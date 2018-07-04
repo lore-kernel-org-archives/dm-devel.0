@@ -1,266 +1,88 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] mm: set PF_LESS_THROTTLE when allocating memory
-	for i/o
-Date: Tue, 3 Jul 2018 18:48:58 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1807031837110.16609@file01.intranet.prod.int.rdu2.redhat.com>
+From: Andy Shevchenko <andy.shevchenko@gmail.com>
+Subject: Re: [PATCH v4 0/5] bitmap: Introduce alloc/free helpers
+Date: Thu, 5 Jul 2018 00:30:06 +0300
+Message-ID: <CAHp75Vd9RSxVsYrbiAFJKLPL4wNzAtS9qAPjCNJJ4E=QbeTP8A@mail.gmail.com>
+References: <20180630201750.2588-1-andriy.shevchenko@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>, linux-mm@kvack.org, linux-block@vger.kernel.org
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, mhocko@kernel.org, dm-devel@redhat.com, xia <jing.xia.mail@gmail.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180630201750.2588-1-andriy.shevchenko@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-input <linux-input@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Yury Norov <ynorov@caviumnetworks.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Mika Westerberg <mika.westerberg@linux.intel.com>, Joe Perches <joe@perches.com>
 List-Id: dm-devel.ids
 
-It has been noticed that congestion throttling can slow down allocations
-path that participate in the IO and thus help the memory reclaim.
-Stalling those allocation is therefore not productive. Moreover mempool
-allocator and md variants of the same already implement their own
-throttling which has a better way to be feedback driven. Stalling at the
-page allocator is therefore even counterproductive.
+On Sat, Jun 30, 2018 at 11:17 PM, Andy Shevchenko
+<andriy.shevchenko@linux.intel.com> wrote:
+> A lot of code is using allocation of bitmaps using BITS_PER_LONG() macro and
+> sizeof(unsigned long) operator. The readability suffers because of this.
+>
+> The series introduces three helpers, i.e. bitmap_alloc(), bitmap_zalloc() and
+> bitmap_free(), to make it more cleaner.
+>
 
-PF_LESS_THROTTLE is a task flag denoting allocation context that is
-participating in the memory reclaim which fits into these IO paths
-model, so use the flag and make the page allocator aware they are
-special and they do not really want any dirty data throttling.
+Dmitry, it seems we are all set now and if you have no objections
+against this version, it would be nice to see it in your tree followed
+by upstream.
 
-The throttling causes stalls on Android - it uses the dm-verity driver 
-that uses dm-bufio. Allocations in dm-bufio were observed to sleep in 
-wait_iff_congested repeatedly.
+> Patches 1 and 2 are preparatory to avoid namespace collisions between
+> bitmap API and DM / MD bitmap. No functional changes intended.
+>
+> Patch 3 introduces new helpers.
+>
+> Patches 4 and 5 is just an example how to use new helpers. Locally I have
+> like dozen of them against different subsystems and drivers.
+>
+> Taking above into consideration it might make sense to have
+> an immutable branch for this cycle.
+>
+> Ideally it would go through Input subsystem, thus, needs an Ack
+> from MD / DM maintainer(s).
+>
+> Since v3:
+> - split DM part and do rename accordingly (Mike)
+> - explain better in the commit message why we can't make helpers as
+>   inliners (Dmitry, Andrew)
+> - drop applied orphaned patch
+>
+> Since v2:
+> - fix compilation issue in MD bitmap code
+> - elaborate changes in commit message of patch 5
+>
+> Since v1:
+> - added namespace fix patch against MD bitmap API
+> - moved functions to lib/bitmap.c to avoid circular dependencies
+> - appended Dmitry's tags
+>
+> Andy Shevchenko (5):
+>   dm: Avoid namespace collision with bitmap API
+>   md: Avoid namespace collision with bitmap API
+>   bitmap: Add bitmap_alloc(), bitmap_zalloc() and bitmap_free()
+>   Input: gpio-keys - Switch to bitmap_zalloc()
+>   Input: evdev - Switch to bitmap API
+>
+>  drivers/input/evdev.c                         |  16 +-
+>  drivers/input/keyboard/gpio_keys.c            |   8 +-
+>  drivers/md/dm-raid.c                          |   6 +-
+>  drivers/md/md-bitmap.c                        | 305 +++++++++---------
+>  drivers/md/md-bitmap.h                        |  60 ++--
+>  drivers/md/md-cluster.c                       |  18 +-
+>  drivers/md/md.c                               |  44 +--
+>  .../md/persistent-data/dm-space-map-common.c  |  20 +-
+>  drivers/md/raid1.c                            |  35 +-
+>  drivers/md/raid10.c                           |  52 ++-
+>  drivers/md/raid5-cache.c                      |   8 +-
+>  drivers/md/raid5.c                            |  44 +--
+>  include/linux/bitmap.h                        |   8 +
+>  lib/bitmap.c                                  |  19 ++
+>  14 files changed, 326 insertions(+), 317 deletions(-)
+>
+> --
+> 2.18.0
+>
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Acked-by: Michal Hocko <mhocko@suse.com> # mempool_alloc and bvec_alloc
-Cc: stable@vger.kernel.org
 
----
- block/bio.c                   |    4 ++++
- drivers/md/dm-bufio.c         |   14 +++++++++++---
- drivers/md/dm-crypt.c         |    8 ++++++++
- drivers/md/dm-integrity.c     |    4 ++++
- drivers/md/dm-kcopyd.c        |    3 +++
- drivers/md/dm-verity-target.c |    4 ++++
- drivers/md/dm-writecache.c    |    4 ++++
- mm/mempool.c                  |    4 ++++
- 8 files changed, 42 insertions(+), 3 deletions(-)
 
-Index: linux-2.6/mm/mempool.c
-===================================================================
---- linux-2.6.orig/mm/mempool.c	2018-06-29 03:47:16.290000000 +0200
-+++ linux-2.6/mm/mempool.c	2018-06-29 03:47:16.270000000 +0200
-@@ -369,6 +369,7 @@ void *mempool_alloc(mempool_t *pool, gfp
- 	unsigned long flags;
- 	wait_queue_entry_t wait;
- 	gfp_t gfp_temp;
-+	unsigned old_flags;
- 
- 	VM_WARN_ON_ONCE(gfp_mask & __GFP_ZERO);
- 	might_sleep_if(gfp_mask & __GFP_DIRECT_RECLAIM);
-@@ -381,7 +382,10 @@ void *mempool_alloc(mempool_t *pool, gfp
- 
- repeat_alloc:
- 
-+	old_flags = current->flags & PF_LESS_THROTTLE;
-+	current->flags |= PF_LESS_THROTTLE;
- 	element = pool->alloc(gfp_temp, pool->pool_data);
-+	current_restore_flags(old_flags, PF_LESS_THROTTLE);
- 	if (likely(element != NULL))
- 		return element;
- 
-Index: linux-2.6/block/bio.c
-===================================================================
---- linux-2.6.orig/block/bio.c	2018-06-29 03:47:16.290000000 +0200
-+++ linux-2.6/block/bio.c	2018-06-29 03:47:16.270000000 +0200
-@@ -217,6 +217,7 @@ fallback:
- 	} else {
- 		struct biovec_slab *bvs = bvec_slabs + *idx;
- 		gfp_t __gfp_mask = gfp_mask & ~(__GFP_DIRECT_RECLAIM | __GFP_IO);
-+		unsigned old_flags;
- 
- 		/*
- 		 * Make this allocation restricted and don't dump info on
-@@ -229,7 +230,10 @@ fallback:
- 		 * Try a slab allocation. If this fails and __GFP_DIRECT_RECLAIM
- 		 * is set, retry with the 1-entry mempool
- 		 */
-+		old_flags = current->flags & PF_LESS_THROTTLE;
-+		current->flags |= PF_LESS_THROTTLE;
- 		bvl = kmem_cache_alloc(bvs->slab, __gfp_mask);
-+		current_restore_flags(old_flags, PF_LESS_THROTTLE);
- 		if (unlikely(!bvl && (gfp_mask & __GFP_DIRECT_RECLAIM))) {
- 			*idx = BVEC_POOL_MAX;
- 			goto fallback;
-Index: linux-2.6/drivers/md/dm-bufio.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-bufio.c	2018-06-29 03:47:16.290000000 +0200
-+++ linux-2.6/drivers/md/dm-bufio.c	2018-06-29 03:47:16.270000000 +0200
-@@ -356,6 +356,7 @@ static void __cache_size_refresh(void)
- static void *alloc_buffer_data(struct dm_bufio_client *c, gfp_t gfp_mask,
- 			       unsigned char *data_mode)
- {
-+	void *ptr;
- 	if (unlikely(c->slab_cache != NULL)) {
- 		*data_mode = DATA_MODE_SLAB;
- 		return kmem_cache_alloc(c->slab_cache, gfp_mask);
-@@ -363,9 +364,14 @@ static void *alloc_buffer_data(struct dm
- 
- 	if (c->block_size <= KMALLOC_MAX_SIZE &&
- 	    gfp_mask & __GFP_NORETRY) {
-+		unsigned old_flags;
- 		*data_mode = DATA_MODE_GET_FREE_PAGES;
--		return (void *)__get_free_pages(gfp_mask,
-+		old_flags = current->flags & PF_LESS_THROTTLE;
-+		current->flags |= PF_LESS_THROTTLE;
-+		ptr = (void *)__get_free_pages(gfp_mask,
- 						c->sectors_per_block_bits - (PAGE_SHIFT - SECTOR_SHIFT));
-+		current_restore_flags(old_flags, PF_LESS_THROTTLE);
-+		return ptr;
- 	}
- 
- 	*data_mode = DATA_MODE_VMALLOC;
-@@ -381,8 +387,10 @@ static void *alloc_buffer_data(struct dm
- 	 */
- 	if (gfp_mask & __GFP_NORETRY) {
- 		unsigned noio_flag = memalloc_noio_save();
--		void *ptr = __vmalloc(c->block_size, gfp_mask, PAGE_KERNEL);
--
-+		unsigned old_flags = current->flags & PF_LESS_THROTTLE;
-+		current->flags |= PF_LESS_THROTTLE;
-+		ptr = __vmalloc(c->block_size, gfp_mask, PAGE_KERNEL);
-+		current_restore_flags(old_flags, PF_LESS_THROTTLE);
- 		memalloc_noio_restore(noio_flag);
- 		return ptr;
- 	}
-Index: linux-2.6/drivers/md/dm-integrity.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-integrity.c	2018-06-29 03:47:16.290000000 +0200
-+++ linux-2.6/drivers/md/dm-integrity.c	2018-06-29 03:47:16.270000000 +0200
-@@ -1318,6 +1318,7 @@ static void integrity_metadata(struct wo
- 	int r;
- 
- 	if (ic->internal_hash) {
-+		unsigned old_flags;
- 		struct bvec_iter iter;
- 		struct bio_vec bv;
- 		unsigned digest_size = crypto_shash_digestsize(ic->internal_hash);
-@@ -1331,8 +1332,11 @@ static void integrity_metadata(struct wo
- 		if (unlikely(ic->mode == 'R'))
- 			goto skip_io;
- 
-+		old_flags = current->flags & PF_LESS_THROTTLE;
-+		current->flags |= PF_LESS_THROTTLE;
- 		checksums = kmalloc((PAGE_SIZE >> SECTOR_SHIFT >> ic->sb->log2_sectors_per_block) * ic->tag_size + extra_space,
- 				    GFP_NOIO | __GFP_NORETRY | __GFP_NOWARN);
-+		current_restore_flags(old_flags, PF_LESS_THROTTLE);
- 		if (!checksums)
- 			checksums = checksums_onstack;
- 
-Index: linux-2.6/drivers/md/dm-kcopyd.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-kcopyd.c	2018-06-29 03:47:16.290000000 +0200
-+++ linux-2.6/drivers/md/dm-kcopyd.c	2018-06-29 03:47:16.270000000 +0200
-@@ -245,7 +245,10 @@ static int kcopyd_get_pages(struct dm_kc
- 	*pages = NULL;
- 
- 	do {
-+		unsigned old_flags = current->flags & PF_LESS_THROTTLE;
-+		current->flags |= PF_LESS_THROTTLE;
- 		pl = alloc_pl(__GFP_NOWARN | __GFP_NORETRY | __GFP_KSWAPD_RECLAIM);
-+		current_restore_flags(old_flags, PF_LESS_THROTTLE);
- 		if (unlikely(!pl)) {
- 			/* Use reserved pages */
- 			pl = kc->pages;
-Index: linux-2.6/drivers/md/dm-verity-target.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-verity-target.c	2018-06-29 03:47:16.290000000 +0200
-+++ linux-2.6/drivers/md/dm-verity-target.c	2018-06-29 03:47:16.280000000 +0200
-@@ -596,9 +596,13 @@ no_prefetch_cluster:
- static void verity_submit_prefetch(struct dm_verity *v, struct dm_verity_io *io)
- {
- 	struct dm_verity_prefetch_work *pw;
-+	unsigned old_flags;
- 
-+	old_flags = current->flags & PF_LESS_THROTTLE;
-+	current->flags |= PF_LESS_THROTTLE;
- 	pw = kmalloc(sizeof(struct dm_verity_prefetch_work),
- 		GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
-+	current_restore_flags(old_flags, PF_LESS_THROTTLE);
- 
- 	if (!pw)
- 		return;
-Index: linux-2.6/drivers/md/dm-writecache.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-writecache.c	2018-06-29 03:47:16.290000000 +0200
-+++ linux-2.6/drivers/md/dm-writecache.c	2018-06-29 03:47:16.280000000 +0200
-@@ -1473,6 +1473,7 @@ static void __writecache_writeback_pmem(
- 	unsigned max_pages;
- 
- 	while (wbl->size) {
-+		unsigned old_flags;
- 		wbl->size--;
- 		e = container_of(wbl->list.prev, struct wc_entry, lru);
- 		list_del(&e->lru);
-@@ -1486,6 +1487,8 @@ static void __writecache_writeback_pmem(
- 		bio_set_dev(&wb->bio, wc->dev->bdev);
- 		wb->bio.bi_iter.bi_sector = read_original_sector(wc, e);
- 		wb->page_offset = PAGE_SIZE;
-+		old_flags = current->flags & PF_LESS_THROTTLE;
-+		current->flags |= PF_LESS_THROTTLE;
- 		if (max_pages <= WB_LIST_INLINE ||
- 		    unlikely(!(wb->wc_list = kmalloc(max_pages * sizeof(struct wc_entry *),
- 						     GFP_NOIO | __GFP_NORETRY |
-@@ -1493,6 +1496,7 @@ static void __writecache_writeback_pmem(
- 			wb->wc_list = wb->wc_list_inline;
- 			max_pages = WB_LIST_INLINE;
- 		}
-+		current_restore_flags(old_flags, PF_LESS_THROTTLE);
- 
- 		BUG_ON(!wc_add_block(wb, e, GFP_NOIO));
- 
-Index: linux-2.6/drivers/md/dm-crypt.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-crypt.c	2018-06-29 03:47:16.290000000 +0200
-+++ linux-2.6/drivers/md/dm-crypt.c	2018-06-29 03:47:16.280000000 +0200
-@@ -2181,12 +2181,16 @@ static void *crypt_page_alloc(gfp_t gfp_
- {
- 	struct crypt_config *cc = pool_data;
- 	struct page *page;
-+	unsigned old_flags;
- 
- 	if (unlikely(percpu_counter_compare(&cc->n_allocated_pages, dm_crypt_pages_per_client) >= 0) &&
- 	    likely(gfp_mask & __GFP_NORETRY))
- 		return NULL;
- 
-+	old_flags = current->flags & PF_LESS_THROTTLE;
-+	current->flags |= PF_LESS_THROTTLE;
- 	page = alloc_page(gfp_mask);
-+	current_restore_flags(old_flags, PF_LESS_THROTTLE);
- 	if (likely(page != NULL))
- 		percpu_counter_add(&cc->n_allocated_pages, 1);
- 
-@@ -2893,7 +2897,10 @@ static int crypt_map(struct dm_target *t
- 
- 	if (cc->on_disk_tag_size) {
- 		unsigned tag_len = cc->on_disk_tag_size * (bio_sectors(bio) >> cc->sector_shift);
-+		unsigned old_flags;
- 
-+		old_flags = current->flags & PF_LESS_THROTTLE;
-+		current->flags |= PF_LESS_THROTTLE;
- 		if (unlikely(tag_len > KMALLOC_MAX_SIZE) ||
- 		    unlikely(!(io->integrity_metadata = kmalloc(tag_len,
- 				GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN)))) {
-@@ -2902,6 +2909,7 @@ static int crypt_map(struct dm_target *t
- 			io->integrity_metadata = mempool_alloc(&cc->tag_pool, GFP_NOIO);
- 			io->integrity_metadata_from_pool = true;
- 		}
-+		current_restore_flags(old_flags, PF_LESS_THROTTLE);
- 	}
- 
- 	if (crypt_integrity_aead(cc))
+-- 
+With Best Regards,
+Andy Shevchenko
