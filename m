@@ -1,7 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: fix products names in hwtable
-Date: Thu,  5 Jul 2018 20:55:05 +0200
-Message-ID: <20180705185505.5920-1-xose.vazquez@gmail.com>
+Subject: [PATCH RFC] multipath-tools: add cciss_tur checker to
+	CCISS arrays
+Date: Thu,  5 Jul 2018 20:56:22 +0200
+Message-ID: <20180705185622.5996-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -18,43 +19,43 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: DM-DEV ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
+In cf87a17ee840aafbbc6166f663963e5213573de7 Hannes says:
+   
+  The 'normal' SG_IO tur checker has some issues with cciss, so
+  we'd better use a dedicated path checker here.
+
+CC: Hannes Reinecke <hare@suse.de>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM-DEV ML <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+
+cciss(block) driver was replaced by hpsa(scsi) in
+253d2464df446456c0bba5ed4137a7be0b278aa8 the last year.
+
+Should cciss be removed from multipath-tools?
+
+---
+ libmultipath/hwtable.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 478bf16..d3a8d9b 100644
+index d3a8d9b..c460d29 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -581,7 +581,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = 30,
- 	},
- 	{
--		/* Enterprise Storage Server / Shark family */
-+		/* Enterprise Storage Server(ESS) / Shark family */
- 		.vendor        = "IBM",
- 		.product       = "^2105",
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
-@@ -613,7 +613,7 @@ static struct hwentry default_hw[] = {
+@@ -199,11 +199,12 @@ static struct hwentry default_hw[] = {
  		.prio_name     = PRIO_ALUA,
  	},
  	{
--		/* DS6000/DS8000 DASD ECKD */
-+		/* PAV DASD ECKD */
- 		.vendor        = "IBM",
- 		.product       = "S/390 DASD ECKD",
- 		.bl_product    = "S/390",
-@@ -623,7 +623,7 @@ static struct hwentry default_hw[] = {
- 		.checker_name  = DIRECTIO,
+-		/* Smart Array */
++		/* Smart Array CCISS */
+ 		.vendor        = "HP",
+ 		.product       = "LOGICAL VOLUME",
+ 		.pgpolicy      = MULTIBUS,
+ 		.no_path_retry = 12,
++		.checker_name  = CCISS_TUR,
  	},
  	{
--		/* DS6000/DS8000 DASD FBA */
-+		/* PAV DASD FBA */
- 		.vendor        = "IBM",
- 		.product       = "S/390 DASD FBA",
- 		.bl_product    = "S/390",
+ 		/* P2000 family */
 -- 
 2.17.1
