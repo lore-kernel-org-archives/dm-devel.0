@@ -1,88 +1,44 @@
-From: Andy Shevchenko <andy.shevchenko@gmail.com>
-Subject: Re: [PATCH v4 0/5] bitmap: Introduce alloc/free helpers
-Date: Thu, 5 Jul 2018 00:30:06 +0300
-Message-ID: <CAHp75Vd9RSxVsYrbiAFJKLPL4wNzAtS9qAPjCNJJ4E=QbeTP8A@mail.gmail.com>
-References: <20180630201750.2588-1-andriy.shevchenko@linux.intel.com>
+From: Gioh Kim <gi-oh.kim@profitbricks.com>
+Subject: [PATCH] Makefile: include Makefile.inc
+Date: Thu,  5 Jul 2018 14:11:56 +0200
+Message-ID: <20180705121156.11954-1-gi-oh.kim@profitbricks.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180630201750.2588-1-andriy.shevchenko@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-input <linux-input@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Yury Norov <ynorov@caviumnetworks.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Mika Westerberg <mika.westerberg@linux.intel.com>, Joe Perches <joe@perches.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: christophe.varoqui@opensvc.com
+Cc: dm-devel@redhat.com, Gioh Kim <gi-oh.kim@profitbricks.com>
 List-Id: dm-devel.ids
 
-On Sat, Jun 30, 2018 at 11:17 PM, Andy Shevchenko
-<andriy.shevchenko@linux.intel.com> wrote:
-> A lot of code is using allocation of bitmaps using BITS_PER_LONG() macro and
-> sizeof(unsigned long) operator. The readability suffers because of this.
->
-> The series introduces three helpers, i.e. bitmap_alloc(), bitmap_zalloc() and
-> bitmap_free(), to make it more cleaner.
->
+Since ENABLE_LIBDMMP is defined in Makefile.inc, Makefile needs to include
+Makefile.inc to disable building libdmmp.
 
-Dmitry, it seems we are all set now and if you have no objections
-against this version, it would be nice to see it in your tree followed
-by upstream.
+Signed-off-by: Gioh Kim <gi-oh.kim@profitbricks.com>
+---
+ Makefile | 2 ++
+ 1 file changed, 2 insertions(+)
 
-> Patches 1 and 2 are preparatory to avoid namespace collisions between
-> bitmap API and DM / MD bitmap. No functional changes intended.
->
-> Patch 3 introduces new helpers.
->
-> Patches 4 and 5 is just an example how to use new helpers. Locally I have
-> like dozen of them against different subsystems and drivers.
->
-> Taking above into consideration it might make sense to have
-> an immutable branch for this cycle.
->
-> Ideally it would go through Input subsystem, thus, needs an Ack
-> from MD / DM maintainer(s).
->
-> Since v3:
-> - split DM part and do rename accordingly (Mike)
-> - explain better in the commit message why we can't make helpers as
->   inliners (Dmitry, Andrew)
-> - drop applied orphaned patch
->
-> Since v2:
-> - fix compilation issue in MD bitmap code
-> - elaborate changes in commit message of patch 5
->
-> Since v1:
-> - added namespace fix patch against MD bitmap API
-> - moved functions to lib/bitmap.c to avoid circular dependencies
-> - appended Dmitry's tags
->
-> Andy Shevchenko (5):
->   dm: Avoid namespace collision with bitmap API
->   md: Avoid namespace collision with bitmap API
->   bitmap: Add bitmap_alloc(), bitmap_zalloc() and bitmap_free()
->   Input: gpio-keys - Switch to bitmap_zalloc()
->   Input: evdev - Switch to bitmap API
->
->  drivers/input/evdev.c                         |  16 +-
->  drivers/input/keyboard/gpio_keys.c            |   8 +-
->  drivers/md/dm-raid.c                          |   6 +-
->  drivers/md/md-bitmap.c                        | 305 +++++++++---------
->  drivers/md/md-bitmap.h                        |  60 ++--
->  drivers/md/md-cluster.c                       |  18 +-
->  drivers/md/md.c                               |  44 +--
->  .../md/persistent-data/dm-space-map-common.c  |  20 +-
->  drivers/md/raid1.c                            |  35 +-
->  drivers/md/raid10.c                           |  52 ++-
->  drivers/md/raid5-cache.c                      |   8 +-
->  drivers/md/raid5.c                            |  44 +--
->  include/linux/bitmap.h                        |   8 +
->  lib/bitmap.c                                  |  19 ++
->  14 files changed, 326 insertions(+), 317 deletions(-)
->
-> --
-> 2.18.0
->
-
-
-
+diff --git a/Makefile b/Makefile
+index 4b145c59..4a224a76 100644
+--- a/Makefile
++++ b/Makefile
+@@ -2,6 +2,8 @@
+ # Copyright (C) 2003 Christophe Varoqui, <christophe.varoqui@opensvc.com>
+ #
+ 
++include Makefile.inc
++
+ BUILDDIRS = \
+ 	libmpathcmd \
+ 	libmultipath \
 -- 
-With Best Regards,
-Andy Shevchenko
+2.14.1
