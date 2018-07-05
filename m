@@ -1,7 +1,7 @@
-From: Gioh Kim <gi-oh.kim@profitbricks.com>
-Subject: [PATCH] Makefile: include Makefile.inc
-Date: Thu,  5 Jul 2018 14:11:56 +0200
-Message-ID: <20180705121156.11954-1-gi-oh.kim@profitbricks.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: fix products names in hwtable
+Date: Thu,  5 Jul 2018 20:55:05 +0200
+Message-ID: <20180705185505.5920-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -15,30 +15,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com
-Cc: dm-devel@redhat.com, Gioh Kim <gi-oh.kim@profitbricks.com>
+Cc: DM-DEV ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Since ENABLE_LIBDMMP is defined in Makefile.inc, Makefile needs to include
-Makefile.inc to disable building libdmmp.
-
-Signed-off-by: Gioh Kim <gi-oh.kim@profitbricks.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEV ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- Makefile | 2 ++
- 1 file changed, 2 insertions(+)
+ libmultipath/hwtable.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/Makefile b/Makefile
-index 4b145c59..4a224a76 100644
---- a/Makefile
-+++ b/Makefile
-@@ -2,6 +2,8 @@
- # Copyright (C) 2003 Christophe Varoqui, <christophe.varoqui@opensvc.com>
- #
- 
-+include Makefile.inc
-+
- BUILDDIRS = \
- 	libmpathcmd \
- 	libmultipath \
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 478bf16..d3a8d9b 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -581,7 +581,7 @@ static struct hwentry default_hw[] = {
+ 		.no_path_retry = 30,
+ 	},
+ 	{
+-		/* Enterprise Storage Server / Shark family */
++		/* Enterprise Storage Server(ESS) / Shark family */
+ 		.vendor        = "IBM",
+ 		.product       = "^2105",
+ 		.no_path_retry = NO_PATH_RETRY_QUEUE,
+@@ -613,7 +613,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
+ 	},
+ 	{
+-		/* DS6000/DS8000 DASD ECKD */
++		/* PAV DASD ECKD */
+ 		.vendor        = "IBM",
+ 		.product       = "S/390 DASD ECKD",
+ 		.bl_product    = "S/390",
+@@ -623,7 +623,7 @@ static struct hwentry default_hw[] = {
+ 		.checker_name  = DIRECTIO,
+ 	},
+ 	{
+-		/* DS6000/DS8000 DASD FBA */
++		/* PAV DASD FBA */
+ 		.vendor        = "IBM",
+ 		.product       = "S/390 DASD FBA",
+ 		.bl_product    = "S/390",
 -- 
-2.14.1
+2.17.1
