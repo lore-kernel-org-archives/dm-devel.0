@@ -1,29 +1,53 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH v2] dm-zoned: Avoid triggering reclaim from inside
- dmz_map()
-Date: Thu, 5 Jul 2018 20:01:59 +0000
-Message-ID: <6a3ec4d0768c0be014f35eec1c16382f36c6e044.camel@wdc.com>
-References: <20180622150911.6066-1-bart.vanassche@wdc.com>
-         <alpine.LRH.2.02.1806271106010.21570@file01.intranet.prod.int.rdu2.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH RFC] multipath-tools: add cciss_tur checker
+ to CCISS arrays
+Date: Fri, 06 Jul 2018 15:42:15 +0200
+Message-ID: <9ad6b33737f4da0d740f222f949e9afdddae44df.camel@suse.com>
+References: <20180705185622.5996-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1806271106010.21570@file01.intranet.prod.int.rdu2.redhat.com>
-Content-Language: en-US
-Content-ID: <37636003E8A2FC4BA42F56B5F15B8F57@namprd04.prod.outlook.com>
-Sender: stable-owner@vger.kernel.org
-To: "mpatocka@redhat.com" <mpatocka@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Damien Le Moal <Damien.LeMoal@wdc.com>, "stable@vger.kernel.org" <stable@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180705185622.5996-1-xose.vazquez@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: DM-DEV ML <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE4LTA2LTI3IGF0IDExOjE0IC0wNDAwLCBNaWt1bGFzIFBhdG9ja2Egd3JvdGU6
-DQo+IE9LIC0gYnV0IEkgdGhpbmsgYSBwcm9wZXIgZml4IHdvdWxkIGJlIHRvIHByZWFsbG9jYXRl
-IHRoZSBjaHVua3MgYW5kIHRoZSANCj4gcmFkaXggdHJlZSB3aGVuIHRoZSBkZXZpY2UgaXMgY3Jl
-YXRlZC4NCj4gDQo+IElmIHRoZSBzeXN0ZW0gaXMgaGlnaGx5IHN0cmVzc2VkLCBpdCBtYXkgYmUg
-cG9zc2libGUgdGhhdCB0aGUgR0ZQX05PSU8gDQo+IGFsbG9jYXRpb24gd291bGQgd2FpdCBmb3Ig
-c29tZSBkYXRhIGJlaW5nIHdyaXR0ZW4gYmFjayAtIGFuZCB0aGUgd3JpdGUgDQo+IGJhY2sgbWF5
-IGJlIGRpcmVjdGVkIGJhY2sgdG8gdGhlIGRtLXpvbmVkIGRldmljZSwgd2FpdGluZyBmb3IgdGhl
-IEdGUF9OT0lPIA0KPiBhbGxvY2F0aW9uIHRvIHN1Y2NlZWQuDQoNCkhlbGxvIE1pa3VsYXMsDQoN
-ClRoYW5rIHlvdSBmb3IgdGhlIGZlZWRiYWNrLiBXZSB3aWxsIGxvb2sgZnVydGhlciBpbnRvIHRo
-aXMuDQoNCkJhcnQuDQoNCg0KDQo=
+T24gVGh1LCAyMDE4LTA3LTA1IGF0IDIwOjU2ICswMjAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
+dGU6Cj4gSW4gY2Y4N2ExN2VlODQwYWFmYmJjNjE2NmY2NjM5NjNlNTIxMzU3M2RlNyBIYW5uZXMg
+c2F5czoKPiAgICAKPiAgIFRoZSAnbm9ybWFsJyBTR19JTyB0dXIgY2hlY2tlciBoYXMgc29tZSBp
+c3N1ZXMgd2l0aCBjY2lzcywgc28KPiAgIHdlJ2QgYmV0dGVyIHVzZSBhIGRlZGljYXRlZCBwYXRo
+IGNoZWNrZXIgaGVyZS4KPiAKPiBDQzogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2UuZGU+Cj4g
+Q2M6IENocmlzdG9waGUgVmFyb3F1aSA8Y2hyaXN0b3BoZS52YXJvcXVpQG9wZW5zdmMuY29tPgo+
+IENjOiBETS1ERVYgTUwgPGRtLWRldmVsQHJlZGhhdC5jb20+Cj4gU2lnbmVkLW9mZi1ieTogWG9z
+ZSBWYXpxdWV6IFBlcmV6IDx4b3NlLnZhenF1ZXpAZ21haWwuY29tPgo+IC0tLQo+IAo+IGNjaXNz
+KGJsb2NrKSBkcml2ZXIgd2FzIHJlcGxhY2VkIGJ5IGhwc2Eoc2NzaSkgaW4KPiAyNTNkMjQ2NGRm
+NDQ2NDU2YzBiYmE1ZWQ0MTM3YTdiZTBiMjc4YWE4IHRoZSBsYXN0IHllYXIuCj4gCj4gU2hvdWxk
+IGNjaXNzIGJlIHJlbW92ZWQgZnJvbSBtdWx0aXBhdGgtdG9vbHM/Cj4gCj4gLS0tCj4gIGxpYm11
+bHRpcGF0aC9od3RhYmxlLmMgfCAzICsrLQo+ICAxIGZpbGUgY2hhbmdlZCwgMiBpbnNlcnRpb25z
+KCspLCAxIGRlbGV0aW9uKC0pCj4gCj4gZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9od3RhYmxl
+LmMgYi9saWJtdWx0aXBhdGgvaHd0YWJsZS5jCj4gaW5kZXggZDNhOGQ5Yi4uYzQ2MGQyOSAxMDA2
+NDQKPiAtLS0gYS9saWJtdWx0aXBhdGgvaHd0YWJsZS5jCj4gKysrIGIvbGlibXVsdGlwYXRoL2h3
+dGFibGUuYwo+IEBAIC0xOTksMTEgKzE5OSwxMiBAQCBzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVm
+YXVsdF9od1tdID0gewo+ICAJCS5wcmlvX25hbWUgICAgID0gUFJJT19BTFVBLAo+ICAJfSwKPiAg
+CXsKPiAtCQkvKiBTbWFydCBBcnJheSAqLwo+ICsJCS8qIFNtYXJ0IEFycmF5IENDSVNTICovCj4g
+IAkJLnZlbmRvciAgICAgICAgPSAiSFAiLAo+ICAJCS5wcm9kdWN0ICAgICAgID0gIkxPR0lDQUwg
+Vk9MVU1FIiwKPiAgCQkucGdwb2xpY3kgICAgICA9IE1VTFRJQlVTLAo+ICAJCS5ub19wYXRoX3Jl
+dHJ5ID0gMTIsCj4gKwkJLmNoZWNrZXJfbmFtZSAgPSBDQ0lTU19UVVIsCj4gIAl9LAoKVGhpcyB3
+b24ndCB3b3JrLCBiZWNhdXNlIHRoZXNlIHZvbHVtZXMgYXJlIGRldGVjdGVkIGFzICJIUCIgIkxP
+R0lDQUwKVk9MVU1FIiwgbm8gbWF0dGVyIHdoZXRoZXIgdGhleSdyZSBhdHRhY2hlZCB0byB0aGUg
+Y2Npc3Mgb3IgdGhlIGhwc2EKZHJpdmVyLgoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8
+bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBH
+bWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9u
+CkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
+dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
+LWRldmVs
