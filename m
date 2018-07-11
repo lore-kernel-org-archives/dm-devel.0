@@ -1,13 +1,12 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH v4 05/14] crypto: ahash: Remove VLA usage
-Date: Wed, 11 Jul 2018 13:36:10 -0700
-Message-ID: <20180711203619.1020-6-keescook@chromium.org>
-References: <20180711203619.1020-1-keescook@chromium.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH REPOST] dm rq: replace BUG_ON(!irqs_disabled)
+	with lockdep's lock annotation
+Date: Wed, 11 Jul 2018 17:22:35 +0200
+Message-ID: <20180711152235.21234-1-bigeasy@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180711203619.1020-1-keescook@chromium.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,64 +16,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, Mike Snitzer <snitzer@redhat.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, qat-linux@intel.com, linux-kernel@vger.kernel.org, Masahiro Yamada <yamada.masahiro@socionext.com>, dm-devel@redhat.com, linux-crypto@vger.kernel.org, Lars Persson <larper@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>
+To: dm-devel@redhat.com
+Cc: Keith Busch <keith.busch@intel.com>, tglx@linutronix.de, Mike Snitzer <snitzer@redhat.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-In the quest to remove all stack VLA usage from the kernel[1], this
-introduces max size macros for ahash, as already done for shash, and
-adjust the crypto user to max state size.
+In commit 052189a2ec95 ("dm: remove superfluous irq disablement in
+dm_request_fn") the spin_lock_irq() was replaced with spin_lock() + a
+check for disabled interrupts. Later the locking part was removed in
+commit 2eb6e1e3aa87 ("dm: submit stacked requests in irq enabled
+context") but the BUG_ON() check remained.
+Mike Snitzer explained that:
+|the queue_lock hasn't been removed for the old .request_fn path in block
+|core -- which dm_old_request_fn is providing the hook for.
+|
+|This BUG_ON() documents that reality.
 
-[1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
+The BUG_ON() statement checks for disabled interrupts. The better check
+would to let lockdep check if the required lock (queue_lock) is held.
+Lockdep will then validate that the lock is held an complain if this is
+not the case. Since lockdep will see this lock held in IRQ-context it
+will also complain should the interrupts be enabled while lock still
+held or acquired with enabled interrupts. So this !irq_disabled() is not
+required.
+This change helps to avoid the BUG_ON() statement on preempt-rt where
+the lock is a sleeping lock and interrupts are never really disabled.
 
-Signed-off-by: Kees Cook <keescook@chromium.org>
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: Keith Busch <keith.busch@intel.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- crypto/ahash.c        | 4 ++--
- crypto/algif_hash.c   | 2 +-
- include/crypto/hash.h | 3 +++
- 3 files changed, 6 insertions(+), 3 deletions(-)
+ drivers/md/dm-rq.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/crypto/ahash.c b/crypto/ahash.c
-index a64c143165b1..6435bdbe42fd 100644
---- a/crypto/ahash.c
-+++ b/crypto/ahash.c
-@@ -550,8 +550,8 @@ static int ahash_prepare_alg(struct ahash_alg *alg)
- {
- 	struct crypto_alg *base = &alg->halg.base;
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index 6e547b8dd298..cbd6c7655f38 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -688,7 +688,7 @@ static void dm_old_request_fn(struct request_queue *q)
+ 		/* Establish tio->ti before queuing work (map_tio_request) */
+ 		tio->ti = ti;
+ 		kthread_queue_work(&md->kworker, &tio->work);
+-		BUG_ON(!irqs_disabled());
++		lockdep_assert_held(q->queue_lock);
+ 	}
+ }
  
--	if (alg->halg.digestsize > PAGE_SIZE / 8 ||
--	    alg->halg.statesize > PAGE_SIZE / 8 ||
-+	if (alg->halg.digestsize > AHASH_MAX_DIGESTSIZE ||
-+	    alg->halg.statesize > AHASH_MAX_STATESIZE ||
- 	    alg->halg.statesize == 0)
- 		return -EINVAL;
- 
-diff --git a/crypto/algif_hash.c b/crypto/algif_hash.c
-index bfcf595fd8f9..8974ee8ebead 100644
---- a/crypto/algif_hash.c
-+++ b/crypto/algif_hash.c
-@@ -239,7 +239,7 @@ static int hash_accept(struct socket *sock, struct socket *newsock, int flags,
- 	struct alg_sock *ask = alg_sk(sk);
- 	struct hash_ctx *ctx = ask->private;
- 	struct ahash_request *req = &ctx->req;
--	char state[crypto_ahash_statesize(crypto_ahash_reqtfm(req)) ? : 1];
-+	char state[AHASH_MAX_STATESIZE];
- 	struct sock *sk2;
- 	struct alg_sock *ask2;
- 	struct hash_ctx *ctx2;
-diff --git a/include/crypto/hash.h b/include/crypto/hash.h
-index ae14cc0e0cdb..4fcd0e2368cd 100644
---- a/include/crypto/hash.h
-+++ b/include/crypto/hash.h
-@@ -64,6 +64,9 @@ struct ahash_request {
- 	void *__ctx[] CRYPTO_MINALIGN_ATTR;
- };
- 
-+#define AHASH_MAX_DIGESTSIZE	512
-+#define AHASH_MAX_STATESIZE	512
-+
- #define AHASH_REQUEST_ON_STACK(name, ahash) \
- 	char __##name##_desc[sizeof(struct ahash_request) + \
- 		crypto_ahash_reqsize(ahash)] CRYPTO_MINALIGN_ATTR; \
 -- 
-2.17.1
+2.18.0
