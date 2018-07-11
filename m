@@ -1,117 +1,67 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-crypt: use wake_up_process instead of a wait
-	queue
-Date: Wed, 11 Jul 2018 12:10:51 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1807111209540.6276@file01.intranet.prod.int.rdu2.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>
-Cc: dm-devel@redhat.com
+From: Kees Cook <keescook@chromium.org>
+Subject: [PATCH v4 03/14] crypto: shash: Remove VLA usage
+Date: Wed, 11 Jul 2018 13:36:08 -0700
+Message-ID: <20180711203619.1020-4-keescook@chromium.org>
+References: <20180711203619.1020-1-keescook@chromium.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180711203619.1020-1-keescook@chromium.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Kees Cook <keescook@chromium.org>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, Alasdair Kergon <agk@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, Masahiro Yamada <yamada.masahiro@socionext.com>, linux-crypto@vger.kernel.org, qat-linux@intel.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-This is a small simplification of dm-crypt - use wake_up_process instead
-of a wait queue in a case where only one process may be waiting.
-dm-writecache uses a similar pattern.
+In the quest to remove all stack VLA usage from the kernel[1], this
+removes the VLAs in SHASH_DESC_ON_STACK (via crypto_shash_descsize())
+by using the maximum allowable size (which is now more clearly captured
+in a macro). Similar limits are turned into macros as well.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+A review of existing sizes shows that SHA512_DIGEST_SIZE (64) is the
+largest digest size and that sizeof(struct sha3_state) (360) is the
+largest descriptor size. The corresponding maximums are reduced.
 
+[1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
+
+Signed-off-by: Kees Cook <keescook@chromium.org>
 ---
- drivers/md/dm-crypt.c |   25 ++++++++++---------------
- 1 file changed, 10 insertions(+), 15 deletions(-)
+ crypto/shash.c        | 6 +++---
+ include/crypto/hash.h | 6 +++++-
+ 2 files changed, 8 insertions(+), 4 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-crypt.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-crypt.c	2018-07-10 00:29:54.970000000 +0200
-+++ linux-2.6/drivers/md/dm-crypt.c	2018-07-11 16:42:32.364000000 +0200
-@@ -144,7 +144,7 @@ struct crypt_config {
- 	struct workqueue_struct *io_queue;
- 	struct workqueue_struct *crypt_queue;
+diff --git a/crypto/shash.c b/crypto/shash.c
+index 5d732c6bb4b2..ab6902c6dae7 100644
+--- a/crypto/shash.c
++++ b/crypto/shash.c
+@@ -458,9 +458,9 @@ static int shash_prepare_alg(struct shash_alg *alg)
+ {
+ 	struct crypto_alg *base = &alg->base;
  
--	wait_queue_head_t write_thread_wait;
-+	spinlock_t write_thread_lock;
- 	struct task_struct *write_thread;
- 	struct rb_root write_tree;
+-	if (alg->digestsize > PAGE_SIZE / 8 ||
+-	    alg->descsize > PAGE_SIZE / 8 ||
+-	    alg->statesize > PAGE_SIZE / 8)
++	if (alg->digestsize > SHASH_MAX_DIGESTSIZE ||
++	    alg->descsize > SHASH_MAX_DESCSIZE ||
++	    alg->statesize > SHASH_MAX_STATESIZE)
+ 		return -EINVAL;
  
-@@ -1620,36 +1620,31 @@ static int dmcrypt_write(void *data)
- 		struct rb_root write_tree;
- 		struct blk_plug plug;
+ 	base->cra_type = &crypto_shash_type;
+diff --git a/include/crypto/hash.h b/include/crypto/hash.h
+index 76e432cab75d..ae14cc0e0cdb 100644
+--- a/include/crypto/hash.h
++++ b/include/crypto/hash.h
+@@ -151,9 +151,13 @@ struct shash_desc {
+ 	void *__ctx[] CRYPTO_MINALIGN_ATTR;
+ };
  
--		DECLARE_WAITQUEUE(wait, current);
--
--		spin_lock_irq(&cc->write_thread_wait.lock);
-+		spin_lock_irq(&cc->write_thread_lock);
- continue_locked:
++#define SHASH_MAX_DIGESTSIZE     64
++#define SHASH_MAX_DESCSIZE      360
++#define SHASH_MAX_STATESIZE     512
++
+ #define SHASH_DESC_ON_STACK(shash, ctx)				  \
+ 	char __##shash##_desc[sizeof(struct shash_desc) +	  \
+-		crypto_shash_descsize(ctx)] CRYPTO_MINALIGN_ATTR; \
++		SHASH_MAX_DESCSIZE] CRYPTO_MINALIGN_ATTR; \
+ 	struct shash_desc *shash = (struct shash_desc *)__##shash##_desc
  
- 		if (!RB_EMPTY_ROOT(&cc->write_tree))
- 			goto pop_from_list;
- 
- 		set_current_state(TASK_INTERRUPTIBLE);
--		__add_wait_queue(&cc->write_thread_wait, &wait);
- 
--		spin_unlock_irq(&cc->write_thread_wait.lock);
-+		spin_unlock_irq(&cc->write_thread_lock);
- 
- 		if (unlikely(kthread_should_stop())) {
- 			set_current_state(TASK_RUNNING);
--			remove_wait_queue(&cc->write_thread_wait, &wait);
- 			break;
- 		}
- 
- 		schedule();
- 
- 		set_current_state(TASK_RUNNING);
--		spin_lock_irq(&cc->write_thread_wait.lock);
--		__remove_wait_queue(&cc->write_thread_wait, &wait);
-+		spin_lock_irq(&cc->write_thread_lock);
- 		goto continue_locked;
- 
- pop_from_list:
- 		write_tree = cc->write_tree;
- 		cc->write_tree = RB_ROOT;
--		spin_unlock_irq(&cc->write_thread_wait.lock);
-+		spin_unlock_irq(&cc->write_thread_lock);
- 
- 		BUG_ON(rb_parent(write_tree.rb_node));
- 
-@@ -1693,7 +1688,9 @@ static void kcryptd_crypt_write_io_submi
- 		return;
- 	}
- 
--	spin_lock_irqsave(&cc->write_thread_wait.lock, flags);
-+	spin_lock_irqsave(&cc->write_thread_lock, flags);
-+	if (RB_EMPTY_ROOT(&cc->write_tree))
-+		wake_up_process(cc->write_thread);
- 	rbp = &cc->write_tree.rb_node;
- 	parent = NULL;
- 	sector = io->sector;
-@@ -1706,9 +1703,7 @@ static void kcryptd_crypt_write_io_submi
- 	}
- 	rb_link_node(&io->rb_node, parent, rbp);
- 	rb_insert_color(&io->rb_node, &cc->write_tree);
--
--	wake_up_locked(&cc->write_thread_wait);
--	spin_unlock_irqrestore(&cc->write_thread_wait.lock, flags);
-+	spin_unlock_irqrestore(&cc->write_thread_lock, flags);
- }
- 
- static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
-@@ -2835,7 +2830,7 @@ static int crypt_ctr(struct dm_target *t
- 		goto bad;
- 	}
- 
--	init_waitqueue_head(&cc->write_thread_wait);
-+	spin_lock_init(&cc->write_thread_lock);
- 	cc->write_tree = RB_ROOT;
- 
- 	cc->write_thread = kthread_create(dmcrypt_write, cc, "dmcrypt_write");
+ /**
+-- 
+2.17.1
