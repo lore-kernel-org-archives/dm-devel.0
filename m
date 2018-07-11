@@ -1,17 +1,12 @@
-From: James Hogarth <james.hogarth@gmail.com>
-Subject: Fwd: [Vdo-devel] Trying to test thin provisioned LVM on
-	VDO
-Date: Wed, 11 Jul 2018 11:51:19 +0100
-Message-ID: <CAGkb5vd5Q1qRZFi8dz-gyRzj87cPFih+D06ojCXBkHZBkFh3+g@mail.gmail.com>
-References: <CAGkb5veuGH=ry3dzmeKWKxva42J3353y4K8JDOOy3dukeWee7w@mail.gmail.com>
-	<CAJtpHn9k4HXHOsvO4gsuWfimLfMFXAZALArpp2Ryq2NL2YZV2g@mail.gmail.com>
-	<CAGkb5vfrd5SJeY3Aa5FwMEsna2p66Pg0YrXHaLX2NEAWm=eZ_g@mail.gmail.com>
-	<CAGkb5vec2pF1XiSgRP7zKaW8ew1titUhdjSjCtO-Wric_BjwEQ@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-crypt: use wake_up_process instead of a wait
+	queue
+Date: Wed, 11 Jul 2018 12:10:51 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1807111209540.6276@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAGkb5vec2pF1XiSgRP7zKaW8ew1titUhdjSjCtO-Wric_BjwEQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,76 +16,102 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Forwarding to dm-devel as it appears the issue to be resolved for VDO
-to receive discards correctly needs a code change in dm-thin ...
+This is a small simplification of dm-crypt - use wake_up_process instead
+of a wait queue in a case where only one process may be waiting.
+dm-writecache uses a similar pattern.
 
-See start of thread here for full details:
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-https://www.redhat.com/archives/vdo-devel/2018-July/msg00000.html
+---
+ drivers/md/dm-crypt.c |   25 ++++++++++---------------
+ 1 file changed, 10 insertions(+), 15 deletions(-)
 
-
----------- Forwarded message ----------
-From: James Hogarth <james.hogarth@gmail.com>
-Date: 11 July 2018 at 11:48
-Subject: Re: [Vdo-devel] Trying to test thin provisioned LVM on VDO
-To: vdo-devel@redhat.com
-Cc: Michael Sclafani <sclafani@redhat.com>, snitzer@redhat.com
-
-
-On 11 July 2018 at 11:26, James Hogarth <james.hogarth@gmail.com> wrote:
-> On 11 July 2018 at 10:40, Michael Sclafani <sclafani@redhat.com> wrote:
->> Based on the error message and a quick scan of the code, it appears dm-thin
->> disables discards because VDO's max_discard_sectors = 4KB is smaller than
->> dm-thin's 64KB+ block size. I have no idea why it does that, but if it
->> neither discards nor zeros out blocks it has written to VDO, that space will
->> not be reclaimed.
->>
->
-> Thanks for confirming the line of thought I was following ...
->
-> Annoyingly this makes the RHEL documentation pretty useless to follow
-> for carrying out thin provisioned volumes...
->
-> Unfortunately I don't have a support account to hand to raise this as
-> a RHEL7.5 issue to resolve ...
->
-> Looking at the lvcreate man page it's not possible to set a block size
-> for a thin pool below 64K
->
-> -c|--chunksize Size[k|UNIT]
->               The size of chunks in a snapshot, cache pool or thin
-> pool.  For snapshots, the value
->               must be a power of 2 between 4KiB and 512KiB and the
-> default value is 4.  For a cache
->               pool the value must be between 32KiB and 1GiB and the
-> default value is 64.  For a thin
->               pool the value must be between 64KiB and 1GiB and the
-> default value starts with 64 and
->               scales up to fit the pool metadata size within 128MiB,
-> if the pool metadata size is not
->               specified.  The value must be a multiple of 64KiB.  See
-> lvmthin(7) and lvmcache(7) for
->               more information.
->
-> What's going to be the best approach to resolve this so that thin
-> provisioning works as expected? It's obviously not advisable to use in
-> this configuration due to the inevitable disk exhaustion issue that
-> will arise.
-
-
-Mike you wrote the relevant patch that appears to be causing the
-conflict and prevents dm-thin passing the discard to VDO here:
-
-https://www.redhat.com/archives/dm-devel/2012-August/msg00381.html
-
-I know it was a while back but do you recall what the reason for the
-max_discard_sector and sectors_per_block comparison was for?
-
-From the VDO code it appears untenable to increase maxDiscardSector
-without major performance impact - to the extent of I/O stalls.
-
-So it looks like the only way to make this work is a change to dm-thin
-to ensure the discards are still passed to the VDO layer below it.
+Index: linux-2.6/drivers/md/dm-crypt.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-crypt.c	2018-07-10 00:29:54.970000000 +0200
++++ linux-2.6/drivers/md/dm-crypt.c	2018-07-11 16:42:32.364000000 +0200
+@@ -144,7 +144,7 @@ struct crypt_config {
+ 	struct workqueue_struct *io_queue;
+ 	struct workqueue_struct *crypt_queue;
+ 
+-	wait_queue_head_t write_thread_wait;
++	spinlock_t write_thread_lock;
+ 	struct task_struct *write_thread;
+ 	struct rb_root write_tree;
+ 
+@@ -1620,36 +1620,31 @@ static int dmcrypt_write(void *data)
+ 		struct rb_root write_tree;
+ 		struct blk_plug plug;
+ 
+-		DECLARE_WAITQUEUE(wait, current);
+-
+-		spin_lock_irq(&cc->write_thread_wait.lock);
++		spin_lock_irq(&cc->write_thread_lock);
+ continue_locked:
+ 
+ 		if (!RB_EMPTY_ROOT(&cc->write_tree))
+ 			goto pop_from_list;
+ 
+ 		set_current_state(TASK_INTERRUPTIBLE);
+-		__add_wait_queue(&cc->write_thread_wait, &wait);
+ 
+-		spin_unlock_irq(&cc->write_thread_wait.lock);
++		spin_unlock_irq(&cc->write_thread_lock);
+ 
+ 		if (unlikely(kthread_should_stop())) {
+ 			set_current_state(TASK_RUNNING);
+-			remove_wait_queue(&cc->write_thread_wait, &wait);
+ 			break;
+ 		}
+ 
+ 		schedule();
+ 
+ 		set_current_state(TASK_RUNNING);
+-		spin_lock_irq(&cc->write_thread_wait.lock);
+-		__remove_wait_queue(&cc->write_thread_wait, &wait);
++		spin_lock_irq(&cc->write_thread_lock);
+ 		goto continue_locked;
+ 
+ pop_from_list:
+ 		write_tree = cc->write_tree;
+ 		cc->write_tree = RB_ROOT;
+-		spin_unlock_irq(&cc->write_thread_wait.lock);
++		spin_unlock_irq(&cc->write_thread_lock);
+ 
+ 		BUG_ON(rb_parent(write_tree.rb_node));
+ 
+@@ -1693,7 +1688,9 @@ static void kcryptd_crypt_write_io_submi
+ 		return;
+ 	}
+ 
+-	spin_lock_irqsave(&cc->write_thread_wait.lock, flags);
++	spin_lock_irqsave(&cc->write_thread_lock, flags);
++	if (RB_EMPTY_ROOT(&cc->write_tree))
++		wake_up_process(cc->write_thread);
+ 	rbp = &cc->write_tree.rb_node;
+ 	parent = NULL;
+ 	sector = io->sector;
+@@ -1706,9 +1703,7 @@ static void kcryptd_crypt_write_io_submi
+ 	}
+ 	rb_link_node(&io->rb_node, parent, rbp);
+ 	rb_insert_color(&io->rb_node, &cc->write_tree);
+-
+-	wake_up_locked(&cc->write_thread_wait);
+-	spin_unlock_irqrestore(&cc->write_thread_wait.lock, flags);
++	spin_unlock_irqrestore(&cc->write_thread_lock, flags);
+ }
+ 
+ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
+@@ -2835,7 +2830,7 @@ static int crypt_ctr(struct dm_target *t
+ 		goto bad;
+ 	}
+ 
+-	init_waitqueue_head(&cc->write_thread_wait);
++	spin_lock_init(&cc->write_thread_lock);
+ 	cc->write_tree = RB_ROOT;
+ 
+ 	cc->write_thread = kthread_create(dmcrypt_write, cc, "dmcrypt_write");
