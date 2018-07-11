@@ -1,15 +1,17 @@
-From: <yael.chemla@foss.arm.com>
-Subject: Re: Q about dm-verity per bio data
-Date: Tue, 10 Jul 2018 20:33:34 +0300
-Message-ID: <000701d41874$233ed3e0$69bc7ba0$@foss.arm.com>
-References: <000701d4184d$bd1cb2b0$37561810$@foss.arm.com>
-	<20180710162946.GA55629@redhat.com>
+From: James Hogarth <james.hogarth@gmail.com>
+Subject: Fwd: [Vdo-devel] Trying to test thin provisioned LVM on
+	VDO
+Date: Wed, 11 Jul 2018 11:51:19 +0100
+Message-ID: <CAGkb5vd5Q1qRZFi8dz-gyRzj87cPFih+D06ojCXBkHZBkFh3+g@mail.gmail.com>
+References: <CAGkb5veuGH=ry3dzmeKWKxva42J3353y4K8JDOOy3dukeWee7w@mail.gmail.com>
+	<CAJtpHn9k4HXHOsvO4gsuWfimLfMFXAZALArpp2Ryq2NL2YZV2g@mail.gmail.com>
+	<CAGkb5vfrd5SJeY3Aa5FwMEsna2p66Pg0YrXHaLX2NEAWm=eZ_g@mail.gmail.com>
+	<CAGkb5vec2pF1XiSgRP7zKaW8ew1titUhdjSjCtO-Wric_BjwEQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180710162946.GA55629@redhat.com>
-Content-Language: en-il
+In-Reply-To: <CAGkb5vec2pF1XiSgRP7zKaW8ew1titUhdjSjCtO-Wric_BjwEQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,190 +21,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: 'Mike Snitzer' <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, 'Yael Chemla' <Yael.Chemla@arm.com>, 'Milan Broz' <gmazyland@gmail.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Forwarding to dm-devel as it appears the issue to be resolved for VDO
+to receive discards correctly needs a code change in dm-thin ...
+
+See start of thread here for full details:
+
+https://www.redhat.com/archives/vdo-devel/2018-July/msg00000.html
 
 
-> -----Original Message-----
-> From: Mike Snitzer <snitzer@redhat.com>
-> Sent: Tuesday, 10 July 2018 19:30
-> To: yael.chemla@foss.arm.com
-> Cc: 'Milan Broz' <gmazyland@gmail.com>; Yael Chemla
-> <Yael.Chemla@arm.com>; dm-devel@redhat.com
-> Subject: Re: Q about dm-verity per bio data
-> 
-> On Tue, Jul 10 2018 at  8:58am -0400,
-> yael.chemla@foss.arm.com <yael.chemla@foss.arm.com> wrote:
-> 
-> > Hi Mike and Milan,
-> > I'd like to consult with you,
-> > I'm trying to rewrite a patch I submitted few month ago according to
-> > comments I got, Eric Bigger asked my to adopt the method used in dm-
-> crypt for dynamic allocations.
-> > ([dm-devel] [PATCH 2/2] md: dm-verity: allow parallel processing of
-> > bio blocks)
-> >
-> > I saw you rewrite lately in verity_ctr (dm-verity-target.c) the
-> > alignment and the calculation of ti->per_io_data_size, and also did similar
-> modification at crypt_ctr,  in dm-crypt.c And I suspect it's the source of my
-> problem.
-> >
-> > In my new patch edition as a preparation for parallelization of requests I've
-> added new structure (dm_verity_request ) to the end of dm-verity "per bio
-> data" area.
-> > And enlarged accordingly the size of per_io_data_size
-> >
-> > I keep getting kernel panic such as " bad PC value" or cpu salls.
-> > I guess there's something related to alignment that is missing
-> >
-> > Here my code (it's not the complete patch I intend to submit) but it
-> demonstrate my modification and triggers the mentioned panics:
-> >
-> > Please let me know if you see any issues with alignment or
-> per_io_data_size  size calculation that is missing.
-> > Thank you,
-> > Yael
-> >
-> > diff --git a/drivers/md/dm-verity-target.c
-> > b/drivers/md/dm-verity-target.c index 0cb81c7ed2bb..8d6fbe1a1ae2
-> > 100644
-> > --- a/drivers/md/dm-verity-target.c
-> > +++ b/drivers/md/dm-verity-target.c
-> > @@ -359,6 +359,7 @@ static void verity_for_io_block(struct dm_verity *v,
-> struct dm_verity_io *io,
-> >          * until you consider the typical block size is 4,096B.
-> >          * Going through this loops twice should be very rare.
-> >          */
-> >         sg_set_page(&sg[*nents], bv.bv_page, len, bv.bv_offset);
-> >
-> >         bio_advance_iter(bio, iter, len);
-> 
-> This hunk doesn't have any change.. and in general when I attempt to apply
-> the patch I get:
-> 
-> patching file drivers/md/dm-verity-target.c
-> patch: **** malformed patch at line 33: @@ -447,6 +448,10 @@ static int
-> verity_verify_io(struct dm_verity_io *io)
-> 
+---------- Forwarded message ----------
+From: James Hogarth <james.hogarth@gmail.com>
+Date: 11 July 2018 at 11:48
+Subject: Re: [Vdo-devel] Trying to test thin provisioned LVM on VDO
+To: vdo-devel@redhat.com
+Cc: Michael Sclafani <sclafani@redhat.com>, snitzer@redhat.com
 
-I minimized my patch to only the structure addition to per bio data, all the rest was omitted. I wanted to consult with you on this matter only.
-And I'm sorry for sending diff between files instead of a patch format, moreover there's a patch that comes before it, therfore you got this hunk.
 
-> > @@ -447,6 +448,10 @@ static int verity_verify_io(struct dm_verity_io *io)
-> >                 unsigned int total_len = 0;
-> >                 sector_t cur_block = io->block + b;
-> >                 struct ahash_request *req = verity_io_hash_req(v, io);
-> > +               struct dm_verity_request *vreq = verity_io_req(io);
-> > +
-> > +               vreq->sg = sg;
-> > +               vreq->cur_block = cur_block;
-> >
-> >                 if (v->validated_blocks &&
-> >                     likely(test_bit(cur_block, v->validated_blocks)))
-> > { @@ -641,6 +646,7 @@ static int verity_map(struct dm_target *ti, struct
-> bio *bio)
-> >         bio->bi_end_io = verity_end_io;
-> >         bio->bi_private = io;
-> >         io->iter = bio->bi_iter;
-> > +       io->vreq = (struct dm_verity_request *)((struct
-> > + dm_verity_fec_io *)verity_io_digest_end(v, io) + 1);
-> >
-> >         verity_fec_init_io(io);
-> >
-> 
-> The above looks very wrong, 2 issues I'm seeing:
-> 
-> 1)
-> your new 'struct dm_verity_request' follows the 'want_digest' in 'struct
-> dm_verity_io' right?
+On 11 July 2018 at 11:26, James Hogarth <james.hogarth@gmail.com> wrote:
+> On 11 July 2018 at 10:40, Michael Sclafani <sclafani@redhat.com> wrote:
+>> Based on the error message and a quick scan of the code, it appears dm-thin
+>> disables discards because VDO's max_discard_sectors = 4KB is smaller than
+>> dm-thin's 64KB+ block size. I have no idea why it does that, but if it
+>> neither discards nor zeros out blocks it has written to VDO, that space will
+>> not be reclaimed.
+>>
+>
+> Thanks for confirming the line of thought I was following ...
+>
+> Annoyingly this makes the RHEL documentation pretty useless to follow
+> for carrying out thin provisioned volumes...
+>
+> Unfortunately I don't have a support account to hand to raise this as
+> a RHEL7.5 issue to resolve ...
+>
+> Looking at the lvcreate man page it's not possible to set a block size
+> for a thin pool below 64K
+>
+> -c|--chunksize Size[k|UNIT]
+>               The size of chunks in a snapshot, cache pool or thin
+> pool.  For snapshots, the value
+>               must be a power of 2 between 4KiB and 512KiB and the
+> default value is 4.  For a cache
+>               pool the value must be between 32KiB and 1GiB and the
+> default value is 64.  For a thin
+>               pool the value must be between 64KiB and 1GiB and the
+> default value starts with 64 and
+>               scales up to fit the pool metadata size within 128MiB,
+> if the pool metadata size is not
+>               specified.  The value must be a multiple of 64KiB.  See
+> lvmthin(7) and lvmcache(7) for
+>               more information.
+>
+> What's going to be the best approach to resolve this so that thin
+> provisioning works as expected? It's obviously not advisable to use in
+> this configuration due to the inevitable disk exhaustion issue that
+> will arise.
 
-You're right currently documentation is misleading, it's actually after everything that resides in per bio data.
-thus dmverity per bio data looks as follows:
 
-u8 hash_req[v->ahash_reqsize];
-u8 real_digest[v->digest_size];
-u8 want_digest[v->digest_size];
-struct dm_verity_fec_io ;
-struct dm_verity_request;
+Mike you wrote the relevant patch that appears to be causing the
+conflict and prevents dm-thin passing the discard to VDO here:
 
-therefore io->vreq is set to location after fec_io structure at per bio memory area (see verity_map).
+https://www.redhat.com/archives/dm-devel/2012-August/msg00381.html
 
-> 
-> So why are you then advancing from 'want_digest' by 'struct
-> dm_verity_fec_io' to point to (struct dm_verity_request *)!?
-> 
-> 'struct dm_verity_fec_io' would still follow all the per-bio-data associated
-> with 'struct dm_verity_io'.
-> 
-> And doesn't dm-verity-fec.c:fec_io() need updating so that it skips over your
-> 'struct dm_verity_io'?
-> 
-> You need to introduce new helpers, something like this:
-> 
-> diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c index
-> 684af08d0747..f3922421d58d 100644
-> --- a/drivers/md/dm-verity-fec.c
-> +++ b/drivers/md/dm-verity-fec.c
-> @@ -28,7 +28,7 @@ bool verity_fec_is_enabled(struct dm_verity *v)
->   */
->  static inline struct dm_verity_fec_io *fec_io(struct dm_verity_io *io)  {
-> -	return (struct dm_verity_fec_io *) verity_io_digest_end(io->v, io);
-> +	return (struct dm_verity_fec_io *) verity_io_end(io);
->  }
-> 
->  /*
-> diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h index
-> 3441c10b840c..937d580adf0b 100644
-> --- a/drivers/md/dm-verity.h
-> +++ b/drivers/md/dm-verity.h
-> @@ -115,6 +115,17 @@ static inline u8 *verity_io_digest_end(struct
-> dm_verity *v,
->  	return verity_io_want_digest(v, io) + v->digest_size;  }
-> 
-> +static inline struct dm_verity_request *verity_io_req(struct
-> +dm_verity_io *io) {
-> +	return (struct dm_verity_request *) verity_io_digest_end(io->v, io); }
-> +
-> +static inline void *verity_io_end(struct dm_verity_io *io) {
-> +	struct dm_verity_request *io_req = verity_io_req(io);
-> +	return io_req + 1;
-> +}
-> +
->  extern int verity_for_bv_block(struct dm_verity *v, struct dm_verity_io *io,
->  			       struct bvec_iter *iter,
->  			       int (*process)(struct dm_verity *v,
-> 
-> 2)
-> There is no need to add 'struct dm_verity_request *vreq;' to 'struct
-> dm_verity_io':
-> 
+I know it was a while back but do you recall what the reason for the
+max_discard_sector and sectors_per_block comparison was for?
 
-vreq pointer is preparation for same solution as in dm-crypt, where there's a pointer to the request structure either located at per bio memory area,  or dynimicly allocated request, see ctx->r.req (dm-crypt.c at crypt_alloc_req_skcipher)
- so when certain cipher is done asynchronously (see in crypt_convert handling of -EINPROGRESS) this pointer will point to a dynamically allocated request, while async cipher will be satisfied with the single request structure resides at per bio area.
+From the VDO code it appears untenable to increase maxDiscardSector
+without major performance impact - to the extent of I/O stalls.
 
-> > diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h index
-> > 3441c10b840c..6ccf6f215fe3 100644
-> > --- a/drivers/md/dm-verity.h
-> > +++ b/drivers/md/dm-verity.h
-> > @@ -78,19 +78,31 @@ struct dm_verity_io {
-> >         struct bvec_iter iter;
-> >
-> >         struct work_struct work;
-> > -
-> > +       struct dm_verity_request *vreq;
-> >         /*
-> >          * Three variably-size fields follow this struct:
-> >          *
-> >          * u8 hash_req[v->ahash_reqsize];
-> >          * u8 real_digest[v->digest_size];
-> >          * u8 want_digest[v->digest_size];
-> > -        *
-> > +        * struct dm_verity_request
-> >          * To access them use: verity_io_hash_req(), verity_io_real_digest()
-> >          * and verity_io_want_digest().
-> >          */
-> >  };
-> 
-> Just access it using the correct verity_io_req().
+So it looks like the only way to make this work is a change to dm-thin
+to ensure the discards are still passed to the VDO layer below it.
