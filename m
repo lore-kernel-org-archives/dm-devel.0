@@ -1,67 +1,34 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH REPOST] dm rq: replace BUG_ON(!irqs_disabled)
-	with lockdep's lock annotation
-Date: Wed, 11 Jul 2018 17:22:35 +0200
-Message-ID: <20180711152235.21234-1-bigeasy@linutronix.de>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v4 13/14] rxrpc: Prepare to remove VLA usage for SKCIPHER_REQUEST_ON_STACK
+Date: Thu, 12 Jul 2018 17:11:09 +0200
+Message-ID: <CAK8P3a1k+cy9wAVNQMWE4tdA4aV8tiu6K3haLc+kMPt0iiUQ9Q@mail.gmail.com>
+References: <20180711203619.1020-1-keescook@chromium.org> <20180711203619.1020-14-keescook@chromium.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Keith Busch <keith.busch@intel.com>, tglx@linutronix.de, Mike Snitzer <snitzer@redhat.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180711203619.1020-14-keescook@chromium.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Eric Biggers <ebiggers@google.com>, Alasdair Kergon <agk@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, Masahiro Yamada <yamada.masahiro@socionext.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, qat-linux@intel.com, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>
 List-Id: dm-devel.ids
 
-In commit 052189a2ec95 ("dm: remove superfluous irq disablement in
-dm_request_fn") the spin_lock_irq() was replaced with spin_lock() + a
-check for disabled interrupts. Later the locking part was removed in
-commit 2eb6e1e3aa87 ("dm: submit stacked requests in irq enabled
-context") but the BUG_ON() check remained.
-Mike Snitzer explained that:
-|the queue_lock hasn't been removed for the old .request_fn path in block
-|core -- which dm_old_request_fn is providing the hook for.
-|
-|This BUG_ON() documents that reality.
+On Wed, Jul 11, 2018 at 10:36 PM, Kees Cook <keescook@chromium.org> wrote:
+> Two uses of SKCIPHER_REQUEST_ON_STACK() will trigger FRAME_WARN warnings
+> (when less than 2048) once the VLA is no longer hidden from the check:
+>
+> net/rxrpc/rxkad.c:398:1: warning: the frame size of 1152 bytes is larger than 1024 bytes [-Wframe-larger-than=]
+> net/rxrpc/rxkad.c:242:1: warning: the frame size of 1152 bytes is larger than 1024 bytes [-Wframe-larger-than=]
+>
+> This bumps the affected objects by 20% to silence the warnings while
+> still providing coverage is anything grows even more.
+>
+> Signed-off-by: Kees Cook <keescook@chromium.org>
 
-The BUG_ON() statement checks for disabled interrupts. The better check
-would to let lockdep check if the required lock (queue_lock) is held.
-Lockdep will then validate that the lock is held an complain if this is
-not the case. Since lockdep will see this lock held in IRQ-context it
-will also complain should the interrupts be enabled while lock still
-held or acquired with enabled interrupts. So this !irq_disabled() is not
-required.
-This change helps to avoid the BUG_ON() statement on preempt-rt where
-the lock is a sleeping lock and interrupts are never really disabled.
+(adding David Howells to cc)
 
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: Keith Busch <keith.busch@intel.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- drivers/md/dm-rq.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+I don't think these are in a fast path, it should be possible to just use
+skcipher_alloc_req() instead of SKCIPHER_REQUEST_ON_STACK() here.
+From what I can tell, neither of the two are called in atomic context, so
+you should be able to use a GFP_KERNEL allocation.
 
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 6e547b8dd298..cbd6c7655f38 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -688,7 +688,7 @@ static void dm_old_request_fn(struct request_queue *q)
- 		/* Establish tio->ti before queuing work (map_tio_request) */
- 		tio->ti = ti;
- 		kthread_queue_work(&md->kworker, &tio->work);
--		BUG_ON(!irqs_disabled());
-+		lockdep_assert_held(q->queue_lock);
- 	}
- }
- 
--- 
-2.18.0
+      Arnd
