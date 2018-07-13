@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 03/10] multipath: fix setting conf->version
-Date: Fri, 13 Jul 2018 14:39:08 -0500
-Message-ID: <1531510755-16046-4-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 01/10] libmultipath: remove last of rbd code
+Date: Fri, 13 Jul 2018 14:39:06 -0500
+Message-ID: <1531510755-16046-2-git-send-email-bmarzins@redhat.com>
 References: <1531510755-16046-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,36 +21,38 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Commit d3b71498 stopped multipath from setting conf->version. Instead,
-it was always being set to 0.0.0. Multipathd was still setting this
-correctly.
+My previous patch to remove the rbd code missed a little bit.
 
-Fixes: d3b71498 "multipath: fix rcu thread cancellation hang"
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/devmapper.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ kpartx/del-part-nodes.rules | 2 +-
+ libmultipath/structs.h      | 1 -
+ 2 files changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index f2befad..8136d15 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -245,13 +245,13 @@ void libmp_dm_init(void)
- 	int verbosity;
- 	unsigned int version[3];
+diff --git a/kpartx/del-part-nodes.rules b/kpartx/del-part-nodes.rules
+index 17bc505..0ceecf5 100644
+--- a/kpartx/del-part-nodes.rules
++++ b/kpartx/del-part-nodes.rules
+@@ -10,7 +10,7 @@
+ # or create an udev rule file that sets ENV{DONT_DEL_PART_NODES}="1".
  
-+	if (dm_prereq(version))
-+		exit(1);
- 	conf = get_multipath_config();
- 	verbosity = conf->verbosity;
--	memcpy(version, conf->version, sizeof(version));
-+	memcpy(conf->version, version, sizeof(version));
- 	put_multipath_config(conf);
- 	dm_init(verbosity);
--	if (dm_prereq(version))
--		exit(1);
- 	dm_udev_set_sync_support(libmp_dm_udev_sync);
- }
+ SUBSYSTEM!="block", GOTO="end_del_part_nodes"
+-KERNEL!="sd*|dasd*|rbd*", GOTO="end_del_part_nodes"
++KERNEL!="sd*|dasd*", GOTO="end_del_part_nodes"
+ ACTION!="add|change", GOTO="end_del_part_nodes"
+ ENV{DEVTYPE}=="partition", GOTO="end_del_part_nodes"
+ 
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index e5b698b..ca14315 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -61,7 +61,6 @@ enum sysfs_buses {
+ 	SYSFS_BUS_IDE,
+ 	SYSFS_BUS_CCW,
+ 	SYSFS_BUS_CCISS,
+-	SYSFS_BUS_RBD,
+ 	SYSFS_BUS_NVME,
+ };
  
 -- 
 2.7.4
