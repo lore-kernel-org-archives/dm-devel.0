@@ -1,12 +1,14 @@
-From: Yuval Turgeman <yturgema@redhat.com>
-Subject: [PATCH] kpartx: compare image filenames with backing
-	files
-Date: Mon, 16 Jul 2018 15:52:13 +0300
-Message-ID: <20180716125213.16767-1-yturgema@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 01/10] libmultipath: remove last of rbd code
+Date: Mon, 16 Jul 2018 11:52:29 +0200
+Message-ID: <be57bfd58459731bb32a9ab7a3e94f0bae0d4701.camel@suse.com>
+References: <1531510755-16046-1-git-send-email-bmarzins@redhat.com>
+	<1531510755-16046-2-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1531510755-16046-2-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,70 +18,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-When running `kpartx -d`, find_loop_by_file tries to compare the image's
-realpath with the output from loopinfo.lo_name, which may hold only the
-basename of the image, making kpartx exit without finding the loopdev
-for the image.
-
-In case the original comparison fails, this patch will check the image's
-realpath with the loop device's backing_file so that find_loop_by_file
-will return the correct value.
-
-Signed-off-by: Yuval Turgeman <yturgema@redhat.com>
----
- kpartx/lopart.c | 30 ++++++++++++++++++++++++++++++
- 1 file changed, 30 insertions(+)
-
-diff --git a/kpartx/lopart.c b/kpartx/lopart.c
-index 69c1eda1..9b652554 100644
---- a/kpartx/lopart.c
-+++ b/kpartx/lopart.c
-@@ -69,6 +69,8 @@ char *find_loop_by_file(const char *filename)
- 	struct loop_info loopinfo;
- 	const char VIRT_BLOCK[] = "/sys/devices/virtual/block";
- 	char path[PATH_MAX];
-+	char bf_path[PATH_MAX];
-+	char backing_file[PATH_MAX];
- 
- 	dir = opendir(VIRT_BLOCK);
- 	if (!dir)
-@@ -122,6 +124,34 @@ char *find_loop_by_file(const char *filename)
- 			found = realpath(path, NULL);
- 			break;
- 		}
-+
-+		/*
-+		 * filename is a realpath, while loopinfo.lo_name may hold just the
-+		 * basename.  If that's the case, try to match filename against the
-+		 * backing_file entry for this loop entry
-+		 */
-+		if (snprintf(bf_path, PATH_MAX, "%s/%s/loop/backing_file", VIRT_BLOCK,
-+					 dent->d_name) >= PATH_MAX)
-+			continue;
-+
-+		fd = open(bf_path, O_RDONLY);
-+		if (fd < 0)
-+			continue;
-+
-+		bytes_read = read(fd, backing_file, sizeof(backing_file) - 1);
-+		if (bytes_read <= 0) {
-+			close(fd);
-+			continue;
-+		}
-+
-+		close(fd);
-+
-+		backing_file[bytes_read-1] = '\0';
-+
-+		if (0 == strcmp(filename, backing_file)) {
-+			found = realpath(path, NULL);
-+			break;
-+		}
- 	}
- 	closedir(dir);
- 	return found;
--- 
-2.17.1
+T24gRnJpLCAyMDE4LTA3LTEzIGF0IDE0OjM5IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gTXkgcHJldmlvdXMgcGF0Y2ggdG8gcmVtb3ZlIHRoZSByYmQgY29kZSBtaXNzZWQgYSBs
+aXR0bGUgYml0Lgo+IAo+IFNpZ25lZC1vZmYtYnk6IEJlbmphbWluIE1hcnppbnNraSA8Ym1hcnpp
+bnNAcmVkaGF0LmNvbT4KPiAtLS0KPiAga3BhcnR4L2RlbC1wYXJ0LW5vZGVzLnJ1bGVzIHwgMiAr
+LQo+ICBsaWJtdWx0aXBhdGgvc3RydWN0cy5oICAgICAgfCAxIC0KPiAgMiBmaWxlcyBjaGFuZ2Vk
+LCAxIGluc2VydGlvbigrKSwgMiBkZWxldGlvbnMoLSkKPiAKClJldmlld2VkLWJ5OiBNYXJ0aW4g
+V2lsY2sgPG13aWxja0BzdXNlLmNvbT4KCj4gZGlmZiAtLWdpdCBhL2twYXJ0eC9kZWwtcGFydC1u
+b2Rlcy5ydWxlcyBiL2twYXJ0eC9kZWwtcGFydC0KPiBub2Rlcy5ydWxlcwo+IGluZGV4IDE3YmM1
+MDUuLjBjZWVjZjUgMTAwNjQ0Cj4gLS0tIGEva3BhcnR4L2RlbC1wYXJ0LW5vZGVzLnJ1bGVzCj4g
+KysrIGIva3BhcnR4L2RlbC1wYXJ0LW5vZGVzLnJ1bGVzCj4gQEAgLTEwLDcgKzEwLDcgQEAKPiAg
+IyBvciBjcmVhdGUgYW4gdWRldiBydWxlIGZpbGUgdGhhdCBzZXRzCj4gRU5We0RPTlRfREVMX1BB
+UlRfTk9ERVN9PSIxIi4KPiAgCj4gIFNVQlNZU1RFTSE9ImJsb2NrIiwgR09UTz0iZW5kX2RlbF9w
+YXJ0X25vZGVzIgo+IC1LRVJORUwhPSJzZCp8ZGFzZCp8cmJkKiIsIEdPVE89ImVuZF9kZWxfcGFy
+dF9ub2RlcyIKPiArS0VSTkVMIT0ic2QqfGRhc2QqIiwgR09UTz0iZW5kX2RlbF9wYXJ0X25vZGVz
+Igo+ICBBQ1RJT04hPSJhZGR8Y2hhbmdlIiwgR09UTz0iZW5kX2RlbF9wYXJ0X25vZGVzIgo+ICBF
+TlZ7REVWVFlQRX09PSJwYXJ0aXRpb24iLCBHT1RPPSJlbmRfZGVsX3BhcnRfbm9kZXMiCj4gIAo+
+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvc3RydWN0cy5oIGIvbGlibXVsdGlwYXRoL3N0cnVj
+dHMuaAo+IGluZGV4IGU1YjY5OGIuLmNhMTQzMTUgMTAwNjQ0Cj4gLS0tIGEvbGlibXVsdGlwYXRo
+L3N0cnVjdHMuaAo+ICsrKyBiL2xpYm11bHRpcGF0aC9zdHJ1Y3RzLmgKPiBAQCAtNjEsNyArNjEs
+NiBAQCBlbnVtIHN5c2ZzX2J1c2VzIHsKPiAgCVNZU0ZTX0JVU19JREUsCj4gIAlTWVNGU19CVVNf
+Q0NXLAo+ICAJU1lTRlNfQlVTX0NDSVNTLAo+IC0JU1lTRlNfQlVTX1JCRCwKPiAgCVNZU0ZTX0JV
+U19OVk1FLAo+ICB9Owo+ICAKCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+
+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJ
+bWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBO
+w7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpo
+dHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
