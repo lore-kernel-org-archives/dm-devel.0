@@ -1,29 +1,85 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH] dm crypt: Convert essiv from ahash to shash
-Date: Mon, 16 Jul 2018 12:23:56 +0200
-Message-ID: <CAK8P3a10ONoVAt8+5TNaYzM2qaH=0THkx16tZCd7hpcx-TWvBQ@mail.gmail.com>
-References: <20180716035912.GA32261@beast>
+From: Yuval Turgeman <yturgema@redhat.com>
+Subject: [PATCH] kpartx: compare image filenames with backing
+	files
+Date: Mon, 16 Jul 2018 15:52:13 +0300
+Message-ID: <20180716125213.16767-1-yturgema@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180716035912.GA32261@beast>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jul 16, 2018 at 5:59 AM, Kees Cook <keescook@chromium.org> wrote:
-> In preparing to remove all stack VLA usage from the kernel[1], this
-> removes the discouraged use of AHASH_REQUEST_ON_STACK in favor of
-> the smaller SHASH_DESC_ON_STACK by converting from ahash-wrapped-shash
-> to direct shash. The stack allocation will be made a fixed size in a
-> later patch to the crypto subsystem.
->
-> [1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
->
-> Signed-off-by: Kees Cook <keescook@chromium.org>
+When running `kpartx -d`, find_loop_by_file tries to compare the image's
+realpath with the output from loopinfo.lo_name, which may hold only the
+basename of the image, making kpartx exit without finding the loopdev
+for the image.
 
-This looks very nice, it should also make the operation more efficient in the
-process by removing one indirection layer.
+In case the original comparison fails, this patch will check the image's
+realpath with the loop device's backing_file so that find_loop_by_file
+will return the correct value.
 
-     Arnd
+Signed-off-by: Yuval Turgeman <yturgema@redhat.com>
+---
+ kpartx/lopart.c | 30 ++++++++++++++++++++++++++++++
+ 1 file changed, 30 insertions(+)
+
+diff --git a/kpartx/lopart.c b/kpartx/lopart.c
+index 69c1eda1..9b652554 100644
+--- a/kpartx/lopart.c
++++ b/kpartx/lopart.c
+@@ -69,6 +69,8 @@ char *find_loop_by_file(const char *filename)
+ 	struct loop_info loopinfo;
+ 	const char VIRT_BLOCK[] = "/sys/devices/virtual/block";
+ 	char path[PATH_MAX];
++	char bf_path[PATH_MAX];
++	char backing_file[PATH_MAX];
+ 
+ 	dir = opendir(VIRT_BLOCK);
+ 	if (!dir)
+@@ -122,6 +124,34 @@ char *find_loop_by_file(const char *filename)
+ 			found = realpath(path, NULL);
+ 			break;
+ 		}
++
++		/*
++		 * filename is a realpath, while loopinfo.lo_name may hold just the
++		 * basename.  If that's the case, try to match filename against the
++		 * backing_file entry for this loop entry
++		 */
++		if (snprintf(bf_path, PATH_MAX, "%s/%s/loop/backing_file", VIRT_BLOCK,
++					 dent->d_name) >= PATH_MAX)
++			continue;
++
++		fd = open(bf_path, O_RDONLY);
++		if (fd < 0)
++			continue;
++
++		bytes_read = read(fd, backing_file, sizeof(backing_file) - 1);
++		if (bytes_read <= 0) {
++			close(fd);
++			continue;
++		}
++
++		close(fd);
++
++		backing_file[bytes_read-1] = '\0';
++
++		if (0 == strcmp(filename, backing_file)) {
++			found = realpath(path, NULL);
++			break;
++		}
+ 	}
+ 	closedir(dir);
+ 	return found;
+-- 
+2.17.1
