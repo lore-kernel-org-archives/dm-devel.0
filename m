@@ -1,140 +1,91 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH] dm crypt: Convert essiv from ahash to shash
-Date: Sun, 15 Jul 2018 20:59:12 -0700
-Message-ID: <20180716035912.GA32261@beast>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v4 11/14] treewide: Prepare to remove VLA
+	usage for AHASH_REQUEST_ON_STACK
+Date: Mon, 16 Jul 2018 09:24:06 +0200
+Message-ID: <CAK8P3a0Y82-zxiC4L1v3B20fTgP=AwfFT7sogZZBH5+v0uToHw@mail.gmail.com>
+References: <20180711203619.1020-1-keescook@chromium.org>
+	<20180711203619.1020-12-keescook@chromium.org>
+	<CAK8P3a3356dbruUfS_+fj9f+X-0jbNE8WMe5sWhJmuRY9Nvcbg@mail.gmail.com>
+	<20180713004038.lwibdesz7ohhoind@gondor.apana.org.au>
+	<CAGXu5jJOZ3u1BTf8U20wErphfjKzaGK+m1sdhA89LqVP3MDYZA@mail.gmail.com>
+	<20180713062204.2o7gz5xri374nii6@gondor.apana.org.au>
+	<CAGXu5jJp3Y4RZD+ZUYsWqf+sTbGJwdN3M=KOiPBn9VecYE4OgQ@mail.gmail.com>
+	<20180715024430.n6bcnb4k7cm3ugtj@gondor.apana.org.au>
+	<CAGXu5jLkhC8Jb0zVXuVZnbJM6tmMpyGkaoCvw=jACLA3fnoChw@mail.gmail.com>
+	<20180716000118.nna5jkgcjxofbsup@gondor.apana.org.au>
+	<CAGXu5jKQV+qiLjbDoS=8QYfG_hdiYeRqeDdov_of5wn5Sek0KA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAGXu5jKQV+qiLjbDoS=8QYfG_hdiYeRqeDdov_of5wn5Sek0KA@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Kees Cook <keescook@chromium.org>
+Cc: Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Herbert Xu <herbert@gondor.apana.org.au>, Mike Snitzer <snitzer@redhat.com>, Eric Biggers <ebiggers@google.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, qat-linux@intel.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Masahiro Yamada <yamada.masahiro@socionext.com>, dm-devel@redhat.com, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, Lars Persson <larper@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>
 List-Id: dm-devel.ids
 
-In preparing to remove all stack VLA usage from the kernel[1], this
-removes the discouraged use of AHASH_REQUEST_ON_STACK in favor of
-the smaller SHASH_DESC_ON_STACK by converting from ahash-wrapped-shash
-to direct shash. The stack allocation will be made a fixed size in a
-later patch to the crypto subsystem.
+On Mon, Jul 16, 2018 at 5:39 AM, Kees Cook <keescook@chromium.org> wrote:
+> On Sun, Jul 15, 2018 at 5:01 PM, Herbert Xu <herbert@gondor.apana.org.au> wrote:
+>> On Sat, Jul 14, 2018 at 07:59:09PM -0700, Kees Cook wrote:
+>>> On Sat, Jul 14, 2018 at 7:44 PM, Herbert Xu <herbert@gondor.apana.org.au> wrote:
+>>> > On Fri, Jul 13, 2018 at 08:07:10PM -0700, Kees Cook wrote:
+>>> >>
+>>> >> On a plane today I started converting all these to shash. IIUC, it
+>>> >> just looks like this (apologies for whitespace damage):
+>>> >
+>>> > Yes if it doesn't actually make use of SGs then shash would be
+>>> > the way to go.  However, for SG users ahash is the best interface.
+>>>
+>>> Nearly all of them artificially build an sg explicitly to use the
+>>> ahash interface. :P
+>>>
+>>> So, I'll take that as a "yes, do these conversions." :) Thanks!
+>>
+>> Yeah anything that's doing a single-element SG list should just
+>> be converted.
+>
+> There are a few that are multiple element SG list, but it's a locally
+> allocated array of SGs, and filled with data. All easily replaced with
+> just calls to ..._update() instead of sg helpers. For example
+> net/wireless/lib80211_crypt_tkip.c:
+>
+> -       sg_init_table(sg, 2);
+> -       sg_set_buf(&sg[0], hdr, 16);
+> -       sg_set_buf(&sg[1], data, data_len);
+> ...
+> -       ahash_request_set_tfm(req, tfm_michael);
+> -       ahash_request_set_callback(req, 0, NULL, NULL);
+> -       ahash_request_set_crypt(req, sg, mic, data_len + 16);
+> -       err = crypto_ahash_digest(req);
+> -       ahash_request_zero(req);
+> +       err = crypto_shash_init(desc);
+> +       if (err)
+> +               goto out;
+> +       err = crypto_shash_update(desc, hdr, 16);
+> +       if (err)
+> +               goto out;
+> +       err = crypto_shash_update(desc, data, data_len);
+> +       if (err)
+> +               goto out;
+> +       err = crypto_shash_final(desc, mic);
+> +
+> +out:
+> +       shash_desc_zero(desc);
+>         return err;
 
-[1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
+There may be a little overhead in calling crypto_shash_update()/
+crypto_shash_final() repeatedly compared to calling
+crypto_ahash_digest() once. It's probably no worse (or maybe
+better) in this case, since we call only three times and there
+is less indirection, but if there are any cases with a long sglist,
+it would be good to measure the performance difference.
 
-Signed-off-by: Kees Cook <keescook@chromium.org>
----
- drivers/md/dm-crypt.c | 31 ++++++++++++++-----------------
- 1 file changed, 14 insertions(+), 17 deletions(-)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index b61b069c33af..c4c922990090 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -99,7 +99,7 @@ struct crypt_iv_operations {
- };
- 
- struct iv_essiv_private {
--	struct crypto_ahash *hash_tfm;
-+	struct crypto_shash *hash_tfm;
- 	u8 *salt;
- };
- 
-@@ -327,25 +327,22 @@ static int crypt_iv_plain64be_gen(struct crypt_config *cc, u8 *iv,
- static int crypt_iv_essiv_init(struct crypt_config *cc)
- {
- 	struct iv_essiv_private *essiv = &cc->iv_gen_private.essiv;
--	AHASH_REQUEST_ON_STACK(req, essiv->hash_tfm);
--	struct scatterlist sg;
-+	SHASH_DESC_ON_STACK(desc, essiv->hash_tfm);
- 	struct crypto_cipher *essiv_tfm;
- 	int err;
- 
--	sg_init_one(&sg, cc->key, cc->key_size);
--	ahash_request_set_tfm(req, essiv->hash_tfm);
--	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP, NULL, NULL);
--	ahash_request_set_crypt(req, &sg, essiv->salt, cc->key_size);
-+	desc->tfm = essiv->hash_tfm;
-+	desc->flags = CRYPTO_TFM_REQ_MAY_SLEEP;
- 
--	err = crypto_ahash_digest(req);
--	ahash_request_zero(req);
-+	err = crypto_shash_digest(desc, cc->key, cc->key_size, essiv->salt);
-+	shash_desc_zero(desc);
- 	if (err)
- 		return err;
- 
- 	essiv_tfm = cc->iv_private;
- 
- 	err = crypto_cipher_setkey(essiv_tfm, essiv->salt,
--			    crypto_ahash_digestsize(essiv->hash_tfm));
-+			    crypto_shash_digestsize(essiv->hash_tfm));
- 	if (err)
- 		return err;
- 
-@@ -356,7 +353,7 @@ static int crypt_iv_essiv_init(struct crypt_config *cc)
- static int crypt_iv_essiv_wipe(struct crypt_config *cc)
- {
- 	struct iv_essiv_private *essiv = &cc->iv_gen_private.essiv;
--	unsigned salt_size = crypto_ahash_digestsize(essiv->hash_tfm);
-+	unsigned salt_size = crypto_shash_digestsize(essiv->hash_tfm);
- 	struct crypto_cipher *essiv_tfm;
- 	int r, err = 0;
- 
-@@ -408,7 +405,7 @@ static void crypt_iv_essiv_dtr(struct crypt_config *cc)
- 	struct crypto_cipher *essiv_tfm;
- 	struct iv_essiv_private *essiv = &cc->iv_gen_private.essiv;
- 
--	crypto_free_ahash(essiv->hash_tfm);
-+	crypto_free_shash(essiv->hash_tfm);
- 	essiv->hash_tfm = NULL;
- 
- 	kzfree(essiv->salt);
-@@ -426,7 +423,7 @@ static int crypt_iv_essiv_ctr(struct crypt_config *cc, struct dm_target *ti,
- 			      const char *opts)
- {
- 	struct crypto_cipher *essiv_tfm = NULL;
--	struct crypto_ahash *hash_tfm = NULL;
-+	struct crypto_shash *hash_tfm = NULL;
- 	u8 *salt = NULL;
- 	int err;
- 
-@@ -436,14 +433,14 @@ static int crypt_iv_essiv_ctr(struct crypt_config *cc, struct dm_target *ti,
- 	}
- 
- 	/* Allocate hash algorithm */
--	hash_tfm = crypto_alloc_ahash(opts, 0, CRYPTO_ALG_ASYNC);
-+	hash_tfm = crypto_alloc_shash(opts, 0, 0);
- 	if (IS_ERR(hash_tfm)) {
- 		ti->error = "Error initializing ESSIV hash";
- 		err = PTR_ERR(hash_tfm);
- 		goto bad;
- 	}
- 
--	salt = kzalloc(crypto_ahash_digestsize(hash_tfm), GFP_KERNEL);
-+	salt = kzalloc(crypto_shash_digestsize(hash_tfm), GFP_KERNEL);
- 	if (!salt) {
- 		ti->error = "Error kmallocing salt storage in ESSIV";
- 		err = -ENOMEM;
-@@ -454,7 +451,7 @@ static int crypt_iv_essiv_ctr(struct crypt_config *cc, struct dm_target *ti,
- 	cc->iv_gen_private.essiv.hash_tfm = hash_tfm;
- 
- 	essiv_tfm = alloc_essiv_cipher(cc, ti, salt,
--				       crypto_ahash_digestsize(hash_tfm));
-+				       crypto_shash_digestsize(hash_tfm));
- 	if (IS_ERR(essiv_tfm)) {
- 		crypt_iv_essiv_dtr(cc);
- 		return PTR_ERR(essiv_tfm);
-@@ -465,7 +462,7 @@ static int crypt_iv_essiv_ctr(struct crypt_config *cc, struct dm_target *ti,
- 
- bad:
- 	if (hash_tfm && !IS_ERR(hash_tfm))
--		crypto_free_ahash(hash_tfm);
-+		crypto_free_shash(hash_tfm);
- 	kfree(salt);
- 	return err;
- }
--- 
-2.17.1
-
-
--- 
-Kees Cook
-Pixel Security
+       Arnd
