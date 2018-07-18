@@ -1,155 +1,49 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 4/5] crypto: Add IV generation templates
-Date: Wed, 18 Jul 2018 09:11:52 -0400
-Message-ID: <20180718131152.GA25685@redhat.com>
-References: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com>
- <1531899055-29362-5-git-send-email-wangxiongfeng2@huawei.com>
- <b6eaf471-7279-ca4f-bb7c-d25df8db2419@gmail.com>
+From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Subject: Re: [PATCH v4 11/14] treewide: Prepare to remove VLA usage for AHASH_REQUEST_ON_STACK
+Date: Wed, 18 Jul 2018 23:50:39 +0900
+Message-ID: <CAKv+Gu-cOV6uo6MpLxr9uQSTT-ku_wn9+D7CC4+3maJtvcaGoA@mail.gmail.com>
+References: <20180711203619.1020-1-keescook@chromium.org> <20180711203619.1020-12-keescook@chromium.org>
+ <CAK8P3a3356dbruUfS_+fj9f+X-0jbNE8WMe5sWhJmuRY9Nvcbg@mail.gmail.com>
+ <20180713004038.lwibdesz7ohhoind@gondor.apana.org.au> <CAGXu5jLYmC7U=bucFZCLsSXNX=T4WhCccR6hx9dwROYF+ZMt0Q@mail.gmail.com>
+ <20180713034406.zwu2pkp3f2onybxs@gondor.apana.org.au> <CAGXu5jLR0zJ6b9axJuG_uvttNShNcN3rhQKGVjW37qPd9saY-Q@mail.gmail.com>
+ <20180713052029.cfo24bsr5swtbdja@gondor.apana.org.au> <CAGXu5jLG4gE44z9cXL3-D1bjbZB1RgTnTsb3PWhU7B3NdRrwVg@mail.gmail.com>
+ <CAK8P3a3nk4-EewKTXcLENTb86r1+bJz_WrkJoJt+D1uTwcpxPA@mail.gmail.com>
+ <CAGXu5j+Q_jc_f9VybyoJqmV7_Q-3hqnC-pOubfNsi7uyAROVrQ@mail.gmail.com> <CAK8P3a3Dh+g=v++BMCtmmiOSnVu4CEUgss0U7BZS_K45aTddqg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <b6eaf471-7279-ca4f-bb7c-d25df8db2419@gmail.com>
+In-Reply-To: <CAK8P3a3Dh+g=v++BMCtmmiOSnVu4CEUgss0U7BZS_K45aTddqg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Xiongfeng Wang <wangxiongfeng2@huawei.com>, Milan Broz <gmazyland@gmail.com>
-Cc: agk@redhat.com, herbert@gondor.apana.org.au, dm-devel@redhat.com, broonie@kernel.org, linux-kernel@vger.kernel.org, arnd@arndb.de, jonathan.cameron@huawei.com
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Kees Cook <keescook@chromium.org>, Herbert Xu <herbert@gondor.apana.org.au>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Eric Biggers <ebiggers@google.com>, Alasdair Kergon <agk@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, Masahiro Yamada <yamada.masahiro@socionext.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, qat-linux@intel.com, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Wed, Jul 18 2018 at  4:16am -0400,
-Milan Broz <gmazyland@gmail.com> wrote:
+On 18 July 2018 at 05:59, Arnd Bergmann <arnd@arndb.de> wrote:
+> On Sun, Jul 15, 2018 at 6:28 AM, Kees Cook <keescook@chromium.org> wrote:
+>>
+>> After my ahash to shash conversions, only ccm is left as an ahash
+>> user, since it actually uses sg. But with the hard-coded value reduced
+>> to 376, this doesn't trip the frame warnings any more. :)
+>>
+>> I'll send an updated series soon.
+>
+> Maybe we should get rid of that one as well then and remove
+> AHASH_REQUEST_ON_STACK()?
+>
+> I see that Ard (now on Cc) added this usage only recently. Looking
+> at the code some more, I also find that the descsize is probably
+> much smaller than 376 for all possible cases   of "cbcmac(*)",
+> either alg->cra_blocksize plus a few bytes or sizeof(mac_desc_ctx)
+> (i.e. 20) for arch/arm64/crypto/aes-glue.c.
+>
+> Walking the sglist here means open-coding a shash_ahash_update()
+> implementation in crypto_ccm_auth(), that that doesn't seem to
+> add much complexity over what it already has to do to chain
+> the sglist today.
+>
 
-> On 18/07/18 09:30, Xiongfeng Wang wrote:
-> > Currently, the IV generation algorithms are implemented in dm-crypt.c.
-> > This patch implement these algorithms as template ciphers, so that
-> > dm-crypt layer can be simplified, and also these algorithms can be
-> > implemented in hardware for performance.
-> > 
-> > Synchronous crypto requests to encrypt/decrypt a sector are processed
-> > sequentially. Asynchronous requests if processed in paralled, are freed
-> > in the async callback.
-> 
-> So we are here again and moving INTERNAL dm-crypt functionality into
-> cryptoapi.
-> 
-> The TCW,LMK  IVs generator make sense only for dm-crypt 
-> for compatible old disk encryption mappings.
-> 
-> I strongly disagree to move this outside of dm-crypt.
-> 
-> Sorry, the last discussion was that it remains inside dm-crypt
-> and it will be only registered through crypto API.
-> 
-> And this for all files:
-> 
-> > + * Copyright (C) 2018, Linaro
-> 
-> It is NOT YOUR code! Please keep copyright and authors as in dm-crypt.
-> 
-> Milan
-> 
-> > 
-> > Interface to the crypto layer - include/crypto/geniv.h
-> > 
-> > This patch is based on the patchset originally started by
-> > Binoy Jayan <binoy.jayan@linaro.org>
-> > ( crypto: Add IV generation algorithms
-> > https://patchwork.kernel.org/patch/9803469/ )
-> > 
-> > Signed-off-by: Binoy Jayan <binoy.jayan@linaro.org>
-> > Signed-off-by: Xiongfeng Wang <wangxiongfeng2@linaro.org>
-> > ---
-> >  crypto/Kconfig         |    7 +
-> >  crypto/Makefile        |    1 +
-> >  crypto/geniv.c         | 2240 ++++++++++++++++++++++++++++++++++++++++++++++++
-> >  include/crypto/geniv.h |   47 +
-> >  4 files changed, 2295 insertions(+)
-> >  create mode 100644 crypto/geniv.c
-> >  create mode 100644 include/crypto/geniv.h
-> > 
-> > diff --git a/crypto/Kconfig b/crypto/Kconfig
-> > index f3e40ac..98f025a 100644
-> > --- a/crypto/Kconfig
-> > +++ b/crypto/Kconfig
-> > @@ -257,6 +257,13 @@ config CRYPTO_GLUE_HELPER_X86
-> >  config CRYPTO_ENGINE
-> >  	tristate
-> >  
-> > +config CRYPTO_GENIV
-> > +	tristate "IV Generator Template"
-> > +	select CRYPTO_AEAD
-> > +	select CRYPTO_BLKCIPHER
-> > +	help
-> > +	  Support for IV generator template, so that dm-crypt can rely on it.
-> > +
-> >  comment "Authenticated Encryption with Associated Data"
-> >  
-> >  config CRYPTO_CCM
-> > diff --git a/crypto/Makefile b/crypto/Makefile
-> > index 6d1d40e..1077d2f 100644
-> > --- a/crypto/Makefile
-> > +++ b/crypto/Makefile
-> > @@ -23,6 +23,7 @@ crypto_blkcipher-y += skcipher.o
-> >  obj-$(CONFIG_CRYPTO_BLKCIPHER2) += crypto_blkcipher.o
-> >  obj-$(CONFIG_CRYPTO_SEQIV) += seqiv.o
-> >  obj-$(CONFIG_CRYPTO_ECHAINIV) += echainiv.o
-> > +obj-$(CONFIG_CRYPTO_GENIV) += geniv.o
-> >  
-> >  crypto_hash-y += ahash.o
-> >  crypto_hash-y += shash.o
-> > diff --git a/crypto/geniv.c b/crypto/geniv.c
-> > new file mode 100644
-> > index 0000000..55d1212
-> > --- /dev/null
-> > +++ b/crypto/geniv.c
-> > @@ -0,0 +1,2240 @@
-> > +// SPDX-License-Identifier: GPL-2.0
-> > +/*
-> > + * geniv.c - crypto template for generating IV
-> > + *
-> > + * Copyright (C) 2018, Linaro
-> > + *
-> > + * This file adds a crypto template to generate IV, so the dm-crypt can rely
-> > + * on it and remove the existing generating IV code.
-> > + */
-> > +
-> > +#include <linux/completion.h>
-> > +#include <linux/err.h>
-> > +#include <linux/module.h>
-> > +#include <linux/init.h>
-> > +#include <linux/kernel.h>
-> > +#include <linux/key.h>
-> > +#include <linux/bio.h>
-> > +#include <linux/blkdev.h>
-> > +#include <linux/mempool.h>
-> > +#include <linux/slab.h>
-> > +#include <linux/crypto.h>
-> > +#include <linux/atomic.h>
-> > +#include <linux/scatterlist.h>
-> > +#include <linux/ctype.h>
-> > +#include <asm/page.h>
-> > +#include <asm/unaligned.h>
-> > +#include <crypto/hash.h>
-> > +#include <crypto/md5.h>
-> > +#include <crypto/algapi.h>
-> > +#include <crypto/skcipher.h>
-> > +#include <crypto/aead.h>
-> > +#include <crypto/authenc.h>
-> > +#include <crypto/geniv.h>
-> > +#include <crypto/internal/aead.h>
-> > +#include <crypto/internal/skcipher.h>
-> > +#include <linux/rtnetlink.h> /* for struct rtattr and RTA macros only */
-> > +#include <keys/user-type.h>
-> > +#include <linux/backing-dev.h>
-> > +#include <linux/device-mapper.h>
-> > +#include <linux/log2.h>
-> > +
-> > +#define DM_MSG_PREFIX		"crypt"
-
-I agree with Milan, the code should remain where it currently is.  If
-you want to plumb in generic access to it fine.  But crypto/geniv.c has
-_no_ business defining DM_MSG_PREFIX.
-
-And I'm sure there are other things that have no place in generic crypto
-code.
-
-Mike
+It would be better to add a variably sized ahash request member to
+struct crypto_ccm_req_priv_ctx, the only problem is that the last
+member of that struct (skreq) is variably sized already, so it would
+involve having a struct ahash_request pointer pointing into the same
+struct, after the skreq member.
