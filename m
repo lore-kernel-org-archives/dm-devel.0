@@ -1,54 +1,155 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH 0/5] crypto: add IV generation templates
-Date: Wed, 18 Jul 2018 12:59:07 +0200
-Message-ID: <CAK8P3a0T0Ku-2GOY8fT38LVy4GpvVSsx=szi0ZNEUq8Z_hZweQ@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 4/5] crypto: Add IV generation templates
+Date: Wed, 18 Jul 2018 09:11:52 -0400
+Message-ID: <20180718131152.GA25685@redhat.com>
 References: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com>
+ <1531899055-29362-5-git-send-email-wangxiongfeng2@huawei.com>
+ <b6eaf471-7279-ca4f-bb7c-d25df8db2419@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com>
+Content-Disposition: inline
+In-Reply-To: <b6eaf471-7279-ca4f-bb7c-d25df8db2419@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Xiongfeng Wang <wangxiongfeng2@huawei.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Mark Brown <broonie@kernel.org>, Jonathan Cameron <jonathan.cameron@huawei.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>
+To: Xiongfeng Wang <wangxiongfeng2@huawei.com>, Milan Broz <gmazyland@gmail.com>
+Cc: agk@redhat.com, herbert@gondor.apana.org.au, dm-devel@redhat.com, broonie@kernel.org, linux-kernel@vger.kernel.org, arnd@arndb.de, jonathan.cameron@huawei.com
 List-Id: dm-devel.ids
 
-On Wed, Jul 18, 2018 at 9:30 AM, Xiongfeng Wang
-<wangxiongfeng2@huawei.com> wrote:
->
-> I tested the performance of software implemented ciphers before and after
-> applying this patchset. The performance didn't change much except for
-> slight regression when writting. The detail information is as follows.
->
-> The command I used:
-> cryptsetup -y -c aes-xts-plain -s 256 --hash sha256 luksFormat /dev/sdd1
-> cryptsetup -y -c aes-cbc-essiv:sha256 -s 256 --hash sha256 luksFormat /dev/sdd1
-> cryptsetup -y -c aes-cbc-benbi -s 256 --hash sha256 luksFormat /dev/sdd1
->
-> cryptsetup luksOpen /dev/sdd1 crypt_fun
-> time dd if=/dev/mapper/crypt_fun of=/dev/null bs=1M count=500 iflag=direct
-> time dd if=/dev/zero of=/dev/mapper/crypt_fun bs=1M count=500 oflag=direct
->
-> Performance comparision:
-> --------------------------------------------------------
-> algorithms      | before applying   |   after applying
-> --------------------------------------------------------
->                 |  read  | write    |  read  | write
-> --------------------------------------------------------
-> aes-xts-plain   | 145.34 | 145.09   | 145.89 | 144.2
-> --------------------------------------------------------
-> aes-cbc-essiv   | 146.87 | 144.62   | 146.74 | 143.41
-> --------------------------------------------------------
-> aes-cbc-benbi   | 146.03 | 144.74   | 146.77 | 144.46
-> --------------------------------------------------------
+On Wed, Jul 18 2018 at  4:16am -0400,
+Milan Broz <gmazyland@gmail.com> wrote:
 
-Do you have any estimate of the expected gains for hardware
-implementations?
+> On 18/07/18 09:30, Xiongfeng Wang wrote:
+> > Currently, the IV generation algorithms are implemented in dm-crypt.c.
+> > This patch implement these algorithms as template ciphers, so that
+> > dm-crypt layer can be simplified, and also these algorithms can be
+> > implemented in hardware for performance.
+> > 
+> > Synchronous crypto requests to encrypt/decrypt a sector are processed
+> > sequentially. Asynchronous requests if processed in paralled, are freed
+> > in the async callback.
+> 
+> So we are here again and moving INTERNAL dm-crypt functionality into
+> cryptoapi.
+> 
+> The TCW,LMK  IVs generator make sense only for dm-crypt 
+> for compatible old disk encryption mappings.
+> 
+> I strongly disagree to move this outside of dm-crypt.
+> 
+> Sorry, the last discussion was that it remains inside dm-crypt
+> and it will be only registered through crypto API.
+> 
+> And this for all files:
+> 
+> > + * Copyright (C) 2018, Linaro
+> 
+> It is NOT YOUR code! Please keep copyright and authors as in dm-crypt.
+> 
+> Milan
+> 
+> > 
+> > Interface to the crypto layer - include/crypto/geniv.h
+> > 
+> > This patch is based on the patchset originally started by
+> > Binoy Jayan <binoy.jayan@linaro.org>
+> > ( crypto: Add IV generation algorithms
+> > https://patchwork.kernel.org/patch/9803469/ )
+> > 
+> > Signed-off-by: Binoy Jayan <binoy.jayan@linaro.org>
+> > Signed-off-by: Xiongfeng Wang <wangxiongfeng2@linaro.org>
+> > ---
+> >  crypto/Kconfig         |    7 +
+> >  crypto/Makefile        |    1 +
+> >  crypto/geniv.c         | 2240 ++++++++++++++++++++++++++++++++++++++++++++++++
+> >  include/crypto/geniv.h |   47 +
+> >  4 files changed, 2295 insertions(+)
+> >  create mode 100644 crypto/geniv.c
+> >  create mode 100644 include/crypto/geniv.h
+> > 
+> > diff --git a/crypto/Kconfig b/crypto/Kconfig
+> > index f3e40ac..98f025a 100644
+> > --- a/crypto/Kconfig
+> > +++ b/crypto/Kconfig
+> > @@ -257,6 +257,13 @@ config CRYPTO_GLUE_HELPER_X86
+> >  config CRYPTO_ENGINE
+> >  	tristate
+> >  
+> > +config CRYPTO_GENIV
+> > +	tristate "IV Generator Template"
+> > +	select CRYPTO_AEAD
+> > +	select CRYPTO_BLKCIPHER
+> > +	help
+> > +	  Support for IV generator template, so that dm-crypt can rely on it.
+> > +
+> >  comment "Authenticated Encryption with Associated Data"
+> >  
+> >  config CRYPTO_CCM
+> > diff --git a/crypto/Makefile b/crypto/Makefile
+> > index 6d1d40e..1077d2f 100644
+> > --- a/crypto/Makefile
+> > +++ b/crypto/Makefile
+> > @@ -23,6 +23,7 @@ crypto_blkcipher-y += skcipher.o
+> >  obj-$(CONFIG_CRYPTO_BLKCIPHER2) += crypto_blkcipher.o
+> >  obj-$(CONFIG_CRYPTO_SEQIV) += seqiv.o
+> >  obj-$(CONFIG_CRYPTO_ECHAINIV) += echainiv.o
+> > +obj-$(CONFIG_CRYPTO_GENIV) += geniv.o
+> >  
+> >  crypto_hash-y += ahash.o
+> >  crypto_hash-y += shash.o
+> > diff --git a/crypto/geniv.c b/crypto/geniv.c
+> > new file mode 100644
+> > index 0000000..55d1212
+> > --- /dev/null
+> > +++ b/crypto/geniv.c
+> > @@ -0,0 +1,2240 @@
+> > +// SPDX-License-Identifier: GPL-2.0
+> > +/*
+> > + * geniv.c - crypto template for generating IV
+> > + *
+> > + * Copyright (C) 2018, Linaro
+> > + *
+> > + * This file adds a crypto template to generate IV, so the dm-crypt can rely
+> > + * on it and remove the existing generating IV code.
+> > + */
+> > +
+> > +#include <linux/completion.h>
+> > +#include <linux/err.h>
+> > +#include <linux/module.h>
+> > +#include <linux/init.h>
+> > +#include <linux/kernel.h>
+> > +#include <linux/key.h>
+> > +#include <linux/bio.h>
+> > +#include <linux/blkdev.h>
+> > +#include <linux/mempool.h>
+> > +#include <linux/slab.h>
+> > +#include <linux/crypto.h>
+> > +#include <linux/atomic.h>
+> > +#include <linux/scatterlist.h>
+> > +#include <linux/ctype.h>
+> > +#include <asm/page.h>
+> > +#include <asm/unaligned.h>
+> > +#include <crypto/hash.h>
+> > +#include <crypto/md5.h>
+> > +#include <crypto/algapi.h>
+> > +#include <crypto/skcipher.h>
+> > +#include <crypto/aead.h>
+> > +#include <crypto/authenc.h>
+> > +#include <crypto/geniv.h>
+> > +#include <crypto/internal/aead.h>
+> > +#include <crypto/internal/skcipher.h>
+> > +#include <linux/rtnetlink.h> /* for struct rtattr and RTA macros only */
+> > +#include <keys/user-type.h>
+> > +#include <linux/backing-dev.h>
+> > +#include <linux/device-mapper.h>
+> > +#include <linux/log2.h>
+> > +
+> > +#define DM_MSG_PREFIX		"crypt"
 
-Would it make sense to try out implementing aes-cbc-essiv
-on the ARMv8 crypto extensions? I see that Ard has done
-some prior work on aes-ccm in arch/arm64/crypto/aes-ce-ccm-*
-that (AFAICT) has a similar goal of avoiding overhead by
-combining the usual operations, so maybe the same can
-be done here.
+I agree with Milan, the code should remain where it currently is.  If
+you want to plumb in generic access to it fine.  But crypto/geniv.c has
+_no_ business defining DM_MSG_PREFIX.
 
-      Arnd
+And I'm sure there are other things that have no place in generic crypto
+code.
+
+Mike
