@@ -1,59 +1,66 @@
-From: Mark Brown <broonie@kernel.org>
+From: Milan Broz <gmazyland@gmail.com>
 Subject: Re: [PATCH 4/5] crypto: Add IV generation templates
-Date: Wed, 18 Jul 2018 17:46:25 +0100
-Message-ID: <20180718164625.GA20360@sirena.org.uk>
+Date: Wed, 18 Jul 2018 19:17:45 +0200
+Message-ID: <82248c13-42fe-b598-0cd7-68e5db0b51be@gmail.com>
 References: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com>
  <1531899055-29362-5-git-send-email-wangxiongfeng2@huawei.com>
  <b6eaf471-7279-ca4f-bb7c-d25df8db2419@gmail.com>
+ <20180718164625.GA20360@sirena.org.uk>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-        protocol="application/pgp-signature"; boundary="Q68bSM7Ycu6FN28Q"
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <b6eaf471-7279-ca4f-bb7c-d25df8db2419@gmail.com>
+In-Reply-To: <20180718164625.GA20360@sirena.org.uk>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <gmazyland@gmail.com>
+To: Mark Brown <broonie@kernel.org>
 Cc: Xiongfeng Wang <wangxiongfeng2@huawei.com>, agk@redhat.com, snitzer@redhat.com, herbert@gondor.apana.org.au, dm-devel@redhat.com, linux-kernel@vger.kernel.org, arnd@arndb.de, jonathan.cameron@huawei.com
 List-Id: dm-devel.ids
 
+On 18/07/18 18:46, Mark Brown wrote:
+> On Wed, Jul 18, 2018 at 10:16:05AM +0200, Milan Broz wrote:
+> 
+>> So we are here again and moving INTERNAL dm-crypt functionality into
+>> cryptoapi.
+> 
+>> The TCW,LMK  IVs generator make sense only for dm-crypt 
+>> for compatible old disk encryption mappings.
+> 
+>> I strongly disagree to move this outside of dm-crypt.
+> 
+>> Sorry, the last discussion was that it remains inside dm-crypt
+>> and it will be only registered through crypto API.
+> 
+> Sorry, I'm partly to blame for this in that I asked Xiongfeng to pick up
+> Binoy Jayan's old patch set.  I seem to have missed that particular part
+> of the discussion and so haven't forwarded it on to him - do you have a
+> link, I can't seem to see it in my local archives of the prior
+> discussions but they might not be complete?
 
---Q68bSM7Ycu6FN28Q
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+I think the last iteration was this patch
+https://lore.kernel.org/lkml/1498106510-19793-2-git-send-email-binoy.jayan@linaro.org/
 
-On Wed, Jul 18, 2018 at 10:16:05AM +0200, Milan Broz wrote:
+But I have still some questions, because I really do not understand
+the real reason for this patchset.
+For now, it adds a lot of complexity for ... what?
 
-> So we are here again and moving INTERNAL dm-crypt functionality into
-> cryptoapi.
+1) If the reason is to make cryptoapi to include IV algorithms, I think we should
+focus on universal algorithms (sequential aka plain64 in dmcrypt) as used
+in XTS mode. ESSIV is intended for CBC mode only and I think general
+consensus today is that XTS mode is preferred to CBC (despite it known problems).
+But I see ESSIV used elsewhere, so maybe it makes sense to export this one as well.
 
-> The TCW,LMK  IVs generator make sense only for dm-crypt=20
-> for compatible old disk encryption mappings.
+But definitely not other internal IVs - some IV generators inside dm-crypt
+(namely TCW and LMK) do much more that IV - they modify encryption mode.
+This was a hack to support some FDE encryption modes (old Truecrypt and loopAES)
+and that should not spread outside dm-crypt (and blame me for this code hacks :).
 
-> I strongly disagree to move this outside of dm-crypt.
+2) If the reason is performance, please provide numbers with the patch.
+What I see now is that the performance is almost the same. So why you are doing it?
+Any real hw that benefits from it?
 
-> Sorry, the last discussion was that it remains inside dm-crypt
-> and it will be only registered through crypto API.
+I added 4k sector support in dmcrypt and IMO this helps much more
+than some hw IV accelerations (AFAIK is is already used in some mainframe
+accelerators this way because of performance).
 
-Sorry, I'm partly to blame for this in that I asked Xiongfeng to pick up
-Binoy Jayan's old patch set.  I seem to have missed that particular part
-of the discussion and so haven't forwarded it on to him - do you have a
-link, I can't seem to see it in my local archives of the prior
-discussions but they might not be complete?
-
---Q68bSM7Ycu6FN28Q
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAABCgAdFiEEreZoqmdXGLWf4p/qJNaLcl1Uh9AFAltPbuAACgkQJNaLcl1U
-h9BELQf/ZVNZaHHO4wZB1eQXBBRGH3LDh1M1jHFuxM9lbL5fZmO6i9Pm0ANrcKSF
-rH0flmXeHkqCM5PNKkN4DH3PCPihEw/ZSt6zW09RhwqS65R12vQnCQbVMNz2lW0u
-WNhJmJcxUoZSwRMzC4mt17417CufbYXm9/rfXwDgfSDQlp71/L6yjEoHzLsVTaw4
-kJMvNzmM0uHqFU+r4ssPY68hvsd40mqcXcFRtf+TdDOf35EUvh2hZ8vF2NujlXxP
-xGpRYbyKEWzQREpgRkf0mdj2eTbUjkTPHvNYOOZM7J0mfQdxGBVn63ZmJlhVuPUK
-9CA5VXOfVnVs9Cs1DypKjj+mJFECMQ==
-=GqVU
------END PGP SIGNATURE-----
-
---Q68bSM7Ycu6FN28Q--
+Milan
