@@ -1,66 +1,59 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [PATCH 0/5] crypto: add IV generation templates
-Date: Thu, 19 Jul 2018 00:34:59 +0900
-Message-ID: <CAKv+Gu8uD4NNS9SaWdSST7n+984ybTBLhGDpq3k5GG4o1+PMWA@mail.gmail.com>
-References: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com> <CAK8P3a0T0Ku-2GOY8fT38LVy4GpvVSsx=szi0ZNEUq8Z_hZweQ@mail.gmail.com>
+From: Mark Brown <broonie@kernel.org>
+Subject: Re: [PATCH 4/5] crypto: Add IV generation templates
+Date: Wed, 18 Jul 2018 17:46:25 +0100
+Message-ID: <20180718164625.GA20360@sirena.org.uk>
+References: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com>
+ <1531899055-29362-5-git-send-email-wangxiongfeng2@huawei.com>
+ <b6eaf471-7279-ca4f-bb7c-d25df8db2419@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: multipart/signed; micalg=pgp-sha512;
+        protocol="application/pgp-signature"; boundary="Q68bSM7Ycu6FN28Q"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAK8P3a0T0Ku-2GOY8fT38LVy4GpvVSsx=szi0ZNEUq8Z_hZweQ@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <b6eaf471-7279-ca4f-bb7c-d25df8db2419@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Xiongfeng Wang <wangxiongfeng2@huawei.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Mark Brown <broonie@kernel.org>, Jonathan Cameron <jonathan.cameron@huawei.com>
+To: Milan Broz <gmazyland@gmail.com>
+Cc: Xiongfeng Wang <wangxiongfeng2@huawei.com>, agk@redhat.com, snitzer@redhat.com, herbert@gondor.apana.org.au, dm-devel@redhat.com, linux-kernel@vger.kernel.org, arnd@arndb.de, jonathan.cameron@huawei.com
 List-Id: dm-devel.ids
 
-On 18 July 2018 at 19:59, Arnd Bergmann <arnd@arndb.de> wrote:
-> On Wed, Jul 18, 2018 at 9:30 AM, Xiongfeng Wang
-> <wangxiongfeng2@huawei.com> wrote:
->>
->> I tested the performance of software implemented ciphers before and after
->> applying this patchset. The performance didn't change much except for
->> slight regression when writting. The detail information is as follows.
->>
->> The command I used:
->> cryptsetup -y -c aes-xts-plain -s 256 --hash sha256 luksFormat /dev/sdd1
->> cryptsetup -y -c aes-cbc-essiv:sha256 -s 256 --hash sha256 luksFormat /dev/sdd1
->> cryptsetup -y -c aes-cbc-benbi -s 256 --hash sha256 luksFormat /dev/sdd1
->>
->> cryptsetup luksOpen /dev/sdd1 crypt_fun
->> time dd if=/dev/mapper/crypt_fun of=/dev/null bs=1M count=500 iflag=direct
->> time dd if=/dev/zero of=/dev/mapper/crypt_fun bs=1M count=500 oflag=direct
->>
->> Performance comparision:
->> --------------------------------------------------------
->> algorithms      | before applying   |   after applying
->> --------------------------------------------------------
->>                 |  read  | write    |  read  | write
->> --------------------------------------------------------
->> aes-xts-plain   | 145.34 | 145.09   | 145.89 | 144.2
->> --------------------------------------------------------
->> aes-cbc-essiv   | 146.87 | 144.62   | 146.74 | 143.41
->> --------------------------------------------------------
->> aes-cbc-benbi   | 146.03 | 144.74   | 146.77 | 144.46
->> --------------------------------------------------------
->
-> Do you have any estimate of the expected gains for hardware
-> implementations?
->
-> Would it make sense to try out implementing aes-cbc-essiv
-> on the ARMv8 crypto extensions? I see that Ard has done
-> some prior work on aes-ccm in arch/arm64/crypto/aes-ce-ccm-*
-> that (AFAICT) has a similar goal of avoiding overhead by
-> combining the usual operations, so maybe the same can
-> be done here.
->
 
-I am having trouble understanding what exactly this series aims to achieve.
+--Q68bSM7Ycu6FN28Q
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Calling into the crypto layer fewer times is a nice goal, but a disk
-sector seems like a reasonable granularity for the dm layer to operate
-on, and I don't think any hardware exists that operates on multi
-sector sequences, where it would pay off to amortize the latency of
-invoking the hardware over an entire bio.
+On Wed, Jul 18, 2018 at 10:16:05AM +0200, Milan Broz wrote:
 
-So in summary, you need to explain to us why we need this. It is
-really very easy to convince people if your changes make things go
-faster.
+> So we are here again and moving INTERNAL dm-crypt functionality into
+> cryptoapi.
+
+> The TCW,LMK  IVs generator make sense only for dm-crypt=20
+> for compatible old disk encryption mappings.
+
+> I strongly disagree to move this outside of dm-crypt.
+
+> Sorry, the last discussion was that it remains inside dm-crypt
+> and it will be only registered through crypto API.
+
+Sorry, I'm partly to blame for this in that I asked Xiongfeng to pick up
+Binoy Jayan's old patch set.  I seem to have missed that particular part
+of the discussion and so haven't forwarded it on to him - do you have a
+link, I can't seem to see it in my local archives of the prior
+discussions but they might not be complete?
+
+--Q68bSM7Ycu6FN28Q
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCgAdFiEEreZoqmdXGLWf4p/qJNaLcl1Uh9AFAltPbuAACgkQJNaLcl1U
+h9BELQf/ZVNZaHHO4wZB1eQXBBRGH3LDh1M1jHFuxM9lbL5fZmO6i9Pm0ANrcKSF
+rH0flmXeHkqCM5PNKkN4DH3PCPihEw/ZSt6zW09RhwqS65R12vQnCQbVMNz2lW0u
+WNhJmJcxUoZSwRMzC4mt17417CufbYXm9/rfXwDgfSDQlp71/L6yjEoHzLsVTaw4
+kJMvNzmM0uHqFU+r4ssPY68hvsd40mqcXcFRtf+TdDOf35EUvh2hZ8vF2NujlXxP
+xGpRYbyKEWzQREpgRkf0mdj2eTbUjkTPHvNYOOZM7J0mfQdxGBVn63ZmJlhVuPUK
+9CA5VXOfVnVs9Cs1DypKjj+mJFECMQ==
+=GqVU
+-----END PGP SIGNATURE-----
+
+--Q68bSM7Ycu6FN28Q--
