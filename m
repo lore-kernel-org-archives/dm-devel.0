@@ -1,76 +1,146 @@
 From: Xiongfeng Wang <wangxiongfeng2@huawei.com>
-Subject: [PATCH 0/5] crypto: add IV generation templates
-Date: Wed, 18 Jul 2018 15:30:50 +0800
-Message-ID: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com>
+Subject: [PATCH 3/5] crypto: gcm - use template array registering API to simplify the code
+Date: Wed, 18 Jul 2018 15:30:53 +0800
+Message-ID: <1531899055-29362-4-git-send-email-wangxiongfeng2@huawei.com>
+References: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: agk@redhat.com, snitzer@redhat.com, herbert@gondor.apana.org.au
 Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, wangxiongfeng2@huawei.com, broonie@kernel.org, arnd@arndb.de, jonathan.cameron@huawei.com
 List-Id: dm-devel.ids
 
-Currently, the iv generation algorithms are implemented in dm-crypt.c.
-This patchset moves these algorithms from the dm layer to the kernel
-crypto layer by implementing them as template ciphers so they
-can be implemented in hardware for performance. We modify the dm layer
-to send a whole 'bio' rather than a sector at a time, so the dm layer
-needs to called into the crypto layer less times. Each bio contains an
-in memory representation of physically contiguous disk blocks. The dm
-layer sets up a chained scatterlist of these blocks split into physically
-contiguous segments in memory so that DMA can be performed.
+Use crypto template array registering API to simplify the code.
 
-This patchset is based on the patchset originally started by
-Binoy Jayan <binoy.jayan@linaro.org>
-( crypto: Add IV generation algorithms
-https://patchwork.kernel.org/patch/9803469/ )
+Signed-off-by: Xiongfeng Wang <xiongfeng.wang@linaro.org>
+---
+ crypto/gcm.c | 76 +++++++++++++++++++++---------------------------------------
+ 1 file changed, 26 insertions(+), 50 deletions(-)
 
-I tested the performance of software implemented ciphers before and after
-applying this patchset. The performance didn't change much except for 
-slight regression when writting. The detail information is as follows.
-
-The command I used:
-cryptsetup -y -c aes-xts-plain -s 256 --hash sha256 luksFormat /dev/sdd1
-cryptsetup -y -c aes-cbc-essiv:sha256 -s 256 --hash sha256 luksFormat /dev/sdd1
-cryptsetup -y -c aes-cbc-benbi -s 256 --hash sha256 luksFormat /dev/sdd1
-
-cryptsetup luksOpen /dev/sdd1 crypt_fun
-time dd if=/dev/mapper/crypt_fun of=/dev/null bs=1M count=500 iflag=direct
-time dd if=/dev/zero of=/dev/mapper/crypt_fun bs=1M count=500 oflag=direct
-
-Performance comparision:
---------------------------------------------------------
-algorithms	| before applying   | 	after applying
---------------------------------------------------------
-		|  read  | write    |  read  | write
---------------------------------------------------------
-aes-xts-plain 	| 145.34 | 145.09   | 145.89 | 144.2 
---------------------------------------------------------
-aes-cbc-essiv 	| 146.87 | 144.62   | 146.74 | 143.41
---------------------------------------------------------
-aes-cbc-benbi 	| 146.03 | 144.74   | 146.77 | 144.46
---------------------------------------------------------
-
-Xiongfeng Wang (5):
-  crypto: api - introduce API to (un)register a array of templates
-  crypto: ccm - use template array registering API to simplify the code
-  crypto: gcm - use template array registering API to simplify the code
-  crypto: Add IV generation templates
-  dm-crypt: modify dm-crypt to rely on IV generation templates
-
- crypto/Kconfig          |    7 +
- crypto/Makefile         |    1 +
- crypto/algapi.c         |   27 +
- crypto/ccm.c            |   82 +-
- crypto/gcm.c            |   76 +-
- crypto/geniv.c          | 2240 +++++++++++++++++++++++++++++++++++++++++++++++
- drivers/md/Kconfig      |    1 +
- drivers/md/dm-crypt.c   | 1697 ++++++++---------------------------
- include/crypto/algapi.h |    2 +
- include/crypto/geniv.h  |   47 +
- 10 files changed, 2722 insertions(+), 1458 deletions(-)
- create mode 100644 crypto/geniv.c
- create mode 100644 include/crypto/geniv.h
-
+diff --git a/crypto/gcm.c b/crypto/gcm.c
+index 0ad879e..b180536 100644
+--- a/crypto/gcm.c
++++ b/crypto/gcm.c
+@@ -727,12 +727,6 @@ static int crypto_gcm_create(struct crypto_template *tmpl, struct rtattr **tb)
+ 					ctr_name, "ghash");
+ }
+ 
+-static struct crypto_template crypto_gcm_tmpl = {
+-	.name = "gcm",
+-	.create = crypto_gcm_create,
+-	.module = THIS_MODULE,
+-};
+-
+ static int crypto_gcm_base_create(struct crypto_template *tmpl,
+ 				  struct rtattr **tb)
+ {
+@@ -756,12 +750,6 @@ static int crypto_gcm_base_create(struct crypto_template *tmpl,
+ 					ctr_name, ghash_name);
+ }
+ 
+-static struct crypto_template crypto_gcm_base_tmpl = {
+-	.name = "gcm_base",
+-	.create = crypto_gcm_base_create,
+-	.module = THIS_MODULE,
+-};
+-
+ static int crypto_rfc4106_setkey(struct crypto_aead *parent, const u8 *key,
+ 				 unsigned int keylen)
+ {
+@@ -989,12 +977,6 @@ static int crypto_rfc4106_create(struct crypto_template *tmpl,
+ 	goto out;
+ }
+ 
+-static struct crypto_template crypto_rfc4106_tmpl = {
+-	.name = "rfc4106",
+-	.create = crypto_rfc4106_create,
+-	.module = THIS_MODULE,
+-};
+-
+ static int crypto_rfc4543_setkey(struct crypto_aead *parent, const u8 *key,
+ 				 unsigned int keylen)
+ {
+@@ -1231,10 +1213,29 @@ static int crypto_rfc4543_create(struct crypto_template *tmpl,
+ 	goto out;
+ }
+ 
+-static struct crypto_template crypto_rfc4543_tmpl = {
+-	.name = "rfc4543",
+-	.create = crypto_rfc4543_create,
+-	.module = THIS_MODULE,
++#define GCM_TEMPLATE_NUM 4
++
++static struct crypto_template crypto_gcm_tmpl[GCM_TEMPLATE_NUM] = {
++	{
++		.name = "gcm_base",
++		.create = crypto_gcm_base_create,
++		.module = THIS_MODULE,
++	},
++	{
++		.name = "gcm",
++		.create = crypto_gcm_create,
++		.module = THIS_MODULE,
++	},
++	{
++		.name = "rfc4106",
++		.create = crypto_rfc4106_create,
++		.module = THIS_MODULE,
++	},
++	{
++		.name = "rfc4543",
++		.create = crypto_rfc4543_create,
++		.module = THIS_MODULE,
++	},
+ };
+ 
+ static int __init crypto_gcm_module_init(void)
+@@ -1247,42 +1248,17 @@ static int __init crypto_gcm_module_init(void)
+ 
+ 	sg_init_one(&gcm_zeroes->sg, gcm_zeroes->buf, sizeof(gcm_zeroes->buf));
+ 
+-	err = crypto_register_template(&crypto_gcm_base_tmpl);
+-	if (err)
+-		goto out;
+-
+-	err = crypto_register_template(&crypto_gcm_tmpl);
++	err = crypto_register_template_array(crypto_gcm_tmpl, GCM_TEMPLATE_NUM);
+ 	if (err)
+-		goto out_undo_base;
++		kfree(gcm_zeroes);
+ 
+-	err = crypto_register_template(&crypto_rfc4106_tmpl);
+-	if (err)
+-		goto out_undo_gcm;
+-
+-	err = crypto_register_template(&crypto_rfc4543_tmpl);
+-	if (err)
+-		goto out_undo_rfc4106;
+-
+-	return 0;
+-
+-out_undo_rfc4106:
+-	crypto_unregister_template(&crypto_rfc4106_tmpl);
+-out_undo_gcm:
+-	crypto_unregister_template(&crypto_gcm_tmpl);
+-out_undo_base:
+-	crypto_unregister_template(&crypto_gcm_base_tmpl);
+-out:
+-	kfree(gcm_zeroes);
+ 	return err;
+ }
+ 
+ static void __exit crypto_gcm_module_exit(void)
+ {
+ 	kfree(gcm_zeroes);
+-	crypto_unregister_template(&crypto_rfc4543_tmpl);
+-	crypto_unregister_template(&crypto_rfc4106_tmpl);
+-	crypto_unregister_template(&crypto_gcm_tmpl);
+-	crypto_unregister_template(&crypto_gcm_base_tmpl);
++	crypto_unregister_template_array(crypto_gcm_tmpl, GCM_TEMPLATE_NUM);
+ }
+ 
+ module_init(crypto_gcm_module_init);
 -- 
 1.7.12.4
