@@ -1,145 +1,76 @@
 From: Xiongfeng Wang <wangxiongfeng2@huawei.com>
-Subject: [PATCH 2/5] crypto: ccm - use template array registering API to simplify the code
-Date: Wed, 18 Jul 2018 15:30:52 +0800
-Message-ID: <1531899055-29362-3-git-send-email-wangxiongfeng2@huawei.com>
-References: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com>
+Subject: [PATCH 0/5] crypto: add IV generation templates
+Date: Wed, 18 Jul 2018 15:30:50 +0800
+Message-ID: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: agk@redhat.com, snitzer@redhat.com, herbert@gondor.apana.org.au
 Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, wangxiongfeng2@huawei.com, broonie@kernel.org, arnd@arndb.de, jonathan.cameron@huawei.com
 List-Id: dm-devel.ids
 
-Use crypto template array registering API to simplify the code.
+Currently, the iv generation algorithms are implemented in dm-crypt.c.
+This patchset moves these algorithms from the dm layer to the kernel
+crypto layer by implementing them as template ciphers so they
+can be implemented in hardware for performance. We modify the dm layer
+to send a whole 'bio' rather than a sector at a time, so the dm layer
+needs to called into the crypto layer less times. Each bio contains an
+in memory representation of physically contiguous disk blocks. The dm
+layer sets up a chained scatterlist of these blocks split into physically
+contiguous segments in memory so that DMA can be performed.
 
-Signed-off-by: Xiongfeng Wang <xiongfeng.wang@linaro.org>
----
- crypto/ccm.c | 82 ++++++++++++++++++++----------------------------------------
- 1 file changed, 27 insertions(+), 55 deletions(-)
+This patchset is based on the patchset originally started by
+Binoy Jayan <binoy.jayan@linaro.org>
+( crypto: Add IV generation algorithms
+https://patchwork.kernel.org/patch/9803469/ )
 
-diff --git a/crypto/ccm.c b/crypto/ccm.c
-index 0a08334..1742d41 100644
---- a/crypto/ccm.c
-+++ b/crypto/ccm.c
-@@ -586,12 +586,6 @@ static int crypto_ccm_create(struct crypto_template *tmpl, struct rtattr **tb)
- 					mac_name);
- }
- 
--static struct crypto_template crypto_ccm_tmpl = {
--	.name = "ccm",
--	.create = crypto_ccm_create,
--	.module = THIS_MODULE,
--};
--
- static int crypto_ccm_base_create(struct crypto_template *tmpl,
- 				  struct rtattr **tb)
- {
-@@ -615,12 +609,6 @@ static int crypto_ccm_base_create(struct crypto_template *tmpl,
- 					cipher_name);
- }
- 
--static struct crypto_template crypto_ccm_base_tmpl = {
--	.name = "ccm_base",
--	.create = crypto_ccm_base_create,
--	.module = THIS_MODULE,
--};
--
- static int crypto_rfc4309_setkey(struct crypto_aead *parent, const u8 *key,
- 				 unsigned int keylen)
- {
-@@ -851,12 +839,6 @@ static int crypto_rfc4309_create(struct crypto_template *tmpl,
- 	goto out;
- }
- 
--static struct crypto_template crypto_rfc4309_tmpl = {
--	.name = "rfc4309",
--	.create = crypto_rfc4309_create,
--	.module = THIS_MODULE,
--};
--
- static int crypto_cbcmac_digest_setkey(struct crypto_shash *parent,
- 				     const u8 *inkey, unsigned int keylen)
- {
-@@ -996,51 +978,41 @@ static int cbcmac_create(struct crypto_template *tmpl, struct rtattr **tb)
- 	return err;
- }
- 
--static struct crypto_template crypto_cbcmac_tmpl = {
--	.name = "cbcmac",
--	.create = cbcmac_create,
--	.free = shash_free_instance,
--	.module = THIS_MODULE,
-+#define CCM_TEMPLATE_NUM 4
-+
-+static struct crypto_template crypto_ccm_tmpl[CCM_TEMPLATE_NUM] = {
-+	{
-+		.name = "cbcmac",
-+		.create = cbcmac_create,
-+		.free = shash_free_instance,
-+		.module = THIS_MODULE,
-+	},
-+	{
-+		.name = "ccm_base",
-+		.create = crypto_ccm_base_create,
-+		.module = THIS_MODULE,
-+	},
-+	{
-+		.name = "ccm",
-+		.create = crypto_ccm_create,
-+		.module = THIS_MODULE,
-+	},
-+	{
-+		.name = "rfc4309",
-+		.create = crypto_rfc4309_create,
-+		.module = THIS_MODULE,
-+	},
- };
- 
- static int __init crypto_ccm_module_init(void)
- {
--	int err;
--
--	err = crypto_register_template(&crypto_cbcmac_tmpl);
--	if (err)
--		goto out;
--
--	err = crypto_register_template(&crypto_ccm_base_tmpl);
--	if (err)
--		goto out_undo_cbcmac;
--
--	err = crypto_register_template(&crypto_ccm_tmpl);
--	if (err)
--		goto out_undo_base;
--
--	err = crypto_register_template(&crypto_rfc4309_tmpl);
--	if (err)
--		goto out_undo_ccm;
--
--out:
--	return err;
--
--out_undo_ccm:
--	crypto_unregister_template(&crypto_ccm_tmpl);
--out_undo_base:
--	crypto_unregister_template(&crypto_ccm_base_tmpl);
--out_undo_cbcmac:
--	crypto_register_template(&crypto_cbcmac_tmpl);
--	goto out;
-+	return crypto_register_template_array(crypto_ccm_tmpl,
-+			CCM_TEMPLATE_NUM);
- }
- 
- static void __exit crypto_ccm_module_exit(void)
- {
--	crypto_unregister_template(&crypto_rfc4309_tmpl);
--	crypto_unregister_template(&crypto_ccm_tmpl);
--	crypto_unregister_template(&crypto_ccm_base_tmpl);
--	crypto_unregister_template(&crypto_cbcmac_tmpl);
-+	crypto_unregister_template_array(crypto_ccm_tmpl, CCM_TEMPLATE_NUM);
- }
- 
- module_init(crypto_ccm_module_init);
+I tested the performance of software implemented ciphers before and after
+applying this patchset. The performance didn't change much except for 
+slight regression when writting. The detail information is as follows.
+
+The command I used:
+cryptsetup -y -c aes-xts-plain -s 256 --hash sha256 luksFormat /dev/sdd1
+cryptsetup -y -c aes-cbc-essiv:sha256 -s 256 --hash sha256 luksFormat /dev/sdd1
+cryptsetup -y -c aes-cbc-benbi -s 256 --hash sha256 luksFormat /dev/sdd1
+
+cryptsetup luksOpen /dev/sdd1 crypt_fun
+time dd if=/dev/mapper/crypt_fun of=/dev/null bs=1M count=500 iflag=direct
+time dd if=/dev/zero of=/dev/mapper/crypt_fun bs=1M count=500 oflag=direct
+
+Performance comparision:
+--------------------------------------------------------
+algorithms	| before applying   | 	after applying
+--------------------------------------------------------
+		|  read  | write    |  read  | write
+--------------------------------------------------------
+aes-xts-plain 	| 145.34 | 145.09   | 145.89 | 144.2 
+--------------------------------------------------------
+aes-cbc-essiv 	| 146.87 | 144.62   | 146.74 | 143.41
+--------------------------------------------------------
+aes-cbc-benbi 	| 146.03 | 144.74   | 146.77 | 144.46
+--------------------------------------------------------
+
+Xiongfeng Wang (5):
+  crypto: api - introduce API to (un)register a array of templates
+  crypto: ccm - use template array registering API to simplify the code
+  crypto: gcm - use template array registering API to simplify the code
+  crypto: Add IV generation templates
+  dm-crypt: modify dm-crypt to rely on IV generation templates
+
+ crypto/Kconfig          |    7 +
+ crypto/Makefile         |    1 +
+ crypto/algapi.c         |   27 +
+ crypto/ccm.c            |   82 +-
+ crypto/gcm.c            |   76 +-
+ crypto/geniv.c          | 2240 +++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/Kconfig      |    1 +
+ drivers/md/dm-crypt.c   | 1697 ++++++++---------------------------
+ include/crypto/algapi.h |    2 +
+ include/crypto/geniv.h  |   47 +
+ 10 files changed, 2722 insertions(+), 1458 deletions(-)
+ create mode 100644 crypto/geniv.c
+ create mode 100644 include/crypto/geniv.h
+
 -- 
 1.7.12.4
