@@ -1,86 +1,66 @@
 From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [PATCH v4 11/14] treewide: Prepare to remove VLA usage for AHASH_REQUEST_ON_STACK
-Date: Thu, 19 Jul 2018 00:33:54 +0900
-Message-ID: <CAKv+Gu-NBKxzV5PYAuzeP5xXfsk=Kw41677ASzRkD6=xO23zeQ@mail.gmail.com>
-References: <20180711203619.1020-1-keescook@chromium.org> <20180711203619.1020-12-keescook@chromium.org>
- <CAK8P3a3356dbruUfS_+fj9f+X-0jbNE8WMe5sWhJmuRY9Nvcbg@mail.gmail.com>
- <20180713004038.lwibdesz7ohhoind@gondor.apana.org.au> <CAGXu5jLYmC7U=bucFZCLsSXNX=T4WhCccR6hx9dwROYF+ZMt0Q@mail.gmail.com>
- <20180713034406.zwu2pkp3f2onybxs@gondor.apana.org.au> <CAGXu5jLR0zJ6b9axJuG_uvttNShNcN3rhQKGVjW37qPd9saY-Q@mail.gmail.com>
- <20180713052029.cfo24bsr5swtbdja@gondor.apana.org.au> <CAGXu5jLG4gE44z9cXL3-D1bjbZB1RgTnTsb3PWhU7B3NdRrwVg@mail.gmail.com>
- <CAK8P3a3nk4-EewKTXcLENTb86r1+bJz_WrkJoJt+D1uTwcpxPA@mail.gmail.com>
- <CAGXu5j+Q_jc_f9VybyoJqmV7_Q-3hqnC-pOubfNsi7uyAROVrQ@mail.gmail.com>
- <CAK8P3a3Dh+g=v++BMCtmmiOSnVu4CEUgss0U7BZS_K45aTddqg@mail.gmail.com>
- <CAKv+Gu-cOV6uo6MpLxr9uQSTT-ku_wn9+D7CC4+3maJtvcaGoA@mail.gmail.com>
- <CAKv+Gu8e9sm42NKwQvQzD33JTHSaEY2q7sm0W0065dDz_rzSaA@mail.gmail.com> <CAK8P3a3C1ihC=X=kZ0S836xeMJSGSy6OLNAcBEkdZ35N04bAMw@mail.gmail.com>
+Subject: Re: [PATCH 0/5] crypto: add IV generation templates
+Date: Thu, 19 Jul 2018 00:34:59 +0900
+Message-ID: <CAKv+Gu8uD4NNS9SaWdSST7n+984ybTBLhGDpq3k5GG4o1+PMWA@mail.gmail.com>
+References: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com> <CAK8P3a0T0Ku-2GOY8fT38LVy4GpvVSsx=szi0ZNEUq8Z_hZweQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAK8P3a3C1ihC=X=kZ0S836xeMJSGSy6OLNAcBEkdZ35N04bAMw@mail.gmail.com>
+In-Reply-To: <CAK8P3a0T0Ku-2GOY8fT38LVy4GpvVSsx=szi0ZNEUq8Z_hZweQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Arnd Bergmann <arnd@arndb.de>
-Cc: Kees Cook <keescook@chromium.org>, Herbert Xu <herbert@gondor.apana.org.au>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Eric Biggers <ebiggers@google.com>, Alasdair Kergon <agk@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, Masahiro Yamada <yamada.masahiro@socionext.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, qat-linux@intel.com, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Cc: Xiongfeng Wang <wangxiongfeng2@huawei.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Mark Brown <broonie@kernel.org>, Jonathan Cameron <jonathan.cameron@huawei.com>
 List-Id: dm-devel.ids
 
-On 19 July 2018 at 00:33, Arnd Bergmann <arnd@arndb.de> wrote:
-> On Wed, Jul 18, 2018 at 5:19 PM, Ard Biesheuvel
-> <ard.biesheuvel@linaro.org> wrote:
->> On 18 July 2018 at 23:50, Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
->>> On 18 July 2018 at 05:59, Arnd Bergmann <arnd@arndb.de> wrote:
->>>> On Sun, Jul 15, 2018 at 6:28 AM, Kees Cook <keescook@chromium.org> wrote:
->>>>>
->>>>> After my ahash to shash conversions, only ccm is left as an ahash
->>>>> user, since it actually uses sg. But with the hard-coded value reduced
->>>>> to 376, this doesn't trip the frame warnings any more. :)
->>>>>
->>>>> I'll send an updated series soon.
->>>>
->>>> Maybe we should get rid of that one as well then and remove
->>>> AHASH_REQUEST_ON_STACK()?
->>>>
->>>> I see that Ard (now on Cc) added this usage only recently. Looking
->>>> at the code some more, I also find that the descsize is probably
->>>> much smaller than 376 for all possible cases   of "cbcmac(*)",
->>>> either alg->cra_blocksize plus a few bytes or sizeof(mac_desc_ctx)
->>>> (i.e. 20) for arch/arm64/crypto/aes-glue.c.
->>>>
->>>> Walking the sglist here means open-coding a shash_ahash_update()
->>>> implementation in crypto_ccm_auth(), that that doesn't seem to
->>>> add much complexity over what it already has to do to chain
->>>> the sglist today.
->>>>
->>>
->>> It would be better to add a variably sized ahash request member to
->>> struct crypto_ccm_req_priv_ctx, the only problem is that the last
->>> member of that struct (skreq) is variably sized already, so it would
->>> involve having a struct ahash_request pointer pointing into the same
->>> struct, after the skreq member.
+On 18 July 2018 at 19:59, Arnd Bergmann <arnd@arndb.de> wrote:
+> On Wed, Jul 18, 2018 at 9:30 AM, Xiongfeng Wang
+> <wangxiongfeng2@huawei.com> wrote:
 >>
->> Actually, I think the below should already do the trick: ahreq and
->> skreq are not used at the same time, so we can stick them in a union,
->> and take the max() of the reqsize to ensure there's enough empty space
->> after it.
->
-> This looks very nice indeed.
->
->> --------8<----------
->> diff --git a/crypto/ccm.c b/crypto/ccm.c
->> index 0a083342ec8c..b242fd0d3262 100644
->> --- a/crypto/ccm.c
->> +++ b/crypto/ccm.c
->> @@ -50,7 +50,10 @@ struct crypto_ccm_req_priv_ctx {
->>         u32 flags;
->>         struct scatterlist src[3];
->>         struct scatterlist dst[3];
->> -       struct skcipher_request skreq;
->> +       union {
->> +               struct ahash_request ahreq;
->> +               struct skcipher_request skreq;
->> +       };
->>  };
+>> I tested the performance of software implemented ciphers before and after
+>> applying this patchset. The performance didn't change much except for
+>> slight regression when writting. The detail information is as follows.
 >>
+>> The command I used:
+>> cryptsetup -y -c aes-xts-plain -s 256 --hash sha256 luksFormat /dev/sdd1
+>> cryptsetup -y -c aes-cbc-essiv:sha256 -s 256 --hash sha256 luksFormat /dev/sdd1
+>> cryptsetup -y -c aes-cbc-benbi -s 256 --hash sha256 luksFormat /dev/sdd1
+>>
+>> cryptsetup luksOpen /dev/sdd1 crypt_fun
+>> time dd if=/dev/mapper/crypt_fun of=/dev/null bs=1M count=500 iflag=direct
+>> time dd if=/dev/zero of=/dev/mapper/crypt_fun bs=1M count=500 oflag=direct
+>>
+>> Performance comparision:
+>> --------------------------------------------------------
+>> algorithms      | before applying   |   after applying
+>> --------------------------------------------------------
+>>                 |  read  | write    |  read  | write
+>> --------------------------------------------------------
+>> aes-xts-plain   | 145.34 | 145.09   | 145.89 | 144.2
+>> --------------------------------------------------------
+>> aes-cbc-essiv   | 146.87 | 144.62   | 146.74 | 143.41
+>> --------------------------------------------------------
+>> aes-cbc-benbi   | 146.03 | 144.74   | 146.77 | 144.46
+>> --------------------------------------------------------
 >
-> And this structure is never put on the stack anywhere but
-> always dynamically allocated anyway, right?
+> Do you have any estimate of the expected gains for hardware
+> implementations?
+>
+> Would it make sense to try out implementing aes-cbc-essiv
+> on the ARMv8 crypto extensions? I see that Ard has done
+> some prior work on aes-ccm in arch/arm64/crypto/aes-ce-ccm-*
+> that (AFAICT) has a similar goal of avoiding overhead by
+> combining the usual operations, so maybe the same can
+> be done here.
 >
 
-Yes.
+I am having trouble understanding what exactly this series aims to achieve.
+
+Calling into the crypto layer fewer times is a nice goal, but a disk
+sector seems like a reasonable granularity for the dm layer to operate
+on, and I don't think any hardware exists that operates on multi
+sector sequences, where it would pay off to amortize the latency of
+invoking the hardware over an entire bio.
+
+So in summary, you need to explain to us why we need this. It is
+really very easy to convince people if your changes make things go
+faster.
