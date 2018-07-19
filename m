@@ -1,33 +1,46 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [dm-devel] [PATCH v5 05/11] crypto: ahash: Remove VLA usage
-Date: Wed, 18 Jul 2018 20:14:07 -0700
-Message-ID: <CAGXu5jJUeMcVQDTd2JAYFTbTk0DcN84i1-4EOJcvLR9zNgyoOQ@mail.gmail.com>
-References: <20180717042150.37761-1-keescook@chromium.org> <20180717042150.37761-6-keescook@chromium.org>
- <20180717163936.GB75957@gmail.com> <CAGXu5jKKD4hzeFEdvY5QdahEr4POd9ZM_B_5Z_iU-Qmx3AYSfQ@mail.gmail.com>
- <20180717231209.GJ75957@gmail.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH 4/5] crypto: Add IV generation templates
+Date: Thu, 19 Jul 2018 10:50:12 +0200
+Message-ID: <CAK8P3a2oubqRKg1tnoG6CsmUs-U5Ab6q5rwpfg08PRNJLhEjEw@mail.gmail.com>
+References: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com>
+ <1531899055-29362-5-git-send-email-wangxiongfeng2@huawei.com>
+ <b6eaf471-7279-ca4f-bb7c-d25df8db2419@gmail.com> <20180718164625.GA20360@sirena.org.uk>
+ <82248c13-42fe-b598-0cd7-68e5db0b51be@gmail.com> <cda1d3de-3f21-2dfc-0423-c1cf456838b4@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180717231209.GJ75957@gmail.com>
+In-Reply-To: <cda1d3de-3f21-2dfc-0423-c1cf456838b4@huawei.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Eric Biggers <ebiggers3@gmail.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Arnd Bergmann <arnd@arndb.de>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Mike Snitzer <snitzer@redhat.com>, Eric Biggers <ebiggers@google.com>, qat-linux@intel.com, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, linux-crypto <linux-crypto@vger.kernel.org>, Lars Persson <larper@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>
+To: Xiongfeng Wang <wangxiongfeng2@huawei.com>
+Cc: Milan Broz <gmazyland@gmail.com>, Mark Brown <broonie@kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jonathan Cameron <jonathan.cameron@huawei.com>
 List-Id: dm-devel.ids
 
-On Tue, Jul 17, 2018 at 4:12 PM, Eric Biggers <ebiggers3@gmail.com> wrote:
-> I just don't see why ahash algorithms would need such a huge maximum digest
-> size.  Don't the 'ahash' algorithms all have 'shash' equivalents too?  Is there
-> actually any hash algorithm, either shash or ahash, in the Linux kernel that has
-> a digest size greater than 64 bytes (512 bits)?  Note that for a real
-> cryptographic hash there isn't really any need for a digest size larger than
-> that, since that already gives you 256-bit collision resistance; that's why
-> SHA-2 and SHA-3 max out at that size.
+On Thu, Jul 19, 2018 at 3:46 AM, Xiongfeng Wang
+<wangxiongfeng2@huawei.com> wrote:
+> Hi,
+>
+> On 2018/7/19 1:17, Milan Broz wrote:
+>> On 18/07/18 18:46, Mark Brown wrote:
+>>> On Wed, Jul 18, 2018 at 10:16:05AM +0200, Milan Broz wrote:
+>>>
+>>>> So we are here again and moving INTERNAL dm-crypt functionality into
+>>>> cryptoapi.
+>>
+>> 2) If the reason is performance, please provide numbers with the patch.
+>> What I see now is that the performance is almost the same. So why you are doing it?
+>> Any real hw that benefits from it?
+>
+> Because the internal implementation of the IV template 'benbi()' is still
+> dividing the whole bio into sectors, so the performance is almost the same.
+> The purpose of this patch is to let dm-crypt rely on the new algorithm 'aes-cbc-benbi'
+> and pass the whole bio to the new algorithm.
+> And then if the hardware driver implements this new algorithm, it can get the data of
+> the bio at one time, and return the processed data at one time.
+> I think it will decrease the overhead of passing each sector alternatively.
+> But the hardware need to implement the new algorithm if it want to benefit from this.
 
-Yup, it certainly looks that way on investigation. I'll adjust both
-ahash and shash to use the same #define.
+There seems to be some support for at least essiv(aes) in
+drivers/crypto/ccree/cc_cipher.c, is that compatible with your essiv(*)
+template, or is that something else?
 
--Kees
-
--- 
-Kees Cook
-Pixel Security
+       Arnd
