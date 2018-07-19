@@ -1,46 +1,35 @@
-From: Arnd Bergmann <arnd@arndb.de>
+From: Herbert Xu <herbert@gondor.apana.org.au>
 Subject: Re: [PATCH 4/5] crypto: Add IV generation templates
-Date: Thu, 19 Jul 2018 10:50:12 +0200
-Message-ID: <CAK8P3a2oubqRKg1tnoG6CsmUs-U5Ab6q5rwpfg08PRNJLhEjEw@mail.gmail.com>
+Date: Thu, 19 Jul 2018 16:54:12 +0800
+Message-ID: <20180719085412.5fxcanx364zten3b@gondor.apana.org.au>
 References: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com>
  <1531899055-29362-5-git-send-email-wangxiongfeng2@huawei.com>
- <b6eaf471-7279-ca4f-bb7c-d25df8db2419@gmail.com> <20180718164625.GA20360@sirena.org.uk>
- <82248c13-42fe-b598-0cd7-68e5db0b51be@gmail.com> <cda1d3de-3f21-2dfc-0423-c1cf456838b4@huawei.com>
+ <b6eaf471-7279-ca4f-bb7c-d25df8db2419@gmail.com>
+ <20180718164625.GA20360@sirena.org.uk>
+ <82248c13-42fe-b598-0cd7-68e5db0b51be@gmail.com>
+ <cda1d3de-3f21-2dfc-0423-c1cf456838b4@huawei.com>
+ <CAK8P3a2oubqRKg1tnoG6CsmUs-U5Ab6q5rwpfg08PRNJLhEjEw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cda1d3de-3f21-2dfc-0423-c1cf456838b4@huawei.com>
+Content-Disposition: inline
+In-Reply-To: <CAK8P3a2oubqRKg1tnoG6CsmUs-U5Ab6q5rwpfg08PRNJLhEjEw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Xiongfeng Wang <wangxiongfeng2@huawei.com>
-Cc: Milan Broz <gmazyland@gmail.com>, Mark Brown <broonie@kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jonathan Cameron <jonathan.cameron@huawei.com>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Xiongfeng Wang <wangxiongfeng2@huawei.com>, Milan Broz <gmazyland@gmail.com>, Mark Brown <broonie@kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jonathan Cameron <jonathan.cameron@huawei.com>
 List-Id: dm-devel.ids
 
-On Thu, Jul 19, 2018 at 3:46 AM, Xiongfeng Wang
-<wangxiongfeng2@huawei.com> wrote:
-> Hi,
+On Thu, Jul 19, 2018 at 10:50:12AM +0200, Arnd Bergmann wrote:
 >
-> On 2018/7/19 1:17, Milan Broz wrote:
->> On 18/07/18 18:46, Mark Brown wrote:
->>> On Wed, Jul 18, 2018 at 10:16:05AM +0200, Milan Broz wrote:
->>>
->>>> So we are here again and moving INTERNAL dm-crypt functionality into
->>>> cryptoapi.
->>
->> 2) If the reason is performance, please provide numbers with the patch.
->> What I see now is that the performance is almost the same. So why you are doing it?
->> Any real hw that benefits from it?
->
-> Because the internal implementation of the IV template 'benbi()' is still
-> dividing the whole bio into sectors, so the performance is almost the same.
-> The purpose of this patch is to let dm-crypt rely on the new algorithm 'aes-cbc-benbi'
-> and pass the whole bio to the new algorithm.
-> And then if the hardware driver implements this new algorithm, it can get the data of
-> the bio at one time, and return the processed data at one time.
-> I think it will decrease the overhead of passing each sector alternatively.
-> But the hardware need to implement the new algorithm if it want to benefit from this.
+> There seems to be some support for at least essiv(aes) in
+> drivers/crypto/ccree/cc_cipher.c, is that compatible with your essiv(*)
+> template, or is that something else?
 
-There seems to be some support for at least essiv(aes) in
-drivers/crypto/ccree/cc_cipher.c, is that compatible with your essiv(*)
-template, or is that something else?
+Whatever it is it should be removed.  We should not be adding
+hardware algorithms for which there is no software equivalent.
 
-       Arnd
+Thanks,
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
