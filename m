@@ -1,81 +1,51 @@
 From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [PATCH 0/5] crypto: add IV generation templates
-Date: Thu, 19 Jul 2018 23:08:52 +0900
-Message-ID: <CAKv+Gu-hvEUyOOh_xpYsSj2WTcbM1FwRnJ1DkTGH1UjxkppNMQ@mail.gmail.com>
-References: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com>
- <CAK8P3a0T0Ku-2GOY8fT38LVy4GpvVSsx=szi0ZNEUq8Z_hZweQ@mail.gmail.com>
- <CAKv+Gu8uD4NNS9SaWdSST7n+984ybTBLhGDpq3k5GG4o1+PMWA@mail.gmail.com> <5d0bb72c-862e-63be-3cc5-83ed02b9a575@huawei.com>
+Subject: Re: [PATCH v4 11/14] treewide: Prepare to remove VLA usage for AHASH_REQUEST_ON_STACK
+Date: Thu, 19 Jul 2018 23:54:06 +0900
+Message-ID: <CAKv+Gu9WH-_keAuio6AYMu6KD877GdRUoDrua_1cqKqK8sE=7A@mail.gmail.com>
+References: <20180711203619.1020-1-keescook@chromium.org> <20180711203619.1020-12-keescook@chromium.org>
+ <CAK8P3a3356dbruUfS_+fj9f+X-0jbNE8WMe5sWhJmuRY9Nvcbg@mail.gmail.com>
+ <20180713004038.lwibdesz7ohhoind@gondor.apana.org.au> <CAGXu5jLYmC7U=bucFZCLsSXNX=T4WhCccR6hx9dwROYF+ZMt0Q@mail.gmail.com>
+ <20180713034406.zwu2pkp3f2onybxs@gondor.apana.org.au> <CAGXu5jLR0zJ6b9axJuG_uvttNShNcN3rhQKGVjW37qPd9saY-Q@mail.gmail.com>
+ <20180713052029.cfo24bsr5swtbdja@gondor.apana.org.au> <CAGXu5jLG4gE44z9cXL3-D1bjbZB1RgTnTsb3PWhU7B3NdRrwVg@mail.gmail.com>
+ <CAK8P3a3nk4-EewKTXcLENTb86r1+bJz_WrkJoJt+D1uTwcpxPA@mail.gmail.com>
+ <CAGXu5j+Q_jc_f9VybyoJqmV7_Q-3hqnC-pOubfNsi7uyAROVrQ@mail.gmail.com>
+ <CAK8P3a3Dh+g=v++BMCtmmiOSnVu4CEUgss0U7BZS_K45aTddqg@mail.gmail.com>
+ <CAKv+Gu-cOV6uo6MpLxr9uQSTT-ku_wn9+D7CC4+3maJtvcaGoA@mail.gmail.com>
+ <CAKv+Gu8e9sm42NKwQvQzD33JTHSaEY2q7sm0W0065dDz_rzSaA@mail.gmail.com>
+ <CAGXu5jLuWfZFTs390c3WSAReLrQ6_KOOvr0FYjXhUQ5h5b8xWA@mail.gmail.com>
+ <B278D0F7-71B6-4F3D-B625-D8B0298CE5B4@linaro.org> <CAGXu5jJyyi1FvT9PytMkU_rPeSqMSHR7asjn8ykShZGGRPPRDg@mail.gmail.com>
+ <E9125A0C-45C8-45FF-93F6-B7AD9DC86347@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5d0bb72c-862e-63be-3cc5-83ed02b9a575@huawei.com>
+In-Reply-To: <E9125A0C-45C8-45FF-93F6-B7AD9DC86347@linaro.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Xiongfeng Wang <wangxiongfeng2@huawei.com>
-Cc: Arnd Bergmann <arnd@arndb.de>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Mark Brown <broonie@kernel.org>, Jonathan Cameron <jonathan.cameron@huawei.com>
+To: Kees Cook <keescook@chromium.org>
+Cc: Arnd Bergmann <arnd@arndb.de>, Herbert Xu <herbert@gondor.apana.org.au>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Eric Biggers <ebiggers@google.com>, Alasdair Kergon <agk@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, Masahiro Yamada <yamada.masahiro@socionext.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, qat-linux@intel.com, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On 19 July 2018 at 19:55, Xiongfeng Wang <wangxiongfeng2@huawei.com> wrote:
-> Hi,
+On 19 July 2018 at 12:13, Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
 >
-> On 2018/7/18 23:34, Ard Biesheuvel wrote:
->> On 18 July 2018 at 19:59, Arnd Bergmann <arnd@arndb.de> wrote:
->>> On Wed, Jul 18, 2018 at 9:30 AM, Xiongfeng Wang
->>> <wangxiongfeng2@huawei.com> wrote:
->>>>
->>>> I tested the performance of software implemented ciphers before and after
->>>> applying this patchset. The performance didn't change much except for
->>>> slight regression when writting. The detail information is as follows.
->>>>
->>>> The command I used:
->>>> cryptsetup -y -c aes-xts-plain -s 256 --hash sha256 luksFormat /dev/sdd1
->>>> cryptsetup -y -c aes-cbc-essiv:sha256 -s 256 --hash sha256 luksFormat /dev/sdd1
->>>> cryptsetup -y -c aes-cbc-benbi -s 256 --hash sha256 luksFormat /dev/sdd1
->>>>
->>>> cryptsetup luksOpen /dev/sdd1 crypt_fun
->>>> time dd if=/dev/mapper/crypt_fun of=/dev/null bs=1M count=500 iflag=direct
->>>> time dd if=/dev/zero of=/dev/mapper/crypt_fun bs=1M count=500 oflag=direct
->>>>
->>>> Performance comparision:
->>>> --------------------------------------------------------
->>>> algorithms      | before applying   |   after applying
->>>> --------------------------------------------------------
->>>>                 |  read  | write    |  read  | write
->>>> --------------------------------------------------------
->>>> aes-xts-plain   | 145.34 | 145.09   | 145.89 | 144.2
->>>> --------------------------------------------------------
->>>> aes-cbc-essiv   | 146.87 | 144.62   | 146.74 | 143.41
->>>> --------------------------------------------------------
->>>> aes-cbc-benbi   | 146.03 | 144.74   | 146.77 | 144.46
->>>> --------------------------------------------------------
->>>
->>> Do you have any estimate of the expected gains for hardware
->>> implementations?
->>>
->>> Would it make sense to try out implementing aes-cbc-essiv
->>> on the ARMv8 crypto extensions? I see that Ard has done
->>> some prior work on aes-ccm in arch/arm64/crypto/aes-ce-ccm-*
->>> that (AFAICT) has a similar goal of avoiding overhead by
->>> combining the usual operations, so maybe the same can
->>> be done here.
->>>
+>> On 19 Jul 2018, at 12:09, Kees Cook <keescook@chromium.org> wrote:
 >>
->> I am having trouble understanding what exactly this series aims to achieve.
+>> On Wed, Jul 18, 2018 at 7:55 PM, Ard Biesheuvel
+>> <ard.biesheuvel@linaro.org> wrote:
+>>> I have only build tested it, so if you make sure that it does not break anything, please go ahead.
 >>
->> Calling into the crypto layer fewer times is a nice goal, but a disk
->> sector seems like a reasonable granularity for the dm layer to operate
->> on, and I don't think any hardware exists that operates on multi
->> sector sequences, where it would pay off to amortize the latency of
->> invoking the hardware over an entire bio.
+>> I can give it a spin; what's the best way? Is CONFIG_CRYPTO_MANAGER=y
+>> sufficient?
+>>
 >
-> I don't know much about crypto hardware, but I think a crypto hardware can handle
-> data more than one sector at one time. So I think passing the whole bio to the hardware
-> at one time will decrease the overhead in passing each sector alternatively.
->
+> You should be able to test ccm(aes) with tcrypt, yes
 
-But this will only be the case if the accelerator is capable of doing
-the IV generation and en/decryption of multiple contiguous sectors in
-a single call. Otherwise, you are just shifting work from one layer to
-the next.
+Apologies, I should have been more clear here. I was replying on my
+phone while attending a meeting.
 
-So at this point, it would be useful to clarify what exactly these
-accelerators are doing and how.
+The builtin test will only kick in for chaining mode templates if they
+are instantiated by something that invokes the algorithm, such as
+loading tcrypt.ko with mode=37 (assuming that ccm(aes) has to be
+instantiated from crypto/ccm.c and some AES cipher rather than being
+provided directly by, e.g., arm64's AES-CCM driver)
+
+I just did the tcrypt myself, and the patch appears to be fine. Let me
+know if you want me to spin the patch.
