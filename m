@@ -1,56 +1,88 @@
-From: Mark Brown <broonie@kernel.org>
-Subject: Re: [PATCH 0/5] crypto: add IV generation templates
-Date: Thu, 19 Jul 2018 16:50:26 +0100
-Message-ID: <20180719155026.GF27938@sirena.org.uk>
-References: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com>
- <CAK8P3a0T0Ku-2GOY8fT38LVy4GpvVSsx=szi0ZNEUq8Z_hZweQ@mail.gmail.com>
- <CAKv+Gu8uD4NNS9SaWdSST7n+984ybTBLhGDpq3k5GG4o1+PMWA@mail.gmail.com>
- <5d0bb72c-862e-63be-3cc5-83ed02b9a575@huawei.com>
- <CAKv+Gu-hvEUyOOh_xpYsSj2WTcbM1FwRnJ1DkTGH1UjxkppNMQ@mail.gmail.com>
+From: kbuild test robot <lkp@intel.com>
+Subject: Re: [PATCH 4/5] crypto: Add IV generation templates
+Date: Fri, 20 Jul 2018 02:14:54 +0800
+Message-ID: <201807200243.21tygjmy%fengguang.wu@intel.com>
+References: <1531899055-29362-5-git-send-email-wangxiongfeng2@huawei.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-        protocol="application/pgp-signature"; boundary="lIrNkN/7tmsD/ALM"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <CAKv+Gu-hvEUyOOh_xpYsSj2WTcbM1FwRnJ1DkTGH1UjxkppNMQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Cc: Xiongfeng Wang <wangxiongfeng2@huawei.com>, Arnd Bergmann <arnd@arndb.de>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jonathan Cameron <jonathan.cameron@huawei.com>
+In-Reply-To: <1531899055-29362-5-git-send-email-wangxiongfeng2@huawei.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Cc: herbert@gondor.apana.org.au, snitzer@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, broonie@kernel.org, arnd@arndb.de, kbuild-all@01.org, jonathan.cameron@huawei.com, wangxiongfeng2@huawei.com, agk@redhat.com
 List-Id: dm-devel.ids
 
+Hi Xiongfeng,
 
---lIrNkN/7tmsD/ALM
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Thank you for the patch! Perhaps something to improve:
 
-On Thu, Jul 19, 2018 at 11:08:52PM +0900, Ard Biesheuvel wrote:
+[auto build test WARNING on cryptodev/master]
+[also build test WARNING on v4.18-rc5 next-20180719]
+[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
 
-> But this will only be the case if the accelerator is capable of doing
-> the IV generation and en/decryption of multiple contiguous sectors in
-> a single call. Otherwise, you are just shifting work from one layer to
-> the next.
+url:    https://github.com/0day-ci/linux/commits/Xiongfeng-Wang/crypto-add-IV-generation-templates/20180719-034438
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/herbert/cryptodev-2.6.git master
+reproduce:
+        # apt-get install sparse
+        make ARCH=x86_64 allmodconfig
+        make C=1 CF=-D__CHECK_ENDIAN__
 
-> So at this point, it would be useful to clarify what exactly these
-> accelerators are doing and how.
 
-Existing hardware can definitely do the IV generation and I believe that
-it can chain multiple sectors together though I'd need to confirm this,
-as mentioned elsewhere in the thread the ccree driver is for one of
-the relevant devices.  I've poked some relevant people.
+sparse warnings: (new ones prefixed by >>)
 
---lIrNkN/7tmsD/ALM
-Content-Type: application/pgp-signature; name="signature.asc"
+>> crypto/geniv.c:303:9: sparse: Variable length array is used.
+   crypto/geniv.c:568:9: sparse: Variable length array is used.
+   crypto/geniv.c:729:9: sparse: Variable length array is used.
+   include/linux/slab.h:631:13: sparse: undefined identifier '__builtin_mul_overflow'
+   include/linux/slab.h:631:13: sparse: not a function <noident>
+>> crypto/geniv.c:1482:17: sparse: incorrect type in assignment (different base types) @@    expected unsigned long long [unsigned] [long] [long long] [usertype] <noident> @@    got long] [long long] [usertype] <noident> @@
+   crypto/geniv.c:1482:17:    expected unsigned long long [unsigned] [long] [long long] [usertype] <noident>
+   crypto/geniv.c:1482:17:    got restricted __le64 [usertype] <noident>
+>> crypto/geniv.c:1543:17: sparse: cast to restricted __le64
+   crypto/geniv.c:1580:17: sparse: incorrect type in assignment (different base types) @@    expected unsigned long long [unsigned] [long] [long long] [usertype] <noident> @@    got long] [long long] [usertype] <noident> @@
+   crypto/geniv.c:1580:17:    expected unsigned long long [unsigned] [long] [long long] [usertype] <noident>
+   crypto/geniv.c:1580:17:    got restricted __le64 [usertype] <noident>
+>> crypto/geniv.c:1912:32: sparse: expression using sizeof(void)
+   include/linux/slab.h:631:13: sparse: call with no type!
 
------BEGIN PGP SIGNATURE-----
+vim +303 crypto/geniv.c
 
-iQEzBAABCgAdFiEEreZoqmdXGLWf4p/qJNaLcl1Uh9AFAltQs0EACgkQJNaLcl1U
-h9B4vQf/YQkCshhwsHWovL39lwKZHpo1OAVwFfEhHS0hainP8pDsnrikXQKO++hn
-XVhUHjaRxdb0Zx/lHAuTVU2dd1K00VoR7udX7u++YaCBJjviVSWvZzPoxIpo+vd4
-1zfjLv3YeLD+Yy7fvLkJiVf114bBWfz/Y4sSiNUhVAxL3AgcRgs36ZA1HS+TghJX
-bs98y1sGwT96emHDT55S7t2jP8fYdD6mJBKvxcS+MT046HDOSEv4+ZtylOI3Nl8w
-Uz7udiikFKRtKwlaPX8YGEnUEqJyi8uoquNC/QVo8yYCxsVx+J/Go6z//EjtAlRD
-+djfP5QXtifKs3spBqRcKZm4gPpyWg==
-=ZoTL
------END PGP SIGNATURE-----
+   298	
+   299	/* Initialise ESSIV - compute salt but no local memory allocations */
+   300	static int crypt_iv_essiv_init(struct geniv_ctx *ctx)
+   301	{
+   302		struct geniv_essiv_private *essiv = &ctx->iv_gen_private.essiv;
+ > 303		AHASH_REQUEST_ON_STACK(req, essiv->hash_tfm);
+   304		struct scatterlist sg;
+   305		struct crypto_cipher *essiv_tfm;
+   306		int err;
+   307	
+   308		sg_init_one(&sg, ctx->key, ctx->key_size);
+   309		ahash_request_set_tfm(req, essiv->hash_tfm);
+   310		ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP, NULL, NULL);
+   311		ahash_request_set_crypt(req, &sg, essiv->salt, ctx->key_size);
+   312	
+   313		err = crypto_ahash_digest(req);
+   314		ahash_request_zero(req);
+   315		if (err)
+   316			return err;
+   317	
+   318		essiv_tfm = ctx->iv_private;
+   319	
+   320		return crypto_cipher_setkey(essiv_tfm, essiv->salt,
+   321				    crypto_ahash_digestsize(essiv->hash_tfm));
+   322	}
+   323	
 
---lIrNkN/7tmsD/ALM--
+---
+0-DAY kernel test infrastructure                Open Source Technology Center
+https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
