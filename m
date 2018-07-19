@@ -1,88 +1,62 @@
-From: kbuild test robot <lkp@intel.com>
-Subject: Re: [PATCH 4/5] crypto: Add IV generation templates
-Date: Fri, 20 Jul 2018 02:14:54 +0800
-Message-ID: <201807200243.21tygjmy%fengguang.wu@intel.com>
-References: <1531899055-29362-5-git-send-email-wangxiongfeng2@huawei.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH v4 11/14] treewide: Prepare to remove VLA usage for AHASH_REQUEST_ON_STACK
+Date: Thu, 19 Jul 2018 11:44:03 -0700
+Message-ID: <CAGXu5jKXtNc0ePXWAbUgiqx6K_fJQG2xptwiTdV-vd_sYiu=9w@mail.gmail.com>
+References: <20180711203619.1020-1-keescook@chromium.org> <20180711203619.1020-12-keescook@chromium.org>
+ <CAK8P3a3356dbruUfS_+fj9f+X-0jbNE8WMe5sWhJmuRY9Nvcbg@mail.gmail.com>
+ <20180713004038.lwibdesz7ohhoind@gondor.apana.org.au> <CAGXu5jLYmC7U=bucFZCLsSXNX=T4WhCccR6hx9dwROYF+ZMt0Q@mail.gmail.com>
+ <20180713034406.zwu2pkp3f2onybxs@gondor.apana.org.au> <CAGXu5jLR0zJ6b9axJuG_uvttNShNcN3rhQKGVjW37qPd9saY-Q@mail.gmail.com>
+ <20180713052029.cfo24bsr5swtbdja@gondor.apana.org.au> <CAGXu5jLG4gE44z9cXL3-D1bjbZB1RgTnTsb3PWhU7B3NdRrwVg@mail.gmail.com>
+ <CAK8P3a3nk4-EewKTXcLENTb86r1+bJz_WrkJoJt+D1uTwcpxPA@mail.gmail.com>
+ <CAGXu5j+Q_jc_f9VybyoJqmV7_Q-3hqnC-pOubfNsi7uyAROVrQ@mail.gmail.com>
+ <CAK8P3a3Dh+g=v++BMCtmmiOSnVu4CEUgss0U7BZS_K45aTddqg@mail.gmail.com>
+ <CAKv+Gu-cOV6uo6MpLxr9uQSTT-ku_wn9+D7CC4+3maJtvcaGoA@mail.gmail.com>
+ <CAKv+Gu8e9sm42NKwQvQzD33JTHSaEY2q7sm0W0065dDz_rzSaA@mail.gmail.com>
+ <CAGXu5jLuWfZFTs390c3WSAReLrQ6_KOOvr0FYjXhUQ5h5b8xWA@mail.gmail.com>
+ <B278D0F7-71B6-4F3D-B625-D8B0298CE5B4@linaro.org> <CAGXu5jJyyi1FvT9PytMkU_rPeSqMSHR7asjn8ykShZGGRPPRDg@mail.gmail.com>
+ <E9125A0C-45C8-45FF-93F6-B7AD9DC86347@linaro.org> <CAKv+Gu9WH-_keAuio6AYMu6KD877GdRUoDrua_1cqKqK8sE=7A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1531899055-29362-5-git-send-email-wangxiongfeng2@huawei.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: herbert@gondor.apana.org.au, snitzer@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, broonie@kernel.org, arnd@arndb.de, kbuild-all@01.org, jonathan.cameron@huawei.com, wangxiongfeng2@huawei.com, agk@redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAKv+Gu9WH-_keAuio6AYMu6KD877GdRUoDrua_1cqKqK8sE=7A@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Cc: Arnd Bergmann <arnd@arndb.de>, Herbert Xu <herbert@gondor.apana.org.au>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Eric Biggers <ebiggers@google.com>, Alasdair Kergon <agk@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, Masahiro Yamada <yamada.masahiro@socionext.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, qat-linux@intel.com, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hi Xiongfeng,
+On Thu, Jul 19, 2018 at 7:54 AM, Ard Biesheuvel
+<ard.biesheuvel@linaro.org> wrote:
+> On 19 July 2018 at 12:13, Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
+>>
+>>> On 19 Jul 2018, at 12:09, Kees Cook <keescook@chromium.org> wrote:
+>>>
+>>> On Wed, Jul 18, 2018 at 7:55 PM, Ard Biesheuvel
+>>> <ard.biesheuvel@linaro.org> wrote:
+>>>> I have only build tested it, so if you make sure that it does not break anything, please go ahead.
+>>>
+>>> I can give it a spin; what's the best way? Is CONFIG_CRYPTO_MANAGER=y
+>>> sufficient?
+>>>
+>>
+>> You should be able to test ccm(aes) with tcrypt, yes
+>
+> Apologies, I should have been more clear here. I was replying on my
+> phone while attending a meeting.
+>
+> The builtin test will only kick in for chaining mode templates if they
+> are instantiated by something that invokes the algorithm, such as
+> loading tcrypt.ko with mode=37 (assuming that ccm(aes) has to be
+> instantiated from crypto/ccm.c and some AES cipher rather than being
+> provided directly by, e.g., arm64's AES-CCM driver)
+>
+> I just did the tcrypt myself, and the patch appears to be fine. Let me
+> know if you want me to spin the patch.
 
-Thank you for the patch! Perhaps something to improve:
+Awesome, thanks for testing! I built a commit with you as the author.
+I'll send it out with the next batch... :)
 
-[auto build test WARNING on cryptodev/master]
-[also build test WARNING on v4.18-rc5 next-20180719]
-[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
+-Kees
 
-url:    https://github.com/0day-ci/linux/commits/Xiongfeng-Wang/crypto-add-IV-generation-templates/20180719-034438
-base:   https://git.kernel.org/pub/scm/linux/kernel/git/herbert/cryptodev-2.6.git master
-reproduce:
-        # apt-get install sparse
-        make ARCH=x86_64 allmodconfig
-        make C=1 CF=-D__CHECK_ENDIAN__
-
-
-sparse warnings: (new ones prefixed by >>)
-
->> crypto/geniv.c:303:9: sparse: Variable length array is used.
-   crypto/geniv.c:568:9: sparse: Variable length array is used.
-   crypto/geniv.c:729:9: sparse: Variable length array is used.
-   include/linux/slab.h:631:13: sparse: undefined identifier '__builtin_mul_overflow'
-   include/linux/slab.h:631:13: sparse: not a function <noident>
->> crypto/geniv.c:1482:17: sparse: incorrect type in assignment (different base types) @@    expected unsigned long long [unsigned] [long] [long long] [usertype] <noident> @@    got long] [long long] [usertype] <noident> @@
-   crypto/geniv.c:1482:17:    expected unsigned long long [unsigned] [long] [long long] [usertype] <noident>
-   crypto/geniv.c:1482:17:    got restricted __le64 [usertype] <noident>
->> crypto/geniv.c:1543:17: sparse: cast to restricted __le64
-   crypto/geniv.c:1580:17: sparse: incorrect type in assignment (different base types) @@    expected unsigned long long [unsigned] [long] [long long] [usertype] <noident> @@    got long] [long long] [usertype] <noident> @@
-   crypto/geniv.c:1580:17:    expected unsigned long long [unsigned] [long] [long long] [usertype] <noident>
-   crypto/geniv.c:1580:17:    got restricted __le64 [usertype] <noident>
->> crypto/geniv.c:1912:32: sparse: expression using sizeof(void)
-   include/linux/slab.h:631:13: sparse: call with no type!
-
-vim +303 crypto/geniv.c
-
-   298	
-   299	/* Initialise ESSIV - compute salt but no local memory allocations */
-   300	static int crypt_iv_essiv_init(struct geniv_ctx *ctx)
-   301	{
-   302		struct geniv_essiv_private *essiv = &ctx->iv_gen_private.essiv;
- > 303		AHASH_REQUEST_ON_STACK(req, essiv->hash_tfm);
-   304		struct scatterlist sg;
-   305		struct crypto_cipher *essiv_tfm;
-   306		int err;
-   307	
-   308		sg_init_one(&sg, ctx->key, ctx->key_size);
-   309		ahash_request_set_tfm(req, essiv->hash_tfm);
-   310		ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP, NULL, NULL);
-   311		ahash_request_set_crypt(req, &sg, essiv->salt, ctx->key_size);
-   312	
-   313		err = crypto_ahash_digest(req);
-   314		ahash_request_zero(req);
-   315		if (err)
-   316			return err;
-   317	
-   318		essiv_tfm = ctx->iv_private;
-   319	
-   320		return crypto_cipher_setkey(essiv_tfm, essiv->salt,
-   321				    crypto_ahash_digestsize(essiv->hash_tfm));
-   322	}
-   323	
-
----
-0-DAY kernel test infrastructure                Open Source Technology Center
-https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
+-- 
+Kees Cook
+Pixel Security
