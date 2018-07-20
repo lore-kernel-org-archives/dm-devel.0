@@ -1,7 +1,7 @@
 From: Marcin Niestroj <m.niestroj@grinn-global.com>
-Subject: [PATCH] configure: Introduce --enable-symvers option
-Date: Fri, 20 Jul 2018 15:46:07 +0200
-Message-ID: <20180720134607.16689-1-m.niestroj@grinn-global.com>
+Subject: [PATCH v2] configure: Introduce --enable-symvers option
+Date: Fri, 20 Jul 2018 17:54:30 +0200
+Message-ID: <20180720155430.8209-1-m.niestroj@grinn-global.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -42,16 +42,19 @@ library.
 ---
 Patch was developed and tested on top of 2018-06-01-stable branch.
 
+Changes v1 -> v2:
+ * Set LDDEPS only when --enable-symvers=gnu
+
  WHATS_NEW                 |  1 +
  configure                 | 32 ++++++++++++++++++++++++++++++--
- configure.ac              | 24 ++++++++++++++++++++++--
+ configure.ac              | 28 +++++++++++++++++++++++++---
  include/configure.h.in    |  3 +++
  lib/misc/lib.h            | 10 +++++-----
  libdm/datastruct/bitset.c |  5 +----
  libdm/ioctl/libdm-iface.c |  2 +-
  libdm/libdm-deptree.c     |  2 +-
  libdm/libdm-stats.c       |  2 +-
- 9 files changed, 65 insertions(+), 16 deletions(-)
+ 9 files changed, 68 insertions(+), 17 deletions(-)
 
 diff --git a/WHATS_NEW b/WHATS_NEW
 index bdd2fa635..2279c4275 100644
@@ -136,10 +139,10 @@ index 7d945dfa8..94cd6b1ea 100755
  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable internationalisation" >&5
  $as_echo_n "checking whether to enable internationalisation... " >&6; }
 diff --git a/configure.ac b/configure.ac
-index e427708cd..e0c4adcca 100644
+index e427708cd..2e8712f92 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -30,7 +30,6 @@ AC_CANONICAL_TARGET([])
+@@ -30,13 +30,11 @@ AC_CANONICAL_TARGET([])
  AS_IF([test -z "$CFLAGS"], [COPTIMISE_FLAG="-O2"])
  case "$host_os" in
  	linux*)
@@ -147,7 +150,13 @@ index e427708cd..e0c4adcca 100644
  		# equivalent to -rdynamic
  		ELDFLAGS="-Wl,--export-dynamic"
  		# FIXME Generate list and use --dynamic-list=.dlopen.sym
-@@ -52,7 +51,6 @@ case "$host_os" in
+ 		CLDWHOLEARCHIVE="-Wl,-whole-archive"
+ 		CLDNOWHOLEARCHIVE="-Wl,-no-whole-archive"
+-		LDDEPS="$LDDEPS .export.sym"
+ 		LIB_SUFFIX=so
+ 		DEVMAPPER=yes
+ 		BUILD_LVMETAD=no
+@@ -52,7 +50,6 @@ case "$host_os" in
  		;;
  	darwin*)
  		CFLAGS="$CFLAGS -no-cpp-precomp -fno-common"
@@ -155,7 +164,7 @@ index e427708cd..e0c4adcca 100644
  		ELDFLAGS=
  		CLDWHOLEARCHIVE="-all_load"
  		CLDNOWHOLEARCHIVE=
-@@ -1656,6 +1654,28 @@ package as well (which may be called readline-devel or something similar).])
+@@ -1656,6 +1653,31 @@ package as well (which may be called readline-devel or something similar).])
  	LIBS=$lvm_saved_libs
  fi
  
@@ -177,7 +186,10 @@ index e427708cd..e0c4adcca 100644
 +  AC_DEFINE(GNU_SYMVER, 1,
 +            [Define to use GNU versioning in the shared library.])
 +  case "$host_os" in
-+    linux*) CLDFLAGS="$CLDFLAGS -Wl,--version-script,.export.sym" ;;
++    linux*)
++      CLDFLAGS="$CLDFLAGS -Wl,--version-script,.export.sym"
++      LDDEPS="$LDDEPS .export.sym"
++      ;;
 +  esac
 +fi
 +
