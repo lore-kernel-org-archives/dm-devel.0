@@ -1,62 +1,62 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v4 11/14] treewide: Prepare to remove VLA usage for AHASH_REQUEST_ON_STACK
-Date: Thu, 19 Jul 2018 11:44:03 -0700
-Message-ID: <CAGXu5jKXtNc0ePXWAbUgiqx6K_fJQG2xptwiTdV-vd_sYiu=9w@mail.gmail.com>
-References: <20180711203619.1020-1-keescook@chromium.org> <20180711203619.1020-12-keescook@chromium.org>
- <CAK8P3a3356dbruUfS_+fj9f+X-0jbNE8WMe5sWhJmuRY9Nvcbg@mail.gmail.com>
- <20180713004038.lwibdesz7ohhoind@gondor.apana.org.au> <CAGXu5jLYmC7U=bucFZCLsSXNX=T4WhCccR6hx9dwROYF+ZMt0Q@mail.gmail.com>
- <20180713034406.zwu2pkp3f2onybxs@gondor.apana.org.au> <CAGXu5jLR0zJ6b9axJuG_uvttNShNcN3rhQKGVjW37qPd9saY-Q@mail.gmail.com>
- <20180713052029.cfo24bsr5swtbdja@gondor.apana.org.au> <CAGXu5jLG4gE44z9cXL3-D1bjbZB1RgTnTsb3PWhU7B3NdRrwVg@mail.gmail.com>
- <CAK8P3a3nk4-EewKTXcLENTb86r1+bJz_WrkJoJt+D1uTwcpxPA@mail.gmail.com>
- <CAGXu5j+Q_jc_f9VybyoJqmV7_Q-3hqnC-pOubfNsi7uyAROVrQ@mail.gmail.com>
- <CAK8P3a3Dh+g=v++BMCtmmiOSnVu4CEUgss0U7BZS_K45aTddqg@mail.gmail.com>
- <CAKv+Gu-cOV6uo6MpLxr9uQSTT-ku_wn9+D7CC4+3maJtvcaGoA@mail.gmail.com>
- <CAKv+Gu8e9sm42NKwQvQzD33JTHSaEY2q7sm0W0065dDz_rzSaA@mail.gmail.com>
- <CAGXu5jLuWfZFTs390c3WSAReLrQ6_KOOvr0FYjXhUQ5h5b8xWA@mail.gmail.com>
- <B278D0F7-71B6-4F3D-B625-D8B0298CE5B4@linaro.org> <CAGXu5jJyyi1FvT9PytMkU_rPeSqMSHR7asjn8ykShZGGRPPRDg@mail.gmail.com>
- <E9125A0C-45C8-45FF-93F6-B7AD9DC86347@linaro.org> <CAKv+Gu9WH-_keAuio6AYMu6KD877GdRUoDrua_1cqKqK8sE=7A@mail.gmail.com>
+From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Subject: Re: [PATCH 0/5] crypto: add IV generation templates
+Date: Fri, 20 Jul 2018 10:02:21 +0900
+Message-ID: <CAKv+Gu_mb26HRi==5oeQyZ7ZOgifg7RUNt2c2V=tTqvFrMYq5g@mail.gmail.com>
+References: <1531899055-29362-1-git-send-email-wangxiongfeng2@huawei.com>
+	<CAK8P3a0T0Ku-2GOY8fT38LVy4GpvVSsx=szi0ZNEUq8Z_hZweQ@mail.gmail.com>
+	<CAKv+Gu8uD4NNS9SaWdSST7n+984ybTBLhGDpq3k5GG4o1+PMWA@mail.gmail.com>
+	<5d0bb72c-862e-63be-3cc5-83ed02b9a575@huawei.com>
+	<CAKv+Gu-hvEUyOOh_xpYsSj2WTcbM1FwRnJ1DkTGH1UjxkppNMQ@mail.gmail.com>
+	<20180719155026.GF27938@sirena.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKv+Gu9WH-_keAuio6AYMu6KD877GdRUoDrua_1cqKqK8sE=7A@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Cc: Arnd Bergmann <arnd@arndb.de>, Herbert Xu <herbert@gondor.apana.org.au>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Eric Biggers <ebiggers@google.com>, Alasdair Kergon <agk@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, Masahiro Yamada <yamada.masahiro@socionext.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, qat-linux@intel.com, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180719155026.GF27938@sirena.org.uk>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mark Brown <broonie@kernel.org>
+Cc: Arnd Bergmann <arnd@arndb.de>, Mike Snitzer <snitzer@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, Jonathan Cameron <jonathan.cameron@huawei.com>, Xiongfeng Wang <wangxiongfeng2@huawei.com>, Alasdair Kergon <agk@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>
 List-Id: dm-devel.ids
 
-On Thu, Jul 19, 2018 at 7:54 AM, Ard Biesheuvel
-<ard.biesheuvel@linaro.org> wrote:
-> On 19 July 2018 at 12:13, Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
->>
->>> On 19 Jul 2018, at 12:09, Kees Cook <keescook@chromium.org> wrote:
->>>
->>> On Wed, Jul 18, 2018 at 7:55 PM, Ard Biesheuvel
->>> <ard.biesheuvel@linaro.org> wrote:
->>>> I have only build tested it, so if you make sure that it does not break anything, please go ahead.
->>>
->>> I can give it a spin; what's the best way? Is CONFIG_CRYPTO_MANAGER=y
->>> sufficient?
->>>
->>
->> You should be able to test ccm(aes) with tcrypt, yes
+On 20 July 2018 at 00:50, Mark Brown <broonie@kernel.org> wrote:
+> On Thu, Jul 19, 2018 at 11:08:52PM +0900, Ard Biesheuvel wrote:
 >
-> Apologies, I should have been more clear here. I was replying on my
-> phone while attending a meeting.
+>> But this will only be the case if the accelerator is capable of doing
+>> the IV generation and en/decryption of multiple contiguous sectors in
+>> a single call. Otherwise, you are just shifting work from one layer to
+>> the next.
 >
-> The builtin test will only kick in for chaining mode templates if they
-> are instantiated by something that invokes the algorithm, such as
-> loading tcrypt.ko with mode=37 (assuming that ccm(aes) has to be
-> instantiated from crypto/ccm.c and some AES cipher rather than being
-> provided directly by, e.g., arm64's AES-CCM driver)
+>> So at this point, it would be useful to clarify what exactly these
+>> accelerators are doing and how.
 >
-> I just did the tcrypt myself, and the patch appears to be fine. Let me
-> know if you want me to spin the patch.
+> Existing hardware can definitely do the IV generation and I believe that
+> it can chain multiple sectors together though I'd need to confirm this,
+> as mentioned elsewhere in the thread the ccree driver is for one of
+> the relevant devices.  I've poked some relevant people.
 
-Awesome, thanks for testing! I built a commit with you as the author.
-I'll send it out with the next batch... :)
+As far as I can infer from the ccree driver source, IV generation and
+en/decryption are separate operations, and given that each sector
+requires both operations to be applied in sequence, letting the crypto
+layer handle an entire bio does not have any benefit *at the moment*.
 
--Kees
+In fact, it seems to me that the ability to use protected AES keys is
+much more appealing than any performance argument (including 'it may
+be slower but at least it does not load the CPU'), so some background
+on how such a change would enable this use case would be beneficial as
+well to getting this adopted.
+
+So my recommendation would be to focus on moving the IV generation
+into the crypto layer, but conservatively, and not confuse people by
+making additional changes that could theoretically improve
+performance, but only on hardware that does not exist.
 
 -- 
-Kees Cook
-Pixel Security
+Ard.
