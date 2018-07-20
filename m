@@ -1,11 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] block: allow max_discard_segments to be stacked
-Date: Fri, 20 Jul 2018 14:57:38 -0400
-Message-ID: <20180720185738.11646-1-snitzer@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 08/10] libmultipath: remove _filter_*
+	blacklist functions
+Date: Fri, 20 Jul 2018 21:05:59 +0200
+Message-ID: <44cd09849a9661dec1793fd4214fc43085bbc029.camel@suse.com>
+References: <1531510755-16046-1-git-send-email-bmarzins@redhat.com>
+	<1531510755-16046-9-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1531510755-16046-9-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,45 +19,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: axboe@kernel.dk
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, hch@lst.de
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Set max_discard_segments to USHRT_MAX in blk_set_stacking_limits() so
-that blk_stack_limits() can stack up this limit for stacked devices.
-
-before:
-
-$ cat /sys/block/nvme0n1/queue/max_discard_segments
-256
-$ cat /sys/block/dm-0/queue/max_discard_segments
-1
-
-after:
-
-$ cat /sys/block/nvme0n1/queue/max_discard_segments
-256
-$ cat /sys/block/dm-0/queue/max_discard_segments
-256
-
-Fixes: 1e739730c5b9e ("block: optionally merge discontiguous discard bios into a single request")
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- block/blk-settings.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/block/blk-settings.c b/block/blk-settings.c
-index d1de71124656..24fff4a3d08a 100644
---- a/block/blk-settings.c
-+++ b/block/blk-settings.c
-@@ -128,7 +128,7 @@ void blk_set_stacking_limits(struct queue_limits *lim)
- 
- 	/* Inherit limits from component devices */
- 	lim->max_segments = USHRT_MAX;
--	lim->max_discard_segments = 1;
-+	lim->max_discard_segments = USHRT_MAX;
- 	lim->max_hw_sectors = UINT_MAX;
- 	lim->max_segment_size = UINT_MAX;
- 	lim->max_sectors = UINT_MAX;
--- 
-2.18.0
+T24gRnJpLCAyMDE4LTA3LTEzIGF0IDE0OjM5IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gVGhlIG9uZSBwb2ludCBvZiB0aGVzZSBmdW5jdGlvbnMgd2FzIGZvciBfZmlsdGVyX3Bh
+dGgoKSwgYW5kIHRoYXQKPiB3YXNuJ3QKPiBpbXByb3ZlZCBieSB1c2luZyB0aGVtLiBTaW5jZSBm
+aWx0ZXJfcGF0aCgpIG9ubHkgcHJpbnRlZCBvbmUgbWVzc2FnZQo+IGF0Cj4gdGhlIGVuZCwgeW91
+IGNvdWxkIGhhdmUgc2l0dWF0aW9ucyB3aGVyZSB0aGUgd3dpZCB3YXMgYmxhY2tsaXN0ZWQsCj4g
+YnV0Cj4gdGhlIGJsYWNrbGlzdCBtZXNzYWdlIGluY2x1ZGVkIHRoZSB2ZW5kb3IvcHJvZHVjdCBp
+bnN0ZWFkLiBBbHNvLCB0aGUKPiBwcm90b2NvbCBhbmQgcHJvcGVydHkgbWVzc2FnZXMgd2VyZSBw
+cmludGVkIHR3aWNlLCBhbmQgaWYgdGhlIGRldmljZQo+IHdhcwo+IG9uIG11bHRpcGxlIHdoaXRl
+bGlzdHMsIG9ubHkgdGhlIGxhc3Qgb25lIGlzIHByaW50ZWQuCj4gCj4gU2lnbmVkLW9mZi1ieTog
+QmVuamFtaW4gTWFyemluc2tpIDxibWFyemluc0ByZWRoYXQuY29tPgo+IC0tLQo+ICBsaWJtdWx0
+aXBhdGgvYmxhY2tsaXN0LmMgfCAxNjggKysrKysrKysrKysrKysrKysrKy0tLS0tLS0tLS0tLS0t
+LS0KPiAtLS0tLS0tLS0tLS0KPiAgbGlibXVsdGlwYXRoL2JsYWNrbGlzdC5oIHwgICAyICstCj4g
+IGxpYm11bHRpcGF0aC9jb25maWd1cmUuYyB8ICAgMiArLQo+ICBsaWJtdWx0aXBhdGgvZGlzY292
+ZXJ5LmMgfCAgIDIgKy0KPiAgNCBmaWxlcyBjaGFuZ2VkLCA3MSBpbnNlcnRpb25zKCspLCAxMDMg
+ZGVsZXRpb25zKC0pCgpSZXZpZXdlZC1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+
+CgpPbmUgcmVtYXJrOgoKPiArZmlsdGVyX2RldmljZSAodmVjdG9yIGJsaXN0LCB2ZWN0b3IgZWxp
+c3QsIGNoYXIgKiB2ZW5kb3IsIGNoYXIgKgo+IHByb2R1Y3QsCj4gKwkgICAgICAgY2hhciAqIGRl
+dikKCldoaWxlIHdlIGFyZSBhdCBpdCwgY291bGQgd2UgZnVydGhlciBzaW1wbGlmeSB0aGVzZSB0
+byB0YWtlIGEgImNvbmYiCmFyZ3VtZW50IGluc3RlYWQgb2YgZWxpc3QgYW5kIGJsaXN0PwoKTWFy
+dGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDAp
+OTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBK
+YW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0K
+ZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVk
+aGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
