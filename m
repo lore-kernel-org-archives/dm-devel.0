@@ -1,15 +1,11 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 07/10] libmultipath: add "protocol" blacklist
-	option.
-Date: Fri, 20 Jul 2018 20:49:17 +0200
-Message-ID: <fed105f786bc3cf07b1bc56ff1e7716630a8e87f.camel@suse.com>
-References: <1531510755-16046-1-git-send-email-bmarzins@redhat.com>
-	<1531510755-16046-8-git-send-email-bmarzins@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] block: allow max_discard_segments to be stacked
+Date: Fri, 20 Jul 2018 14:57:38 -0400
+Message-ID: <20180720185738.11646-1-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1531510755-16046-8-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,38 +15,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: axboe@kernel.dk
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, hch@lst.de
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE4LTA3LTEzIGF0IDE0OjM5IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gTXVsdGlwbGUgdXNlcnMgaGF2ZSByZXF1ZXN0ZWQgYW4gZWFzeSB3YXkgdG8gc2V0dXAg
-YmxhY2tsaXN0cyB0aGF0IGRvCj4gdGhpbmdzIHN1Y2ggYXMgYmxhY2tsaXN0aW5nIGFsbCBub24g
-RkMgYW5kIGlTQ1NJIGRldmljZXMuIEN1cnJlbnRseQo+IHRoZXJlIGlzIG5vIGVhc3kgd2F5IHRv
-IGRvIHRoaXMsIHdpdGhvdXQga25vd2luZyBpbiBhZHZhbmNlIHdoYXQgdGhlCj4gZGV2aWNlcyBh
-cmUuICBMb29raW5nIGludG8gdGhlIHVkZXYgcHJvcGVydHkgdmFsdWVzLCBJIGRpZG4ndCBzZWUg
-YQo+IGNvbnNpc3RlbnQgc2V0IG9mIHZhbHVlcyB0aGF0IHdvdWxkIHdvcmtlZCBmb3IgYWxsIHRo
-ZSBkaWZmZXJlbnQKPiB0eXBlcwo+IG9mIHJlcXVlc3RzIGxpa2UgdGhpcyAod2hpY2ggd291bGQg
-aGF2ZSBhbGxvd2VkIHVzIHRvIHNvbHZlIHRoaXMgYnkKPiBleHRlbmRpbmcgdGhlICJwcm9wZXJ0
-eSIgYmxhY2tsaXN0IG9wdGlvbiB0byBhbGxvdyBjb21wYXJpbmcgdmFsdWVzLAo+IGluc3RlYWQg
-b2YganVzdCBrZXl3b3JkcykuCj4gCj4gSW5zdGVhZCBJJ3ZlIG9wdGVkIHRvIGFsbG93IG11bHRp
-cGF0aCB0byBibGFja2xpc3Qvd2hpdGVsaXN0IGRldmljZXMKPiBieSB0aGUgcHJvdG9jb2wgc3Ry
-aW5ncyBwcmludGVkIGJ5ICJtdWx0aXBhdGhkOiBhZGQgbmV3IHByb3RvY29sIHBhdGgKPiB3aWxk
-Y2FyZCIuIFRoaXMgY2hlY2sgaGFwcGVucyBhZnRlciBtdWx0aXBhdGggY2hlY2tzIHRoZSAiZGV2
-aWNlIgo+IGtleXdvcmQsIGFuZCBiZWZvcmUgaXQgY2hlY2tzIHd3aWQuIFRoaXMgZ2l2ZXMgdXNl
-cnMgYW4gZWFzaWx5Cj4gdW5kZXJzdGFuZGlibGUgbWV0aG9kIHRvIHNldCB1cCB0aGVzZSB0eXBl
-cyBvZiBibGFja2xpc3RzLCB3aXRob3V0Cj4gbmVlZGluZyB0byBrbm93IHRoZSBleGFjdCBhcnJh
-eXMgYmVpbmcgdXNlZC4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBCZW5qYW1pbiBNYXJ6aW5za2kgPGJt
-YXJ6aW5zQHJlZGhhdC5jb20+Cj4gLS0tCj4gIGxpYm11bHRpcGF0aC9ibGFja2xpc3QuYyAgIHwg
-NTEKPiArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKy0tLS0tLS0tCj4gIGxp
-Ym11bHRpcGF0aC9ibGFja2xpc3QuaCAgIHwgIDMgKysrCj4gIGxpYm11bHRpcGF0aC9jb25maWcu
-YyAgICAgIHwgMTUgKysrKysrKysrKysrKysKPiAgbGlibXVsdGlwYXRoL2NvbmZpZy5oICAgICAg
-fCAgMiArKwo+ICBsaWJtdWx0aXBhdGgvZGljdC5jICAgICAgICB8IDE0ICsrKysrKysrKysrLS0K
-PiAgbGlibXVsdGlwYXRoL2Rpc2NvdmVyeS5jICAgfCAgNSArKystLQo+ICBsaWJtdWx0aXBhdGgv
-cHJpbnQuYyAgICAgICB8IDMxICsrKysrKysrKysrKysrKysrKysrKysrKysrKysKPiAgbXVsdGlw
-YXRoL211bHRpcGF0aC5jb25mLjUgfCAxNiArKysrKysrKysrKysrLS0KPiAgOCBmaWxlcyBjaGFu
-Z2VkLCAxMjMgaW5zZXJ0aW9ucygrKSwgMTQgZGVsZXRpb25zKC0pCgpSZXZpZXdlZC1ieTogTWFy
-dGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+CgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNr
-QHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBH
-RjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAy
-MTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJl
-ZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Set max_discard_segments to USHRT_MAX in blk_set_stacking_limits() so
+that blk_stack_limits() can stack up this limit for stacked devices.
+
+before:
+
+$ cat /sys/block/nvme0n1/queue/max_discard_segments
+256
+$ cat /sys/block/dm-0/queue/max_discard_segments
+1
+
+after:
+
+$ cat /sys/block/nvme0n1/queue/max_discard_segments
+256
+$ cat /sys/block/dm-0/queue/max_discard_segments
+256
+
+Fixes: 1e739730c5b9e ("block: optionally merge discontiguous discard bios into a single request")
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ block/blk-settings.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index d1de71124656..24fff4a3d08a 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -128,7 +128,7 @@ void blk_set_stacking_limits(struct queue_limits *lim)
+ 
+ 	/* Inherit limits from component devices */
+ 	lim->max_segments = USHRT_MAX;
+-	lim->max_discard_segments = 1;
++	lim->max_discard_segments = USHRT_MAX;
+ 	lim->max_hw_sectors = UINT_MAX;
+ 	lim->max_segment_size = UINT_MAX;
+ 	lim->max_sectors = UINT_MAX;
+-- 
+2.18.0
