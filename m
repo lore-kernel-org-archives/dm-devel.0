@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 2/5] exofs: use bio_clone_fast in _write_mirror
-Date: Tue, 24 Jul 2018 09:52:31 +0200
-Message-ID: <20180724075234.26861-3-hch@lst.de>
+Subject: [PATCH 3/5] block: remove bio_clone_kmalloc
+Date: Tue, 24 Jul 2018 09:52:32 +0200
+Message-ID: <20180724075234.26861-4-hch@lst.de>
 References: <20180724075234.26861-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,30 +21,30 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: linux-block@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, linux-bcache@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The mirroring code never changes the bio data or biovecs.  This means
-we can reuse the biovec allocation easily instead of duplicating it.
+Unused now.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by Boaz Harrosh <ooo@electrozaur.com>
 Reviewed-by: Ming Lei <ming.lei@redhat.com>
 ---
- fs/exofs/ore.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ include/linux/bio.h | 6 ------
+ 1 file changed, 6 deletions(-)
 
-diff --git a/fs/exofs/ore.c b/fs/exofs/ore.c
-index 1b8b44637e70..5331a15a61f1 100644
---- a/fs/exofs/ore.c
-+++ b/fs/exofs/ore.c
-@@ -873,8 +873,8 @@ static int _write_mirror(struct ore_io_state *ios, int cur_comp)
- 			struct bio *bio;
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index ab221c517f4e..b861baa59454 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -443,12 +443,6 @@ static inline struct bio *bio_kmalloc(gfp_t gfp_mask, unsigned int nr_iovecs)
+ 	return bio_alloc_bioset(gfp_mask, nr_iovecs, NULL);
+ }
  
- 			if (per_dev != master_dev) {
--				bio = bio_clone_kmalloc(master_dev->bio,
--							GFP_KERNEL);
-+				bio = bio_clone_fast(master_dev->bio,
-+						     GFP_KERNEL, NULL);
- 				if (unlikely(!bio)) {
- 					ORE_DBGMSG(
- 					      "Failed to allocate BIO size=%u\n",
+-static inline struct bio *bio_clone_kmalloc(struct bio *bio, gfp_t gfp_mask)
+-{
+-	return bio_clone_bioset(bio, gfp_mask, NULL);
+-
+-}
+-
+ extern blk_qc_t submit_bio(struct bio *);
+ 
+ extern void bio_endio(struct bio *);
 -- 
 2.18.0
