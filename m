@@ -1,13 +1,14 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: kill bio_clone_kmalloc and bio_clone_bioset
-Date: Tue, 24 Jul 2018 13:43:37 -0700
-Message-ID: <8539f366-178d-ee2d-7c24-2bf339f4caff@kernel.dk>
-References: <20180724075234.26861-1-hch@lst.de>
+Subject: Re: [PATCH] block: allow max_discard_segments to be
+	stacked
+Date: Tue, 24 Jul 2018 13:47:11 -0700
+Message-ID: <ba30bcde-3d3c-f1ea-ac61-cf483073f999@kernel.dk>
+References: <20180720185738.11646-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180724075234.26861-1-hch@lst.de>
+In-Reply-To: <20180720185738.11646-1-snitzer@redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,18 +19,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@lst.de>
-Cc: linux-block@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, linux-bcache@vger.kernel.org, dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, hch@lst.de
 List-Id: dm-devel.ids
 
-On 7/24/18 12:52 AM, Christoph Hellwig wrote:
-> Hi all,
+On 7/20/18 11:57 AM, Mike Snitzer wrote:
+> Set max_discard_segments to USHRT_MAX in blk_set_stacking_limits() so
+> that blk_stack_limits() can stack up this limit for stacked devices.
 > 
-> this series removes all but one users of the traditional deep bio clone,
-> and then moves bio_clone_bioset to its only caller so that we get rid
-> of the deep bio cloning in the block layer API.
+> before:
+> 
+> $ cat /sys/block/nvme0n1/queue/max_discard_segments
+> 256
+> $ cat /sys/block/dm-0/queue/max_discard_segments
+> 1
+> 
+> after:
+> 
+> $ cat /sys/block/nvme0n1/queue/max_discard_segments
+> 256
+> $ cat /sys/block/dm-0/queue/max_discard_segments
+> 256
 
-Applied for 4.19.
+Applied, thanks Mike.
 
 -- 
 Jens Axboe
