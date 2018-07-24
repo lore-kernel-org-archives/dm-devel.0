@@ -1,17 +1,18 @@
-From: David Teigland <teigland@redhat.com>
-Subject: Re: [git pull] device mapper fix for 4.18-rc6
-Date: Tue, 24 Jul 2018 10:30:55 -0500
-Message-ID: <20180724153055.GA12605@redhat.com>
-References: <20180720191407.GA11868@redhat.com>
-	<CA+55aFxGp1oh6hYuJVkRKXEaD-F2-qYUYgrerhxqwBTeeAqdxA@mail.gmail.com>
-	<20180720224046.GA12929@redhat.com>
-	<alpine.LRH.2.02.1807241108340.2382@file01.intranet.prod.int.rdu2.redhat.com>
+From: Laurence Oberman <loberman@redhat.com>
+Subject: Re: data corruption with 'splt' workload to XFS on DM
+ cache with its 3 underlying devices being on same NVMe device
+Date: Tue, 24 Jul 2018 11:31:48 -0400
+Message-ID: <1532446308.9819.7.camel@redhat.com>
+References: <20180723163357.GA29658@redhat.com>
+	<e761830f-e3f7-3e88-1697-b4b150e84e5f@suse.de>
+	<20180724130703.GA30804@redhat.com>
+	<27cadfb3-2442-3931-6d58-58aa6adb2e2b@suse.de>
+	<1532440623.9819.4.camel@redhat.com> <20180724151845.GB3235@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1807241108340.2382@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <20180724151845.GB3235@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,29 +22,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, Mike Snitzer <snitzer@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>, Hannes Reinecke <hare@suse.de>
+Cc: linux-block@vger.kernel.org, Brett Hull <bhull@redhat.com>, dm-devel@redhat.com, linux-nvme@lists.infradead.org
 List-Id: dm-devel.ids
 
-On Tue, Jul 24, 2018 at 11:18:54AM -0400, Mikulas Patocka wrote:
-> > I hold it to be a "fix" because it was an embarassing oversight on my
-> > part.  Without this, userspace support cannot be properly added.  LVM2
-> > developers raised their inability to put their metadata anywhere and I
-> > was like "oh shit".
-> 
-> This is not oversight.
-> 
-> It was originally planned that the dm-writecache target would use lvm 
-> metadata just like the dm-cache target - if it were implemented this way, 
-> no "offset" argument would be needed. But David Teigland who was given the 
-> task to implement dm-writecache support in lvm refused to do it this way 
-> and he insists that he must put some of his own metadata at the beginning 
-> of the cache device before the superblock.
-> 
-> So this patch is needed because of him.
-
-Mikulas, an offset would have been useful while I was experimenting with
-dm-writecache.  I don't actually use or need the offset in lvm.  I don't
-think it's a bad idea, but I don't care.
-
-Dave
+T24gVHVlLCAyMDE4LTA3LTI0IGF0IDExOjE4IC0wNDAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6Cj4g
+T24gVHVlLCBKdWwgMjQgMjAxOCBhdMKgwqA5OjU3YW0gLTA0MDAsCj4gTGF1cmVuY2UgT2Jlcm1h
+biA8bG9iZXJtYW5AcmVkaGF0LmNvbT4gd3JvdGU6Cj4gCj4gPiBPbiBUdWUsIDIwMTgtMDctMjQg
+YXQgMTU6NTEgKzAyMDAsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPiA+ID4gCj4gPiA+IF9BY3R1
+YWxseV8sIEkgd291bGQndmUgZG9uZSBpdCB0aGUgb3RoZXIgd2F5IGFyb3VuZDsgYWZ0ZXIgYWxs
+LAo+ID4gPiB3aGVyZSd0IHRoZSBwb2ludCBpbiBydW5uaW5nIGRtLW11bHRpcGF0aCBvbiBhIHBh
+cnRpdGlvbj8KPiA+ID4gQW55dGhpbmcgcnVubmluZyBvbiB0aGUgb3RoZXIgcGFydGl0aW9ucyB3
+b3VsZCBzdWZmZXIgZnJvbSB0aGUKPiA+ID4gaXNzdWVzIGRtLW11bHRpcGF0aCBpcyBkZXNpZ25l
+ZCB0byBoYW5kbGUgKHRlbXBvcmFyeSBwYXRoIGxvc3MKPiA+ID4gZXRjKSwgc28gSSdtCj4gPiA+
+IG5vdCBxdWl0ZSBzdXJlIHdoYXQgeW91IGFyZSB0cnlpbmcgdG8gYWNoaWV2ZSB3aXRoIHlvdXIg
+dGVzdGNhc2UuCj4gPiA+IENhbiB5b3UgZW5saWdodGVuIG1lPwo+ID4gPiAKPiA+ID4gQ2hlZXJz
+LAo+ID4gPiAKPiA+ID4gSGFubmVzCj4gCj4gSSB3YXNuJ3QgbG9va2luZyB0byBkZXBseSB0aGlz
+IChtdWx0aXBhdGggb24gcGFydGl0aW9uKSBpbiBwcm9kdWN0aW9uCj4gb3IKPiBzdWdnZXN0IGl0
+IHRvIG90aGVycy7CoMKgSXQgd2FzIGEgbWVhbnMgdG8gZXhwZXJpbWVudC7CoMKgTW9yZSBiZWxv
+dy4KPiAKPiA+IFRoaXMgY2FtZSBhYm91dCBiZWNhdXNlIGEgY3VzdG9tZXIgaXMgdXNpbmcgbnZt
+ZSBmb3IgYSBkbS1jYWNoZQo+ID4gZGV2aWNlCj4gPiBhbmQgY3JlYXRlZCBtdWx0aXBsZSBwYXJ0
+aXRpb25zIHNvIGFzIHRvIHVzZSB0aGUgc2FtZSBudm1lIHRvIGNhY2hlCj4gPiBtdWx0aXBsZSBk
+aWZmZXJlbnQgInNsb3dlciIgZGV2aWNlcy4gVGhlIGNvcnJ1cHRpb24gd2FzIG5vdGljZWQgaW4K
+PiA+IFhGUwo+ID4gYW5kIEkgZW5nYWdlZCBNaWtlIHRvIGFzc2lzdCBpbiBmaWd1cmluZyBvdXQg
+d2hhdCB3YXMgZ29pbmcgb24uCj4gCj4gWWVzLCBzbyB0b3BvbG9neSBmb3IgdGhlIGN1c3RvbWVy
+J3Mgc2V0dXAgaXM6Cj4gCj4gMSkgTUQgcmFpZDEgb24gMiBOVk1lIHBhcnRpdGlvbnMgKGZyb20g
+c2VwYXJhdGUgTlZNZSBkZXZpY2VzKS4KPiAyKSBUaGVuIERNIGNhY2hlJ3MgImZhc3QiIGFuZCAi
+bWV0YWRhdGEiIGRldmljZXMgbGF5ZXJlZCBvbiBkbS1saW5lYXIKPiDCoMKgwqBtYXBwaW5nIG9u
+dG9wIG9mIHRoZSBNRCByYWlkMS4KPiAzKSBUaGVuIENlcGgncyByYmQgZm9yIERNLWNhY2hlJ3Mg
+c2xvdyBkZXZpY2UuCj4gCj4gSSB3YXMganVzdCBsb29raW5nIHRvIHNpbXBsaWZ5IHRoZSBzdGFj
+ayB0byB0cnkgdG8gYXNzZXNzIHdoeSBYRlMKPiBjb3JydXB0aW9uIHdhcyBiZWluZyBzZWVuIHdp
+dGhvdXQgYWxsIHRoZSBpbnNhbml0eS4KPiAKPiBPbmUgaXNzdWUgd2FzIGNvcnJ1cHRpb24gZHVl
+IHRvIGluY29ycmVjdCBzaHV0ZG93biBvcmRlciAobmV0d29yayB3YXMKPiBnZXR0aW5nIHNodXRk
+b3duIG91dCBmcm9tIHVuZGVybmVhdGggcmJkLCBhbmQgaW4gdHVybiBETS1jYWNoZQo+IGNvdWxk
+bid0Cj4gY29tcGxldGUgaXRzIElPIG1pZ3JhdGlvbnMgZHVyaW5nIGNhY2hlX3Bvc3RzdXNwZW5k
+KCkpLgo+IAo+IFNvIEkgZWxlY3RlZCB0byB0cnkgdXNpbmcgRE0gbXVsdGlwYXRoIHdpdGggcXVl
+dWVfaWZfbm9fcGF0aCB0byB0cnkKPiB0bwo+IHJlcGxpY2F0ZSByYmQgbG9zaW5nIG5ldHdvcmsg
+X3dpdGhvdXRfIG5lZWRpbmcgYSBmdWxsIENlcGgvcmJkIHNldHVwLgo+IAo+IFRoZSByZXN0IGlz
+IGhpc3RvcnkuLi4gYSByYXQtaG9sZSBvZiBjb3JydXB0aW9uIHRoYXQgbGlrZWx5IGlzIHZlcnkK
+PiBkaWZmZXJlbnQgdGhhbiB0aGUgY3VzdG9tZXIncyBzZXR1cC4KPiAKPiBNaWtlCk5vdCB0byBt
+dWRkeSB0aGUgd2F0ZXJzIGhlcmUsIGFuZCBhcyBNaWtlIHNhaWQgdGhlIGlzc3VlIGhlIHRyaXBw
+ZWQKb3ZlciBtYXkgbm90IGJlIHRoZSBkaXJlY3QgaXNzdWUgd2Ugb3JpZ2luYWxseSBzdGFydGVk
+IHdpdGguCgpJbiB0aGUgbGFiIHJlcHJvZHVjZXIgd2l0aCByYmQgYXMgYSBzbG93IGRldmljZXMg
+d2UgZG8gbm90IGhhdmUgYW4gTUQKcmFpZGVkIG52bWUgZm9yIHRoZSBkbS1jYWNoZSwgYnV0IHdl
+IHN0aWxsIHNlZSB0aGUgY29ycnVwdGlvbiBvbmx5IG9uCnRoZSByYmQgYmFzZWQgdGVzdC4KCldl
+IHVzZWQgdGhlIG52bWUgcGFydGl0aW9uZWQgYnV0IG5vIERNIHJhaWQgdG8gdHJ5IGFuIEYvQyBk
+ZXZpY2UtCm1hcHBlci1tdWx0aXBhdGggTFVOUyBjYWNoZWQgdmlhIGRtLWNhY2hlLgoKVGhlIGxh
+c3QgdGVzdCB3ZSByYW4gd2hlcmUgd2UgZGlkIG5vdCBzZWUgY29ycnVwdGlvbiB3YXMgYSBwYXJ0
+aXRpb24Kd2hlcmUgdGhlIHNlY29uZCBwYXJ0aXRpb24gd2FzIHVzZWQgdG8gY2FjaGUgRi9DIGx1
+bnMKCm52bWUwbjHCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgMjU5OjDCoMKgwqDCoDAgMzcyLjZHwqDCoDAgZGlza8KgwqAK4pSc4pSAbnZt
+ZTBuMXAxwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAy
+NTk6McKgwqDCoMKgMMKgwqDCoDE1MEfCoMKgMCBwYXJ0wqDCoArilJTilIBudm1lMG4xcDLCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoDI1OToywqDCoMKg
+wqAwwqDCoMKgMTUwR8KgwqAwIHBhcnTCoMKgCsKgIOKUnOKUgGNhY2hlX0ZDLW52bWVfYmxrX2Nh
+Y2hlX2NkYXRhwqDCoMKgMjUzOjQywqDCoMKgMMKgwqDCoMKgMjBHwqDCoDAgbHZtwqDCoMKgCsKg
+IOKUgiDilJTilIBjYWNoZV9GQy1mY19kaXNrwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoDI1
+Mzo0NcKgwqDCoDDCoMKgwqDCoDQ4R8KgwqAwCmx2bcKgwqDCoC9jYWNoZV9GQwrCoCDilJTilIBj
+YWNoZV9GQy1udm1lX2Jsa19jYWNoZV9jbWV0YcKgwqDCoDI1Mzo0M8KgwqDCoDDCoMKgwqDCoDQw
+TcKgwqAwIGx2bcKgwqDCoArCoMKgwqDCoOKUlOKUgGNhY2hlX0ZDLWZjX2Rpc2vCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgMjUzOjQ1wqDCoMKgMMKgwqDCoMKgNDhHwqDCoDAKbHZtwqDCoMKg
+L2NhY2hlX0ZDCgpjYWNoZV9GQy1mY19kaXNrICgyNTM6NDUpCsKg4pSc4pSAY2FjaGVfRkMtZmNf
+ZGlza19jb3JpZyAoMjUzOjQ0KQrCoOKUgsKgwqDilJTilIAzNjAwMTQwNTA4ZGE2NmMyYzllZTRj
+YzZhZmFjZTFiYWIgKDI1MzozNikgTXVsdGlwYXRoCsKg4pSCwqDCoMKgwqDCoOKUnOKUgCAoNjg6
+MjI0KQrCoOKUgsKgwqDCoMKgwqDilJzilIAgKDY5OjI0MCkKwqDilILCoMKgwqDCoMKg4pSc4pSA
+ICg4OjE5MikKwqDilILCoMKgwqDCoMKg4pSU4pSAICg4OjY0KQrCoOKUnOKUgGNhY2hlX0ZDLW52
+bWVfYmxrX2NhY2hlX2NkYXRhICgyNTM6NDIpCsKg4pSCwqDCoOKUlOKUgCAoMjU5OjIpCsKg4pSU
+4pSAY2FjaGVfRkMtbnZtZV9ibGtfY2FjaGVfY21ldGEgKDI1Mzo0MykKwqDCoMKgwqDilJTilIAg
+KDI1OToyKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
+cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
