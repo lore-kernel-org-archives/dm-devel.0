@@ -1,17 +1,17 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Laurence Oberman <loberman@redhat.com>
 Subject: Re: data corruption with 'splt' workload to XFS on DM
  cache with its 3 underlying devices being on same NVMe device
-Date: Tue, 24 Jul 2018 15:51:05 +0200
-Message-ID: <27cadfb3-2442-3931-6d58-58aa6adb2e2b@suse.de>
+Date: Tue, 24 Jul 2018 09:57:03 -0400
+Message-ID: <1532440623.9819.4.camel@redhat.com>
 References: <20180723163357.GA29658@redhat.com>
 	<e761830f-e3f7-3e88-1697-b4b150e84e5f@suse.de>
 	<20180724130703.GA30804@redhat.com>
+	<27cadfb3-2442-3931-6d58-58aa6adb2e2b@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180724130703.GA30804@redhat.com>
-Content-Language: en-US
+In-Reply-To: <27cadfb3-2442-3931-6d58-58aa6adb2e2b@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,87 +21,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
+To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, linux-nvme@lists.infradead.org
 List-Id: dm-devel.ids
 
-On 07/24/2018 03:07 PM, Mike Snitzer wrote:
-> On Tue, Jul 24 2018 at  2:00am -0400,
-> Hannes Reinecke <hare@suse.de> wrote:
-> 
->> On 07/23/2018 06:33 PM, Mike Snitzer wrote:
->>> Hi,
->>>
->>> I've opened the following public BZ:
->>> https://bugzilla.redhat.com/show_bug.cgi?id=1607527
->>>
->>> Feel free to add comments to that BZ if you have a redhat bugzilla
->>> account.
->>>
->>> But otherwise, happy to get as much feedback and discussion going purely
->>> on the relevant lists.  I've taken ~1.5 weeks to categorize and isolate
->>> this issue.  But I've reached a point where I'm getting diminishing
->>> returns and could _really_ use the collective eyeballs and expertise of
->>> the community.  This is by far one of the most nasty cases of corruption
->>> I've seen in a while.  Not sure where the ultimate cause of corruption
->>> lies (that the money question) but it _feels_ rooted in NVMe and is
->>> unique to this particular workload I've stumbled onto via customer
->>> escalation and then trying to replicate an rbd device using a more
->>> approachable one (request-based DM multipath in this case).
->>>
->> I might be stating the obvious, but so far we only have considered
->> request-based multipath as being active for the _entire_ device.
->> To my knowledge we've never tested that when running on a partition.
-> 
-> True.  We only ever support mapping the partitions ontop of
-> request-based multipath (via dm-linear volumes created by kpartx).
-> 
->> So, have you tested that request-based multipathing works on a
->> partition _at all_? I'm not sure if partition mapping is done
->> correctly here; we never remap the start of the request (nor bio,
->> come to speak of it), so it looks as if we would be doing the wrong
->> things here.
->>
->> Have you checked that partition remapping is done correctly?
-> 
-> It clearly doesn't work.  Not quite following why but...
-> 
-> After running the test the partition table at the start of the whole
-> NVMe device is overwritten by XFS.  So likely the IO destined to the
-> dm-cache's "slow" (dm-mpath device on NVMe partition) was issued to the
-> whole NVMe device:
-> 
-> # pvcreate /dev/nvme1n1
-> WARNING: xfs signature detected on /dev/nvme1n1 at offset 0. Wipe it? [y/n]
-> 
-> # vgcreate test /dev/nvme1n1
-> # lvcreate -n slow -L 512G test
-> WARNING: xfs signature detected on /dev/test/slow at offset 0. Wipe it?
-> [y/n]: y
->    Wiping xfs signature on /dev/test/slow.
->    Logical volume "slow" created.
-> 
-> Isn't this a failing of block core's partitioning?  Why should a target
-> that is given the entire partition of a device need to be concerned with
-> remapping IO?  Shouldn't block core handle that mapping?
-> 
-Only if the device is marked a 'partitionable', which device-mapper 
-devices are not.
-But I thought you knew that ...
-
-> Anyway, yesterday I went so far as to hack together request-based
-> support for DM linear (because request-based DM cannot stack on
-> bio-based DM) .  With this, request-based linear devices instead of
-> conventional partitioning, I no longer see the XFS corruption when
-> running the test:
-> 
-_Actually_, I would've done it the other way around; after all, where't 
-the point in running dm-multipath on a partition?
-Anything running on the other partitions would suffer from the issues 
-dm-multipath is designed to handle (temporary path loss etc), so I'm not 
-quite sure what you are trying to achieve with your testcase.
-Can you enlighten me?
-
-Cheers,
-
-Hannes
+T24gVHVlLCAyMDE4LTA3LTI0IGF0IDE1OjUxICswMjAwLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6
+Cj4gT24gMDcvMjQvMjAxOCAwMzowNyBQTSwgTWlrZSBTbml0emVyIHdyb3RlOgo+ID4gT24gVHVl
+LCBKdWwgMjQgMjAxOCBhdMKgwqAyOjAwYW0gLTA0MDAsCj4gPiBIYW5uZXMgUmVpbmVja2UgPGhh
+cmVAc3VzZS5kZT4gd3JvdGU6Cj4gPiAKPiA+ID4gT24gMDcvMjMvMjAxOCAwNjozMyBQTSwgTWlr
+ZSBTbml0emVyIHdyb3RlOgo+ID4gPiA+IEhpLAo+ID4gPiA+IAo+ID4gPiA+IEkndmUgb3BlbmVk
+IHRoZSBmb2xsb3dpbmcgcHVibGljIEJaOgo+ID4gPiA+IGh0dHBzOi8vYnVnemlsbGEucmVkaGF0
+LmNvbS9zaG93X2J1Zy5jZ2k/aWQ9MTYwNzUyNwo+ID4gPiA+IAo+ID4gPiA+IEZlZWwgZnJlZSB0
+byBhZGQgY29tbWVudHMgdG8gdGhhdCBCWiBpZiB5b3UgaGF2ZSBhIHJlZGhhdAo+ID4gPiA+IGJ1
+Z3ppbGxhCj4gPiA+ID4gYWNjb3VudC4KPiA+ID4gPiAKPiA+ID4gPiBCdXQgb3RoZXJ3aXNlLCBo
+YXBweSB0byBnZXQgYXMgbXVjaCBmZWVkYmFjayBhbmQgZGlzY3Vzc2lvbgo+ID4gPiA+IGdvaW5n
+IHB1cmVseQo+ID4gPiA+IG9uIHRoZSByZWxldmFudCBsaXN0cy7CoMKgSSd2ZSB0YWtlbiB+MS41
+IHdlZWtzIHRvIGNhdGVnb3JpemUgYW5kCj4gPiA+ID4gaXNvbGF0ZQo+ID4gPiA+IHRoaXMgaXNz
+dWUuwqDCoEJ1dCBJJ3ZlIHJlYWNoZWQgYSBwb2ludCB3aGVyZSBJJ20gZ2V0dGluZwo+ID4gPiA+
+IGRpbWluaXNoaW5nCj4gPiA+ID4gcmV0dXJucyBhbmQgY291bGQgX3JlYWxseV8gdXNlIHRoZSBj
+b2xsZWN0aXZlIGV5ZWJhbGxzIGFuZAo+ID4gPiA+IGV4cGVydGlzZSBvZgo+ID4gPiA+IHRoZSBj
+b21tdW5pdHkuwqDCoFRoaXMgaXMgYnkgZmFyIG9uZSBvZiB0aGUgbW9zdCBuYXN0eSBjYXNlcyBv
+Zgo+ID4gPiA+IGNvcnJ1cHRpb24KPiA+ID4gPiBJJ3ZlIHNlZW4gaW4gYSB3aGlsZS7CoMKgTm90
+IHN1cmUgd2hlcmUgdGhlIHVsdGltYXRlIGNhdXNlIG9mCj4gPiA+ID4gY29ycnVwdGlvbgo+ID4g
+PiA+IGxpZXMgKHRoYXQgdGhlIG1vbmV5IHF1ZXN0aW9uKSBidXQgaXQgX2ZlZWxzXyByb290ZWQg
+aW4gTlZNZQo+ID4gPiA+IGFuZCBpcwo+ID4gPiA+IHVuaXF1ZSB0byB0aGlzIHBhcnRpY3VsYXIg
+d29ya2xvYWQgSSd2ZSBzdHVtYmxlZCBvbnRvIHZpYQo+ID4gPiA+IGN1c3RvbWVyCj4gPiA+ID4g
+ZXNjYWxhdGlvbiBhbmQgdGhlbiB0cnlpbmcgdG8gcmVwbGljYXRlIGFuIHJiZCBkZXZpY2UgdXNp
+bmcgYQo+ID4gPiA+IG1vcmUKPiA+ID4gPiBhcHByb2FjaGFibGUgb25lIChyZXF1ZXN0LWJhc2Vk
+IERNIG11bHRpcGF0aCBpbiB0aGlzIGNhc2UpLgo+ID4gPiA+IAo+ID4gPiAKPiA+ID4gSSBtaWdo
+dCBiZSBzdGF0aW5nIHRoZSBvYnZpb3VzLCBidXQgc28gZmFyIHdlIG9ubHkgaGF2ZQo+ID4gPiBj
+b25zaWRlcmVkCj4gPiA+IHJlcXVlc3QtYmFzZWQgbXVsdGlwYXRoIGFzIGJlaW5nIGFjdGl2ZSBm
+b3IgdGhlIF9lbnRpcmVfIGRldmljZS4KPiA+ID4gVG8gbXkga25vd2xlZGdlIHdlJ3ZlIG5ldmVy
+IHRlc3RlZCB0aGF0IHdoZW4gcnVubmluZyBvbiBhCj4gPiA+IHBhcnRpdGlvbi4KPiA+IAo+ID4g
+VHJ1ZS7CoMKgV2Ugb25seSBldmVyIHN1cHBvcnQgbWFwcGluZyB0aGUgcGFydGl0aW9ucyBvbnRv
+cCBvZgo+ID4gcmVxdWVzdC1iYXNlZCBtdWx0aXBhdGggKHZpYSBkbS1saW5lYXIgdm9sdW1lcyBj
+cmVhdGVkIGJ5IGtwYXJ0eCkuCj4gPiAKPiA+ID4gU28sIGhhdmUgeW91IHRlc3RlZCB0aGF0IHJl
+cXVlc3QtYmFzZWQgbXVsdGlwYXRoaW5nIHdvcmtzIG9uIGEKPiA+ID4gcGFydGl0aW9uIF9hdCBh
+bGxfPyBJJ20gbm90IHN1cmUgaWYgcGFydGl0aW9uIG1hcHBpbmcgaXMgZG9uZQo+ID4gPiBjb3Jy
+ZWN0bHkgaGVyZTsgd2UgbmV2ZXIgcmVtYXAgdGhlIHN0YXJ0IG9mIHRoZSByZXF1ZXN0IChub3Ig
+YmlvLAo+ID4gPiBjb21lIHRvIHNwZWFrIG9mIGl0KSwgc28gaXQgbG9va3MgYXMgaWYgd2Ugd291
+bGQgYmUgZG9pbmcgdGhlCj4gPiA+IHdyb25nCj4gPiA+IHRoaW5ncyBoZXJlLgo+ID4gPiAKPiA+
+ID4gSGF2ZSB5b3UgY2hlY2tlZCB0aGF0IHBhcnRpdGlvbiByZW1hcHBpbmcgaXMgZG9uZSBjb3Jy
+ZWN0bHk/Cj4gPiAKPiA+IEl0IGNsZWFybHkgZG9lc24ndCB3b3JrLsKgwqBOb3QgcXVpdGUgZm9s
+bG93aW5nIHdoeSBidXQuLi4KPiA+IAo+ID4gQWZ0ZXIgcnVubmluZyB0aGUgdGVzdCB0aGUgcGFy
+dGl0aW9uIHRhYmxlIGF0IHRoZSBzdGFydCBvZiB0aGUKPiA+IHdob2xlCj4gPiBOVk1lIGRldmlj
+ZSBpcyBvdmVyd3JpdHRlbiBieSBYRlMuwqDCoFNvIGxpa2VseSB0aGUgSU8gZGVzdGluZWQgdG8K
+PiA+IHRoZQo+ID4gZG0tY2FjaGUncyAic2xvdyIgKGRtLW1wYXRoIGRldmljZSBvbiBOVk1lIHBh
+cnRpdGlvbikgd2FzIGlzc3VlZCB0bwo+ID4gdGhlCj4gPiB3aG9sZSBOVk1lIGRldmljZToKPiA+
+IAo+ID4gIyBwdmNyZWF0ZSAvZGV2L252bWUxbjEKPiA+IFdBUk5JTkc6IHhmcyBzaWduYXR1cmUg
+ZGV0ZWN0ZWQgb24gL2Rldi9udm1lMW4xIGF0IG9mZnNldCAwLiBXaXBlCj4gPiBpdD8gW3kvbl0K
+PiA+IAo+ID4gIyB2Z2NyZWF0ZSB0ZXN0IC9kZXYvbnZtZTFuMQo+ID4gIyBsdmNyZWF0ZSAtbiBz
+bG93IC1MIDUxMkcgdGVzdAo+ID4gV0FSTklORzogeGZzIHNpZ25hdHVyZSBkZXRlY3RlZCBvbiAv
+ZGV2L3Rlc3Qvc2xvdyBhdCBvZmZzZXQgMC4gV2lwZQo+ID4gaXQ/Cj4gPiBbeS9uXTogeQo+ID4g
+wqDCoMKgV2lwaW5nIHhmcyBzaWduYXR1cmUgb24gL2Rldi90ZXN0L3Nsb3cuCj4gPiDCoMKgwqBM
+b2dpY2FsIHZvbHVtZSAic2xvdyIgY3JlYXRlZC4KPiA+IAo+ID4gSXNuJ3QgdGhpcyBhIGZhaWxp
+bmcgb2YgYmxvY2sgY29yZSdzIHBhcnRpdGlvbmluZz/CoMKgV2h5IHNob3VsZCBhCj4gPiB0YXJn
+ZXQKPiA+IHRoYXQgaXMgZ2l2ZW4gdGhlIGVudGlyZSBwYXJ0aXRpb24gb2YgYSBkZXZpY2UgbmVl
+ZCB0byBiZSBjb25jZXJuZWQKPiA+IHdpdGgKPiA+IHJlbWFwcGluZyBJTz/CoMKgU2hvdWxkbid0
+IGJsb2NrIGNvcmUgaGFuZGxlIHRoYXQgbWFwcGluZz8KPiA+IAo+IAo+IE9ubHkgaWYgdGhlIGRl
+dmljZSBpcyBtYXJrZWQgYSAncGFydGl0aW9uYWJsZScsIHdoaWNoIGRldmljZS1tYXBwZXLCoAo+
+IGRldmljZXMgYXJlIG5vdC4KPiBCdXQgSSB0aG91Z2h0IHlvdSBrbmV3IHRoYXQgLi4uCj4gCj4g
+PiBBbnl3YXksIHllc3RlcmRheSBJIHdlbnQgc28gZmFyIGFzIHRvIGhhY2sgdG9nZXRoZXIgcmVx
+dWVzdC1iYXNlZAo+ID4gc3VwcG9ydCBmb3IgRE0gbGluZWFyIChiZWNhdXNlIHJlcXVlc3QtYmFz
+ZWQgRE0gY2Fubm90IHN0YWNrIG9uCj4gPiBiaW8tYmFzZWQgRE0pIC7CoMKgV2l0aCB0aGlzLCBy
+ZXF1ZXN0LWJhc2VkIGxpbmVhciBkZXZpY2VzIGluc3RlYWQgb2YKPiA+IGNvbnZlbnRpb25hbCBw
+YXJ0aXRpb25pbmcsIEkgbm8gbG9uZ2VyIHNlZSB0aGUgWEZTIGNvcnJ1cHRpb24gd2hlbgo+ID4g
+cnVubmluZyB0aGUgdGVzdDoKPiA+IAo+IAo+IF9BY3R1YWxseV8sIEkgd291bGQndmUgZG9uZSBp
+dCB0aGUgb3RoZXIgd2F5IGFyb3VuZDsgYWZ0ZXIgYWxsLAo+IHdoZXJlJ3TCoAo+IHRoZSBwb2lu
+dCBpbiBydW5uaW5nIGRtLW11bHRpcGF0aCBvbiBhIHBhcnRpdGlvbj8KPiBBbnl0aGluZyBydW5u
+aW5nIG9uIHRoZSBvdGhlciBwYXJ0aXRpb25zIHdvdWxkIHN1ZmZlciBmcm9tIHRoZQo+IGlzc3Vl
+c8KgCj4gZG0tbXVsdGlwYXRoIGlzIGRlc2lnbmVkIHRvIGhhbmRsZSAodGVtcG9yYXJ5IHBhdGgg
+bG9zcyBldGMpLCBzbyBJJ20KPiBub3TCoAo+IHF1aXRlIHN1cmUgd2hhdCB5b3UgYXJlIHRyeWlu
+ZyB0byBhY2hpZXZlIHdpdGggeW91ciB0ZXN0Y2FzZS4KPiBDYW4geW91IGVubGlnaHRlbiBtZT8K
+PiAKPiBDaGVlcnMsCj4gCj4gSGFubmVzCgpUaGlzIGNhbWUgYWJvdXQgYmVjYXVzZSBhIGN1c3Rv
+bWVyIGlzIHVzaW5nIG52bWUgZm9yIGEgZG0tY2FjaGUgZGV2aWNlCmFuZCBjcmVhdGVkIG11bHRp
+cGxlIHBhcnRpdGlvbnMgc28gYXMgdG8gdXNlIHRoZSBzYW1lIG52bWUgdG8gY2FjaGUKbXVsdGlw
+bGUgZGlmZmVyZW50ICJzbG93ZXIiIGRldmljZXMuIFRoZSBjb3JydXB0aW9uIHdhcyBub3RpY2Vk
+IGluIFhGUwphbmQgSSBlbmdhZ2VkIE1pa2UgdG8gYXNzaXN0IGluIGZpZ3VyaW5nIG91dCB3aGF0
+IHdhcyBnb2luZyBvbi4KCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQu
+Y29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
