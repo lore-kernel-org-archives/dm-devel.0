@@ -1,34 +1,45 @@
-From: Joe Perches <joe@perches.com>
-Subject: Re: [PATCH v6 18/18] crypto: Remove AHASH_REQUEST_ON_STACK
-Date: Tue, 24 Jul 2018 10:31:13 -0700
-Message-ID: <1bdc706ae86039c4ffcff39698251424d54af116.camel@perches.com>
-References: <20180724164936.37477-1-keescook@chromium.org>
-         <20180724164936.37477-19-keescook@chromium.org>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: data corruption with 'splt' workload to XFS on DM
+ cache with its 3 underlying devices being on same NVMe device
+Date: Tue, 24 Jul 2018 10:42:41 -0700
+Message-ID: <20180724174241.GA828@infradead.org>
+References: <20180723163357.GA29658@redhat.com>
+	<e761830f-e3f7-3e88-1697-b4b150e84e5f@suse.de>
+	<20180724130703.GA30804@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180724164936.37477-19-keescook@chromium.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>, Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Pavel Machek <pavel@ucw.cz>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Jens Axboe <axboe@kernel.dk>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Mike Snitzer <snitzer@redhat.com>, Paul Mackerras <paulus@samba.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, David Howells <dhowells@redhat.com>, Johannes Berg <joh>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20180724130703.GA30804@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, linux-nvme@lists.infradead.org
 List-Id: dm-devel.ids
 
-On Tue, 2018-07-24 at 09:49 -0700, Kees Cook wrote:
-> All users of AHASH_REQUEST_ON_STACK have been removed from the kernel, so
-> drop it entirely so no VLAs get reintroduced by future users.
+On Tue, Jul 24, 2018 at 09:07:03AM -0400, Mike Snitzer wrote:
+> True.  We only ever support mapping the partitions ontop of
+> request-based multipath (via dm-linear volumes created by kpartx).
+> 
+> > So, have you tested that request-based multipathing works on a
+> > partition _at all_? I'm not sure if partition mapping is done
+> > correctly here; we never remap the start of the request (nor bio,
+> > come to speak of it), so it looks as if we would be doing the wrong
+> > things here.
+> > 
+> > Have you checked that partition remapping is done correctly?
+> 
+> It clearly doesn't work.  Not quite following why but...
 
-checkpatch has a test for that.
-It could now be removed as well.
----
-diff --git a/scripts/checkpatch.pl b/scripts/checkpatch.pl
-index 34e4683de7a3..a3517334d661 100755
---- a/scripts/checkpatch.pl
-+++ b/scripts/checkpatch.pl
-@@ -796,7 +796,7 @@ our $declaration_macros = qr{(?x:
- 	(?:$Storage\s+)?(?:[A-Z_][A-Z0-9]*_){0,2}(?:DEFINE|DECLARE)(?:_[A-Z0-9]+){1,6}\s*\(|
- 	(?:$Storage\s+)?[HLP]?LIST_HEAD\s*\(|
- 	(?:$Storage\s+)?${Type}\s+uninitialized_var\s*\(|
--	(?:SKCIPHER_REQUEST|SHASH_DESC|AHASH_REQUEST)_ON_STACK\s*\(
-+	(?:SKCIPHER_REQUEST|SHASH_DESC)_ON_STACK\s*\(
- )};
+blk_insert_cloned_request seems to be missing a call to
+blk_partition_remap.  Given that no one but dm-multipath uses this
+request clone insert helper, and people generally run multipath on
+the whole device this is a code path that is almost never exercised.
