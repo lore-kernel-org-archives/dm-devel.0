@@ -1,93 +1,40 @@
-From: Laurence Oberman <loberman@redhat.com>
-Subject: Re: data corruption with 'splt' workload to XFS on DM
- cache with its 3 underlying devices being on same NVMe device
-Date: Tue, 24 Jul 2018 11:31:48 -0400
-Message-ID: <1532446308.9819.7.camel@redhat.com>
-References: <20180723163357.GA29658@redhat.com>
-	<e761830f-e3f7-3e88-1697-b4b150e84e5f@suse.de>
-	<20180724130703.GA30804@redhat.com>
-	<27cadfb3-2442-3931-6d58-58aa6adb2e2b@suse.de>
-	<1532440623.9819.4.camel@redhat.com> <20180724151845.GB3235@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180724151845.GB3235@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Hannes Reinecke <hare@suse.de>
-Cc: linux-block@vger.kernel.org, Brett Hull <bhull@redhat.com>, dm-devel@redhat.com, linux-nvme@lists.infradead.org
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: [PATCH v6 02/18] crypto: cbc: Remove VLA usage
+Date: Tue, 24 Jul 2018 09:49:20 -0700
+Message-ID: <20180724164936.37477-3-keescook@chromium.org>
+References: <20180724164936.37477-1-keescook@chromium.org>
+Return-path: <linux-wireless-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20180724164936.37477-1-keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Sender: linux-wireless-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Gustavo A. R. Silva" <gustavo-L1vi/lXTdts+Va1GwOuvDg@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rabin Vincent <rabinv-VrBV9hrLPhE@public.gmane.org>, Tim Chen <tim.c.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Philipp Reisner <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Giovanni Cabiddu <giovanni.cabiddu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, David Howells <dhowe>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE4LTA3LTI0IGF0IDExOjE4IC0wNDAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6Cj4g
-T24gVHVlLCBKdWwgMjQgMjAxOCBhdMKgwqA5OjU3YW0gLTA0MDAsCj4gTGF1cmVuY2UgT2Jlcm1h
-biA8bG9iZXJtYW5AcmVkaGF0LmNvbT4gd3JvdGU6Cj4gCj4gPiBPbiBUdWUsIDIwMTgtMDctMjQg
-YXQgMTU6NTEgKzAyMDAsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPiA+ID4gCj4gPiA+IF9BY3R1
-YWxseV8sIEkgd291bGQndmUgZG9uZSBpdCB0aGUgb3RoZXIgd2F5IGFyb3VuZDsgYWZ0ZXIgYWxs
-LAo+ID4gPiB3aGVyZSd0IHRoZSBwb2ludCBpbiBydW5uaW5nIGRtLW11bHRpcGF0aCBvbiBhIHBh
-cnRpdGlvbj8KPiA+ID4gQW55dGhpbmcgcnVubmluZyBvbiB0aGUgb3RoZXIgcGFydGl0aW9ucyB3
-b3VsZCBzdWZmZXIgZnJvbSB0aGUKPiA+ID4gaXNzdWVzIGRtLW11bHRpcGF0aCBpcyBkZXNpZ25l
-ZCB0byBoYW5kbGUgKHRlbXBvcmFyeSBwYXRoIGxvc3MKPiA+ID4gZXRjKSwgc28gSSdtCj4gPiA+
-IG5vdCBxdWl0ZSBzdXJlIHdoYXQgeW91IGFyZSB0cnlpbmcgdG8gYWNoaWV2ZSB3aXRoIHlvdXIg
-dGVzdGNhc2UuCj4gPiA+IENhbiB5b3UgZW5saWdodGVuIG1lPwo+ID4gPiAKPiA+ID4gQ2hlZXJz
-LAo+ID4gPiAKPiA+ID4gSGFubmVzCj4gCj4gSSB3YXNuJ3QgbG9va2luZyB0byBkZXBseSB0aGlz
-IChtdWx0aXBhdGggb24gcGFydGl0aW9uKSBpbiBwcm9kdWN0aW9uCj4gb3IKPiBzdWdnZXN0IGl0
-IHRvIG90aGVycy7CoMKgSXQgd2FzIGEgbWVhbnMgdG8gZXhwZXJpbWVudC7CoMKgTW9yZSBiZWxv
-dy4KPiAKPiA+IFRoaXMgY2FtZSBhYm91dCBiZWNhdXNlIGEgY3VzdG9tZXIgaXMgdXNpbmcgbnZt
-ZSBmb3IgYSBkbS1jYWNoZQo+ID4gZGV2aWNlCj4gPiBhbmQgY3JlYXRlZCBtdWx0aXBsZSBwYXJ0
-aXRpb25zIHNvIGFzIHRvIHVzZSB0aGUgc2FtZSBudm1lIHRvIGNhY2hlCj4gPiBtdWx0aXBsZSBk
-aWZmZXJlbnQgInNsb3dlciIgZGV2aWNlcy4gVGhlIGNvcnJ1cHRpb24gd2FzIG5vdGljZWQgaW4K
-PiA+IFhGUwo+ID4gYW5kIEkgZW5nYWdlZCBNaWtlIHRvIGFzc2lzdCBpbiBmaWd1cmluZyBvdXQg
-d2hhdCB3YXMgZ29pbmcgb24uCj4gCj4gWWVzLCBzbyB0b3BvbG9neSBmb3IgdGhlIGN1c3RvbWVy
-J3Mgc2V0dXAgaXM6Cj4gCj4gMSkgTUQgcmFpZDEgb24gMiBOVk1lIHBhcnRpdGlvbnMgKGZyb20g
-c2VwYXJhdGUgTlZNZSBkZXZpY2VzKS4KPiAyKSBUaGVuIERNIGNhY2hlJ3MgImZhc3QiIGFuZCAi
-bWV0YWRhdGEiIGRldmljZXMgbGF5ZXJlZCBvbiBkbS1saW5lYXIKPiDCoMKgwqBtYXBwaW5nIG9u
-dG9wIG9mIHRoZSBNRCByYWlkMS4KPiAzKSBUaGVuIENlcGgncyByYmQgZm9yIERNLWNhY2hlJ3Mg
-c2xvdyBkZXZpY2UuCj4gCj4gSSB3YXMganVzdCBsb29raW5nIHRvIHNpbXBsaWZ5IHRoZSBzdGFj
-ayB0byB0cnkgdG8gYXNzZXNzIHdoeSBYRlMKPiBjb3JydXB0aW9uIHdhcyBiZWluZyBzZWVuIHdp
-dGhvdXQgYWxsIHRoZSBpbnNhbml0eS4KPiAKPiBPbmUgaXNzdWUgd2FzIGNvcnJ1cHRpb24gZHVl
-IHRvIGluY29ycmVjdCBzaHV0ZG93biBvcmRlciAobmV0d29yayB3YXMKPiBnZXR0aW5nIHNodXRk
-b3duIG91dCBmcm9tIHVuZGVybmVhdGggcmJkLCBhbmQgaW4gdHVybiBETS1jYWNoZQo+IGNvdWxk
-bid0Cj4gY29tcGxldGUgaXRzIElPIG1pZ3JhdGlvbnMgZHVyaW5nIGNhY2hlX3Bvc3RzdXNwZW5k
-KCkpLgo+IAo+IFNvIEkgZWxlY3RlZCB0byB0cnkgdXNpbmcgRE0gbXVsdGlwYXRoIHdpdGggcXVl
-dWVfaWZfbm9fcGF0aCB0byB0cnkKPiB0bwo+IHJlcGxpY2F0ZSByYmQgbG9zaW5nIG5ldHdvcmsg
-X3dpdGhvdXRfIG5lZWRpbmcgYSBmdWxsIENlcGgvcmJkIHNldHVwLgo+IAo+IFRoZSByZXN0IGlz
-IGhpc3RvcnkuLi4gYSByYXQtaG9sZSBvZiBjb3JydXB0aW9uIHRoYXQgbGlrZWx5IGlzIHZlcnkK
-PiBkaWZmZXJlbnQgdGhhbiB0aGUgY3VzdG9tZXIncyBzZXR1cC4KPiAKPiBNaWtlCk5vdCB0byBt
-dWRkeSB0aGUgd2F0ZXJzIGhlcmUsIGFuZCBhcyBNaWtlIHNhaWQgdGhlIGlzc3VlIGhlIHRyaXBw
-ZWQKb3ZlciBtYXkgbm90IGJlIHRoZSBkaXJlY3QgaXNzdWUgd2Ugb3JpZ2luYWxseSBzdGFydGVk
-IHdpdGguCgpJbiB0aGUgbGFiIHJlcHJvZHVjZXIgd2l0aCByYmQgYXMgYSBzbG93IGRldmljZXMg
-d2UgZG8gbm90IGhhdmUgYW4gTUQKcmFpZGVkIG52bWUgZm9yIHRoZSBkbS1jYWNoZSwgYnV0IHdl
-IHN0aWxsIHNlZSB0aGUgY29ycnVwdGlvbiBvbmx5IG9uCnRoZSByYmQgYmFzZWQgdGVzdC4KCldl
-IHVzZWQgdGhlIG52bWUgcGFydGl0aW9uZWQgYnV0IG5vIERNIHJhaWQgdG8gdHJ5IGFuIEYvQyBk
-ZXZpY2UtCm1hcHBlci1tdWx0aXBhdGggTFVOUyBjYWNoZWQgdmlhIGRtLWNhY2hlLgoKVGhlIGxh
-c3QgdGVzdCB3ZSByYW4gd2hlcmUgd2UgZGlkIG5vdCBzZWUgY29ycnVwdGlvbiB3YXMgYSBwYXJ0
-aXRpb24Kd2hlcmUgdGhlIHNlY29uZCBwYXJ0aXRpb24gd2FzIHVzZWQgdG8gY2FjaGUgRi9DIGx1
-bnMKCm52bWUwbjHCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgMjU5OjDCoMKgwqDCoDAgMzcyLjZHwqDCoDAgZGlza8KgwqAK4pSc4pSAbnZt
-ZTBuMXAxwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAy
-NTk6McKgwqDCoMKgMMKgwqDCoDE1MEfCoMKgMCBwYXJ0wqDCoArilJTilIBudm1lMG4xcDLCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoDI1OToywqDCoMKg
-wqAwwqDCoMKgMTUwR8KgwqAwIHBhcnTCoMKgCsKgIOKUnOKUgGNhY2hlX0ZDLW52bWVfYmxrX2Nh
-Y2hlX2NkYXRhwqDCoMKgMjUzOjQywqDCoMKgMMKgwqDCoMKgMjBHwqDCoDAgbHZtwqDCoMKgCsKg
-IOKUgiDilJTilIBjYWNoZV9GQy1mY19kaXNrwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoDI1
-Mzo0NcKgwqDCoDDCoMKgwqDCoDQ4R8KgwqAwCmx2bcKgwqDCoC9jYWNoZV9GQwrCoCDilJTilIBj
-YWNoZV9GQy1udm1lX2Jsa19jYWNoZV9jbWV0YcKgwqDCoDI1Mzo0M8KgwqDCoDDCoMKgwqDCoDQw
-TcKgwqAwIGx2bcKgwqDCoArCoMKgwqDCoOKUlOKUgGNhY2hlX0ZDLWZjX2Rpc2vCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgMjUzOjQ1wqDCoMKgMMKgwqDCoMKgNDhHwqDCoDAKbHZtwqDCoMKg
-L2NhY2hlX0ZDCgpjYWNoZV9GQy1mY19kaXNrICgyNTM6NDUpCsKg4pSc4pSAY2FjaGVfRkMtZmNf
-ZGlza19jb3JpZyAoMjUzOjQ0KQrCoOKUgsKgwqDilJTilIAzNjAwMTQwNTA4ZGE2NmMyYzllZTRj
-YzZhZmFjZTFiYWIgKDI1MzozNikgTXVsdGlwYXRoCsKg4pSCwqDCoMKgwqDCoOKUnOKUgCAoNjg6
-MjI0KQrCoOKUgsKgwqDCoMKgwqDilJzilIAgKDY5OjI0MCkKwqDilILCoMKgwqDCoMKg4pSc4pSA
-ICg4OjE5MikKwqDilILCoMKgwqDCoMKg4pSU4pSAICg4OjY0KQrCoOKUnOKUgGNhY2hlX0ZDLW52
-bWVfYmxrX2NhY2hlX2NkYXRhICgyNTM6NDIpCsKg4pSCwqDCoOKUlOKUgCAoMjU5OjIpCsKg4pSU
-4pSAY2FjaGVfRkMtbnZtZV9ibGtfY2FjaGVfY21ldGEgKDI1Mzo0MykKwqDCoMKgwqDilJTilIAg
-KDI1OToyKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
-cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+In the quest to remove all stack VLA usage from the kernel[1], this
+uses the upper bounds on blocksize. Since this is always a cipher
+blocksize, use the existing cipher max blocksize.
+
+[1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org
+
+Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+---
+ include/crypto/cbc.h | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/include/crypto/cbc.h b/include/crypto/cbc.h
+index f5b8bfc22e6d..47db0aac2ab9 100644
+--- a/include/crypto/cbc.h
++++ b/include/crypto/cbc.h
+@@ -113,7 +113,9 @@ static inline int crypto_cbc_decrypt_inplace(
+ 	unsigned int bsize = crypto_skcipher_blocksize(tfm);
+ 	unsigned int nbytes = walk->nbytes;
+ 	u8 *src = walk->src.virt.addr;
+-	u8 last_iv[bsize];
++	u8 last_iv[MAX_CIPHER_BLOCKSIZE];
++
++	BUG_ON(bsize > sizeof(last_iv));
+ 
+ 	/* Start of the last block. */
+ 	src += nbytes - (nbytes & (bsize - 1)) - bsize;
+-- 
+2.17.1
