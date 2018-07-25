@@ -1,8 +1,8 @@
 From: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
-Subject: [PATCH v2 1/6] libnvdimm,
- pmem: kaddr and pfn can be NULL to ->direct_access()
-Date: Thu, 26 Jul 2018 00:28:44 +0800
-Message-ID: <20180725162849.8320-2-yehs2007@zoho.com>
+Subject: [PATCH v2 2/6] s390,
+ dcssblk: kaddr and pfn can be NULL to ->direct_access()
+Date: Thu, 26 Jul 2018 00:28:45 +0800
+Message-ID: <20180725162849.8320-3-yehs2007@zoho.com>
 References: <20180725162849.8320-1-yehs2007@zoho.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,37 +24,38 @@ List-Id: dm-devel.ids
 
 From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 
-pmem_direct_access() needs to check the validity of pointers kaddr
+dcssblk_direct_access() needs to check the validity of pointers kaddr
 and pfn for NULL assignment. If anyone equals to NULL, it doesn't need
 to calculate the value.
 
-If pointer equals to NULL, that is to say callers may have no need for
-kaddr or pfn, so this patch is prepared for allowing them to pass in
-NULL instead of having to pass in a pointer or local variable that
-they then just throw away.
+If either of them is equal to NULL, that is to say callers may
+have no need for kaddr or pfn, so this patch is prepared for allowing
+them to pass in NULL instead of having to pass in a pointer or local
+variable that they then just throw away.
 
 Signed-off-by: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 ---
- drivers/nvdimm/pmem.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ drivers/s390/block/dcssblk.c | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index 8b1fd7f..ecf9024 100644
---- a/drivers/nvdimm/pmem.c
-+++ b/drivers/nvdimm/pmem.c
-@@ -227,8 +227,11 @@ __weak long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
- 	if (unlikely(is_bad_pmem(&pmem->bb, PFN_PHYS(pgoff) / 512,
- 					PFN_PHYS(nr_pages))))
- 		return -EIO;
--	*kaddr = pmem->virt_addr + offset;
--	*pfn = phys_to_pfn_t(pmem->phys_addr + offset, pmem->pfn_flags);
-+
-+	if (kaddr)
-+		*kaddr = pmem->virt_addr + offset;
-+	if (pfn)
-+		*pfn = phys_to_pfn_t(pmem->phys_addr + offset, pmem->pfn_flags);
+diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
+index ed60728..23e526c 100644
+--- a/drivers/s390/block/dcssblk.c
++++ b/drivers/s390/block/dcssblk.c
+@@ -922,9 +922,11 @@ static DEVICE_ATTR(save, S_IWUSR | S_IRUSR, dcssblk_save_show,
+ 	unsigned long dev_sz;
  
- 	/*
- 	 * If badblocks are present, limit known good range to the
+ 	dev_sz = dev_info->end - dev_info->start + 1;
+-	*kaddr = (void *) dev_info->start + offset;
+-	*pfn = __pfn_to_pfn_t(PFN_DOWN(dev_info->start + offset),
+-			PFN_DEV|PFN_SPECIAL);
++	if (kaddr)
++		*kaddr = (void *) dev_info->start + offset;
++	if (pfn)
++		*pfn = __pfn_to_pfn_t(PFN_DOWN(dev_info->start + offset),
++				PFN_DEV|PFN_SPECIAL);
+ 
+ 	return (dev_sz - offset) / PAGE_SIZE;
+ }
 -- 
 1.8.3.1
