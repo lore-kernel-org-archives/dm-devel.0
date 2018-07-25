@@ -1,8 +1,8 @@
 From: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
-Subject: [PATCH v2 5/6] md/dm-writecache: Don't request pointer dummy_addr
- when not required
-Date: Thu, 26 Jul 2018 00:28:48 +0800
-Message-ID: <20180725162849.8320-6-yehs2007@zoho.com>
+Subject: [PATCH v2 6/6] filesystem-dax: Do not request kaddr and pfn when not
+ required
+Date: Thu, 26 Jul 2018 00:28:49 +0800
+Message-ID: <20180725162849.8320-7-yehs2007@zoho.com>
 References: <20180725162849.8320-1-yehs2007@zoho.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,30 +24,86 @@ List-Id: dm-devel.ids
 
 From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 
-Function persistent_memory_claim doesn't need to get local pointer
-dummy_addr from direct_access. Using NULL instead of having to pass
-in a useless local pointer that caller then just throw away.
+Some functions within fs/dax don't need to get local pointer kaddr
+or variable pfn from direct_access. Using NULL instead of having to
+pass in useless pointer or variable that caller then just throw away.
 
-Suggested-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Signed-off-by: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 ---
- drivers/md/dm-writecache.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ fs/dax.c | 13 ++++---------
+ 1 file changed, 4 insertions(+), 9 deletions(-)
 
-diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-index 87107c9..9d79084 100644
---- a/drivers/md/dm-writecache.c
-+++ b/drivers/md/dm-writecache.c
-@@ -268,9 +268,8 @@ static int persistent_memory_claim(struct dm_writecache *wc)
- 		i = 0;
- 		do {
- 			long daa;
--			void *dummy_addr;
- 			daa = dax_direct_access(wc->ssd_dev->dax_dev, i, p - i,
--						&dummy_addr, &pfn);
-+						NULL, &pfn);
- 			if (daa <= 0) {
- 				r = daa ? daa : -EINVAL;
- 				goto err3;
+diff --git a/fs/dax.c b/fs/dax.c
+index 6411928..959a533 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -647,7 +647,6 @@ static int copy_user_dax(struct block_device *bdev, struct dax_device *dax_dev,
+ {
+ 	void *vto, *kaddr;
+ 	pgoff_t pgoff;
+-	pfn_t pfn;
+ 	long rc;
+ 	int id;
+ 
+@@ -656,7 +655,7 @@ static int copy_user_dax(struct block_device *bdev, struct dax_device *dax_dev,
+ 		return rc;
+ 
+ 	id = dax_read_lock();
+-	rc = dax_direct_access(dax_dev, pgoff, PHYS_PFN(size), &kaddr, &pfn);
++	rc = dax_direct_access(dax_dev, pgoff, PHYS_PFN(size), &kaddr, NULL);
+ 	if (rc < 0) {
+ 		dax_read_unlock(id);
+ 		return rc;
+@@ -967,7 +966,6 @@ static int dax_iomap_pfn(struct iomap *iomap, loff_t pos, size_t size,
+ {
+ 	const sector_t sector = dax_iomap_sector(iomap, pos);
+ 	pgoff_t pgoff;
+-	void *kaddr;
+ 	int id, rc;
+ 	long length;
+ 
+@@ -976,7 +974,7 @@ static int dax_iomap_pfn(struct iomap *iomap, loff_t pos, size_t size,
+ 		return rc;
+ 	id = dax_read_lock();
+ 	length = dax_direct_access(iomap->dax_dev, pgoff, PHYS_PFN(size),
+-				   &kaddr, pfnp);
++				   NULL, pfnp);
+ 	if (length < 0) {
+ 		rc = length;
+ 		goto out;
+@@ -1052,15 +1050,13 @@ int __dax_zero_page_range(struct block_device *bdev,
+ 		pgoff_t pgoff;
+ 		long rc, id;
+ 		void *kaddr;
+-		pfn_t pfn;
+ 
+ 		rc = bdev_dax_pgoff(bdev, sector, PAGE_SIZE, &pgoff);
+ 		if (rc)
+ 			return rc;
+ 
+ 		id = dax_read_lock();
+-		rc = dax_direct_access(dax_dev, pgoff, 1, &kaddr,
+-				&pfn);
++		rc = dax_direct_access(dax_dev, pgoff, 1, &kaddr, NULL);
+ 		if (rc < 0) {
+ 			dax_read_unlock(id);
+ 			return rc;
+@@ -1116,7 +1112,6 @@ int __dax_zero_page_range(struct block_device *bdev,
+ 		ssize_t map_len;
+ 		pgoff_t pgoff;
+ 		void *kaddr;
+-		pfn_t pfn;
+ 
+ 		if (fatal_signal_pending(current)) {
+ 			ret = -EINTR;
+@@ -1128,7 +1123,7 @@ int __dax_zero_page_range(struct block_device *bdev,
+ 			break;
+ 
+ 		map_len = dax_direct_access(dax_dev, pgoff, PHYS_PFN(size),
+-				&kaddr, &pfn);
++				&kaddr, NULL);
+ 		if (map_len < 0) {
+ 			ret = map_len;
+ 			break;
 -- 
 1.8.3.1
