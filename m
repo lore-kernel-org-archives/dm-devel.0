@@ -1,11 +1,14 @@
 From: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
-Subject: [PATCH v2 0/6] kaddr and pfn can be NULL to ->direct_access()
-Date: Thu, 26 Jul 2018 00:28:43 +0800
-Message-ID: <20180725162849.8320-1-yehs2007@zoho.com>
+Subject: [PATCH v2 1/6] libnvdimm,
+ pmem: kaddr and pfn can be NULL to ->direct_access()
+Date: Thu, 26 Jul 2018 00:28:44 +0800
+Message-ID: <20180725162849.8320-2-yehs2007@zoho.com>
+References: <20180725162849.8320-1-yehs2007@zoho.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20180725162849.8320-1-yehs2007-ytc+IHgoah0@public.gmane.org>
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -21,41 +24,37 @@ List-Id: dm-devel.ids
 
 From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 
-Changes since v1 [1]:
-* Involve the previous patches for pfn can be NULL.
-* Reword the patch descriptions according to Christian's comment.
-* According to Ross's suggestion, replace local pointer dummy_addr
-  with NULL within md/dm-writecache for direct_access.
+pmem_direct_access() needs to check the validity of pointers kaddr
+and pfn for NULL assignment. If anyone equals to NULL, it doesn't need
+to calculate the value.
 
-[1]: https://lkml.org/lkml/2018/7/24/199
+If pointer equals to NULL, that is to say callers may have no need for
+kaddr or pfn, so this patch is prepared for allowing them to pass in
+NULL instead of having to pass in a pointer or local variable that
+they then just throw away.
 
-Some functions within fs/dax, dax/super and md/dm-writecache don't
-need to get local pointer kaddr or variable pfn from direct_access.
-Assigning NULL to kaddr or pfn to ->direct_access() is more
-straightforward and simple than offering a useless local pointer or
-variable.
+Signed-off-by: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
+---
+ drivers/nvdimm/pmem.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-So all ->direct_access() need to check the validity of pointer kaddr
-and pfn for NULL assignment. If either of them is equal to NULL, that
-is to say callers may have no need for kaddr or pfn, so this series of
-patch are prepared for allowing them to pass in NULL instead of having
-to pass in a local pointer or variable that they then just throw away.
-
-Huaisheng Ye (6):
-  libnvdimm, pmem: kaddr and pfn can be NULL to ->direct_access()
-  s390, dcssblk: kaddr and pfn can be NULL to ->direct_access()
-  tools/testing/nvdimm: kaddr and pfn can be NULL to ->direct_access()
-  dax/super: Do not request a pointer kaddr when not required
-  md/dm-writecache: Don't request pointer dummy_addr when not required
-  filesystem-dax: Do not request kaddr and pfn when not required
-
- drivers/dax/super.c             |  3 +--
- drivers/md/dm-writecache.c      |  3 +--
- drivers/nvdimm/pmem.c           |  7 +++++--
- drivers/s390/block/dcssblk.c    |  8 +++++---
- fs/dax.c                        | 13 ++++---------
- tools/testing/nvdimm/pmem-dax.c | 12 ++++++++----
- 6 files changed, 24 insertions(+), 22 deletions(-)
-
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index 8b1fd7f..ecf9024 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -227,8 +227,11 @@ __weak long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
+ 	if (unlikely(is_bad_pmem(&pmem->bb, PFN_PHYS(pgoff) / 512,
+ 					PFN_PHYS(nr_pages))))
+ 		return -EIO;
+-	*kaddr = pmem->virt_addr + offset;
+-	*pfn = phys_to_pfn_t(pmem->phys_addr + offset, pmem->pfn_flags);
++
++	if (kaddr)
++		*kaddr = pmem->virt_addr + offset;
++	if (pfn)
++		*pfn = phys_to_pfn_t(pmem->phys_addr + offset, pmem->pfn_flags);
+ 
+ 	/*
+ 	 * If badblocks are present, limit known good range to the
 -- 
 1.8.3.1
