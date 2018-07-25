@@ -1,41 +1,67 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH v6 10/18] x86/power/64: Remove VLA usage
-Date: Wed, 25 Jul 2018 11:01:47 -0700
-Message-ID: <CAGXu5j+NPCc2hq5x7JUwgKYvY6zKN28YdtHbHVapnpgC3GwCsg@mail.gmail.com>
-References: <20180724164936.37477-1-keescook@chromium.org> <20180724164936.37477-11-keescook@chromium.org>
- <CAJZ5v0gVDotjufLKUW0YuQu2vA4fmU_gqia=ZA4DocW4XHxx0w@mail.gmail.com>
+From: Dave Jiang <dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 0/6] kaddr and pfn can be NULL to ->direct_access()
+Date: Wed, 25 Jul 2018 14:35:32 -0700
+Message-ID: <3689520a-4a49-4e1f-6ee9-2ff4a9796b9f@intel.com>
+References: <20180725162849.8320-1-yehs2007@zoho.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-wireless-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAJZ5v0gVDotjufLKUW0YuQu2vA4fmU_gqia=ZA4DocW4XHxx0w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-wireless-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Rafael J. Wysocki" <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Gustavo A. R. Silva" <gustavo-L1vi/lXTdts+Va1GwOuvDg@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rabin Vincent <rabinv-VrBV9hrLPhE@public.gmane.org>, Tim Chen <tim.c.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, the arch/x86 maintainers <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Philipp Reisner <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Giovanni Cabiddu <giovanni.cabiddu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Greg Kroah-Hartman <gregk>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20180725162849.8320-1-yehs2007-ytc+IHgoah0@public.gmane.org>
+Content-Language: en-US
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org, heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, colyli-l3A5Bk7waGM@public.gmane.org, bart.vanassche-Sjgp3cTcYWE@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Wed, Jul 25, 2018 at 4:32 AM, Rafael J. Wysocki <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> On Tue, Jul 24, 2018 at 6:49 PM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
->> In the quest to remove all stack VLA usage from the kernel[1], this
->> removes the discouraged use of AHASH_REQUEST_ON_STACK by switching to
->> shash directly and allocating the descriptor in heap memory (which should
->> be fine: the tfm has already been allocated there too).
->>
->> [1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org
->>
->> Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
->> Acked-by: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
->
-> I think I can queue this up if there are no objections from others.
->
-> Do you want me to do that?
+Pretty straight forward series. Huaisheng, I can apply the whole series
+to libnvdimm if we can get ack's from maintainer of dcssblk and
+dm-writecache for the respective bits.
 
-Sure thing. It looks like the other stand-alone patches like this one
-are getting taken into the non-crypto trees, so that's fine.
-
-Thanks!
-
--Kees
-
--- 
-Kees Cook
-Pixel Security
+On 07/25/2018 09:28 AM, Huaisheng Ye wrote:
+> From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
+> 
+> Changes since v1 [1]:
+> * Involve the previous patches for pfn can be NULL.
+> * Reword the patch descriptions according to Christian's comment.
+> * According to Ross's suggestion, replace local pointer dummy_addr
+>   with NULL within md/dm-writecache for direct_access.
+> 
+> [1]: https://lkml.org/lkml/2018/7/24/199
+> 
+> Some functions within fs/dax, dax/super and md/dm-writecache don't
+> need to get local pointer kaddr or variable pfn from direct_access.
+> Assigning NULL to kaddr or pfn to ->direct_access() is more
+> straightforward and simple than offering a useless local pointer or
+> variable.
+> 
+> So all ->direct_access() need to check the validity of pointer kaddr
+> and pfn for NULL assignment. If either of them is equal to NULL, that
+> is to say callers may have no need for kaddr or pfn, so this series of
+> patch are prepared for allowing them to pass in NULL instead of having
+> to pass in a local pointer or variable that they then just throw away.
+> 
+> Huaisheng Ye (6):
+>   libnvdimm, pmem: kaddr and pfn can be NULL to ->direct_access()
+>   s390, dcssblk: kaddr and pfn can be NULL to ->direct_access()
+>   tools/testing/nvdimm: kaddr and pfn can be NULL to ->direct_access()
+>   dax/super: Do not request a pointer kaddr when not required
+>   md/dm-writecache: Don't request pointer dummy_addr when not required
+>   filesystem-dax: Do not request kaddr and pfn when not required
+> 
+>  drivers/dax/super.c             |  3 +--
+>  drivers/md/dm-writecache.c      |  3 +--
+>  drivers/nvdimm/pmem.c           |  7 +++++--
+>  drivers/s390/block/dcssblk.c    |  8 +++++---
+>  fs/dax.c                        | 13 ++++---------
+>  tools/testing/nvdimm/pmem-dax.c | 12 ++++++++----
+>  6 files changed, 24 insertions(+), 22 deletions(-)
+> 
