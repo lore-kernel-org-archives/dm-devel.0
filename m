@@ -1,44 +1,100 @@
-From: Huaisheng HS1 Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
-Subject: RE: [External]  Re: [PATCH v2 0/6] kaddr and pfn can be NULL to
- ->direct_access()
-Date: Thu, 26 Jul 2018 01:29:19 +0000
-Message-ID: <TY2PR03MB3343365E80CCBC374C0EFDD4922B0@TY2PR03MB3343.apcprd03.prod.outlook.com>
-References: <20180725162849.8320-1-yehs2007@zoho.com>
- <3689520a-4a49-4e1f-6ee9-2ff4a9796b9f@intel.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH] kpartx: compare image filenames with backing
+ files
+Date: Thu, 26 Jul 2018 12:08:58 -0500
+Message-ID: <20180726170858.GO31378@octiron.msp.redhat.com>
+References: <20180716125213.16767-1-yturgema@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <3689520a-4a49-4e1f-6ee9-2ff4a9796b9f-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Content-Language: zh-CN
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dave Jiang <dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org" <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, "dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "jack-AlSwsSmVLrQ@public.gmane.org" <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: "axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org" <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, NingTing Cheng <chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>, "heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org" <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "colyli-l3A5Bk7waGM@public.gmane.org" <colyli-l3A5Bk7waGM@public.gmane.org>, "bart.vanassche-Sjgp3cTcYWE@public.gmane.org" <bart.vanassche-Sjgp3cTcYWE@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org" <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20180716125213.16767-1-yturgema@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Yuval Turgeman <yturgema@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> From: Dave Jiang <dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Sent: Thursday, July 26, 2018 5:36 AM
-> Subject: [External] Re: [PATCH v2 0/6] kaddr and pfn can be NULL to ->direct_access()
+On Mon, Jul 16, 2018 at 03:52:13PM +0300, Yuval Turgeman wrote:
+> When running `kpartx -d`, find_loop_by_file tries to compare the image's
+> realpath with the output from loopinfo.lo_name, which may hold only the
+> basename of the image, making kpartx exit without finding the loopdev
+> for the image.
 > 
-> Pretty straight forward series. Huaisheng, I can apply the whole series
-> to libnvdimm if we can get ack's from maintainer of dcssblk and
-> dm-writecache for the respective bits.
+> In case the original comparison fails, this patch will check the image's
+> realpath with the loop device's backing_file so that find_loop_by_file
+> will return the correct value.
 
-Thanks Dave and Ross.
+Looks good.
 
-Hi Jan an Dan,
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-The previous patch series for NULL-pfn had got your Reviewed-by or Signed-off-by.
-Now I have expanded them to local pointer kaddr, can I get your Reviewed-by for current
-patch series? Your acks are very important to me.
-
-Cheers,
-Huaisheng Ye
+> 
+> Signed-off-by: Yuval Turgeman <yturgema@redhat.com>
+> ---
+>  kpartx/lopart.c | 30 ++++++++++++++++++++++++++++++
+>  1 file changed, 30 insertions(+)
+> 
+> diff --git a/kpartx/lopart.c b/kpartx/lopart.c
+> index 69c1eda1..9b652554 100644
+> --- a/kpartx/lopart.c
+> +++ b/kpartx/lopart.c
+> @@ -69,6 +69,8 @@ char *find_loop_by_file(const char *filename)
+>  	struct loop_info loopinfo;
+>  	const char VIRT_BLOCK[] = "/sys/devices/virtual/block";
+>  	char path[PATH_MAX];
+> +	char bf_path[PATH_MAX];
+> +	char backing_file[PATH_MAX];
+>  
+>  	dir = opendir(VIRT_BLOCK);
+>  	if (!dir)
+> @@ -122,6 +124,34 @@ char *find_loop_by_file(const char *filename)
+>  			found = realpath(path, NULL);
+>  			break;
+>  		}
+> +
+> +		/*
+> +		 * filename is a realpath, while loopinfo.lo_name may hold just the
+> +		 * basename.  If that's the case, try to match filename against the
+> +		 * backing_file entry for this loop entry
+> +		 */
+> +		if (snprintf(bf_path, PATH_MAX, "%s/%s/loop/backing_file", VIRT_BLOCK,
+> +					 dent->d_name) >= PATH_MAX)
+> +			continue;
+> +
+> +		fd = open(bf_path, O_RDONLY);
+> +		if (fd < 0)
+> +			continue;
+> +
+> +		bytes_read = read(fd, backing_file, sizeof(backing_file) - 1);
+> +		if (bytes_read <= 0) {
+> +			close(fd);
+> +			continue;
+> +		}
+> +
+> +		close(fd);
+> +
+> +		backing_file[bytes_read-1] = '\0';
+> +
+> +		if (0 == strcmp(filename, backing_file)) {
+> +			found = realpath(path, NULL);
+> +			break;
+> +		}
+>  	}
+>  	closedir(dir);
+>  	return found;
+> -- 
+> 2.17.1
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
