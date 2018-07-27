@@ -1,45 +1,39 @@
-From: Julian Andres Klode <julian.klode@canonical.com>
-Subject: Re: [PATCH] kpartx: compare image filenames with backing
- files
-Date: Fri, 27 Jul 2018 09:53:19 +0800
-Message-ID: <20180727015319.s5urnx6d6jz7eivj@jak-t480s>
-References: <20180716125213.16767-1-yturgema@redhat.com>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v2 5/6] md/dm-writecache: Don't request pointer
+ dummy_addr when not required
+Date: Fri, 27 Jul 2018 15:33:33 -0400
+Message-ID: <20180727193333.GA23266@redhat.com>
+References: <20180725162849.8320-1-yehs2007@zoho.com>
+ <20180725162849.8320-6-yehs2007@zoho.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20180716125213.16767-1-yturgema@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Yuval Turgeman <yturgema@redhat.com>
-Cc: dm-devel@redhat.com
+In-Reply-To: <20180725162849.8320-6-yehs2007-ytc+IHgoah0@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
+Cc: jack-AlSwsSmVLrQ@public.gmane.org, heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, bart.vanassche-Sjgp3cTcYWE@public.gmane.org, chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org, colyli-l3A5Bk7waGM@public.gmane.org, schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Mon, Jul 16, 2018 at 03:52:13PM +0300, Yuval Turgeman wrote:
-> When running `kpartx -d`, find_loop_by_file tries to compare the image's
-> realpath with the output from loopinfo.lo_name, which may hold only the
-> basename of the image, making kpartx exit without finding the loopdev
-> for the image.
+On Wed, Jul 25 2018 at 12:28pm -0400,
+Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org> wrote:
+
+> From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 > 
-> In case the original comparison fails, this patch will check the image's
-> realpath with the loop device's backing_file so that find_loop_by_file
-> will return the correct value.
+> Function persistent_memory_claim doesn't need to get local pointer
+> dummy_addr from direct_access. Using NULL instead of having to pass
+> in a useless local pointer that caller then just throw away.
+> 
+> Suggested-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> Signed-off-by: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 
-That seems like it does the same as my patch[1] from February, but in a more
-sane way. "Good" I did not follow up more on that :) /me will check if it
-solves the problem shortly.
-
-[1] https://www.redhat.com/archives/dm-devel/2018-February/msg00019.html
-
-
--- 
-debian developer - deb.li/jak | jak-linux.org - free software dev
-ubuntu core developer                              i speak de, en
+Acked-by: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
