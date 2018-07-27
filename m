@@ -1,8 +1,8 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
+From: Julian Andres Klode <julian.klode@canonical.com>
 Subject: Re: [PATCH] kpartx: compare image filenames with backing
  files
-Date: Thu, 26 Jul 2018 12:08:58 -0500
-Message-ID: <20180726170858.GO31378@octiron.msp.redhat.com>
+Date: Fri, 27 Jul 2018 09:53:19 +0800
+Message-ID: <20180727015319.s5urnx6d6jz7eivj@jak-t480s>
 References: <20180716125213.16767-1-yturgema@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -33,68 +33,13 @@ On Mon, Jul 16, 2018 at 03:52:13PM +0300, Yuval Turgeman wrote:
 > realpath with the loop device's backing_file so that find_loop_by_file
 > will return the correct value.
 
-Looks good.
+That seems like it does the same as my patch[1] from February, but in a more
+sane way. "Good" I did not follow up more on that :) /me will check if it
+solves the problem shortly.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+[1] https://www.redhat.com/archives/dm-devel/2018-February/msg00019.html
 
-> 
-> Signed-off-by: Yuval Turgeman <yturgema@redhat.com>
-> ---
->  kpartx/lopart.c | 30 ++++++++++++++++++++++++++++++
->  1 file changed, 30 insertions(+)
-> 
-> diff --git a/kpartx/lopart.c b/kpartx/lopart.c
-> index 69c1eda1..9b652554 100644
-> --- a/kpartx/lopart.c
-> +++ b/kpartx/lopart.c
-> @@ -69,6 +69,8 @@ char *find_loop_by_file(const char *filename)
->  	struct loop_info loopinfo;
->  	const char VIRT_BLOCK[] = "/sys/devices/virtual/block";
->  	char path[PATH_MAX];
-> +	char bf_path[PATH_MAX];
-> +	char backing_file[PATH_MAX];
->  
->  	dir = opendir(VIRT_BLOCK);
->  	if (!dir)
-> @@ -122,6 +124,34 @@ char *find_loop_by_file(const char *filename)
->  			found = realpath(path, NULL);
->  			break;
->  		}
-> +
-> +		/*
-> +		 * filename is a realpath, while loopinfo.lo_name may hold just the
-> +		 * basename.  If that's the case, try to match filename against the
-> +		 * backing_file entry for this loop entry
-> +		 */
-> +		if (snprintf(bf_path, PATH_MAX, "%s/%s/loop/backing_file", VIRT_BLOCK,
-> +					 dent->d_name) >= PATH_MAX)
-> +			continue;
-> +
-> +		fd = open(bf_path, O_RDONLY);
-> +		if (fd < 0)
-> +			continue;
-> +
-> +		bytes_read = read(fd, backing_file, sizeof(backing_file) - 1);
-> +		if (bytes_read <= 0) {
-> +			close(fd);
-> +			continue;
-> +		}
-> +
-> +		close(fd);
-> +
-> +		backing_file[bytes_read-1] = '\0';
-> +
-> +		if (0 == strcmp(filename, backing_file)) {
-> +			found = realpath(path, NULL);
-> +			break;
-> +		}
->  	}
->  	closedir(dir);
->  	return found;
-> -- 
-> 2.17.1
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+
+-- 
+debian developer - deb.li/jak | jak-linux.org - free software dev
+ubuntu core developer                              i speak de, en
