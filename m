@@ -1,16 +1,16 @@
-From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v2 5/6] md/dm-writecache: Don't request pointer
- dummy_addr when not required
-Date: Fri, 27 Jul 2018 15:33:33 -0400
-Message-ID: <20180727193333.GA23266@redhat.com>
+From: Huaisheng HS1 Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
+Subject: RE: [External]  [PATCH v2 2/6] s390, dcssblk: kaddr and pfn can be
+ NULL to ->direct_access()
+Date: Sat, 28 Jul 2018 04:07:25 +0000
+Message-ID: <TY2PR03MB334328133134A67C87E5CC5C92290@TY2PR03MB3343.apcprd03.prod.outlook.com>
 References: <20180725162849.8320-1-yehs2007@zoho.com>
- <20180725162849.8320-6-yehs2007@zoho.com>
+ <20180725162849.8320-3-yehs2007@zoho.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20180725162849.8320-6-yehs2007-ytc+IHgoah0@public.gmane.org>
+In-Reply-To: <20180725162849.8320-3-yehs2007-ytc+IHgoah0@public.gmane.org>
+Content-Language: zh-CN
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -20,20 +20,58 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
-Cc: jack-AlSwsSmVLrQ@public.gmane.org, heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, bart.vanassche-Sjgp3cTcYWE@public.gmane.org, chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org, colyli-l3A5Bk7waGM@public.gmane.org, schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org" <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, "heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org" <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, "bart.vanassche-Sjgp3cTcYWE@public.gmane.org" <bart.vanassche-Sjgp3cTcYWE@public.gmane.org>, "martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org" <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org" <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, NingTing Cheng <chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "colyli-l3A5Bk7waGM@public.gmane.org" <colyli-l3A5Bk7waGM@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "jack-AlSwsSmVLrQ@public.gmane.org" <jack-AlSwsSmVLrQ@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Wed, Jul 25 2018 at 12:28pm -0400,
-Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org> wrote:
+Dear Maintainers of Linux-s390,
 
+Greetings.
+
+May I have your ack's for this patch? The whole series would be applied
+to libnvdimm if it could get your approval.
+And any suggestion is welcome.
+
+Cheers,
+Huaisheng Ye
+
+> From: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
+> Sent: Thursday, July 26, 2018 12:29 AM
+> 
 > From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 > 
-> Function persistent_memory_claim doesn't need to get local pointer
-> dummy_addr from direct_access. Using NULL instead of having to pass
-> in a useless local pointer that caller then just throw away.
+> dcssblk_direct_access() needs to check the validity of pointers kaddr
+> and pfn for NULL assignment. If anyone equals to NULL, it doesn't need
+> to calculate the value.
 > 
-> Suggested-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> If either of them is equal to NULL, that is to say callers may
+> have no need for kaddr or pfn, so this patch is prepared for allowing
+> them to pass in NULL instead of having to pass in a pointer or local
+> variable that they then just throw away.
+> 
 > Signed-off-by: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
-
-Acked-by: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> ---
+>  drivers/s390/block/dcssblk.c | 8 +++++---
+>  1 file changed, 5 insertions(+), 3 deletions(-)
+> 
+> diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
+> index ed60728..23e526c 100644
+> --- a/drivers/s390/block/dcssblk.c
+> +++ b/drivers/s390/block/dcssblk.c
+> @@ -922,9 +922,11 @@ static DEVICE_ATTR(save, S_IWUSR | S_IRUSR, dcssblk_save_show,
+>  	unsigned long dev_sz;
+> 
+>  	dev_sz = dev_info->end - dev_info->start + 1;
+> -	*kaddr = (void *) dev_info->start + offset;
+> -	*pfn = __pfn_to_pfn_t(PFN_DOWN(dev_info->start + offset),
+> -			PFN_DEV|PFN_SPECIAL);
+> +	if (kaddr)
+> +		*kaddr = (void *) dev_info->start + offset;
+> +	if (pfn)
+> +		*pfn = __pfn_to_pfn_t(PFN_DOWN(dev_info->start + offset),
+> +				PFN_DEV|PFN_SPECIAL);
+> 
+>  	return (dev_sz - offset) / PAGE_SIZE;
+>  }
+> --
+> 1.8.3.1
