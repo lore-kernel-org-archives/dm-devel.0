@@ -1,12 +1,12 @@
 From: Mauricio Faria de Oliveira <mfo@canonical.com>
-Subject: [PATCH 1/2] multipath-tools: fix compilation with gcc <
-	4.9 on dash shell
-Date: Mon, 30 Jul 2018 16:37:44 -0300
-Message-ID: <20180730193745.21775-2-mfo@canonical.com>
+Subject: [PATCH 2/2] multipath-tools: check for C compiler option
+	-Werror=discarded-qualifiers
+Date: Mon, 30 Jul 2018 16:37:45 -0300
+Message-ID: <20180730193745.21775-3-mfo@canonical.com>
 References: <20180730193745.21775-1-mfo@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20180730193745.21775-1-mfo@canonical.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -22,32 +22,38 @@ To: christophe.varoqui@opensvc.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-VGhlIGRhc2ggc2hlbGwgZG9lcyBub3QgaW50ZXJwcmV0ICcmPicgYXMgYmFzaCBkb2VzLCBzbyBp
-bnN0ZWFkCm9mIHN0ZG91dC9zdGRlcnIgcmVkaXJlY3QsIGl0IHJ1bnMgdGhlIGNvbW1hbmQgaW4g
-YmFja2dyb3VuZCBbMV0uCgogICAgJCBmb3Igc2hlbGwgaW4gYmFzaCBkYXNoOyBkbwogICAgICAg
-IGVjaG8gLW4gIiRzaGVsbCByYyA9ICIKICAgICAgICAkc2hlbGwgLWMgJ2VjaG8gImludCBtYWlu
-KHZvaWQpe3JldHVybiAwO30iIFwKICAgICAgICAgICAgICAgICAgICAgfCBnY2MgLW8gL2Rldi9u
-dWxsIC1jIC1mRkFJTCAteGMgLSAmPi9kZXYvbnVsbDsgZWNobyAkPyc7CiAgICAgIGRvbmUKICAg
-IGJhc2ggcmMgPSAxCiAgICBkYXNoIHJjID0gMAogICAgJCBnY2M6IGVycm9yOiB1bnJlY29nbml6
-ZWQgY29tbWFuZCBsaW5lIG9wdGlvbiDigJgtZkZBSUzigJkKClRoaXMgbWlzbGVhZHMgdGhlIGNo
-ZWNrIGZvciBDIGNvbXBpbGVyIG9wdGlvbiBpbiBNYWtlZmlsZS5pbmMKb24gVWJ1bnR1IDE0LjA0
-IGF0IGxlYXN0LCB3aGljaCB1c2VzIGRhc2ggYXMgL2Jpbi9zaCwgYW5kIGhhcwpHQ0MgNC44IChu
-byAtZnN0YWNrLXByb3RlY3Rvci1zdHJvbmcpLCB0aGVuIHRoZSBidWlsZCBmYWlscy4KClNvLCBy
-ZXBsYWNlICcmPicgd2l0aCB0aGUgZXF1aXZhbGVudCAnPicgYW5kICc+JjInLgoKTm8gcmVncmVz
-c2lvbiBvbiBVYnVudHUgMTguMDQgKEdDQyA3LjMsIC1mc3RhY2stcHJvdGVjdG9yLXN0cm9uZyB1
-c2VkKS4KCkZpeGVzOiBhOGRkODM4YwoibXVsdGlwYXRoLXRvb2xzOiBmaXggY29tcGlsYXRpb24g
-d2l0aCBnY2MgPCA0LjkiCgpbMV0gaHR0cHM6Ly93aWtpLnVidW50dS5jb20vRGFzaEFzQmluU2gg
-KHNlZSAnJj4nIHNlY3Rpb24pCgpTaWduZWQtb2ZmLWJ5OiBNYXVyaWNpbyBGYXJpYSBkZSBPbGl2
-ZWlyYSA8bWZvQGNhbm9uaWNhbC5jb20+Ci0tLQogTWFrZWZpbGUuaW5jIHwgMiArLQogMSBmaWxl
-IGNoYW5nZWQsIDEgaW5zZXJ0aW9uKCspLCAxIGRlbGV0aW9uKC0pCgpkaWZmIC0tZ2l0IGEvTWFr
-ZWZpbGUuaW5jIGIvTWFrZWZpbGUuaW5jCmluZGV4IGFmMmY1YmFlMDlkMy4uYTEyYjQ2ZWYzMTVl
-IDEwMDY0NAotLS0gYS9NYWtlZmlsZS5pbmMKKysrIGIvTWFrZWZpbGUuaW5jCkBAIC03OCw3ICs3
-OCw3IEBAIElOU1RBTExfUFJPR1JBTQk9IGluc3RhbGwKICMgVGVzdCBpZiB0aGUgQyBjb21waWxl
-ciBzdXBwb3J0cyB0aGUgb3B0aW9uLgogIyBFdmFsdWF0ZXMgdG8gIm9wdGlvbiIgaWYgeWVzLCBh
-bmQgImZhbGxiYWNrIiBvdGhlcndpc2UuCiBURVNUX0NDX09QVElPTiA9ICQoc2hlbGwgXAotCWlm
-IGVjaG8gJ2ludCBtYWluKHZvaWQpe3JldHVybiAwO30nIHwgJChDQykgLW8gL2Rldi9udWxsIC1j
-ICIkKDEpIiAteGMgLSAmPi9kZXYvbnVsbDsgXAorCWlmIGVjaG8gJ2ludCBtYWluKHZvaWQpe3Jl
-dHVybiAwO30nIHwgJChDQykgLW8gL2Rldi9udWxsIC1jICIkKDEpIiAteGMgLSA+L2Rldi9udWxs
-IDI+JjE7IFwKIAl0aGVuIFwKIAkJZWNobyAiJCgxKSI7IFwKIAllbHNlIFwKLS0gCjIuMTcuMQoK
-LS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cu
-cmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+The -Werror=discarded-qualifiers option is not supported on GCC 4.8
+(ships in Ubuntu 14.04 at least). Use TEST_CC_OPTION to detect that
+and fix a build failure.
+
+No regression on Ubuntu 18.04 (GCC 7.3, -Werror=discarded-qualifiers
+used).
+
+Fixes: ff307801
+"multipath-tools: Makefile.inc: use -Werror=cast-qual"
+
+Signed-off-by: Mauricio Faria de Oliveira <mfo@canonical.com>
+---
+ Makefile.inc | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile.inc b/Makefile.inc
+index a12b46ef315e..a83f02c72ed6 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -86,11 +86,12 @@ TEST_CC_OPTION = $(shell \
+ 	fi)
+ 
+ STACKPROT := $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)
++ERROR_DISCARDED_QUALIFIERS := $(call TEST_CC_OPTION,-Werror=discarded-qualifiers,)
+ 
+ OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
+ 		  -Werror=implicit-function-declaration -Werror=format-security \
+ 		  -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered \
+-		  -Werror=cast-qual -Werror=discarded-qualifiers \
++		  -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS) \
+ 		  -Wp,-D_FORTIFY_SOURCE=2 $(STACKPROT) \
+ 		  --param=ssp-buffer-size=4
+ 
+-- 
+2.17.1
