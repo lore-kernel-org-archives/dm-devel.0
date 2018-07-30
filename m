@@ -1,14 +1,16 @@
-From: Mauricio Faria de Oliveira <mfo@canonical.com>
-Subject: [PATCH 2/2] multipath-tools: check for C compiler option
-	-Werror=discarded-qualifiers
-Date: Mon, 30 Jul 2018 16:37:45 -0300
-Message-ID: <20180730193745.21775-3-mfo@canonical.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: [PATCH 1/2] multipath-tools: fix compilation with
+ gcc < 4.9 on dash shell
+Date: Mon, 30 Jul 2018 19:59:41 +0000
+Message-ID: <44ef8adf3a2b2dcb21f8a56c62c89044a674ead4.camel@wdc.com>
 References: <20180730193745.21775-1-mfo@canonical.com>
+	<20180730193745.21775-2-mfo@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============4905101161479245288=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180730193745.21775-1-mfo@canonical.com>
+In-Reply-To: <20180730193745.21775-2-mfo@canonical.com>
+Content-Language: en-US
+Content-ID: <9981F8EE8BE71E4AB3B6A7F5E0C8C4C2@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,42 +20,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com
-Cc: dm-devel@redhat.com
+To: "mfo@canonical.com" <mfo@canonical.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The -Werror=discarded-qualifiers option is not supported on GCC 4.8
-(ships in Ubuntu 14.04 at least). Use TEST_CC_OPTION to detect that
-and fix a build failure.
+--===============4905101161479245288==
+Content-Language: en-US
+Content-Type: text/plain; charset="utf-7"
+Content-ID: <9981F8EE8BE71E4AB3B6A7F5E0C8C4C2@namprd04.prod.outlook.com>
+Content-Transfer-Encoding: 8bit
 
-No regression on Ubuntu 18.04 (GCC 7.3, -Werror=discarded-qualifiers
-used).
+On Mon, 2018-07-30 at 16:37 -0300, Mauricio Faria de Oliveira wrote:
++AD4- diff --git a/Makefile.inc b/Makefile.inc
++AD4- index af2f5bae09d3..a12b46ef315e 100644
++AD4- --- a/Makefile.inc
++AD4- +-+-+- b/Makefile.inc
++AD4- +AEAAQA- -78,7 +-78,7 +AEAAQA- INSTALL+AF8-PROGRAM	+AD0- install
++AD4-  +ACM- Test if the C compiler supports the option.
++AD4-  +ACM- Evaluates to +ACI-option+ACI- if yes, and +ACI-fallback+ACI- otherwise.
++AD4-  TEST+AF8-CC+AF8-OPTION +AD0- +ACQ-(shell +AFw-
++AD4- -	if echo 'int main(void)+AHs-return 0+ADsAfQ-' +AHw- +ACQ-(CC) -o /dev/null -c +ACIAJA-(1)+ACI- -xc - +ACYAPg-/dev/null+ADs- +AFw-
++AD4- +-	if echo 'int main(void)+AHs-return 0+ADsAfQ-' +AHw- +ACQ-(CC) -o /dev/null -c +ACIAJA-(1)+ACI- -xc - +AD4-/dev/null 2+AD4AJg-1+ADs- +AFw-
++AD4-  	then +AFw-
++AD4-  		echo +ACIAJA-(1)+ACIAOw- +AFw-
++AD4-  	else +AFw-
 
-Fixes: ff307801
-"multipath-tools: Makefile.inc: use -Werror=cast-qual"
+Reviewed-by: Bart Van Assche +ADw-bart.vanassche+AEA-wdc.com+AD4-
 
-Signed-off-by: Mauricio Faria de Oliveira <mfo@canonical.com>
----
- Makefile.inc | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index a12b46ef315e..a83f02c72ed6 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -86,11 +86,12 @@ TEST_CC_OPTION = $(shell \
- 	fi)
- 
- STACKPROT := $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)
-+ERROR_DISCARDED_QUALIFIERS := $(call TEST_CC_OPTION,-Werror=discarded-qualifiers,)
- 
- OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
- 		  -Werror=implicit-function-declaration -Werror=format-security \
- 		  -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered \
--		  -Werror=cast-qual -Werror=discarded-qualifiers \
-+		  -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS) \
- 		  -Wp,-D_FORTIFY_SOURCE=2 $(STACKPROT) \
- 		  --param=ssp-buffer-size=4
- 
--- 
-2.17.1
+
+
+--===============4905101161479245288==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============4905101161479245288==--
