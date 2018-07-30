@@ -1,78 +1,70 @@
-From: Huaisheng HS1 Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
-Subject: RE: [External]  [PATCH v3 0/6] kaddr and pfn can be NULL to
- ->direct_access()
-Date: Mon, 30 Jul 2018 07:30:07 +0000
-Message-ID: <TY2PR03MB3343C33E4D747830A550438E922F0@TY2PR03MB3343.apcprd03.prod.outlook.com>
-References: <20180730071548.9172-1-yehs2007@zoho.com>
+From: Mauricio Faria de Oliveira <mfo@canonical.com>
+Subject: [PATCH 0/2] multipath-tools: fix build failures on GCC
+	4.8
+Date: Mon, 30 Jul 2018 16:37:43 -0300
+Message-ID: <20180730193745.21775-1-mfo@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20180730071548.9172-1-yehs2007-ytc+IHgoah0@public.gmane.org>
-Content-Language: zh-CN
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, "dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: "axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org" <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, NingTing Cheng <chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org" <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "colyli-l3A5Bk7waGM@public.gmane.org" <colyli-l3A5Bk7waGM@public.gmane.org>, "bart.vanassche-Sjgp3cTcYWE@public.gmane.org" <bart.vanassche-Sjgp3cTcYWE@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org" <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, "jack-AlSwsSmVLrQ@public.gmane.org" <jack-AlSwsSmVLrQ@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org" <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: christophe.varoqui@opensvc.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Missing one in changes log.
-
-> From: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
-> Sent: Monday, July 30, 2018 3:16 PM
-> 
-> From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
-> 
-> Changes since v2 [2]:
-> * Collect Martin and Mike's acks for dcssblk and dm-writecache;
-> * Rebase the series of patch to v4.18-rc7.
-* Collect Ross's reviewed-by for series.
-
-> 
-> Changes since v1 [1]:
-> * Involve the previous patches for pfn can be NULL.
-> * Reword the patch descriptions according to Christian's comment.
-> * According to Ross's suggestion, replace local pointer dummy_addr
->   with NULL within md/dm-writecache for direct_access.
-> 
-> [1]: https://lkml.org/lkml/2018/7/24/199
-> [2]: https://lkml.org/lkml/2018/7/25/581
-> 
-> Some functions within fs/dax, dax/super and md/dm-writecache don't
-> need to get local pointer kaddr or variable pfn from direct_access.
-> Assigning NULL to kaddr or pfn with ->direct_access() is more
-> straightforward and simple than offering a useless local pointer or
-> variable.
-> 
-> So all ->direct_access() need to check the validity of pointer kaddr
-> and pfn for NULL assignment. If either of them is equal to NULL, that
-> is to say callers may have no need for kaddr or pfn, so this series of
-> patch are prepared for allowing them to pass in NULL instead of having
-> to pass in a local pointer or variable that they then just throw away.
-> 
-> Huaisheng Ye (6):
->   libnvdimm, pmem: kaddr and pfn can be NULL to ->direct_access()
->   s390, dcssblk: kaddr and pfn can be NULL to ->direct_access()
->   tools/testing/nvdimm: kaddr and pfn can be NULL to ->direct_access()
->   dax/super: Do not request a pointer kaddr when not required
->   md/dm-writecache: Don't request pointer dummy_addr when not required
->   filesystem-dax: Do not request kaddr and pfn when not required
-> 
->  drivers/dax/super.c             |  3 +--
->  drivers/md/dm-writecache.c      |  3 +--
->  drivers/nvdimm/pmem.c           |  7 +++++--
->  drivers/s390/block/dcssblk.c    |  8 +++++---
->  fs/dax.c                        | 13 ++++---------
->  tools/testing/nvdimm/pmem-dax.c | 12 ++++++++----
->  6 files changed, 24 insertions(+), 22 deletions(-)
-> 
-> --
-> 1.8.3.1
-> 
+VGhpcyBzZXJpZXMgZml4ZXMgYSBjb3VwbGUgb2YgYnVpbGQgZmFpbHVyZXMgaGl0IG9uIEdDQyA0
+LjgKKG9uZSBhY3R1YWxseSBkdWUgdG8gZGFzaC9iYXNoIGRpZmZlcmVuY2VzKSBvbiBVYnVudHUg
+MTQuMDQuCgpBbHNvIHRlc3RlZCBvbiBVYnVudHUgMTguMDQgKEdDQyA3LjMpIGZvciAobm8pIHJl
+Z3Jlc3Npb25zLgoKQmVmb3JlOgoKICAgICQgbWFrZSAKICAgIGNjOiBlcnJvcjogdW5yZWNvZ25p
+emVkIGNvbW1hbmQgbGluZSBvcHRpb24g4oCYLWZzdGFjay1wcm90ZWN0b3Itc3Ryb25n4oCZCiAg
+ICBtYWtlWzFdOiBFbnRlcmluZyBkaXJlY3RvcnkgYC9ob21lL3VidW50dS9naXQvbXVsdGlwYXRo
+LXRvb2xzL2xpYm1wYXRoY21kJwogICAgYnVpbGRpbmcgbXBhdGhfY21kLm8gYmVjYXVzZSBvZiBt
+cGF0aF9jbWQuYwogICAgY2MgLU8yIC1nIC1waXBlIC1XYWxsIC1XZXh0cmEgLVdmb3JtYXQ9MiAt
+V2Vycm9yPWltcGxpY2l0LWludCAtV2Vycm9yPWltcGxpY2l0LWZ1bmN0aW9uLWRlY2xhcmF0aW9u
+IC1XZXJyb3I9Zm9ybWF0LXNlY3VyaXR5IC1Xbm8tc2lnbi1jb21wYXJlIC1Xbm8tdW51c2VkLXBh
+cmFtZXRlciAtV25vLWNsb2JiZXJlZCAtV2Vycm9yPWNhc3QtcXVhbCAtV2Vycm9yPWRpc2NhcmRl
+ZC1xdWFsaWZpZXJzIC1XcCwtRF9GT1JUSUZZX1NPVVJDRT0yIC1mc3RhY2stcHJvdGVjdG9yLXN0
+cm9uZyAtLXBhcmFtPXNzcC1idWZmZXItc2l6ZT00IC1EQklOX0RJUj1cIi9zYmluXCIgLURMSUJf
+U1RSSU5HPVwibGliNjRcIiAtRFJVTl9ESVI9XCJydW5cIiAtTU1EIC1NUCAgLWZQSUMgLWMgLW8g
+bXBhdGhfY21kLm8gbXBhdGhfY21kLmMKICAgIGNjOiBlcnJvcjogdW5yZWNvZ25pemVkIGNvbW1h
+bmQgbGluZSBvcHRpb24g4oCYLWZzdGFjay1wcm90ZWN0b3Itc3Ryb25n4oCZCiAgICBtYWtlWzFd
+OiAqKiogW21wYXRoX2NtZC5vXSBFcnJvciAxCgpBZnRlciBQYXRjaCAxOgoKICAgICQgbWFrZSAK
+ICAgIG1ha2VbMV06IEVudGVyaW5nIGRpcmVjdG9yeSBgL2hvbWUvdWJ1bnR1L2dpdC9tdWx0aXBh
+dGgtdG9vbHMvbGlibXBhdGhjbWQnCiAgICBidWlsZGluZyBtcGF0aF9jbWQubyBiZWNhdXNlIG9m
+IG1wYXRoX2NtZC5jCiAgICBjYyAtTzIgLWcgLXBpcGUgLVdhbGwgLVdleHRyYSAtV2Zvcm1hdD0y
+IC1XZXJyb3I9aW1wbGljaXQtaW50IC1XZXJyb3I9aW1wbGljaXQtZnVuY3Rpb24tZGVjbGFyYXRp
+b24gLVdlcnJvcj1mb3JtYXQtc2VjdXJpdHkgLVduby1zaWduLWNvbXBhcmUgLVduby11bnVzZWQt
+cGFyYW1ldGVyIC1Xbm8tY2xvYmJlcmVkIC1XZXJyb3I9Y2FzdC1xdWFsIC1XZXJyb3I9ZGlzY2Fy
+ZGVkLXF1YWxpZmllcnMgLVdwLC1EX0ZPUlRJRllfU09VUkNFPTIgLWZzdGFjay1wcm90ZWN0b3Ig
+LS1wYXJhbT1zc3AtYnVmZmVyLXNpemU9NCAtREJJTl9ESVI9XCIvc2JpblwiIC1ETElCX1NUUklO
+Rz1cImxpYjY0XCIgLURSVU5fRElSPVwicnVuXCIgLU1NRCAtTVAgIC1mUElDIC1jIC1vIG1wYXRo
+X2NtZC5vIG1wYXRoX2NtZC5jCiAgICBjYzE6IGVycm9yOiAtV2Vycm9yPWRpc2NhcmRlZC1xdWFs
+aWZpZXJzOiBubyBvcHRpb24gLVdkaXNjYXJkZWQtcXVhbGlmaWVycwogICAgbWFrZVsxXTogKioq
+IFttcGF0aF9jbWQub10gRXJyb3IgMQoKQWZ0ZXIgUGF0Y2ggMjoKCiAgICAkIG1ha2UKICAgIG1h
+a2VbMV06IEVudGVyaW5nIGRpcmVjdG9yeSBgL2hvbWUvdWJ1bnR1L2dpdC9tdWx0aXBhdGgtdG9v
+bHMvbGlibXBhdGhjbWQnCiAgICBidWlsZGluZyBtcGF0aF9jbWQubyBiZWNhdXNlIG9mIG1wYXRo
+X2NtZC5jCiAgICBjYyAtTzIgLWcgLXBpcGUgLVdhbGwgLVdleHRyYSAtV2Zvcm1hdD0yIC1XZXJy
+b3I9aW1wbGljaXQtaW50IC1XZXJyb3I9aW1wbGljaXQtZnVuY3Rpb24tZGVjbGFyYXRpb24gLVdl
+cnJvcj1mb3JtYXQtc2VjdXJpdHkgLVduby1zaWduLWNvbXBhcmUgLVduby11bnVzZWQtcGFyYW1l
+dGVyIC1Xbm8tY2xvYmJlcmVkIC1XZXJyb3I9Y2FzdC1xdWFsICAtV3AsLURfRk9SVElGWV9TT1VS
+Q0U9MiAtZnN0YWNrLXByb3RlY3RvciAtLXBhcmFtPXNzcC1idWZmZXItc2l6ZT00IC1EQklOX0RJ
+Uj1cIi9zYmluXCIgLURMSUJfU1RSSU5HPVwibGliNjRcIiAtRFJVTl9ESVI9XCJydW5cIiAtTU1E
+IC1NUCAgLWZQSUMgLWMgLW8gbXBhdGhfY21kLm8gbXBhdGhfY21kLmMKICAgIGNjIC1XbCwteixy
+ZWxybyAtV2wsLXosbm93IC1zaGFyZWQgLVdsLC1zb25hbWU9bGlibXBhdGhjbWQuc28uMCAtbyBs
+aWJtcGF0aGNtZC5zby4wIG1wYXRoX2NtZC5vIAogICAgbG4gLXNmIGxpYm1wYXRoY21kLnNvLjAg
+bGlibXBhdGhjbWQuc28KICAgIG1ha2VbMV06IExlYXZpbmcgZGlyZWN0b3J5IGAvaG9tZS91YnVu
+dHUvZ2l0L211bHRpcGF0aC10b29scy9saWJtcGF0aGNtZCcKCk1hdXJpY2lvIEZhcmlhIGRlIE9s
+aXZlaXJhICgyKToKICBtdWx0aXBhdGgtdG9vbHM6IGZpeCBjb21waWxhdGlvbiB3aXRoIGdjYyA8
+IDQuOSBvbiBkYXNoIHNoZWxsCiAgbXVsdGlwYXRoLXRvb2xzOiBjaGVjayBmb3IgQyBjb21waWxl
+ciBvcHRpb24KICAgIC1XZXJyb3I9ZGlzY2FyZGVkLXF1YWxpZmllcnMKCiBNYWtlZmlsZS5pbmMg
+fCA1ICsrKy0tCiAxIGZpbGUgY2hhbmdlZCwgMyBpbnNlcnRpb25zKCspLCAyIGRlbGV0aW9ucygt
+KQoKLS0gCjIuMTcuMQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
+b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
