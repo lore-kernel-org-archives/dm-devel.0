@@ -1,8 +1,8 @@
 From: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
-Subject: [PATCH v3 4/6] dax/super: Do not request a pointer kaddr when not
- required
-Date: Mon, 30 Jul 2018 15:15:46 +0800
-Message-ID: <20180730071548.9172-5-yehs2007@zoho.com>
+Subject: [PATCH v3 5/6] md/dm-writecache: Don't request pointer dummy_addr
+ when not required
+Date: Mon, 30 Jul 2018 15:15:47 +0800
+Message-ID: <20180730071548.9172-6-yehs2007@zoho.com>
 References: <20180730071548.9172-1-yehs2007@zoho.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,36 +24,32 @@ List-Id: dm-devel.ids
 
 From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 
-Function __bdev_dax_supported doesn't need to get local pointer kaddr
-from direct_access. Using NULL instead of having to pass in a useless
-local pointer that caller then just throw away.
+Function persistent_memory_claim doesn't need to get local pointer
+dummy_addr from direct_access. Using NULL instead of having to pass
+in a useless local pointer that caller then just throw away.
 
+Suggested-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Signed-off-by: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Acked-by: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- drivers/dax/super.c | 3 +--
+ drivers/md/dm-writecache.c | 3 +--
  1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-index 45276ab..6e928f3 100644
---- a/drivers/dax/super.c
-+++ b/drivers/dax/super.c
-@@ -89,7 +89,6 @@ bool __bdev_dax_supported(struct block_device *bdev, int blocksize)
- 	struct request_queue *q;
- 	pgoff_t pgoff;
- 	int err, id;
--	void *kaddr;
- 	pfn_t pfn;
- 	long len;
- 	char buf[BDEVNAME_SIZE];
-@@ -122,7 +121,7 @@ bool __bdev_dax_supported(struct block_device *bdev, int blocksize)
- 	}
- 
- 	id = dax_read_lock();
--	len = dax_direct_access(dax_dev, pgoff, 1, &kaddr, &pfn);
-+	len = dax_direct_access(dax_dev, pgoff, 1, NULL, &pfn);
- 	dax_read_unlock(id);
- 
- 	put_dax(dax_dev);
+diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+index 87107c9..9d79084 100644
+--- a/drivers/md/dm-writecache.c
++++ b/drivers/md/dm-writecache.c
+@@ -268,9 +268,8 @@ static int persistent_memory_claim(struct dm_writecache *wc)
+ 		i = 0;
+ 		do {
+ 			long daa;
+-			void *dummy_addr;
+ 			daa = dax_direct_access(wc->ssd_dev->dax_dev, i, p - i,
+-						&dummy_addr, &pfn);
++						NULL, &pfn);
+ 			if (daa <= 0) {
+ 				r = daa ? daa : -EINVAL;
+ 				goto err3;
 -- 
 1.8.3.1
