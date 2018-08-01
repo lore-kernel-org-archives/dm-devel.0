@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 17/32] libmultipath: fix tur checker double
-	locking
-Date: Wed,  1 Aug 2018 15:57:03 -0500
-Message-ID: <1533157038-3924-18-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 19/32] libmultipath: cleanup tur locking
+Date: Wed,  1 Aug 2018 15:57:05 -0500
+Message-ID: <1533157038-3924-20-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,168 +21,142 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Bart Van Assche <bart.vanassche@wdc.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-tur_devt() locks ct->lock. However, it is ocassionally called while
-ct->lock is already locked. In reality, there is no reason why we need
-to lock all the accesses to ct->devt. The tur checker only needs to
-write to this variable one time, when it first gets the file descripter
-that it is checking.  It also never uses ct->devt directly. Instead, it
-always graps the major and minor, and turns them into a string. This
-patch changes ct->devt into that string, and only sets it if it hasn't
-been set before, and no thread is holding the context. After that,
-this value is only read, and so doesn't need locking.
+There are only three variables whose access needs to be synchronized
+between the tur thread and the path checker itself: state, message, and
+active.  The rest of the variables are either only written when the tur
+thread isn't running, or they aren't accessed by the tur thread, or they
+are atomics that are themselves used to synchronize things.
 
-I realize that this locking was added to make an analyzer happy,
-presumably because sometimes ct->devt was being accessed while ct->devt
-was held, and sometimes not.  The tur checker locking will be cleaned
-up in a later patch to deal with this.
+This patch limits the amount of code that is covered by ct->lock to
+only what needs to be locked. It also makes ct->lock no longer a
+recursive lock. To make this simpler, tur_thread now only sets the
+state and message one time, instead of twice, since PATH_UNCHECKED
+was never able to be returned anyway.
+
+One benefit of this is that the tur checker thread gets more time to
+call tur_check() and return before libcheck_check() gives up and
+return PATH_PENDING.
 
 Cc: Bart Van Assche <bart.vanassche@wdc.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/checkers/tur.c | 52 ++++++++++++++-------------------------------
- 1 file changed, 16 insertions(+), 36 deletions(-)
+ libmultipath/checkers/tur.c | 49 ++++++++++++++++++---------------------------
+ 1 file changed, 20 insertions(+), 29 deletions(-)
 
 diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 275541f..bfb0907 100644
+index a02c445..4a3e39c 100644
 --- a/libmultipath/checkers/tur.c
 +++ b/libmultipath/checkers/tur.c
-@@ -37,32 +37,19 @@
- #define MSG_TUR_FAILED	"tur checker failed to initialize"
- 
- struct tur_checker_context {
--	dev_t devt;
-+	char devt[32];
- 	int state;
--	int running;
-+	int running; /* uatomic access only */
- 	int fd;
- 	unsigned int timeout;
- 	time_t time;
- 	pthread_t thread;
- 	pthread_mutex_t lock;
- 	pthread_cond_t active;
--	int holders;
-+	int holders; /* uatomic access only */
- 	char message[CHECKER_MSG_LEN];
- };
- 
--static const char *tur_devt(char *devt_buf, int size,
--			    struct tur_checker_context *ct)
--{
--	dev_t devt;
--
--	pthread_mutex_lock(&ct->lock);
--	devt = ct->devt;
--	pthread_mutex_unlock(&ct->lock);
--
--	snprintf(devt_buf, size, "%d:%d", major(devt), minor(devt));
--	return devt_buf;
--}
--
+@@ -53,7 +53,6 @@ struct tur_checker_context {
  int libcheck_init (struct checker * c)
  {
  	struct tur_checker_context *ct;
-@@ -232,14 +219,12 @@ static void *tur_thread(void *ctx)
- {
- 	struct tur_checker_context *ct = ctx;
- 	int state, running;
--	char devt[32];
+-	pthread_mutexattr_t attr;
  
- 	/* This thread can be canceled, so setup clean up */
- 	tur_thread_cleanup_push(ct);
- 	rcu_register_thread();
- 
--	condlog(3, "%s: tur checker starting up",
--		tur_devt(devt, sizeof(devt), ct));
-+	condlog(3, "%s: tur checker starting up", ct->devt);
- 
- 	/* TUR checker start up */
- 	pthread_mutex_lock(&ct->lock);
-@@ -256,8 +241,8 @@ static void *tur_thread(void *ctx)
- 	pthread_cond_signal(&ct->active);
- 	pthread_mutex_unlock(&ct->lock);
- 
--	condlog(3, "%s: tur checker finished, state %s",
--		tur_devt(devt, sizeof(devt), ct), checker_state_name(state));
-+	condlog(3, "%s: tur checker finished, state %s", ct->devt,
-+		checker_state_name(state));
- 
- 	running = uatomic_xchg(&ct->running, 0);
- 	if (!running)
-@@ -308,15 +293,14 @@ int libcheck_check(struct checker * c)
- 	struct stat sb;
- 	pthread_attr_t attr;
- 	int tur_status, r;
--	char devt[32];
- 
+ 	ct = malloc(sizeof(struct tur_checker_context));
  	if (!ct)
- 		return PATH_UNCHECKED;
+@@ -64,10 +63,7 @@ int libcheck_init (struct checker * c)
+ 	ct->fd = -1;
+ 	uatomic_set(&ct->holders, 1);
+ 	pthread_cond_init_mono(&ct->active);
+-	pthread_mutexattr_init(&attr);
+-	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+-	pthread_mutex_init(&ct->lock, &attr);
+-	pthread_mutexattr_destroy(&attr);
++	pthread_mutex_init(&ct->lock, NULL);
+ 	c->context = ct;
  
--	if (fstat(c->fd, &sb) == 0) {
--		pthread_mutex_lock(&ct->lock);
--		ct->devt = sb.st_rdev;
--		pthread_mutex_unlock(&ct->lock);
-+	if (uatomic_read(&ct->holders) == 1 && ct->devt[0] == 0 &&
-+	    fstat(c->fd, &sb) == 0) {
-+		snprintf(ct->devt, sizeof(ct->devt), "%d:%d", major(sb.st_rdev),
-+			 minor(sb.st_rdev));
- 	}
+ 	return 0;
+@@ -209,12 +205,6 @@ static void *tur_thread(void *ctx)
  
- 	if (c->sync)
-@@ -327,8 +311,7 @@ int libcheck_check(struct checker * c)
+ 	condlog(3, "%s: tur checker starting up", ct->devt);
+ 
+-	/* TUR checker start up */
+-	pthread_mutex_lock(&ct->lock);
+-	ct->state = PATH_PENDING;
+-	ct->message[0] = '\0';
+-	pthread_mutex_unlock(&ct->lock);
+-
+ 	state = tur_check(ct->fd, ct->timeout, msg);
+ 	pthread_testcancel();
+ 
+@@ -286,13 +276,6 @@ int libcheck_check(struct checker * c)
+ 	/*
+ 	 * Async mode
  	 */
- 	r = pthread_mutex_lock(&ct->lock);
- 	if (r != 0) {
--		condlog(2, "%s: tur mutex lock failed with %d",
--			tur_devt(devt, sizeof(devt), ct), r);
-+		condlog(2, "%s: tur mutex lock failed with %d", ct->devt, r);
- 		MSG(c, MSG_TUR_FAILED);
- 		return PATH_WILD;
- 	}
-@@ -338,14 +321,12 @@ int libcheck_check(struct checker * c)
+-	r = pthread_mutex_lock(&ct->lock);
+-	if (r != 0) {
+-		condlog(2, "%s: tur mutex lock failed with %d", ct->devt, r);
+-		MSG(c, MSG_TUR_FAILED);
+-		return PATH_WILD;
+-	}
+-
+ 	if (ct->thread) {
+ 		if (tur_check_async_timeout(c)) {
  			int running = uatomic_xchg(&ct->running, 0);
- 			if (running)
- 				pthread_cancel(ct->thread);
--			condlog(3, "%s: tur checker timeout",
--				tur_devt(devt, sizeof(devt), ct));
-+			condlog(3, "%s: tur checker timeout", ct->devt);
- 			ct->thread = 0;
- 			MSG(c, MSG_TUR_TIMEOUT);
- 			tur_status = PATH_TIMEOUT;
- 		} else if (uatomic_read(&ct->running) != 0) {
--			condlog(3, "%s: tur checker not finished",
--					tur_devt(devt, sizeof(devt), ct));
-+			condlog(3, "%s: tur checker not finished", ct->devt);
- 			tur_status = PATH_PENDING;
+@@ -308,23 +291,29 @@ int libcheck_check(struct checker * c)
  		} else {
  			/* TUR checker done */
-@@ -361,7 +342,7 @@ int libcheck_check(struct checker * c)
- 			if (ct->state == PATH_PENDING) {
- 				pthread_mutex_unlock(&ct->lock);
+ 			ct->thread = 0;
++			pthread_mutex_lock(&ct->lock);
+ 			tur_status = ct->state;
+ 			strlcpy(c->message, ct->message, sizeof(c->message));
++			pthread_mutex_unlock(&ct->lock);
+ 		}
+-		pthread_mutex_unlock(&ct->lock);
+ 	} else {
+ 		if (uatomic_read(&ct->holders) > 1) {
+ 			/* pthread cancel failed. If it didn't get the path
+ 			   state already, timeout */
+-			if (ct->state == PATH_PENDING) {
+-				pthread_mutex_unlock(&ct->lock);
++			pthread_mutex_lock(&ct->lock);
++			tur_status = ct->state;
++			pthread_mutex_unlock(&ct->lock);
++			if (tur_status == PATH_PENDING) {
  				condlog(3, "%s: tur thread not responding",
--					tur_devt(devt, sizeof(devt), ct));
-+					ct->devt);
+ 					ct->devt);
  				return PATH_TIMEOUT;
  			}
  		}
-@@ -381,7 +362,7 @@ int libcheck_check(struct checker * c)
+ 		/* Start new TUR checker */
+-		ct->state = PATH_UNCHECKED;
++		pthread_mutex_lock(&ct->lock);
++		tur_status = ct->state = PATH_PENDING;
++		ct->message[0] = '\0';
++		pthread_mutex_unlock(&ct->lock);
+ 		ct->fd = c->fd;
+ 		ct->timeout = c->timeout;
+ 		uatomic_add(&ct->holders, 1);
+@@ -337,20 +326,22 @@ int libcheck_check(struct checker * c)
+ 			uatomic_sub(&ct->holders, 1);
+ 			uatomic_set(&ct->running, 0);
  			ct->thread = 0;
- 			pthread_mutex_unlock(&ct->lock);
+-			pthread_mutex_unlock(&ct->lock);
  			condlog(3, "%s: failed to start tur thread, using"
--				" sync mode", tur_devt(devt, sizeof(devt), ct));
-+				" sync mode", ct->devt);
- 			return tur_check(c->fd, c->timeout,
- 					 copy_msg_to_checker, c);
+ 				" sync mode", ct->devt);
+ 			return tur_check(c->fd, c->timeout, c->message);
  		}
-@@ -392,8 +373,7 @@ int libcheck_check(struct checker * c)
+ 		tur_timeout(&tsp);
+-		r = pthread_cond_timedwait(&ct->active, &ct->lock, &tsp);
+-		tur_status = ct->state;
+-		strlcpy(c->message, ct->message, sizeof(c->message));
++		pthread_mutex_lock(&ct->lock);
++		if (ct->state == PATH_PENDING)
++			r = pthread_cond_timedwait(&ct->active, &ct->lock, 
++						   &tsp);
++		if (!r) {
++			tur_status = ct->state;
++			strlcpy(c->message, ct->message, sizeof(c->message));
++		}
  		pthread_mutex_unlock(&ct->lock);
- 		if (uatomic_read(&ct->running) != 0 &&
- 		    (tur_status == PATH_PENDING || tur_status == PATH_UNCHECKED)) {
--			condlog(3, "%s: tur checker still running",
--				tur_devt(devt, sizeof(devt), ct));
-+			condlog(3, "%s: tur checker still running", ct->devt);
- 			tur_status = PATH_PENDING;
+-		if (uatomic_read(&ct->running) != 0 &&
+-		    (tur_status == PATH_PENDING || tur_status == PATH_UNCHECKED)) {
++		if (tur_status == PATH_PENDING) {
+ 			condlog(3, "%s: tur checker still running", ct->devt);
+-			tur_status = PATH_PENDING;
  		} else {
  			int running = uatomic_xchg(&ct->running, 0);
+ 			if (running)
 -- 
 2.7.4
