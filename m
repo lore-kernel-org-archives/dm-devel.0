@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 16/32] libmultipath: fix tur checker timeout
-Date: Wed,  1 Aug 2018 15:57:02 -0500
-Message-ID: <1533157038-3924-17-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 22/32] libmultipath: fix length issues in
+	get_vpd_sgio
+Date: Wed,  1 Aug 2018 15:57:08 -0500
+Message-ID: <1533157038-3924-23-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,49 +22,47 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The code previously was timing out mode if ct->thread was 0 but
-ct->running wasn't. This combination never happens.  The idea was to
-timeout if for some reason the path checker tried to kill the thread,
-but it didn't die.  The correct thing to check for this is ct->holders.
-ct->holders will always be at least one when libcheck_check() is called,
-since libcheck_free() won't get called until the device is no longer
-being checked. So, if ct->holders is 2, that means that the tur thread
-is has not shut down yet.
-
-Also, instead of returning PATH_TIMEOUT whenever the thread hasn't died,
-it should only time out if the thread didn't successfully get a value,
-which means the previous state was already PATH_TIMEOUT.
+When get_vpd_sgio() finds out that the vpd info needed to be truncated
+to fit in the buffer, it doesn't trucate the size as well,  which allows
+it to overwrite the buffer. Also, in once len is set to -ENODATA,
+get_vpd_sgio() should exit, instead of using the negative len in
+memcpy(). Found by coverity.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/checkers/tur.c | 15 +++++++++------
- 1 file changed, 9 insertions(+), 6 deletions(-)
+ libmultipath/discovery.c | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index bf8486d..275541f 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -355,12 +355,15 @@ int libcheck_check(struct checker * c)
- 		}
- 		pthread_mutex_unlock(&ct->lock);
- 	} else {
--		if (uatomic_read(&ct->running) != 0) {
--			/* pthread cancel failed. continue in sync mode */
--			pthread_mutex_unlock(&ct->lock);
--			condlog(3, "%s: tur thread not responding",
--				tur_devt(devt, sizeof(devt), ct));
--			return PATH_TIMEOUT;
-+		if (uatomic_read(&ct->holders) > 1) {
-+			/* pthread cancel failed. If it didn't get the path
-+			   state already, timeout */
-+			if (ct->state == PATH_PENDING) {
-+				pthread_mutex_unlock(&ct->lock);
-+				condlog(3, "%s: tur thread not responding",
-+					tur_devt(devt, sizeof(devt), ct));
-+				return PATH_TIMEOUT;
-+			}
- 		}
- 		/* Start new TUR checker */
- 		ct->state = PATH_UNCHECKED;
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 0b1855d..3e0db7f 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1116,17 +1116,21 @@ get_vpd_sgio (int fd, int pg, char * str, int maxlen)
+ 		return -ENODATA;
+ 	}
+ 	buff_len = get_unaligned_be16(&buff[2]) + 4;
+-	if (buff_len > 4096)
++	if (buff_len > 4096) {
+ 		condlog(3, "vpd pg%02x page truncated", pg);
+-
++		buff_len = 4096;
++	}
+ 	if (pg == 0x80)
+ 		len = parse_vpd_pg80(buff, str, maxlen);
+ 	else if (pg == 0x83)
+ 		len = parse_vpd_pg83(buff, buff_len, str, maxlen);
+ 	else if (pg == 0xc9 && maxlen >= 8) {
+-		len = buff_len < 8 ? -ENODATA :
+-			(buff_len <= maxlen ? buff_len : maxlen);
+-		memcpy (str, buff, len);
++		if (buff_len < 8)
++			len = -ENODATA;
++		else {
++			len = (buff_len <= maxlen)? buff_len : maxlen;
++			memcpy (str, buff, len);
++		}
+ 	} else
+ 		len = -ENOSYS;
+ 
 -- 
 2.7.4
