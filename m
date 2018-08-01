@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 27/32] libmutipath: don't use malformed uevents
-Date: Wed,  1 Aug 2018 15:57:13 -0500
-Message-ID: <1533157038-3924-28-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 28/32] multipath: fix max array size in
+	print_cmd_valid
+Date: Wed,  1 Aug 2018 15:57:14 -0500
+Message-ID: <1533157038-3924-29-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,31 +22,27 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-A uevent that doesn't include the ACTION and DEVPATH fields is
-malformed. It should be ignored, instead of used with those fields being
-NULL.
+The code is attempting to verify that 0 <= k < 3
+However, sizeof(val) is 12, assuming 4 byte integers. The check needs to
+take integer size into account. Found by coverity.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/uevent.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ multipath/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index fd8ca35..5f910e6 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -729,6 +729,12 @@ struct uevent *uevent_from_udev_device(struct udev_device *dev)
- 		if (i == HOTPLUG_NUM_ENVP - 1)
- 			break;
- 	}
-+	if (!uev->devpath || ! uev->action) {
-+		udev_device_unref(dev);
-+		condlog(1, "uevent missing necessary fields");
-+		FREE(uev);
-+		return NULL;
-+	}
- 	uev->udev = dev;
- 	uev->envp[i] = NULL;
+diff --git a/multipath/main.c b/multipath/main.c
+index fc5bf16..d5aad95 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -482,7 +482,7 @@ static int print_cmd_valid(int k, const vector pathvec,
+ 	struct timespec until;
+ 	struct path *pp;
  
+-	if (k < 0 || k >= sizeof(vals))
++	if (k < 0 || k >= (sizeof(vals) / sizeof(int)))
+ 		return 1;
+ 
+ 	if (k == 2) {
 -- 
 2.7.4
