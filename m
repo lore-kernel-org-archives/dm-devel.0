@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 03/32] multipath: fix setting conf->version
-Date: Wed,  1 Aug 2018 15:56:49 -0500
-Message-ID: <1533157038-3924-4-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 05/32] libmutipath: remove unused IDE bus type
+Date: Wed,  1 Aug 2018 15:56:51 -0500
+Message-ID: <1533157038-3924-6-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,37 +21,23 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Commit d3b71498 stopped multipath from setting conf->version. Instead,
-it was always being set to 0.0.0. Multipathd was still setting this
-correctly.
-
-Fixes: d3b71498 "multipath: fix rcu thread cancellation hang"
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/devmapper.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ libmultipath/structs.h | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index f2befad..8136d15 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -245,13 +245,13 @@ void libmp_dm_init(void)
- 	int verbosity;
- 	unsigned int version[3];
- 
-+	if (dm_prereq(version))
-+		exit(1);
- 	conf = get_multipath_config();
- 	verbosity = conf->verbosity;
--	memcpy(version, conf->version, sizeof(version));
-+	memcpy(conf->version, version, sizeof(version));
- 	put_multipath_config(conf);
- 	dm_init(verbosity);
--	if (dm_prereq(version))
--		exit(1);
- 	dm_udev_set_sync_support(libmp_dm_udev_sync);
- }
- 
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index ca14315..0a2623a 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -58,7 +58,6 @@ enum failback_mode {
+ enum sysfs_buses {
+ 	SYSFS_BUS_UNDEF,
+ 	SYSFS_BUS_SCSI,
+-	SYSFS_BUS_IDE,
+ 	SYSFS_BUS_CCW,
+ 	SYSFS_BUS_CCISS,
+ 	SYSFS_BUS_NVME,
 -- 
 2.7.4
