@@ -1,59 +1,59 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: [PATCH 4.14 204/246] scsi: scsi_dh: replace too broad "TP9" string with the exact models
-Date: Wed,  1 Aug 2018 18:51:54 +0200
-Message-ID: <20180801165021.487524990@linuxfoundation.org>
-References: <20180801165011.700991984@linuxfoundation.org>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH 01/32] libmultipath: remove last of rbd code
+Date: Wed,  1 Aug 2018 15:56:47 -0500
+Message-ID: <1533157038-3924-2-git-send-email-bmarzins@redhat.com>
+References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180801165011.700991984@linuxfoundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, stable@vger.kernel.org, NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, Hannes Reinecke <hare@suse.de>, "James E.J. Bottomley" <jejb@linux.vnet.ibm.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, SCSI ML <linux-scsi@vger.kernel.org>, DM ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Sasha Levin <alexander.levin@microsoft.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-4.14-stable review patch.  If anyone has any objections, please let me know.
+My previous patch to remove the rbd code missed a little bit.
 
-------------------
-
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-
-[ Upstream commit 37b37d2609cb0ac267280ef27350b962d16d272e ]
-
-SGI/TP9100 is not an RDAC array:
-    ^^^
-https://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=libmultipath/hwtable.c;h=88b4700beb1d8940008020fbe4c3cd97d62f4a56;hb=HEAD#l235
-
-This partially reverts commit 35204772ea03 ("[SCSI] scsi_dh_rdac :
-Consolidate rdac strings together")
-
-[mkp: fixed up the new entries to align with rest of struct]
-
-Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
-Cc: Martin K. Petersen <martin.petersen@oracle.com>
-Cc: SCSI ML <linux-scsi@vger.kernel.org>
-Cc: DM ML <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
-Signed-off-by: Sasha Levin <alexander.levin@microsoft.com>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- drivers/scsi/scsi_dh.c |    5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ kpartx/del-part-nodes.rules | 2 +-
+ libmultipath/structs.h      | 1 -
+ 2 files changed, 1 insertion(+), 2 deletions(-)
 
---- a/drivers/scsi/scsi_dh.c
-+++ b/drivers/scsi/scsi_dh.c
-@@ -58,7 +58,10 @@ static const struct scsi_dh_blist scsi_d
- 	{"IBM", "3526",			"rdac", },
- 	{"IBM", "3542",			"rdac", },
- 	{"IBM", "3552",			"rdac", },
--	{"SGI", "TP9",			"rdac", },
-+	{"SGI", "TP9300",		"rdac", },
-+	{"SGI", "TP9400",		"rdac", },
-+	{"SGI", "TP9500",		"rdac", },
-+	{"SGI", "TP9700",		"rdac", },
- 	{"SGI", "IS",			"rdac", },
- 	{"STK", "OPENstorage",		"rdac", },
- 	{"STK", "FLEXLINE 380",		"rdac", },
+diff --git a/kpartx/del-part-nodes.rules b/kpartx/del-part-nodes.rules
+index 17bc505..0ceecf5 100644
+--- a/kpartx/del-part-nodes.rules
++++ b/kpartx/del-part-nodes.rules
+@@ -10,7 +10,7 @@
+ # or create an udev rule file that sets ENV{DONT_DEL_PART_NODES}="1".
+ 
+ SUBSYSTEM!="block", GOTO="end_del_part_nodes"
+-KERNEL!="sd*|dasd*|rbd*", GOTO="end_del_part_nodes"
++KERNEL!="sd*|dasd*", GOTO="end_del_part_nodes"
+ ACTION!="add|change", GOTO="end_del_part_nodes"
+ ENV{DEVTYPE}=="partition", GOTO="end_del_part_nodes"
+ 
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index e5b698b..ca14315 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -61,7 +61,6 @@ enum sysfs_buses {
+ 	SYSFS_BUS_IDE,
+ 	SYSFS_BUS_CCW,
+ 	SYSFS_BUS_CCISS,
+-	SYSFS_BUS_RBD,
+ 	SYSFS_BUS_NVME,
+ };
+ 
+-- 
+2.7.4
