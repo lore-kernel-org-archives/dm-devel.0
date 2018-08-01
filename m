@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 01/32] libmultipath: remove last of rbd code
-Date: Wed,  1 Aug 2018 15:56:47 -0500
-Message-ID: <1533157038-3924-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 02/32] libmultipath: fix detect alua corner case
+Date: Wed,  1 Aug 2018 15:56:48 -0500
+Message-ID: <1533157038-3924-3-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,39 +21,33 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-My previous patch to remove the rbd code missed a little bit.
+If retain_attach_hw_handler = no, then the paths tpgs state will never
+be checked, and the multipath device will always select the alua
+handler, if no other handler is selected. the paths tpgs state
+should be checked, regardless of the retain_hwhandler value.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- kpartx/del-part-nodes.rules | 2 +-
- libmultipath/structs.h      | 1 -
- 2 files changed, 1 insertion(+), 2 deletions(-)
+ libmultipath/propsel.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/kpartx/del-part-nodes.rules b/kpartx/del-part-nodes.rules
-index 17bc505..0ceecf5 100644
---- a/kpartx/del-part-nodes.rules
-+++ b/kpartx/del-part-nodes.rules
-@@ -10,7 +10,7 @@
- # or create an udev rule file that sets ENV{DONT_DEL_PART_NODES}="1".
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index af3ed62..fdb5953 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -420,9 +420,11 @@ int select_hwhandler(struct config *conf, struct multipath *mp)
+ 	bool all_tpgs = true;
  
- SUBSYSTEM!="block", GOTO="end_del_part_nodes"
--KERNEL!="sd*|dasd*|rbd*", GOTO="end_del_part_nodes"
-+KERNEL!="sd*|dasd*", GOTO="end_del_part_nodes"
- ACTION!="add|change", GOTO="end_del_part_nodes"
- ENV{DEVTYPE}=="partition", GOTO="end_del_part_nodes"
- 
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index e5b698b..ca14315 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -61,7 +61,6 @@ enum sysfs_buses {
- 	SYSFS_BUS_IDE,
- 	SYSFS_BUS_CCW,
- 	SYSFS_BUS_CCISS,
--	SYSFS_BUS_RBD,
- 	SYSFS_BUS_NVME,
- };
- 
+ 	dh_state = &handler[2];
++
++	vector_foreach_slot(mp->paths, pp, i)
++		all_tpgs = all_tpgs && (pp->tpgs > 0);
+ 	if (mp->retain_hwhandler != RETAIN_HWHANDLER_OFF) {
+ 		vector_foreach_slot(mp->paths, pp, i) {
+-			all_tpgs = all_tpgs && (pp->tpgs > 0);
+ 			if (get_dh_state(pp, dh_state, sizeof(handler) - 2) > 0
+ 			    && strcmp(dh_state, "detached")) {
+ 				memcpy(handler, "1 ", 2);
 -- 
 2.7.4
