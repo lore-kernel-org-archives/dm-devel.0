@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 32/32] multipathd: fix memory leak on error in
-	configure
-Date: Wed,  1 Aug 2018 15:57:18 -0500
-Message-ID: <1533157038-3924-33-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 25/32] libmultipath: fix memory issue in
+	path_latency prio
+Date: Wed,  1 Aug 2018 15:57:11 -0500
+Message-ID: <1533157038-3924-26-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,64 +22,28 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-If configure fails after allocing mpvec, it must free it. Found by
-coverity.
+The path_latency prioriziter was assuming that prepare_directio_read()
+always succeeds. However, it doesn't, and when it fails, the prioritizer
+used buf without it pointing to alloced memory. Found by coverity.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
+ libmultipath/prioritizers/path_latency.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 3c2fe7b..61ca455 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2277,7 +2277,7 @@ configure (struct vectors * vecs)
- 	ret = path_discovery(vecs->pathvec, DI_ALL);
- 	if (ret < 0) {
- 		condlog(0, "configure failed at path discovery");
--		return 1;
-+		goto fail;
- 	}
+diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
+index 765265c..eeee01e 100644
+--- a/libmultipath/prioritizers/path_latency.c
++++ b/libmultipath/prioritizers/path_latency.c
+@@ -237,7 +237,8 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
+ 	lg_maxavglatency = log(MAX_AVG_LATENCY) / lg_base;
+ 	lg_minavglatency = log(MIN_AVG_LATENCY) / lg_base;
  
- 	vector_foreach_slot (vecs->pathvec, pp, i){
-@@ -2294,7 +2294,7 @@ configure (struct vectors * vecs)
- 	}
- 	if (map_discovery(vecs)) {
- 		condlog(0, "configure failed at map discovery");
--		return 1;
-+		goto fail;
- 	}
+-	prepare_directio_read(pp->fd, &blksize, &buf, &restore_flags);
++	if (prepare_directio_read(pp->fd, &blksize, &buf, &restore_flags) < 0)
++		return PRIO_UNDEF;
  
- 	/*
-@@ -2308,7 +2308,7 @@ configure (struct vectors * vecs)
- 		force_reload = FORCE_RELOAD_YES;
- 	if (ret) {
- 		condlog(0, "configure failed while coalescing paths");
--		return 1;
-+		goto fail;
- 	}
- 
- 	/*
-@@ -2317,7 +2317,7 @@ configure (struct vectors * vecs)
- 	 */
- 	if (coalesce_maps(vecs, mpvec)) {
- 		condlog(0, "configure failed while coalescing maps");
--		return 1;
-+		goto fail;
- 	}
- 
- 	dm_lib_release();
-@@ -2353,6 +2353,10 @@ configure (struct vectors * vecs)
- 			i--;
- 	}
- 	return 0;
-+
-+fail:
-+	vector_free(mpvec);
-+	return 1;
- }
- 
- int
+ 	temp = io_num;
+ 	while (temp-- > 0) {
 -- 
 2.7.4
