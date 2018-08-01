@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 28/32] multipath: fix max array size in
-	print_cmd_valid
-Date: Wed,  1 Aug 2018 15:57:14 -0500
-Message-ID: <1533157038-3924-29-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 31/32] multipathd: remove useless check and fix
+	format
+Date: Wed,  1 Aug 2018 15:57:17 -0500
+Message-ID: <1533157038-3924-32-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,27 +22,39 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The code is attempting to verify that 0 <= k < 3
-However, sizeof(val) is 12, assuming 4 byte integers. The check needs to
-take integer size into account. Found by coverity.
+The only thing this patch changes is to remove the check for pp->mpp
+before the check for pp->mpp->prflags, since check_path() already
+verified that pp->mpp != NULL. This fixes a number of coverity warnings.
+Also, I normalized the spacing and indenting of the nearby code.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipath/main.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipathd/main.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index fc5bf16..d5aad95 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -482,7 +482,7 @@ static int print_cmd_valid(int k, const vector pathvec,
- 	struct timespec until;
- 	struct path *pp;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 125a805..3c2fe7b 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1978,14 +1978,14 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 			return 1;
+ 		}
  
--	if (k < 0 || k >= sizeof(vals))
-+	if (k < 0 || k >= (sizeof(vals) / sizeof(int)))
- 		return 1;
+-		if(newstate == PATH_UP || newstate == PATH_GHOST){
+-			if ( pp->mpp && pp->mpp->prflag ){
++		if (newstate == PATH_UP || newstate == PATH_GHOST) {
++			if (pp->mpp->prflag) {
+ 				/*
+ 				 * Check Persistent Reservation.
+ 				 */
+-			condlog(2, "%s: checking persistent reservation "
+-				"registration", pp->dev);
+-			mpath_pr_event_handle(pp);
++				condlog(2, "%s: checking persistent "
++					"reservation registration", pp->dev);
++				mpath_pr_event_handle(pp);
+ 			}
+ 		}
  
- 	if (k == 2) {
 -- 
 2.7.4
