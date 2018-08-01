@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 22/32] libmultipath: fix length issues in
-	get_vpd_sgio
-Date: Wed,  1 Aug 2018 15:57:08 -0500
-Message-ID: <1533157038-3924-23-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 11/32] mpathpersist: add missing --param-rk usage
+	info
+Date: Wed,  1 Aug 2018 15:56:57 -0500
+Message-ID: <1533157038-3924-12-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,47 +22,22 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-When get_vpd_sgio() finds out that the vpd info needed to be truncated
-to fit in the buffer, it doesn't trucate the size as well,  which allows
-it to overwrite the buffer. Also, in once len is set to -ENODATA,
-get_vpd_sgio() should exit, instead of using the negative len in
-memcpy(). Found by coverity.
-
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.c | 14 +++++++++-----
- 1 file changed, 9 insertions(+), 5 deletions(-)
+ mpathpersist/main.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 0b1855d..3e0db7f 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1116,17 +1116,21 @@ get_vpd_sgio (int fd, int pg, char * str, int maxlen)
- 		return -ENODATA;
- 	}
- 	buff_len = get_unaligned_be16(&buff[2]) + 4;
--	if (buff_len > 4096)
-+	if (buff_len > 4096) {
- 		condlog(3, "vpd pg%02x page truncated", pg);
--
-+		buff_len = 4096;
-+	}
- 	if (pg == 0x80)
- 		len = parse_vpd_pg80(buff, str, maxlen);
- 	else if (pg == 0x83)
- 		len = parse_vpd_pg83(buff, buff_len, str, maxlen);
- 	else if (pg == 0xc9 && maxlen >= 8) {
--		len = buff_len < 8 ? -ENODATA :
--			(buff_len <= maxlen ? buff_len : maxlen);
--		memcpy (str, buff, len);
-+		if (buff_len < 8)
-+			len = -ENODATA;
-+		else {
-+			len = (buff_len <= maxlen)? buff_len : maxlen;
-+			memcpy (str, buff, len);
-+		}
- 	} else
- 		len = -ENOSYS;
- 
+diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+index 99151fe..0e4d3f2 100644
+--- a/mpathpersist/main.c
++++ b/mpathpersist/main.c
+@@ -705,6 +705,7 @@ static void usage(void)
+ 			"    --param-alltgpt|-Y         PR Out parameter 'ALL_TG_PT\n"
+ 			"    --param-aptpl|-Z           PR Out parameter 'APTPL'\n"
+ 			"    --read-keys|-k             PR In: Read Keys\n"
++			"    --param-rk=RK|-K RK        PR Out parameter reservation key\n"
+ 			"    --param-sark=SARK|-S SARK  PR Out parameter service "
+ 			"action\n"
+ 			"                               reservation key (SARK is in "
 -- 
 2.7.4
