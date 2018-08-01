@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 21/32] libmultipath: fix set_int error path
-Date: Wed,  1 Aug 2018 15:57:07 -0500
-Message-ID: <1533157038-3924-22-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 32/32] multipathd: fix memory leak on error in
+	configure
+Date: Wed,  1 Aug 2018 15:57:18 -0500
+Message-ID: <1533157038-3924-33-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,30 +22,64 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-set_int() wasn't checking if the line actually had a value before
-converting it to an integer.  Found by coverity. Also, it should
-be using set_value().
+If configure fails after allocing mpvec, it must free it. Found by
+coverity.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/dict.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ multipathd/main.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 32524d5..bf4701e 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -33,7 +33,10 @@ set_int(vector strvec, void *ptr)
- 	int *int_ptr = (int *)ptr;
- 	char * buff;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 3c2fe7b..61ca455 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2277,7 +2277,7 @@ configure (struct vectors * vecs)
+ 	ret = path_discovery(vecs->pathvec, DI_ALL);
+ 	if (ret < 0) {
+ 		condlog(0, "configure failed at path discovery");
+-		return 1;
++		goto fail;
+ 	}
  
--	buff = VECTOR_SLOT(strvec, 1);
-+	buff = set_value(strvec);
-+	if (!buff)
-+		return 1;
-+
- 	*int_ptr = atoi(buff);
+ 	vector_foreach_slot (vecs->pathvec, pp, i){
+@@ -2294,7 +2294,7 @@ configure (struct vectors * vecs)
+ 	}
+ 	if (map_discovery(vecs)) {
+ 		condlog(0, "configure failed at map discovery");
+-		return 1;
++		goto fail;
+ 	}
  
+ 	/*
+@@ -2308,7 +2308,7 @@ configure (struct vectors * vecs)
+ 		force_reload = FORCE_RELOAD_YES;
+ 	if (ret) {
+ 		condlog(0, "configure failed while coalescing paths");
+-		return 1;
++		goto fail;
+ 	}
+ 
+ 	/*
+@@ -2317,7 +2317,7 @@ configure (struct vectors * vecs)
+ 	 */
+ 	if (coalesce_maps(vecs, mpvec)) {
+ 		condlog(0, "configure failed while coalescing maps");
+-		return 1;
++		goto fail;
+ 	}
+ 
+ 	dm_lib_release();
+@@ -2353,6 +2353,10 @@ configure (struct vectors * vecs)
+ 			i--;
+ 	}
  	return 0;
++
++fail:
++	vector_free(mpvec);
++	return 1;
+ }
+ 
+ int
 -- 
 2.7.4
