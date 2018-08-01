@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 02/32] libmultipath: fix detect alua corner case
-Date: Wed,  1 Aug 2018 15:56:48 -0500
-Message-ID: <1533157038-3924-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 09/32] multipath tests: change to work with old
+	make versions
+Date: Wed,  1 Aug 2018 15:56:55 -0500
+Message-ID: <1533157038-3924-10-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,33 +22,26 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-If retain_attach_hw_handler = no, then the paths tpgs state will never
-be checked, and the multipath device will always select the alua
-handler, if no other handler is selected. the paths tpgs state
-should be checked, regardless of the retain_hwhandler value.
+the $(file <) operation only works with make 4.2 and above. I tried
+running the tests on an old machine and it failed. The $shell function
+can do the same thing and multipath has been using that in its
+Makefiles for a while.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/propsel.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ tests/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index af3ed62..fdb5953 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -420,9 +420,11 @@ int select_hwhandler(struct config *conf, struct multipath *mp)
- 	bool all_tpgs = true;
- 
- 	dh_state = &handler[2];
-+
-+	vector_foreach_slot(mp->paths, pp, i)
-+		all_tpgs = all_tpgs && (pp->tpgs > 0);
- 	if (mp->retain_hwhandler != RETAIN_HWHANDLER_OFF) {
- 		vector_foreach_slot(mp->paths, pp, i) {
--			all_tpgs = all_tpgs && (pp->tpgs > 0);
- 			if (get_dh_state(pp, dh_state, sizeof(handler) - 2) > 0
- 			    && strcmp(dh_state, "detached")) {
- 				memcpy(handler, "1 ", 2);
+diff --git a/tests/Makefile b/tests/Makefile
+index 78755ed..d293c87 100644
+--- a/tests/Makefile
++++ b/tests/Makefile
+@@ -51,4 +51,4 @@ COLON:=:
+ 		$(multipathdir)/libmultipath.so Makefile
+ 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $($@_TESTDEPS) $($@_OBJDEPS) \
+ 		$(LIBDEPS) $($@_LIBDEPS) \
+-		$(file <$<.wrap) $(foreach dep,$($@_TESTDEPS),$(file <$(dep).wrap))
++		$(shell cat $<.wrap) $(foreach dep,$($@_TESTDEPS),$(shell cat $(dep).wrap))
 -- 
 2.7.4
