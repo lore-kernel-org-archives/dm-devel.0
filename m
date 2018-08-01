@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 11/32] mpathpersist: add missing --param-rk usage
-	info
-Date: Wed,  1 Aug 2018 15:56:57 -0500
-Message-ID: <1533157038-3924-12-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 23/32] libmultipath: _install_keyword cleanup
+Date: Wed,  1 Aug 2018 15:57:09 -0500
+Message-ID: <1533157038-3924-24-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,22 +21,39 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+_install_keyword should use VECTOR_LAST_SLOT(), which has better error
+checking. It should also fail if it gets a NULL pointer, instead of
+dereferencing it. Found by coverity.
+
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- mpathpersist/main.c | 1 +
- 1 file changed, 1 insertion(+)
+ libmultipath/parser.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
-diff --git a/mpathpersist/main.c b/mpathpersist/main.c
-index 99151fe..0e4d3f2 100644
---- a/mpathpersist/main.c
-+++ b/mpathpersist/main.c
-@@ -705,6 +705,7 @@ static void usage(void)
- 			"    --param-alltgpt|-Y         PR Out parameter 'ALL_TG_PT\n"
- 			"    --param-aptpl|-Z           PR Out parameter 'APTPL'\n"
- 			"    --read-keys|-k             PR In: Read Keys\n"
-+			"    --param-rk=RK|-K RK        PR Out parameter reservation key\n"
- 			"    --param-sark=SARK|-S SARK  PR Out parameter service "
- 			"action\n"
- 			"                               reservation key (SARK is in "
+diff --git a/libmultipath/parser.c b/libmultipath/parser.c
+index b8b7e0d..92ef7cf 100644
+--- a/libmultipath/parser.c
++++ b/libmultipath/parser.c
+@@ -79,12 +79,16 @@ _install_keyword(vector keywords, char *string,
+ 	struct keyword *keyword;
+ 
+ 	/* fetch last keyword */
+-	keyword = VECTOR_SLOT(keywords, VECTOR_SIZE(keywords) - 1);
++	keyword = VECTOR_LAST_SLOT(keywords);
++	if (!keyword)
++		return 1;
+ 
+ 	/* position to last sub level */
+-	for (i = 0; i < sublevel; i++)
+-		keyword =
+-		    VECTOR_SLOT(keyword->sub, VECTOR_SIZE(keyword->sub) - 1);
++	for (i = 0; i < sublevel; i++) {
++		keyword = VECTOR_LAST_SLOT(keyword->sub);
++		if (!keyword)
++			return 1;
++	}
+ 
+ 	/* First sub level allocation */
+ 	if (!keyword->sub)
 -- 
 2.7.4
