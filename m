@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 12/32] kpartx: minor fixes to make coverity happy
-Date: Wed,  1 Aug 2018 15:56:58 -0500
-Message-ID: <1533157038-3924-13-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 13/32] kpartx: Fix memory leak of uuid found by
+	coverity
+Date: Wed,  1 Aug 2018 15:56:59 -0500
+Message-ID: <1533157038-3924-14-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,36 +22,46 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-an open() failure for fd_dasd will return -1, not 0. Also, cast blocksize
-to a uint64_t to keep coverity from complaining about sign extension issues.
+After the call to make_prefixed_uuid() allocs uuid, it must be freed if
+dm_find_part() fails.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- kpartx/dasd.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ kpartx/devmapper.c | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
 
-diff --git a/kpartx/dasd.c b/kpartx/dasd.c
-index e418d5a..94ae81b 100644
---- a/kpartx/dasd.c
-+++ b/kpartx/dasd.c
-@@ -129,7 +129,7 @@ read_dasd_pt(int fd, struct slice all, struct slice *sp, int ns)
- 			 */
- 			unlink(pathname);
- 		}
--		if (!fd_dasd) {
-+		if (fd_dasd < 0) {
- 			/* Couldn't open the device */
- 			return -1;
- 		}
-@@ -157,7 +157,8 @@ read_dasd_pt(int fd, struct slice all, struct slice *sp, int ns)
+diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
+index f94d70e..cd33449 100644
+--- a/kpartx/devmapper.c
++++ b/kpartx/devmapper.c
+@@ -663,7 +663,7 @@ int dm_find_part(const char *parent, const char *delim, int part,
  
- 		geo.heads = 15;
- 		geo.sectors = recs_per_track(blocksize);
--		cyl = disksize / (blocksize * geo.heads * geo.sectors);
-+		cyl = disksize / ((uint64_t)blocksize * geo.heads *
-+				  geo.sectors);
- 		if (cyl < LV_COMPAT_CYL)
- 			geo.cylinders = cyl;
- 		else
+ 	tmp = dm_find_uuid(uuid);
+ 	if (tmp == NULL)
+-		return r;
++		goto out;
+ 
+ 	/* Sanity check on partition, see dm_foreach_partmaps */
+ 	if (dm_type(tmp, "linear") != 1)
+@@ -689,13 +689,14 @@ int dm_find_part(const char *parent, const char *delim, int part,
+ 		       tmp, uuid, name);
+ 
+ 	r = dm_rename(tmp, name);
+-	if (r == 0) {
+-		free(uuid);
+-		if (verbose)
+-			fprintf(stderr, "renaming %s->%s failed\n", tmp, name);
+-	} else
++	if (r == 1) {
+ 		*part_uuid = uuid;
++		return 1;
++	}
++	if (verbose)
++		fprintf(stderr, "renaming %s->%s failed\n", tmp, name);
+ out:
++	free(uuid);
+ 	free(tmp);
+ 	return r;
+ }
 -- 
 2.7.4
