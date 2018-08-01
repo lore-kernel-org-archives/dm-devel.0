@@ -1,33 +1,69 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: dm bufio: Reduce dm_bufio_lock contention
-Date: Wed, 1 Aug 2018 09:03:12 +0200
-Message-ID: <20180801070312.GC16767@dhcp22.suse.cz>
-References: <1528790608-19557-1-git-send-email-jing.xia@unisoc.com>
- <20180612212007.GA22717@redhat.com>
- <alpine.LRH.2.02.1806131001250.15845@file01.intranet.prod.int.rdu2.redhat.com>
- <CAN=25QMQiJ7wvfvYvmZnEnrkeb-SA7_hPj+N2RnO8y-aVO8wOQ@mail.gmail.com>
- <20180614073153.GB9371@dhcp22.suse.cz>
- <CAN=25QNrENVFbb9UAAAJJqKsEeMY+qNs5cQA4EGwgB2dMYTZug@mail.gmail.com>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: [PATCH 4.17 280/336] scsi: scsi_dh: replace too broad
+	"TP9" string with the exact models
+Date: Wed,  1 Aug 2018 18:50:15 +0200
+Message-ID: <20180801165039.741047962@linuxfoundation.org>
+References: <20180801165028.930831994@linuxfoundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAN=25QNrENVFbb9UAAAJJqKsEeMY+qNs5cQA4EGwgB2dMYTZug@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: jing xia <jing.xia.mail@gmail.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180801165028.930831994@linuxfoundation.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-kernel@vger.kernel.org
+Cc: "James E.J. Bottomley" <jejb@linux.vnet.ibm.com>, SCSI ML <linux-scsi@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, stable@vger.kernel.org, Sasha Levin <alexander.levin@microsoft.com>, NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, DM ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Wed 01-08-18 10:48:00, jing xia wrote:
-> We reproduced this issue again and found out the root cause.
-> dm_bufio_prefetch() with dm_bufio_lock enters the direct reclaim and
-> takes a long time to do the soft_limit_reclaim, because of the huge
-> number of memory excess of the memcg.
-> Then, all the task who do shrink_slab() wait for  dm_bufio_lock.
-> 
-> Any suggestions for this?Thanks.
+4.17-stable review patch.  If anyone has any objections, please let me know.
 
-Do not use soft limit?
--- 
-Michal Hocko
-SUSE Labs
+------------------
+
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+
+[ Upstream commit 37b37d2609cb0ac267280ef27350b962d16d272e ]
+
+SGI/TP9100 is not an RDAC array:
+    ^^^
+https://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=libmultipath/hwtable.c;h=88b4700beb1d8940008020fbe4c3cd97d62f4a56;hb=HEAD#l235
+
+This partially reverts commit 35204772ea03 ("[SCSI] scsi_dh_rdac :
+Consolidate rdac strings together")
+
+[mkp: fixed up the new entries to align with rest of struct]
+
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
+Cc: Martin K. Petersen <martin.petersen@oracle.com>
+Cc: SCSI ML <linux-scsi@vger.kernel.org>
+Cc: DM ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+Signed-off-by: Sasha Levin <alexander.levin@microsoft.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/scsi/scsi_dh.c |    5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+--- a/drivers/scsi/scsi_dh.c
++++ b/drivers/scsi/scsi_dh.c
+@@ -58,7 +58,10 @@ static const struct scsi_dh_blist scsi_d
+ 	{"IBM", "3526",			"rdac", },
+ 	{"IBM", "3542",			"rdac", },
+ 	{"IBM", "3552",			"rdac", },
+-	{"SGI", "TP9",			"rdac", },
++	{"SGI", "TP9300",		"rdac", },
++	{"SGI", "TP9400",		"rdac", },
++	{"SGI", "TP9500",		"rdac", },
++	{"SGI", "TP9700",		"rdac", },
+ 	{"SGI", "IS",			"rdac", },
+ 	{"STK", "OPENstorage",		"rdac", },
+ 	{"STK", "FLEXLINE 380",		"rdac", },
