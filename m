@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 13/32] kpartx: Fix memory leak of uuid found by
-	coverity
-Date: Wed,  1 Aug 2018 15:56:59 -0500
-Message-ID: <1533157038-3924-14-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 14/32] kpartx: fix bad dm_devn return
+Date: Wed,  1 Aug 2018 15:57:00 -0500
+Message-ID: <1533157038-3924-15-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,46 +21,26 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-After the call to make_prefixed_uuid() allocs uuid, it must be freed if
-dm_find_part() fails.
+dm_devn shouldn't be returning success if you can't create a dm task to
+find the device info. Found by coverity.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- kpartx/devmapper.c | 13 +++++++------
- 1 file changed, 7 insertions(+), 6 deletions(-)
+ kpartx/devmapper.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
-index f94d70e..cd33449 100644
+index cd33449..8db1eb5 100644
 --- a/kpartx/devmapper.c
 +++ b/kpartx/devmapper.c
-@@ -663,7 +663,7 @@ int dm_find_part(const char *parent, const char *delim, int part,
+@@ -365,7 +365,7 @@ dm_devn (const char * mapname, int *major, int *minor)
+ 	struct dm_info info;
  
- 	tmp = dm_find_uuid(uuid);
- 	if (tmp == NULL)
--		return r;
-+		goto out;
- 
- 	/* Sanity check on partition, see dm_foreach_partmaps */
- 	if (dm_type(tmp, "linear") != 1)
-@@ -689,13 +689,14 @@ int dm_find_part(const char *parent, const char *delim, int part,
- 		       tmp, uuid, name);
- 
- 	r = dm_rename(tmp, name);
--	if (r == 0) {
--		free(uuid);
--		if (verbose)
--			fprintf(stderr, "renaming %s->%s failed\n", tmp, name);
--	} else
-+	if (r == 1) {
- 		*part_uuid = uuid;
+ 	if (!(dmt = dm_task_create(DM_DEVICE_INFO)))
+-		return 0;
 +		return 1;
-+	}
-+	if (verbose)
-+		fprintf(stderr, "renaming %s->%s failed\n", tmp, name);
- out:
-+	free(uuid);
- 	free(tmp);
- 	return r;
- }
+ 
+ 	if (!dm_task_set_name(dmt, mapname))
+ 		goto out;
 -- 
 2.7.4
