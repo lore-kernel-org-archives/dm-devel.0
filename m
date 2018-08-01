@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 23/32] libmultipath: _install_keyword cleanup
-Date: Wed,  1 Aug 2018 15:57:09 -0500
-Message-ID: <1533157038-3924-24-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 15/32] kpartx: remove duplicated gpt validation
+	check
+Date: Wed,  1 Aug 2018 15:57:01 -0500
+Message-ID: <1533157038-3924-16-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,39 +22,33 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-_install_keyword should use VECTOR_LAST_SLOT(), which has better error
-checking. It should also fail if it gets a NULL pointer, instead of
-dereferencing it. Found by coverity.
+The identical check exists twice in a row.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/parser.c | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
+ kpartx/gpt.c | 10 ----------
+ 1 file changed, 10 deletions(-)
 
-diff --git a/libmultipath/parser.c b/libmultipath/parser.c
-index b8b7e0d..92ef7cf 100644
---- a/libmultipath/parser.c
-+++ b/libmultipath/parser.c
-@@ -79,12 +79,16 @@ _install_keyword(vector keywords, char *string,
- 	struct keyword *keyword;
+diff --git a/kpartx/gpt.c b/kpartx/gpt.c
+index 6ef20f9..e31611a 100644
+--- a/kpartx/gpt.c
++++ b/kpartx/gpt.c
+@@ -348,16 +348,6 @@ is_gpt_valid(int fd, uint64_t lba,
+ 		return 0;
+ 	}
  
- 	/* fetch last keyword */
--	keyword = VECTOR_SLOT(keywords, VECTOR_SIZE(keywords) - 1);
-+	keyword = VECTOR_LAST_SLOT(keywords);
-+	if (!keyword)
-+		return 1;
- 
- 	/* position to last sub level */
--	for (i = 0; i < sublevel; i++)
--		keyword =
--		    VECTOR_SLOT(keyword->sub, VECTOR_SIZE(keyword->sub) - 1);
-+	for (i = 0; i < sublevel; i++) {
-+		keyword = VECTOR_LAST_SLOT(keyword->sub);
-+		if (!keyword)
-+			return 1;
-+	}
- 
- 	/* First sub level allocation */
- 	if (!keyword->sub)
+-
+-	/* Check that sizeof_partition_entry has the correct value */
+-	if (__le32_to_cpu((*gpt)->sizeof_partition_entry) != sizeof(gpt_entry)) {
+-		// printf("GUID partition entry size check failed.\n");
+-		free(*gpt);
+-		*gpt = NULL;
+-		return 0;
+-	}
+-
+-
+ 	if (!(*ptes = alloc_read_gpt_entries(fd, *gpt))) {
+ 		free(*gpt);
+ 		*gpt = NULL;
 -- 
 2.7.4
