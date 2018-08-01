@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 24/32] libmultipath: remove unused code
-Date: Wed,  1 Aug 2018 15:57:10 -0500
-Message-ID: <1533157038-3924-25-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 30/32] multipathd: minor fixes
+Date: Wed,  1 Aug 2018 15:57:16 -0500
+Message-ID: <1533157038-3924-31-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,54 +21,37 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-since vector_foreach_slot() already checks if the entry is NULL, there's
-no point in checking it in the loop, since it can't be NULL there. Found
-by coverity.
+In update_multipath(), conf is set again in a couple of lines, and
+nothing uses it before then, so there's no point in setting it twice.
+Also, in ev_remove_path(), strncpy() could end up unterminated, so
+use strlcpy() instead.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/print.c | 8 --------
- 1 file changed, 8 deletions(-)
+ multipathd/main.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 9da6a77..7b610b9 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -275,8 +275,6 @@ snprint_multipath_vpr (char * buff, size_t len, const struct multipath * mpp)
- 	int i, j;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index cc493c1..125a805 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -429,7 +429,7 @@ int update_multipath (struct vectors *vecs, char *mapname, int reset)
+ 				continue;
  
- 	vector_foreach_slot(mpp->pg, pgp, i) {
--		if (!pgp)
--			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
- 			if (strlen(pp->vendor_id) && strlen(pp->product_id))
- 				return snprintf(buff, len, "%s,%s",
-@@ -295,8 +293,6 @@ snprint_multipath_vend (char * buff, size_t len, const struct multipath * mpp)
- 	int i, j;
+ 			if (pp->state != PATH_DOWN) {
+-				struct config *conf = get_multipath_config();
++				struct config *conf;
+ 				int oldstate = pp->state;
+ 				int checkint;
  
- 	vector_foreach_slot(mpp->pg, pgp, i) {
--		if (!pgp)
--			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
- 			if (strlen(pp->vendor_id))
- 				return snprintf(buff, len, "%s", pp->vendor_id);
-@@ -313,8 +309,6 @@ snprint_multipath_prod (char * buff, size_t len, const struct multipath * mpp)
- 	int i, j;
- 
- 	vector_foreach_slot(mpp->pg, pgp, i) {
--		if (!pgp)
--			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
- 			if (strlen(pp->product_id))
- 				return snprintf(buff, len, "%s", pp->product_id);
-@@ -331,8 +325,6 @@ snprint_multipath_rev (char * buff, size_t len, const struct multipath * mpp)
- 	int i, j;
- 
- 	vector_foreach_slot(mpp->pg, pgp, i) {
--		if (!pgp)
--			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
- 			if (strlen(pp->rev))
- 				return snprintf(buff, len, "%s", pp->rev);
+@@ -1096,7 +1096,7 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
+ 			/*
+ 			 * flush_map will fail if the device is open
+ 			 */
+-			strncpy(alias, mpp->alias, WWID_SIZE);
++			strlcpy(alias, mpp->alias, WWID_SIZE);
+ 			if (mpp->flush_on_last_del == FLUSH_ENABLED) {
+ 				condlog(2, "%s Last path deleted, disabling queueing", mpp->alias);
+ 				mpp->retry_tick = 0;
 -- 
 2.7.4
