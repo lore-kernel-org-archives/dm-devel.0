@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 15/32] kpartx: remove duplicated gpt validation
-	check
-Date: Wed,  1 Aug 2018 15:57:01 -0500
-Message-ID: <1533157038-3924-16-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 29/32] multipathd: function return value tweaks
+Date: Wed,  1 Aug 2018 15:57:15 -0500
+Message-ID: <1533157038-3924-30-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,33 +21,47 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The identical check exists twice in a row.
+In cli_add_map() the return value of get_refwwid is never used, and
+refwwid is checked to see if the function returned successfully, so the
+return value doesn't need to be saved.
+
+In resize_map, if setup_map fails, multipathd shouldn't attempt to
+create the device with resulting params string. It should just fail
+instead. Found by coverity.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- kpartx/gpt.c | 10 ----------
- 1 file changed, 10 deletions(-)
+ multipathd/cli_handlers.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
 
-diff --git a/kpartx/gpt.c b/kpartx/gpt.c
-index 6ef20f9..e31611a 100644
---- a/kpartx/gpt.c
-+++ b/kpartx/gpt.c
-@@ -348,16 +348,6 @@ is_gpt_valid(int fd, uint64_t lba,
- 		return 0;
- 	}
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 5682b5c..bb16472 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -796,8 +796,8 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
+ 		if (!alias && !count) {
+ 			condlog(2, "%s: mapname not found for %d:%d",
+ 				param, major, minor);
+-			rc = get_refwwid(CMD_NONE, param, DEV_DEVMAP,
+-					 vecs->pathvec, &refwwid);
++			get_refwwid(CMD_NONE, param, DEV_DEVMAP,
++				    vecs->pathvec, &refwwid);
+ 			if (refwwid) {
+ 				if (coalesce_paths(vecs, NULL, refwwid,
+ 						   FORCE_RELOAD_NONE, CMD_NONE))
+@@ -881,7 +881,12 @@ int resize_map(struct multipath *mpp, unsigned long long size,
  
--
--	/* Check that sizeof_partition_entry has the correct value */
--	if (__le32_to_cpu((*gpt)->sizeof_partition_entry) != sizeof(gpt_entry)) {
--		// printf("GUID partition entry size check failed.\n");
--		free(*gpt);
--		*gpt = NULL;
--		return 0;
--	}
--
--
- 	if (!(*ptes = alloc_read_gpt_entries(fd, *gpt))) {
- 		free(*gpt);
- 		*gpt = NULL;
+ 	mpp->size = size;
+ 	update_mpp_paths(mpp, vecs->pathvec);
+-	setup_map(mpp, params, PARAMS_SIZE, vecs);
++	if (setup_map(mpp, params, PARAMS_SIZE, vecs) != 0) {
++		condlog(0, "%s: failed to setup map for resize : %s",
++			mpp->alias, strerror(errno));
++		mpp->size = orig_size;
++		return 1;
++	}
+ 	mpp->action = ACT_RESIZE;
+ 	mpp->force_udev_reload = 1;
+ 	if (domap(mpp, params, 1) <= 0) {
 -- 
 2.7.4
