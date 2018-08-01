@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 07/32] libmultipath: add "protocol" blacklist
-	option.
-Date: Wed,  1 Aug 2018 15:56:53 -0500
-Message-ID: <1533157038-3924-8-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 10/32] multipath tests: add blacklist tests
+Date: Wed,  1 Aug 2018 15:56:56 -0500
+Message-ID: <1533157038-3924-11-git-send-email-bmarzins@redhat.com>
 References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,423 +21,557 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Multiple users have requested an easy way to setup blacklists that do
-things such as blacklisting all non FC and iSCSI devices. Currently
-there is no easy way to do this, without knowing in advance what the
-devices are.  Looking into the udev property values, I didn't see a
-consistent set of values that would worked for all the different types
-of requests like this (which would have allowed us to solve this by
-extending the "property" blacklist option to allow comparing values,
-instead of just keywords).
-
-Instead I've opted to allow multipath to blacklist/whitelist devices
-by the protocol strings printed by "multipathd: add new protocol path
-wildcard". This check happens after multipath checks the "device"
-keyword, and before it checks wwid. This gives users an easily
-understandible method to set up these types of blacklists, without
-needing to know the exact arrays being used.
+These are tests to validate the filter_* blacklist functions. They not
+only verify that the device is correctly blacklisted/whitelisted, but
+they also verify the log messages that are printed out.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/blacklist.c   | 51 ++++++++++++++++++++++++++++++++++++++--------
- libmultipath/blacklist.h   |  3 +++
- libmultipath/config.c      | 15 ++++++++++++++
- libmultipath/config.h      |  2 ++
- libmultipath/dict.c        | 14 +++++++++++--
- libmultipath/discovery.c   |  5 +++--
- libmultipath/print.c       | 31 ++++++++++++++++++++++++++++
- multipath/multipath.conf.5 | 16 +++++++++++++--
- 8 files changed, 123 insertions(+), 14 deletions(-)
+ tests/Makefile    |   4 +-
+ tests/blacklist.c | 512 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 515 insertions(+), 1 deletion(-)
+ create mode 100644 tests/blacklist.c
 
-diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
-index 361c603..fdd36f7 100644
---- a/libmultipath/blacklist.c
-+++ b/libmultipath/blacklist.c
-@@ -12,6 +12,8 @@
- #include "structs.h"
- #include "config.h"
- #include "blacklist.h"
-+#include "structs_vec.h"
-+#include "print.h"
+diff --git a/tests/Makefile b/tests/Makefile
+index d293c87..98b5c93 100644
+--- a/tests/Makefile
++++ b/tests/Makefile
+@@ -3,7 +3,7 @@ include ../Makefile.inc
+ CFLAGS += $(BIN_CFLAGS) -I$(multipathdir) -I$(mpathcmddir)
+ LIBDEPS += -L$(multipathdir) -lmultipath -lcmocka
  
- int store_ble(vector blist, char * str, int origin)
- {
-@@ -240,12 +242,14 @@ setup_default_blist (struct config * conf)
- 		condlog(3, "%s: %s %s %s", dev, (M), wwid, (S));	\
- 	else if (env)							\
- 		condlog(3, "%s: %s %s %s", dev, (M), env, (S));		\
-+	else if (protocol)						\
-+		condlog(3, "%s: %s %s %s", dev, (M), protocol, (S));	\
- 	else								\
- 		condlog(3, "%s: %s %s", dev, (M), (S))
+-TESTS := uevent parser util dmevents hwtable
++TESTS := uevent parser util dmevents hwtable blacklist
  
- void
- log_filter (const char *dev, char *vendor, char *product, char *wwid,
--	    const char *env, int r)
-+	    const char *env, const char *protocol, int r)
- {
- 	/*
- 	 * Try to sort from most likely to least.
-@@ -265,6 +269,9 @@ log_filter (const char *dev, char *vendor, char *product, char *wwid,
- 	case MATCH_PROPERTY_BLIST:
- 		LOG_BLIST("udev property", "blacklisted");
- 		break;
-+	case MATCH_PROTOCOL_BLIST:
-+		LOG_BLIST("protocol", "blacklisted");
-+		break;
- 	case MATCH_DEVICE_BLIST_EXCEPT:
- 		LOG_BLIST("vendor/product", "whitelisted");
- 		break;
-@@ -280,6 +287,9 @@ log_filter (const char *dev, char *vendor, char *product, char *wwid,
- 	case MATCH_PROPERTY_BLIST_MISSING:
- 		LOG_BLIST("blacklisted,", "udev property missing");
- 		break;
-+	case MATCH_PROTOCOL_BLIST_EXCEPT:
-+		LOG_BLIST("protocol", "whitelisted");
-+		break;
- 	}
- }
+ .SILENT: $(TESTS:%=%.o)
+ .PRECIOUS: $(TESTS:%=%-test)
+@@ -23,6 +23,8 @@ hwtable-test_TESTDEPS := test-lib.o
+ hwtable-test_OBJDEPS := ../libmultipath/discovery.o ../libmultipath/blacklist.o \
+ 	../libmultipath/prio.o ../libmultipath/callout.o ../libmultipath/structs.o
+ hwtable-test_LIBDEPS := -ludev -lpthread -ldl
++blacklist-test_OBJDEPS := ../libmultipath/blacklist.o
++blacklist-test_LIBDEPS := -ludev
  
-@@ -299,7 +309,7 @@ int
- filter_device (vector blist, vector elist, char * vendor, char * product)
- {
- 	int r = _filter_device(blist, elist, vendor, product);
--	log_filter(NULL, vendor, product, NULL, NULL, r);
-+	log_filter(NULL, vendor, product, NULL, NULL, NULL, r);
- 	return r;
- }
- 
-@@ -319,7 +329,7 @@ int
- filter_devnode (vector blist, vector elist, char * dev)
- {
- 	int r = _filter_devnode(blist, elist, dev);
--	log_filter(dev, NULL, NULL, NULL, NULL, r);
-+	log_filter(dev, NULL, NULL, NULL, NULL, NULL, r);
- 	return r;
- }
- 
-@@ -339,7 +349,29 @@ int
- filter_wwid (vector blist, vector elist, char * wwid, char * dev)
- {
- 	int r = _filter_wwid(blist, elist, wwid);
--	log_filter(dev, NULL, NULL, wwid, NULL, r);
-+	log_filter(dev, NULL, NULL, wwid, NULL, NULL, r);
-+	return r;
+ %.out:	%-test
+ 	@echo == running $< ==
+diff --git a/tests/blacklist.c b/tests/blacklist.c
+new file mode 100644
+index 0000000..a55c1c0
+--- /dev/null
++++ b/tests/blacklist.c
+@@ -0,0 +1,512 @@
++/*
++ * Copyright (c) 2018 Benjamin Marzinski, Redhat
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
++ *
++ */
++#include <stdarg.h>
++#include <stddef.h>
++#include <setjmp.h>
++#include <cmocka.h>
++#include "globals.c"
++#include "blacklist.h"
++#include "log.h"
++
++struct udev_device {
++	const char *sysname;
++	char *property_list[];
++};
++
++const char *
++__wrap_udev_device_get_sysname(struct udev_device *udev_device)
++{
++	assert_non_null(udev_device);
++	assert_non_null(udev_device->sysname);
++	return udev_device->sysname;
 +}
 +
-+static int
-+_filter_protocol (vector blist, vector elist, const char * protocol_str)
++struct udev_list_entry *
++__wrap_udev_device_get_properties_list_entry(struct udev_device *udev_device)
 +{
-+	if (_blacklist_exceptions(elist, protocol_str))
-+		return MATCH_PROTOCOL_BLIST_EXCEPT;
-+	if (_blacklist(blist, protocol_str))
-+		return MATCH_PROTOCOL_BLIST;
++	assert_non_null(udev_device);
++	if (!udev_device->property_list)
++		return NULL;
++	if (!*udev_device->property_list)
++		return NULL;
++	return (struct udev_list_entry *)udev_device->property_list;
++}
++
++struct udev_list_entry *
++__wrap_udev_list_entry_get_next(struct udev_list_entry *list_entry)
++{
++	assert_non_null(list_entry);
++	if (!*((char **)list_entry + 1))
++		return NULL;
++	return (struct udev_list_entry *)(((char **)list_entry) + 1);
++}
++
++const char *
++__wrap_udev_list_entry_get_name(struct udev_list_entry *list_entry)
++{
++	return *(const char **)list_entry;
++}
++
++void __wrap_dlog (int sink, int prio, const char * fmt, ...)
++{
++	char buff[MAX_MSG_SIZE];
++	va_list ap;
++
++	assert_int_equal(prio, mock_type(int));
++	va_start(ap, fmt);
++	vsnprintf(buff, MAX_MSG_SIZE, fmt, ap);
++	va_end(ap);
++	assert_string_equal(buff, mock_ptr_type(char *));
++}
++
++void expect_condlog(int prio, char *string)
++{
++	will_return(__wrap_dlog, prio);
++	will_return(__wrap_dlog, string);
++}
++
++vector blist_devnode_sdb;
++vector blist_all;
++vector blist_device_foo_bar;
++vector blist_device_all;
++vector blist_wwid_xyzzy;
++vector blist_protocol_fcp;
++vector blist_property_wwn;
++
++static int setup(void **state)
++{
++	blist_devnode_sdb = vector_alloc();
++	if (!blist_devnode_sdb ||
++	    store_ble(blist_devnode_sdb, strdup("sdb"), ORIGIN_CONFIG))
++		return -1;
++
++	blist_all = vector_alloc();
++	if (!blist_all || store_ble(blist_all, strdup(".*"), ORIGIN_CONFIG))
++		return -1;
++
++	blist_device_foo_bar = vector_alloc();
++	if (!blist_device_foo_bar || alloc_ble_device(blist_device_foo_bar) ||
++	    set_ble_device(blist_device_foo_bar, strdup("foo"), strdup("bar"),
++			   ORIGIN_CONFIG))
++		return -1;
++
++	blist_device_all = vector_alloc();
++	if (!blist_device_all || alloc_ble_device(blist_device_all) ||
++	    set_ble_device(blist_device_all, strdup(".*"), strdup(".*"),
++			   ORIGIN_CONFIG))
++		return -1;
++
++	blist_wwid_xyzzy = vector_alloc();
++	if (!blist_wwid_xyzzy ||
++	    store_ble(blist_wwid_xyzzy, strdup("xyzzy"), ORIGIN_CONFIG))
++		return -1;
++
++	blist_protocol_fcp = vector_alloc();
++	if (!blist_protocol_fcp ||
++	    store_ble(blist_protocol_fcp, strdup("scsi:fcp"), ORIGIN_CONFIG))
++		return -1;
++
++	blist_property_wwn = vector_alloc();
++	if (!blist_property_wwn ||
++	    store_ble(blist_property_wwn, strdup("ID_WWN"), ORIGIN_CONFIG))
++		return -1;
++
 +	return 0;
 +}
 +
-+int
-+filter_protocol(vector blist, vector elist, struct path * pp)
++static int teardown(void **state)
 +{
-+	char buf[PROTOCOL_BUF_SIZE];
-+	int r;
++	free_blacklist(blist_devnode_sdb);
++	free_blacklist(blist_all);
++	free_blacklist_device(blist_device_foo_bar);
++	free_blacklist_device(blist_device_all);
++	free_blacklist(blist_wwid_xyzzy);
++	free_blacklist(blist_protocol_fcp);
++	free_blacklist(blist_property_wwn);
++	return 0;
++}
 +
-+	snprint_path_protocol(buf, sizeof(buf), pp);
-+	r = _filter_protocol(blist, elist, buf);
-+	log_filter(pp->dev, NULL, NULL, NULL, NULL, buf, r);
- 	return r;
- }
- 
-@@ -351,7 +383,6 @@ _filter_path (struct config * conf, struct path * pp)
- 	r = filter_property(conf, pp->udev);
- 	if (r > 0)
- 		return r;
--
- 	r = _filter_devnode(conf->blist_devnode, conf->elist_devnode,pp->dev);
- 	if (r > 0)
- 		return r;
-@@ -359,6 +390,9 @@ _filter_path (struct config * conf, struct path * pp)
- 			   pp->vendor_id, pp->product_id);
- 	if (r > 0)
- 		return r;
-+	r = filter_protocol(conf->blist_protocol, conf->elist_protocol, pp);
-+	if (r > 0)
-+		return r;
- 	r = _filter_wwid(conf->blist_wwid, conf->elist_wwid, pp->wwid);
- 	return r;
- }
-@@ -367,7 +401,8 @@ int
- filter_path (struct config * conf, struct path * pp)
- {
- 	int r=_filter_path(conf, pp);
--	log_filter(pp->dev, pp->vendor_id, pp->product_id, pp->wwid, NULL, r);
-+	log_filter(pp->dev, pp->vendor_id, pp->product_id, pp->wwid, NULL,
-+		   NULL, r);
- 	return r;
- }
- 
-@@ -402,7 +437,7 @@ filter_property(struct config * conf, struct udev_device * udev)
- 
- 		r = _filter_property(conf, env);
- 		if (r) {
--			log_filter(devname, NULL, NULL, NULL, env, r);
-+			log_filter(devname, NULL, NULL, NULL, env, NULL, r);
- 			return r;
- 		}
- 	}
-@@ -411,7 +446,7 @@ filter_property(struct config * conf, struct udev_device * udev)
- 	 * This is the inverse of the 'normal' matching;
- 	 * the environment variable _has_ to match.
- 	 */
--	log_filter(devname, NULL, NULL, NULL, NULL,
-+	log_filter(devname, NULL, NULL, NULL, NULL, NULL,
- 		   MATCH_PROPERTY_BLIST_MISSING);
- 	return MATCH_PROPERTY_BLIST_MISSING;
- }
-diff --git a/libmultipath/blacklist.h b/libmultipath/blacklist.h
-index 0b028d4..f7beef2 100644
---- a/libmultipath/blacklist.h
-+++ b/libmultipath/blacklist.h
-@@ -10,10 +10,12 @@
- #define MATCH_DEVNODE_BLIST  3
- #define MATCH_PROPERTY_BLIST 4
- #define MATCH_PROPERTY_BLIST_MISSING 5
-+#define MATCH_PROTOCOL_BLIST 6
- #define MATCH_WWID_BLIST_EXCEPT     -MATCH_WWID_BLIST
- #define MATCH_DEVICE_BLIST_EXCEPT   -MATCH_DEVICE_BLIST
- #define MATCH_DEVNODE_BLIST_EXCEPT  -MATCH_DEVNODE_BLIST
- #define MATCH_PROPERTY_BLIST_EXCEPT -MATCH_PROPERTY_BLIST
-+#define MATCH_PROTOCOL_BLIST_EXCEPT -MATCH_PROTOCOL_BLIST
- 
- struct blentry {
- 	char * str;
-@@ -36,6 +38,7 @@ int filter_wwid (vector, vector, char *, char *);
- int filter_device (vector, vector, char *, char *);
- int filter_path (struct config *, struct path *);
- int filter_property(struct config *, struct udev_device *);
-+int filter_protocol(vector, vector, struct path *);
- int store_ble (vector, char *, int);
- int set_ble_device (vector, char *, char *, int);
- void free_blacklist (vector);
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index afa309d..0aef186 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -623,11 +623,13 @@ free_config (struct config * conf)
- 	free_blacklist(conf->blist_devnode);
- 	free_blacklist(conf->blist_wwid);
- 	free_blacklist(conf->blist_property);
-+	free_blacklist(conf->blist_protocol);
- 	free_blacklist_device(conf->blist_device);
- 
- 	free_blacklist(conf->elist_devnode);
- 	free_blacklist(conf->elist_wwid);
- 	free_blacklist(conf->elist_property);
-+	free_blacklist(conf->elist_protocol);
- 	free_blacklist_device(conf->elist_device);
- 
- 	free_mptable(conf->mptable);
-@@ -780,6 +782,12 @@ load_config (char * file)
- 		if (!conf->blist_property)
- 			goto out;
- 	}
-+	if (conf->blist_protocol == NULL) {
-+		conf->blist_protocol = vector_alloc();
++static int reset_blists(void **state)
++{
++	conf.blist_devnode = NULL;
++	conf.blist_wwid = NULL;
++	conf.blist_property = NULL;
++	conf.blist_protocol = NULL;
++	conf.blist_device = NULL;
++	conf.elist_devnode = NULL;
++	conf.elist_wwid = NULL;
++	conf.elist_property = NULL;
++	conf.elist_protocol = NULL;
++	conf.elist_device = NULL;
++	return 0;
++}
 +
-+		if (!conf->blist_protocol)
-+			goto out;
-+	}
- 
- 	if (conf->elist_devnode == NULL) {
- 		conf->elist_devnode = vector_alloc();
-@@ -807,6 +815,13 @@ load_config (char * file)
- 		if (!conf->elist_property)
- 			goto out;
- 	}
-+	if (conf->elist_protocol == NULL) {
-+		conf->elist_protocol = vector_alloc();
++static void test_devnode_blacklist(void **state)
++{
++	expect_condlog(3, "sdb: device node name blacklisted\n");
++	assert_int_equal(filter_devnode(blist_devnode_sdb, NULL, "sdb"),
++			 MATCH_DEVNODE_BLIST);
++}
 +
-+		if (!conf->elist_protocol)
-+			goto out;
-+	}
++static void test_devnode_whitelist(void **state)
++{
++	expect_condlog(3, "sdb: device node name whitelisted\n");
++	assert_int_equal(filter_devnode(blist_all, blist_devnode_sdb, "sdb"),
++			 MATCH_DEVNODE_BLIST_EXCEPT);
++	expect_condlog(3, "sdc: device node name blacklisted\n");
++	assert_int_equal(filter_devnode(blist_all, blist_devnode_sdb, "sdc"),
++			 MATCH_DEVNODE_BLIST);
++}
 +
- 	if (setup_default_blist(conf))
- 		goto out;
- 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 6bd42f0..7d0cd9a 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -210,10 +210,12 @@ struct config {
- 	vector blist_wwid;
- 	vector blist_device;
- 	vector blist_property;
-+	vector blist_protocol;
- 	vector elist_devnode;
- 	vector elist_wwid;
- 	vector elist_device;
- 	vector elist_property;
-+	vector elist_protocol;
- };
- 
- extern struct udev * udev;
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 15e7582..32524d5 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -1291,9 +1291,12 @@ blacklist_handler(struct config *conf, vector strvec)
- 		conf->blist_device = vector_alloc();
- 	if (!conf->blist_property)
- 		conf->blist_property = vector_alloc();
-+	if (!conf->blist_protocol)
-+		conf->blist_protocol = vector_alloc();
- 
- 	if (!conf->blist_devnode || !conf->blist_wwid ||
--	    !conf->blist_device || !conf->blist_property)
-+	    !conf->blist_device || !conf->blist_property ||
-+	    !conf->blist_protocol)
- 		return 1;
- 
- 	return 0;
-@@ -1310,9 +1313,12 @@ blacklist_exceptions_handler(struct config *conf, vector strvec)
- 		conf->elist_device = vector_alloc();
- 	if (!conf->elist_property)
- 		conf->elist_property = vector_alloc();
-+	if (!conf->elist_protocol)
-+		conf->elist_protocol = vector_alloc();
- 
- 	if (!conf->elist_devnode || !conf->elist_wwid ||
--	    !conf->elist_device || !conf->elist_property)
-+	    !conf->elist_device || !conf->elist_property ||
-+	    !conf->elist_protocol)
- 		return 1;
- 
- 	return 0;
-@@ -1356,6 +1362,8 @@ declare_ble_handler(blist_wwid)
- declare_ble_handler(elist_wwid)
- declare_ble_handler(blist_property)
- declare_ble_handler(elist_property)
-+declare_ble_handler(blist_protocol)
-+declare_ble_handler(elist_protocol)
- 
- static int
- snprint_def_uxsock_timeout(struct config *conf, char * buff, int len,
-@@ -1627,6 +1635,7 @@ init_keywords(vector keywords)
- 	install_keyword_multi("devnode", &ble_blist_devnode_handler, &snprint_ble_simple);
- 	install_keyword_multi("wwid", &ble_blist_wwid_handler, &snprint_ble_simple);
- 	install_keyword_multi("property", &ble_blist_property_handler, &snprint_ble_simple);
-+	install_keyword_multi("protocol", &ble_blist_protocol_handler, &snprint_ble_simple);
- 	install_keyword_multi("device", &ble_device_handler, NULL);
- 	install_sublevel();
- 	install_keyword("vendor", &ble_blist_device_vendor_handler, &snprint_bled_vendor);
-@@ -1636,6 +1645,7 @@ init_keywords(vector keywords)
- 	install_keyword_multi("devnode", &ble_elist_devnode_handler, &snprint_ble_simple);
- 	install_keyword_multi("wwid", &ble_elist_wwid_handler, &snprint_ble_simple);
- 	install_keyword_multi("property", &ble_elist_property_handler, &snprint_ble_simple);
-+	install_keyword_multi("protocol", &ble_elist_protocol_handler, &snprint_ble_simple);
- 	install_keyword_multi("device", &ble_except_device_handler, NULL);
- 	install_sublevel();
- 	install_keyword("vendor", &ble_elist_device_vendor_handler, &snprint_bled_vendor);
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 573d98b..e58a3fa 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1887,9 +1887,10 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 
- 	if (mask & DI_BLACKLIST && mask & DI_SYSFS) {
- 		if (filter_device(conf->blist_device, conf->elist_device,
--				  pp->vendor_id, pp->product_id) > 0) {
-+				  pp->vendor_id, pp->product_id) > 0 ||
-+		    filter_protocol(conf->blist_protocol, conf->elist_protocol,
-+				    pp) > 0)
- 			return PATHINFO_SKIPPED;
--		}
- 	}
- 
- 	path_state = path_offline(pp);
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index ecfcb48..9da6a77 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -1688,6 +1688,19 @@ int snprint_blacklist_report(struct config *conf, char *buff, int len)
- 
- 	if ((len - fwd - threshold) <= 0)
- 		return len;
-+	fwd += snprintf(buff + fwd, len - fwd, "protocol rules:\n"
-+					       "- blacklist:\n");
-+	if (!snprint_blacklist_group(buff, len, &fwd, &conf->blist_protocol))
-+		return len;
++static void test_devnode_missing(void **state)
++{
++	assert_int_equal(filter_devnode(blist_devnode_sdb, NULL, "sdc"),
++			 MATCH_NOTHING);
++}
 +
-+	if ((len - fwd - threshold) <= 0)
-+		return len;
-+	fwd += snprintf(buff + fwd, len - fwd, "- exceptions:\n");
-+	if (snprint_blacklist_group(buff, len, &fwd, &conf->elist_protocol) == 0)
-+		return len;
++static void test_device_blacklist(void **state)
++{
++	expect_condlog(3, "sdb: (foo:bar) vendor/product blacklisted\n");
++	assert_int_equal(filter_device(blist_device_foo_bar, NULL, "foo",
++				       "bar", "sdb"),
++			 MATCH_DEVICE_BLIST);
++}
 +
-+	if ((len - fwd - threshold) <= 0)
-+		return len;
- 	fwd += snprintf(buff + fwd, len - fwd, "wwid rules:\n"
- 					       "- blacklist:\n");
- 	if (snprint_blacklist_group(buff, len, &fwd, &conf->blist_wwid) == 0)
-@@ -1761,6 +1774,15 @@ static int snprint_blacklist(const struct config *conf, char *buff, int len)
- 		if (fwd >= len)
- 			return len;
- 	}
-+	vector_foreach_slot (conf->blist_protocol, ble, i) {
-+		kw = find_keyword(conf->keywords, rootkw->sub, "protocol");
-+		if (!kw)
-+			return 0;
-+		fwd += snprint_keyword(buff + fwd, len - fwd, "\t%k %v\n",
-+				       kw, ble);
-+		if (fwd >= len)
-+			return len;
-+	}
- 	rootkw = find_keyword(conf->keywords, rootkw->sub, "device");
- 	if (!rootkw)
- 		return 0;
-@@ -1838,6 +1860,15 @@ static int snprint_blacklist_except(const struct config *conf,
- 		if (fwd >= len)
- 			return len;
- 	}
-+	vector_foreach_slot (conf->elist_protocol, ele, i) {
-+		kw = find_keyword(conf->keywords, rootkw->sub, "protocol");
-+		if (!kw)
-+			return 0;
-+		fwd += snprint_keyword(buff + fwd, len - fwd, "\t%k %v\n",
-+				       kw, ele);
-+		if (fwd >= len)
-+			return len;
-+	}
- 	rootkw = find_keyword(conf->keywords, rootkw->sub, "device");
- 	if (!rootkw)
- 		return 0;
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index fb863fd..6333366 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -1205,9 +1205,21 @@ The default \fIblacklist exception\fR is: \fB(SCSI_IDENT_|ID_WWN)\fR, causing
- well-behaved SCSI devices and devices that provide a WWN (World Wide Number)
- to be included, and all others to be excluded.
- .RE
-+.TP
-+.B protocol
-+Regular expression for the protocol of a device to be excluded/included.
-+.RS
-+.PP
-+The protocol strings that multipath recognizes are \fIscsi:fcp\fR,
-+\fIscsi:spi\fR, \fIscsi:ssa\fR, \fIscsi:sbp\fR, \fIscsi:srp\fR,
-+\fIscsi:iscsi\fR, \fIscsi:sas\fR, \fIscsi:adt\fR, \fIscsi:ata\fR,
-+\fIscsi:unspec\fR, \fIccw\fR, \fIcciss\fR, \fInvme\fR, and \fIundef\fR.
-+The protocol that a path is using can be viewed by running
-+\fBmultipathd show paths format "%d %P"\fR
-+.RE
- .LP
--For every device, these 4 blacklist criteria are evaluated in the the order
--"property, dev\%node, device, wwid". If a device turns out to be
-+For every device, these 5 blacklist criteria are evaluated in the the order
-+"property, dev\%node, device, protocol, wwid". If a device turns out to be
- blacklisted by any criterion, it's excluded from handling by multipathd, and
- the later criteria aren't evaluated any more. For each
- criterion, the whitelist takes precedence over the blacklist if a device
++static void test_device_whitelist(void **state)
++{
++	expect_condlog(3, "sdb: (foo:bar) vendor/product whitelisted\n");
++	assert_int_equal(filter_device(blist_device_all, blist_device_foo_bar,
++				       "foo", "bar", "sdb"),
++			 MATCH_DEVICE_BLIST_EXCEPT);
++	expect_condlog(3, "sdb: (foo:baz) vendor/product blacklisted\n");
++	assert_int_equal(filter_device(blist_device_all, blist_device_foo_bar,
++				       "foo", "baz", "sdb"),
++			 MATCH_DEVICE_BLIST);
++}
++
++static void test_device_missing(void **state)
++{
++	assert_int_equal(filter_device(blist_device_foo_bar, NULL, "foo",
++				       "baz", "sdb"),
++			 MATCH_NOTHING);
++}
++
++static void test_wwid_blacklist(void **state)
++{
++	expect_condlog(3, "sdb: wwid xyzzy blacklisted\n");
++	assert_int_equal(filter_wwid(blist_wwid_xyzzy, NULL, "xyzzy", "sdb"),
++			 MATCH_WWID_BLIST);
++}
++
++static void test_wwid_whitelist(void **state)
++{
++	expect_condlog(3, "sdb: wwid xyzzy whitelisted\n");
++	assert_int_equal(filter_wwid(blist_all, blist_wwid_xyzzy,
++				     "xyzzy", "sdb"),
++			 MATCH_WWID_BLIST_EXCEPT);
++	expect_condlog(3, "sdb: wwid plugh blacklisted\n");
++	assert_int_equal(filter_wwid(blist_all, blist_wwid_xyzzy,
++				     "plugh", "sdb"),
++			 MATCH_WWID_BLIST);
++}
++
++static void test_wwid_missing(void **state)
++{
++	assert_int_equal(filter_wwid(blist_wwid_xyzzy, NULL, "plugh", "sdb"),
++			 MATCH_NOTHING);
++}
++
++static void test_protocol_blacklist(void **state)
++{
++	struct path pp = { .dev = "sdb", .bus = SYSFS_BUS_SCSI,
++			   .sg_id.proto_id = SCSI_PROTOCOL_FCP };
++	expect_condlog(3, "sdb: protocol scsi:fcp blacklisted\n");
++	assert_int_equal(filter_protocol(blist_protocol_fcp, NULL, &pp),
++			 MATCH_PROTOCOL_BLIST);
++}
++
++static void test_protocol_whitelist(void **state)
++{
++	struct path pp1 = { .dev = "sdb", .bus = SYSFS_BUS_SCSI,
++			   .sg_id.proto_id = SCSI_PROTOCOL_FCP };
++	struct path pp2 = { .dev = "sdb", .bus = SYSFS_BUS_SCSI,
++			   .sg_id.proto_id = SCSI_PROTOCOL_ISCSI };
++	expect_condlog(3, "sdb: protocol scsi:fcp whitelisted\n");
++	assert_int_equal(filter_protocol(blist_all, blist_protocol_fcp, &pp1),
++			 MATCH_PROTOCOL_BLIST_EXCEPT);
++	expect_condlog(3, "sdb: protocol scsi:iscsi blacklisted\n");
++	assert_int_equal(filter_protocol(blist_all, blist_protocol_fcp, &pp2),
++			 MATCH_PROTOCOL_BLIST);
++}
++
++static void test_protocol_missing(void **state)
++{
++	struct path pp = { .dev = "sdb", .bus = SYSFS_BUS_SCSI,
++			   .sg_id.proto_id = SCSI_PROTOCOL_ISCSI };
++	assert_int_equal(filter_protocol(blist_protocol_fcp, NULL, &pp),
++			 MATCH_NOTHING);
++}
++
++static void test_property_blacklist(void **state)
++{
++	static struct udev_device udev = { "sdb", { "ID_FOO", "ID_WWN", "ID_BAR", NULL } };
++	conf.blist_property = blist_property_wwn;
++	expect_condlog(3, "sdb: udev property ID_WWN blacklisted\n");
++	assert_int_equal(filter_property(&conf, &udev), MATCH_PROPERTY_BLIST);
++}
++
++/* the property check works different in that you check all the property
++ * names, so setting a blacklist value will blacklist the device if any
++ * of the property on the blacklist are found before the property names
++ * in the whitelist.  This might be worth changing. although it would
++ * force multipath to go through the properties twice */
++static void test_property_whitelist(void **state)
++{
++	static struct udev_device udev = { "sdb", { "ID_FOO", "ID_WWN", "ID_BAR", NULL } };
++	conf.elist_property = blist_property_wwn;
++	expect_condlog(3, "sdb: udev property ID_WWN whitelisted\n");
++	assert_int_equal(filter_property(&conf, &udev),
++			 MATCH_PROPERTY_BLIST_EXCEPT);
++}
++
++static void test_property_missing(void **state)
++{
++	static struct udev_device udev = { "sdb", { "ID_FOO", "ID_BAZ", "ID_BAR", NULL } };
++	conf.blist_property = blist_property_wwn;
++	expect_condlog(3, "sdb: blacklisted, udev property missing\n");
++	assert_int_equal(filter_property(&conf, &udev),
++			 MATCH_PROPERTY_BLIST_MISSING);
++}
++
++struct udev_device test_udev = { "sdb", { "ID_FOO", "ID_WWN", "ID_BAR", NULL } };
++
++struct path test_pp = { .dev = "sdb", .bus = SYSFS_BUS_SCSI, .udev = &test_udev,
++			.sg_id.proto_id = SCSI_PROTOCOL_FCP, .vendor_id = "foo",
++			.product_id = "bar", .wwid = "xyzzy" };
++
++static void test_filter_path_property(void **state)
++{
++	conf.blist_property = blist_property_wwn;
++	expect_condlog(3, "sdb: udev property ID_WWN blacklisted\n");
++	assert_int_equal(filter_path(&conf, &test_pp), MATCH_PROPERTY_BLIST);
++}
++
++static void test_filter_path_devnode(void **state)
++{
++	/* always must include property elist, to avoid "missing property"
++	 * blacklisting */
++	conf.elist_property = blist_property_wwn;
++	conf.blist_devnode = blist_devnode_sdb;
++	expect_condlog(3, "sdb: udev property ID_WWN whitelisted\n");
++	expect_condlog(3, "sdb: device node name blacklisted\n");
++	assert_int_equal(filter_path(&conf, &test_pp), MATCH_DEVNODE_BLIST);
++}
++
++static void test_filter_path_device(void **state)
++{
++	/* always must include property elist, to avoid "missing property"
++	 * blacklisting */
++	conf.elist_property = blist_property_wwn;
++	conf.blist_device = blist_device_foo_bar;
++	expect_condlog(3, "sdb: udev property ID_WWN whitelisted\n");
++	expect_condlog(3, "sdb: (foo:bar) vendor/product blacklisted\n");
++	assert_int_equal(filter_path(&conf, &test_pp), MATCH_DEVICE_BLIST);
++}
++
++static void test_filter_path_protocol(void **state)
++{
++	conf.elist_property = blist_property_wwn;
++	conf.blist_protocol = blist_protocol_fcp;
++	expect_condlog(3, "sdb: udev property ID_WWN whitelisted\n");
++	expect_condlog(3, "sdb: protocol scsi:fcp blacklisted\n");
++	assert_int_equal(filter_path(&conf, &test_pp), MATCH_PROTOCOL_BLIST);
++}
++
++static void test_filter_path_wwid(void **state)
++{
++	conf.elist_property = blist_property_wwn;
++	conf.blist_wwid = blist_wwid_xyzzy;
++	expect_condlog(3, "sdb: udev property ID_WWN whitelisted\n");
++	expect_condlog(3, "sdb: wwid xyzzy blacklisted\n");
++	assert_int_equal(filter_path(&conf, &test_pp), MATCH_WWID_BLIST);
++}
++
++struct udev_device miss_udev = { "sdb", { "ID_FOO", "ID_BAZ", "ID_BAR", NULL } };
++
++struct path miss1_pp = { .dev = "sdc", .bus = SYSFS_BUS_SCSI,
++			.udev = &miss_udev,
++			.sg_id.proto_id = SCSI_PROTOCOL_ISCSI,
++			.vendor_id = "foo", .product_id = "baz",
++			.wwid = "plugh" };
++
++struct path miss2_pp = { .dev = "sdc", .bus = SYSFS_BUS_SCSI,
++			.udev = &test_udev,
++			.sg_id.proto_id = SCSI_PROTOCOL_ISCSI,
++			.vendor_id = "foo", .product_id = "baz",
++			.wwid = "plugh" };
++
++static void test_filter_path_missing1(void **state)
++{
++	conf.blist_property = blist_property_wwn;
++	conf.blist_devnode = blist_devnode_sdb;
++	conf.blist_device = blist_device_foo_bar;
++	conf.blist_protocol = blist_protocol_fcp;
++	conf.blist_wwid = blist_wwid_xyzzy;
++	expect_condlog(3, "sdb: blacklisted, udev property missing\n");
++	assert_int_equal(filter_path(&conf, &miss1_pp),
++			 MATCH_PROPERTY_BLIST_MISSING);
++}
++
++/* This one matches the property whitelist, to test the other missing
++ * functions */
++static void test_filter_path_missing2(void **state)
++{
++	conf.elist_property = blist_property_wwn;
++	conf.blist_devnode = blist_devnode_sdb;
++	conf.blist_device = blist_device_foo_bar;
++	conf.blist_protocol = blist_protocol_fcp;
++	conf.blist_wwid = blist_wwid_xyzzy;
++	expect_condlog(3, "sdb: udev property ID_WWN whitelisted\n");
++	assert_int_equal(filter_path(&conf, &miss2_pp),
++			 MATCH_NOTHING);
++}
++
++static void test_filter_path_whitelist(void **state)
++{
++	conf.elist_property = blist_property_wwn;
++	conf.elist_devnode = blist_devnode_sdb;
++	conf.elist_device = blist_device_foo_bar;
++	conf.elist_protocol = blist_protocol_fcp;
++	conf.elist_wwid = blist_wwid_xyzzy;
++	expect_condlog(3, "sdb: udev property ID_WWN whitelisted\n");
++	expect_condlog(3, "sdb: device node name whitelisted\n");
++	expect_condlog(3, "sdb: (foo:bar) vendor/product whitelisted\n");
++	expect_condlog(3, "sdb: protocol scsi:fcp whitelisted\n");
++	expect_condlog(3, "sdb: wwid xyzzy whitelisted\n");
++	assert_int_equal(filter_path(&conf, &test_pp),
++			 MATCH_WWID_BLIST_EXCEPT);
++}
++
++static void test_filter_path_whitelist_property(void **state)
++{
++	conf.blist_property = blist_property_wwn;
++	conf.elist_devnode = blist_devnode_sdb;
++	conf.elist_device = blist_device_foo_bar;
++	conf.elist_protocol = blist_protocol_fcp;
++	conf.elist_wwid = blist_wwid_xyzzy;
++	expect_condlog(3, "sdb: udev property ID_WWN blacklisted\n");
++	assert_int_equal(filter_path(&conf, &test_pp), MATCH_PROPERTY_BLIST);
++}
++
++static void test_filter_path_whitelist_devnode(void **state)
++{
++	conf.elist_property = blist_property_wwn;
++	conf.blist_devnode = blist_devnode_sdb;
++	conf.elist_device = blist_device_foo_bar;
++	conf.elist_protocol = blist_protocol_fcp;
++	conf.elist_wwid = blist_wwid_xyzzy;
++	expect_condlog(3, "sdb: udev property ID_WWN whitelisted\n");
++	expect_condlog(3, "sdb: device node name blacklisted\n");
++	assert_int_equal(filter_path(&conf, &test_pp), MATCH_DEVNODE_BLIST);
++}
++
++static void test_filter_path_whitelist_device(void **state)
++{
++	conf.elist_property = blist_property_wwn;
++	conf.elist_devnode = blist_devnode_sdb;
++	conf.blist_device = blist_device_foo_bar;
++	conf.elist_protocol = blist_protocol_fcp;
++	conf.elist_wwid = blist_wwid_xyzzy;
++	expect_condlog(3, "sdb: udev property ID_WWN whitelisted\n");
++	expect_condlog(3, "sdb: device node name whitelisted\n");
++	expect_condlog(3, "sdb: (foo:bar) vendor/product blacklisted\n");
++	assert_int_equal(filter_path(&conf, &test_pp), MATCH_DEVICE_BLIST);
++}
++
++static void test_filter_path_whitelist_protocol(void **state)
++{
++	conf.elist_property = blist_property_wwn;
++	conf.elist_devnode = blist_devnode_sdb;
++	conf.elist_device = blist_device_foo_bar;
++	conf.blist_protocol = blist_protocol_fcp;
++	conf.elist_wwid = blist_wwid_xyzzy;
++	expect_condlog(3, "sdb: udev property ID_WWN whitelisted\n");
++	expect_condlog(3, "sdb: device node name whitelisted\n");
++	expect_condlog(3, "sdb: (foo:bar) vendor/product whitelisted\n");
++	expect_condlog(3, "sdb: protocol scsi:fcp blacklisted\n");
++	assert_int_equal(filter_path(&conf, &test_pp), MATCH_PROTOCOL_BLIST);
++}
++
++static void test_filter_path_whitelist_wwid(void **state)
++{
++	conf.elist_property = blist_property_wwn;
++	conf.elist_devnode = blist_devnode_sdb;
++	conf.elist_device = blist_device_foo_bar;
++	conf.elist_protocol = blist_protocol_fcp;
++	conf.blist_wwid = blist_wwid_xyzzy;
++	expect_condlog(3, "sdb: udev property ID_WWN whitelisted\n");
++	expect_condlog(3, "sdb: device node name whitelisted\n");
++	expect_condlog(3, "sdb: (foo:bar) vendor/product whitelisted\n");
++	expect_condlog(3, "sdb: protocol scsi:fcp whitelisted\n");
++	expect_condlog(3, "sdb: wwid xyzzy blacklisted\n");
++	assert_int_equal(filter_path(&conf, &test_pp), MATCH_WWID_BLIST);
++}
++
++#define test_and_reset(x) cmocka_unit_test_teardown((x), reset_blists)
++
++int test_blacklist(void)
++{
++	const struct CMUnitTest tests[] = {
++		cmocka_unit_test(test_devnode_blacklist),
++		cmocka_unit_test(test_devnode_whitelist),
++		cmocka_unit_test(test_devnode_missing),
++		cmocka_unit_test(test_device_blacklist),
++		cmocka_unit_test(test_device_whitelist),
++		cmocka_unit_test(test_device_missing),
++		cmocka_unit_test(test_wwid_blacklist),
++		cmocka_unit_test(test_wwid_whitelist),
++		cmocka_unit_test(test_wwid_missing),
++		cmocka_unit_test(test_protocol_blacklist),
++		cmocka_unit_test(test_protocol_whitelist),
++		cmocka_unit_test(test_protocol_missing),
++		test_and_reset(test_property_blacklist),
++		test_and_reset(test_property_whitelist),
++		test_and_reset(test_property_missing),
++		test_and_reset(test_filter_path_property),
++		test_and_reset(test_filter_path_devnode),
++		test_and_reset(test_filter_path_device),
++		test_and_reset(test_filter_path_protocol),
++		test_and_reset(test_filter_path_wwid),
++		test_and_reset(test_filter_path_missing1),
++		test_and_reset(test_filter_path_missing2),
++		test_and_reset(test_filter_path_whitelist),
++		test_and_reset(test_filter_path_whitelist_property),
++		test_and_reset(test_filter_path_whitelist_devnode),
++		test_and_reset(test_filter_path_whitelist_device),
++		test_and_reset(test_filter_path_whitelist_protocol),
++		test_and_reset(test_filter_path_whitelist_wwid),
++	};
++	return cmocka_run_group_tests(tests, setup, teardown);
++}
++
++int main(void)
++{
++	int ret = 0;
++	ret += test_blacklist();
++	return ret;
++}
 -- 
 2.7.4
