@@ -1,84 +1,53 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-thin: stop no_space_timeout worker before switch
-	to write-mode
-Date: Thu, 2 Aug 2018 14:38:00 -0400
-Message-ID: <20180802183800.GA30480@redhat.com>
-References: <20180802081824.1398-1-houtao1@huawei.com>
+From: WGH <wgh@torlan.ru>
+Subject: Re: LVM snapshot broke between 4.14 and 4.16
+Date: Fri, 3 Aug 2018 00:32:21 +0300
+Message-ID: <d76415de-2056-c7d6-cc88-b896deaa8ead@torlan.ru>
+References: <226835ba-2197-b850-6e5b-8ba14f7fd016@torlan.ru>
+ <CAOi1vP_tYG77e71CdDiOcszSSEWrp9Vfi+KB7yFAXVQChkjP5A@mail.gmail.com>
+ <93bff248-6897-4867-841b-2dace11597de@torlan.ru>
+ <CA+55aFyAox9BTDpRsqLXiROhHOX60aa45LEZ7Azteaumdu11Fw@mail.gmail.com>
+ <CAOi1vP-SJO4AMK=XD3Lmja++2dQqoiw6Zn8Vgxf8OfvYgnuC6Q@mail.gmail.com>
+ <CA+55aFy2DR9fxHhmGq+azSjX9D71YtLsuFKmoEuYW3uTAUYtJg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20180802081824.1398-1-houtao1@huawei.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hou Tao <houtao1@huawei.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CA+55aFy2DR9fxHhmGq+azSjX9D71YtLsuFKmoEuYW3uTAUYtJg@mail.gmail.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>, Ilya Dryomov <idryomov@gmail.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block <linux-block@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Sagi Grimberg <sagi@grimberg.me>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Aug 02 2018 at  4:18am -0400,
-Hou Tao <houtao1@huawei.com> wrote:
+On 08/02/2018 09:32 PM, Linus Torvalds wrote:
+> WGH (sorry, no idea what your real name is) - what's the source of the
+> script that broke? Was it some system script you got from outside and
+> likely to affect others too?
+>
+> Or was it just some local thing you wrote yourself and was
+> unintentionally buggy and nobody else is likely to hit this?
+>
+> Because if the latter, if you can work around it and you're the only
+> user this hits, we might just be able to ignore it.
 
-> Now both check_for_space() and do_no_space_timeout() will read & write
-> error_if_no_space in pool->pf. If these functions run concurrently as
-> shown in the following case, the error_if_no_space feature requested
-> by user may get lost.
-> 
-> precondition:
->     * error_if_no_space = 0
->     * Out-of-Data-Space occurs
->     * no_space_timeout worker has been queued
-> 
-> CPU 0:                          CPU 1:
-> // delete a thin device
-> process_delete_mesg()
-> // inovked by commit()
-> set_pool_mode(pool, PM_WRITE)
->     pool->pf.error_if_no_space = \
->      pt->requested_pf.error_if_no_space
-> 
-> 				// timeout
-> 				do_no_space_timeout
-> 				    // the user configuration is lost
-> 				    pool->pf.error_if_no_space = true
->     pool->pf.mode = new_mode
-> 
-> Fix it by stopping no_space_timeout worker before switching to write mode.
-> 
-> Signed-off-by: Hou Tao <houtao1@huawei.com>
-> ---
->  drivers/md/dm-thin.c | 1 +
->  1 file changed, 1 insertion(+)
-> 
-> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> index b900723bbd0f..c6da4afc16cf 100644
-> --- a/drivers/md/dm-thin.c
-> +++ b/drivers/md/dm-thin.c
-> @@ -1401,6 +1401,7 @@ static void check_for_space(struct pool *pool)
->  		return;
->  
->  	if (nr_free) {
-> +		cancel_delayed_work_sync(&pool->no_space_timeout);
->  		set_pool_mode(pool, PM_WRITE);
->  		requeue_bios(pool);
->  	}
-> -- 
-> 2.16.2.dirty
-> 
+The script in question is written by me and contains literally two lines:
 
-Thanks for the patch, I tweaked the header a bit and also moved the
-cancel_delayed_work_sync() to set_pool_mode(), please see:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.19&id=eff8f4c73dd13f7d53015fc911d66f6671dd82b8
+    lvcreate --size 5G --snapshot --name snap0 --permission r
+/dev/mapper/vg0-lvol_rootfs
+    mount /dev/mapper/vg0-snap0 /mnt/rootfs_snapshot
 
-Please let me know if you have any issues with this, otherwise it is
-staged for 4.19 inclussion.
+The script is not buggy (I think), it was written under simple
+assumption that --permission r works. And it does - unless you happen to
+have combination of kernel >=4.16 and lvm2 <2.02.178.
 
-Thanks,
-Mike
+The commit in question appeared only in 4.16, and this kernel version is
+not widespread yet. You have to be running both recent kernel and
+not-so-recent lvm2 to be bitten by this. This probably explains why no
+one else reported this problem.
+
+Workaround certainly exists: I can just create read-write snapshot, but
+mount it read-only. The reason why I didn't discover the workaround
+earlier is that after unsuccessful read-only snapshot creation system
+ends up in some weird state where read-write snapshots are also failing
+with the same error (until reboot). So I got a wrong impression that
+read-write snapshots were broken as well.
