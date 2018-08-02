@@ -1,67 +1,30 @@
-From: Hou Tao <houtao1@huawei.com>
-Subject: [PATCH] dm-thin: stop no_space_timeout worker before
-	switch to write-mode
-Date: Thu, 2 Aug 2018 16:18:24 +0800
-Message-ID: <20180802081824.1398-1-houtao1@huawei.com>
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Subject: Re: [PATCH v4 0/5] bitmap: Introduce alloc/free helpers
+Date: Thu, 02 Aug 2018 15:07:48 +0300
+Message-ID: <54b34c40dbe7a16ef4964813ad5aa73027a917f1.camel@linux.intel.com>
+References: <20180630201750.2588-1-andriy.shevchenko@linux.intel.com>
+         <CAHp75Vd9RSxVsYrbiAFJKLPL4wNzAtS9qAPjCNJJ4E=QbeTP8A@mail.gmail.com>
+         <2310fa540b9e5db3b94f4917ecae76dce2a2ca65.camel@linux.intel.com>
+         <20180802010325.GB184797@dtor-ws>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: snitzer@redhat.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180802010325.GB184797@dtor-ws>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dmitry Torokhov <dmitry.torokhov@gmail.com>
+Cc: Andy Shevchenko <andy.shevchenko@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-input <linux-input@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Yury Norov <ynorov@caviumnetworks.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Mika Westerberg <mika.westerberg@linux.intel.com>, Joe Perches <joe@perches.com>
 List-Id: dm-devel.ids
 
-Now both check_for_space() and do_no_space_timeout() will read & write
-error_if_no_space in pool->pf. If these functions run concurrently as
-shown in the following case, the error_if_no_space feature requested
-by user may get lost.
+On Wed, 2018-08-01 at 18:03 -0700, Dmitry Torokhov wrote:
 
-precondition:
-    * error_if_no_space = 0
-    * Out-of-Data-Space occurs
-    * no_space_timeout worker has been queued
+> I put the first 3 patches into an immutable branch off 4.17:
+> 
+> git://git.kernel.org/pub/scm/linux/kernel/git/dtor/input.git ib/4.17-
+> bitmap
 
-CPU 0:                          CPU 1:
-// delete a thin device
-process_delete_mesg()
-// inovked by commit()
-set_pool_mode(pool, PM_WRITE)
-    pool->pf.error_if_no_space = \
-     pt->requested_pf.error_if_no_space
+Thank you!
 
-				// timeout
-				do_no_space_timeout
-				    // the user configuration is lost
-				    pool->pf.error_if_no_space = true
-    pool->pf.mode = new_mode
-
-Fix it by stopping no_space_timeout worker before switching to write mode.
-
-Signed-off-by: Hou Tao <houtao1@huawei.com>
----
- drivers/md/dm-thin.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index b900723bbd0f..c6da4afc16cf 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -1401,6 +1401,7 @@ static void check_for_space(struct pool *pool)
- 		return;
- 
- 	if (nr_free) {
-+		cancel_delayed_work_sync(&pool->no_space_timeout);
- 		set_pool_mode(pool, PM_WRITE);
- 		requeue_bios(pool);
- 	}
 -- 
-2.16.2.dirty
+Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Intel Finland Oy
