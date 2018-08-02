@@ -1,71 +1,84 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: LVM snapshot broke between 4.14 and 4.16
-Date: Thu, 2 Aug 2018 11:32:54 -0700
-Message-ID: <CA+55aFy2DR9fxHhmGq+azSjX9D71YtLsuFKmoEuYW3uTAUYtJg@mail.gmail.com>
-References: <226835ba-2197-b850-6e5b-8ba14f7fd016@torlan.ru>
- <CAOi1vP_tYG77e71CdDiOcszSSEWrp9Vfi+KB7yFAXVQChkjP5A@mail.gmail.com>
- <93bff248-6897-4867-841b-2dace11597de@torlan.ru> <CA+55aFyAox9BTDpRsqLXiROhHOX60aa45LEZ7Azteaumdu11Fw@mail.gmail.com>
- <CAOi1vP-SJO4AMK=XD3Lmja++2dQqoiw6Zn8Vgxf8OfvYgnuC6Q@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-thin: stop no_space_timeout worker before switch
+	to write-mode
+Date: Thu, 2 Aug 2018 14:38:00 -0400
+Message-ID: <20180802183800.GA30480@redhat.com>
+References: <20180802081824.1398-1-houtao1@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAOi1vP-SJO4AMK=XD3Lmja++2dQqoiw6Zn8Vgxf8OfvYgnuC6Q@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ilya Dryomov <idryomov@gmail.com>
-Cc: wgh@torlan.ru, Jens Axboe <axboe@kernel.dk>, linux-block <linux-block@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Sagi Grimberg <sagi@grimberg.me>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20180802081824.1398-1-houtao1@huawei.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hou Tao <houtao1@huawei.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Aug 2, 2018 at 11:18 AM Ilya Dryomov <idryomov@gmail.com> wrote:
->
-> I think it was my commit 721c7fc701c7 ("block: fail op_is_write()
-> requests to read-only partitions").  The block layer was previously
-> allowing non-blkdev_write_iter() writes to read-only disks and
-> partitions.  dm's chunk_io() boils down to submit_bio(), so in 4.16
-> it started to fail if the underlying device was marked read-only.
+On Thu, Aug 02 2018 at  4:18am -0400,
+Hou Tao <houtao1@huawei.com> wrote:
 
-Ugh. That commit does look like the obviously right thing to do, and
-our old behavior was obviously wrong.
+> Now both check_for_space() and do_no_space_timeout() will read & write
+> error_if_no_space in pool->pf. If these functions run concurrently as
+> shown in the following case, the error_if_no_space feature requested
+> by user may get lost.
+> 
+> precondition:
+>     * error_if_no_space = 0
+>     * Out-of-Data-Space occurs
+>     * no_space_timeout worker has been queued
+> 
+> CPU 0:                          CPU 1:
+> // delete a thin device
+> process_delete_mesg()
+> // inovked by commit()
+> set_pool_mode(pool, PM_WRITE)
+>     pool->pf.error_if_no_space = \
+>      pt->requested_pf.error_if_no_space
+> 
+> 				// timeout
+> 				do_no_space_timeout
+> 				    // the user configuration is lost
+> 				    pool->pf.error_if_no_space = true
+>     pool->pf.mode = new_mode
+> 
+> Fix it by stopping no_space_timeout worker before switching to write mode.
+> 
+> Signed-off-by: Hou Tao <houtao1@huawei.com>
+> ---
+>  drivers/md/dm-thin.c | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+> index b900723bbd0f..c6da4afc16cf 100644
+> --- a/drivers/md/dm-thin.c
+> +++ b/drivers/md/dm-thin.c
+> @@ -1401,6 +1401,7 @@ static void check_for_space(struct pool *pool)
+>  		return;
+>  
+>  	if (nr_free) {
+> +		cancel_delayed_work_sync(&pool->no_space_timeout);
+>  		set_pool_mode(pool, PM_WRITE);
+>  		requeue_bios(pool);
+>  	}
+> -- 
+> 2.16.2.dirty
+> 
 
-At the same time, we really really shouldn't break user flow, even if
-that flow was due to an obvious bug.
+Thanks for the patch, I tweaked the header a bit and also moved the
+cancel_delayed_work_sync() to set_pool_mode(), please see:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.19&id=eff8f4c73dd13f7d53015fc911d66f6671dd82b8
 
-Dang.
+Please let me know if you have any issues with this, otherwise it is
+staged for 4.19 inclussion.
 
-> Apparently at least some versions of lvm(8) instruct dm to mark the COW
-> device read-only even though it is always written to.  It comes up only
-> if the user asks for a read-only snapshot (the default is writable).
->
-> One option might be to ignore the supplied DM_READONLY_FLAG for COW
-> devices.  Marking the COW device (i.e. the exception store) read-only
-> is probably never sane...
-
-That sounds like possibly the sanest fixlet for this - perhaps
-together with a warning message saying "ignoring DM_READONLY_FLAG for
-COW device" so that people see that they are doing insane things.
-
-But some of our internal DM_READONLY_FLAG use obviously comes from
-other sources that we have to honor (ie some grepping shows me code
-like
-
-                if (get_disk_ro(disk))
-                        param->flags |= DM_READONLY_FLAG;
-
-where we obviously can *not* override the get_disk_ro() state. So it
-depends a lot on how this all happened. But it looks like in this
-particular case, it all came from one inconsistent lvmcreate command.
-
-Or - if there really is only _one_ user that noticed this, and a new
-lvm2 release fixes his problem, maybe we can say "we broke it, but the
-only person who reported it can work around it".
-
-WGH (sorry, no idea what your real name is) - what's the source of the
-script that broke? Was it some system script you got from outside and
-likely to affect others too?
-
-Or was it just some local thing you wrote yourself and was
-unintentionally buggy and nobody else is likely to hit this?
-
-Because if the latter, if you can work around it and you're the only
-user this hits, we might just be able to ignore it.
-
-                   Linus
+Thanks,
+Mike
