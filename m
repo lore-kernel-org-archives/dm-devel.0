@@ -1,71 +1,71 @@
-From: Ilya Dryomov <idryomov@gmail.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: LVM snapshot broke between 4.14 and 4.16
-Date: Thu, 2 Aug 2018 20:18:44 +0200
-Message-ID: <CAOi1vP-SJO4AMK=XD3Lmja++2dQqoiw6Zn8Vgxf8OfvYgnuC6Q@mail.gmail.com>
+Date: Thu, 2 Aug 2018 11:32:54 -0700
+Message-ID: <CA+55aFy2DR9fxHhmGq+azSjX9D71YtLsuFKmoEuYW3uTAUYtJg@mail.gmail.com>
 References: <226835ba-2197-b850-6e5b-8ba14f7fd016@torlan.ru>
  <CAOi1vP_tYG77e71CdDiOcszSSEWrp9Vfi+KB7yFAXVQChkjP5A@mail.gmail.com>
  <93bff248-6897-4867-841b-2dace11597de@torlan.ru> <CA+55aFyAox9BTDpRsqLXiROhHOX60aa45LEZ7Azteaumdu11Fw@mail.gmail.com>
+ <CAOi1vP-SJO4AMK=XD3Lmja++2dQqoiw6Zn8Vgxf8OfvYgnuC6Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CA+55aFyAox9BTDpRsqLXiROhHOX60aa45LEZ7Azteaumdu11Fw@mail.gmail.com>
+In-Reply-To: <CAOi1vP-SJO4AMK=XD3Lmja++2dQqoiw6Zn8Vgxf8OfvYgnuC6Q@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: wgh@torlan.ru, Jens Axboe <axboe@kernel.dk>, linux-block <linux-block@vger.kernel.org>, linux-kernel@vger.kernel.org, Sagi Grimberg <sagi@grimberg.me>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+To: Ilya Dryomov <idryomov@gmail.com>
+Cc: wgh@torlan.ru, Jens Axboe <axboe@kernel.dk>, linux-block <linux-block@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Sagi Grimberg <sagi@grimberg.me>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Aug 2, 2018 at 6:41 PM Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
+On Thu, Aug 2, 2018 at 11:18 AM Ilya Dryomov <idryomov@gmail.com> wrote:
 >
-> On Thu, Aug 2, 2018 at 8:16 AM WGH <wgh@torlan.ru> wrote:
-> >
-> > On 08/02/2018 04:31 PM, Ilya Dryomov wrote:
-> > >
-> > > From a quick look, --permission r sets DM_READONLY_FLAG, which makes dm
-> > > mark the disk read-only with set_disk_ro(dm_disk(md), 1) in do_resume().
-> > > A bit later it tries to write to the disk from write_header():
-> > >
-> > >   return chunk_io(ps, ps->header_area, 0, REQ_OP_WRITE, 0, 1);
-> > >
-> > > Thanks,
-> > >
-> > >                 Ilya
-> >
-> > After further investigation, this was fixed on lvm2 side (userspace) in
-> > https://sourceware.org/git/?p=lvm2.git;a=commit;h=a6fdb9d9d70f51c49ad11a87ab4243344e6701a3
-> > (snapshot: keep COW writable for read-only volumes).
-> >
-> > So I guess that's it. Time to poke my distribution package maintainers
-> > to bump the package version.
+> I think it was my commit 721c7fc701c7 ("block: fail op_is_write()
+> requests to read-only partitions").  The block layer was previously
+> allowing non-blkdev_write_iter() writes to read-only disks and
+> partitions.  dm's chunk_io() boils down to submit_bio(), so in 4.16
+> it started to fail if the underlying device was marked read-only.
+
+Ugh. That commit does look like the obviously right thing to do, and
+our old behavior was obviously wrong.
+
+At the same time, we really really shouldn't break user flow, even if
+that flow was due to an obvious bug.
+
+Dang.
+
+> Apparently at least some versions of lvm(8) instruct dm to mark the COW
+> device read-only even though it is always written to.  It comes up only
+> if the user asks for a read-only snapshot (the default is writable).
 >
-> That is *not* how kernel development is supposed to work. If your
-> script used to work, it should continue to work.
->
-> Why did it use to work despite that read-only flag? And what was it
-> that actually broke this?
+> One option might be to ignore the supplied DM_READONLY_FLAG for COW
+> devices.  Marking the COW device (i.e. the exception store) read-only
+> is probably never sane...
 
-I think it was my commit 721c7fc701c7 ("block: fail op_is_write()
-requests to read-only partitions").  The block layer was previously
-allowing non-blkdev_write_iter() writes to read-only disks and
-partitions.  dm's chunk_io() boils down to submit_bio(), so in 4.16
-it started to fail if the underlying device was marked read-only.
+That sounds like possibly the sanest fixlet for this - perhaps
+together with a warning message saying "ignoring DM_READONLY_FLAG for
+COW device" so that people see that they are doing insane things.
 
->
-> We remain bug-for-bug compatible with older kernel versions when
-> people depend on the bugs. Unless the old bugs are security issues,
-> and even then we try to make it _look_ like we work the same way.
->
-> Or was it a user-space lvm tool that broke in the first place, and the
-> kernel release update was a red herring?
+But some of our internal DM_READONLY_FLAG use obviously comes from
+other sources that we have to honor (ie some grepping shows me code
+like
 
-Apparently at least some versions of lvm(8) instruct dm to mark the COW
-device read-only even though it is always written to.  It comes up only
-if the user asks for a read-only snapshot (the default is writable).
+                if (get_disk_ro(disk))
+                        param->flags |= DM_READONLY_FLAG;
 
-One option might be to ignore the supplied DM_READONLY_FLAG for COW
-devices.  Marking the COW device (i.e. the exception store) read-only
-is probably never sane...
+where we obviously can *not* override the get_disk_ro() state. So it
+depends a lot on how this all happened. But it looks like in this
+particular case, it all came from one inconsistent lvmcreate command.
 
-Thanks,
+Or - if there really is only _one_ user that noticed this, and a new
+lvm2 release fixes his problem, maybe we can say "we broke it, but the
+only person who reported it can work around it".
 
-                Ilya
+WGH (sorry, no idea what your real name is) - what's the source of the
+script that broke? Was it some system script you got from outside and
+likely to affect others too?
+
+Or was it just some local thing you wrote yourself and was
+unintentionally buggy and nobody else is likely to hit this?
+
+Because if the latter, if you can work around it and you're the only
+user this hits, we might just be able to ignore it.
+
+                   Linus
