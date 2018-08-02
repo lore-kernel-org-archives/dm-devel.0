@@ -1,29 +1,62 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: LVM snapshot broke between 4.14 and 4.16
-Date: Thu, 2 Aug 2018 14:52:24 -0700
-Message-ID: <CA+55aFyPVQ5-gA93irsaxPC9BNQxnGWrDDHPMUYai2kxKiaKWQ@mail.gmail.com>
-References: <226835ba-2197-b850-6e5b-8ba14f7fd016@torlan.ru>
- <CAOi1vP_tYG77e71CdDiOcszSSEWrp9Vfi+KB7yFAXVQChkjP5A@mail.gmail.com>
- <93bff248-6897-4867-841b-2dace11597de@torlan.ru> <CA+55aFyAox9BTDpRsqLXiROhHOX60aa45LEZ7Azteaumdu11Fw@mail.gmail.com>
- <CAOi1vP-SJO4AMK=XD3Lmja++2dQqoiw6Zn8Vgxf8OfvYgnuC6Q@mail.gmail.com>
- <CA+55aFy2DR9fxHhmGq+azSjX9D71YtLsuFKmoEuYW3uTAUYtJg@mail.gmail.com>
- <d76415de-2056-c7d6-cc88-b896deaa8ead@torlan.ru> <1ec0a220-d5b0-1c27-e63b-c4d3f4ce9d77@torlan.ru>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+From: Kees Cook <keescook@chromium.org>
+Subject: [PATCH v7 3/9] crypto: ccm: Remove VLA usage
+Date: Thu,  2 Aug 2018 15:51:46 -0700
+Message-ID: <20180802225152.19194-4-keescook@chromium.org>
+References: <20180802225152.19194-1-keescook@chromium.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1ec0a220-d5b0-1c27-e63b-c4d3f4ce9d77@torlan.ru>
+In-Reply-To: <20180802225152.19194-1-keescook@chromium.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: wgh@torlan.ru
-Cc: Ilya Dryomov <idryomov@gmail.com>, Jens Axboe <axboe@kernel.dk>, linux-block <linux-block@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Sagi Grimberg <sagi@grimberg.me>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Kees Cook <keescook@chromium.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Tudor-Dan Ambarus <tudor.ambarus@microchip.com>, Andrew Morton <akpm@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, David Woodhouse <dwmw@amazon.co.uk>, Matthew Wilcox <mawilcox@microsoft.com>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, qat-linux@intel.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Aug 2, 2018 at 2:39 PM WGH <wgh@torlan.ru> wrote:
->
-> I've just found one public report of this bug, though:
-> https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=900442
+From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 
-Yeah, it does sound like we should fix this issue.
+In the quest to remove all stack VLA usage from the kernel[1], this drops
+AHASH_REQUEST_ON_STACK by preallocating the ahash request area combined
+with the skcipher area (which are not used at the same time).
 
-Ilya?
+[1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
 
-             Linus
+Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+---
+ crypto/ccm.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/crypto/ccm.c b/crypto/ccm.c
+index 0a083342ec8c..b242fd0d3262 100644
+--- a/crypto/ccm.c
++++ b/crypto/ccm.c
+@@ -50,7 +50,10 @@ struct crypto_ccm_req_priv_ctx {
+ 	u32 flags;
+ 	struct scatterlist src[3];
+ 	struct scatterlist dst[3];
+-	struct skcipher_request skreq;
++	union {
++		struct ahash_request ahreq;
++		struct skcipher_request skreq;
++	};
+ };
+ 
+ struct cbcmac_tfm_ctx {
+@@ -181,7 +184,7 @@ static int crypto_ccm_auth(struct aead_request *req, struct scatterlist *plain,
+ 	struct crypto_ccm_req_priv_ctx *pctx = crypto_ccm_reqctx(req);
+ 	struct crypto_aead *aead = crypto_aead_reqtfm(req);
+ 	struct crypto_ccm_ctx *ctx = crypto_aead_ctx(aead);
+-	AHASH_REQUEST_ON_STACK(ahreq, ctx->mac);
++	struct ahash_request *ahreq = &pctx->ahreq;
+ 	unsigned int assoclen = req->assoclen;
+ 	struct scatterlist sg[3];
+ 	u8 *odata = pctx->odata;
+@@ -427,7 +430,7 @@ static int crypto_ccm_init_tfm(struct crypto_aead *tfm)
+ 	crypto_aead_set_reqsize(
+ 		tfm,
+ 		align + sizeof(struct crypto_ccm_req_priv_ctx) +
+-		crypto_skcipher_reqsize(ctr));
++		max(crypto_ahash_reqsize(mac), crypto_skcipher_reqsize(ctr)));
+ 
+ 	return 0;
+ 
+-- 
+2.17.1
