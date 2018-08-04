@@ -1,63 +1,63 @@
-From: "Theodore Y. Ts'o" <tytso@mit.edu>
-Subject: Re: [dm-devel] LVM snapshot broke between 4.14 and 4.16
-Date: Sat, 4 Aug 2018 12:22:05 -0400
-Message-ID: <20180804162205.GB4461@thunk.org>
-References: <d76415de-2056-c7d6-cc88-b896deaa8ead@torlan.ru>
- <1ec0a220-d5b0-1c27-e63b-c4d3f4ce9d77@torlan.ru>
- <CA+55aFyPVQ5-gA93irsaxPC9BNQxnGWrDDHPMUYai2kxKiaKWQ@mail.gmail.com>
- <b2bbd8ec-ac5b-fa8a-d3f7-8615d87f73c3@redhat.com>
- <CA+55aFwWZX=CXmWDTkDGb36kf12XmTehmQjbiMPCqCRG2hi9kw@mail.gmail.com>
- <20180803185431.GB3258@redhat.com>
- <CA+55aFwDEY7B6OMh5xL2wc8BRj1KkzBHggNowAjbsWfma6H5Zg@mail.gmail.com>
- <20180803193037.GA4581@redhat.com>
- <20180804052033.GA4461@thunk.org>
- <102c2d75-f768-a649-52c3-bac6f0ca738d@redhat.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: LVM snapshot broke between 4.14 and 4.16
+Date: Sat, 4 Aug 2018 10:04:47 -0700
+Message-ID: <CA+55aFza3_+poqmw34ev+a_jZ1Tz0rxjTu7YfnU4HX-SU52abQ@mail.gmail.com>
+References: <CA+55aFyAox9BTDpRsqLXiROhHOX60aa45LEZ7Azteaumdu11Fw@mail.gmail.com>
+	<CAOi1vP-SJO4AMK=XD3Lmja++2dQqoiw6Zn8Vgxf8OfvYgnuC6Q@mail.gmail.com>
+	<CA+55aFy2DR9fxHhmGq+azSjX9D71YtLsuFKmoEuYW3uTAUYtJg@mail.gmail.com>
+	<d76415de-2056-c7d6-cc88-b896deaa8ead@torlan.ru>
+	<1ec0a220-d5b0-1c27-e63b-c4d3f4ce9d77@torlan.ru>
+	<CA+55aFyPVQ5-gA93irsaxPC9BNQxnGWrDDHPMUYai2kxKiaKWQ@mail.gmail.com>
+	<20180803133102.GA3092@redhat.com> <20180803152034.GD32066@thunk.org>
+	<20180803183932.GA3258@redhat.com>
+	<CA+55aFwGGjs_imFFkEPJ4g99Kseam=4Qppv4G6Q=ZfZXdzF7Vw@mail.gmail.com>
+	<20180803190617.GA4498@redhat.com>
+	<CA+55aFzSM6qhZpM4CCpRNR_LWNCbLyRtQQ3hnPwnRrBdDkwWUw@mail.gmail.com>
+	<a5feeaa7-e043-3987-cf23-4090e3eeec4a@torlan.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <102c2d75-f768-a649-52c3-bac6f0ca738d@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Zdenek Kabelac <zkabelac@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Jens Axboe <axboe@kernel.dk>, Sagi Grimberg <sagi@grimberg.me>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-block <linux-block@vger.kernel.org>, dm-devel@redhat.com, Ilya Dryomov <idryomov@gmail.com>, wgh@torlan.ru
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <a5feeaa7-e043-3987-cf23-4090e3eeec4a@torlan.ru>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: wgh@torlan.ru
+Cc: Jens Axboe <axboe@kernel.dk>, Theodore Ts'o <tytso@mit.edu>, Sagi Grimberg <sagi@grimberg.me>, Mike Snitzer <snitzer@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-block <linux-block@vger.kernel.org>, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, Ilya Dryomov <idryomov@gmail.com>
 List-Id: dm-devel.ids
 
-On Sat, Aug 04, 2018 at 10:36:50AM +0200, Zdenek Kabelac wrote:
-> dm-snapshost has really outdated design - it's been useful in the old age
-> where megabyte was hell lot of space.
-> 
-> Nowadays, when users do need to handle snapshots in multi gigabyte sizes and
-> moreover have number of snapshots from the same volume taken over the time,
-> want to take snapshot of snapshot of snapshot, the old snapshot simple kills
-> all the performance, uses tons of resources and becomes serious bottleneck
-> of your system and has lots of usability limitation.
+On Sat, Aug 4, 2018 at 3:03 AM WGH <wgh@torlan.ru> wrote:
+>
+> >
+> The patch works for me.
+>
+> However, there's no text messsage in the kernel log, just a traceback. I
+> think that's because WARN_ONCE is supposed to take condition as a first
+> argument.
 
-Fair enough.  I don't think I would consider that makes dm-snapshot a
-"steaming pile".  For me, protection against data loss is Job One.
+Duh.
 
-> That's where  thin provisioning will shine....
+It needs to be WARN_ONCE(1, ...);
 
-The dm-thin development might want to take a look at what's currently
-in Documentation/device-mapper/thin-privisioning.txt:
+I obviously didn't test that patch, but I _did_ compile it. I wonder
+why I didn't get a compiler warning for it...
 
-   Status
-   ======
+[ Goes off and looks ]
 
-   These targets are very much still in the EXPERIMENTAL state.  Please
-   do not yet rely on them in production.  But do experiment and offer us
-   feedback.  Different use cases will have different performance
-   characteristics, for example due to fragmentation of the data volume.
+Oh, because the "bio_devname(bio, b)" argument ended up being
+interpreted as the format string, and since it was a dynamic string
+the compiler felt it was all fine. Just bad luck.
 
-   If you find this software is not performing as expected please mail
-   dm-devel@redhat.com with details and we'll try our best to improve
-   things for you.
+Anyway, just out of curiosity, what was the traceback?
 
-   Userspace tools for checking and repairing the metadata are under
-   development.
+I'm not entirely happy with that patch either (even after the obvious
+fix to add the "1" argument), but it does seem like the minimal
+temporary workaround for now.
 
-Saying that dm-snapshot is a steaming pile and dm-thin is what
-everyone should use doesn't seem to be consistent with the above.
-
-Cheers,
-
-					- Ted
+              Linus
