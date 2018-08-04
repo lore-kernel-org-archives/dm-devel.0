@@ -1,183 +1,125 @@
-From: Drew Hastings <dhastings@crucialwebhost.com>
-Subject: Re: Is thin provisioning still experimental?
-Date: Fri, 3 Aug 2018 20:13:54 -0700
-Message-ID: <CAN-y+E+9J5w8fx-UYcT9+2SxqFL8nzkn3BYE6cWpW=yP9KdDtA@mail.gmail.com>
-References: <CAN-y+EK612pGsJTH-zO=FU0DpcFJxKfEHuDNs+6ufE6we9aK+g@mail.gmail.com>
-	<20180723140053.GA28984@redhat.com> <20180723140734.GB28984@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: LVM snapshot broke between 4.14 and 4.16
+Date: Sat, 4 Aug 2018 11:19:45 -0400
+Message-ID: <20180804151944.GA9417@redhat.com>
+References: <CA+55aFy2DR9fxHhmGq+azSjX9D71YtLsuFKmoEuYW3uTAUYtJg@mail.gmail.com>
+ <d76415de-2056-c7d6-cc88-b896deaa8ead@torlan.ru>
+ <1ec0a220-d5b0-1c27-e63b-c4d3f4ce9d77@torlan.ru>
+ <CA+55aFyPVQ5-gA93irsaxPC9BNQxnGWrDDHPMUYai2kxKiaKWQ@mail.gmail.com>
+ <b2bbd8ec-ac5b-fa8a-d3f7-8615d87f73c3@redhat.com>
+ <CA+55aFwWZX=CXmWDTkDGb36kf12XmTehmQjbiMPCqCRG2hi9kw@mail.gmail.com>
+ <20180803185431.GB3258@redhat.com>
+ <CA+55aFwDEY7B6OMh5xL2wc8BRj1KkzBHggNowAjbsWfma6H5Zg@mail.gmail.com>
+ <20180803193037.GA4581@redhat.com>
+ <20180804052033.GA4461@thunk.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4710226319292279821=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180723140734.GB28984@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180804052033.GA4461@thunk.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Theodore Y. Ts'o" <tytso@mit.edu>, Linus Torvalds <torvalds@linux-foundation.org>, Jens Axboe <axboe@kernel.dk>, Sagi Grimberg <sagi@grimberg.me>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-block <linux-block@vger.kernel.org>, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, Ilya Dryomov <idryomov@gmail.com>, wgh@torlan.ru
 List-Id: dm-devel.ids
 
---===============4710226319292279821==
-Content-Type: multipart/alternative; boundary="00000000000030cd0f0572936fa7"
+On Sat, Aug 04 2018 at  1:20am -0400,
+Theodore Y. Ts'o <tytso@mit.edu> wrote:
 
---00000000000030cd0f0572936fa7
-Content-Type: text/plain; charset="UTF-8"
+> On Fri, Aug 03, 2018 at 03:30:37PM -0400, Mike Snitzer wrote:
+> > 
+> > I was trying to give context for the "best to update lvm2 anyway"
+> > disclaimer that was used.  Yeah, it was specious.
+> 
+> Well, it seemed to indicate a certain attitude that both Linus and I
+> are concerned about.  I tried to use more of a "pursuading" style to
+> impress why that attitude was not ideal/correct.  Linus used a much
+> more assertive style (e.g., "Hell, no!").
 
-Thank you for that insight, I appreciate it.
+[I debated just ignoring this portion of your reply but it needs to be
+dealt with directly]
 
-Can you elaborate on your concern related to running out of space?
+I prefer how Linus handled it (at least he was timely with his
+follow-ups).  Your initial reply where you joined a fragment of my
+initial reply with Zdenek's (we sent simultaneously, each half way
+around the world) served to merge Zdenek and myself into one fictional
+straw-man you both could attack.  If you have something to say to _me_
+address me directly; don't put words in my mouth because you thought I
+had a complete mind-meld with someone else.
 
-Assuming the metadata device always has space, is it unsafe to let the the
-data device for the thin pool run out of space if queue_if_no_space is set?
-Would it not be safe on the block IO level?
+And please don't act like this wasn't already beaten to death yesterday;
+which left me (as DM maintainer) initially _unwarrantedly_ compromised.
+There was a block regression that I wasn't aware of but someone on my
+broader team (Zdenek) papered over it in userspace rather than report it
+as a regression.
 
-> No idea what, if any, filesystem you intend to run but XFS has the
-ability to discontinue retries for certain error conditions.  I highly
-recommend you enable that for ENOSPC, otherwise you _will_ see the kernel
-block indefinitely in XFS if thinp runs out of space underneath XFS.
+I did brush off the seriousness of side-effects on readonly dm-snapshot
+("Because dm-snapshot").  But that doesn't speak to some systemic
+"problem" you seem to be concerned about.
 
-My use case involves doing block level IO for virtual machines with KVM...
-so there's virtualization in between the thin device and whatever the VM is
-doing. In that scenario, I would expect the IO requests to just hang until
-the thin pool is provided more space for the data device and queued IO from
-the VM would just wait for that. Maybe what you're describing with XFS
-wouldn't be an issue on that setup, since XFS would be running within the
-VM.
+> > And yeah, that isn't a good excuse to ignore it but: dm-snapshot is a
+> > steaming pile as compared to dm thin-provisioning...
+> 
+> On a side note, this is the first that I've heard the assertion that
+> dm-thin was better than dm-snapshot.
 
-On Mon, Jul 23, 2018 at 7:07 AM, Mike Snitzer <snitzer@redhat.com> wrote:
+You don't follow DM much, that's fine.  But thinp is considerably more
+powerful for modern use-cases.
 
-> On Mon, Jul 23 2018 at 10:00am -0400,
-> Mike Snitzer <snitzer@redhat.com> wrote:
->
-> > On Mon, Jul 23 2018 at  1:06am -0400,
-> > Drew Hastings <dhastings@crucialwebhost.com> wrote:
-> >
-> > >    I love all of the work you guys do @dm-devel . Thanks for taking
-> the time
-> > >    to read this.
-> > >    I would like to use thin provisioning targets in production, but
-> it's hard
-> > >    to ignore the warning in the documentation. It seems like, with an
-> > >    understanding of how thin provisioning works, it should be safe to
-> use.
-> >
-> > It is stale.  I just committed this update that'll go upstream for the
-> > 4.19 merge window, see:
-> > https://git.kernel.org/pub/scm/linux/kernel/git/device-
-> mapper/linux-dm.git/commit/?h=dm-4.19&id=f88a3f746ff0047c92e8312646247b
-> 08264daf35
-> >
-> > >    If the metadata and data device for the thin pool have enough space
-> and
-> > >    are both error free, the kernel has plenty of free RAM, block sizes
-> are
-> > >    set large enough to never run into performance issues (64 MiB), all
-> of the
-> > >    underlying hardware is redundant on high performance NVME (no
-> worries of
-> > >    fragmentation of data volume)... is it still unsafe for production?
-> If so,
-> > >    can you shed some light on why that is?
-> >
-> > It is safe.  You do just want to make sure to not run out of space.  We
-> > now handle that event favorably but it is best to tempt fate.
->
-> I meant: "... but it is best to _not_ tempt fate."
->
+> My impression was that dm-snapshot was a proven code base, that only
+> did one thing and (as far as I could tell) did it well.  In contrast,
+> dm-thin is much newer code, **far** more complex, with functionality
+> and corner cases approaching that of a file system ---
 
---00000000000030cd0f0572936fa7
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+dm-snapshot's scaling is _awful_.  This is due to the N-way copy-out
+penalty associated with N snapshots.  So lots of snapshots perform very
+very slowly.  Even one snapshot is slow compared to dm-thinp.
 
-<div dir=3D"ltr"><div>Thank you for that insight, I appreciate it.</div><di=
-v><br></div>Can you elaborate on your concern related to running out of spa=
-ce?<br><br>Assuming the metadata device always has space, is it unsafe to l=
-et the the data device for the thin pool run out of space if queue_if_no_sp=
-ace is set?=C2=A0<span style=3D"font-size:small;text-decoration-style:initi=
-al;text-decoration-color:initial;float:none;display:inline">W</span>ould it=
- not be safe on the block IO level?<br><br>&gt;=C2=A0<span style=3D"font-si=
-ze:12.8px;text-decoration-style:initial;text-decoration-color:initial;float=
-:none;display:inline">No idea=C2=A0</span><span style=3D"font-size:12.8px;t=
-ext-decoration-style:initial;text-decoration-color:initial;float:none;displ=
-ay:inline">what, if any, filesystem you intend to run but XFS has the abili=
-ty to=C2=A0</span><span style=3D"font-size:12.8px;text-decoration-style:ini=
-tial;text-decoration-color:initial;float:none;display:inline">discontinue r=
-etries for certain error conditions.=C2=A0 I highly recommend=C2=A0</span><=
-span style=3D"font-size:12.8px;text-decoration-style:initial;text-decoratio=
-n-color:initial;float:none;display:inline">you enable that for ENOSPC, othe=
-rwise you _will_ see the kernel block=C2=A0</span><span style=3D"font-size:=
-12.8px;text-decoration-style:initial;text-decoration-color:initial;float:no=
-ne;display:inline">indefinitely in XFS if thinp runs out of space underneat=
-h XFS.<br><br>My use case involves doing block level IO for virtual machine=
-s with KVM... so there&#39;s virtualization in between the thin device and =
-whatever the VM is doing. In that scenario, I would expect the IO requests =
-to just hang until the thin pool is provided more space for the data device=
- and queued IO from the VM would just wait for that. Maybe what you&#39;re =
-describing with XFS wouldn&#39;t be an issue on that setup, since XFS would=
- be running within the VM.</span></div><div class=3D"gmail_extra"><br><div =
-class=3D"gmail_quote">On Mon, Jul 23, 2018 at 7:07 AM, Mike Snitzer <span d=
-ir=3D"ltr">&lt;<a href=3D"mailto:snitzer@redhat.com" target=3D"_blank">snit=
-zer@redhat.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" s=
-tyle=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><spa=
-n class=3D"">On Mon, Jul 23 2018 at 10:00am -0400,<br>
-Mike Snitzer &lt;<a href=3D"mailto:snitzer@redhat.com">snitzer@redhat.com</=
-a>&gt; wrote:<br>
-<br>
-&gt; On Mon, Jul 23 2018 at=C2=A0 1:06am -0400,<br>
-&gt; Drew Hastings &lt;<a href=3D"mailto:dhastings@crucialwebhost.com">dhas=
-tings@crucialwebhost.com</a>&gt; wrote:<br>
-&gt; <br>
-&gt; &gt;=C2=A0 =C2=A0 I love all of the work you guys do @dm-devel . Thank=
-s for taking the time<br>
-&gt; &gt;=C2=A0 =C2=A0 to read this.<br>
-&gt; &gt;=C2=A0 =C2=A0 I would like to use thin provisioning targets in pro=
-duction, but it&#39;s hard<br>
-&gt; &gt;=C2=A0 =C2=A0 to ignore the warning in the documentation. It seems=
- like, with an<br>
-&gt; &gt;=C2=A0 =C2=A0 understanding of how thin provisioning works, it sho=
-uld be safe to use.<br>
-&gt; <br>
-&gt; It is stale.=C2=A0 I just committed this update that&#39;ll go upstrea=
-m for the<br>
-&gt; 4.19 merge window, see:<br>
-&gt; <a href=3D"https://git.kernel.org/pub/scm/linux/kernel/git/device-mapp=
-er/linux-dm.git/commit/?h=3Ddm-4.19&amp;id=3Df88a3f746ff0047c92e8312646247b=
-08264daf35" rel=3D"noreferrer" target=3D"_blank">https://git.kernel.org/pub=
-/<wbr>scm/linux/kernel/git/device-<wbr>mapper/linux-dm.git/commit/?h=3D<wbr=
->dm-4.19&amp;id=3D<wbr>f88a3f746ff0047c92e8312646247b<wbr>08264daf35</a><br=
->
-&gt; <br>
-&gt; &gt;=C2=A0 =C2=A0 If the metadata and data device for the thin pool ha=
-ve enough space and<br>
-&gt; &gt;=C2=A0 =C2=A0 are both error free, the kernel has plenty of free R=
-AM, block sizes are<br>
-&gt; &gt;=C2=A0 =C2=A0 set large enough to never run into performance issue=
-s (64 MiB), all of the<br>
-&gt; &gt;=C2=A0 =C2=A0 underlying hardware is redundant on high performance=
- NVME (no worries of<br>
-&gt; &gt;=C2=A0 =C2=A0 fragmentation of data volume)... is it still unsafe =
-for production? If so,<br>
-&gt; &gt;=C2=A0 =C2=A0 can you shed some light on why that is?<br>
-&gt; <br>
-&gt; It is safe.=C2=A0 You do just want to make sure to not run out of spac=
-e.=C2=A0 We<br>
-&gt; now handle that event favorably but it is best to tempt fate.<br>
-<br>
-</span>I meant: &quot;... but it is best to _not_ tempt fate.&quot;<br>
-</blockquote></div><br></div>
+dm-thin (2011) certainly is newer than dm-snapshot (well before 2005),
+and yes dm-thin is complex, but dm-snapshot's code isn't exactly
+"simple".  The on-disk layout is but that simplicity contributes to why
+it doesn't scale at all.
 
---00000000000030cd0f0572936fa7--
+DM thin is a modern approach to snapshots grounded in the same
+btree-based concepts and design used by btrfs.  Given dm-thinp's
+requirements and how it has been deployed and pushed _hard_ it really is
+holding up amazingly well.
 
+> and just to be even more exciting, it [dm-thin] doesn't have an
+> fsck/repair tool to deal with corrupted metadata.
 
---===============4710226319292279821==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+That's one definition for "exciting" on your Friday night ... ;)
 
+The documentation was outdated, see this thread:
+https://www.redhat.com/archives/dm-devel/2018-July/msg00200.html
 
---===============4710226319292279821==--
+Where I shared that this Documentation update was staged for 4.19:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.19&id=6c7413c0f5ab61d2339cf516d25bb44d71f4bad4
+
+That said, thin_repair has shown itself to be hit-or-miss.  There are
+certain corruptions that it doesn't cope with well (leaving the metadata
+"repaired" but the result is an empty thin-pool).  Those cases are more
+rare but still occur.
+
+So repairing thinp corruption can require escalations through
+"enterprise support" (which results in fixes to thin_repair, etc).
+
+> In your opinion, is it because you disagree with the assumption that
+> dm-thin is scary?  Or is the argument that dm-snapshot is even
+> scarier?
+
+Apples and oranges.  DM thinp is complex but necessarily so.
+dm-snapshot is still complex yet only covers legacy and narrow (read:
+now useless) use-cases.
+
+In the same thread I referenced above, see how Drew Hastings is looking
+to use DM thinp to host VM guest storage, which implies a scaling
+dm-snapshot has _zero_ hope of providing:
+https://www.redhat.com/archives/dm-devel/2018-August/msg00088.html
+
+> P.S.  It could be that my impression is wrong/out-dated, but the
+> kernel documentation still says that userspace tools for checking and
+> repairing the metadata are "under development".  As a file system
+> developer, the reaction this inspires is best summed up as:
+> 
+>      https://imgflip.com/memetemplate/50971393/Scared-Face
+
+Already addressed this.
