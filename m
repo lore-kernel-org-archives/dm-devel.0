@@ -1,95 +1,123 @@
-From: WGH <wgh@torlan.ru>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: LVM snapshot broke between 4.14 and 4.16
-Date: Sat, 4 Aug 2018 23:29:35 +0300
-Message-ID: <f724132c-802d-8b22-fab1-7b0c09e8a5dd@torlan.ru>
-References: <CA+55aFyAox9BTDpRsqLXiROhHOX60aa45LEZ7Azteaumdu11Fw@mail.gmail.com>
- <CAOi1vP-SJO4AMK=XD3Lmja++2dQqoiw6Zn8Vgxf8OfvYgnuC6Q@mail.gmail.com>
- <CA+55aFy2DR9fxHhmGq+azSjX9D71YtLsuFKmoEuYW3uTAUYtJg@mail.gmail.com>
- <d76415de-2056-c7d6-cc88-b896deaa8ead@torlan.ru>
- <1ec0a220-d5b0-1c27-e63b-c4d3f4ce9d77@torlan.ru>
- <CA+55aFyPVQ5-gA93irsaxPC9BNQxnGWrDDHPMUYai2kxKiaKWQ@mail.gmail.com>
- <20180803133102.GA3092@redhat.com> <20180803152034.GD32066@thunk.org>
- <20180803183932.GA3258@redhat.com>
- <CA+55aFwGGjs_imFFkEPJ4g99Kseam=4Qppv4G6Q=ZfZXdzF7Vw@mail.gmail.com>
- <20180803190617.GA4498@redhat.com>
- <CA+55aFzSM6qhZpM4CCpRNR_LWNCbLyRtQQ3hnPwnRrBdDkwWUw@mail.gmail.com>
- <a5feeaa7-e043-3987-cf23-4090e3eeec4a@torlan.ru>
- <CA+55aFza3_+poqmw34ev+a_jZ1Tz0rxjTu7YfnU4HX-SU52abQ@mail.gmail.com>
+Date: Sat, 4 Aug 2018 17:48:12 -0400
+Message-ID: <20180804214812.GA11320@redhat.com>
+References: <b2bbd8ec-ac5b-fa8a-d3f7-8615d87f73c3@redhat.com>
+ <CA+55aFwWZX=CXmWDTkDGb36kf12XmTehmQjbiMPCqCRG2hi9kw@mail.gmail.com>
+ <20180803185431.GB3258@redhat.com>
+ <CA+55aFwDEY7B6OMh5xL2wc8BRj1KkzBHggNowAjbsWfma6H5Zg@mail.gmail.com>
+ <20180803193037.GA4581@redhat.com>
+ <20180804052033.GA4461@thunk.org>
+ <102c2d75-f768-a649-52c3-bac6f0ca738d@redhat.com>
+ <20180804162205.GB4461@thunk.org>
+ <20180804181845.GA10499@redhat.com>
+ <20180804193753.GC4461@thunk.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------08D3D26552869C678A565F6E"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CA+55aFza3_+poqmw34ev+a_jZ1Tz0rxjTu7YfnU4HX-SU52abQ@mail.gmail.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20180804193753.GC4461@thunk.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Jens Axboe <axboe@kernel.dk>, Sagi Grimberg <sagi@grimberg.me>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-block <linux-block@vger.kernel.org>, dm-devel@redhat.com, Ilya Dryomov <idryomov@gmail.com>, Zdenek Kabelac <zkabelac@redhat.com>
+To: "Theodore Y. Ts'o" <tytso@mit.edu>, Zdenek Kabelac <zkabelac@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Jens Axboe <axboe@kernel.dk>, Sagi Grimberg <sagi@grimberg.me>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-block <linux-block@vger.kernel.org>, dm-devel@redhat.com, Ilya Dryomov <idryomov@gmail.com>, wgh@torlan.ru
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------08D3D26552869C678A565F6E
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+On Sat, Aug 04 2018 at  3:37pm -0400,
+Theodore Y. Ts'o <tytso@mit.edu> wrote:
 
-On 08/04/2018 08:04 PM, Linus Torvalds wrote:
-> Anyway, just out of curiosity, what was the traceback?
->
-> I'm not entirely happy with that patch either (even after the obvious
-> fix to add the "1" argument), but it does seem like the minimal
-> temporary workaround for now.
+> On Sat, Aug 04, 2018 at 02:18:47PM -0400, Mike Snitzer wrote:
+> > > Fair enough.  I don't think I would consider that makes dm-snapshot a
+> > > "steaming pile".  For me, protection against data loss is Job One.
+> > 
+> > What's your point Ted?  Do you have _any_ intention of actually using
+> > anything DM or is this just a way for you to continue to snipe at it?
+> 
+> My point is that putting down dm-snapshot by calling it a "steaming
+> pile" because it can't perform well on workloads that weren't a
+> requirement when it was first designed is neither accurate nor fair.
 
-Here it is.
+As a person who has written a fair amount of dm-snapshot code I'm free
+to have my opinion.  It is slow.  Period.
 
+If it works for you, great.  But it isn't adequate for most modern
+usecases I'm aware of.
 
---------------08D3D26552869C678A565F6E
-Content-Type: text/x-log;
- name="traceback.log"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
- filename="traceback.log"
+> And steering users away from it by badmouthing to a technology which
+> ever so often, requires enterprise support to recover, is something
+> that *I* at least would classify as "marginal".
 
-[   68.313024] ------------[ cut here ]------------
-[   68.313030] dm-3
-[   68.313049] WARNING: CPU: 1 PID: 77 at block/blk-core.c:2180 generic_make_request_checks+0x4ac/0x600
-[   68.313054] Modules linked in: nf_tables xt_cgroup xt_owner kvm_intel iwlmvm kvm irqbypass iwlwifi
-[   68.313068] CPU: 1 PID: 77 Comm: kworker/1:1 Not tainted 4.17.9-gentoo #3
-[   68.313071] Hardware name: LENOVO 20B6A019RT/20B6A019RT, BIOS GJET91WW (2.41 ) 09/21/2016
-[   68.313077] Workqueue: ksnaphd do_metadata
-[   68.313083] RIP: 0010:generic_make_request_checks+0x4ac/0x600
-[   68.313087] RSP: 0018:ffffc900002e7ba8 EFLAGS: 00010282
-[   68.313091] RAX: 0000000000000000 RBX: ffff8801ef6da300 RCX: ffffffff82636218
-[   68.313094] RDX: 0000000000000001 RSI: 0000000000000086 RDI: ffffffff82cf57cc
-[   68.313097] RBP: ffff880211c2b150 R08: 0000000000000004 R09: 0000000000000307
-[   68.313100] R10: ffffc900002e7c80 R11: ffffffff82cf780d R12: 0000000000000000
-[   68.313103] R13: 0000000000000001 R14: 0000000000001000 R15: ffff8801ef6da300
-[   68.313107] FS:  0000000000000000(0000) GS:ffff88021f240000(0000) knlGS:0000000000000000
-[   68.313111] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[   68.313114] CR2: 000056166d9e8520 CR3: 0000000003a0a006 CR4: 00000000001606e0
-[   68.313117] Call Trace:
-[   68.313126]  ? scsi_init_sgtable+0x42/0x80
-[   68.313134]  ? kmem_cache_alloc+0x170/0x1a0
-[   68.313140]  generic_make_request+0x64/0x400
-[   68.313146]  ? submit_bio+0x6c/0x140
-[   68.313150]  ? bio_alloc_bioset+0xa9/0x1f0
-[   68.313155]  submit_bio+0x6c/0x140
-[   68.313160]  ? vm_get_page+0x20/0x50
-[   68.313165]  dispatch_io+0x287/0x430
-[   68.313171]  ? bio_next_page+0xb0/0xb0
-[   68.313175]  ? bio_get_page+0x40/0x40
-[   68.313180]  ? cpumask_next+0x16/0x20
-[   68.313185]  sync_io+0xc3/0x120
-[   68.313191]  dm_io+0x1f8/0x220
-[   68.313196]  ? bio_next_page+0xb0/0xb0
-[   68.313200]  ? bio_get_page+0x40/0x40
-[   68.313204]  ? cpumask_next+0x16/0x20
-[   68.313209]  do_metadata+0x1d/0x30
-[   68.313216]  process_one_work+0x1b9/0x3e0
-[   68.313222]  worker_thread+0x2b/0x3c0
-[   68.313227]  ? wq_update_unbound_numa+0x10/0x10
-[   68.313232]  kthread+0x113/0x130
-[   68.313237]  ? kthread_create_worker_on_cpu+0x70/0x70
-[   68.313242]  ret_from_fork+0x35/0x40
-[   68.313246] Code: 3e fc ff ff 45 8b a4 24 4c 03 00 00 48 8d 74 24 08 48 89 df c6 05 3a 49 35 01 01 e8 df 68 01 00 48 89 c7 44 89 e6 e8 c4 a0 cd ff <0f> 0b 4c 8b 63 08 e9 0c fc ff ff 80 3d 18 49 35 01 00 0f 85 29 
-[   68.313300] ---[ end trace 2a4da4181ebee969 ]---
+dm-snapshot is slow, as such I will badmouth it because dm-thinp is a
+much more capable replacement.  I have to maintain both, so I'm free to
+steer people according to my experience.
 
---------------08D3D26552869C678A565F6E--
+> Maybe it's just that file system developers have higher standards.  I
+> know that Dave Chinner at LSF/MM commented that using some of the
+> things he has been developing for XFS subvolume support might be
+> interesting precisely because it could provide some of the facilities
+> currently provided by thin provisioning (perhaps not all of them; I'm
+> not sure how well his virtual block remapping layer would handle
+> hundreds of snapshots) but with file system tools which have a lot
+> more seasoning and where people have spent a lot of effort on data
+> recovery tools.
+
+Even new XFS features will have bugs.  Just because XFS's fsck is
+historically robust, oversights and bugs happen when new features are
+added.  And AFAIK future XFS would be looking to leverage DM thinp via
+its producer/consumer model.  But this is going off on a tangent now.
+
+> In any case, I do use DM quite a lot.  I use LVM2 and dm-snapshot (and
+> it's been working just *fine* for my use cases).  I've wanted to use
+> dm-thin, but have been put off by it being labeled as experimental and
+> by some of the comments about how robust its recovery tools are.
+
+The Documentation was stale.  I personally don't reference it so the
+need to update it got overlooked.
+
+> If there was documentation about how an advanced user/developer could
+> use low level tools to do manual repair of a thin pool when the
+> automated procedures didn't work, without having to pay $$$ to some
+> company for "enterprise support", I'd be a lot more willing to give it
+> a try.
+
+We could certainly improve out documentation for the use of thin_check
+and thin_repair.  I know lvm2 has seen improvements to allow the metdata
+voulme to be activated in standalone mode (activate the metadata volume
+without the thin-pool or thin devices ontop) so that the thin_check and
+thin_repair tools can be used on it.  I'd imagine you aren't aware of
+the lvm2 package's lvmthin manpage?  See: man lvmthin
+It'd likely be one of the documentation locations to see improvements.
+I'll talk with others about where we can improve docs, the manpages for
+thin_check and thin_repair are _very_ sparse.  Anyway, room for
+improvement for sure.
+
+But demonizing "enterprise support" like you don't provide that to your
+stake holders is bizarre.  I again was candid and forthcoming about what
+drives/catches the need for thin_check and thin_repair fixes and
+improvements: it just so happens that "enterprise" deployments make use
+of DM-thinp and have exposed the need for support more than community
+users.  I'm not saying I, or other DM thinp oriented developers,
+wouldn't provided the same type of support if a community user like
+yourself hit a problem.  It is just that enterprise users are the
+prontlines of advanced usage and scale.  Deploying hundreds of Gluster
+servers with every brick layered ontop of DM thinp historically exposed
+issues.  Those issues get fixed and benefit everyone.
+
+This discussion, and my need to explain how "enterprise support" drives
+innovation, is so.. weird.
+
+> Sorry, I just care a *lot* about data robustness.
+
+You aren't alone.
+
+> > Maybe read your email from earlier today before repeating yourself:
+> > https://lkml.org/lkml/2018/8/4/366
+> 
+> Apologies.  I'm currently staying at an Assisted Living facility
+> keeping an eye on my Dad this week, and the internet at the senior
+> living center has been.... marginal.  As a result I've been reading my
+> e-mail in batches, and so I hadn't seen the e-mail you had posted
+> earlier before I had sent my reply.
+
+Best wishes.  I've been dealing with stresses in my personal life
+myself.  Might explain why we've had the awkwardness in this thread.
+
+Mike
