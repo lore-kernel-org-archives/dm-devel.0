@@ -1,37 +1,69 @@
-From: "Rafael J. Wysocki" <rjw@rjwysocki.net>
-Subject: Re: [PATCH v6 10/18] x86/power/64: Remove VLA usage
-Date: Mon, 06 Aug 2018 12:28:28 +0200
-Message-ID: <1782361.6NaZWiq7ky@aspire.rjw.lan>
-References: <20180724164936.37477-1-keescook@chromium.org> <CAJZ5v0gVDotjufLKUW0YuQu2vA4fmU_gqia=ZA4DocW4XHxx0w@mail.gmail.com> <CAGXu5j+NPCc2hq5x7JUwgKYvY6zKN28YdtHbHVapnpgC3GwCsg@mail.gmail.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 17/32] libmultipath: fix tur checker double
+	locking
+Date: Mon, 6 Aug 2018 17:55:05 -0500
+Message-ID: <20180806225505.GW31378@octiron.msp.redhat.com>
+References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
+	<1533157038-3924-18-git-send-email-bmarzins@redhat.com>
+	<a275a1d52e54d8f4ded3561d71d63784ddaeb4b8.camel@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CAGXu5j+NPCc2hq5x7JUwgKYvY6zKN28YdtHbHVapnpgC3GwCsg@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: "Rafael J. Wysocki" <rafael@kernel.org>, Herbert Xu <herbert@gondor.apana.org.au>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, Pavel Machek <pavel@ucw.cz>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, the arch/x86 maintainers <x86@kernel.org>, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Jens Axboe <axboe@kernel.dk>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Mike Snitzer <snitzer@redhat.com>, Paul Mackerras <paulus@samba.org>, Greg Kroah-Hartman <gregkh@>
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <a275a1d52e54d8f4ded3561d71d63784ddaeb4b8.camel@wdc.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bart Van Assche <Bart.VanAssche@wdc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "mwilck@suse.com" <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Wednesday, July 25, 2018 8:01:47 PM CEST Kees Cook wrote:
-> On Wed, Jul 25, 2018 at 4:32 AM, Rafael J. Wysocki <rafael@kernel.org> wrote:
-> > On Tue, Jul 24, 2018 at 6:49 PM, Kees Cook <keescook@chromium.org> wrote:
-> >> In the quest to remove all stack VLA usage from the kernel[1], this
-> >> removes the discouraged use of AHASH_REQUEST_ON_STACK by switching to
-> >> shash directly and allocating the descriptor in heap memory (which should
-> >> be fine: the tfm has already been allocated there too).
-> >>
-> >> [1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
-> >>
-> >> Signed-off-by: Kees Cook <keescook@chromium.org>
-> >> Acked-by: Pavel Machek <pavel@ucw.cz>
-> >
-> > I think I can queue this up if there are no objections from others.
-> >
-> > Do you want me to do that?
+On Sun, Aug 05, 2018 at 03:40:30PM +0000, Bart Van Assche wrote:
+> On Wed, 2018-08-01 at 15:57 -0500, Benjamin Marzinski wrote:
+> > I realize that this locking was added to make an analyzer happy,
+> > presumably because sometimes ct->devt was being accessed while ct->devt
+> > was held, and sometimes not.  The tur checker locking will be cleaned
+> > up in a later patch to deal with this.
 > 
-> Sure thing. It looks like the other stand-alone patches like this one
-> are getting taken into the non-crypto trees, so that's fine.
-> 
+> Are you perhaps referring to commit 873be9fef222 ("libmultipath/checkers/tur:
+> Serialize tur_checker_context.devt accesses")? Your assumption about how DRD
+> works is wrong. DRD doesn't care about which mutex or other synchronization
+> primitives are used to serialize accesses to data that is shared between
+> threads. All it cares about is that concurrent accesses to shared data are
+> serialized. I'm afraid that your patch reintroduces the race conditions that
+> were fixed by commit 873be9fef222. Have you considered to fix this without
+> removing the locking?
 
-Applied now, thanks!
+I'm confused here. If the data is only read by multiple threads, I don't
+see why we need to synchronize it. Unless I'm missing something, my
+patch does make sure that the only time ct->devt is written is when
+there is only one thread running that has access to ct.
+
+-       if (fstat(c->fd, &sb) == 0) {
+...
++       if (uatomic_read(&ct->holders) == 1 && ct->devt[0] == 0 &&
++           fstat(c->fd, &sb) == 0) {
+
+holders will always be 2 when a tur checker thread is running (well, the
+thread will decrement it when it finishes, but it will not touch ct
+after that action). Since only the thread calling libcheck_init can
+start the tur checker thread using this context, if there is no thread
+running at the start of libcheck_check(), then no thread can be started
+until libcheck_check() starts it.
+
+Ideally, ct->devt would be set in libcheck_init(), but we don't have the
+information there, so setting it once, on the first time we call
+libcheck_check() seems like a reasonable, and safe, answer.  I certainly
+prefer it to adding recusive locking where it isn't needed.
+
+-Ben
+
+> 
+> Bart.
