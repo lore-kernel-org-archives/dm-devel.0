@@ -1,15 +1,17 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v7 2/9] crypto: cbc: Remove VLA usage
-Date: Tue, 7 Aug 2018 13:52:20 -0700
-Message-ID: <CAGXu5jKvP0BqYx7vG1DP=W_xG40M42NL9iXdm+dqdm9b_r3YMQ@mail.gmail.com>
-References: <20180802225152.19194-1-keescook@chromium.org>
-	<20180802225152.19194-3-keescook@chromium.org>
-	<20180807094720.ljie32lewzlgymm4@gondor.apana.org.au>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Is thin provisioning still experimental?
+Date: Tue, 7 Aug 2018 17:11:21 -0400
+Message-ID: <20180807211120.GA29735@redhat.com>
+References: <CAN-y+EK612pGsJTH-zO=FU0DpcFJxKfEHuDNs+6ufE6we9aK+g@mail.gmail.com>
+	<20180723140053.GA28984@redhat.com>
+	<20180723140734.GB28984@redhat.com>
+	<CAN-y+E+9J5w8fx-UYcT9+2SxqFL8nzkn3BYE6cWpW=yP9KdDtA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180807094720.ljie32lewzlgymm4@gondor.apana.org.au>
+Content-Disposition: inline
+In-Reply-To: <CAN-y+E+9J5w8fx-UYcT9+2SxqFL8nzkn3BYE6cWpW=yP9KdDtA@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,45 +21,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Giovanni Cabiddu <giovanni.cabiddu@intel.com>, LKML <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Mike Snitzer <snitzer@redhat.com>, Tudor-Dan Ambarus <tudor.ambarus@microchip.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Will Deacon <will.deacon@arm.com>, qat-linux@intel.com, Matthew Wilcox <mawilcox@microsoft.com>, "David S. Miller" <davem@davemloft.net>, device-mapper development <dm-devel@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, David Woodhouse <dwmw@amazon.co.uk>, Andrew Morton <akpm@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, Alasdair Kergon <agk@redhat.com>, linux-crypto <linux-crypto@vger.kernel.org>
+To: Drew Hastings <dhastings@crucialwebhost.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Aug 7, 2018 at 2:47 AM, Herbert Xu <herbert@gondor.apana.org.au> wrote:
-> On Thu, Aug 02, 2018 at 03:51:45PM -0700, Kees Cook wrote:
->> In the quest to remove all stack VLA usage from the kernel[1], this
->> uses the upper bounds on blocksize. Since this is always a cipher
->> blocksize, use the existing cipher max blocksize.
->>
->> [1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
->>
->> Signed-off-by: Kees Cook <keescook@chromium.org>
->> ---
->>  include/crypto/cbc.h | 4 +++-
->>  1 file changed, 3 insertions(+), 1 deletion(-)
->>
->> diff --git a/include/crypto/cbc.h b/include/crypto/cbc.h
->> index f5b8bfc22e6d..47db0aac2ab9 100644
->> --- a/include/crypto/cbc.h
->> +++ b/include/crypto/cbc.h
->> @@ -113,7 +113,9 @@ static inline int crypto_cbc_decrypt_inplace(
->>       unsigned int bsize = crypto_skcipher_blocksize(tfm);
->>       unsigned int nbytes = walk->nbytes;
->>       u8 *src = walk->src.virt.addr;
->> -     u8 last_iv[bsize];
->> +     u8 last_iv[MAX_CIPHER_BLOCKSIZE];
->> +
->> +     BUG_ON(bsize > sizeof(last_iv));
+[Please don't top-post.. it really compromises the ability to provide
+proper context for inlined replies, etc]
+
+On Fri, Aug 03 2018 at 11:13pm -0400,
+Drew Hastings <dhastings@crucialwebhost.com> wrote:
+
+>    Thank you for that insight, I appreciate it.
+>    Can you elaborate on your concern related to running out of space?
 >
-> Ugh, please don't add these BUG_ONs.  Add them to the places where
-> the algorithm is created (if they aren't checking that already).
+>    Assuming the metadata device always has space, is it unsafe to let the the
+>    data device for the thin pool run out of space if queue_if_no_space is
+>    set? Would it not be safe on the block IO level?
 
-It's already being checked (cra_blocksize vs MAX_CIPHER_BLOCKSIZE) so
-I was just adding the BUG_ON to catch "impossible" behavior. I'll
-leave it out in the next revision.
+You definitely want to avoid running out of metadata space.  That is one
+area where we seem to have some lingering issues (that we're actively
+working to find).
 
--Kees
+But running out of data space isn't a huge problem, especially if you'd
+like to queue the IO indefinitely because you're closely administering
+the space on your host with the hypervisor that will consume the thinp
+devices.
 
--- 
-Kees Cook
-Pixel Security
+You can configure a timeout for the queuing (after timeout expires the
+thin-pool will transition to error_if_no_space mode).  It defaults to 60
+seconds.  But you can also disable the timeout be setting it to 0.
+ 
+>    > No idea what, if any, filesystem you intend to run but XFS has the
+>    ability to discontinue retries for certain error conditions.  I highly
+>    recommend you enable that for ENOSPC, otherwise you _will_ see the kernel
+>    block indefinitely in XFS if thinp runs out of space underneath XFS.
+> 
+>    My use case involves doing block level IO for virtual machines with KVM...
+>    so there's virtualization in between the thin device and whatever the VM
+>    is doing. In that scenario, I would expect the IO requests to just hang
+>    until the thin pool is provided more space for the data device and queued
+>    IO from the VM would just wait for that. Maybe what you're describing with
+>    XFS wouldn't be an issue on that setup, since XFS would be running within
+>    the VM.
+
+Yes, you can have it hang indefinitely (waiting for thin-pool resize) by
+setting the 'no_space_timeout' module paramter for dm-thin-pool to 0,
+e.g.:
+
+modprobe dm-thin-pool no_space_timeout=0
+or
+echo 0 > /sys/module/dm_thin_pool/parameters/no_space_timeout
+
+That just puts more importance on the admin (I assume you) feeding the
+thin-pool extra free space as needed.
+
+lvm2 has some pretty robust support for resizing both the thin-pool's
+data and metadata devices.  Please have a look at the 'lvmthin' manpage
+that is provided with a more recent lvm2 package.
+
+Thanks,
+Mike
