@@ -1,83 +1,62 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Is thin provisioning still experimental?
-Date: Tue, 7 Aug 2018 17:11:21 -0400
-Message-ID: <20180807211120.GA29735@redhat.com>
-References: <CAN-y+EK612pGsJTH-zO=FU0DpcFJxKfEHuDNs+6ufE6we9aK+g@mail.gmail.com>
-	<20180723140053.GA28984@redhat.com>
-	<20180723140734.GB28984@redhat.com>
-	<CAN-y+E+9J5w8fx-UYcT9+2SxqFL8nzkn3BYE6cWpW=yP9KdDtA@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAN-y+E+9J5w8fx-UYcT9+2SxqFL8nzkn3BYE6cWpW=yP9KdDtA@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Drew Hastings <dhastings@crucialwebhost.com>
-Cc: dm-devel@redhat.com
+From: Kees Cook <keescook@chromium.org>
+Subject: [PATCH v8 3/9] crypto: ccm: Remove VLA usage
+Date: Tue,  7 Aug 2018 14:18:37 -0700
+Message-ID: <20180807211843.47586-4-keescook@chromium.org>
+References: <20180807211843.47586-1-keescook@chromium.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180807211843.47586-1-keescook@chromium.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Kees Cook <keescook@chromium.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Eric Biggers <ebiggers@google.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Tudor-Dan Ambarus <tudor.ambarus@microchip.com>, Andrew Morton <akpm@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, David Woodhouse <dwmw@amazon.co.uk>, Matthew Wilcox <willy@infradead.org>, "David S. Miller" <davem@davemloft.net>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, linux-crypto@vger.kernel.org, dm-devel@redhat.com, qat-linux@intel.coml
 List-Id: dm-devel.ids
 
-[Please don't top-post.. it really compromises the ability to provide
-proper context for inlined replies, etc]
+From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 
-On Fri, Aug 03 2018 at 11:13pm -0400,
-Drew Hastings <dhastings@crucialwebhost.com> wrote:
+In the quest to remove all stack VLA usage from the kernel[1], this drops
+AHASH_REQUEST_ON_STACK by preallocating the ahash request area combined
+with the skcipher area (which are not used at the same time).
 
->    Thank you for that insight, I appreciate it.
->    Can you elaborate on your concern related to running out of space?
->
->    Assuming the metadata device always has space, is it unsafe to let the the
->    data device for the thin pool run out of space if queue_if_no_space is
->    set? Would it not be safe on the block IO level?
+[1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
 
-You definitely want to avoid running out of metadata space.  That is one
-area where we seem to have some lingering issues (that we're actively
-working to find).
+Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+---
+ crypto/ccm.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
 
-But running out of data space isn't a huge problem, especially if you'd
-like to queue the IO indefinitely because you're closely administering
-the space on your host with the hypervisor that will consume the thinp
-devices.
-
-You can configure a timeout for the queuing (after timeout expires the
-thin-pool will transition to error_if_no_space mode).  It defaults to 60
-seconds.  But you can also disable the timeout be setting it to 0.
+diff --git a/crypto/ccm.c b/crypto/ccm.c
+index 0a083342ec8c..b242fd0d3262 100644
+--- a/crypto/ccm.c
++++ b/crypto/ccm.c
+@@ -50,7 +50,10 @@ struct crypto_ccm_req_priv_ctx {
+ 	u32 flags;
+ 	struct scatterlist src[3];
+ 	struct scatterlist dst[3];
+-	struct skcipher_request skreq;
++	union {
++		struct ahash_request ahreq;
++		struct skcipher_request skreq;
++	};
+ };
  
->    > No idea what, if any, filesystem you intend to run but XFS has the
->    ability to discontinue retries for certain error conditions.  I highly
->    recommend you enable that for ENOSPC, otherwise you _will_ see the kernel
->    block indefinitely in XFS if thinp runs out of space underneath XFS.
-> 
->    My use case involves doing block level IO for virtual machines with KVM...
->    so there's virtualization in between the thin device and whatever the VM
->    is doing. In that scenario, I would expect the IO requests to just hang
->    until the thin pool is provided more space for the data device and queued
->    IO from the VM would just wait for that. Maybe what you're describing with
->    XFS wouldn't be an issue on that setup, since XFS would be running within
->    the VM.
-
-Yes, you can have it hang indefinitely (waiting for thin-pool resize) by
-setting the 'no_space_timeout' module paramter for dm-thin-pool to 0,
-e.g.:
-
-modprobe dm-thin-pool no_space_timeout=0
-or
-echo 0 > /sys/module/dm_thin_pool/parameters/no_space_timeout
-
-That just puts more importance on the admin (I assume you) feeding the
-thin-pool extra free space as needed.
-
-lvm2 has some pretty robust support for resizing both the thin-pool's
-data and metadata devices.  Please have a look at the 'lvmthin' manpage
-that is provided with a more recent lvm2 package.
-
-Thanks,
-Mike
+ struct cbcmac_tfm_ctx {
+@@ -181,7 +184,7 @@ static int crypto_ccm_auth(struct aead_request *req, struct scatterlist *plain,
+ 	struct crypto_ccm_req_priv_ctx *pctx = crypto_ccm_reqctx(req);
+ 	struct crypto_aead *aead = crypto_aead_reqtfm(req);
+ 	struct crypto_ccm_ctx *ctx = crypto_aead_ctx(aead);
+-	AHASH_REQUEST_ON_STACK(ahreq, ctx->mac);
++	struct ahash_request *ahreq = &pctx->ahreq;
+ 	unsigned int assoclen = req->assoclen;
+ 	struct scatterlist sg[3];
+ 	u8 *odata = pctx->odata;
+@@ -427,7 +430,7 @@ static int crypto_ccm_init_tfm(struct crypto_aead *tfm)
+ 	crypto_aead_set_reqsize(
+ 		tfm,
+ 		align + sizeof(struct crypto_ccm_req_priv_ctx) +
+-		crypto_skcipher_reqsize(ctr));
++		max(crypto_ahash_reqsize(mac), crypto_skcipher_reqsize(ctr)));
+ 
+ 	return 0;
+ 
+-- 
+2.17.1
