@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 15/17] multipathd: minor fixes
-Date: Wed,  8 Aug 2018 17:21:33 -0500
-Message-ID: <1533766895-28605-16-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 17/17] multipathd: fix memory leak on error in
+	configure
+Date: Wed,  8 Aug 2018 17:21:35 -0500
+Message-ID: <1533766895-28605-18-git-send-email-bmarzins@redhat.com>
 References: <1533766895-28605-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,37 +22,64 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-In update_multipath(), conf is set again in a couple of lines, and
-nothing uses it before then, so there's no point in setting it twice.
-Also, in ev_remove_path(), strncpy() could end up unterminated, so
-use strlcpy() instead.
+If configure fails after allocing mpvec, it must free it. Found by
+coverity.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ multipathd/main.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index cc493c1..125a805 100644
+index 3c2fe7b..61ca455 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -429,7 +429,7 @@ int update_multipath (struct vectors *vecs, char *mapname, int reset)
- 				continue;
+@@ -2277,7 +2277,7 @@ configure (struct vectors * vecs)
+ 	ret = path_discovery(vecs->pathvec, DI_ALL);
+ 	if (ret < 0) {
+ 		condlog(0, "configure failed at path discovery");
+-		return 1;
++		goto fail;
+ 	}
  
- 			if (pp->state != PATH_DOWN) {
--				struct config *conf = get_multipath_config();
-+				struct config *conf;
- 				int oldstate = pp->state;
- 				int checkint;
+ 	vector_foreach_slot (vecs->pathvec, pp, i){
+@@ -2294,7 +2294,7 @@ configure (struct vectors * vecs)
+ 	}
+ 	if (map_discovery(vecs)) {
+ 		condlog(0, "configure failed at map discovery");
+-		return 1;
++		goto fail;
+ 	}
  
-@@ -1096,7 +1096,7 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
- 			/*
- 			 * flush_map will fail if the device is open
- 			 */
--			strncpy(alias, mpp->alias, WWID_SIZE);
-+			strlcpy(alias, mpp->alias, WWID_SIZE);
- 			if (mpp->flush_on_last_del == FLUSH_ENABLED) {
- 				condlog(2, "%s Last path deleted, disabling queueing", mpp->alias);
- 				mpp->retry_tick = 0;
+ 	/*
+@@ -2308,7 +2308,7 @@ configure (struct vectors * vecs)
+ 		force_reload = FORCE_RELOAD_YES;
+ 	if (ret) {
+ 		condlog(0, "configure failed while coalescing paths");
+-		return 1;
++		goto fail;
+ 	}
+ 
+ 	/*
+@@ -2317,7 +2317,7 @@ configure (struct vectors * vecs)
+ 	 */
+ 	if (coalesce_maps(vecs, mpvec)) {
+ 		condlog(0, "configure failed while coalescing maps");
+-		return 1;
++		goto fail;
+ 	}
+ 
+ 	dm_lib_release();
+@@ -2353,6 +2353,10 @@ configure (struct vectors * vecs)
+ 			i--;
+ 	}
+ 	return 0;
++
++fail:
++	vector_free(mpvec);
++	return 1;
+ }
+ 
+ int
 -- 
 2.7.4
