@@ -1,19 +1,15 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH 17/32] libmultipath: fix tur checker double
-	locking
-Date: Tue, 7 Aug 2018 21:45:05 +0000
-Message-ID: <4ebb172b419b154319c076795cb4058bcdde0a6f.camel@wdc.com>
-References: <1533157038-3924-1-git-send-email-bmarzins@redhat.com>
-	<1533157038-3924-18-git-send-email-bmarzins@redhat.com>
-	<a275a1d52e54d8f4ded3561d71d63784ddaeb4b8.camel@wdc.com>
-	<20180806225505.GW31378@octiron.msp.redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: update Hitachi maintainer
+	email
+Date: Wed, 8 Aug 2018 02:05:08 +0200
+Message-ID: <b0c6332b-7a0c-5aad-1050-f9f8c8fc69fa@gmail.com>
+References: <20180626135231.10793-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180806225505.GW31378@octiron.msp.redhat.com>
-Content-Language: en-US
-Content-ID: <B413721AB849FD4B9A39AEF0FBF4153A@namprd04.prod.outlook.com>
+In-Reply-To: <20180626135231.10793-1-xose.vazquez@gmail.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,38 +19,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "mwilck@suse.com" <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEV ML <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 2018-08-06 at 17:55 -0500, Benjamin Marzinski wrote:
-> I'm confused here. If the data is only read by multiple threads, I don't
-> see why we need to synchronize it. Unless I'm missing something, my
-> patch does make sure that the only time ct->devt is written is when
-> there is only one thread running that has access to ct.
-> 
-> -       if (fstat(c->fd, &sb) == 0) {
-> ...
-> +       if (uatomic_read(&ct->holders) == 1 && ct->devt[0] == 0 &&
-> +           fstat(c->fd, &sb) == 0) {
-> 
-> holders will always be 2 when a tur checker thread is running (well, the
-> thread will decrement it when it finishes, but it will not touch ct
-> after that action). Since only the thread calling libcheck_init can
-> start the tur checker thread using this context, if there is no thread
-> running at the start of libcheck_check(), then no thread can be started
-> until libcheck_check() starts it.
-> 
-> Ideally, ct->devt would be set in libcheck_init(), but we don't have the
-> information there, so setting it once, on the first time we call
-> libcheck_check() seems like a reasonable, and safe, answer.  I certainly
-> prefer it to adding recusive locking where it isn't needed.
 
-Replacing a locking scheme into an approach based on atomic variables is
-something I don't like because it makes the code harder to analyze for
-correctness. Have you considered to keep the locking and fix the bug that
-you described in the commit message?
+Missing.
 
-Thanks,
-
-Bart.
+On 06/26/2018 03:52 PM, Xose Vazquez Perez wrote:
+> Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
+> Cc: Matthias Rudolph <matthias.rudolph@hds.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM-DEV ML <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+>  libmultipath/hwtable.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index 287d501..07dd6b6 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -392,10 +392,10 @@ static struct hwentry default_hw[] = {
+>  		.no_path_retry = 10,
+>  	},
+>  	/*
+> -	 * Hitachi
+> +	 * Hitachi Vantara
+>  	 *
+>  	 * Maintainer : Matthias Rudolph
+> -	 * Mail : matthias.rudolph@hds.com
+> +	 * Mail : Matthias.Rudolph@hitachivantara.com
+>  	 */
+>  	{
+>  		/* USP-V, HUS VM, VSP, VSP G1X00 and VSP GX00 families / HP XP */
+> 
