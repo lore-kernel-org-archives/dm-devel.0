@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 16/17] multipathd: remove useless check and
-	fix format
-Date: Wed,  8 Aug 2018 17:21:34 -0500
-Message-ID: <1533766895-28605-17-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 05/17] libmultipath: fix tur checker timeout
+	issue
+Date: Wed,  8 Aug 2018 17:21:23 -0500
+Message-ID: <1533766895-28605-6-git-send-email-bmarzins@redhat.com>
 References: <1533766895-28605-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,39 +22,45 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The only thing this patch changes is to remove the check for pp->mpp
-before the check for pp->mpp->prflags, since check_path() already
-verified that pp->mpp != NULL. This fixes a number of coverity warnings.
-Also, I normalized the spacing and indenting of the nearby code.
+If the tur checker is run, and the tur_thread has timed out,
+libcheck_check() doesn't actually check if the thread is still running.
+This means that the thread could have already completed successfully,
+but the tur checker would still return PATH_TIMEOUT, instead of the
+value returned by the thread. This patch makes libcheck_check() actually
+check if the thread completed, and if so, it returns the proper value.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ libmultipath/checkers/tur.c | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 125a805..3c2fe7b 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1978,14 +1978,14 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 			return 1;
- 		}
- 
--		if(newstate == PATH_UP || newstate == PATH_GHOST){
--			if ( pp->mpp && pp->mpp->prflag ){
-+		if (newstate == PATH_UP || newstate == PATH_GHOST) {
-+			if (pp->mpp->prflag) {
- 				/*
- 				 * Check Persistent Reservation.
- 				 */
--			condlog(2, "%s: checking persistent reservation "
--				"registration", pp->dev);
--			mpath_pr_event_handle(pp);
-+				condlog(2, "%s: checking persistent "
-+					"reservation registration", pp->dev);
-+				mpath_pr_event_handle(pp);
- 			}
- 		}
- 
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index 9f6ef51..4e2c7a8 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -276,12 +276,19 @@ int libcheck_check(struct checker * c)
+ 	if (ct->thread) {
+ 		if (tur_check_async_timeout(c)) {
+ 			int running = uatomic_xchg(&ct->running, 0);
+-			if (running)
++			if (running) {
+ 				pthread_cancel(ct->thread);
+-			condlog(3, "%s: tur checker timeout", ct->devt);
++				condlog(3, "%s: tur checker timeout", ct->devt);
++				MSG(c, MSG_TUR_TIMEOUT);
++				tur_status = PATH_TIMEOUT;
++			} else {
++				pthread_mutex_lock(&ct->lock);
++				tur_status = ct->state;
++				strlcpy(c->message, ct->message,
++					sizeof(c->message));
++				pthread_mutex_unlock(&ct->lock);
++			}
+ 			ct->thread = 0;
+-			MSG(c, MSG_TUR_TIMEOUT);
+-			tur_status = PATH_TIMEOUT;
+ 		} else if (uatomic_read(&ct->running) != 0) {
+ 			condlog(3, "%s: tur checker not finished", ct->devt);
+ 			tur_status = PATH_PENDING;
 -- 
 2.7.4
