@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 08/17] libmultipath: _install_keyword cleanup
-Date: Wed,  8 Aug 2018 17:21:26 -0500
-Message-ID: <1533766895-28605-9-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 11/17] libmultipath: fix null dereference int
+	alloc_path_group
+Date: Wed,  8 Aug 2018 17:21:29 -0500
+Message-ID: <1533766895-28605-12-git-send-email-bmarzins@redhat.com>
 References: <1533766895-28605-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,39 +22,27 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-_install_keyword should use VECTOR_LAST_SLOT(), which has better error
-checking. It should also fail if it gets a NULL pointer, instead of
-dereferencing it. Found by coverity.
+If all_pathgroup failed to allocate a vector for pgp->paths, instead of
+failing after it freed pgp, it would set pgp to NULL and then
+dereference it. This patch fixes that. Found by coverity.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/parser.c | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
+ libmultipath/structs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/parser.c b/libmultipath/parser.c
-index b8b7e0d..92ef7cf 100644
---- a/libmultipath/parser.c
-+++ b/libmultipath/parser.c
-@@ -79,12 +79,16 @@ _install_keyword(vector keywords, char *string,
- 	struct keyword *keyword;
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index ae847d6..caa178a 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -165,7 +165,7 @@ alloc_pathgroup (void)
  
- 	/* fetch last keyword */
--	keyword = VECTOR_SLOT(keywords, VECTOR_SIZE(keywords) - 1);
-+	keyword = VECTOR_LAST_SLOT(keywords);
-+	if (!keyword)
-+		return 1;
+ 	if (!pgp->paths) {
+ 		FREE(pgp);
+-		pgp = NULL;
++		return NULL;
+ 	}
  
- 	/* position to last sub level */
--	for (i = 0; i < sublevel; i++)
--		keyword =
--		    VECTOR_SLOT(keyword->sub, VECTOR_SIZE(keyword->sub) - 1);
-+	for (i = 0; i < sublevel; i++) {
-+		keyword = VECTOR_LAST_SLOT(keyword->sub);
-+		if (!keyword)
-+			return 1;
-+	}
- 
- 	/* First sub level allocation */
- 	if (!keyword->sub)
+ 	dm_pathgroup_to_gen(pgp)->ops = &dm_gen_pathgroup_ops;
 -- 
 2.7.4
