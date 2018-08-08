@@ -1,169 +1,81 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: reformat maintainer info
-Date: Wed, 8 Aug 2018 02:09:02 +0200
-Message-ID: <0c5d737f-0d5e-f6d8-1c91-c4fcbf0606e8@gmail.com>
-References: <20180701155538.5300-1-xose.vazquez@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180701155538.5300-1-xose.vazquez@gmail.com>
-Content-Language: en-GB
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEV ML <dm-devel@redhat.com>
+From: xiao jin <jin.xiao@intel.com>
+Subject: [PATCH] dm-bufio: adjust the reserved buffer for dm-verify-target.
+Date: Wed,  8 Aug 2018 13:07:03 +0800
+Message-ID: <1533704823-5448-1-git-send-email-jin.xiao@intel.com>
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Cc: stable@vger.kernel.org, yanmin.zhang@intel.com, jin.xiao@intel.com
 List-Id: dm-devel.ids
 
-And this one too.
+We hit the BUG() report at include/linux/scatterlist.h:144!
+The callback is as bellow:
+  => verity_work
+  => verity_hash_for_block
+  => verity_verify_level
+  => verity_hash
+  => verity_hash_update
+  => sg_init_one
+  => sg_set_buf
 
-On 07/01/2018 05:55 PM, Xose Vazquez Perez wrote:
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM-DEV ML <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libmultipath/hwtable.c | 39 +++++++++++++--------------------------
->  1 file changed, 13 insertions(+), 26 deletions(-)
-> 
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index f012dea..478bf16 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -38,8 +38,7 @@
->  	 *
->  	 * COMPANY_NAME
->  	 *
-> -	 * Maintainer : XXX
-> -	 * Mail : XXX
-> +	 * Maintainer: XXX <email>
->  	 */
->  	{
->  		/* Product Name */
-> @@ -96,8 +95,7 @@ static struct hwentry default_hw[] = {
->  	/*
->  	 * Apple
->  	 *
-> -	 * Maintainer : Shyam Sundar
-> -	 * Mail : g.shyamsundar@yahoo.co.in
-> +	 * Maintainer: Shyam Sundar <g.shyamsundar@yahoo.co.in>
->  	 */
->  	{
->  		/* Xserve RAID */
-> @@ -342,8 +340,7 @@ static struct hwentry default_hw[] = {
->  		/*
->  		 * SC Series, formerly Compellent
->  		 *
-> -		 * Maintainer : Sean McGinnis
-> -		 * Mail : sean_mcginnis@dell.com
-> +		 * Maintainer: Sean McGinnis <sean_mcginnis@dell.com>
->  		 */
->  		.vendor        = "COMPELNT",
->  		.product       = "Compellent Vol",
-> @@ -406,8 +403,7 @@ static struct hwentry default_hw[] = {
->  	/*
->  	 * Hitachi Vantara
->  	 *
-> -	 * Maintainer : Matthias Rudolph
-> -	 * Mail : Matthias.Rudolph@hitachivantara.com
-> +	 * Maintainer: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
->  	 */
->  	{
->  		/* USP-V, HUS VM, VSP, VSP G1X00 and VSP GX00 families / HP XP */
-> @@ -433,8 +429,7 @@ static struct hwentry default_hw[] = {
->  	/*
->  	 * IBM
->  	 *
-> -	 * Maintainer : Hannes Reinecke
-> -	 * Mail : hare@suse.de
-> +	 * Maintainer: Hannes Reinecke <hare@suse.de>
->  	 */
->  	{
->  		/* ProFibre 4000R */
-> @@ -681,8 +676,7 @@ static struct hwentry default_hw[] = {
->  		/*
->  		 * IBM Power Virtual SCSI Devices
->  		 *
-> -		 * Maintainer : Brian King
-> -		 * Mail : brking@linux.vnet.ibm.com
-> +		 * Maintainer: Brian King <brking@linux.vnet.ibm.com>
->  		 */
->  	{
->  		/* AIX VDASD */
-> @@ -714,8 +708,7 @@ static struct hwentry default_hw[] = {
->  		/*
->  		 * ONTAP family
->  		 *
-> -		 * Maintainer : Martin George
-> -		 * Mail : marting@netapp.com
-> +		 * Maintainer: Martin George <marting@netapp.com>
->  		 */
->  		.vendor        = "NETAPP",
->  		.product       = "LUN",
-> @@ -731,8 +724,7 @@ static struct hwentry default_hw[] = {
->  		/*
->  		 * SANtricity(RDAC) family
->  		 *
-> -		 * Maintainer : NetApp RDAC team
-> -		 * Mail : ng-eseries-upstream-maintainers@netapp.com
-> +		 * Maintainer: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
->  		 */
->  		.vendor        = "(NETAPP|LSI|ENGENIO)",
->  		.product       = "INF-01-00",
-> @@ -749,8 +741,7 @@ static struct hwentry default_hw[] = {
->  		/*
->  		 * SolidFir family
->  		 *
-> -		 * Maintainer : PJ Waskiewicz
-> -		 * Mail : pj.waskiewicz@netapp.com
-> +		 * Maintainer: PJ Waskiewicz <pj.waskiewicz@netapp.com>
->  		 */
->  		.vendor        = "SolidFir",
->  		.product       = "SSD SAN",
-> @@ -771,8 +762,7 @@ static struct hwentry default_hw[] = {
->  	/*
->  	 * Nexenta
->  	 *
-> -	 * Maintainer : Yacine Kheddache
-> -	 * Mail : yacine@alyseo.com
-> +	 * Maintainer: Yacine Kheddache <yacine@alyseo.com>
->  	 */
->  	{
->  		/* COMSTAR */
-> @@ -799,8 +789,7 @@ static struct hwentry default_hw[] = {
->  		/*
->  		 * Pillar Data / Oracle FS
->  		 *
-> -		 * Maintainer : Srinivasan Ramani
-> -		 * Mail : srinivas.ramani@oracle.com
-> +		 * Maintainer: Srinivasan Ramani <srinivas.ramani@oracle.com>
->  		 */
->  	{
->  		/* Axiom */
-> @@ -941,8 +930,7 @@ static struct hwentry default_hw[] = {
->  	/*
->  	 * Pivot3
->  	 *
-> -	 * Maintainer : Bart Brooks
-> -	 * Mail : bartb@pivot3.com
-> +	 * Maintainer: Bart Brooks <bartb@pivot3.com>
->  	 */
->  	{
->  		/* Raige */
-> @@ -1039,8 +1027,7 @@ static struct hwentry default_hw[] = {
->  	/*
->  	 * Infinidat
->  	 *
-> -	 * Maintainer: Arnon Yaari
-> -	 * Mail: arnony@infinidat.com
-> +	 * Maintainer: Arnon Yaari <arnony@infinidat.com>
->  	 */
->  	{
->  		/* InfiniBox */
-> 
+More debug shows the root cause. When creating dufio client it
+uses the __vmalloc() to allocate the buffer data for the reserved
+dm_buffer. The buffer that allocated by the __vmalloc() is invalid
+according to the __virt_addr_valid().
+
+Mostly the reserved dm_buffer is not touched. But occasionally
+it might fail to allocate the dm_buffer data when we try to
+allocate in the __alloc_buffer_wait_no_callback(). Then it has
+to take the reserved dm_buffer for usage. Finally it reports the
+BUG() as virt_addr_valid() detects the buffer data address is invalid.
+
+The patch is to adjust the reserved buffer for dm-verity-target. We
+allocated two dm_buffers into the reserved buffers list when creating
+the buffer interface. The first dm_buffer in the reserved buffer list
+is allocated by the __vmalloc(), it's not used after that. The second
+dm_buffer in the reserved buffer list is allocated by the
+__get_free_pages() which can be consumed after that.
+
+Signed-off-by: xiao jin <jin.xiao@intel.com>
+---
+ drivers/md/dm-bufio.c         | 4 ++--
+ drivers/md/dm-verity-target.c | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index dc385b7..3b7ca5e 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -841,7 +841,7 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
+ 			tried_noio_alloc = true;
+ 		}
+ 
+-		if (!list_empty(&c->reserved_buffers)) {
++		if (!c->need_reserved_buffers) {
+ 			b = list_entry(c->reserved_buffers.next,
+ 				       struct dm_buffer, lru_list);
+ 			list_del(&b->lru_list);
+@@ -1701,7 +1701,7 @@ struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsign
+ 		goto bad;
+ 	}
+ 
+-	while (c->need_reserved_buffers) {
++	if (list_empty(&c->reserved_buffers)) {
+ 		struct dm_buffer *b = alloc_buffer(c, GFP_KERNEL);
+ 
+ 		if (!b) {
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index 12decdbd7..40c66fc 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -1107,7 +1107,7 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	v->hash_blocks = hash_position;
+ 
+ 	v->bufio = dm_bufio_client_create(v->hash_dev->bdev,
+-		1 << v->hash_dev_block_bits, 1, sizeof(struct buffer_aux),
++		1 << v->hash_dev_block_bits, 2, sizeof(struct buffer_aux),
+ 		dm_bufio_alloc_callback, NULL);
+ 	if (IS_ERR(v->bufio)) {
+ 		ti->error = "Cannot initialize dm-bufio";
+-- 
+2.7.4
