@@ -1,14 +1,13 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: update Hitachi maintainer
-	email
-Date: Wed, 8 Aug 2018 02:05:08 +0200
-Message-ID: <b0c6332b-7a0c-5aad-1050-f9f8c8fc69fa@gmail.com>
-References: <20180626135231.10793-1-xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: reformat maintainer info
+Date: Wed, 8 Aug 2018 02:09:02 +0200
+Message-ID: <0c5d737f-0d5e-f6d8-1c91-c4fcbf0606e8@gmail.com>
+References: <20180701155538.5300-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180626135231.10793-1-xose.vazquez@gmail.com>
+In-Reply-To: <20180701155538.5300-1-xose.vazquez@gmail.com>
 Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -23,34 +22,148 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM-DEV ML <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+And this one too.
 
-Missing.
-
-On 06/26/2018 03:52 PM, Xose Vazquez Perez wrote:
-> Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
-> Cc: Matthias Rudolph <matthias.rudolph@hds.com>
+On 07/01/2018 05:55 PM, Xose Vazquez Perez wrote:
 > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 > Cc: DM-DEV ML <dm-devel@redhat.com>
 > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 > ---
->  libmultipath/hwtable.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
+>  libmultipath/hwtable.c | 39 +++++++++++++--------------------------
+>  1 file changed, 13 insertions(+), 26 deletions(-)
 > 
 > diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index 287d501..07dd6b6 100644
+> index f012dea..478bf16 100644
 > --- a/libmultipath/hwtable.c
 > +++ b/libmultipath/hwtable.c
-> @@ -392,10 +392,10 @@ static struct hwentry default_hw[] = {
->  		.no_path_retry = 10,
->  	},
->  	/*
-> -	 * Hitachi
-> +	 * Hitachi Vantara
+> @@ -38,8 +38,7 @@
 >  	 *
->  	 * Maintainer : Matthias Rudolph
-> -	 * Mail : matthias.rudolph@hds.com
-> +	 * Mail : Matthias.Rudolph@hitachivantara.com
+>  	 * COMPANY_NAME
+>  	 *
+> -	 * Maintainer : XXX
+> -	 * Mail : XXX
+> +	 * Maintainer: XXX <email>
+>  	 */
+>  	{
+>  		/* Product Name */
+> @@ -96,8 +95,7 @@ static struct hwentry default_hw[] = {
+>  	/*
+>  	 * Apple
+>  	 *
+> -	 * Maintainer : Shyam Sundar
+> -	 * Mail : g.shyamsundar@yahoo.co.in
+> +	 * Maintainer: Shyam Sundar <g.shyamsundar@yahoo.co.in>
+>  	 */
+>  	{
+>  		/* Xserve RAID */
+> @@ -342,8 +340,7 @@ static struct hwentry default_hw[] = {
+>  		/*
+>  		 * SC Series, formerly Compellent
+>  		 *
+> -		 * Maintainer : Sean McGinnis
+> -		 * Mail : sean_mcginnis@dell.com
+> +		 * Maintainer: Sean McGinnis <sean_mcginnis@dell.com>
+>  		 */
+>  		.vendor        = "COMPELNT",
+>  		.product       = "Compellent Vol",
+> @@ -406,8 +403,7 @@ static struct hwentry default_hw[] = {
+>  	/*
+>  	 * Hitachi Vantara
+>  	 *
+> -	 * Maintainer : Matthias Rudolph
+> -	 * Mail : Matthias.Rudolph@hitachivantara.com
+> +	 * Maintainer: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
 >  	 */
 >  	{
 >  		/* USP-V, HUS VM, VSP, VSP G1X00 and VSP GX00 families / HP XP */
+> @@ -433,8 +429,7 @@ static struct hwentry default_hw[] = {
+>  	/*
+>  	 * IBM
+>  	 *
+> -	 * Maintainer : Hannes Reinecke
+> -	 * Mail : hare@suse.de
+> +	 * Maintainer: Hannes Reinecke <hare@suse.de>
+>  	 */
+>  	{
+>  		/* ProFibre 4000R */
+> @@ -681,8 +676,7 @@ static struct hwentry default_hw[] = {
+>  		/*
+>  		 * IBM Power Virtual SCSI Devices
+>  		 *
+> -		 * Maintainer : Brian King
+> -		 * Mail : brking@linux.vnet.ibm.com
+> +		 * Maintainer: Brian King <brking@linux.vnet.ibm.com>
+>  		 */
+>  	{
+>  		/* AIX VDASD */
+> @@ -714,8 +708,7 @@ static struct hwentry default_hw[] = {
+>  		/*
+>  		 * ONTAP family
+>  		 *
+> -		 * Maintainer : Martin George
+> -		 * Mail : marting@netapp.com
+> +		 * Maintainer: Martin George <marting@netapp.com>
+>  		 */
+>  		.vendor        = "NETAPP",
+>  		.product       = "LUN",
+> @@ -731,8 +724,7 @@ static struct hwentry default_hw[] = {
+>  		/*
+>  		 * SANtricity(RDAC) family
+>  		 *
+> -		 * Maintainer : NetApp RDAC team
+> -		 * Mail : ng-eseries-upstream-maintainers@netapp.com
+> +		 * Maintainer: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+>  		 */
+>  		.vendor        = "(NETAPP|LSI|ENGENIO)",
+>  		.product       = "INF-01-00",
+> @@ -749,8 +741,7 @@ static struct hwentry default_hw[] = {
+>  		/*
+>  		 * SolidFir family
+>  		 *
+> -		 * Maintainer : PJ Waskiewicz
+> -		 * Mail : pj.waskiewicz@netapp.com
+> +		 * Maintainer: PJ Waskiewicz <pj.waskiewicz@netapp.com>
+>  		 */
+>  		.vendor        = "SolidFir",
+>  		.product       = "SSD SAN",
+> @@ -771,8 +762,7 @@ static struct hwentry default_hw[] = {
+>  	/*
+>  	 * Nexenta
+>  	 *
+> -	 * Maintainer : Yacine Kheddache
+> -	 * Mail : yacine@alyseo.com
+> +	 * Maintainer: Yacine Kheddache <yacine@alyseo.com>
+>  	 */
+>  	{
+>  		/* COMSTAR */
+> @@ -799,8 +789,7 @@ static struct hwentry default_hw[] = {
+>  		/*
+>  		 * Pillar Data / Oracle FS
+>  		 *
+> -		 * Maintainer : Srinivasan Ramani
+> -		 * Mail : srinivas.ramani@oracle.com
+> +		 * Maintainer: Srinivasan Ramani <srinivas.ramani@oracle.com>
+>  		 */
+>  	{
+>  		/* Axiom */
+> @@ -941,8 +930,7 @@ static struct hwentry default_hw[] = {
+>  	/*
+>  	 * Pivot3
+>  	 *
+> -	 * Maintainer : Bart Brooks
+> -	 * Mail : bartb@pivot3.com
+> +	 * Maintainer: Bart Brooks <bartb@pivot3.com>
+>  	 */
+>  	{
+>  		/* Raige */
+> @@ -1039,8 +1027,7 @@ static struct hwentry default_hw[] = {
+>  	/*
+>  	 * Infinidat
+>  	 *
+> -	 * Maintainer: Arnon Yaari
+> -	 * Mail: arnony@infinidat.com
+> +	 * Maintainer: Arnon Yaari <arnony@infinidat.com>
+>  	 */
+>  	{
+>  		/* InfiniBox */
 > 
