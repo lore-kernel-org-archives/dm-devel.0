@@ -1,81 +1,144 @@
-From: xiao jin <jin.xiao@intel.com>
-Subject: [PATCH] dm-bufio: adjust the reserved buffer for dm-verify-target.
-Date: Wed,  8 Aug 2018 14:40:57 +0800
-Message-ID: <1533710457-6411-1-git-send-email-jin.xiao@intel.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH v3 RESEND] x86: optimize memcpy_flushcache
+Date: Wed, 8 Aug 2018 17:22:16 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1808081720460.24747@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20180519052503.325953342@debian.vm> <20180519052631.730455475@debian.vm> <CAPcyv4jpY0x7kZtT+afAKnHKy8Uy1AC_N_QM7RrELSj_0iNrRw@mail.gmail.com> <20180524182013.GA59755@redhat.com> <20180618132306.GA25431@redhat.com> <20180621143140.GA14095@gmail.com>
+ <alpine.LRH.2.02.1806211224470.19940@file01.intranet.prod.int.rdu2.redhat.com> <20180622013049.GA12505@gmail.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180622013049.GA12505@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org
-Cc: yanmin.zhang@intel.com, jin.xiao@intel.com
+To: Ingo Molnar <mingo@kernel.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Dan Williams <dan.j.williams@intel.com>, device-mapper development <dm-devel@redhat.com>, X86 ML <x86@kernel.org>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-We hit the BUG() report at include/linux/scatterlist.h:144!
-The callback is as bellow:
-  => verity_work
-  => verity_hash_for_block
-  => verity_verify_level
-  => verity_hash
-  => verity_hash_update
-  => sg_init_one
-  => sg_set_buf
 
-More debug shows the root cause. When creating dufio client it
-uses the __vmalloc() to allocate the buffer data for the reserved
-dm_buffer. The buffer that allocated by the __vmalloc() is invalid
-according to the __virt_addr_valid().
 
-Mostly the reserved dm_buffer is not touched. But occasionally
-it might fail to allocate the dm_buffer data when we try to
-allocate in the __alloc_buffer_wait_no_callback(). Then it has
-to take the reserved dm_buffer for usage. Finally it reports the
-BUG() as virt_addr_valid() detects the buffer data address is invalid.
+On Fri, 22 Jun 2018, Ingo Molnar wrote:
 
-The patch is to adjust the reserved buffer for dm-verity-target. We
-allocated two dm_buffers into the reserved buffers list when creating
-the buffer interface. The first dm_buffer in the reserved buffer list
-is allocated by the __vmalloc(), it's not used after that. The second
-dm_buffer in the reserved buffer list is allocated by the
-__get_free_pages() which can be consumed after that.
+> 
+> * Mikulas Patocka <mpatocka@redhat.com> wrote:
+> 
+> > On Thu, 21 Jun 2018, Ingo Molnar wrote:
+> > 
+> > > 
+> > > * Mike Snitzer <snitzer@redhat.com> wrote:
+> > > 
+> > > > From: Mikulas Patocka <mpatocka@redhat.com>
+> > > > Subject: [PATCH v2] x86: optimize memcpy_flushcache
+> > > > 
+> > > > In the context of constant short length stores to persistent memory,
+> > > > memcpy_flushcache suffers from a 2% performance degradation compared to
+> > > > explicitly using the "movnti" instruction.
+> > > > 
+> > > > Optimize 4, 8, and 16 byte memcpy_flushcache calls to explicitly use the
+> > > > movnti instruction with inline assembler.
+> > > 
+> > > Linus requested asm optimizations to include actual benchmarks, so it would be 
+> > > nice to describe how this was tested, on what hardware, and what the before/after 
+> > > numbers are.
+> > > 
+> > > Thanks,
+> > > 
+> > > 	Ingo
+> > 
+> > It was tested on 4-core skylake machine with persistent memory being 
+> > emulated using the memmap kernel option. The dm-writecache target used the 
+> > emulated persistent memory as a cache and sata SSD as a backing device. 
+> > The patch results in 2% improved throughput when writing data using dd.
+> > 
+> > I don't have access to the machine anymore.
+> 
+> I think this information is enough, but do we know how well memmap emulation 
+> represents true persistent memory speed and cache management characteristics?
+> It might be representative - but I don't know for sure, nor probably most
+> readers of the changelog.
+> 
+> So could you please put all this into an updated changelog, and also add a short 
+> description that outlines exactly which codepaths end up using this method in a 
+> typical persistent memory setup? All filesystem ops - or only reads, etc?
+> 
+> Thanks,
+> 
+> 	Ingo
 
-Signed-off-by: xiao jin <jin.xiao@intel.com>
+Here I resend it:
+
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] x86: optimize memcpy_flushcache
+
+I use memcpy_flushcache in my persistent memory driver for metadata
+updates, there are many 8-byte and 16-byte updates and it turns out that
+the overhead of memcpy_flushcache causes 2% performance degradation
+compared to "movnti" instruction explicitly coded using inline assembler.
+
+The tests were done on a Skylake processor with persistent memory emulated
+using the "memmap" kernel parameter. dd was used to copy data to the
+dm-writecache target.
+
+This patch recognizes memcpy_flushcache calls with constant short length
+and turns them into inline assembler - so that I don't have to use inline
+assembler in the driver.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
 ---
- drivers/md/dm-bufio.c         | 4 ++--
- drivers/md/dm-verity-target.c | 2 +-
- 2 files changed, 3 insertions(+), 3 deletions(-)
+ arch/x86/include/asm/string_64.h |   20 +++++++++++++++++++-
+ arch/x86/lib/usercopy_64.c       |    4 ++--
+ 2 files changed, 21 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index dc385b7..3b7ca5e 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -841,7 +841,7 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
- 			tried_noio_alloc = true;
- 		}
+Index: linux-2.6/arch/x86/include/asm/string_64.h
+===================================================================
+--- linux-2.6.orig/arch/x86/include/asm/string_64.h
++++ linux-2.6/arch/x86/include/asm/string_64.h
+@@ -149,7 +149,25 @@ memcpy_mcsafe(void *dst, const void *src
  
--		if (!list_empty(&c->reserved_buffers)) {
-+		if (!c->need_reserved_buffers) {
- 			b = list_entry(c->reserved_buffers.next,
- 				       struct dm_buffer, lru_list);
- 			list_del(&b->lru_list);
-@@ -1701,7 +1701,7 @@ struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsign
- 		goto bad;
+ #ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
+ #define __HAVE_ARCH_MEMCPY_FLUSHCACHE 1
+-void memcpy_flushcache(void *dst, const void *src, size_t cnt);
++void __memcpy_flushcache(void *dst, const void *src, size_t cnt);
++static __always_inline void memcpy_flushcache(void *dst, const void *src, size_t cnt)
++{
++	if (__builtin_constant_p(cnt)) {
++		switch (cnt) {
++			case 4:
++				asm ("movntil %1, %0" : "=m"(*(u32 *)dst) : "r"(*(u32 *)src));
++				return;
++			case 8:
++				asm ("movntiq %1, %0" : "=m"(*(u64 *)dst) : "r"(*(u64 *)src));
++				return;
++			case 16:
++				asm ("movntiq %1, %0" : "=m"(*(u64 *)dst) : "r"(*(u64 *)src));
++				asm ("movntiq %1, %0" : "=m"(*(u64 *)(dst + 8)) : "r"(*(u64 *)(src + 8)));
++				return;
++		}
++	}
++	__memcpy_flushcache(dst, src, cnt);
++}
+ #endif
+ 
+ #endif /* __KERNEL__ */
+Index: linux-2.6/arch/x86/lib/usercopy_64.c
+===================================================================
+--- linux-2.6.orig/arch/x86/lib/usercopy_64.c
++++ linux-2.6/arch/x86/lib/usercopy_64.c
+@@ -153,7 +153,7 @@ long __copy_user_flushcache(void *dst, c
+ 	return rc;
+ }
+ 
+-void memcpy_flushcache(void *_dst, const void *_src, size_t size)
++void __memcpy_flushcache(void *_dst, const void *_src, size_t size)
+ {
+ 	unsigned long dest = (unsigned long) _dst;
+ 	unsigned long source = (unsigned long) _src;
+@@ -216,7 +216,7 @@ void memcpy_flushcache(void *_dst, const
+ 		clean_cache_range((void *) dest, size);
  	}
+ }
+-EXPORT_SYMBOL_GPL(memcpy_flushcache);
++EXPORT_SYMBOL_GPL(__memcpy_flushcache);
  
--	while (c->need_reserved_buffers) {
-+	if (list_empty(&c->reserved_buffers)) {
- 		struct dm_buffer *b = alloc_buffer(c, GFP_KERNEL);
- 
- 		if (!b) {
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index 12decdbd7..40c66fc 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -1107,7 +1107,7 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	v->hash_blocks = hash_position;
- 
- 	v->bufio = dm_bufio_client_create(v->hash_dev->bdev,
--		1 << v->hash_dev_block_bits, 1, sizeof(struct buffer_aux),
-+		1 << v->hash_dev_block_bits, 2, sizeof(struct buffer_aux),
- 		dm_bufio_alloc_callback, NULL);
- 	if (IS_ERR(v->bufio)) {
- 		ti->error = "Cannot initialize dm-bufio";
--- 
-2.7.4
+ void memcpy_page_flushcache(char *to, struct page *page, size_t offset,
+ 		size_t len)
