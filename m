@@ -1,13 +1,11 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 12/17] libmutipath: don't use malformed uevents
-Date: Wed,  8 Aug 2018 17:21:30 -0500
-Message-ID: <1533766895-28605-13-git-send-email-bmarzins@redhat.com>
-References: <1533766895-28605-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 00/17] Misc Multipath patches
+Date: Wed,  8 Aug 2018 17:21:18 -0500
+Message-ID: <1533766895-28605-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1533766895-28605-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,31 +19,51 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-A uevent that doesn't include the ACTION and DEVPATH fields is
-malformed. It should be ignored, instead of used with those fields being
-NULL.
+This batch of patches is a resend of the non-merged pathes from my last
+set.  The only difference is in
+0002-libmultipath-fix-tur-checker-double-locking.patch 
+It now sets ct->devt when initially creating the tur_checker_context,
+while that structure is still only referenced by a local variable.
+After that, ct->devt is only ever read. This should remove any issues
+with it needing locking.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/uevent.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+Patches 0001-0005 are a number of fixes to the tur checker.These are
+        the ones that should get the most attention.
+Patches 0006-0017 are minor issues found by coverity.
+        Not all of them are bugs that could actually occur in practice,
+        but they are simple and hopefully non-controversial changes.
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index fd8ca35..5f910e6 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -729,6 +729,12 @@ struct uevent *uevent_from_udev_device(struct udev_device *dev)
- 		if (i == HOTPLUG_NUM_ENVP - 1)
- 			break;
- 	}
-+	if (!uev->devpath || ! uev->action) {
-+		udev_device_unref(dev);
-+		condlog(1, "uevent missing necessary fields");
-+		FREE(uev);
-+		return NULL;
-+	}
- 	uev->udev = dev;
- 	uev->envp[i] = NULL;
- 
+Benjamin Marzinski (17):
+  libmultipath: fix tur checker timeout
+  libmultipath: fix tur checker double locking
+  libmultipath: fix tur memory misuse
+  libmultipath: cleanup tur locking
+  libmultipath: fix tur checker timeout issue
+  libmultipath: fix set_int error path
+  libmultipath: fix length issues in get_vpd_sgio
+  libmultipath: _install_keyword cleanup
+  libmultipath: remove unused code
+  libmultipath: fix memory issue in path_latency prio
+  libmultipath: fix null dereference int alloc_path_group
+  libmutipath: don't use malformed uevents
+  multipath: fix max array size in print_cmd_valid
+  multipathd: function return value tweaks
+  multipathd: minor fixes
+  multipathd: remove useless check and fix format
+  multipathd: fix memory leak on error in configure
+
+ libmultipath/checkers/tur.c              | 168 +++++++++++--------------------
+ libmultipath/dict.c                      |   5 +-
+ libmultipath/discovery.c                 |  14 ++-
+ libmultipath/parser.c                    |  12 ++-
+ libmultipath/print.c                     |   8 --
+ libmultipath/prioritizers/path_latency.c |   3 +-
+ libmultipath/structs.c                   |   2 +-
+ libmultipath/uevent.c                    |   6 ++
+ multipath/main.c                         |   2 +-
+ multipathd/cli_handlers.c                |  11 +-
+ multipathd/main.c                        |  26 +++--
+ 11 files changed, 115 insertions(+), 142 deletions(-)
+
 -- 
 2.7.4
