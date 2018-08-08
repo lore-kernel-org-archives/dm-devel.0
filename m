@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 11/17] libmultipath: fix null dereference int
-	alloc_path_group
-Date: Wed,  8 Aug 2018 17:21:29 -0500
-Message-ID: <1533766895-28605-12-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 16/17] multipathd: remove useless check and
+	fix format
+Date: Wed,  8 Aug 2018 17:21:34 -0500
+Message-ID: <1533766895-28605-17-git-send-email-bmarzins@redhat.com>
 References: <1533766895-28605-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,27 +22,39 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-If all_pathgroup failed to allocate a vector for pgp->paths, instead of
-failing after it freed pgp, it would set pgp to NULL and then
-dereference it. This patch fixes that. Found by coverity.
+The only thing this patch changes is to remove the check for pp->mpp
+before the check for pp->mpp->prflags, since check_path() already
+verified that pp->mpp != NULL. This fixes a number of coverity warnings.
+Also, I normalized the spacing and indenting of the nearby code.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/structs.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipathd/main.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index ae847d6..caa178a 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -165,7 +165,7 @@ alloc_pathgroup (void)
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 125a805..3c2fe7b 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1978,14 +1978,14 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 			return 1;
+ 		}
  
- 	if (!pgp->paths) {
- 		FREE(pgp);
--		pgp = NULL;
-+		return NULL;
- 	}
+-		if(newstate == PATH_UP || newstate == PATH_GHOST){
+-			if ( pp->mpp && pp->mpp->prflag ){
++		if (newstate == PATH_UP || newstate == PATH_GHOST) {
++			if (pp->mpp->prflag) {
+ 				/*
+ 				 * Check Persistent Reservation.
+ 				 */
+-			condlog(2, "%s: checking persistent reservation "
+-				"registration", pp->dev);
+-			mpath_pr_event_handle(pp);
++				condlog(2, "%s: checking persistent "
++					"reservation registration", pp->dev);
++				mpath_pr_event_handle(pp);
+ 			}
+ 		}
  
- 	dm_pathgroup_to_gen(pgp)->ops = &dm_gen_pathgroup_ops;
 -- 
 2.7.4
