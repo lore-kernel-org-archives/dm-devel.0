@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 10/17] libmultipath: fix memory issue in
-	path_latency prio
-Date: Wed,  8 Aug 2018 17:21:28 -0500
-Message-ID: <1533766895-28605-11-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 13/17] multipath: fix max array size in
+	print_cmd_valid
+Date: Wed,  8 Aug 2018 17:21:31 -0500
+Message-ID: <1533766895-28605-14-git-send-email-bmarzins@redhat.com>
 References: <1533766895-28605-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,28 +22,27 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The path_latency prioriziter was assuming that prepare_directio_read()
-always succeeds. However, it doesn't, and when it fails, the prioritizer
-used buf without it pointing to alloced memory. Found by coverity.
+The code is attempting to verify that 0 <= k < 3
+However, sizeof(val) is 12, assuming 4 byte integers. The check needs to
+take integer size into account. Found by coverity.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/prioritizers/path_latency.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ multipath/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
-index 765265c..eeee01e 100644
---- a/libmultipath/prioritizers/path_latency.c
-+++ b/libmultipath/prioritizers/path_latency.c
-@@ -237,7 +237,8 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
- 	lg_maxavglatency = log(MAX_AVG_LATENCY) / lg_base;
- 	lg_minavglatency = log(MIN_AVG_LATENCY) / lg_base;
+diff --git a/multipath/main.c b/multipath/main.c
+index fc5bf16..d5aad95 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -482,7 +482,7 @@ static int print_cmd_valid(int k, const vector pathvec,
+ 	struct timespec until;
+ 	struct path *pp;
  
--	prepare_directio_read(pp->fd, &blksize, &buf, &restore_flags);
-+	if (prepare_directio_read(pp->fd, &blksize, &buf, &restore_flags) < 0)
-+		return PRIO_UNDEF;
+-	if (k < 0 || k >= sizeof(vals))
++	if (k < 0 || k >= (sizeof(vals) / sizeof(int)))
+ 		return 1;
  
- 	temp = io_num;
- 	while (temp-- > 0) {
+ 	if (k == 2) {
 -- 
 2.7.4
