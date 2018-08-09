@@ -1,14 +1,15 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 17/17] multipathd: fix memory leak on error in
-	configure
-Date: Wed,  8 Aug 2018 17:21:35 -0500
-Message-ID: <1533766895-28605-18-git-send-email-bmarzins@redhat.com>
-References: <1533766895-28605-1-git-send-email-bmarzins@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm cache metadata: set dirty on all cache blocks
+	after a crash
+Date: Thu, 9 Aug 2018 13:54:07 -0400
+Message-ID: <20180809175407.GA13429@redhat.com>
+References: <20180809162257.30800-1-idryomov@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1533766895-28605-1-git-send-email-bmarzins@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20180809162257.30800-1-idryomov@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,68 +19,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>
+To: Ilya Dryomov <idryomov@gmail.com>
+Cc: dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
-If configure fails after allocing mpvec, it must free it. Found by
-coverity.
+On Thu, Aug 09 2018 at 12:22pm -0400,
+Ilya Dryomov <idryomov@gmail.com> wrote:
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipathd/main.c | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
+> Quoting Documentation/device-mapper/cache.txt:
+> 
+>   The 'dirty' state for a cache block changes far too frequently for us
+>   to keep updating it on the fly.  So we treat it as a hint.  In normal
+>   operation it will be written when the dm device is suspended.  If the
+>   system crashes all cache blocks will be assumed dirty when restarted.
+> 
+> This got broken in commit f177940a8091 ("dm cache metadata: switch to
+> using the new cursor api for loading metadata") in 4.9, which removed
+> the code that consulted cmd->clean_when_opened (CLEAN_SHUTDOWN on-disk
+> flag) when loading cache blocks.  This results in data corruption on an
+> unclean shutdown with dirty cache blocks on the fast device.  After the
+> crash those blocks are considired clean and may get evicted from the
+> cache at any time.  This can be demonstrated by doing a lot of reads
+> to trigger individual evictions, but uncache is more predictable:
+> 
+>   ### Disable auto-activation in lvm.conf to be able to do uncache in
+>   ### time (i.e. see uncache doing flushing) when the fix is applied.
+> 
+>   # xfs_io -d -c 'pwrite -b 4M -S 0xaa 0 1G' /dev/vdb
+>   # vgcreate vg_cache /dev/vdb /dev/vdc
+>   # lvcreate -L 1G -n lv_slowdev vg_cache /dev/vdb
+>   # lvcreate -L 512M -n lv_cachedev vg_cache /dev/vdc
+>   # lvcreate -L 256M -n lv_metadev vg_cache /dev/vdc
+>   # lvconvert --type cache-pool --cachemode writeback vg_cache/lv_cachedev --poolmetadata vg_cache/lv_metadev
+>   # lvconvert --type cache vg_cache/lv_slowdev --cachepool vg_cache/lv_cachedev
+>   # xfs_io -d -c 'pwrite -b 4M -S 0xbb 0 512M' /dev/mapper/vg_cache-lv_slowdev
+>   # xfs_io -d -c 'pread -v 254M 512' /dev/mapper/vg_cache-lv_slowdev | head -n 2
+>   0fe00000:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
+>   0fe00010:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
+>   # dmsetup status vg_cache-lv_slowdev
+>   0 2097152 cache 8 27/65536 128 8192/8192 1 100 0 0 0 8192 7065 2 metadata2 writeback 2 migration_threshold 2048 smq 0 rw -
+>                                                             ^^^^
+>                                 7065 * 64k = 441M yet to be written to the slow device
+>   # echo b >/proc/sysrq-trigger
+> 
+>   # vgchange -ay vg_cache
+>   # xfs_io -d -c 'pread -v 254M 512' /dev/mapper/vg_cache-lv_slowdev | head -n 2
+>   0fe00000:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
+>   0fe00010:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
+>   # lvconvert --uncache vg_cache/lv_slowdev
+>   Flushing 0 blocks for cache vg_cache/lv_slowdev.
+>   Logical volume "lv_cachedev" successfully removed
+>   Logical volume vg_cache/lv_slowdev is not cached.
+>   # xfs_io -d -c 'pread -v 254M 512' /dev/mapper/vg_cache-lv_slowdev | head -n 2
+>   0fe00000:  aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa  ................
+>   0fe00010:  aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa  ................
+> 
+> This is the case with both v1 and v2 cache pool metatata formats.
+> 
+> After applying this patch:
+> 
+>   # vgchange -ay vg_cache
+>   # xfs_io -d -c 'pread -v 254M 512' /dev/mapper/vg_cache-lv_slowdev | head -n 2
+>   0fe00000:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
+>   0fe00010:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
+>   # lvconvert --uncache vg_cache/lv_slowdev
+>   Flushing 3724 blocks for cache vg_cache/lv_slowdev.
+>   ...
+>   Flushing 71 blocks for cache vg_cache/lv_slowdev.
+>   Logical volume "lv_cachedev" successfully removed
+>   Logical volume vg_cache/lv_slowdev is not cached.
+>   # xfs_io -d -c 'pread -v 254M 512' /dev/mapper/vg_cache-lv_slowdev | head -n 2
+>   0fe00000:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
+>   0fe00010:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
+> 
+> Cc: stable@vger.kernel.org
+> Fixes: f177940a8091 ("dm cache metadata: switch to using the new cursor api for loading metadata")
+> Signed-off-by: Ilya Dryomov <idryomov@gmail.com>
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 3c2fe7b..61ca455 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2277,7 +2277,7 @@ configure (struct vectors * vecs)
- 	ret = path_discovery(vecs->pathvec, DI_ALL);
- 	if (ret < 0) {
- 		condlog(0, "configure failed at path discovery");
--		return 1;
-+		goto fail;
- 	}
- 
- 	vector_foreach_slot (vecs->pathvec, pp, i){
-@@ -2294,7 +2294,7 @@ configure (struct vectors * vecs)
- 	}
- 	if (map_discovery(vecs)) {
- 		condlog(0, "configure failed at map discovery");
--		return 1;
-+		goto fail;
- 	}
- 
- 	/*
-@@ -2308,7 +2308,7 @@ configure (struct vectors * vecs)
- 		force_reload = FORCE_RELOAD_YES;
- 	if (ret) {
- 		condlog(0, "configure failed while coalescing paths");
--		return 1;
-+		goto fail;
- 	}
- 
- 	/*
-@@ -2317,7 +2317,7 @@ configure (struct vectors * vecs)
- 	 */
- 	if (coalesce_maps(vecs, mpvec)) {
- 		condlog(0, "configure failed while coalescing maps");
--		return 1;
-+		goto fail;
- 	}
- 
- 	dm_lib_release();
-@@ -2353,6 +2353,10 @@ configure (struct vectors * vecs)
- 			i--;
- 	}
- 	return 0;
-+
-+fail:
-+	vector_free(mpvec);
-+	return 1;
- }
- 
- int
--- 
-2.7.4
+I staged this earlier today for 4.19 inclusion, please see:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.19&id=5b1fe7bec8a8d0cc547a22e7ddc2bd59acd67de4
+
+Thanks so much for your thorough work on this.  Very well done!
+Mike
