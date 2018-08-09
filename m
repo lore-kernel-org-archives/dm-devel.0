@@ -1,15 +1,18 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm cache metadata: set dirty on all cache blocks
-	after a crash
-Date: Thu, 9 Aug 2018 13:54:07 -0400
-Message-ID: <20180809175407.GA13429@redhat.com>
-References: <20180809162257.30800-1-idryomov@gmail.com>
+From: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
+Subject: Re: [RFC] [PATCH 0/1] Introduce emergency raid0 stop for
+ mounted arrays
+Date: Thu, 9 Aug 2018 20:17:40 -0300
+Message-ID: <5b7a349d-073d-4a42-eae1-aa1e6998c449@canonical.com>
+References: <20180801145608.19880-1-gpiccoli@canonical.com>
+	<87tvodpmc8.fsf@notabene.neil.brown.name>
+	<7cfa220e-c04d-b69e-fe39-5b9277f0538d@canonical.com>
+	<87h8kcphze.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20180809162257.30800-1-idryomov@gmail.com>
+In-Reply-To: <87h8kcphze.fsf@notabene.neil.brown.name>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,85 +22,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ilya Dryomov <idryomov@gmail.com>
-Cc: dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>
+To: NeilBrown <neilb@suse.com>, linux-raid@vger.kernel.org, shli@kernel.org
+Cc: linux-block@vger.kernel.org, jay.vosburgh@canonical.com, dm-devel@redhat.com, kernel@gpiccoli.net, linux-fsdevel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Aug 09 2018 at 12:22pm -0400,
-Ilya Dryomov <idryomov@gmail.com> wrote:
+Hi Neil, sorry for my delay.
 
-> Quoting Documentation/device-mapper/cache.txt:
-> 
->   The 'dirty' state for a cache block changes far too frequently for us
->   to keep updating it on the fly.  So we treat it as a hint.  In normal
->   operation it will be written when the dm device is suspended.  If the
->   system crashes all cache blocks will be assumed dirty when restarted.
-> 
-> This got broken in commit f177940a8091 ("dm cache metadata: switch to
-> using the new cursor api for loading metadata") in 4.9, which removed
-> the code that consulted cmd->clean_when_opened (CLEAN_SHUTDOWN on-disk
-> flag) when loading cache blocks.  This results in data corruption on an
-> unclean shutdown with dirty cache blocks on the fast device.  After the
-> crash those blocks are considired clean and may get evicted from the
-> cache at any time.  This can be demonstrated by doing a lot of reads
-> to trigger individual evictions, but uncache is more predictable:
-> 
->   ### Disable auto-activation in lvm.conf to be able to do uncache in
->   ### time (i.e. see uncache doing flushing) when the fix is applied.
-> 
->   # xfs_io -d -c 'pwrite -b 4M -S 0xaa 0 1G' /dev/vdb
->   # vgcreate vg_cache /dev/vdb /dev/vdc
->   # lvcreate -L 1G -n lv_slowdev vg_cache /dev/vdb
->   # lvcreate -L 512M -n lv_cachedev vg_cache /dev/vdc
->   # lvcreate -L 256M -n lv_metadev vg_cache /dev/vdc
->   # lvconvert --type cache-pool --cachemode writeback vg_cache/lv_cachedev --poolmetadata vg_cache/lv_metadev
->   # lvconvert --type cache vg_cache/lv_slowdev --cachepool vg_cache/lv_cachedev
->   # xfs_io -d -c 'pwrite -b 4M -S 0xbb 0 512M' /dev/mapper/vg_cache-lv_slowdev
->   # xfs_io -d -c 'pread -v 254M 512' /dev/mapper/vg_cache-lv_slowdev | head -n 2
->   0fe00000:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
->   0fe00010:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
->   # dmsetup status vg_cache-lv_slowdev
->   0 2097152 cache 8 27/65536 128 8192/8192 1 100 0 0 0 8192 7065 2 metadata2 writeback 2 migration_threshold 2048 smq 0 rw -
->                                                             ^^^^
->                                 7065 * 64k = 441M yet to be written to the slow device
->   # echo b >/proc/sysrq-trigger
-> 
->   # vgchange -ay vg_cache
->   # xfs_io -d -c 'pread -v 254M 512' /dev/mapper/vg_cache-lv_slowdev | head -n 2
->   0fe00000:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
->   0fe00010:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
->   # lvconvert --uncache vg_cache/lv_slowdev
->   Flushing 0 blocks for cache vg_cache/lv_slowdev.
->   Logical volume "lv_cachedev" successfully removed
->   Logical volume vg_cache/lv_slowdev is not cached.
->   # xfs_io -d -c 'pread -v 254M 512' /dev/mapper/vg_cache-lv_slowdev | head -n 2
->   0fe00000:  aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa  ................
->   0fe00010:  aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa  ................
-> 
-> This is the case with both v1 and v2 cache pool metatata formats.
-> 
-> After applying this patch:
-> 
->   # vgchange -ay vg_cache
->   # xfs_io -d -c 'pread -v 254M 512' /dev/mapper/vg_cache-lv_slowdev | head -n 2
->   0fe00000:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
->   0fe00010:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
->   # lvconvert --uncache vg_cache/lv_slowdev
->   Flushing 3724 blocks for cache vg_cache/lv_slowdev.
->   ...
->   Flushing 71 blocks for cache vg_cache/lv_slowdev.
->   Logical volume "lv_cachedev" successfully removed
->   Logical volume vg_cache/lv_slowdev is not cached.
->   # xfs_io -d -c 'pread -v 254M 512' /dev/mapper/vg_cache-lv_slowdev | head -n 2
->   0fe00000:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
->   0fe00010:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
-> 
-> Cc: stable@vger.kernel.org
-> Fixes: f177940a8091 ("dm cache metadata: switch to using the new cursor api for loading metadata")
-> Signed-off-by: Ilya Dryomov <idryomov@gmail.com>
 
-I staged this earlier today for 4.19 inclusion, please see:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.19&id=5b1fe7bec8a8d0cc547a22e7ddc2bd59acd67de4
+On 02/08/2018 18:37, NeilBrown wrote:
+> On Thu, Aug 02 2018, Guilherme G. Piccoli wrote:
+>> [...]
+>> Regarding the current behavior, one test I made was to remove 1 device
+>> of a 2-disk raid0 array and after that, write a file. Write completed
+>> normally (no errors from the userspace perspective), and I hashed the
+>> file using md5. I then rebooted the machine, raid0 was back with the 2
+>> devices, and guess what?
+>> The written file was there, but corrupted (with a different hash). I
+>> don't think this is something fine, user could have written important
+>> data and don't realize it was getting corrupted while writing.
+> 
+> 
+> In your test, did you "fsync" the file after writing to it?  That is
+> essential for data security.
+> If fsync succeeded even though the data wasn't written, that is
+> certainly a bug.  If it doesn't succeed, then you know there is a
+> problem with your data.
+> 
 
-Thanks so much for your thorough work on this.  Very well done!
-Mike
+Yes, I did. After writing, I ran both "sync" and "sync -f" after "dd"
+command complete (with no errors). The sync procedures also finished
+without errors, and the file was there. After a reboot, though, the
+file has a different md5, since it was corrupted.
+
+
+>> [...]
+>> Using the udev/mdadm to notice a member has failed and the array must be
+>> stopped might work, it was my first approach. The main issue here is
+>> timing: it takes "some time" until userspace is aware of the failure, so
+>> we have a window in which writes were sent between
+>>
+>> (A) the array member failed/got removed and
+>> (B) mdadm notices and instruct driver to refuse new writes;
+> 
+> I don't think the delay is relevant.
+> If writes are happening, then the kernel will get write error from the
+> failed devices and can flag the array as faulty.
+> If writes aren't happening, then it no important cost in the "device is
+> removed" message going up to user-space and back.
+
+The problem with the time between userspace notice something is wrong
+and "warn" the kernel to stop writes is that many writes will be sent
+to the device in this mean time, and they can completed later - handling
+async completions of dead devices proved to be tricky, at least in my
+approach.
+Also, writeback threads will be filled with I/Os to be written to the
+dead devices too, this is other part of the problem.
+
+If you have suggestions to improve my approach, or perhaps a totally
+different idea than mine, I highly appreciate the feedback.
+
+Thank you very much for the attention.
+Cheers,
+
+
+Guilherme
+
+> 
+> NeilBrown
+> 
+>>
+>> between (A) and (B), those writes are seen as completed, since they are
+>> indeed complete (at least, they are fine from the page cache point of
+>> view). Then, writeback will try to write those, which will cause
+>> problems or they will complete in a corrupted form (the file will
+>> be present in the array's filesystem after array is restored, but
+>> corrupted).
+>>
+>> So, the in-kernel mechanism avoided most part of window (A)-(B),
+>> although it seems we still have some problems when nesting arrays,
+>> due to this same window, even with the in-kernel mechanism (given the
+>> fact it takes some time to remove the top array when a pretty "far"
+>> bottom-member is failed).
+>>
+>> More suggestions on how to deal with this in a definitive manner are
+>> highly appreciated.
+>> Thanks,
+>>
+>>
+>> Guilherme
