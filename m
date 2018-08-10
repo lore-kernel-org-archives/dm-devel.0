@@ -1,8 +1,8 @@
-From: Ilya Dryomov <idryomov@gmail.com>
-Subject: [PATCH] dm cache metadata: set dirty on all cache blocks
-	after a crash
-Date: Thu,  9 Aug 2018 18:22:57 +0200
-Message-ID: <20180809162257.30800-1-idryomov@gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm: check the sector size of underlying device
+ when verifying start
+Date: Fri, 10 Aug 2018 11:23:08 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1808101122300.16981@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,126 +16,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: Mike Snitzer <msnitzer@redhat.com>, Ondrej Kozina <okozina@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Quoting Documentation/device-mapper/cache.txt:
+It was found out that these commands would fail:
+# modprobe scsi_debug dev_size_mb=128 sector_size=512
+# dmsetup create crypt0 --table "0 245752 crypt cipher_null-ecb - 0 /dev/sda 16385 1 sector_size:4096"
+with the error
+"device-mapper: table: 253:0: start=16385 not aligned to h/w logical block size 4096 of sda"
 
-  The 'dirty' state for a cache block changes far too frequently for us
-  to keep updating it on the fly.  So we treat it as a hint.  In normal
-  operation it will be written when the dm device is suspended.  If the
-  system crashes all cache blocks will be assumed dirty when restarted.
+The logic incorrectly checks the starting sector offset on the underlying
+device against the block size of the device that is being created.
 
-This got broken in commit f177940a8091 ("dm cache metadata: switch to
-using the new cursor api for loading metadata") in 4.9, which removed
-the code that consulted cmd->clean_when_opened (CLEAN_SHUTDOWN on-disk
-flag) when loading cache blocks.  This results in data corruption on an
-unclean shutdown with dirty cache blocks on the fast device.  After the
-crash those blocks are considired clean and may get evicted from the
-cache at any time.  This can be demonstrated by doing a lot of reads
-to trigger individual evictions, but uncache is more predictable:
+This patch fixes it by checking the starting sector offset against the
+block size of the underlying device, not the device that is being created.
 
-  ### Disable auto-activation in lvm.conf to be able to do uncache in
-  ### time (i.e. see uncache doing flushing) when the fix is applied.
-
-  # xfs_io -d -c 'pwrite -b 4M -S 0xaa 0 1G' /dev/vdb
-  # vgcreate vg_cache /dev/vdb /dev/vdc
-  # lvcreate -L 1G -n lv_slowdev vg_cache /dev/vdb
-  # lvcreate -L 512M -n lv_cachedev vg_cache /dev/vdc
-  # lvcreate -L 256M -n lv_metadev vg_cache /dev/vdc
-  # lvconvert --type cache-pool --cachemode writeback vg_cache/lv_cachedev --poolmetadata vg_cache/lv_metadev
-  # lvconvert --type cache vg_cache/lv_slowdev --cachepool vg_cache/lv_cachedev
-  # xfs_io -d -c 'pwrite -b 4M -S 0xbb 0 512M' /dev/mapper/vg_cache-lv_slowdev
-  # xfs_io -d -c 'pread -v 254M 512' /dev/mapper/vg_cache-lv_slowdev | head -n 2
-  0fe00000:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
-  0fe00010:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
-  # dmsetup status vg_cache-lv_slowdev
-  0 2097152 cache 8 27/65536 128 8192/8192 1 100 0 0 0 8192 7065 2 metadata2 writeback 2 migration_threshold 2048 smq 0 rw -
-                                                            ^^^^
-                                7065 * 64k = 441M yet to be written to the slow device
-  # echo b >/proc/sysrq-trigger
-
-  # vgchange -ay vg_cache
-  # xfs_io -d -c 'pread -v 254M 512' /dev/mapper/vg_cache-lv_slowdev | head -n 2
-  0fe00000:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
-  0fe00010:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
-  # lvconvert --uncache vg_cache/lv_slowdev
-  Flushing 0 blocks for cache vg_cache/lv_slowdev.
-  Logical volume "lv_cachedev" successfully removed
-  Logical volume vg_cache/lv_slowdev is not cached.
-  # xfs_io -d -c 'pread -v 254M 512' /dev/mapper/vg_cache-lv_slowdev | head -n 2
-  0fe00000:  aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa  ................
-  0fe00010:  aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa  ................
-
-This is the case with both v1 and v2 cache pool metatata formats.
-
-After applying this patch:
-
-  # vgchange -ay vg_cache
-  # xfs_io -d -c 'pread -v 254M 512' /dev/mapper/vg_cache-lv_slowdev | head -n 2
-  0fe00000:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
-  0fe00010:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
-  # lvconvert --uncache vg_cache/lv_slowdev
-  Flushing 3724 blocks for cache vg_cache/lv_slowdev.
-  ...
-  Flushing 71 blocks for cache vg_cache/lv_slowdev.
-  Logical volume "lv_cachedev" successfully removed
-  Logical volume vg_cache/lv_slowdev is not cached.
-  # xfs_io -d -c 'pread -v 254M 512' /dev/mapper/vg_cache-lv_slowdev | head -n 2
-  0fe00000:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
-  0fe00010:  bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb  ................
-
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Cc: stable@vger.kernel.org
-Fixes: f177940a8091 ("dm cache metadata: switch to using the new cursor api for loading metadata")
-Signed-off-by: Ilya Dryomov <idryomov@gmail.com>
----
- drivers/md/dm-cache-metadata.c | 10 +++++++---
- 1 file changed, 7 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
-index 0d7212410e21..8294a780b579 100644
---- a/drivers/md/dm-cache-metadata.c
-+++ b/drivers/md/dm-cache-metadata.c
-@@ -1322,6 +1322,7 @@ static int __load_mapping_v1(struct dm_cache_metadata *cmd,
+---
+ drivers/md/dm-table.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: linux-2.6/drivers/md/dm-table.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-table.c	2018-08-10 15:18:31.410000000 +0200
++++ linux-2.6/drivers/md/dm-table.c	2018-08-10 15:18:31.410000000 +0200
+@@ -356,7 +356,7 @@ static int device_area_is_invalid(struct
+ 	if (logical_block_size_sectors <= 1)
+ 		return 0;
  
- 	dm_oblock_t oblock;
- 	unsigned flags;
-+	bool dirty = true;
- 
- 	dm_array_cursor_get_value(mapping_cursor, (void **) &mapping_value_le);
- 	memcpy(&mapping, mapping_value_le, sizeof(mapping));
-@@ -1332,8 +1333,10 @@ static int __load_mapping_v1(struct dm_cache_metadata *cmd,
- 			dm_array_cursor_get_value(hint_cursor, (void **) &hint_value_le);
- 			memcpy(&hint, hint_value_le, sizeof(hint));
- 		}
-+		if (cmd->clean_when_opened)
-+			dirty = flags & M_DIRTY;
- 
--		r = fn(context, oblock, to_cblock(cb), flags & M_DIRTY,
-+		r = fn(context, oblock, to_cblock(cb), dirty,
- 		       le32_to_cpu(hint), hints_valid);
- 		if (r) {
- 			DMERR("policy couldn't load cache block %llu",
-@@ -1361,7 +1364,7 @@ static int __load_mapping_v2(struct dm_cache_metadata *cmd,
- 
- 	dm_oblock_t oblock;
- 	unsigned flags;
--	bool dirty;
-+	bool dirty = true;
- 
- 	dm_array_cursor_get_value(mapping_cursor, (void **) &mapping_value_le);
- 	memcpy(&mapping, mapping_value_le, sizeof(mapping));
-@@ -1372,8 +1375,9 @@ static int __load_mapping_v2(struct dm_cache_metadata *cmd,
- 			dm_array_cursor_get_value(hint_cursor, (void **) &hint_value_le);
- 			memcpy(&hint, hint_value_le, sizeof(hint));
- 		}
-+		if (cmd->clean_when_opened)
-+			dirty = dm_bitset_cursor_get_value(dirty_cursor);
- 
--		dirty = dm_bitset_cursor_get_value(dirty_cursor);
- 		r = fn(context, oblock, to_cblock(cb), dirty,
- 		       le32_to_cpu(hint), hints_valid);
- 		if (r) {
--- 
-2.14.4
+-	if (start & (logical_block_size_sectors - 1)) {
++	if (start & (bdev_logical_block_size(dev->bdev) / 512 - 1)) {
+ 		DMWARN("%s: start=%llu not aligned to h/w "
+ 		       "logical block size %u of %s",
+ 		       dm_device_name(ti->table->md),
