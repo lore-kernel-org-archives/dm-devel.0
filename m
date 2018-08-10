@@ -1,15 +1,14 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: check the sector size of underlying device when
- verifying start
-Date: Fri, 10 Aug 2018 11:56:51 -0400
-Message-ID: <20180810155651.GA22384@redhat.com>
-References: <alpine.LRH.2.02.1808101122300.16981@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: Re: dm-crypt: don't decrease device limits
+Date: Fri, 10 Aug 2018 12:11:41 -0400
+Message-ID: <20180810161141.GB22384@redhat.com>
+References: <alpine.LRH.2.02.1808101123110.16981@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1808101122300.16981@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1808101123110.16981@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,20 +25,41 @@ List-Id: dm-devel.ids
 On Fri, Aug 10 2018 at 11:23am -0400,
 Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-> It was found out that these commands would fail:
-> # modprobe scsi_debug dev_size_mb=128 sector_size=512
-> # dmsetup create crypt0 --table "0 245752 crypt cipher_null-ecb - 0 /dev/sda 16385 1 sector_size:4096"
-> with the error
-> "device-mapper: table: 253:0: start=16385 not aligned to h/w logical block size 4096 of sda"
+> dm-crypt should only increase device limits, it should not decrease them.
 > 
-> The logic incorrectly checks the starting sector offset on the underlying
-> device against the block size of the device that is being created.
-> 
-> This patch fixes it by checking the starting sector offset against the
-> block size of the underlying device, not the device that is being created.
+> This fixes a bug where the user could create a crypt device with 1024
+> sector size on the top of scsi device that had 4096 logical sectors. The
+> limit 4096 would be lost and the user could incorrectly send 1024-I/Os to
+> the crypt device.
 > 
 > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: stable@vger.kernel.org
+> 
+> ---
+>  drivers/md/dm-crypt.c |    8 +++-----
+>  1 file changed, 3 insertions(+), 5 deletions(-)
+> 
+> Index: linux-2.6/drivers/md/dm-crypt.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-crypt.c	2018-08-10 15:02:26.700000000 +0200
+> +++ linux-2.6/drivers/md/dm-crypt.c	2018-08-10 15:28:02.170000000 +0200
+> @@ -3072,11 +3072,9 @@ static void crypt_io_hints(struct dm_tar
+>  	 */
+>  	limits->max_segment_size = PAGE_SIZE;
+>  
+> -	if (cc->sector_size != (1 << SECTOR_SHIFT)) {
+> -		limits->logical_block_size = cc->sector_size;
+> -		limits->physical_block_size = cc->sector_size;
+> -		blk_limits_io_min(limits, cc->sector_size);
+> -	}
+> +	limits->logical_block_size = max(limits->logical_block_size, cc->sector_size);
+> +	limits->physical_block_size = max(limits->physical_block_size, (unsigned)cc->sector_size);
+> +	blk_limits_io_min(limits, cc->sector_size);
+>  }
+>  
+>  static struct target_type crypt_target = {
 
-tweaked like we discussed and staged for 4.19 here:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.19&id=b2f9960fd34e6dddba7975133b84263a2f594a20
+tweaked and staged for 4.19 here:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.19&id=08575fd060d7f88f674509461b32d86b272093d9
+
+I switched to using max_t() and stacked io_min rather than impose that
+it is cc->sector_size.
