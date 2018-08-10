@@ -1,8 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm: check the sector size of underlying device
- when verifying start
-Date: Fri, 10 Aug 2018 11:23:08 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1808101122300.16981@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH] dm-crypt: don't decrease device limits
+Date: Fri, 10 Aug 2018 11:23:56 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1808101123110.16981@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -20,35 +19,35 @@ To: Mike Snitzer <msnitzer@redhat.com>, Ondrej Kozina <okozina@redhat.com>, "Ala
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-It was found out that these commands would fail:
-# modprobe scsi_debug dev_size_mb=128 sector_size=512
-# dmsetup create crypt0 --table "0 245752 crypt cipher_null-ecb - 0 /dev/sda 16385 1 sector_size:4096"
-with the error
-"device-mapper: table: 253:0: start=16385 not aligned to h/w logical block size 4096 of sda"
+dm-crypt should only increase device limits, it should not decrease them.
 
-The logic incorrectly checks the starting sector offset on the underlying
-device against the block size of the device that is being created.
-
-This patch fixes it by checking the starting sector offset against the
-block size of the underlying device, not the device that is being created.
+This fixes a bug where the user could create a crypt device with 1024
+sector size on the top of scsi device that had 4096 logical sectors. The
+limit 4096 would be lost and the user could incorrectly send 1024-I/Os to
+the crypt device.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
 
 ---
- drivers/md/dm-table.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/md/dm-crypt.c |    8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-table.c
+Index: linux-2.6/drivers/md/dm-crypt.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-table.c	2018-08-10 15:18:31.410000000 +0200
-+++ linux-2.6/drivers/md/dm-table.c	2018-08-10 15:18:31.410000000 +0200
-@@ -356,7 +356,7 @@ static int device_area_is_invalid(struct
- 	if (logical_block_size_sectors <= 1)
- 		return 0;
+--- linux-2.6.orig/drivers/md/dm-crypt.c	2018-08-10 15:02:26.700000000 +0200
++++ linux-2.6/drivers/md/dm-crypt.c	2018-08-10 15:28:02.170000000 +0200
+@@ -3072,11 +3072,9 @@ static void crypt_io_hints(struct dm_tar
+ 	 */
+ 	limits->max_segment_size = PAGE_SIZE;
  
--	if (start & (logical_block_size_sectors - 1)) {
-+	if (start & (bdev_logical_block_size(dev->bdev) / 512 - 1)) {
- 		DMWARN("%s: start=%llu not aligned to h/w "
- 		       "logical block size %u of %s",
- 		       dm_device_name(ti->table->md),
+-	if (cc->sector_size != (1 << SECTOR_SHIFT)) {
+-		limits->logical_block_size = cc->sector_size;
+-		limits->physical_block_size = cc->sector_size;
+-		blk_limits_io_min(limits, cc->sector_size);
+-	}
++	limits->logical_block_size = max(limits->logical_block_size, cc->sector_size);
++	limits->physical_block_size = max(limits->physical_block_size, (unsigned)cc->sector_size);
++	blk_limits_io_min(limits, cc->sector_size);
+ }
+ 
+ static struct target_type crypt_target = {
