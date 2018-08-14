@@ -1,85 +1,111 @@
-From: Sotirios-Efstathios Maneas <smaneas@cs.toronto.edu>
-Subject: Dm-flakey Module
-Date: Sun, 12 Aug 2018 20:54:49 -0400
-Message-ID: <91F1B2B0-A10A-4BE8-8EC6-28818609F0CA@cs.toronto.edu>
-Mime-Version: 1.0 (Mac OS X Mail 11.5 \(3445.9.1\))
-Content-Type: multipart/mixed; boundary="===============5452813803102494727=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-bufio: adjust the reserved buffer for dm-verify-target.
+Date: Tue, 14 Aug 2018 16:32:46 -0400
+Message-ID: <20180814203245.GA15636@redhat.com>
+References: <1533710457-6411-1-git-send-email-jin.xiao@intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1533710457-6411-1-git-send-email-jin.xiao@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: xiao jin <jin.xiao@intel.com>, Mikulas Patocka <mpatocka@redhat.com>
+Cc: agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, yanmin.zhang@intel.com
 List-Id: dm-devel.ids
 
+On Wed, Aug 08 2018 at  2:40am -0400,
+xiao jin <jin.xiao@intel.com> wrote:
 
---===============5452813803102494727==
-Content-Type: multipart/alternative;
-	boundary="Apple-Mail=_D0FAAC21-04BD-4495-A306-C3F725532F72"
+> We hit the BUG() report at include/linux/scatterlist.h:144!
+> The callback is as bellow:
+>   => verity_work
+>   => verity_hash_for_block
+>   => verity_verify_level
+>   => verity_hash
+>   => verity_hash_update
+>   => sg_init_one
+>   => sg_set_buf
+> 
+> More debug shows the root cause. When creating dufio client it
+> uses the __vmalloc() to allocate the buffer data for the reserved
+> dm_buffer. The buffer that allocated by the __vmalloc() is invalid
+> according to the __virt_addr_valid().
+> 
+> Mostly the reserved dm_buffer is not touched. But occasionally
+> it might fail to allocate the dm_buffer data when we try to
+> allocate in the __alloc_buffer_wait_no_callback(). Then it has
+> to take the reserved dm_buffer for usage. Finally it reports the
+> BUG() as virt_addr_valid() detects the buffer data address is invalid.
+> 
+> The patch is to adjust the reserved buffer for dm-verity-target. We
+> allocated two dm_buffers into the reserved buffers list when creating
+> the buffer interface. The first dm_buffer in the reserved buffer list
+> is allocated by the __vmalloc(), it's not used after that. The second
+> dm_buffer in the reserved buffer list is allocated by the
+> __get_free_pages() which can be consumed after that.
+> 
+> Signed-off-by: xiao jin <jin.xiao@intel.com>
+> ---
+>  drivers/md/dm-bufio.c         | 4 ++--
+>  drivers/md/dm-verity-target.c | 2 +-
+>  2 files changed, 3 insertions(+), 3 deletions(-)
+> 
+> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+> index dc385b7..3b7ca5e 100644
+> --- a/drivers/md/dm-bufio.c
+> +++ b/drivers/md/dm-bufio.c
+> @@ -841,7 +841,7 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
+>  			tried_noio_alloc = true;
+>  		}
+>  
+> -		if (!list_empty(&c->reserved_buffers)) {
+> +		if (!c->need_reserved_buffers) {
+>  			b = list_entry(c->reserved_buffers.next,
+>  				       struct dm_buffer, lru_list);
+>  			list_del(&b->lru_list);
+> @@ -1701,7 +1701,7 @@ struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsign
+>  		goto bad;
+>  	}
+>  
+> -	while (c->need_reserved_buffers) {
+> +	if (list_empty(&c->reserved_buffers)) {
+>  		struct dm_buffer *b = alloc_buffer(c, GFP_KERNEL);
+>  
+>  		if (!b) {
 
+Point was to allocate N buffers (as accounted in
+c->need_reserved_buffers).  This change just allocates a single one.
+Why?
 
---Apple-Mail=_D0FAAC21-04BD-4495-A306-C3F725532F72
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain;
-	charset=us-ascii
+Your header isn't clear on this at all.
 
-Dear developers,
+> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+> index 12decdbd7..40c66fc 100644
+> --- a/drivers/md/dm-verity-target.c
+> +++ b/drivers/md/dm-verity-target.c
+> @@ -1107,7 +1107,7 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+>  	v->hash_blocks = hash_position;
+>  
+>  	v->bufio = dm_bufio_client_create(v->hash_dev->bdev,
+> -		1 << v->hash_dev_block_bits, 1, sizeof(struct buffer_aux),
+> +		1 << v->hash_dev_block_bits, 2, sizeof(struct buffer_aux),
+>  		dm_bufio_alloc_callback, NULL);
+>  	if (IS_ERR(v->bufio)) {
+>  		ti->error = "Cannot initialize dm-bufio";
+> -- 
+> 2.7.4
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 
-My name is Stathis Maneas and currently, I am graduate student at the =
-University of Toronto, conducting research on systems' reliability.
+It isn't at all clear from my initial review that what you're doing
+makes any sense.
 
-Based on the source code of dm-flakey (as found in the latest version of =
-the Linux kernel), if I may, I would like to kindly clarify an =
-implementation detail
-regarding the flakey_map() function. Specifically, I would like to find =
-out what's the difference between simply returning DM_MAPIO_KILL against =
-returning
-DM_MAPIO_SUBMITTED after invoking bio_io_error(bio).
+Seems like you're just papering over bufio's use of !__virt_addr_valid()
+memory in unintuitive ways.
 
-Thanks a lot in advance and I look forward to your response.
+Mikulas, can you see a better way forward?
 
-Kind regards,
-Stathis Maneas
-
-
---Apple-Mail=_D0FAAC21-04BD-4495-A306-C3F725532F72
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/html;
-	charset=us-ascii
-
-<html><head><meta http-equiv=3D"Content-Type" content=3D"text/html; =
-charset=3Dus-ascii"></head><body style=3D"word-wrap: break-word; =
--webkit-nbsp-mode: space; line-break: after-white-space;" class=3D""><div =
-class=3D"">Dear developers,</div><div class=3D""><br class=3D""></div><div=
- class=3D"">My name is Stathis Maneas and currently, I am graduate =
-student at the University of Toronto, conducting research on systems' =
-reliability.</div><div class=3D""><br class=3D""></div><div =
-class=3D"">Based on the source code of dm-flakey (as found in the latest =
-version of the Linux kernel), if I may, I would like to kindly clarify =
-an implementation detail</div><div class=3D"">regarding the <i =
-class=3D"">flakey_map()</i> function. Specifically, I would like to find =
-out what's the difference between simply returning <i =
-class=3D"">DM_MAPIO_KILL</i> against returning</div><div class=3D""><i =
-class=3D"">DM_MAPIO_SUBMITTED</i> after invoking <i =
-class=3D"">bio_io_error(bio)</i>.</div><div class=3D""><br =
-class=3D""></div><div class=3D"">Thanks a lot in advance and I look =
-forward to your response.</div><div class=3D""><br class=3D""></div><div =
-class=3D"">Kind regards,</div><div class=3D"">Stathis Maneas</div><div =
-class=3D""><br class=3D""></div></body></html>=
-
---Apple-Mail=_D0FAAC21-04BD-4495-A306-C3F725532F72--
-
-
---===============5452813803102494727==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5452813803102494727==--
+Mike
