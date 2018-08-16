@@ -1,13 +1,13 @@
-From: Changwei Ge <gechangwei@live.cn>
-Subject: [RFC] Can DM pass SCSI command to path now?
-Date: Thu, 16 Aug 2018 11:56:48 +0000
-Message-ID: <HK0PR06MB25611BB82C50809642EFC4C5D53E0@HK0PR06MB2561.apcprd06.prod.outlook.com>
+From: joerg.diederich@mail.com
+Subject: dm raid1,
+ component device size check seem to fail at 32bit arch using u64
+ sector_t
+Date: Thu, 16 Aug 2018 19:00:33 +0200
+Message-ID: <trinity-dfe34d0e-9507-409e-b59f-ca07448dec4d-1534438832979@3c-app-mailcom-lxa16>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-Content-ID: <48675B074E85A1469D68A5A413A79992@apcprd06.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,20 +17,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
-Cc: "liu.cong@h3c.com" <liu.cong@h3c.com>, "ge.changwei@h3c.com" <ge.changwei@h3c.com>, "changlimin@h3c.com" <changlimin@h3c.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi list,
-
-Recently, I found that block request can't take SCSI CDB any more.
-
-So, can we still pass SCSI command to DM device which will clone the 
-request and transfer it real path?
-
-Otherwise, we query current path of DM each time before issuing a SCSI 
-command?
-
-Thanks,
-
-Changwei
+aGVsbG8sCmhhdmUgbG9va2VkIGEgd2hpbGUgZm9yIGFueSBjaGFuZ2VzIGFuZCBpc3N1ZXMgZXhp
+c3RpbmcgdG8gdGhpcyBhbHJlYWR5LCBidXQgZGlkIG5vdCBmb3VuZCBhbnkuIHdoaWNoIGlzIGhv
+cGVmdWxseSBjb3JyZWN0LgrCoApUaGlzIGlzIApMaW51eCBnb256YWxlcyA0LjE4LjAtZ2VudG9v
+ICMzIFNNUCBQUkVFTVBUIFdlZCBBdWcgMTUgMTU6MzM6NDUgQ0VTVCAyMDE4IGFybXY3bCBBUk12
+NyBQcm9jZXNzb3IgcmV2IDMgKHY3bCkgU0FNU1VORyBFWFlOT1MgKEZsYXR0ZW5lZCBEZXZpY2Ug
+VHJlZSkgR05VL0xpbnV4ClBBVENIIFYyIDEyLzEyICgyMDE3LTEyLTA4IDEwOjU5OjU3IC0wNTAp
+IGludHJvZHVjZWQgCl9jaGVja19kYXRhX2Rldl9zZWN0b3JzIGluIHJhaWQuYwoKQ2FsY3VsYXRp
+b24gaW4gdGhlcmUgdXNlcyAKdG9fc2VjdG9yKHVuc2lnbmVkIGxvbmcgbikKCm9mIGEgc2VjdG9y
+X3QgdmFsdWUsIHdoaWNoIGlzIGEgdTY0IGluIGNhc2UgQ09ORklHX0xCREFGIGlzIGVuYWJsZWQu
+IEF0IGEgMzJiaXQgc3lzdGVtLCB0aGlzIHJlc3VsdHMgaW4gYSB3cm9uZyB2YWx1ZSBhbmQgdGhl
+IGludGVuZGVkIGNoZWNrIGZhaWxzLCB3aGljaCBpcyBleHBlY3RlZCB0byBiZSB3cm9uZy4gU2Vl
+IGV4YW1wbGUgdmFsdWVzIGF0IGEgdXNlZCBzeXN0ZW0gKGFybSAzMmJpdCwgMlRCIHJhaWQxKSBi
+ZWxvdy4KCkkgbWlnaHQgYmUgd3JvbmcsIGlmIHRoZXJlIGlzLCBtYXkgeW91IHBsZWFzZSBwcm92
+aWRlIGEgaGludCB0byBtZSBob3cgdG8gcHJvY2VlZCBoZXJlPyBDdXJyZW50bHksIHRoZXJlJ3Mg
+bm8gcGVyZmVjdCBwYXRjaCBhdmFpbGFibGUgaGVyZSwgYXMgaSBhZG1pdCBpanVzdCBzdGFydGVk
+IGludmVzdGlnYXRpbmcgdGhlIHNvdXJjZSBkdWUgdG8gdGhpcyBiZWhhdmlvci4KClRoYW5rcyBh
+IGxvdCAmIHJlZ2FyZHMsCkrDtnJnCgoKdGhlIHNhaWQgZXhhbXBsZSwgdGhlIG91dHB1dHMgaSdk
+IGFkZGVkClsgICA0OS4wMDQxMzVdIGRldmljZS1tYXBwZXI6IHJhaWQ6IF9jaGVja19kYXRhX2Rl
+dl9zZWN0b3JzClsgICA0OS4wMDQxNDldIGRldmljZS1tYXBwZXI6IHJhaWQ6IHNpemVvZihzZWN0
+b3JfdCkgOApbICAgNDkuMDA0MTYxXSBkZXZpY2UtbWFwcGVyOiByYWlkOiBzaXplb2YodW5zaWdu
+ZWQgbG9uZykgNApbICAgNDkuMDA0MjA2XSBkZXZpY2UtbWFwcGVyOiByYWlkOiBtZC5kZXZfc2Vj
+dG9ycyAxODA5NzkzMDI0LCB0aGF0IGlzIDkyNjYxNDAyODI4OCBieXRlcwpbICAgNDkuMDA0MjQy
+XSBkZXZpY2UtbWFwcGVyOiByYWlkOiByZGV2LT5zZWN0b3JzIDE4MDk3OTMwMjQsIHRoYXQgaXMg
+OTI2NjE0MDI4Mjg4IGJ5dGVzClsgICA0OS4wMDQzMTddIGRldmljZS1tYXBwZXI6IHJhaWQ6IGlf
+c2l6ZV9yZWFkKHJkZXYtPmJkZXYtPmJkX2lub2RlKSByZXR1cm5zIDkyNjYxNDAyODI4OApbICAg
+NDkuMDA0MzI3XSBkZXZpY2UtbWFwcGVyOiByYWlkOiBpX3NpemVfcmVhZChyZGV2LT5iZGV2LT5i
+ZF9pbm9kZSkgPj4gOSBpcyAxODA5NzkzMDI0ClsgICA0OS4wMDQzMzddIGRldmljZS1tYXBwZXI6
+IHJhaWQ6IHRvX3NlY3RvcihpX3NpemVfcmVhZChyZGV2LT5iZGV2LT5iZF9pbm9kZSkpIHJldHVy
+bnMgNjI0MjMwNApbICAgNDkuMDA0MzQ2XSBkZXZpY2UtbWFwcGVyOiByYWlkOiBkcyBpcyA2MjQy
+MzA0ClsgICA0OS4wMDQzNTZdIGRldmljZS1tYXBwZXI6IHJhaWQ6IEVycm9yCgrCoArCoAoKLS0K
+ZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVk
+aGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
