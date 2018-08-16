@@ -1,154 +1,166 @@
-From: "Xiao, Jin" <jin.xiao@intel.com>
-Subject: Re: dm-bufio: adjust the reserved buffer for dm-verify-target.
-Date: Thu, 16 Aug 2018 09:32:43 +0800
-Message-ID: <3995084e-4250-9c28-2fa1-b61add5fb2e9@intel.com>
-References: <1533710457-6411-1-git-send-email-jin.xiao@intel.com>
- <20180814203245.GA15636@redhat.com>
+From: Gilad Ben-Yossef <gilad@benyossef.com>
+Subject: Fwd: (2) FW: Use-after-free while dm-verity
+Date: Thu, 16 Aug 2018 09:53:40 +0700
+Message-ID: <CAOtvUMevF5ifUJ+nd=F0g7CrNRbP-nPx_LHnMCqeQGV=eeiZug@mail.gmail.com>
+References: <20180814083408epcms2p1980005414da7197755f798aa9ed47a4f@epcms2p1>
+	<20180816003535epcms2p6bba40fd6423d0bb605b4dec3866f84c9@epcms2p6>
+	<CGME20180814083408epcms2p1980005414da7197755f798aa9ed47a4f@epcms2p8>
+	<CAOtvUMd8qUm2A7DtQVSR_jZBM8Zihs6eBWshMbiTKJC0xU88vg@mail.gmail.com>
+	<20180816015056epcms2p8954563f824dc617ae13ab1364715159a@epcms2p8>
+	<CAOtvUMf-6gDb-qdokMptZ93MX2QOHjRCLyhmJAhswwc=No=10w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180814203245.GA15636@redhat.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, yanmin.zhang@intel.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAOtvUMf-6gDb-qdokMptZ93MX2QOHjRCLyhmJAhswwc=No=10w@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>, hosung0.kim@samsung.com, hyeon.chung@samsung.com
 List-Id: dm-devel.ids
 
-
-On 8/15/2018 4:32 AM, Mike Snitzer wrote:
-> On Wed, Aug 08 2018 at  2:40am -0400,
-> xiao jin <jin.xiao@intel.com> wrote:
->
->> We hit the BUG() report at include/linux/scatterlist.h:144!
->> The callback is as bellow:
->>    => verity_work
->>    => verity_hash_for_block
->>    => verity_verify_level
->>    => verity_hash
->>    => verity_hash_update
->>    => sg_init_one
->>    => sg_set_buf
->>
->> More debug shows the root cause. When creating dufio client it
->> uses the __vmalloc() to allocate the buffer data for the reserved
->> dm_buffer. The buffer that allocated by the __vmalloc() is invalid
->> according to the __virt_addr_valid().
->>
->> Mostly the reserved dm_buffer is not touched. But occasionally
->> it might fail to allocate the dm_buffer data when we try to
->> allocate in the __alloc_buffer_wait_no_callback(). Then it has
->> to take the reserved dm_buffer for usage. Finally it reports the
->> BUG() as virt_addr_valid() detects the buffer data address is invalid.
->>
->> The patch is to adjust the reserved buffer for dm-verity-target. We
->> allocated two dm_buffers into the reserved buffers list when creating
->> the buffer interface. The first dm_buffer in the reserved buffer list
->> is allocated by the __vmalloc(), it's not used after that. The second
->> dm_buffer in the reserved buffer list is allocated by the
->> __get_free_pages() which can be consumed after that.
->>
->> Signed-off-by: xiao jin <jin.xiao@intel.com>
->> ---
->>   drivers/md/dm-bufio.c         | 4 ++--
->>   drivers/md/dm-verity-target.c | 2 +-
->>   2 files changed, 3 insertions(+), 3 deletions(-)
->>
->> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
->> index dc385b7..3b7ca5e 100644
->> --- a/drivers/md/dm-bufio.c
->> +++ b/drivers/md/dm-bufio.c
->> @@ -841,7 +841,7 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
->>   			tried_noio_alloc = true;
->>   		}
->>   
->> -		if (!list_empty(&c->reserved_buffers)) {
->> +		if (!c->need_reserved_buffers) {
->>   			b = list_entry(c->reserved_buffers.next,
->>   				       struct dm_buffer, lru_list);
->>   			list_del(&b->lru_list);
->> @@ -1701,7 +1701,7 @@ struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsign
->>   		goto bad;
->>   	}
->>   
->> -	while (c->need_reserved_buffers) {
->> +	if (list_empty(&c->reserved_buffers)) {
->>   		struct dm_buffer *b = alloc_buffer(c, GFP_KERNEL);
->>   
->>   		if (!b) {
-> Point was to allocate N buffers (as accounted in
-> c->need_reserved_buffers).  This change just allocates a single one.
-> Why?
->
-> Your header isn't clear on this at all.
-
-Hi Mike,
-
-Currently alloc_buffer() when creating the client will use the 
-__vmalloc() to
-
-get the buffer data for c->reserved_buffers. If the c->reserved_buffers 
-is read to
-
-use in the failures case of buffer allocation in the 
-__alloc_buffer_wait_no_callback(),
-
-and the CONFIG_DEBUG_SG is enabled, we will hit the BUG() report.
-
-That's the problem I find in reality.
-
-
-I have some thinking to solve such issue. I think to keep the initial 
-buffer with the
-
-data from __vmalloc() in the c->reserved_buffers. But the reserved 
-buffer with the data
-
-from __vmalloc() can't be read to use. We can allocate more buffers with the
-
-data mode of DATA_MODE_SLAB or DATA_MODE_GET_FREE_PAGES for 
-c->reserved_buffers.
-
-Such reserved buffers can be used in the failures case of buffer allocation
-
-in the __alloc_buffer_wait_no_callback().
-
-
-I test the code on my device. I never see the BUG() report again. Feel 
-free to correct me.
-
-
-Thanks.
-
-
-Jin
-
->> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
->> index 12decdbd7..40c66fc 100644
->> --- a/drivers/md/dm-verity-target.c
->> +++ b/drivers/md/dm-verity-target.c
->> @@ -1107,7 +1107,7 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
->>   	v->hash_blocks = hash_position;
->>   
->>   	v->bufio = dm_bufio_client_create(v->hash_dev->bdev,
->> -		1 << v->hash_dev_block_bits, 1, sizeof(struct buffer_aux),
->> +		1 << v->hash_dev_block_bits, 2, sizeof(struct buffer_aux),
->>   		dm_bufio_alloc_callback, NULL);
->>   	if (IS_ERR(v->bufio)) {
->>   		ti->error = "Cannot initialize dm-bufio";
->> -- 
->> 2.7.4
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
-> It isn't at all clear from my initial review that what you're doing
-> makes any sense.
->
-> Seems like you're just papering over bufio's use of !__virt_addr_valid()
-> memory in unintuitive ways.
->
-> Mikulas, can you see a better way forward?
->
-> Mike
+SSBtaXNzZWQgc2VuZGluZyBteSByZXBseSB0byB0aGUgbGlzdCBieSBteXNlbGYgbWlzdGFrZSBz
+byBmb3J3YXJkaW5nLgotLS0tLS0tLS0tIEZvcndhcmRlZCBtZXNzYWdlIC0tLS0tLS0tLS0KRnJv
+bTogR2lsYWQgQmVuLVlvc3NlZiA8Z2lsYWRAYmVueW9zc2VmLmNvbT4KRGF0ZTogVGh1LCAxNiBB
+dWcgMjAxOCAwOTo0ODoxOSArMDcwMApTdWJqZWN0OiBSZTogKDIpIEZXOiBVc2UtYWZ0ZXItZnJl
+ZSB3aGlsZSBkbS12ZXJpdHkKVG86IGh5ZW9uLmNodW5nQHNhbXN1bmcuY29tCgpPbiA4LzE2LzE4
+LCDsoJXtmJzsl7AgPGh5ZW9uLmNodW5nQHNhbXN1bmcuY29tPiB3cm90ZToKPiBUaGFuayB5b3Ug
+Zm9yIHJlcGx5IGFuZCBzb3JyeSBmb3IgaW50dXJydXB0aW5nIHlvdXIgdmFjYXRpb24uCj4KCkVo
+LCBkb24ndCB3b3JyeSBhYm91dCBpdC4gSSBlbmpveSBrZXJuZWwgZGV2ZWxvcG1lbnQgd29yay4g
+SnVzdCBkb24ndAp0ZWxsIG15IHdpZmUuLi4gOi0pCj4KPgo+IEkgZ3Vlc3Mga3VubWFwX2F0b21p
+YyAvIGttYXBfYXRvbWljIGNvdWxkIGJlIHByb3RlY3RlZCBmcm9tIHNjaGVkdWxpbmcgYnV0Cj4g
+dGhlIG9wZXJhdGlvbiB1c2luZyB0aGUgcmVzb3VyY2UgbGlrZSBtZW1jb3B5IGNhbm5vdCBiZSBw
+cm90ZWN0ZWQsIHJpZ2h0Pwo+Cj4gUGxlYXNlIGxldCBtZSBrbm93IGlmIEkgd2FzIHdyb25nLgoK
+a21hcF9hdG9taWMoKSBkaXNhYmxlcyBwcmVlbXB0aW9uIHVudGlsIHRoZSBrdW5tYXAgb3BlcmF0
+aW9uIGFuZCBzbwpzY2hlZHVsaW5nIHNob3VsZCBub3QgYmUgcG9zc2libGUgd2hpbGUgdGhlIG1l
+bW9yeSBpcyBtYXBwZWQuCgoKPgo+Cj4KPiBJIGFtIHRlc3RpbmcgYWZ0ZXIgcmV2ZXJ0aW5nIGFu
+ZCByZXNvbHZpbmcgY29uZmljdCBub3cuIEJ1dCBhcyBJIHNhaWQgYmVmb3JlCj4gSSdtIG5vdCBz
+dXJlIGl0IGlzIG9rIGp1c3QgcmV2ZXJ0IG9ubHkgdGhpcyBvbmUuCj4KPiBJcyBpdCBvaz8KClRo
+ZSBwYXRjaCBzdGFuZHMgb24gaXRzIG93biBzbyB0aGF0IHNob3VsZCBiZSBvayBpZiB0aGF0IHBh
+dGNoIGlzIHRoZQpyb290IGNhdXNlIG9mIHRoZSBwcm9ibGVtIGJpdCBpZiB0aGUgcHJvYmxlbSBp
+cyBzb21lIHdoZXJlIGVsc2UgaXQKY291bGQgYWxzbyBiZSBoaWRpbmcgdGhlIHByb2JsZW0gc28g
+aXQgd291bGQgYmUgYmV0dGVyIHRvIHVuZGVyc3RhbmQKd2hhdCBpcyBnb2luZyBvbiBmaXJzdCBv
+ciBpdCBjb3VsZCBiaXRlIHlvdSBlbHNld2hlcmUuCgpHaWxhZAo+Cj4KPgo+IEJlc3QgUmVnYXJk
+cywKPgo+IEh5ZXllb24gQ2h1bmcKPgo+Cj4KPiAtLS0tLS0tLS0gT3JpZ2luYWwgTWVzc2FnZSAt
+LS0tLS0tLS0KPgo+IFNlbmRlciA6IEdpbGFkIEJlbi1Zb3NzZWYgPGdpbGFkQGJlbnlvc3NlZi5j
+b20+Cj4KPiBEYXRlIDogMjAxOC0wOC0xNiAwOTo1NyAoR01UKzkpCj4KPiBUaXRsZSA6IFJlOiBG
+VzogVXNlLWFmdGVyLWZyZWUgd2hpbGUgZG0tdmVyaXR5Cj4KPgo+Cj4gSGkgSHllb24sCj4KPiBP
+biBUaHUsIEF1ZyAxNiwgMjAxOCBhdCAzOjM1IEFNLCDsoJXtmJzsl7AgPGh5ZW9uLmNodW5nQHNh
+bXN1bmcuY29tPiB3cm90ZToKPj4KPj4gSGksCj4+Cj4+Cj4+Cj4+IFdlIGZvdW5kIHNvbWUgYXN5
+bmMgY29tbWl0IGFuZCBhcmUgd29uZGVyaW5nIGlmIHRoaXMgY291bGQgYmUgbWFrZSB0aGlzCj4+
+IGlzc3VlIG9yIG5vdC4KPj4KPj4gSSB3YW50IHRvIHRlc3QgYWZ0ZXIgcmV2ZXJ0aW5nIHRoaXMg
+YnV0IEknbSBub3Qgc3VyZSBpdCBpcyBvayB0byByZXZlcnQKPj4gb25seSB0aGlzIGNvbW1pdCBh
+bmQgd2hlbiBJIHJldmVydCBpdCB0aGVyZSdzIGEgY29uZmxpY3QuCj4+Cj4+Cj4+Cj4+IENvdWxk
+IHlvdSBwbGVhc2UgaGVscCBtZT8KPgo+Cj4gSSBhbSBvbiB2YWNhdGlvbiwgc28gcGxlYXNlIGV4
+Y3VzZSBhbnkgZGVsYXkgaW4gaGFuZGxpbmcgdGhpcy4gTHVja2lseSBJCj4gaGF2ZSBteSBsYXB0
+b3Agd2l0aCBtZSBhbmQgd2lsbCB0cnkgdG8gZG8gbWUgYmVzdCB0byBoZWxwLgo+Cj4gVGhlIGRl
+c2NyaXB0aW9uIGJlbG93IHJlbGF0ZXMgdG8gInVzZS1hZnRlci1mcmVlIi4gSSBqdXN0IHdhbnQg
+dG8gbWFrZSBzdXJlCj4gSSB1bmRlcnN0YW5kOiBkb2VzIHRoaXMgcmVsYXRlIHRvIHRoZSBtZW1j
+cHkgYWZ0ZXIgdW5tYXAsIHJpZ2h0Pwo+Cj4gTm9ybWFsbHksIEkgd291bGQgc2F5IHRoYXQgc2lu
+Y2Ugd2UgdXNlIGttYXBfYXRvbWljIHRvIG1hcCB0aGUgZGF0YSwKPiBwcmVlbXB0aW9uIHNob3Vs
+ZCBiZSBkaXNhYmxlZCBhbmQgc2NoZWR1bGluZyBzaG91bGQgbm90IGhhcHBlbiwgSSBiZWxpZXZl
+Lgo+Cj4gSSB3aWxsIG9ubHkgYmUgYWJsZSB0byB0YWtlIGEgbG9vayBhdCB0aGUgY29kZSBpbiB0
+aGUgZXZlbmluZywgYnV0IGluIHRoZQo+IG1lYW4gdGltZSwgY2FuIHlvdSB2ZXJpZnkgdGhlIGFy
+ZWEgdGhlIG1lbWNweSBpcyBhcHBsaWVkIHRvIGlzIG1hcHBlZCB3aXRoCj4ga21hcF9hdG9taWM/
+Cj4KPiB0aGFua3MhCj4gR2lsYWQKPgo+Pgo+Pgo+PiBjb21taXQgZDFhYzNmZjAwOGZiOWE0OGY5
+MWZjMTU5MjBiNGM4ZGIyNGMwZjAzZQo+PiBBdXRob3I6IEdpbGFkIEJlbi1Zb3NzZWYgPGdpbGFk
+QGJlbnlvc3NlZi5jb20+Cj4+IERhdGU6ICAgU3VuIEZlYiAxOSAxNDo0NjowNyAyMDE3ICswMjAw
+Cj4+Cj4+ICAgICBkbSB2ZXJpdHk6IHN3aXRjaCB0byB1c2luZyBhc3luY2hyb25vdXMgaGFzaCBj
+cnlwdG8gQVBJCj4+Cj4+ICAgICBVc2Ugb2YgdGhlIHN5bmNocm9ub3VzIGRpZ2VzdCBBUEkgbGlt
+aXRzIGRtLXZlcml0eSB0byB1c2luZyBwdXJlCj4+ICAgICBDUFUgYmFzZWQgYWxnb3JpdGhtIHBy
+b3ZpZGVycyBhbmQgcnVsZXMgb3V0IHRoZSB1c2Ugb2Ygb2ZmIENQVQo+PiAgICAgYWxnb3JpdGht
+IHByb3ZpZGVycyB3aGljaCBhcmUgbm9ybWFsbHkgYXN5bmNocm9ub3VzIGJ5IG5hdHVyZSwKPj4g
+ICAgIHBvdGVudGlhbGx5IGZyZWVpbmcgQ1BVIGN5Y2xlcy4KPj4KPj4gICAgIFRoaXMgY2FuIHJl
+ZHVjZSBwZXJmb3JtYW5jZSBwZXIgV2F0dCBpbiBzaXR1YXRpb25zIHN1Y2ggYXMgZHVyaW5nCj4+
+ICAgICBib290IHRpbWUgd2hlbiBhIGxvdCBvZiBjb25jdXJyZW50IGZpbGUgYWNjZXNzZXMgYXJl
+IG1hZGUgdG8gdGhlCj4+ICAgICBwcm90ZWN0ZWQgdm9sdW1lLgo+Pgo+PiAgICAgU2lnbmVkLW9m
+Zi1ieTogR2lsYWQgQmVuLVlvc3NlZiA8Z2lsYWRAYmVueW9zc2VmLmNvbT4KPj4gICAgIENDOiBF
+cmljIEJpZ2dlcnMgPGViaWdnZXJzM0BnbWFpbC5jb20+Cj4+ICAgICBDQzogT25kcmVqIE1vc27s
+sLztm75layA8b21vc25hY2VrK2xpbnV4LWNyeXB0b0BnbWFpbC5jb20+Cj4+ICAgICBUZXN0ZWQt
+Ynk6IE1pbGFuIEJyb3ogPGdtYXp5bGFuZEBnbWFpbC5jb20+Cj4+ICAgICBTaWduZWQtb2ZmLWJ5
+OiBNaWtlIFNuaXR6ZXIgPHNuaXR6ZXJAcmVkaGF0LmNvbT4KPj4KPj4KPj4KPj4KPj4KPj4g6rCQ
+7IKs7ZWp64uI64ukLgo+Pgo+PiDsoJXtmJzsl7Ag65Oc66a8Cj4+Cj4+Cj4+Cj4+Cj4+Cj4+IC0t
+LS0tLS0tLSBPcmlnaW5hbCBNZXNzYWdlIC0tLS0tLS0tLQo+Pgo+PiBTZW5kZXIgOiDsoJXtmJzs
+l7AgPGh5ZW9uLmNodW5nQHNhbXN1bmcuY29tPiBQcmluY2lwYWwKPj4gRW5naW5lZXIvUGxhdGZv
+cm3qsJzrsJztjIAoUy5MU0kpL+yCvOyEseyghOyekAo+Pgo+PiBEYXRlIDogMjAxOC0wOC0xNCAx
+NzozNCAoR01UKzkpCj4+Cj4+IFRpdGxlIDogVXNlLWFmdGVyLWZyZWUgd2hpbGUgZG0tdmVyaXR5
+Cj4+Cj4+Cj4+Cj4+IEhpLAo+Pgo+PiBJJ20gYSBzYW1zdW5nIGVuZ2luZWVyIHdobyBpcyByZXNw
+b25zaWJsZSBmb3IgZG0tdmVyaXR5Lgo+Pgo+Pgo+Pgo+PiBXZSBqdXN0IGVuYWJsZWQgZG0tdmVy
+aXR5IGZvciBhbmRyb2lkIHZlcmZpZWQgYm9vdCAyLjAgKHVzaW5nIGxpbnV4Cj4+IDQuMTQuNTYp
+Lgo+Pgo+PiBBZnRlciBlbmFibGluZywgd2UgbWV0IGtlcm5lbCBwYW5pYyBpc3N1ZSBjYXVzZWQg
+YnkgZG0tdmVyaXR5IGZyZXF1ZW50bHkKPj4gYW5kIGl0IGFsd2F5cyBzaG93ZWQgc2FtZSBjYWxs
+IHN0YWNrIGxpa2UgYmVsb3cuCj4+Cj4+Cj4+Cj4+IENvdWxkIHlvdSBwbGVhc2UgbGV0IG1lIGtu
+b3cgSWYgeW91IGtub3cgYW55IHNpbWlsYXIgaXNzdWUgb3IgaGF2ZSBhbnkKPj4gb3Bpbmlvbj8K
+Pj4KPj4gSWYgdGhpcyBtYWlsIGxpc3QgaXMgbm90IHJpZ2h0LCBwbGVhc2UgZm9yd2FyZCBwcm9w
+ZXIgcGVyc29uIG9yIGxldCBtZQo+PiBrbm93Lgo+Pgo+Pgo+Pgo+PiBUaGFua3MgaW4gYWR2YW5j
+ZS4KPj4KPj4KPj4KPj4gPCA0PlsgNDY4Ni4zODQ2NzldICBbNTogIGt3b3JrZXIvdTE2OjE6ICAg
+NThdIFdvcmtxdWV1ZToga3Zlcml0eWQKPj4gdmVyaXR5X3dvcmsKPj4gPCA0PlsgNDY4Ni4zODQ2
+OTFdICBbNTogIGt3b3JrZXIvdTE2OjE6ICAgNThdIHRhc2s6IGZmZmZmZmM4NzQyYTAwODAKPj4g
+dGFzay5zdGFjazogZmZmZmZmODAwYjFkODAwMAo+PiA8IDQ+WyA0Njg2LjM4NDcwNV0gIFs1OiAg
+a3dvcmtlci91MTY6MTogICA1OF0gUEMgaXMgYXQgX19tZW1jcHkrMHg3MC8weDE4MAo+PiA8IDQ+
+WyA0Njg2LjM4NDcxOF0gIFs1OiAga3dvcmtlci91MTY6MTogICA1OF0gTFIgaXMgYXQKPj4gY3J5
+cHRvX3NoYTFfdXBkYXRlKzB4OTQvMHhlNAo+Pgo+PiAuLi4KPj4KPj4gPDQ+WyA0Njg2LjM4NzQ4
+OF0gIFs1OiAga3dvcmtlci91MTY6MTogICA1OF0gWzxmZmZmZmY4MDA4YjA3MzcwPl0KPj4gX19t
+ZW1jcHkrMHg3MC8weDE4MAo+PiA8IDQ+WyA0Njg2LjM4NzUwM10gIFs1OiAga3dvcmtlci91MTY6
+MTogICA1OF0gWzxmZmZmZmY4MDA4M2EwZjZjPl0KPj4gY3J5cHRvX3NoYXNoX3VwZGF0ZSsweDJj
+LzB4MzQKPj4gPCA0PlsgNDY4Ni4zODc1MTRdICBbNTogIGt3b3JrZXIvdTE2OjE6ICAgNThdIFs8
+ZmZmZmZmODAwODNhMTJjMD5dCj4+IHNoYXNoX2FoYXNoX3VwZGF0ZSsweDNjLzB4ODAKPj4gPCA0
+PlsgNDY4Ni4zODc1MjVdICBbNTogIGt3b3JrZXIvdTE2OjE6ICAgNThdIFs8ZmZmZmZmODAwODNh
+MTYzOD5dCj4+IHNoYXNoX2FzeW5jX3VwZGF0ZSsweDEwLzB4MTgKPj4gPCA0PlsgNDY4Ni4zODc1
+MzhdICBbNTogIGt3b3JrZXIvdTE2OjE6ICAgNThdIFs8ZmZmZmZmODAwODgyNDk3ND5dCj4+IHZl
+cml0eV9oYXNoX3VwZGF0ZSsweDUwLzB4ZGMKPj4gPCA0PlsgNDY4Ni4zODc1NDldICBbNTogIGt3
+b3JrZXIvdTE2OjE6ICAgNThdIFs8ZmZmZmZmODAwODgyNDdjMD5dCj4+IHZlcml0eV9oYXNoKzB4
+NTgvMHhhMAo+PiA8IDQ+WyA0Njg2LjM4NzU2MF0gIFs1OiAga3dvcmtlci91MTY6MTogICA1OF0g
+WzxmZmZmZmY4MDA4ODI0Yzk4Pl0KPj4gdmVyaXR5X3ZlcmlmeV9sZXZlbCsweGM0LzB4MTkwCj4+
+IDwgND5bIDQ2ODYuMzg3NTcxXSAgWzU6ICBrd29ya2VyL3UxNjoxOiAgIDU4XSBbPGZmZmZmZjgw
+MDg4MjRiYzQ+XQo+PiB2ZXJpdHlfaGFzaF9mb3JfYmxvY2srMHhmMC8weDEwMAo+PiA8IDQ+WyA0
+Njg2LjM4NzU4MV0gIFs1OiAga3dvcmtlci91MTY6MTogICA1OF0gWzxmZmZmZmY4MDA4ODI0NGM4
+Pl0KPj4gZmVjX3JlYWRfYnVmcysweDE0NC8weDMwYwo+PiA8IDQ+WyA0Njg2LjM4NzU5Ml0gIFs1
+OiAga3dvcmtlci91MTY6MTogICA1OF0gWzxmZmZmZmY4MDA4ODIzNzMwPl0KPj4gZmVjX2RlY29k
+ZV9yc2IrMHgxNzAvMHg0YmMKPj4gPCA0PlsgNDY4Ni4zODc2MDNdICBbNTogIGt3b3JrZXIvdTE2
+OjE6ICAgNThdIFs8ZmZmZmZmODAwODgyMzUyND5dCj4+IHZlcml0eV9mZWNfZGVjb2RlKzB4ZTgv
+MHgxODQKPj4gPCA0PlsgNDY4Ni4zODc2MTNdICBbNTogIGt3b3JrZXIvdTE2OjE6ICAgNThdIFs8
+ZmZmZmZmODAwODgyNGQzOD5dCj4+IHZlcml0eV92ZXJpZnlfbGV2ZWwrMHgxNjQvMHgxOTAKPj4g
+PCA0PlsgNDY4Ni4zODc2MjNdICBbNTogIGt3b3JrZXIvdTE2OjE6ICAgNThdIFs8ZmZmZmZmODAw
+ODgyNGJjND5dCj4+IHZlcml0eV9oYXNoX2Zvcl9ibG9jaysweGYwLzB4MTAwCj4+IDwgND5bIDQ2
+ODYuMzg3NjM0XSAgWzU6ICBrd29ya2VyL3UxNjoxOiAgIDU4XSBbPGZmZmZmZjgwMDg4MjY0Y2M+
+XQo+PiB2ZXJpdHlfd29yaysweGY4LzB4MzA4Cj4+IDwgND5bIDQ2ODYuMzg3NjQ2XSAgWzU6ICBr
+d29ya2VyL3UxNjoxOiAgIDU4XSBbPGZmZmZmZjgwMDgwY2I1ZWM+XQo+PiBwcm9jZXNzX29uZV93
+b3JrKzB4MmQ0LzB4NjA4Cj4+IDwgND5bIDQ2ODYuMzg3NjU2XSAgWzU6ICBrd29ya2VyL3UxNjox
+OiAgIDU4XSBbPGZmZmZmZjgwMDgwY2JiZjQ+XQo+PiB3b3JrZXJfdGhyZWFkKzB4MjIwLzB4MzQw
+Cj4+IDwgND5bIDQ2ODYuMzg3NjY3XSAgWzU6ICBrd29ya2VyL3UxNjoxOiAgIDU4XSBbPGZmZmZm
+ZjgwMDgwZDA0OTg+XQo+PiBrdGhyZWFkKzB4MTFjLzB4MTJjCj4+IDwgND5bIDQ2ODYuMzg3Njc4
+XSAgWzU6ICBrd29ya2VyL3UxNjoxOiAgIDU4XSBbPGZmZmZmZjgwMDgwODU1N2M+XQo+PiByZXRf
+ZnJvbV9mb3JrKzB4MTAvMHgxOAo+PiA8IDA+WyA0Njg2LjM4NzY5MF0gIFs1OiAga3dvcmtlci91
+MTY6MTogICA1OF0gQ29kZTogNTQwMDAwODAgNTQwMDAwYWIKPj4gYThjMTIwMjcgYTg4MTIwYzcg
+KGE4YzEyMDI3KQo+PiA8IDQ+WyA0Njg2LjM4NzgzOV0gIFs1OiAga3dvcmtlci91MTY6MTogICA1
+OF0gLS0tWyBlbmQgdHJhY2UKPj4gNTQ2NjQzNDliMGY5NDIyYyBdLS0tCj4+Cj4+Cj4+Cj4+Cj4+
+Cj4+IEluIG1lbWNvcHkgZnVuY3Rpb24sCj4+Cj4+IGxvYWQgeDEgcmVnaXN0ZXIgc3VjY2Vzc2Z1
+bGx5IHRoZW4gY29udGV4dCBzd2l0Y2hlZCBieSBzY2hlZHVsZXIuCj4+Cj4+IEFmdGVyIHJldHVy
+bmluZyB0byBzYW1lIG1lbWNvcHkgZnVuY3Rpb24sIGZhaWxlZCBhbm90aGVyIHgxIGxvYWQgYmVj
+dWFzZQo+PiB0aGlzIGlzIHVubWFwcGVkLih3YWxrLT5kYXRhKQo+Pgo+PiA8MT5bICA4ODkuNzMy
+NDg4XSAgWzI6ICBrd29ya2VyL3UxNjozOjE1MzMyXSBVbmFibGUgdG8gaGFuZGxlIGtlcm5lbAo+
+PiBwYWdpbmcgcmVxdWVzdCBhdCB2aXJ0dWFsIGFkZHJlc3MgZmZmZmZmYzAwYjZhZDAwMAo+Pgo+
+Pgo+Pgo+PiBJIHN1c3BlY3QgdGhhdCB0aGlzIGlzIG5vdCBwcm90ZWN0ZWQgcHJvcGVseSBiZWN1
+YXNlIGNhbGxzdGFjayBhbmQgcHJvYmxlbQo+PiAod2Fsay0+ZGF0YTogdXNlLWFmdGVyLWZyZWUp
+IGlzIGFsd2FzeXMgc2FtZS4KPj4KPj4gMS4gc2hyaW5rX25vZGUgaXMgZXhlY3V0ZWQgb24gb250
+aGVyIGNvcmUgYXQgdGhhdCB0aW1lLiBJcyBpdAo+PiBwb3NzaWJsZSB0aGlzIG1ha2UgdGhpcyBw
+cm9ibGVtPwo+Pgo+PiAyLiBJIGZvdW5kIHRoYXQgd2Fsay0+ZGF0YSBpcyB1bm1hcHBlZCBieSBh
+aGFocy5jIGJ1dCBJIGRvbid0IGtub3cgd2hldGhlcgo+PiB0aGlzIGNhdXNlIHRoaXMgdW5tYXBw
+ZWQgc2l0dWF0aW9uIG9yIG5vdC4KPj4KPj4gaWYgKHdhbGstPmZsYWdzICYgQ1JZUFRPX0FMR19B
+U1lOQykKPj4gICAgIGt1bm1hcCh3YWxrLT5wZyk7Cj4+IGVsc2UKPj4gICAgIGt1bm1hcF9hdG9t
+aWMod2Fsay0+ZGF0YSk7Cj4+Cj4+Cj4+Cj4+Cj4+Cj4+IEJlc3QgUmVnYXJkcywKPj4KPj4gSHll
+WWVvbiBDaHVuZwo+Pgo+Pgo+Pgo+Pgo+Pgo+PiBbaW1hZ2VdCj4KPgo+Cj4KPiAtLQo+IEdpbGFk
+IEJlbi1Zb3NzZWYKPiBDaGllZiBDb2ZmZWUgRHJpbmtlcgo+Cj4gdmFsdWVzIG9mIM6yIHdpbGwg
+Z2l2ZSByaXNlIHRvIGRvbSEKPgo+Cj4KPiBbaW1hZ2VdCj4KPiBbaW1hZ2VdCgoKLS0gCkdpbGFk
+IEJlbi1Zb3NzZWYKQ2hpZWYgQ29mZmVlIERyaW5rZXIKCnZhbHVlcyBvZiDOsiB3aWxsIGdpdmUg
+cmlzZSB0byBkb20hCgoKCi0tIApHaWxhZCBCZW4tWW9zc2VmCkNoaWVmIENvZmZlZSBEcmlua2Vy
+Cgp2YWx1ZXMgb2YgzrIgd2lsbCBnaXZlIHJpc2UgdG8gZG9tIQoKLS0KZG0tZGV2ZWwgbWFpbGlu
+ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
+L2xpc3RpbmZvL2RtLWRldmVs
