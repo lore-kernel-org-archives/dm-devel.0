@@ -1,13 +1,13 @@
-From: =?UTF-8?Q?J=C3=B6rg_Diederich?= <joerg.diederich@mailbox.org>
-Subject: dm raid1,
- component device size check seem to fail at 32bit arch at >4byte
- values
-Date: Fri, 17 Aug 2018 09:27:32 +0200 (CEST)
-Message-ID: <1024651684.2843.1534490852300@office.mailbox.org>
-Reply-To: =?UTF-8?Q?J=C3=B6rg_Diederich?= <joerg.diederich@mailbox.org>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [git pull] device mapper changes for 4.19
+Date: Fri, 17 Aug 2018 10:01:18 -0700
+Message-ID: <CA+55aFzYtS99jCSx5Vp1Em3qZB_-32j+OE9MiY4nK71UErA9bg@mail.gmail.com>
+References: <20180816200431.GA31084@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0340604769312788643=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180816200431.GA31084@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,109 +17,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: djeffery@redhat.com, Kees Cook <keescook@chromium.org>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, houtao1@huawei.com, Ilya Dryomov <idryomov@gmail.com>, Andy Grover <agrover@redhat.com>, jpittman@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
---===============0340604769312788643==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_2842_2008408988.1534490852295"
+This is only very weakly related to this pull request, but when I look
+at the diffstat, I note that outside of the Documentation changes, it
+looks like this:
 
-------=_Part_2842_2008408988.1534490852295
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+On Thu, Aug 16, 2018 at 1:04 PM Mike Snitzer <snitzer@redhat.com> wrote:
+>
+>  drivers/md/dm-cache-metadata.c                    |  13 +-
+>  drivers/md/dm-cache-target.c                      |  35 +-
+>  drivers/md/dm-crypt.c                             |  66 ++-
+>  drivers/md/dm-delay.c                             | 249 +++++------
+>  drivers/md/dm-integrity.c                         | 501 ++++++++++++++++++----
+>  drivers/md/dm-kcopyd.c                            |  18 +-
+>  drivers/md/dm-raid1.c                             |  17 +-
+>  drivers/md/dm-snap.c                              |  41 +-
+>  drivers/md/dm-thin.c                              |  31 +-
+>  drivers/md/dm-writecache.c                        |   8 +-
+>  drivers/md/dm-zoned-reclaim.c                     |   6 +-
+>  include/linux/dm-kcopyd.h                         |  12 +-
 
-hello,
-some hours i have looked for any changes and issues existing to this alread=
-y, but did not found any. which is hopefully correct.
+and what stands out to me is that "include/linux/" file.
 
-PATCH V2 12/12 (2017-12-08 10:59:57 -050) introduced
-_check_data_dev_sectors in raid.c
+It turns out that I don't think it should be in include/linux/ at all,
+because it seems entirely internal to drivers/md.
 
-Calculation in there uses
-to_sector(unsigned long n)
+A quick grep shows that nothing outside of drivers/md/ includes that
+header file.
 
-of a loff_t value returned by used i_size_read routine. Which is a long lon=
-g type afaik. At a LP32 system, this results in a wrong value and intended =
-check fails, which is expected to be wrong. At LP64, it should work of cour=
-se. See example values at a used system (arm 32bit, 862GB raid1) below.
+So I wonder if you would mind just moving that header file to
+drivers/md/, and changing the
 
-I might be wrong, if there is, may you please provide a hint to me how to p=
-roceed here? Currently, there's no perfect patch available here, just start=
-ed investigating the source due to this behavior.
+   #include <linux/dm-kcopyd.h>
 
-Thanks a lot & regards,
-J=C3=B6rg
+into just
 
+   #include "dm-kopyd.h"
 
-the said example,at system
+instead?
 
-Linux gonzales 4.18.0-gentoo #3 SMP PREEMPT Wed Aug 15 15:33:45 CEST 2018 a=
-rmv7l ARMv7 Processor rev 3 (v7l) SAMSUNG EXYNOS (Flattened Device Tree) GN=
-U/Linux
+The reason I care (weakly) is just that I end up looking at diffstats
+a lot during the merge window, and it's always nice for me when I see
+"this pull request only changes things internal to that particular
+subsystem". Then I don't need to  worry as much about any interactions
+with any other pulls.
 
-the outputs i'd added
-[ 49.004135] device-mapper: raid: _check_data_dev_sectors
-[ 49.004149] device-mapper: raid: sizeof(sector_t) 8
-[ 49.004161] device-mapper: raid: sizeof(unsigned long) 4
-[ 49.004206] device-mapper: raid: md.dev_sectors 1809793024, that is 926614=
-028288 bytes
-[ 49.004242] device-mapper: raid: rdev->sectors 1809793024, that is 9266140=
-28288 bytes
-[ 49.004317] device-mapper: raid: i_size_read(rdev->bdev->bd_inode) returns=
- 926614028288
-[ 49.004327] device-mapper: raid: i_size_read(rdev->bdev->bd_inode) >> 9 is=
- 1809793024
-[ 49.004337] device-mapper: raid: to_sector(i_size_read(rdev->bdev->bd_inod=
-e)) returns 6242304
-[ 49.004346] device-mapper: raid: ds is 6242304
-[ 49.004356] device-mapper: raid: Error
+And immediately when there are changes to the main include directory,
+that changes, and I start going "ok, who else includes this that I
+need to make sure wasn't impacted?"
 
-------=_Part_2842_2008408988.1534490852295
-MIME-Version: 1.0
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Right now it's noticeable mainly because I happen to be on my laptop,
+so a full "make allmodconfig" takes an hour. Instead, I ended up
+checking manually whether rthat include file update could affect
+anybody else, and just did the drivers/md/ subdirectory build.
 
-<!DOCTYPE html>
-<html><head>
-    <meta charset=3D"UTF-8">
-</head><body><p class=3D"default-style">hello,<br>some hours i have looked =
-for any changes and issues existing to this already, but did not found any.=
- which is hopefully correct.<br> <br>PATCH V2 12/12 (2017-12-08 10:59:57 -0=
-50) introduced<br>_check_data_dev_sectors in raid.c</p><p class=3D"default-=
-style">Calculation in there uses<br>to_sector(unsigned long n)</p><p class=
-=3D"default-style">of a loff_t value returned by  used i_size_read routine.=
- Which is a long long type afaik. At a LP32 system, this results in a wrong=
- value and intended check fails, which is expected to be wrong. At LP64, it=
- should work of course. See example values at a used system (arm 32bit, 862=
-GB raid1) below.</p><p class=3D"default-style">I might be wrong, if there i=
-s, may you please provide a hint to me how to proceed here? Currently, ther=
-e&#39;s no perfect patch available here, just started investigating the sou=
-rce due to this behavior.</p><p class=3D"default-style">Thanks a lot &#38; =
-regards,<br>J&#246;rg</p><p class=3D"default-style"><br>the said example,at=
- system<br></p><p class=3D"default-style">Linux gonzales 4.18.0-gentoo #3 S=
-MP PREEMPT Wed Aug 15 15:33:45 CEST 2018 armv7l ARMv7 Processor rev 3 (v7l)=
- SAMSUNG EXYNOS (Flattened Device Tree) GNU/Linux</p><p class=3D"default-st=
-yle">the outputs i&#39;d added<br>[ 49.004135] device-mapper: raid: _check_=
-data_dev_sectors<br>[ 49.004149] device-mapper: raid: sizeof(sector_t) 8<br=
->[ 49.004161] device-mapper: raid: sizeof(unsigned long) 4<br>[ 49.004206] =
-device-mapper: raid: md.dev_sectors 1809793024, that is 926614028288 bytes<=
-br>[ 49.004242] device-mapper: raid: rdev-&#62;sectors 1809793024, that is =
-926614028288 bytes<br>[ 49.004317] device-mapper: raid: i_size_read(rdev-&#=
-62;bdev-&#62;bd_inode) returns 926614028288<br>[ 49.004327] device-mapper: =
-raid: i_size_read(rdev-&#62;bdev-&#62;bd_inode) &#62;&#62; 9 is 1809793024<=
-br>[ 49.004337] device-mapper: raid: to_sector(i_size_read(rdev-&#62;bdev-&=
-#62;bd_inode)) returns 6242304<br>[ 49.004346] device-mapper: raid: ds is 6=
-242304<br>[ 49.004356] device-mapper: raid: Error<br></p></body></html>
-=20
-------=_Part_2842_2008408988.1534490852295--
+Stupid reason, I know, but I thought I'd spend a couple of minutes
+writing an email and maybe next time around I'll have one less thing
+to check..
 
-
---===============0340604769312788643==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0340604769312788643==--
+               Linus
