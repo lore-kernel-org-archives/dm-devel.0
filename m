@@ -1,14 +1,12 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [git pull] device mapper changes for 4.19
-Date: Fri, 17 Aug 2018 16:04:16 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1808171546510.2385@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20180816200431.GA31084@redhat.com>
-	<CA+55aFzYtS99jCSx5Vp1Em3qZB_-32j+OE9MiY4nK71UErA9bg@mail.gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: refresh kernel-doc from kernel
+	sources
+Date: Sat, 18 Aug 2018 22:38:52 +0200
+Message-ID: <20180818203852.15230-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CA+55aFzYtS99jCSx5Vp1Em3qZB_-32j+OE9MiY4nK71UErA9bg@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,46 +16,88 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: djeffery@redhat.com, Kees Cook <keescook@chromium.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, houtao1@huawei.com, Ilya Dryomov <idryomov@gmail.com>, Andy Grover <agrover@redhat.com>, jpittman@redhat.com, Alasdair G Kergon <agk@redhat.com>
+Cc: Gris Ge <fge@redhat.com>, DM-DEV ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
+Cc: Gris Ge <fge@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEV ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libdmmp/docs/kernel-doc | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
 
-
-On Fri, 17 Aug 2018, Linus Torvalds wrote:
-
-> This is only very weakly related to this pull request, but when I look
-> at the diffstat, I note that outside of the Documentation changes, it
-> looks like this:
-> 
-> On Thu, Aug 16, 2018 at 1:04 PM Mike Snitzer <snitzer@redhat.com> wrote:
-> >
-> >  drivers/md/dm-cache-metadata.c                    |  13 +-
-> >  drivers/md/dm-cache-target.c                      |  35 +-
-> >  drivers/md/dm-crypt.c                             |  66 ++-
-> >  drivers/md/dm-delay.c                             | 249 +++++------
-> >  drivers/md/dm-integrity.c                         | 501 ++++++++++++++++++----
-> >  drivers/md/dm-kcopyd.c                            |  18 +-
-> >  drivers/md/dm-raid1.c                             |  17 +-
-> >  drivers/md/dm-snap.c                              |  41 +-
-> >  drivers/md/dm-thin.c                              |  31 +-
-> >  drivers/md/dm-writecache.c                        |   8 +-
-> >  drivers/md/dm-zoned-reclaim.c                     |   6 +-
-> >  include/linux/dm-kcopyd.h                         |  12 +-
-> 
-> and what stands out to me is that "include/linux/" file.
-> 
-> It turns out that I don't think it should be in include/linux/ at all,
-> because it seems entirely internal to drivers/md.
-
-dm-kcopyd.h (and dm-io.h and dm-bufio.h) are not restricted to device 
-mapper. These subsystems were written by device mapper developers because 
-they needed to reuse the same functionality in multiple dm targets, but 
-these subsystems do not depend on device mapper functionality (with little 
-changes, they could be compiled independently of dm) and could be used by 
-any kernel code (for example filesystems).
-
-I think that perhaps these files could be moved to some generic place like 
-block/lib/, so that others could start using them too.
-
-Mikulas
+diff --git a/libdmmp/docs/kernel-doc b/libdmmp/docs/kernel-doc
+index 0057d8e..8f0f508 100755
+--- a/libdmmp/docs/kernel-doc
++++ b/libdmmp/docs/kernel-doc
+@@ -1062,7 +1062,7 @@ sub dump_struct($$) {
+     my $x = shift;
+     my $file = shift;
+ 
+-    if ($x =~ /(struct|union)\s+(\w+)\s*{(.*)}/) {
++    if ($x =~ /(struct|union)\s+(\w+)\s*\{(.*)\}/) {
+ 	my $decl_type = $1;
+ 	$declaration_name = $2;
+ 	my $members = $3;
+@@ -1148,20 +1148,20 @@ sub dump_struct($$) {
+ 				}
+ 			}
+ 		}
+-		$members =~ s/(struct|union)([^\{\};]+)\{([^\{\}]*)}([^\{\}\;]*)\;/$newmember/;
++		$members =~ s/(struct|union)([^\{\};]+)\{([^\{\}]*)\}([^\{\}\;]*)\;/$newmember/;
+ 	}
+ 
+ 	# Ignore other nested elements, like enums
+-	$members =~ s/({[^\{\}]*})//g;
++	$members =~ s/(\{[^\{\}]*\})//g;
+ 
+ 	create_parameterlist($members, ';', $file, $declaration_name);
+ 	check_sections($file, $declaration_name, $decl_type, $sectcheck, $struct_actual);
+ 
+ 	# Adjust declaration for better display
+-	$declaration =~ s/([{;])/$1\n/g;
+-	$declaration =~ s/}\s+;/};/g;
++	$declaration =~ s/([\{;])/$1\n/g;
++	$declaration =~ s/\}\s+;/};/g;
+ 	# Better handle inlined enums
+-	do {} while ($declaration =~ s/(enum\s+{[^}]+),([^\n])/$1,\n$2/);
++	do {} while ($declaration =~ s/(enum\s+\{[^\}]+),([^\n])/$1,\n$2/);
+ 
+ 	my @def_args = split /\n/, $declaration;
+ 	my $level = 1;
+@@ -1171,12 +1171,12 @@ sub dump_struct($$) {
+ 		$clause =~ s/\s+$//;
+ 		$clause =~ s/\s+/ /;
+ 		next if (!$clause);
+-		$level-- if ($clause =~ m/(})/ && $level > 1);
++		$level-- if ($clause =~ m/(\})/ && $level > 1);
+ 		if (!($clause =~ m/^\s*#/)) {
+ 			$declaration .= "\t" x $level;
+ 		}
+ 		$declaration .= "\t" . $clause . "\n";
+-		$level++ if ($clause =~ m/({)/ && !($clause =~m/}/));
++		$level++ if ($clause =~ m/(\{)/ && !($clause =~m/\}/));
+ 	}
+ 	output_declaration($declaration_name,
+ 			   'struct',
+@@ -1244,7 +1244,7 @@ sub dump_enum($$) {
+     # strip #define macros inside enums
+     $x =~ s@#\s*((define|ifdef)\s+|endif)[^;]*;@@gos;
+ 
+-    if ($x =~ /enum\s+(\w+)\s*{(.*)}/) {
++    if ($x =~ /enum\s+(\w+)\s*\{(.*)\}/) {
+ 	$declaration_name = $1;
+ 	my $members = $2;
+ 	my %_members;
+@@ -1785,7 +1785,7 @@ sub process_proto_type($$) {
+     }
+ 
+     while (1) {
+-	if ( $x =~ /([^{};]*)([{};])(.*)/ ) {
++	if ( $x =~ /([^\{\};]*)([\{\};])(.*)/ ) {
+             if( length $prototype ) {
+                 $prototype .= " "
+             }
+-- 
+2.17.1
