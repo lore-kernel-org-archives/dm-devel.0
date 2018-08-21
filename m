@@ -1,16 +1,25 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: dmsetup create linear with 4 devices not possible?
-Date: Mon, 20 Aug 2018 14:58:33 +0200
-Message-ID: <4a035e5c-66a5-320d-550d-9483757dd364@redhat.com>
-References: <CAGmahrTpAxpkq8DYNTC0osANpv6dBOPCHf2=qjXhqEZON=0mZg@mail.gmail.com>
-	<b4886914-650c-777c-4210-828e7608b3a4@redhat.com>
-	<CAGmahrQ_sD6tge+5Hz72za4aagxhbQCwF9P7zRV06OFVgbYfHQ@mail.gmail.com>
+From: Gilad Ben-Yossef <gilad@benyossef.com>
+Subject: Re: FW: RE:(2) FW: RE: FW: (2) FW: Use-after-free while
+	dm-verity
+Date: Tue, 21 Aug 2018 12:38:23 +0300
+Message-ID: <CAOtvUMdC9zcoQDnNTETzaJOi0U1fEhB=jM9Uw60PvSD_QPJ95Q@mail.gmail.com>
+References: <CAOtvUMe54umEeq9RXMph3Hjw6tk-6y3dT_zreFr6Q=5MAd-96g@mail.gmail.com>
+	<CAOtvUMevF5ifUJ+nd=F0g7CrNRbP-nPx_LHnMCqeQGV=eeiZug@mail.gmail.com>
+	<20180814083408epcms2p1980005414da7197755f798aa9ed47a4f@epcms2p1>
+	<20180816003535epcms2p6bba40fd6423d0bb605b4dec3866f84c9@epcms2p6>
+	<CAOtvUMd8qUm2A7DtQVSR_jZBM8Zihs6eBWshMbiTKJC0xU88vg@mail.gmail.com>
+	<20180816015056epcms2p8954563f824dc617ae13ab1364715159a@epcms2p8>
+	<CAOtvUMf-6gDb-qdokMptZ93MX2QOHjRCLyhmJAhswwc=No=10w@mail.gmail.com>
+	<20180816050443epcms2p8581dcebc1d50e20cd44b6491b0b70bbc@epcms2p8>
+	<20180816080855epcms2p87c6692782464dd95a46db8609a5b8590@epcms2p8>
+	<CGME20180814083408epcms2p1980005414da7197755f798aa9ed47a4f@epcms2p5>
+	<20180820052652epcms2p4b23cb022f3447435cfd112ba69d50c27@epcms2p4>
+	<20180820113359epcms2p576d2465aac9daf873e53a7a84d787ff4@epcms2p5>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAGmahrQ_sD6tge+5Hz72za4aagxhbQCwF9P7zRV06OFVgbYfHQ@mail.gmail.com>
-Content-Language: en-US
+In-Reply-To: <20180820113359epcms2p576d2465aac9daf873e53a7a84d787ff4@epcms2p5>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,51 +29,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Sverd Johnsen <sverd.johnsen@googlemail.com>
-Cc: dm-devel@redhat.com
+To: HyeYeon Chung <hyeon.chung@samsung.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, =?UTF-8?B?6rmA7Zi47ISx?= <hosung0.kim@samsung.com>
 List-Id: dm-devel.ids
 
-Dne 20.8.2018 v 11:06 Sverd Johnsen napsal(a):
-> [40309.478954] device-mapper: table: 254:15: linear: Invalid argument count
-> 
-> root@bar /tmp # vgchange -ay looptest
->      Logging initialised at Mon Aug 20 11:00:05 2018
->      Activating logical volume looptest/testing.
->      activation/volume_list configuration setting not defined: Checking
-> only host tags for looptest/testing.
->      Creating looptest-testing
->      Loading table for looptest-testing (254:15).
->      Resuming looptest-testing (254:15).
->      Activated 1 logical volumes in volume group looptest
->    1 logical volume(s) in volume group "looptest" now active
-> 
-> root@bar /tmp # dmsetup table /dev/mapper/looptest-testing
-> 0 2088960 linear 7:0 2048
-> 2088960 2088960 linear 7:1 2048
-> 4177920 2088960 linear 7:2 2048
-> 6266880 2088960 linear 7:3 2048
-> 
-> root@bar /tmp # dmsetup table /dev/mapper/looptest-testing > test.table
-> 
-> root@bar /tmp # vgchange -an looptest
->      Logging initialised at Mon Aug 20 11:00:18 2018
->      Deactivating logical volume looptest/testing.
->      Removing looptest-testing (254:15)
->      Deactivated 1 logical volumes in volume group looptest
->    0 logical volume(s) in volume group "looptest" now active
-> 
-> root@bar /tmp # dmsetup create test --table test.table
-> Invalid format on line 1 of table .
-> Command failed.
-> 
-> root@bar /tmp # dmsetup create test --table "$(cat test.table)"
-> device-mapper: reload ioctl on test  failed: Invalid argument
-> Command failed.
-> 
-
-And have you tried:
-
-cat test.table | dmsetup create test
-
-
-Zdenek
+SGksCgpPbiBNb24sIEF1ZyAyMCwgMjAxOCBhdCAyOjMzIFBNLCDsoJXtmJzsl7AgPGh5ZW9uLmNo
+dW5nQHNhbXN1bmcuY29tPiB3cm90ZToKPgo+IERlYXIgR2lsYWQsCj4KPgo+Cj4gV2UgZm91bmQg
+bWVtY29weSBpcyBub3QgcHJlZW1wdGVkIGFzIHlvdSBleHBsYWluZWQuCj4KPiBNZW1jb3B5IG1h
+a2Uga2VybmVsIHBhbmljIGF0IHRoZSB2ZXJ5IGZpcnN0IHRpbWUuCj4KPiBZb3VyIGNvbW1lbnQg
+d2FzIHZlcnkgaGVscGZ1bCB1cyB0byBmaW5kIHRoaXMuIFRoYW5rIHlvdS4KPgo+CgoKSSdtIGds
+YWQgSSBjb3VsZCBoZWxwLgoKPgo+IFdlIGZvdW5kIHRoZSBvdGhlciBjb3JlIGV4ZWN1dGVkIHNo
+cmlua19ub2RlIGF0IHRoYXQgdGltZSwgc28gd2Ugc3VzcGVjdCB0aGF0IGxvd21lbSBzaXR1YXRp
+b24gY291bGRlIG1ha2UgdGhpcyBwcm9ibGVtLgo+Cj4gQW5kIHdlIHRlc3RlZCBhZnRlciByZXZl
+cnRpbmcgYXN5bmMgcGF0Y2ggZm9yIDMgZGF5cyBhbmQgdGhlcmUncyBubyBpc3V1ZSBzbyBmYXIu
+Cj4KPiBTbyB3ZSBhc3N1bWUgdGhlcmUncyB1bmV4cGVjdGVkIGZyZWUgaW4gZG0tdmVyaXR5IG9y
+IHNvbWUgcGFnZSBtZW1vcnkgb3BlcmF0aW9uIChleC4gb2Zmc2V0ID8pLgo+Cj4KPgo+IERvIHlv
+dSBoYXZlIGFueSBpZGVhPwo+Cj4KCgpPbmUgdGhpbmcgdGhhdCBjb21lcyB0byBtaW5kIGlzIHVu
+ZGVyc3RhbmRpbmcgd2h5IHRoZXJlIGFyZSBkYXRhCmVycm9ycyBpbiB0aGUgZGF0YSBiZWluZyBy
+ZWFkLiBUaGUgc3RhY2sgdHJhY2UgeW91IHNlbnQgc2hvd3MgY2FsbHMgdG8KdmVyaXR5X2ZlY19k
+ZWNvZGUoKS4KVGhpcyB3b3VsZCBoYXBwZW4gaWYgdGhlcmUgd2FzIGEgbWlzbWF0Y2ggYmV0d2Vl
+biB0aGUgY29tcHV0ZWQgaGFzaAphbmQgdGhlIGV4cGVjdGVkIGhhc2ggb2YgKGluIHRoaXMgc3Bl
+Y2lmaWMgY2FzZSBwZXIgdGhlIHN0YWNrIHRyYWNlKSBhCnN0b3JhZ2UgYmxvY2sgY29udGFpbmlu
+ZyBoYXNoZXMgZm9yIHRoZSBkYXRhLiBJdCBpcyB0aGVyZWZvcmUgYXR0ZW1wdHMKdG8gZml4IHRo
+ZSBlcnJvcnMgdmlhIGVtcGxveWluZyBSZWFkIFNvbG9tb24gY29kZXMuCgpXaGlsZSBpdCBpcyBw
+YXJ0IG9mIERNLVZlcml0eSBkZXNpZ24sIEknbSBzdXJwcmlzZWQgdG8gc2VlIHRoaXMgaGFwcGVu
+CmluIGEgbGFiIGVudmlyb25tZW50LiBEbyB5b3UgZGVsaWJlcmF0ZWx5IGNyZWF0ZSAxIGJpdCBl
+cnJvcnMgaW4gdGhlCmRhdGEgYXMgYSB0ZXN0IG9yIGlzIHRoaXMgc29tZSBjb2luY2lkZW5jZT8K
+Ck90aGVyIHRoYW4gdGhhdCwgSSByZXR1cm4gdG8gbXkgcHJldmlvdXMgcmVxdWVzdDoKCiJJZiB0
+aGlzIGRvZXNuJ3QgYnJpbmcgYW55dGhpbmcgdG8gbGlnaHQsIHBsZWFzZSBwcm92aWRlIGEgdGhl
+IGZ1bGwKa2VybmVsIHBhbmljIGxvZyAobm90IGp1c3QgdGhlIHNuaXBwZXQgaGVyZSksIHlvdXIg
+a2VybmVsIGNvbmZpZyBhbmQKd2hhdCBhcmNoaXRlY3R1cmUvYm9hcmQgeW91IGFyZSBydW5uaW5n
+IHRoaXMgb24sIGFzIHdlbGwgYXMgZGV0YWlscwphYm91dCBETS12ZXJpdHkgcGFydGl0aW9uIHNl
+dHVwLCBzaXplIGFuZCB1bmRlcmx5aW5nIHN0b3JhZ2Ugc28gSSBtYXkKYXR0ZW1wdCB0byByZWNy
+ZWF0ZSB0aGlzLiIKCgpUaGlzIHdpbGwgYmVzdCBoZWxwIG1lIGhlbHAgeW91LgoKCkNoZWVycywK
+CkdpbGFkCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
+czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
