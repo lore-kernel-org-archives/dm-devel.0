@@ -1,11 +1,24 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm verity: don't crash on vmallocated buffer
-Date: Wed, 22 Aug 2018 12:45:51 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1808221238350.30929@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: FW: RE:(2) FW: RE: FW: (2) FW: Use-after-free while
+	dm-verity
+Date: Wed, 22 Aug 2018 13:28:10 -0400
+Message-ID: <20180822172810.GA29125@redhat.com>
+References: <20180816003535epcms2p6bba40fd6423d0bb605b4dec3866f84c9@epcms2p6>
+	<CAOtvUMd8qUm2A7DtQVSR_jZBM8Zihs6eBWshMbiTKJC0xU88vg@mail.gmail.com>
+	<20180816015056epcms2p8954563f824dc617ae13ab1364715159a@epcms2p8>
+	<CAOtvUMf-6gDb-qdokMptZ93MX2QOHjRCLyhmJAhswwc=No=10w@mail.gmail.com>
+	<20180816050443epcms2p8581dcebc1d50e20cd44b6491b0b70bbc@epcms2p8>
+	<20180816080855epcms2p87c6692782464dd95a46db8609a5b8590@epcms2p8>
+	<CGME20180814083408epcms2p1980005414da7197755f798aa9ed47a4f@epcms2p5>
+	<20180820052652epcms2p4b23cb022f3447435cfd112ba69d50c27@epcms2p4>
+	<20180820113359epcms2p576d2465aac9daf873e53a7a84d787ff4@epcms2p5>
+	<CAOtvUMdC9zcoQDnNTETzaJOi0U1fEhB=jM9Uw60PvSD_QPJ95Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <CAOtvUMdC9zcoQDnNTETzaJOi0U1fEhB=jM9Uw60PvSD_QPJ95Q@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,63 +28,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com
-Cc: Eric Biggers <ebiggers3@gmail.com>, yanmin.zhang@intel.com, Gilad Ben-Yossef <gilad@benyossef.com>, =?ISO-8859-2?Q?Ondrej_Mosn=E1=E8ek?= <omosnacek+linux-crypto@gmail.com>, "Xiao, Jin" <jin.xiao@intel.com>, "Alasdair G. Kergon" <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
+To: Gilad Ben-Yossef <gilad@benyossef.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, HyeYeon Chung <hyeon.chung@samsung.com>, =?utf-8?B?6rmA7Zi47ISx?= <hosung0.kim@samsung.com>
 List-Id: dm-devel.ids
 
-Since the commit d1ac3ff008fb ("dm verity: switch to using asynchronous"+
-hash crypto API"), dm-verity uses asynchronous crypto calls for
-verification, so that it can use hardware with asynchronous processing of
-crypto operations.
-
-These asynchronous calls don't support vmalloc memory, but the buffer data
-can be vmallocated if dm-bufio is short of memory and uses a reserved
-buffer that was preallocated in dm_bufio_client_create.
-
-This patch fixes verity_hash_update, so that it deals with vmallocated 
-memory correctly.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Reported-by: "Xiao, Jin" <jin.xiao@intel.com>
-Fixes: d1ac3ff008fb ("dm verity: switch to using asynchronous hash crypto API")
-Cc: stable@vger.kernel.org	# 4.11+
-
----
- drivers/md/dm-verity-target.c |   24 ++++++++++++++++++++----
- 1 file changed, 20 insertions(+), 4 deletions(-)
-
-Index: linux-2.6/drivers/md/dm-verity-target.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-verity-target.c	2018-08-22 17:18:30.800000000 +0200
-+++ linux-2.6/drivers/md/dm-verity-target.c	2018-08-22 17:22:14.810000000 +0200
-@@ -99,10 +99,26 @@ static int verity_hash_update(struct dm_
- {
- 	struct scatterlist sg;
- 
--	sg_init_one(&sg, data, len);
--	ahash_request_set_crypt(req, &sg, NULL, len);
--
--	return crypto_wait_req(crypto_ahash_update(req), wait);
-+	if (likely(!is_vmalloc_addr(data))) {
-+		sg_init_one(&sg, data, len);
-+		ahash_request_set_crypt(req, &sg, NULL, len);
-+		return crypto_wait_req(crypto_ahash_update(req), wait);
-+	} else {
-+		do {
-+			int r;
-+			size_t this_step = min(len, PAGE_SIZE - offset_in_page(data));
-+			flush_kernel_vmap_range((void *)data, this_step);
-+			sg_init_table(&sg, 1);
-+			sg_set_page(&sg, vmalloc_to_page(data), this_step, offset_in_page(data));
-+			ahash_request_set_crypt(req, &sg, NULL, this_step);
-+			r = crypto_wait_req(crypto_ahash_update(req), wait);
-+			if (unlikely(r))
-+				return r;
-+			data += this_step;
-+			len -= this_step;
-+		} while (len);
-+		return 0;
-+	}
- }
- 
- /*
+T24gVHVlLCBBdWcgMjEgMjAxOCBhdCAgNTozOGFtIC0wNDAwLApHaWxhZCBCZW4tWW9zc2VmIDxn
+aWxhZEBiZW55b3NzZWYuY29tPiB3cm90ZToKCj4gSGksCj4gCj4gT24gTW9uLCBBdWcgMjAsIDIw
+MTggYXQgMjozMyBQTSwg7KCV7Zic7JewIDxoeWVvbi5jaHVuZ0BzYW1zdW5nLmNvbT4gd3JvdGU6
+Cj4gPgo+ID4gRGVhciBHaWxhZCwKPiA+Cj4gPgo+ID4KPiA+IFdlIGZvdW5kIG1lbWNvcHkgaXMg
+bm90IHByZWVtcHRlZCBhcyB5b3UgZXhwbGFpbmVkLgo+ID4KPiA+IE1lbWNvcHkgbWFrZSBrZXJu
+ZWwgcGFuaWMgYXQgdGhlIHZlcnkgZmlyc3QgdGltZS4KPiA+Cj4gPiBZb3VyIGNvbW1lbnQgd2Fz
+IHZlcnkgaGVscGZ1bCB1cyB0byBmaW5kIHRoaXMuIFRoYW5rIHlvdS4KPiA+Cj4gPgo+IAo+IAo+
+IEknbSBnbGFkIEkgY291bGQgaGVscC4KPiAKPiA+Cj4gPiBXZSBmb3VuZCB0aGUgb3RoZXIgY29y
+ZSBleGVjdXRlZCBzaHJpbmtfbm9kZSBhdCB0aGF0IHRpbWUsIHNvIHdlIHN1c3BlY3QgdGhhdCBs
+b3dtZW0gc2l0dWF0aW9uIGNvdWxkZSBtYWtlIHRoaXMgcHJvYmxlbS4KPiA+Cj4gPiBBbmQgd2Ug
+dGVzdGVkIGFmdGVyIHJldmVydGluZyBhc3luYyBwYXRjaCBmb3IgMyBkYXlzIGFuZCB0aGVyZSdz
+IG5vIGlzdXVlIHNvIGZhci4KPiA+Cj4gPiBTbyB3ZSBhc3N1bWUgdGhlcmUncyB1bmV4cGVjdGVk
+IGZyZWUgaW4gZG0tdmVyaXR5IG9yIHNvbWUgcGFnZSBtZW1vcnkgb3BlcmF0aW9uIChleC4gb2Zm
+c2V0ID8pLgo+ID4KPiA+Cj4gPgo+ID4gRG8geW91IGhhdmUgYW55IGlkZWE/Cj4gPgo+ID4KPiAK
+PiAKPiBPbmUgdGhpbmcgdGhhdCBjb21lcyB0byBtaW5kIGlzIHVuZGVyc3RhbmRpbmcgd2h5IHRo
+ZXJlIGFyZSBkYXRhCj4gZXJyb3JzIGluIHRoZSBkYXRhIGJlaW5nIHJlYWQuIFRoZSBzdGFjayB0
+cmFjZSB5b3Ugc2VudCBzaG93cyBjYWxscyB0bwo+IHZlcml0eV9mZWNfZGVjb2RlKCkuCj4gVGhp
+cyB3b3VsZCBoYXBwZW4gaWYgdGhlcmUgd2FzIGEgbWlzbWF0Y2ggYmV0d2VlbiB0aGUgY29tcHV0
+ZWQgaGFzaAo+IGFuZCB0aGUgZXhwZWN0ZWQgaGFzaCBvZiAoaW4gdGhpcyBzcGVjaWZpYyBjYXNl
+IHBlciB0aGUgc3RhY2sgdHJhY2UpIGEKPiBzdG9yYWdlIGJsb2NrIGNvbnRhaW5pbmcgaGFzaGVz
+IGZvciB0aGUgZGF0YS4gSXQgaXMgdGhlcmVmb3JlIGF0dGVtcHRzCj4gdG8gZml4IHRoZSBlcnJv
+cnMgdmlhIGVtcGxveWluZyBSZWFkIFNvbG9tb24gY29kZXMuCj4gCj4gV2hpbGUgaXQgaXMgcGFy
+dCBvZiBETS1WZXJpdHkgZGVzaWduLCBJJ20gc3VycHJpc2VkIHRvIHNlZSB0aGlzIGhhcHBlbgo+
+IGluIGEgbGFiIGVudmlyb25tZW50LiBEbyB5b3UgZGVsaWJlcmF0ZWx5IGNyZWF0ZSAxIGJpdCBl
+cnJvcnMgaW4gdGhlCj4gZGF0YSBhcyBhIHRlc3Qgb3IgaXMgdGhpcyBzb21lIGNvaW5jaWRlbmNl
+Pwo+IAo+IE90aGVyIHRoYW4gdGhhdCwgSSByZXR1cm4gdG8gbXkgcHJldmlvdXMgcmVxdWVzdDoK
+PiAKPiAiSWYgdGhpcyBkb2Vzbid0IGJyaW5nIGFueXRoaW5nIHRvIGxpZ2h0LCBwbGVhc2UgcHJv
+dmlkZSBhIHRoZSBmdWxsCj4ga2VybmVsIHBhbmljIGxvZyAobm90IGp1c3QgdGhlIHNuaXBwZXQg
+aGVyZSksIHlvdXIga2VybmVsIGNvbmZpZyBhbmQKPiB3aGF0IGFyY2hpdGVjdHVyZS9ib2FyZCB5
+b3UgYXJlIHJ1bm5pbmcgdGhpcyBvbiwgYXMgd2VsbCBhcyBkZXRhaWxzCj4gYWJvdXQgRE0tdmVy
+aXR5IHBhcnRpdGlvbiBzZXR1cCwgc2l6ZSBhbmQgdW5kZXJseWluZyBzdG9yYWdlIHNvIEkgbWF5
+Cj4gYXR0ZW1wdCB0byByZWNyZWF0ZSB0aGlzLiIKPiAKPiAKPiBUaGlzIHdpbGwgYmVzdCBoZWxw
+IG1lIGhlbHAgeW91LgoKQ2FuIHlvdSBwbGVhc2Ugc2VlIGlmIHRoaXMgcGF0Y2ggaGVscHM/Cgpo
+dHRwczovL3BhdGNod29yay5rZXJuZWwub3JnL3BhdGNoLzEwNTczMDUxLwoKVGhhbmtzLApNaWtl
+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
+dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
