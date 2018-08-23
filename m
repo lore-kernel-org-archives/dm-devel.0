@@ -1,15 +1,16 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH 3/3] dm zoned: target: use refcount_t for dm
- zoned reference counters
-Date: Thu, 23 Aug 2018 22:12:28 +0000
-Message-ID: <BN3PR0401MB16400F7E04FF3E7AF51E1F06E7370@BN3PR0401MB1640.namprd04.prod.outlook.com>
+From: John Pittman <jpittman@redhat.com>
+Subject: Re: [PATCH 2/3] dm zoned: metadata: use refcount_t for
+ dm zoned reference counters
+Date: Thu, 23 Aug 2018 18:54:41 -0400
+Message-ID: <CA+RJvhwcc8imHeSFCA=XVK9QX-miu4uYaoPTJ0w_+xnWf5EJZw@mail.gmail.com>
 References: <20180823173557.19665-1-jpittman@redhat.com>
-	<20180823173557.19665-4-jpittman@redhat.com>
+	<20180823173557.19665-3-jpittman@redhat.com>
+	<BN3PR0401MB1640A8B0BA57BD0FCBE691DCE7370@BN3PR0401MB1640.namprd04.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <BN3PR0401MB1640A8B0BA57BD0FCBE691DCE7370@BN3PR0401MB1640.namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,126 +20,166 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: John Pittman <jpittman@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Damien Le Moal <Damien.LeMoal@wdc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-John,
+Sounds good Damien.  Thanks for reviewing!
 
-On 2018/08/23 10:37, John Pittman wrote:
-> The API surrounding refcount_t should be used in place of atomic_t
-> when variables are being used as reference counters.  This API can
-> prevent issues such as counter overflows and use-after-free
-> conditions.  Within the dm zoned target stack, the atomic_t API is
-> used for bioctx->ref and cw->refcount.  Change these to use
-> refcount_t, avoiding the issues mentioned.
-> 
-> Signed-off-by: John Pittman <jpittman@redhat.com>
-> ---
->  drivers/md/dm-zoned-target.c | 20 ++++++++++----------
->  1 file changed, 10 insertions(+), 10 deletions(-)
-> 
-> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-> index a44183ff4be0..fa36825c1eff 100644
-> --- a/drivers/md/dm-zoned-target.c
-> +++ b/drivers/md/dm-zoned-target.c
-> @@ -19,7 +19,7 @@ struct dmz_bioctx {
->  	struct dmz_target	*target;
->  	struct dm_zone		*zone;
->  	struct bio		*bio;
-> -	atomic_t		ref;
-> +	refcount_t		ref;
->  	blk_status_t		status;
->  };
->  
-> @@ -28,7 +28,7 @@ struct dmz_bioctx {
->   */
->  struct dm_chunk_work {
->  	struct work_struct	work;
-> -	atomic_t		refcount;
-> +	refcount_t		refcount;
->  	struct dmz_target	*target;
->  	unsigned int		chunk;
->  	struct bio_list		bio_list;
-> @@ -115,7 +115,7 @@ static int dmz_submit_read_bio(struct dmz_target *dmz, struct dm_zone *zone,
->  	if (nr_blocks == dmz_bio_blocks(bio)) {
->  		/* Setup and submit the BIO */
->  		bio->bi_iter.bi_sector = sector;
-> -		atomic_inc(&bioctx->ref);
-> +		refcount_inc(&bioctx->ref);
->  		generic_make_request(bio);
->  		return 0;
->  	}
-> @@ -134,7 +134,7 @@ static int dmz_submit_read_bio(struct dmz_target *dmz, struct dm_zone *zone,
->  	bio_advance(bio, clone->bi_iter.bi_size);
->  
->  	/* Submit the clone */
-> -	atomic_inc(&bioctx->ref);
-> +	refcount_inc(&bioctx->ref);
->  	generic_make_request(clone);
->  
->  	return 0;
-> @@ -240,7 +240,7 @@ static void dmz_submit_write_bio(struct dmz_target *dmz, struct dm_zone *zone,
->  	/* Setup and submit the BIO */
->  	bio_set_dev(bio, dmz->dev->bdev);
->  	bio->bi_iter.bi_sector = dmz_start_sect(dmz->metadata, zone) + dmz_blk2sect(chunk_block);
-> -	atomic_inc(&bioctx->ref);
-> +	refcount_inc(&bioctx->ref);
->  	generic_make_request(bio);
->  
->  	if (dmz_is_seq(zone))
-> @@ -456,7 +456,7 @@ static void dmz_handle_bio(struct dmz_target *dmz, struct dm_chunk_work *cw,
->   */
->  static inline void dmz_get_chunk_work(struct dm_chunk_work *cw)
->  {
-> -	atomic_inc(&cw->refcount);
-> +	refcount_inc(&cw->refcount);
->  }
->  
->  /*
-> @@ -465,7 +465,7 @@ static inline void dmz_get_chunk_work(struct dm_chunk_work *cw)
->   */
->  static void dmz_put_chunk_work(struct dm_chunk_work *cw)
->  {
-> -	if (atomic_dec_and_test(&cw->refcount)) {
-> +	if (refcount_dec_and_test(&cw->refcount)) {
->  		WARN_ON(!bio_list_empty(&cw->bio_list));
->  		radix_tree_delete(&cw->target->chunk_rxtree, cw->chunk);
->  		kfree(cw);
-> @@ -546,7 +546,7 @@ static void dmz_queue_chunk_work(struct dmz_target *dmz, struct bio *bio)
->  			goto out;
->  
->  		INIT_WORK(&cw->work, dmz_chunk_work);
-> -		atomic_set(&cw->refcount, 0);
-> +		refcount_set(&cw->refcount, 0);
->  		cw->target = dmz;
->  		cw->chunk = chunk;
->  		bio_list_init(&cw->bio_list);
-> @@ -599,7 +599,7 @@ static int dmz_map(struct dm_target *ti, struct bio *bio)
->  	bioctx->target = dmz;
->  	bioctx->zone = NULL;
->  	bioctx->bio = bio;
-> -	atomic_set(&bioctx->ref, 1);
-> +	refcount_set(&bioctx->ref, 1);
->  	bioctx->status = BLK_STS_OK;
->  
->  	/* Set the BIO pending in the flush list */
-> @@ -633,7 +633,7 @@ static int dmz_end_io(struct dm_target *ti, struct bio *bio, blk_status_t *error
->  	if (bioctx->status == BLK_STS_OK && *error)
->  		bioctx->status = *error;
->  
-> -	if (!atomic_dec_and_test(&bioctx->ref))
-> +	if (!refcount_dec_and_test(&bioctx->ref))
->  		return DM_ENDIO_INCOMPLETE;
->  
->  	/* Done */
-> 
-
-Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
-Tested-by: Damien Le Moal <damien.lemoal@wdc.com>
-
-Thanks !
-
--- 
-Damien Le Moal
-Western Digital Research
+On Thu, Aug 23, 2018 at 6:12 PM, Damien Le Moal <Damien.LeMoal@wdc.com> wrote:
+> John,
+>
+> On 2018/08/23 10:37, John Pittman wrote:
+>> The API surrounding refcount_t should be used in place of atomic_t
+>> when variables are being used as reference counters.  This API can
+>> prevent issues such as counter overflows and use-after-free
+>> conditions.  Within the dm zoned metadata stack, the atomic_t API
+>> is used for mblk->ref and zone->refcount.  Change these to use
+>> refcount_t, avoiding the issues mentioned.
+>>
+>> Signed-off-by: John Pittman <jpittman@redhat.com>
+>> ---
+>>  drivers/md/dm-zoned-metadata.c | 25 +++++++++++++------------
+>>  drivers/md/dm-zoned.h          |  2 +-
+>>  2 files changed, 14 insertions(+), 13 deletions(-)
+>>
+>> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+>> index 969954915566..92e635749414 100644
+>> --- a/drivers/md/dm-zoned-metadata.c
+>> +++ b/drivers/md/dm-zoned-metadata.c
+>> @@ -99,7 +99,7 @@ struct dmz_mblock {
+>>       struct rb_node          node;
+>>       struct list_head        link;
+>>       sector_t                no;
+>> -     atomic_t                ref;
+>> +     refcount_t              ref;
+>
+> While reviewing your patch, I realized that this ref is always manipulated under
+> the zmd->mblk_lock spinlock. So there is no need for it to be an atomic or a
+> refcount. An unsigned int would do as well and be faster. My fault.
+>
+> I will send a patch to go on top of yours to fix that.
+>
+> Otherwise:
+>
+> Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
+> Tested-by: Damien Le Moal <damien.lemoal@wdc.com>
+>
+> Thanks !
+>
+>
+>>       unsigned long           state;
+>>       struct page             *page;
+>>       void                    *data;
+>> @@ -296,7 +296,7 @@ static struct dmz_mblock *dmz_alloc_mblock(struct dmz_metadata *zmd,
+>>
+>>       RB_CLEAR_NODE(&mblk->node);
+>>       INIT_LIST_HEAD(&mblk->link);
+>> -     atomic_set(&mblk->ref, 0);
+>> +     refcount_set(&mblk->ref, 0);
+>>       mblk->state = 0;
+>>       mblk->no = mblk_no;
+>>       mblk->data = page_address(mblk->page);
+>> @@ -397,7 +397,7 @@ static struct dmz_mblock *dmz_fetch_mblock(struct dmz_metadata *zmd,
+>>               return NULL;
+>>
+>>       spin_lock(&zmd->mblk_lock);
+>> -     atomic_inc(&mblk->ref);
+>> +     refcount_inc(&mblk->ref);
+>>       set_bit(DMZ_META_READING, &mblk->state);
+>>       dmz_insert_mblock(zmd, mblk);
+>>       spin_unlock(&zmd->mblk_lock);
+>> @@ -484,7 +484,7 @@ static void dmz_release_mblock(struct dmz_metadata *zmd,
+>>
+>>       spin_lock(&zmd->mblk_lock);
+>>
+>> -     if (atomic_dec_and_test(&mblk->ref)) {
+>> +     if (refcount_dec_and_test(&mblk->ref)) {
+>>               if (test_bit(DMZ_META_ERROR, &mblk->state)) {
+>>                       rb_erase(&mblk->node, &zmd->mblk_rbtree);
+>>                       dmz_free_mblock(zmd, mblk);
+>> @@ -511,7 +511,8 @@ static struct dmz_mblock *dmz_get_mblock(struct dmz_metadata *zmd,
+>>       mblk = dmz_lookup_mblock(zmd, mblk_no);
+>>       if (mblk) {
+>>               /* Cache hit: remove block from LRU list */
+>> -             if (atomic_inc_return(&mblk->ref) == 1 &&
+>> +             refcount_inc(&mblk->ref);
+>> +             if (refcount_read(&mblk->ref) == 1 &&
+>>                   !test_bit(DMZ_META_DIRTY, &mblk->state))
+>>                       list_del_init(&mblk->link);
+>>       }
+>> @@ -753,7 +754,7 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
+>>
+>>               spin_lock(&zmd->mblk_lock);
+>>               clear_bit(DMZ_META_DIRTY, &mblk->state);
+>> -             if (atomic_read(&mblk->ref) == 0)
+>> +             if (refcount_read(&mblk->ref) == 0)
+>>                       list_add_tail(&mblk->link, &zmd->mblk_lru_list);
+>>               spin_unlock(&zmd->mblk_lock);
+>>       }
+>> @@ -1048,7 +1049,7 @@ static int dmz_init_zone(struct dmz_metadata *zmd, struct dm_zone *zone,
+>>       }
+>>
+>>       INIT_LIST_HEAD(&zone->link);
+>> -     atomic_set(&zone->refcount, 0);
+>> +     refcount_set(&zone->refcount, 0);
+>>       zone->chunk = DMZ_MAP_UNMAPPED;
+>>
+>>       if (blkz->type == BLK_ZONE_TYPE_CONVENTIONAL) {
+>> @@ -1574,7 +1575,7 @@ struct dm_zone *dmz_get_zone_for_reclaim(struct dmz_metadata *zmd)
+>>  void dmz_activate_zone(struct dm_zone *zone)
+>>  {
+>>       set_bit(DMZ_ACTIVE, &zone->flags);
+>> -     atomic_inc(&zone->refcount);
+>> +     refcount_inc(&zone->refcount);
+>>  }
+>>
+>>  /*
+>> @@ -1585,7 +1586,7 @@ void dmz_activate_zone(struct dm_zone *zone)
+>>   */
+>>  void dmz_deactivate_zone(struct dm_zone *zone)
+>>  {
+>> -     if (atomic_dec_and_test(&zone->refcount)) {
+>> +     if (refcount_dec_and_test(&zone->refcount)) {
+>>               WARN_ON(!test_bit(DMZ_ACTIVE, &zone->flags));
+>>               clear_bit_unlock(DMZ_ACTIVE, &zone->flags);
+>>               smp_mb__after_atomic();
+>> @@ -2308,7 +2309,7 @@ static void dmz_cleanup_metadata(struct dmz_metadata *zmd)
+>>               mblk = list_first_entry(&zmd->mblk_dirty_list,
+>>                                       struct dmz_mblock, link);
+>>               dmz_dev_warn(zmd->dev, "mblock %llu still in dirty list (ref %u)",
+>> -                          (u64)mblk->no, atomic_read(&mblk->ref));
+>> +                          (u64)mblk->no, refcount_read(&mblk->ref));
+>>               list_del_init(&mblk->link);
+>>               rb_erase(&mblk->node, &zmd->mblk_rbtree);
+>>               dmz_free_mblock(zmd, mblk);
+>> @@ -2326,8 +2327,8 @@ static void dmz_cleanup_metadata(struct dmz_metadata *zmd)
+>>       root = &zmd->mblk_rbtree;
+>>       rbtree_postorder_for_each_entry_safe(mblk, next, root, node) {
+>>               dmz_dev_warn(zmd->dev, "mblock %llu ref %u still in rbtree",
+>> -                          (u64)mblk->no, atomic_read(&mblk->ref));
+>> -             atomic_set(&mblk->ref, 0);
+>> +                          (u64)mblk->no, refcount_read(&mblk->ref));
+>> +             refcount_set(&mblk->ref, 0);
+>>               dmz_free_mblock(zmd, mblk);
+>>       }
+>>
+>> diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
+>> index 12419f0bfe78..b7829a615d26 100644
+>> --- a/drivers/md/dm-zoned.h
+>> +++ b/drivers/md/dm-zoned.h
+>> @@ -78,7 +78,7 @@ struct dm_zone {
+>>       unsigned long           flags;
+>>
+>>       /* Zone activation reference count */
+>> -     atomic_t                refcount;
+>> +     refcount_t              refcount;
+>>
+>>       /* Zone write pointer block (relative to the zone start block) */
+>>       unsigned int            wp_block;
+>>
+>
+>
+> --
+> Damien Le Moal
+> Western Digital Research
