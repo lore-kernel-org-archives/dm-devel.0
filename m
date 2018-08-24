@@ -1,48 +1,74 @@
-From: Dave Watson <davejwatson@fb.com>
-Subject: Re: Deadlock when using crypto API for block devices
-Date: Fri, 24 Aug 2018 09:02:55 -0700
-Message-ID: <20180824160255.rg7lgt2tcbwjc5xn@mmilisic-mbp.dhcp.thefacebook.com>
-References: <alpine.LRH.2.02.1808231621220.8560@file01.intranet.prod.int.rdu2.redhat.com>
- <20180824021010.hfar7gasp34ddrib@gondor.apana.org.au>
- <alpine.LRH.2.02.1808240659320.27014@file01.intranet.prod.int.rdu2.redhat.com>
- <20180824112435.ggizlqrymuibm6oo@gondor.apana.org.au>
- <alpine.LRH.2.02.1808240837120.11243@file01.intranet.prod.int.rdu2.redhat.com>
- <alpine.LRH.2.02.1808240854010.15479@file01.intranet.prod.int.rdu2.redhat.com>
- <20180824132145.2zsnqwbih3iygeeq@gondor.apana.org.au>
- <20180824132231.t3narmsfcykseeee@gondor.apana.org.au>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] add a cmd to display the topology links
+Date: Fri, 24 Aug 2018 22:39:43 +0200
+Message-ID: <af7edd3df3eb93bff31575d0a5b65561975576a6.camel@suse.com>
+References: <1533611004-18376-1-git-send-email-guanjunxiong@huawei.com>
+	<cfd38987521ad7fdd1172e44a9052f52aef360b9.camel@suse.com>
+	<bbbade7b-5c05-4621-45e0-98c5704945be@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180824132231.t3narmsfcykseeee@gondor.apana.org.au>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <bbbade7b-5c05-4621-45e0-98c5704945be@huawei.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Guan Junxiong <guanjunxiong@huawei.com>, dm-devel@redhat.com, christophe.varoqui@opensvc.com, hare@suse.de, bmarzins@redhat.com, xose.vazquez@gmail.com
+Cc: "lijie (AC)" <lijie34@huawei.com>, wangzhoumengjian@huawei.com, shenhong09@huawei.com, chengjike.cheng@huawei.com
 List-Id: dm-devel.ids
 
-On 08/24/18 09:22 PM, Herbert Xu wrote:
-> > > BTW. gcmaes_crypt_by_sg also contains GFP_ATOMIC and -ENOMEM, behind a 
-> > > pretty complex condition. Do you mean that this condition is part of the 
-> > > contract that the crypto API provides?
-> > 
-> > This is an implementation defect.  I think for this case we should
-> > fall back to software GCM if the accelerated version fails.
-> > 
-> > > Should "req->src->offset + req->src->length < PAGE_SIZE" use "<=" instead? 
-> > > Because if the data ends up at page boundary, it will use the atomic 
-> > > allocation that can fail.
-> > 
-> > This condition does look strange.  It's introduced by the commit
-> > e845520707f85c539ce04bb73c6070e9441480be.   Dave, what exactly is
-> > it meant to do?
-
-The aesni routines still require linear AAD data, the condition checks
-that the AAD data is linear, and if not, kmallocs and copies it to a
-linear buffer.
-
-Yes, the condition looks like it could be <= PAGE_SIZE, similar to the
-one in gcmaes_encrypt.
-
-Yes, we should fall back to software gcm if kmalloc fails, although
-AAD data is usually small, and it is probably worth having a small
-stack buffer before attempting to kmalloc.
+T24gRnJpLCAyMDE4LTA4LTI0IGF0IDE0OjUwICswODAwLCBHdWFuIEp1bnhpb25nIHdyb3RlOgo+
+IEhp77yMTWFydGluCj4gVGhhbmtzIGZvciB5b3VyIHJlcGx5Lgo+IFRoZSBjb21tYW5kICJtdWx0
+aXBhdGhkIGxpc3QgcGF0aHMgZm9ybWF0ICVOICVSICVuICVyIiBvciAibHNzY3NpIC10Igo+IHNo
+b3dzIGFsbCB0aGUgcGF0aHMuCj4gVGhlIG5ldyBjb21tYW5kICJtdWx0aXBhdGggLWsiIHJlbW92
+ZXMgdGhlIHBhdGggb2YgaW5mb3JtYXRpb24gd2l0aAo+IHRoZSBzYW1lIGhvc3Qgd3duIGFuZAo+
+IHRhcmdldCB3d24sIG9ubHkgZGlzcGxheSB0aGUgZGlmZmVyZW50IHBoeXNpY2FsIHBhdGggd2hp
+Y2ggaXMgYmV0d2Vlbgo+IGEgc2VydmVyIGFuZCB0aGUKPiBzdG9yYWdlIGRldmljZSBpbiBzdG9y
+YWdlIG5ldHdvcmtpbmcuIFdlIHRoaW5rIHRoaXMgY29tbWFuZCB3aWxsIG1ha2UKPiBpdCBlYXNp
+ZXIgdG8gb2JzZXJ2ZQo+IHBoeXNpY2FsIHBhdGggaW5mb3JtYXRpb24uCgpIbSwgSSdtIG5vdCBn
+ZXR0aW5nIGl0LiBZb3VyIG93biBleGFtcGxlIChiZWxvdykgc2hvd3MgdGhlIHNhbWUKaG9zdC90
+YXJnZXQgV1dOTi9XV1BOIHR1cGxlIHR3aWNlLiBMb29raW5nIGF0IHRoZSBjb2RlLCB5b3Ugc2Vl
+bSB0bwpncm91cCBTQ1NJIHBhdGhzIHRoYXQgaGF2ZSBlcXVhbCBob3N0LCBjaGFubmVsLCBkZXZp
+Y2UgSURzIChJT1csIHlvdQppZ25vcmUgZGlmZmVyZW5jZSBieSBMVU4pLCBhbmQgdGFrZSBqdXN0
+IG9uZSBwYXRoIG91dCBvZiBlYWNoIGdyb3VwLiBJCmNhbiBzZWUgdGhhdCB0aGlzIHNob3J0ZW5z
+IGFuZCBzaW1wbGlmaWVzIHRoZSBvdXRwdXQsIGJ1dCBzdGlsbCBpdCBoYXMKbm90aGluZyB0byBk
+byB3aXRoIG11bHRpcGF0aCwgYW5kIGNvdWxkIGJlIGFjaGlldmVkIG90aGVyd2lzZS4KV2hhdCBh
+Ym91dCAibXVsdGlwYXRoZCBsaXN0IHBhdGhzIGZvcm1hdCAlTiAlUiAlbiAlciB8IHNvcnQgLXUi
+ID8KCk1heWJlIEknbSBzdGlsbCBtaXNzaW5nIHNvbWV0aGluZywgYnV0IGFueXdheSwgbXkgbWFp
+biBvYmplY3Rpb24gaXMKdGhhdCBtdWx0aXBhdGggaXMgbm90IG1lYW50IGFzIGEgdG9vbCBmb3Ig
+cHJpbnRpbmcgZmlicmUgY2hhbm5lbAp0b3BvbG9neS4gVGhlcmUgYXJlIG90aGVyIHRvb2xzIGZv
+ciB0aGlzIHB1cnBvc2UuCgpNYXJ0aW4KCj4gCj4gQmVzdCByZWdhcmRzLgo+IAo+IAo+IE9uIDIw
+MTgvOC8yMSAyMTozMSwgTWFydGluIFdpbGNrIHdyb3RlOgo+ID4gSGVsbG8gR3VhbiwKPiA+IAo+
+ID4gT24gVHVlLCAyMDE4LTA4LTA3IGF0IDExOjAzICswODAwLCBndWFuanVueGlvbmcgMDA0MDE3
+MDkgd3JvdGU6Cj4gPiA+IEZyb206IGRpbmd3ZW55aSAwMDI5NzEwNiA8ZGluZ3dlbnlpQGh1YXdl
+aS5jb20+Cj4gPiA+IAo+ID4gPiBUaGlzIHBhdGNoIGFkZHMgYSBuZXcgcGFyYW1ldGVyIHdoaWNo
+IG5hbWVkIC1rIHRvIGRpc3BsYXkgbGlua3MKPiA+ID4gaW5mb3JtYXRpb24gaW4gdGhlIG11bHRp
+cGF0aCBjb21tYW5kLgo+ID4gPiBDb21tYW5kICdtdWx0aXBhdGggLWsnIGRpc3BsYXkgcGF0aHMg
+d2l0aCB0aGUgc2FtZSBob3N0IHd3biBhbmQKPiA+ID4gdGFyZ2V0IHd3biBhcyBvbmUgbGluayBp
+bmZvcm1hdGlvbi4KPiA+ID4gVGhlIGNtZCBkaXNwbGF5IHRoZSBmb2xsb3dpbmcgaW5mb3JtYXRp
+b24gdG8gcXVpY2tseSBhbmQgZWFzaWx5Cj4gPiA+IGZpbmQKPiA+ID4gdGhlIGhvc3QgYW5kIHRh
+cmdldCBpbmZvcm1hdGlvbi4KPiA+ID4gW3Jvb3RAbG9jYWxob3N0IG1wXSMgLi9tdWx0aXBhdGgg
+LWsKPiA+ID4gbGluayBob3N0X3d3bm49MHgyMDAwMDAyNGZmMmU4MDkyIGhvc3Rfd3dwbj0weDIx
+MDAwMDI0ZmYyZTgwOTIKPiA+ID4gdGFyZ2V0X3d3bm49MHgyMTAwMzMzNDM1MzYzNzM4IHRhcmdl
+dF93d3BuPTB4MjIwMTMzMzQzNTM2MzczOAo+ID4gPiBsaW5rIGhvc3Rfd3dubj0weDIwMDAwMDI0
+ZmYyZTgwOTIgaG9zdF93d3BuPTB4MjEwMDAwMjRmZjJlODA5Mgo+ID4gPiB0YXJnZXRfd3dubj0w
+eDIxMDAzMzM0MzUzNjM3MzggdGFyZ2V0X3d3cG49MHgyMjExMzMzNDM1MzYzNzM4Cj4gPiAKPiA+
+IFRoYW5rcyBmb3IgdGhlIHBhdGNoLiBCdXQgSSBoYXZlIHRvIHNheSBJIHNlZSBsaXR0bGUgdmFs
+dWUgaW4KPiA+IGFkZGluZwo+ID4gdGhpcyBvcHRpb24gdG8gbXVsdGlwYXRoLiBXaGF0J3Mgd3Jv
+bmcgd2l0aCBzaW1wbHkgcnVubmluZyAKPiA+ICJtdWx0aXBhdGhkIGxpc3QgcGF0aHMgZm9ybWF0
+ICVOICVSICVuICVyIiwgb3Igd3JhcHBpbmcgdGhhdAo+ID4gY29tbWFuZCBpbgo+ID4gYSBzaW1w
+bGUgc2hlbGwgc2NyaXB0PyBBY3R1YWxseSwgdGhpcyBoYXMgbm90aGluZyB0byBkbyB3aXRoCj4g
+PiBtdWx0aXBhdGgKPiA+IGF0IGFsbCwgaXQncyByZWFsbHkgdHJhbnNwb3J0LXJlbGF0ZWQgaW5m
+b3JtYXRpb24gc2ltaWxhciB0byAKPiA+ICJsc3Njc2kgLXQiIG91dHB1dC4KPiA+IAo+ID4gUmVn
+YXJkcywKPiA+IE1hcnRpbgo+ID4gCj4gCj4gCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNr
+QHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBH
+RjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAy
+MTI4NCAoQUcgTsO8cm5iZXJnKQoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
+ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
+bA==
