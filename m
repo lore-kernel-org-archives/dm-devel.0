@@ -1,15 +1,17 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] add a cmd to display the topology links
-Date: Fri, 24 Aug 2018 22:39:43 +0200
-Message-ID: <af7edd3df3eb93bff31575d0a5b65561975576a6.camel@suse.com>
-References: <1533611004-18376-1-git-send-email-guanjunxiong@huawei.com>
-	<cfd38987521ad7fdd1172e44a9052f52aef360b9.camel@suse.com>
-	<bbbade7b-5c05-4621-45e0-98c5704945be@huawei.com>
+From: s90006763 <sunao.sun@huawei.com>
+Subject: [PATCH] This patch filled the host WWNN. when using the
+	command of multipathd to list the isscsi paths informartion,
+	the host WWNN of paths informartion is not exist. like this:
+	multipathd show paths format "%N %R" host WWNN host WWPN [undef]
+	iqn.2006-08.com.huawei:oceanstor:21000022a10beb2a::1020002:129.13.100.240
+	[undef]
+	iqn.2006-08.com.huawei:oceanstor:21000022a10beb2a::20003:129.13.100.241
+Date: Fri, 24 Aug 2018 19:22:03 +0800
+Message-ID: <20180824112203.14964-1-sunao.sun@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <bbbade7b-5c05-4621-45e0-98c5704945be@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,56 +21,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Guan Junxiong <guanjunxiong@huawei.com>, dm-devel@redhat.com, christophe.varoqui@opensvc.com, hare@suse.de, bmarzins@redhat.com, xose.vazquez@gmail.com
-Cc: "lijie (AC)" <lijie34@huawei.com>, wangzhoumengjian@huawei.com, shenhong09@huawei.com, chengjike.cheng@huawei.com
+To: dm-devel@redhat.com, christophe.varoqui@opensvc.com, hare@suse.de, mwilck@suse.com, bmarzins@redhat.com, xose.vazquez@gmail.com
+Cc: wangke16@huawei.com, guanjunxiong@huawei.com, chengjike.cheng@huawei.com, shenhong09@huawei.com, lixiaoying@huawei.com, niuhaoxin@huawei.com
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE4LTA4LTI0IGF0IDE0OjUwICswODAwLCBHdWFuIEp1bnhpb25nIHdyb3RlOgo+
-IEhp77yMTWFydGluCj4gVGhhbmtzIGZvciB5b3VyIHJlcGx5Lgo+IFRoZSBjb21tYW5kICJtdWx0
-aXBhdGhkIGxpc3QgcGF0aHMgZm9ybWF0ICVOICVSICVuICVyIiBvciAibHNzY3NpIC10Igo+IHNo
-b3dzIGFsbCB0aGUgcGF0aHMuCj4gVGhlIG5ldyBjb21tYW5kICJtdWx0aXBhdGggLWsiIHJlbW92
-ZXMgdGhlIHBhdGggb2YgaW5mb3JtYXRpb24gd2l0aAo+IHRoZSBzYW1lIGhvc3Qgd3duIGFuZAo+
-IHRhcmdldCB3d24sIG9ubHkgZGlzcGxheSB0aGUgZGlmZmVyZW50IHBoeXNpY2FsIHBhdGggd2hp
-Y2ggaXMgYmV0d2Vlbgo+IGEgc2VydmVyIGFuZCB0aGUKPiBzdG9yYWdlIGRldmljZSBpbiBzdG9y
-YWdlIG5ldHdvcmtpbmcuIFdlIHRoaW5rIHRoaXMgY29tbWFuZCB3aWxsIG1ha2UKPiBpdCBlYXNp
-ZXIgdG8gb2JzZXJ2ZQo+IHBoeXNpY2FsIHBhdGggaW5mb3JtYXRpb24uCgpIbSwgSSdtIG5vdCBn
-ZXR0aW5nIGl0LiBZb3VyIG93biBleGFtcGxlIChiZWxvdykgc2hvd3MgdGhlIHNhbWUKaG9zdC90
-YXJnZXQgV1dOTi9XV1BOIHR1cGxlIHR3aWNlLiBMb29raW5nIGF0IHRoZSBjb2RlLCB5b3Ugc2Vl
-bSB0bwpncm91cCBTQ1NJIHBhdGhzIHRoYXQgaGF2ZSBlcXVhbCBob3N0LCBjaGFubmVsLCBkZXZp
-Y2UgSURzIChJT1csIHlvdQppZ25vcmUgZGlmZmVyZW5jZSBieSBMVU4pLCBhbmQgdGFrZSBqdXN0
-IG9uZSBwYXRoIG91dCBvZiBlYWNoIGdyb3VwLiBJCmNhbiBzZWUgdGhhdCB0aGlzIHNob3J0ZW5z
-IGFuZCBzaW1wbGlmaWVzIHRoZSBvdXRwdXQsIGJ1dCBzdGlsbCBpdCBoYXMKbm90aGluZyB0byBk
-byB3aXRoIG11bHRpcGF0aCwgYW5kIGNvdWxkIGJlIGFjaGlldmVkIG90aGVyd2lzZS4KV2hhdCBh
-Ym91dCAibXVsdGlwYXRoZCBsaXN0IHBhdGhzIGZvcm1hdCAlTiAlUiAlbiAlciB8IHNvcnQgLXUi
-ID8KCk1heWJlIEknbSBzdGlsbCBtaXNzaW5nIHNvbWV0aGluZywgYnV0IGFueXdheSwgbXkgbWFp
-biBvYmplY3Rpb24gaXMKdGhhdCBtdWx0aXBhdGggaXMgbm90IG1lYW50IGFzIGEgdG9vbCBmb3Ig
-cHJpbnRpbmcgZmlicmUgY2hhbm5lbAp0b3BvbG9neS4gVGhlcmUgYXJlIG90aGVyIHRvb2xzIGZv
-ciB0aGlzIHB1cnBvc2UuCgpNYXJ0aW4KCj4gCj4gQmVzdCByZWdhcmRzLgo+IAo+IAo+IE9uIDIw
-MTgvOC8yMSAyMTozMSwgTWFydGluIFdpbGNrIHdyb3RlOgo+ID4gSGVsbG8gR3VhbiwKPiA+IAo+
-ID4gT24gVHVlLCAyMDE4LTA4LTA3IGF0IDExOjAzICswODAwLCBndWFuanVueGlvbmcgMDA0MDE3
-MDkgd3JvdGU6Cj4gPiA+IEZyb206IGRpbmd3ZW55aSAwMDI5NzEwNiA8ZGluZ3dlbnlpQGh1YXdl
-aS5jb20+Cj4gPiA+IAo+ID4gPiBUaGlzIHBhdGNoIGFkZHMgYSBuZXcgcGFyYW1ldGVyIHdoaWNo
-IG5hbWVkIC1rIHRvIGRpc3BsYXkgbGlua3MKPiA+ID4gaW5mb3JtYXRpb24gaW4gdGhlIG11bHRp
-cGF0aCBjb21tYW5kLgo+ID4gPiBDb21tYW5kICdtdWx0aXBhdGggLWsnIGRpc3BsYXkgcGF0aHMg
-d2l0aCB0aGUgc2FtZSBob3N0IHd3biBhbmQKPiA+ID4gdGFyZ2V0IHd3biBhcyBvbmUgbGluayBp
-bmZvcm1hdGlvbi4KPiA+ID4gVGhlIGNtZCBkaXNwbGF5IHRoZSBmb2xsb3dpbmcgaW5mb3JtYXRp
-b24gdG8gcXVpY2tseSBhbmQgZWFzaWx5Cj4gPiA+IGZpbmQKPiA+ID4gdGhlIGhvc3QgYW5kIHRh
-cmdldCBpbmZvcm1hdGlvbi4KPiA+ID4gW3Jvb3RAbG9jYWxob3N0IG1wXSMgLi9tdWx0aXBhdGgg
-LWsKPiA+ID4gbGluayBob3N0X3d3bm49MHgyMDAwMDAyNGZmMmU4MDkyIGhvc3Rfd3dwbj0weDIx
-MDAwMDI0ZmYyZTgwOTIKPiA+ID4gdGFyZ2V0X3d3bm49MHgyMTAwMzMzNDM1MzYzNzM4IHRhcmdl
-dF93d3BuPTB4MjIwMTMzMzQzNTM2MzczOAo+ID4gPiBsaW5rIGhvc3Rfd3dubj0weDIwMDAwMDI0
-ZmYyZTgwOTIgaG9zdF93d3BuPTB4MjEwMDAwMjRmZjJlODA5Mgo+ID4gPiB0YXJnZXRfd3dubj0w
-eDIxMDAzMzM0MzUzNjM3MzggdGFyZ2V0X3d3cG49MHgyMjExMzMzNDM1MzYzNzM4Cj4gPiAKPiA+
-IFRoYW5rcyBmb3IgdGhlIHBhdGNoLiBCdXQgSSBoYXZlIHRvIHNheSBJIHNlZSBsaXR0bGUgdmFs
-dWUgaW4KPiA+IGFkZGluZwo+ID4gdGhpcyBvcHRpb24gdG8gbXVsdGlwYXRoLiBXaGF0J3Mgd3Jv
-bmcgd2l0aCBzaW1wbHkgcnVubmluZyAKPiA+ICJtdWx0aXBhdGhkIGxpc3QgcGF0aHMgZm9ybWF0
-ICVOICVSICVuICVyIiwgb3Igd3JhcHBpbmcgdGhhdAo+ID4gY29tbWFuZCBpbgo+ID4gYSBzaW1w
-bGUgc2hlbGwgc2NyaXB0PyBBY3R1YWxseSwgdGhpcyBoYXMgbm90aGluZyB0byBkbyB3aXRoCj4g
-PiBtdWx0aXBhdGgKPiA+IGF0IGFsbCwgaXQncyByZWFsbHkgdHJhbnNwb3J0LXJlbGF0ZWQgaW5m
-b3JtYXRpb24gc2ltaWxhciB0byAKPiA+ICJsc3Njc2kgLXQiIG91dHB1dC4KPiA+IAo+ID4gUmVn
-YXJkcywKPiA+IE1hcnRpbgo+ID4gCj4gCj4gCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNr
-QHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBH
-RjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAy
-MTI4NCAoQUcgTsO8cm5iZXJnKQoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
-ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
-bA==
+this patch solved this problem and filled the host WWNN.
+like this:
+multipathd show paths format "%N %R"
+host WWNN                           host WWPN
+iqn.1994-05.com.redhat:86329aefccdb iqn.2006-08.com.huawei:oceanstor:21000022a10beb2a::1020002:129.13.100.240
+iqn.1994-05.com.redhat:86329aefccdb iqn.2006-08.com.huawei:oceanstor:21000022a10beb2a::20003:129.13.100.241
+---
+ libmultipath/print.c | 52 +++++++++++++++++++++++++++++++++++++++-------------
+ 1 file changed, 39 insertions(+), 13 deletions(-)
+
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 9da6a77c..e2b90301 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -539,20 +539,39 @@ snprint_host_attr (char * buff, size_t len, const struct path * pp, char *attr)
+ 	char host_id[32];
+ 	const char *value = NULL;
+ 	int ret;
+-
+-	if (pp->sg_id.proto_id != SCSI_PROTOCOL_FCP)
++    
++	if ((pp->sg_id.proto_id != SCSI_PROTOCOL_FCP) && (pp->sg_id.proto_id != SCSI_PROTOCOL_ISCSI) )
+ 		return snprintf(buff, len, "[undef]");
+-	sprintf(host_id, "host%d", pp->sg_id.host_no);
+-	host_dev = udev_device_new_from_subsystem_sysname(udev, "fc_host",
+-							  host_id);
+-	if (!host_dev) {
+-		condlog(1, "%s: No fc_host device for '%s'", pp->dev, host_id);
+-		goto out;
++	if((pp->sg_id.proto_id == SCSI_PROTOCOL_ISCSI) && strcmp(buff, wwid) == 0)
++		
++    if(pp->sg_id.proto_id == SCSI_PROTOCOL_FCP)
++    {
++		sprintf(host_id, "host%d", pp->sg_id.host_no);
++		host_dev = udev_device_new_from_subsystem_sysname(udev, "fc_host",
++								  host_id);
++		if (!host_dev) {
++			condlog(1, "%s: No fc_host device for '%s'", pp->dev, host_id);
++			goto out;
++		}
++		value = udev_device_get_sysattr_value(host_dev, attr);
++		if (value)
++			ret = snprint_str(buff, len, value);
++		udev_device_unref(host_dev);
++    }
++	else if(pp->sg_id.proto_id == SCSI_PROTOCOL_ISCSI)
++	{
++	    sprintf(host_id, "session%d", pp->sg_id.transport_id);
++		host_dev = udev_device_new_from_subsystem_sysname(udev, "iscsi_session",
++								  host_id);
++		if (!host_dev) {
++			condlog(3, "%s: No iscsi_session for '%s'", pp->dev, host_id);
++			goto out;
++		}
++		value = udev_device_get_sysattr_value(host_dev, attr);
++		if (value)
++			ret = snprint_str(buff, len, value);
++		udev_device_unref(host_dev);
+ 	}
+-	value = udev_device_get_sysattr_value(host_dev, attr);
+-	if (value)
+-		ret = snprint_str(buff, len, value);
+-	udev_device_unref(host_dev);
+ out:
+ 	if (!value)
+ 		ret = snprintf(buff, len, "[unknown]");
+@@ -562,7 +581,14 @@ out:
+ int
+ snprint_host_wwnn (char * buff, size_t len, const struct path * pp)
+ {
+-	return snprint_host_attr(buff, len, pp, "node_name");
++	if(pp->sg_id.proto_id == SCSI_PROTOCOL_ISCSI)
++	{
++	    return snprint_host_attr(buff, len, pp, "initiatorname");
++	}
++	else
++	{
++		return snprint_host_attr(buff, len, pp, "node_name");
++	}
+ }
+ 
+ int
+-- 
+2.12.0.windows.1
