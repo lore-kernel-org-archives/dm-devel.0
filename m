@@ -1,56 +1,68 @@
-From: Guan Junxiong <guanjunxiong@huawei.com>
-Subject: Re: [PATCH] add a cmd to display the topology links
-Date: Fri, 24 Aug 2018 14:50:58 +0800
-Message-ID: <bbbade7b-5c05-4621-45e0-98c5704945be@huawei.com>
-References: <1533611004-18376-1-git-send-email-guanjunxiong@huawei.com>
-	<cfd38987521ad7fdd1172e44a9052f52aef360b9.camel@suse.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Deadlock when using crypto API for block devices
+Date: Fri, 24 Aug 2018 07:06:32 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1808240659320.27014@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1808231621220.8560@file01.intranet.prod.int.rdu2.redhat.com> <20180824021010.hfar7gasp34ddrib@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <cfd38987521ad7fdd1172e44a9052f52aef360b9.camel@suse.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com, christophe.varoqui@opensvc.com, hare@suse.de, bmarzins@redhat.com, xose.vazquez@gmail.com
-Cc: "lijie (AC)" <lijie34@huawei.com>, wangzhoumengjian@huawei.com, shenhong09@huawei.com, chengjike.cheng@huawei.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180824021010.hfar7gasp34ddrib@gondor.apana.org.au>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-SGnvvIxNYXJ0aW4KVGhhbmtzIGZvciB5b3VyIHJlcGx5LgpUaGUgY29tbWFuZCAibXVsdGlwYXRo
-ZCBsaXN0IHBhdGhzIGZvcm1hdCAlTiAlUiAlbiAlciIgb3IgImxzc2NzaSAtdCIgc2hvd3MgYWxs
-IHRoZSBwYXRocy4KVGhlIG5ldyBjb21tYW5kICJtdWx0aXBhdGggLWsiIHJlbW92ZXMgdGhlIHBh
-dGggb2YgaW5mb3JtYXRpb24gd2l0aCB0aGUgc2FtZSBob3N0IHd3biBhbmQKdGFyZ2V0IHd3biwg
-b25seSBkaXNwbGF5IHRoZSBkaWZmZXJlbnQgcGh5c2ljYWwgcGF0aCB3aGljaCBpcyBiZXR3ZWVu
-IGEgc2VydmVyIGFuZCB0aGUKc3RvcmFnZSBkZXZpY2UgaW4gc3RvcmFnZSBuZXR3b3JraW5nLiBX
-ZSB0aGluayB0aGlzIGNvbW1hbmQgd2lsbCBtYWtlIGl0IGVhc2llciB0byBvYnNlcnZlCnBoeXNp
-Y2FsIHBhdGggaW5mb3JtYXRpb24uCgpCZXN0IHJlZ2FyZHMuCgoKT24gMjAxOC84LzIxIDIxOjMx
-LCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4gSGVsbG8gR3VhbiwKPiAKPiBPbiBUdWUsIDIwMTgtMDgt
-MDcgYXQgMTE6MDMgKzA4MDAsIGd1YW5qdW54aW9uZyAwMDQwMTcwOSB3cm90ZToKPj4gRnJvbTog
-ZGluZ3dlbnlpIDAwMjk3MTA2IDxkaW5nd2VueWlAaHVhd2VpLmNvbT4KPj4KPj4gVGhpcyBwYXRj
-aCBhZGRzIGEgbmV3IHBhcmFtZXRlciB3aGljaCBuYW1lZCAtayB0byBkaXNwbGF5IGxpbmtzCj4+
-IGluZm9ybWF0aW9uIGluIHRoZSBtdWx0aXBhdGggY29tbWFuZC4KPj4gQ29tbWFuZCAnbXVsdGlw
-YXRoIC1rJyBkaXNwbGF5IHBhdGhzIHdpdGggdGhlIHNhbWUgaG9zdCB3d24gYW5kCj4+IHRhcmdl
-dCB3d24gYXMgb25lIGxpbmsgaW5mb3JtYXRpb24uCj4+IFRoZSBjbWQgZGlzcGxheSB0aGUgZm9s
-bG93aW5nIGluZm9ybWF0aW9uIHRvIHF1aWNrbHkgYW5kIGVhc2lseSBmaW5kCj4+IHRoZSBob3N0
-IGFuZCB0YXJnZXQgaW5mb3JtYXRpb24uCj4+IFtyb290QGxvY2FsaG9zdCBtcF0jIC4vbXVsdGlw
-YXRoIC1rCj4+IGxpbmsgaG9zdF93d25uPTB4MjAwMDAwMjRmZjJlODA5MiBob3N0X3d3cG49MHgy
-MTAwMDAyNGZmMmU4MDkyCj4+IHRhcmdldF93d25uPTB4MjEwMDMzMzQzNTM2MzczOCB0YXJnZXRf
-d3dwbj0weDIyMDEzMzM0MzUzNjM3MzgKPj4gbGluayBob3N0X3d3bm49MHgyMDAwMDAyNGZmMmU4
-MDkyIGhvc3Rfd3dwbj0weDIxMDAwMDI0ZmYyZTgwOTIKPj4gdGFyZ2V0X3d3bm49MHgyMTAwMzMz
-NDM1MzYzNzM4IHRhcmdldF93d3BuPTB4MjIxMTMzMzQzNTM2MzczOAo+IAo+IFRoYW5rcyBmb3Ig
-dGhlIHBhdGNoLiBCdXQgSSBoYXZlIHRvIHNheSBJIHNlZSBsaXR0bGUgdmFsdWUgaW4gYWRkaW5n
-Cj4gdGhpcyBvcHRpb24gdG8gbXVsdGlwYXRoLiBXaGF0J3Mgd3Jvbmcgd2l0aCBzaW1wbHkgcnVu
-bmluZyAKPiAibXVsdGlwYXRoZCBsaXN0IHBhdGhzIGZvcm1hdCAlTiAlUiAlbiAlciIsIG9yIHdy
-YXBwaW5nIHRoYXQgY29tbWFuZCBpbgo+IGEgc2ltcGxlIHNoZWxsIHNjcmlwdD8gQWN0dWFsbHks
-IHRoaXMgaGFzIG5vdGhpbmcgdG8gZG8gd2l0aCBtdWx0aXBhdGgKPiBhdCBhbGwsIGl0J3MgcmVh
-bGx5IHRyYW5zcG9ydC1yZWxhdGVkIGluZm9ybWF0aW9uIHNpbWlsYXIgdG8gCj4gImxzc2NzaSAt
-dCIgb3V0cHV0Lgo+IAo+IFJlZ2FyZHMsCj4gTWFydGluCj4gCgotLQpkbS1kZXZlbCBtYWlsaW5n
-IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
-bGlzdGluZm8vZG0tZGV2ZWw=
+
+
+On Fri, 24 Aug 2018, Herbert Xu wrote:
+
+> On Thu, Aug 23, 2018 at 04:39:23PM -0400, Mikulas Patocka wrote:
+> >
+> > 1. don't set CRYPTO_TFM_REQ_MAY_SLEEP in dm-crypt
+> > =================================================
+> > If we don't set it, dm-crypt will use GFP_ATOMIC and GFP_ATOMIC may fail. 
+> > The function init_crypt in xts.c handles the failure gracefully - but the 
+> > question is - does the whole crypto code handle allocation failures 
+> > gracefully? If not and if it returns -ENOMEM somewhere, it would result in 
+> > I/O errors and data corruption.
+> 
+> It is safe to use GFP_ATOMIC.  First of the allocation is really
+> small (less than a page) so it will only fail when the system is
+> almost completely out of memory.
+
+GFP_ATOMIC is used by networking code. If the system is in a situation 
+when packets arrive faster than the swapper is able to swap, it will 
+happen. It does happen during netwoking surge and corrupting the 
+filesystem in tris situation is not acceptable.
+
+> Even when it does fail the crypto
+> operation will still succeed, albeit it will process things at a
+> smaller granularity so the performance will degrade.
+
+A quick search through the crypto code shows that ahash_save_req and 
+seqiv_aead_encrypt return -ENOMEM.
+
+Will you fix them?
+
+> The sleeping part of that flag is also not an issue because it
+> only kicks in once per page.  As this is going to be less than
+> or equal to a page it shouldn't matter.
+>  
+> > 3. introduce new flag CRYPTO_TFM_REQ_MAY_SLEEP_NOIO
+> > ===================================================
+> > Would you like to introduce it?
+> 
+> For now I don't think this is necessary given that this allocation
+> and similar ones in lrw and other places in the crypto API are just
+> performance enhancements and unlikely to fail except in very dire
+> situations.
+> 
+> But if new problems arise I'm certainly not opposed to this.
+> 
+> Thanks,
+> -- 
+> Email: Herbert Xu <herbert@gondor.apana.org.au>
+> Home Page: http://gondor.apana.org.au/~herbert/
+> PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+
+Mikulas
