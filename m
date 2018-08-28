@@ -1,91 +1,57 @@
-From: "Kani, Toshi" <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
-Subject: Re: Snapshot target and DAX-capable devices
-Date: Tue, 28 Aug 2018 22:38:47 +0000
-Message-ID: <be0cc5947e91cb3d8dffb6ce5f26f93917c3ea29.camel@hpe.com>
-References: <20180827160744.GE4002@quack2.suse.cz>
- <e38303902267d2d8bae8b0c88da84a4ed668e9fb.camel@hpe.com>
- <20180828075025.GA17756@quack2.suse.cz> <20180828175630.GA1197@redhat.com>
+From: KyleMahlkuch <kmahlkuc@linux.vnet.ibm.com>
+Subject: [PATCH] libmultipath: Increase SERIAL_SIZE to 256 bytes
+Date: Tue, 28 Aug 2018 16:34:19 -0500
+Message-ID: <1535492059-29311-1-git-send-email-kmahlkuc@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20180828175630.GA1197-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Content-Language: en-US
-Content-ID: <323FBE92C6EB0847844574BEB3CDD79E-mmYPd6ayCNGroOM5E8FhRbjFIynDaujOfM0AETQt39g@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: "jack-AlSwsSmVLrQ@public.gmane.org" <jack-AlSwsSmVLrQ@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: KyleMahlkuch <kmahlkuc@linux.vnet.ibm.com>
 List-Id: dm-devel.ids
 
-On Tue, 2018-08-28 at 13:56 -0400, Mike Snitzer wrote:
-> On Tue, Aug 28 2018 at  3:50am -0400,
-> Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
-> 
-> > On Mon 27-08-18 16:43:28, Kani, Toshi wrote:
-> > > On Mon, 2018-08-27 at 18:07 +0200, Jan Kara wrote:
-> > > > Hi,
-> > > > 
-> > > > I've been analyzing why fstest generic/081 fails when the backing device is
-> > > > capable of DAX. The problem boils down to the failure of:
-> > > > 
-> > > > lvm vgcreate -f vg0 /dev/pmem0
-> > > > lvm lvcreate -L 128M -n lv0 vg0
-> > > > lvm lvcreate -s -L 4M -n snap0 vg0/lv0
-> > > > 
-> > > > The last command fails like:
-> > > > 
-> > > >   device-mapper: reload ioctl on (253:0) failed: Invalid argument
-> > > >   Failed to lock logical volume vg0/lv0.
-> > > >   Aborting. Manual intervention required.
-> > > > 
-> > > > And the core of the problem is that volume vg0/lv0 is originally of
-> > > > DM_TYPE_DAX_BIO_BASED type but when the snapshot gets created, we try to
-> > > > switch it to DM_TYPE_BIO_BASED because now the device stops supporting DAX.
-> > > > The problem seems to be introduced by Ross' commit dbc626597 "dm: prevent
-> > > > DAX mounts if not supported".
-> > > > 
-> > > > The question is whether / how this should be fixed. The current inability
-> > > > to create snapshots of DAX-capable devices looks weird and the cryptic
-> > > > failure makes it even worse (it took me quite a while to understand what is
-> > > > failing and why). OTOH I see the rationale behind Ross' change as well.
-> > > 
-> > > Here are the dm-snap changes that went along with the original DAX
-> > > support.
-> > > 
-> > > commit b5ab4a9ba55
-> > > commit f6e629bd237
-> > > 
-> > > Basically, snapshots can be added/removed to DAX-capable devices, but
-> > > snapshots need to be mounted without dax option.
-> > 
-> > Yes, and after these two commits things were working. But then commit
-> > dbc626597 broke things again so currently snapshotting DAX-capable devices
-> > does not work. Just try with 4.18...
-> 
-> Commit f6e629bd237 was a nasty hack, and commit dbc626597 exposed it as
-> such.  But commit dbc626597 has caused us to regress.. so we need to fix
-> it.
-> 
-> We could remove DM_TYPE_DAX_BIO_BASED completely.  But in the past I was
-> reluctant to do so because it really is unclear how/if we can even
-> support a device switching from DAX to non-DAX while IO is in-flight. DM
-> supports suspending without flushing (via dmsetup suspend --noflush) and
-> that could really be problematic if we leave DAX IO inflight and then
-> switch the DM table such that the DM device no longer supports DAX.
-> 
-> I'm open to suggestions.
+Certain IBM FlashSystem LUNs can return up to 85 bytes of serial
+number in the Unit Serial Number VPD page, which is larger than
+the current SERIAL_SIZE definition of 65 bytes. Since the max
+size of this field does not appear to be defined in SPC, increasing
+to 256 bytes should hopefully prevent us from hitting this
+in future.
 
-Right, commit f6e629bd237 is a hack, but I do not have a better idea at
-this point...  For now, I am afraid that reverting commit dbc626597 may
-be an option.
+This is an example of a serial number from a FlashSystem:
+Unit serial number VPD page:
+Unit serial number: 3321360050764008101AB300000000000012204214503IBMfcp
 
-Thanks,
--Toshi
+Before this patch multipath returns the error:
+Jul 17 11:24:58 | vpd pg80 overflow, 85/65 bytes required
+
+After the patch is applied the error no longer occur.
+
+Signed-off-by: Kyle Mahlkuch <kmahlkuc@linux.vnet.ibm.com>
+---
+ libmultipath/structs.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index bfa660a..00a1b1a 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -8,7 +8,7 @@
+ #include "byteorder.h"
+ 
+ #define WWID_SIZE		128
+-#define SERIAL_SIZE		65
++#define SERIAL_SIZE		256
+ #define NODE_NAME_SIZE		224
+ #define PATH_STR_SIZE		16
+ #define PARAMS_SIZE		4096
+-- 
+1.8.3.1
