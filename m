@@ -1,184 +1,321 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: Snapshot target and DAX-capable devices
-Date: Fri, 31 Aug 2018 12:01:12 +0200
-Message-ID: <20180831100112.GD11622@quack2.suse.cz>
-References: <20180827160744.GE4002@quack2.suse.cz>
- <e38303902267d2d8bae8b0c88da84a4ed668e9fb.camel@hpe.com>
- <20180828075025.GA17756@quack2.suse.cz>
- <20180828175630.GA1197@redhat.com>
- <20180830093028.GC1767@quack2.suse.cz>
- <20180830184907.GA14867@redhat.com>
- <alpine.LRH.2.02.1808301537420.30950@file01.intranet.prod.int.rdu2.redhat.com>
+From: Marcin Niestroj <m.niestroj@grinn-global.com>
+Subject: [RESEND PATCH v2] configure: Introduce --enable-symvers
+	option
+Date: Fri, 31 Aug 2018 16:48:17 +0200
+Message-ID: <20180831144817.31207-1-m.niestroj@grinn-global.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1808301537420.30950-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Marcin Niestroj <m.niestroj@grinn-global.com>
 List-Id: dm-devel.ids
 
-On Thu 30-08-18 15:44:57, Mikulas Patocka wrote:
-> On Thu, 30 Aug 2018, Mike Snitzer wrote:
-> 
-> > On Thu, Aug 30 2018 at  5:30am -0400,
-> > Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
-> > 
-> > > On Tue 28-08-18 13:56:30, Mike Snitzer wrote:
-> > > > On Tue, Aug 28 2018 at  3:50am -0400,
-> > > > Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
-> > > > 
-> > > > > On Mon 27-08-18 16:43:28, Kani, Toshi wrote:
-> > > > > > On Mon, 2018-08-27 at 18:07 +0200, Jan Kara wrote:
-> > > > > > > Hi,
-> > > > > > > 
-> > > > > > > I've been analyzing why fstest generic/081 fails when the backing device is
-> > > > > > > capable of DAX. The problem boils down to the failure of:
-> > > > > > > 
-> > > > > > > lvm vgcreate -f vg0 /dev/pmem0
-> > > > > > > lvm lvcreate -L 128M -n lv0 vg0
-> > > > > > > lvm lvcreate -s -L 4M -n snap0 vg0/lv0
-> > > > > > > 
-> > > > > > > The last command fails like:
-> > > > > > > 
-> > > > > > >   device-mapper: reload ioctl on (253:0) failed: Invalid argument
-> > > > > > >   Failed to lock logical volume vg0/lv0.
-> > > > > > >   Aborting. Manual intervention required.
-> > > > > > > 
-> > > > > > > And the core of the problem is that volume vg0/lv0 is originally of
-> > > > > > > DM_TYPE_DAX_BIO_BASED type but when the snapshot gets created, we try to
-> > > > > > > switch it to DM_TYPE_BIO_BASED because now the device stops supporting DAX.
-> > > > > > > The problem seems to be introduced by Ross' commit dbc626597 "dm: prevent
-> > > > > > > DAX mounts if not supported".
-> > > > > > > 
-> > > > > > > The question is whether / how this should be fixed. The current inability
-> > > > > > > to create snapshots of DAX-capable devices looks weird and the cryptic
-> > > > > > > failure makes it even worse (it took me quite a while to understand what is
-> > > > > > > failing and why). OTOH I see the rationale behind Ross' change as well.
-> > > > > > 
-> > > > > > Here are the dm-snap changes that went along with the original DAX
-> > > > > > support.
-> > > > > > 
-> > > > > > commit b5ab4a9ba55
-> > > > > > commit f6e629bd237
-> > > > > > 
-> > > > > > Basically, snapshots can be added/removed to DAX-capable devices, but
-> > > > > > snapshots need to be mounted without dax option.
-> > > > > 
-> > > > > Yes, and after these two commits things were working. But then commit
-> > > > > dbc626597 broke things again so currently snapshotting DAX-capable devices
-> > > > > does not work. Just try with 4.18...
-> > > > 
-> > > > Commit f6e629bd237 was a nasty hack, and commit dbc626597 exposed it as
-> > > > such.  But commit dbc626597 has caused us to regress.. so we need to fix
-> > > > it.
-> > > > 
-> > > > We could remove DM_TYPE_DAX_BIO_BASED completely.  But in the past I was
-> > > > reluctant to do so because it really is unclear how/if we can even
-> > > > support a device switching from DAX to non-DAX while IO is in-flight. DM
-> > > > supports suspending without flushing (via dmsetup suspend --noflush) and
-> > > > that could really be problematic if we leave DAX IO inflight and then
-> > > > switch the DM table such that the DM device no longer supports DAX.
-> > > 
-> > > Well, changing device from DAX-capable to DAX-incapable is problematic for
-> > > filesystem on top of it as well. Filesystems simply don't expect this
-> > > feature of a device can change so they would fail in unexpected ways. Also
-> > > PFNs from the pmem (DAX-capable) device that are already mapped to user page
-> > > tables won't magically become unmapped so those processes will still have
-> > > DAX access to those areas of the device.
-> > > 
-> > > But, if both original bdev and COW device are DAX-capable, we *should* be
-> > > able to support snapshotting (and refusing mixing of DAX-capable and
-> > > DAX-incapable devices in a snapshot is IMHO not very surprising to users).
-> > > When creating a snapshot of a device, we need to freeze the filesystem
-> > > using it. That will writeprotect all page tables so we are sure we'll get
-> > > page faults (and thus ->direct_access requests from DM POV) for each write
-> > > attempt to any mapping. Then ->direct_access method of snapshot-origin can
-> > > make sure to copy original contents to the COW-device before returning PFN
-> > > from ->direct_access. Similarly ->direct_access of COW-device can provide
-> > > remapped PFN so everything should work seamlessly from user POV.
-> > > 
-> > > So something like the above would seem like the best solution from user
-> > > POV.  Implementation of the above would not be completely trivial though as
-> > > far as I'm looking into DM code. We'd have to implement ->direct_access
-> > > paths for dm-snap and also I have a vague memory ->direct_access is not
-> > > allowed to sleep these days and DM uses sleeping locks all around... Dan
-> > > should know how big obstacle would it be to reintroduce the sleeping
-> > > possibility (I'm not currently aware of any particular problem with that
-> > > but I'm not paying close attention to those parts of NVDIMM code).
-> > 
-> > Thanks for these details Jan.  Think Dan is on sabbatical so we'll need
-> > Ross to weigh in.
-> > 
-> > As you point out, how are the upper layers (e.g. filesystems) supposed
-> > to reliably cope with this runtime switch to from DAX to non-DAX access?
-> > 
-> > It does look like we'll need the more elaborate work you outlined
-> > above.  It could be that Mikulas will have interest, DAX expertise and
-> > time to do the work.
-> > 
-> > Restating the issue: 4.18 commit dbc626597 switched
-> > drivers/md/dm-table.cdevice_supports_dax() to perform a much more
-> > detailed verification of the device's DAX capabilities by calling
-> > bdev_dax_supported() -- which will actually issue read IO via
-> > dax_direct_access() to validate the DAX support.  dm-snapshot-origin's
-> > origin_direct_access() returns -EIO.  When trying to create a snapshot
-> > of a DAX enabled linear device, this results in the following error:
-> >   kernel: device-mapper: ioctl: can't change device type (old=4 vs new=1) after initial table load.
-> > 
-> > This is because the active DM device's table is being switched from
-> > using the linear target to snapshot-origin.  Because the corresponding
-> > DM type switches from DM_TYPE_DAX_BIO_BASED to DM_TYPE_BIO_BASED
-> > (again because bdev_dax_supported()'s call to dm-snapshot-origin's
-> > origin_direct_access() returns -EIO).
-> > 
-> > In general I _never_ should have taken commit f6e629bd237 ("dm snap: add
-> > fake origin_direct_access").  It gave the elusion that DAX is supported
-> > by dm-snapshot-origin when in reality it simply returns -EIO.  Expecting
-> > that this will "just work" because the bio-based path would be used
-> > instead is extremely fragile.
-> > 
-> > Until we properly add DAX support to dm-snapshot I'm afraid we really do
-> > need to tolerate this "regression".  Since reality is the original
-> > support for snapshot of a DAX DM device never worked in a robust way.
-> > I'm running the risk of making peoples' heads explode but I cannot just
-> > drop everything and scramble to implement all the required DAX changes
-> > in dm-snapshot.
-> > 
-> > Contributions are welcome!
-> > 
-> > Mike
-> 
-> I think a proper fix would be to add functions such as start_dax(struct 
-> block_device *) and stop_dax(struct block_device *).
-> 
-> start_dax would be used by a (filesystem or other) driver that intends to 
-> use dax - stop_dax would be used when the driver is being unloaded and it 
-> no longer needs dax. Device mapper would then maintain a counter how many 
-> dax users are there and prevent reloading the table if there are any.
-> 
-> Do the persistent memory maintainers intend to add such functions?
+Only few libc (e.g. glibc) libraries support full symbol version
+resolution in runtime. There are lot of standard libraries that do not
+support that, such as dietlibc, musl and uclibc. Hence there is no
+reason to generate symbol versions when compiling against them.
 
-So that would be a quick way of at least somehow supporting snapshots for
-dax-capable devices. Actually these "start_dax / stop_dax" functions
-already exist in filesystems - they are fs_dax_get_by_bdev() and
-fs_put_dax(). So by plumbing these two calls down into the block layer, you
-could easily get the functionality you want. I'm fine with that as a short
-term solution for the regression. Longer term I'd like to see something
-like we've outlined with Dave to be implemented but obviously that's more
-work and also on fs / DAX side, not only DM.
+Additionally libdevmapper.so was broken when compiled against
+uclibc. Runtime linker loader caused calling dm_task_get_info_base()
+function recursively, leading to segmentation fault.
 
-								Honza
+Introduce --enable-symvers[=STYLE] option, which allows to choose
+between gnu and disabled symbol versioning. By default gnu symbol
+versioning is used to provide backward compatibility.
+__GNUC__ check is replaced now with GNU_SYMVER, which is generated by
+configure script. Additionally ld version script is included only in
+case of gnu option, which slightly reduces output size.
+
+Providing --disable-symvers to configure script when building against
+uclibc library fixes segmentation fault error described above, due to
+lack of several versions of the same symbol in libdevmapper.so
+library.
+
+Signed-off-by: Marcin Niestroj <m.niestroj@grinn-global.com>
+---
+Hi,
+I am resending rebased (on master) patch.
+
+Changes v1 -> v2:
+ * Set LDDEPS only when --enable-symvers=gnu
+
+ WHATS_NEW                 |  1 +
+ configure                 | 36 +++++++++++++++++++++++++++++++++---
+ configure.ac              | 28 +++++++++++++++++++++++++---
+ include/configure.h.in    |  3 +++
+ lib/misc/lib.h            | 10 +++++-----
+ libdm/datastruct/bitset.c |  5 +----
+ libdm/ioctl/libdm-iface.c |  2 +-
+ libdm/libdm-deptree.c     |  2 +-
+ libdm/libdm-stats.c       |  2 +-
+ 9 files changed, 71 insertions(+), 18 deletions(-)
+
+diff --git a/WHATS_NEW b/WHATS_NEW
+index 6003f0a1b..f49c1d298 100644
+--- a/WHATS_NEW
++++ b/WHATS_NEW
+@@ -1,5 +1,6 @@
+ Version 3.0.0
+ =============
++  Introduce --enable-symvers[=STYLE] switch.
+   Add 'lvm2-activation-generator:' prefix for kmsg messages logged by generator.
+   Add After=rbdmap.service to {lvm2-activation-net,blk-availability}.service.
+   Reduce max concurrent aios to avoid EMFILE with many devices.
+diff --git a/configure b/configure
+index d6ddbc2fa..f0ac95d13 100755
+--- a/configure
++++ b/configure
+@@ -955,6 +955,7 @@ enable_fsadm
+ enable_blkdeactivate
+ enable_dmeventd
+ enable_selinux
++enable_symvers
+ enable_nls
+ with_localedir
+ with_confdir
+@@ -1670,6 +1671,9 @@ Optional Features:
+   --disable-blkdeactivate disable blkdeactivate
+   --enable-dmeventd       enable the device-mapper event daemon
+   --disable-selinux       disable selinux support
++  --enable-symvers[=STYLE]
++                          enables symbol versioning of the shared library
++                          [default=gnu]
+   --enable-nls            enable Native Language Support
+ 
+ Optional Packages:
+@@ -3067,13 +3071,11 @@ if test -z "$CFLAGS"; then :
+ fi
+ case "$host_os" in
+ 	linux*)
+-		CLDFLAGS="$CLDFLAGS -Wl,--version-script,.export.sym"
+ 		# equivalent to -rdynamic
+ 		ELDFLAGS="-Wl,--export-dynamic"
+ 		# FIXME Generate list and use --dynamic-list=.dlopen.sym
+ 		CLDWHOLEARCHIVE="-Wl,-whole-archive"
+ 		CLDNOWHOLEARCHIVE="-Wl,-no-whole-archive"
+-		LDDEPS="$LDDEPS .export.sym"
+ 		LIB_SUFFIX=so
+ 		DEVMAPPER=yes
+ 		BUILD_LVMPOLLD=no
+@@ -3087,7 +3089,6 @@ case "$host_os" in
+ 		;;
+ 	darwin*)
+ 		CFLAGS="$CFLAGS -no-cpp-precomp -fno-common"
+-		CLDFLAGS="$CLDFLAGS"
+ 		ELDFLAGS=
+ 		CLDWHOLEARCHIVE="-all_load"
+ 		CLDNOWHOLEARCHIVE=
+@@ -12820,6 +12821,35 @@ done
+ 	LIBS=$lvm_saved_libs
+ fi
+ 
++################################################################################
++{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable symbol versioning" >&5
++$as_echo_n "checking whether to enable symbol versioning... " >&6; }
++# Check whether --enable-symvers was given.
++if test "${enable_symvers+set}" = set; then :
++  enableval=$enable_symvers;
++  case "$enableval" in
++    gnu|no) ;;
++    *) as_fn_error $? "Unknown argument to enable/disable symvers" "$LINENO" 5 ;;
++  esac
++else
++  enable_symvers=gnu
++fi
++
++{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_symvers" >&5
++$as_echo "$enable_symvers" >&6; }
++
++if test x$GCC = xyes && test x$enable_symvers = xgnu ; then
++
++$as_echo "#define GNU_SYMVER 1" >>confdefs.h
++
++  case "$host_os" in
++    linux*)
++      CLDFLAGS="$CLDFLAGS -Wl,--version-script,.export.sym"
++      LDDEPS="$LDDEPS .export.sym"
++      ;;
++  esac
++fi
++
+ ################################################################################
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable internationalisation" >&5
+ $as_echo_n "checking whether to enable internationalisation... " >&6; }
+diff --git a/configure.ac b/configure.ac
+index 6d9308fec..0131664e2 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -30,13 +30,11 @@ AC_CANONICAL_TARGET([])
+ AS_IF([test -z "$CFLAGS"], [COPTIMISE_FLAG="-O2"])
+ case "$host_os" in
+ 	linux*)
+-		CLDFLAGS="$CLDFLAGS -Wl,--version-script,.export.sym"
+ 		# equivalent to -rdynamic
+ 		ELDFLAGS="-Wl,--export-dynamic"
+ 		# FIXME Generate list and use --dynamic-list=.dlopen.sym
+ 		CLDWHOLEARCHIVE="-Wl,-whole-archive"
+ 		CLDNOWHOLEARCHIVE="-Wl,-no-whole-archive"
+-		LDDEPS="$LDDEPS .export.sym"
+ 		LIB_SUFFIX=so
+ 		DEVMAPPER=yes
+ 		BUILD_LVMPOLLD=no
+@@ -50,7 +48,6 @@ case "$host_os" in
+ 		;;
+ 	darwin*)
+ 		CFLAGS="$CFLAGS -no-cpp-precomp -fno-common"
+-		CLDFLAGS="$CLDFLAGS"
+ 		ELDFLAGS=
+ 		CLDWHOLEARCHIVE="-all_load"
+ 		CLDNOWHOLEARCHIVE=
+@@ -1359,6 +1356,31 @@ package as well (which may be called readline-devel or something similar).])
+ 	LIBS=$lvm_saved_libs
+ fi
+ 
++################################################################################
++dnl -- Symbol versioning
++AC_MSG_CHECKING(whether to enable symbol versioning)
++AC_ARG_ENABLE(symvers,
++              AC_HELP_STRING([--enable-symvers[[[=STYLE]]]],
++                             [enables symbol versioning of the shared library [default=gnu]]),
++                             [
++  case "$enableval" in
++    gnu|no) ;;
++    *) AC_MSG_ERROR(Unknown argument to enable/disable symvers) ;;
++  esac],
++                             enable_symvers=gnu)
++AC_MSG_RESULT($enable_symvers)
++
++if test x$GCC = xyes && test x$enable_symvers = xgnu ; then
++  AC_DEFINE(GNU_SYMVER, 1,
++            [Define to use GNU versioning in the shared library.])
++  case "$host_os" in
++    linux*)
++      CLDFLAGS="$CLDFLAGS -Wl,--version-script,.export.sym"
++      LDDEPS="$LDDEPS .export.sym"
++      ;;
++  esac
++fi
++
+ ################################################################################
+ dnl -- Internationalisation stuff
+ AC_MSG_CHECKING(whether to enable internationalisation)
+diff --git a/include/configure.h.in b/include/configure.h.in
+index f68b09238..15491a17b 100644
+--- a/include/configure.h.in
++++ b/include/configure.h.in
+@@ -135,6 +135,9 @@
+ /* Path to fsadm binary. */
+ #undef FSADM_PATH
+ 
++/* Define to use GNU versioning in the shared library. */
++#undef GNU_SYMVER
++
+ /* Define to 1 if you have the `alarm' function. */
+ #undef HAVE_ALARM
+ 
+diff --git a/lib/misc/lib.h b/lib/misc/lib.h
+index f7baf9dba..0b4dfe911 100644
+--- a/lib/misc/lib.h
++++ b/lib/misc/lib.h
+@@ -41,16 +41,16 @@
+  * macro DM_EXPORT_SYMBOL to export the function and bind it to the
+  * specified version string.
+  *
+- * Since versioning is only available when compiling with GCC the entire
+- * compatibility version should be enclosed in '#if defined(__GNUC__)',
+- * for example:
++ * Since versioning is only available when compiling with GCC
++ * and GLIBC the entire compatibility version should be enclosed
++ * in '#if defined(GNU_SYMVER)', for example:
+  *
+  *   int dm_foo(int bar)
+  *   {
+  *     return bar;
+  *   }
+  *
+- *   #if defined(__GNUC__)
++ *   #if defined(GNU_SYMVER)
+  *   // Backward compatible dm_foo() version 1.02.104
+  *   int dm_foo_v1_02_104(void);
+  *   int dm_foo_v1_02_104(void)
+@@ -67,7 +67,7 @@
+  * versions of library symbols prior to the introduction of symbol
+  * versioning: it must never be used for new symbols.
+  */
+-#if defined(__GNUC__)
++#if defined(GNU_SYMVER)
+ #define DM_EXPORT_SYMBOL(func, ver) \
+ 	__asm__(".symver " #func "_v" #ver ", " #func "@DM_" #ver )
+ #define DM_EXPORT_SYMBOL_BASE(func) \
+diff --git a/libdm/datastruct/bitset.c b/libdm/datastruct/bitset.c
+index 06bd31a9d..65ab5f184 100644
+--- a/libdm/datastruct/bitset.c
++++ b/libdm/datastruct/bitset.c
+@@ -242,7 +242,7 @@ bad:
+ 	return NULL;
+ }
+ 
+-#if defined(__GNUC__)
++#if defined(GNU_SYMVER)
+ /*
+  * Maintain backward compatibility with older versions that did not
+  * accept a 'min_num_bits' argument to dm_bitset_parse_list().
+@@ -253,7 +253,4 @@ dm_bitset_t dm_bitset_parse_list_v1_02_129(const char *str, struct dm_pool *mem)
+ 	return dm_bitset_parse_list(str, mem, 0);
+ }
+ DM_EXPORT_SYMBOL(dm_bitset_parse_list, 1_02_129);
+-
+-#else /* if defined(__GNUC__) */
+-
+ #endif
+diff --git a/libdm/ioctl/libdm-iface.c b/libdm/ioctl/libdm-iface.c
+index e775da7d9..e224cf586 100644
+--- a/libdm/ioctl/libdm-iface.c
++++ b/libdm/ioctl/libdm-iface.c
+@@ -2145,7 +2145,7 @@ void dm_lib_exit(void)
+ 	_version_checked = 0;
+ }
+ 
+-#if defined(__GNUC__)
++#if defined(GNU_SYMVER)
+ /*
+  * Maintain binary backward compatibility.
+  * Version script mechanism works with 'gcc' compatible compilers only.
+diff --git a/libdm/libdm-deptree.c b/libdm/libdm-deptree.c
+index 3e602e28b..9313af181 100644
+--- a/libdm/libdm-deptree.c
++++ b/libdm/libdm-deptree.c
+@@ -3797,7 +3797,7 @@ void dm_tree_node_set_callback(struct dm_tree_node *dnode,
+ 	dnode->callback_data = data;
+ }
+ 
+-#if defined(__GNUC__)
++#if defined(GNU_SYMVER)
+ /*
+  * Backward compatible implementations.
+  *
+diff --git a/libdm/libdm-stats.c b/libdm/libdm-stats.c
+index e9bfa9de9..691938f2c 100644
+--- a/libdm/libdm-stats.c
++++ b/libdm/libdm-stats.c
+@@ -5065,7 +5065,7 @@ int dm_stats_start_filemapd(int fd, uint64_t group_id, const char *path,
+  * current dm_stats_create_region() version.
+  */
+ 
+-#if defined(__GNUC__)
++#if defined(GNU_SYMVER)
+ int dm_stats_create_region_v1_02_106(struct dm_stats *dms, uint64_t *region_id,
+ 				     uint64_t start, uint64_t len, int64_t step,
+ 				     int precise, const char *program_id,
 -- 
-Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
-SUSE Labs, CR
+2.18.0
