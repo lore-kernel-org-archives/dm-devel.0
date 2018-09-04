@@ -1,65 +1,54 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v8 0/9] crypto: Remove VLA usage
-Date: Mon, 3 Sep 2018 22:50:41 -0700
-Message-ID: <CAGXu5jLHkNSGhR7Tk6wg8Vw-7nHPFfAgWyJ0NLMjGQw1BOKovg@mail.gmail.com>
-References: <20180807211843.47586-1-keescook@chromium.org>
-	<20180904051905.a2vyzijz6xyxvyhb@gondor.apana.org.au>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: dm bufio: Reduce dm_bufio_lock contention
+Date: Tue, 4 Sep 2018 09:08:24 +0200
+Message-ID: <20180904070824.GH14951@dhcp22.suse.cz>
+References: <1528790608-19557-1-git-send-email-jing.xia@unisoc.com>
+ <20180612212007.GA22717@redhat.com>
+ <alpine.LRH.2.02.1806131001250.15845@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAN=25QMQiJ7wvfvYvmZnEnrkeb-SA7_hPj+N2RnO8y-aVO8wOQ@mail.gmail.com>
+ <20180614073153.GB9371@dhcp22.suse.cz>
+ <CAN=25QNrENVFbb9UAAAJJqKsEeMY+qNs5cQA4EGwgB2dMYTZug@mail.gmail.com>
+ <alpine.LRH.2.02.1809031816120.27063@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180904051905.a2vyzijz6xyxvyhb@gondor.apana.org.au>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Giovanni Cabiddu <giovanni.cabiddu@intel.com>, LKML <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Mike Snitzer <snitzer@redhat.com>, Tudor-Dan Ambarus <tudor.ambarus@microchip.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Will Deacon <will.deacon@arm.com>, qat-linux@intel.com, Matthew Wilcox <willy@infradead.org>, "David S. Miller" <davem@davemloft.net>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, device-mapper development <dm-devel@redhat.com>, Eric Biggers <ebiggers@google.com>, David Woodhouse <dwmw@amazon.co.uk>, Geert Uytterhoeven <geert@linux-m68k.org>, Andrew Morton <akpm@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, Alasdair Kergon <agk@redhat.com>, linux-crypto <linux-crypto@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1809031816120.27063@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: jing xia <jing.xia.mail@gmail.com>, Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Sep 3, 2018 at 10:19 PM, Herbert Xu <herbert@gondor.apana.org.au> wrote:
-> On Tue, Aug 07, 2018 at 02:18:34PM -0700, Kees Cook wrote:
->> v8 cover letter:
->>
->> I continue to hope this can land in v4.19, but I realize that's unlikely.
->> It would be nice, though, if some of the "trivial" patches could get taken
->> (e.g. cbc, xcbc, ccm VLA removals) so I don't have to keep repeating them.
->> *fingers crossed*
->>
->> Series cover letter:
->>
->> This is nearly the last of the VLA removals[1], but it's one of the
->> largest because crypto gets used in lots of places. After looking
->> through code, usage, reading the threads Gustavo started, and comparing
->> the use-cases to the other VLA removals that have landed in the kernel,
->> I think this series is likely the best way forward to shut the door on
->> VLAs forever.
->>
->> For background, the crypto stack usage is for callers to do an immediate
->> bit of work that doesn't allocate new memory. This means that other VLA
->> removal techniques (like just using kmalloc) aren't workable, and the
->> next common technique is needed: examination of maximum stack usage and
->> the addition of sanity checks. This series does that, and in several
->> cases, these maximums were already implicit in the code.
->>
->> This series is intended to land via the crypto tree for 4.19, though it
->> touches dm, networking, and a few other things as well, since there are
->> dependent patches (new crypto #defines being used, etc).
->
-> I have applied patches 1-4 and 6-8.  I'd like to get an ack from
-> the dm folks regarding patch 5.  As to patch 9, please fix it so
-> it doesn't rely on the BUG_ON to catch things.
+On Mon 03-09-18 18:23:17, Mikulas Patocka wrote:
+> 
+> 
+> On Wed, 1 Aug 2018, jing xia wrote:
+> 
+> > We reproduced this issue again and found out the root cause.
+> > dm_bufio_prefetch() with dm_bufio_lock enters the direct reclaim and
+> > takes a long time to do the soft_limit_reclaim, because of the huge
+> > number of memory excess of the memcg.
+> > Then, all the task who do shrink_slab() wait for  dm_bufio_lock.
+> > 
+> > Any suggestions for this?Thanks.
+> 
+> There's hardly any solution because Michal Hocko refuses to change 
+> __GFP_NORETRY behavior.
+> 
+> The patches 41c73a49df31151f4ff868f28fe4f129f113fa2c and 
+> d12067f428c037b4575aaeb2be00847fc214c24a could reduce the lock contention 
+> on the dm-bufio lock - the patches don't fix the high CPU consumption 
+> inside the memory allocation, but the kernel code should wait less on the 
+> bufio lock.
 
-Great! Thanks very much. I'll get a patch prepared to plumb
-crypto_skcipher_set_reqsize() failures.
+If you actually looked at the bottom line of the problem then you would
+quickly find out that dm-bufio lock is the least of the problem with the
+soft limit reclaim. This is a misfeature which has been merged and we
+have to live with it. All we can do is to discourage people from using
+it and use much more saner low limit instead.
 
--Kees
-
+So please stop this stupid blaming, try to understand the reasoning
+behind my arguments.
 -- 
-Kees Cook
-Pixel Security
+Michal Evil Hocko
+SUSE Labs
