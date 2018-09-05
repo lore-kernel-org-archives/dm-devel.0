@@ -1,7 +1,8 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH 5/5] dm-raid: disable bitmap when journaled
-Date: Wed,  5 Sep 2018 19:36:45 +0200
-Message-ID: <a5d728db7e1123e0626d44a9c8cf0e2e4ecefe16.1536167421.git.heinzm@redhat.com>
+Subject: [PATCH 3/5] dm-raid: correct explicit superblock update
+	requests
+Date: Wed,  5 Sep 2018 19:36:43 +0200
+Message-ID: <62c2b6e2f3fd78591c15144970791416a9012a55.1536167421.git.heinzm@redhat.com>
 References: <cover.1536167421.git.heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,26 +23,84 @@ Errors-To: dm-devel-bounces@redhat.com
 To: heinzm@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When a journal device for raid4/5/6 is used,
-don't create a mutually exclusive write intent bitmap.
+Critical:
+
+Request superblock updates when particular devices are requested
+to be rebuild (e.g. via lvconvert --replace ...) to avoid racy
+"New device injected into existing raid set without 'delta_disks'
+ or 'rebuild' parameter specified" kernel error messages.
+
+Cleanup:
+
+Remove request to write superblocks in super_load() when new,
+because raid_ctr() requests it already via flag RT_FLAG_UPDATE_SBS
+for new arrays (it's performed in preresume).
+
+Avoid explicit superblocks update in rs_start_reshape() because
+it's already requested before for new reshapes in
+rs_prepare_reshape().
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/md/dm-raid.c | 18 ++++++------------
+ 1 file changed, 6 insertions(+), 12 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 9754ef24fd0b..1f0e85f6f7e6 100644
+index 03dd915eff9e..efe035fcb23e 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -2472,7 +2472,7 @@ static int super_validate(struct raid_set *rs, struct md_rdev *rdev)
+@@ -2202,9 +2202,6 @@ static int super_load(struct md_rdev *rdev, struct md_rdev *refdev)
+ 		set_bit(FirstUse, &rdev->flags);
+ 		sb->compat_features = cpu_to_le32(FEATURE_FLAG_SUPPORTS_V190);
+ 
+-		/* Force writing of superblocks to disk */
+-		set_bit(MD_SB_CHANGE_DEVS, &rdev->mddev->sb_flags);
+-
+ 		/* Any superblock is better than none, choose that if given */
+ 		return refdev ? 0 : 1;
+ 	}
+@@ -3126,6 +3123,11 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
+ 		rs_set_new(rs);
+ 	} else if (rs_is_recovering(rs)) {
++		/* Rebuild particular devices */
++		if (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags)) {
++			set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
++			rs_setup_recovery(rs, MaxSector);
++		}
+ 		/* A recovering raid set may be resized */
+ 		; /* skip setup rs */
+ 	} else if (rs_is_reshaping(rs)) {
+@@ -3234,7 +3236,6 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
  	}
  
- 	/* Enable bitmap creation for RAID levels != 0 */
--	mddev->bitmap_info.offset = rt_is_raid0(rs->raid_type) ? 0 : to_sector(4096);
-+	mddev->bitmap_info.offset = (rt_is_raid0(rs->raid_type) || rs->journal_dev.dev) ? 0 : to_sector(4096);
- 	mddev->bitmap_info.default_offset = mddev->bitmap_info.offset;
+ 	r = md_start(&rs->md);
+-
+ 	if (r) {
+ 		ti->error = "Failed to start raid array";
+ 		mddev_unlock(&rs->md);
+@@ -3846,7 +3847,7 @@ static int __load_dirty_region_bitmap(struct raid_set *rs)
+ 	return r;
+ }
  
- 	if (!test_and_clear_bit(FirstUse, &rdev->flags)) {
+-/* Enforce updating all superblocks */
++/* Enforce updating new superblocks */
+ static void rs_update_sbs(struct raid_set *rs)
+ {
+ 	struct mddev *mddev = &rs->md;
+@@ -3901,13 +3902,6 @@ static int rs_start_reshape(struct raid_set *rs)
+ 		}
+ 	}
+ 
+-	/*
+-	 * Now reshape got set up, update superblocks to
+-	 * reflect the fact so that a table reload will
+-	 * access proper superblock content in the ctr.
+-	 */
+-	rs_update_sbs(rs);
+-
+ 	return 0;
+ }
+ 
 -- 
 2.17.1
