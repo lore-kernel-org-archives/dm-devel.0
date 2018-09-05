@@ -1,7 +1,7 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH 2/5] dm-raid: fix stripe adding reshape deadlock
-Date: Wed,  5 Sep 2018 19:36:42 +0200
-Message-ID: <344f4b6d298b2e4058bd57e7197c3914a9040ba5.1536167421.git.heinzm@redhat.com>
+Subject: [PATCH 5/5] dm-raid: disable bitmap when journaled
+Date: Wed,  5 Sep 2018 19:36:45 +0200
+Message-ID: <a5d728db7e1123e0626d44a9c8cf0e2e4ecefe16.1536167421.git.heinzm@redhat.com>
 References: <cover.1536167421.git.heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,76 +22,26 @@ Errors-To: dm-devel-bounces@redhat.com
 To: heinzm@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When initiating a stripe adding reshape, a deadlock between
-md_stop_writes() waiting for the sync thread to stop and the
-running sync thread waiting for inactive stripes occurs
-(this frequently happens on single-core but rarely
- on multi-core systems).
-
-Resolve by setting MD_RECOVERY_WAIT to request the main MD
-resynchronization thread worker function md_do_sync() to bail
-out when initiating the reshape via constructor arguments.
-Don't set the flag when reloading without those arguments and
-avoid superfluous mddev_{suspend,resume} setting up reshape.
-
-Passes all lvm2 raid tests.
+When a journal device for raid4/5/6 is used,
+don't create a mutually exclusive write intent bitmap.
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- Documentation/device-mapper/dm-raid.txt |  1 +
- drivers/md/dm-raid.c                    | 13 ++++---------
- 2 files changed, 5 insertions(+), 9 deletions(-)
+ drivers/md/dm-raid.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/Documentation/device-mapper/dm-raid.txt b/Documentation/device-mapper/dm-raid.txt
-index f68d06d6f28b..efb73f521568 100644
---- a/Documentation/device-mapper/dm-raid.txt
-+++ b/Documentation/device-mapper/dm-raid.txt
-@@ -349,3 +349,4 @@ Version History
- 	state races.
- 1.13.2  Fix raid redundancy validation and avoid keeping raid set frozen
- 1.13.3  Fix reshape race on small devices
-+1.14.0  Fix stripe adding reshape deadlock/potential data corruption
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index ecb7706f7330..03dd915eff9e 100644
+index 9754ef24fd0b..1f0e85f6f7e6 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -3871,14 +3871,13 @@ static int rs_start_reshape(struct raid_set *rs)
- 	struct mddev *mddev = &rs->md;
- 	struct md_personality *pers = mddev->pers;
- 
-+	/* Don't allow the sync thread to work until the table gets reloaded. */
-+	set_bit(MD_RECOVERY_WAIT, &mddev->recovery);
-+
- 	r = rs_setup_reshape(rs);
- 	if (r)
- 		return r;
- 
--	/* Need to be resumed to be able to start reshape, recovery is frozen until raid_resume() though */
--	if (test_and_clear_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags))
--		mddev_resume(mddev);
--
- 	/*
- 	 * Check any reshape constraints enforced by the personalility
- 	 *
-@@ -3902,10 +3901,6 @@ static int rs_start_reshape(struct raid_set *rs)
- 		}
+@@ -2472,7 +2472,7 @@ static int super_validate(struct raid_set *rs, struct md_rdev *rdev)
  	}
  
--	/* Suspend because a resume will happen in raid_resume() */
--	set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags);
--	mddev_suspend(mddev);
--
- 	/*
- 	 * Now reshape got set up, update superblocks to
- 	 * reflect the fact so that a table reload will
-@@ -4002,7 +3997,7 @@ static void raid_resume(struct dm_target *ti)
+ 	/* Enable bitmap creation for RAID levels != 0 */
+-	mddev->bitmap_info.offset = rt_is_raid0(rs->raid_type) ? 0 : to_sector(4096);
++	mddev->bitmap_info.offset = (rt_is_raid0(rs->raid_type) || rs->journal_dev.dev) ? 0 : to_sector(4096);
+ 	mddev->bitmap_info.default_offset = mddev->bitmap_info.offset;
  
- static struct target_type raid_target = {
- 	.name = "raid",
--	.version = {1, 13, 3},
-+	.version = {1, 14, 0},
- 	.module = THIS_MODULE,
- 	.ctr = raid_ctr,
- 	.dtr = raid_dtr,
+ 	if (!test_and_clear_bit(FirstUse, &rdev->flags)) {
 -- 
 2.17.1
