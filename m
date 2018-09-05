@@ -1,14 +1,15 @@
-From: Ondrej Mosnacek <omosnace@redhat.com>
-Subject: Re: [PATCH v2] crypto: xts - Drop use of auxiliary buffer
-Date: Wed, 5 Sep 2018 10:35:54 +0200
-Message-ID: <CAFqZXNtoJmbzzTyifJoi3yPP9tL1jC-1DwQ9o+HpX-R_mydm2A@mail.gmail.com>
-References: <20180904080642.26897-1-omosnace@redhat.com>
-	<20180905063231.GA6813@sol.localdomain>
+From: Marcin =?utf-8?Q?Niestr=C3=B3j?= <m.niestroj@grinn-global.com>
+Subject: Re: [RESEND PATCH v2] configure: Introduce
+	--enable-symvers option
+Date: Wed, 05 Sep 2018 13:03:13 +0200
+Message-ID: <871sa8fbpq.fsf@grinn-global.com>
+References: <20180831144817.31207-1-m.niestroj@grinn-global.com>
+	<c983376a-50fd-d807-7daf-e4508aac6009@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180905063231.GA6813@sol.localdomain>
+In-reply-to: <c983376a-50fd-d807-7daf-e4508aac6009@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,145 +19,115 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: ebiggers@kernel.org
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, linux-crypto@vger.kernel.org
+To: Zdenek Kabelac <zkabelac@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Eric,
+Hi Zdenek,
 
-On Wed, Sep 5, 2018 at 8:32 AM Eric Biggers <ebiggers@kernel.org> wrote:
-> Hi Ondrej,
->
-> On Tue, Sep 04, 2018 at 10:06:42AM +0200, Ondrej Mosnacek wrote:
-> > Since commit acb9b159c784 ("crypto: gf128mul - define gf128mul_x_* in
-> > gf128mul.h"), the gf128mul_x_*() functions are very fast and therefore
-> > caching the computed XTS tweaks has only negligible advantage over
-> > computing them twice.
-> >
-> > In fact, since the current caching implementation limits the size of
-> > the calls to the child ecb(...) algorithm to PAGE_SIZE (usually 4096 B),
-> > it is often actually slower than the simple recomputing implementation.
-> >
-> > This patch simplifies the XTS template to recompute the XTS tweaks from
-> > scratch in the second pass and thus also removes the need to allocate a
-> > dynamic buffer using kmalloc().
-> >
-> > As discussed at [1], the use of kmalloc causes deadlocks with dm-crypt.
-> >
-> > PERFORMANCE RESULTS
-> > I measured time to encrypt/decrypt a memory buffer of varying sizes with
-> > xts(ecb-aes-aesni) using a tool I wrote ([2]) and the results suggest
-> > that after this patch the performance is either better or comparable for
-> > both small and large buffers. Note that there is a lot of noise in the
-> > measurements, but the overall difference is easy to see.
-> >
-> > Old code:
-> > ALGORITHM       KEY (b) DATA (B)        TIME ENC (ns)   TIME DEC (ns)
-> >         xts(aes)     256              64             331             328
-> >         xts(aes)     384              64             332             333
-> >         xts(aes)     512              64             338             348
-> >         xts(aes)     256             512             889             920
-> >         xts(aes)     384             512            1019             993
-> >         xts(aes)     512             512            1032             990
-> >         xts(aes)     256            4096            2152            2292
-> >         xts(aes)     384            4096            2453            2597
-> >         xts(aes)     512            4096            3041            2641
-> >         xts(aes)     256           16384            9443            8027
-> >         xts(aes)     384           16384            8536            8925
-> >         xts(aes)     512           16384            9232            9417
-> >         xts(aes)     256           32768           16383           14897
-> >         xts(aes)     384           32768           17527           16102
-> >         xts(aes)     512           32768           18483           17322
-> >
-> > New code:
-> > ALGORITHM       KEY (b) DATA (B)        TIME ENC (ns)   TIME DEC (ns)
-> >         xts(aes)     256              64             328             324
-> >         xts(aes)     384              64             324             319
-> >         xts(aes)     512              64             320             322
-> >         xts(aes)     256             512             476             473
-> >         xts(aes)     384             512             509             492
-> >         xts(aes)     512             512             531             514
-> >         xts(aes)     256            4096            2132            1829
-> >         xts(aes)     384            4096            2357            2055
-> >         xts(aes)     512            4096            2178            2027
-> >         xts(aes)     256           16384            6920            6983
-> >         xts(aes)     384           16384            8597            7505
-> >         xts(aes)     512           16384            7841            8164
-> >         xts(aes)     256           32768           13468           12307
-> >         xts(aes)     384           32768           14808           13402
-> >         xts(aes)     512           32768           15753           14636
->
-> Can you align the headers of these tables?
+Zdenek Kabelac <zkabelac@redhat.com> writes:
 
-Sure.
+> Dne 31.8.2018 v 16:48 Marcin Niestroj napsal(a):
+>> Only few libc (e.g. glibc) libraries support full symbol version
+>> resolution in runtime. There are lot of standard libraries that do not
+>> support that, such as dietlibc, musl and uclibc. Hence there is no
+>> reason to generate symbol versions when compiling against them.
+>
+> Hi
+>
+> Before going into depth of patch itself - I'd like to get clear first
+> what is wrong with existing solution.
+>
+> #if defined(__GNUC__)
+>
+> was supposed to be protecting against problematic usage - but it's
+> more towards  'gcc'  compiler usage - where the version is tied to
+> compiler infrastructure.
+>
+> So now you say that other libraries do not support symbol versioning
+> at all (so I'm quite wondering how they are able to handle backward
+> compatibility???)
+
+[1] presents a general comparison of musl, uclibc, dietlibc and
+glibc. Please take a look at "ABI and versioning comparison"
+section. Some libcs do not support backward compatibility at all, which
+means that upgrade of libc requires upgrade of all executables. These
+libraries are often used in tiny embedded devices (where binary size
+matters), so only full system upgrade is often implemented.
+
+Regarding symbol versioning... uclibc implementation of dynamic linker
+ignores symbol version at all. It just searches for first occurance of a
+symbol, which is often the oldest symbol version. musl on the other hand
+is aware of symbol versioning, but I am not sure what is the logic
+there. For the system I compiled libdevmapper.so it turns out that the
+newest symbols were used by musl.
+
+[1] http://www.etalabs.net/compare_libcs.html
 
 >
-> > +static int xor_tweak(struct rctx *rctx, struct skcipher_request *req)
-> >  {
-> > -     struct rctx *rctx = skcipher_request_ctx(req);
-> > -     le128 *buf = rctx->ext ?: rctx->buf;
-> > -     struct skcipher_request *subreq;
-> >       const int bs = XTS_BLOCK_SIZE;
-> >       struct skcipher_walk w;
-> > -     struct scatterlist *sg;
-> > -     unsigned offset;
-> > +     le128 t = rctx->t;
-> >       int err;
+> One would have to always introduce completely NEW symbols??
 >
-> Maybe you could add a brief comment above xor_tweak() explaining the design
-> choice for posterity, e.g.:
 >
-> /*
->  * We compute the tweak masks twice (both before and after the ECB encryption or
->  * decryption) to avoid having to allocate a temporary buffer, which usually
->  * would be slower than just doing the gf128mul_x_ble() calls again.
->  */
+>> Additionally libdevmapper.so was broken when compiled against
+>> uclibc. Runtime linker loader caused calling dm_task_get_info_base()
+>> function recursively, leading to segmentation fault.
+>>
+>> Introduce --enable-symvers[=STYLE] option, which allows to choose
+>> between gnu and disabled symbol versioning. By default gnu symbol
+>> versioning is used to provide backward compatibility.
+>> __GNUC__ check is replaced now with GNU_SYMVER, which is generated by
+>> configure script. Additionally ld version script is included only in
+>> case of gnu option, which slightly reduces output size.
+>
+> Yep - the idea was to support always 'last symbol' for compilers which
+> do not support symbol versioning.
+>
+> But your case seems to be you use 'gcc'  compiler,
+> but surrouding libraries are not 'versioning-aware' ?
 
-Definitely, that's a good idea! I'll put something like that into v3.
+My specific case, which I want to solve, is building GNU/Linux system
+from scratch using Buildroot [2] build system. Full image is build
+always from scratch, Buildroot does not support building just parts
+(packages/libraries) of an image. Hence my idea was to add build-time
+option, which Buildroot would always use (--disable-symvers) to build
+libdevmapper with musl and uclibc libraries.
 
->
-> Otherwise this looks good.  Thanks for doing this!
->
-> The new implementation isn't *guaranteed* to be faster, but it should be most of
-> the time, and it's definitely much simpler.  And the current one has had bugs.
-
-Yes, it's not guaranteed, but the complexity of gfmul should be always
-small enough when compared to a block cipher call. If it is small
-enough compared to AES-NI, which is already crazy-fast, then should be
-fine in all realistic cases. Either way, the massive simplification
-should be worth it even with a minor slowdown.
+[2] https://buildroot.org/
 
 >
-> Note that if ever needed there's also still room for optimizing the GF(2^128)
-> multiplications further, e.g. multiplying by 'x' and 'x^2' in parallel, or maybe
-> having a version specialized for 32-bit processors.
->
-> FYI, I think that 'subreq' can have an alignmask insufficient for 'le128', which
-> can cause misaligned accesses during the second xor_tweak().  But, the current
-> version has that bug too...
+> So what's you plan how to solve backward compatibility  -  is i.e.
+> 'uclibc' always user in a way   'recompile everything from scratch' ??
 
-That's a good point, I haven't thought of that... I think I could fix
-it with a clever one-liner in my version, but ideally someone should
-write a patch for the old version, too, so it can get fixed in stable
-as well... but that would be more work than I planned to spend on
-this, I should really be doing other things right now :)
-
-BTW, I noticed later that crypto/lrw.c uses a very similar pattern
-(with kmalloc and calls to ECB). I am now trying to simplify it in the
-same way, but in this case the xor_tweak operation seems to be slower
-and the difference is more noticeable. I have managed to optimize it
-quite a bit and bring the difference down, hopefully enough to mandate
-the simplification. I will send a patch later with some concrete
-numbers.
+Yes, always recompile everything (at least new library users).
 
 >
-> Reviewed-by: Eric Biggers <ebiggers@google.com>
+> Why is the system compiled with 'gcc'  not supporting versioning?
+
+That is because symbol versioning support relies on both gcc (or even
+binutils) and libc (runtime linker). Simple runtime linker (non aware of
+GNU symbol versions) just picks first symbol with exact name. This is
+how uclibc does that. musl on the other hand parses GNU version sections
+in shared libraries and chooses non `hidden` (hidden are non-default)
+symbols. glibc does proper symbol versioning, i.e. it checks if
+referenced version matches defined version. I have also checked, that
+bionic (Android libc) is aware of symbol versioning from around 2015.
+
 >
-> - Eric
+> What is the plan how to resolve binary backward compatibility here?
+> (as you clearly cannot  run  'old compiled binary' with new build
+> libdm  if you provide only latest symbols in some cases)  - is the  'I
+> don't care' policy applied regularly on such  system ?
 
-Thanks,
+Such systems should atomically replace libraries with all their
+users. These systems developers should explicitly request non versioned
+libraries, which can be achieved with introduced `--disable-symvers`
+option. This option is implemented similar as gcc libraries.
 
---
-Ondrej Mosnacek <omosnace at redhat dot com>
-Associate Software Engineer, Security Technologies
-Red Hat, Inc.
+>
+>
+> Zdenek
+
+
+-- 
+Regards,
+Marcin
