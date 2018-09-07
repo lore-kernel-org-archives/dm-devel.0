@@ -1,14 +1,12 @@
-From: Samuel Neves <samuel.c.p.neves@gmail.com>
-Subject: Re: [PATCH v2] crypto: xts - Drop use of auxiliary buffer
-Date: Wed, 5 Sep 2018 16:30:14 +0100
-Message-ID: <CAEX_ruEtrJ2_Mz8FPOJuCHNvLpdGXR+4Nhn6HWng-5hYYxujig@mail.gmail.com>
-References: <20180904080642.26897-1-omosnace@redhat.com>
-	<20180905063231.GA6813@sol.localdomain>
+From: Ondrej Mosnacek <omosnace@redhat.com>
+Subject: [PATCH 0/2] crpyto: lrw - Simplify and optimize the LRW
+	template
+Date: Fri,  7 Sep 2018 13:27:56 +0200
+Message-ID: <20180907112758.14602-1-omosnace@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180905063231.GA6813@sol.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,28 +16,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Ondrej Mosnacek <omosnace@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Eric Biggers <ebiggers@kernel.org>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-crypto@vger.kernel.org, Ondrej Mosnacek <omosnace@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Sep 5, 2018 at 7:32 AM, Eric Biggers <ebiggers@kernel.org> wrote:
-> Note that if ever needed there's also still room for optimizing the GF(2^128)
-> multiplications further, e.g. multiplying by 'x' and 'x^2' in parallel, or maybe
-> having a version specialized for 32-bit processors.
+This patchset is a follow-up to a similar patch for XTS:
+https://patchwork.kernel.org/patch/10588775/
 
-Given that this is used to encrypt small buffers only, skipping ahead
-seems like it may also be a viable strategy. For example, for the XTS
-polynomial x^128 + x^7 + x^2 + x + 1 one can multiply by x^64 very
-efficiently with
+The first patch applies a small optimization to the tweak computation
+and the second simplifes away the use of auxiliary buffer to cache
+computed tweaks.
 
-u128 skip64(u128 x)
-{
-  u128 b64 = (x >> 64);
-  u128 b63 = (x >> 63) & ~(u128)0x01;
-  u128 b62 = (x >> 62) & ~(u128)0x03;
-  u128 b57 = (x >> 57) & ~(u128)0x7f;
-  return (x << 64) ^ (b64 ^ b63 ^ b62 ^ b57);
-}
+Ondrej Mosnacek (2):
+  crypto: lrw - Optimize tweak computation
+  crypto: lrw - Do not use auxiliary buffer
 
-Calling this twice skips exactly 128 blocks, in which case we can xor
-both halves of a 4096-byte sector in parallel.
+ crypto/lrw.c | 321 +++++++++++----------------------------------------
+ 1 file changed, 66 insertions(+), 255 deletions(-)
+
+-- 
+2.17.1
