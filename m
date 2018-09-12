@@ -1,12 +1,16 @@
-From: Tommy Cumberland <tcumberland77@gmail.com>
-Subject: Re: dm-devel Digest, Vol 175, Issue 9
-Date: Wed, 12 Sep 2018 17:03:16 -0400
-Message-ID: <CAEsKJHeKq0O2jYSBwo9hikj9HOtKqBAgYTvg0mqFFHP3F3Fovg@mail.gmail.com>
-References: <mailman.73.1536768018.8296.dm-devel@redhat.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: Re: [PATCH v3 1/2] crypto: lrw - Optimize tweak
+	computation
+Date: Tue, 11 Sep 2018 23:28:15 -0700
+Message-ID: <20180912062815.GB752@sol.localdomain>
+References: <20180911074239.2398-1-omosnace@redhat.com>
+	<20180911074239.2398-2-omosnace@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3908718231989255213=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <mailman.73.1536768018.8296.dm-devel@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20180911074239.2398-2-omosnace@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,238 +20,164 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Ondrej Mosnacek <omosnace@redhat.com>
+Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, linux-crypto@vger.kernel.org
 List-Id: dm-devel.ids
 
---===============3908718231989255213==
-Content-Type: multipart/alternative; boundary="0000000000000405650575b2ec95"
+Hi Ondrej,
 
---0000000000000405650575b2ec95
-Content-Type: text/plain; charset="UTF-8"
+On Tue, Sep 11, 2018 at 09:42:38AM +0200, Ondrej Mosnacek wrote:
+> This patch rewrites the tweak computation to a slightly simpler method
+> that performs less bswaps. Based on performance measurements the new
+> code seems to provide slightly better performance than the old one.
+> 
+> PERFORMANCE MEASUREMENTS (x86_64)
+> Performed using: https://gitlab.com/omos/linux-crypto-bench
+> Crypto driver used: lrw(ecb-aes-aesni)
+> 
+> Before:
+>        ALGORITHM KEY (b)        DATA (B)   TIME ENC (ns)   TIME DEC (ns)
+>         lrw(aes)     256              64             204             286
+>         lrw(aes)     320              64             227             203
+>         lrw(aes)     384              64             208             204
+>         lrw(aes)     256             512             441             439
+>         lrw(aes)     320             512             456             455
+>         lrw(aes)     384             512             469             483
+>         lrw(aes)     256            4096            2136            2190
+>         lrw(aes)     320            4096            2161            2213
+>         lrw(aes)     384            4096            2295            2369
+>         lrw(aes)     256           16384            7692            7868
+>         lrw(aes)     320           16384            8230            8691
+>         lrw(aes)     384           16384            8971            8813
+>         lrw(aes)     256           32768           15336           15560
+>         lrw(aes)     320           32768           16410           16346
+>         lrw(aes)     384           32768           18023           17465
+> 
+> After:
+>        ALGORITHM KEY (b)        DATA (B)   TIME ENC (ns)   TIME DEC (ns)
+>         lrw(aes)     256              64             200             203
+>         lrw(aes)     320              64             202             204
+>         lrw(aes)     384              64             204             205
+>         lrw(aes)     256             512             415             415
+>         lrw(aes)     320             512             432             440
+>         lrw(aes)     384             512             449             451
+>         lrw(aes)     256            4096            1838            1995
+>         lrw(aes)     320            4096            2123            1980
+>         lrw(aes)     384            4096            2100            2119
+>         lrw(aes)     256           16384            7183            6954
+>         lrw(aes)     320           16384            7844            7631
+>         lrw(aes)     384           16384            8256            8126
+>         lrw(aes)     256           32768           14772           14484
+>         lrw(aes)     320           32768           15281           15431
+>         lrw(aes)     384           32768           16469           16293
+> 
+> Signed-off-by: Ondrej Mosnacek <omosnace@redhat.com>
+> ---
+>  crypto/lrw.c | 49 +++++++++++++++++++++++++------------------------
+>  1 file changed, 25 insertions(+), 24 deletions(-)
+> 
+> diff --git a/crypto/lrw.c b/crypto/lrw.c
+> index 393a782679c7..b4f30b6f16d6 100644
+> --- a/crypto/lrw.c
+> +++ b/crypto/lrw.c
+> @@ -120,30 +120,19 @@ static int setkey(struct crypto_skcipher *parent, const u8 *key,
+>  	return 0;
+>  }
+>  
+> -static inline void inc(be128 *iv)
+> +static int next_index(u32 *counter)
+>  {
+> -	be64_add_cpu(&iv->b, 1);
+> -	if (!iv->b)
+> -		be64_add_cpu(&iv->a, 1);
+> -}
+> -
+> -/* this returns the number of consequative 1 bits starting
+> - * from the right, get_index128(00 00 00 00 00 00 ... 00 00 10 FB) = 2 */
+> -static inline int get_index128(be128 *block)
+> -{
+> -	int x;
+> -	__be32 *p = (__be32 *) block;
+> -
+> -	for (p += 3, x = 0; x < 128; p--, x += 32) {
+> -		u32 val = be32_to_cpup(p);
+> -
+> -		if (!~val)
+> -			continue;
+> +	int i, res = 0;
+>  
+> -		return x + ffz(val);
+> +	for (i = 0; i < 4; i++) {
+> +		if (counter[i] + 1 != 0) {
+> +			res += ffz(counter[i]++);
+> +			break;
+> +		}
+> +		counter[i] = 0;
+> +		res += 32;
+>  	}
+> -
+> -	return x;
+> +	return res;
+>  }
 
-Hi I am very new to this and am trying to learn because I'm very interested
-in this. Is there anyway someone would help someone like me. Thank you
+This looks good, but can you leave the comment that says it returns the number
+of leading 1's in the counter?  And now that it increments the counter too.
 
-On Wed, Sep 12, 2018, 12:01 PM <dm-devel-request@redhat.com> wrote:
+Actually, I think it's wrong in the case where the counter is all 1's and wraps
+around.  It will XOR with ->mulinc[128], which is off the end of the array,
+instead of the correct value of ->mulinc[127]... But that's an existing bug :-/
+(If you do want to fix that, please do it in a separate patch, probably
+preceding this one in the series, and add a test vector that covers it...)
 
-> Send dm-devel mailing list submissions to
->         dm-devel@redhat.com
->
-> To subscribe or unsubscribe via the World Wide Web, visit
->         https://www.redhat.com/mailman/listinfo/dm-devel
-> or, via email, send a message with subject or body 'help' to
->         dm-devel-request@redhat.com
->
-> You can reach the person managing the list at
->         dm-devel-owner@redhat.com
->
-> When replying, please edit your Subject line so it is more specific
-> than "Re: Contents of dm-devel digest..."
->
->
-> Today's Topics:
->
->    1. Re: [PATCH] libmultipath: Increase SERIAL_SIZE to 256 bytes
->       (Martin Wilck)
->
->
-> ----------------------------------------------------------------------
->
-> Message: 1
-> Date: Wed, 12 Sep 2018 15:36:02 +0200
-> From: Martin Wilck <mwilck@suse.com>
-> To: KyleMahlkuch <kmahlkuc@linux.vnet.ibm.com>, dm-devel@redhat.com
-> Subject: Re: [dm-devel] [PATCH] libmultipath: Increase SERIAL_SIZE to
->         256 bytes
-> Message-ID: <f9c5e7fbc2136573a098b8aed475ce4eb7c0bf2a.camel@suse.com>
-> Content-Type: text/plain; charset="UTF-8"
->
-> On Tue, 2018-08-28 at 16:34 -0500, KyleMahlkuch wrote:
-> > Certain IBM FlashSystem LUNs can return up to 85 bytes of serial
-> > number in the Unit Serial Number VPD page, which is larger than
-> > the current SERIAL_SIZE definition of 65 bytes. Since the max
-> > size of this field does not appear to be defined in SPC, increasing
-> > to 256 bytes should hopefully prevent us from hitting this
-> > in future.
-> >
->
-> I'm not against it, but would 128 be enough, too? That's what we use
-> for WWID.
->
-> > This is an example of a serial number from a FlashSystem:
-> > Unit serial number VPD page:
-> > Unit serial number:
-> > 3321360050764008101AB300000000000012204214503IBMfcp
->
-> $ echo 3321360050764008101AB300000000000012204214503IBMfcp | wc -c
-> 52
->
-> It looks as if 65 bytes would be sufficient for _this_ serial number.
-> Is there excessive space padding at the end, maybe? Run
->
-> sg_vpd -p sn -r $DEV | hexdump -C
->
-> >
-> > Before this patch multipath returns the error:
-> > Jul 17 11:24:58 | vpd pg80 overflow, 85/65 bytes required
-> >
-> > After the patch is applied the error no longer occur.
-> >
-> > Signed-off-by: Kyle Mahlkuch <kmahlkuc@linux.vnet.ibm.com>
-> > ---
-> >  libmultipath/structs.h | 2 +-
-> >  1 file changed, 1 insertion(+), 1 deletion(-)
->
-> Thanks,
-> Martin
->
-> --
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend?rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N?rnberg)
->
->
->
->
-> ------------------------------
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
-> End of dm-devel Digest, Vol 175, Issue 9
-> ****************************************
->
+>  
+>  static int post_crypt(struct skcipher_request *req)
+> @@ -209,8 +198,9 @@ static int pre_crypt(struct skcipher_request *req)
+>  	struct scatterlist *sg;
+>  	unsigned cryptlen;
+>  	unsigned offset;
+> -	be128 *iv;
+>  	bool more;
+> +	__u32 *iv;
+> +	u32 counter[4];
 
---0000000000000405650575b2ec95
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+'iv' should be '__be32 *', not '__u32 *'.
 
-<div dir=3D"auto">Hi I am very new to this and am trying to learn because I=
-&#39;m very interested in this. Is there anyway someone would help someone =
-like me. Thank you</div><br><div class=3D"gmail_quote"><div dir=3D"ltr">On =
-Wed, Sep 12, 2018, 12:01 PM  &lt;<a href=3D"mailto:dm-devel-request@redhat.=
-com">dm-devel-request@redhat.com</a>&gt; wrote:<br></div><blockquote class=
-=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
-ing-left:1ex">Send dm-devel mailing list submissions to<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 <a href=3D"mailto:dm-devel@redhat.com" target=
-=3D"_blank" rel=3D"noreferrer">dm-devel@redhat.com</a><br>
-<br>
-To subscribe or unsubscribe via the World Wide Web, visit<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 <a href=3D"https://www.redhat.com/mailman/listi=
-nfo/dm-devel" rel=3D"noreferrer noreferrer" target=3D"_blank">https://www.r=
-edhat.com/mailman/listinfo/dm-devel</a><br>
-or, via email, send a message with subject or body &#39;help&#39; to<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 <a href=3D"mailto:dm-devel-request@redhat.com" =
-target=3D"_blank" rel=3D"noreferrer">dm-devel-request@redhat.com</a><br>
-<br>
-You can reach the person managing the list at<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 <a href=3D"mailto:dm-devel-owner@redhat.com" ta=
-rget=3D"_blank" rel=3D"noreferrer">dm-devel-owner@redhat.com</a><br>
-<br>
-When replying, please edit your Subject line so it is more specific<br>
-than &quot;Re: Contents of dm-devel digest...&quot;<br>
-<br>
-<br>
-Today&#39;s Topics:<br>
-<br>
-=C2=A0 =C2=A01. Re: [PATCH] libmultipath: Increase SERIAL_SIZE to 256 bytes=
-<br>
-=C2=A0 =C2=A0 =C2=A0 (Martin Wilck)<br>
-<br>
-<br>
-----------------------------------------------------------------------<br>
-<br>
-Message: 1<br>
-Date: Wed, 12 Sep 2018 15:36:02 +0200<br>
-From: Martin Wilck &lt;<a href=3D"mailto:mwilck@suse.com" target=3D"_blank"=
- rel=3D"noreferrer">mwilck@suse.com</a>&gt;<br>
-To: KyleMahlkuch &lt;<a href=3D"mailto:kmahlkuc@linux.vnet.ibm.com" target=
-=3D"_blank" rel=3D"noreferrer">kmahlkuc@linux.vnet.ibm.com</a>&gt;, <a href=
-=3D"mailto:dm-devel@redhat.com" target=3D"_blank" rel=3D"noreferrer">dm-dev=
-el@redhat.com</a><br>
-Subject: Re: [dm-devel] [PATCH] libmultipath: Increase SERIAL_SIZE to<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 256 bytes<br>
-Message-ID: &lt;<a href=3D"mailto:f9c5e7fbc2136573a098b8aed475ce4eb7c0bf2a.=
-camel@suse.com" target=3D"_blank" rel=3D"noreferrer">f9c5e7fbc2136573a098b8=
-aed475ce4eb7c0bf2a.camel@suse.com</a>&gt;<br>
-Content-Type: text/plain; charset=3D&quot;UTF-8&quot;<br>
-<br>
-On Tue, 2018-08-28 at 16:34 -0500, KyleMahlkuch wrote:<br>
-&gt; Certain IBM FlashSystem LUNs can return up to 85 bytes of serial<br>
-&gt; number in the Unit Serial Number VPD page, which is larger than<br>
-&gt; the current SERIAL_SIZE definition of 65 bytes. Since the max<br>
-&gt; size of this field does not appear to be defined in SPC, increasing<br=
->
-&gt; to 256 bytes should hopefully prevent us from hitting this<br>
-&gt; in future.<br>
-&gt; <br>
-<br>
-I&#39;m not against it, but would 128 be enough, too? That&#39;s what we us=
-e<br>
-for WWID.<br>
-<br>
-&gt; This is an example of a serial number from a FlashSystem:<br>
-&gt; Unit serial number VPD page:<br>
-&gt; Unit serial number:<br>
-&gt; 3321360050764008101AB300000000000012204214503IBMfcp<br>
-<br>
-$ echo 3321360050764008101AB300000000000012204214503IBMfcp | wc -c<br>
-52<br>
-<br>
-It looks as if 65 bytes would be sufficient for _this_ serial number.<br>
-Is there excessive space padding at the end, maybe? Run<br>
-<br>
-sg_vpd -p sn -r $DEV | hexdump -C <br>
-<br>
-&gt; <br>
-&gt; Before this patch multipath returns the error:<br>
-&gt; Jul 17 11:24:58 | vpd pg80 overflow, 85/65 bytes required<br>
-&gt; <br>
-&gt; After the patch is applied the error no longer occur.<br>
-&gt; <br>
-&gt; Signed-off-by: Kyle Mahlkuch &lt;<a href=3D"mailto:kmahlkuc@linux.vnet=
-.ibm.com" target=3D"_blank" rel=3D"noreferrer">kmahlkuc@linux.vnet.ibm.com<=
-/a>&gt;<br>
-&gt; ---<br>
-&gt;=C2=A0 libmultipath/structs.h | 2 +-<br>
-&gt;=C2=A0 1 file changed, 1 insertion(+), 1 deletion(-)<br>
-<br>
-Thanks,<br>
-Martin=C2=A0 <br>
-<br>
--- <br>
-Dr. Martin Wilck &lt;<a href=3D"mailto:mwilck@suse.com" target=3D"_blank" r=
-el=3D"noreferrer">mwilck@suse.com</a>&gt;, Tel. +49 (0)911 74053 2107<br>
-SUSE Linux GmbH, GF: Felix Imend?rffer, Jane Smithard, Graham Norton<br>
-HRB 21284 (AG N?rnberg)<br>
-<br>
-<br>
-<br>
-<br>
-------------------------------<br>
-<br>
---<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank" rel=3D"noreferrer"=
->dm-devel@redhat.com</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
-rer noreferrer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/d=
-m-devel</a><br>
-<br>
-End of dm-devel Digest, Vol 175, Issue 9<br>
-****************************************<br>
-</blockquote></div>
+>  	int err;
+>  
+>  	subreq = &rctx->subreq;
+> @@ -227,6 +217,11 @@ static int pre_crypt(struct skcipher_request *req)
+>  	err = skcipher_walk_virt(&w, subreq, false);
+>  	iv = w.iv;
+>  
+> +	counter[0] = be32_to_cpu(iv[3]);
+> +	counter[1] = be32_to_cpu(iv[2]);
+> +	counter[2] = be32_to_cpu(iv[1]);
+> +	counter[3] = be32_to_cpu(iv[0]);
+> +
+>  	while (w.nbytes) {
+>  		unsigned int avail = w.nbytes;
+>  		be128 *wsrc;
+> @@ -242,10 +237,16 @@ static int pre_crypt(struct skcipher_request *req)
+>  			/* T <- I*Key2, using the optimization
+>  			 * discussed in the specification */
+>  			be128_xor(&rctx->t, &rctx->t,
+> -				  &ctx->mulinc[get_index128(iv)]);
+> -			inc(iv);
+> +				  &ctx->mulinc[next_index(counter)]);
+>  		} while ((avail -= bs) >= bs);
+>  
+> +		if (w.nbytes == w.total) {
+> +			iv[0] = cpu_to_be32(counter[3]);
+> +			iv[1] = cpu_to_be32(counter[2]);
+> +			iv[2] = cpu_to_be32(counter[1]);
+> +			iv[3] = cpu_to_be32(counter[0]);
+> +		}
+> +
+>  		err = skcipher_walk_done(&w, avail);
+>  	}
+>  
+> -- 
+> 2.17.1
+> 
 
---0000000000000405650575b2ec95--
-
-
---===============3908718231989255213==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============3908718231989255213==--
+- Eric
