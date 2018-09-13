@@ -1,57 +1,68 @@
-From: Nicholas Mc Guire <hofrat@osadl.org>
-Subject: [PATCH] dm integrity: drop excess unlikely() from BUG_ON()
-Date: Fri, 14 Sep 2018 09:37:03 +0200
-Message-ID: <1536910623-18013-1-git-send-email-hofrat@osadl.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Nicholas Mc Guire <hofrat@osadl.org>
+From: Ondrej Mosnacek <omosnace@redhat.com>
+Subject: [PATCH v4 0/4] crypto: lrw - Fixes and improvements
+Date: Thu, 13 Sep 2018 10:51:30 +0200
+Message-ID: <20180913085134.11694-1-omosnace@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Eric Biggers <ebiggers@kernel.org>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-crypto@vger.kernel.org, Ondrej Mosnacek <omosnace@redhat.com>
 List-Id: dm-devel.ids
 
- include/asm-generic/bug.h defines BUG_ON(condition) as
-do { if (unlikely(condition)) BUG(); } while (0).
-So BUG_ON already provides unlikely() on the condition thus 
-there is no point in having BUG_ON(unlikely(condition)),
-thus simply drop the excess unlikely().
+This patchset contains a corner-case fix and several improvements  for
+the LRW template.
 
-Signed-off-by: Nicholas Mc Guire <hofrat@osadl.org>
----
+The first patch fixes an out-of-bounds array access (and subsequently
+incorrect cipher output) when the LRW counter goes from all ones to all
+zeros. This patch should be applied to the crypto-2.6 tree and also go
+to stable.
 
-Found during code review
+The second patch adds a test vector for lrw(aes) that covers the above
+bug.
 
-Patch was compile tested with: x86_64_defconfig + SCSI_LOWLEVEL=y,
-DM_INTEGRITY=y
-(with warnings from sparse and smatch - not related to the proposed
- change though)
+The third patch is a small optimization of the LRW tweak computation.
 
-Patch is against 4.19-rc3 (localversion-next is next-20180913)
+The fourth patch is a follow-up to a similar patch for XTS (it
+simplifies away the use of dynamically allocated auxiliary buffer to
+cache the computed tweak values):
+https://patchwork.kernel.org/patch/10588775/
 
- drivers/md/dm-integrity.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+Patches 2-4 should be applied only to cryptodev-2.6, but they all depend
+on the first patch.
 
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 89ccb64..8574e73 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -1948,7 +1948,8 @@ static void do_journal_write(struct dm_integrity_c *ic, unsigned write_start,
- 
- 			if (journal_entry_is_unused(je))
- 				continue;
--			BUG_ON(unlikely(journal_entry_is_inprogress(je)) && !from_replay);
-+			BUG_ON(journal_entry_is_inprogress(je) &&
-+			       !from_replay);
- 			sec = journal_entry_get_sector(je);
- 			if (unlikely(from_replay)) {
- 				if (unlikely(sec & (unsigned)(ic->sectors_per_block - 1))) {
-@@ -1963,7 +1964,8 @@ static void do_journal_write(struct dm_integrity_c *ic, unsigned write_start,
- 				sector_t sec2, area2, offset2;
- 				if (journal_entry_is_unused(je2))
- 					break;
--				BUG_ON(unlikely(journal_entry_is_inprogress(je2)) && !from_replay);
-+				BUG_ON(journal_entry_is_inprogress(je2) &&
-+				       !from_replay);
- 				sec2 = journal_entry_get_sector(je2);
- 				get_area_and_offset(ic, sec2, &area2, &offset2);
- 				if (area2 != area || offset2 != offset + ((k - j) << ic->sb->log2_sectors_per_block))
+Changes in v4:
+  - applied various corrections/suggestions from Eric Biggers
+  - added a fix for buggy behavior on counter wrap-around (+ test vector)
+
+v3: https://www.spinics.net/lists/linux-crypto/msg34946.html
+Changes in v3:
+  - fix a copy-paste error
+
+v2: https://www.spinics.net/lists/linux-crypto/msg34890.html
+Changes in v2:
+  - small cleanup suggested by Eric Biggers
+
+v1: https://www.spinics.net/lists/linux-crypto/msg34871.html
+
+Ondrej Mosnacek (4):
+  crypto: lrw - Fix out-of bounds access on counter overflow
+  crypto: testmgr - Add test for LRW counter wrap-around
+  crypto: lrw - Optimize tweak computation
+  crypto: lrw - Do not use auxiliary buffer
+
+ crypto/lrw.c     | 342 +++++++++++++----------------------------------
+ crypto/testmgr.h |  21 +++
+ 2 files changed, 112 insertions(+), 251 deletions(-)
+
 -- 
-2.1.4
+2.17.1
