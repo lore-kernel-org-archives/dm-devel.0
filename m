@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 3/5] libmultipath: pathinfo: skip hidden devices
-Date: Fri, 14 Sep 2018 14:51:01 +0200
-Message-ID: <20180914125103.1154-3-mwilck@suse.com>
+Subject: [PATCH 5/5] multipathd: decrease log level of uevent
+	messages
+Date: Fri, 14 Sep 2018 14:51:03 +0200
+Message-ID: <20180914125103.1154-5-mwilck@suse.com>
 References: <20180914125103.1154-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,41 +22,57 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Hidden block devices (in practice: members of nvme native multipath
-devices) can't be used by multipath anyway. Current multipath code
-(with default blacklisting) skips them, too, but emits a misleading
-"blacklisted: udev property missing" message.
+The messages "multipathd: add path (uevent)" etc. are displayed
+frequently, and often for devices that don't matter for multipathd.
+If real action needs to be taken, such as adding or removing paths
+or maps from the internal structures, multipathd emits other log
+messages at level 2 later on.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 15 ++++++++++++---
- 1 file changed, 12 insertions(+), 3 deletions(-)
+ multipathd/main.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 0b1855dd..11da64ba 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1858,9 +1858,18 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 	 * limited by DI_BLACKLIST and occurs before this debug
- 	 * message with the mask value.
- 	 */
--	if (pp->udev && (is_claimed_by_foreign(pp->udev) ||
--			 filter_property(conf, pp->udev) > 0))
--		return PATHINFO_SKIPPED;
-+	if (pp->udev) {
-+		const char *hidden =
-+			udev_device_get_sysattr_value(pp->udev, "hidden");
-+
-+		if (hidden && !strcmp(hidden, "1")) {
-+			condlog(3, "%s: hidden", pp->dev);
-+			return PATHINFO_SKIPPED;
-+		}
-+		if (is_claimed_by_foreign(pp->udev) ||
-+			 filter_property(conf, pp->udev) > 0)
-+			return PATHINFO_SKIPPED;
-+	}
+diff --git a/multipathd/main.c b/multipathd/main.c
+index cc493c18..bc95c65f 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -743,7 +743,7 @@ uev_remove_map (struct uevent * uev, struct vectors * vecs)
+ 	int minor;
+ 	struct multipath *mpp;
  
- 	if (filter_devnode(conf->blist_devnode,
- 			   conf->elist_devnode,
+-	condlog(2, "%s: remove map (uevent)", uev->kernel);
++	condlog(3, "%s: remove map (uevent)", uev->kernel);
+ 	alias = uevent_get_dm_name(uev);
+ 	if (!alias) {
+ 		condlog(3, "%s: No DM_NAME in uevent, ignoring", uev->kernel);
+@@ -803,7 +803,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
+ 	int ret = 0, i;
+ 	struct config *conf;
+ 
+-	condlog(2, "%s: add path (uevent)", uev->kernel);
++	condlog(3, "%s: add path (uevent)", uev->kernel);
+ 	if (strstr(uev->kernel, "..") != NULL) {
+ 		/*
+ 		 * Don't allow relative device names in the pathvec
+@@ -911,7 +911,8 @@ ev_add_path (struct path * pp, struct vectors * vecs, int need_do_map)
+ 	     (pathcount(mpp, PATH_GHOST) > 0 && pp->tpgs != TPGS_IMPLICIT &&
+ 	      mpp->ghost_delay_tick <= 0))) {
+ 		/* if wait_for_udev is set and valid paths exist */
+-		condlog(2, "%s: delaying path addition until %s is fully initialized", pp->dev, mpp->alias);
++		condlog(3, "%s: delaying path addition until %s is fully initialized",
++			pp->dev, mpp->alias);
+ 		mpp->wait_for_udev = 2;
+ 		orphan_path(pp, "waiting for create to complete");
+ 		return 0;
+@@ -1038,7 +1039,7 @@ uev_remove_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
+ 	struct path *pp;
+ 	int ret;
+ 
+-	condlog(2, "%s: remove path (uevent)", uev->kernel);
++	condlog(3, "%s: remove path (uevent)", uev->kernel);
+ 	delete_foreign(uev->udev);
+ 
+ 	pthread_cleanup_push(cleanup_lock, &vecs->lock);
 -- 
 2.18.0
