@@ -1,7 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 2/5] libmultipath: nvme: shorter topology output
-Date: Fri, 14 Sep 2018 14:51:00 +0200
-Message-ID: <20180914125103.1154-2-mwilck@suse.com>
+Subject: [PATCH 3/5] libmultipath: pathinfo: skip hidden devices
+Date: Fri, 14 Sep 2018 14:51:01 +0200
+Message-ID: <20180914125103.1154-3-mwilck@suse.com>
 References: <20180914125103.1154-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,44 +21,41 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The nvme foreign code maps the NVMe subsys NQN to the "%n"
-wildcard ("alias"). Some real-world devices use very lengthy
-expressions for the subsys NQN (counted 95 characters on one
-system here), making the "multipath -ll" output hardly readable
-for humans. Use a shorter and more concise printout instead,
-based on the WWID only.
-
-The subsys NQN is still available via the "%n" wildcard:
-"multipathd show maps format %n".
+Hidden block devices (in practice: members of nvme native multipath
+devices) can't be used by multipath anyway. Current multipath code
+(with default blacklisting) skips them, too, but emits a misleading
+"blacklisted: udev property missing" message.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/foreign/nvme.c | 10 +++++++++-
- 1 file changed, 9 insertions(+), 1 deletion(-)
+ libmultipath/discovery.c | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
-index fca3235f..8887a755 100644
---- a/libmultipath/foreign/nvme.c
-+++ b/libmultipath/foreign/nvme.c
-@@ -286,10 +286,18 @@ static int snprint_nvme_path(const struct gen_path *gp,
- 	return 0;
- }
- 
-+static int nvme_style(const struct gen_multipath* gm,
-+		      char *buf, int len, int verbosity)
-+{
-+	int n = snprintf(buf, len, "%%w [%%G]:%%d %%s");
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 0b1855dd..11da64ba 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1858,9 +1858,18 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 	 * limited by DI_BLACKLIST and occurs before this debug
+ 	 * message with the mask value.
+ 	 */
+-	if (pp->udev && (is_claimed_by_foreign(pp->udev) ||
+-			 filter_property(conf, pp->udev) > 0))
+-		return PATHINFO_SKIPPED;
++	if (pp->udev) {
++		const char *hidden =
++			udev_device_get_sysattr_value(pp->udev, "hidden");
 +
-+	return (n < len ? n : len - 1);
-+}
-+
- static const struct gen_multipath_ops nvme_map_ops = {
- 	.get_pathgroups = nvme_mp_get_pgs,
- 	.rel_pathgroups = nvme_mp_rel_pgs,
--	.style = generic_style,
-+	.style = nvme_style,
- 	.snprint = snprint_nvme_map,
- };
++		if (hidden && !strcmp(hidden, "1")) {
++			condlog(3, "%s: hidden", pp->dev);
++			return PATHINFO_SKIPPED;
++		}
++		if (is_claimed_by_foreign(pp->udev) ||
++			 filter_property(conf, pp->udev) > 0)
++			return PATHINFO_SKIPPED;
++	}
  
+ 	if (filter_devnode(conf->blist_devnode,
+ 			   conf->elist_devnode,
 -- 
 2.18.0
