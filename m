@@ -1,14 +1,15 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 5/5] multipathd: decrease log level of uevent
-	messages
-Date: Fri, 14 Sep 2018 14:51:03 +0200
-Message-ID: <20180914125103.1154-5-mwilck@suse.com>
-References: <20180914125103.1154-1-mwilck@suse.com>
+From: Adam Williamson <awilliam@redhat.com>
+Subject: Re: Changes in DM_MULTIPATH_DEVICE_PATH in
+	multipath-tools 0.7.7
+Date: Fri, 14 Sep 2018 08:49:10 -0700
+Message-ID: <12150ad38606f1431f17d2fa433b8d2aaa5e1165.camel@redhat.com>
+References: <96e2092ae7f7638732745758d8aa7d4e2972b515.camel@redhat.com>
+	<5c2c34fb994da6c49a04209ad4660e01f6e2e63a.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180914125103.1154-1-mwilck@suse.com>
+In-Reply-To: <5c2c34fb994da6c49a04209ad4660e01f6e2e63a.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,61 +19,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel mailing list <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The messages "multipathd: add path (uevent)" etc. are displayed
-frequently, and often for devices that don't matter for multipathd.
-If real action needs to be taken, such as adding or removing paths
-or maps from the internal structures, multipathd emits other log
-messages at level 2 later on.
+On Fri, 2018-09-14 at 13:41 +0200, Martin Wilck wrote:
+> 
+> > The *second* commit introduces a new possible value for
+> > DM_MULTIPATH_DEVICE_PATH - "2", meaning "this *might* be a multipath
+> > device, but we're not sure yet." This *may* also be significant to
+> > other rules, because there are several that use this check:
+> > 
+> > ENV{DM_MULTIPATH_DEVICE_PATH}=="1"
+> 
+> If you look at the multipath rules, you can see that the value "2" is
+> never passed on to later rules. If the value "2" is seen by the rules, 
+> processing continues along the "maybe" path, and eventually reaches
+> this code: 
+> 
+> LABEL="pretend_mpath"
+> ENV{DM_MULTIPATH_DEVICE_PATH}="1"
+> ENV{SYSTEMD_READY}="0"
+> GOTO="end_mpath"
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipathd/main.c | 9 +++++----
- 1 file changed, 5 insertions(+), 4 deletions(-)
+That's what I thought, but it's not really 100% clear and I wasn't at
+all sure whether there was something else I was missing which could
+lead to the 2 value 'escaping'.
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index cc493c18..bc95c65f 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -743,7 +743,7 @@ uev_remove_map (struct uevent * uev, struct vectors * vecs)
- 	int minor;
- 	struct multipath *mpp;
- 
--	condlog(2, "%s: remove map (uevent)", uev->kernel);
-+	condlog(3, "%s: remove map (uevent)", uev->kernel);
- 	alias = uevent_get_dm_name(uev);
- 	if (!alias) {
- 		condlog(3, "%s: No DM_NAME in uevent, ignoring", uev->kernel);
-@@ -803,7 +803,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
- 	int ret = 0, i;
- 	struct config *conf;
- 
--	condlog(2, "%s: add path (uevent)", uev->kernel);
-+	condlog(3, "%s: add path (uevent)", uev->kernel);
- 	if (strstr(uev->kernel, "..") != NULL) {
- 		/*
- 		 * Don't allow relative device names in the pathvec
-@@ -911,7 +911,8 @@ ev_add_path (struct path * pp, struct vectors * vecs, int need_do_map)
- 	     (pathcount(mpp, PATH_GHOST) > 0 && pp->tpgs != TPGS_IMPLICIT &&
- 	      mpp->ghost_delay_tick <= 0))) {
- 		/* if wait_for_udev is set and valid paths exist */
--		condlog(2, "%s: delaying path addition until %s is fully initialized", pp->dev, mpp->alias);
-+		condlog(3, "%s: delaying path addition until %s is fully initialized",
-+			pp->dev, mpp->alias);
- 		mpp->wait_for_udev = 2;
- 		orphan_path(pp, "waiting for create to complete");
- 		return 0;
-@@ -1038,7 +1039,7 @@ uev_remove_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
- 	struct path *pp;
- 	int ret;
- 
--	condlog(2, "%s: remove path (uevent)", uev->kernel);
-+	condlog(3, "%s: remove path (uevent)", uev->kernel);
- 	delete_foreign(uev->udev);
- 
- 	pthread_cleanup_push(cleanup_lock, &vecs->lock);
+> That could be better documented by comments, I suppose.
+
+That'd be nice, yes. =) Thanks.
+
+> In short, code that tests for ENV{DM_MULTIPATH_DEVICE_PATH}=="1" to
+> skip actions is fine. Code that checks for empty
+> ENV{DM_MULTIPATH_DEVICE_PATH} should be fixed.
+> 
+> Regards,
+> Martin
+> 
+> PS: This touches a very general topic about udev: to which extent are
+> udev variables "global" in the sense that other, independent rules are
+> allowed to inspect (and maybe even change) them? I don't think there
+> are any clear conventions about this. Very few variables are obviously
+> intended to be global, like "SYSTEMD_READY", but others are rather
+> confined to the code that creates them, and maybe dedicated consumers.
+> IOW, there is no "API" or standard describing how rule sets from
+> different packages maintained by different people should interact.
+
+I don't know. I think I noticed some rules files using a convention of
+prefixing 'private' variables with _.
 -- 
-2.18.0
+Adam Williamson
+Fedora QA Community Monkey
+IRC: adamw | Twitter: AdamW_Fedora | XMPP: adamw AT happyassassin . net
+http://www.happyassassin.net
