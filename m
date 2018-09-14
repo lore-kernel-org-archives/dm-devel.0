@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 4/5] multipathd: fix version check for
-	DM_DEV_ARM_POLL ioctl
-Date: Fri, 14 Sep 2018 14:51:02 +0200
-Message-ID: <20180914125103.1154-4-mwilck@suse.com>
+Subject: [PATCH 2/5] libmultipath: nvme: shorter topology output
+Date: Fri, 14 Sep 2018 14:51:00 +0200
+Message-ID: <20180914125103.1154-2-mwilck@suse.com>
 References: <20180914125103.1154-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,55 +21,44 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Make sure the checks in dmevent_poll_supported() and
-arm_dm_event_poll() use the same logic. Currently, the
-version check check fails in arm_dm_event_poll() if
-libdevmapper's DM_VERSION is newer than the kernel's.
+The nvme foreign code maps the NVMe subsys NQN to the "%n"
+wildcard ("alias"). Some real-world devices use very lengthy
+expressions for the subsys NQN (counted 95 characters on one
+system here), making the "multipath -ll" output hardly readable
+for humans. Use a shorter and more concise printout instead,
+based on the WWID only.
+
+The subsys NQN is still available via the "%n" wildcard:
+"multipathd show maps format %n".
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/dmevents.c | 14 +++++++++-----
- 1 file changed, 9 insertions(+), 5 deletions(-)
+ libmultipath/foreign/nvme.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
 
-diff --git a/multipathd/dmevents.c b/multipathd/dmevents.c
-index e98a974c..31e64a7e 100644
---- a/multipathd/dmevents.c
-+++ b/multipathd/dmevents.c
-@@ -50,16 +50,20 @@ struct dmevent_waiter {
- };
- 
- static struct dmevent_waiter *waiter;
-+/*
-+ * DM_VERSION_MINOR hasn't been updated when DM_DEV_ARM_POLL
-+ * was added in kernel 4.13. 4.37.0 (4.14) has it, safely.
-+ */
-+static const unsigned int DM_VERSION_FOR_ARM_POLL[] = {4, 37, 0};
- 
- int dmevent_poll_supported(void)
- {
--	unsigned int minv[3] = {4, 37, 0};
- 	unsigned int v[3];
- 
- 	if (dm_drv_version(v))
- 		return 0;
- 
--	if (VERSION_GE(v, minv))
-+	if (VERSION_GE(v, DM_VERSION_FOR_ARM_POLL))
- 		return 1;
+diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
+index fca3235f..8887a755 100644
+--- a/libmultipath/foreign/nvme.c
++++ b/libmultipath/foreign/nvme.c
+@@ -286,10 +286,18 @@ static int snprint_nvme_path(const struct gen_path *gp,
  	return 0;
  }
-@@ -120,9 +124,9 @@ static int arm_dm_event_poll(int fd)
- {
- 	struct dm_ioctl dmi;
- 	memset(&dmi, 0, sizeof(dmi));
--	dmi.version[0] = DM_VERSION_MAJOR;
--	dmi.version[1] = DM_VERSION_MINOR;
--	dmi.version[2] = DM_VERSION_PATCHLEVEL;
-+	dmi.version[0] = DM_VERSION_FOR_ARM_POLL[0];
-+	dmi.version[1] = DM_VERSION_FOR_ARM_POLL[1];
-+	dmi.version[2] = DM_VERSION_FOR_ARM_POLL[2];
- 	/* This flag currently does nothing. It simply exists to
- 	 * duplicate the behavior of libdevmapper */
- 	dmi.flags = 0x4;
+ 
++static int nvme_style(const struct gen_multipath* gm,
++		      char *buf, int len, int verbosity)
++{
++	int n = snprintf(buf, len, "%%w [%%G]:%%d %%s");
++
++	return (n < len ? n : len - 1);
++}
++
+ static const struct gen_multipath_ops nvme_map_ops = {
+ 	.get_pathgroups = nvme_mp_get_pgs,
+ 	.rel_pathgroups = nvme_mp_rel_pgs,
+-	.style = generic_style,
++	.style = nvme_style,
+ 	.snprint = snprint_nvme_map,
+ };
+ 
 -- 
 2.18.0
