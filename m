@@ -1,13 +1,14 @@
-From: Ondrej Mosnacek <omosnace@redhat.com>
-Subject: [PATCH v4 4/4] crypto: lrw - Do not use auxiliary buffer
-Date: Thu, 13 Sep 2018 10:51:34 +0200
-Message-ID: <20180913085134.11694-5-omosnace@redhat.com>
-References: <20180913085134.11694-1-omosnace@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: Changes in DM_MULTIPATH_DEVICE_PATH in
+	multipath-tools 0.7.7
+Date: Fri, 14 Sep 2018 13:41:27 +0200
+Message-ID: <5c2c34fb994da6c49a04209ad4660e01f6e2e63a.camel@suse.com>
+References: <96e2092ae7f7638732745758d8aa7d4e2972b515.camel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180913085134.11694-1-omosnace@redhat.com>
+In-Reply-To: <96e2092ae7f7638732745758d8aa7d4e2972b515.camel@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,430 +18,78 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Eric Biggers <ebiggers@kernel.org>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-crypto@vger.kernel.org, Ondrej Mosnacek <omosnace@redhat.com>
+To: Adam Williamson <awilliam@redhat.com>
+Cc: dm-devel mailing list <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This patch simplifies the LRW template to recompute the LRW tweaks from
-scratch in the second pass and thus also removes the need to allocate a
-dynamic buffer using kmalloc().
-
-As discussed at [1], the use of kmalloc causes deadlocks with dm-crypt.
-
-PERFORMANCE MEASUREMENTS (x86_64)
-Performed using: https://gitlab.com/omos/linux-crypto-bench
-Crypto driver used: lrw(ecb-aes-aesni)
-
-The results show that the new code has about the same performance as the
-old code. For 512-byte message it seems to be even slightly faster, but
-that might be just noise.
-
-Before:
-       ALGORITHM KEY (b)        DATA (B)   TIME ENC (ns)   TIME DEC (ns)
-        lrw(aes)     256              64             200             203
-        lrw(aes)     320              64             202             204
-        lrw(aes)     384              64             204             205
-        lrw(aes)     256             512             415             415
-        lrw(aes)     320             512             432             440
-        lrw(aes)     384             512             449             451
-        lrw(aes)     256            4096            1838            1995
-        lrw(aes)     320            4096            2123            1980
-        lrw(aes)     384            4096            2100            2119
-        lrw(aes)     256           16384            7183            6954
-        lrw(aes)     320           16384            7844            7631
-        lrw(aes)     384           16384            8256            8126
-        lrw(aes)     256           32768           14772           14484
-        lrw(aes)     320           32768           15281           15431
-        lrw(aes)     384           32768           16469           16293
-
-After:
-       ALGORITHM KEY (b)        DATA (B)   TIME ENC (ns)   TIME DEC (ns)
-        lrw(aes)     256              64             197             196
-        lrw(aes)     320              64             200             197
-        lrw(aes)     384              64             203             199
-        lrw(aes)     256             512             385             380
-        lrw(aes)     320             512             401             395
-        lrw(aes)     384             512             415             415
-        lrw(aes)     256            4096            1869            1846
-        lrw(aes)     320            4096            2080            1981
-        lrw(aes)     384            4096            2160            2109
-        lrw(aes)     256           16384            7077            7127
-        lrw(aes)     320           16384            7807            7766
-        lrw(aes)     384           16384            8108            8357
-        lrw(aes)     256           32768           14111           14454
-        lrw(aes)     320           32768           15268           15082
-        lrw(aes)     384           32768           16581           16250
-
-[1] https://lkml.org/lkml/2018/8/23/1315
-
-Signed-off-by: Ondrej Mosnacek <omosnace@redhat.com>
----
- crypto/lrw.c | 280 ++++++++++-----------------------------------------
- 1 file changed, 51 insertions(+), 229 deletions(-)
-
-diff --git a/crypto/lrw.c b/crypto/lrw.c
-index 7377b5b486fd..6fcf0d431185 100644
---- a/crypto/lrw.c
-+++ b/crypto/lrw.c
-@@ -29,8 +29,6 @@
- #include <crypto/b128ops.h>
- #include <crypto/gf128mul.h>
- 
--#define LRW_BUFFER_SIZE 128u
--
- #define LRW_BLOCK_SIZE 16
- 
- struct priv {
-@@ -56,19 +54,7 @@ struct priv {
- };
- 
- struct rctx {
--	be128 buf[LRW_BUFFER_SIZE / sizeof(be128)];
--
- 	be128 t;
--
--	be128 *ext;
--
--	struct scatterlist srcbuf[2];
--	struct scatterlist dstbuf[2];
--	struct scatterlist *src;
--	struct scatterlist *dst;
--
--	unsigned int left;
--
- 	struct skcipher_request subreq;
- };
- 
-@@ -152,86 +138,31 @@ static int next_index(u32 *counter)
- 	return 127;
- }
- 
--static int post_crypt(struct skcipher_request *req)
-+/*
-+ * We compute the tweak masks twice (both before and after the ECB encryption or
-+ * decryption) to avoid having to allocate a temporary buffer and/or make
-+ * mutliple calls to the 'ecb(..)' instance, which usually would be slower than
-+ * just doing the next_index() calls again.
-+ */
-+static int xor_tweak(struct skcipher_request *req, bool second_pass)
- {
--	struct rctx *rctx = skcipher_request_ctx(req);
--	be128 *buf = rctx->ext ?: rctx->buf;
--	struct skcipher_request *subreq;
- 	const int bs = LRW_BLOCK_SIZE;
--	struct skcipher_walk w;
--	struct scatterlist *sg;
--	unsigned offset;
--	int err;
--
--	subreq = &rctx->subreq;
--	err = skcipher_walk_virt(&w, subreq, false);
--
--	while (w.nbytes) {
--		unsigned int avail = w.nbytes;
--		be128 *wdst;
--
--		wdst = w.dst.virt.addr;
--
--		do {
--			be128_xor(wdst, buf++, wdst);
--			wdst++;
--		} while ((avail -= bs) >= bs);
--
--		err = skcipher_walk_done(&w, avail);
--	}
--
--	rctx->left -= subreq->cryptlen;
--
--	if (err || !rctx->left)
--		goto out;
--
--	rctx->dst = rctx->dstbuf;
--
--	scatterwalk_done(&w.out, 0, 1);
--	sg = w.out.sg;
--	offset = w.out.offset;
--
--	if (rctx->dst != sg) {
--		rctx->dst[0] = *sg;
--		sg_unmark_end(rctx->dst);
--		scatterwalk_crypto_chain(rctx->dst, sg_next(sg), 2);
--	}
--	rctx->dst[0].length -= offset - sg->offset;
--	rctx->dst[0].offset = offset;
--
--out:
--	return err;
--}
--
--static int pre_crypt(struct skcipher_request *req)
--{
- 	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
--	struct rctx *rctx = skcipher_request_ctx(req);
- 	struct priv *ctx = crypto_skcipher_ctx(tfm);
--	be128 *buf = rctx->ext ?: rctx->buf;
--	struct skcipher_request *subreq;
--	const int bs = LRW_BLOCK_SIZE;
-+	struct rctx *rctx = skcipher_request_ctx(req);
-+	be128 t = rctx->t;
- 	struct skcipher_walk w;
--	struct scatterlist *sg;
--	unsigned cryptlen;
--	unsigned offset;
--	bool more;
- 	__be32 *iv;
- 	u32 counter[4];
- 	int err;
- 
--	subreq = &rctx->subreq;
--	skcipher_request_set_tfm(subreq, tfm);
--
--	cryptlen = subreq->cryptlen;
--	more = rctx->left > cryptlen;
--	if (!more)
--		cryptlen = rctx->left;
--
--	skcipher_request_set_crypt(subreq, rctx->src, rctx->dst,
--				   cryptlen, req->iv);
-+	if (second_pass) {
-+		req = &rctx->subreq;
-+		/* set to our TFM to enforce correct alignment: */
-+		skcipher_request_set_tfm(req, tfm);
-+	}
- 
--	err = skcipher_walk_virt(&w, subreq, false);
-+	err = skcipher_walk_virt(&w, req, false);
- 	iv = (__be32 *)w.iv;
- 
- 	counter[0] = be32_to_cpu(iv[3]);
-@@ -248,16 +179,14 @@ static int pre_crypt(struct skcipher_request *req)
- 		wdst = w.dst.virt.addr;
- 
- 		do {
--			*buf++ = rctx->t;
--			be128_xor(wdst++, &rctx->t, wsrc++);
-+			be128_xor(wdst++, &t, wsrc++);
- 
- 			/* T <- I*Key2, using the optimization
- 			 * discussed in the specification */
--			be128_xor(&rctx->t, &rctx->t,
--				  &ctx->mulinc[next_index(counter)]);
-+			be128_xor(&t, &t, &ctx->mulinc[next_index(counter)]);
- 		} while ((avail -= bs) >= bs);
- 
--		if (w.nbytes == w.total) {
-+		if (second_pass && w.nbytes == w.total) {
- 			iv[0] = cpu_to_be32(counter[3]);
- 			iv[1] = cpu_to_be32(counter[2]);
- 			iv[2] = cpu_to_be32(counter[1]);
-@@ -267,175 +196,68 @@ static int pre_crypt(struct skcipher_request *req)
- 		err = skcipher_walk_done(&w, avail);
- 	}
- 
--	skcipher_request_set_tfm(subreq, ctx->child);
--	skcipher_request_set_crypt(subreq, rctx->dst, rctx->dst,
--				   cryptlen, NULL);
--
--	if (err || !more)
--		goto out;
--
--	rctx->src = rctx->srcbuf;
--
--	scatterwalk_done(&w.in, 0, 1);
--	sg = w.in.sg;
--	offset = w.in.offset;
--
--	if (rctx->src != sg) {
--		rctx->src[0] = *sg;
--		sg_unmark_end(rctx->src);
--		scatterwalk_crypto_chain(rctx->src, sg_next(sg), 2);
--	}
--	rctx->src[0].length -= offset - sg->offset;
--	rctx->src[0].offset = offset;
--
--out:
- 	return err;
- }
- 
--static int init_crypt(struct skcipher_request *req, crypto_completion_t done)
-+static int xor_tweak_pre(struct skcipher_request *req)
- {
--	struct priv *ctx = crypto_skcipher_ctx(crypto_skcipher_reqtfm(req));
--	struct rctx *rctx = skcipher_request_ctx(req);
--	struct skcipher_request *subreq;
--	gfp_t gfp;
--
--	subreq = &rctx->subreq;
--	skcipher_request_set_callback(subreq, req->base.flags, done, req);
--
--	gfp = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ? GFP_KERNEL :
--							   GFP_ATOMIC;
--	rctx->ext = NULL;
--
--	subreq->cryptlen = LRW_BUFFER_SIZE;
--	if (req->cryptlen > LRW_BUFFER_SIZE) {
--		unsigned int n = min(req->cryptlen, (unsigned int)PAGE_SIZE);
--
--		rctx->ext = kmalloc(n, gfp);
--		if (rctx->ext)
--			subreq->cryptlen = n;
--	}
--
--	rctx->src = req->src;
--	rctx->dst = req->dst;
--	rctx->left = req->cryptlen;
--
--	/* calculate first value of T */
--	memcpy(&rctx->t, req->iv, sizeof(rctx->t));
--
--	/* T <- I*Key2 */
--	gf128mul_64k_bbe(&rctx->t, ctx->table);
--
--	return 0;
-+	return xor_tweak(req, false);
- }
- 
--static void exit_crypt(struct skcipher_request *req)
-+static int xor_tweak_post(struct skcipher_request *req)
- {
--	struct rctx *rctx = skcipher_request_ctx(req);
--
--	rctx->left = 0;
--
--	if (rctx->ext)
--		kzfree(rctx->ext);
-+	return xor_tweak(req, true);
- }
- 
--static int do_encrypt(struct skcipher_request *req, int err)
--{
--	struct rctx *rctx = skcipher_request_ctx(req);
--	struct skcipher_request *subreq;
--
--	subreq = &rctx->subreq;
--
--	while (!err && rctx->left) {
--		err = pre_crypt(req) ?:
--		      crypto_skcipher_encrypt(subreq) ?:
--		      post_crypt(req);
--
--		if (err == -EINPROGRESS || err == -EBUSY)
--			return err;
--	}
--
--	exit_crypt(req);
--	return err;
--}
--
--static void encrypt_done(struct crypto_async_request *areq, int err)
-+static void crypt_done(struct crypto_async_request *areq, int err)
- {
- 	struct skcipher_request *req = areq->data;
--	struct skcipher_request *subreq;
--	struct rctx *rctx;
--
--	rctx = skcipher_request_ctx(req);
--
--	if (err == -EINPROGRESS) {
--		if (rctx->left != req->cryptlen)
--			return;
--		goto out;
--	}
- 
--	subreq = &rctx->subreq;
--	subreq->base.flags &= CRYPTO_TFM_REQ_MAY_BACKLOG;
-+	if (!err)
-+		err = xor_tweak_post(req);
- 
--	err = do_encrypt(req, err ?: post_crypt(req));
--	if (rctx->left)
--		return;
--
--out:
- 	skcipher_request_complete(req, err);
- }
- 
--static int encrypt(struct skcipher_request *req)
--{
--	return do_encrypt(req, init_crypt(req, encrypt_done));
--}
--
--static int do_decrypt(struct skcipher_request *req, int err)
-+static void init_crypt(struct skcipher_request *req)
- {
-+	struct priv *ctx = crypto_skcipher_ctx(crypto_skcipher_reqtfm(req));
- 	struct rctx *rctx = skcipher_request_ctx(req);
--	struct skcipher_request *subreq;
-+	struct skcipher_request *subreq = &rctx->subreq;
- 
--	subreq = &rctx->subreq;
--
--	while (!err && rctx->left) {
--		err = pre_crypt(req) ?:
--		      crypto_skcipher_decrypt(subreq) ?:
--		      post_crypt(req);
-+	skcipher_request_set_tfm(subreq, ctx->child);
-+	skcipher_request_set_callback(subreq, req->base.flags, crypt_done, req);
-+	/* pass req->iv as IV (will be used by xor_tweak, ECB will ignore it) */
-+	skcipher_request_set_crypt(subreq, req->dst, req->dst,
-+				   req->cryptlen, req->iv);
- 
--		if (err == -EINPROGRESS || err == -EBUSY)
--			return err;
--	}
-+	/* calculate first value of T */
-+	memcpy(&rctx->t, req->iv, sizeof(rctx->t));
- 
--	exit_crypt(req);
--	return err;
-+	/* T <- I*Key2 */
-+	gf128mul_64k_bbe(&rctx->t, ctx->table);
- }
- 
--static void decrypt_done(struct crypto_async_request *areq, int err)
-+static int encrypt(struct skcipher_request *req)
- {
--	struct skcipher_request *req = areq->data;
--	struct skcipher_request *subreq;
--	struct rctx *rctx;
--
--	rctx = skcipher_request_ctx(req);
--
--	if (err == -EINPROGRESS) {
--		if (rctx->left != req->cryptlen)
--			return;
--		goto out;
--	}
--
--	subreq = &rctx->subreq;
--	subreq->base.flags &= CRYPTO_TFM_REQ_MAY_BACKLOG;
--
--	err = do_decrypt(req, err ?: post_crypt(req));
--	if (rctx->left)
--		return;
-+	struct rctx *rctx = skcipher_request_ctx(req);
-+	struct skcipher_request *subreq = &rctx->subreq;
- 
--out:
--	skcipher_request_complete(req, err);
-+	init_crypt(req);
-+	return xor_tweak_pre(req) ?:
-+		crypto_skcipher_encrypt(subreq) ?:
-+		xor_tweak_post(req);
- }
- 
- static int decrypt(struct skcipher_request *req)
- {
--	return do_decrypt(req, init_crypt(req, decrypt_done));
-+	struct rctx *rctx = skcipher_request_ctx(req);
-+	struct skcipher_request *subreq = &rctx->subreq;
-+
-+	init_crypt(req);
-+	return xor_tweak_pre(req) ?:
-+		crypto_skcipher_decrypt(subreq) ?:
-+		xor_tweak_post(req);
- }
- 
- static int init_tfm(struct crypto_skcipher *tfm)
--- 
-2.17.1
+T24gVGh1LCAyMDE4LTA5LTEzIGF0IDE4OjE2IC0wNzAwLCBBZGFtIFdpbGxpYW1zb24gd3JvdGU6
+Cgo+IFsuLi5dCj4gVGhhdCBiYXNpY2FsbHkgbWVhbnMgInJ1biBtdWx0aXBhdGggLXUgKGRldmlj
+ZSksIGV4cGVjdCBpdHMgb3V0cHV0IHRvCj4gYmUgbGluZXMgb2YgJ0tFWT12YWx1ZScgcGFpcnMs
+IGFuZCBpbXBvcnQgdGhvc2UgcGFpcnMgYXMgZGV2aWNlCj4gcHJvcGVydGllcyIuIEF0IHRoZSBz
+YW1lIHRpbWUsIG11bHRpcGF0aCAtdSBpdHNlbGYgd2FzIGNoYW5nZWQgc28KPiB0aGF0Cj4gaWYg
+dGhlIGRldmljZSAqaXMqIGEgdmFsaWQgbXVsdGlwYXRoIGRldmljZSwgaXQgb3V0cHV0cyB0aGlz
+IHRvCj4gc3Rkb3V0Ogo+IAo+IERNX01VTFRJUEFUSF9ERVZJQ0VfUEFUSD0iMSIKPiAKPiBpZiB0
+aGUgZGV2aWNlIGlzICpub3QqIGEgdmFsaWQgbXVsdGlwYXRoIGRldmljZSwgaXQgb3V0cHV0cyB0
+aGlzOgo+IAo+IERNX01VTFRJUEFUSF9ERVZJQ0VfUEFUSD0iMCIKPiAKPiBzbyBpdCdzIHByZXR0
+eSBlYXN5IHRvIHNlZSB0aGF0IHRoZSBiZWhhdmlvdXIgaGFzIGNoYW5nZWQ6IG5vdywgaWYKPiB0
+aGUKPiBkZXZpY2UgaXMgbm90IGEgdmFsaWQgbXVsdGlwYXRoIGRldmljZSwgRE1fTVVMVElQQVRI
+X0RFVklDRV9QQVRIIGlzCj4gc2V0Cj4gdG8gdGhlIHZhbHVlICIwIiwgaW5zdGVhZCBvZiBub3Qg
+YmVpbmcgc2V0IGF0IGFsbC4KClRoYXQncyByaWdodC4gCgo+IFRoaXMgdHVybnMgb3V0IHRvIGhh
+dmUgY29uc2VxdWVuY2VzLCBiZWNhdXNlIHR3byAqb3RoZXIqIHVkZXYgcnVsZXMKPiBmaWxlcyAo
+aW4gRmVkb3JhIGF0IGxlYXN0KSB1c2UgdGhpcyBjaGVjazoKPiAKPiBFTlZ7RE1fTVVMVElQQVRI
+X0RFVklDRV9QQVRIfT09Ij8qIgo+IAo+IHRoYXQgY2hlY2sgd2lsbCBtYXRjaCBpZiBETV9NVUxU
+SVBBVEhfREVWSUNFX1BBVEggaXMgc2V0IHRvICphbnkgb25lCj4gb3IKPiBtb3JlIGNoYXJhY3Rl
+cnMgYXQgYWxsKi4uLmluY2x1ZGluZyAnMCcuCgpUaGF0IHRlc3QgaXMgd3JvbmcuIEEgYmV0dGVy
+IHRlc3QgZm9yIHNraXBwaW5nIHRoZSBkZXZpY2Ugd291bGQgYmU6CgpFTlZ7RE1fTVVMVElQQVRI
+X0RFVklDRV9QQVRIfT09IjEiIAoKYnV0IGFjdHVhbGx5LCB0aGUgInJpZ2h0IiB0ZXN0IGluIGFs
+bW9zdCBhbGwgY2FzZXMgaXMgKHNlZSBiZWxvdyk6CgpFTlZ7U1lTVEVNRF9SRUFEWX09PSIwIgoK
+PiBUaGUgdXBzaG90IG9mIHRoaXMgaXMgdGhhdCA2NS1tZC1pbmNyZW1lbnRhbC5ydWxlcyBiYXNp
+Y2FsbHkgZ2V0cwo+IHNraXBwZWQgZW50aXJlbHkgYW55IHRpbWUgdGhpcyBoYXBwZW5zLCBhbmQg
+b3VyIGZpcm13YXJlIFJBSUQgc2V0Cj4gZG9lc24ndCBnZXQgaW5pdGlhbGl6ZWQgYnkgdGhhdCBy
+dWxlIHNldCBhcyBpdCBzaG91bGQuIAoKVGhhdCBmaWxlIHNlZW1zIHRvIGJlIEZlZG9yYS1zcGVj
+aWZpYywgdXBzdHJlYW0gbWRhZG0gcnVsZXMgY2hlY2sKU1lTVEVNRF9SRUFEWSBleGNsdXNpdmVs
+eS4KCj4gPiBUaGUgb3RoZXIgcnVsZXMKPiBmaWxlIHRoYXQgdXNlcyB0aGlzIGNoZWNrIGlzIDgw
+LXVkaXNrczIucnVsZXM7IHRoZSBpbXBhY3QgdGhlcmUgaXMKPiB0aGF0Cj4gdmFyaW91cyBVRElT
+S1NfTURfKEZPTykgZGV2aWNlIHByb3BlcnRpZXMgbWF5IG5vdCBnZXQgc2V0LiBJJ20gbm90Cj4g
+c3VyZQo+IHdoYXQgdGhlIGNvbnNlcXVlbmNlcyBvZiB0aGF0IGFyZS4KCkkgb3Zlcmxvb2tlZCB0
+aGF0IG9uZS4gSSdsbCBoYXZlIHRvIGZpbGUgYSBjaGFuZ2UgcmVxdWVzdCB0byB1ZGlza3MuCgo+
+IAo+IChJbiBwYXNzaW5nIEknbGwgbm90ZSB0aGF0IHRoZSBjb21taXQgbWVzc2FnZSBjbGFpbXMg
+IlRoZSBleGl0IHN0YXR1cwo+IHJlbWFpbnMgYXMgdXN1YWwuIiwgYnV0IHRoYXQgaXMgbm90IHRy
+dWUuIFRoZSBvbGQgJ211bHRpcGF0aCAtdScKPiBleGl0ZWQKPiAxIGlmIHRoZSBkZXZpY2Ugd2Fz
+IG5vdCBhIHZhbGlkIG11bHRpcGF0aCBkZXZpY2UuIFRoZSBuZXcgb25lIGV4aXRzIDAKPiBpbiB0
+aGlzIGNhc2UuIEkgZG9uJ3Qga25vdyBpZiB0aGlzIGlzIGludGVudGlvbmFsIG9yIGFuIG92ZXJz
+aWdodCkuCgpJdCdzIGludGVudGlvbmFsLiBJdCdzIGltcG9ydGFudCBmb3IgbXVsdGlwYXRoIHRv
+IGRpZmZlcmVudGlhdGUgdGhlCnNpdHVhdGlvbiB3aGVyZSB0aGUgZGV2aWNlIGhhcyBiZWVuIGNo
+ZWNrZWQgYWxyZWFkeSwgd2l0aCBuZWdhdGl2ZQpyZXN1bHQgKHRoYXQncyB3aGF0IERNX01VTFRJ
+UEFUSF9ERVZJQ0VfUEFUSD0wIG1lYW5zKSBmcm9tIHRoZQpzaXR1YXRpb24gd2hlcmUgaXQgaGFk
+IG5ldmVyIGJlZW4gY2hlY2tlZC4gU2VlIGNvbW1pdCBiMjhjNDA2MyBmb3IKZGV0YWlscy4KCj4g
+VGhlICpzZWNvbmQqIGNvbW1pdCBpbnRyb2R1Y2VzIGEgbmV3IHBvc3NpYmxlIHZhbHVlIGZvcgo+
+IERNX01VTFRJUEFUSF9ERVZJQ0VfUEFUSCAtICIyIiwgbWVhbmluZyAidGhpcyAqbWlnaHQqIGJl
+IGEgbXVsdGlwYXRoCj4gZGV2aWNlLCBidXQgd2UncmUgbm90IHN1cmUgeWV0LiIgVGhpcyAqbWF5
+KiBhbHNvIGJlIHNpZ25pZmljYW50IHRvCj4gb3RoZXIgcnVsZXMsIGJlY2F1c2UgdGhlcmUgYXJl
+IHNldmVyYWwgdGhhdCB1c2UgdGhpcyBjaGVjazoKPiAKPiBFTlZ7RE1fTVVMVElQQVRIX0RFVklD
+RV9QQVRIfT09IjEiCgpJZiB5b3UgbG9vayBhdCB0aGUgbXVsdGlwYXRoIHJ1bGVzLCB5b3UgY2Fu
+IHNlZSB0aGF0IHRoZSB2YWx1ZSAiMiIgaXMKbmV2ZXIgcGFzc2VkIG9uIHRvIGxhdGVyIHJ1bGVz
+LiBJZiB0aGUgdmFsdWUgIjIiIGlzIHNlZW4gYnkgdGhlIHJ1bGVzLCAKcHJvY2Vzc2luZyBjb250
+aW51ZXMgYWxvbmcgdGhlICJtYXliZSIgcGF0aCwgYW5kIGV2ZW50dWFsbHkgcmVhY2hlcwp0aGlz
+IGNvZGU6IAoKTEFCRUw9InByZXRlbmRfbXBhdGgiCkVOVntETV9NVUxUSVBBVEhfREVWSUNFX1BB
+VEh9PSIxIgpFTlZ7U1lTVEVNRF9SRUFEWX09IjAiCkdPVE89ImVuZF9tcGF0aCIKClRoYXQgY291
+bGQgYmUgYmV0dGVyIGRvY3VtZW50ZWQgYnkgY29tbWVudHMsIEkgc3VwcG9zZS4KCkluIHNob3J0
+LCBjb2RlIHRoYXQgdGVzdHMgZm9yIEVOVntETV9NVUxUSVBBVEhfREVWSUNFX1BBVEh9PT0iMSIg
+dG8Kc2tpcCBhY3Rpb25zIGlzIGZpbmUuIENvZGUgdGhhdCBjaGVja3MgZm9yIGVtcHR5CkVOVntE
+TV9NVUxUSVBBVEhfREVWSUNFX1BBVEh9IHNob3VsZCBiZSBmaXhlZC4KClJlZ2FyZHMsCk1hcnRp
+bgoKUFM6IFRoaXMgdG91Y2hlcyBhIHZlcnkgZ2VuZXJhbCB0b3BpYyBhYm91dCB1ZGV2OiB0byB3
+aGljaCBleHRlbnQgYXJlCnVkZXYgdmFyaWFibGVzICJnbG9iYWwiIGluIHRoZSBzZW5zZSB0aGF0
+IG90aGVyLCBpbmRlcGVuZGVudCBydWxlcyBhcmUKYWxsb3dlZCB0byBpbnNwZWN0IChhbmQgbWF5
+YmUgZXZlbiBjaGFuZ2UpIHRoZW0/IEkgZG9uJ3QgdGhpbmsgdGhlcmUKYXJlIGFueSBjbGVhciBj
+b252ZW50aW9ucyBhYm91dCB0aGlzLiBWZXJ5IGZldyB2YXJpYWJsZXMgYXJlIG9idmlvdXNseQpp
+bnRlbmRlZCB0byBiZSBnbG9iYWwsIGxpa2UgIlNZU1RFTURfUkVBRFkiLCBidXQgb3RoZXJzIGFy
+ZSByYXRoZXIKY29uZmluZWQgdG8gdGhlIGNvZGUgdGhhdCBjcmVhdGVzIHRoZW0sIGFuZCBtYXli
+ZSBkZWRpY2F0ZWQgY29uc3VtZXJzLgpJT1csIHRoZXJlIGlzIG5vICJBUEkiIG9yIHN0YW5kYXJk
+IGRlc2NyaWJpbmcgaG93IHJ1bGUgc2V0cyBmcm9tCmRpZmZlcmVudCBwYWNrYWdlcyBtYWludGFp
+bmVkIGJ5IGRpZmZlcmVudCBwZW9wbGUgc2hvdWxkIGludGVyYWN0LgoKQXQgbGVhc3QgSSdtIG5v
+dCBhd2FyZSBvZiBzdWNoIGEgdGhpbmcuCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1
+c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjog
+RmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4
+NCAoQUcgTsO8cm5iZXJnKQoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
+YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
