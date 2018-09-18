@@ -1,16 +1,15 @@
-From: Nicholas Mc Guire <der.herr@hofr.at>
-Subject: Re: FW: [PATCH] dm integrity: drop excess unlikely()
- from BUG_ON()
-Date: Sat, 22 Sep 2018 19:22:24 +0000
-Message-ID: <20180922192224.GC26281@osadl.at>
-References: <20180914233317.GI20451@agk-dp.fab.redhat.com>
-	<alpine.LRH.2.02.1809180649100.17180@file01.intranet.prod.int.rdu2.redhat.com>
+From: "Sunao (A)" <sunao.sun@huawei.com>
+Subject: Re: [PATCH] This patch filled the host WWNN. when using
+ the command of multipathd to list the isscsi paths informartion,
+ the host WWNN of paths informartion is not exist. like this: multipathd show
+ paths format "%N %R" host WWNN host WWPN [undef] iqn.20
+Date: Tue, 18 Sep 2018 09:09:22 +0000
+Message-ID: <AD49694D3F7B7B4D96C353DCB55098B888110F20@dggeml524-mbx.china.huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1809180649100.17180@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Language: zh-CN
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,106 +19,92 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Nicholas Mc Guire <hofrat@osadl.org>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>, "hare@suse.de" <hare@suse.de>, "mwilck@suse.com" <mwilck@suse.com>, "bmarzins@redhat.com" <bmarzins@redhat.com>, "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>
+Cc: "wangke (U)" <wangke16@huawei.com>, dingwenyi <dingwenyi@huawei.com>, guanjunxiong <guanjunxiong@huawei.com>, "Chengjike (ISSP)" <chengjike.cheng@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>, lixiaoying <lixiaoying@huawei.com>
 List-Id: dm-devel.ids
 
-On Tue, Sep 18, 2018 at 06:52:49AM -0400, Mikulas Patocka wrote:
-> I think this patch is not needed.
-> 
-> In the statement "BUG_ON(unlikely(journal_entry_is_inprogress(je)) && 
-> !from_replay);", the "unlikely" macro suggests that the first condition is 
-> likely to be false and therefore the compiler will move the test for the 
-> second condition to the cold section.
-> 
-> If you remove unlikely, the compiler will know that that one of the 
-> conditions will be false, but it won't know which one.
->
-If I understand builtin_expect correctly it is basically only changing the
-relativ location of the branch wich impacts the probability of having it
-in the active page-set or not - as the whole condition is already under
-unlikely() it will potentially be pushed to some non-local position already
-which affects both conditions and then differenciating within that moved
-block which should be located where seems usless - but it may be that some
-architectures can actually gain something from this differenciation I was 
-though not able to figure out an actual case where it would matter. In the
-case of this patch it seems to have no effect (inspected the .lst file 
-before and after the patch was applied).
+this patch solved this problem and filled the host WWNN.
+like this:
+multipathd show paths format "%N %R"
+host WWNN                           host WWPN
+iqn.1994-05.com.redhat:86329aefccdb iqn.2006-08.com.huawei:oceanstor:21000022a10beb2a::1020002:129.13.100.240
+iqn.1994-05.com.redhat:86329aefccdb iqn.2006-08.com.huawei:oceanstor:21000022a10beb2a::20003:129.13.100.241
+---
+ libmultipath/print.c | 52 +++++++++++++++++++++++++++++++++++++++-------------
+ 1 file changed, 39 insertions(+), 13 deletions(-)
 
-thx!
-hofrat
+diff --git a/libmultipath/print.c b/libmultipath/print.c index 9da6a77c..e2b90301 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -539,20 +539,39 @@ snprint_host_attr (char * buff, size_t len, const struct path * pp, char *attr)
+ 	char host_id[32];
+ 	const char *value = NULL;
+ 	int ret;
+-
+-	if (pp->sg_id.proto_id != SCSI_PROTOCOL_FCP)
++    
++	if ((pp->sg_id.proto_id != SCSI_PROTOCOL_FCP) && (pp->sg_id.proto_id 
++!= SCSI_PROTOCOL_ISCSI) )
+ 		return snprintf(buff, len, "[undef]");
+-	sprintf(host_id, "host%d", pp->sg_id.host_no);
+-	host_dev = udev_device_new_from_subsystem_sysname(udev, "fc_host",
+-							  host_id);
+-	if (!host_dev) {
+-		condlog(1, "%s: No fc_host device for '%s'", pp->dev, host_id);
+-		goto out;
++	if((pp->sg_id.proto_id == SCSI_PROTOCOL_ISCSI) && strcmp(buff, wwid) 
++== 0)
++		
++    if(pp->sg_id.proto_id == SCSI_PROTOCOL_FCP)
++    {
++		sprintf(host_id, "host%d", pp->sg_id.host_no);
++		host_dev = udev_device_new_from_subsystem_sysname(udev, "fc_host",
++								  host_id);
++		if (!host_dev) {
++			condlog(1, "%s: No fc_host device for '%s'", pp->dev, host_id);
++			goto out;
++		}
++		value = udev_device_get_sysattr_value(host_dev, attr);
++		if (value)
++			ret = snprint_str(buff, len, value);
++		udev_device_unref(host_dev);
++    }
++	else if(pp->sg_id.proto_id == SCSI_PROTOCOL_ISCSI)
++	{
++	    sprintf(host_id, "session%d", pp->sg_id.transport_id);
++		host_dev = udev_device_new_from_subsystem_sysname(udev, "iscsi_session",
++								  host_id);
++		if (!host_dev) {
++			condlog(3, "%s: No iscsi_session for '%s'", pp->dev, host_id);
++			goto out;
++		}
++		value = udev_device_get_sysattr_value(host_dev, attr);
++		if (value)
++			ret = snprint_str(buff, len, value);
++		udev_device_unref(host_dev);
+ 	}
+-	value = udev_device_get_sysattr_value(host_dev, attr);
+-	if (value)
+-		ret = snprint_str(buff, len, value);
+-	udev_device_unref(host_dev);
+ out:
+ 	if (!value)
+ 		ret = snprintf(buff, len, "[unknown]"); @@ -562,7 +581,14 @@ out:
+ int
+ snprint_host_wwnn (char * buff, size_t len, const struct path * pp)  {
+-	return snprint_host_attr(buff, len, pp, "node_name");
++	if(pp->sg_id.proto_id == SCSI_PROTOCOL_ISCSI)
++	{
++	    return snprint_host_attr(buff, len, pp, "initiatorname");
++	}
++	else
++	{
++		return snprint_host_attr(buff, len, pp, "node_name");
++	}
+ }
  
-> 
-> 
-> On Sat, 15 Sep 2018, Alasdair G Kergon wrote:
-> 
-> > One for you to decide and respond - it's not *identical* of course...
-> > 
-> > (I wonder if this was generated by a script rather than looking at what the compiler actually does)
-> > 
-> > ----- Forwarded message from Nicholas Mc Guire <hofrat@osadl.org> -----
-> > 
-> > Date: Fri, 14 Sep 2018 09:37:03 +0200
-> > From: Nicholas Mc Guire <hofrat@osadl.org>
-> > Subject: [dm-devel] [PATCH] dm integrity: drop excess unlikely() from
-> > 	BUG_ON()
-> > To: Alasdair Kergon <agk@redhat.com>
-> > Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org,
-> > 	Mike Snitzer <snitzer@redhat.com>,
-> > 	Nicholas Mc Guire <hofrat@osadl.org>
-> > 
-> >  include/asm-generic/bug.h defines BUG_ON(condition) as
-> > do { if (unlikely(condition)) BUG(); } while (0).
-> > So BUG_ON already provides unlikely() on the condition thus 
-> > there is no point in having BUG_ON(unlikely(condition)),
-> > thus simply drop the excess unlikely().
-> > 
-> > Signed-off-by: Nicholas Mc Guire <hofrat@osadl.org>
-> > ---
-> > 
-> > Found during code review
-> > 
-> > Patch was compile tested with: x86_64_defconfig + SCSI_LOWLEVEL=y,
-> > DM_INTEGRITY=y
-> > (with warnings from sparse and smatch - not related to the proposed
-> >  change though)
-> > 
-> > Patch is against 4.19-rc3 (localversion-next is next-20180913)
-> > 
-> >  drivers/md/dm-integrity.c | 6 ++++--
-> >  1 file changed, 4 insertions(+), 2 deletions(-)
-> > 
-> > diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-> > index 89ccb64..8574e73 100644
-> > --- a/drivers/md/dm-integrity.c
-> > +++ b/drivers/md/dm-integrity.c
-> > @@ -1948,7 +1948,8 @@ static void do_journal_write(struct dm_integrity_c *ic, unsigned write_start,
-> >  
-> >  			if (journal_entry_is_unused(je))
-> >  				continue;
-> > -			BUG_ON(unlikely(journal_entry_is_inprogress(je)) && !from_replay);
-> > +			BUG_ON(journal_entry_is_inprogress(je) &&
-> > +			       !from_replay);
-> >  			sec = journal_entry_get_sector(je);
-> >  			if (unlikely(from_replay)) {
-> >  				if (unlikely(sec & (unsigned)(ic->sectors_per_block - 1))) {
-> > @@ -1963,7 +1964,8 @@ static void do_journal_write(struct dm_integrity_c *ic, unsigned write_start,
-> >  				sector_t sec2, area2, offset2;
-> >  				if (journal_entry_is_unused(je2))
-> >  					break;
-> > -				BUG_ON(unlikely(journal_entry_is_inprogress(je2)) && !from_replay);
-> > +				BUG_ON(journal_entry_is_inprogress(je2) &&
-> > +				       !from_replay);
-> >  				sec2 = journal_entry_get_sector(je2);
-> >  				get_area_and_offset(ic, sec2, &area2, &offset2);
-> >  				if (area2 != area || offset2 != offset + ((k - j) << ic->sb->log2_sectors_per_block))
-> > -- 
-> > 2.1.4
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> > 
-> > ----- End forwarded message -----
-> > 
+could you agree with this solution or have a better solution?
+
+
+I am looking forward to your reply.
+Best wishes to you.
