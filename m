@@ -1,14 +1,11 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: FW: [PATCH] dm integrity: drop excess unlikely()
- from BUG_ON()
-Date: Tue, 18 Sep 2018 06:52:49 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1809180649100.17180@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20180914233317.GI20451@agk-dp.fab.redhat.com>
+From: =?UTF-8?B?w5Z6a2FuIEfDtmtzdQ==?= <ozkangksu@gmail.com>
+Subject: device-mapper: ioctl: ioctl interface mismatch:
+ kernel(4.37.0), user(4.39.0), cmd(16)
+Date: Wed, 19 Sep 2018 13:35:53 +0300
+Message-ID: <CAPUHmCpwJ7jX-d6PHdmOWQC47zOBkT1-c6o2DH4xS9_Uq13vBA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============8882070040046518812=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180914233317.GI20451@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,92 +15,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Nicholas Mc Guire <hofrat@osadl.org>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I think this patch is not needed.
+--===============8882070040046518812==
+Content-Type: multipart/alternative; boundary="0000000000002f3c7e057636f9c9"
 
-In the statement "BUG_ON(unlikely(journal_entry_is_inprogress(je)) && 
-!from_replay);", the "unlikely" macro suggests that the first condition is 
-likely to be false and therefore the compiler will move the test for the 
-second condition to the cold section.
+--0000000000002f3c7e057636f9c9
+Content-Type: text/plain; charset="UTF-8"
 
-If you remove unlikely, the compiler will know that that one of the 
-conditions will be false, but it won't know which one.
+Hello.
+I just upgraded my Kernel to: 4.14.70-1-lts | device-mapper 2.02.181-1 |
+multipath-tools 0.7.7-1
+After that multipathd started to giving the log: // device-mapper: ioctl:
+ioctl interface mismatch: kernel(4.37.0), user(4.39.0), cmd(16)
+It was working great on my ex kernel "4.14.30-1-lts" with | device-mapper
+2.02.177-5 | multipath-tools 0.7.6-1
+Also I tried multipath git version but nothing change.
 
-Mikulas
+I think the problem related to device-mapper and my device mapper Build
+Date: 2018-08-01 19:05 UTC =
+https://www.archlinux.org/packages/core/x86_64/device-mapper/
+Do I need to compile device mapper git version or what should I do?
+
+--0000000000002f3c7e057636f9c9
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div cl=
+ass=3D"gmail-linestyle1 gmail-colourline" style=3D"font-family:Consolas,&qu=
+ot;Lucida Console&quot;,monospace;padding-left:7px;word-wrap:break-word;col=
+or:rgb(0,0,0);font-size:12.8px">Hello. <br><span style=3D"font-size:12.8px"=
+>I just upgraded my Kernel to: 4.14.70-1-lts | device-mapper 2.02.181-1 | m=
+ultipath-tools 0.7.7-1</span><br></div><div class=3D"gmail-linestyle2 gmail=
+-colourline" style=3D"font-family:Consolas,&quot;Lucida Console&quot;,monos=
+pace;padding-left:7px;word-wrap:break-word;color:rgb(0,0,0);font-size:12.8p=
+x"><span style=3D"font-size:12.8px">After that multipathd started to giving=
+ the log:=C2=A0</span><span style=3D"font-size:12.8px">// device-mapper: io=
+ctl: ioctl interface mismatch: kernel(4.37.0), user(4.39.0), cmd(16)</span>=
+<br></div><div class=3D"gmail-linestyle2 gmail-colourline" style=3D"font-fa=
+mily:Consolas,&quot;Lucida Console&quot;,monospace;padding-left:7px;word-wr=
+ap:break-word;color:rgb(0,0,0);font-size:12.8px"><span style=3D"font-size:1=
+2.8px">It was working great on my ex kernel &quot;4.14.30-1-lts&quot; with =
+| device-mapper 2.02.177-5 | multipath-tools 0.7.6-1</span><br></div><div c=
+lass=3D"gmail-linestyle2 gmail-colourline" style=3D"font-family:Consolas,&q=
+uot;Lucida Console&quot;,monospace;padding-left:7px;word-wrap:break-word;co=
+lor:rgb(0,0,0);font-size:12.8px"><span style=3D"font-size:12.8px">Also I tr=
+ied multipath git version but nothing change.</span><br></div><div class=3D=
+"gmail-linestyle1 gmail-colourline" style=3D"font-family:Consolas,&quot;Luc=
+ida Console&quot;,monospace;padding-left:7px;word-wrap:break-word;color:rgb=
+(0,0,0);font-size:12.8px"><br></div><div class=3D"gmail-linestyle1 gmail-co=
+lourline" style=3D"font-family:Consolas,&quot;Lucida Console&quot;,monospac=
+e;padding-left:7px;word-wrap:break-word;color:rgb(0,0,0);font-size:12.8px">=
+I think the problem related to device-mapper and my device mapper Build Dat=
+e:	2018-08-01 19:05 UTC =3D=C2=A0<a href=3D"https://www.archlinux.org/packa=
+ges/core/x86_64/device-mapper/" target=3D"_blank" rel=3D"noopener">https://=
+www.archlinux.org/packages/core/x86_64/device-mapper/</a></div><div class=
+=3D"gmail-linestyle2 gmail-colourline" style=3D"font-family:Consolas,&quot;=
+Lucida Console&quot;,monospace;padding-left:7px;word-wrap:break-word;color:=
+rgb(0,0,0);font-size:12.8px">Do I need to compile device mapper git version=
+ or what should I do?</div></div></div></div></div>
+
+--0000000000002f3c7e057636f9c9--
 
 
-On Sat, 15 Sep 2018, Alasdair G Kergon wrote:
+--===============8882070040046518812==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-> One for you to decide and respond - it's not *identical* of course...
-> 
-> (I wonder if this was generated by a script rather than looking at what the compiler actually does)
-> 
-> ----- Forwarded message from Nicholas Mc Guire <hofrat@osadl.org> -----
-> 
-> Date: Fri, 14 Sep 2018 09:37:03 +0200
-> From: Nicholas Mc Guire <hofrat@osadl.org>
-> Subject: [dm-devel] [PATCH] dm integrity: drop excess unlikely() from
-> 	BUG_ON()
-> To: Alasdair Kergon <agk@redhat.com>
-> Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org,
-> 	Mike Snitzer <snitzer@redhat.com>,
-> 	Nicholas Mc Guire <hofrat@osadl.org>
-> 
->  include/asm-generic/bug.h defines BUG_ON(condition) as
-> do { if (unlikely(condition)) BUG(); } while (0).
-> So BUG_ON already provides unlikely() on the condition thus 
-> there is no point in having BUG_ON(unlikely(condition)),
-> thus simply drop the excess unlikely().
-> 
-> Signed-off-by: Nicholas Mc Guire <hofrat@osadl.org>
-> ---
-> 
-> Found during code review
-> 
-> Patch was compile tested with: x86_64_defconfig + SCSI_LOWLEVEL=y,
-> DM_INTEGRITY=y
-> (with warnings from sparse and smatch - not related to the proposed
->  change though)
-> 
-> Patch is against 4.19-rc3 (localversion-next is next-20180913)
-> 
->  drivers/md/dm-integrity.c | 6 ++++--
->  1 file changed, 4 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-> index 89ccb64..8574e73 100644
-> --- a/drivers/md/dm-integrity.c
-> +++ b/drivers/md/dm-integrity.c
-> @@ -1948,7 +1948,8 @@ static void do_journal_write(struct dm_integrity_c *ic, unsigned write_start,
->  
->  			if (journal_entry_is_unused(je))
->  				continue;
-> -			BUG_ON(unlikely(journal_entry_is_inprogress(je)) && !from_replay);
-> +			BUG_ON(journal_entry_is_inprogress(je) &&
-> +			       !from_replay);
->  			sec = journal_entry_get_sector(je);
->  			if (unlikely(from_replay)) {
->  				if (unlikely(sec & (unsigned)(ic->sectors_per_block - 1))) {
-> @@ -1963,7 +1964,8 @@ static void do_journal_write(struct dm_integrity_c *ic, unsigned write_start,
->  				sector_t sec2, area2, offset2;
->  				if (journal_entry_is_unused(je2))
->  					break;
-> -				BUG_ON(unlikely(journal_entry_is_inprogress(je2)) && !from_replay);
-> +				BUG_ON(journal_entry_is_inprogress(je2) &&
-> +				       !from_replay);
->  				sec2 = journal_entry_get_sector(je2);
->  				get_area_and_offset(ic, sec2, &area2, &offset2);
->  				if (area2 != area || offset2 != offset + ((k - j) << ic->sb->log2_sectors_per_block))
-> -- 
-> 2.1.4
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
-> ----- End forwarded message -----
-> 
+
+--===============8882070040046518812==--
