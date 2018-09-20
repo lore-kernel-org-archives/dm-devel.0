@@ -1,15 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
 Subject: Re: device-mapper: ioctl: ioctl interface mismatch:
  kernel(4.37.0), user(4.39.0), cmd(16)
-Date: Wed, 19 Sep 2018 11:34:19 -0400
-Message-ID: <20180919153418.GB9101@redhat.com>
+Date: Thu, 20 Sep 2018 12:14:13 +0200
+Message-ID: <58621a53-e348-1f03-7432-67c25fe225f9@redhat.com>
 References: <CAPUHmCpwJ7jX-d6PHdmOWQC47zOBkT1-c6o2DH4xS9_Uq13vBA@mail.gmail.com>
 	<09dfe022-a4a1-3fec-f998-ecfb0a477e44@redhat.com>
 	<CAPUHmCodFP=PFK8DqrV_Qz_cgT6uaRXUihhTaPhjJpJ=bSCy-A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3036103749501354848=="
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <CAPUHmCodFP=PFK8DqrV_Qz_cgT6uaRXUihhTaPhjJpJ=bSCy-A@mail.gmail.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,129 +21,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: =?iso-8859-1?Q?=D6zkan_G=F6ksu?= <ozkangksu@gmail.com>
-Cc: dm-devel@redhat.com, zkabelac@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============3036103749501354848==
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-
-
-Right, this is a multipath-tools problem (AFAIK regression).. not aware
-of any new ioctl requirements that a newer multipathd would have to
-warrant the stricter use of a newer DM ioctl version.
-
-Mike
-
-On Wed, Sep 19 2018 at 11:30am -0400,
-Ã–zkan GÃ¶ksu <ozkangksu@gmail.com> wrote:
-
->    Hello.
->    After your mail I tried something;
->    I just curious what will happen when I downgrade multipath-tools package
->    and the rest was latest.
->    lvm2 2.02.181-1
->    device-mapper 2.02.181-1
->    I just downgrade to: multipath-tools 0.7.6-1
->    Everything works great. I didnt saw any problem.
->    I was thinking the problem related to device-mapper but now its seems
->    something else.
->    This is compile process from Arch-linux AUR repository:
->    [1]https://paste.ubuntu.com/p/zV58g56gVT/
->    If I'm not mistaken this is the log you want. If its not then tell me
->    where should I look for the log you want?
->    [root@SMDEV2  service]# ldd /usr/bin/multipathd
->            linux-vdso.so.1 (0x00007fffea4fe000)
->            libmultipath.so.0 => /usr/lib/libmultipath.so.0
->    (0x00007f729711e000)
->            libmpathpersist.so.0 => /usr/lib/libmpathpersist.so.0
->    (0x00007f7297114000)
->            libmpathcmd.so.0 => /usr/lib/libmpathcmd.so.0 (0x00007f729710f000)
->            libudev.so.1 => /usr/lib/libudev.so.1 (0x00007f72970ef000)
->            libdl.so.2 => /usr/lib/libdl.so.2 (0x00007f72970ea000)
->            liburcu.so.6 => /usr/lib/liburcu.so.6 (0x00007f7296ee2000)
->            libpthread.so.0 => /usr/lib/libpthread.so.0 (0x00007f7296ebf000)
->            libdevmapper.so.1.02 => /usr/lib/libdevmapper.so.1.02
->    (0x00007f7296c69000)
->            libreadline.so.7 => /usr/lib/libreadline.so.7 (0x00007f7296a1c000)
->            libsystemd.so.0 => /usr/lib/libsystemd.so.0 (0x00007f7296990000)
->            libc.so.6 => /usr/lib/libc.so.6 (0x00007f72967cc000)
->            libaio.so.1 => /usr/lib/libaio.so.1 (0x00007f72965ca000)
->            /lib64/ld-linux-x86-64.so.2 => /usr/lib64/ld-linux-x86-64.so.2
->    (0x00007f72971b5000)
->            liburcu-common.so.6 => /usr/lib/liburcu-common.so.6
->    (0x00007f72963c3000)
->            libm.so.6 => /usr/lib/libm.so.6 (0x00007f729623e000)
->            libncursesw.so.6 => /usr/lib/libncursesw.so.6 (0x00007f7295fd1000)
->            librt.so.1 => /usr/lib/librt.so.1 (0x00007f7295fc7000)
->            liblzma.so.5 => /usr/lib/liblzma.so.5 (0x00007f7295da1000)
->            liblz4.so.1 => /usr/lib/liblz4.so.1 (0x00007f7295b84000)
->            libgcrypt.so.20 => /usr/lib/libgcrypt.so.20 (0x00007f7295866000)
->            libgpg-error.so.0 => /usr/lib/libgpg-error.so.0
->    (0x00007f7295646000)
->    I did not tried to compile from GIT by myself. But my knowledge the aur
->    package also takes the code from your git repository
->    If you need anything else just ask me please.
-> 
->    Zdenek Kabelac <[2]zkabelac@redhat.com>, 19 Eyl 2018 Çar, 15:52 tarihinde
->    sunu yazdi:
-> 
->      Dne 19.9.2018 v 12:35 Özkan Göksu napsal(a):
->      > Hello.
->      > I just upgraded my Kernel to: 4.14.70-1-lts | device-mapper 2.02.181-1
->      |
->      > multipath-tools 0.7.7-1
->      > After that multipathd started to giving the log: // device-mapper:
->      ioctl:
->      > ioctl interface mismatch: kernel(4.37.0), user(4.39.0), cmd(16)
->      > It was working great on my ex kernel "4.14.30-1-lts" with |
->      device-mapper
->      > 2.02.177-5 | multipath-tools 0.7.6-1
->      > Also I tried multipath git version but nothing change.
->      >
->      > I think the problem related to device-mapper and my device mapper
->      Build Date:
->      > 2018-08-01 19:05 UTC =
->      > [3]https://www.archlinux.org/packages/core/x86_64/device-mapper/
->      > Do I need to compile device mapper git version or what should I do?
->      >
-> 
->      Hi
-> 
->      Can you pastebin how is your package linked while being compiled (gcc
->      log) and
->      how is then used runtime  (ldd) ?
-> 
->      It seems the code was linked with different .so library then it's using
->      in
->      runtime.
-> 
->      libdm  is supposed to handle all kernel versions.
-> 
->      Regards
-> 
->      Zdenek
-> 
-> References
-> 
->    Visible links
->    1. https://paste.ubuntu.com/p/zV58g56gVT/
->    2. mailto:zkabelac@redhat.com
->    3. https://www.archlinux.org/packages/core/x86_64/device-mapper/
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
-
---===============3036103749501354848==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============3036103749501354848==--
+RG5lIDE5LjkuMjAxOCB2IDE3OjMwIMOWemthbiBHw7Zrc3UgbmFwc2FsKGEpOgo+IEhlbGxvLgo+
+IAo+IEFmdGVyIHlvdXIgbWFpbCBJIHRyaWVkIHNvbWV0aGluZzsKPiBJIGp1c3QgY3VyaW91cyB3
+aGF0IHdpbGwgaGFwcGVuIHdoZW4gSSBkb3duZ3JhZGUgbXVsdGlwYXRoLXRvb2xzIHBhY2thZ2Ug
+YW5kIAo+IHRoZSByZXN0IHdhcyBsYXRlc3QuCj4gbHZtMiAyLjAyLjE4MS0xCj4gZGV2aWNlLW1h
+cHBlciAyLjAyLjE4MS0xCj4gCj4gSSBqdXN0IGRvd25ncmFkZSB0bzogbXVsdGlwYXRoLXRvb2xz
+IDAuNy42LTEKPiBFdmVyeXRoaW5nIHdvcmtzIGdyZWF0LiBJIGRpZG50IHNhdyBhbnkgcHJvYmxl
+bS4KPiBJIHdhcyB0aGlua2luZyB0aGUgcHJvYmxlbSByZWxhdGVkIHRvIGRldmljZS1tYXBwZXIg
+YnV0IG5vdyBpdHMgc2VlbXMgCj4gc29tZXRoaW5nIGVsc2UuCj4gCj4gCj4gVGhpcyBpcyBjb21w
+aWxlIHByb2Nlc3MgZnJvbSBBcmNoLWxpbnV4IEFVUiByZXBvc2l0b3J5OiAKPiBodHRwczovL3Bh
+c3RlLnVidW50dS5jb20vcC96VjU4ZzU2Z1ZULwo+IElmIEknbSBub3QgbWlzdGFrZW4gdGhpcyBp
+cyB0aGUgbG9nIHlvdSB3YW50LiBJZiBpdHMgbm90IHRoZW4gdGVsbCBtZSB3aGVyZSAKPiBzaG91
+bGQgSSBsb29rIGZvciB0aGUgbG9nIHlvdSB3YW50Pwo+IAo+IFtyb290QFNNREVWMsKgIHNlcnZp
+Y2VdIyBsZGQgL3Vzci9iaW4vbXVsdGlwYXRoZAo+IGxpbnV4LXZkc28uc28uMSAoMHgwMDAwN2Zm
+ZmVhNGZlMDAwKQo+IGxpYm11bHRpcGF0aC5zby4wID0+IC91c3IvbGliL2xpYm11bHRpcGF0aC5z
+by4wICgweDAwMDA3ZjcyOTcxMWUwMDApCj4gbGlibXBhdGhwZXJzaXN0LnNvLjAgPT4gL3Vzci9s
+aWIvbGlibXBhdGhwZXJzaXN0LnNvLjAgKDB4MDAwMDdmNzI5NzExNDAwMCkKPiBsaWJtcGF0aGNt
+ZC5zby4wID0+IC91c3IvbGliL2xpYm1wYXRoY21kLnNvLjAgKDB4MDAwMDdmNzI5NzEwZjAwMCkK
+PiBsaWJ1ZGV2LnNvLjEgPT4gL3Vzci9saWIvbGlidWRldi5zby4xICgweDAwMDA3ZjcyOTcwZWYw
+MDApCj4gbGliZGwuc28uMiA9PiAvdXNyL2xpYi9saWJkbC5zby4yICgweDAwMDA3ZjcyOTcwZWEw
+MDApCj4gbGlidXJjdS5zby42ID0+IC91c3IvbGliL2xpYnVyY3Uuc28uNiAoMHgwMDAwN2Y3Mjk2
+ZWUyMDAwKQo+IGxpYnB0aHJlYWQuc28uMCA9PiAvdXNyL2xpYi9saWJwdGhyZWFkLnNvLjAgKDB4
+MDAwMDdmNzI5NmViZjAwMCkKPiBsaWJkZXZtYXBwZXIuc28uMS4wMiA9PiAvdXNyL2xpYi9saWJk
+ZXZtYXBwZXIuc28uMS4wMiAoMHgwMDAwN2Y3Mjk2YzY5MDAwKQo+IGxpYnJlYWRsaW5lLnNvLjcg
+PT4gL3Vzci9saWIvbGlicmVhZGxpbmUuc28uNyAoMHgwMDAwN2Y3Mjk2YTFjMDAwKQo+IGxpYnN5
+c3RlbWQuc28uMCA9PiAvdXNyL2xpYi9saWJzeXN0ZW1kLnNvLjAgKDB4MDAwMDdmNzI5Njk5MDAw
+MCkKPiBsaWJjLnNvLjYgPT4gL3Vzci9saWIvbGliYy5zby42ICgweDAwMDA3ZjcyOTY3Y2MwMDAp
+Cj4gbGliYWlvLnNvLjEgPT4gL3Vzci9saWIvbGliYWlvLnNvLjEgKDB4MDAwMDdmNzI5NjVjYTAw
+MCkKPiAvbGliNjQvbGQtbGludXgteDg2LTY0LnNvLjIgPT4gL3Vzci9saWI2NC9sZC1saW51eC14
+ODYtNjQuc28uMiAKPiAoMHgwMDAwN2Y3Mjk3MWI1MDAwKQo+IGxpYnVyY3UtY29tbW9uLnNvLjYg
+PT4gL3Vzci9saWIvbGlidXJjdS1jb21tb24uc28uNiAoMHgwMDAwN2Y3Mjk2M2MzMDAwKQo+IGxp
+Ym0uc28uNiA9PiAvdXNyL2xpYi9saWJtLnNvLjYgKDB4MDAwMDdmNzI5NjIzZTAwMCkKPiBsaWJu
+Y3Vyc2Vzdy5zby42ID0+IC91c3IvbGliL2xpYm5jdXJzZXN3LnNvLjYgKDB4MDAwMDdmNzI5NWZk
+MTAwMCkKPiBsaWJydC5zby4xID0+IC91c3IvbGliL2xpYnJ0LnNvLjEgKDB4MDAwMDdmNzI5NWZj
+NzAwMCkKPiBsaWJsem1hLnNvLjUgPT4gL3Vzci9saWIvbGlibHptYS5zby41ICgweDAwMDA3Zjcy
+OTVkYTEwMDApCj4gbGlibHo0LnNvLjEgPT4gL3Vzci9saWIvbGlibHo0LnNvLjEgKDB4MDAwMDdm
+NzI5NWI4NDAwMCkKPiBsaWJnY3J5cHQuc28uMjAgPT4gL3Vzci9saWIvbGliZ2NyeXB0LnNvLjIw
+ICgweDAwMDA3ZjcyOTU4NjYwMDApCj4gbGliZ3BnLWVycm9yLnNvLjAgPT4gL3Vzci9saWIvbGli
+Z3BnLWVycm9yLnNvLjAgKDB4MDAwMDdmNzI5NTY0NjAwMCkKPiAKPiBJIGRpZCBub3QgdHJpZWQg
+dG8gY29tcGlsZSBmcm9tIEdJVCBieSBteXNlbGYuIEJ1dCBteSBrbm93bGVkZ2UgdGhlIGF1ciAK
+PiBwYWNrYWdlIGFsc28gdGFrZXMgdGhlIGNvZGUgZnJvbSB5b3VyIGdpdCByZXBvc2l0b3J5Cj4g
+SWYgeW91IG5lZWQgYW55dGhpbmcgZWxzZSBqdXN0IGFzayBtZSBwbGVhc2UuCj4gCj4gCgpIaQoK
+V2lsZCBndWVzcyAtICBsYXRlc3QgbXVsdGlwYXRoIHByb2JhYmx5IHN0YXJ0ZWQgdG8gcmVxdWly
+ZSBsYXRlc3Qga2VybmVsCndoaWNoIGhhcyBzb21lIGVuaGFuY2VkIHN1cHBvcnQgZm9yIHBvbGxp
+bmcgZXZlbnRzIC0gd2hpY2ggaXMgbm90IHlldAp1c2VkIGJ5IGRtZXZlbnRkIG5vciBzdXBwb3J0
+ZWQgYnkgbGliZG0gQVBJLgoKQW5kIGxpa2VseSBtdWx0aXBhdGggZnVsbHk/PyBzd2l0Y2hlZCB0
+byB1c2UgdGhpcyBldmVudCBtZWNoYW5pc20gYW5kCnRoZXJlIGlzIG5vIGJhY2t3YXJkIGNvbXBh
+dGliaWxpdHkgc3VwcG9ydCBmb3Igb2xkZXIga2VybmVsID8KT3IgbWF5YmUgdGhlIGRldGVjdGlv
+biBhbmQgc3dpdGNoIHRvIG9sZCBtZWNoYW5pc20gaXNuJ3QgcHJvcGVybHkgd29ya2luZyB5ZXQg
+PwoKUmVnYXJkcwoKWmRlbmVrCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
+aGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
