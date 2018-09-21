@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v3 16/19] multipathd: remove useless check and
-	fix format
-Date: Fri, 21 Sep 2018 18:05:24 -0500
-Message-ID: <1537571127-10143-17-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 17/19] multipathd: fix memory leak on error in
+	configure
+Date: Fri, 21 Sep 2018 18:05:25 -0500
+Message-ID: <1537571127-10143-18-git-send-email-bmarzins@redhat.com>
 References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,39 +22,64 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The only thing this patch changes is to remove the check for pp->mpp
-before the check for pp->mpp->prflags, since check_path() already
-verified that pp->mpp != NULL. This fixes a number of coverity warnings.
-Also, I normalized the spacing and indenting of the nearby code.
+If configure fails after allocing mpvec, it must free it. Found by
+coverity.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ multipathd/main.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 125a805..3c2fe7b 100644
+index 3c2fe7b..61ca455 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -1978,14 +1978,14 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 			return 1;
- 		}
+@@ -2277,7 +2277,7 @@ configure (struct vectors * vecs)
+ 	ret = path_discovery(vecs->pathvec, DI_ALL);
+ 	if (ret < 0) {
+ 		condlog(0, "configure failed at path discovery");
+-		return 1;
++		goto fail;
+ 	}
  
--		if(newstate == PATH_UP || newstate == PATH_GHOST){
--			if ( pp->mpp && pp->mpp->prflag ){
-+		if (newstate == PATH_UP || newstate == PATH_GHOST) {
-+			if (pp->mpp->prflag) {
- 				/*
- 				 * Check Persistent Reservation.
- 				 */
--			condlog(2, "%s: checking persistent reservation "
--				"registration", pp->dev);
--			mpath_pr_event_handle(pp);
-+				condlog(2, "%s: checking persistent "
-+					"reservation registration", pp->dev);
-+				mpath_pr_event_handle(pp);
- 			}
- 		}
+ 	vector_foreach_slot (vecs->pathvec, pp, i){
+@@ -2294,7 +2294,7 @@ configure (struct vectors * vecs)
+ 	}
+ 	if (map_discovery(vecs)) {
+ 		condlog(0, "configure failed at map discovery");
+-		return 1;
++		goto fail;
+ 	}
  
+ 	/*
+@@ -2308,7 +2308,7 @@ configure (struct vectors * vecs)
+ 		force_reload = FORCE_RELOAD_YES;
+ 	if (ret) {
+ 		condlog(0, "configure failed while coalescing paths");
+-		return 1;
++		goto fail;
+ 	}
+ 
+ 	/*
+@@ -2317,7 +2317,7 @@ configure (struct vectors * vecs)
+ 	 */
+ 	if (coalesce_maps(vecs, mpvec)) {
+ 		condlog(0, "configure failed while coalescing maps");
+-		return 1;
++		goto fail;
+ 	}
+ 
+ 	dm_lib_release();
+@@ -2353,6 +2353,10 @@ configure (struct vectors * vecs)
+ 			i--;
+ 	}
+ 	return 0;
++
++fail:
++	vector_free(mpvec);
++	return 1;
+ }
+ 
+ int
 -- 
 2.7.4
