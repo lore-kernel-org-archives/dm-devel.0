@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v3 15/19] multipathd: minor fixes
-Date: Fri, 21 Sep 2018 18:05:23 -0500
-Message-ID: <1537571127-10143-16-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 16/19] multipathd: remove useless check and
+	fix format
+Date: Fri, 21 Sep 2018 18:05:24 -0500
+Message-ID: <1537571127-10143-17-git-send-email-bmarzins@redhat.com>
 References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,37 +22,39 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-In update_multipath(), conf is set again in a couple of lines, and
-nothing uses it before then, so there's no point in setting it twice.
-Also, in ev_remove_path(), strncpy() could end up unterminated, so
-use strlcpy() instead.
+The only thing this patch changes is to remove the check for pp->mpp
+before the check for pp->mpp->prflags, since check_path() already
+verified that pp->mpp != NULL. This fixes a number of coverity warnings.
+Also, I normalized the spacing and indenting of the nearby code.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ multipathd/main.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index cc493c1..125a805 100644
+index 125a805..3c2fe7b 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -429,7 +429,7 @@ int update_multipath (struct vectors *vecs, char *mapname, int reset)
- 				continue;
+@@ -1978,14 +1978,14 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 			return 1;
+ 		}
  
- 			if (pp->state != PATH_DOWN) {
--				struct config *conf = get_multipath_config();
-+				struct config *conf;
- 				int oldstate = pp->state;
- 				int checkint;
+-		if(newstate == PATH_UP || newstate == PATH_GHOST){
+-			if ( pp->mpp && pp->mpp->prflag ){
++		if (newstate == PATH_UP || newstate == PATH_GHOST) {
++			if (pp->mpp->prflag) {
+ 				/*
+ 				 * Check Persistent Reservation.
+ 				 */
+-			condlog(2, "%s: checking persistent reservation "
+-				"registration", pp->dev);
+-			mpath_pr_event_handle(pp);
++				condlog(2, "%s: checking persistent "
++					"reservation registration", pp->dev);
++				mpath_pr_event_handle(pp);
+ 			}
+ 		}
  
-@@ -1096,7 +1096,7 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
- 			/*
- 			 * flush_map will fail if the device is open
- 			 */
--			strncpy(alias, mpp->alias, WWID_SIZE);
-+			strlcpy(alias, mpp->alias, WWID_SIZE);
- 			if (mpp->flush_on_last_del == FLUSH_ENABLED) {
- 				condlog(2, "%s Last path deleted, disabling queueing", mpp->alias);
- 				mpp->retry_tick = 0;
 -- 
 2.7.4
