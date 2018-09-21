@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v3 09/19] libmultipath: remove unused code
-Date: Fri, 21 Sep 2018 18:05:17 -0500
-Message-ID: <1537571127-10143-10-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 10/19] libmultipath: fix memory issue in
+	path_latency prio
+Date: Fri, 21 Sep 2018 18:05:18 -0500
+Message-ID: <1537571127-10143-11-git-send-email-bmarzins@redhat.com>
 References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,54 +22,28 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-since vector_foreach_slot() already checks if the entry is NULL, there's
-no point in checking it in the loop, since it can't be NULL there. Found
-by coverity.
+The path_latency prioriziter was assuming that prepare_directio_read()
+always succeeds. However, it doesn't, and when it fails, the prioritizer
+used buf without it pointing to alloced memory. Found by coverity.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/print.c | 8 --------
- 1 file changed, 8 deletions(-)
+ libmultipath/prioritizers/path_latency.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 9da6a77..7b610b9 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -275,8 +275,6 @@ snprint_multipath_vpr (char * buff, size_t len, const struct multipath * mpp)
- 	int i, j;
+diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
+index 765265c..eeee01e 100644
+--- a/libmultipath/prioritizers/path_latency.c
++++ b/libmultipath/prioritizers/path_latency.c
+@@ -237,7 +237,8 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
+ 	lg_maxavglatency = log(MAX_AVG_LATENCY) / lg_base;
+ 	lg_minavglatency = log(MIN_AVG_LATENCY) / lg_base;
  
- 	vector_foreach_slot(mpp->pg, pgp, i) {
--		if (!pgp)
--			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
- 			if (strlen(pp->vendor_id) && strlen(pp->product_id))
- 				return snprintf(buff, len, "%s,%s",
-@@ -295,8 +293,6 @@ snprint_multipath_vend (char * buff, size_t len, const struct multipath * mpp)
- 	int i, j;
+-	prepare_directio_read(pp->fd, &blksize, &buf, &restore_flags);
++	if (prepare_directio_read(pp->fd, &blksize, &buf, &restore_flags) < 0)
++		return PRIO_UNDEF;
  
- 	vector_foreach_slot(mpp->pg, pgp, i) {
--		if (!pgp)
--			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
- 			if (strlen(pp->vendor_id))
- 				return snprintf(buff, len, "%s", pp->vendor_id);
-@@ -313,8 +309,6 @@ snprint_multipath_prod (char * buff, size_t len, const struct multipath * mpp)
- 	int i, j;
- 
- 	vector_foreach_slot(mpp->pg, pgp, i) {
--		if (!pgp)
--			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
- 			if (strlen(pp->product_id))
- 				return snprintf(buff, len, "%s", pp->product_id);
-@@ -331,8 +325,6 @@ snprint_multipath_rev (char * buff, size_t len, const struct multipath * mpp)
- 	int i, j;
- 
- 	vector_foreach_slot(mpp->pg, pgp, i) {
--		if (!pgp)
--			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
- 			if (strlen(pp->rev))
- 				return snprintf(buff, len, "%s", pp->rev);
+ 	temp = io_num;
+ 	while (temp-- > 0) {
 -- 
 2.7.4
