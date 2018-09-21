@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v3 17/19] multipathd: fix memory leak on error in
-	configure
-Date: Fri, 21 Sep 2018 18:05:25 -0500
-Message-ID: <1537571127-10143-18-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 18/19] libmultipath: Don't blank intialized
+	paths
+Date: Fri, 21 Sep 2018 18:05:26 -0500
+Message-ID: <1537571127-10143-19-git-send-email-bmarzins@redhat.com>
 References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,64 +22,32 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-If configure fails after allocing mpvec, it must free it. Found by
-coverity.
+When pathinfo fails for some likely transient reason, it clears the path
+wwid, but otherwise returns successfully, to keep the path around but
+not usable until it gets fully initialized. However, if the path has
+already been initialized, and pathinfo hits a transient error, it
+shouldn't clear the wwid.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
+ libmultipath/discovery.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 3c2fe7b..61ca455 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2277,7 +2277,7 @@ configure (struct vectors * vecs)
- 	ret = path_discovery(vecs->pathvec, DI_ALL);
- 	if (ret < 0) {
- 		condlog(0, "configure failed at path discovery");
--		return 1;
-+		goto fail;
- 	}
- 
- 	vector_foreach_slot (vecs->pathvec, pp, i){
-@@ -2294,7 +2294,7 @@ configure (struct vectors * vecs)
- 	}
- 	if (map_discovery(vecs)) {
- 		condlog(0, "configure failed at map discovery");
--		return 1;
-+		goto fail;
- 	}
- 
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 3e0db7f..33815dc 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1991,9 +1991,9 @@ blank:
  	/*
-@@ -2308,7 +2308,7 @@ configure (struct vectors * vecs)
- 		force_reload = FORCE_RELOAD_YES;
- 	if (ret) {
- 		condlog(0, "configure failed while coalescing paths");
--		return 1;
-+		goto fail;
- 	}
- 
- 	/*
-@@ -2317,7 +2317,7 @@ configure (struct vectors * vecs)
+ 	 * Recoverable error, for example faulty or offline path
  	 */
- 	if (coalesce_maps(vecs, mpvec)) {
- 		condlog(0, "configure failed while coalescing maps");
--		return 1;
-+		goto fail;
- 	}
+-	memset(pp->wwid, 0, WWID_SIZE);
+ 	pp->chkrstate = pp->state = PATH_DOWN;
+-	pp->initialized = INIT_FAILED;
++	if (pp->initialized == INIT_FAILED)
++		memset(pp->wwid, 0, WWID_SIZE);
  
- 	dm_lib_release();
-@@ -2353,6 +2353,10 @@ configure (struct vectors * vecs)
- 			i--;
- 	}
- 	return 0;
-+
-+fail:
-+	vector_free(mpvec);
-+	return 1;
+ 	return PATHINFO_OK;
  }
- 
- int
 -- 
 2.7.4
