@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v3 13/19] multipath: fix max array size in
-	print_cmd_valid
-Date: Fri, 21 Sep 2018 18:05:21 -0500
-Message-ID: <1537571127-10143-14-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 14/19] multipathd: function return value tweaks
+Date: Fri, 21 Sep 2018 18:05:22 -0500
+Message-ID: <1537571127-10143-15-git-send-email-bmarzins@redhat.com>
 References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,27 +21,47 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The code is attempting to verify that 0 <= k < 3
-However, sizeof(val) is 12, assuming 4 byte integers. The check needs to
-take integer size into account. Found by coverity.
+In cli_add_map() the return value of get_refwwid is never used, and
+refwwid is checked to see if the function returned successfully, so the
+return value doesn't need to be saved.
+
+In resize_map, if setup_map fails, multipathd shouldn't attempt to
+create the device with resulting params string. It should just fail
+instead. Found by coverity.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipath/main.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipathd/cli_handlers.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index fc5bf16..d5aad95 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -482,7 +482,7 @@ static int print_cmd_valid(int k, const vector pathvec,
- 	struct timespec until;
- 	struct path *pp;
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 5682b5c..bb16472 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -796,8 +796,8 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
+ 		if (!alias && !count) {
+ 			condlog(2, "%s: mapname not found for %d:%d",
+ 				param, major, minor);
+-			rc = get_refwwid(CMD_NONE, param, DEV_DEVMAP,
+-					 vecs->pathvec, &refwwid);
++			get_refwwid(CMD_NONE, param, DEV_DEVMAP,
++				    vecs->pathvec, &refwwid);
+ 			if (refwwid) {
+ 				if (coalesce_paths(vecs, NULL, refwwid,
+ 						   FORCE_RELOAD_NONE, CMD_NONE))
+@@ -881,7 +881,12 @@ int resize_map(struct multipath *mpp, unsigned long long size,
  
--	if (k < 0 || k >= sizeof(vals))
-+	if (k < 0 || k >= (sizeof(vals) / sizeof(int)))
- 		return 1;
- 
- 	if (k == 2) {
+ 	mpp->size = size;
+ 	update_mpp_paths(mpp, vecs->pathvec);
+-	setup_map(mpp, params, PARAMS_SIZE, vecs);
++	if (setup_map(mpp, params, PARAMS_SIZE, vecs) != 0) {
++		condlog(0, "%s: failed to setup map for resize : %s",
++			mpp->alias, strerror(errno));
++		mpp->size = orig_size;
++		return 1;
++	}
+ 	mpp->action = ACT_RESIZE;
+ 	mpp->force_udev_reload = 1;
+ 	if (domap(mpp, params, 1) <= 0) {
 -- 
 2.7.4
