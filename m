@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v3 08/19] libmultipath: _install_keyword cleanup
-Date: Fri, 21 Sep 2018 18:05:16 -0500
-Message-ID: <1537571127-10143-9-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 09/19] libmultipath: remove unused code
+Date: Fri, 21 Sep 2018 18:05:17 -0500
+Message-ID: <1537571127-10143-10-git-send-email-bmarzins@redhat.com>
 References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,39 +21,54 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-_install_keyword should use VECTOR_LAST_SLOT(), which has better error
-checking. It should also fail if it gets a NULL pointer, instead of
-dereferencing it. Found by coverity.
+since vector_foreach_slot() already checks if the entry is NULL, there's
+no point in checking it in the loop, since it can't be NULL there. Found
+by coverity.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/parser.c | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
+ libmultipath/print.c | 8 --------
+ 1 file changed, 8 deletions(-)
 
-diff --git a/libmultipath/parser.c b/libmultipath/parser.c
-index b8b7e0d..92ef7cf 100644
---- a/libmultipath/parser.c
-+++ b/libmultipath/parser.c
-@@ -79,12 +79,16 @@ _install_keyword(vector keywords, char *string,
- 	struct keyword *keyword;
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 9da6a77..7b610b9 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -275,8 +275,6 @@ snprint_multipath_vpr (char * buff, size_t len, const struct multipath * mpp)
+ 	int i, j;
  
- 	/* fetch last keyword */
--	keyword = VECTOR_SLOT(keywords, VECTOR_SIZE(keywords) - 1);
-+	keyword = VECTOR_LAST_SLOT(keywords);
-+	if (!keyword)
-+		return 1;
+ 	vector_foreach_slot(mpp->pg, pgp, i) {
+-		if (!pgp)
+-			continue;
+ 		vector_foreach_slot(pgp->paths, pp, j) {
+ 			if (strlen(pp->vendor_id) && strlen(pp->product_id))
+ 				return snprintf(buff, len, "%s,%s",
+@@ -295,8 +293,6 @@ snprint_multipath_vend (char * buff, size_t len, const struct multipath * mpp)
+ 	int i, j;
  
- 	/* position to last sub level */
--	for (i = 0; i < sublevel; i++)
--		keyword =
--		    VECTOR_SLOT(keyword->sub, VECTOR_SIZE(keyword->sub) - 1);
-+	for (i = 0; i < sublevel; i++) {
-+		keyword = VECTOR_LAST_SLOT(keyword->sub);
-+		if (!keyword)
-+			return 1;
-+	}
+ 	vector_foreach_slot(mpp->pg, pgp, i) {
+-		if (!pgp)
+-			continue;
+ 		vector_foreach_slot(pgp->paths, pp, j) {
+ 			if (strlen(pp->vendor_id))
+ 				return snprintf(buff, len, "%s", pp->vendor_id);
+@@ -313,8 +309,6 @@ snprint_multipath_prod (char * buff, size_t len, const struct multipath * mpp)
+ 	int i, j;
  
- 	/* First sub level allocation */
- 	if (!keyword->sub)
+ 	vector_foreach_slot(mpp->pg, pgp, i) {
+-		if (!pgp)
+-			continue;
+ 		vector_foreach_slot(pgp->paths, pp, j) {
+ 			if (strlen(pp->product_id))
+ 				return snprintf(buff, len, "%s", pp->product_id);
+@@ -331,8 +325,6 @@ snprint_multipath_rev (char * buff, size_t len, const struct multipath * mpp)
+ 	int i, j;
+ 
+ 	vector_foreach_slot(mpp->pg, pgp, i) {
+-		if (!pgp)
+-			continue;
+ 		vector_foreach_slot(pgp->paths, pp, j) {
+ 			if (strlen(pp->rev))
+ 				return snprintf(buff, len, "%s", pp->rev);
 -- 
 2.7.4
