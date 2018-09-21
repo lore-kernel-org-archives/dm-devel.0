@@ -1,17 +1,14 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: device-mapper: ioctl: ioctl interface mismatch:
- kernel(4.37.0), user(4.39.0), cmd(16)
-Date: Thu, 20 Sep 2018 12:14:13 +0200
-Message-ID: <58621a53-e348-1f03-7432-67c25fe225f9@redhat.com>
-References: <CAPUHmCpwJ7jX-d6PHdmOWQC47zOBkT1-c6o2DH4xS9_Uq13vBA@mail.gmail.com>
-	<09dfe022-a4a1-3fec-f998-ecfb0a477e44@redhat.com>
-	<CAPUHmCodFP=PFK8DqrV_Qz_cgT6uaRXUihhTaPhjJpJ=bSCy-A@mail.gmail.com>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH v5] crypto: xts - Drop use of auxiliary buffer
+Date: Fri, 21 Sep 2018 13:44:28 +0800
+Message-ID: <20180921054428.zbvsng2gx5x6rf33@gondor.apana.org.au>
+References: <20180911074008.2249-1-omosnace@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAPUHmCodFP=PFK8DqrV_Qz_cgT6uaRXUihhTaPhjJpJ=bSCy-A@mail.gmail.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20180911074008.2249-1-omosnace@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,56 +18,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Ondrej Mosnacek <omosnace@redhat.com>
+Cc: Eric Biggers <ebiggers@kernel.org>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-crypto@vger.kernel.org
 List-Id: dm-devel.ids
 
-RG5lIDE5LjkuMjAxOCB2IDE3OjMwIMOWemthbiBHw7Zrc3UgbmFwc2FsKGEpOgo+IEhlbGxvLgo+
-IAo+IEFmdGVyIHlvdXIgbWFpbCBJIHRyaWVkIHNvbWV0aGluZzsKPiBJIGp1c3QgY3VyaW91cyB3
-aGF0IHdpbGwgaGFwcGVuIHdoZW4gSSBkb3duZ3JhZGUgbXVsdGlwYXRoLXRvb2xzIHBhY2thZ2Ug
-YW5kIAo+IHRoZSByZXN0IHdhcyBsYXRlc3QuCj4gbHZtMiAyLjAyLjE4MS0xCj4gZGV2aWNlLW1h
-cHBlciAyLjAyLjE4MS0xCj4gCj4gSSBqdXN0IGRvd25ncmFkZSB0bzogbXVsdGlwYXRoLXRvb2xz
-IDAuNy42LTEKPiBFdmVyeXRoaW5nIHdvcmtzIGdyZWF0LiBJIGRpZG50IHNhdyBhbnkgcHJvYmxl
-bS4KPiBJIHdhcyB0aGlua2luZyB0aGUgcHJvYmxlbSByZWxhdGVkIHRvIGRldmljZS1tYXBwZXIg
-YnV0IG5vdyBpdHMgc2VlbXMgCj4gc29tZXRoaW5nIGVsc2UuCj4gCj4gCj4gVGhpcyBpcyBjb21w
-aWxlIHByb2Nlc3MgZnJvbSBBcmNoLWxpbnV4IEFVUiByZXBvc2l0b3J5OiAKPiBodHRwczovL3Bh
-c3RlLnVidW50dS5jb20vcC96VjU4ZzU2Z1ZULwo+IElmIEknbSBub3QgbWlzdGFrZW4gdGhpcyBp
-cyB0aGUgbG9nIHlvdSB3YW50LiBJZiBpdHMgbm90IHRoZW4gdGVsbCBtZSB3aGVyZSAKPiBzaG91
-bGQgSSBsb29rIGZvciB0aGUgbG9nIHlvdSB3YW50Pwo+IAo+IFtyb290QFNNREVWMsKgIHNlcnZp
-Y2VdIyBsZGQgL3Vzci9iaW4vbXVsdGlwYXRoZAo+IGxpbnV4LXZkc28uc28uMSAoMHgwMDAwN2Zm
-ZmVhNGZlMDAwKQo+IGxpYm11bHRpcGF0aC5zby4wID0+IC91c3IvbGliL2xpYm11bHRpcGF0aC5z
-by4wICgweDAwMDA3ZjcyOTcxMWUwMDApCj4gbGlibXBhdGhwZXJzaXN0LnNvLjAgPT4gL3Vzci9s
-aWIvbGlibXBhdGhwZXJzaXN0LnNvLjAgKDB4MDAwMDdmNzI5NzExNDAwMCkKPiBsaWJtcGF0aGNt
-ZC5zby4wID0+IC91c3IvbGliL2xpYm1wYXRoY21kLnNvLjAgKDB4MDAwMDdmNzI5NzEwZjAwMCkK
-PiBsaWJ1ZGV2LnNvLjEgPT4gL3Vzci9saWIvbGlidWRldi5zby4xICgweDAwMDA3ZjcyOTcwZWYw
-MDApCj4gbGliZGwuc28uMiA9PiAvdXNyL2xpYi9saWJkbC5zby4yICgweDAwMDA3ZjcyOTcwZWEw
-MDApCj4gbGlidXJjdS5zby42ID0+IC91c3IvbGliL2xpYnVyY3Uuc28uNiAoMHgwMDAwN2Y3Mjk2
-ZWUyMDAwKQo+IGxpYnB0aHJlYWQuc28uMCA9PiAvdXNyL2xpYi9saWJwdGhyZWFkLnNvLjAgKDB4
-MDAwMDdmNzI5NmViZjAwMCkKPiBsaWJkZXZtYXBwZXIuc28uMS4wMiA9PiAvdXNyL2xpYi9saWJk
-ZXZtYXBwZXIuc28uMS4wMiAoMHgwMDAwN2Y3Mjk2YzY5MDAwKQo+IGxpYnJlYWRsaW5lLnNvLjcg
-PT4gL3Vzci9saWIvbGlicmVhZGxpbmUuc28uNyAoMHgwMDAwN2Y3Mjk2YTFjMDAwKQo+IGxpYnN5
-c3RlbWQuc28uMCA9PiAvdXNyL2xpYi9saWJzeXN0ZW1kLnNvLjAgKDB4MDAwMDdmNzI5Njk5MDAw
-MCkKPiBsaWJjLnNvLjYgPT4gL3Vzci9saWIvbGliYy5zby42ICgweDAwMDA3ZjcyOTY3Y2MwMDAp
-Cj4gbGliYWlvLnNvLjEgPT4gL3Vzci9saWIvbGliYWlvLnNvLjEgKDB4MDAwMDdmNzI5NjVjYTAw
-MCkKPiAvbGliNjQvbGQtbGludXgteDg2LTY0LnNvLjIgPT4gL3Vzci9saWI2NC9sZC1saW51eC14
-ODYtNjQuc28uMiAKPiAoMHgwMDAwN2Y3Mjk3MWI1MDAwKQo+IGxpYnVyY3UtY29tbW9uLnNvLjYg
-PT4gL3Vzci9saWIvbGlidXJjdS1jb21tb24uc28uNiAoMHgwMDAwN2Y3Mjk2M2MzMDAwKQo+IGxp
-Ym0uc28uNiA9PiAvdXNyL2xpYi9saWJtLnNvLjYgKDB4MDAwMDdmNzI5NjIzZTAwMCkKPiBsaWJu
-Y3Vyc2Vzdy5zby42ID0+IC91c3IvbGliL2xpYm5jdXJzZXN3LnNvLjYgKDB4MDAwMDdmNzI5NWZk
-MTAwMCkKPiBsaWJydC5zby4xID0+IC91c3IvbGliL2xpYnJ0LnNvLjEgKDB4MDAwMDdmNzI5NWZj
-NzAwMCkKPiBsaWJsem1hLnNvLjUgPT4gL3Vzci9saWIvbGlibHptYS5zby41ICgweDAwMDA3Zjcy
-OTVkYTEwMDApCj4gbGlibHo0LnNvLjEgPT4gL3Vzci9saWIvbGlibHo0LnNvLjEgKDB4MDAwMDdm
-NzI5NWI4NDAwMCkKPiBsaWJnY3J5cHQuc28uMjAgPT4gL3Vzci9saWIvbGliZ2NyeXB0LnNvLjIw
-ICgweDAwMDA3ZjcyOTU4NjYwMDApCj4gbGliZ3BnLWVycm9yLnNvLjAgPT4gL3Vzci9saWIvbGli
-Z3BnLWVycm9yLnNvLjAgKDB4MDAwMDdmNzI5NTY0NjAwMCkKPiAKPiBJIGRpZCBub3QgdHJpZWQg
-dG8gY29tcGlsZSBmcm9tIEdJVCBieSBteXNlbGYuIEJ1dCBteSBrbm93bGVkZ2UgdGhlIGF1ciAK
-PiBwYWNrYWdlIGFsc28gdGFrZXMgdGhlIGNvZGUgZnJvbSB5b3VyIGdpdCByZXBvc2l0b3J5Cj4g
-SWYgeW91IG5lZWQgYW55dGhpbmcgZWxzZSBqdXN0IGFzayBtZSBwbGVhc2UuCj4gCj4gCgpIaQoK
-V2lsZCBndWVzcyAtICBsYXRlc3QgbXVsdGlwYXRoIHByb2JhYmx5IHN0YXJ0ZWQgdG8gcmVxdWly
-ZSBsYXRlc3Qga2VybmVsCndoaWNoIGhhcyBzb21lIGVuaGFuY2VkIHN1cHBvcnQgZm9yIHBvbGxp
-bmcgZXZlbnRzIC0gd2hpY2ggaXMgbm90IHlldAp1c2VkIGJ5IGRtZXZlbnRkIG5vciBzdXBwb3J0
-ZWQgYnkgbGliZG0gQVBJLgoKQW5kIGxpa2VseSBtdWx0aXBhdGggZnVsbHk/PyBzd2l0Y2hlZCB0
-byB1c2UgdGhpcyBldmVudCBtZWNoYW5pc20gYW5kCnRoZXJlIGlzIG5vIGJhY2t3YXJkIGNvbXBh
-dGliaWxpdHkgc3VwcG9ydCBmb3Igb2xkZXIga2VybmVsID8KT3IgbWF5YmUgdGhlIGRldGVjdGlv
-biBhbmQgc3dpdGNoIHRvIG9sZCBtZWNoYW5pc20gaXNuJ3QgcHJvcGVybHkgd29ya2luZyB5ZXQg
-PwoKUmVnYXJkcwoKWmRlbmVrCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
-aGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Tue, Sep 11, 2018 at 09:40:08AM +0200, Ondrej Mosnacek wrote:
+> Since commit acb9b159c784 ("crypto: gf128mul - define gf128mul_x_* in
+> gf128mul.h"), the gf128mul_x_*() functions are very fast and therefore
+> caching the computed XTS tweaks has only negligible advantage over
+> computing them twice.
+> 
+> In fact, since the current caching implementation limits the size of
+> the calls to the child ecb(...) algorithm to PAGE_SIZE (usually 4096 B),
+> it is often actually slower than the simple recomputing implementation.
+> 
+> This patch simplifies the XTS template to recompute the XTS tweaks from
+> scratch in the second pass and thus also removes the need to allocate a
+> dynamic buffer using kmalloc().
+> 
+> As discussed at [1], the use of kmalloc causes deadlocks with dm-crypt.
+> 
+> PERFORMANCE RESULTS
+> I measured time to encrypt/decrypt a memory buffer of varying sizes with
+> xts(ecb-aes-aesni) using a tool I wrote ([2]) and the results suggest
+> that after this patch the performance is either better or comparable for
+> both small and large buffers. Note that there is a lot of noise in the
+> measurements, but the overall difference is easy to see.
+> 
+> Old code:
+>        ALGORITHM KEY (b)        DATA (B)   TIME ENC (ns)   TIME DEC (ns)
+>         xts(aes)     256              64             331             328
+>         xts(aes)     384              64             332             333
+>         xts(aes)     512              64             338             348
+>         xts(aes)     256             512             889             920
+>         xts(aes)     384             512            1019             993
+>         xts(aes)     512             512            1032             990
+>         xts(aes)     256            4096            2152            2292
+>         xts(aes)     384            4096            2453            2597
+>         xts(aes)     512            4096            3041            2641
+>         xts(aes)     256           16384            9443            8027
+>         xts(aes)     384           16384            8536            8925
+>         xts(aes)     512           16384            9232            9417
+>         xts(aes)     256           32768           16383           14897
+>         xts(aes)     384           32768           17527           16102
+>         xts(aes)     512           32768           18483           17322
+> 
+> New code:
+>        ALGORITHM KEY (b)        DATA (B)   TIME ENC (ns)   TIME DEC (ns)
+>         xts(aes)     256              64             328             324
+>         xts(aes)     384              64             324             319
+>         xts(aes)     512              64             320             322
+>         xts(aes)     256             512             476             473
+>         xts(aes)     384             512             509             492
+>         xts(aes)     512             512             531             514
+>         xts(aes)     256            4096            2132            1829
+>         xts(aes)     384            4096            2357            2055
+>         xts(aes)     512            4096            2178            2027
+>         xts(aes)     256           16384            6920            6983
+>         xts(aes)     384           16384            8597            7505
+>         xts(aes)     512           16384            7841            8164
+>         xts(aes)     256           32768           13468           12307
+>         xts(aes)     384           32768           14808           13402
+>         xts(aes)     512           32768           15753           14636
+> 
+> [1] https://lkml.org/lkml/2018/8/23/1315
+> [2] https://gitlab.com/omos/linux-crypto-bench
+> 
+> Signed-off-by: Ondrej Mosnacek <omosnace@redhat.com>
+> ---
+>  crypto/xts.c | 269 +++++++++------------------------------------------
+>  1 file changed, 46 insertions(+), 223 deletions(-)
+> 
+> Changes in v5:
+>   - fix dumb mistakes
+
+Patch applied.  Thanks.
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
