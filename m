@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v3 07/19] libmultipath: fix length issues in
-	get_vpd_sgio
-Date: Fri, 21 Sep 2018 18:05:15 -0500
-Message-ID: <1537571127-10143-8-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 08/19] libmultipath: _install_keyword cleanup
+Date: Fri, 21 Sep 2018 18:05:16 -0500
+Message-ID: <1537571127-10143-9-git-send-email-bmarzins@redhat.com>
 References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,47 +21,39 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-When get_vpd_sgio() finds out that the vpd info needed to be truncated
-to fit in the buffer, it doesn't trucate the size as well,  which allows
-it to overwrite the buffer. Also, in once len is set to -ENODATA,
-get_vpd_sgio() should exit, instead of using the negative len in
-memcpy(). Found by coverity.
+_install_keyword should use VECTOR_LAST_SLOT(), which has better error
+checking. It should also fail if it gets a NULL pointer, instead of
+dereferencing it. Found by coverity.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.c | 14 +++++++++-----
- 1 file changed, 9 insertions(+), 5 deletions(-)
+ libmultipath/parser.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 0b1855d..3e0db7f 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1116,17 +1116,21 @@ get_vpd_sgio (int fd, int pg, char * str, int maxlen)
- 		return -ENODATA;
- 	}
- 	buff_len = get_unaligned_be16(&buff[2]) + 4;
--	if (buff_len > 4096)
-+	if (buff_len > 4096) {
- 		condlog(3, "vpd pg%02x page truncated", pg);
--
-+		buff_len = 4096;
-+	}
- 	if (pg == 0x80)
- 		len = parse_vpd_pg80(buff, str, maxlen);
- 	else if (pg == 0x83)
- 		len = parse_vpd_pg83(buff, buff_len, str, maxlen);
- 	else if (pg == 0xc9 && maxlen >= 8) {
--		len = buff_len < 8 ? -ENODATA :
--			(buff_len <= maxlen ? buff_len : maxlen);
--		memcpy (str, buff, len);
-+		if (buff_len < 8)
-+			len = -ENODATA;
-+		else {
-+			len = (buff_len <= maxlen)? buff_len : maxlen;
-+			memcpy (str, buff, len);
-+		}
- 	} else
- 		len = -ENOSYS;
+diff --git a/libmultipath/parser.c b/libmultipath/parser.c
+index b8b7e0d..92ef7cf 100644
+--- a/libmultipath/parser.c
++++ b/libmultipath/parser.c
+@@ -79,12 +79,16 @@ _install_keyword(vector keywords, char *string,
+ 	struct keyword *keyword;
  
+ 	/* fetch last keyword */
+-	keyword = VECTOR_SLOT(keywords, VECTOR_SIZE(keywords) - 1);
++	keyword = VECTOR_LAST_SLOT(keywords);
++	if (!keyword)
++		return 1;
+ 
+ 	/* position to last sub level */
+-	for (i = 0; i < sublevel; i++)
+-		keyword =
+-		    VECTOR_SLOT(keyword->sub, VECTOR_SIZE(keyword->sub) - 1);
++	for (i = 0; i < sublevel; i++) {
++		keyword = VECTOR_LAST_SLOT(keyword->sub);
++		if (!keyword)
++			return 1;
++	}
+ 
+ 	/* First sub level allocation */
+ 	if (!keyword->sub)
 -- 
 2.7.4
