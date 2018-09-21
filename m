@@ -1,11 +1,13 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v3 00/19] Misc Multipath patches
-Date: Fri, 21 Sep 2018 18:05:08 -0500
-Message-ID: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 01/19] libmultipath: fix tur checker timeout
+Date: Fri, 21 Sep 2018 18:05:09 -0500
+Message-ID: <1537571127-10143-2-git-send-email-bmarzins@redhat.com>
+References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,60 +21,49 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This batch of patches is a resend of the non-merged pathes from my last
-set, along with 2 new ones. It would be really great if we could get
-a version bug after the outstanding commits go it.
+The code previously was timing out mode if ct->thread was 0 but
+ct->running wasn't. This combination never happens.  The idea was to
+timeout if for some reason the path checker tried to kill the thread,
+but it didn't die.  The correct thing to check for this is ct->holders.
+ct->holders will always be at least one when libcheck_check() is called,
+since libcheck_free() won't get called until the device is no longer
+being checked. So, if ct->holders is 2, that means that the tur thread
+is has not shut down yet.
 
-Patches 0001-0005 are a number of fixes to the tur checker.These are
-	the ones that should get the most attention.
-Patches 0006-0017 are minor issues found by coverity.
-	Not all of them are bugs that could actually occur in practice,
-	but they are simple and hopefully non-controversial changes.
-Patches 0018-0019 are new and related to changing path wwids
+Also, instead of returning PATH_TIMEOUT whenever the thread hasn't died,
+it should only time out if the thread didn't successfully get a value,
+which means the previous state was already PATH_TIMEOUT.
 
-Changes in v3
-	added patches 0018-0019
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/checkers/tur.c | 15 +++++++++------
+ 1 file changed, 9 insertions(+), 6 deletions(-)
 
-Changes in v2
-	0002-libmultipath-fix-tur-checker-double-locking.patch now sets
-	ct->devt when initially creating the tur_checker_context, while
-	that structure is still only referenced by a local variable.
-	After that, ct->devt is only ever read. This should remove any
-	issues with it needing locking.
-
-Benjamin Marzinski (19):
-  libmultipath: fix tur checker timeout
-  libmultipath: fix tur checker double locking
-  libmultipath: fix tur memory misuse
-  libmultipath: cleanup tur locking
-  libmultipath: fix tur checker timeout issue
-  libmultipath: fix set_int error path
-  libmultipath: fix length issues in get_vpd_sgio
-  libmultipath: _install_keyword cleanup
-  libmultipath: remove unused code
-  libmultipath: fix memory issue in path_latency prio
-  libmultipath: fix null dereference int alloc_path_group
-  libmutipath: don't use malformed uevents
-  multipath: fix max array size in print_cmd_valid
-  multipathd: function return value tweaks
-  multipathd: minor fixes
-  multipathd: remove useless check and fix format
-  multipathd: fix memory leak on error in configure
-  libmultipath: Don't blank intialized paths
-  libmultipath: Fixup updating paths
-
- libmultipath/checkers/tur.c              | 168 +++++++++++--------------------
- libmultipath/dict.c                      |   5 +-
- libmultipath/discovery.c                 |  18 ++--
- libmultipath/parser.c                    |  12 ++-
- libmultipath/print.c                     |   8 --
- libmultipath/prioritizers/path_latency.c |   3 +-
- libmultipath/structs.c                   |   2 +-
- libmultipath/uevent.c                    |   6 ++
- multipath/main.c                         |   2 +-
- multipathd/cli_handlers.c                |  11 +-
- multipathd/main.c                        |  50 +++++----
- 11 files changed, 131 insertions(+), 154 deletions(-)
-
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index bf8486d..275541f 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -355,12 +355,15 @@ int libcheck_check(struct checker * c)
+ 		}
+ 		pthread_mutex_unlock(&ct->lock);
+ 	} else {
+-		if (uatomic_read(&ct->running) != 0) {
+-			/* pthread cancel failed. continue in sync mode */
+-			pthread_mutex_unlock(&ct->lock);
+-			condlog(3, "%s: tur thread not responding",
+-				tur_devt(devt, sizeof(devt), ct));
+-			return PATH_TIMEOUT;
++		if (uatomic_read(&ct->holders) > 1) {
++			/* pthread cancel failed. If it didn't get the path
++			   state already, timeout */
++			if (ct->state == PATH_PENDING) {
++				pthread_mutex_unlock(&ct->lock);
++				condlog(3, "%s: tur thread not responding",
++					tur_devt(devt, sizeof(devt), ct));
++				return PATH_TIMEOUT;
++			}
+ 		}
+ 		/* Start new TUR checker */
+ 		ct->state = PATH_UNCHECKED;
 -- 
 2.7.4
