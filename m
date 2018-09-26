@@ -1,199 +1,105 @@
-From: Randy Dunlap <rdunlap@infradead.org>
-Subject: Re: [PATCH 2/2] init: add support to directly boot to a mapped device
-Date: Wed, 26 Sep 2018 09:09:45 -0700
-Message-ID: <c0da1483-4d82-0e13-d03b-9ee8ea6a9d84@infradead.org>
-References: <cover.1537936397.git.helen.koike@collabora.com>
- <2c01b2a43a46fab760208d7af3a7af37eec8c41a.1537936397.git.helen.koike@collabora.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] This patch filled the host WWNN. when using
+ the command of multipathd to list the isscsi paths informartion,
+ the host WWNN of paths informartion is not exist. like this: multipathd show
+ paths format "%N %R" host WWNN host WWPN [undef] iqn.20
+Date: Wed, 26 Sep 2018 22:37:36 +0200
+Message-ID: <ff7728adff7f7f4d25f90ab7465320d095081ba5.camel@suse.com>
+References: <AD49694D3F7B7B4D96C353DCB55098B888110F20@dggeml524-mbx.china.huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2c01b2a43a46fab760208d7af3a7af37eec8c41a.1537936397.git.helen.koike@collabora.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Helen Koike <helen.koike@collabora.com>, dm-devel@redhat.com
-Cc: agk@redhat.com, snitzer@redhat.com, linux-kernel@vger.kernel.org, enric.balletbo@collabora.com, wad@chromium.org, linux-doc@vger.kernel.org, linux-lvm@redhat.com, kernel@collabora.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <AD49694D3F7B7B4D96C353DCB55098B888110F20@dggeml524-mbx.china.huawei.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Sunao (A)" <sunao.sun@huawei.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>, "hare@suse.de" <hare@suse.de>, "bmarzins@redhat.com" <bmarzins@redhat.com>, "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>
+Cc: "wangke (U)" <wangke16@huawei.com>, dingwenyi <dingwenyi@huawei.com>, guanjunxiong <guanjunxiong@huawei.com>, "Chengjike (ISSP)" <chengjike.cheng@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>, lixiaoying <lixiaoying@huawei.com>
 List-Id: dm-devel.ids
 
-On 9/25/18 10:00 PM, Helen Koike wrote:
-> From: Will Drewry <wad@chromium.org>
-> 
-> Add a dm= kernel parameter modeled after the md= parameter from
-> do_mounts_md. It allows for device-mapper targets to be configured at
-> boot time for use early in the boot process (as the root device or
-> otherwise).
-> 
-> Signed-off-by: Will Drewry <wad@chromium.org>
-> Signed-off-by: Kees Cook <keescook@chromium.org>
-> [rework to use dm_ioctl calls]
-> Signed-off-by: Enric Balletbo i Serra <enric.balletbo@collabora.com>
-> [rework to use concise format | rework for upstream]
-> Signed-off-by: Helen Koike <helen.koike@collabora.com>
-
-Hi,
-
-A few small comments inline...
-
-> ---
->  .../admin-guide/kernel-parameters.rst         |   1 +
->  .../admin-guide/kernel-parameters.txt         |   3 +
->  Documentation/device-mapper/dm-boot.txt       |  63 +++
->  init/Makefile                                 |   1 +
->  init/do_mounts.c                              |   1 +
->  init/do_mounts.h                              |  10 +
->  init/do_mounts_dm.c                           | 475 ++++++++++++++++++
->  7 files changed, 554 insertions(+)
->  create mode 100644 Documentation/device-mapper/dm-boot.txt
->  create mode 100644 init/do_mounts_dm.c
-
-> diff --git a/Documentation/device-mapper/dm-boot.txt b/Documentation/device-mapper/dm-boot.txt
-> new file mode 100644
-> index 000000000000..f598f102c980
-> --- /dev/null
-> +++ b/Documentation/device-mapper/dm-boot.txt
-> @@ -0,0 +1,63 @@
-> +Boot time creation of mapped devices
-> +====================================
-> +
-> +It is possible to configure a device mapper device to act as the root
-> +device for your system in two ways.
-> +
-> +The first is to build an initial ramdisk which boots to a minimal
-> +userspace which configures the device, then pivot_root(8) in to it.
-> +
-> +The second is to possible when the device-mapper and any targets are
-
-parse error:  ^^^^^^^^^^^^^^
-
-> +compiled into the kernel (not a module), one or more device-mappers may
-> +be created and used as the root device at boot time with the parameters
-> +given with the boot line dm=...
-> +
-> +The format is specified as a simple string of data separated by commas and
-
-for some definition of "simple".
-
-> +optionally semi-colons, where:
-> + - a comma is used to separate fields like name, uuid, flags and table (specifies
-> +   one device)
-> + - a semi-colon is used to separate devices.
-> +
-> +So the format will look like this:
-> +
-> + dm=<name>,<uuid>,<minor>,<flags>,<table>[,<table>+][;<dev_name>,<uuid>,<minor>,<flags>,<table>[,<table>+]]
-> +
-> +Where,
-> +	<dev_name>	::= The device name.
-> +	<uuid>		::= xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | ""
-> +	<minor>		::= The device minor number.
-> +	<flags>		::= "ro" | "rw"
-> +	<table>		::= <start> <length> <type> <options>
-> +	<type>		::= "verity" | "bootcache" | ...
-> +
-> +The dm line may be as normal when using the dmsetup tool when using the
-> +--concise argument.
-> +
-> +Examples
-> +========
-> +An example of booting to a linear array made up of user-mode linux block
-> +devices:
-> +
-> +  dm="lroot,,,rw, 0 4096 linear 98:16 0, 4096 4096 linear 98:32 0" \
-> +  root=/dev/dm-0
-> +
-> +This will boot to a rw dm-linear target of 8192 sectors split across two
-> +block devices identified by their major:minor numbers.  After boot, udev
-> +will rename this target to /dev/mapper/lroot (depending on the rules).
-> +No uuid was assigned.
-> +
-> +An example of multiple device-mappers, with the dm="..." contents shown
-> +here split on multiple lines for readability:
-> +
-> +    vboot,,ro,
-> +      0 1768000 bootcache
-> +        aa55b119-2a47-8c45-946a-5ac57765011f+1
-> +        76e9be054b15884a9fa85973e9cb274c93afadb6
-> +        1768000 100000 23 20000;
-> +    vroot,,ro,
-> +      0 1740800 verity 254:0 254:0 1740800 sha1
-> +        76e9be054b15884a9fa85973e9cb274c93afadb6
-> +        5b3549d54d6c7a3837b9b81ed72e49463a64c03680c47835bef94d768e5646fe;
-> +    vram,,rw,
-> +      0 32768 linear 1:0 0,
-> +      32768 32768 linear 1:1 0
-
-> diff --git a/init/do_mounts_dm.c b/init/do_mounts_dm.c
-> new file mode 100644
-> index 000000000000..507ae31808ef
-> --- /dev/null
-> +++ b/init/do_mounts_dm.c
-> @@ -0,0 +1,475 @@
-> +// SPDX-License-Identifier: <SPDX License Expression>
-> +
-> +/*
-> + * do_mounts_dm.c
-> + * Copyright (C) 2017 The Chromium OS Authors <chromium-os-dev@chromium.org>
-> + * Based on do_mounts_md.c
-> + *
-> + * This file is released under the GPLv2.
-> + */
-> +#include <linux/async.h>
-> +#include <linux/ctype.h>
-> +#include <linux/device-mapper.h>
-> +#include <linux/fs.h>
-> +#include <linux/string.h>
-> +#include <linux/delay.h>
-> +
-> +#include "do_mounts.h"
-> +
-> +#define DM_MAX_DEVICES 256
-> +#define DM_MAX_NAME 32
-> +#define DM_MAX_UUID 129
-> +
-> +#define DM_MSG_PREFIX "init"
-> +
-> +#define is_even(a) (((a) & 1) == 0)
-> +
-> +/* See Documentation/device-mapper/dm-boot.txt for dm="..." format details. */
-> +
-> +struct target {
-> +	sector_t start;
-> +	sector_t length;
-> +	char *type;
-> +	char *params;
-> +	/* simple singly linked list */
-> +	struct target *next;
-> +};
-> +
-> +struct dm_device {
-> +	int minor;
-> +	int ro;
-> +	char name[DM_MAX_NAME];
-> +	char uuid[DM_MAX_UUID];
-> +	struct target *table;
-> +	int table_count;
-> +	/* simple singly linked list */
-> +	struct dm_device *next;
-> +};
-> +
-> +static struct {
-> +	unsigned long num_devices;
-> +	char *str;
-> +} dm_setup_args __initdata;
-> +
-> +static int dm_early_setup __initdata;
-> +
-
-// @a: must be a power of 2
-
-> +static void __init *_align(void *ptr, unsigned int a)
-> +{
-> +	register unsigned long agn = --a;
-> +
-> +	return (void *) (((unsigned long) ptr + agn) & ~agn);
-> +}
-
-
-thanks.
--- 
-~Randy
+SGkgU3VuYW8sCgpUaGFua3MgZm9yIHlvdXIgcGF0Y2guIE5leHQgdGltZSwgcGxlYXNlIGtlZXAg
+dGhlIHN1YmplY3QgbGluZQphdCBhIHJlYWRhYmxlIGxlbmd0aCwgYW5kIHByb3ZpZGUgYSBmdWxs
+IGRlc2NyaXB0aW9uIG9mIHRoZSBwcm9ibGVtLAphbmQgdGhlIHByb3Bvc2VkIHNvbHV0aW9uLCBp
+biB0aGUgbWVzc2FnZSBib2R5LgoKT24gVHVlLCAyMDE4LTA5LTE4IGF0IDA5OjA5ICswMDAwLCBT
+dW5hbyAoQSkgd3JvdGU6Cj4gdGhpcyBwYXRjaCBzb2x2ZWQgdGhpcyBwcm9ibGVtIGFuZCBmaWxs
+ZWQgdGhlIGhvc3QgV1dOTi4KPiBsaWtlIHRoaXM6Cj4gbXVsdGlwYXRoZCBzaG93IHBhdGhzIGZv
+cm1hdCAiJU4gJVIiCj4gaG9zdCBXV05OICAgICAgICAgICAgICAgICAgICAgICAgICAgaG9zdCBX
+V1BOCj4gaXFuLjE5OTQtMDUuY29tLnJlZGhhdDo4NjMyOWFlZmNjZGIgaXFuLjIwMDYtCj4gMDgu
+Y29tLmh1YXdlaTpvY2VhbnN0b3I6MjEwMDAwMjJhMTBiZWIyYTo6MTAyMDAwMjoxMjkuMTMuMTAw
+LjI0MAo+IGlxbi4xOTk0LTA1LmNvbS5yZWRoYXQ6ODYzMjlhZWZjY2RiIGlxbi4yMDA2LQo+IDA4
+LmNvbS5odWF3ZWk6b2NlYW5zdG9yOjIxMDAwMDIyYTEwYmViMmE6OjIwMDAzOjEyOS4xMy4xMDAu
+MjQxCj4gLS0tCj4gIGxpYm11bHRpcGF0aC9wcmludC5jIHwgNTIgKysrKysrKysrKysrKysrKysr
+KysrKysrKysrKysrKysrKysrKysrLS0tCj4gLS0tLS0tLS0tLQo+ICAxIGZpbGUgY2hhbmdlZCwg
+MzkgaW5zZXJ0aW9ucygrKSwgMTMgZGVsZXRpb25zKC0pCgpVbmZvcnR1bmF0ZWx5LCB5b3VyIHBh
+dGNoIGlzIG1hbGZvcm1lZCBhbmQgdGh1cyBkb2Vzbid0IGFwcGx5LiBQbGVhc2UKdHJ5IHNlbmRp
+bmcgeW91ciBwYXRjaCBkaXJlY3RseSB3aXRoIGdpdC1zZW5kLWVtYWlsIG9yIGFub3RoZXIKcHJv
+Z3JhbSB0aGF0IGRvZXNuJ3QgYnJlYWsgdGhlIHBhdGNoIGZvcm1hdC4KCj4gZGlmZiAtLWdpdCBh
+L2xpYm11bHRpcGF0aC9wcmludC5jIGIvbGlibXVsdGlwYXRoL3ByaW50LmMgaW5kZXgKPiA5ZGE2
+YTc3Yy4uZTJiOTAzMDEgMTAwNjQ0Cj4gLS0tIGEvbGlibXVsdGlwYXRoL3ByaW50LmMKPiArKysg
+Yi9saWJtdWx0aXBhdGgvcHJpbnQuYwo+IEBAIC01MzksMjAgKzUzOSwzOSBAQCBzbnByaW50X2hv
+c3RfYXR0ciAoY2hhciAqIGJ1ZmYsIHNpemVfdCBsZW4sCj4gY29uc3Qgc3RydWN0IHBhdGggKiBw
+cCwgY2hhciAqYXR0cikKPiAgCWNoYXIgaG9zdF9pZFszMl07Cj4gIAljb25zdCBjaGFyICp2YWx1
+ZSA9IE5VTEw7Cj4gIAlpbnQgcmV0Owo+IC0KPiAtCWlmIChwcC0+c2dfaWQucHJvdG9faWQgIT0g
+U0NTSV9QUk9UT0NPTF9GQ1ApCj4gKyAgICAKPiArCWlmICgocHAtPnNnX2lkLnByb3RvX2lkICE9
+IFNDU0lfUFJPVE9DT0xfRkNQKSAmJiAocHAtCj4gPnNnX2lkLnByb3RvX2lkIAo+ICshPSBTQ1NJ
+X1BST1RPQ09MX0lTQ1NJKSApCj4gIAkJcmV0dXJuIHNucHJpbnRmKGJ1ZmYsIGxlbiwgIlt1bmRl
+Zl0iKTsKPiAtCXNwcmludGYoaG9zdF9pZCwgImhvc3QlZCIsIHBwLT5zZ19pZC5ob3N0X25vKTsK
+PiAtCWhvc3RfZGV2ID0gdWRldl9kZXZpY2VfbmV3X2Zyb21fc3Vic3lzdGVtX3N5c25hbWUodWRl
+diwKPiAiZmNfaG9zdCIsCj4gLQkJCQkJCQkgIGhvc3RfaWQpOwo+IC0JaWYgKCFob3N0X2Rldikg
+ewo+IC0JCWNvbmRsb2coMSwgIiVzOiBObyBmY19ob3N0IGRldmljZSBmb3IgJyVzJyIsIHBwLT5k
+ZXYsCj4gaG9zdF9pZCk7Cj4gLQkJZ290byBvdXQ7Cj4gKwlpZigocHAtPnNnX2lkLnByb3RvX2lk
+ID09IFNDU0lfUFJPVE9DT0xfSVNDU0kpICYmIHN0cmNtcChidWZmLAo+IHd3aWQpIAo+ICs9PSAw
+KQo+ICsJCQo+ICsgICAgaWYocHAtPnNnX2lkLnByb3RvX2lkID09IFNDU0lfUFJPVE9DT0xfRkNQ
+KQo+ICsgICAgewo+ICsJCXNwcmludGYoaG9zdF9pZCwgImhvc3QlZCIsIHBwLT5zZ19pZC5ob3N0
+X25vKTsKPiArCQlob3N0X2RldiA9IHVkZXZfZGV2aWNlX25ld19mcm9tX3N1YnN5c3RlbV9zeXNu
+YW1lKHVkZXYsCj4gImZjX2hvc3QiLAo+ICsJCQkJCQkJCSAgaG9zdF8KPiBpZCk7Cj4gKwkJaWYg
+KCFob3N0X2Rldikgewo+ICsJCQljb25kbG9nKDEsICIlczogTm8gZmNfaG9zdCBkZXZpY2UgZm9y
+ICclcyciLAo+IHBwLT5kZXYsIGhvc3RfaWQpOwo+ICsJCQlnb3RvIG91dDsKPiArCQl9Cj4gKwkJ
+dmFsdWUgPSB1ZGV2X2RldmljZV9nZXRfc3lzYXR0cl92YWx1ZShob3N0X2RldiwgYXR0cik7Cj4g
+KwkJaWYgKHZhbHVlKQo+ICsJCQlyZXQgPSBzbnByaW50X3N0cihidWZmLCBsZW4sIHZhbHVlKTsK
+PiArCQl1ZGV2X2RldmljZV91bnJlZihob3N0X2Rldik7Cj4gKyAgICB9Cj4gKwllbHNlIGlmKHBw
+LT5zZ19pZC5wcm90b19pZCA9PSBTQ1NJX1BST1RPQ09MX0lTQ1NJKQo+ICsJewo+ICsJICAgIHNw
+cmludGYoaG9zdF9pZCwgInNlc3Npb24lZCIsIHBwLT5zZ19pZC50cmFuc3BvcnRfaWQpOwo+ICsJ
+CWhvc3RfZGV2ID0gdWRldl9kZXZpY2VfbmV3X2Zyb21fc3Vic3lzdGVtX3N5c25hbWUodWRldiwK
+PiAiaXNjc2lfc2Vzc2lvbiIsCj4gKwkJCQkJCQkJICBob3N0Xwo+IGlkKTsKPiArCQlpZiAoIWhv
+c3RfZGV2KSB7Cj4gKwkJCWNvbmRsb2coMywgIiVzOiBObyBpc2NzaV9zZXNzaW9uIGZvciAnJXMn
+IiwgcHAtCj4gPmRldiwgaG9zdF9pZCk7Cj4gKwkJCWdvdG8gb3V0Owo+ICsJCX0KPiArCQl2YWx1
+ZSA9IHVkZXZfZGV2aWNlX2dldF9zeXNhdHRyX3ZhbHVlKGhvc3RfZGV2LCBhdHRyKTsKPiArCQlp
+ZiAodmFsdWUpCj4gKwkJCXJldCA9IHNucHJpbnRfc3RyKGJ1ZmYsIGxlbiwgdmFsdWUpOwo+ICsJ
+CXVkZXZfZGV2aWNlX3VucmVmKGhvc3RfZGV2KTsKPiAgCX0KPiAtCXZhbHVlID0gdWRldl9kZXZp
+Y2VfZ2V0X3N5c2F0dHJfdmFsdWUoaG9zdF9kZXYsIGF0dHIpOwo+IC0JaWYgKHZhbHVlKQo+IC0J
+CXJldCA9IHNucHJpbnRfc3RyKGJ1ZmYsIGxlbiwgdmFsdWUpOwo+IC0JdWRldl9kZXZpY2VfdW5y
+ZWYoaG9zdF9kZXYpOwo+ICBvdXQ6Cj4gIAlpZiAoIXZhbHVlKQo+ICAJCXJldCA9IHNucHJpbnRm
+KGJ1ZmYsIGxlbiwgIlt1bmtub3duXSIpOyBAQCAtNTYyLDcKPiArNTgxLDE0IEBAIG91dDoKPiAg
+aW50Cj4gIHNucHJpbnRfaG9zdF93d25uIChjaGFyICogYnVmZiwgc2l6ZV90IGxlbiwgY29uc3Qg
+c3RydWN0IHBhdGggKgo+IHBwKSAgewo+IC0JcmV0dXJuIHNucHJpbnRfaG9zdF9hdHRyKGJ1ZmYs
+IGxlbiwgcHAsICJub2RlX25hbWUiKTsKPiArCWlmKHBwLT5zZ19pZC5wcm90b19pZCA9PSBTQ1NJ
+X1BST1RPQ09MX0lTQ1NJKQo+ICsJewo+ICsJICAgIHJldHVybiBzbnByaW50X2hvc3RfYXR0cihi
+dWZmLCBsZW4sIHBwLCAiaW5pdGlhdG9ybmFtZSIpOwo+ICsJfQo+ICsJZWxzZQo+ICsJewo+ICsJ
+CXJldHVybiBzbnByaW50X2hvc3RfYXR0cihidWZmLCBsZW4sIHBwLCAibm9kZV9uYW1lIik7Cj4g
+Kwl9Cj4gIH0KPiAgCj4gY291bGQgeW91IGFncmVlIHdpdGggdGhpcyBzb2x1dGlvbiBvciBoYXZl
+IGEgYmV0dGVyIHNvbHV0aW9uPwoKVGhlIHNvbHV0aW9uIGl0c2VsZiBsb29rcyBvaywgYnV0IEkg
+dGhpbmsgcmVhZGFiaWxpdHkgd291bGQgYmUgYmV0dGVyCnRvIHdpdGggYSBzZXBhcmF0ZSBmdW5j
+dGlvbiBzbnByaW50X2lzY3NpX2hvc3Rfd3dubigpLiBOb3RlIHRoYXQgeW91cgpwYXRjaCBjaGVj
+a3MgcHAtPnNnX2lkLnByb3RvX2lkIGJvdGggaW4gc25wcmludF9ob3N0X2F0dHIoKSBhbmQgaW4g
+aXRzCmNhbGxlciwgYW5kIHRoYXQgdGhlIG9ubHkgYXR0cmlidXRlIHlvdSByZXRyaWV2ZSBmb3Ig
+aXNjc2kgaXMKImluaXRpYXRvcm5hbWUiLCBzbyB5b3UgcmVhbGx5IG5lZWQgbm90IHB1dCB0aGlz
+IGZ1bmN0aW9uYWxpdHkgaW50bwpzbnByaW50X2hvc3RfYXR0ciAod2hpY2ggc2hvdWxkIHJhdGhl
+ciBiZSBuYW1lZCBzbnByaW50X2ZjX2hvc3RfYXR0cigpLApidXQgdGhhdCdzIG5vdCB5b3VyIGlz
+c3VlKS4KCk5vdGUgdGhhdCB3ZSBhbHNvIGhhdmUgc3lzZnNfZ2V0X3RndF9ub2RlbmFtZSgpIGlu
+IGRpc2NvdmVyeS5jIHdoaWNoCmhhcyBhIGxvdCBvZiBzaW1pbGFyIGNvZGUuIElNTywgdGhlIFJp
+Z2h0IFRoaW5nIHRvIGRvIHdvdWxkIGJlIHRvCmNyZWF0ZSBhIHByb3BlciBhYnN0cmFjdGlvbiB0
+byByZXRyaWV2ZSB0aGUgZXF1aXZhbGVudHMgb2YgIm5vZGUgbmFtZSIKYW5kICJwb3J0IG5hbWUi
+IGZvciBkaWZmZXJlbnQgU0NTSSB0cmFuc3BvcnRzLiBCdXQgdGhhdCBjb3VsZCBiZSBkb25lCmxh
+dGVyLgoKUmVnYXJkcywKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2Uu
+Y29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVs
+aXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAo
+QUcgTsO8cm5iZXJnKQoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQu
+Y29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
