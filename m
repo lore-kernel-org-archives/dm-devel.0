@@ -1,49 +1,116 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v8 7/9] crypto: qat: Remove VLA usage
-Date: Tue, 25 Sep 2018 18:12:10 +0200
-Message-ID: <CAK8P3a3kiH-a+JG8FqUw7nc_hk+9z-FdsGFT57SxR83W32zKzQ@mail.gmail.com>
-References: <20180807211843.47586-1-keescook@chromium.org> <20180807211843.47586-8-keescook@chromium.org>
+From: Helen Koike <helen.koike@collabora.com>
+Subject: [PATCH 1/2] dm ioctl: add a device mapper ioctl function.
+Date: Wed, 26 Sep 2018 01:45:46 -0300
+Message-ID: <bb62cb08eceb53a5558f6c655bc003fbf35d87d6.1537936397.git.helen.koike@collabora.com>
+References: <cover.1537936397.git.helen.koike@collabora.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180807211843.47586-8-keescook@chromium.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Tudor Ambarus <tudor.ambarus@microchip.com>, Andrew Morton <akpm@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Will Deacon <will.deacon@arm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, David Woodhouse <dwmw@amazon.co.uk>, Matthew Wilcox <willy@infradead.org>, David Miller <davem@davemloft.net>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, dm-devel@redhat.com, qa
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <cover.1537936397.git.helen.koike@collabora.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Aug 7, 2018 at 11:18 PM Kees Cook <keescook@chromium.org> wrote:
->
-> In the quest to remove all stack VLA usage from the kernel[1], this uses
-> the new upper bound for the stack buffer. Also adds a sanity check.
->
-> [1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
->
-> Signed-off-by: Kees Cook <keescook@chromium.org>
+From: Enric Balletbo i Serra <enric.balletbo@collabora.com>
 
-After rebasing to linux-next, I now get a warning about this file:
+Add a dm_ioctl_cmd to issue the equivalent of a DM ioctl call in kernel.
 
-drivers/crypto/qat/qat_common/qat_algs.c: In function 'qat_alg_do_precomputes':
-drivers/crypto/qat/qat_common/qat_algs.c:257:1: error: the frame size
-of 1112 bytes is larger than 1024 bytes [-Werror=frame-larger-than=]
+Signed-off-by: Enric Balletbo i Serra <enric.balletbo@collabora.com>
+---
+ drivers/md/dm-ioctl.c         | 50 +++++++++++++++++++++++++++++++++++
+ include/linux/device-mapper.h |  6 +++++
+ 2 files changed, 56 insertions(+)
 
-I assume it was already possible to get into that state with the VLA,
-but it seems bad enough that I think we need to do something
-about it.
-
-The large stack variables add up to 1084 bytes, which fully explains
-how we got here:
-
-        SHASH_DESC_ON_STACK(shash, ctx->hash_tfm); /* 360 */
-        struct sha1_state sha1;  /* 92 */
-        struct sha256_state sha256; /* 104 */
-        struct sha512_state sha512; /* 208 */
-        char ipad[MAX_ALGAPI_BLOCKSIZE]; /* 160 */
-        char opad[MAX_ALGAPI_BLOCKSIZE]; /* 160 */
-
-The question is what we can do about it. One simple step I've tried
-is to move the sha1/sha256/sha512 into a union, which saves around
-200 bytes and should bring us (slightly) below the warning
-limit, but I suspect we can do better than that. Any ideas?
-
-        Arnd
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index b810ea77e6b1..68ce2557c62b 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -2024,3 +2024,53 @@ int dm_copy_name_and_uuid(struct mapped_device *md, char *name, char *uuid)
+ 
+ 	return r;
+ }
++
++/**
++ * dm_ioctl_cmd - Device mapper ioctl's
++ * @command: ioctl command
++ * @param: Pointer to device mapped ioctl struct
++ */
++int dm_ioctl_cmd(uint command, struct dm_ioctl *param)
++{
++	int r = 0;
++	int ioctl_flags;
++	unsigned int cmd;
++	ioctl_fn fn = NULL;
++	size_t input_param_size;
++	struct file *filp = NULL;
++
++	if (_IOC_TYPE(command) != DM_IOCTL)
++		return -ENOTTY;
++
++	/* DM_DEV_ARM_POLL is not supported */
++	if (command == DM_DEV_ARM_POLL)
++		return -EINVAL;
++
++	cmd = _IOC_NR(command);
++
++	/*
++	 * Nothing more to do for the version command.
++	 */
++	if (cmd == DM_VERSION_CMD)
++		return 0;
++
++	fn = lookup_ioctl(cmd, &ioctl_flags);
++	if (!fn) {
++		DMWARN("dm_ioctl: unknown command 0x%x", command);
++		return -ENOTTY;
++	}
++
++	input_param_size = param->data_size;
++	r = validate_params(cmd, param);
++	if (r)
++		return r;
++
++	param->data_size = sizeof(*param);
++	r = fn(filp, param, input_param_size);
++
++	if (unlikely(param->flags & DM_BUFFER_FULL_FLAG) &&
++	    unlikely(ioctl_flags & IOCTL_FLAGS_NO_PARAMS))
++		DMERR("ioctl %d tried to output some data but has IOCTL_FLAGS_NO_PARAMS set", cmd);
++
++	return r;
++}
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 6fb0808e87c8..df5a5a60f9aa 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -12,6 +12,7 @@
+ #include <linux/blkdev.h>
+ #include <linux/math64.h>
+ #include <linux/ratelimit.h>
++#include <linux/dm-ioctl.h>
+ 
+ struct dm_dev;
+ struct dm_target;
+@@ -424,6 +425,11 @@ void dm_remap_zone_report(struct dm_target *ti, struct bio *bio,
+ 			  sector_t start);
+ union map_info *dm_get_rq_mapinfo(struct request *rq);
+ 
++/*
++ * Device mapper ioctl function.
++ */
++int dm_ioctl_cmd(unsigned int command, struct dm_ioctl *param);
++
+ struct queue_limits *dm_get_queue_limits(struct mapped_device *md);
+ 
+ /*
+-- 
+2.19.0
