@@ -1,45 +1,54 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 0/2] boot to a mapped device
-Date: Thu, 27 Sep 2018 10:23:29 -0400
-Message-ID: <20180927142328.GA4074@redhat.com>
-References: <cover.1537936397.git.helen.koike@collabora.com>
- <CAFLxGvzCDOTR4stPmp1TTLkQ39x3e8MQuL=AR754abKc5skhpA@mail.gmail.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: dm thin: data block's ref count is not zero but not
+ belong to any device.
+Date: Thu, 27 Sep 2018 15:25:26 +0100
+Message-ID: <20180927142526.GB29590@reti>
+References: <20180926031317.GA20632@yyp.>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <CAFLxGvzCDOTR4stPmp1TTLkQ39x3e8MQuL=AR754abKc5skhpA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Weinberger <richard.weinberger@gmail.com>
-Cc: helen.koike@collabora.com, device-mapper development <dm-devel@redhat.com>, agk@redhat.com, LKML <linux-kernel@vger.kernel.org>, enric.balletbo@collabora.com, Will Drewry <wad@chromium.org>, linux-doc@vger.kernel.org, linux-lvm@redhat.com, kernel@collabora.com
+In-Reply-To: <20180926031317.GA20632@yyp.>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: monty <monty_pavel@sina.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Sep 26 2018 at  3:16am -0400,
-Richard Weinberger <richard.weinberger@gmail.com> wrote:
-
-> Helen,
+On Tue, Sep 25, 2018 at 11:13:17PM -0400, monty wrote:
 > 
-> On Wed, Sep 26, 2018 at 7:01 AM Helen Koike <helen.koike@collabora.com> wrote:
-> >
-> > This series is reviving an old patchwork.
-> > Booting from a mapped device requires an initramfs. This series is
-> > allows for device-mapper targets to be configured at boot time for
-> > use early in the boot process (as the root device or otherwise).
+> Hi! I met a problem of dm-thin: a thin-pool has no volumes but its
+> nr_free_blocks_data is not zero. I guess the scene of this problem like:
+> a. create a thin volume thin01, size is 10GB;
+> b. write 10GB to thin01;
+> c. create a snapshot thin01-snap, orig is thin01;
+> d. write 10GB to thin01-snap;
+> e. for a data block of thin01-snap, which will be written by user, will
+> experience following steps:
+> 	1. alloc a data block m firstly;
+> 	2. wirte data to data block m;
+> 	3. bio callback and assign data block m to thin01-snap.
+> If power loss happens between step 2 and step 3, data block will not
+> belong to any device but its ref count is not zero.
+> Is it a problem? How to solve this problem?
+
+Yes, there are a couple of ways this can happen, a dump and restore of
+the metadata will repair it.
+
+- Joe
+
+
+
 > 
-> What is the reason for this patch series?
-> Setting up non-trivial root filesystems/storage always requires an
-> initramfs, there is nothing
-> wrong about this.
-
-Exactly.  If phones or whatever would benefit from this patchset then
-say as much.
-
-I will not accept this patchset at this time.
-
-> > Example, the following could be added in the boot parameters.
-> > dm="lroot,,,rw, 0 4096 linear 98:16 0, 4096 4096 linear 98:32 0" root=/dev/dm-0
-> 
-> Hmmm, the new dm= parameter is anything but easy to get right.
-
-No, it isn't.. exposes way too much potential for users hanging
-themselves.
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
