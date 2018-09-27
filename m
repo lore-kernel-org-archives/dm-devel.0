@@ -1,105 +1,45 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] This patch filled the host WWNN. when using
- the command of multipathd to list the isscsi paths informartion,
- the host WWNN of paths informartion is not exist. like this: multipathd show
- paths format "%N %R" host WWNN host WWPN [undef] iqn.20
-Date: Wed, 26 Sep 2018 22:37:36 +0200
-Message-ID: <ff7728adff7f7f4d25f90ab7465320d095081ba5.camel@suse.com>
-References: <AD49694D3F7B7B4D96C353DCB55098B888110F20@dggeml524-mbx.china.huawei.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 0/2] boot to a mapped device
+Date: Thu, 27 Sep 2018 10:23:29 -0400
+Message-ID: <20180927142328.GA4074@redhat.com>
+References: <cover.1537936397.git.helen.koike@collabora.com>
+ <CAFLxGvzCDOTR4stPmp1TTLkQ39x3e8MQuL=AR754abKc5skhpA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <AD49694D3F7B7B4D96C353DCB55098B888110F20@dggeml524-mbx.china.huawei.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Sunao (A)" <sunao.sun@huawei.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>, "hare@suse.de" <hare@suse.de>, "bmarzins@redhat.com" <bmarzins@redhat.com>, "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>
-Cc: "wangke (U)" <wangke16@huawei.com>, dingwenyi <dingwenyi@huawei.com>, guanjunxiong <guanjunxiong@huawei.com>, "Chengjike (ISSP)" <chengjike.cheng@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>, lixiaoying <lixiaoying@huawei.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAFLxGvzCDOTR4stPmp1TTLkQ39x3e8MQuL=AR754abKc5skhpA@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Richard Weinberger <richard.weinberger@gmail.com>
+Cc: helen.koike@collabora.com, device-mapper development <dm-devel@redhat.com>, agk@redhat.com, LKML <linux-kernel@vger.kernel.org>, enric.balletbo@collabora.com, Will Drewry <wad@chromium.org>, linux-doc@vger.kernel.org, linux-lvm@redhat.com, kernel@collabora.com
 List-Id: dm-devel.ids
 
-SGkgU3VuYW8sCgpUaGFua3MgZm9yIHlvdXIgcGF0Y2guIE5leHQgdGltZSwgcGxlYXNlIGtlZXAg
-dGhlIHN1YmplY3QgbGluZQphdCBhIHJlYWRhYmxlIGxlbmd0aCwgYW5kIHByb3ZpZGUgYSBmdWxs
-IGRlc2NyaXB0aW9uIG9mIHRoZSBwcm9ibGVtLAphbmQgdGhlIHByb3Bvc2VkIHNvbHV0aW9uLCBp
-biB0aGUgbWVzc2FnZSBib2R5LgoKT24gVHVlLCAyMDE4LTA5LTE4IGF0IDA5OjA5ICswMDAwLCBT
-dW5hbyAoQSkgd3JvdGU6Cj4gdGhpcyBwYXRjaCBzb2x2ZWQgdGhpcyBwcm9ibGVtIGFuZCBmaWxs
-ZWQgdGhlIGhvc3QgV1dOTi4KPiBsaWtlIHRoaXM6Cj4gbXVsdGlwYXRoZCBzaG93IHBhdGhzIGZv
-cm1hdCAiJU4gJVIiCj4gaG9zdCBXV05OICAgICAgICAgICAgICAgICAgICAgICAgICAgaG9zdCBX
-V1BOCj4gaXFuLjE5OTQtMDUuY29tLnJlZGhhdDo4NjMyOWFlZmNjZGIgaXFuLjIwMDYtCj4gMDgu
-Y29tLmh1YXdlaTpvY2VhbnN0b3I6MjEwMDAwMjJhMTBiZWIyYTo6MTAyMDAwMjoxMjkuMTMuMTAw
-LjI0MAo+IGlxbi4xOTk0LTA1LmNvbS5yZWRoYXQ6ODYzMjlhZWZjY2RiIGlxbi4yMDA2LQo+IDA4
-LmNvbS5odWF3ZWk6b2NlYW5zdG9yOjIxMDAwMDIyYTEwYmViMmE6OjIwMDAzOjEyOS4xMy4xMDAu
-MjQxCj4gLS0tCj4gIGxpYm11bHRpcGF0aC9wcmludC5jIHwgNTIgKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKysrKysrKysrLS0tCj4gLS0tLS0tLS0tLQo+ICAxIGZpbGUgY2hhbmdlZCwg
-MzkgaW5zZXJ0aW9ucygrKSwgMTMgZGVsZXRpb25zKC0pCgpVbmZvcnR1bmF0ZWx5LCB5b3VyIHBh
-dGNoIGlzIG1hbGZvcm1lZCBhbmQgdGh1cyBkb2Vzbid0IGFwcGx5LiBQbGVhc2UKdHJ5IHNlbmRp
-bmcgeW91ciBwYXRjaCBkaXJlY3RseSB3aXRoIGdpdC1zZW5kLWVtYWlsIG9yIGFub3RoZXIKcHJv
-Z3JhbSB0aGF0IGRvZXNuJ3QgYnJlYWsgdGhlIHBhdGNoIGZvcm1hdC4KCj4gZGlmZiAtLWdpdCBh
-L2xpYm11bHRpcGF0aC9wcmludC5jIGIvbGlibXVsdGlwYXRoL3ByaW50LmMgaW5kZXgKPiA5ZGE2
-YTc3Yy4uZTJiOTAzMDEgMTAwNjQ0Cj4gLS0tIGEvbGlibXVsdGlwYXRoL3ByaW50LmMKPiArKysg
-Yi9saWJtdWx0aXBhdGgvcHJpbnQuYwo+IEBAIC01MzksMjAgKzUzOSwzOSBAQCBzbnByaW50X2hv
-c3RfYXR0ciAoY2hhciAqIGJ1ZmYsIHNpemVfdCBsZW4sCj4gY29uc3Qgc3RydWN0IHBhdGggKiBw
-cCwgY2hhciAqYXR0cikKPiAgCWNoYXIgaG9zdF9pZFszMl07Cj4gIAljb25zdCBjaGFyICp2YWx1
-ZSA9IE5VTEw7Cj4gIAlpbnQgcmV0Owo+IC0KPiAtCWlmIChwcC0+c2dfaWQucHJvdG9faWQgIT0g
-U0NTSV9QUk9UT0NPTF9GQ1ApCj4gKyAgICAKPiArCWlmICgocHAtPnNnX2lkLnByb3RvX2lkICE9
-IFNDU0lfUFJPVE9DT0xfRkNQKSAmJiAocHAtCj4gPnNnX2lkLnByb3RvX2lkIAo+ICshPSBTQ1NJ
-X1BST1RPQ09MX0lTQ1NJKSApCj4gIAkJcmV0dXJuIHNucHJpbnRmKGJ1ZmYsIGxlbiwgIlt1bmRl
-Zl0iKTsKPiAtCXNwcmludGYoaG9zdF9pZCwgImhvc3QlZCIsIHBwLT5zZ19pZC5ob3N0X25vKTsK
-PiAtCWhvc3RfZGV2ID0gdWRldl9kZXZpY2VfbmV3X2Zyb21fc3Vic3lzdGVtX3N5c25hbWUodWRl
-diwKPiAiZmNfaG9zdCIsCj4gLQkJCQkJCQkgIGhvc3RfaWQpOwo+IC0JaWYgKCFob3N0X2Rldikg
-ewo+IC0JCWNvbmRsb2coMSwgIiVzOiBObyBmY19ob3N0IGRldmljZSBmb3IgJyVzJyIsIHBwLT5k
-ZXYsCj4gaG9zdF9pZCk7Cj4gLQkJZ290byBvdXQ7Cj4gKwlpZigocHAtPnNnX2lkLnByb3RvX2lk
-ID09IFNDU0lfUFJPVE9DT0xfSVNDU0kpICYmIHN0cmNtcChidWZmLAo+IHd3aWQpIAo+ICs9PSAw
-KQo+ICsJCQo+ICsgICAgaWYocHAtPnNnX2lkLnByb3RvX2lkID09IFNDU0lfUFJPVE9DT0xfRkNQ
-KQo+ICsgICAgewo+ICsJCXNwcmludGYoaG9zdF9pZCwgImhvc3QlZCIsIHBwLT5zZ19pZC5ob3N0
-X25vKTsKPiArCQlob3N0X2RldiA9IHVkZXZfZGV2aWNlX25ld19mcm9tX3N1YnN5c3RlbV9zeXNu
-YW1lKHVkZXYsCj4gImZjX2hvc3QiLAo+ICsJCQkJCQkJCSAgaG9zdF8KPiBpZCk7Cj4gKwkJaWYg
-KCFob3N0X2Rldikgewo+ICsJCQljb25kbG9nKDEsICIlczogTm8gZmNfaG9zdCBkZXZpY2UgZm9y
-ICclcyciLAo+IHBwLT5kZXYsIGhvc3RfaWQpOwo+ICsJCQlnb3RvIG91dDsKPiArCQl9Cj4gKwkJ
-dmFsdWUgPSB1ZGV2X2RldmljZV9nZXRfc3lzYXR0cl92YWx1ZShob3N0X2RldiwgYXR0cik7Cj4g
-KwkJaWYgKHZhbHVlKQo+ICsJCQlyZXQgPSBzbnByaW50X3N0cihidWZmLCBsZW4sIHZhbHVlKTsK
-PiArCQl1ZGV2X2RldmljZV91bnJlZihob3N0X2Rldik7Cj4gKyAgICB9Cj4gKwllbHNlIGlmKHBw
-LT5zZ19pZC5wcm90b19pZCA9PSBTQ1NJX1BST1RPQ09MX0lTQ1NJKQo+ICsJewo+ICsJICAgIHNw
-cmludGYoaG9zdF9pZCwgInNlc3Npb24lZCIsIHBwLT5zZ19pZC50cmFuc3BvcnRfaWQpOwo+ICsJ
-CWhvc3RfZGV2ID0gdWRldl9kZXZpY2VfbmV3X2Zyb21fc3Vic3lzdGVtX3N5c25hbWUodWRldiwK
-PiAiaXNjc2lfc2Vzc2lvbiIsCj4gKwkJCQkJCQkJICBob3N0Xwo+IGlkKTsKPiArCQlpZiAoIWhv
-c3RfZGV2KSB7Cj4gKwkJCWNvbmRsb2coMywgIiVzOiBObyBpc2NzaV9zZXNzaW9uIGZvciAnJXMn
-IiwgcHAtCj4gPmRldiwgaG9zdF9pZCk7Cj4gKwkJCWdvdG8gb3V0Owo+ICsJCX0KPiArCQl2YWx1
-ZSA9IHVkZXZfZGV2aWNlX2dldF9zeXNhdHRyX3ZhbHVlKGhvc3RfZGV2LCBhdHRyKTsKPiArCQlp
-ZiAodmFsdWUpCj4gKwkJCXJldCA9IHNucHJpbnRfc3RyKGJ1ZmYsIGxlbiwgdmFsdWUpOwo+ICsJ
-CXVkZXZfZGV2aWNlX3VucmVmKGhvc3RfZGV2KTsKPiAgCX0KPiAtCXZhbHVlID0gdWRldl9kZXZp
-Y2VfZ2V0X3N5c2F0dHJfdmFsdWUoaG9zdF9kZXYsIGF0dHIpOwo+IC0JaWYgKHZhbHVlKQo+IC0J
-CXJldCA9IHNucHJpbnRfc3RyKGJ1ZmYsIGxlbiwgdmFsdWUpOwo+IC0JdWRldl9kZXZpY2VfdW5y
-ZWYoaG9zdF9kZXYpOwo+ICBvdXQ6Cj4gIAlpZiAoIXZhbHVlKQo+ICAJCXJldCA9IHNucHJpbnRm
-KGJ1ZmYsIGxlbiwgIlt1bmtub3duXSIpOyBAQCAtNTYyLDcKPiArNTgxLDE0IEBAIG91dDoKPiAg
-aW50Cj4gIHNucHJpbnRfaG9zdF93d25uIChjaGFyICogYnVmZiwgc2l6ZV90IGxlbiwgY29uc3Qg
-c3RydWN0IHBhdGggKgo+IHBwKSAgewo+IC0JcmV0dXJuIHNucHJpbnRfaG9zdF9hdHRyKGJ1ZmYs
-IGxlbiwgcHAsICJub2RlX25hbWUiKTsKPiArCWlmKHBwLT5zZ19pZC5wcm90b19pZCA9PSBTQ1NJ
-X1BST1RPQ09MX0lTQ1NJKQo+ICsJewo+ICsJICAgIHJldHVybiBzbnByaW50X2hvc3RfYXR0cihi
-dWZmLCBsZW4sIHBwLCAiaW5pdGlhdG9ybmFtZSIpOwo+ICsJfQo+ICsJZWxzZQo+ICsJewo+ICsJ
-CXJldHVybiBzbnByaW50X2hvc3RfYXR0cihidWZmLCBsZW4sIHBwLCAibm9kZV9uYW1lIik7Cj4g
-Kwl9Cj4gIH0KPiAgCj4gY291bGQgeW91IGFncmVlIHdpdGggdGhpcyBzb2x1dGlvbiBvciBoYXZl
-IGEgYmV0dGVyIHNvbHV0aW9uPwoKVGhlIHNvbHV0aW9uIGl0c2VsZiBsb29rcyBvaywgYnV0IEkg
-dGhpbmsgcmVhZGFiaWxpdHkgd291bGQgYmUgYmV0dGVyCnRvIHdpdGggYSBzZXBhcmF0ZSBmdW5j
-dGlvbiBzbnByaW50X2lzY3NpX2hvc3Rfd3dubigpLiBOb3RlIHRoYXQgeW91cgpwYXRjaCBjaGVj
-a3MgcHAtPnNnX2lkLnByb3RvX2lkIGJvdGggaW4gc25wcmludF9ob3N0X2F0dHIoKSBhbmQgaW4g
-aXRzCmNhbGxlciwgYW5kIHRoYXQgdGhlIG9ubHkgYXR0cmlidXRlIHlvdSByZXRyaWV2ZSBmb3Ig
-aXNjc2kgaXMKImluaXRpYXRvcm5hbWUiLCBzbyB5b3UgcmVhbGx5IG5lZWQgbm90IHB1dCB0aGlz
-IGZ1bmN0aW9uYWxpdHkgaW50bwpzbnByaW50X2hvc3RfYXR0ciAod2hpY2ggc2hvdWxkIHJhdGhl
-ciBiZSBuYW1lZCBzbnByaW50X2ZjX2hvc3RfYXR0cigpLApidXQgdGhhdCdzIG5vdCB5b3VyIGlz
-c3VlKS4KCk5vdGUgdGhhdCB3ZSBhbHNvIGhhdmUgc3lzZnNfZ2V0X3RndF9ub2RlbmFtZSgpIGlu
-IGRpc2NvdmVyeS5jIHdoaWNoCmhhcyBhIGxvdCBvZiBzaW1pbGFyIGNvZGUuIElNTywgdGhlIFJp
-Z2h0IFRoaW5nIHRvIGRvIHdvdWxkIGJlIHRvCmNyZWF0ZSBhIHByb3BlciBhYnN0cmFjdGlvbiB0
-byByZXRyaWV2ZSB0aGUgZXF1aXZhbGVudHMgb2YgIm5vZGUgbmFtZSIKYW5kICJwb3J0IG5hbWUi
-IGZvciBkaWZmZXJlbnQgU0NTSSB0cmFuc3BvcnRzLiBCdXQgdGhhdCBjb3VsZCBiZSBkb25lCmxh
-dGVyLgoKUmVnYXJkcywKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2Uu
-Y29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVs
-aXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAo
-QUcgTsO8cm5iZXJnKQoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQu
-Y29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Wed, Sep 26 2018 at  3:16am -0400,
+Richard Weinberger <richard.weinberger@gmail.com> wrote:
+
+> Helen,
+> 
+> On Wed, Sep 26, 2018 at 7:01 AM Helen Koike <helen.koike@collabora.com> wrote:
+> >
+> > This series is reviving an old patchwork.
+> > Booting from a mapped device requires an initramfs. This series is
+> > allows for device-mapper targets to be configured at boot time for
+> > use early in the boot process (as the root device or otherwise).
+> 
+> What is the reason for this patch series?
+> Setting up non-trivial root filesystems/storage always requires an
+> initramfs, there is nothing
+> wrong about this.
+
+Exactly.  If phones or whatever would benefit from this patchset then
+say as much.
+
+I will not accept this patchset at this time.
+
+> > Example, the following could be added in the boot parameters.
+> > dm="lroot,,,rw, 0 4096 linear 98:16 0, 4096 4096 linear 98:32 0" root=/dev/dm-0
+> 
+> Hmmm, the new dm= parameter is anything but easy to get right.
+
+No, it isn't.. exposes way too much potential for users hanging
+themselves.
