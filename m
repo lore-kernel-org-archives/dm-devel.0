@@ -1,16 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] multipathd: fix mpp->hwe handling on path
- removal
-Date: Mon, 01 Oct 2018 16:54:09 +0200
-Message-ID: <f462a9c6b25121485bd19fb8a31c2502306e2414.camel@suse.com>
-References: <20180625151020.31927-1-mwilck@suse.com>
-	<4ccf2557dd0cc5a84d6f009b8afbbd345b58ff15.camel@suse.com>
-	<CABr-GndXjnbDqp8AYFEoPZf8ckkFe-R2SPL4QBrCR+ujUKaj3g@mail.gmail.com>
+Subject: [PATCH 1/2] libmultipath: allow sysfs_pathinfo to return
+	SKIPPED
+Date: Mon,  1 Oct 2018 20:45:06 +0200
+Message-ID: <20181001184507.4162-2-mwilck@suse.com>
+References: <20181001184507.4162-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-GndXjnbDqp8AYFEoPZf8ckkFe-R2SPL4QBrCR+ujUKaj3g@mail.gmail.com>
+In-Reply-To: <20181001184507.4162-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,73 +19,244 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-SGVsbG8gQ2hyaXN0b3BoZSwKCk9uIE1vbiwgMjAxOC0wNy0wMiBhdCAxMjowNSArMDIwMCwgQ2hy
-aXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+IFJpZ2h0LCBkb25lLgo+IFRoZSBsZWZ0b3ZlciBmcm9t
-IHlvdXIgcHJldmlvdXMgdjMgcGF0Y2hzZXQgaXMgbWVyZ2VkIHRvby4KPiBUaGFua3MsCj4gQ2hy
-aXN0b3BoZS4KCkkgdGhpbmsgaW4gdGhhdCBtYWlsIGZyb20gSnVseSAybmQsIHlvdSByZWZlcnJl
-ZCB0byB0aGUgZm9sbG93aW5nIHBhdGNoCnNldCB3aGljaCBoYWQgYmVlbiBhY2tlZCBieSBCZW4g
-b24gSnVuZSAyNXRoIAooaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9hcmNoaXZlcy9kbS1kZXZlbC8y
-MDE4LUp1bmUvbXNnMDAzNjcuaHRtbCk6CgogKiBbUEFUQ0ggdjMgMDAvMTBdIGxpYm1wYXRocGVy
-c2lzdCBmaXhlcyBhbmQgc29tZSBtb3JlCiAqIFtQQVRDSCB2MyAwMS8xMF0gbGlibXBhdGhwZXJz
-aXN0OiByZW1vdmUgZHVwbGljYXRlIHRlc3QgaW4gCiAqIFtQQVRDSCB2MyAwMi8xMF0gbGlibXBh
-dGhwZXJzaXN0OiBmaXggdHlwbyBpbgogKiBbUEFUQ0ggdjMgMDMvMTBdIGxpYm1wYXRocGVyc2lz
-dDogZml4IHN0YWNrIG92ZXJmbG93IGluCiAqIFtQQVRDSCB2MyAwNC8xMF0gbGlibXVsdGlwYXRo
-OiBhZGQgKGdldHxwdXQpX3VuYWxpZ25lZF9iZTY0CiAqIFtQQVRDSCB2MyAwNS8xMF0gbXVsdGlw
-YXRoLXRvb2xzL3Rlc3RzOiBhZGQgdGVzdHMgZm9yCiAqIFtQQVRDSCB2MyAwNi8xMF0gbGlibXBh
-dGhwZXJzaXN0OiBmaXggYnl0ZSBzd2FwcGluZyBmb3IgYmlnIGVuZGlhbgogKiBbUEFUQ0ggdjMg
-MDcvMTBdIChsaWIpbXBhdGhwZXJzaXN0OiB1c2UgT19SRE9OTFkgZmlsZSBkZXNjcmlwdG9ycwog
-KiBbUEFUQ0ggdjMgMDgvMTBdIGxpYm11bHRpcGF0aDogZml4IGdjYyA4LjEgInRydW5jYXRlZCBv
-dXRwdXQiCiAqIFtQQVRDSCB2MyAwOS8xMF0gbXVsdGlwYXRoZDogZml4IGJ1ZmZlciBzaXplIGlu
-IGNsaV9nZXRwcmtleSgpCiAqIFtQQVRDSCB2MyAxMC8xMF0gbGlibXVsdGlwYXRoOiBhdm9pZCBl
-cnJvciBtZXNzYWdlcyBmcm9tIFJEQUMgY2hlY2sKCkkganVzdCBkb3VibGUtY2hlY2tlZCwgYW5k
-IGl0IHNlZW1zIHRoYXQgb3V0IG9mIHRoZXNlLCBvbmx5IHBhdGNoIDkgYW5kCjEwIGdvdCBhcHBs
-aWVkIHRvIHlvdXIgdHJlZS4gRGlkIHlvdSBoYXZlIGFuIGlzc3VlIHdpdGggdGhlIG90aGVycywg
-b3IKd2FzIGl0IGp1c3QgYW4gb3ZlcnNpZ2h0PwoKUmVnYXJkcwpNYXJ0aW4KClBTOiBJJ2xsIHNl
-bmQgYSByZXZpZXcgb3IgQmVuJ3MgbGF0ZSBiaWcgc2VyaWVzIHZlcnkgc29vbi4KCj4gCj4gT24g
-TW9uLCBKdWwgMiwgMjAxOCBhdCAxMTozMyBBTSBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNv
-bT4gd3JvdGU6Cj4gPiBDaHJpc3RvcGhlLAo+ID4gCj4gPiB3aXRob3V0IHRoaXMgcGF0Y2gsIGN1
-cnJlbnQgdXBzdHJlYW0gbXVsdGlwYXRoIF9jcmFzaGVzXyBvbiBwYXRoCj4gPiByZW1vdmFsLiBQ
-bGVhc2UgYXBwbHkgaXQuIElmIHJldmlld2VycyBkaXNhZ3JlZSB3aXRoIHRoaXMgZml4LCBJCj4g
-PiBjYW4KPiA+IHBvc3QgdXBkYXRlcyBsYXRlci4KPiA+IAo+ID4gTWFydGluCj4gPiAKPiA+IE9u
-IE1vbiwgMjAxOC0wNi0yNSBhdCAxNzoxMCArMDIwMCwgTWFydGluIFdpbGNrIHdyb3RlOgo+ID4g
-PiBJbiBteSBwcmV2aW91cyBwYXRjaCBmMDQ2MmYwYzgzMzgsIEkgb3Zlcmxvb2tlZCB0aGF0IGR1
-cmluZyBwYXRoCj4gPiA+IHJlbW92YWwsCj4gPiA+IHRoZSBwYXRoIHRoYXQgbXBwLT5od2UgcmVm
-ZXJlbmNlcyBtYXkgYmUgcmVtb3ZlZCBhbmQgYW5kIHRodXMKPiA+IG1wcC0KPiA+ID4gPmh3ZQo+
-ID4gPiBtYXkgYmVjb21lIHN0YWxlLiBGaXggaXQuCj4gPiA+IAo+ID4gPiBGaXhlczogZjA0NjJm
-MGM4MzM4ICJsaWJtdWx0aXBhdGg6IHVzZSB2ZWN0b3IgZm9yIGZvciBwcC0+aHdlIGFuZAo+ID4g
-bXAtCj4gPiA+ID5od2UiCj4gPiA+IFNpZ25lZC1vZmYtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNr
-QHN1c2UuY29tPgo+ID4gPiAtLS0KPiA+ID4gIG11bHRpcGF0aGQvbWFpbi5jIHwgMTEgKysrKysr
-KysrKysKPiA+ID4gIDEgZmlsZSBjaGFuZ2VkLCAxMSBpbnNlcnRpb25zKCspCj4gPiA+IAo+ID4g
-PiBkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC9tYWluLmMgYi9tdWx0aXBhdGhkL21haW4uYwo+ID4g
-PiBpbmRleCA3MmYwNmI1Ni4uY2M0OTNjMTggMTAwNjQ0Cj4gPiA+IC0tLSBhL211bHRpcGF0aGQv
-bWFpbi5jCj4gPiA+ICsrKyBiL211bHRpcGF0aGQvbWFpbi5jCj4gPiA+IEBAIC0xMDc2LDYgKzEw
-NzYsMTQgQEAgZXZfcmVtb3ZlX3BhdGggKHN0cnVjdCBwYXRoICpwcCwgc3RydWN0Cj4gPiA+IHZl
-Y3RvcnMgKiB2ZWNzLCBpbnQgbmVlZF9kb19tYXApCj4gPiA+ICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgIG1wcC0+YWxpYXMpOwo+ID4gPiAgICAgICAgICAgICAgICAgICAgICAgZ290byBm
-YWlsOwo+ID4gPiAgICAgICAgICAgICAgIH0KPiA+ID4gKwo+ID4gPiArICAgICAgICAgICAgIC8q
-Cj4gPiA+ICsgICAgICAgICAgICAgICogTWFrZSBzdXJlIG1wcC0+aHdlIGRvZXNuJ3QgcG9pbnQg
-dG8gZnJlZWQgbWVtb3J5Cj4gPiA+ICsgICAgICAgICAgICAgICogV2UgY2FsbCBleHRyYWN0X2h3
-ZV9mcm9tX3BhdGgoKSBiZWxvdyB0byByZXN0b3JlCj4gPiA+IG1wcC0+aHdlCj4gPiA+ICsgICAg
-ICAgICAgICAgICovCj4gPiA+ICsgICAgICAgICAgICAgaWYgKG1wcC0+aHdlID09IHBwLT5od2Up
-Cj4gPiA+ICsgICAgICAgICAgICAgICAgICAgICBtcHAtPmh3ZSA9IE5VTEw7Cj4gPiA+ICsKPiA+
-ID4gICAgICAgICAgICAgICBpZiAoKGkgPSBmaW5kX3Nsb3QobXBwLT5wYXRocywgKHZvaWQgKilw
-cCkpICE9IC0xKQo+ID4gPiAgICAgICAgICAgICAgICAgICAgICAgdmVjdG9yX2RlbF9zbG90KG1w
-cC0+cGF0aHMsIGkpOwo+ID4gPiAgCj4gPiA+IEBAIC0xMTA5LDYgKzExMTcsOSBAQCBldl9yZW1v
-dmVfcGF0aCAoc3RydWN0IHBhdGggKnBwLCBzdHJ1Y3QKPiA+IHZlY3RvcnMKPiA+ID4gKiB2ZWNz
-LCBpbnQgbmVlZF9kb19tYXApCj4gPiA+ICAgICAgICAgICAgICAgICAgICAgICAgKi8KPiA+ID4g
-ICAgICAgICAgICAgICB9Cj4gPiA+ICAKPiA+ID4gKyAgICAgICAgICAgICBpZiAobXBwLT5od2Ug
-PT0gTlVMTCkKPiA+ID4gKyAgICAgICAgICAgICAgICAgICAgIGV4dHJhY3RfaHdlX2Zyb21fcGF0
-aChtcHApOwo+ID4gPiArCj4gPiA+ICAgICAgICAgICAgICAgaWYgKHNldHVwX21hcChtcHAsIHBh
-cmFtcywgUEFSQU1TX1NJWkUsIHZlY3MpKSB7Cj4gPiA+ICAgICAgICAgICAgICAgICAgICAgICBj
-b25kbG9nKDAsICIlczogZmFpbGVkIHRvIHNldHVwIG1hcCBmb3IiCj4gPiA+ICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICIgcmVtb3ZhbCBvZiBwYXRoICVzIiwgbXBwLT5hbGlhcywKPiA+
-ID4gcHAtPmRldik7Cj4gPiAKPiA+IC0tCj4gPiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QKPiA+IGRt
-LWRldmVsQHJlZGhhdC5jb20KPiA+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0
-aW5mby9kbS1kZXZlbAoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRl
-bC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5k
-w7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJu
-YmVyZykKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
-czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+The sysfs_pathinfo() code path can't distinguish between real
+failure and a devices that have to be skipped. One example
+for this are NVMe native multipath devices. This may cause
+lots of irritating log messages.
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/discovery.c | 86 +++++++++++++++++++++-------------------
+ 1 file changed, 45 insertions(+), 41 deletions(-)
+
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 0b1855dd..0d94b333 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1156,20 +1156,20 @@ scsi_sysfs_pathinfo (struct path * pp, vector hwtable)
+ 		parent = udev_device_get_parent(parent);
+ 	}
+ 	if (!attr_path || pp->sg_id.host_no == -1)
+-		return 1;
++		return PATHINFO_FAILED;
+ 
+ 	if (sysfs_get_vendor(parent, pp->vendor_id, SCSI_VENDOR_SIZE) <= 0)
+-		return 1;
++		return PATHINFO_FAILED;;
+ 
+ 	condlog(3, "%s: vendor = %s", pp->dev, pp->vendor_id);
+ 
+ 	if (sysfs_get_model(parent, pp->product_id, PATH_PRODUCT_SIZE) <= 0)
+-		return 1;
++		return PATHINFO_FAILED;;
+ 
+ 	condlog(3, "%s: product = %s", pp->dev, pp->product_id);
+ 
+ 	if (sysfs_get_rev(parent, pp->rev, PATH_REV_SIZE) < 0)
+-		return 1;
++		return PATHINFO_FAILED;;
+ 
+ 	condlog(3, "%s: rev = %s", pp->dev, pp->rev);
+ 
+@@ -1192,12 +1192,12 @@ scsi_sysfs_pathinfo (struct path * pp, vector hwtable)
+ 	 * target node name
+ 	 */
+ 	if(sysfs_get_tgt_nodename(pp, pp->tgt_node_name))
+-		return 1;
++		return PATHINFO_FAILED;
+ 
+ 	condlog(3, "%s: tgt_node_name = %s",
+ 		pp->dev, pp->tgt_node_name);
+ 
+-	return 0;
++	return PATHINFO_OK;
+ }
+ 
+ static int
+@@ -1209,17 +1209,17 @@ nvme_sysfs_pathinfo (struct path * pp, vector hwtable)
+ 
+ 	attr_path = udev_device_get_sysname(pp->udev);
+ 	if (!attr_path)
+-		return 1;
++		return PATHINFO_FAILED;
+ 
+ 	if (sscanf(attr_path, "nvme%dn%d",
+ 		   &pp->sg_id.host_no,
+ 		   &pp->sg_id.scsi_id) != 2)
+-		return 1;
++		return PATHINFO_FAILED;
+ 
+ 	parent = udev_device_get_parent_with_subsystem_devtype(pp->udev,
+ 							       "nvme", NULL);
+ 	if (!parent)
+-		return 1;
++		return PATHINFO_SKIPPED;
+ 
+ 	attr = udev_device_get_sysattr_value(pp->udev, "nsid");
+ 	pp->sg_id.lun = attr ? atoi(attr) : 0;
+@@ -1242,7 +1242,7 @@ nvme_sysfs_pathinfo (struct path * pp, vector hwtable)
+ 
+ 	find_hwe(hwtable, pp->vendor_id, pp->product_id, NULL, pp->hwe);
+ 
+-	return 0;
++	return PATHINFO_OK;
+ }
+ 
+ static int
+@@ -1260,14 +1260,14 @@ ccw_sysfs_pathinfo (struct path * pp, vector hwtable)
+ 		parent = udev_device_get_parent(parent);
+ 	}
+ 	if (!parent)
+-		return 1;
++		return PATHINFO_FAILED;
+ 
+ 	sprintf(pp->vendor_id, "IBM");
+ 
+ 	condlog(3, "%s: vendor = %s", pp->dev, pp->vendor_id);
+ 
+ 	if (sysfs_get_devtype(parent, attr_buff, FILE_NAME_SIZE) <= 0)
+-		return 1;
++		return PATHINFO_FAILED;
+ 
+ 	if (!strncmp(attr_buff, "3370", 4)) {
+ 		sprintf(pp->product_id,"S/390 DASD FBA");
+@@ -1301,7 +1301,7 @@ ccw_sysfs_pathinfo (struct path * pp, vector hwtable)
+ 			pp->sg_id.lun);
+ 	}
+ 
+-	return 0;
++	return PATHINFO_OK;
+ }
+ 
+ static int
+@@ -1325,20 +1325,20 @@ cciss_sysfs_pathinfo (struct path * pp, vector hwtable)
+ 		parent = udev_device_get_parent(parent);
+ 	}
+ 	if (!attr_path || pp->sg_id.host_no == -1)
+-		return 1;
++		return PATHINFO_FAILED;
+ 
+ 	if (sysfs_get_vendor(parent, pp->vendor_id, SCSI_VENDOR_SIZE) <= 0)
+-		return 1;
++		return PATHINFO_FAILED;
+ 
+ 	condlog(3, "%s: vendor = %s", pp->dev, pp->vendor_id);
+ 
+ 	if (sysfs_get_model(parent, pp->product_id, PATH_PRODUCT_SIZE) <= 0)
+-		return 1;
++		return PATHINFO_FAILED;
+ 
+ 	condlog(3, "%s: product = %s", pp->dev, pp->product_id);
+ 
+ 	if (sysfs_get_rev(parent, pp->rev, PATH_REV_SIZE) <= 0)
+-		return 1;
++		return PATHINFO_FAILED;
+ 
+ 	condlog(3, "%s: rev = %s", pp->dev, pp->rev);
+ 
+@@ -1358,7 +1358,8 @@ cciss_sysfs_pathinfo (struct path * pp, vector hwtable)
+ 		pp->sg_id.channel,
+ 		pp->sg_id.scsi_id,
+ 		pp->sg_id.lun);
+-	return 0;
++
++	return PATHINFO_OK;
+ }
+ 
+ static int
+@@ -1367,11 +1368,11 @@ common_sysfs_pathinfo (struct path * pp)
+ 	dev_t devt;
+ 
+ 	if (!pp)
+-		return 1;
++		return PATHINFO_FAILED;
+ 
+ 	if (!pp->udev) {
+ 		condlog(4, "%s: udev not initialised", pp->dev);
+-		return 1;
++		return PATHINFO_FAILED;
+ 	}
+ 	devt = udev_device_get_devnum(pp->udev);
+ 	snprintf(pp->dev_t, BLK_DEV_SIZE, "%d:%d", major(devt), minor(devt));
+@@ -1379,11 +1380,11 @@ common_sysfs_pathinfo (struct path * pp)
+ 	condlog(3, "%s: dev_t = %s", pp->dev, pp->dev_t);
+ 
+ 	if (sysfs_get_size(pp, &pp->size))
+-		return 1;
++		return PATHINFO_FAILED;
+ 
+ 	condlog(3, "%s: size = %llu", pp->dev, pp->size);
+ 
+-	return 0;
++	return PATHINFO_OK;
+ }
+ 
+ int
+@@ -1461,8 +1462,10 @@ path_offline (struct path * pp)
+ int
+ sysfs_pathinfo(struct path * pp, vector hwtable)
+ {
+-	if (common_sysfs_pathinfo(pp))
+-		return 1;
++	int r = common_sysfs_pathinfo(pp);
++
++	if (r != PATHINFO_OK)
++		return r;
+ 
+ 	pp->bus = SYSFS_BUS_UNDEF;
+ 	if (!strncmp(pp->dev,"cciss",5))
+@@ -1474,22 +1477,19 @@ sysfs_pathinfo(struct path * pp, vector hwtable)
+ 	if (!strncmp(pp->dev,"nvme", 4))
+ 		pp->bus = SYSFS_BUS_NVME;
+ 
+-	if (pp->bus == SYSFS_BUS_UNDEF)
+-		return 0;
+-	else if (pp->bus == SYSFS_BUS_SCSI) {
+-		if (scsi_sysfs_pathinfo(pp, hwtable))
+-			return 1;
+-	} else if (pp->bus == SYSFS_BUS_CCW) {
+-		if (ccw_sysfs_pathinfo(pp, hwtable))
+-			return 1;
+-	} else if (pp->bus == SYSFS_BUS_CCISS) {
+-		if (cciss_sysfs_pathinfo(pp, hwtable))
+-			return 1;
+-	} else if (pp->bus == SYSFS_BUS_NVME) {
+-		if (nvme_sysfs_pathinfo(pp, hwtable))
+-			return 1;
++	switch (pp->bus) {
++	case SYSFS_BUS_SCSI:
++		return scsi_sysfs_pathinfo(pp, hwtable);
++	case SYSFS_BUS_CCW:
++		return ccw_sysfs_pathinfo(pp, hwtable);
++	case SYSFS_BUS_CCISS:
++		return cciss_sysfs_pathinfo(pp, hwtable);
++	case SYSFS_BUS_NVME:
++		return nvme_sysfs_pathinfo(pp, hwtable);
++	case SYSFS_BUS_UNDEF:
++	default:
++		return PATHINFO_OK;
+ 	}
+-	return 0;
+ }
+ 
+ static int
+@@ -1882,8 +1882,12 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 	/*
+ 	 * fetch info available in sysfs
+ 	 */
+-	if (mask & DI_SYSFS && sysfs_pathinfo(pp, conf->hwtable))
+-		return PATHINFO_FAILED;
++	if (mask & DI_SYSFS) {
++		int rc = sysfs_pathinfo(pp, conf->hwtable);
++
++		if (rc != PATHINFO_OK)
++			return rc;
++	}
+ 
+ 	if (mask & DI_BLACKLIST && mask & DI_SYSFS) {
+ 		if (filter_device(conf->blist_device, conf->elist_device,
+-- 
+2.19.0
