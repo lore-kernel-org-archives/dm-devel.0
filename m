@@ -1,12 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 0/2] multipath-tools: avoid error messages with
-	NVMe
-Date: Mon,  1 Oct 2018 20:45:05 +0200
-Message-ID: <20181001184507.4162-1-mwilck@suse.com>
+Subject: Re: [PATCH v3 01/19] libmultipath: fix tur checker
+	timeout
+Date: Mon, 01 Oct 2018 21:51:22 +0200
+Message-ID: <deb772629c403acaf8c39a0e74f947a7f8b9d2bf.camel@suse.com>
+References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
+	<1537571127-10143-2-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1537571127-10143-2-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,19 +19,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-These two patches avoid useless error messages for NVMe devices.
-
-Martin Wilck (2):
-  libmultipath: allow sysfs_pathinfo to return SKIPPED
-  multipathd: try SCSI persistent reservations for SCSI only
-
- libmultipath/discovery.c | 86 +++++++++++++++++++++-------------------
- multipathd/main.c        |  3 ++
- 2 files changed, 48 insertions(+), 41 deletions(-)
-
--- 
-2.19.0
+T24gRnJpLCAyMDE4LTA5LTIxIGF0IDE4OjA1IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gVGhlIGNvZGUgcHJldmlvdXNseSB3YXMgdGltaW5nIG91dCBtb2RlIGlmIGN0LT50aHJl
+YWQgd2FzIDAgYnV0Cj4gY3QtPnJ1bm5pbmcgd2Fzbid0LiBUaGlzIGNvbWJpbmF0aW9uIG5ldmVy
+IGhhcHBlbnMuICBUaGUgaWRlYSB3YXMgdG8KPiB0aW1lb3V0IGlmIGZvciBzb21lIHJlYXNvbiB0
+aGUgcGF0aCBjaGVja2VyIHRyaWVkIHRvIGtpbGwgdGhlIHRocmVhZCwKPiBidXQgaXQgZGlkbid0
+IGRpZS4gIFRoZSBjb3JyZWN0IHRoaW5nIHRvIGNoZWNrIGZvciB0aGlzIGlzIGN0LQo+ID5ob2xk
+ZXJzLgo+IGN0LT5ob2xkZXJzIHdpbGwgYWx3YXlzIGJlIGF0IGxlYXN0IG9uZSB3aGVuIGxpYmNo
+ZWNrX2NoZWNrKCkgaXMKPiBjYWxsZWQsCj4gc2luY2UgbGliY2hlY2tfZnJlZSgpIHdvbid0IGdl
+dCBjYWxsZWQgdW50aWwgdGhlIGRldmljZSBpcyBubyBsb25nZXIKPiBiZWluZyBjaGVja2VkLiBT
+bywgaWYgY3QtPmhvbGRlcnMgaXMgMiwgdGhhdCBtZWFucyB0aGF0IHRoZSB0dXIKPiB0aHJlYWQK
+PiBpcyBoYXMgbm90IHNodXQgZG93biB5ZXQuCj4gCj4gQWxzbywgaW5zdGVhZCBvZiByZXR1cm5p
+bmcgUEFUSF9USU1FT1VUIHdoZW5ldmVyIHRoZSB0aHJlYWQgaGFzbid0Cj4gZGllZCwKPiBpdCBz
+aG91bGQgb25seSB0aW1lIG91dCBpZiB0aGUgdGhyZWFkIGRpZG4ndCBzdWNjZXNzZnVsbHkgZ2V0
+IGEKPiB2YWx1ZSwKPiB3aGljaCBtZWFucyB0aGUgcHJldmlvdXMgc3RhdGUgd2FzIGFscmVhZHkg
+UEFUSF9USU1FT1VULgoKV2hhdCBhYm91dCBQQVRIX1VOQ0hFQ0tFRD8KCj4gCj4gU2lnbmVkLW9m
+Zi1ieTogQmVuamFtaW4gTWFyemluc2tpIDxibWFyemluc0ByZWRoYXQuY29tPgo+IC0tLQo+ICBs
+aWJtdWx0aXBhdGgvY2hlY2tlcnMvdHVyLmMgfCAxNSArKysrKysrKystLS0tLS0KPiAgMSBmaWxl
+IGNoYW5nZWQsIDkgaW5zZXJ0aW9ucygrKSwgNiBkZWxldGlvbnMoLSkKPiAKPiBkaWZmIC0tZ2l0
+IGEvbGlibXVsdGlwYXRoL2NoZWNrZXJzL3R1ci5jCj4gYi9saWJtdWx0aXBhdGgvY2hlY2tlcnMv
+dHVyLmMKPiBpbmRleCBiZjg0ODZkLi4yNzU1NDFmIDEwMDY0NAo+IC0tLSBhL2xpYm11bHRpcGF0
+aC9jaGVja2Vycy90dXIuYwo+ICsrKyBiL2xpYm11bHRpcGF0aC9jaGVja2Vycy90dXIuYwo+IEBA
+IC0zNTUsMTIgKzM1NSwxNSBAQCBpbnQgbGliY2hlY2tfY2hlY2soc3RydWN0IGNoZWNrZXIgKiBj
+KQo+ICAJCX0KPiAgCQlwdGhyZWFkX211dGV4X3VubG9jaygmY3QtPmxvY2spOwo+ICAJfSBlbHNl
+IHsKPiAtCQlpZiAodWF0b21pY19yZWFkKCZjdC0+cnVubmluZykgIT0gMCkgewo+IC0JCQkvKiBw
+dGhyZWFkIGNhbmNlbCBmYWlsZWQuIGNvbnRpbnVlIGluIHN5bmMgbW9kZQo+ICovCj4gLQkJCXB0
+aHJlYWRfbXV0ZXhfdW5sb2NrKCZjdC0+bG9jayk7Cj4gLQkJCWNvbmRsb2coMywgIiVzOiB0dXIg
+dGhyZWFkIG5vdCByZXNwb25kaW5nIiwKPiAtCQkJCXR1cl9kZXZ0KGRldnQsIHNpemVvZihkZXZ0
+KSwgY3QpKTsKPiAtCQkJcmV0dXJuIFBBVEhfVElNRU9VVDsKPiArCQlpZiAodWF0b21pY19yZWFk
+KCZjdC0+aG9sZGVycykgPiAxKSB7Cj4gKwkJCS8qIHB0aHJlYWQgY2FuY2VsIGZhaWxlZC4gSWYg
+aXQgZGlkbid0IGdldCB0aGUKPiBwYXRoCj4gKwkJCSAgIHN0YXRlIGFscmVhZHksIHRpbWVvdXQg
+Ki8KPiArCQkJaWYgKGN0LT5zdGF0ZSA9PSBQQVRIX1BFTkRJTkcpIHsKPiArCQkJCXB0aHJlYWRf
+bXV0ZXhfdW5sb2NrKCZjdC0+bG9jayk7Cj4gKwkJCQljb25kbG9nKDMsICIlczogdHVyIHRocmVh
+ZCBub3QKPiByZXNwb25kaW5nIiwKPiArCQkJCQl0dXJfZGV2dChkZXZ0LCBzaXplb2YoZGV2dCks
+Cj4gY3QpKTsKPiArCQkJCXJldHVybiBQQVRIX1RJTUVPVVQ7Cj4gKwkJCX0KPiAgCQl9CgpJJ20g
+bm90IHF1aXRlIGdldHRpbmcgaXQgeWV0LiBXZSdyZSBlbnRlcmluZyB0aGlzIGNvZGUgcGF0aCBp
+ZiAKY3QtPnRocmVhZCBpcyAwLiBBcyB5b3UgcG9pbnQgb3V0LCBpZiB0aGVyZSBhcmUgPjEgaG9s
+ZGVycywgYQpwcmV2aW91c2x5IGNhbmNlbGxlZCBUVVIgdGhyZWFkIG11c3QgYmUgc3RpbGwgImFs
+aXZlIi4gQnV0IG5vdyB3ZSB3YW50CnRvIGNoZWNrICphZ2FpbiouIFRoZSBwcmV2aW91cyBjb2Rl
+IHJlZnVzZWQgdG8gZG8gdGhhdCAtIGEgc2luZ2xlCmhhbmdpbmcgVFVSIHRocmVhZCBjb3VsZCBi
+bG9jayBmdXJ0aGVyIGNoZWNrcyBmcm9tIGhhcHBlbmluZywgZm9yZXZlci4KVGhlIFBBVEhfVElN
+RU9VVCByZXR1cm4gY29kZSB3YXMgYWN0dWFsbHkgcXVlc3Rpb25hYmxlIC0gaW4gdGhpcwpsaWJj
+aGVja19jaGVjaygpIGludm9jYXRpb24sIHdlIGRpZG4ndCBldmVuIHRyeSB0byBjaGVjaywgc28g
+bm90aGluZwpjb3VsZCBhY3R1YWxseSB0aW1lIG91dCAoYnV0IHRoYXQncyBvYnZpb3VzbHkgaW5k
+ZXBlbmRlbnQgb2YgeW91cgpwYXRjaCkuCgpXaXRoIHlvdXIgcGF0Y2gsIGlmIGN0LT5zdGF0ZSAh
+PSBQQVRIX1BFTkRJTkcsIHdlJ2QgdHJ5IHRvIHN0YXJ0CmFub3RoZXIgVFVSIHRocmVhZCBhbHRo
+b3VnaCB0aGVyZSdzIHN0aWxsIGEgaGFuZ2luZyBvbmUuIFRoYXQncyBub3QKbmVjZXNzYXJpbHkg
+d3JvbmcsIGJ1dCBJIGZhaWwgdG8gc2VlIHdoeSBpdCBkZXBlbmRzIG9uIGN0LT5zdGF0ZS4KQW55
+d2F5LCBpZiB3ZSBkbyB0aGlzLCB3ZSB0YWtlIHRoZSByaXNrIG9mIHN0YXJ0aW5nIG1vcmUgYW5k
+IG1vcmUgVFVSCnRocmVhZHMgd2hpY2ggbWlnaHQgYWxsIGVuZCB1cCBoYW5naW5nOyBJIHdvbmRl
+ciBpZiB3ZSBzaG91bGQgc3RvcApjcmVhdGluZyBtb3JlIHRocmVhZHMgaWYgY3QtPmhvbGRlcnMg
+Z3Jvd3MgZnVydGhlciAoZS5nLiA+IDUpLgoKUmVnYXJkcywKTWFydGluCgoKPiAgCQkvKiBTdGFy
+dCBuZXcgVFVSIGNoZWNrZXIgKi8KPiAgCQljdC0+c3RhdGUgPSBQQVRIX1VOQ0hFQ0tFRDsKCi0t
+IApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQw
+NTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21p
+dGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgoKLS0KZG0tZGV2
+ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNv
+bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
