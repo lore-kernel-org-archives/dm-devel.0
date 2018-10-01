@@ -1,15 +1,16 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [PATCH v4 0/4] crypto: lrw - Fixes and improvements
-Date: Sun, 30 Sep 2018 21:40:00 +0200
-Message-ID: <CAKv+Gu8nKOE5Vrn72j+=VdyzpzW7zcepHj6DDxeYyTBgRFmqKA@mail.gmail.com>
-References: <20180913085134.11694-1-omosnace@redhat.com>
-	<20180921054534.7iqfb3omlowromhr@gondor.apana.org.au>
-	<CAKv+Gu9cBRsNuSbjmLF9MjGh+_n33Ugw3BsnLzmWNnoW=Zw-DQ@mail.gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] multipathd: fix mpp->hwe handling on path
+ removal
+Date: Mon, 01 Oct 2018 16:54:09 +0200
+Message-ID: <f462a9c6b25121485bd19fb8a31c2502306e2414.camel@suse.com>
+References: <20180625151020.31927-1-mwilck@suse.com>
+	<4ccf2557dd0cc5a84d6f009b8afbbd345b58ff15.camel@suse.com>
+	<CABr-GndXjnbDqp8AYFEoPZf8ckkFe-R2SPL4QBrCR+ujUKaj3g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAKv+Gu9cBRsNuSbjmLF9MjGh+_n33Ugw3BsnLzmWNnoW=Zw-DQ@mail.gmail.com>
+In-Reply-To: <CABr-GndXjnbDqp8AYFEoPZf8ckkFe-R2SPL4QBrCR+ujUKaj3g@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,88 +20,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Eric Biggers <ebiggers@kernel.org>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Ondrej Mosnacek <omosnace@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 30 September 2018 at 21:00, Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
-> On 21 September 2018 at 07:45, Herbert Xu <herbert@gondor.apana.org.au> wrote:
->> On Thu, Sep 13, 2018 at 10:51:30AM +0200, Ondrej Mosnacek wrote:
->>> This patchset contains a corner-case fix and several improvements  for
->>> the LRW template.
->>>
->>> The first patch fixes an out-of-bounds array access (and subsequently
->>> incorrect cipher output) when the LRW counter goes from all ones to all
->>> zeros. This patch should be applied to the crypto-2.6 tree and also go
->>> to stable.
->>>
->>> The second patch adds a test vector for lrw(aes) that covers the above
->>> bug.
->>>
->>> The third patch is a small optimization of the LRW tweak computation.
->>>
->>> The fourth patch is a follow-up to a similar patch for XTS (it
->>> simplifies away the use of dynamically allocated auxiliary buffer to
->>> cache the computed tweak values):
->>> https://patchwork.kernel.org/patch/10588775/
->>>
->>> Patches 2-4 should be applied only to cryptodev-2.6, but they all depend
->>> on the first patch.
->>>
->>> Changes in v4:
->>>   - applied various corrections/suggestions from Eric Biggers
->>>   - added a fix for buggy behavior on counter wrap-around (+ test vector)
->>>
->>> v3: https://www.spinics.net/lists/linux-crypto/msg34946.html
->>> Changes in v3:
->>>   - fix a copy-paste error
->>>
->>> v2: https://www.spinics.net/lists/linux-crypto/msg34890.html
->>> Changes in v2:
->>>   - small cleanup suggested by Eric Biggers
->>>
->>> v1: https://www.spinics.net/lists/linux-crypto/msg34871.html
->>>
->>> Ondrej Mosnacek (4):
->>>   crypto: lrw - Fix out-of bounds access on counter overflow
->>>   crypto: testmgr - Add test for LRW counter wrap-around
->>>   crypto: lrw - Optimize tweak computation
->>>   crypto: lrw - Do not use auxiliary buffer
->>>
->>>  crypto/lrw.c     | 342 +++++++++++++----------------------------------
->>>  crypto/testmgr.h |  21 +++
->>>  2 files changed, 112 insertions(+), 251 deletions(-)
->>
->> All applied.  Thanks.
->
-> I am seeing tcrypt failures with this code:
->
-> alg: skcipher: Test 8 failed (invalid result) on encryption for lrw(ecb-aes-ce)
-> 00000000: 47 90 50 f6 f4 8d 5c 7f 84 c7 83 95 2d a2 02 c0
-> 00000010: da 7f a3 c0 88 2a 0a 50 fb c1 78 03 39 fe 1d e5
-> 00000020: 47 90 50 f6 f4 8d 5c 7f 84 c7 83 95 2d a2 02 c0
->
-> reproduced on both arm64 and ARM (the latter in LE and BE modes)
-
-This fixes it for me
-
-diff --git a/crypto/lrw.c b/crypto/lrw.c
-index 6fcf0d431185..0430ccd08728 100644
---- a/crypto/lrw.c
-+++ b/crypto/lrw.c
-@@ -122,10 +122,9 @@ static int next_index(u32 *counter)
-        int i, res = 0;
-
-        for (i = 0; i < 4; i++) {
--               if (counter[i] + 1 != 0) {
--                       res += ffz(counter[i]++);
--                       break;
--               }
-+               if (counter[i] + 1 != 0)
-+                       return res + ffz(counter[i]++);
-+
-                counter[i] = 0;
-                res += 32;
-        }
-
-since otherwise, the function always returns 127 (!)
+SGVsbG8gQ2hyaXN0b3BoZSwKCk9uIE1vbiwgMjAxOC0wNy0wMiBhdCAxMjowNSArMDIwMCwgQ2hy
+aXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+IFJpZ2h0LCBkb25lLgo+IFRoZSBsZWZ0b3ZlciBmcm9t
+IHlvdXIgcHJldmlvdXMgdjMgcGF0Y2hzZXQgaXMgbWVyZ2VkIHRvby4KPiBUaGFua3MsCj4gQ2hy
+aXN0b3BoZS4KCkkgdGhpbmsgaW4gdGhhdCBtYWlsIGZyb20gSnVseSAybmQsIHlvdSByZWZlcnJl
+ZCB0byB0aGUgZm9sbG93aW5nIHBhdGNoCnNldCB3aGljaCBoYWQgYmVlbiBhY2tlZCBieSBCZW4g
+b24gSnVuZSAyNXRoIAooaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9hcmNoaXZlcy9kbS1kZXZlbC8y
+MDE4LUp1bmUvbXNnMDAzNjcuaHRtbCk6CgogKiBbUEFUQ0ggdjMgMDAvMTBdIGxpYm1wYXRocGVy
+c2lzdCBmaXhlcyBhbmQgc29tZSBtb3JlCiAqIFtQQVRDSCB2MyAwMS8xMF0gbGlibXBhdGhwZXJz
+aXN0OiByZW1vdmUgZHVwbGljYXRlIHRlc3QgaW4gCiAqIFtQQVRDSCB2MyAwMi8xMF0gbGlibXBh
+dGhwZXJzaXN0OiBmaXggdHlwbyBpbgogKiBbUEFUQ0ggdjMgMDMvMTBdIGxpYm1wYXRocGVyc2lz
+dDogZml4IHN0YWNrIG92ZXJmbG93IGluCiAqIFtQQVRDSCB2MyAwNC8xMF0gbGlibXVsdGlwYXRo
+OiBhZGQgKGdldHxwdXQpX3VuYWxpZ25lZF9iZTY0CiAqIFtQQVRDSCB2MyAwNS8xMF0gbXVsdGlw
+YXRoLXRvb2xzL3Rlc3RzOiBhZGQgdGVzdHMgZm9yCiAqIFtQQVRDSCB2MyAwNi8xMF0gbGlibXBh
+dGhwZXJzaXN0OiBmaXggYnl0ZSBzd2FwcGluZyBmb3IgYmlnIGVuZGlhbgogKiBbUEFUQ0ggdjMg
+MDcvMTBdIChsaWIpbXBhdGhwZXJzaXN0OiB1c2UgT19SRE9OTFkgZmlsZSBkZXNjcmlwdG9ycwog
+KiBbUEFUQ0ggdjMgMDgvMTBdIGxpYm11bHRpcGF0aDogZml4IGdjYyA4LjEgInRydW5jYXRlZCBv
+dXRwdXQiCiAqIFtQQVRDSCB2MyAwOS8xMF0gbXVsdGlwYXRoZDogZml4IGJ1ZmZlciBzaXplIGlu
+IGNsaV9nZXRwcmtleSgpCiAqIFtQQVRDSCB2MyAxMC8xMF0gbGlibXVsdGlwYXRoOiBhdm9pZCBl
+cnJvciBtZXNzYWdlcyBmcm9tIFJEQUMgY2hlY2sKCkkganVzdCBkb3VibGUtY2hlY2tlZCwgYW5k
+IGl0IHNlZW1zIHRoYXQgb3V0IG9mIHRoZXNlLCBvbmx5IHBhdGNoIDkgYW5kCjEwIGdvdCBhcHBs
+aWVkIHRvIHlvdXIgdHJlZS4gRGlkIHlvdSBoYXZlIGFuIGlzc3VlIHdpdGggdGhlIG90aGVycywg
+b3IKd2FzIGl0IGp1c3QgYW4gb3ZlcnNpZ2h0PwoKUmVnYXJkcwpNYXJ0aW4KClBTOiBJJ2xsIHNl
+bmQgYSByZXZpZXcgb3IgQmVuJ3MgbGF0ZSBiaWcgc2VyaWVzIHZlcnkgc29vbi4KCj4gCj4gT24g
+TW9uLCBKdWwgMiwgMjAxOCBhdCAxMTozMyBBTSBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNv
+bT4gd3JvdGU6Cj4gPiBDaHJpc3RvcGhlLAo+ID4gCj4gPiB3aXRob3V0IHRoaXMgcGF0Y2gsIGN1
+cnJlbnQgdXBzdHJlYW0gbXVsdGlwYXRoIF9jcmFzaGVzXyBvbiBwYXRoCj4gPiByZW1vdmFsLiBQ
+bGVhc2UgYXBwbHkgaXQuIElmIHJldmlld2VycyBkaXNhZ3JlZSB3aXRoIHRoaXMgZml4LCBJCj4g
+PiBjYW4KPiA+IHBvc3QgdXBkYXRlcyBsYXRlci4KPiA+IAo+ID4gTWFydGluCj4gPiAKPiA+IE9u
+IE1vbiwgMjAxOC0wNi0yNSBhdCAxNzoxMCArMDIwMCwgTWFydGluIFdpbGNrIHdyb3RlOgo+ID4g
+PiBJbiBteSBwcmV2aW91cyBwYXRjaCBmMDQ2MmYwYzgzMzgsIEkgb3Zlcmxvb2tlZCB0aGF0IGR1
+cmluZyBwYXRoCj4gPiA+IHJlbW92YWwsCj4gPiA+IHRoZSBwYXRoIHRoYXQgbXBwLT5od2UgcmVm
+ZXJlbmNlcyBtYXkgYmUgcmVtb3ZlZCBhbmQgYW5kIHRodXMKPiA+IG1wcC0KPiA+ID4gPmh3ZQo+
+ID4gPiBtYXkgYmVjb21lIHN0YWxlLiBGaXggaXQuCj4gPiA+IAo+ID4gPiBGaXhlczogZjA0NjJm
+MGM4MzM4ICJsaWJtdWx0aXBhdGg6IHVzZSB2ZWN0b3IgZm9yIGZvciBwcC0+aHdlIGFuZAo+ID4g
+bXAtCj4gPiA+ID5od2UiCj4gPiA+IFNpZ25lZC1vZmYtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNr
+QHN1c2UuY29tPgo+ID4gPiAtLS0KPiA+ID4gIG11bHRpcGF0aGQvbWFpbi5jIHwgMTEgKysrKysr
+KysrKysKPiA+ID4gIDEgZmlsZSBjaGFuZ2VkLCAxMSBpbnNlcnRpb25zKCspCj4gPiA+IAo+ID4g
+PiBkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC9tYWluLmMgYi9tdWx0aXBhdGhkL21haW4uYwo+ID4g
+PiBpbmRleCA3MmYwNmI1Ni4uY2M0OTNjMTggMTAwNjQ0Cj4gPiA+IC0tLSBhL211bHRpcGF0aGQv
+bWFpbi5jCj4gPiA+ICsrKyBiL211bHRpcGF0aGQvbWFpbi5jCj4gPiA+IEBAIC0xMDc2LDYgKzEw
+NzYsMTQgQEAgZXZfcmVtb3ZlX3BhdGggKHN0cnVjdCBwYXRoICpwcCwgc3RydWN0Cj4gPiA+IHZl
+Y3RvcnMgKiB2ZWNzLCBpbnQgbmVlZF9kb19tYXApCj4gPiA+ICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgIG1wcC0+YWxpYXMpOwo+ID4gPiAgICAgICAgICAgICAgICAgICAgICAgZ290byBm
+YWlsOwo+ID4gPiAgICAgICAgICAgICAgIH0KPiA+ID4gKwo+ID4gPiArICAgICAgICAgICAgIC8q
+Cj4gPiA+ICsgICAgICAgICAgICAgICogTWFrZSBzdXJlIG1wcC0+aHdlIGRvZXNuJ3QgcG9pbnQg
+dG8gZnJlZWQgbWVtb3J5Cj4gPiA+ICsgICAgICAgICAgICAgICogV2UgY2FsbCBleHRyYWN0X2h3
+ZV9mcm9tX3BhdGgoKSBiZWxvdyB0byByZXN0b3JlCj4gPiA+IG1wcC0+aHdlCj4gPiA+ICsgICAg
+ICAgICAgICAgICovCj4gPiA+ICsgICAgICAgICAgICAgaWYgKG1wcC0+aHdlID09IHBwLT5od2Up
+Cj4gPiA+ICsgICAgICAgICAgICAgICAgICAgICBtcHAtPmh3ZSA9IE5VTEw7Cj4gPiA+ICsKPiA+
+ID4gICAgICAgICAgICAgICBpZiAoKGkgPSBmaW5kX3Nsb3QobXBwLT5wYXRocywgKHZvaWQgKilw
+cCkpICE9IC0xKQo+ID4gPiAgICAgICAgICAgICAgICAgICAgICAgdmVjdG9yX2RlbF9zbG90KG1w
+cC0+cGF0aHMsIGkpOwo+ID4gPiAgCj4gPiA+IEBAIC0xMTA5LDYgKzExMTcsOSBAQCBldl9yZW1v
+dmVfcGF0aCAoc3RydWN0IHBhdGggKnBwLCBzdHJ1Y3QKPiA+IHZlY3RvcnMKPiA+ID4gKiB2ZWNz
+LCBpbnQgbmVlZF9kb19tYXApCj4gPiA+ICAgICAgICAgICAgICAgICAgICAgICAgKi8KPiA+ID4g
+ICAgICAgICAgICAgICB9Cj4gPiA+ICAKPiA+ID4gKyAgICAgICAgICAgICBpZiAobXBwLT5od2Ug
+PT0gTlVMTCkKPiA+ID4gKyAgICAgICAgICAgICAgICAgICAgIGV4dHJhY3RfaHdlX2Zyb21fcGF0
+aChtcHApOwo+ID4gPiArCj4gPiA+ICAgICAgICAgICAgICAgaWYgKHNldHVwX21hcChtcHAsIHBh
+cmFtcywgUEFSQU1TX1NJWkUsIHZlY3MpKSB7Cj4gPiA+ICAgICAgICAgICAgICAgICAgICAgICBj
+b25kbG9nKDAsICIlczogZmFpbGVkIHRvIHNldHVwIG1hcCBmb3IiCj4gPiA+ICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICIgcmVtb3ZhbCBvZiBwYXRoICVzIiwgbXBwLT5hbGlhcywKPiA+
+ID4gcHAtPmRldik7Cj4gPiAKPiA+IC0tCj4gPiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QKPiA+IGRt
+LWRldmVsQHJlZGhhdC5jb20KPiA+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0
+aW5mby9kbS1kZXZlbAoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRl
+bC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5k
+w7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJu
+YmVyZykKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
+czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
