@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 1/2] multipath/tests: fix hwtable tests after
-	"hidden" support
-Date: Tue,  2 Oct 2018 20:47:00 +0200
-Message-ID: <20181002184701.18956-2-mwilck@suse.com>
+Subject: [PATCH 2/2] multipath-tools: tests/hwtable: test hidden
+	devices
+Date: Tue,  2 Oct 2018 20:47:01 +0200
+Message-ID: <20181002184701.18956-3-mwilck@suse.com>
 References: <20181002184701.18956-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,46 +22,57 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The previous patch "libmultipath: pathinfo: skip hidden devices"
-requires a change in the pathinfo mocking code. Otherwise the hwtable
-tests will fail.
+Add a test for skipping "hidden" devices.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/test-lib.c | 6 ++++++
- tests/test-lib.h | 3 ++-
- 2 files changed, 8 insertions(+), 1 deletion(-)
+ tests/hwtable.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
 
-diff --git a/tests/test-lib.c b/tests/test-lib.c
-index cff7a5d1..59275163 100644
---- a/tests/test-lib.c
-+++ b/tests/test-lib.c
-@@ -248,6 +248,12 @@ static void mock_sysfs_pathinfo(const struct mocked_path *mp)
-  */
- void mock_pathinfo(int mask, const struct mocked_path *mp)
- {
-+	if (mp->flags & DEV_HIDDEN) {
-+		will_return(__wrap_udev_device_get_sysattr_value, "1");
-+		return;
-+	} else
-+		will_return(__wrap_udev_device_get_sysattr_value, "0");
-+
- 	/* filter_property */
- 	will_return(__wrap_udev_device_get_sysname, mp->devnode);
- 	if (mp->flags & BL_BY_PROPERTY) {
-diff --git a/tests/test-lib.h b/tests/test-lib.h
-index d2745979..7643ab67 100644
---- a/tests/test-lib.h
-+++ b/tests/test-lib.h
-@@ -14,7 +14,8 @@ enum {
- 	BL_MASK = BL_BY_DEVNODE|BL_BY_DEVICE|BL_BY_WWID|BL_BY_PROPERTY,
- 	NEED_SELECT_PRIO = (1 << 8),
- 	NEED_FD		= (1 << 9),
--	USE_GETUID	= (1 << 10)
-+	USE_GETUID	= (1 << 10),
-+	DEV_HIDDEN	= (1 << 11),
- };
+diff --git a/tests/hwtable.c b/tests/hwtable.c
+index 42127adf..9146ecc3 100644
+--- a/tests/hwtable.c
++++ b/tests/hwtable.c
+@@ -1661,6 +1661,24 @@ static int setup_multipath_config_3(void **state)
+ 	return 0;
+ }
  
- struct mocked_path {
++/*
++ * Test for device with "hidden" attribute
++ */
++static void test_hidden(const struct hwt_state *hwt)
++{
++	mock_path_flags("NVME", "NoName", DEV_HIDDEN|BL_MASK);
++}
++
++static int setup_hidden(void **state)
++{
++	struct hwt_state *hwt = CHECK_STATE(state);
++
++	WRITE_EMPTY_CONF(hwt);
++	SET_TEST_FUNC(hwt, test_hidden);
++
++	return 0;
++}
++
+ /*
+  * Create wrapper functions around test_driver() to avoid that cmocka
+  * always uses the same test name. That makes it easier to read test results.
+@@ -1703,6 +1721,7 @@ define_test(product_blacklist_matching)
+ define_test(multipath_config)
+ define_test(multipath_config_2)
+ define_test(multipath_config_3)
++define_test(hidden)
+ 
+ #define test_entry(x) \
+ 	cmocka_unit_test_setup(run_##x, setup_##x)
+@@ -1742,6 +1761,7 @@ static int test_hwtable(void)
+ 		test_entry(multipath_config),
+ 		test_entry(multipath_config_2),
+ 		test_entry(multipath_config_3),
++		test_entry(hidden),
+ 	};
+ 
+ 	return cmocka_run_group_tests(tests, setup, teardown);
 -- 
 2.19.0
