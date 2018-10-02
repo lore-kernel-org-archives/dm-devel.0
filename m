@@ -1,14 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 2/2] multipath-tools: tests/hwtable: test hidden
-	devices
-Date: Tue,  2 Oct 2018 20:47:01 +0200
-Message-ID: <20181002184701.18956-3-mwilck@suse.com>
-References: <20181002184701.18956-1-mwilck@suse.com>
+Subject: Re: [PATCH RESEND 0/4] multipath-tools: fixes for path
+ wwid detection and path change uevents
+Date: Tue, 02 Oct 2018 23:02:50 +0200
+Message-ID: <7aa1314c9095e3315e02525ec2e005030898a9b4.camel@suse.com>
+References: <20180307232152.15538-1-mwilck@suse.com>
+	<20180314174013.GF14513@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181002184701.18956-1-mwilck@suse.com>
+In-Reply-To: <20180314174013.GF14513@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,61 +19,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Add a test for skipping "hidden" devices.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- tests/hwtable.c | 20 ++++++++++++++++++++
- 1 file changed, 20 insertions(+)
-
-diff --git a/tests/hwtable.c b/tests/hwtable.c
-index 42127adf..9146ecc3 100644
---- a/tests/hwtable.c
-+++ b/tests/hwtable.c
-@@ -1661,6 +1661,24 @@ static int setup_multipath_config_3(void **state)
- 	return 0;
- }
- 
-+/*
-+ * Test for device with "hidden" attribute
-+ */
-+static void test_hidden(const struct hwt_state *hwt)
-+{
-+	mock_path_flags("NVME", "NoName", DEV_HIDDEN|BL_MASK);
-+}
-+
-+static int setup_hidden(void **state)
-+{
-+	struct hwt_state *hwt = CHECK_STATE(state);
-+
-+	WRITE_EMPTY_CONF(hwt);
-+	SET_TEST_FUNC(hwt, test_hidden);
-+
-+	return 0;
-+}
-+
- /*
-  * Create wrapper functions around test_driver() to avoid that cmocka
-  * always uses the same test name. That makes it easier to read test results.
-@@ -1703,6 +1721,7 @@ define_test(product_blacklist_matching)
- define_test(multipath_config)
- define_test(multipath_config_2)
- define_test(multipath_config_3)
-+define_test(hidden)
- 
- #define test_entry(x) \
- 	cmocka_unit_test_setup(run_##x, setup_##x)
-@@ -1742,6 +1761,7 @@ static int test_hwtable(void)
- 		test_entry(multipath_config),
- 		test_entry(multipath_config_2),
- 		test_entry(multipath_config_3),
-+		test_entry(hidden),
- 	};
- 
- 	return cmocka_run_group_tests(tests, setup, teardown);
--- 
-2.19.0
+SGkgQmVuLCBDaHJpc3RvcGhlLAoKSSBmb3VuZCBhIHByb2JsZW0gd2l0aCB0aGlzIG9sZCBwYXRj
+aCBzZXJpZXMgb2YgbWluZS4KCk9uIFdlZCwgMjAxOC0wMy0xNCBhdCAxMjo0MCAtMDUwMCwgQmVu
+amFtaW4gTWFyemluc2tpIHdyb3RlOgo+IE9uIFRodSwgTWFyIDA4LCAyMDE4IGF0IDEyOjIxOjQ4
+QU0gKzAxMDAsIE1hcnRpbiBXaWxjayB3cm90ZToKPiA+IEhpIENocmlzdG9waGUsCj4gPiAKPiA+
+IHRoaXMgc21hbGwgc2VyaWVzIGZpeGVzIHNvbWUgbWlub3IgZ2xpdGNoZXMgSSBmb3VuZCBpbiB0
+aGUgY3VycmVudAo+ID4gcGF0aAo+ID4gZGlzY292ZXJ5IGNvZGUsIGFuZCBhdHRlbXB0cyB0byBp
+bXBsZW1lbnQgdGhlIHNhZmUgcGFydCBvZiB0aGUKPiA+IGZ1bmN0aW9uYWxpdHkKPiA+IGRpc2N1
+c3NlZCBpbiB0aGUgdGhyZWFkICJtdWx0aXBhdGhkOiB1cGRhdGUgcGF0aCdzIHVkZXYgaW4KPiA+
+IHVldl91cGRhdGVfcGF0aCIKPiA+IGluIEphbnVhcnkgKGJhc2VkIG9uIGFuIGlkZWEgZnJvbSBX
+dSBDaG9uZ3l1bikuCj4gPiAKPiA+IFJlc2VuZGluZyB0aGUgc2VyaWVzLCB1bmNoYW5nZWQsIHJl
+YmFzZWQgb24gMC43LjUuCj4gPiAKPiA+IFJlZ2FyZHMsCj4gPiBNYXJ0aW4KPiA+IAo+IAo+IFJl
+dmlld2VkLWJ5OiBCZW5qYW1pbiBNYXJ6aW5za2kgPGJtYXJ6aW5zQHJlZGhhdC5jb20+Cj4gCj4g
+Zm9yIHRoZSBzZXQuCj4gCj4gPiBNYXJ0aW4gV2lsY2sgKDQpOgo+ID4gICBsaWJtdWx0aXBhdGg6
+IGdldF91aWQ6IGNoZWNrIFZQRCBwYWdlcyBmb3IgU0NTSSBvbmx5Cj4gPiAgIGxpYm11bHRpcGF0
+aDogZ2V0X3VpZDogZG9uJ3QgcXVpdCBwcmVtYXR1cmVseSB3aXRob3V0IHVkZXYKPiA+ICAgbGli
+bXVsdGlwYXRoOiB1ZXZfdXBkYXRlX3BhdGg6IGFsd2F5cyB3YXJuIGlmIFdXSUQgY2hhbmdlZAo+
+ID4gICBsaWJtdWx0aXBhdGg6IHVldl91cGRhdGVfcGF0aDogdXBkYXRlIHBhdGggcHJvcGVydGll
+cwoKd2hpbGUgSSBhbSBzdGlsbCBwb25kZXJpbmcgYWJvdXQgeW91ciBsYXRlc3Qgc2VyaWVzLCBp
+dCBvY2N1cmVkIHRvIG1lCnRoYXQgbXkgcGF0Y2ggImdldF91aWQ6IGRvbid0IHF1aXQgcHJlbWF0
+dXJlbHkgd2l0aG91dCB1ZGV2IiBpcyBhZ2FpbnN0CnRoZSBzcGlyaXQgb2YgeW91ciAicmV0cmln
+Z2VyIHVldmVudHMgdG8gdHJ5IGFuZCBnZXQgdGhlIHVpZCB0aHJvdWdoCnVkZXYiIHBhdGNoIGZy
+b20gMjAxNiAoNjg4YWEyMmIpLgoKImdldF91aWQ6IGRvbid0IHF1aXQgcHJlbWF0dXJlbHkgd2l0
+aG91dCB1ZGV2IiBoYXMgYmVlbiBtZXJnZWQgYSB3aGlsZQphZ28gKDA4ZDQyZWU2KS4gU2hvdWxk
+IGl0IGJlIHJldmVydGVkPz8KClBybzogdGhlIHBhdGNoIGlzIGFnYWluc3QgdGhlICJ1ZGV2IGZp
+cnN0IiBwaGlsb3NvcGh5IGFuZCBzdWJ2ZXJ0cyB0aGUKcmV0cmlnZ2VyIGxvZ2ljLgpDb246IHdp
+dGggdGhlIHBhdGNoLCB3ZSdsbCBiZSBhYmxlIHRvIHJldHJpZXZlIFdXSURzIG1vcmUgcXVpY2ts
+eSBpbgpzb21lIHNpdHVhdGlvbnMsIGFzIHdlIGRvbid0IGhhdmUgdG8gd2FpdCBmb3IgdWRldi4K
+CkVpdGhlciB3YXkgKGJ1dCBtb3JlIGxpa2VseSB3aXRoIG15IHBhdGNoKSwgaXQgbWF5IGhhcHBl
+biB0aGF0IHdlCnJldHJpZXZlIGEgV1dJRCBmcm9tIHN5c2ZzIG9yIGVsc2V3aGVyZSBmaXJzdCwg
+YW5kIGZyb20gdWRldiBsYXRlci4KVGhlc2UgV1dJRHMgbWF5IG5vdCBuZWNlc3NhcmlseSBtYXRj
+aCwgYW5kIGEgIldXSUQgY2hhbmdlZCIgcHJvYmxlbSBtYXkKb2NjdXIuCgpQbGVhc2UgdGVsbCBt
+ZSB3aGF0IHlvdSB0aGluay4KCk1hcnRpbgoKCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tA
+c3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdG
+OiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIx
+Mjg0IChBRyBOw7xybmJlcmcpCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJl
+ZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
