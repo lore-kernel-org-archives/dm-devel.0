@@ -1,92 +1,59 @@
-From: Thanos Makatos <thanos.makatos@sunlight.io>
-Subject: Re: extracting thin mappings in real time
-Date: Wed, 3 Oct 2018 16:47:41 +0100
-Message-ID: <CA+fs2JOt5oM7=v8KGdwDuq4mP=GDF4zQTYuug=Fj3QecMmWdLA@mail.gmail.com>
-References: <CA+fs2JN0evmnJP2yZT144bUOdxaxUydchXrZmLmFVy4F20yfAA@mail.gmail.com>
-	<20181003130333.GA20800@reti>
-	<CA+fs2JN0FHg_ZGawUACWbJPfCpna1fi7PAMzDem2viNZ-zSthQ@mail.gmail.com>
-	<20181003144720.GC20800@reti>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181003144720.GC20800@reti>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+From: Wenwen Wang <wang6495@umn.edu>
+Subject: [PATCH] dm ioctl: fix a missing-check bug
+Date: Wed,  3 Oct 2018 11:43:59 -0500
+Message-ID: <1538585040-13872-1-git-send-email-wang6495@umn.edu>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Wenwen Wang <wang6495@umn.edu>
+Cc: Kangjie Lu <kjlu@umn.edu>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "maintainer:DEVICE-MAPPER LVM" <dm-devel@redhat.com>, open list <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Wed, Oct 3, 2018 at 3:47 PM Joe Thornber <thornber@redhat.com> wrote:
->
-> On Wed, Oct 03, 2018 at 03:13:36PM +0100, Thanos Makatos wrote:
-> > > Could you say more about why you want to do this?
-> > >
-> >
-> > So that I can directly read the data block without having to pass through
-> > dm-thin, e.g. there might be a more direct datapath to the physical block
-> > device.
-> >
-> > Mappings don't change if you're not using snapshots.  If you are, then any
-> > > write
-> > > to a shared block will trigger a copy on write operation, and subsequently
-> > > a new
-> > > mapping.
-> >
-> > So for backups etc. I made the metadata snapshot available, which gives you
-> > > a
-> > > view of all the metadata frozen at a point in time.  If you're using the
-> > > metadata
-> > > snap you still need to guarantee the mappings for the devices that you're
-> > > interested
-> > > in are not changing.  eg, instead of backing up a live thin, take a
-> > > snapshot of the thin
-> > > and back this up instead.
-> > >
-> >
-> > For now I can guarantee that these mappings don't change (no snapshots,
-> > backups, etc), so it's safe to extract the mapping(s) without having
-> > acquired the meradata snapshot, correct? If this is the case, then how can
-> > I extract individual mappins? (Either from kernel space or from user
-> > space.) Are there specific dm-thin kernel functions I should start looking
-> > at?
->
-> Why is this thin-specific?  What happens if there are two thin-pools under
-> your code?  Do you want the final physical location?  The whole dm stack?
+In copy_params(), the struct 'dm_ioctl' is firstly copied from the user
+space buffer 'user' to 'param_kernel' and the field 'data_size' is checked
+against 'minimum_data_size'. If the check fails, an error code EINVAL will
+be returned. Otherwise, the 'data_size' is used to do the second copy,
+which copies from the same user-space buffer to 'dmi'. After the second
+copy, only 'dmi->data_size' is checked against 'param_kernel->data_size'.
+Given that the buffer 'user' resides in the user space, a malicious
+user-space process can race to change the content in the buffer between the
+two copies. This way, the attacker can inject inconsistent data in
+'param_kernel' and 'dmi'.
 
-You're right, this isn't thin-specific.
+This patch removes the redundant part in the second copy and reuses the
+result in the first copy. It also remove the check of 'data_size' after the
+second copy because it is unnecessary with this patch.
 
-Currently there will be only one thin pool per physical device so it's
-simple enough.
+Signed-off-by: Wenwen Wang <wang6495@umn.edu>
+---
+ drivers/md/dm-ioctl.c | 13 ++++---------
+ 1 file changed, 4 insertions(+), 9 deletions(-)
 
-Indeed I want the physical location, knowing the location in the data
-LV would suffice.
-
->> Efficiently reading the metadata requires a cache of metadata blocks.  Thinp uses dm-bufio
-> to provide this.  It seems very wasteful for you to duplicate this.  So your options are:
->
->
-> i) querying the pool metadata object directly.  Currently there is no way to get hold of the
->    metadata object, you would need to make any queries off the io path, since they can block.
-
-Do you mean that the pool metadata object is internal to dm-thin so
-that other kernel modules cannot access it? If so then I suppose I can
-add functions do dm-thin that return an opaque pointer to it (or
-something like that). Is there some specific function that given the
-poo metadata object can return this information? I've started looking
-at  thin_bio_map(), is this the best place to start?
-
-Also, is option (i) doable from userspace? Is there logic in thin_dump
-to access the on-disk metadata? I suppose I will have to take care
-when reading the metadata as they might not have been committed to
-disk.
-
->> ii) or examining the completed bios, you'd probably need to add some per bio data to give context.
-
-I think option (ii) sounds like the most efficient one but most invasive.
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index b810ea7..b708c69 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1762,18 +1762,13 @@ static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *param_kern
+ 
+ 	*param_flags |= DM_PARAMS_MALLOC;
+ 
+-	if (copy_from_user(dmi, user, param_kernel->data_size))
++	if (copy_from_user(&dmi->data, (char __user *)user + minimum_data_size,
++				param_kernel->data_size - minimum_data_size))
+ 		goto bad;
+ 
+-data_copied:
+-	/*
+-	 * Abort if something changed the ioctl data while it was being copied.
+-	 */
+-	if (dmi->data_size != param_kernel->data_size) {
+-		DMERR("rejecting ioctl: data size modified while processing parameters");
+-		goto bad;
+-	}
++	memcpy(dmi, param_kernel, minimum_data_size);
+ 
++data_copied:
+ 	/* Wipe the user buffer so we do not return it to userspace */
+ 	if (secure_data && clear_user(user, param_kernel->data_size))
+ 		goto bad;
+-- 
+2.7.4
