@@ -1,16 +1,14 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v3 18/19] libmultipath: Don't blank
-	intialized paths
-Date: Wed, 03 Oct 2018 00:37:17 +0200
-Message-ID: <f87221ecedb072a7f3551ea0f62e7df586d075f1.camel@suse.com>
-References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
-	<1537571127-10143-19-git-send-email-bmarzins@redhat.com>
-	<3bb1c108b1e43a85d296eed9a63cefe7a6de2d01.camel@suse.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: extracting thin mappings in real time
+Date: Wed, 3 Oct 2018 14:03:33 +0100
+Message-ID: <20181003130333.GA20800@reti>
+References: <CA+fs2JN0evmnJP2yZT144bUOdxaxUydchXrZmLmFVy4F20yfAA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <3bb1c108b1e43a85d296eed9a63cefe7a6de2d01.camel@suse.com>
+Content-Disposition: inline
+In-Reply-To: <CA+fs2JN0evmnJP2yZT144bUOdxaxUydchXrZmLmFVy4F20yfAA@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,88 +18,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: Thanos Makatos <thanos.makatos@sunlight.io>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-SGkgQmVuLAoKT24gVHVlLCAyMDE4LTEwLTAyIGF0IDAwOjAwICswMjAwLCBNYXJ0aW4gV2lsY2sg
-d3JvdGU6Cj4gT24gRnJpLCAyMDE4LTA5LTIxIGF0IDE4OjA1IC0wNTAwLCBCZW5qYW1pbiBNYXJ6
-aW5za2kgd3JvdGU6Cj4gPiBXaGVuIHBhdGhpbmZvIGZhaWxzIGZvciBzb21lIGxpa2VseSB0cmFu
-c2llbnQgcmVhc29uLCBpdCBjbGVhcnMgdGhlCj4gPiBwYXRoCj4gPiB3d2lkLCBidXQgb3RoZXJ3
-aXNlIHJldHVybnMgc3VjY2Vzc2Z1bGx5LCB0byBrZWVwIHRoZSBwYXRoIGFyb3VuZAo+ID4gYnV0
-Cj4gPiBub3QgdXNhYmxlIHVudGlsIGl0IGdldHMgZnVsbHkgaW5pdGlhbGl6ZWQuIEhvd2V2ZXIs
-IGlmIHRoZSBwYXRoCj4gPiBoYXMKPiA+IGFscmVhZHkgYmVlbiBpbml0aWFsaXplZCwgYW5kIHBh
-dGhpbmZvIGhpdHMgYSB0cmFuc2llbnQgZXJyb3IsIGl0Cj4gPiBzaG91bGRuJ3QgY2xlYXIgdGhl
-IHd3aWQuCj4gPiAKPiA+IFNpZ25lZC1vZmYtYnk6IEJlbmphbWluIE1hcnppbnNraSA8Ym1hcnpp
-bnNAcmVkaGF0LmNvbT4KPiA+IC0tLQo+ID4gIGxpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYyB8IDQg
-KystLQo+ID4gIDEgZmlsZSBjaGFuZ2VkLCAyIGluc2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0p
-Cj4gPiAKPiA+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvZGlzY292ZXJ5LmMgYi9saWJtdWx0
-aXBhdGgvZGlzY292ZXJ5LmMKPiA+IGluZGV4IDNlMGRiN2YuLjMzODE1ZGMgMTAwNjQ0Cj4gPiAt
-LS0gYS9saWJtdWx0aXBhdGgvZGlzY292ZXJ5LmMKPiA+ICsrKyBiL2xpYm11bHRpcGF0aC9kaXNj
-b3ZlcnkuYwo+ID4gQEAgLTE5OTEsOSArMTk5MSw5IEBAIGJsYW5rOgo+ID4gIAkvKgo+ID4gIAkg
-KiBSZWNvdmVyYWJsZSBlcnJvciwgZm9yIGV4YW1wbGUgZmF1bHR5IG9yIG9mZmxpbmUgcGF0aAo+
-ID4gIAkgKi8KPiA+IC0JbWVtc2V0KHBwLT53d2lkLCAwLCBXV0lEX1NJWkUpOwo+ID4gIAlwcC0+
-Y2hrcnN0YXRlID0gcHAtPnN0YXRlID0gUEFUSF9ET1dOOwo+ID4gLQlwcC0+aW5pdGlhbGl6ZWQg
-PSBJTklUX0ZBSUxFRDsKPiA+ICsJaWYgKHBwLT5pbml0aWFsaXplZCA9PSBJTklUX0ZBSUxFRCkK
-PiA+ICsJCW1lbXNldChwcC0+d3dpZCwgMCwgV1dJRF9TSVpFKTsKPiA+ICAKPiA+ICAJcmV0dXJu
-IFBBVEhJTkZPX09LOwo+ID4gIH0KPiAKPiBJIGFtIHVuY2VydGFpbiBhYm91dCB0aGlzIG9uZS4g
-VGhlIG9sZCBjb2RlIHNldHMgcHAtPmluaXRpYWxpemVkIHRvCj4gSU5JVF9GQUlMRUQuIElmIHRo
-ZSBzdGF0ZSBoYWQgYmVlbiBJTklUX01JU1NJTkdfVURFViBvcgo+IElOSVRfUkVRVUVTVEVEX1VE
-RVYgYmVmb3JlLCB0aGlzIHBhdGNoIG1pZ2h0IGNoYW5nZSBob3cgdGhlIGNvZGUKPiBiZWhhdmVz
-IGxhdGVyIGluIGNoZWNrX3BhdGgoKSwgd2hlcmUgdGhlc2UgY29uZGl0aW9ucyBhcmUgY2hlY2tl
-ZC4KPiAKPiBMaWtld2lzZSwgdGVzdHMgZm9yIHN0cmxlbihwcC0+d3dpZCkgYXJlIHVzZWQgaW4g
-dmFyaW91cyBwbGFjZXMKPiBhcm91bmQKPiB0aGUgY29kZS4gVGhlc2UgdGVzdHMgd291bGQgbm93
-IHlpZWxkIGRpZmZlcmVudCByZXN1bHRzIGZvciBwYXRocyBpbgo+ICJyZWNvdmVyYWJsZSBlcnJv
-ciIgc3RhdGUuCj4gCj4gSGF2ZSB5b3UgY29uc2lkZXJlZCB0aGVzZSBwb3NzaWJsZSBzaWRlIGVm
-ZmVjdHM/CgpJJ3ZlIHBvbmRlcmVkIG92ZXIgdGhpcyBhIGxvdC4gVGhlIGR1c3QgaXMgY2xlYXJp
-bmcgdXAgYSBiaXQuCgoxLiBXaXRoIHlvdXIgcGF0Y2ggaW4gcGxhY2UsIElOSVRfRkFJTEVEIGlz
-IG5ldmVyIHNldCBleGNlcHQgaW4KYWxsb2NfcGF0aCgpICh3ZSBtaWdodCByZW5hbWUgaXQgdG8g
-SU5JVF9ORVcgb3IgdGhlIGxpa2UsIGJ1dCBzZWUKYmVsb3cpLgoKMi4gSSBkb24ndCB1bmRlcnN0
-YW5kIGhvdyB5b3UgaGFuZGxlIHJlcGVhdGVkIGZhaWx1cmUgdG8gcmV0cmlldmUgdGhlCldXSUQu
-IEkgc2VlIHRoYXQgZ2V0X3VpZCgpIChhY3R1YWxseSwgc2NzaV91aWRfZmFsbGJhY2soKSkgd291
-bGQKcmV0cmlldmUgdGhlIFdXSUQgZnJvbSBzeXNmcyBhZnRlciByZXRyaWdnZXJzIGFyZSBleGhh
-dXN0ZWQuIEJ1dCBJCmRvbid0IHNlZSBob3cgcGF0aGluZm8oRElfV1dJRCkgd291bGQgZXZlciBi
-ZSBjYWxsZWQgaW4gdGhpcyBzaXR1YXRpb246CgpJbiB0aGUgbGFzdCBpbnZvY2F0aW9uLCBwYXRo
-aW5mbygpIGhhZCBmYWlsZWQgdG8gcmV0cmlldmUgdGhlIFdXSUQgYW5kCnNldCBwcC0+aW5pdGlh
-bGl6ZWQgPSBJTklUX01JU1NJTkdfVURFVi4gVGhlcmUgaXQgd2lsbCByZW1haW4gYmVjYXVzZQpj
-aGVja19wYXRoKCkgd29uJ3Qgc2V0IGl0IHRvIElOSVRfUkVRVUVTVEVEX1VERVYgYW55IG1vcmUg
-YWZ0ZXIgcmV0cmllcwphcmUgZXhoYXVzdGVkLiBBbmQgbm93LCBjaGVja19wYXRoKCkgd29uJ3Qg
-Y2FsbCBwYXRoaW5mbyhESV9BTEwpIGFueQptb3JlIGZyb20gdGhlICJhZGQgbWlzc2luZyBwYXRo
-IiBjb2RlLCBiZWNhdXNlIG9mIHRoZSAocHAtPmluaXRpYWxpemVkCiE9IElOSVRfTUlTU0lOR19V
-REVWKSBjb25kaXRpb24uCgpBbSBJIG92ZXJsb29raW5nIHNvbWV0aGluZz8KCjMuIElmICJibGFu
-ayIgc3RhdGUgbWVhbnMgdGhhdCBpbXBvcnRhbnQgZGV2aWNlIGluZm9ybWF0aW9uIGNvdWxkbid0
-IGJlCnJldHJpZXZlZCBiZWNhdXNlIG9mIHByZXN1bWFibHkgdHJhbnNpZW50IGZhaWx1cmUgY29u
-ZGl0aW9ucywgd2Ugc2hvdWxkCnJldHJ5IHRvIHJldHJpZXZlIHRoaXMgaW5mb3JtYXRpb24gYnkg
-Y2FsbGluZyBwYXRoaW5mbyBhZ2FpbiBsYXRlci4gQnV0CnVubGVzcyB0aGUgV1dJRCBpcyAocmVz
-ZXQgdG8pIHRoZSBlbXB0eSBzdHJpbmcsIGNoZWNrX3BhdGgoKSB3b24ndCBjYWxsCnBhdGhpbmZv
-KERJX0FMTCkgYW55IG1vcmUuCgo0LiBUaGUgImJsYW5rIiBsb2dpYyBpbiBwYXRoaW5mbygpIGNv
-bWJpbmVzIHNldmVyYWwgdmVyeSBkaWZmZXJlbnQKY2FzZXMuCiAgYSkgUEFUSF9SRU1PVkVEIHN0
-YXR1cyBmcm9tIHBhdGhfb2ZmbGluZSgpLiBUaGlzIG1lYW5zIHRoYXQKZWxlbWVudGFyeSBzeXNm
-cyBhdHRyaWJ1dGVzIHdlcmUgbWlzc2luZy4gVGhpcyBpcyBhbG1vc3QgdGhlIHNhbWUgYXMKZmFp
-bHVyZSBpbiBzeXNmc19wYXRoaW5mbygpLCB3aGljaCByZXN1bHRzIGluIFBBVEhJTkZPX0ZBSUxF
-RCByZXR1cm4Kc3RhdHVzOyBidXQgZm9yIFBBVEhfUkVNT1ZFRCB3ZSByZXR1cm4gUEFUSElORk9f
-T0sgYW5kIGtlZXAgdGhlIHBhdGgKYXJvdW5kLgogIGIpIEZhaWx1cmUgaW4gY2hlY2tlcl9jaGVj
-aygpLiBJZiB0aGUgcGF0aCBpcyBvZmZsaW5lIGluIHRoZSBmaXJzdApwbGFjZSwgdGhlIGNoZWNr
-ZXIgaXNuJ3QgY2FsbGVkLCBhbmQgV1dJRCBkZXRlcm1pbmF0aW9uIGlzIGF0dGVtcHRlZC4KQnV0
-IGlmIHRoZSBjaGVja2VyIHJldHVybnMgUEFUSF9VTkNIRUNLRUQgb3IgUEFUSF9XSUxELCB3ZSBn
-b3RvICJibGFuayIKc3RhdGUuCiAgYykgRmFpbHVyZSBpbiBzY3NpX2lvY3RsX3BhdGhpbmZvKCkg
-b3IgY2Npc3NfaW9jdGxfcGF0aGluZm8oKS4gQm90aApmdW5jdGlvbnMgbmV2ZXIgZmFpbCwgc28g
-dGhpcyBjYW4ndCBoYXBwZW4uIEkndmUgcGF0Y2hlcyBoZXJlIHRvIGZpeAp0aGF0LiAgCiAgZCkg
-RmFpbHVyZSB0byBvcGVuIHBwLT5mZC4gCgpkKSBpcyB0aGUgb25seSBjYXNlIGluIHdoaWNoIHRo
-ZSAiYmxhbmsiIGxvZ2ljIG1ha2VzIHJlYWxseSBzZW5zZSB0bwptZS4gSXQgY2FuIGhhcHBlbiBv
-bmx5IGF0IHRoZSBmaXJzdCBwYXRoaW5mbygpIGludm9jYXRpb24sIG1lYW5pbmcgCnBwLT53d2lk
-IGlzIHN0aWxsIGVtcHR5LCBhbmQgcHAtPmluaXRpYWxpemVkIGlzIElOSVRfRkFJTEVELiBZb3Vy
-IHBhdGNoCndvdWxkIGNoYW5nZSBub3RoaW5nIGZvciB0aGlzIGNhc2UuCgphKSBhbmQgYikgY2Fu
-IGhhcHBlbiBmb3IgcGF0aHMgdGhhdCBoYXZlIGJlZW4gaW5pdGlhbGl6ZWQgYWxyZWFkeS4gSQp0
-aGluayBpbiBjYXNlIGEpIHRoZSBXV0lEIHNob3VsZCBiZSByZXNldCwgcHJvYmFibHkgaW5pdGlh
-bGl6ZWQgc2hvdWxkCmJlIHNldCB0byBJTklUX0ZBSUxFRCwgYW5kIFBBVEhJTkZPX0ZBSUxFRCBz
-aG91bGQgYmUgcmV0dXJuZWQuIEluIGNhc2UKYikgd2Ugc2hvdWxkIElNTyBwcm9jZWVkIG5vcm1h
-bGx5IHJhdGhlciB0aGFuIGdvdG8gImJsYW5rIi4gUmVzZXR0aW5nCnRoZSBXV0lEIGluIGNhc2Ug
-YikgaXMgbm9uc2Vuc2UsIGFncmVlZC4KCkFsdG9nZXRoZXIsIGlmIG15IGFuYWx5c2lzIGlzIGNv
-cnJlY3QsIHlvdXIgcGF0Y2ggKG5vdCBibGFua2luZyB0aGUKV1dJRCkgc2hvdWxkIGJlIGFwcGxp
-ZWQgdG8gY2FzZSBiKSBvbmx5LgoKUGxlYXNlIGNvbW1lbnQgLSBJIHN0aWxsIGZlZWwgYSBiaXQg
-Y29uZnVzZWQgYW5kIG1heSBoYXZlIG92ZXJsb29rZWQKc29tZXRoaW5nIGVzc2VudGlhbC4KClJl
-Z2FyZHMKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVs
-LiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTD
-tnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5i
-ZXJnKQoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBz
-Oi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Wed, Oct 03, 2018 at 01:40:22PM +0100, Thanos Makatos wrote:
+> I have a kernel module that sits on top of a thin device mapper target that
+> receives block I/O requests and re-submits then to the thin target. I would
+> like to implement the following functionality: whenever I receive a write
+> completion from the thin target (assuming that it's the first time a block
+> written to) I would like to extract the newly-established mapping of that
+> virtual block.
+> 
+> I know that I can do this using thin_dump, however this involves:
+> (1) spawning a process
+> (2) reserving/releasing a metadata snapshot, and
+> (3) dumping _all_ the mappings.
+> 
+> In other words, it's far to heavyweight for my performance requirements.
+> 
+> Ideally I would like to be able to obtain the mapping in kernel space. I
+> had a look at thin_dump and from what I understand it directly reads the
+> B-tree from the disk? Is there some kernel function that already does this?
+> E.g. given a thin LBA return the physical block address.
+> 
+> Also, regarding having to have reserved a metadata snapshot, is this
+> necessary for obtaining mappings? Aren't mappings immutable once established
+> ?
+
+Could you say more about why you want to do this?
+
+Mappings don't change if you're not using snapshots.  If you are, then any write
+to a shared block will trigger a copy on write operation, and subsequently a new
+mapping.
+
+So for backups etc. I made the metadata snapshot available, which gives you a
+view of all the metadata frozen at a point in time.  If you're using the metadata
+snap you still need to guarantee the mappings for the devices that you're interested
+in are not changing.  eg, instead of backing up a live thin, take a snapshot of the thin
+and back this up instead.
+
+- Joe
