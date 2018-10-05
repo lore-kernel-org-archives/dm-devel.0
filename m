@@ -1,77 +1,119 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v3 02/19] libmultipath: fix tur checker
- double locking
-Date: Fri, 05 Oct 2018 12:25:15 +0200
-Message-ID: <fc2465f686f1cc33b2923f8cd44dabf55ce1c5a4.camel@suse.com>
-References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
-	<1537571127-10143-3-git-send-email-bmarzins@redhat.com>
-	<3bad257069d68444b0b2743d4b38ba6b6d15501d.camel@suse.com>
-	<20181004164521.GB3172@octiron.msp.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181004164521.GB3172@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
-Cc: Bart Van Assche <bart.vanassche@wdc.com>, device-mapper development <dm-devel@redhat.com>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: [PATCH] dm: Fix report zone remapping
+Date: Fri,  5 Oct 2018 19:34:52 +0900
+Message-ID: <20181005103452.7134-1-damien.lemoal@wdc.com>
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE4LTEwLTA0IGF0IDExOjQ1IC0wNTAwLCAgQmVuamFtaW4gTWFyemluc2tpICB3
-cm90ZToKPiBPbiBNb24sIE9jdCAwMSwgMjAxOCBhdCAxMDowOTo0MVBNICswMjAwLCBNYXJ0aW4g
-V2lsY2sgd3JvdGU6Cj4gPiBPbiBGcmksIDIwMTgtMDktMjEgYXQgMTg6MDUgLTA1MDAsIEJlbmph
-bWluIE1hcnppbnNraSB3cm90ZToKPiA+ID4gdHVyX2RldnQoKSBsb2NrcyBjdC0+bG9jay4gSG93
-ZXZlciwgaXQgaXMgb2Nhc3Npb25hbGx5IGNhbGxlZAo+ID4gPiB3aGlsZQo+ID4gPiBjdC0+bG9j
-ayBpcyBhbHJlYWR5IGxvY2tlZC4gSW4gcmVhbGl0eSwgdGhlcmUgaXMgbm8gcmVhc29uIHdoeSB3
-ZQo+ID4gPiBuZWVkCj4gPiA+IHRvIGxvY2sgYWxsIHRoZSBhY2Nlc3NlcyB0byBjdC0+ZGV2dC4g
-VGhlIHR1ciBjaGVja2VyIG9ubHkgbmVlZHMKPiA+ID4gdG8KPiA+ID4gd3JpdGUgdG8gdGhpcyB2
-YXJpYWJsZSBvbmUgdGltZSwgd2hlbiBpdCBmaXJzdCBnZXRzIHRoZSBmaWxlCj4gPiA+IGRlc2Ny
-aXB0ZXIKPiA+ID4gdGhhdCBpdCBpcyBjaGVja2luZy4gIEl0IGFsc28gbmV2ZXIgdXNlcyBjdC0+
-ZGV2dCBkaXJlY3RseS4KPiA+ID4gSW5zdGVhZCwKPiA+ID4gaXQKPiA+ID4gYWx3YXlzIGdyYXBz
-IHRoZSBtYWpvciBhbmQgbWlub3IsIGFuZCB0dXJucyB0aGVtIGludG8gYSBzdHJpbmcuCj4gPiA+
-IFRoaXMKPiA+ID4gcGF0Y2ggY2hhbmdlcyBjdC0+ZGV2dCBpbnRvIHRoYXQgc3RyaW5nLCBhbmQg
-c2V0cyBpdCBpbgo+ID4gPiBsaWJjaGVja19pbml0KCkKPiA+ID4gd2hlbiBpdCBpcyBmaXJzdCBp
-bml0aWFsaXppbmcgdGhlIGNoZWNrZXIgY29udGV4dC4gQWZ0ZXIgdGhhdCwKPiA+ID4gY3QtCj4g
-PiA+ID4gZGV2dAo+ID4gPiAKPiA+ID4gaXMgb25seSBldmVyIHJlYWQuCj4gPiAKPiA+IEkgbGlr
-ZSB0aGUgbG9jayByZW1vdmFsIGEgbG90LCBidXQgbm90IHNvIG11Y2ggdGhlIGNvbnZlcnNpb24g
-aW50bwo+ID4gYQo+ID4gc3RyaW5nLiBXaHkgbm90IGtlZXAgdGhlIGRldl90PyAKPiAKPiBCZWNh
-dXNlIHdlIHdpbGwgc2ltcGx5IGNvbnZlcnQgaXQgaW50byBhIHN0cmluZyBldmVyeSB0aW1lIHdl
-IHVzZSBpdCwKPiBpbnN0ZWFkIG9mIGRvaW5nIHRoZSB3b3JrIG9uZSB0aW1lLiBJdCdzIDI0IG1v
-cmUgYnl0ZXMgaW4gdGhlCj4gdHVyX2NoZWNrZXJfY29udGV4dCwgYnV0IHRoZSBjb2RlIGlzIGVh
-c2llciB0byByZWFkLCBhbmQgd2UncmUgbm90Cj4gZG9pbmcKPiB0aGUgc2FtZSB3b3JrIGFnYWlu
-IGFuZCBhZ2Fpbi4KCldlbGwsIElNTyBzbnByaW50ZihidWYsIE4sICIlZDolZCIsIG1ham9yKHgp
-LCBtaW5vcih4KSkgaXMgbm90IF90aGF0XwptdWNoIHdvcmssIGFuZCBpdCBsb29rcyBhIGxvdCBj
-bGVhbmVyLCB0byBtZSBhdCBsZWFzdC4KCkJ1dCBPSywgSSdtIG5vdCBpbnNpc3Rpbmcgb24gdGhp
-cy4gU28sIGlmIHlvdSByZS1wb3N0LCBJJ20gZ29pbmcgdG8gYWNrCnRoZSBwYXRjaC4KCk15IHRo
-b3VnaHQgZm9yIGxvbmcgdGVybSBpcyBpcyB0aGlzIGFjdHVhbGx5IHRoaXM6IGN0LT5kZXZfdCBp
-cyBvbmx5Cm5lZWRlZCBmb3IgY3JlYXRpbmcgbWVzc2FnZXMgdG8gYmUgc3RvcmVkIGluIHRoZSBj
-aGVja2VyLT5tZXNzYWdlCnN0cmluZywgd2hpY2ggSSBkb24ndCBsaWtlIGVpdGhlci4KCldoeSBk
-b24ndCB3ZSByZXBsYWNlIHRoZSAibWVzc2FnZSIgZmllbGQgd2l0aCBhbiAiaW50IG1zZ2lkIiwg
-YW5kCmFkZCBhIAoKICAgICBjaGFyKiAoKmdldF9tZXNzYWdlKShpbnQgbXNnaWQpCgp0byB0aGUg
-Y2hlY2tlciBBUEk/Cgptc2dpZCBjb3VsZCBhY3R1YWxseSBiZSBhbm90aGVyICJ1YXRvbWljIiBm
-aWVsZC4gV2UgY291bGQgZXZlbiBnbyBvbmUKc3RlcCBmdXJ0aGVyLCBjcmVhdGUgYSBmaWVsZCBm
-b3IgdGhlIGNoZWNrZXIgc3RhdHVzIGluIHN0cnVjdCBjaGVja2VyLAphbmQgdXNlIGxpa2Ugb25l
-IGJ5dGUgZm9yIHRoZSBnZW5lcmFsIHBhdGggc3RhdHVzIGFuZCB0aGUgcmVzdCBvZiB0aGUKZmll
-bGQgZm9yIHRoZSBtc2dpZCwgd2hpY2ggdXN1YWxseSByZXByZXNlbnRzIGp1c3Qgc29tZSBjaGVj
-a2VyLQpzcGVjaWZpYyBleHRyYSBpbmZvcm1hdGlvbiB3cnQgdGhlIHN0YXR1cy4KCj4gPiAKPiA+
-IE9yIG1heWJlIGV2ZW4gZWFzaWVyLCB0aGUgb3RoZXIgd2F5IGFyb3VuZDogd2h5IGRvbid0IHdl
-IG1ha2UgaXQgYQo+ID4gY2hhciogYW5kIHNpbXBseSBzZXQgY2hlY2tlci0+ZGV2X3QgPSAmcHAt
-PmRldl90Pwo+IAo+IFRoZSB3aG9sZSByZWFzb24gd2UgaGF2ZSB0dXJfY2hlY2tlcl9jb250ZXh0
-LT5ob2xkZXJzIGlzIHRoYXQgaXQncwo+IHBvc3NpYmxlIGZvciBhIHBhdGggdG8gYmUgcmVtb3Zl
-ZCAob3Igb3JwaGFuZWQpIHdoaWxlIHRoZSB0aHJlYWQgaXMKPiBzdGlsbCBydW5uaW5nLiBUaGUg
-dHVyX2NoZWNrZXJfY29udGV4dCBuZWVkcyB0byBrZWVwIGFsbCBpdHMgb3duCj4gc3RvcmFnZSwg
-c28gdGhhdCBpdCBuZXZlciBhcyB0byB3b3JyeSBhYm91dCBwb2ludGluZyB0byBmcmVlZCBtZW1v
-cnkuCgpZZWFoLCBJIGdvdCB0aGF0IG1lYW53aGlsZSwgYXMgcG9zdGVkIGJlZm9yZS4gU29ycnku
-CgpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0
-OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZm
-ZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcp
-CgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93
-d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+If dm-linear or dm-flakey have targets on top of a partition of a zoned
+block device, remapping of the start sector and write pointer position
+of the zones reported by a report zones BIO must be modified to not
+only account for the target table entry mapping, but also to account
+for the partition first sector. This start sector must be substracted
+to the start sector of all zones reported. The write pointer position
+of sequential zones must also be reduced by this offset.
+
+Since there is no easy way to access the underlying bdev of the target
+table entry from the dm_target or dm_target_io pointers, modify the
+interface of the function dm_remap_zone_report() to allow a target to
+pass the partition block device starting sector (offset).
+
+Fixes: 10999307c14e ("dm: introduce dm_remap_zone_report()")
+Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+Cc: <stable@vger.kernel.org>
+---
+ drivers/md/dm-flakey.c        |  3 ++-
+ drivers/md/dm-linear.c        |  3 ++-
+ drivers/md/dm.c               | 16 ++++++++++++----
+ include/linux/device-mapper.h |  2 +-
+ 4 files changed, 17 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index 21d126a5078c..c68c2e9cde6b 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -381,7 +381,8 @@ static int flakey_end_io(struct dm_target *ti, struct bio *bio,
+ 		return DM_ENDIO_DONE;
+ 
+ 	if (bio_op(bio) == REQ_OP_ZONE_REPORT) {
+-		dm_remap_zone_report(ti, bio, fc->start);
++		dm_remap_zone_report(ti, bio, get_start_sect(fc->dev->bdev),
++				     fc->start);
+ 		return DM_ENDIO_DONE;
+ 	}
+ 
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index d10964d41fd7..f8cd367abbf6 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -108,7 +108,8 @@ static int linear_end_io(struct dm_target *ti, struct bio *bio,
+ 	struct linear_c *lc = ti->private;
+ 
+ 	if (!*error && bio_op(bio) == REQ_OP_ZONE_REPORT)
+-		dm_remap_zone_report(ti, bio, lc->start);
++		dm_remap_zone_report(ti, bio, get_start_sect(lc->dev->bdev),
++				     lc->start);
+ 
+ 	return DM_ENDIO_DONE;
+ }
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 20f7e4ef5342..ffd8544eedd8 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1162,7 +1162,8 @@ EXPORT_SYMBOL_GPL(dm_accept_partial_bio);
+  * REQ_OP_ZONE_REPORT bio to remap the zone descriptors obtained
+  * from the target device mapping to the dm device.
+  */
+-void dm_remap_zone_report(struct dm_target *ti, struct bio *bio, sector_t start)
++void dm_remap_zone_report(struct dm_target *ti, struct bio *bio,
++			  sector_t dev_offset, sector_t start)
+ {
+ #ifdef CONFIG_BLK_DEV_ZONED
+ 	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
+@@ -1195,18 +1196,25 @@ void dm_remap_zone_report(struct dm_target *ti, struct bio *bio, sector_t start)
+ 		/* Set zones start sector */
+ 		while (hdr->nr_zones && ofst < bvec.bv_len) {
+ 			zone = addr + ofst;
++			zone->start -= dev_offset;
+ 			if (zone->start >= start + ti->len) {
+ 				hdr->nr_zones = 0;
+ 				break;
+ 			}
+ 			zone->start = zone->start + ti->begin - start;
+ 			if (zone->type != BLK_ZONE_TYPE_CONVENTIONAL) {
+-				if (zone->cond == BLK_ZONE_COND_FULL)
++				switch (zone->cond) {
++				case BLK_ZONE_COND_FULL:
+ 					zone->wp = zone->start + zone->len;
+-				else if (zone->cond == BLK_ZONE_COND_EMPTY)
++					break;
++				case BLK_ZONE_COND_EMPTY:
+ 					zone->wp = zone->start;
+-				else
++					break;
++				default:
++					zone->wp -= dev_offset;
+ 					zone->wp = zone->wp + ti->begin - start;
++					break;
++				}
+ 			}
+ 			ofst += sizeof(struct blk_zone);
+ 			hdr->nr_zones--;
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 6fb0808e87c8..22c1924c0ee8 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -421,7 +421,7 @@ int dm_suspended(struct dm_target *ti);
+ int dm_noflush_suspending(struct dm_target *ti);
+ void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors);
+ void dm_remap_zone_report(struct dm_target *ti, struct bio *bio,
+-			  sector_t start);
++			  sector_t dev_offset, sector_t start);
+ union map_info *dm_get_rq_mapinfo(struct request *rq);
+ 
+ struct queue_limits *dm_get_queue_limits(struct mapped_device *md);
+-- 
+2.17.1
