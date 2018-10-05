@@ -1,12 +1,19 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 4.19-rc7
-Date: Fri, 5 Oct 2018 15:05:25 -0400
-Message-ID: <20181005190524.GA5921@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v3 02/19] libmultipath: fix tur checker
+ double locking
+Date: Fri, 05 Oct 2018 21:07:54 +0200
+Message-ID: <da5d8b13f169cf85f8a4a35197585dde0eb104d6.camel@suse.com>
+References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
+	<1537571127-10143-3-git-send-email-bmarzins@redhat.com>
+	<3bad257069d68444b0b2743d4b38ba6b6d15501d.camel@suse.com>
+	<20181004164521.GB3172@octiron.msp.redhat.com>
+	<fc2465f686f1cc33b2923f8cd44dabf55ce1c5a4.camel@suse.com>
+	<20181005171054.GE3172@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <20181005171054.GE3172@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,53 +23,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: dm-devel@redhat.com, Geert Uytterhoeven <geert@linux-m68k.org>, Joe Thornber <ejt@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
+Cc: Bart Van Assche <bart.vanassche@wdc.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Greg,
-
-The following changes since commit 7876320f88802b22d4e2daf7eb027dd14175a0f8:
-
-  Linux 4.19-rc4 (2018-09-16 11:52:37 -0700)
-
-are available in the Git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.19/dm-fixes-2
-
-for you to fetch changes up to 5d07384a666d4b2f781dc056bfeec2c27fbdf383:
-
-  dm cache: fix resize crash if user doesn't reload cache table (2018-10-04 15:20:52 -0400)
-
-Please pull, thanks!
-Mike
-
-----------------------------------------------------------------
-- Fix a DM thinp __udivdi3 undefined on 32-bit bug introduced during
-  4.19 merge window.
-
-- Fix leak and dangling pointer in DM multipath's scsi_dh related code.
-
-- A couple stable@ fixes for DM cache's resize support.
-
-- A DM raid fix to remove "const" from decipher_sync_action()'s return
-  type.
-
-----------------------------------------------------------------
-Geert Uytterhoeven (1):
-      dm raid: remove bogus const from decipher_sync_action() return type
-
-Joe Thornber (1):
-      dm cache metadata: ignore hints array being too small during resize
-
-Mike Snitzer (3):
-      dm thin metadata: fix __udivdi3 undefined on 32-bit
-      dm mpath: fix attached_handler_name leak and dangling hw_handler_name pointer
-      dm cache: fix resize crash if user doesn't reload cache table
-
- drivers/md/dm-cache-metadata.c |  4 ++--
- drivers/md/dm-cache-target.c   |  9 +++++++--
- drivers/md/dm-mpath.c          | 14 ++++++++------
- drivers/md/dm-raid.c           |  2 +-
- drivers/md/dm-thin-metadata.c  |  6 ++----
- 5 files changed, 20 insertions(+), 15 deletions(-)
+T24gRnJpLCAyMDE4LTEwLTA1IGF0IDEyOjEwIC0wNTAwLCAgQmVuamFtaW4gTWFyemluc2tpICB3
+cm90ZToKPiBPbiBGcmksIE9jdCAwNSwgMjAxOCBhdCAxMjoyNToxNVBNICswMjAwLCBNYXJ0aW4g
+V2lsY2sgd3JvdGU6Cj4gPiBPbiBUaHUsIDIwMTgtMTAtMDQgYXQgMTE6NDUgLTA1MDAsICBCZW5q
+YW1pbiBNYXJ6aW5za2kgIHdyb3RlOgo+ID4gPiBPbiBNb24sIE9jdCAwMSwgMjAxOCBhdCAxMDow
+OTo0MVBNICswMjAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4gPiA+ID4gT24gRnJpLCAyMDE4LTA5
+LTIxIGF0IDE4OjA1IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3JvdGU6Cj4gPiA+ID4gPiB0
+dXJfZGV2dCgpIGxvY2tzIGN0LT5sb2NrLiBIb3dldmVyLCBpdCBpcyBvY2Fzc2lvbmFsbHkgY2Fs
+bGVkCj4gPiA+ID4gPiB3aGlsZQo+ID4gPiA+ID4gY3QtPmxvY2sgaXMgYWxyZWFkeSBsb2NrZWQu
+IEluIHJlYWxpdHksIHRoZXJlIGlzIG5vIHJlYXNvbgo+ID4gPiA+ID4gd2h5IHdlCj4gPiA+ID4g
+PiBuZWVkCj4gPiA+ID4gPiB0byBsb2NrIGFsbCB0aGUgYWNjZXNzZXMgdG8gY3QtPmRldnQuIFRo
+ZSB0dXIgY2hlY2tlciBvbmx5Cj4gPiA+ID4gPiBuZWVkcwo+ID4gPiA+ID4gdG8KPiA+ID4gPiA+
+IHdyaXRlIHRvIHRoaXMgdmFyaWFibGUgb25lIHRpbWUsIHdoZW4gaXQgZmlyc3QgZ2V0cyB0aGUg
+ZmlsZQo+ID4gPiA+ID4gZGVzY3JpcHRlcgo+ID4gPiA+ID4gdGhhdCBpdCBpcyBjaGVja2luZy4g
+IEl0IGFsc28gbmV2ZXIgdXNlcyBjdC0+ZGV2dCBkaXJlY3RseS4KPiA+ID4gPiA+IEluc3RlYWQs
+Cj4gPiA+ID4gPiBpdAo+ID4gPiA+ID4gYWx3YXlzIGdyYXBzIHRoZSBtYWpvciBhbmQgbWlub3Is
+IGFuZCB0dXJucyB0aGVtIGludG8gYQo+ID4gPiA+ID4gc3RyaW5nLgo+ID4gPiA+ID4gVGhpcwo+
+ID4gPiA+ID4gcGF0Y2ggY2hhbmdlcyBjdC0+ZGV2dCBpbnRvIHRoYXQgc3RyaW5nLCBhbmQgc2V0
+cyBpdCBpbgo+ID4gPiA+ID4gbGliY2hlY2tfaW5pdCgpCj4gPiA+ID4gPiB3aGVuIGl0IGlzIGZp
+cnN0IGluaXRpYWxpemluZyB0aGUgY2hlY2tlciBjb250ZXh0LiBBZnRlcgo+ID4gPiA+ID4gdGhh
+dCwKPiA+ID4gPiA+IGN0LQo+ID4gPiA+ID4gPiBkZXZ0Cj4gPiA+ID4gPiAKPiA+ID4gPiA+IGlz
+IG9ubHkgZXZlciByZWFkLgo+ID4gPiA+IAo+ID4gPiA+IEkgbGlrZSB0aGUgbG9jayByZW1vdmFs
+IGEgbG90LCBidXQgbm90IHNvIG11Y2ggdGhlIGNvbnZlcnNpb24KPiA+ID4gPiBpbnRvCj4gPiA+
+ID4gYQo+ID4gPiA+IHN0cmluZy4gV2h5IG5vdCBrZWVwIHRoZSBkZXZfdD8gCj4gPiA+IAo+ID4g
+PiBCZWNhdXNlIHdlIHdpbGwgc2ltcGx5IGNvbnZlcnQgaXQgaW50byBhIHN0cmluZyBldmVyeSB0
+aW1lIHdlIHVzZQo+ID4gPiBpdCwKPiA+ID4gaW5zdGVhZCBvZiBkb2luZyB0aGUgd29yayBvbmUg
+dGltZS4gSXQncyAyNCBtb3JlIGJ5dGVzIGluIHRoZQo+ID4gPiB0dXJfY2hlY2tlcl9jb250ZXh0
+LCBidXQgdGhlIGNvZGUgaXMgZWFzaWVyIHRvIHJlYWQsIGFuZCB3ZSdyZQo+ID4gPiBub3QKPiA+
+ID4gZG9pbmcKPiA+ID4gdGhlIHNhbWUgd29yayBhZ2FpbiBhbmQgYWdhaW4uCj4gPiAKPiA+IFdl
+bGwsIElNTyBzbnByaW50ZihidWYsIE4sICIlZDolZCIsIG1ham9yKHgpLCBtaW5vcih4KSkgaXMg
+bm90Cj4gPiBfdGhhdF8KPiA+IG11Y2ggd29yaywgYW5kIGl0IGxvb2tzIGEgbG90IGNsZWFuZXIs
+IHRvIG1lIGF0IGxlYXN0Lgo+ID4gCj4gPiBCdXQgT0ssIEknbSBub3QgaW5zaXN0aW5nIG9uIHRo
+aXMuIFNvLCBpZiB5b3UgcmUtcG9zdCwgSSdtIGdvaW5nIHRvCj4gPiBhY2sKPiA+IHRoZSBwYXRj
+aC4KPiA+IAo+ID4gTXkgdGhvdWdodCBmb3IgbG9uZyB0ZXJtIGlzIGlzIHRoaXMgYWN0dWFsbHkg
+dGhpczogY3QtPmRldl90IGlzCj4gPiBvbmx5Cj4gPiBuZWVkZWQgZm9yIGNyZWF0aW5nIG1lc3Nh
+Z2VzIHRvIGJlIHN0b3JlZCBpbiB0aGUgY2hlY2tlci0+bWVzc2FnZQo+ID4gc3RyaW5nLCB3aGlj
+aCBJIGRvbid0IGxpa2UgZWl0aGVyLgo+ID4gCj4gPiBXaHkgZG9uJ3Qgd2UgcmVwbGFjZSB0aGUg
+Im1lc3NhZ2UiIGZpZWxkIHdpdGggYW4gImludCBtc2dpZCIsIGFuZAo+ID4gYWRkIGEgCj4gPiAK
+PiA+ICAgICAgY2hhciogKCpnZXRfbWVzc2FnZSkoaW50IG1zZ2lkKQo+ID4gCj4gPiB0byB0aGUg
+Y2hlY2tlciBBUEk/Cj4gCj4gSSB3b3VsZCBub3QgaGF2ZSBhIHByb2JsZW0gd2l0aCBhIHBhdGNo
+IHRoYXQgZGlkIHRoaXMuCgpMZXQncyBnZXQgeW91ciBzZXJpZXMgZmluYWxpemVkLCBhbmQgcG9z
+c2libHkgbWVyZ2VkLCBmaXJzdC4KCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxj
+a0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwg
+R0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIg
+MjEyODQgKEFHIE7DvHJuYmVyZykKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
+cmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
+ZWw=
