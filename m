@@ -1,18 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v3 18/19] libmultipath: Don't blank
-	intialized paths
-Date: Fri, 5 Oct 2018 14:38:43 -0500
-Message-ID: <20181005193843.GF3172@octiron.msp.redhat.com>
+Subject: Re: [PATCH v3 19/19] libmultipath: Fixup updating paths
+Date: Fri, 5 Oct 2018 15:32:21 -0500
+Message-ID: <20181005203221.GG3172@octiron.msp.redhat.com>
 References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
-	<1537571127-10143-19-git-send-email-bmarzins@redhat.com>
-	<3bb1c108b1e43a85d296eed9a63cefe7a6de2d01.camel@suse.com>
-	<f87221ecedb072a7f3551ea0f62e7df586d075f1.camel@suse.com>
+	<1537571127-10143-20-git-send-email-bmarzins@redhat.com>
+	<1ec6d9dbdab329d9125ee380790933b7dfab804a.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <f87221ecedb072a7f3551ea0f62e7df586d075f1.camel@suse.com>
+In-Reply-To: <1ec6d9dbdab329d9125ee380790933b7dfab804a.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,147 +24,131 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Oct 03, 2018 at 12:37:17AM +0200, Martin Wilck wrote:
-> Hi Ben,
-> =
-
-> > I am uncertain about this one. The old code sets pp->initialized to
-> > INIT_FAILED. If the state had been INIT_MISSING_UDEV or
-> > INIT_REQUESTED_UDEV before, this patch might change how the code
-> > behaves later in check_path(), where these conditions are checked.
+On Tue, Oct 02, 2018 at 12:30:51AM +0200, Martin Wilck wrote:
+> On Fri, 2018-09-21 at 18:05 -0500, Benjamin Marzinski wrote:
+> > Commit 582c56cc broke some code paths in uev_update_path. First, it
+> > changed the handling of paths that were not fully initialized.
+> > uev_update_path was simply setting the wwids for all of these paths.
+> > Instead, it should ignore the ones that had not requested a new
+> > uevent.
+> > These paths are likely down, and are already getting handled by
+> > check_path, after it verifies that they have become active. Also,
+> > setting the wwid doesn't update all of the other information that
+> > may have been missed when the path was initially added.
 > > =
 
-> > Likewise, tests for strlen(pp->wwid) are used in various places
-> > around
-> > the code. These tests would now yield different results for paths in
-> > "recoverable error" state.
+> > Also, it wasn't possible for pp->wwid_changed to transition back to
+> > zero, unless the path's wwid was empty, in which case there was no
+> > reason to worry about the wwid change in the first place, since the
+> > path
+> > hadn't been fully initialized yet. So, even if a path's wwid changed
+> > and
+> > then changed back to the original value, the path still could not be
+> > used.
 > > =
 
-> > Have you considered these possible side effects?
+> > This patch fixes these issues, and also moves the check for paths
+> > that
+> > have requested a new uevent up in the functions. These paths will get
+> > fully reinitialized anyway, so there is no reason to do all the other
+> > work first.
+> > =
+
+> > Fixes: 582c56cc ("libmultipath: uev_update_path: always warn if WWID
+> > changed")
+> > =
+
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > =
 
-> I've pondered over this a lot. The dust is clearing up a bit.
-> =
+> Thanks for fixing this. Looking at the cleaned-up logic after this
+> patch, I believe that we should hard-code "disable_changed_wwids" to 1.
+> It's crazy to realize that a path WWID has changed and simply go on as
+> if nothing had happened. We shouldn't allow this configuration any
+> more.
 
-> 1. With your patch in place, INIT_FAILED is never set except in
-> alloc_path() (we might rename it to INIT_NEW or the like, but see
-> below).
-
-Correct. The idea is that INIT_FAILED means that the path has never been
-fully initialized and that it is missing more than simply the wwid
-(which would set INIT_MISSING_UDEV instead).
-
-> 2. I don't understand how you handle repeated failure to retrieve the
-> WWID. I see that get_uid() (actually, scsi_uid_fallback()) would
-> retrieve the WWID from sysfs after retriggers are exhausted. But I
-> don't see how pathinfo(DI_WWID) would ever be called in this situation:
->
-> In the last invocation, pathinfo() had failed to retrieve the WWID and
-> set pp->initialized =3D INIT_MISSING_UDEV. There it will remain because
-> check_path() won't set it to INIT_REQUESTED_UDEV any more after retries
-> are exhausted. And now, check_path() won't call pathinfo(DI_ALL) any
-> more from the "add missing path" code, because of the (pp->initialized
-> !=3D INIT_MISSING_UDEV) condition.
-> =
-
-> Am I overlooking something?
-
-Your analysis looks right. This shouldn't have anything to do with the
-correctness of the not blanking initialized paths, but we should fix it
-anyway.  Right now, as you mentioned, if multipathd fails to get the
-wwid after retrigger_tries new uevents, it only has one shot at the
-failback methods, and then mutipathd cannot use that path in the future.
-However, it will still check if the path is up or down, which is pretty
-pointless. It should either
-
-1. set pp->intialized to INIT_OK, to keep it from being checked at all
-in the future, or
-
-2. try to grab the missing pathinfo, so that it can use the path.
-
-The benefit of doing the first is that mutipathd doesn't keep messing
-with paths that really aren't set up to be multipathed. On the other
-hand it might ignore some paths that really should be multipathed.
-perhaps the best idea is to keep trying to get the missing info, but
-just increase pp->tick (possibly progressively) so we try less often.
-
-> 3. If "blank" state means that important device information couldn't be
-> retrieved because of presumably transient failure conditions, we should
-> retry to retrieve this information by calling pathinfo again later. But
-> unless the WWID is (reset to) the empty string, check_path() won't call
-> pathinfo(DI_ALL) any more.
-
-But if we set the wwid at some point in time, that means we got all the
-necessary information.  My argument is that if something happens to
-cause a later pathinfo() call to fail, we shouldn't pretend like we
-didn't already get this info.
- =
-
-> 4. The "blank" logic in pathinfo() combines several very different
-> cases.
->   a) PATH_REMOVED status from path_offline(). This means that
-> elementary sysfs attributes were missing. This is almost the same as
-> failure in sysfs_pathinfo(), which results in PATHINFO_FAILED return
-> status; but for PATH_REMOVED we return PATHINFO_OK and keep the path
-> around.
-
-True, but I've always assumed that this means that we will be getting a
-uevent to remove this path momentarily, so I doesn't really matter what
-we do with it. We could blank the path here, but if we already go the
-necessary info, it seems like just setting the path to PATH_DOWN, and
-waiting for the remove uevent should be fine.
-
->   b) Failure in checker_check(). If the path is offline in the first
-> place, the checker isn't called, and WWID determination is attempted.
-> But if the checker returns PATH_UNCHECKED or PATH_WILD, we goto "blank"
-> state.
-
-This is clearly the wrong thing to do.
-
->   c) Failure in scsi_ioctl_pathinfo() or cciss_ioctl_pathinfo(). Both
-> functions never fail, so this can't happen. I've patches here to fix
-> that.
-
-I just ignored this state because it was impossible. But even with your
-patches, my argument remains the same. If we already got this info,
-failing to get it again shouldn't cause us to delete the wwid. We should
-probably remember the existing values, to make sure that we don't lose
-them if the calls fail for some reason.
-
->   d) Failure to open pp->fd. =
-
-
-This is clearly the right thing to do.
-
-> d) is the only case in which the "blank" logic makes really sense to
-> me. It can happen only at the first pathinfo() invocation, meaning =
-
-> pp->wwid is still empty, and pp->initialized is INIT_FAILED. Your patch
-> would change nothing for this case.
-> =
-
-> a) and b) can happen for paths that have been initialized already. I
-> think in case a) the WWID should be reset, probably initialized should
-> be set to INIT_FAILED, and PATHINFO_FAILED should be returned. In case
-> b) we should IMO proceed normally rather than goto "blank". Resetting
-> the WWID in case b) is nonsense, agreed.
-> =
-
-> Altogether, if my analysis is correct, your patch (not blanking the
-> WWID) should be applied to case b) only.
-
-I don't really care about blanking the wwid in case a). I just think
-it's unnecessary.  Why do you think we should blank it in case c) if we
-have previously gotten those values?
+I'm fine with defaulting disable_changed_wwids to 1.
 
 -Ben
 
-> Please comment - I still feel a bit confused and may have overlooked
-> something essential.
 > =
 
-> Regards
-> Martin
+> Reviewed-by: Martin Wilck <mwilck@suse.com>
+> =
+
+> > ---
+> >  multipathd/main.c | 24 ++++++++++++++----------
+> >  1 file changed, 14 insertions(+), 10 deletions(-)
+> > =
+
+> > diff --git a/multipathd/main.c b/multipathd/main.c
+> > index 61ca455..d6d122a 100644
+> > --- a/multipathd/main.c
+> > +++ b/multipathd/main.c
+> > @@ -1207,6 +1207,15 @@ uev_update_path (struct uevent *uev, struct
+> > vectors * vecs)
+> >  		struct multipath *mpp =3D pp->mpp;
+> >  		char wwid[WWID_SIZE];
+> >  =
+
+> > +		if (pp->initialized =3D=3D INIT_REQUESTED_UDEV) {
+> > +			needs_reinit =3D 1;
+> > +			goto out;
+> > +		}
+> > +		/* Don't deal with other types of failed initialization
+> > +		 * now. check_path will handle it */
+> > +		if (!strlen(pp->wwid))
+> > +			goto out;
+> > +
+> >  		strcpy(wwid, pp->wwid);
+> >  		get_uid(pp, pp->state, uev->udev);
+> >  =
+
+> > @@ -1215,9 +1224,8 @@ uev_update_path (struct uevent *uev, struct
+> > vectors * vecs)
+> >  				uev->kernel, wwid, pp->wwid,
+> >  				(disable_changed_wwids ? "disallowing"
+> > :
+> >  				 "continuing"));
+> > -			if (disable_changed_wwids &&
+> > -			    (strlen(wwid) || pp->wwid_changed)) {
+> > -				strcpy(pp->wwid, wwid);
+> > +			strcpy(pp->wwid, wwid);
+> > +			if (disable_changed_wwids) {
+> >  				if (!pp->wwid_changed) {
+> >  					pp->wwid_changed =3D 1;
+> >  					pp->tick =3D 1;
+> > @@ -1225,11 +1233,9 @@ uev_update_path (struct uevent *uev, struct
+> > vectors * vecs)
+> >  						dm_fail_path(pp->mpp-
+> > >alias, pp->dev_t);
+> >  				}
+> >  				goto out;
+> > -			} else if (!disable_changed_wwids)
+> > -				strcpy(pp->wwid, wwid);
+> > -			else
+> > -				pp->wwid_changed =3D 0;
+> > +			}
+> >  		} else {
+> > +			pp->wwid_changed =3D 0;
+> >  			udev_device_unref(pp->udev);
+> >  			pp->udev =3D udev_device_ref(uev->udev);
+> >  			conf =3D get_multipath_config();
+> > @@ -1240,9 +1246,7 @@ uev_update_path (struct uevent *uev, struct
+> > vectors * vecs)
+> >  			pthread_cleanup_pop(1);
+> >  		}
+> >  =
+
+> > -		if (pp->initialized =3D=3D INIT_REQUESTED_UDEV)
+> > -			needs_reinit =3D 1;
+> > -		else if (mpp && ro >=3D 0) {
+> > +		if (mpp && ro >=3D 0) {
+> >  			condlog(2, "%s: update path write_protect to
+> > '%d' (uevent)", uev->kernel, ro);
+> >  =
+
+> >  			if (mpp->wait_for_udev)
 > =
 
 > -- =
