@@ -1,119 +1,53 @@
-From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH] dm: Fix report zone remapping
-Date: Fri,  5 Oct 2018 19:34:52 +0900
-Message-ID: <20181005103452.7134-1-damien.lemoal@wdc.com>
-Return-path: <stable-owner@vger.kernel.org>
-Sender: stable-owner@vger.kernel.org
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Cc: stable@vger.kernel.org
+From: Thanos Makatos <thanos.makatos@sunlight.io>
+Subject: Re: extracting thin mappings in real time
+Date: Fri, 5 Oct 2018 12:33:21 +0100
+Message-ID: <CA+fs2JONQBrN0fqjJEBmewpLmwxNWiUn3PGpP+yQVxtLWL6ReQ@mail.gmail.com>
+References: <CA+fs2JN0evmnJP2yZT144bUOdxaxUydchXrZmLmFVy4F20yfAA@mail.gmail.com>
+	<20181003130333.GA20800@reti>
+	<CA+fs2JN0FHg_ZGawUACWbJPfCpna1fi7PAMzDem2viNZ-zSthQ@mail.gmail.com>
+	<20181003144720.GC20800@reti>
+	<CA+fs2JOt5oM7=v8KGdwDuq4mP=GDF4zQTYuug=Fj3QecMmWdLA@mail.gmail.com>
+	<20181004125612.GA17205@reti>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20181004125612.GA17205@reti>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If dm-linear or dm-flakey have targets on top of a partition of a zoned
-block device, remapping of the start sector and write pointer position
-of the zones reported by a report zones BIO must be modified to not
-only account for the target table entry mapping, but also to account
-for the partition first sector. This start sector must be substracted
-to the start sector of all zones reported. The write pointer position
-of sequential zones must also be reduced by this offset.
+On Thu, 4 Oct 2018 at 13:56, Joe Thornber <thornber@redhat.com> wrote:
+>
+> On Wed, Oct 03, 2018 at 04:47:41PM +0100, Thanos Makatos wrote:
+> > poo metadata object can return this information? I've started looking
+> > at  thin_bio_map(), is this the best place to start?
+>
+> See thin-metadata.h
+>
+> - Joe
 
-Since there is no easy way to access the underlying bdev of the target
-table entry from the dm_target or dm_target_io pointers, modify the
-interface of the function dm_remap_zone_report() to allow a target to
-pass the partition block device starting sector (offset).
+I started looking at piggybacking the mapping in bio->bi_pivate in
+provision_block and it looks ugly. First, I'll have to introduce a new
+bio flag specifically for this reason: whenever dm-thin sees this it
+should store the mapping in the bio->bi_private. Second, the bio
+passed to dm-thin is cloned so I'll have to find the original bio
+(this requires making struct dm_io public). And third, the original
+bio can be split to multiple cloned bios so the structure in
+bio->bi_pivate should accomodate this.
 
-Fixes: 10999307c14e ("dm: introduce dm_remap_zone_report()")
-Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
-Cc: <stable@vger.kernel.org>
----
- drivers/md/dm-flakey.c        |  3 ++-
- drivers/md/dm-linear.c        |  3 ++-
- drivers/md/dm.c               | 16 ++++++++++++----
- include/linux/device-mapper.h |  2 +-
- 4 files changed, 17 insertions(+), 7 deletions(-)
-
-diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
-index 21d126a5078c..c68c2e9cde6b 100644
---- a/drivers/md/dm-flakey.c
-+++ b/drivers/md/dm-flakey.c
-@@ -381,7 +381,8 @@ static int flakey_end_io(struct dm_target *ti, struct bio *bio,
- 		return DM_ENDIO_DONE;
- 
- 	if (bio_op(bio) == REQ_OP_ZONE_REPORT) {
--		dm_remap_zone_report(ti, bio, fc->start);
-+		dm_remap_zone_report(ti, bio, get_start_sect(fc->dev->bdev),
-+				     fc->start);
- 		return DM_ENDIO_DONE;
- 	}
- 
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index d10964d41fd7..f8cd367abbf6 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -108,7 +108,8 @@ static int linear_end_io(struct dm_target *ti, struct bio *bio,
- 	struct linear_c *lc = ti->private;
- 
- 	if (!*error && bio_op(bio) == REQ_OP_ZONE_REPORT)
--		dm_remap_zone_report(ti, bio, lc->start);
-+		dm_remap_zone_report(ti, bio, get_start_sect(lc->dev->bdev),
-+				     lc->start);
- 
- 	return DM_ENDIO_DONE;
- }
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 20f7e4ef5342..ffd8544eedd8 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1162,7 +1162,8 @@ EXPORT_SYMBOL_GPL(dm_accept_partial_bio);
-  * REQ_OP_ZONE_REPORT bio to remap the zone descriptors obtained
-  * from the target device mapping to the dm device.
-  */
--void dm_remap_zone_report(struct dm_target *ti, struct bio *bio, sector_t start)
-+void dm_remap_zone_report(struct dm_target *ti, struct bio *bio,
-+			  sector_t dev_offset, sector_t start)
- {
- #ifdef CONFIG_BLK_DEV_ZONED
- 	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
-@@ -1195,18 +1196,25 @@ void dm_remap_zone_report(struct dm_target *ti, struct bio *bio, sector_t start)
- 		/* Set zones start sector */
- 		while (hdr->nr_zones && ofst < bvec.bv_len) {
- 			zone = addr + ofst;
-+			zone->start -= dev_offset;
- 			if (zone->start >= start + ti->len) {
- 				hdr->nr_zones = 0;
- 				break;
- 			}
- 			zone->start = zone->start + ti->begin - start;
- 			if (zone->type != BLK_ZONE_TYPE_CONVENTIONAL) {
--				if (zone->cond == BLK_ZONE_COND_FULL)
-+				switch (zone->cond) {
-+				case BLK_ZONE_COND_FULL:
- 					zone->wp = zone->start + zone->len;
--				else if (zone->cond == BLK_ZONE_COND_EMPTY)
-+					break;
-+				case BLK_ZONE_COND_EMPTY:
- 					zone->wp = zone->start;
--				else
-+					break;
-+				default:
-+					zone->wp -= dev_offset;
- 					zone->wp = zone->wp + ti->begin - start;
-+					break;
-+				}
- 			}
- 			ofst += sizeof(struct blk_zone);
- 			hdr->nr_zones--;
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 6fb0808e87c8..22c1924c0ee8 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -421,7 +421,7 @@ int dm_suspended(struct dm_target *ti);
- int dm_noflush_suspending(struct dm_target *ti);
- void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors);
- void dm_remap_zone_report(struct dm_target *ti, struct bio *bio,
--			  sector_t start);
-+			  sector_t dev_offset, sector_t start);
- union map_info *dm_get_rq_mapinfo(struct request *rq);
- 
- struct queue_limits *dm_get_queue_limits(struct mapped_device *md);
--- 
-2.17.1
+Instead I gave a second thought to the solution of using dm-thin's
+public functions to access it's metadata, namely dm_thin_find_block.
+The problem is that if the mapping is not in memory I'll have to read
+it from disk, outside the critical path, and this adds complexity.
+However, since the mapping was just established it should be cached so
+it should mostly work (not being able to obtain the mapping every now
+and then is acceptable). Does this make sense?
