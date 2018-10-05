@@ -1,19 +1,19 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v3 01/19] libmultipath: fix tur checker
-	timeout
-Date: Fri, 5 Oct 2018 12:02:59 -0500
-Message-ID: <20181005170259.GD3172@octiron.msp.redhat.com>
+Subject: Re: [PATCH v3 02/19] libmultipath: fix tur checker
+ double locking
+Date: Fri, 5 Oct 2018 12:10:54 -0500
+Message-ID: <20181005171054.GE3172@octiron.msp.redhat.com>
 References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
-	<1537571127-10143-2-git-send-email-bmarzins@redhat.com>
-	<deb772629c403acaf8c39a0e74f947a7f8b9d2bf.camel@suse.com>
-	<20181004163118.GA3172@octiron.msp.redhat.com>
-	<fd4fb2bec1f7b4dfa5703b2fb395a8f7bc8974bb.camel@suse.com>
+	<1537571127-10143-3-git-send-email-bmarzins@redhat.com>
+	<3bad257069d68444b0b2743d4b38ba6b6d15501d.camel@suse.com>
+	<20181004164521.GB3172@octiron.msp.redhat.com>
+	<fc2465f686f1cc33b2923f8cd44dabf55ce1c5a4.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <fd4fb2bec1f7b4dfa5703b2fb395a8f7bc8974bb.camel@suse.com>
+In-Reply-To: <fc2465f686f1cc33b2923f8cd44dabf55ce1c5a4.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,111 +24,106 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Martin Wilck <mwilck@suse.com>
-Cc: mwilck+gmail@suse.de, device-mapper development <dm-devel@redhat.com>
+Cc: Bart Van Assche <bart.vanassche@wdc.com>, mwilck+gmail@suse.de, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 05, 2018 at 12:11:18PM +0200, Martin Wilck wrote:
-> On Thu, 2018-10-04 at 11:31 -0500,  Benjamin Marzinski  wrote:
-> > It's been a while, and I'm not exactly sure what I was thinking here.
-> > But IIRC the idea was that if the state isn't set yet, then the old
-> > thread could mess with the results of a future thread. Also, it was
-> > to
-> > avoid a corner case where the tur checker was called, started the
-> > thread, got the result before the checker exitted, cancelled the
-> > thread
-> > and returned the result and then was called very shortly afterwards,
-> > before the thread could clean itself up.  In that case, the right
-> > thing
-> > to do (I thought) would be to start a new thread, because the other
-> > one
-> > would be ending soon.  In truth, starting a new thread at all is
-> > probably a bad idea, since the old thread will still mess with the
-> > checker context on exit. =
+On Fri, Oct 05, 2018 at 12:25:15PM +0200, Martin Wilck wrote:
+> On Thu, 2018-10-04 at 11:45 -0500,  Benjamin Marzinski  wrote:
+> > On Mon, Oct 01, 2018 at 10:09:41PM +0200, Martin Wilck wrote:
+> > > On Fri, 2018-09-21 at 18:05 -0500, Benjamin Marzinski wrote:
+> > > > tur_devt() locks ct->lock. However, it is ocassionally called
+> > > > while
+> > > > ct->lock is already locked. In reality, there is no reason why we
+> > > > need
+> > > > to lock all the accesses to ct->devt. The tur checker only needs
+> > > > to
+> > > > write to this variable one time, when it first gets the file
+> > > > descripter
+> > > > that it is checking.  It also never uses ct->devt directly.
+> > > > Instead,
+> > > > it
+> > > > always graps the major and minor, and turns them into a string.
+> > > > This
+> > > > patch changes ct->devt into that string, and sets it in
+> > > > libcheck_init()
+> > > > when it is first initializing the checker context. After that,
+> > > > ct-
+> > > > > devt
+> > > > =
+
+> > > > is only ever read.
+> > > =
+
+> > > I like the lock removal a lot, but not so much the conversion into
+> > > a
+> > > string. Why not keep the dev_t? =
 
 > > =
 
-> > A better idea might be to simply fail back to a syncronous call to
-> > tur_check() when you notice a cancelled thread that hasn't exitted.
-> > That can cause all the other checkers to get delayed, but at least in
-> > that case you are still checking paths. The other option is to do as
-> > before and just not check this path, which won't effect the other
-> > checkers. It seems very unlikely that the thread could remain
-> > uncancelled forever, especially if the path was usable.
-> >
-> > thoughts?
+> > Because we will simply convert it into a string every time we use it,
+> > instead of doing the work one time. It's 24 more bytes in the
+> > tur_checker_context, but the code is easier to read, and we're not
+> > doing
+> > the same work again and again.
 > =
 
-> Generally speaking, we're deeply in the realm of highly unlikely
-> situations I would say. But we should get it right eventually.
+> Well, IMO snprintf(buf, N, "%d:%d", major(x), minor(x)) is not _that_
+> much work, and it looks a lot cleaner, to me at least.
 > =
 
-> Maybe we can add logic to the tur thread to keep its hands off the
-> context if it's a "zombie", like below (just a thought, untested)?
+> But OK, I'm not insisting on this. So, if you re-post, I'm going to ack
+> the patch.
+> =
 
-This still wouldn't stop a thread from racing with new thread creation
-to change ct->holders or ct->running.
+> My thought for long term is is this actually this: ct->dev_t is only
+> needed for creating messages to be stored in the checker->message
+> string, which I don't like either.
+> =
+
+> Why don't we replace the "message" field with an "int msgid", and
+> add a =
+
+> =
+
+>      char* (*get_message)(int msgid)
+> =
+
+> to the checker API?
+
+I would not have a problem with a patch that did this.
 
 -Ben
 
+> =
+
+> msgid could actually be another "uatomic" field. We could even go one
+> step further, create a field for the checker status in struct checker,
+> and use like one byte for the general path status and the rest of the
+> field for the msgid, which usually represents just some checker-
+> specific extra information wrt the status.
+> =
+
+> > > =
+
+> > > Or maybe even easier, the other way around: why don't we make it a
+> > > char* and simply set checker->dev_t =3D &pp->dev_t?
+> > =
+
+> > The whole reason we have tur_checker_context->holders is that it's
+> > possible for a path to be removed (or orphaned) while the thread is
+> > still running. The tur_checker_context needs to keep all its own
+> > storage, so that it never as to worry about pointing to freed memory.
+> =
+
+> Yeah, I got that meanwhile, as posted before. Sorry.
+> =
+
 > Martin
-> =
-
-> =
-
-> diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-> index bf8486d3..e8493ca8 100644
-> --- a/libmultipath/checkers/tur.c
-> +++ b/libmultipath/checkers/tur.c
-> @@ -219,11 +219,18 @@ static void cleanup_func(void *data)
->  	rcu_unregister_thread();
->  }
->  =
-
-> +#define tur_thread_quit_unless_owner(__ct)	   \
-> +	if (__ct->thread !=3D pthread_self()) {	   \
-> +		pthread_mutex_unlock(&__ct->lock); \
-> +		pthread_exit(NULL);		   \
-> +	}
-> +
->  static void copy_msg_to_tcc(void *ct_p, const char *msg)
->  {
->  	struct tur_checker_context *ct =3D ct_p;
->  =
-
->  	pthread_mutex_lock(&ct->lock);
-> +	tur_thread_quit_unless_owner(ct);
->  	strlcpy(ct->message, msg, sizeof(ct->message));
->  	pthread_mutex_unlock(&ct->lock);
->  }
-> @@ -243,6 +250,7 @@ static void *tur_thread(void *ctx)
->  =
-
->  	/* TUR checker start up */
->  	pthread_mutex_lock(&ct->lock);
-> +	tur_thread_quit_unless_owner(ct);
->  	ct->state =3D PATH_PENDING;
->  	ct->message[0] =3D '\0';
->  	pthread_mutex_unlock(&ct->lock);
-> @@ -252,6 +260,7 @@ static void *tur_thread(void *ctx)
->  =
-
->  	/* TUR checker done */
->  	pthread_mutex_lock(&ct->lock);
-> +	tur_thread_quit_unless_owner(ct);
->  	ct->state =3D state;
->  	pthread_cond_signal(&ct->active);
->  	pthread_mutex_unlock(&ct->lock);
-> =
-
-> =
-
-> =
-
 > =
 
 > -- =
 
 > Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSELinux GmbH, GF: Felix Imend=F6rffer, Jane Smithard,  Graham Norton
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
 > HRB 21284 (AG N=FCrnberg)
 > =
