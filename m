@@ -1,16 +1,17 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v3 19/19] libmultipath: Fixup updating paths
-Date: Fri, 5 Oct 2018 15:32:21 -0500
-Message-ID: <20181005203221.GG3172@octiron.msp.redhat.com>
-References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
-	<1537571127-10143-20-git-send-email-bmarzins@redhat.com>
-	<1ec6d9dbdab329d9125ee380790933b7dfab804a.camel@suse.com>
+Subject: Re: [PATCH RESEND 0/4] multipath-tools: fixes for path
+ wwid detection and path change uevents
+Date: Fri, 5 Oct 2018 18:07:04 -0500
+Message-ID: <20181005230704.GH3172@octiron.msp.redhat.com>
+References: <20180307232152.15538-1-mwilck@suse.com>
+	<20180314174013.GF14513@octiron.msp.redhat.com>
+	<7aa1314c9095e3315e02525ec2e005030898a9b4.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1ec6d9dbdab329d9125ee380790933b7dfab804a.camel@suse.com>
+In-Reply-To: <7aa1314c9095e3315e02525ec2e005030898a9b4.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,134 +22,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Martin Wilck <mwilck@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Oct 02, 2018 at 12:30:51AM +0200, Martin Wilck wrote:
-> On Fri, 2018-09-21 at 18:05 -0500, Benjamin Marzinski wrote:
-> > Commit 582c56cc broke some code paths in uev_update_path. First, it
-> > changed the handling of paths that were not fully initialized.
-> > uev_update_path was simply setting the wwids for all of these paths.
-> > Instead, it should ignore the ones that had not requested a new
-> > uevent.
-> > These paths are likely down, and are already getting handled by
-> > check_path, after it verifies that they have become active. Also,
-> > setting the wwid doesn't update all of the other information that
-> > may have been missed when the path was initially added.
-> > =
-
-> > Also, it wasn't possible for pp->wwid_changed to transition back to
-> > zero, unless the path's wwid was empty, in which case there was no
-> > reason to worry about the wwid change in the first place, since the
-> > path
-> > hadn't been fully initialized yet. So, even if a path's wwid changed
-> > and
-> > then changed back to the original value, the path still could not be
-> > used.
-> > =
-
-> > This patch fixes these issues, and also moves the check for paths
-> > that
-> > have requested a new uevent up in the functions. These paths will get
-> > fully reinitialized anyway, so there is no reason to do all the other
-> > work first.
-> > =
-
-> > Fixes: 582c56cc ("libmultipath: uev_update_path: always warn if WWID
-> > changed")
-> > =
-
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+On Tue, Oct 02, 2018 at 11:02:50PM +0200, Martin Wilck wrote:
+> Hi Ben, Christophe,
 > =
 
-> Thanks for fixing this. Looking at the cleaned-up logic after this
-> patch, I believe that we should hard-code "disable_changed_wwids" to 1.
-> It's crazy to realize that a path WWID has changed and simply go on as
-> if nothing had happened. We shouldn't allow this configuration any
-> more.
+> I found a problem with this old patch series of mine.
+> =
 
-I'm fine with defaulting disable_changed_wwids to 1.
+> while I am still pondering about your latest series, it occured to me
+> that my patch "get_uid: don't quit prematurely without udev" is against
+> the spirit of your "retrigger uevents to try and get the uid through
+> udev" patch from 2016 (688aa22b).
+> =
+
+> "get_uid: don't quit prematurely without udev" has been merged a while
+> ago (08d42ee6). Should it be reverted??
+> =
+
+> Pro: the patch is against the "udev first" philosophy and subverts the
+> retrigger logic.
+> Con: with the patch, we'll be able to retrieve WWIDs more quickly in
+> some situations, as we don't have to wait for udev.
+> =
+
+> Either way (but more likely with my patch), it may happen that we
+> retrieve a WWID from sysfs or elsewhere first, and from udev later.
+> These WWIDs may not necessarily match, and a "WWID changed" problem may
+> occur.
+> =
+
+> Please tell me what you think.
+
+I'm having a hard time seeing how get_uid() could get called on a path
+without a udev device attached in multipathd. It can happen because of
+update_paths() in multipath, for paths that don't get discovered when
+searching for paths, but do belong to an existing multipath device. I
+don't think you patch will hurt anything here. So, unless I'm missing
+some code path in multipathd, I don't see a problem with this patch.
+
+In fact, we should probably make scsi_uid_fallback() skip (or at least
+always pass) the retrigger check if we aren't in the daemon, so we
+always try the failback when we run multipath.
 
 -Ben
 
 > =
 
-> Reviewed-by: Martin Wilck <mwilck@suse.com>
+> Martin
 > =
 
-> > ---
-> >  multipathd/main.c | 24 ++++++++++++++----------
-> >  1 file changed, 14 insertions(+), 10 deletions(-)
-> > =
-
-> > diff --git a/multipathd/main.c b/multipathd/main.c
-> > index 61ca455..d6d122a 100644
-> > --- a/multipathd/main.c
-> > +++ b/multipathd/main.c
-> > @@ -1207,6 +1207,15 @@ uev_update_path (struct uevent *uev, struct
-> > vectors * vecs)
-> >  		struct multipath *mpp =3D pp->mpp;
-> >  		char wwid[WWID_SIZE];
-> >  =
-
-> > +		if (pp->initialized =3D=3D INIT_REQUESTED_UDEV) {
-> > +			needs_reinit =3D 1;
-> > +			goto out;
-> > +		}
-> > +		/* Don't deal with other types of failed initialization
-> > +		 * now. check_path will handle it */
-> > +		if (!strlen(pp->wwid))
-> > +			goto out;
-> > +
-> >  		strcpy(wwid, pp->wwid);
-> >  		get_uid(pp, pp->state, uev->udev);
-> >  =
-
-> > @@ -1215,9 +1224,8 @@ uev_update_path (struct uevent *uev, struct
-> > vectors * vecs)
-> >  				uev->kernel, wwid, pp->wwid,
-> >  				(disable_changed_wwids ? "disallowing"
-> > :
-> >  				 "continuing"));
-> > -			if (disable_changed_wwids &&
-> > -			    (strlen(wwid) || pp->wwid_changed)) {
-> > -				strcpy(pp->wwid, wwid);
-> > +			strcpy(pp->wwid, wwid);
-> > +			if (disable_changed_wwids) {
-> >  				if (!pp->wwid_changed) {
-> >  					pp->wwid_changed =3D 1;
-> >  					pp->tick =3D 1;
-> > @@ -1225,11 +1233,9 @@ uev_update_path (struct uevent *uev, struct
-> > vectors * vecs)
-> >  						dm_fail_path(pp->mpp-
-> > >alias, pp->dev_t);
-> >  				}
-> >  				goto out;
-> > -			} else if (!disable_changed_wwids)
-> > -				strcpy(pp->wwid, wwid);
-> > -			else
-> > -				pp->wwid_changed =3D 0;
-> > +			}
-> >  		} else {
-> > +			pp->wwid_changed =3D 0;
-> >  			udev_device_unref(pp->udev);
-> >  			pp->udev =3D udev_device_ref(uev->udev);
-> >  			conf =3D get_multipath_config();
-> > @@ -1240,9 +1246,7 @@ uev_update_path (struct uevent *uev, struct
-> > vectors * vecs)
-> >  			pthread_cleanup_pop(1);
-> >  		}
-> >  =
-
-> > -		if (pp->initialized =3D=3D INIT_REQUESTED_UDEV)
-> > -			needs_reinit =3D 1;
-> > -		else if (mpp && ro >=3D 0) {
-> > +		if (mpp && ro >=3D 0) {
-> >  			condlog(2, "%s: update path write_protect to
-> > '%d' (uevent)", uev->kernel, ro);
-> >  =
-
-> >  			if (mpp->wait_for_udev)
 > =
 
 > -- =
