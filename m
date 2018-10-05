@@ -1,19 +1,14 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v3 02/19] libmultipath: fix tur checker
- double locking
-Date: Fri, 5 Oct 2018 12:10:54 -0500
-Message-ID: <20181005171054.GE3172@octiron.msp.redhat.com>
-References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
-	<1537571127-10143-3-git-send-email-bmarzins@redhat.com>
-	<3bad257069d68444b0b2743d4b38ba6b6d15501d.camel@suse.com>
-	<20181004164521.GB3172@octiron.msp.redhat.com>
-	<fc2465f686f1cc33b2923f8cd44dabf55ce1c5a4.camel@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: Fix report zone remapping
+Date: Fri, 5 Oct 2018 14:29:49 -0400
+Message-ID: <20181005182948.GA5628@redhat.com>
+References: <20181005103452.7134-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <fc2465f686f1cc33b2923f8cd44dabf55ce1c5a4.camel@suse.com>
+In-Reply-To: <20181005103452.7134-1-damien.lemoal@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,107 +18,146 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: Bart Van Assche <bart.vanassche@wdc.com>, mwilck+gmail@suse.de, device-mapper development <dm-devel@redhat.com>
+To: Damien Le Moal <damien.lemoal@wdc.com>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Oct 05, 2018 at 12:25:15PM +0200, Martin Wilck wrote:
-> On Thu, 2018-10-04 at 11:45 -0500,  Benjamin Marzinski  wrote:
-> > On Mon, Oct 01, 2018 at 10:09:41PM +0200, Martin Wilck wrote:
-> > > On Fri, 2018-09-21 at 18:05 -0500, Benjamin Marzinski wrote:
-> > > > tur_devt() locks ct->lock. However, it is ocassionally called
-> > > > while
-> > > > ct->lock is already locked. In reality, there is no reason why we
-> > > > need
-> > > > to lock all the accesses to ct->devt. The tur checker only needs
-> > > > to
-> > > > write to this variable one time, when it first gets the file
-> > > > descripter
-> > > > that it is checking.  It also never uses ct->devt directly.
-> > > > Instead,
-> > > > it
-> > > > always graps the major and minor, and turns them into a string.
-> > > > This
-> > > > patch changes ct->devt into that string, and sets it in
-> > > > libcheck_init()
-> > > > when it is first initializing the checker context. After that,
-> > > > ct-
-> > > > > devt
-> > > > =
+On Fri, Oct 05 2018 at  6:34am -0400,
+Damien Le Moal <damien.lemoal@wdc.com> wrote:
 
-> > > > is only ever read.
-> > > =
+> If dm-linear or dm-flakey have targets on top of a partition of a zoned
+> block device, remapping of the start sector and write pointer position
+> of the zones reported by a report zones BIO must be modified to not
+> only account for the target table entry mapping, but also to account
+> for the partition first sector. This start sector must be substracted
+> to the start sector of all zones reported. The write pointer position
+> of sequential zones must also be reduced by this offset.
+> 
+> Since there is no easy way to access the underlying bdev of the target
+> table entry from the dm_target or dm_target_io pointers, modify the
+> interface of the function dm_remap_zone_report() to allow a target to
+> pass the partition block device starting sector (offset).
+> 
+> Fixes: 10999307c14e ("dm: introduce dm_remap_zone_report()")
+> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+> Cc: <stable@vger.kernel.org>
 
-> > > I like the lock removal a lot, but not so much the conversion into
-> > > a
-> > > string. Why not keep the dev_t? =
+[dropping the actual stable cc from the mail, please don't cc stable in
+the mail header, could be that git-send-email just pulled it in but...]
 
-> > =
+This needs a different fix.  There should be absolutely no need to pass
+in a start offset for a device that is already supposed to be described
+within the 'struct bio' passed to dm_remap_zone_report().
 
-> > Because we will simply convert it into a string every time we use it,
-> > instead of doing the work one time. It's 24 more bytes in the
-> > tur_checker_context, but the code is easier to read, and we're not
-> > doing
-> > the same work again and again.
-> =
+Why can't you just use the bio->bi_bdev ?  Err, since commit
+74d46992e0d9d, I mean bio->bi_disk to get the start sector?
 
-> Well, IMO snprintf(buf, N, "%d:%d", major(x), minor(x)) is not _that_
-> much work, and it looks a lot cleaner, to me at least.
-> =
+You should be able to get it from:
 
-> But OK, I'm not insisting on this. So, if you re-post, I'm going to ack
-> the patch.
-> =
+struct hd_struct *part = disk_get_part(bio->bi_disk, bio->bi_partno);
+part->start_sect;
+disk_put_part(part);
 
-> My thought for long term is is this actually this: ct->dev_t is only
-> needed for creating messages to be stored in the checker->message
-> string, which I don't like either.
-> =
+or:
 
-> Why don't we replace the "message" field with an "int msgid", and
-> add a =
+struct block_device *bdev = bdget_disk(bio->bi_disk, bio->bi_partno);
+get_start_sect(fc->dev->bdev);
+bdput(bdev);
 
-> =
+Mike
 
->      char* (*get_message)(int msgid)
-> =
 
-> to the checker API?
-
-I would not have a problem with a patch that did this.
-
--Ben
-
-> =
-
-> msgid could actually be another "uatomic" field. We could even go one
-> step further, create a field for the checker status in struct checker,
-> and use like one byte for the general path status and the rest of the
-> field for the msgid, which usually represents just some checker-
-> specific extra information wrt the status.
-> =
-
-> > > =
-
-> > > Or maybe even easier, the other way around: why don't we make it a
-> > > char* and simply set checker->dev_t =3D &pp->dev_t?
-> > =
-
-> > The whole reason we have tur_checker_context->holders is that it's
-> > possible for a path to be removed (or orphaned) while the thread is
-> > still running. The tur_checker_context needs to keep all its own
-> > storage, so that it never as to worry about pointing to freed memory.
-> =
-
-> Yeah, I got that meanwhile, as posted before. Sorry.
-> =
-
-> Martin
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
-> =
+> ---
+>  drivers/md/dm-flakey.c        |  3 ++-
+>  drivers/md/dm-linear.c        |  3 ++-
+>  drivers/md/dm.c               | 16 ++++++++++++----
+>  include/linux/device-mapper.h |  2 +-
+>  4 files changed, 17 insertions(+), 7 deletions(-)
+> 
+> diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+> index 21d126a5078c..c68c2e9cde6b 100644
+> --- a/drivers/md/dm-flakey.c
+> +++ b/drivers/md/dm-flakey.c
+> @@ -381,7 +381,8 @@ static int flakey_end_io(struct dm_target *ti, struct bio *bio,
+>  		return DM_ENDIO_DONE;
+>  
+>  	if (bio_op(bio) == REQ_OP_ZONE_REPORT) {
+> -		dm_remap_zone_report(ti, bio, fc->start);
+> +		dm_remap_zone_report(ti, bio, get_start_sect(fc->dev->bdev),
+> +				     fc->start);
+>  		return DM_ENDIO_DONE;
+>  	}
+>  
+> diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+> index d10964d41fd7..f8cd367abbf6 100644
+> --- a/drivers/md/dm-linear.c
+> +++ b/drivers/md/dm-linear.c
+> @@ -108,7 +108,8 @@ static int linear_end_io(struct dm_target *ti, struct bio *bio,
+>  	struct linear_c *lc = ti->private;
+>  
+>  	if (!*error && bio_op(bio) == REQ_OP_ZONE_REPORT)
+> -		dm_remap_zone_report(ti, bio, lc->start);
+> +		dm_remap_zone_report(ti, bio, get_start_sect(lc->dev->bdev),
+> +				     lc->start);
+>  
+>  	return DM_ENDIO_DONE;
+>  }
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 20f7e4ef5342..ffd8544eedd8 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1162,7 +1162,8 @@ EXPORT_SYMBOL_GPL(dm_accept_partial_bio);
+>   * REQ_OP_ZONE_REPORT bio to remap the zone descriptors obtained
+>   * from the target device mapping to the dm device.
+>   */
+> -void dm_remap_zone_report(struct dm_target *ti, struct bio *bio, sector_t start)
+> +void dm_remap_zone_report(struct dm_target *ti, struct bio *bio,
+> +			  sector_t dev_offset, sector_t start)
+>  {
+>  #ifdef CONFIG_BLK_DEV_ZONED
+>  	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
+> @@ -1195,18 +1196,25 @@ void dm_remap_zone_report(struct dm_target *ti, struct bio *bio, sector_t start)
+>  		/* Set zones start sector */
+>  		while (hdr->nr_zones && ofst < bvec.bv_len) {
+>  			zone = addr + ofst;
+> +			zone->start -= dev_offset;
+>  			if (zone->start >= start + ti->len) {
+>  				hdr->nr_zones = 0;
+>  				break;
+>  			}
+>  			zone->start = zone->start + ti->begin - start;
+>  			if (zone->type != BLK_ZONE_TYPE_CONVENTIONAL) {
+> -				if (zone->cond == BLK_ZONE_COND_FULL)
+> +				switch (zone->cond) {
+> +				case BLK_ZONE_COND_FULL:
+>  					zone->wp = zone->start + zone->len;
+> -				else if (zone->cond == BLK_ZONE_COND_EMPTY)
+> +					break;
+> +				case BLK_ZONE_COND_EMPTY:
+>  					zone->wp = zone->start;
+> -				else
+> +					break;
+> +				default:
+> +					zone->wp -= dev_offset;
+>  					zone->wp = zone->wp + ti->begin - start;
+> +					break;
+> +				}
+>  			}
+>  			ofst += sizeof(struct blk_zone);
+>  			hdr->nr_zones--;
+> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+> index 6fb0808e87c8..22c1924c0ee8 100644
+> --- a/include/linux/device-mapper.h
+> +++ b/include/linux/device-mapper.h
+> @@ -421,7 +421,7 @@ int dm_suspended(struct dm_target *ti);
+>  int dm_noflush_suspending(struct dm_target *ti);
+>  void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors);
+>  void dm_remap_zone_report(struct dm_target *ti, struct bio *bio,
+> -			  sector_t start);
+> +			  sector_t dev_offset, sector_t start);
+>  union map_info *dm_get_rq_mapinfo(struct request *rq);
+>  
+>  struct queue_limits *dm_get_queue_limits(struct mapped_device *md);
+> -- 
+> 2.17.1
+> 
