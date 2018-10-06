@@ -1,12 +1,13 @@
 From: Stef Walter <stefw@redhat.com>
-Subject: [PATCH 0/1] Fix kpart -d regression where matching
-	devices not found
-Date: Sat,  6 Oct 2018 09:38:55 +0200
-Message-ID: <20181006073856.15246-1-stefw@redhat.com>
+Subject: [PATCH 1/1] kpartx: Use absolute paths to create mappings
+Date: Sat,  6 Oct 2018 09:38:56 +0200
+Message-ID: <20181006073856.15246-2-stefw@redhat.com>
+References: <20181006073856.15246-1-stefw@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20181006073856.15246-1-stefw@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,24 +21,32 @@ To: dm-devel@redhat.com
 Cc: Stef Walter <stefw@redhat.com>
 List-Id: dm-devel.ids
 
-The Lorax project found a regression in kpartx -d behavior introduced
-by the following commit: 9bdfa3eb8e24b668e6c2bb882cddb0ccfe23ed5b
+kpartx -d now uses absolute paths to delete mappings, since the
+commit 9bdfa3eb8e24b668e6c2bb882cddb0ccfe23ed5b. We should use
+those same absolute paths to create the mappings.
 
-This patch should fix the problem. It's easy to reproduce this problem
-(I did it on Fedora 28) with the following commands:
+Without this patch, the following workflow (as seen in the
+manual page for kpartx) fails to actually remove the devices:
 
-        # kpartx -av disk.img
-        ...
-        # kpartx -dv disk.img
-
-Notice that the loop devices and partition mappings created by the first
-command are not cleaned up by the second command.
-
-Stef Walter (1):
-  kpartx: Use absolute paths to create mappings
-
+    # kpartx -av disk.img
+    ...
+    # kpartx -d disk.img
+---
  kpartx/kpartx.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index 442b6bd9..d4fb53be 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -341,7 +341,7 @@ main(int argc, char **argv){
+ 		if (!loopdev) {
+ 			loopdev = find_unused_loop_device();
+ 
+-			if (set_loop(loopdev, device, 0, &ro)) {
++			if (set_loop(loopdev, rpath, 0, &ro)) {
+ 				fprintf(stderr, "can't set up loop\n");
+ 				exit (1);
+ 			}
 -- 
 2.17.1
