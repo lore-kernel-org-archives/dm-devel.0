@@ -1,14 +1,16 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: dm: Fix report zone remapping
-Date: Sat, 6 Oct 2018 01:24:43 +0000
-Message-ID: <BN3PR0401MB1640B2763051334D011B0111E7E40@BN3PR0401MB1640.namprd04.prod.outlook.com>
+Date: Fri, 5 Oct 2018 23:49:47 -0400
+Message-ID: <20181006034946.GA7891@redhat.com>
 References: <20181005103452.7134-1-damien.lemoal@wdc.com>
 	<20181005182948.GA5628@redhat.com>
+	<BN3PR0401MB1640B2763051334D011B0111E7E40@BN3PR0401MB1640.namprd04.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <BN3PR0401MB1640B2763051334D011B0111E7E40@BN3PR0401MB1640.namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,171 +20,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
+To: Damien Le Moal <Damien.LeMoal@wdc.com>
 Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Mike,
+On Fri, Oct 05 2018 at  9:24pm -0400,
+Damien Le Moal <Damien.LeMoal@wdc.com> wrote:
 
-On 2018/10/06 3:29, Mike Snitzer wrote:
-> On Fri, Oct 05 2018 at  6:34am -0400,
-> Damien Le Moal <damien.lemoal@wdc.com> wrote:
+> Mike,
 > 
->> If dm-linear or dm-flakey have targets on top of a partition of a zoned
->> block device, remapping of the start sector and write pointer position
->> of the zones reported by a report zones BIO must be modified to not
->> only account for the target table entry mapping, but also to account
->> for the partition first sector. This start sector must be substracted
->> to the start sector of all zones reported. The write pointer position
->> of sequential zones must also be reduced by this offset.
->>
->> Since there is no easy way to access the underlying bdev of the target
->> table entry from the dm_target or dm_target_io pointers, modify the
->> interface of the function dm_remap_zone_report() to allow a target to
->> pass the partition block device starting sector (offset).
->>
->> Fixes: 10999307c14e ("dm: introduce dm_remap_zone_report()")
->> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
->> Cc: <stable@vger.kernel.org>
+> On 2018/10/06 3:29, Mike Snitzer wrote:
+> > On Fri, Oct 05 2018 at  6:34am -0400,
+> > Damien Le Moal <damien.lemoal@wdc.com> wrote:
+> > 
+> >> If dm-linear or dm-flakey have targets on top of a partition of a zoned
+> >> block device, remapping of the start sector and write pointer position
+> >> of the zones reported by a report zones BIO must be modified to not
+> >> only account for the target table entry mapping, but also to account
+> >> for the partition first sector. This start sector must be substracted
+> >> to the start sector of all zones reported. The write pointer position
+> >> of sequential zones must also be reduced by this offset.
+> >>
+> >> Since there is no easy way to access the underlying bdev of the target
+> >> table entry from the dm_target or dm_target_io pointers, modify the
+> >> interface of the function dm_remap_zone_report() to allow a target to
+> >> pass the partition block device starting sector (offset).
+> >>
+> >> Fixes: 10999307c14e ("dm: introduce dm_remap_zone_report()")
+> >> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+> >> Cc: <stable@vger.kernel.org>
+> > 
+> > [dropping the actual stable cc from the mail, please don't cc stable in
+> > the mail header, could be that git-send-email just pulled it in but...]
 > 
-> [dropping the actual stable cc from the mail, please don't cc stable in
-> the mail header, could be that git-send-email just pulled it in but...]
+> My apologies about that. It was indeed git-send-email. Will fix that.
+> 
+> > This needs a different fix.  There should be absolutely no need to pass
+> > in a start offset for a device that is already supposed to be described
+> > within the 'struct bio' passed to dm_remap_zone_report().
+> > 
+> > Why can't you just use the bio->bi_bdev ?  Err, since commit
+> > 74d46992e0d9d, I mean bio->bi_disk to get the start sector?
+> > 
+> > You should be able to get it from:
+> > 
+> > struct hd_struct *part = disk_get_part(bio->bi_disk, bio->bi_partno);
+> > part->start_sect;
+> > disk_put_part(part);
+> > 
+> > or:
+> > 
+> > struct block_device *bdev = bdget_disk(bio->bi_disk, bio->bi_partno);
+> > get_start_sect(fc->dev->bdev);
+> > bdput(bdev);
+> 
+> I am afraid this does not work. The original bio disk is of course /dev/dm-xx so
+> not the partition (partno == 0), and the mapped bio passed as argument to the
+> remap zone function (clone of the orig bio) is pointing to the entire underlying
+> disk, not the partition disk used in dmsetup. bi_partno is 0 for both BIOs.
+> Which seems weird, __bio_clone_fast() does copy the disk and part number as is.
+> The disk is of course correctly changed from the orig dm disk to the actual
+> physical disk in the clone, but the partition number stays the same. In the end,
+> only the target has the correct bdev (disk+partno) information it seems.
 
-My apologies about that. It was indeed git-send-email. Will fix that.
+OK, that is a bug that must to be found then.
 
-> This needs a different fix.  There should be absolutely no need to pass
-> in a start offset for a device that is already supposed to be described
-> within the 'struct bio' passed to dm_remap_zone_report().
-> 
-> Why can't you just use the bio->bi_bdev ?  Err, since commit
-> 74d46992e0d9d, I mean bio->bi_disk to get the start sector?
-> 
-> You should be able to get it from:
-> 
-> struct hd_struct *part = disk_get_part(bio->bi_disk, bio->bi_partno);
-> part->start_sect;
-> disk_put_part(part);
-> 
-> or:
-> 
-> struct block_device *bdev = bdget_disk(bio->bi_disk, bio->bi_partno);
-> get_start_sect(fc->dev->bdev);
-> bdput(bdev);
+> It looks like the partno gets lost, which does not seem correct. I must be
+> missing something, but I fail to see what it is. Any suggestion ?
 
-I am afraid this does not work. The original bio disk is of course /dev/dm-xx so
-not the partition (partno == 0), and the mapped bio passed as argument to the
-remap zone function (clone of the orig bio) is pointing to the entire underlying
-disk, not the partition disk used in dmsetup. bi_partno is 0 for both BIOs.
-Which seems weird, __bio_clone_fast() does copy the disk and part number as is.
-The disk is of course correctly changed from the orig dm disk to the actual
-physical disk in the clone, but the partition number stays the same. In the end,
-only the target has the correct bdev (disk+partno) information it seems.
+Not at the moment but I'll have a closer look early next week.
 
-It looks like the partno gets lost, which does not seem correct. I must be
-missing something, but I fail to see what it is. Any suggestion ?
-
-
-> 
-> Mike
-> 
-> 
->> ---
->>  drivers/md/dm-flakey.c        |  3 ++-
->>  drivers/md/dm-linear.c        |  3 ++-
->>  drivers/md/dm.c               | 16 ++++++++++++----
->>  include/linux/device-mapper.h |  2 +-
->>  4 files changed, 17 insertions(+), 7 deletions(-)
->>
->> diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
->> index 21d126a5078c..c68c2e9cde6b 100644
->> --- a/drivers/md/dm-flakey.c
->> +++ b/drivers/md/dm-flakey.c
->> @@ -381,7 +381,8 @@ static int flakey_end_io(struct dm_target *ti, struct bio *bio,
->>  		return DM_ENDIO_DONE;
->>  
->>  	if (bio_op(bio) == REQ_OP_ZONE_REPORT) {
->> -		dm_remap_zone_report(ti, bio, fc->start);
->> +		dm_remap_zone_report(ti, bio, get_start_sect(fc->dev->bdev),
->> +				     fc->start);
->>  		return DM_ENDIO_DONE;
->>  	}
->>  
->> diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
->> index d10964d41fd7..f8cd367abbf6 100644
->> --- a/drivers/md/dm-linear.c
->> +++ b/drivers/md/dm-linear.c
->> @@ -108,7 +108,8 @@ static int linear_end_io(struct dm_target *ti, struct bio *bio,
->>  	struct linear_c *lc = ti->private;
->>  
->>  	if (!*error && bio_op(bio) == REQ_OP_ZONE_REPORT)
->> -		dm_remap_zone_report(ti, bio, lc->start);
->> +		dm_remap_zone_report(ti, bio, get_start_sect(lc->dev->bdev),
->> +				     lc->start);
->>  
->>  	return DM_ENDIO_DONE;
->>  }
->> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
->> index 20f7e4ef5342..ffd8544eedd8 100644
->> --- a/drivers/md/dm.c
->> +++ b/drivers/md/dm.c
->> @@ -1162,7 +1162,8 @@ EXPORT_SYMBOL_GPL(dm_accept_partial_bio);
->>   * REQ_OP_ZONE_REPORT bio to remap the zone descriptors obtained
->>   * from the target device mapping to the dm device.
->>   */
->> -void dm_remap_zone_report(struct dm_target *ti, struct bio *bio, sector_t start)
->> +void dm_remap_zone_report(struct dm_target *ti, struct bio *bio,
->> +			  sector_t dev_offset, sector_t start)
->>  {
->>  #ifdef CONFIG_BLK_DEV_ZONED
->>  	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
->> @@ -1195,18 +1196,25 @@ void dm_remap_zone_report(struct dm_target *ti, struct bio *bio, sector_t start)
->>  		/* Set zones start sector */
->>  		while (hdr->nr_zones && ofst < bvec.bv_len) {
->>  			zone = addr + ofst;
->> +			zone->start -= dev_offset;
->>  			if (zone->start >= start + ti->len) {
->>  				hdr->nr_zones = 0;
->>  				break;
->>  			}
->>  			zone->start = zone->start + ti->begin - start;
->>  			if (zone->type != BLK_ZONE_TYPE_CONVENTIONAL) {
->> -				if (zone->cond == BLK_ZONE_COND_FULL)
->> +				switch (zone->cond) {
->> +				case BLK_ZONE_COND_FULL:
->>  					zone->wp = zone->start + zone->len;
->> -				else if (zone->cond == BLK_ZONE_COND_EMPTY)
->> +					break;
->> +				case BLK_ZONE_COND_EMPTY:
->>  					zone->wp = zone->start;
->> -				else
->> +					break;
->> +				default:
->> +					zone->wp -= dev_offset;
->>  					zone->wp = zone->wp + ti->begin - start;
->> +					break;
->> +				}
->>  			}
->>  			ofst += sizeof(struct blk_zone);
->>  			hdr->nr_zones--;
->> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
->> index 6fb0808e87c8..22c1924c0ee8 100644
->> --- a/include/linux/device-mapper.h
->> +++ b/include/linux/device-mapper.h
->> @@ -421,7 +421,7 @@ int dm_suspended(struct dm_target *ti);
->>  int dm_noflush_suspending(struct dm_target *ti);
->>  void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors);
->>  void dm_remap_zone_report(struct dm_target *ti, struct bio *bio,
->> -			  sector_t start);
->> +			  sector_t dev_offset, sector_t start);
->>  union map_info *dm_get_rq_mapinfo(struct request *rq);
->>  
->>  struct queue_limits *dm_get_queue_limits(struct mapped_device *md);
->> -- 
->> 2.17.1
->>
-> 
-
-
--- 
-Damien Le Moal
-Western Digital Research
+Thanks,
+Mike
