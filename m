@@ -1,18 +1,20 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v3 18/19] libmultipath: Don't blank
- intialized paths
-Date: Mon, 08 Oct 2018 11:41:35 +0200
-Message-ID: <e5fd9aaf1014224d4ce65f77b3bdbfea362c01a9.camel@suse.com>
-References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
-	<1537571127-10143-19-git-send-email-bmarzins@redhat.com>
-	<3bb1c108b1e43a85d296eed9a63cefe7a6de2d01.camel@suse.com>
-	<f87221ecedb072a7f3551ea0f62e7df586d075f1.camel@suse.com>
-	<20181005193843.GF3172@octiron.msp.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: Fix report zone remapping
+Date: Mon, 8 Oct 2018 12:25:27 -0400
+Message-ID: <20181008162526.GA21949@redhat.com>
+References: <20181005103452.7134-1-damien.lemoal@wdc.com>
+	<20181005182948.GA5628@redhat.com>
+	<BN3PR0401MB1640B2763051334D011B0111E7E40@BN3PR0401MB1640.namprd04.prod.outlook.com>
+	<20181006034946.GA7891@redhat.com>
+	<BN3PR0401MB164048A8F408C67EDE5B82B6E7E40@BN3PR0401MB1640.namprd04.prod.outlook.com>
+	<20181006053211.GB7891@redhat.com>
+	<BN3PR0401MB16405173B75BE630E8894600E7E40@BN3PR0401MB1640.namprd04.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181005193843.GF3172@octiron.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <BN3PR0401MB16405173B75BE630E8894600E7E40@BN3PR0401MB1640.namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,153 +24,152 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Benjamin Marzinski <bmarzins@redhat.com>
+To: Damien Le Moal <Damien.LeMoal@wdc.com>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE4LTEwLTA1IGF0IDE0OjM4IC0wNTAwLCAgQmVuamFtaW4gTWFyemluc2tpICB3
-cm90ZToKPiBPbiBXZWQsIE9jdCAwMywgMjAxOCBhdCAxMjozNzoxN0FNICswMjAwLCBNYXJ0aW4g
-V2lsY2sgd3JvdGU6Cj4gPiBIaSBCZW4sCj4gPiAKPiA+ID4gSSBhbSB1bmNlcnRhaW4gYWJvdXQg
-dGhpcyBvbmUuIFRoZSBvbGQgY29kZSBzZXRzIHBwLT5pbml0aWFsaXplZAo+ID4gPiB0bwo+ID4g
-PiBJTklUX0ZBSUxFRC4gSWYgdGhlIHN0YXRlIGhhZCBiZWVuIElOSVRfTUlTU0lOR19VREVWIG9y
-Cj4gPiA+IElOSVRfUkVRVUVTVEVEX1VERVYgYmVmb3JlLCB0aGlzIHBhdGNoIG1pZ2h0IGNoYW5n
-ZSBob3cgdGhlIGNvZGUKPiA+ID4gYmVoYXZlcyBsYXRlciBpbiBjaGVja19wYXRoKCksIHdoZXJl
-IHRoZXNlIGNvbmRpdGlvbnMgYXJlCj4gPiA+IGNoZWNrZWQuCj4gPiA+IAo+ID4gPiBMaWtld2lz
-ZSwgdGVzdHMgZm9yIHN0cmxlbihwcC0+d3dpZCkgYXJlIHVzZWQgaW4gdmFyaW91cyBwbGFjZXMK
-PiA+ID4gYXJvdW5kCj4gPiA+IHRoZSBjb2RlLiBUaGVzZSB0ZXN0cyB3b3VsZCBub3cgeWllbGQg
-ZGlmZmVyZW50IHJlc3VsdHMgZm9yIHBhdGhzCj4gPiA+IGluCj4gPiA+ICJyZWNvdmVyYWJsZSBl
-cnJvciIgc3RhdGUuCj4gPiA+IAo+ID4gPiBIYXZlIHlvdSBjb25zaWRlcmVkIHRoZXNlIHBvc3Np
-YmxlIHNpZGUgZWZmZWN0cz8KPiA+IAo+ID4gSSd2ZSBwb25kZXJlZCBvdmVyIHRoaXMgYSBsb3Qu
-IFRoZSBkdXN0IGlzIGNsZWFyaW5nIHVwIGEgYml0Lgo+ID4gCj4gPiAxLiBXaXRoIHlvdXIgcGF0
-Y2ggaW4gcGxhY2UsIElOSVRfRkFJTEVEIGlzIG5ldmVyIHNldCBleGNlcHQgaW4KPiA+IGFsbG9j
-X3BhdGgoKSAod2UgbWlnaHQgcmVuYW1lIGl0IHRvIElOSVRfTkVXIG9yIHRoZSBsaWtlLCBidXQg
-c2VlCj4gPiBiZWxvdykuCj4gCj4gQ29ycmVjdC4gVGhlIGlkZWEgaXMgdGhhdCBJTklUX0ZBSUxF
-RCBtZWFucyB0aGF0IHRoZSBwYXRoIGhhcyBuZXZlcgo+IGJlZW4KPiBmdWxseSBpbml0aWFsaXpl
-ZCBhbmQgdGhhdCBpdCBpcyBtaXNzaW5nIG1vcmUgdGhhbiBzaW1wbHkgdGhlIHd3aWQKPiAod2hp
-Y2ggd291bGQgc2V0IElOSVRfTUlTU0lOR19VREVWIGluc3RlYWQpLgo+IAo+ID4gMi4gSSBkb24n
-dCB1bmRlcnN0YW5kIGhvdyB5b3UgaGFuZGxlIHJlcGVhdGVkIGZhaWx1cmUgdG8gcmV0cmlldmUK
-PiA+IHRoZQo+ID4gV1dJRC4gSSBzZWUgdGhhdCBnZXRfdWlkKCkgKGFjdHVhbGx5LCBzY3NpX3Vp
-ZF9mYWxsYmFjaygpKSB3b3VsZAo+ID4gcmV0cmlldmUgdGhlIFdXSUQgZnJvbSBzeXNmcyBhZnRl
-ciByZXRyaWdnZXJzIGFyZSBleGhhdXN0ZWQuIEJ1dCBJCj4gPiBkb24ndCBzZWUgaG93IHBhdGhp
-bmZvKERJX1dXSUQpIHdvdWxkIGV2ZXIgYmUgY2FsbGVkIGluIHRoaXMKPiA+IHNpdHVhdGlvbjoK
-PiA+IAo+ID4gSW4gdGhlIGxhc3QgaW52b2NhdGlvbiwgcGF0aGluZm8oKSBoYWQgZmFpbGVkIHRv
-IHJldHJpZXZlIHRoZSBXV0lECj4gPiBhbmQKPiA+IHNldCBwcC0+aW5pdGlhbGl6ZWQgPSBJTklU
-X01JU1NJTkdfVURFVi4gVGhlcmUgaXQgd2lsbCByZW1haW4KPiA+IGJlY2F1c2UKPiA+IGNoZWNr
-X3BhdGgoKSB3b24ndCBzZXQgaXQgdG8gSU5JVF9SRVFVRVNURURfVURFViBhbnkgbW9yZSBhZnRl
-cgo+ID4gcmV0cmllcwo+ID4gYXJlIGV4aGF1c3RlZC4gQW5kIG5vdywgY2hlY2tfcGF0aCgpIHdv
-bid0IGNhbGwgcGF0aGluZm8oRElfQUxMKQo+ID4gYW55Cj4gPiBtb3JlIGZyb20gdGhlICJhZGQg
-bWlzc2luZyBwYXRoIiBjb2RlLCBiZWNhdXNlIG9mIHRoZSAocHAtCj4gPiA+aW5pdGlhbGl6ZWQK
-PiA+ICE9IElOSVRfTUlTU0lOR19VREVWKSBjb25kaXRpb24uCj4gPiAKPiA+IEFtIEkgb3Zlcmxv
-b2tpbmcgc29tZXRoaW5nPwo+IAo+IFlvdXIgYW5hbHlzaXMgbG9va3MgcmlnaHQuIFRoaXMgc2hv
-dWxkbid0IGhhdmUgYW55dGhpbmcgdG8gZG8gd2l0aAo+IHRoZQo+IGNvcnJlY3RuZXNzIG9mIHRo
-ZSBub3QgYmxhbmtpbmcgaW5pdGlhbGl6ZWQgcGF0aHMsIGJ1dCB3ZSBzaG91bGQgZml4Cj4gaXQK
-PiBhbnl3YXkuICBSaWdodCBub3csIGFzIHlvdSBtZW50aW9uZWQsIGlmIG11bHRpcGF0aGQgZmFp
-bHMgdG8gZ2V0IHRoZQo+IHd3aWQgYWZ0ZXIgcmV0cmlnZ2VyX3RyaWVzIG5ldyB1ZXZlbnRzLCBp
-dCBvbmx5IGhhcyBvbmUgc2hvdCBhdCB0aGUKPiBmYWlsYmFjayBtZXRob2RzLCBhbmQgdGhlbiBt
-dXRpcGF0aGQgY2Fubm90IHVzZSB0aGF0IHBhdGggaW4gdGhlCj4gZnV0dXJlLgo+IEhvd2V2ZXIs
-IGl0IHdpbGwgc3RpbGwgY2hlY2sgaWYgdGhlIHBhdGggaXMgdXAgb3IgZG93biwgd2hpY2ggaXMK
-PiBwcmV0dHkKPiBwb2ludGxlc3MuIEl0IHNob3VsZCBlaXRoZXIKPiAKPiAxLiBzZXQgcHAtPmlu
-dGlhbGl6ZWQgdG8gSU5JVF9PSywgdG8ga2VlcCBpdCBmcm9tIGJlaW5nIGNoZWNrZWQgYXQKPiBh
-bGwKPiBpbiB0aGUgZnV0dXJlLCBvcgoKVGhhdCB3b3VsZCBiZSBseWluZyB0byBvdXJzZWx2ZXMu
-IEknZCByYXRoZXIgY2FsbCBpdCBJTklUX0JST0tFTiBvciBzbywKb3IgbWF5YmUgZXZlbiBkZWxl
-dGUgdGhlIHBhdGggZnJvbSBwYXRodmVjIGFsdG9nZXRoZXIuCgpbIFdoaWxlIHdlJ3JlIGF0IHRo
-aXM6IHdlIGNhbGwgcGF0aGluZm8gd2l0aCBESV9BTEwgZnJvbSAKY29uZmlndXJlLT5wYXRoX2Rp
-c2NvdmVyeSgpLCBidXQgd2l0aCBESV9BTEx8RElfQkxBQ0tMSVNUIGZyb20KdWV2X2FkZF9wYXRo
-KCkuIEFzIGEgcmVzdWx0LCBwYXRocyBkaXNjb3ZlcmVkIGluIHVldmVudHMgd29uJ3QgYmUgYWRk
-ZWQKdG8gcGF0aHZlYyBpbiB0aGUgZmlyc3QgcGxhY2UgaWYgdGhleSdyZSBibGFja2xpc3RlZCwg
-d2hpbGUgYmxhY2tsaXN0ZWQKcGF0aHMgZGlzY292ZXJlZCBhdCBzdGFydHVwIHdpbGwgYmUgaW4g
-dGhlIHBhdGh2ZWMsIGJ1dCBvcnBoYW5lZC4gSXMKdGhhdCBpbnRlbnRpb25hbCwgYW5kIGlmIHll
-cywgd2h5ID8gXQoKPiAyLiB0cnkgdG8gZ3JhYiB0aGUgbWlzc2luZyBwYXRoaW5mbywgc28gdGhh
-dCBpdCBjYW4gdXNlIHRoZSBwYXRoLgo+IAo+IFRoZSBiZW5lZml0IG9mIGRvaW5nIHRoZSBmaXJz
-dCBpcyB0aGF0IG11dGlwYXRoZCBkb2Vzbid0IGtlZXAgbWVzc2luZwo+IHdpdGggcGF0aHMgdGhh
-dCByZWFsbHkgYXJlbid0IHNldCB1cCB0byBiZSBtdWx0aXBhdGhlZC4gT24gdGhlIG90aGVyCj4g
-aGFuZCBpdCBtaWdodCBpZ25vcmUgc29tZSBwYXRocyB0aGF0IHJlYWxseSBzaG91bGQgYmUgbXVs
-dGlwYXRoZWQuCj4gcGVyaGFwcyB0aGUgYmVzdCBpZGVhIGlzIHRvIGtlZXAgdHJ5aW5nIHRvIGdl
-dCB0aGUgbWlzc2luZyBpbmZvLCBidXQKPiBqdXN0IGluY3JlYXNlIHBwLT50aWNrIChwb3NzaWJs
-eSBwcm9ncmVzc2l2ZWx5KSBzbyB3ZSB0cnkgbGVzcyBvZnRlbi4KClRoZSBsYXR0ZXIgc291bmRz
-IG92ZXJseSBjb21wbGV4IHRvIG1lLCBpbiBwYXJ0aWN1bGFyIGFzIGluIHRoZSBkYWVtb24sCndl
-J3JlIG9ubHkgbG9va2luZyBhdCBwYXRocyByZXRyaWV2ZWQgdmlhIHVkZXYgYW55d2F5LCBhcyB5
-b3UgcG9pbnRlZApvdXQgaW4geW91ciBvdGhlciBwb3N0LiBTbyBwZXJoYXBzIElOSVRfTUlTU0lO
-R19VREVWIGlzIGp1c3QgYWJvdXQgdGhlCnJpZ2h0IHN0YXRlIGZvciB0aGlzLiBXZSBtYXkganVz
-dCBjb25zaWRlciBjaGFuZ2luZyB1ZXZfdXBkYXRlX3BhdGgoKQpzdWNoIHRoYXQgdGhlIHBhdGgg
-aXMgcGFzc2VkIHRvIHVldl9hZGRfcGF0aCgpIG5vdCBvbmx5IGZvcgpJTklUX1JFUVVFU1RFRF9V
-REVWLCBidXQgYWxzbyBmb3IgSU5JVF9NSVNTSU5HX1VERVYgc3RhdGUuCgo+IAo+ID4gMy4gSWYg
-ImJsYW5rIiBzdGF0ZSBtZWFucyB0aGF0IGltcG9ydGFudCBkZXZpY2UgaW5mb3JtYXRpb24KPiA+
-IGNvdWxkbid0IGJlCj4gPiByZXRyaWV2ZWQgYmVjYXVzZSBvZiBwcmVzdW1hYmx5IHRyYW5zaWVu
-dCBmYWlsdXJlIGNvbmRpdGlvbnMsIHdlCj4gPiBzaG91bGQKPiA+IHJldHJ5IHRvIHJldHJpZXZl
-IHRoaXMgaW5mb3JtYXRpb24gYnkgY2FsbGluZyBwYXRoaW5mbyBhZ2FpbiBsYXRlci4KPiA+IEJ1
-dAo+ID4gdW5sZXNzIHRoZSBXV0lEIGlzIChyZXNldCB0bykgdGhlIGVtcHR5IHN0cmluZywgY2hl
-Y2tfcGF0aCgpIHdvbid0Cj4gPiBjYWxsCj4gPiBwYXRoaW5mbyhESV9BTEwpIGFueSBtb3JlLgo+
-IAo+IEJ1dCBpZiB3ZSBzZXQgdGhlIHd3aWQgYXQgc29tZSBwb2ludCBpbiB0aW1lLCB0aGF0IG1l
-YW5zIHdlIGdvdCBhbGwKPiB0aGUKPiBuZWNlc3NhcnkgaW5mb3JtYXRpb24uICBNeSBhcmd1bWVu
-dCBpcyB0aGF0IGlmIHNvbWV0aGluZyBoYXBwZW5zIHRvCj4gY2F1c2UgYSBsYXRlciBwYXRoaW5m
-bygpIGNhbGwgdG8gZmFpbCwgd2Ugc2hvdWxkbid0IHByZXRlbmQgbGlrZSB3ZQo+IGRpZG4ndCBh
-bHJlYWR5IGdldCB0aGlzIGluZm8uCgpUaGUgcXVlc3Rpb24gaXMgd2hldGhlciB0aGUgcHJvYmxl
-bSBlbmNvdW50ZXJlZCBtZWFucyB0aGF0IHRoZSBlYXJsaWVyCmRldGVybWluZWQgV1dJRCBpcyBz
-dGlsbCByZWxpYWJsZS4gSWYgdGhlIHBhdGggaXMgZW50aXJlbHkgZ29uZSBmcm9tCnN5c2ZzIChj
-YXNlIGEpIGJlbG93KSwgSSB3b3VsZG4ndCBiZXQgb24gdGhhdC4gSW4gdGhpcyBjYXNlIHdlIHJl
-bHkgb24KdGhlIGFzc3VtcHRpb24gdGhhdCB3ZSdsbCByZWNlaXZlIGFuIHVldmVudCBsYXRlciAt
-IGxpa2VseSBidXQgbm90Cmd1YXJhbnRlZWQuCgpPVE9ILCBieSBibGFua2luZyB0aGUgV1dJRCwg
-d2UgZm9yZmVpdCB0aGUgb3Bwb3J0dW5pdHkgdG8gZGV0ZWN0IGEgV1dJRApjaGFuZ2UgbGF0ZXIg
-LSB3aXRoIHRoYXQgaW4gbWluZCwgYmxhbmtpbmcgaXMgYWN0dWFsbHkgd3JvbmcgaW4gdGhpcwpz
-aXR1YXRpb24sIGFuZCB5b3VyIHBhdGNoIHNob3VsZCBiZSBhbiBpbXByb3ZlbWVudC4KCj4gIAo+
-ID4gNC4gVGhlICJibGFuayIgbG9naWMgaW4gcGF0aGluZm8oKSBjb21iaW5lcyBzZXZlcmFsIHZl
-cnkgZGlmZmVyZW50Cj4gPiBjYXNlcy4KPiA+ICAgYSkgUEFUSF9SRU1PVkVEIHN0YXR1cyBmcm9t
-IHBhdGhfb2ZmbGluZSgpLiBUaGlzIG1lYW5zIHRoYXQKPiA+IGVsZW1lbnRhcnkgc3lzZnMgYXR0
-cmlidXRlcyB3ZXJlIG1pc3NpbmcuIFRoaXMgaXMgYWxtb3N0IHRoZSBzYW1lCj4gPiBhcwo+ID4g
-ZmFpbHVyZSBpbiBzeXNmc19wYXRoaW5mbygpLCB3aGljaCByZXN1bHRzIGluIFBBVEhJTkZPX0ZB
-SUxFRAo+ID4gcmV0dXJuCj4gPiBzdGF0dXM7IGJ1dCBmb3IgUEFUSF9SRU1PVkVEIHdlIHJldHVy
-biBQQVRISU5GT19PSyBhbmQga2VlcCB0aGUKPiA+IHBhdGgKPiA+IGFyb3VuZC4KPiAKPiBUcnVl
-LCBidXQgSSd2ZSBhbHdheXMgYXNzdW1lZCB0aGF0IHRoaXMgbWVhbnMgdGhhdCB3ZSB3aWxsIGJl
-IGdldHRpbmcKPiBhCj4gdWV2ZW50IHRvIHJlbW92ZSB0aGlzIHBhdGggbW9tZW50YXJpbHksIHNv
-IEkgZG9lc24ndCByZWFsbHkgbWF0dGVyCj4gd2hhdAo+IHdlIGRvIHdpdGggaXQuIFdlIGNvdWxk
-IGJsYW5rIHRoZSBwYXRoIGhlcmUsIGJ1dCBpZiB3ZSBhbHJlYWR5IGdvIHRoZQo+IG5lY2Vzc2Fy
-eSBpbmZvLCBpdCBzZWVtcyBsaWtlIGp1c3Qgc2V0dGluZyB0aGUgcGF0aCB0byBQQVRIX0RPV04s
-IGFuZAo+IHdhaXRpbmcgZm9yIHRoZSByZW1vdmUgdWV2ZW50IHNob3VsZCBiZSBmaW5lLgoKUGVy
-aGFwcy4gSSBqdXN0IHdhbnRlZCB0byBwb2ludCBvdXQgdGhlIGRpZmZlcmVudCB0cmVhdG1lbnQg
-b2YgdHdvIHZlcnkKc2ltaWxhciBzY2VuYXJpb3MuCgo+ID4gICBiKSBGYWlsdXJlIGluIGNoZWNr
-ZXJfY2hlY2soKS4gSWYgdGhlIHBhdGggaXMgb2ZmbGluZSBpbiB0aGUKPiA+IGZpcnN0Cj4gPiBw
-bGFjZSwgdGhlIGNoZWNrZXIgaXNuJ3QgY2FsbGVkLCBhbmQgV1dJRCBkZXRlcm1pbmF0aW9uIGlz
-Cj4gPiBhdHRlbXB0ZWQuCj4gPiBCdXQgaWYgdGhlIGNoZWNrZXIgcmV0dXJucyBQQVRIX1VOQ0hF
-Q0tFRCBvciBQQVRIX1dJTEQsIHdlIGdvdG8KPiA+ICJibGFuayIKPiA+IHN0YXRlLgo+IAo+IFRo
-aXMgaXMgY2xlYXJseSB0aGUgd3JvbmcgdGhpbmcgdG8gZG8uCj4gCj4gPiAgIGMpIEZhaWx1cmUg
-aW4gc2NzaV9pb2N0bF9wYXRoaW5mbygpIG9yIGNjaXNzX2lvY3RsX3BhdGhpbmZvKCkuCj4gPiBC
-b3RoCj4gPiBmdW5jdGlvbnMgbmV2ZXIgZmFpbCwgc28gdGhpcyBjYW4ndCBoYXBwZW4uIEkndmUg
-cGF0Y2hlcyBoZXJlIHRvCj4gPiBmaXgKPiA+IHRoYXQuCj4gCj4gSSBqdXN0IGlnbm9yZWQgdGhp
-cyBzdGF0ZSBiZWNhdXNlIGl0IHdhcyBpbXBvc3NpYmxlLiBCdXQgZXZlbiB3aXRoCj4geW91cgo+
-IHBhdGNoZXMsIG15IGFyZ3VtZW50IHJlbWFpbnMgdGhlIHNhbWUuIElmIHdlIGFscmVhZHkgZ290
-IHRoaXMgaW5mbywKPiBmYWlsaW5nIHRvIGdldCBpdCBhZ2FpbiBzaG91bGRuJ3QgY2F1c2UgdXMg
-dG8gZGVsZXRlIHRoZSB3d2lkLiBXZQo+IHNob3VsZAo+IHByb2JhYmx5IHJlbWVtYmVyIHRoZSBl
-eGlzdGluZyB2YWx1ZXMsIHRvIG1ha2Ugc3VyZSB0aGF0IHdlIGRvbid0Cj4gbG9zZQo+IHRoZW0g
-aWYgdGhlIGNhbGxzIGZhaWwgZm9yIHNvbWUgcmVhc29uLgoKTXkgcGF0Y2hlcyB3b3VsZG4ndCBj
-aGFuZ2UgYSB0aGluZyBoZXJlLiBUaGV5IGp1c3QgdHVybiB0aGVzZSB0d28KZnVuY3Rpb25zIHRv
-IHZvaWQgdHlwZS4KCj4gCj4gPiAgIGQpIEZhaWx1cmUgdG8gb3BlbiBwcC0+ZmQuIAo+IAo+IFRo
-aXMgaXMgY2xlYXJseSB0aGUgcmlnaHQgdGhpbmcgdG8gZG8uCj4gCj4gPiBkKSBpcyB0aGUgb25s
-eSBjYXNlIGluIHdoaWNoIHRoZSAiYmxhbmsiIGxvZ2ljIG1ha2VzIHJlYWxseSBzZW5zZQo+ID4g
-dG8KPiA+IG1lLiBJdCBjYW4gaGFwcGVuIG9ubHkgYXQgdGhlIGZpcnN0IHBhdGhpbmZvKCkgaW52
-b2NhdGlvbiwgbWVhbmluZyAKPiA+IHBwLT53d2lkIGlzIHN0aWxsIGVtcHR5LCBhbmQgcHAtPmlu
-aXRpYWxpemVkIGlzIElOSVRfRkFJTEVELiBZb3VyCj4gPiBwYXRjaAo+ID4gd291bGQgY2hhbmdl
-IG5vdGhpbmcgZm9yIHRoaXMgY2FzZS4KPiA+IAo+ID4gYSkgYW5kIGIpIGNhbiBoYXBwZW4gZm9y
-IHBhdGhzIHRoYXQgaGF2ZSBiZWVuIGluaXRpYWxpemVkIGFscmVhZHkuCj4gPiBJCj4gPiB0aGlu
-ayBpbiBjYXNlIGEpIHRoZSBXV0lEIHNob3VsZCBiZSByZXNldCwgcHJvYmFibHkgaW5pdGlhbGl6
-ZWQKPiA+IHNob3VsZAo+ID4gYmUgc2V0IHRvIElOSVRfRkFJTEVELCBhbmQgUEFUSElORk9fRkFJ
-TEVEIHNob3VsZCBiZSByZXR1cm5lZC4gSW4KPiA+IGNhc2UKPiA+IGIpIHdlIHNob3VsZCBJTU8g
-cHJvY2VlZCBub3JtYWxseSByYXRoZXIgdGhhbiBnb3RvICJibGFuayIuCj4gPiBSZXNldHRpbmcK
-PiA+IHRoZSBXV0lEIGluIGNhc2UgYikgaXMgbm9uc2Vuc2UsIGFncmVlZC4KPiA+IAo+ID4gQWx0
-b2dldGhlciwgaWYgbXkgYW5hbHlzaXMgaXMgY29ycmVjdCwgeW91ciBwYXRjaCAobm90IGJsYW5r
-aW5nIHRoZQo+ID4gV1dJRCkgc2hvdWxkIGJlIGFwcGxpZWQgdG8gY2FzZSBiKSBvbmx5Lgo+IAo+
-IEkgZG9uJ3QgcmVhbGx5IGNhcmUgYWJvdXQgYmxhbmtpbmcgdGhlIHd3aWQgaW4gY2FzZSBhKS4g
-SSBqdXN0IHRoaW5rCj4gaXQncyB1bm5lY2Vzc2FyeS4gIFdoeSBkbyB5b3UgdGhpbmsgd2Ugc2hv
-dWxkIGJsYW5rIGl0IGluIGNhc2UgYykgaWYKPiB3ZQo+IGhhdmUgcHJldmlvdXNseSBnb3R0ZW4g
-dGhvc2UgdmFsdWVzPwoKU3VtbWFyaXppbmcsIAoKIGEpIHlvdSBjb252aW5jZWQgbWUgYWJvdXQg
-dGhhdCBvbmUsCiBiKSB5b3VyIHBhdGNoIGlzIGdvb2QsIGJ1dCB3ZSBtYXkgbmVlZCBhZGRpdGlv
-bmFsIGNoYW5nZXMgaW4gYSBmb2xsb3ctCnVwIHBhdGNoLAogYykgZG9lc24ndCBoYXBwZW4sCiBk
-KSBJIGFncmVlZCBpbiB0aGUgZmlyc3QgcGxhY2UuCgpBbmQgbXkgY29uY2VybiBhYm91dCBJTklU
-X01JU1NJTkdfVURFViB3YXMgb3J0aG9nb25hbCB0byB5b3VyIHBhdGNoCmFueXdheS4gU28gSSds
-bCBnaXZlIHlvdXIgcGF0Y2ggYSByZXZpZXdlZC1ieS4gU29ycnkgZm9yIHRoZSBub2lzZS4gSQpn
-dWVzcyB5b3UnbGwgY29uY2VkZSB0aGUgaGFuZGxpbmcgb2YgcGF0aCBzdGF0ZXMgaW4gbXVsdGlw
-YXRoLXRvb2xzIGlzCm5vbi10cml2aWFsLiAKCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sg
-PG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXgg
-R21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRv
-bgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
-ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8v
-ZG0tZGV2ZWw=
+On Sat, Oct 06 2018 at  3:37am -0400,
+Damien Le Moal <Damien.LeMoal@wdc.com> wrote:
+
+> On 2018/10/06 14:32, Mike Snitzer wrote:
+> > On Sat, Oct 06 2018 at 12:03am -0400,
+> > Damien Le Moal <Damien.LeMoal@wdc.com> wrote:
+> > 
+> >> Mike,
+> >>
+> >> On 2018/10/06 12:49, Mike Snitzer wrote:
+> >>> On Fri, Oct 05 2018 at  9:24pm -0400,
+> >>> Damien Le Moal <Damien.LeMoal@wdc.com> wrote:
+> >>>
+> >>>> Mike,
+> >>>>
+> >>>> On 2018/10/06 3:29, Mike Snitzer wrote:
+> >>>>> On Fri, Oct 05 2018 at  6:34am -0400,
+> >>>>> Damien Le Moal <damien.lemoal@wdc.com> wrote:
+> >>>>>
+> >>>>>> If dm-linear or dm-flakey have targets on top of a partition of a zoned
+> >>>>>> block device, remapping of the start sector and write pointer position
+> >>>>>> of the zones reported by a report zones BIO must be modified to not
+> >>>>>> only account for the target table entry mapping, but also to account
+> >>>>>> for the partition first sector. This start sector must be substracted
+> >>>>>> to the start sector of all zones reported. The write pointer position
+> >>>>>> of sequential zones must also be reduced by this offset.
+> >>>>>>
+> >>>>>> Since there is no easy way to access the underlying bdev of the target
+> >>>>>> table entry from the dm_target or dm_target_io pointers, modify the
+> >>>>>> interface of the function dm_remap_zone_report() to allow a target to
+> >>>>>> pass the partition block device starting sector (offset).
+> >>>>>>
+> >>>>>> Fixes: 10999307c14e ("dm: introduce dm_remap_zone_report()")
+> >>>>>> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+> >>>>>> Cc: <stable@vger.kernel.org>
+> >>>>>
+> >>>>> [dropping the actual stable cc from the mail, please don't cc stable in
+> >>>>> the mail header, could be that git-send-email just pulled it in but...]
+> >>>>
+> >>>> My apologies about that. It was indeed git-send-email. Will fix that.
+> >>>>
+> >>>>> This needs a different fix.  There should be absolutely no need to pass
+> >>>>> in a start offset for a device that is already supposed to be described
+> >>>>> within the 'struct bio' passed to dm_remap_zone_report().
+> >>>>>
+> >>>>> Why can't you just use the bio->bi_bdev ?  Err, since commit
+> >>>>> 74d46992e0d9d, I mean bio->bi_disk to get the start sector?
+> >>>>>
+> >>>>> You should be able to get it from:
+> >>>>>
+> >>>>> struct hd_struct *part = disk_get_part(bio->bi_disk, bio->bi_partno);
+> >>>>> part->start_sect;
+> >>>>> disk_put_part(part);
+> >>>>>
+> >>>>> or:
+> >>>>>
+> >>>>> struct block_device *bdev = bdget_disk(bio->bi_disk, bio->bi_partno);
+> >>>>> get_start_sect(fc->dev->bdev);
+> >>>>> bdput(bdev);
+> >>>>
+> >>>> I am afraid this does not work. The original bio disk is of course /dev/dm-xx so
+> >>>> not the partition (partno == 0), and the mapped bio passed as argument to the
+> >>>> remap zone function (clone of the orig bio) is pointing to the entire underlying
+> >>>> disk, not the partition disk used in dmsetup. bi_partno is 0 for both BIOs.
+> >>>> Which seems weird, __bio_clone_fast() does copy the disk and part number as is.
+> >>>> The disk is of course correctly changed from the orig dm disk to the actual
+> >>>> physical disk in the clone, but the partition number stays the same. In the end,
+> >>>> only the target has the correct bdev (disk+partno) information it seems.
+> >>>
+> >>> OK, that is a bug that must to be found then.
+> >>
+> >> Nope. No bug. I figured it out: after the bio remapping in the target (which
+> >> calls bio_set_dev() to indicate the partition bdev target for the bio), the
+> >> block core will remap that bio to the container bdev (the entire disk) which is
+> >> partition 0.
+> > 
+> > I just fully explored the bdev lookup aspect of the DM code (thinking
+> > somehow we were dropping the partno on the floor).
+> > 
+> > That aspect all looks fine, so I didn't send an email detailing my
+> > findings.
+> > 
+> >> So the partition number is lost when the bio completes and zone
+> >> remap cannot get the starting physical sector for the adjustment of the zone
+> >> start and wp position.
+> > 
+> > I didn't think to look at block core's partition remapping having a
+> > side-effect of losing the partition info.  Nasty.  But even if that is
+> > the case, shouldn't the bio have been updated to reflect the proper
+> > offset into the device?
+> > 
+> >>>> It looks like the partno gets lost, which does not seem correct. I must be
+> >>>> missing something, but I fail to see what it is. Any suggestion ?
+> >>>
+> >>> Not at the moment but I'll have a closer look early next week.
+> >>
+> >> Now, I see 2 solutions:
+> >> * have the target add to the "start" argument passed to dm_remap_zone_report()
+> >> the offset (start sector) of the block device. The calculation match what needs
+> >> to be done, so it works. It is a little ugly though as the target has to be
+> >> "partition aware" in a sense.
+> >> * Add a "struct dm_dev *dev" argument to dm_remap_zone_report(). The device
+> >> start sector is simply "get_start_sect(dev->bdev)" with that.
+> >>
+> >> I prefer the second solution... What do you think ?
+> > 
+> > I think: I hate block core's partition code! ;)
+> > 
+> > The 2nd option seems better, but I still need to get to the bottom of
+> > _why_ the completing bio isn't properly describing the IO that was
+> > issued.  It cannot have it both ways.  If it strips the partition info
+> > (and just maps IO relative to front of entire disk) then the bio should
+> > to be updated reflect this.
+> > 
+> > Too late here now, will look tomorrow.
+> 
+> I sent a v2 using the dm_dev before reading this email...
+> 
+> On completion, the bio sector will be the sector when issued + completed sectors
+> and the BIO size will indicate the remaining bytes to do, which is always 0 for
+> zone report BIOs. So looking only at the completed "bio" passed as argument, the
+> actual sector that was used is lost because the BIO original length is lost too.
+
+Makes sense.  Rare to want the full bio description after it has gone
+through the beast.  Usually accounting is done on each subset (split) of
+the original bio as each completes, no?
+
+> Thinking of it now, we do not need an additional argument. Since a zone report
+> bio clone is ALWAYS the entire original BIO (zone reports are never split),
+> report_bio is storing the original length of the request. Using that, we can
+> find out the actual sector used for execution, and accounting for the target
+> start offset in the device and its mapping, we can do this to get the partition
+> offset (bio is the clone, report_bio is the original):
+> 
+> dev_offset = bio->bi_iter.bi_sector + ti->begin
+> 		- (start + bio_end_sector(report_bio));
+> 
+> Which is super not obvious and will need to be documented with a nice comment. I
+> just tested, and everything works fine with this. If you are OK with this
+> change, I will send a v3.
+
+OK, please do send v3 if you're happy with it.
+
+Thanks,
+Mike
