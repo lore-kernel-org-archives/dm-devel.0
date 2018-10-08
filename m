@@ -1,12 +1,17 @@
-From: Shenghui Wang <shhuiw@foxmail.com>
-Subject: [PATCH] dm-cache: destroy migration_cache if cache
-	target registration failed
-Date: Sun,  7 Oct 2018 14:45:41 +0800
-Message-ID: <20181007064541.1723-1-shhuiw@foxmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH RESEND 0/4] multipath-tools: fixes for path
+ wwid detection and path change uevents
+Date: Mon, 08 Oct 2018 10:26:58 +0200
+Message-ID: <abfb4b0e068413e4c30453195651e3262c416874.camel@suse.com>
+References: <20180307232152.15538-1-mwilck@suse.com>
+	<20180314174013.GF14513@octiron.msp.redhat.com>
+	<7aa1314c9095e3315e02525ec2e005030898a9b4.camel@suse.com>
+	<20181005230704.GH3172@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20181005230704.GH3172@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,42 +21,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Destroy migration_cache if cache target registration failed in
-dm_cache_init.
-
-Signed-off-by: Shenghui Wang <shhuiw@foxmail.com>
----
- drivers/md/dm-cache-target.c | 9 ++++-----
- 1 file changed, 4 insertions(+), 5 deletions(-)
-
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index e13d991e9fb5..c248667f549d 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -3481,17 +3481,16 @@ static struct target_type cache_target = {
- 
- static int __init dm_cache_init(void)
- {
--	int r;
-+	int r = -ENOMEM;
- 
- 	migration_cache = KMEM_CACHE(dm_cache_migration, 0);
--	if (!migration_cache) {
--		dm_unregister_target(&cache_target);
--		return -ENOMEM;
--	}
-+	if (!migration_cache)
-+		return r;
- 
- 	r = dm_register_target(&cache_target);
- 	if (r) {
- 		DMERR("cache target registration failed: %d", r);
-+		kmem_cache_destroy(migration_cache);
- 		return r;
- 	}
- 
--- 
-2.18.0
+T24gRnJpLCAyMDE4LTEwLTA1IGF0IDE4OjA3IC0wNTAwLCAgQmVuamFtaW4gTWFyemluc2tpICB3
+cm90ZToKPiBPbiBUdWUsIE9jdCAwMiwgMjAxOCBhdCAxMTowMjo1MFBNICswMjAwLCBNYXJ0aW4g
+V2lsY2sgd3JvdGU6Cj4gPiBIaSBCZW4sIENocmlzdG9waGUsCj4gPiAKPiA+IEkgZm91bmQgYSBw
+cm9ibGVtIHdpdGggdGhpcyBvbGQgcGF0Y2ggc2VyaWVzIG9mIG1pbmUuCj4gPiAKPiA+IHdoaWxl
+IEkgYW0gc3RpbGwgcG9uZGVyaW5nIGFib3V0IHlvdXIgbGF0ZXN0IHNlcmllcywgaXQgb2NjdXJl
+ZCB0bwo+ID4gbWUKPiA+IHRoYXQgbXkgcGF0Y2ggImdldF91aWQ6IGRvbid0IHF1aXQgcHJlbWF0
+dXJlbHkgd2l0aG91dCB1ZGV2IiBpcwo+ID4gYWdhaW5zdAo+ID4gdGhlIHNwaXJpdCBvZiB5b3Vy
+ICJyZXRyaWdnZXIgdWV2ZW50cyB0byB0cnkgYW5kIGdldCB0aGUgdWlkCj4gPiB0aHJvdWdoCj4g
+PiB1ZGV2IiBwYXRjaCBmcm9tIDIwMTYgKDY4OGFhMjJiKS4KPiA+IAo+ID4gImdldF91aWQ6IGRv
+bid0IHF1aXQgcHJlbWF0dXJlbHkgd2l0aG91dCB1ZGV2IiBoYXMgYmVlbiBtZXJnZWQgYQo+ID4g
+d2hpbGUKPiA+IGFnbyAoMDhkNDJlZTYpLiBTaG91bGQgaXQgYmUgcmV2ZXJ0ZWQ/Pwo+ID4gCj4g
+PiBQcm86IHRoZSBwYXRjaCBpcyBhZ2FpbnN0IHRoZSAidWRldiBmaXJzdCIgcGhpbG9zb3BoeSBh
+bmQgc3VidmVydHMKPiA+IHRoZQo+ID4gcmV0cmlnZ2VyIGxvZ2ljLgo+ID4gQ29uOiB3aXRoIHRo
+ZSBwYXRjaCwgd2UnbGwgYmUgYWJsZSB0byByZXRyaWV2ZSBXV0lEcyBtb3JlIHF1aWNrbHkKPiA+
+IGluCj4gPiBzb21lIHNpdHVhdGlvbnMsIGFzIHdlIGRvbid0IGhhdmUgdG8gd2FpdCBmb3IgdWRl
+di4KPiA+IAo+ID4gRWl0aGVyIHdheSAoYnV0IG1vcmUgbGlrZWx5IHdpdGggbXkgcGF0Y2gpLCBp
+dCBtYXkgaGFwcGVuIHRoYXQgd2UKPiA+IHJldHJpZXZlIGEgV1dJRCBmcm9tIHN5c2ZzIG9yIGVs
+c2V3aGVyZSBmaXJzdCwgYW5kIGZyb20gdWRldiBsYXRlci4KPiA+IFRoZXNlIFdXSURzIG1heSBu
+b3QgbmVjZXNzYXJpbHkgbWF0Y2gsIGFuZCBhICJXV0lEIGNoYW5nZWQiIHByb2JsZW0KPiA+IG1h
+eQo+ID4gb2NjdXIuCj4gPiAKPiA+IFBsZWFzZSB0ZWxsIG1lIHdoYXQgeW91IHRoaW5rLgo+IAo+
+IEknbSBoYXZpbmcgYSBoYXJkIHRpbWUgc2VlaW5nIGhvdyBnZXRfdWlkKCkgY291bGQgZ2V0IGNh
+bGxlZCBvbiBhCj4gcGF0aAo+IHdpdGhvdXQgYSB1ZGV2IGRldmljZSBhdHRhY2hlZCBpbiBtdWx0
+aXBhdGhkLiBJdCBjYW4gaGFwcGVuIGJlY2F1c2UKPiBvZgo+IHVwZGF0ZV9wYXRocygpIGluIG11
+bHRpcGF0aCwgZm9yIHBhdGhzIHRoYXQgZG9uJ3QgZ2V0IGRpc2NvdmVyZWQgd2hlbgo+IHNlYXJj
+aGluZyBmb3IgcGF0aHMsIGJ1dCBkbyBiZWxvbmcgdG8gYW4gZXhpc3RpbmcgbXVsdGlwYXRoIGRl
+dmljZS4gSQo+IGRvbid0IHRoaW5rIHlvdSBwYXRjaCB3aWxsIGh1cnQgYW55dGhpbmcgaGVyZS4g
+U28sIHVubGVzcyBJJ20gbWlzc2luZwo+IHNvbWUgY29kZSBwYXRoIGluIG11bHRpcGF0aGQsIEkg
+ZG9uJ3Qgc2VlIGEgcHJvYmxlbSB3aXRoIHRoaXMgcGF0Y2guCgpPSywgZmluZSB0aGVuLiBUaGFu
+a3MgZm9yIGNsYXJpZnlpbmcgdGhpcy4KCj4gSW4gZmFjdCwgd2Ugc2hvdWxkIHByb2JhYmx5IG1h
+a2Ugc2NzaV91aWRfZmFsbGJhY2soKSBza2lwIChvciBhdAo+IGxlYXN0Cj4gYWx3YXlzIHBhc3Mp
+IHRoZSByZXRyaWdnZXIgY2hlY2sgaWYgd2UgYXJlbid0IGluIHRoZSBkYWVtb24sIHNvIHdlCj4g
+YWx3YXlzIHRyeSB0aGUgZmFpbGJhY2sgd2hlbiB3ZSBydW4gbXVsdGlwYXRoLgoKQUZBSUNTIHRo
+YXQncyBhbHJlYWR5IHRoZSBjYXNlLCBiZWNhdXNlIG11bHRpcGF0aCBzZXRzIApjb25mLT5yZXRy
+aWdnZXJfdHJpZXMgPSAwIG9uIHN0YXJ0dXAuCgpSZWdhcmRzLApNYXJ0aW4KCi0tIApEci4gTWFy
+dGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpT
+VVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdy
+YWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgoKLS0KZG0tZGV2ZWwgbWFpbGlu
+ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
+L2xpc3RpbmZvL2RtLWRldmVs
