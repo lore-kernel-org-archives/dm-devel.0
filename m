@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v4 11/19] libmultipath: fix null dereference int
-	alloc_path_group
-Date: Tue,  9 Oct 2018 18:03:08 -0500
-Message-ID: <1539126196-28926-12-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v4 12/19] libmutipath: don't use malformed uevents
+Date: Tue,  9 Oct 2018 18:03:09 -0500
+Message-ID: <1539126196-28926-13-git-send-email-bmarzins@redhat.com>
 References: <1539126196-28926-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,28 +21,32 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.de>
 List-Id: dm-devel.ids
 
-If all_pathgroup failed to allocate a vector for pgp->paths, instead of
-failing after it freed pgp, it would set pgp to NULL and then
-dereference it. This patch fixes that. Found by coverity.
+A uevent that doesn't include the ACTION and DEVPATH fields is
+malformed. It should be ignored, instead of used with those fields being
+NULL.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/structs.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/uevent.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index ae847d6..caa178a 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -165,7 +165,7 @@ alloc_pathgroup (void)
- 
- 	if (!pgp->paths) {
- 		FREE(pgp);
--		pgp = NULL;
-+		return NULL;
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index fd8ca35..5f910e6 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -729,6 +729,12 @@ struct uevent *uevent_from_udev_device(struct udev_device *dev)
+ 		if (i == HOTPLUG_NUM_ENVP - 1)
+ 			break;
  	}
++	if (!uev->devpath || ! uev->action) {
++		udev_device_unref(dev);
++		condlog(1, "uevent missing necessary fields");
++		FREE(uev);
++		return NULL;
++	}
+ 	uev->udev = dev;
+ 	uev->envp[i] = NULL;
  
- 	dm_pathgroup_to_gen(pgp)->ops = &dm_gen_pathgroup_ops;
 -- 
 2.7.4
