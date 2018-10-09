@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v4 06/19] libmultipath: fix set_int error path
-Date: Tue,  9 Oct 2018 18:03:03 -0500
-Message-ID: <1539126196-28926-7-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v4 07/19] libmultipath: fix length issues in
+	get_vpd_sgio
+Date: Tue,  9 Oct 2018 18:03:04 -0500
+Message-ID: <1539126196-28926-8-git-send-email-bmarzins@redhat.com>
 References: <1539126196-28926-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,31 +22,48 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.de>
 List-Id: dm-devel.ids
 
-set_int() wasn't checking if the line actually had a value before
-converting it to an integer.  Found by coverity. Also, it should
-be using set_value().
+When get_vpd_sgio() finds out that the vpd info needed to be truncated
+to fit in the buffer, it doesn't trucate the size as well,  which allows
+it to overwrite the buffer. Also, in once len is set to -ENODATA,
+get_vpd_sgio() should exit, instead of using the negative len in
+memcpy(). Found by coverity.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/dict.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ libmultipath/discovery.c | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 32524d5..bf4701e 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -33,7 +33,10 @@ set_int(vector strvec, void *ptr)
- 	int *int_ptr = (int *)ptr;
- 	char * buff;
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index f973d4b..301093f 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1116,17 +1116,21 @@ get_vpd_sgio (int fd, int pg, char * str, int maxlen)
+ 		return -ENODATA;
+ 	}
+ 	buff_len = get_unaligned_be16(&buff[2]) + 4;
+-	if (buff_len > 4096)
++	if (buff_len > 4096) {
+ 		condlog(3, "vpd pg%02x page truncated", pg);
+-
++		buff_len = 4096;
++	}
+ 	if (pg == 0x80)
+ 		len = parse_vpd_pg80(buff, str, maxlen);
+ 	else if (pg == 0x83)
+ 		len = parse_vpd_pg83(buff, buff_len, str, maxlen);
+ 	else if (pg == 0xc9 && maxlen >= 8) {
+-		len = buff_len < 8 ? -ENODATA :
+-			(buff_len <= maxlen ? buff_len : maxlen);
+-		memcpy (str, buff, len);
++		if (buff_len < 8)
++			len = -ENODATA;
++		else {
++			len = (buff_len <= maxlen)? buff_len : maxlen;
++			memcpy (str, buff, len);
++		}
+ 	} else
+ 		len = -ENOSYS;
  
--	buff = VECTOR_SLOT(strvec, 1);
-+	buff = set_value(strvec);
-+	if (!buff)
-+		return 1;
-+
- 	*int_ptr = atoi(buff);
- 
- 	return 0;
 -- 
 2.7.4
