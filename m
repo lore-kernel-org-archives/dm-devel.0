@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v4 08/19] libmultipath: _install_keyword cleanup
-Date: Tue,  9 Oct 2018 18:03:05 -0500
-Message-ID: <1539126196-28926-9-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v4 10/19] libmultipath: fix memory issue in
+	path_latency prio
+Date: Tue,  9 Oct 2018 18:03:07 -0500
+Message-ID: <1539126196-28926-11-git-send-email-bmarzins@redhat.com>
 References: <1539126196-28926-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,40 +22,29 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.de>
 List-Id: dm-devel.ids
 
-_install_keyword should use VECTOR_LAST_SLOT(), which has better error
-checking. It should also fail if it gets a NULL pointer, instead of
-dereferencing it. Found by coverity.
+The path_latency prioriziter was assuming that prepare_directio_read()
+always succeeds. However, it doesn't, and when it fails, the prioritizer
+used buf without it pointing to alloced memory. Found by coverity.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/parser.c | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
+ libmultipath/prioritizers/path_latency.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/parser.c b/libmultipath/parser.c
-index b8b7e0d..92ef7cf 100644
---- a/libmultipath/parser.c
-+++ b/libmultipath/parser.c
-@@ -79,12 +79,16 @@ _install_keyword(vector keywords, char *string,
- 	struct keyword *keyword;
+diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
+index 765265c..eeee01e 100644
+--- a/libmultipath/prioritizers/path_latency.c
++++ b/libmultipath/prioritizers/path_latency.c
+@@ -237,7 +237,8 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
+ 	lg_maxavglatency = log(MAX_AVG_LATENCY) / lg_base;
+ 	lg_minavglatency = log(MIN_AVG_LATENCY) / lg_base;
  
- 	/* fetch last keyword */
--	keyword = VECTOR_SLOT(keywords, VECTOR_SIZE(keywords) - 1);
-+	keyword = VECTOR_LAST_SLOT(keywords);
-+	if (!keyword)
-+		return 1;
+-	prepare_directio_read(pp->fd, &blksize, &buf, &restore_flags);
++	if (prepare_directio_read(pp->fd, &blksize, &buf, &restore_flags) < 0)
++		return PRIO_UNDEF;
  
- 	/* position to last sub level */
--	for (i = 0; i < sublevel; i++)
--		keyword =
--		    VECTOR_SLOT(keyword->sub, VECTOR_SIZE(keyword->sub) - 1);
-+	for (i = 0; i < sublevel; i++) {
-+		keyword = VECTOR_LAST_SLOT(keyword->sub);
-+		if (!keyword)
-+			return 1;
-+	}
- 
- 	/* First sub level allocation */
- 	if (!keyword->sub)
+ 	temp = io_num;
+ 	while (temp-- > 0) {
 -- 
 2.7.4
