@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v4 09/19] libmultipath: remove unused code
-Date: Tue,  9 Oct 2018 18:03:06 -0500
-Message-ID: <1539126196-28926-10-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v4 13/19] multipath: fix max array size in
+	print_cmd_valid
+Date: Tue,  9 Oct 2018 18:03:10 -0500
+Message-ID: <1539126196-28926-14-git-send-email-bmarzins@redhat.com>
 References: <1539126196-28926-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,55 +22,28 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.de>
 List-Id: dm-devel.ids
 
-since vector_foreach_slot() already checks if the entry is NULL, there's
-no point in checking it in the loop, since it can't be NULL there. Found
-by coverity.
+The code is attempting to verify that 0 <= k < 3
+However, sizeof(val) is 12, assuming 4 byte integers. The check needs to
+take integer size into account. Found by coverity.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/print.c | 8 --------
- 1 file changed, 8 deletions(-)
+ multipath/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 9da6a77..7b610b9 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -275,8 +275,6 @@ snprint_multipath_vpr (char * buff, size_t len, const struct multipath * mpp)
- 	int i, j;
+diff --git a/multipath/main.c b/multipath/main.c
+index fc5bf16..d5aad95 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -482,7 +482,7 @@ static int print_cmd_valid(int k, const vector pathvec,
+ 	struct timespec until;
+ 	struct path *pp;
  
- 	vector_foreach_slot(mpp->pg, pgp, i) {
--		if (!pgp)
--			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
- 			if (strlen(pp->vendor_id) && strlen(pp->product_id))
- 				return snprintf(buff, len, "%s,%s",
-@@ -295,8 +293,6 @@ snprint_multipath_vend (char * buff, size_t len, const struct multipath * mpp)
- 	int i, j;
+-	if (k < 0 || k >= sizeof(vals))
++	if (k < 0 || k >= (sizeof(vals) / sizeof(int)))
+ 		return 1;
  
- 	vector_foreach_slot(mpp->pg, pgp, i) {
--		if (!pgp)
--			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
- 			if (strlen(pp->vendor_id))
- 				return snprintf(buff, len, "%s", pp->vendor_id);
-@@ -313,8 +309,6 @@ snprint_multipath_prod (char * buff, size_t len, const struct multipath * mpp)
- 	int i, j;
- 
- 	vector_foreach_slot(mpp->pg, pgp, i) {
--		if (!pgp)
--			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
- 			if (strlen(pp->product_id))
- 				return snprintf(buff, len, "%s", pp->product_id);
-@@ -331,8 +325,6 @@ snprint_multipath_rev (char * buff, size_t len, const struct multipath * mpp)
- 	int i, j;
- 
- 	vector_foreach_slot(mpp->pg, pgp, i) {
--		if (!pgp)
--			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
- 			if (strlen(pp->rev))
- 				return snprintf(buff, len, "%s", pp->rev);
+ 	if (k == 2) {
 -- 
 2.7.4
