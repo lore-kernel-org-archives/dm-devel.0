@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v4 10/19] libmultipath: fix memory issue in
-	path_latency prio
-Date: Tue,  9 Oct 2018 18:03:07 -0500
-Message-ID: <1539126196-28926-11-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v4 11/19] libmultipath: fix null dereference int
+	alloc_path_group
+Date: Tue,  9 Oct 2018 18:03:08 -0500
+Message-ID: <1539126196-28926-12-git-send-email-bmarzins@redhat.com>
 References: <1539126196-28926-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,29 +22,28 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.de>
 List-Id: dm-devel.ids
 
-The path_latency prioriziter was assuming that prepare_directio_read()
-always succeeds. However, it doesn't, and when it fails, the prioritizer
-used buf without it pointing to alloced memory. Found by coverity.
+If all_pathgroup failed to allocate a vector for pgp->paths, instead of
+failing after it freed pgp, it would set pgp to NULL and then
+dereference it. This patch fixes that. Found by coverity.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/prioritizers/path_latency.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ libmultipath/structs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
-index 765265c..eeee01e 100644
---- a/libmultipath/prioritizers/path_latency.c
-+++ b/libmultipath/prioritizers/path_latency.c
-@@ -237,7 +237,8 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
- 	lg_maxavglatency = log(MAX_AVG_LATENCY) / lg_base;
- 	lg_minavglatency = log(MIN_AVG_LATENCY) / lg_base;
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index ae847d6..caa178a 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -165,7 +165,7 @@ alloc_pathgroup (void)
  
--	prepare_directio_read(pp->fd, &blksize, &buf, &restore_flags);
-+	if (prepare_directio_read(pp->fd, &blksize, &buf, &restore_flags) < 0)
-+		return PRIO_UNDEF;
+ 	if (!pgp->paths) {
+ 		FREE(pgp);
+-		pgp = NULL;
++		return NULL;
+ 	}
  
- 	temp = io_num;
- 	while (temp-- > 0) {
+ 	dm_pathgroup_to_gen(pgp)->ops = &dm_gen_pathgroup_ops;
 -- 
 2.7.4
