@@ -1,13 +1,20 @@
-From: =?UTF-8?q?Micha=C5=82=20Miros=C5=82aw?= <mirq-linux@rere.qmqm.pl>
-Subject: [PATCH v2 1/2] dm: add dm_table_device_name()
-Date: Tue, 09 Oct 2018 22:13:42 +0200
-Message-ID: <80a39e1a5beb7137b7112ae8b2302cb168bebdd3.1539115528.git.mirq-linux@rere.qmqm.pl>
-References: <20181009194250.GB4974@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v3 18/19] libmultipath: Don't blank
+ intialized paths
+Date: Tue, 9 Oct 2018 17:20:01 -0500
+Message-ID: <20181009222001.GJ3172@octiron.msp.redhat.com>
+References: <1537571127-10143-1-git-send-email-bmarzins@redhat.com>
+	<1537571127-10143-19-git-send-email-bmarzins@redhat.com>
+	<3bb1c108b1e43a85d296eed9a63cefe7a6de2d01.camel@suse.com>
+	<f87221ecedb072a7f3551ea0f62e7df586d075f1.camel@suse.com>
+	<20181005193843.GF3172@octiron.msp.redhat.com>
+	<e5fd9aaf1014224d4ce65f77b3bdbfea362c01a9.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181009194250.GB4974@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <e5fd9aaf1014224d4ce65f77b3bdbfea362c01a9.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,32 +24,109 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-QWRkIGEgc2hvcnRjdXQgZm9yIGRtX2RldmljZV9uYW1lKGRtX3RhYmxlX2dldF9tZCh0KSkuCgpT
-aWduZWQtb2ZmLWJ5OiBNaWNoYcWCIE1pcm9zxYJhdyA8bWlycS1saW51eEByZXJlLnFtcW0ucGw+
-Ci0tLQp2MjogdXNlIEVYUE9SVF9TWU1CT0xfR1BMIGxpa2UgZG1fZGV2aWNlX25hbWUoKQotLS0K
-IGRyaXZlcnMvbWQvZG0tdGFibGUuYyAgICAgICAgIHwgNiArKysrKysKIGluY2x1ZGUvbGludXgv
-ZGV2aWNlLW1hcHBlci5oIHwgMSArCiAyIGZpbGVzIGNoYW5nZWQsIDcgaW5zZXJ0aW9ucygrKQoK
-ZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0tdGFibGUuYyBiL2RyaXZlcnMvbWQvZG0tdGFibGUu
-YwppbmRleCAzZDBlMmMxOThmMDYuLjc5MmRlMGE0NGNkOCAxMDA2NDQKLS0tIGEvZHJpdmVycy9t
-ZC9kbS10YWJsZS5jCisrKyBiL2RyaXZlcnMvbWQvZG0tdGFibGUuYwpAQCAtMjA3OSw2ICsyMDc5
-LDEyIEBAIHN0cnVjdCBtYXBwZWRfZGV2aWNlICpkbV90YWJsZV9nZXRfbWQoc3RydWN0IGRtX3Rh
-YmxlICp0KQogfQogRVhQT1JUX1NZTUJPTChkbV90YWJsZV9nZXRfbWQpOwogCitjb25zdCBjaGFy
-ICpkbV90YWJsZV9kZXZpY2VfbmFtZShzdHJ1Y3QgZG1fdGFibGUgKnQpCit7CisJcmV0dXJuIGRt
-X2RldmljZV9uYW1lKHQtPm1kKTsKK30KK0VYUE9SVF9TWU1CT0xfR1BMKGRtX3RhYmxlX2Rldmlj
-ZV9uYW1lKTsKKwogdm9pZCBkbV90YWJsZV9ydW5fbWRfcXVldWVfYXN5bmMoc3RydWN0IGRtX3Rh
-YmxlICp0KQogewogCXN0cnVjdCBtYXBwZWRfZGV2aWNlICptZDsKZGlmZiAtLWdpdCBhL2luY2x1
-ZGUvbGludXgvZGV2aWNlLW1hcHBlci5oIGIvaW5jbHVkZS9saW51eC9kZXZpY2UtbWFwcGVyLmgK
-aW5kZXggNmZiMDgwOGU4N2M4Li4wZDYzZjdlNTI2MWMgMTAwNjQ0Ci0tLSBhL2luY2x1ZGUvbGlu
-dXgvZGV2aWNlLW1hcHBlci5oCisrKyBiL2luY2x1ZGUvbGludXgvZGV2aWNlLW1hcHBlci5oCkBA
-IC00OTAsNiArNDkwLDcgQEAgc2VjdG9yX3QgZG1fdGFibGVfZ2V0X3NpemUoc3RydWN0IGRtX3Rh
-YmxlICp0KTsKIHVuc2lnbmVkIGludCBkbV90YWJsZV9nZXRfbnVtX3RhcmdldHMoc3RydWN0IGRt
-X3RhYmxlICp0KTsKIGZtb2RlX3QgZG1fdGFibGVfZ2V0X21vZGUoc3RydWN0IGRtX3RhYmxlICp0
-KTsKIHN0cnVjdCBtYXBwZWRfZGV2aWNlICpkbV90YWJsZV9nZXRfbWQoc3RydWN0IGRtX3RhYmxl
-ICp0KTsKK2NvbnN0IGNoYXIgKmRtX3RhYmxlX2RldmljZV9uYW1lKHN0cnVjdCBkbV90YWJsZSAq
-dCk7CiAKIC8qCiAgKiBUcmlnZ2VyIGFuIGV2ZW50LgotLSAKMi4xOS4xCgotLQpkbS1kZXZlbCBt
-YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21h
-aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Mon, Oct 08, 2018 at 11:41:35AM +0200, Martin Wilck wrote:
+> On Fri, 2018-10-05 at 14:38 -0500,  Benjamin Marzinski  wrote:
+> > On Wed, Oct 03, 2018 at 12:37:17AM +0200, Martin Wilck wrote:
+
+ =
+
+> > Your analysis looks right. This shouldn't have anything to do with
+> > the
+> > correctness of the not blanking initialized paths, but we should fix
+> > it
+> > anyway.  Right now, as you mentioned, if multipathd fails to get the
+> > wwid after retrigger_tries new uevents, it only has one shot at the
+> > failback methods, and then mutipathd cannot use that path in the
+> > future.
+> > However, it will still check if the path is up or down, which is
+> > pretty
+> > pointless. It should either
+> > =
+
+> > 1. set pp->intialized to INIT_OK, to keep it from being checked at
+> > all
+> > in the future, or
+> =
+
+> That would be lying to ourselves. I'd rather call it INIT_BROKEN or so,
+> or maybe even delete the path from pathvec altogether.
+> =
+
+> [ While we're at this: we call pathinfo with DI_ALL from =
+
+> configure->path_discovery(), but with DI_ALL|DI_BLACKLIST from
+> uev_add_path(). As a result, paths discovered in uevents won't be added
+> to pathvec in the first place if they're blacklisted, while blacklisted
+> paths discovered at startup will be in the pathvec, but orphaned. Is
+> that intentional, and if yes, why ? ]
+
+I really don't know why configure() works this way. The call to
+filter_path() just after path_discovery() will remove the blacklisted
+paths, so they won't actually end up in the pathvec. But it does seem
+pretty pointless to not just check if they are blacklisted while
+initializing them.
+
+> > 2. try to grab the missing pathinfo, so that it can use the path.
+> > =
+
+> > The benefit of doing the first is that mutipathd doesn't keep messing
+> > with paths that really aren't set up to be multipathed. On the other
+> > hand it might ignore some paths that really should be multipathed.
+> > perhaps the best idea is to keep trying to get the missing info, but
+> > just increase pp->tick (possibly progressively) so we try less often.
+> =
+
+> The latter sounds overly complex to me, in particular as in the daemon,
+> we're only looking at paths retrieved via udev anyway, as you pointed
+> out in your other post. So perhaps INIT_MISSING_UDEV is just about the
+> right state for this. We may just consider changing uev_update_path()
+> such that the path is passed to uev_add_path() not only for
+> INIT_REQUESTED_UDEV, but also for INIT_MISSING_UDEV state.
+
+The thought behind not just using uev_update_path() is that it doesn't
+get called very predicably. There's a chance that the path may become
+usable, but we won't get any event for it.  There's also a chance that a
+path that will never have a wwid (and thus shouldn't be multipathed)
+will be part of a uevent storm, and multipath will do a bunch of
+pointless work.  If we do the checks in the checkerloop(), we can
+control exactly how often we check these paths.
+ =
+
+> =
+
+> Summarizing, =
+
+> =
+
+>  a) you convinced me about that one,
+>  b) your patch is good, but we may need additional changes in a follow-
+> up patch,
+>  c) doesn't happen,
+>  d) I agreed in the first place.
+> =
+
+> And my concern about INIT_MISSING_UDEV was orthogonal to your patch
+> anyway. So I'll give your patch a reviewed-by. Sorry for the noise. I
+> guess you'll concede the handling of path states in multipath-tools is
+> non-trivial. =
+
+
+Sure. We do need to figure out what to do when we really can't get a
+wwid for the device, but that can happen in a different patchset.
+
+-Ben
+ =
+
+> Martin
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
+> =
