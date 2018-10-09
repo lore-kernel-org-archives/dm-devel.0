@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v4 12/19] libmutipath: don't use malformed uevents
-Date: Tue,  9 Oct 2018 18:03:09 -0500
-Message-ID: <1539126196-28926-13-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v4 09/19] libmultipath: remove unused code
+Date: Tue,  9 Oct 2018 18:03:06 -0500
+Message-ID: <1539126196-28926-10-git-send-email-bmarzins@redhat.com>
 References: <1539126196-28926-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,32 +21,55 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.de>
 List-Id: dm-devel.ids
 
-A uevent that doesn't include the ACTION and DEVPATH fields is
-malformed. It should be ignored, instead of used with those fields being
-NULL.
+since vector_foreach_slot() already checks if the entry is NULL, there's
+no point in checking it in the loop, since it can't be NULL there. Found
+by coverity.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/uevent.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ libmultipath/print.c | 8 --------
+ 1 file changed, 8 deletions(-)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index fd8ca35..5f910e6 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -729,6 +729,12 @@ struct uevent *uevent_from_udev_device(struct udev_device *dev)
- 		if (i == HOTPLUG_NUM_ENVP - 1)
- 			break;
- 	}
-+	if (!uev->devpath || ! uev->action) {
-+		udev_device_unref(dev);
-+		condlog(1, "uevent missing necessary fields");
-+		FREE(uev);
-+		return NULL;
-+	}
- 	uev->udev = dev;
- 	uev->envp[i] = NULL;
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 9da6a77..7b610b9 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -275,8 +275,6 @@ snprint_multipath_vpr (char * buff, size_t len, const struct multipath * mpp)
+ 	int i, j;
  
+ 	vector_foreach_slot(mpp->pg, pgp, i) {
+-		if (!pgp)
+-			continue;
+ 		vector_foreach_slot(pgp->paths, pp, j) {
+ 			if (strlen(pp->vendor_id) && strlen(pp->product_id))
+ 				return snprintf(buff, len, "%s,%s",
+@@ -295,8 +293,6 @@ snprint_multipath_vend (char * buff, size_t len, const struct multipath * mpp)
+ 	int i, j;
+ 
+ 	vector_foreach_slot(mpp->pg, pgp, i) {
+-		if (!pgp)
+-			continue;
+ 		vector_foreach_slot(pgp->paths, pp, j) {
+ 			if (strlen(pp->vendor_id))
+ 				return snprintf(buff, len, "%s", pp->vendor_id);
+@@ -313,8 +309,6 @@ snprint_multipath_prod (char * buff, size_t len, const struct multipath * mpp)
+ 	int i, j;
+ 
+ 	vector_foreach_slot(mpp->pg, pgp, i) {
+-		if (!pgp)
+-			continue;
+ 		vector_foreach_slot(pgp->paths, pp, j) {
+ 			if (strlen(pp->product_id))
+ 				return snprintf(buff, len, "%s", pp->product_id);
+@@ -331,8 +325,6 @@ snprint_multipath_rev (char * buff, size_t len, const struct multipath * mpp)
+ 	int i, j;
+ 
+ 	vector_foreach_slot(mpp->pg, pgp, i) {
+-		if (!pgp)
+-			continue;
+ 		vector_foreach_slot(pgp->paths, pp, j) {
+ 			if (strlen(pp->rev))
+ 				return snprintf(buff, len, "%s", pp->rev);
 -- 
 2.7.4
