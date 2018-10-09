@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v4 14/19] multipathd: function return value tweaks
-Date: Tue,  9 Oct 2018 18:03:11 -0500
-Message-ID: <1539126196-28926-15-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v4 15/19] multipathd: minor fixes
+Date: Tue,  9 Oct 2018 18:03:12 -0500
+Message-ID: <1539126196-28926-16-git-send-email-bmarzins@redhat.com>
 References: <1539126196-28926-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,48 +21,38 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.de>
 List-Id: dm-devel.ids
 
-In cli_add_map() the return value of get_refwwid is never used, and
-refwwid is checked to see if the function returned successfully, so the
-return value doesn't need to be saved.
-
-In resize_map, if setup_map fails, multipathd shouldn't attempt to
-create the device with resulting params string. It should just fail
-instead. Found by coverity.
+In update_multipath(), conf is set again in a couple of lines, and
+nothing uses it before then, so there's no point in setting it twice.
+Also, in ev_remove_path(), strncpy() could end up unterminated, so
+use strlcpy() instead.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/cli_handlers.c | 11 ++++++++---
- 1 file changed, 8 insertions(+), 3 deletions(-)
+ multipathd/main.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 5682b5c..bb16472 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -796,8 +796,8 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
- 		if (!alias && !count) {
- 			condlog(2, "%s: mapname not found for %d:%d",
- 				param, major, minor);
--			rc = get_refwwid(CMD_NONE, param, DEV_DEVMAP,
--					 vecs->pathvec, &refwwid);
-+			get_refwwid(CMD_NONE, param, DEV_DEVMAP,
-+				    vecs->pathvec, &refwwid);
- 			if (refwwid) {
- 				if (coalesce_paths(vecs, NULL, refwwid,
- 						   FORCE_RELOAD_NONE, CMD_NONE))
-@@ -881,7 +881,12 @@ int resize_map(struct multipath *mpp, unsigned long long size,
+diff --git a/multipathd/main.c b/multipathd/main.c
+index ba796ab..cd96304 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -429,7 +429,7 @@ int update_multipath (struct vectors *vecs, char *mapname, int reset)
+ 				continue;
  
- 	mpp->size = size;
- 	update_mpp_paths(mpp, vecs->pathvec);
--	setup_map(mpp, params, PARAMS_SIZE, vecs);
-+	if (setup_map(mpp, params, PARAMS_SIZE, vecs) != 0) {
-+		condlog(0, "%s: failed to setup map for resize : %s",
-+			mpp->alias, strerror(errno));
-+		mpp->size = orig_size;
-+		return 1;
-+	}
- 	mpp->action = ACT_RESIZE;
- 	mpp->force_udev_reload = 1;
- 	if (domap(mpp, params, 1) <= 0) {
+ 			if (pp->state != PATH_DOWN) {
+-				struct config *conf = get_multipath_config();
++				struct config *conf;
+ 				int oldstate = pp->state;
+ 				int checkint;
+ 
+@@ -1097,7 +1097,7 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
+ 			/*
+ 			 * flush_map will fail if the device is open
+ 			 */
+-			strncpy(alias, mpp->alias, WWID_SIZE);
++			strlcpy(alias, mpp->alias, WWID_SIZE);
+ 			if (mpp->flush_on_last_del == FLUSH_ENABLED) {
+ 				condlog(2, "%s Last path deleted, disabling queueing", mpp->alias);
+ 				mpp->retry_tick = 0;
 -- 
 2.7.4
