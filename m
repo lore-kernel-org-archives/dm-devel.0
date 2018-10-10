@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 6/8] libmultipath: test code for "zombie" TUR
-	threads
-Date: Wed, 10 Oct 2018 22:05:04 +0200
-Message-ID: <20181010200506.15796-7-mwilck@suse.com>
+Subject: [PATCH 4/8] multipath.rules: add comment about
+	DM_MULTIPATH_DEVICE_PATH=2
+Date: Wed, 10 Oct 2018 22:05:02 +0200
+Message-ID: <20181010200506.15796-5-mwilck@suse.com>
 References: <20181010200506.15796-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,81 +19,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>, Adam Williamson <awilliam@redhat.com>
 List-Id: dm-devel.ids
 
-This patch adds test code that simulates hanging, non-cancellable
-TUR threads, for testing multipathd's behavior in that situation.
-Compile libmultipath with CFLAGS=-DTUR_TEST_MAJOR=8 to activate
-the test code. Without that flag, the patch has no effect.
+See dm-devel discussion "Changes in DM_MULTIPATH_DEVICE_PATH in
+multipath-tools 0.7.7" (Sep. 2018) for rationale.
 
+Cc: Adam Williamson <awilliam@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/tur.c | 45 +++++++++++++++++++++++++++++++++++++
- 1 file changed, 45 insertions(+)
+ multipath/multipath.rules | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index b2a21707..a986a244 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -196,6 +196,50 @@ static void cleanup_func(void *data)
- 	rcu_unregister_thread();
- }
+diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+index d658073f..9df11a95 100644
+--- a/multipath/multipath.rules
++++ b/multipath/multipath.rules
+@@ -45,6 +45,10 @@ ENV{DM_MULTIPATH_DEVICE_PATH}!="2", \
+ # Code below here is only run in "smart" mode.
+ # multipath -u has indicated this is "maybe" multipath.
  
-+/*
-+ * Test code for "zombie tur thread" handling.
-+ * Compile e.g. with CFLAGS=-DTUR_TEST_MAJOR=8
-+ * Additional parameters can be configure with the macros below.
-+ *
-+ * Everty nth started TUR thread will hang in non-cancellable state
-+ * for given number of seconds, for device given by major/minor.
-+ */
-+#ifdef TUR_TEST_MAJOR
++# Note that DM_MULTIPATH_DEVICE_PATH has the value 2 at this point.
++# This value will never propagate to other rules files, because
++# it will be reset to 1 in the "pretend_multipath" section below.
 +
-+#ifndef TUR_TEST_MINOR
-+#define TUR_TEST_MINOR 0
-+#endif
-+#ifndef TUR_SLEEP_INTERVAL
-+#define TUR_SLEEP_INTERVAL 3
-+#endif
-+#ifndef TUR_SLEEP_SECS
-+#define TUR_SLEEP_SECS 60
-+#endif
-+
-+static void tur_deep_sleep(const struct tur_checker_context *ct)
-+{
-+	static int sleep_cnt;
-+	const struct timespec ts = { .tv_sec = TUR_SLEEP_SECS, .tv_nsec = 0 };
-+	int oldstate;
-+
-+	if (ct->devt != makedev(TUR_TEST_MAJOR, TUR_TEST_MINOR) ||
-+	    ++sleep_cnt % TUR_SLEEP_INTERVAL != 0)
-+		return;
-+
-+	condlog(1, "tur thread going to sleep for %ld seconds", ts.tv_sec);
-+	if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate) != 0)
-+		condlog(0, "pthread_setcancelstate: %m");
-+	if (nanosleep(&ts, NULL) != 0)
-+		condlog(0, "nanosleep: %m");
-+	condlog(1, "tur zombie thread woke up");
-+	if (pthread_setcancelstate(oldstate, NULL) != 0)
-+		condlog(0, "pthread_setcancelstate (2): %m");
-+	pthread_testcancel();
-+}
-+#else
-+#define tur_deep_sleep(x) do {} while (0)
-+#endif /* TUR_TEST_MAJOR */
-+
- static void *tur_thread(void *ctx)
- {
- 	struct tur_checker_context *ct = ctx;
-@@ -209,6 +253,7 @@ static void *tur_thread(void *ctx)
- 	condlog(3, "%d:%d : tur checker starting up", major(ct->devt),
- 		minor(ct->devt));
- 
-+	tur_deep_sleep(ct);
- 	state = tur_check(ct->fd, ct->timeout, msg);
- 	pthread_testcancel();
+ # This shouldn't happen, just in case.
+ ENV{FIND_MULTIPATHS_WAIT_UNTIL}!="?*", GOTO="end_mpath"
  
 -- 
 2.19.0
