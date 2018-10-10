@@ -1,13 +1,15 @@
 From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [PATCH v4 00/19] Misc Multipath patches
-Date: Wed, 10 Oct 2018 09:19:05 +0200
-Message-ID: <095f24f4a6273d5861b79d9dc1d88ed393c907d7.camel@suse.de>
+Subject: Re: [PATCH v4 02/19] libmultipath: fix tur checker
+	double locking
+Date: Wed, 10 Oct 2018 09:08:09 +0200
+Message-ID: <e00d536f4958723d40b82b8e75590115fc1606e7.camel@suse.de>
 References: <1539126196-28926-1-git-send-email-bmarzins@redhat.com>
+	<1539126196-28926-3-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1539126196-28926-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1539126196-28926-3-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,35 +23,18 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-deve
 List-Id: dm-devel.ids
 
 On Tue, 2018-10-09 at 18:02 -0500, Benjamin Marzinski wrote:
-> This batch is a resend of v4, rebased on the latest upstream code
-> with
-> changes base on Martin's review
+> tur_devt() locks ct->lock. However, it is ocassionally called while
+> ct->lock is already locked. In reality, there is no reason why we
+> need
+> to lock all the accesses to ct->devt. The tur checker only needs to
+> write to this variable one time, when it first gets the file
+> descripter
+> that it is checking. This patch sets ct->devt in libcheck_init() when
+> it
+> is first initializing the checker context. After that, ct->devt is
+> only
+> ever read.
 > 
-> Changes in v4
-> 	0001-libmultipath-fix-tur-checker-timeout.patch now fails back
-> 	to synchronous mode if the thread was cancelled but continues
-> to
-> 	run.  Since this is an unlikely event, I decided that it made
-> 	more sense to not complicate the existing thread
-> synchronization
-> 	code to allow multiple threads. However, if someone else want's
-> 	to make those changes, I'm open to the idea.
-> 
-> 	0002-libmultipath-fix-tur-checker-double-locking.patch now
-> saves
-> 	dev_t instead of a string in the checker context, as suggested
-> 	by Martin
-> 
-> 	The only differences in patches 0003-0005 are that they are
-> 	rebased on top of the new patches 0001-0002, but I took off
-> 	Martin's Reviewed-by (just it case I messed something up when
-> 	rebasing them).
-
-For the whole series except 01/19:
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
-
-(I believe minor rebasing would be necessary if my suggested change for
-01/19 is applied).
-
-Martin
