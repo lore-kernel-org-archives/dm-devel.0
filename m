@@ -1,14 +1,13 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [PATCH v4 00/19] Misc Multipath patches
-Date: Wed, 10 Oct 2018 09:25:07 +0200
-Message-ID: <23e6ed4f277880bb47528f44fe66bd5fcbcf9ad2.camel@suse.de>
-References: <1539126196-28926-1-git-send-email-bmarzins@redhat.com>
-	<095f24f4a6273d5861b79d9dc1d88ed393c907d7.camel@suse.de>
+From: John Pittman <jpittman@redhat.com>
+Subject: Re: [PATCH] dm flakey: Document "error_writes" feature
+Date: Wed, 10 Oct 2018 08:18:40 -0400
+Message-ID: <CA+RJvhz8U=SkvrDGT9GcJL9WP6kEY0-U3wU7DcrkuKnDQNYejg@mail.gmail.com>
+References: <1539073891-7701-1-git-send-email-nborisov@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <095f24f4a6273d5861b79d9dc1d88ed393c907d7.camel@suse.de>
+In-Reply-To: <1539073891-7701-1-git-send-email-nborisov@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,44 +17,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: nborisov@suse.com
+Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, Jonathan Corbet <corbet@lwn.net>
 List-Id: dm-devel.ids
 
-On Wed, 2018-10-10 at 09:19 +0200, Martin Wilck wrote:
-> On Tue, 2018-10-09 at 18:02 -0500, Benjamin Marzinski wrote:
-> > This batch is a resend of v4, rebased on the latest upstream code
-> > with
-> > changes base on Martin's review
-> > 
-> > Changes in v4
-> > 	0001-libmultipath-fix-tur-checker-timeout.patch now fails back
-> > 	to synchronous mode if the thread was cancelled but continues
-> > to
-> > 	run.  Since this is an unlikely event, I decided that it made
-> > 	more sense to not complicate the existing thread
-> > synchronization
-> > 	code to allow multiple threads. However, if someone else want's
-> > 	to make those changes, I'm open to the idea.
-> > 
-> > 	0002-libmultipath-fix-tur-checker-double-locking.patch now
-> > saves
-> > 	dev_t instead of a string in the checker context, as suggested
-> > 	by Martin
-> > 
-> > 	The only differences in patches 0003-0005 are that they are
-> > 	rebased on top of the new patches 0001-0002, but I took off
-> > 	Martin's Reviewed-by (just it case I messed something up when
-> > 	rebasing them).
-> 
-> For the whole series except 01/19:
-> 
-> Reviewed-by: Martin Wilck <mwilck@suse.com>
-> 
-> (I believe minor rebasing would be necessary if my suggested change
-> for
-> 01/19 is applied).
+Hi Nikolay, I sent this one to Mike at the end of September.("dm
+flakey: add error_writes to documentation -
+"https://www.redhat.com/archives/dm-devel/2018-September/msg00146.html).
+Unsure if he has picked it up or not.
 
-I just realized that Christophe already applied the whole series. So
-I'll send my own suggestions as patches on top of this.
+Best Regards,
 
-Martin
+John Pittman
+Customer Engagement and Experience
+Red Hat Inc.
+
+On Wed, Oct 10, 2018 at 4:20 AM Nikolay Borisov <nborisov@suse.com> wrote:
+>
+> Commit ef548c551e72 ("dm flakey: introduce "error_writes" feature")
+> added the ability to dm flakey to error out writes in contrast to
+> silently dropping it with 'drop_writes'. Unfortunately this feature
+> is not currently documented and one has to be either familiar with the
+> source code of dm flakey or check out xfstests sources to know of
+> this parameter. So document it.
+>
+> Signed-off-by: Nikolay Borisov <nborisov@suse.com>
+> ---
+>  Documentation/device-mapper/dm-flakey.txt | 4 ++++
+>  1 file changed, 4 insertions(+)
+>
+> diff --git a/Documentation/device-mapper/dm-flakey.txt b/Documentation/device-mapper/dm-flakey.txt
+> index c43030718cef..9f0e247d0877 100644
+> --- a/Documentation/device-mapper/dm-flakey.txt
+> +++ b/Documentation/device-mapper/dm-flakey.txt
+> @@ -33,6 +33,10 @@ Table parameters
+>         All write I/O is silently ignored.
+>         Read I/O is handled correctly.
+>
+> +  error_writes:
+> +       All write I/O is failed with an error signalled.
+> +       Read I/O is handled correctly.
+> +
+>    corrupt_bio_byte <Nth_byte> <direction> <value> <flags>:
+>         During <down interval>, replace <Nth_byte> of the data of
+>         each matching bio with <value>.
+> --
+> 2.7.4
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
