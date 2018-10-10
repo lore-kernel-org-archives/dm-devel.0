@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 3/8] libmultipath: cciss_ioctl_pathinfo doesn't
-	fail
-Date: Wed, 10 Oct 2018 22:05:01 +0200
-Message-ID: <20181010200506.15796-4-mwilck@suse.com>
+Subject: [PATCH 6/8] libmultipath: test code for "zombie" TUR
+	threads
+Date: Wed, 10 Oct 2018 22:05:04 +0200
+Message-ID: <20181010200506.15796-7-mwilck@suse.com>
 References: <20181010200506.15796-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,47 +22,78 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Make it a void function and move the DI_SERIAL test to pathinfo().
+This patch adds test code that simulates hanging, non-cancellable
+TUR threads, for testing multipathd's behavior in that situation.
+Compile libmultipath with CFLAGS=-DTUR_TEST_MAJOR=8 to activate
+the test code. Without that flag, the patch has no effect.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 16 ++++++----------
- 1 file changed, 6 insertions(+), 10 deletions(-)
+ libmultipath/checkers/tur.c | 45 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 45 insertions(+)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 8381d982..873035e5 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1538,14 +1538,11 @@ scsi_ioctl_pathinfo (struct path * pp, struct config *conf, int mask)
- 	return;
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index b2a21707..a986a244 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -196,6 +196,50 @@ static void cleanup_func(void *data)
+ 	rcu_unregister_thread();
  }
  
--static int
--cciss_ioctl_pathinfo (struct path * pp, int mask)
-+static void
-+cciss_ioctl_pathinfo(struct path *pp)
++/*
++ * Test code for "zombie tur thread" handling.
++ * Compile e.g. with CFLAGS=-DTUR_TEST_MAJOR=8
++ * Additional parameters can be configure with the macros below.
++ *
++ * Everty nth started TUR thread will hang in non-cancellable state
++ * for given number of seconds, for device given by major/minor.
++ */
++#ifdef TUR_TEST_MAJOR
++
++#ifndef TUR_TEST_MINOR
++#define TUR_TEST_MINOR 0
++#endif
++#ifndef TUR_SLEEP_INTERVAL
++#define TUR_SLEEP_INTERVAL 3
++#endif
++#ifndef TUR_SLEEP_SECS
++#define TUR_SLEEP_SECS 60
++#endif
++
++static void tur_deep_sleep(const struct tur_checker_context *ct)
++{
++	static int sleep_cnt;
++	const struct timespec ts = { .tv_sec = TUR_SLEEP_SECS, .tv_nsec = 0 };
++	int oldstate;
++
++	if (ct->devt != makedev(TUR_TEST_MAJOR, TUR_TEST_MINOR) ||
++	    ++sleep_cnt % TUR_SLEEP_INTERVAL != 0)
++		return;
++
++	condlog(1, "tur thread going to sleep for %ld seconds", ts.tv_sec);
++	if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate) != 0)
++		condlog(0, "pthread_setcancelstate: %m");
++	if (nanosleep(&ts, NULL) != 0)
++		condlog(0, "nanosleep: %m");
++	condlog(1, "tur zombie thread woke up");
++	if (pthread_setcancelstate(oldstate, NULL) != 0)
++		condlog(0, "pthread_setcancelstate (2): %m");
++	pthread_testcancel();
++}
++#else
++#define tur_deep_sleep(x) do {} while (0)
++#endif /* TUR_TEST_MAJOR */
++
+ static void *tur_thread(void *ctx)
  {
--	if (mask & DI_SERIAL) {
--		get_serial(pp->serial, SERIAL_SIZE, pp->fd);
--		condlog(3, "%s: serial = %s", pp->dev, pp->serial);
--	}
--	return 0;
-+	get_serial(pp->serial, SERIAL_SIZE, pp->fd);
-+	condlog(3, "%s: serial = %s", pp->dev, pp->serial);
- }
+ 	struct tur_checker_context *ct = ctx;
+@@ -209,6 +253,7 @@ static void *tur_thread(void *ctx)
+ 	condlog(3, "%d:%d : tur checker starting up", major(ct->devt),
+ 		minor(ct->devt));
  
- int
-@@ -1940,9 +1937,8 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 	if (path_state == PATH_UP && pp->bus == SYSFS_BUS_SCSI)
- 		scsi_ioctl_pathinfo(pp, conf, mask);
++	tur_deep_sleep(ct);
+ 	state = tur_check(ct->fd, ct->timeout, msg);
+ 	pthread_testcancel();
  
--	if (pp->bus == SYSFS_BUS_CCISS &&
--	    cciss_ioctl_pathinfo(pp, mask))
--		goto blank;
-+	if (pp->bus == SYSFS_BUS_CCISS && mask & DI_SERIAL)
-+		cciss_ioctl_pathinfo(pp);
- 
- 	if (mask & DI_CHECKER) {
- 		if (path_state == PATH_UP) {
 -- 
 2.19.0
