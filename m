@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 1/8] test-kpartx: add test for invocation on
-	image file
-Date: Wed, 10 Oct 2018 22:04:59 +0200
-Message-ID: <20181010200506.15796-2-mwilck@suse.com>
+Subject: [PATCH 8/8] multipathd: handle repeated udev retrigger
+	failure
+Date: Wed, 10 Oct 2018 22:05:06 +0200
+Message-ID: <20181010200506.15796-9-mwilck@suse.com>
 References: <20181010200506.15796-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,89 +19,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Stef Walter <stefw@redhat.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>, Yuval Turgeman <yturgema@redhat.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Add a test for kpartx invocation on an image file that is not
-yet part of a loop device, passing a relative path to kpartx:
+If a path was still not properly initialized after exhausting the
+retrigger tries, it used to remain in INIT_MISSING_UDEV state forever.
+get_uid() might fall back to non-udev-based methods to determine
+the WWID, but it would never be called for a path in this state any more.
 
-        # kpartx -av disk.img
-        ...
-        # kpartx -d disk.img
+This patch changes this behavior by resetting the path back to FAILED
+state if udev can't provide the WWID even after retriggering. Now, if
+the path ever happens to be in PATH_UP or PATH_GHOST state again,
+pathinfo(DI_ALL) will be called from check_path(), and there's at least
+some chance to obtain a WWID for it.
 
-The recent patches 95c4189b "kpartx: Use absolute paths to create mappings"
-and c1adcc5b "kpartx: Use absolute paths to create mappings" both
-independently fixed this behavior, which had been broken previously by
-9bdfa3eb "kpartx: use absolute path for regular files".
-
-Cc: Stef Walter <stefw@redhat.com>
-Cc: Yuval Turgeman <yturgema@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/test-kpartx | 24 +++++++++++++++++++++++-
- 1 file changed, 23 insertions(+), 1 deletion(-)
+ multipathd/main.c | 32 +++++++++++++++++++++++---------
+ 1 file changed, 23 insertions(+), 9 deletions(-)
 
-diff --git a/kpartx/test-kpartx b/kpartx/test-kpartx
-index d2001dce..d3c9aef5 100755
---- a/kpartx/test-kpartx
-+++ b/kpartx/test-kpartx
-@@ -87,6 +87,7 @@ step preparation
- FILE1=kpartx1
- FILE2=kpartx2
- FILE3=kpartx3
-+FILE4=kpartx4
- SIZE=$((1024*1024*1024))  # use bytes as units here
- SECTSIZ=512
- OFFS=32                # offset of linear mapping into dev, sectors
-@@ -108,6 +109,7 @@ step "create loop devices"
- truncate -s $SIZE $FILE1
- truncate -s $SIZE $FILE2
- truncate -s $SIZE $FILE3
-+truncate -s $SIZE $FILE4
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 2d45d989..a9e1a4bd 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1828,15 +1828,29 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	retrigger_tries = conf->retrigger_tries;
+ 	checkint = conf->checkint;
+ 	put_multipath_config(conf);
+-	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV &&
+-	    pp->retriggers < retrigger_tries) {
+-		condlog(2, "%s: triggering change event to reinitialize",
+-			pp->dev);
+-		pp->initialized = INIT_REQUESTED_UDEV;
+-		pp->retriggers++;
+-		sysfs_attr_set_value(pp->udev, "uevent", "change",
+-				     strlen("change"));
+-		return 0;
++	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV) {
++		if (pp->retriggers < retrigger_tries) {
++			condlog(2, "%s: triggering change event to reinitialize",
++				pp->dev);
++			pp->initialized = INIT_REQUESTED_UDEV;
++			pp->retriggers++;
++			sysfs_attr_set_value(pp->udev, "uevent", "change",
++					     strlen("change"));
++			return 0;
++		} else {
++			condlog(1, "%s: not initialized after %d udev retriggers",
++				pp->dev, retrigger_tries);
++			/*
++			 * Make sure that the "add missing path" code path
++			 * below may reinstate the path later, if it ever
++			 * comes up again.
++			 * The WWID needs not be cleared; if it was set, the
++			 * state hadn't been INIT_MISSING_UDEV in the first
++			 * place.
++			 */
++			pp->initialized = INIT_FAILED;
++			return 0;
++		}
+ 	}
  
- LO1=$(losetup -f $FILE1 --show)
- push_cleanup 'losetup -d $LO1'
-@@ -115,8 +117,10 @@ LO2=$(losetup -f $FILE2 --show)
- push_cleanup 'losetup -d $LO2'
- LO3=$(losetup -f $FILE3 --show)
- push_cleanup 'losetup -d $LO3'
-+LO4=$(losetup -f $FILE4 --show)
-+push_cleanup 'losetup -d $LO4'
- 
--[[ $LO1 && $LO2 && $LO3 && -b $LO1 && -b $LO2 && -b $LO3 ]]
-+[[ $LO1 && $LO2 && $LO3 && $LO4 && -b $LO1 && -b $LO2 && -b $LO3 && -b $LO4 ]]
- DEV1=$(stat -c "%t:%T" $LO1)
- DEV2=$(stat -c "%t:%T" $LO2)
- DEV3=$(stat -c "%t:%T" $LO3)
-@@ -173,6 +177,7 @@ step "create partitions on loop devices"
- 
- mk_partitions $LO1
- mk_partitions $LO2
-+mk_partitions $LO4
- 
- # Test invocation of kpartx with regular file here
- LO2P1=/dev/mapper/$(basename $LO2)-foo1
-@@ -310,4 +315,21 @@ $KPARTX $KPARTX_OPTS -f -d $LO3
- [[ -b /dev/mapper/$SPAN1 ]]
- [[ -b /dev/mapper/$SPAN2 ]]
- 
-+step "test kpartx creation/deletion on an image file with no existing loopdev"
-+losetup -d $LO4
-+
-+OUTPUT=$($KPARTX $KPARTX_OPTS -v -a $FILE4 2>&1)
-+read loop dm < \
-+     <(sed -n  's/^add map \(loop[0-9]*\)p1 ([0-9]*:\([0-9]*\)).*$/\1 dm-\2/p' \
-+	   <<<$OUTPUT)
-+[[ $dm && $loop ]]
-+push_cleanup "dmsetup remove -f /dev/$dm"
-+push_cleanup "losetup -d /dev/$loop"
-+
-+[[ -b /dev/mapper/${loop}p1 ]]
-+$KPARTX -d $KPARTX_OPTS $FILE4
-+[[ ! -b /dev/mapper/${loop}p1 ]]
-+# /dev/$loop is _not_ automatically deleted
-+[[ -b /dev/${loop} ]]
-+
- OK=yes
+ 	/*
 -- 
 2.19.0
