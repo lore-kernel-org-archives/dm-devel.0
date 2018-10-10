@@ -1,15 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 4/6] multipathd: set return code for
- multipathd commands
-Date: Wed, 10 Oct 2018 20:14:46 +0200
-Message-ID: <78ec775eeede63f3896e07585093a33b6a1b9ece.camel@suse.com>
+Subject: Re: [PATCH 6/6] libmultipath: timeout on unresponsive
+ tur thread
+Date: Wed, 10 Oct 2018 20:15:21 +0200
+Message-ID: <49fca952c7d2df224066e43c3b93ce5c8252407e.camel@suse.com>
 References: <1539194473-6243-1-git-send-email-bmarzins@redhat.com>
-	<1539194473-6243-5-git-send-email-bmarzins@redhat.com>
+	<1539194473-6243-7-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1539194473-6243-5-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1539194473-6243-7-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,11 +23,15 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-deve
 List-Id: dm-devel.ids
 
 T24gV2VkLCAyMDE4LTEwLTEwIGF0IDEzOjAxIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gRmFpbGVkIG11bHRpcGF0aGQgY29tbWFuZHMgc2hvdWxkIHNldCB0aGUgcmV0dXJuIGNv
-ZGUgdG8gMS4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBCZW5qYW1pbiBNYXJ6aW5za2kgPGJtYXJ6aW5z
-QHJlZGhhdC5jb20+Cj4gLS0tCgpSZXZpZXdlZC1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3Vz
-ZS5jb20+CgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkg
-KDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVy
-LCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoK
-Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
-LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+dGU6Cj4gSWYgdGhlIHR1ciBjaGVja2VyIHRocmVhZCBoYXMgYmVlbiBjYW5jZWxsZWQgYnV0IGlz
+bid0IHJlc3BvbmRpbmcsCj4gdGltZW91dCBpbnN0ZWFkIG9mIGRvaW5nIGEgc3luYyBjaGVjay4g
+IFRoaXMgd2lsbCBrZWVwIG9uZSBiYWQKPiBkZXZpY2UgZnJvbSBpbXBhY3RpbmcgYWxsIG9mIG11
+bHRpcGF0aGQuCj4gCj4gRml4ZXM6IDQ1NTI0MmQgKCJsaWJtdWx0aXBhdGg6IGZpeCB0dXIgY2hl
+Y2tlciB0aW1lb3V0IikKPiBDYzogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+Cj4gU2ln
+bmVkLW9mZi1ieTogQmVuamFtaW4gTWFyemluc2tpIDxibWFyemluc0ByZWRoYXQuY29tPgo+IC0t
+LQoKUmV2aWV3ZWQtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgoKLS0gCkRyLiBN
+YXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3
+ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwg
+R3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCgotLQpkbS1kZXZlbCBtYWls
+aW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxt
+YW4vbGlzdGluZm8vZG0tZGV2ZWw=
