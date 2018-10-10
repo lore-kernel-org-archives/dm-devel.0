@@ -1,16 +1,11 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 5/6] mpathpersist: fix registration rollback
-	issue
-Date: Wed, 10 Oct 2018 21:41:15 +0200
-Message-ID: <fb3717515f2d2d1840b6c9704fab5091f7bc22ba.camel@suse.com>
-References: <1539194473-6243-1-git-send-email-bmarzins@redhat.com>
-	<1539194473-6243-6-git-send-email-bmarzins@redhat.com>
-	<d9d1af1078881470ad9fe2216375a1b4cf70864a.camel@suse.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: delete trailing whitespaces
+Date: Wed, 10 Oct 2018 21:51:16 +0200
+Message-ID: <20181010195116.5588-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d9d1af1078881470ad9fe2216375a1b4cf70864a.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,30 +15,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Cc: DM-DEV ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE4LTEwLTEwIGF0IDIwOjEyICswMjAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cgo+
-ID4gZGlmZiAtLWdpdCBhL2xpYm1wYXRocGVyc2lzdC9tcGF0aF9wZXJzaXN0LmMKPiA+IGIvbGli
-bXBhdGhwZXJzaXN0L21wYXRoX3BlcnNpc3QuYwo+ID4gaW5kZXggMjllN2ZiNC4uMmZmZTU2ZSAx
-MDA2NDQKPiA+IC0tLSBhL2xpYm1wYXRocGVyc2lzdC9tcGF0aF9wZXJzaXN0LmMKPiA+ICsrKyBi
-L2xpYm1wYXRocGVyc2lzdC9tcGF0aF9wZXJzaXN0LmMKPiA+IEBAIC01NTksMTEgKzU1OSwxMCBA
-QCBpbnQgbXBhdGhfcHJvdXRfcmVnKHN0cnVjdCBtdWx0aXBhdGggKm1wcCxpbnQKPiA+IHJxX3Nl
-cnZhY3QsIGludCBycV9zY29wZSwKPiA+ICAJfQo+ID4gIAlpZiAocm9sbGJhY2sgJiYgKChycV9z
-ZXJ2YWN0ID09IE1QQVRIX1BST1VUX1JFR19TQSkgJiYgc2Ffa2V5Cj4gPiAhPSAwICkpewo+ID4g
-IAkJY29uZGxvZyAoMywgIiVzOiBFUlJPUjogaW5pdGlhdGluZyBwciBvdXQgcm9sbGJhY2siLAo+
-ID4gbXBwLT53d2lkKTsKPiA+ICsJCW1lbWNweSgmcGFyYW1wLT5rZXksICZwYXJhbXAtPnNhX2tl
-eSwgOCk7Cj4gPiArCQltZW1zZXQoJnBhcmFtcC0+c2Ffa2V5LCAwLCA4KTsKPiA+ICAJCWZvcigg
-aT0wIDsgaSA8IGNvdW50IDsgaSsrKXsKPiA+ICAJCQlpZih0aHJlYWRbaV0ucGFyYW0uc3RhdHVz
-ID09IE1QQVRIX1BSX1NVQ0NFU1MpCj4gPiB7Cj4gPiAtCQkJCW1lbWNweSgmdGhyZWFkW2ldLnBh
-cmFtLnBhcmFtcC0+a2V5LAo+ID4gJnRocmVhZFtpXS5wYXJhbS5wYXJhbXAtPnNhX2tleSwgOCk7
-Cj4gPiAtCQkJCW1lbXNldCgmdGhyZWFkW2ldLnBhcmFtLnBhcmFtcC0KPiA+ID5zYV9rZXksIAo+
-ID4gMCwgOCk7Cj4gPiAtCQkJCXRocmVhZFtpXS5wYXJhbS5zdGF0dXMgPQo+ID4gTVBBVEhfUFJf
-U1VDQ0VTUzsKPiAKPiBXaHkgZGlkIHlvdSBkZWxldGUgdGhpcyBsYXN0IHN0YXRlbWVudCwgdG9v
-PwoKRm9yIG9idmlvdXMgcmVhc29ucyAuLi4gU29ycnkgZm9yIHRoZSBub2lzZS4gCkkgYWRkZWQg
-YSBSZXZpZXdlZC1ieTogdGFnLgoKQmVzdCwKTWFydGluCgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sg
-PG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXgg
-R21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRv
-bgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
-ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8v
-ZG0tZGV2ZWw=
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEV ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/checkers/tur.c | 2 +-
+ tests/dmevents.c            | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index 86c0cdc..5aeec6f 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -334,7 +334,7 @@ int libcheck_check(struct checker * c)
+ 		tur_timeout(&tsp);
+ 		pthread_mutex_lock(&ct->lock);
+ 		if (ct->state == PATH_PENDING)
+-			r = pthread_cond_timedwait(&ct->active, &ct->lock, 
++			r = pthread_cond_timedwait(&ct->active, &ct->lock,
+ 						   &tsp);
+ 		if (!r) {
+ 			tur_status = ct->state;
+diff --git a/tests/dmevents.c b/tests/dmevents.c
+index 3399c81..bee117a 100644
+--- a/tests/dmevents.c
++++ b/tests/dmevents.c
+@@ -465,7 +465,7 @@ static void test_watch_dmevents_good1(void **state)
+ 		skip();
+ 
+ 	remove_all_dm_device_events();
+-	assert_int_equal(add_dm_device_event("foo", 1, 5), 0);	
++	assert_int_equal(add_dm_device_event("foo", 1, 5), 0);
+ 	will_return(__wrap_dm_geteventnr, 0);
+ 	assert_int_equal(watch_dmevents("foo"), 0);
+ 	dev_evt = find_dmevents("foo");
+-- 
+2.17.2
