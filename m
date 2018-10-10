@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 3/6] libmultipath: remove max_fds code duplication
-Date: Wed, 10 Oct 2018 13:01:10 -0500
-Message-ID: <1539194473-6243-4-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 2/6] multipathd: check for NULL udevice in
+	cli_add_path
+Date: Wed, 10 Oct 2018 13:01:09 -0500
+Message-ID: <1539194473-6243-3-git-send-email-bmarzins@redhat.com>
 References: <1539194473-6243-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,185 +22,29 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Instead of multipath, multipathd, and mpathpersist all having code to
-set the max number of open file descriptors, just use a util function to
-do it.
+If cli_add_path can't get a udevice for the path, it should fail
+immediately, instead of continuing with a NULL udevice, since it will
+fail in store_pathinfo() anyway.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmpathpersist/mpath_persist.c | 11 +----------
- libmultipath/util.c             | 31 +++++++++++++++++++++++++++++++
- libmultipath/util.h             |  1 +
- multipath/main.c                | 12 +-----------
- multipathd/main.c               | 31 +++----------------------------
- 5 files changed, 37 insertions(+), 49 deletions(-)
+ multipathd/cli_handlers.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 4229a94..29e7fb4 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -31,7 +31,6 @@
- #include <stdlib.h>
- #include <string.h>
- #include <errno.h>
--#include <sys/resource.h>
- 
- #define __STDC_FORMAT_MACROS 1
- 
-@@ -48,15 +47,7 @@ mpath_lib_init (void)
- 		return NULL;
- 	}
- 
--	if (conf->max_fds) {
--		struct rlimit fd_limit;
--
--		fd_limit.rlim_cur = conf->max_fds;
--		fd_limit.rlim_max = conf->max_fds;
--		if (setrlimit(RLIMIT_NOFILE, &fd_limit) < 0)
--			condlog(0, "can't set open fds limit to %d : %s",
--				   conf->max_fds, strerror(errno));
--	}
-+	set_max_fds(conf->max_fds);
- 
- 	return conf;
- }
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index 347af5b..d08112d 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -7,6 +7,8 @@
- #include <sys/sysmacros.h>
- #include <sys/types.h>
- #include <sys/utsname.h>
-+#include <sys/time.h>
-+#include <sys/resource.h>
- #include <dirent.h>
- #include <unistd.h>
- #include <errno.h>
-@@ -465,3 +467,32 @@ int safe_write(int fd, const void *buf, size_t count)
- 	}
- 	return 0;
- }
-+
-+void set_max_fds(int max_fds)
-+{
-+	struct rlimit fd_limit;
-+
-+	if (!max_fds)
-+		return;
-+
-+	if (getrlimit(RLIMIT_NOFILE, &fd_limit) < 0) {
-+		condlog(0, "can't get open fds limit: %s",
-+			strerror(errno));
-+		fd_limit.rlim_cur = 0;
-+		fd_limit.rlim_max = 0;
-+	}
-+	if (fd_limit.rlim_cur < max_fds) {
-+		fd_limit.rlim_cur = max_fds;
-+		if (fd_limit.rlim_max < max_fds)
-+			fd_limit.rlim_max = max_fds;
-+		if (setrlimit(RLIMIT_NOFILE, &fd_limit) < 0) {
-+			condlog(0, "can't set open fds limit to "
-+				"%lu/%lu : %s",
-+				fd_limit.rlim_cur, fd_limit.rlim_max,
-+				strerror(errno));
-+		} else {
-+			condlog(3, "set open fds limit to %lu/%lu",
-+				fd_limit.rlim_cur, fd_limit.rlim_max);
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index bb16472..7500080 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -720,6 +720,10 @@ cli_add_path (void * v, char ** reply, int * len, void * data)
+ 		udevice = udev_device_new_from_subsystem_sysname(udev,
+ 								 "block",
+ 								 param);
++		if (!udevice) {
++			condlog(0, "%s: can't find path", param);
++			return 1;
 +		}
-+	}
-+}
-diff --git a/libmultipath/util.h b/libmultipath/util.h
-index 56cec76..c246295 100644
---- a/libmultipath/util.h
-+++ b/libmultipath/util.h
-@@ -21,6 +21,7 @@ int get_linux_version_code(void);
- int parse_prkey(char *ptr, uint64_t *prkey);
- int parse_prkey_flags(char *ptr, uint64_t *prkey, uint8_t *flags);
- int safe_write(int fd, const void *buf, size_t count);
-+void set_max_fds(int max_fds);
- 
- #define KERNEL_VERSION(maj, min, ptc) ((((maj) * 256) + (min)) * 256 + (ptc))
- 
-diff --git a/multipath/main.c b/multipath/main.c
-index d5aad95..05b7bf0 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -56,8 +56,6 @@
- #include "pgpolicies.h"
- #include "version.h"
- #include <errno.h>
--#include <sys/time.h>
--#include <sys/resource.h>
- #include "wwids.h"
- #include "uxsock.h"
- #include "mpath_cmd.h"
-@@ -1002,15 +1000,7 @@ main (int argc, char *argv[])
- 		logsink = 1;
- 	}
- 
--	if (conf->max_fds) {
--		struct rlimit fd_limit;
--
--		fd_limit.rlim_cur = conf->max_fds;
--		fd_limit.rlim_max = conf->max_fds;
--		if (setrlimit(RLIMIT_NOFILE, &fd_limit) < 0)
--			condlog(0, "can't set open fds limit to %d : %s",
--				conf->max_fds, strerror(errno));
--	}
-+	set_max_fds(conf->max_fds);
- 
- 	libmp_udev_set_sync_support(1);
- 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 5f0193b..d3f7719 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -12,8 +12,6 @@
- #include <sys/types.h>
- #include <fcntl.h>
- #include <errno.h>
--#include <sys/time.h>
--#include <sys/resource.h>
- #include <limits.h>
- #include <linux/oom.h>
- #include <libudev.h>
-@@ -2663,33 +2661,10 @@ child (void * param)
- 
- 	envp = getenv("LimitNOFILE");
- 
--	if (envp) {
-+	if (envp)
- 		condlog(2,"Using systemd provided open fds limit of %s", envp);
--	} else if (conf->max_fds) {
--		struct rlimit fd_limit;
--
--		if (getrlimit(RLIMIT_NOFILE, &fd_limit) < 0) {
--			condlog(0, "can't get open fds limit: %s",
--				strerror(errno));
--			fd_limit.rlim_cur = 0;
--			fd_limit.rlim_max = 0;
--		}
--		if (fd_limit.rlim_cur < conf->max_fds) {
--			fd_limit.rlim_cur = conf->max_fds;
--			if (fd_limit.rlim_max < conf->max_fds)
--				fd_limit.rlim_max = conf->max_fds;
--			if (setrlimit(RLIMIT_NOFILE, &fd_limit) < 0) {
--				condlog(0, "can't set open fds limit to "
--					"%lu/%lu : %s",
--					fd_limit.rlim_cur, fd_limit.rlim_max,
--					strerror(errno));
--			} else {
--				condlog(3, "set open fds limit to %lu/%lu",
--					fd_limit.rlim_cur, fd_limit.rlim_max);
--			}
--		}
--
--	}
-+	else
-+		set_max_fds(conf->max_fds);
- 
- 	vecs = gvecs = init_vecs();
- 	if (!vecs)
+ 		conf = get_multipath_config();
+ 		pthread_cleanup_push(put_multipath_config, conf);
+ 		r = store_pathinfo(vecs->pathvec, conf,
 -- 
 2.7.4
