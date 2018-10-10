@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 5/6] mpathpersist: fix registration rollback issue
-Date: Wed, 10 Oct 2018 13:01:12 -0500
-Message-ID: <1539194473-6243-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 6/6] libmultipath: timeout on unresponsive tur
+	thread
+Date: Wed, 10 Oct 2018 13:01:13 -0500
+Message-ID: <1539194473-6243-7-git-send-email-bmarzins@redhat.com>
 References: <1539194473-6243-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,36 +22,34 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-When mpathpersist tries to rollback the registration, it copies
-the SARK to the RK, and clears the SARK. However, it repeated this step
-for each thread. This means that the first rollback thread correctly
-had the RK set to the SARK used during registration. However, if more
-than one registration needed to be rolled back, later threads would have
-both the RK and SARK cleared. This commit fixes that by only copying and
-clearing the SARK once.
+If the tur checker thread has been cancelled but isn't responding,
+timeout instead of doing a sync check.  This will keep one bad
+device from impacting all of multipathd.
 
+Fixes: 455242d ("libmultipath: fix tur checker timeout")
+Cc: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmpathpersist/mpath_persist.c | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+ libmultipath/checkers/tur.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 29e7fb4..2ffe56e 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -559,11 +559,10 @@ int mpath_prout_reg(struct multipath *mpp,int rq_servact, int rq_scope,
- 	}
- 	if (rollback && ((rq_servact == MPATH_PROUT_REG_SA) && sa_key != 0 )){
- 		condlog (3, "%s: ERROR: initiating pr out rollback", mpp->wwid);
-+		memcpy(&paramp->key, &paramp->sa_key, 8);
-+		memset(&paramp->sa_key, 0, 8);
- 		for( i=0 ; i < count ; i++){
- 			if(thread[i].param.status == MPATH_PR_SUCCESS) {
--				memcpy(&thread[i].param.paramp->key, &thread[i].param.paramp->sa_key, 8);
--				memset(&thread[i].param.paramp->sa_key, 0, 8);
--				thread[i].param.status = MPATH_PR_SUCCESS;
- 				rc = pthread_create(&thread[i].id, &attr, mpath_prout_pthread_fn,
- 						(void *)(&thread[i].param));
- 				if (rc){
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index 86c0cdc..b2a2170 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -305,10 +305,10 @@ int libcheck_check(struct checker * c)
+ 	} else {
+ 		if (uatomic_read(&ct->holders) > 1) {
+ 			/* The thread has been cancelled but hasn't
+-			 * quilt. Fail back to synchronous mode */
+-			condlog(3, "%d:%d : tur checker failing back to sync",
++			 * quit. exit with timeout. */
++			condlog(3, "%d:%d : tur thread not responding",
+ 				major(ct->devt), minor(ct->devt));
+-			return tur_check(c->fd, c->timeout, c->message);
++			return PATH_TIMEOUT;
+ 		}
+ 		/* Start new TUR checker */
+ 		pthread_mutex_lock(&ct->lock);
 -- 
 2.7.4
