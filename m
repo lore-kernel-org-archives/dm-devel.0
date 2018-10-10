@@ -1,14 +1,14 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 8/8] multipathd: handle repeated udev retrigger
-	failure
-Date: Wed, 10 Oct 2018 22:05:06 +0200
-Message-ID: <20181010200506.15796-9-mwilck@suse.com>
-References: <20181010200506.15796-1-mwilck@suse.com>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: [git pull] device mapper fixes for 4.19 final
+Date: Wed, 10 Oct 2018 22:35:02 +0200
+Message-ID: <20181010203502.GC6979@kroah.com>
+References: <20181010164643.GA10173@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181010200506.15796-1-mwilck@suse.com>
+Content-Disposition: inline
+In-Reply-To: <20181010164643.GA10173@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,68 +18,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Damien Le Moal <damien.lemoal@wdc.com>, Alasdair G Kergon <agk@redhat.com>, Shenghui Wang <shhuiw@foxmail.com>
 List-Id: dm-devel.ids
 
-If a path was still not properly initialized after exhausting the
-retrigger tries, it used to remain in INIT_MISSING_UDEV state forever.
-get_uid() might fall back to non-udev-based methods to determine
-the WWID, but it would never be called for a path in this state any more.
+On Wed, Oct 10, 2018 at 12:46:44PM -0400, Mike Snitzer wrote:
+> Hi Greg,
+> 
+> The following changes since commit 0238df646e6224016a45505d2c111a24669ebe21:
+> 
+>   Linux 4.19-rc7 (2018-10-07 17:26:02 +0200)
+> 
+> are available in the Git repository at:
+> 
+>   git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.19/dm-fixes-3
 
-This patch changes this behavior by resetting the path back to FAILED
-state if udev can't provide the WWID even after retriggering. Now, if
-the path ever happens to be in PATH_UP or PATH_GHOST state again,
-pathinfo(DI_ALL) will be called from check_path(), and there's at least
-some chance to obtain a WWID for it.
+Now merged, thanks.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipathd/main.c | 32 +++++++++++++++++++++++---------
- 1 file changed, 23 insertions(+), 9 deletions(-)
-
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 2d45d989..a9e1a4bd 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1828,15 +1828,29 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	retrigger_tries = conf->retrigger_tries;
- 	checkint = conf->checkint;
- 	put_multipath_config(conf);
--	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV &&
--	    pp->retriggers < retrigger_tries) {
--		condlog(2, "%s: triggering change event to reinitialize",
--			pp->dev);
--		pp->initialized = INIT_REQUESTED_UDEV;
--		pp->retriggers++;
--		sysfs_attr_set_value(pp->udev, "uevent", "change",
--				     strlen("change"));
--		return 0;
-+	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV) {
-+		if (pp->retriggers < retrigger_tries) {
-+			condlog(2, "%s: triggering change event to reinitialize",
-+				pp->dev);
-+			pp->initialized = INIT_REQUESTED_UDEV;
-+			pp->retriggers++;
-+			sysfs_attr_set_value(pp->udev, "uevent", "change",
-+					     strlen("change"));
-+			return 0;
-+		} else {
-+			condlog(1, "%s: not initialized after %d udev retriggers",
-+				pp->dev, retrigger_tries);
-+			/*
-+			 * Make sure that the "add missing path" code path
-+			 * below may reinstate the path later, if it ever
-+			 * comes up again.
-+			 * The WWID needs not be cleared; if it was set, the
-+			 * state hadn't been INIT_MISSING_UDEV in the first
-+			 * place.
-+			 */
-+			pp->initialized = INIT_FAILED;
-+			return 0;
-+		}
- 	}
- 
- 	/*
--- 
-2.19.0
+greg k-h
