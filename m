@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 4/8] multipath.rules: add comment about
-	DM_MULTIPATH_DEVICE_PATH=2
-Date: Wed, 10 Oct 2018 22:05:02 +0200
-Message-ID: <20181010200506.15796-5-mwilck@suse.com>
+Subject: [PATCH 7/8] libmultipath: handle TUR threads that can't
+	be cancelled
+Date: Wed, 10 Oct 2018 22:05:05 +0200
+Message-ID: <20181010200506.15796-8-mwilck@suse.com>
 References: <20181010200506.15796-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,32 +19,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>, Adam Williamson <awilliam@redhat.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-See dm-devel discussion "Changes in DM_MULTIPATH_DEVICE_PATH in
-multipath-tools 0.7.7" (Sep. 2018) for rationale.
+When the tur checker code determines that a hanging TUR thread
+couldn't be cancelled, rather than simply returning, reallocate
+the checker context and start a new thread. This will leak some
+memory if the hanging thread never wakes up again, but well, in
+that highly unlikely case we're leaking threads anyway.
 
-Cc: Adam Williamson <awilliam@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/multipath.rules | 4 ++++
- 1 file changed, 4 insertions(+)
+ libmultipath/checkers/tur.c | 24 +++++++++++++++++++++---
+ 1 file changed, 21 insertions(+), 3 deletions(-)
 
-diff --git a/multipath/multipath.rules b/multipath/multipath.rules
-index d658073f..9df11a95 100644
---- a/multipath/multipath.rules
-+++ b/multipath/multipath.rules
-@@ -45,6 +45,10 @@ ENV{DM_MULTIPATH_DEVICE_PATH}!="2", \
- # Code below here is only run in "smart" mode.
- # multipath -u has indicated this is "maybe" multipath.
- 
-+# Note that DM_MULTIPATH_DEVICE_PATH has the value 2 at this point.
-+# This value will never propagate to other rules files, because
-+# it will be reset to 1 in the "pretend_multipath" section below.
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index a986a244..9ecca5bd 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -349,11 +349,29 @@ int libcheck_check(struct checker * c)
+ 		}
+ 	} else {
+ 		if (uatomic_read(&ct->holders) > 1) {
+-			/* The thread has been cancelled but hasn't
+-			 * quit. exit with timeout. */
++			int holders;
 +
- # This shouldn't happen, just in case.
- ENV{FIND_MULTIPATHS_WAIT_UNTIL}!="?*", GOTO="end_mpath"
- 
++			/*
++			 * The thread has been cancelled but hasn't quit.
++			 * We have to prevent it from interfering with the new
++			 * thread. We create a new context and leave the old
++			 * one with the stale thread, hoping it will clean up
++			 * eventually.
++			 */
+ 			condlog(3, "%d:%d : tur thread not responding",
+ 				major(ct->devt), minor(ct->devt));
+-			return PATH_TIMEOUT;
++
++			/* libcheck_init will replace c->context */
++			libcheck_init(c);
++
++			holders = uatomic_sub_return(&ct->holders, 1);
++			if (!holders)
++				/* It did terminate, eventually */
++				cleanup_context(ct);
++
++			ct = c->context;
++			if (ct == NULL)
++				return PATH_UNCHECKED;
+ 		}
+ 		/* Start new TUR checker */
+ 		pthread_mutex_lock(&ct->lock);
 -- 
 2.19.0
