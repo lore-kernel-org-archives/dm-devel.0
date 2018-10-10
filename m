@@ -1,14 +1,15 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 6/6] libmultipath: timeout on unresponsive tur
-	thread
-Date: Wed, 10 Oct 2018 13:01:13 -0500
-Message-ID: <1539194473-6243-7-git-send-email-bmarzins@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 5/6] mpathpersist: fix registration rollback
+	issue
+Date: Wed, 10 Oct 2018 20:12:17 +0200
+Message-ID: <d9d1af1078881470ad9fe2216375a1b4cf70864a.camel@suse.com>
 References: <1539194473-6243-1-git-send-email-bmarzins@redhat.com>
+	<1539194473-6243-6-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1539194473-6243-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1539194473-6243-6-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,38 +19,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-If the tur checker thread has been cancelled but isn't responding,
-timeout instead of doing a sync check.  This will keep one bad
-device from impacting all of multipathd.
-
-Fixes: 455242d ("libmultipath: fix tur checker timeout")
-Cc: Martin Wilck <mwilck@suse.com>
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/checkers/tur.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
-
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 86c0cdc..b2a2170 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -305,10 +305,10 @@ int libcheck_check(struct checker * c)
- 	} else {
- 		if (uatomic_read(&ct->holders) > 1) {
- 			/* The thread has been cancelled but hasn't
--			 * quilt. Fail back to synchronous mode */
--			condlog(3, "%d:%d : tur checker failing back to sync",
-+			 * quit. exit with timeout. */
-+			condlog(3, "%d:%d : tur thread not responding",
- 				major(ct->devt), minor(ct->devt));
--			return tur_check(c->fd, c->timeout, c->message);
-+			return PATH_TIMEOUT;
- 		}
- 		/* Start new TUR checker */
- 		pthread_mutex_lock(&ct->lock);
--- 
-2.7.4
+T24gV2VkLCAyMDE4LTEwLTEwIGF0IDEzOjAxIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gV2hlbiBtcGF0aHBlcnNpc3QgdHJpZXMgdG8gcm9sbGJhY2sgdGhlIHJlZ2lzdHJhdGlv
+biwgaXQgY29waWVzCj4gdGhlIFNBUksgdG8gdGhlIFJLLCBhbmQgY2xlYXJzIHRoZSBTQVJLLiBI
+b3dldmVyLCBpdCByZXBlYXRlZCB0aGlzCj4gc3RlcAo+IGZvciBlYWNoIHRocmVhZC4gVGhpcyBt
+ZWFucyB0aGF0IHRoZSBmaXJzdCByb2xsYmFjayB0aHJlYWQgY29ycmVjdGx5Cj4gaGFkIHRoZSBS
+SyBzZXQgdG8gdGhlIFNBUksgdXNlZCBkdXJpbmcgcmVnaXN0cmF0aW9uLiBIb3dldmVyLCBpZiBt
+b3JlCj4gdGhhbiBvbmUgcmVnaXN0cmF0aW9uIG5lZWRlZCB0byBiZSByb2xsZWQgYmFjaywgbGF0
+ZXIgdGhyZWFkcyB3b3VsZAo+IGhhdmUKPiBib3RoIHRoZSBSSyBhbmQgU0FSSyBjbGVhcmVkLiBU
+aGlzIGNvbW1pdCBmaXhlcyB0aGF0IGJ5IG9ubHkgY29weWluZwo+IGFuZAo+IGNsZWFyaW5nIHRo
+ZSBTQVJLIG9uY2UuCj4gCj4gU2lnbmVkLW9mZi1ieTogQmVuamFtaW4gTWFyemluc2tpIDxibWFy
+emluc0ByZWRoYXQuY29tPgo+IC0tLQo+ICBsaWJtcGF0aHBlcnNpc3QvbXBhdGhfcGVyc2lzdC5j
+IHwgNSArKy0tLQo+ICAxIGZpbGUgY2hhbmdlZCwgMiBpbnNlcnRpb25zKCspLCAzIGRlbGV0aW9u
+cygtKQo+IAo+IGRpZmYgLS1naXQgYS9saWJtcGF0aHBlcnNpc3QvbXBhdGhfcGVyc2lzdC5jCj4g
+Yi9saWJtcGF0aHBlcnNpc3QvbXBhdGhfcGVyc2lzdC5jCj4gaW5kZXggMjllN2ZiNC4uMmZmZTU2
+ZSAxMDA2NDQKPiAtLS0gYS9saWJtcGF0aHBlcnNpc3QvbXBhdGhfcGVyc2lzdC5jCj4gKysrIGIv
+bGlibXBhdGhwZXJzaXN0L21wYXRoX3BlcnNpc3QuYwo+IEBAIC01NTksMTEgKzU1OSwxMCBAQCBp
+bnQgbXBhdGhfcHJvdXRfcmVnKHN0cnVjdCBtdWx0aXBhdGggKm1wcCxpbnQKPiBycV9zZXJ2YWN0
+LCBpbnQgcnFfc2NvcGUsCj4gIAl9Cj4gIAlpZiAocm9sbGJhY2sgJiYgKChycV9zZXJ2YWN0ID09
+IE1QQVRIX1BST1VUX1JFR19TQSkgJiYgc2Ffa2V5Cj4gIT0gMCApKXsKPiAgCQljb25kbG9nICgz
+LCAiJXM6IEVSUk9SOiBpbml0aWF0aW5nIHByIG91dCByb2xsYmFjayIsCj4gbXBwLT53d2lkKTsK
+PiArCQltZW1jcHkoJnBhcmFtcC0+a2V5LCAmcGFyYW1wLT5zYV9rZXksIDgpOwo+ICsJCW1lbXNl
+dCgmcGFyYW1wLT5zYV9rZXksIDAsIDgpOwo+ICAJCWZvciggaT0wIDsgaSA8IGNvdW50IDsgaSsr
+KXsKPiAgCQkJaWYodGhyZWFkW2ldLnBhcmFtLnN0YXR1cyA9PSBNUEFUSF9QUl9TVUNDRVNTKQo+
+IHsKPiAtCQkJCW1lbWNweSgmdGhyZWFkW2ldLnBhcmFtLnBhcmFtcC0+a2V5LAo+ICZ0aHJlYWRb
+aV0ucGFyYW0ucGFyYW1wLT5zYV9rZXksIDgpOwo+IC0JCQkJbWVtc2V0KCZ0aHJlYWRbaV0ucGFy
+YW0ucGFyYW1wLT5zYV9rZXksIAo+IDAsIDgpOwo+IC0JCQkJdGhyZWFkW2ldLnBhcmFtLnN0YXR1
+cyA9Cj4gTVBBVEhfUFJfU1VDQ0VTUzsKCldoeSBkaWQgeW91IGRlbGV0ZSB0aGlzIGxhc3Qgc3Rh
+dGVtZW50LCB0b28/CgpNYXJ0aW4KCj4gIAkJCQlyYyA9IHB0aHJlYWRfY3JlYXRlKCZ0aHJlYWRb
+aV0uaWQsCj4gJmF0dHIsIG1wYXRoX3Byb3V0X3B0aHJlYWRfZm4sCj4gIAkJCQkJCSh2b2lkCj4g
+KikoJnRocmVhZFtpXS5wYXJhbSkpOwo+ICAJCQkJaWYgKHJjKXsKCi0tIApEci4gTWFydGluIFdp
+bGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExp
+bnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBO
+b3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0
+CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
+bmZvL2RtLWRldmVs
