@@ -1,12 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 4.19 final
-Date: Wed, 10 Oct 2018 12:46:44 -0400
-Message-ID: <20181010164643.GA10173@redhat.com>
+From: Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [PATCH 06/11] block: Introduce BLKGETZONESZ ioctl
+Date: Wed, 10 Oct 2018 09:53:26 -0700
+Message-ID: <1539190406.195557.4.camel@acm.org>
+References: <20181010015239.24930-1-damien.lemoal@wdc.com>
+	<20181010015239.24930-7-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============5545328523444814217=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <20181010015239.24930-7-damien.lemoal@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,45 +17,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: dm-devel@redhat.com, Damien Le Moal <damien.lemoal@wdc.com>, Alasdair G Kergon <agk@redhat.com>, Shenghui Wang <shhuiw@foxmail.com>
+To: Damien Le Moal <damien.lemoal@wdc.com>, linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org, "Martin K .
+	Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, Matias Bjorling <matias.bjorling@wdc.com>
 List-Id: dm-devel.ids
 
-Hi Greg,
+--===============5545328523444814217==
+Content-Type: text/plain; charset="UTF-7"
+Content-Transfer-Encoding: 7bit
 
-The following changes since commit 0238df646e6224016a45505d2c111a24669ebe21:
+On Wed, 2018-10-10 at 10:52 +-0900, Damien Le Moal wrote:
++AD4  +ACM-define BLKREPORTZONE	+AF8-IOWR(0x12, 130, struct blk+AF8-zone+AF8-report)
++AD4  +ACM-define BLKRESETZONE	+AF8-IOW(0x12, 131, struct blk+AF8-zone+AF8-range)
++AD4 +-+ACM-define BLKGETZONESZ	+AF8-IOW(0x12, 132, unsigned int)
 
-  Linux 4.19-rc7 (2018-10-07 17:26:02 +0200)
+From Documentation/ioctl/botching-up-ioctls.txt, a collection of lessons learned
+the hard way about ioctls:
 
-are available in the Git repository at:
+ +ACo Only use fixed sized integers. To avoid conflicts with typedefs in userspace
+   the kernel has special types like +AF8AXw-u32, +AF8AXw-s64. Use them.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.19/dm-fixes-3
+Please follow that advice.
 
-for you to fetch changes up to beb9caac211c1be1bc118bb62d5cf09c4107e6a5:
+Thanks,
 
-  dm linear: eliminate linear_end_io call if CONFIG_DM_ZONED disabled (2018-10-10 12:11:09 -0400)
+Bart.
 
-Please pull, thanks.
-Mike
 
-----------------------------------------------------------------
-- Fix a DM cache module init error path bug that doesn't properly
-  cleanup a KMEM_CACHE if target registration fails.
+--===============5545328523444814217==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-- Two stable@ fixes for DM zoned target; 4.20 will have changes that
-  eliminate this code entirely but <= 4.19 needs these changes.
 
-----------------------------------------------------------------
-Damien Le Moal (1):
-      dm: fix report zone remapping to account for partition offset
-
-Mike Snitzer (1):
-      dm linear: eliminate linear_end_io call if CONFIG_DM_ZONED disabled
-
-Shenghui Wang (1):
-      dm cache: destroy migration_cache if cache target registration failed
-
- drivers/md/dm-cache-target.c |  5 ++---
- drivers/md/dm-linear.c       |  8 +++++++-
- drivers/md/dm.c              | 27 ++++++++++++++++++++-------
- 3 files changed, 29 insertions(+), 11 deletions(-)
+--===============5545328523444814217==--
