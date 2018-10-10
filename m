@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 4/6] multipathd: set return code for multipathd
-	commands
-Date: Wed, 10 Oct 2018 13:01:11 -0500
-Message-ID: <1539194473-6243-5-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 5/6] mpathpersist: fix registration rollback issue
+Date: Wed, 10 Oct 2018 13:01:12 -0500
+Message-ID: <1539194473-6243-6-git-send-email-bmarzins@redhat.com>
 References: <1539194473-6243-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,95 +21,36 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Failed multipathd commands should set the return code to 1.
+When mpathpersist tries to rollback the registration, it copies
+the SARK to the RK, and clears the SARK. However, it repeated this step
+for each thread. This means that the first rollback thread correctly
+had the RK set to the SARK used during registration. However, if more
+than one registration needed to be rolled back, later threads would have
+both the RK and SARK cleared. This commit fixes that by only copying and
+clearing the SARK once.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c   |  8 ++++----
- multipathd/uxclnt.c | 13 ++++++++-----
- 2 files changed, 12 insertions(+), 9 deletions(-)
+ libmpathpersist/mpath_persist.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index d3f7719..2d45d98 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2966,9 +2966,9 @@ main (int argc, char *argv[])
- 			if (verbosity)
- 				conf->verbosity = verbosity;
- 			uxsock_timeout = conf->uxsock_timeout;
--			uxclnt(optarg, uxsock_timeout + 100);
-+			err = uxclnt(optarg, uxsock_timeout + 100);
- 			free_config(conf);
--			exit(0);
-+			return err;
- 		case 'B':
- 			bindings_read_only = 1;
- 			break;
-@@ -3005,9 +3005,9 @@ main (int argc, char *argv[])
- 			optind++;
- 		}
- 		c += snprintf(c, s + CMDSIZE - c, "\n");
--		uxclnt(s, uxsock_timeout + 100);
-+		err = uxclnt(s, uxsock_timeout + 100);
- 		free_config(conf);
--		exit(0);
-+		return err;
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index 29e7fb4..2ffe56e 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -559,11 +559,10 @@ int mpath_prout_reg(struct multipath *mpp,int rq_servact, int rq_scope,
  	}
- 
- 	if (foreground) {
-diff --git a/multipathd/uxclnt.c b/multipathd/uxclnt.c
-index 08db0e8..a76f8e2 100644
---- a/multipathd/uxclnt.c
-+++ b/multipathd/uxclnt.c
-@@ -103,14 +103,14 @@ static void process(int fd, unsigned int timeout)
- 	}
- }
- 
--static void process_req(int fd, char * inbuf, unsigned int timeout)
-+static int process_req(int fd, char * inbuf, unsigned int timeout)
- {
- 	char *reply;
- 	int ret;
- 
- 	if (send_packet(fd, inbuf) != 0) {
- 		printf("cannot send packet\n");
--		return;
-+		return 1;
- 	}
- 	ret = recv_packet(fd, &reply, timeout);
- 	if (ret < 0) {
-@@ -118,9 +118,12 @@ static void process_req(int fd, char * inbuf, unsigned int timeout)
- 			printf("timeout receiving packet\n");
- 		else
- 			printf("error %d receiving packet\n", ret);
-+		return 1;
- 	} else {
- 		printf("%s", reply);
-+		ret = (strcmp(reply, "fail\n") == 0);
- 		FREE(reply);
-+		return ret;
- 	}
- }
- 
-@@ -129,16 +132,16 @@ static void process_req(int fd, char * inbuf, unsigned int timeout)
-  */
- int uxclnt(char * inbuf, unsigned int timeout)
- {
--	int fd;
-+	int fd, ret = 0;
- 
- 	fd = mpath_connect();
- 	if (fd == -1)
- 		exit(1);
- 
- 	if (inbuf)
--		process_req(fd, inbuf, timeout);
-+		ret = process_req(fd, inbuf, timeout);
- 	else
- 		process(fd, timeout);
- 	mpath_disconnect(fd);
--	return 0;
-+	return ret;
- }
+ 	if (rollback && ((rq_servact == MPATH_PROUT_REG_SA) && sa_key != 0 )){
+ 		condlog (3, "%s: ERROR: initiating pr out rollback", mpp->wwid);
++		memcpy(&paramp->key, &paramp->sa_key, 8);
++		memset(&paramp->sa_key, 0, 8);
+ 		for( i=0 ; i < count ; i++){
+ 			if(thread[i].param.status == MPATH_PR_SUCCESS) {
+-				memcpy(&thread[i].param.paramp->key, &thread[i].param.paramp->sa_key, 8);
+-				memset(&thread[i].param.paramp->sa_key, 0, 8);
+-				thread[i].param.status = MPATH_PR_SUCCESS;
+ 				rc = pthread_create(&thread[i].id, &attr, mpath_prout_pthread_fn,
+ 						(void *)(&thread[i].param));
+ 				if (rc){
 -- 
 2.7.4
