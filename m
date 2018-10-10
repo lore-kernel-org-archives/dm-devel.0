@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 2/8] libmultipath: scsi_ioctl_pathinfo doesn't
+Subject: [PATCH 3/8] libmultipath: cciss_ioctl_pathinfo doesn't
 	fail
-Date: Wed, 10 Oct 2018 22:05:00 +0200
-Message-ID: <20181010200506.15796-3-mwilck@suse.com>
+Date: Wed, 10 Oct 2018 22:05:01 +0200
+Message-ID: <20181010200506.15796-4-mwilck@suse.com>
 References: <20181010200506.15796-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,71 +22,47 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This function never returns error, so make a void.
-Move the mask test to pathinfo() where it belongs.
-The error message about the serial number isn't important
-any more, reduce its level to v3.
+Make it a void function and move the DI_SERIAL test to pathinfo().
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 17 ++++++++---------
- 1 file changed, 8 insertions(+), 9 deletions(-)
+ libmultipath/discovery.c | 16 ++++++----------
+ 1 file changed, 6 insertions(+), 10 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index b267f07c..8381d982 100644
+index 8381d982..873035e5 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1496,7 +1496,7 @@ sysfs_pathinfo(struct path * pp, vector hwtable)
- 	}
+@@ -1538,14 +1538,11 @@ scsi_ioctl_pathinfo (struct path * pp, struct config *conf, int mask)
+ 	return;
  }
  
 -static int
+-cciss_ioctl_pathinfo (struct path * pp, int mask)
 +static void
- scsi_ioctl_pathinfo (struct path * pp, struct config *conf, int mask)
++cciss_ioctl_pathinfo(struct path *pp)
  {
- 	struct udev_device *parent;
-@@ -1506,7 +1506,7 @@ scsi_ioctl_pathinfo (struct path * pp, struct config *conf, int mask)
- 		detect_alua(pp, conf);
- 
- 	if (!(mask & DI_SERIAL))
--		return 0;
-+		return;
- 
- 	parent = pp->udev;
- 	while (parent) {
-@@ -1525,17 +1525,17 @@ scsi_ioctl_pathinfo (struct path * pp, struct config *conf, int mask)
- 		parent = udev_device_get_parent(parent);
- 	}
- 	if (!attr_path || pp->sg_id.host_no == -1)
--		return 0;
-+		return;
- 
- 	if (get_vpd_sysfs(parent, 0x80, pp->serial, SERIAL_SIZE) <= 0) {
- 		if (get_serial(pp->serial, SERIAL_SIZE, pp->fd)) {
--			condlog(2, "%s: fail to get serial", pp->dev);
--			return 0;
-+			condlog(3, "%s: fail to get serial", pp->dev);
-+			return;
- 		}
- 	}
- 
- 	condlog(3, "%s: serial = %s", pp->dev, pp->serial);
+-	if (mask & DI_SERIAL) {
+-		get_serial(pp->serial, SERIAL_SIZE, pp->fd);
+-		condlog(3, "%s: serial = %s", pp->dev, pp->serial);
+-	}
 -	return 0;
-+	return;
++	get_serial(pp->serial, SERIAL_SIZE, pp->fd);
++	condlog(3, "%s: serial = %s", pp->dev, pp->serial);
  }
  
- static int
-@@ -1937,9 +1937,8 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 	if (mask & DI_SERIAL)
- 		get_geometry(pp);
+ int
+@@ -1940,9 +1937,8 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 	if (path_state == PATH_UP && pp->bus == SYSFS_BUS_SCSI)
+ 		scsi_ioctl_pathinfo(pp, conf, mask);
  
--	if (path_state == PATH_UP && pp->bus == SYSFS_BUS_SCSI &&
--	    scsi_ioctl_pathinfo(pp, conf, mask))
+-	if (pp->bus == SYSFS_BUS_CCISS &&
+-	    cciss_ioctl_pathinfo(pp, mask))
 -		goto blank;
-+	if (path_state == PATH_UP && pp->bus == SYSFS_BUS_SCSI)
-+		scsi_ioctl_pathinfo(pp, conf, mask);
++	if (pp->bus == SYSFS_BUS_CCISS && mask & DI_SERIAL)
++		cciss_ioctl_pathinfo(pp);
  
- 	if (pp->bus == SYSFS_BUS_CCISS &&
- 	    cciss_ioctl_pathinfo(pp, mask))
+ 	if (mask & DI_CHECKER) {
+ 		if (path_state == PATH_UP) {
 -- 
 2.19.0
