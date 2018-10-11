@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 07/21] libmultipath/checkers: hp_sw: use message
-	id
-Date: Fri, 12 Oct 2018 00:26:53 +0200
-Message-ID: <20181011222707.3631-8-mwilck@suse.com>
+Subject: [PATCH 20/21] libmultipath: sync_map_state: log failing
+	paths
+Date: Fri, 12 Oct 2018 00:27:06 +0200
+Message-ID: <20181011222707.3631-21-mwilck@suse.com>
 References: <20181011222707.3631-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,44 +22,29 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+Emit a log message when force-failing exisiting paths.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/hp_sw.c | 12 ++++--------
- 1 file changed, 4 insertions(+), 8 deletions(-)
+ libmultipath/structs_vec.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
-index 0ad34a6b..d7f1018c 100644
---- a/libmultipath/checkers/hp_sw.c
-+++ b/libmultipath/checkers/hp_sw.c
-@@ -27,10 +27,6 @@
- #define MX_ALLOC_LEN		255
- #define HEAVY_CHECK_COUNT       10
- 
--#define MSG_HP_SW_UP	"hp_sw checker reports path is up"
--#define MSG_HP_SW_DOWN	"hp_sw checker reports path is down"
--#define MSG_HP_SW_GHOST	"hp_sw checker reports path is ghost"
--
- struct sw_checker_context {
- 	void * dummy;
- };
-@@ -128,14 +124,14 @@ int libcheck_check(struct checker * c)
- 	char buff[MX_ALLOC_LEN];
- 
- 	if (0 != do_inq(c->fd, 0, 1, 0x80, buff, MX_ALLOC_LEN, 0, c->timeout)) {
--		MSG(c, MSG_HP_SW_DOWN);
-+		c->msgid = CHECKER_MSGID_DOWN;
- 		return PATH_DOWN;
--	}
-+	};
- 
- 	if (do_tur(c->fd, c->timeout)) {
--		MSG(c, MSG_HP_SW_GHOST);
-+		c->msgid = CHECKER_MSGID_GHOST;
- 		return PATH_GHOST;
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index f87d69d4..c85823a0 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -318,8 +318,11 @@ sync_map_state(struct multipath *mpp)
+ 			else if ((pp->dmstate == PSTATE_ACTIVE ||
+ 				  pp->dmstate == PSTATE_UNDEF) &&
+ 				 (pp->state == PATH_DOWN ||
+-				  pp->state == PATH_SHAKY))
++				  pp->state == PATH_SHAKY)) {
++				condlog(2, "sync_map_state: failing %s state %d dmstate %d",
++					pp->dev, pp->state, pp->dmstate);
+ 				dm_fail_path(mpp->alias, pp->dev_t);
++			}
+ 		}
  	}
--	MSG(c, MSG_HP_SW_UP);
-+	c->msgid = CHECKER_MSGID_UP;
- 	return PATH_UP;
  }
 -- 
 2.19.0
