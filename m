@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 15/21] libmultipath: rdac checker: leave
-	unsupported paths alone
-Date: Fri, 12 Oct 2018 00:27:01 +0200
-Message-ID: <20181011222707.3631-16-mwilck@suse.com>
+Subject: [PATCH 19/21] libmultipath: coalesce_paths: improve
+	logging of orphaned paths
+Date: Fri, 12 Oct 2018 00:27:05 +0200
+Message-ID: <20181011222707.3631-20-mwilck@suse.com>
 References: <20181011222707.3631-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,90 +22,36 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-A checker shouldn't set the path state to PATH_DOWN if it fails
-to obtain information about the path in the first place. Add logic
-to the checker to distinguish a failed path from an unsupported path.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/rdac.c | 28 +++++++++++++++++++---------
- 1 file changed, 19 insertions(+), 9 deletions(-)
+ libmultipath/configure.c | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c
-index 266f8e10..8a3b73ec 100644
---- a/libmultipath/checkers/rdac.c
-+++ b/libmultipath/checkers/rdac.c
-@@ -26,6 +26,7 @@
- #define SCSI_COMMAND_TERMINATED	0x22
- #define SG_ERR_DRIVER_SENSE	0x08
- #define RECOVERED_ERROR		0x01
-+#define ILLEGAL_REQUEST		0x05
- 
- 
- #define CURRENT_PAGE_CODE_VALUES	0
-@@ -162,14 +163,14 @@ retry:
- 	io_hdr.sbp = sense_b;
- 	io_hdr.timeout = timeout * 1000;
- 
--	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0)
--		return 1;
-+	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0 && errno == ENOTTY)
-+		return PATH_WILD;
- 
- 	/* treat SG_ERR here to get rid of sg_err.[ch] */
- 	io_hdr.status &= 0x7e;
- 	if ((0 == io_hdr.status) && (0 == io_hdr.host_status) &&
- 	    (0 == io_hdr.driver_status))
--		return 0;
-+		return PATH_UP;
- 
- 	/* check if we need to retry this error */
- 	if (io_hdr.info & SG_INFO_OK_MASK) {
-@@ -198,10 +199,14 @@ retry:
- 			else
- 				sense_key = sense_buffer[2] & 0xf;
- 			if (RECOVERED_ERROR == sense_key)
--				return 0;
-+				return PATH_UP;
-+			else if (ILLEGAL_REQUEST == sense_key)
-+				return PATH_WILD;
-+			condlog(1, "rdac checker: INQUIRY failed with sense key %02x",
-+				sense_key);
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 09c3dcf2..ed3e30f5 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -1020,14 +1020,18 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
  		}
  	}
--	return 1;
-+	return PATH_DOWN;
- }
+ 	vector_foreach_slot (pathvec, pp1, k) {
+-		int invalid = 0;
++		int invalid;
+ 		/* skip this path for some reason */
  
- struct volume_access_inq
-@@ -290,12 +295,14 @@ int libcheck_check(struct checker * c)
- 
- 	inqfail = 0;
- 	memset(&inq, 0, sizeof(struct volume_access_inq));
--	if (0 != do_inq(c->fd, 0xC9, &inq, sizeof(struct volume_access_inq),
--			c->timeout)) {
--		ret = PATH_DOWN;
-+	ret = do_inq(c->fd, 0xC9, &inq, sizeof(struct volume_access_inq),
-+		     c->timeout);
-+	if (ret != PATH_UP) {
- 		inqfail = 1;
- 		goto done;
--	} else if (((inq.PQ_PDT & 0xE0) == 0x20) || (inq.PQ_PDT & 0x7f)) {
-+	}
+ 		/* 1. if path has no unique id or wwid blacklisted */
++		if (strlen(pp1->wwid) == 0) {
++			orphan_path(pp1, "no WWID");
++			continue;
++		}
 +
-+	if (((inq.PQ_PDT & 0xE0) == 0x20) || (inq.PQ_PDT & 0x7f)) {
- 		/* LUN not connected*/
- 		ret = PATH_DOWN;
- 		goto done;
-@@ -332,6 +339,9 @@ int libcheck_check(struct checker * c)
- 
- done:
- 	switch (ret) {
-+	case PATH_WILD:
-+		c->msgid = CHECKER_MSGID_UNSUPPORTED;
-+		break;
- 	case PATH_DOWN:
- 		c->msgid = (inqfail ? RDAC_MSGID_INQUIRY_FAILED :
- 			    checker_msg_string(&inq));
+ 		conf = get_multipath_config();
+ 		pthread_cleanup_push(put_multipath_config, conf);
+-		if (strlen(pp1->wwid) == 0 || filter_path(conf, pp1) > 0)
+-			invalid = 1;
++		invalid = (filter_path(conf, pp1) > 0);
+ 		pthread_cleanup_pop(1);
+ 		if (invalid) {
+ 			orphan_path(pp1, "blacklisted");
 -- 
 2.19.0
