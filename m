@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 14/21] libmultipath: hp_sw checker: leave
+Subject: [PATCH 15/21] libmultipath: rdac checker: leave
 	unsupported paths alone
-Date: Fri, 12 Oct 2018 00:27:00 +0200
-Message-ID: <20181011222707.3631-15-mwilck@suse.com>
+Date: Fri, 12 Oct 2018 00:27:01 +0200
+Message-ID: <20181011222707.3631-16-mwilck@suse.com>
 References: <20181011222707.3631-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -28,33 +28,29 @@ to the checker to distinguish a failed path from an unsupported path.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/hp_sw.c | 29 +++++++++++++++++++++--------
- 1 file changed, 21 insertions(+), 8 deletions(-)
+ libmultipath/checkers/rdac.c | 28 +++++++++++++++++++---------
+ 1 file changed, 19 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
-index d7f1018c..1a820223 100644
---- a/libmultipath/checkers/hp_sw.c
-+++ b/libmultipath/checkers/hp_sw.c
-@@ -24,6 +24,7 @@
+diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c
+index 266f8e10..8a3b73ec 100644
+--- a/libmultipath/checkers/rdac.c
++++ b/libmultipath/checkers/rdac.c
+@@ -26,6 +26,7 @@
  #define SCSI_COMMAND_TERMINATED	0x22
  #define SG_ERR_DRIVER_SENSE	0x08
  #define RECOVERED_ERROR		0x01
 +#define ILLEGAL_REQUEST		0x05
- #define MX_ALLOC_LEN		255
- #define HEAVY_CHECK_COUNT       10
  
-@@ -68,14 +69,19 @@ do_inq(int sg_fd, int cmddt, int evpd, unsigned int pg_op,
+ 
+ #define CURRENT_PAGE_CODE_VALUES	0
+@@ -162,14 +163,14 @@ retry:
  	io_hdr.sbp = sense_b;
  	io_hdr.timeout = timeout * 1000;
  
 -	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0)
 -		return 1;
-+	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0) {
-+		if (errno == ENOTTY)
-+			return PATH_WILD;
-+		else
-+			return PATH_DOWN;
-+	}
++	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0 && errno == ENOTTY)
++		return PATH_WILD;
  
  	/* treat SG_ERR here to get rid of sg_err.[ch] */
  	io_hdr.status &= 0x7e;
@@ -62,44 +58,54 @@ index d7f1018c..1a820223 100644
  	    (0 == io_hdr.driver_status))
 -		return 0;
 +		return PATH_UP;
-+
- 	if ((SCSI_CHECK_CONDITION == io_hdr.status) ||
- 	    (SCSI_COMMAND_TERMINATED == io_hdr.status) ||
- 	    (SG_ERR_DRIVER_SENSE == (0xf & io_hdr.driver_status))) {
-@@ -86,11 +92,13 @@ do_inq(int sg_fd, int cmddt, int evpd, unsigned int pg_op,
- 				sense_key = sense_buffer[1] & 0xf;
+ 
+ 	/* check if we need to retry this error */
+ 	if (io_hdr.info & SG_INFO_OK_MASK) {
+@@ -198,10 +199,14 @@ retry:
  			else
  				sense_key = sense_buffer[2] & 0xf;
--			if(RECOVERED_ERROR == sense_key)
+ 			if (RECOVERED_ERROR == sense_key)
 -				return 0;
-+			if (RECOVERED_ERROR == sense_key)
 +				return PATH_UP;
 +			else if (ILLEGAL_REQUEST == sense_key)
 +				return PATH_WILD;
++			condlog(1, "rdac checker: INQUIRY failed with sense key %02x",
++				sense_key);
  		}
  	}
 -	return 1;
 +	return PATH_DOWN;
  }
  
- static int
-@@ -122,10 +130,15 @@ do_tur (int fd, unsigned int timeout)
- int libcheck_check(struct checker * c)
- {
- 	char buff[MX_ALLOC_LEN];
-+	int ret = do_inq(c->fd, 0, 1, 0x80, buff, MX_ALLOC_LEN, 0, c->timeout);
+ struct volume_access_inq
+@@ -290,12 +295,14 @@ int libcheck_check(struct checker * c)
  
--	if (0 != do_inq(c->fd, 0, 1, 0x80, buff, MX_ALLOC_LEN, 0, c->timeout)) {
-+	if (ret == PATH_WILD) {
-+		c->msgid = CHECKER_MSGID_UNSUPPORTED;
-+		return ret;
-+	}
+ 	inqfail = 0;
+ 	memset(&inq, 0, sizeof(struct volume_access_inq));
+-	if (0 != do_inq(c->fd, 0xC9, &inq, sizeof(struct volume_access_inq),
+-			c->timeout)) {
+-		ret = PATH_DOWN;
++	ret = do_inq(c->fd, 0xC9, &inq, sizeof(struct volume_access_inq),
++		     c->timeout);
 +	if (ret != PATH_UP) {
- 		c->msgid = CHECKER_MSGID_DOWN;
--		return PATH_DOWN;
-+		return ret;
- 	};
+ 		inqfail = 1;
+ 		goto done;
+-	} else if (((inq.PQ_PDT & 0xE0) == 0x20) || (inq.PQ_PDT & 0x7f)) {
++	}
++
++	if (((inq.PQ_PDT & 0xE0) == 0x20) || (inq.PQ_PDT & 0x7f)) {
+ 		/* LUN not connected*/
+ 		ret = PATH_DOWN;
+ 		goto done;
+@@ -332,6 +339,9 @@ int libcheck_check(struct checker * c)
  
- 	if (do_tur(c->fd, c->timeout)) {
+ done:
+ 	switch (ret) {
++	case PATH_WILD:
++		c->msgid = CHECKER_MSGID_UNSUPPORTED;
++		break;
+ 	case PATH_DOWN:
+ 		c->msgid = (inqfail ? RDAC_MSGID_INQUIRY_FAILED :
+ 			    checker_msg_string(&inq));
 -- 
 2.19.0
