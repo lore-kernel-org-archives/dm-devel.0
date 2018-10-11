@@ -1,14 +1,12 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: Re: [git pull] device mapper fixes for 4.19 final
-Date: Wed, 10 Oct 2018 22:35:02 +0200
-Message-ID: <20181010203502.GC6979@kroah.com>
-References: <20181010164643.GA10173@redhat.com>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: [PATCH] dm linear: Fix linear_end_io conditional
+	definition
+Date: Thu, 11 Oct 2018 11:45:30 +0900
+Message-ID: <20181011024530.25106-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20181010164643.GA10173@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,21 +16,60 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Damien Le Moal <damien.lemoal@wdc.com>, Alasdair G Kergon <agk@redhat.com>, Shenghui Wang <shhuiw@foxmail.com>
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Oct 10, 2018 at 12:46:44PM -0400, Mike Snitzer wrote:
-> Hi Greg,
-> 
-> The following changes since commit 0238df646e6224016a45505d2c111a24669ebe21:
-> 
->   Linux 4.19-rc7 (2018-10-07 17:26:02 +0200)
-> 
-> are available in the Git repository at:
-> 
->   git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.19/dm-fixes-3
+The dm-linear target is independent of the dm-zoned target. For code
+requiring support for zoned block devices, use CONFIG_BLK_DEV_ZONED
+instead of CONFIG_DM_ZONED.
 
-Now merged, thanks.
+While at it, similarly to dm linear, also enable the DM_TARGET_ZONED_HM
+feature in dm-flakey only if CONFIG_BLK_DEV_ZONED is defined.
 
-greg k-h
+Fixes: beb9caac211c1 ("dm linear: eliminate linear_end_io call if CONFIG_DM_ZONED disabled")
+Fixes: 0be12c1c7fce7 ("dm linear: add support for zoned block devices")
+Cc: stable@vger.kernel.org
+Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+---
+ drivers/md/dm-flakey.c | 2 ++
+ drivers/md/dm-linear.c | 4 ++--
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index 21d126a5078c..32aabe27b37c 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -467,7 +467,9 @@ static int flakey_iterate_devices(struct dm_target *ti, iterate_devices_callout_
+ static struct target_type flakey_target = {
+ 	.name   = "flakey",
+ 	.version = {1, 5, 0},
++#ifdef CONFIG_BLK_DEV_ZONED
+ 	.features = DM_TARGET_ZONED_HM,
++#endif
+ 	.module = THIS_MODULE,
+ 	.ctr    = flakey_ctr,
+ 	.dtr    = flakey_dtr,
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 172f6fa83c0d..2f7c44a006c4 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -102,7 +102,7 @@ static int linear_map(struct dm_target *ti, struct bio *bio)
+ 	return DM_MAPIO_REMAPPED;
+ }
+ 
+-#ifdef CONFIG_DM_ZONED
++#ifdef CONFIG_BLK_DEV_ZONED
+ static int linear_end_io(struct dm_target *ti, struct bio *bio,
+ 			 blk_status_t *error)
+ {
+@@ -210,7 +210,7 @@ static size_t linear_dax_copy_to_iter(struct dm_target *ti, pgoff_t pgoff,
+ static struct target_type linear_target = {
+ 	.name   = "linear",
+ 	.version = {1, 4, 0},
+-#ifdef CONFIG_DM_ZONED
++#ifdef CONFIG_BLK_DEV_ZONED
+ 	.end_io = linear_end_io,
+ 	.features = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_ZONED_HM,
+ #else
+-- 
+2.17.1
