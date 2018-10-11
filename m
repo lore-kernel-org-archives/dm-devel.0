@@ -1,16 +1,11 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: Re: [git pull] device mapper fix for 4.19 final
-Date: Thu, 11 Oct 2018 07:40:38 +0200
-Message-ID: <20181011054038.GA18271@kroah.com>
-References: <20181010164643.GA10173@redhat.com>
-	<20181010203502.GC6979@kroah.com>
-	<20181011033711.GA12723@redhat.com>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: [PATCH v2 00/11] Zoned block device support improvements
+Date: Thu, 11 Oct 2018 16:09:41 +0900
+Message-ID: <20181011070952.13248-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20181011033711.GA12723@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,42 +15,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Damien Le Moal <damien.lemoal@wdc.com>, Alasdair G Kergon <agk@redhat.com>
+To: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, Matias Bjorling <matias.bjorling@wdc.com>
 List-Id: dm-devel.ids
 
-On Wed, Oct 10, 2018 at 11:37:11PM -0400, Mike Snitzer wrote:
-> On Wed, Oct 10 2018 at  4:35P -0400,
-> Greg Kroah-Hartman <gregkh@linuxfoundation.org> wrote:
-> 
-> > On Wed, Oct 10, 2018 at 12:46:44PM -0400, Mike Snitzer wrote:
-> > > Hi Greg,
-> > > 
-> > > The following changes since commit 0238df646e6224016a45505d2c111a24669ebe21:
-> > > 
-> > >   Linux 4.19-rc7 (2018-10-07 17:26:02 +0200)
-> > > 
-> > > are available in the Git repository at:
-> > > 
-> > >   git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.19/dm-fixes-3
-> > 
-> > Now merged, thanks.
-> 
-> Hey Greg,
-> 
-> Sadly the previous DM pull request had a stupid oversight on my part.
-> Damien was quick to correct it and I've now made it available.  Sorry
-> for the noise, that's what I get for requesting you pull the same day I
-> stage a commit, I'll be more careful!
-> 
-> The following changes since commit beb9caac211c1be1bc118bb62d5cf09c4107e6a5:
-> 
->   dm linear: eliminate linear_end_io call if CONFIG_DM_ZONED disabled (2018-10-10 12:11:09 -0400)
-> 
-> are available in the Git repository at:
-> 
->   git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.19/dm-fixes-4
+This series improves zoned block device support (reduce overhead) and
+introduces many simplifications to the code (overall, there are more deletions
+than insertions).
 
-Now merged, thanks.
+In more details:
+* Patches 1 to 3 are SCSI side (sd driver) cleanups and improvements reducing
+  the overhead of report zones command execution during disk scan and
+  revalidation.
+* Patches 4 to 9 improve the useability and user API of zoned block devices.
+* Patch 10 is the main part of this series. This patch replaces the
+  REQ_OP_ZONE_REPORT BIO/request operation for executing report zones commands
+  with a block device file operation, removing the need for the command reply
+  payload in-place rewriting in the BIO buffer. This leads to major
+  simplification of the code in many places.
+* Patch 11 further simplifies the code of low level drivers by providing a
+  generic implementation of zoned block device request queue zone bitmaps
+  initialization and revalidation.
 
-greg k-h
+Please consider the addition of these patches in 4.20.
+Comments are as always welcome.
+
+Changes from v1:
+* Addressed Christoph's and Bart's comments
+* Fixed several compilation errors with zoned block device support disabled
+* Rebased on latest rc including the most recent dm patches
+
+Christoph Hellwig (1):
+  block: add a report_zones method
+
+Damien Le Moal (10):
+  scsi: sd_zbc: Rearrange code
+  scsi: sd_zbc: Reduce boot device scan and revalidate time
+  scsi: sd_zbc: Fix sd_zbc_check_zones() error checks
+  block: Introduce blkdev_nr_zones() helper
+  block: Limit allocation of zone descriptors for report zones
+  block: Introduce BLKGETZONESZ ioctl
+  block: Introduce BLKGETNRZONES ioctl
+  block: Improve zone reset execution
+  block: Expose queue nr_zones in sysfs
+  block: Introduce blk_revalidate_disk_zones()
+
+ block/blk-core.c               |   1 -
+ block/blk-lib.c                |  13 +-
+ block/blk-mq-debugfs.c         |   1 -
+ block/blk-sysfs.c              |  13 +
+ block/blk-zoned.c              | 359 +++++++++++++++---------
+ block/blk.h                    |   8 +
+ block/ioctl.c                  |   4 +
+ drivers/block/null_blk.h       |  11 +-
+ drivers/block/null_blk_main.c  |  30 +-
+ drivers/block/null_blk_zoned.c |  57 +---
+ drivers/md/dm-flakey.c         |  30 +-
+ drivers/md/dm-linear.c         |  35 ++-
+ drivers/md/dm-table.c          |  10 +
+ drivers/md/dm-zoned-target.c   |   3 +-
+ drivers/md/dm.c                | 169 ++++++-----
+ drivers/scsi/sd.c              |  15 +-
+ drivers/scsi/sd.h              |  15 +-
+ drivers/scsi/sd_zbc.c          | 497 +++++++++------------------------
+ include/linux/blk_types.h      |   2 -
+ include/linux/blkdev.h         |  22 +-
+ include/linux/device-mapper.h  |  12 +-
+ include/trace/events/f2fs.h    |   1 -
+ include/uapi/linux/blkzoned.h  |   3 +
+ 23 files changed, 591 insertions(+), 720 deletions(-)
+
+-- 
+2.17.1
