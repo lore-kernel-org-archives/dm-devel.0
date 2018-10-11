@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 11/21] multipathd: improve checker message logging
-Date: Fri, 12 Oct 2018 00:26:57 +0200
-Message-ID: <20181011222707.3631-12-mwilck@suse.com>
+Subject: [PATCH 14/21] libmultipath: hp_sw checker: leave
+	unsupported paths alone
+Date: Fri, 12 Oct 2018 00:27:00 +0200
+Message-ID: <20181011222707.3631-15-mwilck@suse.com>
 References: <20181011222707.3631-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,94 +22,84 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Don't rely on any variables being defined in LOG_MSG.
-If message log level is low, don't bother to fetch the message.
+A checker shouldn't set the path state to PATH_DOWN if it fails
+to obtain information about the path in the first place. Add logic
+to the checker to distinguish a failed path from an unsupported path.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 34 +++++++++++++++++++++++-----------
- 1 file changed, 23 insertions(+), 11 deletions(-)
+ libmultipath/checkers/hp_sw.c | 29 +++++++++++++++++++++--------
+ 1 file changed, 21 insertions(+), 8 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index a9e1a4bd..1bd1518a 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -89,12 +89,22 @@ static int use_watchdog;
- #define FILE_NAME_SIZE 256
- #define CMDSIZE 160
+diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
+index d7f1018c..1a820223 100644
+--- a/libmultipath/checkers/hp_sw.c
++++ b/libmultipath/checkers/hp_sw.c
+@@ -24,6 +24,7 @@
+ #define SCSI_COMMAND_TERMINATED	0x22
+ #define SG_ERR_DRIVER_SENSE	0x08
+ #define RECOVERED_ERROR		0x01
++#define ILLEGAL_REQUEST		0x05
+ #define MX_ALLOC_LEN		255
+ #define HEAVY_CHECK_COUNT       10
  
--#define LOG_MSG(a, b) \
--do { \
--	if (pp->offline) \
--		condlog(a, "%s: %s - path offline", pp->mpp->alias, pp->dev); \
--	else if (strlen(b)) \
--		condlog(a, "%s: %s - %s", pp->mpp->alias, pp->dev, b); \
-+#define LOG_MSG(lvl, verb, pp)					\
-+do {								\
-+	if (lvl <= verb) {					\
-+		if (pp->offline)				\
-+			condlog(lvl, "%s: %s - path offline",	\
-+				pp->mpp->alias, pp->dev);	\
-+		else {						\
-+			const char *__m =			\
-+				checker_message(&pp->checker);	\
-+								\
-+			if (strlen(__m))			\
-+				condlog(lvl, "%s: %s - %s",	\
-+					pp->mpp->alias,		\
-+					pp->dev, __m);		\
-+		}						\
-+	}							\
- } while(0)
+@@ -68,14 +69,19 @@ do_inq(int sg_fd, int cmddt, int evpd, unsigned int pg_op,
+ 	io_hdr.sbp = sense_b;
+ 	io_hdr.timeout = timeout * 1000;
  
- struct mpath_event_param
-@@ -1811,7 +1821,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	int add_active;
- 	int disable_reinstate = 0;
- 	int oldchkrstate = pp->chkrstate;
--	int retrigger_tries, checkint;
-+	int retrigger_tries, checkint, verbosity;
- 	struct config *conf;
- 	int ret;
+-	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0)
+-		return 1;
++	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0) {
++		if (errno == ENOTTY)
++			return PATH_WILD;
++		else
++			return PATH_DOWN;
++	}
  
-@@ -1827,6 +1837,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	conf = get_multipath_config();
- 	retrigger_tries = conf->retrigger_tries;
- 	checkint = conf->checkint;
-+	verbosity = conf->verbosity;
- 	put_multipath_config(conf);
- 	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV) {
- 		if (pp->retriggers < retrigger_tries) {
-@@ -1961,7 +1972,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 		int oldstate = pp->state;
- 		pp->state = newstate;
- 
--		LOG_MSG(1, checker_message(&pp->checker));
-+		LOG_MSG(1, verbosity, pp);
- 
- 		/*
- 		 * upon state change, reset the checkint
-@@ -2050,7 +2061,8 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 			}
- 		} else {
- 			unsigned int max_checkint;
--			LOG_MSG(4, checker_message(&pp->checker));
+ 	/* treat SG_ERR here to get rid of sg_err.[ch] */
+ 	io_hdr.status &= 0x7e;
+ 	if ((0 == io_hdr.status) && (0 == io_hdr.host_status) &&
+ 	    (0 == io_hdr.driver_status))
+-		return 0;
++		return PATH_UP;
 +
-+			LOG_MSG(4, verbosity, pp);
- 			conf = get_multipath_config();
- 			max_checkint = conf->max_checkint;
- 			put_multipath_config(conf);
-@@ -2083,9 +2095,9 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 			log_checker_err = conf->log_checker_err;
- 			put_multipath_config(conf);
- 			if (log_checker_err == LOG_CHKR_ERR_ONCE)
--				LOG_MSG(3, checker_message(&pp->checker));
-+				LOG_MSG(3, verbosity, pp);
+ 	if ((SCSI_CHECK_CONDITION == io_hdr.status) ||
+ 	    (SCSI_COMMAND_TERMINATED == io_hdr.status) ||
+ 	    (SG_ERR_DRIVER_SENSE == (0xf & io_hdr.driver_status))) {
+@@ -86,11 +92,13 @@ do_inq(int sg_fd, int cmddt, int evpd, unsigned int pg_op,
+ 				sense_key = sense_buffer[1] & 0xf;
  			else
--				LOG_MSG(2, checker_message(&pp->checker));
-+				LOG_MSG(2, verbosity, pp);
+ 				sense_key = sense_buffer[2] & 0xf;
+-			if(RECOVERED_ERROR == sense_key)
+-				return 0;
++			if (RECOVERED_ERROR == sense_key)
++				return PATH_UP;
++			else if (ILLEGAL_REQUEST == sense_key)
++				return PATH_WILD;
  		}
  	}
+-	return 1;
++	return PATH_DOWN;
+ }
  
+ static int
+@@ -122,10 +130,15 @@ do_tur (int fd, unsigned int timeout)
+ int libcheck_check(struct checker * c)
+ {
+ 	char buff[MX_ALLOC_LEN];
++	int ret = do_inq(c->fd, 0, 1, 0x80, buff, MX_ALLOC_LEN, 0, c->timeout);
+ 
+-	if (0 != do_inq(c->fd, 0, 1, 0x80, buff, MX_ALLOC_LEN, 0, c->timeout)) {
++	if (ret == PATH_WILD) {
++		c->msgid = CHECKER_MSGID_UNSUPPORTED;
++		return ret;
++	}
++	if (ret != PATH_UP) {
+ 		c->msgid = CHECKER_MSGID_DOWN;
+-		return PATH_DOWN;
++		return ret;
+ 	};
+ 
+ 	if (do_tur(c->fd, c->timeout)) {
 -- 
 2.19.0
