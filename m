@@ -1,18 +1,14 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH v3 09/11] block: Expose queue nr_zones in
-	sysfs
-Date: Fri, 12 Oct 2018 10:41:32 +0200
-Message-ID: <18c7fb0a-9557-56c4-fc95-3fd0acd285b0@suse.de>
-References: <20181012023012.29923-1-damien.lemoal@wdc.com>
-	<20181012023012.29923-10-damien.lemoal@wdc.com>
-	<c13f3820-9a69-6a74-e967-b561d7778bcf@suse.de>
-	<BLUPR0401MB1636E66F2F7AA1F7D2529794E7E20@BLUPR0401MB1636.namprd04.prod.outlook.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH 13/21] libmultipath: clariion checker: leave
+	unsupported paths alone
+Date: Fri, 12 Oct 2018 00:26:59 +0200
+Message-ID: <20181011222707.3631-14-mwilck@suse.com>
+References: <20181011222707.3631-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <BLUPR0401MB1636E66F2F7AA1F7D2529794E7E20@BLUPR0401MB1636.namprd04.prod.outlook.com>
-Content-Language: en-US
+In-Reply-To: <20181011222707.3631-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,88 +18,98 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <Damien.LeMoal@wdc.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Martin K . Petersen" <martin.petersen@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>, Matias Bjorling <Matias.Bjorling@wdc.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-T24gMTAvMTIvMTggOTo1NSBBTSwgRGFtaWVuIExlIE1vYWwgd3JvdGU6Cj4gT24gMjAxOC8xMC8x
-MiAxNjo0MSwgSGFubmVzIFJlaW5lY2tlIHdyb3RlOgo+PiBPbiAxMC8xMi8xOCA0OjMwIEFNLCBE
-YW1pZW4gTGUgTW9hbCB3cm90ZToKPj4+IEV4cG9zZSB0aHJvdWdoIHN5c2ZzIHRoZSBucl96b25l
-cyBmaWVsZCBvZiBzdHJ1Y3QgcmVxdWVzdF9xdWV1ZS4KPj4+IEV4cG9zaW5nIHRoaXMgdmFsdWUg
-aGVscHMgaW4gZGVidWdnaW5nIGRpc2sgaXNzdWVzIGFzIHdlbGwgYXMKPj4+IGZhY2lsaXRhdGlu
-ZyBzY3JpcHRzIGJhc2VkIHVzZSBvZiB0aGUgZGlzayAoZS5nLiBibGt0ZXN0cykuCj4+Pgo+Pj4g
-Rm9yIHpvbmVkIGJsb2NrIGRldmljZXMsIHRoZSBucl96b25lcyBmaWVsZCBpbmRpY2F0ZXMgdGhl
-IHRvdGFsIG51bWJlcgo+Pj4gb2Ygem9uZXMgb2YgdGhlIGRldmljZSBjYWxjdWxhdGVkIHVzaW5n
-IHRoZSBrbm93biBkaXNrIGNhcGFjaXR5IGFuZAo+Pj4gem9uZSBzaXplLiBUaGlzIG51bWJlciBv
-ZiB6b25lcyBpcyBhbHdheXMgMCBmb3IgcmVndWxhciBibG9jayBkZXZpY2VzLgo+Pj4KPj4+IFNp
-bmNlIG5yX3pvbmVzIGlzIGRlZmluZWQgY29uZGl0aW9uYWxseSB3aXRoIENPTkZJR19CTEtfREVW
-X1pPTkVELAo+Pj4gaW50cm9kdWNlIHRoZSBibGtfcXVldWVfbnJfem9uZXMoKSBmdW5jdGlvbiB0
-byByZXR1cm4gdGhlIGNvcnJlY3QgdmFsdWUKPj4+IGZvciBhbnkgZGV2aWNlLCByZWdhcmRsZXNz
-IGlmIENPTkZJR19CTEtfREVWX1pPTkVEIGlzIHNldC4KPj4+Cj4+PiBTaWduZWQtb2ZmLWJ5OiBE
-YW1pZW4gTGUgTW9hbCA8ZGFtaWVuLmxlbW9hbEB3ZGMuY29tPgo+Pj4gLS0tCj4+PiAgICBibG9j
-ay9ibGstc3lzZnMuYyAgICAgIHwgMTEgKysrKysrKysrKysKPj4+ICAgIGluY2x1ZGUvbGludXgv
-YmxrZGV2LmggfCAxMCArKysrKysrKysrCj4+PiAgICAyIGZpbGVzIGNoYW5nZWQsIDIxIGluc2Vy
-dGlvbnMoKykKPj4+Cj4+PiBkaWZmIC0tZ2l0IGEvYmxvY2svYmxrLXN5c2ZzLmMgYi9ibG9jay9i
-bGstc3lzZnMuYwo+Pj4gaW5kZXggMzc3MjY3MWNmMmJjLi45MmJlODA5MmNhNGYgMTAwNjQ0Cj4+
-PiAtLS0gYS9ibG9jay9ibGstc3lzZnMuYwo+Pj4gKysrIGIvYmxvY2svYmxrLXN5c2ZzLmMKPj4+
-IEBAIC0zMDAsNiArMzAwLDExIEBAIHN0YXRpYyBzc2l6ZV90IHF1ZXVlX3pvbmVkX3Nob3coc3Ry
-dWN0IHJlcXVlc3RfcXVldWUgKnEsIGNoYXIgKnBhZ2UpCj4+PiAgICAJfQo+Pj4gICAgfQo+Pj4g
-ICAgCj4+PiArc3RhdGljIHNzaXplX3QgcXVldWVfbnJfem9uZXNfc2hvdyhzdHJ1Y3QgcmVxdWVz
-dF9xdWV1ZSAqcSwgY2hhciAqcGFnZSkKPj4+ICt7Cj4+PiArCXJldHVybiBxdWV1ZV92YXJfc2hv
-dyhibGtfcXVldWVfbnJfem9uZXMocSksIHBhZ2UpOwo+Pj4gK30KPj4+ICsKPj4+ICAgIHN0YXRp
-YyBzc2l6ZV90IHF1ZXVlX25vbWVyZ2VzX3Nob3coc3RydWN0IHJlcXVlc3RfcXVldWUgKnEsIGNo
-YXIgKnBhZ2UpCj4+PiAgICB7Cj4+PiAgICAJcmV0dXJuIHF1ZXVlX3Zhcl9zaG93KChibGtfcXVl
-dWVfbm9tZXJnZXMocSkgPDwgMSkgfAo+Pj4gQEAgLTYzNyw2ICs2NDIsMTEgQEAgc3RhdGljIHN0
-cnVjdCBxdWV1ZV9zeXNmc19lbnRyeSBxdWV1ZV96b25lZF9lbnRyeSA9IHsKPj4+ICAgIAkuc2hv
-dyA9IHF1ZXVlX3pvbmVkX3Nob3csCj4+PiAgICB9Owo+Pj4gICAgCj4+PiArc3RhdGljIHN0cnVj
-dCBxdWV1ZV9zeXNmc19lbnRyeSBxdWV1ZV9ucl96b25lc19lbnRyeSA9IHsKPj4+ICsJLmF0dHIg
-PSB7Lm5hbWUgPSAibnJfem9uZXMiLCAubW9kZSA9IDA0NDQgfSwKPj4+ICsJLnNob3cgPSBxdWV1
-ZV9ucl96b25lc19zaG93LAo+Pj4gK307Cj4+PiArCj4+PiAgICBzdGF0aWMgc3RydWN0IHF1ZXVl
-X3N5c2ZzX2VudHJ5IHF1ZXVlX25vbWVyZ2VzX2VudHJ5ID0gewo+Pj4gICAgCS5hdHRyID0gey5u
-YW1lID0gIm5vbWVyZ2VzIiwgLm1vZGUgPSAwNjQ0IH0sCj4+PiAgICAJLnNob3cgPSBxdWV1ZV9u
-b21lcmdlc19zaG93LAo+Pj4gQEAgLTcyNyw2ICs3MzcsNyBAQCBzdGF0aWMgc3RydWN0IGF0dHJp
-YnV0ZSAqZGVmYXVsdF9hdHRyc1tdID0gewo+Pj4gICAgCSZxdWV1ZV93cml0ZV96ZXJvZXNfbWF4
-X2VudHJ5LmF0dHIsCj4+PiAgICAJJnF1ZXVlX25vbnJvdF9lbnRyeS5hdHRyLAo+Pj4gICAgCSZx
-dWV1ZV96b25lZF9lbnRyeS5hdHRyLAo+Pj4gKwkmcXVldWVfbnJfem9uZXNfZW50cnkuYXR0ciwK
-Pj4+ICAgIAkmcXVldWVfbm9tZXJnZXNfZW50cnkuYXR0ciwKPj4+ICAgIAkmcXVldWVfcnFfYWZm
-aW5pdHlfZW50cnkuYXR0ciwKPj4+ICAgIAkmcXVldWVfaW9zdGF0c19lbnRyeS5hdHRyLAo+Pj4g
-ZGlmZiAtLWdpdCBhL2luY2x1ZGUvbGludXgvYmxrZGV2LmggYi9pbmNsdWRlL2xpbnV4L2Jsa2Rl
-di5oCj4+PiBpbmRleCBjMjQ5NjliMTc0MWIuLjg3OTc1M2IxMDI2MyAxMDA2NDQKPj4+IC0tLSBh
-L2luY2x1ZGUvbGludXgvYmxrZGV2LmgKPj4+ICsrKyBiL2luY2x1ZGUvbGludXgvYmxrZGV2LmgK
-Pj4+IEBAIC04MDQsNiArODA0LDExIEBAIHN0YXRpYyBpbmxpbmUgdW5zaWduZWQgaW50IGJsa19x
-dWV1ZV96b25lX3NlY3RvcnMoc3RydWN0IHJlcXVlc3RfcXVldWUgKnEpCj4+PiAgICB9Cj4+PiAg
-ICAKPj4+ICAgICNpZmRlZiBDT05GSUdfQkxLX0RFVl9aT05FRAo+Pj4gK3N0YXRpYyBpbmxpbmUg
-dW5zaWduZWQgaW50IGJsa19xdWV1ZV9ucl96b25lcyhzdHJ1Y3QgcmVxdWVzdF9xdWV1ZSAqcSkK
-Pj4+ICt7Cj4+PiArCXJldHVybiBibGtfcXVldWVfaXNfem9uZWQocSkgPyBxLT5ucl96b25lcyA6
-IDA7Cj4+PiArfQo+Pj4gKwo+Pj4gICAgc3RhdGljIGlubGluZSB1bnNpZ25lZCBpbnQgYmxrX3F1
-ZXVlX3pvbmVfbm8oc3RydWN0IHJlcXVlc3RfcXVldWUgKnEsCj4+PiAgICAJCQkJCSAgICAgc2Vj
-dG9yX3Qgc2VjdG9yKQo+Pj4gICAgewo+Pj4gQEAgLTgxOSw2ICs4MjQsMTEgQEAgc3RhdGljIGlu
-bGluZSBib29sIGJsa19xdWV1ZV96b25lX2lzX3NlcShzdHJ1Y3QgcmVxdWVzdF9xdWV1ZSAqcSwK
-Pj4+ICAgIAkJcmV0dXJuIGZhbHNlOwo+Pj4gICAgCXJldHVybiB0ZXN0X2JpdChibGtfcXVldWVf
-em9uZV9ubyhxLCBzZWN0b3IpLCBxLT5zZXFfem9uZXNfYml0bWFwKTsKPj4+ICAgIH0KPj4+ICsj
-ZWxzZSAvKiBDT05GSUdfQkxLX0RFVl9aT05FRCAqLwo+Pj4gK3N0YXRpYyBpbmxpbmUgdW5zaWdu
-ZWQgaW50IGJsa19xdWV1ZV9ucl96b25lcyhzdHJ1Y3QgcmVxdWVzdF9xdWV1ZSAqcSkKPj4+ICt7
-Cj4+PiArCXJldHVybiAwOwo+Pj4gK30KPj4+ICAgICNlbmRpZiAvKiBDT05GSUdfQkxLX0RFVl9a
-T05FRCAqLwo+Pj4gICAgCj4+PiAgICBzdGF0aWMgaW5saW5lIGJvb2wgcnFfaXNfc3luYyhzdHJ1
-Y3QgcmVxdWVzdCAqcnEpCj4+Pgo+PiBBY3R1YWxseSwgd2Ugc2hvdWxkIGJlIGNoZWNraW5nIHdo
-ZXRoZXIgd2UgY2FuJ3QgYmxhbmsgb3V0IHRoaXMKPj4gYXR0cmlidXRlIHZpYSB0aGUgaXNfdmlz
-aWJsZSBtZWNoYW5pc207IGFmdGVyIGFsbCwgbm90IGV2ZXJ5IGJsb2NrCj4+IGRldmljZSBpcyB6
-b25lZCwgYW5kIHRob3NlIHdoaWNoIGFyZSBub3QgaGF2ZSBubyBuZWVkIG9mIHRoZSBhdHRyaWJ1
-dGUuLi4KPiAKPiBZZXMgd2UgY291bGQuIEJ1dCBpdCBpcyBzb21ld2hhdCB0aGUgc2FtZSBhcyBk
-cml2ZXMgdGhhdCBkbyBub3Qgc3VwcG9ydCB0cmltOgo+IHRoZXkgZ2V0IG1heF9kaXNjYXJkX3Nl
-Y3RvcnMgdG8gMC4gVGhlIGF0dHJpYnV0ZSBzYXlzICJub3Qgc3VwcG9ydGVkIGJlY2F1c2UgdGhl
-Cj4gdmFsdWUgaXMgMCIuIEkgZm9sbG93ZWQgdGhlIHNhbWUgcHJpbmNpcGxlIGZvciBucl96b25l
-czogdmFsdWUgb2YgMCBzYXlzICJubwo+IHpvbmVzIiwgaG9wZWZ1bGx5IGluIHN5bmMgd2l0aCAi
-em9uZWQiIHNheWluZyAibm9uZSIuIEFuZCBpZiB0aGVzZSAyIGFyZSBub3QgaW4KPiBzeW5jIGFz
-IHN1Y2gsIHRoZW4gd2UgaGF2ZSBhIGRlZmVjdGl2ZSBkcml2ZSBvciBhIGJ1Zy4gU28gYWN0dWFs
-bHkgYWx3YXlzIGhhdmluZwo+IG5yX3pvbmVzIGlzIHVzZWZ1bCBJIHRoaW5rLgo+IAo+IEJ1dCBJ
-IGNhbiBtYWtlIGl0IGludmlzaWJsZSBmb3IgcmVndWxhciBkaXNrcyBpZiB5b3UgaW5zaXN0IDop
-Cj4gCkkgZG9uJ3QgbWluZDsgYnV0IHRoZW4gSSBtaWdodCBiZSB6YmMtYmlhc2VkIGFscmVhZHku
-CkxlYXZlIHVwIHRvIHRoZSBtYWludGFpbmVycyB0byBkZWNpZGUuCkhlbmNlOgoKUmV2aWV3ZWQt
-Ynk6IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNlLmNvbT4KCkNoZWVycywKCkhhbm5lcwotLSAK
-RHIuIEhhbm5lcyBSZWluZWNrZQkJICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFy
-ZUBzdXNlLmRlCQkJICAgICAgICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBH
-bWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKR0Y6IEYuIEltZW5kw7ZyZmZlciwg
-Si4gU21pdGhhcmQsIEouIEd1aWxkLCBELiBVcG1hbnl1LCBHLiBOb3J0b24KSFJCIDIxMjg0IChB
-RyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNv
-bQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+A checker shouldn't set the path state to PATH_DOWN if it fails
+to obtain information about the path in the first place. Add logic
+to the checker to distinguish a failed path from an unsupported path.
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/checkers/emc_clariion.c | 50 ++++++++++++++++++++++++++--
+ 1 file changed, 48 insertions(+), 2 deletions(-)
+
+diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
+index f8e55b93..a277a004 100644
+--- a/libmultipath/checkers/emc_clariion.c
++++ b/libmultipath/checkers/emc_clariion.c
+@@ -20,6 +20,11 @@
+ #define INQUIRY_CMD     0x12
+ #define INQUIRY_CMDLEN  6
+ #define HEAVY_CHECK_COUNT       10
++#define SCSI_COMMAND_TERMINATED	0x22
++#define SCSI_CHECK_CONDITION	0x2
++#define RECOVERED_ERROR		0x01
++#define ILLEGAL_REQUEST		0x05
++#define SG_ERR_DRIVER_SENSE	0x08
+ 
+ /*
+  * Mechanism to track CLARiiON inactive snapshot LUs.
+@@ -130,7 +135,9 @@ int libcheck_check (struct checker * c)
+ 		(struct emc_clariion_checker_path_context *)c->context;
+ 	char wwnstr[33];
+ 	int ret;
++	int retry_emc = 5;
+ 
++retry:
+ 	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
+ 	memset(sense_buffer, 0, 128);
+ 	memset(sb, 0, SENSE_BUFF_LEN);
+@@ -145,12 +152,51 @@ int libcheck_check (struct checker * c)
+ 	io_hdr.timeout = c->timeout * 1000;
+ 	io_hdr.pack_id = 0;
+ 	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
++		if (errno == ENOTTY) {
++			c->msgid = CHECKER_MSGID_UNSUPPORTED;
++			return PATH_WILD;
++		}
+ 		c->msgid = MSG_CLARIION_QUERY_FAILED;
+ 		return PATH_DOWN;
+ 	}
++
+ 	if (io_hdr.info & SG_INFO_OK_MASK) {
+-		c->msgid = MSG_CLARIION_QUERY_ERROR;
+-		return PATH_DOWN;
++		switch (io_hdr.host_status) {
++		case DID_BUS_BUSY:
++		case DID_ERROR:
++		case DID_SOFT_ERROR:
++		case DID_TRANSPORT_DISRUPTED:
++			/* Transport error, retry */
++			if (--retry_emc)
++				goto retry;
++			break;
++		default:
++			break;
++		}
++	}
++
++	if (SCSI_CHECK_CONDITION == io_hdr.status ||
++	    SCSI_COMMAND_TERMINATED == io_hdr.status ||
++	    SG_ERR_DRIVER_SENSE == (0xf & io_hdr.driver_status)) {
++		if (io_hdr.sbp && (io_hdr.sb_len_wr > 2)) {
++			unsigned char *sbp = io_hdr.sbp;
++			int sense_key;
++
++			if (sbp[0] & 0x2)
++				sense_key = sbp[1] & 0xf;
++			else
++				sense_key = sbp[2] & 0xf;
++
++			if (sense_key == ILLEGAL_REQUEST) {
++				c->msgid = CHECKER_MSGID_UNSUPPORTED;
++				return PATH_WILD;
++			} else if (sense_key != RECOVERED_ERROR) {
++				condlog(1, "emc_clariion_checker: INQUIRY failed with sense key %02x",
++					sense_key);
++				c->msgid = MSG_CLARIION_QUERY_ERROR;
++				return PATH_DOWN;
++			}
++		}
+ 	}
+ 	if (/* Verify the code page - right page & revision */
+ 	    sense_buffer[1] != 0xc0 || sense_buffer[9] != 0x00) {
+-- 
+2.19.0
