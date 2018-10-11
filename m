@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 18/21] multipathd: check_path: improve logging
-	for "unusable path" case
-Date: Fri, 12 Oct 2018 00:27:04 +0200
-Message-ID: <20181011222707.3631-19-mwilck@suse.com>
+Subject: [PATCH 16/21] libmultipath: tur checker: leave
+	unsupported paths alone
+Date: Fri, 12 Oct 2018 00:27:02 +0200
+Message-ID: <20181011222707.3631-17-mwilck@suse.com>
 References: <20181011222707.3631-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,24 +22,29 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+A checker shouldn't set the path state to PATH_DOWN if it fails
+to obtain information about the path in the first place. Add logic
+to the checker to distinguish a failed path from an unsupported path.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ libmultipath/checkers/tur.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 1bd1518a..8ce72fce 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1894,7 +1894,8 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index 448c396e..8f4bdc8b 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -125,6 +125,10 @@ retry:
+ 	io_hdr.timeout = timeout * 1000;
+ 	io_hdr.pack_id = 0;
+ 	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
++		if (errno == ENOTTY) {
++			*msgid = CHECKER_MSGID_UNSUPPORTED;
++			return PATH_WILD;
++		}
+ 		*msgid = CHECKER_MSGID_DOWN;
+ 		return PATH_DOWN;
  	}
- 
- 	if (newstate == PATH_WILD || newstate == PATH_UNCHECKED) {
--		condlog(2, "%s: unusable path", pp->dev);
-+		condlog(2, "%s: unusable path - checker failed", pp->dev);
-+		LOG_MSG(2, verbosity, pp);
- 		conf = get_multipath_config();
- 		pthread_cleanup_push(put_multipath_config, conf);
- 		pathinfo(pp, conf, 0);
 -- 
 2.19.0
