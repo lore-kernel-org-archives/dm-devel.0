@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 19/21] libmultipath: coalesce_paths: improve
-	logging of orphaned paths
-Date: Fri, 12 Oct 2018 00:27:05 +0200
-Message-ID: <20181011222707.3631-20-mwilck@suse.com>
+Subject: [PATCH 17/21] libmultipath: pathinfo: don't blank wwid
+	if checker fails
+Date: Fri, 12 Oct 2018 00:27:03 +0200
+Message-ID: <20181011222707.3631-18-mwilck@suse.com>
 References: <20181011222707.3631-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,36 +22,31 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+Blanking a WWID is a dangerous operation. E.g. configure() would
+consider the path in question as invalid and orphan it if the
+WWID is blank. Don't do this for possibly transient checker failures.
+Moreover, we try to determine WWID even if path_offline returns
+PATH_DOWN in the first place, so why should we not if the checker
+has a problem?
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 10 +++++++---
- 1 file changed, 7 insertions(+), 3 deletions(-)
+ libmultipath/discovery.c | 3 ---
+ 1 file changed, 3 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 09c3dcf2..ed3e30f5 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -1020,14 +1020,18 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
- 		}
- 	}
- 	vector_foreach_slot (pathvec, pp1, k) {
--		int invalid = 0;
-+		int invalid;
- 		/* skip this path for some reason */
- 
- 		/* 1. if path has no unique id or wwid blacklisted */
-+		if (strlen(pp1->wwid) == 0) {
-+			orphan_path(pp1, "no WWID");
-+			continue;
-+		}
-+
- 		conf = get_multipath_config();
- 		pthread_cleanup_push(put_multipath_config, conf);
--		if (strlen(pp1->wwid) == 0 || filter_path(conf, pp1) > 0)
--			invalid = 1;
-+		invalid = (filter_path(conf, pp1) > 0);
- 		pthread_cleanup_pop(1);
- 		if (invalid) {
- 			orphan_path(pp1, "blacklisted");
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 3550c3a7..467ece7a 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1944,9 +1944,6 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 		if (path_state == PATH_UP) {
+ 			pp->chkrstate = pp->state = get_state(pp, conf, 0,
+ 							      path_state);
+-			if (pp->state == PATH_UNCHECKED ||
+-			    pp->state == PATH_WILD)
+-				goto blank;
+ 			if (pp->state == PATH_TIMEOUT)
+ 				pp->state = PATH_DOWN;
+ 			if (pp->state == PATH_UP && !pp->size) {
 -- 
 2.19.0
