@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 04/21] libmultipath/checkers: cciss_tur: use
+Subject: [PATCH 09/21] libmultipath/checkers: readsector0: use
 	message id
-Date: Fri, 12 Oct 2018 00:26:50 +0200
-Message-ID: <20181011222707.3631-5-mwilck@suse.com>
+Date: Fri, 12 Oct 2018 00:26:55 +0200
+Message-ID: <20181011222707.3631-10-mwilck@suse.com>
 References: <20181011222707.3631-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,62 +24,35 @@ List-Id: dm-devel.ids
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/cciss_tur.c | 13 +++++--------
- 1 file changed, 5 insertions(+), 8 deletions(-)
+ libmultipath/checkers/readsector0.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/checkers/cciss_tur.c b/libmultipath/checkers/cciss_tur.c
-index 1cab2015..ea843742 100644
---- a/libmultipath/checkers/cciss_tur.c
-+++ b/libmultipath/checkers/cciss_tur.c
-@@ -42,9 +42,6 @@
- #define TUR_CMD_LEN 6
- #define HEAVY_CHECK_COUNT       10
+diff --git a/libmultipath/checkers/readsector0.c b/libmultipath/checkers/readsector0.c
+index 1c2a868e..cf79e067 100644
+--- a/libmultipath/checkers/readsector0.c
++++ b/libmultipath/checkers/readsector0.c
+@@ -6,9 +6,6 @@
+ #include "checkers.h"
+ #include "libsg.h"
  
--#define MSG_CCISS_TUR_UP	"cciss_tur checker reports path is up"
--#define MSG_CCISS_TUR_DOWN	"cciss_tur checker reports path is down"
+-#define MSG_READSECTOR0_UP	"readsector0 checker reports path is up"
+-#define MSG_READSECTOR0_DOWN	"readsector0 checker reports path is down"
 -
- struct cciss_tur_checker_context {
+ struct readsector0_checker_context {
  	void * dummy;
  };
-@@ -69,7 +66,7 @@ int libcheck_check(struct checker * c)
- 	IOCTL_Command_struct cic;       // cciss ioctl command
- 
- 	if ((c->fd) < 0) {
--		MSG(c,"no usable fd");
-+		c->msgid = CHECKER_MSGID_NO_FD;
- 		ret = -1;
- 		goto out;
- 	}
-@@ -79,7 +76,7 @@ int libcheck_check(struct checker * c)
- 		perror("Error: ");
- 		fprintf(stderr, "cciss TUR  failed in CCISS_GETLUNINFO: %s\n",
- 			strerror(errno));
--		MSG(c,MSG_CCISS_TUR_DOWN);
+@@ -35,10 +32,10 @@ int libcheck_check (struct checker * c)
+ 	switch (ret)
+ 	{
+ 	case PATH_DOWN:
+-		MSG(c, MSG_READSECTOR0_DOWN);
 +		c->msgid = CHECKER_MSGID_DOWN;
- 		ret = PATH_DOWN;
- 		goto out;
- 	} else {
-@@ -106,18 +103,18 @@ int libcheck_check(struct checker * c)
- 	if (rc < 0) {
- 		fprintf(stderr, "cciss TUR  failed: %s\n",
- 			strerror(errno));
--		MSG(c,MSG_CCISS_TUR_DOWN);
-+		c->msgid = CHECKER_MSGID_DOWN;
- 		ret = PATH_DOWN;
- 		goto out;
- 	}
- 
- 	if ((cic.error_info.CommandStatus | cic.error_info.ScsiStatus )) {
--		MSG(c,MSG_CCISS_TUR_DOWN);
-+		c->msgid = CHECKER_MSGID_DOWN;
- 		ret = PATH_DOWN;
- 		goto out;
- 	}
- 
--	MSG(c,MSG_CCISS_TUR_UP);
-+	c->msgid = CHECKER_MSGID_UP;
- 
- 	ret = PATH_UP;
- out:
+ 		break;
+ 	case PATH_UP:
+-		MSG(c, MSG_READSECTOR0_UP);
++		c->msgid = CHECKER_MSGID_UP;
+ 		break;
+ 	default:
+ 		break;
 -- 
 2.19.0
