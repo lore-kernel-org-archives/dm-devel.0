@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 17/21] libmultipath: pathinfo: don't blank wwid
-	if checker fails
-Date: Fri, 12 Oct 2018 00:27:03 +0200
-Message-ID: <20181011222707.3631-18-mwilck@suse.com>
+Subject: [PATCH 18/21] multipathd: check_path: improve logging
+	for "unusable path" case
+Date: Fri, 12 Oct 2018 00:27:04 +0200
+Message-ID: <20181011222707.3631-19-mwilck@suse.com>
 References: <20181011222707.3631-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,31 +22,24 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Blanking a WWID is a dangerous operation. E.g. configure() would
-consider the path in question as invalid and orphan it if the
-WWID is blank. Don't do this for possibly transient checker failures.
-Moreover, we try to determine WWID even if path_offline returns
-PATH_DOWN in the first place, so why should we not if the checker
-has a problem?
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 3 ---
- 1 file changed, 3 deletions(-)
+ multipathd/main.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 3550c3a7..467ece7a 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1944,9 +1944,6 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 		if (path_state == PATH_UP) {
- 			pp->chkrstate = pp->state = get_state(pp, conf, 0,
- 							      path_state);
--			if (pp->state == PATH_UNCHECKED ||
--			    pp->state == PATH_WILD)
--				goto blank;
- 			if (pp->state == PATH_TIMEOUT)
- 				pp->state = PATH_DOWN;
- 			if (pp->state == PATH_UP && !pp->size) {
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 1bd1518a..8ce72fce 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1894,7 +1894,8 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	}
+ 
+ 	if (newstate == PATH_WILD || newstate == PATH_UNCHECKED) {
+-		condlog(2, "%s: unusable path", pp->dev);
++		condlog(2, "%s: unusable path - checker failed", pp->dev);
++		LOG_MSG(2, verbosity, pp);
+ 		conf = get_multipath_config();
+ 		pthread_cleanup_push(put_multipath_config, conf);
+ 		pathinfo(pp, conf, 0);
 -- 
 2.19.0
