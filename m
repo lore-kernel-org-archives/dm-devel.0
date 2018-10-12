@@ -1,13 +1,12 @@
-From: Jonathan Corbet <corbet@lwn.net>
-Subject: Re: [PATCH] dm flakey: Document "error_writes" feature
-Date: Fri, 12 Oct 2018 11:31:54 -0600
-Message-ID: <20181012113154.7d2f4a64@lwn.net>
-References: <1539073891-7701-1-git-send-email-nborisov@suse.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: [PATCH] dm-raid: avoid bitmap with raid4/5/6 journal
+	device
+Date: Fri, 12 Oct 2018 20:24:25 +0200
+Message-ID: <20181012182425.4025-1-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1539073891-7701-1-git-send-email-nborisov@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,22 +16,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Nikolay Borisov <nborisov@suse.com>
-Cc: dm-devel@redhat.com, snitzer@redhat.com, linux-doc@vger.kernel.org
+To: heinzm@redhat.com, dm-devel@redhat.com
+Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
-On Tue,  9 Oct 2018 11:31:31 +0300
-Nikolay Borisov <nborisov@suse.com> wrote:
+With raid4/5/6, journal device and write intent bitmap are mutually exclusive.
 
-> Commit ef548c551e72 ("dm flakey: introduce "error_writes" feature")
-> added the ability to dm flakey to error out writes in contrast to
-> silently dropping it with 'drop_writes'. Unfortunately this feature
-> is not currently documented and one has to be either familiar with the
-> source code of dm flakey or check out xfstests sources to know of
-> this parameter. So document it.
-> 
-> Signed-off-by: Nikolay Borisov <nborisov@suse.com>
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+---
+ drivers/md/dm-raid.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Applied to the docs tree, thanks.
-
-jon
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index c44925e4e481..e1dd1622a290 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -2475,7 +2475,7 @@ static int super_validate(struct raid_set *rs, struct md_rdev *rdev)
+ 	}
+ 
+ 	/* Enable bitmap creation for RAID levels != 0 */
+-	mddev->bitmap_info.offset = rt_is_raid0(rs->raid_type) ? 0 : to_sector(4096);
++	mddev->bitmap_info.offset = (rt_is_raid0(rs->raid_type) || rs->journal_dev.dev) ? 0 : to_sector(4096);
+ 	mddev->bitmap_info.default_offset = mddev->bitmap_info.offset;
+ 
+ 	if (!test_and_clear_bit(FirstUse, &rdev->flags)) {
+-- 
+2.17.2
