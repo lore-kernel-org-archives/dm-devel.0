@@ -1,14 +1,13 @@
-From: Ondrej Kozina <okozina@redhat.com>
-Subject: Re: LUKS2 - RAID0 - NVME : alignment issue
-Date: Fri, 12 Oct 2018 18:09:24 +0200
-Message-ID: <e93e5cdb-10be-8bec-b33b-150bad9a32ac@redhat.com>
-References: <CAHzw6onNd8JskiB75PzFd4Zo45dP4fx3emoHFz8eTNkTV2+7+A@mail.gmail.com>
+From: Jonathan Corbet <corbet@lwn.net>
+Subject: Re: [PATCH] dm flakey: Document "error_writes" feature
+Date: Fri, 12 Oct 2018 11:31:54 -0600
+Message-ID: <20181012113154.7d2f4a64@lwn.net>
+References: <1539073891-7701-1-git-send-email-nborisov@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAHzw6onNd8JskiB75PzFd4Zo45dP4fx3emoHFz8eTNkTV2+7+A@mail.gmail.com>
-Content-Language: en-MW
+In-Reply-To: <1539073891-7701-1-git-send-email-nborisov@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,42 +17,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: laurent cop <laurent.cop@gmail.com>
+To: Nikolay Borisov <nborisov@suse.com>
+Cc: dm-devel@redhat.com, snitzer@redhat.com, linux-doc@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gMTAvMTIvMjAxOCAwMTo1NiBQTSwgbGF1cmVudCBjb3Agd3JvdGU6Cj4gSGVsbG8sCj4gCj4g
-SSBoYXZlIHRyb3VibGUgd2hpbGUgaW4gdG9wIG9mIHRoZSBzdGFjayA6Cj4gbWtmcy5leHQ0IC9k
-ZXYvbWFwcGVyL3JhaWQwbHVrczIKPiAvZGV2L21hcHBlci9yYWlkMGx1a3MyIGFsaWduZW1lbnQg
-aXMgb2Zmc2V0IGJ5IDE0NzQ1NiBieXRlcwo+IFRoaXMgbWF5IHJlc3VsdCBpbiB2ZXJ5IHBvb3Ig
-cGVyZm9ybWFuY2UgKHJlLSkgcGFydGl0aW9uaW5nIGlzIHN1Z2dlc3RlZC4KPiBJIGhhdmUgdGhl
-IHNhbWUgcGIgd2l0aCBta2ZzLnhmcwo+IAo+IEkgYW0gdXNpbmcgZm9sbG93aW5nIHNjaGVtZToK
-PiAKPiBMVUtTMsKgwqDCoMKgwqDCoMKgwqDCoMKgID0+IGNyZWF0ZWQgd2l0aCBjcnlwdHNldHVw
-IC12IGx1a3NGb3JtYXQgLS10eXBlIGx1a3MyIAo+IC9kZXYvbWQxMjcgLS1jaXBoZXIgYWVzLWdj
-bS1yYW5kb20gLS1pbnRlZ3JpdHkgYWVhZQoKVGhlcmUncyBhIGJ1ZyBpbiBhbGlnbiBvZmZzZXQg
-Y2FsY3VsYXRpb25zIGluIGNyeXB0c2V0dXAgZm9yIExVS1MyIApmb3JtYXQuIEl0J2xsIGdldCBm
-aXhlZCB3aXRoIGZ1dHVyZSAyLjAuNSByZWxlYXNlLgoKUHJvdmlkZWQgeW91IGRvbid0IGhhdmUg
-cmVhbCBkYXRhIG9uIHRoZSBMVUtTMiBkZXZpY2UgYWxyZWFkeS4uLmNvdWxkIAp5b3UgcHJvdmlk
-ZSB1cyB3aXRoIC0tZGVidWcgb3V0cHV0IGZyb20gdGhlIGx1a3NGb3JtYXQgYWN0aW9uIHJ1biBh
-Z2Fpbj8gCkl0J2QgaGVscCBtZSB0byBmaW5kIG91dCBpZiBpdCBnZXRzIGZpeGVkIHdpdGggY29t
-bWl0IGRkMzZkNTZkNDcyZS4KClJlZ2FyZHMKTy4KCj4gUkFJRCAwwqDCoMKgwqDCoMKgwqDCoMKg
-wqAgPT4gY3JlYXRlZCB3aXRoIG1kYWRtIGNodW5rPTMyCj4gMyBEaXNrcyAqTlZNRSogPT4gcGFy
-dGl0aW9uIHdpdGggZ2Rpc2sgKGZpc3Qgc2VjdG9yIDogMjA0OCkKPiAKPiBJIGdvdCB0aGlzIGlu
-Zm9ybWF0aW9uIHdpdGggbHNibGsgLXQgZm9yIGVhY2ggMyBkaXNrcywgaSBnb3QgdGhlIHNhbWUg
-Cj4gaW5mb3JtYXRpb24uCj4gbnZtZVhuMQo+ICDCoMKgwqDCoMKgwqAgLT4gTnZtZVhuMXAxwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoCBBTElHTiA9IDAKPiAgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCAtPiBt
-ZDEyN8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoCBBTElHTiA9IDAKPiAgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoCAtPiByYWlkMGx1a3MyX2RpZsKgwqDCoMKgwqDCoMKgwqDCoMKgIEFM
-SUdOID0gMTQ3NDU2Cj4gIMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgLT4gcmFpZDBsdWtzMsKgwqDCoMKg
-IEFMSUdOID0gMTQ3NDU2Cj4gMSkgSG93IGNhbiBJIHNvbHZlIG15IGFsaWdubWVudCBpc3N1ZT8K
-PiAyKSBJcyBpdCBub3JtYWwgdG8gaGF2ZSBsb3cgcGVyZm9ybWFuY2VzIHdoaWxlIHdyaXRpbmcg
-d2l0aCBkZC4gSSB3YXMgCj4gdXNpbmcgTFVLUyBwcmV2aW91c2x5IGFuZCBJIGdvdCBvbmx5IG9u
-ZSBkZXYgbWFwcGVyLiBOb3cgSSBnb3QgMi4gRG9lcyAKPiBpdCBoYXZlIGEgYmlnIGltcGFjdCBv
-biBwZXJmb3JtYW5jZXM/Cj4gCj4gS2luZCByZWdhcmRzLgo+IAo+IAo+IC0tCj4gZG0tZGV2ZWwg
-bWFpbGluZyBsaXN0Cj4gZG0tZGV2ZWxAcmVkaGF0LmNvbQo+IGh0dHBzOi8vd3d3LnJlZGhhdC5j
-b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo+IAoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0
-CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
-bmZvL2RtLWRldmVs
+On Tue,  9 Oct 2018 11:31:31 +0300
+Nikolay Borisov <nborisov@suse.com> wrote:
+
+> Commit ef548c551e72 ("dm flakey: introduce "error_writes" feature")
+> added the ability to dm flakey to error out writes in contrast to
+> silently dropping it with 'drop_writes'. Unfortunately this feature
+> is not currently documented and one has to be either familiar with the
+> source code of dm flakey or check out xfstests sources to know of
+> this parameter. So document it.
+> 
+> Signed-off-by: Nikolay Borisov <nborisov@suse.com>
+
+Applied to the docs tree, thanks.
+
+jon
