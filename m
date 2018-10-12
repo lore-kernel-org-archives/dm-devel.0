@@ -1,15 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
 Subject: Re: [PATCH v4 03/11] scsi: sd_zbc: Fix
  sd_zbc_check_zones() error checks
-Date: Fri, 12 Oct 2018 12:23:01 +0200
-Message-ID: <ad9d7c12-f2df-a345-895c-f23b18b1ec29@suse.de>
+Date: Fri, 12 Oct 2018 11:41:22 +0000
+Message-ID: <BN3PR0401MB164067E9169258F410D40614E7E20@BN3PR0401MB1640.namprd04.prod.outlook.com>
 References: <20181012100850.23316-1-damien.lemoal@wdc.com>
 	<20181012100850.23316-4-damien.lemoal@wdc.com>
+	<ad9d7c12-f2df-a345-895c-f23b18b1ec29@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181012100850.23316-4-damien.lemoal@wdc.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,40 +20,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <damien.lemoal@wdc.com>, linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>, Matias Bjorling <matias.bjorling@wdc.com>
+To: Hannes Reinecke <hare@suse.de>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Martin K .
+	Petersen" <martin.petersen@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, Matias Bjorling <Matias.Bjorling@wdc.com>
 List-Id: dm-devel.ids
 
-T24gMTAvMTIvMTggMTI6MDggUE0sIERhbWllbiBMZSBNb2FsIHdyb3RlOgo+IFRoZSB1bnNpZ25l
-ZCAzMiBiaXRzIG92ZXJmbG93IGNoZWNrIGZvciB0aGUgem9uZSBzaXplIHZhbHVlIGlzIGFscmVh
-ZHkKPiBkb25lIHdpdGhpbiBzZF96YmNfY2hlY2tfem9uZXMoKSB3aXRoIHRoZSB0ZXN0Ogo+IAo+
-IH0gZWxzZSBpZiAobG9naWNhbF90b19zZWN0b3JzKHNka3AtPmRldmljZSwgem9uZV9ibG9ja3Mp
-ID4gVUlOVF9NQVgpIHsKPiAKPiBzbyB0aGVyZSBpcyBubyBuZWVkIHRvIGNoZWNrIGFnYWluIGZv
-ciBhbiBvdXQgb2YgcmFuZ2UgdmFsdWUgaW4KPiBzZF96YmNfcmVhZF96b25lcygpLiBTaW1wbGlm
-eSB0aGUgY29kZSBhbmQgZml4IHNkX3piY19jaGVja196b25lcygpCj4gZXJyb3IgcmV0dXJuIHRv
-IC1FRkJJRyBpbnN0ZWFkIG9mIC1FTk9ERVYgaWYgdGhlIHpvbmUgc2l6ZSBpcyB0b28gbGFyZ2Uu
-Cj4gQ2hhbmdlIHRoZSByZXR1cm4gdHlwZSBvZiBzZF96YmNfY2hlY2tfem9uZXMoKSB0byBhbiBp
-bnQgZm9yIHRoZSBlcnJvcgo+IGNvZGUgYW5kIHJldHVybiB0aGUgem9uZSBzaXplICh6b25lX2Js
-b2NrcykgdGhyb3VnaCBhIHUzMiBwb2ludGVyIHRvCj4gYXZvaWQgb3ZlcmZsb3dpbmcgdGhlIHNp
-Z25lZCAzMiByZXR1cm4gdmFsdWUuCj4gCj4gU2lnbmVkLW9mZi1ieTogRGFtaWVuIExlIE1vYWwg
-PGRhbWllbi5sZW1vYWxAd2RjLmNvbT4KPiAtLS0KPiAgIGRyaXZlcnMvc2NzaS9zZF96YmMuYyB8
-IDE5ICsrKysrKysrLS0tLS0tLS0tLS0KPiAgIDEgZmlsZSBjaGFuZ2VkLCA4IGluc2VydGlvbnMo
-KyksIDExIGRlbGV0aW9ucygtKQo+IAo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL3Njc2kvc2RfemJj
-LmMgYi9kcml2ZXJzL3Njc2kvc2RfemJjLmMKPiBpbmRleCBjYTczYzQ2OTMxYzAuLjA2NzhlMWUx
-MDhiMCAxMDA2NDQKPiAtLS0gYS9kcml2ZXJzL3Njc2kvc2RfemJjLmMKPiArKysgYi9kcml2ZXJz
-L3Njc2kvc2RfemJjLmMKPiBAQCAtMzczLDcgKzM3Myw3IEBAIHN0YXRpYyBpbnQgc2RfemJjX2No
-ZWNrX3pvbmVkX2NoYXJhY3RlcmlzdGljcyhzdHJ1Y3Qgc2NzaV9kaXNrICpzZGtwLAo+ICAgICog
-UmV0dXJucyB0aGUgem9uZSBzaXplIGluIG51bWJlciBvZiBibG9ja3MgdXBvbiBzdWNjZXNzIG9y
-IGFuIGVycm9yIGNvZGUKPiAgICAqIHVwb24gZmFpbHVyZS4KPiAgICAqLwo+IC1zdGF0aWMgczY0
-IHNkX3piY19jaGVja196b25lcyhzdHJ1Y3Qgc2NzaV9kaXNrICpzZGtwKQo+ICtzdGF0aWMgaW50
-IHNkX3piY19jaGVja196b25lcyhzdHJ1Y3Qgc2NzaV9kaXNrICpzZGtwLCB1MzIgKnpibG9ja3Mp
-Cj4gICB7Cj4gICAJdTY0IHpvbmVfYmxvY2tzID0gMDsKPiAgIAlzZWN0b3JfdCBtYXhfbGJhLCBi
-bG9jayA9IDA7CgpBY3R1YWxseSBJIHRob3VnaHQgdG8ganVzdCBjaGFuZ2UgdGhlICdzMzInIHRv
-ICdpbnQnLCBhbmQgbm90IGFkZGluZyAKYW5vdGhlciBwYXJhbWV0ZXI7IGJ1dCBhbnl3YXkuCgpS
-ZXZpZXdlZC1ieTogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2UuY29tPgoKSGFubmVzCi0tIApE
-ci4gSGFubmVzIFJlaW5lY2tlCQkgICBUZWFtbGVhZCBTdG9yYWdlICYgTmV0d29ya2luZwpoYXJl
-QHN1c2UuZGUJCQkgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJTlVYIEdt
-YkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogRi4gSW1lbmTDtnJmZmVyLCBK
-LiBTbWl0aGFyZCwgSi4gR3VpbGQsIEQuIFVwbWFueXUsIEcuIE5vcnRvbgpIUkIgMjEyODQgKEFH
-IE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29t
-Cmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On 2018/10/12 19:23, Hannes Reinecke wrote:
+> On 10/12/18 12:08 PM, Damien Le Moal wrote:
+>> The unsigned 32 bits overflow check for the zone size value is already
+>> done within sd_zbc_check_zones() with the test:
+>>
+>> } else if (logical_to_sectors(sdkp->device, zone_blocks) > UINT_MAX) {
+>>
+>> so there is no need to check again for an out of range value in
+>> sd_zbc_read_zones(). Simplify the code and fix sd_zbc_check_zones()
+>> error return to -EFBIG instead of -ENODEV if the zone size is too large.
+>> Change the return type of sd_zbc_check_zones() to an int for the error
+>> code and return the zone size (zone_blocks) through a u32 pointer to
+>> avoid overflowing the signed 32 return value.
+>>
+>> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+>> ---
+>>   drivers/scsi/sd_zbc.c | 19 ++++++++-----------
+>>   1 file changed, 8 insertions(+), 11 deletions(-)
+>>
+>> diff --git a/drivers/scsi/sd_zbc.c b/drivers/scsi/sd_zbc.c
+>> index ca73c46931c0..0678e1e108b0 100644
+>> --- a/drivers/scsi/sd_zbc.c
+>> +++ b/drivers/scsi/sd_zbc.c
+>> @@ -373,7 +373,7 @@ static int sd_zbc_check_zoned_characteristics(struct scsi_disk *sdkp,
+>>    * Returns the zone size in number of blocks upon success or an error code
+>>    * upon failure.
+>>    */
+>> -static s64 sd_zbc_check_zones(struct scsi_disk *sdkp)
+>> +static int sd_zbc_check_zones(struct scsi_disk *sdkp, u32 *zblocks)
+>>   {
+>>   	u64 zone_blocks = 0;
+>>   	sector_t max_lba, block = 0;
+> 
+> Actually I thought to just change the 's32' to 'int', and not adding 
+> another parameter; but anyway.
+
+Yes, I understood that. But since chunk_sectors is unsigned int, zone_blocks has
+to be too and so returning that through an int would be asking for troubles. If
+we ever have see a drive with a 2G LBA zone size that is :)
+I thought it was cleaner this way.
+
+> 
+> Reviewed-by: Hannes Reinecke <hare@suse.com>
+
+Thanks !
+
+> 
+> Hannes
+> 
+
+
+-- 
+Damien Le Moal
+Western Digital Research
