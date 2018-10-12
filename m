@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 6/8] libmultipath: test code for "zombie" TUR
-	threads
-Date: Fri, 12 Oct 2018 16:51:53 -0500
-Message-ID: <20181012215153.GI29125@octiron.msp.redhat.com>
+Subject: Re: [PATCH 7/8] libmultipath: handle TUR threads that
+ can't be cancelled
+Date: Fri, 12 Oct 2018 17:11:38 -0500
+Message-ID: <20181012221138.GJ29125@octiron.msp.redhat.com>
 References: <20181010200506.15796-1-mwilck@suse.com>
-	<20181010200506.15796-7-mwilck@suse.com>
+	<20181010200506.15796-8-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20181010200506.15796-7-mwilck@suse.com>
+In-Reply-To: <20181010200506.15796-8-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,82 +24,67 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Oct 10, 2018 at 10:05:04PM +0200, Martin Wilck wrote:
-> This patch adds test code that simulates hanging, non-cancellable
-> TUR threads, for testing multipathd's behavior in that situation.
-> Compile libmultipath with CFLAGS=-DTUR_TEST_MAJOR=8 to activate
-> the test code. Without that flag, the patch has no effect.
+On Wed, Oct 10, 2018 at 10:05:05PM +0200, Martin Wilck wrote:
+> When the tur checker code determines that a hanging TUR thread
+> couldn't be cancelled, rather than simply returning, reallocate
+> the checker context and start a new thread. This will leak some
+> memory if the hanging thread never wakes up again, but well, in
+> that highly unlikely case we're leaking threads anyway.
 > 
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/checkers/tur.c | 45 +++++++++++++++++++++++++++++++++++++
->  1 file changed, 45 insertions(+)
+>  libmultipath/checkers/tur.c | 24 +++++++++++++++++++++---
+>  1 file changed, 21 insertions(+), 3 deletions(-)
 > 
 > diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-> index b2a21707..a986a244 100644
+> index a986a244..9ecca5bd 100644
 > --- a/libmultipath/checkers/tur.c
 > +++ b/libmultipath/checkers/tur.c
-> @@ -196,6 +196,50 @@ static void cleanup_func(void *data)
->  	rcu_unregister_thread();
->  }
->  
-> +/*
-> + * Test code for "zombie tur thread" handling.
-> + * Compile e.g. with CFLAGS=-DTUR_TEST_MAJOR=8
-> + * Additional parameters can be configure with the macros below.
-> + *
-> + * Everty nth started TUR thread will hang in non-cancellable state
-> + * for given number of seconds, for device given by major/minor.
-> + */
-> +#ifdef TUR_TEST_MAJOR
+> @@ -349,11 +349,29 @@ int libcheck_check(struct checker * c)
+>  		}
+>  	} else {
+>  		if (uatomic_read(&ct->holders) > 1) {
+> -			/* The thread has been cancelled but hasn't
+> -			 * quit. exit with timeout. */
+> +			int holders;
 > +
-> +#ifndef TUR_TEST_MINOR
-> +#define TUR_TEST_MINOR 0
-> +#endif
-> +#ifndef TUR_SLEEP_INTERVAL
-> +#define TUR_SLEEP_INTERVAL 3
-> +#endif
-> +#ifndef TUR_SLEEP_SECS
-> +#define TUR_SLEEP_SECS 60
-> +#endif
+> +			/*
+> +			 * The thread has been cancelled but hasn't quit.
+> +			 * We have to prevent it from interfering with the new
+> +			 * thread. We create a new context and leave the old
+> +			 * one with the stale thread, hoping it will clean up
+> +			 * eventually.
+> +			 */
+>  			condlog(3, "%d:%d : tur thread not responding",
+>  				major(ct->devt), minor(ct->devt));
+> -			return PATH_TIMEOUT;
 > +
-> +static void tur_deep_sleep(const struct tur_checker_context *ct)
-> +{
-> +	static int sleep_cnt;
-> +	const struct timespec ts = { .tv_sec = TUR_SLEEP_SECS, .tv_nsec = 0 };
-> +	int oldstate;
+> +			/* libcheck_init will replace c->context */
+> +			libcheck_init(c);
 > +
-> +	if (ct->devt != makedev(TUR_TEST_MAJOR, TUR_TEST_MINOR) ||
-> +	    ++sleep_cnt % TUR_SLEEP_INTERVAL != 0)
-> +		return;
+> +			holders = uatomic_sub_return(&ct->holders, 1);
+> +			if (!holders)
+> +				/* It did terminate, eventually */
+> +				cleanup_context(ct);
 > +
-> +	condlog(1, "tur thread going to sleep for %ld seconds", ts.tv_sec);
-> +	if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate) != 0)
-> +		condlog(0, "pthread_setcancelstate: %m");
-> +	if (nanosleep(&ts, NULL) != 0)
-> +		condlog(0, "nanosleep: %m");
-> +	condlog(1, "tur zombie thread woke up");
-> +	if (pthread_setcancelstate(oldstate, NULL) != 0)
-> +		condlog(0, "pthread_setcancelstate (2): %m");
-> +	pthread_testcancel();
-> +}
-> +#else
-> +#define tur_deep_sleep(x) do {} while (0)
-> +#endif /* TUR_TEST_MAJOR */
-> +
->  static void *tur_thread(void *ctx)
->  {
->  	struct tur_checker_context *ct = ctx;
-> @@ -209,6 +253,7 @@ static void *tur_thread(void *ctx)
->  	condlog(3, "%d:%d : tur checker starting up", major(ct->devt),
->  		minor(ct->devt));
->  
-> +	tur_deep_sleep(ct);
->  	state = tur_check(ct->fd, ct->timeout, msg);
->  	pthread_testcancel();
->  
+> +			ct = c->context;
+> +			if (ct == NULL)
+> +				return PATH_UNCHECKED;
+
+libcheck_init can fail to allocate the checker_context, and return 1.
+If it does so, it won't reset c->context.  In this case, you will unhold
+the context but keep using it.  Instead we should fail right after the
+call to libcheck_init if it returns 1.
+
+Also, returning PATH_UNCHECKED triggers code in check_path that assumes
+there is a problem with the path. It recalls pathinfo(), and does not do
+all the work that would happen on PATH_DOWN. PATH_TIMEOUT works like
+PATH_DOWN and PATH_SHAKY, which seems like the right thing to do here.
+
+-Ben
+
+>  		}
+>  		/* Start new TUR checker */
+>  		pthread_mutex_lock(&ct->lock);
 > -- 
 > 2.19.0
