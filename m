@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 7/8] libmultipath: handle TUR threads that
- can't be cancelled
-Date: Fri, 12 Oct 2018 17:11:38 -0500
-Message-ID: <20181012221138.GJ29125@octiron.msp.redhat.com>
+Subject: Re: [PATCH 8/8] multipathd: handle repeated udev
+	retrigger failure
+Date: Fri, 12 Oct 2018 17:30:46 -0500
+Message-ID: <20181012223046.GK29125@octiron.msp.redhat.com>
 References: <20181010200506.15796-1-mwilck@suse.com>
-	<20181010200506.15796-8-mwilck@suse.com>
+	<20181010200506.15796-9-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20181010200506.15796-8-mwilck@suse.com>
+In-Reply-To: <20181010200506.15796-9-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,67 +24,90 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Oct 10, 2018 at 10:05:05PM +0200, Martin Wilck wrote:
-> When the tur checker code determines that a hanging TUR thread
-> couldn't be cancelled, rather than simply returning, reallocate
-> the checker context and start a new thread. This will leak some
-> memory if the hanging thread never wakes up again, but well, in
-> that highly unlikely case we're leaking threads anyway.
+On Wed, Oct 10, 2018 at 10:05:06PM +0200, Martin Wilck wrote:
+> If a path was still not properly initialized after exhausting the
+> retrigger tries, it used to remain in INIT_MISSING_UDEV state forever.
+> get_uid() might fall back to non-udev-based methods to determine
+> the WWID, but it would never be called for a path in this state any more.
 > 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/checkers/tur.c | 24 +++++++++++++++++++++---
->  1 file changed, 21 insertions(+), 3 deletions(-)
-> 
-> diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-> index a986a244..9ecca5bd 100644
-> --- a/libmultipath/checkers/tur.c
-> +++ b/libmultipath/checkers/tur.c
-> @@ -349,11 +349,29 @@ int libcheck_check(struct checker * c)
->  		}
->  	} else {
->  		if (uatomic_read(&ct->holders) > 1) {
-> -			/* The thread has been cancelled but hasn't
-> -			 * quit. exit with timeout. */
-> +			int holders;
-> +
-> +			/*
-> +			 * The thread has been cancelled but hasn't quit.
-> +			 * We have to prevent it from interfering with the new
-> +			 * thread. We create a new context and leave the old
-> +			 * one with the stale thread, hoping it will clean up
-> +			 * eventually.
-> +			 */
->  			condlog(3, "%d:%d : tur thread not responding",
->  				major(ct->devt), minor(ct->devt));
-> -			return PATH_TIMEOUT;
-> +
-> +			/* libcheck_init will replace c->context */
-> +			libcheck_init(c);
-> +
-> +			holders = uatomic_sub_return(&ct->holders, 1);
-> +			if (!holders)
-> +				/* It did terminate, eventually */
-> +				cleanup_context(ct);
-> +
-> +			ct = c->context;
-> +			if (ct == NULL)
-> +				return PATH_UNCHECKED;
+> This patch changes this behavior by resetting the path back to FAILED
+> state if udev can't provide the WWID even after retriggering. Now, if
+> the path ever happens to be in PATH_UP or PATH_GHOST state again,
+> pathinfo(DI_ALL) will be called from check_path(), and there's at least
+> some chance to obtain a WWID for it.
 
-libcheck_init can fail to allocate the checker_context, and return 1.
-If it does so, it won't reset c->context.  In this case, you will unhold
-the context but keep using it.  Instead we should fail right after the
-call to libcheck_init if it returns 1.
+What you have seems reasonable, but looking at the code that calls
+pathinfo() in this case, I do have some related suggestions.
 
-Also, returning PATH_UNCHECKED triggers code in check_path that assumes
-there is a problem with the path. It recalls pathinfo(), and does not do
-all the work that would happen on PATH_DOWN. PATH_TIMEOUT works like
-PATH_DOWN and PATH_SHAKY, which seems like the right thing to do here.
+Since check_path() always returns early if !pp->mpp and
+pp->initialized != INIT_FAILED, we don't need the
+pp->initialized != INIT_MISSING_UDEV check before doing the pathinfo
+(although we might want to check pp->initialized == INIT_FAILED, in case
+we add other pp->initialized states in the future).
+
+Also, I don't think that checking if pathinfo returns PATHINFO_OK is the
+right thing to do before calling ev_add_path(). pathinfo() will return
+PATHINFO_OK even if we fail to get the wwid. I'm pretty sure this should
+check if pp->initialized == INIT_OK instead.
+
+Finally, if pp->initialized != INIT_OK after the call to pathinfo(),
+would you object to setting pp->tick to max_checkint so that we don't
+keep checking the path as often.  It is possible that this really is a
+device that shouldn't be multipathed, and for which we will never be
+able to get a wwid. It seems like after some many failures, we don't
+need to be so proactive about rechecking an active path where we simply
+aren't getting the wwid.
 
 -Ben
 
->  		}
->  		/* Start new TUR checker */
->  		pthread_mutex_lock(&ct->lock);
+> 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipathd/main.c | 32 +++++++++++++++++++++++---------
+>  1 file changed, 23 insertions(+), 9 deletions(-)
+> 
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 2d45d989..a9e1a4bd 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -1828,15 +1828,29 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+>  	retrigger_tries = conf->retrigger_tries;
+>  	checkint = conf->checkint;
+>  	put_multipath_config(conf);
+> -	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV &&
+> -	    pp->retriggers < retrigger_tries) {
+> -		condlog(2, "%s: triggering change event to reinitialize",
+> -			pp->dev);
+> -		pp->initialized = INIT_REQUESTED_UDEV;
+> -		pp->retriggers++;
+> -		sysfs_attr_set_value(pp->udev, "uevent", "change",
+> -				     strlen("change"));
+> -		return 0;
+> +	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV) {
+> +		if (pp->retriggers < retrigger_tries) {
+> +			condlog(2, "%s: triggering change event to reinitialize",
+> +				pp->dev);
+> +			pp->initialized = INIT_REQUESTED_UDEV;
+> +			pp->retriggers++;
+> +			sysfs_attr_set_value(pp->udev, "uevent", "change",
+> +					     strlen("change"));
+> +			return 0;
+> +		} else {
+> +			condlog(1, "%s: not initialized after %d udev retriggers",
+> +				pp->dev, retrigger_tries);
+> +			/*
+> +			 * Make sure that the "add missing path" code path
+> +			 * below may reinstate the path later, if it ever
+> +			 * comes up again.
+> +			 * The WWID needs not be cleared; if it was set, the
+> +			 * state hadn't been INIT_MISSING_UDEV in the first
+> +			 * place.
+> +			 */
+> +			pp->initialized = INIT_FAILED;
+> +			return 0;
+> +		}
+>  	}
+>  
+>  	/*
 > -- 
 > 2.19.0
