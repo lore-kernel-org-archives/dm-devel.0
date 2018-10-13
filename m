@@ -1,16 +1,12 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 8/8] multipathd: handle repeated udev
-	retrigger failure
-Date: Fri, 12 Oct 2018 17:30:46 -0500
-Message-ID: <20181012223046.GK29125@octiron.msp.redhat.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH 0/8] various multipath-tools patches
+Date: Sat, 13 Oct 2018 10:48:28 +0200
+Message-ID: <CABr-GnccAS+-rX0wRd6tXxUGmu+3MkOOzEmkq9=tHoWaSPxyfA@mail.gmail.com>
 References: <20181010200506.15796-1-mwilck@suse.com>
-	<20181010200506.15796-9-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============2854485570660695850=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20181010200506.15796-9-mwilck@suse.com>
+In-Reply-To: <20181010200506.15796-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,93 +17,116 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Oct 10, 2018 at 10:05:06PM +0200, Martin Wilck wrote:
-> If a path was still not properly initialized after exhausting the
-> retrigger tries, it used to remain in INIT_MISSING_UDEV state forever.
-> get_uid() might fall back to non-udev-based methods to determine
-> the WWID, but it would never be called for a path in this state any more.
-> 
-> This patch changes this behavior by resetting the path back to FAILED
-> state if udev can't provide the WWID even after retriggering. Now, if
-> the path ever happens to be in PATH_UP or PATH_GHOST state again,
-> pathinfo(DI_ALL) will be called from check_path(), and there's at least
-> some chance to obtain a WWID for it.
+--===============2854485570660695850==
+Content-Type: multipart/alternative; boundary="0000000000003e0618057818450a"
 
-What you have seems reasonable, but looking at the code that calls
-pathinfo() in this case, I do have some related suggestions.
+--0000000000003e0618057818450a
+Content-Type: text/plain; charset="UTF-8"
 
-Since check_path() always returns early if !pp->mpp and
-pp->initialized != INIT_FAILED, we don't need the
-pp->initialized != INIT_MISSING_UDEV check before doing the pathinfo
-(although we might want to check pp->initialized == INIT_FAILED, in case
-we add other pp->initialized states in the future).
+Martin,
 
-Also, I don't think that checking if pathinfo returns PATHINFO_OK is the
-right thing to do before calling ev_add_path(). pathinfo() will return
-PATHINFO_OK even if we fail to get the wwid. I'm pretty sure this should
-check if pp->initialized == INIT_OK instead.
+The 01 to 06 patchs of this set are now merged.
 
-Finally, if pp->initialized != INIT_OK after the call to pathinfo(),
-would you object to setting pp->tick to max_checkint so that we don't
-keep checking the path as often.  It is possible that this really is a
-device that shouldn't be multipathed, and for which we will never be
-able to get a wwid. It seems like after some many failures, we don't
-need to be so proactive about rechecking an active path where we simply
-aren't getting the wwid.
+Thanks,
+Christophe.
 
--Ben
+On Wed, Oct 10, 2018 at 10:05 PM Martin Wilck <mwilck@suse.com> wrote:
 
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  multipathd/main.c | 32 +++++++++++++++++++++++---------
->  1 file changed, 23 insertions(+), 9 deletions(-)
-> 
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 2d45d989..a9e1a4bd 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -1828,15 +1828,29 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
->  	retrigger_tries = conf->retrigger_tries;
->  	checkint = conf->checkint;
->  	put_multipath_config(conf);
-> -	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV &&
-> -	    pp->retriggers < retrigger_tries) {
-> -		condlog(2, "%s: triggering change event to reinitialize",
-> -			pp->dev);
-> -		pp->initialized = INIT_REQUESTED_UDEV;
-> -		pp->retriggers++;
-> -		sysfs_attr_set_value(pp->udev, "uevent", "change",
-> -				     strlen("change"));
-> -		return 0;
-> +	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV) {
-> +		if (pp->retriggers < retrigger_tries) {
-> +			condlog(2, "%s: triggering change event to reinitialize",
-> +				pp->dev);
-> +			pp->initialized = INIT_REQUESTED_UDEV;
-> +			pp->retriggers++;
-> +			sysfs_attr_set_value(pp->udev, "uevent", "change",
-> +					     strlen("change"));
-> +			return 0;
-> +		} else {
-> +			condlog(1, "%s: not initialized after %d udev retriggers",
-> +				pp->dev, retrigger_tries);
-> +			/*
-> +			 * Make sure that the "add missing path" code path
-> +			 * below may reinstate the path later, if it ever
-> +			 * comes up again.
-> +			 * The WWID needs not be cleared; if it was set, the
-> +			 * state hadn't been INIT_MISSING_UDEV in the first
-> +			 * place.
-> +			 */
-> +			pp->initialized = INIT_FAILED;
-> +			return 0;
-> +		}
->  	}
->  
->  	/*
-> -- 
+> Hi Christophe,
+>
+> this series contains some patches I had on my list for
+> some time,  plus some stuff that came up during the discussion
+> about Ben's last large patch series.
+>
+> This goes on top of the "[PATCH 0/6] More misc multipath patches"
+> series that Ben sent today.
+>
+> Regards,
+> Martin
+>
+> Martin Wilck (8):
+>   test-kpartx: add test for invocation on image file
+>   libmultipath: scsi_ioctl_pathinfo doesn't fail
+>   libmultipath: cciss_ioctl_pathinfo doesn't fail
+>   multipath.rules: add comment about DM_MULTIPATH_DEVICE_PATH=2
+>   multipath.8: man page update
+>   libmultipath: test code for "zombie" TUR threads
+>   libmultipath: handle TUR threads that can't be cancelled
+>   multipathd: handle repeated udev retrigger failure
+>
+>  kpartx/test-kpartx          |  24 +++-
+>  libmultipath/checkers/tur.c |  69 ++++++++-
+>  libmultipath/discovery.c    |  33 ++---
+>  multipath/multipath.8       | 273 ++++++++++++++++++++++--------------
+>  multipath/multipath.rules   |   4 +
+>  multipathd/main.c           |  32 +++--
+>  6 files changed, 297 insertions(+), 138 deletions(-)
+>
+> --
 > 2.19.0
+>
+>
+
+--0000000000003e0618057818450a
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Martin,<div><br></div><div>The 01 to 06 patchs of this set=
+ are now merged.</div><div><br></div><div>Thanks,</div><div>Christophe.</di=
+v></div><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Wed, Oct 10, 201=
+8 at 10:05 PM Martin Wilck &lt;<a href=3D"mailto:mwilck@suse.com">mwilck@su=
+se.com</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=3D"m=
+argin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">Hi Christophe=
+,<br>
+<br>
+this series contains some patches I had on my list for<br>
+some time,=C2=A0 plus some stuff that came up during the discussion<br>
+about Ben&#39;s last large patch series.<br>
+<br>
+This goes on top of the &quot;[PATCH 0/6] More misc multipath patches&quot;=
+<br>
+series that Ben sent today.<br>
+<br>
+Regards,<br>
+Martin<br>
+<br>
+Martin Wilck (8):<br>
+=C2=A0 test-kpartx: add test for invocation on image file<br>
+=C2=A0 libmultipath: scsi_ioctl_pathinfo doesn&#39;t fail<br>
+=C2=A0 libmultipath: cciss_ioctl_pathinfo doesn&#39;t fail<br>
+=C2=A0 multipath.rules: add comment about DM_MULTIPATH_DEVICE_PATH=3D2<br>
+=C2=A0 multipath.8: man page update<br>
+=C2=A0 libmultipath: test code for &quot;zombie&quot; TUR threads<br>
+=C2=A0 libmultipath: handle TUR threads that can&#39;t be cancelled<br>
+=C2=A0 multipathd: handle repeated udev retrigger failure<br>
+<br>
+=C2=A0kpartx/test-kpartx=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 |=C2=A0 24 +++-<=
+br>
+=C2=A0libmultipath/checkers/tur.c |=C2=A0 69 ++++++++-<br>
+=C2=A0libmultipath/discovery.c=C2=A0 =C2=A0 |=C2=A0 33 ++---<br>
+=C2=A0multipath/multipath.8=C2=A0 =C2=A0 =C2=A0 =C2=A0| 273 +++++++++++++++=
++++++++--------------<br>
+=C2=A0multipath/multipath.rules=C2=A0 =C2=A0|=C2=A0 =C2=A04 +<br>
+=C2=A0multipathd/main.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0|=C2=A0 32 =
++++--<br>
+=C2=A06 files changed, 297 insertions(+), 138 deletions(-)<br>
+<br>
+-- <br>
+2.19.0<br>
+<br>
+</blockquote></div>
+
+--0000000000003e0618057818450a--
+
+
+--===============2854485570660695850==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2854485570660695850==--
