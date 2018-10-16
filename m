@@ -1,16 +1,17 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v4 11/11] block: Introduce
-	blk_revalidate_disk_zones()
-Date: Tue, 16 Oct 2018 11:17:58 -0400
-Message-ID: <20181016151758.GB26807@redhat.com>
-References: <20181012100850.23316-1-damien.lemoal@wdc.com>
-	<20181012100850.23316-12-damien.lemoal@wdc.com>
+Subject: Re: [PATCH 2/3] dm zoned: metadata: use refcount_t for
+ dm zoned reference counters
+Date: Tue, 16 Oct 2018 14:33:55 -0400
+Message-ID: <20181016183355.GA27563@redhat.com>
+References: <20180823173557.19665-1-jpittman@redhat.com>
+	<20180823173557.19665-3-jpittman@redhat.com>
+	<BN3PR0401MB1640A8B0BA57BD0FCBE691DCE7370@BN3PR0401MB1640.namprd04.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20181012100850.23316-12-damien.lemoal@wdc.com>
+In-Reply-To: <BN3PR0401MB1640A8B0BA57BD0FCBE691DCE7370@BN3PR0401MB1640.namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,43 +21,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <damien.lemoal@wdc.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Matias Bjorling <matias.bjorling@wdc.com>
+To: Damien Le Moal <Damien.LeMoal@wdc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, John Pittman <jpittman@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 12 2018 at  6:08am -0400,
-Damien Le Moal <damien.lemoal@wdc.com> wrote:
+On Thu, Aug 23 2018 at  6:12pm -0400,
+Damien Le Moal <Damien.LeMoal@wdc.com> wrote:
 
-> Drivers exposing zoned block devices have to initialize and maintain
-> correctness (i.e. revalidate) of the device zone bitmaps attached to
-> the device request queue (seq_zones_bitmap and seq_zones_wlock).
+> John,
 > 
-> To simplify coding this, introduce a generic helper function
-> blk_revalidate_disk_zones() suitable for most (and likely all) cases.
-> This new function always update the seq_zones_bitmap and seq_zones_wlock
-> bitmaps as well as the queue nr_zones field when called for a disk
-> using a request based queue. For a disk using a BIO based queue, only
-> the number of zones is updated since these queues do not have
-> schedulers and so do not need the zone bitmaps.
+> On 2018/08/23 10:37, John Pittman wrote:
+> > The API surrounding refcount_t should be used in place of atomic_t
+> > when variables are being used as reference counters.  This API can
+> > prevent issues such as counter overflows and use-after-free
+> > conditions.  Within the dm zoned metadata stack, the atomic_t API
+> > is used for mblk->ref and zone->refcount.  Change these to use
+> > refcount_t, avoiding the issues mentioned.
+> > 
+> > Signed-off-by: John Pittman <jpittman@redhat.com>
+> > ---
+> >  drivers/md/dm-zoned-metadata.c | 25 +++++++++++++------------
+> >  drivers/md/dm-zoned.h          |  2 +-
+> >  2 files changed, 14 insertions(+), 13 deletions(-)
+> > 
+> > diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+> > index 969954915566..92e635749414 100644
+> > --- a/drivers/md/dm-zoned-metadata.c
+> > +++ b/drivers/md/dm-zoned-metadata.c
+> > @@ -99,7 +99,7 @@ struct dmz_mblock {
+> >  	struct rb_node		node;
+> >  	struct list_head	link;
+> >  	sector_t		no;
+> > -	atomic_t		ref;
+> > +	refcount_t		ref;
 > 
-> With this change, the zone bitmap initialization code in sd_zbc.c can be
-> replaced with a call to this function in sd_zbc_read_zones(), which is
-> called from the disk revalidate block operation method.
+> While reviewing your patch, I realized that this ref is always manipulated under
+> the zmd->mblk_lock spinlock. So there is no need for it to be an atomic or a
+> refcount. An unsigned int would do as well and be faster. My fault.
 > 
-> A call to blk_revalidate_disk_zones() is also added to the null_blk
-> driver for devices created with the zoned mode enabled.
-> 
-> Finally, to ensure that zoned devices created with dm-linear or
-> dm-flakey expose the correct number of zones through sysfs, a call to
-> blk_revalidate_disk_zones() is added to dm_table_set_restrictions().
-> 
-> The zone bitmaps allocated and initialized with
-> blk_revalidate_disk_zones() are freed automatically from
-> __blk_release_queue() using the block internal function
-> blk_queue_free_zone_bitmaps().
-> 
-> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
-> Reviewed-by: Hannes Reinecke <hare@suse.com>
-> Reviewed-by: Christoph Hellwig <hch@lst.de>
+> I will send a patch to go on top of yours to fix that.
 
-Reviewed-by: Mike Snitzer <snitzer@redhat.com>
+Hi Damien,
+
+Given what you've said I'm not seeing the point in the intermediate
+refcount_t conversion. 
+
+I'd rather you just send a patch that switches atomic_t to int.
+
+Thanks,
+Mike
