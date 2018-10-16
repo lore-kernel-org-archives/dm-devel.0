@@ -1,16 +1,15 @@
 From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [PATCH v4 03/11] scsi: sd_zbc: Fix
-	sd_zbc_check_zones() error checks
-Date: Tue, 16 Oct 2018 00:51:47 -0400
-Message-ID: <yq1zhvetrx8.fsf@oracle.com>
+Subject: Re: [PATCH v4 10/11] block: add a report_zones method
+Date: Tue, 16 Oct 2018 00:55:47 -0400
+Message-ID: <yq1va62trqk.fsf@oracle.com>
 References: <20181012100850.23316-1-damien.lemoal@wdc.com>
-	<20181012100850.23316-4-damien.lemoal@wdc.com>
+	<20181012100850.23316-11-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181012100850.23316-4-damien.lemoal@wdc.com> (Damien Le Moal's
-	message of "Fri, 12 Oct 2018 19:08:42 +0900")
+In-Reply-To: <20181012100850.23316-11-damien.lemoal@wdc.com> (Damien Le Moal's
+	message of "Fri, 12 Oct 2018 19:08:49 +0900")
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,19 +26,24 @@ List-Id: dm-devel.ids
 
 Damien,
 
-> The unsigned 32 bits overflow check for the zone size value is already
-> done within sd_zbc_check_zones() with the test:
+> Dispatching a report zones command through the request queue is a
+> major pain due to the command reply payload rewriting necessary. Given
+> that blkdev_report_zones() is executing everything synchronously,
+> implement report zones as a block device file operation instead,
+> allowing major simplification of the code in many places.
 >
-> } else if (logical_to_sectors(sdkp->device, zone_blocks) > UINT_MAX) {
+> sd, null-blk, dm-linear and dm-flakey being the only block device
+> drivers supporting exposing zoned block devices, these drivers are
+> modified to provide the device side implementation of the
+> report_zones() block device file operation.
 >
-> so there is no need to check again for an out of range value in
-> sd_zbc_read_zones(). Simplify the code and fix sd_zbc_check_zones()
-> error return to -EFBIG instead of -ENODEV if the zone size is too large.
-> Change the return type of sd_zbc_check_zones() to an int for the error
-> code and return the zone size (zone_blocks) through a u32 pointer to
-> avoid overflowing the signed 32 return value.
+> For device mappers, a new report_zones() target type operation is
+> defined so that the upper block layer calls blkdev_report_zones() can
+> be propagated down to the underlying devices of the dm targets.
+> Implementation for this new operation is added to the dm-linear and
+> dm-flakey targets.
 
-Acked-by: Martin K. Petersen <martin.petersen@oracle.com>
+Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
 
 -- 
 Martin K. Petersen	Oracle Linux Engineering
