@@ -1,13 +1,14 @@
-From: Horia Geanta <horia.geanta@nxp.com>
-Subject: Re: dm-integrity stalls with iMX6q CAAM
-Date: Wed, 17 Oct 2018 13:35:37 +0000
-Message-ID: <VI1PR0402MB3485278043D883A74ED7AEBD98FF0@VI1PR0402MB3485.eurprd04.prod.outlook.com>
-References: <fbcca5eb-a301-53f4-3faf-a36a3229300d@baylibre.com>
+From: "Steinar H. Gunderson" <steinar+kernel@gunderson.no>
+Subject: Re: dm_cache BUG() after power loss
+Date: Wed, 17 Oct 2018 16:43:14 +0200
+Message-ID: <20181017144313.inmjiftle6trn7uc@sesse.net>
+References: <20181009160051.xlcpnnmyvhbivglk@sesse.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20181009160051.xlcpnnmyvhbivglk@sesse.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,46 +18,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Neil Armstrong <narmstrong@baylibre.com>, "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, Aymen Sghaier <aymen.sghaier@nxp.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 9/21/2018 3:06 PM, Neil Armstrong wrote:
-> Hi,
-> 
-> I recently configured dm-crypt + dm-integrity on an iMX6q platform with CAAM Hash functions enabled using the following command lines :
-> 
-> Linux 4.14.71
-> 
-> cryptsetup luksFormat /dev/mmcblk1p3 --cipher aes-xts-plain64 --type luks2 --integrity hmac-sha256 --sector-size 512 --use-urandom
-> cryptsetup open /dev/mmcblk1p3 root
-> mkfs.ext4 -v -F /dev/mapper/root
-> 
-> luksFormat and open finishes correctly, luksDump and status reports correct dm and luks properties.
-> 
-> but when trying to access the /dev/mapper/root (mkfs, sha256sum or whatever), it blocks without any warning or errors reported by the kernel.
-> I can see a few (~170) interrupts on the jr0 interrupt then nothing.
-> 
-> Is there a particular issue with hmac-sha256 with the linux CAAM driver ?
-> 
-> When disabling the CAAM hash functions or using another cipher & integrity pair, it works like a charm.
-> 
-The issue you are seeing is most probably related to CAAM driver not
-implementing correctly the crypto requests "backlogging".
-See commit c0403ec0bb5a ("Revert "dm crypt: fix deadlock when async crypto
-algorithm returns -EBUSY"") for a detailed description.
+On Tue, Oct 09, 2018 at 06:00:51PM +0200, Steinar H. Gunderson wrote:
+> We had a power loss event, and when a server with dm-cache came up again,
+> it paniced (see below for the panic text). I couldn't find any other way to
+> remedy this than to blow away the metadata volume, which I assumed was safe
+> as the cache is in writethrough mode (after several catastrophic events with
+> dm-cache earlier, I don't trust writeback anymore). Unfortunately, this was
+> seemingly not enough, as the underlying devices came back with various levels
+> of corruption and eventually had to be restored from backup. (It's running
+> without dm-cache now.)
 
-Historically, there have been several CAAM backlogging implementations proposed
-- but all were rejected:
-v1: https://patchwork.kernel.org/patch/7144701
-v2: https://patchwork.kernel.org/patch/7199241
-v3: https://patchwork.kernel.org/patch/7221941
-v4: https://patchwork.kernel.org/patch/7230241
-v5: https://patchwork.kernel.org/patch/9033121
+Is there some other place I should report this? The machine is awfully slow
+without its cache, so it's sort of annoying to run without. :-)
 
-Discussion here: https://community.nxp.com/message/1020096
-mentions v2 as solving the issue.
-You could try it while we find a solution that would be accepted upstream.
-
-Hope this helps,
-Horia
+/* Steinar */
+-- 
+Homepage: https://www.sesse.net/
