@@ -1,13 +1,13 @@
-From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH 2/2] dm-zoned: Fix dmz_get_mblock()
-Date: Wed, 17 Oct 2018 18:05:08 +0900
-Message-ID: <20181017090508.22376-3-damien.lemoal@wdc.com>
-References: <20181017090508.22376-1-damien.lemoal@wdc.com>
+From: Horia Geanta <horia.geanta@nxp.com>
+Subject: Re: dm-integrity stalls with iMX6q CAAM
+Date: Wed, 17 Oct 2018 13:35:37 +0000
+Message-ID: <VI1PR0402MB3485278043D883A74ED7AEBD98FF0@VI1PR0402MB3485.eurprd04.prod.outlook.com>
+References: <fbcca5eb-a301-53f4-3faf-a36a3229300d@baylibre.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181017090508.22376-1-damien.lemoal@wdc.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,157 +17,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: Neil Armstrong <narmstrong@baylibre.com>, "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, Aymen Sghaier <aymen.sghaier@nxp.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>
 List-Id: dm-devel.ids
 
-dmz_fetch_mblock() called from dmz_get_mblock() has a race since the
-allocation of the new metadata block descriptor and its insertion in
-the cache rbtree with the READING state is not atomic. Two different
-contexts requesting the same block may end up each adding two different
-descriptors of the same block to the cache.
+On 9/21/2018 3:06 PM, Neil Armstrong wrote:
+> Hi,
+> 
+> I recently configured dm-crypt + dm-integrity on an iMX6q platform with CAAM Hash functions enabled using the following command lines :
+> 
+> Linux 4.14.71
+> 
+> cryptsetup luksFormat /dev/mmcblk1p3 --cipher aes-xts-plain64 --type luks2 --integrity hmac-sha256 --sector-size 512 --use-urandom
+> cryptsetup open /dev/mmcblk1p3 root
+> mkfs.ext4 -v -F /dev/mapper/root
+> 
+> luksFormat and open finishes correctly, luksDump and status reports correct dm and luks properties.
+> 
+> but when trying to access the /dev/mapper/root (mkfs, sha256sum or whatever), it blocks without any warning or errors reported by the kernel.
+> I can see a few (~170) interrupts on the jr0 interrupt then nothing.
+> 
+> Is there a particular issue with hmac-sha256 with the linux CAAM driver ?
+> 
+> When disabling the CAAM hash functions or using another cipher & integrity pair, it works like a charm.
+> 
+The issue you are seeing is most probably related to CAAM driver not
+implementing correctly the crypto requests "backlogging".
+See commit c0403ec0bb5a ("Revert "dm crypt: fix deadlock when async crypto
+algorithm returns -EBUSY"") for a detailed description.
 
-Another problem for this function is that the BIO for processing the
-block read is allocated after the metadata block descriptor is inserted
-in the cache rbtree. If the BIO allocation fails, the metadata block
-descriptor is freed without first being removed from the rbtree.
+Historically, there have been several CAAM backlogging implementations proposed
+- but all were rejected:
+v1: https://patchwork.kernel.org/patch/7144701
+v2: https://patchwork.kernel.org/patch/7199241
+v3: https://patchwork.kernel.org/patch/7221941
+v4: https://patchwork.kernel.org/patch/7230241
+v5: https://patchwork.kernel.org/patch/9033121
 
-Fix the first problem by checking again if the requested block is not in
-the cache right before inserting the newly allocated descriptor,
-atomically under the mblk_lock spinlock. The second problem is fixed by
-simply allocating the BIO before inserting the new block in the cache.
+Discussion here: https://community.nxp.com/message/1020096
+mentions v2 as solving the issue.
+You could try it while we find a solution that would be accepted upstream.
 
-Finally, since dmz_fetch_mblock() also increments a block reference
-counter, rename the function to dmz_get_mblock_slow(). To be symmetric
-and clear, also rename dmz_lookup_mblock() to dmz_get_mblock_fast() and
-increment the block reference counter directly in that function rather
-than in dmz_get_mblock().
-
-Fixes: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target")
-Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
-Cc: stable@vger.kernel.org
-
----
- drivers/md/dm-zoned-metadata.c | 66 +++++++++++++++++++++-------------
- 1 file changed, 42 insertions(+), 24 deletions(-)
-
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index 67b71f6e3bda..fa68336560c3 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -339,10 +339,11 @@ static void dmz_insert_mblock(struct dmz_metadata *zmd, struct dmz_mblock *mblk)
- }
- 
- /*
-- * Lookup a metadata block in the rbtree.
-+ * Lookup a metadata block in the rbtree. If the block is found, increment
-+ * its reference count.
-  */
--static struct dmz_mblock *dmz_lookup_mblock(struct dmz_metadata *zmd,
--					    sector_t mblk_no)
-+static struct dmz_mblock *dmz_get_mblock_fast(struct dmz_metadata *zmd,
-+					      sector_t mblk_no)
- {
- 	struct rb_root *root = &zmd->mblk_rbtree;
- 	struct rb_node *node = root->rb_node;
-@@ -350,8 +351,17 @@ static struct dmz_mblock *dmz_lookup_mblock(struct dmz_metadata *zmd,
- 
- 	while (node) {
- 		mblk = container_of(node, struct dmz_mblock, node);
--		if (mblk->no == mblk_no)
-+		if (mblk->no == mblk_no) {
-+			/*
-+			 * If this is the first reference to the block,
-+			 * remove it from the LRU list.
-+			 */
-+			mblk->ref++;
-+			if (mblk->ref == 1 &&
-+			    !test_bit(DMZ_META_DIRTY, &mblk->state))
-+				list_del_init(&mblk->link);
- 			return mblk;
-+		}
- 		node = (mblk->no < mblk_no) ? node->rb_left : node->rb_right;
- 	}
- 
-@@ -382,32 +392,47 @@ static void dmz_mblock_bio_end_io(struct bio *bio)
- }
- 
- /*
-- * Read a metadata block from disk.
-+ * Read an uncached metadata block from disk and add it to the cache.
-  */
--static struct dmz_mblock *dmz_fetch_mblock(struct dmz_metadata *zmd,
--					   sector_t mblk_no)
-+static struct dmz_mblock *dmz_get_mblock_slow(struct dmz_metadata *zmd,
-+					      sector_t mblk_no)
- {
--	struct dmz_mblock *mblk;
-+	struct dmz_mblock *mblk, *m;
- 	sector_t block = zmd->sb[zmd->mblk_primary].block + mblk_no;
- 	struct bio *bio;
- 
--	/* Get block and insert it */
-+	/* Get a new block and a BIO to read it */
- 	mblk = dmz_alloc_mblock(zmd, mblk_no);
- 	if (!mblk)
- 		return NULL;
- 
--	spin_lock(&zmd->mblk_lock);
--	mblk->ref++;
--	set_bit(DMZ_META_READING, &mblk->state);
--	dmz_insert_mblock(zmd, mblk);
--	spin_unlock(&zmd->mblk_lock);
--
- 	bio = bio_alloc(GFP_NOIO, 1);
- 	if (!bio) {
- 		dmz_free_mblock(zmd, mblk);
- 		return NULL;
- 	}
- 
-+	spin_lock(&zmd->mblk_lock);
-+
-+	/*
-+	 * Make sure that another context did not start reading
-+	 * the block already.
-+	 */
-+	m = dmz_get_mblock_fast(zmd, mblk_no);
-+	if (m) {
-+		spin_unlock(&zmd->mblk_lock);
-+		dmz_free_mblock(zmd, mblk);
-+		bio_put(bio);
-+		return m;
-+	}
-+
-+	mblk->ref++;
-+	set_bit(DMZ_META_READING, &mblk->state);
-+	dmz_insert_mblock(zmd, mblk);
-+
-+	spin_unlock(&zmd->mblk_lock);
-+
-+	/* Submit read BIO */
- 	bio->bi_iter.bi_sector = dmz_blk2sect(block);
- 	bio_set_dev(bio, zmd->dev->bdev);
- 	bio->bi_private = mblk;
-@@ -509,19 +534,12 @@ static struct dmz_mblock *dmz_get_mblock(struct dmz_metadata *zmd,
- 
- 	/* Check rbtree */
- 	spin_lock(&zmd->mblk_lock);
--	mblk = dmz_lookup_mblock(zmd, mblk_no);
--	if (mblk) {
--		/* Cache hit: remove block from LRU list */
--		mblk->ref++;
--		if (mblk->ref == 1 &&
--		    !test_bit(DMZ_META_DIRTY, &mblk->state))
--			list_del_init(&mblk->link);
--	}
-+	mblk = dmz_get_mblock_fast(zmd, mblk_no);
- 	spin_unlock(&zmd->mblk_lock);
- 
- 	if (!mblk) {
- 		/* Cache miss: read the block from disk */
--		mblk = dmz_fetch_mblock(zmd, mblk_no);
-+		mblk = dmz_get_mblock_slow(zmd, mblk_no);
- 		if (!mblk)
- 			return ERR_PTR(-ENOMEM);
- 	}
--- 
-2.17.2
+Hope this helps,
+Horia
