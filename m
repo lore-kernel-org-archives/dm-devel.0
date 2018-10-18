@@ -1,14 +1,17 @@
-From: Gilad Ben-Yossef <gilad@benyossef.com>
-Subject: Re: dm-integrity stalls with iMX6q CAAM
-Date: Thu, 18 Oct 2018 08:35:11 +0300
-Message-ID: <CAOtvUMditsPn90kVSjpkKKzweAnp-ywvt7hps407GmruEMmRCQ@mail.gmail.com>
-References: <fbcca5eb-a301-53f4-3faf-a36a3229300d@baylibre.com>
-	<VI1PR0402MB3485278043D883A74ED7AEBD98FF0@VI1PR0402MB3485.eurprd04.prod.outlook.com>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [PATCH v4 00/11] Zoned block device support
+	improvements
+Date: Thu, 18 Oct 2018 07:57:38 +0000
+Message-ID: <BN3PR0401MB1640E5E4E056F914DB3E7D53E7F80@BN3PR0401MB1640.namprd04.prod.outlook.com>
+References: <20181012100850.23316-1-damien.lemoal@wdc.com>
+	<f6062f58-8f8a-b90a-9163-5938632e1a6a@kernel.dk>
+	<BN3PR0401MB16409A77BC3EA6E37073DD17E7FD0@BN3PR0401MB1640.namprd04.prod.outlook.com>
+	<af21e631-78bc-71f3-60a9-d021f074dab8@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <VI1PR0402MB3485278043D883A74ED7AEBD98FF0@VI1PR0402MB3485.eurprd04.prod.outlook.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,41 +21,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: =?UTF-8?Q?Horia_Geant=C4=83?= <horia.geanta@nxp.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, device-mapper development <dm-devel@redhat.com>, aymen.sghaier@nxp.com, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, narmstrong@baylibre.com
+To: Jens Axboe <axboe@kernel.dk>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Martin K . Petersen" <martin.petersen@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, Matias Bjorling <Matias.Bjorling@wdc.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCBPY3QgMTcsIDIwMTggYXQgNDozNSBQTSBIb3JpYSBHZWFudGEgPGhvcmlhLmdlYW50
-YUBueHAuY29tPiB3cm90ZToKPgo+IE9uIDkvMjEvMjAxOCAzOjA2IFBNLCBOZWlsIEFybXN0cm9u
-ZyB3cm90ZToKPiA+IEhpLAo+ID4KPiA+IEkgcmVjZW50bHkgY29uZmlndXJlZCBkbS1jcnlwdCAr
-IGRtLWludGVncml0eSBvbiBhbiBpTVg2cSBwbGF0Zm9ybSB3aXRoIENBQU0gSGFzaCBmdW5jdGlv
-bnMgZW5hYmxlZCB1c2luZyB0aGUgZm9sbG93aW5nIGNvbW1hbmQgbGluZXMgOgo+ID4KPiA+IExp
-bnV4IDQuMTQuNzEKPiA+Cj4gPiBjcnlwdHNldHVwIGx1a3NGb3JtYXQgL2Rldi9tbWNibGsxcDMg
-LS1jaXBoZXIgYWVzLXh0cy1wbGFpbjY0IC0tdHlwZSBsdWtzMiAtLWludGVncml0eSBobWFjLXNo
-YTI1NiAtLXNlY3Rvci1zaXplIDUxMiAtLXVzZS11cmFuZG9tCj4gPiBjcnlwdHNldHVwIG9wZW4g
-L2Rldi9tbWNibGsxcDMgcm9vdAo+ID4gbWtmcy5leHQ0IC12IC1GIC9kZXYvbWFwcGVyL3Jvb3QK
-PiA+Cj4gPiBsdWtzRm9ybWF0IGFuZCBvcGVuIGZpbmlzaGVzIGNvcnJlY3RseSwgbHVrc0R1bXAg
-YW5kIHN0YXR1cyByZXBvcnRzIGNvcnJlY3QgZG0gYW5kIGx1a3MgcHJvcGVydGllcy4KPiA+Cj4g
-PiBidXQgd2hlbiB0cnlpbmcgdG8gYWNjZXNzIHRoZSAvZGV2L21hcHBlci9yb290IChta2ZzLCBz
-aGEyNTZzdW0gb3Igd2hhdGV2ZXIpLCBpdCBibG9ja3Mgd2l0aG91dCBhbnkgd2FybmluZyBvciBl
-cnJvcnMgcmVwb3J0ZWQgYnkgdGhlIGtlcm5lbC4KPiA+IEkgY2FuIHNlZSBhIGZldyAofjE3MCkg
-aW50ZXJydXB0cyBvbiB0aGUganIwIGludGVycnVwdCB0aGVuIG5vdGhpbmcuCj4gPgo+ID4gSXMg
-dGhlcmUgYSBwYXJ0aWN1bGFyIGlzc3VlIHdpdGggaG1hYy1zaGEyNTYgd2l0aCB0aGUgbGludXgg
-Q0FBTSBkcml2ZXIgPwo+ID4KPiA+IFdoZW4gZGlzYWJsaW5nIHRoZSBDQUFNIGhhc2ggZnVuY3Rp
-b25zIG9yIHVzaW5nIGFub3RoZXIgY2lwaGVyICYgaW50ZWdyaXR5IHBhaXIsIGl0IHdvcmtzIGxp
-a2UgYSBjaGFybS4KPiA+Cj4gVGhlIGlzc3VlIHlvdSBhcmUgc2VlaW5nIGlzIG1vc3QgcHJvYmFi
-bHkgcmVsYXRlZCB0byBDQUFNIGRyaXZlciBub3QKPiBpbXBsZW1lbnRpbmcgY29ycmVjdGx5IHRo
-ZSBjcnlwdG8gcmVxdWVzdHMgImJhY2tsb2dnaW5nIi4KPiBTZWUgY29tbWl0IGMwNDAzZWMwYmI1
-YSAoIlJldmVydCAiZG0gY3J5cHQ6IGZpeCBkZWFkbG9jayB3aGVuIGFzeW5jIGNyeXB0bwo+IGFs
-Z29yaXRobSByZXR1cm5zIC1FQlVTWSIiKSBmb3IgYSBkZXRhaWxlZCBkZXNjcmlwdGlvbi4KPgo+
-IEhpc3RvcmljYWxseSwgdGhlcmUgaGF2ZSBiZWVuIHNldmVyYWwgQ0FBTSBiYWNrbG9nZ2luZyBp
-bXBsZW1lbnRhdGlvbnMgcHJvcG9zZWQKPiAtIGJ1dCBhbGwgd2VyZSByZWplY3RlZDoKCmhtbW0u
-Li4gb2J2aW91c2x5IHRoZSByaWdodCBzb2x1dGlvbiBpcyB0byBpbXBsZW1lbnQgYmFja2xvZ2dp
-bmcgYnV0CnlvdSBtaWdodCB3YW50IHRvIGNvbnNpZGVyIGNoYW5naW5nIHRoZSBkcml2ZXIgdG8K
-cmV0dXJuIC1FTk9TUEMgb3IgLUVOT1NZUyBpbnN0ZWFkIGluIHRoZSBtZWFudGltZS4gSXQgc2hv
-dWxkIGNhdXNlCmRtLWNyeXB0IHRvIGZhaWwgcmF0aGVyIHRoYW4gaGFuZy4uLiB3aGljaCBpcyBu
-b3QgbmVjZXNzYXJpbHkgYmV0dGVyLApidXQgYXQgbGVhc3QgbW9yZSBvYnZpb3VzIGJ5IHRoZSB1
-c2VyIHdoYXQgaXMgZ29pbmcgb24/CgpHaWxhZAoKLS0gCkdpbGFkIEJlbi1Zb3NzZWYKQ2hpZWYg
-Q29mZmVlIERyaW5rZXIKCnZhbHVlcyBvZiDOsiB3aWxsIGdpdmUgcmlzZSB0byBkb20hCgotLQpk
-bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
-YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On 2018/10/16 11:34, Jens Axboe wrote:
+> On 10/14/18 6:45 PM, Damien Le Moal wrote:
+>> Jens,
+>>
+>> On 2018/10/14 7:43, Jens Axboe wrote:
+>>> On 10/12/18 4:08 AM, Damien Le Moal wrote:
+>>>> This series improves zoned block device support (reduce overhead) and
+>>>> introduces many simplifications to the code (overall, there are more deletions
+>>>> than insertions).
+>>>>
+>>>> In more details:
+>>>> * Patches 1 to 3 are SCSI side (sd driver) cleanups and improvements reducing
+>>>>   the overhead of report zones command execution during disk scan and
+>>>>   revalidation.
+>>>> * Patches 4 to 9 improve the useability and user API of zoned block devices.
+>>>> * Patch 10 is the main part of this series. This patch replaces the
+>>>>   REQ_OP_ZONE_REPORT BIO/request operation for executing report zones commands
+>>>>   with a block device file operation, removing the need for the command reply
+>>>>   payload in-place rewriting in the BIO buffer. This leads to major
+>>>>   simplification of the code in many places.
+>>>> * Patch 11 further simplifies the code of low level drivers by providing a
+>>>>   generic implementation of zoned block device request queue zone bitmaps
+>>>>   initialization and revalidation.
+>>>>
+>>>> Please consider the addition of these patches in 4.20.
+>>>> Comments are as always welcome.
+>>>
+>>> How do we want to funnel this series? 1-3 look separate, so perhaps
+>>> they should go through the scsi tree. Then I can take the rest. Or do
+>>> some of the later ones depend on 1-3 being in, in terms of applying
+>>> cleanly?  I can also take all of them, looks like only #3 needs a
+>>> SCSI ack.
+>>
+>> Patch 10 and 11 will not apply cleanly for the scsi part without 1-3
+>> in first.  1-3, 10 and 11 would need an ack/review from Martin (SCSI).
+>> And 10-11 also probably need an ack/review from Mike for the DM
+>> changes.
+> 
+> Probably want to start pinging people, if you're targeting 4.20 with
+> this...
+
+Hi Jens,
+
+Martin and Mike acked/reviewed the SCSI and DM parts respectively (thanks !).
+Do you think you can take this series for 4.20 ?
+
+Thanks.
+
+-- 
+Damien Le Moal
+Western Digital Research
