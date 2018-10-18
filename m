@@ -1,17 +1,12 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH v4 00/11] Zoned block device support
-	improvements
-Date: Thu, 18 Oct 2018 07:57:38 +0000
-Message-ID: <BN3PR0401MB1640E5E4E056F914DB3E7D53E7F80@BN3PR0401MB1640.namprd04.prod.outlook.com>
-References: <20181012100850.23316-1-damien.lemoal@wdc.com>
-	<f6062f58-8f8a-b90a-9163-5938632e1a6a@kernel.dk>
-	<BN3PR0401MB16409A77BC3EA6E37073DD17E7FD0@BN3PR0401MB1640.namprd04.prod.outlook.com>
-	<af21e631-78bc-71f3-60a9-d021f074dab8@kernel.dk>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: LUKS2 - RAID0 - NVME : alignment issue
+Date: Thu, 18 Oct 2018 13:51:01 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1810181342200.19328@file01.intranet.prod.int.rdu2.redhat.com>
+References: <CAHzw6onNd8JskiB75PzFd4Zo45dP4fx3emoHFz8eTNkTV2+7+A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: MULTIPART/MIXED; BOUNDARY="185206533-906627235-1539885061=:19328"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <CAHzw6onNd8JskiB75PzFd4Zo45dP4fx3emoHFz8eTNkTV2+7+A@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,58 +16,66 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Martin K . Petersen" <martin.petersen@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>, Matias Bjorling <Matias.Bjorling@wdc.com>
+To: laurent cop <laurent.cop@gmail.com>
+Cc: dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On 2018/10/16 11:34, Jens Axboe wrote:
-> On 10/14/18 6:45 PM, Damien Le Moal wrote:
->> Jens,
->>
->> On 2018/10/14 7:43, Jens Axboe wrote:
->>> On 10/12/18 4:08 AM, Damien Le Moal wrote:
->>>> This series improves zoned block device support (reduce overhead) and
->>>> introduces many simplifications to the code (overall, there are more deletions
->>>> than insertions).
->>>>
->>>> In more details:
->>>> * Patches 1 to 3 are SCSI side (sd driver) cleanups and improvements reducing
->>>>   the overhead of report zones command execution during disk scan and
->>>>   revalidation.
->>>> * Patches 4 to 9 improve the useability and user API of zoned block devices.
->>>> * Patch 10 is the main part of this series. This patch replaces the
->>>>   REQ_OP_ZONE_REPORT BIO/request operation for executing report zones commands
->>>>   with a block device file operation, removing the need for the command reply
->>>>   payload in-place rewriting in the BIO buffer. This leads to major
->>>>   simplification of the code in many places.
->>>> * Patch 11 further simplifies the code of low level drivers by providing a
->>>>   generic implementation of zoned block device request queue zone bitmaps
->>>>   initialization and revalidation.
->>>>
->>>> Please consider the addition of these patches in 4.20.
->>>> Comments are as always welcome.
->>>
->>> How do we want to funnel this series? 1-3 look separate, so perhaps
->>> they should go through the scsi tree. Then I can take the rest. Or do
->>> some of the later ones depend on 1-3 being in, in terms of applying
->>> cleanly?  I can also take all of them, looks like only #3 needs a
->>> SCSI ack.
->>
->> Patch 10 and 11 will not apply cleanly for the scsi part without 1-3
->> in first.  1-3, 10 and 11 would need an ack/review from Martin (SCSI).
->> And 10-11 also probably need an ack/review from Mike for the DM
->> changes.
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+--185206533-906627235-1539885061=:19328
+Content-Type: TEXT/PLAIN; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+
+
+
+On Fri, 12 Oct 2018, laurent cop wrote:
+
+> Hello,
 > 
-> Probably want to start pinging people, if you're targeting 4.20 with
-> this...
+> I have trouble while in top of the stack :
+> mkfs.ext4 /dev/mapper/raid0luks2
+> /dev/mapper/raid0luks2 alignement is offset by 147456 bytes
+> This may result in very poor performance (re-) partitioning is suggested.
+> I have the same pb with mkfs.xfs
 
-Hi Jens,
+Just ignore this warning. dm-integrity interleaves data and metadata and 
+consequently data are not aligned on raid stripe boundary.
 
-Martin and Mike acked/reviewed the SCSI and DM parts respectively (thanks !).
-Do you think you can take this series for 4.20 ?
+> I am using following scheme:
+> 
+> LUKS2           => created with cryptsetup -v luksFormat --type luks2 /dev/md127 --cipher aes-gcm-random --integrity aeae
+> RAID 0           => created with mdadm chunk=32
+> 3 Disks NVME => partition with gdisk (fist sector : 2048)
+> 
+> I got this information with lsblk -t for each 3 disks, i got the same information.
+> nvmeXn1
+>        -> NvmeXn1p1                                 ALIGN = 0
+>                   -> md127                               ALIGN = 0
+>                            -> raid0luks2_dif           ALIGN = 147456
+>                                        -> raid0luks2     ALIGN = 147456
+> 1) How can I solve my alignment issue?
+>
+> 2) Is it normal to have low performances while writing with dd. I was 
+> using LUKS previously and I got only one dev mapper. Now I got 2. Does 
+> it have a big impact on performances?
+> 
+> Kind regards.
 
-Thanks.
+dm-integrity already slows down writes about 3 times. At this situation, 
+trying to align accesses to raid stripe size doesn't make much sense.
 
--- 
-Damien Le Moal
-Western Digital Research
+If you want to improve performance, you may try to put two dm-ingerity 
+images directly on the SSDs and create raid-0 on the top of them. It may 
+perform better, but you'll have to benchmark it with the workload you are 
+optimizing for.
+
+Mikulas
+--185206533-906627235-1539885061=:19328
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--185206533-906627235-1539885061=:19328--
