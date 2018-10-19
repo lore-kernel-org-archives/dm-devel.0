@@ -1,72 +1,62 @@
 From: Vitaly Chikunov <vt@altlinux.org>
-Subject: Re: dm: add secdel target
-Date: Fri, 19 Oct 2018 15:02:10 +0300
-Message-ID: <20181019120209.osicx2v3vebvsxqr@sole.flsd.net>
+Subject: Re: [dm-devel] [PATCH] dm: add secdel target
+Date: Fri, 19 Oct 2018 15:11:21 +0300
+Message-ID: <20181019121121.k6nv6we37y52ymuc@sole.flsd.net>
 References: <20181014112439.8119-1-vt@altlinux.org>
- <20181018200124.GA6996@redhat.com>
+ <20181019061945.GA7403@infradead.org>
+ <20181019114944.syemvziebwfuruof@sole.flsd.net>
+ <20181019120033.GA7869@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=koi8-r
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181018200124.GA6996@redhat.com>
+In-Reply-To: <20181019120033.GA7869@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Jonathan Corbet <corbet@lwn.net>, Shaohua Li <shli@kernel.org>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Jonathan Corbet <corbet@lwn.net>, Shaohua Li <shli@kernel.org>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Oct 18, 2018 at 04:01:25PM -0400, Mike Snitzer wrote:
-> On Sun, Oct 14 2018 at  7:24am -0400,
-> Vitaly Chikunov <vt@altlinux.org> wrote:
-> 
-> > Report to the upper level ability to discard, and translate arriving
-> > discards to the writes of random or zero data to the underlying level.
+On Fri, Oct 19, 2018 at 05:00:33AM -0700, Christoph Hellwig wrote:
+> On Fri, Oct 19, 2018 at 02:49:44PM +0300, Vitaly Chikunov wrote:
+> > On Thu, Oct 18, 2018 at 11:19:45PM -0700, Christoph Hellwig wrote:
+> > > Just as a note:  the name is a complete misowner, a couple overwrite
+> > > are not in any way secure deletion.  So naming it this way and exposing
+> > > this as erase is a problem that is going to get back to bite us.
 > > 
-> > Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
-> > ---
-> >   This target is the same as the linear target except that is reports ability to
-> >   discard to the upper level and translates arriving discards into sector
-> >   overwrites with random (or zero) data.
+> > In what way it's not secure deletion?
+> > 
+> > It's secure deletion by overwriting discarded data instead of leaving it
+> > as is.
 > 
-> There is a fair amount of code duplication between dm-linear.c and this
-> new target.
+> Overwriting data does not delete data.  Most certainly not in Flash based
+> SSDs, but also not in many storage arrays, or for that matter many modern
+> disks that have sectore remapping and various kinds of non-volatile
+> caches.  There is a reason why devices tend to have special commands to
+> perform secure erase - depending on the media they might or might not
+> overwrite internally, but at least they do it in a way that actually
+> works for the given media and device configuration.
+
+I know that. This is why it says "The target does not try to determine
+if the underlying drive reliably support data overwrites, this decision
+is solely on the discretion of a user. Please note that not all drivers
+support this ability."
+
+
+> > dm-erase or dm-wipe? dm-discerase?
 > 
-> Something needs to give, ideally you'd factor out methods that are
-> shared by both targets, but those methods must _not_ introduce overhead
-> to dm-linear.
+> dm-overwrite?
 
-I see three possible solutions:
- - integrate 'secdel' into dm-linear;
- - export functions like linear_dax_copy_to_iter and fill them into
-   secdel's `struct target_type`;
- - call methods of linear's `struct target_type` from secdel's one.
+These are all good to me.
 
-> Could be that dm-linear methods just get called by the wrapper
-> dm-sec-erase target (more on the "dm-sec-erase" name below).
-
-> > diff --git a/drivers/md/dm-secdel.c b/drivers/md/dm-secdel.c
-> > new file mode 100644
-> > index 000000000000..9aeaf3f243c0
-> > --- /dev/null
-> > +++ b/drivers/md/dm-secdel.c
-> ... 
-> > +			if (mode == SECDEL_MODE_RAND) {
-> > +				page = alloc_page(gfp_mask);
-> > +				if (!page) {
-> > +					DMERR("%s %lu[%lu]: no memory to allocate page for random data",
-> > +					      __func__, sector, nr_sects);
-> > +					/* will fallback to zero filling */
 > 
-> In general, performing memory allocations to service IO is something all
-> DM core and DM targets must work to avoid.  This smells bad.
+> > But still provide REQ_OP_SECURE_ERASE support?
 > 
-> ...
+> On the one hand that is highly misleading and would warrant a warning
+> (see above), on the other hand discard is purely advisory and can be
+> skipped any time, including by intermediate layers.  So I don't think
+> you can actually do what you want without major changes to the whole
+> I/O stack.
 
-Yes, but we need to create and write random data, so I don't see other
-solution. In zero overwriting mode page is not allocated. And it's fall
-back to zero overwriting if page allocation fails for random data.
-
-> Mike
-
-I will address these and other your concerns in v2.
-
-Thanks!
+Probably, a concerned user should test his setup to be sure discards
+reach dm-secdel (after that they go as writes), and data he thinks
+should be erased is erased.
