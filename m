@@ -1,14 +1,14 @@
 From: Milan Broz <gmazyland@gmail.com>
 Subject: Re: LUKS2 - RAID0 - NVME : alignment issue
-Date: Fri, 19 Oct 2018 08:47:33 +0200
-Message-ID: <2cd7ddd8-6c3c-e420-fd1f-44912f24ca66@gmail.com>
+Date: Fri, 19 Oct 2018 08:43:21 +0200
+Message-ID: <e291e3f1-b1c4-f560-c30f-40f21e4e48c5@gmail.com>
 References: <CAHzw6onNd8JskiB75PzFd4Zo45dP4fx3emoHFz8eTNkTV2+7+A@mail.gmail.com>
-	<alpine.LRH.2.02.1810181342200.19328@file01.intranet.prod.int.rdu2.redhat.com>
+	<20181018184312.GA6643@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1810181342200.19328@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <20181018184312.GA6643@redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,53 +19,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>, laurent cop <laurent.cop@gmail.com>
+To: Mike Snitzer <snitzer@redhat.com>, laurent cop <laurent.cop@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gMTgvMTAvMjAxOCAxOTo1MSwgTWlrdWxhcyBQYXRvY2thIHdyb3RlOgo+IE9uIEZyaSwgMTIg
-T2N0IDIwMTgsIGxhdXJlbnQgY29wIHdyb3RlOgo+IAo+PiBIZWxsbywKPj4KPj4gSSBoYXZlIHRy
-b3VibGUgd2hpbGUgaW4gdG9wIG9mIHRoZSBzdGFjayA6Cj4+IG1rZnMuZXh0NCAvZGV2L21hcHBl
-ci9yYWlkMGx1a3MyCj4+IC9kZXYvbWFwcGVyL3JhaWQwbHVrczIgYWxpZ25lbWVudCBpcyBvZmZz
-ZXQgYnkgMTQ3NDU2IGJ5dGVzCj4+IFRoaXMgbWF5IHJlc3VsdCBpbiB2ZXJ5IHBvb3IgcGVyZm9y
-bWFuY2UgKHJlLSkgcGFydGl0aW9uaW5nIGlzIHN1Z2dlc3RlZC4KPj4gSSBoYXZlIHRoZSBzYW1l
-IHBiIHdpdGggbWtmcy54ZnMKPiAKPiBKdXN0IGlnbm9yZSB0aGlzIHdhcm5pbmcuIGRtLWludGVn
-cml0eSBpbnRlcmxlYXZlcyBkYXRhIGFuZCBtZXRhZGF0YSBhbmQgCj4gY29uc2VxdWVudGx5IGRh
-dGEgYXJlIG5vdCBhbGlnbmVkIG9uIHJhaWQgc3RyaXBlIGJvdW5kYXJ5Lgo+IAo+PiBJIGFtIHVz
-aW5nIGZvbGxvd2luZyBzY2hlbWU6Cj4+Cj4+IExVS1MywqDCoMKgwqDCoMKgwqDCoMKgwqAgPT4g
-Y3JlYXRlZCB3aXRoIGNyeXB0c2V0dXAgLXYgbHVrc0Zvcm1hdCAtLXR5cGUgbHVrczIgL2Rldi9t
-ZDEyNyAtLWNpcGhlciBhZXMtZ2NtLXJhbmRvbSAtLWludGVncml0eSBhZWFlCj4+IFJBSUQgMMKg
-wqDCoMKgwqDCoMKgwqDCoMKgID0+IGNyZWF0ZWQgd2l0aCBtZGFkbSBjaHVuaz0zMgo+PiAzIERp
-c2tzIE5WTUUgPT4gcGFydGl0aW9uIHdpdGggZ2Rpc2sgKGZpc3Qgc2VjdG9yIDogMjA0OCkKPj4K
-Pj4gSSBnb3QgdGhpcyBpbmZvcm1hdGlvbiB3aXRoIGxzYmxrIC10IGZvciBlYWNoIDMgZGlza3Ms
-IGkgZ290IHRoZSBzYW1lIGluZm9ybWF0aW9uLgo+PiBudm1lWG4xCj4+IMKgwqDCoMKgwqDCoCAt
-PiBOdm1lWG4xcDHCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgIEFMSUdOID0gMAo+PiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgIC0+IG1kMTI3wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgIEFMSUdOID0gMAo+PiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIC0+IHJhaWQwbHVrczJfZGlmwqDCoMKgwqDC
-oMKgwqDCoMKgwqAgQUxJR04gPSAxNDc0NTYKPj4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCAtPiByYWlk
-MGx1a3MywqDCoMKgwqAgQUxJR04gPSAxNDc0NTYKPj4gMSkgSG93IGNhbiBJIHNvbHZlIG15IGFs
-aWdubWVudCBpc3N1ZT8KPj4KPj4gMikgSXMgaXQgbm9ybWFsIHRvIGhhdmUgbG93IHBlcmZvcm1h
-bmNlcyB3aGlsZSB3cml0aW5nIHdpdGggZGQuIEkgd2FzIAo+PiB1c2luZyBMVUtTIHByZXZpb3Vz
-bHkgYW5kIEkgZ290IG9ubHkgb25lIGRldiBtYXBwZXIuIE5vdyBJIGdvdCAyLiBEb2VzIAo+PiBp
-dCBoYXZlIGEgYmlnIGltcGFjdCBvbiBwZXJmb3JtYW5jZXM/Cj4+Cj4+IEtpbmQgcmVnYXJkcy4K
-PiAKPiBkbS1pbnRlZ3JpdHkgYWxyZWFkeSBzbG93cyBkb3duIHdyaXRlcyBhYm91dCAzIHRpbWVz
-LiBBdCB0aGlzIHNpdHVhdGlvbiwgCj4gdHJ5aW5nIHRvIGFsaWduIGFjY2Vzc2VzIHRvIHJhaWQg
-c3RyaXBlIHNpemUgZG9lc24ndCBtYWtlIG11Y2ggc2Vuc2UuCgpBY3R1YWxseSwgSSB0aGluayB0
-aGF0IHRoZSBhbGlnbm1lbnQgcmVwb3J0ZWQgdGhlcmUgZG9lcyBub3QgbWFrZSBhbnkKc2Vuc2Ug
-Zm9yIGRtLWludGVncml0eSAoaGVyZSBpcyBub3QgYSBzaW1wbGUgb2Zmc2V0LCBkYXRhIGFuZCBt
-ZXRhZGF0YSBhcmUgaW50ZXJsZWF2ZWQsCnRoZXJlIGlzIGEgam91cm5hbC4uLiBEbS1pbnRlZ3Jp
-dHkgaGVyZSBiZWhhdmVzIG1vcmUgbGlrZSBhIGZpbGVzeXN0ZW0gLSB3aGF0IGEgc2luZ2xlCm9m
-ZnNldCBtZWFucz8KCkFueXdheSwgTWlrdWxhcyBkaXNhZ3JlZXMgd2l0aCBtZSB0byBzaW1wbGUg
-cmVtb3ZlIGl0IDotKQoKPiBJZiB5b3Ugd2FudCB0byBpbXByb3ZlIHBlcmZvcm1hbmNlLCB5b3Ug
-bWF5IHRyeSB0byBwdXQgdHdvIGRtLWluZ2VyaXR5IAo+IGltYWdlcyBkaXJlY3RseSBvbiB0aGUg
-U1NEcyBhbmQgY3JlYXRlIHJhaWQtMCBvbiB0aGUgdG9wIG9mIHRoZW0uIEl0IG1heSAKPiBwZXJm
-b3JtIGJldHRlciwgYnV0IHlvdSdsbCBoYXZlIHRvIGJlbmNobWFyayBpdCB3aXRoIHRoZSB3b3Jr
-bG9hZCB5b3UgYXJlIAo+IG9wdGltaXppbmcgZm9yLgoKWW91IGNhbiBkbyB0aGlzIHdpdGggTFVL
-UzIgYXV0aGVudGljYXRlZCBlbmNyeXB0aW9uIGFzIHdlbGwsIGJ1dCBJIGFtIG5vdCBzdXJlCml0
-IGlzIGdvb2QgaWRlYSAtIGl0IHdpbGwgZWF0IENQVSB0aW1lIGZvciBlbmNyeXB0aW9uIGZvciBl
-YWNoIHJhaWQgMCBtZW1iZXIuCgpNaWxhbgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
-dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
-LWRldmVs
+On 18/10/2018 20:43, Mike Snitzer wrote:
+> On Fri, Oct 12 2018 at  7:56am -0400,
+> laurent cop <laurent.cop@gmail.com> wrote:
+> 
+>>    2) Is it normal to have low performances while writing with dd. I was
+>>    using LUKS previously and I got only one dev mapper. Now I got 2. Does it
+>>    have a big impact on performances?
+> 
+> This last question really makes me wonder: did you intend to enable the
+> use of dm-integrity?
+
+If you use an authenticated encryption in LUKS2, it must use dm-integrity as a backend,
+so you get two stacked devices. (Authentication tag and random IV must be stored together
+with every sector, here dm-integrity just provides a space for it, it does not
+calculate anything, all is up to dm-crypt.)
+
+
+m.
