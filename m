@@ -1,43 +1,39 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: LUKS2 - RAID0 - NVME : alignment issue
-Date: Fri, 19 Oct 2018 08:43:21 +0200
-Message-ID: <e291e3f1-b1c4-f560-c30f-40f21e4e48c5@gmail.com>
-References: <CAHzw6onNd8JskiB75PzFd4Zo45dP4fx3emoHFz8eTNkTV2+7+A@mail.gmail.com>
-	<20181018184312.GA6643@redhat.com>
+From: Vitaly Chikunov <vt@altlinux.org>
+Subject: Re: [dm-devel] [PATCH] dm: add secdel target
+Date: Fri, 19 Oct 2018 14:49:44 +0300
+Message-ID: <20181019114944.syemvziebwfuruof@sole.flsd.net>
+References: <20181014112439.8119-1-vt@altlinux.org>
+ <20181019061945.GA7403@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181018184312.GA6643@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, laurent cop <laurent.cop@gmail.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=koi8-r
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20181019061945.GA7403@infradead.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Jonathan Corbet <corbet@lwn.net>, Shaohua Li <shli@kernel.org>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 18/10/2018 20:43, Mike Snitzer wrote:
-> On Fri, Oct 12 2018 at  7:56am -0400,
-> laurent cop <laurent.cop@gmail.com> wrote:
-> 
->>    2) Is it normal to have low performances while writing with dd. I was
->>    using LUKS previously and I got only one dev mapper. Now I got 2. Does it
->>    have a big impact on performances?
-> 
-> This last question really makes me wonder: did you intend to enable the
-> use of dm-integrity?
+On Thu, Oct 18, 2018 at 11:19:45PM -0700, Christoph Hellwig wrote:
+> Just as a note:  the name is a complete misowner, a couple overwrite
+> are not in any way secure deletion.  So naming it this way and exposing
+> this as erase is a problem that is going to get back to bite us.
 
-If you use an authenticated encryption in LUKS2, it must use dm-integrity as a backend,
-so you get two stacked devices. (Authentication tag and random IV must be stored together
-with every sector, here dm-integrity just provides a space for it, it does not
-calculate anything, all is up to dm-crypt.)
+In what way it's not secure deletion?
+
+It's secure deletion by overwriting discarded data instead of leaving it
+as is. Thus it's secure deletion in some way. Level of security and
+applicability (disks choice) is to be determined by the end user.
+Because nobody could guarantee absolute security. Some three letter
+agencies require just one pass of overwrite, some say that more than one
+pass does not increase security. Some hardware disks advertising secure
+deletion may do not much more than this target. Thus 'secure erase' is
+applicable in that way too.
 
 
-m.
+> If you really want this anyway at least give it a different way, and
+> do a one-time warning when th first erase comes in that it is not in
+> any meaninful way secure.
+
+dm-erase or dm-wipe? dm-discerase? But still provide REQ_OP_SECURE_ERASE
+support?
