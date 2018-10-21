@@ -1,7 +1,7 @@
 From: shenghui <shhuiw@foxmail.com>
-Subject: How to setup a basic writecache env?
-Date: Sun, 21 Oct 2018 10:44:00 +0800
-Message-ID: <17790.4479708106$1540203554@news.gmane.org>
+Subject: How to understand dm-writecache/memory_entry
+Date: Sun, 21 Oct 2018 21:18:27 +0800
+Message-ID: <2577.9046970003$1540204360@news.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -21,20 +21,19 @@ List-Id: dm-devel.ids
 
 Hi Mikulas,
 
-Sorry to trouble you.
+Sorry to trouble you again.
 
-I recently noticed dm-writecache in the dm dir, and want to have a try.
-But I failed to setup a basic writecache dm using dmsetup:
+I'm reading the source code of dm-writecache, and noticed:
+-----------------------------------------------------
+static struct wc_memory_entry *memory_entry(struct dm_writecache *wc, struct wc_entry *e)
+{
+	if (is_power_of_2(sizeof(struct wc_entry)) && 0)    // why this?
+		return &sb(wc)->entries[e - wc->entries];
+	else
+		return &sb(wc)->entries[e->index];
+}
 
-# dmsetup create testwbc --table "0 512000000 writecache s /dev/md1p5 /dev/md1p6 1024"
-device-mapper: reload ioctl on testwbc  failed: Invalid argument
-Command failed
-
-In dmesg, there is:
-[ 7863.034468] device-mapper: table: 253:0: writecache: Invalid number of feature args
-[ 7863.034476] device-mapper: ioctl: error adding target to table
-
-I wonder what is the exact args to dmsetup?
+Seems there is something wrong with the if condition, right?
 
 Thanks,
 shenghui
