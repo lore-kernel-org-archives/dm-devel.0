@@ -1,11 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 0/7] multipathd: make uxlsnr errors really fatal
-Date: Wed, 24 Oct 2018 00:05:45 +0200
-Message-ID: <20181023220552.1306-1-mwilck@suse.com>
+Subject: [PATCH 1/7] libmultipath: set pp->checkint in
+	store_pathinfo()
+Date: Wed, 24 Oct 2018 00:05:46 +0200
+Message-ID: <20181023220552.1306-2-mwilck@suse.com>
+References: <20181023220552.1306-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20181023220552.1306-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,41 +19,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
+Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>, Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Christophe,
+store_pathinfo is called with valid conf pointer anyway, so
+checkint is available. pp->checkint is now valid for every
+path after path_discovery().
 
-this series, based on top of the recently submitted
-"various multipath-tools patches (v2)" and "checkers overhaul" series,
-fixes a problem that I recently observed: despite
-ee01e841 "multipathd: handle errors in uxlsnr as fatal", multipathd
-sometimes doesn't quit when the socket setup fails.
+This fixes a bad conf access in cli_add_path().
 
-While at that, I stumbled upon init_path_check_interval(), wondered
-about its purpose, and came to the conclusion that can be quite
-easily obsoleted.
+Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/discovery.c  | 1 +
+ multipathd/cli_handlers.c | 1 -
+ multipathd/main.c         | 2 --
+ 3 files changed, 1 insertion(+), 3 deletions(-)
 
-Martin
-
-Martin Wilck (7):
-  libmultipath: set pp->checkint in store_pathinfo()
-  multipathd: remove init_path_check_interval()
-  multipathd: print error message if checkint is not initialized
-  multipathd: open client socket early
-  multipathd: set DAEMON_CONFIGURE from uxlsnr thread
-  multipathd: make DAEMON_SHUTDOWN a terminal state
-  multipathd: only grab conf once for filter_path()
-
- libmultipath/defaults.h   |  1 +
- libmultipath/dict.c       | 14 +++++-
- libmultipath/discovery.c  |  1 +
- libmultipath/structs.c    |  1 +
- multipathd/cli_handlers.c | 10 ++--
- multipathd/main.c         | 99 +++++++++++++++++++++++++--------------
- multipathd/uxlsnr.c       | 11 +----
- multipathd/uxlsnr.h       |  2 +-
- 8 files changed, 88 insertions(+), 51 deletions(-)
-
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 467ece7a..4ac3fde1 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -103,6 +103,7 @@ store_pathinfo (vector pathvec, struct config *conf,
+ 	err = store_path(pathvec, pp);
+ 	if (err)
+ 		goto out;
++	pp->checkint = conf->checkint;
+ 
+ out:
+ 	if (err)
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 75000807..4aea4ce7 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -736,7 +736,6 @@ cli_add_path (void * v, char ** reply, int * len, void * data)
+ 			condlog(0, "%s: failed to store path info", param);
+ 			return 1;
+ 		}
+-		pp->checkint = conf->checkint;
+ 	}
+ 	return ev_add_path(pp, vecs, 1);
+ blacklisted:
+diff --git a/multipathd/main.c b/multipathd/main.c
+index e80ac906..b8423d89 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2322,8 +2322,6 @@ configure (struct vectors * vecs)
+ 			free_path(pp);
+ 			i--;
+ 		}
+-		else
+-			pp->checkint = conf->checkint;
+ 		pthread_cleanup_pop(1);
+ 	}
+ 	if (map_discovery(vecs)) {
 -- 
 2.19.1
