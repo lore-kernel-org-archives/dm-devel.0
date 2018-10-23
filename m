@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 7/7] multipathd: only grab conf once for
-	filter_path()
-Date: Wed, 24 Oct 2018 00:05:52 +0200
-Message-ID: <20181023220552.1306-8-mwilck@suse.com>
+Subject: [PATCH 5/7] multipathd: set DAEMON_CONFIGURE from uxlsnr
+	thread
+Date: Wed, 24 Oct 2018 00:05:50 +0200
+Message-ID: <20181023220552.1306-6-mwilck@suse.com>
 References: <20181023220552.1306-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,38 +22,101 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This saves a possibly large number of cleanup push/pop calls and
-slightly improves readability.
+Commit ee01e841 had the intention to make multipathd quit if
+the client socket couldn't be set up, because the unix socket
+listener is vital for signal handling in multipathd.
+But during startup, this condition might be lost if the main
+thread doesn't wait for the unix listener to initialize.
 
+Fixes: ee01e841 "multipathd: handle errors in uxlsnr as fatal"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
+ multipathd/main.c | 43 ++++++++++++++++++++++++++++++++-----------
+ 1 file changed, 32 insertions(+), 11 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 768da8da..a7cd3b09 100644
+index 50f69171..c71e7d03 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -2332,16 +2332,17 @@ configure (struct vectors * vecs)
- 		goto fail;
- 	}
+@@ -205,9 +205,8 @@ static void config_cleanup(void *arg)
+ 	pthread_mutex_unlock(&config_lock);
+ }
  
-+	conf = get_multipath_config();
-+	pthread_cleanup_push(put_multipath_config, conf);
- 	vector_foreach_slot (vecs->pathvec, pp, i){
--		conf = get_multipath_config();
--		pthread_cleanup_push(put_multipath_config, conf);
- 		if (filter_path(conf, pp) > 0){
- 			vector_del_slot(vecs->pathvec, i);
- 			free_path(pp);
- 			i--;
- 		}
--		pthread_cleanup_pop(1);
+-void post_config_state(enum daemon_status state)
++static void __post_config_state(enum daemon_status state)
+ {
+-	pthread_mutex_lock(&config_lock);
+ 	if (state != running_state) {
+ 		enum daemon_status old_state = running_state;
+ 
+@@ -217,7 +216,14 @@ void post_config_state(enum daemon_status state)
+ 		do_sd_notify(old_state);
+ #endif
  	}
+-	pthread_mutex_unlock(&config_lock);
++}
++
++void post_config_state(enum daemon_status state)
++{
++	pthread_mutex_lock(&config_lock);
++	pthread_cleanup_push(config_cleanup, NULL);
++	__post_config_state(state);
++	pthread_cleanup_pop(1);
+ }
+ 
+ int set_config_state(enum daemon_status state)
+@@ -1511,6 +1517,10 @@ uxlsnrloop (void * ap)
+ 		condlog(1, "Failed to init uxsock listener");
+ 		return NULL;
+ 	}
++
++	/* Tell main thread that thread has started */
++	post_config_state(DAEMON_CONFIGURE);
++
+ 	set_handler_callback(LIST+PATHS, cli_list_paths);
+ 	set_handler_callback(LIST+PATHS+FMT, cli_list_paths_fmt);
+ 	set_handler_callback(LIST+PATHS+RAW+FMT, cli_list_paths_raw);
+@@ -2726,11 +2736,26 @@ child (void * param)
+ 	 */
+ 	conf = NULL;
+ 
+-	/*
+-	 * Signal start of configuration
+-	 */
+-	post_config_state(DAEMON_CONFIGURE);
++	pthread_cleanup_push(config_cleanup, NULL);
++	pthread_mutex_lock(&config_lock);
+ 
++	__post_config_state(DAEMON_IDLE);
++	rc = pthread_create(&uxlsnr_thr, &misc_attr, uxlsnrloop, vecs);
++	if (!rc) {
++		/* Wait for uxlsnr startup */
++		while (running_state == DAEMON_IDLE)
++			pthread_cond_wait(&config_cond, &config_lock);
++	}
 +	pthread_cleanup_pop(1);
 +
- 	if (map_discovery(vecs)) {
- 		condlog(0, "configure failed at map discovery");
- 		goto fail;
++	if (rc) {
++		condlog(0, "failed to create cli listener: %d", rc);
++		goto failed;
++	}
++	else if (running_state != DAEMON_CONFIGURE) {
++		condlog(0, "cli listener failed to start");
++		goto failed;
++	}
+ 
+ 	if (poll_dmevents) {
+ 		if (init_dmevent_waiter(vecs)) {
+@@ -2753,10 +2778,6 @@ child (void * param)
+ 		goto failed;
+ 	}
+ 	pthread_attr_destroy(&uevent_attr);
+-	if ((rc = pthread_create(&uxlsnr_thr, &misc_attr, uxlsnrloop, vecs))) {
+-		condlog(0, "failed to create cli listener: %d", rc);
+-		goto failed;
+-	}
+ 
+ 	/*
+ 	 * start threads
 -- 
 2.19.1
