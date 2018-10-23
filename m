@@ -1,14 +1,11 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 11/21] multipathd: improve checker message
-	logging
-Date: Tue, 23 Oct 2018 23:58:47 +0200
-Message-ID: <20181023215847.794-2-mwilck@suse.com>
-References: <20181023215847.794-1-mwilck@suse.com>
+Subject: [PATCH 0/7] multipathd: make uxlsnr errors really fatal
+Date: Wed, 24 Oct 2018 00:05:45 +0200
+Message-ID: <20181023220552.1306-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181023215847.794-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,93 +19,38 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Don't rely on any variables being defined in LOG_MSG.
-If message log level is low, don't bother to fetch the message.
+Hi Christophe,
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipathd/main.c | 33 ++++++++++++++++++++++-----------
- 1 file changed, 22 insertions(+), 11 deletions(-)
+this series, based on top of the recently submitted
+"various multipath-tools patches (v2)" and "checkers overhaul" series,
+fixes a problem that I recently observed: despite
+ee01e841 "multipathd: handle errors in uxlsnr as fatal", multipathd
+sometimes doesn't quit when the socket setup fails.
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index bf5f12a6..904fc693 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -89,12 +89,22 @@ static int use_watchdog;
- #define FILE_NAME_SIZE 256
- #define CMDSIZE 160
- 
--#define LOG_MSG(a, b) \
--do { \
--	if (pp->offline) \
--		condlog(a, "%s: %s - path offline", pp->mpp->alias, pp->dev); \
--	else if (strlen(b)) \
--		condlog(a, "%s: %s - %s", pp->mpp->alias, pp->dev, b); \
-+#define LOG_MSG(lvl, verb, pp)					\
-+do {								\
-+	if (lvl <= verb) {					\
-+		if (pp->offline)				\
-+			condlog(lvl, "%s: %s - path offline",	\
-+				pp->mpp->alias, pp->dev);	\
-+		else {						\
-+			const char *__m =			\
-+				checker_message(&pp->checker);	\
-+								\
-+			if (strlen(__m))			\
-+				condlog(lvl, "%s: %s - %s",	\
-+					pp->mpp->alias,		\
-+					pp->dev, __m);		\
-+		}						\
-+	}							\
- } while(0)
- 
- struct mpath_event_param
-@@ -1811,7 +1821,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	int add_active;
- 	int disable_reinstate = 0;
- 	int oldchkrstate = pp->chkrstate;
--	int retrigger_tries, checkint, max_checkint;
-+	int retrigger_tries, checkint, max_checkint, verbosity;
- 	struct config *conf;
- 	int ret;
- 
-@@ -1828,6 +1838,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	retrigger_tries = conf->retrigger_tries;
- 	checkint = conf->checkint;
- 	max_checkint = conf->max_checkint;
-+	verbosity = conf->verbosity;
- 	put_multipath_config(conf);
- 	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV) {
- 		if (pp->retriggers < retrigger_tries) {
-@@ -1970,7 +1981,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 		int oldstate = pp->state;
- 		pp->state = newstate;
- 
--		LOG_MSG(1, checker_message(&pp->checker));
-+		LOG_MSG(1, verbosity, pp);
- 
- 		/*
- 		 * upon state change, reset the checkint
-@@ -2058,7 +2069,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 				return 0;
- 			}
- 		} else {
--			LOG_MSG(4, checker_message(&pp->checker));
-+			LOG_MSG(4, verbosity, pp);
- 			if (pp->checkint != max_checkint) {
- 				/*
- 				 * double the next check delay.
-@@ -2088,9 +2099,9 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 			log_checker_err = conf->log_checker_err;
- 			put_multipath_config(conf);
- 			if (log_checker_err == LOG_CHKR_ERR_ONCE)
--				LOG_MSG(3, checker_message(&pp->checker));
-+				LOG_MSG(3, verbosity, pp);
- 			else
--				LOG_MSG(2, checker_message(&pp->checker));
-+				LOG_MSG(2, verbosity, pp);
- 		}
- 	}
- 
+While at that, I stumbled upon init_path_check_interval(), wondered
+about its purpose, and came to the conclusion that can be quite
+easily obsoleted.
+
+Martin
+
+Martin Wilck (7):
+  libmultipath: set pp->checkint in store_pathinfo()
+  multipathd: remove init_path_check_interval()
+  multipathd: print error message if checkint is not initialized
+  multipathd: open client socket early
+  multipathd: set DAEMON_CONFIGURE from uxlsnr thread
+  multipathd: make DAEMON_SHUTDOWN a terminal state
+  multipathd: only grab conf once for filter_path()
+
+ libmultipath/defaults.h   |  1 +
+ libmultipath/dict.c       | 14 +++++-
+ libmultipath/discovery.c  |  1 +
+ libmultipath/structs.c    |  1 +
+ multipathd/cli_handlers.c | 10 ++--
+ multipathd/main.c         | 99 +++++++++++++++++++++++++--------------
+ multipathd/uxlsnr.c       | 11 +----
+ multipathd/uxlsnr.h       |  2 +-
+ 8 files changed, 88 insertions(+), 51 deletions(-)
+
 -- 
 2.19.1
