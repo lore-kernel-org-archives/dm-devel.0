@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 08/10] multipathd: handle repeated udev
- retrigger failure
-Date: Tue, 23 Oct 2018 14:56:05 -0500
-Message-ID: <20181023195605.GB7100@octiron.msp.redhat.com>
+Subject: Re: [PATCH v2 09/10] multipathd: improve "add missing
+	path" handling
+Date: Tue, 23 Oct 2018 15:11:51 -0500
+Message-ID: <20181023201151.GC7100@octiron.msp.redhat.com>
 References: <20181023134348.17915-1-mwilck@suse.com>
-	<20181023134348.17915-3-mwilck@suse.com>
+	<20181023134348.17915-4-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20181023134348.17915-3-mwilck@suse.com>
+In-Reply-To: <20181023134348.17915-4-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,68 +24,89 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Oct 23, 2018 at 03:43:46PM +0200, Martin Wilck wrote:
-> If a path was still not properly initialized after exhausting the
-> retrigger tries, it used to remain in INIT_MISSING_UDEV state forever.
-> get_uid() might fall back to non-udev-based methods to determine
-> the WWID, but it would never be called for a path in this state any more.
+On Tue, Oct 23, 2018 at 03:43:47PM +0200, Martin Wilck wrote:
+> Only add devices that have been properly initialized by pathinfo().
+> For others, increase the path check interval to avoid useless checks
+> of devices which are probably not meant to be multipathed anyway.
 > 
-> This patch changes this behavior by resetting the path back to FAILED
-> state if udev can't provide the WWID even after retriggering. Now, if
-> the path ever happens to be in PATH_UP or PATH_GHOST state again,
-> pathinfo(DI_ALL) will be called from check_path(), and there's at least
-> some chance to obtain a WWID for it.
+> The check for pp->initialized != INIT_MISSING_UDEV is redundant,
+> as check_path() returns early in all other cases. Replace it by a
+> check for INIT_FAILED, in case we ever add more init states.
 > 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
+
+Thanks
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
+> Suggested-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  multipathd/main.c | 32 +++++++++++++++++++++++---------
->  1 file changed, 23 insertions(+), 9 deletions(-)
+>  multipathd/main.c | 23 ++++++++++++++---------
+>  1 file changed, 14 insertions(+), 9 deletions(-)
 > 
 > diff --git a/multipathd/main.c b/multipathd/main.c
-> index 2d45d989..a9e1a4bd 100644
+> index a9e1a4bd..bf5f12a6 100644
 > --- a/multipathd/main.c
 > +++ b/multipathd/main.c
-> @@ -1828,15 +1828,29 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+> @@ -1811,7 +1811,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+>  	int add_active;
+>  	int disable_reinstate = 0;
+>  	int oldchkrstate = pp->chkrstate;
+> -	int retrigger_tries, checkint;
+> +	int retrigger_tries, checkint, max_checkint;
+>  	struct config *conf;
+>  	int ret;
+>  
+> @@ -1827,6 +1827,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+>  	conf = get_multipath_config();
 >  	retrigger_tries = conf->retrigger_tries;
 >  	checkint = conf->checkint;
+> +	max_checkint = conf->max_checkint;
 >  	put_multipath_config(conf);
-> -	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV &&
-> -	    pp->retriggers < retrigger_tries) {
-> -		condlog(2, "%s: triggering change event to reinitialize",
-> -			pp->dev);
-> -		pp->initialized = INIT_REQUESTED_UDEV;
-> -		pp->retriggers++;
-> -		sysfs_attr_set_value(pp->udev, "uevent", "change",
-> -				     strlen("change"));
-> -		return 0;
-> +	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV) {
-> +		if (pp->retriggers < retrigger_tries) {
-> +			condlog(2, "%s: triggering change event to reinitialize",
-> +				pp->dev);
-> +			pp->initialized = INIT_REQUESTED_UDEV;
-> +			pp->retriggers++;
-> +			sysfs_attr_set_value(pp->udev, "uevent", "change",
-> +					     strlen("change"));
-> +			return 0;
-> +		} else {
-> +			condlog(1, "%s: not initialized after %d udev retriggers",
-> +				pp->dev, retrigger_tries);
-> +			/*
-> +			 * Make sure that the "add missing path" code path
-> +			 * below may reinstate the path later, if it ever
-> +			 * comes up again.
-> +			 * The WWID needs not be cleared; if it was set, the
-> +			 * state hadn't been INIT_MISSING_UDEV in the first
-> +			 * place.
-> +			 */
-> +			pp->initialized = INIT_FAILED;
-> +			return 0;
-> +		}
+>  	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV) {
+>  		if (pp->retriggers < retrigger_tries) {
+> @@ -1891,18 +1892,26 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+>  		return 1;
 >  	}
->  
->  	/*
+>  	if (!pp->mpp) {
+> -		if (!strlen(pp->wwid) && pp->initialized != INIT_MISSING_UDEV &&
+> +		if (!strlen(pp->wwid) && pp->initialized == INIT_FAILED &&
+>  		    (newstate == PATH_UP || newstate == PATH_GHOST)) {
+>  			condlog(2, "%s: add missing path", pp->dev);
+>  			conf = get_multipath_config();
+>  			pthread_cleanup_push(put_multipath_config, conf);
+>  			ret = pathinfo(pp, conf, DI_ALL | DI_BLACKLIST);
+>  			pthread_cleanup_pop(1);
+> -			if (ret == PATHINFO_OK) {
+> +			/* INIT_OK implies ret == PATHINFO_OK */
+> +			if (pp->initialized == INIT_OK) {
+>  				ev_add_path(pp, vecs, 1);
+>  				pp->tick = 1;
+> -			} else if (ret == PATHINFO_SKIPPED)
+> -				return -1;
+> +			} else {
+> +				/*
+> +				 * We failed multiple times to initialize this
+> +				 * path properly. Don't re-check too often.
+> +				 */
+> +				pp->checkint = max_checkint;
+> +				if (ret == PATHINFO_SKIPPED)
+> +					return -1;
+> +			}
+>  		}
+>  		return 0;
+>  	}
+> @@ -2049,11 +2058,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+>  				return 0;
+>  			}
+>  		} else {
+> -			unsigned int max_checkint;
+>  			LOG_MSG(4, checker_message(&pp->checker));
+> -			conf = get_multipath_config();
+> -			max_checkint = conf->max_checkint;
+> -			put_multipath_config(conf);
+>  			if (pp->checkint != max_checkint) {
+>  				/*
+>  				 * double the next check delay.
 > -- 
 > 2.19.1
