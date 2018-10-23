@@ -1,11 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 00/21] libmultipath: checkers overhaul
-Date: Tue, 23 Oct 2018 23:58:46 +0200
-Message-ID: <20181023215847.794-1-mwilck@suse.com>
+Subject: [PATCH 7/7] multipathd: only grab conf once for
+	filter_path()
+Date: Wed, 24 Oct 2018 00:05:52 +0200
+Message-ID: <20181023220552.1306-8-mwilck@suse.com>
+References: <20181023220552.1306-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20181023220552.1306-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,82 +22,38 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Christophe,
+This saves a possibly large number of cleanup push/pop calls and
+slightly improves readability.
 
-As Ben has ack'd v2 of my "various multipath-tools patches"
-series now, I'm resending my previously submitted series
-"checkers overhaul" rebased on top of that. To spare the
-list unnecessary repetition, I resend only this cover letter
-and patch 11/21, because all others are exactly the same as
-before.
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipathd/main.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
-This series starts with a few minor fixes and then attempts
-an overhaul of the checker code.
-
-First, there's a block of patches to get rid of the "message"
-char array in struct checker, replacing it with an integer.
-This topic had been touched in recent discussion between Ben
-and myself.
-
-The next larger block fixes problems with checkers that try
-to check unsupported devices. It's an interesting experience
-to configure wrong checkers for the existing devices and see
-what happens. With these patches, paths won't be falsely
-teared down any more in such situations.
-
-The last patch cleans up the checker data structure by splitting
-it into a "checker class" and the path "checker instance".
-
-There's more work to do in this area, but this is a start.
-
-Regards,
-Martin
-
-Martin Wilck (21):
-  libmultipath: fix use of uninitialized memory in write()
-  libmultipath: fix memory leaks from scandir() use
-  libmultipath/checkers: replace message by msgid
-  libmultipath/checkers: cciss_tur: use message id
-  libmultipath/checkers: directio: use message id
-  libmultipath/checkers: emc_clariion: use message id
-  libmultipath/checkers: hp_sw: use message id
-  libmultipath/checkers: rdac: use message id
-  libmultipath/checkers: readsector0: use message id
-  libmultipath/checkers: tur: use message id
-  multipathd: improve checker message logging
-  libmultipath/checkers: support unsupported paths
-  libmultipath: clariion checker: leave unsupported paths alone
-  libmultipath: hp_sw checker: leave unsupported paths alone
-  libmultipath: rdac checker: leave unsupported paths alone
-  libmultipath: tur checker: leave unsupported paths alone
-  libmultipath: pathinfo: don't blank wwid if checker fails
-  multipathd: check_path: improve logging for "unusable path" case
-  libmultipath: coalesce_paths: improve logging of orphaned paths
-  libmultipath: sync_map_state: log failing paths
-  libmultipath/checkers: cleanup class/instance model
-
- libmultipath/checkers.c              | 196 +++++++++++++++++----------
- libmultipath/checkers.h              |  65 ++++++---
- libmultipath/checkers/cciss_tur.c    |  13 +-
- libmultipath/checkers/directio.c     |  29 ++--
- libmultipath/checkers/emc_clariion.c | 108 ++++++++++++---
- libmultipath/checkers/hp_sw.c        |  39 ++++--
- libmultipath/checkers/rdac.c         |  92 +++++++++----
- libmultipath/checkers/readsector0.c  |   7 +-
- libmultipath/checkers/tur.c          |  60 ++++----
- libmultipath/config.c                |  10 +-
- libmultipath/configure.c             |  10 +-
- libmultipath/discovery.c             |   7 +-
- libmultipath/foreign.c               |   5 +-
- libmultipath/foreign/nvme.c          |   6 +-
- libmultipath/print.c                 |   2 +-
- libmultipath/propsel.c               |  19 +--
- libmultipath/structs_vec.c           |   5 +-
- libmultipath/sysfs.c                 |   5 +-
- libmultipath/util.c                  |   9 ++
- libmultipath/util.h                  |   9 ++
- multipathd/main.c                    |  36 +++--
- 21 files changed, 492 insertions(+), 240 deletions(-)
-
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 768da8da..a7cd3b09 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2332,16 +2332,17 @@ configure (struct vectors * vecs)
+ 		goto fail;
+ 	}
+ 
++	conf = get_multipath_config();
++	pthread_cleanup_push(put_multipath_config, conf);
+ 	vector_foreach_slot (vecs->pathvec, pp, i){
+-		conf = get_multipath_config();
+-		pthread_cleanup_push(put_multipath_config, conf);
+ 		if (filter_path(conf, pp) > 0){
+ 			vector_del_slot(vecs->pathvec, i);
+ 			free_path(pp);
+ 			i--;
+ 		}
+-		pthread_cleanup_pop(1);
+ 	}
++	pthread_cleanup_pop(1);
++
+ 	if (map_discovery(vecs)) {
+ 		condlog(0, "configure failed at map discovery");
+ 		goto fail;
 -- 
 2.19.1
