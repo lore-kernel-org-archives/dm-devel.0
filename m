@@ -1,14 +1,16 @@
-From: Joe Perches <joe@perches.com>
-Subject: Re: [PATCH] mm: convert totalram_pages,
- totalhigh_pages and managed_pages to atomic.
-Date: Mon, 22 Oct 2018 21:15:37 -0700
-Message-ID: <c57bcc584b3700c483b0311881ec3ae8786f88b1.camel__41694.7278347381$1540281959$gmane$org@perches.com>
-References: <1540229092-25207-1-git-send-email-arunks@codeaurora.org>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 7/8] libmultipath: handle TUR threads that
+ can't be cancelled
+Date: Tue, 23 Oct 2018 12:58:59 +0200
+Message-ID: <e2eb8ba9dbef30375301ab45798a7101bae469af.camel@suse.com>
+References: <20181010200506.15796-1-mwilck@suse.com>
+	<20181010200506.15796-8-mwilck@suse.com>
+	<20181012221138.GJ29125@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1540229092-25207-1-git-send-email-arunks@codeaurora.org>
+In-Reply-To: <20181012221138.GJ29125@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,20 +20,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Arun KS <arunks@codeaurora.org>, Guo Ren <ren_guo@c-sky.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Jeff Dike <jdike@addtoit.com>, Richard Weinberger <richard@nod.at>, Borislav Petkov <bp@alien8.de>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter
-	Anvin" <hpa@zytor.com>, x86@kernel.org, David Airlie <airlied@linux.ie>, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Oded Gabbay <oded.gabbay@gmail.com>, Alex Deucher <alexander.deucher@amd.com>, Christian =?ISO-8859-1?Q?K=F6nig?= <christian.koenig@amd.com>, "David (ChunMing) Zhou" <David1.Zhou@amd.com>, Jani Nikula <jani.nikula@linux.intel.com>, Joonas Lahtinen <joonas.lahtinen@linux.int>
-Cc: getarunks@gmail.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 2018-10-22 at 22:53 +0530, Arun KS wrote:
-> Remove managed_page_count_lock spinlock and instead use atomic
-> variables.
-
-Perhaps better to define and use macros for the accesses
-instead of specific uses of atomic_long_<inc/dec/read>
-
-Something like:
-
-#define totalram_pages()	(unsigned long)atomic_long_read(&_totalram_pages)
-#define totalram_pages_inc()	(unsigned long)atomic_long_inc(&_totalram_pages)
-#define totalram_pages_dec()	(unsigned long)atomic_long_dec(&_totalram_pages)
+T24gRnJpLCAyMDE4LTEwLTEyIGF0IDE3OjExIC0wNTAwLCAgQmVuamFtaW4gTWFyemluc2tpICB3
+cm90ZToKPiBPbiBXZWQsIE9jdCAxMCwgMjAxOCBhdCAxMDowNTowNVBNICswMjAwLCBNYXJ0aW4g
+V2lsY2sgd3JvdGU6Cj4gPiBXaGVuIHRoZSB0dXIgY2hlY2tlciBjb2RlIGRldGVybWluZXMgdGhh
+dCBhIGhhbmdpbmcgVFVSIHRocmVhZAo+ID4gY291bGRuJ3QgYmUgY2FuY2VsbGVkLCByYXRoZXIg
+dGhhbiBzaW1wbHkgcmV0dXJuaW5nLCByZWFsbG9jYXRlCj4gPiB0aGUgY2hlY2tlciBjb250ZXh0
+IGFuZCBzdGFydCBhIG5ldyB0aHJlYWQuIFRoaXMgd2lsbCBsZWFrIHNvbWUKPiA+IG1lbW9yeSBp
+ZiB0aGUgaGFuZ2luZyB0aHJlYWQgbmV2ZXIgd2FrZXMgdXAgYWdhaW4sIGJ1dCB3ZWxsLCBpbgo+
+ID4gdGhhdCBoaWdobHkgdW5saWtlbHkgY2FzZSB3ZSdyZSBsZWFraW5nIHRocmVhZHMgYW55d2F5
+Lgo+ID4gCj4gPiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4K
+PiA+IC0tLQo+ID4gIGxpYm11bHRpcGF0aC9jaGVja2Vycy90dXIuYyB8IDI0ICsrKysrKysrKysr
+KysrKysrKysrKy0tLQo+ID4gIDEgZmlsZSBjaGFuZ2VkLCAyMSBpbnNlcnRpb25zKCspLCAzIGRl
+bGV0aW9ucygtKQo+ID4gCj4gPiBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2NoZWNrZXJzL3R1
+ci5jCj4gPiBiL2xpYm11bHRpcGF0aC9jaGVja2Vycy90dXIuYwo+ID4gaW5kZXggYTk4NmEyNDQu
+LjllY2NhNWJkIDEwMDY0NAo+ID4gLS0tIGEvbGlibXVsdGlwYXRoL2NoZWNrZXJzL3R1ci5jCj4g
+PiArKysgYi9saWJtdWx0aXBhdGgvY2hlY2tlcnMvdHVyLmMKPiA+IEBAIC0zNDksMTEgKzM0OSwy
+OSBAQCBpbnQgbGliY2hlY2tfY2hlY2soc3RydWN0IGNoZWNrZXIgKiBjKQo+ID4gIAkJfQo+ID4g
+IAl9IGVsc2Ugewo+ID4gIAkJaWYgKHVhdG9taWNfcmVhZCgmY3QtPmhvbGRlcnMpID4gMSkgewo+
+ID4gLQkJCS8qIFRoZSB0aHJlYWQgaGFzIGJlZW4gY2FuY2VsbGVkIGJ1dCBoYXNuJ3QKPiA+IC0J
+CQkgKiBxdWl0LiBleGl0IHdpdGggdGltZW91dC4gKi8KPiA+ICsJCQlpbnQgaG9sZGVyczsKPiA+
+ICsKPiA+ICsJCQkvKgo+ID4gKwkJCSAqIFRoZSB0aHJlYWQgaGFzIGJlZW4gY2FuY2VsbGVkIGJ1
+dCBoYXNuJ3QKPiA+IHF1aXQuCj4gPiArCQkJICogV2UgaGF2ZSB0byBwcmV2ZW50IGl0IGZyb20g
+aW50ZXJmZXJpbmcgd2l0aAo+ID4gdGhlIG5ldwo+ID4gKwkJCSAqIHRocmVhZC4gV2UgY3JlYXRl
+IGEgbmV3IGNvbnRleHQgYW5kIGxlYXZlCj4gPiB0aGUgb2xkCj4gPiArCQkJICogb25lIHdpdGgg
+dGhlIHN0YWxlIHRocmVhZCwgaG9waW5nIGl0IHdpbGwKPiA+IGNsZWFuIHVwCj4gPiArCQkJICog
+ZXZlbnR1YWxseS4KPiA+ICsJCQkgKi8KPiA+ICAJCQljb25kbG9nKDMsICIlZDolZCA6IHR1ciB0
+aHJlYWQgbm90IHJlc3BvbmRpbmciLAo+ID4gIAkJCQltYWpvcihjdC0+ZGV2dCksIG1pbm9yKGN0
+LT5kZXZ0KSk7Cj4gPiAtCQkJcmV0dXJuIFBBVEhfVElNRU9VVDsKPiA+ICsKPiA+ICsJCQkvKiBs
+aWJjaGVja19pbml0IHdpbGwgcmVwbGFjZSBjLT5jb250ZXh0ICovCj4gPiArCQkJbGliY2hlY2tf
+aW5pdChjKTsKPiA+ICsKPiA+ICsJCQlob2xkZXJzID0gdWF0b21pY19zdWJfcmV0dXJuKCZjdC0+
+aG9sZGVycywgMSk7Cj4gPiArCQkJaWYgKCFob2xkZXJzKQo+ID4gKwkJCQkvKiBJdCBkaWQgdGVy
+bWluYXRlLCBldmVudHVhbGx5ICovCj4gPiArCQkJCWNsZWFudXBfY29udGV4dChjdCk7Cj4gPiAr
+Cj4gPiArCQkJY3QgPSBjLT5jb250ZXh0Owo+ID4gKwkJCWlmIChjdCA9PSBOVUxMKQo+ID4gKwkJ
+CQlyZXR1cm4gUEFUSF9VTkNIRUNLRUQ7Cj4gCj4gbGliY2hlY2tfaW5pdCBjYW4gZmFpbCB0byBh
+bGxvY2F0ZSB0aGUgY2hlY2tlcl9jb250ZXh0LCBhbmQgcmV0dXJuIDEuCj4gSWYgaXQgZG9lcyBz
+bywgaXQgd29uJ3QgcmVzZXQgYy0+Y29udGV4dC4gIEluIHRoaXMgY2FzZSwgeW91IHdpbGwKPiB1
+bmhvbGQKPiB0aGUgY29udGV4dCBidXQga2VlcCB1c2luZyBpdC4gIEluc3RlYWQgd2Ugc2hvdWxk
+IGZhaWwgcmlnaHQgYWZ0ZXIKPiB0aGUKPiBjYWxsIHRvIGxpYmNoZWNrX2luaXQgaWYgaXQgcmV0
+dXJucyAxLgoKT0ssIEknbGwgcmVzdWJtaXQgd2l0aCB0aGlzIGNoYW5nZS4KCj4gQWxzbywgcmV0
+dXJuaW5nIFBBVEhfVU5DSEVDS0VEIHRyaWdnZXJzIGNvZGUgaW4gY2hlY2tfcGF0aCB0aGF0Cj4g
+YXNzdW1lcwo+IHRoZXJlIGlzIGEgcHJvYmxlbSB3aXRoIHRoZSBwYXRoLiBJdCByZWNhbGxzIHBh
+dGhpbmZvKCksIGFuZCBkb2VzIG5vdAo+IGRvCj4gYWxsIHRoZSB3b3JrIHRoYXQgd291bGQgaGFw
+cGVuIG9uIFBBVEhfRE9XTi4gUEFUSF9USU1FT1VUIHdvcmtzIGxpa2UKPiBQQVRIX0RPV04gYW5k
+IFBBVEhfU0hBS1ksIHdoaWNoIHNlZW1zIGxpa2UgdGhlIHJpZ2h0IHRoaW5nIHRvIGRvCj4gaGVy
+ZS4KCkkgYW0gdW5zdXJlIGFib3V0IHRoYXQuIGlmIGxpYmNoZWNrX2luaXQoKSBmYWlscywgd2Ug
+YXJlIG91dCBvZiBtZW1vcnkuClRoaXMgaXMgYSBwcmV0dHkgaG9wZWxlc3Mgc2l0dWF0aW9uIGFu
+eXdheSwgYnV0IGl0IGRvZXMgbm90IGluZGljYXRlCihieSBpdHNlbGYpIHRoYXQgdGhlIHBhdGgg
+aXMgZG93bi4gUHJvYWN0aXZlbHkgZmFpbGluZyB0aGUgcGF0aCBpbiBETQppcyBkYW5nZXJvdXM7
+IGl0IG1pZ2h0IHJlbW92ZSB0aGUgbGFzdCB3b3JraW5nIHBhdGggYW5kIGNhdXNlIGZpbGUKc3lz
+dGVtcyB0byBnbyByZWFkLW9ubHkuIFdlIHNob3VsZCBvbmx5IGRvIHRoYXQgaWYgd2UncmUgcG9z
+aXRpdmUgdGhhdAp0aGUgcGF0aCBpcyBiYWQuIEFyZSB3ZSBwb3NpdGl2ZSB0aGF0IGEgc3RhbGxl
+ZCBUVVIgdGhyZWFkIGNhbiBvbmx5CmhhcHBlbiBpZiBhIHBhdGggaXMgYnJva2VuPyBNYXliZSB0
+aGUgdGhyZWFkIGlzIHN0YWxsZWQgYmVjYXVzZSBzeXN0ZW0KaXMgdGhyYXNoaW5nPwoKTWFydGlu
+CgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTEx
+IDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5l
+IFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKCi0tCmRt
+LWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhh
+dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
