@@ -1,16 +1,12 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 7/8] libmultipath: handle TUR threads that
- can't be cancelled
-Date: Tue, 23 Oct 2018 12:58:59 +0200
-Message-ID: <e2eb8ba9dbef30375301ab45798a7101bae469af.camel@suse.com>
-References: <20181010200506.15796-1-mwilck@suse.com>
-	<20181010200506.15796-8-mwilck@suse.com>
-	<20181012221138.GJ29125@octiron.msp.redhat.com>
+From: =?UTF-8?B?w5Z6a2FuIEfDtmtzdQ==?= <ozkan.goksu@usishi.com>
+Subject: Multipathd failed when I remove faulted disk. "segfault
+ at 648 error 4 in libmultipath.so.0"
+Date: Tue, 23 Oct 2018 14:46:59 +0300
+Message-ID: <CAPu=dv1ZUoapd2ACHKNSMUq5OUE304dobP6+EDeqGpJksmp4dA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181012221138.GJ29125@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,64 +16,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE4LTEwLTEyIGF0IDE3OjExIC0wNTAwLCAgQmVuamFtaW4gTWFyemluc2tpICB3
-cm90ZToKPiBPbiBXZWQsIE9jdCAxMCwgMjAxOCBhdCAxMDowNTowNVBNICswMjAwLCBNYXJ0aW4g
-V2lsY2sgd3JvdGU6Cj4gPiBXaGVuIHRoZSB0dXIgY2hlY2tlciBjb2RlIGRldGVybWluZXMgdGhh
-dCBhIGhhbmdpbmcgVFVSIHRocmVhZAo+ID4gY291bGRuJ3QgYmUgY2FuY2VsbGVkLCByYXRoZXIg
-dGhhbiBzaW1wbHkgcmV0dXJuaW5nLCByZWFsbG9jYXRlCj4gPiB0aGUgY2hlY2tlciBjb250ZXh0
-IGFuZCBzdGFydCBhIG5ldyB0aHJlYWQuIFRoaXMgd2lsbCBsZWFrIHNvbWUKPiA+IG1lbW9yeSBp
-ZiB0aGUgaGFuZ2luZyB0aHJlYWQgbmV2ZXIgd2FrZXMgdXAgYWdhaW4sIGJ1dCB3ZWxsLCBpbgo+
-ID4gdGhhdCBoaWdobHkgdW5saWtlbHkgY2FzZSB3ZSdyZSBsZWFraW5nIHRocmVhZHMgYW55d2F5
-Lgo+ID4gCj4gPiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4K
-PiA+IC0tLQo+ID4gIGxpYm11bHRpcGF0aC9jaGVja2Vycy90dXIuYyB8IDI0ICsrKysrKysrKysr
-KysrKysrKysrKy0tLQo+ID4gIDEgZmlsZSBjaGFuZ2VkLCAyMSBpbnNlcnRpb25zKCspLCAzIGRl
-bGV0aW9ucygtKQo+ID4gCj4gPiBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2NoZWNrZXJzL3R1
-ci5jCj4gPiBiL2xpYm11bHRpcGF0aC9jaGVja2Vycy90dXIuYwo+ID4gaW5kZXggYTk4NmEyNDQu
-LjllY2NhNWJkIDEwMDY0NAo+ID4gLS0tIGEvbGlibXVsdGlwYXRoL2NoZWNrZXJzL3R1ci5jCj4g
-PiArKysgYi9saWJtdWx0aXBhdGgvY2hlY2tlcnMvdHVyLmMKPiA+IEBAIC0zNDksMTEgKzM0OSwy
-OSBAQCBpbnQgbGliY2hlY2tfY2hlY2soc3RydWN0IGNoZWNrZXIgKiBjKQo+ID4gIAkJfQo+ID4g
-IAl9IGVsc2Ugewo+ID4gIAkJaWYgKHVhdG9taWNfcmVhZCgmY3QtPmhvbGRlcnMpID4gMSkgewo+
-ID4gLQkJCS8qIFRoZSB0aHJlYWQgaGFzIGJlZW4gY2FuY2VsbGVkIGJ1dCBoYXNuJ3QKPiA+IC0J
-CQkgKiBxdWl0LiBleGl0IHdpdGggdGltZW91dC4gKi8KPiA+ICsJCQlpbnQgaG9sZGVyczsKPiA+
-ICsKPiA+ICsJCQkvKgo+ID4gKwkJCSAqIFRoZSB0aHJlYWQgaGFzIGJlZW4gY2FuY2VsbGVkIGJ1
-dCBoYXNuJ3QKPiA+IHF1aXQuCj4gPiArCQkJICogV2UgaGF2ZSB0byBwcmV2ZW50IGl0IGZyb20g
-aW50ZXJmZXJpbmcgd2l0aAo+ID4gdGhlIG5ldwo+ID4gKwkJCSAqIHRocmVhZC4gV2UgY3JlYXRl
-IGEgbmV3IGNvbnRleHQgYW5kIGxlYXZlCj4gPiB0aGUgb2xkCj4gPiArCQkJICogb25lIHdpdGgg
-dGhlIHN0YWxlIHRocmVhZCwgaG9waW5nIGl0IHdpbGwKPiA+IGNsZWFuIHVwCj4gPiArCQkJICog
-ZXZlbnR1YWxseS4KPiA+ICsJCQkgKi8KPiA+ICAJCQljb25kbG9nKDMsICIlZDolZCA6IHR1ciB0
-aHJlYWQgbm90IHJlc3BvbmRpbmciLAo+ID4gIAkJCQltYWpvcihjdC0+ZGV2dCksIG1pbm9yKGN0
-LT5kZXZ0KSk7Cj4gPiAtCQkJcmV0dXJuIFBBVEhfVElNRU9VVDsKPiA+ICsKPiA+ICsJCQkvKiBs
-aWJjaGVja19pbml0IHdpbGwgcmVwbGFjZSBjLT5jb250ZXh0ICovCj4gPiArCQkJbGliY2hlY2tf
-aW5pdChjKTsKPiA+ICsKPiA+ICsJCQlob2xkZXJzID0gdWF0b21pY19zdWJfcmV0dXJuKCZjdC0+
-aG9sZGVycywgMSk7Cj4gPiArCQkJaWYgKCFob2xkZXJzKQo+ID4gKwkJCQkvKiBJdCBkaWQgdGVy
-bWluYXRlLCBldmVudHVhbGx5ICovCj4gPiArCQkJCWNsZWFudXBfY29udGV4dChjdCk7Cj4gPiAr
-Cj4gPiArCQkJY3QgPSBjLT5jb250ZXh0Owo+ID4gKwkJCWlmIChjdCA9PSBOVUxMKQo+ID4gKwkJ
-CQlyZXR1cm4gUEFUSF9VTkNIRUNLRUQ7Cj4gCj4gbGliY2hlY2tfaW5pdCBjYW4gZmFpbCB0byBh
-bGxvY2F0ZSB0aGUgY2hlY2tlcl9jb250ZXh0LCBhbmQgcmV0dXJuIDEuCj4gSWYgaXQgZG9lcyBz
-bywgaXQgd29uJ3QgcmVzZXQgYy0+Y29udGV4dC4gIEluIHRoaXMgY2FzZSwgeW91IHdpbGwKPiB1
-bmhvbGQKPiB0aGUgY29udGV4dCBidXQga2VlcCB1c2luZyBpdC4gIEluc3RlYWQgd2Ugc2hvdWxk
-IGZhaWwgcmlnaHQgYWZ0ZXIKPiB0aGUKPiBjYWxsIHRvIGxpYmNoZWNrX2luaXQgaWYgaXQgcmV0
-dXJucyAxLgoKT0ssIEknbGwgcmVzdWJtaXQgd2l0aCB0aGlzIGNoYW5nZS4KCj4gQWxzbywgcmV0
-dXJuaW5nIFBBVEhfVU5DSEVDS0VEIHRyaWdnZXJzIGNvZGUgaW4gY2hlY2tfcGF0aCB0aGF0Cj4g
-YXNzdW1lcwo+IHRoZXJlIGlzIGEgcHJvYmxlbSB3aXRoIHRoZSBwYXRoLiBJdCByZWNhbGxzIHBh
-dGhpbmZvKCksIGFuZCBkb2VzIG5vdAo+IGRvCj4gYWxsIHRoZSB3b3JrIHRoYXQgd291bGQgaGFw
-cGVuIG9uIFBBVEhfRE9XTi4gUEFUSF9USU1FT1VUIHdvcmtzIGxpa2UKPiBQQVRIX0RPV04gYW5k
-IFBBVEhfU0hBS1ksIHdoaWNoIHNlZW1zIGxpa2UgdGhlIHJpZ2h0IHRoaW5nIHRvIGRvCj4gaGVy
-ZS4KCkkgYW0gdW5zdXJlIGFib3V0IHRoYXQuIGlmIGxpYmNoZWNrX2luaXQoKSBmYWlscywgd2Ug
-YXJlIG91dCBvZiBtZW1vcnkuClRoaXMgaXMgYSBwcmV0dHkgaG9wZWxlc3Mgc2l0dWF0aW9uIGFu
-eXdheSwgYnV0IGl0IGRvZXMgbm90IGluZGljYXRlCihieSBpdHNlbGYpIHRoYXQgdGhlIHBhdGgg
-aXMgZG93bi4gUHJvYWN0aXZlbHkgZmFpbGluZyB0aGUgcGF0aCBpbiBETQppcyBkYW5nZXJvdXM7
-IGl0IG1pZ2h0IHJlbW92ZSB0aGUgbGFzdCB3b3JraW5nIHBhdGggYW5kIGNhdXNlIGZpbGUKc3lz
-dGVtcyB0byBnbyByZWFkLW9ubHkuIFdlIHNob3VsZCBvbmx5IGRvIHRoYXQgaWYgd2UncmUgcG9z
-aXRpdmUgdGhhdAp0aGUgcGF0aCBpcyBiYWQuIEFyZSB3ZSBwb3NpdGl2ZSB0aGF0IGEgc3RhbGxl
-ZCBUVVIgdGhyZWFkIGNhbiBvbmx5CmhhcHBlbiBpZiBhIHBhdGggaXMgYnJva2VuPyBNYXliZSB0
-aGUgdGhyZWFkIGlzIHN0YWxsZWQgYmVjYXVzZSBzeXN0ZW0KaXMgdGhyYXNoaW5nPwoKTWFydGlu
-CgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTEx
-IDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5l
-IFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKCi0tCmRt
-LWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhh
-dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Hello.
+
+I was have a faulted disk in my 148 disk ZFS pool and I replaced the
+disk with a new one but when I remove the disk from Jbod, Multipathd
+service failed somehow.
+The jbod attached via SAS LSI-3008
+
+What is the problem with the daemon?
+How do I prevent this problem happen again?
+
+
+Faulted disk removed at: Mon Oct 22 11:30:32 2018
+New disk inserted at: Mon Oct 22 11:30:40 2018
+
+dmesg:
+
+[Mon Oct 22 11:30:32 2018] sd 10:0:58:0: [sdbg] Synchronizing SCSI cache
+[Mon Oct 22 11:30:32 2018] sd 10:0:58:0: [sdbg] Synchronize Cache(10)
+failed: Result: hostbyte=0x01 driverbyte=0x00
+[Mon Oct 22 11:30:32 2018] mpt3sas_cm0: removing handle(0x0098),
+sas_addr(0x5000c5009537e0ad)
+[Mon Oct 22 11:30:32 2018] mpt3sas_cm0: removing : enclosure logical
+id(0x50030480092b8abf), slot(21)
+[Mon Oct 22 11:30:32 2018] mpt3sas_cm0: removing enclosure
+level(0x0001), connector name(     )
+[Mon Oct 22 11:30:32 2018] sd 10:0:135:0: [sdec] Synchronizing SCSI cache
+[Mon Oct 22 11:30:32 2018] sd 10:0:135:0: [sdec] Synchronize Cache(10)
+failed: Result: hostbyte=0x01 driverbyte=0x00
+[Mon Oct 22 11:30:32 2018] mpt3sas_cm0: removing handle(0x0047),
+sas_addr(0x5000c5009537e0ae)
+[Mon Oct 22 11:30:32 2018] mpt3sas_cm0: removing : enclosure logical
+id(0x50030480092b8abf), slot(21)
+[Mon Oct 22 11:30:32 2018] mpt3sas_cm0: removing enclosure
+level(0x0001), connector name(     )
+[Mon Oct 22 11:30:33 2018] device-mapper: multipath: Failing path 128:64.
+[Mon Oct 22 11:30:33 2018] multipathd[5626]: segfault at 648 ip
+00007f452e2dc9b9 sp 00007f452e69d960 error 4 in
+libmultipath.so.0[7f452e2a2000+4c000]
+
+Multipathd daemon log:
+
+-- Logs begin at Mon 2018-04-16 14:30:14 +03. --
+Oct 22 11:30:33 YL-CTRL1 multipathd[5612]: sdbg: remove path (uevent)
+Oct 22 11:30:33 YL-CTRL1 multipathd[5612]: sdec: No SAS end device for
+'end_device-10:5'
+Oct 22 11:30:33 YL-CTRL1 multipathd[5612]: 35000c5009537e0af: load
+table [0 15628053168 multipath 0 0 1 1 service-time 0 1 1 128:64 1
+Oct 22 11:30:33 YL-CTRL1 multipathd[5612]: ]
+Oct 22 11:30:33 YL-CTRL1 multipathd[5612]: sdbg [67:160]: path removed
+from map 35000c5009537e0af
+Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: 128:64: cannot find block device
+Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: checker failed path 128:64
+in map 35000c5009537e0af
+Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: 35000c5009537e0af:
+remaining active paths: 0
+Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: 128:64: cannot find block device
+Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: sdec: remove path (uevent)
+Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: 35000c5009537e0af: map flushed
+Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: 35000c5009537e0af: stop
+event checker thread (139935041709824)
+Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: 35000c5009537e0af: removed
+map after removing all paths
+Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: 35000c5009537e0af: adding map
+Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: 35000c5009537e0af: devmap dm-44 added
+Oct 22 11:30:36 YL-CTRL1 systemd[1]: multipathd.service: Main process
+exited, code=killed, status=11/SEGV
+Oct 22 11:30:36 YL-CTRL1 systemd[1]: multipathd.service: Failed with
+result 'signal'.
+
+Full Dmesg: https://paste.ubuntu.com/p/DDbxBdVnKs/
+
+
+Multipath Conf:
+defaults {
+user_friendly_names no
+  path_grouping_policy failover
+}
+blacklist_exceptions {
+        property "(ID_WWN|SCSI_IDENT_.*|ID_SERIAL)"
+}
+
+Versions:
+device-mapper 2.02.177-5
+multipath-tools 0.7.6-1
+ kernel: 4.14.30-1-lts
