@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 1/7] libmultipath: set pp->checkint in
-	store_pathinfo()
-Date: Wed, 24 Oct 2018 00:05:46 +0200
-Message-ID: <20181023220552.1306-2-mwilck@suse.com>
+Subject: [PATCH 2/7] multipathd: remove init_path_check_interval()
+Date: Wed, 24 Oct 2018 00:05:47 +0200
+Message-ID: <20181023220552.1306-3-mwilck@suse.com>
 References: <20181023220552.1306-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,56 +21,47 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>, Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-store_pathinfo is called with valid conf pointer anyway, so
-checkint is available. pp->checkint is now valid for every
-path after path_discovery().
-
-This fixes a bad conf access in cli_add_path().
+After "libmultipath: set pp->checkint in store_pathinfo()",
+pp-checkint should always be properly initialized, so this code
+is not needed any more.
 
 Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c  | 1 +
- multipathd/cli_handlers.c | 1 -
- multipathd/main.c         | 2 --
- 3 files changed, 1 insertion(+), 3 deletions(-)
+ multipathd/main.c | 14 --------------
+ 1 file changed, 14 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 467ece7a..4ac3fde1 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -103,6 +103,7 @@ store_pathinfo (vector pathvec, struct config *conf,
- 	err = store_path(pathvec, pp);
- 	if (err)
- 		goto out;
-+	pp->checkint = conf->checkint;
- 
- out:
- 	if (err)
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 75000807..4aea4ce7 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -736,7 +736,6 @@ cli_add_path (void * v, char ** reply, int * len, void * data)
- 			condlog(0, "%s: failed to store path info", param);
- 			return 1;
- 		}
--		pp->checkint = conf->checkint;
- 	}
- 	return ev_add_path(pp, vecs, 1);
- blacklisted:
 diff --git a/multipathd/main.c b/multipathd/main.c
-index e80ac906..b8423d89 100644
+index b8423d89..3464ebfa 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -2322,8 +2322,6 @@ configure (struct vectors * vecs)
- 			free_path(pp);
- 			i--;
- 		}
--		else
--			pp->checkint = conf->checkint;
- 		pthread_cleanup_pop(1);
- 	}
- 	if (map_discovery(vecs)) {
+@@ -2131,19 +2131,6 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	return 1;
+ }
+ 
+-static void init_path_check_interval(struct vectors *vecs)
+-{
+-	struct config *conf;
+-	struct path *pp;
+-	unsigned int i;
+-
+-	vector_foreach_slot (vecs->pathvec, pp, i) {
+-		conf = get_multipath_config();
+-		pp->checkint = conf->checkint;
+-		put_multipath_config(conf);
+-	}
+-}
+-
+ static void *
+ checkerloop (void *ap)
+ {
+@@ -2727,7 +2714,6 @@ child (void * param)
+ 	 */
+ 	post_config_state(DAEMON_CONFIGURE);
+ 
+-	init_path_check_interval(vecs);
+ 
+ 	if (poll_dmevents) {
+ 		if (init_dmevent_waiter(vecs)) {
 -- 
 2.19.1
