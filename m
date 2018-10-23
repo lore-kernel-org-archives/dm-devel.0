@@ -1,16 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 10/10] multipath.8: fix description of
- "device" argument
-Date: Tue, 23 Oct 2018 15:33:53 -0500
-Message-ID: <20181023203353.GD7100@octiron.msp.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v2 07/10] libmultipath: handle TUR threads
+ that can't be cancelled
+Date: Tue, 23 Oct 2018 22:49:49 +0200
+Message-ID: <8a3659b919b21305cf7ef6bae321cc3b2b93ffd6.camel@suse.com>
 References: <20181023134348.17915-1-mwilck@suse.com>
-	<20181023134348.17915-5-mwilck@suse.com>
+	<20181023134348.17915-2-mwilck@suse.com>
+	<20181023192849.GA7100@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20181023134348.17915-5-mwilck@suse.com>
+In-Reply-To: <20181023192849.GA7100@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,63 +20,94 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Oct 23, 2018 at 03:43:48PM +0200, Martin Wilck wrote:
-> Describe the fact that we can refer to path devices by WWID, and
-> to multipath maps by devnode.
-> 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  multipath/multipath.8 | 32 ++++++++++++++++++--------------
->  1 file changed, 18 insertions(+), 14 deletions(-)
-> 
-> diff --git a/multipath/multipath.8 b/multipath/multipath.8
-> index c9bd23aa..9cdd05a3 100644
-> --- a/multipath/multipath.8
-> +++ b/multipath/multipath.8
-> @@ -95,21 +95,25 @@ is used to detect and coalesce multiple paths to devices, for fail-over or perfo
->  .SH ARGUMENTS
->  .\" ----------------------------------------------------------------------------
->  .
-> +The \fBdevice\fR argument restricts \fBmultipath\fR's operation to devices matching the given
-> +expression. The argument may refer either to a multipath map or to
-> +its components ("paths"). The expression may be in one of the following formats:
-> +.
-> +.TP 1.4i
-> +.B device node
-> +file name of a device node, e.g. \fI/dev/dm-10\fR or \fI/dev/sda\fR. If the node refers
-> +to an existing device mapper device representing a multipath map, this selects
-> +the map or its paths, depending on the operation mode. Otherwise, it selects a path device.
-> +.
->  .TP
-> -.BI device
-> -Act only on the multipath map specified by
-> -.IR device ,
-> -which is either:
-> -.RS 1.2i
-> -.IP \[bu]
-> -A multipath map name.
-> -.IP \[bu]
-> -A path (low-level device) associated with the desired multipath map; the path may be in one of the following formats:
-> -.RS 1.2i
-> -.IP \[bu]
-> -.B /dev/sdX
-> -.IP \[bu]
-> -.B major:minor
-> +.B device ID
-> +kernel device number specified by major:minor numbers, e.g. \fI65:16\fR. This
-> +format can only be used for path devices.
-> +.
-> +.TP
-> +.B WWID
-> +a World Wide Identifier matching a multipath map or its paths. To list WWIDs of devices
-> +present in the system, use e.g. the command "\fImultipath -d -v3 2>/dev/null\fR".
->  .
->  .\" ----------------------------------------------------------------------------
->  .SH OPERATION MODES
-> -- 
-> 2.19.1
+T24gVHVlLCAyMDE4LTEwLTIzIGF0IDE0OjI4IC0wNTAwLCAgQmVuamFtaW4gTWFyemluc2tpICB3
+cm90ZToKCj4gT24gVHVlLCBPY3QgMjMsIDIwMTggYXQgMDM6NDM6NDVQTSArMDIwMCwgTWFydGlu
+IFdpbGNrIHdyb3RlOgo+ID4gV2hlbiB0aGUgdHVyIGNoZWNrZXIgY29kZSBkZXRlcm1pbmVzIHRo
+YXQgYSBoYW5naW5nIFRVUiB0aHJlYWQKPiA+IGNvdWxkbid0IGJlIGNhbmNlbGxlZCwgcmF0aGVy
+IHRoYW4gc2ltcGx5IHJldHVybmluZywgcmVhbGxvY2F0ZQo+ID4gdGhlIGNoZWNrZXIgY29udGV4
+dCBhbmQgc3RhcnQgYSBuZXcgdGhyZWFkLiBUaGlzIHdpbGwgbGVhayBzb21lCj4gPiBtZW1vcnkg
+aWYgdGhlIGhhbmdpbmcgdGhyZWFkIG5ldmVyIHdha2VzIHVwIGFnYWluLCBidXQgd2VsbCwgaW4K
+PiA+IHRoYXQgaGlnaGx5IHVubGlrZWx5IGNhc2Ugd2UncmUgbGVha2luZyB0aHJlYWRzIGFueXdh
+eS4KPiAKPiBUaGUgdGhpbmcgYWJvdXQgUEFUSF9VTkNIRUNLRUQgaXMgdGhhdCB3ZSBkbyBtYXJr
+IHRoZSBwYXRoIGFzIGZhaWxlZC4KPiBXZSBqdXN0IGRvbid0IHRlbGwgZGV2aWNlLW1hcHBlci4g
+SWYgd2UgZ2V0IFBBVEhfVU5DSEVDS0VEIGluCj4gcGF0aGluZm8oKSwgd2Ugc2V0IHRoZSBzdGF0
+ZSB0byBQQVRIX0RPV04uIElmIHdlIGdldCBhIFBBVEhfVU5DSEVDS0VECj4gaW4KPiBjaGVja19w
+YXRoKCksIHdlIGltbWVkaWF0ZWx5IGNhbGwgcGF0aGluZm8oKSwgCgpCdXQgd2UgY2FsbCBwYXRo
+aW5mbyhwcCwgY29uZiwgMCkgdGhlcmUsIGkuZS4gYWxsIERJIGZsYWdzIHVuc2V0LiBUaGlzCmNv
+bWVzIGRvd24gdG8gYSAocGFydGlhbCkgYmxhY2tsaXN0IGNoZWNrICh3aGljaCBpcyBpZ25vcmVk
+KSBhbmQgYSBjYWxsCnRvIHBhdGhfb2ZmbGluZSgpLiBwcC0+c3RhdGUgaXNuJ3QgdG91Y2hlZCBp
+biB0aGlzIGNvZGUgcGF0aC4gSXQncyBtb3JlCm9yIGxlc3MgYSBOT09QLiAoQlRXLCB0aGUgcHVy
+cG9zZSBvZiB0aGlzIHBhdGhpbmZvKCkgY2FsbCByZW1haW5zCm9ic2N1cmUgdG8gbWUuIEl0IGdv
+ZXMgYmFjayB0byB0aGUgYW5jaWVudCBjb21taXQgOTU5ODczOTUpLgoKPiBtYWtpbmcgaXQgbGlr
+ZWx5IHRoYXQgd2UKPiB3aWxsIGdldCBQQVRIX1VOQ0hFQ0tFRCB0aGVyZSBhcyB3ZWxsLiBUaGUg
+Y29uc2VxdWVuY2Ugb2YgdGhpcyBpcwo+IHRoYXQKPiBpZiB0aGUgcGF0aCBsYXRlciBjaGFuZ2Vz
+IHRvIFBBVEhfRE9XTiwgd2hpY2ggc2VlbXMgbGlrZWx5LCB3ZSBzdGlsbAo+IHdvbid0IHRlbGwg
+ZGV2aWNlLW1hcHBlciwgc2luY2UgYXMgZmFyIGFzIG11bHRpcGF0aGQgaXMgY29uY2VybmVkLAo+
+IHRoZQo+IHBhdGggaGFzbid0IGNoYW5nZWQgc3RhdGUuIAoKSSBkb24ndCBmb2xsb3cgeW91LiBj
+aGVja19wYXRoKCkgcXVpdHMgZWFybHkgd2hlbiBQQVRIX1VOQ0hFQ0tFRCBpcwplbmNvdW50ZXJl
+ZCwgYW5kIGRvZXNuJ3QgYWx0ZXIgcHAtPnN0YXRlLiBJdCB3aWxsIGNoZWNrIGFnYWluIGluIHRo
+ZQpuZXh0IHJvdW5kLCBhbmQgaWYgdGhlIHBhdGggc3dpdGNoZXMgdG8gRE9XTiB0aGVuIChvciBh
+bnkgb3RoZXIgc3RhdGUsCmZvciB0aGF0IG1hdHRlcikgaXQgd2lsbCB0cmVhdCBpdCByaWdodCwg
+QUZBSUNTLgoKPiAgTG9va2luZyBhdCBtb3N0IG9mIHRoZSBjb2RlLCB0aGUgd2F5IHdlCj4gdHJl
+YXQgUEFUSF9VTkNIRUNLRUQgcmVhbGx5IG9ubHkgbWFrZXMgc2Vuc2Ugd2hlbiB3ZSB1c2UgaXQg
+dG8gbWVhbgo+IHdlCj4gaGF2ZW4ndCBldmVyIGdvdHRlbiBhIHJlc3VsdCBmcm9tIGdldF9zdGF0
+ZSgpIGJlZm9yZS4KPiAKPiBJZiB5b3Ugd2FudCBhIHJldHVybiBjb2RlIHRoYXQgZG9lcyBqdXN0
+IGRvZXMgbm90aGluZyB3aXRoIHRoZSBwYXRoLAo+IGV4Y2VwdCB3YWl0LCB0aGF0J3MgUEFUSF9Q
+RU5ESU5HLiBJdCBsZWF2ZXMgdGhlIHBhdGhzIHN0YXRlIGV4YWN0bHkKPiB0aGUKPiBzYW1lIGFz
+IGJlZm9yZS4gVGhlIG9ubHkgaXNzdWUgdGhlcmUgaXMgdGhhdCB3ZSBzY2hlZHVsZSBhbm90aGVy
+IHBhdGgKPiBjaGVja2VyIGZvciBhIHNlY29uZCBsYXRlciwgd2hpY2ggbWlnaHQgbm90IGJlIHRo
+ZSByaWdodCBhbnN3ZXIgdG8gYW4KPiBvdXQtb2YtbWVtb3J5IGlzc3VlLgo+IAo+IElmIHlvdSd2
+ZSByZXZpZXdlZCB0aGUgY29kZSBwYXRocyB0aGF0IHdlIGZvbGxvdyBvbiBQQVRIX1VOQ0hFQ0tF
+RCwKPiBhbmQKPiBzdGlsbCBmZWVsIHRoYXQgaXQgaXMgdGhlIHJpZ2h0IGFuc3dlciwgSSB3b24n
+dCBibG9jayBpdCwgYmVjYXVzZQo+IHRoaXMKPiBpcyBhIHByZXR0eSByZW1vdGUgY29ybmVyIGNh
+c2UuCgpQQVRIX1VOQ0hFQ0tFRCBpcyB0ZXN0ZWQgaW4gdGhlIGZvbGxvd2luZyBwbGFjZXMgKGln
+bm9yaW5nIGNhbGxzIGZyb20KbXVsdGlwYXRoIGFuZCBtcGF0aHBlcnNpc3QpOgoKIDEpIHBhdGhp
+bmZvKCk6IGluIHRoZSAiYmxhbmsiIGNhc2UgKHdlIGRpc2N1c3NlZCB0aGF0IGJlZm9yZSwgSSB0
+aGluawppdCdzIHdyb25nIGFuZCBJIHJlbW92ZWQgdGhhdCB0ZXN0IGluIDE3LzIxIG9mIG15IHBy
+ZXZpb3VzIDIxLXBhcnQKc2VyaWVzKS4KIDIpIHN5bmNfbWFwX3N0YXRlKCk6IG5vIGF0dGVtcHQg
+dG8gc3luYyB0aGUgcGF0aCB3aXRoIGRtIGlzIG1hZGUsCndoaWNoIGlzIHdoYXQgd2Ugd2FudCBo
+ZXJlLCBJTUhPLgogMykgY2hlY2tfcGF0aCgpOiBzZWUgYWJvdmUuCgpTbyB5ZXMsIElNTyB0aGUg
+Y29kZSByZXZpZXcgc2hvd3MgdGhhdCBQQVRIX1VOQ0hFQ0tFRCBpcyBiZXR0ZXIgdGhlbgpQQVRI
+X1RJTUVPVVQgZm9yIHRoZSBjb3JuZXIgY2FzZSBhdCBoYW5kLgoKUmVnYXJkcwpNYXJ0aW4KCgo+
+ICBCdXQgSSBkb24ndCBsaWtlIGhvdyBQQVRIX1VOQ0hFQ0tFRAo+IHdvcmtzIGxpa2UgUEFUSF9E
+T1dOLCBidXQgd2l0aG91dCBhY3R1YWxseSBrZWVwaW5nIHRoZSBzdGF0ZSBzeW5jZWQKPiB3aXRo
+Cj4gdGhlIGtlcm5lbCwgc2luY2UgdGhlIHJlc3Qgb2YgdGhlIG11bHRpcGF0aGQgY29kZSBpcyBl
+eHBlY3RpbmcgdGhlCj4gc3RhdGUKPiB0byBiZSBzeW5jZWQuCj4gIAo+ID4gU2lnbmVkLW9mZi1i
+eTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+Cj4gPiAtLS0KPiA+ICBsaWJtdWx0aXBh
+dGgvY2hlY2tlcnMvdHVyLmMgfCAyNCArKysrKysrKysrKysrKysrKysrKystLS0KPiA+ICAxIGZp
+bGUgY2hhbmdlZCwgMjEgaW5zZXJ0aW9ucygrKSwgMyBkZWxldGlvbnMoLSkKPiA+IAo+ID4gZGlm
+ZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9jaGVja2Vycy90dXIuYwo+ID4gYi9saWJtdWx0aXBhdGgv
+Y2hlY2tlcnMvdHVyLmMKPiA+IGluZGV4IDQxMjEwODkyLi5hNmM4OGViMiAxMDA2NDQKPiA+IC0t
+LSBhL2xpYm11bHRpcGF0aC9jaGVja2Vycy90dXIuYwo+ID4gKysrIGIvbGlibXVsdGlwYXRoL2No
+ZWNrZXJzL3R1ci5jCj4gPiBAQCAtMzQ5LDExICszNDksMjkgQEAgaW50IGxpYmNoZWNrX2NoZWNr
+KHN0cnVjdCBjaGVja2VyICogYykKPiA+ICAJCX0KPiA+ICAJfSBlbHNlIHsKPiA+ICAJCWlmICh1
+YXRvbWljX3JlYWQoJmN0LT5ob2xkZXJzKSA+IDEpIHsKPiA+IC0JCQkvKiBUaGUgdGhyZWFkIGhh
+cyBiZWVuIGNhbmNlbGxlZCBidXQgaGFzbid0Cj4gPiAtCQkJICogcXVpdC4gZXhpdCB3aXRoIHRp
+bWVvdXQuICovCj4gPiArCQkJLyoKPiA+ICsJCQkgKiBUaGUgdGhyZWFkIGhhcyBiZWVuIGNhbmNl
+bGxlZCBidXQgaGFzbid0Cj4gPiBxdWl0Lgo+ID4gKwkJCSAqIFdlIGhhdmUgdG8gcHJldmVudCBp
+dCBmcm9tIGludGVyZmVyaW5nIHdpdGgKPiA+IHRoZSBuZXcKPiA+ICsJCQkgKiB0aHJlYWQuIFdl
+IGNyZWF0ZSBhIG5ldyBjb250ZXh0IGFuZCBsZWF2ZQo+ID4gdGhlIG9sZAo+ID4gKwkJCSAqIG9u
+ZSB3aXRoIHRoZSBzdGFsZSB0aHJlYWQsIGhvcGluZyBpdCB3aWxsCj4gPiBjbGVhbiB1cAo+ID4g
+KwkJCSAqIGV2ZW50dWFsbHkuCj4gPiArCQkJICovCj4gPiAgCQkJY29uZGxvZygzLCAiJWQ6JWQg
+OiB0dXIgdGhyZWFkIG5vdCByZXNwb25kaW5nIiwKPiA+ICAJCQkJbWFqb3IoY3QtPmRldnQpLCBt
+aW5vcihjdC0+ZGV2dCkpOwo+ID4gLQkJCXJldHVybiBQQVRIX1RJTUVPVVQ7Cj4gPiArCj4gPiAr
+CQkJLyoKPiA+ICsJCQkgKiBsaWJjaGVja19pbml0IHdpbGwgcmVwbGFjZSBjLT5jb250ZXh0Lgo+
+ID4gKwkJCSAqIEl0IGZhaWxzIG9ubHkgaW4gT09NIHNpdHVhdGlvbnMuIEluIHRoaXMKPiA+IGNh
+c2UsIHJldHVybgo+ID4gKwkJCSAqIFBBVEhfVU5DSEVDS0VEIHRvIGF2b2lkIHByZW1hdHVyZWx5
+IGZhaWxpbmcKPiA+IHRoZSBwYXRoLgo+ID4gKwkJCSAqLwo+ID4gKwkJCWlmIChsaWJjaGVja19p
+bml0KGMpICE9IDApCj4gPiArCQkJCXJldHVybiBQQVRIX1VOQ0hFQ0tFRDsKPiA+ICsKPiA+ICsJ
+CQlpZiAoIXVhdG9taWNfc3ViX3JldHVybigmY3QtPmhvbGRlcnMsIDEpKQo+ID4gKwkJCQkvKiBJ
+dCBkaWQgdGVybWluYXRlLCBldmVudHVhbGx5ICovCj4gPiArCQkJCWNsZWFudXBfY29udGV4dChj
+dCk7Cj4gPiArCj4gPiArCQkJY3QgPSBjLT5jb250ZXh0Owo+ID4gIAkJfQo+ID4gIAkJLyogU3Rh
+cnQgbmV3IFRVUiBjaGVja2VyICovCj4gPiAgCQlwdGhyZWFkX211dGV4X2xvY2soJmN0LT5sb2Nr
+KTsKPiA+IC0tIAo+ID4gMi4xOS4xCj4gCj4gLS0KPiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QKPiBk
+bS1kZXZlbEByZWRoYXQuY29tCj4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
+bmZvL2RtLWRldmVsCj4gCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwg
+VGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1l
+bmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8
+cm5iZXJnKQoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0
+dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
