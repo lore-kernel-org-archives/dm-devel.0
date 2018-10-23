@@ -1,12 +1,14 @@
-From: =?UTF-8?B?w5Z6a2FuIEfDtmtzdQ==?= <ozkan.goksu@usishi.com>
-Subject: Multipathd failed when I remove faulted disk. "segfault
- at 648 error 4 in libmultipath.so.0"
-Date: Tue, 23 Oct 2018 14:46:59 +0300
-Message-ID: <CAPu=dv1ZUoapd2ACHKNSMUq5OUE304dobP6+EDeqGpJksmp4dA@mail.gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH v2 08/10] multipathd: handle repeated udev
+	retrigger failure
+Date: Tue, 23 Oct 2018 15:43:46 +0200
+Message-ID: <20181023134348.17915-3-mwilck@suse.com>
+References: <20181023134348.17915-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20181023134348.17915-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,91 +18,68 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Hello.
+If a path was still not properly initialized after exhausting the
+retrigger tries, it used to remain in INIT_MISSING_UDEV state forever.
+get_uid() might fall back to non-udev-based methods to determine
+the WWID, but it would never be called for a path in this state any more.
 
-I was have a faulted disk in my 148 disk ZFS pool and I replaced the
-disk with a new one but when I remove the disk from Jbod, Multipathd
-service failed somehow.
-The jbod attached via SAS LSI-3008
+This patch changes this behavior by resetting the path back to FAILED
+state if udev can't provide the WWID even after retriggering. Now, if
+the path ever happens to be in PATH_UP or PATH_GHOST state again,
+pathinfo(DI_ALL) will be called from check_path(), and there's at least
+some chance to obtain a WWID for it.
 
-What is the problem with the daemon?
-How do I prevent this problem happen again?
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipathd/main.c | 32 +++++++++++++++++++++++---------
+ 1 file changed, 23 insertions(+), 9 deletions(-)
 
-
-Faulted disk removed at: Mon Oct 22 11:30:32 2018
-New disk inserted at: Mon Oct 22 11:30:40 2018
-
-dmesg:
-
-[Mon Oct 22 11:30:32 2018] sd 10:0:58:0: [sdbg] Synchronizing SCSI cache
-[Mon Oct 22 11:30:32 2018] sd 10:0:58:0: [sdbg] Synchronize Cache(10)
-failed: Result: hostbyte=0x01 driverbyte=0x00
-[Mon Oct 22 11:30:32 2018] mpt3sas_cm0: removing handle(0x0098),
-sas_addr(0x5000c5009537e0ad)
-[Mon Oct 22 11:30:32 2018] mpt3sas_cm0: removing : enclosure logical
-id(0x50030480092b8abf), slot(21)
-[Mon Oct 22 11:30:32 2018] mpt3sas_cm0: removing enclosure
-level(0x0001), connector name(     )
-[Mon Oct 22 11:30:32 2018] sd 10:0:135:0: [sdec] Synchronizing SCSI cache
-[Mon Oct 22 11:30:32 2018] sd 10:0:135:0: [sdec] Synchronize Cache(10)
-failed: Result: hostbyte=0x01 driverbyte=0x00
-[Mon Oct 22 11:30:32 2018] mpt3sas_cm0: removing handle(0x0047),
-sas_addr(0x5000c5009537e0ae)
-[Mon Oct 22 11:30:32 2018] mpt3sas_cm0: removing : enclosure logical
-id(0x50030480092b8abf), slot(21)
-[Mon Oct 22 11:30:32 2018] mpt3sas_cm0: removing enclosure
-level(0x0001), connector name(     )
-[Mon Oct 22 11:30:33 2018] device-mapper: multipath: Failing path 128:64.
-[Mon Oct 22 11:30:33 2018] multipathd[5626]: segfault at 648 ip
-00007f452e2dc9b9 sp 00007f452e69d960 error 4 in
-libmultipath.so.0[7f452e2a2000+4c000]
-
-Multipathd daemon log:
-
--- Logs begin at Mon 2018-04-16 14:30:14 +03. --
-Oct 22 11:30:33 YL-CTRL1 multipathd[5612]: sdbg: remove path (uevent)
-Oct 22 11:30:33 YL-CTRL1 multipathd[5612]: sdec: No SAS end device for
-'end_device-10:5'
-Oct 22 11:30:33 YL-CTRL1 multipathd[5612]: 35000c5009537e0af: load
-table [0 15628053168 multipath 0 0 1 1 service-time 0 1 1 128:64 1
-Oct 22 11:30:33 YL-CTRL1 multipathd[5612]: ]
-Oct 22 11:30:33 YL-CTRL1 multipathd[5612]: sdbg [67:160]: path removed
-from map 35000c5009537e0af
-Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: 128:64: cannot find block device
-Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: checker failed path 128:64
-in map 35000c5009537e0af
-Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: 35000c5009537e0af:
-remaining active paths: 0
-Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: 128:64: cannot find block device
-Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: sdec: remove path (uevent)
-Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: 35000c5009537e0af: map flushed
-Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: 35000c5009537e0af: stop
-event checker thread (139935041709824)
-Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: 35000c5009537e0af: removed
-map after removing all paths
-Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: 35000c5009537e0af: adding map
-Oct 22 11:30:34 YL-CTRL1 multipathd[5612]: 35000c5009537e0af: devmap dm-44 added
-Oct 22 11:30:36 YL-CTRL1 systemd[1]: multipathd.service: Main process
-exited, code=killed, status=11/SEGV
-Oct 22 11:30:36 YL-CTRL1 systemd[1]: multipathd.service: Failed with
-result 'signal'.
-
-Full Dmesg: https://paste.ubuntu.com/p/DDbxBdVnKs/
-
-
-Multipath Conf:
-defaults {
-user_friendly_names no
-  path_grouping_policy failover
-}
-blacklist_exceptions {
-        property "(ID_WWN|SCSI_IDENT_.*|ID_SERIAL)"
-}
-
-Versions:
-device-mapper 2.02.177-5
-multipath-tools 0.7.6-1
- kernel: 4.14.30-1-lts
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 2d45d989..a9e1a4bd 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1828,15 +1828,29 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	retrigger_tries = conf->retrigger_tries;
+ 	checkint = conf->checkint;
+ 	put_multipath_config(conf);
+-	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV &&
+-	    pp->retriggers < retrigger_tries) {
+-		condlog(2, "%s: triggering change event to reinitialize",
+-			pp->dev);
+-		pp->initialized = INIT_REQUESTED_UDEV;
+-		pp->retriggers++;
+-		sysfs_attr_set_value(pp->udev, "uevent", "change",
+-				     strlen("change"));
+-		return 0;
++	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV) {
++		if (pp->retriggers < retrigger_tries) {
++			condlog(2, "%s: triggering change event to reinitialize",
++				pp->dev);
++			pp->initialized = INIT_REQUESTED_UDEV;
++			pp->retriggers++;
++			sysfs_attr_set_value(pp->udev, "uevent", "change",
++					     strlen("change"));
++			return 0;
++		} else {
++			condlog(1, "%s: not initialized after %d udev retriggers",
++				pp->dev, retrigger_tries);
++			/*
++			 * Make sure that the "add missing path" code path
++			 * below may reinstate the path later, if it ever
++			 * comes up again.
++			 * The WWID needs not be cleared; if it was set, the
++			 * state hadn't been INIT_MISSING_UDEV in the first
++			 * place.
++			 */
++			pp->initialized = INIT_FAILED;
++			return 0;
++		}
+ 	}
+ 
+ 	/*
+-- 
+2.19.1
