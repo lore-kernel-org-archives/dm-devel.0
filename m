@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 6/7] multipathd: make DAEMON_SHUTDOWN a terminal
-	state
-Date: Wed, 24 Oct 2018 00:05:51 +0200
-Message-ID: <20181023220552.1306-7-mwilck@suse.com>
+Subject: [PATCH 4/7] multipathd: open client socket early
+Date: Wed, 24 Oct 2018 00:05:49 +0200
+Message-ID: <20181023220552.1306-5-mwilck@suse.com>
 References: <20181023220552.1306-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,74 +21,104 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-It can happen that, before the main thread reacts on DAEMON_SHUTDOWN
-and starts cancelling threads, another thread resets the state to
-something else. Fix that.
+Open the unix socket in multipathd code and pass the fd to
+uxsock_listen(). This will enable us to make the main thread
+wait for successful socket initialization in a follow-up patch.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/cli_handlers.c |  9 +++++++--
- multipathd/main.c         | 10 +++++++---
- 2 files changed, 14 insertions(+), 5 deletions(-)
+ multipathd/main.c   | 17 ++++++++++++++---
+ multipathd/uxlsnr.c | 11 ++---------
+ multipathd/uxlsnr.h |  2 +-
+ 3 files changed, 17 insertions(+), 13 deletions(-)
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 4aea4ce7..a0d57a53 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -1124,12 +1124,17 @@ cli_switch_group(void * v, char ** reply, int * len, void * data)
- int
- cli_reconfigure(void * v, char ** reply, int * len, void * data)
- {
-+	int rc;
-+
- 	condlog(2, "reconfigure (operator)");
- 
--	if (set_config_state(DAEMON_CONFIGURE) == ETIMEDOUT) {
-+	rc = set_config_state(DAEMON_CONFIGURE); 
-+	if (rc == ETIMEDOUT) {
- 		condlog(2, "timeout starting reconfiguration");
- 		return 1;
--	}
-+	} else if (rc == EINVAL)
-+		/* daemon shutting down */
-+		return 1;
- 	return 0;
- }
- 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index c71e7d03..768da8da 100644
+index 083abf28..50f69171 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -207,7 +207,7 @@ static void config_cleanup(void *arg)
+@@ -66,6 +66,7 @@ static int use_watchdog;
+ #include "pgpolicies.h"
+ #include "uevent.h"
+ #include "log.h"
++#include "uxsock.h"
  
- static void __post_config_state(enum daemon_status state)
+ #include "mpath_cmd.h"
+ #include "mpath_persist.h"
+@@ -1494,12 +1495,22 @@ uevqloop (void * ap)
+ static void *
+ uxlsnrloop (void * ap)
  {
--	if (state != running_state) {
-+	if (state != running_state && running_state != DAEMON_SHUTDOWN) {
- 		enum daemon_status old_state = running_state;
++	int ux_sock;
++
++	pthread_cleanup_push(rcu_unregister, NULL);
++	rcu_register_thread();
++
++	ux_sock = ux_socket_listen(DEFAULT_SOCKET);
++	if (ux_sock == -1)  {
++		condlog(1, "could not create uxsock: %d", errno);
++		exit_daemon();
++		return NULL;
++	}
++
+ 	if (cli_init()) {
+ 		condlog(1, "Failed to init uxsock listener");
+ 		return NULL;
+ 	}
+-	pthread_cleanup_push(rcu_unregister, NULL);
+-	rcu_register_thread();
+ 	set_handler_callback(LIST+PATHS, cli_list_paths);
+ 	set_handler_callback(LIST+PATHS+FMT, cli_list_paths_fmt);
+ 	set_handler_callback(LIST+PATHS+RAW+FMT, cli_list_paths_raw);
+@@ -1554,7 +1565,7 @@ uxlsnrloop (void * ap)
+ 	set_handler_callback(UNSETPRKEY+MAP, cli_unsetprkey);
  
- 		running_state = state;
-@@ -235,7 +235,9 @@ int set_config_state(enum daemon_status state)
- 	if (running_state != state) {
- 		enum daemon_status old_state = running_state;
+ 	umask(077);
+-	uxsock_listen(&uxsock_trigger, ap);
++	uxsock_listen(&uxsock_trigger, ux_sock, ap);
+ 	pthread_cleanup_pop(1);
+ 	return NULL;
+ }
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index 6f666663..04967e9a 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -165,22 +165,15 @@ void uxsock_cleanup(void *arg)
+ /*
+  * entry point
+  */
+-void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
++void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
++		     void * trigger_data)
+ {
+-	long ux_sock;
+ 	int rlen;
+ 	char *inbuf;
+ 	char *reply;
+ 	sigset_t mask;
+ 	int old_clients = MIN_POLLS;
  
--		if (running_state != DAEMON_IDLE) {
-+		if (running_state == DAEMON_SHUTDOWN)
-+			rc = EINVAL;
-+		else if (running_state != DAEMON_IDLE) {
- 			struct timespec ts;
+-	ux_sock = ux_socket_listen(DEFAULT_SOCKET);
+-
+-	if (ux_sock == -1) {
+-		condlog(1, "could not create uxsock: %d", errno);
+-		exit_daemon();
+-	}
+-
+ 	pthread_cleanup_push(uxsock_cleanup, (void *)ux_sock);
  
- 			clock_gettime(CLOCK_MONOTONIC, &ts);
-@@ -2204,7 +2206,9 @@ checkerloop (void *ap)
- 		if (rc == ETIMEDOUT) {
- 			condlog(4, "timeout waiting for DAEMON_IDLE");
- 			continue;
--		}
-+		} else if (rc == EINVAL)
-+			/* daemon shutdown */
-+			break;
+ 	condlog(3, "uxsock: startup listener");
+diff --git a/multipathd/uxlsnr.h b/multipathd/uxlsnr.h
+index d51a8f99..c7f25b2b 100644
+--- a/multipathd/uxlsnr.h
++++ b/multipathd/uxlsnr.h
+@@ -5,7 +5,7 @@
  
- 		pthread_cleanup_push(cleanup_lock, &vecs->lock);
- 		lock(&vecs->lock);
+ typedef int (uxsock_trigger_fn)(char *, char **, int *, bool, void *);
+ 
+-void * uxsock_listen(uxsock_trigger_fn uxsock_trigger,
++void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
+ 		     void * trigger_data);
+ 
+ #endif
 -- 
 2.19.1
