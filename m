@@ -1,14 +1,15 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 10/10] multipath.8: fix description of
-	"device" argument
-Date: Tue, 23 Oct 2018 15:43:48 +0200
-Message-ID: <20181023134348.17915-5-mwilck@suse.com>
-References: <20181023134348.17915-1-mwilck@suse.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH v4 00/11] Zoned block device support
+	improvements
+Date: Tue, 23 Oct 2018 09:59:16 -0600
+Message-ID: <78778e22-9c5e-99d0-ef5c-85e04d03a4b7@kernel.dk>
+References: <20181012100850.23316-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181023134348.17915-1-mwilck@suse.com>
+In-Reply-To: <20181012100850.23316-1-damien.lemoal@wdc.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,61 +19,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+To: Damien Le Moal <damien.lemoal@wdc.com>, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, Matias Bjorling <matias.bjorling@wdc.com>
 List-Id: dm-devel.ids
 
-Describe the fact that we can refer to path devices by WWID, and
-to multipath maps by devnode.
+On 10/12/18 4:08 AM, Damien Le Moal wrote:
+> This series improves zoned block device support (reduce overhead) and
+> introduces many simplifications to the code (overall, there are more deletions
+> than insertions).
+> 
+> In more details:
+> * Patches 1 to 3 are SCSI side (sd driver) cleanups and improvements reducing
+>   the overhead of report zones command execution during disk scan and
+>   revalidation.
+> * Patches 4 to 9 improve the useability and user API of zoned block devices.
+> * Patch 10 is the main part of this series. This patch replaces the
+>   REQ_OP_ZONE_REPORT BIO/request operation for executing report zones commands
+>   with a block device file operation, removing the need for the command reply
+>   payload in-place rewriting in the BIO buffer. This leads to major
+>   simplification of the code in many places.
+> * Patch 11 further simplifies the code of low level drivers by providing a
+>   generic implementation of zoned block device reuest queue zone bitmaps
+>   initialization and revalidation.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipath/multipath.8 | 32 ++++++++++++++++++--------------
- 1 file changed, 18 insertions(+), 14 deletions(-)
+I've applied this, but I have two complaints:
 
-diff --git a/multipath/multipath.8 b/multipath/multipath.8
-index c9bd23aa..9cdd05a3 100644
---- a/multipath/multipath.8
-+++ b/multipath/multipath.8
-@@ -95,21 +95,25 @@ is used to detect and coalesce multiple paths to devices, for fail-over or perfo
- .SH ARGUMENTS
- .\" ----------------------------------------------------------------------------
- .
-+The \fBdevice\fR argument restricts \fBmultipath\fR's operation to devices matching the given
-+expression. The argument may refer either to a multipath map or to
-+its components ("paths"). The expression may be in one of the following formats:
-+.
-+.TP 1.4i
-+.B device node
-+file name of a device node, e.g. \fI/dev/dm-10\fR or \fI/dev/sda\fR. If the node refers
-+to an existing device mapper device representing a multipath map, this selects
-+the map or its paths, depending on the operation mode. Otherwise, it selects a path device.
-+.
- .TP
--.BI device
--Act only on the multipath map specified by
--.IR device ,
--which is either:
--.RS 1.2i
--.IP \[bu]
--A multipath map name.
--.IP \[bu]
--A path (low-level device) associated with the desired multipath map; the path may be in one of the following formats:
--.RS 1.2i
--.IP \[bu]
--.B /dev/sdX
--.IP \[bu]
--.B major:minor
-+.B device ID
-+kernel device number specified by major:minor numbers, e.g. \fI65:16\fR. This
-+format can only be used for path devices.
-+.
-+.TP
-+.B WWID
-+a World Wide Identifier matching a multipath map or its paths. To list WWIDs of devices
-+present in the system, use e.g. the command "\fImultipath -d -v3 2>/dev/null\fR".
- .
- .\" ----------------------------------------------------------------------------
- .SH OPERATION MODES
+1) Two had to be hand applied, it wasn't against the block tree.
+2) The ordering of the signed-off-by. Someone told me that this is
+   patchwork, but I absolutely hate it. SOB should go last, not before
+   the reviewed-by. I fixed that up too.
+
 -- 
-2.19.1
+Jens Axboe
