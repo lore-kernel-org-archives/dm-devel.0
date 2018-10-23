@@ -1,14 +1,11 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: Multipathd failed when I remove faulted disk.
- "segfault at 648 error 4 in libmultipath.so.0"
-Date: Tue, 23 Oct 2018 15:55:15 +0200
-Message-ID: <ddf44a0e80bc76471e7a7c2a32ac2e2795013031.camel@suse.de>
-References: <CAPu=dv1ZUoapd2ACHKNSMUq5OUE304dobP6+EDeqGpJksmp4dA@mail.gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH v2 00/21] libmultipath: checkers overhaul
+Date: Tue, 23 Oct 2018 23:58:46 +0200
+Message-ID: <20181023215847.794-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAPu=dv1ZUoapd2ACHKNSMUq5OUE304dobP6+EDeqGpJksmp4dA@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,15 +15,86 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: =?ISO-8859-1?Q?=D6zkan_G=F6ksu?= <ozkan.goksu@usishi.com>, dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE4LTEwLTIzIGF0IDE0OjQ2ICswMzAwLCDDlnprYW4gR8O2a3N1ICB3cm90ZToK
-PiBIZWxsby4KPiAKPiBJIHdhcyBoYXZlIGEgZmF1bHRlZCBkaXNrIGluIG15IDE0OCBkaXNrIFpG
-UyBwb29sIGFuZCBJIHJlcGxhY2VkIHRoZQo+IGRpc2sgd2l0aCBhIG5ldyBvbmUgYnV0IHdoZW4g
-SSByZW1vdmUgdGhlIGRpc2sgZnJvbSBKYm9kLCBNdWx0aXBhdGhkCj4gc2VydmljZSBmYWlsZWQg
-c29tZWhvdy4KPiBUaGUgamJvZCBhdHRhY2hlZCB2aWEgU0FTIExTSS0zMDA4Cj4gCj4gV2hhdCBp
-cyB0aGUgcHJvYmxlbSB3aXRoIHRoZSBkYWVtb24/Cj4gSG93IGRvIEkgcHJldmVudCB0aGlzIHBy
-b2JsZW0gaGFwcGVuIGFnYWluPwoKRG8geW91IGhhdmUgYSBjb3JlIGR1bXAgb2YgbXVsdGlwYXRo
-ZD8KCk1hcnRpbgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29t
-Cmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Hi Christophe,
+
+As Ben has ack'd v2 of my "various multipath-tools patches"
+series now, I'm resending my previously submitted series
+"checkers overhaul" rebased on top of that. To spare the
+list unnecessary repetition, I resend only this cover letter
+and patch 11/21, because all others are exactly the same as
+before.
+
+This series starts with a few minor fixes and then attempts
+an overhaul of the checker code.
+
+First, there's a block of patches to get rid of the "message"
+char array in struct checker, replacing it with an integer.
+This topic had been touched in recent discussion between Ben
+and myself.
+
+The next larger block fixes problems with checkers that try
+to check unsupported devices. It's an interesting experience
+to configure wrong checkers for the existing devices and see
+what happens. With these patches, paths won't be falsely
+teared down any more in such situations.
+
+The last patch cleans up the checker data structure by splitting
+it into a "checker class" and the path "checker instance".
+
+There's more work to do in this area, but this is a start.
+
+Regards,
+Martin
+
+Martin Wilck (21):
+  libmultipath: fix use of uninitialized memory in write()
+  libmultipath: fix memory leaks from scandir() use
+  libmultipath/checkers: replace message by msgid
+  libmultipath/checkers: cciss_tur: use message id
+  libmultipath/checkers: directio: use message id
+  libmultipath/checkers: emc_clariion: use message id
+  libmultipath/checkers: hp_sw: use message id
+  libmultipath/checkers: rdac: use message id
+  libmultipath/checkers: readsector0: use message id
+  libmultipath/checkers: tur: use message id
+  multipathd: improve checker message logging
+  libmultipath/checkers: support unsupported paths
+  libmultipath: clariion checker: leave unsupported paths alone
+  libmultipath: hp_sw checker: leave unsupported paths alone
+  libmultipath: rdac checker: leave unsupported paths alone
+  libmultipath: tur checker: leave unsupported paths alone
+  libmultipath: pathinfo: don't blank wwid if checker fails
+  multipathd: check_path: improve logging for "unusable path" case
+  libmultipath: coalesce_paths: improve logging of orphaned paths
+  libmultipath: sync_map_state: log failing paths
+  libmultipath/checkers: cleanup class/instance model
+
+ libmultipath/checkers.c              | 196 +++++++++++++++++----------
+ libmultipath/checkers.h              |  65 ++++++---
+ libmultipath/checkers/cciss_tur.c    |  13 +-
+ libmultipath/checkers/directio.c     |  29 ++--
+ libmultipath/checkers/emc_clariion.c | 108 ++++++++++++---
+ libmultipath/checkers/hp_sw.c        |  39 ++++--
+ libmultipath/checkers/rdac.c         |  92 +++++++++----
+ libmultipath/checkers/readsector0.c  |   7 +-
+ libmultipath/checkers/tur.c          |  60 ++++----
+ libmultipath/config.c                |  10 +-
+ libmultipath/configure.c             |  10 +-
+ libmultipath/discovery.c             |   7 +-
+ libmultipath/foreign.c               |   5 +-
+ libmultipath/foreign/nvme.c          |   6 +-
+ libmultipath/print.c                 |   2 +-
+ libmultipath/propsel.c               |  19 +--
+ libmultipath/structs_vec.c           |   5 +-
+ libmultipath/sysfs.c                 |   5 +-
+ libmultipath/util.c                  |   9 ++
+ libmultipath/util.h                  |   9 ++
+ multipathd/main.c                    |  36 +++--
+ 21 files changed, 492 insertions(+), 240 deletions(-)
+
+-- 
+2.19.1
