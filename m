@@ -1,67 +1,27 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 2/7] multipathd: remove init_path_check_interval()
-Date: Wed, 24 Oct 2018 00:05:47 +0200
-Message-ID: <20181023220552.1306-3-mwilck@suse.com>
-References: <20181023220552.1306-1-mwilck@suse.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [RFC] dm-bow working prototype
+Date: Tue, 23 Oct 2018 23:18:19 +0100
+Message-ID: <20181023221819.GB17552@agk-dp.fab.redhat.com>
+References: <20181023212358.60292-1-paullawrence@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181023220552.1306-1-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>, Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20181023212358.60292-1-paullawrence@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Paul Lawrence <paullawrence@google.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Jonathan Corbet <corbet@lwn.net>, Shaohua Li <shli@kernel.org>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-After "libmultipath: set pp->checkint in store_pathinfo()",
-pp-checkint should always be properly initialized, so this code
-is not needed any more.
+On Tue, Oct 23, 2018 at 02:23:28PM -0700, Paul Lawrence wrote:
+> It is planned to use this driver to enable restoration of a failed
+> update attempt on Android devices using ext4.
 
-Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipathd/main.c | 14 --------------
- 1 file changed, 14 deletions(-)
+Could you say a bit more about the reason for this new dm target so we
+can understand better what parameters you are trying to optimise and
+within what new constraints?  What are the failure modes that you need
+to handle better by using this?  (We can guess some answers, but it
+would better if you can lay them out so we don't need to make
+assumptions.)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index b8423d89..3464ebfa 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2131,19 +2131,6 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	return 1;
- }
- 
--static void init_path_check_interval(struct vectors *vecs)
--{
--	struct config *conf;
--	struct path *pp;
--	unsigned int i;
--
--	vector_foreach_slot (vecs->pathvec, pp, i) {
--		conf = get_multipath_config();
--		pp->checkint = conf->checkint;
--		put_multipath_config(conf);
--	}
--}
--
- static void *
- checkerloop (void *ap)
- {
-@@ -2727,7 +2714,6 @@ child (void * param)
- 	 */
- 	post_config_state(DAEMON_CONFIGURE);
- 
--	init_path_check_interval(vecs);
- 
- 	if (poll_dmevents) {
- 		if (init_dmevent_waiter(vecs)) {
--- 
-2.19.1
+Alasdair
