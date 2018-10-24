@@ -1,15 +1,14 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH v4 00/11] Zoned block device support
-	improvements
-Date: Wed, 24 Oct 2018 08:04:53 +0000
-Message-ID: <BN3PR0401MB1640DDD064340B0C074055AFE7F60@BN3PR0401MB1640.namprd04.prod.outlook.com>
-References: <20181012100850.23316-1-damien.lemoal@wdc.com>
-	<78778e22-9c5e-99d0-ef5c-85e04d03a4b7@kernel.dk>
+From: =?UTF-8?B?w5Z6a2FuIEfDtmtzdQ==?= <ozkan.goksu@usishi.com>
+Subject: Re: Multipathd failed when I remove faulted disk.
+ "segfault at 648 error 4 in libmultipath.so.0"
+Date: Wed, 24 Oct 2018 11:44:23 +0300
+Message-ID: <CAPu=dv1XcUXNcuxMmWxQrR4-qpQmR7hHg-YLxXqPYe=Lx6jyRg@mail.gmail.com>
+References: <CAPu=dv1ZUoapd2ACHKNSMUq5OUE304dobP6+EDeqGpJksmp4dA@mail.gmail.com>
+	<ddf44a0e80bc76471e7a7c2a32ac2e2795013031.camel@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============2587038421467933651=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <ddf44a0e80bc76471e7a7c2a32ac2e2795013031.camel@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,52 +18,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Martin K . Petersen" <martin.petersen@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>, Matias Bjorling <Matias.Bjorling@wdc.com>
+To: mwilck@suse.de
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Jens,
+--===============2587038421467933651==
+Content-Type: multipart/alternative; boundary="000000000000e329e10578f57e1f"
 
-On 2018/10/23 16:59, Jens Axboe wrote:
-> On 10/12/18 4:08 AM, Damien Le Moal wrote:
->> This series improves zoned block device support (reduce overhead) and
->> introduces many simplifications to the code (overall, there are more deletions
->> than insertions).
->>
->> In more details:
->> * Patches 1 to 3 are SCSI side (sd driver) cleanups and improvements reducing
->>   the overhead of report zones command execution during disk scan and
->>   revalidation.
->> * Patches 4 to 9 improve the useability and user API of zoned block devices.
->> * Patch 10 is the main part of this series. This patch replaces the
->>   REQ_OP_ZONE_REPORT BIO/request operation for executing report zones commands
->>   with a block device file operation, removing the need for the command reply
->>   payload in-place rewriting in the BIO buffer. This leads to major
->>   simplification of the code in many places.
->> * Patch 11 further simplifies the code of low level drivers by providing a
->>   generic implementation of zoned block device reuest queue zone bitmaps
->>   initialization and revalidation.
-> 
-> I've applied this, but I have two complaints:
-> 
-> 1) Two had to be hand applied, it wasn't against the block tree.
+--000000000000e329e10578f57e1f
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-My apologies for that. I had to rebase against the latest RC because of a
-conflict with late fixes in DM. I should have checked more carefully against the
-block tree after that. Sorry about this, I will be more careful going forward.
+Hello Martin.
 
-> 2) The ordering of the signed-off-by. Someone told me that this is
->    patchwork, but I absolutely hate it. SOB should go last, not before
->    the reviewed-by. I fixed that up too.
+You can download the core dump here:
+https://drive.google.com/file/d/10egy9RXch6-s4x6PX6UjoEfIk3g_gpb9/view?usp=
+=3Dsharing
 
-Thank you. I think this was me rather than patchwork when I a manually added the
-reviewed-by tags with new versions of the series. I will remember this and tag
-in you preferred order.
+Martin Wilck <mwilck@suse.de>, 23 Eki 2018 Sal, 16:55 tarihinde =C5=9Funu y=
+azd=C4=B1:
 
-Thank you.
+> On Tue, 2018-10-23 at 14:46 +0300, =C3=96zkan G=C3=B6ksu  wrote:
+> > Hello.
+> >
+> > I was have a faulted disk in my 148 disk ZFS pool and I replaced the
+> > disk with a new one but when I remove the disk from Jbod, Multipathd
+> > service failed somehow.
+> > The jbod attached via SAS LSI-3008
+> >
+> > What is the problem with the daemon?
+> > How do I prevent this problem happen again?
+>
+> Do you have a core dump of multipathd?
+>
+> Martin
+>
+>
+>
 
-Best regards.
+--000000000000e329e10578f57e1f
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
--- 
-Damien Le Moal
-Western Digital Research
+<div dir=3D"ltr"><div dir=3D"ltr">Hello Martin.<div><br></div><div>You can =
+download the core dump here:</div><div><a href=3D"https://drive.google.com/=
+file/d/10egy9RXch6-s4x6PX6UjoEfIk3g_gpb9/view?usp=3Dsharing">https://drive.=
+google.com/file/d/10egy9RXch6-s4x6PX6UjoEfIk3g_gpb9/view?usp=3Dsharing</a><=
+br></div></div></div><br><div class=3D"gmail_quote"><div dir=3D"ltr">Martin=
+ Wilck &lt;<a href=3D"mailto:mwilck@suse.de">mwilck@suse.de</a>&gt;, 23 Eki=
+ 2018 Sal, 16:55 tarihinde =C5=9Funu yazd=C4=B1:<br></div><blockquote class=
+=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
+ing-left:1ex">On Tue, 2018-10-23 at 14:46 +0300, =C3=96zkan G=C3=B6ksu=C2=
+=A0 wrote:<br>
+&gt; Hello.<br>
+&gt; <br>
+&gt; I was have a faulted disk in my 148 disk ZFS pool and I replaced the<b=
+r>
+&gt; disk with a new one but when I remove the disk from Jbod, Multipathd<b=
+r>
+&gt; service failed somehow.<br>
+&gt; The jbod attached via SAS LSI-3008<br>
+&gt; <br>
+&gt; What is the problem with the daemon?<br>
+&gt; How do I prevent this problem happen again?<br>
+<br>
+Do you have a core dump of multipathd?<br>
+<br>
+Martin<br>
+<br>
+<br>
+</blockquote></div>
+
+--000000000000e329e10578f57e1f--
+
+
+--===============2587038421467933651==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2587038421467933651==--
