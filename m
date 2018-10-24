@@ -1,14 +1,17 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm writecache: fix typo in error msg for
- creating writecache_flush_thread
-Date: Wed, 24 Oct 2018 10:41:25 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1810241038410.17312@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20181024080436.2230-1-shhuiw@foxmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v4 00/11] Zoned block device support
+	improvements
+Date: Wed, 24 Oct 2018 11:03:44 -0400
+Message-ID: <20181024150344.GB13487@redhat.com>
+References: <20181012100850.23316-1-damien.lemoal@wdc.com>
+	<78778e22-9c5e-99d0-ef5c-85e04d03a4b7@kernel.dk>
+	<yq1o9bkf5av.fsf@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181024080436.2230-1-shhuiw@foxmail.com>
+Content-Disposition: inline
+In-Reply-To: <yq1o9bkf5av.fsf@oracle.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,42 +21,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Shenghui Wang <shhuiw@foxmail.com>
-Cc: dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Damien Le Moal <damien.lemoal@wdc.com>, linux-scsi@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Matias Bjorling <matias.bjorling@wdc.com>
 List-Id: dm-devel.ids
 
+On Tue, Oct 23 2018 at 10:26pm -0400,
+Martin K. Petersen <martin.petersen@oracle.com> wrote:
 
-
-On Wed, 24 Oct 2018, Shenghui Wang wrote:
-
-> The error msg should be "flush thread" instead of "endio thread"
-> for writecache_flush_thread.
 > 
-> Signed-off-by: Shenghui Wang <shhuiw@foxmail.com>
+> Jens,
+> 
+> > 2) The ordering of the signed-off-by. Someone told me that this is
+> >    patchwork, but I absolutely hate it. SOB should go last, not before
+> >    the reviewed-by. I fixed that up too.
+> 
+> You keep mentioning this, but I don't recall ever seeing anything to
+> that effect. The rest of the kernel appears to be either arbitrary
+> ordering or favoring author SoB as the first tag.
 
-OK.
+I've always felt the proper order is how Jens likes it too (all dm
+commits from me follow that order).
 
-Acked-by: Mikulas Patocka <mpatocka@redhat.com>
-
-> ---
->  drivers/md/dm-writecache.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-> index 5f1f80d424dd..d656bd1799ae 100644
-> --- a/drivers/md/dm-writecache.c
-> +++ b/drivers/md/dm-writecache.c
-> @@ -2064,7 +2064,7 @@ static int writecache_ctr(struct dm_target *ti, unsigned argc, char **argv)
->  		if (IS_ERR(wc->flush_thread)) {
->  			r = PTR_ERR(wc->flush_thread);
->  			wc->flush_thread = NULL;
-> -			ti->error = "Couldn't spawn endio thread";
-> +			ti->error = "Couldn't spawn flush thread";
->  			goto bad;
->  		}
->  		wake_up_process(wc->flush_thread);
-> -- 
-> 2.18.0
-> 
-> 
-> 
+Mike
