@@ -1,27 +1,39 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [RFC] dm-bow working prototype
-Date: Tue, 23 Oct 2018 23:18:19 +0100
-Message-ID: <20181023221819.GB17552@agk-dp.fab.redhat.com>
-References: <20181023212358.60292-1-paullawrence@google.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [PATCH v4 00/11] Zoned block device support
+	improvements
+Date: Tue, 23 Oct 2018 22:26:48 -0400
+Message-ID: <yq1o9bkf5av.fsf@oracle.com>
+References: <20181012100850.23316-1-damien.lemoal@wdc.com>
+	<78778e22-9c5e-99d0-ef5c-85e04d03a4b7@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181023212358.60292-1-paullawrence@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Lawrence <paullawrence@google.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Jonathan Corbet <corbet@lwn.net>, Shaohua Li <shli@kernel.org>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <78778e22-9c5e-99d0-ef5c-85e04d03a4b7@kernel.dk> (Jens Axboe's
+	message of "Tue, 23 Oct 2018 09:59:16 -0600")
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Damien Le Moal <damien.lemoal@wdc.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Matias Bjorling <matias.bjorling@wdc.com>
 List-Id: dm-devel.ids
 
-On Tue, Oct 23, 2018 at 02:23:28PM -0700, Paul Lawrence wrote:
-> It is planned to use this driver to enable restoration of a failed
-> update attempt on Android devices using ext4.
 
-Could you say a bit more about the reason for this new dm target so we
-can understand better what parameters you are trying to optimise and
-within what new constraints?  What are the failure modes that you need
-to handle better by using this?  (We can guess some answers, but it
-would better if you can lay them out so we don't need to make
-assumptions.)
+Jens,
 
-Alasdair
+> 2) The ordering of the signed-off-by. Someone told me that this is
+>    patchwork, but I absolutely hate it. SOB should go last, not before
+>    the reviewed-by. I fixed that up too.
+
+You keep mentioning this, but I don't recall ever seeing anything to
+that effect. The rest of the kernel appears to be either arbitrary
+ordering or favoring author SoB as the first tag.
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
