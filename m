@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 05/21] libmultipath/checkers: directio: use
+Subject: Re: [PATCH 04/21] libmultipath/checkers: cciss_tur: use
 	message id
-Date: Thu, 25 Oct 2018 15:58:15 -0500
-Message-ID: <20181025205815.GN7100@octiron.msp.redhat.com>
+Date: Thu, 25 Oct 2018 15:57:52 -0500
+Message-ID: <20181025205752.GM7100@octiron.msp.redhat.com>
 References: <20181011222707.3631-1-mwilck@suse.com>
-	<20181011222707.3631-6-mwilck@suse.com>
+	<20181011222707.3631-5-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20181011222707.3631-6-mwilck@suse.com>
+In-Reply-To: <20181011222707.3631-5-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,72 +24,68 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Oct 12, 2018 at 12:26:51AM +0200, Martin Wilck wrote:
+On Fri, Oct 12, 2018 at 12:26:50AM +0200, Martin Wilck wrote:
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/checkers/directio.c | 27 ++++++++++++++++++---------
->  1 file changed, 18 insertions(+), 9 deletions(-)
+>  libmultipath/checkers/cciss_tur.c | 13 +++++--------
+>  1 file changed, 5 insertions(+), 8 deletions(-)
 > 
-> diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
-> index a80848d4..c4a0712e 100644
-> --- a/libmultipath/checkers/directio.c
-> +++ b/libmultipath/checkers/directio.c
-> @@ -18,10 +18,19 @@
->  #include "checkers.h"
->  #include "../libmultipath/debug.h"
+> diff --git a/libmultipath/checkers/cciss_tur.c b/libmultipath/checkers/cciss_tur.c
+> index 1cab2015..ea843742 100644
+> --- a/libmultipath/checkers/cciss_tur.c
+> +++ b/libmultipath/checkers/cciss_tur.c
+> @@ -42,9 +42,6 @@
+>  #define TUR_CMD_LEN 6
+>  #define HEAVY_CHECK_COUNT       10
 >  
-> -#define MSG_DIRECTIO_UNKNOWN	"directio checker is not available"
-> -#define MSG_DIRECTIO_UP		"directio checker reports path is up"
-> -#define MSG_DIRECTIO_DOWN	"directio checker reports path is down"
-> -#define MSG_DIRECTIO_PENDING	"directio checker is waiting on aio"
-> +enum {
-> +	MSG_DIRECTIO_UNKNOWN = CHECKER_FIRST_MSGID,
-> +	MSG_DIRECTIO_PENDING,
-> +	MSG_DIRECTIO_BLOCKSIZE,
-> +};
-> +
-> +#define _IDX(x) (MSG_DIRECTIO_##x - CHECKER_FIRST_MSGID)
-> +const char *libcheck_msgtable[] = {
-> +	[_IDX(UNKNOWN)] = " is not available",
-> +	[_IDX(PENDING)] = " is waiting on aio",
-> +	[_IDX(BLOCKSIZE)] = " cannot get blocksize, set default",
-> +	NULL,
-> +};
+> -#define MSG_CCISS_TUR_UP	"cciss_tur checker reports path is up"
+> -#define MSG_CCISS_TUR_DOWN	"cciss_tur checker reports path is down"
+> -
+>  struct cciss_tur_checker_context {
+>  	void * dummy;
+>  };
+> @@ -69,7 +66,7 @@ int libcheck_check(struct checker * c)
+>  	IOCTL_Command_struct cic;       // cciss ioctl command
 >  
->  #define LOG(prio, fmt, args...) condlog(prio, "directio: " fmt, ##args)
->  
-> @@ -54,7 +63,7 @@ int libcheck_init (struct checker * c)
+>  	if ((c->fd) < 0) {
+> -		MSG(c,"no usable fd");
+> +		c->msgid = CHECKER_MSGID_NO_FD;
+>  		ret = -1;
+>  		goto out;
 >  	}
->  
->  	if (ioctl(c->fd, BLKBSZGET, &ct->blksize) < 0) {
-> -		MSG(c, "cannot get blocksize, set default");
-> +		c->msgid = MSG_DIRECTIO_BLOCKSIZE;
->  		ct->blksize = 512;
->  	}
->  	if (ct->blksize > 4096) {
-> @@ -198,16 +207,16 @@ int libcheck_check (struct checker * c)
->  	switch (ret)
->  	{
->  	case PATH_UNCHECKED:
-> -		MSG(c, MSG_DIRECTIO_UNKNOWN);
-> +		c->msgid = MSG_DIRECTIO_UNKNOWN;
->  		break;
->  	case PATH_DOWN:
-> -		MSG(c, MSG_DIRECTIO_DOWN);
+> @@ -79,7 +76,7 @@ int libcheck_check(struct checker * c)
+>  		perror("Error: ");
+>  		fprintf(stderr, "cciss TUR  failed in CCISS_GETLUNINFO: %s\n",
+>  			strerror(errno));
+> -		MSG(c,MSG_CCISS_TUR_DOWN);
 > +		c->msgid = CHECKER_MSGID_DOWN;
->  		break;
->  	case PATH_UP:
-> -		MSG(c, MSG_DIRECTIO_UP);
-> +		c->msgid = CHECKER_MSGID_UP;
->  		break;
->  	case PATH_PENDING:
-> -		MSG(c, MSG_DIRECTIO_PENDING);
-> +		c->msgid = MSG_DIRECTIO_PENDING;
->  		break;
->  	default:
->  		break;
+>  		ret = PATH_DOWN;
+>  		goto out;
+>  	} else {
+> @@ -106,18 +103,18 @@ int libcheck_check(struct checker * c)
+>  	if (rc < 0) {
+>  		fprintf(stderr, "cciss TUR  failed: %s\n",
+>  			strerror(errno));
+> -		MSG(c,MSG_CCISS_TUR_DOWN);
+> +		c->msgid = CHECKER_MSGID_DOWN;
+>  		ret = PATH_DOWN;
+>  		goto out;
+>  	}
+>  
+>  	if ((cic.error_info.CommandStatus | cic.error_info.ScsiStatus )) {
+> -		MSG(c,MSG_CCISS_TUR_DOWN);
+> +		c->msgid = CHECKER_MSGID_DOWN;
+>  		ret = PATH_DOWN;
+>  		goto out;
+>  	}
+>  
+> -	MSG(c,MSG_CCISS_TUR_UP);
+> +	c->msgid = CHECKER_MSGID_UP;
+>  
+>  	ret = PATH_UP;
+>  out:
 > -- 
 > 2.19.0
