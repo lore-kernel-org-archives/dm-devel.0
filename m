@@ -1,15 +1,16 @@
-From: Wols Lists <antlists@youngman.org.uk>
-Subject: Re: [RFC] dm-bow working prototype
-Date: Thu, 25 Oct 2018 22:15:39 +0100
-Message-ID: <5BD2327B.1040908@youngman.org.uk>
-References: <20181023212358.60292-1-paullawrence@google.com>
-	<CAE8gLhmtrfprc93-XfomNEK5ZgxA_RFA0DnFrEnHjB0q31wkyg@mail.gmail.com>
-	<d00e361b-b849-3139-7e7a-02f05f3794c3@google.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 09/21] libmultipath/checkers: readsector0:
+	use message id
+Date: Thu, 25 Oct 2018 16:02:21 -0500
+Message-ID: <20181025210221.GR7100@octiron.msp.redhat.com>
+References: <20181011222707.3631-1-mwilck@suse.com>
+	<20181011222707.3631-10-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d00e361b-b849-3139-7e7a-02f05f3794c3@google.com>
+Content-Disposition: inline
+In-Reply-To: <20181011222707.3631-10-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,25 +20,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Paul Lawrence <paullawrence@google.com>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, Linux kernel <linux-kernel@vger.kernel.org>
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gMjUvMTAvMTggMTk6MTMsIFBhdWwgTGF3cmVuY2Ugd3JvdGU6Cj4+IEkgaGF2ZSBzb21lIHF1
-ZXN0aW9ucyBhYm91dCBkbS1ib3c6Cj4+IOKAkyBIb3cgZmlsZSBzeXN0ZW0gYWdub3N0aWMgdGhp
-cyBmZWF0dXJlIGlzIHBsYW5uZWQgdG8gYmU/IFdoaWxlIGl0IGlzCj4+IGRlc2lnbmVkIHdpdGgg
-ZXh0NCBpbiBtaW5kLCBpcyBpdCBnb2luZyB0byB3b3JrIHdoZW4gdXNlZCBvdmVyIG90aGVyCj4+
-IGZpbGUgc3lzdGVtcywgbGlrZSBGQVQgb3IgQlRSRlMgZm9yIGV4YW1wbGU/Cgo+IFNvIGxvbmcg
-YXMgdGhlIGZpbGUgc3lzdGVtIHN1cHBvcnRzIGZzdHJpbSwgaXQgc2hvdWxkIHdvcmsuIElmIHRo
-ZSBmaWxlCj4gc3lzdGVtIGNyZWF0ZXMgYSBsb3Qgb2YgY2h1cm4gc2F5IGJ5IHJ1bm5pbmcgZ2Fy
-YmFnZSBjb2xsZWN0aW9uLCBJJ2Qgbm90Cj4gcmVjb21tZW5kIGl0LiBBbmQgSSByZWFsbHkgZG9u
-J3Qgc2VlIHRoZSB1c2UgY2FzZSBpZiB0aGUgZmlsZSBzeXN0ZW0gaGFzCj4gYW55IHNvcnQgb2Yg
-c25hcHNob3QgY2FwYWJpbGl0eSAtIHRoYXQgd2lsbCBhbHdheXMgYmUgYSBzdXBlcmlvcgo+IHNv
-bHV0aW9uIHRvIGEgYmxvY2sgbGV2ZWwgb25lIElNTy4KClNvcnJ5IGZvciBiZWluZyBkZW5zZSwg
-YnV0IHdoeSBpcyB0aGlzIHBvc3RlZCB0byBsaW51eC1yYWlkLCB0aGVuPyBSYWlkCmRvZXMgbm90
-IHN1cHBvcnQgZnN0cmltLCBhbmQgaXMgZmlsZXN5c3RlbS1hZ25vc3RpYy4KCkkgY2FuIGltYWdp
-bmUgcGVvcGxlIGhlcmUgYmVpbmcgaW50ZXJlc3RlZCwgYnV0IGl0IGZlZWxzIHRvIG1lIGFzIHRo
-b3VnaAp5b3VyIGZ1bmN0aW9uYWxpdHkgaXMgY29tcGxldGVseSBvcnRob2dvbmFsIHRvIHJhaWQu
-IFNvcnJ5LgoKQ2hlZXJzLApXb2wKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
-ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
-bA==
+On Fri, Oct 12, 2018 at 12:26:55AM +0200, Martin Wilck wrote:
+
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/checkers/readsector0.c | 7 ++-----
+>  1 file changed, 2 insertions(+), 5 deletions(-)
+> 
+> diff --git a/libmultipath/checkers/readsector0.c b/libmultipath/checkers/readsector0.c
+> index 1c2a868e..cf79e067 100644
+> --- a/libmultipath/checkers/readsector0.c
+> +++ b/libmultipath/checkers/readsector0.c
+> @@ -6,9 +6,6 @@
+>  #include "checkers.h"
+>  #include "libsg.h"
+>  
+> -#define MSG_READSECTOR0_UP	"readsector0 checker reports path is up"
+> -#define MSG_READSECTOR0_DOWN	"readsector0 checker reports path is down"
+> -
+>  struct readsector0_checker_context {
+>  	void * dummy;
+>  };
+> @@ -35,10 +32,10 @@ int libcheck_check (struct checker * c)
+>  	switch (ret)
+>  	{
+>  	case PATH_DOWN:
+> -		MSG(c, MSG_READSECTOR0_DOWN);
+> +		c->msgid = CHECKER_MSGID_DOWN;
+>  		break;
+>  	case PATH_UP:
+> -		MSG(c, MSG_READSECTOR0_UP);
+> +		c->msgid = CHECKER_MSGID_UP;
+>  		break;
+>  	default:
+>  		break;
+> -- 
+> 2.19.0
