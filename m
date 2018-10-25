@@ -1,16 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 10/21] libmultipath/checkers: tur: use
-	message id
-Date: Thu, 25 Oct 2018 16:32:39 -0500
-Message-ID: <20181025213239.GS7100@octiron.msp.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 03/21] libmultipath/checkers: replace message
+	by msgid
+Date: Thu, 25 Oct 2018 23:36:20 +0200
+Message-ID: <53914288ef1a6146e55ade835cdaccd7a1cdaab8.camel@suse.com>
 References: <20181011222707.3631-1-mwilck@suse.com>
-	<20181011222707.3631-11-mwilck@suse.com>
+	<20181011222707.3631-4-mwilck@suse.com>
+	<20181025205727.GL7100@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20181011222707.3631-11-mwilck@suse.com>
+In-Reply-To: <20181025205727.GL7100@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,188 +20,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Oct 12, 2018 at 12:26:56AM +0200, Martin Wilck wrote:
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/checkers/tur.c | 54 ++++++++++++++++++++-----------------
->  1 file changed, 30 insertions(+), 24 deletions(-)
-> 
-> diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-> index 9ecca5bd..448c396e 100644
-> --- a/libmultipath/checkers/tur.c
-> +++ b/libmultipath/checkers/tur.c
-> @@ -29,12 +29,19 @@
->  #define TUR_CMD_LEN 6
->  #define HEAVY_CHECK_COUNT       10
->  
-> -#define MSG_TUR_UP	"tur checker reports path is up"
-> -#define MSG_TUR_DOWN	"tur checker reports path is down"
-> -#define MSG_TUR_GHOST	"tur checker reports path is in standby state"
-> -#define MSG_TUR_RUNNING	"tur checker still running"
-> -#define MSG_TUR_TIMEOUT	"tur checker timed out"
-> -#define MSG_TUR_FAILED	"tur checker failed to initialize"
-> +enum {
-> +	MSG_TUR_RUNNING = CHECKER_FIRST_MSGID,
-> +	MSG_TUR_TIMEOUT,
-> +	MSG_TUR_FAILED,
-> +};
-> +
-> +#define _IDX(x) (MSG_ ## x - CHECKER_FIRST_MSGID)
-> +const char *libcheck_msgtable[] = {
-> +	[_IDX(TUR_RUNNING)] = " still running",
-> +	[_IDX(TUR_TIMEOUT)] = " timed out",
-> +	[_IDX(TUR_FAILED)] = " failed to initialize",
-> +	NULL,
-> +};
->  
->  struct tur_checker_context {
->  	dev_t devt;
-> @@ -47,7 +54,7 @@ struct tur_checker_context {
->  	pthread_mutex_t lock;
->  	pthread_cond_t active;
->  	int holders; /* uatomic access only */
-> -	char message[CHECKER_MSG_LEN];
-> +	int msgid;
->  };
->  
->  int libcheck_init (struct checker * c)
-> @@ -99,7 +106,7 @@ void libcheck_free (struct checker * c)
->  }
->  
->  static int
-> -tur_check(int fd, unsigned int timeout, char *msg)
-> +tur_check(int fd, unsigned int timeout, short *msgid)
->  {
->  	struct sg_io_hdr io_hdr;
->  	unsigned char turCmdBlk[TUR_CMD_LEN] = { 0x00, 0, 0, 0, 0, 0 };
-> @@ -118,7 +125,7 @@ retry:
->  	io_hdr.timeout = timeout * 1000;
->  	io_hdr.pack_id = 0;
->  	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
-> -		snprintf(msg, CHECKER_MSG_LEN, MSG_TUR_DOWN);
-> +		*msgid = CHECKER_MSGID_DOWN;
->  		return PATH_DOWN;
->  	}
->  	if ((io_hdr.status & 0x7e) == 0x18) {
-> @@ -126,7 +133,7 @@ retry:
->  		 * SCSI-3 arrays might return
->  		 * reservation conflict on TUR
->  		 */
-> -		snprintf(msg, CHECKER_MSG_LEN, MSG_TUR_UP);
-> +		*msgid = CHECKER_MSGID_UP;
->  		return PATH_UP;
->  	}
->  	if (io_hdr.info & SG_INFO_OK_MASK) {
-> @@ -171,14 +178,14 @@ retry:
->  				 * LOGICAL UNIT NOT ACCESSIBLE,
->  				 * TARGET PORT IN STANDBY STATE
->  				 */
-> -				snprintf(msg, CHECKER_MSG_LEN, MSG_TUR_GHOST);
-> +				*msgid = CHECKER_MSGID_GHOST;
->  				return PATH_GHOST;
->  			}
->  		}
-> -		snprintf(msg, CHECKER_MSG_LEN, MSG_TUR_DOWN);
-> +		*msgid = CHECKER_MSGID_DOWN;
->  		return PATH_DOWN;
->  	}
-> -	snprintf(msg, CHECKER_MSG_LEN, MSG_TUR_UP);
-> +	*msgid = CHECKER_MSGID_UP;
->  	return PATH_UP;
->  }
->  
-> @@ -244,7 +251,7 @@ static void *tur_thread(void *ctx)
->  {
->  	struct tur_checker_context *ct = ctx;
->  	int state, running;
-> -	char msg[CHECKER_MSG_LEN];
-> +	short msgid;
->  
->  	/* This thread can be canceled, so setup clean up */
->  	tur_thread_cleanup_push(ct);
-> @@ -254,13 +261,13 @@ static void *tur_thread(void *ctx)
->  		minor(ct->devt));
->  
->  	tur_deep_sleep(ct);
-> -	state = tur_check(ct->fd, ct->timeout, msg);
-> +	state = tur_check(ct->fd, ct->timeout, &msgid);
->  	pthread_testcancel();
->  
->  	/* TUR checker done */
->  	pthread_mutex_lock(&ct->lock);
->  	ct->state = state;
-> -	strlcpy(ct->message, msg, sizeof(ct->message));
-> +	ct->msgid = msgid;
->  	pthread_cond_signal(&ct->active);
->  	pthread_mutex_unlock(&ct->lock);
->  
-> @@ -313,7 +320,7 @@ int libcheck_check(struct checker * c)
->  		return PATH_UNCHECKED;
->  
->  	if (c->sync)
-> -		return tur_check(c->fd, c->timeout, c->message);
-> +		return tur_check(c->fd, c->timeout, &c->msgid);
->  
->  	/*
->  	 * Async mode
-> @@ -325,13 +332,12 @@ int libcheck_check(struct checker * c)
->  				pthread_cancel(ct->thread);
->  				condlog(3, "%d:%d : tur checker timeout",
->  					major(ct->devt), minor(ct->devt));
-> -				MSG(c, MSG_TUR_TIMEOUT);
-> +				c->msgid = MSG_TUR_TIMEOUT;
->  				tur_status = PATH_TIMEOUT;
->  			} else {
->  				pthread_mutex_lock(&ct->lock);
->  				tur_status = ct->state;
-> -				strlcpy(c->message, ct->message,
-> -					sizeof(c->message));
-> +				c->msgid = ct->msgid;
->  				pthread_mutex_unlock(&ct->lock);
->  			}
->  			ct->thread = 0;
-> @@ -344,7 +350,7 @@ int libcheck_check(struct checker * c)
->  			ct->thread = 0;
->  			pthread_mutex_lock(&ct->lock);
->  			tur_status = ct->state;
-> -			strlcpy(c->message, ct->message, sizeof(c->message));
-> +			c->msgid = ct->msgid;
->  			pthread_mutex_unlock(&ct->lock);
->  		}
->  	} else {
-> @@ -376,7 +382,7 @@ int libcheck_check(struct checker * c)
->  		/* Start new TUR checker */
->  		pthread_mutex_lock(&ct->lock);
->  		tur_status = ct->state = PATH_PENDING;
-> -		ct->message[0] = '\0';
-> +		ct->msgid = CHECKER_MSGID_NONE;
->  		pthread_mutex_unlock(&ct->lock);
->  		ct->fd = c->fd;
->  		ct->timeout = c->timeout;
-> @@ -392,7 +398,7 @@ int libcheck_check(struct checker * c)
->  			ct->thread = 0;
->  			condlog(3, "%d:%d : failed to start tur thread, using"
->  				" sync mode", major(ct->devt), minor(ct->devt));
-> -			return tur_check(c->fd, c->timeout, c->message);
-> +			return tur_check(c->fd, c->timeout, &c->msgid);
->  		}
->  		tur_timeout(&tsp);
->  		pthread_mutex_lock(&ct->lock);
-> @@ -401,7 +407,7 @@ int libcheck_check(struct checker * c)
->  						   &tsp);
->  		if (!r) {
->  			tur_status = ct->state;
-> -			strlcpy(c->message, ct->message, sizeof(c->message));
-> +			c->msgid = ct->msgid;
->  		}
->  		pthread_mutex_unlock(&ct->lock);
->  		if (tur_status == PATH_PENDING) {
-> -- 
-> 2.19.0
+T24gVGh1LCAyMDE4LTEwLTI1IGF0IDE1OjU3IC0wNTAwLCAgQmVuamFtaW4gTWFyemluc2tpICB3
+cm90ZToKPiBPbiBGcmksIE9jdCAxMiwgMjAxOCBhdCAxMjoyNjo0OUFNICswMjAwLCBNYXJ0aW4g
+V2lsY2sgd3JvdGU6Cj4gPiBSZXBsYWNlIHRoZSBjaGFyYWN0ZXIgYXJyYXkgIm1lc3NhZ2UiIGlu
+IHN0cnVjdCBjaGVja2VyIHdpdGgKPiA+IGEgIm1lc3NhZ2UgSUQiIGZpZWxkLgo+ID4gCj4gPiBU
+aGUgZ2VuZXJpYyBjaGVja2VyIGNvZGUgZGVmaW5lcyBhIGNvdXBsZSBvZiBzdGFuZGFyZCBtZXNz
+YWdlIElEcwo+ID4gYW5kIGNvcnJlc3BvbmRpbmcgbWVzc2FnZXMuIENoZWNrZXItc3BlY2lmaWMg
+bWVzc2FnZSBJRHMgc3RhcnQKPiA+IGF0IENIRUNLRVJfRklSU1RfTVNHLiBDaGVja2VycyB0aGF0
+IGltcGxlbWVudCBzcGVjaWZpYyBtZXNzYWdlCj4gPiBJRHMgbXVzdCBwcm92aWRlIGEgdGFibGUg
+Zm9yIGNvbnZlcnRpbmcgdGhlIElEcyBpbnRvIGFjdHVhbCBsb2cKPiA+IG1lc3NhZ2VzLgo+ID4g
+Cj4gPiBUaGlzIHNpbXBsaWZpZXMgdGhlIGNoZWNrZXIgZGF0YSBzdHJ1Y3R1cmUgYW5kIHRoZSBo
+YW5kbGluZyBvZgo+ID4gY2hlY2tlciBtZXNzYWdlcyBpbiB0aGUgY3JpdGljYWwgY2hlY2tlciBj
+b2RlIHBhdGguIEl0IGNvbWVzIGF0Cj4gPiB0aGUgY29zdCB0aGF0IG9ubHkgY29uc3RhbnQgbWVz
+c2FnZSBzdHJpbmdzIGFyZSBzdXBwb3J0ZWQuIEl0Cj4gPiB0dXJucyBvdXQgdGhhdCBvbmx5IGEg
+c2luZ2xlIGNoZWNrZXIgbG9nIG1lc3NhZ2UgKGluIHRoZQo+ID4gZW1jX2NsYXJpaW9uCj4gPiBj
+aGVja2VyKSB3YXMgZHluYW1pY2FsbHkgZ2VuZXJhdGVkLCBhbmQgdGhlIG1pc3NpbmcgaW5mb3Jt
+YXRpb24gY2FuCj4gPiBiZSBwcm92aWRlZCB3aXRoIGEgc3RhbmRhcmQgY29uZGxvZyBtZXNzYWdl
+Lgo+ID4gCj4gPiBGb2xsb3ctdXAgcGF0Y2hlcyBpbXBsZW1lbnQgdGhpcyBmb3IgdGhlIGV4aXN0
+aW5nIGNoZWNrZXJzLgo+IAo+IEkgaGF2ZSBzb21lIGNvc21ldGljIG5pdHMgdGhhdCBJJ2xsIGFk
+ZCBpbmxpbmUsIGJ1dCBub25lIG9mIHRoZW0gYXJlCj4gcmVhbCBwcm9ibGVtcyBzbywgCj4gCj4g
+UmV2aWV3ZWQtYnk6IEJlbmphbWluIE1hcnppbnNraSA8Ym1hcnppbnNAcmVkaGF0LmNvbT4KPiAK
+PiA+IFNpZ25lZC1vZmYtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgo+ID4gLS0t
+Cj4gPiAKPiBbLi4uXQo+ID4gKwo+ID4gK2NvbnN0IGNoYXIgKmNoZWNrZXJfbWVzc2FnZShjb25z
+dCBzdHJ1Y3QgY2hlY2tlciAqYykKPiA+ICt7Cj4gPiArCXN0YXRpYyBjaGFyIGJ1ZltDSEVDS0VS
+X01TR19MRU5dOwo+ID4gKwljb25zdCBjaGFyICptc2cgPSBfY2hlY2tlcl9tZXNzYWdlKGMpOwo+
+ID4gKwo+ID4gKwlpZiAobXNnID09IE5VTEwgfHwgKm1zZyA9PSAnXDAnKQo+ID4gKwkJKmJ1ZiA9
+ICdcMCc7Cj4gPiArCWVsc2UKPiA+ICsJCXNucHJpbnRmKGJ1Ziwgc2l6ZW9mKGJ1ZiksICIlcyBj
+aGVja2VyJXMiLAo+ID4gKwkJCSBjLT5uYW1lLCBtc2cpOwo+ID4gKwlyZXR1cm4gYnVmOwo+ID4g
+IH0KPiAKPiBTaW5jZSB3ZSBhcmUgcmV0dXJuaW5nIGEgcG9pbnRlciB0byBhIHN0YXRpYyBidWZm
+ZXIsIGl0IGlzCj4gdGhlb3JldGljYWxseQo+IHBvc3NpYmxlIGZvciBtdWx0aXBsZSB0aHJlYWRz
+IHRvIGJlIHVwZGF0aW5nIHRoZSBidWZmZXIgYXQgdGhlIHNhbWUKPiB0aW1lLiBJbiByZWFsaXR5
+LCB3ZSBhcmUgYWx3YXlzIGNhbGxpbmcgY2hlY2tlcl9tZXNzYWdlIHdpdGggdGhlIHZlY3MKPiBs
+b2NrIGhlbGQsIHNlZWluZyBhcyB3ZSBuZWVkIHRvIGd1YXJhbnRlZSB0aGF0IHRoZSBwYXRoIHdl
+IGFyZQo+IGNoZWNraW5nCj4gZG9lc24ndCBnZXQgZGVsZXRlZCBmcm9tIHBhdGh2ZWMgd2hpbGUg
+d2UgYXJlIHVzaW5nIGl0LiBIb3dldmVyLCBpdAo+IGlzCj4gZWFzeSB0byBpbWFnaW5lIGZ1dHVy
+ZSBjb2RlIGNhbGxpbmcgY2hlY2tlcl9tZXNzYWdlIGZvciBhIHBhdGggdGhhdAo+IGhhc24ndCBi
+ZWVuIGFkZGVkIHRvIHBhdGh2ZWMsIGFuZCB0aHVzIGNvdWxkbid0IGJlIGRlbGV0ZWQgYnkgYW5v
+dGhlcgo+IHRocmVhZC4gSW4gdGhpcyBjYXNlIHdlIHdvdWxkbid0IG5lZWQgdGhlIHZlY3MgbG9j
+aywgZXhjZXB0IHRvCj4gZ3VhcmFudGVlCj4gdGhhdCB3ZSBhcmUgdGhlIG9ubHkgdGhyZWFkIHVz
+aW5nIHRoZSBzdGF0aWMgYnVmZmVyLiBJIGRvbid0IHJlYWxseQo+IGhhdmUKPiBhIHByb2JsZW0g
+d2l0aCBrZWVwaW5nIHRoZSBzdGF0aWMgYnVmZmVyLCBidXQgd2Ugc2hvdWxkIGFkZCBhIGNvbW1l
+bnQKPiB0aGF0IGNoZWNrZXJfbWVzc2FnZSBuZWVkcyB0byBiZSBjYWxsZWQgd2l0aCB0aGUgdmVj
+cyBsb2NrIGhlbGQuCgpXaGVyZSB0byBwdXQgdGhhdCBjb21tZW50PyBOZXh0IHRvIHRoZSBmdW5j
+dGlvbiBpdHNlbGYgd291bGQgYmUKcG9pbnRsZXNzLiBOZXh0IHRvIHRoZSBkZWZpbml0aW9uIG9m
+IHRoZSB2ZWNzIGxvY2sgcGVyaGFwcywgd2hlcmUKcGVvcGxlIHdobyB3b3JrIG9uIHRoZSBsb2Nr
+aW5nIGFyZSBsaWtlbHkgdG8gbG9vaz8KCj4gICAKPiA+ICB2b2lkIGNoZWNrZXJfY2xlYXJfbWVz
+c2FnZSAoc3RydWN0IGNoZWNrZXIgKmMpCj4gPiAgewo+ID4gIAlpZiAoIWMpCj4gPiAgCQlyZXR1
+cm47Cj4gPiAtCWMtPm1lc3NhZ2VbMF0gPSAnXDAnOwo+ID4gKwljLT5tc2dpZCA9IENIRUNLRVJf
+TVNHSURfTk9ORTsKPiA+ICB9Cj4gPiAgCj4gPiAgdm9pZCBjaGVja2VyX2dldCAoY2hhciAqbXVs
+dGlwYXRoX2Rpciwgc3RydWN0IGNoZWNrZXIgKiBkc3QsIGNoYXIKPiA+ICogbmFtZSkKPiA+IEBA
+IC0yODgsMTAgKzMzOCwxMiBAQCB2b2lkIGNoZWNrZXJfZ2V0IChjaGFyICptdWx0aXBhdGhfZGly
+LCBzdHJ1Y3QKPiA+IGNoZWNrZXIgKiBkc3QsIGNoYXIgKiBuYW1lKQo+ID4gIAlkc3QtPmZkID0g
+c3JjLT5mZDsKPiA+ICAJZHN0LT5zeW5jID0gc3JjLT5zeW5jOwo+ID4gIAlzdHJuY3B5KGRzdC0+
+bmFtZSwgc3JjLT5uYW1lLCBDSEVDS0VSX05BTUVfTEVOKTsKPiA+IC0Jc3RybmNweShkc3QtPm1l
+c3NhZ2UsIHNyYy0+bWVzc2FnZSwgQ0hFQ0tFUl9NU0dfTEVOKTsKPiA+ICsJZHN0LT5tc2dpZCA9
+IHNyYy0+bXNnaWQ7Cj4gCj4gSXQgbG9va3Mgb2RkIHNldHRpbmcgZHN0LT5tc2dpZCB0byBzcmMt
+Pm1zZ2lkLCB3aGVuIHdlJ3ZlIG5ldmVyIHNldAo+IHNyYy0+bXNnaWQuICBJIHJlYWxpemUgdGhh
+dCBDSEVDS0VSX01TR0lEX05PTkUgPSAwLCBhbmQgd2UgemVybyBvdXQKPiB0aGUKPiBjaGVja2Vy
+IHdoZW4gd2UgYWxsb2MgaXMsIHNvIHNyYy0+bXNnaWQgaXMgc2V0IHRvIENIRUNLRVJfTVNHSURf
+Tk9ORS4KPiBCdXQgc2luY2Ugd2UgYXJlIGFsd2F5cyByZWZlcnJpbmcgdG8gbXNnaWQgYXMgYSBu
+YW1lZCBjb25zdGFudCwgaXQKPiB3b3VsZAo+IGJlIGNsZWFyZXIgaWYgd2UgZXhwbGljaXRseSBz
+ZXQgaXQgdG8gQ0hFQ0tFUl9NU0dJRF9OT05FIGluCj4gYWRkX2NoZWNrZXIKPiAoZXZlbiB0aG91
+Z2ggaXQgaXMgdW5uZWNlc3NhcnkpLiBUaGlzIGlzIHB1cmVseSBjb3NtZXRpYy4KCjIxLzIxIGNs
+ZWFucyB0aGlzIHVwLgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRl
+bC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5k
+w7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJu
+YmVyZykKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
+czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
