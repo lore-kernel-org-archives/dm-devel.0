@@ -1,65 +1,67 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: [dm-devel] [RFC] dm-bow working prototype
-Date: Thu, 25 Oct 2018 11:20:40 +0100
-Message-ID: <20181025102039.GA9378@localhost.localdomain>
-References: <20181023212358.60292-1-paullawrence@google.com>
- <20181023221819.GB17552@agk-dp.fab.redhat.com>
- <296148c2-f2d9-5818-ea76-d71a0d6f5cd4@google.com>
- <alpine.LRH.2.02.1810241514310.4080@file01.intranet.prod.int.rdu2.redhat.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH v4 00/11] Zoned block device support
+	improvements
+Date: Thu, 25 Oct 2018 08:30:32 -0600
+Message-ID: <d01f3553-eb95-34c2-a846-23f8dafaa4a3@kernel.dk>
+References: <20181012100850.23316-1-damien.lemoal@wdc.com>
+	<78778e22-9c5e-99d0-ef5c-85e04d03a4b7@kernel.dk>
+	<yq1o9bkf5av.fsf@oracle.com>
+	<20181024150344.GB13487@redhat.com> <yq1zhv3e4oe.fsf@oracle.com>
+	<1540397093.66186.13.camel@acm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1810241514310.4080@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Paul Lawrence <paullawrence@google.com>, Mike Snitzer <snitzer@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Shaohua Li <shli@kernel.org>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, kernel-team@android.com, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1540397093.66186.13.camel@acm.org>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bart Van Assche <bvanassche@acm.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Damien Le Moal <damien.lemoal@wdc.com>, linux-scsi@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Matias Bjorling <matias.bjorling@wdc.com>
 List-Id: dm-devel.ids
 
-On Wed, Oct 24, 2018 at 03:24:29PM -0400, Mikulas Patocka wrote:
+On 10/24/18 10:04 AM, Bart Van Assche wrote:
+> On Wed, 2018-10-24 at 11:37 -0400, Martin K. Petersen wrote:
+>> Mike,
+>>
+>>>> You keep mentioning this, but I don't recall ever seeing anything to
+>>>> that effect. The rest of the kernel appears to be either arbitrary
+>>>> ordering or favoring author SoB as the first tag.
+>>>
+>>> I've always felt the proper order is how Jens likes it too (all dm
+>>> commits from me follow that order).
+>>
+>> That's fine, I don't have any particular preference. And I don't have
+>> any issue with you guys sticking to a certain ordering in your
+>> respective subsystems. I occasionally shuffle tags when I commit things
+>> in SCSI too.
+>>
+>> I just think it should be properly documented if there is a preferred
+>> way to order things...
 > 
-> 
-> On Wed, 24 Oct 2018, Paul Lawrence wrote:
-> 
-> > Android has had the concept of A/B updates for since Android N, which means
-> > that if an update is unable to boot for any reason three times, we revert to
-> > the older system. However, if the failure occurs after the new system has
-> > started modifying userdata, we will be attempting to start an older system
-> > with a newer userdata, which is an unsupported state. Thus to make A/B able to
-> > fully deliver on its promise of safe updates, we need to be able to revert
-> > userdata in the event of a failure.
-> > 
-> > For those cases where the file system on userdata supports
-> > snapshots/checkpoints, we should clearly use them. However, there are many
-> > Android devices using filesystems that do not support checkpoints, so we need
-> > a generic solution. Here we had two options. One was to use overlayfs to
-> > manage the changes, then on merge have a script that copies the files to the
-> > underlying fs. This was rejected on the grounds of compatibility concerns and
-> > managing the merge through reboots, though it is definitely a plausible
-> > strategy. The second was to work at the block layer.
-> > 
-> > At the block layer, dm-snap would have given us a ready-made solution, except
-> > that there is no sufficiently large spare partition on Android devices. But in
-> > general there is free space on userdata, just scattered over the device, and
-> > of course likely to get modified as soon as userdata is written to. We also
-> > decided that the merge phase was a high risk component of any design. Since
-> > the normal path is that the update succeeds, we anticipate merges happening
-> > 99% of the time, and we want to guarantee their success even in the event of
-> > unexpected failure during the merge. Thus we decided we preferred a strategy
-> > where the device is in the committed state at all times, and rollback requires
-> > work, to one where the device remains in the original state but the merge is
-> > complex.
-> 
-> What about allocating a big file, using the FIEMAP ioctl to find the 
-> physical locations of the file, creating a dm device with many linear 
-> targets to map the big file and using it as a snapshot store? I think it 
-> would be way easier than re-implementing the snapshot functionality in a 
-> new target.
+> When I tried to look up documentation for this I couldn't find anything under
+> the Documentation directory. Maybe it's there but I didn't look carefully
+> enough. All I could find on the web is e-mails from Linus in which he explains
+> that the order of Signed-off-by's should match the chain of authorship.
 
-libdevmapper already has code to handle enumerating physical file
-extents via the dm-stats file mapping support. It should be fairly easy
-to adapt this to create dm tables rather than dm-stats regions.
+I don't think there's any documentation on it, none that I've seen.
+Haven't looked for it, though.
 
-See dm_stats_create_regions_from_fd() and _stats_map_file_regions().
+It's more of a "it always looked like that", until we got patchwork messing
+things up. And then people see that, and do the same. It's a bit
+frustrating. I like to be able to see the SOB chain in a patch, and if
+it's intermingled with other things, it's much harder to read. At least
+for me.
 
-Bryn.
+I'll continue fixing these up, but I do hope that at least the regulars
+on the block side use the proper formatting.
+
+-- 
+Jens Axboe
