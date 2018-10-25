@@ -1,30 +1,54 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [RFC] dm-bow working prototype
-Date: Thu, 25 Oct 2018 01:01:23 +0100
-Message-ID: <20181025000123.GB22722@agk-dp.fab.redhat.com>
-References: <20181023212358.60292-1-paullawrence@google.com> <20181023221819.GB17552@agk-dp.fab.redhat.com> <296148c2-f2d9-5818-ea76-d71a0d6f5cd4@google.com> <alpine.LRH.2.02.1810241514310.4080@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm writecache: remove unused variable sz in
+	writecache_status
+Date: Wed, 24 Oct 2018 23:46:30 -0400
+Message-ID: <20181025034630.GA17401@redhat.com>
+References: <20181025023832.9766-1-shhuiw@foxmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1810241514310.4080@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Lawrence <paullawrence@google.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-doc@vger.kernel.org, kernel-team@android.com, Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>
+In-Reply-To: <20181025023832.9766-1-shhuiw@foxmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Shenghui Wang <shhuiw@foxmail.com>
+Cc: dm-devel@redhat.com, mpatocka@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Oct 24, 2018 at 03:24:29PM -0400, Mikulas Patocka wrote:
-> What about allocating a big file, using the FIEMAP ioctl to find the 
+On Wed, Oct 24 2018 at 10:38pm -0400,
+Shenghui Wang <shhuiw@foxmail.com> wrote:
 
-For reference, dmfilemapd in the lvm2 tree (in daemons/) uses FIEMAP
-(in libdm/libdm-stats.c) for monitoring I/O by file.
+> sz defined but not used in writecache_status. Remove it.
+> 
+> Signed-off-by: Shenghui Wang <shhuiw@foxmail.com>
+> ---
+>  drivers/md/dm-writecache.c | 1 -
+>  1 file changed, 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+> index 5f1f80d424dd..562c32f644b8 100644
+> --- a/drivers/md/dm-writecache.c
+> +++ b/drivers/md/dm-writecache.c
+> @@ -2226,7 +2226,6 @@ static void writecache_status(struct dm_target *ti, status_type_t type,
+>  {
+>  	struct dm_writecache *wc = ti->private;
+>  	unsigned extra_args;
+> -	unsigned sz = 0;
+>  	uint64_t x;
+>  
+>  	switch (type) {
 
-> If you decide that rollback is no longer needed, you just unload the 
-> snapshot target and delete the big file. If you decide that you want to 
-> rollback, you can use the snapshot merge functionality (or you can write a 
-> userspace utility that does offline merge).
- 
-There's some old code from Mark McLoughlin for userspace snapshot merging here:
-  https://people.gnome.org/~markmc/code/merge-dm-snapshot.c
+Have you even compile tested this patch?
 
-Alasdair
+DMEMIT implicitly uses sz.  Not saying I like this, but it is what it
+is.
+
+Nacked-by: Mike Snitzer <snitzer@redhat.com>
