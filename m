@@ -1,101 +1,89 @@
 From: Paul Lawrence <paullawrence@google.com>
-Subject: Re: [dm-devel] [RFC] dm-bow working prototype
-Date: Thu, 25 Oct 2018 10:23:53 -0700
-Message-ID: <4a934593-1bd1-be5f-35c0-945c42762627@google.com>
+Subject: Re: [RFC] dm-bow working prototype
+Date: Thu, 25 Oct 2018 11:13:19 -0700
+Message-ID: <d00e361b-b849-3139-7e7a-02f05f3794c3@google.com>
 References: <20181023212358.60292-1-paullawrence@google.com>
- <20181023221819.GB17552@agk-dp.fab.redhat.com>
- <296148c2-f2d9-5818-ea76-d71a0d6f5cd4@google.com>
- <alpine.LRH.2.02.1810241514310.4080@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAE8gLhmtrfprc93-XfomNEK5ZgxA_RFA0DnFrEnHjB0q31wkyg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1810241514310.4080@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <CAE8gLhmtrfprc93-XfomNEK5ZgxA_RFA0DnFrEnHjB0q31wkyg@mail.gmail.com>
 Content-Language: en-GB
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-doc@vger.kernel.org, kernel-team@android.com, Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>
+To: MegaBrutal <megabrutal@gmail.com>
+Cc: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, corbet@lwn.net, shli@kernel.org, linux-doc@vger.kernel.org, Linux kernel <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-Thank you for the suggestion. I spent part of yesterday experimenting 
-with this idea, and it is certainly very promising. However, it does 
-have some disadvantages as compared to dm-bow, if I am understanding the 
-setup correctly:
 
-1) Since dm-snap has no concept of the free space on the underlying file 
-system any write into the free space will trigger a backup, so using 
-twice the space of dm-bow. Changing existing data will create a backup 
-with both drivers, but since we have to reserve the space for the 
-backups up-front with dm-snap, we would likely only have half the space 
-for that. Either way, it seems that dm-bow is likely to double the 
-amount of changes we could make.
-
-(Might it be possible to dynamically resize the backup file if it is 
-mostly used up? This would fix the problem of only having half the space 
-for changing existing data. The documentation seems to indicate that you 
-can increase the size of the snapshot partition, and it seems like it 
-should be possible to grow the underlying file without triggering a lot 
-of writes. OTOH this would have to happen in userspace which creates 
-other issues.)
-
-2) Similarly, since writes into free space do not trigger a backup in 
-dm-bow, dm-bow is likely to have a lower performance overhead in many 
-circumstances. On the flip side, dm-bow's backup is in free space and 
-will collide with other writes, so this advantage will reduce as free 
-space fills up. But by choosing a suitable algorithm for how we use free 
-space we might be able to retain most of this advantage.
-
-I intend to put together a fully working prototype of your suggestion 
-next to better compare with dm-bow. But I do believe there is value in 
-tracking free space and utilizing it in any such solution.
-
-
-On 10/24/2018 12:24 PM, Mikulas Patocka wrote:
+> The concept intrigued me, so I actually went on to try your prototype.
+> I could apply it on v4.12 mainline (newer kernel versions introduce
+> changes in "struct bio" in "include/linux/blk_types.h" those don't let
+> the module compile – I think minor changes would be necessary to adapt
+> to the new struct, though I didn't go into that).
 >
-> On Wed, 24 Oct 2018, Paul Lawrence wrote:
->
->> Android has had the concept of A/B updates for since Android N, which means
->> that if an update is unable to boot for any reason three times, we revert to
->> the older system. However, if the failure occurs after the new system has
->> started modifying userdata, we will be attempting to start an older system
->> with a newer userdata, which is an unsupported state. Thus to make A/B able to
->> fully deliver on its promise of safe updates, we need to be able to revert
->> userdata in the event of a failure.
->>
->> For those cases where the file system on userdata supports
->> snapshots/checkpoints, we should clearly use them. However, there are many
->> Android devices using filesystems that do not support checkpoints, so we need
->> a generic solution. Here we had two options. One was to use overlayfs to
->> manage the changes, then on merge have a script that copies the files to the
->> underlying fs. This was rejected on the grounds of compatibility concerns and
->> managing the merge through reboots, though it is definitely a plausible
->> strategy. The second was to work at the block layer.
->>
->> At the block layer, dm-snap would have given us a ready-made solution, except
->> that there is no sufficiently large spare partition on Android devices. But in
->> general there is free space on userdata, just scattered over the device, and
->> of course likely to get modified as soon as userdata is written to. We also
->> decided that the merge phase was a high risk component of any design. Since
->> the normal path is that the update succeeds, we anticipate merges happening
->> 99% of the time, and we want to guarantee their success even in the event of
->> unexpected failure during the merge. Thus we decided we preferred a strategy
->> where the device is in the committed state at all times, and rollback requires
->> work, to one where the device remains in the original state but the merge is
->> complex.
-> What about allocating a big file, using the FIEMAP ioctl to find the
-> physical locations of the file, creating a dm device with many linear
-> targets to map the big file and using it as a snapshot store? I think it
-> would be way easier than re-implementing the snapshot functionality in a
-> new target.
->
-> You can mount the whole filesystem using the "origin" target and you can
-> attach a "snapshot" target that uses the mapped big file as its snapshot
-> store - all writes will be placed directly to the device and the old data
-> will be copied to the snapshot store in the big file.
->
-> If you decide that rollback is no longer needed, you just unload the
-> snapshot target and delete the big file. If you decide that you want to
-> rollback, you can use the snapshot merge functionality (or you can write a
-> userspace utility that does offline merge).
->
-> Mikulas
+> My test scenario:
+> On a KVM, I created a 64M partition and formatted it to ext4, then put
+> some random files on it and unmounted the FS. I then called "dmsetup
+> create bowdev --table "0 131072 bow /dev/vdb1"". The
+> "/dev/mapper/bowdev" file appeared as expected. I mounted it in
+> read-only mode ("mount -vo ro /dev/mapper/bowdev /mnt") and run
+> "fstrim -v /mnt". At this point, I tried to advance to STATE 1 ("echo
+> 1 > /sys/block/dm-2/bow/state"), but I got a kernel BUG alert. The
+> STATE did not change. I unmounted bowdev and removed the device
+> ("dmsetup remove bowdev") which resulted in 2 subsequent kernel
+> alerts. The device disappeared but it brought the kernel to an
+> unstable state (various actions, like sync or trying to recreate the
+> bow device, resulted in a hang). I could not get any further than
+> this. I attached all the 3 kernel alerts in "dm-bow.dmesg.log".
+This BUG_ON is caused if your file system writes blocks in sizes less 
+than your page size. I will fix that before I attempt to upstream this 
+driver assuming it gets accepted. If you can make your file system have 
+4k blocks, you should be able to proceed (I hit this when I created a 
+16MB ext4 fs on a loopback device)
+> I have some questions about dm-bow:
+> – How file system agnostic this feature is planned to be? While it is
+> designed with ext4 in mind, is it going to work when used over other
+> file systems, like FAT or BTRFS for example?
+So long as the file system supports fstrim, it should work. If the file 
+system creates a lot of churn say by running garbage collection, I'd not 
+recommend it. And I really don't see the use case if the file system has 
+any sort of snapshot capability - that will always be a superior 
+solution to a block level one IMO.
+> – Especially that BTRFS uses a CoW mechanism for even overwriting
+> files (overwritten segments are written to a free area and only then
+> gets the old data freed – except some specific conditions when
+> NO_COW/nodatacow is involved). Won't BTRFS CoW mechanism confuse BoW,
+> e.g. BTRFS will try to use space that BoW wants to use for backups?
+> Note however, using BoW on BTRFS wouldn't have much point, since BTRFS
+> has built-in features for snapshots. This leads me to my next
+> question.
+> – Why don't you just use BTRFS on Android? It basically provides a
+> similar feature like BoW, and it is matured enough, switching
+> snapshots are easy, etc.. However I see why it wouldn't be feasible
+> for you, e.g. it is slower than ext4, which would matter for an
+> Android device.
+I'm not the ideal person to answer that question, but yes, I believe 
+performance is an issue, along with the lack of file based encryption.
+> – What if you run out of free disk space while updating? I guess you
+> can just revert to the original state with BoW, but an update might
+> require more disk space with BoW (and this is a thing, my Android
+> always complains about not having enough space).
+Well this question remains with any snapshot system, and indeed is there 
+even before you have snapshots. There are really only two choices - 
+throw away the snapshot and keep going, or fail the update and revert 
+(with presumably the intent of freeing up more space and trying again.) 
+Which we choose would be a policy decision - my goal would be to make 
+sure either option is possible.
+> – Can I really expect dm-bow to work on non-Android systems (like I
+> tried it on an Ubuntu KVM)?
+Yes, absolutely, but for the moment it's a work in progress and it 
+contains an assumption about IO accesses being page aligned that is the 
+reason for the failure you are seeing.
+> – Do you have any prototype for the command line utility to be used
+> for recovery?
+Yes, and I will be uploading that. For the moment it is embedded in some 
+Android specific code. It won't take long to extricate it though. It's 
+actually very simple.
+
+Paul
