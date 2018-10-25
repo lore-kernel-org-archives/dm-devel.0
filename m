@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 06/21] libmultipath/checkers: emc_clariion:
-	use message id
-Date: Thu, 25 Oct 2018 15:58:41 -0500
-Message-ID: <20181025205841.GO7100@octiron.msp.redhat.com>
+Subject: Re: [PATCH 07/21] libmultipath/checkers: hp_sw: use
+	message id
+Date: Thu, 25 Oct 2018 15:58:57 -0500
+Message-ID: <20181025205857.GP7100@octiron.msp.redhat.com>
 References: <20181011222707.3631-1-mwilck@suse.com>
-	<20181011222707.3631-7-mwilck@suse.com>
+	<20181011222707.3631-8-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20181011222707.3631-7-mwilck@suse.com>
+In-Reply-To: <20181011222707.3631-8-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,146 +24,48 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Oct 12, 2018 at 12:26:52AM +0200, Martin Wilck wrote:
-> emc_clariion is the only path checker that was using a non-constant
-> message ("read error" case). This isn't possible with the msgid
-> approach any more. Use condlog() for the dynamic log message and
-> simply report "read error" as checker message.
-> 
+On Fri, Oct 12, 2018 at 12:26:53AM +0200, Martin Wilck wrote:
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/checkers/emc_clariion.c | 60 +++++++++++++++++++---------
->  1 file changed, 42 insertions(+), 18 deletions(-)
+>  libmultipath/checkers/hp_sw.c | 12 ++++--------
+>  1 file changed, 4 insertions(+), 8 deletions(-)
 > 
-> diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
-> index 9115b1b9..f8e55b93 100644
-> --- a/libmultipath/checkers/emc_clariion.c
-> +++ b/libmultipath/checkers/emc_clariion.c
-> @@ -41,6 +41,35 @@
->  				((struct emc_clariion_checker_LU_context *)\
->  					(*c->mpcontext))->inactive_snap = 0
+> diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
+> index 0ad34a6b..d7f1018c 100644
+> --- a/libmultipath/checkers/hp_sw.c
+> +++ b/libmultipath/checkers/hp_sw.c
+> @@ -27,10 +27,6 @@
+>  #define MX_ALLOC_LEN		255
+>  #define HEAVY_CHECK_COUNT       10
 >  
-> +enum {
-> +	MSG_CLARIION_QUERY_FAILED = CHECKER_FIRST_MSGID,
-> +	MSG_CLARIION_QUERY_ERROR,
-> +	MSG_CLARIION_PATH_CONFIG,
-> +	MSG_CLARIION_UNIT_REPORT,
-> +	MSG_CLARIION_PATH_NOT_AVAIL,
-> +	MSG_CLARIION_LUN_UNBOUND,
-> +	MSG_CLARIION_WWN_CHANGED,
-> +	MSG_CLARIION_READ_ERROR,
-> +	MSG_CLARIION_PASSIVE_GOOD,
-> +};
-> +
-> +#define _IDX(x) (MSG_CLARIION_ ## x - CHECKER_FIRST_MSGID)
-> +const char *libcheck_msgtable[] = {
-> +	[_IDX(QUERY_FAILED)] = ": sending query command failed",
-> +	[_IDX(QUERY_ERROR)] = ": query command indicates error",
-> +	[_IDX(PATH_CONFIG)] =
-> +	": Path not correctly configured for failover",
-> +	[_IDX(UNIT_REPORT)] =
-> +	": Path unit report page in unknown format",
-> +	[_IDX(PATH_NOT_AVAIL)] =
-> +	": Path not available for normal operations",
-> +	[_IDX(LUN_UNBOUND)] = ": Logical Unit is unbound or LUNZ",
-> +	[_IDX(WWN_CHANGED)] = ": Logical Unit WWN has changed",
-> +	[_IDX(READ_ERROR)] = ": Read error",
-> +	[_IDX(PASSIVE_GOOD)] = ": Active path is healthy",
-> +	NULL,
-> +};
-> +
->  struct emc_clariion_checker_path_context {
->  	char wwn[16];
->  	unsigned wwn_set;
-> @@ -116,17 +145,16 @@ int libcheck_check (struct checker * c)
->  	io_hdr.timeout = c->timeout * 1000;
->  	io_hdr.pack_id = 0;
->  	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
-> -		MSG(c, "emc_clariion_checker: sending query command failed");
-> +		c->msgid = MSG_CLARIION_QUERY_FAILED;
->  		return PATH_DOWN;
->  	}
->  	if (io_hdr.info & SG_INFO_OK_MASK) {
-> -		MSG(c, "emc_clariion_checker: query command indicates error");
-> +		c->msgid = MSG_CLARIION_QUERY_ERROR;
->  		return PATH_DOWN;
->  	}
->  	if (/* Verify the code page - right page & revision */
->  	    sense_buffer[1] != 0xc0 || sense_buffer[9] != 0x00) {
-> -		MSG(c, "emc_clariion_checker: Path unit report page in "
-> -		    "unknown format");
-> +		c->msgid = MSG_CLARIION_UNIT_REPORT;
->  		return PATH_DOWN;
->  	}
+> -#define MSG_HP_SW_UP	"hp_sw checker reports path is up"
+> -#define MSG_HP_SW_DOWN	"hp_sw checker reports path is down"
+> -#define MSG_HP_SW_GHOST	"hp_sw checker reports path is ghost"
+> -
+>  struct sw_checker_context {
+>  	void * dummy;
+>  };
+> @@ -128,14 +124,14 @@ int libcheck_check(struct checker * c)
+>  	char buff[MX_ALLOC_LEN];
 >  
-> @@ -140,22 +168,19 @@ int libcheck_check (struct checker * c)
->  		    ((sense_buffer[28] & 0x07) != 0x06))
->  		/* Arraycommpath should be set to 1 */
->  		|| (sense_buffer[30] & 0x04) != 0x04) {
-> -		MSG(c, "emc_clariion_checker: Path not correctly configured "
-> -		    "for failover");
-> +		c->msgid = MSG_CLARIION_PATH_CONFIG;
+>  	if (0 != do_inq(c->fd, 0, 1, 0x80, buff, MX_ALLOC_LEN, 0, c->timeout)) {
+> -		MSG(c, MSG_HP_SW_DOWN);
+> +		c->msgid = CHECKER_MSGID_DOWN;
 >  		return PATH_DOWN;
->  	}
+> -	}
+> +	};
 >  
->  	if ( /* LUN operations should indicate normal operations */
->  		sense_buffer[48] != 0x00) {
-> -		MSG(c, "emc_clariion_checker: Path not available for normal "
-> -		    "operations");
-> +		c->msgid = MSG_CLARIION_PATH_NOT_AVAIL;
->  		return PATH_SHAKY;
+>  	if (do_tur(c->fd, c->timeout)) {
+> -		MSG(c, MSG_HP_SW_GHOST);
+> +		c->msgid = CHECKER_MSGID_GHOST;
+>  		return PATH_GHOST;
 >  	}
->  
->  	if ( /* LUN should at least be bound somewhere and not be LUNZ */
->  		sense_buffer[4] == 0x00) {
-> -		MSG(c, "emc_clariion_checker: Logical Unit is unbound "
-> -		    "or LUNZ");
-> +		c->msgid = MSG_CLARIION_LUN_UNBOUND;
->  		return PATH_DOWN;
->  	}
->  
-> @@ -166,8 +191,7 @@ int libcheck_check (struct checker * c)
->  	 */
->  	if (ct->wwn_set) {
->  		if (memcmp(ct->wwn, &sense_buffer[10], 16) != 0) {
-> -			MSG(c, "emc_clariion_checker: Logical Unit WWN "
-> -			    "has changed!");
-> +			c->msgid = MSG_CLARIION_WWN_CHANGED;
->  			return PATH_DOWN;
->  		}
->  	} else {
-> @@ -202,14 +226,15 @@ int libcheck_check (struct checker * c)
->  				condlog(3, "emc_clariion_checker: Active "
->  					"path to inactive snapshot WWN %s.",
->  					wwnstr);
-> -			} else
-> -				MSG(c, "emc_clariion_checker: Read "
-> +			} else {
-> +				condlog(3, "emc_clariion_checker: Read "
->  					"error for WWN %s.  Sense data are "
->  					"0x%x/0x%x/0x%x.", wwnstr,
->  					sbb[2]&0xf, sbb[12], sbb[13]);
-> +				c->msgid = MSG_CLARIION_READ_ERROR;
-> +			}
->  		} else {
-> -			MSG(c, "emc_clariion_checker: Active path is "
-> -			    "healthy.");
-> +			c->msgid = MSG_CLARIION_PASSIVE_GOOD;
->  			/*
->  			 * Remove the path from the set of paths to inactive
->  			 * snapshot LUs if it was in this list since the
-> @@ -225,8 +250,7 @@ int libcheck_check (struct checker * c)
->  				wwnstr);
->  			ret = PATH_DOWN;
->  		} else {
-> -			MSG(c,
-> -			    "emc_clariion_checker: Passive path is healthy.");
-> +			c->msgid = MSG_CLARIION_PASSIVE_GOOD;
->  			ret = PATH_UP;	/* not ghost */
->  		}
->  	}
+> -	MSG(c, MSG_HP_SW_UP);
+> +	c->msgid = CHECKER_MSGID_UP;
+>  	return PATH_UP;
+>  }
 > -- 
 > 2.19.0
