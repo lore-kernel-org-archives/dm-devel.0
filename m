@@ -1,67 +1,272 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH v4 00/11] Zoned block device support
-	improvements
-Date: Thu, 25 Oct 2018 08:30:32 -0600
-Message-ID: <d01f3553-eb95-34c2-a846-23f8dafaa4a3@kernel.dk>
-References: <20181012100850.23316-1-damien.lemoal@wdc.com>
-	<78778e22-9c5e-99d0-ef5c-85e04d03a4b7@kernel.dk>
-	<yq1o9bkf5av.fsf@oracle.com>
-	<20181024150344.GB13487@redhat.com> <yq1zhv3e4oe.fsf@oracle.com>
-	<1540397093.66186.13.camel@acm.org>
+From: MegaBrutal <megabrutal@gmail.com>
+Subject: Re: [RFC] dm-bow working prototype
+Date: Thu, 25 Oct 2018 18:30:00 +0200
+Message-ID: <CAE8gLhmtrfprc93-XfomNEK5ZgxA_RFA0DnFrEnHjB0q31wkyg@mail.gmail.com>
+References: <20181023212358.60292-1-paullawrence@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1540397093.66186.13.camel@acm.org>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bvanassche@acm.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: Damien Le Moal <damien.lemoal@wdc.com>, linux-scsi@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Matias Bjorling <matias.bjorling@wdc.com>
+Content-Type: multipart/mixed; boundary="0000000000001b52d00579101e8f"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181023212358.60292-1-paullawrence@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: paullawrence@google.com
+Cc: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, corbet@lwn.net, shli@kernel.org, linux-doc@vger.kernel.org, Linux kernel <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 10/24/18 10:04 AM, Bart Van Assche wrote:
-> On Wed, 2018-10-24 at 11:37 -0400, Martin K. Petersen wrote:
->> Mike,
->>
->>>> You keep mentioning this, but I don't recall ever seeing anything to
->>>> that effect. The rest of the kernel appears to be either arbitrary
->>>> ordering or favoring author SoB as the first tag.
->>>
->>> I've always felt the proper order is how Jens likes it too (all dm
->>> commits from me follow that order).
->>
->> That's fine, I don't have any particular preference. And I don't have
->> any issue with you guys sticking to a certain ordering in your
->> respective subsystems. I occasionally shuffle tags when I commit things
->> in SCSI too.
->>
->> I just think it should be properly documented if there is a preferred
->> way to order things...
-> 
-> When I tried to look up documentation for this I couldn't find anything under
-> the Documentation directory. Maybe it's there but I didn't look carefully
-> enough. All I could find on the web is e-mails from Linus in which he explains
-> that the order of Signed-off-by's should match the chain of authorship.
+--0000000000001b52d00579101e8f
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-I don't think there's any documentation on it, none that I've seen.
-Haven't looked for it, though.
+Paul Lawrence <paullawrence@google.com> ezt =C3=ADrta (id=C5=91pont: 2018. =
+okt.
+23., K, 23:27):
+>
+> bow =3D=3D backup on write
+>
+> Similar to dm-snap, add the ability to take a snapshot of a device.
+> Unlike dm-snap, a separate volume is not required.
+>
 
-It's more of a "it always looked like that", until we got patchwork messing
-things up. And then people see that, and do the same. It's a bit
-frustrating. I like to be able to see the SOB chain in a patch, and if
-it's intermingled with other things, it's much harder to read. At least
-for me.
+The concept intrigued me, so I actually went on to try your prototype.
+I could apply it on v4.12 mainline (newer kernel versions introduce
+changes in "struct bio" in "include/linux/blk_types.h" those don't let
+the module compile =E2=80=93 I think minor changes would be necessary to ad=
+apt
+to the new struct, though I didn't go into that).
 
-I'll continue fixing these up, but I do hope that at least the regulars
-on the block side use the proper formatting.
+My test scenario:
+On a KVM, I created a 64M partition and formatted it to ext4, then put
+some random files on it and unmounted the FS. I then called "dmsetup
+create bowdev --table "0 131072 bow /dev/vdb1"". The
+"/dev/mapper/bowdev" file appeared as expected. I mounted it in
+read-only mode ("mount -vo ro /dev/mapper/bowdev /mnt") and run
+"fstrim -v /mnt". At this point, I tried to advance to STATE 1 ("echo
+1 > /sys/block/dm-2/bow/state"), but I got a kernel BUG alert. The
+STATE did not change. I unmounted bowdev and removed the device
+("dmsetup remove bowdev") which resulted in 2 subsequent kernel
+alerts. The device disappeared but it brought the kernel to an
+unstable state (various actions, like sync or trying to recreate the
+bow device, resulted in a hang). I could not get any further than
+this. I attached all the 3 kernel alerts in "dm-bow.dmesg.log".
 
--- 
-Jens Axboe
+I have some questions about dm-bow:
+=E2=80=93 How file system agnostic this feature is planned to be? While it =
+is
+designed with ext4 in mind, is it going to work when used over other
+file systems, like FAT or BTRFS for example?
+=E2=80=93 Especially that BTRFS uses a CoW mechanism for even overwriting
+files (overwritten segments are written to a free area and only then
+gets the old data freed =E2=80=93 except some specific conditions when
+NO_COW/nodatacow is involved). Won't BTRFS CoW mechanism confuse BoW,
+e.g. BTRFS will try to use space that BoW wants to use for backups?
+Note however, using BoW on BTRFS wouldn't have much point, since BTRFS
+has built-in features for snapshots. This leads me to my next
+question.
+=E2=80=93 Why don't you just use BTRFS on Android? It basically provides a
+similar feature like BoW, and it is matured enough, switching
+snapshots are easy, etc.. However I see why it wouldn't be feasible
+for you, e.g. it is slower than ext4, which would matter for an
+Android device.
+=E2=80=93 What if you run out of free disk space while updating? I guess yo=
+u
+can just revert to the original state with BoW, but an update might
+require more disk space with BoW (and this is a thing, my Android
+always complains about not having enough space).
+=E2=80=93 Can I really expect dm-bow to work on non-Android systems (like I
+tried it on an Ubuntu KVM)?
+=E2=80=93 Do you have any prototype for the command line utility to be used
+for recovery?
+
+
+MegaBrutal
+
+--0000000000001b52d00579101e8f
+Content-Type: text/x-log; charset="US-ASCII"; name="dm-bow.dmesg.log"
+Content-Disposition: attachment; filename="dm-bow.dmesg.log"
+Content-Transfer-Encoding: base64
+Content-ID: <f_jnooge490>
+X-Attachment-Id: f_jnooge490
+
+WyAgMTc0LjIwNjczNV0gYXRrYmQgc2VyaW8wOiBVbmtub3duIGtleSBwcmVzc2VkICh0cmFuc2xh
+dGVkIHNldCAyLCBjb2RlIDB4NjMgb24gaXNhMDA2MC9zZXJpbzApLgpbICAxNzQuMjA2NzQ1XSBh
+dGtiZCBzZXJpbzA6IFVzZSAnc2V0a2V5Y29kZXMgNjMgPGtleWNvZGU+JyB0byBtYWtlIGl0IGtu
+b3duLgpbICAxNzQuMjE1OTgxXSBhdGtiZCBzZXJpbzA6IFVua25vd24ga2V5IHJlbGVhc2VkICh0
+cmFuc2xhdGVkIHNldCAyLCBjb2RlIDB4NjMgb24gaXNhMDA2MC9zZXJpbzApLgpbICAxNzQuMjE1
+OTgzXSBhdGtiZCBzZXJpbzA6IFVzZSAnc2V0a2V5Y29kZXMgNjMgPGtleWNvZGU+JyB0byBtYWtl
+IGl0IGtub3duLgpbICAxODcuOTc2ODc1XSBFWFQ0LWZzIChkbS0yKTogbW91bnRlZCBmaWxlc3lz
+dGVtIHdpdGggb3JkZXJlZCBkYXRhIG1vZGUuIE9wdHM6IChudWxsKQpbICAyMzEuNjMzNjM0XSBk
+ZXZpY2UtbWFwcGVyOiBib3c6IFN3aXRjaGluZyB0byBzdGF0ZSBDaGVja3BvaW50ClsgIDIzMS42
+Mzk1NDFdIC0tLS0tLS0tLS0tLVsgY3V0IGhlcmUgXS0tLS0tLS0tLS0tLQpbICAyMzEuNjM5NTQz
+XSBrZXJuZWwgQlVHIGF0IGRyaXZlcnMvbWQvZG0tYm93LmM6MjI0IQpbICAyMzEuNjM5OTkwXSBp
+bnZhbGlkIG9wY29kZTogMDAwMCBbIzFdIFNNUApbICAyMzEuNjQwMzIwXSBNb2R1bGVzIGxpbmtl
+ZCBpbjogZG1fYm93IGRtX2J1ZmlvIG5sc19pc284ODU5XzEgc25kX2hkYV9jb2RlY19nZW5lcmlj
+IHNuZF9oZGFfaW50ZWwgc25kX2hkYV9jb2RlYyBzbmRfaGRhX2NvcmUgc25kX2h3ZGVwIHNuZF9w
+Y20gam95ZGV2IHNuZF90aW1lciBzbmQgcHBkZXYgaW5wdXRfbGVkcyBzb3VuZGNvcmUgc2VyaW9f
+cmF3IHBhcnBvcnRfcGMgcGFycG9ydCBxZW11X2Z3X2NmZyBtYWNfaGlkIHNjaF9mcV9jb2RlbCBp
+Yl9pc2VyIHJkbWFfY20gaXdfY20gaWJfY20gaWJfY29yZSBpc2NzaV90Y3AgbGliaXNjc2lfdGNw
+IGxpYmlzY3NpIHNjc2lfdHJhbnNwb3J0X2lzY3NpIGlwX3RhYmxlcyB4X3RhYmxlcyBhdXRvZnM0
+IGJ0cmZzIHJhaWQxMCByYWlkNDU2IGFzeW5jX3JhaWQ2X3JlY292IGFzeW5jX21lbWNweSBhc3lu
+Y19wcSBhc3luY194b3IgYXN5bmNfdHggeG9yIHJhaWQ2X3BxIGxpYmNyYzMyYyByYWlkMSByYWlk
+MCBtdWx0aXBhdGggbGluZWFyIGhpZF9nZW5lcmljIHVzYmhpZCBoaWQgcXhsIHR0bSBkcm1fa21z
+X2hlbHBlciBzeXNjb3B5YXJlYSBzeXNmaWxscmVjdCBzeXNpbWdibHQgZmJfc3lzX2ZvcHMgcHNt
+b3VzZSB2aXJ0aW9fYmxrIGFoY2kgbGliYWhjaSBmbG9wcHkgaTJjX3BpaXg0IHBhdGFfYWNwaSBk
+cm0gdmlydGlvX25ldApbICAyMzEuNjQyMTk3XSBDUFU6IDEgUElEOiAxMTgyIENvbW06IGJhc2gg
+Tm90IHRhaW50ZWQgNC4xMi4wLWRtYm93ICMxMDkKWyAgMjMxLjY0MjQ5Nl0gSGFyZHdhcmUgbmFt
+ZTogUUVNVSBTdGFuZGFyZCBQQyAoaTQ0MEZYICsgUElJWCwgMTk5NiksIEJJT1MgMC4wLjAgMDIv
+MDYvMjAxNQpbICAyMzEuNjQyODYwXSB0YXNrOiBmZmZmOWYzNzU2OGFkNTAwIHRhc2suc3RhY2s6
+IGZmZmZiOTI1NDA1YzQwMDAKWyAgMjMxLjY0NTU1MV0gUklQOiAwMDEwOnNlY3Rvcl90b19wYWdl
+LnBhcnQuNSsweDkvMHgxMCBbZG1fYm93XQpbICAyMzEuNjQ1OTM4XSBSU1A6IDAwMTg6ZmZmZmI5
+MjU0MDVjN2QyMCBFRkxBR1M6IDAwMDEwMjAyClsgIDIzMS42NDYyMjldIFJBWDogZmZmZjlmMzc1
+NmFiYWYwMCBSQlg6IDAwMDAwMDAwMDAwMDAwMDAgUkNYOiAwMDAwMDAwMDAwMDAwMDAwClsgIDIz
+MS42NDY0ODldIFJEWDogMDAwMDAwMDAwMDAwMDAwMCBSU0k6IDAwMDAwMDAwMDAwMDEyNDIgUkRJ
+OiBmZmZmOWYzNzVlNzFiZjAwClsgIDIzMS42NDY3NTBdIFJCUDogZmZmZmI5MjU0MDVjN2QyMCBS
+MDg6IDAwMDAwMDM1ZWVjYTAwMDAgUjA5OiAwMDAwMDAwMDAwMDAwMDAwClsgIDIzMS42NDcwNzdd
+IFIxMDogMDAwMDAwMDAwMDAwMDAwMCBSMTE6IDAwMDAwMDAwMDAwMDAyNzggUjEyOiBmZmZmOWYz
+NzU2YWJhOWMwClsgIDIzMS42NDczNDVdIFIxMzogMDAwMDAwMDAwMDAwMDAwMCBSMTQ6IDAwMDAw
+MDAwMDAwMDAwMDAgUjE1OiBmZmZmOWYzNzU2OGM1MDAwClsgIDIzMS42NDc2MjhdIEZTOiAgMDAw
+MDdmOWYxYjhhMDc0MCgwMDAwKSBHUzpmZmZmOWYzNzVlNzAwMDAwKDAwMDApIGtubEdTOjAwMDAw
+MDAwMDAwMDAwMDAKWyAgMjMxLjY0ODA3N10gQ1M6ICAwMDEwIERTOiAwMDAwIEVTOiAwMDAwIENS
+MDogMDAwMDAwMDA4MDA1MDAzMwpbICAyMzEuNjQ4NTAxXSBDUjI6IDAwMDA3ZjA4YzQzMWFmNzgg
+Q1IzOiAwMDAwMDAwMDE2OGZmMDAwIENSNDogMDAwMDAwMDAwMDAwMDZlMApbICAyMzEuNjQ4OTI5
+XSBDYWxsIFRyYWNlOgpbICAyMzEuNjQ5NDE3XSAgY29weV9kYXRhKzB4MTZmLzB4MWUwIFtkbV9i
+b3ddClsgIDIzMS42NDk3OTRdICBzdGF0ZV9zdG9yZSsweDIxNi8weDMyMCBbZG1fYm93XQpbICAy
+MzEuNjUwMTI3XSAgPyBkb193cF9wYWdlKzB4MTM1LzB4NGUwClsgIDIzMS42NTA0MjddICA/IF9f
+aGFuZGxlX21tX2ZhdWx0KzB4ODg5LzB4ZjcwClsgIDIzMS42NTA3MDRdICBrb2JqX2F0dHJfc3Rv
+cmUrMHhmLzB4MjAKWyAgMjMxLjY1MTAxMl0gIHN5c2ZzX2tmX3dyaXRlKzB4MzcvMHg0MApbICAy
+MzEuNjUxMjY4XSAga2VybmZzX2ZvcF93cml0ZSsweDExYy8weDFhMApbICAyMzEuNjUxNTI3XSAg
+X192ZnNfd3JpdGUrMHgyOC8weDEzMApbICAyMzEuNjUxNzY3XSAgPyBoYW5kbGVfbW1fZmF1bHQr
+MHhkOC8weDIzMApbICAyMzEuNjUyMTI3XSAgPyByd192ZXJpZnlfYXJlYSsweDRlLzB4YjAKWyAg
+MjMxLjY1MjM5Ml0gIHZmc193cml0ZSsweGIxLzB4MWEwClsgIDIzMS42NTI2NDhdICBTeVNfd3Jp
+dGUrMHg0Ni8weGEwClsgIDIzMS42NTI4OTNdICBlbnRyeV9TWVNDQUxMXzY0X2Zhc3RwYXRoKzB4
+MWUvMHhhOQpbICAyMzEuNjUzMTExXSBSSVA6IDAwMzM6MHg3ZjlmMWFmNzUxNTQKWyAgMjMxLjY1
+MzM5NF0gUlNQOiAwMDJiOjAwMDA3ZmZlY2NiYThkYjggRUZMQUdTOiAwMDAwMDI0NiBPUklHX1JB
+WDogMDAwMDAwMDAwMDAwMDAwMQpbICAyMzEuNjUzNjkyXSBSQVg6IGZmZmZmZmZmZmZmZmZmZGEg
+UkJYOiAwMDAwN2Y5ZjFiMjUxNzYwIFJDWDogMDAwMDdmOWYxYWY3NTE1NApbICAyMzEuNjU0MDA5
+XSBSRFg6IDAwMDAwMDAwMDAwMDAwMDIgUlNJOiAwMDAwNTVlMTY4NTU1MzkwIFJESTogMDAwMDAw
+MDAwMDAwMDAwMQpbICAyMzEuNjU0MzI0XSBSQlA6IDAwMDAwMDAwMDAwMDAwMDEgUjA4OiAwMDAw
+MDAwMDAwMDAwMDBhIFIwOTogMDAwMDAwMDAwMDAwMDAwMQpbICAyMzEuNjU0NjE4XSBSMTA6IDAw
+MDAwMDAwMDAwMDAwMGEgUjExOiAwMDAwMDAwMDAwMDAwMjQ2IFIxMjogMDAwMDAwMDAwMDAwMDAw
+MQpbICAyMzEuNjU0OTI5XSBSMTM6IDAwMDA1NWUxNjg0NDg3ODEgUjE0OiAwMDAwMDAwMDAwMDAw
+MDAwIFIxNTogMDAwMDAwMDAwMDAwMDAwMApbICAyMzEuNjU1MTYzXSBDb2RlOiA3ZSA2NyBhZCBm
+MyA0OCA4NSBjMCA3NSAwZiBlYiAxNSA0OCA4OSBjNyBlOCBmZiA2OCBhZCBmMyA0OCA4NSBjMCA3
+NCAwOCA4MyA3OCAyMCAwMSA3NSBlZCA1ZCBjMyAwZiAwYiA2NiA2NiA2NiA2NiA5MCA1NSA0OCA4
+OSBlNSA8MGY+IDBiIDBmIDFmIDQ0IDAwIDAwIDY2IDY2IDY2IDY2IDkwIDU1IDQ4IDg5IGU1IDQx
+IDU3IDQxIDU2IDQxIApbICAyMzEuNjU1NjE5XSBSSVA6IHNlY3Rvcl90b19wYWdlLnBhcnQuNSsw
+eDkvMHgxMCBbZG1fYm93XSBSU1A6IGZmZmZiOTI1NDA1YzdkMjAKWyAgMjMxLjY1NTg5Nl0gLS0t
+WyBlbmQgdHJhY2UgNGEwNmY0M2JjMjczMmI2OSBdLS0tClsgIDM1Mi4yNDU0NzhdIC0tLS0tLS0t
+LS0tLVsgY3V0IGhlcmUgXS0tLS0tLS0tLS0tLQpbICAzNTIuMjQ1OTE0XSBXQVJOSU5HOiBDUFU6
+IDAgUElEOiAxMjMzIGF0IGRyaXZlcnMvbWQvZG0tYnVmaW8uYzoxNTEzIGRtX2J1ZmlvX2NsaWVu
+dF9kZXN0cm95KzB4MjNkLzB4MjUwIFtkbV9idWZpb10KWyAgMzUyLjI0NjI0NF0gTW9kdWxlcyBs
+aW5rZWQgaW46IGRtX2JvdyBkbV9idWZpbyBubHNfaXNvODg1OV8xIHNuZF9oZGFfY29kZWNfZ2Vu
+ZXJpYyBzbmRfaGRhX2ludGVsIHNuZF9oZGFfY29kZWMgc25kX2hkYV9jb3JlIHNuZF9od2RlcCBz
+bmRfcGNtIGpveWRldiBzbmRfdGltZXIgc25kIHBwZGV2IGlucHV0X2xlZHMgc291bmRjb3JlIHNl
+cmlvX3JhdyBwYXJwb3J0X3BjIHBhcnBvcnQgcWVtdV9md19jZmcgbWFjX2hpZCBzY2hfZnFfY29k
+ZWwgaWJfaXNlciByZG1hX2NtIGl3X2NtIGliX2NtIGliX2NvcmUgaXNjc2lfdGNwIGxpYmlzY3Np
+X3RjcCBsaWJpc2NzaSBzY3NpX3RyYW5zcG9ydF9pc2NzaSBpcF90YWJsZXMgeF90YWJsZXMgYXV0
+b2ZzNCBidHJmcyByYWlkMTAgcmFpZDQ1NiBhc3luY19yYWlkNl9yZWNvdiBhc3luY19tZW1jcHkg
+YXN5bmNfcHEgYXN5bmNfeG9yIGFzeW5jX3R4IHhvciByYWlkNl9wcSBsaWJjcmMzMmMgcmFpZDEg
+cmFpZDAgbXVsdGlwYXRoIGxpbmVhciBoaWRfZ2VuZXJpYyB1c2JoaWQgaGlkIHF4bCB0dG0gZHJt
+X2ttc19oZWxwZXIgc3lzY29weWFyZWEgc3lzZmlsbHJlY3Qgc3lzaW1nYmx0IGZiX3N5c19mb3Bz
+IHBzbW91c2UgdmlydGlvX2JsayBhaGNpIGxpYmFoY2kgZmxvcHB5IGkyY19waWl4NCBwYXRhX2Fj
+cGkgZHJtIHZpcnRpb19uZXQKWyAgMzUyLjI0Nzk3Nl0gQ1BVOiAwIFBJRDogMTIzMyBDb21tOiBk
+bXNldHVwIFRhaW50ZWQ6IEcgICAgICBEICAgICAgICAgNC4xMi4wLWRtYm93ICMxMDkKWyAgMzUy
+LjI0ODIxM10gSGFyZHdhcmUgbmFtZTogUUVNVSBTdGFuZGFyZCBQQyAoaTQ0MEZYICsgUElJWCwg
+MTk5NiksIEJJT1MgMC4wLjAgMDIvMDYvMjAxNQpbICAzNTIuMjQ4NDU2XSB0YXNrOiBmZmZmOWYz
+NzU2YWYxNTQwIHRhc2suc3RhY2s6IGZmZmZiOTI1NDA4ODQwMDAKWyAgMzUyLjI0ODcxM10gUklQ
+OiAwMDEwOmRtX2J1ZmlvX2NsaWVudF9kZXN0cm95KzB4MjNkLzB4MjUwIFtkbV9idWZpb10KWyAg
+MzUyLjI0ODk1M10gUlNQOiAwMDE4OmZmZmZiOTI1NDA4ODdiZTAgRUZMQUdTOiAwMDAxMDI0Ngpb
+ICAzNTIuMjQ5MjU1XSBSQVg6IGZmZmY5ZjM3NWIyYmU2MTggUkJYOiBmZmZmOWYzNzU2NzNkYzAw
+IFJDWDogMDAwMDAwMDAwMDAwMDAwMQpbICAzNTIuMjQ5NTY5XSBSRFg6IDAwMDAwMDAwMDAwMDAw
+MDAgUlNJOiAwMDAwMDAwMDAwMDAwMDAwIFJESTogZmZmZjlmMzc1NjczZGMwMApbICAzNTIuMjQ5
+ODc4XSBSQlA6IGZmZmZiOTI1NDA4ODdjMTAgUjA4OiBmZmZmZmZmZmMwNGZmNDMwIFIwOTogMDAw
+MDAwMDAwMDAwMDAwMQpbICAzNTIuMjUwMTk1XSBSMTA6IGZmZmZiOTI1NDA4ODdiYjAgUjExOiAw
+MDAwMDAwMDAwMDAwMWJlIFIxMjogZmZmZjlmMzc1NjczZGMyMApbICAzNTIuMjUwNDgxXSBSMTM6
+IGZmZmY5ZjM3NTY5MmUwMDAgUjE0OiAwMDAwMDAwMDAwMDAwMDAwIFIxNTogZmZmZjlmMzc1Njcz
+ZGMyMApbICAzNTIuMjUwNzk5XSBGUzogIDAwMDA3ZmRhMWQyZDcwNDAoMDAwMCkgR1M6ZmZmZjlm
+Mzc1ZTYwMDAwMCgwMDAwKSBrbmxHUzowMDAwMDAwMDAwMDAwMDAwClsgIDM1Mi4yNTExMTddIENT
+OiAgMDAxMCBEUzogMDAwMCBFUzogMDAwMCBDUjA6IDAwMDAwMDAwODAwNTAwMzMKWyAgMzUyLjI1
+MTQwOF0gQ1IyOiAwMDAwN2ZmZGMxMTQyZmY4IENSMzogMDAwMDAwMDAxNmZiMzAwMCBDUjQ6IDAw
+MDAwMDAwMDAwMDA2ZjAKWyAgMzUyLjI1MTY5OV0gQ2FsbCBUcmFjZToKWyAgMzUyLjI1MjAxM10g
+IGRtX2Jvd19kdHIrMHg1Zi8weDkwIFtkbV9ib3ddClsgIDM1Mi4yNTIzMjBdICBkbV90YWJsZV9k
+ZXN0cm95KzB4NjMvMHgxMjAKWyAgMzUyLjI1MjU4MF0gIF9fZG1fZGVzdHJveSsweDE0MS8weDIz
+MApbICAzNTIuMjUyODI4XSAgZG1fZGVzdHJveSsweDEzLzB4MjAKWyAgMzUyLjI1MzA5Ml0gIGRl
+dl9yZW1vdmUrMHhkZS8weDEyMApbICAzNTIuMjUzNDI1XSAgPyByZW1vdmVfYWxsKzB4MzAvMHgz
+MApbICAzNTIuMjUzNjkzXSAgY3RsX2lvY3RsKzB4MWMyLzB4NGEwClsgIDM1Mi4yNTM5MTldICBk
+bV9jdGxfaW9jdGwrMHgxMy8weDIwClsgIDM1Mi4yNTQxNTNdICBkb192ZnNfaW9jdGwrMHg5Mi8w
+eDVkMApbICAzNTIuMjU0MzgzXSAgPyBfX19fZnB1dCsweGUvMHgxMApbICAzNTIuMjU0NjMwXSAg
+PyB0YXNrX3dvcmtfcnVuKzB4N2IvMHg5MApbICAzNTIuMjU0ODM3XSAgU3lTX2lvY3RsKzB4Nzkv
+MHg5MApbICAzNTIuMjU1MDM0XSAgZW50cnlfU1lTQ0FMTF82NF9mYXN0cGF0aCsweDFlLzB4YTkK
+WyAgMzUyLjI1NTIzOF0gUklQOiAwMDMzOjB4N2ZkYTFjYjc1NWQ3ClsgIDM1Mi4yNTU0MzBdIFJT
+UDogMDAyYjowMDAwN2ZmZTk3NGVlOWI4IEVGTEFHUzogMDAwMDAyMDYgT1JJR19SQVg6IDAwMDAw
+MDAwMDAwMDAwMTAKWyAgMzUyLjI1NTYzMF0gUkFYOiBmZmZmZmZmZmZmZmZmZmRhIFJCWDogMDAw
+MDAwMDAwMDAwMDAwMCBSQ1g6IDAwMDA3ZmRhMWNiNzU1ZDcKWyAgMzUyLjI1NTgyOF0gUkRYOiAw
+MDAwNTYxZTkxNjc1YzkwIFJTSTogMDAwMDAwMDBjMTM4ZmQwNCBSREk6IDAwMDAwMDAwMDAwMDAw
+MDMKWyAgMzUyLjI1NjAyNl0gUkJQOiAwMDAwN2ZmZTk3NGVlYTUwIFIwODogMDAwMDdmZGExY2Vh
+YzEyMCBSMDk6IDAwMDA3ZmZlOTc0ZWU4MjAKWyAgMzUyLjI1NjI0Nl0gUjEwOiAwMDAwNTYxZTkx
+Njc1ZDQwIFIxMTogMDAwMDAwMDAwMDAwMDIwNiBSMTI6IDAwMDA1NjFlOTBkNmI4ZTAKWyAgMzUy
+LjI1NjUwNF0gUjEzOiAwMDAwN2ZmZTk3NGVlZDIwIFIxNDogMDAwMDAwMDAwMDAwMDAwMCBSMTU6
+IDAwMDAwMDAwMDAwMDAwMDAKWyAgMzUyLjI1Njg0MF0gQ29kZTogMGYgODQgNzAgZmYgZmYgZmYg
+MGYgMGIgMzEgZjYgNDggYzcgYzcgNzggZjQgNGYgYzAgZTggZmEgMTEgOGEgZjMgNDggOGIgNTMg
+NDggNDggODUgZDIgNzUgYzQgNDggODMgN2IgNDAgMDAgNzUgZTAgZTkgNGIgZmYgZmYgZmYgPDBm
+PiBmZiBlOSA3YiBmZiBmZiBmZiA2NiA5MCA2NiAyZSAwZiAxZiA4NCAwMCAwMCAwMCAwMCAwMCA2
+NiA2NiAKWyAgMzUyLjI1NzQ2NF0gLS0tWyBlbmQgdHJhY2UgNGEwNmY0M2JjMjczMmI2YSBdLS0t
+ClsgIDM1Mi4yNTc5MjldIGRldmljZS1tYXBwZXI6IGJ1ZmlvOiBsZWFrZWQgYnVmZmVyIDAsIGhv
+bGQgY291bnQgMSwgbGlzdCAwClsgIDM1Mi4yNTg3MTFdIC0tLS0tLS0tLS0tLVsgY3V0IGhlcmUg
+XS0tLS0tLS0tLS0tLQpbICAzNTIuMjU5MDk0XSBrZXJuZWwgQlVHIGF0IGRyaXZlcnMvbWQvZG0t
+YnVmaW8uYzoxNTI5IQpbICAzNTIuMjU5Mzg0XSBpbnZhbGlkIG9wY29kZTogMDAwMCBbIzJdIFNN
+UApbICAzNTIuMjU5NzA4XSBNb2R1bGVzIGxpbmtlZCBpbjogZG1fYm93IGRtX2J1ZmlvIG5sc19p
+c284ODU5XzEgc25kX2hkYV9jb2RlY19nZW5lcmljIHNuZF9oZGFfaW50ZWwgc25kX2hkYV9jb2Rl
+YyBzbmRfaGRhX2NvcmUgc25kX2h3ZGVwIHNuZF9wY20gam95ZGV2IHNuZF90aW1lciBzbmQgcHBk
+ZXYgaW5wdXRfbGVkcyBzb3VuZGNvcmUgc2VyaW9fcmF3IHBhcnBvcnRfcGMgcGFycG9ydCBxZW11
+X2Z3X2NmZyBtYWNfaGlkIHNjaF9mcV9jb2RlbCBpYl9pc2VyIHJkbWFfY20gaXdfY20gaWJfY20g
+aWJfY29yZSBpc2NzaV90Y3AgbGliaXNjc2lfdGNwIGxpYmlzY3NpIHNjc2lfdHJhbnNwb3J0X2lz
+Y3NpIGlwX3RhYmxlcyB4X3RhYmxlcyBhdXRvZnM0IGJ0cmZzIHJhaWQxMCByYWlkNDU2IGFzeW5j
+X3JhaWQ2X3JlY292IGFzeW5jX21lbWNweSBhc3luY19wcSBhc3luY194b3IgYXN5bmNfdHggeG9y
+IHJhaWQ2X3BxIGxpYmNyYzMyYyByYWlkMSByYWlkMCBtdWx0aXBhdGggbGluZWFyIGhpZF9nZW5l
+cmljIHVzYmhpZCBoaWQgcXhsIHR0bSBkcm1fa21zX2hlbHBlciBzeXNjb3B5YXJlYSBzeXNmaWxs
+cmVjdCBzeXNpbWdibHQgZmJfc3lzX2ZvcHMgcHNtb3VzZSB2aXJ0aW9fYmxrIGFoY2kgbGliYWhj
+aSBmbG9wcHkgaTJjX3BpaXg0IHBhdGFfYWNwaSBkcm0gdmlydGlvX25ldApbICAzNTIuMjYxNjIw
+XSBDUFU6IDAgUElEOiAxMjMzIENvbW06IGRtc2V0dXAgVGFpbnRlZDogRyAgICAgIEQgVyAgICAg
+ICA0LjEyLjAtZG1ib3cgIzEwOQpbICAzNTIuMjYxOTY0XSBIYXJkd2FyZSBuYW1lOiBRRU1VIFN0
+YW5kYXJkIFBDIChpNDQwRlggKyBQSUlYLCAxOTk2KSwgQklPUyAwLjAuMCAwMi8wNi8yMDE1Clsg
+IDM1Mi4yNjIyODVdIHRhc2s6IGZmZmY5ZjM3NTZhZjE1NDAgdGFzay5zdGFjazogZmZmZmI5MjU0
+MDg4NDAwMApbICAzNTIuMjYyNTUyXSBSSVA6IDAwMTA6ZG1fYnVmaW9fY2xpZW50X2Rlc3Ryb3kr
+MHgxYjMvMHgyNTAgW2RtX2J1ZmlvXQpbICAzNTIuMjYyODA4XSBSU1A6IDAwMTg6ZmZmZmI5MjU0
+MDg4N2JlMCBFRkxBR1M6IDAwMDEwMjkzClsgIDM1Mi4yNjMwODVdIFJBWDogZmZmZjlmMzc1YjJi
+ZTYxOCBSQlg6IGZmZmY5ZjM3NTY3M2RjMDAgUkNYOiAwMDAwMDAwMDAwMDAwMDA2ClsgIDM1Mi4y
+NjMzMzNdIFJEWDogMDAwMDAwMDAwMDAwMDAwMSBSU0k6IDAwMDAwMDAwMDAwMDAwOTYgUkRJOiBm
+ZmZmOWYzNzVlNjBkY2MwClsgIDM1Mi4yNjM1NTRdIFJCUDogZmZmZmI5MjU0MDg4N2MxMCBSMDg6
+IGZmZmZmZmZmYzA0ZmY0MzAgUjA5OiAwMDAwMDAwMDAwMDAwMmIzClsgIDM1Mi4yNjM3NzNdIFIx
+MDogZmZmZmI5MjU0MDg4N2JiMCBSMTE6IDAwMDAwMDAwZmZmZmZmZmYgUjEyOiBmZmZmOWYzNzU2
+NzNkYzQwClsgIDM1Mi4yNjQwMThdIFIxMzogZmZmZjlmMzc1NjczZGMwOCBSMTQ6IDAwMDAwMDAw
+MDAwMDAwMDEgUjE1OiBmZmZmOWYzNzU2NzNkYzIwClsgIDM1Mi4yNjQyNzNdIEZTOiAgMDAwMDdm
+ZGExZDJkNzA0MCgwMDAwKSBHUzpmZmZmOWYzNzVlNjAwMDAwKDAwMDApIGtubEdTOjAwMDAwMDAw
+MDAwMDAwMDAKWyAgMzUyLjI2NDQ5N10gQ1M6ICAwMDEwIERTOiAwMDAwIEVTOiAwMDAwIENSMDog
+MDAwMDAwMDA4MDA1MDAzMwpbICAzNTIuMjY0NzM0XSBDUjI6IDAwMDA3ZmZkYzExNDJmZjggQ1Iz
+OiAwMDAwMDAwMDE2ZmIzMDAwIENSNDogMDAwMDAwMDAwMDAwMDZmMApbICAzNTIuMjY0OTk4XSBD
+YWxsIFRyYWNlOgpbICAzNTIuMjY1MjQ4XSAgZG1fYm93X2R0cisweDVmLzB4OTAgW2RtX2Jvd10K
+WyAgMzUyLjI2NTUyMF0gIGRtX3RhYmxlX2Rlc3Ryb3krMHg2My8weDEyMApbICAzNTIuMjY1Nzcx
+XSAgX19kbV9kZXN0cm95KzB4MTQxLzB4MjMwClsgIDM1Mi4yNjYwMDhdICBkbV9kZXN0cm95KzB4
+MTMvMHgyMApbICAzNTIuMjY2MzIxXSAgZGV2X3JlbW92ZSsweGRlLzB4MTIwClsgIDM1Mi4yNjY2
+NTddICA/IHJlbW92ZV9hbGwrMHgzMC8weDMwClsgIDM1Mi4yNjcwMDBdICBjdGxfaW9jdGwrMHgx
+YzIvMHg0YTAKWyAgMzUyLjI2NzM0NF0gIGRtX2N0bF9pb2N0bCsweDEzLzB4MjAKWyAgMzUyLjI2
+NzcwMF0gIGRvX3Zmc19pb2N0bCsweDkyLzB4NWQwClsgIDM1Mi4yNjgwNzFdICA/IF9fX19mcHV0
+KzB4ZS8weDEwClsgIDM1Mi4yNjgzNzVdICA/IHRhc2tfd29ya19ydW4rMHg3Yi8weDkwClsgIDM1
+Mi4yNjg2NThdICBTeVNfaW9jdGwrMHg3OS8weDkwClsgIDM1Mi4yNjg5MDFdICBlbnRyeV9TWVND
+QUxMXzY0X2Zhc3RwYXRoKzB4MWUvMHhhOQpbICAzNTIuMjY5MTIxXSBSSVA6IDAwMzM6MHg3ZmRh
+MWNiNzU1ZDcKWyAgMzUyLjI2OTM2MV0gUlNQOiAwMDJiOjAwMDA3ZmZlOTc0ZWU5YjggRUZMQUdT
+OiAwMDAwMDIwNiBPUklHX1JBWDogMDAwMDAwMDAwMDAwMDAxMApbICAzNTIuMjY5NTk5XSBSQVg6
+IGZmZmZmZmZmZmZmZmZmZGEgUkJYOiAwMDAwMDAwMDAwMDAwMDAwIFJDWDogMDAwMDdmZGExY2I3
+NTVkNwpbICAzNTIuMjY5ODIwXSBSRFg6IDAwMDA1NjFlOTE2NzVjOTAgUlNJOiAwMDAwMDAwMGMx
+MzhmZDA0IFJESTogMDAwMDAwMDAwMDAwMDAwMwpbICAzNTIuMjcwMDM4XSBSQlA6IDAwMDA3ZmZl
+OTc0ZWVhNTAgUjA4OiAwMDAwN2ZkYTFjZWFjMTIwIFIwOTogMDAwMDdmZmU5NzRlZTgyMApbICAz
+NTIuMjcwMjUzXSBSMTA6IDAwMDA1NjFlOTE2NzVkNDAgUjExOiAwMDAwMDAwMDAwMDAwMjA2IFIx
+MjogMDAwMDU2MWU5MGQ2YjhlMApbICAzNTIuMjcwNDg4XSBSMTM6IDAwMDA3ZmZlOTc0ZWVkMjAg
+UjE0OiAwMDAwMDAwMDAwMDAwMDAwIFIxNTogMDAwMDAwMDAwMDAwMDAwMApbICAzNTIuMjcwNzM5
+XSBDb2RlOiA0OCA4YiA3YiA3OCBlOCBjZiBiMiBlMCBmMyA0OCA4OSBkZiBlOCAxNyBkNSA5MCBm
+MyA0OCA4MyBjNCAwOCA1YiA0MSA1YyA0MSA1ZCA0MSA1ZSA0MSA1ZiA1ZCBjMyA0MSBiZSAwMSAw
+MCAwMCAwMCBlOSBiNCBmZSBmZiBmZiA8MGY+IDBiIDBmIDBiIDBmIDBiIDBmIDBiIDg0IGQyIDc0
+IDdlIDRjIDhkIDY4IGU4IDQxIDhiIDU1IDQwIDQ5IApbICAzNTIuMjcxMjE3XSBSSVA6IGRtX2J1
+ZmlvX2NsaWVudF9kZXN0cm95KzB4MWIzLzB4MjUwIFtkbV9idWZpb10gUlNQOiBmZmZmYjkyNTQw
+ODg3YmUwClsgIDM1Mi4yNzE0ODldIC0tLVsgZW5kIHRyYWNlIDRhMDZmNDNiYzI3MzJiNmIgXS0t
+LQo=
+--0000000000001b52d00579101e8f--
