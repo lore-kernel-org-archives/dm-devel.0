@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 03/21] libmultipath/checkers: replace message
-	by msgid
-Date: Thu, 25 Oct 2018 15:57:27 -0500
-Message-ID: <20181025205727.GL7100@octiron.msp.redhat.com>
+Subject: Re: [PATCH 06/21] libmultipath/checkers: emc_clariion:
+	use message id
+Date: Thu, 25 Oct 2018 15:58:41 -0500
+Message-ID: <20181025205841.GO7100@octiron.msp.redhat.com>
 References: <20181011222707.3631-1-mwilck@suse.com>
-	<20181011222707.3631-4-mwilck@suse.com>
+	<20181011222707.3631-7-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20181011222707.3631-4-mwilck@suse.com>
+In-Reply-To: <20181011222707.3631-7-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,266 +24,146 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Oct 12, 2018 at 12:26:49AM +0200, Martin Wilck wrote:
-> Replace the character array "message" in struct checker with
-> a "message ID" field.
+On Fri, Oct 12, 2018 at 12:26:52AM +0200, Martin Wilck wrote:
+> emc_clariion is the only path checker that was using a non-constant
+> message ("read error" case). This isn't possible with the msgid
+> approach any more. Use condlog() for the dynamic log message and
+> simply report "read error" as checker message.
 > 
-> The generic checker code defines a couple of standard message IDs
-> and corresponding messages. Checker-specific message IDs start
-> at CHECKER_FIRST_MSG. Checkers that implement specific message
-> IDs must provide a table for converting the IDs into actual log
-> messages.
-> 
-> This simplifies the checker data structure and the handling of
-> checker messages in the critical checker code path. It comes at
-> the cost that only constant message strings are supported. It
-> turns out that only a single checker log message (in the emc_clariion
-> checker) was dynamically generated, and the missing information can
-> be provided with a standard condlog message.
-> 
-> Follow-up patches implement this for the existing checkers.
-
-I have some cosmetic nits that I'll add inline, but none of them are
-real problems so, 
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-> 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/checkers.c | 70 +++++++++++++++++++++++++++++++++++------
->  libmultipath/checkers.h | 39 +++++++++++++++++++----
->  2 files changed, 94 insertions(+), 15 deletions(-)
+>  libmultipath/checkers/emc_clariion.c | 60 +++++++++++++++++++---------
+>  1 file changed, 42 insertions(+), 18 deletions(-)
 > 
-> diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-> index 0bacc864..359791ff 100644
-> --- a/libmultipath/checkers.c
-> +++ b/libmultipath/checkers.c
-> @@ -141,6 +141,22 @@ struct checker * add_checker (char *multipath_dir, char * name)
->  	if (!c->free)
->  		goto out;
+> diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
+> index 9115b1b9..f8e55b93 100644
+> --- a/libmultipath/checkers/emc_clariion.c
+> +++ b/libmultipath/checkers/emc_clariion.c
+> @@ -41,6 +41,35 @@
+>  				((struct emc_clariion_checker_LU_context *)\
+>  					(*c->mpcontext))->inactive_snap = 0
 >  
-> +	c->msgtable_size = 0;
-> +	c->msgtable = dlsym(c->handle, "libcheck_msgtable");
-> +
-> +	if (c->msgtable != NULL) {
-> +		const char **p;
-> +
-> +		for (p = c->msgtable;
-> +		     *p && (p - c->msgtable) < CHECKER_MSGTABLE_SIZE; p++)
-> +			/* nothing */;
-> +
-> +		c->msgtable_size = p - c->msgtable;
-> +	} else
-> +		c->msgtable_size = 0;
-> +	condlog(3, "checker %s: message table size = %d",
-> +		c->name, c->msgtable_size);
-> +
->  done:
->  	c->fd = -1;
->  	c->sync = 1;
-> @@ -222,16 +238,16 @@ int checker_check (struct checker * c, int path_state)
->  	if (!c)
->  		return PATH_WILD;
->  
-> -	c->message[0] = '\0';
-> +	c->msgid = CHECKER_MSGID_NONE;
->  	if (c->disable) {
-> -		MSG(c, "checker disabled");
-> +		c->msgid = CHECKER_MSGID_DISABLED;
->  		return PATH_UNCHECKED;
->  	}
->  	if (!strncmp(c->name, NONE, 4))
->  		return path_state;
->  
->  	if (c->fd < 0) {
-> -		MSG(c, "no usable fd");
-> +		c->msgid = CHECKER_MSGID_NO_FD;
->  		return PATH_WILD;
->  	}
->  	r = c->check(c);
-> @@ -248,25 +264,59 @@ int checker_selected (struct checker * c)
->  	return (c->check) ? 1 : 0;
->  }
->  
-> -char * checker_name (struct checker * c)
-> +const char *checker_name(const struct checker *c)
->  {
->  	if (!c)
->  		return NULL;
->  	return c->name;
->  }
->  
-> -char * checker_message (struct checker * c)
-> +static const char *generic_msg[CHECKER_LAST_GENERIC_MSGID] = {
-> +	[CHECKER_MSGID_NONE] = "",
-> +	[CHECKER_MSGID_DISABLED] = " is disabled",
-> +	[CHECKER_MSGID_NO_FD] = " has no usable fd",
-> +	[CHECKER_MSGID_INVALID] = " provided invalid message id",
-> +	[CHECKER_MSGID_UP] = " reports path is up",
-> +	[CHECKER_MSGID_DOWN] = " reports path is down",
-> +	[CHECKER_MSGID_GHOST] = " reports path is ghost",
-> +};
-> +
-> +static const char *_checker_message(const struct checker *c)
->  {
-> -	if (!c)
-> +	int id;
-> +
-> +	if (!c || c->msgid < 0 ||
-> +	    (c->msgid >= CHECKER_LAST_GENERIC_MSGID &&
-> +	     c->msgid < CHECKER_FIRST_MSGID))
->  		return NULL;
-> -	return c->message;
-> +
-> +	if (c->msgid < CHECKER_LAST_GENERIC_MSGID)
-> +		return generic_msg[c->msgid];
-> +
-> +	id = c->msgid - CHECKER_FIRST_MSGID;
-> +	if (id < c->msgtable_size)
-> +		return c->msgtable[id];
-> +	return NULL;
-> +}
-> +
-> +const char *checker_message(const struct checker *c)
-> +{
-> +	static char buf[CHECKER_MSG_LEN];
-> +	const char *msg = _checker_message(c);
-> +
-> +	if (msg == NULL || *msg == '\0')
-> +		*buf = '\0';
-> +	else
-> +		snprintf(buf, sizeof(buf), "%s checker%s",
-> +			 c->name, msg);
-> +	return buf;
->  }
-
-Since we are returning a pointer to a static buffer, it is theoretically
-possible for multiple threads to be updating the buffer at the same
-time. In reality, we are always calling checker_message with the vecs
-lock held, seeing as we need to guarantee that the path we are checking
-doesn't get deleted from pathvec while we are using it. However, it is
-easy to imagine future code calling checker_message for a path that
-hasn't been added to pathvec, and thus couldn't be deleted by another
-thread. In this case we wouldn't need the vecs lock, except to guarantee
-that we are the only thread using the static buffer. I don't really have
-a problem with keeping the static buffer, but we should add a comment
-that checker_message needs to be called with the vecs lock held.
-  
->  void checker_clear_message (struct checker *c)
->  {
->  	if (!c)
->  		return;
-> -	c->message[0] = '\0';
-> +	c->msgid = CHECKER_MSGID_NONE;
->  }
->  
->  void checker_get (char *multipath_dir, struct checker * dst, char * name)
-> @@ -288,10 +338,12 @@ void checker_get (char *multipath_dir, struct checker * dst, char * name)
->  	dst->fd = src->fd;
->  	dst->sync = src->sync;
->  	strncpy(dst->name, src->name, CHECKER_NAME_LEN);
-> -	strncpy(dst->message, src->message, CHECKER_MSG_LEN);
-> +	dst->msgid = src->msgid;
-
-It looks odd setting dst->msgid to src->msgid, when we've never set
-src->msgid.  I realize that CHECKER_MSGID_NONE = 0, and we zero out the
-checker when we alloc is, so src->msgid is set to CHECKER_MSGID_NONE.
-But since we are always referring to msgid as a named constant, it would
-be clearer if we explicitly set it to CHECKER_MSGID_NONE in add_checker
-(even though it is unnecessary). This is purely cosmetic.
-
->  	dst->check = src->check;
->  	dst->init = src->init;
->  	dst->free = src->free;
-> +	dst->msgtable = src->msgtable;
-> +	dst->msgtable_size = src->msgtable_size;
->  	dst->handle = NULL;
->  	src->refcount++;
->  }
-> diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-> index 7b18a1ac..b48f4dc2 100644
-> --- a/libmultipath/checkers.h
-> +++ b/libmultipath/checkers.h
-> @@ -97,6 +97,22 @@ enum path_check_state {
->  #define CHECKER_DEV_LEN 256
->  #define LIB_CHECKER_NAMELEN 256
->  
-> +/*
-> + * Generic message IDs for use in checkers.
-> + */
 > +enum {
-> +	CHECKER_MSGID_NONE = 0,
-> +	CHECKER_MSGID_DISABLED,
-> +	CHECKER_MSGID_NO_FD,
-> +	CHECKER_MSGID_INVALID,
-> +	CHECKER_MSGID_UP,
-> +	CHECKER_MSGID_DOWN,
-> +	CHECKER_MSGID_GHOST,
-> +	CHECKER_LAST_GENERIC_MSGID,
-
-I prefer CHECKER_GENERIC_MSGTABLE_SIZE to CHECKER_LAST_GENERIC_MSGID.
-"char *generic_msg[CHECKER_LAST_GENERIC_MSGID]" just looks like it's an
-off-by-one error when you see it. Again, this is clearly cosmetic. It
-just made me worried when I first saw it.
-
-> +	CHECKER_FIRST_MSGID = 100,	/* lowest msgid for checkers */
-> +	CHECKER_MSGTABLE_SIZE = 100,	/* max msg table size for checkers */
+> +	MSG_CLARIION_QUERY_FAILED = CHECKER_FIRST_MSGID,
+> +	MSG_CLARIION_QUERY_ERROR,
+> +	MSG_CLARIION_PATH_CONFIG,
+> +	MSG_CLARIION_UNIT_REPORT,
+> +	MSG_CLARIION_PATH_NOT_AVAIL,
+> +	MSG_CLARIION_LUN_UNBOUND,
+> +	MSG_CLARIION_WWN_CHANGED,
+> +	MSG_CLARIION_READ_ERROR,
+> +	MSG_CLARIION_PASSIVE_GOOD,
 > +};
 > +
->  struct checker {
->  	struct list_head node;
->  	void *handle;
-> @@ -106,7 +122,7 @@ struct checker {
->  	unsigned int timeout;
->  	int disable;
->  	char name[CHECKER_NAME_LEN];
-> -	char message[CHECKER_MSG_LEN];       /* comm with callers */
-> +	short msgid;		             /* checker-internal extra status */
->  	void * context;                      /* store for persistent data */
->  	void ** mpcontext;                   /* store for persistent data shared
->  						multipath-wide. Use MALLOC if
-> @@ -114,10 +130,10 @@ struct checker {
->  	int (*check)(struct checker *);
->  	int (*init)(struct checker *);       /* to allocate the context */
->  	void (*free)(struct checker *);      /* to free the context */
-> +	const char**msgtable;
-> +	short msgtable_size;
->  };
+> +#define _IDX(x) (MSG_CLARIION_ ## x - CHECKER_FIRST_MSGID)
+> +const char *libcheck_msgtable[] = {
+> +	[_IDX(QUERY_FAILED)] = ": sending query command failed",
+> +	[_IDX(QUERY_ERROR)] = ": query command indicates error",
+> +	[_IDX(PATH_CONFIG)] =
+> +	": Path not correctly configured for failover",
+> +	[_IDX(UNIT_REPORT)] =
+> +	": Path unit report page in unknown format",
+> +	[_IDX(PATH_NOT_AVAIL)] =
+> +	": Path not available for normal operations",
+> +	[_IDX(LUN_UNBOUND)] = ": Logical Unit is unbound or LUNZ",
+> +	[_IDX(WWN_CHANGED)] = ": Logical Unit WWN has changed",
+> +	[_IDX(READ_ERROR)] = ": Read error",
+> +	[_IDX(PASSIVE_GOOD)] = ": Active path is healthy",
+> +	NULL,
+> +};
+> +
+>  struct emc_clariion_checker_path_context {
+>  	char wwn[16];
+>  	unsigned wwn_set;
+> @@ -116,17 +145,16 @@ int libcheck_check (struct checker * c)
+>  	io_hdr.timeout = c->timeout * 1000;
+>  	io_hdr.pack_id = 0;
+>  	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
+> -		MSG(c, "emc_clariion_checker: sending query command failed");
+> +		c->msgid = MSG_CLARIION_QUERY_FAILED;
+>  		return PATH_DOWN;
+>  	}
+>  	if (io_hdr.info & SG_INFO_OK_MASK) {
+> -		MSG(c, "emc_clariion_checker: query command indicates error");
+> +		c->msgid = MSG_CLARIION_QUERY_ERROR;
+>  		return PATH_DOWN;
+>  	}
+>  	if (/* Verify the code page - right page & revision */
+>  	    sense_buffer[1] != 0xc0 || sense_buffer[9] != 0x00) {
+> -		MSG(c, "emc_clariion_checker: Path unit report page in "
+> -		    "unknown format");
+> +		c->msgid = MSG_CLARIION_UNIT_REPORT;
+>  		return PATH_DOWN;
+>  	}
 >  
-> -#define MSG(c, fmt, args...) snprintf((c)->message, CHECKER_MSG_LEN, fmt, ##args);
-> -
->  char * checker_state_name (int);
->  int init_checkers (char *);
->  void cleanup_checkers (void);
-> @@ -134,14 +150,25 @@ void checker_enable (struct checker *);
->  void checker_disable (struct checker *);
->  int checker_check (struct checker *, int);
->  int checker_selected (struct checker *);
-> -char * checker_name (struct checker *);
-> -char * checker_message (struct checker *);
-> +const char *checker_name (const struct checker *);
-> +const char *checker_message (const struct checker *);
->  void checker_clear_message (struct checker *c);
->  void checker_get (char *, struct checker *, char *);
+> @@ -140,22 +168,19 @@ int libcheck_check (struct checker * c)
+>  		    ((sense_buffer[28] & 0x07) != 0x06))
+>  		/* Arraycommpath should be set to 1 */
+>  		|| (sense_buffer[30] & 0x04) != 0x04) {
+> -		MSG(c, "emc_clariion_checker: Path not correctly configured "
+> -		    "for failover");
+> +		c->msgid = MSG_CLARIION_PATH_CONFIG;
+>  		return PATH_DOWN;
+>  	}
 >  
-> -/* Functions exported by path checker dynamic libraries (.so) */
-> +/* Prototypes for symbols exported by path checker dynamic libraries (.so) */
->  int libcheck_check(struct checker *);
->  int libcheck_init(struct checker *);
->  void libcheck_free(struct checker *);
-> +/*
-> + * msgid => message map.
-> + *
-> + * It only needs to be provided if the checker defines specific
-> + * message IDs.
-> + * Message IDs available to checkers start at CHECKER_FIRST_MSG.
-> + * The msgtable array is 0-based, i.e. msgtable[0] is the message
-> + * for msgid == __CHECKER_FIRST_MSG.
-> + * The table ends with a NULL element.
-> + */
-> +extern const char *libcheck_msgtable[];
+>  	if ( /* LUN operations should indicate normal operations */
+>  		sense_buffer[48] != 0x00) {
+> -		MSG(c, "emc_clariion_checker: Path not available for normal "
+> -		    "operations");
+> +		c->msgid = MSG_CLARIION_PATH_NOT_AVAIL;
+>  		return PATH_SHAKY;
+>  	}
 >  
->  #endif /* _CHECKERS_H */
+>  	if ( /* LUN should at least be bound somewhere and not be LUNZ */
+>  		sense_buffer[4] == 0x00) {
+> -		MSG(c, "emc_clariion_checker: Logical Unit is unbound "
+> -		    "or LUNZ");
+> +		c->msgid = MSG_CLARIION_LUN_UNBOUND;
+>  		return PATH_DOWN;
+>  	}
+>  
+> @@ -166,8 +191,7 @@ int libcheck_check (struct checker * c)
+>  	 */
+>  	if (ct->wwn_set) {
+>  		if (memcmp(ct->wwn, &sense_buffer[10], 16) != 0) {
+> -			MSG(c, "emc_clariion_checker: Logical Unit WWN "
+> -			    "has changed!");
+> +			c->msgid = MSG_CLARIION_WWN_CHANGED;
+>  			return PATH_DOWN;
+>  		}
+>  	} else {
+> @@ -202,14 +226,15 @@ int libcheck_check (struct checker * c)
+>  				condlog(3, "emc_clariion_checker: Active "
+>  					"path to inactive snapshot WWN %s.",
+>  					wwnstr);
+> -			} else
+> -				MSG(c, "emc_clariion_checker: Read "
+> +			} else {
+> +				condlog(3, "emc_clariion_checker: Read "
+>  					"error for WWN %s.  Sense data are "
+>  					"0x%x/0x%x/0x%x.", wwnstr,
+>  					sbb[2]&0xf, sbb[12], sbb[13]);
+> +				c->msgid = MSG_CLARIION_READ_ERROR;
+> +			}
+>  		} else {
+> -			MSG(c, "emc_clariion_checker: Active path is "
+> -			    "healthy.");
+> +			c->msgid = MSG_CLARIION_PASSIVE_GOOD;
+>  			/*
+>  			 * Remove the path from the set of paths to inactive
+>  			 * snapshot LUs if it was in this list since the
+> @@ -225,8 +250,7 @@ int libcheck_check (struct checker * c)
+>  				wwnstr);
+>  			ret = PATH_DOWN;
+>  		} else {
+> -			MSG(c,
+> -			    "emc_clariion_checker: Passive path is healthy.");
+> +			c->msgid = MSG_CLARIION_PASSIVE_GOOD;
+>  			ret = PATH_UP;	/* not ghost */
+>  		}
+>  	}
 > -- 
 > 2.19.0
