@@ -1,45 +1,79 @@
-From: Paul Lawrence <paullawrence@google.com>
-Subject: Re: [dm-devel] [RFC] dm-bow working prototype
-Date: Mon, 29 Oct 2018 09:51:48 -0700
-Message-ID: <fba91b2e-4b2e-8daf-ff64-a12c9139cada@google.com>
-References: <20181023212358.60292-1-paullawrence@google.com>
- <20181023221819.GB17552@agk-dp.fab.redhat.com>
- <296148c2-f2d9-5818-ea76-d71a0d6f5cd4@google.com>
- <alpine.LRH.2.02.1810241514310.4080@file01.intranet.prod.int.rdu2.redhat.com>
- <4a934593-1bd1-be5f-35c0-945c42762627@google.com>
- <alpine.LRH.2.02.1810261558460.28906@file01.intranet.prod.int.rdu2.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 13/21] libmultipath: clariion checker: leave
+ unsupported paths alone
+Date: Fri, 26 Oct 2018 11:01:49 +0200
+Message-ID: <4bb720ad302b792d46f8b1d0e0c5a83c55955ce8.camel@suse.com>
+References: <20181011222707.3631-1-mwilck@suse.com>
+	<20181011222707.3631-14-mwilck@suse.com>
+	<20181025214131.GV7100@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1810261558460.28906@file01.intranet.prod.int.rdu2.redhat.com>
-Content-Language: en-GB
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-doc@vger.kernel.org, kernel-team@android.com, Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20181025214131.GV7100@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck@suse.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-
-> The snapshot target could be hacked so that it remembers space trimmed
-> with REQ_OP_DISCARD and won't reallocate these blocks.
->
-> But I suspect that running discard over the whole device would degrade
-> performance more than copying some unneeded data.
->
-> How much data do you intend to backup with this solution?
->
->
-We are space-constrained - we will have to free up space for the backup 
-before we apply the update, so we have to predict the size and keeping 
-usage as low as possible is thus very important.
-
-Also, we've discussed the resizing requirement of the dm-snap solution 
-and that part is not attractive at all - it seems it would be impossible 
-to guarantee that the resizing happens in a timely fashion during the 
-(very busy) update cycle.
-
-Thanks everyone for the insights, especially into how dm-snap works, 
-which I hadn't fully appreciated. At the moment, and for the above 
-reasons, we intend to continue with the dm-bow solution, but do want to 
-keep this discussion open. If anyone is going to be at Linux Plumbers, 
-I'll be presenting this work and would love to chat about it more.
+T24gVGh1LCAyMDE4LTEwLTI1IGF0IDE2OjQxIC0wNTAwLCAgQmVuamFtaW4gTWFyemluc2tpICB3
+cm90ZToKPiBPbiBGcmksIE9jdCAxMiwgMjAxOCBhdCAxMjoyNjo1OUFNICswMjAwLCBNYXJ0aW4g
+V2lsY2sgd3JvdGU6Cj4gPiBBIGNoZWNrZXIgc2hvdWxkbid0IHNldCB0aGUgcGF0aCBzdGF0ZSB0
+byBQQVRIX0RPV04gaWYgaXQgZmFpbHMKPiA+IHRvIG9idGFpbiBpbmZvcm1hdGlvbiBhYm91dCB0
+aGUgcGF0aCBpbiB0aGUgZmlyc3QgcGxhY2UuIEFkZCBsb2dpYwo+ID4gdG8gdGhlIGNoZWNrZXIg
+dG8gZGlzdGluZ3Vpc2ggYSBmYWlsZWQgcGF0aCBmcm9tIGFuIHVuc3VwcG9ydGVkCj4gPiBwYXRo
+Lgo+ID4gCj4gPiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4K
+PiA+IC0tLQo+ID4gIGxpYm11bHRpcGF0aC9jaGVja2Vycy9lbWNfY2xhcmlpb24uYyB8IDUwCj4g
+PiArKysrKysrKysrKysrKysrKysrKysrKysrKy0tCj4gPiAgMSBmaWxlIGNoYW5nZWQsIDQ4IGlu
+c2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0pCj4gPiAKPiA+IGRpZmYgLS1naXQgYS9saWJtdWx0
+aXBhdGgvY2hlY2tlcnMvZW1jX2NsYXJpaW9uLmMKPiA+IGIvbGlibXVsdGlwYXRoL2NoZWNrZXJz
+L2VtY19jbGFyaWlvbi5jCj4gPiBpbmRleCBmOGU1NWI5My4uYTI3N2EwMDQgMTAwNjQ0Cj4gPiAt
+LS0gYS9saWJtdWx0aXBhdGgvY2hlY2tlcnMvZW1jX2NsYXJpaW9uLmMKPiA+ICsrKyBiL2xpYm11
+bHRpcGF0aC9jaGVja2Vycy9lbWNfY2xhcmlpb24uYwo+ID4gQEAgLTIwLDYgKzIwLDExIEBACj4g
+PiAgI2RlZmluZSBJTlFVSVJZX0NNRCAgICAgMHgxMgo+ID4gICNkZWZpbmUgSU5RVUlSWV9DTURM
+RU4gIDYKPiA+ICAjZGVmaW5lIEhFQVZZX0NIRUNLX0NPVU5UICAgICAgIDEwCj4gPiArI2RlZmlu
+ZSBTQ1NJX0NPTU1BTkRfVEVSTUlOQVRFRAkweDIyCj4gPiArI2RlZmluZSBTQ1NJX0NIRUNLX0NP
+TkRJVElPTgkweDIKPiA+ICsjZGVmaW5lIFJFQ09WRVJFRF9FUlJPUgkJMHgwMQo+ID4gKyNkZWZp
+bmUgSUxMRUdBTF9SRVFVRVNUCQkweDA1Cj4gPiArI2RlZmluZSBTR19FUlJfRFJJVkVSX1NFTlNF
+CTB4MDgKPiA+ICAKPiA+ICAvKgo+ID4gICAqIE1lY2hhbmlzbSB0byB0cmFjayBDTEFSaWlPTiBp
+bmFjdGl2ZSBzbmFwc2hvdCBMVXMuCj4gPiBAQCAtMTMwLDcgKzEzNSw5IEBAIGludCBsaWJjaGVj
+a19jaGVjayAoc3RydWN0IGNoZWNrZXIgKiBjKQo+ID4gIAkJKHN0cnVjdCBlbWNfY2xhcmlpb25f
+Y2hlY2tlcl9wYXRoX2NvbnRleHQgKiljLT5jb250ZXh0Owo+ID4gIAljaGFyIHd3bnN0clszM107
+Cj4gPiAgCWludCByZXQ7Cj4gPiArCWludCByZXRyeV9lbWMgPSA1Owo+ID4gIAo+ID4gK3JldHJ5
+Ogo+ID4gIAltZW1zZXQoJmlvX2hkciwgMCwgc2l6ZW9mIChzdHJ1Y3Qgc2dfaW9faGRyKSk7Cj4g
+PiAgCW1lbXNldChzZW5zZV9idWZmZXIsIDAsIDEyOCk7Cj4gPiAgCW1lbXNldChzYiwgMCwgU0VO
+U0VfQlVGRl9MRU4pOwo+ID4gQEAgLTE0NSwxMiArMTUyLDUxIEBAIGludCBsaWJjaGVja19jaGVj
+ayAoc3RydWN0IGNoZWNrZXIgKiBjKQo+ID4gIAlpb19oZHIudGltZW91dCA9IGMtPnRpbWVvdXQg
+KiAxMDAwOwo+ID4gIAlpb19oZHIucGFja19pZCA9IDA7Cj4gPiAgCWlmIChpb2N0bChjLT5mZCwg
+U0dfSU8sICZpb19oZHIpIDwgMCkgewo+ID4gKwkJaWYgKGVycm5vID09IEVOT1RUWSkgewo+ID4g
+KwkJCWMtPm1zZ2lkID0gQ0hFQ0tFUl9NU0dJRF9VTlNVUFBPUlRFRDsKPiA+ICsJCQlyZXR1cm4g
+UEFUSF9XSUxEOwo+ID4gKwkJfQo+ID4gIAkJYy0+bXNnaWQgPSBNU0dfQ0xBUklJT05fUVVFUllf
+RkFJTEVEOwo+ID4gIAkJcmV0dXJuIFBBVEhfRE9XTjsKPiA+ICAJfQo+ID4gKwo+ID4gIAlpZiAo
+aW9faGRyLmluZm8gJiBTR19JTkZPX09LX01BU0spIHsKPiA+IC0JCWMtPm1zZ2lkID0gTVNHX0NM
+QVJJSU9OX1FVRVJZX0VSUk9SOwo+ID4gLQkJcmV0dXJuIFBBVEhfRE9XTjsKPiAKPiBQcmV2aW91
+c2x5LCBpZiAoaW9faGRyLmluZm8gJiBTR19JTkZPX09LX01BU0spIHRoZSBjaGVja2VyIHdvdWxk
+Cj4gYWx3YXlzCj4gcmV0dXJuIFBBVEhfRE9XTi4gIEJvdGggdGhlIHR1ciBhbmQgcmRhYyBjaGVj
+a2VyIGFsd2F5cyByZXR1cm4gZWl0aGVyCj4gUEFUSF9ET1dOIG9yIFBBVEhfV0lMRCBpZiAoaW9f
+aGRyLmluZm8gJiBTR19JTkZPX09LX01BU0sgJiYgc2Vuc2Vfa2V5Cj4gIT0gUkVDT1ZFUkVEX0VS
+Uk9SKS4gV2l0aCB0aGUgY2xhcmlpb24gY2hlY2tlciwgaXQgbm93IGFwcGVhcnMKPiBwb3NzaWJs
+ZQo+IHRvIGhhdmUgKGlvX2hkci5pbmZvICYgU0dfSU5GT19PS19NQVNLICYmIHNlbnNlX2tleSAh
+PQo+IFJFQ09WRVJFRF9FUlJPUikKPiBhbmQgc3RpbGwgcmV0dXJuIFBBVEhfVVAuIElzIHRoaXMg
+aW50ZW50aW9uYWw/IEFtIEkgbWlzc2luZyBzb21ldGhpbmcKPiBoZXJlPwoKSSBjb3BpZWQgdGhp
+cyBjb2RlIGZyb20gdGhlIHJkYWMgY2hlY2tlci4gQnV0IHRoZSBkZWZhdWx0IHJldHVybiB2YWx1
+ZQppbiBlbWNfY2xhcmlpb24gaXMgZGlmZmVyZW50LCB0aGFua3MgZm9yIHNwb3R0aW5nIHRoYXQu
+IEkgd2lsbCBwb3N0IGFuCnVwZGF0ZS4KCkhhbmRsaW5nIG9mIFNDU0kgc3RhdHVzIGFuZCBzZW5z
+ZSBjb2RlcyBpcyBkb25lIGRpZmZlcmVudGx5IGluCmRpZmZlcmVudCBwYXJ0cyBvZiBtdWx0aXBh
+dGgtdG9vbHMuIFdlIHJlYWxseSBuZWVkIGNvbW1vbiBTQ1NJIGNvZGUgOi0vCgpNYXJ0aW4KCi0t
+IApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQw
+NTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21p
+dGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgoKLS0KZG0tZGV2
+ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNv
+bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
