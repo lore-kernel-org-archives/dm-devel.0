@@ -1,12 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper changes for 4.20
-Date: Fri, 26 Oct 2018 11:28:14 -0400
-Message-ID: <20181026152814.GA27329@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 1/7] libmultipath: set pp->checkint in
+	store_pathinfo()
+Date: Fri, 26 Oct 2018 13:53:11 -0500
+Message-ID: <20181026185311.GF7100@octiron.msp.redhat.com>
+References: <20181023220552.1306-1-mwilck@suse.com>
+	<20181023220552.1306-2-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <20181023220552.1306-2-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,74 +20,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Igor Stoppa <igor.stoppa@gmail.com>, Jens Axboe <axboe@kernel.dk>, Damien Le Moal <damien.lemoal@wdc.com>, Heinz Mauelshagen <heinzm@redhat.com>, Wenwen Wang <wang6495@umn.edu>, =?utf-8?B?TWljaGHFgiBNaXJvc8WCYXc=?= <mirq-linux@rere.qmqm.pl>, dm-devel@redhat.com, John Pittman <jpittman@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Bart Van Assche <Bart.VanAssche@sandisk.com>
 List-Id: dm-devel.ids
 
-SGkgTGludXMsCgpXZWxjb21lIGJhY2shCgpUaGUgZm9sbG93aW5nIGNoYW5nZXMgc2luY2UgY29t
-bWl0IDExOGFhNDdjNzA3MmJjZTA1ZmMzOWJkNDBhMWMwYTkwY2FlZDcyYWI6CgogIGRtIGxpbmVh
-cjogZml4IGxpbmVhcl9lbmRfaW8gY29uZGl0aW9uYWwgZGVmaW5pdGlvbiAoMjAxOC0xMC0xMCAy
-MzoyMjoyNCAtMDQwMCkKCmFyZSBhdmFpbGFibGUgaW4gdGhlIEdpdCByZXBvc2l0b3J5IGF0OgoK
-ICBnaXQ6Ly9naXQua2VybmVsLm9yZy9wdWIvc2NtL2xpbnV4L2tlcm5lbC9naXQvZGV2aWNlLW1h
-cHBlci9saW51eC1kbS5naXQgdGFncy9mb3ItNC4yMC9kbS1jaGFuZ2VzCgpmb3IgeW91IHRvIGZl
-dGNoIGNoYW5nZXMgdXAgdG8gZGE0YWQzYTIzYWYzZDdmMzU3YjI0YjMzZTlmZWM3NTMxYjU5ZWU0
-OToKCiAgZG0gd3JpdGVjYWNoZTogcmVtb3ZlIGRpc2FibGVkIGNvZGUgaW4gbWVtb3J5X2VudHJ5
-KCkgKDIwMTgtMTAtMjIgMTA6NTk6NTIgLTA0MDApCgpQbGVhc2UgcHVsbCwgdGhhbmtzLgpNaWtl
-CgotLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tCi0gQmlnZ2VzdCBjaGFuZ2UgdGhpcyBjeWNsZSBpcyB0byByZW1vdmUgc3VwcG9y
-dCBmb3IgdGhlIGxlZ2FjeSBJTyBwYXRoCiAgKC5yZXF1ZXN0X2ZuKSBmcm9tIHJlcXVlc3QtYmFz
-ZWQgRE0uICBKZW5zIGhhcyBhbHJlYWR5IHN0YXJ0ZWQKICBwcmVwYXJpbmcgZm9yIGNvbXBsZXRl
-IHJlbW92YWwgb2YgdGhlIGxlZ2FjeSBJTyBwYXRoIGluIDQuMjEgYnV0IHRoaXMKICBlYXJsaWVy
-IHJlbW92YWwgb2Ygc3VwcG9ydCBmcm9tIERNIGhhcyBiZWVuIGNvb3JkaW5hdGVkIHdpdGggSmVu
-cyAoYXMKICBldmlkZW5jZWQgYnkgdGhlIGNvbW1pdCBiZWluZyBhdHRyaWJ1dGVkIHRvIGhpbSku
-ICBNYWtpbmcKICByZXF1ZXN0LWJhc2VkIERNIGV4Y2x1c3NpdmVseSBibGstbXEgb25seSBjbGVh
-bnMgdXAgdGhhdCBwb3J0aW9uIG9mIERNCiAgY29yZSBxdWl0ZSBuaWNlbHkuCgotIENvbnZlcnQg
-dGhlIHRoaW5wIGFuZCB6b25lZCB0YXJnZXRzIG92ZXIgdG8gdXNpbmcgcmVmY291bnRfdCB3aGVy
-ZQogIGFwcGxpY2FibGUuCgotIEEgY291cGxlIGZpeGVzIHRvIHRoZSBETSB6b25lZCB0YXJnZXQg
-Zm9yIHJlZmNvdW50aW5nIGFuZCBvdGhlciByYWNlcwogIGJ1cmllZCBpbiB0aGUgaW1wbGVtZW50
-YXRpb24gb2YgbWV0YWRhdGEgYmxvY2sgY3JlYXRpb24gYW5kIHVzZS4KCi0gU21hbGwgY2xlYW51
-cHMgdG8gcmVtb3ZlIHJlZHVuZGFudCB1bmxpa2VseSgpIGFyb3VuZCBhIGNvdXBsZQogIFdBUk5f
-T05fT05DRSgpLgoKLSBTaW1wbGlmeSBob3cgZG0taW9jdGwgY29waWVzIGZyb20gdXNlcnNwYWNl
-LCBlbGltaW5hdGluZyBzb21lCiAgcG90ZW50aWFsIGZvciBhIG1hbGljaW91cyB1c2VyIHRyeWlu
-ZyB0byBjaGFuZ2UgdGhlIGV4ZWN1dGVkIGlvY3RsCiAgYWZ0ZXIgaXRzIHByb2Nlc3NpbmcgaGFz
-IGJlZ3VuLgoKLSBUd2Vha2VkIERNIGNyeXB0IHRhcmdldCB0byB1c2UgdGhlIERNIGRldmljZSBu
-YW1lIHdoZW4gbmFtaW5nIHRoZQogIHZhcmlvdXMgd29ya3F1ZXVlcyBjcmVhdGVkIGZvciBhIHBh
-cnRpY3VsYXIgRE0gY3J5cHQgZGV2aWNlIChtYWtlcyB0aGUKICBOIHdvcmtxdWV1ZXMgZm9yIGEg
-RE0gY3J5cHQgZGV2aWNlIG1vcmUgZWFzaWx5IHVuZGVyc3Rvb2QgYW5kIGVuaGFuY2VzCiAgdXNl
-cidzIGFjY291bnRpbmcgY2FwYWJpbGl0aWVzIGF0IGEgZ2xhbmNlIHZpYSAicHMiKQoKLSBTbWFs
-bCBmaXh1cCB0byByZW1vdmUgZGVhZCBicmFuY2ggaW4gRE0gd3JpdGVjYWNoZSdzIG1lbW9yeV9l
-bnRyeSgpLgoKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLQpEYW1pZW4gTGUgTW9hbCAoMik6CiAgICAgIGRtIHpvbmVkOiBmaXgg
-bWV0YWRhdGEgYmxvY2sgcmVmIGNvdW50aW5nCiAgICAgIGRtIHpvbmVkOiBmaXggdmFyaW91cyBk
-bXpfZ2V0X21ibG9jaygpIGlzc3VlcwoKSGVpbnogTWF1ZWxzaGFnZW4gKDEpOgogICAgICBkbSBy
-YWlkOiBhdm9pZCBiaXRtYXAgd2l0aCByYWlkNC81LzYgam91cm5hbCBkZXZpY2UKCklnb3IgU3Rv
-cHBhICgxKToKICAgICAgZG06IHJlbW92ZSB1bm5lY2Vzc2FyeSB1bmxpa2VseSgpIGFyb3VuZCBX
-QVJOX09OX09OQ0UoKQoKSmVucyBBeGJvZSAoMSk6CiAgICAgIGRtOiByZW1vdmUgbGVnYWN5IHJl
-cXVlc3QtYmFzZWQgSU8gcGF0aAoKSm9obiBQaXR0bWFuICgyKToKICAgICAgZG0gdGhpbjogdXNl
-IHJlZmNvdW50X3QgZm9yIHRoaW5fYyByZWZlcmVuY2UgY291bnRpbmcKICAgICAgZG0gem9uZWQ6
-IHRhcmdldDogdXNlIHJlZmNvdW50X3QgZm9yIGRtIHpvbmVkIHJlZmVyZW5jZSBjb3VudGVycwoK
-TWljaGHFgiBNaXJvc8WCYXcgKDIpOgogICAgICBkbTogYWRkIGRtX3RhYmxlX2RldmljZV9uYW1l
-KCkKICAgICAgZG0gY3J5cHQ6IG1ha2Ugd29ya3F1ZXVlIG5hbWVzIGRldmljZS1zcGVjaWZpYwoK
-TWlrZSBTbml0emVyICgzKToKICAgICAgZG06IHJlbmFtZSBETV9UWVBFX01RX1JFUVVFU1RfQkFT
-RUQgdG8gRE1fVFlQRV9SRVFVRVNUX0JBU0VECiAgICAgIGRtIHRhYmxlOiByZXF1aXJlIHRoYXQg
-cmVxdWVzdC1iYXNlZCBETSBiZSBsYXllcmVkIG9uIGJsay1tcSBkZXZpY2VzCiAgICAgIGRtIHdy
-aXRlY2FjaGU6IHJlbW92ZSBkaXNhYmxlZCBjb2RlIGluIG1lbW9yeV9lbnRyeSgpCgpXZW53ZW4g
-V2FuZyAoMSk6CiAgICAgIGRtIGlvY3RsOiBoYXJkZW4gY29weV9wYXJhbXMoKSdzIGNvcHlfZnJv
-bV91c2VyKCkgZnJvbSBtYWxpY2lvdXMgdXNlcnMKCiBkcml2ZXJzL21kL0tjb25maWcgICAgICAg
-ICAgICAgICB8ICAxMSAtLQogZHJpdmVycy9tZC9kbS1jYWNoZS1wb2xpY3ktc21xLmMgfCAgIDIg
-Ky0KIGRyaXZlcnMvbWQvZG0tY29yZS5oICAgICAgICAgICAgIHwgIDEwIC0tCiBkcml2ZXJzL21k
-L2RtLWNyeXB0LmMgICAgICAgICAgICB8ICAxNSArLQogZHJpdmVycy9tZC9kbS1pb2N0bC5jICAg
-ICAgICAgICAgfCAgMTggKy0tCiBkcml2ZXJzL21kL2RtLW1wYXRoLmMgICAgICAgICAgICB8ICAy
-NiArLS0tCiBkcml2ZXJzL21kL2RtLXJhaWQuYyAgICAgICAgICAgICB8ICAgMiArLQogZHJpdmVy
-cy9tZC9kbS1ycS5jICAgICAgICAgICAgICAgfCAzMTYgKysrKy0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tCiBkcml2ZXJzL21kL2RtLXJxLmggICAgICAgICAgICAgICB8ICAgNCAt
-CiBkcml2ZXJzL21kL2RtLXN5c2ZzLmMgICAgICAgICAgICB8ICAgMyArLQogZHJpdmVycy9tZC9k
-bS10YWJsZS5jICAgICAgICAgICAgfCAgNDYgKystLS0tCiBkcml2ZXJzL21kL2RtLXRoaW4uYyAg
-ICAgICAgICAgICB8ICAgOCArLQogZHJpdmVycy9tZC9kbS13cml0ZWNhY2hlLmMgICAgICAgfCAg
-IDUgKy0KIGRyaXZlcnMvbWQvZG0tem9uZWQtbWV0YWRhdGEuYyAgIHwgIDgwICsrKysrKy0tLS0K
-IGRyaXZlcnMvbWQvZG0tem9uZWQtdGFyZ2V0LmMgICAgIHwgIDIwICstLQogZHJpdmVycy9tZC9k
-bS5jICAgICAgICAgICAgICAgICAgfCAgMjUgKy0tLQogZHJpdmVycy9tZC9kbS5oICAgICAgICAg
-ICAgICAgICAgfCAgIDEgLQogaW5jbHVkZS9saW51eC9kZXZpY2UtbWFwcGVyLmggICAgfCAgIDYg
-Ky0KIDE4IGZpbGVzIGNoYW5nZWQsIDEzNCBpbnNlcnRpb25zKCspLCA0NjQgZGVsZXRpb25zKC0p
-CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
-dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Wed, Oct 24, 2018 at 12:05:46AM +0200, Martin Wilck wrote:
+> store_pathinfo is called with valid conf pointer anyway, so
+> checkint is available. pp->checkint is now valid for every
+> path after path_discovery().
+> 
+> This fixes a bad conf access in cli_add_path().
+> 
+
+Reviewed-by: Benjamin Marzinsk <bmarzins@redhat.com>
+
+> Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/discovery.c  | 1 +
+>  multipathd/cli_handlers.c | 1 -
+>  multipathd/main.c         | 2 --
+>  3 files changed, 1 insertion(+), 3 deletions(-)
+> 
+> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> index 467ece7a..4ac3fde1 100644
+> --- a/libmultipath/discovery.c
+> +++ b/libmultipath/discovery.c
+> @@ -103,6 +103,7 @@ store_pathinfo (vector pathvec, struct config *conf,
+>  	err = store_path(pathvec, pp);
+>  	if (err)
+>  		goto out;
+> +	pp->checkint = conf->checkint;
+>  
+>  out:
+>  	if (err)
+> diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+> index 75000807..4aea4ce7 100644
+> --- a/multipathd/cli_handlers.c
+> +++ b/multipathd/cli_handlers.c
+> @@ -736,7 +736,6 @@ cli_add_path (void * v, char ** reply, int * len, void * data)
+>  			condlog(0, "%s: failed to store path info", param);
+>  			return 1;
+>  		}
+> -		pp->checkint = conf->checkint;
+>  	}
+>  	return ev_add_path(pp, vecs, 1);
+>  blacklisted:
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index e80ac906..b8423d89 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -2322,8 +2322,6 @@ configure (struct vectors * vecs)
+>  			free_path(pp);
+>  			i--;
+>  		}
+> -		else
+> -			pp->checkint = conf->checkint;
+>  		pthread_cleanup_pop(1);
+>  	}
+>  	if (map_discovery(vecs)) {
+> -- 
+> 2.19.1
