@@ -1,18 +1,12 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 17/21] libmultipath: pathinfo: don't blank
- wwid if checker fails
-Date: Fri, 26 Oct 2018 10:11:20 -0500
-Message-ID: <20181026151120.GE7100@octiron.msp.redhat.com>
-References: <20181011222707.3631-1-mwilck@suse.com>
-	<20181011222707.3631-18-mwilck@suse.com>
-	<20181025215012.GZ7100@octiron.msp.redhat.com>
-	<080fe2b6dde1b947b9d249276ce1e12b756018c3.camel@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper changes for 4.20
+Date: Fri, 26 Oct 2018 11:28:14 -0400
+Message-ID: <20181026152814.GA27329@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <080fe2b6dde1b947b9d249276ce1e12b756018c3.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,64 +16,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: mwilck+gmail@suse.de, dm-devel@redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Igor Stoppa <igor.stoppa@gmail.com>, Jens Axboe <axboe@kernel.dk>, Damien Le Moal <damien.lemoal@wdc.com>, Heinz Mauelshagen <heinzm@redhat.com>, Wenwen Wang <wang6495@umn.edu>, =?utf-8?B?TWljaGHFgiBNaXJvc8WCYXc=?= <mirq-linux@rere.qmqm.pl>, dm-devel@redhat.com, John Pittman <jpittman@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 26, 2018 at 11:16:23AM +0200, Martin Wilck wrote:
-> On Thu, 2018-10-25 at 16:50 -0500,  Benjamin Marzinski  wrote:
-> > On Fri, Oct 12, 2018 at 12:27:03AM +0200, Martin Wilck wrote:
-> > > Blanking a WWID is a dangerous operation. E.g. configure() would
-> > > consider the path in question as invalid and orphan it if the
-> > > WWID is blank. Don't do this for possibly transient checker
-> > > failures.
-> > > Moreover, we try to determine WWID even if path_offline returns
-> > > PATH_DOWN in the first place, so why should we not if the checker
-> > > has a problem?
-> > > =
-
-> > =
-
-> > Is PATH_WILD a transient error?  Clearly we have cases where
-> > PATH_UNCHECKED happens because of a transient error. What's the case
-> > that you are worried about where we temporarily get a PATH_WILD, but
-> > we
-> > think we should continue will setting up the path?
-> =
-
-> My mentioning of a "transient" error condition is misleading. =
-
-> =
-
-> But do I think that the patch is correct. In particular with the
-> previous changes in the series, PATH_WILD would mean that the checker
-> couldn't do it's job and simply has no information whether or not the
-> path is good. IMO it is wrong not to try to obtain a WWID, or even
-> blank an already retrieved WWID, in this case.
-> =
-
-> Do you disagree?
-
-I guess the question is "Should we create a multipath device if we think
-that it's likely misconfigured?" If there really are multiple paths,
-then it makes sense that we should create the multipath device.  On the
-other hand, if the checker is misconfigured and a path fails, multipathd
-may not be able to restore it, and users might not find that out until
-they actually have the path fail, if they aren't paying attention.
-
-I guess I don't really have any strong feelings against your approach.
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-
-> =
-
-> Regards,
-> Martin
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
-> =
+SGkgTGludXMsCgpXZWxjb21lIGJhY2shCgpUaGUgZm9sbG93aW5nIGNoYW5nZXMgc2luY2UgY29t
+bWl0IDExOGFhNDdjNzA3MmJjZTA1ZmMzOWJkNDBhMWMwYTkwY2FlZDcyYWI6CgogIGRtIGxpbmVh
+cjogZml4IGxpbmVhcl9lbmRfaW8gY29uZGl0aW9uYWwgZGVmaW5pdGlvbiAoMjAxOC0xMC0xMCAy
+MzoyMjoyNCAtMDQwMCkKCmFyZSBhdmFpbGFibGUgaW4gdGhlIEdpdCByZXBvc2l0b3J5IGF0OgoK
+ICBnaXQ6Ly9naXQua2VybmVsLm9yZy9wdWIvc2NtL2xpbnV4L2tlcm5lbC9naXQvZGV2aWNlLW1h
+cHBlci9saW51eC1kbS5naXQgdGFncy9mb3ItNC4yMC9kbS1jaGFuZ2VzCgpmb3IgeW91IHRvIGZl
+dGNoIGNoYW5nZXMgdXAgdG8gZGE0YWQzYTIzYWYzZDdmMzU3YjI0YjMzZTlmZWM3NTMxYjU5ZWU0
+OToKCiAgZG0gd3JpdGVjYWNoZTogcmVtb3ZlIGRpc2FibGVkIGNvZGUgaW4gbWVtb3J5X2VudHJ5
+KCkgKDIwMTgtMTAtMjIgMTA6NTk6NTIgLTA0MDApCgpQbGVhc2UgcHVsbCwgdGhhbmtzLgpNaWtl
+CgotLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tCi0gQmlnZ2VzdCBjaGFuZ2UgdGhpcyBjeWNsZSBpcyB0byByZW1vdmUgc3VwcG9y
+dCBmb3IgdGhlIGxlZ2FjeSBJTyBwYXRoCiAgKC5yZXF1ZXN0X2ZuKSBmcm9tIHJlcXVlc3QtYmFz
+ZWQgRE0uICBKZW5zIGhhcyBhbHJlYWR5IHN0YXJ0ZWQKICBwcmVwYXJpbmcgZm9yIGNvbXBsZXRl
+IHJlbW92YWwgb2YgdGhlIGxlZ2FjeSBJTyBwYXRoIGluIDQuMjEgYnV0IHRoaXMKICBlYXJsaWVy
+IHJlbW92YWwgb2Ygc3VwcG9ydCBmcm9tIERNIGhhcyBiZWVuIGNvb3JkaW5hdGVkIHdpdGggSmVu
+cyAoYXMKICBldmlkZW5jZWQgYnkgdGhlIGNvbW1pdCBiZWluZyBhdHRyaWJ1dGVkIHRvIGhpbSku
+ICBNYWtpbmcKICByZXF1ZXN0LWJhc2VkIERNIGV4Y2x1c3NpdmVseSBibGstbXEgb25seSBjbGVh
+bnMgdXAgdGhhdCBwb3J0aW9uIG9mIERNCiAgY29yZSBxdWl0ZSBuaWNlbHkuCgotIENvbnZlcnQg
+dGhlIHRoaW5wIGFuZCB6b25lZCB0YXJnZXRzIG92ZXIgdG8gdXNpbmcgcmVmY291bnRfdCB3aGVy
+ZQogIGFwcGxpY2FibGUuCgotIEEgY291cGxlIGZpeGVzIHRvIHRoZSBETSB6b25lZCB0YXJnZXQg
+Zm9yIHJlZmNvdW50aW5nIGFuZCBvdGhlciByYWNlcwogIGJ1cmllZCBpbiB0aGUgaW1wbGVtZW50
+YXRpb24gb2YgbWV0YWRhdGEgYmxvY2sgY3JlYXRpb24gYW5kIHVzZS4KCi0gU21hbGwgY2xlYW51
+cHMgdG8gcmVtb3ZlIHJlZHVuZGFudCB1bmxpa2VseSgpIGFyb3VuZCBhIGNvdXBsZQogIFdBUk5f
+T05fT05DRSgpLgoKLSBTaW1wbGlmeSBob3cgZG0taW9jdGwgY29waWVzIGZyb20gdXNlcnNwYWNl
+LCBlbGltaW5hdGluZyBzb21lCiAgcG90ZW50aWFsIGZvciBhIG1hbGljaW91cyB1c2VyIHRyeWlu
+ZyB0byBjaGFuZ2UgdGhlIGV4ZWN1dGVkIGlvY3RsCiAgYWZ0ZXIgaXRzIHByb2Nlc3NpbmcgaGFz
+IGJlZ3VuLgoKLSBUd2Vha2VkIERNIGNyeXB0IHRhcmdldCB0byB1c2UgdGhlIERNIGRldmljZSBu
+YW1lIHdoZW4gbmFtaW5nIHRoZQogIHZhcmlvdXMgd29ya3F1ZXVlcyBjcmVhdGVkIGZvciBhIHBh
+cnRpY3VsYXIgRE0gY3J5cHQgZGV2aWNlIChtYWtlcyB0aGUKICBOIHdvcmtxdWV1ZXMgZm9yIGEg
+RE0gY3J5cHQgZGV2aWNlIG1vcmUgZWFzaWx5IHVuZGVyc3Rvb2QgYW5kIGVuaGFuY2VzCiAgdXNl
+cidzIGFjY291bnRpbmcgY2FwYWJpbGl0aWVzIGF0IGEgZ2xhbmNlIHZpYSAicHMiKQoKLSBTbWFs
+bCBmaXh1cCB0byByZW1vdmUgZGVhZCBicmFuY2ggaW4gRE0gd3JpdGVjYWNoZSdzIG1lbW9yeV9l
+bnRyeSgpLgoKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLQpEYW1pZW4gTGUgTW9hbCAoMik6CiAgICAgIGRtIHpvbmVkOiBmaXgg
+bWV0YWRhdGEgYmxvY2sgcmVmIGNvdW50aW5nCiAgICAgIGRtIHpvbmVkOiBmaXggdmFyaW91cyBk
+bXpfZ2V0X21ibG9jaygpIGlzc3VlcwoKSGVpbnogTWF1ZWxzaGFnZW4gKDEpOgogICAgICBkbSBy
+YWlkOiBhdm9pZCBiaXRtYXAgd2l0aCByYWlkNC81LzYgam91cm5hbCBkZXZpY2UKCklnb3IgU3Rv
+cHBhICgxKToKICAgICAgZG06IHJlbW92ZSB1bm5lY2Vzc2FyeSB1bmxpa2VseSgpIGFyb3VuZCBX
+QVJOX09OX09OQ0UoKQoKSmVucyBBeGJvZSAoMSk6CiAgICAgIGRtOiByZW1vdmUgbGVnYWN5IHJl
+cXVlc3QtYmFzZWQgSU8gcGF0aAoKSm9obiBQaXR0bWFuICgyKToKICAgICAgZG0gdGhpbjogdXNl
+IHJlZmNvdW50X3QgZm9yIHRoaW5fYyByZWZlcmVuY2UgY291bnRpbmcKICAgICAgZG0gem9uZWQ6
+IHRhcmdldDogdXNlIHJlZmNvdW50X3QgZm9yIGRtIHpvbmVkIHJlZmVyZW5jZSBjb3VudGVycwoK
+TWljaGHFgiBNaXJvc8WCYXcgKDIpOgogICAgICBkbTogYWRkIGRtX3RhYmxlX2RldmljZV9uYW1l
+KCkKICAgICAgZG0gY3J5cHQ6IG1ha2Ugd29ya3F1ZXVlIG5hbWVzIGRldmljZS1zcGVjaWZpYwoK
+TWlrZSBTbml0emVyICgzKToKICAgICAgZG06IHJlbmFtZSBETV9UWVBFX01RX1JFUVVFU1RfQkFT
+RUQgdG8gRE1fVFlQRV9SRVFVRVNUX0JBU0VECiAgICAgIGRtIHRhYmxlOiByZXF1aXJlIHRoYXQg
+cmVxdWVzdC1iYXNlZCBETSBiZSBsYXllcmVkIG9uIGJsay1tcSBkZXZpY2VzCiAgICAgIGRtIHdy
+aXRlY2FjaGU6IHJlbW92ZSBkaXNhYmxlZCBjb2RlIGluIG1lbW9yeV9lbnRyeSgpCgpXZW53ZW4g
+V2FuZyAoMSk6CiAgICAgIGRtIGlvY3RsOiBoYXJkZW4gY29weV9wYXJhbXMoKSdzIGNvcHlfZnJv
+bV91c2VyKCkgZnJvbSBtYWxpY2lvdXMgdXNlcnMKCiBkcml2ZXJzL21kL0tjb25maWcgICAgICAg
+ICAgICAgICB8ICAxMSAtLQogZHJpdmVycy9tZC9kbS1jYWNoZS1wb2xpY3ktc21xLmMgfCAgIDIg
+Ky0KIGRyaXZlcnMvbWQvZG0tY29yZS5oICAgICAgICAgICAgIHwgIDEwIC0tCiBkcml2ZXJzL21k
+L2RtLWNyeXB0LmMgICAgICAgICAgICB8ICAxNSArLQogZHJpdmVycy9tZC9kbS1pb2N0bC5jICAg
+ICAgICAgICAgfCAgMTggKy0tCiBkcml2ZXJzL21kL2RtLW1wYXRoLmMgICAgICAgICAgICB8ICAy
+NiArLS0tCiBkcml2ZXJzL21kL2RtLXJhaWQuYyAgICAgICAgICAgICB8ICAgMiArLQogZHJpdmVy
+cy9tZC9kbS1ycS5jICAgICAgICAgICAgICAgfCAzMTYgKysrKy0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tCiBkcml2ZXJzL21kL2RtLXJxLmggICAgICAgICAgICAgICB8ICAgNCAt
+CiBkcml2ZXJzL21kL2RtLXN5c2ZzLmMgICAgICAgICAgICB8ICAgMyArLQogZHJpdmVycy9tZC9k
+bS10YWJsZS5jICAgICAgICAgICAgfCAgNDYgKystLS0tCiBkcml2ZXJzL21kL2RtLXRoaW4uYyAg
+ICAgICAgICAgICB8ICAgOCArLQogZHJpdmVycy9tZC9kbS13cml0ZWNhY2hlLmMgICAgICAgfCAg
+IDUgKy0KIGRyaXZlcnMvbWQvZG0tem9uZWQtbWV0YWRhdGEuYyAgIHwgIDgwICsrKysrKy0tLS0K
+IGRyaXZlcnMvbWQvZG0tem9uZWQtdGFyZ2V0LmMgICAgIHwgIDIwICstLQogZHJpdmVycy9tZC9k
+bS5jICAgICAgICAgICAgICAgICAgfCAgMjUgKy0tLQogZHJpdmVycy9tZC9kbS5oICAgICAgICAg
+ICAgICAgICAgfCAgIDEgLQogaW5jbHVkZS9saW51eC9kZXZpY2UtbWFwcGVyLmggICAgfCAgIDYg
+Ky0KIDE4IGZpbGVzIGNoYW5nZWQsIDEzNCBpbnNlcnRpb25zKCspLCA0NjQgZGVsZXRpb25zKC0p
+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
+dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
