@@ -1,61 +1,137 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [RFC] dm-bow working prototype
-Date: Fri, 26 Oct 2018 16:03:10 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1810261558460.28906@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20181023212358.60292-1-paullawrence@google.com> <20181023221819.GB17552@agk-dp.fab.redhat.com> <296148c2-f2d9-5818-ea76-d71a0d6f5cd4@google.com> <alpine.LRH.2.02.1810241514310.4080@file01.intranet.prod.int.rdu2.redhat.com>
- <4a934593-1bd1-be5f-35c0-945c42762627@google.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 5/7] multipathd: set DAEMON_CONFIGURE from
+	uxlsnr thread
+Date: Fri, 26 Oct 2018 15:19:23 -0500
+Message-ID: <20181026201923.GJ7100@octiron.msp.redhat.com>
+References: <20181023220552.1306-1-mwilck@suse.com>
+	<20181023220552.1306-6-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4a934593-1bd1-be5f-35c0-945c42762627@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Lawrence <paullawrence@google.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-doc@vger.kernel.org, kernel-team@android.com, Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20181023220552.1306-6-mwilck@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-
-
-On Thu, 25 Oct 2018, Paul Lawrence wrote:
-
-> Thank you for the suggestion. I spent part of yesterday experimenting with
-> this idea, and it is certainly very promising. However, it does have some
-> disadvantages as compared to dm-bow, if I am understanding the setup
-> correctly:
+On Wed, Oct 24, 2018 at 12:05:50AM +0200, Martin Wilck wrote:
+> Commit ee01e841 had the intention to make multipathd quit if
+> the client socket couldn't be set up, because the unix socket
+> listener is vital for signal handling in multipathd.
+> But during startup, this condition might be lost if the main
+> thread doesn't wait for the unix listener to initialize.
 > 
-> 1) Since dm-snap has no concept of the free space on the underlying file
-> system any write into the free space will trigger a backup, so using twice the
-> space of dm-bow. Changing existing data will create a backup with both
-> drivers, but since we have to reserve the space for the backups up-front with
-> dm-snap, we would likely only have half the space for that. Either way, it
-> seems that dm-bow is likely to double the amount of changes we could make.
+> Fixes: ee01e841 "multipathd: handle errors in uxlsnr as fatal"
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipathd/main.c | 43 ++++++++++++++++++++++++++++++++-----------
+>  1 file changed, 32 insertions(+), 11 deletions(-)
 > 
-> (Might it be possible to dynamically resize the backup file if it is mostly
-> used up? This would fix the problem of only having half the space for changing
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 50f69171..c71e7d03 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -205,9 +205,8 @@ static void config_cleanup(void *arg)
+>  	pthread_mutex_unlock(&config_lock);
+>  }
+>  
+> -void post_config_state(enum daemon_status state)
+> +static void __post_config_state(enum daemon_status state)
+>  {
+> -	pthread_mutex_lock(&config_lock);
+>  	if (state != running_state) {
+>  		enum daemon_status old_state = running_state;
+>  
+> @@ -217,7 +216,14 @@ void post_config_state(enum daemon_status state)
+>  		do_sd_notify(old_state);
+>  #endif
+>  	}
+> -	pthread_mutex_unlock(&config_lock);
+> +}
+> +
+> +void post_config_state(enum daemon_status state)
+> +{
+> +	pthread_mutex_lock(&config_lock);
+> +	pthread_cleanup_push(config_cleanup, NULL);
+> +	__post_config_state(state);
+> +	pthread_cleanup_pop(1);
+>  }
+>  
+>  int set_config_state(enum daemon_status state)
+> @@ -1511,6 +1517,10 @@ uxlsnrloop (void * ap)
+>  		condlog(1, "Failed to init uxsock listener");
+>  		return NULL;
+>  	}
+> +
+> +	/* Tell main thread that thread has started */
+> +	post_config_state(DAEMON_CONFIGURE);
+> +
+>  	set_handler_callback(LIST+PATHS, cli_list_paths);
+>  	set_handler_callback(LIST+PATHS+FMT, cli_list_paths_fmt);
+>  	set_handler_callback(LIST+PATHS+RAW+FMT, cli_list_paths_raw);
+> @@ -2726,11 +2736,26 @@ child (void * param)
+>  	 */
+>  	conf = NULL;
+>  
+> -	/*
+> -	 * Signal start of configuration
+> -	 */
+> -	post_config_state(DAEMON_CONFIGURE);
+> +	pthread_cleanup_push(config_cleanup, NULL);
+> +	pthread_mutex_lock(&config_lock);
+>  
+> +	__post_config_state(DAEMON_IDLE);
 
-Yes - the snapshot store can be extended while the snapshot is active.
+I don't really understand the need for __post_config_state().  Couldn't
+you just call post_config_state(DAEMON_IDLE), and then grab the
+config_lock after checking that the thread was created successfully.  If
+the scheduler decides to run the uxlsnrloop thread before continuing
+with the child thread, it would be better if uxlsnrloop thread was free
+to grab the config lock anyway.
 
-> existing data. The documentation seems to indicate that you can increase the
-> size of the snapshot partition, and it seems like it should be possible to
-> grow the underlying file without triggering a lot of writes. OTOH this would
-> have to happen in userspace which creates other issues.)
-> 
-> 2) Similarly, since writes into free space do not trigger a backup in dm-bow,
-> dm-bow is likely to have a lower performance overhead in many circumstances.
-> On the flip side, dm-bow's backup is in free space and will collide with other
-> writes, so this advantage will reduce as free space fills up. But by choosing
-> a suitable algorithm for how we use free space we might be able to retain most
-> of this advantage.
-> 
-> I intend to put together a fully working prototype of your suggestion next to
-> better compare with dm-bow. But I do believe there is value in tracking free
-> space and utilizing it in any such solution.
+At any rate, what you have is perfectly correct, so
 
-The snapshot target could be hacked so that it remembers space trimmed 
-with REQ_OP_DISCARD and won't reallocate these blocks.
+Reviewed-by: Benjamin Marzinsk <bmarzins@redhat.com>
 
-But I suspect that running discard over the whole device would degrade 
-performance more than copying some unneeded data.
-
-How much data do you intend to backup with this solution?
-
-Mikulas
+> +	rc = pthread_create(&uxlsnr_thr, &misc_attr, uxlsnrloop, vecs);
+> +	if (!rc) {
+> +		/* Wait for uxlsnr startup */
+> +		while (running_state == DAEMON_IDLE)
+> +			pthread_cond_wait(&config_cond, &config_lock);
+> +	}
+> +	pthread_cleanup_pop(1);
+> +
+> +	if (rc) {
+> +		condlog(0, "failed to create cli listener: %d", rc);
+> +		goto failed;
+> +	}
+> +	else if (running_state != DAEMON_CONFIGURE) {
+> +		condlog(0, "cli listener failed to start");
+> +		goto failed;
+> +	}
+>  
+>  	if (poll_dmevents) {
+>  		if (init_dmevent_waiter(vecs)) {
+> @@ -2753,10 +2778,6 @@ child (void * param)
+>  		goto failed;
+>  	}
+>  	pthread_attr_destroy(&uevent_attr);
+> -	if ((rc = pthread_create(&uxlsnr_thr, &misc_attr, uxlsnrloop, vecs))) {
+> -		condlog(0, "failed to create cli listener: %d", rc);
+> -		goto failed;
+> -	}
+>  
+>  	/*
+>  	 * start threads
+> -- 
+> 2.19.1
