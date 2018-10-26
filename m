@@ -1,16 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 13/21] libmultipath: clariion checker: leave
- unsupported paths alone
-Date: Thu, 25 Oct 2018 16:41:31 -0500
-Message-ID: <20181025214131.GV7100@octiron.msp.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 17/21] libmultipath: pathinfo: don't blank
+ wwid if checker fails
+Date: Fri, 26 Oct 2018 11:16:23 +0200
+Message-ID: <080fe2b6dde1b947b9d249276ce1e12b756018c3.camel@suse.com>
 References: <20181011222707.3631-1-mwilck@suse.com>
-	<20181011222707.3631-14-mwilck@suse.com>
+	<20181011222707.3631-18-mwilck@suse.com>
+	<20181025215012.GZ7100@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20181011222707.3631-14-mwilck@suse.com>
+In-Reply-To: <20181025215012.GZ7100@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,108 +20,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Oct 12, 2018 at 12:26:59AM +0200, Martin Wilck wrote:
-> A checker shouldn't set the path state to PATH_DOWN if it fails
-> to obtain information about the path in the first place. Add logic
-> to the checker to distinguish a failed path from an unsupported path.
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/checkers/emc_clariion.c | 50 ++++++++++++++++++++++++++--
->  1 file changed, 48 insertions(+), 2 deletions(-)
-> 
-> diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
-> index f8e55b93..a277a004 100644
-> --- a/libmultipath/checkers/emc_clariion.c
-> +++ b/libmultipath/checkers/emc_clariion.c
-> @@ -20,6 +20,11 @@
->  #define INQUIRY_CMD     0x12
->  #define INQUIRY_CMDLEN  6
->  #define HEAVY_CHECK_COUNT       10
-> +#define SCSI_COMMAND_TERMINATED	0x22
-> +#define SCSI_CHECK_CONDITION	0x2
-> +#define RECOVERED_ERROR		0x01
-> +#define ILLEGAL_REQUEST		0x05
-> +#define SG_ERR_DRIVER_SENSE	0x08
->  
->  /*
->   * Mechanism to track CLARiiON inactive snapshot LUs.
-> @@ -130,7 +135,9 @@ int libcheck_check (struct checker * c)
->  		(struct emc_clariion_checker_path_context *)c->context;
->  	char wwnstr[33];
->  	int ret;
-> +	int retry_emc = 5;
->  
-> +retry:
->  	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
->  	memset(sense_buffer, 0, 128);
->  	memset(sb, 0, SENSE_BUFF_LEN);
-> @@ -145,12 +152,51 @@ int libcheck_check (struct checker * c)
->  	io_hdr.timeout = c->timeout * 1000;
->  	io_hdr.pack_id = 0;
->  	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
-> +		if (errno == ENOTTY) {
-> +			c->msgid = CHECKER_MSGID_UNSUPPORTED;
-> +			return PATH_WILD;
-> +		}
->  		c->msgid = MSG_CLARIION_QUERY_FAILED;
->  		return PATH_DOWN;
->  	}
-> +
->  	if (io_hdr.info & SG_INFO_OK_MASK) {
-> -		c->msgid = MSG_CLARIION_QUERY_ERROR;
-> -		return PATH_DOWN;
-
-Previously, if (io_hdr.info & SG_INFO_OK_MASK) the checker would always
-return PATH_DOWN.  Both the tur and rdac checker always return either
-PATH_DOWN or PATH_WILD if (io_hdr.info & SG_INFO_OK_MASK && sense_key
-!= RECOVERED_ERROR). With the clariion checker, it now appears possible
-to have (io_hdr.info & SG_INFO_OK_MASK && sense_key != RECOVERED_ERROR)
-and still return PATH_UP. Is this intentional? Am I missing something
-here?
-
-> +		switch (io_hdr.host_status) {
-> +		case DID_BUS_BUSY:
-> +		case DID_ERROR:
-> +		case DID_SOFT_ERROR:
-> +		case DID_TRANSPORT_DISRUPTED:
-> +			/* Transport error, retry */
-> +			if (--retry_emc)
-> +				goto retry;
-> +			break;
-> +		default:
-> +			break;
-> +		}
-> +	}
-> +
-> +	if (SCSI_CHECK_CONDITION == io_hdr.status ||
-> +	    SCSI_COMMAND_TERMINATED == io_hdr.status ||
-> +	    SG_ERR_DRIVER_SENSE == (0xf & io_hdr.driver_status)) {
-> +		if (io_hdr.sbp && (io_hdr.sb_len_wr > 2)) {
-> +			unsigned char *sbp = io_hdr.sbp;
-> +			int sense_key;
-> +
-> +			if (sbp[0] & 0x2)
-> +				sense_key = sbp[1] & 0xf;
-> +			else
-> +				sense_key = sbp[2] & 0xf;
-> +
-> +			if (sense_key == ILLEGAL_REQUEST) {
-> +				c->msgid = CHECKER_MSGID_UNSUPPORTED;
-> +				return PATH_WILD;
-> +			} else if (sense_key != RECOVERED_ERROR) {
-> +				condlog(1, "emc_clariion_checker: INQUIRY failed with sense key %02x",
-> +					sense_key);
-> +				c->msgid = MSG_CLARIION_QUERY_ERROR;
-> +				return PATH_DOWN;
-> +			}
-> +		}
->  	}
->  	if (/* Verify the code page - right page & revision */
->  	    sense_buffer[1] != 0xc0 || sense_buffer[9] != 0x00) {
-> -- 
-> 2.19.0
+T24gVGh1LCAyMDE4LTEwLTI1IGF0IDE2OjUwIC0wNTAwLCAgQmVuamFtaW4gTWFyemluc2tpICB3
+cm90ZToKPiBPbiBGcmksIE9jdCAxMiwgMjAxOCBhdCAxMjoyNzowM0FNICswMjAwLCBNYXJ0aW4g
+V2lsY2sgd3JvdGU6Cj4gPiBCbGFua2luZyBhIFdXSUQgaXMgYSBkYW5nZXJvdXMgb3BlcmF0aW9u
+LiBFLmcuIGNvbmZpZ3VyZSgpIHdvdWxkCj4gPiBjb25zaWRlciB0aGUgcGF0aCBpbiBxdWVzdGlv
+biBhcyBpbnZhbGlkIGFuZCBvcnBoYW4gaXQgaWYgdGhlCj4gPiBXV0lEIGlzIGJsYW5rLiBEb24n
+dCBkbyB0aGlzIGZvciBwb3NzaWJseSB0cmFuc2llbnQgY2hlY2tlcgo+ID4gZmFpbHVyZXMuCj4g
+PiBNb3Jlb3Zlciwgd2UgdHJ5IHRvIGRldGVybWluZSBXV0lEIGV2ZW4gaWYgcGF0aF9vZmZsaW5l
+IHJldHVybnMKPiA+IFBBVEhfRE9XTiBpbiB0aGUgZmlyc3QgcGxhY2UsIHNvIHdoeSBzaG91bGQg
+d2Ugbm90IGlmIHRoZSBjaGVja2VyCj4gPiBoYXMgYSBwcm9ibGVtPwo+ID4gCj4gCj4gSXMgUEFU
+SF9XSUxEIGEgdHJhbnNpZW50IGVycm9yPyAgQ2xlYXJseSB3ZSBoYXZlIGNhc2VzIHdoZXJlCj4g
+UEFUSF9VTkNIRUNLRUQgaGFwcGVucyBiZWNhdXNlIG9mIGEgdHJhbnNpZW50IGVycm9yLiBXaGF0
+J3MgdGhlIGNhc2UKPiB0aGF0IHlvdSBhcmUgd29ycmllZCBhYm91dCB3aGVyZSB3ZSB0ZW1wb3Jh
+cmlseSBnZXQgYSBQQVRIX1dJTEQsIGJ1dAo+IHdlCj4gdGhpbmsgd2Ugc2hvdWxkIGNvbnRpbnVl
+IHdpbGwgc2V0dGluZyB1cCB0aGUgcGF0aD8KCk15IG1lbnRpb25pbmcgb2YgYSAidHJhbnNpZW50
+IiBlcnJvciBjb25kaXRpb24gaXMgbWlzbGVhZGluZy4gCgpCdXQgZG8gSSB0aGluayB0aGF0IHRo
+ZSBwYXRjaCBpcyBjb3JyZWN0LiBJbiBwYXJ0aWN1bGFyIHdpdGggdGhlCnByZXZpb3VzIGNoYW5n
+ZXMgaW4gdGhlIHNlcmllcywgUEFUSF9XSUxEIHdvdWxkIG1lYW4gdGhhdCB0aGUgY2hlY2tlcgpj
+b3VsZG4ndCBkbyBpdCdzIGpvYiBhbmQgc2ltcGx5IGhhcyBubyBpbmZvcm1hdGlvbiB3aGV0aGVy
+IG9yIG5vdCB0aGUKcGF0aCBpcyBnb29kLiBJTU8gaXQgaXMgd3Jvbmcgbm90IHRvIHRyeSB0byBv
+YnRhaW4gYSBXV0lELCBvciBldmVuCmJsYW5rIGFuIGFscmVhZHkgcmV0cmlldmVkIFdXSUQsIGlu
+IHRoaXMgY2FzZS4KCkRvIHlvdSBkaXNhZ3JlZT8KClJlZ2FyZHMsCk1hcnRpbgoKLS0gCkRyLiBN
+YXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3
+ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwg
+R3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCgotLQpkbS1kZXZlbCBtYWls
+aW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxt
+YW4vbGlzdGluZm8vZG0tZGV2ZWw=
