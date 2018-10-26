@@ -1,16 +1,18 @@
-From: Martin Wilck <mwilck@suse.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
 Subject: Re: [PATCH 17/21] libmultipath: pathinfo: don't blank
  wwid if checker fails
-Date: Fri, 26 Oct 2018 11:16:23 +0200
-Message-ID: <080fe2b6dde1b947b9d249276ce1e12b756018c3.camel@suse.com>
+Date: Fri, 26 Oct 2018 10:11:20 -0500
+Message-ID: <20181026151120.GE7100@octiron.msp.redhat.com>
 References: <20181011222707.3631-1-mwilck@suse.com>
 	<20181011222707.3631-18-mwilck@suse.com>
 	<20181025215012.GZ7100@octiron.msp.redhat.com>
+	<080fe2b6dde1b947b9d249276ce1e12b756018c3.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181025215012.GZ7100@octiron.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <080fe2b6dde1b947b9d249276ce1e12b756018c3.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,33 +22,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
-Cc: dm-devel@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: mwilck+gmail@suse.de, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE4LTEwLTI1IGF0IDE2OjUwIC0wNTAwLCAgQmVuamFtaW4gTWFyemluc2tpICB3
-cm90ZToKPiBPbiBGcmksIE9jdCAxMiwgMjAxOCBhdCAxMjoyNzowM0FNICswMjAwLCBNYXJ0aW4g
-V2lsY2sgd3JvdGU6Cj4gPiBCbGFua2luZyBhIFdXSUQgaXMgYSBkYW5nZXJvdXMgb3BlcmF0aW9u
-LiBFLmcuIGNvbmZpZ3VyZSgpIHdvdWxkCj4gPiBjb25zaWRlciB0aGUgcGF0aCBpbiBxdWVzdGlv
-biBhcyBpbnZhbGlkIGFuZCBvcnBoYW4gaXQgaWYgdGhlCj4gPiBXV0lEIGlzIGJsYW5rLiBEb24n
-dCBkbyB0aGlzIGZvciBwb3NzaWJseSB0cmFuc2llbnQgY2hlY2tlcgo+ID4gZmFpbHVyZXMuCj4g
-PiBNb3Jlb3Zlciwgd2UgdHJ5IHRvIGRldGVybWluZSBXV0lEIGV2ZW4gaWYgcGF0aF9vZmZsaW5l
-IHJldHVybnMKPiA+IFBBVEhfRE9XTiBpbiB0aGUgZmlyc3QgcGxhY2UsIHNvIHdoeSBzaG91bGQg
-d2Ugbm90IGlmIHRoZSBjaGVja2VyCj4gPiBoYXMgYSBwcm9ibGVtPwo+ID4gCj4gCj4gSXMgUEFU
-SF9XSUxEIGEgdHJhbnNpZW50IGVycm9yPyAgQ2xlYXJseSB3ZSBoYXZlIGNhc2VzIHdoZXJlCj4g
-UEFUSF9VTkNIRUNLRUQgaGFwcGVucyBiZWNhdXNlIG9mIGEgdHJhbnNpZW50IGVycm9yLiBXaGF0
-J3MgdGhlIGNhc2UKPiB0aGF0IHlvdSBhcmUgd29ycmllZCBhYm91dCB3aGVyZSB3ZSB0ZW1wb3Jh
-cmlseSBnZXQgYSBQQVRIX1dJTEQsIGJ1dAo+IHdlCj4gdGhpbmsgd2Ugc2hvdWxkIGNvbnRpbnVl
-IHdpbGwgc2V0dGluZyB1cCB0aGUgcGF0aD8KCk15IG1lbnRpb25pbmcgb2YgYSAidHJhbnNpZW50
-IiBlcnJvciBjb25kaXRpb24gaXMgbWlzbGVhZGluZy4gCgpCdXQgZG8gSSB0aGluayB0aGF0IHRo
-ZSBwYXRjaCBpcyBjb3JyZWN0LiBJbiBwYXJ0aWN1bGFyIHdpdGggdGhlCnByZXZpb3VzIGNoYW5n
-ZXMgaW4gdGhlIHNlcmllcywgUEFUSF9XSUxEIHdvdWxkIG1lYW4gdGhhdCB0aGUgY2hlY2tlcgpj
-b3VsZG4ndCBkbyBpdCdzIGpvYiBhbmQgc2ltcGx5IGhhcyBubyBpbmZvcm1hdGlvbiB3aGV0aGVy
-IG9yIG5vdCB0aGUKcGF0aCBpcyBnb29kLiBJTU8gaXQgaXMgd3Jvbmcgbm90IHRvIHRyeSB0byBv
-YnRhaW4gYSBXV0lELCBvciBldmVuCmJsYW5rIGFuIGFscmVhZHkgcmV0cmlldmVkIFdXSUQsIGlu
-IHRoaXMgY2FzZS4KCkRvIHlvdSBkaXNhZ3JlZT8KClJlZ2FyZHMsCk1hcnRpbgoKLS0gCkRyLiBN
-YXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3
-ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwg
-R3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCgotLQpkbS1kZXZlbCBtYWls
-aW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxt
-YW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Fri, Oct 26, 2018 at 11:16:23AM +0200, Martin Wilck wrote:
+> On Thu, 2018-10-25 at 16:50 -0500,  Benjamin Marzinski  wrote:
+> > On Fri, Oct 12, 2018 at 12:27:03AM +0200, Martin Wilck wrote:
+> > > Blanking a WWID is a dangerous operation. E.g. configure() would
+> > > consider the path in question as invalid and orphan it if the
+> > > WWID is blank. Don't do this for possibly transient checker
+> > > failures.
+> > > Moreover, we try to determine WWID even if path_offline returns
+> > > PATH_DOWN in the first place, so why should we not if the checker
+> > > has a problem?
+> > > =
+
+> > =
+
+> > Is PATH_WILD a transient error?  Clearly we have cases where
+> > PATH_UNCHECKED happens because of a transient error. What's the case
+> > that you are worried about where we temporarily get a PATH_WILD, but
+> > we
+> > think we should continue will setting up the path?
+> =
+
+> My mentioning of a "transient" error condition is misleading. =
+
+> =
+
+> But do I think that the patch is correct. In particular with the
+> previous changes in the series, PATH_WILD would mean that the checker
+> couldn't do it's job and simply has no information whether or not the
+> path is good. IMO it is wrong not to try to obtain a WWID, or even
+> blank an already retrieved WWID, in this case.
+> =
+
+> Do you disagree?
+
+I guess the question is "Should we create a multipath device if we think
+that it's likely misconfigured?" If there really are multiple paths,
+then it makes sense that we should create the multipath device.  On the
+other hand, if the checker is misconfigured and a path fails, multipathd
+may not be able to restore it, and users might not find that out until
+they actually have the path fail, if they aren't paying attention.
+
+I guess I don't really have any strong feelings against your approach.
+
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+
+> =
+
+> Regards,
+> Martin
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
+> =
