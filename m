@@ -1,16 +1,14 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 13/21] libmultipath: clariion checker: leave
- unsupported paths alone
-Date: Fri, 26 Oct 2018 11:01:49 +0200
-Message-ID: <4bb720ad302b792d46f8b1d0e0c5a83c55955ce8.camel@suse.com>
-References: <20181011222707.3631-1-mwilck@suse.com>
-	<20181011222707.3631-14-mwilck@suse.com>
-	<20181025214131.GV7100@octiron.msp.redhat.com>
+From: laurent cop <laurent.cop@gmail.com>
+Subject: Re: LUKS2 - RAID0 - NVME : alignment issue
+Date: Sun, 28 Oct 2018 01:05:09 +0200
+Message-ID: <CAHzw6ok4YHzQ2_oxShAiaa0T_vX4OA2oXGifNTmAOyLHYwGKRg@mail.gmail.com>
+References: <CAHzw6onNd8JskiB75PzFd4Zo45dP4fx3emoHFz8eTNkTV2+7+A@mail.gmail.com>
+	<alpine.LRH.2.02.1810181342200.19328@file01.intranet.prod.int.rdu2.redhat.com>
+	<2cd7ddd8-6c3c-e420-fd1f-44912f24ca66@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="===============3718265481843422858=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181025214131.GV7100@octiron.msp.redhat.com>
+In-Reply-To: <2cd7ddd8-6c3c-e420-fd1f-44912f24ca66@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,60 +18,292 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck@suse.com
-Cc: dm-devel@redhat.com
+To: Milan Broz <gmazyland@gmail.com>
+Cc: dm-devel@redhat.com, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE4LTEwLTI1IGF0IDE2OjQxIC0wNTAwLCAgQmVuamFtaW4gTWFyemluc2tpICB3
-cm90ZToKPiBPbiBGcmksIE9jdCAxMiwgMjAxOCBhdCAxMjoyNjo1OUFNICswMjAwLCBNYXJ0aW4g
-V2lsY2sgd3JvdGU6Cj4gPiBBIGNoZWNrZXIgc2hvdWxkbid0IHNldCB0aGUgcGF0aCBzdGF0ZSB0
-byBQQVRIX0RPV04gaWYgaXQgZmFpbHMKPiA+IHRvIG9idGFpbiBpbmZvcm1hdGlvbiBhYm91dCB0
-aGUgcGF0aCBpbiB0aGUgZmlyc3QgcGxhY2UuIEFkZCBsb2dpYwo+ID4gdG8gdGhlIGNoZWNrZXIg
-dG8gZGlzdGluZ3Vpc2ggYSBmYWlsZWQgcGF0aCBmcm9tIGFuIHVuc3VwcG9ydGVkCj4gPiBwYXRo
-Lgo+ID4gCj4gPiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4K
-PiA+IC0tLQo+ID4gIGxpYm11bHRpcGF0aC9jaGVja2Vycy9lbWNfY2xhcmlpb24uYyB8IDUwCj4g
-PiArKysrKysrKysrKysrKysrKysrKysrKysrKy0tCj4gPiAgMSBmaWxlIGNoYW5nZWQsIDQ4IGlu
-c2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0pCj4gPiAKPiA+IGRpZmYgLS1naXQgYS9saWJtdWx0
-aXBhdGgvY2hlY2tlcnMvZW1jX2NsYXJpaW9uLmMKPiA+IGIvbGlibXVsdGlwYXRoL2NoZWNrZXJz
-L2VtY19jbGFyaWlvbi5jCj4gPiBpbmRleCBmOGU1NWI5My4uYTI3N2EwMDQgMTAwNjQ0Cj4gPiAt
-LS0gYS9saWJtdWx0aXBhdGgvY2hlY2tlcnMvZW1jX2NsYXJpaW9uLmMKPiA+ICsrKyBiL2xpYm11
-bHRpcGF0aC9jaGVja2Vycy9lbWNfY2xhcmlpb24uYwo+ID4gQEAgLTIwLDYgKzIwLDExIEBACj4g
-PiAgI2RlZmluZSBJTlFVSVJZX0NNRCAgICAgMHgxMgo+ID4gICNkZWZpbmUgSU5RVUlSWV9DTURM
-RU4gIDYKPiA+ICAjZGVmaW5lIEhFQVZZX0NIRUNLX0NPVU5UICAgICAgIDEwCj4gPiArI2RlZmlu
-ZSBTQ1NJX0NPTU1BTkRfVEVSTUlOQVRFRAkweDIyCj4gPiArI2RlZmluZSBTQ1NJX0NIRUNLX0NP
-TkRJVElPTgkweDIKPiA+ICsjZGVmaW5lIFJFQ09WRVJFRF9FUlJPUgkJMHgwMQo+ID4gKyNkZWZp
-bmUgSUxMRUdBTF9SRVFVRVNUCQkweDA1Cj4gPiArI2RlZmluZSBTR19FUlJfRFJJVkVSX1NFTlNF
-CTB4MDgKPiA+ICAKPiA+ICAvKgo+ID4gICAqIE1lY2hhbmlzbSB0byB0cmFjayBDTEFSaWlPTiBp
-bmFjdGl2ZSBzbmFwc2hvdCBMVXMuCj4gPiBAQCAtMTMwLDcgKzEzNSw5IEBAIGludCBsaWJjaGVj
-a19jaGVjayAoc3RydWN0IGNoZWNrZXIgKiBjKQo+ID4gIAkJKHN0cnVjdCBlbWNfY2xhcmlpb25f
-Y2hlY2tlcl9wYXRoX2NvbnRleHQgKiljLT5jb250ZXh0Owo+ID4gIAljaGFyIHd3bnN0clszM107
-Cj4gPiAgCWludCByZXQ7Cj4gPiArCWludCByZXRyeV9lbWMgPSA1Owo+ID4gIAo+ID4gK3JldHJ5
-Ogo+ID4gIAltZW1zZXQoJmlvX2hkciwgMCwgc2l6ZW9mIChzdHJ1Y3Qgc2dfaW9faGRyKSk7Cj4g
-PiAgCW1lbXNldChzZW5zZV9idWZmZXIsIDAsIDEyOCk7Cj4gPiAgCW1lbXNldChzYiwgMCwgU0VO
-U0VfQlVGRl9MRU4pOwo+ID4gQEAgLTE0NSwxMiArMTUyLDUxIEBAIGludCBsaWJjaGVja19jaGVj
-ayAoc3RydWN0IGNoZWNrZXIgKiBjKQo+ID4gIAlpb19oZHIudGltZW91dCA9IGMtPnRpbWVvdXQg
-KiAxMDAwOwo+ID4gIAlpb19oZHIucGFja19pZCA9IDA7Cj4gPiAgCWlmIChpb2N0bChjLT5mZCwg
-U0dfSU8sICZpb19oZHIpIDwgMCkgewo+ID4gKwkJaWYgKGVycm5vID09IEVOT1RUWSkgewo+ID4g
-KwkJCWMtPm1zZ2lkID0gQ0hFQ0tFUl9NU0dJRF9VTlNVUFBPUlRFRDsKPiA+ICsJCQlyZXR1cm4g
-UEFUSF9XSUxEOwo+ID4gKwkJfQo+ID4gIAkJYy0+bXNnaWQgPSBNU0dfQ0xBUklJT05fUVVFUllf
-RkFJTEVEOwo+ID4gIAkJcmV0dXJuIFBBVEhfRE9XTjsKPiA+ICAJfQo+ID4gKwo+ID4gIAlpZiAo
-aW9faGRyLmluZm8gJiBTR19JTkZPX09LX01BU0spIHsKPiA+IC0JCWMtPm1zZ2lkID0gTVNHX0NM
-QVJJSU9OX1FVRVJZX0VSUk9SOwo+ID4gLQkJcmV0dXJuIFBBVEhfRE9XTjsKPiAKPiBQcmV2aW91
-c2x5LCBpZiAoaW9faGRyLmluZm8gJiBTR19JTkZPX09LX01BU0spIHRoZSBjaGVja2VyIHdvdWxk
-Cj4gYWx3YXlzCj4gcmV0dXJuIFBBVEhfRE9XTi4gIEJvdGggdGhlIHR1ciBhbmQgcmRhYyBjaGVj
-a2VyIGFsd2F5cyByZXR1cm4gZWl0aGVyCj4gUEFUSF9ET1dOIG9yIFBBVEhfV0lMRCBpZiAoaW9f
-aGRyLmluZm8gJiBTR19JTkZPX09LX01BU0sgJiYgc2Vuc2Vfa2V5Cj4gIT0gUkVDT1ZFUkVEX0VS
-Uk9SKS4gV2l0aCB0aGUgY2xhcmlpb24gY2hlY2tlciwgaXQgbm93IGFwcGVhcnMKPiBwb3NzaWJs
-ZQo+IHRvIGhhdmUgKGlvX2hkci5pbmZvICYgU0dfSU5GT19PS19NQVNLICYmIHNlbnNlX2tleSAh
-PQo+IFJFQ09WRVJFRF9FUlJPUikKPiBhbmQgc3RpbGwgcmV0dXJuIFBBVEhfVVAuIElzIHRoaXMg
-aW50ZW50aW9uYWw/IEFtIEkgbWlzc2luZyBzb21ldGhpbmcKPiBoZXJlPwoKSSBjb3BpZWQgdGhp
-cyBjb2RlIGZyb20gdGhlIHJkYWMgY2hlY2tlci4gQnV0IHRoZSBkZWZhdWx0IHJldHVybiB2YWx1
-ZQppbiBlbWNfY2xhcmlpb24gaXMgZGlmZmVyZW50LCB0aGFua3MgZm9yIHNwb3R0aW5nIHRoYXQu
-IEkgd2lsbCBwb3N0IGFuCnVwZGF0ZS4KCkhhbmRsaW5nIG9mIFNDU0kgc3RhdHVzIGFuZCBzZW5z
-ZSBjb2RlcyBpcyBkb25lIGRpZmZlcmVudGx5IGluCmRpZmZlcmVudCBwYXJ0cyBvZiBtdWx0aXBh
-dGgtdG9vbHMuIFdlIHJlYWxseSBuZWVkIGNvbW1vbiBTQ1NJIGNvZGUgOi0vCgpNYXJ0aW4KCi0t
-IApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQw
-NTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21p
-dGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgoKLS0KZG0tZGV2
-ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNv
-bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+--===============3718265481843422858==
+Content-Type: multipart/alternative; boundary="00000000000059935e05793de0a2"
+
+--00000000000059935e05793de0a2
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+Thank you all for your advises.
+
+Meanwhile, I have read  Practical Cryptographic Data Integrity Protection
+with Full Disk Encryption Extended Version (1 jul 2018). Very interesting
+publication. :-)
+
+1) Performances seems pretty correct for linear access write 4k blocks NO
+JOURNAL. Nevertheless, you don't indicate how you realise this test (cp,
+dd, fio tool...?).
+
+2) I will reconsider doing again my stack. (No datas on it) Have you any
+advises related to fs, RAID0, luksformat (type luk2) creation?  Indeed, I
+don't clearly understand this point :
+*"dm-integrity interleaves data and metadata and consequently data are not
+aligned on raid stripe boundary."*
+According to what I inderstand this will kill my RAID0 main goal for
+getting fast performance.
+
+3) I want integrity features and I want to try the no journal option for
+performance gain. How to use it  ?
+cryptsetup -v luksFormat --type luks2 /dev/md127 --cipher aes-gcm-random
+--integrity aead  *--integrity-no-journal*
+4) I am not sure to understand the relation between sector size of each
+layer of the stack as we introduce a layer (dif) with metadata under
+dm-crypt layer and above storage devices. Does 4096 bytes must be choosen
+for all layers?
+*--sector-size <bytes>*Set sector size for use with disk encryption. It
+must be power of two and in range 512 - 4096 bytes. The default is 512
+bytes sectors. This option is available only in the LUKS2 mode. Note that
+if sector size is higher than underlying device hardware sector and there
+is not integrity protection that uses data journal, using this option can
+increase risk on incomplete sector writes during a power fail. If used
+together with *--integrity* option and dm-integrity journal, the atomicity
+of writes is guaranteed in all cases (but it cost write performance - data
+has to be written twice). Increasing sector size from 512 bytes to 4096
+bytes can provide better performance on most of the modern storage devices
+and also with some hw encryption accelerators
+Thank you very much for explainations. Any links, articles, documents
+answering to my interrogation are welcomed.(I have already read
+https://manpages.debian.org/unstable/cryptsetup-bin/cryptsetup.8.en.html
+and your publication)
+
+I will try to make the stack again with --debug option.
+
+King regards
+
+
+
+
+
+Le ven. 19 oct. 2018 =C3=A0 08:47, Milan Broz <gmazyland@gmail.com> a =C3=
+=A9crit :
+
+> On 18/10/2018 19:51, Mikulas Patocka wrote:
+> > On Fri, 12 Oct 2018, laurent cop wrote:
+> >
+> >> Hello,
+> >>
+> >> I have trouble while in top of the stack :
+> >> mkfs.ext4 /dev/mapper/raid0luks2
+> >> /dev/mapper/raid0luks2 alignement is offset by 147456 bytes
+> >> This may result in very poor performance (re-) partitioning is
+> suggested.
+> >> I have the same pb with mkfs.xfs
+> >
+> > Just ignore this warning. dm-integrity interleaves data and metadata an=
+d
+> > consequently data are not aligned on raid stripe boundary.
+> >
+> >> I am using following scheme:
+> >>
+> >> LUKS2           =3D> created with cryptsetup -v luksFormat --type luks=
+2
+> /dev/md127 --cipher aes-gcm-random --integrity aeae
+> >> RAID 0           =3D> created with mdadm chunk=3D32
+> >> 3 Disks NVME =3D> partition with gdisk (fist sector : 2048)
+> >>
+> >> I got this information with lsblk -t for each 3 disks, i got the same
+> information.
+> >> nvmeXn1
+> >>        -> NvmeXn1p1                                 ALIGN =3D 0
+> >>                   -> md127                               ALIGN =3D 0
+> >>                            -> raid0luks2_dif           ALIGN =3D 14745=
+6
+> >>                                        -> raid0luks2     ALIGN =3D 147=
+456
+> >> 1) How can I solve my alignment issue?
+> >>
+> >> 2) Is it normal to have low performances while writing with dd. I was
+> >> using LUKS previously and I got only one dev mapper. Now I got 2. Does
+> >> it have a big impact on performances?
+> >>
+> >> Kind regards.
+> >
+> > dm-integrity already slows down writes about 3 times. At this situation=
+,
+> > trying to align accesses to raid stripe size doesn't make much sense.
+>
+> Actually, I think that the alignment reported there does not make any
+> sense for dm-integrity (here is not a simple offset, data and metadata ar=
+e
+> interleaved,
+> there is a journal... Dm-integrity here behaves more like a filesystem -
+> what a single
+> offset means?
+>
+> Anyway, Mikulas disagrees with me to simple remove it :-)
+>
+> > If you want to improve performance, you may try to put two dm-ingerity
+> > images directly on the SSDs and create raid-0 on the top of them. It ma=
+y
+> > perform better, but you'll have to benchmark it with the workload you
+> are
+> > optimizing for.
+>
+> You can do this with LUKS2 authenticated encryption as well, but I am not
+> sure
+> it is good idea - it will eat CPU time for encryption for each raid 0
+> member.
+>
+> Milan
+>
+
+--00000000000059935e05793de0a2
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div di=
+r=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div>Thank you=
+ all for your advises. <br><br>Meanwhile, I have read=C2=A0 Practical Crypt=
+ographic Data Integrity Protection with Full Disk Encryption Extended Versi=
+on (1 jul 2018). Very interesting publication. :-)<br><br></div><div>1) Per=
+formances seems pretty correct for linear access write 4k blocks NO JOURNAL=
+. Nevertheless, you don&#39;t indicate how you realise this test (cp, dd, f=
+io tool...?). <br><br></div><div>2) I will reconsider doing again my stack.=
+ (No datas on it) Have you any advises related to fs, RAID0, luksformat (ty=
+pe luk2) creation?=C2=A0 Indeed, I don&#39;t clearly understand this point =
+:<br><i>&quot;dm-integrity interleaves data and metadata and consequently d=
+ata are not aligned on raid stripe boundary.&quot;</i><br></div><div>Accord=
+ing to what I inderstand this will kill my RAID0 main goal for getting fast=
+ performance.<br></div><div><br></div><div>3) I want integrity features and=
+ I want to try the no journal option for performance gain. How to use it=C2=
+=A0 ?<br></div><div><span class=3D"gmail-im">cryptsetup -v luksFormat --typ=
+e luks2 /dev/md127 --cipher aes-gcm-random --integrity aead=C2=A0 </span><i=
+>--integrity-no-journal</i><span class=3D"gmail-im"></span></div><div><dl c=
+lass=3D"gmail-Bl-tag"><dt>4) I am not sure to understand the relation betwe=
+en sector size of each layer of the stack as we introduce a layer (dif) wit=
+h metadata under dm-crypt layer and above storage devices. Does 4096 bytes =
+must be choosen for all layers? <br></dt><dt><b>--sector-size &lt;bytes&gt;=
+</b></dt><dd>Set sector size for use with disk encryption. It must be power=
+ of two and
+      in range 512 - 4096 bytes. The default is 512 bytes sectors. This opt=
+ion
+      is available only in the LUKS2 mode.
+   =20
+    Note that if sector size is higher than underlying device hardware sect=
+or
+      and there is not integrity protection that uses data journal, using t=
+his
+      option can increase risk on incomplete sector writes during a power f=
+ail.
+   =20
+    If used together with <i>--integrity</i> option and dm-integrity journa=
+l,
+      the atomicity of writes is guaranteed in all cases (but it cost write
+      performance - data has to be written twice).
+   =20
+    Increasing sector size from 512 bytes to 4096 bytes can provide better
+      performance on most of the modern storage devices and also with some =
+hw
+      encryption accelerators</dd><dt><br></dt><dt>Thank you very much for =
+explainations. Any links, articles, documents answering to my interrogation=
+ are welcomed.(I have already read <a href=3D"https://manpages.debian.org/u=
+nstable/cryptsetup-bin/cryptsetup.8.en.html">https://manpages.debian.org/un=
+stable/cryptsetup-bin/cryptsetup.8.en.html</a> and your publication)<br></d=
+t></dl><p>I will try to make the stack again with --debug option.</p><p>Kin=
+g regards<br></p></div><div><br></div><div><br></div><div><br></div><br></d=
+iv></div></div></div></div></div></div></div><br><div class=3D"gmail_quote"=
+><div dir=3D"ltr">Le=C2=A0ven. 19 oct. 2018 =C3=A0=C2=A008:47, Milan Broz &=
+lt;<a href=3D"mailto:gmazyland@gmail.com" target=3D"_blank">gmazyland@gmail=
+.com</a>&gt; a =C3=A9crit=C2=A0:<br></div><blockquote class=3D"gmail_quote"=
+ style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">On=
+ 18/10/2018 19:51, Mikulas Patocka wrote:<br>
+&gt; On Fri, 12 Oct 2018, laurent cop wrote:<br>
+&gt; <br>
+&gt;&gt; Hello,<br>
+&gt;&gt;<br>
+&gt;&gt; I have trouble while in top of the stack :<br>
+&gt;&gt; mkfs.ext4 /dev/mapper/raid0luks2<br>
+&gt;&gt; /dev/mapper/raid0luks2 alignement is offset by 147456 bytes<br>
+&gt;&gt; This may result in very poor performance (re-) partitioning is sug=
+gested.<br>
+&gt;&gt; I have the same pb with mkfs.xfs<br>
+&gt; <br>
+&gt; Just ignore this warning. dm-integrity interleaves data and metadata a=
+nd <br>
+&gt; consequently data are not aligned on raid stripe boundary.<br>
+&gt; <br>
+&gt;&gt; I am using following scheme:<br>
+&gt;&gt;<br>
+&gt;&gt; LUKS2=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =
+=3D&gt; created with cryptsetup -v luksFormat --type luks2 /dev/md127 --cip=
+her aes-gcm-random --integrity aeae<br>
+&gt;&gt; RAID 0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ =3D&gt; created with mdadm chunk=3D32<br>
+&gt;&gt; 3 Disks NVME =3D&gt; partition with gdisk (fist sector : 2048)<br>
+&gt;&gt;<br>
+&gt;&gt; I got this information with lsblk -t for each 3 disks, i got the s=
+ame information.<br>
+&gt;&gt; nvmeXn1<br>
+&gt;&gt; =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 -&gt; NvmeXn1p1=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ALIGN =3D 0<br>
+&gt;&gt; =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 -&gt; md127=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 ALIGN =3D 0<br>
+&gt;&gt; =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 -&gt; raid0luks2_dif=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 ALIGN =3D 147456<br>
+&gt;&gt; =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 -&gt; raid0luks2=C2=A0=C2=A0=C2=A0=C2=A0 ALIGN =3D 147456<br>
+&gt;&gt; 1) How can I solve my alignment issue?<br>
+&gt;&gt;<br>
+&gt;&gt; 2) Is it normal to have low performances while writing with dd. I =
+was <br>
+&gt;&gt; using LUKS previously and I got only one dev mapper. Now I got 2. =
+Does <br>
+&gt;&gt; it have a big impact on performances?<br>
+&gt;&gt;<br>
+&gt;&gt; Kind regards.<br>
+&gt; <br>
+&gt; dm-integrity already slows down writes about 3 times. At this situatio=
+n, <br>
+&gt; trying to align accesses to raid stripe size doesn&#39;t make much sen=
+se.<br>
+<br>
+Actually, I think that the alignment reported there does not make any<br>
+sense for dm-integrity (here is not a simple offset, data and metadata are =
+interleaved,<br>
+there is a journal... Dm-integrity here behaves more like a filesystem - wh=
+at a single<br>
+offset means?<br>
+<br>
+Anyway, Mikulas disagrees with me to simple remove it :-)<br>
+<br>
+&gt; If you want to improve performance, you may try to put two dm-ingerity=
+ <br>
+&gt; images directly on the SSDs and create raid-0 on the top of them. It m=
+ay <br>
+&gt; perform better, but you&#39;ll have to benchmark it with the workload =
+you are <br>
+&gt; optimizing for.<br>
+<br>
+You can do this with LUKS2 authenticated encryption as well, but I am not s=
+ure<br>
+it is good idea - it will eat CPU time for encryption for each raid 0 membe=
+r.<br>
+<br>
+Milan<br>
+</blockquote></div>
+
+--00000000000059935e05793de0a2--
+
+
+--===============3718265481843422858==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============3718265481843422858==--
