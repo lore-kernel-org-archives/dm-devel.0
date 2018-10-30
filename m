@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 06/22] libmultipath/checkers: emc_clariion:
-	use message id
-Date: Tue, 30 Oct 2018 22:06:37 +0100
-Message-ID: <20181030210653.29677-7-mwilck@suse.com>
+Subject: [PATCH v3 15/22] libmultipath: rdac checker: leave
+	unsupported paths alone
+Date: Tue, 30 Oct 2018 22:06:46 +0100
+Message-ID: <20181030210653.29677-16-mwilck@suse.com>
 References: <20181030210653.29677-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,143 +22,91 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-emc_clariion is the only path checker that was using a non-constant
-message ("read error" case). This isn't possible with the msgid
-approach any more. Use condlog() for the dynamic log message and
-simply report "read error" as checker message.
+A checker shouldn't set the path state to PATH_DOWN if it fails
+to obtain information about the path in the first place. Add logic
+to the checker to distinguish a failed path from an unsupported path.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/emc_clariion.c | 60 +++++++++++++++++++---------
- 1 file changed, 42 insertions(+), 18 deletions(-)
+ libmultipath/checkers/rdac.c | 28 +++++++++++++++++++---------
+ 1 file changed, 19 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
-index 9115b1b9..f8e55b93 100644
---- a/libmultipath/checkers/emc_clariion.c
-+++ b/libmultipath/checkers/emc_clariion.c
-@@ -41,6 +41,35 @@
- 				((struct emc_clariion_checker_LU_context *)\
- 					(*c->mpcontext))->inactive_snap = 0
+diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c
+index 266f8e10..8a3b73ec 100644
+--- a/libmultipath/checkers/rdac.c
++++ b/libmultipath/checkers/rdac.c
+@@ -26,6 +26,7 @@
+ #define SCSI_COMMAND_TERMINATED	0x22
+ #define SG_ERR_DRIVER_SENSE	0x08
+ #define RECOVERED_ERROR		0x01
++#define ILLEGAL_REQUEST		0x05
  
-+enum {
-+	MSG_CLARIION_QUERY_FAILED = CHECKER_FIRST_MSGID,
-+	MSG_CLARIION_QUERY_ERROR,
-+	MSG_CLARIION_PATH_CONFIG,
-+	MSG_CLARIION_UNIT_REPORT,
-+	MSG_CLARIION_PATH_NOT_AVAIL,
-+	MSG_CLARIION_LUN_UNBOUND,
-+	MSG_CLARIION_WWN_CHANGED,
-+	MSG_CLARIION_READ_ERROR,
-+	MSG_CLARIION_PASSIVE_GOOD,
-+};
-+
-+#define _IDX(x) (MSG_CLARIION_ ## x - CHECKER_FIRST_MSGID)
-+const char *libcheck_msgtable[] = {
-+	[_IDX(QUERY_FAILED)] = ": sending query command failed",
-+	[_IDX(QUERY_ERROR)] = ": query command indicates error",
-+	[_IDX(PATH_CONFIG)] =
-+	": Path not correctly configured for failover",
-+	[_IDX(UNIT_REPORT)] =
-+	": Path unit report page in unknown format",
-+	[_IDX(PATH_NOT_AVAIL)] =
-+	": Path not available for normal operations",
-+	[_IDX(LUN_UNBOUND)] = ": Logical Unit is unbound or LUNZ",
-+	[_IDX(WWN_CHANGED)] = ": Logical Unit WWN has changed",
-+	[_IDX(READ_ERROR)] = ": Read error",
-+	[_IDX(PASSIVE_GOOD)] = ": Active path is healthy",
-+	NULL,
-+};
-+
- struct emc_clariion_checker_path_context {
- 	char wwn[16];
- 	unsigned wwn_set;
-@@ -116,17 +145,16 @@ int libcheck_check (struct checker * c)
- 	io_hdr.timeout = c->timeout * 1000;
- 	io_hdr.pack_id = 0;
- 	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
--		MSG(c, "emc_clariion_checker: sending query command failed");
-+		c->msgid = MSG_CLARIION_QUERY_FAILED;
- 		return PATH_DOWN;
- 	}
+ 
+ #define CURRENT_PAGE_CODE_VALUES	0
+@@ -162,14 +163,14 @@ retry:
+ 	io_hdr.sbp = sense_b;
+ 	io_hdr.timeout = timeout * 1000;
+ 
+-	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0)
+-		return 1;
++	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0 && errno == ENOTTY)
++		return PATH_WILD;
+ 
+ 	/* treat SG_ERR here to get rid of sg_err.[ch] */
+ 	io_hdr.status &= 0x7e;
+ 	if ((0 == io_hdr.status) && (0 == io_hdr.host_status) &&
+ 	    (0 == io_hdr.driver_status))
+-		return 0;
++		return PATH_UP;
+ 
+ 	/* check if we need to retry this error */
  	if (io_hdr.info & SG_INFO_OK_MASK) {
--		MSG(c, "emc_clariion_checker: query command indicates error");
-+		c->msgid = MSG_CLARIION_QUERY_ERROR;
- 		return PATH_DOWN;
- 	}
- 	if (/* Verify the code page - right page & revision */
- 	    sense_buffer[1] != 0xc0 || sense_buffer[9] != 0x00) {
--		MSG(c, "emc_clariion_checker: Path unit report page in "
--		    "unknown format");
-+		c->msgid = MSG_CLARIION_UNIT_REPORT;
- 		return PATH_DOWN;
- 	}
- 
-@@ -140,22 +168,19 @@ int libcheck_check (struct checker * c)
- 		    ((sense_buffer[28] & 0x07) != 0x06))
- 		/* Arraycommpath should be set to 1 */
- 		|| (sense_buffer[30] & 0x04) != 0x04) {
--		MSG(c, "emc_clariion_checker: Path not correctly configured "
--		    "for failover");
-+		c->msgid = MSG_CLARIION_PATH_CONFIG;
- 		return PATH_DOWN;
- 	}
- 
- 	if ( /* LUN operations should indicate normal operations */
- 		sense_buffer[48] != 0x00) {
--		MSG(c, "emc_clariion_checker: Path not available for normal "
--		    "operations");
-+		c->msgid = MSG_CLARIION_PATH_NOT_AVAIL;
- 		return PATH_SHAKY;
- 	}
- 
- 	if ( /* LUN should at least be bound somewhere and not be LUNZ */
- 		sense_buffer[4] == 0x00) {
--		MSG(c, "emc_clariion_checker: Logical Unit is unbound "
--		    "or LUNZ");
-+		c->msgid = MSG_CLARIION_LUN_UNBOUND;
- 		return PATH_DOWN;
- 	}
- 
-@@ -166,8 +191,7 @@ int libcheck_check (struct checker * c)
- 	 */
- 	if (ct->wwn_set) {
- 		if (memcmp(ct->wwn, &sense_buffer[10], 16) != 0) {
--			MSG(c, "emc_clariion_checker: Logical Unit WWN "
--			    "has changed!");
-+			c->msgid = MSG_CLARIION_WWN_CHANGED;
- 			return PATH_DOWN;
- 		}
- 	} else {
-@@ -202,14 +226,15 @@ int libcheck_check (struct checker * c)
- 				condlog(3, "emc_clariion_checker: Active "
- 					"path to inactive snapshot WWN %s.",
- 					wwnstr);
--			} else
--				MSG(c, "emc_clariion_checker: Read "
-+			} else {
-+				condlog(3, "emc_clariion_checker: Read "
- 					"error for WWN %s.  Sense data are "
- 					"0x%x/0x%x/0x%x.", wwnstr,
- 					sbb[2]&0xf, sbb[12], sbb[13]);
-+				c->msgid = MSG_CLARIION_READ_ERROR;
-+			}
- 		} else {
--			MSG(c, "emc_clariion_checker: Active path is "
--			    "healthy.");
-+			c->msgid = MSG_CLARIION_PASSIVE_GOOD;
- 			/*
- 			 * Remove the path from the set of paths to inactive
- 			 * snapshot LUs if it was in this list since the
-@@ -225,8 +250,7 @@ int libcheck_check (struct checker * c)
- 				wwnstr);
- 			ret = PATH_DOWN;
- 		} else {
--			MSG(c,
--			    "emc_clariion_checker: Passive path is healthy.");
-+			c->msgid = MSG_CLARIION_PASSIVE_GOOD;
- 			ret = PATH_UP;	/* not ghost */
+@@ -198,10 +199,14 @@ retry:
+ 			else
+ 				sense_key = sense_buffer[2] & 0xf;
+ 			if (RECOVERED_ERROR == sense_key)
+-				return 0;
++				return PATH_UP;
++			else if (ILLEGAL_REQUEST == sense_key)
++				return PATH_WILD;
++			condlog(1, "rdac checker: INQUIRY failed with sense key %02x",
++				sense_key);
  		}
  	}
+-	return 1;
++	return PATH_DOWN;
+ }
+ 
+ struct volume_access_inq
+@@ -290,12 +295,14 @@ int libcheck_check(struct checker * c)
+ 
+ 	inqfail = 0;
+ 	memset(&inq, 0, sizeof(struct volume_access_inq));
+-	if (0 != do_inq(c->fd, 0xC9, &inq, sizeof(struct volume_access_inq),
+-			c->timeout)) {
+-		ret = PATH_DOWN;
++	ret = do_inq(c->fd, 0xC9, &inq, sizeof(struct volume_access_inq),
++		     c->timeout);
++	if (ret != PATH_UP) {
+ 		inqfail = 1;
+ 		goto done;
+-	} else if (((inq.PQ_PDT & 0xE0) == 0x20) || (inq.PQ_PDT & 0x7f)) {
++	}
++
++	if (((inq.PQ_PDT & 0xE0) == 0x20) || (inq.PQ_PDT & 0x7f)) {
+ 		/* LUN not connected*/
+ 		ret = PATH_DOWN;
+ 		goto done;
+@@ -332,6 +339,9 @@ int libcheck_check(struct checker * c)
+ 
+ done:
+ 	switch (ret) {
++	case PATH_WILD:
++		c->msgid = CHECKER_MSGID_UNSUPPORTED;
++		break;
+ 	case PATH_DOWN:
+ 		c->msgid = (inqfail ? RDAC_MSGID_INQUIRY_FAILED :
+ 			    checker_msg_string(&inq));
 -- 
 2.19.1
