@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 07/22] libmultipath/checkers: hp_sw: use
-	message id
-Date: Tue, 30 Oct 2018 22:06:38 +0100
-Message-ID: <20181030210653.29677-8-mwilck@suse.com>
+Subject: [PATCH v3 16/22] libmultipath: tur checker: leave
+	unsupported paths alone
+Date: Tue, 30 Oct 2018 22:06:47 +0100
+Message-ID: <20181030210653.29677-17-mwilck@suse.com>
 References: <20181030210653.29677-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,45 +22,30 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+A checker shouldn't set the path state to PATH_DOWN if it fails
+to obtain information about the path in the first place. Add logic
+to the checker to distinguish a failed path from an unsupported path.
+
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/hp_sw.c | 12 ++++--------
- 1 file changed, 4 insertions(+), 8 deletions(-)
+ libmultipath/checkers/tur.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
-index 0ad34a6b..d7f1018c 100644
---- a/libmultipath/checkers/hp_sw.c
-+++ b/libmultipath/checkers/hp_sw.c
-@@ -27,10 +27,6 @@
- #define MX_ALLOC_LEN		255
- #define HEAVY_CHECK_COUNT       10
- 
--#define MSG_HP_SW_UP	"hp_sw checker reports path is up"
--#define MSG_HP_SW_DOWN	"hp_sw checker reports path is down"
--#define MSG_HP_SW_GHOST	"hp_sw checker reports path is ghost"
--
- struct sw_checker_context {
- 	void * dummy;
- };
-@@ -128,14 +124,14 @@ int libcheck_check(struct checker * c)
- 	char buff[MX_ALLOC_LEN];
- 
- 	if (0 != do_inq(c->fd, 0, 1, 0x80, buff, MX_ALLOC_LEN, 0, c->timeout)) {
--		MSG(c, MSG_HP_SW_DOWN);
-+		c->msgid = CHECKER_MSGID_DOWN;
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index 22734be2..a27474f9 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -125,6 +125,10 @@ retry:
+ 	io_hdr.timeout = timeout * 1000;
+ 	io_hdr.pack_id = 0;
+ 	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
++		if (errno == ENOTTY) {
++			*msgid = CHECKER_MSGID_UNSUPPORTED;
++			return PATH_WILD;
++		}
+ 		*msgid = CHECKER_MSGID_DOWN;
  		return PATH_DOWN;
--	}
-+	};
- 
- 	if (do_tur(c->fd, c->timeout)) {
--		MSG(c, MSG_HP_SW_GHOST);
-+		c->msgid = CHECKER_MSGID_GHOST;
- 		return PATH_GHOST;
  	}
--	MSG(c, MSG_HP_SW_UP);
-+	c->msgid = CHECKER_MSGID_UP;
- 	return PATH_UP;
- }
 -- 
 2.19.1
