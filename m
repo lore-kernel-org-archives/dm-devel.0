@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 4/7] multipathd: open client socket early
-Date: Tue, 30 Oct 2018 22:22:46 +0100
-Message-ID: <20181030212249.31127-5-mwilck@suse.com>
+Subject: [PATCH v2 3/7] multipathd: print error message if
+	checkint is not initialized
+Date: Tue, 30 Oct 2018 22:22:45 +0100
+Message-ID: <20181030212249.31127-4-mwilck@suse.com>
 References: <20181030212249.31127-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,108 +22,91 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Open the unix socket in multipathd code and pass the fd to
-uxsock_listen(). This will enable us to make the main thread
-wait for successful socket initialization in a follow-up patch.
+This is just a safety measure in case I overlooked something wrt
+the checkint initialization. It could be reverted once we know the
+error message isn't triggered.
 
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c   | 22 ++++++++++++++++++----
- multipathd/uxlsnr.c | 11 ++---------
- multipathd/uxlsnr.h |  2 +-
- 3 files changed, 21 insertions(+), 14 deletions(-)
+ libmultipath/defaults.h |  1 +
+ libmultipath/dict.c     | 14 ++++++++++++--
+ libmultipath/structs.c  |  1 +
+ multipathd/main.c       |  6 ++++++
+ 4 files changed, 20 insertions(+), 2 deletions(-)
 
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index 7f3839fc..65769398 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -46,6 +46,7 @@
+ #define DEFAULT_UNKNOWN_FIND_MULTIPATHS_TIMEOUT 1
+ #define DEFAULT_ALL_TG_PT ALL_TG_PT_OFF
+ 
++#define CHECKINT_UNDEF		(~0U)
+ #define DEFAULT_CHECKINT	5
+ #define MAX_CHECKINT(a)		(a << 2)
+ 
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index c3f5a6e6..a81c051f 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -264,7 +264,17 @@ snprint_mp_ ## option (struct config *conf, char * buff, int len,	\
+ 	return function (buff, len, mpe->option);			\
+ }
+ 
+-declare_def_handler(checkint, set_int)
++static int checkint_handler(struct config *conf, vector strvec)
++{
++	int rc = set_int(strvec, &conf->checkint);
++
++	if (rc)
++		return rc;
++	if (conf->checkint == CHECKINT_UNDEF)
++		conf->checkint--;
++	return 0;
++}
++
+ declare_def_snprint(checkint, print_int)
+ 
+ declare_def_handler(max_checkint, set_int)
+@@ -1563,7 +1573,7 @@ init_keywords(vector keywords)
+ {
+ 	install_keyword_root("defaults", NULL);
+ 	install_keyword("verbosity", &def_verbosity_handler, &snprint_def_verbosity);
+-	install_keyword("polling_interval", &def_checkint_handler, &snprint_def_checkint);
++	install_keyword("polling_interval", &checkint_handler, &snprint_def_checkint);
+ 	install_keyword("max_polling_interval", &def_max_checkint_handler, &snprint_def_max_checkint);
+ 	install_keyword("reassign_maps", &def_reassign_maps_handler, &snprint_def_reassign_maps);
+ 	install_keyword("multipath_dir", &def_multipath_dir_handler, &snprint_def_multipath_dir);
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index caa178a6..fee899bd 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -100,6 +100,7 @@ alloc_path (void)
+ 		pp->fd = -1;
+ 		pp->tpgs = TPGS_UNDEF;
+ 		pp->priority = PRIO_UNDEF;
++		pp->checkint = CHECKINT_UNDEF;
+ 		checker_clear(&pp->checker);
+ 		dm_path_to_gen(pp)->ops = &dm_gen_path_ops;
+ 		pp->hwe = vector_alloc();
 diff --git a/multipathd/main.c b/multipathd/main.c
-index a2b01705..e45e45dc 100644
+index e81b9c9e..a2b01705 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -66,6 +66,7 @@ static int use_watchdog;
- #include "pgpolicies.h"
- #include "uevent.h"
- #include "log.h"
-+#include "uxsock.h"
- 
- #include "mpath_cmd.h"
- #include "mpath_persist.h"
-@@ -1493,12 +1494,23 @@ uevqloop (void * ap)
- static void *
- uxlsnrloop (void * ap)
- {
-+	int ux_sock;
+@@ -1839,6 +1839,12 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	max_checkint = conf->max_checkint;
+ 	verbosity = conf->verbosity;
+ 	put_multipath_config(conf);
 +
-+	pthread_cleanup_push(rcu_unregister, NULL);
-+	rcu_register_thread();
++	if (pp->checkint == CHECKINT_UNDEF) {
++		condlog(0, "%s: BUG: checkint is not set", pp->dev);
++		pp->checkint = checkint;
++	};
 +
-+	ux_sock = ux_socket_listen(DEFAULT_SOCKET);
-+	if (ux_sock == -1) {
-+		condlog(1, "could not create uxsock: %d", errno);
-+		exit_daemon();
-+		goto out;
-+	}
-+
- 	if (cli_init()) {
- 		condlog(1, "Failed to init uxsock listener");
--		return NULL;
-+		exit_daemon();
-+		goto out;
- 	}
--	pthread_cleanup_push(rcu_unregister, NULL);
--	rcu_register_thread();
- 	set_handler_callback(LIST+PATHS, cli_list_paths);
- 	set_handler_callback(LIST+PATHS+FMT, cli_list_paths_fmt);
- 	set_handler_callback(LIST+PATHS+RAW+FMT, cli_list_paths_raw);
-@@ -1553,7 +1565,9 @@ uxlsnrloop (void * ap)
- 	set_handler_callback(UNSETPRKEY+MAP, cli_unsetprkey);
- 
- 	umask(077);
--	uxsock_listen(&uxsock_trigger, ap);
-+	uxsock_listen(&uxsock_trigger, ux_sock, ap);
-+
-+out:
- 	pthread_cleanup_pop(1);
- 	return NULL;
- }
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index 6f666663..04967e9a 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -165,22 +165,15 @@ void uxsock_cleanup(void *arg)
- /*
-  * entry point
-  */
--void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
-+void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
-+		     void * trigger_data)
- {
--	long ux_sock;
- 	int rlen;
- 	char *inbuf;
- 	char *reply;
- 	sigset_t mask;
- 	int old_clients = MIN_POLLS;
- 
--	ux_sock = ux_socket_listen(DEFAULT_SOCKET);
--
--	if (ux_sock == -1) {
--		condlog(1, "could not create uxsock: %d", errno);
--		exit_daemon();
--	}
--
- 	pthread_cleanup_push(uxsock_cleanup, (void *)ux_sock);
- 
- 	condlog(3, "uxsock: startup listener");
-diff --git a/multipathd/uxlsnr.h b/multipathd/uxlsnr.h
-index d51a8f99..c7f25b2b 100644
---- a/multipathd/uxlsnr.h
-+++ b/multipathd/uxlsnr.h
-@@ -5,7 +5,7 @@
- 
- typedef int (uxsock_trigger_fn)(char *, char **, int *, bool, void *);
- 
--void * uxsock_listen(uxsock_trigger_fn uxsock_trigger,
-+void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
- 		     void * trigger_data);
- 
- #endif
+ 	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV) {
+ 		if (pp->retriggers < retrigger_tries) {
+ 			condlog(2, "%s: triggering change event to reinitialize",
 -- 
 2.19.1
