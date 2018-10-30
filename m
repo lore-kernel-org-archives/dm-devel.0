@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 04/22] libmultipath/checkers: cciss_tur: use
-	message id
-Date: Tue, 30 Oct 2018 22:06:35 +0100
-Message-ID: <20181030210653.29677-5-mwilck@suse.com>
+Subject: [PATCH v3 17/22] libmultipath: pathinfo: don't blank
+	wwid if checker fails
+Date: Tue, 30 Oct 2018 22:06:48 +0100
+Message-ID: <20181030210653.29677-18-mwilck@suse.com>
 References: <20181030210653.29677-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,65 +22,33 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Blanking a WWID is a dangerous operation. E.g. configure() would
+consider the path in question as invalid and orphan it if the
+WWID is blank. Don't do this checker failures which may be transient
+or indicate a badly configured or otherwise malfunctioning checker.
+Moreover, we try to determine WWID even if path_offline returns
+PATH_DOWN in the first place, so why should we not if the checker
+has a problem?
+
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/cciss_tur.c | 13 +++++--------
- 1 file changed, 5 insertions(+), 8 deletions(-)
+ libmultipath/discovery.c | 3 ---
+ 1 file changed, 3 deletions(-)
 
-diff --git a/libmultipath/checkers/cciss_tur.c b/libmultipath/checkers/cciss_tur.c
-index 1cab2015..ea843742 100644
---- a/libmultipath/checkers/cciss_tur.c
-+++ b/libmultipath/checkers/cciss_tur.c
-@@ -42,9 +42,6 @@
- #define TUR_CMD_LEN 6
- #define HEAVY_CHECK_COUNT       10
- 
--#define MSG_CCISS_TUR_UP	"cciss_tur checker reports path is up"
--#define MSG_CCISS_TUR_DOWN	"cciss_tur checker reports path is down"
--
- struct cciss_tur_checker_context {
- 	void * dummy;
- };
-@@ -69,7 +66,7 @@ int libcheck_check(struct checker * c)
- 	IOCTL_Command_struct cic;       // cciss ioctl command
- 
- 	if ((c->fd) < 0) {
--		MSG(c,"no usable fd");
-+		c->msgid = CHECKER_MSGID_NO_FD;
- 		ret = -1;
- 		goto out;
- 	}
-@@ -79,7 +76,7 @@ int libcheck_check(struct checker * c)
- 		perror("Error: ");
- 		fprintf(stderr, "cciss TUR  failed in CCISS_GETLUNINFO: %s\n",
- 			strerror(errno));
--		MSG(c,MSG_CCISS_TUR_DOWN);
-+		c->msgid = CHECKER_MSGID_DOWN;
- 		ret = PATH_DOWN;
- 		goto out;
- 	} else {
-@@ -106,18 +103,18 @@ int libcheck_check(struct checker * c)
- 	if (rc < 0) {
- 		fprintf(stderr, "cciss TUR  failed: %s\n",
- 			strerror(errno));
--		MSG(c,MSG_CCISS_TUR_DOWN);
-+		c->msgid = CHECKER_MSGID_DOWN;
- 		ret = PATH_DOWN;
- 		goto out;
- 	}
- 
- 	if ((cic.error_info.CommandStatus | cic.error_info.ScsiStatus )) {
--		MSG(c,MSG_CCISS_TUR_DOWN);
-+		c->msgid = CHECKER_MSGID_DOWN;
- 		ret = PATH_DOWN;
- 		goto out;
- 	}
- 
--	MSG(c,MSG_CCISS_TUR_UP);
-+	c->msgid = CHECKER_MSGID_UP;
- 
- 	ret = PATH_UP;
- out:
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 3550c3a7..467ece7a 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1944,9 +1944,6 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 		if (path_state == PATH_UP) {
+ 			pp->chkrstate = pp->state = get_state(pp, conf, 0,
+ 							      path_state);
+-			if (pp->state == PATH_UNCHECKED ||
+-			    pp->state == PATH_WILD)
+-				goto blank;
+ 			if (pp->state == PATH_TIMEOUT)
+ 				pp->state = PATH_DOWN;
+ 			if (pp->state == PATH_UP && !pp->size) {
 -- 
 2.19.1
