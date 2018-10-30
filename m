@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 5/7] multipathd: set DAEMON_CONFIGURE from
-	uxlsnr thread
-Date: Tue, 30 Oct 2018 22:22:47 +0100
-Message-ID: <20181030212249.31127-6-mwilck@suse.com>
+Subject: [PATCH v2 4/7] multipathd: open client socket early
+Date: Tue, 30 Oct 2018 22:22:46 +0100
+Message-ID: <20181030212249.31127-5-mwilck@suse.com>
 References: <20181030212249.31127-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,103 +21,108 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Commit ee01e841 had the intention to make multipathd quit if
-the client socket couldn't be set up, because the unix socket
-listener is vital for signal handling in multipathd.
-But during startup, this condition might be lost if the main
-thread doesn't wait for the unix listener to initialize.
+Open the unix socket in multipathd code and pass the fd to
+uxsock_listen(). This will enable us to make the main thread
+wait for successful socket initialization in a follow-up patch.
 
-Fixes: ee01e841 "multipathd: handle errors in uxlsnr as fatal"
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 43 ++++++++++++++++++++++++++++++++-----------
- 1 file changed, 32 insertions(+), 11 deletions(-)
+ multipathd/main.c   | 22 ++++++++++++++++++----
+ multipathd/uxlsnr.c | 11 ++---------
+ multipathd/uxlsnr.h |  2 +-
+ 3 files changed, 21 insertions(+), 14 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index e45e45dc..1b9b6e18 100644
+index a2b01705..e45e45dc 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -204,9 +204,8 @@ static void config_cleanup(void *arg)
- 	pthread_mutex_unlock(&config_lock);
- }
+@@ -66,6 +66,7 @@ static int use_watchdog;
+ #include "pgpolicies.h"
+ #include "uevent.h"
+ #include "log.h"
++#include "uxsock.h"
  
--void post_config_state(enum daemon_status state)
-+static void __post_config_state(enum daemon_status state)
+ #include "mpath_cmd.h"
+ #include "mpath_persist.h"
+@@ -1493,12 +1494,23 @@ uevqloop (void * ap)
+ static void *
+ uxlsnrloop (void * ap)
  {
--	pthread_mutex_lock(&config_lock);
- 	if (state != running_state) {
- 		enum daemon_status old_state = running_state;
- 
-@@ -216,7 +215,14 @@ void post_config_state(enum daemon_status state)
- 		do_sd_notify(old_state);
- #endif
++	int ux_sock;
++
++	pthread_cleanup_push(rcu_unregister, NULL);
++	rcu_register_thread();
++
++	ux_sock = ux_socket_listen(DEFAULT_SOCKET);
++	if (ux_sock == -1) {
++		condlog(1, "could not create uxsock: %d", errno);
++		exit_daemon();
++		goto out;
++	}
++
+ 	if (cli_init()) {
+ 		condlog(1, "Failed to init uxsock listener");
+-		return NULL;
++		exit_daemon();
++		goto out;
  	}
--	pthread_mutex_unlock(&config_lock);
-+}
-+
-+void post_config_state(enum daemon_status state)
-+{
-+	pthread_mutex_lock(&config_lock);
-+	pthread_cleanup_push(config_cleanup, NULL);
-+	__post_config_state(state);
-+	pthread_cleanup_pop(1);
- }
- 
- int set_config_state(enum daemon_status state)
-@@ -1511,6 +1517,10 @@ uxlsnrloop (void * ap)
- 		exit_daemon();
- 		goto out;
- 	}
-+
-+	/* Tell main thread that thread has started */
-+	post_config_state(DAEMON_CONFIGURE);
-+
+-	pthread_cleanup_push(rcu_unregister, NULL);
+-	rcu_register_thread();
  	set_handler_callback(LIST+PATHS, cli_list_paths);
  	set_handler_callback(LIST+PATHS+FMT, cli_list_paths_fmt);
  	set_handler_callback(LIST+PATHS+RAW+FMT, cli_list_paths_raw);
-@@ -2728,11 +2738,26 @@ child (void * param)
- 	 */
- 	conf = NULL;
+@@ -1553,7 +1565,9 @@ uxlsnrloop (void * ap)
+ 	set_handler_callback(UNSETPRKEY+MAP, cli_unsetprkey);
  
--	/*
--	 * Signal start of configuration
--	 */
--	post_config_state(DAEMON_CONFIGURE);
-+	pthread_cleanup_push(config_cleanup, NULL);
-+	pthread_mutex_lock(&config_lock);
- 
-+	__post_config_state(DAEMON_IDLE);
-+	rc = pthread_create(&uxlsnr_thr, &misc_attr, uxlsnrloop, vecs);
-+	if (!rc) {
-+		/* Wait for uxlsnr startup */
-+		while (running_state == DAEMON_IDLE)
-+			pthread_cond_wait(&config_cond, &config_lock);
-+	}
-+	pthread_cleanup_pop(1);
+ 	umask(077);
+-	uxsock_listen(&uxsock_trigger, ap);
++	uxsock_listen(&uxsock_trigger, ux_sock, ap);
 +
-+	if (rc) {
-+		condlog(0, "failed to create cli listener: %d", rc);
-+		goto failed;
-+	}
-+	else if (running_state != DAEMON_CONFIGURE) {
-+		condlog(0, "cli listener failed to start");
-+		goto failed;
-+	}
++out:
+ 	pthread_cleanup_pop(1);
+ 	return NULL;
+ }
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index 6f666663..04967e9a 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -165,22 +165,15 @@ void uxsock_cleanup(void *arg)
+ /*
+  * entry point
+  */
+-void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
++void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
++		     void * trigger_data)
+ {
+-	long ux_sock;
+ 	int rlen;
+ 	char *inbuf;
+ 	char *reply;
+ 	sigset_t mask;
+ 	int old_clients = MIN_POLLS;
  
- 	if (poll_dmevents) {
- 		if (init_dmevent_waiter(vecs)) {
-@@ -2755,10 +2780,6 @@ child (void * param)
- 		goto failed;
- 	}
- 	pthread_attr_destroy(&uevent_attr);
--	if ((rc = pthread_create(&uxlsnr_thr, &misc_attr, uxlsnrloop, vecs))) {
--		condlog(0, "failed to create cli listener: %d", rc);
--		goto failed;
+-	ux_sock = ux_socket_listen(DEFAULT_SOCKET);
+-
+-	if (ux_sock == -1) {
+-		condlog(1, "could not create uxsock: %d", errno);
+-		exit_daemon();
 -	}
+-
+ 	pthread_cleanup_push(uxsock_cleanup, (void *)ux_sock);
  
- 	/*
- 	 * start threads
+ 	condlog(3, "uxsock: startup listener");
+diff --git a/multipathd/uxlsnr.h b/multipathd/uxlsnr.h
+index d51a8f99..c7f25b2b 100644
+--- a/multipathd/uxlsnr.h
++++ b/multipathd/uxlsnr.h
+@@ -5,7 +5,7 @@
+ 
+ typedef int (uxsock_trigger_fn)(char *, char **, int *, bool, void *);
+ 
+-void * uxsock_listen(uxsock_trigger_fn uxsock_trigger,
++void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
+ 		     void * trigger_data);
+ 
+ #endif
 -- 
 2.19.1
