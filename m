@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 01/22] libmultipath: fix use of uninitialized
-	memory in write()
-Date: Tue, 30 Oct 2018 22:06:32 +0100
-Message-ID: <20181030210653.29677-2-mwilck@suse.com>
+Subject: [PATCH v3 07/22] libmultipath/checkers: hp_sw: use
+	message id
+Date: Tue, 30 Oct 2018 22:06:38 +0100
+Message-ID: <20181030210653.29677-8-mwilck@suse.com>
 References: <20181030210653.29677-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,35 +22,45 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-valgrind complained about this.
-
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/checkers/hp_sw.c | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 873035e5..3550c3a7 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -661,7 +661,7 @@ sysfs_set_session_tmo(struct multipath *mpp, struct path *pp)
- 		} else {
- 			snprintf(value, 11, "%u", mpp->fast_io_fail);
- 			if (sysfs_attr_set_value(session_dev, "recovery_tmo",
--						 value, 11) <= 0) {
-+						 value, strlen(value)) <= 0) {
- 				condlog(3, "%s: Failed to set recovery_tmo, "
- 					" error %d", pp->dev, errno);
- 			}
-@@ -693,7 +693,7 @@ sysfs_set_nexus_loss_tmo(struct multipath *mpp, struct path *pp)
- 	if (mpp->dev_loss) {
- 		snprintf(value, 11, "%u", mpp->dev_loss);
- 		if (sysfs_attr_set_value(sas_dev, "I_T_nexus_loss_timeout",
--					 value, 11) <= 0)
-+					 value, strlen(value)) <= 0)
- 			condlog(3, "%s: failed to update "
- 				"I_T Nexus loss timeout, error %d",
- 				pp->dev, errno);
+diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
+index 0ad34a6b..d7f1018c 100644
+--- a/libmultipath/checkers/hp_sw.c
++++ b/libmultipath/checkers/hp_sw.c
+@@ -27,10 +27,6 @@
+ #define MX_ALLOC_LEN		255
+ #define HEAVY_CHECK_COUNT       10
+ 
+-#define MSG_HP_SW_UP	"hp_sw checker reports path is up"
+-#define MSG_HP_SW_DOWN	"hp_sw checker reports path is down"
+-#define MSG_HP_SW_GHOST	"hp_sw checker reports path is ghost"
+-
+ struct sw_checker_context {
+ 	void * dummy;
+ };
+@@ -128,14 +124,14 @@ int libcheck_check(struct checker * c)
+ 	char buff[MX_ALLOC_LEN];
+ 
+ 	if (0 != do_inq(c->fd, 0, 1, 0x80, buff, MX_ALLOC_LEN, 0, c->timeout)) {
+-		MSG(c, MSG_HP_SW_DOWN);
++		c->msgid = CHECKER_MSGID_DOWN;
+ 		return PATH_DOWN;
+-	}
++	};
+ 
+ 	if (do_tur(c->fd, c->timeout)) {
+-		MSG(c, MSG_HP_SW_GHOST);
++		c->msgid = CHECKER_MSGID_GHOST;
+ 		return PATH_GHOST;
+ 	}
+-	MSG(c, MSG_HP_SW_UP);
++	c->msgid = CHECKER_MSGID_UP;
+ 	return PATH_UP;
+ }
 -- 
 2.19.1
