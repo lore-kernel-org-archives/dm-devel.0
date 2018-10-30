@@ -1,14 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 20/22] libmultipath: sync_map_state: log
-	failing paths
-Date: Tue, 30 Oct 2018 22:06:51 +0100
-Message-ID: <20181030210653.29677-21-mwilck@suse.com>
-References: <20181030210653.29677-1-mwilck@suse.com>
+Subject: [PATCH v2 7/7] multipathd: only grab conf once for
+	filter_path()
+Date: Tue, 30 Oct 2018 22:22:49 +0100
+Message-ID: <20181030212249.31127-8-mwilck@suse.com>
+References: <20181030212249.31127-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181030210653.29677-1-mwilck@suse.com>
+In-Reply-To: <20181030212249.31127-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,30 +22,39 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Emit a log message when force-failing exisiting paths.
+This saves a possibly large number of cleanup push/pop calls and
+slightly improves readability.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs_vec.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ multipathd/main.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index f87d69d4..c85823a0 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -318,8 +318,11 @@ sync_map_state(struct multipath *mpp)
- 			else if ((pp->dmstate == PSTATE_ACTIVE ||
- 				  pp->dmstate == PSTATE_UNDEF) &&
- 				 (pp->state == PATH_DOWN ||
--				  pp->state == PATH_SHAKY))
-+				  pp->state == PATH_SHAKY)) {
-+				condlog(2, "sync_map_state: failing %s state %d dmstate %d",
-+					pp->dev, pp->state, pp->dmstate);
- 				dm_fail_path(mpp->alias, pp->dev_t);
-+			}
- 		}
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 2f6aa3f0..6289718d 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2334,16 +2334,17 @@ configure (struct vectors * vecs)
+ 		goto fail;
  	}
- }
+ 
++	conf = get_multipath_config();
++	pthread_cleanup_push(put_multipath_config, conf);
+ 	vector_foreach_slot (vecs->pathvec, pp, i){
+-		conf = get_multipath_config();
+-		pthread_cleanup_push(put_multipath_config, conf);
+ 		if (filter_path(conf, pp) > 0){
+ 			vector_del_slot(vecs->pathvec, i);
+ 			free_path(pp);
+ 			i--;
+ 		}
+-		pthread_cleanup_pop(1);
+ 	}
++	pthread_cleanup_pop(1);
++
+ 	if (map_discovery(vecs)) {
+ 		condlog(0, "configure failed at map discovery");
+ 		goto fail;
 -- 
 2.19.1
