@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 05/22] libmultipath/checkers: directio: use
+Subject: [PATCH v3 09/22] libmultipath/checkers: readsector0: use
 	message id
-Date: Tue, 30 Oct 2018 22:06:36 +0100
-Message-ID: <20181030210653.29677-6-mwilck@suse.com>
+Date: Tue, 30 Oct 2018 22:06:40 +0100
+Message-ID: <20181030210653.29677-10-mwilck@suse.com>
 References: <20181030210653.29677-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,64 +25,33 @@ List-Id: dm-devel.ids
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/directio.c | 27 ++++++++++++++++++---------
- 1 file changed, 18 insertions(+), 9 deletions(-)
+ libmultipath/checkers/readsector0.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
-index a80848d4..c4a0712e 100644
---- a/libmultipath/checkers/directio.c
-+++ b/libmultipath/checkers/directio.c
-@@ -18,10 +18,19 @@
+diff --git a/libmultipath/checkers/readsector0.c b/libmultipath/checkers/readsector0.c
+index 1c2a868e..cf79e067 100644
+--- a/libmultipath/checkers/readsector0.c
++++ b/libmultipath/checkers/readsector0.c
+@@ -6,9 +6,6 @@
  #include "checkers.h"
- #include "../libmultipath/debug.h"
+ #include "libsg.h"
  
--#define MSG_DIRECTIO_UNKNOWN	"directio checker is not available"
--#define MSG_DIRECTIO_UP		"directio checker reports path is up"
--#define MSG_DIRECTIO_DOWN	"directio checker reports path is down"
--#define MSG_DIRECTIO_PENDING	"directio checker is waiting on aio"
-+enum {
-+	MSG_DIRECTIO_UNKNOWN = CHECKER_FIRST_MSGID,
-+	MSG_DIRECTIO_PENDING,
-+	MSG_DIRECTIO_BLOCKSIZE,
-+};
-+
-+#define _IDX(x) (MSG_DIRECTIO_##x - CHECKER_FIRST_MSGID)
-+const char *libcheck_msgtable[] = {
-+	[_IDX(UNKNOWN)] = " is not available",
-+	[_IDX(PENDING)] = " is waiting on aio",
-+	[_IDX(BLOCKSIZE)] = " cannot get blocksize, set default",
-+	NULL,
-+};
- 
- #define LOG(prio, fmt, args...) condlog(prio, "directio: " fmt, ##args)
- 
-@@ -54,7 +63,7 @@ int libcheck_init (struct checker * c)
- 	}
- 
- 	if (ioctl(c->fd, BLKBSZGET, &ct->blksize) < 0) {
--		MSG(c, "cannot get blocksize, set default");
-+		c->msgid = MSG_DIRECTIO_BLOCKSIZE;
- 		ct->blksize = 512;
- 	}
- 	if (ct->blksize > 4096) {
-@@ -198,16 +207,16 @@ int libcheck_check (struct checker * c)
+-#define MSG_READSECTOR0_UP	"readsector0 checker reports path is up"
+-#define MSG_READSECTOR0_DOWN	"readsector0 checker reports path is down"
+-
+ struct readsector0_checker_context {
+ 	void * dummy;
+ };
+@@ -35,10 +32,10 @@ int libcheck_check (struct checker * c)
  	switch (ret)
  	{
- 	case PATH_UNCHECKED:
--		MSG(c, MSG_DIRECTIO_UNKNOWN);
-+		c->msgid = MSG_DIRECTIO_UNKNOWN;
- 		break;
  	case PATH_DOWN:
--		MSG(c, MSG_DIRECTIO_DOWN);
+-		MSG(c, MSG_READSECTOR0_DOWN);
 +		c->msgid = CHECKER_MSGID_DOWN;
  		break;
  	case PATH_UP:
--		MSG(c, MSG_DIRECTIO_UP);
+-		MSG(c, MSG_READSECTOR0_UP);
 +		c->msgid = CHECKER_MSGID_UP;
- 		break;
- 	case PATH_PENDING:
--		MSG(c, MSG_DIRECTIO_PENDING);
-+		c->msgid = MSG_DIRECTIO_PENDING;
  		break;
  	default:
  		break;
