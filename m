@@ -1,14 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 7/7] multipathd: only grab conf once for
-	filter_path()
-Date: Tue, 30 Oct 2018 22:22:49 +0100
-Message-ID: <20181030212249.31127-8-mwilck@suse.com>
-References: <20181030212249.31127-1-mwilck@suse.com>
+Subject: [PATCH v3 19/22] libmultipath: coalesce_paths: improve
+	logging of orphaned paths
+Date: Tue, 30 Oct 2018 22:06:50 +0100
+Message-ID: <20181030210653.29677-20-mwilck@suse.com>
+References: <20181030210653.29677-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181030212249.31127-1-mwilck@suse.com>
+In-Reply-To: <20181030210653.29677-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,39 +22,37 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This saves a possibly large number of cleanup push/pop calls and
-slightly improves readability.
-
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
+ libmultipath/configure.c | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 2f6aa3f0..6289718d 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2334,16 +2334,17 @@ configure (struct vectors * vecs)
- 		goto fail;
- 	}
- 
-+	conf = get_multipath_config();
-+	pthread_cleanup_push(put_multipath_config, conf);
- 	vector_foreach_slot (vecs->pathvec, pp, i){
--		conf = get_multipath_config();
--		pthread_cleanup_push(put_multipath_config, conf);
- 		if (filter_path(conf, pp) > 0){
- 			vector_del_slot(vecs->pathvec, i);
- 			free_path(pp);
- 			i--;
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 09c3dcf2..ed3e30f5 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -1020,14 +1020,18 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
  		}
--		pthread_cleanup_pop(1);
  	}
-+	pthread_cleanup_pop(1);
+ 	vector_foreach_slot (pathvec, pp1, k) {
+-		int invalid = 0;
++		int invalid;
+ 		/* skip this path for some reason */
+ 
+ 		/* 1. if path has no unique id or wwid blacklisted */
++		if (strlen(pp1->wwid) == 0) {
++			orphan_path(pp1, "no WWID");
++			continue;
++		}
 +
- 	if (map_discovery(vecs)) {
- 		condlog(0, "configure failed at map discovery");
- 		goto fail;
+ 		conf = get_multipath_config();
+ 		pthread_cleanup_push(put_multipath_config, conf);
+-		if (strlen(pp1->wwid) == 0 || filter_path(conf, pp1) > 0)
+-			invalid = 1;
++		invalid = (filter_path(conf, pp1) > 0);
+ 		pthread_cleanup_pop(1);
+ 		if (invalid) {
+ 			orphan_path(pp1, "blacklisted");
 -- 
 2.19.1
