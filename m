@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 03/22] libmultipath/checkers: replace message
-	by msgid
-Date: Tue, 30 Oct 2018 22:06:34 +0100
-Message-ID: <20181030210653.29677-4-mwilck@suse.com>
+Subject: [PATCH v3 04/22] libmultipath/checkers: cciss_tur: use
+	message id
+Date: Tue, 30 Oct 2018 22:06:35 +0100
+Message-ID: <20181030210653.29677-5-mwilck@suse.com>
 References: <20181030210653.29677-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,235 +22,65 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Replace the character array "message" in struct checker with
-a "message ID" field.
-
-The generic checker code defines a couple of standard message IDs
-and corresponding messages. Checker-specific message IDs start
-at CHECKER_FIRST_MSG. Checkers that implement specific message
-IDs must provide a table for converting the IDs into actual log
-messages.
-
-This simplifies the checker data structure and the handling of
-checker messages in the critical checker code path. It comes at
-the cost that only constant message strings are supported. It
-turns out that only a single checker log message (in the emc_clariion
-checker) was dynamically generated, and the missing information can
-be provided with a standard condlog message.
-
-Follow-up patches implement this for the existing checkers.
-checker_message() isn't thread-safe in its current form.
-This will be fixed in another follow-up patch.
-
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers.c | 70 +++++++++++++++++++++++++++++++++++------
- libmultipath/checkers.h | 39 +++++++++++++++++++----
- 2 files changed, 94 insertions(+), 15 deletions(-)
+ libmultipath/checkers/cciss_tur.c | 13 +++++--------
+ 1 file changed, 5 insertions(+), 8 deletions(-)
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index 0bacc864..0bf15f47 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -141,6 +141,22 @@ struct checker * add_checker (char *multipath_dir, char * name)
- 	if (!c->free)
- 		goto out;
+diff --git a/libmultipath/checkers/cciss_tur.c b/libmultipath/checkers/cciss_tur.c
+index 1cab2015..ea843742 100644
+--- a/libmultipath/checkers/cciss_tur.c
++++ b/libmultipath/checkers/cciss_tur.c
+@@ -42,9 +42,6 @@
+ #define TUR_CMD_LEN 6
+ #define HEAVY_CHECK_COUNT       10
  
-+	c->msgtable_size = 0;
-+	c->msgtable = dlsym(c->handle, "libcheck_msgtable");
-+
-+	if (c->msgtable != NULL) {
-+		const char **p;
-+
-+		for (p = c->msgtable;
-+		     *p && (p - c->msgtable) < CHECKER_MSGTABLE_SIZE; p++)
-+			/* nothing */;
-+
-+		c->msgtable_size = p - c->msgtable;
-+	} else
-+		c->msgtable_size = 0;
-+	condlog(3, "checker %s: message table size = %d",
-+		c->name, c->msgtable_size);
-+
- done:
- 	c->fd = -1;
- 	c->sync = 1;
-@@ -222,16 +238,16 @@ int checker_check (struct checker * c, int path_state)
- 	if (!c)
- 		return PATH_WILD;
- 
--	c->message[0] = '\0';
-+	c->msgid = CHECKER_MSGID_NONE;
- 	if (c->disable) {
--		MSG(c, "checker disabled");
-+		c->msgid = CHECKER_MSGID_DISABLED;
- 		return PATH_UNCHECKED;
- 	}
- 	if (!strncmp(c->name, NONE, 4))
- 		return path_state;
- 
- 	if (c->fd < 0) {
--		MSG(c, "no usable fd");
-+		c->msgid = CHECKER_MSGID_NO_FD;
- 		return PATH_WILD;
- 	}
- 	r = c->check(c);
-@@ -248,25 +264,59 @@ int checker_selected (struct checker * c)
- 	return (c->check) ? 1 : 0;
- }
- 
--char * checker_name (struct checker * c)
-+const char *checker_name(const struct checker *c)
- {
- 	if (!c)
- 		return NULL;
- 	return c->name;
- }
- 
--char * checker_message (struct checker * c)
-+static const char *generic_msg[CHECKER_LAST_GENERIC_MSGID] = {
-+	[CHECKER_MSGID_NONE] = "",
-+	[CHECKER_MSGID_DISABLED] = " is disabled",
-+	[CHECKER_MSGID_NO_FD] = " has no usable fd",
-+	[CHECKER_MSGID_INVALID] = " provided invalid message id",
-+	[CHECKER_MSGID_UP] = " reports path is up",
-+	[CHECKER_MSGID_DOWN] = " reports path is down",
-+	[CHECKER_MSGID_GHOST] = " reports path is ghost",
-+};
-+
-+static const char *_checker_message(const struct checker *c)
- {
--	if (!c)
-+	int id;
-+
-+	if (!c || c->msgid < 0 ||
-+	    (c->msgid >= CHECKER_LAST_GENERIC_MSGID &&
-+	     c->msgid < CHECKER_FIRST_MSGID))
- 		return NULL;
--	return c->message;
-+
-+	if (c->msgid < CHECKER_LAST_GENERIC_MSGID)
-+		return generic_msg[c->msgid];
-+
-+	id = c->msgid - CHECKER_FIRST_MSGID;
-+	if (id < c->msgtable_size)
-+		return c->msgtable[id];
-+	return NULL;
-+}
-+
-+char *checker_message(const struct checker *c)
-+{
-+	static char buf[CHECKER_MSG_LEN];
-+	const char *msg = _checker_message(c);
-+
-+	if (msg == NULL || *msg == '\0')
-+		*buf = '\0';
-+	else
-+		snprintf(buf, sizeof(buf), "%s checker%s",
-+			 c->name, msg);
-+	return buf;
- }
- 
- void checker_clear_message (struct checker *c)
- {
- 	if (!c)
- 		return;
--	c->message[0] = '\0';
-+	c->msgid = CHECKER_MSGID_NONE;
- }
- 
- void checker_get (char *multipath_dir, struct checker * dst, char * name)
-@@ -288,10 +338,12 @@ void checker_get (char *multipath_dir, struct checker * dst, char * name)
- 	dst->fd = src->fd;
- 	dst->sync = src->sync;
- 	strncpy(dst->name, src->name, CHECKER_NAME_LEN);
--	strncpy(dst->message, src->message, CHECKER_MSG_LEN);
-+	dst->msgid = CHECKER_MSGID_NONE;
- 	dst->check = src->check;
- 	dst->init = src->init;
- 	dst->free = src->free;
-+	dst->msgtable = src->msgtable;
-+	dst->msgtable_size = src->msgtable_size;
- 	dst->handle = NULL;
- 	src->refcount++;
- }
-diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index 7b18a1ac..1d1a116a 100644
---- a/libmultipath/checkers.h
-+++ b/libmultipath/checkers.h
-@@ -97,6 +97,22 @@ enum path_check_state {
- #define CHECKER_DEV_LEN 256
- #define LIB_CHECKER_NAMELEN 256
- 
-+/*
-+ * Generic message IDs for use in checkers.
-+ */
-+enum {
-+	CHECKER_MSGID_NONE = 0,
-+	CHECKER_MSGID_DISABLED,
-+	CHECKER_MSGID_NO_FD,
-+	CHECKER_MSGID_INVALID,
-+	CHECKER_MSGID_UP,
-+	CHECKER_MSGID_DOWN,
-+	CHECKER_MSGID_GHOST,
-+	CHECKER_LAST_GENERIC_MSGID,
-+	CHECKER_FIRST_MSGID = 100,	/* lowest msgid for checkers */
-+	CHECKER_MSGTABLE_SIZE = 100,	/* max msg table size for checkers */
-+};
-+
- struct checker {
- 	struct list_head node;
- 	void *handle;
-@@ -106,7 +122,7 @@ struct checker {
- 	unsigned int timeout;
- 	int disable;
- 	char name[CHECKER_NAME_LEN];
--	char message[CHECKER_MSG_LEN];       /* comm with callers */
-+	short msgid;		             /* checker-internal extra status */
- 	void * context;                      /* store for persistent data */
- 	void ** mpcontext;                   /* store for persistent data shared
- 						multipath-wide. Use MALLOC if
-@@ -114,10 +130,10 @@ struct checker {
- 	int (*check)(struct checker *);
- 	int (*init)(struct checker *);       /* to allocate the context */
- 	void (*free)(struct checker *);      /* to free the context */
-+	const char**msgtable;
-+	short msgtable_size;
- };
- 
--#define MSG(c, fmt, args...) snprintf((c)->message, CHECKER_MSG_LEN, fmt, ##args);
+-#define MSG_CCISS_TUR_UP	"cciss_tur checker reports path is up"
+-#define MSG_CCISS_TUR_DOWN	"cciss_tur checker reports path is down"
 -
- char * checker_state_name (int);
- int init_checkers (char *);
- void cleanup_checkers (void);
-@@ -134,14 +150,25 @@ void checker_enable (struct checker *);
- void checker_disable (struct checker *);
- int checker_check (struct checker *, int);
- int checker_selected (struct checker *);
--char * checker_name (struct checker *);
--char * checker_message (struct checker *);
-+const char *checker_name (const struct checker *);
-+char *checker_message (const struct checker *);
- void checker_clear_message (struct checker *c);
- void checker_get (char *, struct checker *, char *);
+ struct cciss_tur_checker_context {
+ 	void * dummy;
+ };
+@@ -69,7 +66,7 @@ int libcheck_check(struct checker * c)
+ 	IOCTL_Command_struct cic;       // cciss ioctl command
  
--/* Functions exported by path checker dynamic libraries (.so) */
-+/* Prototypes for symbols exported by path checker dynamic libraries (.so) */
- int libcheck_check(struct checker *);
- int libcheck_init(struct checker *);
- void libcheck_free(struct checker *);
-+/*
-+ * msgid => message map.
-+ *
-+ * It only needs to be provided if the checker defines specific
-+ * message IDs.
-+ * Message IDs available to checkers start at CHECKER_FIRST_MSG.
-+ * The msgtable array is 0-based, i.e. msgtable[0] is the message
-+ * for msgid == __CHECKER_FIRST_MSG.
-+ * The table ends with a NULL element.
-+ */
-+extern const char *libcheck_msgtable[];
+ 	if ((c->fd) < 0) {
+-		MSG(c,"no usable fd");
++		c->msgid = CHECKER_MSGID_NO_FD;
+ 		ret = -1;
+ 		goto out;
+ 	}
+@@ -79,7 +76,7 @@ int libcheck_check(struct checker * c)
+ 		perror("Error: ");
+ 		fprintf(stderr, "cciss TUR  failed in CCISS_GETLUNINFO: %s\n",
+ 			strerror(errno));
+-		MSG(c,MSG_CCISS_TUR_DOWN);
++		c->msgid = CHECKER_MSGID_DOWN;
+ 		ret = PATH_DOWN;
+ 		goto out;
+ 	} else {
+@@ -106,18 +103,18 @@ int libcheck_check(struct checker * c)
+ 	if (rc < 0) {
+ 		fprintf(stderr, "cciss TUR  failed: %s\n",
+ 			strerror(errno));
+-		MSG(c,MSG_CCISS_TUR_DOWN);
++		c->msgid = CHECKER_MSGID_DOWN;
+ 		ret = PATH_DOWN;
+ 		goto out;
+ 	}
  
- #endif /* _CHECKERS_H */
+ 	if ((cic.error_info.CommandStatus | cic.error_info.ScsiStatus )) {
+-		MSG(c,MSG_CCISS_TUR_DOWN);
++		c->msgid = CHECKER_MSGID_DOWN;
+ 		ret = PATH_DOWN;
+ 		goto out;
+ 	}
+ 
+-	MSG(c,MSG_CCISS_TUR_UP);
++	c->msgid = CHECKER_MSGID_UP;
+ 
+ 	ret = PATH_UP;
+ out:
 -- 
 2.19.1
