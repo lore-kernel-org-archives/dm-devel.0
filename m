@@ -1,16 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 5/7] multipathd: set DAEMON_CONFIGURE from
-	uxlsnr thread
-Date: Tue, 30 Oct 2018 17:55:06 +0100
-Message-ID: <a631d7c5aff604bb0b86bf919d9f6f2125e7f131.camel@suse.com>
-References: <20181023220552.1306-1-mwilck@suse.com>
-	<20181023220552.1306-6-mwilck@suse.com>
-	<20181026201923.GJ7100@octiron.msp.redhat.com>
+Subject: [PATCH v3 05/22] libmultipath/checkers: directio: use
+	message id
+Date: Tue, 30 Oct 2018 22:06:36 +0100
+Message-ID: <20181030210653.29677-6-mwilck@suse.com>
+References: <20181030210653.29677-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181026201923.GJ7100@octiron.msp.redhat.com>
+In-Reply-To: <20181030210653.29677-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,68 +18,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
-Cc: dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE4LTEwLTI2IGF0IDE1OjE5IC0wNTAwLCAgQmVuamFtaW4gTWFyemluc2tpICB3
-cm90ZToKPiBPbiBXZWQsIE9jdCAyNCwgMjAxOCBhdCAxMjowNTo1MEFNICswMjAwLCBNYXJ0aW4g
-V2lsY2sgd3JvdGU6Cj4gPiBDb21taXQgZWUwMWU4NDEgaGFkIHRoZSBpbnRlbnRpb24gdG8gbWFr
-ZSBtdWx0aXBhdGhkIHF1aXQgaWYKPiA+IHRoZSBjbGllbnQgc29ja2V0IGNvdWxkbid0IGJlIHNl
-dCB1cCwgYmVjYXVzZSB0aGUgdW5peCBzb2NrZXQKPiA+IGxpc3RlbmVyIGlzIHZpdGFsIGZvciBz
-aWduYWwgaGFuZGxpbmcgaW4gbXVsdGlwYXRoZC4KPiA+IEJ1dCBkdXJpbmcgc3RhcnR1cCwgdGhp
-cyBjb25kaXRpb24gbWlnaHQgYmUgbG9zdCBpZiB0aGUgbWFpbgo+ID4gdGhyZWFkIGRvZXNuJ3Qg
-d2FpdCBmb3IgdGhlIHVuaXggbGlzdGVuZXIgdG8gaW5pdGlhbGl6ZS4KPiA+IAo+ID4gRml4ZXM6
-IGVlMDFlODQxICJtdWx0aXBhdGhkOiBoYW5kbGUgZXJyb3JzIGluIHV4bHNuciBhcyBmYXRhbCIK
-PiA+IFNpZ25lZC1vZmYtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgo+ID4gLS0t
-Cj4gPiAgbXVsdGlwYXRoZC9tYWluLmMgfCA0MyArKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KysrKy0tLS0tLS0tLS0tCj4gPiAgMSBmaWxlIGNoYW5nZWQsIDMyIGluc2VydGlvbnMoKyksIDEx
-IGRlbGV0aW9ucygtKQo+ID4gCj4gPiBkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC9tYWluLmMgYi9t
-dWx0aXBhdGhkL21haW4uYwo+ID4gaW5kZXggNTBmNjkxNzEuLmM3MWU3ZDAzIDEwMDY0NAo+ID4g
-LS0tIGEvbXVsdGlwYXRoZC9tYWluLmMKPiA+ICsrKyBiL211bHRpcGF0aGQvbWFpbi5jCj4gPiBA
-QCAtMjcyNiwxMSArMjczNiwyNiBAQCBjaGlsZCAodm9pZCAqIHBhcmFtKQo+ID4gIAkgKi8KPiA+
-ICAJY29uZiA9IE5VTEw7Cj4gPiAgCj4gPiAtCS8qCj4gPiAtCSAqIFNpZ25hbCBzdGFydCBvZiBj
-b25maWd1cmF0aW9uCj4gPiAtCSAqLwo+ID4gLQlwb3N0X2NvbmZpZ19zdGF0ZShEQUVNT05fQ09O
-RklHVVJFKTsKPiA+ICsJcHRocmVhZF9jbGVhbnVwX3B1c2goY29uZmlnX2NsZWFudXAsIE5VTEwp
-Owo+ID4gKwlwdGhyZWFkX211dGV4X2xvY2soJmNvbmZpZ19sb2NrKTsKPiA+ICAKPiA+ICsJX19w
-b3N0X2NvbmZpZ19zdGF0ZShEQUVNT05fSURMRSk7Cj4gCj4gSSBkb24ndCByZWFsbHkgdW5kZXJz
-dGFuZCB0aGUgbmVlZCBmb3IKPiBfX3Bvc3RfY29uZmlnX3N0YXRlKCkuICBDb3VsZG4ndAo+IHlv
-dSBqdXN0IGNhbGwgcG9zdF9jb25maWdfc3RhdGUoREFFTU9OX0lETEUpLCBhbmQgdGhlbiBncmFi
-IHRoZQo+IGNvbmZpZ19sb2NrIGFmdGVyIGNoZWNraW5nIHRoYXQgdGhlIHRocmVhZCB3YXMgY3Jl
-YXRlZAo+IHN1Y2Nlc3NmdWxseS4gIElmCj4gdGhlIHNjaGVkdWxlciBkZWNpZGVzIHRvIHJ1biB0
-aGUgdXhsc25ybG9vcCB0aHJlYWQgYmVmb3JlIGNvbnRpbnVpbmcKPiB3aXRoIHRoZSBjaGlsZCB0
-aHJlYWQsIGl0IHdvdWxkIGJlIGJldHRlciBpZiB1eGxzbnJsb29wIHRocmVhZCB3YXMKPiBmcmVl
-Cj4gdG8gZ3JhYiB0aGUgY29uZmlnIGxvY2sgYW55d2F5LgoKSSB3YW50ZWQgdG8gZW5mb3JjZSBv
-cmRlcmluZyBoZXJlLiBUaGUgdXhsc25yIHdvbid0IGJlIGFibGUgdG8gZ3JhYiB0aGUKbG9jayBh
-bmQgY2hhbmdlIHJ1bm5pbmdfc3RhdGUgdW50aWwgdGhlIGNoaWxkIGVudGVycwpwdGhyZWFkX2Nv
-bmRfd2FpdCgpIGJlbG93LCB3aGljaCBpcyBpbnRlbnRpb25hbC4gcnVubmluZ19zdGF0ZQpzaG91
-bGRuJ3QgYmUgcmVhZCBvciB3cml0dGVuIHdpdGhvdXQgaG9sZGluZyB0aGUgbG9jaywgc28gdGhp
-cyBhY3R1YWxseQpzYXZlcyB1cyBhbiB1bmxvY2svbG9jayBvcGVyYXRpb24sIGFzIGNoaWxkKCkg
-d291bGQgb3RoZXJ3aXNlIG5lZWQgdG8KcmVsZWFzZSB0aGUgbG9jayBiZWZvcmUgY2FsbGluZyBw
-dGhyZWFkX2NyZWF0ZSgpLCBhbmQgcmVhY3F1aXJlIGl0CmFmdGVyd2FyZHMuIFRoaXMgd2F5IHRo
-ZSBzdGFydHVwIHNlcXVlbmNlIGlzIGZ1bGx5IGRldGVybWluaXN0aWMgYW5kCmRvZXNuJ3QgZGVw
-ZW5kIG9uIHNjaGVkdWxlciBkZWNpc2lvbnMuIEkgbGlrZSBpdCB0aGF0IHdheSA6LSkKCj4gQXQg
-YW55IHJhdGUsIHdoYXQgeW91IGhhdmUgaXMgcGVyZmVjdGx5IGNvcnJlY3QsIHNvCj4gCj4gUmV2
-aWV3ZWQtYnk6IEJlbmphbWluIE1hcnppbnNrIDxibWFyemluc0ByZWRoYXQuY29tPgoKVGhhbmtz
-IGEgbG90LgoKTWFydGluCgoKPiAKPiA+ICsJcmMgPSBwdGhyZWFkX2NyZWF0ZSgmdXhsc25yX3Ro
-ciwgJm1pc2NfYXR0ciwgdXhsc25ybG9vcCwgdmVjcyk7Cj4gPiArCWlmICghcmMpIHsKPiA+ICsJ
-CS8qIFdhaXQgZm9yIHV4bHNuciBzdGFydHVwICovCj4gPiArCQl3aGlsZSAocnVubmluZ19zdGF0
-ZSA9PSBEQUVNT05fSURMRSkKPiA+ICsJCQlwdGhyZWFkX2NvbmRfd2FpdCgmY29uZmlnX2NvbmQs
-ICZjb25maWdfbG9jayk7Cj4gPiArCX0KPiA+ICsJcHRocmVhZF9jbGVhbnVwX3BvcCgxKTsKPiA+
-ICsKPiA+ICsJaWYgKHJjKSB7Cj4gPiArCQljb25kbG9nKDAsICJmYWlsZWQgdG8gY3JlYXRlIGNs
-aSBsaXN0ZW5lcjogJWQiLCByYyk7Cj4gPiArCQlnb3RvIGZhaWxlZDsKPiA+ICsJfQo+ID4gKwll
-bHNlIGlmIChydW5uaW5nX3N0YXRlICE9IERBRU1PTl9DT05GSUdVUkUpIHsKPiA+ICsJCWNvbmRs
-b2coMCwgImNsaSBsaXN0ZW5lciBmYWlsZWQgdG8gc3RhcnQiKTsKPiA+ICsJCWdvdG8gZmFpbGVk
-Owo+ID4gKwl9Cj4gPiAgCj4gPiAgCWlmIChwb2xsX2RtZXZlbnRzKSB7Cj4gPiAgCQlpZiAoaW5p
-dF9kbWV2ZW50X3dhaXRlcih2ZWNzKSkgewo+ID4gQEAgLTI3NTMsMTAgKzI3NzgsNiBAQCBjaGls
-ZCAodm9pZCAqIHBhcmFtKQo+ID4gIAkJZ290byBmYWlsZWQ7Cj4gPiAgCX0KPiA+ICAJcHRocmVh
-ZF9hdHRyX2Rlc3Ryb3koJnVldmVudF9hdHRyKTsKPiA+IC0JaWYgKChyYyA9IHB0aHJlYWRfY3Jl
-YXRlKCZ1eGxzbnJfdGhyLCAmbWlzY19hdHRyLCB1eGxzbnJsb29wLAo+ID4gdmVjcykpKSB7Cj4g
-PiAtCQljb25kbG9nKDAsICJmYWlsZWQgdG8gY3JlYXRlIGNsaSBsaXN0ZW5lcjogJWQiLCByYyk7
-Cj4gPiAtCQlnb3RvIGZhaWxlZDsKPiA+IC0JfQo+ID4gIAo+ID4gIAkvKgo+ID4gIAkgKiBzdGFy
-dCB0aHJlYWRzCj4gPiAtLSAKPiA+IDIuMTkuMQotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNr
-QHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBH
-RjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAy
-MTI4NCAoQUcgTsO8cm5iZXJnKQoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
-ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
-bA==
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/checkers/directio.c | 27 ++++++++++++++++++---------
+ 1 file changed, 18 insertions(+), 9 deletions(-)
+
+diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
+index a80848d4..c4a0712e 100644
+--- a/libmultipath/checkers/directio.c
++++ b/libmultipath/checkers/directio.c
+@@ -18,10 +18,19 @@
+ #include "checkers.h"
+ #include "../libmultipath/debug.h"
+ 
+-#define MSG_DIRECTIO_UNKNOWN	"directio checker is not available"
+-#define MSG_DIRECTIO_UP		"directio checker reports path is up"
+-#define MSG_DIRECTIO_DOWN	"directio checker reports path is down"
+-#define MSG_DIRECTIO_PENDING	"directio checker is waiting on aio"
++enum {
++	MSG_DIRECTIO_UNKNOWN = CHECKER_FIRST_MSGID,
++	MSG_DIRECTIO_PENDING,
++	MSG_DIRECTIO_BLOCKSIZE,
++};
++
++#define _IDX(x) (MSG_DIRECTIO_##x - CHECKER_FIRST_MSGID)
++const char *libcheck_msgtable[] = {
++	[_IDX(UNKNOWN)] = " is not available",
++	[_IDX(PENDING)] = " is waiting on aio",
++	[_IDX(BLOCKSIZE)] = " cannot get blocksize, set default",
++	NULL,
++};
+ 
+ #define LOG(prio, fmt, args...) condlog(prio, "directio: " fmt, ##args)
+ 
+@@ -54,7 +63,7 @@ int libcheck_init (struct checker * c)
+ 	}
+ 
+ 	if (ioctl(c->fd, BLKBSZGET, &ct->blksize) < 0) {
+-		MSG(c, "cannot get blocksize, set default");
++		c->msgid = MSG_DIRECTIO_BLOCKSIZE;
+ 		ct->blksize = 512;
+ 	}
+ 	if (ct->blksize > 4096) {
+@@ -198,16 +207,16 @@ int libcheck_check (struct checker * c)
+ 	switch (ret)
+ 	{
+ 	case PATH_UNCHECKED:
+-		MSG(c, MSG_DIRECTIO_UNKNOWN);
++		c->msgid = MSG_DIRECTIO_UNKNOWN;
+ 		break;
+ 	case PATH_DOWN:
+-		MSG(c, MSG_DIRECTIO_DOWN);
++		c->msgid = CHECKER_MSGID_DOWN;
+ 		break;
+ 	case PATH_UP:
+-		MSG(c, MSG_DIRECTIO_UP);
++		c->msgid = CHECKER_MSGID_UP;
+ 		break;
+ 	case PATH_PENDING:
+-		MSG(c, MSG_DIRECTIO_PENDING);
++		c->msgid = MSG_DIRECTIO_PENDING;
+ 		break;
+ 	default:
+ 		break;
+-- 
+2.19.1
