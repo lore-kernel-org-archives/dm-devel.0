@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 10/22] libmultipath/checkers: tur: use message
-	id
-Date: Tue, 30 Oct 2018 22:06:41 +0100
-Message-ID: <20181030210653.29677-11-mwilck@suse.com>
+Subject: [PATCH v3 06/22] libmultipath/checkers: emc_clariion:
+	use message id
+Date: Tue, 30 Oct 2018 22:06:37 +0100
+Message-ID: <20181030210653.29677-7-mwilck@suse.com>
 References: <20181030210653.29677-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,181 +22,143 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+emc_clariion is the only path checker that was using a non-constant
+message ("read error" case). This isn't possible with the msgid
+approach any more. Use condlog() for the dynamic log message and
+simply report "read error" as checker message.
+
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/tur.c | 54 ++++++++++++++++++++-----------------
- 1 file changed, 30 insertions(+), 24 deletions(-)
+ libmultipath/checkers/emc_clariion.c | 60 +++++++++++++++++++---------
+ 1 file changed, 42 insertions(+), 18 deletions(-)
 
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index a6c88eb2..22734be2 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -29,12 +29,19 @@
- #define TUR_CMD_LEN 6
- #define HEAVY_CHECK_COUNT       10
+diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
+index 9115b1b9..f8e55b93 100644
+--- a/libmultipath/checkers/emc_clariion.c
++++ b/libmultipath/checkers/emc_clariion.c
+@@ -41,6 +41,35 @@
+ 				((struct emc_clariion_checker_LU_context *)\
+ 					(*c->mpcontext))->inactive_snap = 0
  
--#define MSG_TUR_UP	"tur checker reports path is up"
--#define MSG_TUR_DOWN	"tur checker reports path is down"
--#define MSG_TUR_GHOST	"tur checker reports path is in standby state"
--#define MSG_TUR_RUNNING	"tur checker still running"
--#define MSG_TUR_TIMEOUT	"tur checker timed out"
--#define MSG_TUR_FAILED	"tur checker failed to initialize"
 +enum {
-+	MSG_TUR_RUNNING = CHECKER_FIRST_MSGID,
-+	MSG_TUR_TIMEOUT,
-+	MSG_TUR_FAILED,
++	MSG_CLARIION_QUERY_FAILED = CHECKER_FIRST_MSGID,
++	MSG_CLARIION_QUERY_ERROR,
++	MSG_CLARIION_PATH_CONFIG,
++	MSG_CLARIION_UNIT_REPORT,
++	MSG_CLARIION_PATH_NOT_AVAIL,
++	MSG_CLARIION_LUN_UNBOUND,
++	MSG_CLARIION_WWN_CHANGED,
++	MSG_CLARIION_READ_ERROR,
++	MSG_CLARIION_PASSIVE_GOOD,
 +};
 +
-+#define _IDX(x) (MSG_ ## x - CHECKER_FIRST_MSGID)
++#define _IDX(x) (MSG_CLARIION_ ## x - CHECKER_FIRST_MSGID)
 +const char *libcheck_msgtable[] = {
-+	[_IDX(TUR_RUNNING)] = " still running",
-+	[_IDX(TUR_TIMEOUT)] = " timed out",
-+	[_IDX(TUR_FAILED)] = " failed to initialize",
++	[_IDX(QUERY_FAILED)] = ": sending query command failed",
++	[_IDX(QUERY_ERROR)] = ": query command indicates error",
++	[_IDX(PATH_CONFIG)] =
++	": Path not correctly configured for failover",
++	[_IDX(UNIT_REPORT)] =
++	": Path unit report page in unknown format",
++	[_IDX(PATH_NOT_AVAIL)] =
++	": Path not available for normal operations",
++	[_IDX(LUN_UNBOUND)] = ": Logical Unit is unbound or LUNZ",
++	[_IDX(WWN_CHANGED)] = ": Logical Unit WWN has changed",
++	[_IDX(READ_ERROR)] = ": Read error",
++	[_IDX(PASSIVE_GOOD)] = ": Active path is healthy",
 +	NULL,
 +};
- 
- struct tur_checker_context {
- 	dev_t devt;
-@@ -47,7 +54,7 @@ struct tur_checker_context {
- 	pthread_mutex_t lock;
- 	pthread_cond_t active;
- 	int holders; /* uatomic access only */
--	char message[CHECKER_MSG_LEN];
-+	int msgid;
- };
- 
- int libcheck_init (struct checker * c)
-@@ -99,7 +106,7 @@ void libcheck_free (struct checker * c)
- }
- 
- static int
--tur_check(int fd, unsigned int timeout, char *msg)
-+tur_check(int fd, unsigned int timeout, short *msgid)
- {
- 	struct sg_io_hdr io_hdr;
- 	unsigned char turCmdBlk[TUR_CMD_LEN] = { 0x00, 0, 0, 0, 0, 0 };
-@@ -118,7 +125,7 @@ retry:
- 	io_hdr.timeout = timeout * 1000;
++
+ struct emc_clariion_checker_path_context {
+ 	char wwn[16];
+ 	unsigned wwn_set;
+@@ -116,17 +145,16 @@ int libcheck_check (struct checker * c)
+ 	io_hdr.timeout = c->timeout * 1000;
  	io_hdr.pack_id = 0;
- 	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
--		snprintf(msg, CHECKER_MSG_LEN, MSG_TUR_DOWN);
-+		*msgid = CHECKER_MSGID_DOWN;
+ 	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
+-		MSG(c, "emc_clariion_checker: sending query command failed");
++		c->msgid = MSG_CLARIION_QUERY_FAILED;
  		return PATH_DOWN;
- 	}
- 	if ((io_hdr.status & 0x7e) == 0x18) {
-@@ -126,7 +133,7 @@ retry:
- 		 * SCSI-3 arrays might return
- 		 * reservation conflict on TUR
- 		 */
--		snprintf(msg, CHECKER_MSG_LEN, MSG_TUR_UP);
-+		*msgid = CHECKER_MSGID_UP;
- 		return PATH_UP;
  	}
  	if (io_hdr.info & SG_INFO_OK_MASK) {
-@@ -171,14 +178,14 @@ retry:
- 				 * LOGICAL UNIT NOT ACCESSIBLE,
- 				 * TARGET PORT IN STANDBY STATE
- 				 */
--				snprintf(msg, CHECKER_MSG_LEN, MSG_TUR_GHOST);
-+				*msgid = CHECKER_MSGID_GHOST;
- 				return PATH_GHOST;
- 			}
- 		}
--		snprintf(msg, CHECKER_MSG_LEN, MSG_TUR_DOWN);
-+		*msgid = CHECKER_MSGID_DOWN;
+-		MSG(c, "emc_clariion_checker: query command indicates error");
++		c->msgid = MSG_CLARIION_QUERY_ERROR;
  		return PATH_DOWN;
  	}
--	snprintf(msg, CHECKER_MSG_LEN, MSG_TUR_UP);
-+	*msgid = CHECKER_MSGID_UP;
- 	return PATH_UP;
- }
+ 	if (/* Verify the code page - right page & revision */
+ 	    sense_buffer[1] != 0xc0 || sense_buffer[9] != 0x00) {
+-		MSG(c, "emc_clariion_checker: Path unit report page in "
+-		    "unknown format");
++		c->msgid = MSG_CLARIION_UNIT_REPORT;
+ 		return PATH_DOWN;
+ 	}
  
-@@ -244,7 +251,7 @@ static void *tur_thread(void *ctx)
- {
- 	struct tur_checker_context *ct = ctx;
- 	int state, running;
--	char msg[CHECKER_MSG_LEN];
-+	short msgid;
+@@ -140,22 +168,19 @@ int libcheck_check (struct checker * c)
+ 		    ((sense_buffer[28] & 0x07) != 0x06))
+ 		/* Arraycommpath should be set to 1 */
+ 		|| (sense_buffer[30] & 0x04) != 0x04) {
+-		MSG(c, "emc_clariion_checker: Path not correctly configured "
+-		    "for failover");
++		c->msgid = MSG_CLARIION_PATH_CONFIG;
+ 		return PATH_DOWN;
+ 	}
  
- 	/* This thread can be canceled, so setup clean up */
- 	tur_thread_cleanup_push(ct);
-@@ -254,13 +261,13 @@ static void *tur_thread(void *ctx)
- 		minor(ct->devt));
+ 	if ( /* LUN operations should indicate normal operations */
+ 		sense_buffer[48] != 0x00) {
+-		MSG(c, "emc_clariion_checker: Path not available for normal "
+-		    "operations");
++		c->msgid = MSG_CLARIION_PATH_NOT_AVAIL;
+ 		return PATH_SHAKY;
+ 	}
  
- 	tur_deep_sleep(ct);
--	state = tur_check(ct->fd, ct->timeout, msg);
-+	state = tur_check(ct->fd, ct->timeout, &msgid);
- 	pthread_testcancel();
+ 	if ( /* LUN should at least be bound somewhere and not be LUNZ */
+ 		sense_buffer[4] == 0x00) {
+-		MSG(c, "emc_clariion_checker: Logical Unit is unbound "
+-		    "or LUNZ");
++		c->msgid = MSG_CLARIION_LUN_UNBOUND;
+ 		return PATH_DOWN;
+ 	}
  
- 	/* TUR checker done */
- 	pthread_mutex_lock(&ct->lock);
- 	ct->state = state;
--	strlcpy(ct->message, msg, sizeof(ct->message));
-+	ct->msgid = msgid;
- 	pthread_cond_signal(&ct->active);
- 	pthread_mutex_unlock(&ct->lock);
- 
-@@ -313,7 +320,7 @@ int libcheck_check(struct checker * c)
- 		return PATH_UNCHECKED;
- 
- 	if (c->sync)
--		return tur_check(c->fd, c->timeout, c->message);
-+		return tur_check(c->fd, c->timeout, &c->msgid);
- 
- 	/*
- 	 * Async mode
-@@ -325,13 +332,12 @@ int libcheck_check(struct checker * c)
- 				pthread_cancel(ct->thread);
- 				condlog(3, "%d:%d : tur checker timeout",
- 					major(ct->devt), minor(ct->devt));
--				MSG(c, MSG_TUR_TIMEOUT);
-+				c->msgid = MSG_TUR_TIMEOUT;
- 				tur_status = PATH_TIMEOUT;
- 			} else {
- 				pthread_mutex_lock(&ct->lock);
- 				tur_status = ct->state;
--				strlcpy(c->message, ct->message,
--					sizeof(c->message));
-+				c->msgid = ct->msgid;
- 				pthread_mutex_unlock(&ct->lock);
- 			}
- 			ct->thread = 0;
-@@ -344,7 +350,7 @@ int libcheck_check(struct checker * c)
- 			ct->thread = 0;
- 			pthread_mutex_lock(&ct->lock);
- 			tur_status = ct->state;
--			strlcpy(c->message, ct->message, sizeof(c->message));
-+			c->msgid = ct->msgid;
- 			pthread_mutex_unlock(&ct->lock);
+@@ -166,8 +191,7 @@ int libcheck_check (struct checker * c)
+ 	 */
+ 	if (ct->wwn_set) {
+ 		if (memcmp(ct->wwn, &sense_buffer[10], 16) != 0) {
+-			MSG(c, "emc_clariion_checker: Logical Unit WWN "
+-			    "has changed!");
++			c->msgid = MSG_CLARIION_WWN_CHANGED;
+ 			return PATH_DOWN;
  		}
  	} else {
-@@ -376,7 +382,7 @@ int libcheck_check(struct checker * c)
- 		/* Start new TUR checker */
- 		pthread_mutex_lock(&ct->lock);
- 		tur_status = ct->state = PATH_PENDING;
--		ct->message[0] = '\0';
-+		ct->msgid = CHECKER_MSGID_NONE;
- 		pthread_mutex_unlock(&ct->lock);
- 		ct->fd = c->fd;
- 		ct->timeout = c->timeout;
-@@ -392,7 +398,7 @@ int libcheck_check(struct checker * c)
- 			ct->thread = 0;
- 			condlog(3, "%d:%d : failed to start tur thread, using"
- 				" sync mode", major(ct->devt), minor(ct->devt));
--			return tur_check(c->fd, c->timeout, c->message);
-+			return tur_check(c->fd, c->timeout, &c->msgid);
+@@ -202,14 +226,15 @@ int libcheck_check (struct checker * c)
+ 				condlog(3, "emc_clariion_checker: Active "
+ 					"path to inactive snapshot WWN %s.",
+ 					wwnstr);
+-			} else
+-				MSG(c, "emc_clariion_checker: Read "
++			} else {
++				condlog(3, "emc_clariion_checker: Read "
+ 					"error for WWN %s.  Sense data are "
+ 					"0x%x/0x%x/0x%x.", wwnstr,
+ 					sbb[2]&0xf, sbb[12], sbb[13]);
++				c->msgid = MSG_CLARIION_READ_ERROR;
++			}
+ 		} else {
+-			MSG(c, "emc_clariion_checker: Active path is "
+-			    "healthy.");
++			c->msgid = MSG_CLARIION_PASSIVE_GOOD;
+ 			/*
+ 			 * Remove the path from the set of paths to inactive
+ 			 * snapshot LUs if it was in this list since the
+@@ -225,8 +250,7 @@ int libcheck_check (struct checker * c)
+ 				wwnstr);
+ 			ret = PATH_DOWN;
+ 		} else {
+-			MSG(c,
+-			    "emc_clariion_checker: Passive path is healthy.");
++			c->msgid = MSG_CLARIION_PASSIVE_GOOD;
+ 			ret = PATH_UP;	/* not ghost */
  		}
- 		tur_timeout(&tsp);
- 		pthread_mutex_lock(&ct->lock);
-@@ -401,7 +407,7 @@ int libcheck_check(struct checker * c)
- 						   &tsp);
- 		if (!r) {
- 			tur_status = ct->state;
--			strlcpy(c->message, ct->message, sizeof(c->message));
-+			c->msgid = ct->msgid;
- 		}
- 		pthread_mutex_unlock(&ct->lock);
- 		if (tur_status == PATH_PENDING) {
+ 	}
 -- 
 2.19.1
