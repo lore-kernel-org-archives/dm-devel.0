@@ -1,14 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 22/22] libmultipath: make checker_message
-	thread safe
-Date: Tue, 30 Oct 2018 22:06:53 +0100
-Message-ID: <20181030210653.29677-23-mwilck@suse.com>
-References: <20181030210653.29677-1-mwilck@suse.com>
+Subject: [PATCH v2 1/7] libmultipath: set pp->checkint in
+	store_pathinfo()
+Date: Tue, 30 Oct 2018 22:22:43 +0100
+Message-ID: <20181030212249.31127-2-mwilck@suse.com>
+References: <20181030212249.31127-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181030210653.29677-1-mwilck@suse.com>
+In-Reply-To: <20181030212249.31127-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,114 +22,56 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Get rid of the static char buffer in checker_message()
-introduced in the previous "replace message by msgid" patch.
+store_pathinfo is called with valid conf pointer anyway, so
+checkint is available. pp->checkint is now valid for every
+path after path_discovery().
 
+This fixes a bad conf access in cli_add_path().
+
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers.c  | 23 ++++++++++++++++++-----
- libmultipath/checkers.h  |  4 +++-
- libmultipath/discovery.c |  9 ++++++---
- multipathd/main.c        | 11 +++++------
- 4 files changed, 32 insertions(+), 15 deletions(-)
+ libmultipath/discovery.c  | 1 +
+ multipathd/cli_handlers.c | 1 -
+ multipathd/main.c         | 2 --
+ 3 files changed, 1 insertion(+), 3 deletions(-)
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index 9a19c9a6..f65a9476 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -309,16 +309,29 @@ static const char *_checker_message(const struct checker *c)
- 	return NULL;
- }
- 
-+int checker_has_message(const struct checker *c)
-+{
-+	const char *msg = _checker_message(c);
-+
-+	if (msg == NULL || *msg == '\0')
-+		return 0;
-+	return 1;
-+}
-+
- char *checker_message(const struct checker *c)
- {
--	static char buf[CHECKER_MSG_LEN];
-+	char *buf;
- 	const char *msg = _checker_message(c);
-+	int len;
- 
- 	if (msg == NULL || *msg == '\0')
--		*buf = '\0';
--	else
--		snprintf(buf, sizeof(buf), "%s checker%s",
--			 c->cls->name, msg);
-+		return NULL;
-+
-+	len = CHECKER_NAME_LEN + 8 + CHECKER_MSG_LEN;
-+	buf = MALLOC(len);
-+	if (buf == NULL)
-+		return NULL;
-+	snprintf(buf, len, "%s checker%s", c->cls->name, msg);
- 	return buf;
- }
- 
-diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index 834efcfe..2c71e40c 100644
---- a/libmultipath/checkers.h
-+++ b/libmultipath/checkers.h
-@@ -145,7 +145,9 @@ int checker_check (struct checker *, int);
- int checker_selected(const struct checker *);
- int checker_is_sync(const struct checker *);
- const char *checker_name (const struct checker *);
--char *checker_message (const struct checker *);
-+/* checker_message(): returned pointer is malloc()d */
-+char *checker_message(const struct checker *);
-+int checker_has_message(const struct checker *);
- void checker_clear_message (struct checker *c);
- void checker_get(const char *, struct checker *, const char *);
- 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 467ece7a..0bcd3c39 100644
+index 0bcd3c39..def5d6b2 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1588,9 +1588,12 @@ get_state (struct path * pp, struct config *conf, int daemon, int oldstate)
- 	condlog(3, "%s: %s state = %s", pp->dev,
- 		checker_name(c), checker_state_name(state));
- 	if (state != PATH_UP && state != PATH_GHOST &&
--	    strlen(checker_message(c)))
--		condlog(3, "%s: checker msg is \"%s\"",
--			pp->dev, checker_message(c));
-+	    checker_has_message(c)) {
-+		char *msg = checker_message(c);
-+
-+		condlog(3, "%s: checker msg is \"%s\"", pp->dev, msg);
-+		FREE(msg);
-+	}
- 	return state;
- }
+@@ -103,6 +103,7 @@ store_pathinfo (vector pathvec, struct config *conf,
+ 	err = store_path(pathvec, pp);
+ 	if (err)
+ 		goto out;
++	pp->checkint = conf->checkint;
  
+ out:
+ 	if (err)
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 75000807..4aea4ce7 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -736,7 +736,6 @@ cli_add_path (void * v, char ** reply, int * len, void * data)
+ 			condlog(0, "%s: failed to store path info", param);
+ 			return 1;
+ 		}
+-		pp->checkint = conf->checkint;
+ 	}
+ 	return ev_add_path(pp, vecs, 1);
+ blacklisted:
 diff --git a/multipathd/main.c b/multipathd/main.c
-index e80ac906..fcf0d2db 100644
+index fcf0d2db..c24b2b99 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -95,14 +95,13 @@ do {								\
- 		if (pp->offline)				\
- 			condlog(lvl, "%s: %s - path offline",	\
- 				pp->mpp->alias, pp->dev);	\
--		else {						\
--			const char *__m =			\
-+		else if (checker_has_message(&pp->checker)) {	\
-+			char *__m =				\
- 				checker_message(&pp->checker);	\
- 								\
--			if (strlen(__m))			\
--				condlog(lvl, "%s: %s - %s",	\
--					pp->mpp->alias,		\
--					pp->dev, __m);		\
-+			condlog(lvl, "%s: %s - %s",		\
-+				pp->mpp->alias, pp->dev, __m);	\
-+			FREE(__m);				\
- 		}						\
- 	}							\
- } while(0)
+@@ -2321,8 +2321,6 @@ configure (struct vectors * vecs)
+ 			free_path(pp);
+ 			i--;
+ 		}
+-		else
+-			pp->checkint = conf->checkint;
+ 		pthread_cleanup_pop(1);
+ 	}
+ 	if (map_discovery(vecs)) {
 -- 
 2.19.1
