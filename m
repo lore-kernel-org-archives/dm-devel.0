@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 02/22] libmultipath: fix memory leaks from
-	scandir() use
-Date: Tue, 30 Oct 2018 22:06:33 +0100
-Message-ID: <20181030210653.29677-3-mwilck@suse.com>
+Subject: [PATCH v3 12/22] libmultipath/checkers: support
+	unsupported paths
+Date: Tue, 30 Oct 2018 22:06:43 +0100
+Message-ID: <20181030210653.29677-13-mwilck@suse.com>
 References: <20181030210653.29677-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,169 +22,58 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-scandir() users must not only free the resulting dirent* array,
-but also every member. Add a cleanup function, and fix the
-existing users of scandir() in libmultipath.
+We should be able to distinguish the case where a checker
+determines a path to be positively down from the case where
+the checker fails to obtain necessary information, e.g.
+because of a configuration problem (wrong checker).
+Use PATH_WILD for the latter case, as it's hardly used now.
 
-Add a small helper macro for casting function pointers to the
-type pthread_cleanup_push() expects.
+Provide a generic message for the situation that a path
+checker can't handle a certain path.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.c       | 10 ++++------
- libmultipath/foreign.c      |  5 ++++-
- libmultipath/foreign/nvme.c |  6 +++++-
- libmultipath/sysfs.c        |  5 ++++-
- libmultipath/util.c         |  9 +++++++++
- libmultipath/util.h         |  9 +++++++++
- 6 files changed, 35 insertions(+), 9 deletions(-)
+ libmultipath/checkers.c | 1 +
+ libmultipath/checkers.h | 7 +++++--
+ 2 files changed, 6 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 0aef186a..5af7af58 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -639,17 +639,13 @@ free_config (struct config * conf)
- 	FREE(conf);
- }
+diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+index 0bf15f47..b947ddf8 100644
+--- a/libmultipath/checkers.c
++++ b/libmultipath/checkers.c
+@@ -279,6 +279,7 @@ static const char *generic_msg[CHECKER_LAST_GENERIC_MSGID] = {
+ 	[CHECKER_MSGID_UP] = " reports path is up",
+ 	[CHECKER_MSGID_DOWN] = " reports path is down",
+ 	[CHECKER_MSGID_GHOST] = " reports path is ghost",
++	[CHECKER_MSGID_UNSUPPORTED] = " doesn't support this device",
+ };
  
--static void free_namelist(void *nl)
--{
--	free(nl);
--}
--
- /* if multipath fails to process the config directory, it should continue,
-  * with just a warning message */
- static void
- process_config_dir(struct config *conf, vector keywords, char *dir)
- {
- 	struct dirent **namelist;
-+	struct scandir_result sr;
- 	int i, n;
- 	char path[LINE_MAX];
- 	int old_hwtable_size;
-@@ -669,7 +665,9 @@ process_config_dir(struct config *conf, vector keywords, char *dir)
- 		return;
- 	} else if (n == 0)
- 		return;
--	pthread_cleanup_push(free_namelist, namelist);
-+	sr.di = namelist;
-+	sr.n = n;
-+	pthread_cleanup_push_cast(free_scandir_result, &sr);
- 	for (i = 0; i < n; i++) {
- 		if (!strstr(namelist[i]->d_name, ".conf"))
- 			continue;
-diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
-index 80b399ba..48e8d247 100644
---- a/libmultipath/foreign.c
-+++ b/libmultipath/foreign.c
-@@ -115,6 +115,7 @@ static int _init_foreign(const char *multipath_dir)
- {
- 	char pathbuf[PATH_MAX];
- 	struct dirent **di;
-+	struct scandir_result sr;
- 	int r, i;
- 
- 	foreigns = vector_alloc();
-@@ -135,7 +136,9 @@ static int _init_foreign(const char *multipath_dir)
- 		return -r;
- 	}
- 
--	pthread_cleanup_push(free, di);
-+	sr.di = di;
-+	sr.n = r;
-+	pthread_cleanup_push_cast(free_scandir_result, &sr);
- 	for (i = 0; i < r; i++) {
- 		const char *msg, *fn, *c;
- 		struct foreign *fgn;
-diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
-index 8887a755..c753a747 100644
---- a/libmultipath/foreign/nvme.c
-+++ b/libmultipath/foreign/nvme.c
-@@ -27,6 +27,7 @@
- #include <dirent.h>
- #include <errno.h>
- #include <ctype.h>
-+#include "util.h"
- #include "vector.h"
- #include "generic.h"
- #include "foreign.h"
-@@ -534,6 +535,7 @@ static void _find_controllers(struct context *ctx, struct nvme_map *map)
- {
- 	char pathbuf[PATH_MAX], realbuf[PATH_MAX];
- 	struct dirent **di = NULL;
-+	struct scandir_result sr;
- 	struct udev_device *subsys;
- 	struct nvme_path *path;
- 	int r, i, n;
-@@ -568,7 +570,9 @@ static void _find_controllers(struct context *ctx, struct nvme_map *map)
- 		return;
- 	}
- 
--	pthread_cleanup_push(free, di);
-+	sr.di = di;
-+	sr.n = r;
-+	pthread_cleanup_push_cast(free_scandir_result, &sr);
- 	for (i = 0; i < r; i++) {
- 		char *fn = di[i]->d_name;
- 		struct udev_device *ctrl, *udev;
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index b7dacaad..558c8d6a 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -303,6 +303,7 @@ static void close_fd(void *arg)
- bool sysfs_is_multipathed(const struct path *pp)
- {
- 	char pathbuf[PATH_MAX];
-+	struct scandir_result sr;
- 	struct dirent **di;
- 	int n, r, i;
- 	bool found = false;
-@@ -323,7 +324,9 @@ bool sysfs_is_multipathed(const struct path *pp)
- 		return false;
- 	}
- 
--	pthread_cleanup_push(free, di);
-+	sr.di = di;
-+	sr.n = r;
-+	pthread_cleanup_push_cast(free_scandir_result, &sr);
- 	for (i = 0; i < r && !found; i++) {
- 		long fd;
- 		int nr;
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index d08112db..66c47611 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -496,3 +496,12 @@ void set_max_fds(int max_fds)
- 		}
- 	}
- }
-+
-+void free_scandir_result(struct scandir_result *res)
-+{
-+	int i;
-+
-+	for (i = 0; i < res->n; i++)
-+		FREE(res->di[i]);
-+	FREE(res->di);
-+}
-diff --git a/libmultipath/util.h b/libmultipath/util.h
-index c2462950..a818e29a 100644
---- a/libmultipath/util.h
-+++ b/libmultipath/util.h
-@@ -30,4 +30,13 @@ void set_max_fds(int max_fds);
- #define safe_snprintf(var, size, format, args...)      \
- 	snprintf(var, size, format, ##args) >= size
- 
-+#define pthread_cleanup_push_cast(f, arg)		\
-+	pthread_cleanup_push(((void (*)(void *))&f), (arg))
-+
-+struct scandir_result {
-+	struct dirent **di;
-+	int n;
-+};
-+void free_scandir_result(struct scandir_result *);
-+
- #endif /* _UTIL_H */
+ static const char *_checker_message(const struct checker *c)
+diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
+index 1d1a116a..dfa60f48 100644
+--- a/libmultipath/checkers.h
++++ b/libmultipath/checkers.h
+@@ -10,8 +10,10 @@
+  * Userspace (multipath/multipathd) path states
+  *
+  * PATH_WILD:
+- * - Use: None of the checkers (returned if we don't have an fd)
+- * - Description: Corner case where "fd < 0" for path fd (see checker_check())
++ * - Use: Any checker
++ * - Description: Corner case where "fd < 0" for path fd (see checker_check()),
++ *   or where a checker detects an unsupported device
++ *   (e.g. wrong checker configured for a given device).
+  *
+  * PATH_UNCHECKED:
+  * - Use: Only in directio checker
+@@ -108,6 +110,7 @@ enum {
+ 	CHECKER_MSGID_UP,
+ 	CHECKER_MSGID_DOWN,
+ 	CHECKER_MSGID_GHOST,
++	CHECKER_MSGID_UNSUPPORTED,
+ 	CHECKER_LAST_GENERIC_MSGID,
+ 	CHECKER_FIRST_MSGID = 100,	/* lowest msgid for checkers */
+ 	CHECKER_MSGTABLE_SIZE = 100,	/* max msg table size for checkers */
 -- 
 2.19.1
