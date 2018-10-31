@@ -1,14 +1,12 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 12/22] libmultipath/checkers: support
-	unsupported paths
-Date: Wed, 31 Oct 2018 11:59:39 +0100
-Message-ID: <20181031105939.22202-3-mwilck@suse.com>
-References: <20181031105939.22202-1-mwilck@suse.com>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: [PATCH 0/2] dm kcopyd: dm snapshot: Fix bugs causing
+	excessive memory usage and workqueue stalls
+Date: Wed, 31 Oct 2018 17:53:07 -0400
+Message-ID: <20181031215309.6493-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181031105939.22202-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,61 +16,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
+To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
+Cc: iliastsi@arrikto.com
 List-Id: dm-devel.ids
 
-We should be able to distinguish the case where a checker
-determines a path to be positively down from the case where
-the checker fails to obtain necessary information, e.g.
-because of a configuration problem (wrong checker).
-Use PATH_WILD for the latter case, as it's hardly used now.
+This patchset fixes two kcopyd and dm-snapshot related issues:
 
-Provide a generic message for the situation that a path
-checker can't handle a certain path.
+  1. If kcopyd is not used properly, the kcopyd job slab cache can grow
+     without limit causing excessive memory usage, which can lead to
+     user processes being killed by the OOM killer.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/checkers.c | 1 +
- libmultipath/checkers.h | 7 +++++--
- 2 files changed, 6 insertions(+), 2 deletions(-)
+  2. The kcopyd thread can hog the CPU while processing the submitted
+     jobs resulting in workqueue stalls and performance degradation.
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index 96086686..e31c028d 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -279,6 +279,7 @@ static const char *generic_msg[CHECKER_GENERIC_MSGTABLE_SIZE] = {
- 	[CHECKER_MSGID_UP] = " reports path is up",
- 	[CHECKER_MSGID_DOWN] = " reports path is down",
- 	[CHECKER_MSGID_GHOST] = " reports path is ghost",
-+	[CHECKER_MSGID_UNSUPPORTED] = " doesn't support this device",
- };
- 
- static const char *_checker_message(const struct checker *c)
-diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index 60b1321b..f6d56db5 100644
---- a/libmultipath/checkers.h
-+++ b/libmultipath/checkers.h
-@@ -10,8 +10,10 @@
-  * Userspace (multipath/multipathd) path states
-  *
-  * PATH_WILD:
-- * - Use: None of the checkers (returned if we don't have an fd)
-- * - Description: Corner case where "fd < 0" for path fd (see checker_check())
-+ * - Use: Any checker
-+ * - Description: Corner case where "fd < 0" for path fd (see checker_check()),
-+ *   or where a checker detects an unsupported device
-+ *   (e.g. wrong checker configured for a given device).
-  *
-  * PATH_UNCHECKED:
-  * - Use: Only in directio checker
-@@ -108,6 +110,7 @@ enum {
- 	CHECKER_MSGID_UP,
- 	CHECKER_MSGID_DOWN,
- 	CHECKER_MSGID_GHOST,
-+	CHECKER_MSGID_UNSUPPORTED,
- 	CHECKER_GENERIC_MSGTABLE_SIZE,
- 	CHECKER_FIRST_MSGID = 100,	/* lowest msgid for checkers */
- 	CHECKER_MSGTABLE_SIZE = 100,	/* max msg table size for checkers */
+The root cause for issue (1) is the way dm-snapshot uses kcopyd. In
+particular, the lack of an explicit or implicit limit to the maximum
+number of in-flight COW jobs.
+
+Issue (2) is caused by:
+
+  a. Again, the lack of an upper limit to the number of in-flight kcopyd
+     jobs created by dm-snapshot.
+
+  b. The fact that one can keep inserting new completed jobs through
+     dm_kcopyd_do_callback() or submitting copy jobs with a source size
+     of 0, while the kcopyd thread is processing these jobs. This can
+     lead to the kcopyd thread running completed jobs indefinitely.
+
+Relevant dmesg outputs are provided per patch.
+
+These issues were discovered using the device mapper test suite [1] and
+the fixes were also tested with it. The relevant tests used are
+documented per patch.
+
+[1] https://github.com/jthornber/device-mapper-test-suite
+
+Nikos Tsironis (2):
+  dm snapshot: Fix excessive memory usage and workqueue stalls
+  dm kcopyd: Fix bug causing workqueue stalls
+
+ drivers/md/dm-kcopyd.c | 19 ++++++++++++++-----
+ drivers/md/dm-snap.c   | 22 ++++++++++++++++++++++
+ 2 files changed, 36 insertions(+), 5 deletions(-)
+
 -- 
-2.19.1
+2.11.0
