@@ -1,10 +1,9 @@
-From: Shenghui Wang <shhuiw@foxmail.com>
-Subject: [PATCH] dm bufio: update comment in dm-bufio.c
-Date: Tue, 30 Oct 2018 15:35:54 +0800
-Message-ID: <20181030073554.1801-1-shhuiw@foxmail.com>
+From: Drew Hastings <dhastings@crucialwebhost.com>
+Subject: multipath target and non-request-stackable devices
+Date: Wed, 31 Oct 2018 02:32:45 -0700
+Message-ID: <CAN-y+EKcNSQL5_eFD1iuJeyUfk7UApgWWA_Vj72TKQN7-a_kVw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============8302101924194078878=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -15,75 +14,94 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: mpatocka@redhat.com, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-* Hashtable has been replaced by rbtree to manage buffers.
-  Update the comment.
-* Fix typo in the comment for dm_bufio_issue_flush
+--===============8302101924194078878==
+Content-Type: multipart/alternative; boundary="000000000000b47606057982fc0f"
 
-Signed-off-by: Shenghui Wang <shhuiw@foxmail.com>
----
- drivers/md/dm-bufio.c | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
+--000000000000b47606057982fc0f
+Content-Type: text/plain; charset="UTF-8"
 
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index dc385b70e4c3..0e9fcceaefd2 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -65,7 +65,7 @@
- 
- /*
-  * Linking of buffers:
-- *	All buffers are linked to cache_hash with their hash_list field.
-+ *	All buffers are linked to buffer_tree with their node field.
-  *
-  *	Clean buffers that are not being written (B_WRITING not set)
-  *	are linked to lru[LIST_CLEAN] with their lru_list field.
-@@ -457,7 +457,7 @@ static void free_buffer(struct dm_buffer *b)
- }
- 
- /*
-- * Link buffer to the hash list and clean or dirty queue.
-+ * Link buffer to the buffer tree and clean or dirty queue.
-  */
- static void __link_buffer(struct dm_buffer *b, sector_t block, int dirty)
- {
-@@ -472,7 +472,7 @@ static void __link_buffer(struct dm_buffer *b, sector_t block, int dirty)
- }
- 
- /*
-- * Unlink buffer from the hash list and dirty or clean queue.
-+ * Unlink buffer from the buffer tree and dirty or clean queue.
-  */
- static void __unlink_buffer(struct dm_buffer *b)
- {
-@@ -993,7 +993,7 @@ static struct dm_buffer *__bufio_new(struct dm_bufio_client *c, sector_t block,
- 
- 	/*
- 	 * We've had a period where the mutex was unlocked, so need to
--	 * recheck the hash table.
-+	 * recheck the buffer tree.
- 	 */
- 	b = __find(c, block);
- 	if (b) {
-@@ -1327,7 +1327,7 @@ int dm_bufio_write_dirty_buffers(struct dm_bufio_client *c)
- EXPORT_SYMBOL_GPL(dm_bufio_write_dirty_buffers);
- 
- /*
-- * Use dm-io to send and empty barrier flush the device.
-+ * Use dm-io to send an empty barrier to flush the device.
-  */
- int dm_bufio_issue_flush(struct dm_bufio_client *c)
- {
-@@ -1356,7 +1356,7 @@ EXPORT_SYMBOL_GPL(dm_bufio_issue_flush);
-  * Then, we write the buffer to the original location if it was dirty.
-  *
-  * Then, if we are the only one who is holding the buffer, relink the buffer
-- * in the hash queue for the new location.
-+ * in the buffer tree for the new location.
-  *
-  * If there was someone else holding the buffer, we write it to the new
-  * location but not relink it, because that other user needs to have the buffer
--- 
-2.18.0
+Firstly, thanks for the hard work you guys are doing on the dm drivers.
+
+I'm curious to know if I correctly understand the limitations of the
+multipath target. I'm using kernel 4.19.0-rc5
+
+When attempting to create a device from two NVMEs connected over nvme_rdma
+/ nvmf, I get the following message:
+
+[43012.002418] device-mapper: table: table load rejected: including
+non-request-stackable devices
+[43012.004067] device-mapper: table: unable to determine table type
+
+Here's an example request that will fail:
+
+dmsetup create test_path --table "0 1562824368 multipath 0 0 2 1
+round-robin 0 1 1 /dev/nvme1n1 1 round-robin 0 1 1 /dev/nvme2n1 1"
+
+This will work:
+
+dmsetup create test_path --table "0 1562824368 multipath 0 0 2 1
+round-robin 0 1 1 /dev/sdc 1 round-robin 0 1 1 /dev/sdb 1"
+
+After looking at dm-table.c, it seems like this may be an issue of these
+underlying devices not being compatible with the multipath driver. I had
+noticed this same error when trying "non-physical" devices in other tests,
+such as trying to multipath other virtual devices.
+
+Is there anything that can be done to do the (relatively "basic") multipath
+that detects IO errors and switches to the other device? It seems like
+fundamentally multipath's error detection works in the same way raid1
+implements IO error detection of the underlying devices, so why is it that
+multipath seems to have this limitation but raid1 does not?
+
+Is md-multipath.c still in use? It seems like it might not have this same
+restriction on the underlying device.
+
+Thank you so much for your time!
+
+--000000000000b47606057982fc0f
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div di=
+r=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr">Firstly, thanks for the hard wo=
+rk you guys are doing on the dm drivers.<div><br></div><div>I&#39;m curious=
+ to know if I correctly understand the limitations of the multipath target.=
+ I&#39;m using kernel=C2=A04.19.0-rc5</div><div><br></div><div>When attempt=
+ing to create a device from two NVMEs connected over nvme_rdma / nvmf, I ge=
+t the following message:<br><br><div>[43012.002418] device-mapper: table: t=
+able load rejected: including non-request-stackable devices</div><div>[4301=
+2.004067] device-mapper: table: unable to determine table type</div></div><=
+div><br></div><div>Here&#39;s an example request that will fail:</div><div>=
+<br></div><div>dmsetup create test_path --table &quot;0 1562824368 multipat=
+h 0 0 2 1 round-robin 0 1 1 /dev/nvme1n1 1 round-robin 0 1 1 /dev/nvme2n1 1=
+&quot;<br></div><div><br></div><div>This will work:</div><div><br></div><di=
+v>dmsetup create test_path=C2=A0--table &quot;0 1562824368 multipath 0 0 2 =
+1 round-robin 0 1 1 /dev/sdc 1 round-robin 0 1 1 /dev/sdb 1&quot;<br></div>=
+<div><br></div><div>After looking at=C2=A0dm-table.c, it seems like this ma=
+y be an issue of these underlying devices not being compatible with the mul=
+tipath driver. I had noticed this same error when trying &quot;non-physical=
+&quot; devices in other tests, such as trying to multipath other virtual de=
+vices.</div><div><br></div><div>Is there anything that can be done to do th=
+e (relatively &quot;basic&quot;) multipath that detects IO errors and switc=
+hes to the other device? It seems like fundamentally multipath&#39;s error =
+detection works in the same way raid1 implements IO error detection of the =
+underlying devices, so why is it that multipath seems to have this limitati=
+on but raid1 does not?</div><div><br></div><div>Is=C2=A0md-multipath.c stil=
+l in use? It seems like it might not have this same restriction on the unde=
+rlying device.</div><div><br></div><div>Thank you so much for your time!</d=
+iv></div></div></div></div></div></div></div>
+
+--000000000000b47606057982fc0f--
+
+
+--===============8302101924194078878==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============8302101924194078878==--
