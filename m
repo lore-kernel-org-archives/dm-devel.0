@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v5 16/21] libmultipath: tur checker: leave
-	unsupported paths alone
-Date: Fri,  2 Nov 2018 13:21:20 +0100
-Message-ID: <20181102122125.30906-17-mwilck@suse.com>
+Subject: [PATCH v5 18/21] multipathd: check_path: improve logging
+	for "unusable path" case
+Date: Fri,  2 Nov 2018 13:21:22 +0100
+Message-ID: <20181102122125.30906-19-mwilck@suse.com>
 References: <20181102122125.30906-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,30 +22,25 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-A checker shouldn't set the path state to PATH_DOWN if it fails
-to obtain information about the path in the first place. Add logic
-to the checker to distinguish a failed path from an unsupported path.
-
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/tur.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ multipathd/main.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 22734be2..a27474f9 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -125,6 +125,10 @@ retry:
- 	io_hdr.timeout = timeout * 1000;
- 	io_hdr.pack_id = 0;
- 	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
-+		if (errno == ENOTTY) {
-+			*msgid = CHECKER_MSGID_UNSUPPORTED;
-+			return PATH_WILD;
-+		}
- 		*msgid = CHECKER_MSGID_DOWN;
- 		return PATH_DOWN;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 2f922db7..c57aa392 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1897,7 +1897,8 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
  	}
+ 
+ 	if (newstate == PATH_WILD || newstate == PATH_UNCHECKED) {
+-		condlog(2, "%s: unusable path", pp->dev);
++		condlog(2, "%s: unusable path - checker failed", pp->dev);
++		LOG_MSG(2, verbosity, pp);
+ 		conf = get_multipath_config();
+ 		pthread_cleanup_push(put_multipath_config, conf);
+ 		pathinfo(pp, conf, 0);
 -- 
 2.19.1
