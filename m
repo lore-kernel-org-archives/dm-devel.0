@@ -1,16 +1,17 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v5 03/21] libmultipath/checkers: replace
-	message by msgid
-Date: Fri, 2 Nov 2018 11:05:17 -0500
-Message-ID: <20181102160517.GE29522@octiron.msp.redhat.com>
-References: <20181102122125.30906-1-mwilck@suse.com>
-	<20181102122125.30906-4-mwilck@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm crypt: use unsigned long long instead of sector_t
+ to store iv_offset
+Date: Fri, 2 Nov 2018 12:11:49 -0400
+Message-ID: <20181102161149.GA1406@redhat.com>
+References: <1541062439-55558-1-git-send-email-alios_sys_security@linux.alibaba.com>
+	<20181101200642.GA29073@redhat.com>
+	<0064ec33-196d-7ff4-51a4-9270389ac2aa@linux.alibaba.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20181102122125.30906-4-mwilck@suse.com>
+In-Reply-To: <0064ec33-196d-7ff4-51a4-9270389ac2aa@linux.alibaba.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,249 +21,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+To: AliOS system security <alios_sys_security@linux.alibaba.com>
+Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Nov 02, 2018 at 01:21:07PM +0100, Martin Wilck wrote:
-> Replace the character array "message" in struct checker with
-> a "message ID" field.
+On Fri, Nov 02 2018 at 12:31am -0400,
+AliOS system security <alios_sys_security@linux.alibaba.com> wrote:
+
+> On 2018/11/2 4:06, Mike Snitzer wrote:
+> >On Thu, Nov 01 2018 at  4:53am -0400,
+> >AliOS system security <alios_sys_security@linux.alibaba.com> wrote:
+> >
+> >>The iv_offset in the mapping table of crypt target is a 64bit number
+> >>when iv mode is plain64 or plain64be. It will be assigned to iv_offset of
+> >>struct crypt_config, cc_sector of struct convert_context and iv_sector of
+> >>struct dm_crypt_request. These structures members are defined as a sector_t.
+> >>But sector_t is 32bit when CONFIG_LBDAF is not set in 32bit kernel. In this
+> >>situation sector_t is not big enough to store the 64bit iv_offset.
+> >I really don't think this is needed.
+> >
+> >cc->iv_offset can only address a the address space used to access the
+> >device.  Which is expressed in terms of sectors.  Therefore if
+> >CONFIG_LBDAF is not set in 32bit kernel then there is no need to address
+> >beyond that which 'sector_t' addresses.
+> >
+> >Please show proof to the contrary if you still think this change is
+> >needed.
+> >
+> >Mike
 > 
-> The generic checker code defines a couple of standard message IDs
-> and corresponding messages. Checker-specific message IDs start
-> at CHECKER_FIRST_MSG. Checkers that implement specific message
-> IDs must provide a table for converting the IDs into actual log
-> messages.
 > 
-> This simplifies the checker data structure and the handling of
-> checker messages in the critical checker code path. It comes at
-> the cost that only constant message strings are supported. It
-> turns out that only a single checker log message (in the emc_clariion
-> checker) was dynamically generated, and the missing information can
-> be provided with a standard condlog message.
+> Sorry I made a mistake. I read
+> Documentation/device-mapper/dm-crypt.txt again and found that the IV
+> offset is a sector count. So it make sense to store the iv_offset as
+> a sector_t.
 > 
-> Follow-up patches implement this for the existing checkers.
+> In addition, I want to describe what problem I met in the beginning.
+> I made a crypt.img with the crypt param
+> "aes-cbc-plain64 0x1234...5678 1311768465173141112 /dev/loop0 0" in
+> a 32bit kernel with CONFIG_LBDAF=y.
+> The iv_offset is set to a 64bit number and the iv mode is set to
+> plain64. Someday I recompiled my kernel but
+> CONFIG_LBDAF is not set this time. When I reload the crypt.img with
+> the same crypt param in new kernel,
+> I got ioctl(..., DM_TABLE_LOAD, ...) return 0 but the content of
+> /dev/dm-0 is incorrect.
 > 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/checkers.c  | 61 +++++++++++++++++++++++++++++++++-------
->  libmultipath/checkers.h  | 43 ++++++++++++++++++++++++----
->  libmultipath/discovery.c |  4 +--
->  3 files changed, 90 insertions(+), 18 deletions(-)
-> 
-> diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-> index 0bacc864..a1b5cb45 100644
-> --- a/libmultipath/checkers.c
-> +++ b/libmultipath/checkers.c
-> @@ -141,6 +141,22 @@ struct checker * add_checker (char *multipath_dir, char * name)
->  	if (!c->free)
->  		goto out;
->  
-> +	c->msgtable_size = 0;
-> +	c->msgtable = dlsym(c->handle, "libcheck_msgtable");
-> +
-> +	if (c->msgtable != NULL) {
-> +		const char **p;
-> +
-> +		for (p = c->msgtable;
-> +		     *p && (p - c->msgtable) < CHECKER_MSGTABLE_SIZE; p++)
-> +			/* nothing */;
-> +
-> +		c->msgtable_size = p - c->msgtable;
-> +	} else
-> +		c->msgtable_size = 0;
-> +	condlog(3, "checker %s: message table size = %d",
-> +		c->name, c->msgtable_size);
-> +
->  done:
->  	c->fd = -1;
->  	c->sync = 1;
-> @@ -222,16 +238,16 @@ int checker_check (struct checker * c, int path_state)
->  	if (!c)
->  		return PATH_WILD;
->  
-> -	c->message[0] = '\0';
-> +	c->msgid = CHECKER_MSGID_NONE;
->  	if (c->disable) {
-> -		MSG(c, "checker disabled");
-> +		c->msgid = CHECKER_MSGID_DISABLED;
->  		return PATH_UNCHECKED;
->  	}
->  	if (!strncmp(c->name, NONE, 4))
->  		return path_state;
->  
->  	if (c->fd < 0) {
-> -		MSG(c, "no usable fd");
-> +		c->msgid = CHECKER_MSGID_NO_FD;
->  		return PATH_WILD;
->  	}
->  	r = c->check(c);
-> @@ -248,25 +264,48 @@ int checker_selected (struct checker * c)
->  	return (c->check) ? 1 : 0;
->  }
->  
-> -char * checker_name (struct checker * c)
-> +const char *checker_name(const struct checker *c)
->  {
->  	if (!c)
->  		return NULL;
->  	return c->name;
->  }
->  
-> -char * checker_message (struct checker * c)
-> +static const char *generic_msg[CHECKER_GENERIC_MSGTABLE_SIZE] = {
-> +	[CHECKER_MSGID_NONE] = "",
-> +	[CHECKER_MSGID_DISABLED] = " is disabled",
-> +	[CHECKER_MSGID_NO_FD] = " has no usable fd",
-> +	[CHECKER_MSGID_INVALID] = " provided invalid message id",
-> +	[CHECKER_MSGID_UP] = " reports path is up",
-> +	[CHECKER_MSGID_DOWN] = " reports path is down",
-> +	[CHECKER_MSGID_GHOST] = " reports path is ghost",
-> +};
-> +
-> +const char *checker_message(const struct checker *c)
->  {
-> -	if (!c)
-> -		return NULL;
-> -	return c->message;
-> +	int id;
-> +
-> +	if (!c || c->msgid < 0 ||
-> +	    (c->msgid >= CHECKER_GENERIC_MSGTABLE_SIZE &&
-> +	     c->msgid < CHECKER_FIRST_MSGID))
-> +		goto bad_id;
-> +
-> +	if (c->msgid < CHECKER_GENERIC_MSGTABLE_SIZE)
-> +		return generic_msg[c->msgid];
-> +
-> +	id = c->msgid - CHECKER_FIRST_MSGID;
-> +	if (id < c->cls->msgtable_size)
-> +		return c->cls->msgtable[id];
-> +
-> +bad_id:
-> +	return generic_msg[CHECKER_MSGID_NONE];
->  }
->  
->  void checker_clear_message (struct checker *c)
->  {
->  	if (!c)
->  		return;
-> -	c->message[0] = '\0';
-> +	c->msgid = CHECKER_MSGID_NONE;
->  }
->  
->  void checker_get (char *multipath_dir, struct checker * dst, char * name)
-> @@ -288,10 +327,12 @@ void checker_get (char *multipath_dir, struct checker * dst, char * name)
->  	dst->fd = src->fd;
->  	dst->sync = src->sync;
->  	strncpy(dst->name, src->name, CHECKER_NAME_LEN);
-> -	strncpy(dst->message, src->message, CHECKER_MSG_LEN);
-> +	dst->msgid = CHECKER_MSGID_NONE;
->  	dst->check = src->check;
->  	dst->init = src->init;
->  	dst->free = src->free;
-> +	dst->msgtable = src->msgtable;
-> +	dst->msgtable_size = src->msgtable_size;
->  	dst->handle = NULL;
->  	src->refcount++;
->  }
-> diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-> index 7b18a1ac..8e26f1df 100644
-> --- a/libmultipath/checkers.h
-> +++ b/libmultipath/checkers.h
-> @@ -97,6 +97,22 @@ enum path_check_state {
->  #define CHECKER_DEV_LEN 256
->  #define LIB_CHECKER_NAMELEN 256
->  
-> +/*
-> + * Generic message IDs for use in checkers.
-> + */
-> +enum {
-> +	CHECKER_MSGID_NONE = 0,
-> +	CHECKER_MSGID_DISABLED,
-> +	CHECKER_MSGID_NO_FD,
-> +	CHECKER_MSGID_INVALID,
-> +	CHECKER_MSGID_UP,
-> +	CHECKER_MSGID_DOWN,
-> +	CHECKER_MSGID_GHOST,
-> +	CHECKER_GENERIC_MSGTABLE_SIZE,
-> +	CHECKER_FIRST_MSGID = 100,	/* lowest msgid for checkers */
-> +	CHECKER_MSGTABLE_SIZE = 100,	/* max msg table size for checkers */
-> +};
-> +
->  struct checker {
->  	struct list_head node;
->  	void *handle;
-> @@ -106,7 +122,7 @@ struct checker {
->  	unsigned int timeout;
->  	int disable;
->  	char name[CHECKER_NAME_LEN];
-> -	char message[CHECKER_MSG_LEN];       /* comm with callers */
-> +	short msgid;		             /* checker-internal extra status */
->  	void * context;                      /* store for persistent data */
->  	void ** mpcontext;                   /* store for persistent data shared
->  						multipath-wide. Use MALLOC if
-> @@ -114,10 +130,10 @@ struct checker {
->  	int (*check)(struct checker *);
->  	int (*init)(struct checker *);       /* to allocate the context */
->  	void (*free)(struct checker *);      /* to free the context */
-> +	const char**msgtable;
-> +	short msgtable_size;
->  };
->  
-> -#define MSG(c, fmt, args...) snprintf((c)->message, CHECKER_MSG_LEN, fmt, ##args);
-> -
->  char * checker_state_name (int);
->  int init_checkers (char *);
->  void cleanup_checkers (void);
-> @@ -134,14 +150,29 @@ void checker_enable (struct checker *);
->  void checker_disable (struct checker *);
->  int checker_check (struct checker *, int);
->  int checker_selected (struct checker *);
-> -char * checker_name (struct checker *);
-> -char * checker_message (struct checker *);
-> +const char *checker_name (const struct checker *);
-> +/*
-> + * This returns a string that's best prepended with "$NAME checker",
-> + * where $NAME is the return value of checker_name().
-> + */
-> +const char *checker_message(const struct checker *);
->  void checker_clear_message (struct checker *c);
->  void checker_get (char *, struct checker *, char *);
->  
-> -/* Functions exported by path checker dynamic libraries (.so) */
-> +/* Prototypes for symbols exported by path checker dynamic libraries (.so) */
->  int libcheck_check(struct checker *);
->  int libcheck_init(struct checker *);
->  void libcheck_free(struct checker *);
-> +/*
-> + * msgid => message map.
-> + *
-> + * It only needs to be provided if the checker defines specific
-> + * message IDs.
-> + * Message IDs available to checkers start at CHECKER_FIRST_MSG.
-> + * The msgtable array is 0-based, i.e. msgtable[0] is the message
-> + * for msgid == __CHECKER_FIRST_MSG.
-> + * The table ends with a NULL element.
-> + */
-> +extern const char *libcheck_msgtable[];
->  
->  #endif /* _CHECKERS_H */
-> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-> index 3550c3a7..5e59e273 100644
-> --- a/libmultipath/discovery.c
-> +++ b/libmultipath/discovery.c
-> @@ -1589,8 +1589,8 @@ get_state (struct path * pp, struct config *conf, int daemon, int oldstate)
->  		checker_name(c), checker_state_name(state));
->  	if (state != PATH_UP && state != PATH_GHOST &&
->  	    strlen(checker_message(c)))
-> -		condlog(3, "%s: checker msg is \"%s\"",
-> -			pp->dev, checker_message(c));
-> +		condlog(3, "%s: %s checker%s",
-> +			pp->dev, checker_name(c), checker_message(c));
->  	return state;
->  }
->  
-> -- 
-> 2.19.1
+> So, is this situation, set the iv mode to plain64 or plain64be in a
+> 32bit kernel with CONFIG_LBDAF is not set, a problem? Should the
+> crypt_ctr() return an error code when this happned? Or we just
+> support 64bit iv mode
+> all the time regardless of CONFIG_LBDAF?
+
+Please see Milan's reply from earlier today.  You did find a real bug.
+Milan is going to iterate on your patch (likely switch to using uint64_t
+and update the patch header to capture all the useful context for why
+this is a real issue -- albeit one that has apparently been around since
+2.6.20).
+
+I'll still attribute the change to you, but Milan's contribution will be
+an incremental improvement on your initial patch.
+
+Thanks for reporting and fixing this.
+
+Mike
