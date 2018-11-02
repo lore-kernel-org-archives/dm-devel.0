@@ -1,14 +1,13 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v5 12/21] libmultipath/checkers: support
-	unsupported paths
-Date: Fri,  2 Nov 2018 13:21:16 +0100
-Message-ID: <20181102122125.30906-13-mwilck@suse.com>
-References: <20181102122125.30906-1-mwilck@suse.com>
+Subject: [PATCH v3 4/7] multipathd: open client socket early
+Date: Fri,  2 Nov 2018 13:23:59 +0100
+Message-ID: <20181102122402.31145-5-mwilck@suse.com>
+References: <20181102122402.31145-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181102122125.30906-1-mwilck@suse.com>
+In-Reply-To: <20181102122402.31145-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,58 +21,124 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-We should be able to distinguish the case where a checker
-determines a path to be positively down from the case where
-the checker fails to obtain necessary information, e.g.
-because of a configuration problem (wrong checker).
-Use PATH_WILD for the latter case, as it's hardly used now.
+Open the unix socket in multipathd code and pass the fd to
+uxsock_listen(). This will enable us to make the main thread
+wait for successful socket initialization in a follow-up patch.
 
-Provide a generic message for the situation that a path
-checker can't handle a certain path.
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers.c | 1 +
- libmultipath/checkers.h | 7 +++++--
- 2 files changed, 6 insertions(+), 2 deletions(-)
+ multipathd/main.c   | 27 ++++++++++++++++++++++-----
+ multipathd/uxlsnr.c | 14 ++------------
+ multipathd/uxlsnr.h |  5 +++--
+ 3 files changed, 27 insertions(+), 19 deletions(-)
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index a1b5cb45..90313c35 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -279,6 +279,7 @@ static const char *generic_msg[CHECKER_GENERIC_MSGTABLE_SIZE] = {
- 	[CHECKER_MSGID_UP] = " reports path is up",
- 	[CHECKER_MSGID_DOWN] = " reports path is down",
- 	[CHECKER_MSGID_GHOST] = " reports path is ghost",
-+	[CHECKER_MSGID_UNSUPPORTED] = " doesn't support this device",
- };
+diff --git a/multipathd/main.c b/multipathd/main.c
+index a022bdb5..a91a14c6 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -66,6 +66,7 @@ static int use_watchdog;
+ #include "pgpolicies.h"
+ #include "uevent.h"
+ #include "log.h"
++#include "uxsock.h"
  
- const char *checker_message(const struct checker *c)
-diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index 8e26f1df..3cd46bdf 100644
---- a/libmultipath/checkers.h
-+++ b/libmultipath/checkers.h
-@@ -10,8 +10,10 @@
-  * Userspace (multipath/multipathd) path states
-  *
-  * PATH_WILD:
-- * - Use: None of the checkers (returned if we don't have an fd)
-- * - Description: Corner case where "fd < 0" for path fd (see checker_check())
-+ * - Use: Any checker
-+ * - Description: Corner case where "fd < 0" for path fd (see checker_check()),
-+ *   or where a checker detects an unsupported device
-+ *   (e.g. wrong checker configured for a given device).
-  *
-  * PATH_UNCHECKED:
-  * - Use: Only in directio checker
-@@ -108,6 +110,7 @@ enum {
- 	CHECKER_MSGID_UP,
- 	CHECKER_MSGID_DOWN,
- 	CHECKER_MSGID_GHOST,
-+	CHECKER_MSGID_UNSUPPORTED,
- 	CHECKER_GENERIC_MSGTABLE_SIZE,
- 	CHECKER_FIRST_MSGID = 100,	/* lowest msgid for checkers */
- 	CHECKER_MSGTABLE_SIZE = 100,	/* max msg table size for checkers */
+ #include "mpath_cmd.h"
+ #include "mpath_persist.h"
+@@ -1496,12 +1497,24 @@ uevqloop (void * ap)
+ static void *
+ uxlsnrloop (void * ap)
+ {
++	long ux_sock;
++
++	pthread_cleanup_push(rcu_unregister, NULL);
++	rcu_register_thread();
++
++	ux_sock = ux_socket_listen(DEFAULT_SOCKET);
++	if (ux_sock == -1) {
++		condlog(1, "could not create uxsock: %d", errno);
++		exit_daemon();
++		goto out;
++	}
++	pthread_cleanup_push(uxsock_cleanup, (void *)ux_sock);
++
+ 	if (cli_init()) {
+ 		condlog(1, "Failed to init uxsock listener");
+-		return NULL;
++		exit_daemon();
++		goto out_sock;
+ 	}
+-	pthread_cleanup_push(rcu_unregister, NULL);
+-	rcu_register_thread();
+ 	set_handler_callback(LIST+PATHS, cli_list_paths);
+ 	set_handler_callback(LIST+PATHS+FMT, cli_list_paths_fmt);
+ 	set_handler_callback(LIST+PATHS+RAW+FMT, cli_list_paths_raw);
+@@ -1556,8 +1569,12 @@ uxlsnrloop (void * ap)
+ 	set_handler_callback(UNSETPRKEY+MAP, cli_unsetprkey);
+ 
+ 	umask(077);
+-	uxsock_listen(&uxsock_trigger, ap);
+-	pthread_cleanup_pop(1);
++	uxsock_listen(&uxsock_trigger, ux_sock, ap);
++
++out_sock:
++	pthread_cleanup_pop(1); /* uxsock_cleanup */
++out:
++	pthread_cleanup_pop(1); /* rcu_unregister */
+ 	return NULL;
+ }
+ 
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index 6f666663..773bc878 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -165,24 +165,15 @@ void uxsock_cleanup(void *arg)
+ /*
+  * entry point
+  */
+-void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
++void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
++		     void * trigger_data)
+ {
+-	long ux_sock;
+ 	int rlen;
+ 	char *inbuf;
+ 	char *reply;
+ 	sigset_t mask;
+ 	int old_clients = MIN_POLLS;
+ 
+-	ux_sock = ux_socket_listen(DEFAULT_SOCKET);
+-
+-	if (ux_sock == -1) {
+-		condlog(1, "could not create uxsock: %d", errno);
+-		exit_daemon();
+-	}
+-
+-	pthread_cleanup_push(uxsock_cleanup, (void *)ux_sock);
+-
+ 	condlog(3, "uxsock: startup listener");
+ 	polls = (struct pollfd *)MALLOC((MIN_POLLS + 1) * sizeof(struct pollfd));
+ 	if (!polls) {
+@@ -322,6 +313,5 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ 		}
+ 	}
+ 
+-	pthread_cleanup_pop(1);
+ 	return NULL;
+ }
+diff --git a/multipathd/uxlsnr.h b/multipathd/uxlsnr.h
+index d51a8f99..18f008d7 100644
+--- a/multipathd/uxlsnr.h
++++ b/multipathd/uxlsnr.h
+@@ -5,7 +5,8 @@
+ 
+ typedef int (uxsock_trigger_fn)(char *, char **, int *, bool, void *);
+ 
+-void * uxsock_listen(uxsock_trigger_fn uxsock_trigger,
+-		     void * trigger_data);
++void uxsock_cleanup(void *arg);
++void *uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
++		    void * trigger_data);
+ 
+ #endif
 -- 
 2.19.1
