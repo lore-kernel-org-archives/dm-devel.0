@@ -1,14 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v5 17/21] libmultipath: pathinfo: don't blank
-	wwid if checker fails
-Date: Fri,  2 Nov 2018 13:21:21 +0100
-Message-ID: <20181102122125.30906-18-mwilck@suse.com>
-References: <20181102122125.30906-1-mwilck@suse.com>
+Subject: [PATCH v3 1/7] libmultipath: set pp->checkint in
+	store_pathinfo()
+Date: Fri,  2 Nov 2018 13:23:56 +0100
+Message-ID: <20181102122402.31145-2-mwilck@suse.com>
+References: <20181102122402.31145-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181102122125.30906-1-mwilck@suse.com>
+In-Reply-To: <20181102122402.31145-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,33 +22,56 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Blanking a WWID is a dangerous operation. E.g. configure() would
-consider the path in question as invalid and orphan it if the
-WWID is blank. Don't do this checker failures which may be transient
-or indicate a badly configured or otherwise malfunctioning checker.
-Moreover, we try to determine WWID even if path_offline returns
-PATH_DOWN in the first place, so why should we not if the checker
-has a problem?
+store_pathinfo is called with valid conf pointer anyway, so
+checkint is available. pp->checkint is now valid for every
+path after path_discovery().
+
+This fixes a bad conf access in cli_add_path().
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 3 ---
- 1 file changed, 3 deletions(-)
+ libmultipath/discovery.c  | 1 +
+ multipathd/cli_handlers.c | 1 -
+ multipathd/main.c         | 2 --
+ 3 files changed, 1 insertion(+), 3 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 5e59e273..a6159e4a 100644
+index a6159e4a..63558ad8 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1944,9 +1944,6 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 		if (path_state == PATH_UP) {
- 			pp->chkrstate = pp->state = get_state(pp, conf, 0,
- 							      path_state);
--			if (pp->state == PATH_UNCHECKED ||
--			    pp->state == PATH_WILD)
--				goto blank;
- 			if (pp->state == PATH_TIMEOUT)
- 				pp->state = PATH_DOWN;
- 			if (pp->state == PATH_UP && !pp->size) {
+@@ -103,6 +103,7 @@ store_pathinfo (vector pathvec, struct config *conf,
+ 	err = store_path(pathvec, pp);
+ 	if (err)
+ 		goto out;
++	pp->checkint = conf->checkint;
+ 
+ out:
+ 	if (err)
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 75000807..4aea4ce7 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -736,7 +736,6 @@ cli_add_path (void * v, char ** reply, int * len, void * data)
+ 			condlog(0, "%s: failed to store path info", param);
+ 			return 1;
+ 		}
+-		pp->checkint = conf->checkint;
+ 	}
+ 	return ev_add_path(pp, vecs, 1);
+ blacklisted:
+diff --git a/multipathd/main.c b/multipathd/main.c
+index c57aa392..958545a4 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2324,8 +2324,6 @@ configure (struct vectors * vecs)
+ 			free_path(pp);
+ 			i--;
+ 		}
+-		else
+-			pp->checkint = conf->checkint;
+ 		pthread_cleanup_pop(1);
+ 	}
+ 	if (map_discovery(vecs)) {
 -- 
 2.19.1
