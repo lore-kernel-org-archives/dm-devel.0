@@ -1,14 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v5 20/21] libmultipath: sync_map_state: log
-	failing paths
-Date: Fri,  2 Nov 2018 13:21:24 +0100
-Message-ID: <20181102122125.30906-21-mwilck@suse.com>
-References: <20181102122125.30906-1-mwilck@suse.com>
+Subject: [PATCH v3 2/7] multipathd: remove
+	init_path_check_interval()
+Date: Fri,  2 Nov 2018 13:23:57 +0100
+Message-ID: <20181102122402.31145-3-mwilck@suse.com>
+References: <20181102122402.31145-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181102122125.30906-1-mwilck@suse.com>
+In-Reply-To: <20181102122402.31145-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,30 +22,47 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Emit a log message when force-failing exisiting paths.
+After "libmultipath: set pp->checkint in store_pathinfo()",
+pp-checkint should always be properly initialized, so this code
+is not needed any more.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs_vec.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ multipathd/main.c | 14 --------------
+ 1 file changed, 14 deletions(-)
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index f87d69d4..c85823a0 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -318,8 +318,11 @@ sync_map_state(struct multipath *mpp)
- 			else if ((pp->dmstate == PSTATE_ACTIVE ||
- 				  pp->dmstate == PSTATE_UNDEF) &&
- 				 (pp->state == PATH_DOWN ||
--				  pp->state == PATH_SHAKY))
-+				  pp->state == PATH_SHAKY)) {
-+				condlog(2, "sync_map_state: failing %s state %d dmstate %d",
-+					pp->dev, pp->state, pp->dmstate);
- 				dm_fail_path(mpp->alias, pp->dev_t);
-+			}
- 		}
- 	}
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 958545a4..dfc10e54 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2133,19 +2133,6 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	return 1;
  }
+ 
+-static void init_path_check_interval(struct vectors *vecs)
+-{
+-	struct config *conf;
+-	struct path *pp;
+-	unsigned int i;
+-
+-	vector_foreach_slot (vecs->pathvec, pp, i) {
+-		conf = get_multipath_config();
+-		pp->checkint = conf->checkint;
+-		put_multipath_config(conf);
+-	}
+-}
+-
+ static void *
+ checkerloop (void *ap)
+ {
+@@ -2729,7 +2716,6 @@ child (void * param)
+ 	 */
+ 	post_config_state(DAEMON_CONFIGURE);
+ 
+-	init_path_check_interval(vecs);
+ 
+ 	if (poll_dmevents) {
+ 		if (init_dmevent_waiter(vecs)) {
 -- 
 2.19.1
