@@ -1,13 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 4/7] multipathd: open client socket early
-Date: Fri,  2 Nov 2018 13:23:59 +0100
-Message-ID: <20181102122402.31145-5-mwilck@suse.com>
-References: <20181102122402.31145-1-mwilck@suse.com>
+Subject: [PATCH v5 06/21] libmultipath/checkers: emc_clariion:
+	use message id
+Date: Fri,  2 Nov 2018 13:21:10 +0100
+Message-ID: <20181102122125.30906-7-mwilck@suse.com>
+References: <20181102122125.30906-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181102122402.31145-1-mwilck@suse.com>
+In-Reply-To: <20181102122125.30906-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,124 +22,143 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Open the unix socket in multipathd code and pass the fd to
-uxsock_listen(). This will enable us to make the main thread
-wait for successful socket initialization in a follow-up patch.
+emc_clariion is the only path checker that was using a non-constant
+message ("read error" case). This isn't possible with the msgid
+approach any more. Use condlog() for the dynamic log message and
+simply report "read error" as checker message.
 
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c   | 27 ++++++++++++++++++++++-----
- multipathd/uxlsnr.c | 14 ++------------
- multipathd/uxlsnr.h |  5 +++--
- 3 files changed, 27 insertions(+), 19 deletions(-)
+ libmultipath/checkers/emc_clariion.c | 60 +++++++++++++++++++---------
+ 1 file changed, 42 insertions(+), 18 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index a022bdb5..a91a14c6 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -66,6 +66,7 @@ static int use_watchdog;
- #include "pgpolicies.h"
- #include "uevent.h"
- #include "log.h"
-+#include "uxsock.h"
+diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
+index 9115b1b9..f8e55b93 100644
+--- a/libmultipath/checkers/emc_clariion.c
++++ b/libmultipath/checkers/emc_clariion.c
+@@ -41,6 +41,35 @@
+ 				((struct emc_clariion_checker_LU_context *)\
+ 					(*c->mpcontext))->inactive_snap = 0
  
- #include "mpath_cmd.h"
- #include "mpath_persist.h"
-@@ -1496,12 +1497,24 @@ uevqloop (void * ap)
- static void *
- uxlsnrloop (void * ap)
- {
-+	long ux_sock;
++enum {
++	MSG_CLARIION_QUERY_FAILED = CHECKER_FIRST_MSGID,
++	MSG_CLARIION_QUERY_ERROR,
++	MSG_CLARIION_PATH_CONFIG,
++	MSG_CLARIION_UNIT_REPORT,
++	MSG_CLARIION_PATH_NOT_AVAIL,
++	MSG_CLARIION_LUN_UNBOUND,
++	MSG_CLARIION_WWN_CHANGED,
++	MSG_CLARIION_READ_ERROR,
++	MSG_CLARIION_PASSIVE_GOOD,
++};
 +
-+	pthread_cleanup_push(rcu_unregister, NULL);
-+	rcu_register_thread();
++#define _IDX(x) (MSG_CLARIION_ ## x - CHECKER_FIRST_MSGID)
++const char *libcheck_msgtable[] = {
++	[_IDX(QUERY_FAILED)] = ": sending query command failed",
++	[_IDX(QUERY_ERROR)] = ": query command indicates error",
++	[_IDX(PATH_CONFIG)] =
++	": Path not correctly configured for failover",
++	[_IDX(UNIT_REPORT)] =
++	": Path unit report page in unknown format",
++	[_IDX(PATH_NOT_AVAIL)] =
++	": Path not available for normal operations",
++	[_IDX(LUN_UNBOUND)] = ": Logical Unit is unbound or LUNZ",
++	[_IDX(WWN_CHANGED)] = ": Logical Unit WWN has changed",
++	[_IDX(READ_ERROR)] = ": Read error",
++	[_IDX(PASSIVE_GOOD)] = ": Active path is healthy",
++	NULL,
++};
 +
-+	ux_sock = ux_socket_listen(DEFAULT_SOCKET);
-+	if (ux_sock == -1) {
-+		condlog(1, "could not create uxsock: %d", errno);
-+		exit_daemon();
-+		goto out;
-+	}
-+	pthread_cleanup_push(uxsock_cleanup, (void *)ux_sock);
-+
- 	if (cli_init()) {
- 		condlog(1, "Failed to init uxsock listener");
--		return NULL;
-+		exit_daemon();
-+		goto out_sock;
+ struct emc_clariion_checker_path_context {
+ 	char wwn[16];
+ 	unsigned wwn_set;
+@@ -116,17 +145,16 @@ int libcheck_check (struct checker * c)
+ 	io_hdr.timeout = c->timeout * 1000;
+ 	io_hdr.pack_id = 0;
+ 	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
+-		MSG(c, "emc_clariion_checker: sending query command failed");
++		c->msgid = MSG_CLARIION_QUERY_FAILED;
+ 		return PATH_DOWN;
  	}
--	pthread_cleanup_push(rcu_unregister, NULL);
--	rcu_register_thread();
- 	set_handler_callback(LIST+PATHS, cli_list_paths);
- 	set_handler_callback(LIST+PATHS+FMT, cli_list_paths_fmt);
- 	set_handler_callback(LIST+PATHS+RAW+FMT, cli_list_paths_raw);
-@@ -1556,8 +1569,12 @@ uxlsnrloop (void * ap)
- 	set_handler_callback(UNSETPRKEY+MAP, cli_unsetprkey);
+ 	if (io_hdr.info & SG_INFO_OK_MASK) {
+-		MSG(c, "emc_clariion_checker: query command indicates error");
++		c->msgid = MSG_CLARIION_QUERY_ERROR;
+ 		return PATH_DOWN;
+ 	}
+ 	if (/* Verify the code page - right page & revision */
+ 	    sense_buffer[1] != 0xc0 || sense_buffer[9] != 0x00) {
+-		MSG(c, "emc_clariion_checker: Path unit report page in "
+-		    "unknown format");
++		c->msgid = MSG_CLARIION_UNIT_REPORT;
+ 		return PATH_DOWN;
+ 	}
  
- 	umask(077);
--	uxsock_listen(&uxsock_trigger, ap);
--	pthread_cleanup_pop(1);
-+	uxsock_listen(&uxsock_trigger, ux_sock, ap);
-+
-+out_sock:
-+	pthread_cleanup_pop(1); /* uxsock_cleanup */
-+out:
-+	pthread_cleanup_pop(1); /* rcu_unregister */
- 	return NULL;
- }
+@@ -140,22 +168,19 @@ int libcheck_check (struct checker * c)
+ 		    ((sense_buffer[28] & 0x07) != 0x06))
+ 		/* Arraycommpath should be set to 1 */
+ 		|| (sense_buffer[30] & 0x04) != 0x04) {
+-		MSG(c, "emc_clariion_checker: Path not correctly configured "
+-		    "for failover");
++		c->msgid = MSG_CLARIION_PATH_CONFIG;
+ 		return PATH_DOWN;
+ 	}
  
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index 6f666663..773bc878 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -165,24 +165,15 @@ void uxsock_cleanup(void *arg)
- /*
-  * entry point
-  */
--void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
-+void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
-+		     void * trigger_data)
- {
--	long ux_sock;
- 	int rlen;
- 	char *inbuf;
- 	char *reply;
- 	sigset_t mask;
- 	int old_clients = MIN_POLLS;
+ 	if ( /* LUN operations should indicate normal operations */
+ 		sense_buffer[48] != 0x00) {
+-		MSG(c, "emc_clariion_checker: Path not available for normal "
+-		    "operations");
++		c->msgid = MSG_CLARIION_PATH_NOT_AVAIL;
+ 		return PATH_SHAKY;
+ 	}
  
--	ux_sock = ux_socket_listen(DEFAULT_SOCKET);
--
--	if (ux_sock == -1) {
--		condlog(1, "could not create uxsock: %d", errno);
--		exit_daemon();
--	}
--
--	pthread_cleanup_push(uxsock_cleanup, (void *)ux_sock);
--
- 	condlog(3, "uxsock: startup listener");
- 	polls = (struct pollfd *)MALLOC((MIN_POLLS + 1) * sizeof(struct pollfd));
- 	if (!polls) {
-@@ -322,6 +313,5 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ 	if ( /* LUN should at least be bound somewhere and not be LUNZ */
+ 		sense_buffer[4] == 0x00) {
+-		MSG(c, "emc_clariion_checker: Logical Unit is unbound "
+-		    "or LUNZ");
++		c->msgid = MSG_CLARIION_LUN_UNBOUND;
+ 		return PATH_DOWN;
+ 	}
+ 
+@@ -166,8 +191,7 @@ int libcheck_check (struct checker * c)
+ 	 */
+ 	if (ct->wwn_set) {
+ 		if (memcmp(ct->wwn, &sense_buffer[10], 16) != 0) {
+-			MSG(c, "emc_clariion_checker: Logical Unit WWN "
+-			    "has changed!");
++			c->msgid = MSG_CLARIION_WWN_CHANGED;
+ 			return PATH_DOWN;
+ 		}
+ 	} else {
+@@ -202,14 +226,15 @@ int libcheck_check (struct checker * c)
+ 				condlog(3, "emc_clariion_checker: Active "
+ 					"path to inactive snapshot WWN %s.",
+ 					wwnstr);
+-			} else
+-				MSG(c, "emc_clariion_checker: Read "
++			} else {
++				condlog(3, "emc_clariion_checker: Read "
+ 					"error for WWN %s.  Sense data are "
+ 					"0x%x/0x%x/0x%x.", wwnstr,
+ 					sbb[2]&0xf, sbb[12], sbb[13]);
++				c->msgid = MSG_CLARIION_READ_ERROR;
++			}
+ 		} else {
+-			MSG(c, "emc_clariion_checker: Active path is "
+-			    "healthy.");
++			c->msgid = MSG_CLARIION_PASSIVE_GOOD;
+ 			/*
+ 			 * Remove the path from the set of paths to inactive
+ 			 * snapshot LUs if it was in this list since the
+@@ -225,8 +250,7 @@ int libcheck_check (struct checker * c)
+ 				wwnstr);
+ 			ret = PATH_DOWN;
+ 		} else {
+-			MSG(c,
+-			    "emc_clariion_checker: Passive path is healthy.");
++			c->msgid = MSG_CLARIION_PASSIVE_GOOD;
+ 			ret = PATH_UP;	/* not ghost */
  		}
  	}
- 
--	pthread_cleanup_pop(1);
- 	return NULL;
- }
-diff --git a/multipathd/uxlsnr.h b/multipathd/uxlsnr.h
-index d51a8f99..18f008d7 100644
---- a/multipathd/uxlsnr.h
-+++ b/multipathd/uxlsnr.h
-@@ -5,7 +5,8 @@
- 
- typedef int (uxsock_trigger_fn)(char *, char **, int *, bool, void *);
- 
--void * uxsock_listen(uxsock_trigger_fn uxsock_trigger,
--		     void * trigger_data);
-+void uxsock_cleanup(void *arg);
-+void *uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
-+		    void * trigger_data);
- 
- #endif
 -- 
 2.19.1
