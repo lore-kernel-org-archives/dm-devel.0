@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v5 11/21] multipathd: improve checker message
-	logging
-Date: Fri,  2 Nov 2018 13:21:15 +0100
-Message-ID: <20181102122125.30906-12-mwilck@suse.com>
+Subject: [PATCH v5 12/21] libmultipath/checkers: support
+	unsupported paths
+Date: Fri,  2 Nov 2018 13:21:16 +0100
+Message-ID: <20181102122125.30906-13-mwilck@suse.com>
 References: <20181102122125.30906-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,95 +22,58 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Don't rely on any variables being defined in LOG_MSG.
-If message log level is low, don't bother to fetch the message.
+We should be able to distinguish the case where a checker
+determines a path to be positively down from the case where
+the checker fails to obtain necessary information, e.g.
+because of a configuration problem (wrong checker).
+Use PATH_WILD for the latter case, as it's hardly used now.
 
+Provide a generic message for the situation that a path
+checker can't handle a certain path.
+
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 35 ++++++++++++++++++++++++-----------
- 1 file changed, 24 insertions(+), 11 deletions(-)
+ libmultipath/checkers.c | 1 +
+ libmultipath/checkers.h | 7 +++++--
+ 2 files changed, 6 insertions(+), 2 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index bf5f12a6..2f922db7 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -89,12 +89,24 @@ static int use_watchdog;
- #define FILE_NAME_SIZE 256
- #define CMDSIZE 160
+diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+index a1b5cb45..90313c35 100644
+--- a/libmultipath/checkers.c
++++ b/libmultipath/checkers.c
+@@ -279,6 +279,7 @@ static const char *generic_msg[CHECKER_GENERIC_MSGTABLE_SIZE] = {
+ 	[CHECKER_MSGID_UP] = " reports path is up",
+ 	[CHECKER_MSGID_DOWN] = " reports path is down",
+ 	[CHECKER_MSGID_GHOST] = " reports path is ghost",
++	[CHECKER_MSGID_UNSUPPORTED] = " doesn't support this device",
+ };
  
--#define LOG_MSG(a, b) \
--do { \
--	if (pp->offline) \
--		condlog(a, "%s: %s - path offline", pp->mpp->alias, pp->dev); \
--	else if (strlen(b)) \
--		condlog(a, "%s: %s - %s", pp->mpp->alias, pp->dev, b); \
-+#define LOG_MSG(lvl, verb, pp)					\
-+do {								\
-+	if (lvl <= verb) {					\
-+		if (pp->offline)				\
-+			condlog(lvl, "%s: %s - path offline",	\
-+				pp->mpp->alias, pp->dev);	\
-+		else  {						\
-+			const char *__m =			\
-+				checker_message(&pp->checker);	\
-+								\
-+			if (strlen(__m))			      \
-+				condlog(lvl, "%s: %s - %s checker%s", \
-+					pp->mpp->alias,		      \
-+					pp->dev,		      \
-+					checker_name(&pp->checker),   \
-+					__m);			      \
-+		}						      \
-+	}							      \
- } while(0)
- 
- struct mpath_event_param
-@@ -1811,7 +1823,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	int add_active;
- 	int disable_reinstate = 0;
- 	int oldchkrstate = pp->chkrstate;
--	int retrigger_tries, checkint, max_checkint;
-+	int retrigger_tries, checkint, max_checkint, verbosity;
- 	struct config *conf;
- 	int ret;
- 
-@@ -1828,6 +1840,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	retrigger_tries = conf->retrigger_tries;
- 	checkint = conf->checkint;
- 	max_checkint = conf->max_checkint;
-+	verbosity = conf->verbosity;
- 	put_multipath_config(conf);
- 	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV) {
- 		if (pp->retriggers < retrigger_tries) {
-@@ -1970,7 +1983,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 		int oldstate = pp->state;
- 		pp->state = newstate;
- 
--		LOG_MSG(1, checker_message(&pp->checker));
-+		LOG_MSG(1, verbosity, pp);
- 
- 		/*
- 		 * upon state change, reset the checkint
-@@ -2058,7 +2071,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 				return 0;
- 			}
- 		} else {
--			LOG_MSG(4, checker_message(&pp->checker));
-+			LOG_MSG(4, verbosity, pp);
- 			if (pp->checkint != max_checkint) {
- 				/*
- 				 * double the next check delay.
-@@ -2088,9 +2101,9 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 			log_checker_err = conf->log_checker_err;
- 			put_multipath_config(conf);
- 			if (log_checker_err == LOG_CHKR_ERR_ONCE)
--				LOG_MSG(3, checker_message(&pp->checker));
-+				LOG_MSG(3, verbosity, pp);
- 			else
--				LOG_MSG(2, checker_message(&pp->checker));
-+				LOG_MSG(2, verbosity, pp);
- 		}
- 	}
- 
+ const char *checker_message(const struct checker *c)
+diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
+index 8e26f1df..3cd46bdf 100644
+--- a/libmultipath/checkers.h
++++ b/libmultipath/checkers.h
+@@ -10,8 +10,10 @@
+  * Userspace (multipath/multipathd) path states
+  *
+  * PATH_WILD:
+- * - Use: None of the checkers (returned if we don't have an fd)
+- * - Description: Corner case where "fd < 0" for path fd (see checker_check())
++ * - Use: Any checker
++ * - Description: Corner case where "fd < 0" for path fd (see checker_check()),
++ *   or where a checker detects an unsupported device
++ *   (e.g. wrong checker configured for a given device).
+  *
+  * PATH_UNCHECKED:
+  * - Use: Only in directio checker
+@@ -108,6 +110,7 @@ enum {
+ 	CHECKER_MSGID_UP,
+ 	CHECKER_MSGID_DOWN,
+ 	CHECKER_MSGID_GHOST,
++	CHECKER_MSGID_UNSUPPORTED,
+ 	CHECKER_GENERIC_MSGTABLE_SIZE,
+ 	CHECKER_FIRST_MSGID = 100,	/* lowest msgid for checkers */
+ 	CHECKER_MSGTABLE_SIZE = 100,	/* max msg table size for checkers */
 -- 
 2.19.1
