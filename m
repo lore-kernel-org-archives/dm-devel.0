@@ -1,17 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm crypt: use unsigned long long instead of sector_t
- to store iv_offset
-Date: Fri, 2 Nov 2018 12:11:49 -0400
-Message-ID: <20181102161149.GA1406@redhat.com>
-References: <1541062439-55558-1-git-send-email-alios_sys_security@linux.alibaba.com>
-	<20181101200642.GA29073@redhat.com>
-	<0064ec33-196d-7ff4-51a4-9270389ac2aa@linux.alibaba.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v5 11/21] multipathd: improve checker message
+	logging
+Date: Fri, 2 Nov 2018 11:54:20 -0500
+Message-ID: <20181102165420.GF29522@octiron.msp.redhat.com>
+References: <20181102122125.30906-1-mwilck@suse.com>
+	<20181102122125.30906-12-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <0064ec33-196d-7ff4-51a4-9270389ac2aa@linux.alibaba.com>
+In-Reply-To: <20181102122125.30906-12-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,67 +20,101 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: AliOS system security <alios_sys_security@linux.alibaba.com>
-Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Nov 02 2018 at 12:31am -0400,
-AliOS system security <alios_sys_security@linux.alibaba.com> wrote:
-
-> On 2018/11/2 4:06, Mike Snitzer wrote:
-> >On Thu, Nov 01 2018 at  4:53am -0400,
-> >AliOS system security <alios_sys_security@linux.alibaba.com> wrote:
-> >
-> >>The iv_offset in the mapping table of crypt target is a 64bit number
-> >>when iv mode is plain64 or plain64be. It will be assigned to iv_offset of
-> >>struct crypt_config, cc_sector of struct convert_context and iv_sector of
-> >>struct dm_crypt_request. These structures members are defined as a sector_t.
-> >>But sector_t is 32bit when CONFIG_LBDAF is not set in 32bit kernel. In this
-> >>situation sector_t is not big enough to store the 64bit iv_offset.
-> >I really don't think this is needed.
-> >
-> >cc->iv_offset can only address a the address space used to access the
-> >device.  Which is expressed in terms of sectors.  Therefore if
-> >CONFIG_LBDAF is not set in 32bit kernel then there is no need to address
-> >beyond that which 'sector_t' addresses.
-> >
-> >Please show proof to the contrary if you still think this change is
-> >needed.
-> >
-> >Mike
+On Fri, Nov 02, 2018 at 01:21:15PM +0100, Martin Wilck wrote:
+> Don't rely on any variables being defined in LOG_MSG.
+> If message log level is low, don't bother to fetch the message.
 > 
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipathd/main.c | 35 ++++++++++++++++++++++++-----------
+>  1 file changed, 24 insertions(+), 11 deletions(-)
 > 
-> Sorry I made a mistake. I read
-> Documentation/device-mapper/dm-crypt.txt again and found that the IV
-> offset is a sector count. So it make sense to store the iv_offset as
-> a sector_t.
-> 
-> In addition, I want to describe what problem I met in the beginning.
-> I made a crypt.img with the crypt param
-> "aes-cbc-plain64 0x1234...5678 1311768465173141112 /dev/loop0 0" in
-> a 32bit kernel with CONFIG_LBDAF=y.
-> The iv_offset is set to a 64bit number and the iv mode is set to
-> plain64. Someday I recompiled my kernel but
-> CONFIG_LBDAF is not set this time. When I reload the crypt.img with
-> the same crypt param in new kernel,
-> I got ioctl(..., DM_TABLE_LOAD, ...) return 0 but the content of
-> /dev/dm-0 is incorrect.
-> 
-> So, is this situation, set the iv mode to plain64 or plain64be in a
-> 32bit kernel with CONFIG_LBDAF is not set, a problem? Should the
-> crypt_ctr() return an error code when this happned? Or we just
-> support 64bit iv mode
-> all the time regardless of CONFIG_LBDAF?
-
-Please see Milan's reply from earlier today.  You did find a real bug.
-Milan is going to iterate on your patch (likely switch to using uint64_t
-and update the patch header to capture all the useful context for why
-this is a real issue -- albeit one that has apparently been around since
-2.6.20).
-
-I'll still attribute the change to you, but Milan's contribution will be
-an incremental improvement on your initial patch.
-
-Thanks for reporting and fixing this.
-
-Mike
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index bf5f12a6..2f922db7 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -89,12 +89,24 @@ static int use_watchdog;
+>  #define FILE_NAME_SIZE 256
+>  #define CMDSIZE 160
+>  
+> -#define LOG_MSG(a, b) \
+> -do { \
+> -	if (pp->offline) \
+> -		condlog(a, "%s: %s - path offline", pp->mpp->alias, pp->dev); \
+> -	else if (strlen(b)) \
+> -		condlog(a, "%s: %s - %s", pp->mpp->alias, pp->dev, b); \
+> +#define LOG_MSG(lvl, verb, pp)					\
+> +do {								\
+> +	if (lvl <= verb) {					\
+> +		if (pp->offline)				\
+> +			condlog(lvl, "%s: %s - path offline",	\
+> +				pp->mpp->alias, pp->dev);	\
+> +		else  {						\
+> +			const char *__m =			\
+> +				checker_message(&pp->checker);	\
+> +								\
+> +			if (strlen(__m))			      \
+> +				condlog(lvl, "%s: %s - %s checker%s", \
+> +					pp->mpp->alias,		      \
+> +					pp->dev,		      \
+> +					checker_name(&pp->checker),   \
+> +					__m);			      \
+> +		}						      \
+> +	}							      \
+>  } while(0)
+>  
+>  struct mpath_event_param
+> @@ -1811,7 +1823,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+>  	int add_active;
+>  	int disable_reinstate = 0;
+>  	int oldchkrstate = pp->chkrstate;
+> -	int retrigger_tries, checkint, max_checkint;
+> +	int retrigger_tries, checkint, max_checkint, verbosity;
+>  	struct config *conf;
+>  	int ret;
+>  
+> @@ -1828,6 +1840,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+>  	retrigger_tries = conf->retrigger_tries;
+>  	checkint = conf->checkint;
+>  	max_checkint = conf->max_checkint;
+> +	verbosity = conf->verbosity;
+>  	put_multipath_config(conf);
+>  	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV) {
+>  		if (pp->retriggers < retrigger_tries) {
+> @@ -1970,7 +1983,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+>  		int oldstate = pp->state;
+>  		pp->state = newstate;
+>  
+> -		LOG_MSG(1, checker_message(&pp->checker));
+> +		LOG_MSG(1, verbosity, pp);
+>  
+>  		/*
+>  		 * upon state change, reset the checkint
+> @@ -2058,7 +2071,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+>  				return 0;
+>  			}
+>  		} else {
+> -			LOG_MSG(4, checker_message(&pp->checker));
+> +			LOG_MSG(4, verbosity, pp);
+>  			if (pp->checkint != max_checkint) {
+>  				/*
+>  				 * double the next check delay.
+> @@ -2088,9 +2101,9 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+>  			log_checker_err = conf->log_checker_err;
+>  			put_multipath_config(conf);
+>  			if (log_checker_err == LOG_CHKR_ERR_ONCE)
+> -				LOG_MSG(3, checker_message(&pp->checker));
+> +				LOG_MSG(3, verbosity, pp);
+>  			else
+> -				LOG_MSG(2, checker_message(&pp->checker));
+> +				LOG_MSG(2, verbosity, pp);
+>  		}
+>  	}
+>  
+> -- 
+> 2.19.1
