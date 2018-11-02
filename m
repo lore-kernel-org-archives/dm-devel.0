@@ -1,16 +1,15 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v5 11/21] multipathd: improve checker message
-	logging
-Date: Fri, 2 Nov 2018 11:54:20 -0500
-Message-ID: <20181102165420.GF29522@octiron.msp.redhat.com>
-References: <20181102122125.30906-1-mwilck@suse.com>
-	<20181102122125.30906-12-mwilck@suse.com>
+Subject: Re: [PATCH v3 4/7] multipathd: open client socket early
+Date: Fri, 2 Nov 2018 12:08:12 -0500
+Message-ID: <20181102170812.GG29522@octiron.msp.redhat.com>
+References: <20181102122402.31145-1-mwilck@suse.com>
+	<20181102122402.31145-5-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20181102122125.30906-12-mwilck@suse.com>
+In-Reply-To: <20181102122402.31145-5-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,97 +23,128 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Nov 02, 2018 at 01:21:15PM +0100, Martin Wilck wrote:
-> Don't rely on any variables being defined in LOG_MSG.
-> If message log level is low, don't bother to fetch the message.
+On Fri, Nov 02, 2018 at 01:23:59PM +0100, Martin Wilck wrote:
+> Open the unix socket in multipathd code and pass the fd to
+> uxsock_listen(). This will enable us to make the main thread
+> wait for successful socket initialization in a follow-up patch.
 > 
+ 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  multipathd/main.c | 35 ++++++++++++++++++++++++-----------
->  1 file changed, 24 insertions(+), 11 deletions(-)
+>  multipathd/main.c   | 27 ++++++++++++++++++++++-----
+>  multipathd/uxlsnr.c | 14 ++------------
+>  multipathd/uxlsnr.h |  5 +++--
+>  3 files changed, 27 insertions(+), 19 deletions(-)
 > 
 > diff --git a/multipathd/main.c b/multipathd/main.c
-> index bf5f12a6..2f922db7 100644
+> index a022bdb5..a91a14c6 100644
 > --- a/multipathd/main.c
 > +++ b/multipathd/main.c
-> @@ -89,12 +89,24 @@ static int use_watchdog;
->  #define FILE_NAME_SIZE 256
->  #define CMDSIZE 160
+> @@ -66,6 +66,7 @@ static int use_watchdog;
+>  #include "pgpolicies.h"
+>  #include "uevent.h"
+>  #include "log.h"
+> +#include "uxsock.h"
 >  
-> -#define LOG_MSG(a, b) \
-> -do { \
-> -	if (pp->offline) \
-> -		condlog(a, "%s: %s - path offline", pp->mpp->alias, pp->dev); \
-> -	else if (strlen(b)) \
-> -		condlog(a, "%s: %s - %s", pp->mpp->alias, pp->dev, b); \
-> +#define LOG_MSG(lvl, verb, pp)					\
-> +do {								\
-> +	if (lvl <= verb) {					\
-> +		if (pp->offline)				\
-> +			condlog(lvl, "%s: %s - path offline",	\
-> +				pp->mpp->alias, pp->dev);	\
-> +		else  {						\
-> +			const char *__m =			\
-> +				checker_message(&pp->checker);	\
-> +								\
-> +			if (strlen(__m))			      \
-> +				condlog(lvl, "%s: %s - %s checker%s", \
-> +					pp->mpp->alias,		      \
-> +					pp->dev,		      \
-> +					checker_name(&pp->checker),   \
-> +					__m);			      \
-> +		}						      \
-> +	}							      \
->  } while(0)
+>  #include "mpath_cmd.h"
+>  #include "mpath_persist.h"
+> @@ -1496,12 +1497,24 @@ uevqloop (void * ap)
+>  static void *
+>  uxlsnrloop (void * ap)
+>  {
+> +	long ux_sock;
+> +
+> +	pthread_cleanup_push(rcu_unregister, NULL);
+> +	rcu_register_thread();
+> +
+> +	ux_sock = ux_socket_listen(DEFAULT_SOCKET);
+> +	if (ux_sock == -1) {
+> +		condlog(1, "could not create uxsock: %d", errno);
+> +		exit_daemon();
+> +		goto out;
+> +	}
+> +	pthread_cleanup_push(uxsock_cleanup, (void *)ux_sock);
+> +
+>  	if (cli_init()) {
+>  		condlog(1, "Failed to init uxsock listener");
+> -		return NULL;
+> +		exit_daemon();
+> +		goto out_sock;
+>  	}
+> -	pthread_cleanup_push(rcu_unregister, NULL);
+> -	rcu_register_thread();
+>  	set_handler_callback(LIST+PATHS, cli_list_paths);
+>  	set_handler_callback(LIST+PATHS+FMT, cli_list_paths_fmt);
+>  	set_handler_callback(LIST+PATHS+RAW+FMT, cli_list_paths_raw);
+> @@ -1556,8 +1569,12 @@ uxlsnrloop (void * ap)
+>  	set_handler_callback(UNSETPRKEY+MAP, cli_unsetprkey);
 >  
->  struct mpath_event_param
-> @@ -1811,7 +1823,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
->  	int add_active;
->  	int disable_reinstate = 0;
->  	int oldchkrstate = pp->chkrstate;
-> -	int retrigger_tries, checkint, max_checkint;
-> +	int retrigger_tries, checkint, max_checkint, verbosity;
->  	struct config *conf;
->  	int ret;
+>  	umask(077);
+> -	uxsock_listen(&uxsock_trigger, ap);
+> -	pthread_cleanup_pop(1);
+> +	uxsock_listen(&uxsock_trigger, ux_sock, ap);
+> +
+> +out_sock:
+> +	pthread_cleanup_pop(1); /* uxsock_cleanup */
+> +out:
+> +	pthread_cleanup_pop(1); /* rcu_unregister */
+>  	return NULL;
+>  }
 >  
-> @@ -1828,6 +1840,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
->  	retrigger_tries = conf->retrigger_tries;
->  	checkint = conf->checkint;
->  	max_checkint = conf->max_checkint;
-> +	verbosity = conf->verbosity;
->  	put_multipath_config(conf);
->  	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV) {
->  		if (pp->retriggers < retrigger_tries) {
-> @@ -1970,7 +1983,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
->  		int oldstate = pp->state;
->  		pp->state = newstate;
+> diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+> index 6f666663..773bc878 100644
+> --- a/multipathd/uxlsnr.c
+> +++ b/multipathd/uxlsnr.c
+> @@ -165,24 +165,15 @@ void uxsock_cleanup(void *arg)
+>  /*
+>   * entry point
+>   */
+> -void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+> +void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
+> +		     void * trigger_data)
+>  {
+> -	long ux_sock;
+>  	int rlen;
+>  	char *inbuf;
+>  	char *reply;
+>  	sigset_t mask;
+>  	int old_clients = MIN_POLLS;
 >  
-> -		LOG_MSG(1, checker_message(&pp->checker));
-> +		LOG_MSG(1, verbosity, pp);
->  
->  		/*
->  		 * upon state change, reset the checkint
-> @@ -2058,7 +2071,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
->  				return 0;
->  			}
->  		} else {
-> -			LOG_MSG(4, checker_message(&pp->checker));
-> +			LOG_MSG(4, verbosity, pp);
->  			if (pp->checkint != max_checkint) {
->  				/*
->  				 * double the next check delay.
-> @@ -2088,9 +2101,9 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
->  			log_checker_err = conf->log_checker_err;
->  			put_multipath_config(conf);
->  			if (log_checker_err == LOG_CHKR_ERR_ONCE)
-> -				LOG_MSG(3, checker_message(&pp->checker));
-> +				LOG_MSG(3, verbosity, pp);
->  			else
-> -				LOG_MSG(2, checker_message(&pp->checker));
-> +				LOG_MSG(2, verbosity, pp);
+> -	ux_sock = ux_socket_listen(DEFAULT_SOCKET);
+> -
+> -	if (ux_sock == -1) {
+> -		condlog(1, "could not create uxsock: %d", errno);
+> -		exit_daemon();
+> -	}
+> -
+> -	pthread_cleanup_push(uxsock_cleanup, (void *)ux_sock);
+> -
+>  	condlog(3, "uxsock: startup listener");
+>  	polls = (struct pollfd *)MALLOC((MIN_POLLS + 1) * sizeof(struct pollfd));
+>  	if (!polls) {
+> @@ -322,6 +313,5 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
 >  		}
 >  	}
 >  
+> -	pthread_cleanup_pop(1);
+>  	return NULL;
+>  }
+> diff --git a/multipathd/uxlsnr.h b/multipathd/uxlsnr.h
+> index d51a8f99..18f008d7 100644
+> --- a/multipathd/uxlsnr.h
+> +++ b/multipathd/uxlsnr.h
+> @@ -5,7 +5,8 @@
+>  
+>  typedef int (uxsock_trigger_fn)(char *, char **, int *, bool, void *);
+>  
+> -void * uxsock_listen(uxsock_trigger_fn uxsock_trigger,
+> -		     void * trigger_data);
+> +void uxsock_cleanup(void *arg);
+> +void *uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
+> +		    void * trigger_data);
+>  
+>  #endif
 > -- 
 > 2.19.1
