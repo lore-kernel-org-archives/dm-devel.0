@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v5 04/21] libmultipath/checkers: cciss_tur: use
-	message id
-Date: Fri,  2 Nov 2018 13:21:08 +0100
-Message-ID: <20181102122125.30906-5-mwilck@suse.com>
+Subject: [PATCH v5 15/21] libmultipath: rdac checker: leave
+	unsupported paths alone
+Date: Fri,  2 Nov 2018 13:21:19 +0100
+Message-ID: <20181102122125.30906-16-mwilck@suse.com>
 References: <20181102122125.30906-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,65 +22,91 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+A checker shouldn't set the path state to PATH_DOWN if it fails
+to obtain information about the path in the first place. Add logic
+to the checker to distinguish a failed path from an unsupported path.
+
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/cciss_tur.c | 13 +++++--------
- 1 file changed, 5 insertions(+), 8 deletions(-)
+ libmultipath/checkers/rdac.c | 28 +++++++++++++++++++---------
+ 1 file changed, 19 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/checkers/cciss_tur.c b/libmultipath/checkers/cciss_tur.c
-index 1cab2015..ea843742 100644
---- a/libmultipath/checkers/cciss_tur.c
-+++ b/libmultipath/checkers/cciss_tur.c
-@@ -42,9 +42,6 @@
- #define TUR_CMD_LEN 6
- #define HEAVY_CHECK_COUNT       10
+diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c
+index 266f8e10..8a3b73ec 100644
+--- a/libmultipath/checkers/rdac.c
++++ b/libmultipath/checkers/rdac.c
+@@ -26,6 +26,7 @@
+ #define SCSI_COMMAND_TERMINATED	0x22
+ #define SG_ERR_DRIVER_SENSE	0x08
+ #define RECOVERED_ERROR		0x01
++#define ILLEGAL_REQUEST		0x05
  
--#define MSG_CCISS_TUR_UP	"cciss_tur checker reports path is up"
--#define MSG_CCISS_TUR_DOWN	"cciss_tur checker reports path is down"
--
- struct cciss_tur_checker_context {
- 	void * dummy;
- };
-@@ -69,7 +66,7 @@ int libcheck_check(struct checker * c)
- 	IOCTL_Command_struct cic;       // cciss ioctl command
  
- 	if ((c->fd) < 0) {
--		MSG(c,"no usable fd");
-+		c->msgid = CHECKER_MSGID_NO_FD;
- 		ret = -1;
- 		goto out;
+ #define CURRENT_PAGE_CODE_VALUES	0
+@@ -162,14 +163,14 @@ retry:
+ 	io_hdr.sbp = sense_b;
+ 	io_hdr.timeout = timeout * 1000;
+ 
+-	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0)
+-		return 1;
++	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0 && errno == ENOTTY)
++		return PATH_WILD;
+ 
+ 	/* treat SG_ERR here to get rid of sg_err.[ch] */
+ 	io_hdr.status &= 0x7e;
+ 	if ((0 == io_hdr.status) && (0 == io_hdr.host_status) &&
+ 	    (0 == io_hdr.driver_status))
+-		return 0;
++		return PATH_UP;
+ 
+ 	/* check if we need to retry this error */
+ 	if (io_hdr.info & SG_INFO_OK_MASK) {
+@@ -198,10 +199,14 @@ retry:
+ 			else
+ 				sense_key = sense_buffer[2] & 0xf;
+ 			if (RECOVERED_ERROR == sense_key)
+-				return 0;
++				return PATH_UP;
++			else if (ILLEGAL_REQUEST == sense_key)
++				return PATH_WILD;
++			condlog(1, "rdac checker: INQUIRY failed with sense key %02x",
++				sense_key);
+ 		}
  	}
-@@ -79,7 +76,7 @@ int libcheck_check(struct checker * c)
- 		perror("Error: ");
- 		fprintf(stderr, "cciss TUR  failed in CCISS_GETLUNINFO: %s\n",
- 			strerror(errno));
--		MSG(c,MSG_CCISS_TUR_DOWN);
-+		c->msgid = CHECKER_MSGID_DOWN;
- 		ret = PATH_DOWN;
- 		goto out;
- 	} else {
-@@ -106,18 +103,18 @@ int libcheck_check(struct checker * c)
- 	if (rc < 0) {
- 		fprintf(stderr, "cciss TUR  failed: %s\n",
- 			strerror(errno));
--		MSG(c,MSG_CCISS_TUR_DOWN);
-+		c->msgid = CHECKER_MSGID_DOWN;
- 		ret = PATH_DOWN;
- 		goto out;
- 	}
+-	return 1;
++	return PATH_DOWN;
+ }
  
- 	if ((cic.error_info.CommandStatus | cic.error_info.ScsiStatus )) {
--		MSG(c,MSG_CCISS_TUR_DOWN);
-+		c->msgid = CHECKER_MSGID_DOWN;
+ struct volume_access_inq
+@@ -290,12 +295,14 @@ int libcheck_check(struct checker * c)
+ 
+ 	inqfail = 0;
+ 	memset(&inq, 0, sizeof(struct volume_access_inq));
+-	if (0 != do_inq(c->fd, 0xC9, &inq, sizeof(struct volume_access_inq),
+-			c->timeout)) {
+-		ret = PATH_DOWN;
++	ret = do_inq(c->fd, 0xC9, &inq, sizeof(struct volume_access_inq),
++		     c->timeout);
++	if (ret != PATH_UP) {
+ 		inqfail = 1;
+ 		goto done;
+-	} else if (((inq.PQ_PDT & 0xE0) == 0x20) || (inq.PQ_PDT & 0x7f)) {
++	}
++
++	if (((inq.PQ_PDT & 0xE0) == 0x20) || (inq.PQ_PDT & 0x7f)) {
+ 		/* LUN not connected*/
  		ret = PATH_DOWN;
- 		goto out;
- 	}
+ 		goto done;
+@@ -332,6 +339,9 @@ int libcheck_check(struct checker * c)
  
--	MSG(c,MSG_CCISS_TUR_UP);
-+	c->msgid = CHECKER_MSGID_UP;
- 
- 	ret = PATH_UP;
- out:
+ done:
+ 	switch (ret) {
++	case PATH_WILD:
++		c->msgid = CHECKER_MSGID_UNSUPPORTED;
++		break;
+ 	case PATH_DOWN:
+ 		c->msgid = (inqfail ? RDAC_MSGID_INQUIRY_FAILED :
+ 			    checker_msg_string(&inq));
 -- 
 2.19.1
