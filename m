@@ -1,15 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 4/7] multipathd: open client socket early
-Date: Thu, 1 Nov 2018 16:49:06 -0500
-Message-ID: <20181101214906.GD29522@octiron.msp.redhat.com>
-References: <20181030212249.31127-1-mwilck@suse.com>
-	<20181030212249.31127-5-mwilck@suse.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: dm crypt: use unsigned long long instead of sector_t
+ to store iv_offset
+Date: Fri, 2 Nov 2018 08:36:56 +0100
+Message-ID: <20a82f81-071e-e742-fc18-2088853efb0f@gmail.com>
+References: <1541062439-55558-1-git-send-email-alios_sys_security@linux.alibaba.com>
+	<20181101200642.GA29073@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20181030212249.31127-5-mwilck@suse.com>
+In-Reply-To: <20181101200642.GA29073@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,121 +20,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>, AliOS system security <alios_sys_security@linux.alibaba.com>
+Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Oct 30, 2018 at 10:22:46PM +0100, Martin Wilck wrote:
-> Open the unix socket in multipathd code and pass the fd to
-> uxsock_listen(). This will enable us to make the main thread
-> wait for successful socket initialization in a follow-up patch.
+On 01/11/2018 21:06, Mike Snitzer wrote:
+> On Thu, Nov 01 2018 at  4:53am -0400,
+> AliOS system security <alios_sys_security@linux.alibaba.com> wrote:
 > 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  multipathd/main.c   | 22 ++++++++++++++++++----
->  multipathd/uxlsnr.c | 11 ++---------
->  multipathd/uxlsnr.h |  2 +-
->  3 files changed, 21 insertions(+), 14 deletions(-)
+>> The iv_offset in the mapping table of crypt target is a 64bit number
+>> when iv mode is plain64 or plain64be. It will be assigned to iv_offset of
+>> struct crypt_config, cc_sector of struct convert_context and iv_sector of
+>> struct dm_crypt_request. These structures members are defined as a sector_t.
+>> But sector_t is 32bit when CONFIG_LBDAF is not set in 32bit kernel. In this
+>> situation sector_t is not big enough to store the 64bit iv_offset.
 > 
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index a2b01705..e45e45dc 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -66,6 +66,7 @@ static int use_watchdog;
->  #include "pgpolicies.h"
->  #include "uevent.h"
->  #include "log.h"
-> +#include "uxsock.h"
->  
->  #include "mpath_cmd.h"
->  #include "mpath_persist.h"
-> @@ -1493,12 +1494,23 @@ uevqloop (void * ap)
->  static void *
->  uxlsnrloop (void * ap)
->  {
-> +	int ux_sock;
-> +
-> +	pthread_cleanup_push(rcu_unregister, NULL);
-> +	rcu_register_thread();
-> +
-> +	ux_sock = ux_socket_listen(DEFAULT_SOCKET);
-> +	if (ux_sock == -1) {
-> +		condlog(1, "could not create uxsock: %d", errno);
-> +		exit_daemon();
-> +		goto out;
-> +	}
-> +
->  	if (cli_init()) {
->  		condlog(1, "Failed to init uxsock listener");
-> -		return NULL;
-> +		exit_daemon();
-> +		goto out;
+> I really don't think this is needed.
+> 
+> cc->iv_offset can only address a the address space used to access the
+> device.  Which is expressed in terms of sectors.  Therefore if
+> CONFIG_LBDAF is not set in 32bit kernel then there is no need to address
+> beyond that which 'sector_t' addresses.
 
-I don't know now much this matters, seeing as we're exitting the daemon
-anyway, but we don't close ux_sock if we fail here. It would make more
-sense to push and pop uxsock_cleanup from this function, instead of
-uxsock_listen()
+Hi,
 
--Ben
+The iv_offset is Initialization Vector offset (for symmetric block cipher)
+that is not in principle limited by the device size sector offset.
+It is just an additional tweak to the cipher mode IV.
 
->  	}
-> -	pthread_cleanup_push(rcu_unregister, NULL);
-> -	rcu_register_thread();
->  	set_handler_callback(LIST+PATHS, cli_list_paths);
->  	set_handler_callback(LIST+PATHS+FMT, cli_list_paths_fmt);
->  	set_handler_callback(LIST+PATHS+RAW+FMT, cli_list_paths_raw);
-> @@ -1553,7 +1565,9 @@ uxlsnrloop (void * ap)
->  	set_handler_callback(UNSETPRKEY+MAP, cli_unsetprkey);
->  
->  	umask(077);
-> -	uxsock_listen(&uxsock_trigger, ap);
-> +	uxsock_listen(&uxsock_trigger, ux_sock, ap);
-> +
-> +out:
->  	pthread_cleanup_pop(1);
->  	return NULL;
->  }
-> diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-> index 6f666663..04967e9a 100644
-> --- a/multipathd/uxlsnr.c
-> +++ b/multipathd/uxlsnr.c
-> @@ -165,22 +165,15 @@ void uxsock_cleanup(void *arg)
->  /*
->   * entry point
->   */
-> -void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
-> +void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
-> +		     void * trigger_data)
->  {
-> -	long ux_sock;
->  	int rlen;
->  	char *inbuf;
->  	char *reply;
->  	sigset_t mask;
->  	int old_clients = MIN_POLLS;
->  
-> -	ux_sock = ux_socket_listen(DEFAULT_SOCKET);
-> -
-> -	if (ux_sock == -1) {
-> -		condlog(1, "could not create uxsock: %d", errno);
-> -		exit_daemon();
-> -	}
-> -
->  	pthread_cleanup_push(uxsock_cleanup, (void *)ux_sock);
->  
->  	condlog(3, "uxsock: startup listener");
-> diff --git a/multipathd/uxlsnr.h b/multipathd/uxlsnr.h
-> index d51a8f99..c7f25b2b 100644
-> --- a/multipathd/uxlsnr.h
-> +++ b/multipathd/uxlsnr.h
-> @@ -5,7 +5,7 @@
->  
->  typedef int (uxsock_trigger_fn)(char *, char **, int *, bool, void *);
->  
-> -void * uxsock_listen(uxsock_trigger_fn uxsock_trigger,
-> +void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
->  		     void * trigger_data);
->  
->  #endif
-> -- 
-> 2.19.1
+If we use 32bit only for 64bit IV, it is wrong and a patch is needed.
+
+> Please show proof to the contrary if you still think this change is
+> needed.
+
+It is easy to reproduce, even it shows this causes data corruption:
+
+# dd if=/dev/zero of=tst.img bs=1M count=1
+
+On 32bit system (use IV offset value that overflows to 64bit; CONFIG_LBDAF if off)
+(and note IV value overflow in table!!)
+
+# echo "tst"|cryptsetup open --type plain -c aes-xts-plain64 --skip 500000000000000000 tst.img test
+
+# sha256sum /dev/mapper/test
+533e25c09176632b3794f35303488c4a8f3f965dffffa6ec2df347c168cb6c19  /dev/mapper/test
+
+# dmsetup table test
+0 2048 crypt aes-xts-plain64 0000000000000000000000000000000000000000000000000000000000000000 3551657984 7:0 0
+
+On 64bit system (the same image):
+
+# echo "tst"|cryptsetup open --type plain -c aes-xts-plain64 --skip 500000000000000000 tst.img test
+
+# sha256sum /dev/mapper/test
+5d16160f9d5f8c33d8051e65fdb4f003cc31cd652b5abb08f03aa6fce0df75fc  /dev/mapper/test
+
+# dmsetup table test
+0 2048 crypt aes-xts-plain64 0000000000000000000000000000000000000000000000000000000000000000 500000000000000000 7:0 0
+
+This must be fixed, thanks for reporting it!
+
+Unfortunately I still do not see the original patch in the list you are replying to.
+
+Once it is on the list, I'll ack it.
+
+Thanks,
+Milan
