@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v5 05/21] libmultipath/checkers: directio: use
+Subject: [PATCH v5 07/21] libmultipath/checkers: hp_sw: use
 	message id
-Date: Fri,  2 Nov 2018 13:21:09 +0100
-Message-ID: <20181102122125.30906-6-mwilck@suse.com>
+Date: Fri,  2 Nov 2018 13:21:11 +0100
+Message-ID: <20181102122125.30906-8-mwilck@suse.com>
 References: <20181102122125.30906-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,66 +25,42 @@ List-Id: dm-devel.ids
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/directio.c | 27 ++++++++++++++++++---------
- 1 file changed, 18 insertions(+), 9 deletions(-)
+ libmultipath/checkers/hp_sw.c | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
 
-diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
-index a80848d4..c4a0712e 100644
---- a/libmultipath/checkers/directio.c
-+++ b/libmultipath/checkers/directio.c
-@@ -18,10 +18,19 @@
- #include "checkers.h"
- #include "../libmultipath/debug.h"
+diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
+index 0ad34a6b..d7f1018c 100644
+--- a/libmultipath/checkers/hp_sw.c
++++ b/libmultipath/checkers/hp_sw.c
+@@ -27,10 +27,6 @@
+ #define MX_ALLOC_LEN		255
+ #define HEAVY_CHECK_COUNT       10
  
--#define MSG_DIRECTIO_UNKNOWN	"directio checker is not available"
--#define MSG_DIRECTIO_UP		"directio checker reports path is up"
--#define MSG_DIRECTIO_DOWN	"directio checker reports path is down"
--#define MSG_DIRECTIO_PENDING	"directio checker is waiting on aio"
-+enum {
-+	MSG_DIRECTIO_UNKNOWN = CHECKER_FIRST_MSGID,
-+	MSG_DIRECTIO_PENDING,
-+	MSG_DIRECTIO_BLOCKSIZE,
-+};
-+
-+#define _IDX(x) (MSG_DIRECTIO_##x - CHECKER_FIRST_MSGID)
-+const char *libcheck_msgtable[] = {
-+	[_IDX(UNKNOWN)] = " is not available",
-+	[_IDX(PENDING)] = " is waiting on aio",
-+	[_IDX(BLOCKSIZE)] = " cannot get blocksize, set default",
-+	NULL,
-+};
+-#define MSG_HP_SW_UP	"hp_sw checker reports path is up"
+-#define MSG_HP_SW_DOWN	"hp_sw checker reports path is down"
+-#define MSG_HP_SW_GHOST	"hp_sw checker reports path is ghost"
+-
+ struct sw_checker_context {
+ 	void * dummy;
+ };
+@@ -128,14 +124,14 @@ int libcheck_check(struct checker * c)
+ 	char buff[MX_ALLOC_LEN];
  
- #define LOG(prio, fmt, args...) condlog(prio, "directio: " fmt, ##args)
- 
-@@ -54,7 +63,7 @@ int libcheck_init (struct checker * c)
- 	}
- 
- 	if (ioctl(c->fd, BLKBSZGET, &ct->blksize) < 0) {
--		MSG(c, "cannot get blocksize, set default");
-+		c->msgid = MSG_DIRECTIO_BLOCKSIZE;
- 		ct->blksize = 512;
- 	}
- 	if (ct->blksize > 4096) {
-@@ -198,16 +207,16 @@ int libcheck_check (struct checker * c)
- 	switch (ret)
- 	{
- 	case PATH_UNCHECKED:
--		MSG(c, MSG_DIRECTIO_UNKNOWN);
-+		c->msgid = MSG_DIRECTIO_UNKNOWN;
- 		break;
- 	case PATH_DOWN:
--		MSG(c, MSG_DIRECTIO_DOWN);
+ 	if (0 != do_inq(c->fd, 0, 1, 0x80, buff, MX_ALLOC_LEN, 0, c->timeout)) {
+-		MSG(c, MSG_HP_SW_DOWN);
 +		c->msgid = CHECKER_MSGID_DOWN;
- 		break;
- 	case PATH_UP:
--		MSG(c, MSG_DIRECTIO_UP);
-+		c->msgid = CHECKER_MSGID_UP;
- 		break;
- 	case PATH_PENDING:
--		MSG(c, MSG_DIRECTIO_PENDING);
-+		c->msgid = MSG_DIRECTIO_PENDING;
- 		break;
- 	default:
- 		break;
+ 		return PATH_DOWN;
+-	}
++	};
+ 
+ 	if (do_tur(c->fd, c->timeout)) {
+-		MSG(c, MSG_HP_SW_GHOST);
++		c->msgid = CHECKER_MSGID_GHOST;
+ 		return PATH_GHOST;
+ 	}
+-	MSG(c, MSG_HP_SW_UP);
++	c->msgid = CHECKER_MSGID_UP;
+ 	return PATH_UP;
+ }
 -- 
 2.19.1
