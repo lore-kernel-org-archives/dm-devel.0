@@ -1,14 +1,14 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v5 13/21] libmultipath: clariion checker: leave
-	unsupported paths alone
-Date: Fri,  2 Nov 2018 13:21:17 +0100
-Message-ID: <20181102122125.30906-14-mwilck@suse.com>
-References: <20181102122125.30906-1-mwilck@suse.com>
+From: AliOS system security <alios_sys_security@linux.alibaba.com>
+Subject: [PATCH] dm crypt: use unsigned long long instead of
+	sector_t to store iv_offset
+Date: Sat,  3 Nov 2018 11:53:28 +0800
+Message-ID: <1541217208-60218-1-git-send-email-alios_sys_security@linux.alibaba.com>
+References: <20a82f81-071e-e742-fc18-2088853efb0f@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181102122125.30906-1-mwilck@suse.com>
+In-Reply-To: <20a82f81-071e-e742-fc18-2088853efb0f@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,106 +18,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+To: Milan Broz <gmazyland@gmail.com>
+Cc: dm-devel@redhat.com, AliOS system security <alios_sys_security@linux.alibaba.com>
 List-Id: dm-devel.ids
 
-A checker shouldn't set the path state to PATH_DOWN if it fails
-to obtain information about the path in the first place. Add logic
-to the checker to distinguish a failed path from an unsupported path.
+The iv_offset in the mapping table of crypt target is a 64bit number
+when iv mode is plain64 or plain64be. It will be assigned to iv_offset of
+struct crypt_config, cc_sector of struct convert_context and iv_sector of
+struct dm_crypt_request. These structures members are defined as a sector_t.
+But sector_t is 32bit when CONFIG_LBDAF is not set in 32bit kernel. In this
+situation sector_t is not big enough to store the 64bit iv_offset.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: AliOS system security <alios_sys_security@linux.alibaba.com>
 ---
- libmultipath/checkers/emc_clariion.c | 54 ++++++++++++++++++++++++++++
- 1 file changed, 54 insertions(+)
+ drivers/md/dm-crypt.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
-index f8e55b93..6fc89113 100644
---- a/libmultipath/checkers/emc_clariion.c
-+++ b/libmultipath/checkers/emc_clariion.c
-@@ -20,6 +20,11 @@
- #define INQUIRY_CMD     0x12
- #define INQUIRY_CMDLEN  6
- #define HEAVY_CHECK_COUNT       10
-+#define SCSI_COMMAND_TERMINATED	0x22
-+#define SCSI_CHECK_CONDITION	0x2
-+#define RECOVERED_ERROR		0x01
-+#define ILLEGAL_REQUEST		0x05
-+#define SG_ERR_DRIVER_SENSE	0x08
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index b8eec51..49be7a6 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -49,7 +49,7 @@ struct convert_context {
+ 	struct bio *bio_out;
+ 	struct bvec_iter iter_in;
+ 	struct bvec_iter iter_out;
+-	sector_t cc_sector;
++	unsigned long long cc_sector;
+ 	atomic_t cc_pending;
+ 	union {
+ 		struct skcipher_request *req;
+@@ -81,7 +81,7 @@ struct dm_crypt_request {
+ 	struct convert_context *ctx;
+ 	struct scatterlist sg_in[4];
+ 	struct scatterlist sg_out[4];
+-	sector_t iv_sector;
++	unsigned long long iv_sector;
+ };
  
- /*
-  * Mechanism to track CLARiiON inactive snapshot LUs.
-@@ -130,7 +135,9 @@ int libcheck_check (struct checker * c)
- 		(struct emc_clariion_checker_path_context *)c->context;
- 	char wwnstr[33];
- 	int ret;
-+	int retry_emc = 5;
- 
-+retry:
- 	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
- 	memset(sense_buffer, 0, 128);
- 	memset(sb, 0, SENSE_BUFF_LEN);
-@@ -145,13 +152,60 @@ int libcheck_check (struct checker * c)
- 	io_hdr.timeout = c->timeout * 1000;
- 	io_hdr.pack_id = 0;
- 	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
-+		if (errno == ENOTTY) {
-+			c->msgid = CHECKER_MSGID_UNSUPPORTED;
-+			return PATH_WILD;
-+		}
- 		c->msgid = MSG_CLARIION_QUERY_FAILED;
- 		return PATH_DOWN;
- 	}
-+
- 	if (io_hdr.info & SG_INFO_OK_MASK) {
-+		switch (io_hdr.host_status) {
-+		case DID_BUS_BUSY:
-+		case DID_ERROR:
-+		case DID_SOFT_ERROR:
-+		case DID_TRANSPORT_DISRUPTED:
-+			/* Transport error, retry */
-+			if (--retry_emc)
-+				goto retry;
-+			break;
-+		default:
-+			break;
-+		}
-+	}
-+
-+	if (SCSI_CHECK_CONDITION == io_hdr.status ||
-+	    SCSI_COMMAND_TERMINATED == io_hdr.status ||
-+	    SG_ERR_DRIVER_SENSE == (0xf & io_hdr.driver_status)) {
-+		if (io_hdr.sbp && (io_hdr.sb_len_wr > 2)) {
-+			unsigned char *sbp = io_hdr.sbp;
-+			int sense_key;
-+
-+			if (sbp[0] & 0x2)
-+				sense_key = sbp[1] & 0xf;
-+			else
-+				sense_key = sbp[2] & 0xf;
-+
-+			if (sense_key == ILLEGAL_REQUEST) {
-+				c->msgid = CHECKER_MSGID_UNSUPPORTED;
-+				return PATH_WILD;
-+			} else if (sense_key != RECOVERED_ERROR) {
-+				condlog(1, "emc_clariion_checker: INQUIRY failed with sense key %02x",
-+					sense_key);
-+				c->msgid = MSG_CLARIION_QUERY_ERROR;
-+				return PATH_DOWN;
-+			}
-+		}
-+	}
-+
-+	if (io_hdr.info & SG_INFO_OK_MASK) {
-+		condlog(1, "emc_clariion_checker: INQUIRY failed without sense, status %02x",
-+			io_hdr.status);
- 		c->msgid = MSG_CLARIION_QUERY_ERROR;
- 		return PATH_DOWN;
- 	}
-+
- 	if (/* Verify the code page - right page & revision */
- 	    sense_buffer[1] != 0xc0 || sense_buffer[9] != 0x00) {
- 		c->msgid = MSG_CLARIION_UNIT_REPORT;
+ struct crypt_config;
+@@ -160,7 +160,7 @@ struct crypt_config {
+ 		struct iv_lmk_private lmk;
+ 		struct iv_tcw_private tcw;
+ 	} iv_gen_private;
+-	sector_t iv_offset;
++	unsigned long long iv_offset;
+ 	unsigned int iv_size;
+ 	unsigned short int sector_size;
+ 	unsigned char sector_shift;
 -- 
-2.19.1
+2.7.4
