@@ -1,17 +1,12 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: LUKS2 - RAID0 - NVME : alignment issue
-Date: Sun, 4 Nov 2018 17:33:18 +0100
-Message-ID: <e240dbf8-8820-d50f-43c1-84691d22a2f8@gmail.com>
-References: <CAHzw6onNd8JskiB75PzFd4Zo45dP4fx3emoHFz8eTNkTV2+7+A@mail.gmail.com>
-	<alpine.LRH.2.02.1810181342200.19328@file01.intranet.prod.int.rdu2.redhat.com>
-	<2cd7ddd8-6c3c-e420-fd1f-44912f24ca66@gmail.com>
-	<CAHzw6ok4YHzQ2_oxShAiaa0T_vX4OA2oXGifNTmAOyLHYwGKRg@mail.gmail.com>
+From: Hans van Kranenburg <hans@knorrie.org>
+Subject: dm-integrity + mdadm + btrfs = no journal?
+Date: Sun, 4 Nov 2018 23:55:55 +0100
+Message-ID: <996277c4-90c0-8ab9-8a93-99f4ca3e487e@knorrie.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAHzw6ok4YHzQ2_oxShAiaa0T_vX4OA2oXGifNTmAOyLHYwGKRg@mail.gmail.com>
-Content-Language: en-US
+Content-Language: en_US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,80 +16,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: laurent cop <laurent.cop@gmail.com>
-Cc: dm-devel@redhat.com, mpatocka@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-SGksCgpzb3JyeSBmb3IgbGF0ZSByZXBseS4uLgoKT24gMjgvMTAvMjAxOCAwMTowNSwgbGF1cmVu
-dCBjb3Agd3JvdGU6Cj4gVGhhbmsgeW91IGFsbCBmb3IgeW91ciBhZHZpc2VzLgo+IAo+IE1lYW53
-aGlsZSwgSSBoYXZlIHJlYWTCoCBQcmFjdGljYWwgQ3J5cHRvZ3JhcGhpYyBEYXRhIEludGVncml0
-eSBQcm90ZWN0aW9uIHdpdGggRnVsbCBEaXNrIEVuY3J5cHRpb24gRXh0ZW5kZWQgVmVyc2lvbiAo
-MSBqdWwgMjAxOCkuIFZlcnkgaW50ZXJlc3RpbmcgcHVibGljYXRpb24uIDotKQoKVGhhbmtzLiBN
-eSBtYWpvciBpbnRlbnRpb24gaGVyZSBpcyB0byBkZW1vbnN0cmF0ZSB0aGF0IHdlIG5lZWQgYXV0
-aGVudGljYXRlZCBlbmNyeXB0aW9uIChBRUFEKSBpbiBmdXR1cmUgaW5zdGVhZCBvZiBjdXJyZW50
-IGxlbmd0aApwcmVzZXJ2aW5nIGVuY3J5cHRpb24gdGhhdCBpcyBub3QgYWJsZSB0byBwcm92aWRl
-IGV2ZW4gdHJpdmlhbCBpbnRlZ3JpdHkgcHJvdGVjdGlvbnMuCgpCdXQgYXMgeW91IGFscmVhZHkg
-Zm91bmQsIGRtLWludGVncml0eSBpcyBmYXIgZnJvbSBpZGVhbCBpbiBzb21lIHNpdHVhdGlvbnMu
-CkFueXdheSBpdCBpcyBzb21ldGhpbmcgdG8gcGxheSB3aXRoLi4uIGFuZCBpbXByb3ZlIGl0IGlu
-IGZ1dHVyZS4KCj4gMSkgUGVyZm9ybWFuY2VzIHNlZW1zIHByZXR0eSBjb3JyZWN0IGZvciBsaW5l
-YXIgYWNjZXNzIHdyaXRlIDRrIGJsb2NrcyBOTyBKT1VSTkFMLiBOZXZlcnRoZWxlc3MsIHlvdSBk
-b24ndCBpbmRpY2F0ZSBob3cgeW91IHJlYWxpc2UgdGhpcyB0ZXN0IChjcCwgZGQsIGZpbyB0b29s
-Li4uPykuCgpJdCB3YXMganVzdCBiYXNpYyBsaW5lYXIgYWNjZXNzIHRoYXQgY2FuIGJlIHNpbXVs
-YXRlZCB3aXRoIGRkIGFzIHdlbGwuCkkgdXNlZCBteSBjb2RlIGh0dHBzOi8vZ2l0aHViLmNvbS9t
-YnJvei9kbV9pbnRfdG9vbHMgKHRoYXQgd2FzIGxhdGVyIHVzZWQgaW4gY3J5cHRzZXR1cCB0byB3
-aXBlIGRldmljZSkuCgpEZXZpY2Ugd2FzIGFjdGl2YXRlZCBieSBjcnlwdHNldHVwIChmb3Igbm8g
-am91cm5hbCB3aXRoIG9wdGlvbiAtLWludGVncml0eS1uby1qb3VybmFsKSBhbmQgdGhlbiBhY2Nl
-c3NlZApieSB0aGUgdG9vbCBtZW50aW9uZWQgYWJvdmUuCgpJbiBzaG9ydCwgcmVhZCB0ZXN0IHVz
-ZWQgZm9yIDRrIGFuZCBuby1kaXJlY3QgbW9kZSkKICAjIGludGVncml0eV9jaGVjayBjaGVjayAt
-biAtYiA4IDxkZXZpY2U+CgphbmQgd3JpdGUgdGVzdAogICMgaW50ZWdyaXR5X2NoZWNrIGZvcm1h
-dCAtbiAtYiA4IDxkZXZpY2U+CgpUaW1lIGlzIG1lYXN1cmVkIGluIHRoZSB0ZXN0IHByb2dyYW0g
-dXNpbmcgZ2V0dGltZW9mZGF5KCkgKHNlZSBjb2RlKS4KKFRoZSBzY3JpcHQgYWxzbyB1c2VkIC91
-c3IvYmluL3RpbWUsIHRoaXMgd2F5IHdlIGZvdW5kIHN0dXBpZCBtaXN0YWtlcyBsaWtlIG1pc3Np
-bmcgZnN5bmMoKSBldGMgOi0pCgpJIHRoaW5rIEkgcmVtb3ZlZCBtb3JlIGluZm8gZnJvbSBwYXBl
-ciBhbmQgZm9yZ290IHRvIHB1dCBpdCBiYWNrIGluIGV4dGVuZGVkIHZlcnNpb24sIHNvcnJ5LgoK
-QW55d2F5LCB0aGUga2VybmVsIGV2b2x2ZXMgdmVyeSBxdWlja2x5IChzcGVjaWZpY2FsbHkgZm9y
-IE5WTUUgZGV2aWNlcykgc28gYW55IGNvbXBhcmlzb24gd2l0aCBvbGRlcgp2ZXJzaW9uIGlzIG1p
-c2xlYWRpbmcgbm93LCBpdCBuZWVkIG5ldyB0ZXN0cy4KCk9uZHJhICh3aGlsZSB3b3JraW5nIG9u
-IGhpcyBtYXN0ZXIgdGhlc2lzKSBoYWQgc29tZSBiZW5jaG1hcmsgc2NyaXB0cyBoZXJlCmh0dHBz
-Oi8vZ2l0bGFiLmNvbS9vbW9zL2RtLWNyeXB0LXRlc3Qtc2NyaXB0cwoKKEkgd291bGQgbGlrZSB0
-byBpbnRlZ3JhdGUgZG0tY3J5cHQvZG0taW50ZWdyaXR5IGJlbmNobWFya2luZyB0byBzb21lIGJl
-dHRlciB1c2FibGUgcGFja2FnZS4uLikKCj4gMikgSSB3aWxsIHJlY29uc2lkZXIgZG9pbmcgYWdh
-aW4gbXkgc3RhY2suIChObyBkYXRhcyBvbiBpdCkgSGF2ZSB5b3UKPiBhbnkgYWR2aXNlcyByZWxh
-dGVkIHRvIGZzLCBSQUlEMCwgbHVrc2Zvcm1hdCAodHlwZSBsdWsyKSBjcmVhdGlvbj8KPiBJbmRl
-ZWQsIEkgZG9uJ3QgY2xlYXJseSB1bmRlcnN0YW5kIHRoaXMgcG9pbnQgOiAvImRtLWludGVncml0
-eQo+IGludGVybGVhdmVzIGRhdGEgYW5kIG1ldGFkYXRhIGFuZCBjb25zZXF1ZW50bHkgZGF0YSBh
-cmUgbm90IGFsaWduZWQKPiBvbiByYWlkIHN0cmlwZSBib3VuZGFyeS4iLyBBY2NvcmRpbmcgdG8g
-d2hhdCBJIGluZGVyc3RhbmQgdGhpcyB3aWxsCj4ga2lsbCBteSBSQUlEMCBtYWluIGdvYWwgZm9y
-IGdldHRpbmcgZmFzdCBwZXJmb3JtYW5jZS4KVW5mb3J0dW5hdGVseSwgeWVzLiBJIHdvdWxkIGxp
-a2UgdG8gaGF2ZSBzb21lIGRtLWludGVncml0eSBtb2RlIHRoYXQgaXMgYWxpZ25lZCB0aG91Z2gu
-CkkgYWRkZWQgbWVudGlvbiB0byByZWxlYXNlIG5vdGVzIGZvciBjcnlwdHNldHVwIDIuMC41IGFi
-b3V0IHBlcmZvcm1hbmNlIHByb2JsZW1zLgoKV2UgKERNIGRldmVsb3BlcnMpIG5lZWQgdG8gZGlz
-Y3VzcyB3aGF0IGNhbiBiZSBkb25lIHdpdGggdGhlc2UgY29uZmlndXJhdGlvbnMgJiBkbS1pbnRl
-Z3JpdHkgaW4gZnV0dXJlLi4uCgpUQkgsIGRvIG5vdCBleHBlY3Qgc3VwZXItZmFzdCBwZXJmb3Jt
-YW5jZSB3aXRoIGRtLWludGVncml0eS4gVGhlIGdvYWwgd2FzCnRvIHByb3ZlIGl0IGNhbiBiZSBk
-b25lLCBpdCBjYW4gYmUgdXNlZCB3aXRoIGNvbW1vbiBzY2VuYXJpb3MsIGJ1dCB0aGUgcGVyZm9y
-bWFjZQpwZW5hbHR5IGZvciBzZWN0b3IgaW50ZXJsZWF2aW5nIGFuZCBqb3VybmFsIHdpbGwgYmUg
-YWx3YXlzIHRoZXJlLgoKPiAzKSBJIHdhbnQgaW50ZWdyaXR5IGZlYXR1cmVzIGFuZCBJIHdhbnQg
-dG8gdHJ5IHRoZSBubyBqb3VybmFsIG9wdGlvbiBmb3IgcGVyZm9ybWFuY2UgZ2Fpbi4gSG93IHRv
-IHVzZSBpdMKgID8KPiBjcnlwdHNldHVwIC12IGx1a3NGb3JtYXQgLS10eXBlIGx1a3MyIC9kZXYv
-bWQxMjcgLS1jaXBoZXIgYWVzLWdjbS1yYW5kb20gLS1pbnRlZ3JpdHkgYWVhZMKgIC8tLWludGVn
-cml0eS1uby1qb3VybmFsLwoKWWVzLCAtLWludGVncml0eS1uby1qb3VybmFsIGlzIHRoZSBmbGFn
-LiBVc2UgaXQgd2l0aCBvcGVuIChsdWtzT3BlbikgY29tbWFuZC4KCklmIG9wZW4gY29tbWFuZCBp
-cyB1c2VkIHdpdGggLS1wZXJzaXN0ZW50LCBpdCBzaG91bGQgYmUgd3JpdHRlbiB0byBMVUtTMiBt
-ZXRhZGF0YSBhbmQgdXNlZCBsYXRlciBhdXRvbWF0aWNhbGx5LgpVbmZvcnR1bmF0ZWx5LCBJIGp1
-c3QgZm91bmQgYSBidWcgZm9yIHBlcnNpc3RlbnQgc2V0dGluZyBmb3IgdGhpcyBzcGVjaWZpYyBv
-cHRpb24uLi4KU28gZm9yIG5vdyB5b3UgaGF2ZSB0byB1c2UgaXQgb24gY29tbWFuZGxpbmUgYWx3
-YXlzLiBJJ2xsIGZpeCB0aGlzLgoKPiA0KSBJIGFtIG5vdCBzdXJlIHRvIHVuZGVyc3RhbmQgdGhl
-IHJlbGF0aW9uIGJldHdlZW4gc2VjdG9yIHNpemUgb2YKPiBlYWNoIGxheWVyIG9mIHRoZSBzdGFj
-ayBhcyB3ZSBpbnRyb2R1Y2UgYSBsYXllciAoZGlmKSB3aXRoIG1ldGFkYXRhCj4gdW5kZXIgZG0t
-Y3J5cHQgbGF5ZXIgYW5kIGFib3ZlIHN0b3JhZ2UgZGV2aWNlcy4gRG9lcyA0MDk2IGJ5dGVzIG11
-c3QKPiBiZSBjaG9vc2VuIGZvciBhbGwgbGF5ZXJzPyAqLS1zZWN0b3Itc2l6ZSA8Ynl0ZXM+KiBT
-ZXQgc2VjdG9yIHNpemUKPiBmb3IgdXNlIHdpdGggZGlzayBlbmNyeXB0aW9uLiBJdCBtdXN0IGJl
-IHBvd2VyIG9mIHR3byBhbmQgaW4gcmFuZ2UKPiA1MTIgLSA0MDk2IGJ5dGVzLiBUaGUgZGVmYXVs
-dCBpcyA1MTIgYnl0ZXMgc2VjdG9ycy4gVGhpcyBvcHRpb24gaXMKPiBhdmFpbGFibGUgb25seSBp
-biB0aGUgTFVLUzIgbW9kZS4KLi4uCgpUaGUgc2VjdG9yIHNpemUgc2hvdWxkIGJlIHRoZSBzYW1l
-IGZvciBhbGwgbGF5ZXJzLiAKRm9yIGRtLWNyeXB0IDRrIHNlY3RvciBzaG91bGQgaW1wcm92ZSBw
-ZXJmb3JtYW5jZSBhcyB3ZWxsCihieSBkZWZhdWx0IGl0IHVzZXMgNTEyIGJ5dGUgc2VjdG9yKS4K
-CkFueXdheSwgdGhhbmsgeW91IGZvciB0ZXN0aW5nIGFuZCB1c2luZyBpdCEKClJlZ2FyZHMsCk1p
-bGFuCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczov
-L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+Hi dm-devel list,
+
+I have a question, or actually want to share a thought experiment about
+using the stuff mentioned in the title of the post, and I'm looking for
+feedback on it that either sounds like "Yes, you got it right, you can
+do this." or "Nope, don't do this, you're missing the fact that XYZ".
+
+---- >8 ----
+
+The use case here is running a linux server in the office of a
+non-profit organization that I support in my free time. The hardware is
+a donated HP z820 workstation (with ECC memory, yay) and 4x250G 10k SAS
+disks.
+
+The machine will run a bunch of Xen virtual machines. There are no
+applications which demand particularly high disk write/read performance.
+
+Encryption of storage is not a requirement. Well, the conflicting
+requirement is that after power loss etc. the machine has to be able to
+fully boot itself again without intervention from a sysadmin.
+
+But, reliability is important. And that's why I was thinking about
+starting to use dm-integrity in combination with mdadm raid to get some
+self-healing bitrot repair capability.
+
+The 4 disks would have a mdadm raid1 /boot on the first two disks and
+then on each disk a partition and mdadm raid10 with dm-integrity
+underneath it, separately for each disk. On top of the raid10 goes LVM,
+with logical volumes for the Xen virtual machines.
+
+---- >8 ----
+
+Now, my question is:
+
+  If I'm using btrfs as filesystem for all the disks in this lvm volume
+group, can I then run dm-integrity without journal?
+
+Btrfs never overwrites data in place. It writes changes to a new place,
+and commits transactions while writing the btrfs superblock, switching
+visiblity after crash to new metadata and data. Then only during the
+following transaction it allows the disk blocks that were already freed
+in the previous transaction to be overwritten again.
+
+The only dangerous thing that remains here I guess is writing the btrfs
+superblock to mdadm raid10. If this fails on every disk it's ending up
+at with inconsistency between data and metadata on dm-integrity level, I
+guess I'm screwed. So, a crash / power loss at exactly the moment
+between both writes and for both disks...
+
+So the question in this case is... is the chance of this happening lower
+than the chance of some old sas disk presenting bitrot back to linux,
+and having mdadm use that and slowly cause vague errors?
+
+---- >8 ----
+
+Or maybe I'm missing something else entirely. I'm here to learn. :)
+
+---- >8 ----
+
+Additional question:
+
+Section 4.4 "Recovery on Write Failure" mentions:
+  "A device must provide atomic updating of both data and metadata. A
+situation in which one part is written to media while another part
+failed must not occur. Furthermore, metadata sectors are packed with
+tags for multiple sectors; thus, a write failure must not cause an
+integrity validation failure for other sectors."
+
+I don't fully understand the last part. Can non-journalled dm-integrity
+result in 'integrity validation failure for other sectors'? Which
+sectors are those other sectors? Are they sectors that were written
+earlier and are not touched during the current write? Is this a similar
+thing to the RAID56 write hole? From what I read and understand so far,
+that seems to not be the case, since the lost dm-integrity metadata
+write would only cause IO errors for the newly added data?
+
+Thanks a lot in advance,
+Hans
