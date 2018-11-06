@@ -1,13 +1,16 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [patch 5/5] block: use a driver-specific handler for the
-	"inflight" value
-Date: Tue, 06 Nov 2018 22:35:03 +0100
-Message-ID: <20181106213858.391264280@debian-a64.vm>
+Subject: Re: [RFC PATCH] dm: Check for device sector overflow if
+ CONFIG_LBDAF is not set
+Date: Tue, 6 Nov 2018 16:44:15 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1811061641270.9045@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20181104134234.13597-1-gmazyland@gmail.com>
+	<alpine.LRH.2.02.1811051333580.28808@file01.intranet.prod.int.rdu2.redhat.com>
+	<178d2361-8d31-ae07-a1ca-59889193e3ce@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm-inflight.patch
+In-Reply-To: <178d2361-8d31-ae07-a1ca-59889193e3ce@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,118 +20,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
+To: Milan Broz <gmazyland@gmail.com>
+Cc: dm-devel@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-Device mapper was converted to percpu inflight counters. In order to
-display the correct values in the "inflight" sysfs file, we need a custom
-callback that sums the percpu counters.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
----
- block/blk-settings.c   |    6 ++++++
- block/genhd.c          |    5 +++++
- drivers/md/dm.c        |   18 ++++++++++++++++++
- include/linux/blkdev.h |    4 ++++
- 4 files changed, 33 insertions(+)
+On Mon, 5 Nov 2018, Milan Broz wrote:
 
-Index: linux-2.6/block/genhd.c
-===================================================================
---- linux-2.6.orig/block/genhd.c	2018-11-06 22:31:46.350000000 +0100
-+++ linux-2.6/block/genhd.c	2018-11-06 22:31:46.350000000 +0100
-@@ -85,6 +85,11 @@ void part_in_flight(struct request_queue
- void part_in_flight_rw(struct request_queue *q, struct hd_struct *part,
- 		       unsigned int inflight[2])
- {
-+	if (q->get_inflight_fn) {
-+		q->get_inflight_fn(q, inflight);
-+		return;
-+	}
-+
- 	if (q->mq_ops) {
- 		blk_mq_in_flight_rw(q, part, inflight);
- 		return;
-Index: linux-2.6/include/linux/blkdev.h
-===================================================================
---- linux-2.6.orig/include/linux/blkdev.h	2018-11-06 22:31:46.350000000 +0100
-+++ linux-2.6/include/linux/blkdev.h	2018-11-06 22:31:46.350000000 +0100
-@@ -324,6 +324,7 @@ typedef int (lld_busy_fn) (struct reques
- typedef int (bsg_job_fn) (struct bsg_job *);
- typedef int (init_rq_fn)(struct request_queue *, struct request *, gfp_t);
- typedef void (exit_rq_fn)(struct request_queue *, struct request *);
-+typedef void (get_inflight_fn)(struct request_queue *, unsigned int [2]);
- 
- enum blk_eh_timer_return {
- 	BLK_EH_DONE,		/* drivers has completed the command */
-@@ -466,6 +467,8 @@ struct request_queue {
- 	exit_rq_fn		*exit_rq_fn;
- 	/* Called from inside blk_get_request() */
- 	void (*initialize_rq_fn)(struct request *rq);
-+	/* Called to get the "inflight" values */
-+	get_inflight_fn		*get_inflight_fn;
- 
- 	const struct blk_mq_ops	*mq_ops;
- 
-@@ -1232,6 +1235,7 @@ extern int blk_queue_dma_drain(struct re
- 			       dma_drain_needed_fn *dma_drain_needed,
- 			       void *buf, unsigned int size);
- extern void blk_queue_lld_busy(struct request_queue *q, lld_busy_fn *fn);
-+extern void blk_queue_get_inflight(struct request_queue *q, get_inflight_fn *fn);
- extern void blk_queue_segment_boundary(struct request_queue *, unsigned long);
- extern void blk_queue_virt_boundary(struct request_queue *, unsigned long);
- extern void blk_queue_prep_rq(struct request_queue *, prep_rq_fn *pfn);
-Index: linux-2.6/block/blk-settings.c
-===================================================================
---- linux-2.6.orig/block/blk-settings.c	2018-11-06 22:31:46.350000000 +0100
-+++ linux-2.6/block/blk-settings.c	2018-11-06 22:31:46.350000000 +0100
-@@ -79,6 +79,12 @@ void blk_queue_lld_busy(struct request_q
- }
- EXPORT_SYMBOL_GPL(blk_queue_lld_busy);
- 
-+void blk_queue_get_inflight(struct request_queue *q, get_inflight_fn *fn)
-+{
-+	q->get_inflight_fn = fn;
-+}
-+EXPORT_SYMBOL_GPL(blk_queue_get_inflight);
-+
- /**
-  * blk_set_default_limits - reset limits to default values
-  * @lim:  the queue_limits structure to reset
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c	2018-11-06 22:31:46.350000000 +0100
-+++ linux-2.6/drivers/md/dm.c	2018-11-06 22:31:46.350000000 +0100
-@@ -662,6 +662,23 @@ static void end_io_acct(struct dm_io *io
- 	}
- }
- 
-+static void dm_get_inflight(struct request_queue *q, unsigned int inflight[2])
-+{
-+	struct mapped_device *md = q->queuedata;
-+	int cpu;
-+
-+	inflight[READ] = inflight[WRITE] = 0;
-+	for_each_possible_cpu(cpu) {
-+		struct dm_percpu *p = per_cpu_ptr(md->counters, cpu);
-+		inflight[READ] += p->inflight[READ];
-+		inflight[WRITE] += p->inflight[WRITE];
-+	}
-+	if ((int)inflight[READ] < 0)
-+		inflight[READ] = 0;
-+	if ((int)inflight[WRITE] < 0)
-+		inflight[WRITE] = 0;
-+}
-+
- /*
-  * Add the bio to the list of deferred io.
-  */
-@@ -2242,6 +2259,7 @@ int dm_setup_md_queue(struct mapped_devi
- 	case DM_TYPE_NVME_BIO_BASED:
- 		dm_init_normal_md_queue(md);
- 		blk_queue_make_request(md->queue, dm_make_request);
-+		blk_queue_get_inflight(md->queue, dm_get_inflight);
- 		break;
- 	case DM_TYPE_NONE:
- 		WARN_ON_ONCE(true);
+> On 05/11/2018 19:35, Mikulas Patocka wrote:
+> > But the condition "sizeof(cc->start) < sizeof(tmpll)" could be dropped, 
+> > the compiler will optimize out "cc->start != tmpll" if the types have the 
+> > same width.
+> 
+> Yes, the intention here is that in 64bit env. the whole if condition
+> is not compiled in. If it happens without "sizeof(cc->start) < sizeof(tmpll)",
+> then we can drop it.
+> 
+> So, does it make sense to add this to all dm targets? Or any better idea?
+> 
+> Milan
+
+In the targets that I have written, I tried to protect against this:
+	if (sscanf(argv[1], "%llu%c", &start, &dummy) != 1 || start != (sector_t)start)
+
+	ic->provided_data_sectors = le64_to_cpu(ic->sb->provided_data_sectors)
+	if (ic->provided_data_sectors != le64_to_cpu(ic->sb->provided_data_sectors)) {
+
+	wc->start_sector = start_sector;
+	if (wc->start_sector != start_sector
+
+If you find some more unprotected cases, it's OK to convert them.
+
+Mikulas
