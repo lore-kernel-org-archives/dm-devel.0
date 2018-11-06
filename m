@@ -1,16 +1,12 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [RFC PATCH] dm: Check for device sector overflow if
- CONFIG_LBDAF is not set
-Date: Tue, 6 Nov 2018 16:44:15 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1811061641270.9045@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20181104134234.13597-1-gmazyland@gmail.com>
-	<alpine.LRH.2.02.1811051333580.28808@file01.intranet.prod.int.rdu2.redhat.com>
-	<178d2361-8d31-ae07-a1ca-59889193e3ce@gmail.com>
+Subject: [patch 2/5] dm: dont rewrite dm_disk(md)->part0.in_flight
+Date: Tue, 06 Nov 2018 22:35:00 +0100
+Message-ID: <20181106213854.621440000@debian-a64.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <178d2361-8d31-ae07-a1ca-59889193e3ce@gmail.com>
+Content-Disposition: inline; filename=dm-dont-rewrite-in_flight.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,36 +16,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>
-Cc: dm-devel@redhat.com, snitzer@redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
+generic_start_io_acct and generic_end_io_acct already update the variable
+in_flight using atomic operations, so we don't have to overwrite them
+again.
 
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-On Mon, 5 Nov 2018, Milan Broz wrote:
+---
+ drivers/md/dm.c |    4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-> On 05/11/2018 19:35, Mikulas Patocka wrote:
-> > But the condition "sizeof(cc->start) < sizeof(tmpll)" could be dropped, 
-> > the compiler will optimize out "cc->start != tmpll" if the types have the 
-> > same width.
-> 
-> Yes, the intention here is that in 64bit env. the whole if condition
-> is not compiled in. If it happens without "sizeof(cc->start) < sizeof(tmpll)",
-> then we can drop it.
-> 
-> So, does it make sense to add this to all dm targets? Or any better idea?
-> 
-> Milan
-
-In the targets that I have written, I tried to protect against this:
-	if (sscanf(argv[1], "%llu%c", &start, &dummy) != 1 || start != (sector_t)start)
-
-	ic->provided_data_sectors = le64_to_cpu(ic->sb->provided_data_sectors)
-	if (ic->provided_data_sectors != le64_to_cpu(ic->sb->provided_data_sectors)) {
-
-	wc->start_sector = start_sector;
-	if (wc->start_sector != start_sector
-
-If you find some more unprotected cases, it's OK to convert them.
-
-Mikulas
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c	2018-10-10 22:24:34.090000000 +0200
++++ linux-2.6/drivers/md/dm.c	2018-10-10 23:06:24.420000000 +0200
+@@ -612,8 +612,7 @@ static void start_io_acct(struct dm_io *
+ 	generic_start_io_acct(md->queue, bio_op(bio), bio_sectors(bio),
+ 			      &dm_disk(md)->part0);
+ 
+-	atomic_set(&dm_disk(md)->part0.in_flight[rw],
+-		   atomic_inc_return(&md->pending[rw]));
++	atomic_inc(&md->pending[rw]);
+ 
+ 	if (unlikely(dm_stats_used(&md->stats)))
+ 		dm_stats_account_io(&md->stats, bio_data_dir(bio),
+@@ -642,7 +641,6 @@ static void end_io_acct(struct dm_io *io
+ 	 * a flush.
+ 	 */
+ 	pending = atomic_dec_return(&md->pending[rw]);
+-	atomic_set(&dm_disk(md)->part0.in_flight[rw], pending);
+ 	pending += atomic_read(&md->pending[rw^0x1]);
+ 
+ 	/* nudge anyone waiting on suspend queue */
