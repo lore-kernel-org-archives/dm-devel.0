@@ -1,14 +1,14 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v3] libmultipath: update INFINIDAT builtin
- config
-Date: Wed, 07 Nov 2018 11:41:03 +0100
-Message-ID: <9ea55d5a8c50d846cc5c0930c06f33446f8f55a0.camel@suse.com>
-References: <CAK2gM1vmua3z7ZQtudyeTQbxivw0qxkGt5K2kJQFJN9UsQL6CQ@mail.gmail.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: [PATCH v2] dm: Check for device sector overflow if
+	CONFIG_LBDAF is not set
+Date: Wed,  7 Nov 2018 22:24:55 +0100
+Message-ID: <20181107212455.7332-1-gmazyland@gmail.com>
+References: <alpine.LRH.2.02.1811061641270.9045@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAK2gM1vmua3z7ZQtudyeTQbxivw0qxkGt5K2kJQFJN9UsQL6CQ@mail.gmail.com>
+In-Reply-To: <alpine.LRH.2.02.1811061641270.9045@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,30 +18,112 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Arnon Yaari <arnony@infinidat.com>, dm-devel@redhat.com
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: dm-devel@redhat.com
+Cc: mpatocka@redhat.com, Milan Broz <gmazyland@gmail.com>, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-QXJub24sCgpPbiBUdWUsIDIwMTctMTAtMTcgYXQgMTA6NTUgKzAzMDAsIEFybm9uIFlhYXJpIHdy
-b3RlOgo+IEJhc2VkIG9uIHRoZSBtYW51ZmFjdHVyZXIgZG9jdW1lbnRhdGlvbjoKPiBodHRwczov
-L3N1cHBvcnQuaW5maW5pZGF0LmNvbS9oYy9lbi11cy9hcnRpY2xlcy8yMDIzMTkyMjIKPiAKPiBJ
-TkZJTklEQVQgcmVjb21tZW5kcyByb3VuZC1yb2JpbiBwYXRoIHNlbGVjdG9yIHVzaW5nCj4gYSBk
-aWZmZXJlbnQgcGF0aCBwZXIgSU8uIFRpbWVvdXQgYW5kIHBhdGggcmVjb3ZlcnkgdmFsdWVzCj4g
-YXJlIGFkanVzdGVkIGZvciBlcnJvci1mcmVlIGhvdCB1cGdyYWRlIHNjZW5hcmlvcy4KPiAKPiBT
-aWduZWQtb2ZmLWJ5OiBBcm5vbiBZYWFyaSA8YXJub255QGluZmluaWRhdC5jb20+Cj4gKyAgICAg
-ICAuZmFzdF9pb19mYWlsICA9IDE1LAo+ICsgICAgICAgLmRldl9sb3NzICAgICAgPSAxNSwKCkkg
-YXBvbG9naXplIGZvciBjb21pbmcgYmFjayB0byB0aGlzIGFmdGVyIG1vcmUgdGhhbiBhIHllYXIu
-CkkndmUgYmVlbiB3b25kZXJpbmcgYWJvdXQgeW91ciBkZXZfbG9zcyByZWNvbW1lbmRhdGlvbi4K
-CldoYXQgaXMgdGhlIHJhdGlvbmFsZSBmb3Igc2V0dGluZyBkZXZfbG9zcyBhbmQgZmFzdF9pb19m
-YWlsIHRvIHRoZSBzYW1lCnZhbHVlLCB3aGljaCBpcyBzdHJhaWdodCBhZ2FpbnN0IHRoZSBnZW5l
-cmFsIHJlY29tbWVuZGF0aW9uPyBBbmQgd2hhdAppcyB0aGUgcmVhc29uIGZvciB0aGUgYWdncmVz
-c2l2ZWx5IGxvdyBkZXZfbG9zcyB2YWx1ZSBhbnl3YXk/IERldmljZQpsb3NzIGFuZCByZS1kaXNj
-b3ZlcnkgaXMgbXVjaCBtb3JlIGNvbXBsZXggdG8gaGFuZGxlIGZvciBib3RoIHRoZQprZXJuZWwg
-YW5kIG11bHRpcGF0aGQgdGhhbiBmYWlsdXJlL3JlaW5zdGFudGlhdGlvbi4gWW91IGFyZSB0aGUg
-b25seQp2ZW5kb3Igd2hvIHJlY29tbWVuZHMgc2V0dGluZyBkZXZfbG9zcyBsZXNzIHRoYW4gdGhl
-IGRlZmF1bHQgb2YgNjAwcy4gCgpDb3VsZCB5b3Ugc2hhcmUgeW91ciByZWFzb25pbmcgcGxlYXNl
-PwoKUmVnYXJkcywKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29t
-PiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXgg
-SW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcg
-TsO8cm5iZXJnKQoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29t
-Cmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Reference to a device in device-mapper table contains offset in sectors.
+
+If the sector_t is 32bit integer (CONFIG_LBDAF is not set), then
+several device-mapper targets can overflow this offset and validity
+check is then performed on a wrong offset and a wrong table is activated.
+
+See for example (on 32bit without CONFIG_LBDAF) this overflow:
+
+  # dmsetup create test --table "0 2048 linear /dev/sdg 4294967297"
+  # dmsetup table test
+  0 2048 linear 8:96 1
+
+This patch adds explicit check for overflow if the offset is sector_t type.
+
+Signed-off-by: Milan Broz <gmazyland@gmail.com>
+---
+ drivers/md/dm-crypt.c    | 2 +-
+ drivers/md/dm-delay.c    | 2 +-
+ drivers/md/dm-flakey.c   | 2 +-
+ drivers/md/dm-linear.c   | 2 +-
+ drivers/md/dm-raid1.c    | 3 ++-
+ drivers/md/dm-unstripe.c | 2 +-
+ 6 files changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 49be7a6a2e81..a41fe7975dc6 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -2781,7 +2781,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	}
+ 
+ 	ret = -EINVAL;
+-	if (sscanf(argv[4], "%llu%c", &tmpll, &dummy) != 1) {
++	if (sscanf(argv[4], "%llu%c", &tmpll, &dummy) != 1 || tmpll != (sector_t)tmpll) {
+ 		ti->error = "Invalid device sector";
+ 		goto bad;
+ 	}
+diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
+index 2fb7bb4304ad..fddffe251bf6 100644
+--- a/drivers/md/dm-delay.c
++++ b/drivers/md/dm-delay.c
+@@ -141,7 +141,7 @@ static int delay_class_ctr(struct dm_target *ti, struct delay_class *c, char **a
+ 	unsigned long long tmpll;
+ 	char dummy;
+ 
+-	if (sscanf(argv[1], "%llu%c", &tmpll, &dummy) != 1) {
++	if (sscanf(argv[1], "%llu%c", &tmpll, &dummy) != 1 || tmpll != (sector_t)tmpll) {
+ 		ti->error = "Invalid device sector";
+ 		return -EINVAL;
+ 	}
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index 3cb97fa4c11d..8261aa8c7fe1 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -213,7 +213,7 @@ static int flakey_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	devname = dm_shift_arg(&as);
+ 
+ 	r = -EINVAL;
+-	if (sscanf(dm_shift_arg(&as), "%llu%c", &tmpll, &dummy) != 1) {
++	if (sscanf(dm_shift_arg(&as), "%llu%c", &tmpll, &dummy) != 1 || tmpll != (sector_t)tmpll) {
+ 		ti->error = "Invalid device sector";
+ 		goto bad;
+ 	}
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 8d7ddee6ac4d..ad980a38fb1e 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -45,7 +45,7 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	}
+ 
+ 	ret = -EINVAL;
+-	if (sscanf(argv[1], "%llu%c", &tmp, &dummy) != 1) {
++	if (sscanf(argv[1], "%llu%c", &tmp, &dummy) != 1 || tmp != (sector_t)tmp) {
+ 		ti->error = "Invalid device sector";
+ 		goto bad;
+ 	}
+diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+index 79eab1071ec2..5a51151f680d 100644
+--- a/drivers/md/dm-raid1.c
++++ b/drivers/md/dm-raid1.c
+@@ -943,7 +943,8 @@ static int get_mirror(struct mirror_set *ms, struct dm_target *ti,
+ 	char dummy;
+ 	int ret;
+ 
+-	if (sscanf(argv[1], "%llu%c", &offset, &dummy) != 1) {
++	if (sscanf(argv[1], "%llu%c", &offset, &dummy) != 1 ||
++	    offset != (sector_t)offset) {
+ 		ti->error = "Invalid offset";
+ 		return -EINVAL;
+ 	}
+diff --git a/drivers/md/dm-unstripe.c b/drivers/md/dm-unstripe.c
+index 954b7ab4e684..e673dacf6418 100644
+--- a/drivers/md/dm-unstripe.c
++++ b/drivers/md/dm-unstripe.c
+@@ -78,7 +78,7 @@ static int unstripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto err;
+ 	}
+ 
+-	if (sscanf(argv[4], "%llu%c", &start, &dummy) != 1) {
++	if (sscanf(argv[4], "%llu%c", &start, &dummy) != 1 || start != (sector_t)start) {
+ 		ti->error = "Invalid striped device offset";
+ 		goto err;
+ 	}
+-- 
+2.19.1
