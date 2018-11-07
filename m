@@ -1,12 +1,14 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [patch 3/5] dm: remove the pending variable
-Date: Tue, 06 Nov 2018 22:35:01 +0100
-Message-ID: <20181106213855.868640480@debian-a64.vm>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v3] libmultipath: update INFINIDAT builtin
+ config
+Date: Wed, 07 Nov 2018 11:41:03 +0100
+Message-ID: <9ea55d5a8c50d846cc5c0930c06f33446f8f55a0.camel@suse.com>
+References: <CAK2gM1vmua3z7ZQtudyeTQbxivw0qxkGt5K2kJQFJN9UsQL6CQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm-remove-pending.patch
+In-Reply-To: <CAK2gM1vmua3z7ZQtudyeTQbxivw0qxkGt5K2kJQFJN9UsQL6CQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,133 +18,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
+To: Arnon Yaari <arnony@infinidat.com>, dm-devel@redhat.com
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Remove the "pending" variable and use dm_disk(md)->part0.in_flight.
-These variables hold identical values.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-core.h |    1 -
- drivers/md/dm-rq.c   |    4 ++--
- drivers/md/dm.c      |   34 ++++++++++++++++------------------
- 3 files changed, 18 insertions(+), 21 deletions(-)
-
-Index: linux-2.6/drivers/md/dm-core.h
-===================================================================
---- linux-2.6.orig/drivers/md/dm-core.h	2018-10-25 00:47:12.000000000 +0200
-+++ linux-2.6/drivers/md/dm-core.h	2018-10-25 00:47:12.000000000 +0200
-@@ -65,7 +65,6 @@ struct mapped_device {
- 	 */
- 	struct work_struct work;
- 	wait_queue_head_t wait;
--	atomic_t pending[2];
- 	spinlock_t deferred_lock;
- 	struct bio_list deferred;
- 
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c	2018-10-25 00:47:12.000000000 +0200
-+++ linux-2.6/drivers/md/dm.c	2018-10-25 00:47:28.000000000 +0200
-@@ -597,23 +597,20 @@ static void free_tio(struct dm_target_io
- 
- int md_in_flight(struct mapped_device *md)
- {
--	return atomic_read(&md->pending[READ]) +
--	       atomic_read(&md->pending[WRITE]);
-+	return atomic_read(&dm_disk(md)->part0.in_flight[READ]) +
-+	       atomic_read(&dm_disk(md)->part0.in_flight[WRITE]);
- }
- 
- static void start_io_acct(struct dm_io *io)
- {
- 	struct mapped_device *md = io->md;
- 	struct bio *bio = io->orig_bio;
--	int rw = bio_data_dir(bio);
- 
- 	io->start_time = jiffies;
- 
- 	generic_start_io_acct(md->queue, bio_op(bio), bio_sectors(bio),
- 			      &dm_disk(md)->part0);
- 
--	atomic_inc(&md->pending[rw]);
--
- 	if (unlikely(dm_stats_used(&md->stats)))
- 		dm_stats_account_io(&md->stats, bio_data_dir(bio),
- 				    bio->bi_iter.bi_sector, bio_sectors(bio),
-@@ -625,27 +622,30 @@ static void end_io_acct(struct dm_io *io
- 	struct mapped_device *md = io->md;
- 	struct bio *bio = io->orig_bio;
- 	unsigned long duration = jiffies - io->start_time;
--	int pending;
--	int rw = bio_data_dir(bio);
- 
-+	/*
-+	 * make sure that atomic_dec in generic_end_io_acct is not reordered
-+	 * with previous writes
-+	 */
-+	smp_mb__before_atomic();
- 	generic_end_io_acct(md->queue, bio_op(bio), &dm_disk(md)->part0,
- 			    io->start_time);
-+	/*
-+	 * generic_end_io_acct does atomic_dec, this barrier makes sure that
-+	 * atomic_dec is not reordered with waitqueue_active
-+	 */
-+	smp_mb__after_atomic();
- 
- 	if (unlikely(dm_stats_used(&md->stats)))
- 		dm_stats_account_io(&md->stats, bio_data_dir(bio),
- 				    bio->bi_iter.bi_sector, bio_sectors(bio),
- 				    true, duration, &io->stats_aux);
- 
--	/*
--	 * After this is decremented the bio must not be touched if it is
--	 * a flush.
--	 */
--	pending = atomic_dec_return(&md->pending[rw]);
--	pending += atomic_read(&md->pending[rw^0x1]);
--
- 	/* nudge anyone waiting on suspend queue */
--	if (!pending)
--		wake_up(&md->wait);
-+	if (unlikely(waitqueue_active(&md->wait))) {
-+		if (!md_in_flight(md))
-+			wake_up(&md->wait);
-+	}
- }
- 
- /*
-@@ -1899,8 +1899,6 @@ static struct mapped_device *alloc_dev(i
- 	if (!md->disk)
- 		goto bad;
- 
--	atomic_set(&md->pending[0], 0);
--	atomic_set(&md->pending[1], 0);
- 	init_waitqueue_head(&md->wait);
- 	INIT_WORK(&md->work, dm_wq_work);
- 	init_waitqueue_head(&md->eventq);
-Index: linux-2.6/drivers/md/dm-rq.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-rq.c	2018-10-25 00:47:12.000000000 +0200
-+++ linux-2.6/drivers/md/dm-rq.c	2018-10-25 00:47:12.000000000 +0200
-@@ -182,7 +182,7 @@ static void rq_completed(struct mapped_d
- 	struct request_queue *q = md->queue;
- 	unsigned long flags;
- 
--	atomic_dec(&md->pending[rw]);
-+	atomic_dec(&dm_disk(md)->part0.in_flight[rw]);
- 
- 	/* nudge anyone waiting on suspend queue */
- 	if (!md_in_flight(md))
-@@ -536,7 +536,7 @@ static void dm_start_request(struct mapp
- 		blk_start_request(orig);
- 	else
- 		blk_mq_start_request(orig);
--	atomic_inc(&md->pending[rq_data_dir(orig)]);
-+	atomic_inc(&dm_disk(md)->part0.in_flight[rq_data_dir(orig)]);
- 
- 	if (md->seq_rq_merge_deadline_usecs) {
- 		md->last_rq_pos = rq_end_sector(orig);
+QXJub24sCgpPbiBUdWUsIDIwMTctMTAtMTcgYXQgMTA6NTUgKzAzMDAsIEFybm9uIFlhYXJpIHdy
+b3RlOgo+IEJhc2VkIG9uIHRoZSBtYW51ZmFjdHVyZXIgZG9jdW1lbnRhdGlvbjoKPiBodHRwczov
+L3N1cHBvcnQuaW5maW5pZGF0LmNvbS9oYy9lbi11cy9hcnRpY2xlcy8yMDIzMTkyMjIKPiAKPiBJ
+TkZJTklEQVQgcmVjb21tZW5kcyByb3VuZC1yb2JpbiBwYXRoIHNlbGVjdG9yIHVzaW5nCj4gYSBk
+aWZmZXJlbnQgcGF0aCBwZXIgSU8uIFRpbWVvdXQgYW5kIHBhdGggcmVjb3ZlcnkgdmFsdWVzCj4g
+YXJlIGFkanVzdGVkIGZvciBlcnJvci1mcmVlIGhvdCB1cGdyYWRlIHNjZW5hcmlvcy4KPiAKPiBT
+aWduZWQtb2ZmLWJ5OiBBcm5vbiBZYWFyaSA8YXJub255QGluZmluaWRhdC5jb20+Cj4gKyAgICAg
+ICAuZmFzdF9pb19mYWlsICA9IDE1LAo+ICsgICAgICAgLmRldl9sb3NzICAgICAgPSAxNSwKCkkg
+YXBvbG9naXplIGZvciBjb21pbmcgYmFjayB0byB0aGlzIGFmdGVyIG1vcmUgdGhhbiBhIHllYXIu
+CkkndmUgYmVlbiB3b25kZXJpbmcgYWJvdXQgeW91ciBkZXZfbG9zcyByZWNvbW1lbmRhdGlvbi4K
+CldoYXQgaXMgdGhlIHJhdGlvbmFsZSBmb3Igc2V0dGluZyBkZXZfbG9zcyBhbmQgZmFzdF9pb19m
+YWlsIHRvIHRoZSBzYW1lCnZhbHVlLCB3aGljaCBpcyBzdHJhaWdodCBhZ2FpbnN0IHRoZSBnZW5l
+cmFsIHJlY29tbWVuZGF0aW9uPyBBbmQgd2hhdAppcyB0aGUgcmVhc29uIGZvciB0aGUgYWdncmVz
+c2l2ZWx5IGxvdyBkZXZfbG9zcyB2YWx1ZSBhbnl3YXk/IERldmljZQpsb3NzIGFuZCByZS1kaXNj
+b3ZlcnkgaXMgbXVjaCBtb3JlIGNvbXBsZXggdG8gaGFuZGxlIGZvciBib3RoIHRoZQprZXJuZWwg
+YW5kIG11bHRpcGF0aGQgdGhhbiBmYWlsdXJlL3JlaW5zdGFudGlhdGlvbi4gWW91IGFyZSB0aGUg
+b25seQp2ZW5kb3Igd2hvIHJlY29tbWVuZHMgc2V0dGluZyBkZXZfbG9zcyBsZXNzIHRoYW4gdGhl
+IGRlZmF1bHQgb2YgNjAwcy4gCgpDb3VsZCB5b3Ugc2hhcmUgeW91ciByZWFzb25pbmcgcGxlYXNl
+PwoKUmVnYXJkcywKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29t
+PiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXgg
+SW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcg
+TsO8cm5iZXJnKQoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29t
+Cmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
