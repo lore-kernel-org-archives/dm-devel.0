@@ -1,15 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: multipath-tools: add ANA support for NVMe device
-Date: Mon, 12 Nov 2018 16:53:23 -0500
-Message-ID: <20181112215323.GA7983@redhat.com>
-References: <1541657381-7452-1-git-send-email-lijie34@huawei.com>
-	<2691abf6733f791fb16b86d96446440e4aaff99f.camel@suse.com>
+From: Andy Grover <agrover@redhat.com>
+Subject: Re: [PATCH] dm integrity: Document size and format of
+ superblock fields
+Date: Mon, 12 Nov 2018 16:23:25 -0800
+Message-ID: <67a4e5bb-b826-3799-34ad-66466c93a253@redhat.com>
+References: <20181109202157.5565-1-agrover@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <2691abf6733f791fb16b86d96446440e4aaff99f.camel@suse.com>
+In-Reply-To: <20181109202157.5565-1-agrover@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,48 +19,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: linux-nvme@lists.infradead.org, lijie <lijie34@huawei.com>, xose.vazquez@gmail.com, chengjike.cheng@huawei.com, shenhong09@huawei.com, dm-devel@redhat.com, wangzhoumengjian@huawei.com, sschremm@netapp.com
+To: dm-devel@redhat.com, snitzer@redhat.com
+Cc: mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Nov 12 2018 at 11:23am -0500,
-Martin Wilck <mwilck@suse.com> wrote:
-
-> Hello Lijie,
+On 11/9/18 12:21 PM, Andy Grover wrote:
+> As mentioned elsewhere in dm-integrity.txt, creating a new integrity
+> device requires creating a small integrity device on top of the base
+> device that formats the base device, reading the provided data sectors
+> out of the superblock, and then recreating the integrity device with the
+> correct size. For this, userspace must know the offset, length, and
+> endianness of the provided_data_sectors field in the superblock.
 > 
-> On Thu, 2018-11-08 at 14:09 +0800, lijie wrote:
-> > Add support for Asynchronous Namespace Access as specified in NVMe
-> > 1.3
-> > TP 4004. The states are updated through reading the ANA log page.
-> > 
-> > By default, the native nvme multipath takes over the nvme device.
-> > We can pass a false to the parameter 'multipath' of the nvme-core.ko
-> > module,when we want to use multipath-tools.
-> 
-> Thank you for the patch. It looks quite good to me. I've tested it with
-> a Linux target and found no problems so far.
-> 
-> I have a few questions and comments inline below.
-> 
-> I suggest you also have a look at detect_prio(); it seems to make sense
-> to use the ana prioritizer for NVMe paths automatically if ANA is
-> supported (with your patch, "detect_prio no" and "prio ana" have to be
-> configured explicitly). But that can be done in a later patch.
+> Document all fields mentioned in the txt to include this, based on struct
+> superblock in dm-integrity.c. Extra fields in struct superblock not
+> already mentioned in the txt remain undocumented.
 
-I (and others) think it makes sense to at least triple check with the
-NVMe developers (now cc'd) to see if we could get agreement on the nvme
-driver providing the ANA state via sysfs (when modparam
-nvme_core.multipath=N is set), like Hannes proposed here:
-http://lists.infradead.org/pipermail/linux-nvme/2018-November/020765.html
+In 4.19 I just noticed provided_data_sectors is now included in dm 
+status. I'm assuming that is now the preferred way for userspace to 
+discover this value? Thus making reading it from the on-disk superblock 
+unnecessary, and thus *documenting* the superblock format unnecessary. 
+Sounds good.
 
-Then the userspace multipath-tools ANA support could just read sysfs
-rather than reinvent harvesting the ANA state via ioctl.
+So please disregard this patch, although some different documentation 
+changes are probably now needed.
 
-But if we continue to hit a wall on that type of sharing of the nvme
-driver's state then I'm fine with reinventing ANA state inquiry and
-tracking like has been proposed here.
+Thanks -- Regards -- Andy
 
-Mike
-
-p.s. thanks for your review Martin, we really need to determine the way
-forward for full multipath-tools support of NVMe with ANA.
+p.s. I'd just run across an issue where creating an integrity device on 
+a loopback device would result in the superblock still reading as all 
+zeroes. Another reason to do it the new way :)
