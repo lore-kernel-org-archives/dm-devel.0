@@ -1,82 +1,144 @@
 From: Hannes Reinecke <hare@suse.de>
 Subject: Re: multipath-tools: add ANA support for NVMe device
-Date: Wed, 14 Nov 2018 08:24:05 +0100
-Message-ID: <d8c35b13-ee5a-e4ee-847a-2bacf788825a@suse.de>
+Date: Wed, 14 Nov 2018 08:49:23 +0100
+Message-ID: <30cf7af7-8826-55bd-e39a-4f81ed032f6d@suse.de>
 References: <1541657381-7452-1-git-send-email-lijie34@huawei.com>
-	<2691abf6733f791fb16b86d96446440e4aaff99f.camel@suse.com>
-	<20181112215323.GA7983@redhat.com>
-	<20181113161838.GC9827@localhost.localdomain>
+ <2691abf6733f791fb16b86d96446440e4aaff99f.camel@suse.com>
+ <20181112215323.GA7983@redhat.com>
+ <20181113161838.GC9827@localhost.localdomain>
+ <20181113180008.GA12513@redhat.com> <20181114053837.GA15086@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181113161838.GC9827@localhost.localdomain>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181114053837.GA15086@redhat.com>
 Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Keith Busch <keith.busch@intel.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: lijie <lijie34@huawei.com>, xose.vazquez@gmail.com, chengjike.cheng@huawei.com, shenhong09@huawei.com, Christoph Hellwig <hch@lst.de>, dm-devel@redhat.com, wangzhoumengjian@huawei.com, linux-nvme@lists.infradead.org, Martin Wilck <mwilck@suse.com>, sschremm@netapp.com
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, Keith Busch <keith.busch@intel.com>, Sagi Grimberg <sagi@grimberg.me>, hch@lst.de, axboe@kernel.dk
+Cc: Martin Wilck <mwilck@suse.com>, lijie <lijie34@huawei.com>, xose.vazquez@gmail.com, linux-nvme@lists.infradead.org, chengjike.cheng@huawei.com, shenhong09@huawei.com, dm-devel@redhat.com, wangzhoumengjian@huawei.com, christophe.varoqui@opensvc.com, bmarzins@redhat.com, sschremm@netapp.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gMTEvMTMvMTggNToxOCBQTSwgS2VpdGggQnVzY2ggd3JvdGU6Cj4gT24gTW9uLCBOb3YgMTIs
-IDIwMTggYXQgMDQ6NTM6MjNQTSAtMDUwMCwgTWlrZSBTbml0emVyIHdyb3RlOgo+PiBPbiBNb24s
-IE5vdiAxMiAyMDE4IGF0IDExOjIzYW0gLTA1MDAsCj4+IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1
-c2UuY29tPiB3cm90ZToKPj4KPj4+IEhlbGxvIExpamllLAo+Pj4KPj4+IE9uIFRodSwgMjAxOC0x
-MS0wOCBhdCAxNDowOSArMDgwMCwgbGlqaWUgd3JvdGU6Cj4+Pj4gQWRkIHN1cHBvcnQgZm9yIEFz
-eW5jaHJvbm91cyBOYW1lc3BhY2UgQWNjZXNzIGFzIHNwZWNpZmllZCBpbiBOVk1lCj4+Pj4gMS4z
-Cj4+Pj4gVFAgNDAwNC4gVGhlIHN0YXRlcyBhcmUgdXBkYXRlZCB0aHJvdWdoIHJlYWRpbmcgdGhl
-IEFOQSBsb2cgcGFnZS4KPj4+Pgo+Pj4+IEJ5IGRlZmF1bHQsIHRoZSBuYXRpdmUgbnZtZSBtdWx0
-aXBhdGggdGFrZXMgb3ZlciB0aGUgbnZtZSBkZXZpY2UuCj4+Pj4gV2UgY2FuIHBhc3MgYSBmYWxz
-ZSB0byB0aGUgcGFyYW1ldGVyICdtdWx0aXBhdGgnIG9mIHRoZSBudm1lLWNvcmUua28KPj4+PiBt
-b2R1bGUsd2hlbiB3ZSB3YW50IHRvIHVzZSBtdWx0aXBhdGgtdG9vbHMuCj4+Pgo+Pj4gVGhhbmsg
-eW91IGZvciB0aGUgcGF0Y2guIEl0IGxvb2tzIHF1aXRlIGdvb2QgdG8gbWUuIEkndmUgdGVzdGVk
-IGl0IHdpdGgKPj4+IGEgTGludXggdGFyZ2V0IGFuZCBmb3VuZCBubyBwcm9ibGVtcyBzbyBmYXIu
-Cj4+Pgo+Pj4gSSBoYXZlIGEgZmV3IHF1ZXN0aW9ucyBhbmQgY29tbWVudHMgaW5saW5lIGJlbG93
-Lgo+Pj4KPj4+IEkgc3VnZ2VzdCB5b3UgYWxzbyBoYXZlIGEgbG9vayBhdCBkZXRlY3RfcHJpbygp
-OyBpdCBzZWVtcyB0byBtYWtlIHNlbnNlCj4+PiB0byB1c2UgdGhlIGFuYSBwcmlvcml0aXplciBm
-b3IgTlZNZSBwYXRocyBhdXRvbWF0aWNhbGx5IGlmIEFOQSBpcwo+Pj4gc3VwcG9ydGVkICh3aXRo
-IHlvdXIgcGF0Y2gsICJkZXRlY3RfcHJpbyBubyIgYW5kICJwcmlvIGFuYSIgaGF2ZSB0byBiZQo+
-Pj4gY29uZmlndXJlZCBleHBsaWNpdGx5KS4gQnV0IHRoYXQgY2FuIGJlIGRvbmUgaW4gYSBsYXRl
-ciBwYXRjaC4KPj4KPj4gSSAoYW5kIG90aGVycykgdGhpbmsgaXQgbWFrZXMgc2Vuc2UgdG8gYXQg
-bGVhc3QgdHJpcGxlIGNoZWNrIHdpdGggdGhlCj4+IE5WTWUgZGV2ZWxvcGVycyAobm93IGNjJ2Qp
-IHRvIHNlZSBpZiB3ZSBjb3VsZCBnZXQgYWdyZWVtZW50IG9uIHRoZSBudm1lCj4+IGRyaXZlciBw
-cm92aWRpbmcgdGhlIEFOQSBzdGF0ZSB2aWEgc3lzZnMgKHdoZW4gbW9kcGFyYW0KPj4gbnZtZV9j
-b3JlLm11bHRpcGF0aD1OIGlzIHNldCksIGxpa2UgSGFubmVzIHByb3Bvc2VkIGhlcmU6Cj4+IGh0
-dHA6Ly9saXN0cy5pbmZyYWRlYWQub3JnL3BpcGVybWFpbC9saW51eC1udm1lLzIwMTgtTm92ZW1i
-ZXIvMDIwNzY1Lmh0bWwKPj4KPj4gVGhlbiB0aGUgdXNlcnNwYWNlIG11bHRpcGF0aC10b29scyBB
-TkEgc3VwcG9ydCBjb3VsZCBqdXN0IHJlYWQgc3lzZnMKPj4gcmF0aGVyIHRoYW4gcmVpbnZlbnQg
-aGFydmVzdGluZyB0aGUgQU5BIHN0YXRlIHZpYSBpb2N0bC4KPiAKPiBJJ2QgcHJlZmVyIG5vdCBk
-dXBsaWNhdGluZyB0aGUgbG9nIHBhZ2UgcGFyc2luZy4gTWF5YmUgbnZtZSdzIHNob3VsZG4ndAo+
-IGV2ZW4gYmUgdGllZCB0byBDT05GSUdfTlZNRV9NVUxUSVBBVEggc28gdGhhdCB0aGUgJ211bHRp
-cGF0aCcgcGFyYW0KPiBpc24ndCBldmVuIGFuIGlzc3VlLgo+ICAgCk15IGFyZ3VtZW50IGhlcmUg
-aXMgdGhhdCBfQU5BXyBzdXBwb3J0IHNob3VsZCBub3QgYmUgdGllZCB0byB0aGUgTlZNRSAKbmF0
-aXZlIG11bHRpcGF0aGluZyBhdCBhbGwuCgpXaGV0aGVyIG9yIG5vdCBBTkEgaXMgcHJlc2VudCBp
-cyBhIGNob2ljZSBvZiB0aGUgdGFyZ2V0IGltcGxlbWVudGF0aW9uOyAKdGhlIGhvc3QgaGFzIF96
-ZXJvXyBpbmZsdWVuY2Ugb24gdGhpcy4gSXQgbWF5IGFyZ3VlIGFsbCBpdCB3YW50cyBhbmQgCmRv
-ZXNuJ3QgZXZlbiBoYXZlIHRvIGltcGxlbWVudCBtdWx0aXBhdGhpbmcuIEJ1dCBpbiB0aGUgZW5k
-IGlmIHRoZSAKdGFyZ2V0IGRlY2xhcmVzIGEgcGF0aCBhcyAnaW5hY2Nlc3NpYmxlJyB0aGUgcGF0
-aCBfaXNfIGluYWNjZXNzaWJsZSB0byAKdGhlIGhvc3QuIEV2ZW4gaXQgdGhhdCBwYXJ0aWN1bGFy
-IGhvc3QgZG9lc24ndCBpbXBsZW1lbnQgb3IgYWN0aXZhdGUgCm11bHRpcGF0aGluZy4KKFlvdSB3
-b3VsZG4ndCBiZWxpZXZlIGhvdyBvZnRlbiBJIGhhZCB0aGlzIGRpc2N1c3Npb24gd2l0aCBvdXIg
-UUEgdGVhbSAKZm9yIEFMVUEgLi4uKQoKV2hldGhlciBvciBub3QgX211bHRpcGF0aGluZ18gaXMg
-dXNlZCBpcyBhIF9ob3N0XyBpbXBsZW1lbnRhdGlvbiwgYW5kIGlzIAphY3R1YWxseSBpbmRlcGVu
-ZGVudCBvbiBBTkEgc3VwcG9ydDsgbGludXggaXRzZWxmIHByb3ZlZCB0aGUgcG9pbnQgaGVyZSAK
-YXMgd2Ugc3VwcG9ydGVkIChzeW1tZXRyaWMpIG11bHRpcGF0aGluZyBmYXIgbG9uZ2VyIHRoYW4g
-d2UgaGFkIGFuIEFOQSAKaW1wbGVtZW50YXRpb24uCgpTbyBwZXJzb25hbGx5IEkgZG9uJ3Qgc2Vl
-IHdoeSB0aGUgJ3JhdycgQU5BIHN1cHBvcnQgKHBhcnNpbmcgbG9nIHBhZ2VzLCAKZmlndXJpbmcg
-b3V0IHBhdGggc3RhdGVzIGV0YykgbmVlZHMgdG8gYmUgdGllZCBpbiB3aXRoIG5hdGl2ZSBOVk1l
-IAptdWx0aXBhdGhpbmcuIF9Fc3BlY2lhbGx5XyBub3QgYXMgbXkgcGF0Y2ggcmVhbGx5IGlzIHRy
-aXZpYWwuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgIFRlYW1s
-ZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZQkJCSAgICAgICAgICAgICAgICs0
-OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8
-cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIsIEouIFNtaXRoYXJkLCBKLiBHdWlsZCwgRC4gVXBt
-YW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFp
-bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWls
-bWFuL2xpc3RpbmZvL2RtLWRldmVs
+On 11/14/18 6:38 AM, Mike Snitzer wrote:
+> On Tue, Nov 13 2018 at  1:00pm -0500,
+> Mike Snitzer <snitzer@redhat.com> wrote:
+> 
+>> On Tue, Nov 13 2018 at 11:18am -0500,
+>> Keith Busch <keith.busch@intel.com> wrote:
+>>
+>>> On Mon, Nov 12, 2018 at 04:53:23PM -0500, Mike Snitzer wrote:
+>>>> On Mon, Nov 12 2018 at 11:23am -0500,
+>>>> Martin Wilck <mwilck@suse.com> wrote:
+>>>>
+>>>>> Hello Lijie,
+>>>>>
+>>>>> On Thu, 2018-11-08 at 14:09 +0800, lijie wrote:
+>>>>>> Add support for Asynchronous Namespace Access as specified in NVMe
+>>>>>> 1.3
+>>>>>> TP 4004. The states are updated through reading the ANA log page.
+>>>>>>
+>>>>>> By default, the native nvme multipath takes over the nvme device.
+>>>>>> We can pass a false to the parameter 'multipath' of the nvme-core.ko
+>>>>>> module,when we want to use multipath-tools.
+>>>>>
+>>>>> Thank you for the patch. It looks quite good to me. I've tested it with
+>>>>> a Linux target and found no problems so far.
+>>>>>
+>>>>> I have a few questions and comments inline below.
+>>>>>
+>>>>> I suggest you also have a look at detect_prio(); it seems to make sense
+>>>>> to use the ana prioritizer for NVMe paths automatically if ANA is
+>>>>> supported (with your patch, "detect_prio no" and "prio ana" have to be
+>>>>> configured explicitly). But that can be done in a later patch.
+>>>>
+>>>> I (and others) think it makes sense to at least triple check with the
+>>>> NVMe developers (now cc'd) to see if we could get agreement on the nvme
+>>>> driver providing the ANA state via sysfs (when modparam
+>>>> nvme_core.multipath=N is set), like Hannes proposed here:
+>>>> http://lists.infradead.org/pipermail/linux-nvme/2018-November/020765.html
+>>>>
+>>>> Then the userspace multipath-tools ANA support could just read sysfs
+>>>> rather than reinvent harvesting the ANA state via ioctl.
+>>>
+>>> I'd prefer not duplicating the log page parsing. Maybe nvme's shouldn't
+>>> even be tied to CONFIG_NVME_MULTIPATH so that the 'multipath' param
+>>> isn't even an issue.
+>>
+>> I like your instincts, we just need to take them a bit further.
+>>
+>> Splitting out the kernel's ANA log page parsing won't buy us much given
+>> it is userspace (multipath-tools) that needs to consume it.  The less
+>> work userspace needs to do (because kernel has already done it) the
+>> better.
+>>
+>> If the NVMe driver is made to always track and export the ANA state via
+>> sysfs [1] we'd avoid userspace parsing duplication "for free".  This
+>> should occur regardless of what layer is reacting to the ANA state
+>> changes (be it NVMe's native multipathing or multipath-tools).
+>>
+>> ANA and NVMe multipathing really are disjoint, making them tightly
+>> coupled only serves to force NVMe driver provided multipathing _or_
+>> userspace ANA state tracking duplication that really isn't ideal [2].
+>>
+>> We need a reasoned answer to the primary question of whether the NVMe
+>> maintainers are willing to cooperate by providing this basic ANA sysfs
+>> export even if nvme_core.multipath=N [1].
+>>
+>> Christoph said "No" [3], but offered little _real_ justification for why
+>> this isn't the right thing for NVMe in general.
+> ...
+>> [1]: http://lists.infradead.org/pipermail/linux-nvme/2018-November/020765.html
+>> [2]: https://www.redhat.com/archives/dm-devel/2018-November/msg00072.html
+> ...
+> 
+> I knew there had to be a pretty tight coupling between the NVMe driver's
+> native multipathing and ANA support... and that the simplicity of
+> Hannes' patch [1] was too good to be true.
+> 
+> The real justification for not making Hannes' change is it'd effectively
+> be useless without first splitting out the ANA handling done during NVMe
+> request completion (NVME_SC_ANA_* cases in nvme_failover_req) that
+> triggers re-reading the ANA log page accordingly.
+> 
+> So without the ability to drive the ANA workqueue to trigger
+> nvme_read_ana_log() from the nvme driver's completion path -- even if
+> nvme_core.multipath=N -- it really doesn't buy multipath-tools anything
+> to have the NVMe driver export the ana state via sysfs, because that ANA
+> state will never get updated.
+> 
+Hmm. Indeed, I was more focussed on having the sysfs attributes 
+displayed, so yes, indeed it needs some more work.
+
+>> The inability to provide proper justification for rejecting a patch
+>> (that already had one co-maintainer's Reviewed-by [5]) _should_ render
+>> that rejection baseless, and the patch applied (especially if there is
+>> contributing subsystem developer interest in maintaining this support
+>> over time, which there is).  At least that is what would happen in a
+>> properly maintained kernel subsystem.
+>>
+>> It'd really go a long way if senior Linux NVMe maintainers took steps to
+>> accept reasonable changes.
+> 
+> Even though I'm frustrated I was clearly too harsh and regret my tone.
+> I promise to _try_ to suck less.
+> 
+> This dynamic of terse responses or no responses at all whenever NVMe
+> driver changes to ease multipath-tools NVMe support are floated is the
+> depressing gift that keeps on giving.  But enough excuses...
+> 
+> Not holding my breath BUT:
+> if decoupling the reading of ANA state from native NVMe multipathing
+> specific work during nvme request completion were an acceptable
+> advancement I'd gladly do the work.
+> 
+I'd be happy to work on that, given that we'll have to have 'real' ANA 
+support for device-mapper anyway for SLE12 SP4 etc.
+
+Cheers,
+
+Hannes
+-- 
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
+GF: F. Imendörffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG Nürnberg)
