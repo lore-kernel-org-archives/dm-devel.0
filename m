@@ -1,91 +1,46 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 0/2] two multipathd fixes
-Date: Wed, 14 Nov 2018 08:39:29 +0100
-Message-ID: <CABr-Gne_nJXtBshwNCdwndd731xbs-eDSWy2uwSj3pALme_S2w@mail.gmail.com>
-References: <20181113213052.2009-1-mwilck@suse.com>
+From: Martin Wilck <mwilck@suse.de>
+Subject: Re: [dm-devel] multipath-tools: add ANA support for NVMe device
+Date: Wed, 14 Nov 2018 11:36:31 +0100
+Message-ID: <3ade435ef087d61a293863a62c1b794ecf8dba14.camel@suse.de>
+References: <1541657381-7452-1-git-send-email-lijie34@huawei.com>
+         <2691abf6733f791fb16b86d96446440e4aaff99f.camel@suse.com>
+         <20181112215323.GA7983@redhat.com>
+         <20181113161838.GC9827@localhost.localdomain>
+         <20181113180008.GA12513@redhat.com> <20181114053837.GA15086@redhat.com>
+         <30cf7af7-8826-55bd-e39a-4f81ed032f6d@suse.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0988399325669661409=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181113213052.2009-1-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <30cf7af7-8826-55bd-e39a-4f81ed032f6d@suse.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Hannes Reinecke <hare@suse.de>, Sagi Grimberg <sagi@grimberg.me>, Keith Busch <keith.busch@intel.com>, axboe@kernel.dk, hch@lst.de, Mike Snitzer <snitzer@redhat.com>
+Cc: xose.vazquez@gmail.com, chengjike.cheng@huawei.com, lijie <lijie34@huawei.com>, shenhong09@huawei.com, wangzhoumengjian@huawei.com, linux-nvme@lists.infradead.org, sschremm@netapp.com, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
---===============0988399325669661409==
-Content-Type: multipart/alternative; boundary="000000000000719c4b057a9b09bb"
+On Wed, 2018-11-14 at 08:49 +0100, Hannes Reinecke wrote:
+> On 11/14/18 6:38 AM, Mike Snitzer wrote:
+> > 
+> > Not holding my breath BUT:
+> > if decoupling the reading of ANA state from native NVMe
+> > multipathing
+> > specific work during nvme request completion were an acceptable
+> > advancement I'd gladly do the work.
+> > 
+> I'd be happy to work on that, given that we'll have to have 'real'
+> ANA 
+> support for device-mapper anyway for SLE12 SP4 etc.
 
---000000000000719c4b057a9b09bb
-Content-Type: text/plain; charset="UTF-8"
+So, what's the way ahead for multipath-tools? 
 
-Merged.
-Thanks.
+Given that, IIUC, at least one official kernel (4.19) has been released
+with ANA support but without the ANA sysfs attributes exported to user
+space, multipath-tools can't rely on them being present. I for one have
+no issue with copying code from nvme-cli and doing NVMe ioctls from
+multipath-tools, as in Lijie's patch. When those sysfs attributes are
+added (and work as expected), we will use them, but IMO we'll need to
+fall back to ioctls until then, and also afterwards, because we can't
+assume to be always running on the latest kernel.
 
-On Tue, Nov 13, 2018 at 10:31 PM Martin Wilck <mwilck@suse.com> wrote:
-
-> Hi Christophe,
->
-> Two small fixes, based on my prior submissions which have been
-> acked by Ben.
->
-> Martin
->
-> Martin Wilck (2):
->   multipathd: fix irritating "minor number mismatch" message
->   multipathd: reset delay_wait_checks counter on failure
->
->  multipathd/main.c | 10 +++++++---
->  1 file changed, 7 insertions(+), 3 deletions(-)
->
-> --
-> 2.19.1
->
->
-
---000000000000719c4b057a9b09bb
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Merged.<div>Thanks.</div></div><br><div class=3D"gmail_quo=
-te"><div dir=3D"ltr">On Tue, Nov 13, 2018 at 10:31 PM Martin Wilck &lt;<a h=
-ref=3D"mailto:mwilck@suse.com">mwilck@suse.com</a>&gt; wrote:<br></div><blo=
-ckquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #c=
-cc solid;padding-left:1ex">Hi Christophe,<br>
-<br>
-Two small fixes, based on my prior submissions which have been<br>
-acked by Ben.<br>
-<br>
-Martin<br>
-<br>
-Martin Wilck (2):<br>
-=C2=A0 multipathd: fix irritating &quot;minor number mismatch&quot; message=
-<br>
-=C2=A0 multipathd: reset delay_wait_checks counter on failure<br>
-<br>
-=C2=A0multipathd/main.c | 10 +++++++---<br>
-=C2=A01 file changed, 7 insertions(+), 3 deletions(-)<br>
-<br>
--- <br>
-2.19.1<br>
-<br>
-</blockquote></div>
-
---000000000000719c4b057a9b09bb--
-
-
---===============0988399325669661409==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0988399325669661409==--
+Best,
+Martin
