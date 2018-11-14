@@ -1,46 +1,43 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [dm-devel] multipath-tools: add ANA support for NVMe device
-Date: Wed, 14 Nov 2018 11:36:31 +0100
-Message-ID: <3ade435ef087d61a293863a62c1b794ecf8dba14.camel@suse.de>
-References: <1541657381-7452-1-git-send-email-lijie34@huawei.com>
-         <2691abf6733f791fb16b86d96446440e4aaff99f.camel@suse.com>
-         <20181112215323.GA7983@redhat.com>
-         <20181113161838.GC9827@localhost.localdomain>
-         <20181113180008.GA12513@redhat.com> <20181114053837.GA15086@redhat.com>
-         <30cf7af7-8826-55bd-e39a-4f81ed032f6d@suse.de>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [patch 5/5] block: use a driver-specific handler for
+ the "inflight" value
+Date: Wed, 14 Nov 2018 07:18:48 -0800
+Message-ID: <20181114151848.GA22138@infradead.org>
+References: <20181106213858.391264280@debian-a64.vm>
+	<20181108145240.GA20087@infradead.org>
+	<20181108170701.GA29107@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <30cf7af7-8826-55bd-e39a-4f81ed032f6d@suse.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>, Sagi Grimberg <sagi@grimberg.me>, Keith Busch <keith.busch@intel.com>, axboe@kernel.dk, hch@lst.de, Mike Snitzer <snitzer@redhat.com>
-Cc: xose.vazquez@gmail.com, chengjike.cheng@huawei.com, lijie <lijie34@huawei.com>, shenhong09@huawei.com, wangzhoumengjian@huawei.com, linux-nvme@lists.infradead.org, sschremm@netapp.com, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20181108170701.GA29107@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: axboe@kernel.dk, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 2018-11-14 at 08:49 +0100, Hannes Reinecke wrote:
-> On 11/14/18 6:38 AM, Mike Snitzer wrote:
-> > 
-> > Not holding my breath BUT:
-> > if decoupling the reading of ANA state from native NVMe
-> > multipathing
-> > specific work during nvme request completion were an acceptable
-> > advancement I'd gladly do the work.
-> > 
-> I'd be happy to work on that, given that we'll have to have 'real'
-> ANA 
-> support for device-mapper anyway for SLE12 SP4 etc.
+On Thu, Nov 08, 2018 at 12:07:01PM -0500, Mike Snitzer wrote:
+> Discussed doing that with Jens and reported as much here:
+> 
+> https://www.redhat.com/archives/dm-devel/2018-November/msg00068.html
+> 
+> And Jens gave additional context for why yet another attempt to switch
+> block core's in_flight to percpu counters is doomed (having already been
+> proposed and rejected twice):
+> 
+> https://www.redhat.com/archives/dm-devel/2018-November/msg00071.html
+> 
+> And yes, definitely should've cc'd linux-block (now added).
 
-So, what's the way ahead for multipath-tools? 
-
-Given that, IIUC, at least one official kernel (4.19) has been released
-with ANA support but without the ANA sysfs attributes exported to user
-space, multipath-tools can't rely on them being present. I for one have
-no issue with copying code from nvme-cli and doing NVMe ioctls from
-multipath-tools, as in Lijie's patch. When those sysfs attributes are
-added (and work as expected), we will use them, but IMO we'll need to
-fall back to ioctls until then, and also afterwards, because we can't
-assume to be always running on the latest kernel.
-
-Best,
-Martin
+So how is dm different from the the other 3 handful of drivers using
+the make_request interface that the per-cpu counters work for dm and
+not the others?
