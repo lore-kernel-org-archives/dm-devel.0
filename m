@@ -1,14 +1,17 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm integrity: Document size and format of
- superblock fields
-Date: Wed, 14 Nov 2018 17:39:54 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1811141737120.7875@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20181109202157.5565-1-agrover@redhat.com>
+Subject: Re: [patch 5/5] block: use a driver-specific handler for
+ the "inflight" value
+Date: Wed, 14 Nov 2018 17:49:07 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1811141740440.7875@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20181106213858.391264280@debian-a64.vm>
+	<20181108145240.GA20087@infradead.org>
+	<20181108170701.GA29107@redhat.com>
+	<20181114151848.GA22138@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181109202157.5565-1-agrover@redhat.com>
+In-Reply-To: <20181114151848.GA22138@infradead.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,74 +21,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andy Grover <agrover@redhat.com>
-Cc: dm-devel@redhat.com, snitzer@redhat.com
+To: Christoph Hellwig <hch@infradead.org>
+Cc: linux-block@vger.kernel.org, axboe@kernel.dk, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-You can change it - though I expect that anyone who will want to parse the 
-superblock will read the file dm-integrity.c anyway.
 
-There's also a new field recalc_sector that says where to resume automatic 
-recalculation.
+
+On Wed, 14 Nov 2018, Christoph Hellwig wrote:
+
+> On Thu, Nov 08, 2018 at 12:07:01PM -0500, Mike Snitzer wrote:
+> > Discussed doing that with Jens and reported as much here:
+> > 
+> > https://www.redhat.com/archives/dm-devel/2018-November/msg00068.html
+> > 
+> > And Jens gave additional context for why yet another attempt to switch
+> > block core's in_flight to percpu counters is doomed (having already been
+> > proposed and rejected twice):
+> > 
+> > https://www.redhat.com/archives/dm-devel/2018-November/msg00071.html
+> > 
+> > And yes, definitely should've cc'd linux-block (now added).
+> 
+> So how is dm different from the the other 3 handful of drivers using
+> the make_request interface that the per-cpu counters work for dm and
+> not the others?
+
+We want to make dm-linear (and dm-stripe) completely lockless, because it 
+is used often and we don't want it to degrade performance.
+
+DM already uses srcu to handle table changes, so that the fast path 
+doesn't take any locks. And the only one "lock" that is remaining is the 
+"in_flight" variable.
+
+As for other drivers, md-raid0 could probably be lockless too (using 
+percpu counting similar to dm). The other raid levels can't be lockless 
+because they need to check the status of the stripe that is being 
+accessed.
 
 Mikulas
-
-
-On Fri, 9 Nov 2018, Andy Grover wrote:
-
-> As mentioned elsewhere in dm-integrity.txt, creating a new integrity
-> device requires creating a small integrity device on top of the base
-> device that formats the base device, reading the provided data sectors
-> out of the superblock, and then recreating the integrity device with the
-> correct size. For this, userspace must know the offset, length, and
-> endianness of the provided_data_sectors field in the superblock.
-> 
-> Document all fields mentioned in the txt to include this, based on struct
-> superblock in dm-integrity.c. Extra fields in struct superblock not
-> already mentioned in the txt remain undocumented.
-> 
-> Signed-off-by: Andy Grover <agrover@redhat.com>
-> ---
->  Documentation/device-mapper/dm-integrity.txt | 26 ++++++++++++--------
->  1 file changed, 16 insertions(+), 10 deletions(-)
-> 
-> diff --git a/Documentation/device-mapper/dm-integrity.txt b/Documentation/device-mapper/dm-integrity.txt
-> index 297251b0d2d5..3d28328f16c1 100644
-> --- a/Documentation/device-mapper/dm-integrity.txt
-> +++ b/Documentation/device-mapper/dm-integrity.txt
-> @@ -158,16 +158,22 @@ The layout of the formatted block device:
->    storing LUKS metadata or for other purpose), the size of the reserved
->    area is specified in the target arguments
->  * superblock (4kiB)
-> -	* magic string - identifies that the device was formatted
-> -	* version
-> -	* log2(interleave sectors)
-> -	* integrity tag size
-> -	* the number of journal sections
-> -	* provided data sectors - the number of sectors that this target
-> -	  provides (i.e. the size of the device minus the size of all
-> -	  metadata and padding). The user of this target should not send
-> -	  bios that access data beyond the "provided data sectors" limit.
-> -	* flags - a flag is set if journal_mac is used
-> +
-> +offset and length in bytes. All values little-endian.
-> +
-> +offset	length	description
-> +0	8	magic string - identifies that the device was formatted
-> +8	1	version
-> +9	1	log2(interleave sectors)
-> +10	2	integrity tag size
-> +12	4	the number of journal sections
-> +16	8	provided data sectors - the number of sectors that this
-> +		target provides (i.e. the size of the device minus the size of
-> +		all metadata and padding). The user of this target should not
-> +		send bios that access data beyond the "provided data sectors"
-> +		limit.
-> +24	4	flags - a flag is set if journal_mac is used
-> +
->  * journal
->  	The journal is divided into sections, each section contains:
->  	* metadata area (4kiB), it contains journal entries
-> -- 
-> 2.17.2
-> 
