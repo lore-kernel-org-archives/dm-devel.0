@@ -1,12 +1,17 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH v5 00/21] libmultipath: checkers overhaul
-Date: Wed, 14 Nov 2018 08:39:05 +0100
-Message-ID: <CABr-Gnc9P44PHV7rB74gMR4SrM77ssHtH-_yTchL-1advz1ybw@mail.gmail.com>
-References: <20181102122125.30906-1-mwilck@suse.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: multipath-tools: add ANA support for NVMe device
+Date: Wed, 14 Nov 2018 08:24:05 +0100
+Message-ID: <d8c35b13-ee5a-e4ee-847a-2bacf788825a@suse.de>
+References: <1541657381-7452-1-git-send-email-lijie34@huawei.com>
+	<2691abf6733f791fb16b86d96446440e4aaff99f.camel@suse.com>
+	<20181112215323.GA7983@redhat.com>
+	<20181113161838.GC9827@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7149700803341368395=="
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181102122125.30906-1-mwilck@suse.com>
+In-Reply-To: <20181113161838.GC9827@localhost.localdomain>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,275 +21,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Keith Busch <keith.busch@intel.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: lijie <lijie34@huawei.com>, xose.vazquez@gmail.com, chengjike.cheng@huawei.com, shenhong09@huawei.com, Christoph Hellwig <hch@lst.de>, dm-devel@redhat.com, wangzhoumengjian@huawei.com, linux-nvme@lists.infradead.org, Martin Wilck <mwilck@suse.com>, sschremm@netapp.com
 List-Id: dm-devel.ids
 
---===============7149700803341368395==
-Content-Type: multipart/alternative; boundary="000000000000036794057a9b08ac"
-
---000000000000036794057a9b08ac
-Content-Type: text/plain; charset="UTF-8"
-
-Merged.
-Thanks.
-
-On Fri, Nov 2, 2018 at 1:23 PM Martin Wilck <mwilck@suse.com> wrote:
-
-> Hi Christophe,
->
-> This is v5 of my "checkers overhaul" series. Changed wrt v4
-> are 03/22, 11/22, and 21/22. I re-post the whole series to
-> avoid confusion.
->
-> This series starts with a few minor fixes and then attempts
-> an overhaul of the checker code.
->
-> First, there's a block of patches to get rid of the "message"
-> char array in struct checker, replacing it with an integer.
-> This topic had been touched in recent discussion between Ben
-> and myself. You may want to collaps the patches in this block
-> (03/21-11/21) into one when commiting; compilation errors will
-> arise if only part of them is a applied.
->
-> The next larger block fixes problems with checkers that try
-> to check unsupported devices. It's an interesting experience
-> to configure wrong checkers for the existing devices and see
-> what happens. With these patches, paths won't be falsely
-> teared down any more in such situations.
->
-> The last patch cleans up the checker data structure by splitting
-> it into a "checker class" and the path "checker instance".
->
-> There's more work to do in this area, but this is a start.
->
-> ----
-> changes v4->v5
->  - 03/21: made checker_message() const again, as 22/22 is gone.
->    Got rid of the static buffer in checker_message() by simply returning
->    the constant message strings, as suggested by Ben in his review of v4.
->    This implies printf format changes in callers; changed format in
-> get_state().
->  - 11/21: Changed printf format in check_path() (see above).
->  - 21/22: rebased, no actual changes (kept Ben's Reviewed-by).
->  - 22/22: dropped, obsolete.
->
-> Changes v3->v4:
->  - 03/22: renamed CHECKER_LAST_GENERIC_MSGID ->
-> CHECKER_GENERIC_MSGTABLE_SIZE
->           (Ben).
->  - 12/22: rebased on top of changed 03/22.
->
-> Changes v2->v3:
->  - 03/22: fixed one minor issue mentioned by Ben;
->           reverted the const-ification of checker_message(),
->           as it will be reverted in 22/22 anyway.
->  - 13/22: fix clariion checker semantics (Ben).
->  - 21/22: rebased on top of updated 03/22.
->  - 22/22: fix thread-safety issue from 03/22 (Ben).
->
-> Changes v1->v2:
->  - 11/22: rebased on top of "various multipath-tools patches" series
->
-> Martin Wilck (21):
->   libmultipath: fix use of uninitialized memory in write()
->   libmultipath: fix memory leaks from scandir() use
->   libmultipath/checkers: replace message by msgid
->   libmultipath/checkers: cciss_tur: use message id
->   libmultipath/checkers: directio: use message id
->   libmultipath/checkers: emc_clariion: use message id
->   libmultipath/checkers: hp_sw: use message id
->   libmultipath/checkers: rdac: use message id
->   libmultipath/checkers: readsector0: use message id
->   libmultipath/checkers: tur: use message id
->   multipathd: improve checker message logging
->   libmultipath/checkers: support unsupported paths
->   libmultipath: clariion checker: leave unsupported paths alone
->   libmultipath: hp_sw checker: leave unsupported paths alone
->   libmultipath: rdac checker: leave unsupported paths alone
->   libmultipath: tur checker: leave unsupported paths alone
->   libmultipath: pathinfo: don't blank wwid if checker fails
->   multipathd: check_path: improve logging for "unusable path" case
->   libmultipath: coalesce_paths: improve logging of orphaned paths
->   libmultipath: sync_map_state: log failing paths
->   libmultipath/checkers: cleanup class/instance model
->
->  libmultipath/checkers.c              | 187 +++++++++++++++++----------
->  libmultipath/checkers.h              |  69 ++++++----
->  libmultipath/checkers/cciss_tur.c    |  13 +-
->  libmultipath/checkers/directio.c     |  29 +++--
->  libmultipath/checkers/emc_clariion.c | 114 +++++++++++++---
->  libmultipath/checkers/hp_sw.c        |  39 +++---
->  libmultipath/checkers/rdac.c         |  92 +++++++++----
->  libmultipath/checkers/readsector0.c  |   7 +-
->  libmultipath/checkers/tur.c          |  60 +++++----
->  libmultipath/config.c                |  10 +-
->  libmultipath/configure.c             |  10 +-
->  libmultipath/discovery.c             |  11 +-
->  libmultipath/foreign.c               |   5 +-
->  libmultipath/foreign/nvme.c          |   6 +-
->  libmultipath/print.c                 |   2 +-
->  libmultipath/propsel.c               |  19 +--
->  libmultipath/structs_vec.c           |   5 +-
->  libmultipath/sysfs.c                 |   5 +-
->  libmultipath/util.c                  |   9 ++
->  libmultipath/util.h                  |   9 ++
->  multipathd/main.c                    |  38 ++++--
->  21 files changed, 497 insertions(+), 242 deletions(-)
->
-> --
-> 2.19.1
->
->
-
---000000000000036794057a9b08ac
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Merged.<div>Thanks.</div></div><br><div class=3D"gmail_quo=
-te"><div dir=3D"ltr">On Fri, Nov 2, 2018 at 1:23 PM Martin Wilck &lt;<a hre=
-f=3D"mailto:mwilck@suse.com">mwilck@suse.com</a>&gt; wrote:<br></div><block=
-quote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc=
- solid;padding-left:1ex">Hi Christophe,<br>
-<br>
-This is v5 of my &quot;checkers overhaul&quot; series. Changed wrt v4<br>
-are 03/22, 11/22, and 21/22. I re-post the whole series to<br>
-avoid confusion.<br>
-<br>
-This series starts with a few minor fixes and then attempts<br>
-an overhaul of the checker code.<br>
-<br>
-First, there&#39;s a block of patches to get rid of the &quot;message&quot;=
-<br>
-char array in struct checker, replacing it with an integer.<br>
-This topic had been touched in recent discussion between Ben<br>
-and myself. You may want to collaps the patches in this block<br>
-(03/21-11/21) into one when commiting; compilation errors will<br>
-arise if only part of them is a applied.<br>
-<br>
-The next larger block fixes problems with checkers that try<br>
-to check unsupported devices. It&#39;s an interesting experience<br>
-to configure wrong checkers for the existing devices and see<br>
-what happens. With these patches, paths won&#39;t be falsely<br>
-teared down any more in such situations.<br>
-<br>
-The last patch cleans up the checker data structure by splitting<br>
-it into a &quot;checker class&quot; and the path &quot;checker instance&quo=
-t;.<br>
-<br>
-There&#39;s more work to do in this area, but this is a start.<br>
-<br>
-----<br>
-changes v4-&gt;v5<br>
-=C2=A0- 03/21: made checker_message() const again, as 22/22 is gone.<br>
-=C2=A0 =C2=A0Got rid of the static buffer in checker_message() by simply re=
-turning<br>
-=C2=A0 =C2=A0the constant message strings, as suggested by Ben in his revie=
-w of v4.<br>
-=C2=A0 =C2=A0This implies printf format changes in callers; changed format =
-in get_state().<br>
-=C2=A0- 11/21: Changed printf format in check_path() (see above).<br>
-=C2=A0- 21/22: rebased, no actual changes (kept Ben&#39;s Reviewed-by).<br>
-=C2=A0- 22/22: dropped, obsolete.<br>
-<br>
-Changes v3-&gt;v4:<br>
-=C2=A0- 03/22: renamed CHECKER_LAST_GENERIC_MSGID -&gt; CHECKER_GENERIC_MSG=
-TABLE_SIZE<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 (Ben).<br>
-=C2=A0- 12/22: rebased on top of changed 03/22.<br>
-<br>
-Changes v2-&gt;v3:<br>
-=C2=A0- 03/22: fixed one minor issue mentioned by Ben;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 reverted the const-ification of checker_=
-message(),<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 as it will be reverted in 22/22 anyway.<=
-br>
-=C2=A0- 13/22: fix clariion checker semantics (Ben).<br>
-=C2=A0- 21/22: rebased on top of updated 03/22.<br>
-=C2=A0- 22/22: fix thread-safety issue from 03/22 (Ben).<br>
-<br>
-Changes v1-&gt;v2:<br>
-=C2=A0- 11/22: rebased on top of &quot;various multipath-tools patches&quot=
-; series<br>
-<br>
-Martin Wilck (21):<br>
-=C2=A0 libmultipath: fix use of uninitialized memory in write()<br>
-=C2=A0 libmultipath: fix memory leaks from scandir() use<br>
-=C2=A0 libmultipath/checkers: replace message by msgid<br>
-=C2=A0 libmultipath/checkers: cciss_tur: use message id<br>
-=C2=A0 libmultipath/checkers: directio: use message id<br>
-=C2=A0 libmultipath/checkers: emc_clariion: use message id<br>
-=C2=A0 libmultipath/checkers: hp_sw: use message id<br>
-=C2=A0 libmultipath/checkers: rdac: use message id<br>
-=C2=A0 libmultipath/checkers: readsector0: use message id<br>
-=C2=A0 libmultipath/checkers: tur: use message id<br>
-=C2=A0 multipathd: improve checker message logging<br>
-=C2=A0 libmultipath/checkers: support unsupported paths<br>
-=C2=A0 libmultipath: clariion checker: leave unsupported paths alone<br>
-=C2=A0 libmultipath: hp_sw checker: leave unsupported paths alone<br>
-=C2=A0 libmultipath: rdac checker: leave unsupported paths alone<br>
-=C2=A0 libmultipath: tur checker: leave unsupported paths alone<br>
-=C2=A0 libmultipath: pathinfo: don&#39;t blank wwid if checker fails<br>
-=C2=A0 multipathd: check_path: improve logging for &quot;unusable path&quot=
-; case<br>
-=C2=A0 libmultipath: coalesce_paths: improve logging of orphaned paths<br>
-=C2=A0 libmultipath: sync_map_state: log failing paths<br>
-=C2=A0 libmultipath/checkers: cleanup class/instance model<br>
-<br>
-=C2=A0libmultipath/checkers.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 | 187 +++++++++++++++++----------<br>
-=C2=A0libmultipath/checkers.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 |=C2=A0 69 ++++++----<br>
-=C2=A0libmultipath/checkers/cciss_tur.c=C2=A0 =C2=A0 |=C2=A0 13 +-<br>
-=C2=A0libmultipath/checkers/directio.c=C2=A0 =C2=A0 =C2=A0|=C2=A0 29 +++--<=
-br>
-=C2=A0libmultipath/checkers/emc_clariion.c | 114 +++++++++++++---<br>
-=C2=A0libmultipath/checkers/hp_sw.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 |=C2=A0 39 +=
-++---<br>
-=C2=A0libmultipath/checkers/rdac.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0|=C2=A0=
- 92 +++++++++----<br>
-=C2=A0libmultipath/checkers/readsector0.c=C2=A0 |=C2=A0 =C2=A07 +-<br>
-=C2=A0libmultipath/checkers/tur.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 |=C2=A0=
- 60 +++++----<br>
-=C2=A0libmultipath/config.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 |=C2=A0 10 +-<br>
-=C2=A0libmultipath/configure.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0|=C2=A0 10 +-<br>
-=C2=A0libmultipath/discovery.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0|=C2=A0 11 +-<br>
-=C2=A0libmultipath/foreign.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0|=C2=A0 =C2=A05 +-<br>
-=C2=A0libmultipath/foreign/nvme.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 |=C2=A0=
- =C2=A06 +-<br>
-=C2=A0libmultipath/print.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0|=C2=A0 =C2=A02 +-<br>
-=C2=A0libmultipath/propsel.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0|=C2=A0 19 +--<br>
-=C2=A0libmultipath/structs_vec.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0|=
-=C2=A0 =C2=A05 +-<br>
-=C2=A0libmultipath/sysfs.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0|=C2=A0 =C2=A05 +-<br>
-=C2=A0libmultipath/util.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 |=C2=A0 =C2=A09 ++<br>
-=C2=A0libmultipath/util.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 |=C2=A0 =C2=A09 ++<br>
-=C2=A0multipathd/main.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 |=C2=A0 38 ++++--<br>
-=C2=A021 files changed, 497 insertions(+), 242 deletions(-)<br>
-<br>
--- <br>
-2.19.1<br>
-<br>
-</blockquote></div>
-
---000000000000036794057a9b08ac--
-
-
---===============7149700803341368395==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7149700803341368395==--
+T24gMTEvMTMvMTggNToxOCBQTSwgS2VpdGggQnVzY2ggd3JvdGU6Cj4gT24gTW9uLCBOb3YgMTIs
+IDIwMTggYXQgMDQ6NTM6MjNQTSAtMDUwMCwgTWlrZSBTbml0emVyIHdyb3RlOgo+PiBPbiBNb24s
+IE5vdiAxMiAyMDE4IGF0IDExOjIzYW0gLTA1MDAsCj4+IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1
+c2UuY29tPiB3cm90ZToKPj4KPj4+IEhlbGxvIExpamllLAo+Pj4KPj4+IE9uIFRodSwgMjAxOC0x
+MS0wOCBhdCAxNDowOSArMDgwMCwgbGlqaWUgd3JvdGU6Cj4+Pj4gQWRkIHN1cHBvcnQgZm9yIEFz
+eW5jaHJvbm91cyBOYW1lc3BhY2UgQWNjZXNzIGFzIHNwZWNpZmllZCBpbiBOVk1lCj4+Pj4gMS4z
+Cj4+Pj4gVFAgNDAwNC4gVGhlIHN0YXRlcyBhcmUgdXBkYXRlZCB0aHJvdWdoIHJlYWRpbmcgdGhl
+IEFOQSBsb2cgcGFnZS4KPj4+Pgo+Pj4+IEJ5IGRlZmF1bHQsIHRoZSBuYXRpdmUgbnZtZSBtdWx0
+aXBhdGggdGFrZXMgb3ZlciB0aGUgbnZtZSBkZXZpY2UuCj4+Pj4gV2UgY2FuIHBhc3MgYSBmYWxz
+ZSB0byB0aGUgcGFyYW1ldGVyICdtdWx0aXBhdGgnIG9mIHRoZSBudm1lLWNvcmUua28KPj4+PiBt
+b2R1bGUsd2hlbiB3ZSB3YW50IHRvIHVzZSBtdWx0aXBhdGgtdG9vbHMuCj4+Pgo+Pj4gVGhhbmsg
+eW91IGZvciB0aGUgcGF0Y2guIEl0IGxvb2tzIHF1aXRlIGdvb2QgdG8gbWUuIEkndmUgdGVzdGVk
+IGl0IHdpdGgKPj4+IGEgTGludXggdGFyZ2V0IGFuZCBmb3VuZCBubyBwcm9ibGVtcyBzbyBmYXIu
+Cj4+Pgo+Pj4gSSBoYXZlIGEgZmV3IHF1ZXN0aW9ucyBhbmQgY29tbWVudHMgaW5saW5lIGJlbG93
+Lgo+Pj4KPj4+IEkgc3VnZ2VzdCB5b3UgYWxzbyBoYXZlIGEgbG9vayBhdCBkZXRlY3RfcHJpbygp
+OyBpdCBzZWVtcyB0byBtYWtlIHNlbnNlCj4+PiB0byB1c2UgdGhlIGFuYSBwcmlvcml0aXplciBm
+b3IgTlZNZSBwYXRocyBhdXRvbWF0aWNhbGx5IGlmIEFOQSBpcwo+Pj4gc3VwcG9ydGVkICh3aXRo
+IHlvdXIgcGF0Y2gsICJkZXRlY3RfcHJpbyBubyIgYW5kICJwcmlvIGFuYSIgaGF2ZSB0byBiZQo+
+Pj4gY29uZmlndXJlZCBleHBsaWNpdGx5KS4gQnV0IHRoYXQgY2FuIGJlIGRvbmUgaW4gYSBsYXRl
+ciBwYXRjaC4KPj4KPj4gSSAoYW5kIG90aGVycykgdGhpbmsgaXQgbWFrZXMgc2Vuc2UgdG8gYXQg
+bGVhc3QgdHJpcGxlIGNoZWNrIHdpdGggdGhlCj4+IE5WTWUgZGV2ZWxvcGVycyAobm93IGNjJ2Qp
+IHRvIHNlZSBpZiB3ZSBjb3VsZCBnZXQgYWdyZWVtZW50IG9uIHRoZSBudm1lCj4+IGRyaXZlciBw
+cm92aWRpbmcgdGhlIEFOQSBzdGF0ZSB2aWEgc3lzZnMgKHdoZW4gbW9kcGFyYW0KPj4gbnZtZV9j
+b3JlLm11bHRpcGF0aD1OIGlzIHNldCksIGxpa2UgSGFubmVzIHByb3Bvc2VkIGhlcmU6Cj4+IGh0
+dHA6Ly9saXN0cy5pbmZyYWRlYWQub3JnL3BpcGVybWFpbC9saW51eC1udm1lLzIwMTgtTm92ZW1i
+ZXIvMDIwNzY1Lmh0bWwKPj4KPj4gVGhlbiB0aGUgdXNlcnNwYWNlIG11bHRpcGF0aC10b29scyBB
+TkEgc3VwcG9ydCBjb3VsZCBqdXN0IHJlYWQgc3lzZnMKPj4gcmF0aGVyIHRoYW4gcmVpbnZlbnQg
+aGFydmVzdGluZyB0aGUgQU5BIHN0YXRlIHZpYSBpb2N0bC4KPiAKPiBJJ2QgcHJlZmVyIG5vdCBk
+dXBsaWNhdGluZyB0aGUgbG9nIHBhZ2UgcGFyc2luZy4gTWF5YmUgbnZtZSdzIHNob3VsZG4ndAo+
+IGV2ZW4gYmUgdGllZCB0byBDT05GSUdfTlZNRV9NVUxUSVBBVEggc28gdGhhdCB0aGUgJ211bHRp
+cGF0aCcgcGFyYW0KPiBpc24ndCBldmVuIGFuIGlzc3VlLgo+ICAgCk15IGFyZ3VtZW50IGhlcmUg
+aXMgdGhhdCBfQU5BXyBzdXBwb3J0IHNob3VsZCBub3QgYmUgdGllZCB0byB0aGUgTlZNRSAKbmF0
+aXZlIG11bHRpcGF0aGluZyBhdCBhbGwuCgpXaGV0aGVyIG9yIG5vdCBBTkEgaXMgcHJlc2VudCBp
+cyBhIGNob2ljZSBvZiB0aGUgdGFyZ2V0IGltcGxlbWVudGF0aW9uOyAKdGhlIGhvc3QgaGFzIF96
+ZXJvXyBpbmZsdWVuY2Ugb24gdGhpcy4gSXQgbWF5IGFyZ3VlIGFsbCBpdCB3YW50cyBhbmQgCmRv
+ZXNuJ3QgZXZlbiBoYXZlIHRvIGltcGxlbWVudCBtdWx0aXBhdGhpbmcuIEJ1dCBpbiB0aGUgZW5k
+IGlmIHRoZSAKdGFyZ2V0IGRlY2xhcmVzIGEgcGF0aCBhcyAnaW5hY2Nlc3NpYmxlJyB0aGUgcGF0
+aCBfaXNfIGluYWNjZXNzaWJsZSB0byAKdGhlIGhvc3QuIEV2ZW4gaXQgdGhhdCBwYXJ0aWN1bGFy
+IGhvc3QgZG9lc24ndCBpbXBsZW1lbnQgb3IgYWN0aXZhdGUgCm11bHRpcGF0aGluZy4KKFlvdSB3
+b3VsZG4ndCBiZWxpZXZlIGhvdyBvZnRlbiBJIGhhZCB0aGlzIGRpc2N1c3Npb24gd2l0aCBvdXIg
+UUEgdGVhbSAKZm9yIEFMVUEgLi4uKQoKV2hldGhlciBvciBub3QgX211bHRpcGF0aGluZ18gaXMg
+dXNlZCBpcyBhIF9ob3N0XyBpbXBsZW1lbnRhdGlvbiwgYW5kIGlzIAphY3R1YWxseSBpbmRlcGVu
+ZGVudCBvbiBBTkEgc3VwcG9ydDsgbGludXggaXRzZWxmIHByb3ZlZCB0aGUgcG9pbnQgaGVyZSAK
+YXMgd2Ugc3VwcG9ydGVkIChzeW1tZXRyaWMpIG11bHRpcGF0aGluZyBmYXIgbG9uZ2VyIHRoYW4g
+d2UgaGFkIGFuIEFOQSAKaW1wbGVtZW50YXRpb24uCgpTbyBwZXJzb25hbGx5IEkgZG9uJ3Qgc2Vl
+IHdoeSB0aGUgJ3JhdycgQU5BIHN1cHBvcnQgKHBhcnNpbmcgbG9nIHBhZ2VzLCAKZmlndXJpbmcg
+b3V0IHBhdGggc3RhdGVzIGV0YykgbmVlZHMgdG8gYmUgdGllZCBpbiB3aXRoIG5hdGl2ZSBOVk1l
+IAptdWx0aXBhdGhpbmcuIF9Fc3BlY2lhbGx5XyBub3QgYXMgbXkgcGF0Y2ggcmVhbGx5IGlzIHRy
+aXZpYWwuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgIFRlYW1s
+ZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZQkJCSAgICAgICAgICAgICAgICs0
+OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8
+cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIsIEouIFNtaXRoYXJkLCBKLiBHdWlsZCwgRC4gVXBt
+YW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFp
+bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWls
+bWFuL2xpc3RpbmZvL2RtLWRldmVs
