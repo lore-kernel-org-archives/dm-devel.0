@@ -1,191 +1,167 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] nvme: allow ANA support to be independent of native
- multipathing
-Date: Thu, 15 Nov 2018 12:46:05 -0500
-Message-ID: <20181115174605.GA19782@redhat.com>
-References: <1541657381-7452-1-git-send-email-lijie34@huawei.com>
- <2691abf6733f791fb16b86d96446440e4aaff99f.camel@suse.com>
- <20181112215323.GA7983@redhat.com>
- <20181113161838.GC9827@localhost.localdomain>
- <20181113180008.GA12513@redhat.com>
- <20181114053837.GA15086@redhat.com>
- <30cf7af7-8826-55bd-e39a-4f81ed032f6d@suse.de>
- <20181114174746.GA18526@redhat.com>
- <87c931e5-4ac9-1795-8d40-cc5541d3ebcf@suse.de>
+From: Omar Sandoval <osandov@osandov.com>
+Subject: Re: [PATCH V10 01/19] block: introduce multi-page page bvec helpers
+Date: Thu, 15 Nov 2018 10:25:59 -0800
+Message-ID: <20181115182559.GA9348@vader>
+References: <20181115085306.9910-1-ming.lei@redhat.com>
+ <20181115085306.9910-2-ming.lei@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <87c931e5-4ac9-1795-8d40-cc5541d3ebcf@suse.de>
+In-Reply-To: <20181115085306.9910-2-ming.lei@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-nvme@lists.infradead.org
-Cc: Hannes Reinecke <hare@suse.de>, Keith Busch <keith.busch@intel.com>, Sagi Grimberg <sagi@grimberg.me>, hch@lst.de, axboe@kernel.dk, Martin Wilck <mwilck@suse.com>, lijie <lijie34@huawei.com>, xose.vazquez@gmail.com, chengjike.cheng@huawei.com, shenhong09@huawei.com, dm-devel@redhat.com, wangzhoumengjian@huawei.com, christophe.varoqui@opensvc.com, bmarzins@redhat.com, sschremm@netapp.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Ming Lei <ming.lei@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-erofs@lists.ozlabs.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, Bob Peterson <rpeterso@r>
 List-Id: dm-devel.ids
 
-Whether or not ANA is present is a choice of the target implementation;
-the host (and whether it supports multipathing) has _zero_ influence on
-this.  If the target declares a path as 'inaccessible' the path _is_
-inaccessible to the host.  As such, ANA support should be functional
-even if native multipathing is not.
+On Thu, Nov 15, 2018 at 04:52:48PM +0800, Ming Lei wrote:
+> This patch introduces helpers of 'mp_bvec_iter_*' for multipage
+> bvec support.
+> 
+> The introduced helpers treate one bvec as real multi-page segment,
+> which may include more than one pages.
+> 
+> The existed helpers of bvec_iter_* are interfaces for supporting current
+> bvec iterator which is thought as single-page by drivers, fs, dm and
+> etc. These introduced helpers will build single-page bvec in flight, so
+> this way won't break current bio/bvec users, which needn't any change.
+> 
+> Cc: Dave Chinner <dchinner@redhat.com>
+> Cc: Kent Overstreet <kent.overstreet@gmail.com>
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Cc: dm-devel@redhat.com
+> Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+> Cc: linux-fsdevel@vger.kernel.org
+> Cc: Shaohua Li <shli@kernel.org>
+> Cc: linux-raid@vger.kernel.org
+> Cc: linux-erofs@lists.ozlabs.org
+> Cc: David Sterba <dsterba@suse.com>
+> Cc: linux-btrfs@vger.kernel.org
+> Cc: Darrick J. Wong <darrick.wong@oracle.com>
+> Cc: linux-xfs@vger.kernel.org
+> Cc: Gao Xiang <gaoxiang25@huawei.com>
+> Cc: Christoph Hellwig <hch@lst.de>
+> Cc: Theodore Ts'o <tytso@mit.edu>
+> Cc: linux-ext4@vger.kernel.org
+> Cc: Coly Li <colyli@suse.de>
+> Cc: linux-bcache@vger.kernel.org
+> Cc: Boaz Harrosh <ooo@electrozaur.com>
+> Cc: Bob Peterson <rpeterso@redhat.com>
+> Cc: cluster-devel@redhat.com
 
-Introduce ability to always re-read ANA log page as required due to ANA
-error and make current ANA state available via sysfs -- even if native
-multipathing is disabled on the host (e.g. nvme_core.multipath=N).
+Reviewed-by: Omar Sandoval <osandov@fb.com>
 
-This affords userspace access to the current ANA state independent of
-which layer might be doing multipathing.  It also allows multipath-tools
-to rely on the NVMe driver for ANA support while dm-multipath takes care
-of multipathing.
+But a couple of comments below.
 
-While implementing these changes care was taken to preserve the exact
-ANA functionality and code sequence native multipathing has provided.
-This manifests as native multipathing's nvme_failover_req() being
-tweaked to call __nvme_update_ana() which was factored out to allow
-nvme_update_ana() to be called independent of nvme_failover_req().
+> Signed-off-by: Ming Lei <ming.lei@redhat.com>
+> ---
+>  include/linux/bvec.h | 63 +++++++++++++++++++++++++++++++++++++++++++++++++---
+>  1 file changed, 60 insertions(+), 3 deletions(-)
+> 
+> diff --git a/include/linux/bvec.h b/include/linux/bvec.h
+> index 02c73c6aa805..8ef904a50577 100644
+> --- a/include/linux/bvec.h
+> +++ b/include/linux/bvec.h
+> @@ -23,6 +23,44 @@
+>  #include <linux/kernel.h>
+>  #include <linux/bug.h>
+>  #include <linux/errno.h>
+> +#include <linux/mm.h>
+> +
+> +/*
+> + * What is multi-page bvecs?
+> + *
+> + * - bvecs stored in bio->bi_io_vec is always multi-page(mp) style
+> + *
+> + * - bvec(struct bio_vec) represents one physically contiguous I/O
+> + *   buffer, now the buffer may include more than one pages after
+> + *   multi-page(mp) bvec is supported, and all these pages represented
+> + *   by one bvec is physically contiguous. Before mp support, at most
+> + *   one page is included in one bvec, we call it single-page(sp)
+> + *   bvec.
+> + *
+> + * - .bv_page of the bvec represents the 1st page in the mp bvec
+> + *
+> + * - .bv_offset of the bvec represents offset of the buffer in the bvec
+> + *
+> + * The effect on the current drivers/filesystem/dm/bcache/...:
+> + *
+> + * - almost everyone supposes that one bvec only includes one single
+> + *   page, so we keep the sp interface not changed, for example,
+> + *   bio_for_each_segment() still returns bvec with single page
+> + *
+> + * - bio_for_each_segment*() will be changed to return single-page
+> + *   bvec too
+> + *
+> + * - during iterating, iterator variable(struct bvec_iter) is always
+> + *   updated in multipage bvec style and that means bvec_iter_advance()
+> + *   is kept not changed
+> + *
+> + * - returned(copied) single-page bvec is built in flight by bvec
+> + *   helpers from the stored multipage bvec
+> + *
+> + * - In case that some components(such as iov_iter) need to support
+> + *   multi-page bvec, we introduce new helpers(mp_bvec_iter_*) for
+> + *   them.
+> + */
 
-And as always, if embedded NVMe users do not want any performance
-overhead associated with ANA or native NVMe multipathing they can
-disable CONFIG_NVME_MULTIPATH.
+This comment sounds more like a commit message (i.e., how were things
+before, and how are we changing them). In a couple of years when I read
+this code, I probably won't care how it was changed, just how it works.
+So I think a comment explaining the concepts of multi-page and
+single-page bvecs is very useful, but please move all of the "foo was
+changed" and "before mp support" type stuff to the commit message.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/nvme/host/core.c      | 10 +++++----
- drivers/nvme/host/multipath.c | 49 +++++++++++++++++++++++++++++++++----------
- drivers/nvme/host/nvme.h      |  4 ++++
- 3 files changed, 48 insertions(+), 15 deletions(-)
+>  /*
+>   * was unsigned short, but we might as well be ready for > 64kB I/O pages
+> @@ -50,16 +88,35 @@ struct bvec_iter {
+>   */
+>  #define __bvec_iter_bvec(bvec, iter)	(&(bvec)[(iter).bi_idx])
+>  
+> -#define bvec_iter_page(bvec, iter)				\
+> +#define mp_bvec_iter_page(bvec, iter)				\
+>  	(__bvec_iter_bvec((bvec), (iter))->bv_page)
+>  
+> -#define bvec_iter_len(bvec, iter)				\
+> +#define mp_bvec_iter_len(bvec, iter)				\
+>  	min((iter).bi_size,					\
+>  	    __bvec_iter_bvec((bvec), (iter))->bv_len - (iter).bi_bvec_done)
+>  
+> -#define bvec_iter_offset(bvec, iter)				\
+> +#define mp_bvec_iter_offset(bvec, iter)				\
+>  	(__bvec_iter_bvec((bvec), (iter))->bv_offset + (iter).bi_bvec_done)
+>  
+> +#define mp_bvec_iter_page_idx(bvec, iter)			\
+> +	(mp_bvec_iter_offset((bvec), (iter)) / PAGE_SIZE)
+> +
+> +/*
+> + * <page, offset,length> of single-page(sp) segment.
+> + *
+> + * This helpers are for building sp bvec in flight.
+> + */
+> +#define bvec_iter_offset(bvec, iter)					\
+> +	(mp_bvec_iter_offset((bvec), (iter)) % PAGE_SIZE)
+> +
+> +#define bvec_iter_len(bvec, iter)					\
+> +	min_t(unsigned, mp_bvec_iter_len((bvec), (iter)),		\
+> +	    (PAGE_SIZE - (bvec_iter_offset((bvec), (iter)))))
 
-diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-index fe957166c4a9..3df607905628 100644
---- a/drivers/nvme/host/core.c
-+++ b/drivers/nvme/host/core.c
-@@ -255,10 +255,12 @@ void nvme_complete_rq(struct request *req)
- 		nvme_req(req)->ctrl->comp_seen = true;
- 
- 	if (unlikely(status != BLK_STS_OK && nvme_req_needs_retry(req))) {
--		if ((req->cmd_flags & REQ_NVME_MPATH) &&
--		    blk_path_error(status)) {
--			nvme_failover_req(req);
--			return;
-+		if (blk_path_error(status)) {
-+			if (req->cmd_flags & REQ_NVME_MPATH) {
-+				nvme_failover_req(req);
-+				return;
-+			}
-+			nvme_update_ana(req);
- 		}
- 
- 		if (!blk_queue_dying(req->q)) {
-diff --git a/drivers/nvme/host/multipath.c b/drivers/nvme/host/multipath.c
-index 8e03cda770c5..0adbcff5fba2 100644
---- a/drivers/nvme/host/multipath.c
-+++ b/drivers/nvme/host/multipath.c
-@@ -22,7 +22,7 @@ MODULE_PARM_DESC(multipath,
- 
- inline bool nvme_ctrl_use_ana(struct nvme_ctrl *ctrl)
- {
--	return multipath && ctrl->subsys && (ctrl->subsys->cmic & (1 << 3));
-+	return ctrl->subsys && (ctrl->subsys->cmic & (1 << 3));
- }
- 
- /*
-@@ -47,6 +47,35 @@ void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
- 	}
- }
- 
-+static bool nvme_ana_error(u16 status)
-+{
-+	switch (status & 0x7ff) {
-+	case NVME_SC_ANA_TRANSITION:
-+	case NVME_SC_ANA_INACCESSIBLE:
-+	case NVME_SC_ANA_PERSISTENT_LOSS:
-+		return true;
-+	}
-+	return false;
-+}
-+
-+static void __nvme_update_ana(struct nvme_ns *ns)
-+{
-+	if (!ns->ctrl->ana_log_buf)
-+		return;
-+
-+	set_bit(NVME_NS_ANA_PENDING, &ns->flags);
-+	queue_work(nvme_wq, &ns->ctrl->ana_work);
-+}
-+
-+void nvme_update_ana(struct request *req)
-+{
-+	struct nvme_ns *ns = req->q->queuedata;
-+	u16 status = nvme_req(req)->status;
-+
-+	if (nvme_ana_error(status))
-+		__nvme_update_ana(ns);
-+}
-+
- void nvme_failover_req(struct request *req)
- {
- 	struct nvme_ns *ns = req->q->queuedata;
-@@ -58,25 +87,22 @@ void nvme_failover_req(struct request *req)
- 	spin_unlock_irqrestore(&ns->head->requeue_lock, flags);
- 	blk_mq_end_request(req, 0);
- 
--	switch (status & 0x7ff) {
--	case NVME_SC_ANA_TRANSITION:
--	case NVME_SC_ANA_INACCESSIBLE:
--	case NVME_SC_ANA_PERSISTENT_LOSS:
-+	if (nvme_ana_error(status)) {
- 		/*
- 		 * If we got back an ANA error we know the controller is alive,
- 		 * but not ready to serve this namespaces.  The spec suggests
- 		 * we should update our general state here, but due to the fact
- 		 * that the admin and I/O queues are not serialized that is
- 		 * fundamentally racy.  So instead just clear the current path,
--		 * mark the the path as pending and kick of a re-read of the ANA
-+		 * mark the path as pending and kick off a re-read of the ANA
- 		 * log page ASAP.
- 		 */
- 		nvme_mpath_clear_current_path(ns);
--		if (ns->ctrl->ana_log_buf) {
--			set_bit(NVME_NS_ANA_PENDING, &ns->flags);
--			queue_work(nvme_wq, &ns->ctrl->ana_work);
--		}
--		break;
-+		__nvme_update_ana(ns);
-+		goto kick_requeue;
-+	}
-+
-+	switch (status & 0x7ff) {
- 	case NVME_SC_HOST_PATH_ERROR:
- 		/*
- 		 * Temporary transport disruption in talking to the controller.
-@@ -93,6 +119,7 @@ void nvme_failover_req(struct request *req)
- 		break;
- 	}
- 
-+kick_requeue:
- 	kblockd_schedule_work(&ns->head->requeue_work);
- }
- 
-diff --git a/drivers/nvme/host/nvme.h b/drivers/nvme/host/nvme.h
-index 27663ce3044e..cbe4253f2d02 100644
---- a/drivers/nvme/host/nvme.h
-+++ b/drivers/nvme/host/nvme.h
-@@ -471,6 +471,7 @@ bool nvme_ctrl_use_ana(struct nvme_ctrl *ctrl);
- void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
- 			struct nvme_ctrl *ctrl, int *flags);
- void nvme_failover_req(struct request *req);
-+void nvme_update_ana(struct request *req);
- void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl);
- int nvme_mpath_alloc_disk(struct nvme_ctrl *ctrl,struct nvme_ns_head *head);
- void nvme_mpath_add_disk(struct nvme_ns *ns, struct nvme_id_ns *id);
-@@ -510,6 +511,9 @@ static inline void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
- static inline void nvme_failover_req(struct request *req)
- {
- }
-+static inline void nvme_update_ana(struct request *req)
-+{
-+}
- static inline void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl)
- {
- }
--- 
-2.15.0
+The parentheses around (bvec_iter_offset((bvec), (iter))) and
+(PAGE_SIZE - (bvec_iter_offset((bvec), (iter)))) are unnecessary
+clutter. This looks easier to read to me:
+
+#define bvec_iter_len(bvec, iter)					\
+	min_t(unsigned, mp_bvec_iter_len((bvec), (iter)),		\
+	      PAGE_SIZE - bvec_iter_offset((bvec), (iter)))
+
+> +
+> +#define bvec_iter_page(bvec, iter)					\
+> +	nth_page(mp_bvec_iter_page((bvec), (iter)),		\
+> +		 mp_bvec_iter_page_idx((bvec), (iter)))
+> +
+>  #define bvec_iter_bvec(bvec, iter)				\
+>  ((struct bio_vec) {						\
+>  	.bv_page	= bvec_iter_page((bvec), (iter)),	\
+> -- 
+> 2.9.5
+> 
