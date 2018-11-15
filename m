@@ -1,150 +1,51 @@
-From: Omar Sandoval <osandov@osandov.com>
-Subject: Re: [PATCH V10 04/19] block: use bio_for_each_bvec() to map sg
-Date: Thu, 15 Nov 2018 14:33:58 -0800
-Message-ID: <20181115223358.GE9348@vader>
-References: <20181115085306.9910-1-ming.lei@redhat.com>
- <20181115085306.9910-5-ming.lei@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [RFC] dm-bow working prototype
+Date: Thu, 15 Nov 2018 18:15:34 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1811151809380.25860@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20181023212358.60292-1-paullawrence@google.com> <20181023221819.GB17552@agk-dp.fab.redhat.com> <296148c2-f2d9-5818-ea76-d71a0d6f5cd4@google.com> <alpine.LRH.2.02.1810241514310.4080@file01.intranet.prod.int.rdu2.redhat.com>
+ <4a934593-1bd1-be5f-35c0-945c42762627@google.com> <alpine.LRH.2.02.1810261558460.28906@file01.intranet.prod.int.rdu2.redhat.com> <fba91b2e-4b2e-8daf-ff64-a12c9139cada@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181115085306.9910-5-ming.lei@redhat.com>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Ming Lei <ming.lei@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-erofs@lists.ozlabs.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, Bob Peterson <rpeterso@r>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <fba91b2e-4b2e-8daf-ff64-a12c9139cada@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Paul Lawrence <paullawrence@google.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-doc@vger.kernel.org, kernel-team@android.com, Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>
 List-Id: dm-devel.ids
 
-On Thu, Nov 15, 2018 at 04:52:51PM +0800, Ming Lei wrote:
-> It is more efficient to use bio_for_each_bvec() to map sg, meantime
-> we have to consider splitting multipage bvec as done in blk_bio_segment_split().
-> 
-> Cc: Dave Chinner <dchinner@redhat.com>
-> Cc: Kent Overstreet <kent.overstreet@gmail.com>
-> Cc: Mike Snitzer <snitzer@redhat.com>
-> Cc: dm-devel@redhat.com
-> Cc: Alexander Viro <viro@zeniv.linux.org.uk>
-> Cc: linux-fsdevel@vger.kernel.org
-> Cc: Shaohua Li <shli@kernel.org>
-> Cc: linux-raid@vger.kernel.org
-> Cc: linux-erofs@lists.ozlabs.org
-> Cc: David Sterba <dsterba@suse.com>
-> Cc: linux-btrfs@vger.kernel.org
-> Cc: Darrick J. Wong <darrick.wong@oracle.com>
-> Cc: linux-xfs@vger.kernel.org
-> Cc: Gao Xiang <gaoxiang25@huawei.com>
-> Cc: Christoph Hellwig <hch@lst.de>
-> Cc: Theodore Ts'o <tytso@mit.edu>
-> Cc: linux-ext4@vger.kernel.org
-> Cc: Coly Li <colyli@suse.de>
-> Cc: linux-bcache@vger.kernel.org
-> Cc: Boaz Harrosh <ooo@electrozaur.com>
-> Cc: Bob Peterson <rpeterso@redhat.com>
-> Cc: cluster-devel@redhat.com
 
-Reviewed-by: Omar Sandoval <osandov@fb.com>
 
-> Signed-off-by: Ming Lei <ming.lei@redhat.com>
-> ---
->  block/blk-merge.c | 72 +++++++++++++++++++++++++++++++++++++++----------------
->  1 file changed, 52 insertions(+), 20 deletions(-)
+On Mon, 29 Oct 2018, Paul Lawrence wrote:
+
 > 
-> diff --git a/block/blk-merge.c b/block/blk-merge.c
-> index 6f7deb94a23f..cb9f49bcfd36 100644
-> --- a/block/blk-merge.c
-> +++ b/block/blk-merge.c
-> @@ -473,6 +473,56 @@ static int blk_phys_contig_segment(struct request_queue *q, struct bio *bio,
->  	return biovec_phys_mergeable(q, &end_bv, &nxt_bv);
->  }
->  
-> +static struct scatterlist *blk_next_sg(struct scatterlist **sg,
-> +		struct scatterlist *sglist)
-> +{
-> +	if (!*sg)
-> +		return sglist;
-> +	else {
-> +		/*
-> +		 * If the driver previously mapped a shorter
-> +		 * list, we could see a termination bit
-> +		 * prematurely unless it fully inits the sg
-> +		 * table on each mapping. We KNOW that there
-> +		 * must be more entries here or the driver
-> +		 * would be buggy, so force clear the
-> +		 * termination bit to avoid doing a full
-> +		 * sg_init_table() in drivers for each command.
-> +		 */
-> +		sg_unmark_end(*sg);
-> +		return sg_next(*sg);
-> +	}
-> +}
-> +
-> +static unsigned blk_bvec_map_sg(struct request_queue *q,
-> +		struct bio_vec *bvec, struct scatterlist *sglist,
-> +		struct scatterlist **sg)
-> +{
-> +	unsigned nbytes = bvec->bv_len;
-> +	unsigned nsegs = 0, total = 0;
-> +
-> +	while (nbytes > 0) {
-> +		unsigned seg_size;
-> +		struct page *pg;
-> +		unsigned offset, idx;
-> +
-> +		*sg = blk_next_sg(sg, sglist);
-> +
-> +		seg_size = min(nbytes, queue_max_segment_size(q));
-> +		offset = (total + bvec->bv_offset) % PAGE_SIZE;
-> +		idx = (total + bvec->bv_offset) / PAGE_SIZE;
-> +		pg = nth_page(bvec->bv_page, idx);
-> +
-> +		sg_set_page(*sg, pg, seg_size, offset);
-> +
-> +		total += seg_size;
-> +		nbytes -= seg_size;
-> +		nsegs++;
-> +	}
-> +
-> +	return nsegs;
-> +}
-> +
->  static inline void
->  __blk_segment_map_sg(struct request_queue *q, struct bio_vec *bvec,
->  		     struct scatterlist *sglist, struct bio_vec *bvprv,
-> @@ -490,25 +540,7 @@ __blk_segment_map_sg(struct request_queue *q, struct bio_vec *bvec,
->  		(*sg)->length += nbytes;
->  	} else {
->  new_segment:
-> -		if (!*sg)
-> -			*sg = sglist;
-> -		else {
-> -			/*
-> -			 * If the driver previously mapped a shorter
-> -			 * list, we could see a termination bit
-> -			 * prematurely unless it fully inits the sg
-> -			 * table on each mapping. We KNOW that there
-> -			 * must be more entries here or the driver
-> -			 * would be buggy, so force clear the
-> -			 * termination bit to avoid doing a full
-> -			 * sg_init_table() in drivers for each command.
-> -			 */
-> -			sg_unmark_end(*sg);
-> -			*sg = sg_next(*sg);
-> -		}
-> -
-> -		sg_set_page(*sg, bvec->bv_page, nbytes, bvec->bv_offset);
-> -		(*nsegs)++;
-> +		(*nsegs) += blk_bvec_map_sg(q, bvec, sglist, sg);
->  	}
->  	*bvprv = *bvec;
->  }
-> @@ -530,7 +562,7 @@ static int __blk_bios_map_sg(struct request_queue *q, struct bio *bio,
->  	int cluster = blk_queue_cluster(q), nsegs = 0;
->  
->  	for_each_bio(bio)
-> -		bio_for_each_segment(bvec, bio, iter)
-> +		bio_for_each_bvec(bvec, bio, iter)
->  			__blk_segment_map_sg(q, &bvec, sglist, &bvprv, sg,
->  					     &nsegs, &cluster);
->  
-> -- 
-> 2.9.5
+> > The snapshot target could be hacked so that it remembers space trimmed
+> > with REQ_OP_DISCARD and won't reallocate these blocks.
+> > 
+> > But I suspect that running discard over the whole device would degrade
+> > performance more than copying some unneeded data.
+> > 
+> > How much data do you intend to backup with this solution?
+> > 
+> > 
+> We are space-constrained - we will have to free up space for the backup before
+> we apply the update, so we have to predict the size and keeping usage as low
+> as possible is thus very important.
 > 
+> Also, we've discussed the resizing requirement of the dm-snap solution and
+> that part is not attractive at all - it seems it would be impossible to
+> guarantee that the resizing happens in a timely fashion during the (very busy)
+> update cycle.
+> 
+> Thanks everyone for the insights, especially into how dm-snap works, which I
+> hadn't fully appreciated. At the moment, and for the above reasons, we intend
+> to continue with the dm-bow solution, but do want to keep this discussion
+> open. If anyone is going to be at Linux Plumbers, I'll be presenting this work
+> and would love to chat about it more.
+
+dm-snapshot took 9 years to fix the last data corruption bug (2004-2013 - 
+the commit e9c6a182649f4259db704ae15a91ac820e63b0ca).
+
+And with the new target duplicating the snapshot functionality, it may be 
+the same.
+
+Mikulas
