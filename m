@@ -1,7 +1,7 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH V10 01/19] block: introduce multi-page page bvec helpers
-Date: Thu, 15 Nov 2018 16:52:48 +0800
-Message-ID: <20181115085306.9910-2-ming.lei@redhat.com>
+Subject: [PATCH V10 02/19] block: introduce bio_for_each_bvec()
+Date: Thu, 15 Nov 2018 16:52:49 +0800
+Message-ID: <20181115085306.9910-3-ming.lei@redhat.com>
 References: <20181115085306.9910-1-ming.lei@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181115085306.9910-1-ming.lei@redhat.com>
@@ -10,16 +10,8 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Ming Lei <ming.lei@redhat.com>, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-erofs@lists.ozlabs.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, Bob Peterson <rpeterso>
 List-Id: dm-devel.ids
 
-This patch introduces helpers of 'mp_bvec_iter_*' for multipage
-bvec support.
-
-The introduced helpers treate one bvec as real multi-page segment,
-which may include more than one pages.
-
-The existed helpers of bvec_iter_* are interfaces for supporting current
-bvec iterator which is thought as single-page by drivers, fs, dm and
-etc. These introduced helpers will build single-page bvec in flight, so
-this way won't break current bio/bvec users, which needn't any change.
+This helper is used for iterating over multi-page bvec for bio
+split & merge code.
 
 Cc: Dave Chinner <dchinner@redhat.com>
 Cc: Kent Overstreet <kent.overstreet@gmail.com>
@@ -45,96 +37,138 @@ Cc: Bob Peterson <rpeterso@redhat.com>
 Cc: cluster-devel@redhat.com
 Signed-off-by: Ming Lei <ming.lei@redhat.com>
 ---
- include/linux/bvec.h | 63 +++++++++++++++++++++++++++++++++++++++++++++++++---
- 1 file changed, 60 insertions(+), 3 deletions(-)
+ include/linux/bio.h  | 34 +++++++++++++++++++++++++++++++---
+ include/linux/bvec.h | 36 ++++++++++++++++++++++++++++++++----
+ 2 files changed, 63 insertions(+), 7 deletions(-)
 
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 056fb627edb3..1f0dcf109841 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -76,6 +76,9 @@
+ #define bio_data_dir(bio) \
+ 	(op_is_write(bio_op(bio)) ? WRITE : READ)
+ 
++#define bio_iter_mp_iovec(bio, iter)				\
++	mp_bvec_iter_bvec((bio)->bi_io_vec, (iter))
++
+ /*
+  * Check whether this bio carries any data or not. A NULL bio is allowed.
+  */
+@@ -135,18 +138,33 @@ static inline bool bio_full(struct bio *bio)
+ #define bio_for_each_segment_all(bvl, bio, i)				\
+ 	for (i = 0, bvl = (bio)->bi_io_vec; i < (bio)->bi_vcnt; i++, bvl++)
+ 
+-static inline void bio_advance_iter(struct bio *bio, struct bvec_iter *iter,
+-				    unsigned bytes)
++static inline void __bio_advance_iter(struct bio *bio, struct bvec_iter *iter,
++				      unsigned bytes, bool mp)
+ {
+ 	iter->bi_sector += bytes >> 9;
+ 
+ 	if (bio_no_advance_iter(bio))
+ 		iter->bi_size -= bytes;
+ 	else
+-		bvec_iter_advance(bio->bi_io_vec, iter, bytes);
++		if (!mp)
++			bvec_iter_advance(bio->bi_io_vec, iter, bytes);
++		else
++			mp_bvec_iter_advance(bio->bi_io_vec, iter, bytes);
+ 		/* TODO: It is reasonable to complete bio with error here. */
+ }
+ 
++static inline void bio_advance_iter(struct bio *bio, struct bvec_iter *iter,
++				    unsigned bytes)
++{
++	__bio_advance_iter(bio, iter, bytes, false);
++}
++
++static inline void bio_advance_mp_iter(struct bio *bio, struct bvec_iter *iter,
++				       unsigned bytes)
++{
++	__bio_advance_iter(bio, iter, bytes, true);
++}
++
+ #define __bio_for_each_segment(bvl, bio, iter, start)			\
+ 	for (iter = (start);						\
+ 	     (iter).bi_size &&						\
+@@ -156,6 +174,16 @@ static inline void bio_advance_iter(struct bio *bio, struct bvec_iter *iter,
+ #define bio_for_each_segment(bvl, bio, iter)				\
+ 	__bio_for_each_segment(bvl, bio, iter, (bio)->bi_iter)
+ 
++#define __bio_for_each_bvec(bvl, bio, iter, start)		\
++	for (iter = (start);						\
++	     (iter).bi_size &&						\
++		((bvl = bio_iter_mp_iovec((bio), (iter))), 1);	\
++	     bio_advance_mp_iter((bio), &(iter), (bvl).bv_len))
++
++/* returns one real segment(multipage bvec) each time */
++#define bio_for_each_bvec(bvl, bio, iter)			\
++	__bio_for_each_bvec(bvl, bio, iter, (bio)->bi_iter)
++
+ #define bio_iter_last(bvec, iter) ((iter).bi_size == (bvec).bv_len)
+ 
+ static inline unsigned bio_segments(struct bio *bio)
 diff --git a/include/linux/bvec.h b/include/linux/bvec.h
-index 02c73c6aa805..8ef904a50577 100644
+index 8ef904a50577..3d61352cd8cf 100644
 --- a/include/linux/bvec.h
 +++ b/include/linux/bvec.h
-@@ -23,6 +23,44 @@
- #include <linux/kernel.h>
- #include <linux/bug.h>
- #include <linux/errno.h>
-+#include <linux/mm.h>
-+
-+/*
-+ * What is multi-page bvecs?
-+ *
-+ * - bvecs stored in bio->bi_io_vec is always multi-page(mp) style
-+ *
-+ * - bvec(struct bio_vec) represents one physically contiguous I/O
-+ *   buffer, now the buffer may include more than one pages after
-+ *   multi-page(mp) bvec is supported, and all these pages represented
-+ *   by one bvec is physically contiguous. Before mp support, at most
-+ *   one page is included in one bvec, we call it single-page(sp)
-+ *   bvec.
-+ *
-+ * - .bv_page of the bvec represents the 1st page in the mp bvec
-+ *
-+ * - .bv_offset of the bvec represents offset of the buffer in the bvec
-+ *
-+ * The effect on the current drivers/filesystem/dm/bcache/...:
-+ *
-+ * - almost everyone supposes that one bvec only includes one single
-+ *   page, so we keep the sp interface not changed, for example,
-+ *   bio_for_each_segment() still returns bvec with single page
-+ *
-+ * - bio_for_each_segment*() will be changed to return single-page
-+ *   bvec too
-+ *
-+ * - during iterating, iterator variable(struct bvec_iter) is always
-+ *   updated in multipage bvec style and that means bvec_iter_advance()
-+ *   is kept not changed
-+ *
-+ * - returned(copied) single-page bvec is built in flight by bvec
-+ *   helpers from the stored multipage bvec
-+ *
-+ * - In case that some components(such as iov_iter) need to support
-+ *   multi-page bvec, we introduce new helpers(mp_bvec_iter_*) for
-+ *   them.
-+ */
+@@ -124,8 +124,16 @@ struct bvec_iter {
+ 	.bv_offset	= bvec_iter_offset((bvec), (iter)),	\
+ })
  
- /*
-  * was unsigned short, but we might as well be ready for > 64kB I/O pages
-@@ -50,16 +88,35 @@ struct bvec_iter {
-  */
- #define __bvec_iter_bvec(bvec, iter)	(&(bvec)[(iter).bi_idx])
- 
--#define bvec_iter_page(bvec, iter)				\
-+#define mp_bvec_iter_page(bvec, iter)				\
- 	(__bvec_iter_bvec((bvec), (iter))->bv_page)
- 
--#define bvec_iter_len(bvec, iter)				\
-+#define mp_bvec_iter_len(bvec, iter)				\
- 	min((iter).bi_size,					\
- 	    __bvec_iter_bvec((bvec), (iter))->bv_len - (iter).bi_bvec_done)
- 
--#define bvec_iter_offset(bvec, iter)				\
-+#define mp_bvec_iter_offset(bvec, iter)				\
- 	(__bvec_iter_bvec((bvec), (iter))->bv_offset + (iter).bi_bvec_done)
- 
-+#define mp_bvec_iter_page_idx(bvec, iter)			\
-+	(mp_bvec_iter_offset((bvec), (iter)) / PAGE_SIZE)
+-static inline bool bvec_iter_advance(const struct bio_vec *bv,
+-		struct bvec_iter *iter, unsigned bytes)
++#define mp_bvec_iter_bvec(bvec, iter)				\
++((struct bio_vec) {							\
++	.bv_page	= mp_bvec_iter_page((bvec), (iter)),	\
++	.bv_len		= mp_bvec_iter_len((bvec), (iter)),	\
++	.bv_offset	= mp_bvec_iter_offset((bvec), (iter)),	\
++})
 +
-+/*
-+ * <page, offset,length> of single-page(sp) segment.
-+ *
-+ * This helpers are for building sp bvec in flight.
-+ */
-+#define bvec_iter_offset(bvec, iter)					\
-+	(mp_bvec_iter_offset((bvec), (iter)) % PAGE_SIZE)
++static inline bool __bvec_iter_advance(const struct bio_vec *bv,
++				       struct bvec_iter *iter,
++				       unsigned bytes, bool mp)
+ {
+ 	if (WARN_ONCE(bytes > iter->bi_size,
+ 		     "Attempted to advance past end of bvec iter\n")) {
+@@ -134,8 +142,14 @@ static inline bool bvec_iter_advance(const struct bio_vec *bv,
+ 	}
+ 
+ 	while (bytes) {
+-		unsigned iter_len = bvec_iter_len(bv, *iter);
+-		unsigned len = min(bytes, iter_len);
++		unsigned len;
 +
-+#define bvec_iter_len(bvec, iter)					\
-+	min_t(unsigned, mp_bvec_iter_len((bvec), (iter)),		\
-+	    (PAGE_SIZE - (bvec_iter_offset((bvec), (iter)))))
++		if (mp)
++			len = mp_bvec_iter_len(bv, *iter);
++		else
++			len = bvec_iter_len(bv, *iter);
 +
-+#define bvec_iter_page(bvec, iter)					\
-+	nth_page(mp_bvec_iter_page((bvec), (iter)),		\
-+		 mp_bvec_iter_page_idx((bvec), (iter)))
++		len = min(bytes, len);
+ 
+ 		bytes -= len;
+ 		iter->bi_size -= len;
+@@ -173,6 +187,20 @@ static inline bool bvec_iter_rewind(const struct bio_vec *bv,
+ 	return true;
+ }
+ 
++static inline bool bvec_iter_advance(const struct bio_vec *bv,
++				     struct bvec_iter *iter,
++				     unsigned bytes)
++{
++	return __bvec_iter_advance(bv, iter, bytes, false);
++}
 +
- #define bvec_iter_bvec(bvec, iter)				\
- ((struct bio_vec) {						\
- 	.bv_page	= bvec_iter_page((bvec), (iter)),	\
++static inline bool mp_bvec_iter_advance(const struct bio_vec *bv,
++					struct bvec_iter *iter,
++					unsigned bytes)
++{
++	return __bvec_iter_advance(bv, iter, bytes, true);
++}
++
+ #define for_each_bvec(bvl, bio_vec, iter, start)			\
+ 	for (iter = (start);						\
+ 	     (iter).bi_size &&						\
 -- 
 2.9.5
