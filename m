@@ -1,153 +1,123 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 2/3] dm: use percpu counters
-Date: Fri, 16 Nov 2018 01:04:18 +0100
-Message-ID: <20181116000507.773533534@debian.vm>
+From: Omar Sandoval <osandov@osandov.com>
+Subject: Re: [PATCH V10 10/19] block: loop: pass multi-page bvec to iov_iter
+Date: Thu, 15 Nov 2018 16:40:22 -0800
+Message-ID: <20181116004022.GE23828@vader>
+References: <20181115085306.9910-1-ming.lei@redhat.com>
+ <20181115085306.9910-11-ming.lei@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm-percpu.patch
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20181115085306.9910-11-ming.lei@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ming Lei <ming.lei@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-erofs@lists.ozlabs.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, Bob Peterson <rpeterso@r>
 List-Id: dm-devel.ids
 
-Use percpu inflight counters to avoid cache line bouncing and improve
-performance.
+On Thu, Nov 15, 2018 at 04:52:57PM +0800, Ming Lei wrote:
+> iov_iter is implemented with bvec itererator, so it is safe to pass
+> multipage bvec to it, and this way is much more efficient than
+> passing one page in each bvec.
+> 
+> Cc: Dave Chinner <dchinner@redhat.com>
+> Cc: Kent Overstreet <kent.overstreet@gmail.com>
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Cc: dm-devel@redhat.com
+> Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+> Cc: linux-fsdevel@vger.kernel.org
+> Cc: Shaohua Li <shli@kernel.org>
+> Cc: linux-raid@vger.kernel.org
+> Cc: linux-erofs@lists.ozlabs.org
+> Cc: David Sterba <dsterba@suse.com>
+> Cc: linux-btrfs@vger.kernel.org
+> Cc: Darrick J. Wong <darrick.wong@oracle.com>
+> Cc: linux-xfs@vger.kernel.org
+> Cc: Gao Xiang <gaoxiang25@huawei.com>
+> Cc: Christoph Hellwig <hch@lst.de>
+> Cc: Theodore Ts'o <tytso@mit.edu>
+> Cc: linux-ext4@vger.kernel.org
+> Cc: Coly Li <colyli@suse.de>
+> Cc: linux-bcache@vger.kernel.org
+> Cc: Boaz Harrosh <ooo@electrozaur.com>
+> Cc: Bob Peterson <rpeterso@redhat.com>
+> Cc: cluster-devel@redhat.com
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Reviewed-by: Omar Sandoval <osandov@fb.com>
 
----
- drivers/md/dm-core.h |    5 +++++
- drivers/md/dm.c      |   50 ++++++++++++++++++++++++++++++++++----------------
- 2 files changed, 39 insertions(+), 16 deletions(-)
+Comments below.
 
-Index: linux-dm/drivers/md/dm-core.h
-===================================================================
---- linux-dm.orig/drivers/md/dm-core.h	2018-11-15 22:06:37.000000000 +0100
-+++ linux-dm/drivers/md/dm-core.h	2018-11-15 22:06:37.000000000 +0100
-@@ -24,6 +24,10 @@ struct dm_kobject_holder {
- 	struct completion completion;
- };
- 
-+struct dm_percpu {
-+	unsigned inflight[2];
-+};
-+
- /*
-  * DM core internal structure that used directly by dm.c and dm-rq.c
-  * DM targets must _not_ deference a mapped_device to directly access its members!
-@@ -63,6 +67,7 @@ struct mapped_device {
- 	/*
- 	 * A list of ios that arrived while we were suspended.
- 	 */
-+	struct dm_percpu __percpu *counters;
- 	struct work_struct work;
- 	wait_queue_head_t wait;
- 	spinlock_t deferred_lock;
-Index: linux-dm/drivers/md/dm.c
-===================================================================
---- linux-dm.orig/drivers/md/dm.c	2018-11-15 22:06:37.000000000 +0100
-+++ linux-dm/drivers/md/dm.c	2018-11-15 22:09:31.000000000 +0100
-@@ -648,19 +648,32 @@ static void free_tio(struct dm_target_io
- 
- int md_in_flight(struct mapped_device *md)
- {
--	return atomic_read(&dm_disk(md)->part0.in_flight[READ]) +
--	       atomic_read(&dm_disk(md)->part0.in_flight[WRITE]);
-+	int cpu;
-+	unsigned sum = 0;
-+	for_each_possible_cpu(cpu) {
-+		struct dm_percpu *p = per_cpu_ptr(md->counters, cpu);
-+		sum += p->inflight[READ] + p->inflight[WRITE];
-+	}
-+	return (int)sum;
- }
- 
- static void start_io_acct(struct dm_io *io)
- {
- 	struct mapped_device *md = io->md;
- 	struct bio *bio = io->orig_bio;
-+	struct hd_struct *part;
-+	int sgrp, cpu;
- 
- 	io->start_time = jiffies;
- 
--	generic_start_io_acct(md->queue, bio_op(bio), bio_sectors(bio),
--			      &dm_disk(md)->part0);
-+	part = &dm_disk(md)->part0;
-+	sgrp = op_stat_group(bio_op(bio));
-+	cpu = part_stat_lock();
-+	__part_stat_add(cpu, part, ios[sgrp], 1);
-+	__part_stat_add(cpu, part, sectors[sgrp], bio_sectors(bio));
-+	part_stat_unlock();
-+
-+	this_cpu_inc(md->counters->inflight[bio_data_dir(bio)]);
- 
- 	if (unlikely(dm_stats_used(&md->stats)))
- 		dm_stats_account_io(&md->stats, bio_data_dir(bio),
-@@ -673,25 +686,24 @@ static void end_io_acct(struct dm_io *io
- 	struct mapped_device *md = io->md;
- 	struct bio *bio = io->orig_bio;
- 	unsigned long duration = jiffies - io->start_time;
-+	struct hd_struct *part;
-+	int sgrp, cpu;
- 
- 	if (unlikely(dm_stats_used(&md->stats)))
- 		dm_stats_account_io(&md->stats, bio_data_dir(bio),
- 				    bio->bi_iter.bi_sector, bio_sectors(bio),
- 				    true, duration, &io->stats_aux);
- 
--	/*
--	 * make sure that atomic_dec in generic_end_io_acct is not reordered
--	 * with previous writes
--	 */
--	smp_mb__before_atomic();
--	generic_end_io_acct(md->queue, bio_op(bio), &dm_disk(md)->part0,
--			    io->start_time);
--	/*
--	 * generic_end_io_acct does atomic_dec, this barrier makes sure that
--	 * atomic_dec is not reordered with waitqueue_active
--	 */
--	smp_mb__after_atomic();
-+	part = &dm_disk(md)->part0;
-+	sgrp = op_stat_group(bio_op(bio));
-+	cpu = part_stat_lock();
-+	__part_stat_add(cpu, part, nsecs[sgrp], jiffies_to_nsecs(duration));
-+	part_stat_unlock();
-+
-+	smp_wmb();
-+	this_cpu_dec(md->counters->inflight[bio_data_dir(bio)]);
- 
-+	smp_mb();
- 	/* nudge anyone waiting on suspend queue */
- 	if (unlikely(waitqueue_active(&md->wait))) {
- 		if (!md_in_flight(md))
-@@ -1822,6 +1834,8 @@ static void cleanup_mapped_device(struct
- 	if (md->queue)
- 		blk_cleanup_queue(md->queue);
- 
-+	free_percpu(md->counters);
-+
- 	cleanup_srcu_struct(&md->io_barrier);
- 
- 	if (md->bdev) {
-@@ -1892,6 +1906,10 @@ static struct mapped_device *alloc_dev(i
- 	if (!md->disk)
- 		goto bad;
- 
-+	md->counters = alloc_percpu(struct dm_percpu);
-+	if (!md->counters)
-+		goto bad;
-+
- 	init_waitqueue_head(&md->wait);
- 	INIT_WORK(&md->work, dm_wq_work);
- 	init_waitqueue_head(&md->eventq);
+> Signed-off-by: Ming Lei <ming.lei@redhat.com>
+> ---
+>  drivers/block/loop.c | 23 ++++++++++++-----------
+>  1 file changed, 12 insertions(+), 11 deletions(-)
+> 
+> diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+> index bf6bc35aaf88..a3fd418ec637 100644
+> --- a/drivers/block/loop.c
+> +++ b/drivers/block/loop.c
+> @@ -515,16 +515,16 @@ static int lo_rw_aio(struct loop_device *lo, struct loop_cmd *cmd,
+>  	struct bio *bio = rq->bio;
+>  	struct file *file = lo->lo_backing_file;
+>  	unsigned int offset;
+> -	int segments = 0;
+> +	int nr_bvec = 0;
+>  	int ret;
+>  
+>  	if (rq->bio != rq->biotail) {
+> -		struct req_iterator iter;
+> +		struct bvec_iter iter;
+>  		struct bio_vec tmp;
+>  
+>  		__rq_for_each_bio(bio, rq)
+> -			segments += bio_segments(bio);
+> -		bvec = kmalloc_array(segments, sizeof(struct bio_vec),
+> +			nr_bvec += bio_bvecs(bio);
+> +		bvec = kmalloc_array(nr_bvec, sizeof(struct bio_vec),
+>  				     GFP_NOIO);
+>  		if (!bvec)
+>  			return -EIO;
+> @@ -533,13 +533,14 @@ static int lo_rw_aio(struct loop_device *lo, struct loop_cmd *cmd,
+>  		/*
+>  		 * The bios of the request may be started from the middle of
+>  		 * the 'bvec' because of bio splitting, so we can't directly
+> -		 * copy bio->bi_iov_vec to new bvec. The rq_for_each_segment
+> +		 * copy bio->bi_iov_vec to new bvec. The bio_for_each_bvec
+>  		 * API will take care of all details for us.
+>  		 */
+> -		rq_for_each_segment(tmp, rq, iter) {
+> -			*bvec = tmp;
+> -			bvec++;
+> -		}
+> +		__rq_for_each_bio(bio, rq)
+> +			bio_for_each_bvec(tmp, bio, iter) {
+> +				*bvec = tmp;
+> +				bvec++;
+> +			}
+
+Even if they're not strictly necessary, could you please include the
+curly braces for __rq_for_each_bio() here?
+
+>  		bvec = cmd->bvec;
+>  		offset = 0;
+>  	} else {
+> @@ -550,11 +551,11 @@ static int lo_rw_aio(struct loop_device *lo, struct loop_cmd *cmd,
+>  		 */
+>  		offset = bio->bi_iter.bi_bvec_done;
+>  		bvec = __bvec_iter_bvec(bio->bi_io_vec, bio->bi_iter);
+> -		segments = bio_segments(bio);
+> +		nr_bvec = bio_bvecs(bio);
+
+This scared me for a second, but it's fine to do here because we haven't
+actually enabled multipage bvecs yet, right?
+
+>  	}
+>  	atomic_set(&cmd->ref, 2);
+>  
+> -	iov_iter_bvec(&iter, rw, bvec, segments, blk_rq_bytes(rq));
+> +	iov_iter_bvec(&iter, rw, bvec, nr_bvec, blk_rq_bytes(rq));
+>  	iter.iov_offset = offset;
+>  
+>  	cmd->iocb.ki_pos = pos;
+> -- 
+> 2.9.5
+> 
