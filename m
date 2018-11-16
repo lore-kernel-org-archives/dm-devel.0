@@ -1,22 +1,23 @@
 From: Omar Sandoval <osandov@osandov.com>
-Subject: Re: [PATCH V10 05/19] block: introduce bvec_last_segment()
-Date: Thu, 15 Nov 2018 15:23:56 -0800
-Message-ID: <20181115232356.GA23238@vader>
+Subject: Re: [PATCH V10 06/19] fs/buffer.c: use bvec iterator to truncate the
+ bio
+Date: Thu, 15 Nov 2018 16:20:20 -0800
+Message-ID: <20181116002020.GA23828@vader>
 References: <20181115085306.9910-1-ming.lei@redhat.com>
- <20181115085306.9910-6-ming.lei@redhat.com>
+ <20181115085306.9910-7-ming.lei@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181115085306.9910-6-ming.lei@redhat.com>
+In-Reply-To: <20181115085306.9910-7-ming.lei@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Ming Lei <ming.lei@redhat.com>
 Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-erofs@lists.ozlabs.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, Bob Peterson <rpeterso@r>
 List-Id: dm-devel.ids
 
-On Thu, Nov 15, 2018 at 04:52:52PM +0800, Ming Lei wrote:
-> BTRFS and guard_bio_eod() need to get the last singlepage segment
-> from one multipage bvec, so introduce this helper to make them happy.
+On Thu, Nov 15, 2018 at 04:52:53PM +0800, Ming Lei wrote:
+> Once multi-page bvec is enabled, the last bvec may include more than one
+> page, this patch use bvec_last_segment() to truncate the bio.
 > 
 > Cc: Dave Chinner <dchinner@redhat.com>
 > Cc: Kent Overstreet <kent.overstreet@gmail.com>
@@ -43,54 +44,27 @@ On Thu, Nov 15, 2018 at 04:52:52PM +0800, Ming Lei wrote:
 
 Reviewed-by: Omar Sandoval <osandov@fb.com>
 
-Minor comments below.
-
 > Signed-off-by: Ming Lei <ming.lei@redhat.com>
 > ---
->  include/linux/bvec.h | 25 +++++++++++++++++++++++++
->  1 file changed, 25 insertions(+)
+>  fs/buffer.c | 5 ++++-
+>  1 file changed, 4 insertions(+), 1 deletion(-)
 > 
-> diff --git a/include/linux/bvec.h b/include/linux/bvec.h
-> index 3d61352cd8cf..01616a0b6220 100644
-> --- a/include/linux/bvec.h
-> +++ b/include/linux/bvec.h
-> @@ -216,4 +216,29 @@ static inline bool mp_bvec_iter_advance(const struct bio_vec *bv,
->  	.bi_bvec_done	= 0,						\
->  }
+> diff --git a/fs/buffer.c b/fs/buffer.c
+> index 1286c2b95498..fa37ad52e962 100644
+> --- a/fs/buffer.c
+> +++ b/fs/buffer.c
+> @@ -3032,7 +3032,10 @@ void guard_bio_eod(int op, struct bio *bio)
 >  
-> +/*
-> + * Get the last singlepage segment from the multipage bvec and store it
-> + * in @seg
-> + */
-> +static inline void bvec_last_segment(const struct bio_vec *bvec,
-> +		struct bio_vec *seg)
-
-Indentation is all messed up here.
-
-> +{
-> +	unsigned total = bvec->bv_offset + bvec->bv_len;
-> +	unsigned last_page = total / PAGE_SIZE;
+>  	/* ..and clear the end of the buffer for reads */
+>  	if (op == REQ_OP_READ) {
+> -		zero_user(bvec->bv_page, bvec->bv_offset + bvec->bv_len,
+> +		struct bio_vec bv;
 > +
-> +	if (last_page * PAGE_SIZE == total)
-> +		last_page--;
-
-I think this could just be
-
-	unsigned int last_page = (total - 1) / PAGE_SIZE;
-
-> +	seg->bv_page = nth_page(bvec->bv_page, last_page);
-> +
-> +	/* the whole segment is inside the last page */
-> +	if (bvec->bv_offset >= last_page * PAGE_SIZE) {
-> +		seg->bv_offset = bvec->bv_offset % PAGE_SIZE;
-> +		seg->bv_len = bvec->bv_len;
-> +	} else {
-> +		seg->bv_offset = 0;
-> +		seg->bv_len = total - last_page * PAGE_SIZE;
-> +	}
-> +}
-> +
->  #endif /* __LINUX_BVEC_ITER_H */
+> +		bvec_last_segment(bvec, &bv);
+> +		zero_user(bv.bv_page, bv.bv_offset + bv.bv_len,
+>  				truncated_bytes);
+>  	}
+>  }
 > -- 
 > 2.9.5
 > 
