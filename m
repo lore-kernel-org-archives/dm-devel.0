@@ -1,212 +1,74 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2] nvme: allow ANA support to be independent of native
- multipathing
-Date: Fri, 16 Nov 2018 13:59:09 -0500
-Message-ID: <20181116185909.GA30049@redhat.com>
-References: <1541657381-7452-1-git-send-email-lijie34@huawei.com>
- <2691abf6733f791fb16b86d96446440e4aaff99f.camel@suse.com>
- <20181112215323.GA7983@redhat.com>
- <20181113161838.GC9827@localhost.localdomain>
- <20181113180008.GA12513@redhat.com>
- <20181114053837.GA15086@redhat.com>
+Subject: Re: nvme: allow ANA support to be independent of native multipathing
+Date: Fri, 16 Nov 2018 14:28:02 -0500
+Message-ID: <20181116192802.GA30057@redhat.com>
+References: <20181114053837.GA15086@redhat.com>
  <30cf7af7-8826-55bd-e39a-4f81ed032f6d@suse.de>
  <20181114174746.GA18526@redhat.com>
  <87c931e5-4ac9-1795-8d40-cc5541d3ebcf@suse.de>
  <20181115174605.GA19782@redhat.com>
+ <20181116091458.GA17267@lst.de>
+ <37098edd-4dea-b58f-bca6-3be9af8ec4ee@suse.de>
+ <20181116094947.GA19296@lst.de>
+ <bbaf4637-209c-5cfe-2749-3fcc54f7a35f@suse.de>
+ <20181116101752.GA21531@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181115174605.GA19782@redhat.com>
+In-Reply-To: <20181116101752.GA21531@lst.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-nvme@lists.infradead.org
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, lijie <lijie34@huawei.com>, xose.vazquez@gmail.com, Sagi Grimberg <sagi@grimberg.me>, chengjike.cheng@huawei.com, linux-kernel@vger.kernel.org, shenhong09@huawei.com, Martin Wilck <mwilck@suse.com>, Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com, wangzhoumengjian@huawei.com, hch@lst.de, sschremm@netapp.com
+To: Christoph Hellwig <hch@lst.de>
+Cc: Hannes Reinecke <hare@suse.de>, linux-nvme@lists.infradead.org, Keith Busch <keith.busch@intel.com>, Sagi Grimberg <sagi@grimberg.me>, axboe@kernel.dk, Martin Wilck <mwilck@suse.com>, lijie <lijie34@huawei.com>, xose.vazquez@gmail.com, chengjike.cheng@huawei.com, shenhong09@huawei.com, dm-devel@redhat.com, wangzhoumengjian@huawei.com, christophe.varoqui@opensvc.com, bmarzins@redhat.com, sschremm@netapp.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Whether or not ANA is present is a choice of the target implementation;
-the host (and whether it supports multipathing) has _zero_ influence on
-this.  If the target declares a path as 'inaccessible' the path _is_
-inaccessible to the host.  As such, ANA support should be functional
-even if native multipathing is not.
+On Fri, Nov 16 2018 at  5:17am -0500,
+Christoph Hellwig <hch@lst.de> wrote:
 
-Introduce ability to always re-read ANA log page as required due to ANA
-error and make current ANA state available via sysfs -- even if native
-multipathing is disabled on the host (via nvme_core.multipath=N).
+> On Fri, Nov 16, 2018 at 11:06:32AM +0100, Hannes Reinecke wrote:
+> > Ok, so would you be happy with making ANA support configurable?
+> 
+> I've looked a bit over the whole situation, and what I think we need
+> to do is:
+> 
+>  a) warn if we see a ANA capable device without multipath support
+>     so people know it is not going to work properly.
 
-While implementing these changes care was taken to preserve the exact
-ANA functionality and code sequence native multipathing has provided.
-This manifests as native multipathing's nvme_failover_req() being
-tweaked to call __nvme_update_ana() which was factored out to allow
-nvme_update_ana() to be called independent of nvme_failover_req().
+I disagree with your cynicism but v2 of this patch now emits a warning
+accordingly.
 
-Add new module param to allow ANA to be disabled via nvme_core.ana=N.
-Also, emit warning if ANA is enabled but native multipathing isn't.
+>  b) deprecate the multipath module option.  It was only intended as
+>     a migration for any pre-existing PCIe multipath user if there
+>     were any, not to support any new functionality.  So for 4.20
+>     put in a patch that prints a clear warning when it is used,
+>     including a link to the nvme list, and then for 4.25 or so
+>     remove it entirely unless something unexpected come up.
 
-And as always, if embedded NVMe users do not want any performance
-overhead associated with ANA or native NVMe multipathing they can
-disable CONFIG_NVME_MULTIPATH.
+You rejected the idea of allowing fine-grained control over whether
+native NVMe multipathing is enabled or not on a per-namespace basis.
+All we have is the coarse-grained nvme_core.multipath=N knob.  Now
+you're forecasting removing even that.  Please don't do that.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/nvme/host/core.c      | 10 +++++---
- drivers/nvme/host/multipath.c | 59 ++++++++++++++++++++++++++++++++++---------
- drivers/nvme/host/nvme.h      |  4 +++
- 3 files changed, 57 insertions(+), 16 deletions(-)
+> This whole drama of optional multipath use has wasted way too much
+> of everyones time already.
 
-v2: add nvme_core.ana modparam and emit warning if ana but !multipath
+It has wasted _way_ too much time.
 
-diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-index fe957166c4a9..3df607905628 100644
---- a/drivers/nvme/host/core.c
-+++ b/drivers/nvme/host/core.c
-@@ -255,10 +255,12 @@ void nvme_complete_rq(struct request *req)
- 		nvme_req(req)->ctrl->comp_seen = true;
- 
- 	if (unlikely(status != BLK_STS_OK && nvme_req_needs_retry(req))) {
--		if ((req->cmd_flags & REQ_NVME_MPATH) &&
--		    blk_path_error(status)) {
--			nvme_failover_req(req);
--			return;
-+		if (blk_path_error(status)) {
-+			if (req->cmd_flags & REQ_NVME_MPATH) {
-+				nvme_failover_req(req);
-+				return;
-+			}
-+			nvme_update_ana(req);
- 		}
- 
- 		if (!blk_queue_dying(req->q)) {
-diff --git a/drivers/nvme/host/multipath.c b/drivers/nvme/host/multipath.c
-index 8e03cda770c5..8b45cad2734d 100644
---- a/drivers/nvme/host/multipath.c
-+++ b/drivers/nvme/host/multipath.c
-@@ -18,11 +18,16 @@
- static bool multipath = true;
- module_param(multipath, bool, 0444);
- MODULE_PARM_DESC(multipath,
--	"turn on native support for multiple controllers per subsystem");
-+	"toggle native support for multiple controllers per subsystem");
-+
-+static bool ana = true;
-+module_param(ana, bool, 0444);
-+MODULE_PARM_DESC(ana,
-+	"toggle support for Asynchronous Namespace Access");
- 
- inline bool nvme_ctrl_use_ana(struct nvme_ctrl *ctrl)
- {
--	return multipath && ctrl->subsys && (ctrl->subsys->cmic & (1 << 3));
-+	return ana && ctrl->subsys && (ctrl->subsys->cmic & (1 << 3));
- }
- 
- /*
-@@ -47,6 +52,35 @@ void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
- 	}
- }
- 
-+static bool nvme_ana_error(u16 status)
-+{
-+	switch (status & 0x7ff) {
-+	case NVME_SC_ANA_TRANSITION:
-+	case NVME_SC_ANA_INACCESSIBLE:
-+	case NVME_SC_ANA_PERSISTENT_LOSS:
-+		return true;
-+	}
-+	return false;
-+}
-+
-+static void __nvme_update_ana(struct nvme_ns *ns)
-+{
-+	if (!ns->ctrl->ana_log_buf)
-+		return;
-+
-+	set_bit(NVME_NS_ANA_PENDING, &ns->flags);
-+	queue_work(nvme_wq, &ns->ctrl->ana_work);
-+}
-+
-+void nvme_update_ana(struct request *req)
-+{
-+	struct nvme_ns *ns = req->q->queuedata;
-+	u16 status = nvme_req(req)->status;
-+
-+	if (nvme_ana_error(status))
-+		__nvme_update_ana(ns);
-+}
-+
- void nvme_failover_req(struct request *req)
- {
- 	struct nvme_ns *ns = req->q->queuedata;
-@@ -58,25 +92,22 @@ void nvme_failover_req(struct request *req)
- 	spin_unlock_irqrestore(&ns->head->requeue_lock, flags);
- 	blk_mq_end_request(req, 0);
- 
--	switch (status & 0x7ff) {
--	case NVME_SC_ANA_TRANSITION:
--	case NVME_SC_ANA_INACCESSIBLE:
--	case NVME_SC_ANA_PERSISTENT_LOSS:
-+	if (nvme_ana_error(status)) {
- 		/*
- 		 * If we got back an ANA error we know the controller is alive,
- 		 * but not ready to serve this namespaces.  The spec suggests
- 		 * we should update our general state here, but due to the fact
- 		 * that the admin and I/O queues are not serialized that is
- 		 * fundamentally racy.  So instead just clear the current path,
--		 * mark the the path as pending and kick of a re-read of the ANA
-+		 * mark the path as pending and kick off a re-read of the ANA
- 		 * log page ASAP.
- 		 */
- 		nvme_mpath_clear_current_path(ns);
--		if (ns->ctrl->ana_log_buf) {
--			set_bit(NVME_NS_ANA_PENDING, &ns->flags);
--			queue_work(nvme_wq, &ns->ctrl->ana_work);
--		}
--		break;
-+		__nvme_update_ana(ns);
-+		goto kick_requeue;
-+	}
-+
-+	switch (status & 0x7ff) {
- 	case NVME_SC_HOST_PATH_ERROR:
- 		/*
- 		 * Temporary transport disruption in talking to the controller.
-@@ -93,6 +124,7 @@ void nvme_failover_req(struct request *req)
- 		break;
- 	}
- 
-+kick_requeue:
- 	kblockd_schedule_work(&ns->head->requeue_work);
- }
- 
-@@ -551,6 +583,9 @@ int nvme_mpath_init(struct nvme_ctrl *ctrl, struct nvme_id_ctrl *id)
- 	if (!nvme_ctrl_use_ana(ctrl))
- 		return 0;
- 
-+	if (!multipath)
-+		dev_warn(ctrl->device, "allowing ANA without native multipathing due to nvme_core.multipath=N\n");
-+
- 	ctrl->anacap = id->anacap;
- 	ctrl->anatt = id->anatt;
- 	ctrl->nanagrpid = le32_to_cpu(id->nanagrpid);
-diff --git a/drivers/nvme/host/nvme.h b/drivers/nvme/host/nvme.h
-index 27663ce3044e..cbe4253f2d02 100644
---- a/drivers/nvme/host/nvme.h
-+++ b/drivers/nvme/host/nvme.h
-@@ -471,6 +471,7 @@ bool nvme_ctrl_use_ana(struct nvme_ctrl *ctrl);
- void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
- 			struct nvme_ctrl *ctrl, int *flags);
- void nvme_failover_req(struct request *req);
-+void nvme_update_ana(struct request *req);
- void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl);
- int nvme_mpath_alloc_disk(struct nvme_ctrl *ctrl,struct nvme_ns_head *head);
- void nvme_mpath_add_disk(struct nvme_ns *ns, struct nvme_id_ns *id);
-@@ -510,6 +511,9 @@ static inline void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
- static inline void nvme_failover_req(struct request *req)
- {
- }
-+static inline void nvme_update_ana(struct request *req)
-+{
-+}
- static inline void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl)
- {
- }
--- 
-2.15.0
+But the drama is born out of you rejecting that we need to preserve
+multipath-tools and dm-multipath's ability to work across any
+transport.  You don't need to do that work: Hannes, myself and others
+have always been willing and able -- if you'd let us.
+
+IIRC it was at 2016's LSF in Boston where Ewan Milne and I had a
+face-to-face conversation with you in the hallway track where you agreed
+that ANA support would be activated if the capability was advertised by
+the target.  The model we discussed is that it would be comparable to
+how ALUA gets enabled during SCSI LUN discovery.
+
+I hope you can see your way forward to be more accommodating now.
+Especially given the proposed changes are backed by NVMe standards.
+
+Please, PLEASE take v2 of this patch.. please? ;)
+
+Thanks,
+Mike
