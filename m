@@ -1,66 +1,30 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 3/3] block: use a driver-specific handler for
- the "inflight" value
-Date: Fri, 16 Nov 2018 08:25:42 -0700
-Message-ID: <c84a1ed6-cc90-472f-446f-d83a27d3ac20@kernel.dk>
-References: <20181116000508.980108938@debian.vm>
-	<20181116091102.GA22961@infradead.org>
-	<20181116135555.GA28870@redhat.com>
+From: Omar Sandoval <osandov@osandov.com>
+Subject: Re: [PATCH V10 18/19] block: kill QUEUE_FLAG_NO_SG_MERGE
+Date: Fri, 16 Nov 2018 08:40:28 -0800
+Message-ID: <20181116164028.GW23828@vader>
+References: <20181115085306.9910-1-ming.lei@redhat.com>
+ <20181115085306.9910-19-ming.lei@redhat.com>
+ <20181116021811.GM23828@vader>
+ <20181116135922.GO3165@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181116135555.GA28870@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20181116135922.GO3165@lst.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Ming Lei <ming.lei@redhat.com>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-erofs@lists.ozlabs.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, Bob Peterson <rpeterso@r>
 List-Id: dm-devel.ids
 
-On 11/16/18 6:55 AM, Mike Snitzer wrote:
-> On Fri, Nov 16 2018 at  4:11am -0500,
-> Christoph Hellwig <hch@infradead.org> wrote:
+On Fri, Nov 16, 2018 at 02:59:22PM +0100, Christoph Hellwig wrote:
+> On Thu, Nov 15, 2018 at 06:18:11PM -0800, Omar Sandoval wrote:
+> > This commit message wasn't very clear. Is it the case that
+> > QUEUE_FLAG_NO_SG_MERGE is no longer set by any drivers?
 > 
->> On Fri, Nov 16, 2018 at 01:04:19AM +0100, Mikulas Patocka wrote:
->>> Device mapper was converted to percpu inflight counters. In order to
->>> display the correct values in the "inflight" sysfs file and in
->>> /proc/diskstats, we need a custom callback that sums the percpu counters.
->>>
->>> The function part_round_stats calculates the number of in-flight I/Os
->>> every jiffy and uses this to calculate the counters time_in_queue and
->>> io_ticks. In order to avoid excessive memory traffic on systems with high
->>> number of CPUs, this functionality is disabled when percpu inflight values
->>> are used and the values time_in_queue and io_ticks are calculated
->>> differently - the result is less precise.
->>
->> And none of that is device mapper specific.  Please submit this code
->> to the block layer for use by all make_request based drivers.  Depending
->> on what Jens as the maintainers thinkgs of the tradeoffs we can discuss
->> if the summing should be on or off by default, or if we maybe even
->> need the current code as a fallback.
-> 
-> I agree.
-> 
-> Mikulas, we discussed that the changes would be made to block core.  I
-> know that makes you less comfortable (I assume because you need to
-> consider more than DM) but it is the right way forward.
-> 
-> Now that the legacy IO path is gone we have less to consider; these
-> counters are only impacting bio-based.
+> I think he wants to say that not doing S/G merging is rather pointless
+> with the current setup of the I/O path, as it isn't going to save
+> you a significant amount of cycles.
 
-Agree, either the new code is good enough to be used in general, and
-then it should be generally used, or it should not exist in the first
-place. We've always worked very hard to provide the most efficient
-helpers and infrastructure we can in the block layer itself, so that
-drivers don't have to reinvent the wheel.
+Okay, that makes sense. Ming, you can add
 
--- 
-Jens Axboe
+Reviewed-by: Omar Sandoval <osandov@fb.com>
