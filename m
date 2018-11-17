@@ -1,14 +1,11 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [PATCH] multipathd: fix mpp->hwe handling when paths
-	are freed
-Date: Wed, 21 Nov 2018 10:16:33 +0100
-Message-ID: <ade3939bb03d5f8398357ad3981b9a393a43813c.camel@suse.de>
-References: <1542774284-20935-1-git-send-email-bmarzins@redhat.com>
+From: Mailing Lists <mailinglists35@gmail.com>
+Subject: ablkcipher plugins for pcrypt
+Date: Sun, 18 Nov 2018 00:42:15 +0200
+Message-ID: <CABjXrGFXTDNLxbCF8GBq1wv+eFwbvU7aO_OjGBQ82F0Tg9n4uQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1542774284-20935-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,36 +15,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: dm-devel@redhat.com
+Cc: steffen.klassert@secunet.com
 List-Id: dm-devel.ids
 
-On Tue, 2018-11-20 at 22:24 -0600, Benjamin Marzinski wrote:
-> Commit 1f962693 didn't deal with all of cases where a path that was
-> part
-> of a multipath device could be removed. verify_paths() removes any
-> path
-> that no longer exists in sysfs.  mpp->hwe needs to be updated here as
-> well, since verify_paths() could remove the path whose hwe vector is
-> pointed to by mpp->hwe.  Also, now that extract_hwe_from_path() is
-> called in verify_paths(), the extract_hwe_from_path() calls that
-> happened immediately after verify_paths() can be dropped.
-> 
-> The other part of this fix is mostly cosmetic. In ev_add_path(), if
-> domap() fails after the path is added to the multipath device and
-> verify_paths() is called, the code can loop back to the rescan label.
-> If
-> the size of the path or the multipath device changed in the interim,
-> ev_add_path() would remove the path, without updating mpp->hwe; but
-> there is no way for the size to change. Just to make that clearer in
-> the
-> code, I've moved the size check to before the rescan label so it only
-> happens once.
-> 
-> Fixes: 1f962693 "multipathd: fix mpp->hwe handling on path removal"
-> Cc: Martin Wilck <mwilck@suse.com>
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Dear Steffen,
 
-Thanks!
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+I stumbled upon this old thread[1] about the possibility of getting
+pcrypt work for dm-crypt.
 
-Martin
+About around the same time dm-crypt got parallel support[2] but as far
+as I understand the patch only enabled parallelism if there are
+multiple simultaneous requests, but still goes single threaded on a
+single I/O submitter (rsync for example):
+
+"This patch changes the crypto workqueue to be per CPU. This means
+that as long as the IO submitter (or the interrupt target CPUs
+for reads) runs on different CPUs the encryption work will be also
+parallel."
+
+Currently pcrypt still only deals with AEAD[3]; is there any chance
+you could revisit the old work you were mentioning in the
+discussion[1]?
+
+Many thanks!
+
+[1] https://www.redhat.com/archives/dm-devel/2010-June/msg00036.html
+[2] https://lwn.net/Articles/390075/
+[3] https://github.com/torvalds/linux/blob/master/crypto/pcrypt.c#L346
