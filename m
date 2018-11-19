@@ -1,27 +1,51 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH V10 00/19] block: support multi-page bvec
-Date: Sat, 17 Nov 2018 10:42:11 +0800
-Message-ID: <20181117024209.GD8872@ming.t460p>
+Subject: Re: [PATCH V10 01/19] block: introduce multi-page page bvec helpers
+Date: Mon, 19 Nov 2018 10:23:28 +0800
+Message-ID: <20181119022327.GC10838@ming.t460p>
 References: <20181115085306.9910-1-ming.lei@redhat.com>
- <20181116140314.GA7735@lst.de>
+ <20181115085306.9910-2-ming.lei@redhat.com>
+ <20181116131305.GA3165@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181116140314.GA7735@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <20181116131305.GA3165@lst.de>
+Sender: linux-btrfs-owner@vger.kernel.org
 To: Christoph Hellwig <hch@lst.de>
 Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-erofs@lists.ozlabs.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, Bob Peterson <rpeterso@redhat.com>, cluster-devel@redhat
 List-Id: dm-devel.ids
 
-On Fri, Nov 16, 2018 at 03:03:14PM +0100, Christoph Hellwig wrote:
-> It seems like bi_phys_segments is still around of this series.
-> Shouldn't it be superflous now?
+On Fri, Nov 16, 2018 at 02:13:05PM +0100, Christoph Hellwig wrote:
+> > -#define bvec_iter_page(bvec, iter)				\
+> > +#define mp_bvec_iter_page(bvec, iter)				\
+> >  	(__bvec_iter_bvec((bvec), (iter))->bv_page)
+> >  
+> > -#define bvec_iter_len(bvec, iter)				\
+> > +#define mp_bvec_iter_len(bvec, iter)				\
+> 
+> I'd much prefer if we would stick to the segment naming that
+> we also use in the higher level helper.
+> 
+> So segment_iter_page, segment_iter_len, etc.
 
-Even though multi-page bvec is supported, the segment number doesn't
-equal to the actual bvec count yet, for example, one bvec may be too
-bigger to be held in one single segment.
+We discussed the naming problem before, one big problem is that the 'segment'
+in bio_for_each_segment*() means one single page segment actually.
 
+If we use segment_iter_page() here for multi-page segment, it may
+confuse people.
+
+Of course, I prefer to the naming of segment/page, 
+
+And Jens didn't agree to rename bio_for_each_segment*() before.
+
+So what is the solution we should take for moving on?
+
+> 
+> > + * This helpers are for building sp bvec in flight.
+> 
+> Please spell out single page, sp is not easy understandable.
+
+OK.
 
 Thanks,
 Ming
