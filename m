@@ -1,25 +1,41 @@
-From: Sagi Grimberg <sagi@grimberg.me>
-Subject: Re: [PATCH V10 09/19] block: introduce bio_bvecs()
-Date: Mon, 19 Nov 2018 16:49:27 -0800
-Message-ID: <002fe56b-25e4-573e-c09b-bb12c3e8d25a@grimberg.me>
+From: "Huang\, Ying" <ying.huang@intel.com>
+Subject: Re: [PATCH V10 15/19] block: always define BIO_MAX_PAGES as 256
+Date: Tue, 20 Nov 2018 10:45:03 +0800
+Message-ID: <87o9ak8o28.fsf@yhuang-dev.intel.com>
 References: <20181115085306.9910-1-ming.lei@redhat.com>
- <20181115085306.9910-10-ming.lei@redhat.com> <20181116134541.GH3165@lst.de>
+        <20181115085306.9910-16-ming.lei@redhat.com>
+        <20181116015936.GJ23828@vader> <20181119090415.GM16736@ming.t460p>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181116134541.GH3165@lst.de>
-Content-Language: en-US
+In-Reply-To: <20181119090415.GM16736@ming.t460p> (Ming Lei's message of "Mon,
+        19 Nov 2018 17:04:16 +0800")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>, Ming Lei <ming.lei@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-erofs@lists.ozlabs.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, Bob Peterson <rpeterso@redhat.com>, cluster-devel@redhat
+To: Ming Lei <ming.lei@redhat.com>
+Cc: Omar Sandoval <osandov@osandov.com>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-erofs@lists.ozlabs.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz
 List-Id: dm-devel.ids
 
+Ming Lei <ming.lei@redhat.com> writes:
 
-> The only user in your final tree seems to be the loop driver, and
-> even that one only uses the helper for read/write bios.
-> 
-> I think something like this would be much simpler in the end:
+> On Thu, Nov 15, 2018 at 05:59:36PM -0800, Omar Sandoval wrote:
+>> On Thu, Nov 15, 2018 at 04:53:02PM +0800, Ming Lei wrote:
+>> > Now multi-page bvec can cover CONFIG_THP_SWAP, so we don't need to
+>> > increase BIO_MAX_PAGES for it.
+>> 
+>> You mentioned to it in the cover letter, but this needs more explanation
+>> in the commit message. Why did CONFIG_THP_SWAP require > 256? Why does
+>> multipage bvecs remove that requirement?
+>
+> CONFIG_THP_SWAP needs to split one TH page into normal pages and adds
+> them all to one bio. With multipage-bvec, it just takes one bvec to
+> hold them all.
 
-The recently submitted nvme-tcp host driver should also be a user
-of this. Does it make sense to keep it as a helper then?
+Yes.  CONFIG_THP_SWAP needs to put 512 normal sub-pages into one bio to
+write the 512 sub-pages together.  With the help of multipage-bvec, it
+needs just bvect to hold 512 normal sub-pages.
+
+Best Regards,
+Huang, Ying
+
+> thanks,
+> Ming
