@@ -1,28 +1,54 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: nvme: allow ANA support to be independent of native
- multipathing
-Date: Tue, 20 Nov 2018 17:23:43 +0100
-Message-ID: <20181120162343.GB2774@lst.de>
-References: <20181116091458.GA17267@lst.de> <37098edd-4dea-b58f-bca6-3be9af8ec4ee@suse.de> <20181116094947.GA19296@lst.de> <bbaf4637-209c-5cfe-2749-3fcc54f7a35f@suse.de> <20181116101752.GA21531@lst.de> <20181116192802.GA30057@redhat.com> <20181119093938.GA11757@lst.de> <20181119145650.GB13470@redhat.com> <20181120094201.GB7742@lst.de> <20181120133719.GB18991@redhat.com>
+From: Sagi Grimberg <sagi@grimberg.me>
+Subject: Re: [PATCH V10 09/19] block: introduce bio_bvecs()
+Date: Tue, 20 Nov 2018 12:11:35 -0800
+Message-ID: <53526aae-fb9b-ee38-0a01-e5899e2d4e4d@grimberg.me>
+References: <20181115085306.9910-1-ming.lei@redhat.com>
+ <20181115085306.9910-10-ming.lei@redhat.com> <20181116134541.GH3165@lst.de>
+ <002fe56b-25e4-573e-c09b-bb12c3e8d25a@grimberg.me>
+ <20181120161651.GB2629@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181120133719.GB18991@redhat.com>
+In-Reply-To: <20181120161651.GB2629@lst.de>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>, Hannes Reinecke <hare@suse.de>, linux-nvme@lists.infradead.org, Keith Busch <keith.busch@intel.com>, Sagi Grimberg <sagi@grimberg.me>, axboe@kernel.dk, Martin Wilck <mwilck@suse.com>, lijie <lijie34@huawei.com>, xose.vazquez@gmail.com, chengjike.cheng@huawei.com, shenhong09@huawei.com, dm-devel@redhat.com, wangzhoumengjian@huawei.com, christophe.varoqui@opensvc.com, bmarzins@redhat.com, sschremm@netapp.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Ming Lei <ming.lei@redhat.com>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-erofs@lists.ozlabs.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, Bob Peterson <rpeterso@r>
 List-Id: dm-devel.ids
 
-On Tue, Nov 20, 2018 at 08:37:19AM -0500, Mike Snitzer wrote:
-> This isn't how a Linux maintainer engages in technical discussion.
 
-And this isn't a technical discussion.   As told before the only
-reason to not build the multipath code is to save space, and
-the only reason to disable multipath at runtime is for potential
-pre-existing setups, which obviously are not ANA capable.
+>>> The only user in your final tree seems to be the loop driver, and
+>>> even that one only uses the helper for read/write bios.
+>>>
+>>> I think something like this would be much simpler in the end:
+>>
+>> The recently submitted nvme-tcp host driver should also be a user
+>> of this. Does it make sense to keep it as a helper then?
+> 
+> I did take a brief look at the code, and I really don't understand
+> why the heck it even deals with bios to start with.  Like all the
+> other nvme transports it is a blk-mq driver and should iterate
+> over segments in a request and more or less ignore bios.  Something
+> is horribly wrong in the design.
 
-The right fix is to warn users if they use a driver without
-CONFIG_NVME_MULTIPATH on a multi-port device and to phase out the
-multipath=0 option in the long run, again with a warning.  Any new
-additions to "improve" these cases simply don't make sense.
+Can you explain a little more? I'm more than happy to change that but
+I'm not completely clear how...
+
+Before we begin a data transfer, we need to set our own iterator that
+will advance with the progression of the data transfer. We also need to
+keep in mind that all the data transfer (both send and recv) are
+completely non blocking (and zero-copy when we send).
+
+That means that every data movement needs to be able to suspend
+and resume asynchronously. i.e. we cannot use the following pattern:
+rq_for_each_segment(bvec, rq, rq_iter) {
+	iov_iter_bvec(&iov_iter, WRITE, &bvec, 1, bvec.bv_len);
+	send(sock, iov_iter);
+}
+
+Given that a request can hold more than a single bio, I'm not clear on
+how we can achieve that without iterating over the bios in the request
+ourselves.
+
+Any useful insight?
