@@ -1,41 +1,51 @@
-From: "Huang\, Ying" <ying.huang@intel.com>
-Subject: Re: [PATCH V10 15/19] block: always define BIO_MAX_PAGES as 256
-Date: Tue, 20 Nov 2018 10:45:03 +0800
-Message-ID: <87o9ak8o28.fsf@yhuang-dev.intel.com>
-References: <20181115085306.9910-1-ming.lei@redhat.com>
-        <20181115085306.9910-16-ming.lei@redhat.com>
-        <20181116015936.GJ23828@vader> <20181119090415.GM16736@ming.t460p>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: RFC: REQ_PRIO use
+Date: Tue, 20 Nov 2018 06:07:48 +0000
+Message-ID: <BN3PR0401MB1640F33FA8F3FFF251DF8266E7D90@BN3PR0401MB1640.namprd04.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181119090415.GM16736@ming.t460p> (Ming Lei's message of "Mon,
-        19 Nov 2018 17:04:16 +0800")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ming Lei <ming.lei@redhat.com>
-Cc: Omar Sandoval <osandov@osandov.com>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-erofs@lists.ozlabs.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Ming Lei <ming.lei@redhat.com> writes:
+include/linux/blk_types.h states that REQ_PRIO intended use is to boost a
+request priority in cfq:
 
-> On Thu, Nov 15, 2018 at 05:59:36PM -0800, Omar Sandoval wrote:
->> On Thu, Nov 15, 2018 at 04:53:02PM +0800, Ming Lei wrote:
->> > Now multi-page bvec can cover CONFIG_THP_SWAP, so we don't need to
->> > increase BIO_MAX_PAGES for it.
->> 
->> You mentioned to it in the cover letter, but this needs more explanation
->> in the commit message. Why did CONFIG_THP_SWAP require > 256? Why does
->> multipage bvecs remove that requirement?
->
-> CONFIG_THP_SWAP needs to split one TH page into normal pages and adds
-> them all to one bio. With multipage-bvec, it just takes one bvec to
-> hold them all.
+__REQ_PRIO,             /* boost priority in cfq */
 
-Yes.  CONFIG_THP_SWAP needs to put 512 normal sub-pages into one bio to
-write the 512 sub-pages together.  With the help of multipage-bvec, it
-needs just bvect to hold 512 normal sub-pages.
+REQ_PRIO is used by different file systems (ext4, btrfs, f2fs, gfs2, erofs) and
+a couple of dm drivers (bcache and dm-zoned), but nobody actually acts on the
+flag being set, certainly not cfq since this scheduler is now gone in 4.21.
 
-Best Regards,
-Huang, Ying
+I think this mandates some cleanups. I can see 2 options:
+1) Have bfq act on this flag
+2) Remove it entirely and replace its use with explicit setting of BIOs priority
+values, either directly through the struct bio bi_ioprio field or indirectly
+through setting the issuer task contecxt iopriority or eventually by adding a
+bi_ionice field to struct bio. For instance, ext4 sets its journald task context
+I/O priority, which result in all BIOs issued by that task to get an explicit
+I/O priority value.
 
-> thanks,
-> Ming
+If option (2) is the preferred choice, looking at the current use of REQ_PRIO,
+removing this flag does not seem difficult at all. In this case, changes by the
+current users to explicitly set BIO I/O priorities can be done later with
+different patches.
+
+Comments, thoughts ?
+
+Best regards.
+
+-- 
+Damien Le Moal
+Western Digital Research
