@@ -1,12 +1,14 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: RFC: REQ_PRIO use
-Date: Tue, 20 Nov 2018 06:07:48 +0000
-Message-ID: <BN3PR0401MB1640F33FA8F3FFF251DF8266E7D90@BN3PR0401MB1640.namprd04.prod.outlook.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: RFC: REQ_PRIO use
+Date: Tue, 20 Nov 2018 01:39:07 -0800
+Message-ID: <20181120093907.GA32682@infradead.org>
+References: <BN3PR0401MB1640F33FA8F3FFF251DF8266E7D90@BN3PR0401MB1640.namprd04.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <BN3PR0401MB1640F33FA8F3FFF251DF8266E7D90@BN3PR0401MB1640.namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,36 +18,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Damien Le Moal <Damien.LeMoal@wdc.com>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-include/linux/blk_types.h states that REQ_PRIO intended use is to boost a
-request priority in cfq:
+We have two places that check the flag, the writeback tracking
+code:
 
-__REQ_PRIO,             /* boost priority in cfq */
+block/blk-wbt.c:#define REQ_HIPRIO      (REQ_SYNC | REQ_META | REQ_PRIO)
+block/blk-wbt.c:        if ((rw & REQ_HIPRIO) || wb_recent_wait(rwb) || current_is_kswapd())
 
-REQ_PRIO is used by different file systems (ext4, btrfs, f2fs, gfs2, erofs) and
-a couple of dm drivers (bcache and dm-zoned), but nobody actually acts on the
-flag being set, certainly not cfq since this scheduler is now gone in 4.21.
+and bcache:
 
-I think this mandates some cleanups. I can see 2 options:
-1) Have bfq act on this flag
-2) Remove it entirely and replace its use with explicit setting of BIOs priority
-values, either directly through the struct bio bi_ioprio field or indirectly
-through setting the issuer task contecxt iopriority or eventually by adding a
-bi_ionice field to struct bio. For instance, ext4 sets its journald task context
-I/O priority, which result in all BIOs issued by that task to get an explicit
-I/O priority value.
+drivers/md/bcache/request.c:        !(bio->bi_opf & REQ_PRIO))
+drivers/md/bcache/request.c:        !(bio->bi_opf & REQ_PRIO) &&
 
-If option (2) is the preferred choice, looking at the current use of REQ_PRIO,
-removing this flag does not seem difficult at all. In this case, changes by the
-current users to explicitly set BIO I/O priorities can be done later with
-different patches.
-
-Comments, thoughts ?
-
-Best regards.
-
--- 
-Damien Le Moal
-Western Digital Research
+the original idea was that not all I/O is a priority we should not
+blindly boost priority for metadata.  Of course wbt actually ignores
+and it and we may just give in and just check REQ_META, except for
+the fact that f2fs now actually submits REQ_PRIO requests without
+REQ_META..
