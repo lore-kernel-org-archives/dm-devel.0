@@ -1,20 +1,77 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: nvme: allow ANA support to be independent of native
- multipathing
-Date: Tue, 20 Nov 2018 10:42:01 +0100
-Message-ID: <20181120094201.GB7742@lst.de>
-References: <87c931e5-4ac9-1795-8d40-cc5541d3ebcf@suse.de> <20181115174605.GA19782@redhat.com> <20181116091458.GA17267@lst.de> <37098edd-4dea-b58f-bca6-3be9af8ec4ee@suse.de> <20181116094947.GA19296@lst.de> <bbaf4637-209c-5cfe-2749-3fcc54f7a35f@suse.de> <20181116101752.GA21531@lst.de> <20181116192802.GA30057@redhat.com> <20181119093938.GA11757@lst.de> <20181119145650.GB13470@redhat.com>
+From: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
+Subject: [RFC PATCH 0/3] realize dax_operations for dm-snapshot
+Date: Tue, 20 Nov 2018 18:20:34 +0800
+Message-ID: <20181120102037.4536-1-yehs2007@zoho.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181119145650.GB13470@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>, Hannes Reinecke <hare@suse.de>, linux-nvme@lists.infradead.org, Keith Busch <keith.busch@intel.com>, Sagi Grimberg <sagi@grimberg.me>, axboe@kernel.dk, Martin Wilck <mwilck@suse.com>, lijie <lijie34@huawei.com>, xose.vazquez@gmail.com, chengjike.cheng@huawei.com, shenhong09@huawei.com, dm-devel@redhat.com, wangzhoumengjian@huawei.com, christophe.varoqui@opensvc.com, bmarzins@redhat.com, sschremm@netapp.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, zwisler-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, vishal.l.verma-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Mon, Nov 19, 2018 at 09:56:50AM -0500, Mike Snitzer wrote:
-> SO: will you be taking my v2 patch for 4.21 or not?
+From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 
-No.
+This series patches are used to realize the dax_operations for dm-snapshot
+with persistent memory device.
+
+Here are the steps about how to verify the function.
+
+1. Configure the persistent memory to fs-dax mode and create namespace with ndctl;
+2. find them in /dev;
+  # ndctl list
+  {
+    "dev":"namespace0.0",
+    "mode":"fsdax",
+    "map":"dev",
+    "size":132118478848,
+    "sector_size":512,
+    "blockdev":"pmem0",
+    "name":"yhs_pmem0",
+    "numa_node":0
+  },
+3. create lv_pmem (here is 4G size) for testing;
+   # pvcreate /dev/pmem0
+   # vgcreate vg_pmem /dev/pmem0
+   # lvcreate  -L 4G -n lv_pmem vg_pmem
+4. create filesystem (ext2 or ext4) to /dev/pmem0
+   # mkfs.ext2 -b 4096 /dev/vg_pmem/lv_pmem
+5. mount pmem with DAX way;
+   # mkdir /mnt/lv_pmem
+   # mount -o dax /dev/vg_pmem/lv_pmem /mnt/lv_pmem/
+6. cp some files to /mnt/lv_pmem;
+   # cp linear_table03.log /mnt/lv_pmem/
+   # cp test0.log /mnt/lv_pmem/
+7. create snapshot for test (here I limit it to 1G size);
+   # lvcreate -L 1G -n snap_pmem -s /dev/vg_pmem/lv_pmem
+8. modify the files copied with vim or copy more other new files;
+   # vim /mnt/lv_pmem/test0.log
+9. umount the pmem device;
+   # umount /mnt/lv_pmem/
+10.merge the snapshot back to origin;
+   # lvconvert --merge /dev/vg_pmem/snap_pmem
+11.mount pmem device again for checking the content of files;
+   # mount -o dax /dev/vg_pmem/lv_pmem /mnt/lv_pmem/
+
+Huaisheng Ye (3):
+  dm: enable dax_operations for dm-snapshot
+  dm: expand hc_map in mapped_device for lack of map
+  dm: expand valid types for dm-ioctl
+
+ drivers/md/dm-core.h  |  1 +
+ drivers/md/dm-ioctl.c |  4 +++-
+ drivers/md/dm-snap.c  | 44 ++++++++++++++++++++++++++++++++++++++++++--
+ drivers/md/dm.c       | 15 +++++++++++++++
+ 4 files changed, 61 insertions(+), 3 deletions(-)
+
+-- 
+1.8.3.1
