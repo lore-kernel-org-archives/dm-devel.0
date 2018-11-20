@@ -1,11 +1,13 @@
 From: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
-Subject: [RFC PATCH 0/3] realize dax_operations for dm-snapshot
-Date: Tue, 20 Nov 2018 18:20:34 +0800
-Message-ID: <20181120102037.4536-1-yehs2007@zoho.com>
+Subject: [RFC PATCH 1/3] dm: enable dax_operations for dm-snapshot
+Date: Tue, 20 Nov 2018 18:20:35 +0800
+Message-ID: <20181120102037.4536-2-yehs2007@zoho.com>
+References: <20181120102037.4536-1-yehs2007@zoho.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20181120102037.4536-1-yehs2007-ytc+IHgoah0@public.gmane.org>
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -21,57 +23,105 @@ List-Id: dm-devel.ids
 
 From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 
-This series patches are used to realize the dax_operations for dm-snapshot
-with persistent memory device.
+Reconstruct origin_dax_direct_access and expand functions
+origin_dax_copy_to/from_iter for DAX operations of dm-snapshot.
 
-Here are the steps about how to verify the function.
+Here is the call trace of origin_dax_copy_to_iter,
+origin_dax_copy_to_iter will callin dm-linear (-real) for further
+dax_operation.
 
-1. Configure the persistent memory to fs-dax mode and create namespace with ndctl;
-2. find them in /dev;
-  # ndctl list
-  {
-    "dev":"namespace0.0",
-    "mode":"fsdax",
-    "map":"dev",
-    "size":132118478848,
-    "sector_size":512,
-    "blockdev":"pmem0",
-    "name":"yhs_pmem0",
-    "numa_node":0
-  },
-3. create lv_pmem (here is 4G size) for testing;
-   # pvcreate /dev/pmem0
-   # vgcreate vg_pmem /dev/pmem0
-   # lvcreate  -L 4G -n lv_pmem vg_pmem
-4. create filesystem (ext2 or ext4) to /dev/pmem0
-   # mkfs.ext2 -b 4096 /dev/vg_pmem/lv_pmem
-5. mount pmem with DAX way;
-   # mkdir /mnt/lv_pmem
-   # mount -o dax /dev/vg_pmem/lv_pmem /mnt/lv_pmem/
-6. cp some files to /mnt/lv_pmem;
-   # cp linear_table03.log /mnt/lv_pmem/
-   # cp test0.log /mnt/lv_pmem/
-7. create snapshot for test (here I limit it to 1G size);
-   # lvcreate -L 1G -n snap_pmem -s /dev/vg_pmem/lv_pmem
-8. modify the files copied with vim or copy more other new files;
-   # vim /mnt/lv_pmem/test0.log
-9. umount the pmem device;
-   # umount /mnt/lv_pmem/
-10.merge the snapshot back to origin;
-   # lvconvert --merge /dev/vg_pmem/snap_pmem
-11.mount pmem device again for checking the content of files;
-   # mount -o dax /dev/vg_pmem/lv_pmem /mnt/lv_pmem/
+[518597.924019] Call Trace:
+[518597.927320]  dump_stack+0x65/0x7e
+[518597.931592]  origin_dax_copy_to_iter+0x51/0x78 [dm_snapshot]
+[518597.938494]  dm_dax_copy_to_iter+0x86/0xc5 [dm_mod]
+[518597.944519]  dax_copy_to_iter+0x27/0x29
+[518597.949371]  dax_iomap_actor+0x264/0x326
+[518597.954308]  ? trace_event_raw_event_dax_pmd_load_hole_class+0xd0/0xd0
+[518597.962159]  iomap_apply+0xc7/0x128
+[518597.966609]  ? trace_event_raw_event_dax_pmd_load_hole_class+0xd0/0xd0
+[518597.974447]  dax_iomap_rw+0x66/0xa8
+[518597.978893]  ? trace_event_raw_event_dax_pmd_load_hole_class+0xd0/0xd0
+[518597.986741]  ext2_file_read_iter+0x4f/0x83 [ext2]
+[518597.992552]  __vfs_read+0x130/0x168
+[518597.997001]  vfs_read+0x92/0x146
+[518598.001155]  ksys_read+0x4f/0xa5
+[518598.005308]  __x64_sys_read+0x16/0x18
+[518598.009942]  do_syscall_64+0x88/0x15f
+[518598.014575]  entry_SYSCALL_64_after_hwframe+0x44/0xa9
 
-Huaisheng Ye (3):
-  dm: enable dax_operations for dm-snapshot
-  dm: expand hc_map in mapped_device for lack of map
-  dm: expand valid types for dm-ioctl
+Signed-off-by: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
+---
+ drivers/md/dm-snap.c | 44 ++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 42 insertions(+), 2 deletions(-)
 
- drivers/md/dm-core.h  |  1 +
- drivers/md/dm-ioctl.c |  4 +++-
- drivers/md/dm-snap.c  | 44 ++++++++++++++++++++++++++++++++++++++++++--
- drivers/md/dm.c       | 15 +++++++++++++++
- 4 files changed, 61 insertions(+), 3 deletions(-)
-
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index ae4b33d..75738b3 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -19,6 +19,7 @@
+ #include <linux/vmalloc.h>
+ #include <linux/log2.h>
+ #include <linux/dm-kcopyd.h>
++#include <linux/dax.h>
+ 
+ #include "dm.h"
+ 
+@@ -2319,8 +2320,45 @@ static int origin_map(struct dm_target *ti, struct bio *bio)
+ static long origin_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
+ 		long nr_pages, void **kaddr, pfn_t *pfn)
+ {
+-	DMWARN("device does not support dax.");
+-	return -EIO;
++	long ret = 0;
++	struct dm_origin *o = ti->private;
++	struct block_device *bdev = o->dev->bdev;
++	struct dax_device *dax_dev = o->dev->dax_dev;
++	sector_t sector = pgoff * PAGE_SECTORS;
++
++	ret = bdev_dax_pgoff(bdev, sector, nr_pages * PAGE_SIZE, &pgoff);
++	if (ret)
++		return ret;
++
++	return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
++}
++
++static size_t origin_dax_copy_from_iter(struct dm_target *ti, pgoff_t pgoff,
++		void *addr, size_t bytes, struct iov_iter *i)
++{
++	struct dm_origin *o = ti->private;
++	struct block_device *bdev = o->dev->bdev;
++	struct dax_device *dax_dev = o->dev->dax_dev;
++	sector_t sector = pgoff * PAGE_SECTORS;
++
++	if (bdev_dax_pgoff(bdev, sector, ALIGN(bytes, PAGE_SIZE), &pgoff))
++		return 0;
++
++	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
++}
++
++static size_t origin_dax_copy_to_iter(struct dm_target *ti, pgoff_t pgoff,
++		void *addr, size_t bytes, struct iov_iter *i)
++{
++	struct dm_origin *o = ti->private;
++	struct block_device *bdev = o->dev->bdev;
++	struct dax_device *dax_dev = o->dev->dax_dev;
++	sector_t sector = pgoff * PAGE_SECTORS;
++
++	if (bdev_dax_pgoff(bdev, sector, ALIGN(bytes, PAGE_SIZE), &pgoff))
++		return 0;
++
++	return dax_copy_to_iter(dax_dev, pgoff, addr, bytes, i);
+ }
+ 
+ /*
+@@ -2383,6 +2421,8 @@ static int origin_iterate_devices(struct dm_target *ti,
+ 	.status  = origin_status,
+ 	.iterate_devices = origin_iterate_devices,
+ 	.direct_access = origin_dax_direct_access,
++	.dax_copy_to_iter = origin_dax_copy_to_iter,
++	.dax_copy_from_iter = origin_dax_copy_from_iter,
+ };
+ 
+ static struct target_type snapshot_target = {
 -- 
 1.8.3.1
