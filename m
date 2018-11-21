@@ -1,14 +1,12 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 19/19] libmultipath: improve logging from
-	orphan_paths
-Date: Wed, 21 Nov 2018 11:18:39 +0100
-Message-ID: <20181121101839.30784-20-mwilck@suse.com>
-References: <20181121101839.30784-1-mwilck@suse.com>
+From: Martin Wilck <mwilck@suse.de>
+Subject: Disconcerting observation with multipathd's dmevent
+	polling code
+Date: Wed, 21 Nov 2018 11:50:38 +0100
+Message-ID: <9f372197ec112f97298641e223d2e5e6a5e1b33a.camel@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181121101839.30784-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,77 +16,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel mailing list <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-It's a big difference if a map is flushed from DM (changing kernel
-state) or just removed from internal multipathd tables. Convey
-this information in log messages.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/structs_vec.c | 6 +++---
- libmultipath/structs_vec.h | 3 ++-
- multipathd/main.c          | 2 +-
- 3 files changed, 6 insertions(+), 5 deletions(-)
-
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index a0b69ce5..4667e34f 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -102,14 +102,14 @@ void orphan_path(struct path *pp, const char *reason)
- 	pp->fd = -1;
- }
- 
--void orphan_paths(vector pathvec, struct multipath *mpp)
-+void orphan_paths(vector pathvec, struct multipath *mpp, const char *reason)
- {
- 	int i;
- 	struct path * pp;
- 
- 	vector_foreach_slot (pathvec, pp, i) {
- 		if (pp->mpp == mpp) {
--			orphan_path(pp, "map flushed");
-+			orphan_path(pp, reason);
- 		}
- 	}
- }
-@@ -122,7 +122,7 @@ remove_map(struct multipath * mpp, struct vectors * vecs, int purge_vec)
- 	/*
- 	 * clear references to this map
- 	 */
--	orphan_paths(vecs->pathvec, mpp);
-+	orphan_paths(vecs->pathvec, mpp, "map removed internally");
- 
- 	if (purge_vec &&
- 	    (i = find_slot(vecs->mpvec, (void *)mpp)) != -1)
-diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
-index f7777aaf..f8b9f63e 100644
---- a/libmultipath/structs_vec.h
-+++ b/libmultipath/structs_vec.h
-@@ -14,7 +14,8 @@ struct vectors {
- void enter_recovery_mode(struct multipath *mpp);
- 
- int adopt_paths (vector pathvec, struct multipath * mpp);
--void orphan_paths (vector pathvec, struct multipath * mpp);
-+void orphan_paths(vector pathvec, struct multipath *mpp,
-+		  const char *reason);
- void orphan_path (struct path * pp, const char *reason);
- 
- int verify_paths(struct multipath * mpp, struct vectors * vecs);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 0c248046..77126f9e 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -655,7 +655,7 @@ flush_map(struct multipath * mpp, struct vectors * vecs, int nopaths)
- 		condlog(2, "%s: map flushed", mpp->alias);
- 	}
- 
--	orphan_paths(vecs->pathvec, mpp);
-+	orphan_paths(vecs->pathvec, mpp, "map flushed");
- 	remove_map_and_stop_waiter(mpp, vecs);
- 
- 	return 0;
--- 
-2.19.1
+SGkgQmVuLAoKSSByZWNlbnRseSBlbmNvdW50ZXJlZCBhIHN0cmFuZ2UgYW5kIGRpc3R1cmJpbmcg
+cGhlbm9tZW5vbiB3aXRoIHRoZQpsYXRlc3QgdXBzdHJlYW0gY29kZS4KClRoZSBzeXN0ZW0gaW4g
+cXVlc3Rpb24gaGFkIHR3byBpU0NTSSBjb25uZWN0aW9ucyBvbiBzZXBhcmF0ZSBuZXR3b3Jrcy4K
+T24gb25lIG9mIHRoZW0sIEkgdGVzdGVkIGlTQ1NJIGRpc2Nvbm5lY3QgYW5kIHJlLWNvbm5lY3Rz
+LCBhbmQgYnJva2VuCnN0b3JhZ2UgY29uZmlndXJhdGlvbnMgKGRpZmZlcmVudCBMVU5zIGRpZmZl
+bmVudCBzaXplcyBhbmQgd2l0aCB0aGUKc2FtZSBXV0lEKS4gVGhlIG90aGVyIG9uZSB3YXMgaWRs
+ZS4KCkR1cmluZyBvbmUgdGVzdCwgSSBvYnNlcnZlZCB0aGF0IG11bHRpcGF0aGQncyBpbnRlcm5h
+bCByZXByZXNlbnRhdGlvbgpvZiB0aGUgbWFwIHJlcHJlc2VudGluZyB0aGUgKmlkbGUqIGNvbm5l
+Y3Rpb24gaGFkIHZhbmlzaGVkLiBUaGUgbWFwIHdhcwpzdGlsbCBwcmVzZW50IG9uIHRoZSBkZXZp
+Y2UtbWFwcGVyIGxldmVsLCBidXQgbXVsdGlwYXRoZCBzZWVtZWQgdG8gaGF2ZQoiZm9yZ290dGVu
+IiBpdCBjb21wbGV0ZWx5LiBUaGUgcmVzcGVjdGl2ZSBwYXRocyB3ZXJlIHRyYWNrZWQgYXMKb3Jw
+aGFucy4KCkhlcmUgaXMgYSBsb2cgZXhjZXJwdC4gbXVsdGlwYXRoZCBpcyB3b3JraW5nIG9uIHBh
+dGggYWRkaXRpb25zIGZvciB0aGUKbWFwIEkgd2FzIHRlc3Rpbmcgd2l0aCAoMTQ5NDU1Li4uKSwg
+d2hlbiBhIERNIGV2ZW50IGlzIHJlY2VpdmVkLiBSaWdodAphZnRlciBldl9hZGRfcGF0aCgpIHJl
+bGVhc2VzIHRoZSBsb2NrLCB0aGUgaWRsZSBtYXAKKDM2MDAxNDA1Li4uKSBpcyByZW1vdmVkIChu
+b3QgZmx1c2hlZCwgYXMgdGhlIG1lc3NhZ2VzIHN1Z2dlc3QpLgoKTm92IDE1IDIyOjA1OjQ2IHNs
+ZXMxNS1nbS1pc2NzaS0wMyBtdWx0aXBhdGhkWzU2OF06IHNkZzogYWRkIHBhdGggKHVldmVudCkK
+IyB1ZXZfYWRkX3BhdGgtPnBhdGhpbmZvKCkKTm92IDE1IDIyOjA1OjQ2IHNsZXMxNS1nbS1pc2Nz
+aS0wMyBtdWx0aXBhdGhkWzU2OF06IHNkZzogdWRldiBwcm9wZXJ0eSBTQ1NJX0lERU5UX0xVTl9U
+MTAgd2hpdGVsaXN0ZWQKIyBldl9hZGRfcGF0aCgpLT5hZG9wdF9wYXRocygpCk5vdiAxNSAyMjow
+NTo0NiBzbGVzMTUtZ20taXNjc2ktMDMgbXVsdGlwYXRoZFs1NjhdOiBzZGU6IG93bmVyc2hpcCBz
+ZXQgdG8gMTQ5NDU1NDAwMDAwMDAwMDA2ZDcwNjE3NDY4MzEwMDAwMDAwMDAwMDAwMDAwMDAwMAou
+Li4KIyBldl9hZGRfcGF0aC0+c2V0dXBfbWFwKCkKTm92IDE1IDIyOjA1OjQ2IHNsZXMxNS1nbS1p
+c2NzaS0wMyBtdWx0aXBhdGhkWzU2OF06IDE0OTQ1NTQwMDAwMDAwMDAwNmQ3MDYxNzQ2ODMxMDAw
+MDAwMDAwMDAwMDAwMDAwMDA6IGZhaWxiYWNrID0gIm1hbnVhbCIgKHNldHRpbmc6IG11bHRpcGF0
+aCBpbnRlcm5hbCkKIyBldl9hZGRfcGF0aC0+ZG9tYXAoKQpOb3YgMTUgMjI6MDU6NDYgc2xlczE1
+LWdtLWlzY3NpLTAzIG11bHRpcGF0aGRbNTY4XTogMTQ5NDU1NDAwMDAwMDAwMDA2ZDcwNjE3NDY4
+MzEwMDAwMDAwMDAwMDAwMDAwMDAwMDogbG9hZCB0YWJsZSBbMCAyMDk3MTUyIG11bHRpcGF0aCAw
+IDAgMyAxIHNlcnZpY2UtdGltZSAwIDEgMSA4OjY0IC4uLgojIGV2X2FkZF9wYXRoLT5zZXR1cF9t
+dWx0aXBhdGgoKS0+dXBkYXRlLW11bHRpcGF0aF9zdHJpbmdzCk5vdiAxNSAyMjowNTo0NiBzbGVz
+MTUtZ20taXNjc2ktMDMgbXVsdGlwYXRoZFs1NjhdOiAxNDk0NTU0MDAwMDAwMDAwMDZkNzA2MTc0
+NjgzMTAwMDAwMDAwMDAwMDAwMDAwMDAwOiBkaXNhc3NlbWJsZSBtYXAgWzAgMCAzIDEgc2Vydmlj
+ZS10aW1lIDAgMSAyIDg6NjQgMSAxIHNlcnZpY2UtdGltZSAuLi4KIyAoISEhISkgZGV2bWFwIGV2
+ZW50IGZvciBMSU8gbWFwCk5vdiAxNSAyMjowNTo0NiBzbGVzMTUtZ20taXNjc2ktMDMgbXVsdGlw
+YXRoZFs1NjhdOiAzNjAwMTQwNWQwOGY3NDhkZDRjNTQ4MWY5ZWMyMmI4ODg6IGRldm1hcCBldmVu
+dCAjMjAKTm92IDE1IDIyOjA1OjQ2IHNsZXMxNS1nbS1pc2NzaS0wMyBtdWx0aXBhdGhkWzU2OF06
+IHNkZyBbODo5Nl06IHBhdGggYWRkZWQgdG8gZGV2bWFwIDE0OTQ1NTQwMDAwMDAwMDAwNmQ3MDYx
+NzQ2ODMxMDAwMDAwMDAwMDAwMDAwMDAwMDAKIyBldl9hZGRfcGF0aCgpIHJldHVybnMsIHZlY3Mt
+PmxvY2sgaXMgcmVsZWFzZWQKIyB1ZXZfYWRkX3BhdGgoKSBnb2VzIG9uIHRvIG5leHQgcGF0aCwg
+bG9jayBjdXJyZW50bHkgbm90IGhlbGQKTm92IDE1IDIyOjA1OjQ2IHNsZXMxNS1nbS1pc2NzaS0w
+MyBtdWx0aXBhdGhkWzU2OF06IHNkaDogYWRkIHBhdGggKHVldmVudCkKIyAoISEhISkgVGhlIExJ
+TyBtYXAgaXMgZmx1c2hlZCAoMzYwMDE0MDVkMDhmNzQ4ZGQ0YzU0ODFmOWVjMjJiODg4KQojIHRo
+aXMgbG9va3MgbGlrZSByZW1vdmVfbWFwKCkgb3IgcmVtb3ZlX21hcF9hbmRfc3RvcF93YWl0ZXIo
+KQo+IE5vdiAxNSAyMjowNTo0NiBzbGVzMTUtZ20taXNjc2ktMDMgbXVsdGlwYXRoZFs1NjhdOiBz
+ZGQ6IG9ycGhhbiBwYXRoLCBtYXAgZmx1c2hlZAo+IE5vdiAxNSAyMjowNTo0NiBzbGVzMTUtZ20t
+aXNjc2ktMDMgbXVsdGlwYXRoZFs1NjhdOiBzeXNmcyBwcmlvcml0aXplciByZWZjb3VudCAyCj4g
+Tm92IDE1IDIyOjA1OjQ2IHNsZXMxNS1nbS1pc2NzaS0wMyBtdWx0aXBhdGhkWzU2OF06IHNkYzog
+b3JwaGFuIHBhdGgsIG1hcCBmbHVzaGVkCgpUbyBtZSB0aGlzIGxvb2tzIGxpa2UgdGhlIG1hcCB3
+YXMgcmVtb3ZlZCBieSB0aGUgRE0gZXZlbnQgaGFuZGxlci4KTW9yZSBkZXRhaWwgY2FuIGJlIGZv
+dW5kIG9uIApodHRwczovL2J1Z3ppbGxhLm9wZW5zdXNlLm9yZy9zaG93X2J1Zy5jZ2k/aWQ9MTEx
+NjI3Mi4KSSd2ZSBhbHNvIHRyaWVkIHRvIHJlcHJvZHVjZSB0aGUgcHJvYmxlbSwgd2l0aCBubyBz
+dWNjZXNzIHNvIGZhcgooYWN0dWFsbHkgSSBoYXZlbid0IG9ic2VydmVkIGFueSBkbWV2ZW50cyBp
+biB0aG9zZSByZXByb2R1Y3Rpb24KYXR0ZW1wdHMpLgoKQWZ0ZXIgZW5jb3VudGVyaW5nIHRoaXMg
+cHJvYmxlbSwgSSd2ZSBzY3J1dGluaXplZCB5b3VyIHBvbGxpbmcgZG1ldmVudApoYW5kbGVyIGNv
+ZGUgb3ZlciBhbmQgb3ZlciBsYXN0IHdlZWssIGJ1dCBJIGNvdWxkbid0IHNwb3QgYW55IHBvc3Np
+YmxlCnByb2JsZW1zIDotKQoKVGhlIGNvbmNlcm4gdGhhdCBJIGhhdmUgaXMgd2l0aCB0aGUgZGVz
+aWduIG9mIHRoZSBwb2xsaW5nIGRtZXZlbnQgQVBJLAppbiBwYXJ0aWN1bGFyIHRoZSBmYWN0IHRo
+YXQgdGhlIGRlZmF1bHQgYWN0aW9uIGlzIEVWRU5UX1JFTU9WRS4gSWYsIGZvcgp3aGF0ZXZlciBy
+ZWFzb24sIG9uZSBtYXAgaXMgbWlzc2luZyBmcm9tIHRoZSByZXR1cm4gdmFsdWUgb2YgdGhlCkRN
+X0RFVklDRV9MSVNUIGlvY3RsLCBtdWx0aXBhdGggcmVtb3ZlcyB0aGUgbWFwIGltbWVkaWF0ZWx5
+LCBhbmQKdGhlcmUncyBub3RoaW5nIHNob3J0IG9mIGEgInJlY29uZmlndXJlIiBvciAiYWRkIG1h
+cCIgQ0xJIGNvbW1hbmQgdGhhdAp3b3VsZCByZWluc3RhdGUgdGhlIG1hcC4gSU9XLCB3ZSByZW1v
+dmUgdGhlIG1hcCBub3Qgb24gYSBrZXJuZWwgZXZlbnQKc2F5aW5nICJ0aGlzIG1hcCBoYXMgYmVl
+biByZW1vdmVkIiwgYnV0IG9uIHJlY2VpdmluZyBhIGxpc3Qgd2hlcmUgdGhpcwplbGVtZW50IGhh
+cHBlbnMgdG8gYmUgbWlzc2luZy4gV2UgaGFuZGxlIHRoaXMgZGlmZmVyZW50bHkgZm9yIHBhdGhz
+LAp3aGVyZSB3ZSB3YWl0IGZvciBhICJyZW1vdmUiIHVldmVudCBiZWZvcmUgd2UgcmVhbGx5IGRl
+bGV0ZSB0aGUgcGF0aApmcm9tIG91ciBkYXRhIHN0cnVjdHVyZXMuIChOb3RlIHRoYXQgdGhlIG1l
+c3NhZ2VzIGZpbGUgSSBzYXZlZCBmcm9tIHRoZQpldmVudCBhYm92ZSBzaG93cyBubyBzaWduIG9m
+IHN1Y2ggYW4gdWV2ZW50IGV2ZXIgYmVlaW5nIHNlbnQgLSBhcyBJCnNhaWQsIHRoZSBkbSBtYXAg
+d2FzIHN0aWxsIHByZXNlbnQgYWZ0ZXIgdGhlIGFib3ZlIG9jY3VyZWQpLgoKV2hhdCBkbyB5b3Ug
+dGhpbmsgYWJvdXQgdGhpcz8gQ291bGQgeW91IG1heWJlIGluc3BlY3QgdGhvc2UgbG9ncyBJCnRv
+b2ssIHRvIG1ha2Ugc3VyZSBJIGRpZG4ndCBnZXQgb24gYSB0b3RhbGx5IHdyb25nIHRyYWNrIGhl
+cmU/CgpSZWdhcmRzLApNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5j
+b20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxp
+eCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChB
+RyBOw7xybmJlcmcpCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
+b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
