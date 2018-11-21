@@ -1,51 +1,54 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH V11 11/19] bcache: avoid to use
-	bio_for_each_segment_all() in bch_bio_alloc_pages()
-Date: Wed, 21 Nov 2018 11:23:19 +0800
-Message-ID: <20181121032327.8434-12-ming.lei@redhat.com>
-References: <20181121032327.8434-1-ming.lei@redhat.com>
-Return-path: <cluster-devel-bounces@redhat.com>
-In-Reply-To: <20181121032327.8434-1-ming.lei@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/cluster-devel>,
-	<mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/cluster-devel>
-List-Post: <mailto:cluster-devel@redhat.com>
-List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/cluster-devel>,
-	<mailto:cluster-devel-request@redhat.com?subject=subscribe>
-Sender: cluster-devel-bounces@redhat.com
-Errors-To: cluster-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, "Darrick J . Wong" <darrick.wong@oracle.com>, Omar Sandoval <osandov@fb.com>, cluster-devel@redhat.com, linux-ext4@vger.kernel.org, Shaohua Li <shli@kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, Boaz Harrosh <ooo@electrozaur.com>, Gao Xiang <gaoxiang25@huawei.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>, Ming Lei <ming.lei@redhat.com>, linux-block@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org
+From: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
+Subject: [RFC PATCH v2 3/3] dm: expand valid types for dm-ioctl
+Date: Wed, 21 Nov 2018 11:27:02 +0800
+Message-ID: <20181121032702.3048-4-yehs2007@zoho.com>
+References: <20181121032702.3048-1-yehs2007@zoho.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20181121032702.3048-1-yehs2007-ytc+IHgoah0@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, zwisler-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, vishal.l.verma-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-bch_bio_alloc_pages() is always called on one new bio, so it is safe
-to access the bvec table directly. Given it is the only kind of this
-case, open code the bvec table access since bio_for_each_segment_all()
-will be changed to support for iterating over multipage bvec.
+From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 
-Acked-by: Coly Li <colyli@suse.de>
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
+If use DAX way to mount the origin device of dm_snapshot, when
+merging back snapshot to origin, system call table_load during the
+construction of snapshot-merge will try to detect new dm_table's type
+equals to the existed md's type or not.
+The existed type equals to DM_TYPE_DAX_BIO_BASED, but the new created
+type belongs to DM_TYPE_BIO_BASED. So, we need to expand valid_type in
+function is_valid_type.
+
+Signed-off-by: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 ---
- drivers/md/bcache/util.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ drivers/md/dm-ioctl.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/bcache/util.c b/drivers/md/bcache/util.c
-index 20eddeac1531..62fb917f7a4f 100644
---- a/drivers/md/bcache/util.c
-+++ b/drivers/md/bcache/util.c
-@@ -270,7 +270,11 @@ int bch_bio_alloc_pages(struct bio *bio, gfp_t gfp_mask)
- 	int i;
- 	struct bio_vec *bv;
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index a27016e..158d657 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1295,7 +1295,8 @@ static int populate_table(struct dm_table *table,
+ static bool is_valid_type(enum dm_queue_mode cur, enum dm_queue_mode new)
+ {
+ 	if (cur == new ||
+-	    (cur == DM_TYPE_BIO_BASED && new == DM_TYPE_DAX_BIO_BASED))
++	    (cur == DM_TYPE_BIO_BASED && new == DM_TYPE_DAX_BIO_BASED) ||
++	    (cur == DM_TYPE_DAX_BIO_BASED && new == DM_TYPE_BIO_BASED))
+ 		return true;
  
--	bio_for_each_segment_all(bv, bio, i) {
-+	/*
-+	 * This is called on freshly new bio, so it is safe to access the
-+	 * bvec table directly.
-+	 */
-+	for (i = 0, bv = bio->bi_io_vec; i < bio->bi_vcnt; bv++, i++) {
- 		bv->bv_page = alloc_page(gfp_mask);
- 		if (!bv->bv_page) {
- 			while (--bv >= bio->bi_io_vec)
+ 	return false;
 -- 
-2.9.5
+1.8.3.1
