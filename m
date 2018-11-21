@@ -1,68 +1,32 @@
-From: Nikolay Borisov <nborisov@suse.com>
-Subject: Re: [PATCH V11 17/19] block: document usage of bio iterator helpers
-Date: Wed, 21 Nov 2018 09:45:25 +0200
-Message-ID: <1f93e845-09e8-2c6c-3643-654b8c490597@suse.com>
-References: <20181121032327.8434-1-ming.lei@redhat.com>
- <20181121032327.8434-18-ming.lei@redhat.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH V10 09/19] block: introduce bio_bvecs()
+Date: Wed, 21 Nov 2018 09:46:08 +0100
+Message-ID: <20181121084608.GA29622@lst.de>
+References: <002fe56b-25e4-573e-c09b-bb12c3e8d25a@grimberg.me> <20181120161651.GB2629@lst.de> <53526aae-fb9b-ee38-0a01-e5899e2d4e4d@grimberg.me> <20181121005902.GA31748@ming.t460p> <2d9bee7a-f010-dcf4-1184-094101058584@grimberg.me> <20181121034415.GA8408@ming.t460p> <2a47d336-c19b-6bf4-c247-d7382871eeea@grimberg.me> <7378bf49-5a7e-5622-d4d1-808ba37ce656@grimberg.me> <20181121050359.GA31915@ming.t460p> <fc268b0e-61b5-aacc-67be-cb7b266c6d8f@grimberg.me>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <20181121032327.8434-18-ming.lei@redhat.com>
-Content-Language: en-US
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Ming Lei <ming.lei@redhat.com>, Jens Axboe <axboe@kernel.dk>
-Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Theodore Ts'o <tytso@mit.edu>, Omar Sandoval <osandov@fb.com>, Sagi Grimberg <sagi@grimberg.me>, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>Bo
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <fc268b0e-61b5-aacc-67be-cb7b266c6d8f@grimberg.me>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Sagi Grimberg <sagi@grimberg.me>
+Cc: Ming Lei <ming.lei@redhat.com>, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-erofs@lists.ozlabs.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozau>
 List-Id: dm-devel.ids
 
+On Tue, Nov 20, 2018 at 09:35:07PM -0800, Sagi Grimberg wrote:
+>> Given it is over TCP, I guess it should be doable for you to preallocate one
+>> 256-bvec table in one page for each request, then sets the max segment size as
+>> (unsigned int)-1, and max segment number as 256, the preallocated table
+>> should work anytime.
+>
+> 256 bvec table is really a lot to preallocate, especially when its not
+> needed, I can easily initialize the bvec_iter on the bio bvec. If this
+> involves preallocation of the worst-case than I don't consider this to
+> be an improvement.
 
-
-On 21.11.18 г. 5:23 ч., Ming Lei wrote:
-> Now multi-page bvec is supported, some helpers may return page by
-> page, meantime some may return segment by segment, this patch
-> documents the usage.
-> 
-> Signed-off-by: Ming Lei <ming.lei@redhat.com>
-> ---
->  Documentation/block/biovecs.txt | 24 ++++++++++++++++++++++++
->  1 file changed, 24 insertions(+)
-> 
-> diff --git a/Documentation/block/biovecs.txt b/Documentation/block/biovecs.txt
-> index 25689584e6e0..bb008f7afb05 100644
-> --- a/Documentation/block/biovecs.txt
-> +++ b/Documentation/block/biovecs.txt
-> @@ -117,3 +117,27 @@ Other implications:
->     size limitations and the limitations of the underlying devices. Thus
->     there's no need to define ->merge_bvec_fn() callbacks for individual block
->     drivers.
-> +
-> +Usage of helpers:
-> +=================
-> +
-> +* The following helpers whose names have the suffix of "_all" can only be used
-> +on non-BIO_CLONED bio. They are usually used by filesystem code. Drivers
-> +shouldn't use them because the bio may have been split before it reached the
-> +driver.
-> +
-> +	bio_for_each_segment_all()
-> +	bio_first_bvec_all()
-> +	bio_first_page_all()
-> +	bio_last_bvec_all()
-> +
-> +* The following helpers iterate over single-page bvecs. The passed 'struct
-> +bio_vec' will contain a single-page IO vector during the iteration
-> +
-> +	bio_for_each_segment()
-> +	bio_for_each_segment_all()
-> +
-> +* The following helpers iterate over single-page bvecs. The passed 'struct
-> +bio_vec' will contain a single-page IO vector during the iteration
-> +
-> +	bio_for_each_bvec()
-
-Just put this helper right below the above 2, no need to repeat the
-explanation. Also I'd suggest introducing another catch-all sentence
-"All other helpers are assumed to iterate multipage bio vecs" and
-perhaps give an example with 1-2 helpers.
-
-> 
+Ok, I took a look at the nvme-tcp code and it seems you care about
+bios because you want a contiguos bio chunk for sending it down
+the networking code.  Yes, in that case we sort of need to iterate
+over bios.  But you already have a special case for discard, so you
+don't really need any of the magic in the bio_bvecs() helper either
+can can just count bi_vcnt in the bio.
