@@ -1,83 +1,85 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH V11 09/19] btrfs: move bio_pages_all() to
-	btrfs
-Date: Wed, 21 Nov 2018 11:23:17 +0800
-Message-ID: <20181121032327.8434-10-ming.lei@redhat.com>
-References: <20181121032327.8434-1-ming.lei@redhat.com>
-Return-path: <cluster-devel-bounces@redhat.com>
-In-Reply-To: <20181121032327.8434-1-ming.lei@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/cluster-devel>,
-	<mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/cluster-devel>
-List-Post: <mailto:cluster-devel@redhat.com>
-List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/cluster-devel>,
-	<mailto:cluster-devel-request@redhat.com?subject=subscribe>
-Sender: cluster-devel-bounces@redhat.com
-Errors-To: cluster-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, "Darrick J . Wong" <darrick.wong@oracle.com>, Omar Sandoval <osandov@fb.com>, cluster-devel@redhat.com, linux-ext4@vger.kernel.org, Shaohua Li <shli@kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, Boaz Harrosh <ooo@electrozaur.com>, Gao Xiang <gaoxiang25@huawei.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>, Ming Lei <ming.lei@redhat.com>, linux-block@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org
+From: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
+Subject: [RFC PATCH v2 0/3] realize dax_operations for dm-snapshot
+Date: Wed, 21 Nov 2018 11:26:59 +0800
+Message-ID: <20181121032702.3048-1-yehs2007@zoho.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, zwisler-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, vishal.l.verma-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-BTRFS is the only user of this helper, so move this helper into
-BTRFS, and implement it via bio_for_each_segment_all(), since
-bio->bi_vcnt may not equal to number of pages after multipage bvec
-is enabled.
+From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
----
- fs/btrfs/extent_io.c | 14 +++++++++++++-
- include/linux/bio.h  |  6 ------
- 2 files changed, 13 insertions(+), 7 deletions(-)
+Changes
+v1->v2:
+	Add NULL funtions for origin_dax_direct_access and
+	origin_dax_copy_from/to_iter in order to avoid building
+	error when CONFIG_DAX_DRIVER has NOT been enabled.
 
-diff --git a/fs/btrfs/extent_io.c b/fs/btrfs/extent_io.c
-index 5d5965297e7e..874bb9aeebdc 100644
---- a/fs/btrfs/extent_io.c
-+++ b/fs/btrfs/extent_io.c
-@@ -2348,6 +2348,18 @@ struct bio *btrfs_create_repair_bio(struct inode *inode, struct bio *failed_bio,
- 	return bio;
- }
- 
-+static unsigned btrfs_bio_pages_all(struct bio *bio)
-+{
-+	unsigned i;
-+	struct bio_vec *bv;
-+
-+	WARN_ON_ONCE(bio_flagged(bio, BIO_CLONED));
-+
-+	bio_for_each_segment_all(bv, bio, i)
-+		;
-+	return i;
-+}
-+
- /*
-  * this is a generic handler for readpage errors (default
-  * readpage_io_failed_hook). if other copies exist, read those and write back
-@@ -2368,7 +2380,7 @@ static int bio_readpage_error(struct bio *failed_bio, u64 phy_offset,
- 	int read_mode = 0;
- 	blk_status_t status;
- 	int ret;
--	unsigned failed_bio_pages = bio_pages_all(failed_bio);
-+	unsigned failed_bio_pages = btrfs_bio_pages_all(failed_bio);
- 
- 	BUG_ON(bio_op(failed_bio) == REQ_OP_WRITE);
- 
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 7560209d6a8a..9d6284f53c07 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -282,12 +282,6 @@ static inline void bio_get_last_bvec(struct bio *bio, struct bio_vec *bv)
- 		bv->bv_len = iter.bi_bvec_done;
- }
- 
--static inline unsigned bio_pages_all(struct bio *bio)
--{
--	WARN_ON_ONCE(bio_flagged(bio, BIO_CLONED));
--	return bio->bi_vcnt;
--}
--
- static inline struct bio_vec *bio_first_bvec_all(struct bio *bio)
- {
- 	WARN_ON_ONCE(bio_flagged(bio, BIO_CLONED));
+[v1]: https://lkml.org/lkml/2018/11/20/759
+
+This series patches are used to realize the dax_operations for dm-snapshot
+with persistent memory device.
+
+Here are the steps about how to verify the function.
+
+1. Configure the persistent memory to fs-dax mode and create namespace with ndctl;
+2. find them in /dev;
+  # ndctl list
+  {
+    "dev":"namespace0.0",
+    "mode":"fsdax",
+    "map":"dev",
+    "size":132118478848,
+    "sector_size":512,
+    "blockdev":"pmem0",
+    "name":"yhs_pmem0",
+    "numa_node":0
+  },
+3. create lv_pmem (here is 4G size) for testing;
+   # pvcreate /dev/pmem0
+   # vgcreate vg_pmem /dev/pmem0
+   # lvcreate  -L 4G -n lv_pmem vg_pmem
+4. create filesystem (ext2 or ext4) to /dev/pmem0
+   # mkfs.ext2 -b 4096 /dev/vg_pmem/lv_pmem
+5. mount pmem with DAX way;
+   # mkdir /mnt/lv_pmem
+   # mount -o dax /dev/vg_pmem/lv_pmem /mnt/lv_pmem/
+6. cp some files to /mnt/lv_pmem;
+   # cp linear_table03.log /mnt/lv_pmem/
+   # cp test0.log /mnt/lv_pmem/
+7. create snapshot for test (here I limit it to 1G size);
+   # lvcreate -L 1G -n snap_pmem -s /dev/vg_pmem/lv_pmem
+8. modify the files copied with vim or copy more other new files;
+   # vim /mnt/lv_pmem/test0.log
+9. umount the pmem device;
+   # umount /mnt/lv_pmem/
+10.merge the snapshot back to origin;
+   # lvconvert --merge /dev/vg_pmem/snap_pmem
+11.mount pmem device again for checking the content of files;
+   # mount -o dax /dev/vg_pmem/lv_pmem /mnt/lv_pmem/
+
+Huaisheng Ye (3):
+  dm: enable dax_operations for dm-snapshot
+  dm: expand hc_map in mapped_device for lack of map
+  dm: expand valid types for dm-ioctl
+
+ drivers/md/dm-core.h  |  1 +
+ drivers/md/dm-ioctl.c |  4 +++-
+ drivers/md/dm-snap.c  | 51 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ drivers/md/dm.c       | 15 +++++++++++++++
+ 4 files changed, 68 insertions(+), 3 deletions(-)
+
 -- 
-2.9.5
+1.8.3.1
