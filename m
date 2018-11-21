@@ -1,90 +1,127 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH V10 09/19] block: introduce bio_bvecs()
-Date: Wed, 21 Nov 2018 11:44:16 +0800
-Message-ID: <20181121034415.GA8408@ming.t460p>
-References: <20181115085306.9910-1-ming.lei@redhat.com>
- <20181115085306.9910-10-ming.lei@redhat.com>
- <20181116134541.GH3165@lst.de>
- <002fe56b-25e4-573e-c09b-bb12c3e8d25a@grimberg.me>
- <20181120161651.GB2629@lst.de>
- <53526aae-fb9b-ee38-0a01-e5899e2d4e4d@grimberg.me>
- <20181121005902.GA31748@ming.t460p>
- <2d9bee7a-f010-dcf4-1184-094101058584@grimberg.me>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH] multipathd: fix mpp->hwe handling when paths are
+	freed
+Date: Tue, 20 Nov 2018 22:24:44 -0600
+Message-ID: <1542774284-20935-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <2d9bee7a-f010-dcf4-1184-094101058584@grimberg.me>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Sagi Grimberg <sagi@grimberg.me>
-Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-erofs@lists.ozlabs.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, Bob Peterson <rpeterso@r>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 20, 2018 at 07:20:45PM -0800, Sagi Grimberg wrote:
-> 
-> > Not sure I understand the 'blocking' problem in this case.
-> > 
-> > We can build a bvec table from this req, and send them all
-> > in send(),
-> 
-> I would like to avoid growing bvec tables and keep everything
-> preallocated. Plus, a bvec_iter operates on a bvec which means
-> we'll need a table there as well... Not liking it so far...
+Commit 1f962693 didn't deal with all of cases where a path that was part
+of a multipath device could be removed. verify_paths() removes any path
+that no longer exists in sysfs.  mpp->hwe needs to be updated here as
+well, since verify_paths() could remove the path whose hwe vector is
+pointed to by mpp->hwe.  Also, now that extract_hwe_from_path() is
+called in verify_paths(), the extract_hwe_from_path() calls that
+happened immediately after verify_paths() can be dropped.
 
-In case of bios in one request, we can't know how many bvecs there
-are except for calling rq_bvecs(), so it may not be suitable to
-preallocate the table. If you have to send the IO request in one send(),
-runtime allocation may be inevitable.
+The other part of this fix is mostly cosmetic. In ev_add_path(), if
+domap() fails after the path is added to the multipath device and
+verify_paths() is called, the code can loop back to the rescan label. If
+the size of the path or the multipath device changed in the interim,
+ev_add_path() would remove the path, without updating mpp->hwe; but
+there is no way for the size to change. Just to make that clearer in the
+code, I've moved the size check to before the rescan label so it only
+happens once.
 
-If you don't require to send the IO request in one send(), you may send
-one bio in one time, and just uses the bio's bvec table directly,
-such as the single bio case in lo_rw_aio().
+Fixes: 1f962693 "multipathd: fix mpp->hwe handling on path removal"
+Cc: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/structs_vec.c |  7 +++++++
+ multipathd/main.c          | 21 ++++++++-------------
+ 2 files changed, 15 insertions(+), 13 deletions(-)
 
-> 
-> > can this way avoid your blocking issue? You may see this
-> > example in branch 'rq->bio != rq->biotail' of lo_rw_aio().
-> 
-> This is exactly an example of not ignoring the bios...
-
-Yeah, that is the most common example, given merge is enabled
-in most of cases. If the driver or device doesn't care merge,
-you can disable it and always get single bio request, then the
-bio's bvec table can be reused for send().
-
-> 
-> > If this way is what you need, I think you are right, even we may
-> > introduce the following helpers:
-> > 
-> > 	rq_for_each_bvec()
-> > 	rq_bvecs()
-> 
-> I'm not sure how this helps me either. Unless we can set a bvec_iter to
-> span bvecs or have an abstract bio crossing when we re-initialize the
-> bvec_iter I don't see how I can ignore bios completely...
-
-rq_for_each_bvec() will iterate over all bvecs from all bios, so you
-needn't to see any bio in this req.
-
-rq_bvecs() will return how many bvecs there are in this request(cover
-all bios in this req)
-
-> 
-> > So looks nvme-tcp host driver might be the 2nd driver which benefits
-> > from multi-page bvec directly.
-> > 
-> > The multi-page bvec V11 has passed my tests and addressed almost
-> > all the comments during review on V10. I removed bio_vecs() in V11,
-> > but it won't be big deal, we can introduce them anytime when there
-> > is the requirement.
-> 
-> multipage-bvecs and nvme-tcp are going to conflict, so it would be good
-> to coordinate on this. I think that nvme-tcp host needs some adjustments
-> as setting a bvec_iter. I'm under the impression that the change is rather
-> small and self-contained, but I'm not sure I have the full
-> picture here.
-
-I guess I may not get your exact requirement on block io iterator from nvme-tcp
-too, :-(
-
-thanks,
-Ming
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index c85823a..e28a88a 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -407,6 +407,12 @@ int verify_paths(struct multipath *mpp, struct vectors *vecs)
+ 			vector_del_slot(mpp->paths, i);
+ 			i--;
+ 
++			/* Make sure mpp->hwe doesn't point to freed memory.
++			 * We call extract_hwe_from_path() below to restore
++			 * mpp->hwe
++			 */
++			if (mpp->hwe == pp->hwe)
++				mpp->hwe = NULL;
+ 			if ((j = find_slot(vecs->pathvec,
+ 					   (void *)pp)) != -1)
+ 				vector_del_slot(vecs->pathvec, j);
+@@ -416,6 +422,7 @@ int verify_paths(struct multipath *mpp, struct vectors *vecs)
+ 				mpp->alias, pp->dev, pp->dev_t);
+ 		}
+ 	}
++	extract_hwe_from_path(mpp);
+ 	return count;
+ }
+ 
+diff --git a/multipathd/main.c b/multipathd/main.c
+index cc555bb..2e5f9ed 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -491,7 +491,6 @@ retry:
+ 	verify_paths(mpp, vecs);
+ 	mpp->action = ACT_RELOAD;
+ 
+-	extract_hwe_from_path(mpp);
+ 	if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
+ 		condlog(0, "%s: failed to setup new map in update", mpp->alias);
+ 		retries = -1;
+@@ -925,6 +924,14 @@ ev_add_path (struct path * pp, struct vectors * vecs, int need_do_map)
+ 		goto fail; /* leave path added to pathvec */
+ 	}
+ 	mpp = find_mp_by_wwid(vecs->mpvec, pp->wwid);
++	if (mpp && pp->size && mpp->size != pp->size) {
++		condlog(0, "%s: failed to add new path %s, device size mismatch", mpp->alias, pp->dev);
++		int i = find_slot(vecs->pathvec, (void *)pp);
++		if (i != -1)
++			vector_del_slot(vecs->pathvec, i);
++		free_path(pp);
++		return 1;
++	}
+ 	if (mpp && mpp->wait_for_udev &&
+ 	    (pathcount(mpp, PATH_UP) > 0 ||
+ 	     (pathcount(mpp, PATH_GHOST) > 0 && pp->tpgs != TPGS_IMPLICIT &&
+@@ -940,17 +947,6 @@ ev_add_path (struct path * pp, struct vectors * vecs, int need_do_map)
+ 	pp->mpp = mpp;
+ rescan:
+ 	if (mpp) {
+-		if (pp->size && mpp->size != pp->size) {
+-			condlog(0, "%s: failed to add new path %s, "
+-				"device size mismatch",
+-				mpp->alias, pp->dev);
+-			int i = find_slot(vecs->pathvec, (void *)pp);
+-			if (i != -1)
+-				vector_del_slot(vecs->pathvec, i);
+-			free_path(pp);
+-			return 1;
+-		}
+-
+ 		condlog(4,"%s: adopting all paths for path %s",
+ 			mpp->alias, pp->dev);
+ 		if (adopt_paths(vecs->pathvec, mpp))
+@@ -958,7 +954,6 @@ rescan:
+ 
+ 		verify_paths(mpp, vecs);
+ 		mpp->action = ACT_RELOAD;
+-		extract_hwe_from_path(mpp);
+ 	} else {
+ 		if (!should_multipath(pp, vecs->pathvec, vecs->mpvec)) {
+ 			orphan_path(pp, "only one path");
+-- 
+2.7.4
