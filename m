@@ -1,81 +1,34 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: Disconcerting observation with multipathd's dmevent
-	polling code
-Date: Wed, 21 Nov 2018 14:33:04 +0100
-Message-ID: <ca260fe5035aee8f1e79bd18f52a12557baa36f0.camel@suse.de>
-References: <9f372197ec112f97298641e223d2e5e6a5e1b33a.camel@suse.de>
-	<6fab77be-763c-4de0-a312-de112e7d1c0a@suse.de>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH V11 10/19] block: loop: pass multi-page bvec to iov_iter
+Date: Wed, 21 Nov 2018 15:00:27 +0100
+Message-ID: <20181121140027.GA2323@lst.de>
+References: <20181121032327.8434-1-ming.lei@redhat.com> <20181121032327.8434-11-ming.lei@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <6fab77be-763c-4de0-a312-de112e7d1c0a@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel mailing list <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20181121032327.8434-11-ming.lei@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ming Lei <ming.lei@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Theodore Ts'o <tytso@mit.edu>, Omar Sandoval <osandov@fb.com>, Sagi Grimberg <sagi@grimberg.me>, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <oo>
 List-Id: dm-devel.ids
 
-On Wed, 2018-11-21 at 12:20 +0100, Hannes Reinecke wrote:
-> On 11/21/18 11:50 AM, Martin Wilck wrote:
-> > 
-> > The concern that I have is with the design of the polling dmevent
-> > API,
-> > in particular the fact that the default action is EVENT_REMOVE. If,
-> > for
-> > whatever reason, one map is missing from the return value of the
-> > DM_DEVICE_LIST ioctl, multipath removes the map immediately, and
-> > there's nothing short of a "reconfigure" or "add map" CLI command
-> > that
-> > would reinstate the map. IOW, we remove the map not on a kernel
-> > event
-> > saying "this map has been removed", but on receiving a list where
-> > this
-> > element happens to be missing. We handle this differently for
-> > paths,
-> > where we wait for a "remove" uevent before we really delete the
-> > path
-> > from our data structures. (Note that the messages file I saved from
-> > the
-> > event above shows no sign of such an uevent ever beeing sent - as I
-> > said, the dm map was still present after the above occured).
-> > 
-> > What do you think about this? Could you maybe inspect those logs I
-> > took, to make sure I didn't get on a totally wrong track here?
-> > 
-> There's an easy solution to it: drop the dmevent handling code in 
-> multipath-tools completely.
-> It's original design was to track _external_ map reloads, as
-> originally 
-> the maps had been setup by 'multipath', and 'multipahtd' was just 
-> tracking state changes. As such multipathd needed to track those 
-> changes, and it had been using dmevents for this.
-> However, with the advent of udev and updates to the multipathd
-> daemon 
-> external map reloads rarely happens, and even if they happen we
-> still 
-> would be notified by uevents.
-> So we might as well drop the dmevent code and rely on udev
-> completely.
-> Which is what we do nowadays anyway.
+> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> index 1ad6eafc43f2..a281b6737b61 100644
+> --- a/include/linux/blkdev.h
+> +++ b/include/linux/blkdev.h
+> @@ -805,6 +805,10 @@ struct req_iterator {
+>  	__rq_for_each_bio(_iter.bio, _rq)			\
+>  		bio_for_each_segment(bvl, _iter.bio, _iter.iter)
+>  
+> +#define rq_for_each_bvec(bvl, _rq, _iter)			\
+> +	__rq_for_each_bio(_iter.bio, _rq)			\
+> +		bio_for_each_bvec(bvl, _iter.bio, _iter.iter)
+> +
 
-I recall Ben arguing that the dmevent API was faster, and more
-reliable, than udev. It doesn't depend on udevd being healthy and
-having enough workers available, which is a plus. The reliability seems
-to be debatable in view of the API design, that was the point of my
-mail.
+I think this should go into the patch adding bio_for_each_bvec and
+friends.
 
-Yet we depend so heavily on udev nowadays that multipathd is pretty
-much lost without it anyway.
+Otherwise looks fine:
 
-Let's see what Ben says.
-
-Thanks,
-Martin
+Reviewed-by: Christoph Hellwig <hch@lst.de>
