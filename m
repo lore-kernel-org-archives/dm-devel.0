@@ -1,12 +1,15 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Disconcerting observation with multipathd's dmevent
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: Disconcerting observation with multipathd's dmevent
 	polling code
-Date: Wed, 21 Nov 2018 11:50:38 +0100
-Message-ID: <9f372197ec112f97298641e223d2e5e6a5e1b33a.camel@suse.de>
+Date: Wed, 21 Nov 2018 12:20:09 +0100
+Message-ID: <6fab77be-763c-4de0-a312-de112e7d1c0a@suse.de>
+References: <9f372197ec112f97298641e223d2e5e6a5e1b33a.camel@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <9f372197ec112f97298641e223d2e5e6a5e1b33a.camel@suse.de>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,84 +19,95 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel mailing list <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-SGkgQmVuLAoKSSByZWNlbnRseSBlbmNvdW50ZXJlZCBhIHN0cmFuZ2UgYW5kIGRpc3R1cmJpbmcg
-cGhlbm9tZW5vbiB3aXRoIHRoZQpsYXRlc3QgdXBzdHJlYW0gY29kZS4KClRoZSBzeXN0ZW0gaW4g
-cXVlc3Rpb24gaGFkIHR3byBpU0NTSSBjb25uZWN0aW9ucyBvbiBzZXBhcmF0ZSBuZXR3b3Jrcy4K
-T24gb25lIG9mIHRoZW0sIEkgdGVzdGVkIGlTQ1NJIGRpc2Nvbm5lY3QgYW5kIHJlLWNvbm5lY3Rz
-LCBhbmQgYnJva2VuCnN0b3JhZ2UgY29uZmlndXJhdGlvbnMgKGRpZmZlcmVudCBMVU5zIGRpZmZl
-bmVudCBzaXplcyBhbmQgd2l0aCB0aGUKc2FtZSBXV0lEKS4gVGhlIG90aGVyIG9uZSB3YXMgaWRs
-ZS4KCkR1cmluZyBvbmUgdGVzdCwgSSBvYnNlcnZlZCB0aGF0IG11bHRpcGF0aGQncyBpbnRlcm5h
-bCByZXByZXNlbnRhdGlvbgpvZiB0aGUgbWFwIHJlcHJlc2VudGluZyB0aGUgKmlkbGUqIGNvbm5l
-Y3Rpb24gaGFkIHZhbmlzaGVkLiBUaGUgbWFwIHdhcwpzdGlsbCBwcmVzZW50IG9uIHRoZSBkZXZp
-Y2UtbWFwcGVyIGxldmVsLCBidXQgbXVsdGlwYXRoZCBzZWVtZWQgdG8gaGF2ZQoiZm9yZ290dGVu
-IiBpdCBjb21wbGV0ZWx5LiBUaGUgcmVzcGVjdGl2ZSBwYXRocyB3ZXJlIHRyYWNrZWQgYXMKb3Jw
-aGFucy4KCkhlcmUgaXMgYSBsb2cgZXhjZXJwdC4gbXVsdGlwYXRoZCBpcyB3b3JraW5nIG9uIHBh
-dGggYWRkaXRpb25zIGZvciB0aGUKbWFwIEkgd2FzIHRlc3Rpbmcgd2l0aCAoMTQ5NDU1Li4uKSwg
-d2hlbiBhIERNIGV2ZW50IGlzIHJlY2VpdmVkLiBSaWdodAphZnRlciBldl9hZGRfcGF0aCgpIHJl
-bGVhc2VzIHRoZSBsb2NrLCB0aGUgaWRsZSBtYXAKKDM2MDAxNDA1Li4uKSBpcyByZW1vdmVkIChu
-b3QgZmx1c2hlZCwgYXMgdGhlIG1lc3NhZ2VzIHN1Z2dlc3QpLgoKTm92IDE1IDIyOjA1OjQ2IHNs
-ZXMxNS1nbS1pc2NzaS0wMyBtdWx0aXBhdGhkWzU2OF06IHNkZzogYWRkIHBhdGggKHVldmVudCkK
-IyB1ZXZfYWRkX3BhdGgtPnBhdGhpbmZvKCkKTm92IDE1IDIyOjA1OjQ2IHNsZXMxNS1nbS1pc2Nz
-aS0wMyBtdWx0aXBhdGhkWzU2OF06IHNkZzogdWRldiBwcm9wZXJ0eSBTQ1NJX0lERU5UX0xVTl9U
-MTAgd2hpdGVsaXN0ZWQKIyBldl9hZGRfcGF0aCgpLT5hZG9wdF9wYXRocygpCk5vdiAxNSAyMjow
-NTo0NiBzbGVzMTUtZ20taXNjc2ktMDMgbXVsdGlwYXRoZFs1NjhdOiBzZGU6IG93bmVyc2hpcCBz
-ZXQgdG8gMTQ5NDU1NDAwMDAwMDAwMDA2ZDcwNjE3NDY4MzEwMDAwMDAwMDAwMDAwMDAwMDAwMAou
-Li4KIyBldl9hZGRfcGF0aC0+c2V0dXBfbWFwKCkKTm92IDE1IDIyOjA1OjQ2IHNsZXMxNS1nbS1p
-c2NzaS0wMyBtdWx0aXBhdGhkWzU2OF06IDE0OTQ1NTQwMDAwMDAwMDAwNmQ3MDYxNzQ2ODMxMDAw
-MDAwMDAwMDAwMDAwMDAwMDA6IGZhaWxiYWNrID0gIm1hbnVhbCIgKHNldHRpbmc6IG11bHRpcGF0
-aCBpbnRlcm5hbCkKIyBldl9hZGRfcGF0aC0+ZG9tYXAoKQpOb3YgMTUgMjI6MDU6NDYgc2xlczE1
-LWdtLWlzY3NpLTAzIG11bHRpcGF0aGRbNTY4XTogMTQ5NDU1NDAwMDAwMDAwMDA2ZDcwNjE3NDY4
-MzEwMDAwMDAwMDAwMDAwMDAwMDAwMDogbG9hZCB0YWJsZSBbMCAyMDk3MTUyIG11bHRpcGF0aCAw
-IDAgMyAxIHNlcnZpY2UtdGltZSAwIDEgMSA4OjY0IC4uLgojIGV2X2FkZF9wYXRoLT5zZXR1cF9t
-dWx0aXBhdGgoKS0+dXBkYXRlLW11bHRpcGF0aF9zdHJpbmdzCk5vdiAxNSAyMjowNTo0NiBzbGVz
-MTUtZ20taXNjc2ktMDMgbXVsdGlwYXRoZFs1NjhdOiAxNDk0NTU0MDAwMDAwMDAwMDZkNzA2MTc0
-NjgzMTAwMDAwMDAwMDAwMDAwMDAwMDAwOiBkaXNhc3NlbWJsZSBtYXAgWzAgMCAzIDEgc2Vydmlj
-ZS10aW1lIDAgMSAyIDg6NjQgMSAxIHNlcnZpY2UtdGltZSAuLi4KIyAoISEhISkgZGV2bWFwIGV2
-ZW50IGZvciBMSU8gbWFwCk5vdiAxNSAyMjowNTo0NiBzbGVzMTUtZ20taXNjc2ktMDMgbXVsdGlw
-YXRoZFs1NjhdOiAzNjAwMTQwNWQwOGY3NDhkZDRjNTQ4MWY5ZWMyMmI4ODg6IGRldm1hcCBldmVu
-dCAjMjAKTm92IDE1IDIyOjA1OjQ2IHNsZXMxNS1nbS1pc2NzaS0wMyBtdWx0aXBhdGhkWzU2OF06
-IHNkZyBbODo5Nl06IHBhdGggYWRkZWQgdG8gZGV2bWFwIDE0OTQ1NTQwMDAwMDAwMDAwNmQ3MDYx
-NzQ2ODMxMDAwMDAwMDAwMDAwMDAwMDAwMDAKIyBldl9hZGRfcGF0aCgpIHJldHVybnMsIHZlY3Mt
-PmxvY2sgaXMgcmVsZWFzZWQKIyB1ZXZfYWRkX3BhdGgoKSBnb2VzIG9uIHRvIG5leHQgcGF0aCwg
-bG9jayBjdXJyZW50bHkgbm90IGhlbGQKTm92IDE1IDIyOjA1OjQ2IHNsZXMxNS1nbS1pc2NzaS0w
-MyBtdWx0aXBhdGhkWzU2OF06IHNkaDogYWRkIHBhdGggKHVldmVudCkKIyAoISEhISkgVGhlIExJ
-TyBtYXAgaXMgZmx1c2hlZCAoMzYwMDE0MDVkMDhmNzQ4ZGQ0YzU0ODFmOWVjMjJiODg4KQojIHRo
-aXMgbG9va3MgbGlrZSByZW1vdmVfbWFwKCkgb3IgcmVtb3ZlX21hcF9hbmRfc3RvcF93YWl0ZXIo
-KQo+IE5vdiAxNSAyMjowNTo0NiBzbGVzMTUtZ20taXNjc2ktMDMgbXVsdGlwYXRoZFs1NjhdOiBz
-ZGQ6IG9ycGhhbiBwYXRoLCBtYXAgZmx1c2hlZAo+IE5vdiAxNSAyMjowNTo0NiBzbGVzMTUtZ20t
-aXNjc2ktMDMgbXVsdGlwYXRoZFs1NjhdOiBzeXNmcyBwcmlvcml0aXplciByZWZjb3VudCAyCj4g
-Tm92IDE1IDIyOjA1OjQ2IHNsZXMxNS1nbS1pc2NzaS0wMyBtdWx0aXBhdGhkWzU2OF06IHNkYzog
-b3JwaGFuIHBhdGgsIG1hcCBmbHVzaGVkCgpUbyBtZSB0aGlzIGxvb2tzIGxpa2UgdGhlIG1hcCB3
-YXMgcmVtb3ZlZCBieSB0aGUgRE0gZXZlbnQgaGFuZGxlci4KTW9yZSBkZXRhaWwgY2FuIGJlIGZv
-dW5kIG9uIApodHRwczovL2J1Z3ppbGxhLm9wZW5zdXNlLm9yZy9zaG93X2J1Zy5jZ2k/aWQ9MTEx
-NjI3Mi4KSSd2ZSBhbHNvIHRyaWVkIHRvIHJlcHJvZHVjZSB0aGUgcHJvYmxlbSwgd2l0aCBubyBz
-dWNjZXNzIHNvIGZhcgooYWN0dWFsbHkgSSBoYXZlbid0IG9ic2VydmVkIGFueSBkbWV2ZW50cyBp
-biB0aG9zZSByZXByb2R1Y3Rpb24KYXR0ZW1wdHMpLgoKQWZ0ZXIgZW5jb3VudGVyaW5nIHRoaXMg
-cHJvYmxlbSwgSSd2ZSBzY3J1dGluaXplZCB5b3VyIHBvbGxpbmcgZG1ldmVudApoYW5kbGVyIGNv
-ZGUgb3ZlciBhbmQgb3ZlciBsYXN0IHdlZWssIGJ1dCBJIGNvdWxkbid0IHNwb3QgYW55IHBvc3Np
-YmxlCnByb2JsZW1zIDotKQoKVGhlIGNvbmNlcm4gdGhhdCBJIGhhdmUgaXMgd2l0aCB0aGUgZGVz
-aWduIG9mIHRoZSBwb2xsaW5nIGRtZXZlbnQgQVBJLAppbiBwYXJ0aWN1bGFyIHRoZSBmYWN0IHRo
-YXQgdGhlIGRlZmF1bHQgYWN0aW9uIGlzIEVWRU5UX1JFTU9WRS4gSWYsIGZvcgp3aGF0ZXZlciBy
-ZWFzb24sIG9uZSBtYXAgaXMgbWlzc2luZyBmcm9tIHRoZSByZXR1cm4gdmFsdWUgb2YgdGhlCkRN
-X0RFVklDRV9MSVNUIGlvY3RsLCBtdWx0aXBhdGggcmVtb3ZlcyB0aGUgbWFwIGltbWVkaWF0ZWx5
-LCBhbmQKdGhlcmUncyBub3RoaW5nIHNob3J0IG9mIGEgInJlY29uZmlndXJlIiBvciAiYWRkIG1h
-cCIgQ0xJIGNvbW1hbmQgdGhhdAp3b3VsZCByZWluc3RhdGUgdGhlIG1hcC4gSU9XLCB3ZSByZW1v
-dmUgdGhlIG1hcCBub3Qgb24gYSBrZXJuZWwgZXZlbnQKc2F5aW5nICJ0aGlzIG1hcCBoYXMgYmVl
-biByZW1vdmVkIiwgYnV0IG9uIHJlY2VpdmluZyBhIGxpc3Qgd2hlcmUgdGhpcwplbGVtZW50IGhh
-cHBlbnMgdG8gYmUgbWlzc2luZy4gV2UgaGFuZGxlIHRoaXMgZGlmZmVyZW50bHkgZm9yIHBhdGhz
-LAp3aGVyZSB3ZSB3YWl0IGZvciBhICJyZW1vdmUiIHVldmVudCBiZWZvcmUgd2UgcmVhbGx5IGRl
-bGV0ZSB0aGUgcGF0aApmcm9tIG91ciBkYXRhIHN0cnVjdHVyZXMuIChOb3RlIHRoYXQgdGhlIG1l
-c3NhZ2VzIGZpbGUgSSBzYXZlZCBmcm9tIHRoZQpldmVudCBhYm92ZSBzaG93cyBubyBzaWduIG9m
-IHN1Y2ggYW4gdWV2ZW50IGV2ZXIgYmVlaW5nIHNlbnQgLSBhcyBJCnNhaWQsIHRoZSBkbSBtYXAg
-d2FzIHN0aWxsIHByZXNlbnQgYWZ0ZXIgdGhlIGFib3ZlIG9jY3VyZWQpLgoKV2hhdCBkbyB5b3Ug
-dGhpbmsgYWJvdXQgdGhpcz8gQ291bGQgeW91IG1heWJlIGluc3BlY3QgdGhvc2UgbG9ncyBJCnRv
-b2ssIHRvIG1ha2Ugc3VyZSBJIGRpZG4ndCBnZXQgb24gYSB0b3RhbGx5IHdyb25nIHRyYWNrIGhl
-cmU/CgpSZWdhcmRzLApNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5j
-b20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxp
-eCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChB
-RyBOw7xybmJlcmcpCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
-b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On 11/21/18 11:50 AM, Martin Wilck wrote:
+> Hi Ben,
+> 
+> I recently encountered a strange and disturbing phenomenon with the
+> latest upstream code.
+> 
+> The system in question had two iSCSI connections on separate networks.
+> On one of them, I tested iSCSI disconnect and re-connects, and broken
+> storage configurations (different LUNs diffenent sizes and with the
+> same WWID). The other one was idle.
+> 
+> During one test, I observed that multipathd's internal representation
+> of the map representing the *idle* connection had vanished. The map was
+> still present on the device-mapper level, but multipathd seemed to have
+> "forgotten" it completely. The respective paths were tracked as
+> orphans.
+> 
+> Here is a log excerpt. multipathd is working on path additions for the
+> map I was testing with (149455...), when a DM event is received. Right
+> after ev_add_path() releases the lock, the idle map
+> (36001405...) is removed (not flushed, as the messages suggest).
+> 
+> Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: sdg: add path (uevent)
+> # uev_add_path->pathinfo()
+> Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: sdg: udev property SCSI_IDENT_LUN_T10 whitelisted
+> # ev_add_path()->adopt_paths()
+> Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: sde: ownership set to 149455400000000006d706174683100000000000000000000
+> ...
+> # ev_add_path->setup_map()
+> Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: 149455400000000006d706174683100000000000000000000: failback = "manual" (setting: multipath internal)
+> # ev_add_path->domap()
+> Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: 149455400000000006d706174683100000000000000000000: load table [0 2097152 multipath 0 0 3 1 service-time 0 1 1 8:64 ...
+> # ev_add_path->setup_multipath()->update-multipath_strings
+> Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: 149455400000000006d706174683100000000000000000000: disassemble map [0 0 3 1 service-time 0 1 2 8:64 1 1 service-time ...
+> # (!!!!) devmap event for LIO map
+> Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: 36001405d08f748dd4c5481f9ec22b888: devmap event #20
+> Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: sdg [8:96]: path added to devmap 149455400000000006d706174683100000000000000000000
+> # ev_add_path() returns, vecs->lock is released
+> # uev_add_path() goes on to next path, lock currently not held
+> Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: sdh: add path (uevent)
+> # (!!!!) The LIO map is flushed (36001405d08f748dd4c5481f9ec22b888)
+> # this looks like remove_map() or remove_map_and_stop_waiter()
+>> Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: sdd: orphan path, map flushed
+>> Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: sysfs prioritizer refcount 2
+>> Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: sdc: orphan path, map flushed
+> 
+> To me this looks like the map was removed by the DM event handler.
+> More detail can be found on
+> https://bugzilla.opensuse.org/show_bug.cgi?id=1116272.
+> I've also tried to reproduce the problem, with no success so far
+> (actually I haven't observed any dmevents in those reproduction
+> attempts).
+> 
+> After encountering this problem, I've scrutinized your polling dmevent
+> handler code over and over last week, but I couldn't spot any possible
+> problems :-)
+> 
+> The concern that I have is with the design of the polling dmevent API,
+> in particular the fact that the default action is EVENT_REMOVE. If, for
+> whatever reason, one map is missing from the return value of the
+> DM_DEVICE_LIST ioctl, multipath removes the map immediately, and
+> there's nothing short of a "reconfigure" or "add map" CLI command that
+> would reinstate the map. IOW, we remove the map not on a kernel event
+> saying "this map has been removed", but on receiving a list where this
+> element happens to be missing. We handle this differently for paths,
+> where we wait for a "remove" uevent before we really delete the path
+> from our data structures. (Note that the messages file I saved from the
+> event above shows no sign of such an uevent ever beeing sent - as I
+> said, the dm map was still present after the above occured).
+> 
+> What do you think about this? Could you maybe inspect those logs I
+> took, to make sure I didn't get on a totally wrong track here?
+> 
+There's an easy solution to it: drop the dmevent handling code in 
+multipath-tools completely.
+It's original design was to track _external_ map reloads, as originally 
+the maps had been setup by 'multipath', and 'multipahtd' was just 
+tracking state changes. As such multipathd needed to track those 
+changes, and it had been using dmevents for this.
+However, with the advent of udev and updates to the multipathd daemon 
+external map reloads rarely happens, and even if they happen we still 
+would be notified by uevents.
+So we might as well drop the dmevent code and rely on udev completely.
+Which is what we do nowadays anyway.
+
+Cheers,
+
+Hannes
