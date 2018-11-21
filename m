@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 07/19] libmultipath: decrease log level of
-	"disassembled" messages
-Date: Wed, 21 Nov 2018 11:18:27 +0100
-Message-ID: <20181121101839.30784-8-mwilck@suse.com>
+Subject: [PATCH 11/19] libmultipath: decrease log level of
+	"prioritizer refcount" message
+Date: Wed, 21 Nov 2018 11:18:31 +0100
+Message-ID: <20181121101839.30784-12-mwilck@suse.com>
 References: <20181121101839.30784-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,44 +22,26 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-These messages are printed from update_multipath_strings, and
-thus from check_path(), which is too much for -v3.
+This was important during development of the refcounting code, but
+now it isn't any more.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/dmparser.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ libmultipath/prio.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index 620f507d..ac13ec06 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -117,7 +117,7 @@ assemble_map (struct multipath * mp, char * params, int len)
+diff --git a/libmultipath/prio.c b/libmultipath/prio.c
+index 17acfd05..0590218d 100644
+--- a/libmultipath/prio.c
++++ b/libmultipath/prio.c
+@@ -42,7 +42,7 @@ void free_prio (struct prio * p)
+ 		return;
+ 	p->refcount--;
+ 	if (p->refcount) {
+-		condlog(3, "%s prioritizer refcount %d",
++		condlog(4, "%s prioritizer refcount %d",
+ 			p->name, p->refcount);
+ 		return;
  	}
- 
- 	FREE(f);
--	condlog(3, "%s: assembled map [%s]", mp->alias, params);
-+	condlog(4, "%s: assembled map [%s]", mp->alias, params);
- 	return 0;
- 
- err:
-@@ -145,7 +145,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
- 
- 	p = params;
- 
--	condlog(3, "%s: disassemble map [%s]", mpp->alias, params);
-+	condlog(4, "%s: disassemble map [%s]", mpp->alias, params);
- 
- 	/*
- 	 * features
-@@ -410,7 +410,7 @@ int disassemble_status(char *params, struct multipath *mpp)
- 
- 	p = params;
- 
--	condlog(3, "%s: disassemble status [%s]", mpp->alias, params);
-+	condlog(4, "%s: disassemble status [%s]", mpp->alias, params);
- 
- 	/*
- 	 * features
 -- 
 2.19.1
