@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 13/19] libmultipath: simplify devt2devname()
-Date: Wed, 21 Nov 2018 11:18:33 +0100
-Message-ID: <20181121101839.30784-14-mwilck@suse.com>
+Subject: [PATCH 08/19] libmultipath: decrease log level of word
+	splitting
+Date: Wed, 21 Nov 2018 11:18:28 +0100
+Message-ID: <20181121101839.30784-9-mwilck@suse.com>
 References: <20181121101839.30784-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,40 +22,25 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Since 1e79548, we don't fallback from /sys/dev/block to
-/proc/partitions anyway. The strncmp() at "skip_proc"
-is doomed to fail. So we might as well return immediately.
-
-Also, decrease the log level; whether this failure is
-noteworthy is rather up to the callers to decide.
+This will make log level 4 actually usable.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/util.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ libmultipath/util.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/libmultipath/util.c b/libmultipath/util.c
-index b5d2e706..28eb7577 100644
+index 66c47611..b5d2e706 100644
 --- a/libmultipath/util.c
 +++ b/libmultipath/util.c
-@@ -191,7 +191,8 @@ int devt2devname(char *devname, int devname_len, char *devt)
- 				return 0;
- 			}
- 		}
--		goto skip_proc;
-+		condlog(4, "%s is invalid", block_path);
-+		return 1;
+@@ -104,7 +104,7 @@ get_word (char * sentence, char ** word)
  	}
- 	memset(block_path, 0, sizeof(block_path));
+ 	strncpy(*word, sentence, len);
+ 	strchop(*word);
+-	condlog(4, "*word = %s, len = %i", *word, len);
++	condlog(5, "*word = %s, len = %i", *word, len);
  
-@@ -220,7 +221,7 @@ int devt2devname(char *devname, int devname_len, char *devt)
- 		}
- 	}
- 	fclose(fd);
--skip_proc:
-+
- 	if (strncmp(block_path,"/sys/block", 10)) {
- 		condlog(3, "No device found for %u:%u", major, minor);
- 		return 1;
+ 	if (*p == '\0')
+ 		return 0;
 -- 
 2.19.1
