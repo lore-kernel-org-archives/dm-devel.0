@@ -1,11 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 00/19] multipath-tools: improve logging at -v3
-Date: Wed, 21 Nov 2018 11:18:20 +0100
-Message-ID: <20181121101839.30784-1-mwilck@suse.com>
+Subject: [PATCH 01/19] tests/hwtable: set multipath_dir in local
+	configuration
+Date: Wed, 21 Nov 2018 11:18:21 +0100
+Message-ID: <20181121101839.30784-2-mwilck@suse.com>
+References: <20181121101839.30784-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20181121101839.30784-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,69 +22,66 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Hi Christophe,
+If internal libmultipath APIs change (such as, recently, the
+checker API), test programs will fail because they'll link
+with the standard system prioritizer / checker / foreign APIs.
 
-most of the patches in this series reduce log levels of frequently
-printed messages at verbosity level 3. My goal was to limit the
-output of multipathd to one line per path per checker invocation,
-which is sufficient to track multipathd's view of path health in
-the logs.
+Make sure we always link with our own shared libraries.
 
-The standard setting of -v2 is not enough for post-mortem analysis of many
-failures. With this series, running multipathd with verbosity 3 becomes a
-realistic option even in production environments. So far the amount of output
-from multipathd with -v3 pretty much made this impossible, at least over
-longer time periods, and also made reading these logs very cumbersome due to
-the amount of redundant partly superfluos verbosity. I've taken care not
-to loose important information in the logs.
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ tests/Makefile  | 7 ++++++-
+ tests/hwtable.c | 5 +++++
+ 2 files changed, 11 insertions(+), 1 deletion(-)
 
-Apart from that, the series fixes errors in the unit tests introduced by my
-last "checker overhaul" patch series (proving that I forgot to run the
-tests before submitting :-( ), and fixes a problem that I found while testing
-handling of a bad configuration (paths with size mismatch).
-
-Regards,
-Martin
-
-Martin Wilck (19):
-  tests/hwtable: set multipath_dir in local configuration
-  tests/hwtable: adjust to new checker API
-  multipath-tools: decrease verbosity of state messages
-  libmultipath: decrease verbosity of pathinfo messages
-  libmultipath: decrease verbosity of TUR checker messages
-  libmultipath: avoid frequent messages from filter_property()
-  libmultipath: decrease log level of "disassembled" messages
-  libmultipath: decrease log level of word splitting
-  libmultipath: increase log level of map removal
-  multipathd: decrease log level of checker timing
-  libmultipath: decrease log level of "prioritizer refcount" message
-  libmpathpersist/update_map_pr: decrease log level for nop
-  libmultipath: simplify devt2devname()
-  libmultipath: decrease log level for failed VPD c9
-  libmultipath: adopt_paths: check for size match
-  libmultipath: coalesce_paths: fix size mismatch handling
-  tests: add unit tests for bitmask functions
-  multipathd: uev_remove_path: remove redundant orphan_paths call
-  libmultipath: improve logging from orphan_paths
-
- libmpathpersist/mpath_persist.c |  3 +-
- libmultipath/blacklist.c        | 54 +++++++++---------
- libmultipath/blacklist.h        |  2 +-
- libmultipath/checkers/tur.c     |  6 +-
- libmultipath/configure.c        | 39 +++++++++----
- libmultipath/discovery.c        | 20 ++++---
- libmultipath/dmparser.c         |  6 +-
- libmultipath/prio.c             |  2 +-
- libmultipath/structs_vec.c      | 18 ++++--
- libmultipath/structs_vec.h      |  3 +-
- libmultipath/util.c             |  7 ++-
- libmultipath/util.h             | 16 ++++++
- multipathd/main.c               | 24 ++++----
- tests/Makefile                  |  7 ++-
- tests/blacklist.c               |  7 ++-
- tests/hwtable.c                 | 89 ++++++++++++++++--------------
- tests/util.c                    | 98 +++++++++++++++++++++++++++++++++
- 17 files changed, 278 insertions(+), 123 deletions(-)
-
+diff --git a/tests/Makefile b/tests/Makefile
+index b37b5027..ef900866 100644
+--- a/tests/Makefile
++++ b/tests/Makefile
+@@ -26,7 +26,11 @@ hwtable-test_LIBDEPS := -ludev -lpthread -ldl
+ blacklist-test_OBJDEPS := ../libmultipath/blacklist.o
+ blacklist-test_LIBDEPS := -ludev
+ 
+-%.out:	%-test
++lib/libchecktur.so:
++	mkdir lib
++	ln -t lib ../libmultipath/{checkers,prioritizers,foreign}/*.so
++
++%.out:	%-test lib/libchecktur.so
+ 	@echo == running $< ==
+ 	@LD_LIBRARY_PATH=$(multipathdir):$(mpathcmddir) ./$< >$@
+ 
+@@ -34,6 +38,7 @@ OBJS = $(TESTS:%=%.o) test-lib.o
+ 
+ clean: dep_clean
+ 	$(RM) $(TESTS:%=%-test) $(TESTS:%=%.out) $(OBJS)
++	$(RM) -rf lib
+ 
+ .SECONDARY: $(OBJS)
+ 
+diff --git a/tests/hwtable.c b/tests/hwtable.c
+index 9146ecc3..1cd788ac 100644
+--- a/tests/hwtable.c
++++ b/tests/hwtable.c
+@@ -250,14 +250,19 @@ static void write_defaults(const struct hwt_state *hwt)
+ 	static struct key_value defaults[] = {
+ 		{ "config_dir", NULL },
+ 		{ "bindings_file", NULL },
++		{ "multipath_dir", NULL },
+ 		{ "detect_prio", "no" },
+ 		{ "detect_checker", "no" },
+ 	};
+ 	char buf[sizeof(tmplate) + sizeof(bindings_name)];
++	char dirbuf[PATH_MAX];
+ 
+ 	snprintf(buf, sizeof(buf), "%s/%s", hwt->tmpname, bindings_name);
+ 	defaults[0].value = hwt->dirname;
+ 	defaults[1].value = buf;
++	assert_ptr_not_equal(getcwd(dirbuf, sizeof(dirbuf)), NULL);
++	strncat(dirbuf, "/lib", sizeof(dirbuf));
++	defaults[2].value = dirbuf;
+ 	write_section(hwt->config_file, "defaults",
+ 		      ARRAY_SIZE(defaults), defaults);
+ }
 -- 
 2.19.1
