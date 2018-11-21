@@ -1,85 +1,110 @@
-From: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
-Subject: [RFC PATCH v2 0/3] realize dax_operations for dm-snapshot
-Date: Wed, 21 Nov 2018 11:26:59 +0800
-Message-ID: <20181121032702.3048-1-yehs2007@zoho.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: [PATCH V11 10/19] block: loop: pass multi-page bvec to
+	iov_iter
+Date: Wed, 21 Nov 2018 11:23:18 +0800
+Message-ID: <20181121032327.8434-11-ming.lei@redhat.com>
+References: <20181121032327.8434-1-ming.lei@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, zwisler-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, vishal.l.verma-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20181121032327.8434-1-ming.lei@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, "Darrick J . Wong" <darrick.wong@oracle.com>, Omar Sandoval <osandov@fb.com>, cluster-devel@redhat.com, linux-ext4@vger.kernel.org, Shaohua Li <shli@kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, Boaz Harrosh <ooo@electrozaur.com>, Gao Xiang <gaoxiang25@huawei.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, Bob Peterson <rpeterso@redhat.com>, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Dave Chinner <dchinner@redhat.com>, David Sterba <dsterba@suse.com>, Ming Lei <ming.lei@redhat.com>, linux-block@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
+iov_iter is implemented on bvec itererator helpers, so it is safe to pass
+multi-page bvec to it, and this way is much more efficient than passing one
+page in each bvec.
 
-Changes
-v1->v2:
-	Add NULL funtions for origin_dax_direct_access and
-	origin_dax_copy_from/to_iter in order to avoid building
-	error when CONFIG_DAX_DRIVER has NOT been enabled.
+Signed-off-by: Ming Lei <ming.lei@redhat.com>
+---
+ drivers/block/loop.c   | 20 ++++++++++----------
+ include/linux/blkdev.h |  4 ++++
+ 2 files changed, 14 insertions(+), 10 deletions(-)
 
-[v1]: https://lkml.org/lkml/2018/11/20/759
-
-This series patches are used to realize the dax_operations for dm-snapshot
-with persistent memory device.
-
-Here are the steps about how to verify the function.
-
-1. Configure the persistent memory to fs-dax mode and create namespace with ndctl;
-2. find them in /dev;
-  # ndctl list
-  {
-    "dev":"namespace0.0",
-    "mode":"fsdax",
-    "map":"dev",
-    "size":132118478848,
-    "sector_size":512,
-    "blockdev":"pmem0",
-    "name":"yhs_pmem0",
-    "numa_node":0
-  },
-3. create lv_pmem (here is 4G size) for testing;
-   # pvcreate /dev/pmem0
-   # vgcreate vg_pmem /dev/pmem0
-   # lvcreate  -L 4G -n lv_pmem vg_pmem
-4. create filesystem (ext2 or ext4) to /dev/pmem0
-   # mkfs.ext2 -b 4096 /dev/vg_pmem/lv_pmem
-5. mount pmem with DAX way;
-   # mkdir /mnt/lv_pmem
-   # mount -o dax /dev/vg_pmem/lv_pmem /mnt/lv_pmem/
-6. cp some files to /mnt/lv_pmem;
-   # cp linear_table03.log /mnt/lv_pmem/
-   # cp test0.log /mnt/lv_pmem/
-7. create snapshot for test (here I limit it to 1G size);
-   # lvcreate -L 1G -n snap_pmem -s /dev/vg_pmem/lv_pmem
-8. modify the files copied with vim or copy more other new files;
-   # vim /mnt/lv_pmem/test0.log
-9. umount the pmem device;
-   # umount /mnt/lv_pmem/
-10.merge the snapshot back to origin;
-   # lvconvert --merge /dev/vg_pmem/snap_pmem
-11.mount pmem device again for checking the content of files;
-   # mount -o dax /dev/vg_pmem/lv_pmem /mnt/lv_pmem/
-
-Huaisheng Ye (3):
-  dm: enable dax_operations for dm-snapshot
-  dm: expand hc_map in mapped_device for lack of map
-  dm: expand valid types for dm-ioctl
-
- drivers/md/dm-core.h  |  1 +
- drivers/md/dm-ioctl.c |  4 +++-
- drivers/md/dm-snap.c  | 51 +++++++++++++++++++++++++++++++++++++++++++++++++--
- drivers/md/dm.c       | 15 +++++++++++++++
- 4 files changed, 68 insertions(+), 3 deletions(-)
-
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index 176ab1f28eca..e3683211f12d 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -510,21 +510,22 @@ static int lo_rw_aio(struct loop_device *lo, struct loop_cmd *cmd,
+ 		     loff_t pos, bool rw)
+ {
+ 	struct iov_iter iter;
++	struct req_iterator rq_iter;
+ 	struct bio_vec *bvec;
+ 	struct request *rq = blk_mq_rq_from_pdu(cmd);
+ 	struct bio *bio = rq->bio;
+ 	struct file *file = lo->lo_backing_file;
++	struct bio_vec tmp;
+ 	unsigned int offset;
+-	int segments = 0;
++	int nr_bvec = 0;
+ 	int ret;
+ 
++	rq_for_each_bvec(tmp, rq, rq_iter)
++		nr_bvec++;
++
+ 	if (rq->bio != rq->biotail) {
+-		struct req_iterator iter;
+-		struct bio_vec tmp;
+ 
+-		__rq_for_each_bio(bio, rq)
+-			segments += bio_segments(bio);
+-		bvec = kmalloc_array(segments, sizeof(struct bio_vec),
++		bvec = kmalloc_array(nr_bvec, sizeof(struct bio_vec),
+ 				     GFP_NOIO);
+ 		if (!bvec)
+ 			return -EIO;
+@@ -533,10 +534,10 @@ static int lo_rw_aio(struct loop_device *lo, struct loop_cmd *cmd,
+ 		/*
+ 		 * The bios of the request may be started from the middle of
+ 		 * the 'bvec' because of bio splitting, so we can't directly
+-		 * copy bio->bi_iov_vec to new bvec. The rq_for_each_segment
++		 * copy bio->bi_iov_vec to new bvec. The rq_for_each_bvec
+ 		 * API will take care of all details for us.
+ 		 */
+-		rq_for_each_segment(tmp, rq, iter) {
++		rq_for_each_bvec(tmp, rq, rq_iter) {
+ 			*bvec = tmp;
+ 			bvec++;
+ 		}
+@@ -550,11 +551,10 @@ static int lo_rw_aio(struct loop_device *lo, struct loop_cmd *cmd,
+ 		 */
+ 		offset = bio->bi_iter.bi_bvec_done;
+ 		bvec = __bvec_iter_bvec(bio->bi_io_vec, bio->bi_iter);
+-		segments = bio_segments(bio);
+ 	}
+ 	atomic_set(&cmd->ref, 2);
+ 
+-	iov_iter_bvec(&iter, rw, bvec, segments, blk_rq_bytes(rq));
++	iov_iter_bvec(&iter, rw, bvec, nr_bvec, blk_rq_bytes(rq));
+ 	iter.iov_offset = offset;
+ 
+ 	cmd->iocb.ki_pos = pos;
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 1ad6eafc43f2..a281b6737b61 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -805,6 +805,10 @@ struct req_iterator {
+ 	__rq_for_each_bio(_iter.bio, _rq)			\
+ 		bio_for_each_segment(bvl, _iter.bio, _iter.iter)
+ 
++#define rq_for_each_bvec(bvl, _rq, _iter)			\
++	__rq_for_each_bio(_iter.bio, _rq)			\
++		bio_for_each_bvec(bvl, _iter.bio, _iter.iter)
++
+ #define rq_iter_last(bvec, _iter)				\
+ 		(_iter.bio->bi_next == NULL &&			\
+ 		 bio_iter_last(bvec, _iter.iter))
 -- 
-1.8.3.1
+2.9.5
