@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 01/19] tests/hwtable: set multipath_dir in local
-	configuration
-Date: Wed, 21 Nov 2018 11:18:21 +0100
-Message-ID: <20181121101839.30784-2-mwilck@suse.com>
+Subject: [PATCH 09/19] libmultipath: increase log level of map
+	removal
+Date: Wed, 21 Nov 2018 11:18:29 +0100
+Message-ID: <20181121101839.30784-10-mwilck@suse.com>
 References: <20181121101839.30784-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,66 +22,50 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-If internal libmultipath APIs change (such as, recently, the
-checker API), test programs will fail because they'll link
-with the standard system prioritizer / checker / foreign APIs.
-
-Make sure we always link with our own shared libraries.
+This is an important event which we want to see with -v3.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/Makefile  | 7 ++++++-
- tests/hwtable.c | 5 +++++
- 2 files changed, 11 insertions(+), 1 deletion(-)
+ libmultipath/structs_vec.c | 6 +++---
+ multipathd/main.c          | 1 +
+ 2 files changed, 4 insertions(+), 3 deletions(-)
 
-diff --git a/tests/Makefile b/tests/Makefile
-index b37b5027..ef900866 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -26,7 +26,11 @@ hwtable-test_LIBDEPS := -ludev -lpthread -ldl
- blacklist-test_OBJDEPS := ../libmultipath/blacklist.o
- blacklist-test_LIBDEPS := -ludev
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index c85823a0..561ff4ac 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -113,8 +113,6 @@ remove_map(struct multipath * mpp, struct vectors * vecs, int purge_vec)
+ {
+ 	int i;
  
--%.out:	%-test
-+lib/libchecktur.so:
-+	mkdir lib
-+	ln -t lib ../libmultipath/{checkers,prioritizers,foreign}/*.so
-+
-+%.out:	%-test lib/libchecktur.so
- 	@echo == running $< ==
- 	@LD_LIBRARY_PATH=$(multipathdir):$(mpathcmddir) ./$< >$@
- 
-@@ -34,6 +38,7 @@ OBJS = $(TESTS:%=%.o) test-lib.o
- 
- clean: dep_clean
- 	$(RM) $(TESTS:%=%-test) $(TESTS:%=%.out) $(OBJS)
-+	$(RM) -rf lib
- 
- .SECONDARY: $(OBJS)
- 
-diff --git a/tests/hwtable.c b/tests/hwtable.c
-index 9146ecc3..1cd788ac 100644
---- a/tests/hwtable.c
-+++ b/tests/hwtable.c
-@@ -250,14 +250,19 @@ static void write_defaults(const struct hwt_state *hwt)
- 	static struct key_value defaults[] = {
- 		{ "config_dir", NULL },
- 		{ "bindings_file", NULL },
-+		{ "multipath_dir", NULL },
- 		{ "detect_prio", "no" },
- 		{ "detect_checker", "no" },
- 	};
- 	char buf[sizeof(tmplate) + sizeof(bindings_name)];
-+	char dirbuf[PATH_MAX];
- 
- 	snprintf(buf, sizeof(buf), "%s/%s", hwt->tmpname, bindings_name);
- 	defaults[0].value = hwt->dirname;
- 	defaults[1].value = buf;
-+	assert_ptr_not_equal(getcwd(dirbuf, sizeof(dirbuf)), NULL);
-+	strncat(dirbuf, "/lib", sizeof(dirbuf));
-+	defaults[2].value = dirbuf;
- 	write_section(hwt->config_file, "defaults",
- 		      ARRAY_SIZE(defaults), defaults);
+-	condlog(4, "%s: remove multipath map", mpp->alias);
+-
+ 	/*
+ 	 * clear references to this map
+ 	 */
+@@ -134,8 +132,10 @@ void
+ remove_map_by_alias(const char *alias, struct vectors * vecs, int purge_vec)
+ {
+ 	struct multipath * mpp = find_mp_by_alias(vecs->mpvec, alias);
+-	if (mpp)
++	if (mpp) {
++		condlog(2, "%s: removing map by alias", alias);
+ 		remove_map(mpp, vecs, purge_vec);
++	}
  }
+ 
+ void
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 88ae4903..b961de53 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -334,6 +334,7 @@ remove_map_and_stop_waiter(struct multipath *mpp, struct vectors *vecs)
+ {
+ 	/* devices are automatically removed by the dmevent polling code,
+ 	 * so they don't need to be manually removed here */
++	condlog(3, "%s: removing map from internal tables", mpp->alias);
+ 	if (!poll_dmevents)
+ 		stop_waiter_thread(mpp, vecs);
+ 	remove_map(mpp, vecs, PURGE_VEC);
 -- 
 2.19.1
