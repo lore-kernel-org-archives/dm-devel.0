@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 12/19] libmpathpersist/update_map_pr: decrease
-	log level for nop
-Date: Wed, 21 Nov 2018 11:18:32 +0100
-Message-ID: <20181121101839.30784-13-mwilck@suse.com>
+Subject: [PATCH 03/19] multipath-tools: decrease verbosity of
+	state messages
+Date: Wed, 21 Nov 2018 11:18:23 +0100
+Message-ID: <20181121101839.30784-4-mwilck@suse.com>
 References: <20181121101839.30784-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,26 +22,76 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-No need to log at -v3 if nothing to do.
+With verbosity level 3, thousands of "path state = running" messages
+are logged, which are pretty much irrelevant, as the checker state
+takes precedence. Also the "get_state" message is totally useless.
+
+With this patch, the path state is reported exactly once per path
+and check.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmpathpersist/mpath_persist.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ libmultipath/discovery.c |  4 +---
+ multipathd/main.c        | 18 ++++++++++--------
+ 2 files changed, 11 insertions(+), 11 deletions(-)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 2ffe56ea..0b9c7149 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -889,7 +889,8 @@ int update_map_pr(struct multipath *mpp)
- 	if (!get_be64(mpp->reservation_key))
- 	{
- 		/* Nothing to do. Assuming pr mgmt feature is disabled*/
--		condlog(3, "%s: reservation_key not set in multipath.conf", mpp->alias);
-+		condlog(4, "%s: reservation_key not set in multipath.conf",
-+			mpp->alias);
- 		return MPATH_PR_SUCCESS;
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 63558ad8..f9a59011 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1433,7 +1433,7 @@ path_offline (struct path * pp)
  	}
  
+ 
+-	condlog(3, "%s: path state = %s", pp->dev, buff);
++	condlog(4, "%s: path state = %s", pp->dev, buff);
+ 
+ 	if (pp->bus == SYSFS_BUS_SCSI) {
+ 		if (!strncmp(buff, "offline", 7)) {
+@@ -1552,8 +1552,6 @@ get_state (struct path * pp, struct config *conf, int daemon, int oldstate)
+ 	struct checker * c = &pp->checker;
+ 	int state;
+ 
+-	condlog(3, "%s: get_state", pp->dev);
+-
+ 	if (!checker_selected(c)) {
+ 		if (daemon) {
+ 			if (pathinfo(pp, conf, DI_SYSFS) != PATHINFO_OK) {
+diff --git a/multipathd/main.c b/multipathd/main.c
+index cc555bb7..88ae4903 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1909,6 +1909,16 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	pp->tick = checkint;
+ 
+ 	newstate = path_offline(pp);
++	if (newstate == PATH_UP) {
++		conf = get_multipath_config();
++		pthread_cleanup_push(put_multipath_config, conf);
++		newstate = get_state(pp, conf, 1, newstate);
++		pthread_cleanup_pop(1);
++	} else {
++		checker_clear_message(&pp->checker);
++		condlog(3, "%s: state %s, checker not called",
++			pp->dev, checker_state_name(newstate));
++	}
+ 	/*
+ 	 * Wait for uevent for removed paths;
+ 	 * some LLDDs like zfcp keep paths unavailable
+@@ -1917,14 +1927,6 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	if (newstate == PATH_REMOVED)
+ 		newstate = PATH_DOWN;
+ 
+-	if (newstate == PATH_UP) {
+-		conf = get_multipath_config();
+-		pthread_cleanup_push(put_multipath_config, conf);
+-		newstate = get_state(pp, conf, 1, newstate);
+-		pthread_cleanup_pop(1);
+-	} else
+-		checker_clear_message(&pp->checker);
+-
+ 	if (pp->wwid_changed) {
+ 		condlog(2, "%s: path wwid has changed. Refusing to use",
+ 			pp->dev);
 -- 
 2.19.1
