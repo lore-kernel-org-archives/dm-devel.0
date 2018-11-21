@@ -1,59 +1,156 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH V10 09/19] block: introduce bio_bvecs()
-Date: Wed, 21 Nov 2018 18:19:38 +0800
-Message-ID: <20181121101937.GA16204@ming.t460p>
-References: <002fe56b-25e4-573e-c09b-bb12c3e8d25a@grimberg.me>
- <20181120161651.GB2629@lst.de>
- <53526aae-fb9b-ee38-0a01-e5899e2d4e4d@grimberg.me>
- <20181121005902.GA31748@ming.t460p>
- <2d9bee7a-f010-dcf4-1184-094101058584@grimberg.me>
- <20181121034415.GA8408@ming.t460p>
- <2a47d336-c19b-6bf4-c247-d7382871eeea@grimberg.me>
- <7378bf49-5a7e-5622-d4d1-808ba37ce656@grimberg.me>
- <20181121050359.GA31915@ming.t460p>
- <fc268b0e-61b5-aacc-67be-cb7b266c6d8f@grimberg.me>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH 17/19] tests: add unit tests for bitmask functions
+Date: Wed, 21 Nov 2018 11:18:37 +0100
+Message-ID: <20181121101839.30784-18-mwilck@suse.com>
+References: <20181121101839.30784-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <fc268b0e-61b5-aacc-67be-cb7b266c6d8f@grimberg.me>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Sagi Grimberg <sagi@grimberg.me>
-Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-erofs@lists.ozlabs.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, Bob Peterson <rpeterso@r>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20181121101839.30784-1-mwilck@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 20, 2018 at 09:35:07PM -0800, Sagi Grimberg wrote:
-> 
-> > > Wait, I see that the bvec is still a single array per bio. When you said
-> > > a table I thought you meant a 2-dimentional array...
-> > 
-> > I mean a new 1-d table A has to be created for multiple bios in one rq,
-> > and build it in the following way
-> > 
-> >             rq_for_each_bvec(tmp, rq, rq_iter)
-> >                      *A = tmp;
-> > 
-> > Then you can pass A to iov_iter_bvec() & send().
-> > 
-> > Given it is over TCP, I guess it should be doable for you to preallocate one
-> > 256-bvec table in one page for each request, then sets the max segment size as
-> > (unsigned int)-1, and max segment number as 256, the preallocated table
-> > should work anytime.
-> 
-> 256 bvec table is really a lot to preallocate, especially when its not
-> needed, I can easily initialize the bvec_iter on the bio bvec. If this
-> involves preallocation of the worst-case than I don't consider this to
-> be an improvement.
+Add unit tests for the bitmask management functions the previous
+patch added in util.h.
 
-If you don't provide one single bvec table, I understand you may not send
-this req via one send().
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ tests/util.c | 98 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 98 insertions(+)
 
-The bvec_iter initialization is easy to do:
-
-	bvec_iter = bio->bi_iter
-
-when you move to a new a bio, please refer to  __bio_for_each_bvec() or
-__bio_for_each_segment().
-
-Thanks,
-Ming
+diff --git a/tests/util.c b/tests/util.c
+index 839effd2..e6d4b9ab 100644
+--- a/tests/util.c
++++ b/tests/util.c
+@@ -26,6 +26,8 @@
+ 
+ #include "globals.c"
+ 
++#define BITARR_SZ 4
++
+ static void test_basenamecpy_good0(void **state)
+ {
+ 	char dst[10];
+@@ -139,6 +141,100 @@ static void test_basenamecpy_bad5(void **state)
+         assert_int_equal(basenamecpy("baz/qux", NULL, sizeof(dst)), 0);
+ }
+ 
++static void test_bitmask_1(void **state)
++{
++	uint64_t arr[BITARR_SZ];
++	int i, j, k, m, b;
++
++	memset(arr, 0, sizeof(arr));
++
++	for (j = 0; j < BITARR_SZ; j++) {
++		for (i = 0; i < 64; i++) {
++			b = 64 * j + i;
++			assert(!is_bit_set_in_array(b, arr));
++			set_bit_in_array(b, arr);
++			for (k = 0; k < BITARR_SZ; k++) {
++				printf("b = %d j = %d k = %d a = %"PRIx64"\n",
++				       b, j, k, arr[k]);
++				if (k == j)
++					assert_int_equal(arr[j], 1ULL << i);
++				else
++					assert_int_equal(arr[k], 0ULL);
++			}
++			for (m = 0; m < 64; m++)
++				if (i == m)
++					assert(is_bit_set_in_array(64 * j + m,
++								   arr));
++				else
++					assert(!is_bit_set_in_array(64 * j + m,
++								    arr));
++			clear_bit_in_array(b, arr);
++			assert(!is_bit_set_in_array(b, arr));
++			for (k = 0; k < BITARR_SZ; k++)
++				assert_int_equal(arr[k], 0ULL);
++		}
++	}
++}
++
++static void test_bitmask_2(void **state)
++{
++	uint64_t arr[BITARR_SZ];
++	int i, j, k, m, b;
++
++	memset(arr, 0, sizeof(arr));
++
++	for (j = 0; j < BITARR_SZ; j++) {
++		for (i = 0; i < 64; i++) {
++			b = 64 * j + i;
++			assert(!is_bit_set_in_array(b, arr));
++			set_bit_in_array(b, arr);
++			for (m = 0; m < 64; m++)
++				if (m <= i)
++					assert(is_bit_set_in_array(64 * j + m,
++								   arr));
++				else
++					assert(!is_bit_set_in_array(64 * j + m,
++								    arr));
++			assert(is_bit_set_in_array(b, arr));
++			for (k = 0; k < BITARR_SZ; k++) {
++				if (k < j || (k == j && i == 63))
++					assert_int_equal(arr[k], ~0ULL);
++				else if (k > j)
++					assert_int_equal(arr[k], 0ULL);
++				else
++					assert_int_equal(
++						arr[k],
++						(1ULL << (i + 1)) - 1);
++			}
++		}
++	}
++	for (j = 0; j < BITARR_SZ; j++) {
++		for (i = 0; i < 64; i++) {
++			b = 64 * j + i;
++			assert(is_bit_set_in_array(b, arr));
++			clear_bit_in_array(b, arr);
++			for (m = 0; m < 64; m++)
++				if (m <= i)
++					assert(!is_bit_set_in_array(64 * j + m,
++								    arr));
++				else
++					assert(is_bit_set_in_array(64 * j + m,
++								   arr));
++			assert(!is_bit_set_in_array(b, arr));
++			for (k = 0; k < BITARR_SZ; k++) {
++				if (k < j || (k == j && i == 63))
++					assert_int_equal(arr[k], 0ULL);
++				else if (k > j)
++					assert_int_equal(arr[k], ~0ULL);
++				else
++					assert_int_equal(
++						arr[k],
++						~((1ULL << (i + 1)) - 1));
++			}
++		}
++	}
++}
++
+ int test_basenamecpy(void)
+ {
+ 	const struct CMUnitTest tests[] = {
+@@ -156,6 +252,8 @@ int test_basenamecpy(void)
+ 		cmocka_unit_test(test_basenamecpy_bad3),
+ 		cmocka_unit_test(test_basenamecpy_bad4),
+ 		cmocka_unit_test(test_basenamecpy_bad5),
++		cmocka_unit_test(test_bitmask_1),
++		cmocka_unit_test(test_bitmask_2),
+ 	};
+ 	return cmocka_run_group_tests(tests, NULL, NULL);
+ }
+-- 
+2.19.1
