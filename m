@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 05/19] libmultipath: decrease verbosity of TUR
-	checker messages
-Date: Wed, 21 Nov 2018 11:18:25 +0100
-Message-ID: <20181121101839.30784-6-mwilck@suse.com>
+Subject: [PATCH 07/19] libmultipath: decrease log level of
+	"disassembled" messages
+Date: Wed, 21 Nov 2018 11:18:27 +0100
+Message-ID: <20181121101839.30784-8-mwilck@suse.com>
 References: <20181121101839.30784-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,44 +22,44 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The thread startup/stop messages aren't very interesting.
-Decrease their verbosity level to v4.
+These messages are printed from update_multipath_strings, and
+thus from check_path(), which is too much for -v3.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/tur.c | 6 +++---
+ libmultipath/dmparser.c | 6 +++---
  1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 63b19624..6b08dbbb 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -261,7 +261,7 @@ static void *tur_thread(void *ctx)
- 	tur_thread_cleanup_push(ct);
- 	rcu_register_thread();
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index 620f507d..ac13ec06 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -117,7 +117,7 @@ assemble_map (struct multipath * mp, char * params, int len)
+ 	}
  
--	condlog(3, "%d:%d : tur checker starting up", major(ct->devt),
-+	condlog(4, "%d:%d : tur checker starting up", major(ct->devt),
- 		minor(ct->devt));
+ 	FREE(f);
+-	condlog(3, "%s: assembled map [%s]", mp->alias, params);
++	condlog(4, "%s: assembled map [%s]", mp->alias, params);
+ 	return 0;
  
- 	tur_deep_sleep(ct);
-@@ -275,7 +275,7 @@ static void *tur_thread(void *ctx)
- 	pthread_cond_signal(&ct->active);
- 	pthread_mutex_unlock(&ct->lock);
+ err:
+@@ -145,7 +145,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
  
--	condlog(3, "%d:%d : tur checker finished, state %s", major(ct->devt),
-+	condlog(4, "%d:%d : tur checker finished, state %s", major(ct->devt),
- 		minor(ct->devt), checker_state_name(state));
+ 	p = params;
  
- 	running = uatomic_xchg(&ct->running, 0);
-@@ -415,7 +415,7 @@ int libcheck_check(struct checker * c)
- 		}
- 		pthread_mutex_unlock(&ct->lock);
- 		if (tur_status == PATH_PENDING) {
--			condlog(3, "%d:%d : tur checker still running",
-+			condlog(4, "%d:%d : tur checker still running",
- 				major(ct->devt), minor(ct->devt));
- 		} else {
- 			int running = uatomic_xchg(&ct->running, 0);
+-	condlog(3, "%s: disassemble map [%s]", mpp->alias, params);
++	condlog(4, "%s: disassemble map [%s]", mpp->alias, params);
+ 
+ 	/*
+ 	 * features
+@@ -410,7 +410,7 @@ int disassemble_status(char *params, struct multipath *mpp)
+ 
+ 	p = params;
+ 
+-	condlog(3, "%s: disassemble status [%s]", mpp->alias, params);
++	condlog(4, "%s: disassemble status [%s]", mpp->alias, params);
+ 
+ 	/*
+ 	 * features
 -- 
 2.19.1
