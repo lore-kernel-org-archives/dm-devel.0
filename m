@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 10/19] multipathd: decrease log level of checker
-	timing
-Date: Wed, 21 Nov 2018 11:18:30 +0100
-Message-ID: <20181121101839.30784-11-mwilck@suse.com>
+Subject: [PATCH 18/19] multipathd: uev_remove_path: remove
+	redundant orphan_paths call
+Date: Wed, 21 Nov 2018 11:18:38 +0100
+Message-ID: <20181121101839.30784-19-mwilck@suse.com>
 References: <20181121101839.30784-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,28 +22,25 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-These messages, printed for every checker invocation, were helpful
-in the past but they don't make much sense under normal operations.
-The same information can be derived from journal time stamps on
-recent Linux distributions.
+The remove_map_and_stop_waiter() call which follows immediately
+will do the same thing.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipathd/main.c | 1 -
+ 1 file changed, 1 deletion(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index b961de53..79c8ed1e 100644
+index 79c8ed1e..0c248046 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -2267,7 +2267,7 @@ checkerloop (void *ap)
- 			if (num_paths) {
- 				unsigned int max_checkint;
+@@ -787,7 +787,6 @@ uev_remove_map (struct uevent * uev, struct vectors * vecs)
+ 		goto out;
+ 	}
  
--				condlog(3, "checked %d path%s in %lu.%06lu secs",
-+				condlog(4, "checked %d path%s in %lu.%06lu secs",
- 					num_paths, num_paths > 1 ? "s" : "",
- 					diff_time.tv_sec,
- 					diff_time.tv_nsec / 1000);
+-	orphan_paths(vecs->pathvec, mpp);
+ 	remove_map_and_stop_waiter(mpp, vecs);
+ out:
+ 	lock_cleanup_pop(vecs->lock);
 -- 
 2.19.1
