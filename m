@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 08/19] libmultipath: decrease log level of word
-	splitting
-Date: Wed, 21 Nov 2018 11:18:28 +0100
-Message-ID: <20181121101839.30784-9-mwilck@suse.com>
+Subject: [PATCH 05/19] libmultipath: decrease verbosity of TUR
+	checker messages
+Date: Wed, 21 Nov 2018 11:18:25 +0100
+Message-ID: <20181121101839.30784-6-mwilck@suse.com>
 References: <20181121101839.30784-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,25 +22,44 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This will make log level 4 actually usable.
+The thread startup/stop messages aren't very interesting.
+Decrease their verbosity level to v4.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/util.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/checkers/tur.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index 66c47611..b5d2e706 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -104,7 +104,7 @@ get_word (char * sentence, char ** word)
- 	}
- 	strncpy(*word, sentence, len);
- 	strchop(*word);
--	condlog(4, "*word = %s, len = %i", *word, len);
-+	condlog(5, "*word = %s, len = %i", *word, len);
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index 63b19624..6b08dbbb 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -261,7 +261,7 @@ static void *tur_thread(void *ctx)
+ 	tur_thread_cleanup_push(ct);
+ 	rcu_register_thread();
  
- 	if (*p == '\0')
- 		return 0;
+-	condlog(3, "%d:%d : tur checker starting up", major(ct->devt),
++	condlog(4, "%d:%d : tur checker starting up", major(ct->devt),
+ 		minor(ct->devt));
+ 
+ 	tur_deep_sleep(ct);
+@@ -275,7 +275,7 @@ static void *tur_thread(void *ctx)
+ 	pthread_cond_signal(&ct->active);
+ 	pthread_mutex_unlock(&ct->lock);
+ 
+-	condlog(3, "%d:%d : tur checker finished, state %s", major(ct->devt),
++	condlog(4, "%d:%d : tur checker finished, state %s", major(ct->devt),
+ 		minor(ct->devt), checker_state_name(state));
+ 
+ 	running = uatomic_xchg(&ct->running, 0);
+@@ -415,7 +415,7 @@ int libcheck_check(struct checker * c)
+ 		}
+ 		pthread_mutex_unlock(&ct->lock);
+ 		if (tur_status == PATH_PENDING) {
+-			condlog(3, "%d:%d : tur checker still running",
++			condlog(4, "%d:%d : tur checker still running",
+ 				major(ct->devt), minor(ct->devt));
+ 		} else {
+ 			int running = uatomic_xchg(&ct->running, 0);
 -- 
 2.19.1
