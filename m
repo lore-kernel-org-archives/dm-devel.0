@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 11/19] libmultipath: decrease log level of
-	"prioritizer refcount" message
-Date: Wed, 21 Nov 2018 11:18:31 +0100
-Message-ID: <20181121101839.30784-12-mwilck@suse.com>
+Subject: [PATCH 04/19] libmultipath: decrease verbosity of
+	pathinfo messages
+Date: Wed, 21 Nov 2018 11:18:24 +0100
+Message-ID: <20181121101839.30784-5-mwilck@suse.com>
 References: <20181121101839.30784-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,26 +22,68 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This was important during development of the refcounting code, but
-now it isn't any more.
+Reduce the verbosity of pointless messages from pathinfo(), in
+particular those that are printed on every checker invocation.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/prio.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/discovery.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/prio.c b/libmultipath/prio.c
-index 17acfd05..0590218d 100644
---- a/libmultipath/prio.c
-+++ b/libmultipath/prio.c
-@@ -42,7 +42,7 @@ void free_prio (struct prio * p)
- 		return;
- 	p->refcount--;
- 	if (p->refcount) {
--		condlog(3, "%s prioritizer refcount %d",
-+		condlog(4, "%s prioritizer refcount %d",
- 			p->name, p->refcount);
- 		return;
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index f9a59011..3ad33492 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1382,7 +1382,7 @@ common_sysfs_pathinfo (struct path * pp)
+ 	devt = udev_device_get_devnum(pp->udev);
+ 	snprintf(pp->dev_t, BLK_DEV_SIZE, "%d:%d", major(devt), minor(devt));
+ 
+-	condlog(3, "%s: dev_t = %s", pp->dev, pp->dev_t);
++	condlog(4, "%s: dev_t = %s", pp->dev, pp->dev_t);
+ 
+ 	if (sysfs_get_size(pp, &pp->size))
+ 		return PATHINFO_FAILED;
+@@ -1599,6 +1599,7 @@ get_prio (struct path * pp)
+ 	struct prio * p;
+ 	struct config *conf;
+ 	int checker_timeout;
++	int old_prio;
+ 
+ 	if (!pp)
+ 		return 0;
+@@ -1619,13 +1620,14 @@ get_prio (struct path * pp)
+ 	conf = get_multipath_config();
+ 	checker_timeout = conf->checker_timeout;
+ 	put_multipath_config(conf);
++	old_prio = pp->priority;
+ 	pp->priority = prio_getprio(p, pp, checker_timeout);
+ 	if (pp->priority < 0) {
+ 		condlog(3, "%s: %s prio error", pp->dev, prio_name(p));
+ 		pp->priority = PRIO_UNDEF;
+ 		return 1;
  	}
+-	condlog(3, "%s: %s prio = %u",
++	condlog((old_prio == pp->priority ? 4 : 3), "%s: %s prio = %u",
+ 		pp->dev, prio_name(p), pp->priority);
+ 	return 0;
+ }
+@@ -1863,7 +1865,7 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 			udev_device_get_sysattr_value(pp->udev, "hidden");
+ 
+ 		if (hidden && !strcmp(hidden, "1")) {
+-			condlog(3, "%s: hidden", pp->dev);
++			condlog(4, "%s: hidden", pp->dev);
+ 			return PATHINFO_SKIPPED;
+ 		}
+ 		if (is_claimed_by_foreign(pp->udev) ||
+@@ -1876,7 +1878,7 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 			   pp->dev) > 0)
+ 		return PATHINFO_SKIPPED;
+ 
+-	condlog(3, "%s: mask = 0x%x", pp->dev, mask);
++	condlog(4, "%s: mask = 0x%x", pp->dev, mask);
+ 
+ 	/*
+ 	 * Sanity check: we need the device number to
 -- 
 2.19.1
