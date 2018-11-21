@@ -1,24 +1,131 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH V11 15/19] block: enable multipage bvecs
-Date: Wed, 21 Nov 2018 17:12:06 +0100
-Message-ID: <20181121161206.GD4977@lst.de>
-References: <20181121032327.8434-1-ming.lei@redhat.com> <20181121032327.8434-16-ming.lei@redhat.com> <20181121145502.GA3241@lst.de> <20181121154812.GD19111@ming.t460p>
+Subject: Re: [PATCH V11 03/19] block: introduce bio_for_each_bvec()
+Date: Wed, 21 Nov 2018 18:12:17 +0100
+Message-ID: <20181121171217.GA6259@lst.de>
+References: <20181121032327.8434-1-ming.lei@redhat.com> <20181121032327.8434-4-ming.lei@redhat.com> <20181121133244.GB1640@lst.de> <20181121153135.GB19111@ming.t460p> <20181121161025.GB4977@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181121154812.GD19111@ming.t460p>
+In-Reply-To: <20181121161025.GB4977@lst.de>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Ming Lei <ming.lei@redhat.com>
 Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Theodore Ts'o <tytso@mit.edu>, Omar Sandoval <osandov@fb.com>, Sagi Grimberg <sagi@grimberg.me>, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <oo>
 List-Id: dm-devel.ids
 
-On Wed, Nov 21, 2018 at 11:48:13PM +0800, Ming Lei wrote:
-> I guess the correct check should be:
-> 
-> 		end_addr = vec_addr + bv->bv_offset + bv->bv_len;
-> 		if (same_page &&
-> 		    (end_addr & PAGE_MASK) != (page_addr & PAGE_MASK))
-> 			return false;
+On Wed, Nov 21, 2018 at 05:10:25PM +0100, Christoph Hellwig wrote:
+> No - I think we can always use the code without any segment in
+> bvec_iter_advance.  Because bvec_iter_advance only operates on the
+> iteractor, the generation of an actual single-page or multi-page
+> bvec is left to the caller using the bvec_iter_bvec or segment_iter_bvec
+> helpers.  The only difference is how many bytes you can move the
+> iterator forward in a single loop iteration - so if you pass in
+> PAGE_SIZE as the max_seg_len you just will have to loop more often
+> for a large enough bytes, but not actually do anything different.
 
-Indeed.
+FYI, this patch reverts the max_seg_len related changes back to where
+we are in mainline, and as expected everything works fine for me:
+
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index e5b975fa0558..926550ce2d21 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -137,24 +137,18 @@ static inline bool bio_full(struct bio *bio)
+ 	for (i = 0, iter_all.idx = 0; iter_all.idx < (bio)->bi_vcnt; iter_all.idx++)	\
+ 		bvec_for_each_segment(bvl, &((bio)->bi_io_vec[iter_all.idx]), i, iter_all)
+ 
+-static inline void __bio_advance_iter(struct bio *bio, struct bvec_iter *iter,
+-				      unsigned bytes, unsigned max_seg_len)
++static inline void bio_advance_iter(struct bio *bio, struct bvec_iter *iter,
++				    unsigned bytes)
+ {
+ 	iter->bi_sector += bytes >> 9;
+ 
+ 	if (bio_no_advance_iter(bio))
+ 		iter->bi_size -= bytes;
+ 	else
+-		__bvec_iter_advance(bio->bi_io_vec, iter, bytes, max_seg_len);
++		bvec_iter_advance(bio->bi_io_vec, iter, bytes);
+ 		/* TODO: It is reasonable to complete bio with error here. */
+ }
+ 
+-static inline void bio_advance_iter(struct bio *bio, struct bvec_iter *iter,
+-				    unsigned bytes)
+-{
+-	__bio_advance_iter(bio, iter, bytes, PAGE_SIZE);
+-}
+-
+ #define __bio_for_each_segment(bvl, bio, iter, start)			\
+ 	for (iter = (start);						\
+ 	     (iter).bi_size &&						\
+@@ -168,7 +162,7 @@ static inline void bio_advance_iter(struct bio *bio, struct bvec_iter *iter,
+ 	for (iter = (start);						\
+ 	     (iter).bi_size &&						\
+ 		((bvl = bio_iter_mp_iovec((bio), (iter))), 1);	\
+-	     __bio_advance_iter((bio), &(iter), (bvl).bv_len, BVEC_MAX_LEN))
++	     bio_advance_iter((bio), &(iter), (bvl).bv_len))
+ 
+ /* returns one real segment(multi-page bvec) each time */
+ #define bio_for_each_bvec(bvl, bio, iter)			\
+diff --git a/include/linux/bvec.h b/include/linux/bvec.h
+index cab36d838ed0..138b4007b8f2 100644
+--- a/include/linux/bvec.h
++++ b/include/linux/bvec.h
+@@ -25,8 +25,6 @@
+ #include <linux/errno.h>
+ #include <linux/mm.h>
+ 
+-#define BVEC_MAX_LEN  ((unsigned int)-1)
+-
+ /*
+  * was unsigned short, but we might as well be ready for > 64kB I/O pages
+  */
+@@ -102,8 +100,8 @@ struct bvec_iter_all {
+ 	.bv_offset	= segment_iter_offset((bvec), (iter)),	\
+ })
+ 
+-static inline bool __bvec_iter_advance(const struct bio_vec *bv,
+-		struct bvec_iter *iter, unsigned bytes, unsigned max_seg_len)
++static inline bool bvec_iter_advance(const struct bio_vec *bv,
++		struct bvec_iter *iter, unsigned bytes)
+ {
+ 	if (WARN_ONCE(bytes > iter->bi_size,
+ 		     "Attempted to advance past end of bvec iter\n")) {
+@@ -112,18 +110,12 @@ static inline bool __bvec_iter_advance(const struct bio_vec *bv,
+ 	}
+ 
+ 	while (bytes) {
+-		unsigned segment_len = segment_iter_len(bv, *iter);
+-
+-		if (max_seg_len < BVEC_MAX_LEN)
+-			segment_len = min_t(unsigned, segment_len,
+-					    max_seg_len -
+-					    bvec_iter_offset(bv, *iter));
++		unsigned iter_len = bvec_iter_len(bv, *iter);
++		unsigned len = min(bytes, iter_len);
+ 
+-		segment_len = min(bytes, segment_len);
+-
+-		bytes -= segment_len;
+-		iter->bi_size -= segment_len;
+-		iter->bi_bvec_done += segment_len;
++		bytes -= len;
++		iter->bi_size -= len;
++		iter->bi_bvec_done += len;
+ 
+ 		if (iter->bi_bvec_done == __bvec_iter_bvec(bv, *iter)->bv_len) {
+ 			iter->bi_bvec_done = 0;
+@@ -157,13 +149,6 @@ static inline bool bvec_iter_rewind(const struct bio_vec *bv,
+ 	return true;
+ }
+ 
+-static inline bool bvec_iter_advance(const struct bio_vec *bv,
+-				     struct bvec_iter *iter,
+-				     unsigned bytes)
+-{
+-	return __bvec_iter_advance(bv, iter, bytes, PAGE_SIZE);
+-}
+-
+ #define for_each_bvec(bvl, bio_vec, iter, start)			\
+ 	for (iter = (start);						\
+ 	     (iter).bi_size &&						\
