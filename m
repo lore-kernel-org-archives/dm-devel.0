@@ -1,44 +1,40 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH V11 15/19] block: enable multipage bvecs
-Date: Fri, 23 Nov 2018 18:50:26 +0800
-Message-ID: <20181123105024.GA13902@ming.t460p>
-References: <20181121032327.8434-1-ming.lei@redhat.com>
- <20181121032327.8434-16-ming.lei@redhat.com>
- <20181121145502.GA3241@lst.de>
- <20181121154812.GD19111@ming.t460p>
- <20181121161206.GD4977@lst.de>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH v2 0/3] realize dax_operations for dm-snapshot
+Date: Sun, 25 Nov 2018 12:59:59 -0800
+Message-ID: <CAPcyv4hmCsNOZPEAzOLxhFCQpyaG0_9TJvJnyuytQAVEU7_wbA@mail.gmail.com>
+References: <20181121032702.3048-1-yehs2007@zoho.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181121161206.GD4977@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Theodore Ts'o <tytso@mit.edu>, Omar Sandoval <osandov@fb.com>, Sagi Grimberg <sagi@grimberg.me>, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, Bob
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20181121032702.3048-1-yehs2007-ytc+IHgoah0@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, NingTing Cheng <chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, zwisler-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Wed, Nov 21, 2018 at 05:12:06PM +0100, Christoph Hellwig wrote:
-> On Wed, Nov 21, 2018 at 11:48:13PM +0800, Ming Lei wrote:
-> > I guess the correct check should be:
-> > 
-> > 		end_addr = vec_addr + bv->bv_offset + bv->bv_len;
-> > 		if (same_page &&
-> > 		    (end_addr & PAGE_MASK) != (page_addr & PAGE_MASK))
-> > 			return false;
-> 
-> Indeed.
+On Tue, Nov 20, 2018 at 7:27 PM Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org> wrote:
+>
+> From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
+>
+> Changes
+> v1->v2:
+>         Add NULL funtions for origin_dax_direct_access and
+>         origin_dax_copy_from/to_iter in order to avoid building
+>         error when CONFIG_DAX_DRIVER has NOT been enabled.
+>
+> [v1]: https://lkml.org/lkml/2018/11/20/759
+>
+> This series patches are used to realize the dax_operations for dm-snapshot
+> with persistent memory device.
 
-The above is still not totally correct, and it should have been:
-
- 		end_addr = vec_addr + bv->bv_offset + bv->bv_len - 1;
- 		if (same_page && (end_addr & PAGE_MASK) != page_addr)
- 			return false;
-
-Also bv->bv_len should be guaranteed as being bigger than zero.
-
-It also shows that it is quite easy to figure out the last page as
-wrong, :-(
-
-
-Thanks,
-Ming
+How does this interact with mmap write faults if the mapping is dax
+and the page needs to be cow'd?
