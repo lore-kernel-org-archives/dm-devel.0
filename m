@@ -1,49 +1,25 @@
-From: Miguel Ojeda <miguel.ojeda.sandonis@gmail.com>
-Subject: Re: [PATCH V12 06/20] block: rename bvec helpers
-Date: Mon, 26 Nov 2018 09:17:16 +0100
-Message-ID: <CANiq72nSa-=n2WUvmQOieDRtf+gC1wg2YuRvKDniSAtDn8=U8g@mail.gmail.com>
-References: <20181126021720.19471-1-ming.lei@redhat.com> <20181126021720.19471-7-ming.lei@redhat.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH V12 05/20] block: remove bvec_iter_rewind()
+Date: Mon, 26 Nov 2018 13:53:17 +0100
+Message-ID: <20181126125317.GA6383@lst.de>
+References: <20181126021720.19471-1-ming.lei@redhat.com> <20181126021720.19471-6-ming.lei@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181126021720.19471-7-ming.lei@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20181126021720.19471-6-ming.lei@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: ming.lei@redhat.com
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, Ted Ts'o <tytso@mit.edu>, osandov@fb.com, sagi@grimberg.me, dchinner@redhat.com, kent.overstreet@gmail.com, snitzer@redhat.com, dm-devel@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, shli@kernel.org, linux-raid@vger.kernel.org, David Sterba <dsterba@suse.com>, Linux Btrfs <linux-btrfs@vger.kernel.org>, darrick.wong@oracle.com, linux-xfs@vger.kernel.org, gaoxiang25@huawei.com, hch@lst.de, Ext4 Developers List <linux-ext4@vger.kernel.org>, colyli@suse.de, linux-bcache@vger.kernel.org, ooo@electrozaur.com, rpeterso@redhat.com, cluster-devel@redhat.com
+To: Ming Lei <ming.lei@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Theodore Ts'o <tytso@mit.edu>, Omar Sandoval <osandov@fb.com>, Sagi Grimberg <sagi@grimberg.me>, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <oo>
 List-Id: dm-devel.ids
 
-On Mon, Nov 26, 2018 at 3:20 AM Ming Lei <ming.lei@redhat.com> wrote:
->
-> We will support multi-page bvec soon, and have to deal with
-> single-page vs multi-page bvec. This patch follows Christoph's
-> suggestion to rename all the following helpers:
->
->         for_each_bvec
->         bvec_iter_bvec
->         bvec_iter_len
->         bvec_iter_page
->         bvec_iter_offset
->
-> into:
->         for_each_segment
->         segment_iter_bvec
->         segment_iter_len
->         segment_iter_page
->         segment_iter_offset
->
-> so that these helpers named with 'segment' only deal with single-page
-> bvec, or called segment. We will introduce helpers named with 'bvec'
-> for multi-page bvec.
->
-> bvec_iter_advance() isn't renamed becasue this helper is always operated
-> on real bvec even though multi-page bvec is supported.
->
-> Suggested-by: Christoph Hellwig <hch@lst.de>
+On Mon, Nov 26, 2018 at 10:17:05AM +0800, Ming Lei wrote:
+> Commit 7759eb23fd980 ("block: remove bio_rewind_iter()") removes
+> bio_rewind_iter(), then no one uses bvec_iter_rewind() any more,
+> so remove it.
+> 
 > Signed-off-by: Ming Lei <ming.lei@redhat.com>
-> ---
->  .clang-format                  |  2 +-
 
-Acked-by: Miguel Ojeda <miguel.ojeda.sandonis@gmail.com>
+Looks good,
 
-Cheers,
-Miguel
+Reviewed-by: Christoph Hellwig <hch@lst.de>
