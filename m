@@ -1,75 +1,59 @@
 From: Omar Sandoval <osandov@osandov.com>
-Subject: Re: [PATCH V12 03/20] block: remove the "cluster" flag
-Date: Mon, 26 Nov 2018 14:12:56 -0800
-Message-ID: <20181126221256.GD30411@vader>
+Subject: Re: [PATCH V12 04/20] block: don't use bio->bi_vcnt to figure out
+ segment number
+Date: Mon, 26 Nov 2018 14:14:47 -0800
+Message-ID: <20181126221447.GE30411@vader>
 References: <20181126021720.19471-1-ming.lei@redhat.com>
- <20181126021720.19471-4-ming.lei@redhat.com>
+ <20181126021720.19471-5-ming.lei@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181126021720.19471-4-ming.lei@redhat.com>
+In-Reply-To: <20181126021720.19471-5-ming.lei@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Ming Lei <ming.lei@redhat.com>
 Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Theodore Ts'o <tytso@mit.edu>, Omar Sandoval <osandov@fb.com>, Sagi Grimberg <sagi@grimberg.me>, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <oo>
 List-Id: dm-devel.ids
 
-On Mon, Nov 26, 2018 at 10:17:03AM +0800, Ming Lei wrote:
-> From: Christoph Hellwig <hch@lst.de>
+On Mon, Nov 26, 2018 at 10:17:04AM +0800, Ming Lei wrote:
+> It is wrong to use bio->bi_vcnt to figure out how many segments
+> there are in the bio even though CLONED flag isn't set on this bio,
+> because this bio may be splitted or advanced.
 > 
-> The cluster flag implements some very old SCSI behavior.  As far as I
-> can tell the original intent was to enable or disable any kind of
-> segment merging.  But the actually visible effect to the LLDD is that
-> it limits each segments to be inside a single page, which we can
-> also affect by setting the maximum segment size and the segment
-> boundary.
+> So always use bio_segments() in blk_recount_segments(), and it shouldn't
+> cause any performance loss now because the physical segment number is figured
+> out in blk_queue_split() and BIO_SEG_VALID is set meantime since
+> bdced438acd83ad83a6c ("block: setup bi_phys_segments after splitting").
+> 
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
 
 Reviewed-by: Omar Sandoval <osandov@fb.com>
 
-One comment typo below.
-
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> 
-> Replace virt boundary with segment boundary limit.
-> 
+> Fixes: 76d8137a3113 ("blk-merge: recaculate segment if it isn't less than max segments")
 > Signed-off-by: Ming Lei <ming.lei@redhat.com>
 > ---
->  block/blk-merge.c       | 20 ++++++++------------
->  block/blk-settings.c    |  3 ---
->  block/blk-sysfs.c       |  5 +----
->  drivers/scsi/scsi_lib.c | 20 ++++++++++++++++----
->  include/linux/blkdev.h  |  6 ------
->  5 files changed, 25 insertions(+), 29 deletions(-)
+>  block/blk-merge.c | 8 +-------
+>  1 file changed, 1 insertion(+), 7 deletions(-)
 > 
-
-[snip]
-
-> diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
-> index 0df15cb738d2..78d6d05992b0 100644
-> --- a/drivers/scsi/scsi_lib.c
-> +++ b/drivers/scsi/scsi_lib.c
-> @@ -1810,6 +1810,8 @@ static int scsi_map_queues(struct blk_mq_tag_set *set)
->  void __scsi_init_queue(struct Scsi_Host *shost, struct request_queue *q)
+> diff --git a/block/blk-merge.c b/block/blk-merge.c
+> index e69d8f8ba819..51ec6ca56a0a 100644
+> --- a/block/blk-merge.c
+> +++ b/block/blk-merge.c
+> @@ -367,13 +367,7 @@ void blk_recalc_rq_segments(struct request *rq)
+>  
+>  void blk_recount_segments(struct request_queue *q, struct bio *bio)
 >  {
->  	struct device *dev = shost->dma_dev;
-> +	unsigned max_segment_size = dma_get_max_seg_size(dev);
-> +	unsigned long segment_boundary = shost->dma_boundary;
+> -	unsigned short seg_cnt;
+> -
+> -	/* estimate segment number by bi_vcnt for non-cloned bio */
+> -	if (bio_flagged(bio, BIO_CLONED))
+> -		seg_cnt = bio_segments(bio);
+> -	else
+> -		seg_cnt = bio->bi_vcnt;
+> +	unsigned short seg_cnt = bio_segments(bio);
 >  
->  	/*
->  	 * this limit is imposed by hardware restrictions
-> @@ -1828,13 +1830,23 @@ void __scsi_init_queue(struct Scsi_Host *shost, struct request_queue *q)
->  	blk_queue_max_hw_sectors(q, shost->max_sectors);
->  	if (shost->unchecked_isa_dma)
->  		blk_queue_bounce_limit(q, BLK_BOUNCE_ISA);
-> -	blk_queue_segment_boundary(q, shost->dma_boundary);
->  	dma_set_seg_boundary(dev, shost->dma_boundary);
->  
-> -	blk_queue_max_segment_size(q, dma_get_max_seg_size(dev));
-> +	/*
-> +	 * Clustering is a really old concept from the stone age of Linux
-> +	 * SCSI support.  But the basic idea is that we never give the
-> +	 * driver a segment that spans multiple pages.  For that we need
-> +	 * to limit the segment size, and set the segment boundary so that
-> +	 * we never merge a second segment which is no page aligned.
-
-Typo, "which is not page aligned".
+>  	if (test_bit(QUEUE_FLAG_NO_SG_MERGE, &q->queue_flags) &&
+>  			(seg_cnt < queue_max_segments(q)))
+> -- 
+> 2.9.5
+> 
