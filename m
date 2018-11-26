@@ -1,49 +1,66 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH V12 04/20] block: don't use bio->bi_vcnt to figure out segment number
-Date: Mon, 26 Nov 2018 10:17:04 +0800
-Message-ID: <20181126021720.19471-5-ming.lei@redhat.com>
+Subject: [PATCH V12 05/20] block: remove bvec_iter_rewind()
+Date: Mon, 26 Nov 2018 10:17:05 +0800
+Message-ID: <20181126021720.19471-6-ming.lei@redhat.com>
 References: <20181126021720.19471-1-ming.lei@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <cluster-devel-bounces@redhat.com>
 In-Reply-To: <20181126021720.19471-1-ming.lei@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <https://www.redhat.com/mailman/options/cluster-devel>,
+	<mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/cluster-devel>
+List-Post: <mailto:cluster-devel@redhat.com>
+List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/cluster-devel>,
+	<mailto:cluster-devel-request@redhat.com?subject=subscribe>
+Sender: cluster-devel-bounces@redhat.com
+Errors-To: cluster-devel-bounces@redhat.com
 To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Theodore Ts'o <tytso@mit.edu>, Omar Sandoval <osandov@fb.com>, Sagi Grimberg <sagi@grimberg.me>, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>Bo
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, "Darrick J . Wong" <darrick.wong@oracle.com>, Omar Sandoval <osandov@fb.com>, cluster-devel@redhat.com, linux-ext4@vger.kernel.org, Shaohua Li <shli@kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, Boaz Harrosh <ooo@electrozaur.com>, Gao Xiang <gaoxiang25@huawei.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>, Ming Lei <ming.lei@redhat.com>, linux-block@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-It is wrong to use bio->bi_vcnt to figure out how many segments
-there are in the bio even though CLONED flag isn't set on this bio,
-because this bio may be splitted or advanced.
+Commit 7759eb23fd980 ("block: remove bio_rewind_iter()") removes
+bio_rewind_iter(), then no one uses bvec_iter_rewind() any more,
+so remove it.
 
-So always use bio_segments() in blk_recount_segments(), and it shouldn't
-cause any performance loss now because the physical segment number is figured
-out in blk_queue_split() and BIO_SEG_VALID is set meantime since
-bdced438acd83ad83a6c ("block: setup bi_phys_segments after splitting").
-
-Reviewed-by: Christoph Hellwig <hch@lst.de>
-Fixes: 76d8137a3113 ("blk-merge: recaculate segment if it isn't less than max segments")
 Signed-off-by: Ming Lei <ming.lei@redhat.com>
 ---
- block/blk-merge.c | 8 +-------
- 1 file changed, 1 insertion(+), 7 deletions(-)
+ include/linux/bvec.h | 24 ------------------------
+ 1 file changed, 24 deletions(-)
 
-diff --git a/block/blk-merge.c b/block/blk-merge.c
-index e69d8f8ba819..51ec6ca56a0a 100644
---- a/block/blk-merge.c
-+++ b/block/blk-merge.c
-@@ -367,13 +367,7 @@ void blk_recalc_rq_segments(struct request *rq)
+diff --git a/include/linux/bvec.h b/include/linux/bvec.h
+index 02c73c6aa805..ba0ae40e77c9 100644
+--- a/include/linux/bvec.h
++++ b/include/linux/bvec.h
+@@ -92,30 +92,6 @@ static inline bool bvec_iter_advance(const struct bio_vec *bv,
+ 	return true;
+ }
  
- void blk_recount_segments(struct request_queue *q, struct bio *bio)
- {
--	unsigned short seg_cnt;
+-static inline bool bvec_iter_rewind(const struct bio_vec *bv,
+-				     struct bvec_iter *iter,
+-				     unsigned int bytes)
+-{
+-	while (bytes) {
+-		unsigned len = min(bytes, iter->bi_bvec_done);
 -
--	/* estimate segment number by bi_vcnt for non-cloned bio */
--	if (bio_flagged(bio, BIO_CLONED))
--		seg_cnt = bio_segments(bio);
--	else
--		seg_cnt = bio->bi_vcnt;
-+	unsigned short seg_cnt = bio_segments(bio);
- 
- 	if (test_bit(QUEUE_FLAG_NO_SG_MERGE, &q->queue_flags) &&
- 			(seg_cnt < queue_max_segments(q)))
+-		if (iter->bi_bvec_done == 0) {
+-			if (WARN_ONCE(iter->bi_idx == 0,
+-				      "Attempted to rewind iter beyond "
+-				      "bvec's boundaries\n")) {
+-				return false;
+-			}
+-			iter->bi_idx--;
+-			iter->bi_bvec_done = __bvec_iter_bvec(bv, *iter)->bv_len;
+-			continue;
+-		}
+-		bytes -= len;
+-		iter->bi_size += len;
+-		iter->bi_bvec_done -= len;
+-	}
+-	return true;
+-}
+-
+ #define for_each_bvec(bvl, bio_vec, iter, start)			\
+ 	for (iter = (start);						\
+ 	     (iter).bi_size &&						\
 -- 
 2.9.5
