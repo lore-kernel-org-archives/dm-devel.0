@@ -1,90 +1,208 @@
 From: Omar Sandoval <osandov@osandov.com>
-Subject: Re: [PATCH V12 01/20] btrfs: remove various bio_offset arguments
-Date: Mon, 26 Nov 2018 14:28:51 -0800
-Message-ID: <20181126222851.GH30411@vader>
+Subject: Re: [PATCH V12 09/20] block: use bio_for_each_bvec() to compute
+ multi-page bvec count
+Date: Mon, 26 Nov 2018 14:37:09 -0800
+Message-ID: <20181126223709.GI30411@vader>
 References: <20181126021720.19471-1-ming.lei@redhat.com>
- <20181126021720.19471-2-ming.lei@redhat.com>
+ <20181126021720.19471-10-ming.lei@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181126021720.19471-2-ming.lei@redhat.com>
+In-Reply-To: <20181126021720.19471-10-ming.lei@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Ming Lei <ming.lei@redhat.com>
 Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Theodore Ts'o <tytso@mit.edu>, Omar Sandoval <osandov@fb.com>, Sagi Grimberg <sagi@grimberg.me>, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <oo>
 List-Id: dm-devel.ids
 
-On Mon, Nov 26, 2018 at 10:17:01AM +0800, Ming Lei wrote:
-> From: Christoph Hellwig <hch@lst.de>
+On Mon, Nov 26, 2018 at 10:17:09AM +0800, Ming Lei wrote:
+> First it is more efficient to use bio_for_each_bvec() in both
+> blk_bio_segment_split() and __blk_recalc_rq_segments() to compute how
+> many multi-page bvecs there are in the bio.
 > 
-> The btrfs write path passes a bio_offset argument through some deep
-> callchains including async offloading.  In the end this is easily
-> calculatable using page_offset plus the bvec offset for the first
-> page in the bio, and only actually used by by a single function.
-> Just move the calculation of the offset there.
+> Secondly once bio_for_each_bvec() is used, the bvec may need to be
+> splitted because its length can be very longer than max segment size,
+> so we have to split the big bvec into several segments.
 > 
-> Reviewed-by: David Sterba <dsterba@suse.com>
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> Thirdly when splitting multi-page bvec into segments, the max segment
+> limit may be reached, so the bio split need to be considered under
+> this situation too.
+
+Reviewed-by: Omar Sandoval <osandov@fb.com>
+
+> Signed-off-by: Ming Lei <ming.lei@redhat.com>
 > ---
->  fs/btrfs/disk-io.c   | 21 +++++----------------
->  fs/btrfs/disk-io.h   |  2 +-
->  fs/btrfs/extent_io.c |  9 ++-------
->  fs/btrfs/extent_io.h |  5 ++---
->  fs/btrfs/inode.c     | 17 ++++++++---------
->  5 files changed, 18 insertions(+), 36 deletions(-)
-
-[snip]
-
-> diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
-> index 9ea4c6f0352f..c576b3fcaea7 100644
-> --- a/fs/btrfs/inode.c
-> +++ b/fs/btrfs/inode.c
-> @@ -1920,8 +1920,7 @@ int btrfs_merge_bio_hook(struct page *page, unsigned long offset,
->   * At IO completion time the cums attached on the ordered extent record
->   * are inserted into the btree
->   */
-> -static blk_status_t btrfs_submit_bio_start(void *private_data, struct bio *bio,
-> -				    u64 bio_offset)
-> +static blk_status_t btrfs_submit_bio_start(void *private_data, struct bio *bio)
->  {
->  	struct inode *inode = private_data;
->  	blk_status_t ret = 0;
-> @@ -1973,8 +1972,7 @@ blk_status_t btrfs_submit_bio_done(void *private_data, struct bio *bio,
->   *    c-3) otherwise:			async submit
->   */
->  static blk_status_t btrfs_submit_bio_hook(void *private_data, struct bio *bio,
-> -				 int mirror_num, unsigned long bio_flags,
-> -				 u64 bio_offset)
-> +				 int mirror_num, unsigned long bio_flags)
->  {
->  	struct inode *inode = private_data;
->  	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-> @@ -2011,8 +2009,7 @@ static blk_status_t btrfs_submit_bio_hook(void *private_data, struct bio *bio,
->  			goto mapit;
->  		/* we're doing a write, do the async checksumming */
->  		ret = btrfs_wq_submit_bio(fs_info, bio, mirror_num, bio_flags,
-> -					  bio_offset, inode,
-> -					  btrfs_submit_bio_start);
-> +					  inode, btrfs_submit_bio_start);
->  		goto out;
->  	} else if (!skip_sum) {
->  		ret = btrfs_csum_one_bio(inode, bio, 0, 0);
-> @@ -8123,10 +8120,13 @@ static void btrfs_endio_direct_write(struct bio *bio)
+>  block/blk-merge.c | 100 +++++++++++++++++++++++++++++++++++++++++++-----------
+>  1 file changed, 80 insertions(+), 20 deletions(-)
+> 
+> diff --git a/block/blk-merge.c b/block/blk-merge.c
+> index 51ec6ca56a0a..2d8f388d43de 100644
+> --- a/block/blk-merge.c
+> +++ b/block/blk-merge.c
+> @@ -161,6 +161,70 @@ static inline unsigned get_max_io_size(struct request_queue *q,
+>  	return sectors;
 >  }
 >  
->  static blk_status_t btrfs_submit_bio_start_direct_io(void *private_data,
-> -				    struct bio *bio, u64 offset)
-> +				    struct bio *bio)
->  {
->  	struct inode *inode = private_data;
-> +	struct bio_vec *bvec = bio_first_bvec_all(bio);
-> +	u64 offset = page_offset(bvec->bv_page) + bvec->bv_offset;
-
-Hm, but for direct I/O, these will be user pages (or the zero page), so
-page_offset() won't be valid?
-
->  	blk_status_t ret;
+> +static unsigned get_max_segment_size(struct request_queue *q,
+> +				     unsigned offset)
+> +{
+> +	unsigned long mask = queue_segment_boundary(q);
 > +
->  	ret = btrfs_csum_one_bio(inode, bio, offset, 1);
->  	BUG_ON(ret); /* -ENOMEM */
->  	return 0;
+> +	return min_t(unsigned long, mask - (mask & offset) + 1,
+> +		     queue_max_segment_size(q));
+> +}
+> +
+> +/*
+> + * Split the bvec @bv into segments, and update all kinds of
+> + * variables.
+> + */
+> +static bool bvec_split_segs(struct request_queue *q, struct bio_vec *bv,
+> +		unsigned *nsegs, unsigned *last_seg_size,
+> +		unsigned *front_seg_size, unsigned *sectors)
+> +{
+> +	unsigned len = bv->bv_len;
+> +	unsigned total_len = 0;
+> +	unsigned new_nsegs = 0, seg_size = 0;
+> +
+> +	/*
+> +	 * Multipage bvec may be too big to hold in one segment,
+> +	 * so the current bvec has to be splitted as multiple
+> +	 * segments.
+> +	 */
+> +	while (len && new_nsegs + *nsegs < queue_max_segments(q)) {
+> +		seg_size = get_max_segment_size(q, bv->bv_offset + total_len);
+> +		seg_size = min(seg_size, len);
+> +
+> +		new_nsegs++;
+> +		total_len += seg_size;
+> +		len -= seg_size;
+> +
+> +		if ((bv->bv_offset + total_len) & queue_virt_boundary(q))
+> +			break;
+> +	}
+> +
+> +	if (!new_nsegs)
+> +		return !!len;
+> +
+> +	/* update front segment size */
+> +	if (!*nsegs) {
+> +		unsigned first_seg_size;
+> +
+> +		if (new_nsegs == 1)
+> +			first_seg_size = get_max_segment_size(q, bv->bv_offset);
+> +		else
+> +			first_seg_size = queue_max_segment_size(q);
+> +
+> +		if (*front_seg_size < first_seg_size)
+> +			*front_seg_size = first_seg_size;
+> +	}
+> +
+> +	/* update other varibles */
+> +	*last_seg_size = seg_size;
+> +	*nsegs += new_nsegs;
+> +	if (sectors)
+> +		*sectors += total_len >> 9;
+> +
+> +	/* split in the middle of the bvec if len != 0 */
+> +	return !!len;
+> +}
+> +
+>  static struct bio *blk_bio_segment_split(struct request_queue *q,
+>  					 struct bio *bio,
+>  					 struct bio_set *bs,
+> @@ -174,7 +238,7 @@ static struct bio *blk_bio_segment_split(struct request_queue *q,
+>  	struct bio *new = NULL;
+>  	const unsigned max_sectors = get_max_io_size(q, bio);
+>  
+> -	bio_for_each_segment(bv, bio, iter) {
+> +	bio_for_each_bvec(bv, bio, iter) {
+>  		/*
+>  		 * If the queue doesn't support SG gaps and adding this
+>  		 * offset would create a gap, disallow it.
+> @@ -189,8 +253,12 @@ static struct bio *blk_bio_segment_split(struct request_queue *q,
+>  			 */
+>  			if (nsegs < queue_max_segments(q) &&
+>  			    sectors < max_sectors) {
+> -				nsegs++;
+> -				sectors = max_sectors;
+> +				/* split in the middle of bvec */
+> +				bv.bv_len = (max_sectors - sectors) << 9;
+> +				bvec_split_segs(q, &bv, &nsegs,
+> +						&seg_size,
+> +						&front_seg_size,
+> +						&sectors);
+>  			}
+>  			goto split;
+>  		}
+> @@ -212,14 +280,12 @@ static struct bio *blk_bio_segment_split(struct request_queue *q,
+>  		if (nsegs == queue_max_segments(q))
+>  			goto split;
+>  
+> -		if (nsegs == 1 && seg_size > front_seg_size)
+> -			front_seg_size = seg_size;
+> -
+> -		nsegs++;
+>  		bvprv = bv;
+>  		bvprvp = &bvprv;
+> -		seg_size = bv.bv_len;
+> -		sectors += bv.bv_len >> 9;
+> +
+> +		if (bvec_split_segs(q, &bv, &nsegs, &seg_size,
+> +				    &front_seg_size, &sectors))
+> +			goto split;
+>  
+>  	}
+>  
+> @@ -233,8 +299,6 @@ static struct bio *blk_bio_segment_split(struct request_queue *q,
+>  			bio = new;
+>  	}
+>  
+> -	if (nsegs == 1 && seg_size > front_seg_size)
+> -		front_seg_size = seg_size;
+>  	bio->bi_seg_front_size = front_seg_size;
+>  	if (seg_size > bio->bi_seg_back_size)
+>  		bio->bi_seg_back_size = seg_size;
+> @@ -296,6 +360,7 @@ static unsigned int __blk_recalc_rq_segments(struct request_queue *q,
+>  {
+>  	struct bio_vec bv, bvprv = { NULL };
+>  	unsigned int seg_size, nr_phys_segs;
+> +	unsigned front_seg_size = bio->bi_seg_front_size;
+>  	struct bio *fbio, *bbio;
+>  	struct bvec_iter iter;
+>  	bool prev = false;
+> @@ -316,7 +381,7 @@ static unsigned int __blk_recalc_rq_segments(struct request_queue *q,
+>  	seg_size = 0;
+>  	nr_phys_segs = 0;
+>  	for_each_bio(bio) {
+> -		bio_for_each_segment(bv, bio, iter) {
+> +		bio_for_each_bvec(bv, bio, iter) {
+>  			/*
+>  			 * If SG merging is disabled, each bio vector is
+>  			 * a segment
+> @@ -336,20 +401,15 @@ static unsigned int __blk_recalc_rq_segments(struct request_queue *q,
+>  				continue;
+>  			}
+>  new_segment:
+> -			if (nr_phys_segs == 1 && seg_size >
+> -			    fbio->bi_seg_front_size)
+> -				fbio->bi_seg_front_size = seg_size;
+> -
+> -			nr_phys_segs++;
+>  			bvprv = bv;
+>  			prev = true;
+> -			seg_size = bv.bv_len;
+> +			bvec_split_segs(q, &bv, &nr_phys_segs, &seg_size,
+> +					&front_seg_size, NULL);
+>  		}
+>  		bbio = bio;
+>  	}
+>  
+> -	if (nr_phys_segs == 1 && seg_size > fbio->bi_seg_front_size)
+> -		fbio->bi_seg_front_size = seg_size;
+> +	fbio->bi_seg_front_size = front_seg_size;
+>  	if (seg_size > bbio->bi_seg_back_size)
+>  		bbio->bi_seg_back_size = seg_size;
+>  
+> -- 
+> 2.9.5
+> 
