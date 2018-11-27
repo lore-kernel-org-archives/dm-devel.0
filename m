@@ -1,28 +1,154 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH V12 16/20] block: enable multipage bvecs
-Date: Tue, 27 Nov 2018 10:25:19 +0800
-Message-ID: <20181127022517.GC25199@ming.t460p>
-References: <20181126021720.19471-1-ming.lei@redhat.com>
- <20181126021720.19471-17-ming.lei@redhat.com>
- <20181126125842.GE6383@lst.de>
+From: Martin Wilck <mwilck@suse.de>
+Subject: Re: Disconcerting observation with multipathd's dmevent
+	polling code
+Date: Tue, 27 Nov 2018 10:19:20 +0100
+Message-ID: <82f6c1b983936a2de4a3f1663f2886cf636460f3.camel@suse.de>
+References: <9f372197ec112f97298641e223d2e5e6a5e1b33a.camel@suse.de>
+	<6fab77be-763c-4de0-a312-de112e7d1c0a@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181126125842.GE6383@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Theodore Ts'o <tytso@mit.edu>, Omar Sandoval <osandov@fb.com>, Sagi Grimberg <sagi@grimberg.me>, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, Bob
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <6fab77be-763c-4de0-a312-de112e7d1c0a@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel mailing list <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Nov 26, 2018 at 01:58:42PM +0100, Christoph Hellwig wrote:
-> > +		phys_addr_t vec_end_addr = page_to_phys(bv->bv_page) +
-> > +			bv->bv_offset + bv->bv_len;
-> 
-> The name is a little confusing, as the real end addr would be -1.  Maybe
-> throw the -1 in here, and adjust for it in the contigous check below?
+Hi Ben,
 
-Yeah, it makes sense.
+On Wed, 2018-11-21 at 12:20 +0100, Hannes Reinecke wrote:
+> On 11/21/18 11:50 AM, Martin Wilck wrote:
+> > Hi Ben,
+> > 
+> > I recently encountered a strange and disturbing phenomenon with the
+> > latest upstream code.
+> > 
+> > The system in question had two iSCSI connections on separate
+> > networks.
+> > On one of them, I tested iSCSI disconnect and re-connects, and
+> > broken
+> > storage configurations (different LUNs diffenent sizes and with the
+> > same WWID). The other one was idle.
+> > 
+> > During one test, I observed that multipathd's internal
+> > representation
+> > of the map representing the *idle* connection had vanished. The map
+> > was
+> > still present on the device-mapper level, but multipathd seemed to
+> > have
+> > "forgotten" it completely. The respective paths were tracked as
+> > orphans.
+> > 
+> > Here is a log excerpt. multipathd is working on path additions for
+> > the
+> > map I was testing with (149455...), when a DM event is received.
+> > Right
+> > after ev_add_path() releases the lock, the idle map
+> > (36001405...) is removed (not flushed, as the messages suggest).
+> > 
+> > Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: sdg: add path
+> > (uevent)
+> > # uev_add_path->pathinfo()
+> > Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: sdg: udev
+> > property SCSI_IDENT_LUN_T10 whitelisted
+> > # ev_add_path()->adopt_paths()
+> > Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: sde: ownership
+> > set to 149455400000000006d706174683100000000000000000000
+> > ...
+> > # ev_add_path->setup_map()
+> > Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]:
+> > 149455400000000006d706174683100000000000000000000: failback =
+> > "manual" (setting: multipath internal)
+> > # ev_add_path->domap()
+> > Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]:
+> > 149455400000000006d706174683100000000000000000000: load table [0
+> > 2097152 multipath 0 0 3 1 service-time 0 1 1 8:64 ...
+> > # ev_add_path->setup_multipath()->update-multipath_strings
+> > Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]:
+> > 149455400000000006d706174683100000000000000000000: disassemble map
+> > [0 0 3 1 service-time 0 1 2 8:64 1 1 service-time ...
+> > # (!!!!) devmap event for LIO map
+> > Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]:
+> > 36001405d08f748dd4c5481f9ec22b888: devmap event #20
+> > Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: sdg [8:96]:
+> > path added to devmap
+> > 149455400000000006d706174683100000000000000000000
+> > # ev_add_path() returns, vecs->lock is released
+> > # uev_add_path() goes on to next path, lock currently not held
+> > Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: sdh: add path
+> > (uevent)
+> > # (!!!!) The LIO map is flushed (36001405d08f748dd4c5481f9ec22b888)
+> > # this looks like remove_map() or remove_map_and_stop_waiter()
+> > > Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: sdd: orphan
+> > > path, map flushed
+> > > Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: sysfs
+> > > prioritizer refcount 2
+> > > Nov 15 22:05:46 sles15-gm-iscsi-03 multipathd[568]: sdc: orphan
+> > > path, map flushed
+> > 
+> > To me this looks like the map was removed by the DM event handler.
+> > More detail can be found on
+> > https://bugzilla.opensuse.org/show_bug.cgi?id=1116272.
+> > I've also tried to reproduce the problem, with no success so far
+> > (actually I haven't observed any dmevents in those reproduction
+> > attempts).
+> > 
+> > After encountering this problem, I've scrutinized your polling
+> > dmevent
+> > handler code over and over last week, but I couldn't spot any
+> > possible
+> > problems :-)
+> > 
+> > The concern that I have is with the design of the polling dmevent
+> > API,
+> > in particular the fact that the default action is EVENT_REMOVE. If,
+> > for
+> > whatever reason, one map is missing from the return value of the
+> > DM_DEVICE_LIST ioctl, multipath removes the map immediately, and
+> > there's nothing short of a "reconfigure" or "add map" CLI command
+> > that
+> > would reinstate the map. IOW, we remove the map not on a kernel
+> > event
+> > saying "this map has been removed", but on receiving a list where
+> > this
+> > element happens to be missing. We handle this differently for
+> > paths,
+> > where we wait for a "remove" uevent before we really delete the
+> > path
+> > from our data structures. (Note that the messages file I saved from
+> > the
+> > event above shows no sign of such an uevent ever beeing sent - as I
+> > said, the dm map was still present after the above occured).
+> > 
+> > What do you think about this? Could you maybe inspect those logs I
+> > took, to make sure I didn't get on a totally wrong track here?
+> > 
+> There's an easy solution to it: drop the dmevent handling code in 
+> multipath-tools completely.
+> It's original design was to track _external_ map reloads, as
+> originally 
+> the maps had been setup by 'multipath', and 'multipahtd' was just 
+> tracking state changes. As such multipathd needed to track those 
+> changes, and it had been using dmevents for this.
+> However, with the advent of udev and updates to the multipathd
+> daemon 
+> external map reloads rarely happens, and even if they happen we
+> still 
+> would be notified by uevents.
+> So we might as well drop the dmevent code and rely on udev
+> completely.
+> Which is what we do nowadays anyway.
 
-thanks,
-Ming
+I like this idea, in particular for map removal.
+Ben, what do you think?
+
+Martin
