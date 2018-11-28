@@ -1,38 +1,188 @@
-From: Colin King <colin.king@canonical.com>
-Subject: [PATCH] dm: integrity: fix spelling mistake in workqueue name
-Date: Wed, 28 Nov 2018 15:15:31 +0000
-Message-ID: <20181128151531.13374-1-colin.king@canonical.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: Disconcerting observation with multipathd's dmevent
+	polling code
+Date: Wed, 28 Nov 2018 10:57:14 -0600
+Message-ID: <20181128165714.GI5077@octiron.msp.redhat.com>
+References: <9f372197ec112f97298641e223d2e5e6a5e1b33a.camel@suse.de>
+	<6fab77be-763c-4de0-a312-de112e7d1c0a@suse.de>
+	<82f6c1b983936a2de4a3f1663f2886cf636460f3.camel@suse.de>
+	<20181127201333.GD5077@octiron.msp.redhat.com>
+	<b3608cce3000a34787d5c252d2dcb8fb6775ba42.camel@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: kernel-janitors@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <b3608cce3000a34787d5c252d2dcb8fb6775ba42.camel@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.de>
+Cc: dm-devel mailing list <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: Colin Ian King <colin.king@canonical.com>
+On Wed, Nov 28, 2018 at 10:31:02AM +0100, Martin Wilck wrote:
+> On Tue, 2018-11-27 at 14:13 -0600, Benjamin Marzinski wrote:
+> > On Tue, Nov 27, 2018 at 10:19:20AM +0100, Martin Wilck wrote:
+> > > 
+> > > I like this idea, in particular for map removal.
+> > > Ben, what do you think?
+> > 
+> > That was my original goal when I ended up with the dmevents code.  I
+> > kept running into new corner cases.  The issue is that udev, by
+> > design,
+> > does not guarantee that you will get all the uevents, and in fact, we
+> > do
+> > see this happen occasionally, so it's not a theoretical problem.
+> > 
+> > Because of that, any system that relies on ueventis has to handle
+> > things
+> > like
+> > 
+> > 1. Someone removes a multipath device
+> > 2. mutipathd misses the remove uevent
+> > 3. Someone creates a differnt multipath device with the same alias
+> > 4. multipathd misses the add uevent.
+> > 5. multipathd notices that your multipath device has all the wrong
+> >    paths, and switches them. Well, fortunately, disable_changed_wwids
+> >    will catch this and simply disable the device
+> 
+> Maybe we should put more work in the "delegate dangerous commands to
+> multipathd" approach.
 
-The workqueue name contains a spelling mistake, rename the workqueue
-from dm-intergrity-recalc to dm-integrity-recalc
+Yeah. If multipath was more of a front-end to multipathd, these
+divergent view issues would be much less likely.
+ 
+> > Someone decides to switch the names of two (or more) multipath
+> > devices:
+> > 1. Someone disables user_friendly_names, renaming the devices to
+> >    their wwid names.
+> > 2. mutipathd misses the uevents.
+> > 3. The person switches the aliases in mutipath.conf and reloads
+> > 4. Now multipathd needs to figure out how to swap two (or more)
+> > device
+> >    aliases
+> 
+> IMO this works well with the current code (unless names are really
+> *swapped*, e.g. mpatha<->mpathb). But maybe I'm overlooking something.
 
-Signed-off-by: Colin Ian King <colin.king@canonical.com>
----
- drivers/md/dm-integrity.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+It does work correctly in the current code, but that's because we never
+miss remove events (renames are basically a remove followed by an add).
+If we relied on uevents and missed them, when we checked the device in
+checkerloop we would find that it suddenly is all wrong.
 
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 62baa3214cc7..457200ca6287 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -3460,7 +3460,7 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 			ti->error = "Recalculate is only valid with internal hash";
- 			goto bad;
- 		}
--		ic->recalc_wq = alloc_workqueue("dm-intergrity-recalc", WQ_MEM_RECLAIM, 1);
-+		ic->recalc_wq = alloc_workqueue("dm-integrity-recalc", WQ_MEM_RECLAIM, 1);
- 		if (!ic->recalc_wq ) {
- 			ti->error = "Cannot allocate workqueue";
- 			r = -ENOMEM;
--- 
-2.19.1
+> > 
+> > I kept trying to figure out methods around issues like these, and
+> > kept
+> > thinking up new ones.  One observation I hit on was that it was
+> > really
+> > important to not miss removing a device, because that was the first
+> > step
+> > in having your multipath devices pointing to the wrong place.  I'm
+> > not
+> > saying it is impossible, I'm just saying that I gave up on it. I
+> > would
+> > happily review code that dealt with all of these issues.
+> 
+> If "remove" uevents is most important, what if we created an additional
+> monitor for "kernel" uevents in multipathd? Those should be just as
+> reliable as dmevents, and for removal, we don't need the udev rule
+> processing. Having ACTION==remove and the KERNEL name should be
+> sufficient. This would obviously not work for "change" or "add" events.
+
+That would certainly help, but again, I would contend that it's not as
+reliable as devmapper. From the netlink man page
+
+"However, reliable transmissions from kernel to user are impossible in
+any case. The kernel can't send a netlink message if the socket buffer
+is full: the message will be dropped and the kernel and the user-space
+process will no longer have the same view of kernel state. It is up to
+the application to detect when this happens (via the ENOBUFS error
+returned by recvmsg(2)) and resynchronize."
+
+In this case, we would need to rescan everything on ENOBUFS, but at
+least we would get a notification.
+
+dmevents simply has one value per device that tracks the current event
+number.  Space for this value is allocated when the device is created,
+and it doesn't take any more space when there is 5000 outstanding events
+than when there is 1.
+
+> Also, I'd like to understand in what (test? production?) scenarios
+> you've observed lost uevents. Lack of reliablity of udev is a problem
+> not only for multipathd, and udev should be fixed. I can mainly think
+> of:
+> 
+>  1) udev rule processing gets stuck on slow IO or IO timeouts, causing
+> the worker to be killed,
+>  2) resource contention between udev workers, in particular on large
+> systems during "coldplug".
+> 
+> Do you have other failure scenarios in mind?
+
+I don't know if this ever being confirmed in the field, but udev and
+won't store an unlimited number of events.  IIRC, after udev finished
+processing and event, processes looking for that event may have a
+limited time to receive that event before it is dropped, if memory is
+tight.  To deal with this, uevent_listen needed to work quickly to make
+sure it didn't lose events.  Or at least that was the case in the early
+days of multipath's udev support. It might be better now.
+
+But we've certainly seen workers killed from timeouts.
+
+> > 
+> > However, before we start down that road (because I went down it once
+> > already, and turned back), lets look at fixing what we have. I agree
+> > that what happened here is that the dmevents code didn't see the
+> > device,
+> > and thus removed it. There seem to be two possible ways for this to
+> > happen
+> > 
+> > 1. device-mapper told us that it successfully completed our command,
+> > but
+> >    gave us incomplete information.  This would be a really big issue.
+> >    Unlike udev, device mapper is supposed to guarantee that if it
+> >    returns success, it has the information that you asked for. It's
+> > not
+> >    just multipath that depends on this.  Many tools use libdevmapper.
+> >    If there is a bug like this in it, that needs to get fixed, not
+> >    worked around on a tool-by-tool basis. But, I don't think that
+> > this
+> >    is what happened.
+> > 
+> > 2. device-mapper told us that it failed to complete our command, and
+> > we
+> >    didn't differentiate that from a successful completion with a
+> > certain
+> >    result.  I think that this is more likely the cause, largely
+> > because
+> >    I can see where we do this. In dm_get_events() once we get the
+> > list
+> >    of names from device-mapper we call dm_is_mpath() on each
+> > name.  I'm
+> >    not sure why I did this.  Probably, I was worried about searching
+> >    through a large list of non-multipath names with a lock held, and
+> >    thought that culling devices that obviously weren't correct would
+> >    speed this up. At any rate, if the device-mapper command fails, we
+> >    assume that the device isn't a multipath device, even though
+> >    device-mapper never told us that.  This is clearly a bug, and it
+> >    clearly would cause exactly the result you saw. That check should
+> > be
+> >    removed, or at least we should differentiate between failure of
+> > the
+> >    command and success of the command, where the device does not have
+> > a
+> >    multipath table.
+> 
+> Good thought. I'd stared at your code in length, but that didn't occur
+> to me. I feel relieved that you found an explanation short of
+> DM_DEVICE_LIST being unreliable.
+> 
+> Martin
+> 
