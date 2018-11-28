@@ -1,57 +1,66 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH V12 00/20] block: support multi-page bvec
-Date: Wed, 28 Nov 2018 06:44:00 -0700
-Message-ID: <7096bc4e-0617-29d0-a90d-ae7caf09a16d@kernel.dk>
-References: <20181126021720.19471-1-ming.lei@redhat.com>
+From: Huaisheng HS1 Ye <yehs1@lenovo.com>
+Subject: RE: [External]  Re: [RFC PATCH v2 0/3] realize dax_operations for
+ dm-snapshot
+Date: Wed, 28 Nov 2018 14:27:12 +0000
+Message-ID: <HK2PR03MB4418C7DE4A2A55E691711CE692D10@HK2PR03MB4418.apcprd03.prod.outlook.com>
+References: <20181121032702.3048-1-yehs2007@zoho.com>
+ <CAPcyv4hmCsNOZPEAzOLxhFCQpyaG0_9TJvJnyuytQAVEU7_wbA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181126021720.19471-1-ming.lei@redhat.com>
-Content-Language: en-US
+In-Reply-To: <CAPcyv4hmCsNOZPEAzOLxhFCQpyaG0_9TJvJnyuytQAVEU7_wbA@mail.gmail.com>
+Content-Language: zh-CN
 Sender: linux-kernel-owner@vger.kernel.org
-To: Ming Lei <ming.lei@redhat.com>
-Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Theodore Ts'o <tytso@mit.edu>, Omar Sandoval <osandov@fb.com>, Sagi Grimberg <sagi@grimberg.me>, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>Bo
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: linux-nvdimm <linux-nvdimm@lists.01.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, Matthew Wilcox <willy@infradead.org>, "zwisler@kernel.org" <zwisler@kernel.org>, Jan Kara <jack@suse.cz>, Dave Jiang <dave.jiang@intel.com>, Vishal L Verma <vishal.l.verma@intel.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, NingTing Cheng <chengnt@lenovo.com>, Huaisheng Ye <yehs2007@zoho.com>
 List-Id: dm-devel.ids
 
-On 11/25/18 7:17 PM, Ming Lei wrote:
-> Hi,
-> 
-> This patchset brings multi-page bvec into block layer:
-> 
-> 1) what is multi-page bvec?
-> 
-> Multipage bvecs means that one 'struct bio_bvec' can hold multiple pages
-> which are physically contiguous instead of one single page used in linux
-> kernel for long time.
-> 
-> 2) why is multi-page bvec introduced?
-> 
-> Kent proposed the idea[1] first. 
-> 
-> As system's RAM becomes much bigger than before, and huge page, transparent
-> huge page and memory compaction are widely used, it is a bit easy now
-> to see physically contiguous pages from fs in I/O. On the other hand, from
-> block layer's view, it isn't necessary to store intermediate pages into bvec,
-> and it is enough to just store the physicallly contiguous 'segment' in each
-> io vector.
-> 
-> Also huge pages are being brought to filesystem and swap [2][6], we can
-> do IO on a hugepage each time[3], which requires that one bio can transfer
-> at least one huge page one time. Turns out it isn't flexiable to change
-> BIO_MAX_PAGES simply[3][5]. Multipage bvec can fit in this case very well.
-> As we saw, if CONFIG_THP_SWAP is enabled, BIO_MAX_PAGES can be configured
-> as much bigger, such as 512, which requires at least two 4K pages for holding
-> the bvec table.
-
-I'm pretty happy with this patchset at this point, looks like it just
-needs a respin to address the last comments. My only concern is whether
-it's a good idea to target this for 4.21, or if we should wait until
-4.22. 4.21 has a fairly substantial amount of changes in terms of block
-already, it's not the best timing for something of this magnitude too.
-
-I'm going back and forth on those one a bit. Any concerns with
-pushing this to 4.22?
-
--- 
-Jens Axboe
+RnJvbTogRGFuIFdpbGxpYW1zIDxkYW4uai53aWxsaWFtc0BpbnRlbC5jb20+DQpTZW50OiBNb25k
+YXksIE5vdmVtYmVyIDI2LCAyMDE4IDU6MDAgQU0+IA0KPiBPbiBUdWUsIE5vdiAyMCwgMjAxOCBh
+dCA3OjI3IFBNIEh1YWlzaGVuZyBZZSA8eWVoczIwMDdAem9oby5jb20+IHdyb3RlOg0KPiA+DQo+
+ID4gRnJvbTogSHVhaXNoZW5nIFllIDx5ZWhzMUBsZW5vdm8uY29tPg0KPiA+DQo+ID4gQ2hhbmdl
+cw0KPiA+IHYxLT52MjoNCj4gPiAgICAgICAgIEFkZCBOVUxMIGZ1bnRpb25zIGZvciBvcmlnaW5f
+ZGF4X2RpcmVjdF9hY2Nlc3MgYW5kDQo+ID4gICAgICAgICBvcmlnaW5fZGF4X2NvcHlfZnJvbS90
+b19pdGVyIGluIG9yZGVyIHRvIGF2b2lkIGJ1aWxkaW5nDQo+ID4gICAgICAgICBlcnJvciB3aGVu
+IENPTkZJR19EQVhfRFJJVkVSIGhhcyBOT1QgYmVlbiBlbmFibGVkLg0KPiA+DQo+ID4gW3YxXTog
+aHR0cHM6Ly9sa21sLm9yZy9sa21sLzIwMTgvMTEvMjAvNzU5DQo+ID4NCj4gPiBUaGlzIHNlcmll
+cyBwYXRjaGVzIGFyZSB1c2VkIHRvIHJlYWxpemUgdGhlIGRheF9vcGVyYXRpb25zIGZvciBkbS1z
+bmFwc2hvdA0KPiA+IHdpdGggcGVyc2lzdGVudCBtZW1vcnkgZGV2aWNlLg0KPiANCj4gSG93IGRv
+ZXMgdGhpcyBpbnRlcmFjdCB3aXRoIG1tYXAgd3JpdGUgZmF1bHRzIGlmIHRoZSBtYXBwaW5nIGlz
+IGRheA0KPiBhbmQgdGhlIHBhZ2UgbmVlZHMgdG8gYmUgY293J2Q/DQoNCkhpIERhbiwNCg0KQmFz
+ZWQgb24gbXkgdW5kZXJzdGFuZGluZywgSSB0aGluayBkbS1zbmFwc2hvdCBpcyBpbXBvc3NpYmxl
+IHRvIHdvcmsNCndpdGggZmlsZSBtYXBwaW5nIGluIERBWCB3YXkuDQoNCldoZW4gZmlsZSBtYXBw
+aW5nIGhhcyBiZWVuIHVzZWQgd2l0aCBEQVgsIHVzZXJzcGFjZSBjb3VsZCBnZXQgdGhlIHBvaW50
+ZXINClRvIGFjY2VzcyBwZXJzaXN0ZW50IG1lbW9yeSBkaXJlY3RseSBieSBwYWdlIGZhdWx0Lg0K
+SGVyZSBpcyB0aGUgY2FsbCB0cmFjZS4NCg0KIDc0IFsgNzY3Ny44OTczNTRdIENhbGwgVHJhY2U6
+DQogNzUgWyA3Njc3LjkwMDUzOF0gIGR1bXBfc3RhY2srMHg2Ny8weDgyDQogNzYgWyA3Njc3Ljkw
+NDY5NV0gIF9fcG1lbV9kaXJlY3RfYWNjZXNzKzB4YTkvMHgxMDEgW25kX3BtZW1dDQogNzcgWyA3
+Njc3LjkxMDkyMl0gID8gbGluZWFyX2N0cisweDEyYS8weDEyYSBbZG1fbW9kXQ0KIDc4IFsgNzY3
+Ny45MTYzNDBdICBwbWVtX2RheF9kaXJlY3RfYWNjZXNzKzB4MzAvMHgzNyBbbmRfcG1lbV0NCiA3
+OSBbIDc2NzcuOTIyNjQxXSAgZGF4X2RpcmVjdF9hY2Nlc3MrMHgzMC8weDU4DQogODAgWyA3Njc3
+LjkyNzQ4MF0gIGxpbmVhcl9kYXhfZGlyZWN0X2FjY2VzcysweDY2LzB4NzEgW2RtX21vZF0NCiA4
+MSBbIDc2NzcuOTMzODQ4XSAgZG1fZGF4X2RpcmVjdF9hY2Nlc3MrMHg5Yy8weGYxIFtkbV9tb2Rd
+DQogODIgWyA3Njc3LjkzOTg1Nl0gID8gb3JpZ2luX2RheF9jb3B5X2Zyb21faXRlcisweDg4LzB4
+ODggW2RtX3NuYXBzaG90XQ0KIDgzIFsgNzY3Ny45NDcwMzJdICBkYXhfZGlyZWN0X2FjY2Vzcysw
+eDMwLzB4NTgNCiA4NCBbIDc2NzcuOTUxODc2XSAgb3JpZ2luX2RheF9kaXJlY3RfYWNjZXNzKzB4
+NmEvMHg3NSBbZG1fc25hcHNob3RdDQogODUgWyA3Njc3Ljk1ODc1M10gIGRtX2RheF9kaXJlY3Rf
+YWNjZXNzKzB4OWMvMHhmMSBbZG1fbW9kXQ0KIDg2IFsgNzY3Ny45NjQ3MzhdICBkYXhfZGlyZWN0
+X2FjY2VzcysweDMwLzB4NTgNCiA4NyBbIDc2NzcuOTY5NTQyXSAgZGF4X2lvbWFwX3BmbisweDg0
+LzB4MTBkDQogODggWyA3Njc3Ljk3NDA2MV0gIGRheF9pb21hcF9wdGVfZmF1bHQrMHg0YTkvMHg3
+NzMNCiA4OSBbIDc2NzcuOTc5MjcxXSAgZGF4X2lvbWFwX2ZhdWx0KzB4MjEvMHgzNg0KIDkwIFsg
+NzY3Ny45ODM4OTVdICBleHQyX2RheF9mYXVsdCsweDcwLzB4OWEgW2V4dDJdDQogOTEgWyA3Njc3
+Ljk4OTA2MV0gIF9fZG9fZmF1bHQrMHgxZC8weDc0DQogOTIgWyA3Njc3Ljk5MzE1OV0gIF9faGFu
+ZGxlX21tX2ZhdWx0KzB4ZjA0LzB4MTdhNA0KIDkzIFsgNzY3Ny45OTgyMjVdICBoYW5kbGVfbW1f
+ZmF1bHQrMHgxYTAvMHgyMDQNCiA5NCBbIDc2NzguMDAzMDM1XSAgX19kb19wYWdlX2ZhdWx0KzB4
+MzliLzB4NGQzDQogOTUgWyA3Njc4LjAwNzgzOV0gIGRvX3BhZ2VfZmF1bHQrMHhmYy8weDExYg0K
+IDk2IFsgNzY3OC4wMTIzMTZdICA/IHBhZ2VfZmF1bHQrMHg4LzB4MzANCiA5NyBbIDc2NzguMDE2
+NDk4XSAgcGFnZV9mYXVsdCsweDFlLzB4MzANCg0KVGhlIGFwcGxpY2F0aW9uIGluIHVzZXJzcGFj
+ZSBjb3VsZCBkaXJlY3RseSByZWFkIG9yIHdyaXRlIHRoZSBkYXRhIG9mDQp0aGUgZmlsZSBjb250
+ZW50IGJ5IG1tYXAgaW4gREFYIHdheS4NCmRtLXNuYXBzaG90IHdvcmtzIGF0IGtlcm5lbCBzcGFj
+ZSwgc28gaXQgZG9lc24ndCBoYXZlIGNoYW5jZSB0byBiZSBhd2FyZQ0Kb2YgdGhlIG1vZGlmaWNh
+dGlvbiBvZiBGUy4NCg0KSSB0aGluayBpbiB0aGlzIGNhc2UsIHBlcmhhcHMgdXNlcnNwYWNlIHNo
+b3VsZCB0YWtlIHRoZSByZXNwb25zaWJpbGl0eQ0KZm9yIHNuYXBzaG90IHdoZW4gZmlsZSBtYXBw
+aW5nIGhhcyBiZWVuIHVzZWQgaW4gREFYIHdheS4gSnVzdCBsaWtlIHdoYXQNCk5WTUwgaGFzIGRv
+bmUgYXMgQ0xGTFVTSCBmb3IgY2FjaGUgbGluZXMgZmx1c2guDQoNCkNvcnJlY3QgbWUgaWYgYW55
+dGhpbmcgaXMgbm90IGFjY3VyYXRlLg0KDQpDaGVlcnMsDQpIdWFpc2hlbmcgWWUNCg==
