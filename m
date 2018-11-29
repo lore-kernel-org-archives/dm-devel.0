@@ -1,68 +1,69 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: Disconcerting observation with multipathd's dmevent
-	polling code
-Date: Wed, 28 Nov 2018 20:35:05 +0100
-Message-ID: <ba0eac644bd0c426aab650c02eec9017047c6802.camel@suse.de>
-References: <9f372197ec112f97298641e223d2e5e6a5e1b33a.camel@suse.de>
-	<6fab77be-763c-4de0-a312-de112e7d1c0a@suse.de>
-	<82f6c1b983936a2de4a3f1663f2886cf636460f3.camel@suse.de>
-	<20181127201333.GD5077@octiron.msp.redhat.com>
-	<b3608cce3000a34787d5c252d2dcb8fb6775ba42.camel@suse.de>
-	<20181128165714.GI5077@octiron.msp.redhat.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [PATCH V12 00/20] block: support multi-page bvec
+Date: Thu, 29 Nov 2018 09:30:00 +0800
+Message-ID: <20181129012959.GC23249@ming.t460p>
+References: <20181126021720.19471-1-ming.lei@redhat.com>
+ <7096bc4e-0617-29d0-a90d-ae7caf09a16d@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181128165714.GI5077@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel mailing list <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <7096bc4e-0617-29d0-a90d-ae7caf09a16d@kernel.dk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>, "Ewan D. Milne" <emilne@redhat.com>
+Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Theodore Ts'o <tytso@mit.edu>, Omar Sandoval <osandov@fb.com>, Sagi Grimberg <sagi@grimberg.me>, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>Bo
 List-Id: dm-devel.ids
 
-On Wed, 2018-11-28 at 10:57 -0600, Benjamin Marzinski wrote:
-> On Wed, Nov 28, 2018 at 10:31:02AM +0100, Martin Wilck wrote:
+On Wed, Nov 28, 2018 at 06:44:00AM -0700, Jens Axboe wrote:
+> On 11/25/18 7:17 PM, Ming Lei wrote:
+> > Hi,
 > > 
-> > If "remove" uevents is most important, what if we created an
-> > additional
-> > monitor for "kernel" uevents in multipathd? Those should be just as
-> > reliable as dmevents, and for removal, we don't need the udev rule
-> > processing. Having ACTION==remove and the KERNEL name should be
-> > sufficient. This would obviously not work for "change" or "add"
-> > events.
+> > This patchset brings multi-page bvec into block layer:
+> > 
+> > 1) what is multi-page bvec?
+> > 
+> > Multipage bvecs means that one 'struct bio_bvec' can hold multiple pages
+> > which are physically contiguous instead of one single page used in linux
+> > kernel for long time.
+> > 
+> > 2) why is multi-page bvec introduced?
+> > 
+> > Kent proposed the idea[1] first. 
+> > 
+> > As system's RAM becomes much bigger than before, and huge page, transparent
+> > huge page and memory compaction are widely used, it is a bit easy now
+> > to see physically contiguous pages from fs in I/O. On the other hand, from
+> > block layer's view, it isn't necessary to store intermediate pages into bvec,
+> > and it is enough to just store the physicallly contiguous 'segment' in each
+> > io vector.
+> > 
+> > Also huge pages are being brought to filesystem and swap [2][6], we can
+> > do IO on a hugepage each time[3], which requires that one bio can transfer
+> > at least one huge page one time. Turns out it isn't flexiable to change
+> > BIO_MAX_PAGES simply[3][5]. Multipage bvec can fit in this case very well.
+> > As we saw, if CONFIG_THP_SWAP is enabled, BIO_MAX_PAGES can be configured
+> > as much bigger, such as 512, which requires at least two 4K pages for holding
+> > the bvec table.
 > 
-> That would certainly help, but again, I would contend that it's not
-> as
-> reliable as devmapper. From the netlink man page
+> I'm pretty happy with this patchset at this point, looks like it just
+> needs a respin to address the last comments. My only concern is whether
+
+I will address the last comment from Omar on patch of '[PATCH V12 01/20] btrfs:
+remove various bio_offset arguments', we may use the approach in V11 simply.
+
+> it's a good idea to target this for 4.21, or if we should wait until
+> 4.22. 4.21 has a fairly substantial amount of changes in terms of block
+> already, it's not the best timing for something of this magnitude too.
+
+Yeah, I understand.
+
 > 
-> "However, reliable transmissions from kernel to user are impossible
-> in
-> any case. The kernel can't send a netlink message if the socket
-> buffer
-> is full: the message will be dropped and the kernel and the user-
-> space
-> process will no longer have the same view of kernel state. It is up
-> to
-> the application to detect when this happens (via the ENOBUFS error
-> returned by recvmsg(2)) and resynchronize."
-> 
-> In this case, we would need to rescan everything on ENOBUFS, but at
-> least we would get a notification.
+> I'm going back and forth on those one a bit. Any concerns with
+> pushing this to 4.22?
 
-By running the uevent listener with RT priority and using a suitably
-large receive buffer, we should be able to reduce the likelihood of
-this happening such that it doesn't really matter anymore. In real OOM
-situations, multipathd is pretty much hosed anyway. multipathd hasn't
-been written with resilience against memory pressure in mind.
+My only one concern is about the warning of "blk_cloned_rq_check_limits:
+over max segments limit" on dm multipath, and seems Ewan and Mike is waiting
+for this fix.
 
-But for the time being, I'm fine with your dm_is_mpath patch.
-
-Thanks
-Martin
+thanks,
+Ming
