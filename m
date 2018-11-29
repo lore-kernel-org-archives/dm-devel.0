@@ -1,34 +1,60 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH V12 00/20] block: support multi-page bvec
-Date: Thu, 29 Nov 2018 11:30:47 +0800
-Message-ID: <20181129033046.GE23390@ming.t460p>
-References: <20181126021720.19471-1-ming.lei@redhat.com>
- <7096bc4e-0617-29d0-a90d-ae7caf09a16d@kernel.dk>
- <20181129012959.GC23249@ming.t460p>
- <1983a2f5-07be-4102-fedc-54e2ad2e16dc@kernel.dk>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 08/19] libmultipath: decrease log level of
+	word splitting
+Date: Thu, 29 Nov 2018 14:49:45 -0600
+Message-ID: <20181129204944.GK5077@octiron.msp.redhat.com>
+References: <20181121101839.30784-1-mwilck@suse.com>
+	<20181121101839.30784-9-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1983a2f5-07be-4102-fedc-54e2ad2e16dc@kernel.dk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Mike Snitzer <snitzer@redhat.com>, "Ewan D. Milne" <emilne@redhat.com>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Theodore Ts'o <tytso@mit.edu>, Omar Sandoval <osandov@fb.com>, Sagi Grimberg <sagi@grimberg.me>, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz
+In-Reply-To: <20181121101839.30784-9-mwilck@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Nov 28, 2018 at 07:20:51PM -0700, Jens Axboe wrote:
-> On 11/28/18 6:30 PM, Ming Lei wrote:
-> >> I'm going back and forth on those one a bit. Any concerns with
-> >> pushing this to 4.22?
-> > 
-> > My only one concern is about the warning of
-> > "blk_cloned_rq_check_limits: over max segments limit" on dm multipath,
-> > and seems Ewan and Mike is waiting for this fix.
+On Wed, Nov 21, 2018 at 11:18:28AM +0100, Martin Wilck wrote:
+> This will make log level 4 actually usable.
+
+condlog doesn't actually handle verbosity levels gerater than 4
+correctly when logging to syslog (there is no loglevel 8).  I didn't
+even realize that there were any condlog(5, ...) calls.  I am all for
+using them to make log level 4 usable, but we should cap prio at 7 in
+log_safe(), to make syslog happy (not that syslog is used much
+anymore).
+
+Otherwise, I'm fine with this
+
+-Ben
+ 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/util.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> Not familiar with this issue, can you post a link to it? I'd be fine
-> working around anything until 4.22, it's not going to be a new issue.
-
-https://marc.info/?t=153303425700002&r=1&w=2
-
-thanks,
-Ming
+> diff --git a/libmultipath/util.c b/libmultipath/util.c
+> index 66c47611..b5d2e706 100644
+> --- a/libmultipath/util.c
+> +++ b/libmultipath/util.c
+> @@ -104,7 +104,7 @@ get_word (char * sentence, char ** word)
+>  	}
+>  	strncpy(*word, sentence, len);
+>  	strchop(*word);
+> -	condlog(4, "*word = %s, len = %i", *word, len);
+> +	condlog(5, "*word = %s, len = %i", *word, len);
+>  
+>  	if (*p == '\0')
+>  		return 0;
+> -- 
+> 2.19.1
