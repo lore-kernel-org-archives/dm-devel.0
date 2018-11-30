@@ -1,14 +1,14 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 0/6] per-cpu in_flight counters for bio-based
-	drivers
-Date: Fri, 30 Nov 2018 17:22:20 -0500
-Message-ID: <20181130222226.77216-1-snitzer@redhat.com>
-References: <20181128004211.368810060@debian.vm>
+Subject: [PATCH v2 1/6] dm: dont rewrite
+	dm_disk(md)->part0.in_flight
+Date: Fri, 30 Nov 2018 17:22:21 -0500
+Message-ID: <20181130222226.77216-2-snitzer@redhat.com>
+References: <20181130222226.77216-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181128004211.368810060@debian.vm>
+In-Reply-To: <20181130222226.77216-1-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,44 +22,39 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-This v2 the product of more thorough review and testing (on my part)
-of Mikulas' original patchset.
+generic_start_io_acct and generic_end_io_acct already update the variable
+in_flight using atomic operations, so we don't have to overwrite them
+again.
 
-Not seeing a major performance win in general but no loss either.  DM
-devices do see a huge boost in IOPS thanks to being able to eliminate
-the inefficient md->pending IO accounting that it was doing, see:
-https://www.redhat.com/archives/dm-devel/2018-November/msg00415.html
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-Happy to iterate on this patchset further as needed, all
-review/suggestions are very much appreciated.
-
-Thanks,
-Mike
-
-Mike Snitzer (1):
-  dm rq: leverage blk_mq_queue_busy() to check for outstanding IO
-
-Mikulas Patocka (5):
-  dm: dont rewrite dm_disk(md)->part0.in_flight
-  block: delete part_round_stats and switch to less precise counting
-  block: switch to per-cpu in-flight counters
-  block: return just one value from part_in_flight
-  dm: remove the pending IO accounting
-
- block/bio.c               | 28 ++++++++++++++++----
- block/blk-core.c          | 67 +++++------------------------------------------
- block/blk-merge.c         |  3 +--
- block/blk-mq.c            | 12 ++++-----
- block/blk-mq.h            |  3 +--
- block/genhd.c             | 59 +++++++++++++++++++++++------------------
- block/partition-generic.c | 10 +++----
- drivers/md/dm-core.h      |  2 --
- drivers/md/dm-rq.c        |  9 +++----
- drivers/md/dm.c           | 36 +++++++++++--------------
- include/linux/genhd.h     | 13 +++++----
- 11 files changed, 98 insertions(+), 144 deletions(-)
-
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index a733e4c920af..a8ae7931bce7 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -663,8 +663,7 @@ static void start_io_acct(struct dm_io *io)
+ 	generic_start_io_acct(md->queue, bio_op(bio), bio_sectors(bio),
+ 			      &dm_disk(md)->part0);
+ 
+-	atomic_set(&dm_disk(md)->part0.in_flight[rw],
+-		   atomic_inc_return(&md->pending[rw]));
++	atomic_inc(&md->pending[rw]);
+ 
+ 	if (unlikely(dm_stats_used(&md->stats)))
+ 		dm_stats_account_io(&md->stats, bio_data_dir(bio),
+@@ -693,7 +692,6 @@ static void end_io_acct(struct dm_io *io)
+ 	 * a flush.
+ 	 */
+ 	pending = atomic_dec_return(&md->pending[rw]);
+-	atomic_set(&dm_disk(md)->part0.in_flight[rw], pending);
+ 	pending += atomic_read(&md->pending[rw^0x1]);
+ 
+ 	/* nudge anyone waiting on suspend queue */
 -- 
 2.15.0
