@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 1/6] dm: dont rewrite
-	dm_disk(md)->part0.in_flight
-Date: Fri, 30 Nov 2018 17:22:21 -0500
-Message-ID: <20181130222226.77216-2-snitzer@redhat.com>
+Subject: [PATCH v2 2/6] dm rq: leverage blk_mq_queue_busy() to
+	check for outstanding IO
+Date: Fri, 30 Nov 2018 17:22:22 -0500
+Message-ID: <20181130222226.77216-3-snitzer@redhat.com>
 References: <20181130222226.77216-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,39 +22,42 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-From: Mikulas Patocka <mpatocka@redhat.com>
+Now that request-based dm-multipath only supports blk-mq, make use of
+the newly introduced blk_mq_queue_busy() to check for outstanding IO --
+rather than (ab)using the block core's in_flight counters.
 
-generic_start_io_acct and generic_end_io_acct already update the variable
-in_flight using atomic operations, so we don't have to overwrite them
-again.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm.c | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
+ drivers/md/dm-rq.c | 9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index a733e4c920af..a8ae7931bce7 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -663,8 +663,7 @@ static void start_io_acct(struct dm_io *io)
- 	generic_start_io_acct(md->queue, bio_op(bio), bio_sectors(bio),
- 			      &dm_disk(md)->part0);
- 
--	atomic_set(&dm_disk(md)->part0.in_flight[rw],
--		   atomic_inc_return(&md->pending[rw]));
-+	atomic_inc(&md->pending[rw]);
- 
- 	if (unlikely(dm_stats_used(&md->stats)))
- 		dm_stats_account_io(&md->stats, bio_data_dir(bio),
-@@ -693,7 +692,6 @@ static void end_io_acct(struct dm_io *io)
- 	 * a flush.
- 	 */
- 	pending = atomic_dec_return(&md->pending[rw]);
--	atomic_set(&dm_disk(md)->part0.in_flight[rw], pending);
- 	pending += atomic_read(&md->pending[rw^0x1]);
- 
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index 1f1fe9a618ea..d2397d8fcbd1 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -130,11 +130,11 @@ static void rq_end_stats(struct mapped_device *md, struct request *orig)
+  */
+ static void rq_completed(struct mapped_device *md, int rw, bool run_queue)
+ {
+-	atomic_dec(&md->pending[rw]);
+-
  	/* nudge anyone waiting on suspend queue */
+-	if (!md_in_flight(md))
+-		wake_up(&md->wait);
++	if (unlikely(waitqueue_active(&md->wait))) {
++		if (!blk_mq_queue_busy(md->queue))
++			wake_up(&md->wait);
++	}
+ 
+ 	/*
+ 	 * dm_put() must be at the end of this function. See the comment above
+@@ -436,7 +436,6 @@ ssize_t dm_attr_rq_based_seq_io_merge_deadline_store(struct mapped_device *md,
+ static void dm_start_request(struct mapped_device *md, struct request *orig)
+ {
+ 	blk_mq_start_request(orig);
+-	atomic_inc(&md->pending[rq_data_dir(orig)]);
+ 
+ 	if (unlikely(dm_stats_used(&md->stats))) {
+ 		struct dm_rq_target_io *tio = tio_from_request(orig);
 -- 
 2.15.0
