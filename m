@@ -1,8 +1,8 @@
-From: Dave Chinner <david@fromorbit.com>
+From: Ric Wheeler <ricwheeler@gmail.com>
 Subject: Re: block layer API for file system creation - when to
  use multidisk mode
-Date: Sat, 1 Dec 2018 15:35:09 +1100
-Message-ID: <20181201043509.GZ6311@dastard>
+Date: Sat, 1 Dec 2018 15:52:31 -0500
+Message-ID: <80505ddf-8c6f-50d7-1e6d-2e50e7349c6f@gmail.com>
 References: <67627995-714c-5c38-a796-32b503de7d13@sandeen.net>
 	<20181005232710.GH12041@dastard>
 	<CAOi1vP-Z7xZk1YvWHYWQGOHfyWccFCkyn8je0HBvGhGuUrXmaQ@mail.gmail.com>
@@ -13,12 +13,13 @@ References: <67627995-714c-5c38-a796-32b503de7d13@sandeen.net>
 	<39031e68-3936-b5e1-bcb6-6fdecc5988c1@gmail.com>
 	<20181130022510.GW6311@dastard>
 	<3da04164-a89f-f4c0-1529-eab12b3226e1@gmail.com>
+	<20181201043509.GZ6311@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <3da04164-a89f-f4c0-1529-eab12b3226e1@gmail.com>
+In-Reply-To: <20181201043509.GZ6311@dastard>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,93 +29,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ric Wheeler <ricwheeler@gmail.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Eric Sandeen <sandeen@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, Eric Sandeen <sandeen@sandeen.net>, xfs <linux-xfs@vger.kernel.org>, IDE/ATA development list <linux-ide@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Mark Nelson <mnelson@redhat.com>, Ilya Dryomov <idryomov@gmail.com>
+To: Dave Chinner <david@fromorbit.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Eric Sandeen <sandeen@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, Eric Sandeen <sandeen@sandeen.net>, xfs <linux-xfs@vger.kernel.org>, IDE/ATA development list <linux-ide@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, linux-block@vger.kernel.org, Mark Nelson <mnelson@redhat.com>, Ilya Dryomov <idryomov@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, Nov 30, 2018 at 01:00:52PM -0500, Ric Wheeler wrote:
-> On 11/30/18 7:55 AM, Dave Chinner wrote:
-> >On Thu, Nov 29, 2018 at 06:53:14PM -0500, Ric Wheeler wrote:
-> >>Other file systems also need to
-> >>accommodate/probe behind the fictitious visible storage device
-> >>layer... Specifically, is there something we can add per block
-> >>device to help here? Number of independent devices
-> >That's how mkfs.xfs used to do stripe unit/stripe width calculations
-> >automatically on MD devices back in the 2000s. We got rid of that
-> >for more generaly applicable configuration information such as
-> >minimum/optimal IO sizes so we could expose equivalent alignment
-> >information from lots of different types of storage device....
-> >
-> >>or a map of
-> >>those regions?
-> >Not sure what this means or how we'd use it.
-> >Dave.
-> =
-
-> What I was thinking of was a way of giving up a good outline of how
-> many independent regions that are behind one "virtual" block device
-> like a ceph rbd or device mapper device. My assumption is that we
-> are trying to lay down (at least one) allocation group per region.
-> =
-
-> What we need to optimize for includes:
-> =
-
-> =A0=A0=A0 * how many independent regions are there?
-> =
-
-> =A0=A0=A0 * what are the boundaries of those regions?
-> =
-
-> =A0=A0=A0 * optimal IO size/alignment/etc
-> =
-
-> Some of that we have, but the current assumptions don't work well
-> for all device types.
-
-Oh, so essential "independent regions" of the storage device. I
-wrote this in 2008:
-
-http://xfs.org/index.php/Reliable_Detection_and_Repair_of_Metadata_Corrupti=
-on#Failure_Domains
-
-This was derived from the ideas in prototype code I wrote in ~2007
-to try to optimise file layout and load distribution across linear
-concats of multi-TB RAID6 luns. Some of that work was published
-long after I left SGI:
-
-https://marc.info/?l=3Dlinux-xfs&m=3D123441191222714&w=3D2
-
-Essentially, independent regions - called "Logical
-Extension Groups", or "legs" of the filesystem - and would
-essentially be an aggregation of AGs in that region. The
-concept was that we'd move the geometry information from the
-superblock into the legs, and so we could have different AG
-geoemetry optimies for each independent leg of the filesystem.
-
-eg the SSD region could have numerous small AGs, the large,
-contiguous RAID6 part could have maximally size AGs or even make use
-of the RT allocator for free space management instead of the
-AG/btree allocator. Basically it was seen as a mechanism for getting
-rid of needing to specify block devices as command line or mount
-options.
-
-Fundamentally, though, it was based on the concept that Linux would
-eventually grow an interface for the block device/volume manager to
-tell the filesystem where the independent regions in the device
-were(*), but that's not something that has ever appeared. If you can
-provide an indepedent region map in an easy to digest format (e.g. a
-set of {offset, len, geometry} tuples), then we can obviously make
-use of it in XFS....
-
-Cheers,
-
-Dave.
-
-(*) Basically provide a linux version of the functionality Irix
-volume managers had provided filesystems since the late 80s....
-
--- =
-
-Dave Chinner
-david@fromorbit.com
+T24gMTEvMzAvMTggMTE6MzUgUE0sIERhdmUgQ2hpbm5lciB3cm90ZToKPiBPbiBGcmksIE5vdiAz
+MCwgMjAxOCBhdCAwMTowMDo1MlBNIC0wNTAwLCBSaWMgV2hlZWxlciB3cm90ZToKPj4gT24gMTEv
+MzAvMTggNzo1NSBBTSwgRGF2ZSBDaGlubmVyIHdyb3RlOgo+Pj4gT24gVGh1LCBOb3YgMjksIDIw
+MTggYXQgMDY6NTM6MTRQTSAtMDUwMCwgUmljIFdoZWVsZXIgd3JvdGU6Cj4+Pj4gT3RoZXIgZmls
+ZSBzeXN0ZW1zIGFsc28gbmVlZCB0bwo+Pj4+IGFjY29tbW9kYXRlL3Byb2JlIGJlaGluZCB0aGUg
+ZmljdGl0aW91cyB2aXNpYmxlIHN0b3JhZ2UgZGV2aWNlCj4+Pj4gbGF5ZXIuLi4gU3BlY2lmaWNh
+bGx5LCBpcyB0aGVyZSBzb21ldGhpbmcgd2UgY2FuIGFkZCBwZXIgYmxvY2sKPj4+PiBkZXZpY2Ug
+dG8gaGVscCBoZXJlPyBOdW1iZXIgb2YgaW5kZXBlbmRlbnQgZGV2aWNlcwo+Pj4gVGhhdCdzIGhv
+dyBta2ZzLnhmcyB1c2VkIHRvIGRvIHN0cmlwZSB1bml0L3N0cmlwZSB3aWR0aCBjYWxjdWxhdGlv
+bnMKPj4+IGF1dG9tYXRpY2FsbHkgb24gTUQgZGV2aWNlcyBiYWNrIGluIHRoZSAyMDAwcy4gV2Ug
+Z290IHJpZCBvZiB0aGF0Cj4+PiBmb3IgbW9yZSBnZW5lcmFseSBhcHBsaWNhYmxlIGNvbmZpZ3Vy
+YXRpb24gaW5mb3JtYXRpb24gc3VjaCBhcwo+Pj4gbWluaW11bS9vcHRpbWFsIElPIHNpemVzIHNv
+IHdlIGNvdWxkIGV4cG9zZSBlcXVpdmFsZW50IGFsaWdubWVudAo+Pj4gaW5mb3JtYXRpb24gZnJv
+bSBsb3RzIG9mIGRpZmZlcmVudCB0eXBlcyBvZiBzdG9yYWdlIGRldmljZS4uLi4KPj4+Cj4+Pj4g
+b3IgYSBtYXAgb2YKPj4+PiB0aG9zZSByZWdpb25zPwo+Pj4gTm90IHN1cmUgd2hhdCB0aGlzIG1l
+YW5zIG9yIGhvdyB3ZSdkIHVzZSBpdC4KPj4+IERhdmUuCj4+IFdoYXQgSSB3YXMgdGhpbmtpbmcg
+b2Ygd2FzIGEgd2F5IG9mIGdpdmluZyB1cCBhIGdvb2Qgb3V0bGluZSBvZiBob3cKPj4gbWFueSBp
+bmRlcGVuZGVudCByZWdpb25zIHRoYXQgYXJlIGJlaGluZCBvbmUgInZpcnR1YWwiIGJsb2NrIGRl
+dmljZQo+PiBsaWtlIGEgY2VwaCByYmQgb3IgZGV2aWNlIG1hcHBlciBkZXZpY2UuIE15IGFzc3Vt
+cHRpb24gaXMgdGhhdCB3ZQo+PiBhcmUgdHJ5aW5nIHRvIGxheSBkb3duIChhdCBsZWFzdCBvbmUp
+IGFsbG9jYXRpb24gZ3JvdXAgcGVyIHJlZ2lvbi4KPj4KPj4gV2hhdCB3ZSBuZWVkIHRvIG9wdGlt
+aXplIGZvciBpbmNsdWRlczoKPj4KPj4gIMKgwqDCoCAqIGhvdyBtYW55IGluZGVwZW5kZW50IHJl
+Z2lvbnMgYXJlIHRoZXJlPwo+Pgo+PiAgwqDCoMKgICogd2hhdCBhcmUgdGhlIGJvdW5kYXJpZXMg
+b2YgdGhvc2UgcmVnaW9ucz8KPj4KPj4gIMKgwqDCoCAqIG9wdGltYWwgSU8gc2l6ZS9hbGlnbm1l
+bnQvZXRjCj4+Cj4+IFNvbWUgb2YgdGhhdCB3ZSBoYXZlLCBidXQgdGhlIGN1cnJlbnQgYXNzdW1w
+dGlvbnMgZG9uJ3Qgd29yayB3ZWxsCj4+IGZvciBhbGwgZGV2aWNlIHR5cGVzLgo+IE9oLCBzbyBl
+c3NlbnRpYWwgImluZGVwZW5kZW50IHJlZ2lvbnMiIG9mIHRoZSBzdG9yYWdlIGRldmljZS4gSQo+
+IHdyb3RlIHRoaXMgaW4gMjAwODoKPgo+IGh0dHA6Ly94ZnMub3JnL2luZGV4LnBocC9SZWxpYWJs
+ZV9EZXRlY3Rpb25fYW5kX1JlcGFpcl9vZl9NZXRhZGF0YV9Db3JydXB0aW9uI0ZhaWx1cmVfRG9t
+YWlucwo+Cj4gVGhpcyB3YXMgZGVyaXZlZCBmcm9tIHRoZSBpZGVhcyBpbiBwcm90b3R5cGUgY29k
+ZSBJIHdyb3RlIGluIH4yMDA3Cj4gdG8gdHJ5IHRvIG9wdGltaXNlIGZpbGUgbGF5b3V0IGFuZCBs
+b2FkIGRpc3RyaWJ1dGlvbiBhY3Jvc3MgbGluZWFyCj4gY29uY2F0cyBvZiBtdWx0aS1UQiBSQUlE
+NiBsdW5zLiBTb21lIG9mIHRoYXQgd29yayB3YXMgcHVibGlzaGVkCj4gbG9uZyBhZnRlciBJIGxl
+ZnQgU0dJOgo+Cj4gaHR0cHM6Ly9tYXJjLmluZm8vP2w9bGludXgteGZzJm09MTIzNDQxMTkxMjIy
+NzE0Jnc9Mgo+Cj4gRXNzZW50aWFsbHksIGluZGVwZW5kZW50IHJlZ2lvbnMgLSBjYWxsZWQgIkxv
+Z2ljYWwKPiBFeHRlbnNpb24gR3JvdXBzIiwgb3IgImxlZ3MiIG9mIHRoZSBmaWxlc3lzdGVtIC0g
+YW5kIHdvdWxkCj4gZXNzZW50aWFsbHkgYmUgYW4gYWdncmVnYXRpb24gb2YgQUdzIGluIHRoYXQg
+cmVnaW9uLiBUaGUKPiBjb25jZXB0IHdhcyB0aGF0IHdlJ2QgbW92ZSB0aGUgZ2VvbWV0cnkgaW5m
+b3JtYXRpb24gZnJvbSB0aGUKPiBzdXBlcmJsb2NrIGludG8gdGhlIGxlZ3MsIGFuZCBzbyB3ZSBj
+b3VsZCBoYXZlIGRpZmZlcmVudCBBRwo+IGdlb2VtZXRyeSBvcHRpbWllcyBmb3IgZWFjaCBpbmRl
+cGVuZGVudCBsZWcgb2YgdGhlIGZpbGVzeXN0ZW0uCj4KPiBlZyB0aGUgU1NEIHJlZ2lvbiBjb3Vs
+ZCBoYXZlIG51bWVyb3VzIHNtYWxsIEFHcywgdGhlIGxhcmdlLAo+IGNvbnRpZ3VvdXMgUkFJRDYg
+cGFydCBjb3VsZCBoYXZlIG1heGltYWxseSBzaXplIEFHcyBvciBldmVuIG1ha2UgdXNlCj4gb2Yg
+dGhlIFJUIGFsbG9jYXRvciBmb3IgZnJlZSBzcGFjZSBtYW5hZ2VtZW50IGluc3RlYWQgb2YgdGhl
+Cj4gQUcvYnRyZWUgYWxsb2NhdG9yLiBCYXNpY2FsbHkgaXQgd2FzIHNlZW4gYXMgYSBtZWNoYW5p
+c20gZm9yIGdldHRpbmcKPiByaWQgb2YgbmVlZGluZyB0byBzcGVjaWZ5IGJsb2NrIGRldmljZXMg
+YXMgY29tbWFuZCBsaW5lIG9yIG1vdW50Cj4gb3B0aW9ucy4KPgo+IEZ1bmRhbWVudGFsbHksIHRo
+b3VnaCwgaXQgd2FzIGJhc2VkIG9uIHRoZSBjb25jZXB0IHRoYXQgTGludXggd291bGQKPiBldmVu
+dHVhbGx5IGdyb3cgYW4gaW50ZXJmYWNlIGZvciB0aGUgYmxvY2sgZGV2aWNlL3ZvbHVtZSBtYW5h
+Z2VyIHRvCj4gdGVsbCB0aGUgZmlsZXN5c3RlbSB3aGVyZSB0aGUgaW5kZXBlbmRlbnQgcmVnaW9u
+cyBpbiB0aGUgZGV2aWNlCj4gd2VyZSgqKSwgYnV0IHRoYXQncyBub3Qgc29tZXRoaW5nIHRoYXQg
+aGFzIGV2ZXIgYXBwZWFyZWQuIElmIHlvdSBjYW4KPiBwcm92aWRlIGFuIGluZGVwZWRlbnQgcmVn
+aW9uIG1hcCBpbiBhbiBlYXN5IHRvIGRpZ2VzdCBmb3JtYXQgKGUuZy4gYQo+IHNldCBvZiB7b2Zm
+c2V0LCBsZW4sIGdlb21ldHJ5fSB0dXBsZXMpLCB0aGVuIHdlIGNhbiBvYnZpb3VzbHkgbWFrZQo+
+IHVzZSBvZiBpdCBpbiBYRlMuLi4uCj4KPiBDaGVlcnMsCj4KPiBEYXZlLgo+Cj4gKCopIEJhc2lj
+YWxseSBwcm92aWRlIGEgbGludXggdmVyc2lvbiBvZiB0aGUgZnVuY3Rpb25hbGl0eSBJcml4Cj4g
+dm9sdW1lIG1hbmFnZXJzIGhhZCBwcm92aWRlZCBmaWxlc3lzdGVtcyBzaW5jZSB0aGUgbGF0ZSA4
+MHMuLi4uCj4KSGkgRGF2ZSwKClRoaXMgaXMgZXhhY3RseSB0aGUga2luZCBvZiB0aGluZyBJIHRo
+aW5rIHdvdWxkIGJlIHVzZWZ1bC7CoCBXZSBtaWdodCB3YW50IHRvIApoYXZlIGEgZGlzdGluY3Qg
+dmFsdWUgKGxpa2UgdGhlIHJvdGF0aW9uYWwpIHRoYXQgaW5kaWNhdGVzIHRoaXMgaXMgYSBkZXZp
+Y2Ugd2l0aCAKbXVsdGlwbGUgImxlZ3MiIHNvIHRoYXQgbm9ybWFsbHkgd2UgcXVlcnkgdGhhdCBh
+bmQgZG9uJ3QgaGF2ZSB0byBsb29rIGZvciB0aGUgCm1vcmUgY29tcGxpY2F0ZWQgaW5mb3JtYXRp
+b24uCgpSZWdhcmRzLAoKUmljCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJl
+ZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
