@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 22/24] domap(): use symbolic return value
-Date: Mon,  3 Dec 2018 20:36:22 +0100
-Message-ID: <20181203193624.21870-5-mwilck@suse.com>
+Subject: [PATCH v2 23/24] domap(): never return DOMAP_RETRY in
+	daemon mode
+Date: Mon,  3 Dec 2018 20:36:23 +0100
+Message-ID: <20181203193624.21870-6-mwilck@suse.com>
 References: <20181203193624.21870-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,108 +22,82 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Use an enum for the already-symbolic return value of domap(), and
-avoid the use of "<= 0" for the return value, which is against the
-spirit of symbolic values. A return value less or equal than 0 means
-DOMAP_FAIL or DOMAP_RETRY. Use the fact that DOMAP_RETRY is only
-returned in the ACT_CREATE case for simplification of the logic
-in those cases where ACT_CREATE is not used.
+DOMAP_RETRY is only used by the multipath tool. multipathd always treats
+it exactly like DOMAP_FAIL. Simplify logic by only returning
+DOMAP_RETRY in non-daemon mode from domap().
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c  |  9 ---------
- libmultipath/configure.h  | 13 +++++++++++++
- multipathd/cli_handlers.c |  2 +-
- multipathd/main.c         |  6 +++---
- 4 files changed, 17 insertions(+), 13 deletions(-)
+ libmultipath/configure.c | 28 +++++++++++++---------------
+ multipathd/main.c        |  9 +--------
+ 2 files changed, 14 insertions(+), 23 deletions(-)
 
 diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 5daf0c13..84ae5f56 100644
+index 84ae5f56..1c549817 100644
 --- a/libmultipath/configure.c
 +++ b/libmultipath/configure.c
-@@ -788,15 +788,6 @@ fail:
- 	return 1;
- }
+@@ -831,7 +831,7 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
+ 		if (lock_multipath(mpp, 1)) {
+ 			condlog(3, "%s: failed to create map (in use)",
+ 				mpp->alias);
+-			return DOMAP_RETRY;
++			return is_daemon ? DOMAP_FAIL : DOMAP_RETRY;
+ 		}
  
--/*
-- * Return value:
-- */
--#define DOMAP_RETRY	-1
--#define DOMAP_FAIL	0
--#define DOMAP_OK	1
--#define DOMAP_EXIST	2
--#define DOMAP_DRY	3
--
- int domap(struct multipath *mpp, char *params, int is_daemon)
- {
- 	int r = DOMAP_FAIL;
-diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-index 64520c57..1b73bf42 100644
---- a/libmultipath/configure.h
-+++ b/libmultipath/configure.h
-@@ -23,6 +23,19 @@ enum actions {
- 	ACT_IMPOSSIBLE,
- };
+ 		sysfs_set_max_sectors_kb(mpp, 0);
+@@ -1110,20 +1110,18 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
  
-+/*
-+ * Return value of domap()
-+ * DAEMON_RETRY is only used in non-daemon case (multipath),
-+ * and only for ACT_CREATE (see domap()).
-+ */
-+enum {
-+	DOMAP_RETRY	= -1,
-+	DOMAP_FAIL	= 0,
-+	DOMAP_OK	= 1,
-+	DOMAP_EXIST	= 2,
-+	DOMAP_DRY	= 3
-+};
+ 		r = domap(mpp, params, is_daemon);
+ 
+-		if (r == DOMAP_FAIL || r == DOMAP_RETRY) {
+-			condlog(3, "%s: domap (%u) failure "
+-				   "for create/reload map",
+-				mpp->alias, r);
+-			if (r == DOMAP_FAIL || is_daemon) {
+-				condlog(2, "%s: %s map",
+-					mpp->alias, (mpp->action == ACT_CREATE)?
+-					"ignoring" : "removing");
+-				remove_map(mpp, vecs, 0);
+-				continue;
+-			} else /* if (r == DOMAP_RETRY && !is_daemon) */ {
+-				ret = CP_RETRY;
+-				goto out;
+-			}
++		if (r == DOMAP_RETRY) {
++			/* This happens in non-daemon case only */
++			ret = CP_RETRY;
++			goto out;
++		}
 +
- /*
-  * Return value of coalesce_paths()
-  * CP_RETRY is only used in non-daemon case (multipath).
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 4fbd8841..14aec17b 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -893,7 +893,7 @@ int resize_map(struct multipath *mpp, unsigned long long size,
- 	}
- 	mpp->action = ACT_RESIZE;
- 	mpp->force_udev_reload = 1;
--	if (domap(mpp, params, 1) <= 0) {
-+	if (domap(mpp, params, 1) == DOMAP_FAIL) {
- 		condlog(0, "%s: failed to resize map : %s", mpp->alias,
- 			strerror(errno));
- 		mpp->size = orig_size;
++		if (r == DOMAP_FAIL) {
++			condlog(2, "%s: domap failure, %s map",
++				mpp->alias, (mpp->action == ACT_CREATE) ?
++				"ignoring" : "removing");
++			remove_map(mpp, vecs, 0);
++			continue;
+ 		}
+ 		if (r == DOMAP_DRY)
+ 			continue;
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 2ea954ae..d0e7107c 100644
+index d0e7107c..1bf3c481 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -498,7 +498,7 @@ retry:
- 		retries = -1;
- 		goto fail;
- 	}
--	if (domap(mpp, params, 1) <= 0 && retries-- > 0) {
-+	if (domap(mpp, params, 1) == DOMAP_FAIL && retries-- > 0) {
- 		condlog(0, "%s: map_udate sleep", mpp->alias);
- 		sleep(1);
- 		goto retry;
-@@ -1000,7 +1000,7 @@ rescan:
+@@ -998,15 +998,8 @@ rescan:
+ 	/*
+ 	 * reload the map for the multipath mapped device
  	 */
- retry:
+-retry:
  	ret = domap(mpp, params, 1);
--	if (ret <= 0) {
-+	if (ret == DOMAP_FAIL || ret == DOMAP_RETRY) {
- 		if (ret < 0 && retries-- > 0) {
- 			condlog(0, "%s: retry domap for addition of new "
- 				"path %s", mpp->alias, pp->dev);
-@@ -1157,7 +1157,7 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
- 		 * reload the map
- 		 */
- 		mpp->action = ACT_RELOAD;
--		if (domap(mpp, params, 1) <= 0) {
-+		if (domap(mpp, params, 1) == DOMAP_FAIL) {
- 			condlog(0, "%s: failed in domap for "
- 				"removal of path %s",
- 				mpp->alias, pp->dev);
+-	if (ret == DOMAP_FAIL || ret == DOMAP_RETRY) {
+-		if (ret < 0 && retries-- > 0) {
+-			condlog(0, "%s: retry domap for addition of new "
+-				"path %s", mpp->alias, pp->dev);
+-			sleep(1);
+-			goto retry;
+-		}
++	if (ret == DOMAP_FAIL) {
+ 		condlog(0, "%s: failed in domap for addition of new "
+ 			"path %s", mpp->alias, pp->dev);
+ 		/*
 -- 
 2.19.1
