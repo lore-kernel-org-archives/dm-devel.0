@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v4 1/7] dm: dont rewrite
-	dm_disk(md)->part0.in_flight
-Date: Thu,  6 Dec 2018 11:41:16 -0500
-Message-ID: <20181206164122.2166-2-snitzer@redhat.com>
+Subject: [PATCH v4 6/7] block: return just one value from
+	part_in_flight
+Date: Thu,  6 Dec 2018 11:41:21 -0500
+Message-ID: <20181206164122.2166-7-snitzer@redhat.com>
 References: <20181206164122.2166-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,37 +24,186 @@ List-Id: dm-devel.ids
 
 From: Mikulas Patocka <mpatocka@redhat.com>
 
-generic_start_io_acct and generic_end_io_acct already update the variable
-in_flight using atomic operations, so we don't have to overwrite them
-again.
+The previous patches deleted all the code that needed the second value
+returned from part_in_flight - now the kernel only uses the first value.
+
+Consequently, part_in_flight (and blk_mq_in_flight) may be changed so that
+it only returns one value.
+
+This patch just refactors the code, there's no functional change.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm.c | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
+ block/blk-mq.c            | 12 +++++-------
+ block/blk-mq.h            |  3 +--
+ block/genhd.c             | 34 ++++++++++++----------------------
+ block/partition-generic.c |  6 +++---
+ include/linux/genhd.h     |  3 +--
+ 5 files changed, 22 insertions(+), 36 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index a733e4c920af..a8ae7931bce7 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -663,8 +663,7 @@ static void start_io_acct(struct dm_io *io)
- 	generic_start_io_acct(md->queue, bio_op(bio), bio_sectors(bio),
- 			      &dm_disk(md)->part0);
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index 900550594651..c6d3101352f4 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -100,25 +100,23 @@ static bool blk_mq_check_inflight(struct blk_mq_hw_ctx *hctx,
+ 	struct mq_inflight *mi = priv;
  
--	atomic_set(&dm_disk(md)->part0.in_flight[rw],
--		   atomic_inc_return(&md->pending[rw]));
-+	atomic_inc(&md->pending[rw]);
- 
- 	if (unlikely(dm_stats_used(&md->stats)))
- 		dm_stats_account_io(&md->stats, bio_data_dir(bio),
-@@ -693,7 +692,6 @@ static void end_io_acct(struct dm_io *io)
- 	 * a flush.
+ 	/*
+-	 * index[0] counts the specific partition that was asked for. index[1]
+-	 * counts the ones that are active on the whole device, so increment
+-	 * that if mi->part is indeed a partition, and not a whole device.
++	 * index[0] counts the specific partition that was asked for.
  	 */
- 	pending = atomic_dec_return(&md->pending[rw]);
--	atomic_set(&dm_disk(md)->part0.in_flight[rw], pending);
- 	pending += atomic_read(&md->pending[rw^0x1]);
+ 	if (rq->part == mi->part)
+ 		mi->inflight[0]++;
+-	if (mi->part->partno)
+-		mi->inflight[1]++;
  
- 	/* nudge anyone waiting on suspend queue */
+ 	return true;
+ }
+ 
+-void blk_mq_in_flight(struct request_queue *q, struct hd_struct *part,
+-		      unsigned int inflight[2])
++unsigned int blk_mq_in_flight(struct request_queue *q, struct hd_struct *part)
+ {
++	unsigned inflight[2];
+ 	struct mq_inflight mi = { .part = part, .inflight = inflight, };
+ 
+ 	inflight[0] = inflight[1] = 0;
+ 	blk_mq_queue_tag_busy_iter(q, blk_mq_check_inflight, &mi);
++
++	return inflight[0];
+ }
+ 
+ static bool blk_mq_check_inflight_rw(struct blk_mq_hw_ctx *hctx,
+diff --git a/block/blk-mq.h b/block/blk-mq.h
+index a664ea44ffd4..0c9c9ea2fefe 100644
+--- a/block/blk-mq.h
++++ b/block/blk-mq.h
+@@ -187,8 +187,7 @@ static inline bool blk_mq_hw_queue_mapped(struct blk_mq_hw_ctx *hctx)
+ 	return hctx->nr_ctx && hctx->tags;
+ }
+ 
+-void blk_mq_in_flight(struct request_queue *q, struct hd_struct *part,
+-		      unsigned int inflight[2]);
++unsigned int blk_mq_in_flight(struct request_queue *q, struct hd_struct *part);
+ void blk_mq_in_flight_rw(struct request_queue *q, struct hd_struct *part,
+ 			 unsigned int inflight[2]);
+ 
+diff --git a/block/genhd.c b/block/genhd.c
+index 9827a2c05db7..1dd8fd6613b8 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -65,34 +65,24 @@ void part_dec_in_flight(struct request_queue *q, struct hd_struct *part, int rw)
+ 		part_stat_local_dec(&part_to_disk(part)->part0, in_flight[rw]);
+ }
+ 
+-void part_in_flight(struct request_queue *q, struct hd_struct *part,
+-		    unsigned int inflight[2])
++unsigned int part_in_flight(struct request_queue *q, struct hd_struct *part)
+ {
+ 	int cpu;
++	unsigned int inflight;
+ 
+ 	if (queue_is_mq(q)) {
+-		blk_mq_in_flight(q, part, inflight);
+-		return;
++		return blk_mq_in_flight(q, part);
+ 	}
+ 
+-	inflight[0] = 0;
++	inflight = 0;
+ 	for_each_possible_cpu(cpu) {
+-		inflight[0] += part_stat_local_read_cpu(part, in_flight[0], cpu) +
+-			       part_stat_local_read_cpu(part, in_flight[1], cpu);
++		inflight += part_stat_local_read_cpu(part, in_flight[0], cpu) +
++			    part_stat_local_read_cpu(part, in_flight[1], cpu);
+ 	}
+-	if ((int)inflight[0] < 0)
+-		inflight[0] = 0;
++	if ((int)inflight < 0)
++		inflight = 0;
+ 
+-	if (part->partno) {
+-		part = &part_to_disk(part)->part0;
+-		inflight[1] = 0;
+-		for_each_possible_cpu(cpu) {
+-			inflight[1] += part_stat_local_read_cpu(part, in_flight[0], cpu) +
+-				       part_stat_local_read_cpu(part, in_flight[1], cpu);
+-		}
+-		if ((int)inflight[1] < 0)
+-			inflight[1] = 0;
+-	}
++	return inflight;
+ }
+ 
+ void part_in_flight_rw(struct request_queue *q, struct hd_struct *part,
+@@ -1348,7 +1338,7 @@ static int diskstats_show(struct seq_file *seqf, void *v)
+ 	struct disk_part_iter piter;
+ 	struct hd_struct *hd;
+ 	char buf[BDEVNAME_SIZE];
+-	unsigned int inflight[2];
++	unsigned int inflight;
+ 
+ 	/*
+ 	if (&disk_to_dev(gp)->kobj.entry == block_class.devices.next)
+@@ -1360,7 +1350,7 @@ static int diskstats_show(struct seq_file *seqf, void *v)
+ 
+ 	disk_part_iter_init(&piter, gp, DISK_PITER_INCL_EMPTY_PART0);
+ 	while ((hd = disk_part_iter_next(&piter))) {
+-		part_in_flight(gp->queue, hd, inflight);
++		inflight = part_in_flight(gp->queue, hd);
+ 		seq_printf(seqf, "%4d %7d %s "
+ 			   "%lu %lu %lu %u "
+ 			   "%lu %lu %lu %u "
+@@ -1376,7 +1366,7 @@ static int diskstats_show(struct seq_file *seqf, void *v)
+ 			   part_stat_read(hd, merges[STAT_WRITE]),
+ 			   part_stat_read(hd, sectors[STAT_WRITE]),
+ 			   (unsigned int)part_stat_read_msecs(hd, STAT_WRITE),
+-			   inflight[0],
++			   inflight,
+ 			   jiffies_to_msecs(part_stat_read(hd, io_ticks)),
+ 			   jiffies_to_msecs(part_stat_read(hd, time_in_queue)),
+ 			   part_stat_read(hd, ios[STAT_DISCARD]),
+diff --git a/block/partition-generic.c b/block/partition-generic.c
+index 42d6138ac876..8e596a8dff32 100644
+--- a/block/partition-generic.c
++++ b/block/partition-generic.c
+@@ -120,9 +120,9 @@ ssize_t part_stat_show(struct device *dev,
+ {
+ 	struct hd_struct *p = dev_to_part(dev);
+ 	struct request_queue *q = part_to_disk(p)->queue;
+-	unsigned int inflight[2];
++	unsigned int inflight;
+ 
+-	part_in_flight(q, p, inflight);
++	inflight = part_in_flight(q, p);
+ 	return sprintf(buf,
+ 		"%8lu %8lu %8llu %8u "
+ 		"%8lu %8lu %8llu %8u "
+@@ -137,7 +137,7 @@ ssize_t part_stat_show(struct device *dev,
+ 		part_stat_read(p, merges[STAT_WRITE]),
+ 		(unsigned long long)part_stat_read(p, sectors[STAT_WRITE]),
+ 		(unsigned int)part_stat_read_msecs(p, STAT_WRITE),
+-		inflight[0],
++		inflight,
+ 		jiffies_to_msecs(part_stat_read(p, io_ticks)),
+ 		jiffies_to_msecs(part_stat_read(p, time_in_queue)),
+ 		part_stat_read(p, ios[STAT_DISCARD]),
+diff --git a/include/linux/genhd.h b/include/linux/genhd.h
+index 636b4f687e35..06c0fd594097 100644
+--- a/include/linux/genhd.h
++++ b/include/linux/genhd.h
+@@ -391,8 +391,7 @@ static inline void free_part_stats(struct hd_struct *part)
+ #define part_stat_local_read_cpu(gendiskp, field, cpu)			\
+ 	local_read(&(part_stat_get_cpu(gendiskp, field, cpu)))
+ 
+-void part_in_flight(struct request_queue *q, struct hd_struct *part,
+-		    unsigned int inflight[2]);
++unsigned int part_in_flight(struct request_queue *q, struct hd_struct *part);
+ void part_in_flight_rw(struct request_queue *q, struct hd_struct *part,
+ 		       unsigned int inflight[2]);
+ void part_dec_in_flight(struct request_queue *q, struct hd_struct *part,
 -- 
 2.15.0
