@@ -1,12 +1,14 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v4 0/7] per-cpu in_flight counters for bio-based
-	drivers
-Date: Thu,  6 Dec 2018 11:41:15 -0500
-Message-ID: <20181206164122.2166-1-snitzer@redhat.com>
+Subject: [PATCH v4 1/7] dm: dont rewrite
+	dm_disk(md)->part0.in_flight
+Date: Thu,  6 Dec 2018 11:41:16 -0500
+Message-ID: <20181206164122.2166-2-snitzer@redhat.com>
+References: <20181206164122.2166-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20181206164122.2166-1-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,42 +22,39 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-Hey,
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-This v4 addresses the compile issues on various archs when CONFIG_SMP
-isn't set (by introducing appropriate wrappers in genhd.h)
+generic_start_io_acct and generic_end_io_acct already update the variable
+in_flight using atomic operations, so we don't have to overwrite them
+again.
 
-Testing with this v4 I was unable to reproduce the issue you reported
-where iostat always reports 0 for avgqu-sz -- but please let me know
-if you still see problems like that.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-Thanks,
-Mike
-
-Mike Snitzer (2):
-  dm rq: leverage blk_mq_queue_busy() to check for outstanding IO
-  block: stop passing 'cpu' to all percpu stats methods
-
-Mikulas Patocka (5):
-  dm: dont rewrite dm_disk(md)->part0.in_flight
-  block: delete part_round_stats and switch to less precise counting
-  block: switch to per-cpu in-flight counters
-  block: return just one value from part_in_flight
-  dm: remove the pending IO accounting
-
- block/bio.c               | 36 ++++++++++++++++-----
- block/blk-core.c          | 80 +++++++----------------------------------------
- block/blk-merge.c         |  4 +--
- block/blk-mq.c            | 12 +++----
- block/blk-mq.h            |  3 +-
- block/genhd.c             | 55 ++++++++++++++++++--------------
- block/partition-generic.c | 10 ++----
- drivers/md/dm-core.h      |  2 --
- drivers/md/dm-rq.c        |  9 +++---
- drivers/md/dm.c           | 36 +++++++++------------
- drivers/md/md.c           |  7 ++---
- include/linux/genhd.h     | 55 +++++++++++++++++++-------------
- 12 files changed, 137 insertions(+), 172 deletions(-)
-
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index a733e4c920af..a8ae7931bce7 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -663,8 +663,7 @@ static void start_io_acct(struct dm_io *io)
+ 	generic_start_io_acct(md->queue, bio_op(bio), bio_sectors(bio),
+ 			      &dm_disk(md)->part0);
+ 
+-	atomic_set(&dm_disk(md)->part0.in_flight[rw],
+-		   atomic_inc_return(&md->pending[rw]));
++	atomic_inc(&md->pending[rw]);
+ 
+ 	if (unlikely(dm_stats_used(&md->stats)))
+ 		dm_stats_account_io(&md->stats, bio_data_dir(bio),
+@@ -693,7 +692,6 @@ static void end_io_acct(struct dm_io *io)
+ 	 * a flush.
+ 	 */
+ 	pending = atomic_dec_return(&md->pending[rw]);
+-	atomic_set(&dm_disk(md)->part0.in_flight[rw], pending);
+ 	pending += atomic_read(&md->pending[rw^0x1]);
+ 
+ 	/* nudge anyone waiting on suspend queue */
 -- 
 2.15.0
