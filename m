@@ -1,8 +1,8 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH] dm crypt: log the encryption algorithm
-	implementation
-Date: Wed,  5 Dec 2018 20:53:00 -0800
-Message-ID: <20181206045300.32387-1-ebiggers@kernel.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v4 0/7] per-cpu in_flight counters for bio-based
+	drivers
+Date: Thu,  6 Dec 2018 11:41:15 -0500
+Message-ID: <20181206164122.2166-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,60 +16,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: linux-crypto@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-From: Eric Biggers <ebiggers@google.com>
+Hey,
 
-Log the encryption algorithm's driver name when a dm-crypt target is
-created.  This will help people determine whether the expected
-implementation is being used.  In some cases we've seen people do
-benchmarks and reject using encryption for performance reasons, when in
-fact they used a much slower implementation than was possible on the
-hardware.  It can make an enormous difference; e.g., AES-XTS on ARM can
-be over 10x faster with the crypto extensions than without.  It can also
-be useful to know if an implementation using an external crypto
-accelerator is being used instead of a software implementation.
+This v4 addresses the compile issues on various archs when CONFIG_SMP
+isn't set (by introducing appropriate wrappers in genhd.h)
 
-Example message:
+Testing with this v4 I was unable to reproduce the issue you reported
+where iostat always reports 0 for avgqu-sz -- but please let me know
+if you still see problems like that.
 
-[   29.307629] device-mapper: crypt: xts(aes) using implementation "xts-aes-ce"
+Thanks,
+Mike
 
-We've already found the similar message in fs/crypto/keyinfo.c to be
-very useful.
+Mike Snitzer (2):
+  dm rq: leverage blk_mq_queue_busy() to check for outstanding IO
+  block: stop passing 'cpu' to all percpu stats methods
 
-Signed-off-by: Eric Biggers <ebiggers@google.com>
----
- drivers/md/dm-crypt.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
+Mikulas Patocka (5):
+  dm: dont rewrite dm_disk(md)->part0.in_flight
+  block: delete part_round_stats and switch to less precise counting
+  block: switch to per-cpu in-flight counters
+  block: return just one value from part_in_flight
+  dm: remove the pending IO accounting
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index b8eec515a003..7646135487be 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1885,6 +1885,13 @@ static int crypt_alloc_tfms_skcipher(struct crypt_config *cc, char *ciphermode)
- 		}
- 	}
- 
-+	/*
-+	 * dm-crypt performance can vary greatly depending on which crypto
-+	 * algorithm implementation is used.  Help people debug performance
-+	 * problems by logging the ->cra_driver_name.
-+	 */
-+	DMINFO("%s using implementation \"%s\"", ciphermode,
-+	       crypto_skcipher_alg(any_tfm(cc))->base.cra_driver_name);
- 	return 0;
- }
- 
-@@ -1903,6 +1910,8 @@ static int crypt_alloc_tfms_aead(struct crypt_config *cc, char *ciphermode)
- 		return err;
- 	}
- 
-+	DMINFO("%s using implementation \"%s\"", ciphermode,
-+	       crypto_aead_alg(any_tfm_aead(cc))->base.cra_driver_name);
- 	return 0;
- }
- 
+ block/bio.c               | 36 ++++++++++++++++-----
+ block/blk-core.c          | 80 +++++++----------------------------------------
+ block/blk-merge.c         |  4 +--
+ block/blk-mq.c            | 12 +++----
+ block/blk-mq.h            |  3 +-
+ block/genhd.c             | 55 ++++++++++++++++++--------------
+ block/partition-generic.c | 10 ++----
+ drivers/md/dm-core.h      |  2 --
+ drivers/md/dm-rq.c        |  9 +++---
+ drivers/md/dm.c           | 36 +++++++++------------
+ drivers/md/md.c           |  7 ++---
+ include/linux/genhd.h     | 55 +++++++++++++++++++-------------
+ 12 files changed, 137 insertions(+), 172 deletions(-)
+
 -- 
-2.19.2
+2.15.0
