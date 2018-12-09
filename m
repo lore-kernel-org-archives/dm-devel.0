@@ -1,16 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm crypt: fix lost ioprio when queuing crypto bios
- from task with ioprio
-Date: Fri, 7 Dec 2018 15:20:30 -0500
-Message-ID: <20181207202029.GA21823@redhat.com>
-References: <20181206221507.5423-1-snitzer@redhat.com>
-	<20181207194319.GA1690@infradead.org>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v2 23/24] domap(): never return DOMAP_RETRY
+ in daemon mode
+Date: Sun, 09 Dec 2018 22:06:05 +0100
+Message-ID: <f38d7a41bb82324eb0d6d362bf68ba637012899e.camel@suse.com>
+References: <20181203193624.21870-1-mwilck@suse.com>
+	<20181203193624.21870-6-mwilck@suse.com>
+	<20181203234548.GA13270@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20181207194319.GA1690@infradead.org>
+In-Reply-To: <20181203234548.GA13270@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,85 +20,98 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, dm-devel@redhat.com, Eric Wheeler <dm-devel@lists.ewheeler.net>
+To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Dec 07 2018 at  2:43pm -0500,
-Christoph Hellwig <hch@infradead.org> wrote:
-
-> On Thu, Dec 06, 2018 at 05:15:07PM -0500, Mike Snitzer wrote:
-> > From: Eric Wheeler <dm-devel@lists.ewheeler.net>
-> > 
-> > Since dm-crypt queues writes (and sometimes reads) to a different kernel
-> > thread (workqueue), the bios will dispatch from tasks with different
-> > io_context->ioprio settings than the submitting task, thus giving
-> > incorrect ioprio hints to the io scheduler.
-> > 
-> > By assigning the ioprio to the bio before queuing to a workqueue, the
-> > original submitting task's io_context->ioprio setting can be retained
-> > through the life of the bio.  We only set the bio's ioprio in dm-crypt
-> > if not already set (by somewhere else, higher in the stack).
-> 
-> The scheme looks a little odd to me.  Instead of requring a driver
-> call why don't we just make sure bios always have the submitting
-> tasks priority set and then make sure the lower layers can rely on it?
-
-The original patch from Eric was from 2 years ago when
-__bio_clone_fast() didn't even copy over the ioprio from the src bio:
-https://patchwork.kernel.org/patch/9474535/
-
-So the 2 hunks from that original patch that did the copying of the
-ioprio (__bio_clone_fast and clone_init) are no longer needed.
-
-Leaving only these changes as in doubt:
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 509fb20f7f86..ce8f03f52433 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -2916,10 +2916,16 @@ static int crypt_map(struct dm_target *ti, struct bio *bio)
-                io->ctx.r.req = (struct skcipher_request *)(io + 1);
-
-        if (bio_data_dir(io->base_bio) == READ) {
--               if (kcryptd_io_read(io, GFP_NOWAIT))
-+               if (kcryptd_io_read(io, GFP_NOWAIT)) {
-+                       if (!ioprio_valid(bio_prio(io->base_bio)))
-+                               bio_set_prio_from_current(io->base_bio);
-                        kcryptd_queue_read(io);
--       } else
-+               }
-+       } else {
-+               if (!ioprio_valid(bio_prio(io->base_bio)))
-+                       bio_set_prio_from_current(io->base_bio);
-                kcryptd_queue_crypt(io);
-+       }
-
-        return DM_MAPIO_SUBMITTED;
- }
-
-I need to look closer at _why_ io->base_bio wouldn't have inherited the
-submitting task's ioprio....
-
-Looks like the 2yr old need for the above was simply due to
-__bio_clone_fast() not copying over the ioprio.  Because crypt_io_init()
-assigns the cloned bio, that DM core sent crypt_map(), to io->base_bio.
-Since io->base_bio is a clone it will have been assigned the original
-bio's ioprio.  Leaving only remaining question being whether that
-original bio had its ioprio previously set?
-
-In this case, bcache appears to be only caller of bio_set_prio(), so for
-the bcache on dm-crypt case Eric cares about dm-crypt _should_ inherit
-bcache's ioprio.
-
-Long story short: you're correct (driver shouldn't need to do this) and
-thankfully it looks like latest upstream code should work fine -- though
-I've not tested it to verify.
-
-Eric, it has been a long time since you had a need for these ioprio
-changes, to benefit bcache stacked on dm-crypt, but if you still have an
-issue with ioprio not being set (or not being from submitting task)
-please let us know.
-
-Thanks,
-Mike
+T24gTW9uLCAyMDE4LTEyLTAzIGF0IDE3OjQ1IC0wNjAwLCAgQmVuamFtaW4gTWFyemluc2tpICB3
+cm90ZToKPiBPbiBNb24sIERlYyAwMywgMjAxOCBhdCAwODozNjoyM1BNICswMTAwLCBNYXJ0aW4g
+V2lsY2sgd3JvdGU6Cj4gPiBET01BUF9SRVRSWSBpcyBvbmx5IHVzZWQgYnkgdGhlIG11bHRpcGF0
+aCB0b29sLiBtdWx0aXBhdGhkIGFsd2F5cwo+ID4gdHJlYXRzCj4gPiBpdCBleGFjdGx5IGxpa2Ug
+RE9NQVBfRkFJTC4gU2ltcGxpZnkgbG9naWMgYnkgb25seSByZXR1cm5pbmcKPiA+IERPTUFQX1JF
+VFJZIGluIG5vbi1kYWVtb24gbW9kZSBmcm9tIGRvbWFwKCkuCj4gPiAKPiA+IFNpZ25lZC1vZmYt
+Ynk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgo+ID4gLS0tCj4gPiAgbGlibXVsdGlw
+YXRoL2NvbmZpZ3VyZS5jIHwgMjggKysrKysrKysrKysrKy0tLS0tLS0tLS0tLS0tLQo+ID4gIG11
+bHRpcGF0aGQvbWFpbi5jICAgICAgICB8ICA5ICstLS0tLS0tLQo+ID4gIDIgZmlsZXMgY2hhbmdl
+ZCwgMTQgaW5zZXJ0aW9ucygrKSwgMjMgZGVsZXRpb25zKC0pCj4gPiAKPiA+IGRpZmYgLS1naXQg
+YS9tdWx0aXBhdGhkL21haW4uYyBiL211bHRpcGF0aGQvbWFpbi5jCj4gPiBpbmRleCBkMGU3MTA3
+Yy4uMWJmM2M0ODEgMTAwNjQ0Cj4gPiAtLS0gYS9tdWx0aXBhdGhkL21haW4uYwo+ID4gKysrIGIv
+bXVsdGlwYXRoZC9tYWluLmMKPiA+IEBAIC05OTgsMTUgKzk5OCw4IEBAIHJlc2NhbjoKPiA+ICAJ
+LyoKPiA+ICAJICogcmVsb2FkIHRoZSBtYXAgZm9yIHRoZSBtdWx0aXBhdGggbWFwcGVkIGRldmlj
+ZQo+ID4gIAkgKi8KPiA+IC1yZXRyeToKPiA+ICAJcmV0ID0gZG9tYXAobXBwLCBwYXJhbXMsIDEp
+Owo+ID4gLQlpZiAocmV0ID09IERPTUFQX0ZBSUwgfHwgcmV0ID09IERPTUFQX1JFVFJZKSB7Cj4g
+PiAtCQlpZiAocmV0IDwgMCAmJiByZXRyaWVzLS0gPiAwKSB7Cj4gPiAtCQkJY29uZGxvZygwLCAi
+JXM6IHJldHJ5IGRvbWFwIGZvciBhZGRpdGlvbiBvZiBuZXcKPiA+ICIKPiA+IC0JCQkJInBhdGgg
+JXMiLCBtcHAtPmFsaWFzLCBwcC0+ZGV2KTsKPiA+IC0JCQlzbGVlcCgxKTsKPiA+IC0JCQlnb3Rv
+IHJldHJ5Owo+ID4gLQkJfQo+ID4gKwlpZiAocmV0ID09IERPTUFQX0ZBSUwpIHsKPiAKPiBJJ20g
+a2luZCBvZiBjb25mbGljdGVkIGFib3V0IHRoaXMgY2hhbmdlLgoKUmlnaHQsIEkgc2hvdCBvdmVy
+IHRoZSB0b3AgaGVyZS4gSSB3YXMgaXJyaXRhdGVkIGJ5IHRoZSBmYWN0IHRoYXQgCiJyZXQgPCAw
+IiB0cmFuc2xhdGVzIHRvICJyZXQgPT0gRE9NQVBfUkVUUlkiIGFuZCB0aGF0IHRoZXJlZm9yZQpE
+T01BUF9SRVRSWSBpcyB0ZXN0ZWQgdHdpY2UuCgo+ICBBY2NvcmRpbmcgdG8gdGhlIGNvbW1pdAo+
+IG1lc3NhZ2UgKGNvbW1pdCAxYzUwY2QzMiksIEhhbm5lcyBwdXQgdGhpcyBjb2RlIGluIHRvIGRl
+YWwgd2l0aCBsb2NrCj4gY29udGVudGlvbiBvbiB0aGUgcGF0aHMgKGJhY2sgd2hlbiB3ZSB1c2Vk
+IGFuIGV4Y2x1c2l2ZSBsb2NrIGluCj4gbG9ja19tdWx0aXBhdGgoKSwgYW5kIGFjdHVhbGx5IHNh
+dyBjb250ZW50aW9uKS4gSSBkb24ndCBrbm93IG9mIGFueQo+IHB1cnBvc2UgZm9yIGxvY2tfbXVs
+dGlwYXRoKCksIHNvIHJlbW92aW5nIHRoaXMgY29kZSBwcm9iYWJseSB3b24ndAo+IGh1cnQKPiBh
+bnl0aGluZy4gQnV0IGlmIHdlIGJlbGlldmUgdGhhdCB3ZSBuZWVkIGxvY2tfbXVsdGlwYXRoKCks
+IHRoZW4gd2UKPiBzaG91bGQgcHJvYmFibHkgcmV0cnkgaGVyZSAodW5sZXNzIHlvdSBoYXZlIHNv
+bWUgdW5kZXJzdGFuZGluZyBvZgo+IGxvY2tfbXVsdGlwYXRoKCkncyBwdXJwb3NlIHdoZXJlIHJl
+dHJ5aW5nIHdvbid0IGhlbHApLgo+Cj4gWy4uLl0KPiBQcm9iYWJseSB0aGUgbW9zdCBpbXBvcnRh
+bnQgcXVlc3Rpb24gSSBoYXZlIGlzICJEb2VzIGFueW9uZSBrbm93IHdoeQo+IHdlID4gUHJvYmFi
+bHkgdGhlIG1vc3QgaW1wb3J0YW50IHF1ZXN0aW9uIEkgaGF2ZSBpcyAiRG9lcyBhbnlvbmUga25v
+dwo+IHdoeSB3ZSBsb2NrIHRoZSBwYXRocz8KClRMO0RSOiBJJ20gOTkuNyUgc3VyZSB3ZSBkb24n
+dCBuZWVkIGxvY2tfbXVsdGlwYXRoKCkgYW55IG1vcmUuCgpUaGUgaGlzdG9yaWMgcmVhc29uIGlz
+IDRkN2EyNzA6CgogICAgJ011bHRpcGxlIG11bHRpcGF0aCg4KSBleGVjcyBjYW4gcmFjZSB3aXRo
+IHVkZXYgc3Rvcm0uCiAgICAKICAgIFdlIGNhbiBzaW11bGF0ZSB0aGlzIHdpdGggdGhlIGZvbGxv
+d2luZyA6CiAgICAibXVsdGlwYXRoIC1GOyAvc2Jpbi9tdWx0aXBhdGggODoxNiAmIC9zYmluL211
+bHRpcGF0aCA4OjMyIgogICAgCiAgICBQcm9ibGVtIGFyaXNlIHdoZW4gdHdvIHJ1bnMgYXJlIGFi
+b3V0IHRvIGNyZWF0ZSB0aGUgc2FtZSBtYXAuCiAgICBPbmUgd2lsbCBmYWlsLCBsZWF2aW5nIHVz
+IHdpdGggYSBjaG9pY2UgOiBhYm9yZCBvciByZXRyeS4nCgpUaGlzIGNvbW1pdCB3YXMgbWFkZSBh
+dCBhIHRpbWUgKE9jdG9iZXIgMjAwNSkgd2hlbiBtdWx0aXBhdGggd2FzIGNhbGxlZApkaXJlY3Rs
+eSBmcm9tIHVkZXYgcnVsZXMgdG8gc2V0IHVwIG1hcHMuIEVhcmxpZXIgdmVyc2lvbnMgb2YgbXVs
+dGlwYXRoCmhhZCBhIGdlbmVyYWwgbG9ja2luZyB0aGF0IHdvdWxkIG5vdCBhbGxvdyBtdWx0aXBs
+ZSBtdWx0aXBhdGggY29tbWFuZHMKdG8gcnVuIGluIHBhcmFsbGVsLCBidXQgdGhhdCBoYXMgYmVl
+biByZW1vdmVkIGxhdGVyLiBUaGlzIHdhcyBhbgphdHRlbXB0IHRvIGxvY2sgb25seSAod291bGQt
+YmUpIG1lbWJlcnMgb2Ygb25lIHNwZWNpZmljIG1hcC4KCk9idmlvdXNseSwgdGhlIGdvYWwgb2Yg
+dGhpcyBwYXRjaCB3b3VsZG4ndCBiZSBhY2hpZXZlZCBhbnkgbW9yZSBzaW5jZQp0aGUgbG9jayBo
+YXMgYmVlbiBjaGFuZ2UgdG8gbm9uLWV4Y2x1c2l2ZSAoMWM1MGNkMzIpLiBNdWx0aXBsZQptdWx0
+aXBhdGggaW5zdGFuY2VzIHJ1biBoYXBwaWx5IG9uIG1lbWJlcnMgb2YgdGhlIHNhbWUgc2V0IG5v
+dy4gSQpoYXZlbid0IHRlc3RlZCBpdCwgYnV0IEkgYmVsaWV2ZSB0aGUgaGlzdG9yaWMgcmFjZSAi
+L3NiaW4vbXVsdGlwYXRoCjg6MTYgJiAvc2Jpbi9tdWx0aXBhdGggODozMiIgc3RpbGwgZXhpc3Rz
+OyBqdXN0IHdlIGRvbid0IHJ1biBtdWx0aXBhdGgKdGhpcyB3YXkgZnJvbSB1ZGV2IHJ1bGVzIGFu
+eSBtb3JlLiAKCmxvY2tfbXVsdGlwYXRoKCkgZG9lc24ndCBoZWxwIHVzIHZvaWQgdGhpcyByYWNl
+LCBhcyB3ZSBjYW4ndCBnbyBiYWNrIHRvCmV4Y2x1c2l2ZSBsb2NraW5nLiBJZiB3ZSB3YW50IHRv
+IGF2b2lkIGl0LCB3ZSBjb3VsZCBjcmVhdGUgYSBsb2NrIGZpbGUKZnJvbSB0aGUgV1dJRCBiZWZv
+cmUgY2FsbGluZyBkb21hcCgpLCAvZGV2L3NobS9tdWx0aXBhdGgvJFdXSUQubG9jayBvcgpzby4g
+T3Igd2UgY291bGQgdXNlIGEgU1lTViBzZW1hcGhvcmUgc2V0LgoKPiBJIGJlbGlldmUgdGhhdCB0
+aGUgY29kZSBvcmlnaW5hbGx5IGV4aXN0ZWQgdG8ga2VlcAo+IG11bHRpcGF0aCBhbmQgbXVsdGlw
+YXRoZCBmcm9tIHRyeWluZyB0byBsb2FkIGEgZGV2aWNlIGF0IHRoZSBzYW1lCj4gdGltZS4KPiBJ
+dCBlbmRlZCB1cCBjYXVzaW5nIHByb2JsZW1zIHdpdGggdWRldiwgYmVjYXVzZSB0aGF0IHRyaWVz
+IHRvIGdyYWIgYQo+IHNoYXJlZCBsb2NrIG9uIHRoZSBwYXRoIHdoaWxlIHdvcmtpbmcgb24gaXQu
+ICBXaGVuIG11bHRpcGF0aCBzd2l0Y2hlZAo+IHRvCj4gdXNpbmcgYSBzaGFyZWQgbG9jayAoY29t
+bWl0IDVlYzA3YjNhKSwgSSBhZ3JlZWQgYmFzZWQgb24gdGhlIHJhdGlvbmFsCj4gdGhhdCB1ZGV2
+IG11c3QgYmUgcHJvdGVjdGluZyBhZ2FpbnN0IHNvbWV0aGluZywgYW5kIHdlIGNvdWxkIG5lZWQK
+PiBwcm90ZWN0aW5nIGFnYWluc3QgdGhlIHNhbWUgdGhpbmcuIFRoZSBkaXNjdXNzaW9uIGlzIGF0
+Ogo+IAo+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vYXJjaGl2ZXMvZG0tZGV2ZWwvMjAxNi1NYXkv
+bXNnMDAwMDkuaHRtbAo+IAoKVGhlIG1lc3NhZ2Ugb2YgdWRldiBjb21taXQgM2ViZGI4MSwgd2hp
+Y2ggaW50cm9kdWNlZCAiZGV2aWNlIG93bmVyc2hpcCIKaW4gdWRldiwgc2F5cyBqdXN0ICJ1ZGV2
+OiBzZXJpYWxpemUvc3luY2hyb25pemUgYmxvY2sgZGV2aWNlIGV2ZW50CmhhbmRsaW5nIHdpdGgg
+ZmlsZSBsb2NrcyIuIEEgY29tbWVudCBzYXlzICJ0aGlzIGVzdGFibGlzaGVzIGEgY29uY2VwdApv
+ZiBkZXZpY2UgIm93bmVyc2hpcCIgdG8gc2VyaWFsaXplIGRldmljZSBhY2Nlc3MuIEV4dGVybmFs
+IHByb2Nlc3Nlcwpob2xkaW5nIGEgIndyaXRlIGxvY2siIHdpbGwgY2F1c2UgdWRldiB0byBza2lw
+IHRoZSBldmVudCBoYW5kbGluZzsgaW4KdGhlIGNhc2UgdWRldiBhY3F1aXJlZCB0aGUgbG9jaywg
+dGhlIGV4dGVybmFsIHByb2Nlc3Mgd2lsbCBibG9jayB1bnRpbAp1ZGV2IGhhcyBmaW5pc2hlZCBp
+dHMgZXZlbnQgaGFuZGxpbmciLgoKQmVjYXVzZSBtdWx0aXBhdGhkIGlzIGFuICJleHRlcm5hbCBw
+cm9jZXNzIiBmcm9tIHVkZXYncyBwb2ludCBvZiB2aWV3LAp0aGlzIHdvdWxkIG1lYW4gdGhhdCBv
+dXIgb2xkIHdheSBvZiB1c2luZyBhIHdyaXRlIGxvY2sgd2FzIGNvcnJlY3QgKGF0CmxlYXN0LCBp
+dCB3YXMgd2hhdCB0aGUgdWRldiBhdXRob3IgaW50ZW5kZWQpLiBCdXQgdWRldiBnZXRzIHRoaXMg
+cmVhbGx5Cndyb25nLCBpdCBzaG91bGQgaXRzZWxmIGJsb2NrIG9yIHJldHJ5IGlmIHRoZSBkZXZp
+Y2UgaXMgbG9ja2VkLCByYXRoZXIKdGhhbiBhYm9ydGluZyB0aGUgZXZlbnQgcHJvY2Vzc2luZy4K
+Ck5vdGUgdGhhdCBib3RoIGRtIGFuZCBtZCBkZXZpY2VzIGFyZSBleGNsdWRlZCBmcm9tIHVkZXYn
+cyBsb2NraW5nCmFueXdheSwgYmVjYXVzZSB0aGUgdWRldiBwZW9wbGUgZW5jb3VudGVyZWQgcHJv
+YmxlbXMgd2l0aCB0aGlzIHNjaGVtZS4KCk1hcnRpbgoKCi0tIApEci4gTWFydGluIFdpbGNrIDxt
+d2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdt
+YkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24K
+SFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
+dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
+LWRldmVs
