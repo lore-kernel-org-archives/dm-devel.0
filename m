@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 23/24] multipathd: simplify retry logic in
-	ev_add_path()
-Date: Mon, 10 Dec 2018 10:49:58 +0100
-Message-ID: <20181210094959.11338-24-mwilck@suse.com>
+Subject: [PATCH v3 20/24] libmultipath: avoid syslog loglevel >
+	LOG_DEBUG
+Date: Mon, 10 Dec 2018 10:49:55 +0100
+Message-ID: <20181210094959.11338-21-mwilck@suse.com>
 References: <20181210094959.11338-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,39 +22,28 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Move the retry loop for DOMAP_RETRY out of the redundant outer
-if conditional, and replace the goto construct with a while loop.
+We use condlog(5, ...) in some places, which doesn't work well
+with syslog.
 
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 13 ++++++-------
- 1 file changed, 6 insertions(+), 7 deletions(-)
+ libmultipath/log_pthread.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index fd3459f7..99145293 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -993,15 +993,14 @@ rescan:
- 	/*
- 	 * reload the map for the multipath mapped device
- 	 */
--retry:
- 	ret = domap(mpp, params, 1);
-+	while (ret == DOMAP_RETRY && retries-- > 0) {
-+		condlog(0, "%s: retry domap for addition of new "
-+			"path %s", mpp->alias, pp->dev);
-+		sleep(1);
-+		ret = domap(mpp, params, 1);
-+	}
- 	if (ret == DOMAP_FAIL || ret == DOMAP_RETRY) {
--		if (ret == DOMAP_RETRY && retries-- > 0) {
--			condlog(0, "%s: retry domap for addition of new "
--				"path %s", mpp->alias, pp->dev);
--			sleep(1);
--			goto retry;
--		}
- 		condlog(0, "%s: failed in domap for addition of new "
- 			"path %s", mpp->alias, pp->dev);
- 		/*
+diff --git a/libmultipath/log_pthread.c b/libmultipath/log_pthread.c
+index bb35dfc7..be57bb1a 100644
+--- a/libmultipath/log_pthread.c
++++ b/libmultipath/log_pthread.c
+@@ -25,6 +25,9 @@ static int log_messages_pending;
+ 
+ void log_safe (int prio, const char * fmt, va_list ap)
+ {
++	if (prio > LOG_DEBUG)
++		prio = LOG_DEBUG;
++
+ 	if (log_thr == (pthread_t)0) {
+ 		vsyslog(prio, fmt, ap);
+ 		return;
 -- 
 2.19.2
