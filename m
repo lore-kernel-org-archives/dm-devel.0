@@ -1,19 +1,11 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: xfstests generic/347 seems unhappy on todays block
-	for-next tree
-Date: Mon, 10 Dec 2018 15:40:05 -0700
-Message-ID: <36632a47-3bc6-2d71-d7f5-3de5ea64b151@kernel.dk>
-References: <20181210213724.GA27905@infradead.org>
-	<f7854d23-cba0-d5ce-e136-6cacd052a6da@kernel.dk>
-	<20181210215356.GA20174@infradead.org>
-	<695940bb-3783-c8f6-6747-dfd548df7ca7@kernel.dk>
-	<d3939eed-d2cc-d247-ffbc-117fbae74118@kernel.dk>
-	<0742acda-f5eb-9d1a-a368-a30c43c56c13@kernel.dk>
+Subject: [PATCH] dm: fix inflight IO check
+Date: Mon, 10 Dec 2018 15:45:53 -0700
+Message-ID: <4fec4b01-35f9-8008-22ec-2ac8af58b854@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <0742acda-f5eb-9d1a-a368-a30c43c56c13@kernel.dk>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -24,44 +16,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@infradead.org>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, snitzer@redhat.com
+To: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 12/10/18 3:36 PM, Jens Axboe wrote:
-> On 12/10/18 3:09 PM, Jens Axboe wrote:
->> On 12/10/18 3:00 PM, Jens Axboe wrote:
->>> On 12/10/18 2:53 PM, Christoph Hellwig wrote:
->>>> On Mon, Dec 10, 2018 at 02:39:39PM -0700, Jens Axboe wrote:
->>>>> On 12/10/18 2:37 PM, Christoph Hellwig wrote:
->>>>>> This test is described as:
->>>>>>
->>>>>> # Test very basic thin device usage, exhaustion, and growth
->>>>>
->>>>> Does that tree have:
->>>>>
->>>>> commit c616cbee97aed4bc6178f148a7240206dcdb85a6
->>>>> Author: Jens Axboe <axboe@kernel.dk>
->>>>> Date:   Thu Dec 6 22:17:44 2018 -0700
->>>>>
->>>>>     blk-mq: punt failed direct issue to dispatch list
->>>>>
->>>>> ?
->>>>
->>>> yes.
->>>>
->>>> The latest commit is 6f75723190d88e1319bea623bfe0292bf3917965
->>>
->>> Reproduces here, guessing it's the inflight counters... Trying without.
->>
->> Yep, works without the inflight changes. Deferring to Mike to sort
->> this one out.
-> 
-> I think this should work much better...
+After switching to percpu inflight counters, the inflight check
+is totally buggy. It's perfectly valid for some counters to be
+non-zero while having a total inflight IO count of 0, that's how
+these kinds of counters work (inc on one CPU, dec on another).
+Fix the md_in_flight() check to sum all counters before returning
+a false positive, potentially.
 
-We can improve upon that, we don't need to ever read the inflight
-counter from IO completion. Testing this one now.
+While at it, remove the inflight read for IO completion. We don't
+need it, just wake anyone that's waiting for the IO count to drop
+to zero. The caller needs to re-check that value anyway when woken,
+which it does.
 
+Fixes: 6f75723190d8 ("dm: remove the pending IO accounting")
+Reported-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+
+---
 
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
 index 70568f8b6c53..79ad4b3d215c 100644
