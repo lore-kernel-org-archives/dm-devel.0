@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 15/24] libmultipath: adopt_paths: check for
-	size match
-Date: Mon, 10 Dec 2018 10:49:50 +0100
-Message-ID: <20181210094959.11338-16-mwilck@suse.com>
+Subject: [PATCH v3 11/24] libmultipath: decrease log level of
+	"prioritizer refcount" message
+Date: Mon, 10 Dec 2018 10:49:46 +0100
+Message-ID: <20181210094959.11338-12-mwilck@suse.com>
 References: <20181210094959.11338-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,31 +22,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-In coalesce_paths() and ev_add_path(), we check for size mismatch.
-We should do it here, too.
+This was important during development of the refcounting code, but
+now it isn't any more.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs_vec.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ libmultipath/prio.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 01391d77..5305bd31 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -60,6 +60,12 @@ int adopt_paths(vector pathvec, struct multipath *mpp)
- 
- 	vector_foreach_slot (pathvec, pp, i) {
- 		if (!strncmp(mpp->wwid, pp->wwid, WWID_SIZE)) {
-+			if (pp->size != 0 && mpp->size != 0 &&
-+			    pp->size != mpp->size) {
-+				condlog(3, "%s: size mismatch for %s, not adding path",
-+					pp->dev, mpp->alias);
-+				continue;
-+			}
- 			condlog(3, "%s: ownership set to %s",
- 				pp->dev, mpp->alias);
- 			pp->mpp = mpp;
+diff --git a/libmultipath/prio.c b/libmultipath/prio.c
+index 17acfd05..0590218d 100644
+--- a/libmultipath/prio.c
++++ b/libmultipath/prio.c
+@@ -42,7 +42,7 @@ void free_prio (struct prio * p)
+ 		return;
+ 	p->refcount--;
+ 	if (p->refcount) {
+-		condlog(3, "%s prioritizer refcount %d",
++		condlog(4, "%s prioritizer refcount %d",
+ 			p->name, p->refcount);
+ 		return;
+ 	}
 -- 
 2.19.2
