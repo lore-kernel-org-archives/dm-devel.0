@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 05/24] libmultipath: decrease verbosity of TUR
-	checker messages
-Date: Mon, 10 Dec 2018 10:49:40 +0100
-Message-ID: <20181210094959.11338-6-mwilck@suse.com>
+Subject: [PATCH v3 14/24] libmultipath: decrease log level for
+	failed VPD c9
+Date: Mon, 10 Dec 2018 10:49:49 +0100
+Message-ID: <20181210094959.11338-15-mwilck@suse.com>
 References: <20181210094959.11338-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,45 +22,29 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The thread startup/stop messages aren't very interesting.
-Decrease their verbosity level to v4.
+It's normal that SCSI devices don't support this page. Only RDAC
+devices need it.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/tur.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ libmultipath/discovery.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 63b19624..6b08dbbb 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -261,7 +261,7 @@ static void *tur_thread(void *ctx)
- 	tur_thread_cleanup_push(ct);
- 	rcu_register_thread();
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 1c87277f..7f983a63 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1106,7 +1106,9 @@ get_vpd_sgio (int fd, int pg, char * str, int maxlen)
  
--	condlog(3, "%d:%d : tur checker starting up", major(ct->devt),
-+	condlog(4, "%d:%d : tur checker starting up", major(ct->devt),
- 		minor(ct->devt));
- 
- 	tur_deep_sleep(ct);
-@@ -275,7 +275,7 @@ static void *tur_thread(void *ctx)
- 	pthread_cond_signal(&ct->active);
- 	pthread_mutex_unlock(&ct->lock);
- 
--	condlog(3, "%d:%d : tur checker finished, state %s", major(ct->devt),
-+	condlog(4, "%d:%d : tur checker finished, state %s", major(ct->devt),
- 		minor(ct->devt), checker_state_name(state));
- 
- 	running = uatomic_xchg(&ct->running, 0);
-@@ -415,7 +415,7 @@ int libcheck_check(struct checker * c)
- 		}
- 		pthread_mutex_unlock(&ct->lock);
- 		if (tur_status == PATH_PENDING) {
--			condlog(3, "%d:%d : tur checker still running",
-+			condlog(4, "%d:%d : tur checker still running",
- 				major(ct->devt), minor(ct->devt));
- 		} else {
- 			int running = uatomic_xchg(&ct->running, 0);
+ 	memset(buff, 0x0, 4096);
+ 	if (sgio_get_vpd(buff, 4096, fd, pg) < 0) {
+-		condlog(3, "failed to issue vpd inquiry for pg%02x",
++		int lvl = pg == 0x80 || pg == 0x83 ? 3 : 4;
++
++		condlog(lvl, "failed to issue vpd inquiry for pg%02x",
+ 			pg);
+ 		return -errno;
+ 	}
 -- 
 2.19.2
