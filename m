@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 16/24] libmultipath: coalesce_paths: fix size
-	mismatch handling
-Date: Mon, 10 Dec 2018 10:49:51 +0100
-Message-ID: <20181210094959.11338-17-mwilck@suse.com>
+Subject: [PATCH v3 10/24] multipathd: decrease log level of
+	checker timing
+Date: Mon, 10 Dec 2018 10:49:45 +0100
+Message-ID: <20181210094959.11338-11-mwilck@suse.com>
 References: <20181210094959.11338-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,142 +22,29 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-When there are paths with the same WWID but different sizes, and
-coalesce_paths() walks the pathvec, it checks paths _after_
-the current one for size mismatch and sets ACT_REJECT. However,
-these paths will be reached in the main loop later, and this time
-the already handled paths will not be checked for size mismatch;
-thus a map could be created, possibly even with mismatching
-devices.
-
-Fix that by tracking which paths were already discarded, and
-skipping them in the main loop later.
+These messages, printed for every checker invocation, were helpful
+in the past but they don't make much sense under normal operations.
+The same information can be derived from journal time stamps on
+recent Linux distributions.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 32 ++++++++++++++++++++++++--------
- libmultipath/util.h      | 16 ++++++++++++++++
- 2 files changed, 40 insertions(+), 8 deletions(-)
+ multipathd/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 406cd4c9..f48664a0 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -1009,6 +1009,7 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
- 	vector pathvec = vecs->pathvec;
- 	struct config *conf;
- 	int allow_queueing;
-+	uint64_t *size_mismatch_seen;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 85055993..4d7c2598 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2262,7 +2262,7 @@ checkerloop (void *ap)
+ 			if (num_paths) {
+ 				unsigned int max_checkint;
  
- 	/* ignore refwwid if it's empty */
- 	if (refwwid && !strlen(refwwid))
-@@ -1019,6 +1020,14 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
- 			pp1->mpp = NULL;
- 		}
- 	}
-+
-+	if (VECTOR_SIZE(pathvec) == 0)
-+		return 0;
-+	size_mismatch_seen = calloc((VECTOR_SIZE(pathvec) - 1) / 64 + 1,
-+				    sizeof(uint64_t));
-+	if (size_mismatch_seen == NULL)
-+		return 1;
-+
- 	vector_foreach_slot (pathvec, pp1, k) {
- 		int invalid;
- 		/* skip this path for some reason */
-@@ -1038,8 +1047,8 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
- 			continue;
- 		}
- 
--		/* 2. if path already coalesced */
--		if (pp1->mpp)
-+		/* 2. if path already coalesced, or seen and discarded */
-+		if (pp1->mpp || is_bit_set_in_array(k, size_mismatch_seen))
- 			continue;
- 
- 		/* 3. if path has disappeared */
-@@ -1088,9 +1097,10 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
- 				 * ouch, avoid feeding that to the DM
- 				 */
- 				condlog(0, "%s: size %llu, expected %llu. "
--					"Discard", pp2->dev_t, pp2->size,
-+					"Discard", pp2->dev, pp2->size,
- 					mpp->size);
- 				mpp->action = ACT_REJECT;
-+				set_bit_in_array(i, size_mismatch_seen);
- 			}
- 		}
- 		verify_paths(mpp, vecs);
-@@ -1119,8 +1129,9 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
- 					"ignoring" : "removing");
- 				remove_map(mpp, vecs, 0);
- 				continue;
--			} else /* if (r == DOMAP_RETRY) */
--				return r;
-+			} else /* if (r == DOMAP_RETRY && !is_daemon) */ {
-+				goto out;
-+			}
- 		}
- 		if (r == DOMAP_DRY)
- 			continue;
-@@ -1161,8 +1172,10 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
- 
- 		if (newmp) {
- 			if (mpp->action != ACT_REJECT) {
--				if (!vector_alloc_slot(newmp))
--					return 1;
-+				if (!vector_alloc_slot(newmp)) {
-+					r = 1;
-+					goto out;
-+				}
- 				vector_set_slot(newmp, mpp);
- 			}
- 			else
-@@ -1193,7 +1206,10 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
- 				condlog(2, "%s: remove (dead)", alias);
- 		}
- 	}
--	return 0;
-+	r = 0;
-+out:
-+	free(size_mismatch_seen);
-+	return r;
- }
- 
- struct udev_device *get_udev_device(const char *dev, enum devtypes dev_type)
-diff --git a/libmultipath/util.h b/libmultipath/util.h
-index a818e29a..1f13c913 100644
---- a/libmultipath/util.h
-+++ b/libmultipath/util.h
-@@ -3,6 +3,7 @@
- 
- #include <sys/types.h>
- #include <inttypes.h>
-+#include <stdbool.h>
- 
- size_t strchop(char *);
- int basenamecpy (const char *src, char *dst, size_t size);
-@@ -39,4 +40,19 @@ struct scandir_result {
- };
- void free_scandir_result(struct scandir_result *);
- 
-+static inline bool is_bit_set_in_array(unsigned int bit, const uint64_t *arr)
-+{
-+	return arr[bit / 64] & (1ULL << (bit % 64)) ? 1 : 0;
-+}
-+
-+static inline void set_bit_in_array(unsigned int bit, uint64_t *arr)
-+{
-+	arr[bit / 64] |= (1ULL << (bit % 64));
-+}
-+
-+static inline void clear_bit_in_array(unsigned int bit, uint64_t *arr)
-+{
-+	arr[bit / 64] &= ~(1ULL << (bit % 64));
-+}
-+
- #endif /* _UTIL_H */
+-				condlog(3, "checked %d path%s in %lu.%06lu secs",
++				condlog(4, "checked %d path%s in %lu.%06lu secs",
+ 					num_paths, num_paths > 1 ? "s" : "",
+ 					diff_time.tv_sec,
+ 					diff_time.tv_nsec / 1000);
 -- 
 2.19.2
