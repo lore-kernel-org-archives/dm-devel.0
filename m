@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 01/24] tests/hwtable: set multipath_dir in
-	local configuration
-Date: Mon, 10 Dec 2018 10:49:36 +0100
-Message-ID: <20181210094959.11338-2-mwilck@suse.com>
+Subject: [PATCH v3 08/24] libmultipath: decrease log level of
+	word splitting
+Date: Mon, 10 Dec 2018 10:49:43 +0100
+Message-ID: <20181210094959.11338-9-mwilck@suse.com>
 References: <20181210094959.11338-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,67 +22,26 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-If internal libmultipath APIs change (such as, recently, the
-checker API), test programs will fail because they'll link
-with the standard system prioritizer / checker / foreign APIs.
-
-Make sure we always link with our own shared libraries.
+This will make log level 4 actually usable.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/Makefile  | 7 ++++++-
- tests/hwtable.c | 5 +++++
- 2 files changed, 11 insertions(+), 1 deletion(-)
+ libmultipath/util.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/tests/Makefile b/tests/Makefile
-index b37b5027..ef900866 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -26,7 +26,11 @@ hwtable-test_LIBDEPS := -ludev -lpthread -ldl
- blacklist-test_OBJDEPS := ../libmultipath/blacklist.o
- blacklist-test_LIBDEPS := -ludev
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index 66c47611..b5d2e706 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -104,7 +104,7 @@ get_word (char * sentence, char ** word)
+ 	}
+ 	strncpy(*word, sentence, len);
+ 	strchop(*word);
+-	condlog(4, "*word = %s, len = %i", *word, len);
++	condlog(5, "*word = %s, len = %i", *word, len);
  
--%.out:	%-test
-+lib/libchecktur.so:
-+	mkdir lib
-+	ln -t lib ../libmultipath/{checkers,prioritizers,foreign}/*.so
-+
-+%.out:	%-test lib/libchecktur.so
- 	@echo == running $< ==
- 	@LD_LIBRARY_PATH=$(multipathdir):$(mpathcmddir) ./$< >$@
- 
-@@ -34,6 +38,7 @@ OBJS = $(TESTS:%=%.o) test-lib.o
- 
- clean: dep_clean
- 	$(RM) $(TESTS:%=%-test) $(TESTS:%=%.out) $(OBJS)
-+	$(RM) -rf lib
- 
- .SECONDARY: $(OBJS)
- 
-diff --git a/tests/hwtable.c b/tests/hwtable.c
-index 9146ecc3..1cd788ac 100644
---- a/tests/hwtable.c
-+++ b/tests/hwtable.c
-@@ -250,14 +250,19 @@ static void write_defaults(const struct hwt_state *hwt)
- 	static struct key_value defaults[] = {
- 		{ "config_dir", NULL },
- 		{ "bindings_file", NULL },
-+		{ "multipath_dir", NULL },
- 		{ "detect_prio", "no" },
- 		{ "detect_checker", "no" },
- 	};
- 	char buf[sizeof(tmplate) + sizeof(bindings_name)];
-+	char dirbuf[PATH_MAX];
- 
- 	snprintf(buf, sizeof(buf), "%s/%s", hwt->tmpname, bindings_name);
- 	defaults[0].value = hwt->dirname;
- 	defaults[1].value = buf;
-+	assert_ptr_not_equal(getcwd(dirbuf, sizeof(dirbuf)), NULL);
-+	strncat(dirbuf, "/lib", sizeof(dirbuf));
-+	defaults[2].value = dirbuf;
- 	write_section(hwt->config_file, "defaults",
- 		      ARRAY_SIZE(defaults), defaults);
- }
+ 	if (*p == '\0')
+ 		return 0;
 -- 
 2.19.2
