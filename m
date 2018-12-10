@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 10/24] multipathd: decrease log level of
-	checker timing
-Date: Mon, 10 Dec 2018 10:49:45 +0100
-Message-ID: <20181210094959.11338-11-mwilck@suse.com>
+Subject: [PATCH v3 19/24] libmultipath: improve logging from
+	orphan_paths
+Date: Mon, 10 Dec 2018 10:49:54 +0100
+Message-ID: <20181210094959.11338-20-mwilck@suse.com>
 References: <20181210094959.11338-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,29 +22,74 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-These messages, printed for every checker invocation, were helpful
-in the past but they don't make much sense under normal operations.
-The same information can be derived from journal time stamps on
-recent Linux distributions.
+It's a big difference if a map is flushed from DM (changing kernel
+state) or just removed from internal multipathd tables. Convey
+this information in log messages.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/structs_vec.c | 6 +++---
+ libmultipath/structs_vec.h | 3 ++-
+ multipathd/main.c          | 2 +-
+ 3 files changed, 6 insertions(+), 5 deletions(-)
 
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 5305bd31..03e2b978 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -102,14 +102,14 @@ void orphan_path(struct path *pp, const char *reason)
+ 	pp->fd = -1;
+ }
+ 
+-void orphan_paths(vector pathvec, struct multipath *mpp)
++void orphan_paths(vector pathvec, struct multipath *mpp, const char *reason)
+ {
+ 	int i;
+ 	struct path * pp;
+ 
+ 	vector_foreach_slot (pathvec, pp, i) {
+ 		if (pp->mpp == mpp) {
+-			orphan_path(pp, "map flushed");
++			orphan_path(pp, reason);
+ 		}
+ 	}
+ }
+@@ -122,7 +122,7 @@ remove_map(struct multipath * mpp, struct vectors * vecs, int purge_vec)
+ 	/*
+ 	 * clear references to this map
+ 	 */
+-	orphan_paths(vecs->pathvec, mpp);
++	orphan_paths(vecs->pathvec, mpp, "map removed internally");
+ 
+ 	if (purge_vec &&
+ 	    (i = find_slot(vecs->mpvec, (void *)mpp)) != -1)
+diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
+index f7777aaf..f8b9f63e 100644
+--- a/libmultipath/structs_vec.h
++++ b/libmultipath/structs_vec.h
+@@ -14,7 +14,8 @@ struct vectors {
+ void enter_recovery_mode(struct multipath *mpp);
+ 
+ int adopt_paths (vector pathvec, struct multipath * mpp);
+-void orphan_paths (vector pathvec, struct multipath * mpp);
++void orphan_paths(vector pathvec, struct multipath *mpp,
++		  const char *reason);
+ void orphan_path (struct path * pp, const char *reason);
+ 
+ int verify_paths(struct multipath * mpp, struct vectors * vecs);
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 85055993..4d7c2598 100644
+index 5e6c35d4..04f02d99 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -2262,7 +2262,7 @@ checkerloop (void *ap)
- 			if (num_paths) {
- 				unsigned int max_checkint;
+@@ -654,7 +654,7 @@ flush_map(struct multipath * mpp, struct vectors * vecs, int nopaths)
+ 		condlog(2, "%s: map flushed", mpp->alias);
+ 	}
  
--				condlog(3, "checked %d path%s in %lu.%06lu secs",
-+				condlog(4, "checked %d path%s in %lu.%06lu secs",
- 					num_paths, num_paths > 1 ? "s" : "",
- 					diff_time.tv_sec,
- 					diff_time.tv_nsec / 1000);
+-	orphan_paths(vecs->pathvec, mpp);
++	orphan_paths(vecs->pathvec, mpp, "map flushed");
+ 	remove_map_and_stop_waiter(mpp, vecs);
+ 
+ 	return 0;
 -- 
 2.19.2
