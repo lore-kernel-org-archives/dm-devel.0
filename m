@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 04/24] libmultipath: decrease verbosity of
-	pathinfo messages
-Date: Mon, 10 Dec 2018 10:49:39 +0100
-Message-ID: <20181210094959.11338-5-mwilck@suse.com>
+Subject: [PATCH v3 03/24] multipath-tools: decrease verbosity of
+	state messages
+Date: Mon, 10 Dec 2018 10:49:38 +0100
+Message-ID: <20181210094959.11338-4-mwilck@suse.com>
 References: <20181210094959.11338-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,69 +22,77 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Reduce the verbosity of pointless messages from pathinfo(), in
-particular those that are printed on every checker invocation.
+With verbosity level 3, thousands of "path state = running" messages
+are logged, which are pretty much irrelevant, as the checker state
+takes precedence. Also the "get_state" message is totally useless.
+
+With this patch, the path state is reported exactly once per path
+and check.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
+ libmultipath/discovery.c |  4 +---
+ multipathd/main.c        | 18 ++++++++++--------
+ 2 files changed, 11 insertions(+), 11 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index f9a59011..3ad33492 100644
+index 63558ad8..f9a59011 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1382,7 +1382,7 @@ common_sysfs_pathinfo (struct path * pp)
- 	devt = udev_device_get_devnum(pp->udev);
- 	snprintf(pp->dev_t, BLK_DEV_SIZE, "%d:%d", major(devt), minor(devt));
- 
--	condlog(3, "%s: dev_t = %s", pp->dev, pp->dev_t);
-+	condlog(4, "%s: dev_t = %s", pp->dev, pp->dev_t);
- 
- 	if (sysfs_get_size(pp, &pp->size))
- 		return PATHINFO_FAILED;
-@@ -1599,6 +1599,7 @@ get_prio (struct path * pp)
- 	struct prio * p;
- 	struct config *conf;
- 	int checker_timeout;
-+	int old_prio;
- 
- 	if (!pp)
- 		return 0;
-@@ -1619,13 +1620,14 @@ get_prio (struct path * pp)
- 	conf = get_multipath_config();
- 	checker_timeout = conf->checker_timeout;
- 	put_multipath_config(conf);
-+	old_prio = pp->priority;
- 	pp->priority = prio_getprio(p, pp, checker_timeout);
- 	if (pp->priority < 0) {
- 		condlog(3, "%s: %s prio error", pp->dev, prio_name(p));
- 		pp->priority = PRIO_UNDEF;
- 		return 1;
+@@ -1433,7 +1433,7 @@ path_offline (struct path * pp)
  	}
--	condlog(3, "%s: %s prio = %u",
-+	condlog((old_prio == pp->priority ? 4 : 3), "%s: %s prio = %u",
- 		pp->dev, prio_name(p), pp->priority);
- 	return 0;
- }
-@@ -1863,7 +1865,7 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 			udev_device_get_sysattr_value(pp->udev, "hidden");
  
- 		if (hidden && !strcmp(hidden, "1")) {
--			condlog(3, "%s: hidden", pp->dev);
-+			condlog(4, "%s: hidden", pp->dev);
- 			return PATHINFO_SKIPPED;
- 		}
- 		if (is_claimed_by_foreign(pp->udev) ||
-@@ -1876,7 +1878,7 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 			   pp->dev) > 0)
- 		return PATHINFO_SKIPPED;
  
--	condlog(3, "%s: mask = 0x%x", pp->dev, mask);
-+	condlog(4, "%s: mask = 0x%x", pp->dev, mask);
+-	condlog(3, "%s: path state = %s", pp->dev, buff);
++	condlog(4, "%s: path state = %s", pp->dev, buff);
  
+ 	if (pp->bus == SYSFS_BUS_SCSI) {
+ 		if (!strncmp(buff, "offline", 7)) {
+@@ -1552,8 +1552,6 @@ get_state (struct path * pp, struct config *conf, int daemon, int oldstate)
+ 	struct checker * c = &pp->checker;
+ 	int state;
+ 
+-	condlog(3, "%s: get_state", pp->dev);
+-
+ 	if (!checker_selected(c)) {
+ 		if (daemon) {
+ 			if (pathinfo(pp, conf, DI_SYSFS) != PATHINFO_OK) {
+diff --git a/multipathd/main.c b/multipathd/main.c
+index c781115c..e07ef502 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1904,6 +1904,16 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	pp->tick = checkint;
+ 
+ 	newstate = path_offline(pp);
++	if (newstate == PATH_UP) {
++		conf = get_multipath_config();
++		pthread_cleanup_push(put_multipath_config, conf);
++		newstate = get_state(pp, conf, 1, newstate);
++		pthread_cleanup_pop(1);
++	} else {
++		checker_clear_message(&pp->checker);
++		condlog(3, "%s: state %s, checker not called",
++			pp->dev, checker_state_name(newstate));
++	}
  	/*
- 	 * Sanity check: we need the device number to
+ 	 * Wait for uevent for removed paths;
+ 	 * some LLDDs like zfcp keep paths unavailable
+@@ -1912,14 +1922,6 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	if (newstate == PATH_REMOVED)
+ 		newstate = PATH_DOWN;
+ 
+-	if (newstate == PATH_UP) {
+-		conf = get_multipath_config();
+-		pthread_cleanup_push(put_multipath_config, conf);
+-		newstate = get_state(pp, conf, 1, newstate);
+-		pthread_cleanup_pop(1);
+-	} else
+-		checker_clear_message(&pp->checker);
+-
+ 	if (pp->wwid_changed) {
+ 		condlog(2, "%s: path wwid has changed. Refusing to use",
+ 			pp->dev);
 -- 
 2.19.2
