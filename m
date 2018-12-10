@@ -1,11 +1,13 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 00/24] multipath-tools: improve logging at -v3
-Date: Mon, 10 Dec 2018 11:06:32 +0100
-Message-ID: <20181210100633.12966-1-mwilck@suse.com>
+Subject: [PATCH v4 22/24] domap(): use symbolic return value
+Date: Mon, 10 Dec 2018 11:06:33 +0100
+Message-ID: <20181210100633.12966-2-mwilck@suse.com>
+References: <20181210100633.12966-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20181210100633.12966-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,104 +21,109 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Hi Christophe,
+Use an enum for the already-symbolic return value of domap(), and
+avoid the use of "<= 0" for the return value, which is against the
+spirit of symbolic values. A return value less or equal than 0 means
+DOMAP_FAIL or DOMAP_RETRY. Use the fact that DOMAP_RETRY is only
+returned in the ACT_CREATE case for simplification of the logic
+in those cases where ACT_CREATE is not used.
 
-most of the patches in this series reduce log levels of frequently
-printed messages at verbosity level 3. My goal was to limit the
-output of multipathd to one line per path per checker invocation,
-which is sufficient to track multipathd's view of path health in
-the logs.
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/configure.c  |  9 ---------
+ libmultipath/configure.h  | 12 ++++++++++++
+ multipathd/cli_handlers.c |  2 +-
+ multipathd/main.c         |  8 ++++----
+ 4 files changed, 17 insertions(+), 14 deletions(-)
 
-The standard setting of -v2 is not enough for post-mortem analysis of many
-failures. With this series, running multipathd with verbosity 3 becomes a
-realistic option even in production environments. So far the amount of output
-from multipathd with -v3 pretty much made this impossible, at least over
-longer time periods, and also made reading these logs very cumbersome due to
-the amount of redundant partly superfluos verbosity. I've taken care not
-to loose important information in the logs.
-
-Apart from that, the series fixes errors in the unit tests introduced by my
-last "checker overhaul" patch series (proving that I forgot to run the
-tests before submitting :-( ), and fixes a problem that I found while testing
-handling of a bad configuration (paths with size mismatch).
-
-Regards,
-Martin
-
-Changed in v4:
-
- - 22/24: removed false statement in comment.
-
-Changes in v3:
-
-Resent full series on Christophe's request. All patches except 22/24, 23/24 are
-the same as before. Added Ben's "Reviewed-by:" where appropriate.
-
- - 22/24: added one fix for a non-symbolic reference to a domap() return value,
-which I'd overlooked before.
- - 23/24: removed on Ben's review. The new 23/24 is just a code cleanup
-without functional change.
-
-Changes in v2:
-
-The first 19 patches are identical to v1 as ACK'd by Ben, except 16/24
-"libmultipath: coalesce_paths: fix size mismatch handling".
-No. 8/24 "libmultipath: decrease log level of word splitting"
-(not yet ACKd by Ben) also stays the same; the issue Ben raised
-in his review is addressed in a separate patch, 20/24.
-21/24 addresses implements Ben's suggestion to use named constants
-as return values in coalesce_paths(). 22, 23, 24 do the same for
-other important, related functions, as I found it strange to make
-this change just for coalesce_paths() alone.  
-
-Martin Wilck (24):
-  tests/hwtable: set multipath_dir in local configuration
-  tests/hwtable: adjust to new checker API
-  multipath-tools: decrease verbosity of state messages
-  libmultipath: decrease verbosity of pathinfo messages
-  libmultipath: decrease verbosity of TUR checker messages
-  libmultipath: avoid frequent messages from filter_property()
-  libmultipath: decrease log level of "disassembled" messages
-  libmultipath: decrease log level of word splitting
-  libmultipath: increase log level of map removal
-  multipathd: decrease log level of checker timing
-  libmultipath: decrease log level of "prioritizer refcount" message
-  libmpathpersist/update_map_pr: decrease log level for nop
-  libmultipath: simplify devt2devname()
-  libmultipath: decrease log level for failed VPD c9
-  libmultipath: adopt_paths: check for size match
-  libmultipath: coalesce_paths: fix size mismatch handling
-  tests: add unit tests for bitmask functions
-  multipathd: uev_remove_path: remove redundant orphan_paths call
-  libmultipath: improve logging from orphan_paths
-  libmultipath: avoid syslog loglevel > LOG_DEBUG
-  coalesce_paths(): use symbolic return value
-  domap(): use symbolic return value
-  multipathd: simplify retry logic in ev_add_path()
-  multipath: use symbolic return value and exit code
-
- libmpathpersist/mpath_persist.c |   3 +-
- libmultipath/blacklist.c        |  54 +++++++-------
- libmultipath/blacklist.h        |   2 +-
- libmultipath/checkers/tur.c     |   6 +-
- libmultipath/configure.c        |  48 +++++++------
- libmultipath/configure.h        |  22 ++++++
- libmultipath/discovery.c        |  20 +++---
- libmultipath/dmparser.c         |   6 +-
- libmultipath/log_pthread.c      |   3 +
- libmultipath/prio.c             |   2 +-
- libmultipath/structs_vec.c      |  18 +++--
- libmultipath/structs_vec.h      |   3 +-
- libmultipath/util.c             |   7 +-
- libmultipath/util.h             |  16 +++++
- multipath/main.c                | 121 ++++++++++++++++++--------------
- multipathd/cli_handlers.c       |   5 +-
- multipathd/main.c               |  45 ++++++------
- tests/Makefile                  |   7 +-
- tests/blacklist.c               |   7 +-
- tests/hwtable.c                 |  89 ++++++++++++-----------
- tests/util.c                    |  98 ++++++++++++++++++++++++++
- 21 files changed, 382 insertions(+), 200 deletions(-)
-
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 5daf0c13..84ae5f56 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -788,15 +788,6 @@ fail:
+ 	return 1;
+ }
+ 
+-/*
+- * Return value:
+- */
+-#define DOMAP_RETRY	-1
+-#define DOMAP_FAIL	0
+-#define DOMAP_OK	1
+-#define DOMAP_EXIST	2
+-#define DOMAP_DRY	3
+-
+ int domap(struct multipath *mpp, char *params, int is_daemon)
+ {
+ 	int r = DOMAP_FAIL;
+diff --git a/libmultipath/configure.h b/libmultipath/configure.h
+index 64520c57..d7509000 100644
+--- a/libmultipath/configure.h
++++ b/libmultipath/configure.h
+@@ -23,6 +23,18 @@ enum actions {
+ 	ACT_IMPOSSIBLE,
+ };
+ 
++/*
++ * Return value of domap()
++ * DAEMON_RETRY is only used for ACT_CREATE (see domap()).
++ */
++enum {
++	DOMAP_RETRY	= -1,
++	DOMAP_FAIL	= 0,
++	DOMAP_OK	= 1,
++	DOMAP_EXIST	= 2,
++	DOMAP_DRY	= 3
++};
++
+ /*
+  * Return value of coalesce_paths()
+  * CP_RETRY is only used in non-daemon case (multipath).
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 4fbd8841..14aec17b 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -893,7 +893,7 @@ int resize_map(struct multipath *mpp, unsigned long long size,
+ 	}
+ 	mpp->action = ACT_RESIZE;
+ 	mpp->force_udev_reload = 1;
+-	if (domap(mpp, params, 1) <= 0) {
++	if (domap(mpp, params, 1) == DOMAP_FAIL) {
+ 		condlog(0, "%s: failed to resize map : %s", mpp->alias,
+ 			strerror(errno));
+ 		mpp->size = orig_size;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index fd1ac8fe..fd3459f7 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -497,7 +497,7 @@ retry:
+ 		retries = -1;
+ 		goto fail;
+ 	}
+-	if (domap(mpp, params, 1) <= 0 && retries-- > 0) {
++	if (domap(mpp, params, 1) == DOMAP_FAIL && retries-- > 0) {
+ 		condlog(0, "%s: map_udate sleep", mpp->alias);
+ 		sleep(1);
+ 		goto retry;
+@@ -995,8 +995,8 @@ rescan:
+ 	 */
+ retry:
+ 	ret = domap(mpp, params, 1);
+-	if (ret <= 0) {
+-		if (ret < 0 && retries-- > 0) {
++	if (ret == DOMAP_FAIL || ret == DOMAP_RETRY) {
++		if (ret == DOMAP_RETRY && retries-- > 0) {
+ 			condlog(0, "%s: retry domap for addition of new "
+ 				"path %s", mpp->alias, pp->dev);
+ 			sleep(1);
+@@ -1152,7 +1152,7 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
+ 		 * reload the map
+ 		 */
+ 		mpp->action = ACT_RELOAD;
+-		if (domap(mpp, params, 1) <= 0) {
++		if (domap(mpp, params, 1) == DOMAP_FAIL) {
+ 			condlog(0, "%s: failed in domap for "
+ 				"removal of path %s",
+ 				mpp->alias, pp->dev);
 -- 
 2.19.2
