@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 13/24] libmultipath: simplify devt2devname()
-Date: Mon, 10 Dec 2018 10:49:48 +0100
-Message-ID: <20181210094959.11338-14-mwilck@suse.com>
+Subject: [PATCH v3 12/24] libmpathpersist/update_map_pr: decrease
+	log level for nop
+Date: Mon, 10 Dec 2018 10:49:47 +0100
+Message-ID: <20181210094959.11338-13-mwilck@suse.com>
 References: <20181210094959.11338-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,41 +22,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Since 1e79548, we don't fallback from /sys/dev/block to
-/proc/partitions anyway. The strncmp() at "skip_proc"
-is doomed to fail. So we might as well return immediately.
-
-Also, decrease the log level; whether this failure is
-noteworthy is rather up to the callers to decide.
+No need to log at -v3 if nothing to do.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/util.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ libmpathpersist/mpath_persist.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index b5d2e706..28eb7577 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -191,7 +191,8 @@ int devt2devname(char *devname, int devname_len, char *devt)
- 				return 0;
- 			}
- 		}
--		goto skip_proc;
-+		condlog(4, "%s is invalid", block_path);
-+		return 1;
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index 7e8a676c..6505774f 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -889,7 +889,8 @@ int update_map_pr(struct multipath *mpp)
+ 	if (!get_be64(mpp->reservation_key))
+ 	{
+ 		/* Nothing to do. Assuming pr mgmt feature is disabled*/
+-		condlog(3, "%s: reservation_key not set in multipath.conf", mpp->alias);
++		condlog(4, "%s: reservation_key not set in multipath.conf",
++			mpp->alias);
+ 		return MPATH_PR_SUCCESS;
  	}
- 	memset(block_path, 0, sizeof(block_path));
  
-@@ -220,7 +221,7 @@ int devt2devname(char *devname, int devname_len, char *devt)
- 		}
- 	}
- 	fclose(fd);
--skip_proc:
-+
- 	if (strncmp(block_path,"/sys/block", 10)) {
- 		condlog(3, "No device found for %u:%u", major, minor);
- 		return 1;
 -- 
 2.19.2
