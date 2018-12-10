@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 18/24] multipathd: uev_remove_path: remove
-	redundant orphan_paths call
-Date: Mon, 10 Dec 2018 10:49:53 +0100
-Message-ID: <20181210094959.11338-19-mwilck@suse.com>
+Subject: [PATCH v3 22/24] domap(): use symbolic return value
+Date: Mon, 10 Dec 2018 10:49:57 +0100
+Message-ID: <20181210094959.11338-23-mwilck@suse.com>
 References: <20181210094959.11338-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,26 +21,110 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The remove_map_and_stop_waiter() call which follows immediately
-will do the same thing.
+Use an enum for the already-symbolic return value of domap(), and
+avoid the use of "<= 0" for the return value, which is against the
+spirit of symbolic values. A return value less or equal than 0 means
+DOMAP_FAIL or DOMAP_RETRY. Use the fact that DOMAP_RETRY is only
+returned in the ACT_CREATE case for simplification of the logic
+in those cases where ACT_CREATE is not used.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 1 -
- 1 file changed, 1 deletion(-)
+ libmultipath/configure.c  |  9 ---------
+ libmultipath/configure.h  | 13 +++++++++++++
+ multipathd/cli_handlers.c |  2 +-
+ multipathd/main.c         |  8 ++++----
+ 4 files changed, 18 insertions(+), 14 deletions(-)
 
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 5daf0c13..84ae5f56 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -788,15 +788,6 @@ fail:
+ 	return 1;
+ }
+ 
+-/*
+- * Return value:
+- */
+-#define DOMAP_RETRY	-1
+-#define DOMAP_FAIL	0
+-#define DOMAP_OK	1
+-#define DOMAP_EXIST	2
+-#define DOMAP_DRY	3
+-
+ int domap(struct multipath *mpp, char *params, int is_daemon)
+ {
+ 	int r = DOMAP_FAIL;
+diff --git a/libmultipath/configure.h b/libmultipath/configure.h
+index 64520c57..1b73bf42 100644
+--- a/libmultipath/configure.h
++++ b/libmultipath/configure.h
+@@ -23,6 +23,19 @@ enum actions {
+ 	ACT_IMPOSSIBLE,
+ };
+ 
++/*
++ * Return value of domap()
++ * DAEMON_RETRY is only used in non-daemon case (multipath),
++ * and only for ACT_CREATE (see domap()).
++ */
++enum {
++	DOMAP_RETRY	= -1,
++	DOMAP_FAIL	= 0,
++	DOMAP_OK	= 1,
++	DOMAP_EXIST	= 2,
++	DOMAP_DRY	= 3
++};
++
+ /*
+  * Return value of coalesce_paths()
+  * CP_RETRY is only used in non-daemon case (multipath).
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 4fbd8841..14aec17b 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -893,7 +893,7 @@ int resize_map(struct multipath *mpp, unsigned long long size,
+ 	}
+ 	mpp->action = ACT_RESIZE;
+ 	mpp->force_udev_reload = 1;
+-	if (domap(mpp, params, 1) <= 0) {
++	if (domap(mpp, params, 1) == DOMAP_FAIL) {
+ 		condlog(0, "%s: failed to resize map : %s", mpp->alias,
+ 			strerror(errno));
+ 		mpp->size = orig_size;
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 4d7c2598..5e6c35d4 100644
+index fd1ac8fe..fd3459f7 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -786,7 +786,6 @@ uev_remove_map (struct uevent * uev, struct vectors * vecs)
- 		goto out;
+@@ -497,7 +497,7 @@ retry:
+ 		retries = -1;
+ 		goto fail;
  	}
- 
--	orphan_paths(vecs->pathvec, mpp);
- 	remove_map_and_stop_waiter(mpp, vecs);
- out:
- 	lock_cleanup_pop(vecs->lock);
+-	if (domap(mpp, params, 1) <= 0 && retries-- > 0) {
++	if (domap(mpp, params, 1) == DOMAP_FAIL && retries-- > 0) {
+ 		condlog(0, "%s: map_udate sleep", mpp->alias);
+ 		sleep(1);
+ 		goto retry;
+@@ -995,8 +995,8 @@ rescan:
+ 	 */
+ retry:
+ 	ret = domap(mpp, params, 1);
+-	if (ret <= 0) {
+-		if (ret < 0 && retries-- > 0) {
++	if (ret == DOMAP_FAIL || ret == DOMAP_RETRY) {
++		if (ret == DOMAP_RETRY && retries-- > 0) {
+ 			condlog(0, "%s: retry domap for addition of new "
+ 				"path %s", mpp->alias, pp->dev);
+ 			sleep(1);
+@@ -1152,7 +1152,7 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
+ 		 * reload the map
+ 		 */
+ 		mpp->action = ACT_RELOAD;
+-		if (domap(mpp, params, 1) <= 0) {
++		if (domap(mpp, params, 1) == DOMAP_FAIL) {
+ 			condlog(0, "%s: failed in domap for "
+ 				"removal of path %s",
+ 				mpp->alias, pp->dev);
 -- 
 2.19.2
