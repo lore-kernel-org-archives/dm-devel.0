@@ -1,13 +1,15 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 22/24] domap(): use symbolic return value
-Date: Mon, 10 Dec 2018 11:06:33 +0100
-Message-ID: <20181210100633.12966-2-mwilck@suse.com>
-References: <20181210100633.12966-1-mwilck@suse.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH v4 0/7] per-cpu in_flight counters for
+	bio-based drivers
+Date: Mon, 10 Dec 2018 08:35:24 -0700
+Message-ID: <2dc7bd99-200b-6239-f604-c071c2de55a1@kernel.dk>
+References: <20181206164122.2166-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181210100633.12966-1-mwilck@suse.com>
+In-Reply-To: <20181206164122.2166-1-snitzer@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,113 +19,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-Use an enum for the already-symbolic return value of domap(), and
-avoid the use of "<= 0" for the return value, which is against the
-spirit of symbolic values. A return value less or equal than 0 means
-DOMAP_FAIL or DOMAP_RETRY. Use the fact that DOMAP_RETRY is only
-returned in the ACT_CREATE case for simplification of the logic
-in those cases where ACT_CREATE is not used.
+On Thu, Dec 6, 2018 at 9:41 AM Mike Snitzer <snitzer@redhat.com> wrote:
+>
+> Hey,
+>
+> This v4 addresses the compile issues on various archs when CONFIG_SMP
+> isn't set (by introducing appropriate wrappers in genhd.h)
+>
+> Testing with this v4 I was unable to reproduce the issue you reported
+> where iostat always reports 0 for avgqu-sz -- but please let me know
+> if you still see problems like that.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/configure.c  |  9 ---------
- libmultipath/configure.h  | 12 ++++++++++++
- multipathd/cli_handlers.c |  2 +-
- multipathd/main.c         |  8 ++++----
- 4 files changed, 17 insertions(+), 14 deletions(-)
+Looks good to me, and also passes my testing. Dropped the mq special
+cases and used this in general, also works fine. I was hoping we could
+get rid of the tag iteration with this, but that still seems to be more
+efficient for blk-mq. But at least we're better off for stacked devices
+with this.
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 5daf0c13..84ae5f56 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -788,15 +788,6 @@ fail:
- 	return 1;
- }
- 
--/*
-- * Return value:
-- */
--#define DOMAP_RETRY	-1
--#define DOMAP_FAIL	0
--#define DOMAP_OK	1
--#define DOMAP_EXIST	2
--#define DOMAP_DRY	3
--
- int domap(struct multipath *mpp, char *params, int is_daemon)
- {
- 	int r = DOMAP_FAIL;
-diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-index 64520c57..d7509000 100644
---- a/libmultipath/configure.h
-+++ b/libmultipath/configure.h
-@@ -23,6 +23,18 @@ enum actions {
- 	ACT_IMPOSSIBLE,
- };
- 
-+/*
-+ * Return value of domap()
-+ * DAEMON_RETRY is only used for ACT_CREATE (see domap()).
-+ */
-+enum {
-+	DOMAP_RETRY	= -1,
-+	DOMAP_FAIL	= 0,
-+	DOMAP_OK	= 1,
-+	DOMAP_EXIST	= 2,
-+	DOMAP_DRY	= 3
-+};
-+
- /*
-  * Return value of coalesce_paths()
-  * CP_RETRY is only used in non-daemon case (multipath).
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 4fbd8841..14aec17b 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -893,7 +893,7 @@ int resize_map(struct multipath *mpp, unsigned long long size,
- 	}
- 	mpp->action = ACT_RESIZE;
- 	mpp->force_udev_reload = 1;
--	if (domap(mpp, params, 1) <= 0) {
-+	if (domap(mpp, params, 1) == DOMAP_FAIL) {
- 		condlog(0, "%s: failed to resize map : %s", mpp->alias,
- 			strerror(errno));
- 		mpp->size = orig_size;
-diff --git a/multipathd/main.c b/multipathd/main.c
-index fd1ac8fe..fd3459f7 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -497,7 +497,7 @@ retry:
- 		retries = -1;
- 		goto fail;
- 	}
--	if (domap(mpp, params, 1) <= 0 && retries-- > 0) {
-+	if (domap(mpp, params, 1) == DOMAP_FAIL && retries-- > 0) {
- 		condlog(0, "%s: map_udate sleep", mpp->alias);
- 		sleep(1);
- 		goto retry;
-@@ -995,8 +995,8 @@ rescan:
- 	 */
- retry:
- 	ret = domap(mpp, params, 1);
--	if (ret <= 0) {
--		if (ret < 0 && retries-- > 0) {
-+	if (ret == DOMAP_FAIL || ret == DOMAP_RETRY) {
-+		if (ret == DOMAP_RETRY && retries-- > 0) {
- 			condlog(0, "%s: retry domap for addition of new "
- 				"path %s", mpp->alias, pp->dev);
- 			sleep(1);
-@@ -1152,7 +1152,7 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
- 		 * reload the map
- 		 */
- 		mpp->action = ACT_RELOAD;
--		if (domap(mpp, params, 1) <= 0) {
-+		if (domap(mpp, params, 1) == DOMAP_FAIL) {
- 			condlog(0, "%s: failed in domap for "
- 				"removal of path %s",
- 				mpp->alias, pp->dev);
 -- 
-2.19.2
+Jens Axboe
