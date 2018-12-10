@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 11/24] libmultipath: decrease log level of
-	"prioritizer refcount" message
-Date: Mon, 10 Dec 2018 10:49:46 +0100
-Message-ID: <20181210094959.11338-12-mwilck@suse.com>
+Subject: [PATCH v3 13/24] libmultipath: simplify devt2devname()
+Date: Mon, 10 Dec 2018 10:49:48 +0100
+Message-ID: <20181210094959.11338-14-mwilck@suse.com>
 References: <20181210094959.11338-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,27 +21,41 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This was important during development of the refcounting code, but
-now it isn't any more.
+Since 1e79548, we don't fallback from /sys/dev/block to
+/proc/partitions anyway. The strncmp() at "skip_proc"
+is doomed to fail. So we might as well return immediately.
+
+Also, decrease the log level; whether this failure is
+noteworthy is rather up to the callers to decide.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/prio.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/util.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/prio.c b/libmultipath/prio.c
-index 17acfd05..0590218d 100644
---- a/libmultipath/prio.c
-+++ b/libmultipath/prio.c
-@@ -42,7 +42,7 @@ void free_prio (struct prio * p)
- 		return;
- 	p->refcount--;
- 	if (p->refcount) {
--		condlog(3, "%s prioritizer refcount %d",
-+		condlog(4, "%s prioritizer refcount %d",
- 			p->name, p->refcount);
- 		return;
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index b5d2e706..28eb7577 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -191,7 +191,8 @@ int devt2devname(char *devname, int devname_len, char *devt)
+ 				return 0;
+ 			}
+ 		}
+-		goto skip_proc;
++		condlog(4, "%s is invalid", block_path);
++		return 1;
  	}
+ 	memset(block_path, 0, sizeof(block_path));
+ 
+@@ -220,7 +221,7 @@ int devt2devname(char *devname, int devname_len, char *devt)
+ 		}
+ 	}
+ 	fclose(fd);
+-skip_proc:
++
+ 	if (strncmp(block_path,"/sys/block", 10)) {
+ 		condlog(3, "No device found for %u:%u", major, minor);
+ 		return 1;
 -- 
 2.19.2
