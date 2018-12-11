@@ -1,18 +1,15 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 23/24] domap(): never return DOMAP_RETRY
-	in daemon mode
-Date: Tue, 11 Dec 2018 11:41:45 -0600
-Message-ID: <20181211174145.GG13270@octiron.msp.redhat.com>
-References: <20181203193624.21870-1-mwilck@suse.com>
-	<20181203193624.21870-6-mwilck@suse.com>
-	<20181203234548.GA13270@octiron.msp.redhat.com>
-	<f38d7a41bb82324eb0d6d362bf68ba637012899e.camel@suse.com>
+Subject: Re: [PATCH v3 00/24] multipath-tools: improve logging at
+	-v3
+Date: Tue, 11 Dec 2018 11:43:01 -0600
+Message-ID: <20181211174301.GH13270@octiron.msp.redhat.com>
+References: <20181210094959.11338-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <f38d7a41bb82324eb0d6d362bf68ba637012899e.camel@suse.com>
+In-Reply-To: <20181210094959.11338-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,45 +20,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Martin Wilck <mwilck@suse.com>
-Cc: mwilck+gmail@suse.de, dm-devel@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, Dec 09, 2018 at 10:06:05PM +0100, Martin Wilck wrote:
-> On Mon, 2018-12-03 at 17:45 -0600,  Benjamin Marzinski  wrote:
+On Mon, Dec 10, 2018 at 10:49:35AM +0100, Martin Wilck wrote:
+> Changes in v3:
 > 
-> TL;DR: I'm 99.7% sure we don't need lock_multipath() any more.
-> 
-> The historic reason is 4d7a270:
-> 
->     'Multiple multipath(8) execs can race with udev storm.
->     
->     We can simulate this with the following :
->     "multipath -F; /sbin/multipath 8:16 & /sbin/multipath 8:32"
->     
->     Problem arise when two runs are about to create the same map.
->     One will fail, leaving us with a choice : abord or retry.'
-> 
-> This commit was made at a time (October 2005) when multipath was called
-> directly from udev rules to set up maps. Earlier versions of multipath
-> had a general locking that would not allow multiple multipath commands
-> to run in parallel, but that has been removed later. This was an
-> attempt to lock only (would-be) members of one specific map.
-> 
-> Obviously, the goal of this patch wouldn't be achieved any more since
-> the lock has been change to non-exclusive (1c50cd32). Multiple
-> multipath instances run happily on members of the same set now. I
-> haven't tested it, but I believe the historic race "/sbin/multipath
-> 8:16 & /sbin/multipath 8:32" still exists; just we don't run multipath
-> this way from udev rules any more. 
-> 
-> lock_multipath() doesn't help us void this race, as we can't go back to
-> exclusive locking. If we want to avoid it, we could create a lock file
-> from the WWID before calling domap(), /dev/shm/multipath/$WWID.lock or
-> so. Or we could use a SYSV semaphore set.
+> Resent full series on Christophe's request. All patches except 22/24, 23/24 are
+> the same as before. Added Ben's "Reviewed-by:" where appropriate.
 
-I vote for removing lock_multipath(). Personally, I've never seen anyone
-report the anything that looks like a multiple creation race since we've
-changed the locking to shared, so I'm fine with leaving it out, but I
-certainly wouldn't NAK a patch that added useful locking back in.
+Belated ACKs on 23/24 and v4 of 22/24
 
 -Ben
+
+> 
+>  - 22/24: added one fix for a non-symbolic reference to a domap() return value,
+> which I'd overlooked before.
+>  - 23/24: removed on Ben's review. The new 23/24 is just a code cleanup
+> without functional change.
+> 
+> Changes in v2:
+> 
+> The first 19 patches are identical to v1 as ACK'd by Ben, except 16/24
+> "libmultipath: coalesce_paths: fix size mismatch handling".
+> No. 8/24 "libmultipath: decrease log level of word splitting"
+> (not yet ACKd by Ben) also stays the same; the issue Ben raised
+> in his review is addressed in a separate patch, 20/24.
+> 21/24 addresses implements Ben's suggestion to use named constants
+> as return values in coalesce_paths(). 22, 23, 24 do the same for
+> other important, related functions, as I found it strange to make
+> this change just for coalesce_paths() alone.  
+> 
+> Martin Wilck (24):
+>   tests/hwtable: set multipath_dir in local configuration
+>   tests/hwtable: adjust to new checker API
+>   multipath-tools: decrease verbosity of state messages
+>   libmultipath: decrease verbosity of pathinfo messages
+>   libmultipath: decrease verbosity of TUR checker messages
+>   libmultipath: avoid frequent messages from filter_property()
+>   libmultipath: decrease log level of "disassembled" messages
+>   libmultipath: decrease log level of word splitting
+>   libmultipath: increase log level of map removal
+>   multipathd: decrease log level of checker timing
+>   libmultipath: decrease log level of "prioritizer refcount" message
+>   libmpathpersist/update_map_pr: decrease log level for nop
+>   libmultipath: simplify devt2devname()
+>   libmultipath: decrease log level for failed VPD c9
+>   libmultipath: adopt_paths: check for size match
+>   libmultipath: coalesce_paths: fix size mismatch handling
+>   tests: add unit tests for bitmask functions
+>   multipathd: uev_remove_path: remove redundant orphan_paths call
+>   libmultipath: improve logging from orphan_paths
+>   libmultipath: avoid syslog loglevel > LOG_DEBUG
+>   coalesce_paths(): use symbolic return value
+>   domap(): use symbolic return value
+>   multipathd: simplify retry logic in ev_add_path()
+>   multipath: use symbolic return value and exit code
+> 
+>  libmpathpersist/mpath_persist.c |   3 +-
+>  libmultipath/blacklist.c        |  54 +++++++-------
+>  libmultipath/blacklist.h        |   2 +-
+>  libmultipath/checkers/tur.c     |   6 +-
+>  libmultipath/configure.c        |  48 +++++++------
+>  libmultipath/configure.h        |  23 ++++++
+>  libmultipath/discovery.c        |  20 +++---
+>  libmultipath/dmparser.c         |   6 +-
+>  libmultipath/log_pthread.c      |   3 +
+>  libmultipath/prio.c             |   2 +-
+>  libmultipath/structs_vec.c      |  18 +++--
+>  libmultipath/structs_vec.h      |   3 +-
+>  libmultipath/util.c             |   7 +-
+>  libmultipath/util.h             |  16 +++++
+>  multipath/main.c                | 121 ++++++++++++++++++--------------
+>  multipathd/cli_handlers.c       |   5 +-
+>  multipathd/main.c               |  45 ++++++------
+>  tests/Makefile                  |   7 +-
+>  tests/blacklist.c               |   7 +-
+>  tests/hwtable.c                 |  89 ++++++++++++-----------
+>  tests/util.c                    |  98 ++++++++++++++++++++++++++
+>  21 files changed, 383 insertions(+), 200 deletions(-)
+> 
+> -- 
+> 2.19.2
