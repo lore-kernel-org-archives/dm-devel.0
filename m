@@ -1,14 +1,11 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] libmultipath: Increase SERIAL_SIZE to 256
- bytes
-Date: Tue, 11 Dec 2018 21:52:13 +0100
-Message-ID: <1866550fb65f9f34074a4bade1d2e030c406e0fd.camel@suse.com>
-References: <1535492059-29311-1-git-send-email-kmahlkuc@linux.vnet.ibm.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH 0/1] update to v2 Fix false removes
+Date: Tue, 11 Dec 2018 15:23:03 -0600
+Message-ID: <1544563384-9721-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1535492059-29311-1-git-send-email-kmahlkuc@linux.vnet.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,35 +15,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: KyleMahlkuch <kmahlkuc@linux.vnet.ibm.com>, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-S3lsZSwKCnBsZWFzZSByZXN1Ym1pdCB3aXRoIFNFUklBTF9TSVpFPTEyOC4gVGhhdCBzaG91bGQg
-YmUgc3VmZmljaWVudCBmb3IKdGhlIHRpbWUgYmVpbmcuCgpNYXJ0aW4KCk9uIFR1ZSwgMjAxOC0w
-OC0yOCBhdCAxNjozNCAtMDUwMCwgS3lsZU1haGxrdWNoIHdyb3RlOgo+IENlcnRhaW4gSUJNIEZs
-YXNoU3lzdGVtIExVTnMgY2FuIHJldHVybiB1cCB0byA4NSBieXRlcyBvZiBzZXJpYWwKPiBudW1i
-ZXIgaW4gdGhlIFVuaXQgU2VyaWFsIE51bWJlciBWUEQgcGFnZSwgd2hpY2ggaXMgbGFyZ2VyIHRo
-YW4KPiB0aGUgY3VycmVudCBTRVJJQUxfU0laRSBkZWZpbml0aW9uIG9mIDY1IGJ5dGVzLiBTaW5j
-ZSB0aGUgbWF4Cj4gc2l6ZSBvZiB0aGlzIGZpZWxkIGRvZXMgbm90IGFwcGVhciB0byBiZSBkZWZp
-bmVkIGluIFNQQywgaW5jcmVhc2luZwo+IHRvIDI1NiBieXRlcyBzaG91bGQgaG9wZWZ1bGx5IHBy
-ZXZlbnQgdXMgZnJvbSBoaXR0aW5nIHRoaXMKPiBpbiBmdXR1cmUuCj4gCj4gVGhpcyBpcyBhbiBl
-eGFtcGxlIG9mIGEgc2VyaWFsIG51bWJlciBmcm9tIGEgRmxhc2hTeXN0ZW06Cj4gVW5pdCBzZXJp
-YWwgbnVtYmVyIFZQRCBwYWdlOgo+IFVuaXQgc2VyaWFsIG51bWJlcjoKPiAzMzIxMzYwMDUwNzY0
-MDA4MTAxQUIzMDAwMDAwMDAwMDAwMTIyMDQyMTQ1MDNJQk1mY3AKPiAKPiBCZWZvcmUgdGhpcyBw
-YXRjaCBtdWx0aXBhdGggcmV0dXJucyB0aGUgZXJyb3I6Cj4gSnVsIDE3IDExOjI0OjU4IHwgdnBk
-IHBnODAgb3ZlcmZsb3csIDg1LzY1IGJ5dGVzIHJlcXVpcmVkCj4gCj4gQWZ0ZXIgdGhlIHBhdGNo
-IGlzIGFwcGxpZWQgdGhlIGVycm9yIG5vIGxvbmdlciBvY2N1ci4KPiAKPiBTaWduZWQtb2ZmLWJ5
-OiBLeWxlIE1haGxrdWNoIDxrbWFobGt1Y0BsaW51eC52bmV0LmlibS5jb20+Cj4gLS0tCj4gIGxp
-Ym11bHRpcGF0aC9zdHJ1Y3RzLmggfCAyICstCj4gIDEgZmlsZSBjaGFuZ2VkLCAxIGluc2VydGlv
-bigrKSwgMSBkZWxldGlvbigtKQo+IAo+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvc3RydWN0
-cy5oIGIvbGlibXVsdGlwYXRoL3N0cnVjdHMuaAo+IGluZGV4IGJmYTY2MGEuLjAwYTFiMWEgMTAw
-NjQ0Cj4gLS0tIGEvbGlibXVsdGlwYXRoL3N0cnVjdHMuaAo+ICsrKyBiL2xpYm11bHRpcGF0aC9z
-dHJ1Y3RzLmgKPiBAQCAtOCw3ICs4LDcgQEAKPiAgI2luY2x1ZGUgImJ5dGVvcmRlci5oIgo+ICAK
-PiAgI2RlZmluZSBXV0lEX1NJWkUJCTEyOAo+IC0jZGVmaW5lIFNFUklBTF9TSVpFCQk2NQo+ICsj
-ZGVmaW5lIFNFUklBTF9TSVpFCQkyNTYKPiAgI2RlZmluZSBOT0RFX05BTUVfU0laRQkJMjI0Cj4g
-ICNkZWZpbmUgUEFUSF9TVFJfU0laRQkJMTYKPiAgI2RlZmluZSBQQVJBTVNfU0laRQkJNDA5NgoK
-LS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3
-NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBT
-bWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCgotLQpkbS1k
-ZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQu
-Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+I accidentally didn't include Christophe in my
+
+[PATCH v2 0/1] Fix false removes
+
+patchset, so v1 of "libmultipath: fix false removes in dmevents polling   
+code" went in.  This commit just patches the code to my v2 version.
+Sorry for the confusion. I've included Martin's Reviewed-by as the end
+result is the same as what he reviewed, and no intervening commits have
+touched libmultipath/devmapper.c or multipathd/dmevents.c
+
+Benjamin Marzinski (1):
+  libmultipath: dm_is_mpath cleanup
+
+ libmultipath/devmapper.c | 21 ++++++++++++---------
+ multipathd/dmevents.c    |  4 +++-
+ 2 files changed, 15 insertions(+), 10 deletions(-)
+
+-- 
+2.7.4
