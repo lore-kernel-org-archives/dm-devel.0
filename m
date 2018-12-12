@@ -1,38 +1,39 @@
-From: "Kani, Toshi" <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+From: "Theodore Y. Ts'o" <tytso@mit.edu>
 Subject: Re: Snapshot target and DAX-capable devices
-Date: Wed, 12 Dec 2018 19:49:25 +0000
-Message-ID: <cdeadbe0b16244a07f2417902c1f46eb1141d96f.camel@hpe.com>
-References: <20180828075025.GA17756@quack2.suse.cz>
- <20180828175630.GA1197@redhat.com> <20180830093028.GC1767@quack2.suse.cz>
- <20180830184907.GA14867@redhat.com>
- <x494lfbabwi.fsf@segfault.boston.devel.redhat.com>
- <alpine.LRH.2.02.1808301545200.30950@file01.intranet.prod.int.rdu2.redhat.com>
- <20180830233809.GH1572@dastard> <20180831094255.GB11622@quack2.suse.cz>
- <167a3303a01.11a848ab768799.5161498967766415143@zoho.com>
- <20181212161254.GA20790@infradead.org> <20181212175047.GA24962@redhat.com>
+Date: Wed, 12 Dec 2018 16:15:47 -0500
+Message-ID: <20181212211547.GA24926@thunk.org>
+References: <20180828175630.GA1197@redhat.com>
+	<20180830093028.GC1767@quack2.suse.cz>
+	<20180830184907.GA14867@redhat.com>
+	<x494lfbabwi.fsf@segfault.boston.devel.redhat.com>
+	<alpine.LRH.2.02.1808301545200.30950@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180830233809.GH1572@dastard>
+	<20180831094255.GB11622@quack2.suse.cz>
+	<167a3303a01.11a848ab768799.5161498967766415143@zoho.com>
+	<20181212161254.GA20790@infradead.org>
+	<20181212175047.GA24962@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20181212175047.GA24962-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Content-Language: en-US
-Content-ID: <4214681ED56B6A43AED1CAB47BB5D7DE-mmYPd6ayCNGroOM5E8FhRbjFIynDaujOfM0AETQt39g@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: "hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org" <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: "jack-AlSwsSmVLrQ@public.gmane.org" <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, "chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org" <chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>, "david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org" <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "colyli-l3A5Bk7waGM@public.gmane.org" <colyli-l3A5Bk7waGM@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20181212175047.GA24962@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Huaisheng Ye <yehs2007@zoho.com>, Jan Kara <jack@suse.cz>, yehs1 <yehs1@lenovo.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, chengnt <chengnt@lenovo.com>, Dave Chinner <david@fromorbit.com>, colyli <colyli@suse.de>, Christoph Hellwig <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Wed, 2018-12-12 at 12:50 -0500, Mike Snitzer wrote:
+On Wed, Dec 12, 2018 at 12:50:47PM -0500, Mike Snitzer wrote:
 > On Wed, Dec 12 2018 at 11:12am -0500,
-> Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+> Christoph Hellwig <hch@infradead.org> wrote:
 > 
 > > Does it really make sense to enhance dm-snapshot?  I thought all serious
 > > users of snapshots had moved on to dm-thinp?
@@ -42,22 +43,13 @@ On Wed, 2018-12-12 at 12:50 -0500, Mike Snitzer wrote:
 > for dm-snapshot in general but it is definitely not a priority (Google's
 > dm-bow is an example of a case where dm-snapshot may get extended to
 > fulfill google's needs).
-> 
-> But for this specific DAX case, I can only assume efforts to prop up
-> dm-snapshot like this are born out of legacy use-cases.  The reality is
-> getting DAX to work with dm-snapshot is pretty involved (due to mmap,
-> etc).  This thread got into a lot of the details:
-> https://www.redhat.com/archives/dm-devel/2018-August/msg00211.html
-> 
-> So any new attempt to reintroduce DAX support to dm-snapshot (or any
-> more complex DM target) will have a very high bar.  One that requires
-> much more extensive mm and block (interlock) prep work to make DAX
-> safe.
 
-Just to be clear, "reintroduce DAX support to dm-snapshot" is a bit
-misleading because there wasn't such attempt before.  My original
-hack/change in dm-snapshot was to support non-DAX use-cases to work with
-DAX-capable devices.
+I would expect that dm-snapshot will be used quite a lot for
+short-lived snapshots (that only live during a database backup or an
+fsck run).  I would hardly call that a "niche use case".  One other
+major advantage that dm-snapshot has is that you can take a snapshot
+for any LVM volume.  For dm-thinp you have migrate your storage to a
+thinp pool, and that adds a fair amount of friction to users migrating
+to dm-thinp.
 
-Thanks,
--Toshi
+						- Ted
