@@ -1,57 +1,68 @@
-From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: Snapshot target and DAX-capable devices
-Date: Wed, 12 Dec 2018 12:50:47 -0500
-Message-ID: <20181212175047.GA24962@redhat.com>
-References: <20180828075025.GA17756@quack2.suse.cz>
- <20180828175630.GA1197@redhat.com>
- <20180830093028.GC1767@quack2.suse.cz>
- <20180830184907.GA14867@redhat.com>
- <x494lfbabwi.fsf@segfault.boston.devel.redhat.com>
- <alpine.LRH.2.02.1808301545200.30950@file01.intranet.prod.int.rdu2.redhat.com>
- <20180830233809.GH1572@dastard>
- <20180831094255.GB11622@quack2.suse.cz>
- <167a3303a01.11a848ab768799.5161498967766415143@zoho.com>
- <20181212161254.GA20790@infradead.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fixes for 4.20
+Date: Wed, 12 Dec 2018 12:56:48 -0500
+Message-ID: <20181212175648.GA25049@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20181212161254.GA20790-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, chengnt <chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, colyli <colyli-l3A5Bk7waGM@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Damien Le Moal <damien.lemoal@wdc.com>
 List-Id: dm-devel.ids
 
-On Wed, Dec 12 2018 at 11:12am -0500,
-Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+Hi Linus,
 
-> Does it really make sense to enhance dm-snapshot?  I thought all serious
-> users of snapshots had moved on to dm-thinp?
+The following changes since commit 2595646791c319cadfdbf271563aac97d0843dc7:
 
-There are cases where dm-snapshot is still useful for people.  But those
-are very niche users.  I'm not opposed to others proposing enhancements
-for dm-snapshot in general but it is definitely not a priority (Google's
-dm-bow is an example of a case where dm-snapshot may get extended to
-fulfill google's needs).
+  Linux 4.20-rc5 (2018-12-02 15:07:55 -0800)
 
-But for this specific DAX case, I can only assume efforts to prop up
-dm-snapshot like this are born out of legacy use-cases.  The reality is
-getting DAX to work with dm-snapshot is pretty involved (due to mmap,
-etc).  This thread got into a lot of the details:
-https://www.redhat.com/archives/dm-devel/2018-August/msg00211.html
+are available in the Git repository at:
 
-So any new attempt to reintroduce DAX support to dm-snapshot (or any
-more complex DM target) will have a very high bar.  One that requires
-much more extensive mm and block (interlock) prep work to make DAX
-safe.
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.20/dm-fixes
 
+for you to fetch changes up to 2af6c0703d75fc3ff2e6de19b4b3adab96acc12d:
+
+  dm thin: bump target version (2018-12-12 09:39:54 -0500)
+
+Please pull, thanks.
 Mike
+
+----------------------------------------------------------------
+- Fix DM cache metadata to verify that a cache has block before trying
+  to continue with operation that requires them.
+
+- Fix bio-based DM core's dm_make_request() to properly impose device
+  limits on individual bios by making use of blk_queue_split().
+
+- Fix long-standing race with how DM thinp notified userspace of
+  thin-pool mode state changes before they were actually made.
+
+- Fix the zoned target's bio completion handling; this is a fairly
+  invassive fix at this stage but it is localized to the zoned target.
+  Any zoned target users will benefit from this fix.
+
+----------------------------------------------------------------
+Damien Le Moal (1):
+      dm zoned: Fix target BIO completion handling
+
+Mike Snitzer (4):
+      dm cache metadata: verify cache has blocks in blocks_are_clean_separate_dirty()
+      dm: call blk_queue_split() to impose device limits on bios
+      dm thin: send event about thin-pool state change _after_ making it
+      dm thin: bump target version
+
+ drivers/md/dm-cache-metadata.c |   4 ++
+ drivers/md/dm-thin.c           |  72 ++++++++++++------------
+ drivers/md/dm-zoned-target.c   | 122 +++++++++++++----------------------------
+ drivers/md/dm.c                |   2 +
+ 4 files changed, 81 insertions(+), 119 deletions(-)
