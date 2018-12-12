@@ -1,79 +1,103 @@
-From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: Snapshot target and DAX-capable devices
-Date: Wed, 12 Dec 2018 17:43:22 -0500
-Message-ID: <20181212224321.GA2902@redhat.com>
-References: <20180830093028.GC1767@quack2.suse.cz>
- <20180830184907.GA14867@redhat.com>
- <x494lfbabwi.fsf@segfault.boston.devel.redhat.com>
- <alpine.LRH.2.02.1808301545200.30950@file01.intranet.prod.int.rdu2.redhat.com>
- <20180830233809.GH1572@dastard>
- <20180831094255.GB11622@quack2.suse.cz>
- <167a3303a01.11a848ab768799.5161498967766415143@zoho.com>
- <20181212161254.GA20790@infradead.org>
- <20181212175047.GA24962@redhat.com>
- <20181212211547.GA24926@thunk.org>
+From: Martin Wilck <mwilck@suse.de>
+Subject: Re: [PATCH] multipath-tools: document why dev_loss_tmo
+ is set to infinity for HPE 3PAR
+Date: Thu, 13 Dec 2018 00:44:30 +0100
+Message-ID: <72e925c5524541dd430ba897f7463321f34ab66e.camel@suse.de>
+References: <20181212165833.12407-1-xose.vazquez@gmail.com>
+	<CAAMCDednRXQqf9hgW5kKNSEoFgVjW21BQv3FmVUSVQTiXoQk8Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20181212211547.GA24926-AKGzg7BKzIDYtjvyW6yDsg@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: "Theodore Y. Ts'o" <tytso-3s7WtUTddSA@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, chengnt <chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, colyli <colyli-l3A5Bk7waGM@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAAMCDednRXQqf9hgW5kKNSEoFgVjW21BQv3FmVUSVQTiXoQk8Q@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Roger Heflin <rogerheflin@gmail.com>, xose.vazquez@gmail.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Dec 12 2018 at  4:15pm -0500,
-Theodore Y. Ts'o <tytso-3s7WtUTddSA@public.gmane.org> wrote:
+On Wed, 2018-12-12 at 13:44 -0600, Roger Heflin wrote:
 
-> On Wed, Dec 12, 2018 at 12:50:47PM -0500, Mike Snitzer wrote:
-> > On Wed, Dec 12 2018 at 11:12am -0500,
-> > Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
-> > 
-> > > Does it really make sense to enhance dm-snapshot?  I thought all serious
-> > > users of snapshots had moved on to dm-thinp?
-> > 
-> > There are cases where dm-snapshot is still useful for people.  But those
-> > are very niche users.  I'm not opposed to others proposing enhancements
-> > for dm-snapshot in general but it is definitely not a priority (Google's
-> > dm-bow is an example of a case where dm-snapshot may get extended to
-> > fulfill google's needs).
+> On thing that seems to be a mess with the tmo value that is being
+> inherited from the underlying driver, is that the setting for the
+> scsi
+> layer is significantly different from what multipath calls TMO.
 > 
-> I would expect that dm-snapshot will be used quite a lot for
-> short-lived snapshots (that only live during a database backup or an
-> fsck run).  I would hardly call that a "niche use case".
+> In the case I have seen with the lpfc driver this is often set fairly
+> low (HPE's doc references 14 seconds, and this is similar to what my
+> employer is using).
+> parm:           lpfc_devloss_tmo:Seconds driver will hold I/O waiting
+> for a device to come back (int)
+> 
+> But setting this on the scsi layer causes it to quickly return an
+> error to the multipath layer.  It does not mean that the scsi layer
+> removes the device from the system, just that it returns an error so
+> that the layer above it can deal with it. 
 
-dm-snapshot is only ~60% performant for 1 snapshot.  Try to do
-additional snapshots and performance crawls to a stop (though I haven't
-reassessed performance in a while).
+You are confusing fast_io_fail_tmo and dev_loss_tmo. What you just
+described is fast_io_fail_tmo. If dev_loss_tmo expires, the SCSI layer
+does indeed remove the SCSI target. See comments on the
+fc_remote_port_delete() function.
+(https://elixir.bootlin.com/linux/latest/source/drivers/scsi/scsi_transport_fc.c#L2906)
 
-dm-snapshot has been in Linux since before 2005, I don't know of all the
-users of it -- maybe there are a ton of users who only take a single
-temporary snapshot and we're all oblivious.
+For multipath, what really matters is fast_io_fail_tmo. dev_loss_tmo
+only matters if fast_io_fail_tmo is unset. fast_io_fail is preferred,
+because path failure/reinstantiation is much easier to handle than path
+removal/re-addition, on both kernel and user space level. The reason
+dev_loss_tmo is not infinity by default is twofold: 1) if fast_io_fail
+is not used and dev_loss_tmo is infinity, IOs might block on a removed
+device forever; 2) even with fast_io_fail, if a lost device doesn't
+come back after a long time, it might be good not to carry it around
+forever - chances are that the storage admin really removed the device
+or changed the zoning.
 
-Definitely not seeing many bugs against it (but it has been around
-forever).  I do know that there are relatively few people showing
-interest in it.  But for 4.21 I did stage a couple useful performance
-fixes:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.21&id=61d594bb7e1cf86dca49cbc9524eb80169d9fca6
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.21&id=d1f7898c7a1b24aa9ae670f9cc21b65e730827eb
+>   The multipath layer
+> interprets its value of TMO as when to clean up/remove the underlying
+> path that when dev_loss_tmo is hit.    TMO is used in both names, but
+> they are not the same usage and meaning and the scsi layer's TMO
+> should not be inherited by the multipath layer, as they don't appear
+> to actually be the same thing.   In multipath it should probably be
+> called remove_fault_paths or something similar.
 
-> One other major advantage that dm-snapshot has is that you can take a
-> snapshot for any LVM volume.  For dm-thinp you have migrate your
-> storage to a thinp pool, and that adds a fair amount of friction to
-> users migrating to dm-thinp.
+I'm not sure what you mean with "multipath layer". The kernel dm-
+multipath layer has nothing to do with dev_loss_tmo at all. multipath-
+tools don't "inherit" this value, either. They *set* it to match the
+settings from multipath.conf and the internal hwtable, taking other
+related settings into account (in particular, no_path_retry).
 
-dm-thinp has the concept of an "external origin".  Changes to origin LVM
-volume get copied out to the thin-pool (same copy cost as old
-dm-snapshot).  But IIRC from that point on your LVM volume is a dm-thin
-device.
+> This incorrect inheritance has caused issues, as prior to multipath
+> inheriting TMO from the scsi layer, multipath did not remove the
+> paths
+> when IO failed for TMO time. 
 
-Mike
+Sorry, no. multipathd *never* removes SCSI paths. If it receives an
+event about removal of a path, it updates its own data structures, and
+the maps in the dm-multipath layer. That's it.
+
+The only thing that multipath-tools do that may cause SCSI devices to
+get removed is to set dev_loss_tmo to a low value. But that would be
+a matter of (unusual) configuration.
+
+>   The paths prior to the inheritance
+> stayed around and errored until the underlying issue was fixed, or a
+> reboot happened, or until someone manually removed the failing paths.
+> When I first saw this I had processes to deal with this, and we did
+> noticed when it stated automatically cleaning up paths and it was
+> good
+> since it eliminated manual work, that is until it caused issues
+> during
+> firmware update.  HPE's update to infinity will be a response to the
+> inherited TMO change causing issues.
+
+I'm wondering what you're talking about. dev_loss_tmo has been in the
+SCSI layer for ages.
+
+Regards
+Martin
