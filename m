@@ -1,89 +1,63 @@
-From: Roger Heflin <rogerheflin@gmail.com>
-Subject: Re: [PATCH] multipath-tools: document why dev_loss_tmo
- is set to infinity for HPE 3PAR
-Date: Wed, 12 Dec 2018 13:44:03 -0600
-Message-ID: <CAAMCDednRXQqf9hgW5kKNSEoFgVjW21BQv3FmVUSVQTiXoQk8Q@mail.gmail.com>
-References: <20181212165833.12407-1-xose.vazquez@gmail.com>
+From: "Kani, Toshi" <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Subject: Re: Snapshot target and DAX-capable devices
+Date: Wed, 12 Dec 2018 19:49:25 +0000
+Message-ID: <cdeadbe0b16244a07f2417902c1f46eb1141d96f.camel@hpe.com>
+References: <20180828075025.GA17756@quack2.suse.cz>
+ <20180828175630.GA1197@redhat.com> <20180830093028.GC1767@quack2.suse.cz>
+ <20180830184907.GA14867@redhat.com>
+ <x494lfbabwi.fsf@segfault.boston.devel.redhat.com>
+ <alpine.LRH.2.02.1808301545200.30950@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180830233809.GH1572@dastard> <20180831094255.GB11622@quack2.suse.cz>
+ <167a3303a01.11a848ab768799.5161498967766415143@zoho.com>
+ <20181212161254.GA20790@infradead.org> <20181212175047.GA24962@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181212165833.12407-1-xose.vazquez@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: xose.vazquez@gmail.com
-Cc: dm-devel@redhat.com
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20181212175047.GA24962-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Language: en-US
+Content-ID: <4214681ED56B6A43AED1CAB47BB5D7DE-mmYPd6ayCNGroOM5E8FhRbjFIynDaujOfM0AETQt39g@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: "hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org" <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: "jack-AlSwsSmVLrQ@public.gmane.org" <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, "chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org" <chengnt-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>, "david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org" <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "colyli-l3A5Bk7waGM@public.gmane.org" <colyli-l3A5Bk7waGM@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On thing that seems to be a mess with the tmo value that is being
-inherited from the underlying driver, is that the setting for the scsi
-layer is significantly different from what multipath calls TMO.
+On Wed, 2018-12-12 at 12:50 -0500, Mike Snitzer wrote:
+> On Wed, Dec 12 2018 at 11:12am -0500,
+> Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+> 
+> > Does it really make sense to enhance dm-snapshot?  I thought all serious
+> > users of snapshots had moved on to dm-thinp?
+> 
+> There are cases where dm-snapshot is still useful for people.  But those
+> are very niche users.  I'm not opposed to others proposing enhancements
+> for dm-snapshot in general but it is definitely not a priority (Google's
+> dm-bow is an example of a case where dm-snapshot may get extended to
+> fulfill google's needs).
+> 
+> But for this specific DAX case, I can only assume efforts to prop up
+> dm-snapshot like this are born out of legacy use-cases.  The reality is
+> getting DAX to work with dm-snapshot is pretty involved (due to mmap,
+> etc).  This thread got into a lot of the details:
+> https://www.redhat.com/archives/dm-devel/2018-August/msg00211.html
+> 
+> So any new attempt to reintroduce DAX support to dm-snapshot (or any
+> more complex DM target) will have a very high bar.  One that requires
+> much more extensive mm and block (interlock) prep work to make DAX
+> safe.
 
-In the case I have seen with the lpfc driver this is often set fairly
-low (HPE's doc references 14 seconds, and this is similar to what my
-employer is using).
-parm:           lpfc_devloss_tmo:Seconds driver will hold I/O waiting
-for a device to come back (int)
+Just to be clear, "reintroduce DAX support to dm-snapshot" is a bit
+misleading because there wasn't such attempt before.  My original
+hack/change in dm-snapshot was to support non-DAX use-cases to work with
+DAX-capable devices.
 
-But setting this on the scsi layer causes it to quickly return an
-error to the multipath layer.  It does not mean that the scsi layer
-removes the device from the system, just that it returns an error so
-that the layer above it can deal with it.   The multipath layer
-interprets its value of TMO as when to clean up/remove the underlying
-path that when dev_loss_tmo is hit.    TMO is used in both names, but
-they are not the same usage and meaning and the scsi layer's TMO
-should not be inherited by the multipath layer, as they don't appear
-to actually be the same thing.   In multipath it should probably be
-called remove_fault_paths or something similar.
-
-This incorrect inheritance has caused issues, as prior to multipath
-inheriting TMO from the scsi layer, multipath did not remove the paths
-when IO failed for TMO time.   The paths prior to the inheritance
-stayed around and errored until the underlying issue was fixed, or a
-reboot happened, or until someone manually removed the failing paths.
-When I first saw this I had processes to deal with this, and we did
-noticed when it stated automatically cleaning up paths and it was good
-since it eliminated manual work, that is until it caused issues during
-firmware update.  HPE's update to infinity will be a response to the
-inherited TMO change causing issues.
-
-On Wed, Dec 12, 2018 at 10:58 AM Xose Vazquez Perez
-<xose.vazquez@gmail.com> wrote:
->
-> It's needed by Peer Persistence, documented in SLES and RHEL guides:
-> https://support.hpe.com/hpsc/doc/public/display?docId=a00053835
-> https://support.hpe.com/hpsc/doc/public/display?docId=c04448818
->
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM-DEVEL ML <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libmultipath/hwtable.c | 1 +
->  1 file changed, 1 insertion(+)
->
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index d3a8d9b..543bacd 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -116,6 +116,7 @@ static struct hwentry default_hw[] = {
->                 .prio_name     = PRIO_ALUA,
->                 .no_path_retry = 18,
->                 .fast_io_fail  = 10,
-> +               /* infinity is needed by Peer Persistence */
->                 .dev_loss      = MAX_DEV_LOSS_TMO,
->         },
->         {
-> --
-> 2.19.2
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Thanks,
+-Toshi
