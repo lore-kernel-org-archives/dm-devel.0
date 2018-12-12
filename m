@@ -1,23 +1,16 @@
-From: "Theodore Y. Ts'o" <tytso@mit.edu>
-Subject: Re: Snapshot target and DAX-capable devices
-Date: Wed, 12 Dec 2018 16:15:47 -0500
-Message-ID: <20181212211547.GA24926@thunk.org>
-References: <20180828175630.GA1197@redhat.com>
-	<20180830093028.GC1767@quack2.suse.cz>
-	<20180830184907.GA14867@redhat.com>
-	<x494lfbabwi.fsf@segfault.boston.devel.redhat.com>
-	<alpine.LRH.2.02.1808301545200.30950@file01.intranet.prod.int.rdu2.redhat.com>
-	<20180830233809.GH1572@dastard>
-	<20180831094255.GB11622@quack2.suse.cz>
-	<167a3303a01.11a848ab768799.5161498967766415143@zoho.com>
-	<20181212161254.GA20790@infradead.org>
-	<20181212175047.GA24962@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v3] libmultipath: update INFINIDAT builtin
+ config
+Date: Wed, 12 Dec 2018 23:33:46 +0100
+Message-ID: <ee66433252a04157dbdecb0b8b18e28166bce43c.camel@suse.com>
+References: <CAK2gM1vmua3z7ZQtudyeTQbxivw0qxkGt5K2kJQFJN9UsQL6CQ@mail.gmail.com>
+	<9ea55d5a8c50d846cc5c0930c06f33446f8f55a0.camel@suse.com>
+	<333c1db2-18ba-1276-9843-35524a0e417e@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20181212175047.GA24962@redhat.com>
+In-Reply-To: <333c1db2-18ba-1276-9843-35524a0e417e@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,29 +20,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Huaisheng Ye <yehs2007@zoho.com>, Jan Kara <jack@suse.cz>, yehs1 <yehs1@lenovo.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, chengnt <chengnt@lenovo.com>, Dave Chinner <david@fromorbit.com>, colyli <colyli@suse.de>, Christoph Hellwig <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>, mwilck@suse.com
+Cc: Arnon Yaari <arnony@infinidat.com>
 List-Id: dm-devel.ids
 
-On Wed, Dec 12, 2018 at 12:50:47PM -0500, Mike Snitzer wrote:
-> On Wed, Dec 12 2018 at 11:12am -0500,
-> Christoph Hellwig <hch@infradead.org> wrote:
-> 
-> > Does it really make sense to enhance dm-snapshot?  I thought all serious
-> > users of snapshots had moved on to dm-thinp?
-> 
-> There are cases where dm-snapshot is still useful for people.  But those
-> are very niche users.  I'm not opposed to others proposing enhancements
-> for dm-snapshot in general but it is definitely not a priority (Google's
-> dm-bow is an example of a case where dm-snapshot may get extended to
-> fulfill google's needs).
-
-I would expect that dm-snapshot will be used quite a lot for
-short-lived snapshots (that only live during a database backup or an
-fsck run).  I would hardly call that a "niche use case".  One other
-major advantage that dm-snapshot has is that you can take a snapshot
-for any LVM volume.  For dm-thinp you have migrate your storage to a
-thinp pool, and that adds a fair amount of friction to users migrating
-to dm-thinp.
-
-						- Ted
+WG9zZSwKCk9uIFdlZCwgMjAxOC0xMi0xMiBhdCAxNzo1OCArMDEwMCwgWG9zZSBWYXpxdWV6IFBl
+cmV6IHdyb3RlOgo+IE9uIDExLzcvMTggMTE6NDEgQU0sIE1hcnRpbiBXaWxjayB3cm90ZToKPiAK
+PiA+IEkgYXBvbG9naXplIGZvciBjb21pbmcgYmFjayB0byB0aGlzIGFmdGVyIG1vcmUgdGhhbiBh
+IHllYXIuCj4gPiBJJ3ZlIGJlZW4gd29uZGVyaW5nIGFib3V0IHlvdXIgZGV2X2xvc3MgcmVjb21t
+ZW5kYXRpb24uCj4gPiAKPiA+IFdoYXQgaXMgdGhlIHJhdGlvbmFsZSBmb3Igc2V0dGluZyBkZXZf
+bG9zcyBhbmQgZmFzdF9pb19mYWlsIHRvIHRoZQo+ID4gc2FtZQo+ID4gdmFsdWUsIHdoaWNoIGlz
+IHN0cmFpZ2h0IGFnYWluc3QgdGhlIGdlbmVyYWwgcmVjb21tZW5kYXRpb24/IEFuZAo+ID4gd2hh
+dAo+ID4gaXMgdGhlIHJlYXNvbiBmb3IgdGhlIGFnZ3Jlc3NpdmVseSBsb3cgZGV2X2xvc3MgdmFs
+dWUgYW55d2F5Pwo+ID4gRGV2aWNlCj4gPiBsb3NzIGFuZCByZS1kaXNjb3ZlcnkgaXMgbXVjaCBt
+b3JlIGNvbXBsZXggdG8gaGFuZGxlIGZvciBib3RoIHRoZQo+ID4ga2VybmVsIGFuZCBtdWx0aXBh
+dGhkIHRoYW4gZmFpbHVyZS9yZWluc3RhbnRpYXRpb24uIFlvdSBhcmUgdGhlCj4gPiBvbmx5Cj4g
+PiB2ZW5kb3Igd2hvIHJlY29tbWVuZHMgc2V0dGluZyBkZXZfbG9zcyBsZXNzIHRoYW4gdGhlIGRl
+ZmF1bHQgb2YKPiA+IDYwMHMuIAo+ID4gCj4gPiBDb3VsZCB5b3Ugc2hhcmUgeW91ciByZWFzb25p
+bmcgcGxlYXNlPwo+IElNTywgYW55IGNoYW5nZSBvZiBhIHN0YW5kYXJkIHZhbHVlIHNob3VsZCBi
+ZSBkb2N1bWVudGVkLgoKSSBhZ3JlZS4gSGF2ZSB5b3UgbG9va2VkIGF0IHRoZSBwYXN0IGNvbnZl
+cnNhdGlvbiAoQXVndXN0IDIwMTcpPyBZb3UKY2hhbGxlbmdlZCBBcm5vbiBmb3IgZXhwbGFuYXRp
+b25zLCBidXQgaGUgY2FtZSB1cCB3aXRoIGp1c3QgYSBnZW5lcmFsCnN0YXRlbWVudCAoIlRpbWVv
+dXQgYW5kIHBhdGggcmVjb3ZlcnkgdmFsdWVzIGFyZSBhZGp1c3RlZCBmb3IgZXJyb3ItCmZyZWUg
+aG90IHVwZ3JhZGUgc2NlbmFyaW9zLiIpLCBubyBkZXRhaWxlZCBleHBsYW5hdGlvbnMuIEluIHBh
+cnRpY3VsYXIsCm5vIHJhdGlvbmFsZSB3YXMgZ2l2ZW4gZm9yIHRoZSB1bnVzdWFsbHkgYWdncmVz
+c2l2ZSBkZXZfbG9zcyBzZXR0aW5nLgpUaGF0J3MgdGhlIHBvaW50IG9mIG15IGlucXVpcnkuCgpN
+YXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAo
+MCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIs
+IEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgoK
+LS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cu
+cmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
