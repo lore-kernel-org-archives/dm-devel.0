@@ -1,14 +1,15 @@
 From: Martin Wilck <mwilck@suse.de>
 Subject: Re: [PATCH] libmultipath: Increase SERIAL_SIZE to 128
  bytes
-Date: Fri, 14 Dec 2018 10:59:23 +0100
-Message-ID: <de82564c105601825c13db1ec309f28d3f50e3b6.camel@suse.de>
+Date: Fri, 14 Dec 2018 11:10:47 +0100
+Message-ID: <863e67fa8f79ec914d95b113fde56a0e6361de89.camel@suse.de>
 References: <cad99184-26da-c914-84cc-1a49e5e8300a@linux.vnet.ibm.com>
+	<de82564c105601825c13db1ec309f28d3f50e3b6.camel@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <cad99184-26da-c914-84cc-1a49e5e8300a@linux.vnet.ibm.com>
+In-Reply-To: <de82564c105601825c13db1ec309f28d3f50e3b6.camel@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,60 +19,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kyle Mahlkuch <kmahlkuc@linux.vnet.ibm.com>, dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: Kyle Mahlkuch <kmahlkuc@linux.vnet.ibm.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
 Cc: kylemahl@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-On Thu, 2018-12-13 at 10:10 -0600, Kyle Mahlkuch wrote:
-
-> Certain IBM FlashSystem LUNs can return up to 85 bytes of serial
-> number in the Unit Serial Number VPD page, which is larger than
-> the current SERIAL_SIZE definition of 65 bytes. Since the max
-> size of this field does not appear to be defined in SPC, increasing
-> to 128 bytes should hopefully prevent us from hitting this
-> in future.
+On Fri, 2018-12-14 at 10:59 +0100, Martin Wilck wrote:
 > 
-> This is an example of a serial number from a FlashSystem:
-> Unit serial number VPD page:
-> Unit serial number:
-> 3321360050764008101AB300000000000012204214503IBMfcp
-
-Your example still doesn't fly, this serial number fits nicely in 65
-bytes :-)  Anyway, you've shown other examples off-list where the
-serial number was actually longer. So:
-
-> Before this patch multipath returns the error:
-> Jul 17 11:24:58 | vpd pg80 overflow, 85/65 bytes required
+> > Signed-off-by: Kyle Mahlkuch <kmahlkuc@linux.vnet.ibm.com>
 > 
-> After the patch is applied the error no longer occur.
+> Reviewed-by: Martin Wilck <mwilck@suse.com>
 > 
-> Signed-off-by: Kyle Mahlkuch <kmahlkuc@linux.vnet.ibm.com>
+> Please resend, and add Christophe to the recepients.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+And when you do that, please send it in a format that applies to 
+the current upstream code base 
+(http://git.opensvc.com/multipath-tools/.git ) with "git am". 
+IOW: plain text.
 
-Please resend, and add Christophe to the recepients.
+Yes, it's a trivial change that Christophe could make by hand, but we
+want your authorship and your changelog message.
 
-> ---
->  libmultipath/structs.h | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-> index bfa660a..00a1b1a 100644
-> --- a/libmultipath/structs.h
-> +++ b/libmultipath/structs.h
-> @@ -8,7 +8,7 @@
->  #include "byteorder.h"
-> 
->  #define WWID_SIZE		128
-> -#define SERIAL_SIZE		65
-> +#define SERIAL_SIZE		128
->  #define NODE_NAME_SIZE		224
->  #define PATH_STR_SIZE		16
->  #define PARAMS_SIZE		4096
-> -- 
-> 1.8.3.1
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Martin
