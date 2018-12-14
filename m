@@ -1,13 +1,14 @@
-From: pr-tracker-bot@kernel.org
-Subject: Re: [git pull] device mapper fixes for 4.20
-Date: Thu, 13 Dec 2018 21:15:03 +0000
-Message-ID: <20181213211503.3163.75438.pr-tracker-bot@pdx-korg-gitolite-1.ci.codeaurora.org>
-References: <20181212175648.GA25049@redhat.com>
+From: Martin Wilck <mwilck@suse.de>
+Subject: Re: [PATCH] libmultipath: Increase SERIAL_SIZE to 128
+ bytes
+Date: Fri, 14 Dec 2018 10:59:23 +0100
+Message-ID: <de82564c105601825c13db1ec309f28d3f50e3b6.camel@suse.de>
+References: <cad99184-26da-c914-84cc-1a49e5e8300a@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181212175648.GA25049@redhat.com>
+In-Reply-To: <cad99184-26da-c914-84cc-1a49e5e8300a@linux.vnet.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,19 +18,60 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, Damien Le Moal <damien.lemoal@wdc.com>
+To: Kyle Mahlkuch <kmahlkuc@linux.vnet.ibm.com>, dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: kylemahl@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-The pull request you sent on Wed, 12 Dec 2018 12:56:48 -0500:
+On Thu, 2018-12-13 at 10:10 -0600, Kyle Mahlkuch wrote:
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.20/dm-fixes
+> Certain IBM FlashSystem LUNs can return up to 85 bytes of serial
+> number in the Unit Serial Number VPD page, which is larger than
+> the current SERIAL_SIZE definition of 65 bytes. Since the max
+> size of this field does not appear to be defined in SPC, increasing
+> to 128 bytes should hopefully prevent us from hitting this
+> in future.
+> 
+> This is an example of a serial number from a FlashSystem:
+> Unit serial number VPD page:
+> Unit serial number:
+> 3321360050764008101AB300000000000012204214503IBMfcp
 
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/67f2a93099cca369c056e591c82f1d1bc726c945
+Your example still doesn't fly, this serial number fits nicely in 65
+bytes :-)  Anyway, you've shown other examples off-list where the
+serial number was actually longer. So:
 
-Thank you!
+> Before this patch multipath returns the error:
+> Jul 17 11:24:58 | vpd pg80 overflow, 85/65 bytes required
+> 
+> After the patch is applied the error no longer occur.
+> 
+> Signed-off-by: Kyle Mahlkuch <kmahlkuc@linux.vnet.ibm.com>
 
--- 
-Deet-doot-dot, I am a bot.
-https://korg.wiki.kernel.org/userdoc/prtracker
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+
+Please resend, and add Christophe to the recepients.
+
+> ---
+>  libmultipath/structs.h | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+> index bfa660a..00a1b1a 100644
+> --- a/libmultipath/structs.h
+> +++ b/libmultipath/structs.h
+> @@ -8,7 +8,7 @@
+>  #include "byteorder.h"
+> 
+>  #define WWID_SIZE		128
+> -#define SERIAL_SIZE		65
+> +#define SERIAL_SIZE		128
+>  #define NODE_NAME_SIZE		224
+>  #define PATH_STR_SIZE		16
+>  #define PARAMS_SIZE		4096
+> -- 
+> 1.8.3.1
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
