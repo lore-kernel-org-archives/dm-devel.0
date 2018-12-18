@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 08/19] libmultipath: add ARRAY_SIZE helper
-Date: Wed, 19 Dec 2018 00:19:20 +0100
-Message-ID: <20181218231931.10762-9-mwilck@suse.com>
+Subject: [PATCH 09/19] libmultipath: make close_fd() a common
+	helper
+Date: Wed, 19 Dec 2018 00:19:21 +0100
+Message-ID: <20181218231931.10762-10-mwilck@suse.com>
 References: <20181218231931.10762-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,37 +22,72 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+move close_fd() into util.c.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/util.h | 1 +
- tests/hwtable.c     | 2 +-
- 2 files changed, 2 insertions(+), 1 deletion(-)
+ libmultipath/sysfs.c | 5 -----
+ libmultipath/util.c  | 5 +++++
+ libmultipath/util.h  | 2 ++
+ multipath/main.c     | 4 ----
+ 4 files changed, 7 insertions(+), 9 deletions(-)
 
+diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+index 558c8d6a..65904d7b 100644
+--- a/libmultipath/sysfs.c
++++ b/libmultipath/sysfs.c
+@@ -295,11 +295,6 @@ static int select_dm_devs(const struct dirent *di)
+ 	return fnmatch("dm-*", di->d_name, FNM_FILE_NAME) == 0;
+ }
+ 
+-static void close_fd(void *arg)
+-{
+-	close((long)arg);
+-}
+-
+ bool sysfs_is_multipathed(const struct path *pp)
+ {
+ 	char pathbuf[PATH_MAX];
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index 28eb7577..944c632e 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -506,3 +506,8 @@ void free_scandir_result(struct scandir_result *res)
+ 		FREE(res->di[i]);
+ 	FREE(res->di);
+ }
++
++void close_fd(void *arg)
++{
++	close((long)arg);
++}
 diff --git a/libmultipath/util.h b/libmultipath/util.h
-index 1f13c913..dea3fa04 100644
+index dea3fa04..1e0d832c 100644
 --- a/libmultipath/util.h
 +++ b/libmultipath/util.h
-@@ -25,6 +25,7 @@ int safe_write(int fd, const void *buf, size_t count);
- void set_max_fds(int max_fds);
+@@ -35,6 +35,8 @@ void set_max_fds(int max_fds);
+ #define pthread_cleanup_push_cast(f, arg)		\
+ 	pthread_cleanup_push(((void (*)(void *))&f), (arg))
  
- #define KERNEL_VERSION(maj, min, ptc) ((((maj) * 256) + (min)) * 256 + (ptc))
-+#define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
++void close_fd(void *arg);
++
+ struct scandir_result {
+ 	struct dirent **di;
+ 	int n;
+diff --git a/multipath/main.c b/multipath/main.c
+index f40c179b..a25e1b4f 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -388,10 +388,6 @@ enum {
+ };
  
- #define safe_sprintf(var, format, args...)	\
- 	snprintf(var, sizeof(var), format, ##args) >= sizeof(var)
-diff --git a/tests/hwtable.c b/tests/hwtable.c
-index 789481ff..ad863b08 100644
---- a/tests/hwtable.c
-+++ b/tests/hwtable.c
-@@ -24,8 +24,8 @@
- #include "pgpolicies.h"
- #include "test-lib.h"
- #include "print.h"
-+#include "util.h"
+ static const char shm_find_mp_dir[] = MULTIPATH_SHM_BASE "find_multipaths";
+-static void close_fd(void *arg)
+-{
+-	close((long)arg);
+-}
  
--#define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
- #define N_CONF_FILES 2
- 
- static const char tmplate[] = "/tmp/hwtable-XXXXXX";
+ /**
+  * find_multipaths_check_timeout(wwid, tmo)
 -- 
 2.19.2
