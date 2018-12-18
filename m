@@ -1,15 +1,11 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [PATCH] libmultipath: Increase SERIAL_SIZE to 128
- bytes
-Date: Fri, 14 Dec 2018 11:10:47 +0100
-Message-ID: <863e67fa8f79ec914d95b113fde56a0e6361de89.camel@suse.de>
-References: <cad99184-26da-c914-84cc-1a49e5e8300a@linux.vnet.ibm.com>
-	<de82564c105601825c13db1ec309f28d3f50e3b6.camel@suse.de>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: [PATCH] dm raid: avoid busy error on scrubbing message
+Date: Tue, 18 Dec 2018 17:35:41 +0100
+Message-ID: <94d065d1aa09b9151280a0fd34502ac335e1ac3e.1545150818.git.heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <de82564c105601825c13db1ec309f28d3f50e3b6.camel@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,24 +15,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kyle Mahlkuch <kmahlkuc@linux.vnet.ibm.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
-Cc: kylemahl@linux.vnet.ibm.com
+To: heinzm@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, 2018-12-14 at 10:59 +0100, Martin Wilck wrote:
-> 
-> > Signed-off-by: Kyle Mahlkuch <kmahlkuc@linux.vnet.ibm.com>
-> 
-> Reviewed-by: Martin Wilck <mwilck@suse.com>
-> 
-> Please resend, and add Christophe to the recepients.
+Sending a check/repair message infrequently leads to -EBUSY
+as oposed to identifying an active resync properly.
+Cause is raid_message() testing recovery bits in a racy way.
 
-And when you do that, please send it in a format that applies to 
-the current upstream code base 
-(http://git.opensvc.com/multipath-tools/.git ) with "git am". 
-IOW: plain text.
+Fix by calling decipher_sync_action() from raid_message()
+to identify the idle state of the RAID device properly.
 
-Yes, it's a trivial change that Christophe could make by hand, but we
-want your authorship and your changelog message.
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+---
+ drivers/md/dm-raid.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-Martin
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index e1dd1622a290..adcfe8ae10aa 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3690,8 +3690,7 @@ static int raid_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 			set_bit(MD_RECOVERY_INTR, &mddev->recovery);
+ 			md_reap_sync_thread(mddev);
+ 		}
+-	} else if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) ||
+-		   test_bit(MD_RECOVERY_NEEDED, &mddev->recovery))
++	} else if (decipher_sync_action(mddev, mddev->recovery) != st_idle)
+ 		return -EBUSY;
+ 	else if (!strcasecmp(argv[0], "resync"))
+ 		; /* MD_RECOVERY_NEEDED set below */
+-- 
+2.19.2
