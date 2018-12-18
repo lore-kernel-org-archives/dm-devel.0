@@ -1,41 +1,31 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm raid: avoid busy error on scrubbing message
-Date: Tue, 18 Dec 2018 14:50:20 -0500
-Message-ID: <20181218195020.GC24676@redhat.com>
-References: <94d065d1aa09b9151280a0fd34502ac335e1ac3e.1545150818.git.heinzm@redhat.com>
+From: Jaegeuk Kim <jaegeuk@kernel.org>
+Subject: Re: dm: give req_size precisely given by user
+Date: Tue, 18 Dec 2018 13:40:18 -0800
+Message-ID: <20181218214018.GA31062@jaegeuk-macbookpro.roam.corp.google.com>
+References: <20181218172537.12300-1-jaegeuk@kernel.org>
+ <01a60138-63ab-6a9d-c0ba-b8fea551b14e@kernel.dk>
+ <20181218194708.GA24676@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <stable-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <94d065d1aa09b9151280a0fd34502ac335e1ac3e.1545150818.git.heinzm@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Heinz Mauelshagen <heinzm@redhat.com>
-Cc: dm-devel@redhat.com
+In-Reply-To: <20181218194708.GA24676@redhat.com>
+Sender: stable-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Dec 18 2018 at 11:35am -0500,
-Heinz Mauelshagen <heinzm@redhat.com> wrote:
-
-> Sending a check/repair message infrequently leads to -EBUSY
-> as oposed to identifying an active resync properly.
-> Cause is raid_message() testing recovery bits in a racy way.
+On 12/18, Mike Snitzer wrote:
+> On Tue, Dec 18 2018 at 12:45pm -0500,
+> Jens Axboe <axboe@kernel.dk> wrote:
 > 
-> Fix by calling decipher_sync_action() from raid_message()
-> to identify the idle state of the RAID device properly.
+> > On 12/18/18 10:25 AM, Jaegeuk Kim wrote:
+> > > This patch makes dm be aware of io_pages to assign sane req_size for reads.
+> > 
+> > Reviewed-by: Jens Axboe <axboe@kernel.dk>
+> > 
 > 
-> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+> I've applied this, see:
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.21&id=c6d6e9b0f6b4201c77f2cea3964dd122697e3543
 
-Applied:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.21&id=74694bcbdf7e28a5ad548cdda9ac56d30be00d13
-
-Thanks,
-Mike
+Got it. Thank you so much.
