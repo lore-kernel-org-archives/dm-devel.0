@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 16/19] libmultipath: detect_prio: try ANA for NVMe
-Date: Wed, 19 Dec 2018 00:19:28 +0100
-Message-ID: <20181218231931.10762-17-mwilck@suse.com>
+Subject: [PATCH 17/19] libmultipath/foreign/nvme: use failover
+	topology
+Date: Wed, 19 Dec 2018 00:19:29 +0100
+Message-ID: <20181218231931.10762-18-mwilck@suse.com>
 References: <20181218231931.10762-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,137 +19,242 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Martin Wilck <mwilck@suse.com>, lijie <lijie34@huawei.com>, dm-devel@redhat.com
+Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Check NVMe devices support ANA, and if yes, use ANA
-for priority checks. The patch moves the ANA detection
-functionality from the ANA prioritizer into generic code,
-and uses it.
+The native multipath driver does not use a multibus policy
+as the current topology output of the NVMe foreign code
+indicates. Rather, it uses failover policy, queueing all
+IO to the current path until a failure occurs.
 
-Cc: lijie <lijie34@huawei.com>
+Change the data structures of the nvme foreign library
+accordingly.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/Makefile           |  1 +
- libmultipath/nvme-lib.c         | 13 +++++++++++++
- libmultipath/nvme-lib.h         |  6 ++++++
- libmultipath/prioritizers/ana.c |  6 ++----
- libmultipath/propsel.c          | 25 +++++++++++++++++++------
- 5 files changed, 41 insertions(+), 10 deletions(-)
+ libmultipath/foreign/nvme.c | 92 +++++++++++++++++++------------------
+ 1 file changed, 48 insertions(+), 44 deletions(-)
 
-diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-index 7d27ea7f..78cca5a8 100644
---- a/libmultipath/Makefile
-+++ b/libmultipath/Makefile
-@@ -47,6 +47,7 @@ OBJS = memory.o parser.o vector.o devmapper.o callout.o \
+diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
+index c753a747..11849889 100644
+--- a/libmultipath/foreign/nvme.c
++++ b/libmultipath/foreign/nvme.c
+@@ -40,17 +40,22 @@ static const char N_A[] = "n/a";
+ const char *THIS;
  
- ifneq ($(call check_file,/usr/include/linux/nvme_ioctl.h),0)
- 	OBJS += nvme-lib.o
-+	CFLAGS += -Invme
- endif
+ struct nvme_map;
++struct nvme_pathgroup {
++	struct gen_pathgroup gen;
++	struct _vector pathvec;
++};
++
+ struct nvme_path {
+ 	struct gen_path gen;
+ 	struct udev_device *udev;
+ 	struct udev_device *ctl;
+ 	struct nvme_map *map;
+ 	bool seen;
+-};
+-
+-struct nvme_pathgroup {
+-	struct gen_pathgroup gen;
+-	vector pathvec;
++	/*
++	 * The kernel works in failover mode.
++	 * Each path has a separate path group.
++	 */
++	struct nvme_pathgroup pg;
+ };
  
- all: $(LIBS)
-diff --git a/libmultipath/nvme-lib.c b/libmultipath/nvme-lib.c
-index 9c32f369..f30e7698 100644
---- a/libmultipath/nvme-lib.c
-+++ b/libmultipath/nvme-lib.c
-@@ -34,3 +34,16 @@ int libmp_nvme_ana_log(int fd, void *ana_log, size_t ana_log_len, int rgo)
+ struct nvme_map {
+@@ -58,11 +63,7 @@ struct nvme_map {
+ 	struct udev_device *udev;
+ 	struct udev_device *subsys;
+ 	dev_t devt;
+-	/* Just one static pathgroup for NVMe for now */
+-	struct nvme_pathgroup pg;
+-	struct gen_pathgroup *gpg;
+ 	struct _vector pgvec;
+-	vector pathvec;
+ 	int nr_live;
+ };
+ 
+@@ -76,29 +77,33 @@ struct nvme_map {
+ #define const_gen_path_to_nvme(g) ((const struct nvme_path*)(g))
+ #define gen_path_to_nvme(g) ((struct nvme_path*)(g))
+ #define nvme_path_to_gen(n) &((n)->gen)
++#define nvme_pg_to_path(x) (VECTOR_SLOT(&((x)->pathvec), 0))
++#define nvme_path_to_pg(x) &((x)->pg)
+ 
+ static void cleanup_nvme_path(struct nvme_path *path)
  {
- 	return nvme_ana_log(fd, ana_log, ana_log_len, rgo);
+ 	condlog(5, "%s: %p %p", __func__, path, path->udev);
+ 	if (path->udev)
+ 		udev_device_unref(path->udev);
++	vector_reset(&path->pg.pathvec);
++
+ 	/* ctl is implicitly referenced by udev, no need to unref */
+ 	free(path);
  }
-+
-+int nvme_id_ctrl_ana(int fd, struct nvme_id_ctrl *ctrl)
-+{
-+	int rc;
-+	struct nvme_id_ctrl c;
-+
-+	rc = nvme_identify_ctrl(fd, &c);
-+	if (rc < 0)
-+		return rc;
-+	if (ctrl)
-+		*ctrl = c;
-+	return c.cmic & (1 << 3) ? 1 : 0;
-+}
-diff --git a/libmultipath/nvme-lib.h b/libmultipath/nvme-lib.h
-index 445c4f46..448dd993 100644
---- a/libmultipath/nvme-lib.h
-+++ b/libmultipath/nvme-lib.h
-@@ -9,6 +9,12 @@ int libmp_nvme_identify_ctrl(int fd, struct nvme_id_ctrl *ctrl);
- int libmp_nvme_identify_ns(int fd, __u32 nsid, bool present,
- 			   struct nvme_id_ns *ns);
- int libmp_nvme_ana_log(int fd, void *ana_log, size_t ana_log_len, int rgo);
-+/*
-+ * Identify controller, and return true if ANA is supported
-+ * ctrl will be filled in if controller is identified, even w/o ANA
-+ * ctrl may be NULL
-+ */
-+int nvme_id_ctrl_ana(int fd, struct nvme_id_ctrl *ctrl);
  
- #ifndef _NVME_LIB_C
- /*
-diff --git a/libmultipath/prioritizers/ana.c b/libmultipath/prioritizers/ana.c
-index 88edb224..b22e7b4a 100644
---- a/libmultipath/prioritizers/ana.c
-+++ b/libmultipath/prioritizers/ana.c
-@@ -125,13 +125,11 @@ int get_ana_info(struct path * pp, unsigned int timeout)
- 	size_t ana_log_len;
- 	bool is_anagrpid_const;
+ static void cleanup_nvme_map(struct nvme_map *map)
+ {
+-	if (map->pathvec) {
+-		struct nvme_path *path;
+-		int i;
++	struct nvme_pathgroup *pg;
++	struct nvme_path *path;
++	int i;
  
--	rc = nvme_identify_ctrl(pp->fd, &ctrl);
-+	rc = nvme_id_ctrl_ana(pp->fd, &ctrl);
- 	if (rc < 0) {
- 		log_nvme_errcode(rc, pp->dev, "nvme_identify_ctrl");
- 		return -ANA_ERR_GETCTRL_FAILED;
+-		vector_foreach_slot_backwards(map->pathvec, path, i) {
+-			condlog(5, "%s: %d %p", __func__, i, path);
+-			cleanup_nvme_path(path);
+-			vector_del_slot(map->pathvec, i);
+-		}
++	vector_foreach_slot_backwards(&map->pgvec, pg, i) {
++		path = nvme_pg_to_path(pg);
++		condlog(5, "%s: %d %p", __func__, i, path);
++		cleanup_nvme_path(path);
++		vector_del_slot(&map->pgvec, i);
+ 	}
+-	vector_free(map->pathvec);
++	vector_reset(&map->pgvec);
+ 	if (map->udev)
+ 		udev_device_unref(map->udev);
+ 	/* subsys is implicitly referenced by udev, no need to unref */
+@@ -190,7 +195,7 @@ nvme_pg_get_paths(const struct gen_pathgroup *gpg) {
+ 	const struct nvme_pathgroup *gp = const_gen_pg_to_nvme(gpg);
+ 
+ 	/* This is all used under the lock, no need to copy */
+-	return gp->pathvec;
++	return &gp->pathvec;
+ }
+ 
+ static void
+@@ -432,7 +437,7 @@ static struct nvme_map *_find_nvme_map_by_devt(const struct context *ctx,
+ static struct nvme_path *
+ _find_path_by_syspath(struct nvme_map *map, const char *syspath)
+ {
+-	struct nvme_path *path;
++	struct nvme_pathgroup *pg;
+ 	char real[PATH_MAX];
+ 	const char *ppath;
+ 	int i;
+@@ -443,7 +448,9 @@ _find_path_by_syspath(struct nvme_map *map, const char *syspath)
+ 		ppath = syspath;
+ 	}
+ 
+-	vector_foreach_slot(map->pathvec, path, i) {
++	vector_foreach_slot(&map->pgvec, pg, i) {
++		struct nvme_path *path = nvme_pg_to_path(pg);
++
+ 		if (!strcmp(ppath,
+ 			    udev_device_get_syspath(path->udev)))
+ 			return path;
+@@ -537,14 +544,17 @@ static void _find_controllers(struct context *ctx, struct nvme_map *map)
+ 	struct dirent **di = NULL;
+ 	struct scandir_result sr;
+ 	struct udev_device *subsys;
++	struct nvme_pathgroup *pg;
+ 	struct nvme_path *path;
+ 	int r, i, n;
+ 
+ 	if (map == NULL || map->udev == NULL)
+ 		return;
+ 
+-	vector_foreach_slot(map->pathvec, path, i)
++	vector_foreach_slot(&map->pgvec, pg, i) {
++		path = nvme_pg_to_path(pg);
+ 		path->seen = false;
++	}
+ 
+ 	subsys = udev_device_get_parent_with_subsystem_devtype(map->udev,
+ 							       "nvme-subsystem",
+@@ -606,7 +616,8 @@ static void _find_controllers(struct context *ctx, struct nvme_map *map)
+ 		if (udev == NULL)
+ 			continue;
+ 
+-		path = _find_path_by_syspath(map, udev_device_get_syspath(udev));
++		path = _find_path_by_syspath(map,
++					     udev_device_get_syspath(udev));
+ 		if (path != NULL) {
+ 			path->seen = true;
+ 			condlog(4, "%s: %s already known",
+@@ -630,24 +641,30 @@ static void _find_controllers(struct context *ctx, struct nvme_map *map)
+ 			cleanup_nvme_path(path);
+ 			continue;
+ 		}
+-
+-		if (vector_alloc_slot(map->pathvec) == NULL) {
++		path->pg.gen.ops = &nvme_pg_ops;
++		if (vector_alloc_slot(&path->pg.pathvec) == NULL) {
+ 			cleanup_nvme_path(path);
+ 			continue;
+ 		}
++		vector_set_slot(&path->pg.pathvec, path);
++		if (vector_alloc_slot(&map->pgvec) == NULL) {
++			cleanup_nvme_path(path);
++			continue;
++		}
++		vector_set_slot(&map->pgvec, &path->pg);
+ 		condlog(3, "%s: %s: new path %s added to %s",
+ 			__func__, THIS, udev_device_get_sysname(udev),
+ 			udev_device_get_sysname(map->udev));
+-		vector_set_slot(map->pathvec, path);
+ 	}
+ 	pthread_cleanup_pop(1);
+ 
+ 	map->nr_live = 0;
+-	vector_foreach_slot_backwards(map->pathvec, path, i) {
++	vector_foreach_slot_backwards(&map->pgvec, pg, i) {
++		path = nvme_pg_to_path(pg);
+ 		if (!path->seen) {
+ 			condlog(1, "path %d not found in %s any more",
+ 				i, udev_device_get_sysname(map->udev));
+-			vector_del_slot(map->pathvec, i);
++			vector_del_slot(&map->pgvec, i);
+ 			cleanup_nvme_path(path);
+ 		} else {
+ 			static const char live_state[] = "live";
+@@ -661,7 +678,7 @@ static void _find_controllers(struct context *ctx, struct nvme_map *map)
+ 	}
+ 	condlog(3, "%s: %s: map %s has %d/%d live paths", __func__, THIS,
+ 		udev_device_get_sysname(map->udev), map->nr_live,
+-		VECTOR_SIZE(map->pathvec));
++		VECTOR_SIZE(&map->pgvec));
+ }
+ 
+ static int _add_map(struct context *ctx, struct udev_device *ud,
+@@ -686,19 +703,6 @@ static int _add_map(struct context *ctx, struct udev_device *ud,
+ 	map->subsys = subsys;
+ 	map->gen.ops = &nvme_map_ops;
+ 
+-	map->pathvec = vector_alloc();
+-	if (map->pathvec == NULL) {
+-		cleanup_nvme_map(map);
+-		return FOREIGN_ERR;
 -	}
 -
--	if(!(ctrl.cmic & (1 << 3)))
-+	} else if (rc == 0)
- 		return -ANA_ERR_NOT_SUPPORTED;
- 
- 	nsid = nvme_get_nsid(pp->fd);
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index f5d87786..98068f34 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -5,6 +5,7 @@
-  */
- #include <stdio.h>
- 
-+#include "nvme-lib.h"
- #include "checkers.h"
- #include "memory.h"
- #include "vector.h"
-@@ -550,13 +551,25 @@ detect_prio(struct config *conf, struct path * pp)
- {
- 	struct prio *p = &pp->prio;
- 	char buff[512];
--	char *default_prio = PRIO_ALUA;
+-	map->pg.gen.ops = &nvme_pg_ops;
+-	map->pg.pathvec = map->pathvec;
+-	map->gpg = nvme_pg_to_gen(&map->pg);
 -
--	if (pp->tpgs <= 0)
--		return;
--	if (pp->tpgs == 2 || !check_rdac(pp)) {
--		if (sysfs_get_asymmetric_access_state(pp, buff, 512) >= 0)
-+	char *default_prio;
-+
-+	switch(pp->bus) {
-+	case SYSFS_BUS_NVME:
-+		if (nvme_id_ctrl_ana(pp->fd, NULL) == 0)
-+			return;
-+		default_prio = PRIO_ANA;
-+		break;
-+	case SYSFS_BUS_SCSI:
-+		if (pp->tpgs <= 0)
-+			return;
-+		if ((pp->tpgs == 2 || !check_rdac(pp)) &&
-+		    sysfs_get_asymmetric_access_state(pp, buff, 512) >= 0)
- 			default_prio = PRIO_SYSFS;
-+		else
-+			default_prio = PRIO_ALUA;
-+		break;
-+	default:
-+		return;
+-	map->pgvec.allocated = 1;
+-	map->pgvec.slot = (void**)&map->gpg;
+-
+ 	if (vector_alloc_slot(ctx->mpvec) == NULL) {
+ 		cleanup_nvme_map(map);
+ 		return FOREIGN_ERR;
+@@ -842,8 +846,8 @@ const struct _vector * get_paths(const struct context *ctx)
+ 	condlog(5, "%s called for \"%s\"", __func__, THIS);
+ 	vector_foreach_slot(ctx->mpvec, gm, i) {
+ 		const struct nvme_map *nm = const_gen_mp_to_nvme(gm);
+-		paths = vector_convert(paths, nm->pathvec,
+-				       struct gen_path, identity);
++		paths = vector_convert(paths, &nm->pgvec,
++				       struct nvme_pathgroup, nvme_pg_to_path);
  	}
- 	prio_get(conf->multipath_dir, p, default_prio, DEFAULT_PRIO_ARGS);
+ 	return paths;
  }
 -- 
 2.19.2
