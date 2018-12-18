@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 10/19] libmultipath: restore PG prio in
-	update_multipath_strings
-Date: Wed, 19 Dec 2018 00:19:22 +0100
-Message-ID: <20181218231931.10762-11-mwilck@suse.com>
+Subject: [PATCH 11/19] multipathd: don't check foreign paths
+	every tick
+Date: Wed, 19 Dec 2018 00:19:23 +0100
+Message-ID: <20181218231931.10762-12-mwilck@suse.com>
 References: <20181218231931.10762-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,49 +22,43 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-update_multipath_strings() destroys and recreates the
-pathgroup vector. This wipes information previously
-stored. Restore the path group priorities.
+We don't do this for native paths, so don't do it for
+foreigns, either. Instead use max_checkint for foreign
+paths, always.
 
-Fixes: efc7407bed65 "libmultipath: don't update path groups when
- printing"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs_vec.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ multipathd/main.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 03e2b978..db5d19da 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -18,6 +18,7 @@
- #include "configure.h"
- #include "libdevmapper.h"
- #include "io_err_stat.h"
-+#include "switchgroup.h"
+diff --git a/multipathd/main.c b/multipathd/main.c
+index aac32ac8..c981d437 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2271,6 +2271,7 @@ checkerloop (void *ap)
+ 	unsigned int i;
+ 	struct timespec last_time;
+ 	struct config *conf;
++	int foreign_tick = 0;
  
- /*
-  * creates or updates mpp->paths reading mpp->pg
-@@ -261,6 +262,9 @@ void sync_paths(struct multipath *mpp, vector pathvec)
- int
- update_multipath_strings(struct multipath *mpp, vector pathvec, int is_daemon)
- {
-+	struct pathgroup *pgp;
-+	int i;
+ 	pthread_cleanup_push(rcu_unregister, NULL);
+ 	rcu_register_thread();
+@@ -2368,7 +2369,15 @@ checkerloop (void *ap)
+ 						diff_time.tv_sec);
+ 			}
+ 		}
+-		check_foreign();
 +
- 	if (!mpp)
- 		return 1;
- 
-@@ -278,6 +282,10 @@ update_multipath_strings(struct multipath *mpp, vector pathvec, int is_daemon)
- 	if (update_multipath_status(mpp))
- 		return 1;
- 
-+	vector_foreach_slot(mpp->pg, pgp, i)
-+		if (pgp->paths)
-+			path_group_prio_update(pgp);
++		if (foreign_tick == 0) {
++			conf = get_multipath_config();
++			foreign_tick = conf->max_checkint;
++			put_multipath_config(conf);
++		}
++		if (--foreign_tick == 0)
++			check_foreign();
 +
- 	return 0;
- }
- 
+ 		post_config_state(DAEMON_IDLE);
+ 		conf = get_multipath_config();
+ 		strict_timing = conf->strict_timing;
 -- 
 2.19.2
