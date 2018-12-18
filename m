@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 09/19] libmultipath: make close_fd() a common
-	helper
-Date: Wed, 19 Dec 2018 00:19:21 +0100
-Message-ID: <20181218231931.10762-10-mwilck@suse.com>
+Subject: [PATCH 10/19] libmultipath: restore PG prio in
+	update_multipath_strings
+Date: Wed, 19 Dec 2018 00:19:22 +0100
+Message-ID: <20181218231931.10762-11-mwilck@suse.com>
 References: <20181218231931.10762-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,72 +22,49 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-move close_fd() into util.c.
+update_multipath_strings() destroys and recreates the
+pathgroup vector. This wipes information previously
+stored. Restore the path group priorities.
 
+Fixes: efc7407bed65 "libmultipath: don't update path groups when
+ printing"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/sysfs.c | 5 -----
- libmultipath/util.c  | 5 +++++
- libmultipath/util.h  | 2 ++
- multipath/main.c     | 4 ----
- 4 files changed, 7 insertions(+), 9 deletions(-)
+ libmultipath/structs_vec.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index 558c8d6a..65904d7b 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -295,11 +295,6 @@ static int select_dm_devs(const struct dirent *di)
- 	return fnmatch("dm-*", di->d_name, FNM_FILE_NAME) == 0;
- }
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 03e2b978..db5d19da 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -18,6 +18,7 @@
+ #include "configure.h"
+ #include "libdevmapper.h"
+ #include "io_err_stat.h"
++#include "switchgroup.h"
  
--static void close_fd(void *arg)
--{
--	close((long)arg);
--}
--
- bool sysfs_is_multipathed(const struct path *pp)
+ /*
+  * creates or updates mpp->paths reading mpp->pg
+@@ -261,6 +262,9 @@ void sync_paths(struct multipath *mpp, vector pathvec)
+ int
+ update_multipath_strings(struct multipath *mpp, vector pathvec, int is_daemon)
  {
- 	char pathbuf[PATH_MAX];
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index 28eb7577..944c632e 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -506,3 +506,8 @@ void free_scandir_result(struct scandir_result *res)
- 		FREE(res->di[i]);
- 	FREE(res->di);
++	struct pathgroup *pgp;
++	int i;
++
+ 	if (!mpp)
+ 		return 1;
+ 
+@@ -278,6 +282,10 @@ update_multipath_strings(struct multipath *mpp, vector pathvec, int is_daemon)
+ 	if (update_multipath_status(mpp))
+ 		return 1;
+ 
++	vector_foreach_slot(mpp->pg, pgp, i)
++		if (pgp->paths)
++			path_group_prio_update(pgp);
++
+ 	return 0;
  }
-+
-+void close_fd(void *arg)
-+{
-+	close((long)arg);
-+}
-diff --git a/libmultipath/util.h b/libmultipath/util.h
-index dea3fa04..1e0d832c 100644
---- a/libmultipath/util.h
-+++ b/libmultipath/util.h
-@@ -35,6 +35,8 @@ void set_max_fds(int max_fds);
- #define pthread_cleanup_push_cast(f, arg)		\
- 	pthread_cleanup_push(((void (*)(void *))&f), (arg))
  
-+void close_fd(void *arg);
-+
- struct scandir_result {
- 	struct dirent **di;
- 	int n;
-diff --git a/multipath/main.c b/multipath/main.c
-index f40c179b..a25e1b4f 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -388,10 +388,6 @@ enum {
- };
- 
- static const char shm_find_mp_dir[] = MULTIPATH_SHM_BASE "find_multipaths";
--static void close_fd(void *arg)
--{
--	close((long)arg);
--}
- 
- /**
-  * find_multipaths_check_timeout(wwid, tmo)
 -- 
 2.19.2
