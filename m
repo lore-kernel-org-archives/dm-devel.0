@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 07/19] setup_map: wait for pending path checkers
-	to finish
-Date: Wed, 19 Dec 2018 00:19:19 +0100
-Message-ID: <20181218231931.10762-8-mwilck@suse.com>
+Subject: [PATCH 06/19] multipath.conf.5: man page fixes for
+	san_path_err_xy
+Date: Wed, 19 Dec 2018 00:19:18 +0100
+Message-ID: <20181218231931.10762-7-mwilck@suse.com>
 References: <20181218231931.10762-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,123 +19,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
+Cc: Guan Junxiong <guanjunxiong@huawei.com>, dm-devel@redhat.com, M Muneendra Kumar <mmandala@brocade.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The timeout for synchronous checks is only 1ms when async path
-checking is used, which may easily be missed on busy systems.
-That's not a problem for the path checker, because it simply
-repeats the check one tick later. However, when maps are
-set up (e.g. when new paths are detected), it's desirable
-to get the number of active paths right. Therefore, wait a bit
-longer if path checkers are found pending in setup_map().
+This adds a paragraph about the san_path_err algorithm to the
+"shaky paths" section of the man page.
 
+Cc: Guan Junxiong <guanjunxiong@huawei.com>
+Cc: M Muneendra Kumar <mmandala@brocade.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 65 ++++++++++++++++++++++++++++++++++++++--
- 1 file changed, 63 insertions(+), 2 deletions(-)
+ multipath/multipath.conf.5 | 35 ++++++++++++++++++++++++++---------
+ 1 file changed, 26 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 5af4a189..39d2a956 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -44,6 +44,10 @@
- #include "sysfs.h"
- #include "io_err_stat.h"
- 
-+/* Time in ms to wait for pending checkers in setup_map() */
-+#define WAIT_CHECKERS_PENDING_MS 10
-+#define WAIT_ALL_CHECKERS_PENDING_MS 90
-+
- /* group paths in pg by host adapter
-  */
- int group_by_host_adapter(struct pathgroup *pgp, vector adapters)
-@@ -257,12 +261,43 @@ int rr_optimize_path_order(struct pathgroup *pgp)
- 	return 0;
- }
- 
-+static int wait_for_pending_paths(struct multipath *mpp,
-+				  struct config *conf,
-+				  int n_pending, int goal, int wait_ms)
-+{
-+	static const struct timespec millisec =
-+		{ .tv_sec = 0, .tv_nsec = 1000*1000 };
-+	int i, j;
-+	struct path *pp;
-+	struct pathgroup *pgp;
-+	struct timespec ts;
-+
-+	do {
-+		vector_foreach_slot(mpp->pg, pgp, i) {
-+			vector_foreach_slot(pgp->paths, pp, j) {
-+				if (pp->state != PATH_PENDING)
-+					continue;
-+				pp->state = get_state(pp, conf,
-+						      0, PATH_PENDING);
-+				if (pp->state != PATH_PENDING &&
-+				    --n_pending <= goal)
-+					return 0;
-+			}
-+		}
-+		ts = millisec;
-+		while (nanosleep(&ts, &ts) != 0 && errno == EINTR)
-+			/* nothing */;
-+	} while (--wait_ms > 0);
-+
-+	return n_pending;
-+}
-+
- int setup_map(struct multipath *mpp, char *params, int params_size,
- 	      struct vectors *vecs)
- {
- 	struct pathgroup * pgp;
- 	struct config *conf;
--	int i;
-+	int i, n_paths;
- 
- 	/*
- 	 * don't bother if devmap size is unknown
-@@ -339,7 +374,9 @@ int setup_map(struct multipath *mpp, char *params, int params_size,
- 		condlog(0, "%s: unexpected behavior may occur!",
- 			mpp->alias);
- 	}
--	/*
-+
-+	n_paths = VECTOR_SIZE(mpp->paths);
-+        /*
- 	 * assign paths to path groups -- start with no groups and all paths
- 	 * in mpp->paths
- 	 */
-@@ -353,6 +390,30 @@ int setup_map(struct multipath *mpp, char *params, int params_size,
- 	if (mpp->pgpolicyfn && mpp->pgpolicyfn(mpp))
- 		return 1;
- 
-+	/*
-+	 * If async state detection is used, see if pending state checks
-+	 * have finished, to get nr_active right. We can't wait until the
-+	 * checkers time out, as that may take 30s or more, and we are
-+	 * holding the vecs lock.
-+	 */
-+	if (conf->force_sync == 0 && n_paths > 0) {
-+		int n_pending = pathcount(mpp, PATH_PENDING);
-+
-+		if (n_pending > 0)
-+			n_pending = wait_for_pending_paths(
-+				mpp, conf, n_pending, 0,
-+				WAIT_CHECKERS_PENDING_MS);
-+		/* ALL paths pending - wait some more, but be satisfied
-+		   with only some paths finished */
-+		if (n_pending == n_paths)
-+			n_pending = wait_for_pending_paths(
-+				mpp, conf, n_pending,
-+				n_paths >= 4 ? 2 : 1,
-+				WAIT_ALL_CHECKERS_PENDING_MS);
-+		if (n_pending > 0)
-+			condlog(2, "%s: setting up map with %d/%d path checkers pending",
-+				mpp->alias, n_pending, n_paths);
-+	}
- 	mpp->nr_active = pathcount(mpp, PATH_UP) + pathcount(mpp, PATH_GHOST);
- 
- 	/*
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 35e6d37c..c7f59147 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -894,10 +894,10 @@ The default is: \fB/etc/multipath/conf.d/\fR
+ .B san_path_err_threshold
+ If set to a value greater than 0, multipathd will watch paths and check how many
+ times a path has been failed due to errors.If the number of failures on a particular
+-path is greater then the san_path_err_threshold then the path will not  reinstante
+-till san_path_err_recovery_time.These path failures should occur within a
++path is greater then the san_path_err_threshold, then the path will not reinstate
++till san_path_err_recovery_time. These path failures should occur within a
+ san_path_err_forget_rate checks, if not we will consider the path is good enough
+-to reinstantate.
++to reinstantate. See "Shaky paths detection" below.
+ .RS
+ .TP
+ The default is: \fBno\fR
+@@ -909,7 +909,7 @@ The default is: \fBno\fR
+ If set to a value greater than 0, multipathd will check whether the path failures
+ has exceeded  the san_path_err_threshold within this many checks i.e
+ san_path_err_forget_rate . If so we will not reinstante the path till
+-san_path_err_recovery_time.
++san_path_err_recovery_time. See "Shaky paths detection" below.
+ .RS
+ .TP
+ The default is: \fBno\fR
+@@ -923,6 +923,7 @@ has exceeded the san_path_err_threshold within san_path_err_forget_rate then the
+ will be placed in failed state for san_path_err_recovery_time duration.Once san_path_err_recovery_time
+ has timeout  we will reinstante the failed path .
+ san_path_err_recovery_time value should be in secs.
++See "Shaky paths detection" below.
+ .RS
+ .TP
+ The default is: \fBno\fR
+@@ -1642,14 +1643,14 @@ A common problem in SAN setups is the occurence of intermittent errors: a
+ path is unreachable, then reachable again for a short time, disappears again,
+ and so forth. This happens typically on unstable interconnects. It is
+ undesirable to switch pathgroups unnecessarily on such frequent, unreliable
+-events. \fImultipathd\fR supports two different methods for detecting this
++events. \fImultipathd\fR supports three different methods for detecting this
+ situation and dealing with it. All methods share the same basic mode of
+ operation: If a path is found to be \(dqshaky\(dq or \(dqflipping\(dq,
+ and appears to be in healthy status, it is not reinstated (put back to use)
+ immediately. Instead, it is watched for some time, and only reinstated
+ if the healthy state appears to be stable. The logic of determining
+ \(dqshaky\(dq condition, as well as the logic when to reinstate,
+-differs between the methods.
++differs between the three methods.
+ .TP 8
+ .B \(dqdelay_checks\(dq failure tracking
+ If a path fails again within a
+@@ -1671,14 +1672,30 @@ monitoring period, the path is reinstated. Otherwise, it
+ is kept in failed state for \fImarginal_path_err_recheck_gap_time\fR, and
+ after that, it is monitored again. For this method, time intervals are measured
+ in seconds.
++.TP
++.B \(dqsan_path_err\(dq failure tracking
++multipathd counts path failures for each path. Once the number of failures
++exceeds the value given by \fIsan_path_err_threshold\fR, the path is not
++reinstated for \fIsan_path_err_recovery_time\fR ticks. While counting
++failures, multipathd \(dqforgets\(dq one past failure every
++\(dqsan_path_err_forget_rate\(dq ticks; thus if errors don't occur more
++often then once in the forget rate interval, the failure count doesn't
++increase and the threshold is never reached. As for the \fIdelay_xy\fR method,
++intervals are measured in \(dqticks\(dq.
++.
++.RS 8
++.LP
++This method is \fBdeprecated\fR in favor of the \(dqmarginal_path\(dq failure
++tracking method, and only offered for backward compatibility.
+ .
+ .RE
+ .LP
+-.
+-See the documentation of the individual options above for details.
++See the documentation
++of the individual options above for details.
+ It is \fBstrongly discouraged\fR to use more than one of these methods for any
+ given multipath map, because the two concurrent methods may interact in
+-unpredictable ways.
++unpredictable ways. If the \(dqmarginal_path\(dq method is active, the
++\(dqsan_path_err\(dq parameters are implicitly set to 0.
+ .
+ .
+ .\" ----------------------------------------------------------------------------
 -- 
 2.19.2
