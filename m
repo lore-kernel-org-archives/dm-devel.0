@@ -1,16 +1,11 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 04/19] Revert "multipath-tools: discard
- san_path_err_XXX feature"
-Date: Wed, 19 Dec 2018 13:02:27 +0100
-Message-ID: <7b211887febc05788f740c7055621ff92af4821c.camel@suse.com>
-References: <20181218231931.10762-1-mwilck@suse.com>
-	<20181218231931.10762-5-mwilck@suse.com>
-	<70906b6af0249c06e324e83ebb4f1549@mail.gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: reorder vendors in hwtable
+Date: Wed, 19 Dec 2018 22:23:57 +0100
+Message-ID: <20181219212357.21076-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <70906b6af0249c06e324e83ebb4f1549@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,45 +15,92 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Muneendra Kumar M <muneendra.kumar@broadcom.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, mwilck+gmail@suse.de
-Cc: Guan Junxiong <guanjunxiong@huawei.com>, M Muneendra Kumar <mmandala@brocade.com>, dm-devel@redhat.com
+Cc: DM-DEVEL ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE4LTEyLTE5IGF0IDE3OjAyICswNTMwLCBNdW5lZW5kcmEgS3VtYXIgTSB3cm90
-ZToKPiBIaSBNYXJ0aW4sCj4gSW4gb25lIG9mIHRoZSBwYXRjaCAgICJbUEFUQ0ggMDAvMTldIHNh
-bl9wYXRoX2VyciAmIG11bHRpcGF0aCBBTkEKPiBzdXBwb3J0Igo+IAo+IHlvdSBoYXZlIG1lbnRp
-b25lZCB0aGF0IHNhbl9wYXRoX2Vycl9YWFggaGFzIHNvbWUgbWVyaXRzCj4gb3ZlciBtYXJnaW5h
-bF9wYXRoX2Vycl9YWFguCj4gCj4gSXMgdGhpcyB1bmRlcnN0YW5kaW5nIGNvcnJlY3QgaWYgc28g
-Y291bGQgeW91IHBsZWFzZSBleHBsYWluIHRoZQo+IHNjZW5hcmlvCj4gaW4gd2hpY2ggdXNlIGNh
-c2UgdGhpcyB3YXMgYmV0dGVyLgo+IAo+IEkgY2FuIHNheSBNYXJnaW5hbF9wYXRoX2Vycl94eCBp
-cyBzdXBlcnNldCBvZiBzYW5fcGF0aF9lcnJfeHguCgpJZiB5b3UgdGhpbmsgc28sIHBsZWFzZSBl
-eHBsYWluIGhvdy4gSW1hZ2luZSBhIHVzZXIgd2hvIGhhcyBjb25maWd1cmVkCgogIHNhbl9wYXRo
-X2Vycl90aHJlc2hvbGQgICAgIFgKICBzYW5fcGF0aF9lcnJfZm9yZ2V0X3JhdGUgICBZCiAgc2Fu
-X3BhdGhfZXJyX3JlY292ZXJ5X3RpbWUgWgoKTm93IHRoaXMgdXNlciBpcyBzdXBwc2VkIG1pZ3Jh
-dGUgdG8gbWFyZ2luYWxfcGF0aCBzZXR0aW5ncy4KCiAgbWFyZ2luYWxfcGF0aF9kb3VibGVfZmFp
-bGVkX3RpbWUgICBBCiAgbWFyZ2luYWxfcGF0aF9lcnJfc2FtcGxlX3RpbWUgICAgICBCCiAgbWFy
-Z2luYWxfcGF0aF9lcnJfcmF0ZV90aHJlc2hvbGQgICBDIAogIG1hcmdpbmFsX3BhdGhfZXJyX3Jl
-Y2hlY2tfZ2FwX3RpbWUgRAoKQ2FuIHlvdSBwcm92aWRlIGEgZm9ybXVsYSB0byBjYWxjdWxhdGUg
-QSxCLEMsRCBzdWNoIHRoYXQgdGhlIHN5c3RlbQpiZWhhdmVzIHRoZSBzYW1lIHdheSAob3IgImJl
-dHRlciIpIHRoYW4gcHJldmlvdXNseSB3aXRoIFgsIFksIFo/CgpJIGhhdmUgcG9uZGVyZWQgdGhp
-cyBmb3IgYSB3aGlsZSBhbmQgY29uY2x1ZGVkIHRoYXQgSSBjYW4ndC4KCj4gSWYgd2UgbmVlZCBi
-b3RoIHNhbl9wYXRoX2Vycl94eCAsIE1hcmdpbmFsX3BhdGhfZXJyX3h4IHRoZW4gc28gbWFueQo+
-IGNvbmZpZ3VyYXRpb25zIHdpbGwgcmVhbGx5IGNvbmZ1c2UgdGhlIGN1c3RvbWVycy4KClRydWUs
-IHRoZSBtYW55IGRpZmZlcmVudCBvcHRpb25zIGFyZSBjb25mdXNpbmcuIEhvd2V2ZXIsIEkgZG9u
-J3QgdGhpbmsKaXQgYmVjb21lcyBtdWNoIHdvcnNlIGJ5IG9mZmVyaW5nIGJvdGggbWV0aG9kcy4g
-Qm90aCBtZXRob2RzIGFyZW4ndAplYXN5IHRvIHVuZGVyc3RhbmQgYnkgdGhlbXNlbHZlcy4gT25j
-ZSB1c2VycyB1bmRlcnN0YW5kIHRoYXQgdGhlc2UgdHdvCnBhcmFtZXRlciBzZXRzIGFyZSBtdXR1
-YWxseSBleGNsdXNpdmUsIEkgdGhpbmsgdGhleSBjYW4gZGVhbCB3aXRoIHRoYXQuCgpXaGF0IHdl
-IHJlYWxseSBuZWVkIGlzIGVhc2llciBzZXQtdXAgb2YgZWl0aGVyIG1ldGhvZCAodGhpbmsgb2Yg
-Mi0zCnNldHMgb2YgcmVhc29iYWJsZSBwcmUtc2V0IHBhcmFtZXRlciB2YWx1ZXMgZm9yIGRpZmZl
-cmVudCBzY2VuYXJpb3MpLiAKSSBiZWxpZXZlIG1vc3QgYWRtaW5zIGFyZSBzbyBpbnRpbWlkYXRl
-ZCBieSB0aGUgY29tcGxleGl0eSBvZiB0aGUKcGFyYW1ldGVycyBhbmQgdGhlaXIgaW50ZXJhY3Rp
-b24gdGhhdCB0aGV5IGdpdmUgdXAgYW5kIHVzZQpkZWxheV94eF9jaGVja3MgaW5zdGVhZCwgb3Ig
-bm90aGluZyBhdCBhbGwuCgpVbmZvcnR1bmF0ZWx5IHRoaXMgaXMgYWxsIGJhc2VkIG9uIGd1ZXNz
-aW5nOyB3ZSBhdCBsZWFzdCBoYXZlIG5vIGRhdGEKaWYgdXNlcnMgYXJlIHRyeWluZyB0aGVzZSBw
-YXJhbWV0ZXJzIGFuZCBpZiB5ZXMsIHdoYXQgdGhleSBhcmUgdXNpbmcuCgpNYXJ0aW4KCi0tIApE
-ci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMg
-MjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhh
-cmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgoKLS0KZG0tZGV2ZWwg
-bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
-YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Xio was acquired by Violin, and add FlashSystem 9100 to Storwize in comments.
+
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEVEL ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 50 ++++++++++++++++++++----------------------
+ 1 file changed, 24 insertions(+), 26 deletions(-)
+
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index d3a8d9b..3eeadde 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -604,7 +604,7 @@ static struct hwentry default_hw[] = {
+ 		.pgpolicy      = MULTIBUS,
+ 	},
+ 	{
+-		/* Storwize family / SAN Volume Controller / Flex System V7000 / FlashSystem V840/V9000 */
++		/* Storwize family / SAN Volume Controller / Flex System V7000 / FlashSystem V840/V9000/9100 */
+ 		.vendor        = "IBM",
+ 		.product       = "^2145",
+ 		.no_path_retry = NO_PATH_RETRY_QUEUE,
+@@ -1099,31 +1099,7 @@ static struct hwentry default_hw[] = {
+ 		.no_path_retry = 30,
+ 	},
+ 	/*
+-	 * Xiotech
+-	 */
+-	{
+-		/* Intelligent Storage Elements family */
+-		.vendor        = "(XIOTECH|XIOtech)",
+-		.product       = "ISE",
+-		.pgpolicy      = MULTIBUS,
+-		.no_path_retry = 12,
+-	},
+-	{
+-		/* iglu blaze family */
+-		.vendor        = "(XIOTECH|XIOtech)",
+-		.product       = "IGLU DISK",
+-		.pgpolicy      = MULTIBUS,
+-		.no_path_retry = 30,
+-	},
+-	{
+-		/* Magnitude family */
+-		.vendor        = "(XIOTECH|XIOtech)",
+-		.product       = "Magnitude",
+-		.pgpolicy      = MULTIBUS,
+-		.no_path_retry = 30,
+-	},
+-	/*
+-	 * Violin Memory
++	 * Violin Systems
+ 	 */
+ 	{
+ 		/* 3000 / 6000 Series */
+@@ -1148,6 +1124,28 @@ static struct hwentry default_hw[] = {
+ 		.product       = "CONCERTO ARRAY",
+ 		.pgpolicy      = MULTIBUS,
+ 		.no_path_retry = 30,
++	},
++		/* Xiotech */
++	{
++		/* Intelligent Storage Elements family */
++		.vendor        = "(XIOTECH|XIOtech)",
++		.product       = "ISE",
++		.pgpolicy      = MULTIBUS,
++		.no_path_retry = 12,
++	},
++	{
++		/* iglu blaze family */
++		.vendor        = "(XIOTECH|XIOtech)",
++		.product       = "IGLU DISK",
++		.pgpolicy      = MULTIBUS,
++		.no_path_retry = 30,
++	},
++	{
++		/* Magnitude family */
++		.vendor        = "(XIOTECH|XIOtech)",
++		.product       = "Magnitude",
++		.pgpolicy      = MULTIBUS,
++		.no_path_retry = 30,
+ 	},
+ 	/*
+ 	 * Promise Technology
+-- 
+2.20.1
