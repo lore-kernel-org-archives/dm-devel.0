@@ -1,11 +1,16 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: reorder vendors in hwtable
-Date: Wed, 19 Dec 2018 22:23:57 +0100
-Message-ID: <20181219212357.21076-1-xose.vazquez@gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 14/19] multipath-tools: add ANA support for
+	NVMe device
+Date: Thu, 20 Dec 2018 16:17:46 +0100
+Message-ID: <1314513c-a24a-a661-1c2c-7fe20669e36e@suse.de>
+References: <20181218231931.10762-1-mwilck@suse.com>
+	<20181218231931.10762-15-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20181218231931.10762-15-mwilck@suse.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,92 +20,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: DM-DEVEL ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com, lijie <lijie34@huawei.com>
 List-Id: dm-devel.ids
 
-Xio was acquired by Violin, and add FlashSystem 9100 to Storwize in comments.
-
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEVEL ML <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 50 ++++++++++++++++++++----------------------
- 1 file changed, 24 insertions(+), 26 deletions(-)
-
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index d3a8d9b..3eeadde 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -604,7 +604,7 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = MULTIBUS,
- 	},
- 	{
--		/* Storwize family / SAN Volume Controller / Flex System V7000 / FlashSystem V840/V9000 */
-+		/* Storwize family / SAN Volume Controller / Flex System V7000 / FlashSystem V840/V9000/9100 */
- 		.vendor        = "IBM",
- 		.product       = "^2145",
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
-@@ -1099,31 +1099,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = 30,
- 	},
- 	/*
--	 * Xiotech
--	 */
--	{
--		/* Intelligent Storage Elements family */
--		.vendor        = "(XIOTECH|XIOtech)",
--		.product       = "ISE",
--		.pgpolicy      = MULTIBUS,
--		.no_path_retry = 12,
--	},
--	{
--		/* iglu blaze family */
--		.vendor        = "(XIOTECH|XIOtech)",
--		.product       = "IGLU DISK",
--		.pgpolicy      = MULTIBUS,
--		.no_path_retry = 30,
--	},
--	{
--		/* Magnitude family */
--		.vendor        = "(XIOTECH|XIOtech)",
--		.product       = "Magnitude",
--		.pgpolicy      = MULTIBUS,
--		.no_path_retry = 30,
--	},
--	/*
--	 * Violin Memory
-+	 * Violin Systems
- 	 */
- 	{
- 		/* 3000 / 6000 Series */
-@@ -1148,6 +1124,28 @@ static struct hwentry default_hw[] = {
- 		.product       = "CONCERTO ARRAY",
- 		.pgpolicy      = MULTIBUS,
- 		.no_path_retry = 30,
-+	},
-+		/* Xiotech */
-+	{
-+		/* Intelligent Storage Elements family */
-+		.vendor        = "(XIOTECH|XIOtech)",
-+		.product       = "ISE",
-+		.pgpolicy      = MULTIBUS,
-+		.no_path_retry = 12,
-+	},
-+	{
-+		/* iglu blaze family */
-+		.vendor        = "(XIOTECH|XIOtech)",
-+		.product       = "IGLU DISK",
-+		.pgpolicy      = MULTIBUS,
-+		.no_path_retry = 30,
-+	},
-+	{
-+		/* Magnitude family */
-+		.vendor        = "(XIOTECH|XIOtech)",
-+		.product       = "Magnitude",
-+		.pgpolicy      = MULTIBUS,
-+		.no_path_retry = 30,
- 	},
- 	/*
- 	 * Promise Technology
--- 
-2.20.1
+T24gMTIvMTkvMTggMTI6MTkgQU0sIE1hcnRpbiBXaWxjayB3cm90ZToKPiBGcm9tOiBsaWppZSA8
+bGlqaWUzNEBodWF3ZWkuY29tPgo+IAo+IEFkZCBzdXBwb3J0IGZvciBBc3luY2hyb25vdXMgTmFt
+ZXNwYWNlIEFjY2VzcyBhcyBzcGVjaWZpZWQgaW4gTlZNZSAxLjMKPiBUUCA0MDA0LiBUaGUgc3Rh
+dGVzIGFyZSB1cGRhdGVkIHRocm91Z2ggcmVhZGluZyB0aGUgQU5BIGxvZyBwYWdlLgo+IAo+IEJ5
+IGRlZmF1bHQsIHRoZSBuYXRpdmUgbnZtZSBtdWx0aXBhdGggdGFrZXMgb3ZlciB0aGUgbnZtZSBk
+ZXZpY2UuCj4gV2UgY2FuIHBhc3MgYSBmYWxzZSB0byB0aGUgcGFyYW1ldGVyICdtdWx0aXBhdGgn
+IG9mIHRoZSBudm1lLWNvcmUua28KPiBtb2R1bGUsd2hlbiB3ZSB3YW50IHRvIHVzZSBtdWx0aXBh
+dGgtdG9vbHMuCj4gCj4gU2lnbmVkLW9mZi1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5j
+b20+Cj4gLS0tCj4gICBsaWJtdWx0aXBhdGgvcHJpby5oICAgICAgICAgICAgICAgIHwgICAxICsK
+PiAgIGxpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvTWFrZWZpbGUgfCAgIDEgKwo+ICAgbGlibXVs
+dGlwYXRoL3ByaW9yaXRpemVycy9hbmEuYyAgICB8IDI5MiArKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKwo+ICAgbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9hbmEuaCAgICB8IDIyMSArKysr
+KysrKysrKysrKysrKysrKysrCj4gICBtdWx0aXBhdGgvbXVsdGlwYXRoLmNvbmYuNSAgICAgICAg
+IHwgICA4ICsKPiAgIDUgZmlsZXMgY2hhbmdlZCwgNTIzIGluc2VydGlvbnMoKykKPiAgIGNyZWF0
+ZSBtb2RlIDEwMDY0NCBsaWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJzL2FuYS5jCj4gICBjcmVhdGUg
+bW9kZSAxMDA2NDQgbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9hbmEuaAo+IAo+IGRpZmYgLS1n
+aXQgYS9saWJtdWx0aXBhdGgvcHJpby5oIGIvbGlibXVsdGlwYXRoL3ByaW8uaAo+IGluZGV4IGFh
+NTg3Y2NkLi41OTlkMWQ4OCAxMDA2NDQKPiAtLS0gYS9saWJtdWx0aXBhdGgvcHJpby5oCj4gKysr
+IGIvbGlibXVsdGlwYXRoL3ByaW8uaAo+IEBAIC0zMCw2ICszMCw3IEBAIHN0cnVjdCBwYXRoOwo+
+ICAgI2RlZmluZSBQUklPX1dFSUdIVEVEX1BBVEgJIndlaWdodGVkcGF0aCIKPiAgICNkZWZpbmUg
+UFJJT19TWVNGUwkJInN5c2ZzIgo+ICAgI2RlZmluZSBQUklPX1BBVEhfTEFURU5DWQkicGF0aF9s
+YXRlbmN5Igo+ICsjZGVmaW5lIFBSSU9fQU5BCQkiYW5hIgo+ICAgCj4gICAvKgo+ICAgICogVmFs
+dWUgdXNlZCB0byBtYXJrIHRoZSBmYWN0IHByaW8gd2FzIG5vdCBkZWZpbmVkCj4gZGlmZiAtLWdp
+dCBhL2xpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvTWFrZWZpbGUgYi9saWJtdWx0aXBhdGgvcHJp
+b3JpdGl6ZXJzL01ha2VmaWxlCj4gaW5kZXggYWI3YmMwNzUuLjE1YWZhYmEzIDEwMDY0NAo+IC0t
+LSBhL2xpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvTWFrZWZpbGUKPiArKysgYi9saWJtdWx0aXBh
+dGgvcHJpb3JpdGl6ZXJzL01ha2VmaWxlCj4gQEAgLTE5LDYgKzE5LDcgQEAgTElCUyA9IFwKPiAg
+IAlsaWJwcmlvcmRhYy5zbyBcCj4gICAJbGlicHJpb3dlaWdodGVkcGF0aC5zbyBcCj4gICAJbGli
+cHJpb3BhdGhfbGF0ZW5jeS5zbyBcCj4gKwlsaWJwcmlvYW5hLnNvIFwKPiAgIAlsaWJwcmlvc3lz
+ZnMuc28KPiAgIAo+ICAgYWxsOiAkKExJQlMpCj4gZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9w
+cmlvcml0aXplcnMvYW5hLmMgYi9saWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJzL2FuYS5jCj4gbmV3
+IGZpbGUgbW9kZSAxMDA2NDQKPiBpbmRleCAwMDAwMDAwMC4uYzVhYWE1ZmIKPiAtLS0gL2Rldi9u
+dWxsCj4gKysrIGIvbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9hbmEuYwo+IEBAIC0wLDAgKzEs
+MjkyIEBACj4gKy8qCj4gKyAqIChDKSBDb3B5cmlnaHQgSFVBV0VJIFRlY2hub2xvZ3kgQ29ycC4g
+MjAxNyAgIEFsbCBSaWdodHMgUmVzZXJ2ZWQuCj4gKyAqCj4gKyAqIGFuYS5jCj4gKyAqIFZlcnNp
+b24gMS4wMAo+ICsgKgo+ICsgKiBUb29sIHRvIG1ha2UgdXNlIG9mIGEgTlZNZS1mZWF0dXJlIGNh
+bGxlZCAgQXN5bW1ldHJpYyBOYW1lc3BhY2UgQWNjZXNzLgo+ICsgKiBJdCBkZXRlcm1pbmVzIHRo
+ZSBBTkEgc3RhdGUgb2YgYSBkZXZpY2UgYW5kIHByaW50cyBhIHByaW9yaXR5IHZhbHVlIHRvIHN0
+ZG91dC4KPiArICoKPiArICogQXV0aG9yKHMpOiBDaGVuZyBKaWtlIDxjaGVuZ2ppa2UuY2hlbmdA
+aHVhd2VpLmNvbT4KPiArICogICAgICAgICAgICBMaSBKaWUgPGxpamllMzRAaHVhd2VpLmNvbT4K
+PiArICoKPiArICogVGhpcyBmaWxlIGlzIHJlbGVhc2VkIHVuZGVyIHRoZSBHUEwgdmVyc2lvbiAy
+LCBvciBhbnkgbGF0ZXIgdmVyc2lvbi4KPiArICovCj4gKyNpbmNsdWRlIDxzdGRpby5oPgo+ICsj
+aW5jbHVkZSA8c3lzL2lvY3RsLmg+Cj4gKyNpbmNsdWRlIDxzeXMvc3RhdC5oPgo+ICsjaW5jbHVk
+ZSA8c3lzL3R5cGVzLmg+Cj4gKyNpbmNsdWRlIDxzdGRib29sLmg+Cj4gKwo+ICsjaW5jbHVkZSAi
+ZGVidWcuaCIKPiArI2luY2x1ZGUgInByaW8uaCIKPiArI2luY2x1ZGUgInN0cnVjdHMuaCIKPiAr
+I2luY2x1ZGUgImFuYS5oIgo+ICsKPiArZW51bSB7Cj4gKwlBTkFfUFJJT19PUFRJTUlaRUQJCT0g
+NTAsCj4gKwlBTkFfUFJJT19OT05PUFRJTUlaRUQJCT0gMTAsCj4gKwlBTkFfUFJJT19JTkFDQ0VT
+U0lCTEUJCT0gNSwKPiArCUFOQV9QUklPX1BFUlNJU1RFTlRfTE9TUwk9IDEsCj4gKwlBTkFfUFJJ
+T19DSEFOR0UJCQk9IDAsCj4gKwlBTkFfUFJJT19SRVNFUlZFRAkJPSAwLAo+ICsJQU5BX1BSSU9f
+R0VUQ1RSTF9GQUlMRUQJCT0gLTEsCj4gKwlBTkFfUFJJT19OT1RfU1VQUE9SVEVECQk9IC0yLAo+
+ICsJQU5BX1BSSU9fR0VUQU5BU19GQUlMRUQJCT0gLTMsCj4gKwlBTkFfUFJJT19HRVRBTkFMT0df
+RkFJTEVECT0gLTQsCj4gKwlBTkFfUFJJT19HRVROU0lEX0ZBSUxFRAkJPSAtNSwKPiArCUFOQV9Q
+UklPX0dFVE5TX0ZBSUxFRAkJPSAtNiwKPiArCUFOQV9QUklPX05PX01FTU9SWQkJPSAtNywKPiAr
+CUFOQV9QUklPX05PX0lORk9STUFUSU9OCQk9IC04LAo+ICt9OwoKUGxlYXNlIG1vZGVsIHRoZSBw
+cmlvcml0aWVzIGFjY29yZGluZyB0byB0aGUgQUxVQSBoYW5kbGVyOyBBTkEgc3RhdGUgCidwZXJz
+aXN0ZW50IGxvc3MnIG1hcHMgb250byBBTFVBICd1bmF2YWlsYWJsZScgKGFuZCBoZW5jZSBzaG91
+bGQgaGF2ZSBhIApwcmlvcml0eSBvZiAnMCcpLCBhbmQgQU5BIHN0YXRlICdpbmFjY2Vzc2libGUn
+IGlzIHJvdWdobHkgc2ltaWxhciB0byAKQUxVQSAnc3RhbmRieScsIGhlbmNlIHNob3VsZCBoYXZl
+IGEgcHJpb3JpdHkgb2YgJzEnLgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5l
+Y2tlCQkgICBUZWFtbGVhZCBTdG9yYWdlICYgTmV0d29ya2luZwpoYXJlQHN1c2UuZGUJCQkgICAg
+ICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIu
+IDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogRi4gSW1lbmTDtnJmZmVyLCBKLiBTbWl0aGFyZCwgSi4g
+R3VpbGQsIEQuIFVwbWFueXUsIEcuIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0t
+CmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJl
+ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
