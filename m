@@ -1,12 +1,14 @@
 From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: [PATCH 0/3] dm snapshot: Improve performance using a
-	more fine-grained locking scheme
-Date: Thu, 20 Dec 2018 20:06:48 +0200
-Message-ID: <20181220180651.4879-1-ntsironis@arrikto.com>
+Subject: [PATCH 1/3] list_bl: Add hlist_bl_add_before/behind
+	helpers
+Date: Thu, 20 Dec 2018 20:06:49 +0200
+Message-ID: <20181220180651.4879-2-ntsironis@arrikto.com>
+References: <20181220180651.4879-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20181220180651.4879-1-ntsironis@arrikto.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,49 +22,52 @@ To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
 Cc: mpatocka@redhat.com, iliastsi@arrikto.com
 List-Id: dm-devel.ids
 
-dm-snapshot uses a single mutex to serialize every access to the
-snapshot state, including accesses to the exception hash tables. This
-mutex is a bottleneck preventing dm-snapshot to scale as the number of
-threads doing IO increases.
+Add hlist_bl_add_before/behind helpers to add an element before/after an
+existing element in a bl_list.
 
-The major contention points are __origin_write()/snapshot_map() and
-pending_complete(), i.e., the submission and completion of pending
-exceptions.
+Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+Signed-off-by: Ilias Tsitsimpis <iliastsi@arrikto.com>
+---
+ include/linux/list_bl.h | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
 
-This patchset substitutes the single mutex with:
-
-  * A read-write semaphore, which protects the mostly read fields of the
-    snapshot structure.
-
-  * Per-bucket bit spinlocks, that protect accesses to the exception
-    hash tables.
-
-fio benchmarks using the null_blk device show significant performance
-improvements as the number of worker processes increases. Write latency
-is almost halved and write IOPS are nearly doubled.
-
-The relevant patch provides detailed benchmark results.
-
-A summary of the patchset follows:
-
-  1. The first patch adds two helper functions to linux/list_bl.h, which
-     is used to implement the per-bucket bit spinlocks in dm-snapshot.
-
-  2. The second patch removes the need to sleep holding the snapshot
-     lock in pending_complete(), thus allowing us to replace the mutex
-     with the per-bucket bit spinlocks.
-
-  3. The third patch changes the locking scheme, as described previously.
-
-Nikos Tsironis (3):
-  list_bl: Add hlist_bl_add_before/behind helpers
-  dm snapshot: Don't sleep holding the snapshot lock
-  dm snapshot: Use fine-grained locking scheme
-
- drivers/md/dm-exception-store.h |   3 +-
- drivers/md/dm-snap.c            | 359 +++++++++++++++++++++++++++-------------
- include/linux/list_bl.h         |  27 +++
- 3 files changed, 269 insertions(+), 120 deletions(-)
-
+diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
+index 3fc2cc57ba1b..2fd918e5fd48 100644
+--- a/include/linux/list_bl.h
++++ b/include/linux/list_bl.h
+@@ -86,6 +86,33 @@ static inline void hlist_bl_add_head(struct hlist_bl_node *n,
+ 	hlist_bl_set_first(h, n);
+ }
+ 
++static inline void hlist_bl_add_before(struct hlist_bl_node *n,
++				       struct hlist_bl_node *next)
++{
++	struct hlist_bl_node **pprev = next->pprev;
++
++	n->pprev = pprev;
++	n->next = next;
++	next->pprev = &n->next;
++
++	/* pprev may be `first`, so be careful not to lose the lock bit */
++	WRITE_ONCE(*pprev,
++		   (struct hlist_bl_node *)
++			((unsigned long)n |
++			 ((unsigned long)*pprev & LIST_BL_LOCKMASK)));
++}
++
++static inline void hlist_bl_add_behind(struct hlist_bl_node *n,
++				       struct hlist_bl_node *prev)
++{
++	n->next = prev->next;
++	n->pprev = &prev->next;
++	WRITE_ONCE(prev->next, n);
++
++	if (n->next)
++		n->next->pprev = &n->next;
++}
++
+ static inline void __hlist_bl_del(struct hlist_bl_node *n)
+ {
+ 	struct hlist_bl_node *next = n->next;
 -- 
 2.11.0
