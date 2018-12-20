@@ -1,16 +1,14 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 14/19] multipath-tools: add ANA support for
-	NVMe device
-Date: Thu, 20 Dec 2018 16:17:46 +0100
-Message-ID: <1314513c-a24a-a661-1c2c-7fe20669e36e@suse.de>
-References: <20181218231931.10762-1-mwilck@suse.com>
-	<20181218231931.10762-15-mwilck@suse.com>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: [PATCH 2/3] dm snapshot: Don't sleep holding the
+	snapshot lock
+Date: Thu, 20 Dec 2018 20:06:50 +0200
+Message-ID: <20181220180651.4879-3-ntsironis@arrikto.com>
+References: <20181220180651.4879-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181218231931.10762-15-mwilck@suse.com>
-Content-Language: en-US
+In-Reply-To: <20181220180651.4879-1-ntsironis@arrikto.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,72 +18,230 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, lijie <lijie34@huawei.com>
+To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
+Cc: mpatocka@redhat.com, iliastsi@arrikto.com
 List-Id: dm-devel.ids
 
-T24gMTIvMTkvMTggMTI6MTkgQU0sIE1hcnRpbiBXaWxjayB3cm90ZToKPiBGcm9tOiBsaWppZSA8
-bGlqaWUzNEBodWF3ZWkuY29tPgo+IAo+IEFkZCBzdXBwb3J0IGZvciBBc3luY2hyb25vdXMgTmFt
-ZXNwYWNlIEFjY2VzcyBhcyBzcGVjaWZpZWQgaW4gTlZNZSAxLjMKPiBUUCA0MDA0LiBUaGUgc3Rh
-dGVzIGFyZSB1cGRhdGVkIHRocm91Z2ggcmVhZGluZyB0aGUgQU5BIGxvZyBwYWdlLgo+IAo+IEJ5
-IGRlZmF1bHQsIHRoZSBuYXRpdmUgbnZtZSBtdWx0aXBhdGggdGFrZXMgb3ZlciB0aGUgbnZtZSBk
-ZXZpY2UuCj4gV2UgY2FuIHBhc3MgYSBmYWxzZSB0byB0aGUgcGFyYW1ldGVyICdtdWx0aXBhdGgn
-IG9mIHRoZSBudm1lLWNvcmUua28KPiBtb2R1bGUsd2hlbiB3ZSB3YW50IHRvIHVzZSBtdWx0aXBh
-dGgtdG9vbHMuCj4gCj4gU2lnbmVkLW9mZi1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5j
-b20+Cj4gLS0tCj4gICBsaWJtdWx0aXBhdGgvcHJpby5oICAgICAgICAgICAgICAgIHwgICAxICsK
-PiAgIGxpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvTWFrZWZpbGUgfCAgIDEgKwo+ICAgbGlibXVs
-dGlwYXRoL3ByaW9yaXRpemVycy9hbmEuYyAgICB8IDI5MiArKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKwo+ICAgbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9hbmEuaCAgICB8IDIyMSArKysr
-KysrKysrKysrKysrKysrKysrCj4gICBtdWx0aXBhdGgvbXVsdGlwYXRoLmNvbmYuNSAgICAgICAg
-IHwgICA4ICsKPiAgIDUgZmlsZXMgY2hhbmdlZCwgNTIzIGluc2VydGlvbnMoKykKPiAgIGNyZWF0
-ZSBtb2RlIDEwMDY0NCBsaWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJzL2FuYS5jCj4gICBjcmVhdGUg
-bW9kZSAxMDA2NDQgbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9hbmEuaAo+IAo+IGRpZmYgLS1n
-aXQgYS9saWJtdWx0aXBhdGgvcHJpby5oIGIvbGlibXVsdGlwYXRoL3ByaW8uaAo+IGluZGV4IGFh
-NTg3Y2NkLi41OTlkMWQ4OCAxMDA2NDQKPiAtLS0gYS9saWJtdWx0aXBhdGgvcHJpby5oCj4gKysr
-IGIvbGlibXVsdGlwYXRoL3ByaW8uaAo+IEBAIC0zMCw2ICszMCw3IEBAIHN0cnVjdCBwYXRoOwo+
-ICAgI2RlZmluZSBQUklPX1dFSUdIVEVEX1BBVEgJIndlaWdodGVkcGF0aCIKPiAgICNkZWZpbmUg
-UFJJT19TWVNGUwkJInN5c2ZzIgo+ICAgI2RlZmluZSBQUklPX1BBVEhfTEFURU5DWQkicGF0aF9s
-YXRlbmN5Igo+ICsjZGVmaW5lIFBSSU9fQU5BCQkiYW5hIgo+ICAgCj4gICAvKgo+ICAgICogVmFs
-dWUgdXNlZCB0byBtYXJrIHRoZSBmYWN0IHByaW8gd2FzIG5vdCBkZWZpbmVkCj4gZGlmZiAtLWdp
-dCBhL2xpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvTWFrZWZpbGUgYi9saWJtdWx0aXBhdGgvcHJp
-b3JpdGl6ZXJzL01ha2VmaWxlCj4gaW5kZXggYWI3YmMwNzUuLjE1YWZhYmEzIDEwMDY0NAo+IC0t
-LSBhL2xpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvTWFrZWZpbGUKPiArKysgYi9saWJtdWx0aXBh
-dGgvcHJpb3JpdGl6ZXJzL01ha2VmaWxlCj4gQEAgLTE5LDYgKzE5LDcgQEAgTElCUyA9IFwKPiAg
-IAlsaWJwcmlvcmRhYy5zbyBcCj4gICAJbGlicHJpb3dlaWdodGVkcGF0aC5zbyBcCj4gICAJbGli
-cHJpb3BhdGhfbGF0ZW5jeS5zbyBcCj4gKwlsaWJwcmlvYW5hLnNvIFwKPiAgIAlsaWJwcmlvc3lz
-ZnMuc28KPiAgIAo+ICAgYWxsOiAkKExJQlMpCj4gZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9w
-cmlvcml0aXplcnMvYW5hLmMgYi9saWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJzL2FuYS5jCj4gbmV3
-IGZpbGUgbW9kZSAxMDA2NDQKPiBpbmRleCAwMDAwMDAwMC4uYzVhYWE1ZmIKPiAtLS0gL2Rldi9u
-dWxsCj4gKysrIGIvbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9hbmEuYwo+IEBAIC0wLDAgKzEs
-MjkyIEBACj4gKy8qCj4gKyAqIChDKSBDb3B5cmlnaHQgSFVBV0VJIFRlY2hub2xvZ3kgQ29ycC4g
-MjAxNyAgIEFsbCBSaWdodHMgUmVzZXJ2ZWQuCj4gKyAqCj4gKyAqIGFuYS5jCj4gKyAqIFZlcnNp
-b24gMS4wMAo+ICsgKgo+ICsgKiBUb29sIHRvIG1ha2UgdXNlIG9mIGEgTlZNZS1mZWF0dXJlIGNh
-bGxlZCAgQXN5bW1ldHJpYyBOYW1lc3BhY2UgQWNjZXNzLgo+ICsgKiBJdCBkZXRlcm1pbmVzIHRo
-ZSBBTkEgc3RhdGUgb2YgYSBkZXZpY2UgYW5kIHByaW50cyBhIHByaW9yaXR5IHZhbHVlIHRvIHN0
-ZG91dC4KPiArICoKPiArICogQXV0aG9yKHMpOiBDaGVuZyBKaWtlIDxjaGVuZ2ppa2UuY2hlbmdA
-aHVhd2VpLmNvbT4KPiArICogICAgICAgICAgICBMaSBKaWUgPGxpamllMzRAaHVhd2VpLmNvbT4K
-PiArICoKPiArICogVGhpcyBmaWxlIGlzIHJlbGVhc2VkIHVuZGVyIHRoZSBHUEwgdmVyc2lvbiAy
-LCBvciBhbnkgbGF0ZXIgdmVyc2lvbi4KPiArICovCj4gKyNpbmNsdWRlIDxzdGRpby5oPgo+ICsj
-aW5jbHVkZSA8c3lzL2lvY3RsLmg+Cj4gKyNpbmNsdWRlIDxzeXMvc3RhdC5oPgo+ICsjaW5jbHVk
-ZSA8c3lzL3R5cGVzLmg+Cj4gKyNpbmNsdWRlIDxzdGRib29sLmg+Cj4gKwo+ICsjaW5jbHVkZSAi
-ZGVidWcuaCIKPiArI2luY2x1ZGUgInByaW8uaCIKPiArI2luY2x1ZGUgInN0cnVjdHMuaCIKPiAr
-I2luY2x1ZGUgImFuYS5oIgo+ICsKPiArZW51bSB7Cj4gKwlBTkFfUFJJT19PUFRJTUlaRUQJCT0g
-NTAsCj4gKwlBTkFfUFJJT19OT05PUFRJTUlaRUQJCT0gMTAsCj4gKwlBTkFfUFJJT19JTkFDQ0VT
-U0lCTEUJCT0gNSwKPiArCUFOQV9QUklPX1BFUlNJU1RFTlRfTE9TUwk9IDEsCj4gKwlBTkFfUFJJ
-T19DSEFOR0UJCQk9IDAsCj4gKwlBTkFfUFJJT19SRVNFUlZFRAkJPSAwLAo+ICsJQU5BX1BSSU9f
-R0VUQ1RSTF9GQUlMRUQJCT0gLTEsCj4gKwlBTkFfUFJJT19OT1RfU1VQUE9SVEVECQk9IC0yLAo+
-ICsJQU5BX1BSSU9fR0VUQU5BU19GQUlMRUQJCT0gLTMsCj4gKwlBTkFfUFJJT19HRVRBTkFMT0df
-RkFJTEVECT0gLTQsCj4gKwlBTkFfUFJJT19HRVROU0lEX0ZBSUxFRAkJPSAtNSwKPiArCUFOQV9Q
-UklPX0dFVE5TX0ZBSUxFRAkJPSAtNiwKPiArCUFOQV9QUklPX05PX01FTU9SWQkJPSAtNywKPiAr
-CUFOQV9QUklPX05PX0lORk9STUFUSU9OCQk9IC04LAo+ICt9OwoKUGxlYXNlIG1vZGVsIHRoZSBw
-cmlvcml0aWVzIGFjY29yZGluZyB0byB0aGUgQUxVQSBoYW5kbGVyOyBBTkEgc3RhdGUgCidwZXJz
-aXN0ZW50IGxvc3MnIG1hcHMgb250byBBTFVBICd1bmF2YWlsYWJsZScgKGFuZCBoZW5jZSBzaG91
-bGQgaGF2ZSBhIApwcmlvcml0eSBvZiAnMCcpLCBhbmQgQU5BIHN0YXRlICdpbmFjY2Vzc2libGUn
-IGlzIHJvdWdobHkgc2ltaWxhciB0byAKQUxVQSAnc3RhbmRieScsIGhlbmNlIHNob3VsZCBoYXZl
-IGEgcHJpb3JpdHkgb2YgJzEnLgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5l
-Y2tlCQkgICBUZWFtbGVhZCBTdG9yYWdlICYgTmV0d29ya2luZwpoYXJlQHN1c2UuZGUJCQkgICAg
-ICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIu
-IDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogRi4gSW1lbmTDtnJmZmVyLCBKLiBTbWl0aGFyZCwgSi4g
-R3VpbGQsIEQuIFVwbWFueXUsIEcuIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0t
-CmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJl
-ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+When completing a pending exception, pending_complete() waits for all
+conflicting reads to drain, before inserting the final, completed
+exception. Conflicting reads are snapshot reads redirected to the
+origin, because the relevant chunk is not remapped to the COW device the
+moment we receive the read.
+
+The completed exception must be inserted into the exception table after
+all conflicting reads drain to ensure snapshot reads don't return
+corrupted data. This is required because inserting the completed
+exception into the exception table signals that the relevant chunk is
+remapped and both origin writes and snapshot merging will now overwrite
+the chunk in origin.
+
+This wait is done holding the snapshot lock to ensure that
+pending_complete() doesn't starve if new snapshot reads keep coming for
+this chunk.
+
+In preparation for the next commit, where we use a spinlock instead of a
+mutex to protect the exception tables, we remove the need for holding
+the lock while waiting for conflicting reads to drain.
+
+We achieve this in two steps:
+
+1. pending_complete() inserts the completed exception before waiting for
+   conflicting reads to drain and removes the pending exception after
+   all conflicting reads drain.
+
+   This ensures that new snapshot reads will be redirected to the COW
+   device, instead of the origin, and thus pending_complete() will not
+   starve. Moreover, we use the existence of both a completed and
+   a pending exception to signify that the COW is done but there are
+   conflicting reads in flight.
+
+2. In __origin_write() we check first if there is a pending exception
+   and then if there is a completed exception. If there is a pending
+   exception any submitted BIO is delayed on the pe->origin_bios list and
+   DM_MAPIO_SUBMITTED is returned. This ensures that neither writes to the
+   origin nor snapshot merging can overwrite the origin chunk, until all
+   conflicting reads drain, and thus snapshot reads will not return
+   corrupted data.
+
+Summarizing, we now have the following possible combinations of pending
+and completed exceptions for a chunk, along with their meaning:
+
+A. No exceptions exist: The chunk has not been remapped yet.
+B. Only a pending exception exists: The chunk is currently being copied
+   to the COW device.
+C. Both a pending and a completed exception exist: COW for this chunk
+   has completed but there are snapshot reads in flight which had been
+   redirected to the origin before the chunk was remapped.
+D. Only the completed exception exists: COW has been completed and there
+   are no conflicting reads in flight.
+
+Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+Signed-off-by: Ilias Tsitsimpis <iliastsi@arrikto.com>
+---
+ drivers/md/dm-snap.c | 102 ++++++++++++++++++++++++++++++++-------------------
+ 1 file changed, 65 insertions(+), 37 deletions(-)
+
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index 36805b12661e..4b34bfa0900a 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -1501,16 +1501,24 @@ static void pending_complete(void *context, int success)
+ 		goto out;
+ 	}
+ 
+-	/* Check for conflicting reads */
+-	__check_for_conflicting_io(s, pe->e.old_chunk);
+-
+ 	/*
+-	 * Add a proper exception, and remove the
+-	 * in-flight exception from the list.
++	 * Add a proper exception. After inserting the completed exception all
++	 * subsequent snapshot reads to this chunk will be redirected to the
++	 * COW device.  This ensures that we do not starve. Moreover, as long
++	 * as the pending exception exists, neither origin writes nor snapshot
++	 * merging can overwrite the chunk in origin.
+ 	 */
+ 	dm_insert_exception(&s->complete, e);
+ 
++	/* Wait for conflicting reads to drain */
++	if (__chunk_is_tracked(s, pe->e.old_chunk)) {
++		mutex_unlock(&s->lock);
++		__check_for_conflicting_io(s, pe->e.old_chunk);
++		mutex_lock(&s->lock);
++	}
++
+ out:
++	/* Remove the in-flight exception from the list */
+ 	dm_remove_exception(&pe->e);
+ 	snapshot_bios = bio_list_get(&pe->snapshot_bios);
+ 	origin_bios = bio_list_get(&pe->origin_bios);
+@@ -1660,25 +1668,15 @@ __lookup_pending_exception(struct dm_snapshot *s, chunk_t chunk)
+ }
+ 
+ /*
+- * Looks to see if this snapshot already has a pending exception
+- * for this chunk, otherwise it allocates a new one and inserts
+- * it into the pending table.
++ * Inserts a pending exception into the pending table.
+  *
+  * NOTE: a write lock must be held on snap->lock before calling
+  * this.
+  */
+ static struct dm_snap_pending_exception *
+-__find_pending_exception(struct dm_snapshot *s,
+-			 struct dm_snap_pending_exception *pe, chunk_t chunk)
++__insert_pending_exception(struct dm_snapshot *s,
++			   struct dm_snap_pending_exception *pe, chunk_t chunk)
+ {
+-	struct dm_snap_pending_exception *pe2;
+-
+-	pe2 = __lookup_pending_exception(s, chunk);
+-	if (pe2) {
+-		free_pending_exception(pe);
+-		return pe2;
+-	}
+-
+ 	pe->e.old_chunk = chunk;
+ 	bio_list_init(&pe->origin_bios);
+ 	bio_list_init(&pe->snapshot_bios);
+@@ -1697,6 +1695,29 @@ __find_pending_exception(struct dm_snapshot *s,
+ 	return pe;
+ }
+ 
++/*
++ * Looks to see if this snapshot already has a pending exception
++ * for this chunk, otherwise it allocates a new one and inserts
++ * it into the pending table.
++ *
++ * NOTE: a write lock must be held on snap->lock before calling
++ * this.
++ */
++static struct dm_snap_pending_exception *
++__find_pending_exception(struct dm_snapshot *s,
++			 struct dm_snap_pending_exception *pe, chunk_t chunk)
++{
++	struct dm_snap_pending_exception *pe2;
++
++	pe2 = __lookup_pending_exception(s, chunk);
++	if (pe2) {
++		free_pending_exception(pe);
++		return pe2;
++	}
++
++	return __insert_pending_exception(s, pe, chunk);
++}
++
+ static void remap_exception(struct dm_snapshot *s, struct dm_exception *e,
+ 			    struct bio *bio, chunk_t chunk)
+ {
+@@ -2107,7 +2128,7 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
+ 	int r = DM_MAPIO_REMAPPED;
+ 	struct dm_snapshot *snap;
+ 	struct dm_exception *e;
+-	struct dm_snap_pending_exception *pe;
++	struct dm_snap_pending_exception *pe, *pe2;
+ 	struct dm_snap_pending_exception *pe_to_start_now = NULL;
+ 	struct dm_snap_pending_exception *pe_to_start_last = NULL;
+ 	chunk_t chunk;
+@@ -2137,17 +2158,17 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
+ 		 */
+ 		chunk = sector_to_chunk(snap->store, sector);
+ 
+-		/*
+-		 * Check exception table to see if block
+-		 * is already remapped in this snapshot
+-		 * and trigger an exception if not.
+-		 */
+-		e = dm_lookup_exception(&snap->complete, chunk);
+-		if (e)
+-			goto next_snapshot;
+-
+ 		pe = __lookup_pending_exception(snap, chunk);
+ 		if (!pe) {
++			/*
++			 * Check exception table to see if block is already
++			 * remapped in this snapshot and trigger an exception
++			 * if not.
++			 */
++			e = dm_lookup_exception(&snap->complete, chunk);
++			if (e)
++				goto next_snapshot;
++
+ 			mutex_unlock(&snap->lock);
+ 			pe = alloc_pending_exception(snap);
+ 			mutex_lock(&snap->lock);
+@@ -2157,16 +2178,23 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
+ 				goto next_snapshot;
+ 			}
+ 
+-			e = dm_lookup_exception(&snap->complete, chunk);
+-			if (e) {
++			pe2 = __lookup_pending_exception(snap, chunk);
++
++			if (!pe2) {
++				e = dm_lookup_exception(&snap->complete, chunk);
++				if (e) {
++					free_pending_exception(pe);
++					goto next_snapshot;
++				}
++
++				pe = __insert_pending_exception(snap, pe, chunk);
++				if (!pe) {
++					__invalidate_snapshot(snap, -ENOMEM);
++					goto next_snapshot;
++				}
++			} else {
+ 				free_pending_exception(pe);
+-				goto next_snapshot;
+-			}
+-
+-			pe = __find_pending_exception(snap, pe, chunk);
+-			if (!pe) {
+-				__invalidate_snapshot(snap, -ENOMEM);
+-				goto next_snapshot;
++				pe = pe2;
+ 			}
+ 		}
+ 
+-- 
+2.11.0
