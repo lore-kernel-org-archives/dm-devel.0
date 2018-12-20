@@ -1,16 +1,13 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 14/19] multipath-tools: add ANA support for
-	NVMe device
-Date: Fri, 21 Dec 2018 00:45:29 +0100
-Message-ID: <c26f4133237997b7a5685de7898e9eae62df73ed.camel@suse.com>
-References: <20181218231931.10762-1-mwilck@suse.com>
-	<20181218231931.10762-15-mwilck@suse.com>
-	<1314513c-a24a-a661-1c2c-7fe20669e36e@suse.de>
+From: Martin Wilck <mwilck@suse.de>
+Subject: Re: [PATCH] multipath-tools: reorder vendors in hwtable
+Date: Fri, 21 Dec 2018 00:51:06 +0100
+Message-ID: <74dbe64aabf33700924e57bcbe249a02c027ff29.camel@suse.de>
+References: <20181219212357.21076-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1314513c-a24a-a661-1c2c-7fe20669e36e@suse.de>
+In-Reply-To: <20181219212357.21076-1-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,59 +17,105 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, mwilck+gmail@suse.de
-Cc: lijie <lijie34@huawei.com>, dm-devel@redhat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: DM-DEVEL ML <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE4LTEyLTIwIGF0IDE2OjE3ICswMTAwLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6
-Cj4gKwo+ID4gK2VudW0gewo+ID4gKwlBTkFfUFJJT19PUFRJTUlaRUQJCT0gNTAsCj4gPiArCUFO
-QV9QUklPX05PTk9QVElNSVpFRAkJPSAxMCwKPiA+ICsJQU5BX1BSSU9fSU5BQ0NFU1NJQkxFCQk9
-IDUsCj4gPiArCUFOQV9QUklPX1BFUlNJU1RFTlRfTE9TUwk9IDEsCj4gPiArCUFOQV9QUklPX0NI
-QU5HRQkJCT0gMCwKPiA+ICsJQU5BX1BSSU9fUkVTRVJWRUQJCT0gMCwKPiA+ICsJQU5BX1BSSU9f
-R0VUQ1RSTF9GQUlMRUQJCT0gLTEsCj4gPiArCUFOQV9QUklPX05PVF9TVVBQT1JURUQJCT0gLTIs
-Cj4gPiArCUFOQV9QUklPX0dFVEFOQVNfRkFJTEVECQk9IC0zLAo+ID4gKwlBTkFfUFJJT19HRVRB
-TkFMT0dfRkFJTEVECT0gLTQsCj4gPiArCUFOQV9QUklPX0dFVE5TSURfRkFJTEVECQk9IC01LAo+
-ID4gKwlBTkFfUFJJT19HRVROU19GQUlMRUQJCT0gLTYsCj4gPiArCUFOQV9QUklPX05PX01FTU9S
-WQkJPSAtNywKPiA+ICsJQU5BX1BSSU9fTk9fSU5GT1JNQVRJT04JCT0gLTgsCj4gPiArfTsKPiAK
-PiBQbGVhc2UgbW9kZWwgdGhlIHByaW9yaXRpZXMgYWNjb3JkaW5nIHRvIHRoZSBBTFVBIGhhbmRs
-ZXI7IEFOQSBzdGF0ZSAKPiAncGVyc2lzdGVudCBsb3NzJyBtYXBzIG9udG8gQUxVQSAndW5hdmFp
-bGFibGUnIChhbmQgaGVuY2Ugc2hvdWxkIGhhdmUKPiBhIAo+IHByaW9yaXR5IG9mICcwJyksIGFu
-ZCBBTkEgc3RhdGUgJ2luYWNjZXNzaWJsZScgaXMgcm91Z2hseSBzaW1pbGFyIHRvIAo+IEFMVUEg
-J3N0YW5kYnknLCBoZW5jZSBzaG91bGQgaGF2ZSBhIHByaW9yaXR5IG9mICcxJy4KCldpbGwgZG8u
-IEJ1dCBwbGVhc2Ugbm90ZSB0aGF0LCBpbiBjb250cmFzdCB0byB3aGF0IHdlIGRpc2N1c3NlZCBv
-ZmYtCmxpc3QsIGEgcHJpb3JpdHkgb2YgIjAiIGhhcyBubyBzcGVjaWFsIG1lYW5pbmcuIEluIHBh
-cnRpY3VsYXIsCnBhdGhncm91cCBwcmlvcml0eSAiMCIgKG9yIG5lZ2F0aXZlISkgZG9lc24ndCBp
-bXBseSB0aGF0IHRoZSBQRyBpbgpxdWVzdGlvbiBjYW4ndCBiZSBzZWxlY3RlZCBmb3IgSS9PLiBU
-aGUgb25seSB0aGluZyB0aGF0IGlzICJzcGVjaWFsIgphYm91dCBwcmlvcml0eSAwIGlzIHRoYXQg
-bXVsdGlwYXRoZCBhc3NpZ25zIHRoaXMgcHJpbyB0byBQR3MgdGhhdCBoYXZlCm5vIHdvcmtpbmcg
-cGF0aHMuIFRoZXJlZm9yZSwgYSBQRyB0byB3aGljaCB0aGUgcHJpb3JpdGl6ZXIgYXNzaWducyBw
-cmlvCjw9IDAgd2lsbCBub3QgYmUgKnByZWZlcnJlZCogb3ZlciBzdWNoIGEgemVyby1wYXRoIFBH
-LgoKVGhlIG9ubHkgd2F5IHRvIGF2b2lkIHRoYXQgdGhlIGtlcm5lbCBzZWxlY3QgYSBwYXJ0aWN1
-bGFyIFBHIGlzIHRvIHNldAphbGwgcGF0aHMgaW4gdGhlIFBHIHRvIGZhaWxlZCBzdGF0ZSwgb3Ig
-dG8gcmVtb3ZlIGl0IGFsdG9nZXRoZXIuCm11bHRpcGF0aGQgY291bGQgdHJ5IHRvIHNldCB0aGUg
-UEcgdG8gImRpc2FibGVkIiBzdGF0ZSwgYnV0IGN1cnJlbnRseQppdCBkb2Vzbid0LCBhbmQgaWYg
-aXQgZGlkLCBpdCB3b3VsZG4ndCBoYXZlIHRoZSBleHBlY3RlZCBlZmZlY3QsCmJlY2F1c2UgImRp
-c2FibGVkIiByZWFsbHkganVzdCBtZWFucyAiYnlwYXNzZWQiIGluIGRldmljZSBtYXBwZXIuIEEK
-ImJ5cGFzc2VkIiBQRyB3aWxsIGJlIHNlbGVjdGVkIGZvciBJL08gaWYgbm8gb3RoZXIgUEcgaGFz
-IGhlYWx0aHkKcGF0aHMuIChTaWRlIG5vdGU6ICJieXBhc3NlZCIgbWlnaHQgYWN0dWFsbHkgYmUg
-YSByZWFzb25hYmxlIFBHIHN0YXRlCnRvIHVzZSBmb3IgYSBQRyBjb25zaXN0aW5nIG9ubHkgb2Yg
-R0hPU1QgcGF0aHMsIGJ1dCB3ZSBkb24ndCBkbyB0aGF0CnRvZGF5KS4KClRoZXJlZm9yZSwgSSB0
-aGluayB0aGF0IGl0IG1ha2VzIHNlbnNlIHRvIGFkZCBhbiAiYW5hIHBhdGggY2hlY2tlciIgdG8K
-bXVsdGlwYXRoZCwgd2hpY2ggd291bGQgZGV0ZWN0IE5WTWUgcGF0aHMgaW4gc3RhdGVzIG5vdCBz
-dWl0YWJsZSBmb3IKSS9PIGFuZCBmYWlsIHRoZW0gaW4gZGV2aWNlIG1hcHBlci4gV2UgZG9uJ3Qg
-d2FudCBkZXZpY2UgbWFwcGVyIHRvIHRyeQp0aGVzZSBwYXRocy4gSSdtIG5vdCBxdWl0ZSBzdXJl
-IGFib3V0ICJpbmFjY2Vzc2libGUiIHN0YXRlIC0geW91cgpzdGF0ZW1lbnQgYWJvdmUgd291bGQg
-aW1wbHkgdGhhdCAiaW5hY2Nlc3NpYmxlIiBzaG91bGRuJ3QgYmUgZmFpbGVkLiAKQnV0IHRoZSB3
-YXkgSSByZWFkIHRoZSBBTkEgc3BlYyAoOC4xOS40KSwgc2ltcGx5IHRyeWluZyBJL08gdGhyb3Vn
-aAoiaW5hY2Nlc3NpYmxlIiBwb3J0cyB3b3VsZCBiZSB3cm9uZy4gUmF0aGVyLCB0aGUgcGF0aCBz
-aG91bGQgYmUKbW9uaXRvcmVkIGZvciBhIHRyYW5zaXRpb24gdG8gZWl0aGVyICJvcHRpbWl6ZWQi
-IG9yICJub24tb3B0aW1pemVkIgpzdGF0ZS4gVGhhdCBtYXRjaGVzIHRoZSBiZWhhdmlvciBvZiB0
-aGUga2VybmVsIG5hdGl2ZSBOVk1lIG11bHRpcGF0aApkcml2ZXIsIHdoaWNoIEFGQUlDUyBuZXZl
-ciBhdHRlbXB0cyBJL08gdGhyb3VnaCBhbnkgcGF0aHMgd2hpY2ggYXJlbid0CmVpdGhlciAib3B0
-aW1pemVkIiBvciAibm9uLW9wdGltaXplZCIsIGFuZCBtYWtlcyBubyBkaXN0aW5jdGlvbiBiZXR3
-ZWVuCiJpbmFjY2Vzc2libGUiIGFuZCAicGVyc2lzdGVudCBsb3NzIiBzdGF0ZXMuCgpDaGVlcnMs
-Ck1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5
-ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZl
-ciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykK
-CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
-dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Wed, 2018-12-19 at 22:23 +0100, Xose Vazquez Perez wrote:
+> Xio was acquired by Violin, and add FlashSystem 9100 to Storwize in
+> comments.
+> 
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM-DEVEL ML <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+>  libmultipath/hwtable.c | 50 ++++++++++++++++++++------------------
+> ----
+>  1 file changed, 24 insertions(+), 26 deletions(-)
+> 
+
+How important is it to reflect this kind of company-A-owns-company-B
+information in multipath-tools source code? IMO it makes it harder to
+track code changes, for no obvious technical reason.
+
+Regards
+Martin
+
+
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index d3a8d9b..3eeadde 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -604,7 +604,7 @@ static struct hwentry default_hw[] = {
+>  		.pgpolicy      = MULTIBUS,
+>  	},
+>  	{
+> -		/* Storwize family / SAN Volume Controller / Flex
+> System V7000 / FlashSystem V840/V9000 */
+> +		/* Storwize family / SAN Volume Controller / Flex
+> System V7000 / FlashSystem V840/V9000/9100 */
+>  		.vendor        = "IBM",
+>  		.product       = "^2145",
+>  		.no_path_retry = NO_PATH_RETRY_QUEUE,
+> @@ -1099,31 +1099,7 @@ static struct hwentry default_hw[] = {
+>  		.no_path_retry = 30,
+>  	},
+>  	/*
+> -	 * Xiotech
+> -	 */
+> -	{
+> -		/* Intelligent Storage Elements family */
+> -		.vendor        = "(XIOTECH|XIOtech)",
+> -		.product       = "ISE",
+> -		.pgpolicy      = MULTIBUS,
+> -		.no_path_retry = 12,
+> -	},
+> -	{
+> -		/* iglu blaze family */
+> -		.vendor        = "(XIOTECH|XIOtech)",
+> -		.product       = "IGLU DISK",
+> -		.pgpolicy      = MULTIBUS,
+> -		.no_path_retry = 30,
+> -	},
+> -	{
+> -		/* Magnitude family */
+> -		.vendor        = "(XIOTECH|XIOtech)",
+> -		.product       = "Magnitude",
+> -		.pgpolicy      = MULTIBUS,
+> -		.no_path_retry = 30,
+> -	},
+> -	/*
+> -	 * Violin Memory
+> +	 * Violin Systems
+>  	 */
+>  	{
+>  		/* 3000 / 6000 Series */
+> @@ -1148,6 +1124,28 @@ static struct hwentry default_hw[] = {
+>  		.product       = "CONCERTO ARRAY",
+>  		.pgpolicy      = MULTIBUS,
+>  		.no_path_retry = 30,
+> +	},
+> +		/* Xiotech */
+> +	{
+> +		/* Intelligent Storage Elements family */
+> +		.vendor        = "(XIOTECH|XIOtech)",
+> +		.product       = "ISE",
+> +		.pgpolicy      = MULTIBUS,
+> +		.no_path_retry = 12,
+> +	},
+> +	{
+> +		/* iglu blaze family */
+> +		.vendor        = "(XIOTECH|XIOtech)",
+> +		.product       = "IGLU DISK",
+> +		.pgpolicy      = MULTIBUS,
+> +		.no_path_retry = 30,
+> +	},
+> +	{
+> +		/* Magnitude family */
+> +		.vendor        = "(XIOTECH|XIOtech)",
+> +		.product       = "Magnitude",
+> +		.pgpolicy      = MULTIBUS,
+> +		.no_path_retry = 30,
+>  	},
+>  	/*
+>  	 * Promise Technology
