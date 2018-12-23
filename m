@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 11/20] multipathd: don't check foreign paths
-	every tick
-Date: Sun, 23 Dec 2018 23:21:17 +0100
-Message-ID: <20181223222126.30882-12-mwilck@suse.com>
+Subject: [PATCH v2 03/20] libmultipath: propsel: don't print
+	undefined values
+Date: Sun, 23 Dec 2018 23:21:09 +0100
+Message-ID: <20181223222126.30882-4-mwilck@suse.com>
 References: <20181223222126.30882-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,43 +22,108 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-We don't do this for native paths, so don't do it for
-foreigns, either. Instead use max_checkint for foreign
-paths, always.
+print_off_int_undef() may return 0 if passed NU_UNDEF,
+in which case the buffer contents are undefined.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
+ libmultipath/propsel.c | 42 ++++++++++++++++++++++++------------------
+ 1 file changed, 24 insertions(+), 18 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index aac32ac8..c981d437 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2271,6 +2271,7 @@ checkerloop (void *ap)
- 	unsigned int i;
- 	struct timespec last_time;
- 	struct config *conf;
-+	int foreign_tick = 0;
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 970a3b5c..7b19fed0 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -855,8 +855,9 @@ int select_delay_watch_checks(struct config *conf, struct multipath *mp)
+ 	mp_set_conf(delay_watch_checks);
+ 	mp_set_default(delay_watch_checks, DEFAULT_DELAY_CHECKS);
+ out:
+-	print_off_int_undef(buff, 12, mp->delay_watch_checks);
+-	condlog(3, "%s: delay_watch_checks = %s %s", mp->alias, buff, origin);
++	if (print_off_int_undef(buff, 12, mp->delay_watch_checks) != 0)
++		condlog(3, "%s: delay_watch_checks = %s %s",
++			mp->alias, buff, origin);
+ 	return 0;
+ }
  
- 	pthread_cleanup_push(rcu_unregister, NULL);
- 	rcu_register_thread();
-@@ -2368,7 +2369,15 @@ checkerloop (void *ap)
- 						diff_time.tv_sec);
- 			}
- 		}
--		check_foreign();
-+
-+		if (foreign_tick == 0) {
-+			conf = get_multipath_config();
-+			foreign_tick = conf->max_checkint;
-+			put_multipath_config(conf);
-+		}
-+		if (--foreign_tick == 0)
-+			check_foreign();
-+
- 		post_config_state(DAEMON_IDLE);
- 		conf = get_multipath_config();
- 		strict_timing = conf->strict_timing;
+@@ -871,8 +872,9 @@ int select_delay_wait_checks(struct config *conf, struct multipath *mp)
+ 	mp_set_conf(delay_wait_checks);
+ 	mp_set_default(delay_wait_checks, DEFAULT_DELAY_CHECKS);
+ out:
+-	print_off_int_undef(buff, 12, mp->delay_wait_checks);
+-	condlog(3, "%s: delay_wait_checks = %s %s", mp->alias, buff, origin);
++	if (print_off_int_undef(buff, 12, mp->delay_wait_checks) != 0)
++		condlog(3, "%s: delay_wait_checks = %s %s",
++			mp->alias, buff, origin);
+ 	return 0;
+ 
+ }
+@@ -888,9 +890,10 @@ int select_marginal_path_err_sample_time(struct config *conf, struct multipath *
+ 	mp_set_conf(marginal_path_err_sample_time);
+ 	mp_set_default(marginal_path_err_sample_time, DEFAULT_ERR_CHECKS);
+ out:
+-	print_off_int_undef(buff, 12, mp->marginal_path_err_sample_time);
+-	condlog(3, "%s: marginal_path_err_sample_time = %s %s", mp->alias, buff,
+-			origin);
++	if (print_off_int_undef(buff, 12, mp->marginal_path_err_sample_time)
++	    != 0)
++		condlog(3, "%s: marginal_path_err_sample_time = %s %s",
++			mp->alias, buff, origin);
+ 	return 0;
+ }
+ 
+@@ -905,9 +908,10 @@ int select_marginal_path_err_rate_threshold(struct config *conf, struct multipat
+ 	mp_set_conf(marginal_path_err_rate_threshold);
+ 	mp_set_default(marginal_path_err_rate_threshold, DEFAULT_ERR_CHECKS);
+ out:
+-	print_off_int_undef(buff, 12, mp->marginal_path_err_rate_threshold);
+-	condlog(3, "%s: marginal_path_err_rate_threshold = %s %s", mp->alias, buff,
+-			origin);
++	if (print_off_int_undef(buff, 12, mp->marginal_path_err_rate_threshold)
++	    != 0)
++		condlog(3, "%s: marginal_path_err_rate_threshold = %s %s",
++			mp->alias, buff, origin);
+ 	return 0;
+ }
+ 
+@@ -922,9 +926,10 @@ int select_marginal_path_err_recheck_gap_time(struct config *conf, struct multip
+ 	mp_set_conf(marginal_path_err_recheck_gap_time);
+ 	mp_set_default(marginal_path_err_recheck_gap_time, DEFAULT_ERR_CHECKS);
+ out:
+-	print_off_int_undef(buff, 12, mp->marginal_path_err_recheck_gap_time);
+-	condlog(3, "%s: marginal_path_err_recheck_gap_time = %s %s", mp->alias, buff,
+-			origin);
++	if (print_off_int_undef(buff, 12,
++				mp->marginal_path_err_recheck_gap_time) != 0)
++		condlog(3, "%s: marginal_path_err_recheck_gap_time = %s %s",
++			mp->alias, buff, origin);
+ 	return 0;
+ }
+ 
+@@ -939,9 +944,10 @@ int select_marginal_path_double_failed_time(struct config *conf, struct multipat
+ 	mp_set_conf(marginal_path_double_failed_time);
+ 	mp_set_default(marginal_path_double_failed_time, DEFAULT_ERR_CHECKS);
+ out:
+-	print_off_int_undef(buff, 12, mp->marginal_path_double_failed_time);
+-	condlog(3, "%s: marginal_path_double_failed_time = %s %s", mp->alias, buff,
+-			origin);
++	if (print_off_int_undef(buff, 12, mp->marginal_path_double_failed_time)
++	    != 0)
++		condlog(3, "%s: marginal_path_double_failed_time = %s %s",
++			mp->alias, buff, origin);
+ 	return 0;
+ }
+ 
+@@ -993,8 +999,8 @@ int select_ghost_delay (struct config *conf, struct multipath * mp)
+ 	mp_set_conf(ghost_delay);
+ 	mp_set_default(ghost_delay, DEFAULT_GHOST_DELAY);
+ out:
+-	print_off_int_undef(buff, 12, mp->ghost_delay);
+-	condlog(3, "%s: ghost_delay = %s %s", mp->alias, buff, origin);
++	if (print_off_int_undef(buff, 12, mp->ghost_delay) != 0)
++		condlog(3, "%s: ghost_delay = %s %s", mp->alias, buff, origin);
+ 	return 0;
+ }
+ 
 -- 
 2.19.2
