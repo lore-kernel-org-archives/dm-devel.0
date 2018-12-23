@@ -1,20 +1,11 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 04/19] Revert "multipath-tools: discard
- san_path_err_XXX feature"
-Date: Sun, 23 Dec 2018 11:59:47 +0100
-Message-ID: <0dc3cffd35eae6f28389195308f9a5ae00a5bcb7.camel@suse.com>
-References: <20181218231931.10762-1-mwilck@suse.com>
-	<20181218231931.10762-5-mwilck@suse.com>
-	<70906b6af0249c06e324e83ebb4f1549@mail.gmail.com>
-	<7b211887febc05788f740c7055621ff92af4821c.camel@suse.com>
-	<b6344e8ee048341d345a2b5fb87fd765@mail.gmail.com>
-	<547efee2e83192f8225068daeb18c7e1c514d51d.camel@suse.com>
-	<d4dea3fd25817b278358297d9e654ef6@mail.gmail.com>
+Subject: [PATCH v2 00/20] san_path_err & multipath ANA support
+Date: Sun, 23 Dec 2018 23:21:06 +0100
+Message-ID: <20181223222126.30882-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d4dea3fd25817b278358297d9e654ef6@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,66 +15,117 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Muneendra Kumar M <muneendra.kumar@broadcom.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, mwilck+gmail@suse.de
-Cc: Guan Junxiong <guanjunxiong@huawei.com>, M Muneendra Kumar <mmandala@brocade.com>, dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-SGkgTXVuZWVkcmEsCgo+IFRoZSBzYW5fcGF0aF9lcnJfWFggZmVhdHVyZSB3YXMgYWRkZWQgYnkg
-bWUgYW5kIHB1c2hlZCB0byB0aGUKPiB1cHN0cmVhbS4KPiBBbmQgdGhpcyBmZWF0dXJlIHdhcyBk
-cml2ZW4gZnJvbSBCcm9jYWRlIEN1c3RvbWVyIEZlZWRiYWNrLgo+IAo+IEFuZCB0aGUgYmVsb3cg
-bGluayB3aWxsIGdpdmUgIHRoZSBoaXN0b3J5IG9mIHRoaXMgd2hlcmUgY291cGxlIG9mCj4gZGlz
-Y3Vzc2lvbnMgd2VudCBiZWZvcmUgd2Ugc3RhcnRlZCB0aGlzIGZlYXR1cmUuCj4gCj4gaHR0cHM6
-Ly93d3cucmVkaGF0LmNvbS9hcmNoaXZlcy9kbS1kZXZlbC8yMDE3LUphbnVhcnkvbXNnMDAwMjUu
-aHRtbAoKSSdtIGF3YXJlIHRoYXQgeW91IGF1dGhvcmVkIHRoZSBmZWF0dXJlLiBJIHdhcyBub3Qg
-YXdhcmUgb2YgdGhhdCBwb3N0CnlvdSBxdW90ZWQsIHRoYW5rcyBmb3IgdGhlIGxpbmsuIEFueXdh
-eSwgeW91IG1lbnRpb25lZCBpbiB0aGF0IHBvc3QKdGhhdCB0aGUgaW50ZXJlc3RlZCBjdXN0b21l
-cnMgd2VyZSB1c2luZyBSSEVMLCBoYXZlIHlvdSBtYWRlIHRoZW0KdXBncmFkZSB0aGVpciBtdWx0
-aXBhdGgtdG9vbHMgdG8gcmVjZW50IHVwc3RyZWFtIHRvIHVzZSB0aGUKc2FuX3BhdGhfZXJyIGFu
-ZC9vciBtYXJnaW5hbF9wYXRoIGZlYXR1cmVzPwoKPiBPdXIgcmVxdWlyZW1lbnQgd2FzIHNpbXBs
-ZQo+IEZvciBleGFtcGxlIElmIHRoZXJlIGFyZSB0d28gcGF0aHMgb24gYSBkbS0xIHNheSBzZGEg
-YW5kIHNkYiBhcwo+IGJlbG93Lgo+IAo+ICAjICBtdWx0aXBhdGggLWxsCj4gIG1wYXRoZCAoMzYw
-MDExMGQwMDFlZTdmMDEwMjA1MDAwMWNjMGI2NzUxKSBkbS0xIFNBTkJsYXplLFZMVU4gTXlMdW4K
-PiAgc2l6ZT04LjBNIGZlYXR1cmVzPScwJyBod2hhbmRsZXI9JzAnIHdwPXJ3Cj4gIGAtKy0gcG9s
-aWN5PSdyb3VuZC1yb2JpbiAwJyBwcmlvPTUwIHN0YXR1cz1hY3RpdmUKPiAgICB8LSA4OjA6MTow
-ICBzZGEgODo0OCBhY3RpdmUgcmVhZHkgIHJ1bm5pbmcKPiAgICBgLSA5OjA6MTowICBzZGIgODo2
-NCBhY3RpdmUgcmVhZHkgIHJ1bm5pbmcKPiAKPiAgQW5kIG9uIHNkYSBpZiBpYW0gc2VlaW5nIGxv
-dCBvZiBlcnJvcnMgZHVlIHRvIHdoaWNoIHRoZSBzZGEgcGF0aCBpcwo+IGZsdWN0dWF0aW5nIGZy
-b20gZmFpbGVkIHN0YXRlIHRvIGFjdGl2ZSBzdGF0ZSBhbmQgdmljZXZlcmEuCj4gCj4gIFRoZSAg
-cmVxdWlyZW1lbnQgd2FzIHNvbWV0aGluZyBsaWtlIHRoaXMgIGlmIHNkYSBpcyBmYWlsZWQobW92
-ZWQKPiBmcm9tCj4gYWN0aXZlIHRvIGZhaWxlZCBzdGF0ZSkgZm9yIG1vcmUgdGhhbiBYCj4gIHRp
-bWVzIGluIGEgWSBkdXJhdGlvbiAsdGhlbiBJIHdhbnQgdG8ga2VlcCB0aGUgc2RhIGluIGZhaWxl
-ZCBzdGF0ZQo+IGZvciBaCj4gZHVyYXRpb24KClRoYW5rcyBmb3IgY2xhcmlmeWluZyB3aGF0IHlv
-dSBtZWFudCB3aXRoICJpcyBmYWlsZWQiLiBJJ2QgYmVlbgp3b25kZXJpbmcgaWYgaXQgbWVhbnQg
-Imdvb2QiLT4iZmFpbGVkIiB0cmFuc2l0aW9ucywgYXMgeW91IGp1c3QKY29uZmlybWVkLCBvciBv
-dmVyYWxsICJmYWlsZWQiIHN0YXRlIGNvdW50LgoKPiAgQW5kIHRoZSBkYXRhIHNob3VsZCB0cmF2
-ZWwgb25seSB0aHJvdWdoIHNkYiBwYXRoIGZvciBaIGhycy4KPiAKPiAKPiAgRnJvbSB0aGUgY29u
-ZmlndXJhdGlvbiBwb2ludCBvZiB2aWV3Cj4gCj4gIHNhbl9wYXRoX2Vycl90aHJlc2hvbGQ6IFRo
-ZSBudW1iZXIgb2YgdGltZXMgdGhlIHNkYSBoYXMgYmVlbiBtb3ZlZAo+IGZyb20KPiBhY3RpdmUg
-dG8gZmFpbGVkIChmcm9tIHRoZSBhYm92ZSBleGFtcGxlIGl0IGlzIFgpCj4gIHNhbl9wYXRoX2Vy
-cl9mb3JnZXRfcmF0ZTogV2F0Y2ggd2luZG93ICh3aXRoaW4gdGhpcyB0aW1lIGZyYW1lIGlmCj4g
-dGhlIHBhdGgKPiBmYWlsdXJlcyAoc2RhIG1vdmluZyBmcm9tIGFjdGl2ZSB0byBmYWlsZWQgKSBh
-cmUgbW9yZSB0aGFuIGVycgo+IHRocmVzaG9sZAo+IHRoZW4gZG9uJ3QgcmVpbnN0YXRlIHRoZSBw
-YXRoKSAoZnJvbSB0aGUgYWJvdmUgZXhhbXBsZSBpdCBpcyBZKQoKVGhlICJ3YXRjaCB3aW5kb3ci
-IGFuYWxvZ3kgZml0cyBpZiB5b3UgaGF2ZSBhIHN0YWJsZSBwYXRoIChubyBvciBvbmx5CnZlcnkg
-cmFyZSBmYWlsdXJlcyBvdmVyIGV4dGVuZGVkIHBlcmlvZHMgb2YgdGltZSkgd2hpY2ggc3VkZGVu
-bHkgc3RhcnRzCmZsdWN0dWF0aW5nLiBNb3JlIHByZWNpc2VseSwgYSAiYmFja2dyb3VuZCIgZmFp
-bHVyZSByYXRlIGNsZWFybHkgYmVsb3cKInNhbl9wYXRoX2Vycl9mb3JnZXRfcmF0ZSIsIGludGVy
-Y2hhbmdpbmcgd2l0aCBwcm9ibGVtYXRpYyBwZXJpb2RzIGluCndoaWNoIHRoZSBmYWlsdXJlIHJh
-dGUgaXMgc2lnbmlmaWNhbnRseSBoaWdoZXIgdGhhbgoic2FuX3BhdGhfZXJyX2ZvcmdldF9yYXRl
-Ii4gQW5kIHRoYXQncyBpcyB0aGUgc2l0dWF0aW9uIHRoZSBhbGdvcml0aG0Kd2FzIG1hZGUgZm9y
-LCByaWdodD8KCkluIGdlbmVyYWwsIHRoZSAidGltZSIgKGluIHRpY2tzKSB0byByZWFjaCB0aGUg
-dHJlc2hvbGQgaXMKCiAgdCA9IFQgLyBtYXgoMS9SIC0gMS9GLCAwKQoKV2hlcmUgVCBpcyBzYW5f
-cGF0aF9lcnJfdGhyZXNob2xkLCBSIGlzIHRoZSBhdmVyYWdlIHRpbWUgKGluIHRpY2tzKQpiZXR3
-ZWVuICJnb29kIi0+ImZhaWxlZCIgdHJhbnNpdGlvbnMgb2YgdGhlIHBhdGgsIGFuZCBGIGlzCnNh
-bl9wYXRoX2Vycl9mb3JnZXRfcmF0ZSAoYWthIHRoZSB0aW1lIGluIHRpY2tzIGFmdGVyIHdoaWNo
-CiJwYXRoX2ZhaWx1cmVzIiBpcyBkZWNyZW1lbnRlZCBieSAxKS4KCklmIFIgPj0gRiwgdCBpcyBp
-bmZpbml0ZTsgdGhlICJwYXRoX2ZhaWx1cmVzIiBjb3VudCBlZmZlY3RpdmVseSBzdGF5cwowLiBJ
-ZiBSIGlzIG11Y2ggc21hbGxlciB0aGFuIEYsIHQgfiBUICogUi4gSWYgUiBpcyBvbmx5IGEgbGl0
-dGxlIGJpdApzbWFsbGVyIHRoYW4gRiwgdCBpcyBmaW5pdGUgYnV0IChwb3NzaWJseSBtdWNoKSBs
-YXJnZXIgdGhhbiBUICogUi4KVGhhdCdzIHdoeSBJIHNsb3BwaWx5IGNhbGxlZCBGIHRoZSAibWF4
-aW11bSB0b2xlcmFibGUgZmFpbHVyZSByYXRlIiBpbgpteSBwcmV2aW91cyBwb3N0LgoKQmVzdCBy
-ZWdhcmRzLApNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBU
-ZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVu
-ZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xy
-bmJlcmcpCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
-cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Hi Christophe,
+
+this series consists of 3 parts. The first part improves the documentation on
+the current approaches to "shaky" or "marginal" path detection, and
+re-introduces the previously removed "san_path_err_xy" approach, which has
+been prematurely removed IMO. At the time, I thought that it was superseded by
+the "marginal path" algorithm, but I have my issues with latter (hopefully
+subject of a follow-up series), and I believe the "medium" complexity of the
+san_path_err code actually has its merits. But to be honest, my strongest
+reason to re-add it is that I have to continue to support it in SLES for some
+time to come.
+
+The second part accumulates a few bug fixes.
+
+The third part introduces NVMe ANA support to multipath-tools, based on the
+original patch from Li Jie of Huawei (#14). Instead of copy/pasting some code
+from nvme-cli, as Li Jie did, I decided to copy some nvme-cli code unmodified
+to our repo, and create a small wrapper around it.  I took care not increase
+the generated binaries with code we don't need. I added detect_prio on top of
+it, and also added ANA support for the "foreign" code for native NVMe
+multipath. BTW: Instead of applying patch #12, it would probably be possible
+to simply add https://github.com/linux-nvme/nvme-cli as a submodule to multipath-
+tools. I haven't tried that yet.
+
+One thing to note: in dm-multipath mode, multipathd can now read the ANA
+properties and derive prio values. But it can't react on updates from the
+storage so far, because the kernel doesn't generate events to user space
+if this happens. I haven't decided how to tackle this problem yet. Hints
+and comments are welcome. For now, I guess it's sufficient that multipathd
+makes prio updates in the checker loop.
+
+Cheers,
+Martin
+
+Changes wrt v1:
+ - 15/20: Model ANA priorities after ALUA (Hannes)
+ - 15/20: Remove ana.h (Ben)
+ - 15/20: Remove check if device is NVMe (Ben)
+ - 20/20: Another minor fix for the NVMe foreign library
+
+Kyle Mahlkuch (1):
+  libmultipath: Increase SERIAL_SIZE to 128 bytes
+
+lijie (1):
+  multipath-tools: add ANA support for NVMe device
+
+Martin Wilck (18):
+  multipath.conf.5: explain "shaky" path detection
+  libmultipath: propsel: don't print undefined values
+  Revert "multipath-tools: discard san_path_err_XXX feature"
+  multipathd: marginal_path overrides san_path_err
+  multipath.conf.5: man page fixes for san_path_err_xy
+  setup_map: wait for pending path checkers to finish
+  libmultipath: add ARRAY_SIZE helper
+  libmultipath: make close_fd() a common helper
+  libmultipath: restore PG prio in update_multipath_strings
+  multipathd: don't check foreign paths every tick
+  libmultipath: add files from nvme-cli for NVMe support
+  libmultipath: add wrapper library for nvme ioctls
+  libmultipath: ANA prioritzer: use nvme wrapper library
+  libmultipath: detect_prio: try ANA for NVMe
+  libmultipath/foreign/nvme: use failover topology
+  libmultipath/foreign/nvme: show ANA state
+  libmultipath/foreign/nvme: indicate ANA support
+  libmultipath/foreign/nvme: fix ouput for "%n" wildcard
+
+ libmultipath/Makefile              |   18 +-
+ libmultipath/config.c              |    3 +
+ libmultipath/config.h              |    9 +
+ libmultipath/configure.c           |   86 +-
+ libmultipath/dict.c                |   39 +
+ libmultipath/foreign/Makefile      |    2 +-
+ libmultipath/foreign/nvme.c        |  187 ++--
+ libmultipath/nvme-lib.c            |   49 +
+ libmultipath/nvme-lib.h            |   39 +
+ libmultipath/nvme/argconfig.h      |   99 ++
+ libmultipath/nvme/json.h           |   87 ++
+ libmultipath/nvme/linux/nvme.h     | 1450 ++++++++++++++++++++++++++++
+ libmultipath/nvme/nvme-ioctl.c     |  869 +++++++++++++++++
+ libmultipath/nvme/nvme-ioctl.h     |  139 +++
+ libmultipath/nvme/nvme.h           |  163 ++++
+ libmultipath/nvme/plugin.h         |   36 +
+ libmultipath/prio.h                |    1 +
+ libmultipath/prioritizers/Makefile |    5 +
+ libmultipath/prioritizers/ana.c    |  232 +++++
+ libmultipath/propsel.c             |  151 ++-
+ libmultipath/propsel.h             |    3 +
+ libmultipath/structs.h             |   30 +-
+ libmultipath/structs_vec.c         |    8 +
+ libmultipath/sysfs.c               |    5 -
+ libmultipath/util.c                |    5 +
+ libmultipath/util.h                |    3 +
+ multipath/main.c                   |    4 -
+ multipath/multipath.conf.5         |  141 ++-
+ multipathd/main.c                  |  105 +-
+ tests/hwtable.c                    |    2 +-
+ 30 files changed, 3865 insertions(+), 105 deletions(-)
+ create mode 100644 libmultipath/nvme-lib.c
+ create mode 100644 libmultipath/nvme-lib.h
+ create mode 100644 libmultipath/nvme/argconfig.h
+ create mode 100644 libmultipath/nvme/json.h
+ create mode 100644 libmultipath/nvme/linux/nvme.h
+ create mode 100644 libmultipath/nvme/nvme-ioctl.c
+ create mode 100644 libmultipath/nvme/nvme-ioctl.h
+ create mode 100644 libmultipath/nvme/nvme.h
+ create mode 100644 libmultipath/nvme/plugin.h
+ create mode 100644 libmultipath/prioritizers/ana.c
+
+-- 
+2.19.2
