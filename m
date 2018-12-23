@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 01/20] libmultipath: Increase SERIAL_SIZE to
-	128 bytes
-Date: Sun, 23 Dec 2018 23:21:07 +0100
-Message-ID: <20181223222126.30882-2-mwilck@suse.com>
+Subject: [PATCH v2 07/20] setup_map: wait for pending path
+	checkers to finish
+Date: Sun, 23 Dec 2018 23:21:13 +0100
+Message-ID: <20181223222126.30882-8-mwilck@suse.com>
 References: <20181223222126.30882-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,46 +19,123 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Kyle Mahlkuch <kmahlkuc@linux.vnet.ibm.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-From: Kyle Mahlkuch <kmahlkuc@linux.vnet.ibm.com>
+The timeout for synchronous checks is only 1ms when async path
+checking is used, which may easily be missed on busy systems.
+That's not a problem for the path checker, because it simply
+repeats the check one tick later. However, when maps are
+set up (e.g. when new paths are detected), it's desirable
+to get the number of active paths right. Therefore, wait a bit
+longer if path checkers are found pending in setup_map().
 
-Certain IBM FlashSystem LUNs can return up to 85 bytes of serial
-number in the Unit Serial Number VPD page, which is larger than
-the current SERIAL_SIZE definition of 65 bytes. Since the max
-size of this field does not appear to be defined in SPC, increasing
-to 128 bytes should hopefully prevent us from hitting this
-in future.
-
-This is an example of a serial number from a FlashSystem:
-Unit serial number VPD page:
-Unit serial number: 3321360050764008101AB300000000000012204214503IBMfcp
-
-Before this patch multipath returns the error:
-Jul 17 11:24:58 | vpd pg80 overflow, 85/65 bytes required
-
-After the patch is applied the error no longer occur.
-
-Signed-off-by: Kyle Mahlkuch<kmahlkuc@linux.vnet.ibm.com>
-Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/configure.c | 65 ++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 63 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 0a2623a0..d8961164 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -9,7 +9,7 @@
- #include "generic.h"
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 5af4a189..39d2a956 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -44,6 +44,10 @@
+ #include "sysfs.h"
+ #include "io_err_stat.h"
  
- #define WWID_SIZE		128
--#define SERIAL_SIZE		65
-+#define SERIAL_SIZE		128
- #define NODE_NAME_SIZE		224
- #define PATH_STR_SIZE		16
- #define PARAMS_SIZE		4096
++/* Time in ms to wait for pending checkers in setup_map() */
++#define WAIT_CHECKERS_PENDING_MS 10
++#define WAIT_ALL_CHECKERS_PENDING_MS 90
++
+ /* group paths in pg by host adapter
+  */
+ int group_by_host_adapter(struct pathgroup *pgp, vector adapters)
+@@ -257,12 +261,43 @@ int rr_optimize_path_order(struct pathgroup *pgp)
+ 	return 0;
+ }
+ 
++static int wait_for_pending_paths(struct multipath *mpp,
++				  struct config *conf,
++				  int n_pending, int goal, int wait_ms)
++{
++	static const struct timespec millisec =
++		{ .tv_sec = 0, .tv_nsec = 1000*1000 };
++	int i, j;
++	struct path *pp;
++	struct pathgroup *pgp;
++	struct timespec ts;
++
++	do {
++		vector_foreach_slot(mpp->pg, pgp, i) {
++			vector_foreach_slot(pgp->paths, pp, j) {
++				if (pp->state != PATH_PENDING)
++					continue;
++				pp->state = get_state(pp, conf,
++						      0, PATH_PENDING);
++				if (pp->state != PATH_PENDING &&
++				    --n_pending <= goal)
++					return 0;
++			}
++		}
++		ts = millisec;
++		while (nanosleep(&ts, &ts) != 0 && errno == EINTR)
++			/* nothing */;
++	} while (--wait_ms > 0);
++
++	return n_pending;
++}
++
+ int setup_map(struct multipath *mpp, char *params, int params_size,
+ 	      struct vectors *vecs)
+ {
+ 	struct pathgroup * pgp;
+ 	struct config *conf;
+-	int i;
++	int i, n_paths;
+ 
+ 	/*
+ 	 * don't bother if devmap size is unknown
+@@ -339,7 +374,9 @@ int setup_map(struct multipath *mpp, char *params, int params_size,
+ 		condlog(0, "%s: unexpected behavior may occur!",
+ 			mpp->alias);
+ 	}
+-	/*
++
++	n_paths = VECTOR_SIZE(mpp->paths);
++        /*
+ 	 * assign paths to path groups -- start with no groups and all paths
+ 	 * in mpp->paths
+ 	 */
+@@ -353,6 +390,30 @@ int setup_map(struct multipath *mpp, char *params, int params_size,
+ 	if (mpp->pgpolicyfn && mpp->pgpolicyfn(mpp))
+ 		return 1;
+ 
++	/*
++	 * If async state detection is used, see if pending state checks
++	 * have finished, to get nr_active right. We can't wait until the
++	 * checkers time out, as that may take 30s or more, and we are
++	 * holding the vecs lock.
++	 */
++	if (conf->force_sync == 0 && n_paths > 0) {
++		int n_pending = pathcount(mpp, PATH_PENDING);
++
++		if (n_pending > 0)
++			n_pending = wait_for_pending_paths(
++				mpp, conf, n_pending, 0,
++				WAIT_CHECKERS_PENDING_MS);
++		/* ALL paths pending - wait some more, but be satisfied
++		   with only some paths finished */
++		if (n_pending == n_paths)
++			n_pending = wait_for_pending_paths(
++				mpp, conf, n_pending,
++				n_paths >= 4 ? 2 : 1,
++				WAIT_ALL_CHECKERS_PENDING_MS);
++		if (n_pending > 0)
++			condlog(2, "%s: setting up map with %d/%d path checkers pending",
++				mpp->alias, n_pending, n_paths);
++	}
+ 	mpp->nr_active = pathcount(mpp, PATH_UP) + pathcount(mpp, PATH_GHOST);
+ 
+ 	/*
 -- 
 2.19.2
