@@ -1,14 +1,12 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 19/20] libmultipath/foreign/nvme: indicate ANA
-	support
-Date: Sun, 23 Dec 2018 23:21:25 +0100
-Message-ID: <20181223222126.30882-20-mwilck@suse.com>
-References: <20181223222126.30882-1-mwilck@suse.com>
+From: Chongyun Wu <wu.chongyun@h3c.com>
+Subject: [PATCH] multipathd: fix daemon not really shutdown
+Date: Wed, 26 Dec 2018 06:34:19 +0000
+Message-ID: <CEB9978CF3252343BE3C67AC9F0086A3651A76AD@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181223222126.30882-1-mwilck@suse.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,126 +16,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Guozhonghua <guozhonghua@h3c.com>, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>
 List-Id: dm-devel.ids
 
-Indicate ANA support in the "hwhandler" output field.
+Hi Martin and Ben,
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Cloud you help to review this patch, thanks.
+
+Test environment: 25 hosts, each host have more than 100 luns,
+each lun have two paths.
+Some times when we try to ceate new multipath will encounter "could
+not create uxsock:98" but the multipathd still running not shutdown
+and can't response any multipathd commands also.
+
+After reproduce this issue and debug, found below fixes might work:
+(1) set_config_state() after pthread_cond_timedwait() other threads
+might changed the running_state from DAEMON_SHUTDOWN to other status
+like DAEMON_IDLE, which will make the shutdown process stopped.
+I found logs to prove this really happened, so we need add judgement
+here too.
+
+(2) process exit signal as possible as we can.
+If we just set a flag and wait handle_signals to handle exit signal,
+there might have more 5s to wait because of ppoll maximal wait time.
+And there might haven't enouth time left for all threads to clean up
+and exit.
+
+With this patch our tester not report this issue again.
+
+Signed-off-by: Chongyun Wu <wu.chongyun@h3c.com>
 ---
- libmultipath/foreign/Makefile |  2 +-
- libmultipath/foreign/nvme.c   | 47 +++++++++++++++++++++++++++++++++--
- 2 files changed, 46 insertions(+), 3 deletions(-)
+  multipathd/main.c | 11 +++--------
+  1 file changed, 3 insertions(+), 8 deletions(-)
 
-diff --git a/libmultipath/foreign/Makefile b/libmultipath/foreign/Makefile
-index fe98ddf7..713762cb 100644
---- a/libmultipath/foreign/Makefile
-+++ b/libmultipath/foreign/Makefile
-@@ -3,7 +3,7 @@
- #
- include ../../Makefile.inc
- 
--CFLAGS += $(LIB_CFLAGS) -I..
-+CFLAGS += $(LIB_CFLAGS) -I.. -I../nvme
- 
- # If you add or remove a checker also update multipath/multipath.conf.5
- LIBS= \
-diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
-index bda9bcc4..838e450e 100644
---- a/libmultipath/foreign/nvme.c
-+++ b/libmultipath/foreign/nvme.c
-@@ -15,6 +15,8 @@
-   along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
- 
-+#include "nvme-lib.h"
-+#include <sys/types.h>
- #include <sys/sysmacros.h>
- #include <libudev.h>
- #include <stdio.h>
-@@ -27,6 +29,7 @@
- #include <dirent.h>
- #include <errno.h>
- #include <ctype.h>
-+#include <fcntl.h>
- #include "util.h"
- #include "vector.h"
- #include "generic.h"
-@@ -65,6 +68,7 @@ struct nvme_map {
- 	dev_t devt;
- 	struct _vector pgvec;
- 	int nr_live;
-+	int ana_supported;
- };
- 
- #define NAME_LEN 64 /* buffer length for temp attributes */
-@@ -183,11 +187,14 @@ static int snprint_nvme_map(const struct gen_multipath *gmp,
- 			return snprintf(buff, len, "%s", "rw");
- 	case 'G':
- 		return snprintf(buff, len, "%s", THIS);
-+	case 'h':
-+		if (nvm->ana_supported == YNU_YES)
-+			return snprintf(buff, len, "ANA");
- 	default:
--		return snprintf(buff, len, N_A);
- 		break;
- 	}
--	return 0;
-+
-+	return snprintf(buff, len, N_A);
- }
- 
- static const struct _vector*
-@@ -567,6 +574,40 @@ out:
- 	return blkdev;
- }
- 
-+static void test_ana_support(struct nvme_map *map, struct udev_device *ctl)
-+{
-+	const char *dev_t;
-+	char sys_path[64];
-+	long fd;
-+	int rc;
-+
-+	if (map->ana_supported != YNU_UNDEF)
-+		return;
-+
-+	dev_t = udev_device_get_sysattr_value(ctl, "dev");
-+	if (snprintf(sys_path, sizeof(sys_path), "/dev/char/%s", dev_t)
-+	    >= sizeof(sys_path))
-+		return;
-+
-+	fd = open(sys_path, O_RDONLY);
-+	if (fd == -1) {
-+		condlog(2, "%s: error opening %s", __func__, sys_path);
-+		return;
-+	}
-+
-+	pthread_cleanup_push(close_fd, (void *)fd);
-+	rc = nvme_id_ctrl_ana(fd, NULL);
-+	if (rc < 0)
-+		condlog(2, "%s: error in nvme_id_ctrl: %s", __func__,
-+			strerror(errno));
-+	else {
-+		map->ana_supported = (rc == 1 ? YNU_YES : YNU_NO);
-+		condlog(3, "%s: NVMe ctrl %s: ANA %s supported", __func__, dev_t,
-+			rc == 1 ? "is" : "is not");
-+	}
-+	pthread_cleanup_pop(1);
-+}
-+
- static void _find_controllers(struct context *ctx, struct nvme_map *map)
- {
- 	char pathbuf[PATH_MAX], realbuf[PATH_MAX];
-@@ -670,6 +711,8 @@ static void _find_controllers(struct context *ctx, struct nvme_map *map)
- 			cleanup_nvme_path(path);
- 			continue;
- 		}
-+		test_ana_support(map, path->ctl);
-+
- 		path->pg.gen.ops = &nvme_pg_ops;
- 		if (vector_alloc_slot(&path->pg.pathvec) == NULL) {
- 			cleanup_nvme_path(path);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 991452930433..620b8264c82f 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -141,7 +141,6 @@ struct udev * udev;
+  struct config *multipath_conf;
+
+  /* Local variables */
+-static volatile sig_atomic_t exit_sig;
+  static volatile sig_atomic_t reconfig_sig;
+  static volatile sig_atomic_t log_reset_sig;
+
+@@ -247,7 +246,7 @@ int set_config_state(enum daemon_status state)
+  			rc = pthread_cond_timedwait(&config_cond,
+  						    &config_lock, &ts);
+  		}
+-		if (!rc) {
++		if (!rc && (running_state != DAEMON_SHUTDOWN)) {
+  			running_state = state;
+  			pthread_cond_broadcast(&config_cond);
+  #ifdef USE_SYSTEMD
+@@ -2517,11 +2516,6 @@ signal_set(int signo, void (*func) (int))
+  void
+  handle_signals(bool nonfatal)
+  {
+-	if (exit_sig) {
+-		condlog(2, "exit (signal)");
+-		exit_sig = 0;
+-		exit_daemon();
+-	}
+  	if (!nonfatal)
+  		return;
+  	if (reconfig_sig) {
+@@ -2546,7 +2540,8 @@ sighup (int sig)
+  static void
+  sigend (int sig)
+  {
+-	exit_sig = 1;
++	condlog(2, "exit (signal)");
++	exit_daemon();
+  }
+
+  static void
 -- 
-2.19.2
+2.11.0
