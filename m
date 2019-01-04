@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 3/6] multipathd: allow shutdown during
-	configure()
-Date: Fri,  4 Jan 2019 18:59:11 +0100
-Message-ID: <20190104175914.22784-4-mwilck@suse.com>
+Subject: [RFC PATCH 2/6] multipathd: protect all access to
+	running_state
+Date: Fri,  4 Jan 2019 18:59:10 +0100
+Message-ID: <20190104175914.22784-3-mwilck@suse.com>
 References: <20190104175914.22784-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,183 +22,229 @@ To: Chongyun Wu <wu.chongyun@h3c.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-reconfigure() can be a long-running operation; both initial path
-discovery and initial map setup can take a long time. Allow
-the main program to indicate that the process should be
-interrupted if a shutdown signal was received.
+Chonyun Wu's latest patch has shown that the handling of the daemon
+state variable running_state is racy and difficult to get right. It's
+not a good candidate for a "benign race" annotation. So, as a first
+step to sanitizing it, make sure all accesses to the state variable
+are protected by config_lock.
+
+The patch also replaces "if" with "while" in several places where the
+code was supposed to wait until a certain state was reached. It's
+important that DAEMON_SHUTDOWN terminates all loops of this kind.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c |  5 +++++
- libmultipath/discovery.c |  4 ++++
- libmultipath/exit.h      |  5 +++++
- mpathpersist/main.c      |  5 +++++
- multipath/main.c         |  6 ++++++
- multipathd/main.c        | 18 ++++++++++++++++++
- 6 files changed, 43 insertions(+)
- create mode 100644 libmultipath/exit.h
+ multipathd/main.c | 79 ++++++++++++++++++++++++++++-------------------
+ 1 file changed, 48 insertions(+), 31 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 84ae5f56..2b062b35 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -43,6 +43,7 @@
- #include "wwids.h"
- #include "sysfs.h"
- #include "io_err_stat.h"
-+#include "exit.h"
- 
- /* group paths in pg by host adapter
-  */
-@@ -1021,6 +1022,10 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
- 
- 	vector_foreach_slot (pathvec, pp1, k) {
- 		int invalid;
-+
-+		if (should_exit())
-+			return CP_FAIL;
-+
- 		/* skip this path for some reason */
- 
- 		/* 1. if path has no unique id or wwid blacklisted */
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 7f983a63..3834685c 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -33,6 +33,7 @@
- #include "unaligned.h"
- #include "prioritizers/alua_rtpg.h"
- #include "foreign.h"
-+#include "exit.h"
- 
- int
- alloc_path_with_pathinfo (struct config *conf, struct udev_device *udevice,
-@@ -160,6 +161,9 @@ path_discovery (vector pathvec, int flag)
- 	udev_list_entry_foreach(entry,
- 				udev_enumerate_get_list_entry(udev_iter)) {
- 		const char *devtype;
-+
-+		if (should_exit())
-+			break;
- 		devpath = udev_list_entry_get_name(entry);
- 		condlog(4, "Discover device %s", devpath);
- 		udevice = udev_device_new_from_syspath(udev, devpath);
-diff --git a/libmultipath/exit.h b/libmultipath/exit.h
-new file mode 100644
-index 00000000..1954c5ce
---- /dev/null
-+++ b/libmultipath/exit.h
-@@ -0,0 +1,5 @@
-+#ifndef _EXIT_H
-+#define _EXIT_H
-+
-+extern int should_exit(void);
-+#endif /* _EXIT_H */
-diff --git a/mpathpersist/main.c b/mpathpersist/main.c
-index 10cba452..fa831a07 100644
---- a/mpathpersist/main.c
-+++ b/mpathpersist/main.c
-@@ -7,6 +7,7 @@
- #include "vector.h"
- #include "config.h"
- #include "structs.h"
-+#include "exit.h"
- #include <getopt.h>
- #include <libudev.h>
- #include "mpath_persist.h"
-@@ -42,6 +43,10 @@ int construct_transportid(const char * inp, struct transportid transid[], int nu
- 
- int logsink;
- struct config *multipath_conf;
-+int should_exit(void)
-+{
-+	return 0;
-+}
- 
- struct config *get_multipath_config(void)
- {
-diff --git a/multipath/main.c b/multipath/main.c
-index f40c179b..a5ca10ca 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -63,8 +63,14 @@
- #include "propsel.h"
- #include "time-util.h"
- #include "file.h"
-+#include "exit.h"
- 
- int logsink;
-+int should_exit(void)
-+{
-+	return 0;
-+}
-+
- struct udev *udev;
- struct config *multipath_conf;
- 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 6fc6a3ac..413beee0 100644
+index 6a5d105a..6fc6a3ac 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -67,6 +67,7 @@ static int use_watchdog;
- #include "uevent.h"
- #include "log.h"
- #include "uxsock.h"
-+#include "exit.h"
+@@ -126,11 +126,21 @@ int poll_dmevents = 0;
+ #else
+ int poll_dmevents = 1;
+ #endif
+-enum daemon_status running_state = DAEMON_INIT;
++enum daemon_status _running_state = DAEMON_INIT;
+ pid_t daemon_pid;
+ pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
+ pthread_cond_t config_cond;
  
- #include "mpath_cmd.h"
- #include "mpath_persist.h"
-@@ -141,6 +142,11 @@ static inline enum daemon_status get_running_state(void)
- 	return st;
- }
- 
-+int should_exit(void)
++static inline enum daemon_status get_running_state(void)
 +{
-+	return get_running_state() == DAEMON_SHUTDOWN;
++	enum daemon_status st;
++
++	pthread_mutex_lock(&config_lock);
++	st = _running_state;
++	pthread_mutex_unlock(&config_lock);
++	return st;
 +}
 +
  /*
   * global copy of vecs for use in sig handlers
   */
-@@ -2355,6 +2361,9 @@ configure (struct vectors * vecs)
- 		goto fail;
- 	}
+@@ -148,7 +158,7 @@ static volatile sig_atomic_t log_reset_sig;
+ const char *
+ daemon_status(void)
+ {
+-	switch (running_state) {
++	switch (get_running_state()) {
+ 	case DAEMON_INIT:
+ 		return "init";
+ 	case DAEMON_START:
+@@ -168,10 +178,10 @@ daemon_status(void)
+ /*
+  * I love you too, systemd ...
+  */
+-const char *
+-sd_notify_status(void)
++static const char *
++sd_notify_status(enum daemon_status state)
+ {
+-	switch (running_state) {
++	switch (state) {
+ 	case DAEMON_INIT:
+ 		return "STATUS=init";
+ 	case DAEMON_START:
+@@ -188,17 +198,18 @@ sd_notify_status(void)
+ }
  
-+	if (should_exit())
-+		goto fail;
-+
- 	conf = get_multipath_config();
- 	pthread_cleanup_push(put_multipath_config, conf);
- 	vector_foreach_slot (vecs->pathvec, pp, i){
-@@ -2371,6 +2380,9 @@ configure (struct vectors * vecs)
- 		goto fail;
- 	}
- 
-+	if (should_exit())
-+		goto fail;
-+
+ #ifdef USE_SYSTEMD
+-static void do_sd_notify(enum daemon_status old_state)
++static void do_sd_notify(enum daemon_status old_state,
++			 enum daemon_status new_state)
+ {
  	/*
- 	 * create new set of maps & push changed ones into dm
- 	 * In the first call, use FORCE_RELOAD_WEAK to avoid making
-@@ -2385,6 +2397,9 @@ configure (struct vectors * vecs)
- 		goto fail;
+ 	 * Checkerloop switches back and forth between idle and running state.
+ 	 * No need to tell systemd each time.
+ 	 * These notifications cause a lot of overhead on dbus.
+ 	 */
+-	if ((running_state == DAEMON_IDLE || running_state == DAEMON_RUNNING) &&
++	if ((new_state == DAEMON_IDLE || new_state == DAEMON_RUNNING) &&
+ 	    (old_state == DAEMON_IDLE || old_state == DAEMON_RUNNING))
+ 		return;
+-	sd_notify(0, sd_notify_status());
++	sd_notify(0, sd_notify_status(new_state));
+ }
+ #endif
+ 
+@@ -207,15 +218,16 @@ static void config_cleanup(void *arg)
+ 	pthread_mutex_unlock(&config_lock);
+ }
+ 
++/* must be called with config_lock held */
+ static void __post_config_state(enum daemon_status state)
+ {
+-	if (state != running_state && running_state != DAEMON_SHUTDOWN) {
+-		enum daemon_status old_state = running_state;
++	if (state != _running_state && _running_state != DAEMON_SHUTDOWN) {
++		enum daemon_status old_state = _running_state;
+ 
+-		running_state = state;
++		_running_state = state;
+ 		pthread_cond_broadcast(&config_cond);
+ #ifdef USE_SYSTEMD
+-		do_sd_notify(old_state);
++		do_sd_notify(old_state, state);
+ #endif
  	}
+ }
+@@ -234,12 +246,12 @@ int set_config_state(enum daemon_status state)
  
-+	if (should_exit())
-+		goto fail;
-+
+ 	pthread_cleanup_push(config_cleanup, NULL);
+ 	pthread_mutex_lock(&config_lock);
+-	if (running_state != state) {
+-		enum daemon_status old_state = running_state;
++	if (_running_state != state) {
++		enum daemon_status old_state = _running_state;
+ 
+-		if (running_state == DAEMON_SHUTDOWN)
++		if (_running_state == DAEMON_SHUTDOWN)
+ 			rc = EINVAL;
+-		else if (running_state != DAEMON_IDLE) {
++		else if (_running_state != DAEMON_IDLE) {
+ 			struct timespec ts;
+ 
+ 			clock_gettime(CLOCK_MONOTONIC, &ts);
+@@ -247,11 +259,11 @@ int set_config_state(enum daemon_status state)
+ 			rc = pthread_cond_timedwait(&config_cond,
+ 						    &config_lock, &ts);
+ 		}
+-		if (!rc && (running_state != DAEMON_SHUTDOWN)) {
+-			running_state = state;
++		if (!rc && (_running_state != DAEMON_SHUTDOWN)) {
++			_running_state = state;
+ 			pthread_cond_broadcast(&config_cond);
+ #ifdef USE_SYSTEMD
+-			do_sd_notify(old_state);
++			do_sd_notify(old_state, state);
+ #endif
+ 		}
+ 	}
+@@ -1405,17 +1417,20 @@ uev_trigger (struct uevent * uev, void * trigger_data)
+ 	int r = 0;
+ 	struct vectors * vecs;
+ 	struct uevent *merge_uev, *tmp;
++	enum daemon_status state;
+ 
+ 	vecs = (struct vectors *)trigger_data;
+ 
+ 	pthread_cleanup_push(config_cleanup, NULL);
+ 	pthread_mutex_lock(&config_lock);
+-	if (running_state != DAEMON_IDLE &&
+-	    running_state != DAEMON_RUNNING)
++	while (_running_state != DAEMON_IDLE &&
++	       _running_state != DAEMON_RUNNING &&
++	       _running_state != DAEMON_SHUTDOWN)
+ 		pthread_cond_wait(&config_cond, &config_lock);
++	state = _running_state;
+ 	pthread_cleanup_pop(1);
+ 
+-	if (running_state == DAEMON_SHUTDOWN)
++	if (state == DAEMON_SHUTDOWN)
+ 		return 0;
+ 
  	/*
- 	 * may need to remove some maps which are no longer relevant
- 	 * e.g., due to blacklist changes in conf file
-@@ -2396,6 +2411,9 @@ configure (struct vectors * vecs)
+@@ -2661,6 +2676,7 @@ child (void * param)
+ 	struct config *conf;
+ 	char *envp;
+ 	int queue_without_daemon;
++	enum daemon_status state;
  
- 	dm_lib_release();
+ 	mlockall(MCL_CURRENT | MCL_FUTURE);
+ 	signal_init();
+@@ -2756,8 +2772,9 @@ child (void * param)
+ 	rc = pthread_create(&uxlsnr_thr, &misc_attr, uxlsnrloop, vecs);
+ 	if (!rc) {
+ 		/* Wait for uxlsnr startup */
+-		while (running_state == DAEMON_IDLE)
++		while (_running_state == DAEMON_IDLE)
+ 			pthread_cond_wait(&config_cond, &config_lock);
++		state = _running_state;
+ 	}
+ 	pthread_cleanup_pop(1);
  
-+	if (should_exit())
-+		goto fail;
-+
- 	sync_maps_state(mpvec);
- 	vector_foreach_slot(mpvec, mpp, i){
- 		if (remember_wwid(mpp->wwid) == 1)
+@@ -2765,7 +2782,7 @@ child (void * param)
+ 		condlog(0, "failed to create cli listener: %d", rc);
+ 		goto failed;
+ 	}
+-	else if (running_state != DAEMON_CONFIGURE) {
++	else if (state != DAEMON_CONFIGURE) {
+ 		condlog(0, "cli listener failed to start");
+ 		goto failed;
+ 	}
+@@ -2805,15 +2822,17 @@ child (void * param)
+ 	}
+ 	pthread_attr_destroy(&misc_attr);
+ 
+-	while (running_state != DAEMON_SHUTDOWN) {
++	while (1) {
+ 		pthread_cleanup_push(config_cleanup, NULL);
+ 		pthread_mutex_lock(&config_lock);
+-		if (running_state != DAEMON_CONFIGURE &&
+-		    running_state != DAEMON_SHUTDOWN) {
++		while (_running_state != DAEMON_CONFIGURE &&
++		       _running_state != DAEMON_SHUTDOWN)
+ 			pthread_cond_wait(&config_cond, &config_lock);
+-		}
++		state = _running_state;
+ 		pthread_cleanup_pop(1);
+-		if (running_state == DAEMON_CONFIGURE) {
++		if (state == DAEMON_SHUTDOWN)
++			break;
++		if (state == DAEMON_CONFIGURE) {
+ 			pthread_cleanup_push(cleanup_lock, &vecs->lock);
+ 			lock(&vecs->lock);
+ 			pthread_testcancel();
+@@ -2983,8 +3002,6 @@ main (int argc, char *argv[])
+ 
+ 	ANNOTATE_BENIGN_RACE_SIZED(&multipath_conf, sizeof(multipath_conf),
+ 				   "Manipulated through RCU");
+-	ANNOTATE_BENIGN_RACE_SIZED(&running_state, sizeof(running_state),
+-		"Suppress complaints about unprotected running_state reads");
+ 	ANNOTATE_BENIGN_RACE_SIZED(&uxsock_timeout, sizeof(uxsock_timeout),
+ 		"Suppress complaints about this scalar variable");
+ 
 -- 
 2.19.2
