@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 4/6] multipathd: cancel threads early during
+Subject: [RFC PATCH 1/6] multipathd: fix daemon not really
 	shutdown
-Date: Fri,  4 Jan 2019 18:59:12 +0100
-Message-ID: <20190104175914.22784-5-mwilck@suse.com>
+Date: Fri,  4 Jan 2019 18:59:09 +0100
+Message-ID: <20190104175914.22784-2-mwilck@suse.com>
 References: <20190104175914.22784-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,51 +22,41 @@ To: Chongyun Wu <wu.chongyun@h3c.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Cancel the other threads before taking vecs->lock. This avoids
-delays during shutdown caused e.g. by the checker thread holding
-the vecs lock.
+From: Chongyun Wu <wu.chongyun@h3c.com>
 
+Test environment: 25 hosts, each host have more than 100 luns,
+each lun have two paths.
+Some times when we try to ceate new multipath will encounter "could
+not create uxsock:98" but the multipathd still running not shutdown
+and can't response any multipathd commands also.
+
+After reproduce this issue and debug, found below fixes might work:
+(1) set_config_state() after pthread_cond_timedwait() other threads
+might changed the running_state from DAEMON_SHUTDOWN to other status
+like DAEMON_IDLE, which will make the shutdown process stopped.
+I found logs to prove this really happened, so we need add judgement
+here too.
+
+(2) [this part removed by mwilck]
+
+Signed-off-by: Chongyun Wu <wu.chongyun@h3c.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 17 +++++++++--------
- 1 file changed, 9 insertions(+), 8 deletions(-)
+ multipathd/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 413beee0..569a27ac 100644
+index 99145293..6a5d105a 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -2872,23 +2872,24 @@ child (void * param)
+@@ -247,7 +247,7 @@ int set_config_state(enum daemon_status state)
+ 			rc = pthread_cond_timedwait(&config_cond,
+ 						    &config_lock, &ts);
  		}
- 	}
- 
--	lock(&vecs->lock);
-+	pthread_cancel(check_thr);
-+	pthread_cancel(uevent_thr);
-+	pthread_cancel(uxlsnr_thr);
-+	pthread_cancel(uevq_thr);
-+	if (poll_dmevents)
-+		pthread_cancel(dmevent_thr);
-+
- 	conf = get_multipath_config();
- 	queue_without_daemon = conf->queue_without_daemon;
- 	put_multipath_config(conf);
-+
-+	lock(&vecs->lock);
- 	if (queue_without_daemon == QUE_NO_DAEMON_OFF)
- 		vector_foreach_slot(vecs->mpvec, mpp, i)
- 			dm_queue_if_no_path(mpp->alias, 0);
- 	remove_maps_and_stop_waiters(vecs);
- 	unlock(&vecs->lock);
- 
--	pthread_cancel(check_thr);
--	pthread_cancel(uevent_thr);
--	pthread_cancel(uxlsnr_thr);
--	pthread_cancel(uevq_thr);
--	if (poll_dmevents)
--		pthread_cancel(dmevent_thr);
--
- 	pthread_join(check_thr, NULL);
- 	pthread_join(uevent_thr, NULL);
- 	pthread_join(uxlsnr_thr, NULL);
+-		if (!rc) {
++		if (!rc && (running_state != DAEMON_SHUTDOWN)) {
+ 			running_state = state;
+ 			pthread_cond_broadcast(&config_cond);
+ #ifdef USE_SYSTEMD
 -- 
 2.19.2
