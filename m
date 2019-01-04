@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 2/6] multipathd: protect all access to
-	running_state
-Date: Fri,  4 Jan 2019 18:59:10 +0100
-Message-ID: <20190104175914.22784-3-mwilck@suse.com>
+Subject: [RFC PATCH 6/6] multipathd: uxlsnr: handle signals while
+	busy
+Date: Fri,  4 Jan 2019 18:59:14 +0100
+Message-ID: <20190104175914.22784-7-mwilck@suse.com>
 References: <20190104175914.22784-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,229 +22,141 @@ To: Chongyun Wu <wu.chongyun@h3c.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Chonyun Wu's latest patch has shown that the handling of the daemon
-state variable running_state is racy and difficult to get right. It's
-not a good candidate for a "benign race" annotation. So, as a first
-step to sanitizing it, make sure all accesses to the state variable
-are protected by config_lock.
+The uxlsnr thread is responsible for receiving and handling
+signals in multipathd. This works well while it is idle and
+waiting for connections in ppoll(). But if it's busy, cli commands
+may need to take the vecs lock, which might take a long time.
 
-The patch also replaces "if" with "while" in several places where the
-code was supposed to wait until a certain state was reached. It's
-important that DAEMON_SHUTDOWN terminates all loops of this kind.
+Use multipathd's ability to handle pending signals to avoid
+shutdown delays.
+
+If we find a deadly signal pending, try to use the remaining cycles
+to provide a meaningful error message to the client rather than
+simply break the connection.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 79 ++++++++++++++++++++++++++++-------------------
- 1 file changed, 48 insertions(+), 31 deletions(-)
+ multipathd/cli.c  | 50 ++++++++++++++++++++++++++++++++++-------------
+ multipathd/cli.h  |  2 +-
+ multipathd/main.c |  4 +++-
+ 3 files changed, 40 insertions(+), 16 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 6a5d105a..6fc6a3ac 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -126,11 +126,21 @@ int poll_dmevents = 0;
- #else
- int poll_dmevents = 1;
- #endif
--enum daemon_status running_state = DAEMON_INIT;
-+enum daemon_status _running_state = DAEMON_INIT;
- pid_t daemon_pid;
- pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
- pthread_cond_t config_cond;
+diff --git a/multipathd/cli.c b/multipathd/cli.c
+index a75afe3f..824c01b6 100644
+--- a/multipathd/cli.c
++++ b/multipathd/cli.c
+@@ -12,7 +12,7 @@
+ #include "util.h"
+ #include "version.h"
+ #include <readline/readline.h>
+-
++#include "main.h"
+ #include "cli.h"
  
-+static inline enum daemon_status get_running_state(void)
+ static vector keys;
+@@ -453,13 +453,45 @@ genhelp_handler (const char *cmd, int error)
+ 	return reply;
+ }
+ 
++static int cli_timedlock(struct mutex_lock *a, long ms)
 +{
-+	enum daemon_status st;
++	struct timespec tmo;
++	const long delta_ms = 100;
++	const long MILLION = 1000L * 1000;
++	const long delta_ns = MILLION * delta_ms;
++	const long BILLION = 1000L * MILLION;
++	int r;
 +
-+	pthread_mutex_lock(&config_lock);
-+	st = _running_state;
-+	pthread_mutex_unlock(&config_lock);
-+	return st;
++	if (ms <= 0 || clock_gettime(CLOCK_REALTIME, &tmo) != 0) {
++		if (deliver_pending_signals())
++			return EINTR;
++		pthread_testcancel();
++		pthread_mutex_lock(&a->mutex);
++		return 0;
++	}
++
++	for(; ms > 0; ms -= delta_ms) {
++		if (deliver_pending_signals())
++			return EINTR;
++		pthread_testcancel();
++		tmo.tv_nsec += (ms >= delta_ms ? delta_ns : MILLION * ms);
++		if (tmo.tv_nsec >= BILLION) {
++			tmo.tv_nsec -= BILLION;
++			tmo.tv_sec++;
++		}
++		r = pthread_mutex_timedlock(&a->mutex, &tmo);
++		if (r != ETIMEDOUT)
++			return r;
++	}
++	return ETIMEDOUT;
 +}
 +
- /*
-  * global copy of vecs for use in sig handlers
-  */
-@@ -148,7 +158,7 @@ static volatile sig_atomic_t log_reset_sig;
- const char *
- daemon_status(void)
+ int
+-parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
++parse_cmd(char *cmd, char **reply, int *len, void *data, long timeout_ms)
  {
--	switch (running_state) {
-+	switch (get_running_state()) {
- 	case DAEMON_INIT:
- 		return "init";
- 	case DAEMON_START:
-@@ -168,10 +178,10 @@ daemon_status(void)
- /*
-  * I love you too, systemd ...
-  */
--const char *
--sd_notify_status(void)
-+static const char *
-+sd_notify_status(enum daemon_status state)
- {
--	switch (running_state) {
-+	switch (state) {
- 	case DAEMON_INIT:
- 		return "STATUS=init";
- 	case DAEMON_START:
-@@ -188,17 +198,18 @@ sd_notify_status(void)
- }
+ 	int r;
+ 	struct handler * h;
+ 	vector cmdvec = NULL;
+-	struct timespec tmo;
  
- #ifdef USE_SYSTEMD
--static void do_sd_notify(enum daemon_status old_state)
-+static void do_sd_notify(enum daemon_status old_state,
-+			 enum daemon_status new_state)
- {
+ 	r = get_cmdvec(cmd, &cmdvec);
+ 
+@@ -481,22 +513,12 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
  	/*
- 	 * Checkerloop switches back and forth between idle and running state.
- 	 * No need to tell systemd each time.
- 	 * These notifications cause a lot of overhead on dbus.
+ 	 * execute handler
  	 */
--	if ((running_state == DAEMON_IDLE || running_state == DAEMON_RUNNING) &&
-+	if ((new_state == DAEMON_IDLE || new_state == DAEMON_RUNNING) &&
- 	    (old_state == DAEMON_IDLE || old_state == DAEMON_RUNNING))
- 		return;
--	sd_notify(0, sd_notify_status());
-+	sd_notify(0, sd_notify_status(new_state));
- }
- #endif
+-	if (clock_gettime(CLOCK_REALTIME, &tmo) == 0) {
+-		tmo.tv_sec += timeout;
+-	} else {
+-		tmo.tv_sec = 0;
+-	}
+ 	if (h->locked) {
+ 		int locked = 0;
+ 		struct vectors * vecs = (struct vectors *)data;
  
-@@ -207,15 +218,16 @@ static void config_cleanup(void *arg)
- 	pthread_mutex_unlock(&config_lock);
- }
- 
-+/* must be called with config_lock held */
- static void __post_config_state(enum daemon_status state)
- {
--	if (state != running_state && running_state != DAEMON_SHUTDOWN) {
--		enum daemon_status old_state = running_state;
-+	if (state != _running_state && _running_state != DAEMON_SHUTDOWN) {
-+		enum daemon_status old_state = _running_state;
- 
--		running_state = state;
-+		_running_state = state;
- 		pthread_cond_broadcast(&config_cond);
- #ifdef USE_SYSTEMD
--		do_sd_notify(old_state);
-+		do_sd_notify(old_state, state);
- #endif
- 	}
- }
-@@ -234,12 +246,12 @@ int set_config_state(enum daemon_status state)
- 
- 	pthread_cleanup_push(config_cleanup, NULL);
- 	pthread_mutex_lock(&config_lock);
--	if (running_state != state) {
--		enum daemon_status old_state = running_state;
-+	if (_running_state != state) {
-+		enum daemon_status old_state = _running_state;
- 
--		if (running_state == DAEMON_SHUTDOWN)
-+		if (_running_state == DAEMON_SHUTDOWN)
- 			rc = EINVAL;
--		else if (running_state != DAEMON_IDLE) {
-+		else if (_running_state != DAEMON_IDLE) {
- 			struct timespec ts;
- 
- 			clock_gettime(CLOCK_MONOTONIC, &ts);
-@@ -247,11 +259,11 @@ int set_config_state(enum daemon_status state)
- 			rc = pthread_cond_timedwait(&config_cond,
- 						    &config_lock, &ts);
- 		}
--		if (!rc && (running_state != DAEMON_SHUTDOWN)) {
--			running_state = state;
-+		if (!rc && (_running_state != DAEMON_SHUTDOWN)) {
-+			_running_state = state;
- 			pthread_cond_broadcast(&config_cond);
- #ifdef USE_SYSTEMD
--			do_sd_notify(old_state);
-+			do_sd_notify(old_state, state);
- #endif
- 		}
- 	}
-@@ -1405,17 +1417,20 @@ uev_trigger (struct uevent * uev, void * trigger_data)
- 	int r = 0;
- 	struct vectors * vecs;
- 	struct uevent *merge_uev, *tmp;
-+	enum daemon_status state;
- 
- 	vecs = (struct vectors *)trigger_data;
- 
- 	pthread_cleanup_push(config_cleanup, NULL);
- 	pthread_mutex_lock(&config_lock);
--	if (running_state != DAEMON_IDLE &&
--	    running_state != DAEMON_RUNNING)
-+	while (_running_state != DAEMON_IDLE &&
-+	       _running_state != DAEMON_RUNNING &&
-+	       _running_state != DAEMON_SHUTDOWN)
- 		pthread_cond_wait(&config_cond, &config_lock);
-+	state = _running_state;
- 	pthread_cleanup_pop(1);
- 
--	if (running_state == DAEMON_SHUTDOWN)
-+	if (state == DAEMON_SHUTDOWN)
- 		return 0;
- 
- 	/*
-@@ -2661,6 +2676,7 @@ child (void * param)
- 	struct config *conf;
- 	char *envp;
- 	int queue_without_daemon;
-+	enum daemon_status state;
- 
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
- 	signal_init();
-@@ -2756,8 +2772,9 @@ child (void * param)
- 	rc = pthread_create(&uxlsnr_thr, &misc_attr, uxlsnrloop, vecs);
- 	if (!rc) {
- 		/* Wait for uxlsnr startup */
--		while (running_state == DAEMON_IDLE)
-+		while (_running_state == DAEMON_IDLE)
- 			pthread_cond_wait(&config_cond, &config_lock);
-+		state = _running_state;
- 	}
- 	pthread_cleanup_pop(1);
- 
-@@ -2765,7 +2782,7 @@ child (void * param)
- 		condlog(0, "failed to create cli listener: %d", rc);
- 		goto failed;
- 	}
--	else if (running_state != DAEMON_CONFIGURE) {
-+	else if (state != DAEMON_CONFIGURE) {
- 		condlog(0, "cli listener failed to start");
- 		goto failed;
- 	}
-@@ -2805,15 +2822,17 @@ child (void * param)
- 	}
- 	pthread_attr_destroy(&misc_attr);
- 
--	while (running_state != DAEMON_SHUTDOWN) {
-+	while (1) {
- 		pthread_cleanup_push(config_cleanup, NULL);
- 		pthread_mutex_lock(&config_lock);
--		if (running_state != DAEMON_CONFIGURE &&
--		    running_state != DAEMON_SHUTDOWN) {
-+		while (_running_state != DAEMON_CONFIGURE &&
-+		       _running_state != DAEMON_SHUTDOWN)
- 			pthread_cond_wait(&config_cond, &config_lock);
+ 		pthread_cleanup_push(cleanup_lock, &vecs->lock);
+-		if (tmo.tv_sec) {
+-			r = timedlock(&vecs->lock, &tmo);
+-		} else {
+-			lock(&vecs->lock);
+-			r = 0;
 -		}
-+		state = _running_state;
- 		pthread_cleanup_pop(1);
--		if (running_state == DAEMON_CONFIGURE) {
-+		if (state == DAEMON_SHUTDOWN)
-+			break;
-+		if (state == DAEMON_CONFIGURE) {
- 			pthread_cleanup_push(cleanup_lock, &vecs->lock);
- 			lock(&vecs->lock);
++		r = cli_timedlock(&vecs->lock, timeout_ms);
+ 		if (r == 0) {
+ 			locked = 1;
  			pthread_testcancel();
-@@ -2983,8 +3002,6 @@ main (int argc, char *argv[])
+diff --git a/multipathd/cli.h b/multipathd/cli.h
+index 7cc7e4be..fb20e0d2 100644
+--- a/multipathd/cli.h
++++ b/multipathd/cli.h
+@@ -123,7 +123,7 @@ int alloc_handlers (void);
+ int add_handler (uint64_t fp, int (*fn)(void *, char **, int *, void *));
+ int set_handler_callback (uint64_t fp, int (*fn)(void *, char **, int *, void *));
+ int set_unlocked_handler_callback (uint64_t fp, int (*fn)(void *, char **, int *, void *));
+-int parse_cmd (char * cmd, char ** reply, int * len, void *, int);
++int parse_cmd(char *cmd, char **reply, int *len, void *data, long timeout_ms);
+ int load_keys (void);
+ char * get_keyparam (vector v, uint64_t code);
+ void free_keys (vector vec);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 6276d34c..9ed0cadd 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1395,11 +1395,13 @@ uxsock_trigger (char * str, char ** reply, int * len, bool is_root,
+ 		return 1;
+ 	}
  
- 	ANNOTATE_BENIGN_RACE_SIZED(&multipath_conf, sizeof(multipath_conf),
- 				   "Manipulated through RCU");
--	ANNOTATE_BENIGN_RACE_SIZED(&running_state, sizeof(running_state),
--		"Suppress complaints about unprotected running_state reads");
- 	ANNOTATE_BENIGN_RACE_SIZED(&uxsock_timeout, sizeof(uxsock_timeout),
- 		"Suppress complaints about this scalar variable");
+-	r = parse_cmd(str, reply, len, vecs, uxsock_timeout / 1000);
++	r = parse_cmd(str, reply, len, vecs, uxsock_timeout);
  
+ 	if (r > 0) {
+ 		if (r == ETIMEDOUT)
+ 			*reply = STRDUP("timeout\n");
++		else if (r == EINTR)
++			*reply = STRDUP("daemon exiting\n");
+ 		else
+ 			*reply = STRDUP("fail\n");
+ 		if (*reply)
 -- 
 2.19.2
