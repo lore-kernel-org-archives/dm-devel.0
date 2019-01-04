@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 6/6] multipathd: uxlsnr: handle signals while
-	busy
-Date: Fri,  4 Jan 2019 18:59:14 +0100
-Message-ID: <20190104175914.22784-7-mwilck@suse.com>
+Subject: [RFC PATCH 5/6] multipathd: add code to handle blocked
+	signals
+Date: Fri,  4 Jan 2019 18:59:13 +0100
+Message-ID: <20190104175914.22784-6-mwilck@suse.com>
 References: <20190104175914.22784-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,141 +22,66 @@ To: Chongyun Wu <wu.chongyun@h3c.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The uxlsnr thread is responsible for receiving and handling
-signals in multipathd. This works well while it is idle and
-waiting for connections in ppoll(). But if it's busy, cli commands
-may need to take the vecs lock, which might take a long time.
+multipathd blocks all signals except in the uxlsnr thread.
+Add some code to handle signals even while they're blocked.
 
-Use multipathd's ability to handle pending signals to avoid
-shutdown delays.
-
-If we find a deadly signal pending, try to use the remaining cycles
-to provide a meaningful error message to the client rather than
-simply break the connection.
+If a shutdown signal is received, deliver_pending_signals() returns
+TRUE. This is not the same as should_exit(), it's just a friendly
+warning to the caller that shutdown/thread cancellation is imminent.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/cli.c  | 50 ++++++++++++++++++++++++++++++++++-------------
- multipathd/cli.h  |  2 +-
- multipathd/main.c |  4 +++-
- 3 files changed, 40 insertions(+), 16 deletions(-)
+ multipathd/main.c | 25 +++++++++++++++++++++++++
+ multipathd/main.h |  1 +
+ 2 files changed, 26 insertions(+)
 
-diff --git a/multipathd/cli.c b/multipathd/cli.c
-index a75afe3f..824c01b6 100644
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -12,7 +12,7 @@
- #include "util.h"
- #include "version.h"
- #include <readline/readline.h>
--
-+#include "main.h"
- #include "cli.h"
- 
- static vector keys;
-@@ -453,13 +453,45 @@ genhelp_handler (const char *cmd, int error)
- 	return reply;
- }
- 
-+static int cli_timedlock(struct mutex_lock *a, long ms)
-+{
-+	struct timespec tmo;
-+	const long delta_ms = 100;
-+	const long MILLION = 1000L * 1000;
-+	const long delta_ns = MILLION * delta_ms;
-+	const long BILLION = 1000L * MILLION;
-+	int r;
-+
-+	if (ms <= 0 || clock_gettime(CLOCK_REALTIME, &tmo) != 0) {
-+		if (deliver_pending_signals())
-+			return EINTR;
-+		pthread_testcancel();
-+		pthread_mutex_lock(&a->mutex);
-+		return 0;
-+	}
-+
-+	for(; ms > 0; ms -= delta_ms) {
-+		if (deliver_pending_signals())
-+			return EINTR;
-+		pthread_testcancel();
-+		tmo.tv_nsec += (ms >= delta_ms ? delta_ns : MILLION * ms);
-+		if (tmo.tv_nsec >= BILLION) {
-+			tmo.tv_nsec -= BILLION;
-+			tmo.tv_sec++;
-+		}
-+		r = pthread_mutex_timedlock(&a->mutex, &tmo);
-+		if (r != ETIMEDOUT)
-+			return r;
-+	}
-+	return ETIMEDOUT;
-+}
-+
- int
--parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
-+parse_cmd(char *cmd, char **reply, int *len, void *data, long timeout_ms)
- {
- 	int r;
- 	struct handler * h;
- 	vector cmdvec = NULL;
--	struct timespec tmo;
- 
- 	r = get_cmdvec(cmd, &cmdvec);
- 
-@@ -481,22 +513,12 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
- 	/*
- 	 * execute handler
- 	 */
--	if (clock_gettime(CLOCK_REALTIME, &tmo) == 0) {
--		tmo.tv_sec += timeout;
--	} else {
--		tmo.tv_sec = 0;
--	}
- 	if (h->locked) {
- 		int locked = 0;
- 		struct vectors * vecs = (struct vectors *)data;
- 
- 		pthread_cleanup_push(cleanup_lock, &vecs->lock);
--		if (tmo.tv_sec) {
--			r = timedlock(&vecs->lock, &tmo);
--		} else {
--			lock(&vecs->lock);
--			r = 0;
--		}
-+		r = cli_timedlock(&vecs->lock, timeout_ms);
- 		if (r == 0) {
- 			locked = 1;
- 			pthread_testcancel();
-diff --git a/multipathd/cli.h b/multipathd/cli.h
-index 7cc7e4be..fb20e0d2 100644
---- a/multipathd/cli.h
-+++ b/multipathd/cli.h
-@@ -123,7 +123,7 @@ int alloc_handlers (void);
- int add_handler (uint64_t fp, int (*fn)(void *, char **, int *, void *));
- int set_handler_callback (uint64_t fp, int (*fn)(void *, char **, int *, void *));
- int set_unlocked_handler_callback (uint64_t fp, int (*fn)(void *, char **, int *, void *));
--int parse_cmd (char * cmd, char ** reply, int * len, void *, int);
-+int parse_cmd(char *cmd, char **reply, int *len, void *data, long timeout_ms);
- int load_keys (void);
- char * get_keyparam (vector v, uint64_t code);
- void free_keys (vector vec);
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 6276d34c..9ed0cadd 100644
+index 569a27ac..6276d34c 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -1395,11 +1395,13 @@ uxsock_trigger (char * str, char ** reply, int * len, bool is_root,
- 		return 1;
- 	}
+@@ -2614,6 +2614,31 @@ signal_init(void)
+ 	signal_set(SIGPIPE, sigend);
+ }
  
--	r = parse_cmd(str, reply, len, vecs, uxsock_timeout / 1000);
-+	r = parse_cmd(str, reply, len, vecs, uxsock_timeout);
- 
- 	if (r > 0) {
- 		if (r == ETIMEDOUT)
- 			*reply = STRDUP("timeout\n");
-+		else if (r == EINTR)
-+			*reply = STRDUP("daemon exiting\n");
- 		else
- 			*reply = STRDUP("fail\n");
- 		if (*reply)
++bool deliver_pending_signals(void)
++{
++	sigset_t set;
++	bool ret = exit_sig;
++
++	if (sigpending(&set) != 0)
++		return false;
++
++	if (sigismember(&set, SIGTERM) ||
++	    sigismember(&set, SIGPIPE) ||
++	    sigismember(&set, SIGINT)) {
++		sigend(SIGTERM);
++		ret = true;
++	}
++	if (sigismember(&set, SIGHUP))
++		sighup(SIGHUP);
++	if (sigismember(&set, SIGUSR1))
++		sigusr1(SIGUSR1);
++	if (sigismember(&set, SIGUSR2))
++		sigusr2(SIGUSR2);
++
++	handle_signals(false);
++	return ret;
++}
++
+ static void
+ setscheduler (void)
+ {
+diff --git a/multipathd/main.h b/multipathd/main.h
+index 8fd426b0..2b77b44b 100644
+--- a/multipathd/main.h
++++ b/multipathd/main.h
+@@ -39,6 +39,7 @@ void * mpath_pr_event_handler_fn (void * );
+ int update_map_pr(struct multipath *mpp);
+ void * mpath_pr_event_handler_fn (void * pathp );
+ void handle_signals(bool);
++bool deliver_pending_signals(void);
+ int __setup_multipath (struct vectors * vecs, struct multipath * mpp,
+ 		       int reset);
+ #define setup_multipath(vecs, mpp) __setup_multipath(vecs, mpp, 1)
 -- 
 2.19.2
