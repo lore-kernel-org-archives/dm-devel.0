@@ -1,14 +1,10 @@
-From: Chongyun Wu <wu.chongyun@h3c.com>
-Subject: Re: [RFC PATCH 0/6] multipath-tools: Fix remaining
- shutdown delay issues
-Date: Mon, 7 Jan 2019 10:00:15 +0000
-Message-ID: <CEB9978CF3252343BE3C67AC9F0086A3651AA2FD@H3CMLB14-EX.srv.huawei-3com.com>
-References: <20190104175914.22784-1-mwilck@suse.com>
+From: NeilBrown <neil@brown.name>
+Subject: [PATCH] dm: fix to_sector() for 32bit
+Date: Sun, 06 Jan 2019 21:06:25 +1100
+Message-ID: <87tvimje1q.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============8805542695904257593=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,66 +14,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Guillaume =?utf-8?Q?Perr=C3=A9al?= <gperreal@free.fr>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Martin,
+--===============8805542695904257593==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha256; protocol="application/pgp-signature"
 
-Your analysis and patch is good for me. I will pick up those patches and 
-test in our test environment, I will let you know the result when I 
-finish the test, thanks.
+--=-=-=
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-Chongyun Wu
 
-On 2019/1/5 1:59, Martin Wilck wrote:
-> Hi Chongyun, Ben, all,
-> 
-> this patch set addresses the points where I can see that handling of
-> shutdown signals may be delayed, as discussed previously. Quoting my
-> previous post:
-> 
-> Let's summarize how multipathd exit works today:
-> 
->   1. signal arrives
->      (signal may be blocked while uxlsnr is busy, see above)
->   2. signal is unblocked in uxlsnr thread (in ppoll())
->   3. signal handler sets exit_sig()
->   4. uxlsnr calls handle_signals()
->   5. handle_signals()->exit_daemon() sets DAEMON_SHUTDOWN() and posts
-> config_cond (child may busy in reconfigure())
->   6. child detects DAEMON_SHUTDOWN and quits main loop
->   7. child locks vecs->lock (may cause wait)
->   8. sets dm_queue_if_no_path, cancels threads, and exits.
-> 
-> I can imagine delays in step 1, 5, and 7, but not in ppoll().
-> 
-> This series addresses 1) in patch 5 and 6, 5) in patch 3, and 7) in patch 4.
-> The series also contains the part of Chongyun's previously posted patch
-> which I agree with.
-> 
-> The set is compile tested, but no more so far. Chongyun, I'd be grateful
-> if you could review it, and give it a try in your test setup.
-> 
-> Chongyun Wu (1):
->    multipathd: fix daemon not really shutdown
-> 
-> Martin Wilck (5):
->    multipathd: protect all access to running_state
->    multipathd: allow shutdown during configure()
->    multipathd: cancel threads early during shutdown
->    multipathd: add code to handle blocked signals
->    multipathd: uxlsnr: handle signals while busy
-> 
->   libmultipath/configure.c |   5 ++
->   libmultipath/discovery.c |   4 ++
->   libmultipath/exit.h      |   5 ++
->   mpathpersist/main.c      |   5 ++
->   multipath/main.c         |   6 ++
->   multipathd/cli.c         |  50 ++++++++++----
->   multipathd/cli.h         |   2 +-
->   multipathd/main.c        | 143 ++++++++++++++++++++++++++++-----------
->   multipathd/main.h        |   1 +
->   9 files changed, 166 insertions(+), 55 deletions(-)
->   create mode 100644 libmultipath/exit.h
-> 
+A dm-raid array with devices larger than 4GB won't assemble on
+a 32 bit host since _check_data_dev_sectors() was added in 4.16.
+This is because to_sector() treats its argument as an "unsigned long"
+which is 32bits (4GB) on a 32bit host.  Using "unsigned long long"
+is more correct.
+
+Kernels as early as 4.2 can have other problems due to to_sector()
+being used on the size of a device.
+
+Fixes: 0cf4503174c1 ("dm raid: add support for the MD RAID0 personality")
+cc: stable@vger.kernel.org (v4.2+)
+Reported-and-tested-by: Guillaume Perr=C3=A9al <gperreal@free.fr>
+Signed-off-by: NeilBrown <neil@brown.name>
+=2D--
+ include/linux/device-mapper.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index e528baebad69..bee4bb9f81bc 100644
+=2D-- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -609,7 +609,7 @@ do {									\
+  */
+ #define dm_target_offset(ti, sector) ((sector) - (ti)->begin)
+=20
+=2Dstatic inline sector_t to_sector(unsigned long n)
++static inline sector_t to_sector(unsigned long long n)
+ {
+ 	return (n >> SECTOR_SHIFT);
+ }
+=2D-=20
+2.14.0.rc0.dirty
+
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAlwx0yEACgkQOeye3VZi
+gblbsw/8DeUnpaOk8Ap1UQ2kgp0t4BtXRUtilRRmgM9gwaFaczfQeazYWePHEeig
+lJdBFalDzdFdEUWN8MPJUZ0jU4IZ7rH7AIx2YnNSXhUxUIyQ3Gp36jTO/uSCDTSj
+PKxj+aFMMWN8eNZLKutjAFjFPK5I808sT2ww3xS/uQOHWvO+TUKcgjCzbjlTwKEw
+ZJU9RZtMn/TwS8M5szz7SQ7tJhZftCvlxnQ4gYcN2FGXhUP6Ppg+I4wZjj6nlgRW
+cNNJl7pJALdVziOy11NeKaFGkJEfOmHGoVgdYV5vthDE0jRV0XlMkZ9iqc6aXdIE
+ATDDXAHtW4ssvxhUlbY9Ar+wt5x1Bk/B9/6u9uKoMrVYQw5TX18gOtm3JHvqjK7k
+6JJi4MAiG3zB/01ym76q1pUqnM2IF0ELABycTK04jIYz1q8OjwPLhRJOo4MAeGkM
+rwiX7xrqdMl+NKbKZB1E3Vk+0NNMtlvMz5RBOKFBHbZkf3OyGLZyAuJ6ZaTGJdRm
+/iJp4XnU9EeXXWag0fWFm6FP81JMwMBQLWBr8oo2wh3iRDiZa5V6yGIHuKBD1Pwe
+HMr5Ss5uBOMjeb3q1aBymRF4LdPfaDvaBuK4OfySGnVoZzVRgGqzrv0/kMfQPTPT
+sbc4WUotlrjYkiik9gZwT4xUvPoXyoSxMnxY/+p0DrLglzLSeBs=
+=4Jvr
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+
+--===============8805542695904257593==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============8805542695904257593==--
