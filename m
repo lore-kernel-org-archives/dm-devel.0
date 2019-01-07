@@ -1,16 +1,11 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 00/19] san_path_err & multipath ANA support
-Date: Mon, 7 Jan 2019 13:15:04 -0600
-Message-ID: <20190107191504.GL11315@octiron.msp.redhat.com>
-References: <20181218231931.10762-1-mwilck@suse.com>
-	<20181221160640.GI11315@octiron.msp.redhat.com>
-	<b717c0ca88c546da7fdeb5285bd65a7a26fefa6e.camel@suse.com>
+From: Bryan Gurney <bgurney@redhat.com>
+Subject: [RFC PATCH 0/1] dm: add dm-dust, a bad sector emulator
+Date: Mon,  7 Jan 2019 14:31:22 -0500
+Message-ID: <1546889483-6341-1-git-send-email-bgurney@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <b717c0ca88c546da7fdeb5285bd65a7a26fefa6e.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,89 +15,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: mwilck+gmail@suse.de, dm-devel@redhat.com
+To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
+Cc: jdorminy@redhat.com, jshimkus@redhat.com, tjaskiew@redhat.com, jpittman@redhat.com, Bryan Gurney <bgurney@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jan 07, 2019 at 12:21:55PM +0100, Martin Wilck wrote:
-> On Fri, 2018-12-21 at 10:06 -0600, Benjamin Marzinski wrote:
-> > =
+This patch adds the device-mapper target dm-dust, which allows the
+arbitrary designation of "bad" sectors, at an arbitrary time.
 
-> > I've been thinking about how we handle marginal paths, and it seems
-> > to
-> > me that instead of telling the kernel that they have failed, it might
-> > be
-> > better to create pathgroups of last resort, which contains marginal
-> > paths that should only be used if all the other paths are down.
-> =
+This target behaves similarly to a linear target, with the exception
+of the minimum and optimal IO sizes being configurable to 512 or
+4096 bytes.  At a given time, the user can send a message to the
+target to start failing read requests on specific blocks.  When the
+failure behavior is enabled, reads of blocks configured "bad" will
+fail with EIO.
 
-> Maybe we should simply assign marginal paths a very low priority? =
+Writes of blocks configured "bad" will result in the following:
 
+1. Remove the block from the "bad block list".
+   sector).
+2. Successfully complete the write.
 
-Yeah, that's the idea. The question is whether all the table reloading
-and messy configurations that could come with this outweighs the benefit
-of having the kernel automatically use these paths when nothing else is
-available.
- =
+After this point, the block will successfully contain the written
+data, and will service reads and writes normally.  This emulates the
+behavior of a "remapped sector" on a hard disk drive.
 
-> At least with "group_by_prio" and immediate failback, that would cause
-> multipathd to switch to these paths if nothing else is available, and
-> switch back ASAP - so it would give you the desired behavior almost at
-> no cost. An open question for me is whether this priority should be
-> higher or lower than what we assign to "ghost" paths ins standby state
-> (1, currently).
-> =
+dm-dust provides logging of which blocks have been added or removed
+to the "bad block list", as well as logging when a block has been
+removed from the bad block list.  These messages can be used
+alongside the messages from the driver using a dm-dust device to
+analyze the driver's behavior when a read fails at a given time.
 
-> Side note: the global "failback" policy setting may not fit the needs
-> of all modern setups. I think that immediate failback is always correct
-> for "marginal" vs. flawless paths, but we know that it's not always
-> wanted for non-optimal vs. optimal paths, or other failback scenarios.
+(This logging can be reduced via a "quiet" mode, if desired.)
 
-Agreed, but I don't think that there is another failback policy that
-makes more sense as the global default.
+Bryan Gurney (1):
+  dm: add dust target
 
-> > =
+ Documentation/device-mapper/dm-dust.txt | 256 ++++++++++++
+ drivers/md/Kconfig                      |   9 +
+ drivers/md/Makefile                     |   1 +
+ drivers/md/dm-dust.c                    | 499 ++++++++++++++++++++++++
+ 4 files changed, 765 insertions(+)
+ create mode 100644 Documentation/device-mapper/dm-dust.txt
+ create mode 100644 drivers/md/dm-dust.c
 
-> > The downsides to this method are that it is quite possible that it
-> > could
-> > double the number of pathgroups whenever you have connection issues,
-> > since a connection issue near the host HBA could cause a marginal
-> > path
-> > in each pathgroup. This means more reloading tables, and more
-> > confusing
-> > layouts.
-> > =
-
-> > The upside to this method is that multipath won't run out of paths
-> > while
-> > their are still marginal paths that it could use. When queuing isn't
-> > enabled, there's nothing to stop the kernel from failing IO while
-> > potentially usable marginal paths exist.
-> > =
-
-> > On the other hand, this problem could be mitigated by having
-> > multipath
-> > work such that, when marginal path detection is configured, it always
-> > makes sure that no_path_retry is at least some minimum value that we
-> > believe is long enough for multipathd to be notified of the path
-> > failure
-> > by the kernel and to reinstate the marginal paths.
-> =
-
-> I'd rather simply document that we discourage "no_path_retry =3D fail"
-> while marginall path detection is enabled. "long enough" sounds like a
-> can of worms to me.
-
-Sure.
-
--Ben
-
-> Martin
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
-> =
+-- 
+2.17.2
