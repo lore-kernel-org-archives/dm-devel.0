@@ -1,10 +1,14 @@
-From: NeilBrown <neil@brown.name>
-Subject: [PATCH] dm: fix to_sector() for 32bit
-Date: Sun, 06 Jan 2019 21:06:25 +1100
-Message-ID: <87tvimje1q.fsf@notabene.neil.brown.name>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 00/19] san_path_err & multipath ANA support
+Date: Mon, 07 Jan 2019 12:21:55 +0100
+Message-ID: <b717c0ca88c546da7fdeb5285bd65a7a26fefa6e.camel@suse.com>
+References: <20181218231931.10762-1-mwilck@suse.com>
+	<20181221160640.GI11315@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============8805542695904257593=="
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20181221160640.GI11315@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,80 +18,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: Guillaume =?utf-8?Q?Perr=C3=A9al?= <gperreal@free.fr>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============8805542695904257593==
-Content-Type: multipart/signed; boundary="=-=-=";
-	micalg=pgp-sha256; protocol="application/pgp-signature"
-
---=-=-=
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-
-
-A dm-raid array with devices larger than 4GB won't assemble on
-a 32 bit host since _check_data_dev_sectors() was added in 4.16.
-This is because to_sector() treats its argument as an "unsigned long"
-which is 32bits (4GB) on a 32bit host.  Using "unsigned long long"
-is more correct.
-
-Kernels as early as 4.2 can have other problems due to to_sector()
-being used on the size of a device.
-
-Fixes: 0cf4503174c1 ("dm raid: add support for the MD RAID0 personality")
-cc: stable@vger.kernel.org (v4.2+)
-Reported-and-tested-by: Guillaume Perr=C3=A9al <gperreal@free.fr>
-Signed-off-by: NeilBrown <neil@brown.name>
-=2D--
- include/linux/device-mapper.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index e528baebad69..bee4bb9f81bc 100644
-=2D-- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -609,7 +609,7 @@ do {									\
-  */
- #define dm_target_offset(ti, sector) ((sector) - (ti)->begin)
-=20
-=2Dstatic inline sector_t to_sector(unsigned long n)
-+static inline sector_t to_sector(unsigned long long n)
- {
- 	return (n >> SECTOR_SHIFT);
- }
-=2D-=20
-2.14.0.rc0.dirty
-
-
---=-=-=
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAlwx0yEACgkQOeye3VZi
-gblbsw/8DeUnpaOk8Ap1UQ2kgp0t4BtXRUtilRRmgM9gwaFaczfQeazYWePHEeig
-lJdBFalDzdFdEUWN8MPJUZ0jU4IZ7rH7AIx2YnNSXhUxUIyQ3Gp36jTO/uSCDTSj
-PKxj+aFMMWN8eNZLKutjAFjFPK5I808sT2ww3xS/uQOHWvO+TUKcgjCzbjlTwKEw
-ZJU9RZtMn/TwS8M5szz7SQ7tJhZftCvlxnQ4gYcN2FGXhUP6Ppg+I4wZjj6nlgRW
-cNNJl7pJALdVziOy11NeKaFGkJEfOmHGoVgdYV5vthDE0jRV0XlMkZ9iqc6aXdIE
-ATDDXAHtW4ssvxhUlbY9Ar+wt5x1Bk/B9/6u9uKoMrVYQw5TX18gOtm3JHvqjK7k
-6JJi4MAiG3zB/01ym76q1pUqnM2IF0ELABycTK04jIYz1q8OjwPLhRJOo4MAeGkM
-rwiX7xrqdMl+NKbKZB1E3Vk+0NNMtlvMz5RBOKFBHbZkf3OyGLZyAuJ6ZaTGJdRm
-/iJp4XnU9EeXXWag0fWFm6FP81JMwMBQLWBr8oo2wh3iRDiZa5V6yGIHuKBD1Pwe
-HMr5Ss5uBOMjeb3q1aBymRF4LdPfaDvaBuK4OfySGnVoZzVRgGqzrv0/kMfQPTPT
-sbc4WUotlrjYkiik9gZwT4xUvPoXyoSxMnxY/+p0DrLglzLSeBs=
-=4Jvr
------END PGP SIGNATURE-----
---=-=-=--
-
-
---===============8805542695904257593==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============8805542695904257593==--
+T24gRnJpLCAyMDE4LTEyLTIxIGF0IDEwOjA2IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gCj4gSSd2ZSBiZWVuIHRoaW5raW5nIGFib3V0IGhvdyB3ZSBoYW5kbGUgbWFyZ2luYWwg
+cGF0aHMsIGFuZCBpdCBzZWVtcwo+IHRvCj4gbWUgdGhhdCBpbnN0ZWFkIG9mIHRlbGxpbmcgdGhl
+IGtlcm5lbCB0aGF0IHRoZXkgaGF2ZSBmYWlsZWQsIGl0IG1pZ2h0Cj4gYmUKPiBiZXR0ZXIgdG8g
+Y3JlYXRlIHBhdGhncm91cHMgb2YgbGFzdCByZXNvcnQsIHdoaWNoIGNvbnRhaW5zIG1hcmdpbmFs
+Cj4gcGF0aHMgdGhhdCBzaG91bGQgb25seSBiZSB1c2VkIGlmIGFsbCB0aGUgb3RoZXIgcGF0aHMg
+YXJlIGRvd24uCgpNYXliZSB3ZSBzaG91bGQgc2ltcGx5IGFzc2lnbiBtYXJnaW5hbCBwYXRocyBh
+IHZlcnkgbG93IHByaW9yaXR5PyAKCkF0IGxlYXN0IHdpdGggImdyb3VwX2J5X3ByaW8iIGFuZCBp
+bW1lZGlhdGUgZmFpbGJhY2ssIHRoYXQgd291bGQgY2F1c2UKbXVsdGlwYXRoZCB0byBzd2l0Y2gg
+dG8gdGhlc2UgcGF0aHMgaWYgbm90aGluZyBlbHNlIGlzIGF2YWlsYWJsZSwgYW5kCnN3aXRjaCBi
+YWNrIEFTQVAgLSBzbyBpdCB3b3VsZCBnaXZlIHlvdSB0aGUgZGVzaXJlZCBiZWhhdmlvciBhbG1v
+c3QgYXQKbm8gY29zdC4gQW4gb3BlbiBxdWVzdGlvbiBmb3IgbWUgaXMgd2hldGhlciB0aGlzIHBy
+aW9yaXR5IHNob3VsZCBiZQpoaWdoZXIgb3IgbG93ZXIgdGhhbiB3aGF0IHdlIGFzc2lnbiB0byAi
+Z2hvc3QiIHBhdGhzIGlucyBzdGFuZGJ5IHN0YXRlCigxLCBjdXJyZW50bHkpLgoKU2lkZSBub3Rl
+OiB0aGUgZ2xvYmFsICJmYWlsYmFjayIgcG9saWN5IHNldHRpbmcgbWF5IG5vdCBmaXQgdGhlIG5l
+ZWRzCm9mIGFsbCBtb2Rlcm4gc2V0dXBzLiBJIHRoaW5rIHRoYXQgaW1tZWRpYXRlIGZhaWxiYWNr
+IGlzIGFsd2F5cyBjb3JyZWN0CmZvciAibWFyZ2luYWwiIHZzLiBmbGF3bGVzcyBwYXRocywgYnV0
+IHdlIGtub3cgdGhhdCBpdCdzIG5vdCBhbHdheXMKd2FudGVkIGZvciBub24tb3B0aW1hbCB2cy4g
+b3B0aW1hbCBwYXRocywgb3Igb3RoZXIgZmFpbGJhY2sgc2NlbmFyaW9zLgoKPiAKPiBUaGUgZG93
+bnNpZGVzIHRvIHRoaXMgbWV0aG9kIGFyZSB0aGF0IGl0IGlzIHF1aXRlIHBvc3NpYmxlIHRoYXQg
+aXQKPiBjb3VsZAo+IGRvdWJsZSB0aGUgbnVtYmVyIG9mIHBhdGhncm91cHMgd2hlbmV2ZXIgeW91
+IGhhdmUgY29ubmVjdGlvbiBpc3N1ZXMsCj4gc2luY2UgYSBjb25uZWN0aW9uIGlzc3VlIG5lYXIg
+dGhlIGhvc3QgSEJBIGNvdWxkIGNhdXNlIGEgbWFyZ2luYWwKPiBwYXRoCj4gaW4gZWFjaCBwYXRo
+Z3JvdXAuIFRoaXMgbWVhbnMgbW9yZSByZWxvYWRpbmcgdGFibGVzLCBhbmQgbW9yZQo+IGNvbmZ1
+c2luZwo+IGxheW91dHMuCj4gCj4gVGhlIHVwc2lkZSB0byB0aGlzIG1ldGhvZCBpcyB0aGF0IG11
+bHRpcGF0aCB3b24ndCBydW4gb3V0IG9mIHBhdGhzCj4gd2hpbGUKPiB0aGVpciBhcmUgc3RpbGwg
+bWFyZ2luYWwgcGF0aHMgdGhhdCBpdCBjb3VsZCB1c2UuIFdoZW4gcXVldWluZyBpc24ndAo+IGVu
+YWJsZWQsIHRoZXJlJ3Mgbm90aGluZyB0byBzdG9wIHRoZSBrZXJuZWwgZnJvbSBmYWlsaW5nIElP
+IHdoaWxlCj4gcG90ZW50aWFsbHkgdXNhYmxlIG1hcmdpbmFsIHBhdGhzIGV4aXN0Lgo+IAo+IE9u
+IHRoZSBvdGhlciBoYW5kLCB0aGlzIHByb2JsZW0gY291bGQgYmUgbWl0aWdhdGVkIGJ5IGhhdmlu
+Zwo+IG11bHRpcGF0aAo+IHdvcmsgc3VjaCB0aGF0LCB3aGVuIG1hcmdpbmFsIHBhdGggZGV0ZWN0
+aW9uIGlzIGNvbmZpZ3VyZWQsIGl0IGFsd2F5cwo+IG1ha2VzIHN1cmUgdGhhdCBub19wYXRoX3Jl
+dHJ5IGlzIGF0IGxlYXN0IHNvbWUgbWluaW11bSB2YWx1ZSB0aGF0IHdlCj4gYmVsaWV2ZSBpcyBs
+b25nIGVub3VnaCBmb3IgbXVsdGlwYXRoZCB0byBiZSBub3RpZmllZCBvZiB0aGUgcGF0aAo+IGZh
+aWx1cmUKPiBieSB0aGUga2VybmVsIGFuZCB0byByZWluc3RhdGUgdGhlIG1hcmdpbmFsIHBhdGhz
+LgoKSSdkIHJhdGhlciBzaW1wbHkgZG9jdW1lbnQgdGhhdCB3ZSBkaXNjb3VyYWdlICJub19wYXRo
+X3JldHJ5ID0gZmFpbCIKd2hpbGUgbWFyZ2luYWxsIHBhdGggZGV0ZWN0aW9uIGlzIGVuYWJsZWQu
+ICJsb25nIGVub3VnaCIgc291bmRzIGxpa2UgYQpjYW4gb2Ygd29ybXMgdG8gbWUuCgpNYXJ0aW4K
+Ci0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEg
+NzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUg
+U21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgoKLS0KZG0t
+ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0
+LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
