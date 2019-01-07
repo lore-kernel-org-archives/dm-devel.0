@@ -1,14 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
 Subject: Re: [PATCH 00/19] san_path_err & multipath ANA support
-Date: Mon, 07 Jan 2019 12:21:55 +0100
-Message-ID: <b717c0ca88c546da7fdeb5285bd65a7a26fefa6e.camel@suse.com>
+Date: Mon, 7 Jan 2019 13:15:04 -0600
+Message-ID: <20190107191504.GL11315@octiron.msp.redhat.com>
 References: <20181218231931.10762-1-mwilck@suse.com>
 	<20181221160640.GI11315@octiron.msp.redhat.com>
+	<b717c0ca88c546da7fdeb5285bd65a7a26fefa6e.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20181221160640.GI11315@octiron.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <b717c0ca88c546da7fdeb5285bd65a7a26fefa6e.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,50 +20,89 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
-Cc: dm-devel@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: mwilck+gmail@suse.de, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE4LTEyLTIxIGF0IDEwOjA2IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gCj4gSSd2ZSBiZWVuIHRoaW5raW5nIGFib3V0IGhvdyB3ZSBoYW5kbGUgbWFyZ2luYWwg
-cGF0aHMsIGFuZCBpdCBzZWVtcwo+IHRvCj4gbWUgdGhhdCBpbnN0ZWFkIG9mIHRlbGxpbmcgdGhl
-IGtlcm5lbCB0aGF0IHRoZXkgaGF2ZSBmYWlsZWQsIGl0IG1pZ2h0Cj4gYmUKPiBiZXR0ZXIgdG8g
-Y3JlYXRlIHBhdGhncm91cHMgb2YgbGFzdCByZXNvcnQsIHdoaWNoIGNvbnRhaW5zIG1hcmdpbmFs
-Cj4gcGF0aHMgdGhhdCBzaG91bGQgb25seSBiZSB1c2VkIGlmIGFsbCB0aGUgb3RoZXIgcGF0aHMg
-YXJlIGRvd24uCgpNYXliZSB3ZSBzaG91bGQgc2ltcGx5IGFzc2lnbiBtYXJnaW5hbCBwYXRocyBh
-IHZlcnkgbG93IHByaW9yaXR5PyAKCkF0IGxlYXN0IHdpdGggImdyb3VwX2J5X3ByaW8iIGFuZCBp
-bW1lZGlhdGUgZmFpbGJhY2ssIHRoYXQgd291bGQgY2F1c2UKbXVsdGlwYXRoZCB0byBzd2l0Y2gg
-dG8gdGhlc2UgcGF0aHMgaWYgbm90aGluZyBlbHNlIGlzIGF2YWlsYWJsZSwgYW5kCnN3aXRjaCBi
-YWNrIEFTQVAgLSBzbyBpdCB3b3VsZCBnaXZlIHlvdSB0aGUgZGVzaXJlZCBiZWhhdmlvciBhbG1v
-c3QgYXQKbm8gY29zdC4gQW4gb3BlbiBxdWVzdGlvbiBmb3IgbWUgaXMgd2hldGhlciB0aGlzIHBy
-aW9yaXR5IHNob3VsZCBiZQpoaWdoZXIgb3IgbG93ZXIgdGhhbiB3aGF0IHdlIGFzc2lnbiB0byAi
-Z2hvc3QiIHBhdGhzIGlucyBzdGFuZGJ5IHN0YXRlCigxLCBjdXJyZW50bHkpLgoKU2lkZSBub3Rl
-OiB0aGUgZ2xvYmFsICJmYWlsYmFjayIgcG9saWN5IHNldHRpbmcgbWF5IG5vdCBmaXQgdGhlIG5l
-ZWRzCm9mIGFsbCBtb2Rlcm4gc2V0dXBzLiBJIHRoaW5rIHRoYXQgaW1tZWRpYXRlIGZhaWxiYWNr
-IGlzIGFsd2F5cyBjb3JyZWN0CmZvciAibWFyZ2luYWwiIHZzLiBmbGF3bGVzcyBwYXRocywgYnV0
-IHdlIGtub3cgdGhhdCBpdCdzIG5vdCBhbHdheXMKd2FudGVkIGZvciBub24tb3B0aW1hbCB2cy4g
-b3B0aW1hbCBwYXRocywgb3Igb3RoZXIgZmFpbGJhY2sgc2NlbmFyaW9zLgoKPiAKPiBUaGUgZG93
-bnNpZGVzIHRvIHRoaXMgbWV0aG9kIGFyZSB0aGF0IGl0IGlzIHF1aXRlIHBvc3NpYmxlIHRoYXQg
-aXQKPiBjb3VsZAo+IGRvdWJsZSB0aGUgbnVtYmVyIG9mIHBhdGhncm91cHMgd2hlbmV2ZXIgeW91
-IGhhdmUgY29ubmVjdGlvbiBpc3N1ZXMsCj4gc2luY2UgYSBjb25uZWN0aW9uIGlzc3VlIG5lYXIg
-dGhlIGhvc3QgSEJBIGNvdWxkIGNhdXNlIGEgbWFyZ2luYWwKPiBwYXRoCj4gaW4gZWFjaCBwYXRo
-Z3JvdXAuIFRoaXMgbWVhbnMgbW9yZSByZWxvYWRpbmcgdGFibGVzLCBhbmQgbW9yZQo+IGNvbmZ1
-c2luZwo+IGxheW91dHMuCj4gCj4gVGhlIHVwc2lkZSB0byB0aGlzIG1ldGhvZCBpcyB0aGF0IG11
-bHRpcGF0aCB3b24ndCBydW4gb3V0IG9mIHBhdGhzCj4gd2hpbGUKPiB0aGVpciBhcmUgc3RpbGwg
-bWFyZ2luYWwgcGF0aHMgdGhhdCBpdCBjb3VsZCB1c2UuIFdoZW4gcXVldWluZyBpc24ndAo+IGVu
-YWJsZWQsIHRoZXJlJ3Mgbm90aGluZyB0byBzdG9wIHRoZSBrZXJuZWwgZnJvbSBmYWlsaW5nIElP
-IHdoaWxlCj4gcG90ZW50aWFsbHkgdXNhYmxlIG1hcmdpbmFsIHBhdGhzIGV4aXN0Lgo+IAo+IE9u
-IHRoZSBvdGhlciBoYW5kLCB0aGlzIHByb2JsZW0gY291bGQgYmUgbWl0aWdhdGVkIGJ5IGhhdmlu
-Zwo+IG11bHRpcGF0aAo+IHdvcmsgc3VjaCB0aGF0LCB3aGVuIG1hcmdpbmFsIHBhdGggZGV0ZWN0
-aW9uIGlzIGNvbmZpZ3VyZWQsIGl0IGFsd2F5cwo+IG1ha2VzIHN1cmUgdGhhdCBub19wYXRoX3Jl
-dHJ5IGlzIGF0IGxlYXN0IHNvbWUgbWluaW11bSB2YWx1ZSB0aGF0IHdlCj4gYmVsaWV2ZSBpcyBs
-b25nIGVub3VnaCBmb3IgbXVsdGlwYXRoZCB0byBiZSBub3RpZmllZCBvZiB0aGUgcGF0aAo+IGZh
-aWx1cmUKPiBieSB0aGUga2VybmVsIGFuZCB0byByZWluc3RhdGUgdGhlIG1hcmdpbmFsIHBhdGhz
-LgoKSSdkIHJhdGhlciBzaW1wbHkgZG9jdW1lbnQgdGhhdCB3ZSBkaXNjb3VyYWdlICJub19wYXRo
-X3JldHJ5ID0gZmFpbCIKd2hpbGUgbWFyZ2luYWxsIHBhdGggZGV0ZWN0aW9uIGlzIGVuYWJsZWQu
-ICJsb25nIGVub3VnaCIgc291bmRzIGxpa2UgYQpjYW4gb2Ygd29ybXMgdG8gbWUuCgpNYXJ0aW4K
-Ci0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEg
-NzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUg
-U21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgoKLS0KZG0t
-ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0
-LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Mon, Jan 07, 2019 at 12:21:55PM +0100, Martin Wilck wrote:
+> On Fri, 2018-12-21 at 10:06 -0600, Benjamin Marzinski wrote:
+> > =
+
+> > I've been thinking about how we handle marginal paths, and it seems
+> > to
+> > me that instead of telling the kernel that they have failed, it might
+> > be
+> > better to create pathgroups of last resort, which contains marginal
+> > paths that should only be used if all the other paths are down.
+> =
+
+> Maybe we should simply assign marginal paths a very low priority? =
+
+
+Yeah, that's the idea. The question is whether all the table reloading
+and messy configurations that could come with this outweighs the benefit
+of having the kernel automatically use these paths when nothing else is
+available.
+ =
+
+> At least with "group_by_prio" and immediate failback, that would cause
+> multipathd to switch to these paths if nothing else is available, and
+> switch back ASAP - so it would give you the desired behavior almost at
+> no cost. An open question for me is whether this priority should be
+> higher or lower than what we assign to "ghost" paths ins standby state
+> (1, currently).
+> =
+
+> Side note: the global "failback" policy setting may not fit the needs
+> of all modern setups. I think that immediate failback is always correct
+> for "marginal" vs. flawless paths, but we know that it's not always
+> wanted for non-optimal vs. optimal paths, or other failback scenarios.
+
+Agreed, but I don't think that there is another failback policy that
+makes more sense as the global default.
+
+> > =
+
+> > The downsides to this method are that it is quite possible that it
+> > could
+> > double the number of pathgroups whenever you have connection issues,
+> > since a connection issue near the host HBA could cause a marginal
+> > path
+> > in each pathgroup. This means more reloading tables, and more
+> > confusing
+> > layouts.
+> > =
+
+> > The upside to this method is that multipath won't run out of paths
+> > while
+> > their are still marginal paths that it could use. When queuing isn't
+> > enabled, there's nothing to stop the kernel from failing IO while
+> > potentially usable marginal paths exist.
+> > =
+
+> > On the other hand, this problem could be mitigated by having
+> > multipath
+> > work such that, when marginal path detection is configured, it always
+> > makes sure that no_path_retry is at least some minimum value that we
+> > believe is long enough for multipathd to be notified of the path
+> > failure
+> > by the kernel and to reinstate the marginal paths.
+> =
+
+> I'd rather simply document that we discourage "no_path_retry =3D fail"
+> while marginall path detection is enabled. "long enough" sounds like a
+> can of worms to me.
+
+Sure.
+
+-Ben
+
+> Martin
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
+> =
