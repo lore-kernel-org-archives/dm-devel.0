@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 09/12] multipathd(coverity): check retval
-	clock_gettime()
-Date: Tue,  8 Jan 2019 23:54:06 +0100
-Message-ID: <20190108225409.15977-10-mwilck@suse.com>
+Subject: [PATCH 04/12] libmultipath(coverity): make sure readlink
+	result is 0-terminated
+Date: Tue,  8 Jan 2019 23:54:01 +0100
+Message-ID: <20190108225409.15977-5-mwilck@suse.com>
 References: <20190108225409.15977-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,35 +22,24 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Checking this is pointless, as we'd bail out early in
-pthread_cond_init_mono if CLOCK_MONOTONIC was unsupported, and this
-is the only error condition of clock_gettime worth checking.
-Do it anyway to make coverity feel better.
+Coverity warned that readlink() results aren't necessarily 0-terminated.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 9 +++++----
- 1 file changed, 5 insertions(+), 4 deletions(-)
+ libmultipath/util.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 01cf70f..0270e18 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -242,10 +242,11 @@ int set_config_state(enum daemon_status state)
- 		else if (running_state != DAEMON_IDLE) {
- 			struct timespec ts;
- 
--			clock_gettime(CLOCK_MONOTONIC, &ts);
--			ts.tv_sec += 1;
--			rc = pthread_cond_timedwait(&config_cond,
--						    &config_lock, &ts);
-+			if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-+				ts.tv_sec += 1;
-+				rc = pthread_cond_timedwait(&config_cond,
-+							    &config_lock, &ts);
-+			}
- 		}
- 		if (!rc && (running_state != DAEMON_SHUTDOWN)) {
- 			running_state = state;
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index 944c632..5b838d5 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -176,6 +176,7 @@ int devt2devname(char *devname, int devname_len, char *devt)
+ 	if (stat("/sys/dev/block", &statbuf) == 0) {
+ 		/* Newer kernels have /sys/dev/block */
+ 		sprintf(block_path,"/sys/dev/block/%u:%u", major, minor);
++		dev[FILE_NAME_SIZE - 1] = '\0';
+ 		if (lstat(block_path, &statbuf) == 0) {
+ 			if (S_ISLNK(statbuf.st_mode) &&
+ 			    readlink(block_path, dev, FILE_NAME_SIZE-1) > 0) {
 -- 
 2.19.2
