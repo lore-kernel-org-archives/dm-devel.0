@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 04/12] libmultipath(coverity): make sure readlink
-	result is 0-terminated
-Date: Tue,  8 Jan 2019 23:54:01 +0100
-Message-ID: <20190108225409.15977-5-mwilck@suse.com>
+Subject: [PATCH 11/12] libmultipath/foreign(coverity): retval
+	check in snprint_nvme_path
+Date: Tue,  8 Jan 2019 23:54:08 +0100
+Message-ID: <20190108225409.15977-12-mwilck@suse.com>
 References: <20190108225409.15977-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,24 +22,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Coverity warned that readlink() results aren't necessarily 0-terminated.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/util.c | 1 +
- 1 file changed, 1 insertion(+)
+ libmultipath/foreign/nvme.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index 944c632..5b838d5 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -176,6 +176,7 @@ int devt2devname(char *devname, int devname_len, char *devt)
- 	if (stat("/sys/dev/block", &statbuf) == 0) {
- 		/* Newer kernels have /sys/dev/block */
- 		sprintf(block_path,"/sys/dev/block/%u:%u", major, minor);
-+		dev[FILE_NAME_SIZE - 1] = '\0';
- 		if (lstat(block_path, &statbuf) == 0) {
- 			if (S_ISLNK(statbuf.st_mode) &&
- 			    readlink(block_path, dev, FILE_NAME_SIZE-1) > 0) {
+diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
+index f0e8293..7e654ec 100644
+--- a/libmultipath/foreign/nvme.c
++++ b/libmultipath/foreign/nvme.c
+@@ -249,8 +249,10 @@ static int snprint_nvme_path(const struct gen_path *gp,
+ 		devt = udev_device_get_devnum(np->udev);
+ 		return snprintf(buff, len, "%u:%u", major(devt), minor(devt));
+ 	case 'o':
+-		sysfs_attr_get_value(np->ctl, "state", fld, sizeof(fld));
+-		return snprintf(buff, len, "%s", fld);
++		if (sysfs_attr_get_value(np->ctl, "state",
++					 fld, sizeof(fld)) > 0)
++			return snprintf(buff, len, "%s", fld);
++		break;
+ 	case 'T':
+ 		if (sysfs_attr_get_value(np->udev, "ana_state", fld,
+ 					 sizeof(fld)) > 0)
 -- 
 2.19.2
