@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 10/12] libmpathpersist(coverity): range checking
-	for PRIN length
-Date: Tue,  8 Jan 2019 23:54:07 +0100
-Message-ID: <20190108225409.15977-11-mwilck@suse.com>
+Subject: [PATCH 05/12] libmultipath(coverity): fix apparent
+	overflow
+Date: Tue,  8 Jan 2019 23:54:02 +0100
+Message-ID: <20190108225409.15977-6-mwilck@suse.com>
 References: <20190108225409.15977-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,39 +22,25 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+"preferred_path" contains always "0" or "1".
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmpathpersist/mpath_pr_ioctl.c | 10 +++++++---
- 1 file changed, 7 insertions(+), 3 deletions(-)
+ libmultipath/discovery.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmpathpersist/mpath_pr_ioctl.c b/libmpathpersist/mpath_pr_ioctl.c
-index c4f4ccd..cf528fe 100644
---- a/libmpathpersist/mpath_pr_ioctl.c
-+++ b/libmpathpersist/mpath_pr_ioctl.c
-@@ -211,7 +211,8 @@ void mpath_format_readfullstatus(struct prin_resp *pr_buff, int len, int noisy)
- 	unsigned char *p;
- 	char  *ppbuff;
- 	uint32_t additional_length;
--
-+	char tempbuff[MPATH_MAX_PARAM_LEN];
-+	struct prin_fulldescr fdesc;
- 
- 	convert_be32_to_cpu(&pr_buff->prin_descriptor.prin_readfd.prgeneration);
- 	convert_be32_to_cpu(&pr_buff->prin_descriptor.prin_readfd.number_of_descriptor);
-@@ -223,9 +224,12 @@ void mpath_format_readfullstatus(struct prin_resp *pr_buff, int len, int noisy)
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 7f983a6..3fd79a3 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -520,7 +520,7 @@ sysfs_get_asymmetric_access_state(struct path *pp, char *buff, int buflen)
+ 		/* Parse error, ignore */
+ 		return 0;
  	}
+-	return  preferred;
++	return !!preferred;
+ }
  
- 	additional_length = pr_buff->prin_descriptor.prin_readfd.number_of_descriptor;
-+	if (additional_length > MPATH_MAX_PARAM_LEN) {
-+		condlog(3, "PRIN length %u exceeds max length %d", additional_length,
-+			MPATH_MAX_PARAM_LEN);
-+		return;
-+	}
- 
--	char tempbuff[MPATH_MAX_PARAM_LEN];
--	struct prin_fulldescr fdesc;
- 	memset(&fdesc, 0, sizeof(struct prin_fulldescr));
- 
- 	memcpy( tempbuff, pr_buff->prin_descriptor.prin_readfd.private_buffer,MPATH_MAX_PARAM_LEN );
+ static void
 -- 
 2.19.2
