@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 03/12] kpartx(coverity): fix apparent
-	out-of-bounds access
-Date: Tue,  8 Jan 2019 23:54:00 +0100
-Message-ID: <20190108225409.15977-4-mwilck@suse.com>
+Subject: [PATCH 07/12] libmultipath(coverity): fix int overflow
+	in sysfs_set_scsi_tmo
+Date: Tue,  8 Jan 2019 23:54:04 +0100
+Message-ID: <20190108225409.15977-8-mwilck@suse.com>
 References: <20190108225409.15977-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,25 +22,23 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This was a false positive.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/dasd.c | 2 +-
+ libmultipath/discovery.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kpartx/dasd.c b/kpartx/dasd.c
-index fb358ad..61b609a 100644
---- a/kpartx/dasd.c
-+++ b/kpartx/dasd.c
-@@ -190,7 +190,7 @@ read_dasd_pt(int fd, struct slice all, struct slice *sp, int ns)
- 		memcpy (&vlabel, data, sizeof(vlabel));
- 	else {
- 		bzero(&vlabel,4);
--		memcpy (&vlabel.vollbl, data, sizeof(vlabel) - 4);
-+		memcpy ((char *)&vlabel + 4, data, sizeof(vlabel) - 4);
- 	}
- 	vtoc_ebcdic_dec(vlabel.vollbl, type, 4);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 3fd79a3..1748eeb 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -711,7 +711,7 @@ sysfs_set_scsi_tmo (struct multipath *mpp, int checkint)
+ 	int dev_loss_tmo = mpp->dev_loss;
  
+ 	if (mpp->no_path_retry > 0) {
+-		uint64_t no_path_retry_tmo = mpp->no_path_retry * checkint;
++		uint64_t no_path_retry_tmo = (uint64_t)mpp->no_path_retry * checkint;
+ 
+ 		if (no_path_retry_tmo > MAX_DEV_LOSS_TMO)
+ 			no_path_retry_tmo = MAX_DEV_LOSS_TMO;
 -- 
 2.19.2
