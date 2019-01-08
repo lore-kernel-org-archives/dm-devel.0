@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 01/12] kpartx(coverity): fix resource leak warning
-Date: Tue,  8 Jan 2019 23:53:58 +0100
-Message-ID: <20190108225409.15977-2-mwilck@suse.com>
+Subject: [PATCH 12/12] libmultipath(coverity): fix possible NULL
+	dereference
+Date: Tue,  8 Jan 2019 23:54:09 +0100
+Message-ID: <20190108225409.15977-13-mwilck@suse.com>
 References: <20190108225409.15977-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,34 +22,25 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This was an easy-to-fix false positive.
+coverity warns that recv_packet may set reply to NULL.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/dasd.c | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+ libmultipath/configure.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kpartx/dasd.c b/kpartx/dasd.c
-index 94ae81b..fb358ad 100644
---- a/kpartx/dasd.c
-+++ b/kpartx/dasd.c
-@@ -137,7 +137,7 @@ read_dasd_pt(int fd, struct slice all, struct slice *sp, int ns)
- 			/* Not a DASD */
- 			return -1;
- 	} else {
--		fd_dasd = fd;
-+		fd_dasd = dup(fd);
- 	}
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 64a1f7b..970b913 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -1042,7 +1042,7 @@ int check_daemon(void)
+ 	if (recv_packet(fd, &reply, timeout) != 0)
+ 		goto out;
  
- 	if (ioctl(fd_dasd, BIODASDINFO, (unsigned long)&info) != 0) {
-@@ -288,7 +288,6 @@ read_dasd_pt(int fd, struct slice all, struct slice *sp, int ns)
- out:
- 	if (data != NULL)
- 		free(data);
--	if (fd_dasd != -1 && fd_dasd != fd)
--		close(fd_dasd);
-+	close(fd_dasd);
- 	return retval;
- }
+-	if (strstr(reply, "shutdown"))
++	if (reply && strstr(reply, "shutdown"))
+ 		goto out_free;
+ 
+ 	ret = 1;
 -- 
 2.19.2
