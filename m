@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 07/12] libmultipath(coverity): fix int overflow
-	in sysfs_set_scsi_tmo
-Date: Tue,  8 Jan 2019 23:54:04 +0100
-Message-ID: <20190108225409.15977-8-mwilck@suse.com>
+Subject: [PATCH 02/12] libmultipath(coverity): cleanup dup usage
+	in execute_program()
+Date: Tue,  8 Jan 2019 23:53:59 +0100
+Message-ID: <20190108225409.15977-3-mwilck@suse.com>
 References: <20190108225409.15977-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,23 +22,43 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+coverity complained about resource leakage here.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/callout.c | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 3fd79a3..1748eeb 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -711,7 +711,7 @@ sysfs_set_scsi_tmo (struct multipath *mpp, int checkint)
- 	int dev_loss_tmo = mpp->dev_loss;
+diff --git a/libmultipath/callout.c b/libmultipath/callout.c
+index d5ca27b..dac088c 100644
+--- a/libmultipath/callout.c
++++ b/libmultipath/callout.c
+@@ -68,19 +68,20 @@ int execute_program(char *path, char *value, int len)
+ 	switch(pid) {
+ 	case 0:
+ 		/* child */
+-		close(STDOUT_FILENO);
  
- 	if (mpp->no_path_retry > 0) {
--		uint64_t no_path_retry_tmo = mpp->no_path_retry * checkint;
-+		uint64_t no_path_retry_tmo = (uint64_t)mpp->no_path_retry * checkint;
+ 		/* dup write side of pipe to STDOUT */
+-		if (dup(fds[1]) < 0)
++		if (dup2(fds[1], STDOUT_FILENO) < 0) {
++			condlog(1, "failed to dup2 stdout: %m");
+ 			return -1;
++		}
++		close(fds[0]);
++		close(fds[1]);
  
- 		if (no_path_retry_tmo > MAX_DEV_LOSS_TMO)
- 			no_path_retry_tmo = MAX_DEV_LOSS_TMO;
+ 		/* Ignore writes to stderr */
+ 		null_fd = open("/dev/null", O_WRONLY);
+ 		if (null_fd > 0) {
+-			int err_fd __attribute__ ((unused));
+-
+-			close(STDERR_FILENO);
+-			err_fd = dup(null_fd);
++			if (dup2(null_fd, STDERR_FILENO) < 0)
++				condlog(1, "failed to dup2 stderr: %m");
+ 			close(null_fd);
+ 		}
+ 
 -- 
 2.19.2
