@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 05/12] libmultipath(coverity): fix apparent
-	overflow
-Date: Tue,  8 Jan 2019 23:54:02 +0100
-Message-ID: <20190108225409.15977-6-mwilck@suse.com>
+Subject: [PATCH 08/12] libmultipath(coverity): fix "enum misuse"
+	for find_multipaths
+Date: Tue,  8 Jan 2019 23:54:05 +0100
+Message-ID: <20190108225409.15977-9-mwilck@suse.com>
 References: <20190108225409.15977-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,25 +22,23 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-"preferred_path" contains always "0" or "1".
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 2 +-
+ libmultipath/dict.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 7f983a6..3fd79a3 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -520,7 +520,7 @@ sysfs_get_asymmetric_access_state(struct path *pp, char *buff, int buflen)
- 		/* Parse error, ignore */
- 		return 0;
- 	}
--	return  preferred;
-+	return !!preferred;
- }
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index fd29abc..eaad4f1 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -327,7 +327,7 @@ def_find_multipaths_handler(struct config *conf, vector strvec)
+ 	int i;
  
- static void
+ 	if (set_yes_no_undef(strvec, &conf->find_multipaths) == 0 &&
+-	    conf->find_multipaths != YNU_UNDEF)
++	    conf->find_multipaths != FIND_MULTIPATHS_UNDEF)
+ 		return 0;
+ 
+ 	buff = set_value(strvec);
 -- 
 2.19.2
