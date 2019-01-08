@@ -1,14 +1,11 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 08/12] libmultipath(coverity): fix "enum misuse"
-	for find_multipaths
-Date: Tue,  8 Jan 2019 23:54:05 +0100
-Message-ID: <20190108225409.15977-9-mwilck@suse.com>
-References: <20190108225409.15977-1-mwilck@suse.com>
+Subject: [PATCH] multipathd: avoid crash in cli_list_path
+Date: Wed,  9 Jan 2019 00:25:43 +0100
+Message-ID: <20190108232543.18134-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190108225409.15977-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,23 +19,24 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+multipathd can be crashed by passing an invalid path name
+to the "show path" command. Fix it.
 ---
- libmultipath/dict.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipathd/cli_handlers.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index fd29abc..eaad4f1 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -327,7 +327,7 @@ def_find_multipaths_handler(struct config *conf, vector strvec)
- 	int i;
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 6304ed3a..fabf4440 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -346,6 +346,8 @@ cli_list_path (void * v, char ** reply, int * len, void * data)
+ 	condlog(3, "%s: list path (operator)", param);
  
- 	if (set_yes_no_undef(strvec, &conf->find_multipaths) == 0 &&
--	    conf->find_multipaths != YNU_UNDEF)
-+	    conf->find_multipaths != FIND_MULTIPATHS_UNDEF)
- 		return 0;
+ 	pp = find_path_by_dev(vecs->pathvec, param);
++	if (!pp)
++		return 1;
  
- 	buff = set_value(strvec);
+ 	return show_path(reply, len, vecs, pp, "%o");
+ }
 -- 
 2.19.2
