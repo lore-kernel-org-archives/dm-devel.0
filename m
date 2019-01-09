@@ -1,11 +1,14 @@
 From: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
-Subject: [RFC PATCH v2 0/4] add parameter for pmem cache device init
-Date: Wed,  9 Jan 2019 13:31:23 +0800
-Message-ID: <20190109053127.8128-1-yehs2007@zoho.com>
+Subject: [RFC PATCH v2 1/4] dm-writecache: remove unused size to
+ writecache_flush_region
+Date: Wed,  9 Jan 2019 13:31:24 +0800
+Message-ID: <20190109053127.8128-2-yehs2007@zoho.com>
+References: <20190109053127.8128-1-yehs2007@zoho.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20190109053127.8128-1-yehs2007-ytc+IHgoah0@public.gmane.org>
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -21,30 +24,65 @@ List-Id: dm-devel.ids
 
 From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 
-This patch set could be used for dm-writecache when use persistent
-memory as cache data device.
+writecache_flush_region doesn't use size to calculate flush region.
+That uses _set_bits to mark the region in dirty_bitmap directly.
 
-Patch 1 and 2 go towards removing unused parameter and codes which
-actually doesn't really work.
+Signed-off-by: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
+---
+ drivers/md/dm-writecache.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
-Patch 3 and 4 are targeted at solving problem fn ctr failed to work
-due to invalid magic or version, which is caused by the super block
-of pmem has messy data stored.
-
-Changes Since v1:
-	- add optional parameter reinit to avoid invalid magic or
-	  version.
-	[1]: https://lkml.org/lkml/2019/1/3/43
-
-Huaisheng Ye (4):
-  dm-writecache: remove unused size to writecache_flush_region
-  dm-writecache: get rid of memory_data flush to writecache_flush_entry
-  dm-writecache: expand pmem_reinit for struct dm_writecache
-  Documentation/device-mapper: add optional parameter reinit
-
- Documentation/device-mapper/writecache.txt |  4 ++++
- drivers/md/dm-writecache.c                 | 19 +++++++++++--------
- 2 files changed, 15 insertions(+), 8 deletions(-)
-
+diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+index 2d50eec..2d8e0c0 100644
+--- a/drivers/md/dm-writecache.c
++++ b/drivers/md/dm-writecache.c
+@@ -418,7 +418,7 @@ static void writecache_flush_all_metadata(struct dm_writecache *wc)
+ 		memset(wc->dirty_bitmap, -1, wc->dirty_bitmap_size);
+ }
+ 
+-static void writecache_flush_region(struct dm_writecache *wc, void *ptr, size_t size)
++static void writecache_flush_region(struct dm_writecache *wc, void *ptr)
+ {
+ 	if (!WC_MODE_PMEM(wc))
+ 		__set_bit(((char *)ptr - (char *)wc->memory_map) / BITMAP_GRANULARITY,
+@@ -657,7 +657,7 @@ static void writecache_free_entry(struct dm_writecache *wc, struct wc_entry *e)
+ 	writecache_unlink(wc, e);
+ 	writecache_add_to_freelist(wc, e);
+ 	clear_seq_count(wc, e);
+-	writecache_flush_region(wc, memory_entry(wc, e), sizeof(struct wc_memory_entry));
++	writecache_flush_region(wc, memory_entry(wc, e));
+ 	if (unlikely(waitqueue_active(&wc->freelist_wait)))
+ 		wake_up(&wc->freelist_wait);
+ }
+@@ -687,9 +687,9 @@ static void writecache_poison_lists(struct dm_writecache *wc)
+ 
+ static void writecache_flush_entry(struct dm_writecache *wc, struct wc_entry *e)
+ {
+-	writecache_flush_region(wc, memory_entry(wc, e), sizeof(struct wc_memory_entry));
++	writecache_flush_region(wc, memory_entry(wc, e));
+ 	if (WC_MODE_PMEM(wc))
+-		writecache_flush_region(wc, memory_data(wc, e), wc->block_size);
++		writecache_flush_region(wc, memory_data(wc, e));
+ }
+ 
+ static bool writecache_entry_is_committed(struct dm_writecache *wc, struct wc_entry *e)
+@@ -733,7 +733,7 @@ static void writecache_flush(struct dm_writecache *wc)
+ 
+ 	wc->seq_count++;
+ 	pmem_assign(sb(wc)->seq_count, cpu_to_le64(wc->seq_count));
+-	writecache_flush_region(wc, &sb(wc)->seq_count, sizeof sb(wc)->seq_count);
++	writecache_flush_region(wc, &sb(wc)->seq_count);
+ 	writecache_commit_flushed(wc);
+ 
+ 	wc->overwrote_committed = false;
+@@ -1757,7 +1757,7 @@ static int init_memory(struct dm_writecache *wc)
+ 	writecache_flush_all_metadata(wc);
+ 	writecache_commit_flushed(wc);
+ 	pmem_assign(sb(wc)->magic, cpu_to_le32(MEMORY_SUPERBLOCK_MAGIC));
+-	writecache_flush_region(wc, &sb(wc)->magic, sizeof sb(wc)->magic);
++	writecache_flush_region(wc, &sb(wc)->magic);
+ 	writecache_commit_flushed(wc);
+ 
+ 	return 0;
 -- 
 1.8.3.1
