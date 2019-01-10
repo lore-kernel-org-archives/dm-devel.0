@@ -1,21 +1,11 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: SMR 512e drive firmware advertising misleading limits?
- [was: Re: [RFC PATCH 1/1] dm: add dust target]
-Date: Wed, 9 Jan 2019 09:29:13 -0500
-Message-ID: <20190109142913.GA26563@redhat.com>
-References: <1546889483-6341-1-git-send-email-bgurney@redhat.com>
-	<1546889483-6341-2-git-send-email-bgurney@redhat.com>
-	<20190108001049.GM11315@octiron.msp.redhat.com>
-	<CAHhmqcSLxihW3L+w=MZ22Z9pbU13MLD7Bn6YQey-u1soFp-KJw@mail.gmail.com>
-	<20190108162314.GA16936@redhat.com>
-	<CAHhmqcTfKniu1eP+fBwHf4gohOfUaz_cgaC3EUezNauUAk6O-Q@mail.gmail.com>
-	<BYAPR04MB581645C55BCC328E193D3DBEE78B0@BYAPR04MB5816.namprd04.prod.outlook.com>
+From: james harvey <jamespharvey20@gmail.com>
+Subject: dm thin pool discarding
+Date: Wed, 9 Jan 2019 19:39:18 -0500
+Message-ID: <CA+X5Wn4fqXZa_Ecc75CfmA2LBq7y8qFzzdDcdFugZwaPgq-Aeg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <BYAPR04MB581645C55BCC328E193D3DBEE78B0@BYAPR04MB5816.namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,23 +15,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <Damien.LeMoal@wdc.com>
-Cc: John Dorminy <jdorminy@redhat.com>, Joe Shimkus <jshimkus@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "tjaskiew@redhat.com" <tjaskiew@redhat.com>, John Pittman <jpittman@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Bryan Gurney <bgurney@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Jan 08 2019 at  8:03pm -0500,
-Damien Le Moal <Damien.LeMoal@wdc.com> wrote:
- 
-> You may want to check against the physical_block_size, and not the logical. SMR
-> disks that are 512 e (512B logical and 4K physical) can handle reads in 512B
-> units but writes have to be 4K. These are exceptions though and kind of breaking
-> all LBA definitions known to men... This check on the physical_block_size can be
-> limited to setups where the underlying disk is SMR.
+I've been talking with ntfs-3g developers, and they're updating their
+discard code to work when an NTFS volume is within an LVM thin volume.
 
-Damien, this sounds like a serious issue with SMR firmware.  If the
-512e SMR drive cannot handle 512b writes then it has no business
-advertising 512B logical.  It should be advertising 4K logical.
+It turns out their code was refusing to discard if discard_granularity
+was > the NTFS cluster size.  By default, a LVM thick volume is giving
+a discard_granularity of 512 bytes, and the NTFS cluster size is 4096.
+By default, a LVM thin volume is giving a discard_granularity of 65536
+bytes.
 
-What am I missing?
+For thin volumes, LVM seems to be returning a discard_granularity
+equal to the thin pool's chunksize, which totally makes sense.
 
-Mike
+Q1 - Is it correct that a filesystem's discard code needs to look for
+an entire block of size discard_granularity to send to the block
+device (dm/LVM)?  That dm/LVM cannot accept discarding smaller amounts
+than this?  (Seems to make sense to me, since otherwise I think the
+metadata would need to keep track of smaller chunks than the
+chunksize, and it doesn't have the metadata space to do that.)
+
+Q2 - Is it correct that the blocks of size discard_granularity sent to
+dm/LVM need to be aligned from the start of the volume, rather than
+the start of the partition?  Let's say the thin pool chunk size is set
+high, like 128MB.  And, the LVM volume is given to a Virtual Machine
+as a raw disk, which creates a partition table within it.  The VM is
+going to "properly align" the partitions
+Meaning, let's say the chunk size is set high, like 128MB.  And, the
+LVM volume is given to a Virtual Machine, which creates a partition
+table within it.  Using fdisk 2.33 and gpt, on a thin pool chunk size
+of 128MB, it shows sectors of 512 bytes, and puts partition 1 starting
+at sector 2048, so at 1MB.  If the filesystem merely considers
+alignment from the beginning of where its partition is, that's not
+going to line up with alignment of the beginning of the block device,
+unless 1MB is a multiple of the thin pool chunk size.
+
+Q3 - Does a LVM thin volume zero out the bytes that are discarded?  At
+least for me, queue/discard_zeroes_data is 0.  I see there was
+discussion on the list of adding this back in 2012, but I'm not sure
+it was ever added for there to be a way to enable it.
+
+Q4 - Are there dragons here?  If I'm right about how Q1&Q2 need to be
+handled, if the filesystem incorrectly sends a discard starting at a
+location not properly aligned, will LVM/dm reject the request, or will
+it still perform an action?  I saw references to block devices
+"rounding" discard requests which sounds really scary to me, as if a
+filesystem which does this incorrectly could lead to data
+corruption/loss.  (I'm not talking about the filesystem going haywire
+and discarding areas it should know are in use, but rather
+misunderstanding the alignment issues.)
