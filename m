@@ -1,20 +1,14 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: dm thin pool discarding
-Date: Thu, 10 Jan 2019 17:12:17 +0100
-Message-ID: <85ffbcfdbe581a73cee0fd5a0044d1a01f8a70f6.camel@suse.de>
-References: <CA+X5Wn4fqXZa_Ecc75CfmA2LBq7y8qFzzdDcdFugZwaPgq-Aeg@mail.gmail.com>
-	<ba0c0646-29f3-f876-6454-8c80b613a46a@redhat.com>
-	<46a8e85e0258cd8ccc328052a428fff0cbdd5ad3.camel@suse.de>
-	<db63baea-269e-e331-a34b-acdffd62839e@redhat.com>
-	<7f57a14868a8d365668d7dde9b3aac92e1ffdf64.camel@suse.de>
-	<b62b708f-f7ac-d04a-c536-1881d3a8fad7@redhat.com>
-	<5f02c1bbae54a3076bfef532f0de9a81f573d0cb.camel@suse.de>
-	<01a87b75-d0d7-c801-ebd6-2cf7da74080b@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-crypt: Fix parsing of extended IV arguments.
+Date: Thu, 10 Jan 2019 14:18:25 -0500
+Message-ID: <20190110191825.GA936@redhat.com>
+References: <20190109105714.3606-1-gmazyland@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <01a87b75-d0d7-c801-ebd6-2cf7da74080b@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20190109105714.3606-1-gmazyland@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,44 +18,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>, james harvey <jamespharvey20@gmail.com>, dm-devel@redhat.com
+To: Milan Broz <gmazyland@gmail.com>
+Cc: dm-devel@redhat.com, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, 2019-01-10 at 16:55 +0100, Zdenek Kabelac wrote:
-> Dne 10. 01. 19 v 16:23 Martin Wilck napsal(a):
-> > On Thu, 2019-01-10 at 16:08 +0100, Zdenek Kabelac wrote:
-> > > Dne 10. 01. 19 v 14:41 Martin Wilck napsal(a):
-> > > > I for one would find it very attractive if dm-thin had a mode
-> > > > supporting fast zeroout.
-> > > 
-> > > I believe '/sys/block/*/queue/discard_zeroes_data  is now always
-> > > returning
-> > > false for any device as it's been considered as unreliable logic.
-> > > 
-> > > So using 'discard' for zeroing is not really an option here.
-> > 
-> > True. But we have "write_zeroes_max_bytes" instead. In device
-> > mapper
-> > terms, it's "num_write_zeroes_bios", which isn't set for dm-thin.
-> > With
-> > the logic outlined above, it could be set, AFAICT.
-> 
-> I assume this is valid request for enhancement of thin-pool target.
-> However  this  'WRITE_SAME'  or whatever scsi low-level command is
-> that is 
-> basically targeted for thinLV user.
-> 
-> So in this case the most effective 'zeroing' of thinLV areas is its
-> discard.
+On Wed, Jan 09 2019 at  5:57am -0500,
+Milan Broz <gmazyland@gmail.com> wrote:
 
-That's what I have in mind. Basically, one could implement a
-"write_zeroes" operation in a similar manner as discard is implemented
-now. We'd just need to be careful with the case where a write_zeroes
-request isn't aligned to chunk size (aka discard_granularity), and
-instead of a noop, either return an error, or fall back to "slow"
-zeroing for the unaligned pieces. I believe that wouldn't be a big
-problem in practice - prudent users would respect the granularity
-anyway.
+> The dm-crypt cipher specification in a mapping table is defined as
+>   cipher[:keycount]-chainmode-ivmode[:ivopts] or with the new crypt API format
+>   capi:cipher_api_spec-ivmode[:ivopts].
+> 
+> For ESSIV, the parameter includes hash specification, for example aes-cbc-essiv:sha256.
+> 
+> The implementation expected that additional IV option never includes another dash '-' character
+> 
+> Unfortunately, with SHA3, we have now names like sha3-256, so the mapping table parser fails:
+> 
+> dmsetup create test --table "0 8 crypt aes-cbc-essiv:sha3-256 9c1185a5c5e9fc54612808977ee8f5b9e 0 /dev/sdb 0"
+>   or (new format)
+> dmsetup create test --table "0 8 crypt capi:cbc(aes)-essiv:sha3-256 9c1185a5c5e9fc54612808977ee8f5b9e 0 /dev/sdb 0"
+> 
+>   device-mapper: crypt: Ignoring unexpected additional cipher options
+>   device-mapper: table: 253:0: crypt: Error creating IV
+>   device-mapper: ioctl: error adding target to table
+> 
+> This patch fixes the dm-crypt constructor to ignore additional dash in IV options and also removes
+> bogus warning (that is ignored anyway).
+> 
+> [This patch should go into stable tree as well.]
 
-Regards
-Martin
+Rather than this it'd be useful to just be more explicit, e.g.:
+
+Fixes: XXXXXXXX ("commit subject")
+Cc: stable@vger.kernel.org # > 4.x?
+
+Once I know which commit exposed us to this problem I can take care of
+getting this fix staged for 5.0-rcX inclussion.
+
+Thanks,
+Mike
