@@ -1,18 +1,20 @@
-From: Martin Wilck <mwilck@suse.de>
+From: Zdenek Kabelac <zkabelac@redhat.com>
 Subject: Re: dm thin pool discarding
-Date: Thu, 10 Jan 2019 16:23:51 +0100
-Message-ID: <5f02c1bbae54a3076bfef532f0de9a81f573d0cb.camel@suse.de>
+Date: Thu, 10 Jan 2019 16:55:04 +0100
+Message-ID: <01a87b75-d0d7-c801-ebd6-2cf7da74080b@redhat.com>
 References: <CA+X5Wn4fqXZa_Ecc75CfmA2LBq7y8qFzzdDcdFugZwaPgq-Aeg@mail.gmail.com>
 	<ba0c0646-29f3-f876-6454-8c80b613a46a@redhat.com>
 	<46a8e85e0258cd8ccc328052a428fff0cbdd5ad3.camel@suse.de>
 	<db63baea-269e-e331-a34b-acdffd62839e@redhat.com>
 	<7f57a14868a8d365668d7dde9b3aac92e1ffdf64.camel@suse.de>
 	<b62b708f-f7ac-d04a-c536-1881d3a8fad7@redhat.com>
+	<5f02c1bbae54a3076bfef532f0de9a81f573d0cb.camel@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <b62b708f-f7ac-d04a-c536-1881d3a8fad7@redhat.com>
+In-Reply-To: <5f02c1bbae54a3076bfef532f0de9a81f573d0cb.camel@suse.de>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,24 +24,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>, james harvey <jamespharvey20@gmail.com>, dm-devel@redhat.com
+To: Martin Wilck <mwilck@suse.de>, james harvey <jamespharvey20@gmail.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, 2019-01-10 at 16:08 +0100, Zdenek Kabelac wrote:
-> Dne 10. 01. 19 v 14:41 Martin Wilck napsal(a):
-> > 
-> > I for one would find it very attractive if dm-thin had a mode
-> > supporting fast zeroout.
+Dne 10. 01. 19 v 16:23 Martin Wilck napsal(a):
+> On Thu, 2019-01-10 at 16:08 +0100, Zdenek Kabelac wrote:
+>> Dne 10. 01. 19 v 14:41 Martin Wilck napsal(a):
+>>>
+>>> I for one would find it very attractive if dm-thin had a mode
+>>> supporting fast zeroout.
+>>
+>> I believe '/sys/block/*/queue/discard_zeroes_data  is now always
+>> returning
+>> false for any device as it's been considered as unreliable logic.
+>>
+>> So using 'discard' for zeroing is not really an option here.
 > 
-> I believe '/sys/block/*/queue/discard_zeroes_data  is now always
-> returning 
-> false for any device as it's been considered as unreliable logic.
-> 
-> So using 'discard' for zeroing is not really an option here.
+> True. But we have "write_zeroes_max_bytes" instead. In device mapper
+> terms, it's "num_write_zeroes_bios", which isn't set for dm-thin. With
+> the logic outlined above, it could be set, AFAICT.
 
-True. But we have "write_zeroes_max_bytes" instead. In device mapper
-terms, it's "num_write_zeroes_bios", which isn't set for dm-thin. With
-the logic outlined above, it could be set, AFAICT.
 
-Thanks,
-Martin
+I assume this is valid request for enhancement of thin-pool target.
+However  this  'WRITE_SAME'  or whatever scsi low-level command is that is 
+basically targeted for thinLV user.
+
+So in this case the most effective 'zeroing' of thinLV areas is its discard.
+
+It'd be interface abuse to use it for intentional slow physical 'zeroing' of 
+allocated chunks before they are 'returned' to the pool.
+
+On the other hand I can imagine some sort of 'new' flag - that would always 
+zero chunks that are returned to the thin-pool - or it could be a message send 
+before final release of thinLV.
+
+So in that case - you would send a dm message 'SECURE_ERASE'  (or if there is 
+some common interface for that) before actual lvremove call and thin-pool 
+would zero out all exclusively provisioned blocks that would be returned back 
+to pool.
+
+I guess you can formulate something like this as RFE BZ.
+
+Also note - you can do this operation yourself already today by using 
+thin-tool and using some scripting-fu skills - but it's pretty hacky....
+
+
+Zdenek
