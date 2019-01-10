@@ -1,20 +1,13 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: SMR 512e drive firmware advertising misleading
- limits? [was: Re: [RFC PATCH 1/1] dm: add dust target]
-Date: Thu, 10 Jan 2019 04:58:11 +0000
-Message-ID: <BYAPR04MB581640F5ED066B99EBC824B8E7840@BYAPR04MB5816.namprd04.prod.outlook.com>
-References: <1546889483-6341-1-git-send-email-bgurney@redhat.com>
-	<1546889483-6341-2-git-send-email-bgurney@redhat.com>
-	<20190108001049.GM11315@octiron.msp.redhat.com>
-	<CAHhmqcSLxihW3L+w=MZ22Z9pbU13MLD7Bn6YQey-u1soFp-KJw@mail.gmail.com>
-	<20190108162314.GA16936@redhat.com>
-	<CAHhmqcTfKniu1eP+fBwHf4gohOfUaz_cgaC3EUezNauUAk6O-Q@mail.gmail.com>
-	<BYAPR04MB581645C55BCC328E193D3DBEE78B0@BYAPR04MB5816.namprd04.prod.outlook.com>
-	<20190109142913.GA26563@redhat.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: dm thin pool discarding
+Date: Thu, 10 Jan 2019 10:18:41 +0100
+Message-ID: <ba0c0646-29f3-f876-6454-8c80b613a46a@redhat.com>
+References: <CA+X5Wn4fqXZa_Ecc75CfmA2LBq7y8qFzzdDcdFugZwaPgq-Aeg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CA+X5Wn4fqXZa_Ecc75CfmA2LBq7y8qFzzdDcdFugZwaPgq-Aeg@mail.gmail.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -25,70 +18,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: John Dorminy <jdorminy@redhat.com>, Shimkus <jshimkus@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Joe, "tjaskiew@redhat.com" <tjaskiew@redhat.com>, John Pittman <jpittman@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Bryan Gurney <bgurney@redhat.com>
+To: james harvey <jamespharvey20@gmail.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Mike,
-
-On 2019/01/09 23:29, Mike Snitzer wrote:
-> On Tue, Jan 08 2019 at  8:03pm -0500,
-> Damien Le Moal <Damien.LeMoal@wdc.com> wrote:
->  
->> You may want to check against the physical_block_size, and not the logical. SMR
->> disks that are 512 e (512B logical and 4K physical) can handle reads in 512B
->> units but writes have to be 4K. These are exceptions though and kind of breaking
->> all LBA definitions known to men... This check on the physical_block_size can be
->> limited to setups where the underlying disk is SMR.
+Dne 10. 01. 19 v 1:39 james harvey napsal(a):
+> I've been talking with ntfs-3g developers, and they're updating their
+> discard code to work when an NTFS volume is within an LVM thin volume.
 > 
-> Damien, this sounds like a serious issue with SMR firmware.  If the
-> 512e SMR drive cannot handle 512b writes then it has no business
-> advertising 512B logical.  It should be advertising 4K logical.
+> It turns out their code was refusing to discard if discard_granularity
+> was > the NTFS cluster size.  By default, a LVM thick volume is giving
+> a discard_granularity of 512 bytes, and the NTFS cluster size is 4096.
+> By default, a LVM thin volume is giving a discard_granularity of 65536
+> bytes.
 > 
-> What am I missing?
+> For thin volumes, LVM seems to be returning a discard_granularity
+> equal to the thin pool's chunksize, which totally makes sense.
+> 
+> Q1 - Is it correct that a filesystem's discard code needs to look for
+> an entire block of size discard_granularity to send to the block
+> device (dm/LVM)?  That dm/LVM cannot accept discarding smaller amounts
+> than this?  (Seems to make sense to me, since otherwise I think the
+> metadata would need to keep track of smaller chunks than the
+> chunksize, and it doesn't have the metadata space to do that.)
 
-You are absolutely correct, and I am with you on this one ! 512e disks are an
-insanity for SMR and should not exist. But unfortunately, they do. The problem
-is not the disk firmware, but the specs. ZBC and ZAC clearly state that writes
-into sequential zones have to be aligned on physical sector boundaries. This
-constraint applies only to sequential zones. Conventional zones can and should
-handle any write request, even those not aligned on 4K boundaries on 512e disks.
 
-Form ZBC r05:
+You can always send discard of 512b sector - but it will not really do 
+anything useful for thin-pool unless you discard 'whole' chunk.
 
-"4.4.3.4.1 Writing in sequential write required zones
-[...]
-If the device server processes a write command with:
-	a) the starting LBA in a sequential write required zone set to a value
-	   that is in the write required zone but
-	   that is not equal to the write pointer; or
-	b) an ending LBA that is not equal to the last logical block within a
-	   physical block (see SBC-4),
-then the device server shall not write any data and shall terminate the command
-with CHECK CONDITION status, with the sense key set to ILLEGAL REQUEST, and the
-additional sense code set to UNALIGNED WRITE COMMAND."
+That's why it is always better to use  'fstrim' - which will always try
+to discard 'largest' regions.
 
-This kind of make sense considering that track shingling allows sectors to be
-written only once, but it seems that nobody in the standard committee clearly
-realized the implications of this on 512e disk models. And so we end up with
-this situation were everything is fine for 512n and 4Kn, but 512e is definitely
-broken.
+There is nothing in thin-pool itself that would track which sectors from 
+chunks were trimmed - so if you trim chunk by sectors - the chunk will still 
+appear as allocated by thin volume. And obviously there is nothing
+that would be 'clearing' such trimmed sectors individually. So when
+you trim  512b out of thin volume - after reading same data location you will 
+still find there your old data.  Only after 'trimming' whole chunk (on chunk 
+boundaries) - you will get zero.  It's worth to note that every thin LV is 
+composed from chunks - so to have successful trim - trimming happens only on 
+aligned chunks - i.e. chunk_size == 64K and then if you try to trim 64K from 
+position 32K - nothing happens....
 
-Disk FW implementation could handle partial 4K sector writes with some caching
-since only the physical sectors containing the LBA pointed by zone write
-pointers need caching. That is at most as many sectors as the number of
-sequential zones. But the specs are like this now, and the disk FW
-implementation has no choice but to follow the text.
+> Q3 - Does a LVM thin volume zero out the bytes that are discarded?  At
+> least for me, queue/discard_zeroes_data is 0.  I see there was
+> discussion on the list of adding this back in 2012, but I'm not sure
+> it was ever added for there to be a way to enable it.
 
-Note that we discussed in the past adding checks in the block stack or scsi
-stack for writes that are not 4K aligned on 512e SMR disks, but in the end
-decided against it. That does not buy us anything and so we let the drive fail
-these unaligned writes instead of failing the commands before dispatching.
-Luckily, all the in kernel software we have supporting SMR use 4K writes (f2fs,
-btrfs prototype and dm-zoned). So this problem never really triggers.
+Unprovisioned chunks always appear as zeroed for reading.
+Once you provision chunk (by write) for thin volume out of thin-pool - it 
+depends on thin-pool target setting 'skip_zeroing'.
 
-Best regards.
+So if zeroing is enabled (no skipping) - and you use larger chunks - the 
+initial chunk provisioning becomes quite expensive - that's why lvm2 is by 
+default recommending to not use zeroing for chunk sizes > 512K.
 
--- 
-Damien Le Moal
-Western Digital Research
+When zeroing is disabled (skipped) -  provisioning is 'fast' - but whatever 
+content was 'left' on thin-pool data device will be readable from unwritten 
+portions of provisioned chunks.  So you need to pick whether you care or do 
+not care. Note - modern filesystems track 'written' data - so normal user can 
+never see such data by reading files from filesystem - but of course root with 
+'dd' command can examine any portion of such device.
+
+I hope this makes it clear.
+
+Zdenek
