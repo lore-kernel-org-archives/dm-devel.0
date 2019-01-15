@@ -1,107 +1,127 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH V13 00/19] block: support multi-page bvec
-Date: Mon, 14 Jan 2019 20:44:59 -0700
-Message-ID: <49d610a4-0c2b-f7e7-6505-9dde59343b75@kernel.dk>
-References: <20190111110127.21664-1-ming.lei@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm thin: fix
+	passdown_double_checking_shared_status()
+Date: Tue, 15 Jan 2019 13:53:20 -0500
+Message-ID: <20190115185320.GA73596@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190111110127.21664-1-ming.lei@redhat.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ming Lei <ming.lei@redhat.com>
-Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Theodore Ts'o <tytso@mit.edu>, Omar Sandoval <osandov@fb.com>, Sagi Grimberg <sagi@grimberg.me>, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, linux-raid@vger.kernel.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, Bob Peterson <rpeterso@redhat.com>, clus
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: ryan.p.norwood@gmail.com, Vallish Vaidyeshwara <vallish@amazon.com>, Eduardo Valentin <eduval@amazon.com>, Anchal Agarwal <anchalag@amazon.com>, Joe Thornber <ejt@redhat.com>, Cristian Gafton <gafton@amazon.com>
 List-Id: dm-devel.ids
 
-On 1/11/19 4:01 AM, Ming Lei wrote:
-> Hi,
-> 
-> This patchset brings multi-page bvec into block layer:
-> 
-> 1) what is multi-page bvec?
-> 
-> Multipage bvecs means that one 'struct bio_bvec' can hold multiple pages
-> which are physically contiguous instead of one single page used in linux
-> kernel for long time.
-> 
-> 2) why is multi-page bvec introduced?
-> 
-> Kent proposed the idea[1] first. 
-> 
-> As system's RAM becomes much bigger than before, and huge page, transparent
-> huge page and memory compaction are widely used, it is a bit easy now
-> to see physically contiguous pages from fs in I/O. On the other hand, from
-> block layer's view, it isn't necessary to store intermediate pages into bvec,
-> and it is enough to just store the physicallly contiguous 'segment' in each
-> io vector.
-> 
-> Also huge pages are being brought to filesystem and swap [2][6], we can
-> do IO on a hugepage each time[3], which requires that one bio can transfer
-> at least one huge page one time. Turns out it isn't flexiable to change
-> BIO_MAX_PAGES simply[3][5]. Multipage bvec can fit in this case very well.
-> As we saw, if CONFIG_THP_SWAP is enabled, BIO_MAX_PAGES can be configured
-> as much bigger, such as 512, which requires at least two 4K pages for holding
-> the bvec table.
-> 
-> With multi-page bvec:
-> 
-> - Inside block layer, both bio splitting and sg map can become more
-> efficient than before by just traversing the physically contiguous
-> 'segment' instead of each page.
-> 
-> - segment handling in block layer can be improved much in future since it
-> should be quite easy to convert multipage bvec into segment easily. For
-> example, we might just store segment in each bvec directly in future.
-> 
-> - bio size can be increased and it should improve some high-bandwidth IO
-> case in theory[4].
-> 
-> - there is opportunity in future to improve memory footprint of bvecs. 
-> 
-> 3) how is multi-page bvec implemented in this patchset?
-> 
-> Patch 1 ~ 4 parpares for supporting multi-page bvec. 
-> 
-> Patches 5 ~ 15 implement multipage bvec in block layer:
-> 
-> 	- put all tricks into bvec/bio/rq iterators, and as far as
-> 	drivers and fs use these standard iterators, they are happy
-> 	with multipage bvec
-> 
-> 	- introduce bio_for_each_bvec() to iterate over multipage bvec for splitting
-> 	bio and mapping sg
-> 
-> 	- keep current bio_for_each_segment*() to itereate over singlepage bvec and
-> 	make sure current users won't be broken; especailly, convert to this
-> 	new helper prototype in single patch 21 given it is bascially a mechanism
-> 	conversion
-> 
-> 	- deal with iomap & xfs's sub-pagesize io vec in patch 13
-> 
-> 	- enalbe multipage bvec in patch 14 
-> 
-> Patch 16 redefines BIO_MAX_PAGES as 256.
-> 
-> Patch 17 documents usages of bio iterator helpers.
-> 
-> Patch 18~19 kills NO_SG_MERGE.
-> 
-> These patches can be found in the following git tree:
-> 
-> 	git:  https://github.com/ming1/linux.git  for-4.21-block-mp-bvec-V12
-> 
-> Lots of test(blktest, xfstests, ltp io, ...) have been run with this patchset,
-> and not see regression.
-> 
-> Thanks Christoph for reviewing the early version and providing very good
-> suggestions, such as: introduce bio_init_with_vec_table(), remove another
-> unnecessary helpers for cleanup and so on.
-> 
-> Thanks Chritoph and Omar for reviewing V10/V11/V12, and provides lots of
-> helpful comments.
+Commit 00a0ea33b49 ("dm thin: do not queue freed thin mapping for next
+stage processing") changed process_prepared_discard_passdown_pt1() to
+increment all the blocks being discarded until after the passdown had
+completed to avoid them being prematurely reused.
 
-Thanks for persisting in this endeavor, Ming, I've applied this for 5.1.
+IO issued to a thin device that breaks sharing with a snapshot, followed
+by a discard issued to snapshot(s) that previously shared the block(s),
+results in passdown_double_checking_shared_status() being called to
+iterate through the blocks double checking their reference count is zero
+and issuing the passdown if so.  So a side effect of commit 00a0ea33b49
+is passdown_double_checking_shared_status() was broken.
 
+Fix this by checking if the block reference count is greater than 1.
+Also, rename dm_pool_block_is_used() to dm_pool_block_is_shared().
+
+Fixes: 00a0ea33b49 ("dm thin: do not queue freed thin mapping for next stage processing")
+Cc: stable@vger.kernel.org # 4.9+
+Reported-by: ryan.p.norwood@gmail.com
+Signed-off-by: Joe Thornber <ejt@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-thin-metadata.c |  4 ++--
+ drivers/md/dm-thin-metadata.h |  2 +-
+ drivers/md/dm-thin.c          | 10 +++++-----
+ 3 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+index 20b0776e39ef..ed3caceaed07 100644
+--- a/drivers/md/dm-thin-metadata.c
++++ b/drivers/md/dm-thin-metadata.c
+@@ -1678,7 +1678,7 @@ int dm_thin_remove_range(struct dm_thin_device *td,
+ 	return r;
+ }
+ 
+-int dm_pool_block_is_used(struct dm_pool_metadata *pmd, dm_block_t b, bool *result)
++int dm_pool_block_is_shared(struct dm_pool_metadata *pmd, dm_block_t b, bool *result)
+ {
+ 	int r;
+ 	uint32_t ref_count;
+@@ -1686,7 +1686,7 @@ int dm_pool_block_is_used(struct dm_pool_metadata *pmd, dm_block_t b, bool *resu
+ 	down_read(&pmd->root_lock);
+ 	r = dm_sm_get_count(pmd->data_sm, b, &ref_count);
+ 	if (!r)
+-		*result = (ref_count != 0);
++		*result = (ref_count > 1);
+ 	up_read(&pmd->root_lock);
+ 
+ 	return r;
+diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
+index 35e954ea20a9..f6be0d733c20 100644
+--- a/drivers/md/dm-thin-metadata.h
++++ b/drivers/md/dm-thin-metadata.h
+@@ -195,7 +195,7 @@ int dm_pool_get_metadata_dev_size(struct dm_pool_metadata *pmd,
+ 
+ int dm_pool_get_data_dev_size(struct dm_pool_metadata *pmd, dm_block_t *result);
+ 
+-int dm_pool_block_is_used(struct dm_pool_metadata *pmd, dm_block_t b, bool *result);
++int dm_pool_block_is_shared(struct dm_pool_metadata *pmd, dm_block_t b, bool *result);
+ 
+ int dm_pool_inc_data_range(struct dm_pool_metadata *pmd, dm_block_t b, dm_block_t e);
+ int dm_pool_dec_data_range(struct dm_pool_metadata *pmd, dm_block_t b, dm_block_t e);
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index dadd9696340c..ca8af21bf644 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -1048,7 +1048,7 @@ static void passdown_double_checking_shared_status(struct dm_thin_new_mapping *m
+ 	 * passdown we have to check that these blocks are now unused.
+ 	 */
+ 	int r = 0;
+-	bool used = true;
++	bool shared = true;
+ 	struct thin_c *tc = m->tc;
+ 	struct pool *pool = tc->pool;
+ 	dm_block_t b = m->data_block, e, end = m->data_block + m->virt_end - m->virt_begin;
+@@ -1058,11 +1058,11 @@ static void passdown_double_checking_shared_status(struct dm_thin_new_mapping *m
+ 	while (b != end) {
+ 		/* find start of unmapped run */
+ 		for (; b < end; b++) {
+-			r = dm_pool_block_is_used(pool->pmd, b, &used);
++			r = dm_pool_block_is_shared(pool->pmd, b, &shared);
+ 			if (r)
+ 				goto out;
+ 
+-			if (!used)
++			if (!shared)
+ 				break;
+ 		}
+ 
+@@ -1071,11 +1071,11 @@ static void passdown_double_checking_shared_status(struct dm_thin_new_mapping *m
+ 
+ 		/* find end of run */
+ 		for (e = b + 1; e != end; e++) {
+-			r = dm_pool_block_is_used(pool->pmd, e, &used);
++			r = dm_pool_block_is_shared(pool->pmd, e, &shared);
+ 			if (r)
+ 				goto out;
+ 
+-			if (used)
++			if (shared)
+ 				break;
+ 		}
+ 
 -- 
-Jens Axboe
+2.15.0
