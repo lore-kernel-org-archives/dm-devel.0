@@ -1,16 +1,16 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [RFC PATCH 4/6] multipathd: cancel threads early
-	during shutdown
-Date: Wed, 16 Jan 2019 17:40:56 -0600
-Message-ID: <20190116234056.GT11315@octiron.msp.redhat.com>
+Subject: Re: [RFC PATCH 5/6] multipathd: add code to handle
+	blocked signals
+Date: Wed, 16 Jan 2019 17:59:28 -0600
+Message-ID: <20190116235928.GU11315@octiron.msp.redhat.com>
 References: <20190104175914.22784-1-mwilck@suse.com>
-	<20190104175914.22784-5-mwilck@suse.com>
+	<20190104175914.22784-6-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20190104175914.22784-5-mwilck@suse.com>
+In-Reply-To: <20190104175914.22784-6-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,65 +24,72 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: Chongyun Wu <wu.chongyun@h3c.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Jan 04, 2019 at 06:59:12PM +0100, Martin Wilck wrote:
-> Cancel the other threads before taking vecs->lock. This avoids
-> delays during shutdown caused e.g. by the checker thread holding
-> the vecs lock.
-
-Before this change, multipathd was guaranteed that once a thread had
-locked the vecs lock, and checked if it had been cancelled, it could not
-be cancelled after that until it unlocked the vecs lock.  Undoing this
-guarantee will likely make it possible for multipathd to leak memory
-where it wasn't possible before. However, since it's happening during
-shutdown, I'm not sure that we really need to care. Or, perhaps you
-audited this, and I'm wrong.
-
-At any rate, it's at least worth mentioning.
-
--Ben
-
+On Fri, Jan 04, 2019 at 06:59:13PM +0100, Martin Wilck wrote:
+> multipathd blocks all signals except in the uxlsnr thread.
+> Add some code to handle signals even while they're blocked.
+> 
+> If a shutdown signal is received, deliver_pending_signals() returns
+> TRUE. This is not the same as should_exit(), it's just a friendly
+> warning to the caller that shutdown/thread cancellation is imminent.
 > 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  multipathd/main.c | 17 +++++++++--------
->  1 file changed, 9 insertions(+), 8 deletions(-)
+>  multipathd/main.c | 25 +++++++++++++++++++++++++
+>  multipathd/main.h |  1 +
+>  2 files changed, 26 insertions(+)
 > 
 > diff --git a/multipathd/main.c b/multipathd/main.c
-> index 413beee0..569a27ac 100644
+> index 569a27ac..6276d34c 100644
 > --- a/multipathd/main.c
 > +++ b/multipathd/main.c
-> @@ -2872,23 +2872,24 @@ child (void * param)
->  		}
->  	}
+> @@ -2614,6 +2614,31 @@ signal_init(void)
+>  	signal_set(SIGPIPE, sigend);
+>  }
 >  
-> -	lock(&vecs->lock);
-> +	pthread_cancel(check_thr);
-> +	pthread_cancel(uevent_thr);
-> +	pthread_cancel(uxlsnr_thr);
-> +	pthread_cancel(uevq_thr);
-> +	if (poll_dmevents)
-> +		pthread_cancel(dmevent_thr);
+> +bool deliver_pending_signals(void)
+> +{
+> +	sigset_t set;
+> +	bool ret = exit_sig;
 > +
->  	conf = get_multipath_config();
->  	queue_without_daemon = conf->queue_without_daemon;
->  	put_multipath_config(conf);
+> +	if (sigpending(&set) != 0)
+> +		return false;
+
+shouldn't this return ret instead of false?
+
+-Ben
+
 > +
-> +	lock(&vecs->lock);
->  	if (queue_without_daemon == QUE_NO_DAEMON_OFF)
->  		vector_foreach_slot(vecs->mpvec, mpp, i)
->  			dm_queue_if_no_path(mpp->alias, 0);
->  	remove_maps_and_stop_waiters(vecs);
->  	unlock(&vecs->lock);
->  
-> -	pthread_cancel(check_thr);
-> -	pthread_cancel(uevent_thr);
-> -	pthread_cancel(uxlsnr_thr);
-> -	pthread_cancel(uevq_thr);
-> -	if (poll_dmevents)
-> -		pthread_cancel(dmevent_thr);
-> -
->  	pthread_join(check_thr, NULL);
->  	pthread_join(uevent_thr, NULL);
->  	pthread_join(uxlsnr_thr, NULL);
+> +	if (sigismember(&set, SIGTERM) ||
+> +	    sigismember(&set, SIGPIPE) ||
+> +	    sigismember(&set, SIGINT)) {
+> +		sigend(SIGTERM);
+> +		ret = true;
+> +	}
+> +	if (sigismember(&set, SIGHUP))
+> +		sighup(SIGHUP);
+> +	if (sigismember(&set, SIGUSR1))
+> +		sigusr1(SIGUSR1);
+> +	if (sigismember(&set, SIGUSR2))
+> +		sigusr2(SIGUSR2);
+> +
+> +	handle_signals(false);
+> +	return ret;
+> +}
+> +
+>  static void
+>  setscheduler (void)
+>  {
+> diff --git a/multipathd/main.h b/multipathd/main.h
+> index 8fd426b0..2b77b44b 100644
+> --- a/multipathd/main.h
+> +++ b/multipathd/main.h
+> @@ -39,6 +39,7 @@ void * mpath_pr_event_handler_fn (void * );
+>  int update_map_pr(struct multipath *mpp);
+>  void * mpath_pr_event_handler_fn (void * pathp );
+>  void handle_signals(bool);
+> +bool deliver_pending_signals(void);
+>  int __setup_multipath (struct vectors * vecs, struct multipath * mpp,
+>  		       int reset);
+>  #define setup_multipath(vecs, mpp) __setup_multipath(vecs, mpp, 1)
 > -- 
 > 2.19.2
