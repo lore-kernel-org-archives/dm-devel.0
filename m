@@ -1,14 +1,16 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 0/3] multipath-tools: compilation fixes
-Date: Wed, 16 Jan 2019 18:10:04 -0600
-Message-ID: <20190117001004.GY11315@octiron.msp.redhat.com>
-References: <20190108113246.5903-1-mwilck@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [RFC PATCH 4/6] multipathd: cancel threads early
+	during shutdown
+Date: Thu, 17 Jan 2019 10:59:51 +0100
+Message-ID: <ac0f4fc202cf40b1c12dd7484468a162d757b4e0.camel@suse.com>
+References: <20190104175914.22784-1-mwilck@suse.com>
+	<20190104175914.22784-5-mwilck@suse.com>
+	<20190116234056.GT11315@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20190108113246.5903-1-mwilck@suse.com>
+In-Reply-To: <20190116234056.GT11315@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,37 +20,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
+Cc: Chongyun Wu <wu.chongyun@h3c.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Jan 08, 2019 at 12:32:43PM +0100, Martin Wilck wrote:
-> Hi Christophe,
-> 
-> my late NVMe patch series broke compilatioin with older
-> kernel headers. This series fixes that, and adds two other
-> minor build-related fixes.
-> 
-> Regards,
-> Martin
-
-ACK for the set
-
--Ben
-
-> 
-> Martin Wilck (3):
->   libmultipath: fix compilation with older kernel headers
->   multipath: fix gcc 4.8 uninitialized variable warning
->   multipath_tools: remove ENABLE_RADOS
-> 
->  Makefile.inc                         |  4 +-
->  libmultipath/Makefile                | 11 ++---
->  libmultipath/foreign/Makefile        |  7 ++-
->  libmultipath/nvme/linux/nvme_ioctl.h | 67 ++++++++++++++++++++++++++++
->  multipath/main.c                     |  9 +---
->  5 files changed, 76 insertions(+), 22 deletions(-)
->  create mode 100644 libmultipath/nvme/linux/nvme_ioctl.h
-> 
-> -- 
-> 2.19.2
+T24gV2VkLCAyMDE5LTAxLTE2IGF0IDE3OjQwIC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gRnJpLCBKYW4gMDQsIDIwMTkgYXQgMDY6NTk6MTJQTSArMDEwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gQ2FuY2VsIHRoZSBvdGhlciB0aHJlYWRzIGJlZm9yZSB0YWtpbmcgdmVj
+cy0+bG9jay4gVGhpcyBhdm9pZHMKPiA+IGRlbGF5cyBkdXJpbmcgc2h1dGRvd24gY2F1c2VkIGUu
+Zy4gYnkgdGhlIGNoZWNrZXIgdGhyZWFkIGhvbGRpbmcKPiA+IHRoZSB2ZWNzIGxvY2suCj4gCj4g
+QmVmb3JlIHRoaXMgY2hhbmdlLCBtdWx0aXBhdGhkIHdhcyBndWFyYW50ZWVkIHRoYXQgb25jZSBh
+IHRocmVhZCBoYWQKPiBsb2NrZWQgdGhlIHZlY3MgbG9jaywgYW5kIGNoZWNrZWQgaWYgaXQgaGFk
+IGJlZW4gY2FuY2VsbGVkLCBpdCBjb3VsZAo+IG5vdAo+IGJlIGNhbmNlbGxlZCBhZnRlciB0aGF0
+IHVudGlsIGl0IHVubG9ja2VkIHRoZSB2ZWNzIGxvY2suICBVbmRvaW5nCj4gdGhpcwo+IGd1YXJh
+bnRlZSB3aWxsIGxpa2VseSBtYWtlIGl0IHBvc3NpYmxlIGZvciBtdWx0aXBhdGhkIHRvIGxlYWsg
+bWVtb3J5Cj4gd2hlcmUgaXQgd2Fzbid0IHBvc3NpYmxlIGJlZm9yZS4gCgpUaGFua3MgZm9yIHBv
+aW50aW5nIHRoYXQgb3V0LgoKSSB3YXNuJ3QgYXdhcmUgb2YgdGhpcyBndWFyYW50ZWUuIEluIG15
+IGxhdGVzdCB2YWxncmluZCB0ZXN0cywgdmFsZ3JpbmQKcmVwb3J0ZWQgbm8gbGVha3MsIGJ1dCBt
+dWx0aXBhdGhkIHdhcyBhbHNvIG5vdCAiY2xlYW4iIGluIHRoZSBzZW5zZQp0aGF0IGV2ZXJ5IGNo
+dW5rIG9mIG1lbW9yeSBtYWxsb2MoKWQgaGFkIGJlZW4gZXhwbGljaXRseSBmcmVlKClkIGF0CmV4
+aXQuIElJUkMgdGhhdCBoYWRuJ3QgYmVlbiBjYXVzZWQgYnkgYW55IHBhdGNoZXMgYWRkZWQgcmVj
+ZW50bHkuCkkgaGF2ZW4ndCBoYWQgdGltZSB0byBsb29rIGF0IHRoYXQgZnVydGhlciwgSSB3YXMg
+c2F0aXNmaWVkIHdpdGggbm8KcmVhbCBsZWFrcyBiZWluZyByZXBvcnRlZC4KCldlIGRvIGZyZWUg
+dGhlIGdsb2JhbCBkYXRhIHN0cnVjdHVyZXMgaW4gInZlY3MiIHdoZW4gd2UgZXhpdC4gU28gYW55
+CnBvc3NpYmxlIGxlYWtzIGNhdXNlZCBieSB0aGlzIHBhdGNoIG11c3QgYmUgY2FzZXMgd2hlcmUg
+dGVtcG9yYXJ5Cm1lbW9yeSBpcyBhbGxvY2F0ZWQgd2l0aG91dCBwcm9wZXIgcHRocmVhZF9jbGVh
+bnVwX3B1c2goKSwgb3Igd2hlcmUgYQp0aHJlYWQgd2FzIGNhbmNlbGxlZCBiZXR3ZWVuIGFsbG9j
+YXRpb24gb2YgbWVtb3J5IGFuZCBzZXR0aW5nIGEKcmVmZXJlbmNlIHRvIGl0IGluIHRoZSBnbG9i
+YWwgZGF0YSBzdHJ1Y3R1cmVzIC0gZS5nLiBiZXR3ZWVuIGFsbG9jYXRpb24Kb2YgYSBwYXRoIGFu
+ZCBhZGRpbmcgaXQgdG8gdmVjcy0+cGF0aHZlYy4KCkkgaGF2ZW4ndCBhdWRpdGVkIGVpdGhlciBj
+bGFzcyBvZiBsZWFrcy4gSSBiZWxpZXZlIHRoZSBmaXJzdCBjbGFzcwpzaG91bGQgaGF2ZSBiZWVu
+IGVsaW1pbmF0ZWQgYnkgZWFybGllciBwaHRocmVhZF9jYW5jZWwgYXVkaXRzLiBGaXhpbmcKdGhl
+IHNlY29uZCBjbGFzcyB3b3VsZCByZXF1aXJlIGRlc2lnbmluZyBzb21lIHJlYWxseSBjbGV2ZXIg
+aGVscGVycywgSQpndWVzcy4gQnV0IGFzIGFyZ3VlZCBhYm92ZSwgSSByZWFsbHkgZG9uJ3QgdGhp
+bmsgaXQgbWF0dGVycyBtdWNoIGlmIGl0CmNvbmNlcm5zIG9ubHkgbGVha3MtYXQtc2h1dGRvd24u
+CgpJJ2xsIHB1dCB0aGlzIG9uIG15IHRvZG8gbGlzdCwgYnV0IG5vdCBhdCB0aGUgaGlnaGVzdCBw
+cmlvLgpGb3IgdGhpcyBSRkMsIHdlIG5lZWQgdG8gZGVjaWRlIHdoZXRoZXIgaXQncyBtb3JlIGlt
+cG9ydGFudCB0byBiZSBsZWFrLQpmcmVlIG9uIHNodXRkb3duLCBvciB0byByZWFjdCBxdWlja2x5
+IG9uIHNodXRkb3duIHJlcXVlc3RzLgoKTWFydGluCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2ls
+Y2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgs
+IEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJC
+IDIxMjg0IChBRyBOw7xybmJlcmcpCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVs
+QHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRl
+dmVs
