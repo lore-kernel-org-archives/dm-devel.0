@@ -1,14 +1,16 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH] multipathd: avoid crash in cli_list_path
-Date: Thu, 17 Jan 2019 14:59:51 -0600
-Message-ID: <20190117205950.GB11315@octiron.msp.redhat.com>
-References: <20190108232543.18134-1-mwilck@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 08/12] libmultipath(coverity): fix "enum
+ misuse" for find_multipaths
+Date: Thu, 17 Jan 2019 22:25:03 +0100
+Message-ID: <08440b7b40257000f1ea07ee17b19d812fec9a55.camel@suse.com>
+References: <20190108225409.15977-1-mwilck@suse.com>
+	<20190108225409.15977-9-mwilck@suse.com>
+	<20190117195528.GZ11315@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20190108232543.18134-1-mwilck@suse.com>
+In-Reply-To: <20190117195528.GZ11315@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,32 +20,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jan 09, 2019 at 12:25:43AM +0100, Martin Wilck wrote:
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-
-> multipathd can be crashed by passing an invalid path name
-> to the "show path" command. Fix it.
-> ---
->  multipathd/cli_handlers.c | 2 ++
->  1 file changed, 2 insertions(+)
-> 
-> diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-> index 6304ed3a..fabf4440 100644
-> --- a/multipathd/cli_handlers.c
-> +++ b/multipathd/cli_handlers.c
-> @@ -346,6 +346,8 @@ cli_list_path (void * v, char ** reply, int * len, void * data)
->  	condlog(3, "%s: list path (operator)", param);
->  
->  	pp = find_path_by_dev(vecs->pathvec, param);
-> +	if (!pp)
-> +		return 1;
->  
->  	return show_path(reply, len, vecs, pp, "%o");
->  }
-> -- 
-> 2.19.2
+T24gVGh1LCAyMDE5LTAxLTE3IGF0IDEzOjU1IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gVHVlLCBKYW4gMDgsIDIwMTkgYXQgMTE6NTQ6MDVQTSArMDEwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gU2lnbmVkLW9mZi1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5j
+b20+Cj4gPiAtLS0KPiA+ICBsaWJtdWx0aXBhdGgvZGljdC5jIHwgMiArLQo+ID4gIDEgZmlsZSBj
+aGFuZ2VkLCAxIGluc2VydGlvbigrKSwgMSBkZWxldGlvbigtKQo+ID4gCj4gPiBkaWZmIC0tZ2l0
+IGEvbGlibXVsdGlwYXRoL2RpY3QuYyBiL2xpYm11bHRpcGF0aC9kaWN0LmMKPiA+IGluZGV4IGZk
+MjlhYmMuLmVhYWQ0ZjEgMTAwNjQ0Cj4gPiAtLS0gYS9saWJtdWx0aXBhdGgvZGljdC5jCj4gPiAr
+KysgYi9saWJtdWx0aXBhdGgvZGljdC5jCj4gPiBAQCAtMzI3LDcgKzMyNyw3IEBAIGRlZl9maW5k
+X211bHRpcGF0aHNfaGFuZGxlcihzdHJ1Y3QgY29uZmlnCj4gPiAqY29uZiwgdmVjdG9yIHN0cnZl
+YykKPiA+ICAJaW50IGk7Cj4gPiAgCj4gPiAgCWlmIChzZXRfeWVzX25vX3VuZGVmKHN0cnZlYywg
+JmNvbmYtPmZpbmRfbXVsdGlwYXRocykgPT0gMCAmJgo+ID4gLQkgICAgY29uZi0+ZmluZF9tdWx0
+aXBhdGhzICE9IFlOVV9VTkRFRikKPiA+ICsJICAgIGNvbmYtPmZpbmRfbXVsdGlwYXRocyAhPSBG
+SU5EX01VTFRJUEFUSFNfVU5ERUYpCj4gPiAgCQlyZXR1cm4gMDsKPiAKPiBJcyB0aGVyZSBzb21l
+IHJlYXNvbiB0aGF0IEkgZG9uJ3QgdW5kZXJzdGFuZCB3aHkgWU5VX1VOREVGIGlzCj4gcHJvYmxl
+bWF0aWMgaGVyZSwgYnV0IG5vdCBsYXRlciBpbiB0aGUgZnVuY3Rpb24gYXQgdGhlOgo+IAo+ICAg
+ICAgICAgaWYgKGNvbmYtPmZpbmRfbXVsdGlwYXRocyA9PSBZTlVfVU5ERUYpIHsKPiAgICAgICAg
+ICAgICAgICAgY29uZGxvZygwLCAiaWxsZWdhbCB2YWx1ZSBmb3IgZmluZF9tdWx0aXBhdGhzOiAl
+cyIsCj4gYnVmZik7Cj4gICAgICAgICAgICAgICAgIGNvbmYtPmZpbmRfbXVsdGlwYXRocyA9IERF
+RkFVTFRfRklORF9NVUxUSVBBVEhTOwo+ICAgICAgICAgfQo+IAo+IGNoZWNrPwoKR29vZCBjYXRj
+aC4gTWF5YmUgY292ZXJpdHkgd291bGQgaGF2ZSBmb3VuZCB0aGF0IGluIGEgc2Vjb25kIHBhc3M/
+IE9yIEkKd2FzIGp1c3QgdG9vIGJsaW5kLi4uIEFzIEkgc2FpZCwgdGhpcyByb3VuZCBvZiB3b3Jr
+IG9uIGNvdmVyaXR5IHdhcwpkaXNydXB0ZWQgYnkgY292ZXJpdHkncyBzZXJ2ZXIgZG93bnRpbWUs
+IHdoaWNoIGlzIHN0aWxsIG5vdCBmaXhlZC4KCkFueXdheSwgdGhpcyBpc24ndCB3cm9uZywgb25s
+eSBpbmNvbXBsZXRlLiBJJ2QgcmF0aGVyIG5vdCByZXNlbmQgdGhlCndob2xlIHNlcmllcyBiZWNh
+dXNlIG9mIHRoaXMuIFdoZW4gY292ZXJpdHkgaXMgdXAgYWdhaW4sIEknbGwgZG8KYW5vdGhlciBy
+b3VuZCBvZiBmaXhlcy4KCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNl
+LmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZl
+bGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQg
+KEFHIE7DvHJuYmVyZykKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
+LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
