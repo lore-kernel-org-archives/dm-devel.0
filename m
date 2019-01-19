@@ -1,12 +1,14 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 0/4] dm: fix various issues with bio splitting
-	code
-Date: Sat, 19 Jan 2019 13:05:02 -0500
-Message-ID: <20190119180506.1300-1-snitzer@redhat.com>
+Subject: [PATCH 3/4] dm: fix missing bio_split() pattern code in
+	__split_and_process_bio()
+Date: Sat, 19 Jan 2019 13:05:05 -0500
+Message-ID: <20190119180506.1300-4-snitzer@redhat.com>
+References: <20190119180506.1300-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190119180506.1300-1-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,29 +22,35 @@ To: dm-devel@redhat.com
 Cc: axboe@kernel.dk, linux-block@vger.kernel.org, NeilBrown <neilb@suse.com>, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+Use the same BIO_QUEUE_ENTERED pattern that was established by commit
+cd4a4ae4683dc ("block: don't use blocking queue entered for recursive
+bio submits") by setting BIO_QUEUE_ENTERED after bio_split() and before
+recursing via generic_make_request().
 
-These mostly stable@ patches will be sent to Linus for 5.0-rc4
-inclusion (would've sent today for 5.0-rc3 but I don't yet have
-linux-next coverage).
+Also add trace_block_split() because it provides useful context about
+bio splits in blktrace.
 
-Just wanted to give a heads up because some of the problems fixed
-could bite other users of the bio_split()+generic_make_request()
-recursive pattern.  We should probably factor out some helpers that
-all users could share (e.g. so they don't forget to set
-BIO_QUEUE_ENTERED or call trace_block_split(), etc).
+Depends-on: cd4a4ae4683dc ("block: don't use blocking queue entered for recursive bio submits")
+Fixes: 18a25da84354 ("dm: ensure bio submission follows a depth-first tree walk")
+Cc: stable@vger.kernel.org # 4.16+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-Thanks,
-Mike
-
-Mike Snitzer (4):
-  dm: fix clone_bio() to trigger blk_recount_segments()
-  dm: fix redundant IO accounting for bios that need splitting
-  dm: fix missing bio_split() pattern code in __split_and_process_bio()
-  dm: fix dm_wq_work() to only use __split_and_process_bio() if appropriate
-
- drivers/md/dm.c | 44 ++++++++++++++++++++++++++++++++------------
- 1 file changed, 32 insertions(+), 12 deletions(-)
-
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index fbadda68e23b..6e29c2d99b99 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1654,7 +1654,9 @@ static blk_qc_t __split_and_process_bio(struct mapped_device *md,
+ 						   sectors[op_stat_group(bio_op(bio))], ci.sector_count);
+ 				part_stat_unlock();
+ 
++				bio_set_flag(bio, BIO_QUEUE_ENTERED);
+ 				bio_chain(b, bio);
++				trace_block_split(md->queue, b, bio->bi_iter.bi_sector);
+ 				ret = generic_make_request(bio);
+ 				break;
+ 			}
 -- 
 2.15.0
