@@ -1,16 +1,14 @@
-From: Coly Li <colyli@suse.de>
-Subject: Re: [PATCH] bcache: never writeback a discard operation
-Date: Wed, 23 Jan 2019 09:39:15 +0800
-Message-ID: <b6f67dae-1de4-256b-1498-d377961fe27e@suse.de>
-References: <20190118051825.18196-1-dja@axtens.net>
-	<20190122155556.478CB217D6@mail.kernel.org>
-	<87womwp71z.fsf@linkitivity.dja.id.au>
+From: Sasha Levin <sashal@kernel.org>
+Subject: Re: [PATCH 3/4] dm: fix missing bio_split() pattern code
+	in __split_and_process_bio()
+Date: Tue, 22 Jan 2019 15:56:00 +0000
+Message-ID: <20190122155601.0D5FA217F5@mail.kernel.org>
+References: <20190119180506.1300-4-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <87womwp71z.fsf@linkitivity.dja.id.au>
-Content-Language: en-US
+In-Reply-To: <20190119180506.1300-4-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,40 +18,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Daniel Axtens <dja@axtens.net>, Sasha Levin <sashal@kernel.org>
-Cc: Michael Lyle <mlyle@lyle.org>, Kent Overstreet <koverstreet@google.com>, "Guilherme G . Piccoli" <gpiccoli@canonical.com>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org
+To: Sasha Levin <sashal@kernel.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: NeilBrown <neilb@suse.com>, stable@vger.kernel.org, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-5ZyoIDIwMTkvMS8yMyDkuIrljYg4OjEwLCBEYW5pZWwgQXh0ZW5zIOWGmemBkzoKPiBIaSBTYXNo
-YSwKPiAKPj4gVGhpcyBjb21taXQgaGFzIGJlZW4gcHJvY2Vzc2VkIGJlY2F1c2UgaXQgY29udGFp
-bnMgYSAiRml4ZXM6IiB0YWcsCj4+IGZpeGluZyBjb21taXQ6IDcyYzI3MDYxMmJkMyBiY2FjaGU6
-IFdyaXRlIG91dCBmdWxsIHN0cmlwZXMuCj4gCj4gSSBhZGRlZCB0aGF0IGZpeGVzIHRhZyBiZWNh
-dXNlIHRoYXQgd2FzIHRoZSBjb21taXQgdGhhdCBhZGRlZCB0aGUKPiBjb2RlLiBIb3dldmVyLCBJ
-IG5vdGljZWQgdGhhdCBvbmUgb2YgdGhlIGJ1ZyByZXBvcnRzIG1lbnRpb25zIHRoYXQgdGhlCj4g
-cHJvYmxlbSBvbmx5IGFyaXNpbmcgYWZ0ZXIgdjQuOC4gWzFdIEkgZG9uJ3QgcXVpdGUga25vdyB3
-aGF0IHRvIG1ha2Ugb2YKPiB0aGlzOiBwZXJoYXBzIGl0IGlzIGEgY29uc2VxdWVuY2Ugb2YgYW5v
-dGhlciBjaGFuZ2UgZW5hYmxpbmcgdGhlIGJyb2tlbgo+IHBhdGguIE1heWJlIHNvbWVvbmUgb24g
-b25lIG9mIHRoZSBsaXN0cyB3aWxsIGhhdmUgYW4gaWRlYS4KPiAKCj5Gcm9tIGNvZGUgbG9naWMs
-IGJjYWNoZSBzaG91bGQgbm90IGhhdmUgYSBkaXNjYXJkIGJpbyBpbiBjYWNoZSBkZXZpY2UsCm90
-aGVyd2lzZSBpdCBpcyBhIGJ1Zy4gVGhlcmVmb3JlIG5vIG1hdHRlciB3aGV0aGVyIHRoZSBpc3N1
-ZSBoYXBwZW5zCmJlZm9yZSB2NC44IGtlcm5lbCwgSSdkIGxpa2UgdG8gaGF2ZSB0aGUgZml4IGlu
-LgoKPj4gdjQuNC4xNzE6IEJ1aWxkIGZhaWxlZCEgRXJyb3JzOgo+PiAgICAgZHJpdmVycy9tZC9i
-Y2FjaGUvd3JpdGViYWNrLmg6NzE6NjogZXJyb3I6IGltcGxpY2l0IGRlY2xhcmF0aW9uIG9mIGZ1
-bmN0aW9uIOKAmGJpb19vcOKAmTsgZGlkIHlvdSBtZWFuIOKAmGJpb19yd+KAmT8gWy1XZXJyb3I9
-aW1wbGljaXQtZnVuY3Rpb24tZGVjbGFyYXRpb25dCj4+ICAgICBkcml2ZXJzL21kL2JjYWNoZS93
-cml0ZWJhY2suaDo3MToyMTogZXJyb3I6IOKAmFJFUV9PUF9ESVNDQVJE4oCZIHVuZGVjbGFyZWQg
-KGZpcnN0IHVzZSBpbiB0aGlzIGZ1bmN0aW9uKTsgZGlkIHlvdSBtZWFuIOKAmFJFUV9ESVNDQVJE
-4oCZPwo+Pgo+PiB2My4xOC4xMzI6IEJ1aWxkIGZhaWxlZCEgRXJyb3JzOgo+PiAgICAgZHJpdmVy
-cy9tZC9iY2FjaGUvd3JpdGViYWNrLmg6NzE6NjogZXJyb3I6IGltcGxpY2l0IGRlY2xhcmF0aW9u
-IG9mIGZ1bmN0aW9uIOKAmGJpb19vcOKAmTsgZGlkIHlvdSBtZWFuIOKAmGJpb19yd+KAmT8gWy1X
-ZXJyb3I9aW1wbGljaXQtZnVuY3Rpb24tZGVjbGFyYXRpb25dCj4+ICAgICBkcml2ZXJzL21kL2Jj
-YWNoZS93cml0ZWJhY2suaDo3MToyMTogZXJyb3I6IOKAmFJFUV9PUF9ESVNDQVJE4oCZIHVuZGVj
-bGFyZWQgKGZpcnN0IHVzZSBpbiB0aGlzIGZ1bmN0aW9uKTsgZGlkIHlvdSBtZWFuIOKAmFJFUV9E
-SVNDQVJE4oCZPwo+Pgo+Pgo+PiBIb3cgc2hvdWxkIHdlIHByb2NlZWQgd2l0aCB0aGlzIHBhdGNo
-Pwo+IAo+IFRoZSBwYXRjaCBzZWVtcyByZWFzb25hYmx5IGVhc3kgdG8gYmFja3BvcnQuIENvbXBp
-bGUtdGVzdGVkIG9ubHksIGFuZAo+IG9ubHkgYWdhaW5zdCB2NC40LjE3MS4KCkkgZG9uJ3QgaGF2
-ZSBpZGVhIHdoZXRoZXIgc3RhYmxlIGtlcm5lbHMgYWNjZXB0IHJlYmFzZWQgcGF0Y2hlcywgZm9y
-ClNVU0Uga2VybmVsIEkgd2lsbCBkbyBiYWNrIHBvcnQgZm9yIGFsbCBuZWNlc3Nhcnkga2VybmVs
-IHZlcnNpb25zLgoKLS0gCgpDb2x5IExpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2
-ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0t
-ZGV2ZWw=
+Hi,
+
+[This is an automated email]
+
+This commit has been processed because it contains a "Fixes:" tag,
+fixing commit: 18a25da84354 dm: ensure bio submission follows a depth-first tree walk.
+
+The bot has tested the following trees: v4.20.3, v4.19.16.
+
+v4.20.3: Failed to apply! Possible dependencies:
+    7ed15898163a ("dm: fix redundant IO accounting for bios that need splitting")
+
+v4.19.16: Failed to apply! Possible dependencies:
+    7ed15898163a ("dm: fix redundant IO accounting for bios that need splitting")
+
+
+How should we proceed with this patch?
+
+--
+Thanks,
+Sasha
