@@ -1,125 +1,55 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 3/4] dm: fix missing bio_split() pattern code
- in __split_and_process_bio()
-Date: Mon, 21 Jan 2019 11:02:04 -0500
-Message-ID: <20190121160204.GA32117@redhat.com>
-References: <20190119180506.1300-1-snitzer@redhat.com>
-	<20190119180506.1300-4-snitzer@redhat.com>
-	<20190121032153.GA24610@ming.t460p>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [PATCH V14 00/18] block: support multi-page bvec
+Date: Tue, 22 Jan 2019 10:01:30 +0800
+Message-ID: <20190122020128.GB2490@ming.t460p>
+References: <20190121081805.32727-1-ming.lei@redhat.com>
+	<61dfaa1e-e7bf-75f1-410b-ed32f97d0782@grimberg.me>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <cluster-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20190121032153.GA24610@ming.t460p>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Ming Lei <ming.lei@redhat.com>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, dm-devel@redhat.com, NeilBrown <neilb@suse.com>
+In-Reply-To: <61dfaa1e-e7bf-75f1-410b-ed32f97d0782@grimberg.me>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/cluster-devel>,
+	<mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/cluster-devel>
+List-Post: <mailto:cluster-devel@redhat.com>
+List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/cluster-devel>,
+	<mailto:cluster-devel-request@redhat.com?subject=subscribe>
+Sender: cluster-devel-bounces@redhat.com
+Errors-To: cluster-devel-bounces@redhat.com
+To: Sagi Grimberg <sagi@grimberg.me>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, "Darrick J . Wong" <darrick.wong@oracle.com>, Omar Sandoval <osandov@fb.com>, cluster-devel@redhat.com, linux-ext4@vger.kernel.org, Kent Overstreet <kent.overstreet@gmail.com>, Boaz Harrosh <ooo@electrozaur.com>, Gao Xiang <gaoxiang25@huawei.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Sun, Jan 20 2019 at 10:21P -0500,
-Ming Lei <ming.lei@redhat.com> wrote:
-
-> On Sat, Jan 19, 2019 at 01:05:05PM -0500, Mike Snitzer wrote:
-> > Use the same BIO_QUEUE_ENTERED pattern that was established by commit
-> > cd4a4ae4683dc ("block: don't use blocking queue entered for recursive
-> > bio submits") by setting BIO_QUEUE_ENTERED after bio_split() and before
-> > recursing via generic_make_request().
-> > 
-> > Also add trace_block_split() because it provides useful context about
-> > bio splits in blktrace.
-> > 
-> > Depends-on: cd4a4ae4683dc ("block: don't use blocking queue entered for recursive bio submits")
-> > Fixes: 18a25da84354 ("dm: ensure bio submission follows a depth-first tree walk")
-> > Cc: stable@vger.kernel.org # 4.16+
-> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> > ---
-> >  drivers/md/dm.c | 2 ++
-> >  1 file changed, 2 insertions(+)
-> > 
-> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> > index fbadda68e23b..6e29c2d99b99 100644
-> > --- a/drivers/md/dm.c
-> > +++ b/drivers/md/dm.c
-> > @@ -1654,7 +1654,9 @@ static blk_qc_t __split_and_process_bio(struct mapped_device *md,
-> >  						   sectors[op_stat_group(bio_op(bio))], ci.sector_count);
-> >  				part_stat_unlock();
-> >  
-> > +				bio_set_flag(bio, BIO_QUEUE_ENTERED);
-> >  				bio_chain(b, bio);
-> > +				trace_block_split(md->queue, b, bio->bi_iter.bi_sector);
-> >  				ret = generic_make_request(bio);
-> >  				break;
-> >  			}
+On Mon, Jan 21, 2019 at 01:43:21AM -0800, Sagi Grimberg wrote:
 > 
-> In theory, BIO_QUEUE_ENTERED is only required when __split_and_process_bio() is
-> called from generic_make_request(). However, it may be called from dm_wq_work(),
-> this way might cause trouble on operation to q->q_usage_counter.
+> > V14:
+> > 	- drop patch(patch 4 in V13) for renaming bvec helpers, as suggested by Jens
+> > 	- use mp_bvec_* as multi-page bvec helper name
+> > 	- fix one build issue, which is caused by missing one converion of
+> > 	bio_for_each_segment_all in fs/gfs2
+> > 	- fix one 32bit ARCH specific issue caused by segment boundary mask
+> > 	overflow
+> 
+> Hey Ming,
+> 
+> So is nvme-tcp also affected here? The only point where I see nvme-tcp
+> can be affected is when initializing a bvec iter using bio_segments() as
+> everywhere else we use iters which should transparently work..
+> 
+> I see that loop was converted, does it mean that nvme-tcp needs to
+> call something like?
+> --
+> 	bio_for_each_mp_bvec(bv, bio, iter)
+> 		nr_bvecs++;
 
-Good point, I've tweaked this patch to clear BIO_QUEUE_ENTERED in
-dm_make_request().
+bio_for_each_segment()/bio_segments() still works, just not as efficient
+as bio_for_each_mp_bvec() given each multi-page bvec(very similar with scatterlist)
+is returned in each loop.
 
-And to Neil's point: yes, these changes really do need to made
-common since it appears all bio_split() callers do go on to call
-generic_make_request().
+I don't look at nvme-tcp code yet. But if nvme-tcp supports this way,
+it can benefit from bio_for_each_mp_bvec().
 
-Anyway, here is the updated patch that is now staged in linux-next:
-
-From: Mike Snitzer <snitzer@redhat.com>
-Date: Fri, 18 Jan 2019 01:21:11 -0500
-Subject: [PATCH v2] dm: fix missing bio_split() pattern code in __split_and_process_bio()
-
-Use the same BIO_QUEUE_ENTERED pattern that was established by commit
-cd4a4ae4683dc ("block: don't use blocking queue entered for recursive
-bio submits") by setting BIO_QUEUE_ENTERED after bio_split() and before
-recursing via generic_make_request().
-
-Also add trace_block_split() because it provides useful context about
-bio splits in blktrace.
-
-Depends-on: cd4a4ae4683dc ("block: don't use blocking queue entered for recursive bio submits")
-Fixes: 18a25da84354 ("dm: ensure bio submission follows a depth-first tree walk")
-Cc: stable@vger.kernel.org # 4.16+
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index fbadda68e23b..25884f833a32 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1654,7 +1654,9 @@ static blk_qc_t __split_and_process_bio(struct mapped_device *md,
- 						   sectors[op_stat_group(bio_op(bio))], ci.sector_count);
- 				part_stat_unlock();
- 
-+				bio_set_flag(bio, BIO_QUEUE_ENTERED);
- 				bio_chain(b, bio);
-+				trace_block_split(md->queue, b, bio->bi_iter.bi_sector);
- 				ret = generic_make_request(bio);
- 				break;
- 			}
-@@ -1734,6 +1736,13 @@ static blk_qc_t dm_make_request(struct request_queue *q, struct bio *bio)
- 
- 	map = dm_get_live_table(md, &srcu_idx);
- 
-+	/*
-+	 * Clear the bio-reentered-generic_make_request() flag,
-+	 * will be set again as needed if bio needs to be split.
-+	 */
-+	if (bio_flagged(bio, BIO_QUEUE_ENTERED))
-+		bio_clear_flag(bio, BIO_QUEUE_ENTERED);
-+
- 	/* if we're suspended, we have to queue this io for later */
- 	if (unlikely(test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags))) {
- 		dm_put_live_table(md, srcu_idx);
--- 
-2.15.0
+Thanks,
+Ming
