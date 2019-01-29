@@ -1,14 +1,16 @@
-From: Chongyun Wu <wu.chongyun@h3c.com>
-Subject: Re: [RFC PATCH 0/6] multipath-tools: Fix remaining
- shutdown delay issues
-Date: Tue, 29 Jan 2019 01:08:38 +0000
-Message-ID: <CEB9978CF3252343BE3C67AC9F0086A3651B0587@H3CMLB14-EX.srv.huawei-3com.com>
-References: <20190104175914.22784-1-mwilck@suse.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: block: Fix a WRITE SAME BUG_ON
+Date: Mon, 28 Jan 2019 23:54:08 -0500
+Message-ID: <yq1lg34f4i7.fsf@oracle.com>
+References: <20190125021107.4595-1-zhangxiaoxu5@huawei.com>
+	<CAMeeMh_=UVGwo-=9WtBXRmiHTXnLAswqis97bM-aiuwnzPU0QQ@mail.gmail.com>
+	<20190128221441.GA24102@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <20190128221441.GA24102@redhat.com> (Mike Snitzer's message of
+	"Mon, 28 Jan 2019 17:14:42 -0500")
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,65 +20,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: axboe@kernel.dk, John Dorminy <jdorminy@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Zhang Xiaoxu <zhangxiaoxu5@huawei.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Martin,
 
-Those patches works well and this issue not happened again, thanks.
+Mike,
 
-On 2019/1/5 1:59, Martin Wilck wrote:
-> Hi Chongyun, Ben, all,
-> 
-> this patch set addresses the points where I can see that handling of
-> shutdown signals may be delayed, as discussed previously. Quoting my
-> previous post:
-> 
-> Let's summarize how multipathd exit works today:
-> 
->   1. signal arrives
->      (signal may be blocked while uxlsnr is busy, see above)
->   2. signal is unblocked in uxlsnr thread (in ppoll())
->   3. signal handler sets exit_sig()
->   4. uxlsnr calls handle_signals()
->   5. handle_signals()->exit_daemon() sets DAEMON_SHUTDOWN() and posts
-> config_cond (child may busy in reconfigure())
->   6. child detects DAEMON_SHUTDOWN and quits main loop
->   7. child locks vecs->lock (may cause wait)
->   8. sets dm_queue_if_no_path, cancels threads, and exits.
-> 
-> I can imagine delays in step 1, 5, and 7, but not in ppoll().
-> 
-> This series addresses 1) in patch 5 and 6, 5) in patch 3, and 7) in patch 4.
-> The series also contains the part of Chongyun's previously posted patch
-> which I agree with.
+>> In the first place, if it's an LVM-only issue, we should fix it only
+>> for device-mapper devices. If this is the right way to fix it,
+>> possibly the way to do that would be to change DM calls to
+>> blk_queue_max_write_same_sectors() to only set the max sectors to
+>> more than 0 if and only if the logical block sizes match.
+>
+> There is no way this is specific to lvm (or DM).  It may _seem_ that way
+> because lvm/dm are in the business of creating stacked devices --
+> whereby exposing users to blk_stack_limits().
+>
+> I'll have a closer look at this issue, hopefully tomorrow, but Zhang
+> Xiaoxu's proposed fix looks bogus to me.  Not disputing there is an
+> issue, just feels like a different fix is needed.
 
-Tested-by: Chongyun Wu <wu.chongyun@h3c.com>
+It's caused by a remnant of the old bio payload hack in sd.c:
 
-> 
-> The set is compile tested, but no more so far. Chongyun, I'd be grateful
-> if you could review it, and give it a try in your test setup.
-> 
-> Chongyun Wu (1):
->    multipathd: fix daemon not really shutdown
-> 
-> Martin Wilck (5):
->    multipathd: protect all access to running_state
->    multipathd: allow shutdown during configure()
->    multipathd: cancel threads early during shutdown
->    multipathd: add code to handle blocked signals
->    multipathd: uxlsnr: handle signals while busy
-> 
->   libmultipath/configure.c |   5 ++
->   libmultipath/discovery.c |   4 ++
->   libmultipath/exit.h      |   5 ++
->   mpathpersist/main.c      |   5 ++
->   multipath/main.c         |   6 ++
->   multipathd/cli.c         |  50 ++++++++++----
->   multipathd/cli.h         |   2 +-
->   multipathd/main.c        | 143 ++++++++++++++++++++++++++++-----------
->   multipathd/main.h        |   1 +
->   9 files changed, 166 insertions(+), 55 deletions(-)
->   create mode 100644 libmultipath/exit.h
-> 
+	BUG_ON(bio_offset(bio) || bio_iovec(bio).bv_len != sdp->sector_size);
+
+We rounded up LBS when we created the DM device. And therefore the
+bv_len coming down is 4K. But one of the component devices has a LBS of
+512 and fails this check.
+
+At first glance one could argue we should just nuke the BUG_ON since the
+sd code no longer relies on bv_len. However, the semantics for WRITE
+SAME are particularly challenging in this scenario. Say the filesystem
+wants to WRITE SAME a 4K PAGE consisting of 512 bytes of zeroes,
+followed by 512 bytes of ones, followed by 512 bytes of twos, etc. If a
+component device only has a 512-byte LBS, we would end up writing zeroes
+to the entire 4K block on that component device instead of the correct
+pattern. Not good.
+
+So disallowing WRITE SAME unless all component devices have the same LBS
+is the correct fix.
+
+That said, now that we have REQ_OP_WRITE_ZEROES (where the LBS is
+irrelevant due to the payload being the ZERO_PAGE), it may be worthwhile
+to remove REQ_OP_WRITE_SAME. I think drbd is the only user relying on a
+non-zero payload. The target code ends up manually iterating, if I
+remember correctly...
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
