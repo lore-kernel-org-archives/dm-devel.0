@@ -1,15 +1,14 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: block: Fix a WRITE SAME BUG_ON
-Date: Mon, 28 Jan 2019 17:14:42 -0500
-Message-ID: <20190128221441.GA24102@redhat.com>
-References: <20190125021107.4595-1-zhangxiaoxu5@huawei.com>
-	<CAMeeMh_=UVGwo-=9WtBXRmiHTXnLAswqis97bM-aiuwnzPU0QQ@mail.gmail.com>
+From: Chongyun Wu <wu.chongyun@h3c.com>
+Subject: Re: [RFC PATCH 0/6] multipath-tools: Fix remaining
+ shutdown delay issues
+Date: Tue, 29 Jan 2019 01:08:38 +0000
+Message-ID: <CEB9978CF3252343BE3C67AC9F0086A3651B0587@H3CMLB14-EX.srv.huawei-3com.com>
+References: <20190104175914.22784-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAMeeMh_=UVGwo-=9WtBXRmiHTXnLAswqis97bM-aiuwnzPU0QQ@mail.gmail.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,32 +18,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: John Dorminy <jdorminy@redhat.com>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, dm-devel@redhat.com, Zhang Xiaoxu <zhangxiaoxu5@huawei.com>, Alasdair G Kergon <agk@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, Jan 26 2019 at  6:17am -0500,
-John Dorminy <jdorminy@redhat.com> wrote:
+Hi Martin,
 
-> Hi. I have read a bit of DM code and spent an hour reviewing this... I
-> didn't get to the point of knowing what the right fix for the problem
-> is, and I may have a wrong understanding, but I have two thoughts
-> about the patch:
+Those patches works well and this issue not happened again, thanks.
+
+On 2019/1/5 1:59, Martin Wilck wrote:
+> Hi Chongyun, Ben, all,
 > 
-> I don't think this is the right solution for two reasons:
+> this patch set addresses the points where I can see that handling of
+> shutdown signals may be delayed, as discussed previously. Quoting my
+> previous post:
 > 
-> In the first place, if it's an LVM-only issue, we should fix it only
-> for device-mapper devices. If this is the right way to fix it,
-> possibly the way to do that would be to change DM calls to
-> blk_queue_max_write_same_sectors() to only set the max sectors to more
-> than 0 if and only if the logical block sizes match.
+> Let's summarize how multipathd exit works today:
+> 
+>   1. signal arrives
+>      (signal may be blocked while uxlsnr is busy, see above)
+>   2. signal is unblocked in uxlsnr thread (in ppoll())
+>   3. signal handler sets exit_sig()
+>   4. uxlsnr calls handle_signals()
+>   5. handle_signals()->exit_daemon() sets DAEMON_SHUTDOWN() and posts
+> config_cond (child may busy in reconfigure())
+>   6. child detects DAEMON_SHUTDOWN and quits main loop
+>   7. child locks vecs->lock (may cause wait)
+>   8. sets dm_queue_if_no_path, cancels threads, and exits.
+> 
+> I can imagine delays in step 1, 5, and 7, but not in ppoll().
+> 
+> This series addresses 1) in patch 5 and 6, 5) in patch 3, and 7) in patch 4.
+> The series also contains the part of Chongyun's previously posted patch
+> which I agree with.
 
-There is no way this is specific to lvm (or DM).  It may _seem_ that way
-because lvm/dm are in the business of creating stacked devices --
-whereby exposing users to blk_stack_limits().
+Tested-by: Chongyun Wu <wu.chongyun@h3c.com>
 
-I'll have a closer look at this issue, hopefully tomorrow, but Zhang
-Xiaoxu's proposed fix looks bogus to me.  Not disputing there is an
-issue, just feels like a different fix is needed.
-
-Mike
+> 
+> The set is compile tested, but no more so far. Chongyun, I'd be grateful
+> if you could review it, and give it a try in your test setup.
+> 
+> Chongyun Wu (1):
+>    multipathd: fix daemon not really shutdown
+> 
+> Martin Wilck (5):
+>    multipathd: protect all access to running_state
+>    multipathd: allow shutdown during configure()
+>    multipathd: cancel threads early during shutdown
+>    multipathd: add code to handle blocked signals
+>    multipathd: uxlsnr: handle signals while busy
+> 
+>   libmultipath/configure.c |   5 ++
+>   libmultipath/discovery.c |   4 ++
+>   libmultipath/exit.h      |   5 ++
+>   mpathpersist/main.c      |   5 ++
+>   multipath/main.c         |   6 ++
+>   multipathd/cli.c         |  50 ++++++++++----
+>   multipathd/cli.h         |   2 +-
+>   multipathd/main.c        | 143 ++++++++++++++++++++++++++++-----------
+>   multipathd/main.h        |   1 +
+>   9 files changed, 166 insertions(+), 55 deletions(-)
+>   create mode 100644 libmultipath/exit.h
+> 
