@@ -1,12 +1,14 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] libmultipath: disable user_friendly_names for
-	NetApp
-Date: Wed, 30 Jan 2019 14:20:32 -0600
-Message-ID: <1548879632-22575-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 1/4] libmultipath: handle existing paths in
+	marginal_path enqueue
+Date: Wed, 30 Jan 2019 16:13:04 -0600
+Message-ID: <1548886387-23381-2-git-send-email-bmarzins@redhat.com>
+References: <1548886387-23381-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1548886387-23381-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,31 +19,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Matt Schulte <matt.schulte@netapp.com>
+Cc: Guan Junxiong <guanjunxiong@huawei.com>, Martin Wilck <mwilck@suse.com>, Muneendra <muneendra.kumar@broadcom.com>
 List-Id: dm-devel.ids
 
-NetApp has tools that rely on devices using WWID names. To avoid
-breaking these, NetApp devices should continue to use WWID names, even
-if the default config is set to enable user_friendly_names. If users
-want to use user_friendly_names on NetApp devices, the must specifically
-override the device config.
+If the path that enqueue_io_err_stat_by_path() is trying to add
+is already on the list, just return success. There's no reason
+to fail in this case.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/hwtable.c | 1 +
- 1 file changed, 1 insertion(+)
+ libmultipath/io_err_stat.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index d3a8d9b..8776411 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -719,6 +719,7 @@ static struct hwentry default_hw[] = {
- 		.flush_on_last_del = FLUSH_ENABLED,
- 		.dev_loss      = MAX_DEV_LOSS_TMO,
- 		.prio_name     = PRIO_ONTAP,
-+		.user_friendly_names = USER_FRIENDLY_NAMES_OFF,
- 	},
- 	{
- 		/*
+diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
+index 02b1453..1cb3ffe 100644
+--- a/libmultipath/io_err_stat.c
++++ b/libmultipath/io_err_stat.c
+@@ -254,7 +254,6 @@ static void free_io_err_pathvec(struct io_err_stat_pathvec *p)
+  * return value
+  * 0: enqueue OK
+  * 1: fails because of internal error
+- * 2: fails because of existing already
+  */
+ static int enqueue_io_err_stat_by_path(struct path *path)
+ {
+@@ -264,7 +263,7 @@ static int enqueue_io_err_stat_by_path(struct path *path)
+ 	p = find_err_path_by_dev(paths->pathvec, path->dev);
+ 	if (p) {
+ 		pthread_mutex_unlock(&paths->mutex);
+-		return 2;
++		return 0;
+ 	}
+ 	pthread_mutex_unlock(&paths->mutex);
+ 
+@@ -418,9 +417,8 @@ int hit_io_err_recheck_time(struct path *pp)
+ 			io_err_stat_log(3, "%s: enqueue fails, to recover",
+ 					pp->dev);
+ 			goto recover;
+-		} else if (!r) {
++		} else
+ 			pp->io_err_pathfail_cnt = PATH_IO_ERR_IN_CHECKING;
+-		}
+ 	}
+ 
+ 	return 1;
 -- 
 2.17.2
