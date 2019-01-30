@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 4/4] libmultipath: fix marginal_paths nr_active
-	check
-Date: Wed, 30 Jan 2019 16:13:07 -0600
-Message-ID: <1548886387-23381-5-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 2/4] multipathd: cleanup marginal paths checking
+	timers
+Date: Wed, 30 Jan 2019 16:13:05 -0600
+Message-ID: <1548886387-23381-3-git-send-email-bmarzins@redhat.com>
 References: <1548886387-23381-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,27 +22,67 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Guan Junxiong <guanjunxiong@huawei.com>, Martin Wilck <mwilck@suse.com>, Muneendra <muneendra.kumar@broadcom.com>
 List-Id: dm-devel.ids
 
-Marginal paths are SHAKY, so they don't count towards the number of
-active paths. poll_io_err_stat() shouldn't automatically reinstate a
-marginal path if there already is an active path.
+When a path gets recovered in hit_io_err_recheck_time(), it will
+continue running in check_path(), so there is no reason to schedule
+another path check as soon as possible (since one is currently
+happening).
+
+Also, there isn't much point in restarting the io err stat checking when
+the path is down, so hit_io_err_recheck_time() should only be run when
+the path is up. Downed marginal paths can be treated just like any other
+downed path.
+
+Finally, there is no reason to set reset pp->io_err_dis_reinstate_time
+when we decide to enqueue a path. Either th enqueue will fail and the
+path will get recovered, or it will succeed, and we won't check the
+reinstate time again until poll_io_err_stat() marks the path as needing
+a requeue.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/io_err_stat.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/io_err_stat.c | 8 --------
+ multipathd/main.c          | 3 ++-
+ 2 files changed, 2 insertions(+), 9 deletions(-)
 
 diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
-index 72aacf3..554b777 100644
+index 1cb3ffe..416e13a 100644
 --- a/libmultipath/io_err_stat.c
 +++ b/libmultipath/io_err_stat.c
-@@ -481,7 +481,7 @@ static int poll_io_err_stat(struct vectors *vecs, struct io_err_stat_path *pp)
- 		 */
- 		path->tick = 1;
+@@ -400,13 +400,6 @@ int hit_io_err_recheck_time(struct path *pp)
+ 		io_err_stat_log(4, "%s: reschedule checking after %d seconds",
+ 				pp->dev,
+ 				pp->mpp->marginal_path_err_recheck_gap_time);
+-		/*
+-		 * to reschedule io error checking again
+-		 * if the path is good enough, we claim it is good
+-		 * and can be reinsated as soon as possible in the
+-		 * check_path routine.
+-		 */
+-		pp->io_err_dis_reinstate_time = curr_time.tv_sec;
+ 		r = enqueue_io_err_stat_by_path(pp);
+ 		/*
+ 		 * Enqueue fails because of internal error.
+@@ -426,7 +419,6 @@ int hit_io_err_recheck_time(struct path *pp)
+ recover:
+ 	pp->io_err_pathfail_cnt = 0;
+ 	pp->io_err_disable_reinstate = 0;
+-	pp->tick = 1;
+ 	return 0;
+ }
  
--	} else if (path->mpp && path->mpp->nr_active > 1) {
-+	} else if (path->mpp && path->mpp->nr_active > 0) {
- 		io_err_stat_log(3, "%s: keep failing the dm path %s",
- 				path->mpp->alias, path->dev);
- 		path->io_err_pathfail_cnt = PATH_IO_ERR_WAITING_TO_CHECK;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 491832b..cac9050 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2075,7 +2075,8 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 		return 1;
+ 	}
+ 
+-	if (pp->io_err_disable_reinstate && hit_io_err_recheck_time(pp)) {
++	if ((newstate == PATH_UP || newstate == PATH_GHOST) &&
++	    pp->io_err_disable_reinstate && hit_io_err_recheck_time(pp)) {
+ 		pp->state = PATH_SHAKY;
+ 		/*
+ 		 * to reschedule as soon as possible,so that this path can
 -- 
 2.17.2
