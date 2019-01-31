@@ -1,60 +1,54 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: block: Fix a WRITE SAME BUG_ON
-Date: Wed, 30 Jan 2019 21:23:09 -0500
-Message-ID: <yq1ftt9bm5u.fsf@oracle.com>
-References: <20190125021107.4595-1-zhangxiaoxu5@huawei.com>
-	<CAMeeMh_=UVGwo-=9WtBXRmiHTXnLAswqis97bM-aiuwnzPU0QQ@mail.gmail.com>
-	<20190128221441.GA24102@redhat.com> <yq1lg34f4i7.fsf@oracle.com>
-	<CAMeeMh85T_qui=LWd0u=b_oMN5XLqowqkvLuYGBM2Ae6tS-mzg@mail.gmail.com>
+From: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
+Subject: [PATCH v3 0/5] Optimize writecache when using pmem as cache
+Date: Thu, 31 Jan 2019 10:29:50 +0800
+Message-ID: <20190131022955.9920-1-yehs2007@zoho.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAMeeMh85T_qui=LWd0u=b_oMN5XLqowqkvLuYGBM2Ae6tS-mzg@mail.gmail.com>
-	(John Dorminy's message of "Wed, 30 Jan 2019 09:08:50 -0500")
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: John Dorminy <jdorminy@redhat.com>
-Cc: axboe@kernel.dk, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Zhang Xiaoxu <zhangxiaoxu5@huawei.com>, Alasdair G Kergon <agk@redhat.com>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: jack-AlSwsSmVLrQ@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
 List-Id: dm-devel.ids
 
+From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 
-John,
+This patch set could be used for dm-writecache when use persistent
+memory as cache data device.
 
->> So disallowing WRITE SAME unless all component devices have the same LBS
->> is the correct fix.
->
-> Alternately, could possibly WRITE_SAME bios be accepted with the
-> minimum sector size of the stack rather than the max, e.g. 512 in this
-> example rather than 4k? They'd need to have a granularity of the
-> larger sector size, though, presumabily necessitating new queue limits
-> write_same_{granularity,block_size}, which might be too much work.
+Patch 1 and 2 go towards removing unused parameter and codes which
+actually doesn't really work.
 
-I don't have a problem restricting the buffer contents to be consistent
-within a page. Or even change the upper layer semantics to specify the
-buffer contents using a single byte (0x00..0xff).
+Patch 3 and 4 are targeted at solving problem fn ctr failed to work
+due to invalid magic or version, which is caused by the super block
+of pmem has messy data stored.
 
-But the issue of head and tail remains if there is a block size mismatch
-so it's important that we keep scaling the logical block size up when
-stacking and reject any bio that can't be honored on a 4Kn device.
+Patch 5 is used for getting the status of seq_count.
 
-> (I use WRITE_SAME to fill devices with a particular pattern in order
-> to catch failures to initialize disk structures appropriately,
-> personally, but it's just for convenience/speed.)
+Changes Since v2: 
+        - seq_count is important for flush operations, output it within status
+          for debugging and analyzing code behavior.
+	[1]: https://lkml.org/lkml/2019/1/3/43
+        [2]: https://lkml.org/lkml/2019/1/9/6
 
-The intent was for stuff like MD to use it to initialize parity disks,
-etc. But adoption has been pretty slow.
+Huaisheng Ye (5):
+  dm-writecache: remove unused size to writecache_flush_region
+  dm-writecache: get rid of memory_data flush to writecache_flush_entry
+  dm-writecache: expand pmem_reinit for struct dm_writecache
+  Documentation/device-mapper: add optional parameter reinit
+  dm-writecache: output seq_count within status
 
-I don't have any problems keeping WRITE_SAME around if people are
-actually using it. It just seemed like most active users only cared
-about writing zeroes.
+ Documentation/device-mapper/writecache.txt |  4 ++++
+ drivers/md/dm-writecache.c                 | 23 +++++++++++++----------
+ 2 files changed, 17 insertions(+), 10 deletions(-)
 
 -- 
-Martin K. Petersen	Oracle Linux Engineering
+1.8.3.1
