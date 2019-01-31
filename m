@@ -1,8 +1,8 @@
 From: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
-Subject: [PATCH v3 3/5] dm-writecache: expand pmem_reinit for struct
- dm_writecache
-Date: Thu, 31 Jan 2019 10:29:53 +0800
-Message-ID: <20190131022955.9920-4-yehs2007@zoho.com>
+Subject: [PATCH v3 4/5] Documentation/device-mapper: add optional parameter
+ reinit
+Date: Thu, 31 Jan 2019 10:29:54 +0800
+Message-ID: <20190131022955.9920-5-yehs2007@zoho.com>
 References: <20190131022955.9920-1-yehs2007@zoho.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,53 +24,27 @@ List-Id: dm-devel.ids
 
 From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 
-When use persistent memory as cache data device, sometimes
-the super block of pmem has messy data stored in it. That would
-have risk to lead fn ctr failed to work due to invalid magic or
-version.
-
-Here we expand pmem_reinit to optional parameters in order to solve
-this issue. When user gets pmem device, which has unrelated data,
-as cache device, he should use paramenter 'reinit' to avoid s.magic
-and s.version don't equal to NULL or correct
-MEMORY_SUPERBLOCK_MAGIC/VERSION.
+Add intro and usage guide for reinit.
 
 Signed-off-by: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 ---
- drivers/md/dm-writecache.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+ Documentation/device-mapper/writecache.txt | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-index c69317c..2c1e825 100644
---- a/drivers/md/dm-writecache.c
-+++ b/drivers/md/dm-writecache.c
-@@ -149,6 +149,7 @@ struct dm_writecache {
+diff --git a/Documentation/device-mapper/writecache.txt b/Documentation/device-mapper/writecache.txt
+index 01532b3..255c68c 100644
+--- a/Documentation/device-mapper/writecache.txt
++++ b/Documentation/device-mapper/writecache.txt
+@@ -45,6 +45,10 @@ Constructor parameters:
+ 		afterwards
+ 		- some underlying devices perform better with fua, some
+ 		  with nofua. The user should test it
++	reinit		(by default off)
++		applicable only to persistent memory - use the REINIT flag
++		when the surper block has messy data, that would cause fn ctr
++		failed to work with invalid magic or version in the superblock
  
- 	bool pmem_mode:1;
- 	bool writeback_fua:1;
-+	bool pmem_reinit:1;
- 
- 	bool overwrote_committed:1;
- 	bool memory_vmapped:1;
-@@ -2026,6 +2027,10 @@ static int writecache_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 				wc->writeback_fua = false;
- 				wc->writeback_fua_set = true;
- 			} else goto invalid_optional;
-+		} else if (!strcasecmp(string, "reinit")) {
-+			if (WC_MODE_PMEM(wc))
-+				wc->pmem_reinit = true;
-+			else goto invalid_optional;
- 		} else {
- invalid_optional:
- 			r = -EINVAL;
-@@ -2127,7 +2132,7 @@ static int writecache_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 		ti->error = "Hardware memory error when reading superblock";
- 		goto bad;
- 	}
--	if (!le32_to_cpu(s.magic) && !le32_to_cpu(s.version)) {
-+	if (wc->pmem_reinit || (!le32_to_cpu(s.magic) && !le32_to_cpu(s.version))) {
- 		r = init_memory(wc);
- 		if (r) {
- 			ti->error = "Unable to initialize device";
+ Status:
+ 1. error indicator - 0 if there was no error, otherwise error number
 -- 
 1.8.3.1
