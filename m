@@ -1,8 +1,7 @@
 From: Huaisheng Ye <yehs2007-ytc+IHgoah0@public.gmane.org>
-Subject: [PATCH v3 4/5] Documentation/device-mapper: add optional parameter
- reinit
-Date: Thu, 31 Jan 2019 10:29:54 +0800
-Message-ID: <20190131022955.9920-5-yehs2007@zoho.com>
+Subject: [PATCH v3 5/5] dm-writecache: output seq_count within status
+Date: Thu, 31 Jan 2019 10:29:55 +0800
+Message-ID: <20190131022955.9920-6-yehs2007@zoho.com>
 References: <20190131022955.9920-1-yehs2007@zoho.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,27 +23,29 @@ List-Id: dm-devel.ids
 
 From: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 
-Add intro and usage guide for reinit.
+seq_count is important for flush operations, output it within status
+for debugging and analyzing code behavior.
 
 Signed-off-by: Huaisheng Ye <yehs1-6jq1YtArVR3QT0dZR+AlfA@public.gmane.org>
 ---
- Documentation/device-mapper/writecache.txt | 4 ++++
- 1 file changed, 4 insertions(+)
+ drivers/md/dm-writecache.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/Documentation/device-mapper/writecache.txt b/Documentation/device-mapper/writecache.txt
-index 01532b3..255c68c 100644
---- a/Documentation/device-mapper/writecache.txt
-+++ b/Documentation/device-mapper/writecache.txt
-@@ -45,6 +45,10 @@ Constructor parameters:
- 		afterwards
- 		- some underlying devices perform better with fua, some
- 		  with nofua. The user should test it
-+	reinit		(by default off)
-+		applicable only to persistent memory - use the REINIT flag
-+		when the surper block has messy data, that would cause fn ctr
-+		failed to work with invalid magic or version in the superblock
+diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+index 2c1e825..3396710 100644
+--- a/drivers/md/dm-writecache.c
++++ b/drivers/md/dm-writecache.c
+@@ -2231,9 +2231,9 @@ static void writecache_status(struct dm_target *ti, status_type_t type,
  
- Status:
- 1. error indicator - 0 if there was no error, otherwise error number
+ 	switch (type) {
+ 	case STATUSTYPE_INFO:
+-		DMEMIT("%ld %llu %llu %llu", writecache_has_error(wc),
++		DMEMIT("%ld %llu %llu %llu %llu", writecache_has_error(wc),
+ 		       (unsigned long long)wc->n_blocks, (unsigned long long)wc->freelist_size,
+-		       (unsigned long long)wc->writeback_size);
++		       (unsigned long long)wc->writeback_size, wc->seq_count);
+ 		break;
+ 	case STATUSTYPE_TABLE:
+ 		DMEMIT("%c %s %s %u ", WC_MODE_PMEM(wc) ? 'p' : 's',
 -- 
 1.8.3.1
