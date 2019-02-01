@@ -1,13 +1,21 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [PATCH 0/4] Marginal Path Fixes and cleanups
-Date: Fri, 01 Feb 2019 15:47:30 +0100
-Message-ID: <58c0a545f1eac527579b45ca2891b451e3fc7a78.camel@suse.de>
-References: <1548886387-23381-1-git-send-email-bmarzins@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: block: Fix a WRITE SAME BUG_ON
+Date: Fri, 1 Feb 2019 17:03:40 +0100
+Message-ID: <f7b05928-316c-4c73-b04b-bba38ea60b27@redhat.com>
+References: <20190125021107.4595-1-zhangxiaoxu5@huawei.com>
+	<CAMeeMh_=UVGwo-=9WtBXRmiHTXnLAswqis97bM-aiuwnzPU0QQ@mail.gmail.com>
+	<20190128221441.GA24102@redhat.com> <yq1lg34f4i7.fsf@oracle.com>
+	<CAMeeMh85T_qui=LWd0u=b_oMN5XLqowqkvLuYGBM2Ae6tS-mzg@mail.gmail.com>
+	<20190131103924.GA22503@infradead.org>
+	<CAMeeMh-uxiee7rKutnr3jrMjzkc8=R2Y3DPPBLvLYjqSwjfi_w@mail.gmail.com>
+	<20190201073527.GA14758@infradead.org>
+	<CAMeeMh-wAZ8377sMrnyQZUt2HT1hB02DHSROJURLmPsaZPkeQQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1548886387-23381-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <CAMeeMh-wAZ8377sMrnyQZUt2HT1hB02DHSROJURLmPsaZPkeQQ@mail.gmail.com>
+Content-Language: en-MW
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,37 +25,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
-Cc: Muneendra <muneendra.kumar@broadcom.com>, Guan Junxiong <guanjunxiong@huawei.com>
+To: John Dorminy <jdorminy@redhat.com>, Christoph Hellwig <hch@infradead.org>
+Cc: axboe@kernel.dk, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Zhang Xiaoxu <zhangxiaoxu5@huawei.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 2019-01-30 at 16:13 -0600, Benjamin Marzinski wrote:
-> I've been playing around with the marginal path code, and I've run
-> into
-> a couple of things that could be cleaned up. The one important issue
-> is
-> that the marginal paths code tries to enqueue the path for IO error
-> checking when it is down.  To enqueue the path, it needs to open the
-> device, which can fail because the path is down.  Instead, it should
-> wait for the path to come back up before it queues it, and starts the
-> IO
-> error checking. This is fixed in patch 0003. The other patches are
-> mostly cleanups. The issues they fix aren't actually breaking
-> things. 
-> 
-> Benjamin Marzinski (4):
->   libmultipath: handle existing paths in marginal_path enqueue
->   multipathd: cleanup marginal paths checking timers
->   libmultipath: fix marginal paths queueing errors
->   libmultipath: fix marginal_paths nr_active check
-> 
->  libmultipath/io_err_stat.c | 71 +++++++++++++++---------------------
+On 2/1/19 3:09 PM, John Dorminy wrote:
+> I didn't know such a thing existed... does it work on any block
+> device? Where do I read more about this?
+
+
+Use sg_write_same(8) from package sg3_utils.
+
+For instance 'sg_write_same --in=foobarfile --lba=0 --num=20000 
+--xferlen=512 /dev/sdwhatever'
+
+will read the pattern to write same from file 'foobarfile' with length 
+explicitely set to 512 bytes
+(rather than derived from foobarfile's size) and write it 20000 times 
+starting at LBA 0 to /dev/sdwhatever.
+
+> --lba=
+>
+> On Fri, Feb 1, 2019 at 2:35 AM Christoph Hellwig <hch@infradead.org> wrote:
+>> On Thu, Jan 31, 2019 at 02:41:52PM -0500, John Dorminy wrote:
+>>>> On Wed, Jan 30, 2019 at 09:08:50AM -0500, John Dorminy wrote:
+>>>>> (I use WRITE_SAME to fill devices with a particular pattern in order
+>>>>> to catch failures to initialize disk structures appropriately,
+>>>>> personally, but it's just for convenience/speed.)
+>>>> How do you use it?  We don't have a user interface to generate
+>>>> REQ_OP_WRITE_SAME requests.
+>>> A not-checked-in test module, similar to Zhang Xiaoxu's reproducer,
+>>> exposing a sysfs node to trigger filling a block device with a test
+>>> pattern.
+>> Any reason you don't just use SCSI/NVMe passthrough directly from
+>> userspace for that?
 > --
->  libmultipath/io_err_stat.h |  2 +-
->  multipathd/main.c          |  3 +-
->  3 files changed, 31 insertions(+), 45 deletions(-)
-> 
-
-For the set:
-
-Reviewed-by: Martin Wilck <mwilck@suse.com
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
