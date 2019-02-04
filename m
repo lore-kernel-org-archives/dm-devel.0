@@ -1,51 +1,94 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: block: Fix a WRITE SAME BUG_ON
-Date: Fri, 1 Feb 2019 08:18:03 -0800
-Message-ID: <20190201161803.GA21124@infradead.org>
-References: <20190125021107.4595-1-zhangxiaoxu5@huawei.com>
-	<CAMeeMh_=UVGwo-=9WtBXRmiHTXnLAswqis97bM-aiuwnzPU0QQ@mail.gmail.com>
-	<20190128221441.GA24102@redhat.com> <yq1lg34f4i7.fsf@oracle.com>
-	<CAMeeMh85T_qui=LWd0u=b_oMN5XLqowqkvLuYGBM2Ae6tS-mzg@mail.gmail.com>
-	<20190131103924.GA22503@infradead.org>
-	<CAMeeMh-uxiee7rKutnr3jrMjzkc8=R2Y3DPPBLvLYjqSwjfi_w@mail.gmail.com>
-	<20190201073527.GA14758@infradead.org>
-	<CAMeeMh-wAZ8377sMrnyQZUt2HT1hB02DHSROJURLmPsaZPkeQQ@mail.gmail.com>
-	<f7b05928-316c-4c73-b04b-bba38ea60b27@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH v3 0/5] Optimize writecache when using pmem as cache
+Date: Mon, 4 Feb 2019 06:27:34 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1902040606380.28217@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20190131022955.9920-1-yehs2007@zoho.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <f7b05928-316c-4c73-b04b-bba38ea60b27@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Heinz Mauelshagen <heinzm@redhat.com>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, John Dorminy <jdorminy@redhat.com>, Zhang Xiaoxu <zhangxiaoxu5@huawei.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190131022955.9920-1-yehs2007@zoho.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Huaisheng Ye <yehs2007@zoho.com>
+Cc: snitzer@redhat.com, agk@redhat.com, dan.j.williams@intel.com, hch@lst.de, jack@suse.cz, corbet@lwn.net, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-nvdimm@lists.01.org, linux-doc@vger.kernel.org, Huaisheng Ye <yehs1@lenovo.com>
 List-Id: dm-devel.ids
 
-On Fri, Feb 01, 2019 at 05:03:40PM +0100, Heinz Mauelshagen wrote:
-> On 2/1/19 3:09 PM, John Dorminy wrote:
-> > I didn't know such a thing existed... does it work on any block
-> > device? Where do I read more about this?
-> 
-> 
-> Use sg_write_same(8) from package sg3_utils.
-> 
-> For instance 'sg_write_same --in=foobarfile --lba=0 --num=20000
-> --xferlen=512 /dev/sdwhatever'
-> 
-> will read the pattern to write same from file 'foobarfile' with length
-> explicitely set to 512 bytes
-> (rather than derived from foobarfile's size) and write it 20000 times
-> starting at LBA 0 to /dev/sdwhatever.
 
-Yeah.  Note that this will only work on SCSI disks (and maybe ATA
-for a very specific corner case).  But for actual devices and not
-remappers the same is true of REQ_OP_WRITE_SAME.
+
+On Thu, 31 Jan 2019, Huaisheng Ye wrote:
+
+> From: Huaisheng Ye <yehs1@lenovo.com>
+> 
+> This patch set could be used for dm-writecache when use persistent
+> memory as cache data device.
+> 
+> Patch 1 and 2 go towards removing unused parameter and codes which
+> actually doesn't really work.
+
+I agree that there is some unused variables and code, but I would let it 
+be as it is. The processors can write data to persistent memory either by 
+using non-temporal stores (the movnti instruction) or by normal stores 
+followed by the clwb instruction.
+
+Currently, the movnti instruction is faster - however, it may be possible 
+that with some newer processors, the clwb instruction could be faster - 
+and in that case, we need the code that you have removed.
+
+I would like to keep both flush strategies around (movnti and clwb), so 
+that we can test how do they perform on various processors. 
+Unfortunatelly, some upstream developers hate code with #ifdefs :-(
+
+Note that compiler optimizations already remove the unused parameter and 
+the impossible code behind "if (WC_MODE_PMEM(wc)) if (!WC_MODE_PMEM(wc))".
+
+> Patch 3 and 4 are targeted at solving problem fn ctr failed to work
+> due to invalid magic or version, which is caused by the super block
+> of pmem has messy data stored.
+
+LVM zeros the beginning of new logical volumes, so there should be no 
+problem with it. If the user wants to use the writecache target without 
+LVM, he should zero the superblock with dd if=/dev/zero of=/dev/pmem0 
+bs=4k count=1
+
+Note that other device mapper targets also follow this policy - for 
+example see drivers/md/dm-snap-persistent.c:
+        if (le32_to_cpu(dh->magic) == 0) {
+                *new_snapshot = 1;
+                return 0;
+        }
+
+        if (le32_to_cpu(dh->magic) != SNAP_MAGIC) {
+                DMWARN("Invalid or corrupt snapshot");
+                r = -ENXIO;
+                goto bad;
+        }
+
+So, I think there is no need for these patches - dm-writecache just does 
+what others targets do.
+
+> Patch 5 is used for getting the status of seq_count.
+
+It may be accepted if other LVM team members find some use for this value.
+
+Mikulas
+
+> Changes Since v2: 
+>         - seq_count is important for flush operations, output it within status
+>           for debugging and analyzing code behavior.
+> 	[1]: https://lkml.org/lkml/2019/1/3/43
+>         [2]: https://lkml.org/lkml/2019/1/9/6
+> 
+> Huaisheng Ye (5):
+>   dm-writecache: remove unused size to writecache_flush_region
+>   dm-writecache: get rid of memory_data flush to writecache_flush_entry
+>   dm-writecache: expand pmem_reinit for struct dm_writecache
+>   Documentation/device-mapper: add optional parameter reinit
+>   dm-writecache: output seq_count within status
+> 
+>  Documentation/device-mapper/writecache.txt |  4 ++++
+>  drivers/md/dm-writecache.c                 | 23 +++++++++++++----------
+>  2 files changed, 17 insertions(+), 10 deletions(-)
+> 
+> -- 
+> 1.8.3.1
+> 
+> 
