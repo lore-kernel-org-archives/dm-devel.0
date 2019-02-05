@@ -1,13 +1,14 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Regression in 5.0-rc4 device-mapper - integrity data
-	invalid
-Date: Tue, 5 Feb 2019 18:06:24 +0100
-Message-ID: <579347b4-2a97-91c8-7f55-3a72d62829e9@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: add memory barrier before waitqueue_active
+Date: Tue, 5 Feb 2019 12:19:01 -0500
+Message-ID: <20190205171901.GA12214@redhat.com>
+References: <alpine.LRH.2.02.1902050506470.12231@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1902050506470.12231@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,39 +18,78 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Ming Lei <ming.lei@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: axboe@kernel.dk, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Mike,
+On Tue, Feb 05 2019 at  5:09am -0500,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-since 5.0-rc4 we are not able to use LUKS2 devices with 4k sector size.
+> Hi
+> 
+> Please submit patch this to Linus before 5.0 is released.
+> 
+> Mikulas
+> 
+> 
+> 
+> waitqueue_active without preceding barrier is unsafe, see the comment
+> before waitqueue_active definition in include/linux/wait.h.
+> 
+> This patch changes it to wq_has_sleeper.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Fixes: 6f75723190d8 ("dm: remove the pending IO accounting")
+> 
+> ---
+>  drivers/md/dm.c |    2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> Index: linux-2.6/drivers/md/dm.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm.c	2019-02-04 20:18:03.000000000 +0100
+> +++ linux-2.6/drivers/md/dm.c	2019-02-04 20:18:03.000000000 +0100
+> @@ -699,7 +699,7 @@ static void end_io_acct(struct dm_io *io
+>  				    true, duration, &io->stats_aux);
+>  
+>  	/* nudge anyone waiting on suspend queue */
+> -	if (unlikely(waitqueue_active(&md->wait)))
+> +	if (unlikely(wq_has_sleeper(&md->wait)))
+>  		wake_up(&md->wait);
+>  }
+>  
 
-For example,
-# cryptsetup luksFormat --type luks2 -c aes-xts-plain64 --integrity hmac-sha256 /dev/sdc --sector-size 4096
+This could be applicable to dm-rq.c:rq_completed() too...
 
-fails with these syslog errors:
-  device-mapper: crypt: Integrity AEAD, tag size 32, IV size 0.
-  device-mapper: integrity: Invalid integrity data size 32768, expected 4096
-  device-mapper: integrity: Invalid integrity data size 32768, expected 4096
+but I'm not following where you think we benefit from adding the
+smp_mb() to end_io_acct() please be explicit about your concern.
 
-(with 512-byte sectors it seems to work ok)
+Focusing on bio-based DM, your concern is end_io_acct()'s wake_up() will
+race with its, or some other cpus', preceding generic_end_io_acct()
+percpu accounting?
+- and so dm_wait_for_completion()'s !md_in_flight() condition will
+  incorrectly determine there is outstanding IO due to end_io_acct()'s
+  missing smp_mb()?
+- SO dm_wait_for_completion() would go back to top its loop and may
+  never get woken up again via wake_up(&md->wait)?
 
-Bisect shows this commit in rc4 is the problematic one (reverting fixes the problem):
-
-commit 57c36519e4b949f89381053f7283f5d605595b42
-Author: Mike Snitzer <snitzer@redhat.com>
-Date:   Wed Jan 16 18:53:26 2019 -0500
-
-    dm: fix clone_bio() to trigger blk_recount_segments()
+The thing is in both callers that use this pattern:
     
-    DM's clone_bio() now benefits from using bio_trim() by fixing the fact
-    that clone_bio() wasn't clearing BIO_SEG_VALID like bio_trim() does;
-    which triggers blk_recount_segments() via bio_phys_segments().
-    
-    Reviewed-by: Ming Lei <ming.lei@redhat.com>
-    Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+    if (unlikely(waitqueue_active(&md->wait)))
+		wake_up(&md->wait);
 
-Could you please check what is missing in the patch?
+the condition (namely IO accounting) will have already been updated via
+generic_end_io_acct() (in terms of part_dec_in_flight() percpu updates).
+So to me, using smp_mb() here is fairly pointless when you consider the
+condition that the waiter (dm_wait_for_completion) will be using is
+_not_ the byproduct of a single store.
 
-Milan
+Again, for bio-based DM, block core is performing atomic percpu updates
+across N cpus.  And the dm_wait_for_completion() waiter is doing percpu
+totalling via md_in_flight_bios().
+
+Could be there is still an issue here.. but I'm not quite seeing it.
+Cc'ing Jens to get his thoughts.
+
+Thanks,
+Mike
