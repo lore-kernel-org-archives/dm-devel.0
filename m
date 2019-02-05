@@ -1,10 +1,14 @@
-From: Drew Hastings <dhastings@crucialwebhost.com>
-Subject: Possible bug in mirror target
-Date: Mon, 4 Feb 2019 17:47:20 -0700
-Message-ID: <CAN-y+EKdQnRWck4B3Ms0ZGHqEL4+V+xPb-G3vhPy+Qe0DMO0oA@mail.gmail.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: Possible bug in mirror target
+Date: Tue, 5 Feb 2019 11:03:01 +0100
+Message-ID: <27e658d7-265f-b765-1b19-d61f52da8457@redhat.com>
+References: <CAN-y+EKdQnRWck4B3Ms0ZGHqEL4+V+xPb-G3vhPy+Qe0DMO0oA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0390950059329611733=="
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAN-y+EKdQnRWck4B3Ms0ZGHqEL4+V+xPb-G3vhPy+Qe0DMO0oA@mail.gmail.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,126 +18,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Drew Hastings <dhastings@crucialwebhost.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============0390950059329611733==
-Content-Type: multipart/alternative; boundary="0000000000004b7a2305811af4ce"
-
---0000000000004b7a2305811af4ce
-Content-Type: text/plain; charset="UTF-8"
-
-Hi,
-
-I'm assuming all user space code is expected to use the handle_errors
-feature, so this isn't that big of a deal. I'm also using 4.19.13, which I
-think is more recent than the latest update to dm-raid1.c
-
-That said, there may be a bug that causes the entire mirror to crash if
-there is an error on the first leg of the mirror, but not on the 2nd leg.
-
-Works fine if you do cause IO errors on the 2nd leg:
-
-root@kernel-dev:~# dmsetup create zerodev --table "0 1073741824 zero"
-root@kernel-dev:~# dmsetup create errordev --table "0 1073741824 error"
-
-
-root@kernel-dev:~# dmsetup create mirror-table --table "0 1073741824 mirror
-core 2 524288 nosync 2 /dev/mapper/zerodev 0 /dev/mapper/errordev 0 0"
-root@kernel-dev:~# dd if=/dev/zero of=/dev/mapper/mirror-table bs=512
-count=1
-1+0 records in
-1+0 records out
-512 bytes copied, 0.000417845 s, 1.2 MB/s
-root@kernel-dev:~# dd if=/dev/zero of=/dev/mapper/mirror-table bs=512
-count=1
-1+0 records in
-1+0 records out
-512 bytes copied, 0.00036228 s, 1.4 MB/s
-root@kernel-dev:~# dmsetup status mirror-table
-0 1073741824 mirror 2 253:1 253:2 2047/2048 1 AD 1 core
-root@kernel-dev:~# dmsetup remove mirror-table
-
-
-The whole mirror fails if you do the error device on the first leg:
-
-root@kernel-dev:~# dmsetup create mirror-table --table "0 1073741824 mirror
-core 2 524288 nosync 2 /dev/mapper/errordev 0 /dev/mapper/zerodev 0 0"
-root@kernel-dev:~# dd if=/dev/zero of=/dev/mapper/mirror-table bs=512
-count=1
-1+0 records in
-1+0 records out
-512 bytes copied, 0.000274188 s, 1.9 MB/s
-root@kernel-dev:~# dd if=/dev/zero of=/dev/mapper/mirror-table bs=512
-count=1
-dd: error writing '/dev/mapper/mirror-table': Input/output error
-1+0 records in
-0+0 records out
-0 bytes copied, 0.000857634 s, 0.0 kB/s
-
-root@kernel-dev:~# dmsetup status mirror-table
-0 1073741824 mirror 2 253:2 253:1 2047/2048 1 DA 1 core
-
-dmesg would be:
-
-[ 1935.876401] device-mapper: raid1: Mirror read failed from 253:2. Trying
-alternative device.
-[ 1939.091919] device-mapper: raid1: Mirror read failed.
-
-Thanks for your time!
-
---0000000000004b7a2305811af4ce
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div di=
-r=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr">Hi,<div><br></div><div><div>I&#=
-39;m assuming all user space code is expected to use the handle_errors feat=
-ure, so this isn&#39;t that big of a deal. I&#39;m also using 4.19.13, whic=
-h I think is more recent than the latest update to=C2=A0dm-raid1.c</div></d=
-iv><div><br></div><div>That said, there may be a bug that causes the entire=
- mirror to crash if there is an error on the first leg of the mirror, but n=
-ot on the 2nd leg.</div><div><br></div><div>Works fine if you do cause IO e=
-rrors on the 2nd leg:</div><div><br></div><div><div>root@kernel-dev:~# dmse=
-tup create zerodev --table &quot;0 1073741824 zero&quot;</div><div>root@ker=
-nel-dev:~# dmsetup create errordev --table &quot;0 1073741824 error&quot;</=
-div><div><br></div><div><br></div><div><div>root@kernel-dev:~# dmsetup crea=
-te mirror-table --table &quot;0 1073741824 mirror core 2 524288 nosync 2 /d=
-ev/mapper/zerodev 0 /dev/mapper/errordev 0 0&quot;</div><div>root@kernel-de=
-v:~# dd if=3D/dev/zero of=3D/dev/mapper/mirror-table bs=3D512 count=3D1</di=
-v><div>1+0 records in</div><div>1+0 records out</div><div>512 bytes copied,=
- 0.000417845 s, 1.2 MB/s</div><div>root@kernel-dev:~# dd if=3D/dev/zero of=
-=3D/dev/mapper/mirror-table bs=3D512 count=3D1</div><div>1+0 records in</di=
-v><div>1+0 records out</div><div>512 bytes copied, 0.00036228 s, 1.4 MB/s</=
-div></div><div>root@kernel-dev:~# dmsetup status mirror-table</div><div>0 1=
-073741824 mirror 2 253:1 253:2 2047/2048 1 AD 1 core</div><div>root@kernel-=
-dev:~# dmsetup remove mirror-table<br></div><div><br></div><div><br></div><=
-div>The whole mirror fails if you do the error device on the first leg:<br>=
-</div><div><br></div><div>root@kernel-dev:~# dmsetup create mirror-table --=
-table &quot;0 1073741824 mirror core 2 524288 nosync 2 /dev/mapper/errordev=
- 0 /dev/mapper/zerodev 0 0&quot;</div><div>root@kernel-dev:~# dd if=3D/dev/=
-zero of=3D/dev/mapper/mirror-table bs=3D512 count=3D1</div><div>1+0 records=
- in</div><div>1+0 records out</div><div>512 bytes copied, 0.000274188 s, 1.=
-9 MB/s</div><div>root@kernel-dev:~# dd if=3D/dev/zero of=3D/dev/mapper/mirr=
-or-table bs=3D512 count=3D1</div><div>dd: error writing &#39;/dev/mapper/mi=
-rror-table&#39;: Input/output error</div><div>1+0 records in</div><div>0+0 =
-records out</div><div>0 bytes copied, 0.000857634 s, 0.0 kB/s</div></div><d=
-iv><br></div><div><div>root@kernel-dev:~# dmsetup status mirror-table</div>=
-<div>0 1073741824 mirror 2 253:2 253:1 2047/2048 1 DA 1 core</div></div><di=
-v><br>dmesg would be:<br><br><div>[ 1935.876401] device-mapper: raid1: Mirr=
-or read failed from 253:2. Trying alternative device.</div><div>[ 1939.0919=
-19] device-mapper: raid1: Mirror read failed.</div></div><div><br></div><di=
-v>Thanks for your time!</div><div><br></div></div></div></div></div></div><=
-/div></div>
-
---0000000000004b7a2305811af4ce--
-
-
---===============0390950059329611733==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0390950059329611733==--
+RG5lIDA1LiAwMi4gMTkgdiAxOjQ3IERyZXcgSGFzdGluZ3MgbmFwc2FsKGEpOgo+IEhpLAo+IAo+
+IEknbSBhc3N1bWluZyBhbGwgdXNlciBzcGFjZSBjb2RlIGlzIGV4cGVjdGVkIHRvIHVzZSB0aGUg
+aGFuZGxlX2Vycm9ycyBmZWF0dXJlLCAKPiBzbyB0aGlzIGlzbid0IHRoYXQgYmlnIG9mIGEgZGVh
+bC4gSSdtIGFsc28gdXNpbmcgNC4xOS4xMywgd2hpY2ggSSB0aGluayBpcyAKPiBtb3JlIHJlY2Vu
+dCB0aGFuIHRoZSBsYXRlc3QgdXBkYXRlIHRvwqBkbS1yYWlkMS5jCj4gCj4gVGhhdCBzYWlkLCB0
+aGVyZSBtYXkgYmUgYSBidWcgdGhhdCBjYXVzZXMgdGhlIGVudGlyZSBtaXJyb3IgdG8gY3Jhc2gg
+aWYgdGhlcmUgCj4gaXMgYW4gZXJyb3Igb24gdGhlIGZpcnN0IGxlZyBvZiB0aGUgbWlycm9yLCBi
+dXQgbm90IG9uIHRoZSAybmQgbGVnLgo+IAo+IFdvcmtzIGZpbmUgaWYgeW91IGRvIGNhdXNlIElP
+IGVycm9ycyBvbiB0aGUgMm5kIGxlZzoKPiAKPiByb290QGtlcm5lbC1kZXY6fiMgZG1zZXR1cCBj
+cmVhdGUgemVyb2RldiAtLXRhYmxlICIwIDEwNzM3NDE4MjQgemVybyIKPiByb290QGtlcm5lbC1k
+ZXY6fiMgZG1zZXR1cCBjcmVhdGUgZXJyb3JkZXYgLS10YWJsZSAiMCAxMDczNzQxODI0IGVycm9y
+Igo+IAo+IAo+IHJvb3RAa2VybmVsLWRldjp+IyBkbXNldHVwIGNyZWF0ZSBtaXJyb3ItdGFibGUg
+LS10YWJsZSAiMCAxMDczNzQxODI0IG1pcnJvciAKPiBjb3JlIDIgNTI0Mjg4IG5vc3luYyAyIC9k
+ZXYvbWFwcGVyL3plcm9kZXYgMCAvZGV2L21hcHBlci9lcnJvcmRldiAwIDAiCgpIaQoKVGhlcmUg
+YXJlIDIgb3BlcmF0aW9uYWwgbW9kZXMgZm9yIG9sZCBkbSBtaXJyb3IgdGFyZ2V0LgpPbmUgcmVx
+dWlyZXMgdG8gaGFuZGxlIGVycm9ycyBleHRlcm5hbGx5LiBQbGVhc2UgY2hlY2sgaS5lLiB0aGUg
+Zm9sbG93aW5nIApndWlkZSBmb3IgbWlycm9yIHRhcmdldDoKCmh0dHBzOi8vd2lraS5nZW50b28u
+b3JnL3dpa2kvRGV2aWNlLW1hcHBlcgoKTHZtMiBpcyB1c2luZyAnZG1ldmVudGQnIHRvIHNlcnZp
+Y2UgdGhpcyBlcnJvciBoYW5kbGluZyAoaS5lLiBkcm9wcGluZwp0aGUgbWlycm9yIGxlZyBvciBh
+bGxvY2F0aW5nIHJlcGxhY2VtZW50IG9uZSkuCgpXaXRob3V0IHRoaXMgb3B0aW9uIHlvdSB3aWxs
+IHN0YXJ0IHRvIHJlY2VpdmUgZGlzYyBmYWlsdXJlcy4KQWxzbyBub3QgLSAgb2xkIG1pcnJvciBo
+YXMgYmVlbiBvYnNvbGV0ZWQgYnkgZG0tcmFpZCB0YXJnZXQsIHRoYXQKaXMgdXNpbmcgc21hbGwg
+bG9nIGRldmljZSBmb3IgZWFjaCBsZWcgKGFuZCB1c2luZyBzYW1lIGtlcm5lbAppbnRlcm5hbHMg
+YXMgbWRyYWlkKQoKClJlZ2FyZHMKClpkZW5lawoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRt
+LWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZv
+L2RtLWRldmVs
