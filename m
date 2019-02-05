@@ -1,14 +1,11 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: Possible bug in mirror target
-Date: Tue, 5 Feb 2019 11:03:01 +0100
-Message-ID: <27e658d7-265f-b765-1b19-d61f52da8457@redhat.com>
-References: <CAN-y+EKdQnRWck4B3Ms0ZGHqEL4+V+xPb-G3vhPy+Qe0DMO0oA@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm: add memory barrier before waitqueue_active
+Date: Tue, 5 Feb 2019 05:09:00 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1902050506470.12231@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAN-y+EKdQnRWck4B3Ms0ZGHqEL4+V+xPb-G3vhPy+Qe0DMO0oA@mail.gmail.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,32 +15,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Drew Hastings <dhastings@crucialwebhost.com>, dm-devel@redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-RG5lIDA1LiAwMi4gMTkgdiAxOjQ3IERyZXcgSGFzdGluZ3MgbmFwc2FsKGEpOgo+IEhpLAo+IAo+
-IEknbSBhc3N1bWluZyBhbGwgdXNlciBzcGFjZSBjb2RlIGlzIGV4cGVjdGVkIHRvIHVzZSB0aGUg
-aGFuZGxlX2Vycm9ycyBmZWF0dXJlLCAKPiBzbyB0aGlzIGlzbid0IHRoYXQgYmlnIG9mIGEgZGVh
-bC4gSSdtIGFsc28gdXNpbmcgNC4xOS4xMywgd2hpY2ggSSB0aGluayBpcyAKPiBtb3JlIHJlY2Vu
-dCB0aGFuIHRoZSBsYXRlc3QgdXBkYXRlIHRvwqBkbS1yYWlkMS5jCj4gCj4gVGhhdCBzYWlkLCB0
-aGVyZSBtYXkgYmUgYSBidWcgdGhhdCBjYXVzZXMgdGhlIGVudGlyZSBtaXJyb3IgdG8gY3Jhc2gg
-aWYgdGhlcmUgCj4gaXMgYW4gZXJyb3Igb24gdGhlIGZpcnN0IGxlZyBvZiB0aGUgbWlycm9yLCBi
-dXQgbm90IG9uIHRoZSAybmQgbGVnLgo+IAo+IFdvcmtzIGZpbmUgaWYgeW91IGRvIGNhdXNlIElP
-IGVycm9ycyBvbiB0aGUgMm5kIGxlZzoKPiAKPiByb290QGtlcm5lbC1kZXY6fiMgZG1zZXR1cCBj
-cmVhdGUgemVyb2RldiAtLXRhYmxlICIwIDEwNzM3NDE4MjQgemVybyIKPiByb290QGtlcm5lbC1k
-ZXY6fiMgZG1zZXR1cCBjcmVhdGUgZXJyb3JkZXYgLS10YWJsZSAiMCAxMDczNzQxODI0IGVycm9y
-Igo+IAo+IAo+IHJvb3RAa2VybmVsLWRldjp+IyBkbXNldHVwIGNyZWF0ZSBtaXJyb3ItdGFibGUg
-LS10YWJsZSAiMCAxMDczNzQxODI0IG1pcnJvciAKPiBjb3JlIDIgNTI0Mjg4IG5vc3luYyAyIC9k
-ZXYvbWFwcGVyL3plcm9kZXYgMCAvZGV2L21hcHBlci9lcnJvcmRldiAwIDAiCgpIaQoKVGhlcmUg
-YXJlIDIgb3BlcmF0aW9uYWwgbW9kZXMgZm9yIG9sZCBkbSBtaXJyb3IgdGFyZ2V0LgpPbmUgcmVx
-dWlyZXMgdG8gaGFuZGxlIGVycm9ycyBleHRlcm5hbGx5LiBQbGVhc2UgY2hlY2sgaS5lLiB0aGUg
-Zm9sbG93aW5nIApndWlkZSBmb3IgbWlycm9yIHRhcmdldDoKCmh0dHBzOi8vd2lraS5nZW50b28u
-b3JnL3dpa2kvRGV2aWNlLW1hcHBlcgoKTHZtMiBpcyB1c2luZyAnZG1ldmVudGQnIHRvIHNlcnZp
-Y2UgdGhpcyBlcnJvciBoYW5kbGluZyAoaS5lLiBkcm9wcGluZwp0aGUgbWlycm9yIGxlZyBvciBh
-bGxvY2F0aW5nIHJlcGxhY2VtZW50IG9uZSkuCgpXaXRob3V0IHRoaXMgb3B0aW9uIHlvdSB3aWxs
-IHN0YXJ0IHRvIHJlY2VpdmUgZGlzYyBmYWlsdXJlcy4KQWxzbyBub3QgLSAgb2xkIG1pcnJvciBo
-YXMgYmVlbiBvYnNvbGV0ZWQgYnkgZG0tcmFpZCB0YXJnZXQsIHRoYXQKaXMgdXNpbmcgc21hbGwg
-bG9nIGRldmljZSBmb3IgZWFjaCBsZWcgKGFuZCB1c2luZyBzYW1lIGtlcm5lbAppbnRlcm5hbHMg
-YXMgbWRyYWlkKQoKClJlZ2FyZHMKClpkZW5lawoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRt
-LWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZv
-L2RtLWRldmVs
+Hi
+
+Please submit patch this to Linus before 5.0 is released.
+
+Mikulas
+
+
+
+waitqueue_active without preceding barrier is unsafe, see the comment
+before waitqueue_active definition in include/linux/wait.h.
+
+This patch changes it to wq_has_sleeper.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Fixes: 6f75723190d8 ("dm: remove the pending IO accounting")
+
+---
+ drivers/md/dm.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c	2019-02-04 20:18:03.000000000 +0100
++++ linux-2.6/drivers/md/dm.c	2019-02-04 20:18:03.000000000 +0100
+@@ -699,7 +699,7 @@ static void end_io_acct(struct dm_io *io
+ 				    true, duration, &io->stats_aux);
+ 
+ 	/* nudge anyone waiting on suspend queue */
+-	if (unlikely(waitqueue_active(&md->wait)))
++	if (unlikely(wq_has_sleeper(&md->wait)))
+ 		wake_up(&md->wait);
+ }
+ 
