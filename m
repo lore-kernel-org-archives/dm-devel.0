@@ -1,11 +1,13 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm: add memory barrier before waitqueue_active
-Date: Tue, 5 Feb 2019 05:09:00 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1902050506470.12231@file01.intranet.prod.int.rdu2.redhat.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Regression in 5.0-rc4 device-mapper - integrity data
+	invalid
+Date: Tue, 5 Feb 2019 18:06:24 +0100
+Message-ID: <579347b4-2a97-91c8-7f55-3a72d62829e9@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,40 +17,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+Hi Mike,
 
-Please submit patch this to Linus before 5.0 is released.
+since 5.0-rc4 we are not able to use LUKS2 devices with 4k sector size.
 
-Mikulas
+For example,
+# cryptsetup luksFormat --type luks2 -c aes-xts-plain64 --integrity hmac-sha256 /dev/sdc --sector-size 4096
 
+fails with these syslog errors:
+  device-mapper: crypt: Integrity AEAD, tag size 32, IV size 0.
+  device-mapper: integrity: Invalid integrity data size 32768, expected 4096
+  device-mapper: integrity: Invalid integrity data size 32768, expected 4096
 
+(with 512-byte sectors it seems to work ok)
 
-waitqueue_active without preceding barrier is unsafe, see the comment
-before waitqueue_active definition in include/linux/wait.h.
+Bisect shows this commit in rc4 is the problematic one (reverting fixes the problem):
 
-This patch changes it to wq_has_sleeper.
+commit 57c36519e4b949f89381053f7283f5d605595b42
+Author: Mike Snitzer <snitzer@redhat.com>
+Date:   Wed Jan 16 18:53:26 2019 -0500
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Fixes: 6f75723190d8 ("dm: remove the pending IO accounting")
+    dm: fix clone_bio() to trigger blk_recount_segments()
+    
+    DM's clone_bio() now benefits from using bio_trim() by fixing the fact
+    that clone_bio() wasn't clearing BIO_SEG_VALID like bio_trim() does;
+    which triggers blk_recount_segments() via bio_phys_segments().
+    
+    Reviewed-by: Ming Lei <ming.lei@redhat.com>
+    Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 
----
- drivers/md/dm.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Could you please check what is missing in the patch?
 
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c	2019-02-04 20:18:03.000000000 +0100
-+++ linux-2.6/drivers/md/dm.c	2019-02-04 20:18:03.000000000 +0100
-@@ -699,7 +699,7 @@ static void end_io_acct(struct dm_io *io
- 				    true, duration, &io->stats_aux);
- 
- 	/* nudge anyone waiting on suspend queue */
--	if (unlikely(waitqueue_active(&md->wait)))
-+	if (unlikely(wq_has_sleeper(&md->wait)))
- 		wake_up(&md->wait);
- }
- 
+Milan
