@@ -1,12 +1,14 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 5.0-rc6
-Date: Thu, 7 Feb 2019 11:58:40 -0500
-Message-ID: <20190207165840.GA62096@redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH 1/4] multipathd: avoid null pointer dereference
+	in LOG_MSG
+Date: Thu,  7 Feb 2019 17:52:59 -0600
+Message-ID: <20190207235302.21635-2-bmarzins@redhat.com>
+References: <20190207235302.21635-1-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <20190207235302.21635-1-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,43 +18,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <gmazyland@gmail.com>, Alasdair G Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Hi Linus,
+LOG_MSG() will dereference pp->mpp. Commit cb5ec664 added a call to
+LOG_MSG() before the check for (!pp->mpp) in check_path.  This can cause
+multipathd to crash.  LOG_MSG() should only be called if pp->mpp is set
+and a checker is selected.
 
-Both of these fixes address issues in changes merged for 5.0-rc4.
+Also, checker_message() should fail to a generic message if c->cls isn't
+set (which means that a checker hasn't been selected).
 
-The following changes since commit 8834f5600cf3c8db365e18a3d5cac2c2780c81e5:
+Fixes: cb5ec664 (multipathd: check_path: improve logging for "unusable
+                 path" case)
+Cc: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/checkers.c | 2 +-
+ multipathd/main.c       | 6 ++++--
+ 2 files changed, 5 insertions(+), 3 deletions(-)
 
-  Linux 5.0-rc5 (2019-02-03 13:48:04 -0800)
-
-are available in the Git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.0/dm-fixes-2
-
-for you to fetch changes up to fa8db4948f5224dae33a0e783e7dec682e145f88:
-
-  dm: don't use bio_trim() afterall (2019-02-06 17:24:37 -0500)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-- Fix DM core's missing memory barrier before waitqueue_active() calls.
-
-- Fix DM core's clone_bio() to work when cloning a subset of a bio with
-  an integrity payload; bio_integrity_trim() wasn't getting called due
-  to bio_trim()'s early return.
-
-----------------------------------------------------------------
-Mike Snitzer (1):
-      dm: don't use bio_trim() afterall
-
-Mikulas Patocka (1):
-      dm: add memory barrier before waitqueue_active
-
- drivers/md/dm-rq.c | 2 +-
- drivers/md/dm.c    | 8 ++++++--
- 2 files changed, 7 insertions(+), 3 deletions(-)
+diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+index 848c4c3..ca95cae 100644
+--- a/libmultipath/checkers.c
++++ b/libmultipath/checkers.c
+@@ -295,7 +295,7 @@ const char *checker_message(const struct checker *c)
+ {
+ 	int id;
+ 
+-	if (!c || c->msgid < 0 ||
++	if (!c || !c->cls || c->msgid < 0 ||
+ 	    (c->msgid >= CHECKER_GENERIC_MSGTABLE_SIZE &&
+ 	     c->msgid < CHECKER_FIRST_MSGID))
+ 		goto bad_id;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 0e3ac2c..1caa40f 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2017,8 +2017,10 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	}
+ 
+ 	if (newstate == PATH_WILD || newstate == PATH_UNCHECKED) {
+-		condlog(2, "%s: unusable path - checker failed", pp->dev);
+-		LOG_MSG(2, verbosity, pp);
++		condlog(2, "%s: unusable path (%s) - checker failed", pp->dev,
++			checker_state_name(newstate));
++		if (pp->mpp && checker_selected(&pp->checker))
++			LOG_MSG(2, verbosity, pp);
+ 		conf = get_multipath_config();
+ 		pthread_cleanup_push(put_multipath_config, conf);
+ 		pathinfo(pp, conf, 0);
+-- 
+2.17.2
