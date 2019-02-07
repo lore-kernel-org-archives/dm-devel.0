@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 1/4] multipathd: avoid null pointer dereference
-	in LOG_MSG
-Date: Thu,  7 Feb 2019 17:52:59 -0600
-Message-ID: <20190207235302.21635-2-bmarzins@redhat.com>
+Subject: [PATCH 2/4] multipath: blacklist zram devices
+Date: Thu,  7 Feb 2019 17:53:00 -0600
+Message-ID: <20190207235302.21635-3-bmarzins@redhat.com>
 References: <20190207235302.21635-1-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,52 +21,37 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-LOG_MSG() will dereference pp->mpp. Commit cb5ec664 added a call to
-LOG_MSG() before the check for (!pp->mpp) in check_path.  This can cause
-multipathd to crash.  LOG_MSG() should only be called if pp->mpp is set
-and a checker is selected.
-
-Also, checker_message() should fail to a generic message if c->cls isn't
-set (which means that a checker hasn't been selected).
-
-Fixes: cb5ec664 (multipathd: check_path: improve logging for "unusable
-                 path" case)
-Cc: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/checkers.c | 2 +-
- multipathd/main.c       | 6 ++++--
- 2 files changed, 5 insertions(+), 3 deletions(-)
+ libmultipath/blacklist.c   | 2 +-
+ multipath/multipath.conf.5 | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index 848c4c3..ca95cae 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -295,7 +295,7 @@ const char *checker_message(const struct checker *c)
- {
- 	int id;
+diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
+index 709895e..e0d0279 100644
+--- a/libmultipath/blacklist.c
++++ b/libmultipath/blacklist.c
+@@ -192,7 +192,7 @@ setup_default_blist (struct config * conf)
+ 	char * str;
+ 	int i;
  
--	if (!c || c->msgid < 0 ||
-+	if (!c || !c->cls || c->msgid < 0 ||
- 	    (c->msgid >= CHECKER_GENERIC_MSGTABLE_SIZE &&
- 	     c->msgid < CHECKER_FIRST_MSGID))
- 		goto bad_id;
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 0e3ac2c..1caa40f 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2017,8 +2017,10 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	}
- 
- 	if (newstate == PATH_WILD || newstate == PATH_UNCHECKED) {
--		condlog(2, "%s: unusable path - checker failed", pp->dev);
--		LOG_MSG(2, verbosity, pp);
-+		condlog(2, "%s: unusable path (%s) - checker failed", pp->dev,
-+			checker_state_name(newstate));
-+		if (pp->mpp && checker_selected(&pp->checker))
-+			LOG_MSG(2, verbosity, pp);
- 		conf = get_multipath_config();
- 		pthread_cleanup_push(put_multipath_config, conf);
- 		pathinfo(pp, conf, 0);
+-	str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]");
++	str = STRDUP("^(ram|zram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]");
+ 	if (!str)
+ 		return 1;
+ 	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 88b8edd..0fe8461 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -1218,7 +1218,7 @@ Regular expression matching the device nodes to be excluded/included.
+ .RS
+ .PP
+ The default \fIblacklist\fR consists of the regular expressions
+-"^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]" and
++"^(ram|zram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]" and
+ "^(td|hd|vd)[a-z]". This causes virtual devices, non-disk devices, and some other
+ device types to be excluded from multipath handling by default.
+ .RE
 -- 
 2.17.2
