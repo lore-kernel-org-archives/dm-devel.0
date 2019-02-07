@@ -1,12 +1,14 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 0/4] multipath: fixes for invalid path device
-	handling
-Date: Thu,  7 Feb 2019 17:52:58 -0600
-Message-ID: <20190207235302.21635-1-bmarzins@redhat.com>
+Subject: [PATCH 4/4] multipathd: don't resend change events for
+	unknown devices
+Date: Thu,  7 Feb 2019 17:53:02 -0600
+Message-ID: <20190207235302.21635-5-bmarzins@redhat.com>
+References: <20190207235302.21635-1-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190207235302.21635-1-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,45 +22,28 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-I recently got a bug from a user with a bad property
-blacklist_exceptions line, where multipath tried to use a zram device,
-which caused multipathd to crash. This patch set fixes that crash, and
-then adds some additional safeguards to prevent things like this
-happening in the future.
+If multipath fails to get the wwid for a device, and the device is
+of an unknown type (pp->bus == SYSFS_BUS_UNDEF), don't send change
+events. Instead, assume that the device was not meant to be used
+and skip it.
 
-The first patch fixes the crash. This crash could be triggered by any
-path device that isn't part of a multipath device, and has it's checker
-fail to check the path correctly.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/discovery.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-The second patch blacklists zram devices specifically. The third patch
-fixes up some code weirdness that doesn't really cause any problems,
-aside from the messages it prints.
-
-The fourth patch changes how pathinfo works so that it now drops devices
-of an unknown type if they can't get a wwid.  The biggest reason to do
-this is so that multipath won't hold an open file descriptor for these
-devices, which are almost definitely not multipathable (and occasionally
-send them TUR ioctls, which are bound to fail, since they aren't scsi
-devices).
-
-As an aside, is there a good reason why multipath uses a devnode
-blacklist to individually blacklist device types, instead of
-blacklisting all denodes, and adding exceptions for the device types
-that we do support?
-
-Benjamin Marzinski (4):
-  multipathd: avoid null pointer dereference in LOG_MSG
-  multipath: blacklist zram devices
-  multipathd: fix pp->initialized state ping-ponging
-  multipathd: don't resend change events for unknown devices
-
- libmultipath/blacklist.c   |  2 +-
- libmultipath/checkers.c    |  2 +-
- libmultipath/discovery.c   | 10 +++++++---
- libmultipath/structs.h     |  1 +
- multipath/multipath.conf.5 |  2 +-
- multipathd/main.c          | 10 +++++++---
- 6 files changed, 18 insertions(+), 9 deletions(-)
-
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 6aef188..10bd8cd 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1966,6 +1966,8 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 	if ((mask & DI_WWID) && !strlen(pp->wwid)) {
+ 		get_uid(pp, path_state, pp->udev);
+ 		if (!strlen(pp->wwid)) {
++			if (pp->bus == SYSFS_BUS_UNDEF)
++				return PATHINFO_SKIPPED;
+ 			if (pp->initialized != INIT_FAILED) {
+ 				pp->initialized = INIT_MISSING_UDEV;
+ 				pp->tick = conf->retrigger_delay;
 -- 
 2.17.2
