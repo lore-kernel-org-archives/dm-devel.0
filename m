@@ -1,14 +1,14 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH] dm: don't overallocate the tags space
-Date: Fri, 8 Feb 2019 19:06:45 +0100
-Message-ID: <96b4fcfb-f4fd-60fd-70e3-c9d981205ff2@gmail.com>
-References: <alpine.LRH.2.02.1902081048510.1182@file01.intranet.prod.int.rdu2.redhat.com>
+From: "John Stoffel" <john@stoffel.org>
+Subject: Re: Possible bug in mirror target
+Date: Sun, 10 Feb 2019 16:58:06 -0500
+Message-ID: <23648.40558.660430.523285@quad.stoffel.home>
+References: <CAN-y+EKdQnRWck4B3Ms0ZGHqEL4+V+xPb-G3vhPy+Qe0DMO0oA@mail.gmail.com>
+	<27e658d7-265f-b765-1b19-d61f52da8457@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1902081048510.1182@file01.intranet.prod.int.rdu2.redhat.com>
-Content-Language: en-US
+In-Reply-To: <27e658d7-265f-b765-1b19-d61f52da8457@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,49 +18,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Ming Lei <minlei@redhat.com>
-Cc: dm-devel@redhat.com
+To: Zdenek Kabelac <zkabelac@redhat.com>
+Cc: dm-devel@redhat.com, Drew Hastings <dhastings@crucialwebhost.com>
 List-Id: dm-devel.ids
 
-On 08/02/2019 16:52, Mikulas Patocka wrote:
-> bio_sectors returns the value in the units of 512-byte sectors (no matter
-> what's the real sector size of the device). dm-crypt multiplies
-> bio_sectors by on_disk_tag_size to calculate the space allocated for
-> integrity tags. If dm-crypt is running with sector size larger than 512,
-> it allocates more data than what's needed.
-> 
-> Device mapper trimmed this extra space when passing the bio to
-> dm-integrity, so this bug didn't result in any visible misbehavior. This
-> bug showed up when device mapper stopped trimming the bio.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Reported-by: Milan Broz <mbroz@redhat.com>
-> 
-> ---
->  drivers/md/dm-crypt.c |    2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> Index: linux-2.6/drivers/md/dm-crypt.c
-> ===================================================================
-> --- linux-2.6.orig/drivers/md/dm-crypt.c	2019-02-08 14:12:19.000000000 +0100
-> +++ linux-2.6/drivers/md/dm-crypt.c	2019-02-08 14:12:19.000000000 +0100
-> @@ -932,7 +932,7 @@ static int dm_crypt_integrity_io_alloc(s
->  	if (IS_ERR(bip))
->  		return PTR_ERR(bip);
->  
-> -	tag_len = io->cc->on_disk_tag_size * bio_sectors(bio);
-> +	tag_len = io->cc->on_disk_tag_size * (bio_sectors(bio) >> io->cc->sector_shift);
->  
->  	bip->bip_iter.bi_size = tag_len;
->  	bip->bip_iter.bi_sector = io->cc->start + io->sector;
-> 
+>>>>> "Zdenek" =3D=3D Zdenek Kabelac <zkabelac@redhat.com> writes:
 
-Yes, this was the problem (perhaps introduced by me since the first commit implementing
-authenticated encryption).
+Zdenek> Dne 05. 02. 19 v 1:47 Drew Hastings napsal(a):
+>> Hi,
+>> =
 
-With patch above even the bio_trim() works properly.
+>> I'm assuming all user space code is expected to use the handle_errors fe=
+ature, =
 
-Tested-and-Reviewed-by: Milan Broz <gmazyland@gmail.com>
+>> so this isn't that big of a deal. I'm also using 4.19.13, which I think =
+is =
 
-Thanks!
-Milan
+>> more recent than the latest update to=A0dm-raid1.c
+>> =
+
+>> That said, there may be a bug that causes the entire mirror to crash if =
+there =
+
+>> is an error on the first leg of the mirror, but not on the 2nd leg.
+>> =
+
+>> Works fine if you do cause IO errors on the 2nd leg:
+>> =
+
+>> root@kernel-dev:~# dmsetup create zerodev --table "0 1073741824 zero"
+>> root@kernel-dev:~# dmsetup create errordev --table "0 1073741824 error"
+>> =
+
+>> =
+
+>> root@kernel-dev:~# dmsetup create mirror-table --table "0 1073741824 mir=
+ror =
+
+>> core 2 524288 nosync 2 /dev/mapper/zerodev 0 /dev/mapper/errordev 0 0"
+
+Zdenek> There are 2 operational modes for old dm mirror target.
+Zdenek> One requires to handle errors externally. Please check i.e. the fol=
+lowing =
+
+Zdenek> guide for mirror target:
+
+Zdenek> https://wiki.gentoo.org/wiki/Device-mapper
+
+Zdenek> Lvm2 is using 'dmeventd' to service this error handling
+Zdenek> (i.e. dropping the mirror leg or allocating replacement one).
+
+Is it time to remove the dm-mirror target then?  Or to deprecate it?
+Or to just silently replace it with something that does the right
+thing when errors happen?  I can't think of why *anyone* would want to
+use the dm-mirror target as it now seems to work.
+
+John
