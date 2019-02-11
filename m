@@ -1,76 +1,125 @@
-From: "John Stoffel" <john@stoffel.org>
-Subject: Re: Possible bug in mirror target
-Date: Sun, 10 Feb 2019 16:58:06 -0500
-Message-ID: <23648.40558.660430.523285@quad.stoffel.home>
-References: <CAN-y+EKdQnRWck4B3Ms0ZGHqEL4+V+xPb-G3vhPy+Qe0DMO0oA@mail.gmail.com>
-	<27e658d7-265f-b765-1b19-d61f52da8457@redhat.com>
+From: Huaisheng HS1 Ye <yehs1@lenovo.com>
+Subject: RE: [External]  Re: [PATCH v3 0/5] Optimize writecache when using
+ pmem as cache
+Date: Mon, 11 Feb 2019 06:47:06 +0000
+Message-ID: <HK2PR03MB4418513AEBCD96612ED2CC9C92640@HK2PR03MB4418.apcprd03.prod.outlook.com>
+References: <20190131022955.9920-1-yehs2007@zoho.com>
+ <alpine.LRH.2.02.1902040606380.28217@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <27e658d7-265f-b765-1b19-d61f52da8457@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>
-Cc: dm-devel@redhat.com, Drew Hastings <dhastings@crucialwebhost.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.02.1902040606380.28217@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Language: zh-CN
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: "snitzer@redhat.com" <snitzer@redhat.com>, "agk@redhat.com" <agk@redhat.com>, "dan.j.williams@intel.com" <dan.j.williams@intel.com>, "hch@lst.de" <hch@lst.de>, "jack@suse.cz" <jack@suse.cz>, "corbet@lwn.net" <corbet@lwn.net>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, NingTing Cheng <chengnt@lenovo.com>, Huaisheng Ye <yehs2007@zoho.com>
 List-Id: dm-devel.ids
 
->>>>> "Zdenek" =3D=3D Zdenek Kabelac <zkabelac@redhat.com> writes:
+> From: Mikulas Patocka <mpatocka@redhat.com>
+> Sent: Monday, February 04, 2019 7:28 PM
+> On Thu, 31 Jan 2019, Huaisheng Ye wrote:
+>=20
+> > From: Huaisheng Ye <yehs1@lenovo.com>
+> >
+> > This patch set could be used for dm-writecache when use persistent
+> > memory as cache data device.
+> >
+> > Patch 1 and 2 go towards removing unused parameter and codes which
+> > actually doesn't really work.
+>=20
+> I agree that there is some unused variables and code, but I would let it
+> be as it is. The processors can write data to persistent memory either by
+> using non-temporal stores (the movnti instruction) or by normal stores
+> followed by the clwb instruction.
+>=20
+> Currently, the movnti instruction is faster - however, it may be possible
+> that with some newer processors, the clwb instruction could be faster -
+> and in that case, we need the code that you have removed.
+>=20
+> I would like to keep both flush strategies around (movnti and clwb), so
+> that we can test how do they perform on various processors.
+> Unfortunatelly, some upstream developers hate code with #ifdefs :-(
+>=20
+> Note that compiler optimizations already remove the unused parameter and
+> the impossible code behind "if (WC_MODE_PMEM(wc)) if (!WC_MODE_PMEM(wc))"=
+.
 
-Zdenek> Dne 05. 02. 19 v 1:47 Drew Hastings napsal(a):
->> Hi,
->> =
+Hi Mikulas,
 
->> I'm assuming all user space code is expected to use the handle_errors fe=
-ature, =
+Thanks for your reply, now I could understand the code flow of dm-writecach=
+e better
+than before.
 
->> so this isn't that big of a deal. I'm also using 4.19.13, which I think =
-is =
+In the process of playing around the code, I found that writecache_flush wo=
+uld try
+to free earlier committed entry with lower seq-count. More seriously is tha=
+t, writecache_flush
+must check it for all entries which hasn't been committed. That's a lot of =
+work to do when
+there are many entries need to be flushed.
 
->> more recent than the latest update to=A0dm-raid1.c
->> =
+I have a plan for writecache_map to avoid using free entry when the committ=
+ed writecache
+has been hit. Does it make sense to simple the code flow, especially for sa=
+ving additional rb-tree
+node insertion and free steps?
 
->> That said, there may be a bug that causes the entire mirror to crash if =
-there =
+Cheers,
+Huaisheng Ye
 
->> is an error on the first leg of the mirror, but not on the 2nd leg.
->> =
-
->> Works fine if you do cause IO errors on the 2nd leg:
->> =
-
->> root@kernel-dev:~# dmsetup create zerodev --table "0 1073741824 zero"
->> root@kernel-dev:~# dmsetup create errordev --table "0 1073741824 error"
->> =
-
->> =
-
->> root@kernel-dev:~# dmsetup create mirror-table --table "0 1073741824 mir=
-ror =
-
->> core 2 524288 nosync 2 /dev/mapper/zerodev 0 /dev/mapper/errordev 0 0"
-
-Zdenek> There are 2 operational modes for old dm mirror target.
-Zdenek> One requires to handle errors externally. Please check i.e. the fol=
-lowing =
-
-Zdenek> guide for mirror target:
-
-Zdenek> https://wiki.gentoo.org/wiki/Device-mapper
-
-Zdenek> Lvm2 is using 'dmeventd' to service this error handling
-Zdenek> (i.e. dropping the mirror leg or allocating replacement one).
-
-Is it time to remove the dm-mirror target then?  Or to deprecate it?
-Or to just silently replace it with something that does the right
-thing when errors happen?  I can't think of why *anyone* would want to
-use the dm-mirror target as it now seems to work.
-
-John
+> > Patch 3 and 4 are targeted at solving problem fn ctr failed to work
+> > due to invalid magic or version, which is caused by the super block
+> > of pmem has messy data stored.
+>=20
+> LVM zeros the beginning of new logical volumes, so there should be no
+> problem with it. If the user wants to use the writecache target without
+> LVM, he should zero the superblock with dd if=3D/dev/zero of=3D/dev/pmem0
+> bs=3D4k count=3D1
+>=20
+> Note that other device mapper targets also follow this policy - for
+> example see drivers/md/dm-snap-persistent.c:
+>         if (le32_to_cpu(dh->magic) =3D=3D 0) {
+>                 *new_snapshot =3D 1;
+>                 return 0;
+>         }
+>=20
+>         if (le32_to_cpu(dh->magic) !=3D SNAP_MAGIC) {
+>                 DMWARN("Invalid or corrupt snapshot");
+>                 r =3D -ENXIO;
+>                 goto bad;
+>         }
+>=20
+> So, I think there is no need for these patches - dm-writecache just does
+> what others targets do.
+>=20
+> > Patch 5 is used for getting the status of seq_count.
+>=20
+> It may be accepted if other LVM team members find some use for this value=
+.
+>=20
+> Mikulas
+>=20
+> > Changes Since v2:
+> >         - seq_count is important for flush operations, output it within=
+ status
+> >           for debugging and analyzing code behavior.
+> > 	[1]: https://lkml.org/lkml/2019/1/3/43
+> >         [2]: https://lkml.org/lkml/2019/1/9/6
+> >
+> > Huaisheng Ye (5):
+> >   dm-writecache: remove unused size to writecache_flush_region
+> >   dm-writecache: get rid of memory_data flush to writecache_flush_entry
+> >   dm-writecache: expand pmem_reinit for struct dm_writecache
+> >   Documentation/device-mapper: add optional parameter reinit
+> >   dm-writecache: output seq_count within status
+> >
+> >  Documentation/device-mapper/writecache.txt |  4 ++++
+> >  drivers/md/dm-writecache.c                 | 23 +++++++++++++---------=
+-
+> >  2 files changed, 17 insertions(+), 10 deletions(-)
+> >
+> > --
+> > 1.8.3.1
+> >
+> >
