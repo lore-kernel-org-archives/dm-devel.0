@@ -1,12 +1,13 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 0/4] multipath: fixes for invalid path device
-	handling
-Date: Wed, 13 Feb 2019 16:55:04 -0600
-Message-ID: <1550098508-27459-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 2/4] multipath: blacklist zram devices
+Date: Wed, 13 Feb 2019 16:55:06 -0600
+Message-ID: <1550098508-27459-3-git-send-email-bmarzins@redhat.com>
+References: <1550098508-27459-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1550098508-27459-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,51 +21,38 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-I recently got a bug from a user with a bad property
-blacklist_exceptions line, where multipath tried to use a zram device,
-which caused multipathd to crash. This patch set fixes that crash, and
-then adds some additional safeguards to prevent things like this
-happening in the future.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/blacklist.c   | 2 +-
+ multipath/multipath.conf.5 | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-The first patch fixes the crash. This crash could be triggered by any
-path device that isn't part of a multipath device, and has it's checker
-fail to check the path correctly.
-
-The second patch blacklists zram devices specifically. The third patch
-fixes up some code weirdness that doesn't really cause any problems,
-aside from the messages it prints.
-
-The fourth patch changes how pathinfo works so that it now drops devices
-of an unknown type if they can't get a wwid.  The biggest reason to do
-this is so that multipath won't hold an open file descriptor for these
-devices, which are almost definitely not multipathable (and occasionally
-send them TUR ioctls, which are bound to fail, since they aren't scsi
-devices).
-
-As an aside, is there a good reason why multipath uses a devnode
-blacklist to individually blacklist device types, instead of
-blacklisting all denodes, and adding exceptions for the device types
-that we do support?
-
-Changes in v2:
-use Martin Wilck's version of PATCH 1/4
-
-Benjamin Marzinski (3):
-  multipath: blacklist zram devices
-  multipathd: fix pp->initialized state ping-ponging
-  multipathd: don't resend change events for unknown devices
-
-Martin Wilck (1):
-  multipathd: avoid null pointer dereference in LOG_MSG
-
- libmultipath/blacklist.c   |  2 +-
- libmultipath/checkers.c    |  9 +--------
- libmultipath/checkers.h    |  6 +++++-
- libmultipath/discovery.c   | 10 +++++++---
- libmultipath/structs.h     |  1 +
- multipath/multipath.conf.5 |  2 +-
- multipathd/main.c          | 10 +++++++---
- 7 files changed, 23 insertions(+), 17 deletions(-)
-
+diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
+index 709895e..e0d0279 100644
+--- a/libmultipath/blacklist.c
++++ b/libmultipath/blacklist.c
+@@ -192,7 +192,7 @@ setup_default_blist (struct config * conf)
+ 	char * str;
+ 	int i;
+ 
+-	str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]");
++	str = STRDUP("^(ram|zram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]");
+ 	if (!str)
+ 		return 1;
+ 	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 88b8edd..0fe8461 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -1218,7 +1218,7 @@ Regular expression matching the device nodes to be excluded/included.
+ .RS
+ .PP
+ The default \fIblacklist\fR consists of the regular expressions
+-"^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]" and
++"^(ram|zram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]" and
+ "^(td|hd|vd)[a-z]". This causes virtual devices, non-disk devices, and some other
+ device types to be excluded from multipath handling by default.
+ .RE
 -- 
 2.17.2
