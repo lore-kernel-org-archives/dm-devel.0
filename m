@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 2/4] multipath: blacklist zram devices
-Date: Wed, 13 Feb 2019 16:55:06 -0600
-Message-ID: <1550098508-27459-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 4/4] multipathd: don't resend change events
+	for unknown devices
+Date: Wed, 13 Feb 2019 16:55:08 -0600
+Message-ID: <1550098508-27459-5-git-send-email-bmarzins@redhat.com>
 References: <1550098508-27459-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,38 +22,29 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+If multipath fails to get the wwid for a device, and the device is
+of an unknown type (pp->bus == SYSFS_BUS_UNDEF), don't send change
+events. Instead, assume that the device was not meant to be used
+and skip it.
+
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/blacklist.c   | 2 +-
- multipath/multipath.conf.5 | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/discovery.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
-index 709895e..e0d0279 100644
---- a/libmultipath/blacklist.c
-+++ b/libmultipath/blacklist.c
-@@ -192,7 +192,7 @@ setup_default_blist (struct config * conf)
- 	char * str;
- 	int i;
- 
--	str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]");
-+	str = STRDUP("^(ram|zram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]");
- 	if (!str)
- 		return 1;
- 	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 88b8edd..0fe8461 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -1218,7 +1218,7 @@ Regular expression matching the device nodes to be excluded/included.
- .RS
- .PP
- The default \fIblacklist\fR consists of the regular expressions
--"^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]" and
-+"^(ram|zram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]" and
- "^(td|hd|vd)[a-z]". This causes virtual devices, non-disk devices, and some other
- device types to be excluded from multipath handling by default.
- .RE
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 6aef188..10bd8cd 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1966,6 +1966,8 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 	if ((mask & DI_WWID) && !strlen(pp->wwid)) {
+ 		get_uid(pp, path_state, pp->udev);
+ 		if (!strlen(pp->wwid)) {
++			if (pp->bus == SYSFS_BUS_UNDEF)
++				return PATHINFO_SKIPPED;
+ 			if (pp->initialized != INIT_FAILED) {
+ 				pp->initialized = INIT_MISSING_UDEV;
+ 				pp->tick = conf->retrigger_delay;
 -- 
 2.17.2
