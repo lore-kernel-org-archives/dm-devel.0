@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 4/4] multipathd: don't resend change events
-	for unknown devices
-Date: Wed, 13 Feb 2019 16:55:08 -0600
-Message-ID: <1550098508-27459-5-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 1/4] multipathd: avoid null pointer
+	dereference in LOG_MSG
+Date: Wed, 13 Feb 2019 16:55:05 -0600
+Message-ID: <1550098508-27459-2-git-send-email-bmarzins@redhat.com>
 References: <1550098508-27459-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,32 +19,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>
+Cc: Martin Wilck <mwilck@suse.de>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-If multipath fails to get the wwid for a device, and the device is
-of an unknown type (pp->bus == SYSFS_BUS_UNDEF), don't send change
-events. Instead, assume that the device was not meant to be used
-and skip it.
+From: Martin Wilck <mwilck@suse.de>
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+LOG_MSG() will dereference pp->mpp. Commit cb5ec664 added a call to
+LOG_MSG() before the check for (!pp->mpp) in check_path.  This can cause
+multipathd to crash.  LOG_MSG() should check the fields before dereferencing
+them. Make checker_selected() an inline function to allow the compiler
+to optimize away the usually redundant test "if (&checker->pp != NULL)".
+
+Also, checker_message() should fail to a generic message if c->cls isn't
+set (which means that a checker hasn't been selected).
+
+Fixes: cb5ec664 (multipathd: check_path: improve logging for "unusable
+                 path" case)
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 2 ++
- 1 file changed, 2 insertions(+)
+ libmultipath/checkers.c | 9 +--------
+ libmultipath/checkers.h | 6 +++++-
+ multipathd/main.c       | 6 ++++--
+ 3 files changed, 10 insertions(+), 11 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 6aef188..10bd8cd 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1966,6 +1966,8 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 	if ((mask & DI_WWID) && !strlen(pp->wwid)) {
- 		get_uid(pp, path_state, pp->udev);
- 		if (!strlen(pp->wwid)) {
-+			if (pp->bus == SYSFS_BUS_UNDEF)
-+				return PATHINFO_SKIPPED;
- 			if (pp->initialized != INIT_FAILED) {
- 				pp->initialized = INIT_MISSING_UDEV;
- 				pp->tick = conf->retrigger_delay;
+diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+index 848c4c3..f4fdcae 100644
+--- a/libmultipath/checkers.c
++++ b/libmultipath/checkers.c
+@@ -261,13 +261,6 @@ int checker_check (struct checker * c, int path_state)
+ 	return r;
+ }
+ 
+-int checker_selected(const struct checker *c)
+-{
+-	if (!c)
+-		return 0;
+-	return c->cls != NULL;
+-}
+-
+ const char *checker_name(const struct checker *c)
+ {
+ 	if (!c || !c->cls)
+@@ -295,7 +288,7 @@ const char *checker_message(const struct checker *c)
+ {
+ 	int id;
+ 
+-	if (!c || c->msgid < 0 ||
++	if (!c || !c->cls || c->msgid < 0 ||
+ 	    (c->msgid >= CHECKER_GENERIC_MSGTABLE_SIZE &&
+ 	     c->msgid < CHECKER_FIRST_MSGID))
+ 		goto bad_id;
+diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
+index b2e8f9a..dab197f 100644
+--- a/libmultipath/checkers.h
++++ b/libmultipath/checkers.h
+@@ -129,6 +129,11 @@ struct checker {
+ 						you want to stuff data in. */
+ };
+ 
++static inline int checker_selected(const struct checker *c)
++{
++	return c != NULL && c->cls != NULL;
++}
++
+ const char *checker_state_name(int);
+ int init_checkers(const char *);
+ void cleanup_checkers (void);
+@@ -142,7 +147,6 @@ void checker_set_fd (struct checker *, int);
+ void checker_enable (struct checker *);
+ void checker_disable (struct checker *);
+ int checker_check (struct checker *, int);
+-int checker_selected(const struct checker *);
+ int checker_is_sync(const struct checker *);
+ const char *checker_name (const struct checker *);
+ /*
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 0e3ac2c..37bea63 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -92,7 +92,8 @@ static int use_watchdog;
+ 
+ #define LOG_MSG(lvl, verb, pp)					\
+ do {								\
+-	if (lvl <= verb) {					\
++	if (pp->mpp && checker_selected(&pp->checker) &&	\
++	    lvl <= verb) {					\
+ 		if (pp->offline)				\
+ 			condlog(lvl, "%s: %s - path offline",	\
+ 				pp->mpp->alias, pp->dev);	\
+@@ -2017,7 +2018,8 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	}
+ 
+ 	if (newstate == PATH_WILD || newstate == PATH_UNCHECKED) {
+-		condlog(2, "%s: unusable path - checker failed", pp->dev);
++		condlog(2, "%s: unusable path (%s) - checker failed",
++			pp->dev, checker_state_name(newstate));
+ 		LOG_MSG(2, verbosity, pp);
+ 		conf = get_multipath_config();
+ 		pthread_cleanup_push(put_multipath_config, conf);
 -- 
 2.17.2
