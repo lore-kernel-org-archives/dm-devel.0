@@ -1,14 +1,24 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 3/4] multipathd: fix pp->initialized state
-	ping-ponging
-Date: Wed, 13 Feb 2019 16:55:07 -0600
-Message-ID: <1550098508-27459-4-git-send-email-bmarzins@redhat.com>
-References: <1550098508-27459-1-git-send-email-bmarzins@redhat.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: block: Fix a WRITE SAME BUG_ON
+Date: Wed, 13 Feb 2019 21:31:16 -0500
+Message-ID: <yq1lg2jqex7.fsf@oracle.com>
+References: <20190125021107.4595-1-zhangxiaoxu5@huawei.com>
+	<CAMeeMh_=UVGwo-=9WtBXRmiHTXnLAswqis97bM-aiuwnzPU0QQ@mail.gmail.com>
+	<20190128221441.GA24102@redhat.com> <yq1lg34f4i7.fsf@oracle.com>
+	<CAMeeMh85T_qui=LWd0u=b_oMN5XLqowqkvLuYGBM2Ae6tS-mzg@mail.gmail.com>
+	<20190131103924.GA22503@infradead.org>
+	<CAMeeMh-uxiee7rKutnr3jrMjzkc8=R2Y3DPPBLvLYjqSwjfi_w@mail.gmail.com>
+	<20190201073527.GA14758@infradead.org>
+	<CAMeeMh-wAZ8377sMrnyQZUt2HT1hB02DHSROJURLmPsaZPkeQQ@mail.gmail.com>
+	<f7b05928-316c-4c73-b04b-bba38ea60b27@redhat.com>
+	<20190201161803.GA21124@infradead.org>
+	<d693e299-3c7d-b3cb-e8c7-a1f94bba4697@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1550098508-27459-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <d693e299-3c7d-b3cb-e8c7-a1f94bba4697@huawei.com> (zhangxiaoxu's
+	message of "Tue, 12 Feb 2019 11:11:29 +0800")
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,84 +28,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>
+To: "zhangxiaoxu (A)" <zhangxiaoxu5@huawei.com>
+Cc: axboe@kernel.dk, linux-block@vger.kernel.org, John Dorminy <jdorminy@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, "Martin K. Petersen" <martin.petersen@oracle.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-When a multipath device fails to get a wwid in pathinfo, it moves to the
-INIT_MISSING_UDEV state. After a device in this state sends
-retrigger_tries change uevents in check_path(), it moves to the
-INIT_FAILED state.  However, when check_path() is run on a device in
-INIT_FAILED, it can call pathinfo, which will set the path back
-into INIT_MISSING_UDEV if it cannot get a wwid.  The next call to
-check_path() will put the path back into INIT_FAILED.  The device will
-continue to ping-pong between these states.
 
-To solve this a new pp->initialized state has been added INIT_NEW.  New
-path devices start in this state, instead of INIT_FAILED. INIT_NEW and
-INIT_FAILED are treated exactly the same, with one exception. A device
-in INIT_FAILED cannot transition back to INIT_MISSING_UDEV.
+zhangxiaoxu,
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/discovery.c | 8 +++++---
- libmultipath/structs.h   | 1 +
- multipathd/main.c        | 4 +++-
- 3 files changed, 9 insertions(+), 4 deletions(-)
+> Any progress about the problme?
+> Should we disable the write same when stack the different LBA disks?
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 1748eeb..6aef188 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1966,8 +1966,10 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 	if ((mask & DI_WWID) && !strlen(pp->wwid)) {
- 		get_uid(pp, path_state, pp->udev);
- 		if (!strlen(pp->wwid)) {
--			pp->initialized = INIT_MISSING_UDEV;
--			pp->tick = conf->retrigger_delay;
-+			if (pp->initialized != INIT_FAILED) {
-+				pp->initialized = INIT_MISSING_UDEV;
-+				pp->tick = conf->retrigger_delay;
-+			}
- 			return PATHINFO_OK;
- 		}
- 		else
-@@ -2000,7 +2002,7 @@ blank:
- 	 * Recoverable error, for example faulty or offline path
- 	 */
- 	pp->chkrstate = pp->state = PATH_DOWN;
--	if (pp->initialized == INIT_FAILED)
-+	if (pp->initialized == INIT_NEW || pp->initialized == INIT_FAILED)
- 		memset(pp->wwid, 0, WWID_SIZE);
- 
- 	return PATHINFO_OK;
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 375c728..b794b0d 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -202,6 +202,7 @@ enum ghost_delay_states {
- };
- 
- enum initialized_states {
-+	INIT_NEW,
- 	INIT_FAILED,
- 	INIT_MISSING_UDEV,
- 	INIT_REQUESTED_UDEV,
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 37bea63..43830e8 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2028,7 +2028,9 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 		return 1;
- 	}
- 	if (!pp->mpp) {
--		if (!strlen(pp->wwid) && pp->initialized == INIT_FAILED &&
-+		if (!strlen(pp->wwid) &&
-+		    (pp->initialized == INIT_FAILED ||
-+		     pp->initialized == INIT_NEW) &&
- 		    (newstate == PATH_UP || newstate == PATH_GHOST)) {
- 			condlog(2, "%s: add missing path", pp->dev);
- 			conf = get_multipath_config();
+Yes, please.
+
 -- 
-2.17.2
+Martin K. Petersen	Oracle Linux Engineering
