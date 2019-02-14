@@ -1,14 +1,12 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [PATCH v2 0/4] multipath: fixes for invalid path
-	device handling
-Date: Thu, 14 Feb 2019 11:42:41 +0100
-Message-ID: <6670ebcaa96b7f9d0950c309fa981c9d6eb4a38d.camel@suse.de>
-References: <1550098508-27459-1-git-send-email-bmarzins@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 1/4] dm: refactor start_io_acct
+Date: Thu, 14 Feb 2019 16:00:03 +0100
+Message-ID: <20190214150102.931117000@debian-a64.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1550098508-27459-1-git-send-email-bmarzins@redhat.com>
+Content-Disposition: inline; filename=refactor-start-io-acct.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,64 +16,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: Mike Snitzer <msnitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 2019-02-13 at 16:55 -0600, Benjamin Marzinski wrote:
-> I recently got a bug from a user with a bad property
-> blacklist_exceptions line, where multipath tried to use a zram
-> device,
-> which caused multipathd to crash. This patch set fixes that crash,
-> and
-> then adds some additional safeguards to prevent things like this
-> happening in the future.
-> 
-> The first patch fixes the crash. This crash could be triggered by any
-> path device that isn't part of a multipath device, and has it's
-> checker
-> fail to check the path correctly.
-> 
-> The second patch blacklists zram devices specifically. The third
-> patch
-> fixes up some code weirdness that doesn't really cause any problems,
-> aside from the messages it prints.
-> 
-> The fourth patch changes how pathinfo works so that it now drops
-> devices
-> of an unknown type if they can't get a wwid.  The biggest reason to
-> do
-> this is so that multipath won't hold an open file descriptor for
-> these
-> devices, which are almost definitely not multipathable (and
-> occasionally
-> send them TUR ioctls, which are bound to fail, since they aren't scsi
-> devices).
-> 
-> As an aside, is there a good reason why multipath uses a devnode
-> blacklist to individually blacklist device types, instead of
-> blacklisting all denodes, and adding exceptions for the device types
-> that we do support?
-> 
-> Changes in v2:
-> use Martin Wilck's version of PATCH 1/4
-> 
-> Benjamin Marzinski (3):
->   multipath: blacklist zram devices
->   multipathd: fix pp->initialized state ping-ponging
->   multipathd: don't resend change events for unknown devices
-> 
-> Martin Wilck (1):
->   multipathd: avoid null pointer dereference in LOG_MSG
-> 
->  libmultipath/blacklist.c   |  2 +-
->  libmultipath/checkers.c    |  9 +--------
->  libmultipath/checkers.h    |  6 +++++-
->  libmultipath/discovery.c   | 10 +++++++---
->  libmultipath/structs.h     |  1 +
->  multipath/multipath.conf.5 |  2 +-
->  multipathd/main.c          | 10 +++++++---
->  7 files changed, 23 insertions(+), 17 deletions(-)
-> 
+This patch refactors start_io_acct, so that it doesn't take a pointer to
+struct dm_io - so that it could be used in the following patch.
 
-For the set:
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm.c |   30 ++++++++++++------------------
+ 1 file changed, 12 insertions(+), 18 deletions(-)
+
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c	2019-02-05 12:07:21.000000000 +0100
++++ linux-2.6/drivers/md/dm.c	2019-02-05 14:31:56.000000000 +0100
+@@ -580,7 +580,10 @@ out:
+ 	return r;
+ }
+ 
+-static void start_io_acct(struct dm_io *io);
++static void start_io_acct(struct mapped_device *md, struct bio *bio)
++{
++	generic_start_io_acct(md->queue, bio_op(bio), bio_sectors(bio), &dm_disk(md)->part0);
++}
+ 
+ static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
+ {
+@@ -604,7 +607,14 @@ static struct dm_io *alloc_io(struct map
+ 	io->md = md;
+ 	spin_lock_init(&io->endio_lock);
+ 
+-	start_io_acct(io);
++	io->start_time = jiffies;
++
++	start_io_acct(md, bio);
++
++	if (unlikely(dm_stats_used(&md->stats)))
++		dm_stats_account_io(&md->stats, bio_data_dir(bio),
++				    bio->bi_iter.bi_sector, bio_sectors(bio),
++				    false, 0, &io->stats_aux);
+ 
+ 	return io;
+ }
+@@ -668,22 +678,6 @@ static bool md_in_flight(struct mapped_d
+ 		return md_in_flight_bios(md);
+ }
+ 
+-static void start_io_acct(struct dm_io *io)
+-{
+-	struct mapped_device *md = io->md;
+-	struct bio *bio = io->orig_bio;
+-
+-	io->start_time = jiffies;
+-
+-	generic_start_io_acct(md->queue, bio_op(bio), bio_sectors(bio),
+-			      &dm_disk(md)->part0);
+-
+-	if (unlikely(dm_stats_used(&md->stats)))
+-		dm_stats_account_io(&md->stats, bio_data_dir(bio),
+-				    bio->bi_iter.bi_sector, bio_sectors(bio),
+-				    false, 0, &io->stats_aux);
+-}
+-
+ static void end_io_acct(struct dm_io *io)
+ {
+ 	struct mapped_device *md = io->md;
