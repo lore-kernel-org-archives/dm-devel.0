@@ -1,21 +1,25 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: Possible bug in mirror target
-Date: Thu, 14 Feb 2019 10:23:16 +0000
-Message-ID: <20190214102316.GA11797@localhost.localdomain>
-References: <CAN-y+EKdQnRWck4B3Ms0ZGHqEL4+V+xPb-G3vhPy+Qe0DMO0oA@mail.gmail.com>
-	<27e658d7-265f-b765-1b19-d61f52da8457@redhat.com>
-	<23648.40558.660430.523285@quad.stoffel.home>
-	<84219415-de11-5b28-ec2f-68ee7e74c4b0@redhat.com>
-	<23651.19067.298943.820452@quad.stoffel.home>
-	<64d236db-20d9-35f6-83d8-bf81cb4b8fb5@redhat.com>
-	<20190213150141.GC26740@localhost.localdomain>
-	<10b45aa5-58af-e198-aa77-30aedc998238@redhat.com>
+From: "zhangxiaoxu (A)" <zhangxiaoxu5@huawei.com>
+Subject: Re: block: Fix a WRITE SAME BUG_ON
+Date: Thu, 14 Feb 2019 17:36:11 +0800
+Message-ID: <6a00e005-656e-7b3c-6b86-1430f3e7e623@huawei.com>
+References: <20190125021107.4595-1-zhangxiaoxu5@huawei.com>
+	<CAMeeMh_=UVGwo-=9WtBXRmiHTXnLAswqis97bM-aiuwnzPU0QQ@mail.gmail.com>
+	<20190128221441.GA24102@redhat.com> <yq1lg34f4i7.fsf@oracle.com>
+	<CAMeeMh85T_qui=LWd0u=b_oMN5XLqowqkvLuYGBM2Ae6tS-mzg@mail.gmail.com>
+	<20190131103924.GA22503@infradead.org>
+	<CAMeeMh-uxiee7rKutnr3jrMjzkc8=R2Y3DPPBLvLYjqSwjfi_w@mail.gmail.com>
+	<20190201073527.GA14758@infradead.org>
+	<CAMeeMh-wAZ8377sMrnyQZUt2HT1hB02DHSROJURLmPsaZPkeQQ@mail.gmail.com>
+	<f7b05928-316c-4c73-b04b-bba38ea60b27@redhat.com>
+	<20190201161803.GA21124@infradead.org>
+	<d693e299-3c7d-b3cb-e8c7-a1f94bba4697@huawei.com>
+	<yq1lg2jqex7.fsf@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <10b45aa5-58af-e198-aa77-30aedc998238@redhat.com>
+In-Reply-To: <yq1lg2jqex7.fsf@oracle.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,46 +29,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>
-Cc: dm-devel@redhat.com, John Stoffel <john@stoffel.org>, Drew Hastings <dhastings@crucialwebhost.com>
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: axboe@kernel.dk, linux-block@vger.kernel.org, John Dorminy <jdorminy@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCBGZWIgMTMsIDIwMTkgYXQgMDc6MDg6NDBQTSArMDEwMCwgWmRlbmVrIEthYmVsYWMg
-d3JvdGU6Cj4gRG5lIDEzLiAwMi4gMTkgdiAxNjowMSBCcnluIE0uIFJlZXZlcyBuYXBzYWwoYSk6
-Cj4gPiBPbiBXZWQsIEZlYiAxMywgMjAxOSBhdCAwMzoyMTo1MlBNICswMTAwLCBaZGVuZWsgS2Fi
-ZWxhYyB3cm90ZToKPiA+ID4gSWYgeW91IGhhdmUgdGhpcyBmcmVlIHNwYWNlIGl0J3Mgc3VyZWx5
-IG5vdCBhIGJhZCB0aGluZyAtIGJ1dCB0aGVyZQo+ID4gPiBhcmUgbWFueSBjYXNlcywgeW91IGNh
-biBnZXQgYW55IGZyZWUgc3BhY2UgLSBtYWpvcml0eSBvZiBmaWxlc3lzdGVtcwo+ID4gPiBkb2Vz
-IG5vdCBzdXBwb3J0IHNocmlua2luZyAtIHNvIHRoZSBvbmx5ICdmcmVlJyBzcGFjZSB5b3UgY2Fu
-Cj4gPiA+IGdldCBpcyBieSBhZGRpbmcgbmV3IHN0b3JhZ2UgdG8gVkcgLSBhZ2FpbiBxdWl0ZSBs
-aW1pdGluZyBmYWN0b3IuCj4gPiAKPiA+IFByb2JhYmx5IG9idmlvdXMgdG8gbWFueSwgYnV0IGlm
-IHlvdSBmaW5kIHlvdXJzZWxmIGluIHRoaXMgc2l0dWF0aW9uCj4gPiB1c2luZyB0aGUgUmVkIEhh
-dCAvIEZlZG9yYSBkZWZhdWx0IGxheW91dCBjcmVhdGVkIGJ5IEFuYWNvbmRhLCB0aGUKPiA+IGVh
-c2llc3Qgc29sdXRpb24gaXMgbm9ybWFsbHkgdG8gInN0ZWFsIiBvbmUgZXh0ZW50IGZyb20gdGhl
-IGF1dG8tCj4gPiBjb25maWd1cmVkIHN3YXAgTFYsIGFuZCBkb25hdGUgaXQgdG8gdGhlIG1pcnJv
-ciBjb252ZXJzaW9uOgo+ID4gCj4gPiAgICAjIHN3YXBvZmYgLWEKPiA+ICAgICMgbHZyZXNpemUg
-LWwgLTEgcmhlbC9zd2FwCj4gPiAgICAjIG1rc3dhcCAvZGV2L3JoZWwvc3dhcAo+ID4gICAgIyBz
-d2Fwb24gLWEKPiA+ICAgICMgbHZjaGFuZ2UgLW0xIC4uLgo+ID4gCj4gPiBUaGlzIHdpbGwgYWx3
-YXlzIHdvcmsgd2l0aCB0aGUgYXV0b21hdGljIGxheW91dHMgcHJvdmlkZWQgYnkgdGhvc2UKPiA+
-IGRpc3Ryb3MuCj4gCj4gSnVzdCB0byBmdXJ0aGVyIGNsZWFyIHRoaXMgLSB5ZWFoIC0gc3RlYWxp
-bmcgMSBleHRlbnQgdGhpcyB3YXkgJ21vc3RseScKPiB0ZW1wb3JhcmlseSB3b3JrcywgaG93ZXZl
-ciBmb3IgY29udmVyc2lvbiB0byAncmFpZCcgLSB0aGUgcnVsZSBzaG91bGQgYmUsCj4gdGhhdCBs
-b2cvbWV0YWRhdGEgZGV2aWNlIGZvciBlYWNoIGxlZyBzaG91bGQgYmUgY28tbG9jYXRlZCBvbiB0
-aGUgc2FtZQo+IHBoeXNpY2FsIGRldmljZSBhcyB0aGUgbGVnIGl0c2VsZiAtIGNsZWFybHkgc3Rv
-cmluZyBtdWx0aXBsZSBvciBhbGwgbWV0YWRhdGEKPiBkZXZpY2VzIG9uIDEgcGh5c2ljYWwgZGV2
-aWNlIHdpbGwgbm90IGhhdmUgcmVxdWlyZWQgcHVycG9zZSAtIGFsdGhvdWdoIGFzCgpUaGF0J3Mg
-ZXhhY3RseSB3aGF0IHRob3NlIHN0ZXBzIGRvIChJIHVzZWQgdGhlbSB0d28gZGF5cyBhZ28gdG8g
-dmVyaWZ5CmFuIFJIQlopLiBZb3Ugc3RlYWwgdGhlIGV4dGVudCBmcm9tIHRoZSBzeXN0ZW0gUFYg
-dGhhdCBBbmFjb25kYSBvcmlnaW5hbGx5CmNyZWF0ZWQgdGhlIHZvbHVtZSBncm91cCBvbiwgcHJv
-dmlkaW5nIGEgcm1ldGEgbG9nIG9uIHRoZSBzYW1lIGRldmljZSBhcwp0aGUgaW1hZ2Ugdm9sdW1l
-LgoKRXh0cmEgc3RlcHMgd291bGQgYmUgbmVlZGVkIHRvIGNvZXJjZSB0aGUgbG9ncyBvbnRvIHRo
-ZSBzYW1lIGRldmljZXM6CgogIHJoZWwtcm9vdCAoMjUzOjQpCiAgIOKUnOKUgHJoZWwtcm9vdF9y
-aW1hZ2VfMSAoMjUzOjMpCiAgIOKUgiAg4pSU4pSAICgyNTI6MTcpCiAgIOKUnOKUgHJoZWwtcm9v
-dF9ybWV0YV8xICgyNTM6MikKICAg4pSCICDilJTilIAgKDI1MjoxNykKICAg4pSc4pSAcmhlbC1y
-b290X3JpbWFnZV8wICgyNTM6MSkKICAg4pSCICDilJTilIAgKDI1MjoyKQogICDilJTilIByaGVs
-LXJvb3Rfcm1ldGFfMCAoMjUzOjApCiAgICAgIOKUlOKUgCAoMjUyOjIpCgpZb3Ugb2J2aW91c2x5
-IG5lZWQgdG8gYWxzbyBwcm92aWRlIHN1ZmZpY2llbnQgc3BhY2UgaW4gYW55IG5ldyBQViB0byBh
-bGxvdwpmb3IgdGhlIGV4dHJhIGxvZyBleHRlbnQsIGJ1dCB0aGF0IHNob3VsZG4ndCBiZSBlaXRo
-ZXIgc3VycHJpc2luZyBvcgpkaWZmaWN1bHQuCgpSZWdhcmRzLApCcnluLgoKLS0KZG0tZGV2ZWwg
-bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
-YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Any comments about the patch?
+
+On 2/14/2019 10:31 AM, Martin K. Petersen wrote:
+> 
+> zhangxiaoxu,
+> 
+>> Any progress about the problme?
+>> Should we disable the write same when stack the different LBA disks?
+> 
+> Yes, please.
+> 
