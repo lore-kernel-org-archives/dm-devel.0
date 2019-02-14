@@ -1,11 +1,14 @@
-From: yangerkun <yangerkun@huawei.com>
-Subject: [PATCH] dm: clear BIO_SEG_VALID in clone_bio
-Date: Thu, 14 Feb 2019 17:19:30 +0800
-Message-ID: <20190214091930.121952-1-yangerkun@huawei.com>
+From: Martin Wilck <mwilck@suse.de>
+Subject: Re: [PATCH v2 0/4] multipath: fixes for invalid path
+	device handling
+Date: Thu, 14 Feb 2019 11:42:41 +0100
+Message-ID: <6670ebcaa96b7f9d0950c309fa981c9d6eb4a38d.camel@suse.de>
+References: <1550098508-27459-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1550098508-27459-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,32 +18,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com, snitzer@redhat.com
-Cc: yangerkun@huawei.com, miaoxie@huawei.com, dm-devel@redhat.com, houtao1@huawei.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Since 57c36519e4("dm: fix clone_bio() to trigger blk_recount_segments()")
-has been reverted by fa8db494("dm: don't use bio_trim() afterall"), the
-problem that clone bio won't trigger blk_recount_segments will exits
-again. So just clean the flag in clone_bio.
+On Wed, 2019-02-13 at 16:55 -0600, Benjamin Marzinski wrote:
+> I recently got a bug from a user with a bad property
+> blacklist_exceptions line, where multipath tried to use a zram
+> device,
+> which caused multipathd to crash. This patch set fixes that crash,
+> and
+> then adds some additional safeguards to prevent things like this
+> happening in the future.
+> 
+> The first patch fixes the crash. This crash could be triggered by any
+> path device that isn't part of a multipath device, and has it's
+> checker
+> fail to check the path correctly.
+> 
+> The second patch blacklists zram devices specifically. The third
+> patch
+> fixes up some code weirdness that doesn't really cause any problems,
+> aside from the messages it prints.
+> 
+> The fourth patch changes how pathinfo works so that it now drops
+> devices
+> of an unknown type if they can't get a wwid.  The biggest reason to
+> do
+> this is so that multipath won't hold an open file descriptor for
+> these
+> devices, which are almost definitely not multipathable (and
+> occasionally
+> send them TUR ioctls, which are bound to fail, since they aren't scsi
+> devices).
+> 
+> As an aside, is there a good reason why multipath uses a devnode
+> blacklist to individually blacklist device types, instead of
+> blacklisting all denodes, and adding exceptions for the device types
+> that we do support?
+> 
+> Changes in v2:
+> use Martin Wilck's version of PATCH 1/4
+> 
+> Benjamin Marzinski (3):
+>   multipath: blacklist zram devices
+>   multipathd: fix pp->initialized state ping-ponging
+>   multipathd: don't resend change events for unknown devices
+> 
+> Martin Wilck (1):
+>   multipathd: avoid null pointer dereference in LOG_MSG
+> 
+>  libmultipath/blacklist.c   |  2 +-
+>  libmultipath/checkers.c    |  9 +--------
+>  libmultipath/checkers.h    |  6 +++++-
+>  libmultipath/discovery.c   | 10 +++++++---
+>  libmultipath/structs.h     |  1 +
+>  multipath/multipath.conf.5 |  2 +-
+>  multipathd/main.c          | 10 +++++++---
+>  7 files changed, 23 insertions(+), 17 deletions(-)
+> 
 
-Fixes: fa8db4948f522("dm: don't use bio_trim() afterall")
-Signed-off-by: yangerkun <yangerkun@huawei.com>
----
- drivers/md/dm.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 515e6af..b22ac04 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1336,6 +1336,7 @@ static int clone_bio(struct dm_target_io *tio, struct bio *bio,
- 			return r;
- 	}
- 
-+	bio_clear_flag(clone, BIO_SEG_VALID);
- 	bio_advance(clone, to_bytes(sector - clone->bi_iter.bi_sector));
- 	clone->bi_iter.bi_size = to_bytes(len);
- 
--- 
-2.9.5
+For the set:
+Reviewed-by: Martin Wilck <mwilck@suse.com>
