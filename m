@@ -1,11 +1,14 @@
-From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: [PATCH] dm thin: Fix bug wrt FUA request completion
-Date: Thu, 14 Feb 2019 20:38:47 +0200
-Message-ID: <20190214183847.23743-1-ntsironis@arrikto.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: clear BIO_SEG_VALID in clone_bio
+Date: Thu, 14 Feb 2019 13:55:37 -0500
+Message-ID: <20190214185536.GA15733@redhat.com>
+References: <20190214091930.121952-1-yangerkun@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20190214091930.121952-1-yangerkun@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,144 +18,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
-Cc: ejt@redhat.com
+To: yangerkun <yangerkun@huawei.com>
+Cc: dm-devel@redhat.com, miaoxie@huawei.com, Ming Lei <minlei@redhat.com>, agk@redhat.com, houtao1@huawei.com
 List-Id: dm-devel.ids
 
-When provisioning a new data block for a virtual block, either because
-the block was previously unallocated or because we are breaking sharing,
-if the whole block of data is being overwritten the bio that triggered
-the provisioning is issued immediately, skipping copying or zeroing of
-the data block.
+On Thu, Feb 14 2019 at  4:19am -0500,
+yangerkun <yangerkun@huawei.com> wrote:
 
-When this bio completes the new mapping is inserted in to the pool's
-metadata by process_prepared_mapping(), where the bio completion is
-signaled to the upper layers.
+> Since 57c36519e4("dm: fix clone_bio() to trigger blk_recount_segments()")
+> has been reverted by fa8db494("dm: don't use bio_trim() afterall"), the
+> problem that clone bio won't trigger blk_recount_segments will exits
+> again. So just clean the flag in clone_bio.
+> 
+> Fixes: fa8db4948f522("dm: don't use bio_trim() afterall")
+> Signed-off-by: yangerkun <yangerkun@huawei.com>
+> ---
+>  drivers/md/dm.c | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 515e6af..b22ac04 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1336,6 +1336,7 @@ static int clone_bio(struct dm_target_io *tio, struct bio *bio,
+>  			return r;
+>  	}
+>  
+> +	bio_clear_flag(clone, BIO_SEG_VALID);
+>  	bio_advance(clone, to_bytes(sector - clone->bi_iter.bi_sector));
+>  	clone->bi_iter.bi_size = to_bytes(len);
+>  
+> -- 
+> 2.9.5
+> 
 
-This completion is signaled without first committing the metadata. If
-the bio in question has the REQ_FUA flag set and the system crashes
-right after its completion and before the next metadata commit, then the
-write is lost despite the REQ_FUA flag requiring that I/O completion for
-this request is only signaled after the data has been committed to
-non-volatile storage.
+Yes, when I wrote commit fa8db4948f522 I purposely did _not_ clear
+BIO_SEG_VALID.  Commit 57c36519e4 wasn't born out of an observed need to
+blk_recount_segments() (e.g. otherwise something would fail).
 
-Fix this by deferring the completion of overwrite bios, with the REQ_FUA
-flag set, after the metadata has been committed.
+So I just reverted to what DM has done in clone_bio() for quite a long
+time once using bio_trim() became a liability (since fixed in dm-crypt,
+but not staged upstream yet).
 
-Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
----
- drivers/md/dm-thin.c | 54 +++++++++++++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 49 insertions(+), 5 deletions(-)
+Anyway: I'm open to reconsidering, by taking your patch, if there is a
+genuine benefit/fix associated with triggering blk_recount_segments()
+for clones.  I'm unaware of why it's needed...
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index ca8af21bf644..322b87745a6f 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -257,6 +257,7 @@ struct pool {
- 
- 	spinlock_t lock;
- 	struct bio_list deferred_flush_bios;
-+	struct bio_list deferred_flush_completions;
- 	struct list_head prepared_mappings;
- 	struct list_head prepared_discards;
- 	struct list_head prepared_discards_pt2;
-@@ -956,6 +957,39 @@ static void process_prepared_mapping_fail(struct dm_thin_new_mapping *m)
- 	mempool_free(m, &m->tc->pool->mapping_pool);
- }
- 
-+static void complete_overwrite_bio(struct thin_c *tc, struct bio *bio)
-+{
-+	struct pool *pool = tc->pool;
-+	unsigned long flags;
-+
-+	/*
-+	 * If the bio has the REQ_FUA flag set we must commit the metadata
-+	 * before signaling its completion.
-+	 */
-+	if (!bio_triggers_commit(tc, bio)) {
-+		bio_endio(bio);
-+		return;
-+	}
-+
-+	/*
-+	 * Complete bio with an error if earlier I/O caused changes to the
-+	 * metadata that can't be committed, e.g, due to I/O errors on the
-+	 * metadata device.
-+	 */
-+	if (dm_thin_aborted_changes(tc->td)) {
-+		bio_io_error(bio);
-+		return;
-+	}
-+
-+	/*
-+	 * Batch together any bios that trigger commits and then issue a
-+	 * single commit for them in process_deferred_bios().
-+	 */
-+	spin_lock_irqsave(&pool->lock, flags);
-+	bio_list_add(&pool->deferred_flush_completions, bio);
-+	spin_unlock_irqrestore(&pool->lock, flags);
-+}
-+
- static void process_prepared_mapping(struct dm_thin_new_mapping *m)
- {
- 	struct thin_c *tc = m->tc;
-@@ -988,7 +1022,7 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
- 	 */
- 	if (bio) {
- 		inc_remap_and_issue_cell(tc, m->cell, m->data_block);
--		bio_endio(bio);
-+		complete_overwrite_bio(tc, bio);
- 	} else {
- 		inc_all_io_entry(tc->pool, m->cell->holder);
- 		remap_and_issue(tc, m->cell->holder, m->data_block);
-@@ -2317,7 +2351,7 @@ static void process_deferred_bios(struct pool *pool)
- {
- 	unsigned long flags;
- 	struct bio *bio;
--	struct bio_list bios;
-+	struct bio_list bios, bio_completions;
- 	struct thin_c *tc;
- 
- 	tc = get_first_thin(pool);
-@@ -2328,26 +2362,36 @@ static void process_deferred_bios(struct pool *pool)
- 	}
- 
- 	/*
--	 * If there are any deferred flush bios, we must commit
--	 * the metadata before issuing them.
-+	 * If there are any deferred flush bios, we must commit the metadata
-+	 * before issuing them or signaling their completion.
- 	 */
- 	bio_list_init(&bios);
-+	bio_list_init(&bio_completions);
-+
- 	spin_lock_irqsave(&pool->lock, flags);
- 	bio_list_merge(&bios, &pool->deferred_flush_bios);
- 	bio_list_init(&pool->deferred_flush_bios);
-+
-+	bio_list_merge(&bio_completions, &pool->deferred_flush_completions);
-+	bio_list_init(&pool->deferred_flush_completions);
- 	spin_unlock_irqrestore(&pool->lock, flags);
- 
--	if (bio_list_empty(&bios) &&
-+	if (bio_list_empty(&bios) && bio_list_empty(&bio_completions) &&
- 	    !(dm_pool_changed_this_transaction(pool->pmd) && need_commit_due_to_time(pool)))
- 		return;
- 
- 	if (commit(pool)) {
-+		bio_list_merge(&bios, &bio_completions);
-+
- 		while ((bio = bio_list_pop(&bios)))
- 			bio_io_error(bio);
- 		return;
- 	}
- 	pool->last_commit_jiffies = jiffies;
- 
-+	while ((bio = bio_list_pop(&bio_completions)))
-+		bio_endio(bio);
-+
- 	while ((bio = bio_list_pop(&bios)))
- 		generic_make_request(bio);
- }
--- 
-2.11.0
+Mike
