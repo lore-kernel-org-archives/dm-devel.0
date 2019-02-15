@@ -1,110 +1,66 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH V15 00/18] block: support multi-page bvec
-Date: Fri, 15 Feb 2019 08:49:31 -0700
-Message-ID: <c52b6a8b-d1d4-67ff-f81c-371d09cc6d5b@kernel.dk>
+From: Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [dm-devel] [PATCH V15 00/18] block: support multi-page bvec
+Date: Fri, 15 Feb 2019 09:14:15 -0800
+Message-ID: <1550250855.31902.102.camel@acm.org>
 References: <20190215111324.30129-1-ming.lei@redhat.com>
+         <c52b6a8b-d1d4-67ff-f81c-371d09cc6d5b@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-7"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <20190215111324.30129-1-ming.lei@redhat.com>
-Content-Language: en-US
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Ming Lei <ming.lei@redhat.com>
-Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Theodore Ts'o <tytso@mit.edu>, Omar Sandoval <osandov@fb.com>, Sagi Grimberg <sagi@grimberg.me>, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, linux-raid@vger.kernel.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, Bob Peterson <rpeterso@redhat.com>, clus
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <c52b6a8b-d1d4-67ff-f81c-371d09cc6d5b@kernel.dk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>, Ming Lei <ming.lei@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, "Darrick J . Wong" <darrick.wong@oracle.com>, Omar Sandoval <osandov@fb.com>, cluster-devel@redhat.com, linux-ext4@vger.kernel.org, Kent Overstreet <kent.overstreet@gmail.com>, Boaz Harrosh <ooo@electrozaur.com>, Gao Xiang <gaoxiang25@huawei.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, Bob Peterson <rpeterso@redhat.com>, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Dave Chinner <dchinner@redhat.com>, David Sterba <dsterba@suse.com>, linux-block@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 2/15/19 4:13 AM, Ming Lei wrote:
-> Hi,
-> 
-> This patchset brings multi-page bvec into block layer:
-> 
-> 1) what is multi-page bvec?
-> 
-> Multipage bvecs means that one 'struct bio_bvec' can hold multiple pages
-> which are physically contiguous instead of one single page used in linux
-> kernel for long time.
-> 
-> 2) why is multi-page bvec introduced?
-> 
-> Kent proposed the idea[1] first. 
-> 
-> As system's RAM becomes much bigger than before, and huge page, transparent
-> huge page and memory compaction are widely used, it is a bit easy now
-> to see physically contiguous pages from fs in I/O. On the other hand, from
-> block layer's view, it isn't necessary to store intermediate pages into bvec,
-> and it is enough to just store the physicallly contiguous 'segment' in each
-> io vector.
-> 
-> Also huge pages are being brought to filesystem and swap [2][6], we can
-> do IO on a hugepage each time[3], which requires that one bio can transfer
-> at least one huge page one time. Turns out it isn't flexiable to change
-> BIO_MAX_PAGES simply[3][5]. Multipage bvec can fit in this case very well.
-> As we saw, if CONFIG_THP_SWAP is enabled, BIO_MAX_PAGES can be configured
-> as much bigger, such as 512, which requires at least two 4K pages for holding
-> the bvec table.
-> 
-> With multi-page bvec:
-> 
-> - Inside block layer, both bio splitting and sg map can become more
-> efficient than before by just traversing the physically contiguous
-> 'segment' instead of each page.
-> 
-> - segment handling in block layer can be improved much in future since it
-> should be quite easy to convert multipage bvec into segment easily. For
-> example, we might just store segment in each bvec directly in future.
-> 
-> - bio size can be increased and it should improve some high-bandwidth IO
-> case in theory[4].
-> 
-> - there is opportunity in future to improve memory footprint of bvecs. 
-> 
-> 3) how is multi-page bvec implemented in this patchset?
-> 
-> Patch 1 ~ 3 parpares for supporting multi-page bvec. 
-> 
-> Patches 4 ~ 14 implement multipage bvec in block layer:
-> 
-> 	- put all tricks into bvec/bio/rq iterators, and as far as
-> 	drivers and fs use these standard iterators, they are happy
-> 	with multipage bvec
-> 
-> 	- introduce bio_for_each_bvec() to iterate over multipage bvec for splitting
-> 	bio and mapping sg
-> 
-> 	- keep current bio_for_each_segment*() to itereate over singlepage bvec and
-> 	make sure current users won't be broken; especailly, convert to this
-> 	new helper prototype in single patch 21 given it is bascially a mechanism
-> 	conversion
-> 
-> 	- deal with iomap & xfs's sub-pagesize io vec in patch 13
-> 
-> 	- enalbe multipage bvec in patch 14 
-> 
-> Patch 15 redefines BIO_MAX_PAGES as 256.
-> 
-> Patch 16 documents usages of bio iterator helpers.
-> 
-> Patch 17~18 kills NO_SG_MERGE.
-> 
-> These patches can be found in the following git tree:
-> 
-> 	git:  https://github.com/ming1/linux.git  v5.0-blk_mp_bvec_v14
-                                                                   ^^^
+On Fri, 2019-02-15 at 08:49 -0700, Jens Axboe wrote:
++AD4 On 2/15/19 4:13 AM, Ming Lei wrote:
++AD4 +AD4 This patchset brings multi-page bvec into block layer:
++AD4 
++AD4 Applied, thanks Ming. Let's hope it sticks+ACE
 
-v15?
+Hi Jens and Ming,
 
-> Lots of test(blktest, xfstests, ltp io, ...) have been run with this patchset,
-> and not see regression.
-> 
-> Thanks Christoph for reviewing the early version and providing very good
-> suggestions, such as: introduce bio_init_with_vec_table(), remove another
-> unnecessary helpers for cleanup and so on.
-> 
-> Thanks Chritoph and Omar for reviewing V10/V11/V12, and provides lots of
-> helpful comments.
+Test nvmeof-mp/002 fails with Jens' for-next branch from this morning.
+I have not yet tried to figure out which patch introduced the failure.
+Anyway, this is what I see in the kernel log for test nvmeof-mp/002:
 
-Applied, thanks Ming. Let's hope it sticks!
++AFs  475.611363+AF0 BUG: unable to handle kernel NULL pointer dereference at 0000000000000020
++AFs  475.621188+AF0 +ACM-PF error: +AFs-normal kernel read fault+AF0
++AFs  475.623148+AF0 PGD 0 P4D 0  
++AFs  475.624737+AF0 Oops: 0000 +AFsAIw-1+AF0 PREEMPT SMP KASAN
++AFs  475.626628+AF0 CPU: 1 PID: 277 Comm: kworker/1:1H Tainted: G    B             5.0.0-rc6-dbg+- +ACM-1
++AFs  475.630232+AF0 Hardware name: QEMU Standard PC (i440FX +- PIIX, 1996), BIOS 1.10.2-1 04/01/2014
++AFs  475.633855+AF0 Workqueue: kblockd blk+AF8-mq+AF8-requeue+AF8-work
++AFs  475.635777+AF0 RIP: 0010:+AF8AXw-blk+AF8-recalc+AF8-rq+AF8-segments+-0xbe/0x590
++AFs  475.670948+AF0 Call Trace:
++AFs  475.693515+AF0  blk+AF8-recalc+AF8-rq+AF8-segments+-0x2f/0x50
++AFs  475.695081+AF0  blk+AF8-insert+AF8-cloned+AF8-request+-0xbb/0x1c0
++AFs  475.701142+AF0  dm+AF8-mq+AF8-queue+AF8-rq+-0x3d1/0x770
++AFs  475.707225+AF0  blk+AF8-mq+AF8-dispatch+AF8-rq+AF8-list+-0x5fc/0xb10
++AFs  475.717137+AF0  blk+AF8-mq+AF8-sched+AF8-dispatch+AF8-requests+-0x256/0x300
++AFs  475.721767+AF0  +AF8AXw-blk+AF8-mq+AF8-run+AF8-hw+AF8-queue+-0xd6/0x180
++AFs  475.725920+AF0  +AF8AXw-blk+AF8-mq+AF8-delay+AF8-run+AF8-hw+AF8-queue+-0x25c/0x290
++AFs  475.727480+AF0  blk+AF8-mq+AF8-run+AF8-hw+AF8-queue+-0x119/0x1b0
++AFs  475.732019+AF0  blk+AF8-mq+AF8-run+AF8-hw+AF8-queues+-0x7b/0xa0
++AFs  475.733468+AF0  blk+AF8-mq+AF8-requeue+AF8-work+-0x2cb/0x300
++AFs  475.736473+AF0  process+AF8-one+AF8-work+-0x4f1/0xa40
++AFs  475.739424+AF0  worker+AF8-thread+-0x67/0x5b0
++AFs  475.741751+AF0  kthread+-0x1cf/0x1f0
++AFs  475.746034+AF0  ret+AF8-from+AF8-fork+-0x24/0x30
 
--- 
-Jens Axboe
+(gdb) list +ACo(+AF8AXw-blk+AF8-recalc+AF8-rq+AF8-segments+-0xbe)
+0xffffffff816a152e is in +AF8AXw-blk+AF8-recalc+AF8-rq+AF8-segments (block/blk-merge.c:366).
+361                                                  struct bio +ACo-bio)
+362     +AHs
+363             struct bio+AF8-vec bv, bvprv +AD0 +AHs NULL +AH0AOw
+364             int prev +AD0 0+ADs
+365             unsigned int seg+AF8-size, nr+AF8-phys+AF8-segs+ADs
+366             unsigned front+AF8-seg+AF8-size +AD0 bio-+AD4-bi+AF8-seg+AF8-front+AF8-size+ADs
+367             struct bio +ACo-fbio, +ACo-bbio+ADs
+368             struct bvec+AF8-iter iter+ADs
+369
+370             if (+ACE-bio)
+
+Bart.
