@@ -1,16 +1,12 @@
-From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: Re: [PATCH v2] dm thin: Fix bug wrt FUA request
-	completion
-Date: Fri, 15 Feb 2019 16:33:29 +0200
-Message-ID: <ff84e335-6f48-c955-fab8-5b307959663a@arrikto.com>
-References: <20190214232138.25667-1-ntsironis@arrikto.com>
-	<20190215135406.GA23097@reti>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fixes for 5.0 final
+Date: Fri, 15 Feb 2019 09:38:32 -0500
+Message-ID: <20190215143832.GA20900@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190215135406.GA23097@reti>
-Content-Language: en-US
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,189 +16,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: ejt@redhat.com
-Cc: dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Nikos Tsironis <ntsironis@arrikto.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 2/15/19 3:54 PM, Joe Thornber wrote:
-> Ack.
-> 
-> Thanks for this I was under the mistaken impression that FUA requests got split 
-> by core dm into separate payload and PREFLUSH requests.
-> 
-> I've audited dm-cache and that looks ok.
-> 
-> How did you test this patch?  That missing bio_list_init() in V1 must
-> have caused memory corruption?
-> 
-> - Joe
+Hi Linus,
 
-Hi Joe,
+The following changes since commit d13937116f1e82bf508a6325111b322c30c85eb9:
 
-bio_list_init() initializes the bio list's head and tail pointers to
-NULL and pool_create() allocates the struct pool structure using
-kzalloc() so the bio list was implicitly correctly initialized and no
-memory corruption occurred.
+  Linux 5.0-rc6 (2019-02-10 14:42:20 -0800)
 
-Nikos
+are available in the Git repository at:
 
-> 
-> 
-> On Fri, Feb 15, 2019 at 01:21:38AM +0200, Nikos Tsironis wrote:
->> When provisioning a new data block for a virtual block, either because
->> the block was previously unallocated or because we are breaking sharing,
->> if the whole block of data is being overwritten the bio that triggered
->> the provisioning is issued immediately, skipping copying or zeroing of
->> the data block.
->>
->> When this bio completes the new mapping is inserted in to the pool's
->> metadata by process_prepared_mapping(), where the bio completion is
->> signaled to the upper layers.
->>
->> This completion is signaled without first committing the metadata. If
->> the bio in question has the REQ_FUA flag set and the system crashes
->> right after its completion and before the next metadata commit, then the
->> write is lost despite the REQ_FUA flag requiring that I/O completion for
->> this request is only signaled after the data has been committed to
->> non-volatile storage.
->>
->> Fix this by deferring the completion of overwrite bios, with the REQ_FUA
->> flag set, after the metadata has been committed.
->>
->> Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
->> ---
->>  drivers/md/dm-thin.c | 55 +++++++++++++++++++++++++++++++++++++++++++++++-----
->>  1 file changed, 50 insertions(+), 5 deletions(-)
->>
->> Changes in v2:
->>   - Add missing bio_list_init() in pool_create()
->>
->> v1: https://www.redhat.com/archives/dm-devel/2019-February/msg00064.html
->>
->> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
->> index ca8af21bf644..e83b63608262 100644
->> --- a/drivers/md/dm-thin.c
->> +++ b/drivers/md/dm-thin.c
->> @@ -257,6 +257,7 @@ struct pool {
->>  
->>  	spinlock_t lock;
->>  	struct bio_list deferred_flush_bios;
->> +	struct bio_list deferred_flush_completions;
->>  	struct list_head prepared_mappings;
->>  	struct list_head prepared_discards;
->>  	struct list_head prepared_discards_pt2;
->> @@ -956,6 +957,39 @@ static void process_prepared_mapping_fail(struct dm_thin_new_mapping *m)
->>  	mempool_free(m, &m->tc->pool->mapping_pool);
->>  }
->>  
->> +static void complete_overwrite_bio(struct thin_c *tc, struct bio *bio)
->> +{
->> +	struct pool *pool = tc->pool;
->> +	unsigned long flags;
->> +
->> +	/*
->> +	 * If the bio has the REQ_FUA flag set we must commit the metadata
->> +	 * before signaling its completion.
->> +	 */
->> +	if (!bio_triggers_commit(tc, bio)) {
->> +		bio_endio(bio);
->> +		return;
->> +	}
->> +
->> +	/*
->> +	 * Complete bio with an error if earlier I/O caused changes to the
->> +	 * metadata that can't be committed, e.g, due to I/O errors on the
->> +	 * metadata device.
->> +	 */
->> +	if (dm_thin_aborted_changes(tc->td)) {
->> +		bio_io_error(bio);
->> +		return;
->> +	}
->> +
->> +	/*
->> +	 * Batch together any bios that trigger commits and then issue a
->> +	 * single commit for them in process_deferred_bios().
->> +	 */
->> +	spin_lock_irqsave(&pool->lock, flags);
->> +	bio_list_add(&pool->deferred_flush_completions, bio);
->> +	spin_unlock_irqrestore(&pool->lock, flags);
->> +}
->> +
->>  static void process_prepared_mapping(struct dm_thin_new_mapping *m)
->>  {
->>  	struct thin_c *tc = m->tc;
->> @@ -988,7 +1022,7 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
->>  	 */
->>  	if (bio) {
->>  		inc_remap_and_issue_cell(tc, m->cell, m->data_block);
->> -		bio_endio(bio);
->> +		complete_overwrite_bio(tc, bio);
->>  	} else {
->>  		inc_all_io_entry(tc->pool, m->cell->holder);
->>  		remap_and_issue(tc, m->cell->holder, m->data_block);
->> @@ -2317,7 +2351,7 @@ static void process_deferred_bios(struct pool *pool)
->>  {
->>  	unsigned long flags;
->>  	struct bio *bio;
->> -	struct bio_list bios;
->> +	struct bio_list bios, bio_completions;
->>  	struct thin_c *tc;
->>  
->>  	tc = get_first_thin(pool);
->> @@ -2328,26 +2362,36 @@ static void process_deferred_bios(struct pool *pool)
->>  	}
->>  
->>  	/*
->> -	 * If there are any deferred flush bios, we must commit
->> -	 * the metadata before issuing them.
->> +	 * If there are any deferred flush bios, we must commit the metadata
->> +	 * before issuing them or signaling their completion.
->>  	 */
->>  	bio_list_init(&bios);
->> +	bio_list_init(&bio_completions);
->> +
->>  	spin_lock_irqsave(&pool->lock, flags);
->>  	bio_list_merge(&bios, &pool->deferred_flush_bios);
->>  	bio_list_init(&pool->deferred_flush_bios);
->> +
->> +	bio_list_merge(&bio_completions, &pool->deferred_flush_completions);
->> +	bio_list_init(&pool->deferred_flush_completions);
->>  	spin_unlock_irqrestore(&pool->lock, flags);
->>  
->> -	if (bio_list_empty(&bios) &&
->> +	if (bio_list_empty(&bios) && bio_list_empty(&bio_completions) &&
->>  	    !(dm_pool_changed_this_transaction(pool->pmd) && need_commit_due_to_time(pool)))
->>  		return;
->>  
->>  	if (commit(pool)) {
->> +		bio_list_merge(&bios, &bio_completions);
->> +
->>  		while ((bio = bio_list_pop(&bios)))
->>  			bio_io_error(bio);
->>  		return;
->>  	}
->>  	pool->last_commit_jiffies = jiffies;
->>  
->> +	while ((bio = bio_list_pop(&bio_completions)))
->> +		bio_endio(bio);
->> +
->>  	while ((bio = bio_list_pop(&bios)))
->>  		generic_make_request(bio);
->>  }
->> @@ -2954,6 +2998,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
->>  	INIT_DELAYED_WORK(&pool->no_space_timeout, do_no_space_timeout);
->>  	spin_lock_init(&pool->lock);
->>  	bio_list_init(&pool->deferred_flush_bios);
->> +	bio_list_init(&pool->deferred_flush_completions);
->>  	INIT_LIST_HEAD(&pool->prepared_mappings);
->>  	INIT_LIST_HEAD(&pool->prepared_discards);
->>  	INIT_LIST_HEAD(&pool->prepared_discards_pt2);
->> -- 
->> 2.11.0
->>
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.0/dm-fixes-3
+
+for you to fetch changes up to 4ae280b4ee3463fa57bbe6eede26b97daff8a0f1:
+
+  dm thin: fix bug where bio that overwrites thin block ignores FUA (2019-02-14 19:02:29 -0500)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+- Fix bug in DM crypt's sizing of its block integrity tag space,
+  resulting in less memory use when DM crypt layers on DM integrity.
+
+- Fix a long-standing DM thinp crash consistency bug that was due to
+  improper handling of FUA.  This issue is specific to writes that
+  fill an entire thinp block which needs to be allocated.
+
+----------------------------------------------------------------
+Mikulas Patocka (1):
+      dm crypt: don't overallocate the integrity tag space
+
+Nikos Tsironis (1):
+      dm thin: fix bug where bio that overwrites thin block ignores FUA
+
+ drivers/md/dm-crypt.c |  2 +-
+ drivers/md/dm-thin.c  | 55 ++++++++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 51 insertions(+), 6 deletions(-)
