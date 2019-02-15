@@ -1,15 +1,16 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH v2] dm thin: Fix bug wrt FUA request
-	completion
-Date: Fri, 15 Feb 2019 13:54:07 +0000
-Message-ID: <20190215135406.GA23097@reti>
-References: <20190214232138.25667-1-ntsironis@arrikto.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 4/4] dm: implement no-clone optimization
+Date: Fri, 15 Feb 2019 09:09:16 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1902150901230.14993@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20190214150106.703894360@debian-a64.vm>
+	<20190214155552.GA10827@redhat.com>
+	<alpine.LRH.2.02.1902141125520.16727@file01.intranet.prod.int.rdu2.redhat.com>
+	<20190214170119.GA15261@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20190214232138.25667-1-ntsironis@arrikto.com>
+In-Reply-To: <20190214170119.GA15261@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,172 +20,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Nikos Tsironis <ntsironis@arrikto.com>
-Cc: dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com, ejt@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Ack.
-
-Thanks for this I was under the mistaken impression that FUA requests got split 
-by core dm into separate payload and PREFLUSH requests.
-
-I've audited dm-cache and that looks ok.
-
-How did you test this patch?  That missing bio_list_init() in V1 must
-have caused memory corruption?
-
-- Joe
 
 
-On Fri, Feb 15, 2019 at 01:21:38AM +0200, Nikos Tsironis wrote:
-> When provisioning a new data block for a virtual block, either because
-> the block was previously unallocated or because we are breaking sharing,
-> if the whole block of data is being overwritten the bio that triggered
-> the provisioning is issued immediately, skipping copying or zeroing of
-> the data block.
+On Thu, 14 Feb 2019, Mike Snitzer wrote:
+
+> On Thu, Feb 14 2019 at 11:54am -0500,
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
 > 
-> When this bio completes the new mapping is inserted in to the pool's
-> metadata by process_prepared_mapping(), where the bio completion is
-> signaled to the upper layers.
+> > > > x86-64, 2x six-core
+> > > > /dev/ram0					2449MiB/s
+> > > > /dev/mapper/lin 5.0-rc without optimization	1970MiB/s
+> > > > /dev/mapper/lin 5.0-rc with optimization	2238MiB/s
+> > > > 
+> > > > arm64, quad core:
+> > > > /dev/ram0					457MiB/s
+> > > > /dev/mapper/lin 5.0-rc without optimization	325MiB/s
+> > > > /dev/mapper/lin 5.0-rc with optimization	364MiB/s
+> > > > 
+> > > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > > 
+> > > Nice performance improvement.  But each device should have its own
+> > > mempool for dm_noclone + front padding.  So it should be wired into
+> > > dm_alloc_md_mempools().
+> > 
+> > We don't need to use mempools - if the slab allocation fails, we fall back 
+> > to the cloning path that has mempools.
 > 
-> This completion is signaled without first committing the metadata. If
-> the bio in question has the REQ_FUA flag set and the system crashes
-> right after its completion and before the next metadata commit, then the
-> write is lost despite the REQ_FUA flag requiring that I/O completion for
-> this request is only signaled after the data has been committed to
-> non-volatile storage.
+> But the implementation benefits from each DM device having control over
+> any extra memory it'd like to use for front padding.  Same as is done
+> now for the full-blown DM core with cloning.
+
+If the machine is out of memory, you alredy have much more serious 
+problems to deal with - attempting to optimize I/O by 13% doesn't make 
+sense.
+
+> > > It is fine if you don't actually deal with supporting per-bio-data in 
+> > > this patch, but a follow-on patch to add support for noclone-based 
+> > > per-bio-data shouldn't be expected to refactor the location of the 
+> > > mempool allocation (module vs per-device granularity).
+> > > 
+> > > Mike
+> > 
+> > I tried to use per-bio-data and other features - and it makes the 
+> > structure dm_noclone and function noclone_endio grow:
+> > 
+> > #define DM_NOCLONE_MAGIC 9693664
+> > struct dm_noclone {
+> > 	struct mapped_device *md;
+> > 	struct dm_target *ti;
+> > 	struct bio *bio;
+> > 	struct bvec_iter orig_bi_iter;
+> > 	bio_end_io_t *orig_bi_end_io;
+> > 	void *orig_bi_private;
+> > 	unsigned long start_time;
+> > 	/* ... per-bio data ... */
+> > 	/* DM_NOCLONE_MAGIC */
+> > };
+> > 
+> > And this growth degrades performance on linear target - from 2238MiB/s to 
+> > 2145MiB/s.
 > 
-> Fix this by deferring the completion of overwrite bios, with the REQ_FUA
-> flag set, after the metadata has been committed.
-> 
-> Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
-> ---
->  drivers/md/dm-thin.c | 55 +++++++++++++++++++++++++++++++++++++++++++++++-----
->  1 file changed, 50 insertions(+), 5 deletions(-)
-> 
-> Changes in v2:
->   - Add missing bio_list_init() in pool_create()
-> 
-> v1: https://www.redhat.com/archives/dm-devel/2019-February/msg00064.html
-> 
-> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> index ca8af21bf644..e83b63608262 100644
-> --- a/drivers/md/dm-thin.c
-> +++ b/drivers/md/dm-thin.c
-> @@ -257,6 +257,7 @@ struct pool {
->  
->  	spinlock_t lock;
->  	struct bio_list deferred_flush_bios;
-> +	struct bio_list deferred_flush_completions;
->  	struct list_head prepared_mappings;
->  	struct list_head prepared_discards;
->  	struct list_head prepared_discards_pt2;
-> @@ -956,6 +957,39 @@ static void process_prepared_mapping_fail(struct dm_thin_new_mapping *m)
->  	mempool_free(m, &m->tc->pool->mapping_pool);
->  }
->  
-> +static void complete_overwrite_bio(struct thin_c *tc, struct bio *bio)
-> +{
-> +	struct pool *pool = tc->pool;
-> +	unsigned long flags;
-> +
-> +	/*
-> +	 * If the bio has the REQ_FUA flag set we must commit the metadata
-> +	 * before signaling its completion.
-> +	 */
-> +	if (!bio_triggers_commit(tc, bio)) {
-> +		bio_endio(bio);
-> +		return;
-> +	}
-> +
-> +	/*
-> +	 * Complete bio with an error if earlier I/O caused changes to the
-> +	 * metadata that can't be committed, e.g, due to I/O errors on the
-> +	 * metadata device.
-> +	 */
-> +	if (dm_thin_aborted_changes(tc->td)) {
-> +		bio_io_error(bio);
-> +		return;
-> +	}
-> +
-> +	/*
-> +	 * Batch together any bios that trigger commits and then issue a
-> +	 * single commit for them in process_deferred_bios().
-> +	 */
-> +	spin_lock_irqsave(&pool->lock, flags);
-> +	bio_list_add(&pool->deferred_flush_completions, bio);
-> +	spin_unlock_irqrestore(&pool->lock, flags);
-> +}
-> +
->  static void process_prepared_mapping(struct dm_thin_new_mapping *m)
->  {
->  	struct thin_c *tc = m->tc;
-> @@ -988,7 +1022,7 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
->  	 */
->  	if (bio) {
->  		inc_remap_and_issue_cell(tc, m->cell, m->data_block);
-> -		bio_endio(bio);
-> +		complete_overwrite_bio(tc, bio);
->  	} else {
->  		inc_all_io_entry(tc->pool, m->cell->holder);
->  		remap_and_issue(tc, m->cell->holder, m->data_block);
-> @@ -2317,7 +2351,7 @@ static void process_deferred_bios(struct pool *pool)
->  {
->  	unsigned long flags;
->  	struct bio *bio;
-> -	struct bio_list bios;
-> +	struct bio_list bios, bio_completions;
->  	struct thin_c *tc;
->  
->  	tc = get_first_thin(pool);
-> @@ -2328,26 +2362,36 @@ static void process_deferred_bios(struct pool *pool)
->  	}
->  
->  	/*
-> -	 * If there are any deferred flush bios, we must commit
-> -	 * the metadata before issuing them.
-> +	 * If there are any deferred flush bios, we must commit the metadata
-> +	 * before issuing them or signaling their completion.
->  	 */
->  	bio_list_init(&bios);
-> +	bio_list_init(&bio_completions);
-> +
->  	spin_lock_irqsave(&pool->lock, flags);
->  	bio_list_merge(&bios, &pool->deferred_flush_bios);
->  	bio_list_init(&pool->deferred_flush_bios);
-> +
-> +	bio_list_merge(&bio_completions, &pool->deferred_flush_completions);
-> +	bio_list_init(&pool->deferred_flush_completions);
->  	spin_unlock_irqrestore(&pool->lock, flags);
->  
-> -	if (bio_list_empty(&bios) &&
-> +	if (bio_list_empty(&bios) && bio_list_empty(&bio_completions) &&
->  	    !(dm_pool_changed_this_transaction(pool->pmd) && need_commit_due_to_time(pool)))
->  		return;
->  
->  	if (commit(pool)) {
-> +		bio_list_merge(&bios, &bio_completions);
-> +
->  		while ((bio = bio_list_pop(&bios)))
->  			bio_io_error(bio);
->  		return;
->  	}
->  	pool->last_commit_jiffies = jiffies;
->  
-> +	while ((bio = bio_list_pop(&bio_completions)))
-> +		bio_endio(bio);
-> +
->  	while ((bio = bio_list_pop(&bios)))
->  		generic_make_request(bio);
->  }
-> @@ -2954,6 +2998,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
->  	INIT_DELAYED_WORK(&pool->no_space_timeout, do_no_space_timeout);
->  	spin_lock_init(&pool->lock);
->  	bio_list_init(&pool->deferred_flush_bios);
-> +	bio_list_init(&pool->deferred_flush_completions);
->  	INIT_LIST_HEAD(&pool->prepared_mappings);
->  	INIT_LIST_HEAD(&pool->prepared_discards);
->  	INIT_LIST_HEAD(&pool->prepared_discards_pt2);
-> -- 
-> 2.11.0
-> 
+> It shouldn't if done properly.. for linear there wouldn't be any growth.
+
+That means variable structure length depending on target?
+
+Other targets are so slow that they don't need this optimization at all - 
+for example dm-thin has 80 - 110MiB/s for the same use case - an 
+optimization that improves performance of linear by 13% has no effect 
+here.
+
+If we had a target that performs as well as linear or striped, this 
+optimization could be enabled for it.
+
+Mikulas
