@@ -1,168 +1,190 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH V15 18/18] block: kill BLK_MQ_F_SG_MERGE
-Date: Fri, 15 Feb 2019 19:13:24 +0800
-Message-ID: <20190215111324.30129-19-ming.lei@redhat.com>
-References: <20190215111324.30129-1-ming.lei@redhat.com>
-Return-path: <cluster-devel-bounces@redhat.com>
-In-Reply-To: <20190215111324.30129-1-ming.lei@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/cluster-devel>,
-	<mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/cluster-devel>
-List-Post: <mailto:cluster-devel@redhat.com>
-List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/cluster-devel>,
-	<mailto:cluster-devel-request@redhat.com?subject=subscribe>
-Sender: cluster-devel-bounces@redhat.com
-Errors-To: cluster-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, "Darrick J . Wong" <darrick.wong@oracle.com>, Omar Sandoval <osandov@fb.com>, cluster-devel@redhat.com, linux-ext4@vger.kernel.org, Kent Overstreet <kent.overstreet@gmail.com>, Boaz Harrosh <ooo@electrozaur.com>, Gao Xiang <gaoxiang25@huawei.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>, Ming Lei <ming.lei@redhat.com>, linux-block@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: [PATCH v2] dm thin: Fix bug wrt FUA request
+	completion
+Date: Fri, 15 Feb 2019 13:54:07 +0000
+Message-ID: <20190215135406.GA23097@reti>
+References: <20190214232138.25667-1-ntsironis@arrikto.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20190214232138.25667-1-ntsironis@arrikto.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Nikos Tsironis <ntsironis@arrikto.com>
+Cc: dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com, ejt@redhat.com
 List-Id: dm-devel.ids
 
-QUEUE_FLAG_NO_SG_MERGE has been killed, so kill BLK_MQ_F_SG_MERGE too.
+Ack.
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Omar Sandoval <osandov@fb.com>
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
----
- block/blk-mq-debugfs.c       | 1 -
- drivers/block/loop.c         | 2 +-
- drivers/block/nbd.c          | 2 +-
- drivers/block/rbd.c          | 2 +-
- drivers/block/skd_main.c     | 1 -
- drivers/block/xen-blkfront.c | 2 +-
- drivers/md/dm-rq.c           | 2 +-
- drivers/mmc/core/queue.c     | 3 +--
- drivers/scsi/scsi_lib.c      | 2 +-
- include/linux/blk-mq.h       | 1 -
- 10 files changed, 7 insertions(+), 11 deletions(-)
+Thanks for this I was under the mistaken impression that FUA requests got split 
+by core dm into separate payload and PREFLUSH requests.
 
-diff --git a/block/blk-mq-debugfs.c b/block/blk-mq-debugfs.c
-index 697d6213c82b..c39247c5ddb6 100644
---- a/block/blk-mq-debugfs.c
-+++ b/block/blk-mq-debugfs.c
-@@ -249,7 +249,6 @@ static const char *const alloc_policy_name[] = {
- static const char *const hctx_flag_name[] = {
- 	HCTX_FLAG_NAME(SHOULD_MERGE),
- 	HCTX_FLAG_NAME(TAG_SHARED),
--	HCTX_FLAG_NAME(SG_MERGE),
- 	HCTX_FLAG_NAME(BLOCKING),
- 	HCTX_FLAG_NAME(NO_SCHED),
- };
-diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index 8ef583197414..3d63ad036398 100644
---- a/drivers/block/loop.c
-+++ b/drivers/block/loop.c
-@@ -1937,7 +1937,7 @@ static int loop_add(struct loop_device **l, int i)
- 	lo->tag_set.queue_depth = 128;
- 	lo->tag_set.numa_node = NUMA_NO_NODE;
- 	lo->tag_set.cmd_size = sizeof(struct loop_cmd);
--	lo->tag_set.flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_SG_MERGE;
-+	lo->tag_set.flags = BLK_MQ_F_SHOULD_MERGE;
- 	lo->tag_set.driver_data = lo;
- 
- 	err = blk_mq_alloc_tag_set(&lo->tag_set);
-diff --git a/drivers/block/nbd.c b/drivers/block/nbd.c
-index 7c9a949e876b..32a7ba1674b7 100644
---- a/drivers/block/nbd.c
-+++ b/drivers/block/nbd.c
-@@ -1571,7 +1571,7 @@ static int nbd_dev_add(int index)
- 	nbd->tag_set.numa_node = NUMA_NO_NODE;
- 	nbd->tag_set.cmd_size = sizeof(struct nbd_cmd);
- 	nbd->tag_set.flags = BLK_MQ_F_SHOULD_MERGE |
--		BLK_MQ_F_SG_MERGE | BLK_MQ_F_BLOCKING;
-+		BLK_MQ_F_BLOCKING;
- 	nbd->tag_set.driver_data = nbd;
- 
- 	err = blk_mq_alloc_tag_set(&nbd->tag_set);
-diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
-index 1e92b61d0bd5..abe9e1c89227 100644
---- a/drivers/block/rbd.c
-+++ b/drivers/block/rbd.c
-@@ -3988,7 +3988,7 @@ static int rbd_init_disk(struct rbd_device *rbd_dev)
- 	rbd_dev->tag_set.ops = &rbd_mq_ops;
- 	rbd_dev->tag_set.queue_depth = rbd_dev->opts->queue_depth;
- 	rbd_dev->tag_set.numa_node = NUMA_NO_NODE;
--	rbd_dev->tag_set.flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_SG_MERGE;
-+	rbd_dev->tag_set.flags = BLK_MQ_F_SHOULD_MERGE;
- 	rbd_dev->tag_set.nr_hw_queues = 1;
- 	rbd_dev->tag_set.cmd_size = sizeof(struct work_struct);
- 
-diff --git a/drivers/block/skd_main.c b/drivers/block/skd_main.c
-index ab893a7571a2..7d3ad6c22ee5 100644
---- a/drivers/block/skd_main.c
-+++ b/drivers/block/skd_main.c
-@@ -2843,7 +2843,6 @@ static int skd_cons_disk(struct skd_device *skdev)
- 		skdev->sgs_per_request * sizeof(struct scatterlist);
- 	skdev->tag_set.numa_node = NUMA_NO_NODE;
- 	skdev->tag_set.flags = BLK_MQ_F_SHOULD_MERGE |
--		BLK_MQ_F_SG_MERGE |
- 		BLK_ALLOC_POLICY_TO_MQ_FLAG(BLK_TAG_ALLOC_FIFO);
- 	skdev->tag_set.driver_data = skdev;
- 	rc = blk_mq_alloc_tag_set(&skdev->tag_set);
-diff --git a/drivers/block/xen-blkfront.c b/drivers/block/xen-blkfront.c
-index 0ed4b200fa58..d43a5677ccbc 100644
---- a/drivers/block/xen-blkfront.c
-+++ b/drivers/block/xen-blkfront.c
-@@ -977,7 +977,7 @@ static int xlvbd_init_blk_queue(struct gendisk *gd, u16 sector_size,
- 	} else
- 		info->tag_set.queue_depth = BLK_RING_SIZE(info);
- 	info->tag_set.numa_node = NUMA_NO_NODE;
--	info->tag_set.flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_SG_MERGE;
-+	info->tag_set.flags = BLK_MQ_F_SHOULD_MERGE;
- 	info->tag_set.cmd_size = sizeof(struct blkif_req);
- 	info->tag_set.driver_data = info;
- 
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 4eb5f8c56535..b2f8eb2365ee 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -527,7 +527,7 @@ int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t)
- 	md->tag_set->ops = &dm_mq_ops;
- 	md->tag_set->queue_depth = dm_get_blk_mq_queue_depth();
- 	md->tag_set->numa_node = md->numa_node_id;
--	md->tag_set->flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_SG_MERGE;
-+	md->tag_set->flags = BLK_MQ_F_SHOULD_MERGE;
- 	md->tag_set->nr_hw_queues = dm_get_blk_mq_nr_hw_queues();
- 	md->tag_set->driver_data = md;
- 
-diff --git a/drivers/mmc/core/queue.c b/drivers/mmc/core/queue.c
-index 35cc138b096d..cc19e71c71d4 100644
---- a/drivers/mmc/core/queue.c
-+++ b/drivers/mmc/core/queue.c
-@@ -410,8 +410,7 @@ int mmc_init_queue(struct mmc_queue *mq, struct mmc_card *card)
- 	else
- 		mq->tag_set.queue_depth = MMC_QUEUE_DEPTH;
- 	mq->tag_set.numa_node = NUMA_NO_NODE;
--	mq->tag_set.flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_SG_MERGE |
--			    BLK_MQ_F_BLOCKING;
-+	mq->tag_set.flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_BLOCKING;
- 	mq->tag_set.nr_hw_queues = 1;
- 	mq->tag_set.cmd_size = sizeof(struct mmc_queue_req);
- 	mq->tag_set.driver_data = mq;
-diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
-index 6d65ac584eba..6cadbe945bdb 100644
---- a/drivers/scsi/scsi_lib.c
-+++ b/drivers/scsi/scsi_lib.c
-@@ -1899,7 +1899,7 @@ int scsi_mq_setup_tags(struct Scsi_Host *shost)
- 	shost->tag_set.queue_depth = shost->can_queue;
- 	shost->tag_set.cmd_size = cmd_size;
- 	shost->tag_set.numa_node = NUMA_NO_NODE;
--	shost->tag_set.flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_SG_MERGE;
-+	shost->tag_set.flags = BLK_MQ_F_SHOULD_MERGE;
- 	shost->tag_set.flags |=
- 		BLK_ALLOC_POLICY_TO_MQ_FLAG(shost->hostt->tag_alloc_policy);
- 	shost->tag_set.driver_data = shost;
-diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
-index 0e030f5f76b6..b0c814bcc7e3 100644
---- a/include/linux/blk-mq.h
-+++ b/include/linux/blk-mq.h
-@@ -218,7 +218,6 @@ struct blk_mq_ops {
- enum {
- 	BLK_MQ_F_SHOULD_MERGE	= 1 << 0,
- 	BLK_MQ_F_TAG_SHARED	= 1 << 1,
--	BLK_MQ_F_SG_MERGE	= 1 << 2,
- 	BLK_MQ_F_BLOCKING	= 1 << 5,
- 	BLK_MQ_F_NO_SCHED	= 1 << 6,
- 	BLK_MQ_F_ALLOC_POLICY_START_BIT = 8,
--- 
-2.9.5
+I've audited dm-cache and that looks ok.
+
+How did you test this patch?  That missing bio_list_init() in V1 must
+have caused memory corruption?
+
+- Joe
+
+
+On Fri, Feb 15, 2019 at 01:21:38AM +0200, Nikos Tsironis wrote:
+> When provisioning a new data block for a virtual block, either because
+> the block was previously unallocated or because we are breaking sharing,
+> if the whole block of data is being overwritten the bio that triggered
+> the provisioning is issued immediately, skipping copying or zeroing of
+> the data block.
+> 
+> When this bio completes the new mapping is inserted in to the pool's
+> metadata by process_prepared_mapping(), where the bio completion is
+> signaled to the upper layers.
+> 
+> This completion is signaled without first committing the metadata. If
+> the bio in question has the REQ_FUA flag set and the system crashes
+> right after its completion and before the next metadata commit, then the
+> write is lost despite the REQ_FUA flag requiring that I/O completion for
+> this request is only signaled after the data has been committed to
+> non-volatile storage.
+> 
+> Fix this by deferring the completion of overwrite bios, with the REQ_FUA
+> flag set, after the metadata has been committed.
+> 
+> Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+> ---
+>  drivers/md/dm-thin.c | 55 +++++++++++++++++++++++++++++++++++++++++++++++-----
+>  1 file changed, 50 insertions(+), 5 deletions(-)
+> 
+> Changes in v2:
+>   - Add missing bio_list_init() in pool_create()
+> 
+> v1: https://www.redhat.com/archives/dm-devel/2019-February/msg00064.html
+> 
+> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+> index ca8af21bf644..e83b63608262 100644
+> --- a/drivers/md/dm-thin.c
+> +++ b/drivers/md/dm-thin.c
+> @@ -257,6 +257,7 @@ struct pool {
+>  
+>  	spinlock_t lock;
+>  	struct bio_list deferred_flush_bios;
+> +	struct bio_list deferred_flush_completions;
+>  	struct list_head prepared_mappings;
+>  	struct list_head prepared_discards;
+>  	struct list_head prepared_discards_pt2;
+> @@ -956,6 +957,39 @@ static void process_prepared_mapping_fail(struct dm_thin_new_mapping *m)
+>  	mempool_free(m, &m->tc->pool->mapping_pool);
+>  }
+>  
+> +static void complete_overwrite_bio(struct thin_c *tc, struct bio *bio)
+> +{
+> +	struct pool *pool = tc->pool;
+> +	unsigned long flags;
+> +
+> +	/*
+> +	 * If the bio has the REQ_FUA flag set we must commit the metadata
+> +	 * before signaling its completion.
+> +	 */
+> +	if (!bio_triggers_commit(tc, bio)) {
+> +		bio_endio(bio);
+> +		return;
+> +	}
+> +
+> +	/*
+> +	 * Complete bio with an error if earlier I/O caused changes to the
+> +	 * metadata that can't be committed, e.g, due to I/O errors on the
+> +	 * metadata device.
+> +	 */
+> +	if (dm_thin_aborted_changes(tc->td)) {
+> +		bio_io_error(bio);
+> +		return;
+> +	}
+> +
+> +	/*
+> +	 * Batch together any bios that trigger commits and then issue a
+> +	 * single commit for them in process_deferred_bios().
+> +	 */
+> +	spin_lock_irqsave(&pool->lock, flags);
+> +	bio_list_add(&pool->deferred_flush_completions, bio);
+> +	spin_unlock_irqrestore(&pool->lock, flags);
+> +}
+> +
+>  static void process_prepared_mapping(struct dm_thin_new_mapping *m)
+>  {
+>  	struct thin_c *tc = m->tc;
+> @@ -988,7 +1022,7 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
+>  	 */
+>  	if (bio) {
+>  		inc_remap_and_issue_cell(tc, m->cell, m->data_block);
+> -		bio_endio(bio);
+> +		complete_overwrite_bio(tc, bio);
+>  	} else {
+>  		inc_all_io_entry(tc->pool, m->cell->holder);
+>  		remap_and_issue(tc, m->cell->holder, m->data_block);
+> @@ -2317,7 +2351,7 @@ static void process_deferred_bios(struct pool *pool)
+>  {
+>  	unsigned long flags;
+>  	struct bio *bio;
+> -	struct bio_list bios;
+> +	struct bio_list bios, bio_completions;
+>  	struct thin_c *tc;
+>  
+>  	tc = get_first_thin(pool);
+> @@ -2328,26 +2362,36 @@ static void process_deferred_bios(struct pool *pool)
+>  	}
+>  
+>  	/*
+> -	 * If there are any deferred flush bios, we must commit
+> -	 * the metadata before issuing them.
+> +	 * If there are any deferred flush bios, we must commit the metadata
+> +	 * before issuing them or signaling their completion.
+>  	 */
+>  	bio_list_init(&bios);
+> +	bio_list_init(&bio_completions);
+> +
+>  	spin_lock_irqsave(&pool->lock, flags);
+>  	bio_list_merge(&bios, &pool->deferred_flush_bios);
+>  	bio_list_init(&pool->deferred_flush_bios);
+> +
+> +	bio_list_merge(&bio_completions, &pool->deferred_flush_completions);
+> +	bio_list_init(&pool->deferred_flush_completions);
+>  	spin_unlock_irqrestore(&pool->lock, flags);
+>  
+> -	if (bio_list_empty(&bios) &&
+> +	if (bio_list_empty(&bios) && bio_list_empty(&bio_completions) &&
+>  	    !(dm_pool_changed_this_transaction(pool->pmd) && need_commit_due_to_time(pool)))
+>  		return;
+>  
+>  	if (commit(pool)) {
+> +		bio_list_merge(&bios, &bio_completions);
+> +
+>  		while ((bio = bio_list_pop(&bios)))
+>  			bio_io_error(bio);
+>  		return;
+>  	}
+>  	pool->last_commit_jiffies = jiffies;
+>  
+> +	while ((bio = bio_list_pop(&bio_completions)))
+> +		bio_endio(bio);
+> +
+>  	while ((bio = bio_list_pop(&bios)))
+>  		generic_make_request(bio);
+>  }
+> @@ -2954,6 +2998,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
+>  	INIT_DELAYED_WORK(&pool->no_space_timeout, do_no_space_timeout);
+>  	spin_lock_init(&pool->lock);
+>  	bio_list_init(&pool->deferred_flush_bios);
+> +	bio_list_init(&pool->deferred_flush_completions);
+>  	INIT_LIST_HEAD(&pool->prepared_mappings);
+>  	INIT_LIST_HEAD(&pool->prepared_discards);
+>  	INIT_LIST_HEAD(&pool->prepared_discards_pt2);
+> -- 
+> 2.11.0
+> 
