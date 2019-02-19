@@ -1,14 +1,12 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 1/8] dm: update dm_process_bio() to split bio if
-	in ->make_request_fn()
-Date: Tue, 19 Feb 2019 17:17:14 -0500
-Message-ID: <20190219221721.29830-2-snitzer@redhat.com>
-References: <20190219221721.29830-1-snitzer@redhat.com>
+Subject: [PATCH 0/8] dm: changes staged in linux-next for 5.1 so
+	far
+Date: Tue, 19 Feb 2019 17:17:13 -0500
+Message-ID: <20190219221721.29830-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190219221721.29830-1-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,168 +19,45 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Must call blk_queue_split() otherwise queue_limits for abnormal requests
-(e.g. discard, writesame, etc) won't be imposed.
+I seized on Mikulas's noclone patches and took it upon myself to add
+noclone support to bio-based dm-multipath.  Pretty happy with how
+things turned out but also open to all review/feedback.
 
-In addition, add dm_queue_split() to simplify DM specific splitting that
-is needed for targets that impose ti->max_io_len.
+I've verified that all mptest tests pass (with tcmloop, mptest's
+nvmefcloop based test setup panics with 5.0-rc6.. I should probably
+report and/or fix that).
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm.c | 93 ++++++++++++++++++++++++++++++++++++++++-----------------
- 1 file changed, 66 insertions(+), 27 deletions(-)
+I've yet to do the before vs after multipath benchmarking to see if
+there is a performance win but I'm betting there will be (otherwise I
+wouldn't have done this work).  I'll backfill benchmarking results
+later in the week.
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 515e6af9bed2..7a774fcd0194 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1533,6 +1533,22 @@ static int __send_write_zeroes(struct clone_info *ci, struct dm_target *ti)
- 	return __send_changing_extent_only(ci, ti, get_num_write_zeroes_bios(ti), false);
- }
- 
-+static bool is_abnormal_io(struct bio *bio)
-+{
-+	bool r = false;
-+
-+	switch (bio_op(bio)) {
-+	case REQ_OP_DISCARD:
-+	case REQ_OP_SECURE_ERASE:
-+	case REQ_OP_WRITE_SAME:
-+	case REQ_OP_WRITE_ZEROES:
-+		r = true;
-+		break;
-+	}
-+
-+	return r;
-+}
-+
- static bool __process_abnormal_io(struct clone_info *ci, struct dm_target *ti,
- 				  int *result)
- {
-@@ -1565,7 +1581,7 @@ static int __split_and_process_non_flush(struct clone_info *ci)
- 	if (!dm_target_is_valid(ti))
- 		return -EIO;
- 
--	if (unlikely(__process_abnormal_io(ci, ti, &r)))
-+	if (__process_abnormal_io(ci, ti, &r))
- 		return r;
- 
- 	len = min_t(sector_t, max_io_len(ci->sector, ti), ci->sector_count);
-@@ -1601,13 +1617,6 @@ static blk_qc_t __split_and_process_bio(struct mapped_device *md,
- 	blk_qc_t ret = BLK_QC_T_NONE;
- 	int error = 0;
- 
--	if (unlikely(!map)) {
--		bio_io_error(bio);
--		return ret;
--	}
--
--	blk_queue_split(md->queue, &bio);
--
- 	init_clone_info(&ci, md, map, bio);
- 
- 	if (bio->bi_opf & REQ_PREFLUSH) {
-@@ -1675,18 +1684,13 @@ static blk_qc_t __split_and_process_bio(struct mapped_device *md,
-  * Optimized variant of __split_and_process_bio that leverages the
-  * fact that targets that use it do _not_ have a need to split bios.
-  */
--static blk_qc_t __process_bio(struct mapped_device *md,
--			      struct dm_table *map, struct bio *bio)
-+static blk_qc_t __process_bio(struct mapped_device *md, struct dm_table *map,
-+			      struct bio *bio, struct dm_target *ti)
- {
- 	struct clone_info ci;
- 	blk_qc_t ret = BLK_QC_T_NONE;
- 	int error = 0;
- 
--	if (unlikely(!map)) {
--		bio_io_error(bio);
--		return ret;
--	}
--
- 	init_clone_info(&ci, md, map, bio);
- 
- 	if (bio->bi_opf & REQ_PREFLUSH) {
-@@ -1704,21 +1708,11 @@ static blk_qc_t __process_bio(struct mapped_device *md,
- 		error = __send_empty_flush(&ci);
- 		/* dec_pending submits any data associated with flush */
- 	} else {
--		struct dm_target *ti = md->immutable_target;
- 		struct dm_target_io *tio;
- 
--		/*
--		 * Defend against IO still getting in during teardown
--		 * - as was seen for a time with nvme-fcloop
--		 */
--		if (WARN_ON_ONCE(!ti || !dm_target_is_valid(ti))) {
--			error = -EIO;
--			goto out;
--		}
--
- 		ci.bio = bio;
- 		ci.sector_count = bio_sectors(bio);
--		if (unlikely(__process_abnormal_io(&ci, ti, &error)))
-+		if (__process_abnormal_io(&ci, ti, &error))
- 			goto out;
- 
- 		tio = alloc_tio(&ci, ti, 0, GFP_NOIO);
-@@ -1730,11 +1724,56 @@ static blk_qc_t __process_bio(struct mapped_device *md,
- 	return ret;
- }
- 
-+static void dm_queue_split(struct mapped_device *md, struct dm_target *ti, struct bio **bio)
-+{
-+	unsigned len, sector_count;
-+
-+	sector_count = bio_sectors(*bio);
-+	len = min_t(sector_t, max_io_len((*bio)->bi_iter.bi_sector, ti), sector_count);
-+
-+	if (sector_count > len) {
-+		struct bio *split = bio_split(*bio, len, GFP_NOIO, &md->queue->bio_split);
-+
-+		bio_chain(split, *bio);
-+		trace_block_split(md->queue, split, (*bio)->bi_iter.bi_sector);
-+		generic_make_request(*bio);
-+		*bio = split;
-+	}
-+}
-+
- static blk_qc_t dm_process_bio(struct mapped_device *md,
- 			       struct dm_table *map, struct bio *bio)
- {
-+	blk_qc_t ret = BLK_QC_T_NONE;
-+	struct dm_target *ti = md->immutable_target;
-+
-+	if (unlikely(!map)) {
-+		bio_io_error(bio);
-+		return ret;
-+	}
-+
-+	if (!ti) {
-+		ti = dm_table_find_target(map, bio->bi_iter.bi_sector);
-+		if (unlikely(!ti || !dm_target_is_valid(ti))) {
-+			bio_io_error(bio);
-+			return ret;
-+		}
-+	}
-+
-+	/*
-+	 * If in ->make_request_fn we need to use blk_queue_split(), otherwise
-+	 * queue_limits for abnormal requests (e.g. discard, writesame, etc)
-+	 * won't be imposed.
-+	 */
-+	if (current->bio_list) {
-+		if (is_abnormal_io(bio))
-+			blk_queue_split(md->queue, &bio);
-+		else
-+			dm_queue_split(md, ti, &bio);
-+	}
-+
- 	if (dm_get_md_type(md) == DM_TYPE_NVME_BIO_BASED)
--		return __process_bio(md, map, bio);
-+		return __process_bio(md, map, bio, ti);
- 	else
- 		return __split_and_process_bio(md, map, bio);
- }
+Mike Snitzer (6):
+  dm: update dm_process_bio() to split bio if in ->make_request_fn()
+  dm: eliminate 'split_discard_bios' flag from DM target interface
+  dm: improve noclone bio support
+  dm: add the ability to attach per-bio-data to dm_noclone bio
+  dm: improve noclone_endio() to support multipath target
+  dm mpath: add support for dm_noclone and its per-bio-data
+
+Mikulas Patocka (2):
+  dm: refactor start_io_acct and end_io_acct
+  dm: implement noclone optimization for bio-based
+
+ drivers/md/dm-cache-target.c  |   1 -
+ drivers/md/dm-core.h          |   1 +
+ drivers/md/dm-linear.c        |   1 +
+ drivers/md/dm-mpath.c         |  65 ++++++--
+ drivers/md/dm-raid.c          |  14 +-
+ drivers/md/dm-stripe.c        |   1 +
+ drivers/md/dm-table.c         |  11 ++
+ drivers/md/dm-thin.c          |   1 -
+ drivers/md/dm-zero.c          |   1 +
+ drivers/md/dm-zoned-target.c  |   1 -
+ drivers/md/dm.c               | 357 +++++++++++++++++++++++++++++-------------
+ drivers/md/dm.h               |   1 +
+ include/linux/device-mapper.h |  22 ++-
+ 13 files changed, 346 insertions(+), 131 deletions(-)
+
 -- 
 2.15.0
