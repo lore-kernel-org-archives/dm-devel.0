@@ -1,195 +1,78 @@
-From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: Re: [PATCH 0/3] dm snapshot: Improve performance using a
- more fine-grained locking scheme
-Date: Tue, 19 Feb 2019 13:04:51 +0200
-Message-ID: <425d7efe-ab3f-67be-264e-9c3b6db229bc@arrikto.com>
-References: <20181220180651.4879-1-ntsironis@arrikto.com>
-	<763dd7f2-b0c2-ea15-004e-d6b95fce79ca@arrikto.com>
-	<alpine.LRH.2.02.1902180936350.17098@file01.intranet.prod.int.rdu2.redhat.com>
-	<20190218151530.GA7852@redhat.com>
+From: Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [dm-devel] [PATCH V15 00/18] block: support multi-page bvec
+Date: Tue, 19 Feb 2019 08:28:19 -0800
+Message-ID: <1550593699.31902.115.camel@acm.org>
+References: <20190215111324.30129-1-ming.lei@redhat.com>
+         <c52b6a8b-d1d4-67ff-f81c-371d09cc6d5b@kernel.dk>
+         <1550250855.31902.102.camel@acm.org> <20190217131128.GB7296@ming.t460p>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190218151530.GA7852@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, agk@redhat.com, iliastsi@arrikto.com
+Content-Type: text/plain; charset="UTF-7"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <20190217131128.GB7296@ming.t460p>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Ming Lei <ming.lei@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, "Darrick J . Wong" <darrick.wong@oracle.com>, Omar Sandoval <osandov@fb.com>, cluster-devel@redhat.com, linux-ext4@vger.kernel.org, Kent Overstreet <kent.overstreet@gmail.com>, Boaz Harrosh <ooo@electrozaur.com>, Gao Xiang <gaoxiang25@huawei.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, Bob Peterson <rpeterso@redhat.com>, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Dave Chinner <dchinner@redhat.com>, David Sterba <dsterba@suse.com>, linux-block@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 2/18/19 5:15 PM, Mike Snitzer wrote:
-> On Mon, Feb 18 2019 at  9:37am -0500,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
-> =
+On Sun, 2019-02-17 at 21:11 +-0800, Ming Lei wrote:
++AD4 The following patch should fix this issue:
++AD4 
++AD4 
++AD4 diff --git a/block/blk-merge.c b/block/blk-merge.c
++AD4 index bed065904677..066b66430523 100644
++AD4 --- a/block/blk-merge.c
++AD4 +-+-+- b/block/blk-merge.c
++AD4 +AEAAQA -363,13 +-363,15 +AEAAQA static unsigned int +AF8AXw-blk+AF8-recalc+AF8-rq+AF8-segments(struct request+AF8-queue +ACo-q,
++AD4  	struct bio+AF8-vec bv, bvprv +AD0 +AHs NULL +AH0AOw
++AD4  	int prev +AD0 0+ADs
++AD4  	unsigned int seg+AF8-size, nr+AF8-phys+AF8-segs+ADs
++AD4 -	unsigned front+AF8-seg+AF8-size +AD0 bio-+AD4-bi+AF8-seg+AF8-front+AF8-size+ADs
++AD4 +-	unsigned front+AF8-seg+AF8-size+ADs
++AD4  	struct bio +ACo-fbio, +ACo-bbio+ADs
++AD4  	struct bvec+AF8-iter iter+ADs
++AD4  
++AD4  	if (+ACE-bio)
++AD4  		return 0+ADs
++AD4  
++AD4 +-	front+AF8-seg+AF8-size +AD0 bio-+AD4-bi+AF8-seg+AF8-front+AF8-size+ADs
++AD4 +-
++AD4  	switch (bio+AF8-op(bio)) +AHs
++AD4  	case REQ+AF8-OP+AF8-DISCARD:
++AD4  	case REQ+AF8-OP+AF8-SECURE+AF8-ERASE:
 
->>
->>
->> On Mon, 18 Feb 2019, Nikos Tsironis wrote:
->>
->>> Hello,
->>>
->>> This is a kind reminder for this patch set. I'm bumping this thread to
->>> solicit your feedback. Please let me know what else I may need to do for
->>> these patches to land in the upcoming merge window for 5.1.
->>>
->>> Looking forward to your feedback,
->>>
->>> Nikos
->>
->> I don't know what to do with those patches.
->>
->> The patches make it more complicated, so I can't really say if they are =
+Hi Ming,
 
->> correct or not.
-> =
+With this patch applied test nvmeof-mp/002 fails as follows:
 
-> As I mentioned to you before: please do the best you can reasoning
-> through (and even quantifying on your own) the performance reward these
-> patches provide.
-> =
++AFs  694.700400+AF0 kernel BUG at lib/sg+AF8-pool.c:103+ACE
++AFs  694.705932+AF0 invalid opcode: 0000 +AFsAIw-1+AF0 PREEMPT SMP KASAN
++AFs  694.708297+AF0 CPU: 2 PID: 349 Comm: kworker/2:1H Tainted: G    B             5.0.0-rc6-dbg+- +ACM-2
++AFs  694.711730+AF0 Hardware name: QEMU Standard PC (i440FX +- PIIX, 1996), BIOS 1.10.2-1 04/01/2014
++AFs  694.715113+AF0 Workqueue: kblockd blk+AF8-mq+AF8-run+AF8-work+AF8-fn
++AFs  694.716894+AF0 RIP: 0010:sg+AF8-alloc+AF8-table+AF8-chained+-0xe5/0xf0
++AFs  694.758222+AF0 Call Trace:
++AFs  694.759645+AF0  nvme+AF8-rdma+AF8-queue+AF8-rq+-0x2aa/0xcc0 +AFs-nvme+AF8-rdma+AF0
++AFs  694.764915+AF0  blk+AF8-mq+AF8-try+AF8-issue+AF8-directly+-0x2a5/0x4b0
++AFs  694.771779+AF0  blk+AF8-insert+AF8-cloned+AF8-request+-0x11e/0x1c0
++AFs  694.778417+AF0  dm+AF8-mq+AF8-queue+AF8-rq+-0x3d1/0x770
++AFs  694.793400+AF0  blk+AF8-mq+AF8-dispatch+AF8-rq+AF8-list+-0x5fc/0xb10
++AFs  694.798386+AF0  blk+AF8-mq+AF8-sched+AF8-dispatch+AF8-requests+-0x2f7/0x300
++AFs  694.803180+AF0  +AF8AXw-blk+AF8-mq+AF8-run+AF8-hw+AF8-queue+-0xd6/0x180
++AFs  694.808933+AF0  blk+AF8-mq+AF8-run+AF8-work+AF8-fn+-0x27/0x30
++AFs  694.810315+AF0  process+AF8-one+AF8-work+-0x4f1/0xa40
++AFs  694.813178+AF0  worker+AF8-thread+-0x67/0x5b0
++AFs  694.814487+AF0  kthread+-0x1cf/0x1f0
++AFs  694.819134+AF0  ret+AF8-from+AF8-fork+-0x24/0x30
 
-> Then we'll need to make a call on risk vs reward.
-> =
+The code in sg+AF8-pool.c that triggers the BUG() statement is as follows:
 
-> Nikos mentioned in another mail on Friday that this dm-snapshot patchset
-> is a prereq for more dm-snapshot changes he has.  Nikos, if you could
-> forecast what those additional changes to dm-snapshot are that could
-> help inform the review process for this initial patchset.
+int sg+AF8-alloc+AF8-table+AF8-chained(struct sg+AF8-table +ACo-table, int nents,
+		struct scatterlist +ACo-first+AF8-chunk)
++AHs
+	int ret+ADs
 
-Hello Mike, hello Mikulas,
+	BUG+AF8-ON(+ACE-nents)+ADs
++AFs ... +AF0
 
-Thank you both for your feedback.
-
-I understand your desire to ensure the patches continue to maintain the
-high level of quality in the kernel and I agree completely. As part of
-this effort, I have been contributing to the device mapper test suite,
-extending it with a test suite for dm-snapshot. Please see the relevant
-Pull Requests [1], [2]. Actually, it was this process of me trying to
-understand the current functioning of the code in depth and improve its
-testing, which helped me identify some minor dm-snapshot bugs previously
-[3], [4].
-
-So, I definitely agree with your effort to maintain high quality for
-kernel code;  extending the device mapper test suite was my very first
-step in facilitating my own coding process for these patches, and I
-would be happy to implement any further suggestions for testing you
-may have.
-
-The long-term goal of my current and upcoming patches is to make
-dm-snapshot usable with modern, low-latency NVMe devices, make it
-scalable on multi-core machines, and reduce its overhead significantly.
-
-I understand a lot of effort has been put to make dm-thin performant,
-but we are particularly interested in improving the performance of
-dm-snapshot and its usability on modern hardware, because it has distinct
-advantages over using dm-thin for our specific use cases:
-
-  * Short-lived snapshots, for consistency, where I/O performance to the
-    original device degrades only while the snapshot is active, and
-    returns back to its original level after deleting the snapshot
-
-  * Taking a consistent snapshot of any volume, while still being able
-    to write to the origin volume, i.e., maintaining the snapshot in an
-    external device, independently of the origin, without the need to
-    make the original volume a dm-thin device (versus dm-thin=92s external
-    origin snapshots)
-
-Actually, we are using dm-snapshot heavily right now for maintaining
-ephemeral transient snapshot for backups. This is the only way to have
-close to bare metal performance, without dm-thin=92s permanent degradation
-(at least until the origin volume is completely overwritten).
-
-So, to give you an overall idea of the end-to-end story and where the
-current patch set fits:
-
-My initial performance evaluation of dm-snapshot revealed a big
-performance drop, while the snapshot is active; a drop which is not
-justified by COW alone. Using fio with blktrace I noticed that the
-per-CPU I/O distribution was uneven. Although many threads were doing
-I/O, only a couple of the CPUs ended up submitting I/O requests to the
-underlying device.
-
-The bottleneck here is kcopyd serializing all I/O. The recent work with
-blk-mq towards increasing parallelism of I/O processing in modern
-multi-cores is essentially going to waste for any users of kcopyd,
-including dm-snapshot, because I/Os are issued only by a single CPU at a
-time, the one on which kcopyd=92s thread happens to be running.
-
-So, the first step I took was to redesign kcopyd to prevent I/O
-serialization by respecting thread locality for I/Os and their
-completion. This made distribution of I/O processing uniform across
-CPUs, but then dm-snapshot=92s single mutex prevented it from exploiting
-kcopyd=92s improved scalability.
-
-Further investigation revealed that dm-snapshot itself has significant
-CPU overhead that increases I/O latency far beyond that of an NVMe
-device. As an example, working with an NVMe array capable of 700K write
-IOPS with an average latency of ~350us per request, I was seeing 65K
-write IOPS with an average latency of ~4ms per request with dm-snapshot.
-This was due to lock contention in dm-snapshot itself, even before it
-hit kcopyd.
-
-This is where the current patch set fits. Replacing the single mutex
-with a fine-grained locking scheme reduces lock contention and enables
-dm-snaphsot to scale as the number of threads increases. For all the
-details, please see the measurements I include as part of PATCH 3/3.
-Also, replacing dm-snapshot's single mutex with fine-grained locking
-makes it ready to exploit dm-kcopyd=92s improved design, which I will
-introduce in follow-up patches.
-
-Finally, after these two patches, I would like to improve performance
-specifically for transient snapshots. In the case of transient snapshots,
-there is no need to complete exceptions in order
-(commit 230c83afdd9cd - "dm snapshot: avoid snapshot space leak on crash")
-or even sequentially. By taking advantage of the new kcopyd design, we
-can complete them out-of-order and in parallel. This will also increase
-IOPS significantly and slash I/O latency.
-
-So, all in all, my end goal is to bring performance of short-lived
-snapshots based on dm-snapshot as close as possible to bare-metal
-performance.
-
-To summarize, I see the following progression of patches:
-
-  * Scale dm-snapshot (current patch set)
-  * Scale kcopyd
-  * Further improve transient snapshots by lifting the limitation of
-    in-order and sequential completion
-
-My current measurements show that these patch series lead to an eventual
-performance improvement of ~300% increase in sustained throughput and
-~80% decrease in I/O latency for transient snapshots, over the null_blk
-device. =
-
-
-Especially for this patch set, please find detailed measurements as part
-of PATCH 3/3.
-
-Mike, it would be great, as you say, if you could run the test suite
-yourselves, and reproduce the results.
-
-This was a rather long email, but I hope it makes the end-to-end purpose
-of these patches clearer, and quantifies the reward in increased
-throughput, decreased latency, and improved efficiency of dm-snapshot on
-modern hardware.
-
-I would be more than happy to continue the conversation and focus on any
-other questions you may have, as you continue with reviewing these
-patches.
-
-Thanks,
-Nikos.
-
-[1] https://github.com/jthornber/device-mapper-test-suite/pull/51
-[2] https://github.com/jthornber/device-mapper-test-suite/pull/52
-[3] https://www.redhat.com/archives/dm-devel/2018-October/msg00460.html
-[4] https://www.redhat.com/archives/dm-devel/2018-October/msg00461.html
+Bart.
