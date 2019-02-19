@@ -1,7 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 5/8] dm: improve noclone bio support
-Date: Tue, 19 Feb 2019 17:17:18 -0500
-Message-ID: <20190219221721.29830-6-snitzer@redhat.com>
+Subject: [PATCH 7/8] dm: improve noclone_endio() to support
+	multipath target
+Date: Tue, 19 Feb 2019 17:17:20 -0500
+Message-ID: <20190219221721.29830-8-snitzer@redhat.com>
 References: <20190219221721.29830-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,151 +21,141 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Leverage fact that dm_queue_split() enables use of noclone support even
-for targets that require additional splitting (via ti->max_io_len).
+noclone_endio() must call the target's ->endio method if it exists.
+Also must handle the various DM_ENDIO_* returns that are possible.
 
-To achieve this move noclone processing from dm_make_request() to
-dm_process_bio() and check if bio->bi_end_io is already set to
-noclone_endio.  This also fixes dm_wq_work() to be able to support
-noclone bios (because it calls dm_process_bio()).
+Factor out dm_bio_pushback_needed() for both dec_pending() and
+noclone_endio() to use when handling BLK_STS_DM_REQUEUE.
 
-While at it, clean up ->map() return processing to be comparable to
-__map_bio() and add some code comments that explain why certain
-conditionals exist to prevent the use of noclone.
+Lastly, there is no need to conditionally set md->immutable_target in
+__bind().  If the device only uses a single immutable target then it
+should always be reflected in md->immutable_target.  This is important
+because noclone_endio() benefits from this to get access to the
+multipath dm_target without needing to add another member to the
+'dm_noclone' structure.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm.c | 102 +++++++++++++++++++++++++++++++++-----------------------
- 1 file changed, 61 insertions(+), 41 deletions(-)
+ drivers/md/dm.c | 77 ++++++++++++++++++++++++++++++++++++++++-----------------
+ 1 file changed, 55 insertions(+), 22 deletions(-)
 
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index cbda11b34635..6868b80fc70c 100644
+index 8ff0ced278d7..2299f946c175 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -1769,14 +1769,74 @@ static blk_qc_t dm_process_bio(struct mapped_device *md,
- 	 * If in ->make_request_fn we need to use blk_queue_split(), otherwise
- 	 * queue_limits for abnormal requests (e.g. discard, writesame, etc)
- 	 * won't be imposed.
-+	 *
-+	 * For normal READ and WRITE requests we benefit from upfront splitting
-+	 * via dm_queue_split() because we can then leverage noclone support below.
- 	 */
--	if (current->bio_list) {
-+	if (current->bio_list && (bio->bi_end_io != noclone_endio)) {
-+		/*
-+		 * It is fine to use {blk,dm}_queue_split() before opting to use noclone
-+		 * because any ->bi_private and ->bi_end_io will get saved off below.
-+		 * Once noclone_endio() is called the bio_chain's endio will kick in.
-+		 * - __split_and_process_bio() can split further, but any targets that
-+		 *   require late _DM_ initiated splitting (e.g. dm_accept_partial_bio()
-+		 *   callers) shouldn't set ti->no_clone.
-+		 */
- 		if (is_abnormal_io(bio))
- 			blk_queue_split(md->queue, &bio);
- 		else
- 			dm_queue_split(md, ti, &bio);
+@@ -897,6 +897,28 @@ static int __noflush_suspending(struct mapped_device *md)
+ 	return test_bit(DMF_NOFLUSH_SUSPENDING, &md->flags);
+ }
+ 
++static bool dm_bio_pushback_needed(struct mapped_device *md,
++				   struct bio *bio, blk_status_t *error)
++{
++	unsigned long flags;
++
++	/*
++	 * Target requested pushing back the I/O.
++	 */
++	if (__noflush_suspending(md)) {
++		spin_lock_irqsave(&md->deferred_lock, flags);
++		// FIXME: using bio_list_add_head() creates LIFO
++		bio_list_add_head(&md->deferred, bio);
++		spin_unlock_irqrestore(&md->deferred_lock, flags);
++		return true;
++	} else {
++		/* noflush suspend was interrupted. */
++		*error = BLK_STS_IOERR;
++	}
++
++	return false;
++}
++
+ /*
+  * Decrements the number of outstanding ios that a bio has been
+  * cloned into, completing the original io if necc.
+@@ -917,19 +939,8 @@ static void dec_pending(struct dm_io *io, blk_status_t error)
  	}
  
-+	if (dm_table_supports_noclone(map) &&
-+	    (bio_op(bio) == REQ_OP_READ || bio_op(bio) == REQ_OP_WRITE) &&
-+	    likely(!(bio->bi_opf & REQ_PREFLUSH)) &&
-+	    likely(!bio_integrity(bio)) && /* integrity requires specialized processing */
-+	    likely(!dm_stats_used(&md->stats))) { /* noclone doesn't support dm-stats */
-+		int r;
-+		struct dm_noclone *noclone;
+ 	if (atomic_dec_and_test(&io->io_count)) {
+-		if (io->status == BLK_STS_DM_REQUEUE) {
+-			/*
+-			 * Target requested pushing back the I/O.
+-			 */
+-			spin_lock_irqsave(&md->deferred_lock, flags);
+-			if (__noflush_suspending(md))
+-				/* NOTE early return due to BLK_STS_DM_REQUEUE below */
+-				bio_list_add_head(&md->deferred, io->orig_bio);
+-			else
+-				/* noflush suspend was interrupted. */
+-				io->status = BLK_STS_IOERR;
+-			spin_unlock_irqrestore(&md->deferred_lock, flags);
+-		}
++		if (unlikely(io->status == BLK_STS_DM_REQUEUE))
++			(void) dm_bio_pushback_needed(md, bio, &io->status);
+ 
+ 		io_error = io->status;
+ 		bio = io->orig_bio;
+@@ -1019,8 +1030,33 @@ static void clone_endio(struct bio *bio)
+ 
+ static void noclone_endio(struct bio *bio)
+ {
++	blk_status_t error = bio->bi_status;
+ 	struct dm_noclone *noclone = bio->bi_private;
+ 	struct mapped_device *md = noclone->md;
++	struct dm_target *ti = NULL;
++	dm_endio_fn endio = NULL;
 +
-+		/* Already been here if bio->bi_end_io is noclone_endio, reentered via dm_wq_work() */
-+		if (bio->bi_end_io != noclone_endio) {
-+			noclone = kmem_cache_alloc(_noclone_cache, GFP_NOWAIT);
-+			if (unlikely(!noclone))
-+				goto no_fast_path;
++	if (md->immutable_target) {
++		ti = md->immutable_target;
++		endio = ti->type->end_io;
++	}
 +
-+			noclone->md = md;
-+			noclone->start_time = jiffies;
-+			noclone->orig_bi_end_io = bio->bi_end_io;
-+			noclone->orig_bi_private = bio->bi_private;
-+			bio->bi_end_io = noclone_endio;
-+			bio->bi_private = noclone;
-+		}
-+
-+		start_io_acct(md, bio);
-+		r = ti->type->map(ti, bio);
++	if (endio) {
++		int r = endio(ti, bio, &error);
 +		switch (r) {
-+		case DM_MAPIO_SUBMITTED:
++		case DM_ENDIO_REQUEUE:
++			error = BLK_STS_DM_REQUEUE;
++			/*FALLTHRU*/
++		case DM_ENDIO_DONE:
 +			break;
-+		case DM_MAPIO_REMAPPED:
-+			/* the bio has been remapped so dispatch it */
-+			if (md->type == DM_TYPE_NVME_BIO_BASED)
-+				ret = direct_make_request(bio);
-+			else
-+				ret = generic_make_request(bio);
-+			break;
-+		case DM_MAPIO_KILL:
-+			bio_io_error(bio);
-+			break;
-+		case DM_MAPIO_REQUEUE:
-+			bio->bi_status = BLK_STS_DM_REQUEUE;
-+			noclone_endio(bio);
-+			break;
++		case DM_ENDIO_INCOMPLETE:
++			/* The target will handle the io */
++			return;
 +		default:
-+			DMWARN("unimplemented target map return value: %d", r);
++			DMWARN("unimplemented target endio return value: %d", r);
 +			BUG();
 +		}
-+
-+		return ret;
 +	}
-+no_fast_path:
- 	if (dm_get_md_type(md) == DM_TYPE_NVME_BIO_BASED)
- 		return __process_bio(md, map, bio, ti);
- 	else
-@@ -1803,48 +1863,8 @@ static blk_qc_t dm_make_request(struct request_queue *q, struct bio *bio)
- 		return ret;
- 	}
  
--	if (dm_table_supports_noclone(map) &&
--	    (bio_op(bio) == REQ_OP_READ || bio_op(bio) == REQ_OP_WRITE) &&
--	    likely(!(bio->bi_opf & REQ_PREFLUSH)) &&
--	    !bio_flagged(bio, BIO_CHAIN) &&
--	    likely(!bio_integrity(bio)) &&
--	    likely(!dm_stats_used(&md->stats))) {
--		int r;
--		struct dm_noclone *noclone;
--		struct dm_target *ti = dm_table_find_target(map, bio->bi_iter.bi_sector);
--		if (unlikely(!dm_target_is_valid(ti)))
--			goto no_fast_path;
--		if (unlikely(bio_sectors(bio) > max_io_len(bio->bi_iter.bi_sector, ti)))
--			goto no_fast_path;
--		noclone = kmem_cache_alloc(_noclone_cache, GFP_NOWAIT);
--		if (unlikely(!noclone))
--			goto no_fast_path;
--		noclone->md = md;
--		noclone->start_time = jiffies;
--		noclone->orig_bi_end_io = bio->bi_end_io;
--		noclone->orig_bi_private = bio->bi_private;
--		bio->bi_end_io = noclone_endio;
--		bio->bi_private = noclone;
--		start_io_acct(md, bio);
--		r = ti->type->map(ti, bio);
--		ret = BLK_QC_T_NONE;
--		if (likely(r == DM_MAPIO_REMAPPED)) {
--			ret = generic_make_request(bio);
--		} else if (likely(r == DM_MAPIO_SUBMITTED)) {
--		} else if (r == DM_MAPIO_KILL) {
--			bio->bi_status = BLK_STS_IOERR;
--			noclone_endio(bio);
--		} else {
--			DMWARN("unimplemented target map return value: %d", r);
--			BUG();
--		}
--		goto put_table_ret;
--	}
--
--no_fast_path:
- 	ret = dm_process_bio(md, map, bio);
+ 	end_io_acct(md, bio, noclone->start_time);
  
--put_table_ret:
- 	dm_put_live_table(md, srcu_idx);
- 	return ret;
+@@ -1028,6 +1064,11 @@ static void noclone_endio(struct bio *bio)
+ 	bio->bi_private = noclone->orig_bi_private;
+ 	kmem_cache_free(_noclone_cache, noclone);
+ 
++	if (unlikely(error == BLK_STS_DM_REQUEUE)) {
++		if (dm_bio_pushback_needed(md, bio, &bio->bi_status))
++			return;
++	}
++
+ 	bio_endio(bio);
  }
+ 
+@@ -2229,15 +2270,7 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
+ 	if (request_based)
+ 		dm_stop_queue(q);
+ 
+-	if (request_based || md->type == DM_TYPE_NVME_BIO_BASED) {
+-		/*
+-		 * Leverage the fact that request-based DM targets and
+-		 * NVMe bio based targets are immutable singletons
+-		 * - used to optimize both dm_request_fn and dm_mq_queue_rq;
+-		 *   and __process_bio.
+-		 */
+-		md->immutable_target = dm_table_get_immutable_target(t);
+-	}
++	md->immutable_target = dm_table_get_immutable_target(t);
+ 
+ 	ret = __bind_mempools(md, t);
+ 	if (ret) {
 -- 
 2.15.0
