@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 7/8] dm: improve noclone_endio() to support
-	multipath target
-Date: Tue, 19 Feb 2019 17:17:20 -0500
-Message-ID: <20190219221721.29830-8-snitzer@redhat.com>
+Subject: [PATCH 8/8] dm mpath: add support for dm_noclone and its
+	per-bio-data
+Date: Tue, 19 Feb 2019 17:17:21 -0500
+Message-ID: <20190219221721.29830-9-snitzer@redhat.com>
 References: <20190219221721.29830-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,141 +21,187 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-noclone_endio() must call the target's ->endio method if it exists.
-Also must handle the various DM_ENDIO_* returns that are possible.
+Update multipath_init_per_bio_data() to allocate a dm_mpath_per_bio_data
+structure and associate it with the noclone bio using the dm_noclone
+structure's 'noclone_private' member.
 
-Factor out dm_bio_pushback_needed() for both dec_pending() and
-noclone_endio() to use when handling BLK_STS_DM_REQUEUE.
-
-Lastly, there is no need to conditionally set md->immutable_target in
-__bind().  If the device only uses a single immutable target then it
-should always be reflected in md->immutable_target.  This is important
-because noclone_endio() benefits from this to get access to the
-multipath dm_target without needing to add another member to the
-'dm_noclone' structure.
+If kmem_cache_alloc() fails to allocate a struct dm_mpath_per_bio_data,
+DM_MAPIO_NOCLONE_FAILED is returned from ->map and DM core falls back to
+using traditional bio-based DM's bio cloning.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm.c | 77 ++++++++++++++++++++++++++++++++++++++++-----------------
- 1 file changed, 55 insertions(+), 22 deletions(-)
+ drivers/md/dm-mpath.c | 65 +++++++++++++++++++++++++++++++++++++++++++--------
+ 1 file changed, 55 insertions(+), 10 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 8ff0ced278d7..2299f946c175 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -897,6 +897,28 @@ static int __noflush_suspending(struct mapped_device *md)
- 	return test_bit(DMF_NOFLUSH_SUSPENDING, &md->flags);
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 2ee5e357a0a7..ac7ca5334796 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -30,6 +30,8 @@
+ #define DM_PG_INIT_DELAY_MSECS 2000
+ #define DM_PG_INIT_DELAY_DEFAULT ((unsigned) -1)
+ 
++static struct kmem_cache *_noclone_per_bio_data_cache;
++
+ /* Path properties */
+ struct pgpath {
+ 	struct list_head list;
+@@ -101,6 +103,11 @@ struct dm_mpath_io {
+ 	size_t nr_bytes;
+ };
+ 
++struct dm_mpath_per_bio_data {
++	struct dm_mpath_io mpio;
++	struct dm_bio_details bio_details;
++};
++
+ typedef int (*action_fn) (struct pgpath *pgpath);
+ 
+ static struct workqueue_struct *kmultipathd, *kmpath_handlerd;
+@@ -250,11 +257,16 @@ static struct dm_mpath_io *get_mpio(union map_info *info)
+ 
+ static size_t multipath_per_bio_data_size(void)
+ {
+-	return sizeof(struct dm_mpath_io) + sizeof(struct dm_bio_details);
++	return sizeof(struct dm_mpath_per_bio_data);
  }
  
-+static bool dm_bio_pushback_needed(struct mapped_device *md,
-+				   struct bio *bio, blk_status_t *error)
-+{
-+	unsigned long flags;
+ static struct dm_mpath_io *get_mpio_from_bio(struct bio *bio)
+ {
++	struct dm_noclone *noclone = dm_get_noclone_from_bio(bio);
 +
-+	/*
-+	 * Target requested pushing back the I/O.
-+	 */
-+	if (__noflush_suspending(md)) {
-+		spin_lock_irqsave(&md->deferred_lock, flags);
-+		// FIXME: using bio_list_add_head() creates LIFO
-+		bio_list_add_head(&md->deferred, bio);
-+		spin_unlock_irqrestore(&md->deferred_lock, flags);
-+		return true;
-+	} else {
-+		/* noflush suspend was interrupted. */
-+		*error = BLK_STS_IOERR;
++	if (noclone)
++		return noclone->noclone_private;
++
+ 	return dm_per_bio_data(bio, multipath_per_bio_data_size());
+ }
+ 
+@@ -265,16 +277,29 @@ static struct dm_bio_details *get_bio_details_from_mpio(struct dm_mpath_io *mpio
+ 	return bio_details;
+ }
+ 
+-static void multipath_init_per_bio_data(struct bio *bio, struct dm_mpath_io **mpio_p)
++static bool multipath_init_per_bio_data(struct dm_target *ti, struct bio *bio,
++					struct dm_mpath_io **mpio_p)
+ {
+-	struct dm_mpath_io *mpio = get_mpio_from_bio(bio);
+-	struct dm_bio_details *bio_details = get_bio_details_from_mpio(mpio);
++	struct dm_mpath_io *mpio;
++	struct dm_bio_details *bio_details;
++	struct dm_noclone *noclone = dm_get_noclone_from_bio(bio);
++
++	if (noclone) {
++		noclone->noclone_private =
++			kmem_cache_alloc(_noclone_per_bio_data_cache, GFP_NOWAIT);
++		if (unlikely(!noclone->noclone_private))
++			return false;
 +	}
 +
-+	return false;
-+}
++	mpio = get_mpio_from_bio(bio);
++	bio_details = get_bio_details_from_mpio(mpio);
+ 
+ 	mpio->nr_bytes = bio->bi_iter.bi_size;
+ 	mpio->pgpath = NULL;
+ 	*mpio_p = mpio;
+ 
+ 	dm_bio_record(bio_details, bio);
++	return true;
+ }
+ 
+ /*-----------------------------------------------
+@@ -652,7 +677,9 @@ static int multipath_map_bio(struct dm_target *ti, struct bio *bio)
+ 	struct multipath *m = ti->private;
+ 	struct dm_mpath_io *mpio = NULL;
+ 
+-	multipath_init_per_bio_data(bio, &mpio);
++	if (!multipath_init_per_bio_data(ti, bio, &mpio))
++		return DM_MAPIO_NOCLONE_FAILED;
 +
- /*
-  * Decrements the number of outstanding ios that a bio has been
-  * cloned into, completing the original io if necc.
-@@ -917,19 +939,8 @@ static void dec_pending(struct dm_io *io, blk_status_t error)
+ 	return __multipath_map_bio(m, bio, mpio);
+ }
+ 
+@@ -1178,9 +1205,10 @@ static int multipath_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	ti->num_discard_bios = 1;
+ 	ti->num_write_same_bios = 1;
+ 	ti->num_write_zeroes_bios = 1;
+-	if (m->queue_mode == DM_TYPE_BIO_BASED)
++	if (m->queue_mode == DM_TYPE_BIO_BASED) {
++		ti->no_clone = true;
+ 		ti->per_io_data_size = multipath_per_bio_data_size();
+-	else
++	} else
+ 		ti->per_io_data_size = sizeof(struct dm_mpath_io);
+ 
+ 	return 0;
+@@ -1584,12 +1612,13 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
+ 	return r;
+ }
+ 
+-static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
++static int multipath_end_io_bio(struct dm_target *ti, struct bio *bio,
+ 				blk_status_t *error)
+ {
+ 	struct multipath *m = ti->private;
+-	struct dm_mpath_io *mpio = get_mpio_from_bio(clone);
++	struct dm_mpath_io *mpio = get_mpio_from_bio(bio);
+ 	struct pgpath *pgpath = mpio->pgpath;
++	struct dm_noclone *noclone = NULL;
+ 	unsigned long flags;
+ 	int r = DM_ENDIO_DONE;
+ 
+@@ -1611,7 +1640,7 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
  	}
  
- 	if (atomic_dec_and_test(&io->io_count)) {
--		if (io->status == BLK_STS_DM_REQUEUE) {
--			/*
--			 * Target requested pushing back the I/O.
--			 */
--			spin_lock_irqsave(&md->deferred_lock, flags);
--			if (__noflush_suspending(md))
--				/* NOTE early return due to BLK_STS_DM_REQUEUE below */
--				bio_list_add_head(&md->deferred, io->orig_bio);
--			else
--				/* noflush suspend was interrupted. */
--				io->status = BLK_STS_IOERR;
--			spin_unlock_irqrestore(&md->deferred_lock, flags);
--		}
-+		if (unlikely(io->status == BLK_STS_DM_REQUEUE))
-+			(void) dm_bio_pushback_needed(md, bio, &io->status);
+ 	spin_lock_irqsave(&m->lock, flags);
+-	bio_list_add(&m->queued_bios, clone);
++	bio_list_add(&m->queued_bios, bio);
+ 	spin_unlock_irqrestore(&m->lock, flags);
+ 	if (!test_bit(MPATHF_QUEUE_IO, &m->flags))
+ 		queue_work(kmultipathd, &m->process_queued_bios);
+@@ -1625,6 +1654,12 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
+ 			ps->type->end_io(ps, &pgpath->path, mpio->nr_bytes);
+ 	}
  
- 		io_error = io->status;
- 		bio = io->orig_bio;
-@@ -1019,8 +1030,33 @@ static void clone_endio(struct bio *bio)
- 
- static void noclone_endio(struct bio *bio)
- {
-+	blk_status_t error = bio->bi_status;
- 	struct dm_noclone *noclone = bio->bi_private;
- 	struct mapped_device *md = noclone->md;
-+	struct dm_target *ti = NULL;
-+	dm_endio_fn endio = NULL;
-+
-+	if (md->immutable_target) {
-+		ti = md->immutable_target;
-+		endio = ti->type->end_io;
++	if (r != DM_ENDIO_INCOMPLETE) {
++		noclone = dm_get_noclone_from_bio(bio);
++		if (noclone)
++			kmem_cache_free(_noclone_per_bio_data_cache, noclone->noclone_private);
 +	}
 +
-+	if (endio) {
-+		int r = endio(ti, bio, &error);
-+		switch (r) {
-+		case DM_ENDIO_REQUEUE:
-+			error = BLK_STS_DM_REQUEUE;
-+			/*FALLTHRU*/
-+		case DM_ENDIO_DONE:
-+			break;
-+		case DM_ENDIO_INCOMPLETE:
-+			/* The target will handle the io */
-+			return;
-+		default:
-+			DMWARN("unimplemented target endio return value: %d", r);
-+			BUG();
-+		}
-+	}
- 
- 	end_io_acct(md, bio, noclone->start_time);
- 
-@@ -1028,6 +1064,11 @@ static void noclone_endio(struct bio *bio)
- 	bio->bi_private = noclone->orig_bi_private;
- 	kmem_cache_free(_noclone_cache, noclone);
- 
-+	if (unlikely(error == BLK_STS_DM_REQUEUE)) {
-+		if (dm_bio_pushback_needed(md, bio, &bio->bi_status))
-+			return;
-+	}
-+
- 	bio_endio(bio);
+ 	return r;
  }
  
-@@ -2229,15 +2270,7 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
- 	if (request_based)
- 		dm_stop_queue(q);
+@@ -2057,6 +2092,13 @@ static int __init dm_multipath_init(void)
+ 		goto bad_alloc_kmpath_handlerd;
+ 	}
  
--	if (request_based || md->type == DM_TYPE_NVME_BIO_BASED) {
--		/*
--		 * Leverage the fact that request-based DM targets and
--		 * NVMe bio based targets are immutable singletons
--		 * - used to optimize both dm_request_fn and dm_mq_queue_rq;
--		 *   and __process_bio.
--		 */
--		md->immutable_target = dm_table_get_immutable_target(t);
--	}
-+	md->immutable_target = dm_table_get_immutable_target(t);
++	_noclone_per_bio_data_cache = KMEM_CACHE(dm_mpath_per_bio_data, 0);
++	if (!_noclone_per_bio_data_cache) {
++		DMERR("failed to create noclone_per_bio_data_cache");
++		r = -ENOMEM;
++		goto bad_noclone_pbd;
++	}
++
+ 	r = dm_register_target(&multipath_target);
+ 	if (r < 0) {
+ 		DMERR("request-based register failed %d", r);
+@@ -2067,6 +2109,8 @@ static int __init dm_multipath_init(void)
+ 	return 0;
  
- 	ret = __bind_mempools(md, t);
- 	if (ret) {
+ bad_register_target:
++	kmem_cache_destroy(_noclone_per_bio_data_cache);
++bad_noclone_pbd:
+ 	destroy_workqueue(kmpath_handlerd);
+ bad_alloc_kmpath_handlerd:
+ 	destroy_workqueue(kmultipathd);
+@@ -2078,6 +2122,7 @@ static void __exit dm_multipath_exit(void)
+ {
+ 	destroy_workqueue(kmpath_handlerd);
+ 	destroy_workqueue(kmultipathd);
++	kmem_cache_destroy(_noclone_per_bio_data_cache);
+ 
+ 	dm_unregister_target(&multipath_target);
+ }
 -- 
 2.15.0
