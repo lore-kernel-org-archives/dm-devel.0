@@ -1,11 +1,14 @@
-From: ZhangXiaoxu <zhangxiaoxu5@huawei.com>
-Subject: [PATCH v3] block: Fix a WRITE SAME BUG_ON
-Date: Wed, 20 Feb 2019 10:09:43 +0800
-Message-ID: <1550628583-100041-1-git-send-email-zhangxiaoxu5@huawei.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v2 8/9] dm mpath: enable noclone support for
+	bio-based
+Date: Wed, 20 Feb 2019 16:44:35 -0500
+Message-ID: <20190220214436.38476-9-snitzer@redhat.com>
+References: <20190220214436.38476-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190220214436.38476-1-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,90 +18,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: martin.petersen@oracle.com, hch@infradead.org, heinzm@redhat.com, jdorminy@redhat.com, axboe@kernel.dk, snitzer@redhat.com, linux-block@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com, zhangxiaoxu5@huawei.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If the lvm is stacked by different lbs disks, when WRITE SAME on it, will bug_on:
+Avoiding bio cloning (aka noclone) offers a slight advantage over bio
+cloning for this read workload:
+  fio --ioengine=psync --iodepth=1 --rw=read --bs=512 --direct=1 \
+      --numjobs=12 --time_based --runtime=10 --group_reporting --name=/dev/mapper/mpath
 
-kernel BUG at drivers/scsi/sd.c:968!
-invalid opcode: 0000 [#1] SMP PTI
-CPU: 11 PID: 525 Comm: kworker/11:1H Tainted: G           O      5.0.0-rc3+ #2
-Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.10.2-2.fc27 04/01/2014
-Workqueue: kblockd blk_mq_run_work_fn
-RIP: 0010:sd_init_command+0x7aa/0xdb0
-Code: 30 75 00 00 c7 85 44 01 00 00 18 00 00 00 0f 85 fa 04 00 00 48 83 c4 40 48
-      89 df 5b 5d 41 5c 41 5d 41 5e 41 5f e9 b6 ca fe ff <0f> 0b 41 bc 09
-RSP: 0018:ffffb55f80ddbca0 EFLAGS: 00010206
-RAX: 0000000000001000 RBX: ffff9ed23fb927a0 RCX: 000000000000f000
-RDX: ffff9ed23f0a8400 RSI: ffff9ed27bc79800 RDI: 0000000000000000
-RBP: ffff9ed23fb92680 R08: ffff9ed27c8c0000 R09: ffff9ed23fb927d8
-R10: 0000000000000000 R11: fefefefefefefeff R12: ffff9ed27bc79800
-R13: ffff9ed2787a0000 R14: ffff9ed27bdf3400 R15: ffff9ed23fb927a0
-FS:  0000000000000000(0000) GS:ffff9ed27c8c0000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 00007f6b14cf9341 CR3: 0000000069058000 CR4: 00000000000006e0
-Call Trace:
- ? vp_notify+0x12/0x20
- scsi_queue_rq+0x525/0xa30
- blk_mq_dispatch_rq_list+0x8d/0x580
- ? syscall_return_via_sysret+0x10/0x7f
- ? elv_rb_del+0x1f/0x30
- ? deadline_remove_request+0x55/0xc0
- blk_mq_do_dispatch_sched+0x76/0x110
- blk_mq_sched_dispatch_requests+0xf9/0x170
- __blk_mq_run_hw_queue+0x51/0xd0
- process_one_work+0x195/0x380
- worker_thread+0x30/0x390
- ? process_one_work+0x380/0x380
- kthread+0x113/0x130
- ? kthread_park+0x90/0x90
- ret_from_fork+0x35/0x40
-Modules linked in: alloc(O+)
----[ end trace dc92ddeb2e6d1fe5 ]---
+clone   3331MB/s 3337MB/s 3355MB/s
+noclone 3418MB/s 3407MB/s 3420MB/s
 
-The logical_block_size of the LVM is the max value of the sub disks,
-it maybe different with one of the sub disk. when WRITE SAME on the
-disk, it will BUG_ON when setup WRITE SAME cmd.
-
-Close WRITE_SAME feature on the LVM if it was stacked by different
-logical_block_size disk.
-
-Signed-off-by: ZhangXiaoxu <zhangxiaoxu5@huawei.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- block/blk-settings.c | 14 ++++++++++++--
- 1 file changed, 12 insertions(+), 2 deletions(-)
+ drivers/md/dm-mpath.c | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
 
-diff --git a/block/blk-settings.c b/block/blk-settings.c
-index 3e7038e..672cd27 100644
---- a/block/blk-settings.c
-+++ b/block/blk-settings.c
-@@ -497,8 +497,6 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
- 	t->max_sectors = min_not_zero(t->max_sectors, b->max_sectors);
- 	t->max_hw_sectors = min_not_zero(t->max_hw_sectors, b->max_hw_sectors);
- 	t->max_dev_sectors = min_not_zero(t->max_dev_sectors, b->max_dev_sectors);
--	t->max_write_same_sectors = min(t->max_write_same_sectors,
--					b->max_write_same_sectors);
- 	t->max_write_zeroes_sectors = min(t->max_write_zeroes_sectors,
- 					b->max_write_zeroes_sectors);
- 	t->bounce_pfn = min_not_zero(t->bounce_pfn, b->bounce_pfn);
-@@ -537,6 +535,18 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
- 		}
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 2ee5e357a0a7..579330cd7a6a 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1178,9 +1178,10 @@ static int multipath_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	ti->num_discard_bios = 1;
+ 	ti->num_write_same_bios = 1;
+ 	ti->num_write_zeroes_bios = 1;
+-	if (m->queue_mode == DM_TYPE_BIO_BASED)
++	if (m->queue_mode == DM_TYPE_BIO_BASED) {
++		ti->no_clone = true;
+ 		ti->per_io_data_size = multipath_per_bio_data_size();
+-	else
++	} else
+ 		ti->per_io_data_size = sizeof(struct dm_mpath_io);
+ 
+ 	return 0;
+@@ -1584,11 +1585,11 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
+ 	return r;
+ }
+ 
+-static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
++static int multipath_end_io_bio(struct dm_target *ti, struct bio *bio,
+ 				blk_status_t *error)
+ {
+ 	struct multipath *m = ti->private;
+-	struct dm_mpath_io *mpio = get_mpio_from_bio(clone);
++	struct dm_mpath_io *mpio = get_mpio_from_bio(bio);
+ 	struct pgpath *pgpath = mpio->pgpath;
+ 	unsigned long flags;
+ 	int r = DM_ENDIO_DONE;
+@@ -1611,7 +1612,7 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
  	}
  
-+	/* If the lbs is different, disable WRITE SAME.
-+	   The default value of max_write_same_sectors is UINT_MAX, and
-+	   default value of logical_block_size is 512, do not apply this
-+	   rule when first iteration.
-+	 */
-+	if (t->logical_block_size != b->logical_block_size &&
-+	    t->max_write_same_sectors != UINT_MAX)
-+		t->max_write_same_sectors = 0;
-+	else
-+		t->max_write_same_sectors = min(t->max_write_same_sectors,
-+						b->max_write_same_sectors);
-+
- 	t->logical_block_size = max(t->logical_block_size,
- 				    b->logical_block_size);
- 
+ 	spin_lock_irqsave(&m->lock, flags);
+-	bio_list_add(&m->queued_bios, clone);
++	bio_list_add(&m->queued_bios, bio);
+ 	spin_unlock_irqrestore(&m->lock, flags);
+ 	if (!test_bit(MPATHF_QUEUE_IO, &m->flags))
+ 		queue_work(kmultipathd, &m->process_queued_bios);
+@@ -2011,7 +2012,7 @@ static int multipath_busy(struct dm_target *ti)
+  *---------------------------------------------------------------*/
+ static struct target_type multipath_target = {
+ 	.name = "multipath",
+-	.version = {1, 13, 0},
++	.version = {1, 14, 0},
+ 	.features = DM_TARGET_SINGLETON | DM_TARGET_IMMUTABLE |
+ 		    DM_TARGET_PASSES_INTEGRITY,
+ 	.module = THIS_MODULE,
 -- 
-2.7.4
+2.15.0
