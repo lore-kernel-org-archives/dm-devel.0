@@ -1,66 +1,87 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: block: Fix a WRITE SAME BUG_ON
-Date: Tue, 19 Feb 2019 18:10:39 -0500
-Message-ID: <yq1tvgzl6hc.fsf@oracle.com>
-References: <20190125021107.4595-1-zhangxiaoxu5@huawei.com>
-	<CAMeeMh_=UVGwo-=9WtBXRmiHTXnLAswqis97bM-aiuwnzPU0QQ@mail.gmail.com>
-	<20190128221441.GA24102@redhat.com> <yq1lg34f4i7.fsf@oracle.com>
-	<CAMeeMh85T_qui=LWd0u=b_oMN5XLqowqkvLuYGBM2Ae6tS-mzg@mail.gmail.com>
-	<20190131103924.GA22503@infradead.org>
-	<CAMeeMh-uxiee7rKutnr3jrMjzkc8=R2Y3DPPBLvLYjqSwjfi_w@mail.gmail.com>
-	<20190201073527.GA14758@infradead.org>
-	<CAMeeMh-wAZ8377sMrnyQZUt2HT1hB02DHSROJURLmPsaZPkeQQ@mail.gmail.com>
-	<f7b05928-316c-4c73-b04b-bba38ea60b27@redhat.com>
-	<20190201161803.GA21124@infradead.org>
-	<d693e299-3c7d-b3cb-e8c7-a1f94bba4697@huawei.com>
-	<yq1lg2jqex7.fsf@oracle.com>
-	<6a00e005-656e-7b3c-6b86-1430f3e7e623@huawei.com>
-	<22afb417-1bc6-d638-def7-aa3dcc9bcd31@huawei.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [dm-devel] [PATCH V15 00/18] block: support multi-page bvec
+Date: Wed, 20 Feb 2019 09:17:20 +0800
+Message-ID: <20190220011719.GA13035@ming.t460p>
+References: <20190215111324.30129-1-ming.lei@redhat.com>
+ <c52b6a8b-d1d4-67ff-f81c-371d09cc6d5b@kernel.dk>
+ <1550250855.31902.102.camel@acm.org>
+ <20190217131128.GB7296@ming.t460p>
+ <1550593699.31902.115.camel@acm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <22afb417-1bc6-d638-def7-aa3dcc9bcd31@huawei.com> (zhangxiaoxu's
-	message of "Mon, 18 Feb 2019 22:10:51 +0800")
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "zhangxiaoxu (A)" <zhangxiaoxu5@huawei.com>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, John Dorminy <jdorminy@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, "Martin K. Petersen" <martin.petersen@oracle.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1550593699.31902.115.camel@acm.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Bart Van Assche <bvanassche@acm.org>
+Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, "Darrick J . Wong" <darrick.wong@oracle.com>, Omar Sandoval <osandov@fb.com>, cluster-devel@redhat.com, linux-ext4@vger.kernel.org, Kent Overstreet <kent.overstreet@gmail.com>, Boaz Harrosh <ooo@electrozaur.com>, Gao Xiang <gaoxiang25@huawei.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, Bob Peterson <rpeterso@redhat.com>, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Dave Chinner <dchinner@redhat.com>, David Sterba <dsterba@suse.com>, linux-block@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org
 List-Id: dm-devel.ids
 
+On Tue, Feb 19, 2019 at 08:28:19AM -0800, Bart Van Assche wrote:
+> On Sun, 2019-02-17 at 21:11 +0800, Ming Lei wrote:
+> > The following patch should fix this issue:
+> > 
+> > 
+> > diff --git a/block/blk-merge.c b/block/blk-merge.c
+> > index bed065904677..066b66430523 100644
+> > --- a/block/blk-merge.c
+> > +++ b/block/blk-merge.c
+> > @@ -363,13 +363,15 @@ static unsigned int __blk_recalc_rq_segments(struct request_queue *q,
+> >  	struct bio_vec bv, bvprv = { NULL };
+> >  	int prev = 0;
+> >  	unsigned int seg_size, nr_phys_segs;
+> > -	unsigned front_seg_size = bio->bi_seg_front_size;
+> > +	unsigned front_seg_size;
+> >  	struct bio *fbio, *bbio;
+> >  	struct bvec_iter iter;
+> >  
+> >  	if (!bio)
+> >  		return 0;
+> >  
+> > +	front_seg_size = bio->bi_seg_front_size;
+> > +
+> >  	switch (bio_op(bio)) {
+> >  	case REQ_OP_DISCARD:
+> >  	case REQ_OP_SECURE_ERASE:
+> 
+> Hi Ming,
+> 
+> With this patch applied test nvmeof-mp/002 fails as follows:
+> 
+> [  694.700400] kernel BUG at lib/sg_pool.c:103!
+> [  694.705932] invalid opcode: 0000 [#1] PREEMPT SMP KASAN
+> [  694.708297] CPU: 2 PID: 349 Comm: kworker/2:1H Tainted: G    B             5.0.0-rc6-dbg+ #2
+> [  694.711730] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.10.2-1 04/01/2014
+> [  694.715113] Workqueue: kblockd blk_mq_run_work_fn
+> [  694.716894] RIP: 0010:sg_alloc_table_chained+0xe5/0xf0
+> [  694.758222] Call Trace:
+> [  694.759645]  nvme_rdma_queue_rq+0x2aa/0xcc0 [nvme_rdma]
+> [  694.764915]  blk_mq_try_issue_directly+0x2a5/0x4b0
+> [  694.771779]  blk_insert_cloned_request+0x11e/0x1c0
+> [  694.778417]  dm_mq_queue_rq+0x3d1/0x770
+> [  694.793400]  blk_mq_dispatch_rq_list+0x5fc/0xb10
+> [  694.798386]  blk_mq_sched_dispatch_requests+0x2f7/0x300
+> [  694.803180]  __blk_mq_run_hw_queue+0xd6/0x180
+> [  694.808933]  blk_mq_run_work_fn+0x27/0x30
+> [  694.810315]  process_one_work+0x4f1/0xa40
+> [  694.813178]  worker_thread+0x67/0x5b0
+> [  694.814487]  kthread+0x1cf/0x1f0
+> [  694.819134]  ret_from_fork+0x24/0x30
+> 
+> The code in sg_pool.c that triggers the BUG() statement is as follows:
+> 
+> int sg_alloc_table_chained(struct sg_table *table, int nents,
+> 		struct scatterlist *first_chunk)
+> {
+> 	int ret;
+> 
+> 	BUG_ON(!nents);
+> [ ... ]
+> 
+> Bart.
 
-Hi Zhang,
+I can reproduce this issue("kernel BUG at lib/sg_pool.c:103") without mp-bvec patches,
+so looks it isn't the fault of this patchset.
 
-> ping.
->
-> Anyone can help merge this patch? or any other solutions?
-
-+	/* If the logical block size is different, forbid write same */
-+	if (t->logical_block_size != b->logical_block_size &&
-+	    t->max_write_same_sectors != UINT_MAX)
-+		t->max_write_same_sectors = 0;
-+	else
-+		t->max_write_same_sectors = min(t->max_write_same_sectors,
-+						b->max_write_same_sectors);
-+
-
-I am not particularly keen on this UINT_MAX magic. I would prefer to
-have the stacking driver default for lbs be set to 0 so the stacking
-function could avoid special-casing the first iteration. But I am not
-sure whether that would break any assumptions in DM/MD wrt. the logical
-block size being non-zero prior to calling the stacking function.
-
-Mike? Any comments?
-
-If we stick with the UINT_MAX check, the comment should at least point
-out why it's there.
-
--- 
-Martin K. Petersen	Oracle Linux Engineering
+Thanks,
+Ming
