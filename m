@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 1/9] dm: update dm_process_bio() to split bio
-	if in ->make_request_fn()
-Date: Wed, 20 Feb 2019 16:44:28 -0500
-Message-ID: <20190220214436.38476-2-snitzer@redhat.com>
+Subject: [PATCH v2 2/9] dm: eliminate 'split_discard_bios' flag
+	from DM target interface
+Date: Wed, 20 Feb 2019 16:44:29 -0500
+Message-ID: <20190220214436.38476-3-snitzer@redhat.com>
 References: <20190220214436.38476-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,168 +21,189 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Must call blk_queue_split() otherwise queue_limits for abnormal requests
-(e.g. discard, writesame, etc) won't be imposed.
-
-In addition, add dm_queue_split() to simplify DM specific splitting that
-is needed for targets that impose ti->max_io_len.
+There is no need to have DM core split discards on behalf of a DM target
+now that blk_queue_split() handles splitting discards based on the
+queue_limits.  A DM target just needs to set max_discard_sectors,
+discard_granularity, etc, in queue_limits.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm.c | 93 ++++++++++++++++++++++++++++++++++++++++-----------------
- 1 file changed, 66 insertions(+), 27 deletions(-)
+ drivers/md/dm-cache-target.c  |  1 -
+ drivers/md/dm-raid.c          | 14 +++++++++-----
+ drivers/md/dm-thin.c          |  1 -
+ drivers/md/dm-zoned-target.c  |  1 -
+ drivers/md/dm.c               | 28 ++++++----------------------
+ include/linux/device-mapper.h |  6 ------
+ include/uapi/linux/dm-ioctl.h |  4 ++--
+ 7 files changed, 17 insertions(+), 38 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 515e6af9bed2..7a774fcd0194 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1533,6 +1533,22 @@ static int __send_write_zeroes(struct clone_info *ci, struct dm_target *ti)
- 	return __send_changing_extent_only(ci, ti, get_num_write_zeroes_bios(ti), false);
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index b29a8327eed1..adc529f12b6b 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -2496,7 +2496,6 @@ static int cache_create(struct cache_args *ca, struct cache **result)
+ 
+ 	ti->num_discard_bios = 1;
+ 	ti->discards_supported = true;
+-	ti->split_discard_bios = false;
+ 
+ 	ti->per_io_data_size = sizeof(struct per_bio_data);
+ 
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index adcfe8ae10aa..9fdef6897316 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -2986,11 +2986,6 @@ static void configure_discard_support(struct raid_set *rs)
+ 		}
+ 	}
+ 
+-	/*
+-	 * RAID1 and RAID10 personalities require bio splitting,
+-	 * RAID0/4/5/6 don't and process large discard bios properly.
+-	 */
+-	ti->split_discard_bios = !!(rs_is_raid1(rs) || rs_is_raid10(rs));
+ 	ti->num_discard_bios = 1;
  }
  
-+static bool is_abnormal_io(struct bio *bio)
-+{
-+	bool r = false;
-+
-+	switch (bio_op(bio)) {
-+	case REQ_OP_DISCARD:
-+	case REQ_OP_SECURE_ERASE:
-+	case REQ_OP_WRITE_SAME:
-+	case REQ_OP_WRITE_ZEROES:
-+		r = true;
-+		break;
-+	}
-+
-+	return r;
-+}
-+
- static bool __process_abnormal_io(struct clone_info *ci, struct dm_target *ti,
- 				  int *result)
- {
-@@ -1565,7 +1581,7 @@ static int __split_and_process_non_flush(struct clone_info *ci)
- 	if (!dm_target_is_valid(ti))
- 		return -EIO;
+@@ -3747,6 +3742,15 @@ static void raid_io_hints(struct dm_target *ti, struct queue_limits *limits)
  
--	if (unlikely(__process_abnormal_io(ci, ti, &r)))
-+	if (__process_abnormal_io(ci, ti, &r))
- 		return r;
- 
- 	len = min_t(sector_t, max_io_len(ci->sector, ti), ci->sector_count);
-@@ -1601,13 +1617,6 @@ static blk_qc_t __split_and_process_bio(struct mapped_device *md,
- 	blk_qc_t ret = BLK_QC_T_NONE;
- 	int error = 0;
- 
--	if (unlikely(!map)) {
--		bio_io_error(bio);
--		return ret;
--	}
--
--	blk_queue_split(md->queue, &bio);
--
- 	init_clone_info(&ci, md, map, bio);
- 
- 	if (bio->bi_opf & REQ_PREFLUSH) {
-@@ -1675,18 +1684,13 @@ static blk_qc_t __split_and_process_bio(struct mapped_device *md,
-  * Optimized variant of __split_and_process_bio that leverages the
-  * fact that targets that use it do _not_ have a need to split bios.
-  */
--static blk_qc_t __process_bio(struct mapped_device *md,
--			      struct dm_table *map, struct bio *bio)
-+static blk_qc_t __process_bio(struct mapped_device *md, struct dm_table *map,
-+			      struct bio *bio, struct dm_target *ti)
- {
- 	struct clone_info ci;
- 	blk_qc_t ret = BLK_QC_T_NONE;
- 	int error = 0;
- 
--	if (unlikely(!map)) {
--		bio_io_error(bio);
--		return ret;
--	}
--
- 	init_clone_info(&ci, md, map, bio);
- 
- 	if (bio->bi_opf & REQ_PREFLUSH) {
-@@ -1704,21 +1708,11 @@ static blk_qc_t __process_bio(struct mapped_device *md,
- 		error = __send_empty_flush(&ci);
- 		/* dec_pending submits any data associated with flush */
- 	} else {
--		struct dm_target *ti = md->immutable_target;
- 		struct dm_target_io *tio;
- 
--		/*
--		 * Defend against IO still getting in during teardown
--		 * - as was seen for a time with nvme-fcloop
--		 */
--		if (WARN_ON_ONCE(!ti || !dm_target_is_valid(ti))) {
--			error = -EIO;
--			goto out;
--		}
--
- 		ci.bio = bio;
- 		ci.sector_count = bio_sectors(bio);
--		if (unlikely(__process_abnormal_io(&ci, ti, &error)))
-+		if (__process_abnormal_io(&ci, ti, &error))
- 			goto out;
- 
- 		tio = alloc_tio(&ci, ti, 0, GFP_NOIO);
-@@ -1730,11 +1724,56 @@ static blk_qc_t __process_bio(struct mapped_device *md,
- 	return ret;
- }
- 
-+static void dm_queue_split(struct mapped_device *md, struct dm_target *ti, struct bio **bio)
-+{
-+	unsigned len, sector_count;
-+
-+	sector_count = bio_sectors(*bio);
-+	len = min_t(sector_t, max_io_len((*bio)->bi_iter.bi_sector, ti), sector_count);
-+
-+	if (sector_count > len) {
-+		struct bio *split = bio_split(*bio, len, GFP_NOIO, &md->queue->bio_split);
-+
-+		bio_chain(split, *bio);
-+		trace_block_split(md->queue, split, (*bio)->bi_iter.bi_sector);
-+		generic_make_request(*bio);
-+		*bio = split;
-+	}
-+}
-+
- static blk_qc_t dm_process_bio(struct mapped_device *md,
- 			       struct dm_table *map, struct bio *bio)
- {
-+	blk_qc_t ret = BLK_QC_T_NONE;
-+	struct dm_target *ti = md->immutable_target;
-+
-+	if (unlikely(!map)) {
-+		bio_io_error(bio);
-+		return ret;
-+	}
-+
-+	if (!ti) {
-+		ti = dm_table_find_target(map, bio->bi_iter.bi_sector);
-+		if (unlikely(!ti || !dm_target_is_valid(ti))) {
-+			bio_io_error(bio);
-+			return ret;
-+		}
-+	}
+ 	blk_limits_io_min(limits, chunk_size);
+ 	blk_limits_io_opt(limits, chunk_size * mddev_data_stripes(rs));
 +
 +	/*
-+	 * If in ->make_request_fn we need to use blk_queue_split(), otherwise
-+	 * queue_limits for abnormal requests (e.g. discard, writesame, etc)
-+	 * won't be imposed.
++	 * RAID1 and RAID10 personalities require bio splitting,
++	 * RAID0/4/5/6 don't and process large discard bios properly.
 +	 */
-+	if (current->bio_list) {
-+		if (is_abnormal_io(bio))
-+			blk_queue_split(md->queue, &bio);
-+		else
-+			dm_queue_split(md, ti, &bio);
++	if (rs_is_raid1(rs) || rs_is_raid10(rs)) {
++		limits->discard_granularity = chunk_size;
++		limits->max_discard_sectors = chunk_size;
 +	}
-+
- 	if (dm_get_md_type(md) == DM_TYPE_NVME_BIO_BASED)
--		return __process_bio(md, map, bio);
-+		return __process_bio(md, map, bio, ti);
- 	else
- 		return __split_and_process_bio(md, map, bio);
  }
+ 
+ static void raid_postsuspend(struct dm_target *ti)
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index e83b63608262..0d9ded0f5e50 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -4227,7 +4227,6 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	if (tc->pool->pf.discard_enabled) {
+ 		ti->discards_supported = true;
+ 		ti->num_discard_bios = 1;
+-		ti->split_discard_bios = false;
+ 	}
+ 
+ 	mutex_unlock(&dm_thin_pool_table.mutex);
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index 6af5babe6837..8865c1709e16 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -727,7 +727,6 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	ti->per_io_data_size = sizeof(struct dmz_bioctx);
+ 	ti->flush_supported = true;
+ 	ti->discards_supported = true;
+-	ti->split_discard_bios = true;
+ 
+ 	/* The exposed capacity is the number of chunks that can be mapped */
+ 	ti->len = (sector_t)dmz_nr_chunks(dmz->metadata) << dev->zone_nr_sectors_shift;
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 7a774fcd0194..b988e178a523 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1478,17 +1478,10 @@ static unsigned get_num_write_zeroes_bios(struct dm_target *ti)
+ 	return ti->num_write_zeroes_bios;
+ }
+ 
+-typedef bool (*is_split_required_fn)(struct dm_target *ti);
+-
+-static bool is_split_required_for_discard(struct dm_target *ti)
+-{
+-	return ti->split_discard_bios;
+-}
+-
+ static int __send_changing_extent_only(struct clone_info *ci, struct dm_target *ti,
+-				       unsigned num_bios, bool is_split_required)
++				       unsigned num_bios)
+ {
+-	unsigned len;
++	unsigned len = ci->sector_count;
+ 
+ 	/*
+ 	 * Even though the device advertised support for this type of
+@@ -1499,38 +1492,29 @@ static int __send_changing_extent_only(struct clone_info *ci, struct dm_target *
+ 	if (!num_bios)
+ 		return -EOPNOTSUPP;
+ 
+-	if (!is_split_required)
+-		len = min((sector_t)ci->sector_count, max_io_len_target_boundary(ci->sector, ti));
+-	else
+-		len = min((sector_t)ci->sector_count, max_io_len(ci->sector, ti));
+-
+ 	__send_duplicate_bios(ci, ti, num_bios, &len);
+ 
+-	ci->sector += len;
+-	ci->sector_count -= len;
+-
+ 	return 0;
+ }
+ 
+ static int __send_discard(struct clone_info *ci, struct dm_target *ti)
+ {
+-	return __send_changing_extent_only(ci, ti, get_num_discard_bios(ti),
+-					   is_split_required_for_discard(ti));
++	return __send_changing_extent_only(ci, ti, get_num_discard_bios(ti));
+ }
+ 
+ static int __send_secure_erase(struct clone_info *ci, struct dm_target *ti)
+ {
+-	return __send_changing_extent_only(ci, ti, get_num_secure_erase_bios(ti), false);
++	return __send_changing_extent_only(ci, ti, get_num_secure_erase_bios(ti));
+ }
+ 
+ static int __send_write_same(struct clone_info *ci, struct dm_target *ti)
+ {
+-	return __send_changing_extent_only(ci, ti, get_num_write_same_bios(ti), false);
++	return __send_changing_extent_only(ci, ti, get_num_write_same_bios(ti));
+ }
+ 
+ static int __send_write_zeroes(struct clone_info *ci, struct dm_target *ti)
+ {
+-	return __send_changing_extent_only(ci, ti, get_num_write_zeroes_bios(ti), false);
++	return __send_changing_extent_only(ci, ti, get_num_write_zeroes_bios(ti));
+ }
+ 
+ static bool is_abnormal_io(struct bio *bio)
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index e528baebad69..0f5b3d7c6cb3 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -315,12 +315,6 @@ struct dm_target {
+ 	 * whether or not its underlying devices have support.
+ 	 */
+ 	bool discards_supported:1;
+-
+-	/*
+-	 * Set if the target required discard bios to be split
+-	 * on max_io_len boundary.
+-	 */
+-	bool split_discard_bios:1;
+ };
+ 
+ /* Each target can link one of these into the table */
+diff --git a/include/uapi/linux/dm-ioctl.h b/include/uapi/linux/dm-ioctl.h
+index d1e49514977b..f396a82dfd3e 100644
+--- a/include/uapi/linux/dm-ioctl.h
++++ b/include/uapi/linux/dm-ioctl.h
+@@ -270,9 +270,9 @@ enum {
+ #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
+ 
+ #define DM_VERSION_MAJOR	4
+-#define DM_VERSION_MINOR	39
++#define DM_VERSION_MINOR	40
+ #define DM_VERSION_PATCHLEVEL	0
+-#define DM_VERSION_EXTRA	"-ioctl (2018-04-03)"
++#define DM_VERSION_EXTRA	"-ioctl (2019-01-18)"
+ 
+ /* Status bits */
+ #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
 -- 
 2.15.0
