@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 9/9] dm: remove unused _rq_tio_cache and
-	_rq_cache
-Date: Wed, 20 Feb 2019 16:44:36 -0500
-Message-ID: <20190220214436.38476-10-snitzer@redhat.com>
+Subject: [PATCH v2 7/9] dm: improve noclone_endio() to support
+	multipath target
+Date: Wed, 20 Feb 2019 16:44:34 -0500
+Message-ID: <20190220214436.38476-8-snitzer@redhat.com>
 References: <20190220214436.38476-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,126 +21,146 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Also move dm_rq_target_io structure definition from dm-rq.h to dm-rq.c
+noclone_endio() must call the target's ->endio method if it exists.
+Also must handle the various DM_ENDIO_* returns that are possible.
 
-Fixes: 6a23e05c2fe3c6 ("dm: remove legacy request-based IO path")
+Factor out dm_bio_pushback_needed() for both dec_pending() and
+noclone_endio() to use when handling BLK_STS_DM_REQUEUE.
+
+Lastly, there is no need to conditionally set md->immutable_target in
+__bind().  If the device only uses a single immutable target then it
+should always be reflected in md->immutable_target.  This is important
+because noclone_endio() benefits from this to get access to the
+multipath dm_target without needing to add another member to the
+'dm_noclone' structure.
+
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-rq.c | 16 ++++++++++++++++
- drivers/md/dm-rq.h | 16 ----------------
- drivers/md/dm.c    | 22 ++--------------------
- 3 files changed, 18 insertions(+), 36 deletions(-)
+ drivers/md/dm.c | 80 ++++++++++++++++++++++++++++++++++++++++-----------------
+ 1 file changed, 57 insertions(+), 23 deletions(-)
 
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index a20531e5f3b4..9428cd951e3b 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -12,6 +12,22 @@
- 
- #define DM_MSG_PREFIX "core-rq"
- 
-+/*
-+ * One of these is allocated per request.
-+ */
-+struct dm_rq_target_io {
-+	struct mapped_device *md;
-+	struct dm_target *ti;
-+	struct request *orig, *clone;
-+	struct kthread_work work;
-+	blk_status_t error;
-+	union map_info info;
-+	struct dm_stats_aux stats_aux;
-+	unsigned long duration_jiffies;
-+	unsigned n_sectors;
-+	unsigned completed;
-+};
-+
- #define DM_MQ_NR_HW_QUEUES 1
- #define DM_MQ_QUEUE_DEPTH 2048
- static unsigned dm_mq_nr_hw_queues = DM_MQ_NR_HW_QUEUES;
-diff --git a/drivers/md/dm-rq.h b/drivers/md/dm-rq.h
-index b39245545229..1eea0da641db 100644
---- a/drivers/md/dm-rq.h
-+++ b/drivers/md/dm-rq.h
-@@ -16,22 +16,6 @@
- 
- struct mapped_device;
- 
--/*
-- * One of these is allocated per request.
-- */
--struct dm_rq_target_io {
--	struct mapped_device *md;
--	struct dm_target *ti;
--	struct request *orig, *clone;
--	struct kthread_work work;
--	blk_status_t error;
--	union map_info info;
--	struct dm_stats_aux stats_aux;
--	unsigned long duration_jiffies;
--	unsigned n_sectors;
--	unsigned completed;
--};
--
- /*
-  * For request-based dm - the bio clones we allocate are embedded in these
-  * structs.
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 0943913bceca..a58f35d31fd0 100644
+index 7e022f840419..0943913bceca 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -188,9 +188,6 @@ struct table_device {
- 	struct dm_dev dm_dev;
- };
- 
--static struct kmem_cache *_rq_tio_cache;
--static struct kmem_cache *_rq_cache;
--
- /*
-  * Bio-based DM's mempools' reserved IOs set by the user.
-  */
-@@ -252,20 +249,11 @@ static unsigned dm_get_numa_node(void)
- 
- static int __init local_init(void)
- {
--	int r = -ENOMEM;
--
--	_rq_tio_cache = KMEM_CACHE(dm_rq_target_io, 0);
--	if (!_rq_tio_cache)
--		return r;
--
--	_rq_cache = kmem_cache_create("dm_old_clone_request", sizeof(struct request),
--				      __alignof__(struct request), 0, NULL);
--	if (!_rq_cache)
--		goto out_free_rq_tio_cache;
-+	int r;
- 
- 	r = dm_uevent_init();
- 	if (r)
--		goto out_free_rq_cache;
-+		return r;
- 
- 	deferred_remove_workqueue = alloc_workqueue("kdmremove", WQ_UNBOUND, 1);
- 	if (!deferred_remove_workqueue) {
-@@ -287,10 +275,6 @@ static int __init local_init(void)
- 	destroy_workqueue(deferred_remove_workqueue);
- out_uevent_exit:
- 	dm_uevent_exit();
--out_free_rq_cache:
--	kmem_cache_destroy(_rq_cache);
--out_free_rq_tio_cache:
--	kmem_cache_destroy(_rq_tio_cache);
- 
- 	return r;
+@@ -919,6 +919,28 @@ static int __noflush_suspending(struct mapped_device *md)
+ 	return test_bit(DMF_NOFLUSH_SUSPENDING, &md->flags);
  }
-@@ -300,8 +284,6 @@ static void local_exit(void)
- 	flush_scheduled_work();
- 	destroy_workqueue(deferred_remove_workqueue);
  
--	kmem_cache_destroy(_rq_cache);
--	kmem_cache_destroy(_rq_tio_cache);
- 	unregister_blkdev(_major, _name);
- 	dm_uevent_exit();
++static bool dm_bio_pushback_needed(struct mapped_device *md,
++				   struct bio *bio, blk_status_t *error)
++{
++	unsigned long flags;
++
++	/*
++	 * Target requested pushing back the I/O.
++	 */
++	if (__noflush_suspending(md)) {
++		spin_lock_irqsave(&md->deferred_lock, flags);
++		// FIXME: using bio_list_add_head() creates LIFO
++		bio_list_add_head(&md->deferred, bio);
++		spin_unlock_irqrestore(&md->deferred_lock, flags);
++		return true;
++	} else {
++		/* noflush suspend was interrupted. */
++		*error = BLK_STS_IOERR;
++	}
++
++	return false;
++}
++
+ /*
+  * Decrements the number of outstanding ios that a bio has been
+  * cloned into, completing the original io if necc.
+@@ -939,22 +961,12 @@ static void dec_pending(struct dm_io *io, blk_status_t error)
+ 	}
  
+ 	if (atomic_dec_and_test(&io->io_count)) {
+-		if (io->status == BLK_STS_DM_REQUEUE) {
+-			/*
+-			 * Target requested pushing back the I/O.
+-			 */
+-			spin_lock_irqsave(&md->deferred_lock, flags);
+-			if (__noflush_suspending(md))
+-				/* NOTE early return due to BLK_STS_DM_REQUEUE below */
+-				bio_list_add_head(&md->deferred, io->orig_bio);
+-			else
+-				/* noflush suspend was interrupted. */
+-				io->status = BLK_STS_IOERR;
+-			spin_unlock_irqrestore(&md->deferred_lock, flags);
+-		}
++		bio = io->orig_bio;
++
++		if (unlikely(io->status == BLK_STS_DM_REQUEUE))
++			(void) dm_bio_pushback_needed(md, bio, &io->status);
+ 
+ 		io_error = io->status;
+-		bio = io->orig_bio;
+ 
+ 		if (unlikely(dm_stats_used(&md->stats))) {
+ 			unsigned long duration = jiffies - io->start_time;
+@@ -1041,8 +1053,33 @@ static void clone_endio(struct bio *bio)
+ 
+ static void noclone_endio(struct bio *bio)
+ {
++	blk_status_t error = bio->bi_status;
+ 	struct dm_noclone *noclone = bio->bi_private;
+ 	struct mapped_device *md = noclone->md;
++	struct dm_target *ti = NULL;
++	dm_endio_fn endio = NULL;
++
++	if (md->immutable_target) {
++		ti = md->immutable_target;
++		endio = ti->type->end_io;
++	}
++
++	if (endio) {
++		int r = endio(ti, bio, &error);
++		switch (r) {
++		case DM_ENDIO_REQUEUE:
++			error = BLK_STS_DM_REQUEUE;
++			/*FALLTHRU*/
++		case DM_ENDIO_DONE:
++			break;
++		case DM_ENDIO_INCOMPLETE:
++			/* The target will handle the io */
++			return;
++		default:
++			DMWARN("unimplemented target endio return value: %d", r);
++			BUG();
++		}
++	}
+ 
+ 	end_io_acct(md, bio, noclone->start_time);
+ 
+@@ -1050,6 +1087,11 @@ static void noclone_endio(struct bio *bio)
+ 	bio->bi_private = noclone->orig_bi_private;
+ 	kfree(noclone);
+ 
++	if (unlikely(error == BLK_STS_DM_REQUEUE)) {
++		if (dm_bio_pushback_needed(md, bio, &bio->bi_status))
++			return;
++	}
++
+ 	bio_endio(bio);
+ }
+ 
+@@ -2249,15 +2291,7 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
+ 	if (request_based)
+ 		dm_stop_queue(q);
+ 
+-	if (request_based || md->type == DM_TYPE_NVME_BIO_BASED) {
+-		/*
+-		 * Leverage the fact that request-based DM targets and
+-		 * NVMe bio based targets are immutable singletons
+-		 * - used to optimize both dm_request_fn and dm_mq_queue_rq;
+-		 *   and __process_bio.
+-		 */
+-		md->immutable_target = dm_table_get_immutable_target(t);
+-	}
++	md->immutable_target = dm_table_get_immutable_target(t);
+ 
+ 	ret = __bind_mempools(md, t);
+ 	if (ret) {
 -- 
 2.15.0
