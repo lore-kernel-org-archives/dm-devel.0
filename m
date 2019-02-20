@@ -1,14 +1,11 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 8/8] dm mpath: add support for dm_noclone and its
-	per-bio-data
-Date: Tue, 19 Feb 2019 17:17:21 -0500
-Message-ID: <20190219221721.29830-9-snitzer@redhat.com>
-References: <20190219221721.29830-1-snitzer@redhat.com>
+From: ZhangXiaoxu <zhangxiaoxu5@huawei.com>
+Subject: [PATCH v3] block: Fix a WRITE SAME BUG_ON
+Date: Wed, 20 Feb 2019 10:09:43 +0800
+Message-ID: <1550628583-100041-1-git-send-email-zhangxiaoxu5@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190219221721.29830-1-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,190 +15,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: martin.petersen@oracle.com, hch@infradead.org, heinzm@redhat.com, jdorminy@redhat.com, axboe@kernel.dk, snitzer@redhat.com, linux-block@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com, zhangxiaoxu5@huawei.com
 List-Id: dm-devel.ids
 
-Update multipath_init_per_bio_data() to allocate a dm_mpath_per_bio_data
-structure and associate it with the noclone bio using the dm_noclone
-structure's 'noclone_private' member.
+If the lvm is stacked by different lbs disks, when WRITE SAME on it, will bug_on:
 
-If kmem_cache_alloc() fails to allocate a struct dm_mpath_per_bio_data,
-DM_MAPIO_NOCLONE_FAILED is returned from ->map and DM core falls back to
-using traditional bio-based DM's bio cloning.
+kernel BUG at drivers/scsi/sd.c:968!
+invalid opcode: 0000 [#1] SMP PTI
+CPU: 11 PID: 525 Comm: kworker/11:1H Tainted: G           O      5.0.0-rc3+ #2
+Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.10.2-2.fc27 04/01/2014
+Workqueue: kblockd blk_mq_run_work_fn
+RIP: 0010:sd_init_command+0x7aa/0xdb0
+Code: 30 75 00 00 c7 85 44 01 00 00 18 00 00 00 0f 85 fa 04 00 00 48 83 c4 40 48
+      89 df 5b 5d 41 5c 41 5d 41 5e 41 5f e9 b6 ca fe ff <0f> 0b 41 bc 09
+RSP: 0018:ffffb55f80ddbca0 EFLAGS: 00010206
+RAX: 0000000000001000 RBX: ffff9ed23fb927a0 RCX: 000000000000f000
+RDX: ffff9ed23f0a8400 RSI: ffff9ed27bc79800 RDI: 0000000000000000
+RBP: ffff9ed23fb92680 R08: ffff9ed27c8c0000 R09: ffff9ed23fb927d8
+R10: 0000000000000000 R11: fefefefefefefeff R12: ffff9ed27bc79800
+R13: ffff9ed2787a0000 R14: ffff9ed27bdf3400 R15: ffff9ed23fb927a0
+FS:  0000000000000000(0000) GS:ffff9ed27c8c0000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007f6b14cf9341 CR3: 0000000069058000 CR4: 00000000000006e0
+Call Trace:
+ ? vp_notify+0x12/0x20
+ scsi_queue_rq+0x525/0xa30
+ blk_mq_dispatch_rq_list+0x8d/0x580
+ ? syscall_return_via_sysret+0x10/0x7f
+ ? elv_rb_del+0x1f/0x30
+ ? deadline_remove_request+0x55/0xc0
+ blk_mq_do_dispatch_sched+0x76/0x110
+ blk_mq_sched_dispatch_requests+0xf9/0x170
+ __blk_mq_run_hw_queue+0x51/0xd0
+ process_one_work+0x195/0x380
+ worker_thread+0x30/0x390
+ ? process_one_work+0x380/0x380
+ kthread+0x113/0x130
+ ? kthread_park+0x90/0x90
+ ret_from_fork+0x35/0x40
+Modules linked in: alloc(O+)
+---[ end trace dc92ddeb2e6d1fe5 ]---
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+The logical_block_size of the LVM is the max value of the sub disks,
+it maybe different with one of the sub disk. when WRITE SAME on the
+disk, it will BUG_ON when setup WRITE SAME cmd.
+
+Close WRITE_SAME feature on the LVM if it was stacked by different
+logical_block_size disk.
+
+Signed-off-by: ZhangXiaoxu <zhangxiaoxu5@huawei.com>
 ---
- drivers/md/dm-mpath.c | 65 +++++++++++++++++++++++++++++++++++++++++++--------
- 1 file changed, 55 insertions(+), 10 deletions(-)
+ block/blk-settings.c | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 2ee5e357a0a7..ac7ca5334796 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -30,6 +30,8 @@
- #define DM_PG_INIT_DELAY_MSECS 2000
- #define DM_PG_INIT_DELAY_DEFAULT ((unsigned) -1)
- 
-+static struct kmem_cache *_noclone_per_bio_data_cache;
-+
- /* Path properties */
- struct pgpath {
- 	struct list_head list;
-@@ -101,6 +103,11 @@ struct dm_mpath_io {
- 	size_t nr_bytes;
- };
- 
-+struct dm_mpath_per_bio_data {
-+	struct dm_mpath_io mpio;
-+	struct dm_bio_details bio_details;
-+};
-+
- typedef int (*action_fn) (struct pgpath *pgpath);
- 
- static struct workqueue_struct *kmultipathd, *kmpath_handlerd;
-@@ -250,11 +257,16 @@ static struct dm_mpath_io *get_mpio(union map_info *info)
- 
- static size_t multipath_per_bio_data_size(void)
- {
--	return sizeof(struct dm_mpath_io) + sizeof(struct dm_bio_details);
-+	return sizeof(struct dm_mpath_per_bio_data);
- }
- 
- static struct dm_mpath_io *get_mpio_from_bio(struct bio *bio)
- {
-+	struct dm_noclone *noclone = dm_get_noclone_from_bio(bio);
-+
-+	if (noclone)
-+		return noclone->noclone_private;
-+
- 	return dm_per_bio_data(bio, multipath_per_bio_data_size());
- }
- 
-@@ -265,16 +277,29 @@ static struct dm_bio_details *get_bio_details_from_mpio(struct dm_mpath_io *mpio
- 	return bio_details;
- }
- 
--static void multipath_init_per_bio_data(struct bio *bio, struct dm_mpath_io **mpio_p)
-+static bool multipath_init_per_bio_data(struct dm_target *ti, struct bio *bio,
-+					struct dm_mpath_io **mpio_p)
- {
--	struct dm_mpath_io *mpio = get_mpio_from_bio(bio);
--	struct dm_bio_details *bio_details = get_bio_details_from_mpio(mpio);
-+	struct dm_mpath_io *mpio;
-+	struct dm_bio_details *bio_details;
-+	struct dm_noclone *noclone = dm_get_noclone_from_bio(bio);
-+
-+	if (noclone) {
-+		noclone->noclone_private =
-+			kmem_cache_alloc(_noclone_per_bio_data_cache, GFP_NOWAIT);
-+		if (unlikely(!noclone->noclone_private))
-+			return false;
-+	}
-+
-+	mpio = get_mpio_from_bio(bio);
-+	bio_details = get_bio_details_from_mpio(mpio);
- 
- 	mpio->nr_bytes = bio->bi_iter.bi_size;
- 	mpio->pgpath = NULL;
- 	*mpio_p = mpio;
- 
- 	dm_bio_record(bio_details, bio);
-+	return true;
- }
- 
- /*-----------------------------------------------
-@@ -652,7 +677,9 @@ static int multipath_map_bio(struct dm_target *ti, struct bio *bio)
- 	struct multipath *m = ti->private;
- 	struct dm_mpath_io *mpio = NULL;
- 
--	multipath_init_per_bio_data(bio, &mpio);
-+	if (!multipath_init_per_bio_data(ti, bio, &mpio))
-+		return DM_MAPIO_NOCLONE_FAILED;
-+
- 	return __multipath_map_bio(m, bio, mpio);
- }
- 
-@@ -1178,9 +1205,10 @@ static int multipath_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	ti->num_discard_bios = 1;
- 	ti->num_write_same_bios = 1;
- 	ti->num_write_zeroes_bios = 1;
--	if (m->queue_mode == DM_TYPE_BIO_BASED)
-+	if (m->queue_mode == DM_TYPE_BIO_BASED) {
-+		ti->no_clone = true;
- 		ti->per_io_data_size = multipath_per_bio_data_size();
--	else
-+	} else
- 		ti->per_io_data_size = sizeof(struct dm_mpath_io);
- 
- 	return 0;
-@@ -1584,12 +1612,13 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
- 	return r;
- }
- 
--static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
-+static int multipath_end_io_bio(struct dm_target *ti, struct bio *bio,
- 				blk_status_t *error)
- {
- 	struct multipath *m = ti->private;
--	struct dm_mpath_io *mpio = get_mpio_from_bio(clone);
-+	struct dm_mpath_io *mpio = get_mpio_from_bio(bio);
- 	struct pgpath *pgpath = mpio->pgpath;
-+	struct dm_noclone *noclone = NULL;
- 	unsigned long flags;
- 	int r = DM_ENDIO_DONE;
- 
-@@ -1611,7 +1640,7 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index 3e7038e..672cd27 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -497,8 +497,6 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+ 	t->max_sectors = min_not_zero(t->max_sectors, b->max_sectors);
+ 	t->max_hw_sectors = min_not_zero(t->max_hw_sectors, b->max_hw_sectors);
+ 	t->max_dev_sectors = min_not_zero(t->max_dev_sectors, b->max_dev_sectors);
+-	t->max_write_same_sectors = min(t->max_write_same_sectors,
+-					b->max_write_same_sectors);
+ 	t->max_write_zeroes_sectors = min(t->max_write_zeroes_sectors,
+ 					b->max_write_zeroes_sectors);
+ 	t->bounce_pfn = min_not_zero(t->bounce_pfn, b->bounce_pfn);
+@@ -537,6 +535,18 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+ 		}
  	}
  
- 	spin_lock_irqsave(&m->lock, flags);
--	bio_list_add(&m->queued_bios, clone);
-+	bio_list_add(&m->queued_bios, bio);
- 	spin_unlock_irqrestore(&m->lock, flags);
- 	if (!test_bit(MPATHF_QUEUE_IO, &m->flags))
- 		queue_work(kmultipathd, &m->process_queued_bios);
-@@ -1625,6 +1654,12 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
- 			ps->type->end_io(ps, &pgpath->path, mpio->nr_bytes);
- 	}
- 
-+	if (r != DM_ENDIO_INCOMPLETE) {
-+		noclone = dm_get_noclone_from_bio(bio);
-+		if (noclone)
-+			kmem_cache_free(_noclone_per_bio_data_cache, noclone->noclone_private);
-+	}
++	/* If the lbs is different, disable WRITE SAME.
++	   The default value of max_write_same_sectors is UINT_MAX, and
++	   default value of logical_block_size is 512, do not apply this
++	   rule when first iteration.
++	 */
++	if (t->logical_block_size != b->logical_block_size &&
++	    t->max_write_same_sectors != UINT_MAX)
++		t->max_write_same_sectors = 0;
++	else
++		t->max_write_same_sectors = min(t->max_write_same_sectors,
++						b->max_write_same_sectors);
 +
- 	return r;
- }
+ 	t->logical_block_size = max(t->logical_block_size,
+ 				    b->logical_block_size);
  
-@@ -2057,6 +2092,13 @@ static int __init dm_multipath_init(void)
- 		goto bad_alloc_kmpath_handlerd;
- 	}
- 
-+	_noclone_per_bio_data_cache = KMEM_CACHE(dm_mpath_per_bio_data, 0);
-+	if (!_noclone_per_bio_data_cache) {
-+		DMERR("failed to create noclone_per_bio_data_cache");
-+		r = -ENOMEM;
-+		goto bad_noclone_pbd;
-+	}
-+
- 	r = dm_register_target(&multipath_target);
- 	if (r < 0) {
- 		DMERR("request-based register failed %d", r);
-@@ -2067,6 +2109,8 @@ static int __init dm_multipath_init(void)
- 	return 0;
- 
- bad_register_target:
-+	kmem_cache_destroy(_noclone_per_bio_data_cache);
-+bad_noclone_pbd:
- 	destroy_workqueue(kmpath_handlerd);
- bad_alloc_kmpath_handlerd:
- 	destroy_workqueue(kmultipathd);
-@@ -2078,6 +2122,7 @@ static void __exit dm_multipath_exit(void)
- {
- 	destroy_workqueue(kmpath_handlerd);
- 	destroy_workqueue(kmultipathd);
-+	kmem_cache_destroy(_noclone_per_bio_data_cache);
- 
- 	dm_unregister_target(&multipath_target);
- }
 -- 
-2.15.0
+2.7.4
