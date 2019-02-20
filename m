@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 6/9] dm: add per-bio-data support to noclone
-	bio
-Date: Wed, 20 Feb 2019 16:44:33 -0500
-Message-ID: <20190220214436.38476-7-snitzer@redhat.com>
+Subject: [PATCH v2 9/9] dm: remove unused _rq_tio_cache and
+	_rq_cache
+Date: Wed, 20 Feb 2019 16:44:36 -0500
+Message-ID: <20190220214436.38476-10-snitzer@redhat.com>
 References: <20190220214436.38476-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,100 +21,126 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Mikulas Patocka <mpatocka@redhat.com>
+Also move dm_rq_target_io structure definition from dm-rq.h to dm-rq.c
 
-Allocate additional space after the 'struct dm_clone' for the target
-requested per_io_data_size and place DM_NOCLONE_MAGIC at the end.
-
-Update both dm_per_bio_data() and dm_bio_from_per_bio_data() to branch
-accordingly based on whether bio/data is from clone or noclone.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Fixes: 6a23e05c2fe3c6 ("dm: remove legacy request-based IO path")
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm.c | 32 ++++++++++++++++++++++++++++----
- 1 file changed, 28 insertions(+), 4 deletions(-)
+ drivers/md/dm-rq.c | 16 ++++++++++++++++
+ drivers/md/dm-rq.h | 16 ----------------
+ drivers/md/dm.c    | 22 ++--------------------
+ 3 files changed, 18 insertions(+), 36 deletions(-)
 
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index a20531e5f3b4..9428cd951e3b 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -12,6 +12,22 @@
+ 
+ #define DM_MSG_PREFIX "core-rq"
+ 
++/*
++ * One of these is allocated per request.
++ */
++struct dm_rq_target_io {
++	struct mapped_device *md;
++	struct dm_target *ti;
++	struct request *orig, *clone;
++	struct kthread_work work;
++	blk_status_t error;
++	union map_info info;
++	struct dm_stats_aux stats_aux;
++	unsigned long duration_jiffies;
++	unsigned n_sectors;
++	unsigned completed;
++};
++
+ #define DM_MQ_NR_HW_QUEUES 1
+ #define DM_MQ_QUEUE_DEPTH 2048
+ static unsigned dm_mq_nr_hw_queues = DM_MQ_NR_HW_QUEUES;
+diff --git a/drivers/md/dm-rq.h b/drivers/md/dm-rq.h
+index b39245545229..1eea0da641db 100644
+--- a/drivers/md/dm-rq.h
++++ b/drivers/md/dm-rq.h
+@@ -16,22 +16,6 @@
+ 
+ struct mapped_device;
+ 
+-/*
+- * One of these is allocated per request.
+- */
+-struct dm_rq_target_io {
+-	struct mapped_device *md;
+-	struct dm_target *ti;
+-	struct request *orig, *clone;
+-	struct kthread_work work;
+-	blk_status_t error;
+-	union map_info info;
+-	struct dm_stats_aux stats_aux;
+-	unsigned long duration_jiffies;
+-	unsigned n_sectors;
+-	unsigned completed;
+-};
+-
+ /*
+  * For request-based dm - the bio clones we allocate are embedded in these
+  * structs.
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index d84735be6927..7e022f840419 100644
+index 0943913bceca..a58f35d31fd0 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -26,6 +26,8 @@
- #include <linux/pr.h>
- #include <linux/refcount.h>
- 
-+#include <asm/unaligned.h>
-+
- #define DM_MSG_PREFIX "core"
- 
- /*
-@@ -105,16 +107,29 @@ struct dm_io {
- /*
-  * One of these is allocated per noclone bio.
-  */
-+#define DM_NOCLONE_MAGIC 9693664
- struct dm_noclone {
- 	struct mapped_device *md;
-+	struct bio *bio;
- 	bio_end_io_t *orig_bi_end_io;
- 	void *orig_bi_private;
- 	unsigned long start_time;
-+	/* ... per-bio-data ... */
-+	/* DM_NOCLONE_MAGIC */
+@@ -188,9 +188,6 @@ struct table_device {
+ 	struct dm_dev dm_dev;
  };
  
-+static void noclone_endio(struct bio *bio);
-+
- void *dm_per_bio_data(struct bio *bio, size_t data_size)
+-static struct kmem_cache *_rq_tio_cache;
+-static struct kmem_cache *_rq_cache;
+-
+ /*
+  * Bio-based DM's mempools' reserved IOs set by the user.
+  */
+@@ -252,20 +249,11 @@ static unsigned dm_get_numa_node(void)
+ 
+ static int __init local_init(void)
  {
--	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
-+	struct dm_target_io *tio;
-+
-+	if (bio->bi_end_io == noclone_endio) {
-+		struct dm_noclone *noclone = bio->bi_private;
-+		return noclone + 1;
-+	}
-+
-+	tio = container_of(bio, struct dm_target_io, clone);
- 	if (!tio->inside_dm_io)
- 		return (char *)bio - offsetof(struct dm_target_io, clone) - data_size;
- 	return (char *)bio - offsetof(struct dm_target_io, clone) - offsetof(struct dm_io, tio) - data_size;
-@@ -124,9 +139,14 @@ EXPORT_SYMBOL_GPL(dm_per_bio_data);
- struct bio *dm_bio_from_per_bio_data(void *data, size_t data_size)
- {
- 	struct dm_io *io = (struct dm_io *)((char *)data + data_size);
--	if (io->magic == DM_IO_MAGIC)
-+	unsigned magic = get_unaligned(&io->magic);
-+	if (magic == DM_NOCLONE_MAGIC) {
-+		struct dm_noclone *noclone = (struct dm_noclone *)data - 1;
-+		return noclone->bio;
-+	}
-+	if (magic == DM_IO_MAGIC)
- 		return (struct bio *)((char *)io + offsetof(struct dm_io, tio) + offsetof(struct dm_target_io, clone));
--	BUG_ON(io->magic != DM_TIO_MAGIC);
-+	BUG_ON(magic != DM_TIO_MAGIC);
- 	return (struct bio *)((char *)io + offsetof(struct dm_target_io, clone));
+-	int r = -ENOMEM;
+-
+-	_rq_tio_cache = KMEM_CACHE(dm_rq_target_io, 0);
+-	if (!_rq_tio_cache)
+-		return r;
+-
+-	_rq_cache = kmem_cache_create("dm_old_clone_request", sizeof(struct request),
+-				      __alignof__(struct request), 0, NULL);
+-	if (!_rq_cache)
+-		goto out_free_rq_tio_cache;
++	int r;
+ 
+ 	r = dm_uevent_init();
+ 	if (r)
+-		goto out_free_rq_cache;
++		return r;
+ 
+ 	deferred_remove_workqueue = alloc_workqueue("kdmremove", WQ_UNBOUND, 1);
+ 	if (!deferred_remove_workqueue) {
+@@ -287,10 +275,6 @@ static int __init local_init(void)
+ 	destroy_workqueue(deferred_remove_workqueue);
+ out_uevent_exit:
+ 	dm_uevent_exit();
+-out_free_rq_cache:
+-	kmem_cache_destroy(_rq_cache);
+-out_free_rq_tio_cache:
+-	kmem_cache_destroy(_rq_tio_cache);
+ 
+ 	return r;
  }
- EXPORT_SYMBOL_GPL(dm_bio_from_per_bio_data);
-@@ -1793,14 +1813,18 @@ static blk_qc_t dm_process_bio(struct mapped_device *md,
+@@ -300,8 +284,6 @@ static void local_exit(void)
+ 	flush_scheduled_work();
+ 	destroy_workqueue(deferred_remove_workqueue);
  
- 		/* Already been here if bio->bi_end_io is noclone_endio, reentered via dm_wq_work() */
- 		if (bio->bi_end_io != noclone_endio) {
--			noclone = kmalloc_node(sizeof(*noclone), GFP_NOWAIT, md->numa_node_id);
-+			noclone = kmalloc_node(sizeof(*noclone) + ti->per_io_data_size + sizeof(unsigned),
-+					       GFP_NOWAIT, md->numa_node_id);
- 			if (unlikely(!noclone))
- 				goto no_fast_path;
+-	kmem_cache_destroy(_rq_cache);
+-	kmem_cache_destroy(_rq_tio_cache);
+ 	unregister_blkdev(_major, _name);
+ 	dm_uevent_exit();
  
- 			noclone->md = md;
- 			noclone->start_time = jiffies;
-+			noclone->bio = bio;
- 			noclone->orig_bi_end_io = bio->bi_end_io;
- 			noclone->orig_bi_private = bio->bi_private;
-+			put_unaligned(DM_NOCLONE_MAGIC,
-+				      (unsigned *)((char *)noclone + sizeof(*noclone) + ti->per_io_data_size));
- 			bio->bi_end_io = noclone_endio;
- 			bio->bi_private = noclone;
- 		} else
 -- 
 2.15.0
