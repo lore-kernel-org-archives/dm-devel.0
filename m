@@ -1,67 +1,174 @@
-From: Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [dm-devel] [PATCH V15 00/18] block: support multi-page bvec
-Date: Tue, 19 Feb 2019 18:37:09 -0800
-Message-ID: <8253d52d-a77a-b008-1fbd-f2f0a794a022@acm.org>
-References: <20190215111324.30129-1-ming.lei@redhat.com>
- <c52b6a8b-d1d4-67ff-f81c-371d09cc6d5b@kernel.dk>
- <1550250855.31902.102.camel@acm.org> <20190217131128.GB7296@ming.t460p>
- <1550593699.31902.115.camel@acm.org> <20190220011719.GA13035@ming.t460p>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 7/8] dm: improve noclone_endio() to support
+ multipath target
+Date: Wed, 20 Feb 2019 10:08:39 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1902201007010.25108@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20190219221721.29830-1-snitzer@redhat.com>
+	<20190219221721.29830-8-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190220011719.GA13035@ming.t460p>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ming Lei <ming.lei@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, "Darrick J . Wong" <darrick.wong@oracle.com>, Omar Sandoval <osandov@fb.com>, cluster-devel@redhat.com, linux-ext4@vger.kernel.org, Kent Overstreet <kent.overstreet@gmail.com>, Boaz Harrosh <ooo@electrozaur.com>, Gao Xiang <gaoxiang25@huawei.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, Bob Peterson <rpeterso@redhat.com>, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Dave Chinner <dchinner@redhat.com>, David Sterba <dsterba@suse.com>, linux-block@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190219221721.29830-8-snitzer@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2/19/19 5:17 PM, Ming Lei wrote:
-> On Tue, Feb 19, 2019 at 08:28:19AM -0800, Bart Van Assche wrote:
->> With this patch applied test nvmeof-mp/002 fails as follows:
->>
->> [  694.700400] kernel BUG at lib/sg_pool.c:103!
->> [  694.705932] invalid opcode: 0000 [#1] PREEMPT SMP KASAN
->> [  694.708297] CPU: 2 PID: 349 Comm: kworker/2:1H Tainted: G    B             5.0.0-rc6-dbg+ #2
->> [  694.711730] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.10.2-1 04/01/2014
->> [  694.715113] Workqueue: kblockd blk_mq_run_work_fn
->> [  694.716894] RIP: 0010:sg_alloc_table_chained+0xe5/0xf0
->> [  694.758222] Call Trace:
->> [  694.759645]  nvme_rdma_queue_rq+0x2aa/0xcc0 [nvme_rdma]
->> [  694.764915]  blk_mq_try_issue_directly+0x2a5/0x4b0
->> [  694.771779]  blk_insert_cloned_request+0x11e/0x1c0
->> [  694.778417]  dm_mq_queue_rq+0x3d1/0x770
->> [  694.793400]  blk_mq_dispatch_rq_list+0x5fc/0xb10
->> [  694.798386]  blk_mq_sched_dispatch_requests+0x2f7/0x300
->> [  694.803180]  __blk_mq_run_hw_queue+0xd6/0x180
->> [  694.808933]  blk_mq_run_work_fn+0x27/0x30
->> [  694.810315]  process_one_work+0x4f1/0xa40
->> [  694.813178]  worker_thread+0x67/0x5b0
->> [  694.814487]  kthread+0x1cf/0x1f0
->> [  694.819134]  ret_from_fork+0x24/0x30
->>
->> The code in sg_pool.c that triggers the BUG() statement is as follows:
->>
->> int sg_alloc_table_chained(struct sg_table *table, int nents,
->> 		struct scatterlist *first_chunk)
->> {
->> 	int ret;
->>
->> 	BUG_ON(!nents);
->> [ ... ]
->>
->> Bart.
+
+
+On Tue, 19 Feb 2019, Mike Snitzer wrote:
+
+> noclone_endio() must call the target's ->endio method if it exists.
+> Also must handle the various DM_ENDIO_* returns that are possible.
 > 
-> I can reproduce this issue("kernel BUG at lib/sg_pool.c:103") without mp-bvec patches,
-> so looks it isn't the fault of this patchset.
+> Factor out dm_bio_pushback_needed() for both dec_pending() and
+> noclone_endio() to use when handling BLK_STS_DM_REQUEUE.
+> 
+> Lastly, there is no need to conditionally set md->immutable_target in
+> __bind().  If the device only uses a single immutable target then it
+> should always be reflected in md->immutable_target.  This is important
+> because noclone_endio() benefits from this to get access to the
+> multipath dm_target without needing to add another member to the
+> 'dm_noclone' structure.
+> 
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>  drivers/md/dm.c | 77 ++++++++++++++++++++++++++++++++++++++++-----------------
+>  1 file changed, 55 insertions(+), 22 deletions(-)
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 8ff0ced278d7..2299f946c175 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -897,6 +897,28 @@ static int __noflush_suspending(struct mapped_device *md)
+>  	return test_bit(DMF_NOFLUSH_SUSPENDING, &md->flags);
+>  }
+>  
+> +static bool dm_bio_pushback_needed(struct mapped_device *md,
+> +				   struct bio *bio, blk_status_t *error)
+> +{
+> +	unsigned long flags;
+> +
+> +	/*
+> +	 * Target requested pushing back the I/O.
+> +	 */
+> +	if (__noflush_suspending(md)) {
+> +		spin_lock_irqsave(&md->deferred_lock, flags);
+> +		// FIXME: using bio_list_add_head() creates LIFO
+> +		bio_list_add_head(&md->deferred, bio);
+> +		spin_unlock_irqrestore(&md->deferred_lock, flags);
+> +		return true;
+> +	} else {
+> +		/* noflush suspend was interrupted. */
+> +		*error = BLK_STS_IOERR;
+> +	}
+> +
+> +	return false;
+> +}
+> +
+>  /*
+>   * Decrements the number of outstanding ios that a bio has been
+>   * cloned into, completing the original io if necc.
+> @@ -917,19 +939,8 @@ static void dec_pending(struct dm_io *io, blk_status_t error)
+>  	}
+>  
+>  	if (atomic_dec_and_test(&io->io_count)) {
+> -		if (io->status == BLK_STS_DM_REQUEUE) {
+> -			/*
+> -			 * Target requested pushing back the I/O.
+> -			 */
+> -			spin_lock_irqsave(&md->deferred_lock, flags);
+> -			if (__noflush_suspending(md))
+> -				/* NOTE early return due to BLK_STS_DM_REQUEUE below */
+> -				bio_list_add_head(&md->deferred, io->orig_bio);
+> -			else
+> -				/* noflush suspend was interrupted. */
+> -				io->status = BLK_STS_IOERR;
+> -			spin_unlock_irqrestore(&md->deferred_lock, flags);
+> -		}
+> +		if (unlikely(io->status == BLK_STS_DM_REQUEUE))
+> +			(void) dm_bio_pushback_needed(md, bio, &io->status);
 
-Thanks Ming for your feedback.
+This triggers compiler warning because the variable bio is uninitialized 
+here.
 
-Jens, I don't see that issue with kernel v5.0-rc6. Does that mean that 
-the sg_pool BUG() is a regression in your for-next branch that predates 
-Ming's multi-page bvec patch series?
+Mikulas
 
-Thanks,
-
-Bart.
+>  
+>  		io_error = io->status;
+>  		bio = io->orig_bio;
+> @@ -1019,8 +1030,33 @@ static void clone_endio(struct bio *bio)
+>  
+>  static void noclone_endio(struct bio *bio)
+>  {
+> +	blk_status_t error = bio->bi_status;
+>  	struct dm_noclone *noclone = bio->bi_private;
+>  	struct mapped_device *md = noclone->md;
+> +	struct dm_target *ti = NULL;
+> +	dm_endio_fn endio = NULL;
+> +
+> +	if (md->immutable_target) {
+> +		ti = md->immutable_target;
+> +		endio = ti->type->end_io;
+> +	}
+> +
+> +	if (endio) {
+> +		int r = endio(ti, bio, &error);
+> +		switch (r) {
+> +		case DM_ENDIO_REQUEUE:
+> +			error = BLK_STS_DM_REQUEUE;
+> +			/*FALLTHRU*/
+> +		case DM_ENDIO_DONE:
+> +			break;
+> +		case DM_ENDIO_INCOMPLETE:
+> +			/* The target will handle the io */
+> +			return;
+> +		default:
+> +			DMWARN("unimplemented target endio return value: %d", r);
+> +			BUG();
+> +		}
+> +	}
+>  
+>  	end_io_acct(md, bio, noclone->start_time);
+>  
+> @@ -1028,6 +1064,11 @@ static void noclone_endio(struct bio *bio)
+>  	bio->bi_private = noclone->orig_bi_private;
+>  	kmem_cache_free(_noclone_cache, noclone);
+>  
+> +	if (unlikely(error == BLK_STS_DM_REQUEUE)) {
+> +		if (dm_bio_pushback_needed(md, bio, &bio->bi_status))
+> +			return;
+> +	}
+> +
+>  	bio_endio(bio);
+>  }
+>  
+> @@ -2229,15 +2270,7 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
+>  	if (request_based)
+>  		dm_stop_queue(q);
+>  
+> -	if (request_based || md->type == DM_TYPE_NVME_BIO_BASED) {
+> -		/*
+> -		 * Leverage the fact that request-based DM targets and
+> -		 * NVMe bio based targets are immutable singletons
+> -		 * - used to optimize both dm_request_fn and dm_mq_queue_rq;
+> -		 *   and __process_bio.
+> -		 */
+> -		md->immutable_target = dm_table_get_immutable_target(t);
+> -	}
+> +	md->immutable_target = dm_table_get_immutable_target(t);
+>  
+>  	ret = __bind_mempools(md, t);
+>  	if (ret) {
+> -- 
+> 2.15.0
+> 
