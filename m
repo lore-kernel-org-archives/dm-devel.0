@@ -1,66 +1,55 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: block: be more careful about status in __bio_chain_endio
-Date: Fri, 22 Feb 2019 16:10:06 -0500
-Message-ID: <20190222211006.GA10987@redhat.com>
-References: <70cda2a3-f246-d45b-f600-1f9d15ba22ff@gmail.com>
- <87eflmpqkb.fsf@notabene.neil.brown.name>
+Subject: Re: dm crypt: fix memory leak in dm_crypt_integrity_io_alloc() error
+ path
+Date: Fri, 22 Feb 2019 17:45:18 -0500
+Message-ID: <20190222224518.GA11359@redhat.com>
+References: <20190216210022.29483-1-sultan@kerneltoast.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <87eflmpqkb.fsf@notabene.neil.brown.name>
+In-Reply-To: <20190216210022.29483-1-sultan@kerneltoast.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: sultan@kerneltoast.com
+Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Feb 15 2018 at  4:09am -0500,
-NeilBrown <neilb@suse.com> wrote:
+On Sat, Feb 16 2019 at  4:00pm -0500,
+sultan@kerneltoast.com <sultan@kerneltoast.com> wrote:
 
+> From: Sultan Alsawaf <sultan@kerneltoast.com>
 > 
-> If two bios are chained under the one parent (with bio_chain())
-> it is possible that one will succeed and the other will fail.
-> __bio_chain_endio must ensure that the failure error status
-> is reported for the whole, rather than the success.
+> dm_crypt_integrity_io_alloc() allocates space for an integrity payload but
+> doesn't free it in the error path, leaking memory. Add a bio_integrity_free()
+> invocation upon error to fix the memory leak.
 > 
-> It currently tries to be careful, but this test is racy.
-> If both children finish at the same time, they might both see that
-> parent->bi_status as zero, and so will assign their own status.
-> If the assignment to parent->bi_status by the successful bio happens
-> last, the error status will be lost which can lead to silent data
-> corruption.
-> 
-> Instead, __bio_chain_endio should only assign a non-zero status
-> to parent->bi_status.  There is then no need to test the current
-> value of parent->bi_status - a test that would be racy anyway.
-> 
-> Note that this bug hasn't been seen in practice.  It was only discovered
-> by examination after a similar bug was found in dm.c
-> 
-> Signed-off-by: NeilBrown <neilb@suse.com>
+> Signed-off-by: Sultan Alsawaf <sultan@kerneltoast.com>
 > ---
->  block/bio.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+>  drivers/md/dm-crypt.c | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
 > 
-> diff --git a/block/bio.c b/block/bio.c
-> index e1708db48258..ad77140edc6f 100644
-> --- a/block/bio.c
-> +++ b/block/bio.c
-> @@ -312,7 +312,7 @@ static struct bio *__bio_chain_endio(struct bio *bio)
->  {
->  	struct bio *parent = bio->bi_private;
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index dd538e6b2..f731e1fe0 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -939,8 +939,10 @@ static int dm_crypt_integrity_io_alloc(struct dm_crypt_io *io, struct bio *bio)
 >  
-> -	if (!parent->bi_status)
-> +	if (bio->bi_status)
->  		parent->bi_status = bio->bi_status;
->  	bio_put(bio);
->  	return parent;
-> -- 
-> 2.14.0.rc0.dirty
-> 
+>  	ret = bio_integrity_add_page(bio, virt_to_page(io->integrity_metadata),
+>  				     tag_len, offset_in_page(io->integrity_metadata));
+> -	if (unlikely(ret != tag_len))
+> +	if (unlikely(ret != tag_len)) {
+> +		bio_integrity_free(bio);
+>  		return -ENOMEM;
+> +	}
+>  
+>  	return 0;
+>  }
 
-Reviewed-by: Mike Snitzer <snitzer@redhat.com>
+Since commit 7c20f11680a4 bio_integrity_free() is no longer and exported
+symbol.
 
-Jens, this one slipped through the crack just over a year ago.
-It is available in patchwork here:
-https://patchwork.kernel.org/patch/10220727/
+But that aside, this dm-crypt clone bio's endio will clean up the bip
+once -ENOMEM return starts to make its way out via
+crypt_alloc_buffer()'s bio_put().
+
+Mike
