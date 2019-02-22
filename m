@@ -1,11 +1,14 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 0/9] Misc Multipath patches
-Date: Fri, 22 Feb 2019 10:58:03 -0600
-Message-ID: <1550854692-19873-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 2/9] libmultipath: handle existing paths in
+	marginal_path enqueue
+Date: Fri, 22 Feb 2019 10:58:05 -0600
+Message-ID: <1550854692-19873-3-git-send-email-bmarzins@redhat.com>
+References: <1550854692-19873-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1550854692-19873-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,34 +22,47 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The series is a mix of resends an new patches.
+If the path that enqueue_io_err_stat_by_path() is trying to add
+is already on the list, just return success. There's no reason
+to fail in this case.
 
-Patches 0001-0005 are simply resends of patches I've submitted earlier,
-with no changes other that adding Reviewed-by's where appropriate.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/io_err_stat.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
-Patches 0006-0009 are the result of running into some bugs during
-firmare updates on an array. 
-
-Benjamin Marzinski (9):
-  libmultipath: disable user_friendly_names for NetApp
-  libmultipath: handle existing paths in marginal_path enqueue
-  multipathd: cleanup marginal paths checking timers
-  libmultipath: fix marginal paths queueing errors
-  libmultipath: fix marginal_paths nr_active check
-  multipathd: Fix miscounting active paths
-  multipathd: ignore failed wwid recheck
-  libmutipath: continue to use old state on PATH_PENDING
-  multipathd: use update_path_groups instead of reload_map
-
- libmultipath/discovery.c   | 18 ++++++----
- libmultipath/hwtable.c     |  1 +
- libmultipath/io_err_stat.c | 71 +++++++++++++++-----------------------
- libmultipath/io_err_stat.h |  2 +-
- multipath/main.c           |  2 +-
- multipathd/cli_handlers.c  |  2 +-
- multipathd/main.c          | 27 +++++++++------
- multipathd/main.h          |  2 ++
- 8 files changed, 62 insertions(+), 63 deletions(-)
-
+diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
+index 02b1453..1cb3ffe 100644
+--- a/libmultipath/io_err_stat.c
++++ b/libmultipath/io_err_stat.c
+@@ -254,7 +254,6 @@ static void free_io_err_pathvec(struct io_err_stat_pathvec *p)
+  * return value
+  * 0: enqueue OK
+  * 1: fails because of internal error
+- * 2: fails because of existing already
+  */
+ static int enqueue_io_err_stat_by_path(struct path *path)
+ {
+@@ -264,7 +263,7 @@ static int enqueue_io_err_stat_by_path(struct path *path)
+ 	p = find_err_path_by_dev(paths->pathvec, path->dev);
+ 	if (p) {
+ 		pthread_mutex_unlock(&paths->mutex);
+-		return 2;
++		return 0;
+ 	}
+ 	pthread_mutex_unlock(&paths->mutex);
+ 
+@@ -418,9 +417,8 @@ int hit_io_err_recheck_time(struct path *pp)
+ 			io_err_stat_log(3, "%s: enqueue fails, to recover",
+ 					pp->dev);
+ 			goto recover;
+-		} else if (!r) {
++		} else
+ 			pp->io_err_pathfail_cnt = PATH_IO_ERR_IN_CHECKING;
+-		}
+ 	}
+ 
+ 	return 1;
 -- 
 2.17.2
