@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 8/9] libmutipath: continue to use old state on
-	PATH_PENDING
-Date: Fri, 22 Feb 2019 10:58:11 -0600
-Message-ID: <1550854692-19873-9-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 9/9] multipathd: use update_path_groups instead
+	of reload_map
+Date: Fri, 22 Feb 2019 10:58:12 -0600
+Message-ID: <1550854692-19873-10-git-send-email-bmarzins@redhat.com>
 References: <1550854692-19873-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,44 +22,73 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-When pathinfo() sets pp->state to PATH_PENDING, it can cause problems
-with path checking.  It should act more like check_path(). When
-check_path() sees a new state of PATH_PENDING, it doesn't update the
-path state at all, so a path's old state is normally never PATH_PENDING.
-
-As and example of the problems of setting a path to PATH_PENDING, If
-check_path() sets a path's state to PATH_UP, then a call to pathinfo()
-sets the state to PATH_PENDING, and then another call the check_path()
-sets the state to PATH_DOWN, multipathd won't fail the path in the
-kernel. Also, if a path's state is PATH_PENDING, and nr_active is
-recalculated, that path will count as down, even if the state was
-previously PATH_UP. If a path already has a state of PATH_WILD or
-PATH_UNCHECKED, changing it to PATH_PENDING won't hurt anything, and it
-will help anyone who sees it know what's actually happening. But
-otherwise, pathinfo() should leave the previous state alone.
+reload_map() doesn't do the work to sync the state after reloading the
+map.  Instead of calling it directly, cli_reload() and uev_update_path()
+should call update_path_groups(), which calls reload_map() with all the
+necessary syncing.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ multipathd/cli_handlers.c |  2 +-
+ multipathd/main.c         | 13 ++++++++-----
+ multipathd/main.h         |  2 ++
+ 3 files changed, 11 insertions(+), 6 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 729bcb9..d3585f9 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1946,8 +1946,11 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index f95813e..60e17d6 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -877,7 +877,7 @@ cli_reload(void *v, char **reply, int *len, void *data)
+ 		return 1;
+ 	}
  
- 	if (mask & DI_CHECKER) {
- 		if (path_state == PATH_UP) {
--			pp->chkrstate = pp->state = get_state(pp, conf, 0,
--							      path_state);
-+			int newstate = get_state(pp, conf, 0, path_state);
-+			if (newstate != PATH_PENDING ||
-+			    pp->state == PATH_UNCHECKED ||
-+			    pp->state == PATH_WILD)
-+				pp->chkrstate = pp->state = newstate;
- 			if (pp->state == PATH_TIMEOUT)
- 				pp->state = PATH_DOWN;
- 			if (pp->state == PATH_UP && !pp->size) {
+-	return reload_map(vecs, mpp, 0, 1);
++	return update_path_groups(mpp, vecs, 0);
+ }
+ 
+ int resize_map(struct multipath *mpp, unsigned long long size,
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 81ad6c0..27ff186 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1272,10 +1272,13 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 			else {
+ 				if (ro == 1)
+ 					pp->mpp->force_readonly = 1;
+-				retval = reload_map(vecs, mpp, 0, 1);
+-				pp->mpp->force_readonly = 0;
+-				condlog(2, "%s: map %s reloaded (retval %d)",
+-					uev->kernel, mpp->alias, retval);
++				retval = update_path_groups(mpp, vecs, 0);
++				if (retval == 2)
++					condlog(2, "%s: map removed during reload", pp->dev);
++				else {
++					pp->mpp->force_readonly = 0;
++					condlog(2, "%s: map %s reloaded (retval %d)", uev->kernel, mpp->alias, retval);
++				}
+ 			}
+ 		}
+ 	}
+@@ -1831,7 +1834,7 @@ int update_path_groups(struct multipath *mpp, struct vectors *vecs, int refresh)
+ 
+ 	dm_lib_release();
+ 	if (setup_multipath(vecs, mpp) != 0)
+-		return 1;
++		return 2;
+ 	sync_map_state(mpp);
+ 
+ 	return 0;
+diff --git a/multipathd/main.h b/multipathd/main.h
+index 8fd426b..e5c1398 100644
+--- a/multipathd/main.h
++++ b/multipathd/main.h
+@@ -43,5 +43,7 @@ int __setup_multipath (struct vectors * vecs, struct multipath * mpp,
+ 		       int reset);
+ #define setup_multipath(vecs, mpp) __setup_multipath(vecs, mpp, 1)
+ int update_multipath (struct vectors *vecs, char *mapname, int reset);
++int update_path_groups(struct multipath *mpp, struct vectors *vecs,
++		       int refresh);
+ 
+ #endif /* MAIN_H */
 -- 
 2.17.2
