@@ -1,65 +1,185 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v12] dm: add support to directly boot to a mapped device
-Date: Thu, 21 Feb 2019 14:42:47 -0800
-Message-ID: <CAGXu5jL2xQL9rgwQsqfraGQwzOd2+yr-2qkKvZYNwXYGTV8TZA@mail.gmail.com>
-References: <20190221203334.24504-1-helen.koike@collabora.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH v2 5/9] dm: improve noclone bio support
+Date: Fri, 22 Feb 2019 05:59:01 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1902220558150.18614@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20190220214436.38476-1-snitzer@redhat.com>
+	<20190220214436.38476-6-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190221203334.24504-1-helen.koike@collabora.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Helen Koike <helen.koike@collabora.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Will Drewry <wad@chromium.org>, Mike Snitzer <snitzer@redhat.com>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, richard -rw- weinberger <richard.weinberger@gmail.com>, LKML <linux-kernel@vger.kernel.org>, linux-lvm@redhat.com, Enric Balletbo i Serra <enric.balletbo@collabora.com>, kernel@collabora.com, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190220214436.38476-6-snitzer@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Feb 21, 2019 at 12:33 PM Helen Koike <helen.koike@collabora.com> wrote:
->
-> Add a "create" module parameter, which allows device-mapper targets to be
-> configured at boot time. This enables early use of dm targets in the boot
-> process (as the root device or otherwise) without the need of an initramfs.
->
-> The syntax used in the boot param is based on the concise format from the
-> dmsetup tool to follow the rule of least surprise:
->
->         sudo dmsetup table --concise /dev/mapper/lroot
->
-> Which is:
->         dm-mod.create=<name>,<uuid>,<minor>,<flags>,<table>[,<table>+][;<name>,<uuid>,<minor>,<flags>,<table>[,<table>+]+]
->
-> Where,
->         <name>          ::= The device name.
->         <uuid>          ::= xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | ""
->         <minor>         ::= The device minor number | ""
->         <flags>         ::= "ro" | "rw"
->         <table>         ::= <start_sector> <num_sectors> <target_type> <target_args>
->         <target_type>   ::= "verity" | "linear" | ...
->
-> For example, the following could be added in the boot parameters:
-> dm-mod.create="lroot,,,rw, 0 4096 linear 98:16 0, 4096 4096 linear 98:32 0" root=/dev/dm-0
->
-> Only the targets that were tested are allowed and the ones that doesn't
-> change any block device when the dm is create as read-only. For example,
-> mirror and cache targets are not allowed. The rationale behind this is
-> that if the user makes a mistake, choosing the wrong device to be the
-> mirror or the cache can corrupt data.
->
-> The only targets allowed are:
-> * crypt
-> * delay
-> * linear
-> * snapshot-origin
-> * striped
-> * verity
->
-> Co-developed-by: Will Drewry <wad@chromium.org>
-> Co-developed-by: Kees Cook <keescook@chromium.org>
-> Co-developed-by: Enric Balletbo i Serra <enric.balletbo@collabora.com>
-> Signed-off-by: Helen Koike <helen.koike@collabora.com>
+Hi
 
-Thanks! This appears to have everything Chrome OS needs. I've asked a
-few other folks to look at it too.
+I've fonud out that this patch causes timeout in the lvm test 
+shell/activate-missing-segment.sh and some others.
 
-Reviewed-by: Kees Cook <keescook@chromium.org>
+Mikulas
 
--- 
-Kees Cook
+
+
+On Wed, 20 Feb 2019, Mike Snitzer wrote:
+
+> Leverage fact that dm_queue_split() enables use of noclone support even
+> for targets that require additional splitting (via ti->max_io_len).
+> 
+> To achieve this move noclone processing from dm_make_request() to
+> dm_process_bio() and check if bio->bi_end_io is already set to
+> noclone_endio.  This also fixes dm_wq_work() to be able to support
+> noclone bios (because it calls dm_process_bio()).
+> 
+> While at it, clean up ->map() return processing to be comparable to
+> __map_bio() and add some code comments that explain why certain
+> conditionals exist to prevent the use of noclone.
+> 
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>  drivers/md/dm.c | 103 ++++++++++++++++++++++++++++++++++----------------------
+>  1 file changed, 62 insertions(+), 41 deletions(-)
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 57919f211acc..d84735be6927 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1764,14 +1764,75 @@ static blk_qc_t dm_process_bio(struct mapped_device *md,
+>  	 * If in ->make_request_fn we need to use blk_queue_split(), otherwise
+>  	 * queue_limits for abnormal requests (e.g. discard, writesame, etc)
+>  	 * won't be imposed.
+> +	 *
+> +	 * For normal READ and WRITE requests we benefit from upfront splitting
+> +	 * via dm_queue_split() because we can then leverage noclone support below.
+>  	 */
+> -	if (current->bio_list) {
+> +	if (current->bio_list && (bio->bi_end_io != noclone_endio)) {
+> +		/*
+> +		 * It is fine to use {blk,dm}_queue_split() before opting to use noclone
+> +		 * because any ->bi_private and ->bi_end_io will get saved off below.
+> +		 * Once noclone_endio() is called the bio_chain's endio will kick in.
+> +		 * - __split_and_process_bio() can split further, but any targets that
+> +		 *   require late _DM_ initiated splitting (e.g. dm_accept_partial_bio()
+> +		 *   callers) shouldn't set ti->no_clone.
+> +		 */
+>  		if (is_abnormal_io(bio))
+>  			blk_queue_split(md->queue, &bio);
+>  		else
+>  			dm_queue_split(md, ti, &bio);
+>  	}
+>  
+> +	if (dm_table_supports_noclone(map) &&
+> +	    (bio_op(bio) == REQ_OP_READ || bio_op(bio) == REQ_OP_WRITE) &&
+> +	    likely(!(bio->bi_opf & REQ_PREFLUSH)) &&
+> +	    likely(!bio_integrity(bio)) && /* integrity requires specialized processing */
+> +	    likely(!dm_stats_used(&md->stats))) { /* noclone doesn't support dm-stats */
+> +		int r;
+> +		struct dm_noclone *noclone;
+> +
+> +		/* Already been here if bio->bi_end_io is noclone_endio, reentered via dm_wq_work() */
+> +		if (bio->bi_end_io != noclone_endio) {
+> +			noclone = kmalloc_node(sizeof(*noclone), GFP_NOWAIT, md->numa_node_id);
+> +			if (unlikely(!noclone))
+> +				goto no_fast_path;
+> +
+> +			noclone->md = md;
+> +			noclone->start_time = jiffies;
+> +			noclone->orig_bi_end_io = bio->bi_end_io;
+> +			noclone->orig_bi_private = bio->bi_private;
+> +			bio->bi_end_io = noclone_endio;
+> +			bio->bi_private = noclone;
+> +		} else
+> +			noclone = bio->bi_private;
+> +
+> +		start_io_acct(md, bio);
+> +		r = ti->type->map(ti, bio);
+> +		switch (r) {
+> +		case DM_MAPIO_SUBMITTED:
+> +			break;
+> +		case DM_MAPIO_REMAPPED:
+> +			/* the bio has been remapped so dispatch it */
+> +			if (md->type == DM_TYPE_NVME_BIO_BASED)
+> +				ret = direct_make_request(bio);
+> +			else
+> +				ret = generic_make_request(bio);
+> +			break;
+> +		case DM_MAPIO_KILL:
+> +			bio_io_error(bio);
+> +			break;
+> +		case DM_MAPIO_REQUEUE:
+> +			bio->bi_status = BLK_STS_DM_REQUEUE;
+> +			noclone_endio(bio);
+> +			break;
+> +		default:
+> +			DMWARN("unimplemented target map return value: %d", r);
+> +			BUG();
+> +		}
+> +
+> +		return ret;
+> +	}
+> +no_fast_path:
+>  	if (dm_get_md_type(md) == DM_TYPE_NVME_BIO_BASED)
+>  		return __process_bio(md, map, bio, ti);
+>  	else
+> @@ -1798,48 +1859,8 @@ static blk_qc_t dm_make_request(struct request_queue *q, struct bio *bio)
+>  		return ret;
+>  	}
+>  
+> -	if (dm_table_supports_noclone(map) &&
+> -	    (bio_op(bio) == REQ_OP_READ || bio_op(bio) == REQ_OP_WRITE) &&
+> -	    likely(!(bio->bi_opf & REQ_PREFLUSH)) &&
+> -	    !bio_flagged(bio, BIO_CHAIN) &&
+> -	    likely(!bio_integrity(bio)) &&
+> -	    likely(!dm_stats_used(&md->stats))) {
+> -		int r;
+> -		struct dm_noclone *noclone;
+> -		struct dm_target *ti = dm_table_find_target(map, bio->bi_iter.bi_sector);
+> -		if (unlikely(!dm_target_is_valid(ti)))
+> -			goto no_fast_path;
+> -		if (unlikely(bio_sectors(bio) > max_io_len(bio->bi_iter.bi_sector, ti)))
+> -			goto no_fast_path;
+> -		noclone = kmalloc_node(sizeof(*noclone), GFP_NOWAIT, md->numa_node_id);
+> -		if (unlikely(!noclone))
+> -			goto no_fast_path;
+> -		noclone->md = md;
+> -		noclone->start_time = jiffies;
+> -		noclone->orig_bi_end_io = bio->bi_end_io;
+> -		noclone->orig_bi_private = bio->bi_private;
+> -		bio->bi_end_io = noclone_endio;
+> -		bio->bi_private = noclone;
+> -		start_io_acct(md, bio);
+> -		r = ti->type->map(ti, bio);
+> -		ret = BLK_QC_T_NONE;
+> -		if (likely(r == DM_MAPIO_REMAPPED)) {
+> -			ret = generic_make_request(bio);
+> -		} else if (likely(r == DM_MAPIO_SUBMITTED)) {
+> -		} else if (r == DM_MAPIO_KILL) {
+> -			bio->bi_status = BLK_STS_IOERR;
+> -			noclone_endio(bio);
+> -		} else {
+> -			DMWARN("unimplemented target map return value: %d", r);
+> -			BUG();
+> -		}
+> -		goto put_table_ret;
+> -	}
+> -
+> -no_fast_path:
+>  	ret = dm_process_bio(md, map, bio);
+>  
+> -put_table_ret:
+>  	dm_put_live_table(md, srcu_idx);
+>  	return ret;
+>  }
+> -- 
+> 2.15.0
+> 
