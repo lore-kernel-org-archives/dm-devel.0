@@ -1,45 +1,89 @@
-From: John Dorminy <jdorminy@redhat.com>
-Subject: Re: block: be more careful about status in __bio_chain_endio
-Date: Fri, 22 Feb 2019 22:10:39 -0500
-Message-ID: <CAMeeMh9qLkTByWJewPR4o844wPkA-g5Hnm7aGjszuPopPAe8vA@mail.gmail.com>
-References: <70cda2a3-f246-d45b-f600-1f9d15ba22ff@gmail.com>
- <87eflmpqkb.fsf@notabene.neil.brown.name> <20190222211006.GA10987@redhat.com>
- <7f0aeb7b-fdaa-0625-f785-05c342047550@kernel.dk> <20190222235459.GA11726@redhat.com>
- <CAMeeMh-2ANOr_Sb66EyA_HULkVRudD7fyOZsDbpRpDrshwnR2w@mail.gmail.com> <20190223024402.GA12407@redhat.com>
+From: Kurt Garloff <kurt@garloff.de>
+Subject: bug: dmsetup fails to parse concise tables
+Date: Sat, 23 Feb 2019 22:56:59 +0100
+Message-ID: <0b154688-762c-b6ac-2925-4ee8a19962a2@garloff.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190223024402.GA12407@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.com>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Content-Type: multipart/mixed; boundary="------------C0AF673486902DD0A7BD9402"
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I'm also worried about the other two versions, though:
+This is a multi-part message in MIME format.
+--------------C0AF673486902DD0A7BD9402
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-memory-barriers.txt#1724:
+Hi,
 
-1724 (*) The compiler is within its rights to invent stores to a variable,
+if I store device-mapper tables with dmsetup table --concise, I would
+expect that dmsetup create --concise would be able to parse the tables.
 
-i.e. the compiler is free to decide __bio_chain_endio looks like this:
+dmsetup however fails this with a simple three-entry table like this one:=
 
-static struct bio *__bio_chain_endio(struct bio *bio)
-{
-  struct bio *parent = bio->bi_private;
-  blk_status_t tmp = parent->bi_status;
-  parent->bi_status = bio->bi_status;
-  if (!bio->bi_status)
-    parent->bi_status = tmp;
-  bio_put(bio);
-  return parent;
-}
 
-In which case, the read and later store on the two different threads
-may overlap in such a way that bio_endio sometimes sees success, even
-if one child had an error.
+joined,77f15d24-943c-4dff-91e2-e43a4b0d9a23,1,rw,0 8 linear 7:1 0,8 8
+linear 7:2 0,16 8 linear 7:3 0
 
-As a result, I believe the setting of parent->bi_status needs to be a
-WRITE_ONCE() and the later reading needs to be a READ_ONCE()
-[although, since the later reading happens in many different
-functions, perhaps some other barrier to make sure all readers get the
-correct value is in order.]
+A full test case to be added to the test/shell/ directory is attached.
+
+PS: I'm not on the list, please copy me on responses.
+
+--=20
+Kurt Garloff <kurt@garloff.de>
+Cologne, Germany
+
+
+--------------C0AF673486902DD0A7BD9402
+Content-Type: application/x-shellscript;
+ name="dmsetup-concise.sh"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="dmsetup-concise.sh"
+
+IyEvdXNyL2Jpbi9lbnYgYmFzaAoKIyBDb3B5cmlnaHQgKEMpIDIwMTkgS3VydCBHYXJsb2Zm
+IDxrdXJ0QGdhcmxvZmYuZGU+CiMKIyBUaGlzIGNvcHlyaWdodGVkIG1hdGVyaWFsIGlzIG1h
+ZGUgYXZhaWxhYmxlIHRvIGFueW9uZSB3aXNoaW5nIHRvIHVzZSwKIyBtb2RpZnksIGNvcHks
+IG9yIHJlZGlzdHJpYnV0ZSBpdCBzdWJqZWN0IHRvIHRoZSB0ZXJtcyBhbmQgY29uZGl0aW9u
+cwojIG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSB2LjIuCiMKIyBZb3Ugc2hv
+dWxkIGhhdmUgcmVjZWl2ZWQgYSBjb3B5IG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGlj
+ZW5zZQojIGFsb25nIHdpdGggdGhpcyBwcm9ncmFtOyBpZiBub3QsIHdyaXRlIHRvIHRoZSBG
+cmVlIFNvZnR3YXJlIEZvdW5kYXRpb24sCiMgSW5jLiwgNTEgRnJhbmtsaW4gU3RyZWV0LCBG
+aWZ0aCBGbG9vciwgQm9zdG9uLCBNQSAwMjExMC0xMzAxIFVTQQoKIyB1bnJlbGF0ZWQgdG8g
+bHZtMiBkYWVtb25zCgouIGxpYi9pbml0dGVzdAoKI2F1eCB0YXJnZXRfYXRfbGVhc3QgZG0t
+bGluZWFyIDEgMCAwIHx8IHNraXAgIm1pc3NpbmcgZG0tbGluZWFyIHRhcmdldCIKCmZ1bmN0
+aW9uIF90ZWFyZG93bigpIHsKCWF1eCB0ZWFyZG93bl9kZXZzX3ByZWZpeGVkICIkUFJFRklY
+IgoJbG9zZXR1cCAtZCAvZGV2L2xvb3BbNjc4XSB8fCB0cnVlCglybSAtZiBsb2ZpbGVbNjc4
+XSBkbXRibC1jb25jaXNlIGRtdGJsLWNvbmNpc2UyCn0KCnRyYXAgJ190ZWFyZG93bicgRVhJ
+VAoKZGQgaWY9L2Rldi96ZXJvIG9mPWxvZmlsZTYgYnM9NDA5NiBjb3VudD0xCmRkIGlmPS9k
+ZXYvemVybyBvZj1sb2ZpbGU3IGJzPTQwOTYgY291bnQ9MQpkZCBpZj0vZGV2L3plcm8gb2Y9
+bG9maWxlOCBicz00MDk2IGNvdW50PTEKbG9zZXR1cCAvZGV2L2xvb3A2IGxvZmlsZTYKbG9z
+ZXR1cCAvZGV2L2xvb3A3IGxvZmlsZTcKbG9zZXR1cCAvZGV2L2xvb3A4IGxvZmlsZTgKCiMg
+Q3JlYXRlIDMgZW50cnkgbGluZWFyIG1hcHBpbmcKZWNobyAtZSAiMCA4IGxpbmVhciAvZGV2
+L2xvb3A2IDBcbjggOCBsaW5lYXIgL2Rldi9sb29wNyAwXG4gMTYgOCBsaW5lYXIgL2Rldi9s
+b29wOCAwIiB8IGRtc2V0dXAgY3JlYXRlICIkUFJFRklYLWxpbmVhciIgLXUgYHV1aWRnZW5g
+CiMgU2F2ZSBpbnRvIGNvbmNpc2UgdGFibGUKZG1zZXR1cCB0YWJsZSAtLWNvbmNpc2UgIiRQ
+UkVGSVgtbGluZWFyIiA+IGRtdGJsLWNvbmNpc2UKIyBSZW1vdmUgbWFwcGluZwpkbXNldHVw
+IHJlbW92ZSAiJFBSRUZJWC1saW5lYXIiCiMgUmVjcmVhdGUgZnJvbSBjb25jaXNlIHRhYmxl
+CmRtc2V0dXAgY3JlYXRlIC0tY29uY2lzZSA8IGRtdGJsLWNvbmNpc2UKIyBPdXRwdXQgdGFi
+bGUgYWdhaW4KZG1zZXR1cCB0YWJsZSAtLWNvbmNpc2UgIiRQUkVGSVgtbGluZWFyIiA+IGRt
+dGJsLWNvbmNpc2UyCiMgQ29tcGFyZQpjbXAgZG10YmwtY29uY2lzZSBkbXRibC1jb25jaXNl
+MgoKIyBDbGVhbnVwCiNkbXNldHVwIHJlbW92ZSAiJFBSRUZJWC1saW5lYXIiCl90ZWFyZG93
+bgoK
+--------------C0AF673486902DD0A7BD9402
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------C0AF673486902DD0A7BD9402--
