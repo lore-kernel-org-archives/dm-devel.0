@@ -1,82 +1,61 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: block: be more careful about status in __bio_chain_endio
-Date: Fri, 22 Feb 2019 18:55:00 -0500
-Message-ID: <20190222235459.GA11726@redhat.com>
+From: John Dorminy <jdorminy@redhat.com>
+Subject: Re: block: be more careful about status in
+	__bio_chain_endio
+Date: Fri, 22 Feb 2019 21:02:06 -0500
+Message-ID: <CAMeeMh-2ANOr_Sb66EyA_HULkVRudD7fyOZsDbpRpDrshwnR2w@mail.gmail.com>
 References: <70cda2a3-f246-d45b-f600-1f9d15ba22ff@gmail.com>
- <87eflmpqkb.fsf@notabene.neil.brown.name>
- <20190222211006.GA10987@redhat.com>
- <7f0aeb7b-fdaa-0625-f785-05c342047550@kernel.dk>
+	<87eflmpqkb.fsf@notabene.neil.brown.name>
+	<20190222211006.GA10987@redhat.com>
+	<7f0aeb7b-fdaa-0625-f785-05c342047550@kernel.dk>
+	<20190222235459.GA11726@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <7f0aeb7b-fdaa-0625-f785-05c342047550@kernel.dk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: NeilBrown <neilb@suse.com>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190222235459.GA11726@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, Feb 22 2019 at  5:46pm -0500,
-Jens Axboe <axboe@kernel.dk> wrote:
+I am perhaps not understanding the intricacies here, or not seeing a
+barrier protecting it, so forgive me if I'm off base. I think reading
+parent->bi_status here is unsafe.
+Consider the following sequence of events on two threads.
 
-> On 2/22/19 2:10 PM, Mike Snitzer wrote:
-> > On Thu, Feb 15 2018 at  4:09am -0500,
-> > NeilBrown <neilb@suse.com> wrote:
-> > 
-> >>
-> >> If two bios are chained under the one parent (with bio_chain())
-> >> it is possible that one will succeed and the other will fail.
-> >> __bio_chain_endio must ensure that the failure error status
-> >> is reported for the whole, rather than the success.
-> >>
-> >> It currently tries to be careful, but this test is racy.
-> >> If both children finish at the same time, they might both see that
-> >> parent->bi_status as zero, and so will assign their own status.
-> >> If the assignment to parent->bi_status by the successful bio happens
-> >> last, the error status will be lost which can lead to silent data
-> >> corruption.
-> >>
-> >> Instead, __bio_chain_endio should only assign a non-zero status
-> >> to parent->bi_status.  There is then no need to test the current
-> >> value of parent->bi_status - a test that would be racy anyway.
-> >>
-> >> Note that this bug hasn't been seen in practice.  It was only discovered
-> >> by examination after a similar bug was found in dm.c
-> >>
-> >> Signed-off-by: NeilBrown <neilb@suse.com>
-> >> ---
-> >>  block/bio.c | 2 +-
-> >>  1 file changed, 1 insertion(+), 1 deletion(-)
-> >>
-> >> diff --git a/block/bio.c b/block/bio.c
-> >> index e1708db48258..ad77140edc6f 100644
-> >> --- a/block/bio.c
-> >> +++ b/block/bio.c
-> >> @@ -312,7 +312,7 @@ static struct bio *__bio_chain_endio(struct bio *bio)
-> >>  {
-> >>  	struct bio *parent = bio->bi_private;
-> >>  
-> >> -	if (!parent->bi_status)
-> >> +	if (bio->bi_status)
-> >>  		parent->bi_status = bio->bi_status;
-> >>  	bio_put(bio);
-> >>  	return parent;
-> >> -- 
-> >> 2.14.0.rc0.dirty
-> >>
-> > 
-> > Reviewed-by: Mike Snitzer <snitzer@redhat.com>
-> > 
-> > Jens, this one slipped through the crack just over a year ago.
-> > It is available in patchwork here:
-> > https://patchwork.kernel.org/patch/10220727/
-> 
-> Should this be:
-> 
-> 	if (!parent->bi_status && bio->bi_status)
-> 		parent->bi_status = bio->bi_status;
-> 
-> perhaps?
+Thread 0                                 Thread 1
+In __bio_chain_endio:                    In __bio_chain_endio:
+[A] Child 0 reads parent->bi_status,
+    no error.
+                                         Child bio 1 reads parent, no error seen
+                                         It sets parent->bi_status to an error
+                                         It calls bio_put.
+Child bio 0 calls bio_put
+[end __bio_chain_endio]                  [end __bio_chain_endio]
+                                         In bio_chain_endio(), bio_endio(parent)
+                                         is called, calling bio_remaining_done()
+                                         which decrements __bi_remaining to 1
+                                         and returns false, so no further endio
+                                         stuff is done.
+In bio_chain_endio(), bio_endio(parent)
+is called, calling bio_remaining_done(),
+decrementing parent->__bi_remaining to
+ 0, and continuing to finish parent.
+Either for block tracing or for parent's
+bi_end_io(), this thread tries to read
+parent->bi_status again.
 
-Yeap, even better.  Not seeing any reason to have the last error win,
-the first in the chain is likely the most important.
+The compiler or the CPU may cache the read from [A], and since there
+are no intervening barriers, parent->bi_status is still believed on
+thread 0 to be success. Thus the bio may still be falsely believed to
+have completed successfully, even though child 1 set an error in it.
+
+Am I missing a subtlety here?
