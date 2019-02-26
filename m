@@ -1,15 +1,15 @@
 From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [PATCH 6/9] multipathd: Fix miscounting active paths
-Date: Tue, 26 Feb 2019 11:16:16 +0100
-Message-ID: <dc5cd0d638eb7c0bc1c7aa3a909b04591da502ac.camel@suse.de>
+Subject: Re: [PATCH 9/9] multipathd: use update_path_groups
+ instead of reload_map
+Date: Tue, 26 Feb 2019 11:47:29 +0100
+Message-ID: <15f01e8c1ed5f85acea4d4dc7be953c321eccda7.camel@suse.de>
 References: <1550854692-19873-1-git-send-email-bmarzins@redhat.com>
-	<1550854692-19873-7-git-send-email-bmarzins@redhat.com>
-	<5b1f0b54b1e025ca69304984df8ca9eec1eea14c.camel@suse.de>
+	<1550854692-19873-10-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5b1f0b54b1e025ca69304984df8ca9eec1eea14c.camel@suse.de>
+In-Reply-To: <1550854692-19873-10-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,77 +23,106 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.var
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 2019-02-26 at 10:15 +0100, Martin Wilck wrote:
-> On Fri, 2019-02-22 at 10:58 -0600, Benjamin Marzinski wrote:
-> > When multipathd gets a change uevent, it calls pathinfo with
-> > DI_NOIO.
-> > This sets the path state to the return value of path_offline(). If
-> > a
-> > path is in the PATH_DOWN state but path_offline() returns PATH_UP,
-> > when
-> > that path gets a change event, its state will get moved to PATH_UP
-> > without either reinstating the path, or reloading the map.  The
-> > next
-> > call to check_path() will move the path back to PATH_DOWN. Since
-> > check_path() simply increments and decrements nr_active instead of
-> > calculating it based on the actual number of active paths,
-> > nr_active
-> > will get decremented a second time for this failed path,
-> > potentially
-> > putting the multipath device into recovery mode.
-> > 
-> > This commit does two things to avoid this situation. It makes the
-> > DI_NOIO flag only set pp->state in pathinfo() if DI_CHECKER is also
-> > set.
-> > This isn't set in uev_update_path() to avoid changing the path
-> > state
-> > in
-> > this case.  Also, to guard against pp->state getting changed in
-> > some
-> > other code path without properly updating the map state,
-> > check_path()
-> > now calls set_no_path_retry, which recalculates nr_active based on
-> > the
-> > actual number of active paths, and makes sure that the
-> > queue_if_no_path
-> > value in the features line is correct.
-> > 
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > ---
-> >  libmultipath/discovery.c | 11 ++++++-----
-> >  multipath/main.c         |  2 +-
-> >  multipathd/main.c        |  4 +++-
-> >  3 files changed, 10 insertions(+), 7 deletions(-)
+On Fri, 2019-02-22 at 10:58 -0600, Benjamin Marzinski wrote:
+> reload_map() doesn't do the work to sync the state after reloading
+> the
+> map.  Instead of calling it directly, cli_reload() and
+> uev_update_path()
+> should call update_path_groups(), which calls reload_map() with all
+> the
+> necessary syncing.
 > 
-> Thanks a lot for catching this! I was just hunting down a similar
-> problem. You may have saved me lots of hair-pulling.
-> 
-> While I'm excited abouot the first hunk, I'm a bit unsure about the
-> second one. I like the general idea (I'd be happy to do away with the
-> "blind" incrementing and decrementing of nr_active), but I see a
-> problem with PATH_PENDING paths, along the lines of thought layed out
-> in commit adf551f "setup_map: wait for pending path checkers to
-> finish". By counting only PATH_UP and PATH_GHOST in check_path(), we
-> are very likely to falsely regard some pending paths as "inactive"
-> just
-> because their checker hasn't completed within a millisecond.
-> Consequently, we may falsely set a map to queuing (or worse, failing)
-> mode just because a few path checkers are still pending.
-> 
-> So for the time being, I'd rather apply the first hunk only. If we
-> still see multipathd's internal nr_active deviating from the real
-> situation, we need to put in some debugging code to find out where it
-> diverges.
-> 
-> In the long run, IMO we should separate the "queueing mode" logic
-> (which is map-related) from check_path() (which is path-related). We
-> should check all paths of a given map, and when we're done, decide
-> upon
-> the queuing mode. PATH_PENDING will still need some extra thought.
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>  multipathd/cli_handlers.c |  2 +-
+>  multipathd/main.c         | 13 ++++++++-----
+>  multipathd/main.h         |  2 ++
+>  3 files changed, 11 insertions(+), 6 deletions(-)
 
-After having reviewed patch 8/9 of this series ("libmutipath: continue
-to use old state on PATH_PENDING"), I see this differently now. The
-last paragraph of my first assessment is still worth consideration, but
-only as future work.
+I can see that this makes some sense for the cli_reload() path (see
+below). But for uev_update_path(), I'm not sure. This is the code path
+where a paths's "ro" attribute changes. With this change, you'll call
+update_multipath_strings() for every uevent that arrives, causing a lot
+of extra work on every uevent. This may hurt, in particular if lots of
+uevents arrive at the same time. I fail to see what you gain by doing
+the extra work. If path states change, either dm events or uevents for
+the other paths in the map will likely arrive soon and cause the other
+path's states to be fixed, or check_path() will detect the state
+changes and fix the DM states eventually. No?
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+For cli_reload() it'd actually be the question if we should re-
+calculate priorities and path groups in multipathd before calling
+update_path_groups() / reload_map().
+
+Regards,
+Martin
+
+
+
+> 
+> diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+> index f95813e..60e17d6 100644
+> --- a/multipathd/cli_handlers.c
+> +++ b/multipathd/cli_handlers.c
+> @@ -877,7 +877,7 @@ cli_reload(void *v, char **reply, int *len, void
+> *data)
+>  		return 1;
+>  	}
+>  
+> -	return reload_map(vecs, mpp, 0, 1);
+> +	return update_path_groups(mpp, vecs, 0);
+>  }
+>  
+>  int resize_map(struct multipath *mpp, unsigned long long size,
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 81ad6c0..27ff186 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -1272,10 +1272,13 @@ uev_update_path (struct uevent *uev, struct
+> vectors * vecs)
+>  			else {
+>  				if (ro == 1)
+>  					pp->mpp->force_readonly = 1;
+> -				retval = reload_map(vecs, mpp, 0, 1);
+> -				pp->mpp->force_readonly = 0;
+> -				condlog(2, "%s: map %s reloaded (retval
+> %d)",
+> -					uev->kernel, mpp->alias,
+> retval);
+> +				retval = update_path_groups(mpp, vecs,
+> 0);
+> +				if (retval == 2)
+> +					condlog(2, "%s: map removed
+> during reload", pp->dev);
+> +				else {
+> +					pp->mpp->force_readonly = 0;
+> +					condlog(2, "%s: map %s reloaded
+> (retval %d)", uev->kernel, mpp->alias, retval);
+> +				}
+>  			}
+>  		}
+>  	}
+> @@ -1831,7 +1834,7 @@ int update_path_groups(struct multipath *mpp,
+> struct vectors *vecs, int refresh)
+>  
+>  	dm_lib_release();
+>  	if (setup_multipath(vecs, mpp) != 0)
+> -		return 1;
+> +		return 2;
+>  	sync_map_state(mpp);
+>  
+>  	return 0;
+> diff --git a/multipathd/main.h b/multipathd/main.h
+> index 8fd426b..e5c1398 100644
+> --- a/multipathd/main.h
+> +++ b/multipathd/main.h
+> @@ -43,5 +43,7 @@ int __setup_multipath (struct vectors * vecs,
+> struct multipath * mpp,
+>  		       int reset);
+>  #define setup_multipath(vecs, mpp) __setup_multipath(vecs, mpp, 1)
+>  int update_multipath (struct vectors *vecs, char *mapname, int
+> reset);
+> +int update_path_groups(struct multipath *mpp, struct vectors *vecs,
+> +		       int refresh);
+>  
+>  #endif /* MAIN_H */
