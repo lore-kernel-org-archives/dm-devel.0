@@ -1,13 +1,14 @@
 From: Martin Wilck <mwilck@suse.de>
 Subject: Re: [PATCH 0/9] Misc Multipath patches
-Date: Tue, 26 Feb 2019 11:50:04 +0100
-Message-ID: <8286ef3d092399550db019731f0322c7eb5914e7.camel@suse.de>
+Date: Tue, 26 Feb 2019 16:10:30 +0100
+Message-ID: <0fa3826a37d245d21f42865c3b3ab112192c3f49.camel@suse.de>
 References: <1550854692-19873-1-git-send-email-bmarzins@redhat.com>
+	<8286ef3d092399550db019731f0322c7eb5914e7.camel@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1550854692-19873-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <8286ef3d092399550db019731f0322c7eb5914e7.camel@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,43 +22,16 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.var
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 2019-02-22 at 10:58 -0600, Benjamin Marzinski wrote:
-> The series is a mix of resends an new patches.
+On Tue, 2019-02-26 at 11:50 +0100, Martin Wilck wrote:
 > 
-> Patches 0001-0005 are simply resends of patches I've submitted
-> earlier,
-> with no changes other that adding Reviewed-by's where appropriate.
+> In case I've caused confusion:
 > 
-> Patches 0006-0009 are the result of running into some bugs during
-> firmare updates on an array. 
-> 
-> Benjamin Marzinski (9):
->   libmultipath: disable user_friendly_names for NetApp
->   libmultipath: handle existing paths in marginal_path enqueue
->   multipathd: cleanup marginal paths checking timers
->   libmultipath: fix marginal paths queueing errors
->   libmultipath: fix marginal_paths nr_active check
->   multipathd: Fix miscounting active paths
->   multipathd: ignore failed wwid recheck
->   libmutipath: continue to use old state on PATH_PENDING
->   multipathd: use update_path_groups instead of reload_map
-> 
->  libmultipath/discovery.c   | 18 ++++++----
->  libmultipath/hwtable.c     |  1 +
->  libmultipath/io_err_stat.c | 71 +++++++++++++++---------------------
-> --
->  libmultipath/io_err_stat.h |  2 +-
->  multipath/main.c           |  2 +-
->  multipathd/cli_handlers.c  |  2 +-
->  multipathd/main.c          | 27 +++++++++------
->  multipathd/main.h          |  2 ++
->  8 files changed, 62 insertions(+), 63 deletions(-)
-> 
+> ACK on the series except 9/9 for which I'd appreciate some extra
+> information.
 
-In case I've caused confusion:
+Argh. I meant to say: all except 7/9 and 9/9. Details in my related
+emails.
 
-ACK on the series except 9/9 for which I'd appreciate some extra
-information.
+Next time I better not try to avoid confusion :-/
 
-Cheers,
 Martin
