@@ -1,131 +1,71 @@
-From: "Martins, Bruno O" <bruno.martins@cgi.com>
-Subject: multipathd ignoring dev_loss_tmo setting
-Date: Thu, 28 Feb 2019 11:38:22 +0000
-Message-ID: <d915601a3472d7448e57f968e2ec3a63c627a35e.camel@cgi.com>
+From: Jon Hunter <jonathanh@nvidia.com>
+Subject: Re: [PATCH V15 14/18] block: enable multipage bvecs
+Date: Thu, 28 Feb 2019 12:39:10 +0000
+Message-ID: <83c1e25b-4aab-4374-e160-b506eea9e68f@nvidia.com>
+References: <20190215111324.30129-1-ming.lei@redhat.com>
+ <20190215111324.30129-15-ming.lei@redhat.com>
+ <CGME20190221084301eucas1p11e8841a62b4b1da3cccca661b6f4c29d@eucas1p1.samsung.com>
+ <6c9ae4de-c56f-a2b3-2542-da7d8b95601d@samsung.com>
+ <0dbbee64-5c6b-0374-4360-6dc218c70d58@nvidia.com>
+ <20190227232940.GA13319@ming.t460p>
+ <01155e88-f021-fbe2-d048-42e303fe2935@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <01155e88-f021-fbe2-d048-42e303fe2935@samsung.com>
 Content-Language: en-US
-Content-ID: <7F81297DDB80FC40AD89F3A257EC5404@logica.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Marek Szyprowski <m.szyprowski@samsung.com>, Ming Lei <ming.lei@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Theodore Ts'o <tytso@mit.edu>, Omar Sandoval <osandov@fb.com>, Sagi Grimberg <sagi@grimberg.me>, Dave Chinner <dchinner@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, linux-raid@vger.kernel.org, David Sterba <dsterba@suse.com>, linux-btrfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Gao Xiang <gaoxiang25@huawei.com>, Christoph Hellwig <hch@lst.de>, linux-ext4@vger.kernel.org, Coly Li <colyli@suse.de>, linux-bcache@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>
 List-Id: dm-devel.ids
 
-Hello guys,
 
-I am trying to modify /etc/multipath.conf on my system so that the
-parameter 'dev_loss_tmo' is changed from the default value.
+On 28/02/2019 07:51, Marek Szyprowski wrote:
+> Hi Ming,
+> 
+> On 2019-02-28 00:29, Ming Lei wrote:
+>> On Wed, Feb 27, 2019 at 08:47:09PM +0000, Jon Hunter wrote:
+>>> On 21/02/2019 08:42, Marek Szyprowski wrote:
+>>>> On 2019-02-15 12:13, Ming Lei wrote:
+>>>>> This patch pulls the trigger for multi-page bvecs.
+>>>>>
+>>>>> Reviewed-by: Omar Sandoval <osandov@fb.com>
+>>>>> Signed-off-by: Ming Lei <ming.lei@redhat.com>
+>>>> Since Linux next-20190218 I've observed problems with block layer on one
+>>>> of my test devices (Odroid U3 with EXT4 rootfs on SD card). Bisecting
+>>>> this issue led me to this change. This is also the first linux-next
+>>>> release with this change merged. The issue is fully reproducible and can
+>>>> be observed in the following kernel log:
+>>>>
+>>>> sdhci: Secure Digital Host Controller Interface driver
+>>>> sdhci: Copyright(c) Pierre Ossman
+>>>> s3c-sdhci 12530000.sdhci: clock source 2: mmc_busclk.2 (100000000 Hz)
+>>>> s3c-sdhci 12530000.sdhci: Got CD GPIO
+>>>> mmc0: SDHCI controller on samsung-hsmmc [12530000.sdhci] using ADMA
+>>>> mmc0: new high speed SDHC card at address aaaa
+>>>> mmcblk0: mmc0:aaaa SL16G 14.8 GiB
+>>> I have also noticed some failures when writing to an eMMC device on one
+>>> of our Tegra boards. We have a simple eMMC write/read test and it is
+>>> currently failing because the data written does not match the source.
+>>>
+>>> I did not seem the same crash as reported here, however, in our case the
+>>> rootfs is NFS mounted and so probably would not. However, the bisect
+>>> points to this commit and reverting on top of -next fixes the issues.
+>> It is sdhci, probably related with max segment size, could you test the
+>> following patch:
+>>
+>> https://marc.info/?l=linux-mmc&m=155128334122951&w=2
+> 
+> This seems to be fixing my issue too! Thanks!
 
-My multipath.conf file contains the following:
+Thanks, I can confirm this fixes the issue for Tegra. So feel free to
+add my ...
 
-defaults {
-        verbosity 2
-        polling_interval 5
-        max_polling_interval 10
-        multipath_dir "/lib64/multipath"
-        path_selector "round-robin 0"
-        path_grouping_policy "failover"
-        uid_attribute "ID_SERIAL"
-        prio "const"
-        prio_args ""
-        features "0"
-        path_checker "directio"
-        alias_prefix "mpath"
-        failback "manual"
-        rr_min_io 1000
-        rr_min_io_rq 1
-        max_fds "max"
-        rr_weight "uniform"
-        no_path_retry "fail"
-        queue_without_daemon "no"
-        checker_timeout 15
-        flush_on_last_del "no"
-        user_friendly_names "yes"
-        fast_io_fail_tmo 5
-        dev_loss_tmo 10
-        bindings_file "/etc/multipath/bindings"
-        wwids_file /etc/multipath/wwids
-        log_checker_err always
-        retain_attached_hw_handler no
-        detect_prio no
-}
+Tested-by: Jon Hunter <jonathanh@nvidia.com>
 
-However, when checking the value currently in use I am getting the
-wrong value (which is '30') for some of the remote ports:
+Cheers!
+Jon
 
-for f in /sys/class/fc_remote_ports/rport-*/dev_loss_tmo; do
-d=$(dirname $f); echo $(basename $d):$(cat $d/node_name):$(cat $f);
-done
-
-rport-3:0-0:0x5742b0f00007c500:10
-rport-3:0-1:0x5742b0f00007c500:10
-rport-3:0-2:0x5742b0f00007c500:10
-rport-3:0-3:0x5000097408369800:30
-rport-3:0-4:0x500009757804cbff:30
-rport-4:0-0:0x5742b0f00007c500:10
-rport-4:0-1:0x5742b0f00007c500:10
-rport-4:0-2:0x5000097408369800:30
-rport-4:0-3:0x5742b0f00007c500:10
-rport-4:0-4:0x500009757804cbff:30
-rport-5:0-0:0x5742b0f00007c500:10
-rport-5:0-1:0x5742b0f00007c500:10
-rport-5:0-2:0x5742b0f00007c500:10
-rport-5:0-3:0x5000097408369800:30
-rport-5:0-4:0x500009757804cbff:30
-rport-6:0-0:0x5742b0f00007c500:10
-rport-6:0-1:0x5742b0f00007c500:10
-rport-6:0-2:0x5000097408369800:30
-rport-6:0-3:0x5742b0f00007c500:10
-rport-6:0-4:0x500009757804cbff:30
-
-systool is giving me the same information:
-
-systool -c fc_remote_ports -v | grep dev_loss_tmo
-
-    dev_loss_tmo        = "10"
-    dev_loss_tmo        = "10"
-    dev_loss_tmo        = "10"
-    dev_loss_tmo        = "10"
-    dev_loss_tmo        = "10"
-    dev_loss_tmo        = "10"
-    dev_loss_tmo        = "10"
-    dev_loss_tmo        = "10"
-    dev_loss_tmo        = "10"
-    dev_loss_tmo        = "30"
-    dev_loss_tmo        = "10"
-    dev_loss_tmo        = "30"
-    dev_loss_tmo        = "30"
-    dev_loss_tmo        = "10"
-    dev_loss_tmo        = "30"
-    dev_loss_tmo        = "10"
-    dev_loss_tmo        = "30"
-    dev_loss_tmo        = "30"
-    dev_loss_tmo        = "30"
-    dev_loss_tmo        = "30"
-
-Where is this value coming from? May this be a bug? I couldn't find
-anything useful on the Internet regarding this.
-
-I am using the following versions:
-
-rpm -qa multipath-tools
-multipath-tools-0.4.9-109.1
-
-uname -a
-Linux mysystem 3.0.101-63-default #1 SMP Tue Jun 23 16:02:31 UTC 2015
-(4b89d0c) x86_64 x86_64 x86_64 GNU/Linux
-
-Thanks for your help!
-
-Kind regards,
-
-Bruno
+-- 
+nvpublic
