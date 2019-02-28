@@ -1,111 +1,83 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: multipathd ignoring dev_loss_tmo setting
-Date: Thu, 28 Feb 2019 13:53:30 -0600
-Message-ID: <20190228195330.GQ3023@octiron.msp.redhat.com>
-References: <d915601a3472d7448e57f968e2ec3a63c627a35e.camel@cgi.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 1/3] list_bl: Add hlist_bl_add_before/behind helpers
+Date: Thu, 28 Feb 2019 16:32:02 -0500
+Message-ID: <20190228213201.GB23527@redhat.com>
+References: <20181220180651.4879-1-ntsironis@arrikto.com>
+ <20181220180651.4879-2-ntsironis@arrikto.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <d915601a3472d7448e57f968e2ec3a63c627a35e.camel@cgi.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Martins, Bruno O" <bruno.martins@cgi.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+In-Reply-To: <20181220180651.4879-2-ntsironis@arrikto.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, hch@infradead.org, Nikos Tsironis <ntsironis@arrikto.com>
+Cc: agk@redhat.com, dm-devel@redhat.com, mpatocka@redhat.com, iliastsi@arrikto.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Feb 28, 2019 at 11:38:22AM +0000, Martins, Bruno O wrote:
-> Hello guys,
-> 
-> I am trying to modify /etc/multipath.conf on my system so that the
-> parameter 'dev_loss_tmo' is changed from the default value.
-> 
-> However, when checking the value currently in use I am getting the
-> wrong value (which is '30') for some of the remote ports:
->
+On Thu, Dec 20 2018 at  1:06pm -0500,
+Nikos Tsironis <ntsironis@arrikto.com> wrote:
 
-Are you sure those rports are used by multipath devices? multipath only
-changes dev_loss_tmo for rports associated with a multipath path device.
+> Add hlist_bl_add_before/behind helpers to add an element before/after an
+> existing element in a bl_list.
+> 
+> Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+> Signed-off-by: Ilias Tsitsimpis <iliastsi@arrikto.com>
+> ---
+>  include/linux/list_bl.h | 27 +++++++++++++++++++++++++++
+>  1 file changed, 27 insertions(+)
+> 
+> diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
+> index 3fc2cc57ba1b..2fd918e5fd48 100644
+> --- a/include/linux/list_bl.h
+> +++ b/include/linux/list_bl.h
+> @@ -86,6 +86,33 @@ static inline void hlist_bl_add_head(struct hlist_bl_node *n,
+>  	hlist_bl_set_first(h, n);
+>  }
+>  
+> +static inline void hlist_bl_add_before(struct hlist_bl_node *n,
+> +				       struct hlist_bl_node *next)
+> +{
+> +	struct hlist_bl_node **pprev = next->pprev;
+> +
+> +	n->pprev = pprev;
+> +	n->next = next;
+> +	next->pprev = &n->next;
+> +
+> +	/* pprev may be `first`, so be careful not to lose the lock bit */
+> +	WRITE_ONCE(*pprev,
+> +		   (struct hlist_bl_node *)
+> +			((unsigned long)n |
+> +			 ((unsigned long)*pprev & LIST_BL_LOCKMASK)));
+> +}
+> +
+> +static inline void hlist_bl_add_behind(struct hlist_bl_node *n,
+> +				       struct hlist_bl_node *prev)
+> +{
+> +	n->next = prev->next;
+> +	n->pprev = &prev->next;
+> +	WRITE_ONCE(prev->next, n);
+> +
+> +	if (n->next)
+> +		n->next->pprev = &n->next;
+> +}
+> +
+>  static inline void __hlist_bl_del(struct hlist_bl_node *n)
+>  {
+>  	struct hlist_bl_node *next = n->next;
+> -- 
+> 2.11.0
 
--Ben
- 
-> for f in /sys/class/fc_remote_ports/rport-*/dev_loss_tmo; do
-> d=$(dirname $f); echo $(basename $d):$(cat $d/node_name):$(cat $f);
-> done
-> 
-> rport-3:0-0:0x5742b0f00007c500:10
-> rport-3:0-1:0x5742b0f00007c500:10
-> rport-3:0-2:0x5742b0f00007c500:10
-> rport-3:0-3:0x5000097408369800:30
-> rport-3:0-4:0x500009757804cbff:30
-> rport-4:0-0:0x5742b0f00007c500:10
-> rport-4:0-1:0x5742b0f00007c500:10
-> rport-4:0-2:0x5000097408369800:30
-> rport-4:0-3:0x5742b0f00007c500:10
-> rport-4:0-4:0x500009757804cbff:30
-> rport-5:0-0:0x5742b0f00007c500:10
-> rport-5:0-1:0x5742b0f00007c500:10
-> rport-5:0-2:0x5742b0f00007c500:10
-> rport-5:0-3:0x5000097408369800:30
-> rport-5:0-4:0x500009757804cbff:30
-> rport-6:0-0:0x5742b0f00007c500:10
-> rport-6:0-1:0x5742b0f00007c500:10
-> rport-6:0-2:0x5000097408369800:30
-> rport-6:0-3:0x5742b0f00007c500:10
-> rport-6:0-4:0x500009757804cbff:30
-> 
-> systool is giving me the same information:
-> 
-> systool -c fc_remote_ports -v | grep dev_loss_tmo
-> 
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "30"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "30"
->     dev_loss_tmo        = "30"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "30"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "30"
->     dev_loss_tmo        = "30"
->     dev_loss_tmo        = "30"
->     dev_loss_tmo        = "30"
-> 
-> Where is this value coming from? May this be a bug? I couldn't find
-> anything useful on the Internet regarding this.
-> 
-> I am using the following versions:
-> 
-> rpm -qa multipath-tools
-> multipath-tools-0.4.9-109.1
-> 
-> uname -a
-> Linux mysystem 3.0.101-63-default #1 SMP Tue Jun 23 16:02:31 UTC 2015
-> (4b89d0c) x86_64 x86_64 x86_64 GNU/Linux
-> 
-> Thanks for your help!
-> 
-> Kind regards,
-> 
-> Bruno
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Hi Paul and Christoph,
+
+You've added your Signed-off-by to include/linux/list_bl.h commits in
+the past.  I'm not sure how this proposed patch should be handled.
+
+These new hlist_bl_add_{before,behind} changes are a prereq for
+dm-snapshot changes that Nikos has proposed, please see:
+https://patchwork.kernel.org/patch/10739265/
+
+Any assistance/review you, or others on LKML, might be able to provide
+would be appreciated.
+
+Thanks,
+Mike
