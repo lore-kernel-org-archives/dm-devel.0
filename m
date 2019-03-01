@@ -1,16 +1,15 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: multipathd ignoring dev_loss_tmo setting
-Date: Fri, 1 Mar 2019 11:35:12 -0600
-Message-ID: <20190301173512.GR3023@octiron.msp.redhat.com>
-References: <d915601a3472d7448e57f968e2ec3a63c627a35e.camel@cgi.com>
-	<20190228195330.GQ3023@octiron.msp.redhat.com>
-	<69ee893dda390f614c78f49b55ea99c7c7f6583a.camel@cgi.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: linux-next: Boot hangs 3 minutes with device mapper
+	on s390
+Date: Fri, 1 Mar 2019 13:30:50 -0500
+Message-ID: <20190301183050.GA29752@redhat.com>
+References: <20190301183350.5ff697d4@TP-holzheu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <69ee893dda390f614c78f49b55ea99c7c7f6583a.camel@cgi.com>
+In-Reply-To: <20190301183350.5ff697d4@TP-holzheu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,87 +19,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Martins, Bruno O" <bruno.martins@cgi.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Michael Holzheu <holzheu@linux.ibm.com>
+Cc: Benjamin Block <bblock@linux.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, dm-devel@redhat.com, linux-next@vger.kernel.org, Mikulas Patocka <mpatocka@redhat.com>, Steffen Maier <maier@linux.ibm.com>
 List-Id: dm-devel.ids
 
-On Fri, Mar 01, 2019 at 10:04:52AM +0000, Martins, Bruno O wrote:
-> On Thu, 2019-02-28 at 13:53 -0600, Benjamin Marzinski wrote:
-> > On Thu, Feb 28, 2019 at 11:38:22AM +0000, Martins, Bruno O wrote:
-> > > Hello guys,
-> > > 
-> > > I am trying to modify /etc/multipath.conf on my system so that the
-> > > parameter 'dev_loss_tmo' is changed from the default value.
-> > > 
-> > > However, when checking the value currently in use I am getting the
-> > > wrong value (which is '30') for some of the remote ports:
-> > > 
-> > 
-> > Are you sure those rports are used by multipath devices? multipath
-> > only
-> > changes dev_loss_tmo for rports associated with a multipath path
-> > device.
-> > 
-> > -Ben
-> >  
-> 
-> Hi Benjamin,
-> 
-> Thanks for your reply!
-> 
-> I believe they are:
-> 
-> [ 10:02:45 ] root@myhost:~# multipath -ll | grep 3:0:3
->   |- 3:0:3:12  sdblc 128:1568 active ready running
->   |- 3:0:3:13  sdbnu 132:1664 active ready running
->   |- 3:0:3:18  sdbre 66:1792  active ready running
->   |- 3:0:3:1   sdbkg 70:1728  active ready running
->   |- 3:0:3:2   sdbnv 132:1680 active ready running
->   |- 3:0:3:20  sdbrg 66:1824  active ready running
->   |- 3:0:3:17  sdbpg 134:1760 active ready running
->   |- 3:0:3:16  sdbpf 134:1744 active ready running
->   |- 3:0:3:11  sdbkf 70:1712  active ready running
->   |- 3:0:3:19  sdbrf 66:1808  active ready running
->   |- 3:0:3:14  sdbnw 132:1696 active ready running
->   |- 3:0:3:15  sdbpe 134:1728 active ready running
-> 
-> Is this the best way to check that information?
-
-The scsi HBTL isn't guaranteed to line up with the rport id.  To find this
-out you can either run
-
-# ls -l /sys/block
-
-and then check the rport for your path devices from the link
-destination.
-
-For instance
-
-[root@ask-07 block]# ls -l /sys/block
-<snip>
-lrwxrwxrwx. 1 root root 0 Feb 21 02:45 sdb -> ../devices/pci0000:00/0000:00:0a.0/0000:06:00.0/host16/rport-16:0-0/target16:0:0/16:0:0:0/block/sdb
-lrwxrwxrwx. 1 root root 0 Feb 21 02:45 sdc -> ../devices/pci0000:00/0000:00:0a.0/0000:06:00.0/host16/rport-16:0-0/target16:0:0/16:0:0:1/block/sdc
-lrwxrwxrwx. 1 root root 0 Feb 21 02:45 sdd -> ../devices/pci0000:00/0000:00:0a.0/0000:06:00.1/host17/rport-17:0-0/target17:0:0/17:0:0:0/block/sdd
-lrwxrwxrwx. 1 root root 0 Feb 21 02:45 sde -> ../devices/pci0000:00/0000:00:0a.0/0000:06:00.1/host17/rport-17:0-0/target17:0:0/17:0:0:1/block/sde
-<snip>
- 
-Here, sdb and sdc are using rport-16:0-0, and sdd and sde are using
-rport-17:0-0
-
-Otherwise, you can pick an rport with the wrong dev_loss_tmo, and check
-
-/sys/class/fc_remote_ports/<rport>/device/<target>/
-
-In there there will be a number of scsi HBTL identifiers, for example
-
-# ls /sys/class/fc_remote_ports/rport-16\:0-0/device/target16\:0\:0/
-16:0:0:0  16:0:0:1  fc_transport  power  subsystem  uevent
-
-If these HBTL ids (16:0:0:0 and 16:0:0:1) are for multipath path
-devices, then multipath should be updating dev_loss_tmo for them. In my
-example above, the scsi HBTL does correspond to the rport id, but this
-isn't always the case.
-
--Ben
-
-> BR,
+T24gRnJpLCBNYXIgMDEgMjAxOSBhdCAxMjozM3BtIC0wNTAwLApNaWNoYWVsIEhvbHpoZXUgPGhv
+bHpoZXVAbGludXguaWJtLmNvbT4gd3JvdGU6Cgo+IEhpIE1pa2UsCj4gCj4gT24gRmVkb3JhIDI5
+LCB0aGUgZm9sbG93aW5nICJsaW51eC1uZXh0IiBjb21taXQgaW50cm9kdWNlZCBhIHJlZ3Jlc3Np
+b24gb24gczM5MDoKPiAKPiAgIGNvbW1pdCAxZWZhM2JiNzlkM2RlOGNhMWI3ZjY3NzAzMTNhMWZj
+MGJlYmUyNWM3Cj4gICBBdXRob3I6IE1pa2UgU25pdHplciA8c25pdHplckByZWRoYXQuY29tPgo+
+ICAgRGF0ZTogICBGcmkgRmViIDIyIDExOjIzOjAxIDIwMTkgLTA1MDAKPiAKPiAgICAgZG06IG11
+c3QgYWxsb2NhdGUgZG1fbm9jbG9uZSBmb3Igc3RhY2tlZCBub2Nsb25lIGRldmljZXMKPiAgICAg
+Cj4gICAgIE90aGVyd2lzZSB2YXJpb3VzIGx2bTIgdGVzdHN1aXRlIHRlc3RzIGZhaWwgYmVjYXVz
+ZSB0aGUgbG93ZXIgbGF5ZXJzIG9mCj4gICAgIHRoZSBzdGFja2VkIG5vY2xvbmUgZGV2aWNlIGFy
+ZW4ndCB1cGRhdGVkIHRvIGFsbG9jYXRlIGEgbmV3ICdzdHJ1Y3QKPiAgICAgZG1fY2xvbmUnIHRo
+YXQgcmVmbGVjdHMgdGhlIHVwcGVyIGxheWVyIGJpbyB0aGF0IHdhcyBpc3N1ZWQgdG8gaXQuCj4g
+ICAgIAo+ICAgICBGaXhlczogOTdhODk0NTgwMjBiMzggKCJkbTogaW1wcm92ZSBub2Nsb25lIGJp
+byBzdXBwb3J0IikKPiAgICAgUmVwb3J0ZWQtYnk6IE1pa3VsYXMgUGF0b2NrYSA8bXBhdG9ja2FA
+cmVkaGF0LmNvbT4KPiAgICAgU2lnbmVkLW9mZi1ieTogTWlrZSBTbml0emVyIDxzbml0emVyQHJl
+ZGhhdC5jb20+Cj4gCj4gV2l0aCB0aGlzIGNvbW1pdCB0aGUgYm9vdCBoYW5ncyB0aHJlZSBtaW51
+dGVzIG9uIGEgei9WTSBzeXN0ZW0gd2l0aCB0aGUKPiBmb2xsb3dpbmcgZGV2aWNlIG1hcHBlciBz
+ZXR1cDoKPiAKPiAjIGRtc2V0dXAgbHMgLS10cmVlCj4gbXBhdGhlICgyNTI6NSkKPiAg4pSc4pSA
+ICg4OjEyOCkKPiAg4pSU4pSAICg4OjE0NCkKPiBtcGF0aGQgKDI1Mjo0KQo+ICDilJzilIAgKDg6
+OTYpCj4gIOKUlOKUgCAoODoxMTIpCj4gbXBhdGhjICgyNTI6MykKPiAg4pSc4pSAICg4OjY0KQo+
+ICDilJTilIAgKDg6ODApCj4gbXBhdGhiICgyNTI6MikKPiAg4pSc4pSAICg4OjMyKQo+ICDilJTi
+lIAgKDg6NDgpCj4gbXBhdGhhMSAoMjUyOjEpCj4gIOKUlOKUgG1wYXRoYSAoMjUyOjApCj4gICAg
+IOKUnOKUgCAoODoxNikKPiAgICAg4pSU4pSAICg4OjApCj4gCj4gT24gdGhlIGNvbnNvbGUgd2Ug
+Z2V0IG1lc3NhZ2VzIGxpa2UgdGhlIGZvbGxvd2luZzoKPiAKPiAgICAxMC4xMTY4NjMgc2QgMzow
+OjA6MTA4MzcxOTgxMzogc2RqIFdyaXRlIFByb3RlY3QgaXMgb2ZmIAo+ICAgIDEwLjExNzE3MCBz
+ZCAzOjA6MDoxMDgzNzE5ODEzOiBzZGogV3JpdGUgY2FjaGU6IGVuYWJsZWQsIHJlYWQgY2FjaGU6
+IGVuYWJsZWQsIGRvZXNuJ3Qgc3VwcG9ydCBEUE8gb3IgRlVBIAo+ICAgIDEwLjEzMDU2MiBzZCAz
+OjA6MDoxMDgzNzE5ODEzOiBzZGogQXR0YWNoZWQgU0NTSSBkaXNrIAo+ICBBIHN0YXJ0IGpvYiBp
+cyBydW5uaW5nIGZvciB1ZGV2IFdhaSAgIERldmljZSBJbml0aWFsaXphdGlvbiAoNnMgLyAzbWlu
+KQo+ICBBIHN0YXJ0IGpvYiBpcyBydW5uaW5nIGZvciB1ZGV2IFdhaSAgIERldmljZSBJbml0aWFs
+aXphdGlvbiAoNnMgLyAzbWluKQo+ICBBIHN0YXJ0IGpvYiBpcyBydW5uaW5nIGZvciB1ZGV2IFdh
+aSAgIERldmljZSBJbml0aWFsaXphdGlvbiAoN3MgLyAzbWluKQo+ICBBIHN0YXJ0IGpvYiBpcyBy
+dW5uaW5nIGZvciB1ZGV2IFdhaSAgIERldmljZSBJbml0aWFsaXphdGlvbiAoN3MgLyAzbWluKQo+
+ICBBIHN0YXJ0IGpvYiBpcyBydW5uaW5nIGZvciB1ZGV2IFdhaSAgIERldmljZSBJbml0aWFsaXph
+dGlvbiAoOHMgLyAzbWluKQo+ICAuLi4KPiAKPiBBZnRlciB0aHJlZSBtaW51dGVzIHRoZSBib290
+IHByb2Nlc3MgY29udGludWVzIGFuZCB0aGUgc3lzdGVtIGNvbWVzLgo+IAo+IEFzIGtlcm5lbCBj
+b25maWcgd2UgdXNlZCAicGVyZm9ybWFuY2VfZGVmY29uZmlnIiAobWFrZSBwZXJmb3JtYW5jZV9k
+ZWZjb25maWcpLgoKSSdtIHN0cnVnZ2xpbmcgdG8gc2VlIHdoeSB0aGlzIHBhcnRpY3VsYXIgY2hh
+bmdlIHdvdWxkIGNhdXNlIHN1Y2ggYSBib290CnN0YWxsIC0tIGJ1dCB0aGVuIHJlc29sdmUgaXRz
+ZWxmLgoKQ2FuIHlvdSBwcm92aWRlIHRoZSBvdXRwdXQgZnJvbSAnZG1zZXR1cCB0YWJsZSc/CgpN
+dWx0aXBhdGggZGVmYXVsdHMgdG8gYmxrLW1xIChyZXF1ZXN0LWJhc2VkKS4gIFRoZSBjaGFuZ2Ug
+eW91J3ZlIGNhbGxlZAppbnRvIHF1ZXN0aW9uIGlzIHJlbGF0ZWQgdG8gYmlvLWJhc2VkIERNLiAg
+U28gVGhlcmUgbXVzdCBiZSBzb21lCmJpby1iYXNlZCBETSBsYXllciBvbnRvcCBvZiB0aGUgbXVs
+dGlwYXRoIGRldmljZXMuICBJcyBtcGF0aGExIGEKZG0tbGluZWFyIGRldmljZSBsYXllcmVkIG9u
+dG9wIG9mIG11bHRpcGF0aD8KClRoYW5rcywKTWlrZQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0
+CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
+bmZvL2RtLWRldmVs
