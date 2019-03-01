@@ -1,137 +1,369 @@
-From: Franck LENORMAND <franck.lenormand@nxp.com>
-Subject: [RFC PATCH 2/2] dm-crypt: Use any key type which is registered
-Date: Fri,  1 Mar 2019 17:09:59 +0100
-Message-ID: <1551456599-10603-3-git-send-email-franck.lenormand@nxp.com>
-References: <1551456599-10603-1-git-send-email-franck.lenormand@nxp.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1551456599-10603-1-git-send-email-franck.lenormand@nxp.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org, keyrings@vger.kernel.org
-Cc: franck.lenormand@nxp.com, horia.geanta@nxp.com, silvano.dininno@nxp.com, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, dhowells@redhat.com, jmorris@namei.org, serge@hallyn.com
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: [PATCH v2 5/5] dm snapshot: Use fine-grained locking
+	scheme
+Date: Fri,  1 Mar 2019 18:51:51 +0200
+Message-ID: <20190301165151.1352-6-ntsironis@arrikto.com>
+References: <20190301165151.1352-1-ntsironis@arrikto.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190301165151.1352-1-ntsironis@arrikto.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
+Cc: mpatocka@redhat.com, iliastsi@arrikto.com
 List-Id: dm-devel.ids
 
-There was only 2 key_type supported by dm-crypt which limits other
-implementations.
+Substitute the global locking scheme with a fine grained one, employing
+the read-write semaphore and the scalable exception tables with
+per-bucket locks introduced by the previous two commits.
 
-This patch allows to use any key_type which is registered obtaining
-the key_type from key framework.
+Summarizing, we now use a read-write semaphore to protect the mostly
+read fields of the snapshot structure, e.g., valid, active, etc., and
+per-bucket bit spinlocks to protect accesses to the complete and pending
+exception tables.
 
-This also remove the compilation dependency between dm-crypt and
-key implementations.
+Finally, we use an extra spinlock (pe_allocation_lock) to serialize the
+allocation of new exceptions by the exception store. This allocation is
+really fast, so the extra spinlock doesn't hurt the performance.
 
-Signed-off-by: Franck LENORMAND <franck.lenormand@nxp.com>
+This scheme allows dm-snapshot to scale better, resulting in increased
+IOPS and reduced latency.
+
+Following are some benchmark results using the null_blk device:
+
+  modprobe null_blk gb=1024 bs=512 submit_queues=8 hw_queue_depth=4096 \
+   queue_mode=2 irqmode=1 completion_nsec=1 nr_devices=1
+
+* Benchmark fio_origin_randwrite_throughput_N, from the device mapper
+  test suite [1] (direct IO, random 4K writes to origin device, IO
+  engine libaio):
+
+  +--------------+-------------+------------+
+  | # of workers | IOPS Before | IOPS After |
+  +--------------+-------------+------------+
+  |      1       |    57708    |   66421    |
+  |      2       |    63415    |   77589    |
+  |      4       |    67276    |   98839    |
+  |      8       |    60564    |   109258   |
+  +--------------+-------------+------------+
+
+* Benchmark fio_origin_randwrite_latency_N, from the device mapper test
+  suite [1] (direct IO, random 4K writes to origin device, IO engine
+  psync):
+
+  +--------------+-----------------------+----------------------+
+  | # of workers | Latency (usec) Before | Latency (usec) After |
+  +--------------+-----------------------+----------------------+
+  |      1       |         16.25         |        13.27         |
+  |      2       |         31.65         |        25.08         |
+  |      4       |         55.28         |        41.08         |
+  |      8       |         121.47        |        74.44         |
+  +--------------+-----------------------+----------------------+
+
+* Benchmark fio_snapshot_randwrite_throughput_N, from the device mapper
+  test suite [1] (direct IO, random 4K writes to snapshot device, IO
+  engine libaio):
+
+  +--------------+-------------+------------+
+  | # of workers | IOPS Before | IOPS After |
+  +--------------+-------------+------------+
+  |      1       |    72593    |   84938    |
+  |      2       |    97379    |   134973   |
+  |      4       |    90610    |   143077   |
+  |      8       |    90537    |   180085   |
+  +--------------+-------------+------------+
+
+* Benchmark fio_snapshot_randwrite_latency_N, from the device mapper
+  test suite [1] (direct IO, random 4K writes to snapshot device, IO
+  engine psync):
+
+  +--------------+-----------------------+----------------------+
+  | # of workers | Latency (usec) Before | Latency (usec) After |
+  +--------------+-----------------------+----------------------+
+  |      1       |         12.53         |         10.6         |
+  |      2       |         19.78         |        14.89         |
+  |      4       |         40.37         |        23.47         |
+  |      8       |         89.32         |        48.48         |
+  +--------------+-----------------------+----------------------+
+
+[1] https://github.com/jthornber/device-mapper-test-suite
+
+Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+Signed-off-by: Ilias Tsitsimpis <iliastsi@arrikto.com>
 ---
- drivers/md/dm-crypt.c    | 11 ++++++-----
- include/linux/key-type.h |  2 ++
- security/keys/key.c      | 42 ++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 50 insertions(+), 5 deletions(-)
+ drivers/md/dm-snap.c | 84 +++++++++++++++++++++++++++-------------------------
+ 1 file changed, 44 insertions(+), 40 deletions(-)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index dd538e6..e25efc2 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -35,6 +35,7 @@
- #include <crypto/authenc.h>
- #include <linux/rtnetlink.h> /* for struct rtattr and RTA macros only */
- #include <keys/user-type.h>
-+#include <linux/key-type.h>
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index ab75857309aa..4530d0620a72 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -77,7 +77,9 @@ struct dm_snapshot {
  
- #include <linux/device-mapper.h>
+ 	atomic_t pending_exceptions_count;
  
-@@ -2010,6 +2011,7 @@ static int crypt_set_keyring_key(struct crypt_config *cc, const char *key_string
- 	int ret;
- 	struct key *key;
- 	const struct user_key_payload *ukp;
-+	struct key_type *type;
- 
- 	/*
- 	 * Reject key_string with whitespace. dm core currently lacks code for
-@@ -2025,16 +2027,15 @@ static int crypt_set_keyring_key(struct crypt_config *cc, const char *key_string
- 	if (!key_desc || key_desc == key_string || !strlen(key_desc + 1))
- 		return -EINVAL;
- 
--	if (strncmp(key_string, "logon:", key_desc - key_string + 1) &&
--	    strncmp(key_string, "user:", key_desc - key_string + 1))
--		return -EINVAL;
-+	type = get_key_type(key_string, key_desc - key_string);
-+	if (!type)
-+		return -ENOENT;
- 
- 	new_key_string = kstrdup(key_string, GFP_KERNEL);
- 	if (!new_key_string)
- 		return -ENOMEM;
- 
--	key = request_key(key_string[0] == 'l' ? &key_type_logon : &key_type_user,
--			  key_desc + 1, NULL);
-+	key = request_key(type, key_desc + 1, NULL);
- 	if (IS_ERR(key)) {
- 		kzfree(new_key_string);
- 		return PTR_ERR(key);
-diff --git a/include/linux/key-type.h b/include/linux/key-type.h
-index bc9af55..2b2167b 100644
---- a/include/linux/key-type.h
-+++ b/include/linux/key-type.h
-@@ -176,6 +176,8 @@ extern struct key_type key_type_keyring;
- extern int register_key_type(struct key_type *ktype);
- extern void unregister_key_type(struct key_type *ktype);
- 
-+extern struct key_type *get_key_type(const char *type_name, size_t string_size);
+-	/* Protected by "lock" */
++	spinlock_t pe_allocation_lock;
 +
- extern int key_payload_reserve(struct key *key, size_t datalen);
- extern int key_instantiate_and_link(struct key *key,
- 				    const void *data,
-diff --git a/security/keys/key.c b/security/keys/key.c
-index 44a80d6..ef76114 100644
---- a/security/keys/key.c
-+++ b/security/keys/key.c
-@@ -1156,6 +1156,48 @@ void unregister_key_type(struct key_type *ktype)
++	/* Protected by "pe_allocation_lock" */
+ 	sector_t exception_start_sequence;
+ 
+ 	/* Protected by kcopyd single-threaded callback */
+@@ -1245,6 +1247,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	s->snapshot_overflowed = 0;
+ 	s->active = 0;
+ 	atomic_set(&s->pending_exceptions_count, 0);
++	spin_lock_init(&s->pe_allocation_lock);
+ 	s->exception_start_sequence = 0;
+ 	s->exception_complete_sequence = 0;
+ 	s->out_of_order_tree = RB_ROOT;
+@@ -1522,6 +1525,13 @@ static void __invalidate_snapshot(struct dm_snapshot *s, int err)
+ 	dm_table_event(s->ti->table);
  }
- EXPORT_SYMBOL(unregister_key_type);
  
-+/**
-+ * get_key_type - Get the type of key using its name
-+ * @type_name: Name of the key type to get
-+ * @string_size: Size of the string to match
-+ *
-+ * The functions support null ended string (string_size == 0) as well as
-+ * pointer on a string matching a number of characters (string_size > 0)
-+ *
-+ * Returns a pointer on the key type if successful, -ENOENT if the key type
-+ * is not registered.
-+ */
-+struct key_type *get_key_type(const char *type_name, size_t string_size)
++static void invalidate_snapshot(struct dm_snapshot *s, int err)
 +{
-+	struct key_type *p;
-+	struct key_type *ktype = ERR_PTR(-ENOENT);
-+
-+	if (!type_name)
-+		return ktype;
-+
-+	down_write(&key_types_sem);
-+
-+	/* Search the key type in the list */
-+	list_for_each_entry(p, &key_types_list, link) {
-+		if (string_size) {
-+			if (strncmp(p->name, type_name, string_size) == 0) {
-+				ktype = p;
-+				break;
-+			}
-+		} else {
-+			if (strcmp(p->name, type_name) == 0) {
-+				ktype = p;
-+				break;
-+			}
-+		}
-+	}
-+
-+	up_read(&key_types_sem);
-+
-+	return ktype;
++	down_write(&s->lock);
++	__invalidate_snapshot(s, err);
++	up_write(&s->lock);
 +}
-+EXPORT_SYMBOL(get_key_type);
 +
+ static void pending_complete(void *context, int success)
+ {
+ 	struct dm_snap_pending_exception *pe = context;
+@@ -1537,8 +1547,7 @@ static void pending_complete(void *context, int success)
+ 
+ 	if (!success) {
+ 		/* Read/write error - snapshot is unusable */
+-		down_write(&s->lock);
+-		__invalidate_snapshot(s, -EIO);
++		invalidate_snapshot(s, -EIO);
+ 		error = 1;
+ 
+ 		dm_exception_table_lock(&lock);
+@@ -1547,8 +1556,7 @@ static void pending_complete(void *context, int success)
+ 
+ 	e = alloc_completed_exception(GFP_NOIO);
+ 	if (!e) {
+-		down_write(&s->lock);
+-		__invalidate_snapshot(s, -ENOMEM);
++		invalidate_snapshot(s, -ENOMEM);
+ 		error = 1;
+ 
+ 		dm_exception_table_lock(&lock);
+@@ -1556,11 +1564,13 @@ static void pending_complete(void *context, int success)
+ 	}
+ 	*e = pe->e;
+ 
+-	down_write(&s->lock);
++	down_read(&s->lock);
+ 	dm_exception_table_lock(&lock);
+ 	if (!s->valid) {
++		up_read(&s->lock);
+ 		free_completed_exception(e);
+ 		error = 1;
++
+ 		goto out;
+ 	}
+ 
+@@ -1572,13 +1582,12 @@ static void pending_complete(void *context, int success)
+ 	 * merging can overwrite the chunk in origin.
+ 	 */
+ 	dm_insert_exception(&s->complete, e);
++	up_read(&s->lock);
+ 
+ 	/* Wait for conflicting reads to drain */
+ 	if (__chunk_is_tracked(s, pe->e.old_chunk)) {
+ 		dm_exception_table_unlock(&lock);
+-		up_write(&s->lock);
+ 		__check_for_conflicting_io(s, pe->e.old_chunk);
+-		down_write(&s->lock);
+ 		dm_exception_table_lock(&lock);
+ 	}
+ 
+@@ -1595,8 +1604,6 @@ static void pending_complete(void *context, int success)
+ 		full_bio->bi_end_io = pe->full_bio_end_io;
+ 	increment_pending_exceptions_done_count();
+ 
+-	up_write(&s->lock);
+-
+ 	/* Submit any pending write bios */
+ 	if (error) {
+ 		if (full_bio)
+@@ -1738,8 +1745,8 @@ __lookup_pending_exception(struct dm_snapshot *s, chunk_t chunk)
  /*
-  * Initialise the key management state.
+  * Inserts a pending exception into the pending table.
+  *
+- * NOTE: a write lock must be held on snap->lock before calling
+- * this.
++ * NOTE: a write lock must be held on the chunk's pending exception table slot
++ * before calling this.
   */
+ static struct dm_snap_pending_exception *
+ __insert_pending_exception(struct dm_snapshot *s,
+@@ -1751,12 +1758,15 @@ __insert_pending_exception(struct dm_snapshot *s,
+ 	pe->started = 0;
+ 	pe->full_bio = NULL;
+ 
++	spin_lock(&s->pe_allocation_lock);
+ 	if (s->store->type->prepare_exception(s->store, &pe->e)) {
++		spin_unlock(&s->pe_allocation_lock);
+ 		free_pending_exception(pe);
+ 		return NULL;
+ 	}
+ 
+ 	pe->exception_sequence = s->exception_start_sequence++;
++	spin_unlock(&s->pe_allocation_lock);
+ 
+ 	dm_insert_exception(&s->pending, &pe->e);
+ 
+@@ -1768,8 +1778,8 @@ __insert_pending_exception(struct dm_snapshot *s,
+  * for this chunk, otherwise it allocates a new one and inserts
+  * it into the pending table.
+  *
+- * NOTE: a write lock must be held on snap->lock before calling
+- * this.
++ * NOTE: a write lock must be held on the chunk's pending exception table slot
++ * before calling this.
+  */
+ static struct dm_snap_pending_exception *
+ __find_pending_exception(struct dm_snapshot *s,
+@@ -1820,7 +1830,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
+ 	if (!s->valid)
+ 		return DM_MAPIO_KILL;
+ 
+-	down_write(&s->lock);
++	down_read(&s->lock);
+ 	dm_exception_table_lock(&lock);
+ 
+ 	if (!s->valid || (unlikely(s->snapshot_overflowed) &&
+@@ -1845,17 +1855,9 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
+ 		pe = __lookup_pending_exception(s, chunk);
+ 		if (!pe) {
+ 			dm_exception_table_unlock(&lock);
+-			up_write(&s->lock);
+ 			pe = alloc_pending_exception(s);
+-			down_write(&s->lock);
+ 			dm_exception_table_lock(&lock);
+ 
+-			if (!s->valid || s->snapshot_overflowed) {
+-				free_pending_exception(pe);
+-				r = DM_MAPIO_KILL;
+-				goto out_unlock;
+-			}
+-
+ 			e = dm_lookup_exception(&s->complete, chunk);
+ 			if (e) {
+ 				free_pending_exception(pe);
+@@ -1866,10 +1868,15 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
+ 			pe = __find_pending_exception(s, pe, chunk);
+ 			if (!pe) {
+ 				dm_exception_table_unlock(&lock);
++				up_read(&s->lock);
++
++				down_write(&s->lock);
+ 
+ 				if (s->store->userspace_supports_overflow) {
+-					s->snapshot_overflowed = 1;
+-					DMERR("Snapshot overflowed: Unable to allocate exception.");
++					if (s->valid && !s->snapshot_overflowed) {
++						s->snapshot_overflowed = 1;
++						DMERR("Snapshot overflowed: Unable to allocate exception.");
++					}
+ 				} else
+ 					__invalidate_snapshot(s, -ENOMEM);
+ 				up_write(&s->lock);
+@@ -1887,8 +1894,10 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
+ 		    bio->bi_iter.bi_size ==
+ 		    (s->store->chunk_size << SECTOR_SHIFT)) {
+ 			pe->started = 1;
++
+ 			dm_exception_table_unlock(&lock);
+-			up_write(&s->lock);
++			up_read(&s->lock);
++
+ 			start_full_bio(pe, bio);
+ 			goto out;
+ 		}
+@@ -1896,10 +1905,12 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
+ 		bio_list_add(&pe->snapshot_bios, bio);
+ 
+ 		if (!pe->started) {
+-			/* this is protected by snap->lock */
++			/* this is protected by the exception table lock */
+ 			pe->started = 1;
++
+ 			dm_exception_table_unlock(&lock);
+-			up_write(&s->lock);
++			up_read(&s->lock);
++
+ 			start_copy(pe);
+ 			goto out;
+ 		}
+@@ -1910,7 +1921,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
+ 
+ out_unlock:
+ 	dm_exception_table_unlock(&lock);
+-	up_write(&s->lock);
++	up_read(&s->lock);
+ out:
+ 	return r;
+ }
+@@ -2234,7 +2245,7 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
+ 		chunk = sector_to_chunk(snap->store, sector);
+ 		dm_exception_table_lock_init(snap, chunk, &lock);
+ 
+-		down_write(&snap->lock);
++		down_read(&snap->lock);
+ 		dm_exception_table_lock(&lock);
+ 
+ 		/* Only deal with valid and active snapshots */
+@@ -2253,16 +2264,9 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
+ 				goto next_snapshot;
+ 
+ 			dm_exception_table_unlock(&lock);
+-			up_write(&snap->lock);
+ 			pe = alloc_pending_exception(snap);
+-			down_write(&snap->lock);
+ 			dm_exception_table_lock(&lock);
+ 
+-			if (!snap->valid) {
+-				free_pending_exception(pe);
+-				goto next_snapshot;
+-			}
+-
+ 			pe2 = __lookup_pending_exception(snap, chunk);
+ 
+ 			if (!pe2) {
+@@ -2275,9 +2279,9 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
+ 				pe = __insert_pending_exception(snap, pe, chunk);
+ 				if (!pe) {
+ 					dm_exception_table_unlock(&lock);
+-					__invalidate_snapshot(snap, -ENOMEM);
+-					up_write(&snap->lock);
++					up_read(&snap->lock);
+ 
++					invalidate_snapshot(snap, -ENOMEM);
+ 					continue;
+ 				}
+ 			} else {
+@@ -2310,7 +2314,7 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
+ 
+ next_snapshot:
+ 		dm_exception_table_unlock(&lock);
+-		up_write(&snap->lock);
++		up_read(&snap->lock);
+ 
+ 		if (pe_to_start_now) {
+ 			start_copy(pe_to_start_now);
 -- 
-2.7.4
+2.11.0
