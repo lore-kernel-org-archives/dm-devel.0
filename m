@@ -1,83 +1,84 @@
-From: Alexander Duyck <alexander.duyck@gmail.com>
-Subject: Re: x86 VM Boot hang with latest linux-next
-Date: Sun, 3 Mar 2019 09:06:46 -0800
-Message-ID: <CAKgT0Ue9+wSL60Bj0drkgVQwem=mh_eTrFMda+inX4=qBgi3dA@mail.gmail.com>
-References: <CAKgT0UeMqmojVrNV1i-DdY18EBwbJ_4zVTUggAWas5D5yeU1PQ@mail.gmail.com>
- <20190303034847.GA8699@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH v2 0/5] dm snapshot: Improve performance
+ using a more fine-grained locking scheme
+Date: Sun, 3 Mar 2019 16:16:12 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1903031614310.26093@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20190301165151.1352-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190303034847.GA8699@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: linux-next@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190301165151.1352-1-ntsironis@arrikto.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Nikos Tsironis <ntsironis@arrikto.com>
+Cc: dm-devel@redhat.com, agk@redhat.com, snitzer@redhat.com, iliastsi@arrikto.com
 List-Id: dm-devel.ids
 
-On Sat, Mar 2, 2019 at 7:48 PM Mike Snitzer <snitzer@redhat.com> wrote:
->
-> On Sat, Mar 02 2019 at  6:34pm -0500,
-> Alexander Duyck <alexander.duyck@gmail.com> wrote:
->
-> > So I have been seeing an issue with an intermittent boot hang on my
-> > x86 KVM VM with the latest linux-next and have bisected it down to the
-> > following commit:
-> > 1efa3bb79d3de8ca1b7f6770313a1fc0bebe25c7 is the first bad commit
-> > commit 1efa3bb79d3de8ca1b7f6770313a1fc0bebe25c7
-> > Author: Mike Snitzer <snitzer@redhat.com>
-> > Date:   Fri Feb 22 11:23:01 2019 -0500
-> >
-> >     dm: must allocate dm_noclone for stacked noclone devices
-> >
-> >     Otherwise various lvm2 testsuite tests fail because the lower layer=
-s of
-> >     the stacked noclone device aren't updated to allocate a new 'struct
-> >     dm_clone' that reflects the upper layer bio that was issued to it.
-> >
-> >     Fixes: 97a89458020b38 ("dm: improve noclone bio support")
-> >     Reported-by: Mikulas Patocka <mpatocka@redhat.com>
-> >     Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> >
-> > What I am seeing is in about 3 out of 4 boots the startup just hangs
-> > at the filesystem check stage with the following message:
-> > [  OK  ] Reached target Local File Systems (Pre).
-> >          Starting File System Check on /dev/=E2=80=A6127-ad57-426f-bb45=
--363950544c0c...
-> > [    **] (1 of 2) A start job is running for=E2=80=A6n on device 252:2 =
-(19s / no limit)
-> >
-> > I did some googling and it looks like a similar issue has been
-> > reported for s390. Based on the request for data there I have the
-> > following info:
-> > [root@localhost ~]# dmsetup ls --tree
-> > fedora-swap (253:1)
-> >  =E2=94=94=E2=94=80 (252:2)
-> > fedora-root (253:0)
-> >  =E2=94=94=E2=94=80 (252:2)
-> >
-> > [root@localhost ~]# dmsetup table
-> > fedora-swap: 0 4194304 linear 252:2 2048
-> > fedora-root: 0 31457280 linear 252:2 4196352
->
-> Thanks, which version of Fedora are you running?
 
-The VM is running Fedora 27 with a kernel built off of latest
-linux-next as of March 1st.
+Acked-by: Mikulas Patocka <mpatocka@redhat.com>
 
-> Your case is more straightforward in that you're clearly using bio-based
-> DM linear (which was updated to leverage "noclone" support); whereas the
-> s390 case is using request-based DM which isn't impacted by the commit
-> in question at all.
->
-> I'll attempt to reproduce first thing Monday.
->
-> Mike
 
-Thanks. The behavior of it has me wondering if we are looking at
-something like an uninitialized data issue or something like that
-since as I mentioned I don't see this occur on every boot, just on
-most of them. So every now and then I can boot up the VM without any
-issues, but most of the time it will boot and then get stuck waiting
-on jobs that take forever.
+On Fri, 1 Mar 2019, Nikos Tsironis wrote:
 
-- Alex
+> dm-snapshot uses a single mutex to serialize every access to the
+> snapshot state, including accesses to the exception hash tables. This
+> mutex is a bottleneck preventing dm-snapshot to scale as the number of
+> threads doing IO increases.
+> 
+> The major contention points are __origin_write()/snapshot_map() and
+> pending_complete(), i.e., the submission and completion of pending
+> exceptions.
+> 
+> This patchset substitutes the single mutex with:
+> 
+>   * A read-write semaphore, which protects the mostly read fields of the
+>     snapshot structure.
+> 
+>   * Per-bucket bit spinlocks, that protect accesses to the exception
+>     hash tables.
+> 
+> fio benchmarks using the null_blk device show significant performance
+> improvements as the number of worker processes increases. Write latency
+> is almost halved and write IOPS are nearly doubled.
+> 
+> The relevant patch provides detailed benchmark results.
+> 
+> A summary of the patchset follows:
+> 
+>   1. The first patch adds two helper functions to linux/list_bl.h, which
+>      is used to implement the per-bucket bit spinlocks in dm-snapshot.
+> 
+>   2. The second patch removes the need to sleep holding the snapshot
+>      lock in pending_complete(), thus allowing us to replace the mutex
+>      with the per-bucket bit spinlocks.
+> 
+>   3. The third patch changes the locking scheme, as described previously.
+> 
+> Changes in v2:
+>   - Split third patch of v1 into three patches: 3/5, 4/5, 5/5.
+> 
+> v1: https://www.redhat.com/archives/dm-devel/2018-December/msg00161.html
+> 
+> Nikos Tsironis (5):
+>   list_bl: Add hlist_bl_add_before/behind helpers
+>   dm snapshot: Don't sleep holding the snapshot lock
+>   dm snapshot: Replace mutex with rw semaphore
+>   dm snapshot: Make exception tables scalable
+>   dm snapshot: Use fine-grained locking scheme
+> 
+>  drivers/md/dm-exception-store.h |   3 +-
+>  drivers/md/dm-snap.c            | 359 +++++++++++++++++++++++++++-------------
+>  include/linux/list_bl.h         |  27 +++
+>  3 files changed, 269 insertions(+), 120 deletions(-)
+> 
+> -- 
+> 2.11.0
+> 
