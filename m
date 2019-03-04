@@ -1,13 +1,16 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: multipathd ignoring dev_loss_tmo setting
-Date: Mon, 04 Mar 2019 13:09:45 +0100
-Message-ID: <ab5b51f08713bc0eed503d2de7ad31e6006320f0.camel@suse.de>
-References: <d915601a3472d7448e57f968e2ec3a63c627a35e.camel@cgi.com>
+From: Steffen Maier <maier@linux.ibm.com>
+Subject: Re: linux-next: Boot hangs 3 minutes with device mapper
+	on s390
+Date: Mon, 4 Mar 2019 11:01:46 +0100
+Message-ID: <113ebf5f-a5e8-b313-f515-ac7c49f51c50@linux.ibm.com>
+References: <20190301183350.5ff697d4@TP-holzheu>
+	<20190301183050.GA29752@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d915601a3472d7448e57f968e2ec3a63c627a35e.camel@cgi.com>
+In-Reply-To: <20190301183050.GA29752@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,145 +20,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Martins, Bruno O" <bruno.martins@cgi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>, Michael Holzheu <holzheu@linux.ibm.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Benjamin Block <bblock@linux.ibm.com>, linux-next@vger.kernel.org, Heiko Carstens <heiko.carstens@de.ibm.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, 2019-02-28 at 11:38 +0000,  Martins, Bruno O wrote:
-> Hello guys,
-> 
-> I am trying to modify /etc/multipath.conf on my system so that the
-> parameter 'dev_loss_tmo' is changed from the default value.
-> 
-> My multipath.conf file contains the following:
-> 
-> defaults {
->         verbosity 2
->         polling_interval 5
->         max_polling_interval 10
->         multipath_dir "/lib64/multipath"
->         path_selector "round-robin 0"
->         path_grouping_policy "failover"
->         uid_attribute "ID_SERIAL"
->         prio "const"
->         prio_args ""
->         features "0"
->         path_checker "directio"
->         alias_prefix "mpath"
->         failback "manual"
->         rr_min_io 1000
->         rr_min_io_rq 1
->         max_fds "max"
->         rr_weight "uniform"
->         no_path_retry "fail"
->         queue_without_daemon "no"
->         checker_timeout 15
->         flush_on_last_del "no"
->         user_friendly_names "yes"
->         fast_io_fail_tmo 5
->         dev_loss_tmo 10
->         bindings_file "/etc/multipath/bindings"
->         wwids_file /etc/multipath/wwids
->         log_checker_err always
->         retain_attached_hw_handler no
->         detect_prio no
-> }
-> 
-> However, when checking the value currently in use I am getting the
-> wrong value (which is '30') for some of the remote ports:
-> 
-> for f in /sys/class/fc_remote_ports/rport-*/dev_loss_tmo; do
-> d=$(dirname $f); echo $(basename $d):$(cat $d/node_name):$(cat $f);
-> done
-> 
-> rport-3:0-0:0x5742b0f00007c500:10
-> rport-3:0-1:0x5742b0f00007c500:10
-> rport-3:0-2:0x5742b0f00007c500:10
-> rport-3:0-3:0x5000097408369800:30
-> rport-3:0-4:0x500009757804cbff:30
-> rport-4:0-0:0x5742b0f00007c500:10
-> rport-4:0-1:0x5742b0f00007c500:10
-> rport-4:0-2:0x5000097408369800:30
-> rport-4:0-3:0x5742b0f00007c500:10
-> rport-4:0-4:0x500009757804cbff:30
-> rport-5:0-0:0x5742b0f00007c500:10
-> rport-5:0-1:0x5742b0f00007c500:10
-> rport-5:0-2:0x5742b0f00007c500:10
-> rport-5:0-3:0x5000097408369800:30
-> rport-5:0-4:0x500009757804cbff:30
-> rport-6:0-0:0x5742b0f00007c500:10
-> rport-6:0-1:0x5742b0f00007c500:10
-> rport-6:0-2:0x5000097408369800:30
-> rport-6:0-3:0x5742b0f00007c500:10
-> rport-6:0-4:0x500009757804cbff:30
-> 
-> systool is giving me the same information:
-> 
-> systool -c fc_remote_ports -v | grep dev_loss_tmo
-> 
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "10"
-> 
-> 
-> > 
-> > I am using the following versions:
-> > 
-> > rpm -qa multipath-tools
-> > multipath-tools-0.4.9-109.1
-> > 
-> > uname -a
-> > Linux mysystem 3.0.101-63-default #1 SMP Tue Jun 23 16:02:31 UTC
-> 2015
-> > (4b89d0c) x86_64 x86_64 x86_64 GNU/Linux
-> > 
-> > Thanks for your help!
-> > 
-> > Kind regards,
-> > 
-> > Bruno
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> > 
-> 
-> 
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "30"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "30"
->     dev_loss_tmo        = "30"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "30"
->     dev_loss_tmo        = "10"
->     dev_loss_tmo        = "30"
->     dev_loss_tmo        = "30"
->     dev_loss_tmo        = "30"
->     dev_loss_tmo        = "30"
-> 
-> Where is this value coming from? May this be a bug? I couldn't find
-> anything useful on the Internet regarding this.
-
-It'd be very helpful if you could upload "multipath -v3" (or multipathd
-with verbosity 3) logs somewhere.
-
-It looks as if you're using some SLE11 variant, so maybe you want to
-open a support case?
-
-Another question would be why you want such a low dev_loss_tmo. It's
-not generally recommended, because on the kernel side, removing and re-
-adding a device is a lot more complex than disabling and re-enabling
-it. The fast_io_fail_tmo should provide you with quick path failover
-already. My recommendation is to set dev_loss_tmo to a value which
-would, in the given data center, indicate that the device loss is
-really not due to a temporary outage but due to a permantly removed
-device (e.g. permanent storage configuration change). So basically, the
-dev_loss_tmo shouldn't be shorter than the admin's lunch break.
-
-Martin
+T24gMDMvMDEvMjAxOSAwNzozMCBQTSwgTWlrZSBTbml0emVyIHdyb3RlOgo+IE9uIEZyaSwgTWFy
+IDAxIDIwMTkgYXQgMTI6MzNwbSAtMDUwMCwKPiBNaWNoYWVsIEhvbHpoZXUgPGhvbHpoZXVAbGlu
+dXguaWJtLmNvbT4gd3JvdGU6Cj4gCj4+IEhpIE1pa2UsCj4+Cj4+IE9uIEZlZG9yYSAyOSwgdGhl
+IGZvbGxvd2luZyAibGludXgtbmV4dCIgY29tbWl0IGludHJvZHVjZWQgYSByZWdyZXNzaW9uIG9u
+IHMzOTA6Cj4+Cj4+ICAgIGNvbW1pdCAxZWZhM2JiNzlkM2RlOGNhMWI3ZjY3NzAzMTNhMWZjMGJl
+YmUyNWM3Cj4+ICAgIEF1dGhvcjogTWlrZSBTbml0emVyIDxzbml0emVyQHJlZGhhdC5jb20+Cj4+
+ICAgIERhdGU6ICAgRnJpIEZlYiAyMiAxMToyMzowMSAyMDE5IC0wNTAwCj4+Cj4+ICAgICAgZG06
+IG11c3QgYWxsb2NhdGUgZG1fbm9jbG9uZSBmb3Igc3RhY2tlZCBub2Nsb25lIGRldmljZXMKPj4g
+ICAgICAKPj4gICAgICBPdGhlcndpc2UgdmFyaW91cyBsdm0yIHRlc3RzdWl0ZSB0ZXN0cyBmYWls
+IGJlY2F1c2UgdGhlIGxvd2VyIGxheWVycyBvZgo+PiAgICAgIHRoZSBzdGFja2VkIG5vY2xvbmUg
+ZGV2aWNlIGFyZW4ndCB1cGRhdGVkIHRvIGFsbG9jYXRlIGEgbmV3ICdzdHJ1Y3QKPj4gICAgICBk
+bV9jbG9uZScgdGhhdCByZWZsZWN0cyB0aGUgdXBwZXIgbGF5ZXIgYmlvIHRoYXQgd2FzIGlzc3Vl
+ZCB0byBpdC4KPj4gICAgICAKPj4gICAgICBGaXhlczogOTdhODk0NTgwMjBiMzggKCJkbTogaW1w
+cm92ZSBub2Nsb25lIGJpbyBzdXBwb3J0IikKPj4gICAgICBSZXBvcnRlZC1ieTogTWlrdWxhcyBQ
+YXRvY2thIDxtcGF0b2NrYUByZWRoYXQuY29tPgo+PiAgICAgIFNpZ25lZC1vZmYtYnk6IE1pa2Ug
+U25pdHplciA8c25pdHplckByZWRoYXQuY29tPgo+Pgo+PiBXaXRoIHRoaXMgY29tbWl0IHRoZSBi
+b290IGhhbmdzIHRocmVlIG1pbnV0ZXMgb24gYSB6L1ZNIHN5c3RlbSB3aXRoIHRoZQo+PiBmb2xs
+b3dpbmcgZGV2aWNlIG1hcHBlciBzZXR1cDoKPj4KPj4gIyBkbXNldHVwIGxzIC0tdHJlZQo+PiBt
+cGF0aGUgKDI1Mjo1KQo+PiAgIOKUnOKUgCAoODoxMjgpCj4+ICAg4pSU4pSAICg4OjE0NCkKPj4g
+bXBhdGhkICgyNTI6NCkKPj4gICDilJzilIAgKDg6OTYpCj4+ICAg4pSU4pSAICg4OjExMikKPj4g
+bXBhdGhjICgyNTI6MykKPj4gICDilJzilIAgKDg6NjQpCj4+ICAg4pSU4pSAICg4OjgwKQo+PiBt
+cGF0aGIgKDI1MjoyKQo+PiAgIOKUnOKUgCAoODozMikKPj4gICDilJTilIAgKDg6NDgpCj4+IG1w
+YXRoYTEgKDI1MjoxKQo+PiAgIOKUlOKUgG1wYXRoYSAoMjUyOjApCj4+ICAgICAg4pSc4pSAICg4
+OjE2KQo+PiAgICAgIOKUlOKUgCAoODowKQo+Pgo+PiBPbiB0aGUgY29uc29sZSB3ZSBnZXQgbWVz
+c2FnZXMgbGlrZSB0aGUgZm9sbG93aW5nOgo+Pgo+PiAgICAgMTAuMTE2ODYzIHNkIDM6MDowOjEw
+ODM3MTk4MTM6IHNkaiBXcml0ZSBQcm90ZWN0IGlzIG9mZgo+PiAgICAgMTAuMTE3MTcwIHNkIDM6
+MDowOjEwODM3MTk4MTM6IHNkaiBXcml0ZSBjYWNoZTogZW5hYmxlZCwgcmVhZCBjYWNoZTogZW5h
+YmxlZCwgZG9lc24ndCBzdXBwb3J0IERQTyBvciBGVUEKPj4gICAgIDEwLjEzMDU2MiBzZCAzOjA6
+MDoxMDgzNzE5ODEzOiBzZGogQXR0YWNoZWQgU0NTSSBkaXNrCj4+ICAgQSBzdGFydCBqb2IgaXMg
+cnVubmluZyBmb3IgdWRldiBXYWkgICBEZXZpY2UgSW5pdGlhbGl6YXRpb24gKDZzIC8gM21pbikK
+Pj4gICBBIHN0YXJ0IGpvYiBpcyBydW5uaW5nIGZvciB1ZGV2IFdhaSAgIERldmljZSBJbml0aWFs
+aXphdGlvbiAoNnMgLyAzbWluKQo+PiAgIEEgc3RhcnQgam9iIGlzIHJ1bm5pbmcgZm9yIHVkZXYg
+V2FpICAgRGV2aWNlIEluaXRpYWxpemF0aW9uICg3cyAvIDNtaW4pCj4+ICAgQSBzdGFydCBqb2Ig
+aXMgcnVubmluZyBmb3IgdWRldiBXYWkgICBEZXZpY2UgSW5pdGlhbGl6YXRpb24gKDdzIC8gM21p
+bikKPj4gICBBIHN0YXJ0IGpvYiBpcyBydW5uaW5nIGZvciB1ZGV2IFdhaSAgIERldmljZSBJbml0
+aWFsaXphdGlvbiAoOHMgLyAzbWluKQo+PiAgIC4uLgo+Pgo+PiBBZnRlciB0aHJlZSBtaW51dGVz
+IHRoZSBib290IHByb2Nlc3MgY29udGludWVzIGFuZCB0aGUgc3lzdGVtIGNvbWVzLgo+Pgo+PiBB
+cyBrZXJuZWwgY29uZmlnIHdlIHVzZWQgInBlcmZvcm1hbmNlX2RlZmNvbmZpZyIgKG1ha2UgcGVy
+Zm9ybWFuY2VfZGVmY29uZmlnKS4KPiAKPiBJJ20gc3RydWdnbGluZyB0byBzZWUgd2h5IHRoaXMg
+cGFydGljdWxhciBjaGFuZ2Ugd291bGQgY2F1c2Ugc3VjaCBhIGJvb3QKPiBzdGFsbCAtLSBidXQg
+dGhlbiByZXNvbHZlIGl0c2VsZi4KPiAKPiBDYW4geW91IHByb3ZpZGUgdGhlIG91dHB1dCBmcm9t
+ICdkbXNldHVwIHRhYmxlJz8KPiAKPiBNdWx0aXBhdGggZGVmYXVsdHMgdG8gYmxrLW1xIChyZXF1
+ZXN0LWJhc2VkKS4gIFRoZSBjaGFuZ2UgeW91J3ZlIGNhbGxlZAo+IGludG8gcXVlc3Rpb24gaXMg
+cmVsYXRlZCB0byBiaW8tYmFzZWQgRE0uICBTbyBUaGVyZSBtdXN0IGJlIHNvbWUKPiBiaW8tYmFz
+ZWQgRE0gbGF5ZXIgb250b3Agb2YgdGhlIG11bHRpcGF0aCBkZXZpY2VzLiAgSXMgbXBhdGhhMSBh
+Cj4gZG0tbGluZWFyIGRldmljZSBsYXllcmVkIG9udG9wIG9mIG11bHRpcGF0aD8KClllcywgbXBh
+dGhhMSBpcyBqdXN0IGFuIGF1dG9tYXRpY2FsbHkgZ2VuZXJhdGVkIGtwYXJ0eCBsaW5lYXIgcGFy
+dGl0aW9uIAptYXBwaW5nLCBzbyB0aGF0IG9uZSBpcyBiaW8tYmFzZWQuCgoKLS0gCk1pdCBmcmV1
+bmRsaWNoZW4gR3J1ZXNzZW4gLyBLaW5kIHJlZ2FyZHMKU3RlZmZlbiBNYWllcgoKTGludXggb24g
+SUJNIFogRGV2ZWxvcG1lbnQKCmh0dHBzOi8vd3d3LmlibS5jb20vcHJpdmFjeS91cy9lbi8KSUJN
+IERldXRzY2hsYW5kIFJlc2VhcmNoICYgRGV2ZWxvcG1lbnQgR21iSApWb3JzaXR6ZW5kZXIgZGVz
+IEF1ZnNpY2h0c3JhdHM6IE1hdHRoaWFzIEhhcnRtYW5uCkdlc2NoYWVmdHNmdWVocnVuZzogRGly
+ayBXaXR0a29wcApTaXR6IGRlciBHZXNlbGxzY2hhZnQ6IEJvZWJsaW5nZW4KUmVnaXN0ZXJnZXJp
+Y2h0OiBBbXRzZ2VyaWNodCBTdHV0dGdhcnQsIEhSQiAyNDMyOTQKCi0tCmRtLWRldmVsIG1haWxp
+bmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1h
+bi9saXN0aW5mby9kbS1kZXZlbA==
