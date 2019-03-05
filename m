@@ -1,16 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: x86 VM Boot hang with latest linux-next
-Date: Mon, 4 Mar 2019 23:07:15 -0500
-Message-ID: <20190305040714.GB21739@redhat.com>
-References: <CAKgT0UeMqmojVrNV1i-DdY18EBwbJ_4zVTUggAWas5D5yeU1PQ@mail.gmail.com>
-	<20190303034847.GA8699@redhat.com>
-	<CAKgT0Ue9+wSL60Bj0drkgVQwem=mh_eTrFMda+inX4=qBgi3dA@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: linux-next: Boot hangs 3 minutes with device mapper
+	on s390
+Date: Tue, 5 Mar 2019 04:46:43 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1903050440470.24841@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20190301183350.5ff697d4@TP-holzheu>
+	<20190301183050.GA29752@redhat.com>
+	<20190304110334.6f71962a@TP-holzheu>
+	<20190305040321.GA21739@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAKgT0Ue9+wSL60Bj0drkgVQwem=mh_eTrFMda+inX4=qBgi3dA@mail.gmail.com>
+In-Reply-To: <20190305040321.GA21739@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,63 +21,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alexander Duyck <alexander.duyck@gmail.com>
-Cc: dm-devel@redhat.com, linux-next@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Benjamin Block <bblock@linux.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Alexander Duyck <alexander.duyck@gmail.com>, dm-devel@redhat.com, linux-next@vger.kernel.org, Steffen Maier <maier@linux.ibm.com>, Michael Holzheu <holzheu@linux.ibm.com>
 List-Id: dm-devel.ids
 
-T24gU3VuLCBNYXIgMDMgMjAxOSBhdCAxMjowNnBtIC0wNTAwLApBbGV4YW5kZXIgRHV5Y2sgPGFs
-ZXhhbmRlci5kdXlja0BnbWFpbC5jb20+IHdyb3RlOgoKPiBPbiBTYXQsIE1hciAyLCAyMDE5IGF0
-IDc6NDggUE0gTWlrZSBTbml0emVyIDxzbml0emVyQHJlZGhhdC5jb20+IHdyb3RlOgo+ID4KPiA+
-IE9uIFNhdCwgTWFyIDAyIDIwMTkgYXQgIDY6MzRwbSAtMDUwMCwKPiA+IEFsZXhhbmRlciBEdXlj
-ayA8YWxleGFuZGVyLmR1eWNrQGdtYWlsLmNvbT4gd3JvdGU6Cj4gPgo+ID4gPiBTbyBJIGhhdmUg
-YmVlbiBzZWVpbmcgYW4gaXNzdWUgd2l0aCBhbiBpbnRlcm1pdHRlbnQgYm9vdCBoYW5nIG9uIG15
-Cj4gPiA+IHg4NiBLVk0gVk0gd2l0aCB0aGUgbGF0ZXN0IGxpbnV4LW5leHQgYW5kIGhhdmUgYmlz
-ZWN0ZWQgaXQgZG93biB0byB0aGUKPiA+ID4gZm9sbG93aW5nIGNvbW1pdDoKPiA+ID4gMWVmYTNi
-Yjc5ZDNkZThjYTFiN2Y2NzcwMzEzYTFmYzBiZWJlMjVjNyBpcyB0aGUgZmlyc3QgYmFkIGNvbW1p
-dAo+ID4gPiBjb21taXQgMWVmYTNiYjc5ZDNkZThjYTFiN2Y2NzcwMzEzYTFmYzBiZWJlMjVjNwo+
-ID4gPiBBdXRob3I6IE1pa2UgU25pdHplciA8c25pdHplckByZWRoYXQuY29tPgo+ID4gPiBEYXRl
-OiAgIEZyaSBGZWIgMjIgMTE6MjM6MDEgMjAxOSAtMDUwMAo+ID4gPgo+ID4gPiAgICAgZG06IG11
-c3QgYWxsb2NhdGUgZG1fbm9jbG9uZSBmb3Igc3RhY2tlZCBub2Nsb25lIGRldmljZXMKPiA+ID4K
-PiA+ID4gICAgIE90aGVyd2lzZSB2YXJpb3VzIGx2bTIgdGVzdHN1aXRlIHRlc3RzIGZhaWwgYmVj
-YXVzZSB0aGUgbG93ZXIgbGF5ZXJzIG9mCj4gPiA+ICAgICB0aGUgc3RhY2tlZCBub2Nsb25lIGRl
-dmljZSBhcmVuJ3QgdXBkYXRlZCB0byBhbGxvY2F0ZSBhIG5ldyAnc3RydWN0Cj4gPiA+ICAgICBk
-bV9jbG9uZScgdGhhdCByZWZsZWN0cyB0aGUgdXBwZXIgbGF5ZXIgYmlvIHRoYXQgd2FzIGlzc3Vl
-ZCB0byBpdC4KPiA+ID4KPiA+ID4gICAgIEZpeGVzOiA5N2E4OTQ1ODAyMGIzOCAoImRtOiBpbXBy
-b3ZlIG5vY2xvbmUgYmlvIHN1cHBvcnQiKQo+ID4gPiAgICAgUmVwb3J0ZWQtYnk6IE1pa3VsYXMg
-UGF0b2NrYSA8bXBhdG9ja2FAcmVkaGF0LmNvbT4KPiA+ID4gICAgIFNpZ25lZC1vZmYtYnk6IE1p
-a2UgU25pdHplciA8c25pdHplckByZWRoYXQuY29tPgo+ID4gPgo+ID4gPiBXaGF0IEkgYW0gc2Vl
-aW5nIGlzIGluIGFib3V0IDMgb3V0IG9mIDQgYm9vdHMgdGhlIHN0YXJ0dXAganVzdCBoYW5ncwo+
-ID4gPiBhdCB0aGUgZmlsZXN5c3RlbSBjaGVjayBzdGFnZSB3aXRoIHRoZSBmb2xsb3dpbmcgbWVz
-c2FnZToKPiA+ID4gWyAgT0sgIF0gUmVhY2hlZCB0YXJnZXQgTG9jYWwgRmlsZSBTeXN0ZW1zIChQ
-cmUpLgo+ID4gPiAgICAgICAgICBTdGFydGluZyBGaWxlIFN5c3RlbSBDaGVjayBvbiAvZGV2L+KA
-pjEyNy1hZDU3LTQyNmYtYmI0NS0zNjM5NTA1NDRjMGMuLi4KPiA+ID4gWyAgICAqKl0gKDEgb2Yg
-MikgQSBzdGFydCBqb2IgaXMgcnVubmluZyBmb3LigKZuIG9uIGRldmljZSAyNTI6MiAoMTlzIC8g
-bm8gbGltaXQpCj4gPiA+Cj4gPiA+IEkgZGlkIHNvbWUgZ29vZ2xpbmcgYW5kIGl0IGxvb2tzIGxp
-a2UgYSBzaW1pbGFyIGlzc3VlIGhhcyBiZWVuCj4gPiA+IHJlcG9ydGVkIGZvciBzMzkwLiBCYXNl
-ZCBvbiB0aGUgcmVxdWVzdCBmb3IgZGF0YSB0aGVyZSBJIGhhdmUgdGhlCj4gPiA+IGZvbGxvd2lu
-ZyBpbmZvOgo+ID4gPiBbcm9vdEBsb2NhbGhvc3Qgfl0jIGRtc2V0dXAgbHMgLS10cmVlCj4gPiA+
-IGZlZG9yYS1zd2FwICgyNTM6MSkKPiA+ID4gIOKUlOKUgCAoMjUyOjIpCj4gPiA+IGZlZG9yYS1y
-b290ICgyNTM6MCkKPiA+ID4gIOKUlOKUgCAoMjUyOjIpCj4gPiA+Cj4gPiA+IFtyb290QGxvY2Fs
-aG9zdCB+XSMgZG1zZXR1cCB0YWJsZQo+ID4gPiBmZWRvcmEtc3dhcDogMCA0MTk0MzA0IGxpbmVh
-ciAyNTI6MiAyMDQ4Cj4gPiA+IGZlZG9yYS1yb290OiAwIDMxNDU3MjgwIGxpbmVhciAyNTI6MiA0
-MTk2MzUyCj4gPgo+ID4gVGhhbmtzLCB3aGljaCB2ZXJzaW9uIG9mIEZlZG9yYSBhcmUgeW91IHJ1
-bm5pbmc/Cj4gCj4gVGhlIFZNIGlzIHJ1bm5pbmcgRmVkb3JhIDI3IHdpdGggYSBrZXJuZWwgYnVp
-bHQgb2ZmIG9mIGxhdGVzdAo+IGxpbnV4LW5leHQgYXMgb2YgTWFyY2ggMXN0Lgo+IAo+ID4gWW91
-ciBjYXNlIGlzIG1vcmUgc3RyYWlnaHRmb3J3YXJkIGluIHRoYXQgeW91J3JlIGNsZWFybHkgdXNp
-bmcgYmlvLWJhc2VkCj4gPiBETSBsaW5lYXIgKHdoaWNoIHdhcyB1cGRhdGVkIHRvIGxldmVyYWdl
-ICJub2Nsb25lIiBzdXBwb3J0KTsgd2hlcmVhcyB0aGUKPiA+IHMzOTAgY2FzZSBpcyB1c2luZyBy
-ZXF1ZXN0LWJhc2VkIERNIHdoaWNoIGlzbid0IGltcGFjdGVkIGJ5IHRoZSBjb21taXQKPiA+IGlu
-IHF1ZXN0aW9uIGF0IGFsbC4KPiA+Cj4gPiBJJ2xsIGF0dGVtcHQgdG8gcmVwcm9kdWNlIGZpcnN0
-IHRoaW5nIE1vbmRheS4KPiA+Cj4gPiBNaWtlCj4gCj4gVGhhbmtzLiBUaGUgYmVoYXZpb3Igb2Yg
-aXQgaGFzIG1lIHdvbmRlcmluZyBpZiB3ZSBhcmUgbG9va2luZyBhdAo+IHNvbWV0aGluZyBsaWtl
-IGFuIHVuaW5pdGlhbGl6ZWQgZGF0YSBpc3N1ZSBvciBzb21ldGhpbmcgbGlrZSB0aGF0Cj4gc2lu
-Y2UgYXMgSSBtZW50aW9uZWQgSSBkb24ndCBzZWUgdGhpcyBvY2N1ciBvbiBldmVyeSBib290LCBq
-dXN0IG9uCj4gbW9zdCBvZiB0aGVtLiBTbyBldmVyeSBub3cgYW5kIHRoZW4gSSBjYW4gYm9vdCB1
-cCB0aGUgVk0gd2l0aG91dCBhbnkKPiBpc3N1ZXMsIGJ1dCBtb3N0IG9mIHRoZSB0aW1lIGl0IHdp
-bGwgYm9vdCBhbmQgdGhlbiBnZXQgc3R1Y2sgd2FpdGluZwo+IG9uIGpvYnMgdGhhdCB0YWtlIGZv
-cmV2ZXIuCgpJIGp1c3QgY29waWVkIHlvdSBvbiBhbm90aGVyIHJlbGF0ZWQgdGhyZWFkLCBidXQg
-Zm9yIHRoZSBiZW5lZml0IG9mCmFueW9uZSBvbiBMS01MLCBwbGVhc2Ugc2VlIHRoZSBmb2xsb3dp
-bmcgZm9yIGEgZml4IHRoYXQgd29ya3MgZm9yIG1lOgoKaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9h
-cmNoaXZlcy9kbS1kZXZlbC8yMDE5LU1hcmNoL21zZzAwMDI3Lmh0bWwKCi0tCmRtLWRldmVsIG1h
-aWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFp
-bG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+
+
+On Mon, 4 Mar 2019, Mike Snitzer wrote:
+
+> Hi,
+> 
+> Alexander reported this same boot hang in another thread.  I was able to
+> reproduce using an x86_64 .config that Alexander provided.
+> 
+> I've pushed this fix out to linux-next:
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.1&id=be2c5301817833f692aadb2e5fa209582db01d3b
+> 
+> If you could verify this fix works for you I'd appreciate it.
+> 
+> Thanks,
+> Mike
+
+So, remove this no-clone optimization and stage it for the next merge 
+window. There's something we don't understand, so don't merge it. This 
+patch is just papering over the problem.
+
+"Stacking noclone targets creates more complexity than is tolerable" just 
+means that no one knows what is hapenning there.
+
+Meanwile, we could get access to the system that reports hangs and test it 
+there.
+
+Mikulas
