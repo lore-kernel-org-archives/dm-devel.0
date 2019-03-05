@@ -1,40 +1,39 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: x86 VM Boot hang with latest linux-next
-Date: Mon, 4 Mar 2019 18:02:46 -0500
-Message-ID: <20190304230246.GC20327@redhat.com>
-References: <CAKgT0UeMqmojVrNV1i-DdY18EBwbJ_4zVTUggAWas5D5yeU1PQ@mail.gmail.com>
- <20190303034847.GA8699@redhat.com>
- <CAKgT0Ue9+wSL60Bj0drkgVQwem=mh_eTrFMda+inX4=qBgi3dA@mail.gmail.com>
+Subject: Re: linux-next: Boot hangs 3 minutes with device mapper
+	on s390
+Date: Mon, 4 Mar 2019 23:03:21 -0500
+Message-ID: <20190305040321.GA21739@redhat.com>
+References: <20190301183350.5ff697d4@TP-holzheu>
+	<20190301183050.GA29752@redhat.com>
+	<20190304110334.6f71962a@TP-holzheu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <CAKgT0Ue9+wSL60Bj0drkgVQwem=mh_eTrFMda+inX4=qBgi3dA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexander Duyck <alexander.duyck@gmail.com>
-Cc: linux-next@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
+In-Reply-To: <20190304110334.6f71962a@TP-holzheu>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Michael Holzheu <holzheu@linux.ibm.com>, Alexander Duyck <alexander.duyck@gmail.com>
+Cc: Benjamin Block <bblock@linux.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, dm-devel@redhat.com, linux-next@vger.kernel.org, Mikulas Patocka <mpatocka@redhat.com>, Steffen Maier <maier@linux.ibm.com>
 List-Id: dm-devel.ids
 
-On Sun, Mar 03 2019 at 12:06pm -0500,
-Alexander Duyck <alexander.duyck@gmail.com> wrote:
+Hi,
 
-> Thanks. The behavior of it has me wondering if we are looking at
-> something like an uninitialized data issue or something like that
-> since as I mentioned I don't see this occur on every boot, just on
-> most of them. So every now and then I can boot up the VM without any
-> issues, but most of the time it will boot and then get stuck waiting
-> on jobs that take forever.
+Alexander reported this same boot hang in another thread.  I was able to
+reproduce using an x86_64 .config that Alexander provided.
 
-The commit in question (1efa3bb79d3 "dm: must allocate dm_noclone for
-stacked noclone devices") conditionally allocates the 'struct
-dm_noclone' and I can only infer that the change is causing a negative
-side-effect in virtualized environments (both x86_64 and s390).
+I've pushed this fix out to linux-next:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.1&id=be2c5301817833f692aadb2e5fa209582db01d3b
 
-I haven't been able to reproduce on x86_64 kvm with virtio-scsi on
-fedora 25 though.  Will try fedora 29 shortly, and also try virtio-blk.
-
-Could you please provide your guest's .config (even if just off-list)?
-Also, what kernel are you running on the host?
+If you could verify this fix works for you I'd appreciate it.
 
 Thanks,
 Mike
