@@ -1,39 +1,57 @@
-From: "Theodore Y. Ts'o" <tytso@mit.edu>
-Subject: Re: Serial console is causing system lock-up
-Date: Wed, 6 Mar 2019 11:30:04 -0500
-Message-ID: <20190306163003.GA31858@mit.edu>
-References: <alpine.LRH.2.02.1903060917280.5335@file01.intranet.prod.int.rdu2.redhat.com>
-	<20190306152218.eocv4zulf7tv2mkc@pathway.suse.cz>
-	<alpine.LRH.2.02.1903061031420.16905@file01.intranet.prod.int.rdu2.redhat.com>
+From: Jan =?ISO-8859-1?Q?L=FCbbe?= <jlu@pengutronix.de>
+Subject: Re: [RFC PATCH 0/2] Create CAAM HW key in linux keyring and use in
+ dmcrypt
+Date: Wed, 06 Mar 2019 17:47:46 +0100
+Message-ID: <1551890866.5086.125.camel@pengutronix.de>
+References: <1551456599-10603-1-git-send-email-franck.lenormand@nxp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1903061031420.16905@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Petr Mladek <pmladek@suse.com>, Nigel Croxon <ncroxon@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Rostedt <rostedt@goodmis.org>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, dm-devel@redhat.com, linux-serial@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1551456599-10603-1-git-send-email-franck.lenormand@nxp.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Franck LENORMAND <franck.lenormand@nxp.com>, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org, keyrings@vger.kernel.org
+Cc: horia.geanta@nxp.com, silvano.dininno@nxp.com, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, dhowells@redhat.com, jmorris@namei.org, serge@hallyn.com, David Gstir <david@sigma-star.at>
 List-Id: dm-devel.ids
 
-On Wed, Mar 06, 2019 at 11:07:55AM -0500, Mikulas Patocka wrote:
-> This bug only happens if we select large logbuffer (millions of 
-> characters). With smaller log buffer, there are messages "** X printk 
-> messages dropped", but there's no lockup.
+Hi Franck,
+
+thanks for working on this!
+
+On Fri, 2019-03-01 at 17:09 +0100, Franck LENORMAND wrote:
+> The creation of such structures and its use was not exposed to userspace so
+> it was complicated to use and required custom development. We would like to
+> ease this using interface which are known and used:
+>  - Linux key retention service : Allow to generate or load keys in a
+>         keyring which can be used by applications.
+>  - dm-crypt : device mapper allowing to encrypt data.
 > 
-> The kernel apparently puts 2 million characters into a console log buffer, 
-> then takes some lock and than tries to write all of them to a slow serial 
-> line.
+> The capacity to generate or load keys already available in the Linux key
+> retention service does not allows to exploit CAAM capabilities hence we
+> need to create a new key_type. The new key type "caam_tk" allows to:
+>  - Create a black key from random
+>  - Create a black key from a red key
+>  - Load a black blob to retrieve the black key
 
-What are the messages; from what kernel subsystem?  Why are you seeing
-so many log messages?
+On 2018-07-23, Udit Agarwal <udit.agarwal@nxp.com> sent a series which
+seems related to this:
+[PATCH v2 1/2] security/keys/secure_key: Adds the secure key support
+based on CAAM.
+[PATCH v2 2/2] encrypted_keys: Adds support for secure key-type as
+master key.
 
-					- Ted
+Is this series intended to continue that work and cover the same uses-
+cases? 
+
+If I remember correctly, the CAAM also supports marking blobs to allow
+or disallow exporting the encapsulated key from the hardware. Or is
+this unneeded and we could encrypt/decrypt other (less critical) key
+material against the tk(cbc(aes)) CAAM key via the keyring mechanisms?
+
+Best regards,
+Jan
+-- 
+Pengutronix e.K.                           |                             |
+Industrial Linux Solutions                 | http://www.pengutronix.de/  |
+Peiner Str. 6-8, 31137 Hildesheim, Germany | Phone: +49-5121-206917-0    |
+Amtsgericht Hildesheim, HRA 2686           | Fax:   +49-5121-206917-5555 |
