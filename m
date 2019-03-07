@@ -1,62 +1,86 @@
-From: Franck Lenormand <franck.lenormand@nxp.com>
-Subject: RE: [RFC PATCH 0/2] Create CAAM HW key in linux keyring and use in
- dmcrypt
-Date: Thu, 7 Mar 2019 13:17:48 +0000
-Message-ID: <AM6PR04MB54473C2D30DDD7CDC8522DF9924C0@AM6PR04MB5447.eurprd04.prod.outlook.com>
-References: <1551456599-10603-1-git-send-email-franck.lenormand@nxp.com>
- <11177.1551893395@warthog.procyon.org.uk>
+From: "John Stoffel" <john@stoffel.org>
+Subject: Re: Serial console is causing system lock-up
+Date: Thu, 7 Mar 2019 09:08:39 -0500
+Message-ID: <23681.9703.524330.948156@quad.stoffel.home>
+References: <alpine.LRH.2.02.1903060917280.5335@file01.intranet.prod.int.rdu2.redhat.com>
+	<20190306152218.eocv4zulf7tv2mkc@pathway.suse.cz>
+	<alpine.LRH.2.02.1903061031420.16905@file01.intranet.prod.int.rdu2.redhat.com>
+	<20190306163003.GA31858@mit.edu>
+	<alpine.LRH.2.02.1903061157530.3129@file01.intranet.prod.int.rdu2.redhat.com>
+	<20190306171943.12345598@oasis.local.home>
+	<87ftrzbp3y.fsf@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <11177.1551893395@warthog.procyon.org.uk>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-security-module@vger.kernel.org" <linux-security-module@vger.kernel.org>, "keyrings@vger.kernel.org" <keyrings@vger.kernel.org>, Horia Geanta <horia.geanta@nxp.com>, Silvano Di Ninno <silvano.dininno@nxp.com>, "agk@redhat.com" <agk@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "jmorris@namei.org" <jmorris@namei.org>, "serge@hallyn.com" <serge@hallyn.com>
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <87ftrzbp3y.fsf@linutronix.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: John Ogness <john.ogness@linutronix.de>
+Cc: Petr Mladek <pmladek@suse.com>, Nigel Croxon <ncroxon@redhat.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Rostedt <rostedt@goodmis.org>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-serial@vger.kernel.org
 List-Id: dm-devel.ids
 
-> -----Original Message-----
-> From: David Howells <dhowells@redhat.com>
-> Sent: Wednesday, March 6, 2019 6:30 PM
-> To: Franck Lenormand <franck.lenormand@nxp.com>
-> Cc: dhowells@redhat.com; linux-kernel@vger.kernel.org; linux-security-
-> module@vger.kernel.org; keyrings@vger.kernel.org; Horia Geanta
-> <horia.geanta@nxp.com>; Silvano Di Ninno <silvano.dininno@nxp.com>;
-> agk@redhat.com; snitzer@redhat.com; dm-devel@redhat.com;
-> jmorris@namei.org; serge@hallyn.com
-> Subject: Re: [RFC PATCH 0/2] Create CAAM HW key in linux keyring and use =
-in
-> dmcrypt
->=20
-> Franck LENORMAND <franck.lenormand@nxp.com> wrote:
->=20
-> > The capacity to generate or load keys already available in the Linux
-> > key retention service does not allows to exploit CAAM capabilities
-> > hence we need to create a new key_type. The new key type "caam_tk"
-> allows to:
-> >  - Create a black key from random
-> >  - Create a black key from a red key
-> >  - Load a black blob to retrieve the black key
->=20
-> Is it possible that this could be done through an existing key type, such=
- as the
-> asymmetric, trusted or encrypted key typed?
->=20
-> David
+>>>>> "John" == John Ogness <john.ogness@linutronix.de> writes:
 
-Hello David,
+John> On 2019-03-06, Steven Rostedt <rostedt@goodmis.org> wrote:
+>>> This bug only happens if we select large logbuffer (millions of
+>>> characters). With smaller log buffer, there are messages "** X printk
+>>> messages dropped", but there's no lockup.
+>>> 
+>>> The kernel apparently puts 2 million characters into a console log
+>>> buffer, then takes some lock and than tries to write all of them to a
+>>> slow serial line.
+>>> 
+>>> [...]
+>>> 
+>>> The MD-RAID is supposed to recalculate data for the corrupted device
+>>> and bring it back to life. However, scrubbing the MD-RAID device
+>>> resulted in a lot of reads from the device with bad checksums, these
+>>> were reported to the log and killed the machine.
+>>> 
+>>> I made a patch to dm-integrity to rate-limit the error messages. But
+>>> anyway - killing the machine in case of too many log messages seems
+>>> bad.  If the log messages are produced faster than the kernel can
+>>> write them, the kernel should discard some of them, not kill itself.
+>> 
+>> Sounds like another aurgment for the new printk design.
 
-I didn't know about asymmetric key type so I looked it up, from my
-observation, it would not be possible to use it for the caam_tk as
-we must perform operations on the data provided.
-The name " asymmetric " is also misleading for the use we would have.
+John> Assuming the bad checksum messages are considered an emergency
+John> (for example, at least loglevel KERN_WARN), then the new printk
+John> design would print those messages synchronously to the slow
+John> serial line in the context of the driver as the driver is
+John> producing them.
 
-The trusted and encrypted does not provides the necessary
-callbacks to do what we would need or require huge modifications.
+John> There wouldn't be a lock-up, but it would definitely slow down
+John> the driver. The situation of "messages being produced faster
+John> than the kernel can write them" would never exist because the
+John> printk() call will only return after the writing is completed. I
+John> am curious if that would be acceptable here?
 
-I would like, for this series to focus on the change related to
-dm-crypt. In effect, it is currently not possible to pass a key
-from the asymmetric key type to it.
+The real problem is the disconnect between serial console speed and
+capacity in bits/sec and that of the regular console.  Serial, esp at
+9600 baud is just a slow and limited resource which needs to be
+handled differently than a graphical console.
 
-Franck
+I'm also big on ratelimiting messages, even critical warning
+messages.  Too much redundant info doesn't help anyone.  And what a
+subsystem thinks is critical, may not be critical to the system as a
+whole.
+
+In this case, if these checksum messages are telling us that there's
+corruption, why isn't dm-integrity going readonly and making the block
+device get the filesystem to also go readonly and to stop the damage
+right away?
+
+If it's just a warning for the niceness, then please rate limit them,
+or summarize them in some more useful way.  Or even log them to
+somewhere else than the console once the problem is noted.
+
+John
