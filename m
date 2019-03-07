@@ -1,21 +1,12 @@
-From: John Ogness <john.ogness@linutronix.de>
-Subject: Re: Serial console is causing system lock-up
-Date: Thu, 07 Mar 2019 15:21:50 +0100
-Message-ID: <87r2biojcx.fsf@linutronix.de>
-References: <20190306163003.GA31858@mit.edu>
-	<alpine.LRH.2.02.1903061157530.3129@file01.intranet.prod.int.rdu2.redhat.com>
-	<20190306171943.12345598@oasis.local.home>
-	<87ftrzbp3y.fsf@linutronix.de> <20190307022254.GB4893@jagdpanzerIV>
-	<87tvgfhzd6.fsf@linutronix.de> <20190307082509.GA1925@jagdpanzerIV>
-	<87pnr3hyle.fsf@linutronix.de> <20190307091748.GA6307@jagdpanzerIV>
-	<87o96nezr2.fsf@linutronix.de>
-	<20190307122642.GA10415@tigerII.localdomain>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper changes for 5.1
+Date: Thu, 7 Mar 2019 11:24:51 -0500
+Message-ID: <20190307162450.GA8985@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190307122642.GA10415@tigerII.localdomain> (Sergey
-	Senozhatsky's message of "Thu, 7 Mar 2019 21:26:42 +0900")
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,90 +16,120 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Sergey Senozhatsky <sergey.senozhatsky@gmail.com>
-Cc: Petr Mladek <pmladek@suse.com>, Nigel Croxon <ncroxon@redhat.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Rostedt <rostedt@goodmis.org>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-serial@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, Huaisheng Ye <yehs1@lenovo.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Chengguang Xu <cgxu519@gmx.com>, Helen Koike <helen.koike@collabora.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, NeilBrown <neil@brown.name>, Alasdair G Kergon <agk@redhat.com>, Jason Cai <jason.cai.kern@gmail.com>
 List-Id: dm-devel.ids
 
-On 2019-03-07, Sergey Senozhatsky <sergey.senozhatsky@gmail.com> wrote:
->>> The CPU which spins on prb_lock() can have preemption disabled and,
->>> additionally, can have local IRQs disabled, or be under RCU read
->>> side lock. If consoles are busy, then there are CPUs which printk()
->>> data and keep prb_lock contended; prb_lock() does not seem to be
->>> fair. What am I missing?
->> 
->> You are correct. Making prb_lock fair might be something we want to
->> look into. Perhaps also based on the loglevel of what needs to be
->> printed. (For example, KERN_ALERT always wins over KERN_CRIT.)
->
-> Good.
->
-> I'm not insisting, but I have a feeling that touching watchdogs after
-> call_console_drivers() might be too late, sometimes. When we spin in
-> prb_lock() we wait for all CPUs which are before/ahead of us to
-> finish their call_console_drivers(), one by one. So if CPUZ is very
-> unlucky and is in atomic context, then prb_lock() for that CPUZ can
-> last for  N * call_console_drivers().  And depending on N (which also
-> includes unfairness) and call_console_drivers() timings NMI watchdog
-> may pay CPUZ a visit before it gets its chance to touch watchdogs.
->
-> *May be* sometimes we might want to touch watchdogs in prb_lock().
+Hi Linus,
 
-This is an excellent point. The handling of the watchdogs needs to be
-more carefully considered/placed.
+I had to rebase a couple days ago because I decided to drop the
+bio-based DM "noclone" feature that was developed this past development
+cycle.  The "noclone" support allowed certain DM targets to work without
+requiring bio cloning.  A performance win of ~10% was realized with 512b
+bio payloads, on _really_ fast storage, but if the bio payload just
+increased to as small as 4K then the improvement was only 1%.  The risk
+vs reward trade-off skewed toward too risky at this time given late
+breaking reports of Fedora boot hangs on s390 and x86_64 kvm guests for
+particular kernel configs.  Persistent memory may warrant revisiting
+this line of work in the future but for now it has been tabled.
 
-> So, given the design of new printk(), I can't help thinking about the
-> fact that current
-> 	"the winner takes it all"
-> may become
-> 	"the winner waits for all".
+The following changes since commit 4ae280b4ee3463fa57bbe6eede26b97daff8a0f1:
 
-I am open to looking at implementing a fair prb_cpulock(). I think
-without it, your observation for these "multi-CPU emergency message
-flood" cases is correct.
+  dm thin: fix bug where bio that overwrites thin block ignores FUA (2019-02-14 19:02:29 -0500)
 
-> [...]
->
-> And this brings us to another pessimistic scenario: a very unlucky
-> CPUZ has to spin in prb_lock() waiting for other CPUs to print out
-> the very same 2 million chars. Which in terms of printk() latency
-> looks to me just like current printk.
+are available in the Git repository at:
 
-If the prb_cpulock() is fair, they are both taking turns printing. The
-prb_cpulock() is taken for _each_ printk() call and not (like in the
-current printk) for the complete unprinted contents of the ringbuffer.
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.1/dm-changes
 
-> John, sorry to ask this, does new printk() design always provide
-> latency guarantees good enough for PREEMPT_RT?
+for you to fetch changes up to 225557446856448039a9e495da37b72c20071ef2:
 
-Yes, because it is assumed that emergency messages will never occur for
-a correctly running system. We've run tests where we pr_info() from all
-contexts and the console_loglevel is set such that KERN_INFO is printed
-to the console. The storage of the messages into the printk ringbuffer
-do not cause any unacceptable latencies. And printing those messages to
-the consoles via the fully preemptible printk-kthread also causes no
-unacceptable latencies.
+  dm integrity: limit the rate of error messages (2019-03-06 09:03:00 -0500)
 
-Obviously as soon as any emergency message appears, an _unacceptable_
-latency occurs. But that is considered OK because the system is no
-longer running correctly and it is worth the price to pay to get those
-messages with such high reliability.
+Please pull, thanks.
+Mike
 
-In a previous response[0] to Petr, I talk about defining _all_ console
-printing as emergency and requiring userspace to handle informational
-messages. With that definition, one could argue that the atomic consoles
-are enough and we could avoid the printk-kthread(s) altogether. I am not
-absolutely against this idea. But there (most likely) will be consoles
-that cannot support atomic. And how should they be handled? We could
-keep the current (quite complex) implementation in place just for
-them. But I really wonder if all that is necessary just for those (few?)
-consoles. printk-kthreads seem to me to be the ideal solution
-(particularly when dealing with PREEMPT_RT, where nearly everything
-important becomes a kthread). My RFC series implements a very simple
-(naive) approach to kthread printing. I believe there is a lot[1][2] we
-can do to make the printk-kthread printing more reliable.
+----------------------------------------------------------------
+- Update bio-based DM core to always call blk_queue_split() and update
+  DM targets to properly advertise discard limits that blk_queue_split()
+  looks at when dtermining to split discard.  Whereby allowing DM core's
+  own 'split_discard_bios' to be removed.
 
-John Ogness
+- Improve DM cache target to provide support for discard passdown to the
+  origin device.
 
-[0] https://lkml.kernel.org/r/87k1hbbq2m.fsf@linutronix.de
-[1] https://lkml.kernel.org/r/87o96p9gtx.fsf@linutronix.de
-[2] https://lkml.kernel.org/r/87lg1rggcz.fsf@linutronix.de
+- Introduce support to directly boot to a DM mapped device from init by
+  using dm-mod.create= module param.  This eliminates the need for an
+  elaborate initramfs that is otherwise needed to create DM devices.
+  This feature's implementation has been worked on for quite some time
+  (got up to v12) and is of particular interest to Android and other
+  more embedded platforms (e.g. ARM).
+
+- Rate limit errors from the DM integrity target that were identified as
+  the cause for recent NMI hangs due to console limitations.
+
+- Add sanity checks for user input to thin-pool and external snapshot
+  creation.
+
+- Remove some unused leftover kmem caches from when old .request_fn
+  request-based support was removed.
+
+- Various small cleanups and fixes to targets (e.g. typos, needless
+  unlikely() annotations, use struct_size(), remove needless
+  .direct_access method from dm-snapshot)
+
+----------------------------------------------------------------
+Chengguang Xu (3):
+      dm integrity: remove redundant unlikely annotation
+      dm verity fec: remove redundant unlikely annotation
+      dm block manager: remove redundant unlikely annotation
+
+Gustavo A. R. Silva (1):
+      dm switch: use struct_size() in kzalloc()
+
+Helen Koike (1):
+      dm: add support to directly boot to a mapped device
+
+Huaisheng Ye (1):
+      dm writecache: fix typo in name for writeback_wq
+
+Jason Cai (Xiang Feng) (1):
+      dm thin: add sanity checks to thin-pool and external snapshot creation
+
+Mike Snitzer (5):
+      dm: update dm_process_bio() to split bio if in ->make_request_fn()
+      dm: eliminate 'split_discard_bios' flag from DM target interface
+      dm: remove unused _rq_tio_cache and _rq_cache
+      dm: always call blk_queue_split() in dm_process_bio()
+      dm cache: add support for discard passdown to the origin device
+
+Mikulas Patocka (2):
+      dm snapshot: don't define direct_access if we don't support it
+      dm integrity: limit the rate of error messages
+
+NeilBrown (1):
+      dm: fix to_sector() for 32bit
+
+ Documentation/device-mapper/cache.txt         |   3 +
+ Documentation/device-mapper/dm-init.txt       | 114 ++++++++++
+ drivers/md/Kconfig                            |  12 +
+ drivers/md/Makefile                           |   4 +
+ drivers/md/dm-cache-target.c                  | 127 ++++++++---
+ drivers/md/dm-init.c                          | 303 ++++++++++++++++++++++++++
+ drivers/md/dm-integrity.c                     |  10 +-
+ drivers/md/dm-ioctl.c                         | 103 +++++++++
+ drivers/md/dm-raid.c                          |  14 +-
+ drivers/md/dm-rq.c                            |  16 ++
+ drivers/md/dm-rq.h                            |  16 --
+ drivers/md/dm-snap.c                          |   8 -
+ drivers/md/dm-switch.c                        |   3 +-
+ drivers/md/dm-thin.c                          |  14 +-
+ drivers/md/dm-verity-fec.c                    |   6 +-
+ drivers/md/dm-writecache.c                    |   2 +-
+ drivers/md/dm-zoned-target.c                  |   1 -
+ drivers/md/dm.c                               | 139 ++++++------
+ drivers/md/persistent-data/dm-block-manager.c |   8 +-
+ include/linux/device-mapper.h                 |  17 +-
+ include/uapi/linux/dm-ioctl.h                 |   4 +-
+ 21 files changed, 776 insertions(+), 148 deletions(-)
+ create mode 100644 Documentation/device-mapper/dm-init.txt
+ create mode 100644 drivers/md/dm-init.c
