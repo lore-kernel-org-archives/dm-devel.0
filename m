@@ -1,14 +1,15 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [dm-crypt] Dm-integrity freeze
-Date: Thu, 7 Mar 2019 17:37:10 +0100
-Message-ID: <9d19e5b1-b76f-27da-fa4a-f3a83e6e2791@gmail.com>
-References: <5D8A23C5-B6AD-48EA-B0AD-AD1BD1A2B97B@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: Build: properly parse
+ systemd's version
+Date: Thu, 7 Mar 2019 19:22:58 +0100
+Message-ID: <8a4f3790-a2a9-27ad-b839-d2b743e939a7@gmail.com>
+References: <20190307145448.2470-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5D8A23C5-B6AD-48EA-B0AD-AD1BD1A2B97B@gmail.com>
-Content-Language: en-US
+In-Reply-To: <20190307145448.2470-1-mwilck@suse.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,92 +19,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Victor Helmholtz <victor.helmholtz@gmail.com>, dm-crypt@saout.de
-Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+To: Martin Wilck <mwilck@suse.com>, Dominique Leuenberger <dimstar@opensuse.org>, Igor Gnatenko <ignatenkobrain@fedoraproject.org>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+On 3/7/19 3:54 PM, Martin Wilck wrote:
+> From: Dominique Leuenberger <dimstar@opensuse.org>
+> 
+> Since systemd 241, systemctl --version no longer 'just' prints out the
+> version, but gives more information like git commit ref and whatnot. In
+> it's shortest form, it gives something like "systemd 241 (241)", which when
+> passed as parameter "-DUSE_SYSTEMD=241 (241)" results in shell errors.
+> 
+> Try to retrieve the version from pkg-config instead, and if that fails,
+> discard anything after the first number in "systemctl --version" output.
 
-from the full log it seems that it is stuck in tgtd (iSCSI).
+There is a simpler patch in Fedora, see below.
 
-Anyway, this is device-mapper, dm-devel is better list here.
-(added to cc + Mikulas)
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  Makefile.inc | 9 +++++++--
+>  1 file changed, 7 insertions(+), 2 deletions(-)
+> 
+> diff --git a/Makefile.inc b/Makefile.inc
+> index fc728ca9..56c3eda0 100644
+> --- a/Makefile.inc
+> +++ b/Makefile.inc
+> @@ -36,8 +36,13 @@ ifndef RUN
+>  endif
+>  
+>  ifndef SYSTEMD
+> -	ifeq ($(shell systemctl --version > /dev/null 2>&1 && echo 1), 1)
+> -		SYSTEMD = $(shell systemctl --version 2> /dev/null |  sed -n 's/systemd \([0-9]*\)/\1/p')
+> +	ifeq ($(shell pkg-config --modversion libsystemd >/dev/null 2>&1 && echo 1), 1)
+> +		SYSTEMD = $(shell pkg-config --modversion libsystemd)
+> +	else
+> +		ifeq ($(shell systemctl --version >/dev/null 2>&1 && echo 1), 1)
+> +			SYSTEMD = $(shell systemctl --version 2> /dev/null | \
+> +				sed -n 's/systemd \([0-9]*\).*/\1/p')
+> +		endif
+>  	endif
+>  endif
+>  
+> 
 
-m.
+From a4dbf985b2440f8bb0210b90aaf549030e274b4f Mon Sep 17 00:00:00 2001
+From: Igor Gnatenko <ignatenkobrain@fedoraproject.org>
+Date: Mon, 18 Feb 2019 00:09:17 +0100
+Subject: [PATCH] Fix systemd version detection
 
-On 3/7/19 4:26 PM, Victor Helmholtz wrote:
-> Hi
-> =
+Signed-off-by: Igor Gnatenko <ignatenkobrain@fedoraproject.org>
+---
+ Makefile.inc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-> I have recently had a problem with my server: all writes to RAID drives w=
-ere frozen and I had to force-reboot it. I looked at kernel logs and I thin=
-k dm-integrity might be source of the problem. Could anyone help me underst=
-and meaning of following messages (this message was repeated 8 times, full =
-kernel log is here: https://pastebin.com/DMgMtNJq ):
-> =
+diff --git a/Makefile.inc b/Makefile.inc
+index fc728ca..5b2f6d4 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -37,7 +37,7 @@ endif
 
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.498048] INFO: task =
-kworker/0:112:26760 blocked for more than 120 seconds.
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.499784] =A0 =A0 =A0=
- Not tainted 4.19.0-2-amd64 #1 Debian 4.19.16-1
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.501222] "echo 0 > /=
-proc/sys/kernel/hung_task_timeout_secs" disables this message.
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.503095] kworker/0:1=
-12 =A0 D =A0 =A00 26760 =A0 =A0 =A02 0x80000080
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.504424] Workqueue: =
-dm-integrity-metadata integrity_bio_wait [dm_integrity]
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.506149] Call Trace:
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.506782] =A0? __sche=
-dule+0x2a2/0x870
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.507706] =A0schedule=
-+0x28/0x80
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.508484] =A0io_sched=
-ule+0x12/0x40
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.509321] =A0wait_and=
-_add_new_range+0x89/0xa0 [dm_integrity]
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.510709] =A0dm_integ=
-rity_map_continue+0xe71/0x1020 [dm_integrity]
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.512193] =A0? __swit=
-ch_to_asm+0x40/0x70
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.513149] =A0? __swit=
-ch_to_asm+0x34/0x70
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.514105] =A0? __swit=
-ch_to_asm+0x40/0x70
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.515088] =A0? __swit=
-ch_to_asm+0x40/0x70
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.516048] =A0? __swit=
-ch_to_asm+0x34/0x70
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.517000] =A0? __swit=
-ch_to_asm+0x40/0x70
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.517978] =A0? __swit=
-ch_to_asm+0x34/0x70
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.518968] =A0? __swit=
-ch_to_asm+0x34/0x70
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.519926] =A0? __swit=
-ch_to+0x8c/0x440
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.520822] =A0process_=
-one_work+0x1a7/0x3a0
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.521798] =A0worker_t=
-hread+0x30/0x390
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.522725] =A0? pwq_un=
-bound_release_workfn+0xd0/0xd0
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.523901] =A0kthread+=
-0x112/0x130
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.524691] =A0? kthrea=
-d_bind+0x30/0x30
-> Mar =A01 23:48:21 unassigned-hostname kernel: [369732.525584] =A0ret_from=
-_fork+0x35/0x40
-> =
+ ifndef SYSTEMD
+ 	ifeq ($(shell systemctl --version > /dev/null 2>&1 && echo 1), 1)
+-		SYSTEMD = $(shell systemctl --version 2> /dev/null |  sed -n 's/systemd \([0-9]*\)/\1/p')
++		SYSTEMD = $(shell systemctl --version 2> /dev/null |  sed -n 's/systemd \([0-9]*\).*/\1/p')
+ 	endif
+ endif
 
-> Is this a bug in kernel or do I have some problems with hardware?
-> =
-
-> Regards
-> Victor
-> =
-
-> _______________________________________________
-> dm-crypt mailing list
-> dm-crypt@saout.de
-> https://www.saout.de/mailman/listinfo/dm-crypt
-> =
+-- 
+2.20.1
