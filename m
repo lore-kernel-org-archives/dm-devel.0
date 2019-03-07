@@ -1,21 +1,20 @@
-From: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>
-Subject: Re: Serial console is causing system lock-up
-Date: Thu, 7 Mar 2019 17:25:09 +0900
-Message-ID: <20190307082509.GA1925@jagdpanzerIV>
-References: <alpine.LRH.2.02.1903060917280.5335@file01.intranet.prod.int.rdu2.redhat.com>
-	<20190306152218.eocv4zulf7tv2mkc@pathway.suse.cz>
-	<alpine.LRH.2.02.1903061031420.16905@file01.intranet.prod.int.rdu2.redhat.com>
-	<20190306163003.GA31858@mit.edu>
-	<alpine.LRH.2.02.1903061157530.3129@file01.intranet.prod.int.rdu2.redhat.com>
-	<20190306171943.12345598@oasis.local.home>
-	<87ftrzbp3y.fsf@linutronix.de> <20190307022254.GB4893@jagdpanzerIV>
-	<87tvgfhzd6.fsf@linutronix.de>
+From: Michael Holzheu <holzheu@linux.ibm.com>
+Subject: Re: bio-based DM's "noclone" changes have been dropped
+ from 5.1 [was: Re: linux-next: Boot hangs 3 minutes with device mapper on
+ s390]
+Date: Thu, 7 Mar 2019 11:18:40 +0100
+Message-ID: <20190307111840.206f98ca@TP-holzheu>
+References: <20190301183350.5ff697d4@TP-holzheu>
+	<20190301183050.GA29752@redhat.com>
+	<20190304110334.6f71962a@TP-holzheu>
+	<20190305040321.GA21739@redhat.com>
+	<CAKgT0UeZ26BDr2FzKKECPLgCfij0SwPrk7GA+UuUuf0nnp3S1A@mail.gmail.com>
+	<20190305222112.GA26427@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <87tvgfhzd6.fsf@linutronix.de>
+In-Reply-To: <20190305222112.GA26427@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,19 +24,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: John Ogness <john.ogness@linutronix.de>
-Cc: Petr Mladek <pmladek@suse.com>, Nigel Croxon <ncroxon@redhat.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Rostedt <rostedt@goodmis.org>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-serial@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Benjamin Block <bblock@linux.ibm.com>, Carstens <heiko.carstens@de.ibm.com>, Alexander Duyck <alexander.duyck@gmail.com>, dm-devel@redhat.com, linux-next@vger.kernel.org, Patocka <mpatocka@redhat.com>, Mikulas, Heiko, Steffen Maier <maier@linux.ibm.com>
 List-Id: dm-devel.ids
 
-On (03/07/19 09:17), John Ogness wrote:
-> > If the serial console is a really slow one and we have a CPU in atomic
-> > context spinnig on prb_lock, while the prb_lock is always acquired by
-> > other CPUs, then it may look like a lock-up scenario.
+On Tue, 5 Mar 2019 17:21:12 -0500
+Mike Snitzer <snitzer@redhat.com> wrote:
+
+> On Tue, Mar 05 2019 at  1:02pm -0500,
+> Alexander Duyck <alexander.duyck@gmail.com> wrote:
 > 
-> When the console is constantly printing messages, I wouldn't say that
-> looks like a lock-up scenario. It looks like the system is busy printing
-> critical information to the console (which it is).
+> > On Mon, Mar 4, 2019 at 8:03 PM Mike Snitzer <snitzer@redhat.com> wrote:
+> > >
+> > > Hi,
+> > >
+> > > Alexander reported this same boot hang in another thread.  I was able to
+> > > reproduce using an x86_64 .config that Alexander provided.
+> > >
+> > > I've pushed this fix out to linux-next:
+> > > https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.1&id=be2c5301817833f692aadb2e5fa209582db01d3b
+> > >
+> > > If you could verify this fix works for you I'd appreciate it.
+> > >
+> > > Thanks,
+> > > Mike
+> > 
+> > I've verified I am no longer seeing the issue with this patch applied.
+> 
+> Thanks for testing.
+> 
+> But so you and others are aware: based on further internal discussion
+> with Mikulas, I decided to drop all the bio-based DM "noclone" changes
+> that were developed for 5.1.
+> 
+> Mikulas had a really good point that the 10-13% performance benefit seen
+> with 512b IO workloads all but disappears to only a 1% improvement as
+> soon as the bio's payload is increased to >= 4K.  Meaning the risk
+> associated with the noclone changes really is _not_ worth the reward.
+> 
+> I've rebased the dm-5.1 branch accordingly and linux-next will pick it
+> up tonight.
 
-What if we have N tasks/CPUs calling printk() simultaneously?
+I can confirm that the problem disappeared now on s390.
 
-	-ss
+Thanks!
+Michael
