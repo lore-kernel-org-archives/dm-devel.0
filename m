@@ -1,15 +1,15 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH] multipath-tools: Build: properly parse
  systemd's version
-Date: Thu, 7 Mar 2019 19:22:58 +0100
-Message-ID: <8a4f3790-a2a9-27ad-b839-d2b743e939a7@gmail.com>
+Date: Thu, 07 Mar 2019 20:20:41 +0100
+Message-ID: <a272001f313ba99e5b2a8d2215acc87c9390e8b4.camel@suse.com>
 References: <20190307145448.2470-1-mwilck@suse.com>
+	<8a4f3790-a2a9-27ad-b839-d2b743e939a7@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190307145448.2470-1-mwilck@suse.com>
-Content-Language: en-GB
+In-Reply-To: <8a4f3790-a2a9-27ad-b839-d2b743e939a7@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,72 +19,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Dominique Leuenberger <dimstar@opensuse.org>, Igor Gnatenko <ignatenkobrain@fedoraproject.org>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Igor Gnatenko <ignatenkobrain@fedoraproject.org>, Dominique Leuenberger <dimstar@opensuse.org>, Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
+Cc: development <dm-devel@redhat.com>, device-mapper
 List-Id: dm-devel.ids
 
-On 3/7/19 3:54 PM, Martin Wilck wrote:
-> From: Dominique Leuenberger <dimstar@opensuse.org>
-> 
-> Since systemd 241, systemctl --version no longer 'just' prints out the
-> version, but gives more information like git commit ref and whatnot. In
-> it's shortest form, it gives something like "systemd 241 (241)", which when
-> passed as parameter "-DUSE_SYSTEMD=241 (241)" results in shell errors.
-> 
-> Try to retrieve the version from pkg-config instead, and if that fails,
-> discard anything after the first number in "systemctl --version" output.
-
-There is a simpler patch in Fedora, see below.
-
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  Makefile.inc | 9 +++++++--
->  1 file changed, 7 insertions(+), 2 deletions(-)
-> 
-> diff --git a/Makefile.inc b/Makefile.inc
-> index fc728ca9..56c3eda0 100644
-> --- a/Makefile.inc
-> +++ b/Makefile.inc
-> @@ -36,8 +36,13 @@ ifndef RUN
->  endif
->  
->  ifndef SYSTEMD
-> -	ifeq ($(shell systemctl --version > /dev/null 2>&1 && echo 1), 1)
-> -		SYSTEMD = $(shell systemctl --version 2> /dev/null |  sed -n 's/systemd \([0-9]*\)/\1/p')
-> +	ifeq ($(shell pkg-config --modversion libsystemd >/dev/null 2>&1 && echo 1), 1)
-> +		SYSTEMD = $(shell pkg-config --modversion libsystemd)
-> +	else
-> +		ifeq ($(shell systemctl --version >/dev/null 2>&1 && echo 1), 1)
-> +			SYSTEMD = $(shell systemctl --version 2> /dev/null | \
-> +				sed -n 's/systemd \([0-9]*\).*/\1/p')
-> +		endif
->  	endif
->  endif
->  
-> 
-
-From a4dbf985b2440f8bb0210b90aaf549030e274b4f Mon Sep 17 00:00:00 2001
-From: Igor Gnatenko <ignatenkobrain@fedoraproject.org>
-Date: Mon, 18 Feb 2019 00:09:17 +0100
-Subject: [PATCH] Fix systemd version detection
-
-Signed-off-by: Igor Gnatenko <ignatenkobrain@fedoraproject.org>
----
- Makefile.inc | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/Makefile.inc b/Makefile.inc
-index fc728ca..5b2f6d4 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -37,7 +37,7 @@ endif
-
- ifndef SYSTEMD
- 	ifeq ($(shell systemctl --version > /dev/null 2>&1 && echo 1), 1)
--		SYSTEMD = $(shell systemctl --version 2> /dev/null |  sed -n 's/systemd \([0-9]*\)/\1/p')
-+		SYSTEMD = $(shell systemctl --version 2> /dev/null |  sed -n 's/systemd \([0-9]*\).*/\1/p')
- 	endif
- endif
-
--- 
-2.20.1
+T24gVGh1LCAyMDE5LTAzLTA3IGF0IDE5OjIyICswMTAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
+dGU6Cj4gT24gMy83LzE5IDM6NTQgUE0sIE1hcnRpbiBXaWxjayB3cm90ZToKPiA+IEZyb206IERv
+bWluaXF1ZSBMZXVlbmJlcmdlciA8ZGltc3RhckBvcGVuc3VzZS5vcmc+Cj4gPiAKPiA+IFNpbmNl
+IHN5c3RlbWQgMjQxLCBzeXN0ZW1jdGwgLS12ZXJzaW9uIG5vIGxvbmdlciAnanVzdCcgcHJpbnRz
+IG91dAo+ID4gdGhlCj4gPiB2ZXJzaW9uLCBidXQgZ2l2ZXMgbW9yZSBpbmZvcm1hdGlvbiBsaWtl
+IGdpdCBjb21taXQgcmVmIGFuZAo+ID4gd2hhdG5vdC4gSW4KPiA+IGl0J3Mgc2hvcnRlc3QgZm9y
+bSwgaXQgZ2l2ZXMgc29tZXRoaW5nIGxpa2UgInN5c3RlbWQgMjQxICgyNDEpIiwKPiA+IHdoaWNo
+IHdoZW4KPiA+IHBhc3NlZCBhcyBwYXJhbWV0ZXIgIi1EVVNFX1NZU1RFTUQ9MjQxICgyNDEpIiBy
+ZXN1bHRzIGluIHNoZWxsCj4gPiBlcnJvcnMuCj4gPiAKPiA+IFRyeSB0byByZXRyaWV2ZSB0aGUg
+dmVyc2lvbiBmcm9tIHBrZy1jb25maWcgaW5zdGVhZCwgYW5kIGlmIHRoYXQKPiA+IGZhaWxzLAo+
+ID4gZGlzY2FyZCBhbnl0aGluZyBhZnRlciB0aGUgZmlyc3QgbnVtYmVyIGluICJzeXN0ZW1jdGwg
+LS12ZXJzaW9uIgo+ID4gb3V0cHV0Lgo+IAo+IFRoZXJlIGlzIGEgc2ltcGxlciBwYXRjaCBpbiBG
+ZWRvcmEsIHNlZSBiZWxvdy4KCldoaWNoIGlzIGVxdWl2YWxlbnQgdG8gdGhlICJlbHNlIiBjbGF1
+c2Ugb2YgbXkgcGF0Y2gsIHRoYW5rcyBmb3IKcG9pbnRpbmcgaXQgb3V0LgoKQnV0IHBrZy1jb25m
+aWcgc2hvdWxkIGJlIHRoZSB3YXkgdG8gZ28gaW4gdGhlIGZ1dHVyZSwgc28gd2h5IG5vdAp1c2Ug
+aXQgaWYgd2UgY2FuPwoKTWFydGluCgoKPiAKPiA+IFNpZ25lZC1vZmYtYnk6IE1hcnRpbiBXaWxj
+ayA8bXdpbGNrQHN1c2UuY29tPgo+ID4gLS0tCj4gPiAgTWFrZWZpbGUuaW5jIHwgOSArKysrKysr
+LS0KPiA+ICAxIGZpbGUgY2hhbmdlZCwgNyBpbnNlcnRpb25zKCspLCAyIGRlbGV0aW9ucygtKQo+
+ID4gCj4gPiBkaWZmIC0tZ2l0IGEvTWFrZWZpbGUuaW5jIGIvTWFrZWZpbGUuaW5jCj4gPiBpbmRl
+eCBmYzcyOGNhOS4uNTZjM2VkYTAgMTAwNjQ0Cj4gPiAtLS0gYS9NYWtlZmlsZS5pbmMKPiA+ICsr
+KyBiL01ha2VmaWxlLmluYwo+ID4gQEAgLTM2LDggKzM2LDEzIEBAIGlmbmRlZiBSVU4KPiA+ICBl
+bmRpZgo+ID4gIAo+ID4gIGlmbmRlZiBTWVNURU1ECj4gPiAtCWlmZXEgKCQoc2hlbGwgc3lzdGVt
+Y3RsIC0tdmVyc2lvbiA+IC9kZXYvbnVsbCAyPiYxICYmIGVjaG8gMSksCj4gPiAxKQo+ID4gLQkJ
+U1lTVEVNRCA9ICQoc2hlbGwgc3lzdGVtY3RsIC0tdmVyc2lvbiAyPiAvZGV2L251bGwKPiA+IHwg
+IHNlZCAtbiAncy9zeXN0ZW1kIFwoWzAtOV0qXCkvXDEvcCcpCj4gPiArCWlmZXEgKCQoc2hlbGwg
+cGtnLWNvbmZpZyAtLW1vZHZlcnNpb24gbGlic3lzdGVtZCA+L2Rldi9udWxsCj4gPiAyPiYxICYm
+IGVjaG8gMSksIDEpCj4gPiArCQlTWVNURU1EID0gJChzaGVsbCBwa2ctY29uZmlnIC0tbW9kdmVy
+c2lvbiBsaWJzeXN0ZW1kKQo+ID4gKwllbHNlCj4gPiArCQlpZmVxICgkKHNoZWxsIHN5c3RlbWN0
+bCAtLXZlcnNpb24gPi9kZXYvbnVsbCAyPiYxICYmCj4gPiBlY2hvIDEpLCAxKQo+ID4gKwkJCVNZ
+U1RFTUQgPSAkKHNoZWxsIHN5c3RlbWN0bCAtLXZlcnNpb24gMj4KPiA+IC9kZXYvbnVsbCB8IFwK
+PiA+ICsJCQkJc2VkIC1uICdzL3N5c3RlbWQgXChbMC05XSpcKS4qL1wxL3AnKQo+ID4gKwkJZW5k
+aWYKPiA+ICAJZW5kaWYKPiA+ICBlbmRpZgo+ID4gIAo+ID4gCj4gCj4gRnJvbSBhNGRiZjk4NWIy
+NDQwZjhiYjAyMTBiOTBhYWY1NDkwMzBlMjc0YjRmIE1vbiBTZXAgMTcgMDA6MDA6MDAKPiAyMDAx
+Cj4gRnJvbTogSWdvciBHbmF0ZW5rbyA8aWduYXRlbmtvYnJhaW5AZmVkb3JhcHJvamVjdC5vcmc+
+Cj4gRGF0ZTogTW9uLCAxOCBGZWIgMjAxOSAwMDowOToxNyArMDEwMAo+IFN1YmplY3Q6IFtQQVRD
+SF0gRml4IHN5c3RlbWQgdmVyc2lvbiBkZXRlY3Rpb24KPiAKPiBTaWduZWQtb2ZmLWJ5OiBJZ29y
+IEduYXRlbmtvIDxpZ25hdGVua29icmFpbkBmZWRvcmFwcm9qZWN0Lm9yZz4KPiAtLS0KPiAgTWFr
+ZWZpbGUuaW5jIHwgMiArLQo+ICAxIGZpbGUgY2hhbmdlZCwgMSBpbnNlcnRpb24oKyksIDEgZGVs
+ZXRpb24oLSkKPiAKPiBkaWZmIC0tZ2l0IGEvTWFrZWZpbGUuaW5jIGIvTWFrZWZpbGUuaW5jCj4g
+aW5kZXggZmM3MjhjYS4uNWIyZjZkNCAxMDA2NDQKPiAtLS0gYS9NYWtlZmlsZS5pbmMKPiArKysg
+Yi9NYWtlZmlsZS5pbmMKPiBAQCAtMzcsNyArMzcsNyBAQCBlbmRpZgo+IAo+ICBpZm5kZWYgU1lT
+VEVNRAo+ICAJaWZlcSAoJChzaGVsbCBzeXN0ZW1jdGwgLS12ZXJzaW9uID4gL2Rldi9udWxsIDI+
+JjEgJiYgZWNobyAxKSwKPiAxKQo+IC0JCVNZU1RFTUQgPSAkKHNoZWxsIHN5c3RlbWN0bCAtLXZl
+cnNpb24gMj4gL2Rldi9udWxsCj4gfCAgc2VkIC1uICdzL3N5c3RlbWQgXChbMC05XSpcKS9cMS9w
+JykKPiArCQlTWVNURU1EID0gJChzaGVsbCBzeXN0ZW1jdGwgLS12ZXJzaW9uIDI+IC9kZXYvbnVs
+bAo+IHwgIHNlZCAtbiAncy9zeXN0ZW1kIFwoWzAtOV0qXCkuKi9cMS9wJykKPiAgCWVuZGlmCj4g
+IGVuZGlmCj4gCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiAr
+NDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJm
+ZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJn
+KQoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8v
+d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
