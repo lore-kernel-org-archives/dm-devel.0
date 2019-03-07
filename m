@@ -1,78 +1,77 @@
-From: Franck Lenormand <franck.lenormand@nxp.com>
-Subject: RE: [RFC PATCH 0/2] Create CAAM HW key in linux keyring and use in
- dmcrypt
-Date: Thu, 7 Mar 2019 13:02:58 +0000
-Message-ID: <AM6PR04MB54479B9BFFC5A8DE1041A6DD924C0@AM6PR04MB5447.eurprd04.prod.outlook.com>
-References: <1551456599-10603-1-git-send-email-franck.lenormand@nxp.com>
- <1551890866.5086.125.camel@pengutronix.de>
+From: John Ogness <john.ogness@linutronix.de>
+Subject: Re: Serial console is causing system lock-up
+Date: Thu, 07 Mar 2019 11:37:53 +0100
+Message-ID: <87o96nezr2.fsf@linutronix.de>
+References: <20190306152218.eocv4zulf7tv2mkc@pathway.suse.cz>
+	<alpine.LRH.2.02.1903061031420.16905@file01.intranet.prod.int.rdu2.redhat.com>
+	<20190306163003.GA31858@mit.edu>
+	<alpine.LRH.2.02.1903061157530.3129@file01.intranet.prod.int.rdu2.redhat.com>
+	<20190306171943.12345598@oasis.local.home>
+	<87ftrzbp3y.fsf@linutronix.de> <20190307022254.GB4893@jagdpanzerIV>
+	<87tvgfhzd6.fsf@linutronix.de> <20190307082509.GA1925@jagdpanzerIV>
+	<87pnr3hyle.fsf@linutronix.de> <20190307091748.GA6307@jagdpanzerIV>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1551890866.5086.125.camel@pengutronix.de>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: =?utf-8?B?SmFuIEzDvGJiZQ==?= <jlu@pengutronix.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-security-module@vger.kernel.org" <linux-security-module@vger.kernel.org>, "keyrings@vger.kernel.org" <keyrings@vger.kernel.org>
-Cc: Horia Geanta <horia.geanta@nxp.com>, Silvano Di Ninno <silvano.dininno@nxp.com>, "agk@redhat.com" <agk@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "dhowells@redhat.com" <dhowells@redhat.com>, "jmorris@namei.org" <jmorris@namei.org>, "serge@hallyn.com" <serge@hallyn.com>, David Gstir <david@sigma-star.at>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190307091748.GA6307@jagdpanzerIV> (Sergey Senozhatsky's
+	message of "Thu, 7 Mar 2019 18:17:48 +0900")
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>
+Cc: Petr Mladek <pmladek@suse.com>, Nigel Croxon <ncroxon@redhat.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Rostedt <rostedt@goodmis.org>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-serial@vger.kernel.org
 List-Id: dm-devel.ids
 
-PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KPiBGcm9tOiBKYW4gTMO8YmJlIDxqbHVAcGVu
-Z3V0cm9uaXguZGU+DQo+IFNlbnQ6IFdlZG5lc2RheSwgTWFyY2ggNiwgMjAxOSA1OjQ4IFBNDQo+
-IFRvOiBGcmFuY2sgTGVub3JtYW5kIDxmcmFuY2subGVub3JtYW5kQG54cC5jb20+OyBsaW51eC0N
-Cj4ga2VybmVsQHZnZXIua2VybmVsLm9yZzsgbGludXgtc2VjdXJpdHktbW9kdWxlQHZnZXIua2Vy
-bmVsLm9yZzsNCj4ga2V5cmluZ3NAdmdlci5rZXJuZWwub3JnDQo+IENjOiBIb3JpYSBHZWFudGEg
-PGhvcmlhLmdlYW50YUBueHAuY29tPjsgU2lsdmFubyBEaSBOaW5ubw0KPiA8c2lsdmFuby5kaW5p
-bm5vQG54cC5jb20+OyBhZ2tAcmVkaGF0LmNvbTsgc25pdHplckByZWRoYXQuY29tOyBkbS0NCj4g
-ZGV2ZWxAcmVkaGF0LmNvbTsgZGhvd2VsbHNAcmVkaGF0LmNvbTsgam1vcnJpc0BuYW1laS5vcmc7
-DQo+IHNlcmdlQGhhbGx5bi5jb207IERhdmlkIEdzdGlyIDxkYXZpZEBzaWdtYS1zdGFyLmF0Pg0K
-PiBTdWJqZWN0OiBSZTogW1JGQyBQQVRDSCAwLzJdIENyZWF0ZSBDQUFNIEhXIGtleSBpbiBsaW51
-eCBrZXlyaW5nIGFuZCB1c2UgaW4NCj4gZG1jcnlwdA0KPiANCj4gSGkgRnJhbmNrLA0KPiANCj4g
-dGhhbmtzIGZvciB3b3JraW5nIG9uIHRoaXMhDQo+IA0KPiBPbiBGcmksIDIwMTktMDMtMDEgYXQg
-MTc6MDkgKzAxMDAsIEZyYW5jayBMRU5PUk1BTkQgd3JvdGU6DQo+ID4gVGhlIGNyZWF0aW9uIG9m
-IHN1Y2ggc3RydWN0dXJlcyBhbmQgaXRzIHVzZSB3YXMgbm90IGV4cG9zZWQgdG8NCj4gPiB1c2Vy
-c3BhY2Ugc28gaXQgd2FzIGNvbXBsaWNhdGVkIHRvIHVzZSBhbmQgcmVxdWlyZWQgY3VzdG9tDQo+
-ID4gZGV2ZWxvcG1lbnQuIFdlIHdvdWxkIGxpa2UgdG8gZWFzZSB0aGlzIHVzaW5nIGludGVyZmFj
-ZSB3aGljaCBhcmUga25vd24NCj4gYW5kIHVzZWQ6DQo+ID4gIC0gTGludXgga2V5IHJldGVudGlv
-biBzZXJ2aWNlIDogQWxsb3cgdG8gZ2VuZXJhdGUgb3IgbG9hZCBrZXlzIGluIGENCj4gPiAgICAg
-ICAgIGtleXJpbmcgd2hpY2ggY2FuIGJlIHVzZWQgYnkgYXBwbGljYXRpb25zLg0KPiA+ICAtIGRt
-LWNyeXB0IDogZGV2aWNlIG1hcHBlciBhbGxvd2luZyB0byBlbmNyeXB0IGRhdGEuDQo+ID4NCj4g
-PiBUaGUgY2FwYWNpdHkgdG8gZ2VuZXJhdGUgb3IgbG9hZCBrZXlzIGFscmVhZHkgYXZhaWxhYmxl
-IGluIHRoZSBMaW51eA0KPiA+IGtleSByZXRlbnRpb24gc2VydmljZSBkb2VzIG5vdCBhbGxvd3Mg
-dG8gZXhwbG9pdCBDQUFNIGNhcGFiaWxpdGllcw0KPiA+IGhlbmNlIHdlIG5lZWQgdG8gY3JlYXRl
-IGEgbmV3IGtleV90eXBlLiBUaGUgbmV3IGtleSB0eXBlICJjYWFtX3RrIg0KPiBhbGxvd3MgdG86
-DQo+ID4gIC0gQ3JlYXRlIGEgYmxhY2sga2V5IGZyb20gcmFuZG9tDQo+ID4gIC0gQ3JlYXRlIGEg
-YmxhY2sga2V5IGZyb20gYSByZWQga2V5DQo+ID4gIC0gTG9hZCBhIGJsYWNrIGJsb2IgdG8gcmV0
-cmlldmUgdGhlIGJsYWNrIGtleQ0KPiANCj4gT24gMjAxOC0wNy0yMywgVWRpdCBBZ2Fyd2FsIDx1
-ZGl0LmFnYXJ3YWxAbnhwLmNvbT4gc2VudCBhIHNlcmllcyB3aGljaA0KPiBzZWVtcyByZWxhdGVk
-IHRvIHRoaXM6DQo+IFtQQVRDSCB2MiAxLzJdIHNlY3VyaXR5L2tleXMvc2VjdXJlX2tleTogQWRk
-cyB0aGUgc2VjdXJlIGtleSBzdXBwb3J0IGJhc2VkDQo+IG9uIENBQU0uDQo+IFtQQVRDSCB2MiAy
-LzJdIGVuY3J5cHRlZF9rZXlzOiBBZGRzIHN1cHBvcnQgZm9yIHNlY3VyZSBrZXktdHlwZSBhcyBt
-YXN0ZXINCj4ga2V5Lg0KPiANCj4gSXMgdGhpcyBzZXJpZXMgaW50ZW5kZWQgdG8gY29udGludWUg
-dGhhdCB3b3JrIGFuZCBjb3ZlciB0aGUgc2FtZSB1c2VzLSBjYXNlcz8NCj4gDQo+IElmIEkgcmVt
-ZW1iZXIgY29ycmVjdGx5LCB0aGUgQ0FBTSBhbHNvIHN1cHBvcnRzIG1hcmtpbmcgYmxvYnMgdG8g
-YWxsb3cgb3INCj4gZGlzYWxsb3cgZXhwb3J0aW5nIHRoZSBlbmNhcHN1bGF0ZWQga2V5IGZyb20g
-dGhlIGhhcmR3YXJlLiBPciBpcyB0aGlzDQo+IHVubmVlZGVkIGFuZCB3ZSBjb3VsZCBlbmNyeXB0
-L2RlY3J5cHQgb3RoZXIgKGxlc3MgY3JpdGljYWwpIGtleSBtYXRlcmlhbA0KPiBhZ2FpbnN0IHRo
-ZSB0ayhjYmMoYWVzKSkgQ0FBTSBrZXkgdmlhIHRoZSBrZXlyaW5nIG1lY2hhbmlzbXM/DQo+IA0K
-PiBCZXN0IHJlZ2FyZHMsDQo+IEphbg0KPiAtLQ0KPiBQZW5ndXRyb25peCBlLksuICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfA0KPiBJbmR1
-c3RyaWFsIExpbnV4IFNvbHV0aW9ucyAgICAgICAgICAgICAgICAgfA0KPiBodHRwczovL2VtZWEw
-MS5zYWZlbGlua3MucHJvdGVjdGlvbi5vdXRsb29rLmNvbS8/dXJsPWh0dHAlM0ElMkYlMkZ3dw0K
-PiB3LnBlbmd1dHJvbml4LmRlJTJGJmFtcDtkYXRhPTAyJTdDMDElN0NmcmFuY2subGVub3JtYW5k
-JTQwbnhwLmNvDQo+IG0lN0MyOWFiODllOTlmOTA0MGUzMGFhOTA4ZDZhMjUzNzk2NyU3QzY4NmVh
-MWQzYmMyYjRjNmZhOTJjZDk5Yw0KPiA1YzMwMTYzNSU3QzAlN0MwJTdDNjM2ODc0ODc2NzMyMTUz
-MDkzJmFtcDtzZGF0YT1ieUtENFNtWWZ6TVRzDQo+IEZLNmNYNUw4MSUyQjloeHhxVGJuT0xmNyUy
-QkFKZ1h5bFUlM0QmYW1wO3Jlc2VydmVkPTAgIHwNCj4gUGVpbmVyIFN0ci4gNi04LCAzMTEzNyBI
-aWxkZXNoZWltLCBHZXJtYW55IHwgUGhvbmU6ICs0OS01MTIxLTIwNjkxNy0wICAgIHwNCj4gQW10
-c2dlcmljaHQgSGlsZGVzaGVpbSwgSFJBIDI2ODYgICAgICAgICAgIHwgRmF4OiAgICs0OS01MTIx
-LTIwNjkxNy01NTU1IHwNCg0KSGVsbG8gSmFuLA0KDQpUaGUgY3VycmVudCBzZXJpZXMgaXMgYWlt
-ZWQgdG8gY2hhbmdlIHdoaWNoIGtleSB0eXBlIGlzIGFjY2VwdGFibGUgaW4gZG0tY3J5cHQuIFdp
-dGhvdXQNCnRoaXMgY2hhbmdlLCB0aGUga2V5IHR5cGUgY2Fubm90IGJlIGludGVncmF0ZWQgcHJv
-cGVybHkuDQoNCkFib3V0IHRoZSBrZXkgdHlwZSBpbXBsZW1lbnRhdGlvbjoNClRoZSBpbXBsZW1l
-bnRhdGlvbiBvZiB0aGUga2V5IHR5cGUgaXMgYW4gaW1wcm92ZW1lbnQgcmVsYXRlZCB0byB0aGUg
-d29yayBvZiBVZGl0IEFnYXJ3YWwuDQoNClRoZSB0cmFuc2Zvcm0gdGsoY2JjKGFlcykpIGlzIGlu
-dGVuZGVkIHRvIHJlY2VpdmUga2V5IG1hdGVyaWFsIHdob3NlIGZvcm1hdCBjYW4gY2hhbmdlDQpo
-ZW5jZSB0aGUgInRhZ2dpbmciIHRvIGhhbmRsZSBpdCBwcm9wZXJseS4gSXQgY291bGQsIGZvciBl
-eGFtcGxlLCBoYW5kbGUgcGxhaW4ga2V5cywgYmxhY2sga2V5cyBvciBibG9icyBhcyBrZXkgbWF0
-ZXJpYWwgYW5kIHRoaXMgbWF0ZXJpYWwgd291bGQgYmUgc3RvcmVkIGluIGtleXJpbmcuDQoNClJl
-Z2FyZHMsDQpGcmFuY2sNCg==
+On 2019-03-07, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com> wrote:
+>>>> When the console is constantly printing messages, I wouldn't say
+>>>> that looks like a lock-up scenario. It looks like the system is
+>>>> busy printing critical information to the console (which it is).
+>>>
+>>> What if we have N tasks/CPUs calling printk() simultaneously?
+>> 
+>> Then they take turns printing their messages to the console, spinning
+>> until they get their turn. This still is not and does not look like a
+>> lock-up. But I think you already know this, so I don't understand the
+>> reasoning behind asking the question. Maybe you could clarify what
+>> you are getting at.
+>
+> Sorry John, the reasoning is that I'm trying to understand
+> why this does not look like soft or hard lock-up or RCU stall
+> scenario.
+
+The reason is that you are seeing data being printed on the console. The
+watchdogs (soft, hard, rcu, nmi) are all touched with each emergency
+message.
+
+> The CPU which spins on prb_lock() can have preemption disabled and,
+> additionally, can have local IRQs disabled, or be under RCU read
+> side lock. If consoles are busy, then there are CPUs which printk()
+> data and keep prb_lock contended; prb_lock() does not seem to be
+> fair. What am I missing?
+
+You are correct. Making prb_lock fair might be something we want to look
+into. Perhaps also based on the loglevel of what needs to be
+printed. (For example, KERN_ALERT always wins over KERN_CRIT.)
+
+> You probably talk about the case when all
+> printing CPUs are in preemptible contexts (assumingly this is what
+> is happening in dm-integrity case) so they can spin on prb_lock(),
+> that's OK. The case I'm talking about is - what if we have the same
+> situation, but then one of the CPUs printk()-s from !preemptible.
+> Does this make sense?
+
+Yes, you are referring to a worst case. We could have local_irqs
+disabled on every CPU while every CPU is hit with an NMI and all those
+NMIs want to dump a load of messages. The rest of the system will be
+frozen until those NMI printers can finish. But that is still not a
+lock-up. At some point those printers should finish and eventually the
+system should be able to resume.
+
+John Ogness
