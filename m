@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 08/12] libmutipath: continue to use old state
-	on PATH_PENDING
-Date: Fri,  8 Mar 2019 17:12:01 -0600
-Message-ID: <1552086725-18476-9-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 07/12] multipathd: ignore failed wwid recheck
+Date: Fri,  8 Mar 2019 17:12:00 -0600
+Message-ID: <1552086725-18476-8-git-send-email-bmarzins@redhat.com>
 References: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,45 +21,68 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-When pathinfo() sets pp->state to PATH_PENDING, it can cause problems
-with path checking.  It should act more like check_path(). When
-check_path() sees a new state of PATH_PENDING, it doesn't update the
-path state at all, so a path's old state is normally never PATH_PENDING.
+If disable_changed_wwids is set, when multipathd gets a change event on
+a path, it verifies that the wwid hasn't changed in uev_update_path().
+If get_uid() failed, uev_update_path treated this as a wwid change to 0.
+This could cause paths to suddenly be dropped due to an issue with
+getting the wwid.  Even if get_uid() failed because the path was down,
+it no change uevent happend when it later became active, multipathd
+would continue to ignore the path. Also, scsi_uid_fallback() clears the
+failure return if it doesn't attempt to fallback, causing get_uid()
+to return success, when it actually failed.
 
-As and example of the problems of setting a path to PATH_PENDING, If
-check_path() sets a path's state to PATH_UP, then a call to pathinfo()
-sets the state to PATH_PENDING, and then another call the check_path()
-sets the state to PATH_DOWN, multipathd won't fail the path in the
-kernel. Also, if a path's state is PATH_PENDING, and nr_active is
-recalculated, that path will count as down, even if the state was
-previously PATH_UP. If a path already has a state of PATH_WILD or
-PATH_UNCHECKED, changing it to PATH_PENDING won't hurt anything, and it
-will help anyone who sees it know what's actually happening. But
-otherwise, pathinfo() should leave the previous state alone.
+Multipathd should neither set nor clear wwid_changed if get_uid()
+returned failure. Also, scsi_uid_fallback() should retain the old return
+value if it doesn't attempt to fallback.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ libmultipath/discovery.c | 6 +++---
+ multipathd/main.c        | 6 ++++--
+ 2 files changed, 7 insertions(+), 5 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index b08cb2d..28c00e5 100644
+index 729bcb9..b08cb2d 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1946,8 +1946,11 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+@@ -1755,9 +1755,9 @@ get_vpd_uid(struct path * pp)
+ }
  
- 	if (mask & DI_CHECKER) {
- 		if (path_state == PATH_UP) {
--			pp->chkrstate = pp->state = get_state(pp, conf, 0,
--							      path_state);
-+			int newstate = get_state(pp, conf, 0, path_state);
-+			if (newstate != PATH_PENDING ||
-+			    pp->state == PATH_UNCHECKED ||
-+			    pp->state == PATH_WILD)
-+				pp->chkrstate = pp->state = newstate;
- 			if (pp->state == PATH_TIMEOUT)
- 				pp->state = PATH_DOWN;
- 			if (pp->state == PATH_UP && !pp->size) {
+ static ssize_t scsi_uid_fallback(struct path *pp, int path_state,
+-			     const char **origin)
++			     const char **origin, ssize_t old_len)
+ {
+-	ssize_t len = 0;
++	ssize_t len = old_len;
+ 	int retrigger;
+ 	struct config *conf;
+ 
+@@ -1828,7 +1828,7 @@ get_uid (struct path * pp, int path_state, struct udev_device *udev)
+ 			origin = "sysfs";
+ 		}
+ 		if (len <= 0 && pp->bus == SYSFS_BUS_SCSI)
+-			len = scsi_uid_fallback(pp, path_state, &origin);
++			len = scsi_uid_fallback(pp, path_state, &origin, len);
+ 	}
+ 	if ( len < 0 ) {
+ 		condlog(1, "%s: failed to get %s uid: %s",
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 678ecf8..fd83a6a 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1234,9 +1234,11 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 			goto out;
+ 
+ 		strcpy(wwid, pp->wwid);
+-		get_uid(pp, pp->state, uev->udev);
++		rc = get_uid(pp, pp->state, uev->udev);
+ 
+-		if (strncmp(wwid, pp->wwid, WWID_SIZE) != 0) {
++		if (rc != 0)
++			strcpy(pp->wwid, wwid);
++		else if (strncmp(wwid, pp->wwid, WWID_SIZE) != 0) {
+ 			condlog(0, "%s: path wwid changed from '%s' to '%s'. %s",
+ 				uev->kernel, wwid, pp->wwid,
+ 				(disable_changed_wwids ? "disallowing" :
 -- 
 2.17.2
