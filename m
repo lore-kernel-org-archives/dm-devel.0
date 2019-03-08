@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 12/12] multipathd: change failed get_uid
-	handling
-Date: Fri,  8 Mar 2019 17:12:05 -0600
-Message-ID: <1552086725-18476-13-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 06/12] multipathd: Fix miscounting active paths
+Date: Fri,  8 Mar 2019 17:11:59 -0600
+Message-ID: <1552086725-18476-7-git-send-email-bmarzins@redhat.com>
 References: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,129 +21,90 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Instead of ignoring failed get_uid() calls, multipathd now fails the
-path as it originally did. However, if the result of calling get_uid()
-is a blank wwid (which is always the case when it fails), multipathd now
-tries to get the wwid in check_path() as well, using the uid_fallback()
-methods to attempt to get a valid wwid.
+When multipathd gets a change uevent, it calls pathinfo with DI_NOIO.
+This sets the path state to the return value of path_offline(). If a
+path is in the PATH_DOWN state but path_offline() returns PATH_UP, when
+that path gets a change event, its state will get moved to PATH_UP
+without either reinstating the path, or reloading the map.  The next
+call to check_path() will move the path back to PATH_DOWN. Since
+check_path() simply increments and decrements nr_active instead of
+calculating it based on the actual number of active paths, nr_active
+will get decremented a second time for this failed path, potentially
+putting the multipath device into recovery mode.
 
-Multipathd can't use the uid_attribute methods, since pp->udev still has
-the old uevent information with the uid_attribute of the original wwid.
-This means that the uid_attribute methods would always return the
-original wwid, even if it had changed.
+This commit does two things to avoid this situation. It makes the
+DI_NOIO flag only set pp->state in pathinfo() if DI_CHECKER is also set.
+This isn't set in uev_update_path() to avoid changing the path state in
+this case.  Also, to guard against pp->state getting changed in some
+other code path without properly updating the map state, check_path()
+now calls set_no_path_retry, which recalculates nr_active based on the
+actual number of active paths, and makes sure that the queue_if_no_path
+value in the features line is correct.
 
-To make the get_uid() use the fallback methods, pathinfo now sets
-pp->retriggers to the retrigger_tries once a WWID has be successfully
-obtained, so that it uid_fallback() doesn't need to be called
-retrigger_tries times before trying the fallback methods.
-
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.c |  4 +++-
- libmultipath/structs.h   |  6 ++++++
- multipathd/main.c        | 36 +++++++++++++++++++++++++-----------
- 3 files changed, 34 insertions(+), 12 deletions(-)
+ libmultipath/discovery.c | 11 ++++++-----
+ multipath/main.c         |  2 +-
+ multipathd/main.c        |  4 +++-
+ 3 files changed, 10 insertions(+), 7 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index bece67c..15568ca 100644
+index 10bd8cd..729bcb9 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -2018,8 +2018,10 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 		}
+@@ -1914,11 +1914,12 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 	if (path_state == PATH_REMOVED)
+ 		goto blank;
+ 	else if (mask & DI_NOIO) {
+-		/*
+-		 * Avoid any IO on the device itself.
+-		 * Behave like DI_CHECKER in the "path unavailable" case.
+-		 */
+-		pp->chkrstate = pp->state = path_state;
++		if (mask & DI_CHECKER)
++			/*
++			 * Avoid any IO on the device itself.
++			 * simply use the path_offline() return as its state
++			 */
++			pp->chkrstate = pp->state = path_state;
+ 		return PATHINFO_OK;
  	}
  
--	if ((mask & DI_ALL) == DI_ALL)
-+	if ((mask & DI_ALL) == DI_ALL) {
-+		pp->retriggers = conf->retrigger_tries;
- 		pp->initialized = INIT_OK;
-+	}
- 	return PATHINFO_OK;
+diff --git a/multipath/main.c b/multipath/main.c
+index 5abb118..69141db 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -356,7 +356,7 @@ static int check_usable_paths(struct config *conf,
+ 			pp->udev = get_udev_device(pp->dev_t, DEV_DEVT);
+ 			if (pp->udev == NULL)
+ 				continue;
+-			if (pathinfo(pp, conf, DI_SYSFS|DI_NOIO) != PATHINFO_OK)
++			if (pathinfo(pp, conf, DI_SYSFS|DI_NOIO|DI_CHECKER) != PATHINFO_OK)
+ 				continue;
  
- blank:
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index b794b0d..6e4b871 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -221,6 +221,12 @@ enum all_tg_pt_states {
- 	ALL_TG_PT_ON = YNU_YES,
- };
- 
-+enum wwid_changed_states {
-+	WWID_SAME = 0,
-+	WWID_ZEROED,
-+	WWID_CHANGED,
-+};
-+
- struct sg_id {
- 	int host_no;
- 	int channel;
+ 			if (pp->state == PATH_UP &&
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 7a317d9..2331c41 100644
+index 43830e8..678ecf8 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -1234,27 +1234,27 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 			goto out;
+@@ -392,7 +392,8 @@ static void set_no_path_retry(struct multipath *mpp)
+ 	default:
+ 		if (mpp->nr_active > 0) {
+ 			mpp->retry_tick = 0;
+-			dm_queue_if_no_path(mpp->alias, 1);
++			if (!is_queueing)
++				dm_queue_if_no_path(mpp->alias, 1);
+ 		} else if (is_queueing && mpp->retry_tick == 0)
+ 			enter_recovery_mode(mpp);
+ 		break;
+@@ -2072,6 +2073,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	/* if update_multipath_strings orphaned the path, quit early */
+ 	if (!pp->mpp)
+ 		return 0;
++	set_no_path_retry(pp->mpp);
  
- 		strcpy(wwid, pp->wwid);
--		rc = get_uid(pp, pp->state, uev->udev);
-+		get_uid(pp, pp->state, uev->udev);
- 
--		if (rc != 0)
--			strcpy(pp->wwid, wwid);
--		else if (strncmp(wwid, pp->wwid, WWID_SIZE) != 0) {
-+		if (strncmp(wwid, pp->wwid, WWID_SIZE) != 0) {
-+			int wwid_changed = (strlen(pp->wwid))? WWID_CHANGED :
-+							       WWID_ZEROED;
- 			condlog(0, "%s: path wwid changed from '%s' to '%s'. %s",
- 				uev->kernel, wwid, pp->wwid,
- 				(disable_changed_wwids ? "disallowing" :
- 				 "continuing"));
- 			strcpy(pp->wwid, wwid);
- 			if (disable_changed_wwids) {
--				if (!pp->wwid_changed) {
--					pp->wwid_changed = 1;
-+				if (pp->wwid_changed == WWID_SAME) {
- 					pp->tick = 1;
- 					if (pp->mpp)
- 						dm_fail_path(pp->mpp->alias, pp->dev_t);
- 				}
-+				pp->wwid_changed = wwid_changed;
- 				goto out;
- 			}
- 		} else {
--			pp->wwid_changed = 0;
-+			pp->wwid_changed = WWID_SAME;
- 			udev_device_unref(pp->udev);
- 			pp->udev = udev_device_ref(uev->udev);
- 			conf = get_multipath_config();
-@@ -2017,10 +2017,24 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	if (newstate == PATH_REMOVED)
- 		newstate = PATH_DOWN;
- 
--	if (pp->wwid_changed) {
--		condlog(2, "%s: path wwid has changed. Refusing to use",
--			pp->dev);
--		newstate = PATH_DOWN;
-+	if (pp->wwid_changed != WWID_SAME) {
-+		if (pp->wwid_changed == WWID_ZEROED) {
-+			char wwid[WWID_SIZE];
-+
-+			strcpy(wwid, pp->wwid);
-+			get_uid(pp, newstate, NULL);
-+			if (strncmp(wwid, pp->wwid, WWID_SIZE) == 0)
-+				pp->wwid_changed = WWID_SAME;
-+			else {
-+				pp->wwid_changed = (strlen(pp->wwid))? WWID_CHANGED : WWID_ZEROED;
-+				strcpy(pp->wwid, wwid);
-+			}
-+		}
-+		if (pp->wwid_changed != WWID_SAME) {
-+			condlog(2, "%s: path wwid has changed. Refusing to use",
-+				pp->dev);
-+			newstate = PATH_DOWN;
-+		}
- 	}
- 
- 	if (newstate == PATH_WILD || newstate == PATH_UNCHECKED) {
+ 	if ((newstate == PATH_UP || newstate == PATH_GHOST) &&
+ 			check_path_reinstate_state(pp)) {
 -- 
 2.17.2
