@@ -1,11 +1,14 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 00/12] Misc Multipath patches
-Date: Fri,  8 Mar 2019 17:11:53 -0600
-Message-ID: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 03/12] multipathd: cleanup marginal paths
+	checking timers
+Date: Fri,  8 Mar 2019 17:11:56 -0600
+Message-ID: <1552086725-18476-4-git-send-email-bmarzins@redhat.com>
+References: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,88 +22,68 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The series is a mix of resends an new patches.
+When a path gets recovered in hit_io_err_recheck_time(), it will
+continue running in check_path(), so there is no reason to schedule
+another path check as soon as possible (since one is currently
+happening).
 
-Patches 0001-0005 are simply resends of patches I've submitted earlier,
-with no changes other that adding Reviewed-by's where appropriate.
+Also, there isn't much point in restarting the io err stat checking when
+the path is down, so hit_io_err_recheck_time() should only be run when
+the path is up. Downed marginal paths can be treated just like any other
+downed path.
 
-Patches 0006-0009 are the result of running into some bugs during
-firmare updates on an array.
+Finally, there is no reason to set reset pp->io_err_dis_reinstate_time
+when we decide to enqueue a path. Either th enqueue will fail and the
+path will get recovered, or it will succeed, and we won't check the
+reinstate time again until poll_io_err_stat() marks the path as needing
+a requeue.
 
-Changes in v2:
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/io_err_stat.c | 8 --------
+ multipathd/main.c          | 3 ++-
+ 2 files changed, 2 insertions(+), 9 deletions(-)
 
-0007:	simply fixes the issue with multipathd not resetting the wwid
-	when get_uid() fails, and makes scsi_uid_fallback return the
-	correct value, when it is still waiting for the retriggers
-	to max out. The Changes that Martin suggested are dealt with
-	in patch 0012
-
-0010:	This patch adds some missing options to the multipath.conf(5)
-	man page, including "user_friendly_names" like Martin metioned
-	in his earlier review of patch 0001.
-
-0011:	This patch adds a fallback method for nvme devices, to grab the
-	wwid directly from sysfs.
-
-0012:	I kept this patch seperate from 0007, because I'm not sure that
-	it is the right thing to do. First, it's not very hard to have
-	get_uid() fail. For a scsi device, all that needs to happen is
-	for a change event to occur while the path is down and cannot be
-	opened. scsi_id will fail, and ID_SERIAL will not be set. This
-	seems far more likely than a device changing wwids because it
-	switched LUNs.
-
-	If we fail the device for getting a blank wwid, we then have to
-	get the new wwid before we can decide what needs to be done to
-	the path.  There are two options. One is to trigger more
-	uevents, so that multipathd gets a uevent with the updated
-	uid_attribute. This assumes that the original problem wasn't
-	udev timing out because it was overloaded. If that was the
-	problem, adding more uevents just makes things work. Even
-	still, this means that once the new wwid is available, we have
-	to run check_path, then wait for the uevent, and then run
-	check_path again before we can restore the path. For these
-	reasons, I didn't go down this route.
-
-	The other way to get the new wwid is to run the fallback
-	methods. This doesn't require multipathd to get a new uevent
-	with the updated wwid, but it does do something that worries
-	me.  When we run the fallback methods, we clear uid_attribute
-	for the path. We do this because, presumably, we can't be
-	certain that the fallback method and the uid_attribute method
-	will return the same wwid. If this is really a possiblity
-	then the fallback methods aren't any help at all. I don't
-	know of any cases where this is true, which is why I'm
-	submitting the patch. But I still not sure that its not
-	better simply to assume that if get_uid() fails, that it
-	did so for some mundane reason, and simply keep the old
-	wwid.
-
-Benjamin Marzinski (12):
-  libmultipath: disable user_friendly_names for NetApp
-  libmultipath: handle existing paths in marginal_path enqueue
-  multipathd: cleanup marginal paths checking timers
-  libmultipath: fix marginal paths queueing errors
-  libmultipath: fix marginal_paths nr_active check
-  multipathd: Fix miscounting active paths
-  multipathd: ignore failed wwid recheck
-  libmutipath: continue to use old state on PATH_PENDING
-  multipathd: use update_path_groups instead of reload_map
-  multipath.conf: add missing options to man page
-  libmultipath: add get_uid fallback code for NVMe devices
-  multipathd: change failed get_uid handling
-
- libmultipath/discovery.c   | 73 +++++++++++++++++++++++++-------------
- libmultipath/hwtable.c     |  1 +
- libmultipath/io_err_stat.c | 71 +++++++++++++++---------------------
- libmultipath/io_err_stat.h |  2 +-
- libmultipath/structs.h     |  6 ++++
- multipath/main.c           |  2 +-
- multipath/multipath.conf.5 |  8 +++++
- multipathd/cli_handlers.c  |  2 +-
- multipathd/main.c          | 50 ++++++++++++++++++--------
- multipathd/main.h          |  2 ++
- 10 files changed, 133 insertions(+), 84 deletions(-)
-
+diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
+index 1cb3ffe..416e13a 100644
+--- a/libmultipath/io_err_stat.c
++++ b/libmultipath/io_err_stat.c
+@@ -400,13 +400,6 @@ int hit_io_err_recheck_time(struct path *pp)
+ 		io_err_stat_log(4, "%s: reschedule checking after %d seconds",
+ 				pp->dev,
+ 				pp->mpp->marginal_path_err_recheck_gap_time);
+-		/*
+-		 * to reschedule io error checking again
+-		 * if the path is good enough, we claim it is good
+-		 * and can be reinsated as soon as possible in the
+-		 * check_path routine.
+-		 */
+-		pp->io_err_dis_reinstate_time = curr_time.tv_sec;
+ 		r = enqueue_io_err_stat_by_path(pp);
+ 		/*
+ 		 * Enqueue fails because of internal error.
+@@ -426,7 +419,6 @@ int hit_io_err_recheck_time(struct path *pp)
+ recover:
+ 	pp->io_err_pathfail_cnt = 0;
+ 	pp->io_err_disable_reinstate = 0;
+-	pp->tick = 1;
+ 	return 0;
+ }
+ 
+diff --git a/multipathd/main.c b/multipathd/main.c
+index fb520b6..fe6d8ef 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2079,7 +2079,8 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 		return 1;
+ 	}
+ 
+-	if (pp->io_err_disable_reinstate && hit_io_err_recheck_time(pp)) {
++	if ((newstate == PATH_UP || newstate == PATH_GHOST) &&
++	    pp->io_err_disable_reinstate && hit_io_err_recheck_time(pp)) {
+ 		pp->state = PATH_SHAKY;
+ 		/*
+ 		 * to reschedule as soon as possible,so that this path can
 -- 
 2.17.2
