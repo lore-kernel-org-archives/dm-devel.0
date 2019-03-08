@@ -1,22 +1,14 @@
-From: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>
-Subject: Re: Serial console is causing system lock-up
-Date: Fri, 8 Mar 2019 10:22:42 +0900
-Message-ID: <20190308012242.GA4063@jagdpanzerIV>
-References: <alpine.LRH.2.02.1903060917280.5335@file01.intranet.prod.int.rdu2.redhat.com>
-	<20190306152218.eocv4zulf7tv2mkc@pathway.suse.cz>
-	<alpine.LRH.2.02.1903061031420.16905@file01.intranet.prod.int.rdu2.redhat.com>
-	<20190306163003.GA31858@mit.edu>
-	<alpine.LRH.2.02.1903061157530.3129@file01.intranet.prod.int.rdu2.redhat.com>
-	<20190306171943.12345598@oasis.local.home>
-	<87ftrzbp3y.fsf@linutronix.de>
-	<23681.9703.524330.948156@quad.stoffel.home>
-	<alpine.LRH.2.02.1903070918110.6122@file01.intranet.prod.int.rdu2.redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH v2 02/12] libmultipath: handle existing paths in
+	marginal_path enqueue
+Date: Fri,  8 Mar 2019 17:11:55 -0600
+Message-ID: <1552086725-18476-3-git-send-email-bmarzins@redhat.com>
+References: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1903070918110.6122@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,31 +18,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Petr Mladek <pmladek@suse.com>, Nigel Croxon <ncroxon@redhat.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, John Ogness <john.ogness@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, John Stoffel <john@stoffel.org>, Steven Rostedt <rostedt@goodmis.org>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, dm-devel@redhat.com, linux-serial@vger.kernel.org
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On (03/07/19 09:26), Mikulas Patocka wrote:
-> On Thu, 7 Mar 2019, John Stoffel wrote:
-> 
-> > The real problem is the disconnect between serial console speed and
-> > capacity in bits/sec and that of the regular console.  Serial, esp at
-> > 9600 baud is just a slow and limited resource which needs to be
-> > handled differently than a graphical console.
-> >
-> > I'm also big on ratelimiting messages, even critical warning
-> > messages.  Too much redundant info doesn't help anyone.  And what a
-> > subsystem thinks is critical, may not be critical to the system as a
-> > whole.
-> 
-> Perhaps a proper solution would be to drop excessive messages to serial 
-> console unless Oops or BUG has happened?
+If the path that enqueue_io_err_stat_by_path() is trying to add
+is already on the list, just return success. There's no reason
+to fail in this case.
 
-Technically, we can have a per-console loglevel configuration. We have
-several use cases for this already. Slower consoles will filter out more
-messages and print only ERR/CRIT/ALERT/EMERG.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/io_err_stat.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
-dm-integrity uses WARN level, which is below ERR; so it seems that
-per-console loglevel can do the trick.
-
-	-ss
+diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
+index 02b1453..1cb3ffe 100644
+--- a/libmultipath/io_err_stat.c
++++ b/libmultipath/io_err_stat.c
+@@ -254,7 +254,6 @@ static void free_io_err_pathvec(struct io_err_stat_pathvec *p)
+  * return value
+  * 0: enqueue OK
+  * 1: fails because of internal error
+- * 2: fails because of existing already
+  */
+ static int enqueue_io_err_stat_by_path(struct path *path)
+ {
+@@ -264,7 +263,7 @@ static int enqueue_io_err_stat_by_path(struct path *path)
+ 	p = find_err_path_by_dev(paths->pathvec, path->dev);
+ 	if (p) {
+ 		pthread_mutex_unlock(&paths->mutex);
+-		return 2;
++		return 0;
+ 	}
+ 	pthread_mutex_unlock(&paths->mutex);
+ 
+@@ -418,9 +417,8 @@ int hit_io_err_recheck_time(struct path *pp)
+ 			io_err_stat_log(3, "%s: enqueue fails, to recover",
+ 					pp->dev);
+ 			goto recover;
+-		} else if (!r) {
++		} else
+ 			pp->io_err_pathfail_cnt = PATH_IO_ERR_IN_CHECKING;
+-		}
+ 	}
+ 
+ 	return 1;
+-- 
+2.17.2
