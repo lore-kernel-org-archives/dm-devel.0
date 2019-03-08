@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 07/12] multipathd: ignore failed wwid recheck
-Date: Fri,  8 Mar 2019 17:12:00 -0600
-Message-ID: <1552086725-18476-8-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 09/12] multipathd: use update_path_groups
+	instead of reload_map
+Date: Fri,  8 Mar 2019 17:12:02 -0600
+Message-ID: <1552086725-18476-10-git-send-email-bmarzins@redhat.com>
 References: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,68 +22,73 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-If disable_changed_wwids is set, when multipathd gets a change event on
-a path, it verifies that the wwid hasn't changed in uev_update_path().
-If get_uid() failed, uev_update_path treated this as a wwid change to 0.
-This could cause paths to suddenly be dropped due to an issue with
-getting the wwid.  Even if get_uid() failed because the path was down,
-it no change uevent happend when it later became active, multipathd
-would continue to ignore the path. Also, scsi_uid_fallback() clears the
-failure return if it doesn't attempt to fallback, causing get_uid()
-to return success, when it actually failed.
-
-Multipathd should neither set nor clear wwid_changed if get_uid()
-returned failure. Also, scsi_uid_fallback() should retain the old return
-value if it doesn't attempt to fallback.
+reload_map() doesn't do the work to sync the state after reloading the
+map.  Instead of calling it directly, cli_reload() and uev_update_path()
+should call update_path_groups(), which calls reload_map() with all the
+necessary syncing.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.c | 6 +++---
- multipathd/main.c        | 6 ++++--
- 2 files changed, 7 insertions(+), 5 deletions(-)
+ multipathd/cli_handlers.c |  2 +-
+ multipathd/main.c         | 13 ++++++++-----
+ multipathd/main.h         |  2 ++
+ 3 files changed, 11 insertions(+), 6 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 729bcb9..b08cb2d 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1755,9 +1755,9 @@ get_vpd_uid(struct path * pp)
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index f95813e..60e17d6 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -877,7 +877,7 @@ cli_reload(void *v, char **reply, int *len, void *data)
+ 		return 1;
+ 	}
+ 
+-	return reload_map(vecs, mpp, 0, 1);
++	return update_path_groups(mpp, vecs, 0);
  }
  
- static ssize_t scsi_uid_fallback(struct path *pp, int path_state,
--			     const char **origin)
-+			     const char **origin, ssize_t old_len)
- {
--	ssize_t len = 0;
-+	ssize_t len = old_len;
- 	int retrigger;
- 	struct config *conf;
- 
-@@ -1828,7 +1828,7 @@ get_uid (struct path * pp, int path_state, struct udev_device *udev)
- 			origin = "sysfs";
- 		}
- 		if (len <= 0 && pp->bus == SYSFS_BUS_SCSI)
--			len = scsi_uid_fallback(pp, path_state, &origin);
-+			len = scsi_uid_fallback(pp, path_state, &origin, len);
- 	}
- 	if ( len < 0 ) {
- 		condlog(1, "%s: failed to get %s uid: %s",
+ int resize_map(struct multipath *mpp, unsigned long long size,
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 678ecf8..fd83a6a 100644
+index fd83a6a..7a317d9 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -1234,9 +1234,11 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 			goto out;
+@@ -1273,10 +1273,13 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 			else {
+ 				if (ro == 1)
+ 					pp->mpp->force_readonly = 1;
+-				retval = reload_map(vecs, mpp, 0, 1);
+-				pp->mpp->force_readonly = 0;
+-				condlog(2, "%s: map %s reloaded (retval %d)",
+-					uev->kernel, mpp->alias, retval);
++				retval = update_path_groups(mpp, vecs, 0);
++				if (retval == 2)
++					condlog(2, "%s: map removed during reload", pp->dev);
++				else {
++					pp->mpp->force_readonly = 0;
++					condlog(2, "%s: map %s reloaded (retval %d)", uev->kernel, mpp->alias, retval);
++				}
+ 			}
+ 		}
+ 	}
+@@ -1832,7 +1835,7 @@ int update_path_groups(struct multipath *mpp, struct vectors *vecs, int refresh)
  
- 		strcpy(wwid, pp->wwid);
--		get_uid(pp, pp->state, uev->udev);
-+		rc = get_uid(pp, pp->state, uev->udev);
+ 	dm_lib_release();
+ 	if (setup_multipath(vecs, mpp) != 0)
+-		return 1;
++		return 2;
+ 	sync_map_state(mpp);
  
--		if (strncmp(wwid, pp->wwid, WWID_SIZE) != 0) {
-+		if (rc != 0)
-+			strcpy(pp->wwid, wwid);
-+		else if (strncmp(wwid, pp->wwid, WWID_SIZE) != 0) {
- 			condlog(0, "%s: path wwid changed from '%s' to '%s'. %s",
- 				uev->kernel, wwid, pp->wwid,
- 				(disable_changed_wwids ? "disallowing" :
+ 	return 0;
+diff --git a/multipathd/main.h b/multipathd/main.h
+index 8fd426b..e5c1398 100644
+--- a/multipathd/main.h
++++ b/multipathd/main.h
+@@ -43,5 +43,7 @@ int __setup_multipath (struct vectors * vecs, struct multipath * mpp,
+ 		       int reset);
+ #define setup_multipath(vecs, mpp) __setup_multipath(vecs, mpp, 1)
+ int update_multipath (struct vectors *vecs, char *mapname, int reset);
++int update_path_groups(struct multipath *mpp, struct vectors *vecs,
++		       int refresh);
+ 
+ #endif /* MAIN_H */
 -- 
 2.17.2
