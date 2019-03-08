@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 02/12] libmultipath: handle existing paths in
-	marginal_path enqueue
-Date: Fri,  8 Mar 2019 17:11:55 -0600
-Message-ID: <1552086725-18476-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 01/12] libmultipath: disable
+	user_friendly_names for NetApp
+Date: Fri,  8 Mar 2019 17:11:54 -0600
+Message-ID: <1552086725-18476-2-git-send-email-bmarzins@redhat.com>
 References: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,47 +22,29 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-If the path that enqueue_io_err_stat_by_path() is trying to add
-is already on the list, just return success. There's no reason
-to fail in this case.
+NetApp has tools that rely on devices using WWID names. To avoid
+breaking these, NetApp devices should continue to use WWID names, even
+if the default config is set to enable user_friendly_names. If users
+want to use user_friendly_names on NetApp devices, the must specifically
+override the device config.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/io_err_stat.c | 6 ++----
- 1 file changed, 2 insertions(+), 4 deletions(-)
+ libmultipath/hwtable.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
-index 02b1453..1cb3ffe 100644
---- a/libmultipath/io_err_stat.c
-+++ b/libmultipath/io_err_stat.c
-@@ -254,7 +254,6 @@ static void free_io_err_pathvec(struct io_err_stat_pathvec *p)
-  * return value
-  * 0: enqueue OK
-  * 1: fails because of internal error
-- * 2: fails because of existing already
-  */
- static int enqueue_io_err_stat_by_path(struct path *path)
- {
-@@ -264,7 +263,7 @@ static int enqueue_io_err_stat_by_path(struct path *path)
- 	p = find_err_path_by_dev(paths->pathvec, path->dev);
- 	if (p) {
- 		pthread_mutex_unlock(&paths->mutex);
--		return 2;
-+		return 0;
- 	}
- 	pthread_mutex_unlock(&paths->mutex);
- 
-@@ -418,9 +417,8 @@ int hit_io_err_recheck_time(struct path *pp)
- 			io_err_stat_log(3, "%s: enqueue fails, to recover",
- 					pp->dev);
- 			goto recover;
--		} else if (!r) {
-+		} else
- 			pp->io_err_pathfail_cnt = PATH_IO_ERR_IN_CHECKING;
--		}
- 	}
- 
- 	return 1;
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index d3a8d9b..8776411 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -719,6 +719,7 @@ static struct hwentry default_hw[] = {
+ 		.flush_on_last_del = FLUSH_ENABLED,
+ 		.dev_loss      = MAX_DEV_LOSS_TMO,
+ 		.prio_name     = PRIO_ONTAP,
++		.user_friendly_names = USER_FRIENDLY_NAMES_OFF,
+ 	},
+ 	{
+ 		/*
 -- 
 2.17.2
