@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 01/12] libmultipath: disable
-	user_friendly_names for NetApp
-Date: Fri,  8 Mar 2019 17:11:54 -0600
-Message-ID: <1552086725-18476-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 10/12] multipath.conf: add missing options to
+	man page
+Date: Fri,  8 Mar 2019 17:12:03 -0600
+Message-ID: <1552086725-18476-11-git-send-email-bmarzins@redhat.com>
 References: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,29 +22,44 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-NetApp has tools that rely on devices using WWID names. To avoid
-breaking these, NetApp devices should continue to use WWID names, even
-if the default config is set to enable user_friendly_names. If users
-want to use user_friendly_names on NetApp devices, the must specifically
-override the device config.
-
-Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/hwtable.c | 1 +
- 1 file changed, 1 insertion(+)
+ multipath/multipath.conf.5 | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index d3a8d9b..8776411 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -719,6 +719,7 @@ static struct hwentry default_hw[] = {
- 		.flush_on_last_del = FLUSH_ENABLED,
- 		.dev_loss      = MAX_DEV_LOSS_TMO,
- 		.prio_name     = PRIO_ONTAP,
-+		.user_friendly_names = USER_FRIENDLY_NAMES_OFF,
- 	},
- 	{
- 		/*
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 0fe8461..1e0714f 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -1494,6 +1494,8 @@ section:
+ .TP
+ .B flush_on_last_del
+ .TP
++.B user_friendly_names
++.TP
+ .B retain_attached_hw_handler
+ .TP
+ .B detect_prio
+@@ -1525,6 +1527,8 @@ section:
+ .B max_sectors_kb
+ .TP
+ .B ghost_delay
++.TP
++.B all_tg_pt
+ .RE
+ .PD
+ .LP
+@@ -1604,7 +1608,11 @@ the values are taken from the \fIdevices\fR or \fIdefaults\fR sections:
+ .TP
+ .B skip_kpartx
+ .TP
++.B max_sectors_kb
++.TP
+ .B ghost_delay
++.TP
++.B all_tg_pt
+ .RE
+ .PD
+ .LP
 -- 
 2.17.2
