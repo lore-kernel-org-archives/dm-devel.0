@@ -1,14 +1,13 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 11/12] libmultipath: add get_uid fallback code
-	for NVMe devices
-Date: Fri,  8 Mar 2019 17:12:04 -0600
-Message-ID: <1552086725-18476-12-git-send-email-bmarzins@redhat.com>
-References: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
+From: pr-tracker-bot@kernel.org
+Subject: Re: [git pull] device mapper changes for 5.1
+Date: Sun, 10 Mar 2019 01:45:19 +0000
+Message-ID: <155218231908.7195.12854925577578754305.pr-tracker-bot@kernel.org>
+References: <20190307162450.GA8985@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <20190307162450.GA8985@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,91 +17,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Huaisheng Ye <yehs1@lenovo.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Chengguang Xu <cgxu519@gmx.com>, Helen Koike <helen.koike@collabora.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, NeilBrown <neil@brown.name>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, Jason Cai <jason.cai.kern@gmail.com>
 List-Id: dm-devel.ids
 
-If multipath can't get the uid for NVMe devices from udev, it can get it
-directly from sysfs.
+The pull request you sent on Thu, 7 Mar 2019 11:24:51 -0500:
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/discovery.c | 49 ++++++++++++++++++++++++++++------------
- 1 file changed, 34 insertions(+), 15 deletions(-)
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.1/dm-changes
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 28c00e5..bece67c 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1754,8 +1754,8 @@ get_vpd_uid(struct path * pp)
- 	return get_vpd_sysfs(parent, 0x83, pp->wwid, WWID_SIZE);
- }
- 
--static ssize_t scsi_uid_fallback(struct path *pp, int path_state,
--			     const char **origin, ssize_t old_len)
-+static ssize_t uid_fallback(struct path *pp, int path_state,
-+			    const char **origin, ssize_t old_len)
- {
- 	ssize_t len = old_len;
- 	int retrigger;
-@@ -1764,17 +1764,36 @@ static ssize_t scsi_uid_fallback(struct path *pp, int path_state,
- 	conf = get_multipath_config();
- 	retrigger = conf->retrigger_tries;
- 	put_multipath_config(conf);
--	if (pp->retriggers >= retrigger &&
--	    !strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE)) {
--		len = get_vpd_uid(pp);
--		*origin = "sysfs";
--		pp->uid_attribute = NULL;
--		if (len < 0 && path_state == PATH_UP) {
--			condlog(1, "%s: failed to get sysfs uid: %s",
--				pp->dev, strerror(-len));
--			len = get_vpd_sgio(pp->fd, 0x83, pp->wwid,
--					   WWID_SIZE);
--			*origin = "sgio";
-+	if (pp->retriggers >= retrigger) {
-+		if (pp->bus == SYSFS_BUS_SCSI &&
-+		    !strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE)) {
-+			len = get_vpd_uid(pp);
-+			*origin = "sysfs";
-+			pp->uid_attribute = NULL;
-+			if (len < 0 && path_state == PATH_UP) {
-+				condlog(1, "%s: failed to get sysfs uid: %s",
-+					pp->dev, strerror(-len));
-+				len = get_vpd_sgio(pp->fd, 0x83, pp->wwid,
-+						   WWID_SIZE);
-+				*origin = "sgio";
-+			}
-+		} else if (pp->bus == SYSFS_BUS_NVME) {
-+			char value[256];
-+			len = sysfs_attr_get_value(pp->udev, "wwid", value,
-+						   sizeof(value));
-+			if (len <= 0)
-+				return -1;
-+			len = strlcpy(pp->wwid, value, WWID_SIZE);
-+			if (len >= WWID_SIZE) {
-+				len = fix_broken_nvme_wwid(pp, value,
-+							   WWID_SIZE);
-+				if (len > 0)
-+					return len;
-+				condlog(0, "%s: wwid overflow", pp->dev);
-+				len = WWID_SIZE;
-+			}
-+			*origin = "sysfs";
-+			pp->uid_attribute = NULL;
- 		}
- 	}
- 	return len;
-@@ -1827,8 +1846,8 @@ get_uid (struct path * pp, int path_state, struct udev_device *udev)
- 			len = get_vpd_uid(pp);
- 			origin = "sysfs";
- 		}
--		if (len <= 0 && pp->bus == SYSFS_BUS_SCSI)
--			len = scsi_uid_fallback(pp, path_state, &origin, len);
-+		if (len <= 0)
-+			len = uid_fallback(pp, path_state, &origin, len);
- 	}
- 	if ( len < 0 ) {
- 		condlog(1, "%s: failed to get %s uid: %s",
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/6cdc577a18a616c331f57e268c97466171cfc45f
+
+Thank you!
+
 -- 
-2.17.2
+Deet-doot-dot, I am a bot.
+https://korg.wiki.kernel.org/userdoc/prtracker
