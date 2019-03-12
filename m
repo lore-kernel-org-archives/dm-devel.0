@@ -1,21 +1,18 @@
-From: John Ogness <john.ogness@linutronix.de>
-Subject: Re: Serial console is causing system lock-up
-Date: Tue, 12 Mar 2019 16:19:28 +0100
-Message-ID: <87zhq0yvb3.fsf@linutronix.de>
-References: <20190307022254.GB4893@jagdpanzerIV>
-	<87tvgfhzd6.fsf@linutronix.de> <20190307082509.GA1925@jagdpanzerIV>
-	<87pnr3hyle.fsf@linutronix.de> <20190307091748.GA6307@jagdpanzerIV>
-	<87o96nezr2.fsf@linutronix.de>
-	<20190307122642.GA10415@tigerII.localdomain>
-	<87r2biojcx.fsf@linutronix.de> <20190312023231.GA4146@jagdpanzerIV>
-	<87a7i05wwi.fsf@linutronix.de>
-	<20190312120824.4eaa4eyjcxvuzm23@pathway.suse.cz>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: multipathd ignoring dev_loss_tmo setting
+Date: Tue, 12 Mar 2019 17:32:16 -0500
+Message-ID: <20190312223216.GC13295@octiron.msp.redhat.com>
+References: <d915601a3472d7448e57f968e2ec3a63c627a35e.camel@cgi.com>
+	<20190228195330.GQ3023@octiron.msp.redhat.com>
+	<69ee893dda390f614c78f49b55ea99c7c7f6583a.camel@cgi.com>
+	<20190301173512.GR3023@octiron.msp.redhat.com>
+	<1379896535dccc69dc07bf16a8be7696392261a3.camel@cgi.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190312120824.4eaa4eyjcxvuzm23@pathway.suse.cz> (Petr Mladek's
-	message of "Tue, 12 Mar 2019 13:08:24 +0100")
+Content-Disposition: inline
+In-Reply-To: <1379896535dccc69dc07bf16a8be7696392261a3.camel@cgi.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,37 +22,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Petr Mladek <pmladek@suse.com>
-Cc: Nigel Croxon <ncroxon@redhat.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Rostedt <rostedt@goodmis.org>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-serial@vger.kernel.org
+To: "Martins, Bruno O" <bruno.martins@cgi.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2019-03-12, Petr Mladek <pmladek@suse.com> wrote:
-> On Tue 2019-03-12 09:17:49, John Ogness wrote:
->> The current printk implementation is handling all console printing as
->> best effort. Trying hard enough to dramatically affect the system,
->> but not trying hard enough to guarantee success.
->
-> I agree that direct output is more reliable. It might be very useful
-> for debugging some types of problems. The question is if it is worth
-> the cost (code complexity, serializing CPUs == slowing down the
-> entire system).
->
-> But it is is possible that a reasonable offloading (in the direction
-> of last Sergey's approach) might be a better deal.
->
->
-> I suggest the following way forward (separate patchsets):
->
->     1. Replace log buffer (least controversial thing)
->     2. Reliable offload to kthread (would be useful anyway)
->     3. Atomic consoles (a lot of tricky code, might not be
-> 		worth the effort)
->
-> Could we agree on this?
+On Mon, Mar 04, 2019 at 09:48:59AM +0000, Martins, Bruno O wrote:
+> On Fri, 2019-03-01 at 11:35 -0600, Benjamin Marzinski wrote:
+> > On Fri, Mar 01, 2019 at 10:04:52AM +0000, Martins, Bruno O wrote:
+> > > On Thu, 2019-02-28 at 13:53 -0600, Benjamin Marzinski wrote:
+> > > > On Thu, Feb 28, 2019 at 11:38:22AM +0000, Martins, Bruno O wrote:
+> > > > > Hello guys,
+> > > > > 
+> > > > > I am trying to modify /etc/multipath.conf on my system so that
+> > > > > the
+> > > > > parameter 'dev_loss_tmo' is changed from the default value.
+> > > > > 
+> > > > > However, when checking the value currently in use I am getting
+> > > > > the
+> > > > > wrong value (which is '30') for some of the remote ports:
+> > > > > 
+> > > > 
+> > > > Are you sure those rports are used by multipath devices?
+> > > > multipath
+> > > > only
+> > > > changes dev_loss_tmo for rports associated with a multipath path
+> > > > device.
+> > > > 
+> > > > -Ben
+> > > >  
+> 
+> Hello Ben,
+> 
+> Then I believe this rport's with wrong dev_loss_tmo are part of
+> multipathd. Is this correct?
 
-Since this is about the new RFC printk design, I've responded in that
-thread [0].
+yeah, that looks correct. If you run
 
-John Ogness
+# multipath -r
 
-[0] https://lkml.kernel.org/r/874l8815uc.fsf@linutronix.de
+does that correct the issue?  If not, can you attach the result of
+running
+
+# multipath -rv 3
+
+-Ben
+
+> 
+> Best regards,
+> 
+> Bruno
