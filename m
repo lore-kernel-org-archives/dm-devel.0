@@ -1,61 +1,58 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 1/3] list_bl: Add hlist_bl_add_before/behind helpers
-Date: Mon, 11 Mar 2019 18:43:33 -0400
-Message-ID: <20190311224333.GA16968@redhat.com>
-References: <20181220180651.4879-1-ntsironis@arrikto.com>
- <20181220180651.4879-2-ntsironis@arrikto.com>
- <20190228213201.GB23527@redhat.com>
- <20190311181607.GA9388@infradead.org>
- <20190311221321.GP13351@linux.ibm.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Serial console is causing system lock-up
+Date: Tue, 12 Mar 2019 06:05:52 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1903120557560.12085@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20190306171943.12345598@oasis.local.home>
+	<87ftrzbp3y.fsf@linutronix.de> <20190307022254.GB4893@jagdpanzerIV>
+	<87tvgfhzd6.fsf@linutronix.de> <20190307082509.GA1925@jagdpanzerIV>
+	<87pnr3hyle.fsf@linutronix.de> <20190307091748.GA6307@jagdpanzerIV>
+	<87o96nezr2.fsf@linutronix.de>
+	<20190307122642.GA10415@tigerII.localdomain>
+	<87r2biojcx.fsf@linutronix.de> <20190312023231.GA4146@jagdpanzerIV>
+	<87a7i05wwi.fsf@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190311221321.GP13351@linux.ibm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Paul E. McKenney" <paulmck@linux.ibm.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Nikos Tsironis <ntsironis@arrikto.com>, agk@redhat.com, dm-devel@redhat.com, mpatocka@redhat.com, iliastsi@arrikto.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <87a7i05wwi.fsf@linutronix.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: John Ogness <john.ogness@linutronix.de>
+Cc: Petr Mladek <pmladek@suse.com>, Nigel Croxon <ncroxon@redhat.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Rostedt <rostedt@goodmis.org>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, dm-devel@redhat.com, linux-serial@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Mar 11 2019 at  6:13pm -0400,
-Paul E. McKenney <paulmck@linux.ibm.com> wrote:
 
-> On Mon, Mar 11, 2019 at 11:16:08AM -0700, Christoph Hellwig wrote:
-> > On Thu, Feb 28, 2019 at 04:32:02PM -0500, Mike Snitzer wrote:
-> > > Hi Paul and Christoph,
-> > > 
-> > > You've added your Signed-off-by to include/linux/list_bl.h commits in
-> > > the past.  I'm not sure how this proposed patch should be handled.
-> > > 
-> > > These new hlist_bl_add_{before,behind} changes are a prereq for
-> > > dm-snapshot changes that Nikos has proposed, please see:
-> > > https://patchwork.kernel.org/patch/10739265/
-> > > 
-> > > Any assistance/review you, or others on LKML, might be able to provide
-> > > would be appreciated.
-> > 
-> > I just killed two helpers.  That being said assuming that we only
-> > rely on the next pointer for the lockless traversals the changes look
-> > fine to me, but the code might be beyond my paygrade..
+
+On Tue, 12 Mar 2019, John Ogness wrote:
+
+> > But it doesn't turn SMP system into UP.
 > 
-> First, apologies for being slow on this one.
+> In this example it turned it into a brick.
+> 
+> The problems I see are:
+> 
+> 1. The current loglevels used in the kernel are not sufficient to
+>    distinguish between emergency and informational messages. Addressing
+>    this issue may require things like using a new printk flag and
+>    manually marking the printks that we(?) decide are critical. I was
 
-No problem.
- 
-> Second, were the two helpers hlist_bl_add_{before,behind}()?  If so, I
-> guess there is not much point in me looking them over.  Though perhaps
-> I should be looking something else over?
+It depends on what the user considers important. The kernel doesn't know 
+what's critical and can't know it.
 
-No, think Christoph was referring to his commit 1879fd6a26571fd4e8e1f
-from 2011.
+For example, if the user plugs an USB stick and the USB stick reports an 
+I/O error, it is not critical condition.
 
-Anyway, I'd like you to look over this new proposed patch that
-introduces hlist_bl_add_{before,behind}(), please see:
-https://patchwork.kernel.org/patch/10835713/
+If the user runs the whole system from the USB stick and the USB stick 
+reports an I/O error, it is critical condition.
 
-If you're happy with the patch, and can provide your Reviewed-by or
-Acked-by, I'll then pick it up as a prereq for the broader dm-snapshot
-changes that Nikos has provided.
+The filesystems and the block device drivers can't know if the data stored 
+on them are important.
 
-Thanks!
-Mike
+Mikulas
