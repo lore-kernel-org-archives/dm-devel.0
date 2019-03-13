@@ -1,14 +1,20 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm-ingerity: change memcmp to strncmp
-Date: Wed, 13 Mar 2019 11:58:11 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1903131154290.2424@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1903130753420.22289@file01.intranet.prod.int.rdu2.redhat.com>
-	<1552488026.3022.2.camel@HansenPartnership.com>
+From: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>
+Subject: Re: Serial console is causing system lock-up
+Date: Wed, 13 Mar 2019 11:38:36 +0900
+Message-ID: <20190313023836.GC783@jagdpanzerIV>
+References: <87tvgfhzd6.fsf@linutronix.de> <20190307082509.GA1925@jagdpanzerIV>
+	<87pnr3hyle.fsf@linutronix.de> <20190307091748.GA6307@jagdpanzerIV>
+	<87o96nezr2.fsf@linutronix.de>
+	<20190307122642.GA10415@tigerII.localdomain>
+	<87r2biojcx.fsf@linutronix.de> <20190312023231.GA4146@jagdpanzerIV>
+	<87a7i05wwi.fsf@linutronix.de>
+	<20190312120824.4eaa4eyjcxvuzm23@pathway.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1552488026.3022.2.camel@HansenPartnership.com>
+Content-Disposition: inline
+In-Reply-To: <20190312120824.4eaa4eyjcxvuzm23@pathway.suse.cz>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,56 +24,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com
+To: Petr Mladek <pmladek@suse.com>
+Cc: Nigel Croxon <ncroxon@redhat.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, John Ogness <john.ogness@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Rostedt <rostedt@goodmis.org>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-serial@vger.kernel.org
 List-Id: dm-devel.ids
 
-
-
-On Wed, 13 Mar 2019, James Bottomley wrote:
-
-> On Wed, 2019-03-13 at 07:56 -0400, Mikulas Patocka wrote:
-> > If the string opt_string is small, the function memcmp can access
-> > bytes
-> > that are beyond the terminating nul character. In theory, it could
-> > cause
-> > segfault, if opt_string were located just below some unmapped memory.
-> > 
-> > This patch changes memcmp to strncmp, so that we don't read bytes
-> > beyond
-> > the end of the string.
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > Cc: stable@vger.kernel.org	# v4.12+
-> > 
-> > ---
-> >  drivers/md/dm-integrity.c |    8 ++++----
-> >  1 file changed, 4 insertions(+), 4 deletions(-)
-> > 
-> > Index: linux-2.6/drivers/md/dm-integrity.c
-> > ===================================================================
-> > --- linux-2.6.orig/drivers/md/dm-integrity.c	2019-03-12
-> > 15:33:17.000000000 +0100
-> > +++ linux-2.6/drivers/md/dm-integrity.c	2019-03-12
-> > 15:34:49.000000000 +0100
-> > @@ -3185,7 +3185,7 @@ static int dm_integrity_ctr(struct dm_ta
-> >  			journal_watermark = val;
-> >  		else if (sscanf(opt_string, "commit_time:%u%c",
-> > &val, &dummy) == 1)
-> >  			sync_msec = val;
-> > -		else if (!memcmp(opt_string, "meta_device:",
-> > strlen("meta_device:"))) {
-> > +		else if (!strncmp(opt_string, "meta_device:",
-> > strlen("meta_device:"))) {
+On (03/12/19 13:08), Petr Mladek wrote:
+> > 2. You seem unwilling to acknowledge the difference between emergency
+> >    and informational messages. A message is either critical or it is
+> >    not. If it is, it should be handled as such, regardless of
+> >    interference, regardless if it means turning an SMP machine into a UP
+> >    machine. If it is not critical, it should be sent along a
+> >    non-interfering path so the the system is _not_ affected.
 > 
-> strncmp(a, b, strlen(b)) is semantically equivalent to strcmp(a,b) but
-> the latter is far shorter and easier so you should use it.
-> 
-> James
+> This means that any critical message is always more important than any
+> workload. It opens doors for iteresting DOS attacks.
 
-No, it isn't.
+Agreed.
 
-strncmp("blabla", "bla", strlen("bla") returns zero.
-strcmp("blabla", "bla") reurns a positive number.
+So what I thought about "mutual exclusive error reporting with
+quadratic latencies" was that if any workload involves error
+reporting then it might be a good idea to _not_ parallelize such
+workload anymore.
 
-Mikulas
+> > The current printk implementation is handling all console printing as
+> > best effort. Trying hard enough to dramatically affect the system, but
+> > not trying hard enough to guarantee success.
+>
+> I agree that direct output is more reliable. It might be very useful
+> for debugging some types of problems. The question is
+> if it is worth the cost (code complexity, serializing CPUs
+> == slowing down the entire system).
+
+Agreed.
+
+I'm very skeptical about "serializing CPUs" part. It looks like one
+"print or die trying" is replaced with another "print or die trying".
+What happened to  log_store() + flush_on_panic()?
+
+	-ss
