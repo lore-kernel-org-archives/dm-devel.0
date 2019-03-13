@@ -1,75 +1,111 @@
-From: John Ogness <john.ogness@linutronix.de>
-Subject: Re: Serial console is causing system lock-up
-Date: Wed, 13 Mar 2019 09:43:36 +0100
-Message-ID: <878sxj9nbb.fsf@linutronix.de>
-References: <87tvgfhzd6.fsf@linutronix.de>
-	<20190307082509.GA1925@jagdpanzerIV> <87pnr3hyle.fsf@linutronix.de>
-	<20190307091748.GA6307@jagdpanzerIV> <87o96nezr2.fsf@linutronix.de>
-	<20190307122642.GA10415@tigerII.localdomain>
-	<87r2biojcx.fsf@linutronix.de> <20190312023231.GA4146@jagdpanzerIV>
-	<87a7i05wwi.fsf@linutronix.de>
-	<20190312120824.4eaa4eyjcxvuzm23@pathway.suse.cz>
-	<20190313023836.GC783@jagdpanzerIV>
+From: "Paul E. McKenney" <paulmck@linux.ibm.com>
+Subject: Re: [PATCH 1/3] list_bl: Add hlist_bl_add_before/behind helpers
+Date: Wed, 13 Mar 2019 16:48:53 -0700
+Message-ID: <20190313234853.GA7797@linux.ibm.com>
+References: <20181220180651.4879-1-ntsironis@arrikto.com>
+ <20181220180651.4879-2-ntsironis@arrikto.com>
+ <20190228213201.GB23527@redhat.com>
+Reply-To: paulmck@linux.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190313023836.GC783@jagdpanzerIV> (Sergey Senozhatsky's message
-	of "Wed, 13 Mar 2019 11:38:36 +0900")
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>
-Cc: Petr Mladek <pmladek@suse.com>, Nigel Croxon <ncroxon@redhat.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Rostedt <rostedt@goodmis.org>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-serial@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190228213201.GB23527@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: hch@infradead.org, Nikos Tsironis <ntsironis@arrikto.com>, agk@redhat.com, dm-devel@redhat.com, mpatocka@redhat.com, iliastsi@arrikto.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 2019-03-13, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com> wrote:
->>> The current printk implementation is handling all console printing
->>> as best effort. Trying hard enough to dramatically affect the
->>> system, but not trying hard enough to guarantee success.
->>
->> I agree that direct output is more reliable. It might be very useful
->> for debugging some types of problems. The question is
->> if it is worth the cost (code complexity, serializing CPUs
->> == slowing down the entire system).
->
-> Agreed.
->
-> I'm very skeptical about "serializing CPUs" part. It looks like one
-> "print or die trying" is replaced with another "print or die trying".
-> What happened to log_store() + flush_on_panic()?
+On Thu, Feb 28, 2019 at 04:32:02PM -0500, Mike Snitzer wrote:
+> On Thu, Dec 20 2018 at  1:06pm -0500,
+> Nikos Tsironis <ntsironis@arrikto.com> wrote:
+> 
+> > Add hlist_bl_add_before/behind helpers to add an element before/after an
+> > existing element in a bl_list.
+> > 
+> > Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+> > Signed-off-by: Ilias Tsitsimpis <iliastsi@arrikto.com>
+> > ---
+> >  include/linux/list_bl.h | 27 +++++++++++++++++++++++++++
+> >  1 file changed, 27 insertions(+)
+> > 
+> > diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
+> > index 3fc2cc57ba1b..2fd918e5fd48 100644
+> > --- a/include/linux/list_bl.h
+> > +++ b/include/linux/list_bl.h
+> > @@ -86,6 +86,33 @@ static inline void hlist_bl_add_head(struct hlist_bl_node *n,
+> >  	hlist_bl_set_first(h, n);
+> >  }
+> >  
+> > +static inline void hlist_bl_add_before(struct hlist_bl_node *n,
+> > +				       struct hlist_bl_node *next)
+> > +{
+> > +	struct hlist_bl_node **pprev = next->pprev;
+> > +
+> > +	n->pprev = pprev;
+> > +	n->next = next;
+> > +	next->pprev = &n->next;
+> > +
+> > +	/* pprev may be `first`, so be careful not to lose the lock bit */
+> > +	WRITE_ONCE(*pprev,
+> > +		   (struct hlist_bl_node *)
+> > +			((unsigned long)n |
+> > +			 ((unsigned long)*pprev & LIST_BL_LOCKMASK)));
 
-We are literally discussing in a thread where the current printk
-implementation failed to get messages out (lots of dropped messages)
-_and_ printk console printing was responsible for _killing_ the machine.
+A nit, but use of uintptr_t shrinks things a bit:
 
-What would my proposal do in _this_ situation:
++		   (struct hlist_bl_node *)
++			((uintptr_t)n | ((uintptr_t)*pprev & LIST_BL_LOCKMASK)));
 
-1. If no emergency console was available or the messages were not
-classified as emergency, messages would have been dropped during console
-printing and the system would have run unaffected. The number of dropped
-messages might not even be more if the scheduler could run the printk
-kthread effectively.
+I am not too concerned about this, though.
 
-OR
+The WRITE_ONCE() is to handle races with hlist_bl_empty() (which does contain
+the corresponding READ_ONCE()) correct?
 
-2. If an emergency console was available and the messages were
-classified as emergency, _no_ messages would have dropped, the system
-would have become very slow on the CPUs generating the messages, and
-then eventually it would have recovered.
+> > +}
+> > +
+> > +static inline void hlist_bl_add_behind(struct hlist_bl_node *n,
+> > +				       struct hlist_bl_node *prev)
+> > +{
+> > +	n->next = prev->next;
+> > +	n->pprev = &prev->next;
+> > +	WRITE_ONCE(prev->next, n);
 
+I don't see what this WRITE_ONCE() is interacting with.  The traversals
+use plain C-language reads, and hlist_bl_empty() can't get here.  All
+uses of hlist_bl_for_each_entry() invoke hlist_bl_lock() before starting
+the traversal, and hlist_bl_for_each_entry_safe() looks to be unused.
+(Perhaps it should be removed?  Or is there some anticipated use?)
 
-I don't understand how you can think "print or die trying" is replaced
-with another "print or die trying". But it is probably not constructive
-to debate this right now. Petr has laid out a good course that will
-allow us to advance in smaller, more conservative, steps.
+I don't believe that the WRITE_ONCE() is needed.  What am I missing?
 
-By the way, Sergey, I appreciate your skepticism.
+Other than that, looks good.
 
-John Ogness
+							Thanx, Paul
+
+> > +
+> > +	if (n->next)
+> > +		n->next->pprev = &n->next;
+> > +}
+> > +
+> >  static inline void __hlist_bl_del(struct hlist_bl_node *n)
+> >  {
+> >  	struct hlist_bl_node *next = n->next;
+> > -- 
+> > 2.11.0
+> 
+> Hi Paul and Christoph,
+> 
+> You've added your Signed-off-by to include/linux/list_bl.h commits in
+> the past.  I'm not sure how this proposed patch should be handled.
+> 
+> These new hlist_bl_add_{before,behind} changes are a prereq for
+> dm-snapshot changes that Nikos has proposed, please see:
+> https://patchwork.kernel.org/patch/10739265/
+> 
+> Any assistance/review you, or others on LKML, might be able to provide
+> would be appreciated.
+> 
+> Thanks,
+> Mike
+> 
