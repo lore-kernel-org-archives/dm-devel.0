@@ -1,68 +1,165 @@
-From: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>
-Subject: Re: Serial console is causing system lock-up
-Date: Thu, 14 Mar 2019 19:30:45 +0900
-Message-ID: <20190314103045.GA24210@jagdpanzerIV>
-References: <87pnr3hyle.fsf@linutronix.de> <20190307091748.GA6307@jagdpanzerIV>
-	<87o96nezr2.fsf@linutronix.de>
-	<20190307122642.GA10415@tigerII.localdomain>
-	<87r2biojcx.fsf@linutronix.de> <20190312023231.GA4146@jagdpanzerIV>
-	<87a7i05wwi.fsf@linutronix.de>
-	<20190312120824.4eaa4eyjcxvuzm23@pathway.suse.cz>
-	<20190313023836.GC783@jagdpanzerIV> <878sxj9nbb.fsf@linutronix.de>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: Re: [dm-devel] [PATCH 1/3] list_bl: Add hlist_bl_add_before/behind
+ helpers
+Date: Thu, 14 Mar 2019 19:01:23 +0200
+Message-ID: <86a26792-03ad-0dc4-737e-8fd5a3a79fa8@arrikto.com>
+References: <20181220180651.4879-1-ntsironis@arrikto.com>
+ <20181220180651.4879-2-ntsironis@arrikto.com>
+ <20190228213201.GB23527@redhat.com> <20190313234853.GA7797@linux.ibm.com>
+ <20190314003027.GE4202@redhat.com>
+ <f70ea4c9-658d-5770-be7f-a1a97bb67643@arrikto.com>
+ <20190314140750.GB4102@linux.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <878sxj9nbb.fsf@linutronix.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: John Ogness <john.ogness@linutronix.de>
-Cc: Petr Mladek <pmladek@suse.com>, Nigel Croxon <ncroxon@redhat.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Rostedt <rostedt@goodmis.org>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-serial@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190314140750.GB4102@linux.ibm.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: paulmck@linux.ibm.com
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, iliastsi@arrikto.com, hch@infradead.org, dm-devel@redhat.com, mpatocka@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On (03/13/19 09:43), John Ogness wrote:
-> I don't understand how you can think "print or die trying" is replaced
-> with another "print or die trying".
+On 3/14/19 4:07 PM, Paul E. McKenney wrote:
+> On Thu, Mar 14, 2019 at 03:28:23PM +0200, Nikos Tsironis wrote:
+>> On 3/14/19 2:30 AM, Mike Snitzer wrote:
+>>> On Wed, Mar 13 2019 at  7:48pm -0400,
+>>> Paul E. McKenney <paulmck@linux.ibm.com> wrote:
+>>>
+>> Hi Paul,
+>>
+>> Thanks a lot for your feedback!
+> 
+> NP, and apologies for the delay.
+> 
+>>>> On Thu, Feb 28, 2019 at 04:32:02PM -0500, Mike Snitzer wrote:
+>>>>> On Thu, Dec 20 2018 at  1:06pm -0500,
+>>>>> Nikos Tsironis <ntsironis@arrikto.com> wrote:
+>>>>>
+>>>>>> Add hlist_bl_add_before/behind helpers to add an element before/after an
+>>>>>> existing element in a bl_list.
+>>>>>>
+>>>>>> Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+>>>>>> Signed-off-by: Ilias Tsitsimpis <iliastsi@arrikto.com>
+>>>>>> ---
+>>>>>>  include/linux/list_bl.h | 27 +++++++++++++++++++++++++++
+>>>>>>  1 file changed, 27 insertions(+)
+>>>>>>
+>>>>>> diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
+>>>>>> index 3fc2cc57ba1b..2fd918e5fd48 100644
+>>>>>> --- a/include/linux/list_bl.h
+>>>>>> +++ b/include/linux/list_bl.h
+>>>>>> @@ -86,6 +86,33 @@ static inline void hlist_bl_add_head(struct hlist_bl_node *n,
+>>>>>>  	hlist_bl_set_first(h, n);
+>>>>>>  }
+>>>>>>  
+>>>>>> +static inline void hlist_bl_add_before(struct hlist_bl_node *n,
+>>>>>> +				       struct hlist_bl_node *next)
+>>>>>> +{
+>>>>>> +	struct hlist_bl_node **pprev = next->pprev;
+>>>>>> +
+>>>>>> +	n->pprev = pprev;
+>>>>>> +	n->next = next;
+>>>>>> +	next->pprev = &n->next;
+>>>>>> +
+>>>>>> +	/* pprev may be `first`, so be careful not to lose the lock bit */
+>>>>>> +	WRITE_ONCE(*pprev,
+>>>>>> +		   (struct hlist_bl_node *)
+>>>>>> +			((unsigned long)n |
+>>>>>> +			 ((unsigned long)*pprev & LIST_BL_LOCKMASK)));
+>>>>
+>>>> A nit, but use of uintptr_t shrinks things a bit:
+>>>>
+>>>> +		   (struct hlist_bl_node *)
+>>>> +			((uintptr_t)n | ((uintptr_t)*pprev & LIST_BL_LOCKMASK)));
+>>>>
+>>>> I am not too concerned about this, though.
+>>>
+>>> I'm fine with folding in your suggestion.
+>>
+>> Indeed, this looks better.
+>>
+>>>> The WRITE_ONCE() is to handle races with hlist_bl_empty() (which does contain
+>>>> the corresponding READ_ONCE()) correct?
+>>>
+>>> Correct.
+>>
+>> Yes that's correct.
+>>
+>>>>>> +}
+>>>>>> +
+>>>>>> +static inline void hlist_bl_add_behind(struct hlist_bl_node *n,
+>>>>>> +				       struct hlist_bl_node *prev)
+>>>>>> +{
+>>>>>> +	n->next = prev->next;
+>>>>>> +	n->pprev = &prev->next;
+>>>>>> +	WRITE_ONCE(prev->next, n);
+>>>>
+>>>> I don't see what this WRITE_ONCE() is interacting with.  The traversals
+>>>> use plain C-language reads, and hlist_bl_empty() can't get here.  All
+>>>> uses of hlist_bl_for_each_entry() invoke hlist_bl_lock() before starting
+>>>> the traversal, and hlist_bl_for_each_entry_safe() looks to be unused.
+>>>> (Perhaps it should be removed?  Or is there some anticipated use?)
+>>
+>> I am using hlist_bl_for_each_entry_safe() in this proposed patch for
+>> dm-snapshot: https://patchwork.kernel.org/patch/10835709/
+> 
+> Probably should keep it, then.  ;-)
+> 
+>>>>
+>>>> I don't believe that the WRITE_ONCE() is needed.  What am I missing?
+>>>>
+>>>> Other than that, looks good.
+>>>>
+>>>> 							Thanx, Paul
+>>>>
+>>>
+>>> I'd imagine it was just born out of symmetry with hlist_bl_add_before()
+>>> and/or caution.  But let's see what Nikos has to say.
+>>
+>> I also don't believe that this WRITE_SAME() is needed. But, looking at
+>> hlist_add_behind() in include/linux/list.h, which, if I am not missing
+>> something, is used in the same way as hlist_bl_add_behind(), it also
+>> uses WRITE_ONCE() to update prev->next:
+>>
+>> static inline void hlist_add_behind(struct hlist_node *n,
+>> 				    struct hlist_node *prev)
+>> {
+>> 	n->next = prev->next;
+>> 	WRITE_ONCE(prev->next, n);
+>> 	n->pprev = &prev->next;
+>>
+>> 	if (n->next)
+>> 		n->next->pprev  = &n->next;
+>> }
+>>
+>> Could it be the case that the WRITE_ONCE() in hlist_add_behind() is also
+>> not needed? This WRITE_ONCE() was introduced by commit 1c97be677f72b3
+>> ("list: Use WRITE_ONCE() when adding to lists and hlists").
+> 
+> Looks like I have no one to blame but myself!
+> 
+> Would you like to remove that as part of your patch series?
 
-Sorry, let me explain. In some contexts CPUs which are spinning on
-prb_lock don't do anything else. A careful placement of
+Yes, Of course. I will add an extra patch removing the WRITE_ONCE() from
+hlist_add_behind().
 
-        touch_softlockup_watchdog_sync();
-        clocksource_touch_watchdog();
-        rcu_cpu_stall_reset();
-        touch_nmi_watchdog();
+Thanks,
+Nikos
 
-keeps the watchdogs away, yes, but that doesn't mean that we are not
-sitting on a time bomb. Think of RCU, for instance. We keep rcu_cpu_stall
-silent and things can look OK, but that doesn't mean that RCU is OK in
-reality; spinning CPUs may hold off grace periods. So now a relatively
-simple issue - raid checksum mismatch in this particular case - has
-potential to become OOM. Quadratic CPU serialisation doesn't scale.
-Throw enough reporting CPUs on it and we may get very close to some
-big problems. Does this make sense?
-
-This bug report demonstrates that we can have N CPUs reporting warns
-simultaneously. And I think that people would want to have pr_warns
-and WARN_ONs to be printed as emergency level messages (it sort of
-sounds reasonable. I understand that you have different opinion on this).
-
-And what I'm thinking is that *probably* we can have a bit less radical
-approach - the system is not always doomed when it WARNs us - and a bit
-more "best effort" one. *May be* we don't need to apply full serialisation
-all the time. *May be* full serialisation can be applied only when we see
-that we are about to run out of free space in logbuf. Or may be can
-start dynamically resize the logbuf. And so on.
-
-> By the way, Sergey, I appreciate your skepticism.
-
-Sorry, John. I know I'm a PITA.
-
-	-ss
+> 
+>> But, since I am not an expert in lockless programming, I opted to be on
+>> the safe side and followed the example of hlist_add_behind().
+>>
+>> That said, I will follow up with a new version of the patch removing the
+>> WRITE_ONCE() and using uintptr_t instead of unsigned long.
+> 
+> Sounds good!
+> 
+> 							Thanx, Paul
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
