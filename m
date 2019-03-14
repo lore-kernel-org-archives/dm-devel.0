@@ -1,111 +1,66 @@
 From: "Paul E. McKenney" <paulmck@linux.ibm.com>
 Subject: Re: [PATCH 1/3] list_bl: Add hlist_bl_add_before/behind helpers
-Date: Wed, 13 Mar 2019 16:48:53 -0700
-Message-ID: <20190313234853.GA7797@linux.ibm.com>
+Date: Wed, 13 Mar 2019 17:25:05 -0700
+Message-ID: <20190314002505.GD13351@linux.ibm.com>
 References: <20181220180651.4879-1-ntsironis@arrikto.com>
  <20181220180651.4879-2-ntsironis@arrikto.com>
  <20190228213201.GB23527@redhat.com>
+ <20190311181607.GA9388@infradead.org>
+ <20190311221321.GP13351@linux.ibm.com>
+ <20190311224333.GA16968@redhat.com>
 Reply-To: paulmck@linux.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190228213201.GB23527@redhat.com>
+In-Reply-To: <20190311224333.GA16968@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: hch@infradead.org, Nikos Tsironis <ntsironis@arrikto.com>, agk@redhat.com, dm-devel@redhat.com, mpatocka@redhat.com, iliastsi@arrikto.com, linux-kernel@vger.kernel.org
+Cc: Christoph Hellwig <hch@infradead.org>, Nikos Tsironis <ntsironis@arrikto.com>, agk@redhat.com, dm-devel@redhat.com, mpatocka@redhat.com, iliastsi@arrikto.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Feb 28, 2019 at 04:32:02PM -0500, Mike Snitzer wrote:
-> On Thu, Dec 20 2018 at  1:06pm -0500,
-> Nikos Tsironis <ntsironis@arrikto.com> wrote:
+On Mon, Mar 11, 2019 at 06:43:33PM -0400, Mike Snitzer wrote:
+> On Mon, Mar 11 2019 at  6:13pm -0400,
+> Paul E. McKenney <paulmck@linux.ibm.com> wrote:
 > 
-> > Add hlist_bl_add_before/behind helpers to add an element before/after an
-> > existing element in a bl_list.
+> > On Mon, Mar 11, 2019 at 11:16:08AM -0700, Christoph Hellwig wrote:
+> > > On Thu, Feb 28, 2019 at 04:32:02PM -0500, Mike Snitzer wrote:
+> > > > Hi Paul and Christoph,
+> > > > 
+> > > > You've added your Signed-off-by to include/linux/list_bl.h commits in
+> > > > the past.  I'm not sure how this proposed patch should be handled.
+> > > > 
+> > > > These new hlist_bl_add_{before,behind} changes are a prereq for
+> > > > dm-snapshot changes that Nikos has proposed, please see:
+> > > > https://patchwork.kernel.org/patch/10739265/
+> > > > 
+> > > > Any assistance/review you, or others on LKML, might be able to provide
+> > > > would be appreciated.
+> > > 
+> > > I just killed two helpers.  That being said assuming that we only
+> > > rely on the next pointer for the lockless traversals the changes look
+> > > fine to me, but the code might be beyond my paygrade..
 > > 
-> > Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
-> > Signed-off-by: Ilias Tsitsimpis <iliastsi@arrikto.com>
-> > ---
-> >  include/linux/list_bl.h | 27 +++++++++++++++++++++++++++
-> >  1 file changed, 27 insertions(+)
-> > 
-> > diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
-> > index 3fc2cc57ba1b..2fd918e5fd48 100644
-> > --- a/include/linux/list_bl.h
-> > +++ b/include/linux/list_bl.h
-> > @@ -86,6 +86,33 @@ static inline void hlist_bl_add_head(struct hlist_bl_node *n,
-> >  	hlist_bl_set_first(h, n);
-> >  }
-> >  
-> > +static inline void hlist_bl_add_before(struct hlist_bl_node *n,
-> > +				       struct hlist_bl_node *next)
-> > +{
-> > +	struct hlist_bl_node **pprev = next->pprev;
-> > +
-> > +	n->pprev = pprev;
-> > +	n->next = next;
-> > +	next->pprev = &n->next;
-> > +
-> > +	/* pprev may be `first`, so be careful not to lose the lock bit */
-> > +	WRITE_ONCE(*pprev,
-> > +		   (struct hlist_bl_node *)
-> > +			((unsigned long)n |
-> > +			 ((unsigned long)*pprev & LIST_BL_LOCKMASK)));
+> > First, apologies for being slow on this one.
+> 
+> No problem.
+>  
+> > Second, were the two helpers hlist_bl_add_{before,behind}()?  If so, I
+> > guess there is not much point in me looking them over.  Though perhaps
+> > I should be looking something else over?
+> 
+> No, think Christoph was referring to his commit 1879fd6a26571fd4e8e1f
+> from 2011.
+> 
+> Anyway, I'd like you to look over this new proposed patch that
+> introduces hlist_bl_add_{before,behind}(), please see:
+> https://patchwork.kernel.org/patch/10835713/
+> 
+> If you're happy with the patch, and can provide your Reviewed-by or
+> Acked-by, I'll then pick it up as a prereq for the broader dm-snapshot
+> changes that Nikos has provided.
 
-A nit, but use of uintptr_t shrinks things a bit:
-
-+		   (struct hlist_bl_node *)
-+			((uintptr_t)n | ((uintptr_t)*pprev & LIST_BL_LOCKMASK)));
-
-I am not too concerned about this, though.
-
-The WRITE_ONCE() is to handle races with hlist_bl_empty() (which does contain
-the corresponding READ_ONCE()) correct?
-
-> > +}
-> > +
-> > +static inline void hlist_bl_add_behind(struct hlist_bl_node *n,
-> > +				       struct hlist_bl_node *prev)
-> > +{
-> > +	n->next = prev->next;
-> > +	n->pprev = &prev->next;
-> > +	WRITE_ONCE(prev->next, n);
-
-I don't see what this WRITE_ONCE() is interacting with.  The traversals
-use plain C-language reads, and hlist_bl_empty() can't get here.  All
-uses of hlist_bl_for_each_entry() invoke hlist_bl_lock() before starting
-the traversal, and hlist_bl_for_each_entry_safe() looks to be unused.
-(Perhaps it should be removed?  Or is there some anticipated use?)
-
-I don't believe that the WRITE_ONCE() is needed.  What am I missing?
-
-Other than that, looks good.
+I replied to the version earlier in this email thread.  Looks close,
+but a couple of questions.
 
 							Thanx, Paul
-
-> > +
-> > +	if (n->next)
-> > +		n->next->pprev = &n->next;
-> > +}
-> > +
-> >  static inline void __hlist_bl_del(struct hlist_bl_node *n)
-> >  {
-> >  	struct hlist_bl_node *next = n->next;
-> > -- 
-> > 2.11.0
-> 
-> Hi Paul and Christoph,
-> 
-> You've added your Signed-off-by to include/linux/list_bl.h commits in
-> the past.  I'm not sure how this proposed patch should be handled.
-> 
-> These new hlist_bl_add_{before,behind} changes are a prereq for
-> dm-snapshot changes that Nikos has proposed, please see:
-> https://patchwork.kernel.org/patch/10739265/
-> 
-> Any assistance/review you, or others on LKML, might be able to provide
-> would be appreciated.
-> 
-> Thanks,
-> Mike
-> 
