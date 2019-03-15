@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 1/9] libmultipath: add sysfs_get_inquiry()
-Date: Fri, 15 Mar 2019 17:11:47 +0100
-Message-ID: <20190315161155.24062-2-mwilck@suse.com>
+Subject: [PATCH 8/9] libmultipath: check_rdac(): pre-check in
+	hwtable
+Date: Fri, 15 Mar 2019 17:11:54 +0100
+Message-ID: <20190315161155.24062-9-mwilck@suse.com>
 References: <20190315161155.24062-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,84 +19,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>, Steve.Schremmer@netapp.com, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
-Provide a utility function to retrieve inquiry data from
-sysfs, like we do for VPDs.
+Currently check_rdac() always runs an SG_IO for VPD 0xc9 to check
+if the storage supports RDAC. This is an extra IO, and may cause
+annoying error messages on the storage side for non-RDAC arrays.
+Do the RDAC override only for arrays that have legacy configuration
+to use the rdac checker.
 
+Cc: Steve.Schremmer@netapp.com
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+Cc: Hannes Reinecke <hare@suse.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 23 ++++++++++++++++++-----
- libmultipath/discovery.h |  6 ++++--
- 2 files changed, 22 insertions(+), 7 deletions(-)
+ libmultipath/propsel.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 10bd8cd6..65d651d4 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -218,12 +218,11 @@ declare_sysfs_get_str(vendor);
- declare_sysfs_get_str(model);
- declare_sysfs_get_str(rev);
- 
--ssize_t
--sysfs_get_vpd (struct udev_device * udev, int pg,
--	       unsigned char * buff, size_t len)
-+static ssize_t
-+sysfs_get_binary (struct udev_device * udev, const char *attrname,
-+		  unsigned char *buff, size_t len)
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index d5fbd94e..2eb6fc2a 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -470,9 +470,17 @@ check_rdac(struct path * pp)
  {
- 	ssize_t attr_len;
--	char attrname[9];
- 	const char * devname;
+ 	int len;
+ 	char buff[44];
++	const char *checker_name = NULL;
++	/* dummy, for do_set_from_hwe */
++	const char *origin __attribute__((unused));
  
- 	if (!udev) {
-@@ -232,7 +231,6 @@ sysfs_get_vpd (struct udev_device * udev, int pg,
- 	}
- 
- 	devname = udev_device_get_sysname(udev);
--	sprintf(attrname, "vpd_pg%02x", pg);
- 	attr_len = sysfs_bin_attr_get_value(udev, attrname, buff, len);
- 	if (attr_len < 0) {
- 		condlog(3, "%s: attribute %s not found in sysfs",
-@@ -242,6 +240,21 @@ sysfs_get_vpd (struct udev_device * udev, int pg,
- 	return attr_len;
- }
- 
-+ssize_t sysfs_get_vpd(struct udev_device * udev, unsigned char pg,
-+		      unsigned char *buff, size_t len)
-+{
-+	char attrname[9];
-+
-+	snprintf(attrname, sizeof(attrname), "vpd_pg%02x", pg);
-+	return sysfs_get_binary(udev, attrname, buff, len);
-+}
-+
-+ssize_t sysfs_get_inquiry(struct udev_device * udev,
-+			  unsigned char *buff, size_t len)
-+{
-+	return sysfs_get_binary(udev, "inquiry", buff, len);
-+}
-+
- int
- sysfs_get_timeout(struct path *pp, unsigned int *timeout)
- {
-diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
-index 9aacf75b..7cacbb6c 100644
---- a/libmultipath/discovery.h
-+++ b/libmultipath/discovery.h
-@@ -48,8 +48,10 @@ int sysfs_get_host_pci_name(const struct path *pp, char *pci_name);
- int sysfs_get_iscsi_ip_address(const struct path *pp, char *ip_address);
- int sysfs_get_host_adapter_name(const struct path *pp,
- 				char *adapter_name);
--ssize_t sysfs_get_vpd (struct udev_device * udev, int pg, unsigned char * buff,
--		       size_t len);
-+ssize_t sysfs_get_vpd (struct udev_device *udev, unsigned char pg,
-+		       unsigned char *buff, size_t len);
-+ssize_t sysfs_get_inquiry(struct udev_device *udev,
-+			  unsigned char *buff, size_t len);
- int sysfs_get_asymmetric_access_state(struct path *pp,
- 				      char *buff, int buflen);
- int get_uid(struct path * pp, int path_state, struct udev_device *udev);
+ 	if (pp->bus != SYSFS_BUS_SCSI)
+ 		return 0;
++	/* Avoid ioctl if this is likely not an RDAC array */
++	do_set_from_hwe(checker_name, pp, checker_name, NULL);
++out:    /* for do_set_from_hwe */
++	if (!checker_name || strcmp(checker_name, RDAC))
++		return 0;
+ 	len = get_vpd_sgio(pp->fd, 0xC9, buff, 44);
+ 	if (len <= 0)
+ 		return 0;
 -- 
 2.21.0
