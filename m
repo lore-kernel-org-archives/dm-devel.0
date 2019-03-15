@@ -1,16 +1,16 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH 9/9] libmultipath: hwtable: add Lenovo DE
 	series
-Date: Fri, 15 Mar 2019 17:21:24 +0100
-Message-ID: <13d53b8d-9ce1-09fa-fc50-15e390e59672@gmail.com>
+Date: Fri, 15 Mar 2019 17:59:38 +0100
+Message-ID: <035a04387b76a8b310a88501f00c2b1bcaa5209c.camel@suse.com>
 References: <20190315161155.24062-1-mwilck@suse.com>
 	<20190315161155.24062-10-mwilck@suse.com>
+	<BN8PR06MB579317ED3B7E69E11BC1DEEE8C440@BN8PR06MB5793.namprd06.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190315161155.24062-10-mwilck@suse.com>
-Content-Language: en-GB
+In-Reply-To: <BN8PR06MB579317ED3B7E69E11BC1DEEE8C440@BN8PR06MB5793.namprd06.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,53 +20,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, dm-devel@redhat.com, Steve.Schremmer@netapp.com
+To: "Schremmer, Steven" <Steve.Schremmer@netapp.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: ng-eseries-upstream-maintainers <ng-eseries-upstream-maintainers@netapp.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On 3/15/19 5:11 PM, Martin Wilck wrote:
-
-> I got this from Steven.
-> 
-> Cc: Steve.Schremmer@netapp.com
-> Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
-> Cc: xose.vazquez@gmail.com
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/hwtable.c | 20 ++++++++++++++++++++
->  1 file changed, 20 insertions(+)
-
-Do not forget the kernel side:
-drivers/scsi/{scsi_devinfo.c,scsi_dh.c}
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index d3a8d9ba..fd9afc75 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -701,6 +701,26 @@ static struct hwentry default_hw[] = {
->  		.no_path_retry = (300 / DEFAULT_CHECKINT),
->  		.prio_name     = PRIO_ALUA,
->  	},
-> +        /*
-> +         * Lenovo
-> +         */
-> +        {
-> +                /*
-> +		 * DE Series
-> +		 *
-> +		 * Maintainer: Steve Schremmer <Steve.Schremmer@netapp.com>
-> +		 */
-> +                .vendor        = "LENOVO",
-> +                .product       = "DE_Series",
-> +                .bl_product    = "Universal Xport",
-> +                .pgpolicy      = GROUP_BY_PRIO,
-> +                .checker_name  = RDAC,
-> +                .features      = "2 pg_init_retries 50",
-> +                .hwhandler     = "1 rdac",
-> +                .prio_name     = PRIO_RDAC,
-> +                .pgfailback    = -FAILBACK_IMMEDIATE,
-> +                .no_path_retry = 30,
-> +        },
->  	/*
->  	 * NetApp
->  	 */
-> 
+T24gRnJpLCAyMDE5LTAzLTE1IGF0IDE2OjMzICswMDAwLCAgU2NocmVtbWVyLCBTdGV2ZW4gd3Jv
+dGU6Cj4gPiArICAgICAgICAvKgo+ID4gKyAgICAgICAgICogTGVub3ZvCj4gPiArICAgICAgICAg
+Ki8KPiA+ICsgICAgICAgIHsKPiA+ICsgICAgICAgICAgICAgICAgLyoKPiA+ICsgICAgICAgICAg
+ICAgICAgKiBERSBTZXJpZXMKPiA+ICsgICAgICAgICAgICAgICAgKgo+ID4gKyAgICAgICAgICAg
+ICAgICAqIE1haW50YWluZXI6IFN0ZXZlIFNjaHJlbW1lciA8Cj4gPiBTdGV2ZS5TY2hyZW1tZXJA
+bmV0YXBwLmNvbT4KPiA+ICsgICAgICAgICAgICAgICAgKi8KPiA+ICsgICAgICAgICAgICAgICAg
+LnZlbmRvciAgICAgICAgPSAiTEVOT1ZPIiwKPiA+ICsgICAgICAgICAgICAgICAgLnByb2R1Y3Qg
+ICAgICAgPSAiREVfU2VyaWVzIiwKPiA+ICsgICAgICAgICAgICAgICAgLmJsX3Byb2R1Y3QgICAg
+PSAiVW5pdmVyc2FsIFhwb3J0IiwKPiA+ICsgICAgICAgICAgICAgICAgLnBncG9saWN5ICAgICAg
+PSBHUk9VUF9CWV9QUklPLAo+ID4gKyAgICAgICAgICAgICAgICAuY2hlY2tlcl9uYW1lICA9IFJE
+QUMsCj4gPiArICAgICAgICAgICAgICAgIC5mZWF0dXJlcyAgICAgID0gIjIgcGdfaW5pdF9yZXRy
+aWVzIDUwIiwKPiA+ICsgICAgICAgICAgICAgICAgLmh3aGFuZGxlciAgICAgPSAiMSByZGFjIiwK
+PiA+ICsgICAgICAgICAgICAgICAgLnByaW9fbmFtZSAgICAgPSBQUklPX1JEQUMsCj4gPiArICAg
+ICAgICAgICAgICAgIC5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lNTUVESUFURSwKPiA+ICsg
+ICAgICAgICAgICAgICAgLm5vX3BhdGhfcmV0cnkgPSAzMCwKPiA+ICsgICAgICAgIH0sCj4gPiAg
+ICAgICAgIC8qCj4gPiAgICAgICAgICAqIE5ldEFwcAo+ID4gICAgICAgICAgKi8KPiAKPiBJZiB5
+b3UncmUgZ29pbmcgdG8gbGlzdCBhIG5ldGFwcC5jb20gYWRkcmVzcywgbWF5IGFzIHdlbGwgYmUK
+PiBuZy1lc2VyaWVzLXVwc3RyZWFtLW1haW50YWluZXJzQG5ldGFwcC5jb20KPiAKCkN1cnJlbnRs
+eSwgd2UgaGF2ZSB0aGVzZSBpbiBod3RhYmxlLmM6CgogKiBNYWludGFpbmVyOiBNYXJ0aW4gR2Vv
+cmdlIDxtYXJ0aW5nQG5ldGFwcC5jb20+CiAqIE1haW50YWluZXI6IFBKIFdhc2tpZXdpY3ogPHBq
+Lndhc2tpZXdpY3pAbmV0YXBwLmNvbT4KClNob3VsZCB0aGV5IGFsbCBiZSByZXBsYWNlZCBieSB0
+aGUgbmctZXNlcmllcyBhZGRyZXNzPwoKQWxzbywgaWYgeW91IGhhcHBlbiB0byBrbm93IGEgTGVu
+b3ZvIG1haW50YWluZXIsIGZlZWwgZnJlZSB0bwp0ZWxsIG1lLgoKTWFydGluCgotLSAKRHIuIE1h
+cnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcK
+U1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBH
+cmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKCi0tCmRtLWRldmVsIG1haWxp
+bmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1h
+bi9saXN0aW5mby9kbS1kZXZlbA==
