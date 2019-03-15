@@ -1,165 +1,64 @@
-From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: Re: [dm-devel] [PATCH 1/3] list_bl: Add hlist_bl_add_before/behind
- helpers
-Date: Thu, 14 Mar 2019 19:01:23 +0200
-Message-ID: <86a26792-03ad-0dc4-737e-8fd5a3a79fa8@arrikto.com>
-References: <20181220180651.4879-1-ntsironis@arrikto.com>
- <20181220180651.4879-2-ntsironis@arrikto.com>
- <20190228213201.GB23527@redhat.com> <20190313234853.GA7797@linux.ibm.com>
- <20190314003027.GE4202@redhat.com>
- <f70ea4c9-658d-5770-be7f-a1a97bb67643@arrikto.com>
- <20190314140750.GB4102@linux.ibm.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v2 07/12] multipathd: ignore failed wwid
+	recheck
+Date: Fri, 15 Mar 2019 12:48:49 +0100
+Message-ID: <17d16e1ae0b183405707a719eb661e33ae7b05ec.camel@suse.com>
+References: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
+	<1552086725-18476-8-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190314140750.GB4102@linux.ibm.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: paulmck@linux.ibm.com
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, iliastsi@arrikto.com, hch@infradead.org, dm-devel@redhat.com, mpatocka@redhat.com, agk@redhat.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1552086725-18476-8-git-send-email-bmarzins@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 3/14/19 4:07 PM, Paul E. McKenney wrote:
-> On Thu, Mar 14, 2019 at 03:28:23PM +0200, Nikos Tsironis wrote:
->> On 3/14/19 2:30 AM, Mike Snitzer wrote:
->>> On Wed, Mar 13 2019 at  7:48pm -0400,
->>> Paul E. McKenney <paulmck@linux.ibm.com> wrote:
->>>
->> Hi Paul,
->>
->> Thanks a lot for your feedback!
-> 
-> NP, and apologies for the delay.
-> 
->>>> On Thu, Feb 28, 2019 at 04:32:02PM -0500, Mike Snitzer wrote:
->>>>> On Thu, Dec 20 2018 at  1:06pm -0500,
->>>>> Nikos Tsironis <ntsironis@arrikto.com> wrote:
->>>>>
->>>>>> Add hlist_bl_add_before/behind helpers to add an element before/after an
->>>>>> existing element in a bl_list.
->>>>>>
->>>>>> Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
->>>>>> Signed-off-by: Ilias Tsitsimpis <iliastsi@arrikto.com>
->>>>>> ---
->>>>>>  include/linux/list_bl.h | 27 +++++++++++++++++++++++++++
->>>>>>  1 file changed, 27 insertions(+)
->>>>>>
->>>>>> diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
->>>>>> index 3fc2cc57ba1b..2fd918e5fd48 100644
->>>>>> --- a/include/linux/list_bl.h
->>>>>> +++ b/include/linux/list_bl.h
->>>>>> @@ -86,6 +86,33 @@ static inline void hlist_bl_add_head(struct hlist_bl_node *n,
->>>>>>  	hlist_bl_set_first(h, n);
->>>>>>  }
->>>>>>  
->>>>>> +static inline void hlist_bl_add_before(struct hlist_bl_node *n,
->>>>>> +				       struct hlist_bl_node *next)
->>>>>> +{
->>>>>> +	struct hlist_bl_node **pprev = next->pprev;
->>>>>> +
->>>>>> +	n->pprev = pprev;
->>>>>> +	n->next = next;
->>>>>> +	next->pprev = &n->next;
->>>>>> +
->>>>>> +	/* pprev may be `first`, so be careful not to lose the lock bit */
->>>>>> +	WRITE_ONCE(*pprev,
->>>>>> +		   (struct hlist_bl_node *)
->>>>>> +			((unsigned long)n |
->>>>>> +			 ((unsigned long)*pprev & LIST_BL_LOCKMASK)));
->>>>
->>>> A nit, but use of uintptr_t shrinks things a bit:
->>>>
->>>> +		   (struct hlist_bl_node *)
->>>> +			((uintptr_t)n | ((uintptr_t)*pprev & LIST_BL_LOCKMASK)));
->>>>
->>>> I am not too concerned about this, though.
->>>
->>> I'm fine with folding in your suggestion.
->>
->> Indeed, this looks better.
->>
->>>> The WRITE_ONCE() is to handle races with hlist_bl_empty() (which does contain
->>>> the corresponding READ_ONCE()) correct?
->>>
->>> Correct.
->>
->> Yes that's correct.
->>
->>>>>> +}
->>>>>> +
->>>>>> +static inline void hlist_bl_add_behind(struct hlist_bl_node *n,
->>>>>> +				       struct hlist_bl_node *prev)
->>>>>> +{
->>>>>> +	n->next = prev->next;
->>>>>> +	n->pprev = &prev->next;
->>>>>> +	WRITE_ONCE(prev->next, n);
->>>>
->>>> I don't see what this WRITE_ONCE() is interacting with.  The traversals
->>>> use plain C-language reads, and hlist_bl_empty() can't get here.  All
->>>> uses of hlist_bl_for_each_entry() invoke hlist_bl_lock() before starting
->>>> the traversal, and hlist_bl_for_each_entry_safe() looks to be unused.
->>>> (Perhaps it should be removed?  Or is there some anticipated use?)
->>
->> I am using hlist_bl_for_each_entry_safe() in this proposed patch for
->> dm-snapshot: https://patchwork.kernel.org/patch/10835709/
-> 
-> Probably should keep it, then.  ;-)
-> 
->>>>
->>>> I don't believe that the WRITE_ONCE() is needed.  What am I missing?
->>>>
->>>> Other than that, looks good.
->>>>
->>>> 							Thanx, Paul
->>>>
->>>
->>> I'd imagine it was just born out of symmetry with hlist_bl_add_before()
->>> and/or caution.  But let's see what Nikos has to say.
->>
->> I also don't believe that this WRITE_SAME() is needed. But, looking at
->> hlist_add_behind() in include/linux/list.h, which, if I am not missing
->> something, is used in the same way as hlist_bl_add_behind(), it also
->> uses WRITE_ONCE() to update prev->next:
->>
->> static inline void hlist_add_behind(struct hlist_node *n,
->> 				    struct hlist_node *prev)
->> {
->> 	n->next = prev->next;
->> 	WRITE_ONCE(prev->next, n);
->> 	n->pprev = &prev->next;
->>
->> 	if (n->next)
->> 		n->next->pprev  = &n->next;
->> }
->>
->> Could it be the case that the WRITE_ONCE() in hlist_add_behind() is also
->> not needed? This WRITE_ONCE() was introduced by commit 1c97be677f72b3
->> ("list: Use WRITE_ONCE() when adding to lists and hlists").
-> 
-> Looks like I have no one to blame but myself!
-> 
-> Would you like to remove that as part of your patch series?
-
-Yes, Of course. I will add an extra patch removing the WRITE_ONCE() from
-hlist_add_behind().
-
-Thanks,
-Nikos
-
-> 
->> But, since I am not an expert in lockless programming, I opted to be on
->> the safe side and followed the example of hlist_add_behind().
->>
->> That said, I will follow up with a new version of the patch removing the
->> WRITE_ONCE() and using uintptr_t instead of unsigned long.
-> 
-> Sounds good!
-> 
-> 							Thanx, Paul
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+T24gRnJpLCAyMDE5LTAzLTA4IGF0IDE3OjEyIC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gSWYgZGlzYWJsZV9jaGFuZ2VkX3d3aWRzIGlzIHNldCwgd2hlbiBtdWx0aXBhdGhkIGdl
+dHMgYSBjaGFuZ2UgZXZlbnQKPiBvbgo+IGEgcGF0aCwgaXQgdmVyaWZpZXMgdGhhdCB0aGUgd3dp
+ZCBoYXNuJ3QgY2hhbmdlZCBpbgo+IHVldl91cGRhdGVfcGF0aCgpLgo+IElmIGdldF91aWQoKSBm
+YWlsZWQsIHVldl91cGRhdGVfcGF0aCB0cmVhdGVkIHRoaXMgYXMgYSB3d2lkIGNoYW5nZSB0bwo+
+IDAuCj4gVGhpcyBjb3VsZCBjYXVzZSBwYXRocyB0byBzdWRkZW5seSBiZSBkcm9wcGVkIGR1ZSB0
+byBhbiBpc3N1ZSB3aXRoCj4gZ2V0dGluZyB0aGUgd3dpZC4gIEV2ZW4gaWYgZ2V0X3VpZCgpIGZh
+aWxlZCBiZWNhdXNlIHRoZSBwYXRoIHdhcwo+IGRvd24sCj4gaXQgbm8gY2hhbmdlIHVldmVudCBo
+YXBwZW5kIHdoZW4gaXQgbGF0ZXIgYmVjYW1lIGFjdGl2ZSwgbXVsdGlwYXRoZAo+IHdvdWxkIGNv
+bnRpbnVlIHRvIGlnbm9yZSB0aGUgcGF0aC4gQWxzbywgc2NzaV91aWRfZmFsbGJhY2soKSBjbGVh
+cnMKPiB0aGUKPiBmYWlsdXJlIHJldHVybiBpZiBpdCBkb2Vzbid0IGF0dGVtcHQgdG8gZmFsbGJh
+Y2ssIGNhdXNpbmcgZ2V0X3VpZCgpCj4gdG8gcmV0dXJuIHN1Y2Nlc3MsIHdoZW4gaXQgYWN0dWFs
+bHkgZmFpbGVkLgo+IAo+IE11bHRpcGF0aGQgc2hvdWxkIG5laXRoZXIgc2V0IG5vciBjbGVhciB3
+d2lkX2NoYW5nZWQgaWYgZ2V0X3VpZCgpCj4gcmV0dXJuZWQgZmFpbHVyZS4gQWxzbywgc2NzaV91
+aWRfZmFsbGJhY2soKSBzaG91bGQgcmV0YWluIHRoZSBvbGQKPiByZXR1cm4KPiB2YWx1ZSBpZiBp
+dCBkb2Vzbid0IGF0dGVtcHQgdG8gZmFsbGJhY2suCj4gCj4gU2lnbmVkLW9mZi1ieTogQmVuamFt
+aW4gTWFyemluc2tpIDxibWFyemluc0ByZWRoYXQuY29tPgo+IC0tLQo+ICBsaWJtdWx0aXBhdGgv
+ZGlzY292ZXJ5LmMgfCA2ICsrKy0tLQo+ICBtdWx0aXBhdGhkL21haW4uYyAgICAgICAgfCA2ICsr
+KystLQo+ICAyIGZpbGVzIGNoYW5nZWQsIDcgaW5zZXJ0aW9ucygrKSwgNSBkZWxldGlvbnMoLSkK
+PiAKPiBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2Rpc2NvdmVyeS5jIGIvbGlibXVsdGlwYXRo
+L2Rpc2NvdmVyeS5jCj4gaW5kZXggNzI5YmNiOS4uYjA4Y2IyZCAxMDA2NDQKPiAtLS0gYS9saWJt
+dWx0aXBhdGgvZGlzY292ZXJ5LmMKPiArKysgYi9saWJtdWx0aXBhdGgvZGlzY292ZXJ5LmMKPiBA
+QCAtMTc1NSw5ICsxNzU1LDkgQEAgZ2V0X3ZwZF91aWQoc3RydWN0IHBhdGggKiBwcCkKPiAgfQo+
+ICAKPiAgc3RhdGljIHNzaXplX3Qgc2NzaV91aWRfZmFsbGJhY2soc3RydWN0IHBhdGggKnBwLCBp
+bnQgcGF0aF9zdGF0ZSwKPiAtCQkJICAgICBjb25zdCBjaGFyICoqb3JpZ2luKQo+ICsJCQkgICAg
+IGNvbnN0IGNoYXIgKipvcmlnaW4sIHNzaXplX3Qgb2xkX2xlbikKPiAgewo+IC0Jc3NpemVfdCBs
+ZW4gPSAwOwo+ICsJc3NpemVfdCBsZW4gPSBvbGRfbGVuOwo+ICAJaW50IHJldHJpZ2dlcjsKPiAg
+CXN0cnVjdCBjb25maWcgKmNvbmY7CgpQbGVhc2UgZG9uJ3QgY2FsbCB0aGlzIHZhcmlhYmxlICJv
+bGRfbGVuIiBidXQgImVycmNvZGUiIG9yIHRoZSBsaWtlLiBJZgp0aGlzIGlzIGNhbGxlZCwgIm9s
+ZF9sZW4iIGlzIGFsd2F5cyBuZWdhdGl2ZSAoaW5kaWNhdGluZyBhIHByZXZpb3VzCmVycm9yKSBv
+ciAwIChpbmRpY2F0aW5nIHByZXZpb3VzIGF0dGVtcHRzIHJldHVybmVkIGFuIGVtcHR5IFdXSUQs
+IHdoaWNoCmlzIGFsc28gbGlrZWx5IGFuIGVycm9yKS4KCk90aGVyd2lzZSwgQUNLLiBCdXQgeW91
+IHJldmVydCBtb3N0IG9mIHRoaXMgbGF0ZXIgaW4gMTIvMTI7IEkgdGhpbmsgdGhlCnR3byBzaG91
+bGQgYmUgbWVyZ2VkIChleGNlcHQgZm9yIHRoZSBzY3NpX3VpZF9mYWxsYmFjayBwYXJ0LCBtYXli
+ZSkuCgpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwu
+ICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2
+cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJl
+cmcpCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
+Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
