@@ -1,15 +1,15 @@
-From: Hannes Reinecke <hare@suse.com>
-Subject: Re: [PATCH v2 3/9] libmultipath: alua: try to retrieve
- inquiry data from sysfs
-Date: Mon, 18 Mar 2019 08:08:34 +0100
-Message-ID: <c2b2bdde-36aa-5ad9-aa5a-2722f9a22fd8@suse.com>
-References: <20190315171930.28335-1-mwilck@suse.com>
-	<20190315171930.28335-4-mwilck@suse.com>
+From: "Schremmer, Steven" <Steve.Schremmer@netapp.com>
+Subject: Re: [PATCH 9/9] libmultipath: hwtable: add Lenovo DE
+	series
+Date: Fri, 15 Mar 2019 16:33:42 +0000
+Message-ID: <BN8PR06MB579317ED3B7E69E11BC1DEEE8C440@BN8PR06MB5793.namprd06.prod.outlook.com>
+References: <20190315161155.24062-1-mwilck@suse.com>
+	<20190315161155.24062-10-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190315171930.28335-4-mwilck@suse.com>
+In-Reply-To: <20190315161155.24062-10-mwilck@suse.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -21,40 +21,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, dm-devel@redhat.com, Steve.Schremmer@netapp.com
+Cc: ng-eseries-upstream-maintainers <ng-eseries-upstream-maintainers@netapp.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-T24gMy8xNS8xOSA2OjE5IFBNLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4gVGhpcyBjYW4gYXZvaWQg
-SU8gd2hpbGUgY29uZmlndXJpbmcgdGhlIHBhdGggcHJpb3JpdGl6ZXIuCj4gVGhlIGFsdWEgcHJp
-b3JpdGl6ZXIgYXZvaWRzIHJlYWRpbmcgZnJvbSBzeXNmcyBmb3IgYSByZWFzb24KPiAoc2VlIGNv
-bW1pdCA3ZTJmNDZkMyksIGJ1dCB0aGlzIGFwcGxpZXMgb25seSB0byBSVFBHIC8gU1RQRywKPiBu
-b3QgdG8gSU5RVUlSWSBjYWxscy4KPiAKPiBDYzogU3RldmUuU2NocmVtbWVyQG5ldGFwcC5jb20K
-PiBDYzogTmV0QXBwIFJEQUMgdGVhbSA8bmctZXNlcmllcy11cHN0cmVhbS1tYWludGFpbmVyc0Bu
-ZXRhcHAuY29tPgo+IENjOiBIYW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5jb20+Cj4gU2lnbmVk
-LW9mZi1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+Cj4gLS0tCj4gICBsaWJtdWx0
-aXBhdGgvcHJpb3JpdGl6ZXJzL2FsdWFfcnRwZy5jIHwgMTcgKysrKysrKysrKysrKysrKysKPiAg
-IDEgZmlsZSBjaGFuZ2VkLCAxNyBpbnNlcnRpb25zKCspCj4gCj4gZGlmZiAtLWdpdCBhL2xpYm11
-bHRpcGF0aC9wcmlvcml0aXplcnMvYWx1YV9ydHBnLmMgYi9saWJtdWx0aXBhdGgvcHJpb3JpdGl6
-ZXJzL2FsdWFfcnRwZy5jCj4gaW5kZXggZDkyMTVhODguLjI3MWEwMTlkIDEwMDY0NAo+IC0tLSBh
-L2xpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvYWx1YV9ydHBnLmMKPiArKysgYi9saWJtdWx0aXBh
-dGgvcHJpb3JpdGl6ZXJzL2FsdWFfcnRwZy5jCj4gQEAgLTE4OCw2ICsxODgsMjMgQEAgcmV0cnk6
-Cj4gICBpbnQgZG9faW5xdWlyeShjb25zdCBzdHJ1Y3QgcGF0aCAqcHAsIGludCBldnBkLCB1bnNp
-Z25lZCBpbnQgY29kZXBhZ2UsCj4gICAJICAgICAgIHZvaWQgKnJlc3AsIGludCByZXNwbGVuLCB1
-bnNpZ25lZCBpbnQgdGltZW91dCkKPiAgIHsKPiArCXN0cnVjdCB1ZGV2X2RldmljZSAqdWQ7Cj4g
-Kwo+ICsJdWQgPSB1ZGV2X2RldmljZV9nZXRfcGFyZW50X3dpdGhfc3Vic3lzdGVtX2RldnR5cGUo
-cHAtPnVkZXYsICJzY3NpIiwKPiArCQkJCQkJCSAgICJzY3NpX2RldmljZSIpOwo+ICsJaWYgKHVk
-ICE9IE5VTEwpIHsKPiArCQlpbnQgcmM7Cj4gKwo+ICsJCWlmICghZXZwZCkKPiArCQkJcmMgPSBz
-eXNmc19nZXRfaW5xdWlyeSh1ZCwgcmVzcCwgcmVzcGxlbik7Cj4gKwkJZWxzZQo+ICsJCQlyYyA9
-IHN5c2ZzX2dldF92cGQodWQsIGNvZGVwYWdlLCByZXNwLCByZXNwbGVuKTsKPiArCj4gKwkJaWYg
-KHJjID49IDApIHsKPiArCQkJUFJJTlRfSEVYKCh1bnNpZ25lZCBjaGFyICopIHJlc3AsIHJlc3Bs
-ZW4pOwo+ICsJCQlyZXR1cm4gMDsKPiArCQl9Cj4gKwl9Cj4gICAJcmV0dXJuIGRvX2lucXVpcnlf
-c2cocHAtPmZkLCBldnBkLCBjb2RlcGFnZSwgcmVzcCwgcmVzcGxlbiwgdGltZW91dCk7Cj4gICB9
-Cj4gICAKPiAKRG9uJ3QgeW91IG5lZWQgdG8gZG8gYSB1ZGV2X2RldmljZV9wdXQoKSBvciBzb21l
-c3VjaD8KCk90aGVyIHRoYW4gdGhhdDoKClJldmlld2VkLWJ5OiBIYW5uZXMgUmVpbmVja2UgPGhh
-cmVAc3VzZS5jb20+CgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAg
-ICAgICAgICAgICAgIHpTZXJpZXMgJiBTdG9yYWdlCmhhcmVAc3VzZS5jb20JCQkgICAgICAgICAg
-ICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkw
-NDA5IE7DvHJuYmVyZwpHRjogRi4gSW1lbmTDtnJmZmVyLCBKLiBTbWl0aGFyZCwgRC4gVXBtYW55
-dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGlu
-ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
-L2xpc3RpbmZvL2RtLWRldmVs
+> +        /*
+> +         * Lenovo
+> +         */
+> +        {
+> +                /*
+> +                * DE Series
+> +                *
+> +                * Maintainer: Steve Schremmer <Steve.Schremmer@netapp.com>
+> +                */
+> +                .vendor        = "LENOVO",
+> +                .product       = "DE_Series",
+> +                .bl_product    = "Universal Xport",
+> +                .pgpolicy      = GROUP_BY_PRIO,
+> +                .checker_name  = RDAC,
+> +                .features      = "2 pg_init_retries 50",
+> +                .hwhandler     = "1 rdac",
+> +                .prio_name     = PRIO_RDAC,
+> +                .pgfailback    = -FAILBACK_IMMEDIATE,
+> +                .no_path_retry = 30,
+> +        },
+>         /*
+>          * NetApp
+>          */
+
+If you're going to list a netapp.com address, may as well be
+ng-eseries-upstream-maintainers@netapp.com
