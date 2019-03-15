@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 9/9] libmultipath: hwtable: add Lenovo DE
-	series
-Date: Fri, 15 Mar 2019 18:19:30 +0100
-Message-ID: <20190315171930.28335-10-mwilck@suse.com>
+Subject: [PATCH v2 4/9] libmultipath: constify sysfs_get_timeout()
+Date: Fri, 15 Mar 2019 18:19:25 +0100
+Message-ID: <20190315171930.28335-5-mwilck@suse.com>
 References: <20190315171930.28335-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,49 +18,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, dm-devel@redhat.com, xose.vazquez@gmail.com, Martin Wilck <mwilck@suse.com>, Steve.Schremmer@netapp.com
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-I got this from Steven.
-
-Cc: Steve.Schremmer@netapp.com
-Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
-Cc: xose.vazquez@gmail.com
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/hwtable.c | 20 ++++++++++++++++++++
- 1 file changed, 20 insertions(+)
+ libmultipath/discovery.c | 2 +-
+ libmultipath/discovery.h | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index d3a8d9ba..b8285818 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -701,6 +701,26 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = (300 / DEFAULT_CHECKINT),
- 		.prio_name     = PRIO_ALUA,
- 	},
-+        /*
-+         * Lenovo
-+         */
-+        {
-+                /*
-+		 * DE Series
-+		 *
-+		 * Maintainer: ng-eseries-upstream-maintainers@netapp.com
-+		 */
-+                .vendor        = "LENOVO",
-+                .product       = "DE_Series",
-+                .bl_product    = "Universal Xport",
-+                .pgpolicy      = GROUP_BY_PRIO,
-+                .checker_name  = RDAC,
-+                .features      = "2 pg_init_retries 50",
-+                .hwhandler     = "1 rdac",
-+                .prio_name     = PRIO_RDAC,
-+                .pgfailback    = -FAILBACK_IMMEDIATE,
-+                .no_path_retry = 30,
-+        },
- 	/*
- 	 * NetApp
- 	 */
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 6b4a420b..270dedc9 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -256,7 +256,7 @@ ssize_t sysfs_get_inquiry(struct udev_device * udev,
+ }
+ 
+ int
+-sysfs_get_timeout(struct path *pp, unsigned int *timeout)
++sysfs_get_timeout(const struct path *pp, unsigned int *timeout)
+ {
+ 	const char *attr = NULL;
+ 	const char *subsys;
+diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
+index 7cacbb6c..a9a28add 100644
+--- a/libmultipath/discovery.h
++++ b/libmultipath/discovery.h
+@@ -43,7 +43,7 @@ int store_pathinfo (vector pathvec, struct config *conf,
+ 		    struct udev_device *udevice, int flag,
+ 		    struct path **pp_ptr);
+ int sysfs_set_scsi_tmo (struct multipath *mpp, int checkint);
+-int sysfs_get_timeout(struct path *pp, unsigned int *timeout);
++int sysfs_get_timeout(const struct path *pp, unsigned int *timeout);
+ int sysfs_get_host_pci_name(const struct path *pp, char *pci_name);
+ int sysfs_get_iscsi_ip_address(const struct path *pp, char *ip_address);
+ int sysfs_get_host_adapter_name(const struct path *pp,
 -- 
 2.21.0
