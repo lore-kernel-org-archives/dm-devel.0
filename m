@@ -1,7 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 4/9] libmultipath: constify sysfs_get_timeout()
-Date: Fri, 15 Mar 2019 18:19:25 +0100
-Message-ID: <20190315171930.28335-5-mwilck@suse.com>
+Subject: [PATCH v2 1/9] libmultipath: add sysfs_get_inquiry()
+Date: Fri, 15 Mar 2019 18:19:22 +0100
+Message-ID: <20190315171930.28335-2-mwilck@suse.com>
 References: <20190315171930.28335-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,37 +21,81 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+Provide a utility function to retrieve inquiry data from
+sysfs, like we do for VPDs.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 2 +-
- libmultipath/discovery.h | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/discovery.c | 23 ++++++++++++++++++-----
+ libmultipath/discovery.h |  6 ++++--
+ 2 files changed, 22 insertions(+), 7 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 6b4a420b..270dedc9 100644
+index 10bd8cd6..65d651d4 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -256,7 +256,7 @@ ssize_t sysfs_get_inquiry(struct udev_device * udev,
+@@ -218,12 +218,11 @@ declare_sysfs_get_str(vendor);
+ declare_sysfs_get_str(model);
+ declare_sysfs_get_str(rev);
+ 
+-ssize_t
+-sysfs_get_vpd (struct udev_device * udev, int pg,
+-	       unsigned char * buff, size_t len)
++static ssize_t
++sysfs_get_binary (struct udev_device * udev, const char *attrname,
++		  unsigned char *buff, size_t len)
+ {
+ 	ssize_t attr_len;
+-	char attrname[9];
+ 	const char * devname;
+ 
+ 	if (!udev) {
+@@ -232,7 +231,6 @@ sysfs_get_vpd (struct udev_device * udev, int pg,
+ 	}
+ 
+ 	devname = udev_device_get_sysname(udev);
+-	sprintf(attrname, "vpd_pg%02x", pg);
+ 	attr_len = sysfs_bin_attr_get_value(udev, attrname, buff, len);
+ 	if (attr_len < 0) {
+ 		condlog(3, "%s: attribute %s not found in sysfs",
+@@ -242,6 +240,21 @@ sysfs_get_vpd (struct udev_device * udev, int pg,
+ 	return attr_len;
  }
  
++ssize_t sysfs_get_vpd(struct udev_device * udev, unsigned char pg,
++		      unsigned char *buff, size_t len)
++{
++	char attrname[9];
++
++	snprintf(attrname, sizeof(attrname), "vpd_pg%02x", pg);
++	return sysfs_get_binary(udev, attrname, buff, len);
++}
++
++ssize_t sysfs_get_inquiry(struct udev_device * udev,
++			  unsigned char *buff, size_t len)
++{
++	return sysfs_get_binary(udev, "inquiry", buff, len);
++}
++
  int
--sysfs_get_timeout(struct path *pp, unsigned int *timeout)
-+sysfs_get_timeout(const struct path *pp, unsigned int *timeout)
+ sysfs_get_timeout(struct path *pp, unsigned int *timeout)
  {
- 	const char *attr = NULL;
- 	const char *subsys;
 diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
-index 7cacbb6c..a9a28add 100644
+index 9aacf75b..7cacbb6c 100644
 --- a/libmultipath/discovery.h
 +++ b/libmultipath/discovery.h
-@@ -43,7 +43,7 @@ int store_pathinfo (vector pathvec, struct config *conf,
- 		    struct udev_device *udevice, int flag,
- 		    struct path **pp_ptr);
- int sysfs_set_scsi_tmo (struct multipath *mpp, int checkint);
--int sysfs_get_timeout(struct path *pp, unsigned int *timeout);
-+int sysfs_get_timeout(const struct path *pp, unsigned int *timeout);
- int sysfs_get_host_pci_name(const struct path *pp, char *pci_name);
+@@ -48,8 +48,10 @@ int sysfs_get_host_pci_name(const struct path *pp, char *pci_name);
  int sysfs_get_iscsi_ip_address(const struct path *pp, char *ip_address);
  int sysfs_get_host_adapter_name(const struct path *pp,
+ 				char *adapter_name);
+-ssize_t sysfs_get_vpd (struct udev_device * udev, int pg, unsigned char * buff,
+-		       size_t len);
++ssize_t sysfs_get_vpd (struct udev_device *udev, unsigned char pg,
++		       unsigned char *buff, size_t len);
++ssize_t sysfs_get_inquiry(struct udev_device *udev,
++			  unsigned char *buff, size_t len);
+ int sysfs_get_asymmetric_access_state(struct path *pp,
+ 				      char *buff, int buflen);
+ int get_uid(struct path * pp, int path_state, struct udev_device *udev);
 -- 
 2.21.0
