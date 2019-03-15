@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 5/9] libmultipath: detect_alua(): use system
-	timeout
-Date: Fri, 15 Mar 2019 18:19:26 +0100
-Message-ID: <20190315171930.28335-6-mwilck@suse.com>
+Subject: [PATCH v2 7/9] libmultipath: don't link alua_rtpg.o twice
+Date: Fri, 15 Mar 2019 18:19:28 +0100
+Message-ID: <20190315171930.28335-8-mwilck@suse.com>
 References: <20190315171930.28335-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,44 +21,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This is not the path checker - we don't need to use the
-configured checker timeout here. This makes it possible to
-call this function without a current (struct config *).
+We link this already to libmultipath.so. Therefore, no need
+to link ti to libprioalua.so, too.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 9 ++++++---
- 1 file changed, 6 insertions(+), 3 deletions(-)
+ libmultipath/prioritizers/Makefile | 3 ---
+ 1 file changed, 3 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 270dedc9..b2a43e86 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -833,11 +833,14 @@ get_serial (char * str, int maxlen, int fd)
- }
+diff --git a/libmultipath/prioritizers/Makefile b/libmultipath/prioritizers/Makefile
+index 4d80c20c..9d0fe03c 100644
+--- a/libmultipath/prioritizers/Makefile
++++ b/libmultipath/prioritizers/Makefile
+@@ -28,9 +28,6 @@ endif
  
- static void
--detect_alua(struct path * pp, struct config *conf)
-+detect_alua(struct path * pp)
- {
- 	int ret;
- 	int tpgs;
--	unsigned int timeout = conf->checker_timeout;
-+	unsigned int timeout;
-+
-+	if (sysfs_get_timeout(pp, &timeout) <= 0)
-+		timeout = DEF_TIMEOUT;
+ all: $(LIBS)
  
- 	if ((tpgs = get_target_port_group_support(pp, timeout)) <= 0) {
- 		pp->tpgs = TPGS_NONE;
-@@ -1519,7 +1522,7 @@ scsi_ioctl_pathinfo (struct path * pp, struct config *conf, int mask)
- 	const char *attr_path = NULL;
+-libprioalua.so: alua.o alua_rtpg.o
+-	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
+-
+ libpriopath_latency.so: path_latency.o  ../checkers/libsg.o
+ 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^ -lm
  
- 	if (pp->tpgs == TPGS_UNDEF)
--		detect_alua(pp, conf);
-+		detect_alua(pp);
- 
- 	if (!(mask & DI_SERIAL))
- 		return;
 -- 
 2.21.0
