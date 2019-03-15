@@ -1,13 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 4/9] libmultipath: constify sysfs_get_timeout()
-Date: Fri, 15 Mar 2019 17:11:50 +0100
-Message-ID: <20190315161155.24062-5-mwilck@suse.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH 9/9] libmultipath: hwtable: add Lenovo DE
+	series
+Date: Fri, 15 Mar 2019 17:21:24 +0100
+Message-ID: <13d53b8d-9ce1-09fa-fc50-15e390e59672@gmail.com>
 References: <20190315161155.24062-1-mwilck@suse.com>
+	<20190315161155.24062-10-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190315161155.24062-1-mwilck@suse.com>
+In-Reply-To: <20190315161155.24062-10-mwilck@suse.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,41 +20,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, dm-devel@redhat.com, Steve.Schremmer@netapp.com
 List-Id: dm-devel.ids
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/discovery.c | 2 +-
- libmultipath/discovery.h | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+On 3/15/19 5:11 PM, Martin Wilck wrote:
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 6b4a420b..270dedc9 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -256,7 +256,7 @@ ssize_t sysfs_get_inquiry(struct udev_device * udev,
- }
- 
- int
--sysfs_get_timeout(struct path *pp, unsigned int *timeout)
-+sysfs_get_timeout(const struct path *pp, unsigned int *timeout)
- {
- 	const char *attr = NULL;
- 	const char *subsys;
-diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
-index 7cacbb6c..a9a28add 100644
---- a/libmultipath/discovery.h
-+++ b/libmultipath/discovery.h
-@@ -43,7 +43,7 @@ int store_pathinfo (vector pathvec, struct config *conf,
- 		    struct udev_device *udevice, int flag,
- 		    struct path **pp_ptr);
- int sysfs_set_scsi_tmo (struct multipath *mpp, int checkint);
--int sysfs_get_timeout(struct path *pp, unsigned int *timeout);
-+int sysfs_get_timeout(const struct path *pp, unsigned int *timeout);
- int sysfs_get_host_pci_name(const struct path *pp, char *pci_name);
- int sysfs_get_iscsi_ip_address(const struct path *pp, char *ip_address);
- int sysfs_get_host_adapter_name(const struct path *pp,
--- 
-2.21.0
+> I got this from Steven.
+> 
+> Cc: Steve.Schremmer@netapp.com
+> Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+> Cc: xose.vazquez@gmail.com
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/hwtable.c | 20 ++++++++++++++++++++
+>  1 file changed, 20 insertions(+)
+
+Do not forget the kernel side:
+drivers/scsi/{scsi_devinfo.c,scsi_dh.c}
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index d3a8d9ba..fd9afc75 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -701,6 +701,26 @@ static struct hwentry default_hw[] = {
+>  		.no_path_retry = (300 / DEFAULT_CHECKINT),
+>  		.prio_name     = PRIO_ALUA,
+>  	},
+> +        /*
+> +         * Lenovo
+> +         */
+> +        {
+> +                /*
+> +		 * DE Series
+> +		 *
+> +		 * Maintainer: Steve Schremmer <Steve.Schremmer@netapp.com>
+> +		 */
+> +                .vendor        = "LENOVO",
+> +                .product       = "DE_Series",
+> +                .bl_product    = "Universal Xport",
+> +                .pgpolicy      = GROUP_BY_PRIO,
+> +                .checker_name  = RDAC,
+> +                .features      = "2 pg_init_retries 50",
+> +                .hwhandler     = "1 rdac",
+> +                .prio_name     = PRIO_RDAC,
+> +                .pgfailback    = -FAILBACK_IMMEDIATE,
+> +                .no_path_retry = 30,
+> +        },
+>  	/*
+>  	 * NetApp
+>  	 */
+> 
