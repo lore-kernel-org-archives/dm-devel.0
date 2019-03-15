@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 5/9] libmultipath: detect_alua(): use system
-	timeout
-Date: Fri, 15 Mar 2019 17:11:51 +0100
-Message-ID: <20190315161155.24062-6-mwilck@suse.com>
+Subject: [PATCH 4/9] libmultipath: constify sysfs_get_timeout()
+Date: Fri, 15 Mar 2019 17:11:50 +0100
+Message-ID: <20190315161155.24062-5-mwilck@suse.com>
 References: <20190315161155.24062-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,44 +21,37 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This is not the path checker - we don't need to use the
-configured checker timeout here. This makes it possible to
-call this function without a current (struct config *).
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 9 ++++++---
- 1 file changed, 6 insertions(+), 3 deletions(-)
+ libmultipath/discovery.c | 2 +-
+ libmultipath/discovery.h | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 270dedc9..b2a43e86 100644
+index 6b4a420b..270dedc9 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -833,11 +833,14 @@ get_serial (char * str, int maxlen, int fd)
+@@ -256,7 +256,7 @@ ssize_t sysfs_get_inquiry(struct udev_device * udev,
  }
  
- static void
--detect_alua(struct path * pp, struct config *conf)
-+detect_alua(struct path * pp)
+ int
+-sysfs_get_timeout(struct path *pp, unsigned int *timeout)
++sysfs_get_timeout(const struct path *pp, unsigned int *timeout)
  {
- 	int ret;
- 	int tpgs;
--	unsigned int timeout = conf->checker_timeout;
-+	unsigned int timeout;
-+
-+	if (sysfs_get_timeout(pp, &timeout) <= 0)
-+		timeout = DEF_TIMEOUT;
- 
- 	if ((tpgs = get_target_port_group_support(pp, timeout)) <= 0) {
- 		pp->tpgs = TPGS_NONE;
-@@ -1519,7 +1522,7 @@ scsi_ioctl_pathinfo (struct path * pp, struct config *conf, int mask)
- 	const char *attr_path = NULL;
- 
- 	if (pp->tpgs == TPGS_UNDEF)
--		detect_alua(pp, conf);
-+		detect_alua(pp);
- 
- 	if (!(mask & DI_SERIAL))
- 		return;
+ 	const char *attr = NULL;
+ 	const char *subsys;
+diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
+index 7cacbb6c..a9a28add 100644
+--- a/libmultipath/discovery.h
++++ b/libmultipath/discovery.h
+@@ -43,7 +43,7 @@ int store_pathinfo (vector pathvec, struct config *conf,
+ 		    struct udev_device *udevice, int flag,
+ 		    struct path **pp_ptr);
+ int sysfs_set_scsi_tmo (struct multipath *mpp, int checkint);
+-int sysfs_get_timeout(struct path *pp, unsigned int *timeout);
++int sysfs_get_timeout(const struct path *pp, unsigned int *timeout);
+ int sysfs_get_host_pci_name(const struct path *pp, char *pci_name);
+ int sysfs_get_iscsi_ip_address(const struct path *pp, char *ip_address);
+ int sysfs_get_host_adapter_name(const struct path *pp,
 -- 
 2.21.0
