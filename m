@@ -1,13 +1,12 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 7/9] libmultipath: don't link alua_rtpg.o twice
-Date: Fri, 15 Mar 2019 18:19:28 +0100
-Message-ID: <20190315171930.28335-8-mwilck@suse.com>
-References: <20190315171930.28335-1-mwilck@suse.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: maintain the uniformity in the
+	multipath.conf.5 page
+Date: Sat, 16 Mar 2019 23:25:56 +0100
+Message-ID: <20190316222556.21437-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190315171930.28335-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,31 +16,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: DM-DEVEL ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-We link this already to libmultipath.so. Therefore, no need
-to link ti to libprioalua.so, too.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEVEL ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/prioritizers/Makefile | 3 ---
- 1 file changed, 3 deletions(-)
+ multipath/multipath.conf.5 | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/libmultipath/prioritizers/Makefile b/libmultipath/prioritizers/Makefile
-index 4d80c20c..9d0fe03c 100644
---- a/libmultipath/prioritizers/Makefile
-+++ b/libmultipath/prioritizers/Makefile
-@@ -28,9 +28,6 @@ endif
- 
- all: $(LIBS)
- 
--libprioalua.so: alua.o alua_rtpg.o
--	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
--
- libpriopath_latency.so: path_latency.o  ../checkers/libsg.o
- 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^ -lm
- 
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 0fe8461..b0648cc 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -260,11 +260,11 @@ The default is: \fB<unset>\fR
+ The udev attribute providing a unique path identifier.
+ .RS
+ .TP
+-The default is: for SCSI devices \fBID_SERIAL\fR
++The default is: \fBID_SERIAL\fR, for SCSI devices
+ .TP
+-The default is: for DASD devices \fBID_UID\fR
++The default is: \fBID_UID\fR, for DASD devices
+ .TP
+-The default is: for NVME devices \fBID_WWN\fR
++The default is: \fBID_WWN\fR, for NVMe devices
+ .RE
+ .
+ .
+@@ -670,7 +670,7 @@ This should be smaller than dev_loss_tmo. Setting this to
+ will disable the timeout.
+ .RS
+ .TP
+-The default is: in \fB5\fR
++The default is: \fB5\fR
+ .RE
+ .
+ .
+@@ -718,7 +718,7 @@ track of the persistent reservation key used for a specific WWID, when
+ \fIreservation_key\fR is set to \fBfile\fR.
+ .RS
+ .TP
+-The default is \fB/etc/multipath/prkeys\fR
++The default is: \fB/etc/multipath/prkeys\fR
+ .RE
+ .
+ .
+@@ -1186,7 +1186,7 @@ to switch the ghost paths to active ones. Setting this to \fI0\fR or \fIon\fR
+ makes multipath immediately mark a device with only ghost paths as ready.
+ .RS
+ .TP
+-The default is \fBno\fR
++The default is: \fBno\fR
+ .RE
+ .
+ .
 -- 
-2.21.0
+2.20.1
