@@ -1,357 +1,56 @@
-From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: [PATCH v3 6/6] dm snapshot: Use fine-grained locking scheme
-Date: Sun, 17 Mar 2019 14:22:58 +0200
-Message-ID: <20190317122258.21760-7-ntsironis@arrikto.com>
-References: <20190317122258.21760-1-ntsironis@arrikto.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190317122258.21760-1-ntsironis@arrikto.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
-Cc: mpatocka@redhat.com, paulmck@linux.ibm.com, hch@infradead.org, iliastsi@arrikto.com, linux-kernel@vger.kernel.org
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH v2 01/12] libmultipath: disable
+ user_friendly_names for NetApp
+Date: Sun, 17 Mar 2019 16:04:20 +0100
+Message-ID: <f0ff0f72-e1f8-4b24-308b-7ba044b37a09@gmail.com>
+References: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
+	<1552086725-18476-2-git-send-email-bmarzins@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1552086725-18476-2-git-send-email-bmarzins@redhat.com>
+Content-Language: en-GB
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Substitute the global locking scheme with a fine grained one, employing
-the read-write semaphore and the scalable exception tables with
-per-bucket locks introduced by the previous two commits.
+On 3/9/19 12:11 AM, Benjamin Marzinski wrote:
 
-Summarizing, we now use a read-write semaphore to protect the mostly
-read fields of the snapshot structure, e.g., valid, active, etc., and
-per-bucket bit spinlocks to protect accesses to the complete and pending
-exception tables.
+> NetApp has tools that rely on devices using WWID names. To avoid
+> breaking these, NetApp devices should continue to use WWID names, even
+> if the default config is set to enable user_friendly_names. If users
+> want to use user_friendly_names on NetApp devices, the must specifically
+> override the device config.
+> 
+> Reviewed-by: Martin Wilck <mwilck@suse.com>
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>  libmultipath/hwtable.c | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index d3a8d9b..8776411 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -719,6 +719,7 @@ static struct hwentry default_hw[] = {
+>  		.flush_on_last_del = FLUSH_ENABLED,
+>  		.dev_loss      = MAX_DEV_LOSS_TMO,
+>  		.prio_name     = PRIO_ONTAP,
+                /* WWID names needed by NetApp tool ... */
+> +		.user_friendly_names = USER_FRIENDLY_NAMES_OFF,
+>  	},
+>  	{
+>  		/*
+> 
 
-Finally, we use an extra spinlock (pe_allocation_lock) to serialize the
-allocation of new exceptions by the exception store. This allocation is
-really fast, so the extra spinlock doesn't hurt the performance.
-
-This scheme allows dm-snapshot to scale better, resulting in increased
-IOPS and reduced latency.
-
-Following are some benchmark results using the null_blk device:
-
-  modprobe null_blk gb=1024 bs=512 submit_queues=8 hw_queue_depth=4096 \
-   queue_mode=2 irqmode=1 completion_nsec=1 nr_devices=1
-
-* Benchmark fio_origin_randwrite_throughput_N, from the device mapper
-  test suite [1] (direct IO, random 4K writes to origin device, IO
-  engine libaio):
-
-  +--------------+-------------+------------+
-  | # of workers | IOPS Before | IOPS After |
-  +--------------+-------------+------------+
-  |      1       |    57708    |   66421    |
-  |      2       |    63415    |   77589    |
-  |      4       |    67276    |   98839    |
-  |      8       |    60564    |   109258   |
-  +--------------+-------------+------------+
-
-* Benchmark fio_origin_randwrite_latency_N, from the device mapper test
-  suite [1] (direct IO, random 4K writes to origin device, IO engine
-  psync):
-
-  +--------------+-----------------------+----------------------+
-  | # of workers | Latency (usec) Before | Latency (usec) After |
-  +--------------+-----------------------+----------------------+
-  |      1       |         16.25         |        13.27         |
-  |      2       |         31.65         |        25.08         |
-  |      4       |         55.28         |        41.08         |
-  |      8       |         121.47        |        74.44         |
-  +--------------+-----------------------+----------------------+
-
-* Benchmark fio_snapshot_randwrite_throughput_N, from the device mapper
-  test suite [1] (direct IO, random 4K writes to snapshot device, IO
-  engine libaio):
-
-  +--------------+-------------+------------+
-  | # of workers | IOPS Before | IOPS After |
-  +--------------+-------------+------------+
-  |      1       |    72593    |   84938    |
-  |      2       |    97379    |   134973   |
-  |      4       |    90610    |   143077   |
-  |      8       |    90537    |   180085   |
-  +--------------+-------------+------------+
-
-* Benchmark fio_snapshot_randwrite_latency_N, from the device mapper
-  test suite [1] (direct IO, random 4K writes to snapshot device, IO
-  engine psync):
-
-  +--------------+-----------------------+----------------------+
-  | # of workers | Latency (usec) Before | Latency (usec) After |
-  +--------------+-----------------------+----------------------+
-  |      1       |         12.53         |         10.6         |
-  |      2       |         19.78         |        14.89         |
-  |      4       |         40.37         |        23.47         |
-  |      8       |         89.32         |        48.48         |
-  +--------------+-----------------------+----------------------+
-
-[1] https://github.com/jthornber/device-mapper-test-suite
-
-Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
-Signed-off-by: Ilias Tsitsimpis <iliastsi@arrikto.com>
----
- drivers/md/dm-snap.c | 84 +++++++++++++++++++++++++++-------------------------
- 1 file changed, 44 insertions(+), 40 deletions(-)
-
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index ab75857309aa..4530d0620a72 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -77,7 +77,9 @@ struct dm_snapshot {
- 
- 	atomic_t pending_exceptions_count;
- 
--	/* Protected by "lock" */
-+	spinlock_t pe_allocation_lock;
-+
-+	/* Protected by "pe_allocation_lock" */
- 	sector_t exception_start_sequence;
- 
- 	/* Protected by kcopyd single-threaded callback */
-@@ -1245,6 +1247,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	s->snapshot_overflowed = 0;
- 	s->active = 0;
- 	atomic_set(&s->pending_exceptions_count, 0);
-+	spin_lock_init(&s->pe_allocation_lock);
- 	s->exception_start_sequence = 0;
- 	s->exception_complete_sequence = 0;
- 	s->out_of_order_tree = RB_ROOT;
-@@ -1522,6 +1525,13 @@ static void __invalidate_snapshot(struct dm_snapshot *s, int err)
- 	dm_table_event(s->ti->table);
- }
- 
-+static void invalidate_snapshot(struct dm_snapshot *s, int err)
-+{
-+	down_write(&s->lock);
-+	__invalidate_snapshot(s, err);
-+	up_write(&s->lock);
-+}
-+
- static void pending_complete(void *context, int success)
- {
- 	struct dm_snap_pending_exception *pe = context;
-@@ -1537,8 +1547,7 @@ static void pending_complete(void *context, int success)
- 
- 	if (!success) {
- 		/* Read/write error - snapshot is unusable */
--		down_write(&s->lock);
--		__invalidate_snapshot(s, -EIO);
-+		invalidate_snapshot(s, -EIO);
- 		error = 1;
- 
- 		dm_exception_table_lock(&lock);
-@@ -1547,8 +1556,7 @@ static void pending_complete(void *context, int success)
- 
- 	e = alloc_completed_exception(GFP_NOIO);
- 	if (!e) {
--		down_write(&s->lock);
--		__invalidate_snapshot(s, -ENOMEM);
-+		invalidate_snapshot(s, -ENOMEM);
- 		error = 1;
- 
- 		dm_exception_table_lock(&lock);
-@@ -1556,11 +1564,13 @@ static void pending_complete(void *context, int success)
- 	}
- 	*e = pe->e;
- 
--	down_write(&s->lock);
-+	down_read(&s->lock);
- 	dm_exception_table_lock(&lock);
- 	if (!s->valid) {
-+		up_read(&s->lock);
- 		free_completed_exception(e);
- 		error = 1;
-+
- 		goto out;
- 	}
- 
-@@ -1572,13 +1582,12 @@ static void pending_complete(void *context, int success)
- 	 * merging can overwrite the chunk in origin.
- 	 */
- 	dm_insert_exception(&s->complete, e);
-+	up_read(&s->lock);
- 
- 	/* Wait for conflicting reads to drain */
- 	if (__chunk_is_tracked(s, pe->e.old_chunk)) {
- 		dm_exception_table_unlock(&lock);
--		up_write(&s->lock);
- 		__check_for_conflicting_io(s, pe->e.old_chunk);
--		down_write(&s->lock);
- 		dm_exception_table_lock(&lock);
- 	}
- 
-@@ -1595,8 +1604,6 @@ static void pending_complete(void *context, int success)
- 		full_bio->bi_end_io = pe->full_bio_end_io;
- 	increment_pending_exceptions_done_count();
- 
--	up_write(&s->lock);
--
- 	/* Submit any pending write bios */
- 	if (error) {
- 		if (full_bio)
-@@ -1738,8 +1745,8 @@ __lookup_pending_exception(struct dm_snapshot *s, chunk_t chunk)
- /*
-  * Inserts a pending exception into the pending table.
-  *
-- * NOTE: a write lock must be held on snap->lock before calling
-- * this.
-+ * NOTE: a write lock must be held on the chunk's pending exception table slot
-+ * before calling this.
-  */
- static struct dm_snap_pending_exception *
- __insert_pending_exception(struct dm_snapshot *s,
-@@ -1751,12 +1758,15 @@ __insert_pending_exception(struct dm_snapshot *s,
- 	pe->started = 0;
- 	pe->full_bio = NULL;
- 
-+	spin_lock(&s->pe_allocation_lock);
- 	if (s->store->type->prepare_exception(s->store, &pe->e)) {
-+		spin_unlock(&s->pe_allocation_lock);
- 		free_pending_exception(pe);
- 		return NULL;
- 	}
- 
- 	pe->exception_sequence = s->exception_start_sequence++;
-+	spin_unlock(&s->pe_allocation_lock);
- 
- 	dm_insert_exception(&s->pending, &pe->e);
- 
-@@ -1768,8 +1778,8 @@ __insert_pending_exception(struct dm_snapshot *s,
-  * for this chunk, otherwise it allocates a new one and inserts
-  * it into the pending table.
-  *
-- * NOTE: a write lock must be held on snap->lock before calling
-- * this.
-+ * NOTE: a write lock must be held on the chunk's pending exception table slot
-+ * before calling this.
-  */
- static struct dm_snap_pending_exception *
- __find_pending_exception(struct dm_snapshot *s,
-@@ -1820,7 +1830,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
- 	if (!s->valid)
- 		return DM_MAPIO_KILL;
- 
--	down_write(&s->lock);
-+	down_read(&s->lock);
- 	dm_exception_table_lock(&lock);
- 
- 	if (!s->valid || (unlikely(s->snapshot_overflowed) &&
-@@ -1845,17 +1855,9 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
- 		pe = __lookup_pending_exception(s, chunk);
- 		if (!pe) {
- 			dm_exception_table_unlock(&lock);
--			up_write(&s->lock);
- 			pe = alloc_pending_exception(s);
--			down_write(&s->lock);
- 			dm_exception_table_lock(&lock);
- 
--			if (!s->valid || s->snapshot_overflowed) {
--				free_pending_exception(pe);
--				r = DM_MAPIO_KILL;
--				goto out_unlock;
--			}
--
- 			e = dm_lookup_exception(&s->complete, chunk);
- 			if (e) {
- 				free_pending_exception(pe);
-@@ -1866,10 +1868,15 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
- 			pe = __find_pending_exception(s, pe, chunk);
- 			if (!pe) {
- 				dm_exception_table_unlock(&lock);
-+				up_read(&s->lock);
-+
-+				down_write(&s->lock);
- 
- 				if (s->store->userspace_supports_overflow) {
--					s->snapshot_overflowed = 1;
--					DMERR("Snapshot overflowed: Unable to allocate exception.");
-+					if (s->valid && !s->snapshot_overflowed) {
-+						s->snapshot_overflowed = 1;
-+						DMERR("Snapshot overflowed: Unable to allocate exception.");
-+					}
- 				} else
- 					__invalidate_snapshot(s, -ENOMEM);
- 				up_write(&s->lock);
-@@ -1887,8 +1894,10 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
- 		    bio->bi_iter.bi_size ==
- 		    (s->store->chunk_size << SECTOR_SHIFT)) {
- 			pe->started = 1;
-+
- 			dm_exception_table_unlock(&lock);
--			up_write(&s->lock);
-+			up_read(&s->lock);
-+
- 			start_full_bio(pe, bio);
- 			goto out;
- 		}
-@@ -1896,10 +1905,12 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
- 		bio_list_add(&pe->snapshot_bios, bio);
- 
- 		if (!pe->started) {
--			/* this is protected by snap->lock */
-+			/* this is protected by the exception table lock */
- 			pe->started = 1;
-+
- 			dm_exception_table_unlock(&lock);
--			up_write(&s->lock);
-+			up_read(&s->lock);
-+
- 			start_copy(pe);
- 			goto out;
- 		}
-@@ -1910,7 +1921,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
- 
- out_unlock:
- 	dm_exception_table_unlock(&lock);
--	up_write(&s->lock);
-+	up_read(&s->lock);
- out:
- 	return r;
- }
-@@ -2234,7 +2245,7 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
- 		chunk = sector_to_chunk(snap->store, sector);
- 		dm_exception_table_lock_init(snap, chunk, &lock);
- 
--		down_write(&snap->lock);
-+		down_read(&snap->lock);
- 		dm_exception_table_lock(&lock);
- 
- 		/* Only deal with valid and active snapshots */
-@@ -2253,16 +2264,9 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
- 				goto next_snapshot;
- 
- 			dm_exception_table_unlock(&lock);
--			up_write(&snap->lock);
- 			pe = alloc_pending_exception(snap);
--			down_write(&snap->lock);
- 			dm_exception_table_lock(&lock);
- 
--			if (!snap->valid) {
--				free_pending_exception(pe);
--				goto next_snapshot;
--			}
--
- 			pe2 = __lookup_pending_exception(snap, chunk);
- 
- 			if (!pe2) {
-@@ -2275,9 +2279,9 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
- 				pe = __insert_pending_exception(snap, pe, chunk);
- 				if (!pe) {
- 					dm_exception_table_unlock(&lock);
--					__invalidate_snapshot(snap, -ENOMEM);
--					up_write(&snap->lock);
-+					up_read(&snap->lock);
- 
-+					invalidate_snapshot(snap, -ENOMEM);
- 					continue;
- 				}
- 			} else {
-@@ -2310,7 +2314,7 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
- 
- next_snapshot:
- 		dm_exception_table_unlock(&lock);
--		up_write(&snap->lock);
-+		up_read(&snap->lock);
- 
- 		if (pe_to_start_now) {
- 			start_copy(pe_to_start_now);
--- 
-2.11.0
+A minimal explanation should be added for a quick reference.
