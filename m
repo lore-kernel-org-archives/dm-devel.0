@@ -1,247 +1,368 @@
 From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: [PATCH v3 3/6] dm snapshot: Don't sleep holding the
-	snapshot lock
-Date: Sun, 17 Mar 2019 14:22:55 +0200
-Message-ID: <20190317122258.21760-4-ntsironis@arrikto.com>
+Subject: [PATCH v3 4/6] dm snapshot: Replace mutex with rw semaphore
+Date: Sun, 17 Mar 2019 14:22:56 +0200
+Message-ID: <20190317122258.21760-5-ntsironis@arrikto.com>
 References: <20190317122258.21760-1-ntsironis@arrikto.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190317122258.21760-1-ntsironis@arrikto.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
-Cc: hch@infradead.org, paulmck@linux.ibm.com, mpatocka@redhat.com, linux-kernel@vger.kernel.org, iliastsi@arrikto.com
+Cc: mpatocka@redhat.com, paulmck@linux.ibm.com, hch@infradead.org, iliastsi@arrikto.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-When completing a pending exception, pending_complete() waits for all
-conflicting reads to drain, before inserting the final, completed
-exception. Conflicting reads are snapshot reads redirected to the
-origin, because the relevant chunk is not remapped to the COW device the
-moment we receive the read.
+dm-snapshot uses a single mutex to serialize every access to the
+snapshot state. This includes all accesses to the complete and pending
+exception tables, which occur at every origin write, every snapshot
+read/write and every exception completion.
 
-The completed exception must be inserted into the exception table after
-all conflicting reads drain to ensure snapshot reads don't return
-corrupted data. This is required because inserting the completed
-exception into the exception table signals that the relevant chunk is
-remapped and both origin writes and snapshot merging will now overwrite
-the chunk in origin.
+The lock statistics indicate that this mutex is a bottleneck (average
+wait time ~480 usecs for 8 processes doing random 4K writes to the
+origin device) preventing dm-snapshot to scale as the number of threads
+doing IO increases.
 
-This wait is done holding the snapshot lock to ensure that
-pending_complete() doesn't starve if new snapshot reads keep coming for
-this chunk.
+The major contention points are __origin_write()/snapshot_map() and
+pending_complete(), i.e., the submission and completion of pending
+exceptions.
 
-In preparation for the next commit, where we use a spinlock instead of a
-mutex to protect the exception tables, we remove the need for holding
-the lock while waiting for conflicting reads to drain.
+Replace this mutex with a rw semaphore.
 
-We achieve this in two steps:
-
-1. pending_complete() inserts the completed exception before waiting for
-   conflicting reads to drain and removes the pending exception after
-   all conflicting reads drain.
-
-   This ensures that new snapshot reads will be redirected to the COW
-   device, instead of the origin, and thus pending_complete() will not
-   starve. Moreover, we use the existence of both a completed and
-   a pending exception to signify that the COW is done but there are
-   conflicting reads in flight.
-
-2. In __origin_write() we check first if there is a pending exception
-   and then if there is a completed exception. If there is a pending
-   exception any submitted BIO is delayed on the pe->origin_bios list and
-   DM_MAPIO_SUBMITTED is returned. This ensures that neither writes to the
-   origin nor snapshot merging can overwrite the origin chunk, until all
-   conflicting reads drain, and thus snapshot reads will not return
-   corrupted data.
-
-Summarizing, we now have the following possible combinations of pending
-and completed exceptions for a chunk, along with their meaning:
-
-A. No exceptions exist: The chunk has not been remapped yet.
-B. Only a pending exception exists: The chunk is currently being copied
-   to the COW device.
-C. Both a pending and a completed exception exist: COW for this chunk
-   has completed but there are snapshot reads in flight which had been
-   redirected to the origin before the chunk was remapped.
-D. Only the completed exception exists: COW has been completed and there
-   are no conflicting reads in flight.
+We essentially revert commit ae1093be5a0ef9 ("dm snapshot: use mutex
+instead of rw_semaphore") and together with the next two patches we
+substitute the single mutex with a fine-grained locking scheme, where we
+use a read-write semaphore to protect the mostly read fields of the
+snapshot structure, e.g., valid, active, etc., and per-bucket bit
+spinlocks to protect accesses to the complete and pending exception
+tables.
 
 Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
 Signed-off-by: Ilias Tsitsimpis <iliastsi@arrikto.com>
 ---
- drivers/md/dm-snap.c | 102 ++++++++++++++++++++++++++++++++-------------------
- 1 file changed, 65 insertions(+), 37 deletions(-)
+ drivers/md/dm-snap.c | 88 +++++++++++++++++++++++++---------------------------
+ 1 file changed, 43 insertions(+), 45 deletions(-)
 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 36805b12661e..4b34bfa0900a 100644
+index 4b34bfa0900a..209da5dd0ba6 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -1501,16 +1501,24 @@ static void pending_complete(void *context, int success)
- 		goto out;
+@@ -48,7 +48,7 @@ struct dm_exception_table {
+ };
+ 
+ struct dm_snapshot {
+-	struct mutex lock;
++	struct rw_semaphore lock;
+ 
+ 	struct dm_dev *origin;
+ 	struct dm_dev *cow;
+@@ -457,9 +457,9 @@ static int __find_snapshots_sharing_cow(struct dm_snapshot *snap,
+ 		if (!bdev_equal(s->cow->bdev, snap->cow->bdev))
+ 			continue;
+ 
+-		mutex_lock(&s->lock);
++		down_read(&s->lock);
+ 		active = s->active;
+-		mutex_unlock(&s->lock);
++		up_read(&s->lock);
+ 
+ 		if (active) {
+ 			if (snap_src)
+@@ -927,7 +927,7 @@ static int remove_single_exception_chunk(struct dm_snapshot *s)
+ 	int r;
+ 	chunk_t old_chunk = s->first_merging_chunk + s->num_merging_chunks - 1;
+ 
+-	mutex_lock(&s->lock);
++	down_write(&s->lock);
+ 
+ 	/*
+ 	 * Process chunks (and associated exceptions) in reverse order
+@@ -942,7 +942,7 @@ static int remove_single_exception_chunk(struct dm_snapshot *s)
+ 	b = __release_queued_bios_after_merge(s);
+ 
+ out:
+-	mutex_unlock(&s->lock);
++	up_write(&s->lock);
+ 	if (b)
+ 		flush_bios(b);
+ 
+@@ -1001,9 +1001,9 @@ static void snapshot_merge_next_chunks(struct dm_snapshot *s)
+ 		if (linear_chunks < 0) {
+ 			DMERR("Read error in exception store: "
+ 			      "shutting down merge");
+-			mutex_lock(&s->lock);
++			down_write(&s->lock);
+ 			s->merge_failed = 1;
+-			mutex_unlock(&s->lock);
++			up_write(&s->lock);
+ 		}
+ 		goto shut;
+ 	}
+@@ -1044,10 +1044,10 @@ static void snapshot_merge_next_chunks(struct dm_snapshot *s)
+ 		previous_count = read_pending_exceptions_done_count();
  	}
  
--	/* Check for conflicting reads */
--	__check_for_conflicting_io(s, pe->e.old_chunk);
--
- 	/*
--	 * Add a proper exception, and remove the
--	 * in-flight exception from the list.
-+	 * Add a proper exception. After inserting the completed exception all
-+	 * subsequent snapshot reads to this chunk will be redirected to the
-+	 * COW device.  This ensures that we do not starve. Moreover, as long
-+	 * as the pending exception exists, neither origin writes nor snapshot
-+	 * merging can overwrite the chunk in origin.
- 	 */
- 	dm_insert_exception(&s->complete, e);
+-	mutex_lock(&s->lock);
++	down_write(&s->lock);
+ 	s->first_merging_chunk = old_chunk;
+ 	s->num_merging_chunks = linear_chunks;
+-	mutex_unlock(&s->lock);
++	up_write(&s->lock);
  
-+	/* Wait for conflicting reads to drain */
-+	if (__chunk_is_tracked(s, pe->e.old_chunk)) {
-+		mutex_unlock(&s->lock);
-+		__check_for_conflicting_io(s, pe->e.old_chunk);
-+		mutex_lock(&s->lock);
-+	}
-+
+ 	/* Wait until writes to all 'linear_chunks' drain */
+ 	for (i = 0; i < linear_chunks; i++)
+@@ -1089,10 +1089,10 @@ static void merge_callback(int read_err, unsigned long write_err, void *context)
+ 	return;
+ 
+ shut:
+-	mutex_lock(&s->lock);
++	down_write(&s->lock);
+ 	s->merge_failed = 1;
+ 	b = __release_queued_bios_after_merge(s);
+-	mutex_unlock(&s->lock);
++	up_write(&s->lock);
+ 	error_bios(b);
+ 
+ 	merge_shutdown(s);
+@@ -1191,7 +1191,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	s->exception_start_sequence = 0;
+ 	s->exception_complete_sequence = 0;
+ 	s->out_of_order_tree = RB_ROOT;
+-	mutex_init(&s->lock);
++	init_rwsem(&s->lock);
+ 	INIT_LIST_HEAD(&s->list);
+ 	spin_lock_init(&s->pe_lock);
+ 	s->state_bits = 0;
+@@ -1357,9 +1357,9 @@ static void snapshot_dtr(struct dm_target *ti)
+ 	/* Check whether exception handover must be cancelled */
+ 	(void) __find_snapshots_sharing_cow(s, &snap_src, &snap_dest, NULL);
+ 	if (snap_src && snap_dest && (s == snap_src)) {
+-		mutex_lock(&snap_dest->lock);
++		down_write(&snap_dest->lock);
+ 		snap_dest->valid = 0;
+-		mutex_unlock(&snap_dest->lock);
++		up_write(&snap_dest->lock);
+ 		DMERR("Cancelling snapshot handover.");
+ 	}
+ 	up_read(&_origins_lock);
+@@ -1390,8 +1390,6 @@ static void snapshot_dtr(struct dm_target *ti)
+ 
+ 	dm_exception_store_destroy(s->store);
+ 
+-	mutex_destroy(&s->lock);
+-
+ 	dm_put_device(ti, s->cow);
+ 
+ 	dm_put_device(ti, s->origin);
+@@ -1479,7 +1477,7 @@ static void pending_complete(void *context, int success)
+ 
+ 	if (!success) {
+ 		/* Read/write error - snapshot is unusable */
+-		mutex_lock(&s->lock);
++		down_write(&s->lock);
+ 		__invalidate_snapshot(s, -EIO);
+ 		error = 1;
+ 		goto out;
+@@ -1487,14 +1485,14 @@ static void pending_complete(void *context, int success)
+ 
+ 	e = alloc_completed_exception(GFP_NOIO);
+ 	if (!e) {
+-		mutex_lock(&s->lock);
++		down_write(&s->lock);
+ 		__invalidate_snapshot(s, -ENOMEM);
+ 		error = 1;
+ 		goto out;
+ 	}
+ 	*e = pe->e;
+ 
+-	mutex_lock(&s->lock);
++	down_write(&s->lock);
+ 	if (!s->valid) {
+ 		free_completed_exception(e);
+ 		error = 1;
+@@ -1512,9 +1510,9 @@ static void pending_complete(void *context, int success)
+ 
+ 	/* Wait for conflicting reads to drain */
+ 	if (__chunk_is_tracked(s, pe->e.old_chunk)) {
+-		mutex_unlock(&s->lock);
++		up_write(&s->lock);
+ 		__check_for_conflicting_io(s, pe->e.old_chunk);
+-		mutex_lock(&s->lock);
++		down_write(&s->lock);
+ 	}
+ 
  out:
-+	/* Remove the in-flight exception from the list */
- 	dm_remove_exception(&pe->e);
- 	snapshot_bios = bio_list_get(&pe->snapshot_bios);
- 	origin_bios = bio_list_get(&pe->origin_bios);
-@@ -1660,25 +1668,15 @@ __lookup_pending_exception(struct dm_snapshot *s, chunk_t chunk)
- }
+@@ -1527,7 +1525,7 @@ static void pending_complete(void *context, int success)
+ 		full_bio->bi_end_io = pe->full_bio_end_io;
+ 	increment_pending_exceptions_done_count();
  
- /*
-- * Looks to see if this snapshot already has a pending exception
-- * for this chunk, otherwise it allocates a new one and inserts
-- * it into the pending table.
-+ * Inserts a pending exception into the pending table.
-  *
-  * NOTE: a write lock must be held on snap->lock before calling
-  * this.
-  */
- static struct dm_snap_pending_exception *
--__find_pending_exception(struct dm_snapshot *s,
--			 struct dm_snap_pending_exception *pe, chunk_t chunk)
-+__insert_pending_exception(struct dm_snapshot *s,
-+			   struct dm_snap_pending_exception *pe, chunk_t chunk)
- {
--	struct dm_snap_pending_exception *pe2;
--
--	pe2 = __lookup_pending_exception(s, chunk);
--	if (pe2) {
--		free_pending_exception(pe);
--		return pe2;
--	}
--
- 	pe->e.old_chunk = chunk;
- 	bio_list_init(&pe->origin_bios);
- 	bio_list_init(&pe->snapshot_bios);
-@@ -1697,6 +1695,29 @@ __find_pending_exception(struct dm_snapshot *s,
- 	return pe;
- }
+-	mutex_unlock(&s->lock);
++	up_write(&s->lock);
  
-+/*
-+ * Looks to see if this snapshot already has a pending exception
-+ * for this chunk, otherwise it allocates a new one and inserts
-+ * it into the pending table.
-+ *
-+ * NOTE: a write lock must be held on snap->lock before calling
-+ * this.
-+ */
-+static struct dm_snap_pending_exception *
-+__find_pending_exception(struct dm_snapshot *s,
-+			 struct dm_snap_pending_exception *pe, chunk_t chunk)
-+{
-+	struct dm_snap_pending_exception *pe2;
-+
-+	pe2 = __lookup_pending_exception(s, chunk);
-+	if (pe2) {
-+		free_pending_exception(pe);
-+		return pe2;
-+	}
-+
-+	return __insert_pending_exception(s, pe, chunk);
-+}
-+
- static void remap_exception(struct dm_snapshot *s, struct dm_exception *e,
- 			    struct bio *bio, chunk_t chunk)
- {
-@@ -2107,7 +2128,7 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
- 	int r = DM_MAPIO_REMAPPED;
- 	struct dm_snapshot *snap;
- 	struct dm_exception *e;
--	struct dm_snap_pending_exception *pe;
-+	struct dm_snap_pending_exception *pe, *pe2;
- 	struct dm_snap_pending_exception *pe_to_start_now = NULL;
- 	struct dm_snap_pending_exception *pe_to_start_last = NULL;
- 	chunk_t chunk;
-@@ -2137,17 +2158,17 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
- 		 */
- 		chunk = sector_to_chunk(snap->store, sector);
+ 	/* Submit any pending write bios */
+ 	if (error) {
+@@ -1750,7 +1748,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
+ 	if (!s->valid)
+ 		return DM_MAPIO_KILL;
  
--		/*
--		 * Check exception table to see if block
--		 * is already remapped in this snapshot
--		 * and trigger an exception if not.
--		 */
--		e = dm_lookup_exception(&snap->complete, chunk);
--		if (e)
--			goto next_snapshot;
--
- 		pe = __lookup_pending_exception(snap, chunk);
+-	mutex_lock(&s->lock);
++	down_write(&s->lock);
+ 
+ 	if (!s->valid || (unlikely(s->snapshot_overflowed) &&
+ 	    bio_data_dir(bio) == WRITE)) {
+@@ -1773,9 +1771,9 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
+ 	if (bio_data_dir(bio) == WRITE) {
+ 		pe = __lookup_pending_exception(s, chunk);
  		if (!pe) {
-+			/*
-+			 * Check exception table to see if block is already
-+			 * remapped in this snapshot and trigger an exception
-+			 * if not.
-+			 */
-+			e = dm_lookup_exception(&snap->complete, chunk);
-+			if (e)
-+				goto next_snapshot;
-+
- 			mutex_unlock(&snap->lock);
- 			pe = alloc_pending_exception(snap);
- 			mutex_lock(&snap->lock);
-@@ -2157,16 +2178,23 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
- 				goto next_snapshot;
- 			}
+-			mutex_unlock(&s->lock);
++			up_write(&s->lock);
+ 			pe = alloc_pending_exception(s);
+-			mutex_lock(&s->lock);
++			down_write(&s->lock);
  
--			e = dm_lookup_exception(&snap->complete, chunk);
--			if (e) {
-+			pe2 = __lookup_pending_exception(snap, chunk);
-+
-+			if (!pe2) {
-+				e = dm_lookup_exception(&snap->complete, chunk);
-+				if (e) {
-+					free_pending_exception(pe);
-+					goto next_snapshot;
-+				}
-+
-+				pe = __insert_pending_exception(snap, pe, chunk);
-+				if (!pe) {
-+					__invalidate_snapshot(snap, -ENOMEM);
-+					goto next_snapshot;
-+				}
-+			} else {
+ 			if (!s->valid || s->snapshot_overflowed) {
  				free_pending_exception(pe);
--				goto next_snapshot;
--			}
--
--			pe = __find_pending_exception(snap, pe, chunk);
--			if (!pe) {
--				__invalidate_snapshot(snap, -ENOMEM);
--				goto next_snapshot;
-+				pe = pe2;
- 			}
+@@ -1810,7 +1808,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
+ 		    bio->bi_iter.bi_size ==
+ 		    (s->store->chunk_size << SECTOR_SHIFT)) {
+ 			pe->started = 1;
+-			mutex_unlock(&s->lock);
++			up_write(&s->lock);
+ 			start_full_bio(pe, bio);
+ 			goto out;
+ 		}
+@@ -1820,7 +1818,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
+ 		if (!pe->started) {
+ 			/* this is protected by snap->lock */
+ 			pe->started = 1;
+-			mutex_unlock(&s->lock);
++			up_write(&s->lock);
+ 			start_copy(pe);
+ 			goto out;
+ 		}
+@@ -1830,7 +1828,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
+ 	}
+ 
+ out_unlock:
+-	mutex_unlock(&s->lock);
++	up_write(&s->lock);
+ out:
+ 	return r;
+ }
+@@ -1866,7 +1864,7 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio)
+ 
+ 	chunk = sector_to_chunk(s->store, bio->bi_iter.bi_sector);
+ 
+-	mutex_lock(&s->lock);
++	down_write(&s->lock);
+ 
+ 	/* Full merging snapshots are redirected to the origin */
+ 	if (!s->valid)
+@@ -1897,12 +1895,12 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio)
+ 	bio_set_dev(bio, s->origin->bdev);
+ 
+ 	if (bio_data_dir(bio) == WRITE) {
+-		mutex_unlock(&s->lock);
++		up_write(&s->lock);
+ 		return do_origin(s->origin, bio);
+ 	}
+ 
+ out_unlock:
+-	mutex_unlock(&s->lock);
++	up_write(&s->lock);
+ 
+ 	return r;
+ }
+@@ -1934,7 +1932,7 @@ static int snapshot_preresume(struct dm_target *ti)
+ 	down_read(&_origins_lock);
+ 	(void) __find_snapshots_sharing_cow(s, &snap_src, &snap_dest, NULL);
+ 	if (snap_src && snap_dest) {
+-		mutex_lock(&snap_src->lock);
++		down_read(&snap_src->lock);
+ 		if (s == snap_src) {
+ 			DMERR("Unable to resume snapshot source until "
+ 			      "handover completes.");
+@@ -1944,7 +1942,7 @@ static int snapshot_preresume(struct dm_target *ti)
+ 			      "source is suspended.");
+ 			r = -EINVAL;
+ 		}
+-		mutex_unlock(&snap_src->lock);
++		up_read(&snap_src->lock);
+ 	}
+ 	up_read(&_origins_lock);
+ 
+@@ -1990,11 +1988,11 @@ static void snapshot_resume(struct dm_target *ti)
+ 
+ 	(void) __find_snapshots_sharing_cow(s, &snap_src, &snap_dest, NULL);
+ 	if (snap_src && snap_dest) {
+-		mutex_lock(&snap_src->lock);
+-		mutex_lock_nested(&snap_dest->lock, SINGLE_DEPTH_NESTING);
++		down_write(&snap_src->lock);
++		down_write_nested(&snap_dest->lock, SINGLE_DEPTH_NESTING);
+ 		__handover_exceptions(snap_src, snap_dest);
+-		mutex_unlock(&snap_dest->lock);
+-		mutex_unlock(&snap_src->lock);
++		up_write(&snap_dest->lock);
++		up_write(&snap_src->lock);
+ 	}
+ 
+ 	up_read(&_origins_lock);
+@@ -2009,9 +2007,9 @@ static void snapshot_resume(struct dm_target *ti)
+ 	/* Now we have correct chunk size, reregister */
+ 	reregister_snapshot(s);
+ 
+-	mutex_lock(&s->lock);
++	down_write(&s->lock);
+ 	s->active = 1;
+-	mutex_unlock(&s->lock);
++	up_write(&s->lock);
+ }
+ 
+ static uint32_t get_origin_minimum_chunksize(struct block_device *bdev)
+@@ -2051,7 +2049,7 @@ static void snapshot_status(struct dm_target *ti, status_type_t type,
+ 	switch (type) {
+ 	case STATUSTYPE_INFO:
+ 
+-		mutex_lock(&snap->lock);
++		down_write(&snap->lock);
+ 
+ 		if (!snap->valid)
+ 			DMEMIT("Invalid");
+@@ -2076,7 +2074,7 @@ static void snapshot_status(struct dm_target *ti, status_type_t type,
+ 				DMEMIT("Unknown");
  		}
  
+-		mutex_unlock(&snap->lock);
++		up_write(&snap->lock);
+ 
+ 		break;
+ 
+@@ -2142,7 +2140,7 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
+ 		if (dm_target_is_snapshot_merge(snap->ti))
+ 			continue;
+ 
+-		mutex_lock(&snap->lock);
++		down_write(&snap->lock);
+ 
+ 		/* Only deal with valid and active snapshots */
+ 		if (!snap->valid || !snap->active)
+@@ -2169,9 +2167,9 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
+ 			if (e)
+ 				goto next_snapshot;
+ 
+-			mutex_unlock(&snap->lock);
++			up_write(&snap->lock);
+ 			pe = alloc_pending_exception(snap);
+-			mutex_lock(&snap->lock);
++			down_write(&snap->lock);
+ 
+ 			if (!snap->valid) {
+ 				free_pending_exception(pe);
+@@ -2221,7 +2219,7 @@ static int __origin_write(struct list_head *snapshots, sector_t sector,
+ 		}
+ 
+ next_snapshot:
+-		mutex_unlock(&snap->lock);
++		up_write(&snap->lock);
+ 
+ 		if (pe_to_start_now) {
+ 			start_copy(pe_to_start_now);
 -- 
 2.11.0
