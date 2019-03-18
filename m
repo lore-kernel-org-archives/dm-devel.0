@@ -1,16 +1,17 @@
-From: Martin Wilck <mwilck@suse.com>
+From: Martin Wilck <mwilck@suse.de>
 Subject: Re: [PATCH v2 8/9] libmultipath: check_rdac(): pre-check
  in hwtable
-Date: Mon, 18 Mar 2019 10:52:17 +0100
-Message-ID: <8aca1a5b7bdb79f369ac3ec395b3f81c4987e488.camel@suse.com>
+Date: Mon, 18 Mar 2019 11:06:22 +0100
+Message-ID: <2a0f49b46a2aebebce517b69e9304611964df417.camel@suse.de>
 References: <20190315171930.28335-1-mwilck@suse.com>
 	<20190315171930.28335-9-mwilck@suse.com>
 	<c4c50690-714e-7350-34cd-cab69876c765@suse.com>
+	<8aca1a5b7bdb79f369ac3ec395b3f81c4987e488.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <c4c50690-714e-7350-34cd-cab69876c765@suse.com>
+In-Reply-To: <8aca1a5b7bdb79f369ac3ec395b3f81c4987e488.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,48 +21,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
+To: Martin Wilck <Martin.Wilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.com>, mwilck+gmail@suse.de
 Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, dm-devel@redhat.com, Steve.Schremmer@netapp.com
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE5LTAzLTE4IGF0IDA4OjEwICswMTAwLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6
-Cj4gT24gMy8xNS8xOSA2OjE5IFBNLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4gPiBDdXJyZW50bHkg
-Y2hlY2tfcmRhYygpIGFsd2F5cyBydW5zIGFuIFNHX0lPIGZvciBWUEQgMHhjOSB0byBjaGVjawo+
-ID4gaWYgdGhlIHN0b3JhZ2Ugc3VwcG9ydHMgUkRBQy4gVGhpcyBpcyBhbiBleHRyYSBJTywgYW5k
-IG1heSBjYXVzZQo+ID4gYW5ub3lpbmcgZXJyb3IgbWVzc2FnZXMgb24gdGhlIHN0b3JhZ2Ugc2lk
-ZSBmb3Igbm9uLVJEQUMgYXJyYXlzLgo+ID4gRG8gdGhlIFJEQUMgb3ZlcnJpZGUgb25seSBmb3Ig
-YXJyYXlzIHRoYXQgaGF2ZSBsZWdhY3kgY29uZmlndXJhdGlvbgo+ID4gdG8gdXNlIHRoZSByZGFj
-IGNoZWNrZXIuCj4gPiAKPiA+IENjOiBTdGV2ZS5TY2hyZW1tZXJAbmV0YXBwLmNvbQo+ID4gQ2M6
-IE5ldEFwcCBSREFDIHRlYW0gPG5nLWVzZXJpZXMtdXBzdHJlYW0tbWFpbnRhaW5lcnNAbmV0YXBw
-LmNvbT4KPiA+IENjOiBIYW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5jb20+Cj4gPiBTaWduZWQt
-b2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KPiA+IC0tLQo+ID4gICBsaWJt
-dWx0aXBhdGgvcHJvcHNlbC5jIHwgOCArKysrKysrKwo+ID4gICAxIGZpbGUgY2hhbmdlZCwgOCBp
-bnNlcnRpb25zKCspCj4gPiAKPiA+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvcHJvcHNlbC5j
-IGIvbGlibXVsdGlwYXRoL3Byb3BzZWwuYwo+ID4gaW5kZXggMjc0NzRmMDUuLjhjMDhhNWNjIDEw
-MDY0NAo+ID4gLS0tIGEvbGlibXVsdGlwYXRoL3Byb3BzZWwuYwo+ID4gKysrIGIvbGlibXVsdGlw
-YXRoL3Byb3BzZWwuYwo+ID4gQEAgLTQ3MCw5ICs0NzAsMTcgQEAgY2hlY2tfcmRhYyhzdHJ1Y3Qg
-cGF0aCAqIHBwKQo+ID4gICB7Cj4gPiAgIAlpbnQgbGVuOwo+ID4gICAJY2hhciBidWZmWzQ0XTsK
-PiA+ICsJY29uc3QgY2hhciAqY2hlY2tlcl9uYW1lID0gTlVMTDsKPiA+ICsJLyogZHVtbXksIGZv
-ciBkb19zZXRfZnJvbV9od2UgKi8KPiA+ICsJY29uc3QgY2hhciAqb3JpZ2luIF9fYXR0cmlidXRl
-X18oKHVudXNlZCkpOwo+ID4gICAKPiA+ICAgCWlmIChwcC0+YnVzICE9IFNZU0ZTX0JVU19TQ1NJ
-KQo+ID4gICAJCXJldHVybiAwOwo+ID4gKwkvKiBBdm9pZCBpb2N0bCBpZiB0aGlzIGlzIGxpa2Vs
-eSBub3QgYW4gUkRBQyBhcnJheSAqLwo+ID4gKwlkb19zZXRfZnJvbV9od2UoY2hlY2tlcl9uYW1l
-LCBwcCwgY2hlY2tlcl9uYW1lLCBOVUxMKTsKPiA+ICtvdXQ6ICAgIC8qIGZvciBkb19zZXRfZnJv
-bV9od2UgKi8KPiA+ICsJaWYgKCFjaGVja2VyX25hbWUgfHwgc3RyY21wKGNoZWNrZXJfbmFtZSwg
-UkRBQykpCj4gPiArCQlyZXR1cm4gMDsKPiA+ICAgCWxlbiA9IGdldF92cGRfc2dpbyhwcC0+ZmQs
-IDB4QzksIGJ1ZmYsIDQ0KTsKPiA+ICAgCWlmIChsZW4gPD0gMCkKPiA+ICAgCQlyZXR1cm4gMDsK
-PiA+IAo+ICpvcmlnaW4/IGR1bW15IGZvciBkb19zZXRfZnJvbV9od2UoKT8KPiBXaGF0IGZ1bmt5
-IGludGVyZmFjZSBpcyB0aGF0Pwo+IAo+IFBsZWFzZSByZWRlc2lnbiBkb19zZXRfZnJvbV9od2Uo
-KSBzbyBhcyBfbm90XyB0byByZXF1aXJlICdtYWdpYycKPiB2YXJpYWJsZXMuCgpJdCdzIHRoZSB0
-cnVseSAiZnVua3kiIHdheSB0aGUgbWFjcm9zIGFyZSB3cml0dGVuIGluIGRpY3QuYyA6LS8KKEFk
-bWl0dGVkbHkgSSB3cm90ZSB0aGF0IG9uZSBteXNlbGYsIGJ1dCBJIHdhcyBmb2xsb3dpbmcgdGhl
-IHN0eWxlIG9mCnRoZSBmaWxlKS4KCkJ1dCB5b3UncmUgcmlnaHQsIEkgZG9uJ3QgbGlrZSB0aGlz
-ICJkdW1teSIgc3R1ZmYgZWl0aGVyLiBBcyB0aGlzIHBhdGNoCnNldCBpcyBtZWFudCBhcyBhIGJ1
-ZyBmaXggYW5kIG5vdCBhIG1ham9yIHJlZGVzaWduIG9mIGRpY3QuYywgSSBndWVzcwpJJ2xsIHJh
-dGhlciBub3QgdXNlIHRoZSBkb19zZXRfZnJvbV9od2UoKSBtYWNybyB0aGVyZS4gQW5kIHB1dCB0
-aGUKcmVkZXNpZ24gb24gbXkgdG8tZG8gbGlzdC4KClRoYW5rcywKTWFydGluCgotLSAKRHIuIE1h
-cnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcK
-U1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBH
-cmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKCi0tCmRtLWRldmVsIG1haWxp
-bmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1h
-bi9saXN0aW5mby9kbS1kZXZlbA==
+On Mon, 2019-03-18 at 10:52 +0100, Martin Wilck wrote:
+> On Mon, 2019-03-18 at 08:10 +0100, Hannes Reinecke w
+> > *origin? dummy for do_set_from_hwe()?
+> > What funky interface is that?
+> > 
+> > Please redesign do_set_from_hwe() so as _not_ to require 'magic'
+> > variables.
+> 
+> It's the truly "funky" way the macros are written in dict.c :-/
+> (Admittedly I wrote that one myself, but I was following the style of
+> the file).
+> 
+> But you're right, I don't like this "dummy" stuff either. As this
+> patch
+> set is meant as a bug fix and not a major redesign of dict.c, I guess
+> I'll rather not use the do_set_from_hwe() macro there. And put the
+> redesign on my to-do list.
+
+... I meant propsel.c, of course. Sorry.
+
+Martin
