@@ -1,114 +1,50 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 3/3] multipathd: ignore "disable_changed_wwids"
-Date: Mon, 18 Mar 2019 13:12:35 +0100
-Message-ID: <20190318121235.8942-4-mwilck@suse.com>
-References: <20190318121235.8942-1-mwilck@suse.com>
+From: "Paul E. McKenney" <paulmck@linux.ibm.com>
+Subject: Re: [PATCH v3 1/6] list: Don't use WRITE_ONCE() in hlist_add_behind()
+Date: Mon, 18 Mar 2019 08:39:25 -0700
+Message-ID: <20190318153925.GH4102@linux.ibm.com>
+References: <20190317122258.21760-1-ntsironis@arrikto.com>
+ <20190317122258.21760-2-ntsironis@arrikto.com>
+Reply-To: paulmck@linux.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190318121235.8942-1-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190317122258.21760-2-ntsironis@arrikto.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Nikos Tsironis <ntsironis@arrikto.com>
+Cc: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com, mpatocka@redhat.com, hch@infradead.org, iliastsi@arrikto.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-This option has no effect any more.
+On Sun, Mar 17, 2019 at 02:22:53PM +0200, Nikos Tsironis wrote:
+> Commit 1c97be677f72b3 ("list: Use WRITE_ONCE() when adding to lists and
+> hlists") introduced the use of WRITE_ONCE() to atomically write the list
+> head's ->next pointer.
+> 
+> hlist_add_behind() doesn't touch the hlist head's ->first pointer so
+> there is no reason to use WRITE_ONCE() in this case.
+> 
+> Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+> Signed-off-by: Ilias Tsitsimpis <iliastsi@arrikto.com>
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/config.c      |  1 -
- libmultipath/config.h      |  1 -
- libmultipath/dict.c        | 18 +++++++++++++++---
- multipath/multipath.conf.5 |  8 ++------
- 4 files changed, 17 insertions(+), 11 deletions(-)
+Reviewed-by: Paul E. McKenney <paulmck@linux.ibm.com>
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 24d71aed..141f092b 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -715,7 +715,6 @@ load_config (char * file)
- 	conf->retrigger_tries = DEFAULT_RETRIGGER_TRIES;
- 	conf->retrigger_delay = DEFAULT_RETRIGGER_DELAY;
- 	conf->uev_wait_timeout = DEFAULT_UEV_WAIT_TIMEOUT;
--	conf->disable_changed_wwids = DEFAULT_DISABLE_CHANGED_WWIDS;
- 	conf->remove_retries = 0;
- 	conf->ghost_delay = DEFAULT_GHOST_DELAY;
- 	conf->all_tg_pt = DEFAULT_ALL_TG_PT;
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index b938c26c..f5bf5b1b 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -182,7 +182,6 @@ struct config {
- 	int delayed_reconfig;
- 	int uev_wait_timeout;
- 	int skip_kpartx;
--	int disable_changed_wwids;
- 	int remove_retries;
- 	int max_sectors_kb;
- 	int ghost_delay;
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index eaad4f18..96815f8a 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -156,6 +156,12 @@ out:
- 	return len;
- }
- 
-+static int
-+print_ignored (char *buff, int len)
-+{
-+	return snprintf(buff, len, "ignored");
-+}
-+
- static int
- print_yes_no (char *buff, int len, long v)
- {
-@@ -548,9 +554,15 @@ declare_hw_handler(skip_kpartx, set_yes_no_undef)
- declare_hw_snprint(skip_kpartx, print_yes_no_undef)
- declare_mp_handler(skip_kpartx, set_yes_no_undef)
- declare_mp_snprint(skip_kpartx, print_yes_no_undef)
--
--declare_def_handler(disable_changed_wwids, set_yes_no)
--declare_def_snprint(disable_changed_wwids, print_yes_no)
-+static int def_disable_changed_wwids_handler(struct config *conf, vector strvec)
-+{
-+	return 0;
-+}
-+static int snprint_def_disable_changed_wwids(struct config *conf, char *buff,
-+					     int len, const void *data)
-+{
-+	return print_ignored(buff, len);
-+}
- 
- declare_def_handler(remove_retries, set_int)
- declare_def_snprint(remove_retries, print_int)
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 0fe8461d..a2e3e866 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -1148,12 +1148,8 @@ The default is: \fBno\fR
- .
- .TP
- .B disable_changed_wwids
--If set to \fIyes\fR, multipathd will check the path wwid on change events, and
--if it has changed from the wwid of the multipath device, multipathd will
--disable access to the path until the wwid changes back.
--.RS
--.TP
--The default is: \fBno\fR
-+This option is deprecated and ignored. If the WWID of a path suddenly changes,
-+multipathd handles it as if it was removed and then added again.
- .RE
- .
- .
--- 
-2.21.0
+> ---
+>  include/linux/list.h | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/include/linux/list.h b/include/linux/list.h
+> index edb7628e46ed..b68d2a85859b 100644
+> --- a/include/linux/list.h
+> +++ b/include/linux/list.h
+> @@ -743,7 +743,7 @@ static inline void hlist_add_behind(struct hlist_node *n,
+>  				    struct hlist_node *prev)
+>  {
+>  	n->next = prev->next;
+> -	WRITE_ONCE(prev->next, n);
+> +	prev->next = n;
+>  	n->pprev = &prev->next;
+>  
+>  	if (n->next)
+> -- 
+> 2.11.0
+> 
