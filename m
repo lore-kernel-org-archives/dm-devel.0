@@ -1,15 +1,16 @@
 From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [PATCH] multipath-tools: reorder vendors in hwtable
-Date: Mon, 18 Mar 2019 10:42:37 +0100
-Message-ID: <e78daeb2e723cca91c248cb2de7c0d8a2a428280.camel@suse.de>
-References: <20181219212357.21076-1-xose.vazquez@gmail.com>
-	<74dbe64aabf33700924e57bcbe249a02c027ff29.camel@suse.de>
-	<b450ce2f-72fe-6a06-f46d-f93ecf600d2d@gmail.com>
+Subject: Re: [PATCH v2 01/12] libmultipath: disable
+ user_friendly_names for NetApp
+Date: Mon, 18 Mar 2019 10:45:16 +0100
+Message-ID: <c1a117cf19e9ed410724ce6c72e4dacf43581634.camel@suse.de>
+References: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
+	<1552086725-18476-2-git-send-email-bmarzins@redhat.com>
+	<f0ff0f72-e1f8-4b24-308b-7ba044b37a09@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <b450ce2f-72fe-6a06-f46d-f93ecf600d2d@gmail.com>
+In-Reply-To: <f0ff0f72-e1f8-4b24-308b-7ba044b37a09@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,56 +20,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEVEL ML <dm-devel@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sun, 2019-03-17 at 00:04 +0100, Xose Vazquez Perez wrote:
-> On 12/21/18 12:51 AM, Martin Wilck wrote:
-> > On Wed, 2018-12-19 at 22:23 +0100, Xose Vazquez Perez wrote:
-> > > Xio was acquired by Violin, and add FlashSystem 9100 to Storwize
-> > > in
-> > > comments.
-> > > 
-> > > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> > > Cc: DM-DEVEL ML <dm-devel@redhat.com>
-> > > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> > > ---
-> > >  libmultipath/hwtable.c | 50 ++++++++++++++++++++--------------
-> > > ----
-> > > ----
-> > >  1 file changed, 24 insertions(+), 26 deletions(-)
-> > > 
-> > How important is it to reflect this kind of company-A-owns-company-
-> > B
-> > information in multipath-tools source code? IMO it makes it harder
-> > to
-> > track code changes, for no obvious technical reason.
+On Sun, 2019-03-17 at 16:04 +0100, Xose Vazquez Perez wrote:
+> On 3/9/19 12:11 AM, Benjamin Marzinski wrote:
 > 
-> Keep the file consistent with the real world.
-> There is no more Xiotech company, now their products are sold by
-> Violin.
-> The same happened in the past with:
-> XIV : RamSan -> IBM
-> LSI_RDAC : SolidFir -> NetApp
-> DEC -> Compaq : 3PAR : LEFTHAND : Nimble : SGI -> HPE
-> DGC : XtremIO -> EMC : Compellent -> DELL
+> > NetApp has tools that rely on devices using WWID names. To avoid
+> > breaking these, NetApp devices should continue to use WWID names,
+> > even
+> > if the default config is set to enable user_friendly_names. If
+> > users
+> > want to use user_friendly_names on NetApp devices, the must
+> > specifically
+> > override the device config.
+> > 
+> > Reviewed-by: Martin Wilck <mwilck@suse.com>
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  libmultipath/hwtable.c | 1 +
+> >  1 file changed, 1 insertion(+)
+> > 
+> > diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> > index d3a8d9b..8776411 100644
+> > --- a/libmultipath/hwtable.c
+> > +++ b/libmultipath/hwtable.c
+> > @@ -719,6 +719,7 @@ static struct hwentry default_hw[] = {
+> >  		.flush_on_last_del = FLUSH_ENABLED,
+> >  		.dev_loss      = MAX_DEV_LOSS_TMO,
+> >  		.prio_name     = PRIO_ONTAP,
+>                 /* WWID names needed by NetApp tool ... */
+> > +		.user_friendly_names = USER_FRIENDLY_NAMES_OFF,
+> >  	},
+> >  	{
+> >  		/*
+> > 
+> 
+> A minimal explanation should be added for a quick reference.
 
-Fine with me, in general. But I dislike the "reordering vendors" type
-of patch, leading to 22 insertions and 22 deletions without changing
-any actual code. Sorting the hw entries by comments also makes little
-sense to me. IMO we should switch using the actual .vendor/.product
-strings for sorting, and perhaps move the "maintainers" information
-into a separate file.
+IMO that's not necessary. People who want to know can quickly run "git
+blame" to figure this out, and get more information than your single
+line comment provides. 
 
-The fact that we did it in the past doesn't mean it's the right thing
-to do. Anyone who needs to look up properties for a specific device in
-hwtable.c will likely use the "search" functionality of her text editor
-of choice, rather than rely on the alphabetic sorting of the entries;
-and again it's usually the vendor/product string that matters for this
-lookup rather than the comment on top of it. Therefore the benefit of
-keeping the order is low. But following the history of changes (in
-order to figure out when and with what rationale a certain setting was
-added) is made significantly harder by patches of this kind.
+That works as long as we don't mess up the code with "reorder by
+comment" patches, that is :-)
 
 Martin
