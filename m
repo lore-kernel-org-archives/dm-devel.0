@@ -1,16 +1,16 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [PATCH v2 01/12] libmultipath: disable
- user_friendly_names for NetApp
-Date: Mon, 18 Mar 2019 10:45:16 +0100
-Message-ID: <c1a117cf19e9ed410724ce6c72e4dacf43581634.camel@suse.de>
-References: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
-	<1552086725-18476-2-git-send-email-bmarzins@redhat.com>
-	<f0ff0f72-e1f8-4b24-308b-7ba044b37a09@gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v2 3/9] libmultipath: alua: try to retrieve
+ inquiry data from sysfs
+Date: Mon, 18 Mar 2019 10:47:15 +0100
+Message-ID: <b1b3f5dcff6613286e68fccf3bfb169833e1cf19.camel@suse.com>
+References: <20190315171930.28335-1-mwilck@suse.com>
+	<20190315171930.28335-4-mwilck@suse.com>
+	<c2b2bdde-36aa-5ad9-aa5a-2722f9a22fd8@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <f0ff0f72-e1f8-4b24-308b-7ba044b37a09@gmail.com>
+In-Reply-To: <c2b2bdde-36aa-5ad9-aa5a-2722f9a22fd8@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,50 +20,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, dm-devel@redhat.com, Steve.Schremmer@netapp.com
 List-Id: dm-devel.ids
 
-On Sun, 2019-03-17 at 16:04 +0100, Xose Vazquez Perez wrote:
-> On 3/9/19 12:11 AM, Benjamin Marzinski wrote:
-> 
-> > NetApp has tools that rely on devices using WWID names. To avoid
-> > breaking these, NetApp devices should continue to use WWID names,
-> > even
-> > if the default config is set to enable user_friendly_names. If
-> > users
-> > want to use user_friendly_names on NetApp devices, the must
-> > specifically
-> > override the device config.
-> > 
-> > Reviewed-by: Martin Wilck <mwilck@suse.com>
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > ---
-> >  libmultipath/hwtable.c | 1 +
-> >  1 file changed, 1 insertion(+)
-> > 
-> > diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> > index d3a8d9b..8776411 100644
-> > --- a/libmultipath/hwtable.c
-> > +++ b/libmultipath/hwtable.c
-> > @@ -719,6 +719,7 @@ static struct hwentry default_hw[] = {
-> >  		.flush_on_last_del = FLUSH_ENABLED,
-> >  		.dev_loss      = MAX_DEV_LOSS_TMO,
-> >  		.prio_name     = PRIO_ONTAP,
->                 /* WWID names needed by NetApp tool ... */
-> > +		.user_friendly_names = USER_FRIENDLY_NAMES_OFF,
-> >  	},
-> >  	{
-> >  		/*
-> > 
-> 
-> A minimal explanation should be added for a quick reference.
-
-IMO that's not necessary. People who want to know can quickly run "git
-blame" to figure this out, and get more information than your single
-line comment provides. 
-
-That works as long as we don't mess up the code with "reorder by
-comment" patches, that is :-)
-
-Martin
+T24gTW9uLCAyMDE5LTAzLTE4IGF0IDA4OjA4ICswMTAwLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6
+Cj4gT24gMy8xNS8xOSA2OjE5IFBNLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4gPiBUaGlzIGNhbiBh
+dm9pZCBJTyB3aGlsZSBjb25maWd1cmluZyB0aGUgcGF0aCBwcmlvcml0aXplci4KPiA+IFRoZSBh
+bHVhIHByaW9yaXRpemVyIGF2b2lkcyByZWFkaW5nIGZyb20gc3lzZnMgZm9yIGEgcmVhc29uCj4g
+PiAoc2VlIGNvbW1pdCA3ZTJmNDZkMyksIGJ1dCB0aGlzIGFwcGxpZXMgb25seSB0byBSVFBHIC8g
+U1RQRywKPiA+IG5vdCB0byBJTlFVSVJZIGNhbGxzLgo+ID4gCj4gPiBDYzogU3RldmUuU2NocmVt
+bWVyQG5ldGFwcC5jb20KPiA+IENjOiBOZXRBcHAgUkRBQyB0ZWFtIDxuZy1lc2VyaWVzLXVwc3Ry
+ZWFtLW1haW50YWluZXJzQG5ldGFwcC5jb20+Cj4gPiBDYzogSGFubmVzIFJlaW5lY2tlIDxoYXJl
+QHN1c2UuY29tPgo+ID4gU2lnbmVkLW9mZi1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5j
+b20+Cj4gPiAtLS0KPiA+ICAgbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9hbHVhX3J0cGcuYyB8
+IDE3ICsrKysrKysrKysrKysrKysrCj4gPiAgIDEgZmlsZSBjaGFuZ2VkLCAxNyBpbnNlcnRpb25z
+KCspCj4gPiAKPiA+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJzL2FsdWFf
+cnRwZy5jCj4gPiBiL2xpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvYWx1YV9ydHBnLmMKPiA+IGlu
+ZGV4IGQ5MjE1YTg4Li4yNzFhMDE5ZCAxMDA2NDQKPiA+IC0tLSBhL2xpYm11bHRpcGF0aC9wcmlv
+cml0aXplcnMvYWx1YV9ydHBnLmMKPiA+ICsrKyBiL2xpYm11bHRpcGF0aC9wcmlvcml0aXplcnMv
+YWx1YV9ydHBnLmMKPiA+IEBAIC0xODgsNiArMTg4LDIzIEBAIHJldHJ5Ogo+ID4gICBpbnQgZG9f
+aW5xdWlyeShjb25zdCBzdHJ1Y3QgcGF0aCAqcHAsIGludCBldnBkLCB1bnNpZ25lZCBpbnQKPiA+
+IGNvZGVwYWdlLAo+ID4gICAJICAgICAgIHZvaWQgKnJlc3AsIGludCByZXNwbGVuLCB1bnNpZ25l
+ZCBpbnQgdGltZW91dCkKPiA+ICAgewo+ID4gKwlzdHJ1Y3QgdWRldl9kZXZpY2UgKnVkOwo+ID4g
+Kwo+ID4gKwl1ZCA9IHVkZXZfZGV2aWNlX2dldF9wYXJlbnRfd2l0aF9zdWJzeXN0ZW1fZGV2dHlw
+ZShwcC0+dWRldiwKPiA+ICJzY3NpIiwKPiA+ICsJCQkJCQkJICAgInNjc2lfZGV2aWNlCj4gPiAi
+KTsKPiA+ICsJaWYgKHVkICE9IE5VTEwpIHsKPiA+ICsJCWludCByYzsKPiA+ICsKPiA+ICsJCWlm
+ICghZXZwZCkKPiA+ICsJCQlyYyA9IHN5c2ZzX2dldF9pbnF1aXJ5KHVkLCByZXNwLCByZXNwbGVu
+KTsKPiA+ICsJCWVsc2UKPiA+ICsJCQlyYyA9IHN5c2ZzX2dldF92cGQodWQsIGNvZGVwYWdlLCBy
+ZXNwLAo+ID4gcmVzcGxlbik7Cj4gPiArCj4gPiArCQlpZiAocmMgPj0gMCkgewo+ID4gKwkJCVBS
+SU5UX0hFWCgodW5zaWduZWQgY2hhciAqKSByZXNwLCByZXNwbGVuKTsKPiA+ICsJCQlyZXR1cm4g
+MDsKPiA+ICsJCX0KPiA+ICsJfQo+ID4gICAJcmV0dXJuIGRvX2lucXVpcnlfc2cocHAtPmZkLCBl
+dnBkLCBjb2RlcGFnZSwgcmVzcCwgcmVzcGxlbiwKPiA+IHRpbWVvdXQpOwo+ID4gICB9Cj4gPiAg
+IAo+ID4gCj4gRG9uJ3QgeW91IG5lZWQgdG8gZG8gYSB1ZGV2X2RldmljZV9wdXQoKSBvciBzb21l
+c3VjaD8KCk5vLiBUaGUgbWFuIHBhZ2Ugb2YgdWRldl9kZXZpY2VfZ2V0X3BhcmVudC4uLiBzYXlz
+ICJObyBhZGRpdGlvbmFsCnJlZmVyZW5jZSB0byB0aGlzIGRldmljZSBpcyBhY3F1aXJlZCIuCgpU
+aGFua3MsCk1hcnRpbgoKCj4gCj4gT3RoZXIgdGhhbiB0aGF0Ogo+IAo+IFJldmlld2VkLWJ5OiBI
+YW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5jb20+Cj4gCj4gQ2hlZXJzLAo+IAo+IEhhbm5lcwoK
+LS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3
+NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBT
+bWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCgotLQpkbS1k
+ZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQu
+Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
