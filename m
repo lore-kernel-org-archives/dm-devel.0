@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 1/3] multipathd: handle changed wwids by removal
-	and addition
-Date: Mon, 18 Mar 2019 13:12:33 +0100
-Message-ID: <20190318121235.8942-2-mwilck@suse.com>
+Subject: [PATCH 3/3] multipathd: ignore "disable_changed_wwids"
+Date: Mon, 18 Mar 2019 13:12:35 +0100
+Message-ID: <20190318121235.8942-4-mwilck@suse.com>
 References: <20190318121235.8942-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,136 +21,94 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-If a path's WWID changes, it's not necessarily failed. But it certainly
-has to be removed from an existing map, otherwise data corruption is
-imminent. Instead of keeping the path in the map, failing it, and
-remembering the "changed WWID" state, this patch simply removes and
-re-adds the path.
-
-If the WWID is truly different now, the path will be readded as if
-it was a new path. If the WWID is zero because of a (possibly temporary)
-getuid() failure, and getuid() fails in uev_add_path() again, it
-will be added with INIT_MISSING_UDEV status and thus handled appropriately
-by the "missing udev" logic.
+This option has no effect any more.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 71 +++++++++++++++++++++++++----------------------
- 1 file changed, 38 insertions(+), 33 deletions(-)
+ libmultipath/config.c      |  1 -
+ libmultipath/config.h      |  1 -
+ libmultipath/dict.c        | 18 +++++++++++++++---
+ multipath/multipath.conf.5 |  8 ++------
+ 4 files changed, 17 insertions(+), 11 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index fb520b64..bd26209d 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1184,13 +1184,22 @@ fail:
- 	return 1;
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 24d71aed..141f092b 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -715,7 +715,6 @@ load_config (char * file)
+ 	conf->retrigger_tries = DEFAULT_RETRIGGER_TRIES;
+ 	conf->retrigger_delay = DEFAULT_RETRIGGER_DELAY;
+ 	conf->uev_wait_timeout = DEFAULT_UEV_WAIT_TIMEOUT;
+-	conf->disable_changed_wwids = DEFAULT_DISABLE_CHANGED_WWIDS;
+ 	conf->remove_retries = 0;
+ 	conf->ghost_delay = DEFAULT_GHOST_DELAY;
+ 	conf->all_tg_pt = DEFAULT_ALL_TG_PT;
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index b938c26c..f5bf5b1b 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -182,7 +182,6 @@ struct config {
+ 	int delayed_reconfig;
+ 	int uev_wait_timeout;
+ 	int skip_kpartx;
+-	int disable_changed_wwids;
+ 	int remove_retries;
+ 	int max_sectors_kb;
+ 	int ghost_delay;
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index eaad4f18..96815f8a 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -156,6 +156,12 @@ out:
+ 	return len;
  }
  
-+static bool is_wwid_changed(const struct path *pp, const char *old_wwid)
++static int
++print_ignored (char *buff, int len)
 +{
-+	bool wwid_changed = (strncmp(old_wwid, pp->wwid, WWID_SIZE) != 0);
-+
-+	if (wwid_changed)
-+		condlog(1, "%s: WWID changed from \"%s\" to \"%s\"",
-+			pp->dev, old_wwid, pp->wwid);
-+	return wwid_changed;
++	return snprintf(buff, len, "ignored");
 +}
 +
  static int
- uev_update_path (struct uevent *uev, struct vectors * vecs)
+ print_yes_no (char *buff, int len, long v)
  {
- 	int ro, retval = 0, rc;
- 	struct path * pp;
- 	struct config *conf;
--	int disable_changed_wwids;
- 	int needs_reinit = 0;
- 
- 	switch ((rc = change_foreign(uev->udev))) {
-@@ -1208,12 +1217,6 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 		break;
- 	}
- 
--	conf = get_multipath_config();
--	disable_changed_wwids = conf->disable_changed_wwids;
--	put_multipath_config(conf);
+@@ -548,9 +554,15 @@ declare_hw_handler(skip_kpartx, set_yes_no_undef)
+ declare_hw_snprint(skip_kpartx, print_yes_no_undef)
+ declare_mp_handler(skip_kpartx, set_yes_no_undef)
+ declare_mp_snprint(skip_kpartx, print_yes_no_undef)
 -
--	ro = uevent_get_disk_ro(uev);
--
- 	pthread_cleanup_push(cleanup_lock, &vecs->lock);
- 	lock(&vecs->lock);
- 	pthread_testcancel();
-@@ -1221,7 +1224,7 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
- 	if (pp) {
- 		struct multipath *mpp = pp->mpp;
--		char wwid[WWID_SIZE];
-+		bool wwid_changed;
+-declare_def_handler(disable_changed_wwids, set_yes_no)
+-declare_def_snprint(disable_changed_wwids, print_yes_no)
++static int def_disable_changed_wwids_handler(struct config *conf, vector strvec)
++{
++	return 0;
++}
++static int snprint_def_disable_changed_wwids(struct config *conf, char *buff,
++					     int len, const void *data)
++{
++	return print_ignored(buff, len);
++}
  
- 		if (pp->initialized == INIT_REQUESTED_UDEV) {
- 			needs_reinit = 1;
-@@ -1232,36 +1235,38 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 		if (!strlen(pp->wwid))
- 			goto out;
- 
--		strcpy(wwid, pp->wwid);
--		get_uid(pp, pp->state, uev->udev);
--
--		if (strncmp(wwid, pp->wwid, WWID_SIZE) != 0) {
--			condlog(0, "%s: path wwid changed from '%s' to '%s'. %s",
--				uev->kernel, wwid, pp->wwid,
--				(disable_changed_wwids ? "disallowing" :
--				 "continuing"));
--			strcpy(pp->wwid, wwid);
--			if (disable_changed_wwids) {
--				if (!pp->wwid_changed) {
--					pp->wwid_changed = 1;
--					pp->tick = 1;
--					if (pp->mpp)
--						dm_fail_path(pp->mpp->alias, pp->dev_t);
--				}
--				goto out;
--			}
-+		if (pp->mpp) {
-+			get_uid(pp, pp->state, uev->udev);
-+			wwid_changed = is_wwid_changed(pp, pp->mpp->wwid);
- 		} else {
--			pp->wwid_changed = 0;
-+			char *old_wwid = strdup(pp->wwid);
-+
-+			if (!old_wwid)
-+				goto out;
-+			pthread_cleanup_push(free, (void*)old_wwid);
-+			wwid_changed = is_wwid_changed(pp, old_wwid);
-+			pthread_cleanup_pop(1);
-+		}
-+
-+		if (wwid_changed) {
-+			ev_remove_path(pp, vecs, 1);
-+			needs_reinit = 1;
-+			goto out;
-+		}
-+
-+		if (pp->udev != uev->udev) {
- 			udev_device_unref(pp->udev);
- 			pp->udev = udev_device_ref(uev->udev);
--			conf = get_multipath_config();
--			pthread_cleanup_push(put_multipath_config, conf);
--			if (pathinfo(pp, conf, DI_SYSFS|DI_NOIO) != PATHINFO_OK)
--				condlog(1, "%s: pathinfo failed after change uevent",
--					uev->kernel);
--			pthread_cleanup_pop(1);
- 		}
- 
-+		conf = get_multipath_config();
-+		pthread_cleanup_push(put_multipath_config, conf);
-+		if (pathinfo(pp, conf, DI_SYSFS|DI_NOIO) != PATHINFO_OK)
-+			condlog(1, "%s: pathinfo failed after change uevent",
-+				uev->kernel);
-+		pthread_cleanup_pop(1);
-+
-+		ro = uevent_get_disk_ro(uev);
- 		if (mpp && ro >= 0) {
- 			condlog(2, "%s: update path write_protect to '%d' (uevent)", uev->kernel, ro);
- 
+ declare_def_handler(remove_retries, set_int)
+ declare_def_snprint(remove_retries, print_int)
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 0fe8461d..a2e3e866 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -1148,12 +1148,8 @@ The default is: \fBno\fR
+ .
+ .TP
+ .B disable_changed_wwids
+-If set to \fIyes\fR, multipathd will check the path wwid on change events, and
+-if it has changed from the wwid of the multipath device, multipathd will
+-disable access to the path until the wwid changes back.
+-.RS
+-.TP
+-The default is: \fBno\fR
++This option is deprecated and ignored. If the WWID of a path suddenly changes,
++multipathd handles it as if it was removed and then added again.
+ .RE
+ .
+ .
 -- 
 2.21.0
