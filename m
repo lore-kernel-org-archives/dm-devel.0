@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 04/10] libmultipath: constify
-	sysfs_get_timeout()
-Date: Mon, 18 Mar 2019 12:24:39 +0100
-Message-ID: <20190318112445.6636-5-mwilck@suse.com>
+Subject: [PATCH v3 03/10] libmultipath: alua: try to retrieve
+	inquiry data from sysfs
+Date: Mon, 18 Mar 2019 12:24:38 +0100
+Message-ID: <20190318112445.6636-4-mwilck@suse.com>
 References: <20190318112445.6636-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,40 +19,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>, Steve.Schremmer@netapp.com, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
+This can avoid IO while configuring the path prioritizer.
+The alua prioritizer avoids reading from sysfs for a reason
+(see commit 7e2f46d3), but this applies only to RTPG / STPG,
+not to INQUIRY calls.
+
+Cc: Steve.Schremmer@netapp.com
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+Cc: Hannes Reinecke <hare@suse.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 2 +-
- libmultipath/discovery.h | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/prioritizers/alua_rtpg.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 6b4a420b..270dedc9 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -256,7 +256,7 @@ ssize_t sysfs_get_inquiry(struct udev_device * udev,
+diff --git a/libmultipath/prioritizers/alua_rtpg.c b/libmultipath/prioritizers/alua_rtpg.c
+index d9215a88..271a019d 100644
+--- a/libmultipath/prioritizers/alua_rtpg.c
++++ b/libmultipath/prioritizers/alua_rtpg.c
+@@ -188,6 +188,23 @@ retry:
+ int do_inquiry(const struct path *pp, int evpd, unsigned int codepage,
+ 	       void *resp, int resplen, unsigned int timeout)
+ {
++	struct udev_device *ud;
++
++	ud = udev_device_get_parent_with_subsystem_devtype(pp->udev, "scsi",
++							   "scsi_device");
++	if (ud != NULL) {
++		int rc;
++
++		if (!evpd)
++			rc = sysfs_get_inquiry(ud, resp, resplen);
++		else
++			rc = sysfs_get_vpd(ud, codepage, resp, resplen);
++
++		if (rc >= 0) {
++			PRINT_HEX((unsigned char *) resp, resplen);
++			return 0;
++		}
++	}
+ 	return do_inquiry_sg(pp->fd, evpd, codepage, resp, resplen, timeout);
  }
  
- int
--sysfs_get_timeout(struct path *pp, unsigned int *timeout)
-+sysfs_get_timeout(const struct path *pp, unsigned int *timeout)
- {
- 	const char *attr = NULL;
- 	const char *subsys;
-diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
-index 7cacbb6c..a9a28add 100644
---- a/libmultipath/discovery.h
-+++ b/libmultipath/discovery.h
-@@ -43,7 +43,7 @@ int store_pathinfo (vector pathvec, struct config *conf,
- 		    struct udev_device *udevice, int flag,
- 		    struct path **pp_ptr);
- int sysfs_set_scsi_tmo (struct multipath *mpp, int checkint);
--int sysfs_get_timeout(struct path *pp, unsigned int *timeout);
-+int sysfs_get_timeout(const struct path *pp, unsigned int *timeout);
- int sysfs_get_host_pci_name(const struct path *pp, char *pci_name);
- int sysfs_get_iscsi_ip_address(const struct path *pp, char *ip_address);
- int sysfs_get_host_adapter_name(const struct path *pp,
 -- 
 2.21.0
