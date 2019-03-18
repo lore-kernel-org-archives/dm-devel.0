@@ -1,11 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 0/3] New approach at handling changed WWIDs
-Date: Mon, 18 Mar 2019 13:12:32 +0100
-Message-ID: <20190318121235.8942-1-mwilck@suse.com>
+Subject: [PATCH 1/3] multipathd: handle changed wwids by removal
+	and addition
+Date: Mon, 18 Mar 2019 13:12:33 +0100
+Message-ID: <20190318121235.8942-2-mwilck@suse.com>
+References: <20190318121235.8942-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190318121235.8942-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,82 +22,136 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Hi Ben, hi Christophe,
+If a path's WWID changes, it's not necessarily failed. But it certainly
+has to be removed from an existing map, otherwise data corruption is
+imminent. Instead of keeping the path in the map, failing it, and
+remembering the "changed WWID" state, this patch simply removes and
+re-adds the path.
 
-after reviewing Ben's last patch set, I've been pondering over the
-handling of changed WWIDs, which seems to have become a bit too clever
-and complex for my taste, and I came up with this new approach
-instead.
+If the WWID is truly different now, the path will be readded as if
+it was a new path. If the WWID is zero because of a (possibly temporary)
+getuid() failure, and getuid() fails in uev_add_path() again, it
+will be added with INIT_MISSING_UDEV status and thus handled appropriately
+by the "missing udev" logic.
 
-TL;DR: instead of treating paths with changed WWIDs as faulty, act
-as if the path was removed, and another path was then added and
-obtained the device ID of the removed path.
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipathd/main.c | 71 +++++++++++++++++++++++++----------------------
+ 1 file changed, 38 insertions(+), 33 deletions(-)
 
-Long version:
-
-What would cause the WWID of an in-use path to change on the fly? Other than
-a) gross malfunction of the storage or kernel (which would be almost certain
-to corrupt data anyway, whether or not multipathd is taking precautions),
-I can think of two scenarios: b) multipathd might have missed both a
-"remove" and a subsequent "add" uevent for the device in question; c)
-the admin may have played with the udev rules, and solicited change
-uevents manually.
-
-In case b), doing what my patch does is obviously the right thing. In case
-c), the right thing would be throwing slimy stinking things at the admin,
-but as we can't do that, removing and re-adding seems still more reasonable
-than pretending the path was faulty. Even in case a), removing the path
-from the current map is no worse than failing it.
-
-What remains to be considered is what Ben was dealing with in his latest set,
-a permanent or temporary failure to retrieve the WWID, resulting in a 0-length
-WWID to be returned. IMO it's actually the best thing about this new approach
-that this doesn't need to be special-cased. The path initialization logic
-that we already have would take care of it using the INIT_MISSING_UDEV logic.
-Either the WWID would be successfully retrieved eventually, in which case the
-path would be re-added to the previous map, or (depending on configuration)
-added to a new map or left alone. Or the failure is permanent, in which case
-multipathd would eventually give up and orphan the path. AFAICS this would
-be the "right thing" to do in all these different cases, without any
-additional logic.
-
-Note also that if a "reconfigure" was carried out in the presence of
-paths with changed WWID, the final outcome would likely be the same that
-my patch now achieves without "reconfigure".
-
-I case I've come to the wrong conclusions because I overlooked something
-essential, please tell me.
-
-Going one step futher, I've actually come to think differently about the
-"fallback logic" for the case that no WWID can be obtained from udev. I
-believe now that such fallback logic should _not_ be used. The point is not
-to derive _some_ WWID, but _the right one_, and that's udev's job. But udev
-can be customized in complex ways that multipathd has no idea about.
-In the worst case, we'd receive some WWIDs from udev and some from our
-own logic, and combine paths into a map which wouldn't acutally belong
-together. Therefore I vote for ripping out the fallback logic altogether
-and depend on udev exclusively for WWID generation. I haven't included this
-in the current patch set in order not to make it too controversial.
-
-The only purpose for the fallback logic that I could see is to provide
-a configuration option to force multipathd to _always_ determine the
-WWID by itself, ignoring udev device properties.
-
-Regards
-Martin
-
-Martin Wilck (3):
-  multipathd: handle changed wwids by removal and addition
-  multipathd: remove "wwid_changed" path attribute
-  multipathd: ignore "disable_changed_wwids"
-
- libmultipath/config.c      |  1 -
- libmultipath/config.h      |  1 -
- libmultipath/dict.c        | 18 +++++++--
- libmultipath/structs.h     |  1 -
- multipath/multipath.conf.5 |  8 +---
- multipathd/main.c          | 77 +++++++++++++++++++-------------------
- 6 files changed, 55 insertions(+), 51 deletions(-)
-
+diff --git a/multipathd/main.c b/multipathd/main.c
+index fb520b64..bd26209d 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1184,13 +1184,22 @@ fail:
+ 	return 1;
+ }
+ 
++static bool is_wwid_changed(const struct path *pp, const char *old_wwid)
++{
++	bool wwid_changed = (strncmp(old_wwid, pp->wwid, WWID_SIZE) != 0);
++
++	if (wwid_changed)
++		condlog(1, "%s: WWID changed from \"%s\" to \"%s\"",
++			pp->dev, old_wwid, pp->wwid);
++	return wwid_changed;
++}
++
+ static int
+ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ {
+ 	int ro, retval = 0, rc;
+ 	struct path * pp;
+ 	struct config *conf;
+-	int disable_changed_wwids;
+ 	int needs_reinit = 0;
+ 
+ 	switch ((rc = change_foreign(uev->udev))) {
+@@ -1208,12 +1217,6 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 		break;
+ 	}
+ 
+-	conf = get_multipath_config();
+-	disable_changed_wwids = conf->disable_changed_wwids;
+-	put_multipath_config(conf);
+-
+-	ro = uevent_get_disk_ro(uev);
+-
+ 	pthread_cleanup_push(cleanup_lock, &vecs->lock);
+ 	lock(&vecs->lock);
+ 	pthread_testcancel();
+@@ -1221,7 +1224,7 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
+ 	if (pp) {
+ 		struct multipath *mpp = pp->mpp;
+-		char wwid[WWID_SIZE];
++		bool wwid_changed;
+ 
+ 		if (pp->initialized == INIT_REQUESTED_UDEV) {
+ 			needs_reinit = 1;
+@@ -1232,36 +1235,38 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 		if (!strlen(pp->wwid))
+ 			goto out;
+ 
+-		strcpy(wwid, pp->wwid);
+-		get_uid(pp, pp->state, uev->udev);
+-
+-		if (strncmp(wwid, pp->wwid, WWID_SIZE) != 0) {
+-			condlog(0, "%s: path wwid changed from '%s' to '%s'. %s",
+-				uev->kernel, wwid, pp->wwid,
+-				(disable_changed_wwids ? "disallowing" :
+-				 "continuing"));
+-			strcpy(pp->wwid, wwid);
+-			if (disable_changed_wwids) {
+-				if (!pp->wwid_changed) {
+-					pp->wwid_changed = 1;
+-					pp->tick = 1;
+-					if (pp->mpp)
+-						dm_fail_path(pp->mpp->alias, pp->dev_t);
+-				}
+-				goto out;
+-			}
++		if (pp->mpp) {
++			get_uid(pp, pp->state, uev->udev);
++			wwid_changed = is_wwid_changed(pp, pp->mpp->wwid);
+ 		} else {
+-			pp->wwid_changed = 0;
++			char *old_wwid = strdup(pp->wwid);
++
++			if (!old_wwid)
++				goto out;
++			pthread_cleanup_push(free, (void*)old_wwid);
++			wwid_changed = is_wwid_changed(pp, old_wwid);
++			pthread_cleanup_pop(1);
++		}
++
++		if (wwid_changed) {
++			ev_remove_path(pp, vecs, 1);
++			needs_reinit = 1;
++			goto out;
++		}
++
++		if (pp->udev != uev->udev) {
+ 			udev_device_unref(pp->udev);
+ 			pp->udev = udev_device_ref(uev->udev);
+-			conf = get_multipath_config();
+-			pthread_cleanup_push(put_multipath_config, conf);
+-			if (pathinfo(pp, conf, DI_SYSFS|DI_NOIO) != PATHINFO_OK)
+-				condlog(1, "%s: pathinfo failed after change uevent",
+-					uev->kernel);
+-			pthread_cleanup_pop(1);
+ 		}
+ 
++		conf = get_multipath_config();
++		pthread_cleanup_push(put_multipath_config, conf);
++		if (pathinfo(pp, conf, DI_SYSFS|DI_NOIO) != PATHINFO_OK)
++			condlog(1, "%s: pathinfo failed after change uevent",
++				uev->kernel);
++		pthread_cleanup_pop(1);
++
++		ro = uevent_get_disk_ro(uev);
+ 		if (mpp && ro >= 0) {
+ 			condlog(2, "%s: update path write_protect to '%d' (uevent)", uev->kernel, ro);
+ 
 -- 
 2.21.0
