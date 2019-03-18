@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 08/10] libmultipath: tidy up do_set_from_hwe()
-	with statement expression
-Date: Mon, 18 Mar 2019 12:24:43 +0100
-Message-ID: <20190318112445.6636-9-mwilck@suse.com>
+Subject: [PATCH v3 05/10] libmultipath: detect_alua(): use system
+	timeout
+Date: Mon, 18 Mar 2019 12:24:40 +0100
+Message-ID: <20190318112445.6636-6-mwilck@suse.com>
 References: <20190318112445.6636-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,62 +19,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>, Hannes Reinecke <hare@suse.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-propsel.c has a lot of "funky" macros making assumptions about
-variable and label names in callers. This one is particularly
-ugly. As a first tidy-up step, split out a statement expression
-which can be called cleanly from code that doesn't have said
-variables and labels.
+This is not the path checker - we don't need to use the
+configured checker timeout here. This makes it possible to
+call this function without a current (struct config *).
 
-Cc: Hannes Reinecke <hare@suse.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/propsel.c | 22 +++++++++++++++-------
- 1 file changed, 15 insertions(+), 7 deletions(-)
+ libmultipath/discovery.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 27474f05..caf55b68 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -45,22 +45,30 @@ do {									\
- 	}								\
- } while(0)
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 270dedc9..b2a43e86 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -833,11 +833,14 @@ get_serial (char * str, int maxlen, int fd)
+ }
  
--#define do_set_from_vec(type, var, src, dest, msg)			\
--do {									\
-+#define __do_set_from_vec(type, var, src, dest)				\
-+({									\
- 	type *_p;							\
-+	bool _found = false;						\
- 	int i;								\
- 									\
- 	vector_foreach_slot(src, _p, i) {				\
- 		if (_p->var) {						\
- 			dest = _p->var;					\
--			origin = msg;					\
--			goto out;					\
-+			_found = true;					\
-+			break;						\
- 		}							\
- 	}								\
--} while (0)
-+	_found;								\
-+})
+ static void
+-detect_alua(struct path * pp, struct config *conf)
++detect_alua(struct path * pp)
+ {
+ 	int ret;
+ 	int tpgs;
+-	unsigned int timeout = conf->checker_timeout;
++	unsigned int timeout;
 +
-+#define __do_set_from_hwe(var, src, dest) \
-+	__do_set_from_vec(struct hwentry, var, (src)->hwe, dest)
++	if (sysfs_get_timeout(pp, &timeout) <= 0)
++		timeout = DEF_TIMEOUT;
  
--#define do_set_from_hwe(var, src, dest, msg) \
--	do_set_from_vec(struct hwentry, var, src->hwe, dest, msg)
-+#define do_set_from_hwe(var, src, dest, msg)				\
-+	if (__do_set_from_hwe(var, src, dest)) {			\
-+		origin = msg;						\
-+		goto out;						\
-+	}
+ 	if ((tpgs = get_target_port_group_support(pp, timeout)) <= 0) {
+ 		pp->tpgs = TPGS_NONE;
+@@ -1519,7 +1522,7 @@ scsi_ioctl_pathinfo (struct path * pp, struct config *conf, int mask)
+ 	const char *attr_path = NULL;
  
- static const char default_origin[] = "(setting: multipath internal)";
- static const char hwe_origin[] =
+ 	if (pp->tpgs == TPGS_UNDEF)
+-		detect_alua(pp, conf);
++		detect_alua(pp);
+ 
+ 	if (!(mask & DI_SERIAL))
+ 		return;
 -- 
 2.21.0
