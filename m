@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 07/10] libmultipath: don't link alua_rtpg.o
-	twice
-Date: Mon, 18 Mar 2019 12:24:42 +0100
-Message-ID: <20190318112445.6636-8-mwilck@suse.com>
+Subject: [PATCH v3 10/10] libmultipath: hwtable: add Lenovo DE
+	series
+Date: Mon, 18 Mar 2019 12:24:45 +0100
+Message-ID: <20190318112445.6636-11-mwilck@suse.com>
 References: <20190318112445.6636-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,30 +19,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, dm-devel@redhat.com, xose.vazquez@gmail.com, Martin Wilck <mwilck@suse.com>, Steve.Schremmer@netapp.com
 List-Id: dm-devel.ids
 
-We link this already to libmultipath.so. Therefore, no need
-to link ti to libprioalua.so, too.
+I got this from Steven.
 
+Cc: Steve.Schremmer@netapp.com
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+Cc: xose.vazquez@gmail.com
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/prioritizers/Makefile | 3 ---
- 1 file changed, 3 deletions(-)
+ libmultipath/hwtable.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
 
-diff --git a/libmultipath/prioritizers/Makefile b/libmultipath/prioritizers/Makefile
-index 4d80c20c..9d0fe03c 100644
---- a/libmultipath/prioritizers/Makefile
-+++ b/libmultipath/prioritizers/Makefile
-@@ -28,9 +28,6 @@ endif
- 
- all: $(LIBS)
- 
--libprioalua.so: alua.o alua_rtpg.o
--	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
--
- libpriopath_latency.so: path_latency.o  ../checkers/libsg.o
- 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^ -lm
- 
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index d3a8d9ba..b8285818 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -701,6 +701,26 @@ static struct hwentry default_hw[] = {
+ 		.no_path_retry = (300 / DEFAULT_CHECKINT),
+ 		.prio_name     = PRIO_ALUA,
+ 	},
++        /*
++         * Lenovo
++         */
++        {
++                /*
++		 * DE Series
++		 *
++		 * Maintainer: ng-eseries-upstream-maintainers@netapp.com
++		 */
++                .vendor        = "LENOVO",
++                .product       = "DE_Series",
++                .bl_product    = "Universal Xport",
++                .pgpolicy      = GROUP_BY_PRIO,
++                .checker_name  = RDAC,
++                .features      = "2 pg_init_retries 50",
++                .hwhandler     = "1 rdac",
++                .prio_name     = PRIO_RDAC,
++                .pgfailback    = -FAILBACK_IMMEDIATE,
++                .no_path_retry = 30,
++        },
+ 	/*
+ 	 * NetApp
+ 	 */
 -- 
 2.21.0
