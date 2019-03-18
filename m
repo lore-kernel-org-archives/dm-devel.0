@@ -1,16 +1,16 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH v2 01/12] libmultipath: disable
- user_friendly_names for NetApp
-Date: Sun, 17 Mar 2019 16:04:20 +0100
-Message-ID: <f0ff0f72-e1f8-4b24-308b-7ba044b37a09@gmail.com>
-References: <1552086725-18476-1-git-send-email-bmarzins@redhat.com>
-	<1552086725-18476-2-git-send-email-bmarzins@redhat.com>
+From: Hannes Reinecke <hare@suse.com>
+Subject: Re: [PATCH v2 8/9] libmultipath: check_rdac(): pre-check
+	in hwtable
+Date: Mon, 18 Mar 2019 08:10:18 +0100
+Message-ID: <c4c50690-714e-7350-34cd-cab69876c765@suse.com>
+References: <20190315171930.28335-1-mwilck@suse.com>
+	<20190315171930.28335-9-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1552086725-18476-2-git-send-email-bmarzins@redhat.com>
-Content-Language: en-GB
+In-Reply-To: <20190315171930.28335-9-mwilck@suse.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,37 +20,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, dm-devel@redhat.com, Steve.Schremmer@netapp.com
 List-Id: dm-devel.ids
 
-On 3/9/19 12:11 AM, Benjamin Marzinski wrote:
-
-> NetApp has tools that rely on devices using WWID names. To avoid
-> breaking these, NetApp devices should continue to use WWID names, even
-> if the default config is set to enable user_friendly_names. If users
-> want to use user_friendly_names on NetApp devices, the must specifically
-> override the device config.
-> 
-> Reviewed-by: Martin Wilck <mwilck@suse.com>
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  libmultipath/hwtable.c | 1 +
->  1 file changed, 1 insertion(+)
-> 
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index d3a8d9b..8776411 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -719,6 +719,7 @@ static struct hwentry default_hw[] = {
->  		.flush_on_last_del = FLUSH_ENABLED,
->  		.dev_loss      = MAX_DEV_LOSS_TMO,
->  		.prio_name     = PRIO_ONTAP,
-                /* WWID names needed by NetApp tool ... */
-> +		.user_friendly_names = USER_FRIENDLY_NAMES_OFF,
->  	},
->  	{
->  		/*
-> 
-
-A minimal explanation should be added for a quick reference.
+T24gMy8xNS8xOSA2OjE5IFBNLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4gQ3VycmVudGx5IGNoZWNr
+X3JkYWMoKSBhbHdheXMgcnVucyBhbiBTR19JTyBmb3IgVlBEIDB4YzkgdG8gY2hlY2sKPiBpZiB0
+aGUgc3RvcmFnZSBzdXBwb3J0cyBSREFDLiBUaGlzIGlzIGFuIGV4dHJhIElPLCBhbmQgbWF5IGNh
+dXNlCj4gYW5ub3lpbmcgZXJyb3IgbWVzc2FnZXMgb24gdGhlIHN0b3JhZ2Ugc2lkZSBmb3Igbm9u
+LVJEQUMgYXJyYXlzLgo+IERvIHRoZSBSREFDIG92ZXJyaWRlIG9ubHkgZm9yIGFycmF5cyB0aGF0
+IGhhdmUgbGVnYWN5IGNvbmZpZ3VyYXRpb24KPiB0byB1c2UgdGhlIHJkYWMgY2hlY2tlci4KPiAK
+PiBDYzogU3RldmUuU2NocmVtbWVyQG5ldGFwcC5jb20KPiBDYzogTmV0QXBwIFJEQUMgdGVhbSA8
+bmctZXNlcmllcy11cHN0cmVhbS1tYWludGFpbmVyc0BuZXRhcHAuY29tPgo+IENjOiBIYW5uZXMg
+UmVpbmVja2UgPGhhcmVAc3VzZS5jb20+Cj4gU2lnbmVkLW9mZi1ieTogTWFydGluIFdpbGNrIDxt
+d2lsY2tAc3VzZS5jb20+Cj4gLS0tCj4gICBsaWJtdWx0aXBhdGgvcHJvcHNlbC5jIHwgOCArKysr
+KysrKwo+ICAgMSBmaWxlIGNoYW5nZWQsIDggaW5zZXJ0aW9ucygrKQo+IAo+IGRpZmYgLS1naXQg
+YS9saWJtdWx0aXBhdGgvcHJvcHNlbC5jIGIvbGlibXVsdGlwYXRoL3Byb3BzZWwuYwo+IGluZGV4
+IDI3NDc0ZjA1Li44YzA4YTVjYyAxMDA2NDQKPiAtLS0gYS9saWJtdWx0aXBhdGgvcHJvcHNlbC5j
+Cj4gKysrIGIvbGlibXVsdGlwYXRoL3Byb3BzZWwuYwo+IEBAIC00NzAsOSArNDcwLDE3IEBAIGNo
+ZWNrX3JkYWMoc3RydWN0IHBhdGggKiBwcCkKPiAgIHsKPiAgIAlpbnQgbGVuOwo+ICAgCWNoYXIg
+YnVmZls0NF07Cj4gKwljb25zdCBjaGFyICpjaGVja2VyX25hbWUgPSBOVUxMOwo+ICsJLyogZHVt
+bXksIGZvciBkb19zZXRfZnJvbV9od2UgKi8KPiArCWNvbnN0IGNoYXIgKm9yaWdpbiBfX2F0dHJp
+YnV0ZV9fKCh1bnVzZWQpKTsKPiAgIAo+ICAgCWlmIChwcC0+YnVzICE9IFNZU0ZTX0JVU19TQ1NJ
+KQo+ICAgCQlyZXR1cm4gMDsKPiArCS8qIEF2b2lkIGlvY3RsIGlmIHRoaXMgaXMgbGlrZWx5IG5v
+dCBhbiBSREFDIGFycmF5ICovCj4gKwlkb19zZXRfZnJvbV9od2UoY2hlY2tlcl9uYW1lLCBwcCwg
+Y2hlY2tlcl9uYW1lLCBOVUxMKTsKPiArb3V0OiAgICAvKiBmb3IgZG9fc2V0X2Zyb21faHdlICov
+Cj4gKwlpZiAoIWNoZWNrZXJfbmFtZSB8fCBzdHJjbXAoY2hlY2tlcl9uYW1lLCBSREFDKSkKPiAr
+CQlyZXR1cm4gMDsKPiAgIAlsZW4gPSBnZXRfdnBkX3NnaW8ocHAtPmZkLCAweEM5LCBidWZmLCA0
+NCk7Cj4gICAJaWYgKGxlbiA8PSAwKQo+ICAgCQlyZXR1cm4gMDsKPiAKKm9yaWdpbj8gZHVtbXkg
+Zm9yIGRvX3NldF9mcm9tX2h3ZSgpPwpXaGF0IGZ1bmt5IGludGVyZmFjZSBpcyB0aGF0PwoKUGxl
+YXNlIHJlZGVzaWduIGRvX3NldF9mcm9tX2h3ZSgpIHNvIGFzIF9ub3RfIHRvIHJlcXVpcmUgJ21h
+Z2ljJyB2YXJpYWJsZXMuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJ
+CSAgICAgICAgICAgICAgIHpTZXJpZXMgJiBTdG9yYWdlCmhhcmVAc3VzZS5jb20JCQkgICAgICAg
+ICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIuIDUs
+IDkwNDA5IE7DvHJuYmVyZwpHRjogRi4gSW1lbmTDtnJmZmVyLCBKLiBTbWl0aGFyZCwgRC4gVXBt
+YW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFp
+bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWls
+bWFuL2xpc3RpbmZvL2RtLWRldmVs
