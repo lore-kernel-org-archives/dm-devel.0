@@ -1,16 +1,15 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v3 05/10] libmultipath: detect_alua(): use
-	system timeout
-Date: Tue, 19 Mar 2019 13:36:58 -0500
-Message-ID: <20190319183658.GK13295@octiron.msp.redhat.com>
+Subject: Re: [PATCH v3 00/10] multipath-tools: avoid I/O during
+ uevent processing
+Date: Tue, 19 Mar 2019 13:37:46 -0500
+Message-ID: <20190319183746.GL13295@octiron.msp.redhat.com>
 References: <20190318112445.6636-1-mwilck@suse.com>
-	<20190318112445.6636-6-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20190318112445.6636-6-mwilck@suse.com>
+In-Reply-To: <20190318112445.6636-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,56 +23,63 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 18, 2019 at 12:24:40PM +0100, Martin Wilck wrote:
-> This is not the path checker - we don't need to use the
-> configured checker timeout here. This makes it possible to
-> call this function without a current (struct config *).
-
-I feel like checker_timeout is badly named, since we use if for a lot of
-timeouts that aren't in the checker.  In general, I feel like we should
-allow users to configure how long they want these sorts of calls to wait
-for a response. I get why you changed this, but it may be worth thinking
-about if we should deal with this timeout like we deal with verbosity,
-where, we track it outside of the config structure.
-
-But that doesn't need to be dealt with now, so
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com> 
- 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/discovery.c | 9 ++++++---
->  1 file changed, 6 insertions(+), 3 deletions(-)
+On Mon, Mar 18, 2019 at 12:24:35PM +0100, Martin Wilck wrote:
+> Hi Christophe, hi Ben,
 > 
-> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-> index 270dedc9..b2a43e86 100644
-> --- a/libmultipath/discovery.c
-> +++ b/libmultipath/discovery.c
-> @@ -833,11 +833,14 @@ get_serial (char * str, int maxlen, int fd)
->  }
+> the bulk of this series attempts to avoid unnecessary I/O for "multipath -u"
+> calls from udev rules. I came up with it in a recent attempt to debug
+> avoid "multipath -u" hangups during boot. I found that the detect_alua()
+> call in the get_refwwid->pathinfo->scsi_ioctl_pathinfo call sequence would
+> cause an sg ioctl to be sent for every "multipath -u" invocation. That's
+> obvious nonsense, we don't need to detect ALUA capabilities to find out
+> if a device is a potential multipath member.
+> 
+> So, rather than setting pp->tpgs in pathinfo, I resorted to a "lazy"
+> approach where ALUA capabilities are probed when they are needed, no
+> sooner. I also cleaned up the ALUA code a bit (still some more to go),
+> and made it attempt to read INQUIRY data from sysfs.
+> 
+> Regards,
+> Martin
+
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+
+for the set.
+ 
+> Changes v2->v3:
+> 
+>  - added 8/10 "tidy up do_set_from_hwe() with statement expression"
+>    (Hannes), renumber subsequent patches accordingly.
+>  - 9/10: cleanup ugly macro usage; do retrieve VPD for "unknown"
+>    SCSI storage devices
 >  
->  static void
-> -detect_alua(struct path * pp, struct config *conf)
-> +detect_alua(struct path * pp)
->  {
->  	int ret;
->  	int tpgs;
-> -	unsigned int timeout = conf->checker_timeout;
-> +	unsigned int timeout;
-> +
-> +	if (sysfs_get_timeout(pp, &timeout) <= 0)
-> +		timeout = DEF_TIMEOUT;
->  
->  	if ((tpgs = get_target_port_group_support(pp, timeout)) <= 0) {
->  		pp->tpgs = TPGS_NONE;
-> @@ -1519,7 +1522,7 @@ scsi_ioctl_pathinfo (struct path * pp, struct config *conf, int mask)
->  	const char *attr_path = NULL;
->  
->  	if (pp->tpgs == TPGS_UNDEF)
-> -		detect_alua(pp, conf);
-> +		detect_alua(pp);
->  
->  	if (!(mask & DI_SERIAL))
->  		return;
+> Changes v1->v2:
+> 
+>  - 6/9: remove one remaining direct access to pp->tpgs
+>  - 9/9: use non-personal email address for maintainer
+> 
+> Martin Wilck (10):
+>   libmultipath: add sysfs_get_inquiry()
+>   libmultipath: alua: make API more consistent
+>   libmultipath: alua: try to retrieve inquiry data from sysfs
+>   libmultipath: constify sysfs_get_timeout()
+>   libmultipath: detect_alua(): use system timeout
+>   libmultipath: lazy tpgs probing
+>   libmultipath: don't link alua_rtpg.o twice
+>   libmultipath: tidy up do_set_from_hwe() with statement expression
+>   libmultipath: check_rdac(): pre-check in hwtable
+>   libmultipath: hwtable: add Lenovo DE series
+> 
+>  libmultipath/discovery.c              | 46 +++++++++++++++++-------
+>  libmultipath/discovery.h              | 10 +++---
+>  libmultipath/hwtable.c                | 20 +++++++++++
+>  libmultipath/prioritizers/Makefile    |  3 --
+>  libmultipath/prioritizers/alua.c      |  4 +--
+>  libmultipath/prioritizers/alua_rtpg.c | 45 +++++++++++++++++------
+>  libmultipath/prioritizers/alua_rtpg.h |  7 ++--
+>  libmultipath/propsel.c                | 52 ++++++++++++++++++---------
+>  multipathd/main.c                     |  7 ++--
+>  9 files changed, 139 insertions(+), 55 deletions(-)
+> 
 > -- 
 > 2.21.0
