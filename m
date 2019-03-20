@@ -1,90 +1,181 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH v3 0/6] dm snapshot: Improve performance using a more
- fine-grained locking scheme
-Date: Wed, 20 Mar 2019 15:06:29 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1903201506020.17844@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20190317122258.21760-1-ntsironis@arrikto.com>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: Re: [dm-devel] [PATCH 1/3] list_bl: Add hlist_bl_add_before/behind
+ helpers
+Date: Wed, 20 Mar 2019 22:25:48 +0200
+Message-ID: <f5d715d6-7300-eccb-a67a-fc3a41b537db@arrikto.com>
+References: <20181220180651.4879-1-ntsironis@arrikto.com>
+ <20181220180651.4879-2-ntsironis@arrikto.com>
+ <20190228213201.GB23527@redhat.com> <20190313234853.GA7797@linux.ibm.com>
+ <20190314003027.GE4202@redhat.com>
+ <f70ea4c9-658d-5770-be7f-a1a97bb67643@arrikto.com>
+ <20190314140750.GB4102@linux.ibm.com> <20190314150306.GA22051@linux.ibm.com>
+ <ad704078-1a28-5726-c428-7be19dbe2466@arrikto.com>
+ <20190318171640.GM4102@linux.ibm.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190317122258.21760-1-ntsironis@arrikto.com>
+In-Reply-To: <20190318171640.GM4102@linux.ibm.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Nikos Tsironis <ntsironis@arrikto.com>
-Cc: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com, paulmck@linux.ibm.com, hch@infradead.org, iliastsi@arrikto.com, linux-kernel@vger.kernel.org
+To: paulmck@linux.ibm.com
+Cc: Mike Snitzer <snitzer@redhat.com>, hch@infradead.org, agk@redhat.com, dm-devel@redhat.com, mpatocka@redhat.com, iliastsi@arrikto.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
+On 3/18/19 7:16 PM, Paul E. McKenney wrote:
+> On Sun, Mar 17, 2019 at 01:52:50PM +0200, Nikos Tsironis wrote:
+>> On 3/14/19 5:03 PM, Paul E. McKenney wrote:
+>>> On Thu, Mar 14, 2019 at 07:07:50AM -0700, Paul E. McKenney wrote:
+>>>> On Thu, Mar 14, 2019 at 03:28:23PM +0200, Nikos Tsironis wrote:
+>>>>> On 3/14/19 2:30 AM, Mike Snitzer wrote:
+>>>>>> On Wed, Mar 13 2019 at  7:48pm -0400,
+>>>>>> Paul E. McKenney <paulmck@linux.ibm.com> wrote:
+>>>>>>
+>>>>> Hi Paul,
+>>>>>
+>>>>> Thanks a lot for your feedback!
+>>>>
+>>>> NP, and apologies for the delay.
+>>>>
+>>>>>>> On Thu, Feb 28, 2019 at 04:32:02PM -0500, Mike Snitzer wrote:
+>>>>>>>> On Thu, Dec 20 2018 at  1:06pm -0500,
+>>>>>>>> Nikos Tsironis <ntsironis@arrikto.com> wrote:
+>>>>>>>>
+>>>>>>>>> Add hlist_bl_add_before/behind helpers to add an element before/after an
+>>>>>>>>> existing element in a bl_list.
+>>>>>>>>>
+>>>>>>>>> Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+>>>>>>>>> Signed-off-by: Ilias Tsitsimpis <iliastsi@arrikto.com>
+>>>>>>>>> ---
+>>>>>>>>>  include/linux/list_bl.h | 27 +++++++++++++++++++++++++++
+>>>>>>>>>  1 file changed, 27 insertions(+)
+>>>>>>>>>
+>>>>>>>>> diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
+>>>>>>>>> index 3fc2cc57ba1b..2fd918e5fd48 100644
+>>>>>>>>> --- a/include/linux/list_bl.h
+>>>>>>>>> +++ b/include/linux/list_bl.h
+>>>>>>>>> @@ -86,6 +86,33 @@ static inline void hlist_bl_add_head(struct hlist_bl_node *n,
+>>>>>>>>>  	hlist_bl_set_first(h, n);
+>>>>>>>>>  }
+>>>>>>>>>  
+>>>>>>>>> +static inline void hlist_bl_add_before(struct hlist_bl_node *n,
+>>>>>>>>> +				       struct hlist_bl_node *next)
+>>>>>>>>> +{
+>>>>>>>>> +	struct hlist_bl_node **pprev = next->pprev;
+>>>>>>>>> +
+>>>>>>>>> +	n->pprev = pprev;
+>>>>>>>>> +	n->next = next;
+>>>>>>>>> +	next->pprev = &n->next;
+>>>>>>>>> +
+>>>>>>>>> +	/* pprev may be `first`, so be careful not to lose the lock bit */
+>>>>>>>>> +	WRITE_ONCE(*pprev,
+>>>>>>>>> +		   (struct hlist_bl_node *)
+>>>>>>>>> +			((unsigned long)n |
+>>>>>>>>> +			 ((unsigned long)*pprev & LIST_BL_LOCKMASK)));
+>>>>>>>
+>>>>>>> A nit, but use of uintptr_t shrinks things a bit:
+>>>>>>>
+>>>>>>> +		   (struct hlist_bl_node *)
+>>>>>>> +			((uintptr_t)n | ((uintptr_t)*pprev & LIST_BL_LOCKMASK)));
+>>>>>>>
+>>>>>>> I am not too concerned about this, though.
+>>>>>>
+>>>>>> I'm fine with folding in your suggestion.
+>>>>>
+>>>>> Indeed, this looks better.
+>>>>>
+>>>>>>> The WRITE_ONCE() is to handle races with hlist_bl_empty() (which does contain
+>>>>>>> the corresponding READ_ONCE()) correct?
+>>>>>>
+>>>>>> Correct.
+>>>>>
+>>>>> Yes that's correct.
+>>>>>
+>>>>>>>>> +}
+>>>>>>>>> +
+>>>>>>>>> +static inline void hlist_bl_add_behind(struct hlist_bl_node *n,
+>>>>>>>>> +				       struct hlist_bl_node *prev)
+>>>>>>>>> +{
+>>>>>>>>> +	n->next = prev->next;
+>>>>>>>>> +	n->pprev = &prev->next;
+>>>>>>>>> +	WRITE_ONCE(prev->next, n);
+>>>>>>>
+>>>>>>> I don't see what this WRITE_ONCE() is interacting with.  The traversals
+>>>>>>> use plain C-language reads, and hlist_bl_empty() can't get here.  All
+>>>>>>> uses of hlist_bl_for_each_entry() invoke hlist_bl_lock() before starting
+>>>>>>> the traversal, and hlist_bl_for_each_entry_safe() looks to be unused.
+>>>>>>> (Perhaps it should be removed?  Or is there some anticipated use?)
+>>>>>
+>>>>> I am using hlist_bl_for_each_entry_safe() in this proposed patch for
+>>>>> dm-snapshot: https://patchwork.kernel.org/patch/10835709/
+>>>>
+>>>> Probably should keep it, then.  ;-)
+>>>>
+>>>>>>>
+>>>>>>> I don't believe that the WRITE_ONCE() is needed.  What am I missing?
+>>>>>>>
+>>>>>>> Other than that, looks good.
+>>>>>>>
+>>>>>>> 							Thanx, Paul
+>>>>>>>
+>>>>>>
+>>>>>> I'd imagine it was just born out of symmetry with hlist_bl_add_before()
+>>>>>> and/or caution.  But let's see what Nikos has to say.
+>>>>>
+>>>>> I also don't believe that this WRITE_SAME() is needed. But, looking at
+>>>>> hlist_add_behind() in include/linux/list.h, which, if I am not missing
+>>>>> something, is used in the same way as hlist_bl_add_behind(), it also
+>>>>> uses WRITE_ONCE() to update prev->next:
+>>>>>
+>>>>> static inline void hlist_add_behind(struct hlist_node *n,
+>>>>> 				    struct hlist_node *prev)
+>>>>> {
+>>>>> 	n->next = prev->next;
+>>>>> 	WRITE_ONCE(prev->next, n);
+>>>>> 	n->pprev = &prev->next;
+>>>>>
+>>>>> 	if (n->next)
+>>>>> 		n->next->pprev  = &n->next;
+>>>>> }
+>>>>>
+>>>>> Could it be the case that the WRITE_ONCE() in hlist_add_behind() is also
+>>>>> not needed? This WRITE_ONCE() was introduced by commit 1c97be677f72b3
+>>>>> ("list: Use WRITE_ONCE() when adding to lists and hlists").
+>>>>
+>>>> Looks like I have no one to blame but myself!
+>>>>
+>>>> Would you like to remove that as part of your patch series?
+>>>>
+>>>>> But, since I am not an expert in lockless programming, I opted to be on
+>>>>> the safe side and followed the example of hlist_add_behind().
+>>>>>
+>>>>> That said, I will follow up with a new version of the patch removing the
+>>>>> WRITE_ONCE() and using uintptr_t instead of unsigned long.
+>>>>
+>>>> Sounds good!
+>>>
+>>> Oh, and of course intptr_t is one character shorter than uintptr_t, and
+>>> looks to work just as well in this context.  ;-)
+>>>
+>>> 							Thanx, Paul
+>>>
+>>
+>>
+>> Hi Paul,
+>>
+>> Sorry for the late reply.
+>>
+>> intptr_t seems to be defined only in a header file under arch/mips, so I
+>> will stick to uintptr_t.
+> 
+> Ah, apologies for the misdirection!  Hmmm...  Maybe intptr_t should be
+> added alongside uintptr_t?  Saving a character is saving a character.  ;-)
+> 
+> 							Thanx, Paul
+> 
 
-Acked-by: Mikulas Patocka <mpatocka@redhat.com>
+I will follow up with an unrelated patch to add intptr_t to
+include/linux/types.h, so that it is available in subsequent patches
+throughout the kernel.
 
-
-
-On Sun, 17 Mar 2019, Nikos Tsironis wrote:
-
-> dm-snapshot uses a single mutex to serialize every access to the
-> snapshot state, including accesses to the exception hash tables. This
-> mutex is a bottleneck preventing dm-snapshot to scale as the number of
-> threads doing IO increases.
-> 
-> The major contention points are __origin_write()/snapshot_map() and
-> pending_complete(), i.e., the submission and completion of pending
-> exceptions.
-> 
-> This patchset substitutes the single mutex with:
-> 
->   * A read-write semaphore, which protects the mostly read fields of the
->     snapshot structure.
-> 
->   * Per-bucket bit spinlocks, that protect accesses to the exception
->     hash tables.
-> 
-> fio benchmarks using the null_blk device show significant performance
-> improvements as the number of worker processes increases. Write latency
-> is almost halved and write IOPS are nearly doubled.
-> 
-> The relevant patch provides detailed benchmark results.
-> 
-> A summary of the patchset follows:
-> 
->   1. The first patch removes an unnecessary use of WRITE_ONCE() in
->      hlist_add_behind().
-> 
->   2. The second patch adds two helper functions to linux/list_bl.h,
->      which is used to implement the per-bucket bit spinlocks in
->      dm-snapshot.
-> 
->   3. The third patch removes the need to sleep holding the snapshot lock
->      in pending_complete(), thus allowing us to replace the mutex with
->      the per-bucket bit spinlocks.
-> 
->   4. Patches 4, 5 and 6 change the locking scheme, as described
->      previously.
-> 
-> Changes in v3:
->   - Don't use WRITE_ONCE() in hlist_bl_add_behind(), as it's not needed.
->   - Fix hlist_add_behind() to also not use WRITE_ONCE().
->   - Use uintptr_t instead of unsigned long in hlist_bl_add_before().
-> 
-> v2: https://www.redhat.com/archives/dm-devel/2019-March/msg00007.html
-> 
-> Changes in v2:
->   - Split third patch of v1 into three patches: 3/5, 4/5, 5/5.
-> 
-> v1: https://www.redhat.com/archives/dm-devel/2018-December/msg00161.html
-> 
-> Nikos Tsironis (6):
->   list: Don't use WRITE_ONCE() in hlist_add_behind()
->   list_bl: Add hlist_bl_add_before/behind helpers
->   dm snapshot: Don't sleep holding the snapshot lock
->   dm snapshot: Replace mutex with rw semaphore
->   dm snapshot: Make exception tables scalable
->   dm snapshot: Use fine-grained locking scheme
-> 
->  drivers/md/dm-exception-store.h |   3 +-
->  drivers/md/dm-snap.c            | 359 +++++++++++++++++++++++++++-------------
->  include/linux/list.h            |   2 +-
->  include/linux/list_bl.h         |  26 +++
->  4 files changed, 269 insertions(+), 121 deletions(-)
-> 
-> -- 
-> 2.11.0
-> 
+Nikos
