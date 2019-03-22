@@ -1,17 +1,14 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 0/3] New approach at handling changed WWIDs
-Date: Fri, 22 Mar 2019 12:28:56 +0100
-Message-ID: <45b8e5fd8bfe0806a7ef001f3dbb127669ad7789.camel@suse.com>
-References: <20190318121235.8942-1-mwilck@suse.com>
-	<20190319171115.GF13295@octiron.msp.redhat.com>
-	<402a4da867abb74c04511e98623e5abb6b144b7e.camel@suse.com>
-	<5af82a40b76e39542742a3df349d00d32351d7cd.camel@suse.com>
-	<20190321223117.GN13295@octiron.msp.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] dm: rename max_io_len to io_boundary
+Date: Fri, 22 Mar 2019 09:21:02 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1903220916180.23974@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1903211646170.994@file01.intranet.prod.int.rdu2.redhat.com>
+	<CAMeeMh8Sed3ZN5wew6epsNJghzXgQ9Krsku-TSsLEGrHLACTnQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190321223117.GN13295@octiron.msp.redhat.com>
+In-Reply-To: <CAMeeMh8Sed3ZN5wew6epsNJghzXgQ9Krsku-TSsLEGrHLACTnQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,97 +18,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
-Cc: dm-devel@redhat.com
+To: John Dorminy <jdorminy@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE5LTAzLTIxIGF0IDE3OjMxIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gCj4gaWRlYWxseSwgd2Ugd291bGQgYmUgYWJsZSB0byBkZXRlcm1pbmUgd2hldGhlciBv
-ciBub3QgdWRldiB3YXMgYWJsZQo+IHRvCj4gZ2V0IGFsbCB0aGUgbmVjZXNzYXJ5IGluZm9ybWF0
-aW9uLiBJdCB3b3VsZCBiZSBuaWNlIHRvIGJlIG5vdGlmaWVkIGlmCj4gc2NzaV9pZCBmYWlsZWQg
-b3IgdWRldiB0aW1lZCBvdXQuCgpUaGUgbGF0dGVyICh1ZGV2IHRpbWVvdXQpIHdvbid0IHdvcmsg
-d2l0aG91dCBzaWduaWZpY2FudCBjaGFuZ2VzIHRvCnVkZXYvc3lzdGVtZC4gQ3VycmVudGx5IHVk
-ZXZkIHNpbXBseSBraWxscyBoYW5naW5nIHdvcmtlcnMgd2l0aApTSUdLSUxMLCBhbmQgZG9lc24n
-dCBib3RoZXIgdG8gc2VuZCBhbiAiaW5jb21wbGV0ZSB1ZXZlbnQiIG1lc3NhZ2UgdG8KbW9uaXRv
-ciBsaXN0ZW5lcnMuCgpXaGF0IHdlICptaWdodCogZG8gaW4gbXVsdGlwYXRoZCBpcyBsaXN0ZW4g
-Zm9yIGtlcm5lbCB1ZXZlbnRzIF9hbmRfCnVkZXYgdWV2ZW50cywgYW5kIGZpZ3VyaW5nIG91dCBw
-b3NzaWJsZSBwcm9ibGVtcyBieSByZWxhdGluZyBhbmQKY29tcGFyaW5nIHRoZW0uIEl0IHdvdWxk
-IGJlIGEgbm9uLXRyaXZpYWwgdGFzazsgd2UnZCBoYXZlIHRvIGRlYWwgd2l0aAp0aGUgcG9zc2li
-aWxpdHkgdGhhdCBrZXJuZWwgZXZlbnRzIG1pZ2h0IGdldCBsb3N0LCBvciBtaWdodCBoYXZlCmhh
-cHBlbmVkIGJlZm9yZSBtdWx0aXBhdGhkIHdhcyBzdGFydGVkLiBEdXJpbmcgc3RhcnR1cCwgdGhp
-cyB3b3VsZG4ndApoZWxwIHVzLiBSYXRoZXIsIGl0IHdvdWxkIGVuYWJsZSB1cyB0byByZWFjdCBv
-biBldmVudHMgZHVyaW5nIHJ1bnRpbWUKd2hpY2ggd2UgY3VycmVudGx5IG1pc3MuIEkgc2VlIHRo
-aXMgYXMgYSBmZWF0dXJlIGVuaGFuY2VtZW50IC0KcG9zc2libGUsIGJ1dCByZWFsbHkgaGFyZCB0
-byBnZXQgcmlnaHQsIGFuZCBub3QgZGlyZWN0bHkgcmVsYXRlZCB0byB0aGUKcHJvYmxlbXMgd2Ug
-YXJlIGN1cnJlbnRseSBkZWFsaW5nIHdpdGguCgpJZiB3ZSBsb29rIGF0IHVkZXYgaW5mb3JtYXRp
-b24gZm9yIGEgYmxvY2sgZGV2aWNlIChlaXRoZXIgZHVyaW5nIGRldmljZQpwcm9iaW5nIG9yIHVl
-dmVudCBwcm9jZXNzaW5nKSwgYW5kIHRoZSBXV0lEIGlzIG5vdCBzZXQgYnV0IHNvbWUgb3RoZXIK
-cHJvcGVydGllcyAoZS5nLiBJRF9QQVRIKSBhcmUsIHdlIGNhbiBiZSBwcmV0dHkgc3VyZSB0aGF0
-IHNjc2lfaWQgb3IKc2dfaW5xIGhhdmUgZmFpbGVkIGR1cmluZyBwcm9jZXNzaW5nIG9mIHRoZSBs
-YXN0IHVldmVudCBmb3IgdGhhdApkZXZpY2UuIElmLCBpbiB0aGlzIGNhc2UsIHdlIHVzZWQgb3Vy
-IGZhbGxiYWNrIGFjdGlvbiB0byByZXRyaWV2ZSB0aGUKV1dJRCwgd2UnZCBiZSBhYmxlIHRvIGRl
-dGVybWluZSBpZiBpdCB3YXMgYSB2ZXJ5IHNob3J0LWxpdmVkIHByb2JsZW0gb3IKc29tZXRoaW5n
-IG1vcmUgc2VyaW91cy4KIAo+ID4gV2hhdGV2ZXIgd2UgZG8sIHdlIHNob3VsZCBzdG9wIHRyeWlu
-ZyB0byAiZml4IiB0aGUgcGF0aCBXV0lEIGluCj4gPiBkaXNhc3NlbWJsZV9tYXAoKS4gVGhhdCdz
-ICpzbyogYWdhaW5zdCB0aGUgc2VwYXJhdGlvbiBvZiBjb25jZXJucwo+ID4gcHJpbmNpcGxlLiBJ
-biBnZXR1aWQoKSwgd2UgbWlnaHQgY2hlY2sgaWYgYSBwYXRoIHdpdGggbWlzc2luZyBXV0lECj4g
-PiBpcwo+ID4gYWxyZWFkeSBwYXJ0IG9mIGFuIGV4aXN0aW5nIG11bHRpcGF0aCBtYXAsIGFuZCB0
-aGVuIHNldCB0aGUgcGF0aAo+ID4gV1dJRAo+ID4gZnJvbSB0aGUgbWFwIFdXSUQgYXMgc29ydC1v
-ZiBhIGxhc3QgZW1lcmdlbmN5IGZhbGxiYWNrLiBCdXQgdGhhdCwKPiA+IHRvbywKPiA+IHNob3Vs
-ZCBvbmx5IGJlIGRvbmUgZHVyaW5nIHN0YXJ0dXAgKGFzc3VtaW5nIHRoYXQgYSBwcmV2aW91cwo+
-ID4gbXVsdGlwYXRoCj4gPiBvciBtdWx0aXBhdGhkIGluc3RhbmNlIGhhZCBzZXQgdXAgdGhlIG1h
-cCBjb3JyZWN0bHksIGFuZCB0aGF0IHVkZXYKPiA+IGluZm9ybWF0aW9uIGhhZCBiZWVuICJsb3N0
-IiBzaW5jZSB0aGVuKSwgYW5kIG9ubHkgYWZ0ZXIgcmV0cnlpbmcgYXMKPiA+IGRlc2NyaWJlZCBh
-Ym92ZS4KPiAKPiBXZSBkb24ndCB3YW50IHRvIHJlbW92ZSBwYXRocyBmcm9tIG11bHRpcGF0aCBk
-ZXZpY2VzIGJlY2F1c2UKPiBtdWx0aXBhdGhkCj4gc3RhcnRlZCB1cCB3aGVuIHRoZSBwYXRoIHdh
-cyBtaXNzaW5nIHVkZXYgaW5mb3JtYXRpb24uIFRoZSB1ZGV2Cj4gcHJvcGVydGllcyBhcmUgdHJp
-Y2tpZXIsIGJ1dCBpZiB3ZSBzaW1wbHkgaGF2ZSBhIG51bGwgV1dJRCwgaXQgbWFrZXMKPiBzZW5z
-ZSB0byBhbGxvdyBpdCBhcyBhIGxhc3QgcmVzb3J0IGlmIHRoZSBkZXZpY2Ugb3RoZXJ3aXNlIGFw
-cGVhcnMgdG8KPiBoYXZlIHRoZSBzYW1lIHBhdGhzIGFzIGl0IHByZXZpb3VzbHkgZGlkLgoKSSBh
-Z3JlZSwgYnV0IEkgZG9uJ3QgYWdyZWUgd2l0aCBmaWxsaW5nIGluIHBwLT53d2lkIGZyb20gbXBw
-LT53d2lkLgoKPiAgdXNlcnMgY2FuIGFsd2F5cyBydW4KPiAKPiAjIG11bHRpcGF0aCAtZgo+IAo+
-IHRvIHJlbW92ZSB0aGUgZGV2aWNlLiBJZiBpdCBsb29rcyBsaWtlIHNvbWUgb2YgdGhlIHBhdGhz
-IGFyZSBzdXBwb3NlZAo+IHRvCj4gY2hhbmdlIG9uIHRoZSBkZXZpY2UsIHdlIHNob3VsZCBxdWl0
-ZSBwb3NzaWJseSBub3QgaW5jbHVkZSBwYXRocyB3aXRoCj4gYQo+IG51bGwgV1dJRCwgYmVjYXVz
-ZSB3ZSBkb24ndCBrbm93IHdoYXQgaGFzIGNoYW5nZWQuICBCdXQgd2UgY2FuIGRvCj4gdGhpcwo+
-IHNvbWVwbGFjZSBlbHNlIHRoYW4gaW4gZGlzYXNzZW1ibGVfbWFwKCkuIAoKSG93IHdvdWxkIHlv
-dSBkZXRlcm1pbmUgdGhhdCBzb21ldGhpbmcgaXMgInN1cHBvc2VkIHRvIGNoYW5nZSI/Cgo+IAo+
-ID4gTm90ZSB0aGF0IHNpbmNlIGJ5LXByb3BlcnR5IGJsYWNrbGlzdGluZyB3YXMgaW50cm9kdWNl
-ZCBpbiAyMDEzLAo+ID4gc2lnbmlmaWNhbnQgcHJvZ3Jlc3MgaGFzIGJlZW4gbWFkZSBpbiBvdGhl
-ciBhcmVhcy4gV2UgaGF2ZQo+ID4gYmxhY2tsaXN0aW5nCj4gPiBieSB0cmFuc3BvcnQgbm93LCAi
-ZmluZF9tdWx0aXBhdGhzIiwgdGhlICJmYWlsZWRfd3dpZHMiIGxvZ2ljIHRoYXQKPiA+IGF2b2lk
-cyByZXBlYXRlZCBhdHRlbXB0cyBhdCBzZXR0aW5nIHVwIG1hcHMgZm9yIGJ1c3kgZGV2aWNlcywg
-YW5kCj4gPiB0aGUKPiA+IElOSVRfTUlTU0lOR19VREVWIGxvZ2ljIHRvIGRlYWwgd2l0aCBpbmNv
-bXBsZXRlIGluaXRpYWxpemF0aW9uLiBUaGUKPiA+IHVkZXYgcnVsZXMgaGF2ZSBiZWVuIGltcHJv
-dmVkIGFzIHdlbGwuIFNvLCBkb2luZyBhd2F5IHdpdGgKPiA+ICJyZXF1aXJlZAo+ID4gdWRldiBw
-cm9wZXJ0aWVzIiBtYXkgbm90IGJlIHNvIGRhbmdlcm91cywgYWZ0ZXIgYWxsLiAKPiA+IAo+ID4g
-VGhvdWdodHM/Cj4gCj4gQW5vdGhlciBvcHRpb24gd291bGQgYmUgdG8gZG8gc29tZSBleHRyYSB3
-b3JrIGluIHJlY29uZmlndXJlLiAgSWYgd2UKPiBoZWxkIG9uIHRvIHRoZSBvbGQgcGF0aCwgYW5k
-IGNsZWFuZWQgdXAgZXZlcnl0aGluZyBidXQgdGhlIG9sZCB1ZGV2Cj4gZGV2aWNlIGFuZCBmaWxl
-IGRlc2NyaXB0b3IsIHdlIGNvdWxkIGJlIHN1cmUgdGhhdCB0aGUga2VybmVsIHdvdWxkbid0Cj4g
-cmV1c2UgdGhhdCBkZXZpY2UgbWFqb3I6bWlub3Igd2hpbGUgd2Ugd2VyZSByZWNvbmZpZ3VyaW5n
-LiBJZiB3ZSBnb3QKPiBzb21lIHBhdGhzIHdpdGhvdXQgdGhlaXIgdWRldiBpbmZvcm1hdGlvbiwg
-d2Ugd291bGQgaGF2ZSB0aGUgb2xkIHVkZXYKPiBpbmZvcm1hdGlvbiB0byBjaGVjayBhZ2FpbnN0
-IHRoZSBuZXcgY29uZmlnLCB0byBzZWUgaWYgdGhlIGRldmljZQo+IHNob3VsZAo+IGJlIHJlbW92
-ZWQuIEFnYWluLCB0aGlzIHdvcmtzIGJlc3QgaWYgd2UgY291bGQgZGV0ZXJtaW5lIGlmIHdlIHdl
-cmUKPiBtaXNzaW5nIHVkZXYgaW5mb3JtYXRpb24uICBBbHRob3VnaCBpbiB0aGlzIGNhc2Ugd2Ug
-Y291bGQgcHJvYmFibHkKPiBqdXN0Cj4gdXNlIGFueSBwYXRoIHRoYXQgYmVjYW1lIGJsYWNrbGlz
-dGVkIGJlY2F1c2Ugb2Ygbm90IGhhdmluZyB0aGUKPiBuZWNlc3NhcnkKPiBwcm9wZXJ0eSBpbmZv
-cm1hdGlvbi4KCklPVywgd2Ugc2hvdWxkbid0IGJsYWNrbGlzdCB0aGVzZSBwYXRocywgd2hpY2gg
-aXMgd2hhdCBJIHdhcyB0cnlpbmcgdG8Kc2F5LiBZb3VyIGlkZWEgdG8gaG9sZCB0aGUgcmVmZXJl
-bmNlcyB1bnRpbCByZWNvbmZpZ3VyZSgpIGlzIGZpbmlzaGVkCnNvdW5kcyBjbGV2ZXIgdG8gbWUu
-CgpUaGUgaWRlYSBvZiBibGFja2xpc3RpbmctYnktbWlzc2luZy1wcm9wZXJ0aWVzIGlzIHRvIGRl
-dGVybWluZSBpZgpJRF9TRVJJQUwgZm9yIGEgZ2l2ZW4gV1dJRCBpcyBfcmVsaWFibGVfLiBJdCBz
-aG91bGQgYmUgdXNlZCBpZiB3ZSBnZXQgYQpub24temVybyBJRF9TRVJJQUwgYW5kIGF0IHRoZSBz
-YW1lIHRpbWUgbm9uZSBvZiB0aGUgcmVxdWlyZWQKcHJvcGVydGllcywgZS5nLiBJRF9XV04uIElN
-TywgaWYgdGhpcyBpcyB0aGUgY2FzZSwgd2UgY2FuIGJlIGNlcnRhaW4KdGhhdCBzY3NpX2lkIGRp
-ZCAqbm90KiBmYWlsIC0gYWZ0ZXIgYWxsLCBpdCB3YXMgYWJsZSB0byBvYnRhaW4KSURfU0VSSUFM
-LiBPVE9ILCBpZiBuZWl0aGVyIElEX1NFUklBTCBub3IgSURfV1dOIGlzIHNldCwgZmFpbHVyZSB0
-bwphY2Nlc3MgdGhlIGRldmljZSBpcyBsaWtlbHkuIFRodXMgdGhlIHNvbHV0aW9uIGhlcmUgaXMg
-c2ltcGxlOiBXZQpzaG91bGQgYXBwbHkgImJsYWNrbGlzdGluZyBieSBtaXNzaW5nIHByb3BlcnR5
-IiAqb25seSogaWYgSURfU0VSSUFMIGlzCnNldCwgYnV0IElEX1dXTiBpcyBub3QuCgpNYXJ0aW4K
-Ci0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEg
-NzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUg
-U21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgoKLS0KZG0t
-ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0
-LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+
+
+On Thu, 21 Mar 2019, John Dorminy wrote:
+
+> I'm thankful for this change making it explicit that this parameter is
+> not a max IO length but something else. I've been confused by the name
+> more than once when trying to figure out why IOs weren't coming in as
+> large as I expected. I wish there were a way for targets to say "I can
+> accept IO of up to $len" without saying "I want my IO split if it
+> crosses a multiple of $len, no matter what size it is", and I'm
+> thankful for this step making it easier if I ever act on that wish...
+
+If you want to limit the size of incoming bios, you can use 
+dm_accept_partial_bio.
+
+dm_accept_partial_bio accepts a bio and a length. It will reduce the bio 
+to the specified length and send the rest of data in another bio.
+
+See this piece of code in the function crypt_map:
+        /*
+         * Check if bio is too large, split as needed.
+         */
+        if (unlikely(bio->bi_iter.bi_size > (BIO_MAX_PAGES << PAGE_SHIFT)) &&
+            (bio_data_dir(bio) == WRITE || cc->on_disk_tag_size))
+                dm_accept_partial_bio(bio, ((BIO_MAX_PAGES << PAGE_SHIFT) >> SECTOR_SHIFT));
+
+
+Mikulas
