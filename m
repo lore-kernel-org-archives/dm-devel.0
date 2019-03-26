@@ -1,53 +1,83 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 0/3] New approach at handling changed WWIDs
-Date: Tue, 26 Mar 2019 09:21:41 +0100
-Message-ID: <1567203fadd7bec50d0862d99a067dffdd2329e6.camel@suse.com>
-References: <20190318121235.8942-1-mwilck@suse.com>
-	<20190319171115.GF13295@octiron.msp.redhat.com>
-	<402a4da867abb74c04511e98623e5abb6b144b7e.camel@suse.com>
-	<20190325222722.GP13295@octiron.msp.redhat.com>
+From: Ilya Dryomov <idryomov@gmail.com>
+Subject: [PATCH] dm table: propagate BDI_CAP_STABLE_WRITES
+Date: Tue, 26 Mar 2019 20:20:58 +0100
+Message-ID: <20190326192058.21844-1-idryomov@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190325222722.GP13295@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE5LTAzLTI1IGF0IDE3OjI3IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gCj4gPiBPbmUgcmVtYXJrOiBXaXRoIHRoZSBrZXJuZWwgZXhwb3J0aW5nIHRoZSBWUEQg
-cGFnZXMgaW4gc3lzZnMKPiA+IGFuZCBteSBsYXRlICJtdWx0aXBhdGggLXUiIHBhdGNoIHNlcmll
-cywgdWRldiBzaG91bGQgYmUgYWJsZSB0bwo+ID4gcHJvY2Vzcwo+ID4gdWV2ZW50cyBmb3IgcGF0
-aCBkZXZpY2VzIHdpdGhvdXQgYSBzaW5nbGUgYWN0dWFsIGRldmljZSBJTy4gKCopIAo+ID4gV2hp
-bGUgdGhlcmUgYXJlIHN0aWxsIHBvc3NpYmxlIGNhdXNlcyBmb3IgdWRldiBwcm9jZXNzaW5nIHRv
-IGdldAo+ID4gc3R1Y2ssCj4gPiB0aGlzIHdvdWxkIG1ha2UgaXQgbXVjaCBsZXNzIGxpa2VseS4K
-PiAKPiBGb3IgcmVhc29ucyBJIGRvbid0IHVuZGVyc3RhbmQsIG5vdCBhbGwgZGV2aWNlcyBnZXQg
-YSB2cGRfcGc4MyBzeXNmcwo+IGZpbGUsIGV2ZW4gdGhvdWdoIHRoZXkgY2xlYXJseSBoYXZlIGEg
-cGFnZSAweDgzLCBzaW5jZSBtdWx0aXBhdGggYW5kCj4gc2dfaW5xIGNhbiByZWFkIGZyb20gaXQg
-dmlhIGlvY3RsLiAgSSBoYXZlIGEgZGV2aWNlIGxpa2UgdGhpcy4gVGhpcwo+IGlzCj4gcXVpdGUg
-cG9zc2libHkgYSBrZXJuZWwgaXNzdWUgdGhhdCBzaG91bGQgZ2V0IGZpeGVkLCBidXQgcmVnYXJk
-bGVzcywKPiBpdCdzIGJlZW4gdGhlcmUgZm9yIGEgd2hpbGUsIGFuZCBJIGp1c3QgY2hla2VkIGFu
-ZCBpdCBzdGlsbCBleGlzdHMgaW4KPiB0aGUgNS4wLjAtcmM2IGtlcm5lbC4KClRoaXMgaXMgaW50
-ZW50aW9uYWwuIFRoZSBrZXJuZWwgYXBwbGllcyBjb25zZXJ2YXRpdmUgaGV1cmlzdGljcyB0bwpk
-ZXRlcm1pbmUgd2hldGhlciB0aGVzZSBWUERzIGFyZSBzdXBwb3J0ZWQuIFNlZSB0aGUgY29tbWVu
-dCBpbgpzY3NpX2RldmljZV9zdXBwb3J0c192cGQoKS4gU29tZXRpbWVzIHRoZSBrZXJuZWwgZ2V0
-cyBpdCB3cm9uZywgdXN1YWxseQpiZWNhdXNlIHRoZSBkZXZpY2UgY2xhaW1zIHRvIGJlIGEgcHJl
-LVNDU0lfU1BDXzIgZGV2aWNlLiBTdWNoIGRldmljZXMKc2hvdWxkIGJlIGZpeGVkIHdpdGggdGhl
-IEJMSVNUX1RSWV9WUERfUEFHRVMgZGV2aWNlIGZsYWcgaWYgdGhleSBkbwpzdXBwb3J0IHRoZSBE
-SSBWUEQuCgpPUEVOLVYgZGV2aWNlcyBhcmUgYSBub3RvcmlvdXMgZXhhbXBsZS4gQnV0IG1lYW53
-aGlsZSB0aGUgYmxpc3QgZmxhZ3MKYXJlIGluIHBsYWNlIGZvciB0aGVtLgoKUmVnYXJkcwpNYXJ0
-aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5
-MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEph
-bmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgoKLS0K
-ZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVk
-aGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Some devices don't use blk_integrity but still want stable pages
+because they do their own checksumming.  Examples include rbd and iSCSI
+when data digests are negotiated.  Stacking DM (and thus LVM) on top of
+these devices results in sporadic checksum errors.
+
+Set BDI_CAP_STABLE_WRITES if any underlying device has it set.
+
+Signed-off-by: Ilya Dryomov <idryomov@gmail.com>
+---
+ drivers/md/dm-table.c | 39 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 39 insertions(+)
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index ba9481f1bf3c..cde3b49b2a91 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1844,6 +1844,36 @@ static bool dm_table_supports_secure_erase(struct dm_table *t)
+ 	return true;
+ }
+ 
++static int device_requires_stable_pages(struct dm_target *ti,
++					struct dm_dev *dev, sector_t start,
++					sector_t len, void *data)
++{
++	struct request_queue *q = bdev_get_queue(dev->bdev);
++
++	return q && bdi_cap_stable_pages_required(q->backing_dev_info);
++}
++
++/*
++ * If any underlying device requires stable pages, a table must require
++ * them as well.  Only targets that support iterate_devices are considered:
++ * don't want error, zero, etc to require stable pages.
++ */
++static bool dm_table_requires_stable_pages(struct dm_table *t)
++{
++	struct dm_target *ti;
++	unsigned i;
++
++	for (i = 0; i < dm_table_get_num_targets(t); i++) {
++		ti = dm_table_get_target(t, i);
++
++		if (ti->type->iterate_devices &&
++		    ti->type->iterate_devices(ti, device_requires_stable_pages, NULL))
++			return true;
++	}
++
++	return false;
++}
++
+ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 			       struct queue_limits *limits)
+ {
+@@ -1896,6 +1926,15 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 
+ 	dm_table_verify_integrity(t);
+ 
++	/*
++	 * Some devices don't use blk_integrity but still want stable pages
++	 * because they do their own checksumming.
++	 */
++	if (dm_table_requires_stable_pages(t))
++		q->backing_dev_info->capabilities |= BDI_CAP_STABLE_WRITES;
++	else
++		q->backing_dev_info->capabilities &= ~BDI_CAP_STABLE_WRITES;
++
+ 	/*
+ 	 * Determine whether or not this queue's I/O timings contribute
+ 	 * to the entropy pool, Only request-based targets use this.
+-- 
+2.19.2
