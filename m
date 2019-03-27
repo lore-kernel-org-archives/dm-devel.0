@@ -1,83 +1,52 @@
-From: Ilya Dryomov <idryomov@gmail.com>
-Subject: [PATCH] dm table: propagate BDI_CAP_STABLE_WRITES
-Date: Tue, 26 Mar 2019 20:20:58 +0100
-Message-ID: <20190326192058.21844-1-idryomov@gmail.com>
+From: zhengbin <zhengbin13@huawei.com>
+Subject: [PATCH] md: remove unnecessary unlikely()
+Date: Wed, 27 Mar 2019 14:31:37 +0800
+Message-ID: <1553668297-82871-1-git-send-email-zhengbin13@huawei.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
+Cc: zhengbin13@huawei.com, yi.zhang@huawei.com, houtao1@huawei.com
 List-Id: dm-devel.ids
 
-Some devices don't use blk_integrity but still want stable pages
-because they do their own checksumming.  Examples include rbd and iSCSI
-when data digests are negotiated.  Stacking DM (and thus LVM) on top of
-these devices results in sporadic checksum errors.
+BUG_ON() already contains an unlikely(), there is no need for another one.
 
-Set BDI_CAP_STABLE_WRITES if any underlying device has it set.
-
-Signed-off-by: Ilya Dryomov <idryomov@gmail.com>
+Signed-off-by: zhengbin <zhengbin13@huawei.com>
 ---
- drivers/md/dm-table.c | 39 +++++++++++++++++++++++++++++++++++++++
- 1 file changed, 39 insertions(+)
+ drivers/md/dm-integrity.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index ba9481f1bf3c..cde3b49b2a91 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1844,6 +1844,36 @@ static bool dm_table_supports_secure_erase(struct dm_table *t)
- 	return true;
- }
- 
-+static int device_requires_stable_pages(struct dm_target *ti,
-+					struct dm_dev *dev, sector_t start,
-+					sector_t len, void *data)
-+{
-+	struct request_queue *q = bdev_get_queue(dev->bdev);
-+
-+	return q && bdi_cap_stable_pages_required(q->backing_dev_info);
-+}
-+
-+/*
-+ * If any underlying device requires stable pages, a table must require
-+ * them as well.  Only targets that support iterate_devices are considered:
-+ * don't want error, zero, etc to require stable pages.
-+ */
-+static bool dm_table_requires_stable_pages(struct dm_table *t)
-+{
-+	struct dm_target *ti;
-+	unsigned i;
-+
-+	for (i = 0; i < dm_table_get_num_targets(t); i++) {
-+		ti = dm_table_get_target(t, i);
-+
-+		if (ti->type->iterate_devices &&
-+		    ti->type->iterate_devices(ti, device_requires_stable_pages, NULL))
-+			return true;
-+	}
-+
-+	return false;
-+}
-+
- void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 			       struct queue_limits *limits)
- {
-@@ -1896,6 +1926,15 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 
- 	dm_table_verify_integrity(t);
- 
-+	/*
-+	 * Some devices don't use blk_integrity but still want stable pages
-+	 * because they do their own checksumming.
-+	 */
-+	if (dm_table_requires_stable_pages(t))
-+		q->backing_dev_info->capabilities |= BDI_CAP_STABLE_WRITES;
-+	else
-+		q->backing_dev_info->capabilities &= ~BDI_CAP_STABLE_WRITES;
-+
- 	/*
- 	 * Determine whether or not this queue's I/O timings contribute
- 	 * to the entropy pool, Only request-based targets use this.
--- 
-2.19.2
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index d57d997..7f03638 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -1959,7 +1959,7 @@ static void do_journal_write(struct dm_integrity_c *ic, unsigned write_start,
+
+ 			if (journal_entry_is_unused(je))
+ 				continue;
+-			BUG_ON(unlikely(journal_entry_is_inprogress(je)) && !from_replay);
++			BUG_ON(journal_entry_is_inprogress(je) && !from_replay);
+ 			sec = journal_entry_get_sector(je);
+ 			if (unlikely(from_replay)) {
+ 				if (unlikely(sec & (unsigned)(ic->sectors_per_block - 1))) {
+@@ -1974,7 +1974,7 @@ static void do_journal_write(struct dm_integrity_c *ic, unsigned write_start,
+ 				sector_t sec2, area2, offset2;
+ 				if (journal_entry_is_unused(je2))
+ 					break;
+-				BUG_ON(unlikely(journal_entry_is_inprogress(je2)) && !from_replay);
++				BUG_ON(journal_entry_is_inprogress(je2) && !from_replay);
+ 				sec2 = journal_entry_get_sector(je2);
+ 				get_area_and_offset(ic, sec2, &area2, &offset2);
+ 				if (area2 != area || offset2 != offset + ((k - j) << ic->sb->log2_sectors_per_block))
+--
+2.7.4
