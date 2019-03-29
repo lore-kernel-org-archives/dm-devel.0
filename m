@@ -1,14 +1,14 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: md: remove unnecessary unlikely()
-Date: Wed, 27 Mar 2019 09:19:59 -0400
-Message-ID: <20190327131959.GA20360@redhat.com>
-References: <1553668297-82871-1-git-send-email-zhengbin13@huawei.com>
+From: Martin Wilck <mwilck@suse.de>
+Subject: Re: [PATCH resend] multipath-tools: document why
+ dev_loss_tmo is set to infinity for HPE 3PAR
+Date: Fri, 29 Mar 2019 16:53:25 +0100
+Message-ID: <5a96ccac4f8fadfaa2bcafebcc6ee17c46ad68ff.camel@suse.de>
+References: <20190316223045.21614-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1553668297-82871-1-git-send-email-zhengbin13@huawei.com>
+In-Reply-To: <20190316223045.21614-1-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,48 +18,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: zhengbin <zhengbin13@huawei.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, houtao1@huawei.com, agk@redhat.com, yi.zhang@huawei.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: DM-DEVEL ML <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Mar 27 2019 at  2:31am -0400,
-zhengbin <zhengbin13@huawei.com> wrote:
-
-> BUG_ON() already contains an unlikely(), there is no need for another one.
+On Sat, 2019-03-16 at 23:30 +0100, Xose Vazquez Perez wrote:
+> It's needed by Peer Persistence, documented in SLES and RHEL guides:
+> https://support.hpe.com/hpsc/doc/public/display?docId=a00053835
+> https://support.hpe.com/hpsc/doc/public/display?docId=c04448818
 > 
-> Signed-off-by: zhengbin <zhengbin13@huawei.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM-DEVEL ML <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 > ---
->  drivers/md/dm-integrity.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
+>  libmultipath/hwtable.c | 1 +
+>  1 file changed, 1 insertion(+)
 > 
-> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-> index d57d997..7f03638 100644
-> --- a/drivers/md/dm-integrity.c
-> +++ b/drivers/md/dm-integrity.c
-> @@ -1959,7 +1959,7 @@ static void do_journal_write(struct dm_integrity_c *ic, unsigned write_start,
-> 
->  			if (journal_entry_is_unused(je))
->  				continue;
-> -			BUG_ON(unlikely(journal_entry_is_inprogress(je)) && !from_replay);
-> +			BUG_ON(journal_entry_is_inprogress(je) && !from_replay);
->  			sec = journal_entry_get_sector(je);
->  			if (unlikely(from_replay)) {
->  				if (unlikely(sec & (unsigned)(ic->sectors_per_block - 1))) {
-> @@ -1974,7 +1974,7 @@ static void do_journal_write(struct dm_integrity_c *ic, unsigned write_start,
->  				sector_t sec2, area2, offset2;
->  				if (journal_entry_is_unused(je2))
->  					break;
-> -				BUG_ON(unlikely(journal_entry_is_inprogress(je2)) && !from_replay);
-> +				BUG_ON(journal_entry_is_inprogress(je2) && !from_replay);
->  				sec2 = journal_entry_get_sector(je2);
->  				get_area_and_offset(ic, sec2, &area2, &offset2);
->  				if (area2 != area || offset2 != offset + ((k - j) << ic->sb->log2_sectors_per_block))
-> --
-> 2.7.4
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index d3a8d9b..543bacd 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -116,6 +116,7 @@ static struct hwentry default_hw[] = {
+>  		.prio_name     = PRIO_ALUA,
+>  		.no_path_retry = 18,
+>  		.fast_io_fail  = 10,
+> +		/* infinity is needed by Peer Persistence */
+>  		.dev_loss      = MAX_DEV_LOSS_TMO,
+>  	},
+>  	{
 
-Last time another janitor came through with this suggestion Mikulas
-responded with:
+I'm not quite getting the benefit of adding this comment without
+further explanation what Peer Persistence is. Also, IMO, setting
+dev_loss_tmo to a higher value than the default (contrary to lowering
+it) doesn't require much justification.
 
-https://www.redhat.com/archives/dm-devel/2018-September/msg00088.html
+But it can't really hurt, so:
 
-SO thanks, but no thanks.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
