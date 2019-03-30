@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v3 09/17] multipathd: use update_path_groups
-	instead of reload_map
-Date: Sat, 30 Mar 2019 01:05:58 -0500
-Message-ID: <1553925966-20958-10-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 12/17] libmulitpath: cleanup uid_fallback code
+Date: Sat, 30 Mar 2019 01:06:01 -0500
+Message-ID: <1553925966-20958-13-git-send-email-bmarzins@redhat.com>
 References: <1553925966-20958-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,74 +21,126 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-reload_map() doesn't do the work to sync the state after reloading the
-map.  Instead of calling it directly, cli_reload() and uev_update_path()
-should call update_path_groups(), which calls reload_map() with all the
-necessary syncing.
+Instead of always calling uid_fallback() if the configured method to get
+the uid failed, get_uid now checks if the path supports fallbacks and if
+all the retriggers have occurred. If so, it calls uid_fallback(), which
+just attempts to get the uid using the appropriate fallback method. None
+of these changes should make the code function any differently.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/cli_handlers.c |  2 +-
- multipathd/main.c         | 13 ++++++++-----
- multipathd/main.h         |  2 ++
- 3 files changed, 11 insertions(+), 6 deletions(-)
+ libmultipath/discovery.c | 85 ++++++++++++++++++++++------------------
+ 1 file changed, 46 insertions(+), 39 deletions(-)
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index f95813e..60e17d6 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -877,7 +877,7 @@ cli_reload(void *v, char **reply, int *len, void *data)
- 		return 1;
- 	}
- 
--	return reload_map(vecs, mpp, 0, 1);
-+	return update_path_groups(mpp, vecs, 0);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index bece67c..3ec60d6 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1755,50 +1755,50 @@ get_vpd_uid(struct path * pp)
  }
  
- int resize_map(struct multipath *mpp, unsigned long long size,
-diff --git a/multipathd/main.c b/multipathd/main.c
-index fd83a6a..7a317d9 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1273,10 +1273,13 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 			else {
- 				if (ro == 1)
- 					pp->mpp->force_readonly = 1;
--				retval = reload_map(vecs, mpp, 0, 1);
--				pp->mpp->force_readonly = 0;
--				condlog(2, "%s: map %s reloaded (retval %d)",
--					uev->kernel, mpp->alias, retval);
-+				retval = update_path_groups(mpp, vecs, 0);
-+				if (retval == 2)
-+					condlog(2, "%s: map removed during reload", pp->dev);
-+				else {
-+					pp->mpp->force_readonly = 0;
-+					condlog(2, "%s: map %s reloaded (retval %d)", uev->kernel, mpp->alias, retval);
-+				}
- 			}
+ static ssize_t uid_fallback(struct path *pp, int path_state,
+-			    const char **origin, ssize_t old_len)
++			    const char **origin)
+ {
+-	ssize_t len = old_len;
+-	int retrigger;
+-	struct config *conf;
+-
+-	conf = get_multipath_config();
+-	retrigger = conf->retrigger_tries;
+-	put_multipath_config(conf);
+-	if (pp->retriggers >= retrigger) {
+-		if (pp->bus == SYSFS_BUS_SCSI &&
+-		    !strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE)) {
+-			len = get_vpd_uid(pp);
+-			*origin = "sysfs";
+-			pp->uid_attribute = NULL;
+-			if (len < 0 && path_state == PATH_UP) {
+-				condlog(1, "%s: failed to get sysfs uid: %s",
+-					pp->dev, strerror(-len));
+-				len = get_vpd_sgio(pp->fd, 0x83, pp->wwid,
++	ssize_t len = -1;
++
++	if (pp->bus == SYSFS_BUS_SCSI &&
++	    !strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE)) {
++		len = get_vpd_uid(pp);
++		*origin = "sysfs";
++		pp->uid_attribute = NULL;
++		if (len < 0 && path_state == PATH_UP) {
++			condlog(1, "%s: failed to get sysfs uid: %s",
++				pp->dev, strerror(-len));
++			len = get_vpd_sgio(pp->fd, 0x83, pp->wwid,
++					   WWID_SIZE);
++			*origin = "sgio";
++		}
++	} else if (pp->bus == SYSFS_BUS_NVME) {
++		char value[256];
++		len = sysfs_attr_get_value(pp->udev, "wwid", value,
++					   sizeof(value));
++		if (len <= 0)
++			return -1;
++		len = strlcpy(pp->wwid, value, WWID_SIZE);
++		if (len >= WWID_SIZE) {
++			len = fix_broken_nvme_wwid(pp, value,
+ 						   WWID_SIZE);
+-				*origin = "sgio";
+-			}
+-		} else if (pp->bus == SYSFS_BUS_NVME) {
+-			char value[256];
+-			len = sysfs_attr_get_value(pp->udev, "wwid", value,
+-						   sizeof(value));
+-			if (len <= 0)
+-				return -1;
+-			len = strlcpy(pp->wwid, value, WWID_SIZE);
+-			if (len >= WWID_SIZE) {
+-				len = fix_broken_nvme_wwid(pp, value,
+-							   WWID_SIZE);
+-				if (len > 0)
+-					return len;
+-				condlog(0, "%s: wwid overflow", pp->dev);
+-				len = WWID_SIZE;
+-			}
+-			*origin = "sysfs";
+-			pp->uid_attribute = NULL;
++			if (len > 0)
++				return len;
++			condlog(0, "%s: wwid overflow", pp->dev);
++			len = WWID_SIZE;
  		}
++		*origin = "sysfs";
++		pp->uid_attribute = NULL;
  	}
-@@ -1832,7 +1835,7 @@ int update_path_groups(struct multipath *mpp, struct vectors *vecs, int refresh)
+ 	return len;
+ }
  
- 	dm_lib_release();
- 	if (setup_multipath(vecs, mpp) != 0)
--		return 1;
-+		return 2;
- 	sync_map_state(mpp);
- 
- 	return 0;
-diff --git a/multipathd/main.h b/multipathd/main.h
-index 8fd426b..e5c1398 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -43,5 +43,7 @@ int __setup_multipath (struct vectors * vecs, struct multipath * mpp,
- 		       int reset);
- #define setup_multipath(vecs, mpp) __setup_multipath(vecs, mpp, 1)
- int update_multipath (struct vectors *vecs, char *mapname, int reset);
-+int update_path_groups(struct multipath *mpp, struct vectors *vecs,
-+		       int refresh);
- 
- #endif /* MAIN_H */
++static int has_uid_fallback(struct path *pp)
++{
++	return ((pp->bus == SYSFS_BUS_SCSI &&
++		 !strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE)) ||
++		pp->bus == SYSFS_BUS_NVME);
++}
++
+ int
+ get_uid (struct path * pp, int path_state, struct udev_device *udev)
+ {
+@@ -1846,8 +1846,15 @@ get_uid (struct path * pp, int path_state, struct udev_device *udev)
+ 			len = get_vpd_uid(pp);
+ 			origin = "sysfs";
+ 		}
+-		if (len <= 0)
+-			len = uid_fallback(pp, path_state, &origin, len);
++		if (len <= 0 && has_uid_fallback(pp)) {
++			int retrigger_tries;
++
++			conf = get_multipath_config();
++			retrigger_tries = conf->retrigger_tries;
++			put_multipath_config(conf);
++			if (pp->retriggers >= retrigger_tries)
++				len = uid_fallback(pp, path_state, &origin);
++		}
+ 	}
+ 	if ( len < 0 ) {
+ 		condlog(1, "%s: failed to get %s uid: %s",
 -- 
 2.17.2
