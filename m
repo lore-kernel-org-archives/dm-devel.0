@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v3 12/17] libmulitpath: cleanup uid_fallback code
-Date: Sat, 30 Mar 2019 01:06:01 -0500
-Message-ID: <1553925966-20958-13-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 10/17] multipath.conf: add missing options to
+	man page
+Date: Sat, 30 Mar 2019 01:05:59 -0500
+Message-ID: <1553925966-20958-11-git-send-email-bmarzins@redhat.com>
 References: <1553925966-20958-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,126 +22,53 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Instead of always calling uid_fallback() if the configured method to get
-the uid failed, get_uid now checks if the path supports fallbacks and if
-all the retriggers have occurred. If so, it calls uid_fallback(), which
-just attempts to get the uid using the appropriate fallback method. None
-of these changes should make the code function any differently.
-
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.c | 85 ++++++++++++++++++++++------------------
- 1 file changed, 46 insertions(+), 39 deletions(-)
+ multipath/multipath.conf.5 | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index bece67c..3ec60d6 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1755,50 +1755,50 @@ get_vpd_uid(struct path * pp)
- }
- 
- static ssize_t uid_fallback(struct path *pp, int path_state,
--			    const char **origin, ssize_t old_len)
-+			    const char **origin)
- {
--	ssize_t len = old_len;
--	int retrigger;
--	struct config *conf;
--
--	conf = get_multipath_config();
--	retrigger = conf->retrigger_tries;
--	put_multipath_config(conf);
--	if (pp->retriggers >= retrigger) {
--		if (pp->bus == SYSFS_BUS_SCSI &&
--		    !strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE)) {
--			len = get_vpd_uid(pp);
--			*origin = "sysfs";
--			pp->uid_attribute = NULL;
--			if (len < 0 && path_state == PATH_UP) {
--				condlog(1, "%s: failed to get sysfs uid: %s",
--					pp->dev, strerror(-len));
--				len = get_vpd_sgio(pp->fd, 0x83, pp->wwid,
-+	ssize_t len = -1;
-+
-+	if (pp->bus == SYSFS_BUS_SCSI &&
-+	    !strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE)) {
-+		len = get_vpd_uid(pp);
-+		*origin = "sysfs";
-+		pp->uid_attribute = NULL;
-+		if (len < 0 && path_state == PATH_UP) {
-+			condlog(1, "%s: failed to get sysfs uid: %s",
-+				pp->dev, strerror(-len));
-+			len = get_vpd_sgio(pp->fd, 0x83, pp->wwid,
-+					   WWID_SIZE);
-+			*origin = "sgio";
-+		}
-+	} else if (pp->bus == SYSFS_BUS_NVME) {
-+		char value[256];
-+		len = sysfs_attr_get_value(pp->udev, "wwid", value,
-+					   sizeof(value));
-+		if (len <= 0)
-+			return -1;
-+		len = strlcpy(pp->wwid, value, WWID_SIZE);
-+		if (len >= WWID_SIZE) {
-+			len = fix_broken_nvme_wwid(pp, value,
- 						   WWID_SIZE);
--				*origin = "sgio";
--			}
--		} else if (pp->bus == SYSFS_BUS_NVME) {
--			char value[256];
--			len = sysfs_attr_get_value(pp->udev, "wwid", value,
--						   sizeof(value));
--			if (len <= 0)
--				return -1;
--			len = strlcpy(pp->wwid, value, WWID_SIZE);
--			if (len >= WWID_SIZE) {
--				len = fix_broken_nvme_wwid(pp, value,
--							   WWID_SIZE);
--				if (len > 0)
--					return len;
--				condlog(0, "%s: wwid overflow", pp->dev);
--				len = WWID_SIZE;
--			}
--			*origin = "sysfs";
--			pp->uid_attribute = NULL;
-+			if (len > 0)
-+				return len;
-+			condlog(0, "%s: wwid overflow", pp->dev);
-+			len = WWID_SIZE;
- 		}
-+		*origin = "sysfs";
-+		pp->uid_attribute = NULL;
- 	}
- 	return len;
- }
- 
-+static int has_uid_fallback(struct path *pp)
-+{
-+	return ((pp->bus == SYSFS_BUS_SCSI &&
-+		 !strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE)) ||
-+		pp->bus == SYSFS_BUS_NVME);
-+}
-+
- int
- get_uid (struct path * pp, int path_state, struct udev_device *udev)
- {
-@@ -1846,8 +1846,15 @@ get_uid (struct path * pp, int path_state, struct udev_device *udev)
- 			len = get_vpd_uid(pp);
- 			origin = "sysfs";
- 		}
--		if (len <= 0)
--			len = uid_fallback(pp, path_state, &origin, len);
-+		if (len <= 0 && has_uid_fallback(pp)) {
-+			int retrigger_tries;
-+
-+			conf = get_multipath_config();
-+			retrigger_tries = conf->retrigger_tries;
-+			put_multipath_config(conf);
-+			if (pp->retriggers >= retrigger_tries)
-+				len = uid_fallback(pp, path_state, &origin);
-+		}
- 	}
- 	if ( len < 0 ) {
- 		condlog(1, "%s: failed to get %s uid: %s",
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 0fe8461..864d7eb 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -1468,6 +1468,8 @@ section:
+ .TP
+ .B uid_attribute
+ .TP
++.B getuid_callout
++.TP
+ .B path_selector
+ .TP
+ .B path_checker
+@@ -1494,6 +1496,8 @@ section:
+ .TP
+ .B flush_on_last_del
+ .TP
++.B user_friendly_names
++.TP
+ .B retain_attached_hw_handler
+ .TP
+ .B detect_prio
+@@ -1525,6 +1529,8 @@ section:
+ .B max_sectors_kb
+ .TP
+ .B ghost_delay
++.TP
++.B all_tg_pt
+ .RE
+ .PD
+ .LP
+@@ -1604,7 +1610,11 @@ the values are taken from the \fIdevices\fR or \fIdefaults\fR sections:
+ .TP
+ .B skip_kpartx
+ .TP
++.B max_sectors_kb
++.TP
+ .B ghost_delay
++.TP
++.B all_tg_pt
+ .RE
+ .PD
+ .LP
 -- 
 2.17.2
