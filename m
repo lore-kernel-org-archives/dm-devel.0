@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v3 13/17] multipathd: handle changed wwids by
-	removal and addition
-Date: Sat, 30 Mar 2019 01:06:02 -0500
-Message-ID: <1553925966-20958-14-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 08/17] libmutipath: continue to use old state
+	on PATH_PENDING
+Date: Sat, 30 Mar 2019 01:05:57 -0500
+Message-ID: <1553925966-20958-9-git-send-email-bmarzins@redhat.com>
 References: <1553925966-20958-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,80 +22,45 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-If a path's WWID changes, it's not necessarily failed. But it certainly
-has to be removed from an existing map, otherwise data corruption is
-imminent. Instead of keeping the path in the map, failing it, and
-remembering the "changed WWID" state, this patch simply removes and
-re-adds the path.
+When pathinfo() sets pp->state to PATH_PENDING, it can cause problems
+with path checking.  It should act more like check_path(). When
+check_path() sees a new state of PATH_PENDING, it doesn't update the
+path state at all, so a path's old state is normally never PATH_PENDING.
 
-This is patch is heavily based on the previous patch of the same name
-by Martin Wilck.
+As and example of the problems of setting a path to PATH_PENDING, If
+check_path() sets a path's state to PATH_UP, then a call to pathinfo()
+sets the state to PATH_PENDING, and then another call the check_path()
+sets the state to PATH_DOWN, multipathd won't fail the path in the
+kernel. Also, if a path's state is PATH_PENDING, and nr_active is
+recalculated, that path will count as down, even if the state was
+previously PATH_UP. If a path already has a state of PATH_WILD or
+PATH_UNCHECKED, changing it to PATH_PENDING won't hurt anything, and it
+will help anyone who sees it know what's actually happening. But
+otherwise, pathinfo() should leave the previous state alone.
 
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 28 ++++++----------------------
- 1 file changed, 6 insertions(+), 22 deletions(-)
+ libmultipath/discovery.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 7a317d9..b3571d9 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1191,7 +1191,6 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 	int ro, retval = 0, rc;
- 	struct path * pp;
- 	struct config *conf;
--	int disable_changed_wwids;
- 	int needs_reinit = 0;
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index b08cb2d..28c00e5 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1946,8 +1946,11 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
  
- 	switch ((rc = change_foreign(uev->udev))) {
-@@ -1209,12 +1208,6 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 		break;
- 	}
- 
--	conf = get_multipath_config();
--	disable_changed_wwids = conf->disable_changed_wwids;
--	put_multipath_config(conf);
--
--	ro = uevent_get_disk_ro(uev);
--
- 	pthread_cleanup_push(cleanup_lock, &vecs->lock);
- 	lock(&vecs->lock);
- 	pthread_testcancel();
-@@ -1239,22 +1232,12 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 		if (rc != 0)
- 			strcpy(pp->wwid, wwid);
- 		else if (strncmp(wwid, pp->wwid, WWID_SIZE) != 0) {
--			condlog(0, "%s: path wwid changed from '%s' to '%s'. %s",
--				uev->kernel, wwid, pp->wwid,
--				(disable_changed_wwids ? "disallowing" :
--				 "continuing"));
--			strcpy(pp->wwid, wwid);
--			if (disable_changed_wwids) {
--				if (!pp->wwid_changed) {
--					pp->wwid_changed = 1;
--					pp->tick = 1;
--					if (pp->mpp)
--						dm_fail_path(pp->mpp->alias, pp->dev_t);
--				}
--				goto out;
--			}
-+			condlog(0, "%s: path wwid changed from '%s' to '%s'",
-+				uev->kernel, wwid, pp->wwid);
-+			ev_remove_path(pp, vecs, 1);
-+			needs_reinit = 1;
-+			goto out;
- 		} else {
--			pp->wwid_changed = 0;
- 			udev_device_unref(pp->udev);
- 			pp->udev = udev_device_ref(uev->udev);
- 			conf = get_multipath_config();
-@@ -1265,6 +1248,7 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 			pthread_cleanup_pop(1);
- 		}
- 
-+		ro = uevent_get_disk_ro(uev);
- 		if (mpp && ro >= 0) {
- 			condlog(2, "%s: update path write_protect to '%d' (uevent)", uev->kernel, ro);
- 
+ 	if (mask & DI_CHECKER) {
+ 		if (path_state == PATH_UP) {
+-			pp->chkrstate = pp->state = get_state(pp, conf, 0,
+-							      path_state);
++			int newstate = get_state(pp, conf, 0, path_state);
++			if (newstate != PATH_PENDING ||
++			    pp->state == PATH_UNCHECKED ||
++			    pp->state == PATH_WILD)
++				pp->chkrstate = pp->state = newstate;
+ 			if (pp->state == PATH_TIMEOUT)
+ 				pp->state = PATH_DOWN;
+ 			if (pp->state == PATH_UP && !pp->size) {
 -- 
 2.17.2
