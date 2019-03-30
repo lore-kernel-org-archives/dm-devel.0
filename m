@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v3 08/17] libmutipath: continue to use old state
-	on PATH_PENDING
-Date: Sat, 30 Mar 2019 01:05:57 -0500
-Message-ID: <1553925966-20958-9-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 15/17] multipathd: ignore
+	"disable_changed_wwids"
+Date: Sat, 30 Mar 2019 01:06:04 -0500
+Message-ID: <1553925966-20958-16-git-send-email-bmarzins@redhat.com>
 References: <1553925966-20958-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,45 +22,97 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-When pathinfo() sets pp->state to PATH_PENDING, it can cause problems
-with path checking.  It should act more like check_path(). When
-check_path() sees a new state of PATH_PENDING, it doesn't update the
-path state at all, so a path's old state is normally never PATH_PENDING.
+From: Martin Wilck <mwilck@suse.com>
 
-As and example of the problems of setting a path to PATH_PENDING, If
-check_path() sets a path's state to PATH_UP, then a call to pathinfo()
-sets the state to PATH_PENDING, and then another call the check_path()
-sets the state to PATH_DOWN, multipathd won't fail the path in the
-kernel. Also, if a path's state is PATH_PENDING, and nr_active is
-recalculated, that path will count as down, even if the state was
-previously PATH_UP. If a path already has a state of PATH_WILD or
-PATH_UNCHECKED, changing it to PATH_PENDING won't hurt anything, and it
-will help anyone who sees it know what's actually happening. But
-otherwise, pathinfo() should leave the previous state alone.
+This option has no effect any more.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ libmultipath/config.c      |  1 -
+ libmultipath/config.h      |  1 -
+ libmultipath/dict.c        | 18 +++++++++++++++---
+ multipath/multipath.conf.5 |  8 ++------
+ 4 files changed, 17 insertions(+), 11 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index b08cb2d..28c00e5 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1946,8 +1946,11 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 24d71ae..141f092 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -715,7 +715,6 @@ load_config (char * file)
+ 	conf->retrigger_tries = DEFAULT_RETRIGGER_TRIES;
+ 	conf->retrigger_delay = DEFAULT_RETRIGGER_DELAY;
+ 	conf->uev_wait_timeout = DEFAULT_UEV_WAIT_TIMEOUT;
+-	conf->disable_changed_wwids = DEFAULT_DISABLE_CHANGED_WWIDS;
+ 	conf->remove_retries = 0;
+ 	conf->ghost_delay = DEFAULT_GHOST_DELAY;
+ 	conf->all_tg_pt = DEFAULT_ALL_TG_PT;
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index b938c26..f5bf5b1 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -182,7 +182,6 @@ struct config {
+ 	int delayed_reconfig;
+ 	int uev_wait_timeout;
+ 	int skip_kpartx;
+-	int disable_changed_wwids;
+ 	int remove_retries;
+ 	int max_sectors_kb;
+ 	int ghost_delay;
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index eaad4f1..96815f8 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -156,6 +156,12 @@ out:
+ 	return len;
+ }
  
- 	if (mask & DI_CHECKER) {
- 		if (path_state == PATH_UP) {
--			pp->chkrstate = pp->state = get_state(pp, conf, 0,
--							      path_state);
-+			int newstate = get_state(pp, conf, 0, path_state);
-+			if (newstate != PATH_PENDING ||
-+			    pp->state == PATH_UNCHECKED ||
-+			    pp->state == PATH_WILD)
-+				pp->chkrstate = pp->state = newstate;
- 			if (pp->state == PATH_TIMEOUT)
- 				pp->state = PATH_DOWN;
- 			if (pp->state == PATH_UP && !pp->size) {
++static int
++print_ignored (char *buff, int len)
++{
++	return snprintf(buff, len, "ignored");
++}
++
+ static int
+ print_yes_no (char *buff, int len, long v)
+ {
+@@ -548,9 +554,15 @@ declare_hw_handler(skip_kpartx, set_yes_no_undef)
+ declare_hw_snprint(skip_kpartx, print_yes_no_undef)
+ declare_mp_handler(skip_kpartx, set_yes_no_undef)
+ declare_mp_snprint(skip_kpartx, print_yes_no_undef)
+-
+-declare_def_handler(disable_changed_wwids, set_yes_no)
+-declare_def_snprint(disable_changed_wwids, print_yes_no)
++static int def_disable_changed_wwids_handler(struct config *conf, vector strvec)
++{
++	return 0;
++}
++static int snprint_def_disable_changed_wwids(struct config *conf, char *buff,
++					     int len, const void *data)
++{
++	return print_ignored(buff, len);
++}
+ 
+ declare_def_handler(remove_retries, set_int)
+ declare_def_snprint(remove_retries, print_int)
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 864d7eb..646c156 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -1148,12 +1148,8 @@ The default is: \fBno\fR
+ .
+ .TP
+ .B disable_changed_wwids
+-If set to \fIyes\fR, multipathd will check the path wwid on change events, and
+-if it has changed from the wwid of the multipath device, multipathd will
+-disable access to the path until the wwid changes back.
+-.RS
+-.TP
+-The default is: \fBno\fR
++This option is deprecated and ignored. If the WWID of a path suddenly changes,
++multipathd handles it as if it was removed and then added again.
+ .RE
+ .
+ .
 -- 
 2.17.2
