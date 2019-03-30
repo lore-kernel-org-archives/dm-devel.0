@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v3 04/17] libmultipath: fix marginal paths
-	queueing errors
-Date: Sat, 30 Mar 2019 01:05:53 -0500
-Message-ID: <1553925966-20958-5-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 06/17] multipathd: Fix miscounting active paths
+Date: Sat, 30 Mar 2019 01:05:55 -0500
+Message-ID: <1553925966-20958-7-git-send-email-bmarzins@redhat.com>
 References: <1553925966-20958-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,174 +21,90 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The current marginal paths code tries to enqueue paths for io error
-checking when multipathd receives a uevent on path failure. This can run
-into a couple of problems. First, this uevent could happen before or
-after multipathd actually fails the path, so simply checking nr_active
-doesn't tell us if this is the last active path. Also, The code to fail
-the path in enqueue_io_err_stat_by_path() doesn't ever update the path
-state. This can cause the path to get failed twice, temporarily leading
-to incorrect nr_active counts. Further, The point when multipathd should
-care if this is the last active path is when the path has come up again,
-not when it goes down. Lastly, if the path is down, it is often
-impossible to open the path device, causing setup_directio_ctx() to
-fail, which causes multipathd to skip io error checking and mark the
-path as not marginal.
+When multipathd gets a change uevent, it calls pathinfo with DI_NOIO.
+This sets the path state to the return value of path_offline(). If a
+path is in the PATH_DOWN state but path_offline() returns PATH_UP, when
+that path gets a change event, its state will get moved to PATH_UP
+without either reinstating the path, or reloading the map.  The next
+call to check_path() will move the path back to PATH_DOWN. Since
+check_path() simply increments and decrements nr_active instead of
+calculating it based on the actual number of active paths, nr_active
+will get decremented a second time for this failed path, potentially
+putting the multipath device into recovery mode.
 
-Instead, multipathd should just make sure that if the path is marginal,
-it gets failed in the uevent, so as not to race with the checkerloop
-thread. Then, when the path comes back up, check_path() can enqueue it,
-just like it does for paths that need to get rechecked. To make it
-obvious that the state PATH_IO_ERR_IN_POLLING_RECHECK and the function
-hit_io_err_recheck_time() now apply to paths waiting to be enqueued for
-the first time as well, I've also changed their names to
-PATH_IO_ERR_WAITING_TO_CHECK and need_io_err_check(), respectively.
+This commit does two things to avoid this situation. It makes the
+DI_NOIO flag only set pp->state in pathinfo() if DI_CHECKER is also set.
+This isn't set in uev_update_path() to avoid changing the path state in
+this case.  Also, to guard against pp->state getting changed in some
+other code path without properly updating the map state, check_path()
+now calls set_no_path_retry, which recalculates nr_active based on the
+actual number of active paths, and makes sure that the queue_if_no_path
+value in the features line is correct.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/io_err_stat.c | 55 +++++++++++++++++---------------------
- libmultipath/io_err_stat.h |  2 +-
- multipathd/main.c          |  2 +-
- 3 files changed, 27 insertions(+), 32 deletions(-)
+ libmultipath/discovery.c | 11 ++++++-----
+ multipath/main.c         |  2 +-
+ multipathd/main.c        |  4 +++-
+ 3 files changed, 10 insertions(+), 7 deletions(-)
 
-diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
-index 416e13a..72aacf3 100644
---- a/libmultipath/io_err_stat.c
-+++ b/libmultipath/io_err_stat.c
-@@ -41,7 +41,7 @@
- #define CONCUR_NR_EVENT			32
- 
- #define PATH_IO_ERR_IN_CHECKING		-1
--#define PATH_IO_ERR_IN_POLLING_RECHECK	-2
-+#define PATH_IO_ERR_WAITING_TO_CHECK	-2
- 
- #define io_err_stat_log(prio, fmt, args...) \
- 	condlog(prio, "io error statistic: " fmt, ##args)
-@@ -283,24 +283,6 @@ static int enqueue_io_err_stat_by_path(struct path *path)
- 	vector_set_slot(paths->pathvec, p);
- 	pthread_mutex_unlock(&paths->mutex);
- 
--	if (!path->io_err_disable_reinstate) {
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 10bd8cd..729bcb9 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1914,11 +1914,12 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 	if (path_state == PATH_REMOVED)
+ 		goto blank;
+ 	else if (mask & DI_NOIO) {
 -		/*
--		 *fail the path in the kernel for the time of the to make
--		 *the test more reliable
+-		 * Avoid any IO on the device itself.
+-		 * Behave like DI_CHECKER in the "path unavailable" case.
 -		 */
--		io_err_stat_log(3, "%s: fail dm path %s before checking",
--				path->mpp->alias, path->dev);
--		path->io_err_disable_reinstate = 1;
--		dm_fail_path(path->mpp->alias, path->dev_t);
--		update_queue_mode_del_path(path->mpp);
--
--		/*
--		 * schedule path check as soon as possible to
--		 * update path state to delayed state
--		 */
--		path->tick = 1;
--
--	}
- 	io_err_stat_log(2, "%s: enqueue path %s to check",
- 			path->mpp->alias, path->dev);
- 	return 0;
-@@ -317,7 +299,6 @@ free_ioerr_path:
- int io_err_stat_handle_pathfail(struct path *path)
- {
- 	struct timespec curr_time;
--	int res;
- 
- 	if (uatomic_read(&io_err_thread_running) == 0)
- 		return 1;
-@@ -332,8 +313,6 @@ int io_err_stat_handle_pathfail(struct path *path)
- 
- 	if (!path->mpp)
- 		return 1;
--	if (path->mpp->nr_active <= 1)
--		return 1;
- 	if (path->mpp->marginal_path_double_failed_time <= 0 ||
- 		path->mpp->marginal_path_err_sample_time <= 0 ||
- 		path->mpp->marginal_path_err_recheck_gap_time <= 0 ||
-@@ -371,17 +350,33 @@ int io_err_stat_handle_pathfail(struct path *path)
- 	}
- 	path->io_err_pathfail_cnt++;
- 	if (path->io_err_pathfail_cnt >= FLAKY_PATHFAIL_THRESHOLD) {
--		res = enqueue_io_err_stat_by_path(path);
--		if (!res)
--			path->io_err_pathfail_cnt = PATH_IO_ERR_IN_CHECKING;
--		else
--			path->io_err_pathfail_cnt = 0;
-+		path->io_err_disable_reinstate = 1;
-+		path->io_err_pathfail_cnt = PATH_IO_ERR_WAITING_TO_CHECK;
-+		/* enqueue path as soon as it comes up */
-+		path->io_err_dis_reinstate_time = 0;
-+		if (path->state != PATH_DOWN) {
-+			struct config *conf;
-+			int oldstate = path->state;
-+			int checkint;
-+
-+			conf = get_multipath_config();
-+			checkint = conf->checkint;
-+			put_multipath_config(conf);
-+			io_err_stat_log(2, "%s: mark as failed", path->dev);
-+			path->mpp->stat_path_failures++;
-+			path->state = PATH_DOWN;
-+			path->dmstate = PSTATE_FAILED;
-+			if (oldstate == PATH_UP || oldstate == PATH_GHOST)
-+				update_queue_mode_del_path(path->mpp);
-+			if (path->tick > checkint)
-+				path->tick = checkint;
-+		}
+-		pp->chkrstate = pp->state = path_state;
++		if (mask & DI_CHECKER)
++			/*
++			 * Avoid any IO on the device itself.
++			 * simply use the path_offline() return as its state
++			 */
++			pp->chkrstate = pp->state = path_state;
+ 		return PATHINFO_OK;
  	}
  
- 	return 0;
- }
+diff --git a/multipath/main.c b/multipath/main.c
+index 5abb118..69141db 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -356,7 +356,7 @@ static int check_usable_paths(struct config *conf,
+ 			pp->udev = get_udev_device(pp->dev_t, DEV_DEVT);
+ 			if (pp->udev == NULL)
+ 				continue;
+-			if (pathinfo(pp, conf, DI_SYSFS|DI_NOIO) != PATHINFO_OK)
++			if (pathinfo(pp, conf, DI_SYSFS|DI_NOIO|DI_CHECKER) != PATHINFO_OK)
+ 				continue;
  
--int hit_io_err_recheck_time(struct path *pp)
-+int need_io_err_check(struct path *pp)
- {
- 	struct timespec curr_time;
- 	int r;
-@@ -392,7 +387,7 @@ int hit_io_err_recheck_time(struct path *pp)
- 		io_err_stat_log(2, "%s: recover path early", pp->dev);
- 		goto recover;
- 	}
--	if (pp->io_err_pathfail_cnt != PATH_IO_ERR_IN_POLLING_RECHECK)
-+	if (pp->io_err_pathfail_cnt != PATH_IO_ERR_WAITING_TO_CHECK)
- 		return 1;
- 	if (clock_gettime(CLOCK_MONOTONIC, &curr_time) != 0 ||
- 	    (curr_time.tv_sec - pp->io_err_dis_reinstate_time) >
-@@ -489,7 +484,7 @@ static int poll_io_err_stat(struct vectors *vecs, struct io_err_stat_path *pp)
- 	} else if (path->mpp && path->mpp->nr_active > 1) {
- 		io_err_stat_log(3, "%s: keep failing the dm path %s",
- 				path->mpp->alias, path->dev);
--		path->io_err_pathfail_cnt = PATH_IO_ERR_IN_POLLING_RECHECK;
-+		path->io_err_pathfail_cnt = PATH_IO_ERR_WAITING_TO_CHECK;
- 		path->io_err_disable_reinstate = 1;
- 		path->io_err_dis_reinstate_time = currtime.tv_sec;
- 		io_err_stat_log(3, "%s: disable reinstating of %s",
-diff --git a/libmultipath/io_err_stat.h b/libmultipath/io_err_stat.h
-index bbf31b4..53d6d7d 100644
---- a/libmultipath/io_err_stat.h
-+++ b/libmultipath/io_err_stat.h
-@@ -10,6 +10,6 @@ extern pthread_attr_t io_err_stat_attr;
- int start_io_err_stat_thread(void *data);
- void stop_io_err_stat_thread(void);
- int io_err_stat_handle_pathfail(struct path *path);
--int hit_io_err_recheck_time(struct path *pp);
-+int need_io_err_check(struct path *pp);
- 
- #endif /* _IO_ERR_STAT_H */
+ 			if (pp->state == PATH_UP &&
 diff --git a/multipathd/main.c b/multipathd/main.c
-index fe6d8ef..43830e8 100644
+index 43830e8..678ecf8 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -2080,7 +2080,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	}
+@@ -392,7 +392,8 @@ static void set_no_path_retry(struct multipath *mpp)
+ 	default:
+ 		if (mpp->nr_active > 0) {
+ 			mpp->retry_tick = 0;
+-			dm_queue_if_no_path(mpp->alias, 1);
++			if (!is_queueing)
++				dm_queue_if_no_path(mpp->alias, 1);
+ 		} else if (is_queueing && mpp->retry_tick == 0)
+ 			enter_recovery_mode(mpp);
+ 		break;
+@@ -2072,6 +2073,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	/* if update_multipath_strings orphaned the path, quit early */
+ 	if (!pp->mpp)
+ 		return 0;
++	set_no_path_retry(pp->mpp);
  
  	if ((newstate == PATH_UP || newstate == PATH_GHOST) &&
--	    pp->io_err_disable_reinstate && hit_io_err_recheck_time(pp)) {
-+	    pp->io_err_disable_reinstate && need_io_err_check(pp)) {
- 		pp->state = PATH_SHAKY;
- 		/*
- 		 * to reschedule as soon as possible,so that this path can
+ 			check_path_reinstate_state(pp)) {
 -- 
 2.17.2
