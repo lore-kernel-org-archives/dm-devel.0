@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v3 15/17] multipathd: ignore
-	"disable_changed_wwids"
-Date: Sat, 30 Mar 2019 01:06:04 -0500
-Message-ID: <1553925966-20958-16-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 17/17] libmultipath: silence dm_is_mpath error
+	messages
+Date: Sat, 30 Mar 2019 01:06:06 -0500
+Message-ID: <1553925966-20958-18-git-send-email-bmarzins@redhat.com>
 References: <1553925966-20958-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,97 +22,28 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-From: Martin Wilck <mwilck@suse.com>
+When "multipath -F" is run, dm_is_mpath was printing error messages
+about partition devices, because they had already been removed, when
+it checked.  Lower the error logging level so this doesn't happen on
+the default verbosity.
 
-This option has no effect any more.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/config.c      |  1 -
- libmultipath/config.h      |  1 -
- libmultipath/dict.c        | 18 +++++++++++++++---
- multipath/multipath.conf.5 |  8 ++------
- 4 files changed, 17 insertions(+), 11 deletions(-)
+ libmultipath/devmapper.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 24d71ae..141f092 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -715,7 +715,6 @@ load_config (char * file)
- 	conf->retrigger_tries = DEFAULT_RETRIGGER_TRIES;
- 	conf->retrigger_delay = DEFAULT_RETRIGGER_DELAY;
- 	conf->uev_wait_timeout = DEFAULT_UEV_WAIT_TIMEOUT;
--	conf->disable_changed_wwids = DEFAULT_DISABLE_CHANGED_WWIDS;
- 	conf->remove_retries = 0;
- 	conf->ghost_delay = DEFAULT_GHOST_DELAY;
- 	conf->all_tg_pt = DEFAULT_ALL_TG_PT;
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index b938c26..f5bf5b1 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -182,7 +182,6 @@ struct config {
- 	int delayed_reconfig;
- 	int uev_wait_timeout;
- 	int skip_kpartx;
--	int disable_changed_wwids;
- 	int remove_retries;
- 	int max_sectors_kb;
- 	int ghost_delay;
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index eaad4f1..96815f8 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -156,6 +156,12 @@ out:
- 	return len;
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 3294bd4..2e79667 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -746,7 +746,7 @@ out_task:
+ 	dm_task_destroy(dmt);
+ out:
+ 	if (r < 0)
+-		condlog(2, "%s: dm command failed in %s", name, __FUNCTION__);
++		condlog(3, "%s: dm command failed in %s: %s", name, __FUNCTION__, strerror(errno));
+ 	return r;
  }
  
-+static int
-+print_ignored (char *buff, int len)
-+{
-+	return snprintf(buff, len, "ignored");
-+}
-+
- static int
- print_yes_no (char *buff, int len, long v)
- {
-@@ -548,9 +554,15 @@ declare_hw_handler(skip_kpartx, set_yes_no_undef)
- declare_hw_snprint(skip_kpartx, print_yes_no_undef)
- declare_mp_handler(skip_kpartx, set_yes_no_undef)
- declare_mp_snprint(skip_kpartx, print_yes_no_undef)
--
--declare_def_handler(disable_changed_wwids, set_yes_no)
--declare_def_snprint(disable_changed_wwids, print_yes_no)
-+static int def_disable_changed_wwids_handler(struct config *conf, vector strvec)
-+{
-+	return 0;
-+}
-+static int snprint_def_disable_changed_wwids(struct config *conf, char *buff,
-+					     int len, const void *data)
-+{
-+	return print_ignored(buff, len);
-+}
- 
- declare_def_handler(remove_retries, set_int)
- declare_def_snprint(remove_retries, print_int)
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 864d7eb..646c156 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -1148,12 +1148,8 @@ The default is: \fBno\fR
- .
- .TP
- .B disable_changed_wwids
--If set to \fIyes\fR, multipathd will check the path wwid on change events, and
--if it has changed from the wwid of the multipath device, multipathd will
--disable access to the path until the wwid changes back.
--.RS
--.TP
--The default is: \fBno\fR
-+This option is deprecated and ignored. If the WWID of a path suddenly changes,
-+multipathd handles it as if it was removed and then added again.
- .RE
- .
- .
 -- 
 2.17.2
