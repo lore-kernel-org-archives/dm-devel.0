@@ -1,14 +1,14 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [PATCH resend] multipath-tools: document why
- dev_loss_tmo is set to infinity for HPE 3PAR
-Date: Fri, 29 Mar 2019 16:53:25 +0100
-Message-ID: <5a96ccac4f8fadfaa2bcafebcc6ee17c46ad68ff.camel@suse.de>
-References: <20190316223045.21614-1-xose.vazquez@gmail.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH v3 01/17] BZ 1668693: disable user_friendly_names
+	for NetApp
+Date: Sat, 30 Mar 2019 01:05:50 -0500
+Message-ID: <1553925966-20958-2-git-send-email-bmarzins@redhat.com>
+References: <1553925966-20958-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190316223045.21614-1-xose.vazquez@gmail.com>
+In-Reply-To: <1553925966-20958-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,40 +18,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: DM-DEVEL ML <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Sat, 2019-03-16 at 23:30 +0100, Xose Vazquez Perez wrote:
-> It's needed by Peer Persistence, documented in SLES and RHEL guides:
-> https://support.hpe.com/hpsc/doc/public/display?docId=a00053835
-> https://support.hpe.com/hpsc/doc/public/display?docId=c04448818
-> 
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM-DEVEL ML <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libmultipath/hwtable.c | 1 +
->  1 file changed, 1 insertion(+)
-> 
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index d3a8d9b..543bacd 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -116,6 +116,7 @@ static struct hwentry default_hw[] = {
->  		.prio_name     = PRIO_ALUA,
->  		.no_path_retry = 18,
->  		.fast_io_fail  = 10,
-> +		/* infinity is needed by Peer Persistence */
->  		.dev_loss      = MAX_DEV_LOSS_TMO,
->  	},
->  	{
-
-I'm not quite getting the benefit of adding this comment without
-further explanation what Peer Persistence is. Also, IMO, setting
-dev_loss_tmo to a higher value than the default (contrary to lowering
-it) doesn't require much justification.
-
-But it can't really hurt, so:
+NetApp has tools that rely on devices using WWID names. To avoid
+breaking these, NetApp devices should continue to use WWID names, even
+if the default config is set to enable user_friendly_names. If users
+want to use user_friendly_names on NetApp devices, the must specifically
+override the device config.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/hwtable.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index d3a8d9b..8776411 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -719,6 +719,7 @@ static struct hwentry default_hw[] = {
+ 		.flush_on_last_del = FLUSH_ENABLED,
+ 		.dev_loss      = MAX_DEV_LOSS_TMO,
+ 		.prio_name     = PRIO_ONTAP,
++		.user_friendly_names = USER_FRIENDLY_NAMES_OFF,
+ 	},
+ 	{
+ 		/*
+-- 
+2.17.2
