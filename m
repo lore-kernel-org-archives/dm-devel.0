@@ -1,15 +1,15 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v3 12/17] libmulitpath: cleanup uid_fallback
-	code
-Date: Mon, 01 Apr 2019 15:26:04 +0200
-Message-ID: <98891ca781542ed0f76945ebde6103544f204f4a.camel@suse.com>
+From: Martin Wilck <mwilck@suse.de>
+Subject: Re: [PATCH v3 13/17] multipathd: handle changed wwids by
+ removal and addition
+Date: Mon, 01 Apr 2019 15:31:36 +0200
+Message-ID: <b2395066ce3c6f286d43f714902a52f3415aad69.camel@suse.de>
 References: <1553925966-20958-1-git-send-email-bmarzins@redhat.com>
-	<1553925966-20958-13-git-send-email-bmarzins@redhat.com>
+	<1553925966-20958-14-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1553925966-20958-13-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1553925966-20958-14-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,41 +23,18 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.var
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gU2F0LCAyMDE5LTAzLTMwIGF0IDAxOjA2IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gSW5zdGVhZCBvZiBhbHdheXMgY2FsbGluZyB1aWRfZmFsbGJhY2soKSBpZiB0aGUgY29u
-ZmlndXJlZCBtZXRob2QgdG8KPiBnZXQKPiB0aGUgdWlkIGZhaWxlZCwgZ2V0X3VpZCBub3cgY2hl
-Y2tzIGlmIHRoZSBwYXRoIHN1cHBvcnRzIGZhbGxiYWNrcyBhbmQKPiBpZgo+IGFsbCB0aGUgcmV0
-cmlnZ2VycyBoYXZlIG9jY3VycmVkLiBJZiBzbywgaXQgY2FsbHMgdWlkX2ZhbGxiYWNrKCksCj4g
-d2hpY2gKPiBqdXN0IGF0dGVtcHRzIHRvIGdldCB0aGUgdWlkIHVzaW5nIHRoZSBhcHByb3ByaWF0
-ZSBmYWxsYmFjayBtZXRob2QuCj4gTm9uZQo+IG9mIHRoZXNlIGNoYW5nZXMgc2hvdWxkIG1ha2Ug
-dGhlIGNvZGUgZnVuY3Rpb24gYW55IGRpZmZlcmVudGx5Lgo+IAo+IFNpZ25lZC1vZmYtYnk6IEJl
-bmphbWluIE1hcnppbnNraSA8Ym1hcnppbnNAcmVkaGF0LmNvbT4KPiAtLS0KPiAgbGlibXVsdGlw
-YXRoL2Rpc2NvdmVyeS5jIHwgODUgKysrKysrKysrKysrKysrKysrKysrKy0tLS0tLS0tLS0tLS0t
-Cj4gLS0tLQo+ICAxIGZpbGUgY2hhbmdlZCwgNDYgaW5zZXJ0aW9ucygrKSwgMzkgZGVsZXRpb25z
-KC0pCj4gCj4gZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYyBiL2xpYm11bHRp
-cGF0aC9kaXNjb3ZlcnkuYwo+IGluZGV4IGJlY2U2N2MuLjNlYzYwZDYgMTAwNjQ0Cj4gLS0tIGEv
-bGlibXVsdGlwYXRoL2Rpc2NvdmVyeS5jCj4gKysrIGIvbGlibXVsdGlwYXRoL2Rpc2NvdmVyeS5j
-Cj4gQEAgLTE3NTUsNTAgKzE3NTUsNTAgQEAgZ2V0X3ZwZF91aWQoc3RydWN0IHBhdGggKiBwcCkK
-PiAgfQo+ICAKPiAgc3RhdGljIHNzaXplX3QgdWlkX2ZhbGxiYWNrKHN0cnVjdCBwYXRoICpwcCwg
-aW50IHBhdGhfc3RhdGUsCj4gLQkJCSAgICBjb25zdCBjaGFyICoqb3JpZ2luLCBzc2l6ZV90IG9s
-ZF9sZW4pCj4gKwkJCSAgICBjb25zdCBjaGFyICoqb3JpZ2luKQo+ICB7Cj4gLQlzc2l6ZV90IGxl
-biA9IG9sZF9sZW47Cj4gLQlpbnQgcmV0cmlnZ2VyOwo+IC0Jc3RydWN0IGNvbmZpZyAqY29uZjsK
-PiAtCj4gLQljb25mID0gZ2V0X211bHRpcGF0aF9jb25maWcoKTsKPiAtCXJldHJpZ2dlciA9IGNv
-bmYtPnJldHJpZ2dlcl90cmllczsKPiAtCXB1dF9tdWx0aXBhdGhfY29uZmlnKGNvbmYpOwo+IC0J
-aWYgKHBwLT5yZXRyaWdnZXJzID49IHJldHJpZ2dlcikgewo+IC0JCWlmIChwcC0+YnVzID09IFNZ
-U0ZTX0JVU19TQ1NJICYmCj4gLQkJICAgICFzdHJjbXAocHAtPnVpZF9hdHRyaWJ1dGUsIERFRkFV
-TFRfVUlEX0FUVFJJQlVURSkpCj4gewo+IC0JCQlsZW4gPSBnZXRfdnBkX3VpZChwcCk7Cj4gLQkJ
-CSpvcmlnaW4gPSAic3lzZnMiOwo+IC0JCQlwcC0+dWlkX2F0dHJpYnV0ZSA9IE5VTEw7Cj4gLQkJ
-CWlmIChsZW4gPCAwICYmIHBhdGhfc3RhdGUgPT0gUEFUSF9VUCkgewo+IC0JCQkJY29uZGxvZygx
-LCAiJXM6IGZhaWxlZCB0byBnZXQgc3lzZnMKPiB1aWQ6ICVzIiwKPiAtCQkJCQlwcC0+ZGV2LCBz
-dHJlcnJvcigtbGVuKSk7Cj4gLQkJCQlsZW4gPSBnZXRfdnBkX3NnaW8ocHAtPmZkLCAweDgzLCBw
-cC0KPiA+d3dpZCwKPiArCXNzaXplX3QgbGVuID0gLTE7Cj4gKwo+ICsJaWYgKHBwLT5idXMgPT0g
-U1lTRlNfQlVTX1NDU0kgJiYKPiArCSAgICAhc3RyY21wKHBwLT51aWRfYXR0cmlidXRlLCBERUZB
-VUxUX1VJRF9BVFRSSUJVVEUpKSB7CgpFdmVuIHRoZSBjaGVjayBmb3IgREVGQVVMVF9VSURfQVRU
-UklCVVRFIG1pZ2h0IGJlIG1vdmVkIHRvIGdldF91aWQoKS4KQnV0IHdlIGNhbiBkbyB0aGF0IGxh
-dGVyLgoKUmV2aWV3ZWQtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgoKLS0gCkRy
-LiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAy
-MTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFy
-ZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCgotLQpkbS1kZXZlbCBt
-YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21h
-aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Sat, 2019-03-30 at 01:06 -0500, Benjamin Marzinski wrote:
+> If a path's WWID changes, it's not necessarily failed. But it
+> certainly
+> has to be removed from an existing map, otherwise data corruption is
+> imminent. Instead of keeping the path in the map, failing it, and
+> remembering the "changed WWID" state, this patch simply removes and
+> re-adds the path.
+> 
+> This is patch is heavily based on the previous patch of the same name
+> by Martin Wilck.
+> 
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+
+Reviewed-by: Martin Wilck <mwilck@suse.com>
