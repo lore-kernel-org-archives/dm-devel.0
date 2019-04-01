@@ -1,16 +1,16 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: least-pending multipath path selector WAS (9/14/14
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: least-pending multipath path selector WAS (9/14/14
  !!!!): Re: Powerpath vs dm-multipath - two points of FUD?
-Date: Mon, 1 Apr 2019 01:16:33 +0200
-Message-ID: <80c5be3f-f00a-36cb-c848-5207a8556b2f@gmail.com>
+Date: Mon, 01 Apr 2019 13:05:26 +0200
+Message-ID: <6df18d919a2ae5071b54e26107006169e7da10db.camel@suse.com>
 References: <CA+ZWeLBUXK_kWjNkUcsg_5rP8ruew6ipupzdL_kw_K4v70p_5g@mail.gmail.com>
 	<54155446.2030700@suse.de>
+	<80c5be3f-f00a-36cb-c848-5207a8556b2f@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <54155446.2030700@suse.de>
-Content-Language: en-GB
+In-Reply-To: <80c5be3f-f00a-36cb-c848-5207a8556b2f@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,350 +20,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Martin Wilck <mwilck@suse.com>, device-mapper development <dm-devel@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>, Hannes Reinecke <hare@suse.de>
 List-Id: dm-devel.ids
 
-On 9/14/14 10:39 AM, Hannes Reinecke wrote:
-
-> We do this with the switch to request-based multipathing.
-> Using one of the other load balancers (eg least-pending) and set rr_min_io to '1' will give you exactly that behaviour.
-
-As the original authors team, at HP, was dissolved ( https://bugzilla.redhat.com/show_bug.cgi?id=438760#c14 )
-Hannes, do you consider least-pending mp selector helpful for upstream?
-
-https://raw.githubusercontent.com/kdave/kernel-source/master/patches.suse/dm-mpath-leastpending-path-update
-
----cut---
-Subject: Update least-pending-IO dynamic load balancer
-From: Hannes Reinecke <hare@suse.de>
-Date: Wed Jan 7 09:26:30 2009 +0100:
-References: bnc#444199
-Patch-mainline: not yet, <hare: will resubmit, Oct 4, 2017>
-
-Attached patch provides "Least pending IO" dynamic load balancing policy for
-bio based device mapper multipath. This load balancing policy considers the
-number of unserviced requests pending on a path and selects the path with least
-count for pending service request.
-
-We find this policy more useful especially when the SAN environment has
-heterogeneous components. Ex, when there is one 8GB HBA and one 2GB HBA
-connected to the same server, 8GB HBA could be utilized better with this
-algorithm.
-
-This patch includes the update as posted in the bugzilla,
-based on the review comments received in the dm-devel mailing list.
-
-Signed-off-by: Sakshi Chaitanya Veni <vsakshi@hp.com>
-Signed-off-by: Vijayakumar Balasubramanian <vijayakumar@hp.com>
-Signed-off-by: Senthil Kumar V <senthil-kumar.veluswamy@hp.com>
-Signed-off-by: Hannes Reinecke <hare@suse.de>
-
----
- drivers/md/Makefile           |    2
- drivers/md/dm-least-pending.c |  265 ++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 266 insertions(+), 1 deletion(-)
-
---- a/drivers/md/Makefile
-+++ b/drivers/md/Makefile
-@@ -41,7 +41,7 @@ obj-$(CONFIG_DM_BIO_PRISON)	+= dm-bio-pr
- obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
- obj-$(CONFIG_DM_DELAY)		+= dm-delay.o
- obj-$(CONFIG_DM_FLAKEY)		+= dm-flakey.o
--obj-$(CONFIG_DM_MULTIPATH)	+= dm-multipath.o dm-round-robin.o
-+obj-$(CONFIG_DM_MULTIPATH)	+= dm-multipath.o dm-round-robin.o dm-least-pending.o
- obj-$(CONFIG_DM_MULTIPATH_QL)	+= dm-queue-length.o
- obj-$(CONFIG_DM_MULTIPATH_ST)	+= dm-service-time.o
- obj-$(CONFIG_DM_SWITCH)		+= dm-switch.o
---- /dev/null
-+++ b/drivers/md/dm-least-pending.c
-@@ -0,0 +1,265 @@
-+/*
-+ * (C) Copyright 2008 Hewlett-Packard Development Company, L.P
-+ *
-+ * This file is released under the GPL.
-+ */
-+
-+#include "dm-path-selector.h"
-+
-+#include <linux/slab.h>
-+#include <linux/module.h>
-+
-+#define DM_MSG_PREFIX "multipath least-pending"
-+
-+/*-----------------------------------------------------------------
-+* Path-handling code, paths are held in lists
-+*---------------------------------------------------------------*/
-+struct path_info {
-+       struct list_head list;
-+       struct dm_path *path;
-+       atomic_t io_count;
-+};
-+
-+static void free_paths(struct list_head *paths)
-+{
-+       struct path_info *pi, *next;
-+
-+       list_for_each_entry_safe(pi, next, paths, list) {
-+		list_del(&pi->list);
-+		kfree(pi);
-+       }
-+}
-+
-+/*-----------------------------------------------------------------
-+ * Least-pending selector
-+ *---------------------------------------------------------------*/
-+
-+#define LPP_MIN_IO     1
-+
-+struct selector {
-+       struct list_head valid_paths;
-+       struct list_head invalid_paths;
-+};
-+
-+static struct selector *alloc_selector(void)
-+{
-+       struct selector *s = kmalloc(sizeof(*s), GFP_KERNEL);
-+
-+       if (s) {
-+		INIT_LIST_HEAD(&s->valid_paths);
-+		INIT_LIST_HEAD(&s->invalid_paths);
-+       }
-+
-+       return s;
-+}
-+
-+static int lpp_create(struct path_selector *ps, unsigned argc, char **argv)
-+{
-+       struct selector *s;
-+
-+       s = alloc_selector();
-+       if (!s)
-+		return -ENOMEM;
-+
-+       ps->context = s;
-+       return 0;
-+}
-+
-+static void lpp_destroy(struct path_selector *ps)
-+{
-+       struct selector *s = ps->context;
-+
-+       free_paths(&s->valid_paths);
-+       free_paths(&s->invalid_paths);
-+       kfree(s);
-+       ps->context = NULL;
-+}
-+
-+static int lpp_status(struct path_selector *ps, struct dm_path *path,
-+			status_type_t type, char *result, unsigned int maxlen)
-+{
-+       struct path_info *pi;
-+       int sz = 0;
-+
-+       if (!path)
-+		switch (type) {
-+		case STATUSTYPE_INFO:
-+			DMEMIT("1 ");
-+		break;
-+		case STATUSTYPE_TABLE:
-+			DMEMIT("0 ");
-+		break;
-+		}
-+       else {
-+		pi = path->pscontext;
-+		switch (type) {
-+		case STATUSTYPE_INFO:
-+			/*
-+			 * Even though repeat_count isn't used anymore,
-+			 * status info expects it. It's always 1.
-+			 */
-+			DMEMIT("1:%u ", atomic_read(&pi->io_count));
-+		break;
-+		case STATUSTYPE_TABLE:
-+		break;
-+		}
-+	}
-+
-+       return sz;
-+}
-+
-+/*
-+ * Called during initialisation to register each path
-+ */
-+static int lpp_add_path(struct path_selector *ps, struct dm_path *path,
-+			int argc, char **argv, char **error)
-+{
-+       struct selector *s = ps->context;
-+       struct path_info *pi;
-+
-+	if (argc > 1) {
-+		*error = "least-pending ps: incorrect number of arguments";
-+		return -EINVAL;
-+	}
-+
-+       /*
-+        * Sanity check the optional repeat_count argument.  It must
-+	* always be 1 and isn't actually variable.  We can just issue
-+	* a warning and adjust automatically rather than error out.
-+	*/
-+       if (argc == 1) {
-+		unsigned repeat_count = 1;
-+	        if (sscanf(argv[0], "%u", &repeat_count) != 1) {
-+			*error = "least-pending ps: invalid repeat count";
-+			return -EINVAL;
-+		}
-+		if (repeat_count > 1)
-+			DMWARN_LIMIT("repeat_count > 1 is deprecated, using 1 instead");
-+       }
-+
-+       /* allocate the path */
-+       pi = kmalloc(sizeof(*pi), GFP_KERNEL);
-+       if (!pi) {
-+		*error = "least-pending ps: Error allocating path context";
-+		return -ENOMEM;
-+       }
-+
-+       pi->path = path;
-+       atomic_set(&pi->io_count, 0);
-+
-+       path->pscontext = pi;
-+
-+       list_add(&pi->list, &s->valid_paths);
-+
-+       return 0;
-+}
-+
-+static void lpp_fail_path(struct path_selector *ps, struct dm_path *p)
-+{
-+       struct selector *s = ps->context;
-+       struct path_info *pi = p->pscontext;
-+
-+       if (!pi)
-+	return;
-+
-+       atomic_set(&pi->io_count, 0);
-+
-+       list_move(&pi->list, &s->invalid_paths);
-+}
-+
-+static int lpp_reinstate_path(struct path_selector *ps, struct dm_path *p)
-+{
-+       struct selector *s = ps->context;
-+       struct path_info *pi = p->pscontext;
-+
-+       if (!pi)
-+	return 1;
-+
-+       list_move(&pi->list, &s->valid_paths);
-+
-+       return 0;
-+}
-+
-+static struct dm_path *lpp_select_path(struct path_selector *ps,
-+				       size_t nr_bytes)
-+{
-+       struct selector *s = ps->context;
-+       struct path_info *pi, *next, *least_io_path = NULL;
-+       struct list_head *paths;
-+
-+       if (list_empty(&s->valid_paths))
-+		return NULL;
-+
-+       paths = &s->valid_paths;
-+
-+       list_for_each_entry_safe(pi, next, paths, list) {
-+		if (!least_io_path || atomic_read(&least_io_path->io_count) < atomic_read(&pi->io_count))
-+			least_io_path = pi;
-+		if (!atomic_read(&least_io_path->io_count))
-+			break;
-+       }
-+
-+       if (!least_io_path)
-+		return NULL;
-+
-+       atomic_inc(&least_io_path->io_count);
-+
-+       return least_io_path->path;
-+}
-+
-+static int lpp_end_io(struct path_selector *ps, struct dm_path *path,
-+		      size_t nr_bytes)
-+{
-+       struct path_info *pi = NULL;
-+
-+       pi = path->pscontext;
-+       if (!pi)
-+	return 1;
-+
-+       atomic_dec(&pi->io_count);
-+
-+       return 0;
-+}
-+
-+static struct path_selector_type lpp_ps = {
-+       .name = "least-pending",
-+       .module = THIS_MODULE,
-+       .table_args = 1,
-+       .info_args = 0,
-+       .create = lpp_create,
-+       .destroy = lpp_destroy,
-+       .status = lpp_status,
-+       .add_path = lpp_add_path,
-+       .fail_path = lpp_fail_path,
-+       .reinstate_path = lpp_reinstate_path,
-+       .select_path = lpp_select_path,
-+       .end_io = lpp_end_io,
-+};
-+
-+static int __init dm_lpp_init(void)
-+{
-+       int r = dm_register_path_selector(&lpp_ps);
-+
-+       if (r < 0)
-+		DMERR("register failed %d", r);
-+
-+       DMINFO("version 1.0.0 loaded");
-+
-+       return r;
-+}
-+
-+static void __exit dm_lpp_exit(void)
-+{
-+       int r = dm_unregister_path_selector(&lpp_ps);
-+
-+       if (r < 0)
-+		DMERR("unregister failed %d", r);
-+}
-+
-+module_init(dm_lpp_init);
-+module_exit(dm_lpp_exit);
-+
-+MODULE_DESCRIPTION(DM_NAME " least-pending multipath path selector");
-+MODULE_AUTHOR("Sakshi Chaitanya Veni <vsakshi@hp.com>");
-+MODULE_LICENSE("GPL");
-+
----end---
-
-
-Missing Kconfig option:
-
-diff -pNaur linux-2.6.28-rc7-org//drivers/md/Kconfig linux-2.6.28-rc7-mod//drivers/md/Kconfig
---- linux-2.6.28-rc7-org//drivers/md/Kconfig	2008-12-04 14:50:35.000000000 +0530
-+++ linux-2.6.28-rc7-mod//drivers/md/Kconfig	2008-12-05 15:32:56.000000000 +0530
-@@ -192,6 +192,16 @@ config MD_MULTIPATH
-
- 	  If unsure, say N.
-
-+config MD_MULTIPATH_LPP
-+        tristate "Multipath - Least Pending IO Path Selector"
-+        depends on MD_MULTIPATH
-+        help
-+          Least Pending IO Path Selector - This load balancing policy
-+          considers the number of unserviced requests pending on a path
-+          and selects the path with least count for pending service request.
-+
-+          If unsure, say N.
-+
- config MD_FAULTY
- 	tristate "Faulty test module for MD"
- 	depends on BLK_DEV_MD
+SGkgWG9zZSwKCk9uIE1vbiwgMjAxOS0wNC0wMSBhdCAwMToxNiArMDIwMCwgWG9zZSBWYXpxdWV6
+IFBlcmV6IHdyb3RlOgo+IE9uIDkvMTQvMTQgMTA6MzkgQU0sIEhhbm5lcyBSZWluZWNrZSB3cm90
+ZToKPiAKPiA+IFdlIGRvIHRoaXMgd2l0aCB0aGUgc3dpdGNoIHRvIHJlcXVlc3QtYmFzZWQgbXVs
+dGlwYXRoaW5nLgo+ID4gVXNpbmcgb25lIG9mIHRoZSBvdGhlciBsb2FkIGJhbGFuY2VycyAoZWcg
+bGVhc3QtcGVuZGluZykgYW5kIHNldAo+ID4gcnJfbWluX2lvIHRvICcxJyB3aWxsIGdpdmUgeW91
+IGV4YWN0bHkgdGhhdCBiZWhhdmlvdXIuCj4gCj4gQXMgdGhlIG9yaWdpbmFsIGF1dGhvcnMgdGVh
+bSwgYXQgSFAsIHdhcyBkaXNzb2x2ZWQgKCAKPiBodHRwczovL2J1Z3ppbGxhLnJlZGhhdC5jb20v
+c2hvd19idWcuY2dpP2lkPTQzODc2MCNjMTQgKQo+IEhhbm5lcywgZG8geW91IGNvbnNpZGVyIGxl
+YXN0LXBlbmRpbmcgbXAgc2VsZWN0b3IgaGVscGZ1bCBmb3IKPiB1cHN0cmVhbT8KPiAKCkkgY2Fu
+J3Qgc3BlYWsgZm9yIEhhbm5lcywgYnV0IEkgYmVsaWV2ZSB0aGF0IHRoZSBmdW5jdGlvbmFsaXR5
+IHByb3ZpZGVkCmJ5IHRoaXMgcGF0Y2ggaXMgbW9zdGx5IHByb3ZpZGVkIGJ5IHRoZSAicXVldWUt
+bGVuZ3RoIiBwYXRoIHNlbGVjdG9yCnRvZGF5LiAic2VydmljZS10aW1lIiBoYXMgYmVlbiB0aGUg
+ZGVmYXVsdCBzaW5jZSAyMDEzLCBhbmQgbW9zdCB1c2VycwpzZWVtIHRvIGJlIGZpbmUgd2l0aCB0
+aGF0LgoKSXQncyB0cnVlIHRoYXQgU0xFUyBrZXJuZWxzIHN0aWxsIHN1cHBvcnQgaXQsIGJ1dCBJ
+IGRvbid0IHRoaW5rIGl0J3MKdXNlZCBtdWNoLCBpZiBhdCBhbGwuCgpFdmVuIGlmIHRoZSAibGVh
+c3QgcGVuZGluZyIgc2VsZWN0b3Igd2FzIHN0aWxsIG5lZWRlZCwgdGhlIHBhdGNoIHdvdWxkCm5l
+ZWQgdXBkYXRpbmcgZm9yIGN1cnJlbnQgdXBzdHJlYW0sIHRvIGFjY29tb2RhdGUgdGhlIGNoYW5n
+ZXMgZnJvbQo5NjU5ZjgxMTQ0NmEgImRtIG1wYXRoOiBwdXNoIHBhdGggc2VsZWN0b3IgbG9ja2lu
+ZyBkb3duIHRvIHBhdGgKc2VsZWN0b3JzIiwgYW5kIHBvc3NpYmx5IG90aGVyIGNoYW5nZXMgaW4g
+dGhlIGdlbmVyYWwgZG0vcGF0aCBzZWxlY3RvcgpmcmFtZXdvcmsuCgpNYXJ0aW4KCi0tIApEci4g
+TWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEw
+NwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQs
+IEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgoKLS0KZG0tZGV2ZWwgbWFp
+bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWls
+bWFuL2xpc3RpbmZvL2RtLWRldmVs
