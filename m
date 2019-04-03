@@ -1,15 +1,12 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v3 07/17] multipathd: ignore failed wwid
-	recheck
-Date: Mon, 01 Apr 2019 16:32:00 +0200
-Message-ID: <8479599ccaba1da17a1361a4866c860d91b43c84.camel@suse.com>
-References: <1553925966-20958-1-git-send-email-bmarzins@redhat.com>
-	<1553925966-20958-8-git-send-email-bmarzins@redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: dracut: multipath module
+Date: Wed, 3 Apr 2019 21:59:59 +0200
+Message-ID: <a839ad11-96fa-73a0-fb58-ba589cfa61c9@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1553925966-20958-8-git-send-email-bmarzins@redhat.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,29 +16,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>, initramfs <initramfs@vger.kernel.org>, Dave Young <dyoung@redhat.com>, Harald Hoyer <harald@redhat.co>
 List-Id: dm-devel.ids
 
-T24gU2F0LCAyMDE5LTAzLTMwIGF0IDAxOjA1IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gSWYgZGlzYWJsZV9jaGFuZ2VkX3d3aWRzIGlzIHNldCwgd2hlbiBtdWx0aXBhdGhkIGdl
-dHMgYSBjaGFuZ2UgZXZlbnQKPiBvbgo+IGEgcGF0aCwgaXQgdmVyaWZpZXMgdGhhdCB0aGUgd3dp
-ZCBoYXNuJ3QgY2hhbmdlZCBpbgo+IHVldl91cGRhdGVfcGF0aCgpLgo+IElmIGdldF91aWQoKSBm
-YWlsZWQsIHVldl91cGRhdGVfcGF0aCB0cmVhdGVkIHRoaXMgYXMgYSB3d2lkIGNoYW5nZSB0bwo+
-IDAuCj4gVGhpcyBjb3VsZCBjYXVzZSBwYXRocyB0byBzdWRkZW5seSBiZSBkcm9wcGVkIGR1ZSB0
-byBhbiBpc3N1ZSB3aXRoCj4gZ2V0dGluZyB0aGUgd3dpZC4gIEV2ZW4gaWYgZ2V0X3VpZCgpIGZh
-aWxlZCBiZWNhdXNlIHRoZSBwYXRoIHdhcwo+IGRvd24sCj4gaXQgbm8gY2hhbmdlIHVldmVudCBo
-YXBwZW5kIHdoZW4gaXQgbGF0ZXIgYmVjYW1lIGFjdGl2ZSwgbXVsdGlwYXRoZAo+IHdvdWxkIGNv
-bnRpbnVlIHRvIGlnbm9yZSB0aGUgcGF0aC4gQWxzbywgc2NzaV91aWRfZmFsbGJhY2soKSBjbGVh
-cnMKPiB0aGUKPiBmYWlsdXJlIHJldHVybiBpZiBpdCBkb2Vzbid0IGF0dGVtcHQgdG8gZmFsbGJh
-Y2ssIGNhdXNpbmcgZ2V0X3VpZCgpCj4gdG8gcmV0dXJuIHN1Y2Nlc3MsIHdoZW4gaXQgYWN0dWFs
-bHkgZmFpbGVkLgo+IAo+IE11bHRpcGF0aGQgc2hvdWxkIG5laXRoZXIgc2V0IG5vciBjbGVhciB3
-d2lkX2NoYW5nZWQgaWYgZ2V0X3VpZCgpCj4gcmV0dXJuZWQgZmFpbHVyZS4gQWxzbywgc2NzaV91
-aWRfZmFsbGJhY2soKSBzaG91bGQgcmV0YWluIHRoZSBvbGQKPiByZXR1cm4KPiB2YWx1ZSBpZiBp
-dCBkb2Vzbid0IGF0dGVtcHQgdG8gZmFsbGJhY2suCj4gCj4gU2lnbmVkLW9mZi1ieTogQmVuamFt
-aW4gTWFyemluc2tpIDxibWFyemluc0ByZWRoYXQuY29tPgoKUmV2aWV3ZWQtYnk6IE1hcnRpbiBX
-aWxjayA8bXdpbGNrQHN1c2UuY29tPgoKCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3Vz
-ZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBG
-ZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0
-IChBRyBOw7xybmJlcmcpCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
-dC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Hi,
+
+
+This only works in a Fedora/RH distribution:
+
+
+- dracut/modules.d/90multipath/module-setup.sh:97:        [ -n "$_allow" ] && mpathconf $_allow --outfile ${initdir}/etc/multipath.conf
+                                                                              ^^^^^^^^^
+   https://src.fedoraproject.org/rpms/device-mapper-multipath/blob/master/f/0012-RH-add-mpathconf.patch
+
+
+- dracut/modules.d/90multipath/multipathd.sh:3:if getargbool 1 rd.multipath -d -n rd_NO_MULTIPATH && [ -e /etc/multipath.conf ]; then
+                                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+- dracut/modules.d/90multipath/multipathd-stop.sh:3:if [ -e /etc/multipath.conf ]; then
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   https://src.fedoraproject.org/rpms/device-mapper-multipath/blob/master/f/0010-RH-don-t-start-without-a-config-file.patch
