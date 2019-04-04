@@ -1,8 +1,7 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH] dm-crypt: fix endianess annotations around
-	org_sector_of_dmreq
-Date: Thu,  4 Apr 2019 18:33:34 +0200
-Message-ID: <20190404163334.4453-1-hch@lst.de>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] Fix systemd version detection
+Date: Thu,  4 Apr 2019 17:03:21 -0500
+Message-ID: <1554415401-26011-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,52 +15,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Igor Gnatenko <ignatenkobrain@fedoraproject.org>, device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The sector used here is a little endian value, so use the right
-type for it.
+From: Igor Gnatenko <ignatenkobrain@fedoraproject.org>
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+Signed-off-by: Igor Gnatenko <ignatenkobrain@fedoraproject.org>
 ---
- drivers/md/dm-crypt.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ Makefile.inc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index dd6565798778..692cddf3fe2a 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1034,11 +1034,11 @@ static u8 *org_iv_of_dmreq(struct crypt_config *cc,
- 	return iv_of_dmreq(cc, dmreq) + cc->iv_size;
- }
+diff --git a/Makefile.inc b/Makefile.inc
+index fc728ca..5b2f6d4 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -37,7 +37,7 @@ endif
  
--static uint64_t *org_sector_of_dmreq(struct crypt_config *cc,
-+static __le64 *org_sector_of_dmreq(struct crypt_config *cc,
- 		       struct dm_crypt_request *dmreq)
- {
- 	u8 *ptr = iv_of_dmreq(cc, dmreq) + cc->iv_size + cc->iv_size;
--	return (uint64_t*) ptr;
-+	return (__le64 *) ptr;
- }
+ ifndef SYSTEMD
+ 	ifeq ($(shell systemctl --version > /dev/null 2>&1 && echo 1), 1)
+-		SYSTEMD = $(shell systemctl --version 2> /dev/null |  sed -n 's/systemd \([0-9]*\)/\1/p')
++		SYSTEMD = $(shell systemctl --version 2> /dev/null |  sed -n 's/systemd \([0-9]*\).*/\1/p')
+ 	endif
+ endif
  
- static unsigned int *org_tag_of_dmreq(struct crypt_config *cc,
-@@ -1074,7 +1074,7 @@ static int crypt_convert_block_aead(struct crypt_config *cc,
- 	struct bio_vec bv_out = bio_iter_iovec(ctx->bio_out, ctx->iter_out);
- 	struct dm_crypt_request *dmreq;
- 	u8 *iv, *org_iv, *tag_iv, *tag;
--	uint64_t *sector;
-+	__le64 *sector;
- 	int r = 0;
- 
- 	BUG_ON(cc->integrity_iv_size && cc->integrity_iv_size != cc->iv_size);
-@@ -1169,7 +1169,7 @@ static int crypt_convert_block_skcipher(struct crypt_config *cc,
- 	struct scatterlist *sg_in, *sg_out;
- 	struct dm_crypt_request *dmreq;
- 	u8 *iv, *org_iv, *tag_iv;
--	uint64_t *sector;
-+	__le64 *sector;
- 	int r = 0;
- 
- 	/* Reject unexpected unaligned bio. */
 -- 
-2.20.1
+2.17.2
