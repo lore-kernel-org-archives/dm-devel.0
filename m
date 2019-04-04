@@ -1,12 +1,14 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: dracut: multipath module
-Date: Wed, 3 Apr 2019 21:59:59 +0200
-Message-ID: <a839ad11-96fa-73a0-fb58-ba589cfa61c9@gmail.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [PATCH] scsi: add new RDAC LENOVO/DE_Series device
+Date: Wed, 03 Apr 2019 23:29:07 -0400
+Message-ID: <yq1d0m2tpmk.fsf@oracle.com>
+References: <20190330144331.20276-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-GB
+In-Reply-To: <20190330144331.20276-1-xose.vazquez@gmail.com> (Xose Vazquez
+	Perez's message of "Sat, 30 Mar 2019 15:43:31 +0100")
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,22 +18,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, initramfs <initramfs@vger.kernel.org>, Dave Young <dyoung@redhat.com>, Harald Hoyer <harald@redhat.co>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, SCSI ML <linux-scsi@vger.kernel.org>, "Martin K . Petersen" <martin.petersen@oracle.com>, NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, DM ML <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Hi,
 
+Xose,
 
-This only works in a Fedora/RH distribution:
+> Blacklist "Universal Xport" LUN, it's used for in-band storage array
+> management.  And add it to the rdac dh family.
 
+Applied to 5.1/scsi-fixes, thanks.
 
-- dracut/modules.d/90multipath/module-setup.sh:97:        [ -n "$_allow" ] && mpathconf $_allow --outfile ${initdir}/etc/multipath.conf
-                                                                              ^^^^^^^^^
-   https://src.fedoraproject.org/rpms/device-mapper-multipath/blob/master/f/0012-RH-add-mpathconf.patch
-
-
-- dracut/modules.d/90multipath/multipathd.sh:3:if getargbool 1 rd.multipath -d -n rd_NO_MULTIPATH && [ -e /etc/multipath.conf ]; then
-                                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
-- dracut/modules.d/90multipath/multipathd-stop.sh:3:if [ -e /etc/multipath.conf ]; then
-                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
-   https://src.fedoraproject.org/rpms/device-mapper-multipath/blob/master/f/0010-RH-don-t-start-without-a-config-file.patch
+-- 
+Martin K. Petersen	Oracle Linux Engineering
