@@ -1,15 +1,11 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH] Fix systemd version detection
-Date: Thu, 4 Apr 2019 19:28:50 -0500
-Message-ID: <20190405002850.GT13295@octiron.msp.redhat.com>
-References: <1554415401-26011-1-git-send-email-bmarzins@redhat.com>
-	<15d8c824a598c1dbca0b8118d540d245a6d0a722.camel@suse.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-integrity: fix deadlock with overlapping I/O
+Date: Fri, 5 Apr 2019 15:26:39 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1904051519570.13259@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <15d8c824a598c1dbca0b8118d540d245a6d0a722.camel@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,28 +15,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.de>
-Cc: Igor Gnatenko <ignatenkobrain@fedoraproject.org>, device-mapper development <dm-devel@redhat.com>
+To: Mike Snitzer <msnitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Apr 05, 2019 at 12:06:49AM +0200, Martin Wilck wrote:
-> Hi Ben,
-> 
-> On Thu, 2019-04-04 at 17:03 -0500, Benjamin Marzinski wrote:
-> > From: Igor Gnatenko <ignatenkobrain@fedoraproject.org>
-> > 
-> > Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > Signed-off-by: Igor Gnatenko <ignatenkobrain@fedoraproject.org>
-> 
-> I'd submitted a different patch last month:
-> 
-> "multipath-tools: Build: properly parse systemd's version"
-> https://www.redhat.com/archives/dm-devel/2019-March/msg00057.html
-> 
-> Did you disagree with that one?
+Hi
 
-Actually, I totally forgot about that one. It's fine.
+I've found quite a serious bug in dm-integrity - it will deadlock when 
+processing overlapping bios.
 
--Ben
+Please send this patch to Linus.
+
+Mikulas
+
+
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+
+dm-integrity could deadlock with overlapping I/O, the bug was introduced
+by a patch 724376a04d1a ("dm integrity: implement fair range locks").
+Apparently, few users use overlapping I/O, so the bug went undetected for
+so long.
+
+In order to fix the bug, we fix the typos in the function ranges_overlap
+and we remove a flawed ranges_overlap check in remove_range_unlocked. This
+condition could leave unprocessed bios hanging on wait_list forever.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org	# v4.19+
+Fixes: 724376a04d1a ("dm integrity: implement fair range locks")
+
+---
+ drivers/md/dm-integrity.c |    4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2019-04-05 19:48:13.000000000 +0200
++++ linux-2.6/drivers/md/dm-integrity.c	2019-04-05 20:04:22.000000000 +0200
+@@ -878,7 +878,7 @@ static void copy_from_journal(struct dm_
+ static bool ranges_overlap(struct dm_integrity_range *range1, struct dm_integrity_range *range2)
+ {
+ 	return range1->logical_sector < range2->logical_sector + range2->n_sectors &&
+-	       range2->logical_sector + range2->n_sectors > range2->logical_sector;
++	       range1->logical_sector + range1->n_sectors > range2->logical_sector;
+ }
  
-> Martin
+ static bool add_new_range(struct dm_integrity_c *ic, struct dm_integrity_range *new_range, bool check_waiting)
+@@ -924,8 +924,6 @@ static void remove_range_unlocked(struct
+ 		struct dm_integrity_range *last_range =
+ 			list_first_entry(&ic->wait_list, struct dm_integrity_range, wait_entry);
+ 		struct task_struct *last_range_task;
+-		if (!ranges_overlap(range, last_range))
+-			break;
+ 		last_range_task = last_range->task;
+ 		list_del(&last_range->wait_entry);
+ 		if (!add_new_range(ic, last_range, false)) {
