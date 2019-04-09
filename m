@@ -1,13 +1,15 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH v2] dm zoned: Silence a static checker warning
-Date: Wed, 10 Apr 2019 07:56:14 +0000
-Message-ID: <BYAPR04MB58160DF520B305A4328FC438E72E0@BYAPR04MB5816.namprd04.prod.outlook.com>
-References: <20190410074735.GA28842@kadam>
+From: =?UTF-8?B?S2FpIEzDvGtl?= <kailueke@riseup.net>
+Subject: Re: Partition size set to 0 when resizing extended and
+ adding logical partition with BLKPG
+Date: Tue, 9 Apr 2019 19:58:18 +0200
+Message-ID: <ca6ca335-db0c-e5b1-49e7-d1c5ba2f014d@riseup.net>
+References: <3e5e466a-dacf-d18e-9eff-e89b5f93bfd2@riseup.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <3e5e466a-dacf-d18e-9eff-e89b5f93bfd2@riseup.net>
+Content-Language: de-DE
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,52 +19,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Dan Carpenter <dan.carpenter@oracle.com>, Alasdair Kergon <agk@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Hannes Reinecke <hare@suse.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Edwards <gedwards@ddn.com>, "kernel-janitors@vger.kernel.org" <kernel-janitors@vger.kernel.org>, Ming Lei <ming.lei@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Greg, Omar, Sandoval <osandov@fb.com>, Bart Van Assche <bvanassche@acm.org>
+To: axboe@kernel.dk, vgoyal@redhat.com, psusi@ubuntu.com
+Cc: "vtrefny@redhat.com" <vtrefny@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2019/04/10 16:48, Dan Carpenter wrote:
-> My static checker complains about this line from dmz_get_zoned_device()
-> 
-> 	aligned_capacity = dev->capacity & ~(blk_queue_zone_sectors(q) - 1);
-> 
-> The problem is that "aligned_capacity" and "dev->capacity" are sector_t
-> type (which is a u64) but blk_queue_zone_sectors(q) returns a u32 so the
-> higher 32 bits in "aligned_capacity" are always cleared to zero.  This
-> patch adds a cast to u64 to address this issue.
-> 
-> Fixes: 114e025968b5 ("dm zoned: ignore last smaller runt zone")
-> Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
-> ---
-> v2: In v1 I changed blk_queue_zone_sectors() to return a sector_t type,
-> but in v2 I just add a cast.  The v2 fix would end up going through
-> different maintainers and reviewers so the CC list has grown...
-> 
-> Original discussion: https://marc.info/?l=kernel-janitors&m=155487663405737&w=2
-> 
->  drivers/md/dm-zoned-target.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-> index 8865c1709e16..b6cb44fa946d 100644
-> --- a/drivers/md/dm-zoned-target.c
-> +++ b/drivers/md/dm-zoned-target.c
-> @@ -643,7 +643,8 @@ static int dmz_get_zoned_device(struct dm_target *ti, char *path)
->  
->  	q = bdev_get_queue(dev->bdev);
->  	dev->capacity = i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT;
-> -	aligned_capacity = dev->capacity & ~(blk_queue_zone_sectors(q) - 1);
-> +	aligned_capacity = dev->capacity &
-> +				~((u64)blk_queue_zone_sectors(q) - 1);
-
-sector_t is an u64 only if CONFIG_LBDAF is defined (I think this option is going
-away though). Otherwise it is an unsigned long which would be u32 on 32 bits
-arch. Not a problem in terms of arithmetic, but why not cast to sector_t directly ?
-
->  	if (ti->begin ||
->  	    ((ti->len != dev->capacity) && (ti->len != aligned_capacity))) {
->  		ti->error = "Partial mapping not supported";
-> 
--- 
-Damien Le Moal
-Western Digital Research
+QWgsIG5vLCBmb3JnZXQgYWJvdXQgaXQsIHNvcnJ5LgoKSXQncyBhIGJ1ZyBpbiBsaWJwYXJ0ZWQg
+YW5kIHRoYXQncyB3aHkgSSBvYnNlcnZlZCB0aGUgd3JvbmcgYXJndW1lbnQgaW4Kc3RyYWNlIHdo
+aWNoIG1hZGUgaXQgaW50byBteSBjb2RlIGFzIHdlbGwuClRoZSBsZW5ndGggc2hvdWxkIGJlIG9m
+IGNvdXJzZSA1MTIgYW5kIG5vdCAxIGR1ZSB0byB0aGUgZGlmZmVyZW50IHVuaXRzLgoKUGF0Y2gg
+d291bGQgYmUgYWRkaW5nIHRoZSBmb2xsb3dpbmcgbGluZSB0byBsaWJwYXJ0ZWQvYXJjaC9saW51
+eC5jOjI1NTE6CisrKyDCoCDCoCDCoMKgIGxpbnV4X3BhcnQubGVuZ3RoICo9IGRpc2stPmRldi0+
+c2VjdG9yX3NpemU7CihmdW5jdGlvbiBfYmxrcGdfcmVzaXplX3BhcnRpdGlvbikKCldlbGwsIHRo
+YW5rcyBmb3IgcmVhZGluZyBpdCBhbnl3YXkuIEkgd2lsbCBzdWJtaXQgYSBwYXRjaC4KCkFtIDA5
+LjA0LjE5IHVtIDE4OjQxIHNjaHJpZWIgS2FpIEzDvGtlOgo+IEhlbGxvLAo+Cj4gSSB3cml0ZSB0
+byB5b3UgYmVjYXVzZSBJIGJlbGlldmUgdGhhdCB0aGUgQkxLUEcgaW9jdGwgbWlzYmVoYXZlcyB3
+aGVuIGFuCj4gZXhpc3RpbmcgZXh0ZW5kZWQgTUJSIHBhcnRpdGlvbiBpcyBjaGFuZ2VkIGFuZCBh
+IGxvZ2ljYWwgcGFydGl0aW9uIGFkZGVkCj4gaW4gaXQuCj4gU2hvdWxkIEkgcmVwb3J0IGxpa2Ug
+dGhpcyBvciBzaG91bGQgSSBzaWduIHVwIGZvciBidWd6aWxsYS5rZXJuZWwub3JnPwo+Cj4gVGhl
+IC9zeXMvYmxvY2svc2R4L3NkeFkvc2l6ZSBlbnRyeSBpcyBzZXQgdG8gMCBhbmQgZXZlbiBvcGVu
+aW5nIHRoZQo+IGV4dGVuZGVkIHBhcnRpdGlvbiBmYWlscy4KPiBUaGlzIGxlYWRzIHRvIGUuZy4g
+dWRldmQgZmFpbGluZyB0byBoYXZlIGFjY2Vzcy4KPiBodHRwczovL2dpdGh1Yi5jb20vc3RvcmFn
+ZWQtcHJvamVjdC91ZGlza3MvaXNzdWVzLzQyNQo+Cj4gVG8gZml4IHRoaXMgc2l0dWF0aW9uIGZy
+b20gdXNlcnNwYWNlLCBhIEJMS1JSUEFSVCBpb2N0bCBpcyBuZWVkZWQuCj4KPiBUbyByZXByb2R1
+Y2UgaXQsIEkgYXR0YWNoZWQgYSBzbWFsbCBwcm9ncmFtLCB3aGljaCB5b3UgY2FuIHJ1biBvbiB0
+aGlzCj4gcHJlcGFyZWQgaW1hZ2Ugb3Igb24gYW55IGRyaXZlIHdpdGggYSBzaW5nbGUgZXh0ZW5k
+ZWQgcGFydGl0aW9uIG9uIGl0Lgo+Cj4gJCB3Z2V0IGh0dHA6Ly9rYWlsdWVrZS5zcGxpbmUuZGUv
+dGVzdC5pbWcKPiAkIHVkaXNrc2N0bCBsb29wLXNldHVwIC1mIHRlc3QuaW1nCj4KPiAkIHN1ZG8g
+Li9zaW0gbG9vcDAKPiBuZXcgc2l6ZSBpbiAvc3lzL2Jsb2NrL2xvb3AwL2xvb3AwcDEvc2l6ZTog
+MAo+IGlzc3VpbmcgQkxLUlJQQVJUCj4gbmV3IHNpemUgaW4gL3N5cy9ibG9jay9sb29wMC9sb29w
+MHAxL3NpemU6IDIKPgo+Cj4gRG8geW91IHRoaW5rIHRoYXQgdGhpcyBzaG91bGQgYmUgZml4ZWQg
+aW4gdGhlIGtlcm5lbD8KPiBSZWdhcmRzLAo+IEthaSBMw7xrZQo+CgotLQpkbS1kZXZlbCBtYWls
+aW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxt
+YW4vbGlzdGluZm8vZG0tZGV2ZWw=
