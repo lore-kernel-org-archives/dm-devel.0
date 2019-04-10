@@ -1,7 +1,7 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [RFC patch 30/41] dm bufio: Simplify stack trace retrieval
-Date: Wed, 10 Apr 2019 12:28:24 +0200
-Message-ID: <20190410103646.311208785@linutronix.de>
+Subject: [RFC patch 31/41] dm persistent data: Simplify stack trace handling
+Date: Wed, 10 Apr 2019 12:28:25 +0200
+Message-ID: <20190410103646.401662030@linutronix.de>
 References: <20190410102754.387743324@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -12,58 +12,70 @@ Cc: Josh Poimboeuf <jpoimboe@redhat.com>, x86@kernel.org, Andy Lutomirski <luto@
 List-Id: dm-devel.ids
 
 Replace the indirection through struct stack_trace with an invocation of
-the storage array based interface.
+the storage array based interface. This results in less storage space and
+indirection.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Cc: dm-devel@redhat.com
 Cc: Mike Snitzer <snitzer@redhat.com>
 Cc: Alasdair Kergon <agk@redhat.com>
 ---
- drivers/md/dm-bufio.c |   15 ++++++---------
- 1 file changed, 6 insertions(+), 9 deletions(-)
+ drivers/md/persistent-data/dm-block-manager.c |   19 +++++++++----------
+ 1 file changed, 9 insertions(+), 10 deletions(-)
 
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -150,7 +150,7 @@ struct dm_buffer {
- 	void (*end_io)(struct dm_buffer *, blk_status_t);
- #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+--- a/drivers/md/persistent-data/dm-block-manager.c
++++ b/drivers/md/persistent-data/dm-block-manager.c
+@@ -35,7 +35,10 @@
+ #define MAX_HOLDERS 4
  #define MAX_STACK 10
--	struct stack_trace stack_trace;
-+	unsigned int stack_len;
- 	unsigned long stack_entries[MAX_STACK];
+ 
+-typedef unsigned long stack_entries[MAX_STACK];
++struct stack_store {
++	unsigned int	nr_entries;
++	unsigned long	entries[MAX_STACK];
++};
+ 
+ struct block_lock {
+ 	spinlock_t lock;
+@@ -44,8 +47,7 @@ struct block_lock {
+ 	struct task_struct *holders[MAX_HOLDERS];
+ 
+ #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+-	struct stack_trace traces[MAX_HOLDERS];
+-	stack_entries entries[MAX_HOLDERS];
++	struct stack_store traces[MAX_HOLDERS];
  #endif
  };
-@@ -232,11 +232,7 @@ static DEFINE_MUTEX(dm_bufio_clients_loc
- #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
- static void buffer_record_stack(struct dm_buffer *b)
+ 
+@@ -73,7 +75,7 @@ static void __add_holder(struct block_lo
  {
--	b->stack_trace.nr_entries = 0;
--	b->stack_trace.max_entries = MAX_STACK;
--	b->stack_trace.entries = b->stack_entries;
--	b->stack_trace.skip = 2;
--	save_stack_trace(&b->stack_trace);
-+	b->stack_len = stack_trace_save(b->stack_entries, MAX_STACK, 2);
- }
+ 	unsigned h = __find_holder(lock, NULL);
+ #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+-	struct stack_trace *t;
++	struct stack_store *t;
  #endif
  
-@@ -438,7 +434,7 @@ static struct dm_buffer *alloc_buffer(st
- 	adjust_total_allocated(b->data_mode, (long)c->block_size);
+ 	get_task_struct(task);
+@@ -81,11 +83,7 @@ static void __add_holder(struct block_lo
  
  #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
--	memset(&b->stack_trace, 0, sizeof(b->stack_trace));
-+	b->stack_len = 0;
+ 	t = lock->traces + h;
+-	t->nr_entries = 0;
+-	t->max_entries = MAX_STACK;
+-	t->entries = lock->entries[h];
+-	t->skip = 2;
+-	save_stack_trace(t);
++	t->nr_entries = stack_trace_save(t->entries, MAX_STACK, 2);
  #endif
- 	return b;
  }
-@@ -1520,8 +1516,9 @@ static void drop_buffers(struct dm_bufio
- 			DMERR("leaked buffer %llx, hold count %u, list %d",
- 			      (unsigned long long)b->block, b->hold_count, i);
- #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
--			print_stack_trace(&b->stack_trace, 1);
--			b->hold_count = 0; /* mark unclaimed to avoid BUG_ON below */
-+			stack_trace_print(b->stack_entries, b->stack_len, 1);
-+			/* mark unclaimed to avoid BUG_ON below */
-+			b->hold_count = 0;
- #endif
- 		}
  
+@@ -106,7 +104,8 @@ static int __check_holder(struct block_l
+ 			DMERR("recursive lock detected in metadata");
+ #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+ 			DMERR("previously held here:");
+-			print_stack_trace(lock->traces + i, 4);
++			stack_trace_print(lock->traces[i].entries,
++					  lock->traces[i].nr_entries, 4);
+ 
+ 			DMERR("subsequent acquisition attempted here:");
+ 			dump_stack();
