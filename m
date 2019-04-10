@@ -1,66 +1,69 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH v3] dm zoned: Silence a static checker warning
-Date: Wed, 10 Apr 2019 08:14:32 +0000
-Message-ID: <BYAPR04MB581696AA3EF70BE5328A9C95E72E0@BYAPR04MB5816.namprd04.prod.outlook.com>
-References: <20190410081231.GA31089@kadam>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [RFC patch 30/41] dm bufio: Simplify stack trace retrieval
+Date: Wed, 10 Apr 2019 12:28:24 +0200
+Message-ID: <20190410103646.311208785@linutronix.de>
+References: <20190410102754.387743324@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Dan Carpenter <dan.carpenter@oracle.com>, Alasdair Kergon <agk@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Hannes Reinecke <hare@suse.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Edwards <gedwards@ddn.com>, "kernel-janitors@vger.kernel.org" <kernel-janitors@vger.kernel.org>, Ming Lei <ming.lei@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Greg, Omar, Sandoval <osandov@fb.com>, Bart Van Assche <bvanassche@acm.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: LKML <linux-kernel@vger.kernel.org>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>, x86@kernel.org, Andy Lutomirski <luto@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Alexander Potapenko <glider@google.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 2019/04/10 17:13, Dan Carpenter wrote:
-> My static checker complains about this line from dmz_get_zoned_device()
-> 
-> 	aligned_capacity = dev->capacity & ~(blk_queue_zone_sectors(q) - 1);
-> 
-> The problem is that "aligned_capacity" and "dev->capacity" are sector_t
-> type (which is a u64 under most configs) but blk_queue_zone_sectors(q)
-> returns a u32 so the higher 32 bits in aligned_capacity are cleared to
-> zero.  This patch adds a cast to address the issue.
-> 
-> Fixes: 114e025968b5 ("dm zoned: ignore last smaller runt zone")
-> Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
-> ---
-> v2: The v1 patch declared blk_queue_zone_sectors() as sector_t but the
->     v2 cast added a cast to u64.
-> v3: Cast it to sector_t instead
-> 
->  drivers/md/dm-zoned-target.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-> index 8865c1709e16..51d029bbb740 100644
-> --- a/drivers/md/dm-zoned-target.c
-> +++ b/drivers/md/dm-zoned-target.c
-> @@ -643,7 +643,8 @@ static int dmz_get_zoned_device(struct dm_target *ti, char *path)
->  
->  	q = bdev_get_queue(dev->bdev);
->  	dev->capacity = i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT;
-> -	aligned_capacity = dev->capacity & ~(blk_queue_zone_sectors(q) - 1);
-> +	aligned_capacity = dev->capacity &
-> +				~((sector_t)blk_queue_zone_sectors(q) - 1);
->  	if (ti->begin ||
->  	    ((ti->len != dev->capacity) && (ti->len != aligned_capacity))) {
->  		ti->error = "Partial mapping not supported";
-> 
+Replace the indirection through struct stack_trace with an invocation of
+the storage array based interface.
 
-Thanks for fixing this !
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: dm-devel@redhat.com
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>
+---
+ drivers/md/dm-bufio.c |   15 ++++++---------
+ 1 file changed, 6 insertions(+), 9 deletions(-)
 
-Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
-
--- 
-Damien Le Moal
-Western Digital Research
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -150,7 +150,7 @@ struct dm_buffer {
+ 	void (*end_io)(struct dm_buffer *, blk_status_t);
+ #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+ #define MAX_STACK 10
+-	struct stack_trace stack_trace;
++	unsigned int stack_len;
+ 	unsigned long stack_entries[MAX_STACK];
+ #endif
+ };
+@@ -232,11 +232,7 @@ static DEFINE_MUTEX(dm_bufio_clients_loc
+ #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+ static void buffer_record_stack(struct dm_buffer *b)
+ {
+-	b->stack_trace.nr_entries = 0;
+-	b->stack_trace.max_entries = MAX_STACK;
+-	b->stack_trace.entries = b->stack_entries;
+-	b->stack_trace.skip = 2;
+-	save_stack_trace(&b->stack_trace);
++	b->stack_len = stack_trace_save(b->stack_entries, MAX_STACK, 2);
+ }
+ #endif
+ 
+@@ -438,7 +434,7 @@ static struct dm_buffer *alloc_buffer(st
+ 	adjust_total_allocated(b->data_mode, (long)c->block_size);
+ 
+ #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+-	memset(&b->stack_trace, 0, sizeof(b->stack_trace));
++	b->stack_len = 0;
+ #endif
+ 	return b;
+ }
+@@ -1520,8 +1516,9 @@ static void drop_buffers(struct dm_bufio
+ 			DMERR("leaked buffer %llx, hold count %u, list %d",
+ 			      (unsigned long long)b->block, b->hold_count, i);
+ #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+-			print_stack_trace(&b->stack_trace, 1);
+-			b->hold_count = 0; /* mark unclaimed to avoid BUG_ON below */
++			stack_trace_print(b->stack_entries, b->stack_len, 1);
++			/* mark unclaimed to avoid BUG_ON below */
++			b->hold_count = 0;
+ #endif
+ 		}
+ 
