@@ -1,14 +1,12 @@
-From: Phillip Susi <phill@thesusis.net>
-Subject: Re: Partition size set to 0 when resizing extended and
- adding logical partition with BLKPG
-Date: Tue, 9 Apr 2019 13:33:53 -0400
-Message-ID: <924abfa1-f5bd-83f3-ba0c-e166c0564d38@thesusis.net>
-References: <3e5e466a-dacf-d18e-9eff-e89b5f93bfd2@riseup.net>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [PATCH v2] dm zoned: Silence a static checker warning
+Date: Wed, 10 Apr 2019 07:56:14 +0000
+Message-ID: <BYAPR04MB58160DF520B305A4328FC438E72E0@BYAPR04MB5816.namprd04.prod.outlook.com>
+References: <20190410074735.GA28842@kadam>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <3e5e466a-dacf-d18e-9eff-e89b5f93bfd2@riseup.net>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,21 +17,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: =?UTF-8?B?S2FpIEzDvGtl?= <kailueke@riseup.net>, axboe@kernel.dk, vgoyal@redhat.com
-Cc: "vtrefny@redhat.com" <vtrefny@redhat.com>, dm-devel@redhat.com
+To: Dan Carpenter <dan.carpenter@oracle.com>, Alasdair Kergon <agk@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Hannes Reinecke <hare@suse.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Edwards <gedwards@ddn.com>, "kernel-janitors@vger.kernel.org" <kernel-janitors@vger.kernel.org>, Ming Lei <ming.lei@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Greg, Omar, Sandoval <osandov@fb.com>, Bart Van Assche <bvanassche@acm.org>
 List-Id: dm-devel.ids
 
-T24gNC85LzIwMTkgMTI6NDEgUE0sIEthaSBMw7xrZSB3cm90ZToKPiAkIHN1ZG8gLi9zaW0gbG9v
-cDAKPiBuZXcgc2l6ZSBpbiAvc3lzL2Jsb2NrL2xvb3AwL2xvb3AwcDEvc2l6ZTogMAo+IGlzc3Vp
-bmcgQkxLUlJQQVJUCj4gbmV3IHNpemUgaW4gL3N5cy9ibG9jay9sb29wMC9sb29wMHAxL3NpemU6
-IDIKCj4gaW50IHJlc2l6ZXBhcnQoY2hhciAqcGF0aCwgaW50IHN0YXJ0LCBpbnQgZmQpIHsKPiAg
-IHN0cnVjdCBibGtwZ19wYXJ0aXRpb24gcGFydDsKPiAgIHN0cnVjdCBibGtwZ19pb2N0bF9hcmcg
-aW9jdGxfYXJnOwo+ICAgbWVtc2V0KCZwYXJ0LCAwLCBzaXplb2YocGFydCkpOwo+ICAgcGFydC5z
-dGFydCA9IHN0YXJ0Owo+ICAgcGFydC5sZW5ndGggPSAxOwoKSSB3b3VsZCBzdWdnZXN0IGNoYW5n
-aW5nIGxlbmd0aCB0byAyLiAgVGhpcyBpcyB3aGF0IHBhcnRlZCBhbmQgcGFydHggZG8KYW5kIGl0
-IHNlZW1zIHRvIHdvcmsgdGhlcmUuICBMaW51eCBoYXMgYWx3YXlzIGV4cG9zZWQgMiBzZWN0b3Jz
-IHRocm91Z2gKdGhlIGV4dGVuZGVkIHBhcnRpdGlvbiBzbyB5b3UgY2FuIGhhdmUgbGlsbyBpbnN0
-YWxsIGl0c2VsZiB0aGVyZS4gIEl0Cm1heSBiZSB0aGF0IHRoZSBrZXJuZWwgdGhpbmtzIHRoYXQg
-aXMgdGhlIG1pbmltdW0gYWxsb3dlZCBzaXplLgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRt
-LWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZv
-L2RtLWRldmVs
+On 2019/04/10 16:48, Dan Carpenter wrote:
+> My static checker complains about this line from dmz_get_zoned_device()
+> 
+> 	aligned_capacity = dev->capacity & ~(blk_queue_zone_sectors(q) - 1);
+> 
+> The problem is that "aligned_capacity" and "dev->capacity" are sector_t
+> type (which is a u64) but blk_queue_zone_sectors(q) returns a u32 so the
+> higher 32 bits in "aligned_capacity" are always cleared to zero.  This
+> patch adds a cast to u64 to address this issue.
+> 
+> Fixes: 114e025968b5 ("dm zoned: ignore last smaller runt zone")
+> Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
+> ---
+> v2: In v1 I changed blk_queue_zone_sectors() to return a sector_t type,
+> but in v2 I just add a cast.  The v2 fix would end up going through
+> different maintainers and reviewers so the CC list has grown...
+> 
+> Original discussion: https://marc.info/?l=kernel-janitors&m=155487663405737&w=2
+> 
+>  drivers/md/dm-zoned-target.c | 3 ++-
+>  1 file changed, 2 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+> index 8865c1709e16..b6cb44fa946d 100644
+> --- a/drivers/md/dm-zoned-target.c
+> +++ b/drivers/md/dm-zoned-target.c
+> @@ -643,7 +643,8 @@ static int dmz_get_zoned_device(struct dm_target *ti, char *path)
+>  
+>  	q = bdev_get_queue(dev->bdev);
+>  	dev->capacity = i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT;
+> -	aligned_capacity = dev->capacity & ~(blk_queue_zone_sectors(q) - 1);
+> +	aligned_capacity = dev->capacity &
+> +				~((u64)blk_queue_zone_sectors(q) - 1);
+
+sector_t is an u64 only if CONFIG_LBDAF is defined (I think this option is going
+away though). Otherwise it is an unsigned long which would be u32 on 32 bits
+arch. Not a problem in terms of arithmetic, but why not cast to sector_t directly ?
+
+>  	if (ti->begin ||
+>  	    ((ti->len != dev->capacity) && (ti->len != aligned_capacity))) {
+>  		ti->error = "Partial mapping not supported";
+> 
+-- 
+Damien Le Moal
+Western Digital Research
