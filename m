@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH RESEND 1/3] multipath-tools: Build: properly
-	parse systemd's version
-Date: Thu, 11 Apr 2019 12:27:12 +0200
-Message-ID: <20190411102714.12026-2-mwilck@suse.com>
+Subject: [PATCH RESEND 2/3] multipathd: fix daemon not really
+	shutdown
+Date: Thu, 11 Apr 2019 12:27:13 +0200
+Message-ID: <20190411102714.12026-3-mwilck@suse.com>
 References: <20190411102714.12026-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,45 +19,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>, Dominique Leuenberger <dimstar@opensuse.org>
+Cc: Chongyun Wu <wu.chongyun@h3c.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-From: Dominique Leuenberger <dimstar@opensuse.org>
+From: Chongyun Wu <wu.chongyun@h3c.com>
 
-Since systemd 241, systemctl --version no longer 'just' prints out the
-version, but gives more information like git commit ref and whatnot. In
-it's shortest form, it gives something like "systemd 241 (241)", which when
-passed as parameter "-DUSE_SYSTEMD=241 (241)" results in shell errors.
+Test environment: 25 hosts, each host have more than 100 luns,
+each lun have two paths.
+Some times when we try to ceate new multipath will encounter "could
+not create uxsock:98" but the multipathd still running not shutdown
+and can't response any multipathd commands also.
 
-Try to retrieve the version from pkg-config instead, and if that fails,
-discard anything after the first number in "systemctl --version" output.
+After reproduce this issue and debug, found below fixes might work:
+(1) set_config_state() after pthread_cond_timedwait() other threads
+might changed the running_state from DAEMON_SHUTDOWN to other status
+like DAEMON_IDLE, which will make the shutdown process stopped.
+I found logs to prove this really happened, so we need add judgement
+here too.
 
-Acked-by: Benjamin Marzinski <bmarzins@redhat.com>
-Acked-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+(2) [this part removed by mwilck]
+
+Signed-off-by: Chongyun Wu <wu.chongyun@h3c.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- Makefile.inc | 9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+ multipathd/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index fc728ca9..56c3eda0 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -36,8 +36,13 @@ ifndef RUN
- endif
- 
- ifndef SYSTEMD
--	ifeq ($(shell systemctl --version > /dev/null 2>&1 && echo 1), 1)
--		SYSTEMD = $(shell systemctl --version 2> /dev/null |  sed -n 's/systemd \([0-9]*\)/\1/p')
-+	ifeq ($(shell pkg-config --modversion libsystemd >/dev/null 2>&1 && echo 1), 1)
-+		SYSTEMD = $(shell pkg-config --modversion libsystemd)
-+	else
-+		ifeq ($(shell systemctl --version >/dev/null 2>&1 && echo 1), 1)
-+			SYSTEMD = $(shell systemctl --version 2> /dev/null | \
-+				sed -n 's/systemd \([0-9]*\).*/\1/p')
-+		endif
- 	endif
- endif
- 
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 1413c6d6..47aff2d8 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -249,7 +249,7 @@ int set_config_state(enum daemon_status state)
+ 							    &config_lock, &ts);
+ 			}
+ 		}
+-		if (!rc) {
++		if (!rc && (running_state != DAEMON_SHUTDOWN)) {
+ 			running_state = state;
+ 			pthread_cond_broadcast(&config_cond);
+ #ifdef USE_SYSTEMD
 -- 
 2.21.0
