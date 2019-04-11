@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 4/4] libmultipath: get_prio(): don't reset prio
-	for inaccessible paths
-Date: Thu, 11 Apr 2019 12:49:23 +0200
-Message-ID: <20190411104923.13470-5-mwilck@suse.com>
+Subject: [PATCH 3/4] libmultipath: ana prioritizer: decrease log
+	level
+Date: Thu, 11 Apr 2019 12:49:22 +0200
+Message-ID: <20190411104923.13470-4-mwilck@suse.com>
 References: <20190411104923.13470-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,47 +22,31 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-pathinfo() doesn't call get_prio() if a path is down, now keeping the old
-priority value. But if a path becomes inaccessible between the state check
-and the get_prio() call, retrieving the priority will likely fail, and the
-path priority will be reset to PRIO_UNDEF. This makes it timing-dependent
-how the priority of a failed path is treated. Fix that by checking the path
-state in get_prio() if an error occurs, and not touching pp->priority if
-the path is in inaccessible state. A checker_check() call would be too
-much here, but a quick path_offline() check seems appropriate.
+The "ana state = ..." printed in the get_prio() call path
+is irritating, because by it's similarity to the checker
+messages it suggests to the reader that an "ana checker",
+which doesn't exist, was in place. Moreover, the "ana prio ="
+message is also only printed at level 4.
 
-Keep the previous behavior for the case where getting the priority fails
-although the path is apparently healthy. This is presumably a very rare
-condition, in which it seems actually wrong to preserve the old prio value.
+Decrease the verbosity of this message.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 13 +++++++++++--
- 1 file changed, 11 insertions(+), 2 deletions(-)
+ libmultipath/prioritizers/ana.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 7a17911d..7d638c20 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1625,8 +1625,17 @@ get_prio (struct path * pp)
- 	old_prio = pp->priority;
- 	pp->priority = prio_getprio(p, pp, checker_timeout);
- 	if (pp->priority < 0) {
--		condlog(3, "%s: %s prio error", pp->dev, prio_name(p));
--		pp->priority = PRIO_UNDEF;
-+		/* this changes pp->offline, but why not */
-+		int state = path_offline(pp);
-+
-+		if (state == PATH_DOWN || state == PATH_PENDING)
-+			condlog(3, "%s: %s prio error in state %d, keeping prio = %d",
-+				pp->dev, prio_name(p), state, pp->priority);
-+		else {
-+			condlog(3, "%s: %s prio error in state %d",
-+				pp->dev, prio_name(p), state);
-+			pp->priority = PRIO_UNDEF;
-+		}
- 		return 1;
- 	}
- 	condlog((old_prio == pp->priority ? 4 : 3), "%s: %s prio = %u",
+diff --git a/libmultipath/prioritizers/ana.c b/libmultipath/prioritizers/ana.c
+index 990d935f..2673d9d9 100644
+--- a/libmultipath/prioritizers/ana.c
++++ b/libmultipath/prioritizers/ana.c
+@@ -164,7 +164,7 @@ int get_ana_info(struct path * pp, unsigned int timeout)
+ 				   ana_log, ana_log_len);
+ 	pthread_cleanup_pop(1);
+ 	if (rc >= 0)
+-		condlog(3, "%s: ana state = %02x [%s]", pp->dev, rc,
++		condlog(4, "%s: ana state = %02x [%s]", pp->dev, rc,
+ 			aas_print_string(rc));
+ 	return rc;
+ }
 -- 
 2.21.0
