@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 3/4] libmultipath: ana prioritizer: decrease log
-	level
-Date: Thu, 11 Apr 2019 12:49:22 +0200
-Message-ID: <20190411104923.13470-4-mwilck@suse.com>
+Subject: [PATCH 2/4] Revert "Set priority to '0' for PATH_BLOCKED
+	or PATH_DOWN"
+Date: Thu, 11 Apr 2019 12:49:21 +0200
+Message-ID: <20190411104923.13470-3-mwilck@suse.com>
 References: <20190411104923.13470-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,31 +22,40 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The "ana state = ..." printed in the get_prio() call path
-is irritating, because by it's similarity to the checker
-messages it suggests to the reader that an "ana checker",
-which doesn't exist, was in place. Moreover, the "ana prio ="
-message is also only printed at level 4.
+This reverts commit ce8d707c4235860373238dea6491a77a931d4c9f.
 
-Decrease the verbosity of this message.
+In check_path(), we don't touch path priority if a path is down.
+But when pathinfo(DI_CHECKER) is called in down state, we reset
+the priority to 0. This is inconsistent.
+
+Commit ce8d707 was about maps being rejected during multipath startup
+because of undefined priorities. Since commit 94036e3 "libmultipath:
+don't reject maps with undefined prio", such maps aren't rejected
+any more, thus we can skip resetting the priority to 0.
+
+Note that when we calculate path group priorities, the prio of
+paths which are not UP or GHOST are ignored anyway, so this
+change will not cause changes wrt PG priorities or PG ordering.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
+Cc: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/prioritizers/ana.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/discovery.c | 3 ---
+ 1 file changed, 3 deletions(-)
 
-diff --git a/libmultipath/prioritizers/ana.c b/libmultipath/prioritizers/ana.c
-index 990d935f..2673d9d9 100644
---- a/libmultipath/prioritizers/ana.c
-+++ b/libmultipath/prioritizers/ana.c
-@@ -164,7 +164,7 @@ int get_ana_info(struct path * pp, unsigned int timeout)
- 				   ana_log, ana_log_len);
- 	pthread_cleanup_pop(1);
- 	if (rc >= 0)
--		condlog(3, "%s: ana state = %02x [%s]", pp->dev, rc,
-+		condlog(4, "%s: ana state = %02x [%s]", pp->dev, rc,
- 			aas_print_string(rc));
- 	return rc;
- }
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 744cf2cc..7a17911d 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1982,9 +1982,6 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 		} else {
+ 			condlog(3, "%s: path inaccessible", pp->dev);
+ 			pp->chkrstate = pp->state = path_state;
+-			if (path_state == PATH_PENDING ||
+-			    path_state == PATH_DOWN)
+-				pp->priority = 0;
+ 		}
+ 	}
+ 
 -- 
 2.21.0
