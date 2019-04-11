@@ -1,14 +1,12 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH RESEND 2/3] multipathd: fix daemon not really
-	shutdown
-Date: Thu, 11 Apr 2019 12:27:13 +0200
-Message-ID: <20190411102714.12026-3-mwilck@suse.com>
-References: <20190411102714.12026-1-mwilck@suse.com>
+Subject: [PATCH 0/4] multipath-tools: prio handling for offline
+	paths
+Date: Thu, 11 Apr 2019 12:49:19 +0200
+Message-ID: <20190411104923.13470-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190411102714.12026-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,45 +17,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Chongyun Wu <wu.chongyun@h3c.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-From: Chongyun Wu <wu.chongyun@h3c.com>
+A recent bug report revealed that the handling of path priorities is
+inconsistent in multipathd when paths fail. In the current code, depending
+on timing, the prio of a faild path may be reset to 0, reset to -1
+(PRIO_UNDEF), or not reset at all. The inconsistency is most obvious
+with "group_by_prio", as it results in strange artefacts how failed
+paths are regrouped, and how path groups are sorted.
 
-Test environment: 25 hosts, each host have more than 100 luns,
-each lun have two paths.
-Some times when we try to ceate new multipath will encounter "could
-not create uxsock:98" but the multipathd still running not shutdown
-and can't response any multipathd commands also.
+This series tries to address these issues.
 
-After reproduce this issue and debug, found below fixes might work:
-(1) set_config_state() after pthread_cond_timedwait() other threads
-might changed the running_state from DAEMON_SHUTDOWN to other status
-like DAEMON_IDLE, which will make the shutdown process stopped.
-I found logs to prove this really happened, so we need add judgement
-here too.
+The general mind set that I applied is that, in case of doubt, it's
+best to retain the priority that was retrieved while the path was
+last accessible.
 
-(2) [this part removed by mwilck]
+Martin Wilck (4):
+  libmultipath: group_by_prio: fix signedness bug
+  Revert "Set priority to '0' for PATH_BLOCKED or PATH_DOWN"
+  libmultipath: ana prioritizer: decrease log level
+  libmultipath: get_prio(): don't reset prio for inaccessible paths
 
-Signed-off-by: Chongyun Wu <wu.chongyun@h3c.com>
-Signed-off-by: Martin Wilck <mwilck@suse.com>
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipathd/main.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/discovery.c        | 16 +++++++++++-----
+ libmultipath/pgpolicies.c       |  2 +-
+ libmultipath/prioritizers/ana.c |  2 +-
+ 3 files changed, 13 insertions(+), 7 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 1413c6d6..47aff2d8 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -249,7 +249,7 @@ int set_config_state(enum daemon_status state)
- 							    &config_lock, &ts);
- 			}
- 		}
--		if (!rc) {
-+		if (!rc && (running_state != DAEMON_SHUTDOWN)) {
- 			running_state = state;
- 			pthread_cond_broadcast(&config_cond);
- #ifdef USE_SYSTEMD
 -- 
 2.21.0
