@@ -1,81 +1,55 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [RFC patch 31/41] dm persistent data: Simplify stack trace handling
-Date: Wed, 10 Apr 2019 12:28:25 +0200
-Message-ID: <20190410103646.401662030@linutronix.de>
-References: <20190410102754.387743324@linutronix.de>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH RESEND 0/3] Possibly lost multipath-tools patches
+Date: Thu, 11 Apr 2019 12:27:11 +0200
+Message-ID: <20190411102714.12026-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: LKML <linux-kernel@vger.kernel.org>
-Cc: Josh Poimboeuf <jpoimboe@redhat.com>, x86@kernel.org, Andy Lutomirski <luto@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Alexander Potapenko <glider@google.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Replace the indirection through struct stack_trace with an invocation of
-the storage array based interface. This results in less storage space and
-indirection.
+Hello Christophe,
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: dm-devel@redhat.com
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>
----
- drivers/md/persistent-data/dm-block-manager.c |   19 +++++++++----------
- 1 file changed, 9 insertions(+), 10 deletions(-)
+lest they be forgotten, the patches in this series have been previously
+submitted to dm-devel, and got positive review. Please apply at your
+convenience. Ben's latest series "[PATCH v3 00/17] Misc Multipath patches"
+is IMO also ready for merging.
 
---- a/drivers/md/persistent-data/dm-block-manager.c
-+++ b/drivers/md/persistent-data/dm-block-manager.c
-@@ -35,7 +35,10 @@
- #define MAX_HOLDERS 4
- #define MAX_STACK 10
- 
--typedef unsigned long stack_entries[MAX_STACK];
-+struct stack_store {
-+	unsigned int	nr_entries;
-+	unsigned long	entries[MAX_STACK];
-+};
- 
- struct block_lock {
- 	spinlock_t lock;
-@@ -44,8 +47,7 @@ struct block_lock {
- 	struct task_struct *holders[MAX_HOLDERS];
- 
- #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
--	struct stack_trace traces[MAX_HOLDERS];
--	stack_entries entries[MAX_HOLDERS];
-+	struct stack_store traces[MAX_HOLDERS];
- #endif
- };
- 
-@@ -73,7 +75,7 @@ static void __add_holder(struct block_lo
- {
- 	unsigned h = __find_holder(lock, NULL);
- #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
--	struct stack_trace *t;
-+	struct stack_store *t;
- #endif
- 
- 	get_task_struct(task);
-@@ -81,11 +83,7 @@ static void __add_holder(struct block_lo
- 
- #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
- 	t = lock->traces + h;
--	t->nr_entries = 0;
--	t->max_entries = MAX_STACK;
--	t->entries = lock->entries[h];
--	t->skip = 2;
--	save_stack_trace(t);
-+	t->nr_entries = stack_trace_save(t->entries, MAX_STACK, 2);
- #endif
- }
- 
-@@ -106,7 +104,8 @@ static int __check_holder(struct block_l
- 			DMERR("recursive lock detected in metadata");
- #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
- 			DMERR("previously held here:");
--			print_stack_trace(lock->traces + i, 4);
-+			stack_trace_print(lock->traces[i].entries,
-+					  lock->traces[i].nr_entries, 4);
- 
- 			DMERR("subsequent acquisition attempted here:");
- 			dump_stack();
+Patches 2/3 and 3/3 were part of my "[RFC PATCH 0/6] multipath-tools: Fix
+remaining shutdown delay issues" series in January. These two got acked by
+Ben. They are independent of the rest of the series, which still needs more
+work. I made a small change to patch 3/3: the original patch had renamed
+"running_state" to "_running_state" to make the compiler catch all accesses
+to this variable. After fixing all references, I believe that the renaming
+isn't necessary any more, and not doing it improves the readability of the
+patch.
+
+Regards
+Martin
+
+Chongyun Wu (1):
+  multipathd: fix daemon not really shutdown
+
+Dominique Leuenberger (1):
+  multipath-tools: Build: properly parse systemd's version
+
+Martin Wilck (1):
+  multipathd: protect all access to running_state
+
+ Makefile.inc      |  9 +++++--
+ multipathd/main.c | 60 ++++++++++++++++++++++++++++++-----------------
+ 2 files changed, 46 insertions(+), 23 deletions(-)
+
+-- 
+2.21.0
