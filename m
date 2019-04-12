@@ -1,42 +1,55 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH RESEND 0/3] Possibly lost multipath-tools
-	patches
-Date: Thu, 11 Apr 2019 22:25:38 +0200
-Message-ID: <45a51271a37cfb7746d3997bfcf34184e626c128.camel@suse.com>
-References: <20190411102714.12026-1-mwilck@suse.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190411102714.12026-1-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Benjamin, dm-devel@redhat.com, Martin Wilck <Martin.Wilck@suse.com>
+From: Huaisheng Ye <huye@redhat.com>
+Subject: [PATCH] dm-writecache: simplify the using of pointer wb
+Date: Fri, 12 Apr 2019 11:27:18 -0400
+Message-ID: <20190412152718.27102-1-huye@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: mpatocka@redhat.com, snitzer@redhat.com, agk@redhat.com
+Cc: prarit@redhat.com, chengnt@lenovo.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Huaisheng Ye <yehs1@lenovo.com>
 List-Id: dm-devel.ids
 
-SGkgQ2hyaXN0b3BoZSwKCk9uIFRodSwgMjAxOS0wNC0xMSBhdCAxMjoyNyArMDIwMCwgTWFydGlu
-IFdpbGNrIHdyb3RlOgo+IGxlc3QgdGhleSBiZSBmb3Jnb3R0ZW4sIHRoZSBwYXRjaGVzIGluIHRo
-aXMgc2VyaWVzIGhhdmUgYmVlbgo+IHByZXZpb3VzbHkKPiBzdWJtaXR0ZWQgdG8gZG0tZGV2ZWws
-IGFuZCBnb3QgcG9zaXRpdmUgcmV2aWV3LiBQbGVhc2UgYXBwbHkgYXQgeW91cgo+IGNvbnZlbmll
-bmNlLiBCZW4ncyBsYXRlc3Qgc2VyaWVzICJbUEFUQ0ggdjMgMDAvMTddIE1pc2MgTXVsdGlwYXRo
-Cj4gcGF0Y2hlcyIKPiBpcyBJTU8gYWxzbyByZWFkeSBmb3IgbWVyZ2luZy4KCkknZCBsaWtlIHRv
-IHJlbWluZCB5b3UgYWxzbyBvZiBteSBzZXJpZXMgIltQQVRDSCB2MyAwMC8xMF0gbXVsdGlwYXRo
-LQp0b29sczogYXZvaWQgSS9PIGR1cmluZyB1ZXZlbnQgcHJvY2Vzc2luZyIgd2hpY2ggaGFkIGJl
-ZW4gQWNrJ2QgYnkKQmVuIG9uIE1hcmNoIDE5dGg6IAoKaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9h
-cmNoaXZlcy9kbS1kZXZlbC8yMDE5LU1hcmNoL21zZzAwMTg0Lmh0bWwKCkFzIHVzdWFsLCB0aGUg
-cGF0Y2hlcyB0aGF0IEkgY29uc2lkZXIgcmVhZHkgZm9yIHVwc3RyZWFtIGluY2x1c2lvbgpjYW4g
-YmUgZm91bmQgaGVyZToKCmh0dHBzOi8vZ2l0aHViLmNvbS9vcGVuU1VTRS9tdWx0aXBhdGgtdG9v
-bHMvY29tbWl0cy91cHN0cmVhbS1xdWV1ZQoKUmVnYXJkcywKTWFydGluCgotLSAKRHIuIE1hcnRp
-biBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VT
-RSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFo
-YW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKCi0tCmRtLWRldmVsIG1haWxpbmcg
-bGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9s
-aXN0aW5mby9kbS1kZXZlbA==
+From: Huaisheng Ye <yehs1@lenovo.com>
+
+In function __writecache_writeback_pmem, the pointer bio has been
+already there, it doesn't need to seek bio's address from pointer wb.
+
+Signed-off-by: Huaisheng Ye <yehs1@lenovo.com>
+---
+ drivers/md/dm-writecache.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+index f782287..5b4d1c1 100644
+--- a/drivers/md/dm-writecache.c
++++ b/drivers/md/dm-writecache.c
+@@ -1478,9 +1478,9 @@ static void __writecache_writeback_pmem(struct dm_writecache *wc, struct writeba
+ 		bio = bio_alloc_bioset(GFP_NOIO, max_pages, &wc->bio_set);
+ 		wb = container_of(bio, struct writeback_struct, bio);
+ 		wb->wc = wc;
+-		wb->bio.bi_end_io = writecache_writeback_endio;
+-		bio_set_dev(&wb->bio, wc->dev->bdev);
+-		wb->bio.bi_iter.bi_sector = read_original_sector(wc, e);
++		bio->bi_end_io = writecache_writeback_endio;
++		bio_set_dev(bio, wc->dev->bdev);
++		bio->bi_iter.bi_sector = read_original_sector(wc, e);
+ 		wb->page_offset = PAGE_SIZE;
+ 		if (max_pages <= WB_LIST_INLINE ||
+ 		    unlikely(!(wb->wc_list = kmalloc_array(max_pages, sizeof(struct wc_entry *),
+@@ -1507,12 +1507,12 @@ static void __writecache_writeback_pmem(struct dm_writecache *wc, struct writeba
+ 			wb->wc_list[wb->wc_list_n++] = f;
+ 			e = f;
+ 		}
+-		bio_set_op_attrs(&wb->bio, REQ_OP_WRITE, WC_MODE_FUA(wc) * REQ_FUA);
++		bio_set_op_attrs(bio, REQ_OP_WRITE, WC_MODE_FUA(wc) * REQ_FUA);
+ 		if (writecache_has_error(wc)) {
+ 			bio->bi_status = BLK_STS_IOERR;
+-			bio_endio(&wb->bio);
++			bio_endio(bio);
+ 		} else {
+-			submit_bio(&wb->bio);
++			submit_bio(bio);
+ 		}
+ 
+ 		__writeback_throttle(wc, wbl);
+-- 
+1.8.3.1
