@@ -1,14 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 3/3] dm thin metadata: check
-	__commit_transaction()'s return
-Date: Mon, 15 Apr 2019 17:17:17 -0400
-Message-ID: <20190415211717.18737-4-snitzer@redhat.com>
+Subject: Re: [PATCH 2/3] dm thin metadata: do not write metadata
+ if no changes occurred
+Date: Mon, 15 Apr 2019 22:39:03 -0400
+Message-ID: <20190416023903.GA19565@redhat.com>
 References: <20190415211717.18737-1-snitzer@redhat.com>
+	<20190415211717.18737-3-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190415211717.18737-1-snitzer@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20190415211717.18737-3-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,31 +24,33 @@ To: dm-devel@redhat.com
 Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-Fix __reserve_metadata_snap() to return early if __commit_transaction()
-fails.
+On Mon, Apr 15 2019 at  5:17pm -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-thin-metadata.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+> Otherwise, just loading a thin-pool and then removing it will cause its
+> metadata to be changed (e.g. superblock written) -- even without any
+> thin devices being made active or metadata snapshot being manipulated.
+> 
+> Add 'changed' flag to struct dm_pool_metadata.  Set both td->changed and
+> pmd->changed using __set_thin_changed() -- this assures pmd->changed is
+> always set when td->changed is.  For methods that don't involve changing
+> a td, set pmd->changed directly.
+> 
+> Rename __delete_device() to __delete_thin() -- improves symmetry with
+> __create_thin().
+> 
+> Update dm_pool_changed_this_transaction() to simply return pmd->changed.
+> 
+> Fix dm_pool_commit_metadata() to open the next transaction if the return
+> from __commit_transaction() is 0.  Not seeing why the early return ever
+> made since for a return of 0 given that dm-io's async_io(), as used by
+> bufio, always returns 0.
 
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index f4e8327abc75..3ba27f5f7da9 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -1248,7 +1248,12 @@ static int __reserve_metadata_snap(struct dm_pool_metadata *pmd)
- 	 * We commit to ensure the btree roots which we increment in a
- 	 * moment are up to date.
- 	 */
--	__commit_transaction(pmd);
-+	r = __commit_transaction(pmd);
-+	if (r < 0) {
-+		DMWARN("%s: __commit_transaction() failed, error = %d",
-+		       __func__, r);
-+		return r;
-+	}
- 
- 	/*
- 	 * Copy the superblock.
--- 
-2.18.0
+This v1 patch was incomplete.  However this approach's need to establish
+pmd->changed everywhere that alters metadata, without doing so in terms
+of a thin device, is like whack-a-mole.
+
+But I think this could be simplified to only set a 'pmd->accessed'
+(never clear it) and only__commit_transaction() if pmd->accessed --
+so only pool messages that change metadata would need to set
+pmd->accessed.
