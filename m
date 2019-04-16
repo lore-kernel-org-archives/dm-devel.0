@@ -1,27 +1,53 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Jonathan Corbet <corbet@lwn.net>
 Subject: Re: [PATCH 10/57] docs: device-mapper: convert it to ReST format
-Date: Tue, 16 Apr 2019 09:28:52 -0400
-Message-ID: <20190416132851.GA22497@redhat.com>
+Date: Tue, 16 Apr 2019 08:00:24 -0600
+Message-ID: <20190416080024.7fb65682@lwn.net>
 References: <cover.1555382110.git.mchehab+samsung@kernel.org>
- <9dd3c4eca01489bd67ea6de88dfedef8b0e81901.1555382110.git.mchehab+samsung@kernel.org>
+        <9dd3c4eca01489bd67ea6de88dfedef8b0e81901.1555382110.git.mchehab+samsung@kernel.org>
+        <20190416132851.GA22497@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <9dd3c4eca01489bd67ea6de88dfedef8b0e81901.1555382110.git.mchehab+samsung@kernel.org>
+In-Reply-To: <20190416132851.GA22497@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
-Cc: Linux Doc Mailing List <linux-doc@vger.kernel.org>, Mauro Carvalho Chehab <mchehab@infradead.org>, linux-kernel@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>, Linux Doc Mailing List <linux-doc@vger.kernel.org>, Mauro Carvalho Chehab <mchehab@infradead.org>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Apr 15 2019 at 10:55pm -0400,
-Mauro Carvalho Chehab <mchehab+samsung@kernel.org> wrote:
+On Tue, 16 Apr 2019 09:28:52 -0400
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-> Convert the Device Mapper documentation to ReST.
+> Can you help me understand why this is the direction text based
+> Documenation is taking in the Linux kernel?  All I see is markup, and
+> escaping of characters, that is a chore to administer over time.
 
-Can you help me understand why this is the direction text based
-Documenation is taking in the Linux kernel?  All I see is markup, and
-escaping of characters, that is a chore to administer over time.
+This is a discussion that was mostly resolved some years ago...
 
-Please advise, thanks.
-Mike
+Classic Documentation/ is a jumbled collection of unorganized text files,
+some of which contain highly useful information and others of which
+haven't had much to offer since about 1996.  We are working to turn it
+into an organized collection where, hopefully, some thought has actually
+been given to the people who will be reading it.
+
+The ReST conversion, in particular, allows us to link documents into a
+larger structure, create indexes and cross references, and produce output
+in formats like HTML and PDF.  It lets us present the documentation like
+this:
+
+	https://www.kernel.org/doc/html/latest/
+
+Among other things, making the documentation more accessible in this way
+makes it easier and more rewarding for developers to improve it, and I
+believe we are seeing the results of that.  Linus called out the
+documentation work in the 5.1-rc1 announcement, for example.
+
+Nobody has complained about the maintenance burden of RST docs - so far as
+I have heard, anyway.  Things do break occasionally, but problems in the
+docs build almost always result from code changes that mess up the
+kerneldoc comments rather than RST changes, and it's been that way for as
+long as I've been paying attention.
+
+Thanks,
+
+jon
