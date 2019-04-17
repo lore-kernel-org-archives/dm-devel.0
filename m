@@ -1,130 +1,153 @@
-From: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
-Subject: Re: [PATCH 10/57] docs: device-mapper: convert it to ReST format
-Date: Tue, 16 Apr 2019 15:14:46 -0300
-Message-ID: <20190416151446.1a2b8ffa@coco.lan>
-References: <cover.1555382110.git.mchehab+samsung@kernel.org>
-        <9dd3c4eca01489bd67ea6de88dfedef8b0e81901.1555382110.git.mchehab+samsung@kernel.org>
-        <20190416132851.GA22497@redhat.com>
-        <20190416080024.7fb65682@lwn.net>
-        <20190416154858.GB22497@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v2 2/3] dm thin metadata: do not write metadata
+ if no changes occurred
+Date: Tue, 16 Apr 2019 21:30:50 -0400
+Message-ID: <20190417013050.GA25356@redhat.com>
+References: <20190415211717.18737-1-snitzer@redhat.com>
+	<20190415211717.18737-3-snitzer@redhat.com>
+	<20190416023903.GA19565@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190416154858.GB22497@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jonathan Corbet <corbet@lwn.net>, Linux Doc Mailing List <linux-doc@vger.kernel.org>, Mauro Carvalho Chehab <mchehab@infradead.org>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20190416023903.GA19565@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-Em Tue, 16 Apr 2019 11:48:59 -0400
-Mike Snitzer <snitzer@redhat.com> escreveu:
+Otherwise, just loading a thin-pool and then removing it will cause its
+metadata to be changed (e.g. superblock written) -- even without any
+thin devices being made active or metadata snapshot being manipulated.
 
-> On Tue, Apr 16 2019 at 10:00am -0400,
-> Jonathan Corbet <corbet@lwn.net> wrote:
-> 
-> > On Tue, 16 Apr 2019 09:28:52 -0400
-> > Mike Snitzer <snitzer@redhat.com> wrote:
-> >   
-> > > Can you help me understand why this is the direction text based
-> > > Documenation is taking in the Linux kernel?  All I see is markup, and
-> > > escaping of characters, that is a chore to administer over time.  
-> > 
-> > This is a discussion that was mostly resolved some years ago...
-> > 
-> > Classic Documentation/ is a jumbled collection of unorganized text files,
-> > some of which contain highly useful information and others of which
-> > haven't had much to offer since about 1996.  We are working to turn it
-> > into an organized collection where, hopefully, some thought has actually
-> > been given to the people who will be reading it.
-> > 
-> > The ReST conversion, in particular, allows us to link documents into a
-> > larger structure, create indexes and cross references, and produce output
-> > in formats like HTML and PDF.  It lets us present the documentation like
-> > this:
-> > 
-> > 	https://www.kernel.org/doc/html/latest/
-> > 
-> > Among other things, making the documentation more accessible in this way
-> > makes it easier and more rewarding for developers to improve it, and I
-> > believe we are seeing the results of that.  Linus called out the
-> > documentation work in the 5.1-rc1 announcement, for example.
-> > 
-> > Nobody has complained about the maintenance burden of RST docs - so far as
-> > I have heard, anyway.  Things do break occasionally, but problems in the
-> > docs build almost always result from code changes that mess up the
-> > kerneldoc comments rather than RST changes, and it's been that way for as
-> > long as I've been paying attention.  
-> 
-> Thanks for the context.  I clearly just haven't followed the evolution.
-> Certainly looks like a solid improvement.
-> 
-> Think the last piece I'm missing is: how does one edit a .rst document
-> without having to know to sprinkle syntactic sugar around?  Does emacs
-> have a ReST mode?  If not what client interface are people using to
-> properly change these documents?
+Add 'in_service' flag to struct dm_pool_metadata and use a new
+dm_pool_set_in_service() interface to set it if either a thin device is
+activated or a message is sent to the thin-pool.  Once 'in_service' is
+set it is never cleared.  __commit_transaction() will return 0 if
+'in_service' is not set.
 
-I guess the main point is that, after writing a .rst file, run
-"make htmldocs" and see how it fits :-)
+Also fix dm_pool_commit_metadata() to open the next transaction if the
+return from __commit_transaction() is 0.  Not seeing why the early
+return ever made since for a return of 0 given that dm-io's async_io(),
+as used by bufio, always returns 0.
 
-As Jon mentioned, a large number of documents (even some written lots of
-years ago) already fits into ReST, and keeping it simpler makes easier
-for plain text file readers.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-thin-metadata.c | 23 ++++++++++++++++++++++-
+ drivers/md/dm-thin-metadata.h |  2 ++
+ drivers/md/dm-thin.c          |  9 +++++++++
+ 3 files changed, 33 insertions(+), 1 deletion(-)
 
-We do have some documents (like the media book), were we use a lot
-of the markup stuff, as those documents came from DocBook and it is full of
-cross-references, complex tables, images, examples, etc, but for most
-subsystems, you're safe with the usual stuff.
-
-> 
-> (apologies if this is all spelled out nicely in Documentation/
-> somewhere, but please help this man learn to fish).
-
-A few tips if you want to write documents that are easy to
-read as text files and produce nice output after parsed:
-
-1) it is written to document Python. So, it is indentation 
-   sensitive. Usually most of the fixes are just to properly
-   indent things;
-
-2) By default, it identifies line breaks with two \n. The
-   exceptions are literal blocks like:
-
-   ::
-	foo
-	bar
-
-  and things like:
-
-	foo
-	   bar
-
-  (in this case, it will bold **foo**) 
-
-  Another trick that I use to avoid the need of adding an extra \n is to 
-  convert itemized lists into a table, with:
-
-	===
-	foo
-	bar
-	===
-
-3) Things like "struct *foo" usually produces error, as a single
-   * is interpreted as italic. The parser will look for another *. As
-   it won't find, it will produce an error. So, this need to be escaped
-   somehow.
-
-   While you can escape such special characters like * and _ with an
-   inverted bar, like "struct \*foo", that looks ugly for casual
-   text file readers.
-
-   Instead, I do either::
-
-	struct *foo
-
-   or, if I want it in the middle of a text, I use `struct *foo`. 
-   IMO, placing it on a literal block (::) looks visually better for
-   both text and html modes.
-
-Thanks,
-Mauro
+diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+index 7381e477a945..fcff30fc07cd 100644
+--- a/drivers/md/dm-thin-metadata.c
++++ b/drivers/md/dm-thin-metadata.c
+@@ -201,6 +201,13 @@ struct dm_pool_metadata {
+ 	 */
+ 	bool fail_io:1;
+ 
++	/*
++	 * Set once a thin-pool has been accessed through one of the interfaces
++	 * that imply the pool is in-service (e.g. thin devices created/deleted,
++	 * thin-pool message, metadata snapshots, etc).
++	 */
++	bool in_service:1;
++
+ 	/*
+ 	 * Reading the space map roots can fail, so we read it into these
+ 	 * buffers before the superblock is locked and updated.
+@@ -790,6 +797,9 @@ static int __commit_transaction(struct dm_pool_metadata *pmd)
+ 	 */
+ 	BUILD_BUG_ON(sizeof(struct thin_disk_superblock) > 512);
+ 
++	if (unlikely(!pmd->in_service))
++		return 0;
++
+ 	r = __write_changed_details(pmd);
+ 	if (r < 0)
+ 		return r;
+@@ -853,6 +863,7 @@ struct dm_pool_metadata *dm_pool_metadata_open(struct block_device *bdev,
+ 	pmd->time = 0;
+ 	INIT_LIST_HEAD(&pmd->thin_devices);
+ 	pmd->fail_io = false;
++	pmd->in_service = false;
+ 	pmd->bdev = bdev;
+ 	pmd->data_block_size = data_block_size;
+ 
+@@ -1727,6 +1738,16 @@ int dm_pool_dec_data_range(struct dm_pool_metadata *pmd, dm_block_t b, dm_block_
+ 	return r;
+ }
+ 
++void dm_pool_set_in_service(struct dm_pool_metadata *pmd)
++{
++	if (!pmd->in_service) {
++		down_write(&pmd->root_lock);
++		if (!pmd->in_service)
++			pmd->in_service = true;
++		up_write(&pmd->root_lock);
++	}
++}
++
+ bool dm_thin_changed_this_transaction(struct dm_thin_device *td)
+ {
+ 	int r;
+@@ -1787,7 +1808,7 @@ int dm_pool_commit_metadata(struct dm_pool_metadata *pmd)
+ 		goto out;
+ 
+ 	r = __commit_transaction(pmd);
+-	if (r <= 0)
++	if (r < 0)
+ 		goto out;
+ 
+ 	/*
+diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
+index f6be0d733c20..8192530984be 100644
+--- a/drivers/md/dm-thin-metadata.h
++++ b/drivers/md/dm-thin-metadata.h
+@@ -47,6 +47,8 @@ struct dm_pool_metadata *dm_pool_metadata_open(struct block_device *bdev,
+ 
+ int dm_pool_metadata_close(struct dm_pool_metadata *pmd);
+ 
++void dm_pool_set_in_service(struct dm_pool_metadata *pmd);
++
+ /*
+  * Compat feature flags.  Any incompat flags beyond the ones
+  * specified below will prevent use of the thin metadata.
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index fcd887703f95..b6dbbdfc9118 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -3822,6 +3822,13 @@ static int pool_message(struct dm_target *ti, unsigned argc, char **argv,
+ 		return -EOPNOTSUPP;
+ 	}
+ 
++	/*
++	 * Any message sent to a thin-pool warrants putting it in-service
++	 * (even if the message is malformed, it speaks to a user
++	 *  attempting to interface with the thin-pool)
++	 */
++	dm_pool_set_in_service(pool->pmd);
++
+ 	if (!strcasecmp(argv[0], "create_thin"))
+ 		r = process_create_thin_mesg(argc, argv, pool);
+ 
+@@ -4222,6 +4229,8 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		goto bad_pool;
+ 	}
+ 
++	dm_pool_set_in_service(tc->pool->pmd);
++
+ 	r = dm_pool_open_thin_device(tc->pool->pmd, tc->dev_id, &tc->td);
+ 	if (r) {
+ 		ti->error = "Couldn't open thin internal device";
+-- 
+2.18.0
