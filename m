@@ -1,15 +1,11 @@
-From: Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [PATCH] dm-crypt: fix endianess annotations around
- org_sector_of_dmreq
-Date: Wed, 17 Apr 2019 06:28:08 -0700
-Message-ID: <5f7ecb42-a89c-40da-a8f2-b2f416520bef@acm.org>
-References: <20190404163334.4453-1-hch@lst.de>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: [PATCH] dm cache metadata: Fix loading discard bitset
+Date: Wed, 17 Apr 2019 17:19:18 +0300
+Message-ID: <20190417141918.10648-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190404163334.4453-1-hch@lst.de>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,15 +15,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@lst.de>, dm-devel@redhat.com
+To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
+Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-On 4/4/19 9:33 AM, Christoph Hellwig wrote:
-> The sector used here is a little endian value, so use the right
-> type for it.
+Add missing dm_bitset_cursor_next() to properly advance the bitset
+cursor.
 
-Hi Christoph,
+Otherwise, the discarded state of all blocks is set according to the
+discarded state of the first block.
 
-You may want to fix the spelling of "endianness" in the subject. Anyway:
+Fixes: ae4a46a1f6 ("dm cache metadata: use bitset cursor api to load discard bitset")
+Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+---
+ drivers/md/dm-cache-metadata.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
 
-Reviewed-by: Bart Van Assche <bvanassche@acm.org>
+diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
+index 6fc93834da44..151aa95775be 100644
+--- a/drivers/md/dm-cache-metadata.c
++++ b/drivers/md/dm-cache-metadata.c
+@@ -1167,11 +1167,18 @@ static int __load_discards(struct dm_cache_metadata *cmd,
+ 		if (r)
+ 			return r;
+ 
+-		for (b = 0; b < from_dblock(cmd->discard_nr_blocks); b++) {
++		for (b = 0; ; b++) {
+ 			r = fn(context, cmd->discard_block_size, to_dblock(b),
+ 			       dm_bitset_cursor_get_value(&c));
+ 			if (r)
+ 				break;
++
++			if (b >= (from_dblock(cmd->discard_nr_blocks) - 1))
++				break;
++
++			r = dm_bitset_cursor_next(&c);
++			if (r)
++				break;
+ 		}
+ 
+ 		dm_bitset_cursor_end(&c);
+-- 
+2.11.0
