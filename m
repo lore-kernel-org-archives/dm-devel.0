@@ -1,7 +1,7 @@
 From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: [patch V2 11/29] fault-inject: Simplify stacktrace retrieval
-Date: Thu, 18 Apr 2019 10:41:30 +0200
-Message-ID: <20190418084254.082820685@linutronix.de>
+Subject: [patch V2 07/29] mm/slub: Simplify stack trace retrieval
+Date: Thu, 18 Apr 2019 10:41:26 +0200
+Message-ID: <20190418084253.720040206@linutronix.de>
 References: <20190418084119.056416939@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,36 +24,37 @@ Replace the indirection through struct stack_trace with an invocation of
 the storage array based interface.
 
 Signed-off-by: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Pekka Enberg <penberg-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+Cc: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
 ---
- lib/fault-inject.c |   12 +++---------
- 1 file changed, 3 insertions(+), 9 deletions(-)
+ mm/slub.c |   12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
 
---- a/lib/fault-inject.c
-+++ b/lib/fault-inject.c
-@@ -65,22 +65,16 @@ static bool fail_task(struct fault_attr
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -552,18 +552,14 @@ static void set_track(struct kmem_cache
  
- static bool fail_stacktrace(struct fault_attr *attr)
- {
--	struct stack_trace trace;
- 	int depth = attr->stacktrace_depth;
- 	unsigned long entries[MAX_STACK_TRACE_DEPTH];
--	int n;
-+	int n, nr_entries;
- 	bool found = (attr->require_start == 0 && attr->require_end == ULONG_MAX);
+ 	if (addr) {
+ #ifdef CONFIG_STACKTRACE
+-		struct stack_trace trace;
++		unsigned int nr_entries;
  
- 	if (depth == 0)
- 		return found;
+-		trace.nr_entries = 0;
+-		trace.max_entries = TRACK_ADDRS_COUNT;
+-		trace.entries = p->addrs;
+-		trace.skip = 3;
+ 		metadata_access_enable();
+-		save_stack_trace(&trace);
++		nr_entries = stack_trace_save(p->addrs, TRACK_ADDRS_COUNT, 3);
+ 		metadata_access_disable();
  
--	trace.nr_entries = 0;
--	trace.entries = entries;
--	trace.max_entries = depth;
--	trace.skip = 1;
--
--	save_stack_trace(&trace);
--	for (n = 0; n < trace.nr_entries; n++) {
-+	nr_entries = stack_trace_save(entries, depth, 1);
-+	for (n = 0; n < nr_entries; n++) {
- 		if (attr->reject_start <= entries[n] &&
- 			       entries[n] < attr->reject_end)
- 			return false;
+-		if (trace.nr_entries < TRACK_ADDRS_COUNT)
+-			p->addrs[trace.nr_entries] = 0;
++		if (nr_entries < TRACK_ADDRS_COUNT)
++			p->addrs[nr_entries] = 0;
+ #endif
+ 		p->addr = addr;
+ 		p->cpu = smp_processor_id();
