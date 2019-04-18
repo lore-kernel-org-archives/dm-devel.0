@@ -1,7 +1,7 @@
 From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: [patch V2 08/29] mm/kmemleak: Simplify stacktrace handling
-Date: Thu, 18 Apr 2019 10:41:27 +0200
-Message-ID: <20190418084253.811477032@linutronix.de>
+Subject: [patch V2 12/29] dma/debug: Simplify stracktrace retrieval
+Date: Thu, 18 Apr 2019 10:41:31 +0200
+Message-ID: <20190418084254.180116966@linutronix.de>
 References: <20190418084119.056416939@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,68 +20,52 @@ To: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Joonas Lahtinen <joonas.lahtinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Alexander Potapenko <glider-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kasan-dev-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Johannes Thumshirn <jthumshirn-l3A5Bk7waGM@public.gmane.org>, Andrey Ryabinin <aryabinin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Maarten Lankhorst <maarten.lankhorst-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Rodrigo Vivi <rodrigo.vivi-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mike Rapoport <rppt-23VcF4HTsmKsTnJN9+BGXg@public.gmane.org>
 List-Id: dm-devel.ids
 
-Replace the indirection through struct stack_trace by using the storage
-array based interfaces.
+Replace the indirection through struct stack_trace with an invocation of
+the storage array based interface.
 
 Signed-off-by: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+Cc: iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Cc: Robin Murphy <robin.murphy-5wv7dgnIgG8@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 ---
- mm/kmemleak.c |   24 +++---------------------
- 1 file changed, 3 insertions(+), 21 deletions(-)
+ kernel/dma/debug.c |   13 +++++--------
+ 1 file changed, 5 insertions(+), 8 deletions(-)
 
---- a/mm/kmemleak.c
-+++ b/mm/kmemleak.c
-@@ -410,11 +410,6 @@ static void print_unreferenced(struct se
-  */
- static void dump_object_info(struct kmemleak_object *object)
- {
--	struct stack_trace trace;
+--- a/kernel/dma/debug.c
++++ b/kernel/dma/debug.c
+@@ -89,8 +89,8 @@ struct dma_debug_entry {
+ 	int		 sg_mapped_ents;
+ 	enum map_err_types  map_err_type;
+ #ifdef CONFIG_STACKTRACE
+-	struct		 stack_trace stacktrace;
+-	unsigned long	 st_entries[DMA_DEBUG_STACKTRACE_ENTRIES];
++	unsigned int	stack_len;
++	unsigned long	stack_entries[DMA_DEBUG_STACKTRACE_ENTRIES];
+ #endif
+ };
+ 
+@@ -174,7 +174,7 @@ static inline void dump_entry_trace(stru
+ #ifdef CONFIG_STACKTRACE
+ 	if (entry) {
+ 		pr_warning("Mapped at:\n");
+-		print_stack_trace(&entry->stacktrace, 0);
++		stack_trace_print(entry->stack_entries, entry->stack_len, 0);
+ 	}
+ #endif
+ }
+@@ -704,12 +704,9 @@ static struct dma_debug_entry *dma_entry
+ 	spin_unlock_irqrestore(&free_entries_lock, flags);
+ 
+ #ifdef CONFIG_STACKTRACE
+-	entry->stacktrace.max_entries = DMA_DEBUG_STACKTRACE_ENTRIES;
+-	entry->stacktrace.entries = entry->st_entries;
+-	entry->stacktrace.skip = 1;
+-	save_stack_trace(&entry->stacktrace);
++	entry->stack_len = stack_trace_save(entry->stack_entries,
++					    ARRAY_SIZE(entry->stack_entries), 1);
+ #endif
 -
--	trace.nr_entries = object->trace_len;
--	trace.entries = object->trace;
--
- 	pr_notice("Object 0x%08lx (size %zu):\n",
- 		  object->pointer, object->size);
- 	pr_notice("  comm \"%s\", pid %d, jiffies %lu\n",
-@@ -424,7 +419,7 @@ static void dump_object_info(struct kmem
- 	pr_notice("  flags = 0x%x\n", object->flags);
- 	pr_notice("  checksum = %u\n", object->checksum);
- 	pr_notice("  backtrace:\n");
--	print_stack_trace(&trace, 4);
-+	stack_trace_print(object->trace, object->trace_len, 4);
+ 	return entry;
  }
  
- /*
-@@ -553,15 +548,7 @@ static struct kmemleak_object *find_and_
-  */
- static int __save_stack_trace(unsigned long *trace)
- {
--	struct stack_trace stack_trace;
--
--	stack_trace.max_entries = MAX_TRACE;
--	stack_trace.nr_entries = 0;
--	stack_trace.entries = trace;
--	stack_trace.skip = 2;
--	save_stack_trace(&stack_trace);
--
--	return stack_trace.nr_entries;
-+	return stack_trace_save(trace, MAX_TRACE, 2);
- }
- 
- /*
-@@ -2019,13 +2006,8 @@ early_param("kmemleak", kmemleak_boot_co
- 
- static void __init print_log_trace(struct early_log *log)
- {
--	struct stack_trace trace;
--
--	trace.nr_entries = log->trace_len;
--	trace.entries = log->trace;
--
- 	pr_notice("Early log backtrace:\n");
--	print_stack_trace(&trace, 2);
-+	stack_trace_print(log->trace, log->trace_len, 2);
- }
- 
- /*
