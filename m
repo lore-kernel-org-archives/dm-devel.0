@@ -1,78 +1,101 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: [patch V2 14/29] dm bufio: Simplify stack trace retrieval
-Date: Thu, 18 Apr 2019 10:41:33 +0200
-Message-ID: <20190418084254.361284697@linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [patch V2 21/29] tracing: Use percpu stack trace buffer
+ more intelligently
+Date: Thu, 18 Apr 2019 10:41:40 +0200
+Message-ID: <20190418084254.999521114@linutronix.de>
 References: <20190418084119.056416939@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Joonas Lahtinen <joonas.lahtinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Alexander Potapenko <glider-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kasan-dev-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrey Ryabinin <aryabinin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Johannes Thumshirn <jthumshirn-l3A5Bk7waGM@public.gmane.org>, Maarten Lankhorst <maarten.lankhorst-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Rodrigo Vivi <rodrigo.vivi-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mike Rapoport <rppt-23VcF4HTsmKsTnJN9+BGXg@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+To: LKML <linux-kernel@vger.kernel.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, Johannes Thumshirn <jthumshirn@suse.de>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, David Rientjes <rientjes@google.com>, Akinobu Mita <akinobu.mita@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Sterba <dster>
 List-Id: dm-devel.ids
 
-Replace the indirection through struct stack_trace with an invocation of
-the storage array based interface.
-
-Signed-off-by: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
----
- drivers/md/dm-bufio.c |   15 ++++++---------
- 1 file changed, 6 insertions(+), 9 deletions(-)
-
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -150,7 +150,7 @@ struct dm_buffer {
- 	void (*end_io)(struct dm_buffer *, blk_status_t);
- #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
- #define MAX_STACK 10
--	struct stack_trace stack_trace;
-+	unsigned int stack_len;
- 	unsigned long stack_entries[MAX_STACK];
- #endif
- };
-@@ -232,11 +232,7 @@ static DEFINE_MUTEX(dm_bufio_clients_loc
- #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
- static void buffer_record_stack(struct dm_buffer *b)
- {
--	b->stack_trace.nr_entries = 0;
--	b->stack_trace.max_entries = MAX_STACK;
--	b->stack_trace.entries = b->stack_entries;
--	b->stack_trace.skip = 2;
--	save_stack_trace(&b->stack_trace);
-+	b->stack_len = stack_trace_save(b->stack_entries, MAX_STACK, 2);
- }
- #endif
- 
-@@ -438,7 +434,7 @@ static struct dm_buffer *alloc_buffer(st
- 	adjust_total_allocated(b->data_mode, (long)c->block_size);
- 
- #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
--	memset(&b->stack_trace, 0, sizeof(b->stack_trace));
-+	b->stack_len = 0;
- #endif
- 	return b;
- }
-@@ -1520,8 +1516,9 @@ static void drop_buffers(struct dm_bufio
- 			DMERR("leaked buffer %llx, hold count %u, list %d",
- 			      (unsigned long long)b->block, b->hold_count, i);
- #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
--			print_stack_trace(&b->stack_trace, 1);
--			b->hold_count = 0; /* mark unclaimed to avoid BUG_ON below */
-+			stack_trace_print(b->stack_entries, b->stack_len, 1);
-+			/* mark unclaimed to avoid BUG_ON below */
-+			b->hold_count = 0;
- #endif
- 		}
- 
+VGhlIHBlciBjcHUgc3RhY2sgdHJhY2UgYnVmZmVyIHVzYWdlIHBhdHRlcm4gaXMgb2RkIGF0IGJl
+c3QuIFRoZSBidWZmZXIgaGFzCnBsYWNlIGZvciA1MTIgc3RhY2sgdHJhY2UgZW50cmllcyBvbiA2
+NC1iaXQgYW5kIDEwMjQgb24gMzItYml0LiBXaGVuCmludGVycnVwdHMgb3IgZXhjZXB0aW9ucyBu
+ZXN0IGFmdGVyIHRoZSBwZXIgY3B1IGJ1ZmZlciB3YXMgYWNxdWlyZWQgdGhlCnN0YWNrdHJhY2Ug
+bGVuZ3RoIGlzIGhhcmRjb2RlZCB0byA4IGVudHJpZXMuIDUxMi8xMDI0IHN0YWNrIHRyYWNlIGVu
+dHJpZXMKaW4ga2VybmVsIHN0YWNrcyBhcmUgdW5yZWFsaXN0aWMgc28gdGhlIGJ1ZmZlciBpcyBh
+IGNvbXBsZXRlIHdhc3RlLgoKU3BsaXQgdGhlIGJ1ZmZlciBpbnRvIGNodW5rcyBvZiA2NCBzdGFj
+ayBlbnRyaWVzIHdoaWNoIGlzIHBsZW50eS4gVGhpcwphbGxvd3MgbmVzdGluZyBjb250ZXh0cyAo
+aW50ZXJydXB0cywgZXhjZXB0aW9ucykgdG8gdXRpbGl6ZSB0aGUgY3B1IGJ1ZmZlcgpmb3Igc3Rh
+Y2sgcmV0cmlldmFsIGFuZCBhdm9pZHMgdGhlIGZpeGVkIGxlbmd0aCBhbGxvY2F0aW9uIGFsb25n
+IHdpdGggdGhlCmNvbmRpdGlvbmFsIGV4ZWN1dGlvbiBwYXRoZXMuCgpTaWduZWQtb2ZmLWJ5OiBU
+aG9tYXMgR2xlaXhuZXIgPHRnbHhAbGludXRyb25peC5kZT4KQ2M6IFN0ZXZlbiBSb3N0ZWR0IDxy
+b3N0ZWR0QGdvb2RtaXMub3JnPgotLS0KIGtlcm5lbC90cmFjZS90cmFjZS5jIHwgICA3NyArKysr
+KysrKysrKysrKysrKysrKysrKysrLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KIDEgZmlsZSBj
+aGFuZ2VkLCAzOSBpbnNlcnRpb25zKCspLCAzOCBkZWxldGlvbnMoLSkKCi0tLSBhL2tlcm5lbC90
+cmFjZS90cmFjZS5jCisrKyBiL2tlcm5lbC90cmFjZS90cmFjZS5jCkBAIC0yNzQ5LDEyICsyNzQ5
+LDIxIEBAIHRyYWNlX2Z1bmN0aW9uKHN0cnVjdCB0cmFjZV9hcnJheSAqdHIsCiAKICNpZmRlZiBD
+T05GSUdfU1RBQ0tUUkFDRQogCi0jZGVmaW5lIEZUUkFDRV9TVEFDS19NQVhfRU5UUklFUyAoUEFH
+RV9TSVpFIC8gc2l6ZW9mKHVuc2lnbmVkIGxvbmcpKQorLyogNjQgZW50cmllcyBmb3Iga2VybmVs
+IHN0YWNrcyBhcmUgcGxlbnR5ICovCisjZGVmaW5lIEZUUkFDRV9LU1RBQ0tfRU5UUklFUwk2NAor
+CiBzdHJ1Y3QgZnRyYWNlX3N0YWNrIHsKLQl1bnNpZ25lZCBsb25nCQljYWxsc1tGVFJBQ0VfU1RB
+Q0tfTUFYX0VOVFJJRVNdOworCXVuc2lnbmVkIGxvbmcJCWNhbGxzW0ZUUkFDRV9LU1RBQ0tfRU5U
+UklFU107CiB9OwogCi1zdGF0aWMgREVGSU5FX1BFUl9DUFUoc3RydWN0IGZ0cmFjZV9zdGFjaywg
+ZnRyYWNlX3N0YWNrKTsKKy8qIFRoaXMgYWxsb3dzIDggbGV2ZWwgbmVzdGluZyB3aGljaCBpcyBw
+bGVudHkgKi8KKyNkZWZpbmUgRlRSQUNFX0tTVEFDS19ORVNUSU5HCShQQUdFX1NJWkUgLyBzaXpl
+b2Yoc3RydWN0IGZ0cmFjZV9zdGFjaykpCisKK3N0cnVjdCBmdHJhY2Vfc3RhY2tzIHsKKwlzdHJ1
+Y3QgZnRyYWNlX3N0YWNrCXN0YWNrc1tGVFJBQ0VfS1NUQUNLX05FU1RJTkddOworfTsKKworc3Rh
+dGljIERFRklORV9QRVJfQ1BVKHN0cnVjdCBmdHJhY2Vfc3RhY2tzLCBmdHJhY2Vfc3RhY2tzKTsK
+IHN0YXRpYyBERUZJTkVfUEVSX0NQVShpbnQsIGZ0cmFjZV9zdGFja19yZXNlcnZlKTsKIAogc3Rh
+dGljIHZvaWQgX19mdHJhY2VfdHJhY2Vfc3RhY2soc3RydWN0IHJpbmdfYnVmZmVyICpidWZmZXIs
+CkBAIC0yNzYzLDEwICsyNzcyLDExIEBAIHN0YXRpYyB2b2lkIF9fZnRyYWNlX3RyYWNlX3N0YWNr
+KHN0cnVjdAogewogCXN0cnVjdCB0cmFjZV9ldmVudF9jYWxsICpjYWxsID0gJmV2ZW50X2tlcm5l
+bF9zdGFjazsKIAlzdHJ1Y3QgcmluZ19idWZmZXJfZXZlbnQgKmV2ZW50OworCXN0cnVjdCBmdHJh
+Y2Vfc3RhY2sgKmZzdGFjazsKIAlzdHJ1Y3Qgc3RhY2tfZW50cnkgKmVudHJ5OwogCXN0cnVjdCBz
+dGFja190cmFjZSB0cmFjZTsKLQlpbnQgdXNlX3N0YWNrOwotCWludCBzaXplID0gRlRSQUNFX1NU
+QUNLX0VOVFJJRVM7CisJaW50IHNpemUgPSBGVFJBQ0VfS1NUQUNLX0VOVFJJRVM7CisJaW50IHN0
+YWNraWR4OwogCiAJdHJhY2UubnJfZW50cmllcwk9IDA7CiAJdHJhY2Uuc2tpcAkJPSBza2lwOwpA
+QCAtMjc4OCwyOSArMjc5OCwzMiBAQCBzdGF0aWMgdm9pZCBfX2Z0cmFjZV90cmFjZV9zdGFjayhz
+dHJ1Y3QKIAkgKi8KIAlwcmVlbXB0X2Rpc2FibGVfbm90cmFjZSgpOwogCi0JdXNlX3N0YWNrID0g
+X190aGlzX2NwdV9pbmNfcmV0dXJuKGZ0cmFjZV9zdGFja19yZXNlcnZlKTsKKwlzdGFja2lkeCA9
+IF9fdGhpc19jcHVfaW5jX3JldHVybihmdHJhY2Vfc3RhY2tfcmVzZXJ2ZSk7CisKKwkvKiBUaGlz
+IHNob3VsZCBuZXZlciBoYXBwZW4uIElmIGl0IGRvZXMsIHllbGwgb25jZSBhbmQgc2tpcCAqLwor
+CWlmIChXQVJOX09OX09OQ0Uoc3RhY2tpZHggPj0gRlRSQUNFX0tTVEFDS19ORVNUSU5HKSkKKwkJ
+Z290byBvdXQ7CisKIAkvKgotCSAqIFdlIGRvbid0IG5lZWQgYW55IGF0b21pYyB2YXJpYWJsZXMs
+IGp1c3QgYSBiYXJyaWVyLgotCSAqIElmIGFuIGludGVycnVwdCBjb21lcyBpbiwgd2UgZG9uJ3Qg
+Y2FyZSwgYmVjYXVzZSBpdCB3b3VsZAotCSAqIGhhdmUgZXhpdGVkIGFuZCBwdXQgdGhlIGNvdW50
+ZXIgYmFjayB0byB3aGF0IHdlIHdhbnQuCi0JICogV2UganVzdCBuZWVkIGEgYmFycmllciB0byBr
+ZWVwIGdjYyBmcm9tIG1vdmluZyB0aGluZ3MKLQkgKiBhcm91bmQuCisJICogVGhlIGFib3ZlIF9f
+dGhpc19jcHVfaW5jX3JldHVybigpIGlzICdhdG9taWMnIGNwdSBsb2NhbC4gQW4KKwkgKiBpbnRl
+cnJ1cHQgd2lsbCBlaXRoZXIgc2VlIHRoZSB2YWx1ZSBwcmUgaW5jcmVtZW50IG9yIHBvc3QKKwkg
+KiBpbmNyZW1lbnQuIElmIHRoZSBpbnRlcnJ1cHQgaGFwcGVucyBwcmUgaW5jcmVtZW50IGl0IHdp
+bGwgaGF2ZQorCSAqIHJlc3RvcmVkIHRoZSBjb3VudGVyIHdoZW4gaXQgcmV0dXJucy4gIFdlIGp1
+c3QgbmVlZCBhIGJhcnJpZXIgdG8KKwkgKiBrZWVwIGdjYyBmcm9tIG1vdmluZyB0aGluZ3MgYXJv
+dW5kLgogCSAqLwogCWJhcnJpZXIoKTsKLQlpZiAodXNlX3N0YWNrID09IDEpIHsKLQkJdHJhY2Uu
+ZW50cmllcwkJPSB0aGlzX2NwdV9wdHIoZnRyYWNlX3N0YWNrLmNhbGxzKTsKLQkJdHJhY2UubWF4
+X2VudHJpZXMJPSBGVFJBQ0VfU1RBQ0tfTUFYX0VOVFJJRVM7Ci0KLQkJaWYgKHJlZ3MpCi0JCQlz
+YXZlX3N0YWNrX3RyYWNlX3JlZ3MocmVncywgJnRyYWNlKTsKLQkJZWxzZQotCQkJc2F2ZV9zdGFj
+a190cmFjZSgmdHJhY2UpOwotCi0JCWlmICh0cmFjZS5ucl9lbnRyaWVzID4gc2l6ZSkKLQkJCXNp
+emUgPSB0cmFjZS5ucl9lbnRyaWVzOwotCX0gZWxzZQotCQkvKiBGcm9tIG5vdyBvbiwgdXNlX3N0
+YWNrIGlzIGEgYm9vbGVhbiAqLwotCQl1c2Vfc3RhY2sgPSAwOworCisJZnN0YWNrID0gdGhpc19j
+cHVfcHRyKGZ0cmFjZV9zdGFja3Muc3RhY2tzKSArIChzdGFja2lkeCAtIDEpOworCXRyYWNlLmVu
+dHJpZXMJCT0gZnN0YWNrLT5jYWxsczsKKwl0cmFjZS5tYXhfZW50cmllcwk9IEZUUkFDRV9LU1RB
+Q0tfRU5UUklFUzsKKworCWlmIChyZWdzKQorCQlzYXZlX3N0YWNrX3RyYWNlX3JlZ3MocmVncywg
+JnRyYWNlKTsKKwllbHNlCisJCXNhdmVfc3RhY2tfdHJhY2UoJnRyYWNlKTsKKworCWlmICh0cmFj
+ZS5ucl9lbnRyaWVzID4gc2l6ZSkKKwkJc2l6ZSA9IHRyYWNlLm5yX2VudHJpZXM7CiAKIAlzaXpl
+ICo9IHNpemVvZih1bnNpZ25lZCBsb25nKTsKIApAQCAtMjgyMCwxOSArMjgzMyw3IEBAIHN0YXRp
+YyB2b2lkIF9fZnRyYWNlX3RyYWNlX3N0YWNrKHN0cnVjdAogCQlnb3RvIG91dDsKIAllbnRyeSA9
+IHJpbmdfYnVmZmVyX2V2ZW50X2RhdGEoZXZlbnQpOwogCi0JbWVtc2V0KCZlbnRyeS0+Y2FsbGVy
+LCAwLCBzaXplKTsKLQotCWlmICh1c2Vfc3RhY2spCi0JCW1lbWNweSgmZW50cnktPmNhbGxlciwg
+dHJhY2UuZW50cmllcywKLQkJICAgICAgIHRyYWNlLm5yX2VudHJpZXMgKiBzaXplb2YodW5zaWdu
+ZWQgbG9uZykpOwotCWVsc2UgewotCQl0cmFjZS5tYXhfZW50cmllcwk9IEZUUkFDRV9TVEFDS19F
+TlRSSUVTOwotCQl0cmFjZS5lbnRyaWVzCQk9IGVudHJ5LT5jYWxsZXI7Ci0JCWlmIChyZWdzKQot
+CQkJc2F2ZV9zdGFja190cmFjZV9yZWdzKHJlZ3MsICZ0cmFjZSk7Ci0JCWVsc2UKLQkJCXNhdmVf
+c3RhY2tfdHJhY2UoJnRyYWNlKTsKLQl9CisJbWVtY3B5KCZlbnRyeS0+Y2FsbGVyLCB0cmFjZS5l
+bnRyaWVzLCBzaXplKTsKIAogCWVudHJ5LT5zaXplID0gdHJhY2UubnJfZW50cmllczsKIAoKCl9f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkludGVsLWdmeCBt
+YWlsaW5nIGxpc3QKSW50ZWwtZ2Z4QGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwczovL2xpc3Rz
+LmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2ludGVsLWdmeA==
