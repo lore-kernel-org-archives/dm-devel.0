@@ -1,58 +1,64 @@
-From: Josh Poimboeuf <jpoimboe@redhat.com>
-Subject: Re: [patch V2 28/29] stacktrace: Provide common infrastructure
-Date: Thu, 18 Apr 2019 09:52:01 -0500
-Message-ID: <20190418145201.mjzyqbmkjcghqzex@treble>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [patch V2 21/29] tracing: Use percpu stack trace
+ buffer more intelligently
+Date: Thu, 18 Apr 2019 10:53:34 -0400
+Message-ID: <20190418105334.5093528d@gandalf.local.home>
 References: <20190418084119.056416939@linutronix.de>
- <20190418084255.652003111@linutronix.de>
+ <20190418084254.999521114@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190418084255.652003111@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+In-Reply-To: <20190418084254.999521114@linutronix.de>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
 To: Thomas Gleixner <tglx@linutronix.de>
-Cc: LKML <linux-kernel@vger.kernel.org>, x86@kernel.org, Andy Lutomirski <luto@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Alexander Potapenko <glider@google.com>, linux-arch@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, David Rientjes <rientjes@google.com>, Christoph Lameter <cl@linux.com>, Catalin Marinas <catalin.marinas@arm.com>, Dmitry Vyukov <dvyukov@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, kasan-dev@googlegroups.com, Mike Rapoport <rppt@linux.vnet.ibm.com>, Akinobu Mita <akinobu.mita@gmail.com>, iommu@lists.linux-foundation.org, Robin Murphy <robin.murphy@arm.com>, Christoph Hellwig <hch@lst.de>, Marek
+Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, Johannes Thumshirn <jthumshirn@suse.de>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, David Rientjes <rientjes@google.com>, Akinobu Mita <akinobu.mita@gmail.com>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Sterba <dsterba@suse.com>, Dmitry Vyukov <dvyukov@g>
 List-Id: dm-devel.ids
 
-On Thu, Apr 18, 2019 at 10:41:47AM +0200, Thomas Gleixner wrote:
-> All architectures which support stacktrace carry duplicated code and
-> do the stack storage and filtering at the architecture side.
-> 
-> Provide a consolidated interface with a callback function for consuming the
-> stack entries provided by the architecture specific stack walker. This
-> removes lots of duplicated code and allows to implement better filtering
-> than 'skip number of entries' in the future without touching any
-> architecture specific code.
-> 
-> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-> Cc: linux-arch@vger.kernel.org
-
-This is a step in the right direction, especially if it allows us to get
-rid of the 'skip' stuff.  But I'm not crazy about the callbacks.
-
-Another idea I had (but never got a chance to work on) was to extend the
-x86 unwind interface to all arches.  So instead of the callbacks, each
-arch would implement something like this API:
-
-
-struct unwind_state state;
-
-void unwind_start(struct unwind_state *state, struct task_struct *task,
-		  struct pt_regs *regs, unsigned long *first_frame);
-
-bool unwind_next_frame(struct unwind_state *state);
-
-inline bool unwind_done(struct unwind_state *state);
-
-
-Not only would it avoid the callbacks (which is a nice benefit already),
-it would also allow the interfaces to be used outside of the
-stack_trace_*() interfaces.  That would come in handy in cases like the
-ftrace stack tracer code, which needs more than the stack_trace_*() API
-can give.
-
-Of course, this may be more work than what you thought you signed up for
-;-)
-
--- 
-Josh
+T24gVGh1LCAxOCBBcHIgMjAxOSAxMDo0MTo0MCArMDIwMApUaG9tYXMgR2xlaXhuZXIgPHRnbHhA
+bGludXRyb25peC5kZT4gd3JvdGU6Cgo+IFRoZSBwZXIgY3B1IHN0YWNrIHRyYWNlIGJ1ZmZlciB1
+c2FnZSBwYXR0ZXJuIGlzIG9kZCBhdCBiZXN0LiBUaGUgYnVmZmVyIGhhcwo+IHBsYWNlIGZvciA1
+MTIgc3RhY2sgdHJhY2UgZW50cmllcyBvbiA2NC1iaXQgYW5kIDEwMjQgb24gMzItYml0LiBXaGVu
+Cj4gaW50ZXJydXB0cyBvciBleGNlcHRpb25zIG5lc3QgYWZ0ZXIgdGhlIHBlciBjcHUgYnVmZmVy
+IHdhcyBhY3F1aXJlZCB0aGUKPiBzdGFja3RyYWNlIGxlbmd0aCBpcyBoYXJkY29kZWQgdG8gOCBl
+bnRyaWVzLiA1MTIvMTAyNCBzdGFjayB0cmFjZSBlbnRyaWVzCj4gaW4ga2VybmVsIHN0YWNrcyBh
+cmUgdW5yZWFsaXN0aWMgc28gdGhlIGJ1ZmZlciBpcyBhIGNvbXBsZXRlIHdhc3RlLgo+IAo+IFNw
+bGl0IHRoZSBidWZmZXIgaW50byBjaHVua3Mgb2YgNjQgc3RhY2sgZW50cmllcyB3aGljaCBpcyBw
+bGVudHkuIFRoaXMKPiBhbGxvd3MgbmVzdGluZyBjb250ZXh0cyAoaW50ZXJydXB0cywgZXhjZXB0
+aW9ucykgdG8gdXRpbGl6ZSB0aGUgY3B1IGJ1ZmZlcgo+IGZvciBzdGFjayByZXRyaWV2YWwgYW5k
+IGF2b2lkcyB0aGUgZml4ZWQgbGVuZ3RoIGFsbG9jYXRpb24gYWxvbmcgd2l0aCB0aGUKPiBjb25k
+aXRpb25hbCBleGVjdXRpb24gcGF0aGVzLgo+IAo+IFNpZ25lZC1vZmYtYnk6IFRob21hcyBHbGVp
+eG5lciA8dGdseEBsaW51dHJvbml4LmRlPgo+IENjOiBTdGV2ZW4gUm9zdGVkdCA8cm9zdGVkdEBn
+b29kbWlzLm9yZz4KPiAtLS0KPiAga2VybmVsL3RyYWNlL3RyYWNlLmMgfCAgIDc3ICsrKysrKysr
+KysrKysrKysrKysrKysrKystLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQo+ICAxIGZpbGUgY2hh
+bmdlZCwgMzkgaW5zZXJ0aW9ucygrKSwgMzggZGVsZXRpb25zKC0pCj4gCj4gLS0tIGEva2VybmVs
+L3RyYWNlL3RyYWNlLmMKPiArKysgYi9rZXJuZWwvdHJhY2UvdHJhY2UuYwo+IEBAIC0yNzQ5LDEy
+ICsyNzQ5LDIxIEBAIHRyYWNlX2Z1bmN0aW9uKHN0cnVjdCB0cmFjZV9hcnJheSAqdHIsCj4gIAo+
+ICAjaWZkZWYgQ09ORklHX1NUQUNLVFJBQ0UKPiAgCj4gLSNkZWZpbmUgRlRSQUNFX1NUQUNLX01B
+WF9FTlRSSUVTIChQQUdFX1NJWkUgLyBzaXplb2YodW5zaWduZWQgbG9uZykpCj4gKy8qIDY0IGVu
+dHJpZXMgZm9yIGtlcm5lbCBzdGFja3MgYXJlIHBsZW50eSAqLwo+ICsjZGVmaW5lIEZUUkFDRV9L
+U1RBQ0tfRU5UUklFUwk2NAo+ICsKPiAgc3RydWN0IGZ0cmFjZV9zdGFjayB7Cj4gLQl1bnNpZ25l
+ZCBsb25nCQljYWxsc1tGVFJBQ0VfU1RBQ0tfTUFYX0VOVFJJRVNdOwo+ICsJdW5zaWduZWQgbG9u
+ZwkJY2FsbHNbRlRSQUNFX0tTVEFDS19FTlRSSUVTXTsKPiAgfTsKPiAgCj4gLXN0YXRpYyBERUZJ
+TkVfUEVSX0NQVShzdHJ1Y3QgZnRyYWNlX3N0YWNrLCBmdHJhY2Vfc3RhY2spOwo+ICsvKiBUaGlz
+IGFsbG93cyA4IGxldmVsIG5lc3Rpbmcgd2hpY2ggaXMgcGxlbnR5ICovCgpDYW4gd2UgbWFrZSB0
+aGlzIDQgbGV2ZWwgbmVzdGluZyBhbmQgaW5jcmVhc2UgdGhlIHNpemU/IChJIGNhbiBzZWUgdXMK
+Z29pbmcgbW9yZSB0aGFuIDY0IGRlZXAsIGtlcm5lbCBkZXZlbG9wZXJzIG5ldmVyIGNlYXNlIHRv
+IGFtYXplIG1lIDstKQpUaGF0J3MgYWxsIHdlIG5lZWQ6CgogQ29udGV4dDogTm9ybWFsLCBzb2Z0
+aXJxLCBpcnEsIE5NSQoKSXMgdGhlcmUgYW55IG90aGVyIHdheSB0byBuZXN0PwoKLS0gU3RldmUK
+Cj4gKyNkZWZpbmUgRlRSQUNFX0tTVEFDS19ORVNUSU5HCShQQUdFX1NJWkUgLyBzaXplb2Yoc3Ry
+dWN0IGZ0cmFjZV9zdGFjaykpCj4gKwo+ICtzdHJ1Y3QgZnRyYWNlX3N0YWNrcyB7Cj4gKwlzdHJ1
+Y3QgZnRyYWNlX3N0YWNrCXN0YWNrc1tGVFJBQ0VfS1NUQUNLX05FU1RJTkddOwo+ICt9Owo+ICsK
+PiArc3RhdGljIERFRklORV9QRVJfQ1BVKHN0cnVjdCBmdHJhY2Vfc3RhY2tzLCBmdHJhY2Vfc3Rh
+Y2tzKTsKPiAgc3RhdGljIERFRklORV9QRVJfQ1BVKGludCwgZnRyYWNlX3N0YWNrX3Jlc2VydmUp
+Owo+ICAKPiAKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18K
+SW50ZWwtZ2Z4IG1haWxpbmcgbGlzdApJbnRlbC1nZnhAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0
+dHBzOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vaW50ZWwtZ2Z4
