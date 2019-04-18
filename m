@@ -1,7 +1,7 @@
 From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: [patch V2 12/29] dma/debug: Simplify stracktrace retrieval
-Date: Thu, 18 Apr 2019 10:41:31 +0200
-Message-ID: <20190418084254.180116966@linutronix.de>
+Subject: [patch V2 06/29] latency_top: Simplify stack trace handling
+Date: Thu, 18 Apr 2019 10:41:25 +0200
+Message-ID: <20190418084253.628227766@linutronix.de>
 References: <20190418084119.056416939@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,48 +24,40 @@ Replace the indirection through struct stack_trace with an invocation of
 the storage array based interface.
 
 Signed-off-by: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Cc: Robin Murphy <robin.murphy-5wv7dgnIgG8@public.gmane.org>
-Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 ---
- kernel/dma/debug.c |   13 +++++--------
- 1 file changed, 5 insertions(+), 8 deletions(-)
+ kernel/latencytop.c |   17 ++---------------
+ 1 file changed, 2 insertions(+), 15 deletions(-)
 
---- a/kernel/dma/debug.c
-+++ b/kernel/dma/debug.c
-@@ -89,8 +89,8 @@ struct dma_debug_entry {
- 	int		 sg_mapped_ents;
- 	enum map_err_types  map_err_type;
- #ifdef CONFIG_STACKTRACE
--	struct		 stack_trace stacktrace;
--	unsigned long	 st_entries[DMA_DEBUG_STACKTRACE_ENTRIES];
-+	unsigned int	stack_len;
-+	unsigned long	stack_entries[DMA_DEBUG_STACKTRACE_ENTRIES];
- #endif
- };
- 
-@@ -174,7 +174,7 @@ static inline void dump_entry_trace(stru
- #ifdef CONFIG_STACKTRACE
- 	if (entry) {
- 		pr_warning("Mapped at:\n");
--		print_stack_trace(&entry->stacktrace, 0);
-+		stack_trace_print(entry->stack_entries, entry->stack_len, 0);
- 	}
- #endif
+--- a/kernel/latencytop.c
++++ b/kernel/latencytop.c
+@@ -141,20 +141,6 @@ account_global_scheduler_latency(struct
+ 	memcpy(&latency_record[i], lat, sizeof(struct latency_record));
  }
-@@ -704,12 +704,9 @@ static struct dma_debug_entry *dma_entry
- 	spin_unlock_irqrestore(&free_entries_lock, flags);
  
- #ifdef CONFIG_STACKTRACE
--	entry->stacktrace.max_entries = DMA_DEBUG_STACKTRACE_ENTRIES;
--	entry->stacktrace.entries = entry->st_entries;
--	entry->stacktrace.skip = 1;
--	save_stack_trace(&entry->stacktrace);
-+	entry->stack_len = stack_trace_save(entry->stack_entries,
-+					    ARRAY_SIZE(entry->stack_entries), 1);
- #endif
+-/*
+- * Iterator to store a backtrace into a latency record entry
+- */
+-static inline void store_stacktrace(struct task_struct *tsk,
+-					struct latency_record *lat)
+-{
+-	struct stack_trace trace;
 -
- 	return entry;
- }
+-	memset(&trace, 0, sizeof(trace));
+-	trace.max_entries = LT_BACKTRACEDEPTH;
+-	trace.entries = &lat->backtrace[0];
+-	save_stack_trace_tsk(tsk, &trace);
+-}
+-
+ /**
+  * __account_scheduler_latency - record an occurred latency
+  * @tsk - the task struct of the task hitting the latency
+@@ -191,7 +177,8 @@ void __sched
+ 	lat.count = 1;
+ 	lat.time = usecs;
+ 	lat.max = usecs;
+-	store_stacktrace(tsk, &lat);
++
++	stack_trace_save_tsk(tsk, lat.backtrace, LT_BACKTRACEDEPTH, 0);
+ 
+ 	raw_spin_lock_irqsave(&latency_lock, flags);
  
