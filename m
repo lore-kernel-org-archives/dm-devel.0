@@ -1,49 +1,55 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [patch V2 20/29] tracing: Simplify stacktrace retrieval
- in histograms
-Date: Thu, 18 Apr 2019 10:41:39 +0200
-Message-ID: <20190418084254.910579307@linutronix.de>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: [patch V2 04/29] backtrace-test: Simplify stack trace handling
+Date: Thu, 18 Apr 2019 10:41:23 +0200
+Message-ID: <20190418084253.431851214@linutronix.de>
 References: <20190418084119.056416939@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <intel-gfx-bounces@lists.freedesktop.org>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
-List-Post: <mailto:intel-gfx@lists.freedesktop.org>
-List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: intel-gfx-bounces@lists.freedesktop.org
-Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
-To: LKML <linux-kernel@vger.kernel.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, Johannes Thumshirn <jthumshirn@suse.de>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, David Rientjes <rientjes@google.com>, Akinobu Mita <akinobu.mita@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Sterba <dster>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
+List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Joonas Lahtinen <joonas.lahtinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Alexander Potapenko <glider-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kasan-dev-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Johannes Thumshirn <jthumshirn-l3A5Bk7waGM@public.gmane.org>, Andrey Ryabinin <aryabinin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Maarten Lankhorst <maarten.lankhorst-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Rodrigo Vivi <rodrigo.vivi-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mike Rapoport <rppt-23VcF4HTsmKsTnJN9+BGXg@public.gmane.org>
 List-Id: dm-devel.ids
 
-VGhlIGluZGlyZWN0aW9uIHRocm91Z2ggc3RydWN0IHN0YWNrX3RyYWNlIGlzIG5vdCBuZWNlc3Nh
-cnkgYXQgYWxsLiBVc2UgdGhlCnN0b3JhZ2UgYXJyYXkgYmFzZWQgaW50ZXJmYWNlLgoKU2lnbmVk
-LW9mZi1ieTogVGhvbWFzIEdsZWl4bmVyIDx0Z2x4QGxpbnV0cm9uaXguZGU+CkNjOiBTdGV2ZW4g
-Um9zdGVkdCA8cm9zdGVkdEBnb29kbWlzLm9yZz4KLS0tCiBrZXJuZWwvdHJhY2UvdHJhY2VfZXZl
-bnRzX2hpc3QuYyB8ICAgMTIgKysrLS0tLS0tLS0tCiAxIGZpbGUgY2hhbmdlZCwgMyBpbnNlcnRp
-b25zKCspLCA5IGRlbGV0aW9ucygtKQoKLS0tIGEva2VybmVsL3RyYWNlL3RyYWNlX2V2ZW50c19o
-aXN0LmMKKysrIGIva2VybmVsL3RyYWNlL3RyYWNlX2V2ZW50c19oaXN0LmMKQEAgLTUxODYsNyAr
-NTE4Niw2IEBAIHN0YXRpYyB2b2lkIGV2ZW50X2hpc3RfdHJpZ2dlcihzdHJ1Y3QgZXYKIAl1NjQg
-dmFyX3JlZl92YWxzW1RSQUNJTkdfTUFQX1ZBUlNfTUFYXTsKIAljaGFyIGNvbXBvdW5kX2tleVtI
-SVNUX0tFWV9TSVpFX01BWF07CiAJc3RydWN0IHRyYWNpbmdfbWFwX2VsdCAqZWx0ID0gTlVMTDsK
-LQlzdHJ1Y3Qgc3RhY2tfdHJhY2Ugc3RhY2t0cmFjZTsKIAlzdHJ1Y3QgaGlzdF9maWVsZCAqa2V5
-X2ZpZWxkOwogCXU2NCBmaWVsZF9jb250ZW50czsKIAl2b2lkICprZXkgPSBOVUxMOwpAQCAtNTE5
-OCwxNCArNTE5Nyw5IEBAIHN0YXRpYyB2b2lkIGV2ZW50X2hpc3RfdHJpZ2dlcihzdHJ1Y3QgZXYK
-IAkJa2V5X2ZpZWxkID0gaGlzdF9kYXRhLT5maWVsZHNbaV07CiAKIAkJaWYgKGtleV9maWVsZC0+
-ZmxhZ3MgJiBISVNUX0ZJRUxEX0ZMX1NUQUNLVFJBQ0UpIHsKLQkJCXN0YWNrdHJhY2UubWF4X2Vu
-dHJpZXMgPSBISVNUX1NUQUNLVFJBQ0VfREVQVEg7Ci0JCQlzdGFja3RyYWNlLmVudHJpZXMgPSBl
-bnRyaWVzOwotCQkJc3RhY2t0cmFjZS5ucl9lbnRyaWVzID0gMDsKLQkJCXN0YWNrdHJhY2Uuc2tp
-cCA9IEhJU1RfU1RBQ0tUUkFDRV9TS0lQOwotCi0JCQltZW1zZXQoc3RhY2t0cmFjZS5lbnRyaWVz
-LCAwLCBISVNUX1NUQUNLVFJBQ0VfU0laRSk7Ci0JCQlzYXZlX3N0YWNrX3RyYWNlKCZzdGFja3Ry
-YWNlKTsKLQorCQkJbWVtc2V0KGVudHJpZXMsIDAsIEhJU1RfU1RBQ0tUUkFDRV9TSVpFKTsKKwkJ
-CXN0YWNrX3RyYWNlX3NhdmUoZW50cmllcywgSElTVF9TVEFDS1RSQUNFX0RFUFRILAorCQkJCQkg
-SElTVF9TVEFDS1RSQUNFX1NLSVApOwogCQkJa2V5ID0gZW50cmllczsKIAkJfSBlbHNlIHsKIAkJ
-CWZpZWxkX2NvbnRlbnRzID0ga2V5X2ZpZWxkLT5mbihrZXlfZmllbGQsIGVsdCwgcmJlLCByZWMp
-OwoKCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkludGVs
-LWdmeCBtYWlsaW5nIGxpc3QKSW50ZWwtZ2Z4QGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwczov
-L2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2ludGVsLWdmeA==
+Replace the indirection through struct stack_trace by using the storage
+array based interfaces.
+
+Signed-off-by: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+---
+ kernel/backtracetest.c |   11 +++--------
+ 1 file changed, 3 insertions(+), 8 deletions(-)
+
+--- a/kernel/backtracetest.c
++++ b/kernel/backtracetest.c
+@@ -48,19 +48,14 @@ static void backtrace_test_irq(void)
+ #ifdef CONFIG_STACKTRACE
+ static void backtrace_test_saved(void)
+ {
+-	struct stack_trace trace;
+ 	unsigned long entries[8];
++	unsigned int nr_entries;
+ 
+ 	pr_info("Testing a saved backtrace.\n");
+ 	pr_info("The following trace is a kernel self test and not a bug!\n");
+ 
+-	trace.nr_entries = 0;
+-	trace.max_entries = ARRAY_SIZE(entries);
+-	trace.entries = entries;
+-	trace.skip = 0;
+-
+-	save_stack_trace(&trace);
+-	print_stack_trace(&trace, 0);
++	nr_entries = stack_trace_save(entries, ARRAY_SIZE(entries), 0);
++	stack_trace_print(entries, nr_entries, 0);
+ }
+ #else
+ static void backtrace_test_saved(void)
