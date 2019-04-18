@@ -1,212 +1,40 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [RFC PATCH] multipath: check on multipathd without
-	starting it
-Date: Thu, 18 Apr 2019 22:30:40 +0200
-Message-ID: <6a618273a647908773d832b3f71a08278379cc5d.camel@suse.de>
-References: <1555609786-25156-1-git-send-email-bmarzins@redhat.com>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [patch V2 01/29] tracing: Cleanup stack trace code
+Date: Thu, 18 Apr 2019 23:14:45 +0200 (CEST)
+Message-ID: <alpine.DEB.2.21.1904182313470.3174@nanos.tec.linutronix.de>
+References: <20190418084119.056416939@linutronix.de>
+	<20190418084253.142712304@linutronix.de>
+	<20190418135721.5vwd6ngxagrrrrtt@treble>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1555609786-25156-1-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, ematsumiya@suse.com
+Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <20190418135721.5vwd6ngxagrrrrtt@treble>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
+List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Joonas Lahtinen <joonas.lahtinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Alexander Potapenko <glider-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kasan-dev-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Johannes Thumshirn <jthumshirn-l3A5Bk7waGM@public.gmane.org>, Andrey Ryabinin <aryabinin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Maarten Lankhorst <maarten.lankhorst-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Jani Nikula <jani.nikula@lin>
 List-Id: dm-devel.ids
 
-Hi Ben,
+On Thu, 18 Apr 2019, Josh Poimboeuf wrote:
 
-On Thu, 2019-04-18 at 12:49 -0500, Benjamin Marzinski wrote:
-> When "multipath -u" is run, it checks if multipathd is running.
-> Currently it does this by trying to connect to the mutipathd socket.
-> This can cause problems during boot.  The multipathd.socket systemd
-> unit
-> file will cause "multipath -u" to wait until multipathd has been
-> started
-> before continuing.  
-
-Thanks a lot for this. We were hunting several similar problems lately,
-and were beginning to suspect exactly this. The main reason that we
-haven't come up with a patch like this is that I refused to believe
-this could happen - here is why.
-
-We've had the patch d7188fc "multipathd: start daemon after udev
-trigger" out in the field since November 2016. That patch moves
-multipathd's start (but not the start of multipathd.socket!) to after
-"udev settle" has finished. What we've been observing lately seems to
-be this:
-
- - start multipathd.socket
- - start systemd-udev-trigger
- - start systemd-udev-settle
- - SCSI disk found, "add" uevent generated
- - multipath -u
-   - opens socket
- - systemd queues a job to start multipathd, but doesn't start it
-because "udev settle" isn't finished yet
-   - now "multipath -u" hangs ...
-
-... which is basically a deadlock situation which causes either the
-uevent, or "udev settle" itself, or both, to time out before usable
-devices are found. The system is almost certain to end up in emergency
-mode. And it's not even a matter of lots of udev activity.
-
-What I'm really puzzled about is that I have never observed this in the
-last 2 years, and it'd be almost certain to generate dozens of bug
-reports quickly, which it is currently doing.
-
- ** Is it possible that something has changed in the way systemd
-handles opening the socket and starting the associated service? **
-
-> >If there is a lot of activity on the system,
-> multipathd may not start up immediately, causing block device
-> initialization to be delayed, potentially until after systemd times
-> waiting for the device.  To avoid this, multipath now checks if
-> multipathd is running by reading /run/multipathd.pid and checking the
-> /proc/<pid>/comm to verify that multipathd is really running with
-> this
-> pid. This avoids forcing "multipath -u" to wait on multipathd
-> starting
-> up.
+> On Thu, Apr 18, 2019 at 10:41:20AM +0200, Thomas Gleixner wrote:
+> > - Remove the extra array member of stack_dump_trace[]. It's not required as
+> >   the stack tracer stores at max array size - 1 entries so there is still
+> >   an empty slot.
 > 
-> As an alternative to this patch, multipath could simply switch the
-> order
-> of the calls to systemd_service_enabled() and mpath_connect().
->  This would
-> make multipath only try to connect with multipathd if it wasn't
-> enabled in
-> systemd, so that it wouldn't autostart.
+> What is the empty slot used for?
 
-If my above analysis is correct, it'd be sufficient to revert d7188fc 
-and start multipathd before udev trigger and udev settle again, as it
-used to be. I've been thinking about this for some time, IMO it would
-be actually the "Right Thing" in the long term. The problem is that we
-need to be sure that multipathd would deal gracefully with encountering
-multipath maps during startup where none of the constituent paths are
-in the udev database (yet), and where it might take considerable time
-until these paths appear.
+I was trying to find an answer but failed. Maybe it's just historical
+leftovers or Steven knows where the magic is in this maze.
 
-> Another alternative is to do away with multipathd.socket. Since
-> multipathd
-> needs to always be running in order to get uevents, there isn't much
-> value
-> in having it autoactivate when it gets an interactive command.
+Thanks,
 
-Some people may still be running without the daemon and just work with
-"multipath" commands. It "works", just that uevents aren't received and
-paths aren't reinstated; we've never officially deprecated it. I think
-we need the socket for the time being, for the "delegate dangerous
-commands to user space" feature in multipath.
-
-One of our customers worked around the problem by adding an
-After=systemd-udev-settle.service to multipathd.socket, too. That
-way socket activation doesn't happen; it seems to "work" too, but it
-wouldn't be my preferred solution.
-
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-
-The patch looks good to me. 
-
-Reviewed-by: Martin Wilck <mwilck@suse.com>
-
-> ---
->  multipath/main.c | 60 +++++++++++++++++++++++++++++++++++++++++++---
-> --
->  1 file changed, 54 insertions(+), 6 deletions(-)
-> 
-> diff --git a/multipath/main.c b/multipath/main.c
-> index 69141dbc..008e3d3f 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -850,6 +850,58 @@ out:
->  	return r;
->  }
->  
-> +int is_multipathd_running(void)
-> +{
-> +	FILE *f = NULL;
-> +	char buf[16];
-> +	char path[PATH_MAX];
-> +	int pid;
-> +	char *end;
-> +
-> +	f = fopen(DEFAULT_PIDFILE, "r");
-> +	if (!f) {
-> +		if (errno != ENOENT)
-> +			condlog(4, "can't open " DEFAULT_PIDFILE ":
-> %s",
-> +				strerror(errno));
-> +		return 0;
-> +	}
-> +	if (!fgets(buf, sizeof(buf), f)) {
-> +		if (ferror(f))
-> +			condlog(4, "read of " DEFAULT_PIDFILE " failed:
-> %s",
-> +				strerror(errno));
-> +		fclose(f);
-> +		return 0;
-> +	}
-> +	fclose(f);
-> +	errno = 0;
-> +	strchop(buf);
-> +	pid = strtol(buf, &end, 10);
-> +	if (errno != 0 || pid <= 0 || *end != '\0') {
-> +		condlog(4, "invalid contents in " DEFAULT_PIDFILE ":
-> '%s'",
-> +			buf);
-> +		return 0;
-> +	}
-> +	snprintf(path, sizeof(path), "/proc/%d/comm", pid);
-> +	f = fopen(path, "r");
-> +	if (!f) {
-> +		if (errno != ENOENT)
-> +			condlog(4, "can't open %s: %s", path,
-> strerror(errno));artin
-> +		return 0;
-> +	}
-> +	if (!fgets(buf, sizeof(buf), f)) {
-> +		if (ferror(f))
-> +			condlog(4, "read of %s failed: %s", path,
-> +				strerror(errno));
-> +		fclose(f);
-> +		return 0;
-> +	}
-> +	fclose(f);
-> +	strchop(buf);
-> +	if (strcmp(buf, "multipathd") != 0)
-> +		return 0;
-> +	return 1;
-> +}
-> +
->  int
->  main (int argc, char *argv[])
->  {
-> @@ -1028,17 +1080,13 @@ main (int argc, char *argv[])
->  	}
->  	if (cmd == CMD_VALID_PATH &&
->  	    dev_type == DEV_UEVENT) {
-> -		int fd;
-> -
-> -		fd = mpath_connect();
-> -		if (fd == -1) {
-> +		if (!is_multipathd_running()) {
->  			condlog(3, "%s: daemon is not running", dev);
->  			if (!systemd_service_enabled(dev)) {
->  				r = print_cmd_valid(RTVL_NO, NULL,
-> conf);
->  				goto out;
->  			}
-> -		} else
-> -			mpath_disconnect(fd);
-> +		}
->  	}
->  
->  	if (cmd == CMD_REMOVE_WWID && !dev) {
+	tglx
