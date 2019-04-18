@@ -1,15 +1,16 @@
 From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [patch V2 28/29] stacktrace: Provide common infrastructure
-Date: Thu, 18 Apr 2019 13:57:22 +0200 (CEST)
-Message-ID: <alpine.DEB.2.21.1904181355300.3174@nanos.tec.linutronix.de>
+Subject: Re: [patch V2 03/29] lib/stackdepot: Provide functions which operate
+	on plain storage arrays
+Date: Thu, 18 Apr 2019 13:58:45 +0200 (CEST)
+Message-ID: <alpine.DEB.2.21.1904181358030.3174@nanos.tec.linutronix.de>
 References: <20190418084119.056416939@linutronix.de>
-	<20190418084255.652003111@linutronix.de>
-	<20190418115207.GB13304@rapoport-lnx>
+	<20190418084253.337266121@linutronix.de>
+	<20190418115152.GA13304@rapoport-lnx>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20190418115207.GB13304@rapoport-lnx>
+In-Reply-To: <20190418115152.GA13304@rapoport-lnx>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
 	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
@@ -24,49 +25,25 @@ Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie
 List-Id: dm-devel.ids
 
 On Thu, 18 Apr 2019, Mike Rapoport wrote:
-> On Thu, Apr 18, 2019 at 10:41:47AM +0200, Thomas Gleixner wrote:
+> On Thu, Apr 18, 2019 at 10:41:22AM +0200, Thomas Gleixner wrote:
+> > 
+> > -void depot_fetch_stack(depot_stack_handle_t handle, struct stack_trace *trace)
 > > +/**
-> > + * arch_stack_walk - Architecture specific function to walk the stack
-> > +
-> 
-> Nit: no '*' at line beginning makes kernel-doc unhappy
-
-Oops.
-
-> > + * @consume_entry:	Callback which is invoked by the architecture code for
-> > + *			each entry.
-> > + * @cookie:		Caller supplied pointer which is handed back to
-> > + *			@consume_entry
-> > + * @task:		Pointer to a task struct, can be NULL
-> > + * @regs:		Pointer to registers, can be NULL
+> > + * stack_depot_fetch - Fetch stack entries from a depot
 > > + *
-> > + * @task	@regs:
-> > + * NULL		NULL	Stack trace from current
-> > + * task		NULL	Stack trace from task (can be current)
-> > + * NULL		regs	Stack trace starting on regs->stackpointer
 > 
-> This will render as a single line with 'make *docs'.
-> Adding line separators makes this actually a table in the generated docs:
-> 
->  * ============ ======= ============================================
->  * task		regs
->  * ============ ======= ============================================
->  * NULL		NULL	Stack trace from current
->  * task		NULL	Stack trace from task (can be current)
->  * NULL		regs	Stack trace starting on regs->stackpointer
->  * ============ ======= ============================================
+> Nit: kernel-doc will complain about missing description of @handle.
 
-Cute.
+Duh.
 
-> > + * Returns number of entries stored.
+> > + * @entries:		Pointer to store the entries address
+> > + */
 > 
 > Can you please s/Returns/Return:/ so that kernel-doc will recognize this as
 > return section.
-> 
-> This is relevant for other comments below as well.
 
-Sure.
+Sure thing.
 
-Thanks for the free kernel doc course! :)
+Thanks,
 
 	tglx
