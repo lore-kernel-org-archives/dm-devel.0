@@ -1,58 +1,90 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [patch V2 27/29] lib/stackdepot: Remove obsolete
- functions
-Date: Thu, 18 Apr 2019 10:41:46 +0200
-Message-ID: <20190418084255.561045203@linutronix.de>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: [patch V2 15/29] dm persistent data: Simplify stack trace handling
+Date: Thu, 18 Apr 2019 10:41:34 +0200
+Message-ID: <20190418084254.459090858@linutronix.de>
 References: <20190418084119.056416939@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <intel-gfx-bounces@lists.freedesktop.org>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
-List-Post: <mailto:intel-gfx@lists.freedesktop.org>
-List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: intel-gfx-bounces@lists.freedesktop.org
-Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
-To: LKML <linux-kernel@vger.kernel.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, Johannes Thumshirn <jthumshirn@suse.de>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, David Rientjes <rientjes@google.com>, Akinobu Mita <akinobu.mita@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Sterba <dster>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
+List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Joonas Lahtinen <joonas.lahtinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Alexander Potapenko <glider-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kasan-dev-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrey Ryabinin <aryabinin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Johannes Thumshirn <jthumshirn-l3A5Bk7waGM@public.gmane.org>, Maarten Lankhorst <maarten.lankhorst-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Rodrigo Vivi <rodrigo.vivi-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mike Rapoport <rppt-23VcF4HTsmKsTnJN9+BGXg@public.gmane.org>
 List-Id: dm-devel.ids
 
-Tm8gbW9yZSB1c2VycyBvZiB0aGUgc3RydWN0IHN0YWNrX3RyYWNlIGJhc2VkIGludGVyZmFjZXMu
-CgpTaWduZWQtb2ZmLWJ5OiBUaG9tYXMgR2xlaXhuZXIgPHRnbHhAbGludXRyb25peC5kZT4KQWNr
-ZWQtYnk6IEFsZXhhbmRlciBQb3RhcGVua28gPGdsaWRlckBnb29nbGUuY29tPgotLS0KIGluY2x1
-ZGUvbGludXgvc3RhY2tkZXBvdC5oIHwgICAgNCAtLS0tCiBsaWIvc3RhY2tkZXBvdC5jICAgICAg
-ICAgICB8ICAgMjAgLS0tLS0tLS0tLS0tLS0tLS0tLS0KIDIgZmlsZXMgY2hhbmdlZCwgMjQgZGVs
-ZXRpb25zKC0pCgotLS0gYS9pbmNsdWRlL2xpbnV4L3N0YWNrZGVwb3QuaAorKysgYi9pbmNsdWRl
-L2xpbnV4L3N0YWNrZGVwb3QuaApAQCAtMjMsMTMgKzIzLDkgQEAKIAogdHlwZWRlZiB1MzIgZGVw
-b3Rfc3RhY2tfaGFuZGxlX3Q7CiAKLXN0cnVjdCBzdGFja190cmFjZTsKLQotZGVwb3Rfc3RhY2tf
-aGFuZGxlX3QgZGVwb3Rfc2F2ZV9zdGFjayhzdHJ1Y3Qgc3RhY2tfdHJhY2UgKnRyYWNlLCBnZnBf
-dCBmbGFncyk7CiBkZXBvdF9zdGFja19oYW5kbGVfdCBzdGFja19kZXBvdF9zYXZlKHVuc2lnbmVk
-IGxvbmcgKmVudHJpZXMsCiAJCQkJICAgICAgdW5zaWduZWQgaW50IG5yX2VudHJpZXMsIGdmcF90
-IGdmcF9mbGFncyk7CiAKLXZvaWQgZGVwb3RfZmV0Y2hfc3RhY2soZGVwb3Rfc3RhY2tfaGFuZGxl
-X3QgaGFuZGxlLCBzdHJ1Y3Qgc3RhY2tfdHJhY2UgKnRyYWNlKTsKIHVuc2lnbmVkIGludCBzdGFj
-a19kZXBvdF9mZXRjaChkZXBvdF9zdGFja19oYW5kbGVfdCBoYW5kbGUsCiAJCQkgICAgICAgdW5z
-aWduZWQgbG9uZyAqKmVudHJpZXMpOwogCi0tLSBhL2xpYi9zdGFja2RlcG90LmMKKysrIGIvbGli
-L3N0YWNrZGVwb3QuYwpAQCAtMjEyLDE0ICsyMTIsNiBAQCB1bnNpZ25lZCBpbnQgc3RhY2tfZGVw
-b3RfZmV0Y2goZGVwb3Rfc3RhCiB9CiBFWFBPUlRfU1lNQk9MX0dQTChzdGFja19kZXBvdF9mZXRj
-aCk7CiAKLXZvaWQgZGVwb3RfZmV0Y2hfc3RhY2soZGVwb3Rfc3RhY2tfaGFuZGxlX3QgaGFuZGxl
-LCBzdHJ1Y3Qgc3RhY2tfdHJhY2UgKnRyYWNlKQotewotCXVuc2lnbmVkIGludCBuZW50ID0gc3Rh
-Y2tfZGVwb3RfZmV0Y2goaGFuZGxlLCAmdHJhY2UtPmVudHJpZXMpOwotCi0JdHJhY2UtPm1heF9l
-bnRyaWVzID0gdHJhY2UtPm5yX2VudHJpZXMgPSBuZW50OwotfQotRVhQT1JUX1NZTUJPTF9HUEwo
-ZGVwb3RfZmV0Y2hfc3RhY2spOwotCiAvKioKICAqIHN0YWNrX2RlcG90X3NhdmUgLSBTYXZlIGEg
-c3RhY2sgdHJhY2UgZnJvbSBhbiBhcnJheQogICoKQEAgLTMxNCwxNSArMzA2LDMgQEAgZGVwb3Rf
-c3RhY2tfaGFuZGxlX3Qgc3RhY2tfZGVwb3Rfc2F2ZSh1bgogCXJldHVybiByZXR2YWw7CiB9CiBF
-WFBPUlRfU1lNQk9MX0dQTChzdGFja19kZXBvdF9zYXZlKTsKLQotLyoqCi0gKiBkZXBvdF9zYXZl
-X3N0YWNrIC0gc2F2ZSBzdGFjayBpbiBhIHN0YWNrIGRlcG90LgotICogQHRyYWNlIC0gdGhlIHN0
-YWNrdHJhY2UgdG8gc2F2ZS4KLSAqIEBhbGxvY19mbGFncyAtIGZsYWdzIGZvciBhbGxvY2F0aW5n
-IGFkZGl0aW9uYWwgbWVtb3J5IGlmIHJlcXVpcmVkLgotICovCi1kZXBvdF9zdGFja19oYW5kbGVf
-dCBkZXBvdF9zYXZlX3N0YWNrKHN0cnVjdCBzdGFja190cmFjZSAqdHJhY2UsCi0JCQkJICAgICAg
-Z2ZwX3QgYWxsb2NfZmxhZ3MpCi17Ci0JcmV0dXJuIHN0YWNrX2RlcG90X3NhdmUodHJhY2UtPmVu
-dHJpZXMsIHRyYWNlLT5ucl9lbnRyaWVzLCBhbGxvY19mbGFncyk7Ci19Ci1FWFBPUlRfU1lNQk9M
-X0dQTChkZXBvdF9zYXZlX3N0YWNrKTsKCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fXwpJbnRlbC1nZnggbWFpbGluZyBsaXN0CkludGVsLWdmeEBsaXN0cy5m
-cmVlZGVza3RvcC5vcmcKaHR0cHM6Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0
-aW5mby9pbnRlbC1nZng=
+Replace the indirection through struct stack_trace with an invocation of
+the storage array based interface. This results in less storage space and
+indirection.
+
+Signed-off-by: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+---
+ drivers/md/persistent-data/dm-block-manager.c |   19 +++++++++----------
+ 1 file changed, 9 insertions(+), 10 deletions(-)
+
+--- a/drivers/md/persistent-data/dm-block-manager.c
++++ b/drivers/md/persistent-data/dm-block-manager.c
+@@ -35,7 +35,10 @@
+ #define MAX_HOLDERS 4
+ #define MAX_STACK 10
+ 
+-typedef unsigned long stack_entries[MAX_STACK];
++struct stack_store {
++	unsigned int	nr_entries;
++	unsigned long	entries[MAX_STACK];
++};
+ 
+ struct block_lock {
+ 	spinlock_t lock;
+@@ -44,8 +47,7 @@ struct block_lock {
+ 	struct task_struct *holders[MAX_HOLDERS];
+ 
+ #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+-	struct stack_trace traces[MAX_HOLDERS];
+-	stack_entries entries[MAX_HOLDERS];
++	struct stack_store traces[MAX_HOLDERS];
+ #endif
+ };
+ 
+@@ -73,7 +75,7 @@ static void __add_holder(struct block_lo
+ {
+ 	unsigned h = __find_holder(lock, NULL);
+ #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+-	struct stack_trace *t;
++	struct stack_store *t;
+ #endif
+ 
+ 	get_task_struct(task);
+@@ -81,11 +83,7 @@ static void __add_holder(struct block_lo
+ 
+ #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+ 	t = lock->traces + h;
+-	t->nr_entries = 0;
+-	t->max_entries = MAX_STACK;
+-	t->entries = lock->entries[h];
+-	t->skip = 2;
+-	save_stack_trace(t);
++	t->nr_entries = stack_trace_save(t->entries, MAX_STACK, 2);
+ #endif
+ }
+ 
+@@ -106,7 +104,8 @@ static int __check_holder(struct block_l
+ 			DMERR("recursive lock detected in metadata");
+ #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+ 			DMERR("previously held here:");
+-			print_stack_trace(lock->traces + i, 4);
++			stack_trace_print(lock->traces[i].entries,
++					  lock->traces[i].nr_entries, 4);
+ 
+ 			DMERR("subsequent acquisition attempted here:");
+ 			dump_stack();
