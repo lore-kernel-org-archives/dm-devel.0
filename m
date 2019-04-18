@@ -1,191 +1,115 @@
-From: Shaun Tancheff <shaun@tancheff.com>
-Subject: Re: [PATCH] dm-zoned: Fix zone report handling
-Date: Thu, 18 Apr 2019 07:32:35 -0500
-Message-ID: <CAJ48U8VehF-fxTMYLzUY_jQf4gdukA8EoKZ1iRnbfv9nn+keyQ@mail.gmail.com>
-References: <20190418090307.1098-1-damien.lemoal@wdc.com>
+From: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
+Subject: Avoiding merge conflicts while adding new docs - Was: Re: [PATCH
+ 00/57] Convert files to ReST
+Date: Thu, 18 Apr 2019 09:42:23 -0300
+Message-ID: <20190418091526.00e074d1@coco.lan>
+References: <cover.1555382110.git.mchehab+samsung@kernel.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1596851737129193744=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190418090307.1098-1-damien.lemoal@wdc.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <damien.lemoal@wdc.com>
-Cc: dm-devel <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1555382110.git.mchehab+samsung@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jonathan Corbet <corbet@lwn.net>
+Cc: Linux Doc Mailing List <linux-doc@vger.kernel.org>, Mauro Carvalho Chehab <mchehab@infradead.org>, linux-kernel@vger.kernel.org, linux-riscv@lists.infradead.org, linux-fbdev@vger.kernel.org, linux-s390@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-watchdog@vger.kernel.org, xdp-newbies@vger.kernel.org, linux-samsung-soc@vger.kernel.org, linux-acpi@vger.kernel.org, linux-stm32@st-md-mailman.stormreply.com, bpf@vger.kernel.org, linux-ide@vger.kernel.org, linux-pm@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-scsi@vger.kernel.org, linux-gpio@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, x86@kernel.org, dm-devel@redhat.com, target-devel@vger.kernel.org, netdev@vger.kernel.org, kexec@lists.infradead.org, linux-fpga@vger.kernel.org, linux-rdma@vger.ke
 List-Id: dm-devel.ids
 
---===============1596851737129193744==
-Content-Type: multipart/alternative; boundary="0000000000000a72420586cd33d1"
+Jon,
 
---0000000000000a72420586cd33d1
-Content-Type: text/plain; charset="UTF-8"
+Em Mon, 15 Apr 2019 23:55:25 -0300
+Mauro Carvalho Chehab <mchehab+samsung@kernel.org> escreveu:
 
-On Thu, Apr 18, 2019 at 4:04 AM Damien Le Moal <damien.lemoal@wdc.com>
-wrote:
+> I have a separate patch series with do the actual rename and
+> adjustment of references. I opted to submit this first, as it
+> sounds easier to merge this way, as each subsystem maintainer
+> can apply the conversion directly on their trees (or at docs
+> tree), avoiding merge conflects.
 
-> The function blkdev_report_zones() returns success even if no zone
-> information is reported (empty report). Empty zone reports can only
-> happen if the report start sector passed exceeds the device capacity.
-> The conditions for this to happen are either a bug in the caller code,
-> or, a change in the device that forced the low level driver to change
-> the device capacity to a value that is lower than the report start
-> sector. This situation includes a failed disk revalidation resulting in
-> the disk capacity being changed to 0.
->
-> If this change happens while dm-zoned is in its initialization phase
-> executing dmz_init_zones(), this function may enter an infinite loop
-> and hang the system. To avoid this, add a check to disallow empty zone
-> reports and bail out early. Also fix the function dmz_update_zone() to
-> make sure that the report for the requested zone was correctly obtained.
->
-> Fixes: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target")
-> Cc: stable@vger.kernel.org
-> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
-> ---
->  drivers/md/dm-zoned-metadata.c | 5 +++++
->  1 file changed, 5 insertions(+)
->
-> diff --git a/drivers/md/dm-zoned-metadata.c
-> b/drivers/md/dm-zoned-metadata.c
-> index fa68336560c3..d8334cd45d7c 100644
-> --- a/drivers/md/dm-zoned-metadata.c
-> +++ b/drivers/md/dm-zoned-metadata.c
-> @@ -1169,6 +1169,9 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
->                         goto out;
->                 }
->
-> +               if (!nr_blkz)
-> +                       break;
-> +
->                 /* Process report */
->                 for (i = 0; i < nr_blkz; i++) {
->                         ret = dmz_init_zone(zmd, zone, &blkz[i]);
-> @@ -1204,6 +1207,8 @@ static int dmz_update_zone(struct dmz_metadata *zmd,
-> struct dm_zone *zone)
->         /* Get zone information from disk */
->         ret = blkdev_report_zones(zmd->dev->bdev, dmz_start_sect(zmd,
-> zone),
->                                   &blkz, &nr_blkz, GFP_NOIO);
-> +       if (!nr_blkz)
-> +               ret = -EIO;
->         if (ret) {
->                 dmz_dev_err(zmd->dev, "Get zone %u report failed",
->                             dmz_id(zmd, zone));
->
+Based on the number of feedbacks we have about this, I'm
+considering to submit a second version of my conversion patch
+series that would be doing the rename together with each patch,
+adding the rst files to an index file.
 
-Reviewed-by: Shaun Tancheff <shaun@tancheff.com>
+However, doing that would produce lots of warnings. We have
+already lots of those at linux-next:
 
+	checking consistency... 
 
-> --
-> 2.20.1
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+	docs/Documentation/accelerators/ocxl.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/admin-guide/mm/numaperf.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/allocators.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/attributes.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/bigalloc.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/bitmaps.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/blockgroup.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/blocks.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/checksums.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/directory.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/eainode.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/group_descr.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/ifork.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/inlinedata.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/inodes.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/journal.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/mmp.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/special_inodes.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/filesystems/ext4/super.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/fmc/index.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/gpu/msm-crash-dump.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/interconnect/interconnect.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/laptops/lg-laptop.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/virtual/kvm/amd-memory-encryption.rst: WARNING: document isn't included in any toctree
+	docs/Documentation/virtual/kvm/vcpu-requests.rst: WARNING: document isn't included in any toctree
 
---0000000000000a72420586cd33d1
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+After thinking a little bit and doing some tests, I think a good solution
+would be to add ":orphan:" markup to the new .rst files that were not
+added yet into the main body (e. g. something like the enclosed example).
 
-<div dir=3D"ltr"><div dir=3D"ltr"><br></div><br><div class=3D"gmail_quote">=
-<div dir=3D"ltr" class=3D"gmail_attr">On Thu, Apr 18, 2019 at 4:04 AM Damie=
-n Le Moal &lt;<a href=3D"mailto:damien.lemoal@wdc.com">damien.lemoal@wdc.co=
-m</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=3D"margin=
-:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"=
->The function blkdev_report_zones() returns success even if no zone<br>
-information is reported (empty report). Empty zone reports can only<br>
-happen if the report start sector passed exceeds the device capacity.<br>
-The conditions for this to happen are either a bug in the caller code,<br>
-or, a change in the device that forced the low level driver to change<br>
-the device capacity to a value that is lower than the report start<br>
-sector. This situation includes a failed disk revalidation resulting in<br>
-the disk capacity being changed to 0.<br>
-<br>
-If this change happens while dm-zoned is in its initialization phase<br>
-executing dmz_init_zones(), this function may enter an infinite loop<br>
-and hang the system. To avoid this, add a check to disallow empty zone<br>
-reports and bail out early. Also fix the function dmz_update_zone() to<br>
-make sure that the report for the requested zone was correctly obtained.<br=
->
-<br>
-Fixes: 3b1a94c88b79 (&quot;dm zoned: drive-managed zoned block device targe=
-t&quot;)<br>
-Cc: <a href=3D"mailto:stable@vger.kernel.org" target=3D"_blank">stable@vger=
-.kernel.org</a><br>
-Signed-off-by: Damien Le Moal &lt;<a href=3D"mailto:damien.lemoal@wdc.com" =
-target=3D"_blank">damien.lemoal@wdc.com</a>&gt;<br>
----<br>
-=C2=A0drivers/md/dm-zoned-metadata.c | 5 +++++<br>
-=C2=A01 file changed, 5 insertions(+)<br>
-<br>
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.=
-c<br>
-index fa68336560c3..d8334cd45d7c 100644<br>
---- a/drivers/md/dm-zoned-metadata.c<br>
-+++ b/drivers/md/dm-zoned-metadata.c<br>
-@@ -1169,6 +1169,9 @@ static int dmz_init_zones(struct dmz_metadata *zmd)<b=
-r>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 goto out;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
-<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0if (!nr_blkz)<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0break;<br>
-+<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /* Process report *=
-/<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 for (i =3D 0; i &lt=
-; nr_blkz; i++) {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 ret =3D dmz_init_zone(zmd, zone, &amp;blkz[i]);<br>
-@@ -1204,6 +1207,8 @@ static int dmz_update_zone(struct dmz_metadata *zmd, =
-struct dm_zone *zone)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 /* Get zone information from disk */<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 ret =3D blkdev_report_zones(zmd-&gt;dev-&gt;bde=
-v, dmz_start_sect(zmd, zone),<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &amp;blkz, &amp;nr_blkz, GFP_=
-NOIO);<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0if (!nr_blkz)<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0ret =3D -EIO;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ret) {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 dmz_dev_err(zmd-&gt=
-;dev, &quot;Get zone %u report failed&quot;,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 dmz_id(zmd, zone));<br></blockquote><div><br></div=
-><div>Reviewed-by: Shaun Tancheff &lt;<a href=3D"mailto:shaun@tancheff.com"=
->shaun@tancheff.com</a>&gt;</div><div>=C2=A0</div><blockquote class=3D"gmai=
-l_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,20=
-4,204);padding-left:1ex">
--- <br>
-2.20.1<br>
-<br>
---<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
-m</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
-rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
-<br>
-</blockquote></div></div>
+That will make Sphinx suppress the:
+	"WARNING: document isn't included in any toctree"
+warning for the new files, while they're not included at the main indexes.
 
---0000000000000a72420586cd33d1--
+This way, maintainers can do all the hard work of doing/applying the ReST
+file conversion/addition patch series on their own trees, and, once
+everything gets merged, submit a patch against the latest docs-next
+tree, removing the :orphan: tag and add them to the common index.rst
+files.
 
+That should largely avoid merging conflicts.
 
---===============1596851737129193744==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+For example, assuming that someone converts the stuff at
+Documentation/accounting and rename the text files there to
+RST (I'm actually doing that), he could add the enclosed change on
+the top of its index file:
 
+	diff --git a/Documentation/accounting/index.rst b/Documentation/accounting/index.rst
+	index e7dda5afa73f..e1f6284b5ff3 100644
+	--- a/Documentation/accounting/index.rst
+	+++ b/Documentation/accounting/index.rst
+	@@ -1,3 +1,5 @@
+	+:orphan:
+	+
+	 ==========
+	 Accounting
+	 ==========
 
---===============1596851737129193744==--
+With would make Sphinx to ignore the subdir index file while
+reporting errors. It will still build the documentation, allowing
+the developer to test the changes.
+
+One of the advantages is that checking the orphaned docs is as
+easy as running:
+
+	$ git grep -l ":orphan:" Documentation/
+	...
+	Documentation/accounting/index.rst
+	...
+
+Making easy for people to check the orphaned files and send a fixup
+patch if something got orphaned after the merge window and send a
+fixes patches to be applied upstream.
+
+What do you think?
+
+Regards,
+Mauro
