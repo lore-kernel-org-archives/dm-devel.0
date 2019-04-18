@@ -1,40 +1,43 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [patch V2 01/29] tracing: Cleanup stack trace code
-Date: Thu, 18 Apr 2019 23:14:45 +0200 (CEST)
-Message-ID: <alpine.DEB.2.21.1904182313470.3174@nanos.tec.linutronix.de>
+Date: Thu, 18 Apr 2019 17:24:43 -0400
+Message-ID: <20190418172443.30ec83e3@gandalf.local.home>
 References: <20190418084119.056416939@linutronix.de>
-	<20190418084253.142712304@linutronix.de>
-	<20190418135721.5vwd6ngxagrrrrtt@treble>
+ <20190418084253.142712304@linutronix.de>
+ <20190418135721.5vwd6ngxagrrrrtt@treble>
+ <alpine.DEB.2.21.1904182313470.3174@nanos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20190418135721.5vwd6ngxagrrrrtt@treble>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Joonas Lahtinen <joonas.lahtinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Alexander Potapenko <glider-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kasan-dev-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Johannes Thumshirn <jthumshirn-l3A5Bk7waGM@public.gmane.org>, Andrey Ryabinin <aryabinin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Maarten Lankhorst <maarten.lankhorst-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Jani Nikula <jani.nikula@lin>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+In-Reply-To: <alpine.DEB.2.21.1904182313470.3174@nanos.tec.linutronix.de>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, Johannes Thumshirn <jthumshirn@suse.de>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, David Rientjes <rientjes@google.com>, Akinobu Mita <akinobu.mita@gmail.com>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Sterba <dsterba@suse.com>, Dmitry Vyukov <dvyukov@g>
 List-Id: dm-devel.ids
 
-On Thu, 18 Apr 2019, Josh Poimboeuf wrote:
-
-> On Thu, Apr 18, 2019 at 10:41:20AM +0200, Thomas Gleixner wrote:
-> > - Remove the extra array member of stack_dump_trace[]. It's not required as
-> >   the stack tracer stores at max array size - 1 entries so there is still
-> >   an empty slot.
-> 
-> What is the empty slot used for?
-
-I was trying to find an answer but failed. Maybe it's just historical
-leftovers or Steven knows where the magic is in this maze.
-
-Thanks,
-
-	tglx
+T24gVGh1LCAxOCBBcHIgMjAxOSAyMzoxNDo0NSArMDIwMCAoQ0VTVCkKVGhvbWFzIEdsZWl4bmVy
+IDx0Z2x4QGxpbnV0cm9uaXguZGU+IHdyb3RlOgoKPiBPbiBUaHUsIDE4IEFwciAyMDE5LCBKb3No
+IFBvaW1ib2V1ZiB3cm90ZToKPiAKPiA+IE9uIFRodSwgQXByIDE4LCAyMDE5IGF0IDEwOjQxOjIw
+QU0gKzAyMDAsIFRob21hcyBHbGVpeG5lciB3cm90ZTogIAo+ID4gPiAtIFJlbW92ZSB0aGUgZXh0
+cmEgYXJyYXkgbWVtYmVyIG9mIHN0YWNrX2R1bXBfdHJhY2VbXS4gSXQncyBub3QgcmVxdWlyZWQg
+YXMKPiA+ID4gICB0aGUgc3RhY2sgdHJhY2VyIHN0b3JlcyBhdCBtYXggYXJyYXkgc2l6ZSAtIDEg
+ZW50cmllcyBzbyB0aGVyZSBpcyBzdGlsbAo+ID4gPiAgIGFuIGVtcHR5IHNsb3QuICAKPiA+IAo+
+ID4gV2hhdCBpcyB0aGUgZW1wdHkgc2xvdCB1c2VkIGZvcj8gIAo+IAo+IEkgd2FzIHRyeWluZyB0
+byBmaW5kIGFuIGFuc3dlciBidXQgZmFpbGVkLiBNYXliZSBpdCdzIGp1c3QgaGlzdG9yaWNhbAo+
+IGxlZnRvdmVycyBvciBTdGV2ZW4ga25vd3Mgd2hlcmUgdGhlIG1hZ2ljIGlzIGluIHRoaXMgbWF6
+ZS4KPgoKSSBiZWxpZXZlIGl0IHdhcyBmb3IgaGlzdG9yaWNhbCBsZWZ0b3ZlcnMgKHRoZXJlIHdh
+cyBhIHRpbWUgaXQgd2FzCnJlcXVpcmVkKSwgYW5kIGxlZnQgdGhlcmUgZm9yICJwYXJhbm9pZCIg
+c2FrZS4gQnV0IGxldCBtZSBhcHBseSB0aGUKcGF0Y2ggYW5kIHNlZSBpZiBpdCBpcyByZWFsbHkg
+bmVlZGVkLgoKLS0gU3RldmUKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX18KSW50ZWwtZ2Z4IG1haWxpbmcgbGlzdApJbnRlbC1nZnhAbGlzdHMuZnJlZWRlc2t0
+b3Aub3JnCmh0dHBzOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vaW50
+ZWwtZ2Z4
