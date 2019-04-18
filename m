@@ -1,55 +1,69 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: [patch V2 04/29] backtrace-test: Simplify stack trace handling
-Date: Thu, 18 Apr 2019 10:41:23 +0200
-Message-ID: <20190418084253.431851214@linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [patch V2 26/29] stacktrace: Remove obsolete functions
+Date: Thu, 18 Apr 2019 10:41:45 +0200
+Message-ID: <20190418084255.471038924@linutronix.de>
 References: <20190418084119.056416939@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Joonas Lahtinen <joonas.lahtinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Alexander Potapenko <glider-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kasan-dev-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Johannes Thumshirn <jthumshirn-l3A5Bk7waGM@public.gmane.org>, Andrey Ryabinin <aryabinin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Maarten Lankhorst <maarten.lankhorst-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Rodrigo Vivi <rodrigo.vivi-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mike Rapoport <rppt-23VcF4HTsmKsTnJN9+BGXg@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+To: LKML <linux-kernel@vger.kernel.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, Johannes Thumshirn <jthumshirn@suse.de>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, David Rientjes <rientjes@google.com>, Akinobu Mita <akinobu.mita@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Sterba <dster>
 List-Id: dm-devel.ids
 
-Replace the indirection through struct stack_trace by using the storage
-array based interfaces.
-
-Signed-off-by: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
----
- kernel/backtracetest.c |   11 +++--------
- 1 file changed, 3 insertions(+), 8 deletions(-)
-
---- a/kernel/backtracetest.c
-+++ b/kernel/backtracetest.c
-@@ -48,19 +48,14 @@ static void backtrace_test_irq(void)
- #ifdef CONFIG_STACKTRACE
- static void backtrace_test_saved(void)
- {
--	struct stack_trace trace;
- 	unsigned long entries[8];
-+	unsigned int nr_entries;
- 
- 	pr_info("Testing a saved backtrace.\n");
- 	pr_info("The following trace is a kernel self test and not a bug!\n");
- 
--	trace.nr_entries = 0;
--	trace.max_entries = ARRAY_SIZE(entries);
--	trace.entries = entries;
--	trace.skip = 0;
--
--	save_stack_trace(&trace);
--	print_stack_trace(&trace, 0);
-+	nr_entries = stack_trace_save(entries, ARRAY_SIZE(entries), 0);
-+	stack_trace_print(entries, nr_entries, 0);
- }
- #else
- static void backtrace_test_saved(void)
+Tm8gbW9yZSB1c2VycyBvZiB0aGUgc3RydWN0IHN0YWNrX3RyYWNlIGJhc2VkIGludGVyZmFjZXMu
+IFJlbW92ZSB0aGVtLgoKUmVtb3ZlIHRoZSBtYWNybyBzdHVicyBmb3IgIUNPTkZJR19TVEFDS1RS
+QUNFIGFzIHdlbGwgYXMgdGhleSBhcmUgcG9pbnRsZXNzCmJlY2F1c2UgdGhlIHN0b3JhZ2Ugb24g
+dGhlIGNhbGwgc2l0ZXMgaXMgY29uZGl0aW9uYWwgb24gQ09ORklHX1NUQUNLVFJBQ0UKYWxyZWFk
+eS4gTm8gcG9pbnQgdG8gYmUgJ3NtYXJ0Jy4KClNpZ25lZC1vZmYtYnk6IFRob21hcyBHbGVpeG5l
+ciA8dGdseEBsaW51dHJvbml4LmRlPgotLS0KIGluY2x1ZGUvbGludXgvc3RhY2t0cmFjZS5oIHwg
+ICAxNyAtLS0tLS0tLS0tLS0tLS0tLQoga2VybmVsL3N0YWNrdHJhY2UuYyAgICAgICAgfCAgIDE0
+IC0tLS0tLS0tLS0tLS0tCiAyIGZpbGVzIGNoYW5nZWQsIDMxIGRlbGV0aW9ucygtKQoKLS0tIGEv
+aW5jbHVkZS9saW51eC9zdGFja3RyYWNlLmgKKysrIGIvaW5jbHVkZS9saW51eC9zdGFja3RyYWNl
+LmgKQEAgLTM2LDI0ICszNiw3IEBAIGV4dGVybiB2b2lkIHNhdmVfc3RhY2tfdHJhY2VfdHNrKHN0
+cnVjdAogCQkJCXN0cnVjdCBzdGFja190cmFjZSAqdHJhY2UpOwogZXh0ZXJuIGludCBzYXZlX3N0
+YWNrX3RyYWNlX3Rza19yZWxpYWJsZShzdHJ1Y3QgdGFza19zdHJ1Y3QgKnRzaywKIAkJCQkJIHN0
+cnVjdCBzdGFja190cmFjZSAqdHJhY2UpOwotCi1leHRlcm4gdm9pZCBwcmludF9zdGFja190cmFj
+ZShzdHJ1Y3Qgc3RhY2tfdHJhY2UgKnRyYWNlLCBpbnQgc3BhY2VzKTsKLWV4dGVybiBpbnQgc25w
+cmludF9zdGFja190cmFjZShjaGFyICpidWYsIHNpemVfdCBzaXplLAotCQkJc3RydWN0IHN0YWNr
+X3RyYWNlICp0cmFjZSwgaW50IHNwYWNlcyk7Ci0KLSNpZmRlZiBDT05GSUdfVVNFUl9TVEFDS1RS
+QUNFX1NVUFBPUlQKIGV4dGVybiB2b2lkIHNhdmVfc3RhY2tfdHJhY2VfdXNlcihzdHJ1Y3Qgc3Rh
+Y2tfdHJhY2UgKnRyYWNlKTsKLSNlbHNlCi0jIGRlZmluZSBzYXZlX3N0YWNrX3RyYWNlX3VzZXIo
+dHJhY2UpICAgICAgICAgICAgICBkbyB7IH0gd2hpbGUgKDApCi0jZW5kaWYKLQotI2Vsc2UgLyog
+IUNPTkZJR19TVEFDS1RSQUNFICovCi0jIGRlZmluZSBzYXZlX3N0YWNrX3RyYWNlKHRyYWNlKQkJ
+CWRvIHsgfSB3aGlsZSAoMCkKLSMgZGVmaW5lIHNhdmVfc3RhY2tfdHJhY2VfdHNrKHRzaywgdHJh
+Y2UpCQlkbyB7IH0gd2hpbGUgKDApCi0jIGRlZmluZSBzYXZlX3N0YWNrX3RyYWNlX3VzZXIodHJh
+Y2UpCQkJZG8geyB9IHdoaWxlICgwKQotIyBkZWZpbmUgcHJpbnRfc3RhY2tfdHJhY2UodHJhY2Us
+IHNwYWNlcykJCWRvIHsgfSB3aGlsZSAoMCkKLSMgZGVmaW5lIHNucHJpbnRfc3RhY2tfdHJhY2Uo
+YnVmLCBzaXplLCB0cmFjZSwgc3BhY2VzKQlkbyB7IH0gd2hpbGUgKDApCi0jIGRlZmluZSBzYXZl
+X3N0YWNrX3RyYWNlX3Rza19yZWxpYWJsZSh0c2ssIHRyYWNlKQkoeyAtRU5PU1lTOyB9KQogI2Vu
+ZGlmIC8qIENPTkZJR19TVEFDS1RSQUNFICovCiAKICNpZiBkZWZpbmVkKENPTkZJR19TVEFDS1RS
+QUNFKSAmJiBkZWZpbmVkKENPTkZJR19IQVZFX1JFTElBQkxFX1NUQUNLVFJBQ0UpCi0tLSBhL2tl
+cm5lbC9zdGFja3RyYWNlLmMKKysrIGIva2VybmVsL3N0YWNrdHJhY2UuYwpAQCAtMzAsMTIgKzMw
+LDYgQEAgdm9pZCBzdGFja190cmFjZV9wcmludCh1bnNpZ25lZCBsb25nICplbgogfQogRVhQT1JU
+X1NZTUJPTF9HUEwoc3RhY2tfdHJhY2VfcHJpbnQpOwogCi12b2lkIHByaW50X3N0YWNrX3RyYWNl
+KHN0cnVjdCBzdGFja190cmFjZSAqdHJhY2UsIGludCBzcGFjZXMpCi17Ci0Jc3RhY2tfdHJhY2Vf
+cHJpbnQodHJhY2UtPmVudHJpZXMsIHRyYWNlLT5ucl9lbnRyaWVzLCBzcGFjZXMpOwotfQotRVhQ
+T1JUX1NZTUJPTF9HUEwocHJpbnRfc3RhY2tfdHJhY2UpOwotCiAvKioKICAqIHN0YWNrX3RyYWNl
+X3NucHJpbnQgLSBQcmludCB0aGUgZW50cmllcyBpbiB0aGUgc3RhY2sgdHJhY2UgaW50byBhIGJ1
+ZmZlcgogICogQGJ1ZjoJUG9pbnRlciB0byB0aGUgcHJpbnQgYnVmZmVyCkBAIC03MCwxNCArNjQs
+NiBAQCBpbnQgc3RhY2tfdHJhY2Vfc25wcmludChjaGFyICpidWYsIHNpemVfCiB9CiBFWFBPUlRf
+U1lNQk9MX0dQTChzdGFja190cmFjZV9zbnByaW50KTsKIAotaW50IHNucHJpbnRfc3RhY2tfdHJh
+Y2UoY2hhciAqYnVmLCBzaXplX3Qgc2l6ZSwKLQkJCXN0cnVjdCBzdGFja190cmFjZSAqdHJhY2Us
+IGludCBzcGFjZXMpCi17Ci0JcmV0dXJuIHN0YWNrX3RyYWNlX3NucHJpbnQoYnVmLCBzaXplLCB0
+cmFjZS0+ZW50cmllcywKLQkJCQkgICB0cmFjZS0+bnJfZW50cmllcywgc3BhY2VzKTsKLX0KLUVY
+UE9SVF9TWU1CT0xfR1BMKHNucHJpbnRfc3RhY2tfdHJhY2UpOwotCiAvKgogICogQXJjaGl0ZWN0
+dXJlcyB0aGF0IGRvIG5vdCBpbXBsZW1lbnQgc2F2ZV9zdGFja190cmFjZV8qKCkKICAqIGdldCB0
+aGVzZSB3ZWFrIGFsaWFzZXMgYW5kIG9uY2UtcGVyLWJvb3R1cCB3YXJuaW5ncwoKCl9fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkludGVsLWdmeCBtYWlsaW5n
+IGxpc3QKSW50ZWwtZ2Z4QGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwczovL2xpc3RzLmZyZWVk
+ZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2ludGVsLWdmeA==
