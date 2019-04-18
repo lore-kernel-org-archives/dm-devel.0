@@ -1,120 +1,58 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [patch V2 29/29] x86/stacktrace: Use common
- infrastructure
-Date: Thu, 18 Apr 2019 10:41:48 +0200
-Message-ID: <20190418084255.740246383@linutronix.de>
+From: Andrey Ryabinin <aryabinin@virtuozzo.com>
+Subject: Re: [patch V2 09/29] mm/kasan: Simplify stacktrace handling
+Date: Thu, 18 Apr 2019 13:39:45 +0300
+Message-ID: <5b77992a-52b6-807e-f77d-9cf3e648c71f@virtuozzo.com>
 References: <20190418084119.056416939@linutronix.de>
+ <20190418084253.903603121@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <intel-gfx-bounces@lists.freedesktop.org>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
-List-Post: <mailto:intel-gfx@lists.freedesktop.org>
-List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: intel-gfx-bounces@lists.freedesktop.org
-Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
-To: LKML <linux-kernel@vger.kernel.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, David Rientjes <rientjes@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, Johannes Thumshirn <jthumshirn@suse.de>, Akinobu Mita <akinobu.mita@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Sterba <dster>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190418084253.903603121@linutronix.de>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>, LKML <linux-kernel@vger.kernel.org>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>, x86@kernel.org, Andy Lutomirski <luto@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Alexander Potapenko <glider@google.com>, Dmitry Vyukov <dvyukov@google.com>, kasan-dev@googlegroups.com, linux-mm@kvack.org, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Pekka Enberg <penberg@kernel.org>, David Rientjes <rientjes@google.com>, Christoph Lameter <cl@linux.com>, Catalin Marinas <catalin.marinas@arm.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Akinobu Mita <akinobu.mita@gmail.com>, iommu@lists.linux-foundation.org, Robin Murphy <robin.murphy@arm.com>, Christoph Hellwig <hch@lst.de>, Marek Szyprowski <m.szyprowski@samsung.com>, Johannes Thumshirn <jthumshirn@suse.de>
 List-Id: dm-devel.ids
 
-UmVwbGFjZSB0aGUgc3RhY2tfdHJhY2Vfc2F2ZSooKSBmdW5jdGlvbnMgd2l0aCB0aGUgbmV3IGFy
-Y2hfc3RhY2tfd2FsaygpCmludGVyZmFjZXMuCgpTaWduZWQtb2ZmLWJ5OiBUaG9tYXMgR2xlaXhu
-ZXIgPHRnbHhAbGludXRyb25peC5kZT4KQ2M6IGxpbnV4LWFyY2hAdmdlci5rZXJuZWwub3JnCi0t
-LQogYXJjaC94ODYvS2NvbmZpZyAgICAgICAgICAgICB8ICAgIDEgCiBhcmNoL3g4Ni9rZXJuZWwv
-c3RhY2t0cmFjZS5jIHwgIDExNiArKysrKysrLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tCiAyIGZpbGVzIGNoYW5nZWQsIDIwIGluc2VydGlvbnMoKyksIDk3IGRlbGV0aW9ucygt
-KQoKLS0tIGEvYXJjaC94ODYvS2NvbmZpZworKysgYi9hcmNoL3g4Ni9LY29uZmlnCkBAIC03NCw2
-ICs3NCw3IEBAIGNvbmZpZyBYODYKIAlzZWxlY3QgQVJDSF9NSUdIVF9IQVZFX0FDUElfUERDCQlp
-ZiBBQ1BJCiAJc2VsZWN0IEFSQ0hfTUlHSFRfSEFWRV9QQ19QQVJQT1JUCiAJc2VsZWN0IEFSQ0hf
-TUlHSFRfSEFWRV9QQ19TRVJJTworCXNlbGVjdCBBUkNIX1NUQUNLV0FMSwogCXNlbGVjdCBBUkNI
-X1NVUFBPUlRTX0FDUEkKIAlzZWxlY3QgQVJDSF9TVVBQT1JUU19BVE9NSUNfUk1XCiAJc2VsZWN0
-IEFSQ0hfU1VQUE9SVFNfTlVNQV9CQUxBTkNJTkcJaWYgWDg2XzY0Ci0tLSBhL2FyY2gveDg2L2tl
-cm5lbC9zdGFja3RyYWNlLmMKKysrIGIvYXJjaC94ODYva2VybmVsL3N0YWNrdHJhY2UuYwpAQCAt
-MTIsNzUgKzEyLDMxIEBACiAjaW5jbHVkZSA8YXNtL3N0YWNrdHJhY2UuaD4KICNpbmNsdWRlIDxh
-c20vdW53aW5kLmg+CiAKLXN0YXRpYyBpbnQgc2F2ZV9zdGFja19hZGRyZXNzKHN0cnVjdCBzdGFj
-a190cmFjZSAqdHJhY2UsIHVuc2lnbmVkIGxvbmcgYWRkciwKLQkJCSAgICAgIGJvb2wgbm9zY2hl
-ZCkKLXsKLQlpZiAobm9zY2hlZCAmJiBpbl9zY2hlZF9mdW5jdGlvbnMoYWRkcikpCi0JCXJldHVy
-biAwOwotCi0JaWYgKHRyYWNlLT5za2lwID4gMCkgewotCQl0cmFjZS0+c2tpcC0tOwotCQlyZXR1
-cm4gMDsKLQl9Ci0KLQlpZiAodHJhY2UtPm5yX2VudHJpZXMgPj0gdHJhY2UtPm1heF9lbnRyaWVz
-KQotCQlyZXR1cm4gLTE7Ci0KLQl0cmFjZS0+ZW50cmllc1t0cmFjZS0+bnJfZW50cmllcysrXSA9
-IGFkZHI7Ci0JcmV0dXJuIDA7Ci19Ci0KLXN0YXRpYyB2b2lkIG5vaW5saW5lIF9fc2F2ZV9zdGFj
-a190cmFjZShzdHJ1Y3Qgc3RhY2tfdHJhY2UgKnRyYWNlLAotCQkJICAgICAgIHN0cnVjdCB0YXNr
-X3N0cnVjdCAqdGFzaywgc3RydWN0IHB0X3JlZ3MgKnJlZ3MsCi0JCQkgICAgICAgYm9vbCBub3Nj
-aGVkKQordm9pZCBhcmNoX3N0YWNrX3dhbGsoc3RhY2tfdHJhY2VfY29uc3VtZV9mbiBjb25zdW1l
-X2VudHJ5LCB2b2lkICpjb29raWUsCisJCSAgICAgc3RydWN0IHRhc2tfc3RydWN0ICp0YXNrLCBz
-dHJ1Y3QgcHRfcmVncyAqcmVncykKIHsKIAlzdHJ1Y3QgdW53aW5kX3N0YXRlIHN0YXRlOwogCXVu
-c2lnbmVkIGxvbmcgYWRkcjsKIAotCWlmIChyZWdzKQotCQlzYXZlX3N0YWNrX2FkZHJlc3ModHJh
-Y2UsIHJlZ3MtPmlwLCBub3NjaGVkKTsKKwlpZiAocmVncyAmJiAhY29uc3VtZV9lbnRyeShjb29r
-aWUsIHJlZ3MtPmlwLCBmYWxzZSkpCisJCXJldHVybjsKIAogCWZvciAodW53aW5kX3N0YXJ0KCZz
-dGF0ZSwgdGFzaywgcmVncywgTlVMTCk7ICF1bndpbmRfZG9uZSgmc3RhdGUpOwogCSAgICAgdW53
-aW5kX25leHRfZnJhbWUoJnN0YXRlKSkgewogCQlhZGRyID0gdW53aW5kX2dldF9yZXR1cm5fYWRk
-cmVzcygmc3RhdGUpOwotCQlpZiAoIWFkZHIgfHwgc2F2ZV9zdGFja19hZGRyZXNzKHRyYWNlLCBh
-ZGRyLCBub3NjaGVkKSkKKwkJaWYgKCFhZGRyIHx8ICFjb25zdW1lX2VudHJ5KGNvb2tpZSwgYWRk
-ciwgZmFsc2UpKQogCQkJYnJlYWs7CiAJfQogfQogCiAvKgotICogU2F2ZSBzdGFjay1iYWNrdHJh
-Y2UgYWRkcmVzc2VzIGludG8gYSBzdGFja190cmFjZSBidWZmZXIuCisgKiBUaGlzIGZ1bmN0aW9u
-IHJldHVybnMgYW4gZXJyb3IgaWYgaXQgZGV0ZWN0cyBhbnkgdW5yZWxpYWJsZSBmZWF0dXJlcyBv
-ZiB0aGUKKyAqIHN0YWNrLiAgT3RoZXJ3aXNlIGl0IGd1YXJhbnRlZXMgdGhhdCB0aGUgc3RhY2sg
-dHJhY2UgaXMgcmVsaWFibGUuCisgKgorICogSWYgdGhlIHRhc2sgaXMgbm90ICdjdXJyZW50Jywg
-dGhlIGNhbGxlciAqbXVzdCogZW5zdXJlIHRoZSB0YXNrIGlzIGluYWN0aXZlLgogICovCi12b2lk
-IHNhdmVfc3RhY2tfdHJhY2Uoc3RydWN0IHN0YWNrX3RyYWNlICp0cmFjZSkKLXsKLQl0cmFjZS0+
-c2tpcCsrOwotCV9fc2F2ZV9zdGFja190cmFjZSh0cmFjZSwgY3VycmVudCwgTlVMTCwgZmFsc2Up
-OwotfQotRVhQT1JUX1NZTUJPTF9HUEwoc2F2ZV9zdGFja190cmFjZSk7Ci0KLXZvaWQgc2F2ZV9z
-dGFja190cmFjZV9yZWdzKHN0cnVjdCBwdF9yZWdzICpyZWdzLCBzdHJ1Y3Qgc3RhY2tfdHJhY2Ug
-KnRyYWNlKQotewotCV9fc2F2ZV9zdGFja190cmFjZSh0cmFjZSwgY3VycmVudCwgcmVncywgZmFs
-c2UpOwotfQotCi12b2lkIHNhdmVfc3RhY2tfdHJhY2VfdHNrKHN0cnVjdCB0YXNrX3N0cnVjdCAq
-dHNrLCBzdHJ1Y3Qgc3RhY2tfdHJhY2UgKnRyYWNlKQotewotCWlmICghdHJ5X2dldF90YXNrX3N0
-YWNrKHRzaykpCi0JCXJldHVybjsKLQotCWlmICh0c2sgPT0gY3VycmVudCkKLQkJdHJhY2UtPnNr
-aXArKzsKLQlfX3NhdmVfc3RhY2tfdHJhY2UodHJhY2UsIHRzaywgTlVMTCwgdHJ1ZSk7Ci0KLQlw
-dXRfdGFza19zdGFjayh0c2spOwotfQotRVhQT1JUX1NZTUJPTF9HUEwoc2F2ZV9zdGFja190cmFj
-ZV90c2spOwotCi0jaWZkZWYgQ09ORklHX0hBVkVfUkVMSUFCTEVfU1RBQ0tUUkFDRQotCi1zdGF0
-aWMgaW50IF9fYWx3YXlzX2lubGluZQotX19zYXZlX3N0YWNrX3RyYWNlX3JlbGlhYmxlKHN0cnVj
-dCBzdGFja190cmFjZSAqdHJhY2UsCi0JCQkgICAgc3RydWN0IHRhc2tfc3RydWN0ICp0YXNrKQor
-aW50IGFyY2hfc3RhY2tfd2Fsa19yZWxpYWJsZShzdGFja190cmFjZV9jb25zdW1lX2ZuIGNvbnN1
-bWVfZW50cnksCisJCQkgICAgIHZvaWQgKmNvb2tpZSwgc3RydWN0IHRhc2tfc3RydWN0ICp0YXNr
-KQogewogCXN0cnVjdCB1bndpbmRfc3RhdGUgc3RhdGU7CiAJc3RydWN0IHB0X3JlZ3MgKnJlZ3M7
-CkBAIC0xMTcsNyArNzMsNyBAQCBzdGF0aWMgaW50IF9fYWx3YXlzX2lubGluZQogCQlpZiAoIWFk
-ZHIpCiAJCQlyZXR1cm4gLUVJTlZBTDsKIAotCQlpZiAoc2F2ZV9zdGFja19hZGRyZXNzKHRyYWNl
-LCBhZGRyLCBmYWxzZSkpCisJCWlmICghY29uc3VtZV9lbnRyeShjb29raWUsIGFkZHIsIGZhbHNl
-KSkKIAkJCXJldHVybiAtRUlOVkFMOwogCX0KIApAQCAtMTMyLDMyICs4OCw2IEBAIHN0YXRpYyBp
-bnQgX19hbHdheXNfaW5saW5lCiAJcmV0dXJuIDA7CiB9CiAKLS8qCi0gKiBUaGlzIGZ1bmN0aW9u
-IHJldHVybnMgYW4gZXJyb3IgaWYgaXQgZGV0ZWN0cyBhbnkgdW5yZWxpYWJsZSBmZWF0dXJlcyBv
-ZiB0aGUKLSAqIHN0YWNrLiAgT3RoZXJ3aXNlIGl0IGd1YXJhbnRlZXMgdGhhdCB0aGUgc3RhY2sg
-dHJhY2UgaXMgcmVsaWFibGUuCi0gKgotICogSWYgdGhlIHRhc2sgaXMgbm90ICdjdXJyZW50Jywg
-dGhlIGNhbGxlciAqbXVzdCogZW5zdXJlIHRoZSB0YXNrIGlzIGluYWN0aXZlLgotICovCi1pbnQg
-c2F2ZV9zdGFja190cmFjZV90c2tfcmVsaWFibGUoc3RydWN0IHRhc2tfc3RydWN0ICp0c2ssCi0J
-CQkJICBzdHJ1Y3Qgc3RhY2tfdHJhY2UgKnRyYWNlKQotewotCWludCByZXQ7Ci0KLQkvKgotCSAq
-IElmIHRoZSB0YXNrIGRvZXNuJ3QgaGF2ZSBhIHN0YWNrIChlLmcuLCBhIHpvbWJpZSksIHRoZSBz
-dGFjayBpcwotCSAqICJyZWxpYWJseSIgZW1wdHkuCi0JICovCi0JaWYgKCF0cnlfZ2V0X3Rhc2tf
-c3RhY2sodHNrKSkKLQkJcmV0dXJuIDA7Ci0KLQlyZXQgPSBfX3NhdmVfc3RhY2tfdHJhY2VfcmVs
-aWFibGUodHJhY2UsIHRzayk7Ci0KLQlwdXRfdGFza19zdGFjayh0c2spOwotCi0JcmV0dXJuIHJl
-dDsKLX0KLSNlbmRpZiAvKiBDT05GSUdfSEFWRV9SRUxJQUJMRV9TVEFDS1RSQUNFICovCi0KIC8q
-IFVzZXJzcGFjZSBzdGFja3RyYWNlIC0gYmFzZWQgb24ga2VybmVsL3RyYWNlL3RyYWNlX3N5c3By
-b2YuYyAqLwogCiBzdHJ1Y3Qgc3RhY2tfZnJhbWVfdXNlciB7CkBAIC0xODIsMTUgKzExMiwxNSBA
-QCBjb3B5X3N0YWNrX2ZyYW1lKGNvbnN0IHZvaWQgX191c2VyICpmcCwKIAlyZXR1cm4gcmV0Owog
-fQogCi1zdGF0aWMgaW5saW5lIHZvaWQgX19zYXZlX3N0YWNrX3RyYWNlX3VzZXIoc3RydWN0IHN0
-YWNrX3RyYWNlICp0cmFjZSkKK3ZvaWQgYXJjaF9zdGFja193YWxrX3VzZXIoc3RhY2tfdHJhY2Vf
-Y29uc3VtZV9mbiBjb25zdW1lX2VudHJ5LCB2b2lkICpjb29raWUsCisJCQkgIGNvbnN0IHN0cnVj
-dCBwdF9yZWdzICpyZWdzKQogewotCWNvbnN0IHN0cnVjdCBwdF9yZWdzICpyZWdzID0gdGFza19w
-dF9yZWdzKGN1cnJlbnQpOwogCWNvbnN0IHZvaWQgX191c2VyICpmcCA9IChjb25zdCB2b2lkIF9f
-dXNlciAqKXJlZ3MtPmJwOwogCi0JaWYgKHRyYWNlLT5ucl9lbnRyaWVzIDwgdHJhY2UtPm1heF9l
-bnRyaWVzKQotCQl0cmFjZS0+ZW50cmllc1t0cmFjZS0+bnJfZW50cmllcysrXSA9IHJlZ3MtPmlw
-OworCWlmICghY29uc3VtZV9lbnRyeShjb29raWUsIHJlZ3MtPmlwLCBmYWxzZSkpCisJCXJldHVy
-bjsKIAotCXdoaWxlICh0cmFjZS0+bnJfZW50cmllcyA8IHRyYWNlLT5tYXhfZW50cmllcykgewor
-CXdoaWxlICgxKSB7CiAJCXN0cnVjdCBzdGFja19mcmFtZV91c2VyIGZyYW1lOwogCiAJCWZyYW1l
-Lm5leHRfZnAgPSBOVUxMOwpAQCAtMjAwLDggKzEzMCw4IEBAIHN0YXRpYyBpbmxpbmUgdm9pZCBf
-X3NhdmVfc3RhY2tfdHJhY2VfdXMKIAkJaWYgKCh1bnNpZ25lZCBsb25nKWZwIDwgcmVncy0+c3Ap
-CiAJCQlicmVhazsKIAkJaWYgKGZyYW1lLnJldF9hZGRyKSB7Ci0JCQl0cmFjZS0+ZW50cmllc1t0
-cmFjZS0+bnJfZW50cmllcysrXSA9Ci0JCQkJZnJhbWUucmV0X2FkZHI7CisJCQlpZiAoIWNvbnN1
-bWVfZW50cnkoY29va2llLCBmcmFtZS5yZXRfYWRkciwgZmFsc2UpKQorCQkJCXJldHVybjsKIAkJ
-fQogCQlpZiAoZnAgPT0gZnJhbWUubmV4dF9mcCkKIAkJCWJyZWFrOwpAQCAtMjA5LDExICsxMzks
-MyBAQCBzdGF0aWMgaW5saW5lIHZvaWQgX19zYXZlX3N0YWNrX3RyYWNlX3VzCiAJfQogfQogCi12
-b2lkIHNhdmVfc3RhY2tfdHJhY2VfdXNlcihzdHJ1Y3Qgc3RhY2tfdHJhY2UgKnRyYWNlKQotewot
-CS8qCi0JICogVHJhY2UgdXNlciBzdGFjayBpZiB3ZSBhcmUgbm90IGEga2VybmVsIHRocmVhZAot
-CSAqLwotCWlmIChjdXJyZW50LT5tbSkKLQkJX19zYXZlX3N0YWNrX3RyYWNlX3VzZXIodHJhY2Up
-OwotfQoKCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCklu
-dGVsLWdmeCBtYWlsaW5nIGxpc3QKSW50ZWwtZ2Z4QGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRw
-czovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2ludGVsLWdmeA==
+On 4/18/19 11:41 AM, Thomas Gleixner wrote:
+> Replace the indirection through struct stack_trace by using the storage
+> array based interfaces.
+> 
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> Acked-by: Dmitry Vyukov <dvyukov@google.com>
+> Cc: Andrey Ryabinin <aryabinin@virtuozzo.com>
+> Cc: Alexander Potapenko <glider@google.com>
+> Cc: kasan-dev@googlegroups.com
+> Cc: linux-mm@kvack.org
+
+Acked-by: Andrey Ryabinin <aryabinin@virtuozzo.com>
+
+>  
+>  static inline depot_stack_handle_t save_stack(gfp_t flags)
+>  {
+>  	unsigned long entries[KASAN_STACK_DEPTH];
+> -	struct stack_trace trace = {
+> -		.nr_entries = 0,
+> -		.entries = entries,
+> -		.max_entries = KASAN_STACK_DEPTH,
+> -		.skip = 0
+> -	};
+> +	unsigned int nr_entries;
+>  
+> -	save_stack_trace(&trace);
+> -	filter_irq_stacks(&trace);
+> -
+> -	return depot_save_stack(&trace, flags);
+> +	nr_entries = stack_trace_save(entries, ARRAY_SIZE(entries), 0);
+> +	nr_entries = filter_irq_stacks(entries, nr_entries);
+> +	return stack_depot_save(entries, nr_entries, flags);
+
+Suggestion for further improvement:
+
+stack_trace_save() shouldn't unwind beyond irq entry point so we wouldn't need filter_irq_stacks().
+Probably all call sites doesn't care about random stack above irq entry point, so it doesn't
+make sense to spend resources on unwinding non-irq stack from interrupt first an filtering out it later.
+
+It would improve performance of stack_trace_save() called from interrupt and fix page_owner which feed unfiltered
+stack to stack_depot_save(). Random non-irq part kills the benefit of using the stack_deopt_save().
