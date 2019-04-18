@@ -1,36 +1,58 @@
-From: Peng Wang <rocking@whu.edu.cn>
-Subject: [PATCH] dm: initialize md->dax_dev only with CONFIG_DAX_DRIVER enabled
-Date: Thu, 18 Apr 2019 21:59:19 +0800
-Message-ID: <20190418135919.10754-1-rocking@whu.edu.cn>
+From: Josh Poimboeuf <jpoimboe@redhat.com>
+Subject: Re: [patch V2 28/29] stacktrace: Provide common infrastructure
+Date: Thu, 18 Apr 2019 09:52:01 -0500
+Message-ID: <20190418145201.mjzyqbmkjcghqzex@treble>
+References: <20190418084119.056416939@linutronix.de>
+ <20190418084255.652003111@linutronix.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190418084255.652003111@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
-Cc: linux-kernel@vger.kernel.org, Peng Wang <rocking@whu.edu.cn>
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: LKML <linux-kernel@vger.kernel.org>, x86@kernel.org, Andy Lutomirski <luto@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Alexander Potapenko <glider@google.com>, linux-arch@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, David Rientjes <rientjes@google.com>, Christoph Lameter <cl@linux.com>, Catalin Marinas <catalin.marinas@arm.com>, Dmitry Vyukov <dvyukov@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, kasan-dev@googlegroups.com, Mike Rapoport <rppt@linux.vnet.ibm.com>, Akinobu Mita <akinobu.mita@gmail.com>, iommu@lists.linux-foundation.org, Robin Murphy <robin.murphy@arm.com>, Christoph Hellwig <hch@lst.de>, Marek
 List-Id: dm-devel.ids
 
-md->dax_dev is NULL default and there is no need to process it
-without CONFIG_DAX_DRIVER configured.
+On Thu, Apr 18, 2019 at 10:41:47AM +0200, Thomas Gleixner wrote:
+> All architectures which support stacktrace carry duplicated code and
+> do the stack storage and filtering at the architecture side.
+> 
+> Provide a consolidated interface with a callback function for consuming the
+> stack entries provided by the architecture specific stack walker. This
+> removes lots of duplicated code and allows to implement better filtering
+> than 'skip number of entries' in the future without touching any
+> architecture specific code.
+> 
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> Cc: linux-arch@vger.kernel.org
 
-Signed-off-by: Peng Wang <rocking@whu.edu.cn>
----
- drivers/md/dm.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+This is a step in the right direction, especially if it allows us to get
+rid of the 'skip' stuff.  But I'm not crazy about the callbacks.
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 043f0761e4a0..418a51cf194c 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1972,8 +1972,8 @@ static struct mapped_device *alloc_dev(int minor)
- 		dax_dev = alloc_dax(md, md->disk->disk_name, &dm_dax_ops);
- 		if (!dax_dev)
- 			goto bad;
-+		md->dax_dev = dax_dev;
- 	}
--	md->dax_dev = dax_dev;
- 
- 	add_disk_no_queue_reg(md->disk);
- 	format_dev_t(md->name, MKDEV(_major, minor));
+Another idea I had (but never got a chance to work on) was to extend the
+x86 unwind interface to all arches.  So instead of the callbacks, each
+arch would implement something like this API:
+
+
+struct unwind_state state;
+
+void unwind_start(struct unwind_state *state, struct task_struct *task,
+		  struct pt_regs *regs, unsigned long *first_frame);
+
+bool unwind_next_frame(struct unwind_state *state);
+
+inline bool unwind_done(struct unwind_state *state);
+
+
+Not only would it avoid the callbacks (which is a nice benefit already),
+it would also allow the interfaces to be used outside of the
+stack_trace_*() interfaces.  That would come in handy in cases like the
+ftrace stack tracer code, which needs more than the stack_trace_*() API
+can give.
+
+Of course, this may be more work than what you thought you signed up for
+;-)
+
 -- 
-2.19.1
+Josh
