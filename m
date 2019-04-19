@@ -1,60 +1,59 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [patch V2 28/29] stacktrace: Provide common infrastructure
-Date: Fri, 19 Apr 2019 10:32:30 +0200 (CEST)
-Message-ID: <alpine.DEB.2.21.1904191031390.3174@nanos.tec.linutronix.de>
+Date: Fri, 19 Apr 2019 11:07:17 +0200
+Message-ID: <20190419090717.GN7905@worktop.programming.kicks-ass.net>
 References: <20190418084119.056416939@linutronix.de>
-	<20190418084255.652003111@linutronix.de>
-	<20190419071843.GM4038@hirez.programming.kicks-ass.net>
+ <20190418084255.652003111@linutronix.de>
+ <20190419071843.GM4038@hirez.programming.kicks-ass.net>
+ <alpine.DEB.2.21.1904191031390.3174@nanos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20190419071843.GM4038-Nxj+rRp3nVydTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Joonas Lahtinen <joonas.lahtinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Alexander Potapenko <glider-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kasan-dev-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrey Ryabinin <aryabinin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Johannes Thumshirn <jthumshirn-l3A5Bk7waGM@public.gmane.org>, Maarten Lankhorst <maarten.lankhorst-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Rodrigo Vivi <rodrigo.vivi-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mike Rapoport <rppt-23VcF4HTsmKsTnJN9+BGXg@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.21.1904191031390.3174@nanos.tec.linutronix.de>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, David Rientjes <rientjes@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, Johannes Thumshirn <jthumshirn@suse.de>, Akinobu Mita <akinobu.mita@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Josef Bacik <josef@toxicpanda.com>, Rodrigo Vivi <rodrigo.vivi@intel.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jp>
 List-Id: dm-devel.ids
 
-On Fri, 19 Apr 2019, Peter Zijlstra wrote:
-> On Thu, Apr 18, 2019 at 10:41:47AM +0200, Thomas Gleixner wrote:
-> 
-> > +typedef bool (*stack_trace_consume_fn)(void *cookie, unsigned long addr,
-> > +                                      bool reliable);
-> 
-> > +void arch_stack_walk(stack_trace_consume_fn consume_entry, void *cookie,
-> > +		     struct task_struct *task, struct pt_regs *regs);
-> > +int arch_stack_walk_reliable(stack_trace_consume_fn consume_entry, void *cookie,
-> > +			     struct task_struct *task);
-> 
-> This bugs me a little; ideally the _reliable() thing would not exists.
-> 
-> Thomas said that the existing __save_stack_trace_reliable() is different
-> enough for the unification to be non-trivial, but maybe Josh can help
-> out?
-> 
-> >From what I can see the biggest significant differences are:
-> 
->  - it looks at the regs sets on the stack and for FP bails early
->  - bails for khreads and idle (after it does all the hard work!?!)
-> 
-> The first (FP checking for exceptions) should probably be reflected in
-> consume_fn(.reliable) anyway -- although that would mean a lot of extra
-> '?' entries where there are none today.
-> 
-> And the second (KTHREAD/IDLE) is something that the generic code can
-> easily do before calling into the arch unwinder.
-
-And looking at the powerpc version of it, that has even more interesting
-extra checks in that function.
-
-Thanks,
-
-	tglx
+T24gRnJpLCBBcHIgMTksIDIwMTkgYXQgMTA6MzI6MzBBTSArMDIwMCwgVGhvbWFzIEdsZWl4bmVy
+IHdyb3RlOgo+IE9uIEZyaSwgMTkgQXByIDIwMTksIFBldGVyIFppamxzdHJhIHdyb3RlOgo+ID4g
+T24gVGh1LCBBcHIgMTgsIDIwMTkgYXQgMTA6NDE6NDdBTSArMDIwMCwgVGhvbWFzIEdsZWl4bmVy
+IHdyb3RlOgo+ID4gCj4gPiA+ICt0eXBlZGVmIGJvb2wgKCpzdGFja190cmFjZV9jb25zdW1lX2Zu
+KSh2b2lkICpjb29raWUsIHVuc2lnbmVkIGxvbmcgYWRkciwKPiA+ID4gKyAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgYm9vbCByZWxpYWJsZSk7Cj4gPiAKPiA+ID4gK3ZvaWQg
+YXJjaF9zdGFja193YWxrKHN0YWNrX3RyYWNlX2NvbnN1bWVfZm4gY29uc3VtZV9lbnRyeSwgdm9p
+ZCAqY29va2llLAo+ID4gPiArCQkgICAgIHN0cnVjdCB0YXNrX3N0cnVjdCAqdGFzaywgc3RydWN0
+IHB0X3JlZ3MgKnJlZ3MpOwo+ID4gPiAraW50IGFyY2hfc3RhY2tfd2Fsa19yZWxpYWJsZShzdGFj
+a190cmFjZV9jb25zdW1lX2ZuIGNvbnN1bWVfZW50cnksIHZvaWQgKmNvb2tpZSwKPiA+ID4gKwkJ
+CSAgICAgc3RydWN0IHRhc2tfc3RydWN0ICp0YXNrKTsKPiA+IAo+ID4gVGhpcyBidWdzIG1lIGEg
+bGl0dGxlOyBpZGVhbGx5IHRoZSBfcmVsaWFibGUoKSB0aGluZyB3b3VsZCBub3QgZXhpc3RzLgo+
+ID4gCj4gPiBUaG9tYXMgc2FpZCB0aGF0IHRoZSBleGlzdGluZyBfX3NhdmVfc3RhY2tfdHJhY2Vf
+cmVsaWFibGUoKSBpcyBkaWZmZXJlbnQKPiA+IGVub3VnaCBmb3IgdGhlIHVuaWZpY2F0aW9uIHRv
+IGJlIG5vbi10cml2aWFsLCBidXQgbWF5YmUgSm9zaCBjYW4gaGVscAo+ID4gb3V0Pwo+ID4gCj4g
+PiA+RnJvbSB3aGF0IEkgY2FuIHNlZSB0aGUgYmlnZ2VzdCBzaWduaWZpY2FudCBkaWZmZXJlbmNl
+cyBhcmU6Cj4gPiAKPiA+ICAtIGl0IGxvb2tzIGF0IHRoZSByZWdzIHNldHMgb24gdGhlIHN0YWNr
+IGFuZCBmb3IgRlAgYmFpbHMgZWFybHkKPiA+ICAtIGJhaWxzIGZvciBraHJlYWRzIGFuZCBpZGxl
+IChhZnRlciBpdCBkb2VzIGFsbCB0aGUgaGFyZCB3b3JrIT8hKQo+ID4gCj4gPiBUaGUgZmlyc3Qg
+KEZQIGNoZWNraW5nIGZvciBleGNlcHRpb25zKSBzaG91bGQgcHJvYmFibHkgYmUgcmVmbGVjdGVk
+IGluCj4gPiBjb25zdW1lX2ZuKC5yZWxpYWJsZSkgYW55d2F5IC0tIGFsdGhvdWdoIHRoYXQgd291
+bGQgbWVhbiBhIGxvdCBvZiBleHRyYQo+ID4gJz8nIGVudHJpZXMgd2hlcmUgdGhlcmUgYXJlIG5v
+bmUgdG9kYXkuCj4gPiAKPiA+IEFuZCB0aGUgc2Vjb25kIChLVEhSRUFEL0lETEUpIGlzIHNvbWV0
+aGluZyB0aGF0IHRoZSBnZW5lcmljIGNvZGUgY2FuCj4gPiBlYXNpbHkgZG8gYmVmb3JlIGNhbGxp
+bmcgaW50byB0aGUgYXJjaCB1bndpbmRlci4KPiAKPiBBbmQgbG9va2luZyBhdCB0aGUgcG93ZXJw
+YyB2ZXJzaW9uIG9mIGl0LCB0aGF0IGhhcyBldmVuIG1vcmUgaW50ZXJlc3RpbmcKPiBleHRyYSBj
+aGVja3MgaW4gdGhhdCBmdW5jdGlvbi4KClJpZ2h0LCBidXQgbm90IGZ1bmRhbWVudGFsbHkgZGlm
+ZmVyZW50IGZyb20gZGV0ZXJtaW5pbmcgQHJlbGlhYmxlIEkKdGhpbmsuCgpBbnl3YXksIGl0IHdv
+dWxkIGJlIGdvb2QgaWYgc29tZW9uZSBrbm93bGVkZ2FibGUgY291bGQgaGF2ZSBhIGxvb2sgYXQK
+dGhpcy4KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KZHJp
+LWRldmVsIG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHBz
+Oi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vZHJpLWRldmVs
