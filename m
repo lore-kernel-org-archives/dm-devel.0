@@ -1,65 +1,52 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [patch V2 01/29] tracing: Cleanup stack trace code
-Date: Fri, 19 Apr 2019 00:44:17 +0200 (CEST)
-Message-ID: <alpine.DEB.2.21.1904190040510.3174@nanos.tec.linutronix.de>
+Date: Thu, 18 Apr 2019 20:39:54 -0400
+Message-ID: <20190418203954.631914cb@oasis.local.home>
 References: <20190418084119.056416939@linutronix.de>
-	<20190418084253.142712304@linutronix.de>
-	<20190418181938.2e2a9a04@gandalf.local.home>
+ <20190418084253.142712304@linutronix.de>
+ <20190418181938.2e2a9a04@gandalf.local.home>
+ <alpine.DEB.2.21.1904190040510.3174@nanos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20190418181938.2e2a9a04-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Joonas Lahtinen <joonas.lahtinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Alexander Potapenko <glider-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kasan-dev-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Johannes Thumshirn <jthumshirn-l3A5Bk7waGM@public.gmane.org>, Andrey Ryabinin <aryabinin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Maarten Lankhorst <maarten.lankhorst-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Rodrigo Vivi <rodrigo.vivi-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mike Rapoport <rppt@linux>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+In-Reply-To: <alpine.DEB.2.21.1904190040510.3174@nanos.tec.linutronix.de>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, Johannes Thumshirn <jthumshirn@suse.de>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, David Rientjes <rientjes@google.com>, Akinobu Mita <akinobu.mita@gmail.com>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Sterba <dsterba@suse.com>, Dmitry Vyukov <dvyukov@g>
 List-Id: dm-devel.ids
 
-On Thu, 18 Apr 2019, Steven Rostedt wrote:
-> On Thu, 18 Apr 2019 10:41:20 +0200
-> Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org> wrote:
-> 
-> > @@ -412,23 +404,20 @@ stack_trace_sysctl(struct ctl_table *tab
-> >  		   void __user *buffer, size_t *lenp,
-> >  		   loff_t *ppos)
-> >  {
-> > -	int ret;
-> > +	int ret, was_enabled;
-> 
-> One small nit. Could this be:
-> 
-> 	int was_enabled;
-> 	int ret;
-> 
-> I prefer only joining variables that are related on the same line.
-> Makes it look cleaner IMO.
-
-If you wish so. To me it's waste of screen space :)
-
-> >  
-> >  	mutex_lock(&stack_sysctl_mutex);
-> > +	was_enabled = !!stack_tracer_enabled;
-> >  
-> 
-> Bah, not sure why I didn't do it this way to begin with. I think I
-> copied something else that couldn't do it this way for some reason and
-> didn't put any brain power behind the copy. :-/ But that was back in
-> 2008 so I blame it on being "young and stupid" ;-)
-
-The young part is gone for sure :)
-
-> Other then the above nit and removing the unneeded +1 in max_entries:
-
-s/+1/-1/
-
-Thanks,
-
-	tglx
+T24gRnJpLCAxOSBBcHIgMjAxOSAwMDo0NDoxNyArMDIwMCAoQ0VTVCkKVGhvbWFzIEdsZWl4bmVy
+IDx0Z2x4QGxpbnV0cm9uaXguZGU+IHdyb3RlOgoKPiBPbiBUaHUsIDE4IEFwciAyMDE5LCBTdGV2
+ZW4gUm9zdGVkdCB3cm90ZToKPiA+IE9uIFRodSwgMTggQXByIDIwMTkgMTA6NDE6MjAgKzAyMDAK
+PiA+IFRob21hcyBHbGVpeG5lciA8dGdseEBsaW51dHJvbml4LmRlPiB3cm90ZToKPiA+ICAgCj4g
+PiA+IEBAIC00MTIsMjMgKzQwNCwyMCBAQCBzdGFja190cmFjZV9zeXNjdGwoc3RydWN0IGN0bF90
+YWJsZSAqdGFiCj4gPiA+ICAJCSAgIHZvaWQgX191c2VyICpidWZmZXIsIHNpemVfdCAqbGVucCwK
+PiA+ID4gIAkJICAgbG9mZl90ICpwcG9zKQo+ID4gPiAgewo+ID4gPiAtCWludCByZXQ7Cj4gPiA+
+ICsJaW50IHJldCwgd2FzX2VuYWJsZWQ7ICAKPiA+IAo+ID4gT25lIHNtYWxsIG5pdC4gQ291bGQg
+dGhpcyBiZToKPiA+IAo+ID4gCWludCB3YXNfZW5hYmxlZDsKPiA+IAlpbnQgcmV0Owo+ID4gCj4g
+PiBJIHByZWZlciBvbmx5IGpvaW5pbmcgdmFyaWFibGVzIHRoYXQgYXJlIHJlbGF0ZWQgb24gdGhl
+IHNhbWUgbGluZS4KPiA+IE1ha2VzIGl0IGxvb2sgY2xlYW5lciBJTU8uICAKPiAKPiBJZiB5b3Ug
+d2lzaCBzby4gVG8gbWUgaXQncyB3YXN0ZSBvZiBzY3JlZW4gc3BhY2UgOikKCkF0IGxlYXN0IHlv
+dSBkaWRuJ3Qgc2F5IGl0IGhlbHBzIHRoZSBjb21waWxlciA7LSkKCj4gCj4gPiA+ICAKPiA+ID4g
+IAltdXRleF9sb2NrKCZzdGFja19zeXNjdGxfbXV0ZXgpOwo+ID4gPiArCXdhc19lbmFibGVkID0g
+ISFzdGFja190cmFjZXJfZW5hYmxlZDsKPiA+ID4gICAgCj4gPiAKPiA+IEJhaCwgbm90IHN1cmUg
+d2h5IEkgZGlkbid0IGRvIGl0IHRoaXMgd2F5IHRvIGJlZ2luIHdpdGguIEkgdGhpbmsgSQo+ID4g
+Y29waWVkIHNvbWV0aGluZyBlbHNlIHRoYXQgY291bGRuJ3QgZG8gaXQgdGhpcyB3YXkgZm9yIHNv
+bWUgcmVhc29uIGFuZAo+ID4gZGlkbid0IHB1dCBhbnkgYnJhaW4gcG93ZXIgYmVoaW5kIHRoZSBj
+b3B5LiA6LS8gQnV0IHRoYXQgd2FzIGJhY2sgaW4KPiA+IDIwMDggc28gSSBibGFtZSBpdCBvbiBi
+ZWluZyAieW91bmcgYW5kIHN0dXBpZCIgOy0pICAKPiAKPiBUaGUgeW91bmcgcGFydCBpcyBnb25l
+IGZvciBzdXJlIDopCgpJIHB1cnBvc2VseSBzZXQgeW91IHVwIGZvciB0aGF0IHJlc3BvbnNlLgoK
+PiAKPiA+IE90aGVyIHRoZW4gdGhlIGFib3ZlIG5pdCBhbmQgcmVtb3ZpbmcgdGhlIHVubmVlZGVk
+ICsxIGluIG1heF9lbnRyaWVzOiAgCj4gCj4gcy8rMS8tMS8KClRoYXQgd2FzIGFuIG9kZSB0byBH
+KwoKLS0gU3RldmUKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X18KSW50ZWwtZ2Z4IG1haWxpbmcgbGlzdApJbnRlbC1nZnhAbGlzdHMuZnJlZWRlc2t0b3Aub3Jn
+Cmh0dHBzOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vaW50ZWwtZ2Z4
