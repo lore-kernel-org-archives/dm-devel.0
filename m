@@ -1,73 +1,28 @@
-From: Josh Poimboeuf <jpoimboe@redhat.com>
-Subject: Re: [patch V2 28/29] stacktrace: Provide common infrastructure
-Date: Fri, 19 Apr 2019 11:17:30 -0500
-Message-ID: <20190419161730.zgpa3e5fhny42wq7@treble>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [patch V2 23/29] tracing: Simplify stack trace retrieval
+Date: Fri, 19 Apr 2019 16:11:09 -0400
+Message-ID: <20190419161109.5f981236@gandalf.local.home>
 References: <20190418084119.056416939@linutronix.de>
- <20190418084255.652003111@linutronix.de>
- <20190419071843.GM4038@hirez.programming.kicks-ass.net>
- <alpine.DEB.2.21.1904191031390.3174@nanos.tec.linutronix.de>
- <20190419090717.GN7905@worktop.programming.kicks-ass.net>
+        <20190418084255.186774860@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-Content-Disposition: inline
-In-Reply-To: <20190419090717.GN7905@worktop.programming.kicks-ass.net>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, David Rientjes <rientjes@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, Johannes Thumshirn <jthumshirn@suse.de>, Akinobu Mita <akinobu.mita@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Rodrigo Vivi <rodrigo.vivi@intel.com>, David Sterba <dste>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190418084255.186774860@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: LKML <linux-kernel@vger.kernel.org>, Josh Poimboeuf <jpoimboe@redhat.com>, x86@kernel.org, Andy Lutomirski <luto@kernel.org>, Alexander Potapenko <glider@google.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, David Rientjes <rientjes@google.com>, Christoph Lameter <cl@linux.com>, Catalin Marinas <catalin.marinas@arm.com>, Dmitry Vyukov <dvyukov@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, kasan-dev@googlegroups.com, Mike Rapoport <rppt@linux.vnet.ibm.com>, Akinobu Mita <akinobu.mita@gmail.com>, iommu@lists.linux-foundation.org, Robin Murphy <robin.murphy@arm.com>, Christoph Hellwig <hch@lst.de>, Marek Szyprowski <m.szyprowski@samsung.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCBBcHIgMTksIDIwMTkgYXQgMTE6MDc6MTdBTSArMDIwMCwgUGV0ZXIgWmlqbHN0cmEg
-d3JvdGU6Cj4gT24gRnJpLCBBcHIgMTksIDIwMTkgYXQgMTA6MzI6MzBBTSArMDIwMCwgVGhvbWFz
-IEdsZWl4bmVyIHdyb3RlOgo+ID4gT24gRnJpLCAxOSBBcHIgMjAxOSwgUGV0ZXIgWmlqbHN0cmEg
-d3JvdGU6Cj4gPiA+IE9uIFRodSwgQXByIDE4LCAyMDE5IGF0IDEwOjQxOjQ3QU0gKzAyMDAsIFRo
-b21hcyBHbGVpeG5lciB3cm90ZToKPiA+ID4gCj4gPiA+ID4gK3R5cGVkZWYgYm9vbCAoKnN0YWNr
-X3RyYWNlX2NvbnN1bWVfZm4pKHZvaWQgKmNvb2tpZSwgdW5zaWduZWQgbG9uZyBhZGRyLAo+ID4g
-PiA+ICsgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGJvb2wgcmVsaWFibGUp
-Owo+ID4gPiAKPiA+ID4gPiArdm9pZCBhcmNoX3N0YWNrX3dhbGsoc3RhY2tfdHJhY2VfY29uc3Vt
-ZV9mbiBjb25zdW1lX2VudHJ5LCB2b2lkICpjb29raWUsCj4gPiA+ID4gKwkJICAgICBzdHJ1Y3Qg
-dGFza19zdHJ1Y3QgKnRhc2ssIHN0cnVjdCBwdF9yZWdzICpyZWdzKTsKPiA+ID4gPiAraW50IGFy
-Y2hfc3RhY2tfd2Fsa19yZWxpYWJsZShzdGFja190cmFjZV9jb25zdW1lX2ZuIGNvbnN1bWVfZW50
-cnksIHZvaWQgKmNvb2tpZSwKPiA+ID4gPiArCQkJICAgICBzdHJ1Y3QgdGFza19zdHJ1Y3QgKnRh
-c2spOwo+ID4gPiAKPiA+ID4gVGhpcyBidWdzIG1lIGEgbGl0dGxlOyBpZGVhbGx5IHRoZSBfcmVs
-aWFibGUoKSB0aGluZyB3b3VsZCBub3QgZXhpc3RzLgo+ID4gPiAKPiA+ID4gVGhvbWFzIHNhaWQg
-dGhhdCB0aGUgZXhpc3RpbmcgX19zYXZlX3N0YWNrX3RyYWNlX3JlbGlhYmxlKCkgaXMgZGlmZmVy
-ZW50Cj4gPiA+IGVub3VnaCBmb3IgdGhlIHVuaWZpY2F0aW9uIHRvIGJlIG5vbi10cml2aWFsLCBi
-dXQgbWF5YmUgSm9zaCBjYW4gaGVscAo+ID4gPiBvdXQ/Cj4gPiA+IAo+ID4gPiA+RnJvbSB3aGF0
-IEkgY2FuIHNlZSB0aGUgYmlnZ2VzdCBzaWduaWZpY2FudCBkaWZmZXJlbmNlcyBhcmU6Cj4gPiA+
-IAo+ID4gPiAgLSBpdCBsb29rcyBhdCB0aGUgcmVncyBzZXRzIG9uIHRoZSBzdGFjayBhbmQgZm9y
-IEZQIGJhaWxzIGVhcmx5Cj4gPiA+ICAtIGJhaWxzIGZvciBraHJlYWRzIGFuZCBpZGxlIChhZnRl
-ciBpdCBkb2VzIGFsbCB0aGUgaGFyZCB3b3JrIT8hKQoKVGhhdCdzIGRvbmUgZm9yIGEgcmVhc29u
-LCBzZWUgdGhlICJTdWNjZXNzIHBhdGgiIGNvbW1lbnRzLgoKPiA+ID4gVGhlIGZpcnN0IChGUCBj
-aGVja2luZyBmb3IgZXhjZXB0aW9ucykgc2hvdWxkIHByb2JhYmx5IGJlIHJlZmxlY3RlZCBpbgo+
-ID4gPiBjb25zdW1lX2ZuKC5yZWxpYWJsZSkgYW55d2F5IC0tIGFsdGhvdWdoIHRoYXQgd291bGQg
-bWVhbiBhIGxvdCBvZiBleHRyYQo+ID4gPiAnPycgZW50cmllcyB3aGVyZSB0aGVyZSBhcmUgbm9u
-ZSB0b2RheS4KPiA+ID4gCj4gPiA+IEFuZCB0aGUgc2Vjb25kIChLVEhSRUFEL0lETEUpIGlzIHNv
-bWV0aGluZyB0aGF0IHRoZSBnZW5lcmljIGNvZGUgY2FuCj4gPiA+IGVhc2lseSBkbyBiZWZvcmUg
-Y2FsbGluZyBpbnRvIHRoZSBhcmNoIHVud2luZGVyLgo+ID4gCj4gPiBBbmQgbG9va2luZyBhdCB0
-aGUgcG93ZXJwYyB2ZXJzaW9uIG9mIGl0LCB0aGF0IGhhcyBldmVuIG1vcmUgaW50ZXJlc3RpbmcK
-PiA+IGV4dHJhIGNoZWNrcyBpbiB0aGF0IGZ1bmN0aW9uLgo+IAo+IFJpZ2h0LCBidXQgbm90IGZ1
-bmRhbWVudGFsbHkgZGlmZmVyZW50IGZyb20gZGV0ZXJtaW5pbmcgQHJlbGlhYmxlIEkKPiB0aGlu
-ay4KPiAKPiBBbnl3YXksIGl0IHdvdWxkIGJlIGdvb2QgaWYgc29tZW9uZSBrbm93bGVkZ2FibGUg
-Y291bGQgaGF2ZSBhIGxvb2sgYXQKPiB0aGlzLgoKWWVhaCwgd2UgY291bGQgcHJvYmFibHkgZG8g
-dGhhdC4KClRoZSBmbG93IHdvdWxkIG5lZWQgdG8gYmUgY2hhbmdlZCBhIGJpdCAtLSBzb21lIG9m
-IHRoZSBlcnJvcnMgYXJlIHNvZnQKZXJyb3JzIHdoaWNoIG1vc3QgdXNlcnMgZG9uJ3QgY2FyZSBh
-Ym91dCBiZWNhdXNlIHRoZXkganVzdCB3YW50IGEgYmVzdAplZmZvcnQuICBUaGUgc29mdCBlcnJv
-cnMgY2FuIGJlIHJlbWVtYmVyZWQgd2l0aG91dCBicmVha2luZyBvdXQgb2YgdGhlCmxvb3AsIGFu
-ZCBqdXN0IHJldHVybmVkIGF0IHRoZSBlbmQuICBNb3N0IHVzZXJzIGNvdWxkIGp1c3QgaWdub3Jl
-IHRoZQpyZXR1cm4gY29kZS4KClRoZSBvbmx5IHRoaW5nIEknZCBiZSB3b3JyaWVkIGFib3V0IGlz
-IHBlcmZvcm1hbmNlIGZvciB0aGUgbm9uLWxpdmVwYXRjaAp1c2VycywgYnV0IEkgZ3Vlc3MgdGhv
-c2UgY2hlY2tzIGRvbid0IGxvb2sgdmVyeSBleHBlbnNpdmUuICBBbmQgdGhlIHg4Ngp1bndpbmRl
-cnMgYXJlIGFscmVhZHkgcHJldHR5IHNsb3cgYW55d2F5Li4uCgotLSAKSm9zaApfX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpkcmktZGV2ZWwgbWFpbGluZyBs
-aXN0CmRyaS1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cHM6Ly9saXN0cy5mcmVlZGVz
-a3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmktZGV2ZWw=
+On Thu, 18 Apr 2019 10:41:42 +0200
+Thomas Gleixner <tglx@linutronix.de> wrote:
+
+> Replace the indirection through struct stack_trace by using the storage
+> array based interfaces.
+> 
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> Cc: Steven Rostedt <rostedt@goodmis.org>
+
+Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+
+-- Steve
