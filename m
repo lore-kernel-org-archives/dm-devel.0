@@ -1,32 +1,43 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH v2 56/79] docs: Documentation/*.txt: rename all ReST
-	files to *.rst
-Date: Tue, 23 Apr 2019 10:31:35 +0200
-Message-ID: <20190423083135.GA11158@hirez.programming.kicks-ass.net>
-References: <cover.1555938375.git.mchehab+samsung@kernel.org>
-	<cda57849a6462ccc72dcd360b30068ab6a1021c4.1555938376.git.mchehab+samsung@kernel.org>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: max_sectors_kb limitations with VDO and dm-thin
+Date: Tue, 23 Apr 2019 12:11:16 +0200
+Message-ID: <45987177-c92c-d906-50bc-f4c789c36857@redhat.com>
+References: <CAFTvtQ=HnGB2bw8heFR5rL=5K9FOAXbbyK65pqzO0MMFV3CEiQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <cda57849a6462ccc72dcd360b30068ab6a1021c4.1555938376.git.mchehab+samsung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Mauro Carvalho Chehab <mchehab+samsung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Rafael J. Wysocki" <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Farhan Ali <alifm-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-sh-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Halil Pasic <pasic-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, tboot-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>, openipmi-developer-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Nicholas Piggin <npiggin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Sean Paul <sean-p7yTbzM4H96eqtR555YLDQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-wireless@v
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAFTvtQ=HnGB2bw8heFR5rL=5K9FOAXbbyK65pqzO0MMFV3CEiQ@mail.gmail.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ryan Norwood <ryan.p.norwood@gmail.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Apr 22, 2019 at 10:27:45AM -0300, Mauro Carvalho Chehab wrote:
-
->  .../{atomic_bitops.txt => atomic_bitops.rst}  |  2 +
-
-What's happend to atomic_t.txt, also NAK, I still occationally touch
-these files.
+RG5lIDE5LiAwNC4gMTkgdiAxNjo0MCBSeWFuIE5vcndvb2QgbmFwc2FsKGEpOgo+IFdlIGhhdmUg
+YmVlbiB1c2luZyBkbS10aGluIGxheWVyZWQgYWJvdmUgVkRPIGFuZCBoYXZlIG5vdGljZWQgdGhh
+dCBvdXIgCj4gcGVyZm9ybWFuY2UgaXMgbm90IG9wdGltYWwgZm9yIGxhcmdlIHNlcXVlbnRpYWwg
+d3JpdGVzIGFzIG1heF9zZWN0b3JzX2tiIAo+IGFuZMKgbWF4X2h3X3NlY3RvcnNfa2LCoGZvciBh
+bGwgdGhpbiBkZXZpY2VzIGFyZSBzZXQgdG8gNGsgZHVlIHRvIHRoZSBWRE8gbGF5ZXIgCj4gYmVu
+ZWF0aC4KPiAKPiBUaGlzIGVmZmVjdGl2ZWx5IGVsaW1pbmF0ZXMgdGhlIHBlcmZvcm1hbmNlIG9w
+dGltaXphdGlvbnMgZm9yIHNlcXVlbnRpYWwgCj4gd3JpdGVzIHRvIHNraXAgYm90aCB6ZXJvaW5n
+IGFuZCBDT1cgb3ZlcmhlYWQgd2hlbiBhIHdyaXRlIGZ1bGx5IG92ZXJsYXBzIGEgCj4gdGhpbiBj
+aHVuayBhcyBhbGwgYmlvcyBhcmUgc3BsaXQgaW50byA0ayB3aGljaCBhbHdheXMgYmUgbGVzcyB0
+aGFuIHRoZSA2NGsgCj4gdGhpbiBjaHVuayBtaW5pbXVtLgo+IAo+IElzIHRoaXMga25vd24gYmVo
+YXZpb3I/IElzIHRoZXJlIGFueSB3YXkgYXJvdW5kIHRoaXMgaXNzdWU/CgpIaQoKSWYgeW91IHJl
+cXVpcmUgaGlnaGVzdCBwZXJmb3JtYW5jZSAtIEknZCBzdWdnZXN0IHRvIGF2b2lkIHVzaW5nIFZE
+Ty4KVkRPIHJlcGxhY2VzIHBlcmZvcm1hbmNlIHdpdGggYmV0dGVyIHNwYWNlIHV0aWxpemF0aW9u
+LgpJdCB3b3JrcyBvbiA0S2lCIGJsb2NrIC0gc28gYnkgZGVzaWduIGl0J3MgZ29pbmcgdG8gYmUg
+c2xvdy4KCkknZCBhbHNvIHByb2JhYmx5IG5vdCBtaXggMiBwcm92aXNpb25pbmcgdGVjaG5vbG9n
+aWVzIHRvZ2V0aGVyIC0gdGhlcmUKaXMgbm9udHJpdmlhbCBhbW91bnQgb2YgcHJvYmxlbWF0aWMg
+c3RhdGVzIHdoZW4gdGhlIHdob2xlIGRldmljZSBzdGFjawpydW5zIG91dCBvZiByZWFsIHBoeXNp
+Y2FsIHNwYWNlLgoKUmVnYXJkcwoKWmRlbmVrCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
+ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8v
+ZG0tZGV2ZWw=
