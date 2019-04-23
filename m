@@ -1,12 +1,13 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm-writecache: simplify the using of pointer wb
-Date: Tue, 23 Apr 2019 11:49:31 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1904231148150.17390@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20190412152718.27102-1-huye@redhat.com>
+Subject: Re: [PATCH] dm-writecache: add unlikely for returned value of
+ rb_next/prev
+Date: Tue, 23 Apr 2019 11:50:51 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1904231150360.17390@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20190412152814.27158-1-huye@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190412152718.27102-1-huye@redhat.com>
+In-Reply-To: <20190412152814.27158-1-huye@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Huaisheng Ye <huye@redhat.com>
 Cc: snitzer@redhat.com, agk@redhat.com, prarit@redhat.com, chengnt@lenovo.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Huaisheng Ye <yehs1@lenovo.com>
@@ -18,53 +19,40 @@ On Fri, 12 Apr 2019, Huaisheng Ye wrote:
 
 > From: Huaisheng Ye <yehs1@lenovo.com>
 > 
-> In function __writecache_writeback_pmem, the pointer bio has been
-> already there, it doesn't need to seek bio's address from pointer wb.
-
-The compiler optimizer knows that the offset between "wb" and "bio" is 
-constant, so that there is no difference in the generated code before or 
-after this patch.
-
-Mikulas
-
+> In functions writecache_discard and writecache_find_entry, there is
+> high probablity that the pointer of structure rb_node doesn't equal
+> to NULL. Add unlikly for the pointer node.
+> 
 > Signed-off-by: Huaisheng Ye <yehs1@lenovo.com>
+
+Acked-by: Mikulas Patocka <mpatocka@redhat.com>
+
 > ---
->  drivers/md/dm-writecache.c | 12 ++++++------
->  1 file changed, 6 insertions(+), 6 deletions(-)
+>  drivers/md/dm-writecache.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
 > 
 > diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-> index f782287..5b4d1c1 100644
+> index 5b4d1c1..cfbbfbc 100644
 > --- a/drivers/md/dm-writecache.c
 > +++ b/drivers/md/dm-writecache.c
-> @@ -1478,9 +1478,9 @@ static void __writecache_writeback_pmem(struct dm_writecache *wc, struct writeba
->  		bio = bio_alloc_bioset(GFP_NOIO, max_pages, &wc->bio_set);
->  		wb = container_of(bio, struct writeback_struct, bio);
->  		wb->wc = wc;
-> -		wb->bio.bi_end_io = writecache_writeback_endio;
-> -		bio_set_dev(&wb->bio, wc->dev->bdev);
-> -		wb->bio.bi_iter.bi_sector = read_original_sector(wc, e);
-> +		bio->bi_end_io = writecache_writeback_endio;
-> +		bio_set_dev(bio, wc->dev->bdev);
-> +		bio->bi_iter.bi_sector = read_original_sector(wc, e);
->  		wb->page_offset = PAGE_SIZE;
->  		if (max_pages <= WB_LIST_INLINE ||
->  		    unlikely(!(wb->wc_list = kmalloc_array(max_pages, sizeof(struct wc_entry *),
-> @@ -1507,12 +1507,12 @@ static void __writecache_writeback_pmem(struct dm_writecache *wc, struct writeba
->  			wb->wc_list[wb->wc_list_n++] = f;
->  			e = f;
->  		}
-> -		bio_set_op_attrs(&wb->bio, REQ_OP_WRITE, WC_MODE_FUA(wc) * REQ_FUA);
-> +		bio_set_op_attrs(bio, REQ_OP_WRITE, WC_MODE_FUA(wc) * REQ_FUA);
->  		if (writecache_has_error(wc)) {
->  			bio->bi_status = BLK_STS_IOERR;
-> -			bio_endio(&wb->bio);
-> +			bio_endio(bio);
->  		} else {
-> -			submit_bio(&wb->bio);
-> +			submit_bio(bio);
+> @@ -571,7 +571,7 @@ static struct wc_entry *writecache_find_entry(struct dm_writecache *wc,
+>  			node = rb_prev(&e->rb_node);
+>  		else
+>  			node = rb_next(&e->rb_node);
+> -		if (!node)
+> +		if (unlikely(!node))
+>  			return e;
+>  		e2 = container_of(node, struct wc_entry, rb_node);
+>  		if (read_original_sector(wc, e2) != block)
+> @@ -804,7 +804,7 @@ static void writecache_discard(struct dm_writecache *wc, sector_t start, sector_
+>  			writecache_free_entry(wc, e);
 >  		}
 >  
->  		__writeback_throttle(wc, wbl);
+> -		if (!node)
+> +		if (unlikely(!node))
+>  			break;
+>  
+>  		e = container_of(node, struct wc_entry, rb_node);
 > -- 
 > 1.8.3.1
 > 
