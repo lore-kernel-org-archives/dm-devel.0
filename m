@@ -1,48 +1,210 @@
-From: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
-Subject: Re: [PATCH v2 56/79] docs: Documentation/*.txt: rename all ReST
-	files to *.rst
-Date: Tue, 23 Apr 2019 10:30:53 -0600
-Message-ID: <20190423103053.07cf2149@lwn.net>
-References: <cover.1555938375.git.mchehab+samsung@kernel.org>
-	<cda57849a6462ccc72dcd360b30068ab6a1021c4.1555938376.git.mchehab+samsung@kernel.org>
-	<20190423083135.GA11158@hirez.programming.kicks-ass.net>
-	<20190423125519.GA7104@redhat.com>
-	<20190423130132.GT4038@hirez.programming.kicks-ass.net>
+From: Ryan Norwood <ryan.p.norwood@gmail.com>
+Subject: Re: max_sectors_kb limitations with VDO and dm-thin
+Date: Tue, 23 Apr 2019 13:02:38 -0400
+Message-ID: <CAFTvtQ=JiZ7FWNiayM5bVY5A8ZCNbDtXV=rUxa_0u6Xm6rJAqg@mail.gmail.com>
+References: <CAFTvtQ=HnGB2bw8heFR5rL=5K9FOAXbbyK65pqzO0MMFV3CEiQ@mail.gmail.com>
+	<45987177-c92c-d906-50bc-f4c789c36857@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20190423130132.GT4038-Nxj+rRp3nVydTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Rafael J. Wysocki" <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Farhan Ali <alifm-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, Mauro Carvalho Chehab <mchehab+samsung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-sh-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Halil Pasic <pasic-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, tboot-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>, openipmi-developer-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Nicholas Piggin <npiggin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Sean Paul <sean-p7yTbzM4H96eqtR555YLDQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Content-Type: multipart/mixed; boundary="===============1764848670685058691=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <45987177-c92c-d906-50bc-f4c789c36857@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Zdenek Kabelac <zkabelac@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, 23 Apr 2019 15:01:32 +0200
-Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+--===============1764848670685058691==
+Content-Type: multipart/alternative; boundary="0000000000000e04670587358e4d"
 
-> But yes, I have 0 motivation to learn or abide by rst. It simply doesn't
-> give me anything in return. There is no upside, only worse text files :/
+--0000000000000e04670587358e4d
+Content-Type: text/plain; charset="UTF-8"
 
-So I believe it gives even you one thing in return: documentation that is
-more accessible for both readers and authors.  More readable docs should
-lead to more educated developers who understand the code better.  More
-writable docs will bring more people in to help to improve them.  The
-former effect has been reported in the GPU community, where they say that
-the quality of submissions has improved along with the docs.  The latter
-can be observed in the increased number of people working on the docs
-overall, something that Linus noted in the 5.1-rc1 announcement.
+I have added vdo-devel to the converation:
+https://www.redhat.com/archives/vdo-devel/2019-April/msg00017.html
 
-Hopefully that's worth something :)
+Here is some more info to describe the specific issue:
 
-Thanks,
+A dm-thin volume is configured with a chunk/block size that determines the
+minimum allocation size that it can track, between 64KiB and 1GiB. If an
+application performs a write to a dm-thin block device, and that IO
+operation completely overlaps a thin block, dm-thin will skip zeroing after
+allocation before performing the write. This is a pretty big performance
+optimization as it effectively halves IO for large sequential writes. When
+a block device has a snapshot the data is referenced by both the original
+block and the snapshot. If a write is issued dm-thin will  normally
+allocate a new chunk, copy the old data to that new chunk, then perform the
+write. If the new write completely overlaps a chunk it will skip the copy.
 
-jon
+So for example dm-thin block device is created in a thin pool with a 512k
+block size. A new block is created and an application performs a 4k
+sequential write at the beginning of the volume. dm-thin will do the
+following,
+
+1) allocate 512k block
+2) write 0's to the block
+3) perform the 4k write
+
+This does 516k of writes for a 4k write (ouch). If the write was at least
+512k, it will skip zeroing and just do the write.
+
+Similarly assume there is a dm-thin block device with a snapshot and data
+is shared between the two. Again the application performs a 4k write.
+
+1) allocate new 512k block
+2) copy 512k form the old block to the new
+3) perform the 4k write
+
+This does 512k in reads and 516k in writes (big ouch). If the write was at
+least 512k it will skip all the overhead.
+
+Now fast forward to VDO. Normally the IO size is determined by the
+max_sectors_kb setting in /sys/block/DEVICE/queue. This value is inherited
+for stacked DM devices and can be modified by the user up to the hardware
+limit max_hw_sectors_kb, which also appears to be inherited for stacked DM
+devices. VDO sets this value to 4k which in turn forces all layers stacked
+above it to also have a 4k maximum. If you take my previous example but
+place VDO beneath the dm-thin volume, all IO sequential or otherwise will
+be split down to 4k which will completely eliminate all the performance
+optimizations that dm-thin provides.
+
+1) Is this known behavior?
+2) Is there a possible workaround?
+
+
+On Tue, Apr 23, 2019 at 6:11 AM Zdenek Kabelac <zkabelac@redhat.com> wrote:
+
+> Dne 19. 04. 19 v 16:40 Ryan Norwood napsal(a):
+> > We have been using dm-thin layered above VDO and have noticed that our
+> > performance is not optimal for large sequential writes as max_sectors_kb
+> > and max_hw_sectors_kb for all thin devices are set to 4k due to the VDO
+> layer
+> > beneath.
+> >
+> > This effectively eliminates the performance optimizations for sequential
+> > writes to skip both zeroing and COW overhead when a write fully overlaps
+> a
+> > thin chunk as all bios are split into 4k which always be less than the
+> 64k
+> > thin chunk minimum.
+> >
+> > Is this known behavior? Is there any way around this issue?
+>
+> Hi
+>
+> If you require highest performance - I'd suggest to avoid using VDO.
+> VDO replaces performance with better space utilization.
+> It works on 4KiB block - so by design it's going to be slow.
+>
+> I'd also probably not mix 2 provisioning technologies together - there
+> is nontrivial amount of problematic states when the whole device stack
+> runs out of real physical space.
+>
+> Regards
+>
+> Zdenek
+>
+
+--0000000000000e04670587358e4d
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div dir=3D"ltr">I have added vdo-devel to the converation=
+:=C2=A0<a href=3D"https://www.redhat.com/archives/vdo-devel/2019-April/msg0=
+0017.html" target=3D"_blank">https://www.redhat.com/archives/vdo-devel/2019=
+-April/msg00017.html</a></div><div dir=3D"ltr"><br></div><div dir=3D"ltr">H=
+ere is some more info to describe the specific issue:</div><div dir=3D"ltr"=
+><div><br></div><div><div>A dm-thin volume is configured with a chunk/block=
+ size that determines the minimum allocation size that it can track, betwee=
+n 64KiB and 1GiB. If an application performs a write to a dm-thin block dev=
+ice, and that IO operation completely overlaps a thin block, dm-thin will s=
+kip zeroing after allocation before performing the write. This is a pretty =
+big performance optimization as it effectively halves IO for large sequenti=
+al writes. When a block device has a snapshot the data is referenced by bot=
+h the original block and the snapshot. If a write is issued dm-thin will=C2=
+=A0 normally allocate a new chunk, copy the old data to that new chunk, the=
+n perform the write. If the new write completely overlaps a chunk it will s=
+kip the copy.</div><div><br></div><div>So for example dm-thin block device =
+is created in a thin pool with a 512k block size. A new block is created an=
+d an application performs a 4k sequential write at the beginning of the vol=
+ume. dm-thin will do the following,=C2=A0</div><div><br></div><div>1) alloc=
+ate 512k block</div><div>2) write 0&#39;s to the block</div><div>3) perform=
+ the 4k write</div><div><br></div><div>This does 516k of writes for a 4k wr=
+ite (ouch). If the write was at least 512k, it will skip zeroing and just d=
+o the write.</div><div><br></div><div>Similarly assume there is a dm-thin b=
+lock device with a snapshot and data is shared between the two. Again the a=
+pplication performs a 4k write.</div><div><br></div><div>1) allocate new 51=
+2k block</div><div>2) copy 512k form the old block to the new</div><div>3) =
+perform the 4k write</div><div><br></div><div>This does 512k in reads and 5=
+16k in writes (big ouch). If the write was at least 512k it will skip all t=
+he overhead.</div><div><br></div><div>Now fast forward to VDO. Normally the=
+ IO size is determined by the max_sectors_kb setting in /sys/block/DEVICE/q=
+ueue. This value is inherited for stacked DM devices and can be modified by=
+ the user up to the hardware limit max_hw_sectors_kb, which also appears to=
+ be inherited for stacked DM devices. VDO sets this value to 4k which in tu=
+rn forces all layers stacked above it to also have a 4k maximum. If you tak=
+e my previous example but place VDO beneath the dm-thin volume, all IO sequ=
+ential or otherwise will be split down to 4k which will completely eliminat=
+e all the performance optimizations that dm-thin provides.</div><div><br></=
+div><div>1) Is this known behavior?=C2=A0</div><div>2) Is there a possible =
+workaround?</div></div><div class=3D"gmail-yj6qo gmail-ajU" style=3D"outlin=
+e:none;padding:10px 0px;width:22px;margin:2px 0px 0px"><br class=3D"gmail-A=
+pple-interchange-newline"></div></div></div><br><div class=3D"gmail_quote">=
+<div dir=3D"ltr" class=3D"gmail_attr">On Tue, Apr 23, 2019 at 6:11 AM Zdene=
+k Kabelac &lt;<a href=3D"mailto:zkabelac@redhat.com">zkabelac@redhat.com</a=
+>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px=
+ 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">Dne=
+ 19. 04. 19 v 16:40 Ryan Norwood napsal(a):<br>
+&gt; We have been using dm-thin layered above VDO and have noticed that our=
+ <br>
+&gt; performance is not optimal for large sequential writes as max_sectors_=
+kb <br>
+&gt; and=C2=A0max_hw_sectors_kb=C2=A0for all thin devices are set to 4k due=
+ to the VDO layer <br>
+&gt; beneath.<br>
+&gt; <br>
+&gt; This effectively eliminates the performance optimizations for sequenti=
+al <br>
+&gt; writes to skip both zeroing and COW overhead when a write fully overla=
+ps a <br>
+&gt; thin chunk as all bios are split into 4k which always be less than the=
+ 64k <br>
+&gt; thin chunk minimum.<br>
+&gt; <br>
+&gt; Is this known behavior? Is there any way around this issue?<br>
+<br>
+Hi<br>
+<br>
+If you require highest performance - I&#39;d suggest to avoid using VDO.<br=
+>
+VDO replaces performance with better space utilization.<br>
+It works on 4KiB block - so by design it&#39;s going to be slow.<br>
+<br>
+I&#39;d also probably not mix 2 provisioning technologies together - there<=
+br>
+is nontrivial amount of problematic states when the whole device stack<br>
+runs out of real physical space.<br>
+<br>
+Regards<br>
+<br>
+Zdenek<br>
+</blockquote></div>
+
+--0000000000000e04670587358e4d--
+
+
+--===============1764848670685058691==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1764848670685058691==--
