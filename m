@@ -1,141 +1,117 @@
-From: Logan Gunthorpe <logang-OTvnGxWRz7hWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v2 56/79] docs: Documentation/*.txt: rename all ReST files
-	to *.rst
-Date: Mon, 22 Apr 2019 10:37:35 -0600
-Message-ID: <3e26b3a0-bcd3-93a1-d21c-ac1041f93697@deltatee.com>
-References: <cover.1555938375.git.mchehab+samsung@kernel.org>
-	<cda57849a6462ccc72dcd360b30068ab6a1021c4.1555938376.git.mchehab+samsung@kernel.org>
+From: Daniel Vetter <daniel@ffwll.ch>
+Subject: Re: [patch V2 16/29] drm: Simplify stacktrace handling
+Date: Tue, 23 Apr 2019 09:36:25 +0200
+Message-ID: <20190423073625.GZ13337@phenom.ffwll.local>
+References: <20190418084119.056416939@linutronix.de>
+ <20190418084254.549410214@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <cda57849a6462ccc72dcd360b30068ab6a1021c4.1555938376.git.mchehab+samsung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Content-Language: en-CA
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Mauro Carvalho Chehab <mchehab+samsung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux Doc Mailing List <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Rafael J. Wysocki" <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Farhan Ali <alifm-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-sh-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Halil Pasic <pasic-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, tboot-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>, openipmi-developer-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Nicholas Piggin <npiggin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Sean Paul <sean-p7yTbzM4H96eqtR555YLDQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-wireless@v
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+Content-Disposition: inline
+In-Reply-To: <20190418084254.549410214@linutronix.de>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, David Rientjes <rientjes@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, Johannes Thumshirn <jthumshirn@suse.de>, Akinobu Mita <akinobu.mita@gmail.com>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Steven Rostedt <rostedt@goodmis.org>, Andy Lutomirski <luto@kernel.org>, David Sterba <dsterba@suse.com>, Dmitry Vyukov <dvyukov@g>
 List-Id: dm-devel.ids
 
-
-
-On 2019-04-22 7:27 a.m., Mauro Carvalho Chehab wrote:
-
-> 
-> Later patches will move them to a better place and remove the
-> :orphan: markup.
-> 
-> Signed-off-by: Mauro Carvalho Chehab <mchehab+samsung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> ---
->  Documentation/ABI/removed/sysfs-class-rfkill  |  2 +-
->  Documentation/ABI/stable/sysfs-class-rfkill   |  2 +-
->  Documentation/ABI/stable/sysfs-devices-node   |  2 +-
->  Documentation/ABI/testing/procfs-diskstats    |  2 +-
->  Documentation/ABI/testing/sysfs-block         |  2 +-
->  .../ABI/testing/sysfs-class-switchtec         |  2 +-
->  .../ABI/testing/sysfs-devices-system-cpu      |  4 +-
->  .../{DMA-API-HOWTO.txt => DMA-API-HOWTO.rst}  |  2 +
->  Documentation/{DMA-API.txt => DMA-API.rst}    |  8 ++-
->  .../{DMA-ISA-LPC.txt => DMA-ISA-LPC.rst}      |  4 +-
->  ...{DMA-attributes.txt => DMA-attributes.rst} |  2 +
->  Documentation/{IPMI.txt => IPMI.rst}          |  2 +
->  .../{IRQ-affinity.txt => IRQ-affinity.rst}    |  2 +
->  .../{IRQ-domain.txt => IRQ-domain.rst}        |  2 +
->  Documentation/{IRQ.txt => IRQ.rst}            |  2 +
->  .../{Intel-IOMMU.txt => Intel-IOMMU.rst}      |  2 +
->  Documentation/PCI/pci.txt                     |  8 +--
->  Documentation/{SAK.txt => SAK.rst}            |  2 +
->  Documentation/{SM501.txt => SM501.rst}        |  2 +
->  .../admin-guide/kernel-parameters.txt         |  6 +-
->  Documentation/admin-guide/l1tf.rst            |  2 +-
->  .../{atomic_bitops.txt => atomic_bitops.rst}  |  2 +
->  Documentation/block/biodoc.txt                |  2 +-
->  .../{bt8xxgpio.txt => bt8xxgpio.rst}          |  2 +
->  Documentation/{btmrvl.txt => btmrvl.rst}      |  2 +
->  ...-mapping.txt => bus-virt-phys-mapping.rst} |  4 +-
->  ...g-warn-once.txt => clearing-warn-once.rst} |  2 +
->  Documentation/{cpu-load.txt => cpu-load.rst}  |  2 +
->  .../{cputopology.txt => cputopology.rst}      |  2 +
->  Documentation/{crc32.txt => crc32.rst}        |  2 +
->  Documentation/{dcdbas.txt => dcdbas.rst}      |  2 +
->  ...ging-modules.txt => debugging-modules.rst} |  2 +
->  ...hci1394.txt => debugging-via-ohci1394.rst} |  2 +
->  Documentation/{dell_rbu.txt => dell_rbu.rst}  |  2 +
->  Documentation/device-mapper/statistics.rst    |  4 +-
->  .../devicetree/bindings/phy/phy-bindings.txt  |  2 +-
->  Documentation/{digsig.txt => digsig.rst}      |  2 +
->  Documentation/driver-api/usb/dma.rst          |  6 +-
->  Documentation/driver-model/device.rst         |  2 +-
->  Documentation/{efi-stub.txt => efi-stub.rst}  |  2 +
->  Documentation/{eisa.txt => eisa.rst}          |  2 +
->  Documentation/fb/vesafb.rst                   |  2 +-
->  Documentation/filesystems/sysfs.txt           |  2 +-
->  ...ex-requeue-pi.txt => futex-requeue-pi.rst} |  2 +
->  .../{gcc-plugins.txt => gcc-plugins.rst}      |  2 +
->  Documentation/gpu/drm-mm.rst                  |  2 +-
->  Documentation/{highuid.txt => highuid.rst}    |  2 +
->  .../{hw_random.txt => hw_random.rst}          |  2 +
->  .../{hwspinlock.txt => hwspinlock.rst}        |  2 +
->  Documentation/ia64/IRQ-redir.txt              |  2 +-
->  .../{intel_txt.txt => intel_txt.rst}          |  2 +
->  .../{io-mapping.txt => io-mapping.rst}        |  2 +
->  .../{io_ordering.txt => io_ordering.rst}      |  2 +
->  Documentation/{iostats.txt => iostats.rst}    |  2 +
->  ...flags-tracing.txt => irqflags-tracing.rst} |  2 +
->  Documentation/{isa.txt => isa.rst}            |  2 +
->  Documentation/{isapnp.txt => isapnp.rst}      |  2 +
->  ...hreads.txt => kernel-per-CPU-kthreads.rst} |  4 +-
->  Documentation/{kobject.txt => kobject.rst}    |  4 +-
->  Documentation/{kprobes.txt => kprobes.rst}    |  2 +
->  Documentation/{kref.txt => kref.rst}          |  2 +
->  Documentation/laptops/thinkpad-acpi.txt       |  6 +-
->  Documentation/{ldm.txt => ldm.rst}            |  2 +
->  Documentation/locking/rt-mutex.rst            |  2 +-
->  ...kup-watchdogs.txt => lockup-watchdogs.rst} |  2 +
->  Documentation/{lsm.txt => lsm.rst}            |  2 +
->  Documentation/{lzo.txt => lzo.rst}            |  2 +
->  Documentation/{mailbox.txt => mailbox.rst}    |  2 +
->  Documentation/memory-barriers.txt             |  6 +-
->  ...hameleon-bus.txt => men-chameleon-bus.rst} |  2 +
->  Documentation/networking/scaling.rst          |  4 +-
->  .../{nommu-mmap.txt => nommu-mmap.rst}        |  2 +
->  Documentation/{ntb.txt => ntb.rst}            |  2 +
->  Documentation/{numastat.txt => numastat.rst}  |  2 +
->  Documentation/{padata.txt => padata.rst}      |  2 +
->  ...port-lowlevel.txt => parport-lowlevel.rst} |  2 +
->  ...-semaphore.txt => percpu-rw-semaphore.rst} |  2 +
->  Documentation/{phy.txt => phy.rst}            |  2 +
->  Documentation/{pi-futex.txt => pi-futex.rst}  |  2 +
->  Documentation/{pnp.txt => pnp.rst}            |  2 +
->  ...reempt-locking.txt => preempt-locking.rst} |  2 +
->  Documentation/{pwm.txt => pwm.rst}            |  2 +
->  Documentation/{rbtree.txt => rbtree.rst}      |  2 +
->  .../{remoteproc.txt => remoteproc.rst}        |  4 +-
->  Documentation/{rfkill.txt => rfkill.rst}      |  2 +
->  ...ust-futex-ABI.txt => robust-futex-ABI.rst} |  2 +
->  ...{robust-futexes.txt => robust-futexes.rst} |  2 +
->  Documentation/{rpmsg.txt => rpmsg.rst}        |  2 +
->  Documentation/{rtc.txt => rtc.rst}            |  2 +
->  Documentation/s390/vfio-ccw.rst               |  6 +-
->  Documentation/{sgi-ioc4.txt => sgi-ioc4.rst}  |  2 +
->  Documentation/{siphash.txt => siphash.rst}    |  2 +
->  .../{smsc_ece1099.txt => smsc_ece1099.rst}    |  2 +
->  .../{speculation.txt => speculation.rst}      |  2 +
->  .../{static-keys.txt => static-keys.rst}      |  2 +
->  Documentation/{svga.txt => svga.rst}          |  2 +
->  .../{switchtec.txt => switchtec.rst}          |  4 +-
-
-For all the switchtec changes:
-
-Acked-by: Logan Gunthorpe <logang-OTvnGxWRz7hWk0Htik3J/w@public.gmane.org>
-
-Thanks,
-
-Logan
+T24gVGh1LCBBcHIgMTgsIDIwMTkgYXQgMTA6NDE6MzVBTSArMDIwMCwgVGhvbWFzIEdsZWl4bmVy
+IHdyb3RlOgo+IFJlcGxhY2UgdGhlIGluZGlyZWN0aW9uIHRocm91Z2ggc3RydWN0IHN0YWNrX3Ry
+YWNlIGJ5IHVzaW5nIHRoZSBzdG9yYWdlCj4gYXJyYXkgYmFzZWQgaW50ZXJmYWNlcy4KPiAKPiBU
+aGUgb3JpZ2luYWwgY29kZSBpbiBhbGwgcHJpbnRpbmcgZnVuY3Rpb25zIGlzIHJlYWxseSB3cm9u
+Zy4gSXQgYWxsb2NhdGVzIGEKPiBzdG9yYWdlIGFycmF5IG9uIHN0YWNrIHdoaWNoIGlzIHVudXNl
+ZCBiZWNhdXNlIGRlcG90X2ZldGNoX3N0YWNrKCkgZG9lcyBub3QKPiBzdG9yZSBhbnl0aGluZyBp
+biBpdC4gSXQgb3ZlcndyaXRlcyB0aGUgZW50cmllcyBwb2ludGVyIGluIHRoZSBzdGFja190cmFj
+ZQo+IHN0cnVjdCBzbyBpdCBwb2ludHMgdG8gdGhlIGRlcG90IHN0b3JhZ2UuCgpUaGFua3MgZm9y
+IGNsZWFuaW5nIHRoaXMgdXAgZm9yIHVzIQoKPiBTaWduZWQtb2ZmLWJ5OiBUaG9tYXMgR2xlaXhu
+ZXIgPHRnbHhAbGludXRyb25peC5kZT4KPiBDYzogaW50ZWwtZ2Z4QGxpc3RzLmZyZWVkZXNrdG9w
+Lm9yZwo+IENjOiBKb29uYXMgTGFodGluZW4gPGpvb25hcy5sYWh0aW5lbkBsaW51eC5pbnRlbC5j
+b20+Cj4gQ2M6IE1hYXJ0ZW4gTGFua2hvcnN0IDxtYWFydGVuLmxhbmtob3JzdEBsaW51eC5pbnRl
+bC5jb20+Cj4gQ2M6IGRyaS1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKPiBDYzogRGF2aWQg
+QWlybGllIDxhaXJsaWVkQGxpbnV4LmllPgo+IENjOiBKYW5pIE5pa3VsYSA8amFuaS5uaWt1bGFA
+bGludXguaW50ZWwuY29tPgo+IENjOiBEYW5pZWwgVmV0dGVyIDxkYW5pZWxAZmZ3bGwuY2g+Cj4g
+Q2M6IFJvZHJpZ28gVml2aSA8cm9kcmlnby52aXZpQGludGVsLmNvbT4KCkFja2VkLWJ5OiBEYW5p
+ZWwgVmV0dGVyIDxkYW5pZWwudmV0dGVyQGZmd2xsLmNoPgoKZm9yIG1lcmdpbmcgdGhyb3VnaCB3
+aGF0ZXZlciB0cmVlIGlzIGNvbnZlbmllbnQgZm9yIHlvdSAob3IgdGVsbCBtZSBJCnNob3VsZCBw
+aWNrIGl0IHVwIGludG8gZHJtLW5leHQgd2hlbiB0aGUgcHJlcCB3b3JrIGxhbmRlZCkuCgpDaGVl
+cnMsIERhbmllbAoKPiAtLS0KPiAgZHJpdmVycy9ncHUvZHJtL2RybV9tbS5jICAgICAgICAgICAg
+ICAgIHwgICAyMiArKysrKysrLS0tLS0tLS0tLS0tLS0tCj4gIGRyaXZlcnMvZ3B1L2RybS9pOTE1
+L2k5MTVfdm1hLmMgICAgICAgICB8ICAgMTEgKysrKy0tLS0tLS0KPiAgZHJpdmVycy9ncHUvZHJt
+L2k5MTUvaW50ZWxfcnVudGltZV9wbS5jIHwgICAyMSArKysrKysrLS0tLS0tLS0tLS0tLS0KPiAg
+MyBmaWxlcyBjaGFuZ2VkLCAxOCBpbnNlcnRpb25zKCspLCAzNiBkZWxldGlvbnMoLSkKPiAKPiAt
+LS0gYS9kcml2ZXJzL2dwdS9kcm0vZHJtX21tLmMKPiArKysgYi9kcml2ZXJzL2dwdS9kcm0vZHJt
+X21tLmMKPiBAQCAtMTA2LDIyICsxMDYsMTkgQEAKPiAgc3RhdGljIG5vaW5saW5lIHZvaWQgc2F2
+ZV9zdGFjayhzdHJ1Y3QgZHJtX21tX25vZGUgKm5vZGUpCj4gIHsKPiAgCXVuc2lnbmVkIGxvbmcg
+ZW50cmllc1tTVEFDS0RFUFRIXTsKPiAtCXN0cnVjdCBzdGFja190cmFjZSB0cmFjZSA9IHsKPiAt
+CQkuZW50cmllcyA9IGVudHJpZXMsCj4gLQkJLm1heF9lbnRyaWVzID0gU1RBQ0tERVBUSCwKPiAt
+CQkuc2tpcCA9IDEKPiAtCX07Cj4gKwl1bnNpZ25lZCBpbnQgbjsKPiAgCj4gLQlzYXZlX3N0YWNr
+X3RyYWNlKCZ0cmFjZSk7Cj4gKwluID0gc3RhY2tfdHJhY2Vfc2F2ZShlbnRyaWVzLCBBUlJBWV9T
+SVpFKGVudHJpZXMpLCAxKTsKPiAgCj4gIAkvKiBNYXkgYmUgY2FsbGVkIHVuZGVyIHNwaW5sb2Nr
+LCBzbyBhdm9pZCBzbGVlcGluZyAqLwo+IC0Jbm9kZS0+c3RhY2sgPSBkZXBvdF9zYXZlX3N0YWNr
+KCZ0cmFjZSwgR0ZQX05PV0FJVCk7Cj4gKwlub2RlLT5zdGFjayA9IHN0YWNrX2RlcG90X3NhdmUo
+ZW50cmllcywgbiwgR0ZQX05PV0FJVCk7Cj4gIH0KPiAgCj4gIHN0YXRpYyB2b2lkIHNob3dfbGVh
+a3Moc3RydWN0IGRybV9tbSAqbW0pCj4gIHsKPiAgCXN0cnVjdCBkcm1fbW1fbm9kZSAqbm9kZTsK
+PiAtCXVuc2lnbmVkIGxvbmcgZW50cmllc1tTVEFDS0RFUFRIXTsKPiArCXVuc2lnbmVkIGxvbmcg
+KmVudHJpZXM7Cj4gKwl1bnNpZ25lZCBpbnQgbnJfZW50cmllczsKPiAgCWNoYXIgKmJ1ZjsKPiAg
+Cj4gIAlidWYgPSBrbWFsbG9jKEJVRlNaLCBHRlBfS0VSTkVMKTsKPiBAQCAtMTI5LDE5ICsxMjYs
+MTQgQEAgc3RhdGljIHZvaWQgc2hvd19sZWFrcyhzdHJ1Y3QgZHJtX21tICptbQo+ICAJCXJldHVy
+bjsKPiAgCj4gIAlsaXN0X2Zvcl9lYWNoX2VudHJ5KG5vZGUsIGRybV9tbV9ub2RlcyhtbSksIG5v
+ZGVfbGlzdCkgewo+IC0JCXN0cnVjdCBzdGFja190cmFjZSB0cmFjZSA9IHsKPiAtCQkJLmVudHJp
+ZXMgPSBlbnRyaWVzLAo+IC0JCQkubWF4X2VudHJpZXMgPSBTVEFDS0RFUFRICj4gLQkJfTsKPiAt
+Cj4gIAkJaWYgKCFub2RlLT5zdGFjaykgewo+ICAJCQlEUk1fRVJST1IoIm5vZGUgWyUwOGxseCAr
+ICUwOGxseF06IHVua25vd24gb3duZXJcbiIsCj4gIAkJCQkgIG5vZGUtPnN0YXJ0LCBub2RlLT5z
+aXplKTsKPiAgCQkJY29udGludWU7Cj4gIAkJfQo+ICAKPiAtCQlkZXBvdF9mZXRjaF9zdGFjayhu
+b2RlLT5zdGFjaywgJnRyYWNlKTsKPiAtCQlzbnByaW50X3N0YWNrX3RyYWNlKGJ1ZiwgQlVGU1os
+ICZ0cmFjZSwgMCk7Cj4gKwkJbnJfZW50cmllcyA9IHN0YWNrX2RlcG90X2ZldGNoKG5vZGUtPnN0
+YWNrLCAmZW50cmllcyk7Cj4gKwkJc3RhY2tfdHJhY2Vfc25wcmludChidWYsIEJVRlNaLCBlbnRy
+aWVzLCBucl9lbnRyaWVzLCAwKTsKPiAgCQlEUk1fRVJST1IoIm5vZGUgWyUwOGxseCArICUwOGxs
+eF06IGluc2VydGVkIGF0XG4lcyIsCj4gIAkJCSAgbm9kZS0+c3RhcnQsIG5vZGUtPnNpemUsIGJ1
+Zik7Cj4gIAl9Cj4gLS0tIGEvZHJpdmVycy9ncHUvZHJtL2k5MTUvaTkxNV92bWEuYwo+ICsrKyBi
+L2RyaXZlcnMvZ3B1L2RybS9pOTE1L2k5MTVfdm1hLmMKPiBAQCAtMzYsMTEgKzM2LDggQEAKPiAg
+Cj4gIHN0YXRpYyB2b2lkIHZtYV9wcmludF9hbGxvY2F0b3Ioc3RydWN0IGk5MTVfdm1hICp2bWEs
+IGNvbnN0IGNoYXIgKnJlYXNvbikKPiAgewo+IC0JdW5zaWduZWQgbG9uZyBlbnRyaWVzWzEyXTsK
+PiAtCXN0cnVjdCBzdGFja190cmFjZSB0cmFjZSA9IHsKPiAtCQkuZW50cmllcyA9IGVudHJpZXMs
+Cj4gLQkJLm1heF9lbnRyaWVzID0gQVJSQVlfU0laRShlbnRyaWVzKSwKPiAtCX07Cj4gKwl1bnNp
+Z25lZCBsb25nICplbnRyaWVzOwo+ICsJdW5zaWduZWQgaW50IG5yX2VudHJpZXM7Cj4gIAljaGFy
+IGJ1Zls1MTJdOwo+ICAKPiAgCWlmICghdm1hLT5ub2RlLnN0YWNrKSB7Cj4gQEAgLTQ5LDggKzQ2
+LDggQEAgc3RhdGljIHZvaWQgdm1hX3ByaW50X2FsbG9jYXRvcihzdHJ1Y3QgaQo+ICAJCXJldHVy
+bjsKPiAgCX0KPiAgCj4gLQlkZXBvdF9mZXRjaF9zdGFjayh2bWEtPm5vZGUuc3RhY2ssICZ0cmFj
+ZSk7Cj4gLQlzbnByaW50X3N0YWNrX3RyYWNlKGJ1Ziwgc2l6ZW9mKGJ1ZiksICZ0cmFjZSwgMCk7
+Cj4gKwlucl9lbnRyaWVzID0gc3RhY2tfZGVwb3RfZmV0Y2godm1hLT5ub2RlLnN0YWNrLCAmZW50
+cmllcyk7Cj4gKwlzdGFja190cmFjZV9zbnByaW50KGJ1Ziwgc2l6ZW9mKGJ1ZiksIGVudHJpZXMs
+IG5yX2VudHJpZXMsIDApOwo+ICAJRFJNX0RFQlVHX0RSSVZFUigidm1hLm5vZGUgWyUwOGxseCAr
+ICUwOGxseF0gJXM6IGluc2VydGVkIGF0ICVzXG4iLAo+ICAJCQkgdm1hLT5ub2RlLnN0YXJ0LCB2
+bWEtPm5vZGUuc2l6ZSwgcmVhc29uLCBidWYpOwo+ICB9Cj4gLS0tIGEvZHJpdmVycy9ncHUvZHJt
+L2k5MTUvaW50ZWxfcnVudGltZV9wbS5jCj4gKysrIGIvZHJpdmVycy9ncHUvZHJtL2k5MTUvaW50
+ZWxfcnVudGltZV9wbS5jCj4gQEAgLTYwLDI3ICs2MCwyMCBAQAo+ICBzdGF0aWMgbm9pbmxpbmUg
+ZGVwb3Rfc3RhY2tfaGFuZGxlX3QgX19zYXZlX2RlcG90X3N0YWNrKHZvaWQpCj4gIHsKPiAgCXVu
+c2lnbmVkIGxvbmcgZW50cmllc1tTVEFDS0RFUFRIXTsKPiAtCXN0cnVjdCBzdGFja190cmFjZSB0
+cmFjZSA9IHsKPiAtCQkuZW50cmllcyA9IGVudHJpZXMsCj4gLQkJLm1heF9lbnRyaWVzID0gQVJS
+QVlfU0laRShlbnRyaWVzKSwKPiAtCQkuc2tpcCA9IDEsCj4gLQl9Owo+ICsJdW5zaWduZWQgaW50
+IG47Cj4gIAo+IC0Jc2F2ZV9zdGFja190cmFjZSgmdHJhY2UpOwo+IC0JcmV0dXJuIGRlcG90X3Nh
+dmVfc3RhY2soJnRyYWNlLCBHRlBfTk9XQUlUIHwgX19HRlBfTk9XQVJOKTsKPiArCW4gPSBzdGFj
+a190cmFjZV9zYXZlKGVudHJpZXMsIEFSUkFZX1NJWkUoZW50cmllcyksIDEpOwo+ICsJcmV0dXJu
+IHN0YWNrX2RlcG90X3NhdmUoZW50cmllcywgbiwgR0ZQX05PV0FJVCB8IF9fR0ZQX05PV0FSTik7
+Cj4gIH0KPiAgCj4gIHN0YXRpYyB2b2lkIF9fcHJpbnRfZGVwb3Rfc3RhY2soZGVwb3Rfc3RhY2tf
+aGFuZGxlX3Qgc3RhY2ssCj4gIAkJCQljaGFyICpidWYsIGludCBzeiwgaW50IGluZGVudCkKPiAg
+ewo+IC0JdW5zaWduZWQgbG9uZyBlbnRyaWVzW1NUQUNLREVQVEhdOwo+IC0Jc3RydWN0IHN0YWNr
+X3RyYWNlIHRyYWNlID0gewo+IC0JCS5lbnRyaWVzID0gZW50cmllcywKPiAtCQkubWF4X2VudHJp
+ZXMgPSBBUlJBWV9TSVpFKGVudHJpZXMpLAo+IC0JfTsKPiArCXVuc2lnbmVkIGxvbmcgKmVudHJp
+ZXM7Cj4gKwl1bnNpZ25lZCBpbnQgbnJfZW50cmllczsKPiAgCj4gLQlkZXBvdF9mZXRjaF9zdGFj
+ayhzdGFjaywgJnRyYWNlKTsKPiAtCXNucHJpbnRfc3RhY2tfdHJhY2UoYnVmLCBzeiwgJnRyYWNl
+LCBpbmRlbnQpOwo+ICsJbnJfZW50cmllcyA9IHN0YWNrX2RlcG90X2ZldGNoKHN0YWNrLCAmZW50
+cmllcyk7Cj4gKwlzdGFja190cmFjZV9zbnByaW50KGJ1Ziwgc3osIGVudHJpZXMsIG5yX2VudHJp
+ZXMsIGluZGVudCk7Cj4gIH0KPiAgCj4gIHN0YXRpYyB2b2lkIGluaXRfaW50ZWxfcnVudGltZV9w
+bV93YWtlcmVmKHN0cnVjdCBkcm1faTkxNV9wcml2YXRlICppOTE1KQo+IAo+IAoKLS0gCkRhbmll
+bCBWZXR0ZXIKU29mdHdhcmUgRW5naW5lZXIsIEludGVsIENvcnBvcmF0aW9uCmh0dHA6Ly9ibG9n
+LmZmd2xsLmNoCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+CkludGVsLWdmeCBtYWlsaW5nIGxpc3QKSW50ZWwtZ2Z4QGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpo
+dHRwczovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2ludGVsLWdmeA==
