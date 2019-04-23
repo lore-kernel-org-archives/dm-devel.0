@@ -1,98 +1,70 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm-writecache: avoid unnecessary lookups in
- writecache_find_entry
-Date: Tue, 23 Apr 2019 11:44:28 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1904231140240.17390@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20190420162102.6460-1-yehs2007@zoho.com>
+Subject: Re: [PATCH] dm-writecache: simplify the using of pointer wb
+Date: Tue, 23 Apr 2019 11:49:31 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1904231148150.17390@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20190412152718.27102-1-huye@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190420162102.6460-1-yehs2007@zoho.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Huaisheng Ye <yehs2007@zoho.com>
-Cc: prarit@redhat.com, Huaisheng Ye <yehs1@lenovo.com>, snitzer@redhat.com, chengnt@lenovo.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190412152718.27102-1-huye@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Huaisheng Ye <huye@redhat.com>
+Cc: snitzer@redhat.com, agk@redhat.com, prarit@redhat.com, chengnt@lenovo.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Huaisheng Ye <yehs1@lenovo.com>
 List-Id: dm-devel.ids
 
 
 
-On Sun, 21 Apr 2019, Huaisheng Ye wrote:
+On Fri, 12 Apr 2019, Huaisheng Ye wrote:
 
 > From: Huaisheng Ye <yehs1@lenovo.com>
 > 
-> Only when entry has been found, that would only be necessary to check the
-> lowest or highest seq-count.
-> 
-> Add local variable "found" in writecache_find_entry, if no entry has been
-> found, it is meaningless that having a useless rb_prev or rb_next.
+> In function __writecache_writeback_pmem, the pointer bio has been
+> already there, it doesn't need to seek bio's address from pointer wb.
 
-
-Hi
-
-I don't quite see what is this patch trying to fix.
-Don't fix something that isn't broken.
+The compiler optimizer knows that the offset between "wb" and "bio" is 
+constant, so that there is no difference in the generated code before or 
+after this patch.
 
 Mikulas
 
-
 > Signed-off-by: Huaisheng Ye <yehs1@lenovo.com>
 > ---
->  drivers/md/dm-writecache.c | 12 ++++++++++--
->  1 file changed, 10 insertions(+), 2 deletions(-)
+>  drivers/md/dm-writecache.c | 12 ++++++------
+>  1 file changed, 6 insertions(+), 6 deletions(-)
 > 
 > diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-> index ddf1732..047ae09 100644
+> index f782287..5b4d1c1 100644
 > --- a/drivers/md/dm-writecache.c
 > +++ b/drivers/md/dm-writecache.c
-> @@ -537,14 +537,18 @@ static struct wc_entry *writecache_find_entry(struct dm_writecache *wc,
->  {
->  	struct wc_entry *e;
->  	struct rb_node *node = wc->tree.rb_node;
-> +	bool found = false;
->  
->  	if (unlikely(!node))
->  		return NULL;
->  
->  	while (1) {
->  		e = container_of(node, struct wc_entry, rb_node);
-> -		if (read_original_sector(wc, e) == block)
-> +		if (read_original_sector(wc, e) == block) {
-> +			found = true;
->  			break;
-> +		}
-> +
->  		node = (read_original_sector(wc, e) >= block ?
->  			e->rb_node.rb_left : e->rb_node.rb_right);
->  		if (unlikely(!node)) {
-> @@ -564,7 +568,8 @@ static struct wc_entry *writecache_find_entry(struct dm_writecache *wc,
+> @@ -1478,9 +1478,9 @@ static void __writecache_writeback_pmem(struct dm_writecache *wc, struct writeba
+>  		bio = bio_alloc_bioset(GFP_NOIO, max_pages, &wc->bio_set);
+>  		wb = container_of(bio, struct writeback_struct, bio);
+>  		wb->wc = wc;
+> -		wb->bio.bi_end_io = writecache_writeback_endio;
+> -		bio_set_dev(&wb->bio, wc->dev->bdev);
+> -		wb->bio.bi_iter.bi_sector = read_original_sector(wc, e);
+> +		bio->bi_end_io = writecache_writeback_endio;
+> +		bio_set_dev(bio, wc->dev->bdev);
+> +		bio->bi_iter.bi_sector = read_original_sector(wc, e);
+>  		wb->page_offset = PAGE_SIZE;
+>  		if (max_pages <= WB_LIST_INLINE ||
+>  		    unlikely(!(wb->wc_list = kmalloc_array(max_pages, sizeof(struct wc_entry *),
+> @@ -1507,12 +1507,12 @@ static void __writecache_writeback_pmem(struct dm_writecache *wc, struct writeba
+>  			wb->wc_list[wb->wc_list_n++] = f;
+>  			e = f;
 >  		}
->  	}
+> -		bio_set_op_attrs(&wb->bio, REQ_OP_WRITE, WC_MODE_FUA(wc) * REQ_FUA);
+> +		bio_set_op_attrs(bio, REQ_OP_WRITE, WC_MODE_FUA(wc) * REQ_FUA);
+>  		if (writecache_has_error(wc)) {
+>  			bio->bi_status = BLK_STS_IOERR;
+> -			bio_endio(&wb->bio);
+> +			bio_endio(bio);
+>  		} else {
+> -			submit_bio(&wb->bio);
+> +			submit_bio(bio);
+>  		}
 >  
-> -	while (1) {
-> +	/* only need to check lowest or highest seq-count when entry has been found */
-> +	while (found) {
->  		struct wc_entry *e2;
->  		if (flags & WFE_LOWEST_SEQ)
->  			node = rb_prev(&e->rb_node);
-> @@ -577,6 +582,9 @@ static struct wc_entry *writecache_find_entry(struct dm_writecache *wc,
->  			return e;
->  		e = e2;
->  	}
-> +
-> +	/* no entry has been found, return the following entry */
-> +	return e;
->  }
->  
->  static void writecache_insert_entry(struct dm_writecache *wc, struct wc_entry *ins)
+>  		__writeback_throttle(wc, wbl);
 > -- 
 > 1.8.3.1
-> 
 > 
