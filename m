@@ -1,235 +1,79 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH] multipath -u: test socket connection in
-	non-blocking mode
-Date: Tue, 23 Apr 2019 21:32:37 +0200
-Message-ID: <20190423193237.28391-1-mwilck@suse.com>
+From: Mauro Carvalho Chehab <mchehab+samsung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2 56/79] docs: Documentation/*.txt: rename all ReST
+	files to *.rst
+Date: Tue, 23 Apr 2019 17:05:02 -0300
+Message-ID: <20190423170409.7b1370ac@coco.lan>
+References: <cover.1555938375.git.mchehab+samsung@kernel.org>
+	<cda57849a6462ccc72dcd360b30068ab6a1021c4.1555938376.git.mchehab+samsung@kernel.org>
+	<20190423083135.GA11158@hirez.programming.kicks-ass.net>
+	<20190423125519.GA7104@redhat.com>
+	<20190423130132.GT4038@hirez.programming.kicks-ass.net>
+	<20190423103053.07cf2149@lwn.net>
+	<20190423171158.GG12232@hirez.programming.kicks-ass.net>
+	<20190423172006.GD16353@zn.tnic>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <20190423172006.GD16353-Jj63ApZU6fQ@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
+List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Rafael J. Wysocki" <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Farhan Ali <alifm-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-sh-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Halil Pasic <pasic-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, tboot-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>, openipmi-developer-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Nicholas Piggin <npiggin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Sean Paul <sean-p7yTbzM4H96eqtR555YLDQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-wireless@v
 List-Id: dm-devel.ids
 
-Since commit d7188fcd "multipathd: start daemon after udev trigger",
-multipathd startup is delayed during boot until after "udev settle"
-terminates. But "multipath -u" is run by udev workers for storage devices,
-and attempts to connect to the multipathd socket. This causes a start job
-for multipathd to be scheduled by systemd, but that job won't be started
-until "udev settle" finishes. This is not a problem on systems with 129 or
-less storage units, because the connect() call of "multipath -u" will
-succeed anyway. But on larger systems, the listen backlog of the systemd
-socket can be exceeded, which causes connect() calls for the socket to
-block until multipathd starts up and begins calling accept(). This creates
-a deadlock situation, because "multipath -u" (called by udev workers)
-blocks, and thus "udev settle" doesn't finish, delaying multipathd
-startup. This situation then persists until either the workers or "udev
-settle" time out. In the former case, path devices might be misclassified
-as non-multipath devices by "multipath -u".
+Em Tue, 23 Apr 2019 19:20:06 +0200
+Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org> escreveu:
 
-Fix this by using a non-blocking socket fd for connect() and interpret the
-errno appropriately.
+> On Tue, Apr 23, 2019 at 07:11:58PM +0200, Peter Zijlstra wrote:
+> > I know I'm an odd duck; but no. They're _less_ accessible for me, as
+> > both a reader and author. They look 'funny' when read as a text file
+> > (the only way it makes sense to read them; I spend 99% of my time on a
+> > computer looking at monospace text interfaces; mutt, vim and console, in
+> > that approximate order).  
+> 
+> +1
+> 
+> It is probably fine to stare at them here
+> https://www.kernel.org/doc/html/latest/ and the end result is good
+> for showing them in browsers but after this conversion, it is
+> getting more and more painful to work with those files. For example,
+> Documentation/x86/x86_64/mm.txt we use a lot. I'd hate it if I had to go
+> sort out rest muck first just so that I can read it.
 
-This patch reverts most of the changes from commit 8cdf6661 "multipath:
-check on multipathd without starting it". Instead, "multipath -u" does
-access the socket and start multipath again (which is what we want IMO),
-but it is now able to detect and handle the "full backlog" situation.
----
- libmpathcmd/mpath_cmd.c | 33 +++++++++++++++++---
- libmpathcmd/mpath_cmd.h | 15 +++++++++
- multipath/main.c        | 67 ++++++++++++-----------------------------
- 3 files changed, 64 insertions(+), 51 deletions(-)
+That's my view about how that specific file would be after
+converted to ReST:
 
-diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
-index df4ca541..265af1fb 100644
---- a/libmpathcmd/mpath_cmd.c
-+++ b/libmpathcmd/mpath_cmd.c
-@@ -26,6 +26,7 @@
- #include <poll.h>
- #include <string.h>
- #include <errno.h>
-+#include <fcntl.h>
- 
- #include "mpath_cmd.h"
- 
-@@ -93,10 +94,11 @@ static size_t write_all(int fd, const void *buf, size_t len)
- /*
-  * connect to a unix domain socket
-  */
--int mpath_connect(void)
-+int __mpath_connect(int nonblocking)
- {
--	int fd, len;
-+	int fd, len, err;
- 	struct sockaddr_un addr;
-+	int flags = 0;
- 
- 	memset(&addr, 0, sizeof(addr));
- 	addr.sun_family = AF_LOCAL;
-@@ -106,16 +108,39 @@ int mpath_connect(void)
- 
- 	fd = socket(AF_LOCAL, SOCK_STREAM, 0);
- 	if (fd == -1)
--		return -1;
-+		return -errno;
-+
-+	if (nonblocking) {
-+		flags = fcntl(fd, F_GETFL, 0);
-+		if (flags != -1)
-+			(void)fcntl(fd, F_SETFL, flags|O_NONBLOCK);
-+	}
- 
- 	if (connect(fd, (struct sockaddr *)&addr, len) == -1) {
-+		err = -errno;
- 		close(fd);
--		return -1;
-+		return err;
- 	}
- 
-+	if (nonblocking && flags != -1)
-+		(void)fcntl(fd, F_SETFL, flags);
-+
- 	return fd;
- }
- 
-+/*
-+ * connect to a unix domain socket
-+ */
-+int mpath_connect(void)
-+{
-+	int fd = __mpath_connect(0);
-+
-+	if (fd >= 0)
-+		return fd;
-+	errno = -fd;
-+	return -1;
-+}
-+
- int mpath_disconnect(int fd)
- {
- 	return close(fd);
-diff --git a/libmpathcmd/mpath_cmd.h b/libmpathcmd/mpath_cmd.h
-index 15aeb067..0d4c45cd 100644
---- a/libmpathcmd/mpath_cmd.h
-+++ b/libmpathcmd/mpath_cmd.h
-@@ -34,6 +34,21 @@ extern "C" {
- #define DEFAULT_REPLY_TIMEOUT	4000
- 
- 
-+/*
-+ * DESCRIPTION:
-+ *	Same as mpath_connect() (see below) except for the error return code
-+ *	and the "nonblocking" parameter.
-+ *	If "nonblocking" is set, connects in non-blocking mode. This is
-+ *	useful to avoid blocking if the listening socket's backlog is
-+ *	exceeded. In this case, -EAGAIN will be returned.
-+ *	Even with "nonblocking" set, the returned file descriptor is in
-+ *	blocking mode in case of success.
-+ *
-+ * RETURNS:
-+ *	A file descriptor (>= 0) on success. -errno on failure.
-+ */
-+int __mpath_connect(int nonblocking);
-+
- /*
-  * DESCRIPTION:
-  *	Connect to the running multipathd daemon. On systems with the
-diff --git a/multipath/main.c b/multipath/main.c
-index 008e3d3f..52220dbf 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -850,55 +850,28 @@ out:
- 	return r;
- }
- 
--int is_multipathd_running(void)
-+static int test_multipathd_socket(void)
- {
--	FILE *f = NULL;
--	char buf[16];
--	char path[PATH_MAX];
--	int pid;
--	char *end;
-+	int fd;
-+	/*
-+	 * "multipath -u" may be run before the daemon is started. In this
-+	 * case, systemd might own the socket but might delay multipathd
-+	 * startup until some other unit (udev settle!)  has finished
-+	 * starting. With many LUNs, the listen backlog may be exceeded, which
-+	 * would cause connect() to block. This causes udev workers calling
-+	 * "multipath -u" to hang, and thus creates a deadlock, until "udev
-+	 * settle" times out.  To avoid this, call connect() in non-blocking
-+	 * mode here, and take EAGAIN as indication for a filled-up systemd
-+	 * backlog.
-+	 */
- 
--	f = fopen(DEFAULT_PIDFILE, "r");
--	if (!f) {
--		if (errno != ENOENT)
--			condlog(4, "can't open " DEFAULT_PIDFILE ": %s",
--				strerror(errno));
--		return 0;
--	}
--	if (!fgets(buf, sizeof(buf), f)) {
--		if (ferror(f))
--			condlog(4, "read of " DEFAULT_PIDFILE " failed: %s",
--				strerror(errno));
--		fclose(f);
--		return 0;
--	}
--	fclose(f);
--	errno = 0;
--	strchop(buf);
--	pid = strtol(buf, &end, 10);
--	if (errno != 0 || pid <= 0 || *end != '\0') {
--		condlog(4, "invalid contents in " DEFAULT_PIDFILE ": '%s'",
--			buf);
--		return 0;
--	}
--	snprintf(path, sizeof(path), "/proc/%d/comm", pid);
--	f = fopen(path, "r");
--	if (!f) {
--		if (errno != ENOENT)
--			condlog(4, "can't open %s: %s", path, strerror(errno));
--		return 0;
--	}
--	if (!fgets(buf, sizeof(buf), f)) {
--		if (ferror(f))
--			condlog(4, "read of %s failed: %s", path,
--				strerror(errno));
--		fclose(f);
--		return 0;
--	}
--	fclose(f);
--	strchop(buf);
--	if (strcmp(buf, "multipathd") != 0)
-+	fd = __mpath_connect(1);
-+	if (fd == -EAGAIN)
-+		condlog(3, "daemon backlog exceeded");
-+	else if (fd < 0)
- 		return 0;
-+	else
-+		close(fd);
- 	return 1;
- }
- 
-@@ -1080,7 +1053,7 @@ main (int argc, char *argv[])
- 	}
- 	if (cmd == CMD_VALID_PATH &&
- 	    dev_type == DEV_UEVENT) {
--		if (!is_multipathd_running()) {
-+		if (!test_multipathd_socket()) {
- 			condlog(3, "%s: daemon is not running", dev);
- 			if (!systemd_service_enabled(dev)) {
- 				r = print_cmd_valid(RTVL_NO, NULL, conf);
--- 
-2.21.0
+	https://git.linuxtv.org/mchehab/experimental.git/tree/Documentation/x86/x86_64/mm.rst?h=convert_rst_renames
+
+I don't have any troubles reading/understanding it as a plain text
+file, and its html output is also nice (although Sphinx 1.7.8 seems to
+have some issues when parsing some cells - probably due to some bug):
+
+	https://www.infradead.org/~mchehab/rst_conversion/x86/x86_64/mm.html
+
+> 
+> I think we can simply leave some text files be text files and be done
+> with it.
+
+Changbin's approach was somewhat close to what you want. He simply
+prepended the tables with ::, in order to show them as plain old
+ascii:
+
+	https://lore.kernel.org/lkml/20190423162932.21428-60-changbin.du-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org/
+
+Both equally works, from ReST conversion PoV. I'm fine ether way.
+
+I prefer my approach, as, IMHO, it is visually nicer on both text and
+html versions, but his approach is likely easier to maintain, as doing
+ascii artwork by hand is sometimes painful.
+
+Thanks,
+Mauro
