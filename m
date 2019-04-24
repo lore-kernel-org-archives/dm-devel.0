@@ -1,238 +1,65 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2] multipath -u: test socket connection in
-	non-blocking mode
-Date: Wed, 24 Apr 2019 11:07:59 +0200
-Message-ID: <20190424090759.29796-1-mwilck@suse.com>
+From: Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>
+Subject: Re: [PATCH v2 56/79] docs: Documentation/*.txt: rename all ReST
+	files to *.rst
+Date: Wed, 24 Apr 2019 11:19:06 +0200
+Message-ID: <20190424091906.GA30142@zn.tnic>
+References: <cda57849a6462ccc72dcd360b30068ab6a1021c4.1555938376.git.mchehab+samsung@kernel.org>
+	<20190423083135.GA11158@hirez.programming.kicks-ass.net>
+	<20190423125519.GA7104@redhat.com>
+	<20190423130132.GT4038@hirez.programming.kicks-ass.net>
+	<20190423103053.07cf2149@lwn.net>
+	<20190423171158.GG12232@hirez.programming.kicks-ass.net>
+	<20190423172006.GD16353@zn.tnic> <20190423170409.7b1370ac@coco.lan>
+	<20190423213816.GE16353@zn.tnic> <20190423160640.70c9703f@lwn.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20190423160640.70c9703f-T1hC0tSOHrs@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
+List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Rafael J. Wysocki" <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Farhan Ali <alifm-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, Mauro Carvalho Chehab <mchehab+samsung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-sh-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Halil Pasic <pasic-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, tboot-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>, openipmi-developer-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Nicholas Piggin <npiggin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Sean Paul <sean-p7yTbzM4H96eqtR555YLDQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: dm-devel.ids
 
-Since commit d7188fcd "multipathd: start daemon after udev trigger",
-multipathd startup is delayed during boot until after "udev settle"
-terminates. But "multipath -u" is run by udev workers for storage devices,
-and attempts to connect to the multipathd socket. This causes a start job
-for multipathd to be scheduled by systemd, but that job won't be started
-until "udev settle" finishes. This is not a problem on systems with 129 or
-less storage units, because the connect() call of "multipath -u" will
-succeed anyway. But on larger systems, the listen backlog of the systemd
-socket can be exceeded, which causes connect() calls for the socket to
-block until multipathd starts up and begins calling accept(). This creates
-a deadlock situation, because "multipath -u" (called by udev workers)
-blocks, and thus "udev settle" doesn't finish, delaying multipathd
-startup. This situation then persists until either the workers or "udev
-settle" time out. In the former case, path devices might be misclassified
-as non-multipath devices by "multipath -u".
+On Tue, Apr 23, 2019 at 04:06:40PM -0600, Jonathan Corbet wrote:
+> Remember that most of our docs are 99% RST even though they were written
+> by people who had never even heard of RST.  I really don't think it's a
+> big deal - a far smaller cognitive load than trying to keep up with any
+> given subsystem's variable-declaration-ordering rules, for example :)
 
-Fix this by using a non-blocking socket fd for connect() and interpret the
-errno appropriately.
+Tztztz, this thing seems to have hit a nerve with people. Which means, I
+will enforce that even more now so that I annoy submitters more! :-P
 
-This patch reverts most of the changes from commit 8cdf6661 "multipath:
-check on multipathd without starting it". Instead, "multipath -u" does
-access the socket and start multipath again (which is what we want IMO),
-but it is now able to detect and handle the "full backlog" situation.
+See, I can do my own "RST" too. :-P
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Srsly: ok, good. Sounds like we're on the same page then.
 
-V2:
+>  I'm trying to do the same in Documentation/, with an attempt to be
+> sympathetic toward our readers, sort things by intended audience,
+> and create (someday) a coherent whole. I agree that moving docs is
+> a short-term annoyance, but I'm hoping that it brings a long-term
+> benefit.
 
-Use same error reporting convention in __mpath_connect() as in
-mpath_connect() (Hannes Reinecke). We can't easily change the latter,
-because it's part of the "public" libmpathcmd API. 
+Ok, that's fair. I've been moving files too, in the past.
 
----
- libmpathcmd/mpath_cmd.c | 24 +++++++++++++-
- libmpathcmd/mpath_cmd.h | 15 +++++++++
- multipath/main.c        | 70 +++++++++++++----------------------------
- 3 files changed, 60 insertions(+), 49 deletions(-)
+> Minimal markup is the policy (it's even documented :).  Automating stuff
+> that can be automated is an area that has definitely not received
+> enough attention; hopefully some things can be done there in the very
+> near future.
 
-diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
-index df4ca541..b681311b 100644
---- a/libmpathcmd/mpath_cmd.c
-+++ b/libmpathcmd/mpath_cmd.c
-@@ -26,6 +26,7 @@
- #include <poll.h>
- #include <string.h>
- #include <errno.h>
-+#include <fcntl.h>
- 
- #include "mpath_cmd.h"
- 
-@@ -93,10 +94,11 @@ static size_t write_all(int fd, const void *buf, size_t len)
- /*
-  * connect to a unix domain socket
-  */
--int mpath_connect(void)
-+int __mpath_connect(int nonblocking)
- {
- 	int fd, len;
- 	struct sockaddr_un addr;
-+	int flags = 0;
- 
- 	memset(&addr, 0, sizeof(addr));
- 	addr.sun_family = AF_LOCAL;
-@@ -108,14 +110,34 @@ int mpath_connect(void)
- 	if (fd == -1)
- 		return -1;
- 
-+	if (nonblocking) {
-+		flags = fcntl(fd, F_GETFL, 0);
-+		if (flags != -1)
-+			(void)fcntl(fd, F_SETFL, flags|O_NONBLOCK);
-+	}
-+
- 	if (connect(fd, (struct sockaddr *)&addr, len) == -1) {
-+		int err = errno;
-+
- 		close(fd);
-+		errno = err;
- 		return -1;
- 	}
- 
-+	if (nonblocking && flags != -1)
-+		(void)fcntl(fd, F_SETFL, flags);
-+
- 	return fd;
- }
- 
-+/*
-+ * connect to a unix domain socket
-+ */
-+int mpath_connect(void)
-+{
-+	return __mpath_connect(0);
-+}
-+
- int mpath_disconnect(int fd)
- {
- 	return close(fd);
-diff --git a/libmpathcmd/mpath_cmd.h b/libmpathcmd/mpath_cmd.h
-index 15aeb067..ccfd35f2 100644
---- a/libmpathcmd/mpath_cmd.h
-+++ b/libmpathcmd/mpath_cmd.h
-@@ -34,6 +34,21 @@ extern "C" {
- #define DEFAULT_REPLY_TIMEOUT	4000
- 
- 
-+/*
-+ * DESCRIPTION:
-+ *	Same as mpath_connect() (see below) except for the "nonblocking"
-+ *	parameter.
-+ *	If "nonblocking" is set, connects in non-blocking mode. This is
-+ *	useful to avoid blocking if the listening socket's backlog is
-+ *	exceeded. In this case, errno will be set to EAGAIN.
-+ *	In case of success, the returned file descriptor is in in blocking
-+ *	mode, even if "nonblocking" was true.
-+ *
-+ * RETURNS:
-+ *	A file descriptor on success. -1 on failure (with errno set).
-+ */
-+int __mpath_connect(int nonblocking);
-+
- /*
-  * DESCRIPTION:
-  *	Connect to the running multipathd daemon. On systems with the
-diff --git a/multipath/main.c b/multipath/main.c
-index 008e3d3f..7933b07f 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -850,55 +850,29 @@ out:
- 	return r;
- }
- 
--int is_multipathd_running(void)
-+static int test_multipathd_socket(void)
- {
--	FILE *f = NULL;
--	char buf[16];
--	char path[PATH_MAX];
--	int pid;
--	char *end;
-+	int fd;
-+	/*
-+	 * "multipath -u" may be run before the daemon is started. In this
-+	 * case, systemd might own the socket but might delay multipathd
-+	 * startup until some other unit (udev settle!)  has finished
-+	 * starting. With many LUNs, the listen backlog may be exceeded, which
-+	 * would cause connect() to block. This causes udev workers calling
-+	 * "multipath -u" to hang, and thus creates a deadlock, until "udev
-+	 * settle" times out.  To avoid this, call connect() in non-blocking
-+	 * mode here, and take EAGAIN as indication for a filled-up systemd
-+	 * backlog.
-+	 */
- 
--	f = fopen(DEFAULT_PIDFILE, "r");
--	if (!f) {
--		if (errno != ENOENT)
--			condlog(4, "can't open " DEFAULT_PIDFILE ": %s",
--				strerror(errno));
--		return 0;
--	}
--	if (!fgets(buf, sizeof(buf), f)) {
--		if (ferror(f))
--			condlog(4, "read of " DEFAULT_PIDFILE " failed: %s",
--				strerror(errno));
--		fclose(f);
--		return 0;
--	}
--	fclose(f);
--	errno = 0;
--	strchop(buf);
--	pid = strtol(buf, &end, 10);
--	if (errno != 0 || pid <= 0 || *end != '\0') {
--		condlog(4, "invalid contents in " DEFAULT_PIDFILE ": '%s'",
--			buf);
--		return 0;
--	}
--	snprintf(path, sizeof(path), "/proc/%d/comm", pid);
--	f = fopen(path, "r");
--	if (!f) {
--		if (errno != ENOENT)
--			condlog(4, "can't open %s: %s", path, strerror(errno));
--		return 0;
--	}
--	if (!fgets(buf, sizeof(buf), f)) {
--		if (ferror(f))
--			condlog(4, "read of %s failed: %s", path,
--				strerror(errno));
--		fclose(f);
--		return 0;
--	}
--	fclose(f);
--	strchop(buf);
--	if (strcmp(buf, "multipathd") != 0)
--		return 0;
-+	fd = __mpath_connect(1);
-+	if (fd == -1) {
-+		if (errno == EAGAIN)
-+			condlog(3, "daemon backlog exceeded");
-+		else
-+			return 0;
-+	} else
-+		close(fd);
- 	return 1;
- }
- 
-@@ -1080,7 +1054,7 @@ main (int argc, char *argv[])
- 	}
- 	if (cmd == CMD_VALID_PATH &&
- 	    dev_type == DEV_UEVENT) {
--		if (!is_multipathd_running()) {
-+		if (!test_multipathd_socket()) {
- 			condlog(3, "%s: daemon is not running", dev);
- 			if (!systemd_service_enabled(dev)) {
- 				r = print_cmd_valid(RTVL_NO, NULL, conf);
+Sounds nice, thanks Jon!
+
 -- 
-2.21.0
+Regards/Gruss,
+    Boris.
+
+Good mailing practices for 400: avoid top-posting and trim the reply.
