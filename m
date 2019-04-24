@@ -1,154 +1,157 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH v2] multipath -u: test socket connection in
- non-blocking mode
-Date: Wed, 24 Apr 2019 11:28:08 +0200
-Message-ID: <4d893322-f606-ea63-6694-e05182296bf6@suse.de>
-References: <20190424090759.29796-1-mwilck@suse.com>
+From: Mauro Carvalho Chehab <mchehab+samsung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2 56/79] docs: Documentation/*.txt: rename all ReST
+	files to *.rst
+Date: Wed, 24 Apr 2019 07:40:07 -0300
+Message-ID: <20190423232325.679c100b@coco.lan>
+References: <cover.1555938375.git.mchehab+samsung@kernel.org>
+	<cda57849a6462ccc72dcd360b30068ab6a1021c4.1555938376.git.mchehab+samsung@kernel.org>
+	<20190423083135.GA11158@hirez.programming.kicks-ass.net>
+	<20190423125519.GA7104@redhat.com>
+	<20190423130132.GT4038@hirez.programming.kicks-ass.net>
+	<20190423103053.07cf2149@lwn.net>
+	<20190423171158.GG12232@hirez.programming.kicks-ass.net>
+	<20190423172006.GD16353@zn.tnic> <20190423170409.7b1370ac@coco.lan>
+	<20190423213816.GE16353@zn.tnic>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190424090759.29796-1-mwilck@suse.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <20190423213816.GE16353-Jj63ApZU6fQ@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
+List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Rafael J. Wysocki" <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Farhan Ali <alifm-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-sh-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Halil Pasic <pasic-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, tboot-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>, openipmi-developer-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Nicholas Piggin <npiggin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Sean Paul <sean-p7yTbzM4H96eqtR555YLDQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-wireless@v
 List-Id: dm-devel.ids
 
-T24gNC8yNC8xOSAxMTowNyBBTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IFNpbmNlIGNvbW1pdCBk
-NzE4OGZjZCAibXVsdGlwYXRoZDogc3RhcnQgZGFlbW9uIGFmdGVyIHVkZXYgdHJpZ2dlciIsCj4g
-bXVsdGlwYXRoZCBzdGFydHVwIGlzIGRlbGF5ZWQgZHVyaW5nIGJvb3QgdW50aWwgYWZ0ZXIgInVk
-ZXYgc2V0dGxlIgo+IHRlcm1pbmF0ZXMuIEJ1dCAibXVsdGlwYXRoIC11IiBpcyBydW4gYnkgdWRl
-diB3b3JrZXJzIGZvciBzdG9yYWdlIGRldmljZXMsCj4gYW5kIGF0dGVtcHRzIHRvIGNvbm5lY3Qg
-dG8gdGhlIG11bHRpcGF0aGQgc29ja2V0LiBUaGlzIGNhdXNlcyBhIHN0YXJ0IGpvYgo+IGZvciBt
-dWx0aXBhdGhkIHRvIGJlIHNjaGVkdWxlZCBieSBzeXN0ZW1kLCBidXQgdGhhdCBqb2Igd29uJ3Qg
-YmUgc3RhcnRlZAo+IHVudGlsICJ1ZGV2IHNldHRsZSIgZmluaXNoZXMuIFRoaXMgaXMgbm90IGEg
-cHJvYmxlbSBvbiBzeXN0ZW1zIHdpdGggMTI5IG9yCj4gbGVzcyBzdG9yYWdlIHVuaXRzLCBiZWNh
-dXNlIHRoZSBjb25uZWN0KCkgY2FsbCBvZiAibXVsdGlwYXRoIC11IiB3aWxsCj4gc3VjY2VlZCBh
-bnl3YXkuIEJ1dCBvbiBsYXJnZXIgc3lzdGVtcywgdGhlIGxpc3RlbiBiYWNrbG9nIG9mIHRoZSBz
-eXN0ZW1kCj4gc29ja2V0IGNhbiBiZSBleGNlZWRlZCwgd2hpY2ggY2F1c2VzIGNvbm5lY3QoKSBj
-YWxscyBmb3IgdGhlIHNvY2tldCB0bwo+IGJsb2NrIHVudGlsIG11bHRpcGF0aGQgc3RhcnRzIHVw
-IGFuZCBiZWdpbnMgY2FsbGluZyBhY2NlcHQoKS4gVGhpcyBjcmVhdGVzCj4gYSBkZWFkbG9jayBz
-aXR1YXRpb24sIGJlY2F1c2UgIm11bHRpcGF0aCAtdSIgKGNhbGxlZCBieSB1ZGV2IHdvcmtlcnMp
-Cj4gYmxvY2tzLCBhbmQgdGh1cyAidWRldiBzZXR0bGUiIGRvZXNuJ3QgZmluaXNoLCBkZWxheWlu
-ZyBtdWx0aXBhdGhkCj4gc3RhcnR1cC4gVGhpcyBzaXR1YXRpb24gdGhlbiBwZXJzaXN0cyB1bnRp
-bCBlaXRoZXIgdGhlIHdvcmtlcnMgb3IgInVkZXYKPiBzZXR0bGUiIHRpbWUgb3V0LiBJbiB0aGUg
-Zm9ybWVyIGNhc2UsIHBhdGggZGV2aWNlcyBtaWdodCBiZSBtaXNjbGFzc2lmaWVkCj4gYXMgbm9u
-LW11bHRpcGF0aCBkZXZpY2VzIGJ5ICJtdWx0aXBhdGggLXUiLgo+IAo+IEZpeCB0aGlzIGJ5IHVz
-aW5nIGEgbm9uLWJsb2NraW5nIHNvY2tldCBmZCBmb3IgY29ubmVjdCgpIGFuZCBpbnRlcnByZXQg
-dGhlCj4gZXJybm8gYXBwcm9wcmlhdGVseS4KPiAKPiBUaGlzIHBhdGNoIHJldmVydHMgbW9zdCBv
-ZiB0aGUgY2hhbmdlcyBmcm9tIGNvbW1pdCA4Y2RmNjY2MSAibXVsdGlwYXRoOgo+IGNoZWNrIG9u
-IG11bHRpcGF0aGQgd2l0aG91dCBzdGFydGluZyBpdCIuIEluc3RlYWQsICJtdWx0aXBhdGggLXUi
-IGRvZXMKPiBhY2Nlc3MgdGhlIHNvY2tldCBhbmQgc3RhcnQgbXVsdGlwYXRoIGFnYWluICh3aGlj
-aCBpcyB3aGF0IHdlIHdhbnQgSU1PKSwKPiBidXQgaXQgaXMgbm93IGFibGUgdG8gZGV0ZWN0IGFu
-ZCBoYW5kbGUgdGhlICJmdWxsIGJhY2tsb2ciIHNpdHVhdGlvbi4KPiAKPiBTaWduZWQtb2ZmLWJ5
-OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KPiAKPiBWMjoKPiAKPiBVc2Ugc2FtZSBl
-cnJvciByZXBvcnRpbmcgY29udmVudGlvbiBpbiBfX21wYXRoX2Nvbm5lY3QoKSBhcyBpbgo+IG1w
-YXRoX2Nvbm5lY3QoKSAoSGFubmVzIFJlaW5lY2tlKS4gV2UgY2FuJ3QgZWFzaWx5IGNoYW5nZSB0
-aGUgbGF0dGVyLAo+IGJlY2F1c2UgaXQncyBwYXJ0IG9mIHRoZSAicHVibGljIiBsaWJtcGF0aGNt
-ZCBBUEkuCj4gCj4gLS0tCj4gICBsaWJtcGF0aGNtZC9tcGF0aF9jbWQuYyB8IDI0ICsrKysrKysr
-KysrKystCj4gICBsaWJtcGF0aGNtZC9tcGF0aF9jbWQuaCB8IDE1ICsrKysrKysrKwo+ICAgbXVs
-dGlwYXRoL21haW4uYyAgICAgICAgfCA3MCArKysrKysrKysrKysrLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLQo+ICAgMyBmaWxlcyBjaGFuZ2VkLCA2MCBpbnNlcnRpb25zKCspLCA0OSBkZWxl
-dGlvbnMoLSkKPiAKPiBkaWZmIC0tZ2l0IGEvbGlibXBhdGhjbWQvbXBhdGhfY21kLmMgYi9saWJt
-cGF0aGNtZC9tcGF0aF9jbWQuYwo+IGluZGV4IGRmNGNhNTQxLi5iNjgxMzExYiAxMDA2NDQKPiAt
-LS0gYS9saWJtcGF0aGNtZC9tcGF0aF9jbWQuYwo+ICsrKyBiL2xpYm1wYXRoY21kL21wYXRoX2Nt
-ZC5jCj4gQEAgLTI2LDYgKzI2LDcgQEAKPiAgICNpbmNsdWRlIDxwb2xsLmg+Cj4gICAjaW5jbHVk
-ZSA8c3RyaW5nLmg+Cj4gICAjaW5jbHVkZSA8ZXJybm8uaD4KPiArI2luY2x1ZGUgPGZjbnRsLmg+
-Cj4gICAKPiAgICNpbmNsdWRlICJtcGF0aF9jbWQuaCIKPiAgIAo+IEBAIC05MywxMCArOTQsMTEg
-QEAgc3RhdGljIHNpemVfdCB3cml0ZV9hbGwoaW50IGZkLCBjb25zdCB2b2lkICpidWYsIHNpemVf
-dCBsZW4pCj4gICAvKgo+ICAgICogY29ubmVjdCB0byBhIHVuaXggZG9tYWluIHNvY2tldAo+ICAg
-ICovCj4gLWludCBtcGF0aF9jb25uZWN0KHZvaWQpCj4gK2ludCBfX21wYXRoX2Nvbm5lY3QoaW50
-IG5vbmJsb2NraW5nKQo+ICAgewo+ICAgCWludCBmZCwgbGVuOwo+ICAgCXN0cnVjdCBzb2NrYWRk
-cl91biBhZGRyOwo+ICsJaW50IGZsYWdzID0gMDsKPiAgIAo+ICAgCW1lbXNldCgmYWRkciwgMCwg
-c2l6ZW9mKGFkZHIpKTsKPiAgIAlhZGRyLnN1bl9mYW1pbHkgPSBBRl9MT0NBTDsKPiBAQCAtMTA4
-LDE0ICsxMTAsMzQgQEAgaW50IG1wYXRoX2Nvbm5lY3Qodm9pZCkKPiAgIAlpZiAoZmQgPT0gLTEp
-Cj4gICAJCXJldHVybiAtMTsKPiAgIAo+ICsJaWYgKG5vbmJsb2NraW5nKSB7Cj4gKwkJZmxhZ3Mg
-PSBmY250bChmZCwgRl9HRVRGTCwgMCk7Cj4gKwkJaWYgKGZsYWdzICE9IC0xKQo+ICsJCQkodm9p
-ZClmY250bChmZCwgRl9TRVRGTCwgZmxhZ3N8T19OT05CTE9DSyk7Cj4gKwl9Cj4gKwo+ICAgCWlm
-IChjb25uZWN0KGZkLCAoc3RydWN0IHNvY2thZGRyICopJmFkZHIsIGxlbikgPT0gLTEpIHsKPiAr
-CQlpbnQgZXJyID0gZXJybm87Cj4gKwo+ICAgCQljbG9zZShmZCk7Cj4gKwkJZXJybm8gPSBlcnI7
-Cj4gICAJCXJldHVybiAtMTsKPiAgIAl9Cj4gICAKPiArCWlmIChub25ibG9ja2luZyAmJiBmbGFn
-cyAhPSAtMSkKPiArCQkodm9pZClmY250bChmZCwgRl9TRVRGTCwgZmxhZ3MpOwo+ICsKPiAgIAly
-ZXR1cm4gZmQ7Cj4gICB9Cj4gICAKPiArLyoKPiArICogY29ubmVjdCB0byBhIHVuaXggZG9tYWlu
-IHNvY2tldAo+ICsgKi8KPiAraW50IG1wYXRoX2Nvbm5lY3Qodm9pZCkKPiArewo+ICsJcmV0dXJu
-IF9fbXBhdGhfY29ubmVjdCgwKTsKPiArfQo+ICsKPiAgIGludCBtcGF0aF9kaXNjb25uZWN0KGlu
-dCBmZCkKPiAgIHsKPiAgIAlyZXR1cm4gY2xvc2UoZmQpOwo+IGRpZmYgLS1naXQgYS9saWJtcGF0
-aGNtZC9tcGF0aF9jbWQuaCBiL2xpYm1wYXRoY21kL21wYXRoX2NtZC5oCj4gaW5kZXggMTVhZWIw
-NjcuLmNjZmQzNWYyIDEwMDY0NAo+IC0tLSBhL2xpYm1wYXRoY21kL21wYXRoX2NtZC5oCj4gKysr
-IGIvbGlibXBhdGhjbWQvbXBhdGhfY21kLmgKPiBAQCAtMzQsNiArMzQsMjEgQEAgZXh0ZXJuICJD
-IiB7Cj4gICAjZGVmaW5lIERFRkFVTFRfUkVQTFlfVElNRU9VVAk0MDAwCj4gICAKPiAgIAo+ICsv
-Kgo+ICsgKiBERVNDUklQVElPTjoKPiArICoJU2FtZSBhcyBtcGF0aF9jb25uZWN0KCkgKHNlZSBi
-ZWxvdykgZXhjZXB0IGZvciB0aGUgIm5vbmJsb2NraW5nIgo+ICsgKglwYXJhbWV0ZXIuCj4gKyAq
-CUlmICJub25ibG9ja2luZyIgaXMgc2V0LCBjb25uZWN0cyBpbiBub24tYmxvY2tpbmcgbW9kZS4g
-VGhpcyBpcwo+ICsgKgl1c2VmdWwgdG8gYXZvaWQgYmxvY2tpbmcgaWYgdGhlIGxpc3RlbmluZyBz
-b2NrZXQncyBiYWNrbG9nIGlzCj4gKyAqCWV4Y2VlZGVkLiBJbiB0aGlzIGNhc2UsIGVycm5vIHdp
-bGwgYmUgc2V0IHRvIEVBR0FJTi4KPiArICoJSW4gY2FzZSBvZiBzdWNjZXNzLCB0aGUgcmV0dXJu
-ZWQgZmlsZSBkZXNjcmlwdG9yIGlzIGluIGluIGJsb2NraW5nCj4gKyAqCW1vZGUsIGV2ZW4gaWYg
-Im5vbmJsb2NraW5nIiB3YXMgdHJ1ZS4KPiArICoKPiArICogUkVUVVJOUzoKPiArICoJQSBmaWxl
-IGRlc2NyaXB0b3Igb24gc3VjY2Vzcy4gLTEgb24gZmFpbHVyZSAod2l0aCBlcnJubyBzZXQpLgo+
-ICsgKi8KPiAraW50IF9fbXBhdGhfY29ubmVjdChpbnQgbm9uYmxvY2tpbmcpOwo+ICsKPiAgIC8q
-Cj4gICAgKiBERVNDUklQVElPTjoKPiAgICAqCUNvbm5lY3QgdG8gdGhlIHJ1bm5pbmcgbXVsdGlw
-YXRoZCBkYWVtb24uIE9uIHN5c3RlbXMgd2l0aCB0aGUKPiBkaWZmIC0tZ2l0IGEvbXVsdGlwYXRo
-L21haW4uYyBiL211bHRpcGF0aC9tYWluLmMKPiBpbmRleCAwMDhlM2QzZi4uNzkzM2IwN2YgMTAw
-NjQ0Cj4gLS0tIGEvbXVsdGlwYXRoL21haW4uYwo+ICsrKyBiL211bHRpcGF0aC9tYWluLmMKPiBA
-QCAtODUwLDU1ICs4NTAsMjkgQEAgb3V0Ogo+ICAgCXJldHVybiByOwo+ICAgfQo+ICAgCj4gLWlu
-dCBpc19tdWx0aXBhdGhkX3J1bm5pbmcodm9pZCkKPiArc3RhdGljIGludCB0ZXN0X211bHRpcGF0
-aGRfc29ja2V0KHZvaWQpCj4gICB7Cj4gLQlGSUxFICpmID0gTlVMTDsKPiAtCWNoYXIgYnVmWzE2
-XTsKPiAtCWNoYXIgcGF0aFtQQVRIX01BWF07Cj4gLQlpbnQgcGlkOwo+IC0JY2hhciAqZW5kOwo+
-ICsJaW50IGZkOwo+ICsJLyoKPiArCSAqICJtdWx0aXBhdGggLXUiIG1heSBiZSBydW4gYmVmb3Jl
-IHRoZSBkYWVtb24gaXMgc3RhcnRlZC4gSW4gdGhpcwo+ICsJICogY2FzZSwgc3lzdGVtZCBtaWdo
-dCBvd24gdGhlIHNvY2tldCBidXQgbWlnaHQgZGVsYXkgbXVsdGlwYXRoZAo+ICsJICogc3RhcnR1
-cCB1bnRpbCBzb21lIG90aGVyIHVuaXQgKHVkZXYgc2V0dGxlISkgIGhhcyBmaW5pc2hlZAo+ICsJ
-ICogc3RhcnRpbmcuIFdpdGggbWFueSBMVU5zLCB0aGUgbGlzdGVuIGJhY2tsb2cgbWF5IGJlIGV4
-Y2VlZGVkLCB3aGljaAo+ICsJICogd291bGQgY2F1c2UgY29ubmVjdCgpIHRvIGJsb2NrLiBUaGlz
-IGNhdXNlcyB1ZGV2IHdvcmtlcnMgY2FsbGluZwo+ICsJICogIm11bHRpcGF0aCAtdSIgdG8gaGFu
-ZywgYW5kIHRodXMgY3JlYXRlcyBhIGRlYWRsb2NrLCB1bnRpbCAidWRldgo+ICsJICogc2V0dGxl
-IiB0aW1lcyBvdXQuICBUbyBhdm9pZCB0aGlzLCBjYWxsIGNvbm5lY3QoKSBpbiBub24tYmxvY2tp
-bmcKPiArCSAqIG1vZGUgaGVyZSwgYW5kIHRha2UgRUFHQUlOIGFzIGluZGljYXRpb24gZm9yIGEg
-ZmlsbGVkLXVwIHN5c3RlbWQKPiArCSAqIGJhY2tsb2cuCj4gKwkgKi8KPiAgIAo+IC0JZiA9IGZv
-cGVuKERFRkFVTFRfUElERklMRSwgInIiKTsKPiAtCWlmICghZikgewo+IC0JCWlmIChlcnJubyAh
-PSBFTk9FTlQpCj4gLQkJCWNvbmRsb2coNCwgImNhbid0IG9wZW4gIiBERUZBVUxUX1BJREZJTEUg
-IjogJXMiLAo+IC0JCQkJc3RyZXJyb3IoZXJybm8pKTsKPiAtCQlyZXR1cm4gMDsKPiAtCX0KPiAt
-CWlmICghZmdldHMoYnVmLCBzaXplb2YoYnVmKSwgZikpIHsKPiAtCQlpZiAoZmVycm9yKGYpKQo+
-IC0JCQljb25kbG9nKDQsICJyZWFkIG9mICIgREVGQVVMVF9QSURGSUxFICIgZmFpbGVkOiAlcyIs
-Cj4gLQkJCQlzdHJlcnJvcihlcnJubykpOwo+IC0JCWZjbG9zZShmKTsKPiAtCQlyZXR1cm4gMDsK
-PiAtCX0KPiAtCWZjbG9zZShmKTsKPiAtCWVycm5vID0gMDsKPiAtCXN0cmNob3AoYnVmKTsKPiAt
-CXBpZCA9IHN0cnRvbChidWYsICZlbmQsIDEwKTsKPiAtCWlmIChlcnJubyAhPSAwIHx8IHBpZCA8
-PSAwIHx8ICplbmQgIT0gJ1wwJykgewo+IC0JCWNvbmRsb2coNCwgImludmFsaWQgY29udGVudHMg
-aW4gIiBERUZBVUxUX1BJREZJTEUgIjogJyVzJyIsCj4gLQkJCWJ1Zik7Cj4gLQkJcmV0dXJuIDA7
-Cj4gLQl9Cj4gLQlzbnByaW50ZihwYXRoLCBzaXplb2YocGF0aCksICIvcHJvYy8lZC9jb21tIiwg
-cGlkKTsKPiAtCWYgPSBmb3BlbihwYXRoLCAiciIpOwo+IC0JaWYgKCFmKSB7Cj4gLQkJaWYgKGVy
-cm5vICE9IEVOT0VOVCkKPiAtCQkJY29uZGxvZyg0LCAiY2FuJ3Qgb3BlbiAlczogJXMiLCBwYXRo
-LCBzdHJlcnJvcihlcnJubykpOwo+IC0JCXJldHVybiAwOwo+IC0JfQo+IC0JaWYgKCFmZ2V0cyhi
-dWYsIHNpemVvZihidWYpLCBmKSkgewo+IC0JCWlmIChmZXJyb3IoZikpCj4gLQkJCWNvbmRsb2co
-NCwgInJlYWQgb2YgJXMgZmFpbGVkOiAlcyIsIHBhdGgsCj4gLQkJCQlzdHJlcnJvcihlcnJubykp
-Owo+IC0JCWZjbG9zZShmKTsKPiAtCQlyZXR1cm4gMDsKPiAtCX0KPiAtCWZjbG9zZShmKTsKPiAt
-CXN0cmNob3AoYnVmKTsKPiAtCWlmIChzdHJjbXAoYnVmLCAibXVsdGlwYXRoZCIpICE9IDApCj4g
-LQkJcmV0dXJuIDA7Cj4gKwlmZCA9IF9fbXBhdGhfY29ubmVjdCgxKTsKPiArCWlmIChmZCA9PSAt
-MSkgewo+ICsJCWlmIChlcnJubyA9PSBFQUdBSU4pCj4gKwkJCWNvbmRsb2coMywgImRhZW1vbiBi
-YWNrbG9nIGV4Y2VlZGVkIik7Cj4gKwkJZWxzZQo+ICsJCQlyZXR1cm4gMDsKPiArCX0gZWxzZQo+
-ICsJCWNsb3NlKGZkKTsKPiAgIAlyZXR1cm4gMTsKPiAgIH0KPiAgIAo+IEBAIC0xMDgwLDcgKzEw
-NTQsNyBAQCBtYWluIChpbnQgYXJnYywgY2hhciAqYXJndltdKQo+ICAgCX0KPiAgIAlpZiAoY21k
-ID09IENNRF9WQUxJRF9QQVRIICYmCj4gICAJICAgIGRldl90eXBlID09IERFVl9VRVZFTlQpIHsK
-PiAtCQlpZiAoIWlzX211bHRpcGF0aGRfcnVubmluZygpKSB7Cj4gKwkJaWYgKCF0ZXN0X211bHRp
-cGF0aGRfc29ja2V0KCkpIHsKPiAgIAkJCWNvbmRsb2coMywgIiVzOiBkYWVtb24gaXMgbm90IHJ1
-bm5pbmciLCBkZXYpOwo+ICAgCQkJaWYgKCFzeXN0ZW1kX3NlcnZpY2VfZW5hYmxlZChkZXYpKSB7
-Cj4gICAJCQkJciA9IHByaW50X2NtZF92YWxpZChSVFZMX05PLCBOVUxMLCBjb25mKTsKPiAKSSB3
-b3VsZCBoYXZlIHByZWZlcnJlZCBhICdib29sZWFuJyBhcyBhcmd1bWVudCBmb3IgX19tcGF0aF9j
-b25uZWN0KCksIApidXQgdGhhdCdzIGEgc3R5bGUgcXVlc3Rpb24gSSBndWVzcy4KClJldmlld2Vk
-LWJ5OiBIYW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5jb20+CgpDaGVlcnMsCgpIYW5uZXMKLS0g
-CkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhh
-cmVAc3VzZS5kZQkJCSAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVgg
-R21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBGZWxpeCBJbWVuZMO2cmZm
-ZXIsIE1hcnkgSGlnZ2lucywgU3JpIFJhc2lhaApIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0t
-CmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJl
-ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Em Tue, 23 Apr 2019 23:38:16 +0200
+Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org> escreveu:
+
+> On Tue, Apr 23, 2019 at 05:05:02PM -0300, Mauro Carvalho Chehab wrote:
+> > That's my view about how that specific file would be after
+> > converted to ReST:
+> > 
+> > 	https://git.linuxtv.org/mchehab/experimental.git/tree/Documentation/x86/x86_64/mm.rst?h=convert_rst_renames
+> > 
+> > I don't have any troubles reading/understanding it as a plain text
+> > file,  
+> 
+> If that is all the changes it would need, then I guess that's ok. Btw,
+> those rst-conversion patches don't really show what got changed. Dunno
+> if git can even show that properly. I diffed the two files by hand to
+> see what got changed, see end of mail.
+
+Well, you can use git show -M01 and it will likely show what
+changed. The thing is that plain diff is not very good showing
+diffs on text files. I suspect that using some tool like wdiff
+would give a better view of such changes.
+
+> So I guess if table in rst means, one needs to draw rows and columns, I
+> guess that's ok. It's not like I have to do it every day.
+
+Yes, for complex tables, one needs to draw rows/columns. For simple
+tables, all you need to do is something like:
+
+  ====== ========   ====    ========    ===
+  -      CONT PTE    PMD    CONT PMD    PUD
+  ====== ========   ====    ========    ===
+  4K:         64K     2M         32M     1G
+  16K:         2M    32M          1G
+  64K:         2M   512M         16G
+  ====== ========   ====    ========    ===
+
+in order to teach Sphinx where each column starts/stops, and
+(optionally) show the table titles in bold.
+
+(that's from Documentation/arm64/hugetlbpage.rst conversion)
+
+> But exactly this - *having* to do rst formatting would mean a lot of
+> getting used to and people writing something which is not necessarily
+> correct rst and someone else fixing up after them.
+
+Yeah, one has to take the conversion effort, but once done, it should be
+easy to keep it updated.
+
+> > and its html output is also nice (although Sphinx 1.7.8 seems to
+> > have some issues when parsing some cells - probably due to some bug):
+> > 
+> > 	https://www.infradead.org/~mchehab/rst_conversion/x86/x86_64/mm.html  
+> 
+> I don't know how that looks in your browser but in mine those addresses
+> are not in monospaced font and there's no properly reading them.
+> 
+> And yap, the cells parsing fun I see too.
+
+Font selection is one of the things would require some markup, as a
+plain text file doesn't have font changes.
+
+There are several ways to make it use a monospaced font.
+
+The straight forward way would be to place everything that it is
+monospaced inside ``double quotes``, with is the ReST way to mark
+a literal block inside a text. IMHO, that would add too much
+"noise" at the tables.
+
+Another possibility would be to do:
+
+	.. raw:: html
+
+	       <head><style>td { font-family: monospace, monospace; }</style></head>
+
+(the double monospace here is not a mistake - it is due to a known
+bug^H^H^Hfeature on some browsers[1])
+
+[1] https://stackoverflow.com/questions/38781089/font-family-monospace-monospace
+
+IMO, the best alternative would be to add a new class to the css file,
+and use it whenever we need a table with monospaced font, e. g.:
+
+diff --git a/Documentation/sphinx-static/theme_overrides.css b/Documentation/sphinx-static/theme_overrides.css
+index e21e36cd6761..0948de6651f8 100644
+--- a/Documentation/sphinx-static/theme_overrides.css
++++ b/Documentation/sphinx-static/theme_overrides.css
+@@ -125,3 +125,7 @@ div[class^="highlight"] pre {
+         color: inherit;
+     }
+ }
++
++table.monospaced {
++	font-family: monospace, monospace;
++}
+diff --git a/Documentation/x86/x86_64/mm.rst b/Documentation/x86/x86_64/mm.rst
+index e8a92fa0f9b2..704bad5c5130 100644
+--- a/Documentation/x86/x86_64/mm.rst
++++ b/Documentation/x86/x86_64/mm.rst
+@@ -18,6 +18,8 @@ Notes:
+    notation than "16 EB", which few will recognize at first sight as 16 exabytes.
+    It also shows it nicely how incredibly large 64-bit address space is.
+ 
++.. cssclass:: monospaced
++
+ +-----------------+------------+------------------+---------+-----------------------------------------------------------+
+ |   Start addr    |   Offset   |     End addr     |  Size   | VM area description                                       |
+ +=================+============+==================+=========+===========================================================+
+
+(patch on the top of this tree
+https://git.linuxtv.org/mchehab/experimental.git/tree/Documentation/x86/x86_64/mm.rst?h=convert_rst_renames)
+
+The ..cssclass:: markup on the above example will be applied just to
+the table below it. So, with that, it is possible to have normal and
+monospaced tables mixed (if you apply the above patch, you'll see
+that just the first table will use monospaced fonts).
+
+- 
+
+Personally, I don't care much with monospaced fonts on this table. After
+all, if I want to see it monospaced, I can simply click at the
+"View page source" at the browser, and it will display the file as a
+plain old monospaced text file.
+
+Thanks,
+Mauro
