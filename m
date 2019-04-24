@@ -1,152 +1,156 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] multipath -u: test socket connection in
-	non-blocking mode
-Date: Wed, 24 Apr 2019 07:48:40 +0200
-Message-ID: <97f71fe5-ed9c-1f12-e344-132bac889b7e@suse.de>
-References: <20190423193237.28391-1-mwilck@suse.com>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v2 56/79] docs: Documentation/*.txt: rename all ReST
+	files to *.rst
+Date: Wed, 24 Apr 2019 08:52:09 +0200
+Message-ID: <20190424065209.GC4038@hirez.programming.kicks-ass.net>
+References: <cover.1555938375.git.mchehab+samsung@kernel.org>
+	<cda57849a6462ccc72dcd360b30068ab6a1021c4.1555938376.git.mchehab+samsung@kernel.org>
+	<20190423083135.GA11158@hirez.programming.kicks-ass.net>
+	<20190423125519.GA7104@redhat.com>
+	<20190423130132.GT4038@hirez.programming.kicks-ass.net>
+	<20190423103053.07cf2149@lwn.net>
+	<20190423171158.GG12232@hirez.programming.kicks-ass.net>
+	<20190423172006.GD16353@zn.tnic> <20190423170409.7b1370ac@coco.lan>
+	<20190423213816.GE16353@zn.tnic>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190423193237.28391-1-mwilck@suse.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20190423213816.GE16353-Jj63ApZU6fQ@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
+List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Rafael J. Wysocki" <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Farhan Ali <alifm-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, Mauro Carvalho Chehab <mchehab+samsung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-sh-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Halil Pasic <pasic-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, tboot-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>, openipmi-developer-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Nicholas Piggin <npiggin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Sean Paul <sean-p7yTbzM4H96eqtR555YLDQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: dm-devel.ids
 
-T24gNC8yMy8xOSA5OjMyIFBNLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4gU2luY2UgY29tbWl0IGQ3
-MTg4ZmNkICJtdWx0aXBhdGhkOiBzdGFydCBkYWVtb24gYWZ0ZXIgdWRldiB0cmlnZ2VyIiwKPiBt
-dWx0aXBhdGhkIHN0YXJ0dXAgaXMgZGVsYXllZCBkdXJpbmcgYm9vdCB1bnRpbCBhZnRlciAidWRl
-diBzZXR0bGUiCj4gdGVybWluYXRlcy4gQnV0ICJtdWx0aXBhdGggLXUiIGlzIHJ1biBieSB1ZGV2
-IHdvcmtlcnMgZm9yIHN0b3JhZ2UgZGV2aWNlcywKPiBhbmQgYXR0ZW1wdHMgdG8gY29ubmVjdCB0
-byB0aGUgbXVsdGlwYXRoZCBzb2NrZXQuIFRoaXMgY2F1c2VzIGEgc3RhcnQgam9iCj4gZm9yIG11
-bHRpcGF0aGQgdG8gYmUgc2NoZWR1bGVkIGJ5IHN5c3RlbWQsIGJ1dCB0aGF0IGpvYiB3b24ndCBi
-ZSBzdGFydGVkCj4gdW50aWwgInVkZXYgc2V0dGxlIiBmaW5pc2hlcy4gVGhpcyBpcyBub3QgYSBw
-cm9ibGVtIG9uIHN5c3RlbXMgd2l0aCAxMjkgb3IKPiBsZXNzIHN0b3JhZ2UgdW5pdHMsIGJlY2F1
-c2UgdGhlIGNvbm5lY3QoKSBjYWxsIG9mICJtdWx0aXBhdGggLXUiIHdpbGwKPiBzdWNjZWVkIGFu
-eXdheS4gQnV0IG9uIGxhcmdlciBzeXN0ZW1zLCB0aGUgbGlzdGVuIGJhY2tsb2cgb2YgdGhlIHN5
-c3RlbWQKPiBzb2NrZXQgY2FuIGJlIGV4Y2VlZGVkLCB3aGljaCBjYXVzZXMgY29ubmVjdCgpIGNh
-bGxzIGZvciB0aGUgc29ja2V0IHRvCj4gYmxvY2sgdW50aWwgbXVsdGlwYXRoZCBzdGFydHMgdXAg
-YW5kIGJlZ2lucyBjYWxsaW5nIGFjY2VwdCgpLiBUaGlzIGNyZWF0ZXMKPiBhIGRlYWRsb2NrIHNp
-dHVhdGlvbiwgYmVjYXVzZSAibXVsdGlwYXRoIC11IiAoY2FsbGVkIGJ5IHVkZXYgd29ya2VycykK
-PiBibG9ja3MsIGFuZCB0aHVzICJ1ZGV2IHNldHRsZSIgZG9lc24ndCBmaW5pc2gsIGRlbGF5aW5n
-IG11bHRpcGF0aGQKPiBzdGFydHVwLiBUaGlzIHNpdHVhdGlvbiB0aGVuIHBlcnNpc3RzIHVudGls
-IGVpdGhlciB0aGUgd29ya2VycyBvciAidWRldgo+IHNldHRsZSIgdGltZSBvdXQuIEluIHRoZSBm
-b3JtZXIgY2FzZSwgcGF0aCBkZXZpY2VzIG1pZ2h0IGJlIG1pc2NsYXNzaWZpZWQKPiBhcyBub24t
-bXVsdGlwYXRoIGRldmljZXMgYnkgIm11bHRpcGF0aCAtdSIuCj4gCj4gRml4IHRoaXMgYnkgdXNp
-bmcgYSBub24tYmxvY2tpbmcgc29ja2V0IGZkIGZvciBjb25uZWN0KCkgYW5kIGludGVycHJldCB0
-aGUKPiBlcnJubyBhcHByb3ByaWF0ZWx5Lgo+IAo+IFRoaXMgcGF0Y2ggcmV2ZXJ0cyBtb3N0IG9m
-IHRoZSBjaGFuZ2VzIGZyb20gY29tbWl0IDhjZGY2NjYxICJtdWx0aXBhdGg6Cj4gY2hlY2sgb24g
-bXVsdGlwYXRoZCB3aXRob3V0IHN0YXJ0aW5nIGl0Ii4gSW5zdGVhZCwgIm11bHRpcGF0aCAtdSIg
-ZG9lcwo+IGFjY2VzcyB0aGUgc29ja2V0IGFuZCBzdGFydCBtdWx0aXBhdGggYWdhaW4gKHdoaWNo
-IGlzIHdoYXQgd2Ugd2FudCBJTU8pLAo+IGJ1dCBpdCBpcyBub3cgYWJsZSB0byBkZXRlY3QgYW5k
-IGhhbmRsZSB0aGUgImZ1bGwgYmFja2xvZyIgc2l0dWF0aW9uLgo+IC0tLQo+ICAgbGlibXBhdGhj
-bWQvbXBhdGhfY21kLmMgfCAzMyArKysrKysrKysrKysrKysrKy0tLQo+ICAgbGlibXBhdGhjbWQv
-bXBhdGhfY21kLmggfCAxNSArKysrKysrKysKPiAgIG11bHRpcGF0aC9tYWluLmMgICAgICAgIHwg
-NjcgKysrKysrKysrKysrLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KPiAgIDMgZmlsZXMg
-Y2hhbmdlZCwgNjQgaW5zZXJ0aW9ucygrKSwgNTEgZGVsZXRpb25zKC0pCj4gCj4gZGlmZiAtLWdp
-dCBhL2xpYm1wYXRoY21kL21wYXRoX2NtZC5jIGIvbGlibXBhdGhjbWQvbXBhdGhfY21kLmMKPiBp
-bmRleCBkZjRjYTU0MS4uMjY1YWYxZmIgMTAwNjQ0Cj4gLS0tIGEvbGlibXBhdGhjbWQvbXBhdGhf
-Y21kLmMKPiArKysgYi9saWJtcGF0aGNtZC9tcGF0aF9jbWQuYwo+IEBAIC0yNiw2ICsyNiw3IEBA
-Cj4gICAjaW5jbHVkZSA8cG9sbC5oPgo+ICAgI2luY2x1ZGUgPHN0cmluZy5oPgo+ICAgI2luY2x1
-ZGUgPGVycm5vLmg+Cj4gKyNpbmNsdWRlIDxmY250bC5oPgo+ICAgCj4gICAjaW5jbHVkZSAibXBh
-dGhfY21kLmgiCj4gICAKPiBAQCAtOTMsMTAgKzk0LDExIEBAIHN0YXRpYyBzaXplX3Qgd3JpdGVf
-YWxsKGludCBmZCwgY29uc3Qgdm9pZCAqYnVmLCBzaXplX3QgbGVuKQo+ICAgLyoKPiAgICAqIGNv
-bm5lY3QgdG8gYSB1bml4IGRvbWFpbiBzb2NrZXQKPiAgICAqLwo+IC1pbnQgbXBhdGhfY29ubmVj
-dCh2b2lkKQo+ICtpbnQgX19tcGF0aF9jb25uZWN0KGludCBub25ibG9ja2luZykKPiAgIHsKPiAt
-CWludCBmZCwgbGVuOwo+ICsJaW50IGZkLCBsZW4sIGVycjsKPiAgIAlzdHJ1Y3Qgc29ja2FkZHJf
-dW4gYWRkcjsKPiArCWludCBmbGFncyA9IDA7Cj4gICAKPiAgIAltZW1zZXQoJmFkZHIsIDAsIHNp
-emVvZihhZGRyKSk7Cj4gICAJYWRkci5zdW5fZmFtaWx5ID0gQUZfTE9DQUw7Cj4gQEAgLTEwNiwx
-NiArMTA4LDM5IEBAIGludCBtcGF0aF9jb25uZWN0KHZvaWQpCj4gICAKPiAgIAlmZCA9IHNvY2tl
-dChBRl9MT0NBTCwgU09DS19TVFJFQU0sIDApOwo+ICAgCWlmIChmZCA9PSAtMSkKPiAtCQlyZXR1
-cm4gLTE7Cj4gKwkJcmV0dXJuIC1lcnJubzsKPiArCj4gKwlpZiAobm9uYmxvY2tpbmcpIHsKPiAr
-CQlmbGFncyA9IGZjbnRsKGZkLCBGX0dFVEZMLCAwKTsKPiArCQlpZiAoZmxhZ3MgIT0gLTEpCj4g
-KwkJCSh2b2lkKWZjbnRsKGZkLCBGX1NFVEZMLCBmbGFnc3xPX05PTkJMT0NLKTsKPiArCX0KPiAg
-IAo+ICAgCWlmIChjb25uZWN0KGZkLCAoc3RydWN0IHNvY2thZGRyICopJmFkZHIsIGxlbikgPT0g
-LTEpIHsKPiArCQllcnIgPSAtZXJybm87Cj4gICAJCWNsb3NlKGZkKTsKPiAtCQlyZXR1cm4gLTE7
-Cj4gKwkJcmV0dXJuIGVycjsKPiAgIAl9Cj4gICAKPiArCWlmIChub25ibG9ja2luZyAmJiBmbGFn
-cyAhPSAtMSkKPiArCQkodm9pZClmY250bChmZCwgRl9TRVRGTCwgZmxhZ3MpOwo+ICsKPiAgIAly
-ZXR1cm4gZmQ7Cj4gICB9Cj4gICAKPiArLyoKPiArICogY29ubmVjdCB0byBhIHVuaXggZG9tYWlu
-IHNvY2tldAo+ICsgKi8KPiAraW50IG1wYXRoX2Nvbm5lY3Qodm9pZCkKPiArewo+ICsJaW50IGZk
-ID0gX19tcGF0aF9jb25uZWN0KDApOwo+ICsKPiArCWlmIChmZCA+PSAwKQo+ICsJCXJldHVybiBm
-ZDsKPiArCWVycm5vID0gLWZkOwo+ICsJcmV0dXJuIC0xOwo+ICt9Cj4gKwo+ICAgaW50IG1wYXRo
-X2Rpc2Nvbm5lY3QoaW50IGZkKQo+ICAgewo+ICAgCXJldHVybiBjbG9zZShmZCk7ClBsZWFzZSBk
-byBhd2F5IHdpdGggdGhlIHdyYXBwZXIuCk5vIHBvaW50IGluIGhhdmluZyBpdDsgcmF0aGVyIHVz
-ZSBhIGNvbnNpc3RlbnQgcmV0dXJuIHZhbHVlCihpZSBlaXRoZXIgLTEgYW5kIHNldHRpbmcgZXJy
-bm8sIG9yIHJldHVybmluZyAtZXJybm8gZGlyZWN0bHkpLgoKPiBkaWZmIC0tZ2l0IGEvbGlibXBh
-dGhjbWQvbXBhdGhfY21kLmggYi9saWJtcGF0aGNtZC9tcGF0aF9jbWQuaAo+IGluZGV4IDE1YWVi
-MDY3Li4wZDRjNDVjZCAxMDA2NDQKPiAtLS0gYS9saWJtcGF0aGNtZC9tcGF0aF9jbWQuaAo+ICsr
-KyBiL2xpYm1wYXRoY21kL21wYXRoX2NtZC5oCj4gQEAgLTM0LDYgKzM0LDIxIEBAIGV4dGVybiAi
-QyIgewo+ICAgI2RlZmluZSBERUZBVUxUX1JFUExZX1RJTUVPVVQJNDAwMAo+ICAgCj4gICAKPiAr
-LyoKPiArICogREVTQ1JJUFRJT046Cj4gKyAqCVNhbWUgYXMgbXBhdGhfY29ubmVjdCgpIChzZWUg
-YmVsb3cpIGV4Y2VwdCBmb3IgdGhlIGVycm9yIHJldHVybiBjb2RlCj4gKyAqCWFuZCB0aGUgIm5v
-bmJsb2NraW5nIiBwYXJhbWV0ZXIuCj4gKyAqCUlmICJub25ibG9ja2luZyIgaXMgc2V0LCBjb25u
-ZWN0cyBpbiBub24tYmxvY2tpbmcgbW9kZS4gVGhpcyBpcwo+ICsgKgl1c2VmdWwgdG8gYXZvaWQg
-YmxvY2tpbmcgaWYgdGhlIGxpc3RlbmluZyBzb2NrZXQncyBiYWNrbG9nIGlzCj4gKyAqCWV4Y2Vl
-ZGVkLiBJbiB0aGlzIGNhc2UsIC1FQUdBSU4gd2lsbCBiZSByZXR1cm5lZC4KPiArICoJRXZlbiB3
-aXRoICJub25ibG9ja2luZyIgc2V0LCB0aGUgcmV0dXJuZWQgZmlsZSBkZXNjcmlwdG9yIGlzIGlu
-Cj4gKyAqCWJsb2NraW5nIG1vZGUgaW4gY2FzZSBvZiBzdWNjZXNzLgo+ICsgKgo+ICsgKiBSRVRV
-Uk5TOgo+ICsgKglBIGZpbGUgZGVzY3JpcHRvciAoPj0gMCkgb24gc3VjY2Vzcy4gLWVycm5vIG9u
-IGZhaWx1cmUuCj4gKyAqLwo+ICtpbnQgX19tcGF0aF9jb25uZWN0KGludCBub25ibG9ja2luZyk7
-Cj4gKwo+ICAgLyoKPiAgICAqIERFU0NSSVBUSU9OOgo+ICAgICoJQ29ubmVjdCB0byB0aGUgcnVu
-bmluZyBtdWx0aXBhdGhkIGRhZW1vbi4gT24gc3lzdGVtcyB3aXRoIHRoZQo+IGRpZmYgLS1naXQg
-YS9tdWx0aXBhdGgvbWFpbi5jIGIvbXVsdGlwYXRoL21haW4uYwo+IGluZGV4IDAwOGUzZDNmLi41
-MjIyMGRiZiAxMDA2NDQKPiAtLS0gYS9tdWx0aXBhdGgvbWFpbi5jCj4gKysrIGIvbXVsdGlwYXRo
-L21haW4uYwo+IEBAIC04NTAsNTUgKzg1MCwyOCBAQCBvdXQ6Cj4gICAJcmV0dXJuIHI7Cj4gICB9
-Cj4gICAKPiAtaW50IGlzX211bHRpcGF0aGRfcnVubmluZyh2b2lkKQo+ICtzdGF0aWMgaW50IHRl
-c3RfbXVsdGlwYXRoZF9zb2NrZXQodm9pZCkKPiAgIHsKPiAtCUZJTEUgKmYgPSBOVUxMOwo+IC0J
-Y2hhciBidWZbMTZdOwo+IC0JY2hhciBwYXRoW1BBVEhfTUFYXTsKPiAtCWludCBwaWQ7Cj4gLQlj
-aGFyICplbmQ7Cj4gKwlpbnQgZmQ7Cj4gKwkvKgo+ICsJICogIm11bHRpcGF0aCAtdSIgbWF5IGJl
-IHJ1biBiZWZvcmUgdGhlIGRhZW1vbiBpcyBzdGFydGVkLiBJbiB0aGlzCj4gKwkgKiBjYXNlLCBz
-eXN0ZW1kIG1pZ2h0IG93biB0aGUgc29ja2V0IGJ1dCBtaWdodCBkZWxheSBtdWx0aXBhdGhkCj4g
-KwkgKiBzdGFydHVwIHVudGlsIHNvbWUgb3RoZXIgdW5pdCAodWRldiBzZXR0bGUhKSAgaGFzIGZp
-bmlzaGVkCj4gKwkgKiBzdGFydGluZy4gV2l0aCBtYW55IExVTnMsIHRoZSBsaXN0ZW4gYmFja2xv
-ZyBtYXkgYmUgZXhjZWVkZWQsIHdoaWNoCj4gKwkgKiB3b3VsZCBjYXVzZSBjb25uZWN0KCkgdG8g
-YmxvY2suIFRoaXMgY2F1c2VzIHVkZXYgd29ya2VycyBjYWxsaW5nCj4gKwkgKiAibXVsdGlwYXRo
-IC11IiB0byBoYW5nLCBhbmQgdGh1cyBjcmVhdGVzIGEgZGVhZGxvY2ssIHVudGlsICJ1ZGV2Cj4g
-KwkgKiBzZXR0bGUiIHRpbWVzIG91dC4gIFRvIGF2b2lkIHRoaXMsIGNhbGwgY29ubmVjdCgpIGlu
-IG5vbi1ibG9ja2luZwo+ICsJICogbW9kZSBoZXJlLCBhbmQgdGFrZSBFQUdBSU4gYXMgaW5kaWNh
-dGlvbiBmb3IgYSBmaWxsZWQtdXAgc3lzdGVtZAo+ICsJICogYmFja2xvZy4KPiArCSAqLwo+ICAg
-Cj4gLQlmID0gZm9wZW4oREVGQVVMVF9QSURGSUxFLCAiciIpOwo+IC0JaWYgKCFmKSB7Cj4gLQkJ
-aWYgKGVycm5vICE9IEVOT0VOVCkKPiAtCQkJY29uZGxvZyg0LCAiY2FuJ3Qgb3BlbiAiIERFRkFV
-TFRfUElERklMRSAiOiAlcyIsCj4gLQkJCQlzdHJlcnJvcihlcnJubykpOwo+IC0JCXJldHVybiAw
-Owo+IC0JfQo+IC0JaWYgKCFmZ2V0cyhidWYsIHNpemVvZihidWYpLCBmKSkgewo+IC0JCWlmIChm
-ZXJyb3IoZikpCj4gLQkJCWNvbmRsb2coNCwgInJlYWQgb2YgIiBERUZBVUxUX1BJREZJTEUgIiBm
-YWlsZWQ6ICVzIiwKPiAtCQkJCXN0cmVycm9yKGVycm5vKSk7Cj4gLQkJZmNsb3NlKGYpOwo+IC0J
-CXJldHVybiAwOwo+IC0JfQo+IC0JZmNsb3NlKGYpOwo+IC0JZXJybm8gPSAwOwo+IC0Jc3RyY2hv
-cChidWYpOwo+IC0JcGlkID0gc3RydG9sKGJ1ZiwgJmVuZCwgMTApOwo+IC0JaWYgKGVycm5vICE9
-IDAgfHwgcGlkIDw9IDAgfHwgKmVuZCAhPSAnXDAnKSB7Cj4gLQkJY29uZGxvZyg0LCAiaW52YWxp
-ZCBjb250ZW50cyBpbiAiIERFRkFVTFRfUElERklMRSAiOiAnJXMnIiwKPiAtCQkJYnVmKTsKPiAt
-CQlyZXR1cm4gMDsKPiAtCX0KPiAtCXNucHJpbnRmKHBhdGgsIHNpemVvZihwYXRoKSwgIi9wcm9j
-LyVkL2NvbW0iLCBwaWQpOwo+IC0JZiA9IGZvcGVuKHBhdGgsICJyIik7Cj4gLQlpZiAoIWYpIHsK
-PiAtCQlpZiAoZXJybm8gIT0gRU5PRU5UKQo+IC0JCQljb25kbG9nKDQsICJjYW4ndCBvcGVuICVz
-OiAlcyIsIHBhdGgsIHN0cmVycm9yKGVycm5vKSk7Cj4gLQkJcmV0dXJuIDA7Cj4gLQl9Cj4gLQlp
-ZiAoIWZnZXRzKGJ1Ziwgc2l6ZW9mKGJ1ZiksIGYpKSB7Cj4gLQkJaWYgKGZlcnJvcihmKSkKPiAt
-CQkJY29uZGxvZyg0LCAicmVhZCBvZiAlcyBmYWlsZWQ6ICVzIiwgcGF0aCwKPiAtCQkJCXN0cmVy
-cm9yKGVycm5vKSk7Cj4gLQkJZmNsb3NlKGYpOwo+IC0JCXJldHVybiAwOwo+IC0JfQo+IC0JZmNs
-b3NlKGYpOwo+IC0Jc3RyY2hvcChidWYpOwo+IC0JaWYgKHN0cmNtcChidWYsICJtdWx0aXBhdGhk
-IikgIT0gMCkKPiArCWZkID0gX19tcGF0aF9jb25uZWN0KDEpOwo+ICsJaWYgKGZkID09IC1FQUdB
-SU4pCj4gKwkJY29uZGxvZygzLCAiZGFlbW9uIGJhY2tsb2cgZXhjZWVkZWQiKTsKPiArCWVsc2Ug
-aWYgKGZkIDwgMCkKPiAgIAkJcmV0dXJuIDA7Cj4gKwllbHNlCj4gKwkJY2xvc2UoZmQpOwo+ICAg
-CXJldHVybiAxOwo+ICAgfQo+ICAgCj4gQEAgLTEwODAsNyArMTA1Myw3IEBAIG1haW4gKGludCBh
-cmdjLCBjaGFyICphcmd2W10pCj4gICAJfQo+ICAgCWlmIChjbWQgPT0gQ01EX1ZBTElEX1BBVEgg
-JiYKPiAgIAkgICAgZGV2X3R5cGUgPT0gREVWX1VFVkVOVCkgewo+IC0JCWlmICghaXNfbXVsdGlw
-YXRoZF9ydW5uaW5nKCkpIHsKPiArCQlpZiAoIXRlc3RfbXVsdGlwYXRoZF9zb2NrZXQoKSkgewo+
-ICAgCQkJY29uZGxvZygzLCAiJXM6IGRhZW1vbiBpcyBub3QgcnVubmluZyIsIGRldik7Cj4gICAJ
-CQlpZiAoIXN5c3RlbWRfc2VydmljZV9lbmFibGVkKGRldikpIHsKPiAgIAkJCQlyID0gcHJpbnRf
-Y21kX3ZhbGlkKFJUVkxfTk8sIE5VTEwsIGNvbmYpOwo+IApSZW1haW5kZXIgbG9va3Mgb2theS4K
-CkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgVGVhbWxlYWQgU3Rv
-cmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlCQkJICAgICAgICAgICAgICAgKzQ5IDkxMSA3
-NDA1MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcK
-R0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgTWFyeSBIaWdnaW5zLCBTcmkgUmFzaWFoCkhSQiAyMTI4
-NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
-dC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Tue, Apr 23, 2019 at 11:38:16PM +0200, Borislav Petkov wrote:
+> If that is all the changes it would need, then I guess that's ok. Btw,
+> those rst-conversion patches don't really show what got changed. Dunno
+> if git can even show that properly. I diffed the two files by hand to
+> see what got changed, see end of mail.
+
+That is not a happy diff; that table has gotten waay worse to read due
+to all that extra table crap.
+
+> ---
+> --- mm.old	2019-04-23 23:18:55.954335784 +0200
+> +++ mm.new	2019-04-23 23:18:48.122335821 +0200
+> @@ -18,51 +18,68 @@ Notes:
+>     notation than "16 EB", which few will recognize at first sight as 16 exabytes.
+>     It also shows it nicely how incredibly large 64-bit address space is.
+>  
+> -========================================================================================================================
+> -    Start addr    |   Offset   |     End addr     |  Size   | VM area description
+> -========================================================================================================================
+> -                  |            |                  |         |
+> - 0000000000000000 |    0       | 00007fffffffffff |  128 TB | user-space virtual memory, different per mm
+> -__________________|____________|__________________|_________|___________________________________________________________
+> -                  |            |                  |         |
+> - 0000800000000000 | +128    TB | ffff7fffffffffff | ~16M TB | ... huge, almost 64 bits wide hole of non-canonical
+> -                  |            |                  |         |     virtual memory addresses up to the -128 TB
+> -                  |            |                  |         |     starting offset of kernel mappings.
+> -__________________|____________|__________________|_________|___________________________________________________________
+> -                                                            |
+> -                                                            | Kernel-space virtual memory, shared between all processes:
+> -____________________________________________________________|___________________________________________________________
+> -                  |            |                  |         |
+> - ffff800000000000 | -128    TB | ffff87ffffffffff |    8 TB | ... guard hole, also reserved for hypervisor
+> - ffff880000000000 | -120    TB | ffff887fffffffff |  0.5 TB | LDT remap for PTI
+> - ffff888000000000 | -119.5  TB | ffffc87fffffffff |   64 TB | direct mapping of all physical memory (page_offset_base)
+> - ffffc88000000000 |  -55.5  TB | ffffc8ffffffffff |  0.5 TB | ... unused hole
+> - ffffc90000000000 |  -55    TB | ffffe8ffffffffff |   32 TB | vmalloc/ioremap space (vmalloc_base)
+> - ffffe90000000000 |  -23    TB | ffffe9ffffffffff |    1 TB | ... unused hole
+> - ffffea0000000000 |  -22    TB | ffffeaffffffffff |    1 TB | virtual memory map (vmemmap_base)
+> - ffffeb0000000000 |  -21    TB | ffffebffffffffff |    1 TB | ... unused hole
+> - ffffec0000000000 |  -20    TB | fffffbffffffffff |   16 TB | KASAN shadow memory
+> -__________________|____________|__________________|_________|____________________________________________________________
+> -                                                            |
+> -                                                            | Identical layout to the 56-bit one from here on:
+> -____________________________________________________________|____________________________________________________________
+> -                  |            |                  |         |
+> - fffffc0000000000 |   -4    TB | fffffdffffffffff |    2 TB | ... unused hole
+> -                  |            |                  |         | vaddr_end for KASLR
+> - fffffe0000000000 |   -2    TB | fffffe7fffffffff |  0.5 TB | cpu_entry_area mapping
+> - fffffe8000000000 |   -1.5  TB | fffffeffffffffff |  0.5 TB | ... unused hole
+> - ffffff0000000000 |   -1    TB | ffffff7fffffffff |  0.5 TB | %esp fixup stacks
+> - ffffff8000000000 | -512    GB | ffffffeeffffffff |  444 GB | ... unused hole
+> - ffffffef00000000 |  -68    GB | fffffffeffffffff |   64 GB | EFI region mapping space
+> - ffffffff00000000 |   -4    GB | ffffffff7fffffff |    2 GB | ... unused hole
+> - ffffffff80000000 |   -2    GB | ffffffff9fffffff |  512 MB | kernel text mapping, mapped to physical address 0
+> - ffffffff80000000 |-2048    MB |                  |         |
+> - ffffffffa0000000 |-1536    MB | fffffffffeffffff | 1520 MB | module mapping space
+> - ffffffffff000000 |  -16    MB |                  |         |
+> -    FIXADDR_START | ~-11    MB | ffffffffff5fffff | ~0.5 MB | kernel-internal fixmap range, variable size and offset
+> - ffffffffff600000 |  -10    MB | ffffffffff600fff |    4 kB | legacy vsyscall ABI
+> - ffffffffffe00000 |   -2    MB | ffffffffffffffff |    2 MB | ... unused hole
+> -__________________|____________|__________________|_________|___________________________________________________________
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|   Start addr    |   Offset   |     End addr     |  Size   | VM area description                                       |
+> ++=================+============+==================+=========+===========================================================+
+> +|                 |            |                  |         |                                                           |
+> +|0000000000000000 |    0       | 00007fffffffffff |  128 TB | user-space virtual memory, different per mm               |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|                 |            |                  |         |                                                           |
+> +|0000800000000000 | +128    TB | ffff7fffffffffff | ~16M TB | ... huge, almost 64 bits wide hole of non-canonical       |
+> +|                 |            |                  |         | virtual memory addresses up to the -128 TB                |
+> +|                 |            |                  |         | starting offset of kernel mappings.                       |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|                      **Kernel-space virtual memory, shared between all processes:**                                   |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffff800000000000 | -128    TB | ffff87ffffffffff |    8 TB | ... guard hole, also reserved for hypervisor              |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffff880000000000 | -120    TB | ffff887fffffffff |  0.5 TB | LDT remap for PTI                                         |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffff888000000000 | -119.5  TB | ffffc87fffffffff |   64 TB | direct mapping of all physical memory (page_offset_base)  |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffffc88000000000 |  -55.5  TB | ffffc8ffffffffff |  0.5 TB | ... unused hole                                           |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffffc90000000000 |  -55    TB | ffffe8ffffffffff |   32 TB | vmalloc/ioremap space (vmalloc_base)                      |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffffe90000000000 |  -23    TB | ffffe9ffffffffff |    1 TB | ... unused hole                                           |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffffea0000000000 |  -22    TB | ffffeaffffffffff |    1 TB | virtual memory map (vmemmap_base)                         |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffffeb0000000000 |  -21    TB | ffffebffffffffff |    1 TB | ... unused hole                                           |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffffec0000000000 |  -20    TB | fffffbffffffffff |   16 TB | KASAN shadow memory                                       |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|                         **Identical layout to the 56-bit one from here on:**                                          |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|fffffc0000000000 |   -4    TB | fffffdffffffffff |    2 TB | ... unused hole                                           |
+> +|                 |            |                  |         | vaddr_end for KASLR                                       |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|fffffe0000000000 |   -2    TB | fffffe7fffffffff |  0.5 TB | cpu_entry_area mapping                                    |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|fffffe8000000000 |   -1.5  TB | fffffeffffffffff |  0.5 TB | ... unused hole                                           |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffffff0000000000 |   -1    TB | ffffff7fffffffff |  0.5 TB | %esp fixup stacks                                         |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffffff8000000000 | -512    GB | ffffffeeffffffff |  444 GB | ... unused hole                                           |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffffffef00000000 |  -68    GB | fffffffeffffffff |   64 GB | EFI region mapping space                                  |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffffffff00000000 |   -4    GB | ffffffff7fffffff |    2 GB | ... unused hole                                           |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffffffff80000000 |   -2    GB | ffffffff9fffffff |  512 MB | kernel text mapping, mapped to physical address 0         |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffffffff80000000 |-2048    MB |                  |         |                                                           |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffffffffa0000000 |-1536    MB | fffffffffeffffff | 1520 MB | module mapping space                                      |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffffffffff000000 |  -16    MB |                  |         |                                                           |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|   FIXADDR_START | ~-11    MB | ffffffffff5fffff | ~0.5 MB | kernel-internal fixmap range, variable size and offset    |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffffffffff600000 |  -10    MB | ffffffffff600fff |    4 kB | legacy vsyscall ABI                                       |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
+> +|ffffffffffe00000 |   -2    MB | ffffffffffffffff |    2 MB | ... unused hole                                           |
+> ++-----------------+------------+------------------+---------+-----------------------------------------------------------+
