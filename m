@@ -1,12 +1,12 @@
 From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 5.0 41/66] scsi: core: add new RDAC LENOVO/DE_Series device
-Date: Wed, 24 Apr 2019 10:33:15 -0400
-Message-ID: <20190424143341.27665-41-sashal@kernel.org>
-References: <20190424143341.27665-1-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 4.19 33/52] scsi: core: add new RDAC LENOVO/DE_Series device
+Date: Wed, 24 Apr 2019 10:38:51 -0400
+Message-ID: <20190424143911.28890-33-sashal@kernel.org>
+References: <20190424143911.28890-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190424143341.27665-1-sashal@kernel.org>
+In-Reply-To: <20190424143911.28890-1-sashal@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>, Hannes Reinecke <hare@suse.de>, NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, SCSI ML <linux-scsi@vger.kernel.org>, DM ML <dm-devel@redhat.com>, Sasha Levin <sashal@kernel.org>
@@ -30,7 +30,7 @@ Cc: DM ML <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
-Signed-off-by: Sasha Levin (Microsoft) <sashal@kernel.org>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
  drivers/scsi/scsi_devinfo.c | 1 +
  drivers/scsi/scsi_dh.c      | 1 +
