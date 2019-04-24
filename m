@@ -1,135 +1,152 @@
-From: Huaisheng HS1 Ye <yehs1@lenovo.com>
-Subject: RE: [External]  Re: [PATCH] dm-writecache: avoid unnecessary lookups
- in writecache_find_entry
-Date: Wed, 24 Apr 2019 04:08:24 +0000
-Message-ID: <HK2PR03MB4418482EB0C2C73559FACD7F923C0@HK2PR03MB4418.apcprd03.prod.outlook.com>
-References: <20190420162102.6460-1-yehs2007@zoho.com>
- <alpine.LRH.2.02.1904231140240.17390@file01.intranet.prod.int.rdu2.redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH] multipath -u: test socket connection in
+	non-blocking mode
+Date: Wed, 24 Apr 2019 07:48:40 +0200
+Message-ID: <97f71fe5-ed9c-1f12-e344-132bac889b7e@suse.de>
+References: <20190423193237.28391-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1904231140240.17390@file01.intranet.prod.int.rdu2.redhat.com>
-Content-Language: zh-CN
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: "snitzer@redhat.com" <snitzer@redhat.com>, "agk@redhat.com" <agk@redhat.com>, "prarit@redhat.com" <prarit@redhat.com>, NingTing Cheng <chengnt@lenovo.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Huaisheng Ye <yehs2007@zoho.com>
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190423193237.28391-1-mwilck@suse.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Mikulas Patocka <mpatocka@redhat.com>
-Sent: Tuesday, April 23, 2019 11:44 PM
->=20
-> On Sun, 21 Apr 2019, Huaisheng Ye wrote:
->=20
-> > From: Huaisheng Ye <yehs1@lenovo.com>
-> >
-> > Only when entry has been found, that would only be necessary to check t=
-he
-> > lowest or highest seq-count.
-> >
-> > Add local variable "found" in writecache_find_entry, if no entry has be=
-en
-> > found, it is meaningless that having a useless rb_prev or rb_next.
->=20
->=20
-> Hi
->=20
-> I don't quite see what is this patch trying to fix.
-> Don't fix something that isn't broken
-
-Hi Mikulas,
-
-Thanks for your reply.
-This patch is not designed for fixing logical error. That is used for optim=
-izing the behavior of writecache_find_entry.
-
-Let me give an example to illustrate the point below.
-Suppose that is the case, here is a normal READ bio comes to writecache_map=
-. And because of bio's direction is READ, writecache_find_entry would be ca=
-lled with flags WFE_RETURN_FOLLOWING.
-
-Now there are two scenarios,=20
-1. writecache_find_entry successfully get an existing entry by searching rb=
-_tree, we could call it HIT. Then the first 'while' will be finished by 'br=
-eak'. Next it will move to second 'while' loop, because of the flags hasn't=
- been marked as WFE_LOWEST_SEQ. writecache_find_entry will try to return an=
- entry with HIGHEST_SEQ, if there are other entries which has same original=
-_sector in rb_tree.
-For this situation, the current code is okay to deal with it.
-
-2. writecache_find_entry couldn't get an existing entry from rb_tree, we co=
-uld call it MISS. Because of same flags WFE_RETURN_FOLLOWING, writecache_fi=
-nd_entry will get other entry, which's original_sector will slightly larger=
- than input parameter block, with big probability.
-For this scenario, function writecache_find_entry doesn't need to enter sec=
-ond 'while' loop. But current code would still try to check there were othe=
-r entry with same original_sector.
-So the additional rb_next or rb_prev is unnecessary by this case, also the =
-code doesn't need to compare the original_sector of 'e2' with parameter 'bl=
-ock'.
-
-My patch is designed to optimize the second case. so we could skip the seco=
-nd 'while' loop when the block is missed from rb_tree.
-
-Cheers,
-Huaisheng Ye
-
->=20
-> > Signed-off-by: Huaisheng Ye <yehs1@lenovo.com>
-> > ---
-> >  drivers/md/dm-writecache.c | 12 ++++++++++--
-> >  1 file changed, 10 insertions(+), 2 deletions(-)
-> >
-> > diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-> > index ddf1732..047ae09 100644
-> > --- a/drivers/md/dm-writecache.c
-> > +++ b/drivers/md/dm-writecache.c
-> > @@ -537,14 +537,18 @@ static struct wc_entry *writecache_find_entry(str=
-uct dm_writecache *wc,
-> >  {
-> >  	struct wc_entry *e;
-> >  	struct rb_node *node =3D wc->tree.rb_node;
-> > +	bool found =3D false;
-> >
-> >  	if (unlikely(!node))
-> >  		return NULL;
-> >
-> >  	while (1) {
-> >  		e =3D container_of(node, struct wc_entry, rb_node);
-> > -		if (read_original_sector(wc, e) =3D=3D block)
-> > +		if (read_original_sector(wc, e) =3D=3D block) {
-> > +			found =3D true;
-> >  			break;
-> > +		}
-> > +
-> >  		node =3D (read_original_sector(wc, e) >=3D block ?
-> >  			e->rb_node.rb_left : e->rb_node.rb_right);
-> >  		if (unlikely(!node)) {
-> > @@ -564,7 +568,8 @@ static struct wc_entry *writecache_find_entry(struc=
-t dm_writecache *wc,
-> >  		}
-> >  	}
-> >
-> > -	while (1) {
-> > +	/* only need to check lowest or highest seq-count when entry has been=
- found */
-> > +	while (found) {
-> >  		struct wc_entry *e2;
-> >  		if (flags & WFE_LOWEST_SEQ)
-> >  			node =3D rb_prev(&e->rb_node);
-> > @@ -577,6 +582,9 @@ static struct wc_entry *writecache_find_entry(struc=
-t dm_writecache *wc,
-> >  			return e;
-> >  		e =3D e2;
-> >  	}
-> > +
-> > +	/* no entry has been found, return the following entry */
-> > +	return e;
-> >  }
-> >
-> >  static void writecache_insert_entry(struct dm_writecache *wc, struct w=
-c_entry *ins)
-> > --
-> > 1.8.3.1
-> >
-> >
+T24gNC8yMy8xOSA5OjMyIFBNLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4gU2luY2UgY29tbWl0IGQ3
+MTg4ZmNkICJtdWx0aXBhdGhkOiBzdGFydCBkYWVtb24gYWZ0ZXIgdWRldiB0cmlnZ2VyIiwKPiBt
+dWx0aXBhdGhkIHN0YXJ0dXAgaXMgZGVsYXllZCBkdXJpbmcgYm9vdCB1bnRpbCBhZnRlciAidWRl
+diBzZXR0bGUiCj4gdGVybWluYXRlcy4gQnV0ICJtdWx0aXBhdGggLXUiIGlzIHJ1biBieSB1ZGV2
+IHdvcmtlcnMgZm9yIHN0b3JhZ2UgZGV2aWNlcywKPiBhbmQgYXR0ZW1wdHMgdG8gY29ubmVjdCB0
+byB0aGUgbXVsdGlwYXRoZCBzb2NrZXQuIFRoaXMgY2F1c2VzIGEgc3RhcnQgam9iCj4gZm9yIG11
+bHRpcGF0aGQgdG8gYmUgc2NoZWR1bGVkIGJ5IHN5c3RlbWQsIGJ1dCB0aGF0IGpvYiB3b24ndCBi
+ZSBzdGFydGVkCj4gdW50aWwgInVkZXYgc2V0dGxlIiBmaW5pc2hlcy4gVGhpcyBpcyBub3QgYSBw
+cm9ibGVtIG9uIHN5c3RlbXMgd2l0aCAxMjkgb3IKPiBsZXNzIHN0b3JhZ2UgdW5pdHMsIGJlY2F1
+c2UgdGhlIGNvbm5lY3QoKSBjYWxsIG9mICJtdWx0aXBhdGggLXUiIHdpbGwKPiBzdWNjZWVkIGFu
+eXdheS4gQnV0IG9uIGxhcmdlciBzeXN0ZW1zLCB0aGUgbGlzdGVuIGJhY2tsb2cgb2YgdGhlIHN5
+c3RlbWQKPiBzb2NrZXQgY2FuIGJlIGV4Y2VlZGVkLCB3aGljaCBjYXVzZXMgY29ubmVjdCgpIGNh
+bGxzIGZvciB0aGUgc29ja2V0IHRvCj4gYmxvY2sgdW50aWwgbXVsdGlwYXRoZCBzdGFydHMgdXAg
+YW5kIGJlZ2lucyBjYWxsaW5nIGFjY2VwdCgpLiBUaGlzIGNyZWF0ZXMKPiBhIGRlYWRsb2NrIHNp
+dHVhdGlvbiwgYmVjYXVzZSAibXVsdGlwYXRoIC11IiAoY2FsbGVkIGJ5IHVkZXYgd29ya2VycykK
+PiBibG9ja3MsIGFuZCB0aHVzICJ1ZGV2IHNldHRsZSIgZG9lc24ndCBmaW5pc2gsIGRlbGF5aW5n
+IG11bHRpcGF0aGQKPiBzdGFydHVwLiBUaGlzIHNpdHVhdGlvbiB0aGVuIHBlcnNpc3RzIHVudGls
+IGVpdGhlciB0aGUgd29ya2VycyBvciAidWRldgo+IHNldHRsZSIgdGltZSBvdXQuIEluIHRoZSBm
+b3JtZXIgY2FzZSwgcGF0aCBkZXZpY2VzIG1pZ2h0IGJlIG1pc2NsYXNzaWZpZWQKPiBhcyBub24t
+bXVsdGlwYXRoIGRldmljZXMgYnkgIm11bHRpcGF0aCAtdSIuCj4gCj4gRml4IHRoaXMgYnkgdXNp
+bmcgYSBub24tYmxvY2tpbmcgc29ja2V0IGZkIGZvciBjb25uZWN0KCkgYW5kIGludGVycHJldCB0
+aGUKPiBlcnJubyBhcHByb3ByaWF0ZWx5Lgo+IAo+IFRoaXMgcGF0Y2ggcmV2ZXJ0cyBtb3N0IG9m
+IHRoZSBjaGFuZ2VzIGZyb20gY29tbWl0IDhjZGY2NjYxICJtdWx0aXBhdGg6Cj4gY2hlY2sgb24g
+bXVsdGlwYXRoZCB3aXRob3V0IHN0YXJ0aW5nIGl0Ii4gSW5zdGVhZCwgIm11bHRpcGF0aCAtdSIg
+ZG9lcwo+IGFjY2VzcyB0aGUgc29ja2V0IGFuZCBzdGFydCBtdWx0aXBhdGggYWdhaW4gKHdoaWNo
+IGlzIHdoYXQgd2Ugd2FudCBJTU8pLAo+IGJ1dCBpdCBpcyBub3cgYWJsZSB0byBkZXRlY3QgYW5k
+IGhhbmRsZSB0aGUgImZ1bGwgYmFja2xvZyIgc2l0dWF0aW9uLgo+IC0tLQo+ICAgbGlibXBhdGhj
+bWQvbXBhdGhfY21kLmMgfCAzMyArKysrKysrKysrKysrKysrKy0tLQo+ICAgbGlibXBhdGhjbWQv
+bXBhdGhfY21kLmggfCAxNSArKysrKysrKysKPiAgIG11bHRpcGF0aC9tYWluLmMgICAgICAgIHwg
+NjcgKysrKysrKysrKysrLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KPiAgIDMgZmlsZXMg
+Y2hhbmdlZCwgNjQgaW5zZXJ0aW9ucygrKSwgNTEgZGVsZXRpb25zKC0pCj4gCj4gZGlmZiAtLWdp
+dCBhL2xpYm1wYXRoY21kL21wYXRoX2NtZC5jIGIvbGlibXBhdGhjbWQvbXBhdGhfY21kLmMKPiBp
+bmRleCBkZjRjYTU0MS4uMjY1YWYxZmIgMTAwNjQ0Cj4gLS0tIGEvbGlibXBhdGhjbWQvbXBhdGhf
+Y21kLmMKPiArKysgYi9saWJtcGF0aGNtZC9tcGF0aF9jbWQuYwo+IEBAIC0yNiw2ICsyNiw3IEBA
+Cj4gICAjaW5jbHVkZSA8cG9sbC5oPgo+ICAgI2luY2x1ZGUgPHN0cmluZy5oPgo+ICAgI2luY2x1
+ZGUgPGVycm5vLmg+Cj4gKyNpbmNsdWRlIDxmY250bC5oPgo+ICAgCj4gICAjaW5jbHVkZSAibXBh
+dGhfY21kLmgiCj4gICAKPiBAQCAtOTMsMTAgKzk0LDExIEBAIHN0YXRpYyBzaXplX3Qgd3JpdGVf
+YWxsKGludCBmZCwgY29uc3Qgdm9pZCAqYnVmLCBzaXplX3QgbGVuKQo+ICAgLyoKPiAgICAqIGNv
+bm5lY3QgdG8gYSB1bml4IGRvbWFpbiBzb2NrZXQKPiAgICAqLwo+IC1pbnQgbXBhdGhfY29ubmVj
+dCh2b2lkKQo+ICtpbnQgX19tcGF0aF9jb25uZWN0KGludCBub25ibG9ja2luZykKPiAgIHsKPiAt
+CWludCBmZCwgbGVuOwo+ICsJaW50IGZkLCBsZW4sIGVycjsKPiAgIAlzdHJ1Y3Qgc29ja2FkZHJf
+dW4gYWRkcjsKPiArCWludCBmbGFncyA9IDA7Cj4gICAKPiAgIAltZW1zZXQoJmFkZHIsIDAsIHNp
+emVvZihhZGRyKSk7Cj4gICAJYWRkci5zdW5fZmFtaWx5ID0gQUZfTE9DQUw7Cj4gQEAgLTEwNiwx
+NiArMTA4LDM5IEBAIGludCBtcGF0aF9jb25uZWN0KHZvaWQpCj4gICAKPiAgIAlmZCA9IHNvY2tl
+dChBRl9MT0NBTCwgU09DS19TVFJFQU0sIDApOwo+ICAgCWlmIChmZCA9PSAtMSkKPiAtCQlyZXR1
+cm4gLTE7Cj4gKwkJcmV0dXJuIC1lcnJubzsKPiArCj4gKwlpZiAobm9uYmxvY2tpbmcpIHsKPiAr
+CQlmbGFncyA9IGZjbnRsKGZkLCBGX0dFVEZMLCAwKTsKPiArCQlpZiAoZmxhZ3MgIT0gLTEpCj4g
+KwkJCSh2b2lkKWZjbnRsKGZkLCBGX1NFVEZMLCBmbGFnc3xPX05PTkJMT0NLKTsKPiArCX0KPiAg
+IAo+ICAgCWlmIChjb25uZWN0KGZkLCAoc3RydWN0IHNvY2thZGRyICopJmFkZHIsIGxlbikgPT0g
+LTEpIHsKPiArCQllcnIgPSAtZXJybm87Cj4gICAJCWNsb3NlKGZkKTsKPiAtCQlyZXR1cm4gLTE7
+Cj4gKwkJcmV0dXJuIGVycjsKPiAgIAl9Cj4gICAKPiArCWlmIChub25ibG9ja2luZyAmJiBmbGFn
+cyAhPSAtMSkKPiArCQkodm9pZClmY250bChmZCwgRl9TRVRGTCwgZmxhZ3MpOwo+ICsKPiAgIAly
+ZXR1cm4gZmQ7Cj4gICB9Cj4gICAKPiArLyoKPiArICogY29ubmVjdCB0byBhIHVuaXggZG9tYWlu
+IHNvY2tldAo+ICsgKi8KPiAraW50IG1wYXRoX2Nvbm5lY3Qodm9pZCkKPiArewo+ICsJaW50IGZk
+ID0gX19tcGF0aF9jb25uZWN0KDApOwo+ICsKPiArCWlmIChmZCA+PSAwKQo+ICsJCXJldHVybiBm
+ZDsKPiArCWVycm5vID0gLWZkOwo+ICsJcmV0dXJuIC0xOwo+ICt9Cj4gKwo+ICAgaW50IG1wYXRo
+X2Rpc2Nvbm5lY3QoaW50IGZkKQo+ICAgewo+ICAgCXJldHVybiBjbG9zZShmZCk7ClBsZWFzZSBk
+byBhd2F5IHdpdGggdGhlIHdyYXBwZXIuCk5vIHBvaW50IGluIGhhdmluZyBpdDsgcmF0aGVyIHVz
+ZSBhIGNvbnNpc3RlbnQgcmV0dXJuIHZhbHVlCihpZSBlaXRoZXIgLTEgYW5kIHNldHRpbmcgZXJy
+bm8sIG9yIHJldHVybmluZyAtZXJybm8gZGlyZWN0bHkpLgoKPiBkaWZmIC0tZ2l0IGEvbGlibXBh
+dGhjbWQvbXBhdGhfY21kLmggYi9saWJtcGF0aGNtZC9tcGF0aF9jbWQuaAo+IGluZGV4IDE1YWVi
+MDY3Li4wZDRjNDVjZCAxMDA2NDQKPiAtLS0gYS9saWJtcGF0aGNtZC9tcGF0aF9jbWQuaAo+ICsr
+KyBiL2xpYm1wYXRoY21kL21wYXRoX2NtZC5oCj4gQEAgLTM0LDYgKzM0LDIxIEBAIGV4dGVybiAi
+QyIgewo+ICAgI2RlZmluZSBERUZBVUxUX1JFUExZX1RJTUVPVVQJNDAwMAo+ICAgCj4gICAKPiAr
+LyoKPiArICogREVTQ1JJUFRJT046Cj4gKyAqCVNhbWUgYXMgbXBhdGhfY29ubmVjdCgpIChzZWUg
+YmVsb3cpIGV4Y2VwdCBmb3IgdGhlIGVycm9yIHJldHVybiBjb2RlCj4gKyAqCWFuZCB0aGUgIm5v
+bmJsb2NraW5nIiBwYXJhbWV0ZXIuCj4gKyAqCUlmICJub25ibG9ja2luZyIgaXMgc2V0LCBjb25u
+ZWN0cyBpbiBub24tYmxvY2tpbmcgbW9kZS4gVGhpcyBpcwo+ICsgKgl1c2VmdWwgdG8gYXZvaWQg
+YmxvY2tpbmcgaWYgdGhlIGxpc3RlbmluZyBzb2NrZXQncyBiYWNrbG9nIGlzCj4gKyAqCWV4Y2Vl
+ZGVkLiBJbiB0aGlzIGNhc2UsIC1FQUdBSU4gd2lsbCBiZSByZXR1cm5lZC4KPiArICoJRXZlbiB3
+aXRoICJub25ibG9ja2luZyIgc2V0LCB0aGUgcmV0dXJuZWQgZmlsZSBkZXNjcmlwdG9yIGlzIGlu
+Cj4gKyAqCWJsb2NraW5nIG1vZGUgaW4gY2FzZSBvZiBzdWNjZXNzLgo+ICsgKgo+ICsgKiBSRVRV
+Uk5TOgo+ICsgKglBIGZpbGUgZGVzY3JpcHRvciAoPj0gMCkgb24gc3VjY2Vzcy4gLWVycm5vIG9u
+IGZhaWx1cmUuCj4gKyAqLwo+ICtpbnQgX19tcGF0aF9jb25uZWN0KGludCBub25ibG9ja2luZyk7
+Cj4gKwo+ICAgLyoKPiAgICAqIERFU0NSSVBUSU9OOgo+ICAgICoJQ29ubmVjdCB0byB0aGUgcnVu
+bmluZyBtdWx0aXBhdGhkIGRhZW1vbi4gT24gc3lzdGVtcyB3aXRoIHRoZQo+IGRpZmYgLS1naXQg
+YS9tdWx0aXBhdGgvbWFpbi5jIGIvbXVsdGlwYXRoL21haW4uYwo+IGluZGV4IDAwOGUzZDNmLi41
+MjIyMGRiZiAxMDA2NDQKPiAtLS0gYS9tdWx0aXBhdGgvbWFpbi5jCj4gKysrIGIvbXVsdGlwYXRo
+L21haW4uYwo+IEBAIC04NTAsNTUgKzg1MCwyOCBAQCBvdXQ6Cj4gICAJcmV0dXJuIHI7Cj4gICB9
+Cj4gICAKPiAtaW50IGlzX211bHRpcGF0aGRfcnVubmluZyh2b2lkKQo+ICtzdGF0aWMgaW50IHRl
+c3RfbXVsdGlwYXRoZF9zb2NrZXQodm9pZCkKPiAgIHsKPiAtCUZJTEUgKmYgPSBOVUxMOwo+IC0J
+Y2hhciBidWZbMTZdOwo+IC0JY2hhciBwYXRoW1BBVEhfTUFYXTsKPiAtCWludCBwaWQ7Cj4gLQlj
+aGFyICplbmQ7Cj4gKwlpbnQgZmQ7Cj4gKwkvKgo+ICsJICogIm11bHRpcGF0aCAtdSIgbWF5IGJl
+IHJ1biBiZWZvcmUgdGhlIGRhZW1vbiBpcyBzdGFydGVkLiBJbiB0aGlzCj4gKwkgKiBjYXNlLCBz
+eXN0ZW1kIG1pZ2h0IG93biB0aGUgc29ja2V0IGJ1dCBtaWdodCBkZWxheSBtdWx0aXBhdGhkCj4g
+KwkgKiBzdGFydHVwIHVudGlsIHNvbWUgb3RoZXIgdW5pdCAodWRldiBzZXR0bGUhKSAgaGFzIGZp
+bmlzaGVkCj4gKwkgKiBzdGFydGluZy4gV2l0aCBtYW55IExVTnMsIHRoZSBsaXN0ZW4gYmFja2xv
+ZyBtYXkgYmUgZXhjZWVkZWQsIHdoaWNoCj4gKwkgKiB3b3VsZCBjYXVzZSBjb25uZWN0KCkgdG8g
+YmxvY2suIFRoaXMgY2F1c2VzIHVkZXYgd29ya2VycyBjYWxsaW5nCj4gKwkgKiAibXVsdGlwYXRo
+IC11IiB0byBoYW5nLCBhbmQgdGh1cyBjcmVhdGVzIGEgZGVhZGxvY2ssIHVudGlsICJ1ZGV2Cj4g
+KwkgKiBzZXR0bGUiIHRpbWVzIG91dC4gIFRvIGF2b2lkIHRoaXMsIGNhbGwgY29ubmVjdCgpIGlu
+IG5vbi1ibG9ja2luZwo+ICsJICogbW9kZSBoZXJlLCBhbmQgdGFrZSBFQUdBSU4gYXMgaW5kaWNh
+dGlvbiBmb3IgYSBmaWxsZWQtdXAgc3lzdGVtZAo+ICsJICogYmFja2xvZy4KPiArCSAqLwo+ICAg
+Cj4gLQlmID0gZm9wZW4oREVGQVVMVF9QSURGSUxFLCAiciIpOwo+IC0JaWYgKCFmKSB7Cj4gLQkJ
+aWYgKGVycm5vICE9IEVOT0VOVCkKPiAtCQkJY29uZGxvZyg0LCAiY2FuJ3Qgb3BlbiAiIERFRkFV
+TFRfUElERklMRSAiOiAlcyIsCj4gLQkJCQlzdHJlcnJvcihlcnJubykpOwo+IC0JCXJldHVybiAw
+Owo+IC0JfQo+IC0JaWYgKCFmZ2V0cyhidWYsIHNpemVvZihidWYpLCBmKSkgewo+IC0JCWlmIChm
+ZXJyb3IoZikpCj4gLQkJCWNvbmRsb2coNCwgInJlYWQgb2YgIiBERUZBVUxUX1BJREZJTEUgIiBm
+YWlsZWQ6ICVzIiwKPiAtCQkJCXN0cmVycm9yKGVycm5vKSk7Cj4gLQkJZmNsb3NlKGYpOwo+IC0J
+CXJldHVybiAwOwo+IC0JfQo+IC0JZmNsb3NlKGYpOwo+IC0JZXJybm8gPSAwOwo+IC0Jc3RyY2hv
+cChidWYpOwo+IC0JcGlkID0gc3RydG9sKGJ1ZiwgJmVuZCwgMTApOwo+IC0JaWYgKGVycm5vICE9
+IDAgfHwgcGlkIDw9IDAgfHwgKmVuZCAhPSAnXDAnKSB7Cj4gLQkJY29uZGxvZyg0LCAiaW52YWxp
+ZCBjb250ZW50cyBpbiAiIERFRkFVTFRfUElERklMRSAiOiAnJXMnIiwKPiAtCQkJYnVmKTsKPiAt
+CQlyZXR1cm4gMDsKPiAtCX0KPiAtCXNucHJpbnRmKHBhdGgsIHNpemVvZihwYXRoKSwgIi9wcm9j
+LyVkL2NvbW0iLCBwaWQpOwo+IC0JZiA9IGZvcGVuKHBhdGgsICJyIik7Cj4gLQlpZiAoIWYpIHsK
+PiAtCQlpZiAoZXJybm8gIT0gRU5PRU5UKQo+IC0JCQljb25kbG9nKDQsICJjYW4ndCBvcGVuICVz
+OiAlcyIsIHBhdGgsIHN0cmVycm9yKGVycm5vKSk7Cj4gLQkJcmV0dXJuIDA7Cj4gLQl9Cj4gLQlp
+ZiAoIWZnZXRzKGJ1Ziwgc2l6ZW9mKGJ1ZiksIGYpKSB7Cj4gLQkJaWYgKGZlcnJvcihmKSkKPiAt
+CQkJY29uZGxvZyg0LCAicmVhZCBvZiAlcyBmYWlsZWQ6ICVzIiwgcGF0aCwKPiAtCQkJCXN0cmVy
+cm9yKGVycm5vKSk7Cj4gLQkJZmNsb3NlKGYpOwo+IC0JCXJldHVybiAwOwo+IC0JfQo+IC0JZmNs
+b3NlKGYpOwo+IC0Jc3RyY2hvcChidWYpOwo+IC0JaWYgKHN0cmNtcChidWYsICJtdWx0aXBhdGhk
+IikgIT0gMCkKPiArCWZkID0gX19tcGF0aF9jb25uZWN0KDEpOwo+ICsJaWYgKGZkID09IC1FQUdB
+SU4pCj4gKwkJY29uZGxvZygzLCAiZGFlbW9uIGJhY2tsb2cgZXhjZWVkZWQiKTsKPiArCWVsc2Ug
+aWYgKGZkIDwgMCkKPiAgIAkJcmV0dXJuIDA7Cj4gKwllbHNlCj4gKwkJY2xvc2UoZmQpOwo+ICAg
+CXJldHVybiAxOwo+ICAgfQo+ICAgCj4gQEAgLTEwODAsNyArMTA1Myw3IEBAIG1haW4gKGludCBh
+cmdjLCBjaGFyICphcmd2W10pCj4gICAJfQo+ICAgCWlmIChjbWQgPT0gQ01EX1ZBTElEX1BBVEgg
+JiYKPiAgIAkgICAgZGV2X3R5cGUgPT0gREVWX1VFVkVOVCkgewo+IC0JCWlmICghaXNfbXVsdGlw
+YXRoZF9ydW5uaW5nKCkpIHsKPiArCQlpZiAoIXRlc3RfbXVsdGlwYXRoZF9zb2NrZXQoKSkgewo+
+ICAgCQkJY29uZGxvZygzLCAiJXM6IGRhZW1vbiBpcyBub3QgcnVubmluZyIsIGRldik7Cj4gICAJ
+CQlpZiAoIXN5c3RlbWRfc2VydmljZV9lbmFibGVkKGRldikpIHsKPiAgIAkJCQlyID0gcHJpbnRf
+Y21kX3ZhbGlkKFJUVkxfTk8sIE5VTEwsIGNvbmYpOwo+IApSZW1haW5kZXIgbG9va3Mgb2theS4K
+CkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgVGVhbWxlYWQgU3Rv
+cmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlCQkJICAgICAgICAgICAgICAgKzQ5IDkxMSA3
+NDA1MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcK
+R0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgTWFyeSBIaWdnaW5zLCBTcmkgUmFzaWFoCkhSQiAyMTI4
+NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
+dC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
