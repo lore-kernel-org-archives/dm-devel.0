@@ -1,148 +1,69 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [patch V3 21/29] tracing: Use percpu stack trace buffer more
- intelligently
-Date: Thu, 25 Apr 2019 11:45:14 +0200
-Message-ID: <20190425094803.066064076@linutronix.de>
+Subject: [patch V3 26/29] stacktrace: Remove obsolete functions
+Date: Thu, 25 Apr 2019 11:45:19 +0200
+Message-ID: <20190425094803.524796783@linutronix.de>
 References: <20190425094453.875139013@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
 To: LKML <linux-kernel@vger.kernel.org>
-Cc: Josh Poimboeuf <jpoimboe@redhat.com>, x86@kernel.org, Andy Lutomirski <luto@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Alexander Potapenko <glider@google.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, David Rientjes <rientjes@google.com>, Catalin Marinas <catalin.marinas@arm.com>, Dmitry Vyukov <dvyukov@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, kasan-dev@googlegroups.com, Mike Rapoport <rppt@linux.vnet.ibm.com>, Akinobu Mita <akinobu.mita@gmail.com>, Christoph Hellwig <hch@lst.de>, iommu@lists.linux-foundation.org, Robin Murphy <robin.murphy@arm.com>, Marek Szyprowski <m.szyprowski@samsung.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Miroslav Benes <mbenes@suse.cz>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, Johannes Thumshirn <jthumshirn@suse.de>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, David Rientjes <rientjes@google.com>, Akinobu Mita <akinobu.mita@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jpoimboe>
 List-Id: dm-devel.ids
 
-The per cpu stack trace buffer usage pattern is odd at best. The buffer has
-place for 512 stack trace entries on 64-bit and 1024 on 32-bit. When
-interrupts or exceptions nest after the per cpu buffer was acquired the
-stacktrace length is hardcoded to 8 entries. 512/1024 stack trace entries
-in kernel stacks are unrealistic so the buffer is a complete waste.
-
-Split the buffer into 4 nest levels, which are 128/256 entries per
-level. This allows nesting contexts (interrupts, exceptions) to utilize the
-cpu buffer for stack retrieval and avoids the fixed length allocation along
-with the conditional execution pathes.
-
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: Steven Rostedt <rostedt@goodmis.org>
----
-V3: Limit to 4 nest levels and increase size per level.
----
- kernel/trace/trace.c |   77 +++++++++++++++++++++++++--------------------------
- 1 file changed, 39 insertions(+), 38 deletions(-)
-
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -2749,12 +2749,21 @@ trace_function(struct trace_array *tr,
- 
- #ifdef CONFIG_STACKTRACE
- 
--#define FTRACE_STACK_MAX_ENTRIES (PAGE_SIZE / sizeof(unsigned long))
-+/* Allow 4 levels of nesting: normal, softirq, irq, NMI */
-+#define FTRACE_KSTACK_NESTING	4
-+
-+#define FTRACE_KSTACK_ENTRIES	(PAGE_SIZE / FTRACE_KSTACK_NESTING)
-+
- struct ftrace_stack {
--	unsigned long		calls[FTRACE_STACK_MAX_ENTRIES];
-+	unsigned long		calls[FTRACE_KSTACK_ENTRIES];
-+};
-+
-+
-+struct ftrace_stacks {
-+	struct ftrace_stack	stacks[FTRACE_KSTACK_NESTING];
- };
- 
--static DEFINE_PER_CPU(struct ftrace_stack, ftrace_stack);
-+static DEFINE_PER_CPU(struct ftrace_stacks, ftrace_stacks);
- static DEFINE_PER_CPU(int, ftrace_stack_reserve);
- 
- static void __ftrace_trace_stack(struct ring_buffer *buffer,
-@@ -2763,10 +2772,11 @@ static void __ftrace_trace_stack(struct
- {
- 	struct trace_event_call *call = &event_kernel_stack;
- 	struct ring_buffer_event *event;
-+	struct ftrace_stack *fstack;
- 	struct stack_entry *entry;
- 	struct stack_trace trace;
--	int use_stack;
--	int size = FTRACE_STACK_ENTRIES;
-+	int size = FTRACE_KSTACK_ENTRIES;
-+	int stackidx;
- 
- 	trace.nr_entries	= 0;
- 	trace.skip		= skip;
-@@ -2788,29 +2798,32 @@ static void __ftrace_trace_stack(struct
- 	 */
- 	preempt_disable_notrace();
- 
--	use_stack = __this_cpu_inc_return(ftrace_stack_reserve);
-+	stackidx = __this_cpu_inc_return(ftrace_stack_reserve);
-+
-+	/* This should never happen. If it does, yell once and skip */
-+	if (WARN_ON_ONCE(stackidx >= FTRACE_KSTACK_NESTING))
-+		goto out;
-+
- 	/*
--	 * We don't need any atomic variables, just a barrier.
--	 * If an interrupt comes in, we don't care, because it would
--	 * have exited and put the counter back to what we want.
--	 * We just need a barrier to keep gcc from moving things
--	 * around.
-+	 * The above __this_cpu_inc_return() is 'atomic' cpu local. An
-+	 * interrupt will either see the value pre increment or post
-+	 * increment. If the interrupt happens pre increment it will have
-+	 * restored the counter when it returns.  We just need a barrier to
-+	 * keep gcc from moving things around.
- 	 */
- 	barrier();
--	if (use_stack == 1) {
--		trace.entries		= this_cpu_ptr(ftrace_stack.calls);
--		trace.max_entries	= FTRACE_STACK_MAX_ENTRIES;
--
--		if (regs)
--			save_stack_trace_regs(regs, &trace);
--		else
--			save_stack_trace(&trace);
--
--		if (trace.nr_entries > size)
--			size = trace.nr_entries;
--	} else
--		/* From now on, use_stack is a boolean */
--		use_stack = 0;
-+
-+	fstack = this_cpu_ptr(ftrace_stacks.stacks) + (stackidx - 1);
-+	trace.entries		= fstack->calls;
-+	trace.max_entries	= FTRACE_KSTACK_ENTRIES;
-+
-+	if (regs)
-+		save_stack_trace_regs(regs, &trace);
-+	else
-+		save_stack_trace(&trace);
-+
-+	if (trace.nr_entries > size)
-+		size = trace.nr_entries;
- 
- 	size *= sizeof(unsigned long);
- 
-@@ -2820,19 +2833,7 @@ static void __ftrace_trace_stack(struct
- 		goto out;
- 	entry = ring_buffer_event_data(event);
- 
--	memset(&entry->caller, 0, size);
--
--	if (use_stack)
--		memcpy(&entry->caller, trace.entries,
--		       trace.nr_entries * sizeof(unsigned long));
--	else {
--		trace.max_entries	= FTRACE_STACK_ENTRIES;
--		trace.entries		= entry->caller;
--		if (regs)
--			save_stack_trace_regs(regs, &trace);
--		else
--			save_stack_trace(&trace);
--	}
-+	memcpy(&entry->caller, trace.entries, size);
- 
- 	entry->size = trace.nr_entries;
- 
+Tm8gbW9yZSB1c2VycyBvZiB0aGUgc3RydWN0IHN0YWNrX3RyYWNlIGJhc2VkIGludGVyZmFjZXMu
+IFJlbW92ZSB0aGVtLgoKUmVtb3ZlIHRoZSBtYWNybyBzdHVicyBmb3IgIUNPTkZJR19TVEFDS1RS
+QUNFIGFzIHdlbGwgYXMgdGhleSBhcmUgcG9pbnRsZXNzCmJlY2F1c2UgdGhlIHN0b3JhZ2Ugb24g
+dGhlIGNhbGwgc2l0ZXMgaXMgY29uZGl0aW9uYWwgb24gQ09ORklHX1NUQUNLVFJBQ0UKYWxyZWFk
+eS4gTm8gcG9pbnQgdG8gYmUgJ3NtYXJ0Jy4KClNpZ25lZC1vZmYtYnk6IFRob21hcyBHbGVpeG5l
+ciA8dGdseEBsaW51dHJvbml4LmRlPgotLS0KIGluY2x1ZGUvbGludXgvc3RhY2t0cmFjZS5oIHwg
+ICAxNyAtLS0tLS0tLS0tLS0tLS0tLQoga2VybmVsL3N0YWNrdHJhY2UuYyAgICAgICAgfCAgIDE0
+IC0tLS0tLS0tLS0tLS0tCiAyIGZpbGVzIGNoYW5nZWQsIDMxIGRlbGV0aW9ucygtKQoKLS0tIGEv
+aW5jbHVkZS9saW51eC9zdGFja3RyYWNlLmgKKysrIGIvaW5jbHVkZS9saW51eC9zdGFja3RyYWNl
+LmgKQEAgLTM2LDI0ICszNiw3IEBAIGV4dGVybiB2b2lkIHNhdmVfc3RhY2tfdHJhY2VfdHNrKHN0
+cnVjdAogCQkJCXN0cnVjdCBzdGFja190cmFjZSAqdHJhY2UpOwogZXh0ZXJuIGludCBzYXZlX3N0
+YWNrX3RyYWNlX3Rza19yZWxpYWJsZShzdHJ1Y3QgdGFza19zdHJ1Y3QgKnRzaywKIAkJCQkJIHN0
+cnVjdCBzdGFja190cmFjZSAqdHJhY2UpOwotCi1leHRlcm4gdm9pZCBwcmludF9zdGFja190cmFj
+ZShzdHJ1Y3Qgc3RhY2tfdHJhY2UgKnRyYWNlLCBpbnQgc3BhY2VzKTsKLWV4dGVybiBpbnQgc25w
+cmludF9zdGFja190cmFjZShjaGFyICpidWYsIHNpemVfdCBzaXplLAotCQkJc3RydWN0IHN0YWNr
+X3RyYWNlICp0cmFjZSwgaW50IHNwYWNlcyk7Ci0KLSNpZmRlZiBDT05GSUdfVVNFUl9TVEFDS1RS
+QUNFX1NVUFBPUlQKIGV4dGVybiB2b2lkIHNhdmVfc3RhY2tfdHJhY2VfdXNlcihzdHJ1Y3Qgc3Rh
+Y2tfdHJhY2UgKnRyYWNlKTsKLSNlbHNlCi0jIGRlZmluZSBzYXZlX3N0YWNrX3RyYWNlX3VzZXIo
+dHJhY2UpICAgICAgICAgICAgICBkbyB7IH0gd2hpbGUgKDApCi0jZW5kaWYKLQotI2Vsc2UgLyog
+IUNPTkZJR19TVEFDS1RSQUNFICovCi0jIGRlZmluZSBzYXZlX3N0YWNrX3RyYWNlKHRyYWNlKQkJ
+CWRvIHsgfSB3aGlsZSAoMCkKLSMgZGVmaW5lIHNhdmVfc3RhY2tfdHJhY2VfdHNrKHRzaywgdHJh
+Y2UpCQlkbyB7IH0gd2hpbGUgKDApCi0jIGRlZmluZSBzYXZlX3N0YWNrX3RyYWNlX3VzZXIodHJh
+Y2UpCQkJZG8geyB9IHdoaWxlICgwKQotIyBkZWZpbmUgcHJpbnRfc3RhY2tfdHJhY2UodHJhY2Us
+IHNwYWNlcykJCWRvIHsgfSB3aGlsZSAoMCkKLSMgZGVmaW5lIHNucHJpbnRfc3RhY2tfdHJhY2Uo
+YnVmLCBzaXplLCB0cmFjZSwgc3BhY2VzKQlkbyB7IH0gd2hpbGUgKDApCi0jIGRlZmluZSBzYXZl
+X3N0YWNrX3RyYWNlX3Rza19yZWxpYWJsZSh0c2ssIHRyYWNlKQkoeyAtRU5PU1lTOyB9KQogI2Vu
+ZGlmIC8qIENPTkZJR19TVEFDS1RSQUNFICovCiAKICNpZiBkZWZpbmVkKENPTkZJR19TVEFDS1RS
+QUNFKSAmJiBkZWZpbmVkKENPTkZJR19IQVZFX1JFTElBQkxFX1NUQUNLVFJBQ0UpCi0tLSBhL2tl
+cm5lbC9zdGFja3RyYWNlLmMKKysrIGIva2VybmVsL3N0YWNrdHJhY2UuYwpAQCAtMzAsMTIgKzMw
+LDYgQEAgdm9pZCBzdGFja190cmFjZV9wcmludCh1bnNpZ25lZCBsb25nICplbgogfQogRVhQT1JU
+X1NZTUJPTF9HUEwoc3RhY2tfdHJhY2VfcHJpbnQpOwogCi12b2lkIHByaW50X3N0YWNrX3RyYWNl
+KHN0cnVjdCBzdGFja190cmFjZSAqdHJhY2UsIGludCBzcGFjZXMpCi17Ci0Jc3RhY2tfdHJhY2Vf
+cHJpbnQodHJhY2UtPmVudHJpZXMsIHRyYWNlLT5ucl9lbnRyaWVzLCBzcGFjZXMpOwotfQotRVhQ
+T1JUX1NZTUJPTF9HUEwocHJpbnRfc3RhY2tfdHJhY2UpOwotCiAvKioKICAqIHN0YWNrX3RyYWNl
+X3NucHJpbnQgLSBQcmludCB0aGUgZW50cmllcyBpbiB0aGUgc3RhY2sgdHJhY2UgaW50byBhIGJ1
+ZmZlcgogICogQGJ1ZjoJUG9pbnRlciB0byB0aGUgcHJpbnQgYnVmZmVyCkBAIC03MiwxNCArNjYs
+NiBAQCBpbnQgc3RhY2tfdHJhY2Vfc25wcmludChjaGFyICpidWYsIHNpemVfCiB9CiBFWFBPUlRf
+U1lNQk9MX0dQTChzdGFja190cmFjZV9zbnByaW50KTsKIAotaW50IHNucHJpbnRfc3RhY2tfdHJh
+Y2UoY2hhciAqYnVmLCBzaXplX3Qgc2l6ZSwKLQkJCXN0cnVjdCBzdGFja190cmFjZSAqdHJhY2Us
+IGludCBzcGFjZXMpCi17Ci0JcmV0dXJuIHN0YWNrX3RyYWNlX3NucHJpbnQoYnVmLCBzaXplLCB0
+cmFjZS0+ZW50cmllcywKLQkJCQkgICB0cmFjZS0+bnJfZW50cmllcywgc3BhY2VzKTsKLX0KLUVY
+UE9SVF9TWU1CT0xfR1BMKHNucHJpbnRfc3RhY2tfdHJhY2UpOwotCiAvKgogICogQXJjaGl0ZWN0
+dXJlcyB0aGF0IGRvIG5vdCBpbXBsZW1lbnQgc2F2ZV9zdGFja190cmFjZV8qKCkKICAqIGdldCB0
+aGVzZSB3ZWFrIGFsaWFzZXMgYW5kIG9uY2UtcGVyLWJvb3R1cCB3YXJuaW5ncwoKCl9fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkludGVsLWdmeCBtYWlsaW5n
+IGxpc3QKSW50ZWwtZ2Z4QGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwczovL2xpc3RzLmZyZWVk
+ZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2ludGVsLWdmeA==
