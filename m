@@ -1,7 +1,7 @@
 From: Huaisheng Ye <yehs2007@zoho.com>
-Subject: [PATCH v2 2/4] dm writecache: add unlikely for returned value of rb_next/prev
-Date: Thu, 25 Apr 2019 21:31:18 +0800
-Message-ID: <20190425133120.13088-3-yehs2007@zoho.com>
+Subject: [PATCH v2 3/4] dm writecache: remove unused member page_offset in writeback_struct
+Date: Thu, 25 Apr 2019 21:31:19 +0800
+Message-ID: <20190425133120.13088-4-yehs2007@zoho.com>
 References: <20190425133120.13088-1-yehs2007@zoho.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190425133120.13088-1-yehs2007@zoho.com>
@@ -12,38 +12,34 @@ List-Id: dm-devel.ids
 
 From: Huaisheng Ye <yehs1@lenovo.com>
 
-In functions writecache_discard() and writecache_find_entry() there is a
-high probablity that the pointer of structure rb_node won't equal NULL.
-Add unlikely for the pointer node NULL.
+The stucture member page_offset in writeback_struct never has been
+used actually. Remove it.
 
 Signed-off-by: Huaisheng Ye <yehs1@lenovo.com>
 Acked-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-writecache.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ drivers/md/dm-writecache.c | 2 --
+ 1 file changed, 2 deletions(-)
 
 diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-index 5b4d1c1..cfbbfbc 100644
+index cfbbfbc..ddf1732 100644
 --- a/drivers/md/dm-writecache.c
 +++ b/drivers/md/dm-writecache.c
-@@ -571,7 +571,7 @@ static struct wc_entry *writecache_find_entry(struct dm_writecache *wc,
- 			node = rb_prev(&e->rb_node);
- 		else
- 			node = rb_next(&e->rb_node);
--		if (!node)
-+		if (unlikely(!node))
- 			return e;
- 		e2 = container_of(node, struct wc_entry, rb_node);
- 		if (read_original_sector(wc, e2) != block)
-@@ -804,7 +804,7 @@ static void writecache_discard(struct dm_writecache *wc, sector_t start, sector_
- 			writecache_free_entry(wc, e);
- 		}
- 
--		if (!node)
-+		if (unlikely(!node))
- 			break;
- 
- 		e = container_of(node, struct wc_entry, rb_node);
+@@ -190,7 +190,6 @@ struct writeback_struct {
+ 	struct dm_writecache *wc;
+ 	struct wc_entry **wc_list;
+ 	unsigned wc_list_n;
+-	unsigned page_offset;
+ 	struct page *page;
+ 	struct wc_entry *wc_list_inline[WB_LIST_INLINE];
+ 	struct bio bio;
+@@ -1481,7 +1480,6 @@ static void __writecache_writeback_pmem(struct dm_writecache *wc, struct writeba
+ 		bio->bi_end_io = writecache_writeback_endio;
+ 		bio_set_dev(bio, wc->dev->bdev);
+ 		bio->bi_iter.bi_sector = read_original_sector(wc, e);
+-		wb->page_offset = PAGE_SIZE;
+ 		if (max_pages <= WB_LIST_INLINE ||
+ 		    unlikely(!(wb->wc_list = kmalloc_array(max_pages, sizeof(struct wc_entry *),
+ 							   GFP_NOIO | __GFP_NORETRY |
 -- 
 1.8.3.1
