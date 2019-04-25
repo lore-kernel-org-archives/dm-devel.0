@@ -1,64 +1,208 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [patch V3 25/29] livepatch: Simplify stack trace
- retrieval
-Date: Thu, 25 Apr 2019 11:45:18 +0200
-Message-ID: <20190425094803.437950229@linutronix.de>
+Subject: [patch V3 29/29] x86/stacktrace: Use common infrastructure
+Date: Thu, 25 Apr 2019 11:45:22 +0200
+Message-ID: <20190425094803.816485461@linutronix.de>
 References: <20190425094453.875139013@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <intel-gfx-bounces@lists.freedesktop.org>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
-List-Post: <mailto:intel-gfx@lists.freedesktop.org>
-List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: intel-gfx-bounces@lists.freedesktop.org
-Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: LKML <linux-kernel@vger.kernel.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Miroslav Benes <mbenes@suse.cz>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, David Rientjes <rientjes@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, Johannes Thumshirn <jthumshirn@suse.de>, Akinobu Mita <akinobu.mita@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jpoimboe>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>, x86@kernel.org, Andy Lutomirski <luto@kernel.org>, linux-arch@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, Alexander Potapenko <glider@google.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, David Rientjes <rientjes@google.com>, Catalin Marinas <catalin.marinas@arm.com>, Dmitry Vyukov <dvyukov@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, kasan-dev@googlegroups.com, Mike Rapoport <rppt@linux.vnet.ibm.com>, Akinobu Mita <akinobu.mita@gmail.com>, Christoph Hellwig <hch@lst.de>, iommu@lists.linux-foundation.org, Robin Murphy <robin.murphy@arm.com>, Marek
 List-Id: dm-devel.ids
 
-UmVwbGFjZSB0aGUgaW5kaXJlY3Rpb24gdGhyb3VnaCBzdHJ1Y3Qgc3RhY2tfdHJhY2UgYnkgdXNp
-bmcgdGhlIHN0b3JhZ2UKYXJyYXkgYmFzZWQgaW50ZXJmYWNlcy4KClNpZ25lZC1vZmYtYnk6IFRo
-b21hcyBHbGVpeG5lciA8dGdseEBsaW51dHJvbml4LmRlPgpBY2tlZC1ieTogTWlyb3NsYXYgQmVu
-ZXMgPG1iZW5lc0BzdXNlLmN6PgotLS0KIGtlcm5lbC9saXZlcGF0Y2gvdHJhbnNpdGlvbi5jIHwg
-ICAyMiArKysrKysrKystLS0tLS0tLS0tLS0tCiAxIGZpbGUgY2hhbmdlZCwgOSBpbnNlcnRpb25z
-KCspLCAxMyBkZWxldGlvbnMoLSkKCi0tLSBhL2tlcm5lbC9saXZlcGF0Y2gvdHJhbnNpdGlvbi5j
-CisrKyBiL2tlcm5lbC9saXZlcGF0Y2gvdHJhbnNpdGlvbi5jCkBAIC0yMDIsMTUgKzIwMiwxNSBA
-QCB2b2lkIGtscF91cGRhdGVfcGF0Y2hfc3RhdGUoc3RydWN0IHRhc2tfCiAgKiBEZXRlcm1pbmUg
-d2hldGhlciB0aGUgZ2l2ZW4gc3RhY2sgdHJhY2UgaW5jbHVkZXMgYW55IHJlZmVyZW5jZXMgdG8g
-YQogICogdG8tYmUtcGF0Y2hlZCBvciB0by1iZS11bnBhdGNoZWQgZnVuY3Rpb24uCiAgKi8KLXN0
-YXRpYyBpbnQga2xwX2NoZWNrX3N0YWNrX2Z1bmMoc3RydWN0IGtscF9mdW5jICpmdW5jLAotCQkJ
-CXN0cnVjdCBzdGFja190cmFjZSAqdHJhY2UpCitzdGF0aWMgaW50IGtscF9jaGVja19zdGFja19m
-dW5jKHN0cnVjdCBrbHBfZnVuYyAqZnVuYywgdW5zaWduZWQgbG9uZyAqZW50cmllcywKKwkJCQl1
-bnNpZ25lZCBpbnQgbnJfZW50cmllcykKIHsKIAl1bnNpZ25lZCBsb25nIGZ1bmNfYWRkciwgZnVu
-Y19zaXplLCBhZGRyZXNzOwogCXN0cnVjdCBrbHBfb3BzICpvcHM7CiAJaW50IGk7CiAKLQlmb3Ig
-KGkgPSAwOyBpIDwgdHJhY2UtPm5yX2VudHJpZXM7IGkrKykgewotCQlhZGRyZXNzID0gdHJhY2Ut
-PmVudHJpZXNbaV07CisJZm9yIChpID0gMDsgaSA8IG5yX2VudHJpZXM7IGkrKykgeworCQlhZGRy
-ZXNzID0gZW50cmllc1tpXTsKIAogCQlpZiAoa2xwX3RhcmdldF9zdGF0ZSA9PSBLTFBfVU5QQVRD
-SEVEKSB7CiAJCQkgLyoKQEAgLTI1NCwyOSArMjU0LDI1IEBAIHN0YXRpYyBpbnQga2xwX2NoZWNr
-X3N0YWNrX2Z1bmMoc3RydWN0IGsKIHN0YXRpYyBpbnQga2xwX2NoZWNrX3N0YWNrKHN0cnVjdCB0
-YXNrX3N0cnVjdCAqdGFzaywgY2hhciAqZXJyX2J1ZikKIHsKIAlzdGF0aWMgdW5zaWduZWQgbG9u
-ZyBlbnRyaWVzW01BWF9TVEFDS19FTlRSSUVTXTsKLQlzdHJ1Y3Qgc3RhY2tfdHJhY2UgdHJhY2U7
-CiAJc3RydWN0IGtscF9vYmplY3QgKm9iajsKIAlzdHJ1Y3Qga2xwX2Z1bmMgKmZ1bmM7Ci0JaW50
-IHJldDsKKwlpbnQgcmV0LCBucl9lbnRyaWVzOwogCi0JdHJhY2Uuc2tpcCA9IDA7Ci0JdHJhY2Uu
-bnJfZW50cmllcyA9IDA7Ci0JdHJhY2UubWF4X2VudHJpZXMgPSBNQVhfU1RBQ0tfRU5UUklFUzsK
-LQl0cmFjZS5lbnRyaWVzID0gZW50cmllczsKLQlyZXQgPSBzYXZlX3N0YWNrX3RyYWNlX3Rza19y
-ZWxpYWJsZSh0YXNrLCAmdHJhY2UpOworCXJldCA9IHN0YWNrX3RyYWNlX3NhdmVfdHNrX3JlbGlh
-YmxlKHRhc2ssIGVudHJpZXMsIEFSUkFZX1NJWkUoZW50cmllcykpOwogCVdBUk5fT05fT05DRShy
-ZXQgPT0gLUVOT1NZUyk7Ci0JaWYgKHJldCkgeworCWlmIChyZXQgPCAwKSB7CiAJCXNucHJpbnRm
-KGVycl9idWYsIFNUQUNLX0VSUl9CVUZfU0laRSwKIAkJCSAiJXM6ICVzOiVkIGhhcyBhbiB1bnJl
-bGlhYmxlIHN0YWNrXG4iLAogCQkJIF9fZnVuY19fLCB0YXNrLT5jb21tLCB0YXNrLT5waWQpOwog
-CQlyZXR1cm4gcmV0OwogCX0KKwlucl9lbnRyaWVzID0gcmV0OwogCiAJa2xwX2Zvcl9lYWNoX29i
-amVjdChrbHBfdHJhbnNpdGlvbl9wYXRjaCwgb2JqKSB7CiAJCWlmICghb2JqLT5wYXRjaGVkKQog
-CQkJY29udGludWU7CiAJCWtscF9mb3JfZWFjaF9mdW5jKG9iaiwgZnVuYykgewotCQkJcmV0ID0g
-a2xwX2NoZWNrX3N0YWNrX2Z1bmMoZnVuYywgJnRyYWNlKTsKKwkJCXJldCA9IGtscF9jaGVja19z
-dGFja19mdW5jKGZ1bmMsIGVudHJpZXMsIG5yX2VudHJpZXMpOwogCQkJaWYgKHJldCkgewogCQkJ
-CXNucHJpbnRmKGVycl9idWYsIFNUQUNLX0VSUl9CVUZfU0laRSwKIAkJCQkJICIlczogJXM6JWQg
-aXMgc2xlZXBpbmcgb24gZnVuY3Rpb24gJXNcbiIsCgoKX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX18KSW50ZWwtZ2Z4IG1haWxpbmcgbGlzdApJbnRlbC1nZnhA
-bGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHBzOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxt
-YW4vbGlzdGluZm8vaW50ZWwtZ2Z4
+Replace the stack_trace_save*() functions with the new arch_stack_walk()
+interfaces.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-arch@vger.kernel.org
+---
+ arch/x86/Kconfig             |    1 
+ arch/x86/kernel/stacktrace.c |  116 +++++++------------------------------------
+ 2 files changed, 20 insertions(+), 97 deletions(-)
+
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -74,6 +74,7 @@ config X86
+ 	select ARCH_MIGHT_HAVE_ACPI_PDC		if ACPI
+ 	select ARCH_MIGHT_HAVE_PC_PARPORT
+ 	select ARCH_MIGHT_HAVE_PC_SERIO
++	select ARCH_STACKWALK
+ 	select ARCH_SUPPORTS_ACPI
+ 	select ARCH_SUPPORTS_ATOMIC_RMW
+ 	select ARCH_SUPPORTS_NUMA_BALANCING	if X86_64
+--- a/arch/x86/kernel/stacktrace.c
++++ b/arch/x86/kernel/stacktrace.c
+@@ -12,75 +12,31 @@
+ #include <asm/stacktrace.h>
+ #include <asm/unwind.h>
+ 
+-static int save_stack_address(struct stack_trace *trace, unsigned long addr,
+-			      bool nosched)
+-{
+-	if (nosched && in_sched_functions(addr))
+-		return 0;
+-
+-	if (trace->skip > 0) {
+-		trace->skip--;
+-		return 0;
+-	}
+-
+-	if (trace->nr_entries >= trace->max_entries)
+-		return -1;
+-
+-	trace->entries[trace->nr_entries++] = addr;
+-	return 0;
+-}
+-
+-static void noinline __save_stack_trace(struct stack_trace *trace,
+-			       struct task_struct *task, struct pt_regs *regs,
+-			       bool nosched)
++void arch_stack_walk(stack_trace_consume_fn consume_entry, void *cookie,
++		     struct task_struct *task, struct pt_regs *regs)
+ {
+ 	struct unwind_state state;
+ 	unsigned long addr;
+ 
+-	if (regs)
+-		save_stack_address(trace, regs->ip, nosched);
++	if (regs && !consume_entry(cookie, regs->ip, false))
++		return;
+ 
+ 	for (unwind_start(&state, task, regs, NULL); !unwind_done(&state);
+ 	     unwind_next_frame(&state)) {
+ 		addr = unwind_get_return_address(&state);
+-		if (!addr || save_stack_address(trace, addr, nosched))
++		if (!addr || !consume_entry(cookie, addr, false))
+ 			break;
+ 	}
+ }
+ 
+ /*
+- * Save stack-backtrace addresses into a stack_trace buffer.
++ * This function returns an error if it detects any unreliable features of the
++ * stack.  Otherwise it guarantees that the stack trace is reliable.
++ *
++ * If the task is not 'current', the caller *must* ensure the task is inactive.
+  */
+-void save_stack_trace(struct stack_trace *trace)
+-{
+-	trace->skip++;
+-	__save_stack_trace(trace, current, NULL, false);
+-}
+-EXPORT_SYMBOL_GPL(save_stack_trace);
+-
+-void save_stack_trace_regs(struct pt_regs *regs, struct stack_trace *trace)
+-{
+-	__save_stack_trace(trace, current, regs, false);
+-}
+-
+-void save_stack_trace_tsk(struct task_struct *tsk, struct stack_trace *trace)
+-{
+-	if (!try_get_task_stack(tsk))
+-		return;
+-
+-	if (tsk == current)
+-		trace->skip++;
+-	__save_stack_trace(trace, tsk, NULL, true);
+-
+-	put_task_stack(tsk);
+-}
+-EXPORT_SYMBOL_GPL(save_stack_trace_tsk);
+-
+-#ifdef CONFIG_HAVE_RELIABLE_STACKTRACE
+-
+-static int __always_inline
+-__save_stack_trace_reliable(struct stack_trace *trace,
+-			    struct task_struct *task)
++int arch_stack_walk_reliable(stack_trace_consume_fn consume_entry,
++			     void *cookie, struct task_struct *task)
+ {
+ 	struct unwind_state state;
+ 	struct pt_regs *regs;
+@@ -117,7 +73,7 @@ static int __always_inline
+ 		if (!addr)
+ 			return -EINVAL;
+ 
+-		if (save_stack_address(trace, addr, false))
++		if (!consume_entry(cookie, addr, false))
+ 			return -EINVAL;
+ 	}
+ 
+@@ -132,32 +88,6 @@ static int __always_inline
+ 	return 0;
+ }
+ 
+-/*
+- * This function returns an error if it detects any unreliable features of the
+- * stack.  Otherwise it guarantees that the stack trace is reliable.
+- *
+- * If the task is not 'current', the caller *must* ensure the task is inactive.
+- */
+-int save_stack_trace_tsk_reliable(struct task_struct *tsk,
+-				  struct stack_trace *trace)
+-{
+-	int ret;
+-
+-	/*
+-	 * If the task doesn't have a stack (e.g., a zombie), the stack is
+-	 * "reliably" empty.
+-	 */
+-	if (!try_get_task_stack(tsk))
+-		return 0;
+-
+-	ret = __save_stack_trace_reliable(trace, tsk);
+-
+-	put_task_stack(tsk);
+-
+-	return ret;
+-}
+-#endif /* CONFIG_HAVE_RELIABLE_STACKTRACE */
+-
+ /* Userspace stacktrace - based on kernel/trace/trace_sysprof.c */
+ 
+ struct stack_frame_user {
+@@ -182,15 +112,15 @@ copy_stack_frame(const void __user *fp,
+ 	return ret;
+ }
+ 
+-static inline void __save_stack_trace_user(struct stack_trace *trace)
++void arch_stack_walk_user(stack_trace_consume_fn consume_entry, void *cookie,
++			  const struct pt_regs *regs)
+ {
+-	const struct pt_regs *regs = task_pt_regs(current);
+ 	const void __user *fp = (const void __user *)regs->bp;
+ 
+-	if (trace->nr_entries < trace->max_entries)
+-		trace->entries[trace->nr_entries++] = regs->ip;
++	if (!consume_entry(cookie, regs->ip, false))
++		return;
+ 
+-	while (trace->nr_entries < trace->max_entries) {
++	while (1) {
+ 		struct stack_frame_user frame;
+ 
+ 		frame.next_fp = NULL;
+@@ -200,8 +130,8 @@ static inline void __save_stack_trace_us
+ 		if ((unsigned long)fp < regs->sp)
+ 			break;
+ 		if (frame.ret_addr) {
+-			trace->entries[trace->nr_entries++] =
+-				frame.ret_addr;
++			if (!consume_entry(cookie, frame.ret_addr, false))
++				return;
+ 		}
+ 		if (fp == frame.next_fp)
+ 			break;
+@@ -209,11 +139,3 @@ static inline void __save_stack_trace_us
+ 	}
+ }
+ 
+-void save_stack_trace_user(struct stack_trace *trace)
+-{
+-	/*
+-	 * Trace user stack if we are not a kernel thread
+-	 */
+-	if (current->mm)
+-		__save_stack_trace_user(trace);
+-}
