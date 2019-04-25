@@ -1,92 +1,61 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [patch V3 24/29] tracing: Remove the last struct
- stack_trace usage
-Date: Thu, 25 Apr 2019 11:45:17 +0200
-Message-ID: <20190425094803.340000461@linutronix.de>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: [patch V3 20/29] tracing: Simplify stacktrace retrieval in histograms
+Date: Thu, 25 Apr 2019 11:45:13 +0200
+Message-ID: <20190425094802.979089273@linutronix.de>
 References: <20190425094453.875139013@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <intel-gfx-bounces@lists.freedesktop.org>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
-List-Post: <mailto:intel-gfx@lists.freedesktop.org>
-List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: intel-gfx-bounces@lists.freedesktop.org
-Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
-To: LKML <linux-kernel@vger.kernel.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Miroslav Benes <mbenes@suse.cz>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, Johannes Thumshirn <jthumshirn@suse.de>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, David Rientjes <rientjes@google.com>, Akinobu Mita <akinobu.mita@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jpoimboe>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
+List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Joonas Lahtinen <joonas.lahtinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Alexander Potapenko <glider-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kasan-dev-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrey Ryabinin <aryabinin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Johannes Thumshirn <jthumshirn-l3A5Bk7waGM@public.gmane.org>, Maarten Lankhorst <maarten.lankhorst-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Rodrigo Vivi <rodrigo.vivi-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: dm-devel.ids
 
-U2ltcGxpZnkgdGhlIHN0YWNrIHJldHJpZXZhbCBjb2RlIGJ5IHVzaW5nIHRoZSBzdG9yYWdlIGFy
-cmF5IGJhc2VkCmludGVyZmFjZS4KClNpZ25lZC1vZmYtYnk6IFRob21hcyBHbGVpeG5lciA8dGds
-eEBsaW51dHJvbml4LmRlPgpSZXZpZXdlZC1ieTogU3RldmVuIFJvc3RlZHQgKFZNd2FyZSkgPHJv
-c3RlZHRAZ29vZG1pcy5vcmc+Ci0tLQoga2VybmVsL3RyYWNlL3RyYWNlX3N0YWNrLmMgfCAgIDM3
-ICsrKysrKysrKysrKysrKystLS0tLS0tLS0tLS0tLS0tLS0tLS0KIDEgZmlsZSBjaGFuZ2VkLCAx
-NiBpbnNlcnRpb25zKCspLCAyMSBkZWxldGlvbnMoLSkKCi0tLSBhL2tlcm5lbC90cmFjZS90cmFj
-ZV9zdGFjay5jCisrKyBiL2tlcm5lbC90cmFjZS90cmFjZV9zdGFjay5jCkBAIC0yMywxMSArMjMs
-NyBAQAogc3RhdGljIHVuc2lnbmVkIGxvbmcgc3RhY2tfZHVtcF90cmFjZVtTVEFDS19UUkFDRV9F
-TlRSSUVTXTsKIHN0YXRpYyB1bnNpZ25lZCBzdGFja190cmFjZV9pbmRleFtTVEFDS19UUkFDRV9F
-TlRSSUVTXTsKIAotc3RydWN0IHN0YWNrX3RyYWNlIHN0YWNrX3RyYWNlX21heCA9IHsKLQkubWF4
-X2VudHJpZXMJCT0gU1RBQ0tfVFJBQ0VfRU5UUklFUywKLQkuZW50cmllcwkJPSAmc3RhY2tfZHVt
-cF90cmFjZVswXSwKLX07Ci0KK3N0YXRpYyB1bnNpZ25lZCBpbnQgc3RhY2tfdHJhY2VfZW50cmll
-czsKIHN0YXRpYyB1bnNpZ25lZCBsb25nIHN0YWNrX3RyYWNlX21heF9zaXplOwogc3RhdGljIGFy
-Y2hfc3BpbmxvY2tfdCBzdGFja190cmFjZV9tYXhfbG9jayA9CiAJKGFyY2hfc3BpbmxvY2tfdClf
-X0FSQ0hfU1BJTl9MT0NLX1VOTE9DS0VEOwpAQCAtNDQsMTAgKzQwLDEwIEBAIHN0YXRpYyB2b2lk
-IHByaW50X21heF9zdGFjayh2b2lkKQogCiAJcHJfZW1lcmcoIiAgICAgICAgRGVwdGggICAgU2l6
-ZSAgIExvY2F0aW9uICAgICglZCBlbnRyaWVzKVxuIgogCQkJICAgIiAgICAgICAgLS0tLS0gICAg
-LS0tLSAgIC0tLS0tLS0tXG4iLAotCQkJICAgc3RhY2tfdHJhY2VfbWF4Lm5yX2VudHJpZXMpOwor
-CQkJICAgc3RhY2tfdHJhY2VfZW50cmllcyk7CiAKLQlmb3IgKGkgPSAwOyBpIDwgc3RhY2tfdHJh
-Y2VfbWF4Lm5yX2VudHJpZXM7IGkrKykgewotCQlpZiAoaSArIDEgPT0gc3RhY2tfdHJhY2VfbWF4
-Lm5yX2VudHJpZXMpCisJZm9yIChpID0gMDsgaSA8IHN0YWNrX3RyYWNlX2VudHJpZXM7IGkrKykg
-eworCQlpZiAoaSArIDEgPT0gc3RhY2tfdHJhY2VfZW50cmllcykKIAkJCXNpemUgPSBzdGFja190
-cmFjZV9pbmRleFtpXTsKIAkJZWxzZQogCQkJc2l6ZSA9IHN0YWNrX3RyYWNlX2luZGV4W2ldIC0g
-c3RhY2tfdHJhY2VfaW5kZXhbaSsxXTsKQEAgLTkzLDEzICs4OSwxMiBAQCBzdGF0aWMgdm9pZCBj
-aGVja19zdGFjayh1bnNpZ25lZCBsb25nIGlwCiAKIAlzdGFja190cmFjZV9tYXhfc2l6ZSA9IHRo
-aXNfc2l6ZTsKIAotCXN0YWNrX3RyYWNlX21heC5ucl9lbnRyaWVzID0gMDsKLQlzdGFja190cmFj
-ZV9tYXguc2tpcCA9IDA7Ci0KLQlzYXZlX3N0YWNrX3RyYWNlKCZzdGFja190cmFjZV9tYXgpOwor
-CXN0YWNrX3RyYWNlX2VudHJpZXMgPSBzdGFja190cmFjZV9zYXZlKHN0YWNrX2R1bXBfdHJhY2Us
-CisJCQkJCSAgICAgICBBUlJBWV9TSVpFKHN0YWNrX2R1bXBfdHJhY2UpIC0gMSwKKwkJCQkJICAg
-ICAgIDApOwogCiAJLyogU2tpcCBvdmVyIHRoZSBvdmVyaGVhZCBvZiB0aGUgc3RhY2sgdHJhY2Vy
-IGl0c2VsZiAqLwotCWZvciAoaSA9IDA7IGkgPCBzdGFja190cmFjZV9tYXgubnJfZW50cmllczsg
-aSsrKSB7CisJZm9yIChpID0gMDsgaSA8IHN0YWNrX3RyYWNlX2VudHJpZXM7IGkrKykgewogCQlp
-ZiAoc3RhY2tfZHVtcF90cmFjZVtpXSA9PSBpcCkKIAkJCWJyZWFrOwogCX0KQEAgLTEwOCw3ICsx
-MDMsNyBAQCBzdGF0aWMgdm9pZCBjaGVja19zdGFjayh1bnNpZ25lZCBsb25nIGlwCiAJICogU29t
-ZSBhcmNocyBtYXkgbm90IGhhdmUgdGhlIHBhc3NlZCBpbiBpcCBpbiB0aGUgZHVtcC4KIAkgKiBJ
-ZiB0aGF0IGhhcHBlbnMsIHdlIG5lZWQgdG8gc2hvdyBldmVyeXRoaW5nLgogCSAqLwotCWlmIChp
-ID09IHN0YWNrX3RyYWNlX21heC5ucl9lbnRyaWVzKQorCWlmIChpID09IHN0YWNrX3RyYWNlX2Vu
-dHJpZXMpCiAJCWkgPSAwOwogCiAJLyoKQEAgLTEyNiwxMyArMTIxLDEzIEBAIHN0YXRpYyB2b2lk
-IGNoZWNrX3N0YWNrKHVuc2lnbmVkIGxvbmcgaXAKIAkgKiBsb29wIHdpbGwgb25seSBoYXBwZW4g
-b25jZS4gVGhpcyBjb2RlIG9ubHkgdGFrZXMgcGxhY2UKIAkgKiBvbiBhIG5ldyBtYXgsIHNvIGl0
-IGlzIGZhciBmcm9tIGEgZmFzdCBwYXRoLgogCSAqLwotCXdoaWxlIChpIDwgc3RhY2tfdHJhY2Vf
-bWF4Lm5yX2VudHJpZXMpIHsKKwl3aGlsZSAoaSA8IHN0YWNrX3RyYWNlX2VudHJpZXMpIHsKIAkJ
-aW50IGZvdW5kID0gMDsKIAogCQlzdGFja190cmFjZV9pbmRleFt4XSA9IHRoaXNfc2l6ZTsKIAkJ
-cCA9IHN0YXJ0OwogCi0JCWZvciAoOyBwIDwgdG9wICYmIGkgPCBzdGFja190cmFjZV9tYXgubnJf
-ZW50cmllczsgcCsrKSB7CisJCWZvciAoOyBwIDwgdG9wICYmIGkgPCBzdGFja190cmFjZV9lbnRy
-aWVzOyBwKyspIHsKIAkJCS8qCiAJCQkgKiBUaGUgUkVBRF9PTkNFX05PQ0hFQ0sgaXMgdXNlZCB0
-byBsZXQgS0FTQU4ga25vdyB0aGF0CiAJCQkgKiB0aGlzIGlzIG5vdCBhIHN0YWNrLW91dC1vZi1i
-b3VuZHMgZXJyb3IuCkBAIC0xNjMsNyArMTU4LDcgQEAgc3RhdGljIHZvaWQgY2hlY2tfc3RhY2so
-dW5zaWduZWQgbG9uZyBpcAogCQkJaSsrOwogCX0KIAotCXN0YWNrX3RyYWNlX21heC5ucl9lbnRy
-aWVzID0geDsKKwlzdGFja190cmFjZV9lbnRyaWVzID0geDsKIAogCWlmICh0YXNrX3N0YWNrX2Vu
-ZF9jb3JydXB0ZWQoY3VycmVudCkpIHsKIAkJcHJpbnRfbWF4X3N0YWNrKCk7CkBAIC0yNjUsNyAr
-MjYwLDcgQEAgc3RhdGljIHZvaWQgKgogewogCWxvbmcgbiA9ICpwb3MgLSAxOwogCi0JaWYgKG4g
-Pj0gc3RhY2tfdHJhY2VfbWF4Lm5yX2VudHJpZXMpCisJaWYgKG4gPj0gc3RhY2tfdHJhY2VfZW50
-cmllcykKIAkJcmV0dXJuIE5VTEw7CiAKIAltLT5wcml2YXRlID0gKHZvaWQgKiluOwpAQCAtMzI5
-LDcgKzMyNCw3IEBAIHN0YXRpYyBpbnQgdF9zaG93KHN0cnVjdCBzZXFfZmlsZSAqbSwgdm8KIAkJ
-c2VxX3ByaW50ZihtLCAiICAgICAgICBEZXB0aCAgICBTaXplICAgTG9jYXRpb24iCiAJCQkgICAi
-ICAgICglZCBlbnRyaWVzKVxuIgogCQkJICAgIiAgICAgICAgLS0tLS0gICAgLS0tLSAgIC0tLS0t
-LS0tXG4iLAotCQkJICAgc3RhY2tfdHJhY2VfbWF4Lm5yX2VudHJpZXMpOworCQkJICAgc3RhY2tf
-dHJhY2VfZW50cmllcyk7CiAKIAkJaWYgKCFzdGFja190cmFjZXJfZW5hYmxlZCAmJiAhc3RhY2tf
-dHJhY2VfbWF4X3NpemUpCiAJCQlwcmludF9kaXNhYmxlZChtKTsKQEAgLTMzOSwxMCArMzM0LDEw
-IEBAIHN0YXRpYyBpbnQgdF9zaG93KHN0cnVjdCBzZXFfZmlsZSAqbSwgdm8KIAogCWkgPSAqKGxv
-bmcgKil2OwogCi0JaWYgKGkgPj0gc3RhY2tfdHJhY2VfbWF4Lm5yX2VudHJpZXMpCisJaWYgKGkg
-Pj0gc3RhY2tfdHJhY2VfZW50cmllcykKIAkJcmV0dXJuIDA7CiAKLQlpZiAoaSArIDEgPT0gc3Rh
-Y2tfdHJhY2VfbWF4Lm5yX2VudHJpZXMpCisJaWYgKGkgKyAxID09IHN0YWNrX3RyYWNlX2VudHJp
-ZXMpCiAJCXNpemUgPSBzdGFja190cmFjZV9pbmRleFtpXTsKIAllbHNlCiAJCXNpemUgPSBzdGFj
-a190cmFjZV9pbmRleFtpXSAtIHN0YWNrX3RyYWNlX2luZGV4W2krMV07CgoKX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KSW50ZWwtZ2Z4IG1haWxpbmcgbGlz
-dApJbnRlbC1nZnhAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHBzOi8vbGlzdHMuZnJlZWRlc2t0
-b3Aub3JnL21haWxtYW4vbGlzdGluZm8vaW50ZWwtZ2Z4
+The indirection through struct stack_trace is not necessary at all. Use the
+storage array based interface.
+
+Signed-off-by: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Tested-by: Tom Zanussi <tom.zanussi-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Reviewed-by: Tom Zanussi <tom.zanussi-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Acked-by: Steven Rostedt (VMware) <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+---
+ kernel/trace/trace_events_hist.c |   12 +++---------
+ 1 file changed, 3 insertions(+), 9 deletions(-)
+
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -5186,7 +5186,6 @@ static void event_hist_trigger(struct ev
+ 	u64 var_ref_vals[TRACING_MAP_VARS_MAX];
+ 	char compound_key[HIST_KEY_SIZE_MAX];
+ 	struct tracing_map_elt *elt = NULL;
+-	struct stack_trace stacktrace;
+ 	struct hist_field *key_field;
+ 	u64 field_contents;
+ 	void *key = NULL;
+@@ -5198,14 +5197,9 @@ static void event_hist_trigger(struct ev
+ 		key_field = hist_data->fields[i];
+ 
+ 		if (key_field->flags & HIST_FIELD_FL_STACKTRACE) {
+-			stacktrace.max_entries = HIST_STACKTRACE_DEPTH;
+-			stacktrace.entries = entries;
+-			stacktrace.nr_entries = 0;
+-			stacktrace.skip = HIST_STACKTRACE_SKIP;
+-
+-			memset(stacktrace.entries, 0, HIST_STACKTRACE_SIZE);
+-			save_stack_trace(&stacktrace);
+-
++			memset(entries, 0, HIST_STACKTRACE_SIZE);
++			stack_trace_save(entries, HIST_STACKTRACE_DEPTH,
++					 HIST_STACKTRACE_SKIP);
+ 			key = entries;
+ 		} else {
+ 			field_contents = key_field->fn(key_field, elt, rbe, rec);
