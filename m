@@ -1,8 +1,8 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [patch V3 04/29] backtrace-test: Simplify stack trace
- handling
-Date: Thu, 25 Apr 2019 11:44:57 +0200
-Message-ID: <20190425094801.501919093@linutronix.de>
+Subject: [patch V3 25/29] livepatch: Simplify stack trace
+ retrieval
+Date: Thu, 25 Apr 2019 11:45:18 +0200
+Message-ID: <20190425094803.437950229@linutronix.de>
 References: <20190425094453.875139013@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -18,26 +18,47 @@ List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
 Errors-To: intel-gfx-bounces@lists.freedesktop.org
 Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
 To: LKML <linux-kernel@vger.kernel.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Miroslav Benes <mbenes@suse.cz>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, Johannes Thumshirn <jthumshirn@suse.de>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, David Rientjes <rientjes@google.com>, Akinobu Mita <akinobu.mita@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jpoimboe>
+Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Miroslav Benes <mbenes@suse.cz>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, David Rientjes <rientjes@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, Johannes Thumshirn <jthumshirn@suse.de>, Akinobu Mita <akinobu.mita@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jpoimboe>
 List-Id: dm-devel.ids
 
 UmVwbGFjZSB0aGUgaW5kaXJlY3Rpb24gdGhyb3VnaCBzdHJ1Y3Qgc3RhY2tfdHJhY2UgYnkgdXNp
 bmcgdGhlIHN0b3JhZ2UKYXJyYXkgYmFzZWQgaW50ZXJmYWNlcy4KClNpZ25lZC1vZmYtYnk6IFRo
-b21hcyBHbGVpeG5lciA8dGdseEBsaW51dHJvbml4LmRlPgotLS0KIGtlcm5lbC9iYWNrdHJhY2V0
-ZXN0LmMgfCAgIDExICsrKy0tLS0tLS0tCiAxIGZpbGUgY2hhbmdlZCwgMyBpbnNlcnRpb25zKCsp
-LCA4IGRlbGV0aW9ucygtKQoKLS0tIGEva2VybmVsL2JhY2t0cmFjZXRlc3QuYworKysgYi9rZXJu
-ZWwvYmFja3RyYWNldGVzdC5jCkBAIC00OCwxOSArNDgsMTQgQEAgc3RhdGljIHZvaWQgYmFja3Ry
-YWNlX3Rlc3RfaXJxKHZvaWQpCiAjaWZkZWYgQ09ORklHX1NUQUNLVFJBQ0UKIHN0YXRpYyB2b2lk
-IGJhY2t0cmFjZV90ZXN0X3NhdmVkKHZvaWQpCiB7Ci0Jc3RydWN0IHN0YWNrX3RyYWNlIHRyYWNl
-OwogCXVuc2lnbmVkIGxvbmcgZW50cmllc1s4XTsKKwl1bnNpZ25lZCBpbnQgbnJfZW50cmllczsK
-IAogCXByX2luZm8oIlRlc3RpbmcgYSBzYXZlZCBiYWNrdHJhY2UuXG4iKTsKIAlwcl9pbmZvKCJU
-aGUgZm9sbG93aW5nIHRyYWNlIGlzIGEga2VybmVsIHNlbGYgdGVzdCBhbmQgbm90IGEgYnVnIVxu
-Iik7CiAKLQl0cmFjZS5ucl9lbnRyaWVzID0gMDsKLQl0cmFjZS5tYXhfZW50cmllcyA9IEFSUkFZ
-X1NJWkUoZW50cmllcyk7Ci0JdHJhY2UuZW50cmllcyA9IGVudHJpZXM7Ci0JdHJhY2Uuc2tpcCA9
-IDA7Ci0KLQlzYXZlX3N0YWNrX3RyYWNlKCZ0cmFjZSk7Ci0JcHJpbnRfc3RhY2tfdHJhY2UoJnRy
-YWNlLCAwKTsKKwlucl9lbnRyaWVzID0gc3RhY2tfdHJhY2Vfc2F2ZShlbnRyaWVzLCBBUlJBWV9T
-SVpFKGVudHJpZXMpLCAwKTsKKwlzdGFja190cmFjZV9wcmludChlbnRyaWVzLCBucl9lbnRyaWVz
-LCAwKTsKIH0KICNlbHNlCiBzdGF0aWMgdm9pZCBiYWNrdHJhY2VfdGVzdF9zYXZlZCh2b2lkKQoK
-Cl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkludGVsLWdm
-eCBtYWlsaW5nIGxpc3QKSW50ZWwtZ2Z4QGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwczovL2xp
-c3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2ludGVsLWdmeA==
+b21hcyBHbGVpeG5lciA8dGdseEBsaW51dHJvbml4LmRlPgpBY2tlZC1ieTogTWlyb3NsYXYgQmVu
+ZXMgPG1iZW5lc0BzdXNlLmN6PgotLS0KIGtlcm5lbC9saXZlcGF0Y2gvdHJhbnNpdGlvbi5jIHwg
+ICAyMiArKysrKysrKystLS0tLS0tLS0tLS0tCiAxIGZpbGUgY2hhbmdlZCwgOSBpbnNlcnRpb25z
+KCspLCAxMyBkZWxldGlvbnMoLSkKCi0tLSBhL2tlcm5lbC9saXZlcGF0Y2gvdHJhbnNpdGlvbi5j
+CisrKyBiL2tlcm5lbC9saXZlcGF0Y2gvdHJhbnNpdGlvbi5jCkBAIC0yMDIsMTUgKzIwMiwxNSBA
+QCB2b2lkIGtscF91cGRhdGVfcGF0Y2hfc3RhdGUoc3RydWN0IHRhc2tfCiAgKiBEZXRlcm1pbmUg
+d2hldGhlciB0aGUgZ2l2ZW4gc3RhY2sgdHJhY2UgaW5jbHVkZXMgYW55IHJlZmVyZW5jZXMgdG8g
+YQogICogdG8tYmUtcGF0Y2hlZCBvciB0by1iZS11bnBhdGNoZWQgZnVuY3Rpb24uCiAgKi8KLXN0
+YXRpYyBpbnQga2xwX2NoZWNrX3N0YWNrX2Z1bmMoc3RydWN0IGtscF9mdW5jICpmdW5jLAotCQkJ
+CXN0cnVjdCBzdGFja190cmFjZSAqdHJhY2UpCitzdGF0aWMgaW50IGtscF9jaGVja19zdGFja19m
+dW5jKHN0cnVjdCBrbHBfZnVuYyAqZnVuYywgdW5zaWduZWQgbG9uZyAqZW50cmllcywKKwkJCQl1
+bnNpZ25lZCBpbnQgbnJfZW50cmllcykKIHsKIAl1bnNpZ25lZCBsb25nIGZ1bmNfYWRkciwgZnVu
+Y19zaXplLCBhZGRyZXNzOwogCXN0cnVjdCBrbHBfb3BzICpvcHM7CiAJaW50IGk7CiAKLQlmb3Ig
+KGkgPSAwOyBpIDwgdHJhY2UtPm5yX2VudHJpZXM7IGkrKykgewotCQlhZGRyZXNzID0gdHJhY2Ut
+PmVudHJpZXNbaV07CisJZm9yIChpID0gMDsgaSA8IG5yX2VudHJpZXM7IGkrKykgeworCQlhZGRy
+ZXNzID0gZW50cmllc1tpXTsKIAogCQlpZiAoa2xwX3RhcmdldF9zdGF0ZSA9PSBLTFBfVU5QQVRD
+SEVEKSB7CiAJCQkgLyoKQEAgLTI1NCwyOSArMjU0LDI1IEBAIHN0YXRpYyBpbnQga2xwX2NoZWNr
+X3N0YWNrX2Z1bmMoc3RydWN0IGsKIHN0YXRpYyBpbnQga2xwX2NoZWNrX3N0YWNrKHN0cnVjdCB0
+YXNrX3N0cnVjdCAqdGFzaywgY2hhciAqZXJyX2J1ZikKIHsKIAlzdGF0aWMgdW5zaWduZWQgbG9u
+ZyBlbnRyaWVzW01BWF9TVEFDS19FTlRSSUVTXTsKLQlzdHJ1Y3Qgc3RhY2tfdHJhY2UgdHJhY2U7
+CiAJc3RydWN0IGtscF9vYmplY3QgKm9iajsKIAlzdHJ1Y3Qga2xwX2Z1bmMgKmZ1bmM7Ci0JaW50
+IHJldDsKKwlpbnQgcmV0LCBucl9lbnRyaWVzOwogCi0JdHJhY2Uuc2tpcCA9IDA7Ci0JdHJhY2Uu
+bnJfZW50cmllcyA9IDA7Ci0JdHJhY2UubWF4X2VudHJpZXMgPSBNQVhfU1RBQ0tfRU5UUklFUzsK
+LQl0cmFjZS5lbnRyaWVzID0gZW50cmllczsKLQlyZXQgPSBzYXZlX3N0YWNrX3RyYWNlX3Rza19y
+ZWxpYWJsZSh0YXNrLCAmdHJhY2UpOworCXJldCA9IHN0YWNrX3RyYWNlX3NhdmVfdHNrX3JlbGlh
+YmxlKHRhc2ssIGVudHJpZXMsIEFSUkFZX1NJWkUoZW50cmllcykpOwogCVdBUk5fT05fT05DRShy
+ZXQgPT0gLUVOT1NZUyk7Ci0JaWYgKHJldCkgeworCWlmIChyZXQgPCAwKSB7CiAJCXNucHJpbnRm
+KGVycl9idWYsIFNUQUNLX0VSUl9CVUZfU0laRSwKIAkJCSAiJXM6ICVzOiVkIGhhcyBhbiB1bnJl
+bGlhYmxlIHN0YWNrXG4iLAogCQkJIF9fZnVuY19fLCB0YXNrLT5jb21tLCB0YXNrLT5waWQpOwog
+CQlyZXR1cm4gcmV0OwogCX0KKwlucl9lbnRyaWVzID0gcmV0OwogCiAJa2xwX2Zvcl9lYWNoX29i
+amVjdChrbHBfdHJhbnNpdGlvbl9wYXRjaCwgb2JqKSB7CiAJCWlmICghb2JqLT5wYXRjaGVkKQog
+CQkJY29udGludWU7CiAJCWtscF9mb3JfZWFjaF9mdW5jKG9iaiwgZnVuYykgewotCQkJcmV0ID0g
+a2xwX2NoZWNrX3N0YWNrX2Z1bmMoZnVuYywgJnRyYWNlKTsKKwkJCXJldCA9IGtscF9jaGVja19z
+dGFja19mdW5jKGZ1bmMsIGVudHJpZXMsIG5yX2VudHJpZXMpOwogCQkJaWYgKHJldCkgewogCQkJ
+CXNucHJpbnRmKGVycl9idWYsIFNUQUNLX0VSUl9CVUZfU0laRSwKIAkJCQkJICIlczogJXM6JWQg
+aXMgc2xlZXBpbmcgb24gZnVuY3Rpb24gJXNcbiIsCgoKX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX18KSW50ZWwtZ2Z4IG1haWxpbmcgbGlzdApJbnRlbC1nZnhA
+bGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHBzOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxt
+YW4vbGlzdGluZm8vaW50ZWwtZ2Z4
