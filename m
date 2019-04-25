@@ -1,21 +1,14 @@
-From: Ryan Norwood <ryan.p.norwood@gmail.com>
-Subject: Re: [Vdo-devel] max_sectors_kb limitations with VDO and
-	dm-thin
-Date: Thu, 25 Apr 2019 14:26:28 -0400
-Message-ID: <CAFTvtQm14UejpKwCC23_uLKo8Q33jAyk7m_tSt9CJ+=r7qx6rg@mail.gmail.com>
-References: <CAFTvtQ=HnGB2bw8heFR5rL=5K9FOAXbbyK65pqzO0MMFV3CEiQ@mail.gmail.com>
-	<45987177-c92c-d906-50bc-f4c789c36857@redhat.com>
-	<CAFTvtQ=JiZ7FWNiayM5bVY5A8ZCNbDtXV=rUxa_0u6Xm6rJAqg@mail.gmail.com>
-	<CAMeeMh-v+xpn2YDizFQg4cKHZgC=aCdJwLfAMeGLGT1gB1ZURw@mail.gmail.com>
-	<CAFTvtQnLDU_MKzse5t4xc_CVWENsZtwQQSTAFyj-45tPg5STZQ@mail.gmail.com>
-	<CAFTvtQnALzibyS3jKisXRb+XGe8dopQfkj33=gtJAjd2+XymYQ@mail.gmail.com>
-	<20190424212751.GC14367@redhat.com> <20190424222240.GA14922@redhat.com>
-	<CAFTvtQmJ--4nqJNfq2dOs=fHOs42Mv=31DGkbk+rx3GDAmaYpw@mail.gmail.com>
-	<a3384bdcaff6b8efdb94d4d9940b7119@assyoma.it>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v2] multipath -u: test socket connection in
+ non-blocking mode
+Date: Thu, 25 Apr 2019 21:33:03 +0200
+Message-ID: <fa3ea599bf6424587fec45b5eb3549b3200ac5e9.camel@suse.com>
+References: <20190424090759.29796-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5376076428639557431=="
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <a3384bdcaff6b8efdb94d4d9940b7119@assyoma.it>
+In-Reply-To: <20190424090759.29796-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,70 +18,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Gionatan Danti <g.danti@assyoma.it>
-Cc: vdo-devel@redhat.com, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============5376076428639557431==
-Content-Type: multipart/alternative; boundary="00000000000087c4bf05875ef580"
-
---00000000000087c4bf05875ef580
-Content-Type: text/plain; charset="UTF-8"
-
-Here is the BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1703073
-
-On Thu, Apr 25, 2019 at 2:11 PM Gionatan Danti <g.danti@assyoma.it> wrote:
-
-> Il 25-04-2019 13:58 Ryan Norwood ha scritto:
-> > Great, I will do that. Thank you for all your help!
->
-> For future reference, can you post here the link of the BZ issue?
-> Thanks.
->
-> --
-> Danti Gionatan
-> Supporto Tecnico
-> Assyoma S.r.l. - www.assyoma.it
-> email: g.danti@assyoma.it - info@assyoma.it
-> GPG public key ID: FF5F32A8
->
-
---00000000000087c4bf05875ef580
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><div dir=3D"ltr">Here is the BZ: <a href=3D"https://bugzil=
-la.redhat.com/show_bug.cgi?id=3D1703073">https://bugzilla.redhat.com/show_b=
-ug.cgi?id=3D1703073</a><br></div></div><br><div class=3D"gmail_quote"><div =
-dir=3D"ltr" class=3D"gmail_attr">On Thu, Apr 25, 2019 at 2:11 PM Gionatan D=
-anti &lt;<a href=3D"mailto:g.danti@assyoma.it">g.danti@assyoma.it</a>&gt; w=
-rote:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0p=
-x 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">Il 25-04-2=
-019 13:58 Ryan Norwood ha scritto:<br>
-&gt; Great, I will do that. Thank you for all your help!<br>
-<br>
-For future reference, can you post here the link of the BZ issue?<br>
-Thanks.<br>
-<br>
--- <br>
-Danti Gionatan<br>
-Supporto Tecnico<br>
-Assyoma S.r.l. - <a href=3D"http://www.assyoma.it" rel=3D"noreferrer" targe=
-t=3D"_blank">www.assyoma.it</a><br>
-email: <a href=3D"mailto:g.danti@assyoma.it" target=3D"_blank">g.danti@assy=
-oma.it</a> - <a href=3D"mailto:info@assyoma.it" target=3D"_blank">info@assy=
-oma.it</a><br>
-GPG public key ID: FF5F32A8<br>
-</blockquote></div>
-
---00000000000087c4bf05875ef580--
-
-
---===============5376076428639557431==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5376076428639557431==--
+T24gV2VkLCAyMDE5LTA0LTI0IGF0IDExOjA3ICswMjAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4g
+U2luY2UgY29tbWl0IGQ3MTg4ZmNkICJtdWx0aXBhdGhkOiBzdGFydCBkYWVtb24gYWZ0ZXIgdWRl
+diB0cmlnZ2VyIiwKPiBtdWx0aXBhdGhkIHN0YXJ0dXAgaXMgZGVsYXllZCBkdXJpbmcgYm9vdCB1
+bnRpbCBhZnRlciAidWRldiBzZXR0bGUiCj4gdGVybWluYXRlcy4gQnV0ICJtdWx0aXBhdGggLXUi
+IGlzIHJ1biBieSB1ZGV2IHdvcmtlcnMgZm9yIHN0b3JhZ2UKPiBkZXZpY2VzLAo+IGFuZCBhdHRl
+bXB0cyB0byBjb25uZWN0IHRvIHRoZSBtdWx0aXBhdGhkIHNvY2tldC4gVGhpcyBjYXVzZXMgYSBz
+dGFydAo+IGpvYgo+IGZvciBtdWx0aXBhdGhkIHRvIGJlIHNjaGVkdWxlZCBieSBzeXN0ZW1kLCBi
+dXQgdGhhdCBqb2Igd29uJ3QgYmUKPiBzdGFydGVkCj4gdW50aWwgInVkZXYgc2V0dGxlIiBmaW5p
+c2hlcy4gVGhpcyBpcyBub3QgYSBwcm9ibGVtIG9uIHN5c3RlbXMgd2l0aAo+IDEyOSBvcgo+IGxl
+c3Mgc3RvcmFnZSB1bml0cywgYmVjYXVzZSB0aGUgY29ubmVjdCgpIGNhbGwgb2YgIm11bHRpcGF0
+aCAtdSIgd2lsbAo+IHN1Y2NlZWQgYW55d2F5LiBCdXQgb24gbGFyZ2VyIHN5c3RlbXMsIHRoZSBs
+aXN0ZW4gYmFja2xvZyBvZiB0aGUKPiBzeXN0ZW1kCj4gc29ja2V0IGNhbiBiZSBleGNlZWRlZCwg
+d2hpY2ggY2F1c2VzIGNvbm5lY3QoKSBjYWxscyBmb3IgdGhlIHNvY2tldAo+IHRvCj4gYmxvY2sg
+dW50aWwgbXVsdGlwYXRoZCBzdGFydHMgdXAgYW5kIGJlZ2lucyBjYWxsaW5nIGFjY2VwdCgpLiBU
+aGlzCj4gY3JlYXRlcwo+IGEgZGVhZGxvY2sgc2l0dWF0aW9uLCBiZWNhdXNlICJtdWx0aXBhdGgg
+LXUiIChjYWxsZWQgYnkgdWRldiB3b3JrZXJzKQo+IGJsb2NrcywgYW5kIHRodXMgInVkZXYgc2V0
+dGxlIiBkb2Vzbid0IGZpbmlzaCwgZGVsYXlpbmcgbXVsdGlwYXRoZAo+IHN0YXJ0dXAuIFRoaXMg
+c2l0dWF0aW9uIHRoZW4gcGVyc2lzdHMgdW50aWwgZWl0aGVyIHRoZSB3b3JrZXJzIG9yCj4gInVk
+ZXYKPiBzZXR0bGUiIHRpbWUgb3V0LiBJbiB0aGUgZm9ybWVyIGNhc2UsIHBhdGggZGV2aWNlcyBt
+aWdodCBiZQo+IG1pc2NsYXNzaWZpZWQKPiBhcyBub24tbXVsdGlwYXRoIGRldmljZXMgYnkgIm11
+bHRpcGF0aCAtdSIuCj4gCj4gRml4IHRoaXMgYnkgdXNpbmcgYSBub24tYmxvY2tpbmcgc29ja2V0
+IGZkIGZvciBjb25uZWN0KCkgYW5kCj4gaW50ZXJwcmV0IHRoZQo+IGVycm5vIGFwcHJvcHJpYXRl
+bHkuCj4gCj4gVGhpcyBwYXRjaCByZXZlcnRzIG1vc3Qgb2YgdGhlIGNoYW5nZXMgZnJvbSBjb21t
+aXQgOGNkZjY2NjEKPiAibXVsdGlwYXRoOgo+IGNoZWNrIG9uIG11bHRpcGF0aGQgd2l0aG91dCBz
+dGFydGluZyBpdCIuIEluc3RlYWQsICJtdWx0aXBhdGggLXUiCj4gZG9lcwo+IGFjY2VzcyB0aGUg
+c29ja2V0IGFuZCBzdGFydCBtdWx0aXBhdGggYWdhaW4gKHdoaWNoIGlzIHdoYXQgd2Ugd2FudAo+
+IElNTyksCj4gYnV0IGl0IGlzIG5vdyBhYmxlIHRvIGRldGVjdCBhbmQgaGFuZGxlIHRoZSAiZnVs
+bCBiYWNrbG9nIiBzaXR1YXRpb24uCj4gCj4gU2lnbmVkLW9mZi1ieTogTWFydGluIFdpbGNrIDxt
+d2lsY2tAc3VzZS5jb20+Cj4gCj4gVjI6Cj4gCj4gVXNlIHNhbWUgZXJyb3IgcmVwb3J0aW5nIGNv
+bnZlbnRpb24gaW4gX19tcGF0aF9jb25uZWN0KCkgYXMgaW4KPiBtcGF0aF9jb25uZWN0KCkgKEhh
+bm5lcyBSZWluZWNrZSkuIFdlIGNhbid0IGVhc2lseSBjaGFuZ2UgdGhlIGxhdHRlciwKPiBiZWNh
+dXNlIGl0J3MgcGFydCBvZiB0aGUgInB1YmxpYyIgbGlibXBhdGhjbWQgQVBJLiAKCkZUUiwgb3Vy
+IGN1c3RvbWVyIHJlcG9ydGVkIHRoYXQgdGhpcyBwYXRjaCBmaXhlZCBoaXMgcHJvYmxlbS4KCkBC
+ZW4sIEknZCBiZSBncmF0ZWZ1bCBpZiB5b3UgY291bGQgdHJ5IGl0IChvciBoYXZlIHRoZSB1c2Vy
+IHRyeSBpdCkKaW4geW91ciBwcm9ibGVtIGNhc2UgYXMgd2VsbC4KCi0tIApEci4gTWFydGluIFdp
+bGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExp
+bnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBO
+b3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0
+CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
+bmZvL2RtLWRldmVs
