@@ -1,34 +1,47 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [patch V3 18/29] lockdep: Remove save argument from
- check_prev_add()
-Date: Thu, 25 Apr 2019 15:35:49 +0200
-Message-ID: <20190425133549.GW4038@hirez.programming.kicks-ass.net>
-References: <20190425094453.875139013@linutronix.de>
- <20190425094802.803362058@linutronix.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-delay: fix a crash when invalid device is
+	specified
+Date: Thu, 25 Apr 2019 12:07:54 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1904251207040.6655@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <intel-gfx-bounces@lists.freedesktop.org>
-Content-Disposition: inline
-In-Reply-To: <20190425094802.803362058@linutronix.de>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
-List-Post: <mailto:intel-gfx@lists.freedesktop.org>
-List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: intel-gfx-bounces@lists.freedesktop.org
-Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Miroslav Benes <mbenes@suse.cz>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, David Rientjes <rientjes@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, Johannes Thumshirn <jthumshirn@suse.de>, Akinobu Mita <akinobu.mita@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jpoimboe>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>, Ondrej Kozina <okozina@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gVGh1LCBBcHIgMjUsIDIwMTkgYXQgMTE6NDU6MTFBTSArMDIwMCwgVGhvbWFzIEdsZWl4bmVy
-IHdyb3RlOgo+IFRoZXJlIGlzIG9ubHkgb25lIGNhbGxlciB3aGljaCBoYW5kcyBpbiBzYXZlX3Ry
-YWNlIGFzIGZ1bmN0aW9uIHBvaW50ZXIuCj4gCj4gU2lnbmVkLW9mZi1ieTogVGhvbWFzIEdsZWl4
-bmVyIDx0Z2x4QGxpbnV0cm9uaXguZGU+CgpBY2tlZC1ieTogUGV0ZXIgWmlqbHN0cmEgKEludGVs
-KSA8cGV0ZXJ6QGluZnJhZGVhZC5vcmc+Cl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fCkludGVsLWdmeCBtYWlsaW5nIGxpc3QKSW50ZWwtZ2Z4QGxpc3RzLmZy
-ZWVkZXNrdG9wLm9yZwpodHRwczovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3Rp
-bmZvL2ludGVsLWdmeA==
+When the target line contains invalid device, delay_ctr will call
+delay_dtr with NULL workqueue. Attempting to destroy the NULL workqueue
+causes a crash.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
+
+---
+ drivers/md/dm-delay.c |    3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+Index: linux-2.6/drivers/md/dm-delay.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-delay.c	2019-01-12 16:48:32.000000000 +0100
++++ linux-2.6/drivers/md/dm-delay.c	2019-04-25 18:01:08.000000000 +0200
+@@ -121,7 +121,8 @@ static void delay_dtr(struct dm_target *
+ {
+ 	struct delay_c *dc = ti->private;
+ 
+-	destroy_workqueue(dc->kdelayd_wq);
++	if (dc->kdelayd_wq)
++		destroy_workqueue(dc->kdelayd_wq);
+ 
+ 	if (dc->read.dev)
+ 		dm_put_device(ti, dc->read.dev);
