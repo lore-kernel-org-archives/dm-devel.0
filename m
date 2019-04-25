@@ -1,110 +1,59 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [patch V3 23/29] tracing: Simplify stack trace retrieval
-Date: Thu, 25 Apr 2019 11:45:16 +0200
-Message-ID: <20190425094803.248604594@linutronix.de>
+Subject: [patch V3 14/29] dm bufio: Simplify stack trace
+ retrieval
+Date: Thu, 25 Apr 2019 11:45:07 +0200
+Message-ID: <20190425094802.446326191@linutronix.de>
 References: <20190425094453.875139013@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
 To: LKML <linux-kernel@vger.kernel.org>
-Cc: Josh Poimboeuf <jpoimboe@redhat.com>, x86@kernel.org, Andy Lutomirski <luto@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Alexander Potapenko <glider@google.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, David Rientjes <rientjes@google.com>, Catalin Marinas <catalin.marinas@arm.com>, Dmitry Vyukov <dvyukov@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, kasan-dev@googlegroups.com, Mike Rapoport <rppt@linux.vnet.ibm.com>, Akinobu Mita <akinobu.mita@gmail.com>, Christoph Hellwig <hch@lst.de>, iommu@lists.linux-foundation.org, Robin Murphy <robin.murphy@arm.com>, Marek Szyprowski <m.szyprowski@samsung.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Miroslav Benes <mbenes@suse.cz>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, David Rientjes <rientjes@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, Johannes Thumshirn <jthumshirn@suse.de>, Akinobu Mita <akinobu.mita@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jpoimboe>
 List-Id: dm-devel.ids
 
-Replace the indirection through struct stack_trace by using the storage
-array based interfaces.
-
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
----
- kernel/trace/trace.c |   40 +++++++++++++---------------------------
- 1 file changed, 13 insertions(+), 27 deletions(-)
-
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -2774,22 +2774,18 @@ static void __ftrace_trace_stack(struct
- {
- 	struct trace_event_call *call = &event_kernel_stack;
- 	struct ring_buffer_event *event;
-+	unsigned int size, nr_entries;
- 	struct ftrace_stack *fstack;
- 	struct stack_entry *entry;
--	struct stack_trace trace;
--	int size = FTRACE_KSTACK_ENTRIES;
- 	int stackidx;
- 
--	trace.nr_entries	= 0;
--	trace.skip		= skip;
--
- 	/*
- 	 * Add one, for this function and the call to save_stack_trace()
- 	 * If regs is set, then these functions will not be in the way.
- 	 */
- #ifndef CONFIG_UNWINDER_ORC
- 	if (!regs)
--		trace.skip++;
-+		skip++;
- #endif
- 
- 	/*
-@@ -2816,28 +2812,24 @@ static void __ftrace_trace_stack(struct
- 	barrier();
- 
- 	fstack = this_cpu_ptr(ftrace_stacks.stacks) + (stackidx - 1);
--	trace.entries		= fstack->calls;
--	trace.max_entries	= FTRACE_KSTACK_ENTRIES;
--
--	if (regs)
--		save_stack_trace_regs(regs, &trace);
--	else
--		save_stack_trace(&trace);
--
--	if (trace.nr_entries > size)
--		size = trace.nr_entries;
-+	size = ARRAY_SIZE(fstack->calls);
- 
--	size *= sizeof(unsigned long);
-+	if (regs) {
-+		nr_entries = stack_trace_save_regs(regs, fstack->calls,
-+						   size, skip);
-+	} else {
-+		nr_entries = stack_trace_save(fstack->calls, size, skip);
-+	}
- 
-+	size = nr_entries * sizeof(unsigned long);
- 	event = __trace_buffer_lock_reserve(buffer, TRACE_STACK,
- 					    sizeof(*entry) + size, flags, pc);
- 	if (!event)
- 		goto out;
- 	entry = ring_buffer_event_data(event);
- 
--	memcpy(&entry->caller, trace.entries, size);
--
--	entry->size = trace.nr_entries;
-+	memcpy(&entry->caller, fstack->calls, size);
-+	entry->size = nr_entries;
- 
- 	if (!call_filter_check_discard(call, entry, buffer, event))
- 		__buffer_unlock_commit(buffer, event);
-@@ -2916,7 +2908,6 @@ ftrace_trace_userstack(struct ring_buffe
- 	struct trace_event_call *call = &event_user_stack;
- 	struct ring_buffer_event *event;
- 	struct userstack_entry *entry;
--	struct stack_trace trace;
- 
- 	if (!(global_trace.trace_flags & TRACE_ITER_USERSTACKTRACE))
- 		return;
-@@ -2947,12 +2938,7 @@ ftrace_trace_userstack(struct ring_buffe
- 	entry->tgid		= current->tgid;
- 	memset(&entry->caller, 0, sizeof(entry->caller));
- 
--	trace.nr_entries	= 0;
--	trace.max_entries	= FTRACE_STACK_ENTRIES;
--	trace.skip		= 0;
--	trace.entries		= entry->caller;
--
--	save_stack_trace_user(&trace);
-+	stack_trace_save_user(entry->caller, FTRACE_STACK_ENTRIES);
- 	if (!call_filter_check_discard(call, entry, buffer, event))
- 		__buffer_unlock_commit(buffer, event);
- 
+UmVwbGFjZSB0aGUgaW5kaXJlY3Rpb24gdGhyb3VnaCBzdHJ1Y3Qgc3RhY2tfdHJhY2Ugd2l0aCBh
+biBpbnZvY2F0aW9uIG9mCnRoZSBzdG9yYWdlIGFycmF5IGJhc2VkIGludGVyZmFjZS4KClNpZ25l
+ZC1vZmYtYnk6IFRob21hcyBHbGVpeG5lciA8dGdseEBsaW51dHJvbml4LmRlPgpDYzogZG0tZGV2
+ZWxAcmVkaGF0LmNvbQpDYzogTWlrZSBTbml0emVyIDxzbml0emVyQHJlZGhhdC5jb20+CkNjOiBB
+bGFzZGFpciBLZXJnb24gPGFna0ByZWRoYXQuY29tPgotLS0KIGRyaXZlcnMvbWQvZG0tYnVmaW8u
+YyB8ICAgMTUgKysrKysrLS0tLS0tLS0tCiAxIGZpbGUgY2hhbmdlZCwgNiBpbnNlcnRpb25zKCsp
+LCA5IGRlbGV0aW9ucygtKQoKLS0tIGEvZHJpdmVycy9tZC9kbS1idWZpby5jCisrKyBiL2RyaXZl
+cnMvbWQvZG0tYnVmaW8uYwpAQCAtMTUwLDcgKzE1MCw3IEBAIHN0cnVjdCBkbV9idWZmZXIgewog
+CXZvaWQgKCplbmRfaW8pKHN0cnVjdCBkbV9idWZmZXIgKiwgYmxrX3N0YXR1c190KTsKICNpZmRl
+ZiBDT05GSUdfRE1fREVCVUdfQkxPQ0tfU1RBQ0tfVFJBQ0lORwogI2RlZmluZSBNQVhfU1RBQ0sg
+MTAKLQlzdHJ1Y3Qgc3RhY2tfdHJhY2Ugc3RhY2tfdHJhY2U7CisJdW5zaWduZWQgaW50IHN0YWNr
+X2xlbjsKIAl1bnNpZ25lZCBsb25nIHN0YWNrX2VudHJpZXNbTUFYX1NUQUNLXTsKICNlbmRpZgog
+fTsKQEAgLTIzMiwxMSArMjMyLDcgQEAgc3RhdGljIERFRklORV9NVVRFWChkbV9idWZpb19jbGll
+bnRzX2xvYwogI2lmZGVmIENPTkZJR19ETV9ERUJVR19CTE9DS19TVEFDS19UUkFDSU5HCiBzdGF0
+aWMgdm9pZCBidWZmZXJfcmVjb3JkX3N0YWNrKHN0cnVjdCBkbV9idWZmZXIgKmIpCiB7Ci0JYi0+
+c3RhY2tfdHJhY2UubnJfZW50cmllcyA9IDA7Ci0JYi0+c3RhY2tfdHJhY2UubWF4X2VudHJpZXMg
+PSBNQVhfU1RBQ0s7Ci0JYi0+c3RhY2tfdHJhY2UuZW50cmllcyA9IGItPnN0YWNrX2VudHJpZXM7
+Ci0JYi0+c3RhY2tfdHJhY2Uuc2tpcCA9IDI7Ci0Jc2F2ZV9zdGFja190cmFjZSgmYi0+c3RhY2tf
+dHJhY2UpOworCWItPnN0YWNrX2xlbiA9IHN0YWNrX3RyYWNlX3NhdmUoYi0+c3RhY2tfZW50cmll
+cywgTUFYX1NUQUNLLCAyKTsKIH0KICNlbmRpZgogCkBAIC00MzgsNyArNDM0LDcgQEAgc3RhdGlj
+IHN0cnVjdCBkbV9idWZmZXIgKmFsbG9jX2J1ZmZlcihzdAogCWFkanVzdF90b3RhbF9hbGxvY2F0
+ZWQoYi0+ZGF0YV9tb2RlLCAobG9uZyljLT5ibG9ja19zaXplKTsKIAogI2lmZGVmIENPTkZJR19E
+TV9ERUJVR19CTE9DS19TVEFDS19UUkFDSU5HCi0JbWVtc2V0KCZiLT5zdGFja190cmFjZSwgMCwg
+c2l6ZW9mKGItPnN0YWNrX3RyYWNlKSk7CisJYi0+c3RhY2tfbGVuID0gMDsKICNlbmRpZgogCXJl
+dHVybiBiOwogfQpAQCAtMTUyMCw4ICsxNTE2LDkgQEAgc3RhdGljIHZvaWQgZHJvcF9idWZmZXJz
+KHN0cnVjdCBkbV9idWZpbwogCQkJRE1FUlIoImxlYWtlZCBidWZmZXIgJWxseCwgaG9sZCBjb3Vu
+dCAldSwgbGlzdCAlZCIsCiAJCQkgICAgICAodW5zaWduZWQgbG9uZyBsb25nKWItPmJsb2NrLCBi
+LT5ob2xkX2NvdW50LCBpKTsKICNpZmRlZiBDT05GSUdfRE1fREVCVUdfQkxPQ0tfU1RBQ0tfVFJB
+Q0lORwotCQkJcHJpbnRfc3RhY2tfdHJhY2UoJmItPnN0YWNrX3RyYWNlLCAxKTsKLQkJCWItPmhv
+bGRfY291bnQgPSAwOyAvKiBtYXJrIHVuY2xhaW1lZCB0byBhdm9pZCBCVUdfT04gYmVsb3cgKi8K
+KwkJCXN0YWNrX3RyYWNlX3ByaW50KGItPnN0YWNrX2VudHJpZXMsIGItPnN0YWNrX2xlbiwgMSk7
+CisJCQkvKiBtYXJrIHVuY2xhaW1lZCB0byBhdm9pZCBCVUdfT04gYmVsb3cgKi8KKwkJCWItPmhv
+bGRfY291bnQgPSAwOwogI2VuZGlmCiAJCX0KIAoKCl9fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fCkludGVsLWdmeCBtYWlsaW5nIGxpc3QKSW50ZWwtZ2Z4QGxp
+c3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwczovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFu
+L2xpc3RpbmZvL2ludGVsLWdmeA==
