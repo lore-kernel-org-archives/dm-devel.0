@@ -1,40 +1,31 @@
-From: Josh Poimboeuf <jpoimboe@redhat.com>
-Subject: Re: [patch V3 00/29] stacktrace: Consolidate stack trace usage
-Date: Thu, 25 Apr 2019 08:31:05 -0500
-Message-ID: <20190425133105.54uyebwcdkxx5trg@treble>
-References: <20190425094453.875139013@linutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+From: Huaisheng Ye <yehs2007@zoho.com>
+Subject: [PATCH v2 0/4] Misc dm writecache patches
+Date: Thu, 25 Apr 2019 21:31:16 +0800
+Message-ID: <20190425133120.13088-1-yehs2007@zoho.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190425094453.875139013@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: LKML <linux-kernel@vger.kernel.org>, x86@kernel.org, Andy Lutomirski <luto@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Alexander Potapenko <glider@google.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, David Rientjes <rientjes@google.com>, Catalin Marinas <catalin.marinas@arm.com>, Dmitry Vyukov <dvyukov@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, kasan-dev@googlegroups.com, Mike Rapoport <rppt@linux.vnet.ibm.com>, Akinobu Mita <akinobu.mita@gmail.com>, Christoph Hellwig <hch@lst.de>, iommu@lists.linux-foundation.org, Robin Murphy <robin.murphy@arm.com>, Marek Szyprowski <m.szyprowski@samsung.com>
+To: mpatocka@redhat.com, snitzer@redhat.com, agk@redhat.com
+Cc: prarit@redhat.com, chengnt@lenovo.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Huaisheng Ye <yehs1@lenovo.com>
 List-Id: dm-devel.ids
 
-On Thu, Apr 25, 2019 at 11:44:53AM +0200, Thomas Gleixner wrote:
-> This is an update to V2 which can be found here:
-> 
->   https://lkml.kernel.org/r/20190418084119.056416939@linutronix.de
-> 
-> Changes vs. V2:
-> 
->   - Fixed the kernel-doc issue pointed out by Mike
-> 
->   - Removed the '-1' oddity from the tracer
-> 
->   - Restricted the tracer nesting to 4
-> 
->   - Restored the lockdep magic to prevent redundant stack traces
-> 
->   - Addressed the small nitpicks here and there
-> 
->   - Picked up Acked/Reviewed tags
+From: Huaisheng Ye <yehs1@lenovo.com>
 
-Other than the 2 minor nits:
+This patch set is a collection about some patches for dm-writecache.
 
-Reviewed-by: Josh Poimboeuf <jpoimboe@redhat.com>
+Patches 0001-0003 have got Acked-by or Signed-off-by from the author and
+dm maintainer.
+
+Patches 0004 is still under review. Any comments and suggestion are welcome.
+
+Huaisheng Ye (4):
+  dm writecache: remove needless dereferences in
+    __writecache_writeback_pmem()
+  dm writecache: add unlikely for returned value of rb_next/prev
+  dm writecache: remove unused member page_offset in writeback_struct
+  dm writecache: avoid unnecessary lookups in writecache_find_entry
+
+ drivers/md/dm-writecache.c | 30 ++++++++++++++++++------------
+ 1 file changed, 18 insertions(+), 12 deletions(-)
 
 -- 
-Josh
+1.8.3.1
