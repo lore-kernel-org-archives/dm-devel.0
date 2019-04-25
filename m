@@ -1,242 +1,103 @@
-From: yuyufen <yuyufen@huawei.com>
-Subject: Re: [PATCH v2] dm mpath: fix missing call of path
- selector type->end_io
-Date: Thu, 25 Apr 2019 17:25:10 +0800
-Message-ID: <d49d1784-6ecf-5450-a633-692ba107b9ee@huawei.com>
-References: <20190424151905.22615-1-yuyufen@huawei.com>
-	<ed4a3f0c76cdeef15f549a475a6b31eca177c392.camel@suse.de>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [patch V3 16/29] drm: Simplify stacktrace handling
+Date: Thu, 25 Apr 2019 11:45:09 +0200
+Message-ID: <20190425094802.622094226@linutronix.de>
+References: <20190425094453.875139013@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <ed4a3f0c76cdeef15f549a475a6b31eca177c392.camel@suse.de>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.de>, dm-devel@redhat.com, snitzer@redhat.com
-Cc: ming.lei@redhat.com, yi.zhang@huawei.com, mpatocka@redhat.com, houtao1@huawei.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+To: LKML <linux-kernel@vger.kernel.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Miroslav Benes <mbenes@suse.cz>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, David Rientjes <rientjes@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, Johannes Thumshirn <jthumshirn@suse.de>, Akinobu Mita <akinobu.mita@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, David Sterba <dsterba@su>
 List-Id: dm-devel.ids
 
-
-
-On 2019/4/24 23:38, Martin Wilck wrote:
-> On Wed, 2019-04-24 at 23:19 +0800, Yufen Yu wrote:
->> After commit 396eaf21ee17 ("blk-mq: improve DM's blk-mq IO merging
->> via
->> blk_insert_cloned_request feedback"), map_request() will requeue the
->> tio
->> when issued clone request return BLK_STS_RESOURCE or
->> BLK_STS_DEV_RESOURCE.
->>
->> Thus, if device drive status is error, a tio may be requeued multiple
->> times
->> until the return value is not DM_MAPIO_REQUEUE. That means type-
->>> start_io
->> may be called multiple tims, while type->end_io just be called when
->> IO
->> complete.
->>
->> In fact, even without the commit, setup_clone() fail also can make
->> the
->> tio requeue and miss call type->end_io.
->>
->> As servicer-time path selector for example, it selects path based on
->> in_flight_size, which is increased by st_start_io() and decreased by
->> st_end_io(). Missing call of end_io can lead to in_flight_size count
->> error and let the selector make the wrong choice. In addition,
->> queue-length path selector will also be affected.
->>
->> To fix the problem, we call type->end_io in ->release_clone_rq before
->> tio requeue. It pass map_info to ->release_clone_rq() for requeue
->> path,
->> and pass NULL for the others path.
->>
->> Fixes: 396eaf21ee17 ("blk-mq: improve DM's blk-mq IO merging via
->> blk_insert_cloned_request feedback")
->> Cc: Ming Lei <ming.lei@redhat.com>
->> Cc: Martin Wilck <mwilck@suse.com>
->> Cc: Mikulas Patocka <mpatocka@redhat.com>
->> Cc: Hou Tao <houtao1@huawei.com>
->> Signed-off-by: Yufen Yu <yuyufen@huawei.com>
->>
->> ---
->> V2:
->>   - remove the new added interface ->end_stat() in V1
->>   - use ->release_clone_rq() to call path selector ->end_io
->>   - add dm_rq_status to show clone status
->>
->> V1:
->>   - https://www.redhat.com/archives/dm-devel/2019-April/msg00148.html
->> ---
->>   drivers/md/dm-mpath.c         | 20 +++++++++++++++++++-
->>   drivers/md/dm-rq.c            | 19 ++++++++++++++-----
->>   drivers/md/dm-target.c        |  4 +++-
->>   include/linux/device-mapper.h | 13 ++++++++++++-
->>   4 files changed, 48 insertions(+), 8 deletions(-)
->>
->> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
->> index 2ee5e357a0a7..e2f6e9c9363f 100644
->> --- a/drivers/md/dm-mpath.c
->> +++ b/drivers/md/dm-mpath.c
->> @@ -544,8 +544,26 @@ static int multipath_clone_and_map(struct
->> dm_target *ti, struct request *rq,
->>   	return DM_MAPIO_REMAPPED;
->>   }
->>   
->> -static void multipath_release_clone(struct request *clone)
->> +static void multipath_release_clone(struct request *clone,
->> +				union map_info *map_context
->> +				enum dm_rq_status clone_status)
->>   {
->> +	struct dm_mpath_io *mpio;
->> +	struct pgpath *pgpath;
->> +
->> +	if (clone_status != DM_CLONE_RQ_OK && !map_context) {
-> Should this be "... && map_context)", maybe ?
-
-Yes, thanks for catching this! This is an obvious error.
-
->
->> +		mpio = get_mpio(map_context);
->> +		pgpath = mpio->pgpath;
->> +
->> +		if (pgpath) {
->> +			struct path_selector *ps = &pgpath->pg->ps;
->> +
->> +			if (ps->type->end_io)
->> +				ps->type->end_io(ps, &pgpath->path,
->> +						mpio->nr_bytes);
->> +		}
->> +	}
->> +
->>   	blk_put_request(clone);
->>   }
->>   
->> diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
->> index b66745bd08bb..4cf309775d2c 100644
->> --- a/drivers/md/dm-rq.c
->> +++ b/drivers/md/dm-rq.c
->> @@ -168,7 +168,7 @@ static void dm_end_request(struct request *clone,
->> blk_status_t error)
->>   	struct request *rq = tio->orig;
->>   
->>   	blk_rq_unprep_clone(clone);
->> -	tio->ti->type->release_clone_rq(clone);
->> +	tio->ti->type->release_clone_rq(clone, NULL, DM_CLONE_RQ_OK);
->>   
->>   	rq_end_stats(md, rq);
->>   	blk_mq_end_request(rq, error);
->> @@ -201,7 +201,7 @@ static void dm_requeue_original_request(struct
->> dm_rq_target_io *tio, bool delay_
->>   	rq_end_stats(md, rq);
->>   	if (tio->clone) {
->>   		blk_rq_unprep_clone(tio->clone);
->> -		tio->ti->type->release_clone_rq(tio->clone);
->> +		tio->ti->type->release_clone_rq(tio->clone, NULL,
->> DM_CLONE_RQ_OK);
->>   	}
->>   
->>   	dm_mq_delay_requeue_request(rq, delay_ms);
->> @@ -397,8 +397,12 @@ static int map_request(struct dm_rq_target_io
->> *tio)
->>   		break;
->>   	case DM_MAPIO_REMAPPED:
->>   		if (setup_clone(clone, rq, tio, GFP_ATOMIC)) {
->> -			/* -ENOMEM */
->> -			ti->type->release_clone_rq(clone);
->> +			/* -ENOMEM
->> +			 * For multipath, before requeue, we need to
->> pass tio->info
->> +			 * to release_clone_rq, avoiding missing call
->> of path sector
->> +			 * ->end_io.
->> +			 */
->> +			ti->type->release_clone_rq(clone, &tio->info,
->> DM_CLONE_RQ_CANCAL);
->>   			return DM_MAPIO_REQUEUE;
->>   		}
->>   
->> @@ -408,7 +412,12 @@ static int map_request(struct dm_rq_target_io
->> *tio)
->>   		ret = dm_dispatch_clone_request(clone, rq);
->>   		if (ret == BLK_STS_RESOURCE || ret ==
->> BLK_STS_DEV_RESOURCE) {
->>   			blk_rq_unprep_clone(clone);
->> -			tio->ti->type->release_clone_rq(clone);
->> +			/*
->> +			 * For multipath, before requeue, we need to
->> pass tio->info
->> +			 * to release_clone_rq, avoiding missing call
->> of path sector
->> +			 * ->end_io.
->> +			 */
->> +			tio->ti->type->release_clone_rq(clone, &tio-
->>> info, DM_CLONE_RQ_CANCAL);
->>   			tio->clone = NULL;
->>   			return DM_MAPIO_REQUEUE;
->>   		}
->> diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
->> index 314d17ca6466..fd0962a24a54 100644
->> --- a/drivers/md/dm-target.c
->> +++ b/drivers/md/dm-target.c
->> @@ -136,7 +136,9 @@ static int io_err_clone_and_map_rq(struct
->> dm_target *ti, struct request *rq,
->>   	return DM_MAPIO_KILL;
->>   }
->>   
->> -static void io_err_release_clone_rq(struct request *clone)
->> +static void io_err_release_clone_rq(struct request *clone,
->> +				union map_info *map_context,
->> +				enum dm_rq_status clone_status)
->>   {
->>   }
->>   
->> diff --git a/include/linux/device-mapper.h b/include/linux/device-
->> mapper.h
->> index b0672756d056..9b9ab762a992 100644
->> --- a/include/linux/device-mapper.h
->> +++ b/include/linux/device-mapper.h
->> @@ -31,6 +31,15 @@ enum dm_queue_mode {
->>   	DM_TYPE_NVME_BIO_BASED	 = 4,
->>   };
->>   
->> +/*
->> + * clone request status
->> + */
->> +enum dm_rq_status {
->> +	DM_CLONE_RQ_OK,
->> +	DM_CLONE_RQ_CANCAL,
->> +	DM_CLONE_RQ_MAX,
->> +};
-> "CANCAL" looks strange - did you mean "CANCEL"?
-
-This is a spelling error.
-
->
-> Anyway, what do you need this new enum for? Couldn't you just pass the
-> disposition (i.e. DM_MAPIO_REQUEUE), and use a different value (e.g.
-> DM_ENDIO_DONE) at those call sites where end_io shouldn't be called?
->
-> Regards,
-> Martin
->
->
-> .
->
-
-Thanks for your suggestion. Passing DM_MAPIO_REQUEUE is a good idea.
-It indicates that request will be requeued and we need to call ->end_io.
-
-However, I am not sure if it is suitable for use DM_ENDIO_DONE.
-It is strange that we use DM_ENDIO_DONE in dm_requeue_original_request(),
-which is called in the case of DM_ENDIO_REQUEUE in dm_done().
-
-Yufen
-Thanks a lot.
+UmVwbGFjZSB0aGUgaW5kaXJlY3Rpb24gdGhyb3VnaCBzdHJ1Y3Qgc3RhY2tfdHJhY2UgYnkgdXNp
+bmcgdGhlIHN0b3JhZ2UKYXJyYXkgYmFzZWQgaW50ZXJmYWNlcy4KClRoZSBvcmlnaW5hbCBjb2Rl
+IGluIGFsbCBwcmludGluZyBmdW5jdGlvbnMgaXMgcmVhbGx5IHdyb25nLiBJdCBhbGxvY2F0ZXMg
+YQpzdG9yYWdlIGFycmF5IG9uIHN0YWNrIHdoaWNoIGlzIHVudXNlZCBiZWNhdXNlIGRlcG90X2Zl
+dGNoX3N0YWNrKCkgZG9lcyBub3QKc3RvcmUgYW55dGhpbmcgaW4gaXQuIEl0IG92ZXJ3cml0ZXMg
+dGhlIGVudHJpZXMgcG9pbnRlciBpbiB0aGUgc3RhY2tfdHJhY2UKc3RydWN0IHNvIGl0IHBvaW50
+cyB0byB0aGUgZGVwb3Qgc3RvcmFnZS4KClNpZ25lZC1vZmYtYnk6IFRob21hcyBHbGVpeG5lciA8
+dGdseEBsaW51dHJvbml4LmRlPgpBY2tlZC1ieTogRGFuaWVsIFZldHRlciA8ZGFuaWVsQGZmd2xs
+LmNoPgpDYzogaW50ZWwtZ2Z4QGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpDYzogSm9vbmFzIExhaHRp
+bmVuIDxqb29uYXMubGFodGluZW5AbGludXguaW50ZWwuY29tPgpDYzogTWFhcnRlbiBMYW5raG9y
+c3QgPG1hYXJ0ZW4ubGFua2hvcnN0QGxpbnV4LmludGVsLmNvbT4KQ2M6IGRyaS1kZXZlbEBsaXN0
+cy5mcmVlZGVza3RvcC5vcmcKQ2M6IERhdmlkIEFpcmxpZSA8YWlybGllZEBsaW51eC5pZT4KQ2M6
+IEphbmkgTmlrdWxhIDxqYW5pLm5pa3VsYUBsaW51eC5pbnRlbC5jb20+CkNjOiBSb2RyaWdvIFZp
+dmkgPHJvZHJpZ28udml2aUBpbnRlbC5jb20+Ci0tLQogZHJpdmVycy9ncHUvZHJtL2RybV9tbS5j
+ICAgICAgICAgICAgICAgIHwgICAyMiArKysrKysrLS0tLS0tLS0tLS0tLS0tCiBkcml2ZXJzL2dw
+dS9kcm0vaTkxNS9pOTE1X3ZtYS5jICAgICAgICAgfCAgIDExICsrKystLS0tLS0tCiBkcml2ZXJz
+L2dwdS9kcm0vaTkxNS9pbnRlbF9ydW50aW1lX3BtLmMgfCAgIDIxICsrKysrKystLS0tLS0tLS0t
+LS0tLQogMyBmaWxlcyBjaGFuZ2VkLCAxOCBpbnNlcnRpb25zKCspLCAzNiBkZWxldGlvbnMoLSkK
+Ci0tLSBhL2RyaXZlcnMvZ3B1L2RybS9kcm1fbW0uYworKysgYi9kcml2ZXJzL2dwdS9kcm0vZHJt
+X21tLmMKQEAgLTEwNiwyMiArMTA2LDE5IEBACiBzdGF0aWMgbm9pbmxpbmUgdm9pZCBzYXZlX3N0
+YWNrKHN0cnVjdCBkcm1fbW1fbm9kZSAqbm9kZSkKIHsKIAl1bnNpZ25lZCBsb25nIGVudHJpZXNb
+U1RBQ0tERVBUSF07Ci0Jc3RydWN0IHN0YWNrX3RyYWNlIHRyYWNlID0gewotCQkuZW50cmllcyA9
+IGVudHJpZXMsCi0JCS5tYXhfZW50cmllcyA9IFNUQUNLREVQVEgsCi0JCS5za2lwID0gMQotCX07
+CisJdW5zaWduZWQgaW50IG47CiAKLQlzYXZlX3N0YWNrX3RyYWNlKCZ0cmFjZSk7CisJbiA9IHN0
+YWNrX3RyYWNlX3NhdmUoZW50cmllcywgQVJSQVlfU0laRShlbnRyaWVzKSwgMSk7CiAKIAkvKiBN
+YXkgYmUgY2FsbGVkIHVuZGVyIHNwaW5sb2NrLCBzbyBhdm9pZCBzbGVlcGluZyAqLwotCW5vZGUt
+PnN0YWNrID0gZGVwb3Rfc2F2ZV9zdGFjaygmdHJhY2UsIEdGUF9OT1dBSVQpOworCW5vZGUtPnN0
+YWNrID0gc3RhY2tfZGVwb3Rfc2F2ZShlbnRyaWVzLCBuLCBHRlBfTk9XQUlUKTsKIH0KIAogc3Rh
+dGljIHZvaWQgc2hvd19sZWFrcyhzdHJ1Y3QgZHJtX21tICptbSkKIHsKIAlzdHJ1Y3QgZHJtX21t
+X25vZGUgKm5vZGU7Ci0JdW5zaWduZWQgbG9uZyBlbnRyaWVzW1NUQUNLREVQVEhdOworCXVuc2ln
+bmVkIGxvbmcgKmVudHJpZXM7CisJdW5zaWduZWQgaW50IG5yX2VudHJpZXM7CiAJY2hhciAqYnVm
+OwogCiAJYnVmID0ga21hbGxvYyhCVUZTWiwgR0ZQX0tFUk5FTCk7CkBAIC0xMjksMTkgKzEyNiwx
+NCBAQCBzdGF0aWMgdm9pZCBzaG93X2xlYWtzKHN0cnVjdCBkcm1fbW0gKm1tCiAJCXJldHVybjsK
+IAogCWxpc3RfZm9yX2VhY2hfZW50cnkobm9kZSwgZHJtX21tX25vZGVzKG1tKSwgbm9kZV9saXN0
+KSB7Ci0JCXN0cnVjdCBzdGFja190cmFjZSB0cmFjZSA9IHsKLQkJCS5lbnRyaWVzID0gZW50cmll
+cywKLQkJCS5tYXhfZW50cmllcyA9IFNUQUNLREVQVEgKLQkJfTsKLQogCQlpZiAoIW5vZGUtPnN0
+YWNrKSB7CiAJCQlEUk1fRVJST1IoIm5vZGUgWyUwOGxseCArICUwOGxseF06IHVua25vd24gb3du
+ZXJcbiIsCiAJCQkJICBub2RlLT5zdGFydCwgbm9kZS0+c2l6ZSk7CiAJCQljb250aW51ZTsKIAkJ
+fQogCi0JCWRlcG90X2ZldGNoX3N0YWNrKG5vZGUtPnN0YWNrLCAmdHJhY2UpOwotCQlzbnByaW50
+X3N0YWNrX3RyYWNlKGJ1ZiwgQlVGU1osICZ0cmFjZSwgMCk7CisJCW5yX2VudHJpZXMgPSBzdGFj
+a19kZXBvdF9mZXRjaChub2RlLT5zdGFjaywgJmVudHJpZXMpOworCQlzdGFja190cmFjZV9zbnBy
+aW50KGJ1ZiwgQlVGU1osIGVudHJpZXMsIG5yX2VudHJpZXMsIDApOwogCQlEUk1fRVJST1IoIm5v
+ZGUgWyUwOGxseCArICUwOGxseF06IGluc2VydGVkIGF0XG4lcyIsCiAJCQkgIG5vZGUtPnN0YXJ0
+LCBub2RlLT5zaXplLCBidWYpOwogCX0KLS0tIGEvZHJpdmVycy9ncHUvZHJtL2k5MTUvaTkxNV92
+bWEuYworKysgYi9kcml2ZXJzL2dwdS9kcm0vaTkxNS9pOTE1X3ZtYS5jCkBAIC0zNiwxMSArMzYs
+OCBAQAogCiBzdGF0aWMgdm9pZCB2bWFfcHJpbnRfYWxsb2NhdG9yKHN0cnVjdCBpOTE1X3ZtYSAq
+dm1hLCBjb25zdCBjaGFyICpyZWFzb24pCiB7Ci0JdW5zaWduZWQgbG9uZyBlbnRyaWVzWzEyXTsK
+LQlzdHJ1Y3Qgc3RhY2tfdHJhY2UgdHJhY2UgPSB7Ci0JCS5lbnRyaWVzID0gZW50cmllcywKLQkJ
+Lm1heF9lbnRyaWVzID0gQVJSQVlfU0laRShlbnRyaWVzKSwKLQl9OworCXVuc2lnbmVkIGxvbmcg
+KmVudHJpZXM7CisJdW5zaWduZWQgaW50IG5yX2VudHJpZXM7CiAJY2hhciBidWZbNTEyXTsKIAog
+CWlmICghdm1hLT5ub2RlLnN0YWNrKSB7CkBAIC00OSw4ICs0Niw4IEBAIHN0YXRpYyB2b2lkIHZt
+YV9wcmludF9hbGxvY2F0b3Ioc3RydWN0IGkKIAkJcmV0dXJuOwogCX0KIAotCWRlcG90X2ZldGNo
+X3N0YWNrKHZtYS0+bm9kZS5zdGFjaywgJnRyYWNlKTsKLQlzbnByaW50X3N0YWNrX3RyYWNlKGJ1
+Ziwgc2l6ZW9mKGJ1ZiksICZ0cmFjZSwgMCk7CisJbnJfZW50cmllcyA9IHN0YWNrX2RlcG90X2Zl
+dGNoKHZtYS0+bm9kZS5zdGFjaywgJmVudHJpZXMpOworCXN0YWNrX3RyYWNlX3NucHJpbnQoYnVm
+LCBzaXplb2YoYnVmKSwgZW50cmllcywgbnJfZW50cmllcywgMCk7CiAJRFJNX0RFQlVHX0RSSVZF
+Uigidm1hLm5vZGUgWyUwOGxseCArICUwOGxseF0gJXM6IGluc2VydGVkIGF0ICVzXG4iLAogCQkJ
+IHZtYS0+bm9kZS5zdGFydCwgdm1hLT5ub2RlLnNpemUsIHJlYXNvbiwgYnVmKTsKIH0KLS0tIGEv
+ZHJpdmVycy9ncHUvZHJtL2k5MTUvaW50ZWxfcnVudGltZV9wbS5jCisrKyBiL2RyaXZlcnMvZ3B1
+L2RybS9pOTE1L2ludGVsX3J1bnRpbWVfcG0uYwpAQCAtNjAsMjcgKzYwLDIwIEBACiBzdGF0aWMg
+bm9pbmxpbmUgZGVwb3Rfc3RhY2tfaGFuZGxlX3QgX19zYXZlX2RlcG90X3N0YWNrKHZvaWQpCiB7
+CiAJdW5zaWduZWQgbG9uZyBlbnRyaWVzW1NUQUNLREVQVEhdOwotCXN0cnVjdCBzdGFja190cmFj
+ZSB0cmFjZSA9IHsKLQkJLmVudHJpZXMgPSBlbnRyaWVzLAotCQkubWF4X2VudHJpZXMgPSBBUlJB
+WV9TSVpFKGVudHJpZXMpLAotCQkuc2tpcCA9IDEsCi0JfTsKKwl1bnNpZ25lZCBpbnQgbjsKIAot
+CXNhdmVfc3RhY2tfdHJhY2UoJnRyYWNlKTsKLQlyZXR1cm4gZGVwb3Rfc2F2ZV9zdGFjaygmdHJh
+Y2UsIEdGUF9OT1dBSVQgfCBfX0dGUF9OT1dBUk4pOworCW4gPSBzdGFja190cmFjZV9zYXZlKGVu
+dHJpZXMsIEFSUkFZX1NJWkUoZW50cmllcyksIDEpOworCXJldHVybiBzdGFja19kZXBvdF9zYXZl
+KGVudHJpZXMsIG4sIEdGUF9OT1dBSVQgfCBfX0dGUF9OT1dBUk4pOwogfQogCiBzdGF0aWMgdm9p
+ZCBfX3ByaW50X2RlcG90X3N0YWNrKGRlcG90X3N0YWNrX2hhbmRsZV90IHN0YWNrLAogCQkJCWNo
+YXIgKmJ1ZiwgaW50IHN6LCBpbnQgaW5kZW50KQogewotCXVuc2lnbmVkIGxvbmcgZW50cmllc1tT
+VEFDS0RFUFRIXTsKLQlzdHJ1Y3Qgc3RhY2tfdHJhY2UgdHJhY2UgPSB7Ci0JCS5lbnRyaWVzID0g
+ZW50cmllcywKLQkJLm1heF9lbnRyaWVzID0gQVJSQVlfU0laRShlbnRyaWVzKSwKLQl9OworCXVu
+c2lnbmVkIGxvbmcgKmVudHJpZXM7CisJdW5zaWduZWQgaW50IG5yX2VudHJpZXM7CiAKLQlkZXBv
+dF9mZXRjaF9zdGFjayhzdGFjaywgJnRyYWNlKTsKLQlzbnByaW50X3N0YWNrX3RyYWNlKGJ1Ziwg
+c3osICZ0cmFjZSwgaW5kZW50KTsKKwlucl9lbnRyaWVzID0gc3RhY2tfZGVwb3RfZmV0Y2goc3Rh
+Y2ssICZlbnRyaWVzKTsKKwlzdGFja190cmFjZV9zbnByaW50KGJ1Ziwgc3osIGVudHJpZXMsIG5y
+X2VudHJpZXMsIGluZGVudCk7CiB9CiAKIHN0YXRpYyB2b2lkIGluaXRfaW50ZWxfcnVudGltZV9w
+bV93YWtlcmVmKHN0cnVjdCBkcm1faTkxNV9wcml2YXRlICppOTE1KQoKCl9fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkludGVsLWdmeCBtYWlsaW5nIGxpc3QK
+SW50ZWwtZ2Z4QGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwczovL2xpc3RzLmZyZWVkZXNrdG9w
+Lm9yZy9tYWlsbWFuL2xpc3RpbmZvL2ludGVsLWdmeA==
