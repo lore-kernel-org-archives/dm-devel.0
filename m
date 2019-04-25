@@ -1,73 +1,44 @@
 From: Josh Poimboeuf <jpoimboe@redhat.com>
-Subject: Re: [patch V3 21/29] tracing: Use percpu stack trace
- buffer more intelligently
-Date: Thu, 25 Apr 2019 08:29:35 -0500
-Message-ID: <20190425132935.ae35l5oybby5ddgl@treble>
+Subject: Re: [patch V3 24/29] tracing: Remove the last struct stack_trace
+ usage
+Date: Thu, 25 Apr 2019 08:30:32 -0500
+Message-ID: <20190425133032.ds27oje6nxswvdji@treble>
 References: <20190425094453.875139013@linutronix.de>
- <20190425094803.066064076@linutronix.de>
+ <20190425094803.340000461@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190425094803.066064076@linutronix.de>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
-List-Post: <mailto:intel-gfx@lists.freedesktop.org>
-List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: intel-gfx-bounces@lists.freedesktop.org
-Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+In-Reply-To: <20190425094803.340000461@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Thomas Gleixner <tglx@linutronix.de>
-Cc: Mike Snitzer <snitzer@redhat.com>, David Airlie <airlied@linux.ie>, Catalin Marinas <catalin.marinas@arm.com>, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, dm-devel@redhat.com, Alexander Potapenko <glider@google.com>, Christoph Lameter <cl@linux.com>, Miroslav Benes <mbenes@suse.cz>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>, Marek Szyprowski <m.szyprowski@samsung.com>, linux-arch@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, Johannes Thumshirn <jthumshirn@suse.de>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Alexey Dobriyan <adobriyan@gmail.com>, intel-gfx@lists.freedesktop.org, David Rientjes <rientjes@google.com>, Akinobu Mita <akinobu.mita@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Josef Bacik <josef@toxicpanda.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, David Sterba <dsterba@su>
+Cc: LKML <linux-kernel@vger.kernel.org>, x86@kernel.org, Andy Lutomirski <luto@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Alexander Potapenko <glider@google.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, David Rientjes <rientjes@google.com>, Catalin Marinas <catalin.marinas@arm.com>, Dmitry Vyukov <dvyukov@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, kasan-dev@googlegroups.com, Mike Rapoport <rppt@linux.vnet.ibm.com>, Akinobu Mita <akinobu.mita@gmail.com>, Christoph Hellwig <hch@lst.de>, iommu@lists.linux-foundation.org, Robin Murphy <robin.murphy@arm.com>, Marek Szyprowski <m.szyprowski@samsung.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCBBcHIgMjUsIDIwMTkgYXQgMTE6NDU6MTRBTSArMDIwMCwgVGhvbWFzIEdsZWl4bmVy
-IHdyb3RlOgo+IEBAIC0yNzg4LDI5ICsyNzk4LDMyIEBAIHN0YXRpYyB2b2lkIF9fZnRyYWNlX3Ry
-YWNlX3N0YWNrKHN0cnVjdAo+ICAJICovCj4gIAlwcmVlbXB0X2Rpc2FibGVfbm90cmFjZSgpOwo+
-ICAKPiAtCXVzZV9zdGFjayA9IF9fdGhpc19jcHVfaW5jX3JldHVybihmdHJhY2Vfc3RhY2tfcmVz
-ZXJ2ZSk7Cj4gKwlzdGFja2lkeCA9IF9fdGhpc19jcHVfaW5jX3JldHVybihmdHJhY2Vfc3RhY2tf
-cmVzZXJ2ZSk7Cj4gKwo+ICsJLyogVGhpcyBzaG91bGQgbmV2ZXIgaGFwcGVuLiBJZiBpdCBkb2Vz
-LCB5ZWxsIG9uY2UgYW5kIHNraXAgKi8KPiArCWlmIChXQVJOX09OX09OQ0Uoc3RhY2tpZHggPj0g
-RlRSQUNFX0tTVEFDS19ORVNUSU5HKSkKPiArCQlnb3RvIG91dDsKPiArCj4gIAkvKgo+IC0JICog
-V2UgZG9uJ3QgbmVlZCBhbnkgYXRvbWljIHZhcmlhYmxlcywganVzdCBhIGJhcnJpZXIuCj4gLQkg
-KiBJZiBhbiBpbnRlcnJ1cHQgY29tZXMgaW4sIHdlIGRvbid0IGNhcmUsIGJlY2F1c2UgaXQgd291
-bGQKPiAtCSAqIGhhdmUgZXhpdGVkIGFuZCBwdXQgdGhlIGNvdW50ZXIgYmFjayB0byB3aGF0IHdl
-IHdhbnQuCj4gLQkgKiBXZSBqdXN0IG5lZWQgYSBiYXJyaWVyIHRvIGtlZXAgZ2NjIGZyb20gbW92
-aW5nIHRoaW5ncwo+IC0JICogYXJvdW5kLgo+ICsJICogVGhlIGFib3ZlIF9fdGhpc19jcHVfaW5j
-X3JldHVybigpIGlzICdhdG9taWMnIGNwdSBsb2NhbC4gQW4KPiArCSAqIGludGVycnVwdCB3aWxs
-IGVpdGhlciBzZWUgdGhlIHZhbHVlIHByZSBpbmNyZW1lbnQgb3IgcG9zdAo+ICsJICogaW5jcmVt
-ZW50LiBJZiB0aGUgaW50ZXJydXB0IGhhcHBlbnMgcHJlIGluY3JlbWVudCBpdCB3aWxsIGhhdmUK
-PiArCSAqIHJlc3RvcmVkIHRoZSBjb3VudGVyIHdoZW4gaXQgcmV0dXJucy4gIFdlIGp1c3QgbmVl
-ZCBhIGJhcnJpZXIgdG8KPiArCSAqIGtlZXAgZ2NjIGZyb20gbW92aW5nIHRoaW5ncyBhcm91bmQu
-Cj4gIAkgKi8KPiAgCWJhcnJpZXIoKTsKPiAtCWlmICh1c2Vfc3RhY2sgPT0gMSkgewo+IC0JCXRy
-YWNlLmVudHJpZXMJCT0gdGhpc19jcHVfcHRyKGZ0cmFjZV9zdGFjay5jYWxscyk7Cj4gLQkJdHJh
-Y2UubWF4X2VudHJpZXMJPSBGVFJBQ0VfU1RBQ0tfTUFYX0VOVFJJRVM7Cj4gLQo+IC0JCWlmIChy
-ZWdzKQo+IC0JCQlzYXZlX3N0YWNrX3RyYWNlX3JlZ3MocmVncywgJnRyYWNlKTsKPiAtCQllbHNl
-Cj4gLQkJCXNhdmVfc3RhY2tfdHJhY2UoJnRyYWNlKTsKPiAtCj4gLQkJaWYgKHRyYWNlLm5yX2Vu
-dHJpZXMgPiBzaXplKQo+IC0JCQlzaXplID0gdHJhY2UubnJfZW50cmllczsKPiAtCX0gZWxzZQo+
-IC0JCS8qIEZyb20gbm93IG9uLCB1c2Vfc3RhY2sgaXMgYSBib29sZWFuICovCj4gLQkJdXNlX3N0
-YWNrID0gMDsKPiArCj4gKwlmc3RhY2sgPSB0aGlzX2NwdV9wdHIoZnRyYWNlX3N0YWNrcy5zdGFj
-a3MpICsgKHN0YWNraWR4IC0gMSk7CgpuaXQ6IGl0IHdvdWxkIGJlIHNsaWdodGx5IGxlc3Mgc3Vy
-cHJpc2luZyBpZiBzdGFja2lkeCB3ZXJlIDAtYmFzZWQ6CgpkaWZmIC0tZ2l0IGEva2VybmVsL3Ry
-YWNlL3RyYWNlLmMgYi9rZXJuZWwvdHJhY2UvdHJhY2UuYwppbmRleCBkM2Y2ZWM3ZWI3MjkuLjRm
-YzkzMDA0ZmVhYiAxMDA2NDQKLS0tIGEva2VybmVsL3RyYWNlL3RyYWNlLmMKKysrIGIva2VybmVs
-L3RyYWNlL3RyYWNlLmMKQEAgLTI3OTgsMTAgKzI3OTgsMTAgQEAgc3RhdGljIHZvaWQgX19mdHJh
-Y2VfdHJhY2Vfc3RhY2soc3RydWN0IHJpbmdfYnVmZmVyICpidWZmZXIsCiAJICovCiAJcHJlZW1w
-dF9kaXNhYmxlX25vdHJhY2UoKTsKIAotCXN0YWNraWR4ID0gX190aGlzX2NwdV9pbmNfcmV0dXJu
-KGZ0cmFjZV9zdGFja19yZXNlcnZlKTsKKwlzdGFja2lkeCA9IF9fdGhpc19jcHVfaW5jX3JldHVy
-bihmdHJhY2Vfc3RhY2tfcmVzZXJ2ZSkgLSAxOwogCiAJLyogVGhpcyBzaG91bGQgbmV2ZXIgaGFw
-cGVuLiBJZiBpdCBkb2VzLCB5ZWxsIG9uY2UgYW5kIHNraXAgKi8KLQlpZiAoV0FSTl9PTl9PTkNF
-KHN0YWNraWR4ID49IEZUUkFDRV9LU1RBQ0tfTkVTVElORykpCisJaWYgKFdBUk5fT05fT05DRShz
-dGFja2lkeCA+IEZUUkFDRV9LU1RBQ0tfTkVTVElORykpCiAJCWdvdG8gb3V0OwogCiAJLyoKQEAg
-LTI4MTMsNyArMjgxMyw3IEBAIHN0YXRpYyB2b2lkIF9fZnRyYWNlX3RyYWNlX3N0YWNrKHN0cnVj
-dCByaW5nX2J1ZmZlciAqYnVmZmVyLAogCSAqLwogCWJhcnJpZXIoKTsKIAotCWZzdGFjayA9IHRo
-aXNfY3B1X3B0cihmdHJhY2Vfc3RhY2tzLnN0YWNrcykgKyAoc3RhY2tpZHggLSAxKTsKKwlmc3Rh
-Y2sgPSB0aGlzX2NwdV9wdHIoZnRyYWNlX3N0YWNrcy5zdGFja3MpICsgc3RhY2tpZHg7CiAJdHJh
-Y2UuZW50cmllcwkJPSBmc3RhY2stPmNhbGxzOwogCXRyYWNlLm1heF9lbnRyaWVzCT0gRlRSQUNF
-X0tTVEFDS19FTlRSSUVTOwogCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fCkludGVsLWdmeCBtYWlsaW5nIGxpc3QKSW50ZWwtZ2Z4QGxpc3RzLmZyZWVkZXNr
-dG9wLm9yZwpodHRwczovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2lu
-dGVsLWdmeA==
+On Thu, Apr 25, 2019 at 11:45:17AM +0200, Thomas Gleixner wrote:
+> Simplify the stack retrieval code by using the storage array based
+> interface.
+> 
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> ---
+>  kernel/trace/trace_stack.c |   37 ++++++++++++++++---------------------
+>  1 file changed, 16 insertions(+), 21 deletions(-)
+> 
+> --- a/kernel/trace/trace_stack.c
+> +++ b/kernel/trace/trace_stack.c
+> @@ -23,11 +23,7 @@
+>  static unsigned long stack_dump_trace[STACK_TRACE_ENTRIES];
+>  static unsigned stack_trace_index[STACK_TRACE_ENTRIES];
+>  
+> -struct stack_trace stack_trace_max = {
+> -	.max_entries		= STACK_TRACE_ENTRIES,
+> -	.entries		= &stack_dump_trace[0],
+> -};
+> -
+> +static unsigned int stack_trace_entries;
+
+"stack_trace_entries" -> "nr_stack_trace_entries"
+
+-- 
+Josh
