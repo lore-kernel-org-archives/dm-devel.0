@@ -1,53 +1,110 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: [patch V3 17/29] lockdep: Remove unused trace argument from
-	print_circular_bug()
-Date: Thu, 25 Apr 2019 11:45:10 +0200
-Message-ID: <20190425094802.716274532@linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [patch V3 23/29] tracing: Simplify stack trace retrieval
+Date: Thu, 25 Apr 2019 11:45:16 +0200
+Message-ID: <20190425094803.248604594@linutronix.de>
 References: <20190425094453.875139013@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Joonas Lahtinen <joonas.lahtinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Alexander Potapenko <glider-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kasan-dev-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Johannes Thumshirn <jthumshirn-l3A5Bk7waGM@public.gmane.org>, Andrey Ryabinin <aryabinin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Maarten Lankhorst <maarten.lankhorst-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Rodrigo Vivi <rodrigo.vivi-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: LKML <linux-kernel@vger.kernel.org>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>, x86@kernel.org, Andy Lutomirski <luto@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Alexander Potapenko <glider@google.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, David Rientjes <rientjes@google.com>, Catalin Marinas <catalin.marinas@arm.com>, Dmitry Vyukov <dvyukov@google.com>, Andrey Ryabinin <aryabinin@virtuozzo.com>, kasan-dev@googlegroups.com, Mike Rapoport <rppt@linux.vnet.ibm.com>, Akinobu Mita <akinobu.mita@gmail.com>, Christoph Hellwig <hch@lst.de>, iommu@lists.linux-foundation.org, Robin Murphy <robin.murphy@arm.com>, Marek Szyprowski <m.szyprowski@samsung.com>
 List-Id: dm-devel.ids
 
-Signed-off-by: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
----
- kernel/locking/lockdep.c |    9 ++++-----
- 1 file changed, 4 insertions(+), 5 deletions(-)
+Replace the indirection through struct stack_trace by using the storage
+array based interfaces.
 
---- a/kernel/locking/lockdep.c
-+++ b/kernel/locking/lockdep.c
-@@ -1522,10 +1522,9 @@ static inline int class_equal(struct loc
- }
- 
- static noinline int print_circular_bug(struct lock_list *this,
--				struct lock_list *target,
--				struct held_lock *check_src,
--				struct held_lock *check_tgt,
--				struct stack_trace *trace)
-+				       struct lock_list *target,
-+				       struct held_lock *check_src,
-+				       struct held_lock *check_tgt)
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ kernel/trace/trace.c |   40 +++++++++++++---------------------------
+ 1 file changed, 13 insertions(+), 27 deletions(-)
+
+--- a/kernel/trace/trace.c
++++ b/kernel/trace/trace.c
+@@ -2774,22 +2774,18 @@ static void __ftrace_trace_stack(struct
  {
- 	struct task_struct *curr = current;
- 	struct lock_list *parent;
-@@ -2206,7 +2205,7 @@ check_prev_add(struct task_struct *curr,
- 			 */
- 			save(trace);
- 		}
--		return print_circular_bug(&this, target_entry, next, prev, trace);
-+		return print_circular_bug(&this, target_entry, next, prev);
- 	}
- 	else if (unlikely(ret < 0))
- 		return print_bfs_bug(ret);
+ 	struct trace_event_call *call = &event_kernel_stack;
+ 	struct ring_buffer_event *event;
++	unsigned int size, nr_entries;
+ 	struct ftrace_stack *fstack;
+ 	struct stack_entry *entry;
+-	struct stack_trace trace;
+-	int size = FTRACE_KSTACK_ENTRIES;
+ 	int stackidx;
+ 
+-	trace.nr_entries	= 0;
+-	trace.skip		= skip;
+-
+ 	/*
+ 	 * Add one, for this function and the call to save_stack_trace()
+ 	 * If regs is set, then these functions will not be in the way.
+ 	 */
+ #ifndef CONFIG_UNWINDER_ORC
+ 	if (!regs)
+-		trace.skip++;
++		skip++;
+ #endif
+ 
+ 	/*
+@@ -2816,28 +2812,24 @@ static void __ftrace_trace_stack(struct
+ 	barrier();
+ 
+ 	fstack = this_cpu_ptr(ftrace_stacks.stacks) + (stackidx - 1);
+-	trace.entries		= fstack->calls;
+-	trace.max_entries	= FTRACE_KSTACK_ENTRIES;
+-
+-	if (regs)
+-		save_stack_trace_regs(regs, &trace);
+-	else
+-		save_stack_trace(&trace);
+-
+-	if (trace.nr_entries > size)
+-		size = trace.nr_entries;
++	size = ARRAY_SIZE(fstack->calls);
+ 
+-	size *= sizeof(unsigned long);
++	if (regs) {
++		nr_entries = stack_trace_save_regs(regs, fstack->calls,
++						   size, skip);
++	} else {
++		nr_entries = stack_trace_save(fstack->calls, size, skip);
++	}
+ 
++	size = nr_entries * sizeof(unsigned long);
+ 	event = __trace_buffer_lock_reserve(buffer, TRACE_STACK,
+ 					    sizeof(*entry) + size, flags, pc);
+ 	if (!event)
+ 		goto out;
+ 	entry = ring_buffer_event_data(event);
+ 
+-	memcpy(&entry->caller, trace.entries, size);
+-
+-	entry->size = trace.nr_entries;
++	memcpy(&entry->caller, fstack->calls, size);
++	entry->size = nr_entries;
+ 
+ 	if (!call_filter_check_discard(call, entry, buffer, event))
+ 		__buffer_unlock_commit(buffer, event);
+@@ -2916,7 +2908,6 @@ ftrace_trace_userstack(struct ring_buffe
+ 	struct trace_event_call *call = &event_user_stack;
+ 	struct ring_buffer_event *event;
+ 	struct userstack_entry *entry;
+-	struct stack_trace trace;
+ 
+ 	if (!(global_trace.trace_flags & TRACE_ITER_USERSTACKTRACE))
+ 		return;
+@@ -2947,12 +2938,7 @@ ftrace_trace_userstack(struct ring_buffe
+ 	entry->tgid		= current->tgid;
+ 	memset(&entry->caller, 0, sizeof(entry->caller));
+ 
+-	trace.nr_entries	= 0;
+-	trace.max_entries	= FTRACE_STACK_ENTRIES;
+-	trace.skip		= 0;
+-	trace.entries		= entry->caller;
+-
+-	save_stack_trace_user(&trace);
++	stack_trace_save_user(entry->caller, FTRACE_STACK_ENTRIES);
+ 	if (!call_filter_check_discard(call, entry, buffer, event))
+ 		__buffer_unlock_commit(buffer, event);
+ 
