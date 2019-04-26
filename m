@@ -1,63 +1,71 @@
-From: Helen Koike <helen.koike@collabora.com>
-Subject: [PATCH] dm: init: fix max devices/targets checks
-Date: Fri, 26 Apr 2019 17:09:55 -0300
-Message-ID: <20190426200955.17886-1-helen.koike@collabora.com>
+From: kbuild test robot <lkp@intel.com>
+Subject: [RFC PATCH dm] dm: dust_rb_search() can be static
+Date: Sat, 27 Apr 2019 07:12:48 +0800
+Message-ID: <20190426231248.GA44578@ivb42>
+References: <201904270727.g6e3MBmi%lkp@intel.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: kernel@collabora.com, Helen Koike <helen.koike@collabora.com>, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <201904270727.g6e3MBmi%lkp@intel.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bryan Gurney <bgurney@redhat.com>
+Cc: dm-devel@redhat.com, kbuild-all@01.org, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-dm-init should allow up to DM_MAX_{DEVICES,TARGETS} for devices/targets,
-and not DM_MAX_{DEVICES,TARGETS} - 1.
 
-Fix the checks and also fix the error message when the number of devices
-is surpassed.
-
-Signed-off-by: Helen Koike <helen.koike@collabora.com>
-
+Fixes: cefb8eb074c8 ("dm: add dust target")
+Signed-off-by: kbuild test robot <lkp@intel.com>
 ---
-Hi,
-
-This patch was tested by manipulating DM_MAX_TARGETS and DM_MAX_DEVICES
-macros and making sure the test cases in the following test script[1] was
-passing or failing when they should.
-
-[1] https://gitlab.collabora.com/koike/dm-cmdline-test
-
-Thanks
-Helen
-
- drivers/md/dm-init.c | 8 ++++----
+ dm-dust.c |    8 ++++----
  1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
-index 4b76f84424c3..352e803f566e 100644
---- a/drivers/md/dm-init.c
-+++ b/drivers/md/dm-init.c
-@@ -160,7 +160,7 @@ static int __init dm_parse_table(struct dm_device *dev, char *str)
+diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
+index f5434ada..dd56284 100644
+--- a/drivers/md/dm-dust.c
++++ b/drivers/md/dm-dust.c
+@@ -32,7 +32,7 @@ struct dust_device {
+ 	bool quiet_mode:1;
+ };
  
- 	while (table_entry) {
- 		DMDEBUG("parsing table \"%s\"", str);
--		if (++dev->dmi.target_count >= DM_MAX_TARGETS) {
-+		if (++dev->dmi.target_count > DM_MAX_TARGETS) {
- 			DMERR("too many targets %u > %d",
- 			      dev->dmi.target_count, DM_MAX_TARGETS);
- 			return -EINVAL;
-@@ -242,9 +242,9 @@ static int __init dm_parse_devices(struct list_head *devices, char *str)
- 			return -ENOMEM;
- 		list_add_tail(&dev->list, devices);
+-struct badblock *dust_rb_search(struct rb_root *root, sector_t blk)
++static struct badblock *dust_rb_search(struct rb_root *root, sector_t blk)
+ {
+ 	struct rb_node *node = root->rb_node;
  
--		if (++ndev >= DM_MAX_DEVICES) {
--			DMERR("too many targets %u > %d",
--			      dev->dmi.target_count, DM_MAX_TARGETS);
-+		if (++ndev > DM_MAX_DEVICES) {
-+			DMERR("too many devices %lu > %d",
-+			      ndev, DM_MAX_DEVICES);
- 			return -EINVAL;
- 		}
+@@ -50,7 +50,7 @@ struct badblock *dust_rb_search(struct rb_root *root, sector_t blk)
+ 	return NULL;
+ }
  
--- 
-2.20.1
+-bool dust_rb_insert(struct rb_root *root, struct badblock *new)
++static bool dust_rb_insert(struct rb_root *root, struct badblock *new)
+ {
+ 	struct badblock *bblk;
+ 	struct rb_node **link = &root->rb_node, *parent = NULL;
+@@ -492,7 +492,7 @@ static struct target_type dust_target = {
+ 	.prepare_ioctl = dust_prepare_ioctl,
+ };
+ 
+-int __init dm_dust_init(void)
++static int __init dm_dust_init(void)
+ {
+ 	int result = dm_register_target(&dust_target);
+ 
+@@ -502,7 +502,7 @@ int __init dm_dust_init(void)
+ 	return result;
+ }
+ 
+-void __exit dm_dust_exit(void)
++static void __exit dm_dust_exit(void)
+ {
+ 	dm_unregister_target(&dust_target);
+ }
