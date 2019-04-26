@@ -1,14 +1,13 @@
 From: kbuild test robot <lkp@intel.com>
-Subject: [RFC PATCH dm] dm: dust_rb_search() can be static
+Subject: [dm:dm-5.2 22/22] drivers/md/dm-dust.c:35:17: sparse:
+ sparse: symbol 'dust_rb_search' was not declared. Should it be static?
 Date: Sat, 27 Apr 2019 07:12:48 +0800
-Message-ID: <20190426231248.GA44578@ivb42>
-References: <201904270727.g6e3MBmi%lkp@intel.com>
+Message-ID: <201904270727.g6e3MBmi%lkp@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <201904270727.g6e3MBmi%lkp@intel.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,50 +21,28 @@ To: Bryan Gurney <bgurney@redhat.com>
 Cc: dm-devel@redhat.com, kbuild-all@01.org, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
+tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git dm-5.2
+head:   cefb8eb074c8cde87d4a6947e24c00b8cbde830c
+commit: cefb8eb074c8cde87d4a6947e24c00b8cbde830c [22/22] dm: add dust target
+reproduce:
+        # apt-get install sparse
+        git checkout cefb8eb074c8cde87d4a6947e24c00b8cbde830c
+        make ARCH=x86_64 allmodconfig
+        make C=1 CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__'
 
-Fixes: cefb8eb074c8 ("dm: add dust target")
-Signed-off-by: kbuild test robot <lkp@intel.com>
+If you fix the issue, kindly add following tag
+Reported-by: kbuild test robot <lkp@intel.com>
+
+
+sparse warnings: (new ones prefixed by >>)
+
+>> drivers/md/dm-dust.c:35:17: sparse: sparse: symbol 'dust_rb_search' was not declared. Should it be static?
+>> drivers/md/dm-dust.c:53:6: sparse: sparse: symbol 'dust_rb_insert' was not declared. Should it be static?
+>> drivers/md/dm-dust.c:495:12: sparse: sparse: symbol 'dm_dust_init' was not declared. Should it be static?
+>> drivers/md/dm-dust.c:505:13: sparse: sparse: symbol 'dm_dust_exit' was not declared. Should it be static?
+
+Please review and possibly fold the followup patch.
+
 ---
- dm-dust.c |    8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
-
-diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
-index f5434ada..dd56284 100644
---- a/drivers/md/dm-dust.c
-+++ b/drivers/md/dm-dust.c
-@@ -32,7 +32,7 @@ struct dust_device {
- 	bool quiet_mode:1;
- };
- 
--struct badblock *dust_rb_search(struct rb_root *root, sector_t blk)
-+static struct badblock *dust_rb_search(struct rb_root *root, sector_t blk)
- {
- 	struct rb_node *node = root->rb_node;
- 
-@@ -50,7 +50,7 @@ struct badblock *dust_rb_search(struct rb_root *root, sector_t blk)
- 	return NULL;
- }
- 
--bool dust_rb_insert(struct rb_root *root, struct badblock *new)
-+static bool dust_rb_insert(struct rb_root *root, struct badblock *new)
- {
- 	struct badblock *bblk;
- 	struct rb_node **link = &root->rb_node, *parent = NULL;
-@@ -492,7 +492,7 @@ static struct target_type dust_target = {
- 	.prepare_ioctl = dust_prepare_ioctl,
- };
- 
--int __init dm_dust_init(void)
-+static int __init dm_dust_init(void)
- {
- 	int result = dm_register_target(&dust_target);
- 
-@@ -502,7 +502,7 @@ int __init dm_dust_init(void)
- 	return result;
- }
- 
--void __exit dm_dust_exit(void)
-+static void __exit dm_dust_exit(void)
- {
- 	dm_unregister_target(&dust_target);
- }
+0-DAY kernel test infrastructure                Open Source Technology Center
+https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
