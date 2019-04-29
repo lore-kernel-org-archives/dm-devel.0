@@ -1,12 +1,12 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 02/10] dm-integrity: dont report unused options
-Date: Mon, 29 Apr 2019 14:57:18 +0200
-Message-ID: <20190429125738.430881080@debian-a64.vm>
+Subject: [PATCH 07/10] dm-integrity: update documentation
+Date: Mon, 29 Apr 2019 14:57:23 +0200
+Message-ID: <20190429125744.763120000@debian-a64.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm-integrity-hide-unused-parameters.patch
+Content-Disposition: inline; filename=dm-integrity-docs.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,43 +20,58 @@ To: Mike Snitzer <msnitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Hein
 Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-If we are not journaling, don't report journaling options in the table
-status.
+Update documentation with the "meta_device" parameter and flags.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-integrity.c |   10 +++++++---
- 1 file changed, 7 insertions(+), 3 deletions(-)
+ Documentation/device-mapper/dm-integrity.txt |   10 +++++++++-
+ drivers/md/dm-integrity.c                    |    4 +++-
+ 2 files changed, 12 insertions(+), 2 deletions(-)
 
+Index: linux-2.6/Documentation/device-mapper/dm-integrity.txt
+===================================================================
+--- linux-2.6.orig/Documentation/device-mapper/dm-integrity.txt	2019-04-26 16:29:56.000000000 +0200
++++ linux-2.6/Documentation/device-mapper/dm-integrity.txt	2019-04-26 17:12:29.000000000 +0200
+@@ -79,6 +79,10 @@ interleave_sectors:number
+ 	a power of two. If the device is already formatted, the value from
+ 	the superblock is used.
+ 
++meta_device:device
++	Don't interleave the data and metadata on on device. Use a
++	separate device for metadata.
++
+ buffer_sectors:number
+ 	The number of sectors in one buffer. The value is rounded down to
+ 	a power of two.
+@@ -167,7 +171,11 @@ The layout of the formatted block device
+ 	  provides (i.e. the size of the device minus the size of all
+ 	  metadata and padding). The user of this target should not send
+ 	  bios that access data beyond the "provided data sectors" limit.
+-	* flags - a flag is set if journal_mac is used
++	* flags
++	  SB_FLAG_HAVE_JOURNAL_MAC - a flag is set if journal_mac is used
++	  SB_FLAG_RECALCULATING - recalculating is in progress
++	* log2(sectors per block)
++	* a position where recalculating finished
+ * journal
+ 	The journal is divided into sections, each section contains:
+ 	* metadata area (4kiB), it contains journal entries
 Index: linux-2.6/drivers/md/dm-integrity.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-integrity.c	2019-04-09 14:01:43.000000000 +0200
-+++ linux-2.6/drivers/md/dm-integrity.c	2019-04-09 14:01:43.000000000 +0200
-@@ -2468,10 +2468,12 @@ static void dm_integrity_status(struct d
- 		__u64 watermark_percentage = (__u64)(ic->journal_entries - ic->free_sectors_threshold) * 100;
- 		watermark_percentage += ic->journal_entries / 2;
- 		do_div(watermark_percentage, ic->journal_entries);
--		arg_count = 5;
-+		arg_count = 3;
- 		arg_count += !!ic->meta_dev;
- 		arg_count += ic->sectors_per_block != 1;
- 		arg_count += !!(ic->sb->flags & cpu_to_le32(SB_FLAG_RECALCULATING));
-+		arg_count += ic->mode == 'J';
-+		arg_count += ic->mode == 'J';
- 		arg_count += !!ic->internal_hash_alg.alg_string;
- 		arg_count += !!ic->journal_crypt_alg.alg_string;
- 		arg_count += !!ic->journal_mac_alg.alg_string;
-@@ -2486,8 +2488,10 @@ static void dm_integrity_status(struct d
- 		DMEMIT(" journal_sectors:%u", ic->initial_sectors - SB_SECTORS);
- 		DMEMIT(" interleave_sectors:%u", 1U << ic->sb->log2_interleave_sectors);
- 		DMEMIT(" buffer_sectors:%u", 1U << ic->log2_buffer_sectors);
--		DMEMIT(" journal_watermark:%u", (unsigned)watermark_percentage);
--		DMEMIT(" commit_time:%u", ic->autocommit_msec);
-+		if (ic->mode == 'J') {
-+			DMEMIT(" journal_watermark:%u", (unsigned)watermark_percentage);
-+			DMEMIT(" commit_time:%u", ic->autocommit_msec);
-+		}
- 
- #define EMIT_ALG(a, n)							\
- 		do {							\
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2019-04-26 16:29:03.000000000 +0200
++++ linux-2.6/drivers/md/dm-integrity.c	2019-04-26 17:13:19.000000000 +0200
+@@ -3093,10 +3093,12 @@ bad:
+  *		buffer_sectors
+  *		journal_watermark
+  *		commit_time
++ *		meta_device
++ *		block_size
+  *		internal_hash
+  *		journal_crypt
+  *		journal_mac
+- *		block_size
++ *		recalculate
+  */
+ static int dm_integrity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ {
