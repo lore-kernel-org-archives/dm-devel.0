@@ -1,14 +1,12 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [PATCH] dm mpath: fix memory leak for
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH] dm mpath: parse_path: always free
 	attached_handler_name
-Date: Mon, 29 Apr 2019 11:36:55 +0200
-Message-ID: <40abc8f16f781f8f6de1e9dac489fd023cc1e657.camel@suse.de>
-References: <20190427105409.36721-1-yuyufen@huawei.com>
+Date: Mon, 29 Apr 2019 11:48:15 +0200
+Message-ID: <20190429094815.29827-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190427105409.36721-1-yuyufen@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,43 +16,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Yufen Yu <yuyufen@huawei.com>, dm-devel@redhat.com, snitzer@redhat.com
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, mpatocka@redhat.com
+To: Yufen Yu <yuyufen@huawei.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Sat, 2019-04-27 at 18:54 +0800, Yufen Yu wrote:
-> If multipath does not set flag MPATHF_RETAIN_ATTACHED_HW_HANDLER,
-> parse_path() would forget to free attached_handler_name when
-> successfully exit, resulting in memory leak.
+Commit b592211c33f7 "dm mpath: fix attached_handler_name leak and
+dangling hw_handler_name pointer" fixed a memory leak for the
+case where setup_scsi_dh() returns failure. But setup_scsi_dh
+may return success and not "use" attached_handler_name if the
+retain_attached_hwhandler flag is not set on the map. As
+setup_scsi_sh properly "steals" the pointer by nullifying it,
+freeing it unconditionally in parse_path() is safe.
 
-I believe this should rather be done in parse_path(), as
-setup_scsi_dh() nullifies the pointer anyway when it "steals" it.
-I'll send a patch shortly.
+Fixes: b592211c33f7 "dm mpath: fix attached_handler_name leak and
+dangling hw_handler_name pointer"
+Reported-by: Yufen Yu <yuyufen@huawei.com>
 
-Thanks,
-Martin
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ drivers/md/dm-mpath.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-
-
-
-
-> 
-> Signed-off-by: Yufen Yu <yuyufen@huawei.com>
-> ---
->  drivers/md/dm-mpath.c | 2 ++
->  1 file changed, 2 insertions(+)
-> 
-> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> index 00e738c1222f..850a7c637a88 100644
-> --- a/drivers/md/dm-mpath.c
-> +++ b/drivers/md/dm-mpath.c
-> @@ -841,6 +841,8 @@ static int setup_scsi_dh(struct block_device
-> *bdev, struct multipath *m,
->  			m->hw_handler_name = *attached_handler_name;
->  			*attached_handler_name = NULL;
->  		}
-> +	} else {
-> +		kfree(*attached_handler_name);
->  	}
->  
->  	if (m->hw_handler_name) {
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 2ee5e35..cc5173d 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -882,6 +882,7 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+ 	if (attached_handler_name || m->hw_handler_name) {
+ 		INIT_DELAYED_WORK(&p->activate_path, activate_path_work);
+ 		r = setup_scsi_dh(p->path.dev->bdev, m, &attached_handler_name, &ti->error);
++		kfree(attached_handler_name);
+ 		if (r) {
+ 			dm_put_device(ti, p->path.dev);
+ 			goto bad;
+@@ -896,7 +897,6 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+ 
+ 	return p;
+  bad:
+-	kfree(attached_handler_name);
+ 	free_pgpath(p);
+ 	return ERR_PTR(r);
+ }
+-- 
+2.21.0
