@@ -1,15 +1,16 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v2] multipathd: fix client response for
-	socket activation
-Date: Fri, 3 May 2019 13:54:58 -0500
-Message-ID: <20190503185457.GE5210@octiron.msp.redhat.com>
-References: <20190430224138.22391-1-mwilck@suse.com>
+Subject: Re: [PATCH v2] multipath -u: test socket connection in
+ non-blocking mode
+Date: Mon, 29 Apr 2019 16:38:38 -0500
+Message-ID: <20190429213837.GC5210@octiron.msp.redhat.com>
+References: <20190424090759.29796-1-mwilck@suse.com>
+	<fa3ea599bf6424587fec45b5eb3549b3200ac5e9.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20190430224138.22391-1-mwilck@suse.com>
+In-Reply-To: <fa3ea599bf6424587fec45b5eb3549b3200ac5e9.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,111 +24,78 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, May 01, 2019 at 12:41:38AM +0200, Martin Wilck wrote:
-> When a client wakes up multipathd through the socket, it is likely that the
-> ux listener responds to client requests before multipathd startup has
-> completed. This means that client commands such as "show paths" or "show
-> topology" return success with an empty result, which is quite confusing.
-> 
-> Therefore, in the ux listener, don't start answering client requests while
-> the daemon is configuring. Rather, wait for some other daemon state. We
-> can't wait hard, because the ux listener must also handle signals. So just
-> wait for some short time, and poll again.
-> 
-> This has the side effect that command responses for commands that don't
-> require full initialization, such as "show wildcards", "show config" or
-> "shutdown", are also delayed until the configuration stage has completed.
-> But that seems to be a relatively cheap price to pay for getting the
-> expected response for other commands. To avoid this side effect, the client
-> handling would need to be rewritten such that the uxlsnr thread would have
-> a means to "know" which commands require the configuration stage to
-> complete and which do not.
-> 
-> v2: Removed an unrelated, unnecessary hunk in child().
+On Thu, Apr 25, 2019 at 09:33:03PM +0200, Martin Wilck wrote:
+> On Wed, 2019-04-24 at 11:07 +0200, Martin Wilck wrote:
+> > Since commit d7188fcd "multipathd: start daemon after udev trigger",
+> > multipathd startup is delayed during boot until after "udev settle"
+> > terminates. But "multipath -u" is run by udev workers for storage
+> > devices,
+> > and attempts to connect to the multipathd socket. This causes a start
+> > job
+> > for multipathd to be scheduled by systemd, but that job won't be
+> > started
+> > until "udev settle" finishes. This is not a problem on systems with
+> > 129 or
+> > less storage units, because the connect() call of "multipath -u" will
+> > succeed anyway. But on larger systems, the listen backlog of the
+> > systemd
+> > socket can be exceeded, which causes connect() calls for the socket
+> > to
+> > block until multipathd starts up and begins calling accept(). This
+> > creates
+> > a deadlock situation, because "multipath -u" (called by udev workers)
+> > blocks, and thus "udev settle" doesn't finish, delaying multipathd
+> > startup. This situation then persists until either the workers or
+> > "udev
+> > settle" time out. In the former case, path devices might be
+> > misclassified
+> > as non-multipath devices by "multipath -u".
+> > =
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > Fix this by using a non-blocking socket fd for connect() and
+> > interpret the
+> > errno appropriately.
+> > =
 
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  multipathd/main.c   | 27 +++++++++++++++++++++++++++
->  multipathd/main.h   |  2 ++
->  multipathd/uxlsnr.c | 12 ++++++++++++
->  3 files changed, 41 insertions(+)
-> 
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index f203d77f..ad818320 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -220,6 +220,33 @@ static void config_cleanup(void *arg)
->  	pthread_mutex_unlock(&config_lock);
->  }
->  
-> +/*
-> + * If the current status is @oldstate, wait for at most @ms milliseconds
-> + * for the state to change, and return the new state, which may still be
-> + * @oldstate.
-> + */
-> +enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
-> +					    unsigned long ms)
-> +{
-> +	enum daemon_status st;
-> +	struct timespec tmo;
-> +
-> +	if (oldstate == DAEMON_SHUTDOWN)
-> +		return DAEMON_SHUTDOWN;
-> +
-> +	pthread_mutex_lock(&config_lock);
-> +	pthread_cleanup_push(config_cleanup, NULL);
-> +	st = running_state;
-> +	if (st == oldstate && clock_gettime(CLOCK_MONOTONIC, &tmo) == 0) {
-> +		tmo.tv_nsec += ms * 1000 * 1000;
-> +		normalize_timespec(&tmo);
-> +		(void)pthread_cond_timedwait(&config_cond, &config_lock, &tmo);
-> +		st = running_state;
-> +	}
-> +	pthread_cleanup_pop(1);
-> +	return st;
-> +}
-> +
->  /* must be called with config_lock held */
->  static void __post_config_state(enum daemon_status state)
->  {
-> diff --git a/multipathd/main.h b/multipathd/main.h
-> index e5c1398f..7bb8463f 100644
-> --- a/multipathd/main.h
-> +++ b/multipathd/main.h
-> @@ -20,6 +20,8 @@ extern int uxsock_timeout;
->  
->  void exit_daemon(void);
->  const char * daemon_status(void);
-> +enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
-> +					    unsigned long ms);
->  int need_to_delay_reconfig (struct vectors *);
->  int reconfigure (struct vectors *);
->  int ev_add_path (struct path *, struct vectors *, int);
-> diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-> index 773bc878..04cbb7c7 100644
-> --- a/multipathd/uxlsnr.c
-> +++ b/multipathd/uxlsnr.c
-> @@ -249,6 +249,18 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
->  			continue;
->  		}
->  
-> +		/*
-> +		 * Client connection. We shouldn't answer while we're
-> +		 * configuring - nothing may be configured yet.
-> +		 * But we can't wait forever either, because this thread
-> +		 * must handle signals. So wait a short while only.
-> +		 */
-> +		if (wait_for_state_change_if(DAEMON_CONFIGURE, 10)
-> +		    == DAEMON_CONFIGURE) {
-> +			handle_signals(false);
-> +			continue;
-> +		}
-> +
->  		/* see if a client wants to speak to us */
->  		for (i = 1; i < num_clients + 1; i++) {
->  			if (polls[i].revents & POLLIN) {
-> -- 
-> 2.21.0
+> > This patch reverts most of the changes from commit 8cdf6661
+> > "multipath:
+> > check on multipathd without starting it". Instead, "multipath -u"
+> > does
+> > access the socket and start multipath again (which is what we want
+> > IMO),
+> > but it is now able to detect and handle the "full backlog" situation.
+> > =
+
+> > Signed-off-by: Martin Wilck <mwilck@suse.com>
+> > =
+
+> > V2:
+> > =
+
+> > Use same error reporting convention in __mpath_connect() as in
+> > mpath_connect() (Hannes Reinecke). We can't easily change the latter,
+> > because it's part of the "public" libmpathcmd API. =
+
+> =
+
+> FTR, our customer reported that this patch fixed his problem.
+> =
+
+> @Ben, I'd be grateful if you could try it (or have the user try it)
+> in your problem case as well.
+
+Unfortunately, I don't have a 129+ path system handy that the person who
+does isn't around right now.  The code makes sense, and assuming that I
+can verify that it fixes the problem I'm seeing, I'm fine with going
+this route.
+
+-Ben
+
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
+> =
