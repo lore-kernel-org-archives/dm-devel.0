@@ -1,61 +1,133 @@
-From: Nathan Chancellor <natechancellor@gmail.com>
-Subject: [PATCH] dm dust: Convert an 'else if' into an 'else' in dust_map
-Date: Mon, 29 Apr 2019 19:10:10 -0700
-Message-ID: <20190430021010.25151-1-natechancellor@gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH] multipathd: fix client response for socket
+	activation
+Date: Wed,  1 May 2019 00:27:34 +0200
+Message-ID: <20190430222734.18060-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, clang-built-linux@googlegroups.com, Nick Desaulniers <ndesaulniers@google.com>, Nathan Chancellor <natechancellor@gmail.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-When building with -Wsometimes-uninitialized, Clang warns:
+When a client wakes up multipathd through the socket, it is likely that the
+ux listener responds to client requests before multipathd startup has
+completed. This means that client commands such as "show paths" or "show
+topology" return success with an empty result, which is quite confusing.
 
-drivers/md/dm-dust.c:216:11: warning: variable 'ret' is used
-uninitialized whenever 'if' condition is false
-[-Wsometimes-uninitialized]
-        else if (bio_data_dir(bio) == WRITE)
-                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
-include/linux/bio.h:69:2: note: expanded from macro 'bio_data_dir'
-        (op_is_write(bio_op(bio)) ? WRITE : READ)
-        ^
-drivers/md/dm-dust.c:219:9: note: uninitialized use occurs here
-        return ret;
-               ^~~
-drivers/md/dm-dust.c:216:7: note: remove the 'if' if its condition is
-always true
-        else if (bio_data_dir(bio) == WRITE)
-             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-drivers/md/dm-dust.c:209:9: note: initialize the variable 'ret' to
-silence this warning
-        int ret;
-               ^
-                = 0
-1 warning generated.
+Therefore, in the ux listener, don't start answering client requests while
+the daemon is configuring. Rather, wait for some other daemon state. We
+can't wait hard, because the ux listener must also handle signals. So just
+wait for some short time, and poll again.
 
-It isn't wrong; however, bio_data_dir will only ever return READ and
-WRITE so the second 'else if' can really become an 'else' to silence
-this warning and not change the final meaning of the code.
+This has the side effect that command responses for commands that don't
+require full initialization, such as "show wildcards", "show config" or
+"shutdown", are also delayed until the configuration stage has completed.
+But that seems to be a relatively cheap price to pay for getting the
+expected response for other commands. To avoid this side effect, the client
+handling would need to be rewritten such that the uxlsnr thread would have
+a means to "know" which commands require the configuration stage to
+complete and which do not.
 
-Link: https://github.com/ClangBuiltLinux/linux/issues/462
-Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- drivers/md/dm-dust.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipathd/main.c   | 29 ++++++++++++++++++++++++++++-
+ multipathd/main.h   |  2 ++
+ multipathd/uxlsnr.c | 12 ++++++++++++
+ 3 files changed, 42 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
-index 997830984893..5baeb56679ed 100644
---- a/drivers/md/dm-dust.c
-+++ b/drivers/md/dm-dust.c
-@@ -213,7 +213,7 @@ static int dust_map(struct dm_target *ti, struct bio *bio)
+diff --git a/multipathd/main.c b/multipathd/main.c
+index f203d77f..cf220499 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -220,6 +220,33 @@ static void config_cleanup(void *arg)
+ 	pthread_mutex_unlock(&config_lock);
+ }
  
- 	if (bio_data_dir(bio) == READ)
- 		ret = dust_map_read(dd, bio->bi_iter.bi_sector, dd->fail_read_on_bb);
--	else if (bio_data_dir(bio) == WRITE)
-+	else
- 		ret = dust_map_write(dd, bio->bi_iter.bi_sector, dd->fail_read_on_bb);
++/*
++ * If the current status is @oldstate, wait for at most @ms milliseconds
++ * for the state to change, and return the new state, which may still be
++ * @oldstate.
++ */
++enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
++					    unsigned long ms)
++{
++	enum daemon_status st;
++	struct timespec tmo;
++
++	if (oldstate == DAEMON_SHUTDOWN)
++		return DAEMON_SHUTDOWN;
++
++	pthread_mutex_lock(&config_lock);
++	pthread_cleanup_push(config_cleanup, NULL);
++	st = running_state;
++	if (st == oldstate && clock_gettime(CLOCK_MONOTONIC, &tmo) == 0) {
++		tmo.tv_nsec += ms * 1000 * 1000;
++		normalize_timespec(&tmo);
++		(void)pthread_cond_timedwait(&config_cond, &config_lock, &tmo);
++		st = running_state;
++	}
++	pthread_cleanup_pop(1);
++	return st;
++}
++
+ /* must be called with config_lock held */
+ static void __post_config_state(enum daemon_status state)
+ {
+@@ -2861,7 +2888,7 @@ child (void * param)
+ 	 */
+ 	conf = NULL;
  
- 	return ret;
+-	pthread_cleanup_push(config_cleanup, NULL);
++	pthread_cleanup_push_cast(config_cleanup, NULL);
+ 	pthread_mutex_lock(&config_lock);
+ 
+ 	__post_config_state(DAEMON_IDLE);
+diff --git a/multipathd/main.h b/multipathd/main.h
+index e5c1398f..7bb8463f 100644
+--- a/multipathd/main.h
++++ b/multipathd/main.h
+@@ -20,6 +20,8 @@ extern int uxsock_timeout;
+ 
+ void exit_daemon(void);
+ const char * daemon_status(void);
++enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
++					    unsigned long ms);
+ int need_to_delay_reconfig (struct vectors *);
+ int reconfigure (struct vectors *);
+ int ev_add_path (struct path *, struct vectors *, int);
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index 773bc878..04cbb7c7 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -249,6 +249,18 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
+ 			continue;
+ 		}
+ 
++		/*
++		 * Client connection. We shouldn't answer while we're
++		 * configuring - nothing may be configured yet.
++		 * But we can't wait forever either, because this thread
++		 * must handle signals. So wait a short while only.
++		 */
++		if (wait_for_state_change_if(DAEMON_CONFIGURE, 10)
++		    == DAEMON_CONFIGURE) {
++			handle_signals(false);
++			continue;
++		}
++
+ 		/* see if a client wants to speak to us */
+ 		for (i = 1; i < num_clients + 1; i++) {
+ 			if (polls[i].revents & POLLIN) {
 -- 
 2.21.0
