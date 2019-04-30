@@ -1,73 +1,79 @@
-From: Nick Desaulniers <ndesaulniers@google.com>
-Subject: Re: [PATCH] dm dust: Convert an 'else if' into an 'else' in dust_map
-Date: Tue, 30 Apr 2019 15:31:27 -0700
-Message-ID: <CAKwvOdkNMnwRC9UO_cJq+e9+x5DHE0Nw0guzThxU_RX5obfSPQ@mail.gmail.com>
-References: <20190430021010.25151-1-natechancellor@gmail.com>
+From: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
+Subject: [PATCH 1/2] block: Fix a NULL pointer dereference in  generic_make_request()
+Date: Tue, 30 Apr 2019 19:37:21 -0300
+Message-ID: <20190430223722.20845-1-gpiccoli@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190430021010.25151-1-natechancellor@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Nathan Chancellor <natechancellor@gmail.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, LKML <linux-kernel@vger.kernel.org>, clang-built-linux <clang-built-linux@googlegroups.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: linux-block@vger.kernel.org, linux-raid@vger.kernel.org
+Cc: dm-devel@redhat.com, axboe@kernel.dk, gavin.guo@canonical.com, jay.vosburgh@canonical.com, gpiccoli@canonical.com, kernel@gpiccoli.net, Bart Van Assche <bvanassche@acm.org>, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Apr 29, 2019 at 7:10 PM Nathan Chancellor
-<natechancellor@gmail.com> wrote:
->
-> When building with -Wsometimes-uninitialized, Clang warns:
->
-> drivers/md/dm-dust.c:216:11: warning: variable 'ret' is used
-> uninitialized whenever 'if' condition is false
-> [-Wsometimes-uninitialized]
->         else if (bio_data_dir(bio) == WRITE)
->                  ^~~~~~~~~~~~~~~~~~~~~~~~~~
-> include/linux/bio.h:69:2: note: expanded from macro 'bio_data_dir'
->         (op_is_write(bio_op(bio)) ? WRITE : READ)
->         ^
-> drivers/md/dm-dust.c:219:9: note: uninitialized use occurs here
->         return ret;
->                ^~~
-> drivers/md/dm-dust.c:216:7: note: remove the 'if' if its condition is
-> always true
->         else if (bio_data_dir(bio) == WRITE)
->              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-> drivers/md/dm-dust.c:209:9: note: initialize the variable 'ret' to
-> silence this warning
->         int ret;
->                ^
->                 = 0
-> 1 warning generated.
->
-> It isn't wrong; however, bio_data_dir will only ever return READ and
-> WRITE so the second 'else if' can really become an 'else' to silence
-> this warning and not change the final meaning of the code.
->
-> Link: https://github.com/ClangBuiltLinux/linux/issues/462
-> Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>
-> ---
->  drivers/md/dm-dust.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
->
-> diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
-> index 997830984893..5baeb56679ed 100644
-> --- a/drivers/md/dm-dust.c
-> +++ b/drivers/md/dm-dust.c
-> @@ -213,7 +213,7 @@ static int dust_map(struct dm_target *ti, struct bio *bio)
->
->         if (bio_data_dir(bio) == READ)
->                 ret = dust_map_read(dd, bio->bi_iter.bi_sector, dd->fail_read_on_bb);
-> -       else if (bio_data_dir(bio) == WRITE)
-> +       else
->                 ret = dust_map_write(dd, bio->bi_iter.bi_sector, dd->fail_read_on_bb);
->
->         return ret;
-> --
-> 2.21.0
->
+Commit 37f9579f4c31 ("blk-mq: Avoid that submitting a bio concurrently
+with device removal triggers a crash") introduced a NULL pointer
+dereference in generic_make_request(). The patch sets q to NULL and
+enter_succeeded to false; right after, there's an 'if (enter_succeeded)'
+which is not taken, and then the 'else' will dereference q in
+blk_queue_dying(q).
 
-Thanks for the patch.
-Reviewed-by: Nick Desaulniers <ndesaulniers@google.com>
+This patch just moves the 'q = NULL' to a point in which it won't trigger
+the oops, although the semantics of this NULLification remains untouched.
+
+A simple test case/reproducer is as follows:
+a) Build kernel v5.1-rc7 with CONFIG_BLK_CGROUP=n.
+
+b) Create a raid0 md array with 2 NVMe devices as members, and mount it
+with an ext4 filesystem.
+
+c) Run the following oneliner (supposing the raid0 is mounted in /mnt):
+(dd of=/mnt/tmp if=/dev/zero bs=1M count=999 &); sleep 0.3;
+echo 1 > /sys/block/nvme0n1/device/device/remove
+(whereas nvme0n1 is the 2nd array member)
+
+This will trigger the following oops:
+
+BUG: unable to handle kernel NULL pointer dereference at 0000000000000078
+PGD 0 P4D 0
+Oops: 0000 [#1] SMP PTI
+RIP: 0010:generic_make_request+0x32b/0x400
+Call Trace:
+ submit_bio+0x73/0x140
+ ext4_io_submit+0x4d/0x60
+ ext4_writepages+0x626/0xe90
+ do_writepages+0x4b/0xe0
+[...]
+
+This patch has no functional changes and preserves the md/raid0 behavior
+when a member is removed before kernel v4.17.
+
+Cc: Bart Van Assche <bvanassche@acm.org>
+Cc: stable@vger.kernel.org # v4.17
+Fixes: 37f9579f4c31 ("blk-mq: Avoid that submitting a bio concurrently with device removal triggers a crash")
+Signed-off-by: Guilherme G. Piccoli <gpiccoli@canonical.com>
+---
+ block/blk-core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/block/blk-core.c b/block/blk-core.c
+index a55389ba8779..e21856a7f3fa 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1076,7 +1076,6 @@ blk_qc_t generic_make_request(struct bio *bio)
+ 				flags = BLK_MQ_REQ_NOWAIT;
+ 			if (blk_queue_enter(q, flags) < 0) {
+ 				enter_succeeded = false;
+-				q = NULL;
+ 			}
+ 		}
+ 
+@@ -1108,6 +1107,7 @@ blk_qc_t generic_make_request(struct bio *bio)
+ 				bio_wouldblock_error(bio);
+ 			else
+ 				bio_io_error(bio);
++			q = NULL;
+ 		}
+ 		bio = bio_list_pop(&bio_list_on_stack[0]);
+ 	} while (bio);
 -- 
-Thanks,
-~Nick Desaulniers
+2.21.0
