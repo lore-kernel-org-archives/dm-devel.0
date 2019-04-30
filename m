@@ -1,102 +1,126 @@
-From: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
-Subject: [PATCH 2/2] md/raid0: Do not bypass blocking queue entered for raid0  bios
-Date: Tue, 30 Apr 2019 19:37:22 -0300
-Message-ID: <20190430223722.20845-2-gpiccoli@canonical.com>
-References: <20190430223722.20845-1-gpiccoli@canonical.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH v2] multipathd: fix client response for socket
+	activation
+Date: Wed,  1 May 2019 00:41:38 +0200
+Message-ID: <20190430224138.22391-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20190430223722.20845-1-gpiccoli@canonical.com>
-Sender: stable-owner@vger.kernel.org
-To: linux-block@vger.kernel.org, linux-raid@vger.kernel.org
-Cc: dm-devel@redhat.com, axboe@kernel.dk, gavin.guo@canonical.com, jay.vosburgh@canonical.com, gpiccoli@canonical.com, kernel@gpiccoli.net, Ming Lei <ming.lei@redhat.com>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, stable@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Commit cd4a4ae4683d ("block: don't use blocking queue entered for
-recursive bio submits") introduced the flag BIO_QUEUE_ENTERED in order
-split bios bypass the blocking queue entering routine and use the live
-non-blocking version. It was a result of an extensive discussion in
-a linux-block thread[0], and the purpose of this change was to prevent
-a hung task waiting on a reference to drop.
+When a client wakes up multipathd through the socket, it is likely that the
+ux listener responds to client requests before multipathd startup has
+completed. This means that client commands such as "show paths" or "show
+topology" return success with an empty result, which is quite confusing.
 
-Happens that md raid0 split bios all the time, and more important,
-it changes their underlying device to the raid member. After the change
-introduced by this flag's usage, we experience various crashes if a raid0
-member is removed during a large write. This happens because the bio
-reaches the live queue entering function when the queue of the raid0
-member is dying.
+Therefore, in the ux listener, don't start answering client requests while
+the daemon is configuring. Rather, wait for some other daemon state. We
+can't wait hard, because the ux listener must also handle signals. So just
+wait for some short time, and poll again.
 
-A simple reproducer of this behavior is presented below:
-a) Build kernel v5.1-rc7 with CONFIG_BLK_DEV_THROTTLING=y.
+This has the side effect that command responses for commands that don't
+require full initialization, such as "show wildcards", "show config" or
+"shutdown", are also delayed until the configuration stage has completed.
+But that seems to be a relatively cheap price to pay for getting the
+expected response for other commands. To avoid this side effect, the client
+handling would need to be rewritten such that the uxlsnr thread would have
+a means to "know" which commands require the configuration stage to
+complete and which do not.
 
-b) Create a raid0 md array with 2 NVMe devices as members, and mount it
-with an ext4 filesystem.
+v2: Removed an unrelated, unnecessary hunk in child().
 
-c) Run the following oneliner (supposing the raid0 is mounted in /mnt):
-(dd of=/mnt/tmp if=/dev/zero bs=1M count=999 &); sleep 0.3;
-echo 1 > /sys/block/nvme0n1/device/device/remove
-(whereas nvme0n1 is the 2nd array member)
-
-This will trigger the following warning/oops:
-
-------------[ cut here ]------------
-no blkg associated for bio on block-device: nvme0n1
-WARNING: CPU: 9 PID: 184 at ./include/linux/blk-cgroup.h:785
-generic_make_request_checks+0x4dd/0x690
-[...]
-BUG: unable to handle kernel NULL pointer dereference at 0000000000000155
-PGD 0 P4D 0
-Oops: 0000 [#1] SMP PTI
-RIP: 0010:blk_throtl_bio+0x45/0x970
-[...]
-Call Trace:
- generic_make_request_checks+0x1bf/0x690
- generic_make_request+0x64/0x3f0
- raid0_make_request+0x184/0x620 [raid0]
- ? raid0_make_request+0x184/0x620 [raid0]
- ? blk_queue_split+0x384/0x6d0
- md_handle_request+0x126/0x1a0
- md_make_request+0x7b/0x180
- generic_make_request+0x19e/0x3f0
- submit_bio+0x73/0x140
-[...]
-
-This patch changes raid0 driver to fallback to the "old" blocking queue
-entering procedure, by clearing the BIO_QUEUE_ENTERED from raid0 bios.
-This prevents the crashes and restores the regular behavior of raid0
-arrays when a member is removed during a large write.
-
-[0] https://marc.info/?l=linux-block&m=152638475806811
-
-Cc: Jens Axboe <axboe@kernel.dk>
-Cc: Ming Lei <ming.lei@redhat.com>
-Cc: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
-Cc: stable@vger.kernel.org # v4.18
-Fixes: cd4a4ae4683d ("block: don't use blocking queue entered for recursive bio submits")
-Signed-off-by: Guilherme G. Piccoli <gpiccoli@canonical.com>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- drivers/md/raid0.c | 2 ++
- 1 file changed, 2 insertions(+)
+ multipathd/main.c   | 27 +++++++++++++++++++++++++++
+ multipathd/main.h   |  2 ++
+ multipathd/uxlsnr.c | 12 ++++++++++++
+ 3 files changed, 41 insertions(+)
 
-diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-index f3fb5bb8c82a..d5bdc79e0835 100644
---- a/drivers/md/raid0.c
-+++ b/drivers/md/raid0.c
-@@ -547,6 +547,7 @@ static void raid0_handle_discard(struct mddev *mddev, struct bio *bio)
- 			trace_block_bio_remap(bdev_get_queue(rdev->bdev),
- 				discard_bio, disk_devt(mddev->gendisk),
- 				bio->bi_iter.bi_sector);
-+		bio_clear_flag(bio, BIO_QUEUE_ENTERED);
- 		generic_make_request(discard_bio);
- 	}
- 	bio_endio(bio);
-@@ -602,6 +603,7 @@ static bool raid0_make_request(struct mddev *mddev, struct bio *bio)
- 				disk_devt(mddev->gendisk), bio_sector);
- 	mddev_check_writesame(mddev, bio);
- 	mddev_check_write_zeroes(mddev, bio);
-+	bio_clear_flag(bio, BIO_QUEUE_ENTERED);
- 	generic_make_request(bio);
- 	return true;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index f203d77f..ad818320 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -220,6 +220,33 @@ static void config_cleanup(void *arg)
+ 	pthread_mutex_unlock(&config_lock);
  }
+ 
++/*
++ * If the current status is @oldstate, wait for at most @ms milliseconds
++ * for the state to change, and return the new state, which may still be
++ * @oldstate.
++ */
++enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
++					    unsigned long ms)
++{
++	enum daemon_status st;
++	struct timespec tmo;
++
++	if (oldstate == DAEMON_SHUTDOWN)
++		return DAEMON_SHUTDOWN;
++
++	pthread_mutex_lock(&config_lock);
++	pthread_cleanup_push(config_cleanup, NULL);
++	st = running_state;
++	if (st == oldstate && clock_gettime(CLOCK_MONOTONIC, &tmo) == 0) {
++		tmo.tv_nsec += ms * 1000 * 1000;
++		normalize_timespec(&tmo);
++		(void)pthread_cond_timedwait(&config_cond, &config_lock, &tmo);
++		st = running_state;
++	}
++	pthread_cleanup_pop(1);
++	return st;
++}
++
+ /* must be called with config_lock held */
+ static void __post_config_state(enum daemon_status state)
+ {
+diff --git a/multipathd/main.h b/multipathd/main.h
+index e5c1398f..7bb8463f 100644
+--- a/multipathd/main.h
++++ b/multipathd/main.h
+@@ -20,6 +20,8 @@ extern int uxsock_timeout;
+ 
+ void exit_daemon(void);
+ const char * daemon_status(void);
++enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
++					    unsigned long ms);
+ int need_to_delay_reconfig (struct vectors *);
+ int reconfigure (struct vectors *);
+ int ev_add_path (struct path *, struct vectors *, int);
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index 773bc878..04cbb7c7 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -249,6 +249,18 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
+ 			continue;
+ 		}
+ 
++		/*
++		 * Client connection. We shouldn't answer while we're
++		 * configuring - nothing may be configured yet.
++		 * But we can't wait forever either, because this thread
++		 * must handle signals. So wait a short while only.
++		 */
++		if (wait_for_state_change_if(DAEMON_CONFIGURE, 10)
++		    == DAEMON_CONFIGURE) {
++			handle_signals(false);
++			continue;
++		}
++
+ 		/* see if a client wants to speak to us */
+ 		for (i = 1; i < num_clients + 1; i++) {
+ 			if (polls[i].revents & POLLIN) {
 -- 
 2.21.0
