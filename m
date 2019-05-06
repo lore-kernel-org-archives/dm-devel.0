@@ -1,16 +1,14 @@
-From: Song Liu <liu.song.a23@gmail.com>
-Subject: Re: [RFC] [PATCH V2 0/1] Introduce emergency raid0 stop
-	for mounted arrays
-Date: Wed, 1 May 2019 08:33:58 -0700
-Message-ID: <CAPhsuW65EW8JgjE8zknPQPXYcmDhX9LEhTKGb0KHywqKuZkUcA@mail.gmail.com>
-References: <20190418220448.7219-1-gpiccoli@canonical.com>
-	<CAPhsuW4k5zz2pJBPL60VzjTcj6NTnhBh-RjvWASLcOxAk+yDEw@mail.gmail.com>
-	<b39b96ea-2540-a407-2232-1af91e3e6658@canonical.com>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: [PATCH 5.0 063/122] scsi: core: add new RDAC
+	LENOVO/DE_Series device
+Date: Mon,  6 May 2019 16:32:01 +0200
+Message-ID: <20190506143100.615679234@linuxfoundation.org>
+References: <20190506143054.670334917@linuxfoundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <b39b96ea-2540-a407-2232-1af91e3e6658@canonical.com>
+In-Reply-To: <20190506143054.670334917@linuxfoundation.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,85 +18,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, kernel@gpiccoli.net, NeilBrown <neilb@suse.com>, linux-raid <linux-raid@vger.kernel.org>, dm-devel@redhat.com, Linux-Fsdevel <linux-fsdevel@vger.kernel.org>, Jay Vosburgh <jay.vosburgh@canonical.com>, gavin.guo@canonical.com
+To: linux-kernel@vger.kernel.org
+Cc: "Sasha Levin (Microsoft)" <sashal@kernel.org>, "James E.J. Bottomley" <jejb@linux.vnet.ibm.com>, SCSI ML <linux-scsi@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Xose Vazquez Perez <xose.vazquez@gmail.com>, stable@vger.kernel.org, NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, DM ML <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Tue, Apr 30, 2019 at 3:41 PM Guilherme G. Piccoli
-<gpiccoli@canonical.com> wrote:
->
-> > On 19/04/2019 14:08, Song Liu wrote:
-> > [...]
-> > I read through the discussion in V1, and I would agree with Neil that
-> > current behavior is reasonable.
-> >
-> > For the following example:
-> >
-> > fd = open("file", "w");
-> > write(fd, buf, size);
-> > ret = fsync(fd);
-> >
-> > If "size" is big enough, the write is not expected to be atomic for
-> > md or other drives. If we remove the underlining block device
-> > after write() and before fsync(), the file could get corrupted. This
-> > is the same for md or NVMe/SCSI drives.
-> >
-> > The application need to check "ret" from fsync(), the data is safe
-> > only when fsync() returns 0.
-> >
-> > Does this make sense?
-> >
->
-> Hi Song, thanks for your quick response, and sorry for my delay.
-> I've noticed after v4.18 kernel started to crash when we remove one
-> raid0 member while writing, so I was investigating this
-> before perform your test (in fact, found 2 issues [0]), hence my delay.
->
-> Your test does make sense; in fact I've tested your scenario with the
-> following code (with the patches from [0]):
-> https://pastebin.ubuntu.com/p/cyqpDqpM7x/
->
-> Indeed, fsync returns -1 in this case.
-> Interestingly, when I do a "dd if=<some_file> of=<raid0_mount>" and try
-> to "sync -f <some_file>" and "sync", it succeeds and the file is
-> written, although corrupted.
+[ Upstream commit 1cb1d2c64e812928fe0a40b8f7e74523d0283dbe ]
 
-I guess this is some issue with sync command, but I haven't got time
-to look into it. How about running dd with oflag=sync or oflag=direct?
+Blacklist "Universal Xport" LUN. It's used for in-band storage array
+management.  Also add model to the rdac dh family.
 
->
-> Do you think this behavior is correct? In other devices, like a pure
-> SCSI disk or NVMe, the 'dd' write fails.
-> Also, what about the status of the raid0 array in mdadm - it shows as
-> "clean" even after the member is removed, should we change that?
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
+Cc: Martin K. Petersen <martin.petersen@oracle.com>
+Cc: SCSI ML <linux-scsi@vger.kernel.org>
+Cc: DM ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+Signed-off-by: Sasha Levin (Microsoft) <sashal@kernel.org>
+---
+ drivers/scsi/scsi_devinfo.c | 1 +
+ drivers/scsi/scsi_dh.c      | 1 +
+ 2 files changed, 2 insertions(+)
 
-I guess this is because the kernel hasn't detect the array is gone? In
-that case, I think reducing the latency would be useful for some use
-cases.
-
-Thanks,
-Song
-
->
->
-> > Also, could you please highlight changes from V1 (if more than
-> > just rebase)?
->
-> No changes other than rebase. Worth mentioning here that a kernel bot
-> (and Julia Lawall) found an issue in my patch; I forgot a
-> "mutex_lock(&mddev->open_mutex);" in line 6053, which caused the first
-> caveat (hung mdadm and persistent device in /dev). Thanks for pointing
-> this silly mistake from me! in case this patch gets some traction, I'll
-> re-submit with that fixed.
->
-> Cheers,
->
->
-> Guilherme
->
-> [0] https://marc.info/?l=linux-block&m=155666385707413
->
-> >
-> > Thanks,
-> > Song
-> >
+diff --git a/drivers/scsi/scsi_devinfo.c b/drivers/scsi/scsi_devinfo.c
+index c4cbfd07b916..a08ff3bd6310 100644
+--- a/drivers/scsi/scsi_devinfo.c
++++ b/drivers/scsi/scsi_devinfo.c
+@@ -238,6 +238,7 @@ static struct {
+ 	{"NETAPP", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
+ 	{"LSI", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
+ 	{"ENGENIO", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
++	{"LENOVO", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
+ 	{"SMSC", "USB 2 HS-CF", NULL, BLIST_SPARSELUN | BLIST_INQUIRY_36},
+ 	{"SONY", "CD-ROM CDU-8001", NULL, BLIST_BORKEN},
+ 	{"SONY", "TSL", NULL, BLIST_FORCELUN},		/* DDS3 & DDS4 autoloaders */
+diff --git a/drivers/scsi/scsi_dh.c b/drivers/scsi/scsi_dh.c
+index 5a58cbf3a75d..c14006ac98f9 100644
+--- a/drivers/scsi/scsi_dh.c
++++ b/drivers/scsi/scsi_dh.c
+@@ -75,6 +75,7 @@ static const struct scsi_dh_blist scsi_dh_blist[] = {
+ 	{"NETAPP", "INF-01-00",		"rdac", },
+ 	{"LSI", "INF-01-00",		"rdac", },
+ 	{"ENGENIO", "INF-01-00",	"rdac", },
++	{"LENOVO", "DE_Series",		"rdac", },
+ 	{NULL, NULL,			NULL },
+ };
+ 
+-- 
+2.20.1
