@@ -1,65 +1,61 @@
-From: Song Liu <liu.song.a23@gmail.com>
-Subject: Re: [PATCH 2/2] md/raid0: Do not bypass blocking queue entered for
- raid0 bios
-Date: Mon, 6 May 2019 17:07:16 -0400
-Message-ID: <CAPhsuW6ahmkUhCgns=9WHPXSvYefB0Gmr1oB7gdZiD86sKyHFg@mail.gmail.com>
-References: <20190430223722.20845-1-gpiccoli@canonical.com>
- <20190430223722.20845-2-gpiccoli@canonical.com> <CAPhsuW4SeUhNOJJkEf9wcLjbbc9qX0=C8zqbyCtC7Q8fdL91hw@mail.gmail.com>
- <c8721ba3-5d38-7906-5049-e2b16e967ecf@canonical.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-integrity: correctly calculate the size of
+ metadata area
+Date: Tue, 7 May 2019 14:28:35 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1905071358500.26614@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <c8721ba3-5d38-7906-5049-e2b16e967ecf@canonical.com>
-Sender: stable-owner@vger.kernel.org
-To: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
-Cc: linux-block@vger.kernel.org, linux-raid <linux-raid@vger.kernel.org>, dm-devel@redhat.com, axboe@kernel.dk, Gavin Guo <gavin.guo@canonical.com>, Jay Vosburgh <jay.vosburgh@canonical.com>, kernel@gpiccoli.net, Ming Lei <ming.lei@redhat.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, stable@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Milan Broz <mbroz@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, May 6, 2019 at 2:48 PM Guilherme G. Piccoli
-<gpiccoli@canonical.com> wrote:
->
-> On 06/05/2019 13:50, Song Liu wrote:
-> > [...]
-> > IIUC, we need this for all raid types. Is it possible to fix that in md.c so
-> > all types get the fix?
-> >
-> > Thanks,
-> > Song
-> >
->
-> Hi Song, thanks again for reviewing my code and provide input, much
-> appreciated!
->
-> I understand this could in theory affects all the RAID levels, but in
-> practice I don't think it'll happen. RAID0 is the only "blind" mode of
-> RAID, in the sense it's the only one that doesn't care at all with
-> failures. In fact, this was the origin of my other thread [0], regarding
-> the change of raid0's behavior in error cases..because it currently does
-> not care with members being removed and rely only in filesystem failures
-> (after submitting many BIOs to the removed device).
->
-> That said, in this change I've only took care of raid0, since in my
-> understanding the other levels won't submit BIOs to dead devices; we can
-> experiment that to see if it's true.
+When we use separate devices for data and metadata, dm-integrity would
+incorrectly calculate the size of the metadata device as if it had
+512-byte block size - and it would refuse activation with larger block
+size and smaller metadata device.
 
-Could you please run a quick test with raid5? I am wondering whether
-some race condition could get us into similar crash. If we cannot easily
-trigger the bug, we can process with this version.
+This patch fixes it so that it takes actual block size into account.
 
-Thanks,
-Song
+It fixes https://gitlab.com/cryptsetup/cryptsetup/issues/450
 
->
-> But I'd be happy to change all other levels also if you think it's
-> appropriate (or a simple generic change to md.c if it is enough). Do you
-> think we could go ahead with this change, and further improve that (to
-> cover all raid cases if necessary)?
->
-> Cheers,
->
->
-> Guilherme
->
->
->
-> [0] https://marc.info/?l=linux-raid&m=155562509905735
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org	# v4.19+
+Fixes: 356d9d52e122 ("dm integrity: allow separate metadata device")
+
+---
+ drivers/md/dm-integrity.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2019-05-07 18:57:04.000000000 +0200
++++ linux-2.6/drivers/md/dm-integrity.c	2019-05-07 20:26:44.000000000 +0200
+@@ -2568,7 +2568,7 @@ static int calculate_device_limits(struc
+ 		if (last_sector < ic->start || last_sector >= ic->meta_device_sectors)
+ 			return -EINVAL;
+ 	} else {
+-		__u64 meta_size = ic->provided_data_sectors * ic->tag_size;
++		__u64 meta_size = (ic->provided_data_sectors >> ic->sb->log2_sectors_per_block) * ic->tag_size;
+ 		meta_size = (meta_size + ((1U << (ic->log2_buffer_sectors + SECTOR_SHIFT)) - 1))
+ 				>> (ic->log2_buffer_sectors + SECTOR_SHIFT);
+ 		meta_size <<= ic->log2_buffer_sectors;
+@@ -3439,7 +3439,7 @@ try_smaller_buffer:
+ 	DEBUG_print("	journal_sections %u\n", (unsigned)le32_to_cpu(ic->sb->journal_sections));
+ 	DEBUG_print("	journal_entries %u\n", ic->journal_entries);
+ 	DEBUG_print("	log2_interleave_sectors %d\n", ic->sb->log2_interleave_sectors);
+-	DEBUG_print("	device_sectors 0x%llx\n", (unsigned long long)ic->device_sectors);
++	DEBUG_print("	data_device_sectors 0x%llx\n", (unsigned long long)ic->data_device_sectors);
+ 	DEBUG_print("	initial_sectors 0x%x\n", ic->initial_sectors);
+ 	DEBUG_print("	metadata_run 0x%x\n", ic->metadata_run);
+ 	DEBUG_print("	log2_metadata_run %d\n", ic->log2_metadata_run);
