@@ -1,14 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 08/10] dm-integrity: add a bitmap mode
-Date: Tue, 7 May 2019 14:51:54 -0400
-Message-ID: <20190507185154.GB24320@redhat.com>
-References: <20190429125746.036036640@debian-a64.vm>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: format correctly maintainer
+	info in hwtable
+Date: Tue,  7 May 2019 20:53:09 +0200
+Message-ID: <20190507185309.21050-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20190429125746.036036640@debian-a64.vm>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,23 +16,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Ondrej Kozina <okozina@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
+Cc: DM-DEVEL ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Mon, Apr 29 2019 at  8:57am -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEVEL ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-> Add a new bitmap mode for dm-integrity.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
-This patch header needs much more detail.
-
-Can you please be as informative and detailed as possible about what
-this new bitmap mode is (what constraints it has, where it is expected
-to be useful, etc)?  Also, if you have them, provide some benchmarks
-that showcase its benefits.
-
-Thanks,
-Mike
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 1d96433..1fade7e 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -38,7 +38,7 @@
+ 	 *
+ 	 * COMPANY_NAME
+ 	 *
+-	 * Maintainer: XXX <email>
++	 * Maintainer: NAME <email>
+ 	 */
+ 	{
+ 		/* Product Name */
+@@ -708,7 +708,7 @@ static struct hwentry default_hw[] = {
+                 /*
+ 		 * DE Series
+ 		 *
+-		 * Maintainer: ng-eseries-upstream-maintainers@netapp.com
++		 * Maintainer: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+ 		 */
+                 .vendor        = "LENOVO",
+                 .product       = "DE_Series",
+-- 
+2.21.0
