@@ -1,54 +1,76 @@
-From: Wols Lists <antlists@youngman.org.uk>
-Subject: Re: [PATCH 2/2] md/raid0: Do not bypass blocking queue entered for
- raid0 bios
-Date: Wed, 8 May 2019 17:52:59 +0100
-Message-ID: <5CD3096B.4030302@youngman.org.uk>
-References: <20190430223722.20845-1-gpiccoli@canonical.com>
- <20190430223722.20845-2-gpiccoli@canonical.com>
- <CAPhsuW4SeUhNOJJkEf9wcLjbbc9qX0=C8zqbyCtC7Q8fdL91hw@mail.gmail.com>
- <c8721ba3-5d38-7906-5049-e2b16e967ecf@canonical.com>
- <CAPhsuW6ahmkUhCgns=9WHPXSvYefB0Gmr1oB7gdZiD86sKyHFg@mail.gmail.com>
- <5CD2A172.4010302@youngman.org.uk>
- <0ad36b2f-ec36-6930-b587-da0526613567@gpiccoli.net>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 08/10] dm-integrity: add a bitmap mode
+Date: Wed, 8 May 2019 13:25:33 -0400
+Message-ID: <20190508172533.GA29488@redhat.com>
+References: <20190429125746.036036640@debian-a64.vm>
+	<20190507185154.GB24320@redhat.com>
+	<alpine.LRH.2.02.1905081228270.29650@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <0ad36b2f-ec36-6930-b587-da0526613567@gpiccoli.net>
-Sender: stable-owner@vger.kernel.org
-To: "Guilherme G. Piccoli" <guilherme@gpiccoli.net>, Song Liu <liu.song.a23@gmail.com>
-Cc: "Guilherme G. Piccoli" <gpiccoli@canonical.com>, linux-block@vger.kernel.org, linux-raid <linux-raid@vger.kernel.org>, dm-devel@redhat.com, axboe@kernel.dk, Gavin Guo <gavin.guo@canonical.com>, Jay Vosburgh <jay.vosburgh@canonical.com>, kernel@gpiccoli.net, Ming Lei <ming.lei@redhat.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, stable@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1905081228270.29650@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Ondrej Kozina <okozina@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On 08/05/19 15:52, Guilherme G. Piccoli wrote:
-> Hi, I understand your concern. But all other raid levels contains
-> failure-event mechanisms. For example, in all my tests with raid5 or
-> raid1, it first complained the device was removed, then it failed in
-> super_written() when no other available device was present.
-> On the other hand, raid0 does "blind-writes": it just selects the device
-> in which that bio should be written (given the stripe math) and change
-> the bio's device, sending it back via generic_make_request(). It's
-> dummy, but not in a bad way, but rather for performance reasons. It has
-> no "intelligence" for failures, as all other raid levels.
-> 
-> That said, we could fix md.c for all raid levels, but I personally think
-> it's a bazooka shot, only raid0 shows consistently this issue.
-> 
-The academic in me says we should push that error handling into
-generic_make_request() or some raid function in md.c that deals with
-those problems. Sounds like there's a fair bit of duplicate
-functionality that could be re-factored out.
->>
->> Academic purity versus engineering practicality :-)
-> 
-> Heheh you have good points here! Thanks for the input =)
-> Cheers,
-> 
-Doesn't help when there's not an architect to design an overall "grand
-scheme", but my usual way of working is to design top down academically,
-and then ask myself "what do I need" before implementing bottom-up.
-Hopefully with a load of documentation saying "I haven't done this
-because I don't need it, but this is where it goes".
+On Wed, May 08 2019 at 12:46pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-Cheers,
-Wol
+> 
+> 
+> On Tue, 7 May 2019, Mike Snitzer wrote:
+> 
+> > On Mon, Apr 29 2019 at  8:57am -0400,
+> > Mikulas Patocka <mpatocka@redhat.com> wrote:
+> > 
+> > > Add a new bitmap mode for dm-integrity.
+> > > 
+> > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > 
+> > This patch header needs much more detail.
+> > 
+> > Can you please be as informative and detailed as possible about what
+> > this new bitmap mode is (what constraints it has, where it is expected
+> > to be useful, etc)?  Also, if you have them, provide some benchmarks
+> > that showcase its benefits.
+> > 
+> > Thanks,
+> > Mike
+> 
+> The patch adds the documentation to the file 
+> "Documentation/device-mapper/dm-integrity.txt", so it can be also used as 
+> a patch header. For example:
+> 
+> "This patch introduces an alternative mode of operation whete dm-integrity 
+> uses bitmap instead of a journal. If a bit in the bitmap is 1, the 
+> corresponding region's data and integrity tags are not synchronized - if 
+> the machine crashes, the unsynchronized regions will be recalculated. The 
+> bitmap mode is faster than the journal mode, because we don't have to 
+> write the data twice, but it is also less reliable, because if data 
+> corruption happens when the machine crashes, it may not be detected."
+> 
+> Benchmark - on an SSD connected to a SATA300 port, when doing large linear 
+> writes with dd.
+> 
+> buffered I/O:
+> 	raw device throughput - 245MB/s
+> 	dm-integrity with journaling - 120MB/s
+> 	dm-integrity with bitmap - 238MB/s
+> 
+> direct I/O with 1MB block size:
+> 	raw device throughput - 248MB/s
+> 	dm-integrity with journaling - 123MB/s
+> 	dm-integrity with bitmap - 223MB/s
+
+Great, thanks.
