@@ -1,65 +1,71 @@
-From: "Guilherme G. Piccoli" <guilherme@gpiccoli.net>
-Subject: Re: [PATCH 2/2] md/raid0: Do not bypass blocking queue entered for
- raid0 bios
-Date: Wed, 8 May 2019 11:52:29 -0300
-Message-ID: <0ad36b2f-ec36-6930-b587-da0526613567@gpiccoli.net>
-References: <20190430223722.20845-1-gpiccoli@canonical.com>
- <20190430223722.20845-2-gpiccoli@canonical.com>
- <CAPhsuW4SeUhNOJJkEf9wcLjbbc9qX0=C8zqbyCtC7Q8fdL91hw@mail.gmail.com>
- <c8721ba3-5d38-7906-5049-e2b16e967ecf@canonical.com>
- <CAPhsuW6ahmkUhCgns=9WHPXSvYefB0Gmr1oB7gdZiD86sKyHFg@mail.gmail.com>
- <5CD2A172.4010302@youngman.org.uk>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 08/10] dm-integrity: add a bitmap mode
+Date: Wed, 8 May 2019 12:46:29 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1905081228270.29650@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20190429125746.036036640@debian-a64.vm>
+	<20190507185154.GB24320@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <5CD2A172.4010302@youngman.org.uk>
-Content-Language: en-US
-Sender: stable-owner@vger.kernel.org
-To: Wols Lists <antlists@youngman.org.uk>, Song Liu <liu.song.a23@gmail.com>
-Cc: "Guilherme G. Piccoli" <gpiccoli@canonical.com>, linux-block@vger.kernel.org, linux-raid <linux-raid@vger.kernel.org>, dm-devel@redhat.com, axboe@kernel.dk, Gavin Guo <gavin.guo@canonical.com>, Jay Vosburgh <jay.vosburgh@canonical.com>, kernel@gpiccoli.net, Ming Lei <ming.lei@redhat.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, stable@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190507185154.GB24320@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Ondrej Kozina <okozina@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On 5/8/19 6:29 AM, Wols Lists wrote:
-> On 06/05/19 22:07, Song Liu wrote:
->> Could you please run a quick test with raid5? I am wondering whether
->> some race condition could get us into similar crash. If we cannot easily
->> trigger the bug, we can process with this version.
+
+
+On Tue, 7 May 2019, Mike Snitzer wrote:
+
+> On Mon, Apr 29 2019 at  8:57am -0400,
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
 > 
-> Bear in mind I just read the list and write documentation, but ...
+> > Add a new bitmap mode for dm-integrity.
+> > 
+> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 > 
-> My gut feeling is that if it can theoretically happen for all raid
-> modes, it should be fixed for all raid modes. What happens if code
-> changes elsewhere and suddenly it really does happen for say raid-5?
+> This patch header needs much more detail.
 > 
-> On the other hand, if fixing it in md.c only gets tested for raid-0, how
-> do we know it will actually work for other raids if they do suddenly
-> start falling through.
-
-Hi, I understand your concern. But all other raid levels contains 
-failure-event mechanisms. For example, in all my tests with raid5 or 
-raid1, it first complained the device was removed, then it failed in 
-super_written() when no other available device was present.
-On the other hand, raid0 does "blind-writes": it just selects the device 
-in which that bio should be written (given the stripe math) and change 
-the bio's device, sending it back via generic_make_request(). It's 
-dummy, but not in a bad way, but rather for performance reasons. It has 
-no "intelligence" for failures, as all other raid levels.
-
-That said, we could fix md.c for all raid levels, but I personally think 
-it's a bazooka shot, only raid0 shows consistently this issue.
-
+> Can you please be as informative and detailed as possible about what
+> this new bitmap mode is (what constraints it has, where it is expected
+> to be useful, etc)?  Also, if you have them, provide some benchmarks
+> that showcase its benefits.
 > 
-> Academic purity versus engineering practicality :-)
+> Thanks,
+> Mike
 
-Heheh you have good points here! Thanks for the input =)
-Cheers,
+The patch adds the documentation to the file 
+"Documentation/device-mapper/dm-integrity.txt", so it can be also used as 
+a patch header. For example:
 
+"This patch introduces an alternative mode of operation whete dm-integrity 
+uses bitmap instead of a journal. If a bit in the bitmap is 1, the 
+corresponding region's data and integrity tags are not synchronized - if 
+the machine crashes, the unsynchronized regions will be recalculated. The 
+bitmap mode is faster than the journal mode, because we don't have to 
+write the data twice, but it is also less reliable, because if data 
+corruption happens when the machine crashes, it may not be detected."
 
-Guilherme
+Benchmark - on an SSD connected to a SATA300 port, when doing large linear 
+writes with dd.
 
+buffered I/O:
+	raw device throughput - 245MB/s
+	dm-integrity with journaling - 120MB/s
+	dm-integrity with bitmap - 238MB/s
 
-> 
-> Cheers,
-> Wol
-> 
+direct I/O with 1MB block size:
+	raw device throughput - 248MB/s
+	dm-integrity with journaling - 123MB/s
+	dm-integrity with bitmap - 223MB/s
+
+Mikulas
