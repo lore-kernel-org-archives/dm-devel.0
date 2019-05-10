@@ -1,30 +1,33 @@
-From: Sheetal <2396sheetal@gmail.com>
-Subject: [PATCH] md : dm: Fixed a brace coding style issue
-Date: Fri, 10 May 2019 23:18:37 +0530
-Message-ID: <20190510174838.1968-1-2396sheetal@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-Cc: person@a.com, Sheetal <2396sheetal@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+From: Martin Wilck <mwilck@suse.de>
+Subject: Re: [PATCH] multipath-tools: document missing multipath
+ flags in help output
+Date: Fri, 10 May 2019 21:03:44 +0200
+Message-ID: <25cc158e34570949192c5bb3c4c3e9dc0a050cc0.camel@suse.de>
+References: <20190502192408.31187-1-xose.vazquez@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190502192408.31187-1-xose.vazquez@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: DM-DEVEL ML <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Fixed a coding style issue.
----
- drivers/md/dm.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+On Thu, 2019-05-02 at 21:24 +0200, Xose Vazquez Perez wrote:
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM-DEVEL ML <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+>  multipath/main.c | 35 ++++++++++++++++++++++-------------
+>  1 file changed, 22 insertions(+), 13 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 043f0761e4a0..2a8820bd581d 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -781,7 +781,8 @@ static void close_table_device(struct table_device *td, struct mapped_device *md
- }
- 
- static struct table_device *find_table_device(struct list_head *l, dev_t dev,
--					      fmode_t mode) {
-+					      fmode_t mode)
-+{
- 	struct table_device *td;
- 
- 	list_for_each_entry(td, l, list)
--- 
-2.17.1
+Reviewed-by: Martin Wilck <mwilck@suse.com>
