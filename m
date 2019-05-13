@@ -1,32 +1,41 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [PATCH] multipath-tools: document missing
- mpathpersist flags in help output
-Date: Fri, 10 May 2019 21:05:19 +0200
-Message-ID: <a49d4f80a7bc78726dc0e136bfd39e01b585ec62.camel@suse.de>
-References: <20190502214901.3170-1-xose.vazquez@gmail.com>
+From: Doug Anderson <dianders@chromium.org>
+Subject: Problems caused by dm crypt: use WQ_HIGHPRI for the IO and crypt workqueues
+Date: Mon, 13 May 2019 09:18:23 -0700
+Message-ID: <CAD=FV=VOAjgdrvkK8YKPP-8zqwPpo39rA43JH2BCeYLB0UkgAQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190502214901.3170-1-xose.vazquez@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tim Murray <timmurray@google.com>, Mike Snitzer <snitzer@redhat.com>, Guenter Roeck <groeck@chromium.org>
+Cc: Enric Balletbo i Serra <enric.balletbo@collabora.com>, Vito Caputo <vcaputo@pengaru.com>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, 2019-05-02 at 23:49 +0200, Xose Vazquez Perez wrote:
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM-DEVEL ML <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  mpathpersist/main.c | 17 ++++++++++-------
->  1 file changed, 10 insertions(+), 7 deletions(-)
+Hi,
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+I wanted to jump on the bandwagon of people reporting problems with
+commit a1b89132dc4f ("dm crypt: use WQ_HIGHPRI for the IO and crypt
+workqueues").
+
+Specifically I've been tracking down communication errors when talking
+to our Embedded Controller (EC) over SPI.  I found that communication
+errors happened _much_ more frequently on newer kernels than older
+ones.  Using ftrace I managed to track the problem down to the dm
+crypt patch.  ...and, indeed, reverting that patch gets rid of the
+vast majority of my errors.
+
+If you want to see the ftrace of my high priority worker getting
+blocked for 7.5 ms, you can see:
+
+https://bugs.chromium.org/p/chromium/issues/attachmentText?aid=392715
+
+
+In my case I'm looking at solving my problems by bumping the CrOS EC
+transfers fully up to real time priority.  ...but given that there are
+other reports of problems with the dm-crypt priority (notably I found
+https://bugzilla.kernel.org/show_bug.cgi?id=199857) maybe we should
+also come up with a different solution for dm-crypt?
+
+
+Thanks!
+
+-Doug
