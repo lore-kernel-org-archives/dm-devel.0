@@ -1,139 +1,63 @@
-From: Helen Koike <helen.koike@collabora.com>
-Subject: [PATCH] dm ioctl: fix hang in early create error condition
-Date: Mon, 13 May 2019 16:25:30 -0300
-Message-ID: <20190513192530.1167-1-helen.koike@collabora.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm ioctl: fix hang in early create error condition
+Date: Mon, 13 May 2019 21:37:16 -0400
+Message-ID: <20190514013716.GA10260@lobo>
+References: <20190513192530.1167-1-helen.koike@collabora.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190513192530.1167-1-helen.koike@collabora.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: kernel@collabora.com, Helen Koike <helen.koike@collabora.com>, stable@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
+To: Helen Koike <helen.koike@collabora.com>
+Cc: dm-devel@redhat.com, kernel@collabora.com, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-The dm_early_create() function (which deals with "dm-mod.create=" kernel
-command line option) calls dm_hash_insert() who gets an extra reference
-to the md object.
+On Mon, May 13 2019 at  3:25P -0400,
+Helen Koike <helen.koike@collabora.com> wrote:
 
-In case of failure, this reference wasn't being released, causing
-dm_destroy() to hang, thus hanging the whole boot process.
+> The dm_early_create() function (which deals with "dm-mod.create=" kernel
+> command line option) calls dm_hash_insert() who gets an extra reference
+> to the md object.
+> 
+> In case of failure, this reference wasn't being released, causing
+> dm_destroy() to hang, thus hanging the whole boot process.
+> 
+> Fix this by calling __hash_remove() in the error path.
+> 
+> Fixes: 6bbc923dfcf57d ("dm: add support to directly boot to a mapped device")
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Helen Koike <helen.koike@collabora.com>
+> 
+> ---
+> Hi,
+> 
+> I tested this patch by adding a new test case in the following test
+> script:
+> 
+> https://gitlab.collabora.com/koike/dm-cmdline-test/commit/d2d7a0ee4a49931cdb59f08a837b516c2d5d743d
+> 
+> This test was failing, but with this patch it works correctly.
+> 
+> Thanks
+> Helen
 
-Fix this by calling __hash_remove() in the error path.
+Thanks for the patch but I'd prefer the following simpler fix.  What do
+you think?
 
-Fixes: 6bbc923dfcf57d ("dm: add support to directly boot to a mapped device")
-Cc: stable@vger.kernel.org
-Signed-off-by: Helen Koike <helen.koike@collabora.com>
-
----
-Hi,
-
-I tested this patch by adding a new test case in the following test
-script:
-
-https://gitlab.collabora.com/koike/dm-cmdline-test/commit/d2d7a0ee4a49931cdb59f08a837b516c2d5d743d
-
-This test was failing, but with this patch it works correctly.
-
-Thanks
-Helen
-
- drivers/md/dm-ioctl.c | 25 +++++++++++++++----------
- 1 file changed, 15 insertions(+), 10 deletions(-)
+That said, I can provide a follow-on patch (inspired by the patch you
+provided) that encourages more code sharing between dm_early_create()
+and dev_create() by factoring out __dev_create().
 
 diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index c740153b4e52..31da18611a21 100644
+index c740153b4e52..0eb0b462c736 100644
 --- a/drivers/md/dm-ioctl.c
 +++ b/drivers/md/dm-ioctl.c
-@@ -205,7 +205,8 @@ static void free_cell(struct hash_cell *hc)
-  * The kdev_t and uuid of a device can never change once it is
-  * initially inserted.
-  */
--static int dm_hash_insert(const char *name, const char *uuid, struct mapped_device *md)
-+static struct hash_cell *dm_hash_insert(const char *name, const char *uuid,
-+					struct mapped_device *md)
- {
- 	struct hash_cell *cell, *hc;
- 
-@@ -214,7 +215,7 @@ static int dm_hash_insert(const char *name, const char *uuid, struct mapped_devi
- 	 */
- 	cell = alloc_cell(name, uuid, md);
- 	if (!cell)
--		return -ENOMEM;
-+		return ERR_PTR(-ENOMEM);
- 
- 	/*
- 	 * Insert the cell into both hash tables.
-@@ -243,12 +244,12 @@ static int dm_hash_insert(const char *name, const char *uuid, struct mapped_devi
- 	mutex_unlock(&dm_hash_cells_mutex);
- 	up_write(&_hash_lock);
- 
--	return 0;
-+	return cell;
- 
-  bad:
- 	up_write(&_hash_lock);
- 	free_cell(cell);
--	return -EBUSY;
-+	return ERR_PTR(-EBUSY);
- }
- 
- static struct dm_table *__hash_remove(struct hash_cell *hc)
-@@ -747,6 +748,7 @@ static int dev_create(struct file *filp, struct dm_ioctl *param, size_t param_si
- {
- 	int r, m = DM_ANY_MINOR;
- 	struct mapped_device *md;
-+	struct hash_cell *hc;
- 
- 	r = check_name(param->name);
- 	if (r)
-@@ -759,11 +761,11 @@ static int dev_create(struct file *filp, struct dm_ioctl *param, size_t param_si
- 	if (r)
- 		return r;
- 
--	r = dm_hash_insert(param->name, *param->uuid ? param->uuid : NULL, md);
--	if (r) {
-+	hc = dm_hash_insert(param->name, *param->uuid ? param->uuid : NULL, md);
-+	if (IS_ERR(hc)) {
- 		dm_put(md);
- 		dm_destroy(md);
--		return r;
-+		return PTR_ERR(hc);
- 	}
- 
- 	param->flags &= ~DM_INACTIVE_PRESENT_FLAG;
-@@ -2044,6 +2046,7 @@ int __init dm_early_create(struct dm_ioctl *dmi,
- 	int r, m = DM_ANY_MINOR;
- 	struct dm_table *t, *old_map;
- 	struct mapped_device *md;
-+	struct hash_cell *hc;
- 	unsigned int i;
- 
- 	if (!dmi->target_count)
-@@ -2062,14 +2065,14 @@ int __init dm_early_create(struct dm_ioctl *dmi,
- 		return r;
- 
- 	/* hash insert */
--	r = dm_hash_insert(dmi->name, *dmi->uuid ? dmi->uuid : NULL, md);
--	if (r)
-+	hc = dm_hash_insert(dmi->name, *dmi->uuid ? dmi->uuid : NULL, md);
-+	if (IS_ERR(hc))
- 		goto err_destroy_dm;
- 
- 	/* alloc table */
- 	r = dm_table_create(&t, get_mode(dmi), dmi->target_count, md);
- 	if (r)
--		goto err_destroy_dm;
-+		goto err_hash_remove;
- 
- 	/* add targets */
- 	for (i = 0; i < dmi->target_count; i++) {
-@@ -2116,6 +2119,8 @@ int __init dm_early_create(struct dm_ioctl *dmi,
- 
+@@ -2117,6 +2117,7 @@ int __init dm_early_create(struct dm_ioctl *dmi,
  err_destroy_table:
  	dm_table_destroy(t);
-+err_hash_remove:
-+	__hash_remove(hc);
  err_destroy_dm:
++	(void) __hash_remove(__find_device_hash_cell(dmi));
  	dm_put(md);
  	dm_destroy(md);
--- 
-2.20.1
+ 	return r;
