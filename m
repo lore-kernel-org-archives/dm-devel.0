@@ -1,97 +1,141 @@
-From: Erich Eckner <device-mapper@eckner.net>
-Subject: add identifying information in INTEGRITY AEAD ERROR
-	message
-Date: Tue, 14 May 2019 11:48:46 +0200 (CEST)
-Message-ID: <alpine.LNX.2.21.9999.1905141138180.19368@nlopc43.ioq.uni-jena.de>
+From: Doug Anderson <dianders@chromium.org>
+Subject: Re: Problems caused by dm crypt: use WQ_HIGHPRI for the IO and crypt workqueues
+Date: Tue, 14 May 2019 09:47:10 -0700
+Message-ID: <CAD=FV=X7GDNoJVvRgBTDoVkf9UYA69B-rTY2G3888w=9iS=RtQ@mail.gmail.com>
+References: <CAD=FV=VOAjgdrvkK8YKPP-8zqwPpo39rA43JH2BCeYLB0UkgAQ@mail.gmail.com>
+ <20190513171519.GA26166@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="596483122-1015369343-1557827332=:19368"
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190513171519.GA26166@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Tim Murray <timmurray@google.com>, Guenter Roeck <groeck@chromium.org>, Enric Balletbo i Serra <enric.balletbo@collabora.com>, Vito Caputo <vcaputo@pengaru.com>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, Tejun Heo <tj@kernel.org>
 List-Id: dm-devel.ids
-
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
-
---596483122-1015369343-1557827332=:19368
-Content-Type: text/plain; format=flowed; charset=ISO-8859-15
-Content-Transfer-Encoding: 8BIT
-
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA256
 
 Hi,
 
-I have a bunch of dm integrity devices tied together to an md raid. Now I 
-see the following error message in dmesg:
+On Mon, May 13, 2019 at 10:15 AM Mike Snitzer <snitzer@redhat.com> wrote:
 
-device-mapper: crypt: INTEGRITY AEAD ERROR, sector 1109341168
+> On Mon, May 13 2019 at 12:18pm -0400,
+> Doug Anderson <dianders@chromium.org> wrote:
+>
+> > Hi,
+> >
+> > I wanted to jump on the bandwagon of people reporting problems with
+> > commit a1b89132dc4f ("dm crypt: use WQ_HIGHPRI for the IO and crypt
+> > workqueues").
+> >
+> > Specifically I've been tracking down communication errors when talking
+> > to our Embedded Controller (EC) over SPI.  I found that communication
+> > errors happened _much_ more frequently on newer kernels than older
+> > ones.  Using ftrace I managed to track the problem down to the dm
+> > crypt patch.  ...and, indeed, reverting that patch gets rid of the
+> > vast majority of my errors.
+> >
+> > If you want to see the ftrace of my high priority worker getting
+> > blocked for 7.5 ms, you can see:
+> >
+> > https://bugs.chromium.org/p/chromium/issues/attachmentText?aid=392715
+> >
+> >
+> > In my case I'm looking at solving my problems by bumping the CrOS EC
+> > transfers fully up to real time priority.  ...but given that there are
+> > other reports of problems with the dm-crypt priority (notably I found
+> > https://bugzilla.kernel.org/show_bug.cgi?id=199857) maybe we should
+> > also come up with a different solution for dm-crypt?
+> >
+>
+> And chance you can test how behaviour changes if you remove
+> WQ_CPU_INTENSIVE? e.g.:
+>
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index 692cddf3fe2a..c97d5d807311 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -2827,8 +2827,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>
+>         ret = -ENOMEM;
+>         cc->io_queue = alloc_workqueue("kcryptd_io/%s",
+> -                                      WQ_HIGHPRI | WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM,
+> -                                      1, devname);
+> +                                      WQ_HIGHPRI | WQ_MEM_RECLAIM, 1, devname);
+>         if (!cc->io_queue) {
+>                 ti->error = "Couldn't create kcryptd io queue";
+>                 goto bad;
+> @@ -2836,11 +2835,10 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>
+>         if (test_bit(DM_CRYPT_SAME_CPU, &cc->flags))
+>                 cc->crypt_queue = alloc_workqueue("kcryptd/%s",
+> -                                                 WQ_HIGHPRI | WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM,
+> -                                                 1, devname);
+> +                                                 WQ_HIGHPRI | WQ_MEM_RECLAIM, 1, devname);
+>         else
+>                 cc->crypt_queue = alloc_workqueue("kcryptd/%s",
+> -                                                 WQ_HIGHPRI | WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_UNBOUND,
+> +                                                 WQ_HIGHPRI | WQ_MEM_RECLAIM | WQ_UNBOUND,
+>                                                   num_online_cpus(), devname);
+>         if (!cc->crypt_queue) {
+>                 ti->error = "Couldn't create kcryptd queue";
 
-repeated a couple of times every few seconds in a row with differing 
-sector numbers. There are no other errors in dmesg next to these. As I 
-understand, this means, one of the drives deliveres garbage to the 
-integrity device which hence issues a read error. (There is an e2fsck 
-running on the raid which generates a lot of disk i/o.) That's good - it's 
-exactly what I intended this integrity thing for.
+It's not totally trivially easy for me to test.  My previous failure
+cases were leaving a few devices "idle" over a long period of time.  I
+did that on 3 machines last night and didn't see any failures.  Thus
+removing "WQ_CPU_INTENSIVE" may have made things better.  Before I say
+for sure I'd want to test for longer / redo the test a few times,
+since I've seen the problem go away on its own before (just by
+timing/luck) and then re-appear.
 
-My problem now is, that I would like to find out which of my 10 drives is 
-the bad one. Is there any way to get some identifying information (a uuid, 
-the name of the device in /dev/mapper/, ...)?
+Do you have a theory about why removing WQ_CPU_INTENSIVE would help?
 
-ah, the usual statistics:
-> uname -a
-Linux fileserver 5.1.0 #56 SMP Tue May 7 06:24:43 CEST 2019 x86_64 
-Intel(R) Pentium(R) CPU G2020 @ 2.90GHz GenuineIntel GNU/Linux
-> zgrep INTEGRITY /proc/config.gz
-CONFIG_BLK_DEV_INTEGRITY=y
-CONFIG_DM_INTEGRITY=y
-# CONFIG_BTRFS_FS_CHECK_INTEGRITY is not set
-CONFIG_INTEGRITY=y
-# CONFIG_INTEGRITY_SIGNATURE is not set
-CONFIG_INTEGRITY_AUDIT=y
+---
 
-The kernel is manually compiled - I'm happy to activate any options you 
-deem necessary.
+NOTE: in trying to reproduce problems more quickly I actually came up
+with a better test case for the problem I was seeing.  I found that I
+can reproduce my own problems much better with this test:
 
-regards,
-Erich Eckner
-Friedrich-Schiller-Universität Jena
-Institut für Optik und Quantenelektronik
-Helmholtzweg 4
-07743 Jena
+  dd if=/dev/zero of=/var/log/foo.txt bs=4M count=512&
+  while true; do
+    ectool version > /dev/null;
+  done
 
-Tel. +49 3641 9-47238
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCAAdFiEE3p92iMrPBP64GmxZCu7JB1Xae1oFAlzajwAACgkQCu7JB1Xa
-e1rQ2g/9HVoQcSwhKxLW6w7wy8rgUlHBt/DbWxeHM6KTkss5yxrVNUkv1TGXop9l
-krDMKvhpNxI29IrhvSgqSbtJw0sk9iJU0urFsrs09TK6ATvcUtO5X8CLnPULqBqC
-YnnygcBgVt16FgoaAMVSyx2qEGrO5DXzquqLlJAa2z0+ZZGWa/5Nrhm3nfbHBbQQ
-pjiNpk+iNVbGIhe8+tR+vOZfJaghrA3B9W7FyYARlfB1Gy4S/DM5im2HTw/2ESJp
-nkSprpxiq5WyN56tFKnCrZSwe2Ga4NCNP6h8Gz7ynKlpbziXMey8BP3Puvfh7UNa
-Blcz648/3RwqfKkGqrY2mypo6DyiWribHr0A8Uza/RWVERbg0U9o1DdZ6DKbbnSm
-MKfAuSKBE2WErHrfwNN7WGOK/xlonkR8oADcaLI8db1Xu4Stj1HqA5lB9aT+K9KP
-kJFnc1254qJ+LvQHJfPTsW8sKgqwIfccNONltta/BCJCgcDl79y0VL9WX/dJS6Pu
-xqSSejPJ7Fp+gpR+FZbllWn+rCGF+JY6dku5oObp5uZOlfwQg8+zAhf4TQLYJmn0
-dzgaqonpzzmEGHUw31/R2Km0aHtuEsTCW986Gx9taWY84JyQDRSXjAXHsxJCMtN3
-rpMbDemoSRz6/WnI48VauN2obeUS3dmQraV+MNPpGiJmt86XM0o=
-=YfBa
------END PGP SIGNATURE-----
---596483122-1015369343-1557827332=:19368
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+It should be noted that "/var" is on encrypted stateful on my system
+so throwing data at it stresses dm-crypt.  It should also be noted
+that somehow "/var" also ends up traversing through a loopback device
+(this becomes relevant below):
 
 
---596483122-1015369343-1557827332=:19368--
+With the above test:
+
+1. With a mainline kernel that has commit 37a186225a0c
+("platform/chrome: cros_ec_spi: Transfer messages at high priority"):
+I see failures.
+
+2. With a mainline kernel that has commit 37a186225a0c plus removing
+WQ_CPU_INTENSIVE in dm-crypt: I still see failures.
+
+3. With a mainline kernel that has commit 37a186225a0c plus removing
+high priority (but keeping CPU intensive) in dm-crypt: I still see
+failures.
+
+4. With a mainline kernel that has commit 37a186225a0c plus removing
+high priority (but keeping CPU intensive) in dm-crypt plus removing
+set_user_nice() in loop_prepare_queue(): I get a pass!
+
+5. With a mainline kernel that has commit 37a186225a0c plus removing
+set_user_nice() in loop_prepare_queue() plus leaving dm-crypt alone: I
+see failures.
+
+6. With a mainline kernel that has commit 37a186225a0c plus removing
+set_user_nice() in loop_prepare_queue() plus removing WQ_CPU_INTENSIVE
+in dm-crypt: I still see failures
+
+7. With my new "cros_ec at realtime" series and no other patches, I get a pass!
+
+
+tl;dr: High priority (even without CPU_INTENSIVE) definitely causes
+interference with my high priority work starving it for > 8 ms, but
+dm-crypt isn't unique here--loopback devices also have problems.
+
+
+-Doug
