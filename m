@@ -1,69 +1,71 @@
-From: Helen Koike <helen.koike@collabora.com>
-Subject: [PATCH v2] dm ioctl: fix hang in early create error condition
-Date: Wed, 15 May 2019 13:50:54 -0300
-Message-ID: <20190515165054.12680-1-helen.koike@collabora.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH v9 4/7] dm: enable synchronous dax
+Date: Wed, 15 May 2019 13:48:57 -0700
+Message-ID: <CAPcyv4jp+9eBQMX+KXhT1oZRkxLeCp9r9g9hFUCRw=OcuQ9wmQ@mail.gmail.com>
+References: <20190514145422.16923-1-pagupta@redhat.com> <20190514145422.16923-5-pagupta@redhat.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190514145422.16923-5-pagupta@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: kernel@collabora.com, Helen Koike <helen.koike@collabora.com>, stable@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: linux-nvdimm <linux-nvdimm@lists.01.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, virtualization@lists.linux-foundation.org, KVM list <kvm@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux ACPI <linux-acpi@vger.kernel.org>, Qemu Developers <qemu-devel@nongnu.org>, linux-ext4 <linux-ext4@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Ross Zwisler <zwisler@kernel.org>, Vishal L Verma <vishal.l.verma@intel.com>, Dave Jiang <dave.jiang@intel.com>, "Michael S. Tsirkin" <mst@redhat.com>, Jason Wang <jasowang@redhat.com>, Matthew Wilcox <willy@infradead.org>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Christoph Hellwig <hch@infradead.org>, Len Brown <lenb@kernel.org>, Jan Kara <jack@suse.cz>, Theodore
 List-Id: dm-devel.ids
 
-The dm_early_create() function (which deals with "dm-mod.create=" kernel
-command line option) calls dm_hash_insert() who gets an extra reference
-to the md object.
+[ add Mike and dm-devel ]
 
-In case of failure, this reference wasn't being released, causing
-dm_destroy() to hang, thus hanging the whole boot process.
+Mike, any concerns with the below addition to the device-mapper-dax
+implementation?
 
-Fix this by calling __hash_remove() in the error path.
-
-Fixes: 6bbc923dfcf57d ("dm: add support to directly boot to a mapped device")
-Cc: stable@vger.kernel.org
-Signed-off-by: Helen Koike <helen.koike@collabora.com>
-
----
-Hi,
-
-I also tested this patch version with the new test case in the following test
-script:
-
-https://gitlab.collabora.com/koike/dm-cmdline-test/commit/d2d7a0ee4a49931cdb59f08a837b516c2d5d743d
-
-Thanks
-Helen
-
-Changes in v2:
-- instead of modifying dm_hash_insert() to return the hash cell, use
-__get_name_cell(dmi->name) instead.
-
- drivers/md/dm-ioctl.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index c740153b4e52..1e03bc89e20f 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -2069,7 +2069,7 @@ int __init dm_early_create(struct dm_ioctl *dmi,
- 	/* alloc table */
- 	r = dm_table_create(&t, get_mode(dmi), dmi->target_count, md);
- 	if (r)
--		goto err_destroy_dm;
-+		goto err_hash_remove;
- 
- 	/* add targets */
- 	for (i = 0; i < dmi->target_count; i++) {
-@@ -2116,6 +2116,10 @@ int __init dm_early_create(struct dm_ioctl *dmi,
- 
- err_destroy_table:
- 	dm_table_destroy(t);
-+err_hash_remove:
-+	(void) __hash_remove(__get_name_cell(dmi->name));
-+	/* release reference from __get_name_cell */
-+	dm_put(md);
- err_destroy_dm:
- 	dm_put(md);
- 	dm_destroy(md);
--- 
-2.20.1
+On Tue, May 14, 2019 at 7:58 AM Pankaj Gupta <pagupta@redhat.com> wrote:
+>
+>  This patch sets dax device 'DAXDEV_SYNC' flag if all the target
+>  devices of device mapper support synchrononous DAX. If device
+>  mapper consists of both synchronous and asynchronous dax devices,
+>  we don't set 'DAXDEV_SYNC' flag.
+>
+> Signed-off-by: Pankaj Gupta <pagupta@redhat.com>
+> ---
+>  drivers/md/dm-table.c | 14 ++++++++++++++
+>  1 file changed, 14 insertions(+)
+>
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index cde3b49b2a91..1cce626ff576 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -886,10 +886,17 @@ static int device_supports_dax(struct dm_target *ti, struct dm_dev *dev,
+>         return bdev_dax_supported(dev->bdev, PAGE_SIZE);
+>  }
+>
+> +static int device_synchronous(struct dm_target *ti, struct dm_dev *dev,
+> +                              sector_t start, sector_t len, void *data)
+> +{
+> +       return dax_synchronous(dev->dax_dev);
+> +}
+> +
+>  static bool dm_table_supports_dax(struct dm_table *t)
+>  {
+>         struct dm_target *ti;
+>         unsigned i;
+> +       bool dax_sync = true;
+>
+>         /* Ensure that all targets support DAX. */
+>         for (i = 0; i < dm_table_get_num_targets(t); i++) {
+> @@ -901,7 +908,14 @@ static bool dm_table_supports_dax(struct dm_table *t)
+>                 if (!ti->type->iterate_devices ||
+>                     !ti->type->iterate_devices(ti, device_supports_dax, NULL))
+>                         return false;
+> +
+> +               /* Check devices support synchronous DAX */
+> +               if (dax_sync &&
+> +                   !ti->type->iterate_devices(ti, device_synchronous, NULL))
+> +                       dax_sync = false;
+>         }
+> +       if (dax_sync)
+> +               set_dax_synchronous(t->md->dax_dev);
+>
+>         return true;
+>  }
+> --
+> 2.20.1
+>
