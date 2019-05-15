@@ -1,12 +1,14 @@
 From: Milan Broz <gmazyland@gmail.com>
-Subject: [PATCH 2/2] dm-crypt: move detailed message into debug
-	level.
-Date: Wed, 15 May 2019 16:23:43 +0200
-Message-ID: <20190515142343.30641-1-gmazyland@gmail.com>
+Subject: [PATCH 1/2] dm-crypt: print device name in integrity
+	error message.
+Date: Wed, 15 May 2019 16:22:30 +0200
+Message-ID: <20190515142231.30590-1-gmazyland@gmail.com>
+References: <alpine.LNX.2.21.9999.1905141138180.19368@nlopc43.ioq.uni-jena.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LNX.2.21.9999.1905141138180.19368@nlopc43.ioq.uni-jena.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,67 +22,40 @@ To: dm-devel@redhat.com
 Cc: Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-The information about tag size should not be printed
-without debug info set. Also pront device major:minor in
-the error message to identify the device instance.
-
-Also use rate limiting and debug level for info about
-used crypto API implementaton.
-(During online reencryption this message saturates syslog,
-because we are moving hotzone across the whole device.)
+This message should better identify the device with the integrity failure.
 
 Signed-off-by: Milan Broz <gmazyland@gmail.com>
 ---
- drivers/md/dm-crypt.c | 9 +++++----
- 1 file changed, 5 insertions(+), 4 deletions(-)
+ drivers/md/dm-crypt.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 36dfa36505ed..af017d044dc0 100644
+index 7f6462f74ac8..36dfa36505ed 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -946,6 +946,7 @@ static int crypt_integrity_ctr(struct crypt_config *cc, struct dm_target *ti)
- {
- #ifdef CONFIG_BLK_DEV_INTEGRITY
- 	struct blk_integrity *bi = blk_get_integrity(cc->dev->bdev->bd_disk);
-+	struct mapped_device *md = dm_table_get_md(ti->table);
- 
- 	/* From now we require underlying device with our integrity profile */
- 	if (!bi || strcasecmp(bi->profile->name, "DM-DIF-EXT-TAG")) {
-@@ -965,7 +966,7 @@ static int crypt_integrity_ctr(struct crypt_config *cc, struct dm_target *ti)
- 
- 	if (crypt_integrity_aead(cc)) {
- 		cc->integrity_tag_size = cc->on_disk_tag_size - cc->integrity_iv_size;
--		DMINFO("Integrity AEAD, tag size %u, IV size %u.",
-+		DMDEBUG("%s: Integrity AEAD, tag size %u, IV size %u.", dm_device_name(md),
- 		       cc->integrity_tag_size, cc->integrity_iv_size);
- 
- 		if (crypto_aead_setauthsize(any_tfm_aead(cc), cc->integrity_tag_size)) {
-@@ -973,7 +974,7 @@ static int crypt_integrity_ctr(struct crypt_config *cc, struct dm_target *ti)
- 			return -EINVAL;
- 		}
- 	} else if (cc->integrity_iv_size)
--		DMINFO("Additional per-sector space %u bytes for IV.",
-+		DMDEBUG("%s: Additional per-sector space %u bytes for IV.", dm_device_name(md),
- 		       cc->integrity_iv_size);
- 
- 	if ((cc->integrity_tag_size + cc->integrity_iv_size) != bi->tag_size) {
-@@ -1890,7 +1891,7 @@ static int crypt_alloc_tfms_skcipher(struct crypt_config *cc, char *ciphermode)
- 	 * algorithm implementation is used.  Help people debug performance
- 	 * problems by logging the ->cra_driver_name.
- 	 */
--	DMINFO("%s using implementation \"%s\"", ciphermode,
-+	DMDEBUG_LIMIT("%s using implementation \"%s\"", ciphermode,
- 	       crypto_skcipher_alg(any_tfm(cc))->base.cra_driver_name);
- 	return 0;
- }
-@@ -1910,7 +1911,7 @@ static int crypt_alloc_tfms_aead(struct crypt_config *cc, char *ciphermode)
- 		return err;
+@@ -1143,9 +1143,11 @@ static int crypt_convert_block_aead(struct crypt_config *cc,
+ 		r = crypto_aead_decrypt(req);
  	}
  
--	DMINFO("%s using implementation \"%s\"", ciphermode,
-+	DMDEBUG_LIMIT("%s using implementation \"%s\"", ciphermode,
- 	       crypto_aead_alg(any_tfm_aead(cc))->base.cra_driver_name);
- 	return 0;
- }
+-	if (r == -EBADMSG)
+-		DMERR_LIMIT("INTEGRITY AEAD ERROR, sector %llu",
++	if (r == -EBADMSG) {
++		char b[BDEVNAME_SIZE];
++		DMERR_LIMIT("%s: INTEGRITY AEAD ERROR, sector %llu", bio_devname(ctx->bio_in, b),
+ 			    (unsigned long long)le64_to_cpu(*sector));
++	}
+ 
+ 	if (!r && cc->iv_gen_ops && cc->iv_gen_ops->post)
+ 		r = cc->iv_gen_ops->post(cc, org_iv, dmreq);
+@@ -1788,7 +1790,8 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
+ 		error = cc->iv_gen_ops->post(cc, org_iv_of_dmreq(cc, dmreq), dmreq);
+ 
+ 	if (error == -EBADMSG) {
+-		DMERR_LIMIT("INTEGRITY AEAD ERROR, sector %llu",
++		char b[BDEVNAME_SIZE];
++		DMERR_LIMIT("%s: INTEGRITY AEAD ERROR, sector %llu", bio_devname(ctx->bio_in, b),
+ 			    (unsigned long long)le64_to_cpu(*org_sector_of_dmreq(cc, dmreq)));
+ 		io->error = BLK_STS_PROTECTION;
+ 	} else if (error < 0)
 -- 
 2.20.1
