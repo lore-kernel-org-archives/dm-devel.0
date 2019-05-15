@@ -1,54 +1,86 @@
-From: Pankaj Gupta <pagupta@redhat.com>
-Subject: Re: [PATCH] dax: Arrange for dax_supported check to span multiple
- devices
-Date: Wed, 15 May 2019 04:38:06 -0400 (EDT)
-Message-ID: <34965939.28870107.1557909486195.JavaMail.zimbra@redhat.com>
-References: <155789172402.748145.11853718580748830476.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: [PATCH 2/2] dm-crypt: move detailed message into debug
+	level.
+Date: Wed, 15 May 2019 16:23:43 +0200
+Message-ID: <20190515142343.30641-1-gmazyland@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <155789172402.748145.11853718580748830476.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: snitzer@redhat.com, stable@vger.kernel.org, Jan Kara <jack@suse.cz>, Ira Weiny <ira.weiny@intel.com>, Dave Jiang <dave.jiang@intel.com>, Keith Busch <keith.busch@intel.com>, Matthew Wilcox <willy@infradead.org>, Vishal Verma <vishal.l.verma@intel.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
+The information about tag size should not be printed
+without debug info set. Also pront device major:minor in
+the error message to identify the device instance.
 
+Also use rate limiting and debug level for info about
+used crypto API implementaton.
+(During online reencryption this message saturates syslog,
+because we are moving hotzone across the whole device.)
 
-> 
-> Pankaj reports that starting with commit ad428cdb525a "dax: Check the
-> end of the block-device capacity with dax_direct_access()" device-mapper
-> no longer allows dax operation. This results from the stricter checks in
-> __bdev_dax_supported() that validate that the start and end of a
-> block-device map to the same 'pagemap' instance.
-> 
-> Teach the dax-core and device-mapper to validate the 'pagemap' on a
-> per-target basis. This is accomplished by refactoring the
-> bdev_dax_supported() internals into generic_fsdax_supported() which
-> takes a sector range to validate. Consequently generic_fsdax_supported()
-> is suitable to be used in a device-mapper ->iterate_devices() callback.
-> A new ->dax_supported() operation is added to allow composite devices to
-> split and route upper-level bdev_dax_supported() requests.
-> 
-> Fixes: ad428cdb525a ("dax: Check the end of the block-device...")
-> Cc: <stable@vger.kernel.org>
-> Cc: Jan Kara <jack@suse.cz>
-> Cc: Ira Weiny <ira.weiny@intel.com>
-> Cc: Dave Jiang <dave.jiang@intel.com>
-> Cc: Mike Snitzer <snitzer@redhat.com>
-> Cc: Keith Busch <keith.busch@intel.com>
-> Cc: Matthew Wilcox <willy@infradead.org>
-> Cc: Vishal Verma <vishal.l.verma@intel.com>
-> Cc: Heiko Carstens <heiko.carstens@de.ibm.com>
-> Cc: Martin Schwidefsky <schwidefsky@de.ibm.com>
-> Reported-by: Pankaj Gupta <pagupta@redhat.com>
-> Signed-off-by: Dan Williams <dan.j.williams@intel.com>
+Signed-off-by: Milan Broz <gmazyland@gmail.com>
+---
+ drivers/md/dm-crypt.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
 
-Thank you for the patch. Looks good to me. 
-I also tested the patch and it works well.
-
-Reviewed-and-Tested-by: Pankaj Gupta <pagupta@redhat.com> 
-
-Best regards,
-Pankaj
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 36dfa36505ed..af017d044dc0 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -946,6 +946,7 @@ static int crypt_integrity_ctr(struct crypt_config *cc, struct dm_target *ti)
+ {
+ #ifdef CONFIG_BLK_DEV_INTEGRITY
+ 	struct blk_integrity *bi = blk_get_integrity(cc->dev->bdev->bd_disk);
++	struct mapped_device *md = dm_table_get_md(ti->table);
+ 
+ 	/* From now we require underlying device with our integrity profile */
+ 	if (!bi || strcasecmp(bi->profile->name, "DM-DIF-EXT-TAG")) {
+@@ -965,7 +966,7 @@ static int crypt_integrity_ctr(struct crypt_config *cc, struct dm_target *ti)
+ 
+ 	if (crypt_integrity_aead(cc)) {
+ 		cc->integrity_tag_size = cc->on_disk_tag_size - cc->integrity_iv_size;
+-		DMINFO("Integrity AEAD, tag size %u, IV size %u.",
++		DMDEBUG("%s: Integrity AEAD, tag size %u, IV size %u.", dm_device_name(md),
+ 		       cc->integrity_tag_size, cc->integrity_iv_size);
+ 
+ 		if (crypto_aead_setauthsize(any_tfm_aead(cc), cc->integrity_tag_size)) {
+@@ -973,7 +974,7 @@ static int crypt_integrity_ctr(struct crypt_config *cc, struct dm_target *ti)
+ 			return -EINVAL;
+ 		}
+ 	} else if (cc->integrity_iv_size)
+-		DMINFO("Additional per-sector space %u bytes for IV.",
++		DMDEBUG("%s: Additional per-sector space %u bytes for IV.", dm_device_name(md),
+ 		       cc->integrity_iv_size);
+ 
+ 	if ((cc->integrity_tag_size + cc->integrity_iv_size) != bi->tag_size) {
+@@ -1890,7 +1891,7 @@ static int crypt_alloc_tfms_skcipher(struct crypt_config *cc, char *ciphermode)
+ 	 * algorithm implementation is used.  Help people debug performance
+ 	 * problems by logging the ->cra_driver_name.
+ 	 */
+-	DMINFO("%s using implementation \"%s\"", ciphermode,
++	DMDEBUG_LIMIT("%s using implementation \"%s\"", ciphermode,
+ 	       crypto_skcipher_alg(any_tfm(cc))->base.cra_driver_name);
+ 	return 0;
+ }
+@@ -1910,7 +1911,7 @@ static int crypt_alloc_tfms_aead(struct crypt_config *cc, char *ciphermode)
+ 		return err;
+ 	}
+ 
+-	DMINFO("%s using implementation \"%s\"", ciphermode,
++	DMDEBUG_LIMIT("%s using implementation \"%s\"", ciphermode,
+ 	       crypto_aead_alg(any_tfm_aead(cc))->base.cra_driver_name);
+ 	return 0;
+ }
+-- 
+2.20.1
