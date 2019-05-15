@@ -1,101 +1,105 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v2] multipath -u: test socket connection in
- non-blocking mode
-Date: Mon, 29 Apr 2019 16:38:38 -0500
-Message-ID: <20190429213837.GC5210@octiron.msp.redhat.com>
-References: <20190424090759.29796-1-mwilck@suse.com>
-	<fa3ea599bf6424587fec45b5eb3549b3200ac5e9.camel@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm ioctl: fix hang in early create error condition
+Date: Wed, 15 May 2019 12:20:54 -0400
+Message-ID: <20190515162054.GA14934@redhat.com>
+References: <20190513192530.1167-1-helen.koike@collabora.com>
+ <20190514013716.GA10260@lobo>
+ <78dda04b-925f-49eb-f88a-6d940bcc4754@collabora.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <fa3ea599bf6424587fec45b5eb3549b3200ac5e9.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+In-Reply-To: <78dda04b-925f-49eb-f88a-6d940bcc4754@collabora.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Helen Koike <helen.koike@collabora.com>
+Cc: dm-devel@redhat.com, kernel@collabora.com, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Apr 25, 2019 at 09:33:03PM +0200, Martin Wilck wrote:
-> On Wed, 2019-04-24 at 11:07 +0200, Martin Wilck wrote:
-> > Since commit d7188fcd "multipathd: start daemon after udev trigger",
-> > multipathd startup is delayed during boot until after "udev settle"
-> > terminates. But "multipath -u" is run by udev workers for storage
-> > devices,
-> > and attempts to connect to the multipathd socket. This causes a start
-> > job
-> > for multipathd to be scheduled by systemd, but that job won't be
-> > started
-> > until "udev settle" finishes. This is not a problem on systems with
-> > 129 or
-> > less storage units, because the connect() call of "multipath -u" will
-> > succeed anyway. But on larger systems, the listen backlog of the
-> > systemd
-> > socket can be exceeded, which causes connect() calls for the socket
-> > to
-> > block until multipathd starts up and begins calling accept(). This
-> > creates
-> > a deadlock situation, because "multipath -u" (called by udev workers)
-> > blocks, and thus "udev settle" doesn't finish, delaying multipathd
-> > startup. This situation then persists until either the workers or
-> > "udev
-> > settle" time out. In the former case, path devices might be
-> > misclassified
-> > as non-multipath devices by "multipath -u".
-> > =
+On Wed, May 15 2019 at 12:12pm -0400,
+Helen Koike <helen.koike@collabora.com> wrote:
 
-> > Fix this by using a non-blocking socket fd for connect() and
-> > interpret the
-> > errno appropriately.
-> > =
+> Hi,
+> 
+> On 5/13/19 10:37 PM, Mike Snitzer wrote:
+> > On Mon, May 13 2019 at  3:25P -0400,
+> > Helen Koike <helen.koike@collabora.com> wrote:
+> > 
+> >> The dm_early_create() function (which deals with "dm-mod.create=" kernel
+> >> command line option) calls dm_hash_insert() who gets an extra reference
+> >> to the md object.
+> >>
+> >> In case of failure, this reference wasn't being released, causing
+> >> dm_destroy() to hang, thus hanging the whole boot process.
+> >>
+> >> Fix this by calling __hash_remove() in the error path.
+> >>
+> >> Fixes: 6bbc923dfcf57d ("dm: add support to directly boot to a mapped device")
+> >> Cc: stable@vger.kernel.org
+> >> Signed-off-by: Helen Koike <helen.koike@collabora.com>
+> >>
+> >> ---
+> >> Hi,
+> >>
+> >> I tested this patch by adding a new test case in the following test
+> >> script:
+> >>
+> >> https://gitlab.collabora.com/koike/dm-cmdline-test/commit/d2d7a0ee4a49931cdb59f08a837b516c2d5d743d
+> >>
+> >> This test was failing, but with this patch it works correctly.
+> >>
+> >> Thanks
+> >> Helen
+> > 
+> > Thanks for the patch but I'd prefer the following simpler fix.  What do
+> > you think?
+> > 
+> > That said, I can provide a follow-on patch (inspired by the patch you
+> > provided) that encourages more code sharing between dm_early_create()
+> > and dev_create() by factoring out __dev_create().
+> 
+> Sounds great.
+> 
+> > 
+> > diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+> > index c740153b4e52..0eb0b462c736 100644
+> > --- a/drivers/md/dm-ioctl.c
+> > +++ b/drivers/md/dm-ioctl.c
+> > @@ -2117,6 +2117,7 @@ int __init dm_early_create(struct dm_ioctl *dmi,
+> >  err_destroy_table:
+> >  	dm_table_destroy(t);
+> >  err_destroy_dm:
+> > +	(void) __hash_remove(__find_device_hash_cell(dmi));
+> >  	dm_put(md);
+> >  	dm_destroy(md);
+> >  	return r;
+> > 
+> 
+> This doesn't really work for two reasons:
+> 
+> 1) __find_device_hash_cell() requires a mutual exclusivity between name,
+> uuid and dev. In dm_early_create(), dmi can have more then one of these.
 
-> > This patch reverts most of the changes from commit 8cdf6661
-> > "multipath:
-> > check on multipathd without starting it". Instead, "multipath -u"
-> > does
-> > access the socket and start multipath again (which is what we want
-> > IMO),
-> > but it is now able to detect and handle the "full backlog" situation.
-> > =
+__find_device_hash_cell's exclusivity requirements are strange; I'll try
+to understand what requires this.
 
-> > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > =
+> 2) I can fix (1) by calling __get_name_cell(), as the name is mandatory
+> anyway, but this function also grabs another reference to the md object,
+> so I need to add an extra dm_put(md) there:
+> 
+>  err_destroy_table:
+>         dm_table_destroy(t);
+> +err_hash_remove:
+> +       (void) __hash_remove(__get_name_cell(dmi->name));
+> +       dm_put(md);
+>  err_destroy_dm:
+>         dm_put(md);
+>         dm_destroy(md);
+> 
+> 
+> What do you think? Is this ok?
 
-> > V2:
-> > =
+I think so.  Please submit a v2 and I'll rebase my followon patch
+accordingly and will get it posted.
 
-> > Use same error reporting convention in __mpath_connect() as in
-> > mpath_connect() (Hannes Reinecke). We can't easily change the latter,
-> > because it's part of the "public" libmpathcmd API. =
-
-> =
-
-> FTR, our customer reported that this patch fixed his problem.
-> =
-
-> @Ben, I'd be grateful if you could try it (or have the user try it)
-> in your problem case as well.
-
-Unfortunately, I don't have a 129+ path system handy that the person who
-does isn't around right now.  The code makes sense, and assuming that I
-can verify that it fixes the problem I'm seeing, I'm fine with going
-this route.
-
--Ben
-
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
-> =
+Thanks,
+Mike
