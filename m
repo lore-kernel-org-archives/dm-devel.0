@@ -1,16 +1,12 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [PATCH v2] multipath -u: test socket connection in
- non-blocking mode
-Date: Thu, 16 May 2019 08:44:56 +0200
-Message-ID: <e5abf79650733d4035bac4c01168802e2ce71389.camel@suse.de>
-References: <20190424090759.29796-1-mwilck@suse.com>
-	<fa3ea599bf6424587fec45b5eb3549b3200ac5e9.camel@suse.com>
-	<20190429213837.GC5210@octiron.msp.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH] libmultipath: get_prio(): really don't reset
+	prio for inaccessible paths
+Date: Thu, 16 May 2019 09:10:24 +0200
+Message-ID: <20190516071024.7230-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190429213837.GC5210@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,24 +16,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck+gmail@suse.de
-Cc: dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Mon, 2019-04-29 at 16:38 -0500, Benjamin Marzinski wrote:
-> On Thu, Apr 25, 2019 at 09:33:03PM +0200, Martin Wilck wrote:
-> > 
-> > @Ben, I'd be grateful if you could try it (or have the user try it)
-> > in your problem case as well.
-> 
-> Unfortunately, I don't have a 129+ path system handy that the person
-> who
-> does isn't around right now.  The code makes sense, and assuming that
-> I
-> can verify that it fixes the problem I'm seeing, I'm fine with going
-> this route.
+As pointed out by Ben Marzinski, my previous patch ebbb56f2 doesn't do what
+it pretends to do.
 
-Thanks, Ben. As noted earlier, we've had several customers who reported
-this, and they're all happy with this patch. 
+Fixes: ebbb56f2 "libmultipath: get_prio(): don't reset prio for inaccessible
+paths"
+---
+ libmultipath/discovery.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-Martin
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index b3dc60b1..856c52c6 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1648,10 +1648,11 @@ get_prio (struct path * pp)
+ 		/* this changes pp->offline, but why not */
+ 		int state = path_offline(pp);
+ 
+-		if (state == PATH_DOWN || state == PATH_PENDING)
++		if (state == PATH_DOWN || state == PATH_PENDING) {
++			pp->priority = old_prio;
+ 			condlog(3, "%s: %s prio error in state %d, keeping prio = %d",
+ 				pp->dev, prio_name(p), state, pp->priority);
+-		else {
++		} else {
+ 			condlog(3, "%s: %s prio error in state %d",
+ 				pp->dev, prio_name(p), state);
+ 			pp->priority = PRIO_UNDEF;
+-- 
+2.21.0
