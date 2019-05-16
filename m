@@ -1,18 +1,13 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v2] multipath -u: test socket connection in
- non-blocking mode
-Date: Thu, 16 May 2019 16:12:27 -0500
-Message-ID: <20190516211227.GG3090@octiron.msp.redhat.com>
-References: <20190424090759.29796-1-mwilck@suse.com>
-	<fa3ea599bf6424587fec45b5eb3549b3200ac5e9.camel@suse.com>
-	<20190429213837.GC5210@octiron.msp.redhat.com>
-	<e5abf79650733d4035bac4c01168802e2ce71389.camel@suse.de>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [git pull v2] device mapper changes for 5.2
+Date: Thu, 16 May 2019 15:59:08 -0700
+Message-ID: <CAHk-=whepZ=ht0h-+XaQzag5eAVQtofDW_gUknwu+d+Cnh+yQw@mail.gmail.com>
+References: <20190513185948.GA26710@redhat.com> <20190516143206.GA16368@lobo>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <e5abf79650733d4035bac4c01168802e2ce71389.camel@suse.de>
+In-Reply-To: <20190516143206.GA16368@lobo>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,31 +17,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.de>
-Cc: mwilck+gmail@suse.de, dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Damien Le Moal <damien.lemoal@wdc.com>, Nikos Tsironis <ntsironis@arrikto.com>, Huaisheng Ye <yehs1@lenovo.com>, YueHaibing <yuehaibing@huawei.com>, Peng Wang <rocking@whu.edu.cn>, Helen Koike <helen.koike@collabora.com>, Martin Wilck <mwilck@suse.com>, linux-block <linux-block@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Dan Carpenter <dan.carpenter@oracle.com>, Sheetal Singala <2396sheetal@gmail.com>, Colin Ian King <colin.king@canonical.com>, Yufen Yu <yuyufen@huawei.com>, Christoph Hellwig <hch@lst.de>, Alasdair G Kergon <agk@redhat.com>, Bryan Gurney <bgurney@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, May 16, 2019 at 08:44:56AM +0200, Martin Wilck wrote:
-> On Mon, 2019-04-29 at 16:38 -0500, Benjamin Marzinski wrote:
-> > On Thu, Apr 25, 2019 at 09:33:03PM +0200, Martin Wilck wrote:
-> > > 
-> > > @Ben, I'd be grateful if you could try it (or have the user try it)
-> > > in your problem case as well.
-> > 
-> > Unfortunately, I don't have a 129+ path system handy that the person
-> > who
-> > does isn't around right now.  The code makes sense, and assuming that
-> > I
-> > can verify that it fixes the problem I'm seeing, I'm fine with going
-> > this route.
-> 
-> Thanks, Ben. As noted earlier, we've had several customers who reported
-> this, and they're all happy with this patch. 
+On Thu, May 16, 2019 at 7:32 AM Mike Snitzer <snitzer@redhat.com> wrote:
+>
+> Seems you haven't pulled my 'for-5.2/dm-changes' tag from earlier this
+> week so I've added 4 additional simple commits to this v2 pull.
 
-I did get around to testing this, and it fixes our reproducer too.
+Hmm. Strange. I see your email from three days ago now that you
+mention it, but I don't recall having ever seen it before.
 
--Ben
+I must have fat-fingered it when it came in, and it was marked as
+"read" without having ever been seen. Possibly because I was traveling
+for my daughter's graduation, and being on mobile.
 
-> 
-> Martin
-> 
+Anyway, good that you re-sent, updates and all. Now pulled
+
+                  Linus
