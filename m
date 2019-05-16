@@ -1,14 +1,12 @@
-From: Erich Eckner <dm-devel@eckner.net>
-Subject: Re: [PATCH 1/2] dm-crypt: print device name in integrity
- error message.
-Date: Thu, 16 May 2019 11:04:37 +0200 (CEST)
-Message-ID: <alpine.LNX.2.21.9999.1905161101060.2715@nlopc43.ioq.uni-jena.de>
-References: <alpine.LNX.2.21.9999.1905141138180.19368@nlopc43.ioq.uni-jena.de>
-	<20190515142231.30590-1-gmazyland@gmail.com>
+From: Sheetal Singala <2396sheetal@gmail.com>
+Subject: Fwd: [PATCH] md : dm: Fixed a brace coding style issue
+Date: Thu, 16 May 2019 17:24:37 +0530
+Message-ID: <CAGzrpOypt7xqgRr7tCUKA=sc1YqefARSM25Rw_-F6G9T3qZVig@mail.gmail.com>
+References: <20190510174838.1968-1-2396sheetal@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="596483122-1063363029-1557997484=:2715"
+Content-Type: multipart/mixed; boundary="===============7553541089540138098=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190515142231.30590-1-gmazyland@gmail.com>
+In-Reply-To: <20190510174838.1968-1-2396sheetal@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,108 +16,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>
-Cc: dm-devel@redhat.com
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+--===============7553541089540138098==
+Content-Type: multipart/alternative; boundary="000000000000d82e170588ffee57"
 
---596483122-1063363029-1557997484=:2715
-Content-Type: text/plain; charset=ISO-8859-15; format=flowed
-Content-Transfer-Encoding: 8BIT
+--000000000000d82e170588ffee57
+Content-Type: text/plain; charset="UTF-8"
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA256
+Fixed a coding style issue.
+---
+ drivers/md/dm.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-Hi,
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 043f0761e4a0..2a8820bd581d 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -781,7 +781,8 @@ static void close_table_device(struct table_device *td,
+struct mapped_device *md
+ }
 
-thanks for the fast patch - I applied it on top of 5.1.2 and it has the 
-desired result. (It took some time to trigger the read errors, though 
-;-b):
+ static struct table_device *find_table_device(struct list_head *l, dev_t
+dev,
+-                                             fmode_t mode) {
++                                             fmode_t mode)
++{
+        struct table_device *td;
 
-[ 8834.156713] device-mapper: crypt: dm-17: INTEGRITY AEAD ERROR, sector 
-1595877368
-[ 9713.463619] device-mapper: crypt: dm-17: INTEGRITY AEAD ERROR, sector 
-1595877040
-
-
-regards,
-Erich Eckner
-Friedrich-Schiller-Universität Jena
-Institut für Optik und Quantenelektronik
-Helmholtzweg 4
-07743 Jena
-
-Tel. +49 3641 9-47238
+        list_for_each_entry(td, l, list)
+-- 
+2.17.1
 
 
-On Wed, 15 May 2019, Milan Broz wrote:
 
-> This message should better identify the device with the integrity failure.
->
-> Signed-off-by: Milan Broz <gmazyland@gmail.com>
-> ---
-> drivers/md/dm-crypt.c | 9 ++++++---
-> 1 file changed, 6 insertions(+), 3 deletions(-)
->
-> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> index 7f6462f74ac8..36dfa36505ed 100644
-> --- a/drivers/md/dm-crypt.c
-> +++ b/drivers/md/dm-crypt.c
-> @@ -1143,9 +1143,11 @@ static int crypt_convert_block_aead(struct crypt_config *cc,
-> 		r = crypto_aead_decrypt(req);
-> 	}
->
-> -	if (r == -EBADMSG)
-> -		DMERR_LIMIT("INTEGRITY AEAD ERROR, sector %llu",
-> +	if (r == -EBADMSG) {
-> +		char b[BDEVNAME_SIZE];
-> +		DMERR_LIMIT("%s: INTEGRITY AEAD ERROR, sector %llu", bio_devname(ctx->bio_in, b),
-> 			    (unsigned long long)le64_to_cpu(*sector));
-> +	}
->
-> 	if (!r && cc->iv_gen_ops && cc->iv_gen_ops->post)
-> 		r = cc->iv_gen_ops->post(cc, org_iv, dmreq);
-> @@ -1788,7 +1790,8 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
-> 		error = cc->iv_gen_ops->post(cc, org_iv_of_dmreq(cc, dmreq), dmreq);
->
-> 	if (error == -EBADMSG) {
-> -		DMERR_LIMIT("INTEGRITY AEAD ERROR, sector %llu",
-> +		char b[BDEVNAME_SIZE];
-> +		DMERR_LIMIT("%s: INTEGRITY AEAD ERROR, sector %llu", bio_devname(ctx->bio_in, b),
-> 			    (unsigned long long)le64_to_cpu(*org_sector_of_dmreq(cc, dmreq)));
-> 		io->error = BLK_STS_PROTECTION;
-> 	} else if (error < 0)
-> -- 
-> 2.20.1
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
------BEGIN PGP SIGNATURE-----
+-- 
+Regards,
+Sheetal Singala
 
-iQIzBAEBCAAdFiEE3p92iMrPBP64GmxZCu7JB1Xae1oFAlzdJ6cACgkQCu7JB1Xa
-e1raZQ/+PbM9H3gLyVYsUMw5uNA5galb88AD7vkHbSGRrERjZiDIDFvA35wLnBQt
-/K+GKvFnPiM3qlceYCRYTEfPVO/8SRPDkGg8h55ArdmGpgWUfagvFCJYiJKe7gRu
-SMjOXMYkA0187jB5YarEbCSYEDsrJr8wtBfwlHYgQ7pMbU6ua/l6KHGPG3abznZ9
-PC6US1y6QX3lrMqZwKmdfijZGIlJ8Tf1KdagTMZbDs74MTpzLwOoNdQbNLv/yA3o
-PLpXSrbPXZnVkL6VWpjBfCwgjFSqPlScwqwgDZJRbtiSmsOcTFtDke974KMoGMTe
-MfnXe0YTMu4TvP1wAuDk3SztTw59RsAnTjS1JUkR11fjV1uZgTqkPtmm21XpI9Op
-mMVCPjcCVq96uYT4CkY17B4Ukj4VT0rFb/47WKpcl66jvC4q3rIdnq9124IClnEw
-eWZAz6KDLb6q3Z7/k3lSpSXmc9yQMBsOrzCMHv36N62RfoDFV8139gw5PjZNgnRm
-KUX9SUSw+nPpUvcqajJwb7LJDf+jueCG6rhzQVGknvt693YQ49gWwgsheoT+d8fS
-YBQgSq4ZNV5tGHBgfm6qOEi2/JTnyBl8b41IOarh/aYjLILyg6cTSU0FevT2eii+
-JeRQtJCsoDl4FmhCXKd9+DHB+vTZ9h3ZRizIx6+Sm9uNcqDOVs0=
-=lei7
------END PGP SIGNATURE-----
---596483122-1063363029-1557997484=:2715
+--000000000000d82e170588ffee57
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><br><div class=3D"gmail_quote">Fixed a coding style issue.=
+<br>
+---<br>
+=C2=A0drivers/md/dm.c | 3 ++-<br>
+=C2=A01 file changed, 2 insertions(+), 1 deletion(-)<br>
+<br>
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c<br>
+index 043f0761e4a0..2a8820bd581d 100644<br>
+--- a/drivers/md/dm.c<br>
++++ b/drivers/md/dm.c<br>
+@@ -781,7 +781,8 @@ static void close_table_device(struct table_device *td,=
+ struct mapped_device *md<br>
+=C2=A0}<br>
+<br>
+=C2=A0static struct table_device *find_table_device(struct list_head *l, de=
+v_t dev,<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0fmode_t mode) {<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0fmode_t mode)<br>
++{<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 struct table_device *td;<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 list_for_each_entry(td, l, list)<br>
+-- <br>
+2.17.1<br>
+<br>
+</div><br clear=3D"all"><br>-- <br><div dir=3D"ltr" class=3D"gmail_signatur=
+e" data-smartmail=3D"gmail_signature"><div dir=3D"ltr">Regards,<div>Sheetal=
+ Singala</div></div></div></div>
+
+--000000000000d82e170588ffee57--
+
+
+--===============7553541089540138098==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---596483122-1063363029-1557997484=:2715--
+--===============7553541089540138098==--
