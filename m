@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 4/4] multipathd: handle NULL return from
-	genhelp_handler
-Date: Fri, 17 May 2019 11:14:10 -0500
-Message-ID: <1558109650-21179-5-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 2/4] kpartx: fail if dup() of dasd file
+	descriptor fails
+Date: Fri, 17 May 2019 11:14:08 -0500
+Message-ID: <1558109650-21179-3-git-send-email-bmarzins@redhat.com>
 References: <1558109650-21179-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,40 +22,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-parse_cmd() wasn't checking if genhelp_handler() returned NULL. It was simply
-assuming that it got a string. On NULL, it now returns an error. Found by
-Coverity.
+If kpartx fails to create a copy of the dasd file descriptor, it should
+fail, instead of treating the error value as a valid fd. Found by
+coverity.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/cli.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ kpartx/dasd.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/multipathd/cli.c b/multipathd/cli.c
-index ca176a99..17795b61 100644
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -467,6 +467,8 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
- 
- 	if (r) {
- 		*reply = genhelp_handler(cmd, r);
-+		if (*reply == NULL)
-+			return EINVAL;
- 		*len = strlen(*reply) + 1;
- 		return 0;
- 	}
-@@ -474,9 +476,11 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
- 	h = find_handler(fingerprint(cmdvec));
- 
- 	if (!h || !h->fn) {
-+		free_keys(cmdvec);
- 		*reply = genhelp_handler(cmd, EINVAL);
-+		if (*reply == NULL)
-+			return EINVAL;
- 		*len = strlen(*reply) + 1;
--		free_keys(cmdvec);
- 		return 0;
+diff --git a/kpartx/dasd.c b/kpartx/dasd.c
+index 61b609a5..d95d8ca0 100644
+--- a/kpartx/dasd.c
++++ b/kpartx/dasd.c
+@@ -138,6 +138,8 @@ read_dasd_pt(int fd, struct slice all, struct slice *sp, int ns)
+ 			return -1;
+ 	} else {
+ 		fd_dasd = dup(fd);
++		if (fd_dasd < 0)
++			return -1;
  	}
  
+ 	if (ioctl(fd_dasd, BIODASDINFO, (unsigned long)&info) != 0) {
 -- 
 2.17.2
