@@ -1,41 +1,29 @@
 From: "Guilherme G. Piccoli" <kernel@gpiccoli.net>
-Subject: Re: [PATCH 1/2] block: Fix a NULL pointer dereference in generic_make_request()
-Date: Fri, 17 May 2019 13:17:15 -0300
-Message-ID: <CALJn8nME9NQGsSqLXHQPEizFfKUzxozfYy-2510MHyMPHRzhfw@mail.gmail.com>
-References: <20190430223722.20845-1-gpiccoli@canonical.com> <CAKM4Aez=eC96uyqJa+=Aom2M2eQnknQW_uY4v9NMVpROSiuKSg@mail.gmail.com>
+Subject: Re: [PATCH 2/2] md/raid0: Do not bypass blocking queue entered for
+ raid0 bios
+Date: Fri, 17 May 2019 13:19:18 -0300
+Message-ID: <CALJn8nOTCcOtFJ1SzZAuJxNuxzf2Tq7Yw34h1E5XE-mbn5CUbg@mail.gmail.com>
+References: <20190430223722.20845-1-gpiccoli@canonical.com>
+ <20190430223722.20845-2-gpiccoli@canonical.com> <CAPhsuW4SeUhNOJJkEf9wcLjbbc9qX0=C8zqbyCtC7Q8fdL91hw@mail.gmail.com>
+ <c8721ba3-5d38-7906-5049-e2b16e967ecf@canonical.com> <CAPhsuW6ahmkUhCgns=9WHPXSvYefB0Gmr1oB7gdZiD86sKyHFg@mail.gmail.com>
+ <5CD2A172.4010302@youngman.org.uk> <0ad36b2f-ec36-6930-b587-da0526613567@gpiccoli.net>
+ <5CD3096B.4030302@youngman.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <CAKM4Aez=eC96uyqJa+=Aom2M2eQnknQW_uY4v9NMVpROSiuKSg@mail.gmail.com>
+In-Reply-To: <5CD3096B.4030302@youngman.org.uk>
 Sender: stable-owner@vger.kernel.org
-To: Eric Ren <renzhengeek@gmail.com>
-Cc: "Guilherme G. Piccoli" <gpiccoli@canonical.com>, linux-block@vger.kernel.org, linux-raid <linux-raid@vger.kernel.org>, dm-devel@redhat.com, axboe@kernel.dk, Gavin Guo <gavin.guo@canonical.com>, Jay Vosburgh <jay.vosburgh@canonical.com>, Bart Van Assche <bvanassche@acm.org>, stable@vger.kernel.org
+To: Wols Lists <antlists@youngman.org.uk>, Song Liu <liu.song.a23@gmail.com>, axboe@kernel.dk
+Cc: "Guilherme G. Piccoli" <gpiccoli@canonical.com>, linux-block@vger.kernel.org, linux-raid <linux-raid@vger.kernel.org>, dm-devel@redhat.com, Gavin Guo <gavin.guo@canonical.com>, Jay Vosburgh <jay.vosburgh@canonical.com>, Ming Lei <ming.lei@redhat.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, May 17, 2019 at 12:33 AM Eric Ren <renzhengeek@gmail.com> wrote:
->
-> Hello,
-> [...]
-> Thanks for the bugfix. I also had a panic having very similar
-> calltrace below as this one,
-> when using devicemapper in container scenario and deleting many thin
-> snapshots by dmsetup
-> remove_all -f, meanwhile executing lvm command like vgs.
->
-> After applied this one, my testing doesn't crash kernel any more for
-> one week.  Could the block
-> developers please give more feedback/priority on this one?
->
+Jens / Song, any news in this one?
 
-Thanks Eric, for the testing! I think you could send your Tested-by[0]
-tag, which could be added
-in the patch before merge. It's good to know the patch helped somebody
-and your testing improves
-confidence in the change.
+I think would be good to have this raid0 fix rather sooner than later
+if possible - it's easy
+to reproduce the crash.
 
-Cheers,
+Thanks,
 
 
 Guilherme
-
-[0] https://www.kernel.org/doc/html/latest/process/submitting-patches.html#using-reported-by-tested-by-reviewed-by-suggested-by-and-fixes
