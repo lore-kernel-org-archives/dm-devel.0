@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 1/4] libmultipath: handle clock_gettime failures
-	in tur checker
-Date: Fri, 17 May 2019 11:14:07 -0500
-Message-ID: <1558109650-21179-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 4/4] multipathd: handle NULL return from
+	genhelp_handler
+Date: Fri, 17 May 2019 11:14:10 -0500
+Message-ID: <1558109650-21179-5-git-send-email-bmarzins@redhat.com>
 References: <1558109650-21179-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,58 +22,40 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-If clock_gettime() fails, and multipathd can't figure out when it should
-time out, it should just default to assuming that it has already timed
-out. Found by coverity.
+parse_cmd() wasn't checking if genhelp_handler() returned NULL. It was simply
+assuming that it got a string. On NULL, it now returns an error. Found by
+Coverity.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/checkers/tur.c | 19 +++++++++++++++----
- 1 file changed, 15 insertions(+), 4 deletions(-)
+ multipathd/cli.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 6b08dbbb..717353ef 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -290,7 +290,12 @@ static void *tur_thread(void *ctx)
+diff --git a/multipathd/cli.c b/multipathd/cli.c
+index ca176a99..17795b61 100644
+--- a/multipathd/cli.c
++++ b/multipathd/cli.c
+@@ -467,6 +467,8 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
  
- static void tur_timeout(struct timespec *tsp)
- {
--	clock_gettime(CLOCK_MONOTONIC, tsp);
-+	if (clock_gettime(CLOCK_MONOTONIC, tsp) != 0) {
-+		/* can't get time. clear tsp to not wait */
-+		tsp->tv_sec = 0;
-+		tsp->tv_nsec = 0;
-+		return;
-+	}
- 	tsp->tv_nsec += 1000 * 1000; /* 1 millisecond */
- 	normalize_timespec(tsp);
- }
-@@ -300,8 +305,12 @@ static void tur_set_async_timeout(struct checker *c)
- 	struct tur_checker_context *ct = c->context;
- 	struct timespec now;
+ 	if (r) {
+ 		*reply = genhelp_handler(cmd, r);
++		if (*reply == NULL)
++			return EINVAL;
+ 		*len = strlen(*reply) + 1;
+ 		return 0;
+ 	}
+@@ -474,9 +476,11 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
+ 	h = find_handler(fingerprint(cmdvec));
  
--	clock_gettime(CLOCK_MONOTONIC, &now);
--	ct->time = now.tv_sec + c->timeout;
-+	if (clock_gettime(CLOCK_MONOTONIC, &now) != 0)
-+		/* can't get time. clear time to always timeout on
-+		 * next path check */
-+		ct->time = 0;
-+	else
-+		ct->time = now.tv_sec + c->timeout;
- }
- 
- static int tur_check_async_timeout(struct checker *c)
-@@ -309,7 +318,9 @@ static int tur_check_async_timeout(struct checker *c)
- 	struct tur_checker_context *ct = c->context;
- 	struct timespec now;
- 
--	clock_gettime(CLOCK_MONOTONIC, &now);
-+	if (clock_gettime(CLOCK_MONOTONIC, &now) != 0)
-+		/* can't get time. assume we've timed out */
-+		return 1;
- 	return (now.tv_sec > ct->time);
- }
+ 	if (!h || !h->fn) {
++		free_keys(cmdvec);
+ 		*reply = genhelp_handler(cmd, EINVAL);
++		if (*reply == NULL)
++			return EINVAL;
+ 		*len = strlen(*reply) + 1;
+-		free_keys(cmdvec);
+ 		return 0;
+ 	}
  
 -- 
 2.17.2
