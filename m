@@ -1,67 +1,41 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 3/4] multipathd: fix REALLOC_REPLY with max
-	length reply
-Date: Fri, 17 May 2019 11:14:09 -0500
-Message-ID: <1558109650-21179-4-git-send-email-bmarzins@redhat.com>
-References: <1558109650-21179-1-git-send-email-bmarzins@redhat.com>
+From: "Guilherme G. Piccoli" <kernel@gpiccoli.net>
+Subject: Re: [PATCH 1/2] block: Fix a NULL pointer dereference in generic_make_request()
+Date: Fri, 17 May 2019 13:17:15 -0300
+Message-ID: <CALJn8nME9NQGsSqLXHQPEizFfKUzxozfYy-2510MHyMPHRzhfw@mail.gmail.com>
+References: <20190430223722.20845-1-gpiccoli@canonical.com> <CAKM4Aez=eC96uyqJa+=Aom2M2eQnknQW_uY4v9NMVpROSiuKSg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1558109650-21179-1-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <CAKM4Aez=eC96uyqJa+=Aom2M2eQnknQW_uY4v9NMVpROSiuKSg@mail.gmail.com>
+Sender: stable-owner@vger.kernel.org
+To: Eric Ren <renzhengeek@gmail.com>
+Cc: "Guilherme G. Piccoli" <gpiccoli@canonical.com>, linux-block@vger.kernel.org, linux-raid <linux-raid@vger.kernel.org>, dm-devel@redhat.com, axboe@kernel.dk, Gavin Guo <gavin.guo@canonical.com>, Jay Vosburgh <jay.vosburgh@canonical.com>, Bart Van Assche <bvanassche@acm.org>, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-Commit cd5a9797e added code to REALLOC_REPLY() that intended to stop
-growing the reply buffer after it reached a maximum size. However this
-code didn't stop the realloc() from happening. Worse, if the realloc()
-failed, multipathd would double free the reply buffer. Found by
-Coverity.
+On Fri, May 17, 2019 at 12:33 AM Eric Ren <renzhengeek@gmail.com> wrote:
+>
+> Hello,
+> [...]
+> Thanks for the bugfix. I also had a panic having very similar
+> calltrace below as this one,
+> when using devicemapper in container scenario and deleting many thin
+> snapshots by dmsetup
+> remove_all -f, meanwhile executing lvm command like vgs.
+>
+> After applied this one, my testing doesn't crash kernel any more for
+> one week.  Could the block
+> developers please give more feedback/priority on this one?
+>
 
-Fixes: cd5a9797e "libmpathcmd(coverity): limit reply length"
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipathd/cli.h | 17 +++++++++--------
- 1 file changed, 9 insertions(+), 8 deletions(-)
+Thanks Eric, for the testing! I think you could send your Tested-by[0]
+tag, which could be added
+in the patch before merge. It's good to know the patch helped somebody
+and your testing improves
+confidence in the change.
 
-diff --git a/multipathd/cli.h b/multipathd/cli.h
-index f3fa077a..32dcffac 100644
---- a/multipathd/cli.h
-+++ b/multipathd/cli.h
-@@ -100,15 +100,16 @@ enum {
- 			if (m >= MAX_REPLY_LEN) {		\
- 				condlog(1, "Warning: max reply length exceeded"); \
- 				free(tmp);			\
--				r = NULL;			\
-+				(r) = NULL;			\
-+			} else {				\
-+				(r) = REALLOC((r), (m) * 2);	\
-+				if ((r)) {			\
-+					memset((r) + (m), 0, (m)); \
-+					(m) *= 2;		\
-+				}				\
-+				else				\
-+					free(tmp);		\
- 			}					\
--			(r) = REALLOC((r), (m) * 2);		\
--			if ((r)) {				\
--				memset((r) + (m), 0, (m));	\
--				(m) *= 2;			\
--			}					\
--			else					\
--				free(tmp);			\
- 		}						\
- 	} while (0)
- 
--- 
-2.17.2
+Cheers,
+
+
+Guilherme
+
+[0] https://www.kernel.org/doc/html/latest/process/submitting-patches.html#using-reported-by-tested-by-reviewed-by-suggested-by-and-fixes
