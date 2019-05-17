@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 2/4] kpartx: fail if dup() of dasd file
-	descriptor fails
-Date: Fri, 17 May 2019 11:14:08 -0500
-Message-ID: <1558109650-21179-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 3/4] multipathd: fix REALLOC_REPLY with max
+	length reply
+Date: Fri, 17 May 2019 11:14:09 -0500
+Message-ID: <1558109650-21179-4-git-send-email-bmarzins@redhat.com>
 References: <1558109650-21179-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,27 +22,46 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-If kpartx fails to create a copy of the dasd file descriptor, it should
-fail, instead of treating the error value as a valid fd. Found by
-coverity.
+Commit cd5a9797e added code to REALLOC_REPLY() that intended to stop
+growing the reply buffer after it reached a maximum size. However this
+code didn't stop the realloc() from happening. Worse, if the realloc()
+failed, multipathd would double free the reply buffer. Found by
+Coverity.
 
+Fixes: cd5a9797e "libmpathcmd(coverity): limit reply length"
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- kpartx/dasd.c | 2 ++
- 1 file changed, 2 insertions(+)
+ multipathd/cli.h | 17 +++++++++--------
+ 1 file changed, 9 insertions(+), 8 deletions(-)
 
-diff --git a/kpartx/dasd.c b/kpartx/dasd.c
-index 61b609a5..d95d8ca0 100644
---- a/kpartx/dasd.c
-+++ b/kpartx/dasd.c
-@@ -138,6 +138,8 @@ read_dasd_pt(int fd, struct slice all, struct slice *sp, int ns)
- 			return -1;
- 	} else {
- 		fd_dasd = dup(fd);
-+		if (fd_dasd < 0)
-+			return -1;
- 	}
+diff --git a/multipathd/cli.h b/multipathd/cli.h
+index f3fa077a..32dcffac 100644
+--- a/multipathd/cli.h
++++ b/multipathd/cli.h
+@@ -100,15 +100,16 @@ enum {
+ 			if (m >= MAX_REPLY_LEN) {		\
+ 				condlog(1, "Warning: max reply length exceeded"); \
+ 				free(tmp);			\
+-				r = NULL;			\
++				(r) = NULL;			\
++			} else {				\
++				(r) = REALLOC((r), (m) * 2);	\
++				if ((r)) {			\
++					memset((r) + (m), 0, (m)); \
++					(m) *= 2;		\
++				}				\
++				else				\
++					free(tmp);		\
+ 			}					\
+-			(r) = REALLOC((r), (m) * 2);		\
+-			if ((r)) {				\
+-				memset((r) + (m), 0, (m));	\
+-				(m) *= 2;			\
+-			}					\
+-			else					\
+-				free(tmp);			\
+ 		}						\
+ 	} while (0)
  
- 	if (ioctl(fd_dasd, BIODASDINFO, (unsigned long)&info) != 0) {
 -- 
 2.17.2
