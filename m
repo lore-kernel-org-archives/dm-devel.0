@@ -1,42 +1,100 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [PATCH 0/4] Coverity fixes
-Date: Fri, 17 May 2019 23:56:45 +0200
-Message-ID: <2e9ce7711685308366025c55b34abb565034e202.camel@suse.de>
-References: <1558109650-21179-1-git-send-email-bmarzins@redhat.com>
+From: Ming Lei <tom.leiming@gmail.com>
+Subject: Re: [PATCH 1/2] block: Fix a NULL pointer dereference in generic_make_request()
+Date: Sat, 18 May 2019 06:04:32 +0800
+Message-ID: <CACVXFVNsOoJqipwivoCbH1jNs_5b0g9E6HWhh6kXYTzetALzQQ@mail.gmail.com>
+References: <20190430223722.20845-1-gpiccoli@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1558109650-21179-1-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20190430223722.20845-1-gpiccoli@canonical.com>
+Sender: stable-owner@vger.kernel.org
+To: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
+Cc: linux-block <linux-block@vger.kernel.org>, "open list:SOFTWARE RAID (Multiple Disks) SUPPORT" <linux-raid@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Jens Axboe <axboe@kernel.dk>, Gavin Guo <gavin.guo@canonical.com>, Jay Vosburgh <jay.vosburgh@canonical.com>, kernel@gpiccoli.net, Bart Van Assche <bvanassche@acm.org>, stable <stable@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Fri, 2019-05-17 at 11:14 -0500, Benjamin Marzinski wrote:
-> These are fixes to some issues that coverity pointed out.
-> 
-> Benjamin Marzinski (4):
->   libmultipath: handle clock_gettime failures in tur checker
->   kpartx: fail if dup() of dasd file descriptor fails
->   multipathd: fix REALLOC_REPLY with max length reply
->   multipathd: handle NULL return from genhelp_handler
-> 
->  kpartx/dasd.c               |  2 ++
->  libmultipath/checkers/tur.c | 19 +++++++++++++++----
->  multipathd/cli.c            |  6 +++++-
->  multipathd/cli.h            | 17 +++++++++--------
->  4 files changed, 31 insertions(+), 13 deletions(-)
-> 
+On Wed, May 1, 2019 at 6:38 AM Guilherme G. Piccoli
+<gpiccoli@canonical.com> wrote:
+>
+> Commit 37f9579f4c31 ("blk-mq: Avoid that submitting a bio concurrently
+> with device removal triggers a crash") introduced a NULL pointer
+> dereference in generic_make_request(). The patch sets q to NULL and
+> enter_succeeded to false; right after, there's an 'if (enter_succeeded)'
+> which is not taken, and then the 'else' will dereference q in
+> blk_queue_dying(q).
+>
+> This patch just moves the 'q = NULL' to a point in which it won't trigger
+> the oops, although the semantics of this NULLification remains untouched.
+>
+> A simple test case/reproducer is as follows:
+> a) Build kernel v5.1-rc7 with CONFIG_BLK_CGROUP=n.
+>
+> b) Create a raid0 md array with 2 NVMe devices as members, and mount it
+> with an ext4 filesystem.
+>
+> c) Run the following oneliner (supposing the raid0 is mounted in /mnt):
+> (dd of=/mnt/tmp if=/dev/zero bs=1M count=999 &); sleep 0.3;
+> echo 1 > /sys/block/nvme0n1/device/device/remove
+> (whereas nvme0n1 is the 2nd array member)
+>
+> This will trigger the following oops:
+>
+> BUG: unable to handle kernel NULL pointer dereference at 0000000000000078
+> PGD 0 P4D 0
+> Oops: 0000 [#1] SMP PTI
+> RIP: 0010:generic_make_request+0x32b/0x400
+> Call Trace:
+>  submit_bio+0x73/0x140
+>  ext4_io_submit+0x4d/0x60
+>  ext4_writepages+0x626/0xe90
+>  do_writepages+0x4b/0xe0
+> [...]
+>
+> This patch has no functional changes and preserves the md/raid0 behavior
+> when a member is removed before kernel v4.17.
+>
+> Cc: Bart Van Assche <bvanassche@acm.org>
+> Cc: stable@vger.kernel.org # v4.17
+> Fixes: 37f9579f4c31 ("blk-mq: Avoid that submitting a bio concurrently with device removal triggers a crash")
 
-ACK for the series, except 1/4.
+BTW, the legacy IO request path is removed since 5.0, the above fault
+commit can be
+removed as done by the following patches:
 
-Martin
+https://lore.kernel.org/linux-block/20190515030310.20393-1-ming.lei@redhat.com/T/#t
+
+> Signed-off-by: Guilherme G. Piccoli <gpiccoli@canonical.com>
+> ---
+>  block/blk-core.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/block/blk-core.c b/block/blk-core.c
+> index a55389ba8779..e21856a7f3fa 100644
+> --- a/block/blk-core.c
+> +++ b/block/blk-core.c
+> @@ -1076,7 +1076,6 @@ blk_qc_t generic_make_request(struct bio *bio)
+>                                 flags = BLK_MQ_REQ_NOWAIT;
+>                         if (blk_queue_enter(q, flags) < 0) {
+>                                 enter_succeeded = false;
+> -                               q = NULL;
+>                         }
+
+Please remove '{}'.
+
+>                 }
+>
+> @@ -1108,6 +1107,7 @@ blk_qc_t generic_make_request(struct bio *bio)
+>                                 bio_wouldblock_error(bio);
+>                         else
+>                                 bio_io_error(bio);
+> +                       q = NULL;
+>                 }
+>                 bio = bio_list_pop(&bio_list_on_stack[0]);
+>         } while (bio);
+> --
+> 2.21.0
+>
+
+Reviewed-by: Ming Lei <ming.lei@redhat.com>
+
+Thanks,
+Ming Lei
