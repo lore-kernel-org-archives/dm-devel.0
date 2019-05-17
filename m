@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 6/7] mpathpersist: initialize data structures
-	only once
-Date: Sat, 18 May 2019 00:57:02 +0200
-Message-ID: <20190517225703.16295-7-mwilck@suse.com>
+Subject: [RFC PATCH 1/7] mpathpersist: call usage() just once on
+	return
+Date: Sat, 18 May 2019 00:56:57 +0200
+Message-ID: <20190517225703.16295-2-mwilck@suse.com>
 References: <20190517225703.16295-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,55 +22,91 @@ To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dbond@redhat.com, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-We now have the possibility to run several PR commands in a single
-mpathpersist invocation. Run initialization / discovery and teardown
-only once at program invocation / exit.
+This simplifies further changes.
 ---
- mpathpersist/main.c | 11 ++++++++---
- 1 file changed, 8 insertions(+), 3 deletions(-)
+ mpathpersist/main.c | 11 ++---------
+ 1 file changed, 2 insertions(+), 9 deletions(-)
 
 diff --git a/mpathpersist/main.c b/mpathpersist/main.c
-index b204647f..5f871019 100644
+index 10cba452..94e89c13 100644
 --- a/mpathpersist/main.c
 +++ b/mpathpersist/main.c
-@@ -367,6 +367,9 @@ static int handle_args(int argc, char * argv[], int nline)
- 		/* set verbosity */
- 		noisy = (loglevel >= 3) ? 1 : hex;
- 		verbose	= (loglevel >= 3)? 3: loglevel;
-+		ret = mpath_persistent_reserve_init_vecs(verbose);
-+		if (ret != MPATH_PR_SUCCESS)
-+			goto out;
- 	}
+@@ -265,7 +265,6 @@ int main (int argc, char * argv[])
  
- 	if ((prout_flag + prin_flag) == 0 && batch_fn == NULL)
-@@ -473,7 +476,7 @@ static int handle_args(int argc, char * argv[], int nline)
+ 			default:
+ 				fprintf(stderr, "unrecognised switch " "code 0x%x ??\n", c);
+-				usage ();
+ 				ret = MPATH_PR_SYNTAX_ERROR;
+ 				goto out;
+ 		}
+@@ -283,7 +282,6 @@ int main (int argc, char * argv[])
+ 		{
+ 			for (; optind < argc; ++optind)
+ 				fprintf (stderr, "Unexpected extra argument: %s\n", argv[optind]);
+-			usage ();
+ 			ret = MPATH_PR_SYNTAX_ERROR;
  			goto out;
  		}
- 
--		ret = mpath_persistent_reserve_in (fd, prin_sa, resp, noisy, verbose);
-+		ret = __mpath_persistent_reserve_in (fd, prin_sa, resp, noisy);
- 		if (ret != MPATH_PR_SUCCESS )
- 		{
- 			fprintf (stderr, "Persistent Reserve IN command failed\n");
-@@ -533,8 +536,8 @@ static int handle_args(int argc, char * argv[], int nline)
- 		}
- 
- 		/* PROUT commands other than 'register and move' */
--		ret = mpath_persistent_reserve_out (fd, prout_sa, 0, prout_type,
--				paramp, noisy, verbose);
-+		ret = __mpath_persistent_reserve_out (fd, prout_sa, 0, prout_type,
-+				paramp, noisy);
- 		for (j = 0 ; j < num_transport; j++)
- 		{
- 			tmp = paramp->trnptid_list[j];
-@@ -572,6 +575,8 @@ out :
- 		free(batch_fn);
- 		ret = ret == 0 ? rv : ret;
+@@ -296,14 +294,12 @@ int main (int argc, char * argv[])
+ 	if ((prout_flag + prin_flag) == 0)
+ 	{
+ 		fprintf (stderr, "choose either '--in' or '--out' \n");
+-		usage ();
+ 		ret = MPATH_PR_SYNTAX_ERROR;
+ 		goto out;
  	}
-+	if (nline == 0)
-+		mpath_persistent_reserve_free_vecs();
- 	return (ret >= 0) ? ret : MPATH_PR_OTHER;
- }
+ 	if ((prout_flag + prin_flag) > 1)
+ 	{
+ 		fprintf (stderr, "choose either '--in' or '--out' \n");
+-		usage ();
+ 		ret = MPATH_PR_SYNTAX_ERROR;
+ 		goto out;
+ 	}
+@@ -334,20 +330,17 @@ int main (int argc, char * argv[])
+ 		{
+ 			fprintf (stderr,
+ 					" No service action given for Persistent Reserve IN\n");
+-			usage();
+ 			ret = MPATH_PR_SYNTAX_ERROR;
+ 		}
+ 		else if (num_prin_sa > 1)
+ 		{
+ 			fprintf (stderr, " Too many service actions given; choose "
+ 					"one only\n");
+-			usage();
+ 			ret = MPATH_PR_SYNTAX_ERROR;
+ 		}
+ 	}
+ 	else
+ 	{
+-		usage ();
+ 		ret = MPATH_PR_SYNTAX_ERROR;
+ 		goto out;
+ 	}
+@@ -356,7 +349,6 @@ int main (int argc, char * argv[])
+ 	{
+ 		fprintf (stderr, " --relative-target-port"
+ 				" only useful with --register-move\n");
+-		usage ();
+ 		ret = MPATH_PR_SYNTAX_ERROR;
+ 		goto out;
+ 	}
+@@ -378,7 +370,6 @@ int main (int argc, char * argv[])
+ 	if (device_name == NULL)
+ 	{
+ 		fprintf (stderr, "No device name given \n");
+-		usage ();
+ 		ret = MPATH_PR_SYNTAX_ERROR;
+ 		goto out;
+ 	}
+@@ -496,6 +487,8 @@ int main (int argc, char * argv[])
+ 	}
  
+ out :
++	if (ret == MPATH_PR_SYNTAX_ERROR)
++		usage();
+ 	mpath_lib_exit(conf);
+ 	udev_unref(udev);
+ 	return (ret >= 0) ? ret : MPATH_PR_OTHER;
 -- 
 2.21.0
