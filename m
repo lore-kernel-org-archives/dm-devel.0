@@ -1,193 +1,313 @@
-From: =?utf-8?Q?Michael_La=C3=9F?= <bevan@bi-co.net>
+From: Andrea Gelmini <andrea.gelmini@gelma.net>
 Subject: Re: fstrim discarding too many or wrong blocks on Linux 5.1, leading
  to data loss
-Date: Mon, 20 May 2019 15:58:20 +0200
-Message-ID: <9D4ECE0B-C9DD-4BAD-A764-9DE2FF2A10C7@bi-co.net>
-References: <297da4cbe20235080205719805b08810@bi-co.net>
- <CAJCQCtR-uo9fgs66pBMEoYX_xAye=O-L8kiMwyAdFjPS5T4+CA@mail.gmail.com>
- <8C31D41C-9608-4A65-B543-8ABCC0B907A0@bi-co.net>
- <CAJCQCtTZWXUgUDh8vn0BFeEbAdKToDSVYYw4Q0bt0rECQr9nxQ@mail.gmail.com>
- <AD966642-1043-468D-BABF-8FC9AF514D36@bi-co.net>
- <158a3491-e4d2-d905-7f58-11a15bddcd70@gmx.com>
- <C1CD4646-E75D-4AAF-9CD6-B3AC32495FD3@bi-co.net>
- <CAK-xaQYPs62v971zm1McXw_FGzDmh_vpz3KLEbxzkmrsSgTfXw@mail.gmail.com>
-Mime-Version: 1.0 (Mac OS X Mail 12.4 \(3445.104.11\))
-Content-Type: text/plain;
-        charset=utf-8
+Date: Mon, 20 May 2019 16:53:41 +0200
+Message-ID: <CAK-xaQYakXcAbhfiH_VbqWkh+HBJD5N69ktnnA7OnWdhL6fDLA@mail.gmail.com>
+References: <297da4cbe20235080205719805b08810@bi-co.net> <CAJCQCtR-uo9fgs66pBMEoYX_xAye=O-L8kiMwyAdFjPS5T4+CA@mail.gmail.com>
+ <8C31D41C-9608-4A65-B543-8ABCC0B907A0@bi-co.net> <CAJCQCtTZWXUgUDh8vn0BFeEbAdKToDSVYYw4Q0bt0rECQr9nxQ@mail.gmail.com>
+ <AD966642-1043-468D-BABF-8FC9AF514D36@bi-co.net> <158a3491-e4d2-d905-7f58-11a15bddcd70@gmx.com>
+ <C1CD4646-E75D-4AAF-9CD6-B3AC32495FD3@bi-co.net> <CAK-xaQYPs62v971zm1McXw_FGzDmh_vpz3KLEbxzkmrsSgTfXw@mail.gmail.com>
+ <9D4ECE0B-C9DD-4BAD-A764-9DE2FF2A10C7@bi-co.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 8BIT
 Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <CAK-xaQYPs62v971zm1McXw_FGzDmh_vpz3KLEbxzkmrsSgTfXw@mail.gmail.com>
+In-Reply-To: <9D4ECE0B-C9DD-4BAD-A764-9DE2FF2A10C7@bi-co.net>
 Sender: linux-btrfs-owner@vger.kernel.org
-To: Andrea Gelmini <andrea.gelmini@gmail.com>
+To: =?UTF-8?B?TWljaGFlbCBMYcOf?= <bevan@bi-co.net>
 Cc: Qu Wenruo <quwenruo.btrfs@gmx.com>, Chris Murphy <lists@colorremedies.com>, Btrfs BTRFS <linux-btrfs@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Il giorno lun 20 mag 2019 alle ore 15:58 Michael Laß <bevan@bi-co.net>
+ha scritto:
+>
+>
+> > Am 20.05.2019 um 15:53 schrieb Andrea Gelmini <andrea.gelmini@gmail.com>:
+> >
+> > Had same issue on a similar (well,  quite exactly same setup), on a machine in production.
+> > But It Is more than 4 tera of data, so in the end I re-dd the image and restarted, sticking to 5.0.y branch never had problem.
+> > I was able to replicate it. SSD Samsung, more recent version.
+> > Not with btrfs but ext4, by the way.
+>
+> Thanks for the info, that eliminates one variable. So you also used dm-crypt on top of LVM?
 
-> Am 20.05.2019 um 15:53 schrieb Andrea Gelmini <andrea.gelmini@gmail.com>:
-> 
-> Had same issue on a similar (well,  quite exactly same setup), on a machine in production.
-> But It Is more than 4 tera of data, so in the end I re-dd the image and restarted, sticking to 5.0.y branch never had problem.
-> I was able to replicate it. SSD Samsung, more recent version.
-> Not with btrfs but ext4, by the way.
+root@glet:~# lsblk |grep -v loop
+NAME           MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINT
+sda              8:0    0   3,7T  0 disk
+├─sda1           8:1    0   260M  0 part  /boot/efi
+├─sda2           8:2    0    16M  0 part
+├─sda3           8:3    0  67,6G  0 part
+├─sda4           8:4    0   883M  0 part
+├─sda5           8:5    0   1,9G  0 part  /boot
+└─sda6           8:6    0   3,5T  0 part
+ └─sda6_crypt 254:0    0   3,5T  0 crypt
+   ├─cry-root 254:1    0    28G  0 lvm   /
+   ├─cry-swap 254:2    0    70G  0 lvm   [SWAP]
+   └─cry-home 254:3    0   2,7T  0 lvm   /home
+nvme0n1        259:0    0 119,2G  0 disk
+├─nvme0n1p1    259:1    0  97,8G  0 part  /mnt/nvme
+└─nvme0n1p2    259:2    0  21,5G  0 part  [SWAP]
+root@glet:~#
 
-Thanks for the info, that eliminates one variable. So you also used dm-crypt on top of LVM?
+Booting with kernel > 5.0, it discard cry-home, for the first big part.
 
-Cheers,
-Michael
+root@glet:~# lvdisplay  -vv
+     devices/global_filter not found in config: defaulting to
+global_filter = [ "a|.*/|" ]
+     Setting global/locking_type to 1
+     Setting global/use_lvmetad to 1
+     global/lvmetad_update_wait_time not found in config: defaulting to 10
+     Setting response to OK
+     Setting protocol to lvmetad
+     Setting version to 1
+     Setting global/use_lvmpolld to 1
+     Setting devices/sysfs_scan to 1
+     Setting devices/multipath_component_detection to 1
+     Setting devices/md_component_detection to 1
+     Setting devices/fw_raid_component_detection to 0
+     Setting devices/ignore_suspended_devices to 0
+     Setting devices/ignore_lvm_mirrors to 1
+     devices/filter not found in config: defaulting to filter = [ "a|.*/|" ]
+     Setting devices/cache_dir to /run/lvm
+     Setting devices/cache_file_prefix to
+     devices/cache not found in config: defaulting to /run/lvm/.cache
+     Setting devices/write_cache_state to 1
+     Setting global/use_lvmetad to 1
+     Setting activation/activation_mode to degraded
+     metadata/record_lvs_history not found in config: defaulting to 0
+     Setting activation/monitoring to 1
+     Setting global/locking_type to 1
+     Setting global/wait_for_locks to 1
+     File-based locking selected.
+     Setting global/prioritise_write_locks to 1
+     Setting global/locking_dir to /run/lock/lvm
+     Setting global/use_lvmlockd to 0
+     Setting response to OK
+     Setting token to filter:3239235440
+     Setting daemon_pid to 650
+     Setting response to OK
+     Setting global_disable to 0
+     report/output_format not found in config: defaulting to basic
+     log/report_command_log not found in config: defaulting to 0
+     Setting response to OK
+     Setting response to OK
+     Setting response to OK
+     Setting name to cry
+     Processing VG cry Orkwof-zq16-e1qM-rUMt-vKV1-Lc13-CgiKYp
+     Locking /run/lock/lvm/V_cry RB
+     Reading VG cry Orkwofzq16e1qMrUMtvKV1Lc13CgiKYp
+     Setting response to OK
+     Setting response to OK
+     Setting response to OK
+     Setting name to cry
+     Setting metadata/format to lvm2
+     Setting id to OtoEfX-bpWN-l9gd-kLJW-1xca-PaHR-ARrSKr
+     Setting format to lvm2
+     Setting device to 65024
+     Setting dev_size to 7465840640
+     Setting label_sector to 1
+     Setting ext_flags to 1
+     Setting ext_version to 2
+     Setting size to 1044480
+     Setting start to 4096
+     Setting ignore to 0
+     Setting response to OK
+     Setting response to OK
+     Setting response to OK
+     /dev/mapper/sda6_crypt: size is 7465842688 sectors
+     Adding cry/root to the list of LVs to be processed.
+     Adding cry/swap to the list of LVs to be processed.
+     Adding cry/home to the list of LVs to be processed.
+     Processing LV root in VG cry.
+ --- Logical volume ---
+     global/lvdisplay_shows_full_device_path not found in config:
+defaulting to 0
+ LV Path                /dev/cry/root
+ LV Name                root
+ VG Name                cry
+ LV UUID                J0vJ5D-Rzyt-9fOm-cJVU-bwjc-6pc1-jGqIhc
+ LV Write Access        read/write
+ LV Creation host, time glet, 2018-11-02 17:51:35 +0100
+ LV Status              available
+ # open                 1
+ LV Size                <27,94 GiB
+ Current LE             7152
+ Segments               1
+ Allocation             inherit
+ Read ahead sectors     auto
+ - currently set to     256
+ Block device           254:1
 
-> I saw the discard of big initial part of lvm partition. I can't find superblocks Copy in the First half, but torwards the end of logical volume.
-> 
-> Sorry, i can't play with It again, but i have the whole (4 tera) dd image with the bug.
-> 
-> 
-> Ciao,
-> Gelma
-> 
-> Il lun 20 mag 2019, 02:38 Michael Laß <bevan@bi-co.net> ha scritto:
-> CC'ing dm-devel, as this seems to be a dm-related issue. Short summary for new readers:
-> 
-> On Linux 5.1 (tested up to 5.1.3), fstrim may discard too many blocks, leading to data loss. I have the following storage stack:
-> 
-> btrfs
-> dm-crypt (LUKS)
-> LVM logical volume
-> LVM single physical volume
-> MBR partition
-> Samsung 830 SSD
-> 
-> The mapping between logical volumes and physical segments is a bit mixed up. See below for the output for “pvdisplay -m”. When I issue fstrim on the mounted btrfs volume, I get the following kernel messages:
-> 
-> attempt to access beyond end of device
-> sda1: rw=16387, want=252755893, limit=250067632
-> BTRFS warning (device dm-5): failed to trim 1 device(s), last error -5
-> 
-> At the same time, other logical volumes on the same physical volume are destroyed. Also the btrfs volume itself may be damaged (this seems to depend on the actual usage).
-> 
-> I can easily reproduce this issue locally and I’m currently bisecting. So far I could narrow down the range of commits to:
-> Good: 92fff53b7191cae566be9ca6752069426c7f8241
-> Bad: 225557446856448039a9e495da37b72c20071ef2
-> 
-> In this range of commits, there are only dm-related changes.
-> 
-> So far, I have not reproduced the issue with other file systems or a simplified stack. I first want to continue bisecting but this may take another day.
-> 
-> 
-> > Am 18.05.2019 um 12:26 schrieb Qu Wenruo <quwenruo.btrfs@gmx.com>:
-> > On 2019/5/18 下午5:18, Michael Laß wrote:
-> >> 
-> >>> Am 18.05.2019 um 06:09 schrieb Chris Murphy <lists@colorremedies.com>:
-> >>> 
-> >>> On Fri, May 17, 2019 at 11:37 AM Michael Laß <bevan@bi-co.net> wrote:
-> >>>> 
-> >>>> 
-> >>>> I tried to reproduce this issue: I recreated the btrfs file system, set up a minimal system and issued fstrim again. It printed the following error message:
-> >>>> 
-> >>>> fstrim: /: FITRIM ioctl failed: Input/output error
-> >>> 
-> >>> Huh. Any kernel message at the same time? I would expect any fstrim
-> >>> user space error message to also have a kernel message. Any i/o error
-> >>> suggests some kind of storage stack failure - which could be hardware
-> >>> or software, you can't know without seeing the kernel messages.
-> >> 
-> >> I missed that. The kernel messages are:
-> >> 
-> >> attempt to access beyond end of device
-> >> sda1: rw=16387, want=252755893, limit=250067632
-> >> BTRFS warning (device dm-5): failed to trim 1 device(s), last error -5
-> >> 
-> >> Here are some more information on the partitions and LVM physical segments:
-> >> 
-> >> fdisk -l /dev/sda:
-> >> 
-> >> Device     Boot Start       End   Sectors   Size Id Type
-> >> /dev/sda1  *     2048 250069679 250067632 119.2G 8e Linux LVM
-> >> 
-> >> pvdisplay -m:
-> >> 
-> >>  --- Physical volume ---
-> >>  PV Name               /dev/sda1
-> >>  VG Name               vg_system
-> >>  PV Size               119.24 GiB / not usable <22.34 MiB
-> >>  Allocatable           yes (but full)
-> >>  PE Size               32.00 MiB
-> >>  Total PE              3815
-> >>  Free PE               0
-> >>  Allocated PE          3815
-> >>  PV UUID               mqCLFy-iDnt-NfdC-lfSv-Maor-V1Ih-RlG8lP
-> >> 
-> >>  --- Physical Segments ---
-> >>  Physical extent 0 to 1248:
-> >>    Logical volume    /dev/vg_system/btrfs
-> >>    Logical extents   2231 to 3479
-> >>  Physical extent 1249 to 1728:
-> >>    Logical volume    /dev/vg_system/btrfs
-> >>    Logical extents   640 to 1119
-> >>  Physical extent 1729 to 1760:
-> >>    Logical volume    /dev/vg_system/grml-images
-> >>    Logical extents   0 to 31
-> >>  Physical extent 1761 to 2016:
-> >>    Logical volume    /dev/vg_system/swap
-> >>    Logical extents   0 to 255
-> >>  Physical extent 2017 to 2047:
-> >>    Logical volume    /dev/vg_system/btrfs
-> >>    Logical extents   3480 to 3510
-> >>  Physical extent 2048 to 2687:
-> >>    Logical volume    /dev/vg_system/btrfs
-> >>    Logical extents   0 to 639
-> >>  Physical extent 2688 to 3007:
-> >>    Logical volume    /dev/vg_system/btrfs
-> >>    Logical extents   1911 to 2230
-> >>  Physical extent 3008 to 3320:
-> >>    Logical volume    /dev/vg_system/btrfs
-> >>    Logical extents   1120 to 1432
-> >>  Physical extent 3321 to 3336:
-> >>    Logical volume    /dev/vg_system/boot
-> >>    Logical extents   0 to 15
-> >>  Physical extent 3337 to 3814:
-> >>    Logical volume    /dev/vg_system/btrfs
-> >>    Logical extents   1433 to 1910
-> >> 
-> >> 
-> >> Would btrfs even be able to accidentally trim parts of other LVs or does this clearly hint towards a LVM/dm issue?
-> > 
-> > I can't speak sure, but (at least for latest kernel) btrfs has a lot of
-> > extra mount time self check, including chunk stripe check against
-> > underlying device, thus the possibility shouldn't be that high for btrfs.
-> 
-> Indeed, bisecting the issue led me to a range of commits that only contains dm-related and no btrfs-related changes. So I assume this is a bug in dm.
-> 
-> >> Is there an easy way to somehow trace the trim through the different layers so one can see where it goes wrong?
-> > 
-> > Sure, you could use dm-log-writes.
-> > It will record all read/write (including trim) for later replay.
-> > 
-> > So in your case, you can build the storage stack like:
-> > 
-> > Btrfs
-> > <dm-log-writes>
-> > LUKS/dmcrypt
-> > LVM
-> > MBR partition
-> > Samsung SSD
-> > 
-> > Then replay the log (using src/log-write/replay-log in fstests) with
-> > verbose output, you can verify every trim operation against the dmcrypt
-> > device size.
-> > 
-> > If all trim are fine, then move the dm-log-writes a layer lower, until
-> > you find which layer is causing the problem.
-> 
-> That sounds like a plan! However, I first want to continue bisecting as I am afraid to lose my reproducer by changing parts of my storage stack.
-> 
-> Cheers,
-> Michael
-> 
-> > 
-> > Thanks,
-> > Qu
-> >> 
-> >> Cheers,
-> >> Michael
-> >> 
-> >> PS: Current state of bisection: It looks like the error was introduced somewhere between b5dd0c658c31b469ccff1b637e5124851e7a4a1c and v5.1.
-> 
+     Processing LV swap in VG cry.
+ --- Logical volume ---
+     global/lvdisplay_shows_full_device_path not found in config:
+defaulting to 0
+ LV Path                /dev/cry/swap
+ LV Name                swap
+ VG Name                cry
+ LV UUID                c4iLex-xxMu-Quyr-4qkt-hFk2-uOb5-BDF5ls
+ LV Write Access        read/write
+ LV Creation host, time glet, 2018-11-02 17:51:43 +0100
+ LV Status              available
+ # open                 2
+ LV Size                70,00 GiB
+ Current LE             17920
+ Segments               2
+ Allocation             inherit
+ Read ahead sectors     auto
+ - currently set to     256
+ Block device           254:2
+
+     Processing LV home in VG cry.
+ --- Logical volume ---
+     global/lvdisplay_shows_full_device_path not found in config:
+defaulting to 0
+ LV Path                /dev/cry/home
+ LV Name                home
+ VG Name                cry
+ LV UUID                jycl7w-59lN-F3Ne-DBDa-G21g-CAmb-ROvIaX
+ LV Write Access        read/write
+ LV Creation host, time glet, 2018-11-02 17:51:50 +0100
+ LV Status              available
+ # open                 1
+ LV Size                <2,71 TiB
+ Current LE             709591
+ Segments               2
+ Allocation             inherit
+ Read ahead sectors     auto
+ - currently set to     256
+ Block device           254:3
+
+     Unlocking /run/lock/lvm/V_cry
+     Setting global/notify_dbus to 1
+
+Also, changing crypttab:
+root@glet:~# cat /etc/crypttab
+sda6_crypt UUID=fe03e2e6-b8b1-4672-8a3e-b536ac4e1539 none luks,discard
+
+removing discard didn't solve the issue.
+
+In my setup it was enough to boot the system, so having complain about
+/home mounting
+impossible (no filesystem found).
+
+Well, keep in mind that at boot I have a few things, like:
+root@glet:~# grep -i swap /etc/fstab
+/dev/mapper/cry-swap none       swap    sw,discard=once,pri=0
+    0       0
+/dev/nvme0n1p2       none       swap    sw,discard=once,pri=1
+
+And other stuff in cron and so on.
+
+So I can trigger the problem at boot (ubuntu 19.04), by my changes.
+
+Hope it helps.
+
+Uhm, by the way, my SSD (latest firmware):
+
+root@glet:~# hdparm -I /dev/sda
+
+/dev/sda:
+
+ATA device, with non-removable media
+       Model Number:       Samsung SSD 860 EVO 4TB
+       Serial Number:      S3YPNWAK101163T
+       Firmware Revision:  RVT02B6Q
+       Transport:          Serial, ATA8-AST, SATA 1.0a, SATA II
+Extensions, SATA Rev 2.5, SATA Rev 2.6, SATA Rev 3.0
+Standards:
+       Used: unknown (minor revision code 0x005e)
+       Supported: 11 8 7 6 5
+       Likely used: 11
+Configuration:
+       Logical         max     current
+       cylinders       16383   16383
+       heads           16      16
+       sectors/track   63      63
+       --
+       CHS current addressable sectors:    16514064
+       LBA    user addressable sectors:   268435455
+       LBA48  user addressable sectors:  7814037168
+       Logical  Sector size:                   512 bytes
+       Physical Sector size:                   512 bytes
+       Logical Sector-0 offset:                  0 bytes
+       device size with M = 1024*1024:     3815447 MBytes
+       device size with M = 1000*1000:     4000787 MBytes (4000 GB)
+       cache/buffer size  = unknown
+       Form Factor: 2.5 inch
+       Nominal Media Rotation Rate: Solid State Device
+Capabilities:
+       LBA, IORDY(can be disabled)
+       Queue depth: 32
+       Standby timer values: spec'd by Standard, no device specific minimum
+       R/W multiple sector transfer: Max = 1   Current = 1
+       DMA: mdma0 mdma1 mdma2 udma0 udma1 udma2 udma3 udma4 udma5 *udma6
+            Cycle time: min=120ns recommended=120ns
+       PIO: pio0 pio1 pio2 pio3 pio4
+            Cycle time: no flow control=120ns  IORDY flow control=120ns
+Commands/features:
+       Enabled Supported:
+          *    SMART feature set
+               Security Mode feature set
+          *    Power Management feature set
+          *    Write cache
+          *    Look-ahead
+          *    Host Protected Area feature set
+          *    WRITE_BUFFER command
+          *    READ_BUFFER command
+          *    NOP cmd
+          *    DOWNLOAD_MICROCODE
+               SET_MAX security extension
+          *    48-bit Address feature set
+          *    Device Configuration Overlay feature set
+          *    Mandatory FLUSH_CACHE
+          *    FLUSH_CACHE_EXT
+          *    SMART error logging
+          *    SMART self-test
+          *    General Purpose Logging feature set
+          *    WRITE_{DMA|MULTIPLE}_FUA_EXT
+          *    64-bit World wide name
+               Write-Read-Verify feature set
+          *    WRITE_UNCORRECTABLE_EXT command
+          *    {READ,WRITE}_DMA_EXT_GPL commands
+          *    Segmented DOWNLOAD_MICROCODE
+          *    Gen1 signaling speed (1.5Gb/s)
+          *    Gen2 signaling speed (3.0Gb/s)
+          *    Gen3 signaling speed (6.0Gb/s)
+          *    Native Command Queueing (NCQ)
+          *    Phy event counters
+          *    READ_LOG_DMA_EXT equivalent to READ_LOG_EXT
+          *    DMA Setup Auto-Activate optimization
+          *    Device-initiated interface power management
+          *    Asynchronous notification (eg. media change)
+          *    Software settings preservation
+          *    Device Sleep (DEVSLP)
+          *    SMART Command Transport (SCT) feature set
+          *    SCT Write Same (AC2)
+          *    SCT Error Recovery Control (AC3)
+          *    SCT Features Control (AC4)
+          *    SCT Data Tables (AC5)
+          *    reserved 69[4]
+          *    DOWNLOAD MICROCODE DMA command
+          *    SET MAX SETPASSWORD/UNLOCK DMA commands
+          *    WRITE BUFFER DMA command
+          *    READ BUFFER DMA command
+          *    Data Set Management TRIM supported (limit 8 blocks)
+          *    Deterministic read ZEROs after TRIM
+Security:
+       Master password revision code = 65534
+               supported
+       not     enabled
+       not     locked
+       not     frozen
+       not     expired: security count
+               supported: enhanced erase
+       4min for SECURITY ERASE UNIT. 8min for ENHANCED SECURITY ERASE UNIT.
+Logical Unit WWN Device Identifier: 5002538e7001e8a7
+       NAA             : 5
+       IEEE OUI        : 002538
+       Unique ID       : e7001e8a7
+Device Sleep:
+       DEVSLP Exit Timeout (DETO): 50 ms (drive)
+       Minimum DEVSLP Assertion Time (MDAT): 30 ms (drive)
+Checksum: correct
