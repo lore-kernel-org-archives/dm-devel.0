@@ -1,37 +1,56 @@
-From: Guilherme Piccoli <gpiccoli@canonical.com>
-Subject: Re: [PATCH 2/2] md/raid0: Do not bypass blocking queue entered for
- raid0 bios
-Date: Mon, 20 May 2019 16:25:59 -0300
-Message-ID: <CAHD1Q_zYXvqAGT3shFx=GcfQ=ZV91LZGEEK1wXsOuBMhrrTyDQ@mail.gmail.com>
-References: <20190430223722.20845-1-gpiccoli@canonical.com>
- <20190430223722.20845-2-gpiccoli@canonical.com> <CAPhsuW4SeUhNOJJkEf9wcLjbbc9qX0=C8zqbyCtC7Q8fdL91hw@mail.gmail.com>
- <c8721ba3-5d38-7906-5049-e2b16e967ecf@canonical.com> <CAPhsuW6ahmkUhCgns=9WHPXSvYefB0Gmr1oB7gdZiD86sKyHFg@mail.gmail.com>
- <5CD2A172.4010302@youngman.org.uk> <0ad36b2f-ec36-6930-b587-da0526613567@gpiccoli.net>
- <5CD3096B.4030302@youngman.org.uk> <CALJn8nOTCcOtFJ1SzZAuJxNuxzf2Tq7Yw34h1E5XE-mbn5CUbg@mail.gmail.com>
- <CAPhsuW7AwsWiHiqaW55paqtiCLvt3U9C+sQ50fbBr1v=czATyg@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <CAPhsuW7AwsWiHiqaW55paqtiCLvt3U9C+sQ50fbBr1v=czATyg@mail.gmail.com>
-Sender: stable-owner@vger.kernel.org
-To: Song Liu <liu.song.a23@gmail.com>
-Cc: "Guilherme G. Piccoli" <kernel@gpiccoli.net>, Wols Lists <antlists@youngman.org.uk>, axboe@kernel.dk, linux-block@vger.kernel.org, linux-raid <linux-raid@vger.kernel.org>, dm-devel@redhat.com, Gavin Guo <gavin.guo@canonical.com>, Jay Vosburgh <jay.vosburgh@canonical.com>, Ming Lei <ming.lei@redhat.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, stable@vger.kernel.org
+From: =?utf-8?Q?Michael_La=C3=9F?= <bevan@bi-co.net>
+Subject: Re: fstrim discarding too many or wrong blocks on Linux 5.1, leading
+ to data loss
+Date: Mon, 20 May 2019 21:58:20 +0200
+Message-ID: <A140375B-7C55-4D1D-8892-3C93E5F0E49F@bi-co.net>
+References: <297da4cbe20235080205719805b08810@bi-co.net>
+ <CAJCQCtR-uo9fgs66pBMEoYX_xAye=O-L8kiMwyAdFjPS5T4+CA@mail.gmail.com>
+ <8C31D41C-9608-4A65-B543-8ABCC0B907A0@bi-co.net>
+ <CAJCQCtTZWXUgUDh8vn0BFeEbAdKToDSVYYw4Q0bt0rECQr9nxQ@mail.gmail.com>
+ <AD966642-1043-468D-BABF-8FC9AF514D36@bi-co.net>
+ <158a3491-e4d2-d905-7f58-11a15bddcd70@gmx.com>
+ <C1CD4646-E75D-4AAF-9CD6-B3AC32495FD3@bi-co.net>
+ <CAK-xaQYPs62v971zm1McXw_FGzDmh_vpz3KLEbxzkmrsSgTfXw@mail.gmail.com>
+ <9D4ECE0B-C9DD-4BAD-A764-9DE2FF2A10C7@bi-co.net>
+ <CAK-xaQYakXcAbhfiH_VbqWkh+HBJD5N69ktnnA7OnWdhL6fDLA@mail.gmail.com>
+ <ea5552b8-7b6a-2516-d968-c3f3c731e159@gmail.com>
+Mime-Version: 1.0 (Mac OS X Mail 12.4 \(3445.104.11\))
+Content-Type: text/plain;
+        charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <ea5552b8-7b6a-2516-d968-c3f3c731e159@gmail.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Milan Broz <gmazyland@gmail.com>
+Cc: Andrea Gelmini <andrea.gelmini@gelma.net>, Qu Wenruo <quwenruo.btrfs@gmx.com>, Chris Murphy <lists@colorremedies.com>, Btrfs BTRFS <linux-btrfs@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, May 20, 2019 at 1:24 PM Song Liu <liu.song.a23@gmail.com> wrote:
->
-> On Fri, May 17, 2019 at 9:19 AM Guilherme G. Piccoli
->
-> I will process it. It was delayed due to the merge window.
->
-> Thanks,
-> Song
 
+> Am 20.05.2019 um 18:45 schrieb Milan Broz <gmazyland@gmail.com>:
+> 
+> On 20/05/2019 16:53, Andrea Gelmini wrote:
+> ...
+>> Also, changing crypttab:
+>> root@glet:~# cat /etc/crypttab
+>> sda6_crypt UUID=fe03e2e6-b8b1-4672-8a3e-b536ac4e1539 none luks,discard
+>> 
+>> removing discard didn't solve the issue.
+> 
+> This is very strange, disabling discard should reject every discard IO
+> on the dmcrypt layer. Are you sure it was really disabled?
+> 
+> Note, it is the root filesystem, so you have to regenerate initramfs
+> to update crypttab inside it.
 
-Thank you Song! I'm ready to send a v2, just to match the v2 of patch
-"1/2" of this series (but no
-change in this one, except rebase to 5.2-rc1).
+For me, I cannot reproduce the issue when I remove the discard option from the crypttab (and regenerate the initramfs). When trying fstrim I just get “the discard operation is not supported”, as I would expect. No damage is done to other logical volumes.
+
+However, my stack differs from Andrea’s in that I have dm-crypt on an LVM logical volume and not dm-crypt as a physical volume for LVM. Not sure if that makes a difference here.
 
 Cheers,
+Michael
 
-Guilherme
+> Could you paste "dmsetup table" and "lsblk -D" to verify that discard flag
+> is not there?
+> (I mean dmsetup table with the zeroed key, as a default and safe output.)
+> 
+> Milan
