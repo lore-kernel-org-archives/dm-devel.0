@@ -1,56 +1,93 @@
-From: =?utf-8?Q?Michael_La=C3=9F?= <bevan@bi-co.net>
-Subject: Re: fstrim discarding too many or wrong blocks on Linux 5.1, leading
- to data loss
-Date: Mon, 20 May 2019 21:58:20 +0200
-Message-ID: <A140375B-7C55-4D1D-8892-3C93E5F0E49F@bi-co.net>
-References: <297da4cbe20235080205719805b08810@bi-co.net>
- <CAJCQCtR-uo9fgs66pBMEoYX_xAye=O-L8kiMwyAdFjPS5T4+CA@mail.gmail.com>
- <8C31D41C-9608-4A65-B543-8ABCC0B907A0@bi-co.net>
- <CAJCQCtTZWXUgUDh8vn0BFeEbAdKToDSVYYw4Q0bt0rECQr9nxQ@mail.gmail.com>
- <AD966642-1043-468D-BABF-8FC9AF514D36@bi-co.net>
- <158a3491-e4d2-d905-7f58-11a15bddcd70@gmx.com>
- <C1CD4646-E75D-4AAF-9CD6-B3AC32495FD3@bi-co.net>
- <CAK-xaQYPs62v971zm1McXw_FGzDmh_vpz3KLEbxzkmrsSgTfXw@mail.gmail.com>
- <9D4ECE0B-C9DD-4BAD-A764-9DE2FF2A10C7@bi-co.net>
- <CAK-xaQYakXcAbhfiH_VbqWkh+HBJD5N69ktnnA7OnWdhL6fDLA@mail.gmail.com>
- <ea5552b8-7b6a-2516-d968-c3f3c731e159@gmail.com>
-Mime-Version: 1.0 (Mac OS X Mail 12.4 \(3445.104.11\))
-Content-Type: text/plain;
-        charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <ea5552b8-7b6a-2516-d968-c3f3c731e159@gmail.com>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Milan Broz <gmazyland@gmail.com>
-Cc: Andrea Gelmini <andrea.gelmini@gelma.net>, Qu Wenruo <quwenruo.btrfs@gmx.com>, Chris Murphy <lists@colorremedies.com>, Btrfs BTRFS <linux-btrfs@vger.kernel.org>, dm-devel@redhat.com
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH] mpathpersist.8: fix examples in man page
+Date: Mon, 20 May 2019 22:09:22 +0200
+Message-ID: <20190520200922.27760-1-mwilck@suse.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+--prout-type is ignored in the REGISTER service action. The RESERVE service
+action takes a Reservation Key, not a Service action Reservation Key, as
+argument. The text mentions "Service Action Reservation Key" in several places
+where it means the Reservation Key. Add examples for unregistering the current
+key, and the CLEAR service action. Fix formatting with longer text in the
+description lines (the .TP formatting would produce bad results if the
+first line needs to be broken).
 
-> Am 20.05.2019 um 18:45 schrieb Milan Broz <gmazyland@gmail.com>:
-> 
-> On 20/05/2019 16:53, Andrea Gelmini wrote:
-> ...
->> Also, changing crypttab:
->> root@glet:~# cat /etc/crypttab
->> sda6_crypt UUID=fe03e2e6-b8b1-4672-8a3e-b536ac4e1539 none luks,discard
->> 
->> removing discard didn't solve the issue.
-> 
-> This is very strange, disabling discard should reject every discard IO
-> on the dmcrypt layer. Are you sure it was really disabled?
-> 
-> Note, it is the root filesystem, so you have to regenerate initramfs
-> to update crypttab inside it.
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ mpathpersist/mpathpersist.8 | 43 +++++++++++++++++++++++++++++--------
+ 1 file changed, 34 insertions(+), 9 deletions(-)
 
-For me, I cannot reproduce the issue when I remove the discard option from the crypttab (and regenerate the initramfs). When trying fstrim I just get “the discard operation is not supported”, as I would expect. No damage is done to other logical volumes.
-
-However, my stack differs from Andrea’s in that I have dm-crypt on an LVM logical volume and not dm-crypt as a physical volume for LVM. Not sure if that makes a difference here.
-
-Cheers,
-Michael
-
-> Could you paste "dmsetup table" and "lsblk -D" to verify that discard flag
-> is not there?
-> (I mean dmsetup table with the zeroed key, as a default and safe output.)
-> 
-> Milan
+diff --git a/mpathpersist/mpathpersist.8 b/mpathpersist/mpathpersist.8
+index 885491dd..cd602e40 100644
+--- a/mpathpersist/mpathpersist.8
++++ b/mpathpersist/mpathpersist.8
+@@ -167,18 +167,43 @@ PR In: maximum allocation length. LEN is a decimal number between 0 and 8192.
+ .SH EXAMPLE
+ .\" ----------------------------------------------------------------------------
+ .
+-.TP
+-Register the Service Action Reservation Key for the /dev/mapper/mpath9 device:
+-\fBmpathpersist --out --register --param-sark=\fI123abc \fB--prout-type=\fI5 /dev/mapper/mpath9\fR
+-.TP
+-Read the Service Action Reservation Key for the /dev/mapper/mpath9 device:
++.PP
++Register the key \(dq123abc\(dq for the /dev/mapper/mpath9 device:
++.RS
++\fBmpathpersist --out --register --param-sark=\fI123abc /dev/mapper/mpath9\fR
++.RE
++.PP
++Read registered reservation keys for the /dev/mapper/mpath9 device:
++.RS
+ \fBmpathpersist -i -k \fI/dev/mapper/mpath9\fR
+-.TP
+-Reserve the Service Action Reservation Key for the /dev/mapper/mpath9 device:
+-\fBmpathpersist --out --reserve --param-sark=\fI123abc \fB--prout-type=\fI8 \fB-d \fI/dev/mapper/mpath9\fR
+-.TP
++.RE
++.PP
++Create a reservation for the /dev/mapper/mpath9 device with the given
++reservation key:
++.RS
++\fBmpathpersist --out --reserve --param-rk=\fI123abc \fB--prout-type=\fI8 \fB-d \fI/dev/mapper/mpath9\fR
++.RE
++.PP
+ Read the reservation status of the /dev/mapper/mpath9 device:
++.RS
+ \fBmpathpersist -i -s -d \fI/dev/mapper/mpath9\fR
++.RE
++.PP
++Release the previously created reservation (note that the prout-type needs to
++be the same as above):
++.RS
++\fBmpathpersist --out --release --param-rk=\fI123abc \fB--prout-type=\fI8 \fB-d \fI/dev/mapper/mpath9\fR
++.RE
++.PP
++Remove the current key registered for this host (i.e. reset it to 0):
++.RS
++\fBmpathpersist --out --register-ignore -K \fI123abc\fB -S \fI0\fB \fI/dev/mapper/mpath9\fR
++.RE
++.PP
++Remove current reservation, and unregister all registered keys from all I_T nexuses:
++.RS
++\fBmpathpersist -oCK \fI123abc \fI/dev/mapper/mpath9\fR
++.RE
+ .
+ .
+ .\" ----------------------------------------------------------------------------
+-- 
+2.21.0
