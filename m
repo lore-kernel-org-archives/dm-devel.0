@@ -1,17 +1,12 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Dm-integrity freeze
-Date: Tue, 21 May 2019 18:07:36 -0400
-Message-ID: <20190521220736.GB30736@redhat.com>
-References: <5D8A23C5-B6AD-48EA-B0AD-AD1BD1A2B97B@gmail.com>
-	<9d19e5b1-b76f-27da-fa4a-f3a83e6e2791@gmail.com>
-	<2a12ef24-ab21-a9bb-af40-3743d0b8e2c7@knorrie.org>
-	<33d155ac-9b09-c8b0-3df1-88063dac964f@knorrie.org>
+Subject: [git pull] device mapper fix for 5.2-rc2
+Date: Tue, 21 May 2019 19:38:45 -0400
+Message-ID: <20190521233844.GA31426@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <33d155ac-9b09-c8b0-3df1-88063dac964f@knorrie.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,47 +16,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hans van Kranenburg <hans@knorrie.org>
-Cc: dm-crypt@saout.de, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <gmazyland@gmail.com>, Victor Helmholtz <victor.helmholtz@gmail.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Michael Lass <bevan@bi-co.net>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, May 21 2019 at  4:33pm -0400,
-Hans van Kranenburg <hans@knorrie.org> wrote:
+Hi Linus,
 
-> Hi,
-> 
-> On 5/21/19 10:43 AM, Hans van Kranenburg wrote:
-> > Hi,
-> > 
-> > I'm seeing the same lockup, also 4.19. This is mdadm RAID10 on top of 4x
-> > a partition with only dm-integrity.
-> > 
-> > It just happened out of the blue, no heavy load or anything. All IO to
-> > it is frozen now.
-> > 
-> > [...]
-> 
-> There it is again... dmesg dump below. All cpus on 100% iowait.
-> 
-> It's triggered after a few minutes by running some Windows 2019 server
-> install (ugh, don't ask) in a Xen HVM domU, which writes into a raw
-> sparse file on a btrfs filesystem on LVM on mdadm RAID10 on 4x
-> dm-integrity (wheeee!!)...
-> 
-> This morning it was triggered a few minutes after starting an old
-> windows 2008 server image that I copied to this machine.
-> 
-> When running only other Linux vms, and when copying data onto
-> filesystems that live in LVM logical volumes I haven't seen this problem
-> yet, at all, in the last few weeks that this machine is running.
-> 
-> I noticed there's a "dm integrity: fix deadlock with overlapping I/O"
-> fix in a later 4.19. Is there any chance this is related? I have no
-> idea, but any hints or suggestions about what to try would be appreciated.
+The following changes since commit 8454fca4f53bbe5e0a71613192674c8ce5c52318:
 
-Yes, all your hung tasks are hung in wait_and_add_new_range().
+  dm: fix a couple brace coding style issues (2019-05-16 10:09:21 -0400)
 
-Please use that later 4.19 or apply commit 4ed319c6ac08 ("dm integrity:
-fix deadlock with overlapping I/O")
+are available in the Git repository at:
 
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.2/dm-fix-1
+
+for you to fetch changes up to 51b86f9a8d1c4bb4e3862ee4b4c5f46072f7520d:
+
+  dm: make sure to obey max_io_len_target_boundary (2019-05-21 19:15:20 -0400)
+
+Please pull, thanks.
 Mike
+
+----------------------------------------------------------------
+- Fix a particularly glaring oversight in a DM core commit from 5.1 that
+  doesn't properly trim special IOs (e.g. discards) relative to
+  corresponding target's max_io_len_target_boundary().
+
+----------------------------------------------------------------
+Michael Lass (1):
+      dm: make sure to obey max_io_len_target_boundary
+
+ drivers/md/dm.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
