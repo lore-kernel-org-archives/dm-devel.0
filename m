@@ -1,108 +1,72 @@
-From: Song Liu <liu.song.a23@gmail.com>
-Subject: Re: [PATCH V2 1/2] block: Fix a NULL pointer dereference in generic_make_request()
-Date: Mon, 20 May 2019 22:59:16 -0700
-Message-ID: <CAPhsuW6KayaNR-0eFHpvPG-LVuPFL_1OFjvZpOcnapVFe2vC9Q@mail.gmail.com>
-References: <20190520220911.25192-1-gpiccoli@canonical.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: [RFC 1/1] Add dm verity root hash pkcs7 sig validation.
+Date: Tue, 21 May 2019 09:38:35 +0200
+Message-ID: <7e922983-7716-e215-a29b-3154f7afb493@gmail.com>
+References: <20190520215422.23939-1-jaskarankhurana@linux.microsoft.com>
+ <20190520215422.23939-2-jaskarankhurana@linux.microsoft.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20190520220911.25192-1-gpiccoli@canonical.com>
-Sender: stable-owner@vger.kernel.org
-To: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
-Cc: linux-block@vger.kernel.org, linux-raid <linux-raid@vger.kernel.org>, dm-devel@redhat.com, axboe@kernel.dk, Gavin Guo <gavin.guo@canonical.com>, Jay Vosburgh <jay.vosburgh@canonical.com>, "Guilherme G. Piccoli" <kernel@gpiccoli.net>, stable@vger.kernel.org, Bart Van Assche <bvanassche@acm.org>, Ming Lei <ming.lei@redhat.com>, Eric Ren <renzhengeek@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190520215422.23939-2-jaskarankhurana@linux.microsoft.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org
 List-Id: dm-devel.ids
 
-On Mon, May 20, 2019 at 3:10 PM Guilherme G. Piccoli
-<gpiccoli@canonical.com> wrote:
->
-> Commit 37f9579f4c31 ("blk-mq: Avoid that submitting a bio concurrently
-> with device removal triggers a crash") introduced a NULL pointer
-> dereference in generic_make_request(). The patch sets q to NULL and
-> enter_succeeded to false; right after, there's an 'if (enter_succeeded)'
-> which is not taken, and then the 'else' will dereference q in
-> blk_queue_dying(q).
->
-> This patch just moves the 'q = NULL' to a point in which it won't trigger
-> the oops, although the semantics of this NULLification remains untouched.
->
-> A simple test case/reproducer is as follows:
-> a) Build kernel v5.2-rc1 with CONFIG_BLK_CGROUP=n.
->
-> b) Create a raid0 md array with 2 NVMe devices as members, and mount it
-> with an ext4 filesystem.
->
-> c) Run the following oneliner (supposing the raid0 is mounted in /mnt):
-> (dd of=/mnt/tmp if=/dev/zero bs=1M count=999 &); sleep 0.3;
-> echo 1 > /sys/block/nvme0n1/device/device/remove
-> (whereas nvme0n1 is the 2nd array member)
->
-> This will trigger the following oops:
->
-> BUG: unable to handle kernel NULL pointer dereference at 0000000000000078
-> PGD 0 P4D 0
-> Oops: 0000 [#1] SMP PTI
-> RIP: 0010:generic_make_request+0x32b/0x400
-> Call Trace:
->  submit_bio+0x73/0x140
->  ext4_io_submit+0x4d/0x60
->  ext4_writepages+0x626/0xe90
->  do_writepages+0x4b/0xe0
-> [...]
->
-> This patch has no functional changes and preserves the md/raid0 behavior
-> when a member is removed before kernel v4.17.
->
-> Cc: stable@vger.kernel.org # v4.17
-> Reviewed-by: Bart Van Assche <bvanassche@acm.org>
-> Reviewed-by: Ming Lei <ming.lei@redhat.com>
-> Tested-by: Eric Ren <renzhengeek@gmail.com>
-> Fixes: 37f9579f4c31 ("blk-mq: Avoid that submitting a bio concurrently with device removal triggers a crash")
-> Signed-off-by: Guilherme G. Piccoli <gpiccoli@canonical.com>
+On 20/05/2019 23:54, Jaskaran Khurana wrote:
+> Adds in-kernel pkcs7 signature checking for the roothash of
+> the dm-verity hash tree.
+> 
+> The verification is to support cases where the roothash is not secured by
+> Trusted Boot, UEFI Secureboot or similar technologies.
+> One of the use cases for this is for dm-verity volumes mounted after boot,
+> the root hash provided during the creation of the dm-verity volume has to
+> be secure and thus in-kernel validation implemented here will be used
+> before we trust the root hash and allow the block device to be created.
+> 
+> The signature being provided for verification must verify the root hash and 
+> must be trusted by the builtin keyring for verification to succeed.
+> 
+> Adds DM_VERITY_VERIFY_ROOTHASH_SIG: roothash verification
+> against the roothash signature file *if* specified, if signature file is
+> specified verification must succeed prior to creation of device mapper 
+> block device.
+> 
+> Adds DM_VERITY_VERIFY_ROOTHASH_SIG_FORCE: roothash signature *must* be
+> specified for all dm verity volumes and verification must succeed prior
+> to creation of device mapper block device.
 
-Applied both patches! Thanks for the fix!
+I am not sure this is a good idea. If I understand it correctly, this will
+block creating another dm-verity mappings without PKCS7 signature, and these
+are used in many other environments and applications that could possibly
+run on that system later.
 
-> ---
->
-> Changes V1->V2:
-> * Implemented Ming's suggestion (drop {} from if) - thanks Ming!
-> * Rebased to v5.2-rc1
-> * Added Reviewed-by/Tested-by tags
->
-> Also, Ming mentioned a new patch series[0] that will refactor legacy IO
-> path so probably the bug won't happen anymore. Even in this case,
-> I consider this patch important specially aiming the stable releases,
-> in which backporting small bugfixes is much simpler than more complex
-> patch sets.
->
-> [0] https://lore.kernel.org/linux-block/20190515030310.20393-1-ming.lei@redhat.com/T/#t
->
->  block/blk-core.c | 5 ++---
->  1 file changed, 2 insertions(+), 3 deletions(-)
->
-> diff --git a/block/blk-core.c b/block/blk-core.c
-> index 419d600e6637..e887915c7804 100644
-> --- a/block/blk-core.c
-> +++ b/block/blk-core.c
-> @@ -1054,10 +1054,8 @@ blk_qc_t generic_make_request(struct bio *bio)
->                         flags = 0;
->                         if (bio->bi_opf & REQ_NOWAIT)
->                                 flags = BLK_MQ_REQ_NOWAIT;
-> -                       if (blk_queue_enter(q, flags) < 0) {
-> +                       if (blk_queue_enter(q, flags) < 0)
->                                 enter_succeeded = false;
-> -                               q = NULL;
-> -                       }
->                 }
->
->                 if (enter_succeeded) {
-> @@ -1088,6 +1086,7 @@ blk_qc_t generic_make_request(struct bio *bio)
->                                 bio_wouldblock_error(bio);
->                         else
->                                 bio_io_error(bio);
-> +                       q = NULL;
->                 }
->                 bio = bio_list_pop(&bio_list_on_stack[0]);
->         } while (bio);
-> --
-> 2.21.0
->
+(But I have no idea how to solve it better though :-)
+
+...
+
+> +	/* Root hash signature is  a optional parameter*/
+> +	r = verity_verify_root_hash(root_hash_digest_to_validate,
+> +				    strlen(root_hash_digest_to_validate),
+> +				    verify_args.sig,
+> +				    verify_args.sig_size);
+> +	if (r < 0) {
+> +		ti->error = "Root hash verification failed";
+> +		goto bad;
+> +	}
+
+You are sending the PKCS7 signature as a (quite large) binary blob inside the mapping table.
+
+I am not sure if it is possible here (I guess so), but why not put this it kernel keyring
+and then just reference it from mapping table?
+(We use kernel keyring in libcryptsetup already for dm-crypt.)
+
+It will also solve an issue in userspace patch, when you are reading the signature
+file too late (devices can be suspended in that moment, so I would prefer to download
+sig file to keyring in advance, and then just reference it in mapping table).
+
+(I guess you will send merge request for veritysetup userspace part later.)
+
+Milan
