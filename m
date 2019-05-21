@@ -1,58 +1,70 @@
-From: Pankaj Gupta <pagupta-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v10 7/7] xfs: disable map_sync for async flush
-Date: Tue, 21 May 2019 19:07:13 +0530
-Message-ID: <20190521133713.31653-8-pagupta@redhat.com>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: Re: [PATCH v10 2/7] virtio-pmem: Add virtio pmem driver
+Date: Tue, 21 May 2019 09:51:35 -0400
+Message-ID: <20190521094543-mutt-send-email-mst@kernel.org>
 References: <20190521133713.31653-1-pagupta@redhat.com>
+ <20190521133713.31653-3-pagupta@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20190521133713.31653-1-pagupta-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org, lcapitulino-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, zwisler-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jstaron-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, david-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, nilal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lenb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kilobyte-b9QjgO8OEXPVItvQsEIGlw@public.gmane.org, riel-ebMLmSuQjDVBDgjK7y7TUQ@public.gmane.org, yuval.shaia-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, stefanha-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kwolf-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, xiaoguangrong.eric-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, cohuck-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org, imammedo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190521133713.31653-3-pagupta@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Pankaj Gupta <pagupta@redhat.com>
+Cc: linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, kvm@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-acpi@vger.kernel.org, qemu-devel@nongnu.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, dm-devel@redhat.com, dan.j.williams@intel.com, zwisler@kernel.org, vishal.l.verma@intel.com, dave.jiang@intel.com, jasowang@redhat.com, willy@infradead.org, rjw@rjwysocki.net, hch@infradead.org, lenb@kernel.org, jack@suse.cz, tytso@mit.edu, adilger.kernel@dilger.ca, darrick.wong@oracle.com, lcapitulino@redhat.com, kwolf@redhat.com, imammedo@redhat.com, jmoyer@redhat.com, nilal@redhat.com, riel@surriel.com, stefanha@redhat.com, aarcange@redhat.com, david@redhat.com, david@fromorbit.com, cohuck@redhat.com, xiaoguangrong.er
 List-Id: dm-devel.ids
 
-Dont support 'MAP_SYNC' with non-DAX files and DAX files
-with asynchronous dax_device. Virtio pmem provides
-asynchronous host page cache flush mechanism. We don't
-support 'MAP_SYNC' with virtio pmem and xfs.
+On Tue, May 21, 2019 at 07:07:08PM +0530, Pankaj Gupta wrote:
+> diff --git a/include/uapi/linux/virtio_pmem.h b/include/uapi/linux/virtio_pmem.h
+> new file mode 100644
+> index 000000000000..7a3e2fe52415
+> --- /dev/null
+> +++ b/include/uapi/linux/virtio_pmem.h
+> @@ -0,0 +1,35 @@
+> +/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
+> +/*
+> + * Definitions for virtio-pmem devices.
+> + *
+> + * Copyright (C) 2019 Red Hat, Inc.
+> + *
+> + * Author(s): Pankaj Gupta <pagupta@redhat.com>
+> + */
+> +
+> +#ifndef _UAPI_LINUX_VIRTIO_PMEM_H
+> +#define _UAPI_LINUX_VIRTIO_PMEM_H
+> +
+> +#include <linux/types.h>
+> +#include <linux/virtio_types.h>
+> +#include <linux/virtio_ids.h>
+> +#include <linux/virtio_config.h>
+> +
+> +struct virtio_pmem_config {
+> +	__le64 start;
+> +	__le64 size;
+> +};
+> +
 
-Signed-off-by: Pankaj Gupta <pagupta-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Reviewed-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
----
- fs/xfs/xfs_file.c | 9 ++++++---
- 1 file changed, 6 insertions(+), 3 deletions(-)
+config generally should be __u64.
+Are you sure sparse does not complain?
 
-diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
-index a7ceae90110e..f17652cca5ff 100644
---- a/fs/xfs/xfs_file.c
-+++ b/fs/xfs/xfs_file.c
-@@ -1203,11 +1203,14 @@ xfs_file_mmap(
- 	struct file	*filp,
- 	struct vm_area_struct *vma)
- {
-+	struct dax_device 	*dax_dev;
-+
-+	dax_dev = xfs_find_daxdev_for_inode(file_inode(filp));
- 	/*
--	 * We don't support synchronous mappings for non-DAX files. At least
--	 * until someone comes with a sensible use case.
-+	 * We don't support synchronous mappings for non-DAX files and
-+	 * for DAX files if underneath dax_device is not synchronous.
- 	 */
--	if (!IS_DAX(file_inode(filp)) && (vma->vm_flags & VM_SYNC))
-+	if (!daxdev_mapping_supported(vma, dax_dev))
- 		return -EOPNOTSUPP;
- 
- 	file_accessed(filp);
+
+> +#define VIRTIO_PMEM_REQ_TYPE_FLUSH      0
+> +
+> +struct virtio_pmem_resp {
+> +	/* Host return status corresponding to flush request */
+> +	__virtio32 ret;
+> +};
+> +
+> +struct virtio_pmem_req {
+> +	/* command type */
+> +	__virtio32 type;
+> +};
+> +
+> +#endif
+> -- 
+> 2.20.1
+
+Sorry why are these __virtio32 not __le32?
+
 -- 
-2.20.1
+MST
