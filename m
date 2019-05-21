@@ -1,19 +1,16 @@
-From: Andrea Gelmini <andrea.gelmini@gmail.com>
-Subject: Re: fstrim discarding too many or wrong blocks on Linux
- 5.1, leading to data loss
-Date: Mon, 20 May 2019 15:53:30 +0200
-Message-ID: <CAK-xaQYPs62v971zm1McXw_FGzDmh_vpz3KLEbxzkmrsSgTfXw@mail.gmail.com>
-References: <297da4cbe20235080205719805b08810@bi-co.net>
-	<CAJCQCtR-uo9fgs66pBMEoYX_xAye=O-L8kiMwyAdFjPS5T4+CA@mail.gmail.com>
-	<8C31D41C-9608-4A65-B543-8ABCC0B907A0@bi-co.net>
-	<CAJCQCtTZWXUgUDh8vn0BFeEbAdKToDSVYYw4Q0bt0rECQr9nxQ@mail.gmail.com>
-	<AD966642-1043-468D-BABF-8FC9AF514D36@bi-co.net>
-	<158a3491-e4d2-d905-7f58-11a15bddcd70@gmx.com>
-	<C1CD4646-E75D-4AAF-9CD6-B3AC32495FD3@bi-co.net>
+From: Hans van Kranenburg <hans@knorrie.org>
+Subject: Re: [dm-crypt] Dm-integrity freeze
+Date: Tue, 21 May 2019 22:33:30 +0200
+Message-ID: <33d155ac-9b09-c8b0-3df1-88063dac964f@knorrie.org>
+References: <5D8A23C5-B6AD-48EA-B0AD-AD1BD1A2B97B@gmail.com>
+	<9d19e5b1-b76f-27da-fa4a-f3a83e6e2791@gmail.com>
+	<2a12ef24-ab21-a9bb-af40-3743d0b8e2c7@knorrie.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3843945107317580719=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <C1CD4646-E75D-4AAF-9CD6-B3AC32495FD3@bi-co.net>
+In-Reply-To: <2a12ef24-ab21-a9bb-af40-3743d0b8e2c7@knorrie.org>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,432 +20,345 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: =?UTF-8?B?TWljaGFlbCBMYcOf?= <bevan@bi-co.net>
-Cc: dm-devel@redhat.com, Chris Murphy <lists@colorremedies.com>, Btrfs BTRFS <linux-btrfs@vger.kernel.org>, Qu Wenruo <quwenruo.btrfs@gmx.com>
+To: Milan Broz <gmazyland@gmail.com>, Victor Helmholtz <victor.helmholtz@gmail.com>, dm-crypt@saout.de
+Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
---===============3843945107317580719==
-Content-Type: multipart/alternative; boundary="000000000000794ed60589520fbd"
+Hi,
 
---000000000000794ed60589520fbd
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+On 5/21/19 10:43 AM, Hans van Kranenburg wrote:
+> Hi,
+> 
+> I'm seeing the same lockup, also 4.19. This is mdadm RAID10 on top of 4x
+> a partition with only dm-integrity.
+> 
+> It just happened out of the blue, no heavy load or anything. All IO to
+> it is frozen now.
+> 
+> [...]
 
-Had same issue on a similar (well,  quite exactly same setup), on a machine
-in production.
-But It Is more than 4 tera of data, so in the end I re-dd the image and
-restarted, sticking to 5.0.y branch never had problem.
-I was able to replicate it. SSD Samsung, more recent version.
-Not with btrfs but ext4, by the way.
-I saw the discard of big initial part of lvm partition. I can't find
-superblocks Copy in the First half, but torwards the end of logical volume.
+There it is again... dmesg dump below. All cpus on 100% iowait.
 
-Sorry, i can't play with It again, but i have the whole (4 tera) dd image
-with the bug.
+It's triggered after a few minutes by running some Windows 2019 server
+install (ugh, don't ask) in a Xen HVM domU, which writes into a raw
+sparse file on a btrfs filesystem on LVM on mdadm RAID10 on 4x
+dm-integrity (wheeee!!)...
 
+This morning it was triggered a few minutes after starting an old
+windows 2008 server image that I copied to this machine.
 
-Ciao,
-Gelma
+When running only other Linux vms, and when copying data onto
+filesystems that live in LVM logical volumes I haven't seen this problem
+yet, at all, in the last few weeks that this machine is running.
 
-Il lun 20 mag 2019, 02:38 Michael La=C3=9F <bevan@bi-co.net> ha scritto:
+I noticed there's a "dm integrity: fix deadlock with overlapping I/O"
+fix in a later 4.19. Is there any chance this is related? I have no
+idea, but any hints or suggestions about what to try would be appreciated.
 
-> CC'ing dm-devel, as this seems to be a dm-related issue. Short summary fo=
-r
-> new readers:
->
-> On Linux 5.1 (tested up to 5.1.3), fstrim may discard too many blocks,
-> leading to data loss. I have the following storage stack:
->
-> btrfs
-> dm-crypt (LUKS)
-> LVM logical volume
-> LVM single physical volume
-> MBR partition
-> Samsung 830 SSD
->
-> The mapping between logical volumes and physical segments is a bit mixed
-> up. See below for the output for =E2=80=9Cpvdisplay -m=E2=80=9D. When I i=
-ssue fstrim on the
-> mounted btrfs volume, I get the following kernel messages:
->
-> attempt to access beyond end of device
-> sda1: rw=3D16387, want=3D252755893, limit=3D250067632
-> BTRFS warning (device dm-5): failed to trim 1 device(s), last error -5
->
-> At the same time, other logical volumes on the same physical volume are
-> destroyed. Also the btrfs volume itself may be damaged (this seems to
-> depend on the actual usage).
->
-> I can easily reproduce this issue locally and I=E2=80=99m currently bisec=
-ting. So
-> far I could narrow down the range of commits to:
-> Good: 92fff53b7191cae566be9ca6752069426c7f8241
-> Bad: 225557446856448039a9e495da37b72c20071ef2
->
-> In this range of commits, there are only dm-related changes.
->
-> So far, I have not reproduced the issue with other file systems or a
-> simplified stack. I first want to continue bisecting but this may take
-> another day.
->
->
-> > Am 18.05.2019 um 12:26 schrieb Qu Wenruo <quwenruo.btrfs@gmx.com>:
-> > On 2019/5/18 =E4=B8=8B=E5=8D=885:18, Michael La=C3=9F wrote:
-> >>
-> >>> Am 18.05.2019 um 06:09 schrieb Chris Murphy <lists@colorremedies.com>=
-:
-> >>>
-> >>> On Fri, May 17, 2019 at 11:37 AM Michael La=C3=9F <bevan@bi-co.net> w=
-rote:
-> >>>>
-> >>>>
-> >>>> I tried to reproduce this issue: I recreated the btrfs file system,
-> set up a minimal system and issued fstrim again. It printed the following
-> error message:
-> >>>>
-> >>>> fstrim: /: FITRIM ioctl failed: Input/output error
-> >>>
-> >>> Huh. Any kernel message at the same time? I would expect any fstrim
-> >>> user space error message to also have a kernel message. Any i/o error
-> >>> suggests some kind of storage stack failure - which could be hardware
-> >>> or software, you can't know without seeing the kernel messages.
-> >>
-> >> I missed that. The kernel messages are:
-> >>
-> >> attempt to access beyond end of device
-> >> sda1: rw=3D16387, want=3D252755893, limit=3D250067632
-> >> BTRFS warning (device dm-5): failed to trim 1 device(s), last error -5
-> >>
-> >> Here are some more information on the partitions and LVM physical
-> segments:
-> >>
-> >> fdisk -l /dev/sda:
-> >>
-> >> Device     Boot Start       End   Sectors   Size Id Type
-> >> /dev/sda1  *     2048 250069679 250067632 119.2G 8e Linux LVM
-> >>
-> >> pvdisplay -m:
-> >>
-> >>  --- Physical volume ---
-> >>  PV Name               /dev/sda1
-> >>  VG Name               vg_system
-> >>  PV Size               119.24 GiB / not usable <22.34 MiB
-> >>  Allocatable           yes (but full)
-> >>  PE Size               32.00 MiB
-> >>  Total PE              3815
-> >>  Free PE               0
-> >>  Allocated PE          3815
-> >>  PV UUID               mqCLFy-iDnt-NfdC-lfSv-Maor-V1Ih-RlG8lP
-> >>
-> >>  --- Physical Segments ---
-> >>  Physical extent 0 to 1248:
-> >>    Logical volume    /dev/vg_system/btrfs
-> >>    Logical extents   2231 to 3479
-> >>  Physical extent 1249 to 1728:
-> >>    Logical volume    /dev/vg_system/btrfs
-> >>    Logical extents   640 to 1119
-> >>  Physical extent 1729 to 1760:
-> >>    Logical volume    /dev/vg_system/grml-images
-> >>    Logical extents   0 to 31
-> >>  Physical extent 1761 to 2016:
-> >>    Logical volume    /dev/vg_system/swap
-> >>    Logical extents   0 to 255
-> >>  Physical extent 2017 to 2047:
-> >>    Logical volume    /dev/vg_system/btrfs
-> >>    Logical extents   3480 to 3510
-> >>  Physical extent 2048 to 2687:
-> >>    Logical volume    /dev/vg_system/btrfs
-> >>    Logical extents   0 to 639
-> >>  Physical extent 2688 to 3007:
-> >>    Logical volume    /dev/vg_system/btrfs
-> >>    Logical extents   1911 to 2230
-> >>  Physical extent 3008 to 3320:
-> >>    Logical volume    /dev/vg_system/btrfs
-> >>    Logical extents   1120 to 1432
-> >>  Physical extent 3321 to 3336:
-> >>    Logical volume    /dev/vg_system/boot
-> >>    Logical extents   0 to 15
-> >>  Physical extent 3337 to 3814:
-> >>    Logical volume    /dev/vg_system/btrfs
-> >>    Logical extents   1433 to 1910
-> >>
-> >>
-> >> Would btrfs even be able to accidentally trim parts of other LVs or
-> does this clearly hint towards a LVM/dm issue?
-> >
-> > I can't speak sure, but (at least for latest kernel) btrfs has a lot of
-> > extra mount time self check, including chunk stripe check against
-> > underlying device, thus the possibility shouldn't be that high for btrf=
-s.
->
-> Indeed, bisecting the issue led me to a range of commits that only
-> contains dm-related and no btrfs-related changes. So I assume this is a b=
-ug
-> in dm.
->
-> >> Is there an easy way to somehow trace the trim through the different
-> layers so one can see where it goes wrong?
-> >
-> > Sure, you could use dm-log-writes.
-> > It will record all read/write (including trim) for later replay.
-> >
-> > So in your case, you can build the storage stack like:
-> >
-> > Btrfs
-> > <dm-log-writes>
-> > LUKS/dmcrypt
-> > LVM
-> > MBR partition
-> > Samsung SSD
-> >
-> > Then replay the log (using src/log-write/replay-log in fstests) with
-> > verbose output, you can verify every trim operation against the dmcrypt
-> > device size.
-> >
-> > If all trim are fine, then move the dm-log-writes a layer lower, until
-> > you find which layer is causing the problem.
->
-> That sounds like a plan! However, I first want to continue bisecting as I
-> am afraid to lose my reproducer by changing parts of my storage stack.
->
-> Cheers,
-> Michael
->
-> >
-> > Thanks,
-> > Qu
-> >>
-> >> Cheers,
-> >> Michael
-> >>
-> >> PS: Current state of bisection: It looks like the error was introduced
-> somewhere between b5dd0c658c31b469ccff1b637e5124851e7a4a1c and v5.1.
->
->
+Right now, I still have the opportunity to stop the migration and keep
+using the previous hardware for some days, having the possibility to
+reproduce this a few times and try things, if you want.
 
---000000000000794ed60589520fbd
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+If not, I likely have to go try remove the dm-integrity layer, but I'd
+rather help fixing this issue.
 
-<div dir=3D"auto">Had same issue on a similar (well,=C2=A0 quite exactly sa=
-me setup), on a machine in production.<div dir=3D"auto">But It Is more than=
- 4 tera of data, so in the end I re-dd the image and restarted, sticking to=
- 5.0.y branch never had problem.</div><div dir=3D"auto">I was able to repli=
-cate it. SSD Samsung, more recent version.</div><div dir=3D"auto">Not with =
-btrfs but ext4, by the way.</div><div dir=3D"auto">I saw the discard of big=
- initial part of lvm partition. I can&#39;t find superblocks Copy in the Fi=
-rst half, but torwards the end of logical volume.</div><div dir=3D"auto"><b=
-r></div><div dir=3D"auto">Sorry, i can&#39;t play with It again, but i have=
- the whole (4 tera) dd image with the bug.</div><div dir=3D"auto"><br></div=
-><div dir=3D"auto"><br></div><div dir=3D"auto">Ciao,</div><div dir=3D"auto"=
->Gelma</div></div><br><div class=3D"gmail_quote"><div dir=3D"ltr" class=3D"=
-gmail_attr">Il lun 20 mag 2019, 02:38 Michael La=C3=9F &lt;<a href=3D"mailt=
-o:bevan@bi-co.net">bevan@bi-co.net</a>&gt; ha scritto:<br></div><blockquote=
- class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc soli=
-d;padding-left:1ex">CC&#39;ing dm-devel, as this seems to be a dm-related i=
-ssue. Short summary for new readers:<br>
-<br>
-On Linux 5.1 (tested up to 5.1.3), fstrim may discard too many blocks, lead=
-ing to data loss. I have the following storage stack:<br>
-<br>
-btrfs<br>
-dm-crypt (LUKS)<br>
-LVM logical volume<br>
-LVM single physical volume<br>
-MBR partition<br>
-Samsung 830 SSD<br>
-<br>
-The mapping between logical volumes and physical segments is a bit mixed up=
-. See below for the output for =E2=80=9Cpvdisplay -m=E2=80=9D. When I issue=
- fstrim on the mounted btrfs volume, I get the following kernel messages:<b=
-r>
-<br>
-attempt to access beyond end of device<br>
-sda1: rw=3D16387, want=3D252755893, limit=3D250067632<br>
-BTRFS warning (device dm-5): failed to trim 1 device(s), last error -5<br>
-<br>
-At the same time, other logical volumes on the same physical volume are des=
-troyed. Also the btrfs volume itself may be damaged (this seems to depend o=
-n the actual usage).<br>
-<br>
-I can easily reproduce this issue locally and I=E2=80=99m currently bisecti=
-ng. So far I could narrow down the range of commits to:<br>
-Good: 92fff53b7191cae566be9ca6752069426c7f8241<br>
-Bad: 225557446856448039a9e495da37b72c20071ef2<br>
-<br>
-In this range of commits, there are only dm-related changes.<br>
-<br>
-So far, I have not reproduced the issue with other file systems or a simpli=
-fied stack. I first want to continue bisecting but this may take another da=
-y.<br>
-<br>
-<br>
-&gt; Am 18.05.2019 um 12:26 schrieb Qu Wenruo &lt;<a href=3D"mailto:quwenru=
-o.btrfs@gmx.com" target=3D"_blank" rel=3D"noreferrer">quwenruo.btrfs@gmx.co=
-m</a>&gt;:<br>
-&gt; On 2019/5/18 =E4=B8=8B=E5=8D=885:18, Michael La=C3=9F wrote:<br>
-&gt;&gt; <br>
-&gt;&gt;&gt; Am 18.05.2019 um 06:09 schrieb Chris Murphy &lt;<a href=3D"mai=
-lto:lists@colorremedies.com" target=3D"_blank" rel=3D"noreferrer">lists@col=
-orremedies.com</a>&gt;:<br>
-&gt;&gt;&gt; <br>
-&gt;&gt;&gt; On Fri, May 17, 2019 at 11:37 AM Michael La=C3=9F &lt;<a href=
-=3D"mailto:bevan@bi-co.net" target=3D"_blank" rel=3D"noreferrer">bevan@bi-c=
-o.net</a>&gt; wrote:<br>
-&gt;&gt;&gt;&gt; <br>
-&gt;&gt;&gt;&gt; <br>
-&gt;&gt;&gt;&gt; I tried to reproduce this issue: I recreated the btrfs fil=
-e system, set up a minimal system and issued fstrim again. It printed the f=
-ollowing error message:<br>
-&gt;&gt;&gt;&gt; <br>
-&gt;&gt;&gt;&gt; fstrim: /: FITRIM ioctl failed: Input/output error<br>
-&gt;&gt;&gt; <br>
-&gt;&gt;&gt; Huh. Any kernel message at the same time? I would expect any f=
-strim<br>
-&gt;&gt;&gt; user space error message to also have a kernel message. Any i/=
-o error<br>
-&gt;&gt;&gt; suggests some kind of storage stack failure - which could be h=
-ardware<br>
-&gt;&gt;&gt; or software, you can&#39;t know without seeing the kernel mess=
-ages.<br>
-&gt;&gt; <br>
-&gt;&gt; I missed that. The kernel messages are:<br>
-&gt;&gt; <br>
-&gt;&gt; attempt to access beyond end of device<br>
-&gt;&gt; sda1: rw=3D16387, want=3D252755893, limit=3D250067632<br>
-&gt;&gt; BTRFS warning (device dm-5): failed to trim 1 device(s), last erro=
-r -5<br>
-&gt;&gt; <br>
-&gt;&gt; Here are some more information on the partitions and LVM physical =
-segments:<br>
-&gt;&gt; <br>
-&gt;&gt; fdisk -l /dev/sda:<br>
-&gt;&gt; <br>
-&gt;&gt; Device=C2=A0 =C2=A0 =C2=A0Boot Start=C2=A0 =C2=A0 =C2=A0 =C2=A0End=
-=C2=A0 =C2=A0Sectors=C2=A0 =C2=A0Size Id Type<br>
-&gt;&gt; /dev/sda1=C2=A0 *=C2=A0 =C2=A0 =C2=A02048 250069679 250067632 119.=
-2G 8e Linux LVM<br>
-&gt;&gt; <br>
-&gt;&gt; pvdisplay -m:<br>
-&gt;&gt; <br>
-&gt;&gt;=C2=A0 --- Physical volume ---<br>
-&gt;&gt;=C2=A0 PV Name=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0/dev/sda1<br>
-&gt;&gt;=C2=A0 VG Name=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0vg_system<br>
-&gt;&gt;=C2=A0 PV Size=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0119.24 GiB / not usable &lt;22.34 MiB<br>
-&gt;&gt;=C2=A0 Allocatable=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0yes (but=
- full)<br>
-&gt;&gt;=C2=A0 PE Size=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A032.00 MiB<br>
-&gt;&gt;=C2=A0 Total PE=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 381=
-5<br>
-&gt;&gt;=C2=A0 Free PE=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A00<br>
-&gt;&gt;=C2=A0 Allocated PE=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 3815<br>
-&gt;&gt;=C2=A0 PV UUID=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0mqCLFy-iDnt-NfdC-lfSv-Maor-V1Ih-RlG8lP<br>
-&gt;&gt; <br>
-&gt;&gt;=C2=A0 --- Physical Segments ---<br>
-&gt;&gt;=C2=A0 Physical extent 0 to 1248:<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical volume=C2=A0 =C2=A0 /dev/vg_system/btrfs<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical extents=C2=A0 =C2=A02231 to 3479<br>
-&gt;&gt;=C2=A0 Physical extent 1249 to 1728:<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical volume=C2=A0 =C2=A0 /dev/vg_system/btrfs<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical extents=C2=A0 =C2=A0640 to 1119<br>
-&gt;&gt;=C2=A0 Physical extent 1729 to 1760:<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical volume=C2=A0 =C2=A0 /dev/vg_system/grml-image=
-s<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical extents=C2=A0 =C2=A00 to 31<br>
-&gt;&gt;=C2=A0 Physical extent 1761 to 2016:<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical volume=C2=A0 =C2=A0 /dev/vg_system/swap<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical extents=C2=A0 =C2=A00 to 255<br>
-&gt;&gt;=C2=A0 Physical extent 2017 to 2047:<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical volume=C2=A0 =C2=A0 /dev/vg_system/btrfs<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical extents=C2=A0 =C2=A03480 to 3510<br>
-&gt;&gt;=C2=A0 Physical extent 2048 to 2687:<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical volume=C2=A0 =C2=A0 /dev/vg_system/btrfs<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical extents=C2=A0 =C2=A00 to 639<br>
-&gt;&gt;=C2=A0 Physical extent 2688 to 3007:<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical volume=C2=A0 =C2=A0 /dev/vg_system/btrfs<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical extents=C2=A0 =C2=A01911 to 2230<br>
-&gt;&gt;=C2=A0 Physical extent 3008 to 3320:<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical volume=C2=A0 =C2=A0 /dev/vg_system/btrfs<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical extents=C2=A0 =C2=A01120 to 1432<br>
-&gt;&gt;=C2=A0 Physical extent 3321 to 3336:<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical volume=C2=A0 =C2=A0 /dev/vg_system/boot<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical extents=C2=A0 =C2=A00 to 15<br>
-&gt;&gt;=C2=A0 Physical extent 3337 to 3814:<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical volume=C2=A0 =C2=A0 /dev/vg_system/btrfs<br>
-&gt;&gt;=C2=A0 =C2=A0 Logical extents=C2=A0 =C2=A01433 to 1910<br>
-&gt;&gt; <br>
-&gt;&gt; <br>
-&gt;&gt; Would btrfs even be able to accidentally trim parts of other LVs o=
-r does this clearly hint towards a LVM/dm issue?<br>
-&gt; <br>
-&gt; I can&#39;t speak sure, but (at least for latest kernel) btrfs has a l=
-ot of<br>
-&gt; extra mount time self check, including chunk stripe check against<br>
-&gt; underlying device, thus the possibility shouldn&#39;t be that high for=
- btrfs.<br>
-<br>
-Indeed, bisecting the issue led me to a range of commits that only contains=
- dm-related and no btrfs-related changes. So I assume this is a bug in dm.<=
-br>
-<br>
-&gt;&gt; Is there an easy way to somehow trace the trim through the differe=
-nt layers so one can see where it goes wrong?<br>
-&gt; <br>
-&gt; Sure, you could use dm-log-writes.<br>
-&gt; It will record all read/write (including trim) for later replay.<br>
-&gt; <br>
-&gt; So in your case, you can build the storage stack like:<br>
-&gt; <br>
-&gt; Btrfs<br>
-&gt; &lt;dm-log-writes&gt;<br>
-&gt; LUKS/dmcrypt<br>
-&gt; LVM<br>
-&gt; MBR partition<br>
-&gt; Samsung SSD<br>
-&gt; <br>
-&gt; Then replay the log (using src/log-write/replay-log in fstests) with<b=
-r>
-&gt; verbose output, you can verify every trim operation against the dmcryp=
-t<br>
-&gt; device size.<br>
-&gt; <br>
-&gt; If all trim are fine, then move the dm-log-writes a layer lower, until=
-<br>
-&gt; you find which layer is causing the problem.<br>
-<br>
-That sounds like a plan! However, I first want to continue bisecting as I a=
-m afraid to lose my reproducer by changing parts of my storage stack.<br>
-<br>
-Cheers,<br>
-Michael<br>
-<br>
-&gt; <br>
-&gt; Thanks,<br>
-&gt; Qu<br>
-&gt;&gt; <br>
-&gt;&gt; Cheers,<br>
-&gt;&gt; Michael<br>
-&gt;&gt; <br>
-&gt;&gt; PS: Current state of bisection: It looks like the error was introd=
-uced somewhere between b5dd0c658c31b469ccff1b637e5124851e7a4a1c and v5.1.<b=
-r>
-<br>
-</blockquote></div>
+Thanks,
 
---000000000000794ed60589520fbd--
-
-
---===============3843945107317580719==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============3843945107317580719==--
+[37218.238621] INFO: task md127_raid10:485 blocked for more than 120
+seconds.
+[37218.238713]       Not tainted 4.19.0-mx4-amd64 #1 Debian
+4.19.28-2+mendix1
+[37218.238782] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
+disables this message.
+[37218.238856] md127_raid10    D    0   485      2 0x80000000
+[37218.238859] Call Trace:
+[37218.238868]  ? __schedule+0x2a2/0x870
+[37218.238871]  ? _raw_spin_unlock_irqrestore+0x14/0x20
+[37218.238872]  schedule+0x28/0x80
+[37218.238882]  md_super_wait+0x6e/0xa0 [md_mod]
+[37218.238887]  ? finish_wait+0x80/0x80
+[37218.238892]  write_page+0x172/0x320 [md_mod]
+[37218.238894]  ? __schedule+0x2aa/0x870
+[37218.238895]  ? _raw_spin_unlock_irqrestore+0x14/0x20
+[37218.238900]  md_update_sb.part.64+0x382/0x8f0 [md_mod]
+[37218.238904]  md_check_recovery+0x148/0x540 [md_mod]
+[37218.238907]  raid10d+0x62/0x1440 [raid10]
+[37218.238910]  ? __switch_to_asm+0x34/0x70
+[37218.238912]  ? finish_task_switch+0x78/0x260
+[37218.238914]  ? _raw_spin_lock_irqsave+0x15/0x40
+[37218.238917]  ? lock_timer_base+0x67/0x80
+[37218.238918]  ? _raw_spin_unlock_irqrestore+0x14/0x20
+[37218.238920]  ? try_to_del_timer_sync+0x4d/0x80
+[37218.238922]  ? del_timer_sync+0x35/0x40
+[37218.238923]  ? schedule_timeout+0x173/0x390
+[37218.238927]  ? md_rdev_init+0xb0/0xb0 [md_mod]
+[37218.238930]  ? md_thread+0x94/0x150 [md_mod]
+[37218.238932]  ? raid10_end_write_request+0x290/0x290 [raid10]
+[37218.238936]  md_thread+0x94/0x150 [md_mod]
+[37218.238938]  ? finish_wait+0x80/0x80
+[37218.238940]  kthread+0x112/0x130
+[37218.238941]  ? kthread_bind+0x30/0x30
+[37218.238943]  ret_from_fork+0x35/0x40
+[37218.238951] INFO: task btrfs-transacti:575 blocked for more than 120
+seconds.
+[37218.239023]       Not tainted 4.19.0-mx4-amd64 #1 Debian
+4.19.28-2+mendix1
+[37218.239092] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
+disables this message.
+[37218.239164] btrfs-transacti D    0   575      2 0x80000000
+[37218.239166] Call Trace:
+[37218.239168]  ? __schedule+0x2a2/0x870
+[37218.239169]  ? _raw_spin_unlock_irqrestore+0x14/0x20
+[37218.239171]  schedule+0x28/0x80
+[37218.239175]  md_write_start+0x14b/0x220 [md_mod]
+[37218.239177]  ? finish_wait+0x80/0x80
+[37218.239179]  raid10_make_request+0x3d/0x130 [raid10]
+[37218.239181]  ? finish_wait+0x80/0x80
+[37218.239185]  md_handle_request+0x119/0x190 [md_mod]
+[37218.239189]  md_make_request+0x78/0x160 [md_mod]
+[37218.239192]  generic_make_request+0x1a4/0x410
+[37218.239195]  submit_bio+0x45/0x140
+[37218.239196]  ? bio_clone_fast+0x2c/0x60
+[37218.239228]  btrfs_map_bio+0x20a/0x350 [btrfs]
+[37218.239246]  btree_submit_bio_hook+0x8d/0xc0 [btrfs]
+[37218.239264]  submit_one_bio+0x5f/0x80 [btrfs]
+[37218.239283]  flush_write_bio.isra.40+0x1d/0x30 [btrfs]
+[37218.239301]  btree_write_cache_pages+0x243/0x360 [btrfs]
+[37218.239318]  ? btrfs_buffer_uptodate+0x33/0x50 [btrfs]
+[37218.239331]  ? read_block_for_search.isra.36+0xf2/0x340 [btrfs]
+[37218.239333]  do_writepages+0x41/0xd0
+[37218.239351]  ? merge_state.part.45+0x3f/0x130 [btrfs]
+[37218.239353]  ? kmem_cache_alloc+0x15c/0x1c0
+[37218.239370]  ? clear_state_bit+0xdb/0x180 [btrfs]
+[37218.239372]  __filemap_fdatawrite_range+0xbe/0xf0
+[37218.239388]  btrfs_write_marked_extents+0x68/0x150 [btrfs]
+[37218.239405]  btrfs_write_and_wait_transaction.isra.21+0x4d/0xa0 [btrfs]
+[37218.239421]  btrfs_commit_transaction+0x56c/0x870 [btrfs]
+[37218.239437]  ? start_transaction+0x9d/0x3f0 [btrfs]
+[37218.239453]  transaction_kthread+0x147/0x180 [btrfs]
+[37218.239468]  ? btrfs_cleanup_transaction+0x530/0x530 [btrfs]
+[37218.239470]  kthread+0x112/0x130
+[37218.239471]  ? kthread_bind+0x30/0x30
+[37218.239473]  ret_from_fork+0x35/0x40
+[37218.239481] INFO: task 1.xvda-1:1820 blocked for more than 120 seconds.
+[37218.239551]       Not tainted 4.19.0-mx4-amd64 #1 Debian
+4.19.28-2+mendix1
+[37218.239620] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
+disables this message.
+[37218.239692] 1.xvda-1        D    0  1820      2 0x80000000
+[37218.239694] Call Trace:
+[37218.239696]  ? __schedule+0x2a2/0x870
+[37218.239698]  ? _raw_spin_unlock_irqrestore+0x14/0x20
+[37218.239699]  schedule+0x28/0x80
+[37218.239703]  md_write_start+0x14b/0x220 [md_mod]
+[37218.239706]  ? finish_wait+0x80/0x80
+[37218.239708]  raid10_make_request+0x3d/0x130 [raid10]
+[37218.239710]  ? finish_wait+0x80/0x80
+[37218.239713]  md_handle_request+0x119/0x190 [md_mod]
+[37218.239718]  md_make_request+0x78/0x160 [md_mod]
+[37218.239720]  generic_make_request+0x1a4/0x410
+[37218.239723]  ? bvec_alloc+0x51/0xe0
+[37218.239725]  submit_bio+0x45/0x140
+[37218.239727]  ? bio_add_page+0x48/0x60
+[37218.239731]  dispatch_rw_block_io+0x68f/0x990 [xen_blkback]
+[37218.239734]  ? branch_type+0x2e4/0x350
+[37218.239737]  __do_block_io_op+0x2fc/0x5f0 [xen_blkback]
+[37218.239739]  ? _raw_spin_unlock_irqrestore+0x14/0x20
+[37218.239740]  ? try_to_del_timer_sync+0x4d/0x80
+[37218.239743]  xen_blkif_schedule+0xce/0x620 [xen_blkback]
+[37218.239745]  ? finish_wait+0x80/0x80
+[37218.239748]  ? xen_blkif_be_int+0x30/0x30 [xen_blkback]
+[37218.239749]  kthread+0x112/0x130
+[37218.239750]  ? kthread_bind+0x30/0x30
+[37218.239751]  ret_from_fork+0x35/0x40
+[37218.239757] INFO: task 2.xvda-0:2125 blocked for more than 120 seconds.
+[37218.239825]       Not tainted 4.19.0-mx4-amd64 #1 Debian
+4.19.28-2+mendix1
+[37218.239894] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
+disables this message.
+[37218.239967] 2.xvda-0        D    0  2125      2 0x80000000
+[37218.239968] Call Trace:
+[37218.239970]  ? __schedule+0x2a2/0x870
+[37218.239971]  ? _raw_spin_unlock_irqrestore+0x14/0x20
+[37218.239972]  schedule+0x28/0x80
+[37218.239977]  md_write_start+0x14b/0x220 [md_mod]
+[37218.239979]  ? finish_wait+0x80/0x80
+[37218.239981]  raid10_make_request+0x3d/0x130 [raid10]
+[37218.239983]  ? finish_wait+0x80/0x80
+[37218.239986]  md_handle_request+0x119/0x190 [md_mod]
+[37218.239990]  md_make_request+0x78/0x160 [md_mod]
+[37218.239992]  generic_make_request+0x1a4/0x410
+[37218.239994]  submit_bio+0x45/0x140
+[37218.239996]  ? bio_add_page+0x48/0x60
+[37218.239998]  dispatch_rw_block_io+0x68f/0x990 [xen_blkback]
+[37218.240001]  ? branch_type+0x2e7/0x350
+[37218.240003]  __do_block_io_op+0x2fc/0x5f0 [xen_blkback]
+[37218.240005]  ? _raw_spin_unlock_irqrestore+0x14/0x20
+[37218.240006]  ? try_to_del_timer_sync+0x4d/0x80
+[37218.240009]  xen_blkif_schedule+0xce/0x620 [xen_blkback]
+[37218.240010]  ? __schedule+0x2aa/0x870
+[37218.240012]  ? finish_wait+0x80/0x80
+[37218.240014]  ? xen_blkif_be_int+0x30/0x30 [xen_blkback]
+[37218.240015]  kthread+0x112/0x130
+[37218.240016]  ? kthread_bind+0x30/0x30
+[37218.240018]  ret_from_fork+0x35/0x40
+[37218.240021] INFO: task qemu-system-i38:6225 blocked for more than 120
+seconds.
+[37218.240092]       Not tainted 4.19.0-mx4-amd64 #1 Debian
+4.19.28-2+mendix1
+[37218.240161] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
+disables this message.
+[37218.240258] qemu-system-i38 D    0  6225      1 0x00000000
+[37218.240260] Call Trace:
+[37218.240262]  ? __schedule+0x2a2/0x870
+[37218.240263]  schedule+0x28/0x80
+[37218.240266]  io_schedule+0x12/0x40
+[37218.240267]  wait_on_page_bit+0x114/0x150
+[37218.240269]  ? page_cache_tree_insert+0xe0/0xe0
+[37218.240288]  extent_write_cache_pages+0x33e/0x3e0 [btrfs]
+[37218.240292]  ? timerqueue_del+0x1e/0x40
+[37218.240293]  ? __remove_hrtimer+0x35/0x70
+[37218.240311]  extent_writepages+0x50/0x80 [btrfs]
+[37218.240314]  do_writepages+0x41/0xd0
+[37218.240315]  ? __hrtimer_init+0xb0/0xb0
+[37218.240317]  __filemap_fdatawrite_range+0xbe/0xf0
+[37218.240334]  start_ordered_ops+0x4c/0x90 [btrfs]
+[37218.240352]  btrfs_sync_file+0x9a/0x3d0 [btrfs]
+[37218.240357]  do_fsync+0x38/0x70
+[37218.240359]  __x64_sys_fdatasync+0x13/0x20
+[37218.240361]  do_syscall_64+0x53/0x100
+[37218.240364]  entry_SYSCALL_64_after_hwframe+0x44/0xa9
+[37218.240366] RIP: 0033:0x7f2c4484f2e7
+[37218.240373] Code: Bad RIP value.
+[37218.240374] RSP: 002b:00007f2c40c24560 EFLAGS: 00000293 ORIG_RAX:
+000000000000004b
+[37218.240376] RAX: ffffffffffffffda RBX: 000000000000001c RCX:
+00007f2c4484f2e7
+[37218.240377] RDX: 0000000000000000 RSI: 0000000000000008 RDI:
+000000000000001c
+[37218.240378] RBP: 000055f297129ea0 R08: 0000000000000000 R09:
+00000000ffffffff
+[37218.240379] R10: 00007f2c40c24660 R11: 0000000000000293 R12:
+000055f2964b06e0
+[37218.240380] R13: 000055f2970ea078 R14: 000055f2974aa920 R15:
+000055f297d92ab0
+[37218.240383] INFO: task kworker/1:2:4661 blocked for more than 120
+seconds.
+[37218.240478]       Not tainted 4.19.0-mx4-amd64 #1 Debian
+4.19.28-2+mendix1
+[37218.240580] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
+disables this message.
+[37218.240701] kworker/1:2     D    0  4661      2 0x80000000
+[37218.240708] Workqueue: dm-integrity-metadata integrity_bio_wait
+[dm_integrity]
+[37218.240709] Call Trace:
+[37218.240711]  ? __schedule+0x2a2/0x870
+[37218.240713]  schedule+0x28/0x80
+[37218.240715]  io_schedule+0x12/0x40
+[37218.240717]  wait_and_add_new_range+0x89/0xa0 [dm_integrity]
+[37218.240719]  dm_integrity_map_continue+0xe71/0x1020 [dm_integrity]
+[37218.240723]  ? xen_load_sp0+0x77/0x170
+[37218.240725]  ? __switch_to+0x1e1/0x440
+[37218.240727]  ? finish_task_switch+0x78/0x260
+[37218.240730]  process_one_work+0x1a7/0x3a0
+[37218.240732]  worker_thread+0x30/0x390
+[37218.240734]  ? create_worker+0x1a0/0x1a0
+[37218.240735]  kthread+0x112/0x130
+[37218.240736]  ? kthread_bind+0x30/0x30
+[37218.240738]  ret_from_fork+0x35/0x40
+[37218.240741] INFO: task kworker/1:11:4887 blocked for more than 120
+seconds.
+[37218.240836]       Not tainted 4.19.0-mx4-amd64 #1 Debian
+4.19.28-2+mendix1
+[37218.240929] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
+disables this message.
+[37218.241050] kworker/1:11    D    0  4887      2 0x80000000
+[37218.241053] Workqueue: dm-integrity-metadata integrity_bio_wait
+[dm_integrity]
+[37218.241054] Call Trace:
+[37218.241056]  ? __schedule+0x2a2/0x870
+[37218.241058]  schedule+0x28/0x80
+[37218.241059]  io_schedule+0x12/0x40
+[37218.241061]  wait_and_add_new_range+0x89/0xa0 [dm_integrity]
+[37218.241063]  dm_integrity_map_continue+0xe71/0x1020 [dm_integrity]
+[37218.241065]  ? xen_load_sp0+0x77/0x170
+[37218.241067]  ? __switch_to+0x1e1/0x440
+[37218.241068]  ? finish_task_switch+0x78/0x260
+[37218.241070]  process_one_work+0x1a7/0x3a0
+[37218.241072]  worker_thread+0x30/0x390
+[37218.241073]  ? create_worker+0x1a0/0x1a0
+[37218.241074]  kthread+0x112/0x130
+[37218.241075]  ? kthread_bind+0x30/0x30
+[37218.241077]  ret_from_fork+0x35/0x40
+[37218.241082] INFO: task kworker/0:19:5061 blocked for more than 120
+seconds.
+[37218.241176]       Not tainted 4.19.0-mx4-amd64 #1 Debian
+4.19.28-2+mendix1
+[37218.241270] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
+disables this message.
+[37218.241391] kworker/0:19    D    0  5061      2 0x80000000
+[37218.241394] Workqueue: dm-integrity-metadata integrity_bio_wait
+[dm_integrity]
+[37218.241395] Call Trace:
+[37218.241397]  ? __schedule+0x2a2/0x870
+[37218.241398]  schedule+0x28/0x80
+[37218.241400]  io_schedule+0x12/0x40
+[37218.241402]  wait_and_add_new_range+0x89/0xa0 [dm_integrity]
+[37218.241404]  dm_integrity_map_continue+0xe71/0x1020 [dm_integrity]
+[37218.241406]  ? xen_load_sp0+0x77/0x170
+[37218.241407]  ? __switch_to+0x1e1/0x440
+[37218.241408]  ? finish_task_switch+0x78/0x260
+[37218.241410]  process_one_work+0x1a7/0x3a0
+[37218.241412]  worker_thread+0x30/0x390
+[37218.241414]  ? create_worker+0x1a0/0x1a0
+[37218.241415]  kthread+0x112/0x130
+[37218.241416]  ? kthread_bind+0x30/0x30
+[37218.241417]  ret_from_fork+0x35/0x40
+[37218.241420] INFO: task kworker/1:3:5090 blocked for more than 120
+seconds.
+[37218.241514]       Not tainted 4.19.0-mx4-amd64 #1 Debian
+4.19.28-2+mendix1
+[37218.241616] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
+disables this message.
+[37218.241737] kworker/1:3     D    0  5090      2 0x80000000
+[37218.241740] Workqueue: dm-integrity-metadata integrity_bio_wait
+[dm_integrity]
+[37218.241740] Call Trace:
+[37218.241742]  ? __schedule+0x2a2/0x870
+[37218.241744]  schedule+0x28/0x80
+[37218.241745]  io_schedule+0x12/0x40
+[37218.241747]  wait_and_add_new_range+0x89/0xa0 [dm_integrity]
+[37218.241749]  dm_integrity_map_continue+0xe71/0x1020 [dm_integrity]
+[37218.241751]  ? xen_load_sp0+0x77/0x170
+[37218.241752]  ? __switch_to+0x1e1/0x440
+[37218.241753]  ? finish_task_switch+0x78/0x260
+[37218.241755]  process_one_work+0x1a7/0x3a0
+[37218.241757]  worker_thread+0x30/0x390
+[37218.241758]  ? create_worker+0x1a0/0x1a0
+[37218.241759]  kthread+0x112/0x130
+[37218.241760]  ? kthread_bind+0x30/0x30
+[37218.241762]  ret_from_fork+0x35/0x40
+[37218.241764] INFO: task kworker/1:10:5264 blocked for more than 120
+seconds.
+[37218.241859]       Not tainted 4.19.0-mx4-amd64 #1 Debian
+4.19.28-2+mendix1
+[37218.241952] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
+disables this message.
+[37218.242073] kworker/1:10    D    0  5264      2 0x80000000
+[37218.242076] Workqueue: dm-integrity-metadata integrity_bio_wait
+[dm_integrity]
+[37218.242077] Call Trace:
+[37218.242079]  ? __schedule+0x2a2/0x870
+[37218.242080]  schedule+0x28/0x80
+[37218.242082]  io_schedule+0x12/0x40
+[37218.242083]  wait_and_add_new_range+0x89/0xa0 [dm_integrity]
+[37218.242085]  dm_integrity_map_continue+0xe71/0x1020 [dm_integrity]
+[37218.242088]  ? xen_load_sp0+0x77/0x170
+[37218.242089]  ? __switch_to+0x1e1/0x440
+[37218.242090]  ? finish_task_switch+0x78/0x260
+[37218.242092]  process_one_work+0x1a7/0x3a0
+[37218.242094]  worker_thread+0x30/0x390
+[37218.242095]  ? create_worker+0x1a0/0x1a0
+[37218.242096]  kthread+0x112/0x130
+[37218.242097]  ? kthread_bind+0x30/0x30
+[37218.242099]  ret_from_fork+0x35/0x40
