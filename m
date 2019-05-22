@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
 Subject: Re: [RFC PATCH 2/7] mpathpersist: add option
 	--batch-file (-f)
-Date: Wed, 22 May 2019 14:30:01 -0500
-Message-ID: <20190522193001.GA7630@octiron.msp.redhat.com>
+Date: Wed, 22 May 2019 14:31:31 -0500
+Message-ID: <20190522193131.GC7630@octiron.msp.redhat.com>
 References: <20190517225703.16295-1-mwilck@suse.com>
 	<20190517225703.16295-3-mwilck@suse.com>
 Mime-Version: 1.0
@@ -21,7 +21,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com, dbond@octiron.msp.redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On Sat, May 18, 2019 at 12:56:58AM +0200, Martin Wilck wrote:
