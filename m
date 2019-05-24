@@ -1,29 +1,51 @@
-From: Guilherme Piccoli <gpiccoli@canonical.com>
-Subject: Re: [PATCH V2 1/2] block: Fix a NULL pointer dereference in generic_make_request()
-Date: Thu, 23 May 2019 17:30:52 -0300
-Message-ID: <CAHD1Q_zCkmiDN24Njjr5Nfuc11hSxN5fgw98MX9j5LJoiwgXPA@mail.gmail.com>
-References: <20190520220911.25192-1-gpiccoli@canonical.com>
- <CAPhsuW6KayaNR-0eFHpvPG-LVuPFL_1OFjvZpOcnapVFe2vC9Q@mail.gmail.com>
- <3e583b2d-742a-3238-69ed-7a2e6cce417b@canonical.com> <CAPhsuW7o9bj5DYnUDkCqDeW7NnfNTSBBWJC5_ZVxhoomDEEJcg@mail.gmail.com>
+From: Gen Zhang <blackgod016574@gmail.com>
+Subject: [PATCH] dm-region-hash: Fix a missing-check bug in __rh_alloc()
+Date: Fri, 24 May 2019 11:12:48 +0800
+Message-ID: <20190524031248.GA6295@zhanggen-UX430UQ>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <CAPhsuW7o9bj5DYnUDkCqDeW7NnfNTSBBWJC5_ZVxhoomDEEJcg@mail.gmail.com>
-Sender: stable-owner@vger.kernel.org
-To: Song Liu <liu.song.a23@gmail.com>
-Cc: linux-block@vger.kernel.org, linux-raid <linux-raid@vger.kernel.org>, dm-devel@redhat.com, Jens Axboe <axboe@kernel.dk>, Gavin Guo <gavin.guo@canonical.com>, Jay Vosburgh <jay.vosburgh@canonical.com>, "Guilherme G. Piccoli" <kernel@gpiccoli.net>, stable@vger.kernel.org, Bart Van Assche <bvanassche@acm.org>, Ming Lei <ming.lei@redhat.com>, Eric Ren <renzhengeek@gmail.com>, Christoph Hellwig <hch@infradead.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, May 23, 2019 at 2:06 PM Song Liu <liu.song.a23@gmail.com> wrote:
->
->
-> Sorry for the confusion and delay. I will send patches to stable@.
->
-> Song
+In function __rh_alloc(), the pointer nreg is allocated a memory space
+via kmalloc(). And it is used in the following codes. However, when 
+there is a memory allocation error, kmalloc() fails. Thus null pointer
+dereference may happen. And it will cause the kernel to crash. Therefore,
+we should check the return value and handle the error.
+Further, in __rh_find(), we should also check the return value and
+handle the error.
 
+Signed-off-by: Gen Zhang <blackgod016574@gmail.com>
 
-Hi Song, no problem at all! Thanks a lot for the clarification.
-Cheers,
-
-
-Guilherme
+---
+diff --git a/drivers/md/dm-region-hash.c b/drivers/md/dm-region-hash.c
+index 1f76045..2fa1641 100644
+--- a/drivers/md/dm-region-hash.c
++++ b/drivers/md/dm-region-hash.c
+@@ -290,8 +290,11 @@ static struct dm_region *__rh_alloc(struct dm_region_hash *rh, region_t region)
+ 	struct dm_region *reg, *nreg;
+ 
+ 	nreg = mempool_alloc(&rh->region_pool, GFP_ATOMIC);
+-	if (unlikely(!nreg))
++	if (unlikely(!nreg)) {
+ 		nreg = kmalloc(sizeof(*nreg), GFP_NOIO | __GFP_NOFAIL);
++		if (!nreg)
++			return NULL;
++	}
+ 
+ 	nreg->state = rh->log->type->in_sync(rh->log, region, 1) ?
+ 		      DM_RH_CLEAN : DM_RH_NOSYNC;
+@@ -329,6 +332,8 @@ static struct dm_region *__rh_find(struct dm_region_hash *rh, region_t region)
+ 	if (!reg) {
+ 		read_unlock(&rh->hash_lock);
+ 		reg = __rh_alloc(rh, region);
++		if (!reg)
++			return NULL;
+ 		read_lock(&rh->hash_lock);
+ 	}
+ 
+---
