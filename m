@@ -1,40 +1,46 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: fstrim discarding too many or wrong blocks on Linux 5.1, leading
- to data loss
-Date: Fri, 24 May 2019 17:10:51 +0200
-Message-ID: <20190524151051.GA28270@kroah.com>
-References: <8C31D41C-9608-4A65-B543-8ABCC0B907A0@bi-co.net>
- <CAJCQCtTZWXUgUDh8vn0BFeEbAdKToDSVYYw4Q0bt0rECQr9nxQ@mail.gmail.com>
- <AD966642-1043-468D-BABF-8FC9AF514D36@bi-co.net>
- <158a3491-e4d2-d905-7f58-11a15bddcd70@gmx.com>
- <C1CD4646-E75D-4AAF-9CD6-B3AC32495FD3@bi-co.net>
- <3142764D-5944-4004-BC57-C89C89AC9ED9@bi-co.net>
- <F170BB63-D9D7-4D08-9097-3C18815BE869@bi-co.net>
- <20190521190023.GA68070@glet>
- <20190521201226.GA23332@lobo>
- <CAK-xaQZ9PCLgzFw0-YJ=Yvou=t0k=Vv-9JY4n3=VD2s=NaYL4w@mail.gmail.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] libmultipath: make vector_foreach_slot_backwards
+	work as expected
+Date: Fri, 24 May 2019 17:41:14 -0500
+Message-ID: <1558737674-22335-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAK-xaQZ9PCLgzFw0-YJ=Yvou=t0k=Vv-9JY4n3=VD2s=NaYL4w@mail.gmail.com>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Andrea Gelmini <andrea.gelmini@linux.it>
-Cc: Mike Snitzer <snitzer@redhat.com>, Michael =?iso-8859-1?B?TGHf?= <bevan@bi-co.net>, dm-devel@redhat.com, Chris Murphy <lists@colorremedies.com>, Qu Wenruo <quwenruo.btrfs@gmx.com>, Btrfs BTRFS <linux-btrfs@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Fri, May 24, 2019 at 05:00:51PM +0200, Andrea Gelmini wrote:
-> Hi Mike,
->    I'm doing setup to replicate and test the condition. I see your
-> patch is already in the 5.2 dev kernel.
->    I'm going to try with latest git, and see what happens. Anyway,
-> don't you this it would be good
->    to have this patch ( 51b86f9a8d1c4bb4e3862ee4b4c5f46072f7520d )
-> anyway in the 5.1 stable branch?
+All of the code that uses vector_foreach_slot_backwards() treats "i" as
+the index of the entry "p", but the way it was coded, that wasn't the
+case. "i" was the number of the entry counting from 1, not 0.
 
-It's already in the 5.1 stable queue and will be in the next 5.1 release
-in a day or so.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/vector.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-thanks,
-
-greg k-h
+diff --git a/libmultipath/vector.h b/libmultipath/vector.h
+index 41d2b896..344dffd5 100644
+--- a/libmultipath/vector.h
++++ b/libmultipath/vector.h
+@@ -40,7 +40,7 @@ typedef struct _vector *vector;
+ #define vector_foreach_slot_after(v,p,i) \
+ 	for (; (v) && i < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); i++)
+ #define vector_foreach_slot_backwards(v,p,i) \
+-	for (i = VECTOR_SIZE(v); i > 0 && ((p) = (v)->slot[i-1]); i--)
++	for (i = VECTOR_SIZE(v) - 1; (int)i >= 0 && ((p) = (v)->slot[i]); i--)
+ 
+ #define identity(x) (x)
+ /*
+-- 
+2.17.2
