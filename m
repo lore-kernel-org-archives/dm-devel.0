@@ -1,11 +1,13 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 0/9] speeding up mpathpersist
-Date: Mon, 27 May 2019 14:59:33 +0200
-Message-ID: <20190527125942.8366-1-mwilck@suse.com>
+Subject: [PATCH v2 8/9] mpathpersist.8: fix examples in man page
+Date: Mon, 27 May 2019 14:59:41 +0200
+Message-ID: <20190527125942.8366-9-mwilck@suse.com>
+References: <20190527125942.8366-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190527125942.8366-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,46 +21,75 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-We've had reports that mpathpersist doesn't scale well in environments
-with lots of IO devices. This patch set tries to address this problem
-with a few optimizations:
+--prout-type is ignored in the REGISTER service action. The RESERVE service
+action takes a Reservation Key, not a Service action Reservation Key, as
+argument. The text mentions "Service Action Reservation Key" in several places
+where it means the Reservation Key. Add examples for unregistering the current
+key, and the CLEAR service action. Fix formatting with longer text in the
+description lines (the .TP formatting would produce bad results if the
+first line needs to be broken).
 
- - instead of doing a full path discovery at startup, only look at
-   paths that are part of the maps being worked on
- - allow multiple PR commands in a single run using "batch files",
-   without re-discovering everything between PR commands
- - avoid looking at priorities
-
-I've done some basic testing and it seems to work. It remains to be
-seen what the effect on performance really is, but the amount of system
-calls to be performed for a given set of mpathpersist actions should
-be substantially reduced in any case, especially when using batching.
-
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
-v2:
- - avoid memory leak with --batch-file (Ben Marzinski)
- - add documentation to usage() output and mpathpersist man page
- - integrate "mpathpersist.8: fix examples in man page" which I'd sent
-   separately before
+ mpathpersist/mpathpersist.8 | 43 +++++++++++++++++++++++++++++--------
+ 1 file changed, 34 insertions(+), 9 deletions(-)
 
-
-Martin Wilck (9):
-  mpathpersist: call usage() just once on return
-  mpathpersist: add option --batch-file (-f)
-  mpathpersist: no need to treat error close() as fatal
-  libmpathpersist: updatepaths: deal with missing pp->udev
-  libmpathpersist: factor out initialization and teardown
-  mpathpersist: initialize data structures only once
-  libmpathpersist: don't bother with priorities
-  mpathpersist.8: fix examples in man page
-  mpathpersist.8: add documentation for --batch-file (-f)
-
- libmpathpersist/mpath_persist.c | 250 +++++++++++++++-----------------
- libmpathpersist/mpath_persist.h |  40 +++++
- mpathpersist/main.c             | 227 ++++++++++++++++++++++-------
- mpathpersist/main.h             |   1 +
- mpathpersist/mpathpersist.8     | 121 ++++++++++++++--
- 5 files changed, 440 insertions(+), 199 deletions(-)
-
+diff --git a/mpathpersist/mpathpersist.8 b/mpathpersist/mpathpersist.8
+index 885491dd..cd602e40 100644
+--- a/mpathpersist/mpathpersist.8
++++ b/mpathpersist/mpathpersist.8
+@@ -167,18 +167,43 @@ PR In: maximum allocation length. LEN is a decimal number between 0 and 8192.
+ .SH EXAMPLE
+ .\" ----------------------------------------------------------------------------
+ .
+-.TP
+-Register the Service Action Reservation Key for the /dev/mapper/mpath9 device:
+-\fBmpathpersist --out --register --param-sark=\fI123abc \fB--prout-type=\fI5 /dev/mapper/mpath9\fR
+-.TP
+-Read the Service Action Reservation Key for the /dev/mapper/mpath9 device:
++.PP
++Register the key \(dq123abc\(dq for the /dev/mapper/mpath9 device:
++.RS
++\fBmpathpersist --out --register --param-sark=\fI123abc /dev/mapper/mpath9\fR
++.RE
++.PP
++Read registered reservation keys for the /dev/mapper/mpath9 device:
++.RS
+ \fBmpathpersist -i -k \fI/dev/mapper/mpath9\fR
+-.TP
+-Reserve the Service Action Reservation Key for the /dev/mapper/mpath9 device:
+-\fBmpathpersist --out --reserve --param-sark=\fI123abc \fB--prout-type=\fI8 \fB-d \fI/dev/mapper/mpath9\fR
+-.TP
++.RE
++.PP
++Create a reservation for the /dev/mapper/mpath9 device with the given
++reservation key:
++.RS
++\fBmpathpersist --out --reserve --param-rk=\fI123abc \fB--prout-type=\fI8 \fB-d \fI/dev/mapper/mpath9\fR
++.RE
++.PP
+ Read the reservation status of the /dev/mapper/mpath9 device:
++.RS
+ \fBmpathpersist -i -s -d \fI/dev/mapper/mpath9\fR
++.RE
++.PP
++Release the previously created reservation (note that the prout-type needs to
++be the same as above):
++.RS
++\fBmpathpersist --out --release --param-rk=\fI123abc \fB--prout-type=\fI8 \fB-d \fI/dev/mapper/mpath9\fR
++.RE
++.PP
++Remove the current key registered for this host (i.e. reset it to 0):
++.RS
++\fBmpathpersist --out --register-ignore -K \fI123abc\fB -S \fI0\fB \fI/dev/mapper/mpath9\fR
++.RE
++.PP
++Remove current reservation, and unregister all registered keys from all I_T nexuses:
++.RS
++\fBmpathpersist -oCK \fI123abc \fI/dev/mapper/mpath9\fR
++.RE
+ .
+ .
+ .\" ----------------------------------------------------------------------------
 -- 
 2.21.0
