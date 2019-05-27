@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 3/9] mpathpersist: no need to treat error
-	close() as fatal
-Date: Mon, 27 May 2019 14:59:36 +0200
-Message-ID: <20190527125942.8366-4-mwilck@suse.com>
+Subject: [PATCH v2 1/9] mpathpersist: call usage() just once on
+	return
+Date: Mon, 27 May 2019 14:59:34 +0200
+Message-ID: <20190527125942.8366-2-mwilck@suse.com>
 References: <20190527125942.8366-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,7 +22,7 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Simplify code a bit.
+This simplifies further changes.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
@@ -30,40 +30,85 @@ Signed-off-by: Martin Wilck <mwilck@suse.com>
  1 file changed, 2 insertions(+), 9 deletions(-)
 
 diff --git a/mpathpersist/main.c b/mpathpersist/main.c
-index 2e19f29f..6df9762d 100644
+index 10cba452..94e89c13 100644
 --- a/mpathpersist/main.c
 +++ b/mpathpersist/main.c
-@@ -154,7 +154,7 @@ static int do_batch_file(const char *batch_fn)
+@@ -265,7 +265,6 @@ int main (int argc, char * argv[])
  
- static int handle_args(int argc, char * argv[], int nline)
- {
--	int fd, c, res;
-+	int fd, c;
- 	const char *device_name = NULL;
- 	int num_prin_sa = 0;
- 	int num_prout_sa = 0;
-@@ -179,7 +179,6 @@ static int handle_args(int argc, char * argv[], int nline)
- 	char *batch_fn = NULL;
- 	void *resp = NULL;
- 	struct transportid * tmp;
--	struct config *conf = multipath_conf;
- 
- 	memset(transportids, 0, MPATH_MX_TIDS * sizeof(struct transportid));
- 
-@@ -565,13 +564,7 @@ static int handle_args(int argc, char * argv[], int nline)
- 		printf("PR out: command failed\n");
+ 			default:
+ 				fprintf(stderr, "unrecognised switch " "code 0x%x ??\n", c);
+-				usage ();
+ 				ret = MPATH_PR_SYNTAX_ERROR;
+ 				goto out;
+ 		}
+@@ -283,7 +282,6 @@ int main (int argc, char * argv[])
+ 		{
+ 			for (; optind < argc; ++optind)
+ 				fprintf (stderr, "Unexpected extra argument: %s\n", argv[optind]);
+-			usage ();
+ 			ret = MPATH_PR_SYNTAX_ERROR;
+ 			goto out;
+ 		}
+@@ -296,14 +294,12 @@ int main (int argc, char * argv[])
+ 	if ((prout_flag + prin_flag) == 0)
+ 	{
+ 		fprintf (stderr, "choose either '--in' or '--out' \n");
+-		usage ();
+ 		ret = MPATH_PR_SYNTAX_ERROR;
+ 		goto out;
+ 	}
+ 	if ((prout_flag + prin_flag) > 1)
+ 	{
+ 		fprintf (stderr, "choose either '--in' or '--out' \n");
+-		usage ();
+ 		ret = MPATH_PR_SYNTAX_ERROR;
+ 		goto out;
+ 	}
+@@ -334,20 +330,17 @@ int main (int argc, char * argv[])
+ 		{
+ 			fprintf (stderr,
+ 					" No service action given for Persistent Reserve IN\n");
+-			usage();
+ 			ret = MPATH_PR_SYNTAX_ERROR;
+ 		}
+ 		else if (num_prin_sa > 1)
+ 		{
+ 			fprintf (stderr, " Too many service actions given; choose "
+ 					"one only\n");
+-			usage();
+ 			ret = MPATH_PR_SYNTAX_ERROR;
+ 		}
+ 	}
+ 	else
+ 	{
+-		usage ();
+ 		ret = MPATH_PR_SYNTAX_ERROR;
+ 		goto out;
+ 	}
+@@ -356,7 +349,6 @@ int main (int argc, char * argv[])
+ 	{
+ 		fprintf (stderr, " --relative-target-port"
+ 				" only useful with --register-move\n");
+-		usage ();
+ 		ret = MPATH_PR_SYNTAX_ERROR;
+ 		goto out;
+ 	}
+@@ -378,7 +370,6 @@ int main (int argc, char * argv[])
+ 	if (device_name == NULL)
+ 	{
+ 		fprintf (stderr, "No device name given \n");
+-		usage ();
+ 		ret = MPATH_PR_SYNTAX_ERROR;
+ 		goto out;
+ 	}
+@@ -496,6 +487,8 @@ int main (int argc, char * argv[])
  	}
  
--	res = close (fd);
--	if (res < 0)
--	{
--		mpath_lib_exit(conf);
--		udev_unref(udev);
--		return MPATH_PR_FILE_ERROR;
--	}
-+	close (fd);
- 
  out :
- 	if (ret == MPATH_PR_SYNTAX_ERROR) {
++	if (ret == MPATH_PR_SYNTAX_ERROR)
++		usage();
+ 	mpath_lib_exit(conf);
+ 	udev_unref(udev);
+ 	return (ret >= 0) ? ret : MPATH_PR_OTHER;
 -- 
 2.21.0
