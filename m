@@ -1,14 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 6/9] mpathpersist: initialize data structures
-	only once
-Date: Mon, 27 May 2019 14:59:39 +0200
-Message-ID: <20190527125942.8366-7-mwilck@suse.com>
-References: <20190527125942.8366-1-mwilck@suse.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH] libmultipath: make
+ vector_foreach_slot_backwards work as expected
+Date: Tue, 28 May 2019 10:16:18 -0500
+Message-ID: <20190528151618.GE7630@octiron.msp.redhat.com>
+References: <1558737674-22335-1-git-send-email-bmarzins@redhat.com>
+	<478097e8086d85ba6d0785e825a8ef9b05d21554.camel@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190527125942.8366-1-mwilck@suse.com>
+Content-Disposition: inline
+In-Reply-To: <478097e8086d85ba6d0785e825a8ef9b05d21554.camel@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,61 +20,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
+To: Martin Wilck <mwilck@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-We now have the possibility to run several PR commands in a single
-mpathpersist invocation. Run initialization / discovery and teardown
-only once at program invocation / exit.
+On Mon, May 27, 2019 at 12:03:59PM +0200, Martin Wilck wrote:
+> On Fri, 2019-05-24 at 17:41 -0500, Benjamin Marzinski wrote:
+> > All of the code that uses vector_foreach_slot_backwards() treats "i"
+> > as
+> > the index of the entry "p", but the way it was coded, that wasn't the
+> > case. "i" was the number of the entry counting from 1, not 0.
+> > 
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  libmultipath/vector.h | 2 +-
+> >  1 file changed, 1 insertion(+), 1 deletion(-)
+> > 
+> 
+> Reviewed-by: Martin Wilck <mwilck@suse.com>
+> 
+> Let's add that there was only one caller that actually used
+> "i"("multipath -W"). So the harm done by this bug was not as bad as one
+> might think.
+>  
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- mpathpersist/main.c | 11 ++++++++---
- 1 file changed, 8 insertions(+), 3 deletions(-)
+Actually, it caused _find_controllers() to delete the wrong slot from
+map->pgvec, which caused a crash on a future _find_controllers() call
+because we don't check for a NULL path between
 
-diff --git a/mpathpersist/main.c b/mpathpersist/main.c
-index 6df9762d..cbb59623 100644
---- a/mpathpersist/main.c
-+++ b/mpathpersist/main.c
-@@ -374,6 +374,9 @@ static int handle_args(int argc, char * argv[], int nline)
- 		/* set verbosity */
- 		noisy = (loglevel >= 3) ? 1 : hex;
- 		verbose	= (loglevel >= 3)? 3: loglevel;
-+		ret = mpath_persistent_reserve_init_vecs(verbose);
-+		if (ret != MPATH_PR_SUCCESS)
-+			goto out;
- 	}
- 
- 	if ((prout_flag + prin_flag) == 0 && batch_fn == NULL)
-@@ -480,7 +483,7 @@ static int handle_args(int argc, char * argv[], int nline)
- 			goto out;
- 		}
- 
--		ret = mpath_persistent_reserve_in (fd, prin_sa, resp, noisy, verbose);
-+		ret = __mpath_persistent_reserve_in (fd, prin_sa, resp, noisy);
- 		if (ret != MPATH_PR_SUCCESS )
- 		{
- 			fprintf (stderr, "Persistent Reserve IN command failed\n");
-@@ -540,8 +543,8 @@ static int handle_args(int argc, char * argv[], int nline)
- 		}
- 
- 		/* PROUT commands other than 'register and move' */
--		ret = mpath_persistent_reserve_out (fd, prout_sa, 0, prout_type,
--				paramp, noisy, verbose);
-+		ret = __mpath_persistent_reserve_out (fd, prout_sa, 0, prout_type,
-+				paramp, noisy);
- 		for (j = 0 ; j < num_transport; j++)
- 		{
- 			tmp = paramp->trnptid_list[j];
-@@ -580,6 +583,8 @@ out :
- 		free(batch_fn);
- 		ret = ret == 0 ? rv : ret;
- 	}
-+	if (nline == 0)
-+		mpath_persistent_reserve_free_vecs();
- 	return (ret >= 0) ? ret : MPATH_PR_OTHER;
- }
- 
--- 
-2.21.0
+path = nvme_pg_to_path(pg);
+
+and
+
+path->seen = false;
+
+Since there should never be a NULL path, I don't think we need to add
+that check, but this happens in more than multipath -W. We use "i" in
+_cleanup_foreign(), cleanup_nvme_map(), _delete_all(), and
+_find_controllers(). 
+
+-Ben
