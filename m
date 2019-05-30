@@ -1,73 +1,44 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 0/9] speeding up mpathpersist
-Date: Wed, 29 May 2019 14:30:45 -0500
-Message-ID: <20190529193045.GF7630@octiron.msp.redhat.com>
-References: <20190527125942.8366-1-mwilck@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-init: fix 2 incorrect use of kstrndup()
+Date: Thu, 30 May 2019 12:11:03 -0400
+Message-ID: <20190530161103.GA30026@redhat.com>
+References: <20190529013320.GA3307@zhanggen-UX430UQ>
+ <fcf2c3c0-e479-9e74-59d5-79cd2a0bade6@acm.org>
+ <20190529152443.GA4076@zhanggen-UX430UQ>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190527125942.8366-1-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
+In-Reply-To: <20190529152443.GA4076@zhanggen-UX430UQ>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Gen Zhang <blackgod016574@gmail.com>
+Cc: Bart Van Assche <bvanassche@acm.org>, dm-devel@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, May 27, 2019 at 02:59:33PM +0200, Martin Wilck wrote:
-> We've had reports that mpathpersist doesn't scale well in environments
-> with lots of IO devices. This patch set tries to address this problem
-> with a few optimizations:
-> 
->  - instead of doing a full path discovery at startup, only look at
->    paths that are part of the maps being worked on
->  - allow multiple PR commands in a single run using "batch files",
->    without re-discovering everything between PR commands
->  - avoid looking at priorities
-> 
-> I've done some basic testing and it seems to work. It remains to be
-> seen what the effect on performance really is, but the amount of system
-> calls to be performed for a given set of mpathpersist actions should
-> be substantially reduced in any case, especially when using batching.
-> 
-> ---
-> v2:
->  - avoid memory leak with --batch-file (Ben Marzinski)
->  - add documentation to usage() output and mpathpersist man page
->  - integrate "mpathpersist.8: fix examples in man page" which I'd sent
->    separately before
-> 
+On Wed, May 29 2019 at 11:24am -0400,
+Gen Zhang <blackgod016574@gmail.com> wrote:
 
-ACK for the set.
+> On Wed, May 29, 2019 at 05:23:53AM -0700, Bart Van Assche wrote:
+> > On 5/28/19 6:33 PM, Gen Zhang wrote:
+> > > In drivers/md/dm-init.c, kstrndup() is incorrectly used twice.
+> > > 
+> > > It should be: char *kstrndup(const char *s, size_t max, gfp_t gfp);
+> > 
+> > Should the following be added to this patch?
+> > 
+> > Fixes: 6bbc923dfcf5 ("dm: add support to directly boot to a mapped
+> > device") # v5.1.
+> > Cc: stable
+> > 
+> > Thanks,
+> > 
+> > Bart.
+> Personally, I am not quite sure about this question, because I am not 
+> the maintainer of this part.
 
--Ben
+Yes, it should have the tags Bart suggested.
 
-> 
-> Martin Wilck (9):
->   mpathpersist: call usage() just once on return
->   mpathpersist: add option --batch-file (-f)
->   mpathpersist: no need to treat error close() as fatal
->   libmpathpersist: updatepaths: deal with missing pp->udev
->   libmpathpersist: factor out initialization and teardown
->   mpathpersist: initialize data structures only once
->   libmpathpersist: don't bother with priorities
->   mpathpersist.8: fix examples in man page
->   mpathpersist.8: add documentation for --batch-file (-f)
-> 
->  libmpathpersist/mpath_persist.c | 250 +++++++++++++++-----------------
->  libmpathpersist/mpath_persist.h |  40 +++++
->  mpathpersist/main.c             | 227 ++++++++++++++++++++++-------
->  mpathpersist/main.h             |   1 +
->  mpathpersist/mpathpersist.8     | 121 ++++++++++++++--
->  5 files changed, 440 insertions(+), 199 deletions(-)
-> 
-> -- 
-> 2.21.0
+I'll take care it.
+
+Thanks,
+Mike
