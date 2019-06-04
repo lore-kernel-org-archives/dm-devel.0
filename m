@@ -1,129 +1,144 @@
-From: Helen Koike <helen.koike@collabora.com>
-Subject: Re: [PATCH v12] dm: add support to directly boot to a mapped device
-Date: Tue, 4 Jun 2019 14:38:59 -0300
-Message-ID: <d6b4fb26-9a1b-0acd-ce4a-e48322a17e7d@collabora.com>
-References: <20190221203334.24504-1-helen.koike@collabora.com>
- <5cf5a724.1c69fb81.1e8f0.08fb@mx.google.com>
+From: Josef Bacik <josef@toxicpanda.com>
+Subject: Re: dm log writes: make sure the log super sectors are
+ written in order
+Date: Tue, 4 Jun 2019 10:46:50 -0700
+Message-ID: <20190604174649.nwoguifzgbh7f7ey@roberthasiphone.dhcp.thefacebook.com>
+References: <1559571534-16467-1-git-send-email-yi.zhang@huawei.com>
+	<20190603144608.GA22116@redhat.com>
+	<20190603190243.zqbfsgz22k3wghby@MacBook-Pro-91.local>
+	<fae337b4-146e-743e-fe7d-6c796bfd560d@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5cf5a724.1c69fb81.1e8f0.08fb@mx.google.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Stephen Boyd <swboyd@chromium.org>, dm-devel@redhat.com
-Cc: wad@chromium.org, keescook@chromium.org, snitzer@redhat.com, linux-doc@vger.kernel.org, richard.weinberger@gmail.com, linux-kernel@vger.kernel.org, linux-lvm@redhat.com, enric.balletbo@collabora.com, kernel@collabora.com, agk@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <fae337b4-146e-743e-fe7d-6c796bfd560d@huawei.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "zhangyi (F)" <yi.zhang@huawei.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Josef Bacik <jbacik@fb.com>, Josef Bacik <josef@toxicpanda.com>, dm-devel@redhat.com, houtao1@huawei.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Hi Stephen,
+On Tue, Jun 04, 2019 at 12:20:53PM +0800, zhangyi (F) wrote:
+> On 2019/6/4 3:02, Josef Bacik Wrote:
+> > On Mon, Jun 03, 2019 at 10:46:08AM -0400, Mike Snitzer wrote:
+> >> On Mon, Jun 03 2019 at 10:18am -0400,
+> >> zhangyi (F) <yi.zhang@huawei.com> wrote:
+> >>
+> >>> Currently, although we submit super bios in log-write thread orderly
+> >>> (the super.nr_entries is incremented by each logged entry), the
+> >>> submit_bio() cannot make sure that each super sector is written to log
+> >>> device in order. So the submitting bio of each super sector may be
+> >>> out-of-order, and then the final nr_entries maybe small than the real
+> >>> entries submitted.
+> >>>
+> >>> This problem can be reproduced by the xfstests generic/455 with ext4,
+> >>> which may complained below after running the test:
+> >>>
+> >>>   QA output created by 455
+> >>>  -Silence is golden
+> >>>  +mark 'end' does not exist
+> >>>
+> >>> This patch serialize submitting super secotrs to make sure each super
+> >>> sectors are written to log disk in order.
+> >>>
+> >>> Signed-off-by: zhangyi (F) <yi.zhang@huawei.com>
+> >>
+> >> This doesn't feel right.
+> >>
+> >> You raised 2 things you're trying to address:
+> >> 1) IO is out of order
+> >> 2) accounting (nr_entries) isn't correct
+> >>
+> >> I'll need to reviewer closer but serializing "super" bios doesn't seem
+> >> like the best fix.
+> >>
+> >> Josef, any chance you can weigh in on this?  AFAIK you are still "the
+> >> man" for dm-log-writes ;)
+> >>
+> > 
+> > Well the #2 is caused by #1, we submit the bio for a super two times in a row
+> > and it's a crapshoot which one makes it to disk.  So he's right, and it's kind
+> > of funny because this is the sort of problem that dm-log-writes was written to
+> > catch, and I fucked it up here ;).  That being said this is a bit
+> > over-engineered, can we just add a completion to the log buff and do a
+> > wait_for_completion() when we're writing out the super?  It's not like this thing
+> > needs to be super performant.  Thanks,
+> > 
+> 
+> Hi, Josef
+> 
+> Thanks for your suggestions. It's fine by me to switch to use completion
+> instead. Some thing like this?
+> 
+> ...
+> @@ -180,6 +182,15 @@ static void log_end_io(struct bio *bio)
+>         bio_put(bio);
+>  }
+> 
+> +static void log_end_super(struct bio *bio)
+> +{
+> +       struct log_writes_c *lc = bio->bi_private;
+> +
+> +       /* Wake up log-write kthread that super has been written */
+> +       complete(&lc->super_comp);
+> +       log_end_io(bio);
+> +}
+> +
+>  /*
+>   * Meant to be called if there is an error, it will free all the pages
+>   * associated with the block.
+> @@ -215,7 +226,8 @@ static int write_metadata(struct log_writes_c *lc, void *entry,
+>         bio->bi_iter.bi_size = 0;
+>         bio->bi_iter.bi_sector = sector;
+>         bio_set_dev(bio, lc->logdev->bdev);
+> -       bio->bi_end_io = log_end_io;
+> +       bio->bi_end_io = (sector == WRITE_LOG_SUPER_SECTOR) ?
+> +                         log_end_super : log_end_io;
+>         bio->bi_private = lc;
+>         bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
+> 
+> @@ -418,11 +430,19 @@ static int log_super(struct log_writes_c *lc)
+>         super.nr_entries = cpu_to_le64(lc->logged_entries);
+>         super.sectorsize = cpu_to_le32(lc->sectorsize);
+> 
+> -       if (write_metadata(lc, &super, sizeof(super), NULL, 0, 0)) {
+> +       if (write_metadata(lc, &super, sizeof(super), NULL, 0,
+> +                          WRITE_LOG_SUPER_SECTOR)) {
+>                 DMERR("Couldn't write super");
+>                 return -1;
+>         }
+> 
+> +       /*
+> +        * Super sector should be writen in-order, or else the
+> +        * nr_entries could be rewritten by the old bio and small
+> +        * than the real submitted entries.
+> +        */
+> +       wait_for_completion_io(&lc->super_comp);
+> +
+>         return 0;
+>  }
+> ...
+> 
+> But one thing need to mention is that, IIUC, If we use completion, the
+> log_writes_kthread have to wait on writing out every super bio, so it cannot
+> keep on submitting subsequent log bios. It maybe more performance impact
+> than my v1 (it only wait on previous super if it was not finished).
+>
 
-On 6/3/19 8:02 PM, Stephen Boyd wrote:
-> Quoting Helen Koike (2019-02-21 12:33:34)
->> Add a "create" module parameter, which allows device-mapper targets to be
->> configured at boot time. This enables early use of dm targets in the boot
->> process (as the root device or otherwise) without the need of an initramfs.
->>
->> The syntax used in the boot param is based on the concise format from the
->> dmsetup tool to follow the rule of least surprise:
->>
->>         sudo dmsetup table --concise /dev/mapper/lroot
->>
->> Which is:
->>         dm-mod.create=<name>,<uuid>,<minor>,<flags>,<table>[,<table>+][;<name>,<uuid>,<minor>,<flags>,<table>[,<table>+]+]
->>
->> Where,
->>         <name>          ::= The device name.
->>         <uuid>          ::= xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | ""
->>         <minor>         ::= The device minor number | ""
->>         <flags>         ::= "ro" | "rw"
->>         <table>         ::= <start_sector> <num_sectors> <target_type> <target_args>
->>         <target_type>   ::= "verity" | "linear" | ...
->>
->> For example, the following could be added in the boot parameters:
->> dm-mod.create="lroot,,,rw, 0 4096 linear 98:16 0, 4096 4096 linear 98:32 0" root=/dev/dm-0
->>
->> Only the targets that were tested are allowed and the ones that doesn't
->> change any block device when the dm is create as read-only. For example,
->> mirror and cache targets are not allowed. The rationale behind this is
->> that if the user makes a mistake, choosing the wrong device to be the
->> mirror or the cache can corrupt data.
->>
->> The only targets allowed are:
->> * crypt
->> * delay
->> * linear
->> * snapshot-origin
->> * striped
->> * verity
->>
->> Co-developed-by: Will Drewry <wad@chromium.org>
->> Co-developed-by: Kees Cook <keescook@chromium.org>
->> Co-developed-by: Enric Balletbo i Serra <enric.balletbo@collabora.com>
->> Signed-off-by: Helen Koike <helen.koike@collabora.com>
->>
->> ---
->>
-> 
-> I'm trying to boot a mainline linux kernel on a chromeos device with dm
-> verity and a USB stick but it's not working for me even with this patch.
-> I've had to hack around two problems:
-> 
->  1) rootwait isn't considered
-> 
->  2) verity doesn't seem to accept UUID for <hash_dev> or <dev>
-> 
-> For the first problem, it happens every boot for me because I'm trying
-> to boot off of a USB stick and it's behind a hub that takes a few
-> seconds to enumerate. If I hack up the code to call dm_init_init() after
-> the 'rootdelay' cmdline parameter is used then I can make this work. It
-> would be much nicer if the whole mechanism didn't use a late initcall
-> though. If it used a hook from prepare_namespace() and then looped
-> waiting for devices to create when rootwait was specified it would work.
+Yeah but like I said, we're not worried about performance here.  It's in an
+async thread, the fs will never be waiting on these IO's to finish.  It may slow
+down the end of xfstests that need to wait for the log to finish flushing, but I
+think that's probably fine.
 
-The patch was implemented with late initcall partially to be contained
-in drivers/md/*, but to support rootwait, adding a hook from
-prepare_namespace seems the way to go indeed.
+Another solution is to only write the super when we destroy the device, cause
+frankly we don't really need the super until we're done anyway.  Thanks,
 
-> 
-> The second problem is that in chromeos we have the bootloader fill out
-> the UUID of the kernel partition (%U) and then we have another parameter
-> that indicates the offset from that kernel partition to add to the
-> kernel partition (typically 1, i.e. PARTNROFF=1) to find the root
-> filesystem partition. The way verity seems to work here is that we need
-> to specify a path like /dev/sda3 or the major:minor number of the device
-> on the commandline to make this work. It would be better if we could add
-> in support for the PARTNROFF style that name_to_dev_t() handles so we
-> can specify the root partition like we're currently doing. I suspect we
-> should be able to add support for this into the device mapper layer so
-> that we can specify devices this way.
-
-hmm, I didn't test this yet but at least from what I can see in the
-code, verity_ctr() calls dm_get_device() that ends up calling
-name_to_dev_t() which should take care of PARTNROFF, this requires a bit
-more investigation.
-
-> 
-> If it helps, an example commandline I've been using to test out a usb
-> stick is as follows:
-> 
-> dm-mod.create="vroot,,0,ro, 0 4710400 verity 0 8:19 8:19 4096 4096 588800 588800 sha1 9b0a223aedbf74b06442b0f05fbff33c55edd010 414b21fba60a1901e23aec373e994942e991d6762631e54a39bc42411f244bd2"
-
-Thanks
-
-> 
-> Also, the documentation (Documentation/device-mapper/dm-init.txt) says
-> we can use a way that doesn't specify so many arguments, but dm verity
-> complains about not enough arguments (10) when following the example:
-> 
->   vroot,,,ro,
->   0 1740800 verity 254:0 254:0 1740800 sha1
->   76e9be054b15884a9fa85973e9cb274c93afadb6
->   5b3549d54d6c7a3837b9b81ed72e49463a64c03680c47835bef94d768e5646fe;    
-> 
-> So the documentation needs an update?
-> 
-
-Ack, I'll update this.
-
-Thanks
-Helen
+Josef 
