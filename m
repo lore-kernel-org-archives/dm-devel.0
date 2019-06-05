@@ -1,47 +1,48 @@
-From: Stephen Boyd <swboyd@chromium.org>
-Subject: [PATCH] dm init: Remove trailing newline from DM*()
-Date: Tue,  4 Jun 2019 18:27:29 -0700
-Message-ID: <20190605012729.30770-1-swboyd@chromium.org>
+From: Jiri Slaby <jslaby@suse.cz>
+Subject: Re: [PATCH] dm-region-hash: Fix a missing-check bug in __rh_alloc()
+Date: Wed, 5 Jun 2019 08:05:18 +0200
+Message-ID: <79ec221d-6970-3b30-0660-4a288a4c465e@suse.cz>
+References: <20190524031248.GA6295@zhanggen-UX430UQ>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=iso-8859-2
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190524031248.GA6295@zhanggen-UX430UQ>
+Content-Language: en-GB
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Helen Koike <helen.koike@collabora.com>
+To: Gen Zhang <blackgod016574@gmail.com>, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-These printing macros already add a trailing newline, so having another
-one here just makes for blank lines when these prints are enabled.
-Remove them to match style of the rest of the uses of the macros.
+On 24. 05. 19, 5:12, Gen Zhang wrote:
+> In function __rh_alloc(), the pointer nreg is allocated a memory space
+> via kmalloc(). And it is used in the following codes. However, when 
+> there is a memory allocation error, kmalloc() fails. Thus null pointer
+> dereference may happen. And it will cause the kernel to crash. Therefore,
+> we should check the return value and handle the error.
+> Further, in __rh_find(), we should also check the return value and
+> handle the error.
+> 
+> Signed-off-by: Gen Zhang <blackgod016574@gmail.com>
+> 
+> ---
+> diff --git a/drivers/md/dm-region-hash.c b/drivers/md/dm-region-hash.c
+> index 1f76045..2fa1641 100644
+> --- a/drivers/md/dm-region-hash.c
+> +++ b/drivers/md/dm-region-hash.c
+> @@ -290,8 +290,11 @@ static struct dm_region *__rh_alloc(struct dm_region_hash *rh, region_t region)
+>  	struct dm_region *reg, *nreg;
+>  
+>  	nreg = mempool_alloc(&rh->region_pool, GFP_ATOMIC);
+> -	if (unlikely(!nreg))
+> +	if (unlikely(!nreg)) {
+>  		nreg = kmalloc(sizeof(*nreg), GFP_NOIO | __GFP_NOFAIL);
+> +		if (!nreg)
+> +			return NULL;
 
-Cc: Helen Koike <helen.koike@collabora.com>
-Fixes: 6bbc923dfcf5 ("dm: add support to directly boot to a mapped device")
-Signed-off-by: Stephen Boyd <swboyd@chromium.org>
----
- drivers/md/dm-init.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+What's the purpose of checking NO_FAIL allocations?
 
-diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
-index 352e803f566e..54b78c68bf0b 100644
---- a/drivers/md/dm-init.c
-+++ b/drivers/md/dm-init.c
-@@ -272,7 +272,7 @@ static int __init dm_init_init(void)
- 		return 0;
- 
- 	if (strlen(create) >= DM_MAX_STR_SIZE) {
--		DMERR("Argument is too big. Limit is %d\n", DM_MAX_STR_SIZE);
-+		DMERR("Argument is too big. Limit is %d", DM_MAX_STR_SIZE);
- 		return -EINVAL;
- 	}
- 	str = kstrndup(create, GFP_KERNEL, DM_MAX_STR_SIZE);
-@@ -283,7 +283,7 @@ static int __init dm_init_init(void)
- 	if (r)
- 		goto out;
- 
--	DMINFO("waiting for all devices to be available before creating mapped devices\n");
-+	DMINFO("waiting for all devices to be available before creating mapped devices");
- 	wait_for_device_probe();
- 
- 	list_for_each_entry(dev, &devices, list) {
+thanks,
 -- 
-Sent by a computer through tubes
+js
+suse labs
