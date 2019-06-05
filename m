@@ -1,133 +1,78 @@
-From: "zhangyi (F)" <yi.zhang@huawei.com>
-Subject: Re: dm log writes: make sure the log super sectors are
- written in order
-Date: Tue, 4 Jun 2019 12:20:53 +0800
-Message-ID: <fae337b4-146e-743e-fe7d-6c796bfd560d@huawei.com>
-References: <1559571534-16467-1-git-send-email-yi.zhang@huawei.com>
-	<20190603144608.GA22116@redhat.com>
-	<20190603190243.zqbfsgz22k3wghby@MacBook-Pro-91.local>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: [dm-devel] [PATCH v12] dm: add support to directly boot to a
+ mapped device
+Date: Wed, 5 Jun 2019 10:35:49 +0200
+Message-ID: <c5eae05c-f209-8578-f7fd-cd2feabb309c@redhat.com>
+References: <20190221203334.24504-1-helen.koike@collabora.com>
+ <5cf5a724.1c69fb81.1e8f0.08fb@mx.google.com>
+ <d6b4fb26-9a1b-0acd-ce4a-e48322a17e7d@collabora.com>
+ <5cf6c7e6.1c69fb81.e1551.8ac4@mx.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=iso-8859-2; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190603190243.zqbfsgz22k3wghby@MacBook-Pro-91.local>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Josef Bacik <josef@toxicpanda.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: Josef Bacik <jbacik@fb.com>, dm-devel@redhat.com, agk@redhat.com, houtao1@huawei.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5cf6c7e6.1c69fb81.e1551.8ac4@mx.google.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Stephen Boyd <swboyd@chromium.org>, Helen Koike <helen.koike@collabora.com>, dm-devel@redhat.com
+Cc: wad@chromium.org, keescook@chromium.org, snitzer@redhat.com, linux-doc@vger.kernel.org, richard.weinberger@gmail.com, linux-kernel@vger.kernel.org, linux-lvm@redhat.com, enric.balletbo@collabora.com, kernel@collabora.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On 2019/6/4 3:02, Josef Bacik Wrote:
-> On Mon, Jun 03, 2019 at 10:46:08AM -0400, Mike Snitzer wrote:
->> On Mon, Jun 03 2019 at 10:18am -0400,
->> zhangyi (F) <yi.zhang@huawei.com> wrote:
->>
->>> Currently, although we submit super bios in log-write thread orderly
->>> (the super.nr_entries is incremented by each logged entry), the
->>> submit_bio() cannot make sure that each super sector is written to log
->>> device in order. So the submitting bio of each super sector may be
->>> out-of-order, and then the final nr_entries maybe small than the real
->>> entries submitted.
+Dne 04. 06. 19 v 21:35 Stephen Boyd napsal(a):
+> Quoting Helen Koike (2019-06-04 10:38:59)
+>> On 6/3/19 8:02 PM, Stephen Boyd wrote:
 >>>
->>> This problem can be reproduced by the xfstests generic/455 with ext4,
->>> which may complained below after running the test:
+>>> I'm trying to boot a mainline linux kernel on a chromeos device with dm
+>>> verity and a USB stick but it's not working for me even with this patch.
+>>> I've had to hack around two problems:
 >>>
->>>   QA output created by 455
->>>  -Silence is golden
->>>  +mark 'end' does not exist
+>>>   1) rootwait isn't considered
 >>>
->>> This patch serialize submitting super secotrs to make sure each super
->>> sectors are written to log disk in order.
+>>>   2) verity doesn't seem to accept UUID for <hash_dev> or <dev>
 >>>
->>> Signed-off-by: zhangyi (F) <yi.zhang@huawei.com>
+>>> For the first problem, it happens every boot for me because I'm trying
+>>> to boot off of a USB stick and it's behind a hub that takes a few
+>>> seconds to enumerate. If I hack up the code to call dm_init_init() after
+>>> the 'rootdelay' cmdline parameter is used then I can make this work. It
+>>> would be much nicer if the whole mechanism didn't use a late initcall
+>>> though. If it used a hook from prepare_namespace() and then looped
+>>> waiting for devices to create when rootwait was specified it would work.
 >>
->> This doesn't feel right.
->>
->> You raised 2 things you're trying to address:
->> 1) IO is out of order
->> 2) accounting (nr_entries) isn't correct
->>
->> I'll need to reviewer closer but serializing "super" bios doesn't seem
->> like the best fix.
->>
->> Josef, any chance you can weigh in on this?  AFAIK you are still "the
->> man" for dm-log-writes ;)
->>
+>> The patch was implemented with late initcall partially to be contained
+>> in drivers/md/*, but to support rootwait, adding a hook from
+>> prepare_namespace seems the way to go indeed.
 > 
-> Well the #2 is caused by #1, we submit the bio for a super two times in a row
-> and it's a crapshoot which one makes it to disk.  So he's right, and it's kind
-> of funny because this is the sort of problem that dm-log-writes was written to
-> catch, and I fucked it up here ;).  That being said this is a bit
-> over-engineered, can we just add a completion to the log buff and do a
-> wait_for_completion() when we're writing out the super?  It's not like this thing
-> needs to be super performant.  Thanks,
+> Alright, great.
 > 
+>>
+>>>
+>>> The second problem is that in chromeos we have the bootloader fill out
+>>> the UUID of the kernel partition (%U) and then we have another parameter
+>>> that indicates the offset from that kernel partition to add to the
+>>> kernel partition (typically 1, i.e. PARTNROFF=1) to find the root
+>>> filesystem partition. The way verity seems to work here is that we need
+>>> to specify a path like /dev/sda3 or the major:minor number of the device
 
-Hi, Josef
 
-Thanks for your suggestions. It's fine by me to switch to use completion
-instead. Some thing like this?
+Hi
 
-...
-@@ -180,6 +182,15 @@ static void log_end_io(struct bio *bio)
-        bio_put(bio);
- }
+As not a direct dm developer - isn't this going a bit too far ? -
+This way you will need to soon move halve of the userspace functionality into 
+kernel space.
 
-+static void log_end_super(struct bio *bio)
-+{
-+       struct log_writes_c *lc = bio->bi_private;
-+
-+       /* Wake up log-write kthread that super has been written */
-+       complete(&lc->super_comp);
-+       log_end_io(bio);
-+}
-+
- /*
-  * Meant to be called if there is an error, it will free all the pages
-  * associated with the block.
-@@ -215,7 +226,8 @@ static int write_metadata(struct log_writes_c *lc, void *entry,
-        bio->bi_iter.bi_size = 0;
-        bio->bi_iter.bi_sector = sector;
-        bio_set_dev(bio, lc->logdev->bdev);
--       bio->bi_end_io = log_end_io;
-+       bio->bi_end_io = (sector == WRITE_LOG_SUPER_SECTOR) ?
-+                         log_end_super : log_end_io;
-        bio->bi_private = lc;
-        bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
+IMHO would be way more progressive to start using initramdisk and let 
+userspace resolve all the issue.
 
-@@ -418,11 +430,19 @@ static int log_super(struct log_writes_c *lc)
-        super.nr_entries = cpu_to_le64(lc->logged_entries);
-        super.sectorsize = cpu_to_le32(lc->sectorsize);
+Clearly once you start to wait for some 'devices' to appear - then you will 
+need to way for CORRECT device as well - since sda,sdb... goes in random 
+order, so you would need to parse disk headers and so on.
 
--       if (write_metadata(lc, &super, sizeof(super), NULL, 0, 0)) {
-+       if (write_metadata(lc, &super, sizeof(super), NULL, 0,
-+                          WRITE_LOG_SUPER_SECTOR)) {
-                DMERR("Couldn't write super");
-                return -1;
-        }
+What you are effectively doing at this moment is you are shifting/ballooning 
+'ramdisk' code into kernel image - just to be named a kernel.
 
-+       /*
-+        * Super sector should be writen in-order, or else the
-+        * nr_entries could be rewritten by the old bio and small
-+        * than the real submitted entries.
-+        */
-+       wait_for_completion_io(&lc->super_comp);
-+
-        return 0;
- }
-...
+So why it is so big deal to start to use ramdisk on ChromeOS?
+That would have solved most of problems you have or you will have instantly.
 
-But one thing need to mention is that, IIUC, If we use completion, the
-log_writes_kthread have to wait on writing out every super bio, so it cannot
-keep on submitting subsequent log bios. It maybe more performance impact
-than my v1 (it only wait on previous super if it was not finished).
+Regards
 
-Thanks,
-Yi.
+Zdenek
