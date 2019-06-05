@@ -1,26 +1,47 @@
 From: Stephen Boyd <swboyd@chromium.org>
-Subject: Re: [PATCH] Documentation/dm-init: fix multi device example
-Date: Tue, 04 Jun 2019 12:37:12 -0700
-Message-ID: <5cf6c869.1c69fb81.5ed2e.84d1@mx.google.com>
-References: <20190604182719.15944-1-helen.koike@collabora.com>
+Subject: [PATCH] dm init: Remove trailing newline from DM*()
+Date: Tue,  4 Jun 2019 18:27:29 -0700
+Message-ID: <20190605012729.30770-1-swboyd@chromium.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190604182719.15944-1-helen.koike@collabora.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: wad@chromium.org, keescook@chromium.org, snitzer@redhat.com, linux-doc@vger.kernel.org, richard.weinberger@gmail.com, linux-kernel@vger.kernel.org, linux-lvm@redhat.com, enric.balletbo@collabora.com, kernel@collabora.com, agk@redhat.com, Helen Koike <helen.koike@collabora.com>, Jonathan Corbet <corbet@lwn.net>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Helen Koike <helen.koike@collabora.com>
 List-Id: dm-devel.ids
 
-Quoting Helen Koike (2019-06-04 11:27:19)
-> The example in the docs regarding multiple device-mappers is invalid (it
-> has a wrong number of arguments), it's a left over from previous
-> versions of the patch.
-> Replace the example with an valid and tested one.
->=20
-> Signed-off-by: Helen Koike <helen.koike@collabora.com>
->=20
-> ---
+These printing macros already add a trailing newline, so having another
+one here just makes for blank lines when these prints are enabled.
+Remove them to match style of the rest of the uses of the macros.
 
-Reviewed-by: Stephen Boyd <swboyd@chromium.org>
+Cc: Helen Koike <helen.koike@collabora.com>
+Fixes: 6bbc923dfcf5 ("dm: add support to directly boot to a mapped device")
+Signed-off-by: Stephen Boyd <swboyd@chromium.org>
+---
+ drivers/md/dm-init.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
+index 352e803f566e..54b78c68bf0b 100644
+--- a/drivers/md/dm-init.c
++++ b/drivers/md/dm-init.c
+@@ -272,7 +272,7 @@ static int __init dm_init_init(void)
+ 		return 0;
+ 
+ 	if (strlen(create) >= DM_MAX_STR_SIZE) {
+-		DMERR("Argument is too big. Limit is %d\n", DM_MAX_STR_SIZE);
++		DMERR("Argument is too big. Limit is %d", DM_MAX_STR_SIZE);
+ 		return -EINVAL;
+ 	}
+ 	str = kstrndup(create, GFP_KERNEL, DM_MAX_STR_SIZE);
+@@ -283,7 +283,7 @@ static int __init dm_init_init(void)
+ 	if (r)
+ 		goto out;
+ 
+-	DMINFO("waiting for all devices to be available before creating mapped devices\n");
++	DMINFO("waiting for all devices to be available before creating mapped devices");
+ 	wait_for_device_probe();
+ 
+ 	list_for_each_entry(dev, &devices, list) {
+-- 
+Sent by a computer through tubes
