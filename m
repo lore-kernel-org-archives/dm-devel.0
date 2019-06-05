@@ -1,51 +1,60 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Automatic blacklisting of NVMe devices if NVMe
-	native MP
-Date: Wed, 5 Jun 2019 10:33:55 -0400
-Message-ID: <20190605143355.GA734@redhat.com>
-References: <OFE5B87F49.B857DE99-ONC225840F.00284A78-C225840F.00292455@notes.na.collabserv.com>
+From: Gen Zhang <blackgod016574@gmail.com>
+Subject: Re: dm-region-hash: Fix a missing-check bug in __rh_alloc()
+Date: Wed, 5 Jun 2019 22:58:20 +0800
+Message-ID: <20190605145820.GA3465@zhanggen-UX430UQ>
+References: <20190524031248.GA6295@zhanggen-UX430UQ>
+ <79ec221d-6970-3b30-0660-4a288a4c465e@suse.cz>
+ <20190605122159.GA32538@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <OFE5B87F49.B857DE99-ONC225840F.00284A78-C225840F.00292455@notes.na.collabserv.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Eyal Ben-David <EYALBE@il.ibm.com>
-Cc: dm-devel@redhat.com
+In-Reply-To: <20190605122159.GA32538@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jiri Slaby <jslaby@suse.cz>, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Jun 04 2019 at  3:29am -0400,
-Eyal Ben-David <EYALBE@il.ibm.com> wrote:
-
->    Hi all,
+On Wed, Jun 05, 2019 at 08:21:59AM -0400, Mike Snitzer wrote:
+> On Wed, Jun 05 2019 at  2:05am -0400,
+> Jiri Slaby <jslaby@suse.cz> wrote:
 > 
->    Is it possible to automatically blacklist all NVMe devices if the NVMe
->    driver has it's own multipath?
+> > On 24. 05. 19, 5:12, Gen Zhang wrote:
+> > > In function __rh_alloc(), the pointer nreg is allocated a memory space
+> > > via kmalloc(). And it is used in the following codes. However, when 
+> > > there is a memory allocation error, kmalloc() fails. Thus null pointer
+> > > dereference may happen. And it will cause the kernel to crash. Therefore,
+> > > we should check the return value and handle the error.
+> > > Further, in __rh_find(), we should also check the return value and
+> > > handle the error.
+> > > 
+> > > Signed-off-by: Gen Zhang <blackgod016574@gmail.com>
+> > > 
+> > > ---
+> > > diff --git a/drivers/md/dm-region-hash.c b/drivers/md/dm-region-hash.c
+> > > index 1f76045..2fa1641 100644
+> > > --- a/drivers/md/dm-region-hash.c
+> > > +++ b/drivers/md/dm-region-hash.c
+> > > @@ -290,8 +290,11 @@ static struct dm_region *__rh_alloc(struct dm_region_hash *rh, region_t region)
+> > >  	struct dm_region *reg, *nreg;
+> > >  
+> > >  	nreg = mempool_alloc(&rh->region_pool, GFP_ATOMIC);
+> > > -	if (unlikely(!nreg))
+> > > +	if (unlikely(!nreg)) {
+> > >  		nreg = kmalloc(sizeof(*nreg), GFP_NOIO | __GFP_NOFAIL);
+> > > +		if (!nreg)
+> > > +			return NULL;
+> > 
+> > What's the purpose of checking NO_FAIL allocations?
 > 
->    I mean if for example if:
+> There isn't, that was already pointed out in a different thread for this
+> same patch (think patch was posted twice):
+> https://www.redhat.com/archives/dm-devel/2019-May/msg00124.html
 > 
->    cat /sys/module/nvme_core/parameters/multipath
->    Y
-> 
->    then device mapper would automatically blacklist all NVMe devices to avoid
->    unexpected consequences.
+> Mike
+Thanks for your reply. The first thread is not replied for a period, so
+the second one is posted. But I don't know why Jiri replied to the first
+thread.
 
-The native NVMe multipath device would only look to have one path from
-above.  So multipath shouldn't even pick up these native NVMe multipath
-devices.  And in addition, IIRC, multipath-tools has been trained to at
-least recognize native NVMe multipath device and displays useful info
-about them.
-
-Have you seen an actual problem?  What versions of kernel and
-multipath-tools are you using?
-
-Mike
+Thanks
+Gen
