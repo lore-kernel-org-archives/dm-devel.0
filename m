@@ -1,12 +1,12 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 06/30] multipath-tools: Fix more strncpy(X, Y,
-	size - 1) calls
-Date: Fri,  7 Jun 2019 15:05:28 +0200
-Message-ID: <20190607130552.13203-7-mwilck@suse.com>
+Subject: [PATCH 01/30] kpartx: dasd: fix
+	-Waddress-of-packed-member warning from gcc9
+Date: Fri,  7 Jun 2019 15:05:23 +0200
+Message-ID: <20190607130552.13203-2-mwilck@suse.com>
 References: <20190607130552.13203-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20190607130552.13203-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -22,115 +22,26 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The compiler emitted no warnings for these, but for consistency
-it makes sense to fix them, too.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmpathpersist/mpath_persist.c | 2 +-
- libmultipath/configure.c        | 4 ++--
- libmultipath/prio.c             | 3 ++-
- libmultipath/structs_vec.c      | 3 ++-
- multipathd/waiter.c             | 3 ++-
- 5 files changed, 9 insertions(+), 6 deletions(-)
-
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 4abcaed5..53022f5b 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -618,7 +618,7 @@ int send_prout_activepath(char * dev, int rq_servact, int rq_scope,
- 	int rc;
- 
- 	memset(&thread, 0, sizeof(thread));
--	strncpy(param.dev, dev, FILE_NAME_SIZE - 1);
-+	strlcpy(param.dev, dev, FILE_NAME_SIZE);
- 	/* Initialize and set thread joinable attribute */
- 	pthread_attr_init(&attr);
- 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index dfee7d24..c8dd69b0 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -650,7 +650,7 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
- 		if (cmpp) {
- 			condlog(2, "%s: rename %s to %s", mpp->wwid,
- 				cmpp->alias, mpp->alias);
--			strncpy(mpp->alias_old, cmpp->alias, WWID_SIZE - 1);
-+			strlcpy(mpp->alias_old, cmpp->alias, WWID_SIZE);
- 			mpp->action = ACT_RENAME;
- 			if (force_reload) {
- 				mpp->force_udev_reload = 1;
-@@ -1257,7 +1257,7 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
- 			if (!deadmap(mpp))
- 				continue;
- 
--			strncpy(alias, mpp->alias, WWID_SIZE - 1);
-+			strlcpy(alias, mpp->alias, WWID_SIZE);
- 
- 			vector_del_slot(newmp, i);
- 			i--;
-diff --git a/libmultipath/prio.c b/libmultipath/prio.c
-index 0590218d..87de1f97 100644
---- a/libmultipath/prio.c
-+++ b/libmultipath/prio.c
-@@ -5,6 +5,7 @@
- #include <sys/stat.h>
- 
- #include "debug.h"
-+#include "util.h"
- #include "prio.h"
- 
- static LIST_HEAD(prioritizers);
-@@ -166,7 +167,7 @@ void prio_get (char *multipath_dir, struct prio * dst, char * name, char * args)
- 
- 	strncpy(dst->name, src->name, PRIO_NAME_LEN);
- 	if (args)
--		strncpy(dst->args, args, PRIO_ARGS_LEN - 1);
-+		strlcpy(dst->args, args, PRIO_ARGS_LEN);
- 	dst->getprio = src->getprio;
- 	dst->handle = NULL;
- 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index db5d19da..c43b58fb 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -2,6 +2,7 @@
- #include <string.h>
- #include <unistd.h>
- 
-+#include "util.h"
- #include "checkers.h"
- #include "vector.h"
- #include "defaults.h"
-@@ -350,7 +351,7 @@ find_existing_alias (struct multipath * mpp,
- 
- 	vector_foreach_slot (vecs->mpvec, mp, i)
- 		if (strncmp(mp->wwid, mpp->wwid, WWID_SIZE - 1) == 0) {
--			strncpy(mpp->alias_old, mp->alias, WWID_SIZE - 1);
-+			strlcpy(mpp->alias_old, mp->alias, WWID_SIZE);
- 			return;
- 		}
- }
-diff --git a/multipathd/waiter.c b/multipathd/waiter.c
-index 5895f157..eb8d6996 100644
---- a/multipathd/waiter.c
-+++ b/multipathd/waiter.c
-@@ -11,6 +11,7 @@
- #include <signal.h>
- #include <urcu.h>
- 
-+#include "util.h"
- #include "vector.h"
- #include "memory.h"
- #include "checkers.h"
-@@ -210,7 +211,7 @@ int start_waiter_thread (struct multipath *mpp, struct vectors *vecs)
- 	if (!wp)
- 		goto out;
- 
--	strncpy(wp->mapname, mpp->alias, WWID_SIZE - 1);
-+	strlcpy(wp->mapname, mpp->alias, WWID_SIZE);
- 	wp->vecs = vecs;
- 
- 	if (pthread_create(&wp->thread, &waiter_attr, waitevent, wp)) {
--- 
-2.21.0
+Rml4ZXMgdGhlIGZvbGxvd2luZyB3YXJuaW5nOgoKZGFzZC5jOiBJbiBmdW5jdGlvbiDigJhyZWFk
+X2Rhc2RfcHTigJk6CmRhc2QuYzoyMDY6Mzogd2FybmluZzogY29udmVydGluZyBhIHBhY2tlZCDi
+gJh2b2x1bWVfbGFiZWxfdOKAmSB7YWthIOKAmHN0cnVjdAp2b2x1bWVfbGFiZWzigJl9IHBvaW50
+ZXIgKGFsaWdubWVudCAxKSB0byBhIOKAmGxhYmVsX2ludHNfdOKAmSB7YWthIOKAmHVuc2lnbmVk
+IGludOKAmX0KcG9pbnRlciAoYWxpZ25tZW50IDQpIG1heSByZXN1bHQgaW4gYW4gdW5hbGlnbmVk
+IHBvaW50ZXIgdmFsdWUKWy1XYWRkcmVzcy1vZi1wYWNrZWQtbWVtYmVyXQogIDIwNiB8ICAgbGFi
+ZWxfaW50c190ICpsYWJlbCA9IChsYWJlbF9pbnRzX3QgKikgJnZsYWJlbDsKICAgICAgfCAgIF5+
+fn5+fn5+fn5+fgoKQXMgdm9sdW1lX2xhYmVsX3QgaXMgb25seSB1c2VkIGluIHJlYWRfZGFzZF9w
+dCgpLCBhbmQgZmlsbGVkIHdpdGggbWVtY3B5KCksCmluY3JlYXNpbmcgaXRzIGFsaWdubWVudCBz
+aG91bGQgYmUgc2FmZS4KClNpZ25lZC1vZmYtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2Uu
+Y29tPgotLS0KIGtwYXJ0eC9kYXNkLmggfCAyICstCiAxIGZpbGUgY2hhbmdlZCwgMSBpbnNlcnRp
+b24oKyksIDEgZGVsZXRpb24oLSkKCmRpZmYgLS1naXQgYS9rcGFydHgvZGFzZC5oIGIva3BhcnR4
+L2Rhc2QuaAppbmRleCA3NDlhZjQ5YS4uOGFkNWQ2MjAgMTAwNjQ0Ci0tLSBhL2twYXJ0eC9kYXNk
+LmgKKysrIGIva3BhcnR4L2Rhc2QuaApAQCAtNjgsNyArNjgsNyBAQCB0eXBlZGVmIHN0cnVjdCB2
+b2x1bWVfbGFiZWwKIAljaGFyIHJlczNbMjhdOwkgICAgICAgIC8qIHJlc2VydmVkICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICovCiAJdWludDhfdCBsZGxfdmVyc2lvbjsgICAgLyog
+dmVyc2lvbiBudW1iZXIsIHZhbGlkIGZvciBsZGwgZm9ybWF0ICAgICAgKi8KIAl1aW50NjRfdCBm
+b3JtYXR0ZWRfYmxvY2tzOyAvKiB2YWxpZCB3aGVuIGxkbF92ZXJzaW9uID49IGYyICAgICAgICAg
+ICAqLwotfSBfX2F0dHJpYnV0ZV9fICgocGFja2VkKSkgdm9sdW1lX2xhYmVsX3Q7Cit9IF9fYXR0
+cmlidXRlX18gKChwYWNrZWQsIGFsaWduZWQoX19hbGlnbm9mX18oaW50KSkpKSB2b2x1bWVfbGFi
+ZWxfdDsKIAogCiB0eXBlZGVmIHN0cnVjdCBleHRlbnQKLS0gCjIuMjEuMAoKLS0KZG0tZGV2ZWwg
+bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
+YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
