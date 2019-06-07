@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 19/30] libmultipath: add consistent WWID overflow
-	logging in parse_vpd_pg83
-Date: Fri,  7 Jun 2019 15:05:41 +0200
-Message-ID: <20190607130552.13203-20-mwilck@suse.com>
+Subject: [PATCH 22/30] libmultipath: fix parsing of
+	non-space-terminated T10 ID
+Date: Fri,  7 Jun 2019 15:05:44 +0200
+Message-ID: <20190607130552.13203-23-mwilck@suse.com>
 References: <20190607130552.13203-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,85 +22,36 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+If the T10 vendor specific ID doesn't end with spaces, the last
+part won't be parsed. Fix it.
+
+Fixes: 18176202e75c "Read wwid from sysfs vpg_pg83 attribute"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 49 ++++++++++++++++++++++++++--------------
- 1 file changed, 32 insertions(+), 17 deletions(-)
+ libmultipath/discovery.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 45c2931e..e484ec8d 100644
+index 3558e559..efcea468 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1011,38 +1011,53 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
- 		if (vpd_type == 0x2 || vpd_type == 0x3) {
- 			int i;
- 
-+			assert(out_len >= 2);
- 			len = sprintf(out, "%d", vpd_type);
--			for (i = 0; i < vpd_len && len < out_len - 2; i++) {
-+			if (2 * vpd_len >= out_len - len) {
-+				condlog(1, "%s: WWID overflow, type %d, %d/%lu bytes required",
-+					__func__, vpd_type,
-+					2 * vpd_len + len + 1, out_len);
-+				vpd_len = (out_len - len - 1) / 2;
-+			}
-+			for (i = 0; i < vpd_len; i++)
- 				len += sprintf(out + len,
- 					       "%02x", vpd[i]);
--			}
- 		} else if (vpd_type == 0x8) {
- 			if (!memcmp("eui.", vpd, 4)) {
- 				out[0] =  '2';
--				len = 1;
- 				vpd += 4;
--				vpd_len -= 4;
--				for (i = 0; i < vpd_len && len < out_len - 1; i++) {
--					len += sprintf(out + len, "%c",
--						       tolower(vpd[i]));
-+				len = vpd_len - 4;
-+				if (len > out_len - 1) {
-+					condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
-+						__func__, out[0], len + 1, out_len);
-+					len = out_len - 1;
+@@ -1083,6 +1083,17 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ 					vpd_len --;
  				}
-+				for (i = 0; i < len; ++i)
-+					out[1 + i] = tolower(vpd[i]);
-+				/* designator should be 0-terminated, but let's make sure */
-+				out[len] = '\0';
- 			} else if (!memcmp("naa.", vpd, 4)) {
- 				out[0] = '3';
--				len = 1;
- 				vpd += 4;
--				vpd_len -= 4;
--				for (i = 0; i < vpd_len && len < out_len - 1; i++) {
--					len += sprintf(out + len, "%c",
--						       tolower(vpd[i]));
-+				len = vpd_len - 4;
-+				if (len > out_len - 1) {
-+					condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
-+						__func__, out[0], len + 1, out_len);
-+					len = out_len - 1;
- 				}
-+				for (i = 0; i < len; ++i)
-+					out[1 + i] = tolower(vpd[i]);
-+				out[len] = '\0';
- 			} else {
- 				out[0] = '8';
- 				vpd += 4;
--				vpd_len -= 4;
--				if (vpd_len > out_len - 2)
--					vpd_len = out_len - 2;
--				memcpy(out + 1, vpd, vpd_len);
--				len = vpd_len + 1;
-+				len = vpd_len - 4;
-+				if (len > out_len - 1) {
-+					condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
-+						__func__, out[0], len + 1, out_len);
-+					len = out_len - 1;
-+				}
-+				memcpy(out + 1, vpd, len);
- 				out[len] = '\0';
  			}
- 		} else if (vpd_type == 0x1) {
++			p_len = vpd_len;
++			if (p_len > 0 && len < out_len - 1) {
++				if (len + p_len > out_len - 1) {
++					condlog(1, "%s: WWID overflow, type 1, %d/%lu bytes required",
++						__func__, len + p_len + 1, out_len);
++					p_len = out_len - len - 1;
++				}
++				memcpy(out + len, vpd, p_len);
++				len += p_len;
++				out[len] = '\0';
++			}
+ 			if (len > 1 && out[len - 1] == '_') {
+ 				out[len - 1] = '\0';
+ 				len--;
 -- 
 2.21.0
