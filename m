@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 21/30] libmultipath: allow zero-padded SCSI names
-	in parse_vpd_pg83()
-Date: Fri,  7 Jun 2019 15:05:43 +0200
-Message-ID: <20190607130552.13203-22-mwilck@suse.com>
+Subject: [PATCH 11/30] tests/hwtable: decrease log verbosity
+Date: Fri,  7 Jun 2019 15:05:33 +0200
+Message-ID: <20190607130552.13203-12-mwilck@suse.com>
 References: <20190607130552.13203-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,27 +21,23 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The spec says that SCSI name strings designator length must be a multiple of
-4, and that strings must be zero-terminated and zero-padded.
-Fix the returned string length if the VPD input ends with multiple 0-bytes.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 2 ++
- 1 file changed, 2 insertions(+)
+ tests/hwtable.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 32e3f9d3..3558e559 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1032,6 +1032,8 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+diff --git a/tests/hwtable.c b/tests/hwtable.c
+index 13da1d99..f436f52d 100644
+--- a/tests/hwtable.c
++++ b/tests/hwtable.c
+@@ -457,7 +457,7 @@ static void replicate_config(const struct hwt_state *hwt, bool local)
+ 	vector hwtable;
+ 	struct config *conf;
  
- 			vpd += 4;
- 			len = vpd_len - 4;
-+			while (len > 2 && vpd[len - 2] == '\0')
-+				--len;
- 			if (len > out_len - 1) {
- 				condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
- 					__func__, out[0], len + 1, out_len);
+-	condlog(1, "--- %s: replicating %s configuration", __func__,
++	condlog(3, "--- %s: replicating %s configuration", __func__,
+ 		local ? "local" : "full");
+ 
+ 	conf = get_multipath_config();
 -- 
 2.21.0
