@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 16/30] libmultipath: fix possible WWID overflow
-	in parse_vpd_pg83()
-Date: Fri,  7 Jun 2019 15:05:38 +0200
-Message-ID: <20190607130552.13203-17-mwilck@suse.com>
+Subject: [PATCH 17/30] libmultipath: fix another WWID overflow in
+	parse_vpd_pg83()
+Date: Fri,  7 Jun 2019 15:05:39 +0200
+Message-ID: <20190607130552.13203-18-mwilck@suse.com>
 References: <20190607130552.13203-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,61 +22,26 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-We have to check the remaining length before printing to the
-output buffer, not afterwards.
+This one is an obvious typo.
 
 Fixes: 18176202e75c "Read wwid from sysfs vpg_pg83 attribute"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 16 +++-------------
- 1 file changed, 3 insertions(+), 13 deletions(-)
+ libmultipath/discovery.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 89c4d2ad..eed35284 100644
+index eed35284..10306b22 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1012,11 +1012,9 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
- 			int i;
- 
- 			len = sprintf(out, "%d", vpd_type);
--			for (i = 0; i < vpd_len; i++) {
-+			for (i = 0; i < vpd_len && len < out_len - 2; i++) {
- 				len += sprintf(out + len,
- 					       "%02x", vpd[i]);
--				if (len >= out_len)
--					break;
- 			}
- 		} else if (vpd_type == 0x8) {
- 			if (!memcmp("eui.", vpd, 4)) {
-@@ -1024,27 +1022,19 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+@@ -1040,7 +1040,7 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
  				len = 1;
  				vpd += 4;
  				vpd_len -= 4;
--				for (i = 0; i < vpd_len; i++) {
-+				for (i = 0; i < vpd_len && len < out_len - 1; i++) {
- 					len += sprintf(out + len, "%c",
- 						       tolower(vpd[i]));
--					if (len >= out_len)
--						break;
- 				}
--				len = vpd_len + 1;
--				out[len] = '\0';
- 			} else if (!memcmp("naa.", vpd, 4)) {
- 				out[0] = '3';
- 				len = 1;
- 				vpd += 4;
- 				vpd_len -= 4;
--				for (i = 0; i < vpd_len; i++) {
-+				for (i = 0; i < vpd_len && len < out_len - 1; i++) {
- 					len += sprintf(out + len, "%c",
- 						       tolower(vpd[i]));
--					if (len >= out_len)
--						break;
- 				}
--				len = vpd_len + 1;
--				out[len] = '\0';
- 			} else {
- 				out[0] = '8';
- 				len = 1;
+-				if (vpd_len > out_len + 2)
++				if (vpd_len > out_len - 2)
+ 					vpd_len = out_len - 2;
+ 				memcpy(out, vpd, vpd_len);
+ 				len = vpd_len + 1;
 -- 
 2.21.0
