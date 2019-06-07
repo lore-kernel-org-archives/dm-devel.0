@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 12/30] multipath-tools tests: add strlcpy() tests
-Date: Fri,  7 Jun 2019 15:05:34 +0200
-Message-ID: <20190607130552.13203-13-mwilck@suse.com>
+Subject: [PATCH 30/30] multipath.conf.5: Improve documentation of
+	WWID determination
+Date: Fri,  7 Jun 2019 15:05:52 +0200
+Message-ID: <20190607130552.13203-31-mwilck@suse.com>
 References: <20190607130552.13203-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,172 +19,99 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>, Tang Junhui <tang.junhui@zte.com.cn>
 List-Id: dm-devel.ids
 
-As we're using strlcpy quite a bit, make sure it works as designed.
+Clarify the effect of setting uid_attrs, and document the effect of setting
+uid_attribute to an empty string. Replace the arcane "vpd_pg83" with
+something easier to understand. Tell the user that the defaults are
+usually good enough.
 
+Cc: Tang Junhui <tang.junhui@zte.com.cn>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/util.c | 142 +++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 142 insertions(+)
+ multipath/multipath.conf.5 | 48 ++++++++++++++++++++++++--------------
+ 1 file changed, 31 insertions(+), 17 deletions(-)
 
-diff --git a/tests/util.c b/tests/util.c
-index e6d4b9ab..4e04a480 100644
---- a/tests/util.c
-+++ b/tests/util.c
-@@ -258,10 +258,152 @@ int test_basenamecpy(void)
- 	return cmocka_run_group_tests(tests, NULL, NULL);
- }
- 
-+static const char src_str[] = "Hello";
-+
-+/* strlcpy with length 0 */
-+static void test_strlcpy_0(void **state)
-+{
-+	char tst[] = "word";
-+	int rc;
-+
-+	rc = strlcpy(tst, src_str, 0);
-+	assert_int_equal(rc, strlen(src_str));
-+	assert_string_equal(tst, "word");
-+}
-+
-+/* strlcpy with length 1 */
-+static void test_strlcpy_1(void **state)
-+{
-+	char tst[] = "word";
-+	int rc;
-+
-+	rc = strlcpy(tst, src_str, 1);
-+	assert_int_equal(rc, strlen(src_str));
-+	assert_int_equal(tst[0], '\0');
-+	assert_string_equal(tst + 1, "ord");
-+}
-+
-+/* strlcpy with length 2 */
-+static void test_strlcpy_2(void **state)
-+{
-+	char tst[] = "word";
-+	int rc;
-+
-+	rc = strlcpy(tst, src_str, 2);
-+	assert_int_equal(rc, strlen(src_str));
-+	assert_int_equal(tst[0], src_str[0]);
-+	assert_int_equal(tst[1], '\0');
-+	assert_string_equal(tst + 2, "rd");
-+}
-+
-+/* strlcpy with dst length < src length */
-+static void test_strlcpy_3(void **state)
-+{
-+	char tst[] = "word";
-+	int rc;
-+
-+	rc = strlcpy(tst, src_str, sizeof(tst));
-+	assert_int_equal(rc, strlen(src_str));
-+	assert_int_equal(sizeof(tst) - 1, strlen(tst));
-+	assert_true(strncmp(tst, src_str, sizeof(tst) - 1) == 0);
-+}
-+
-+/* strlcpy with dst length > src length */
-+static void test_strlcpy_4(void **state)
-+{
-+	static const char old[] = "0123456789";
-+	char *tst;
-+	int rc;
-+
-+	tst = strdup(old);
-+	rc = strlcpy(tst, src_str, sizeof(old));
-+	assert_int_equal(rc, strlen(src_str));
-+	assert_string_equal(src_str, tst);
-+	assert_string_equal(tst + sizeof(src_str), old + sizeof(src_str));
-+	free(tst);
-+}
-+
-+/* strlcpy with dst length = src length, dst not terminated */
-+static void test_strlcpy_5(void **state)
-+{
-+	char *tst;
-+	int rc;
-+
-+	tst = malloc(sizeof(src_str));
-+	memset(tst, 'f', sizeof(src_str));
-+
-+	rc = strlcpy(tst, src_str, sizeof(src_str));
-+	assert_int_equal(rc, strlen(src_str));
-+	assert_string_equal(src_str, tst);
-+
-+	free(tst);
-+}
-+
-+/* strlcpy with dst length > src length, dst not terminated */
-+static void test_strlcpy_6(void **state)
-+{
-+	char *tst;
-+	int rc;
-+
-+	tst = malloc(sizeof(src_str) + 2);
-+	memset(tst, 'f', sizeof(src_str) + 2);
-+
-+	rc = strlcpy(tst, src_str, sizeof(src_str) + 2);
-+	assert_int_equal(rc, strlen(src_str));
-+	assert_string_equal(src_str, tst);
-+	assert_int_equal(tst[sizeof(src_str)], 'f');
-+	assert_int_equal(tst[sizeof(src_str) + 1], 'f');
-+
-+	free(tst);
-+}
-+
-+/* strlcpy with empty src */
-+static void test_strlcpy_7(void **state)
-+{
-+	char tst[] = "word";
-+	static const char empty[] = "";
-+	int rc;
-+
-+	rc = strlcpy(tst, empty, sizeof(tst));
-+	assert_int_equal(rc, strlen(empty));
-+	assert_string_equal(empty, tst);
-+	assert_string_equal(tst + 1, "ord");
-+}
-+
-+/* strlcpy with empty src, length 0 */
-+static void test_strlcpy_8(void **state)
-+{
-+	char tst[] = "word";
-+	static const char empty[] = "";
-+	int rc;
-+
-+	rc = strlcpy(tst, empty, 0);
-+	assert_int_equal(rc, strlen(empty));
-+	assert_string_equal("word", tst);
-+}
-+
-+static int test_strlcpy(void)
-+{
-+	const struct CMUnitTest tests[] = {
-+		cmocka_unit_test(test_strlcpy_0),
-+		cmocka_unit_test(test_strlcpy_1),
-+		cmocka_unit_test(test_strlcpy_2),
-+		cmocka_unit_test(test_strlcpy_3),
-+		cmocka_unit_test(test_strlcpy_4),
-+		cmocka_unit_test(test_strlcpy_5),
-+		cmocka_unit_test(test_strlcpy_6),
-+		cmocka_unit_test(test_strlcpy_7),
-+		cmocka_unit_test(test_strlcpy_8),
-+	};
-+
-+	return cmocka_run_group_tests(tests, NULL, NULL);
-+}
-+
- int main(void)
- {
- 	int ret = 0;
- 
- 	ret += test_basenamecpy();
-+	ret += test_strlcpy();
- 	return ret;
- }
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index d5fe38ac..f7d21b4c 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -241,23 +241,32 @@ The default is: \fBfailover\fR
+ .
+ .TP
+ .B uid_attrs
+-The udev attribute providing a unique path identifier for corresponding
+-type of path devices. If this field is configured and matched with type
+-of device, it would override any other methods providing for device
+-unique identifier in config file, and it would activate merging uevents
+-according to the identifier to promote effiecncy in processing uevents.
+-It has no default value, if you want to identify path by udev attribute
+-and to activate merging uevents for SCSI and DASD devices, you can set
+-its value as: \fIuid_attrs "sd:ID_SERIAL dasd:ID_UID"\fR.
++.
++Setting this option activates \fBmerging uevents\fR by WWID, which may improve
++uevent processing effiency. Moreover, it's an alternative method to configure
++the udev properties to use for determining unique path identifiers (WWIDs).
+ .RS
+-.TP
+-The default is: \fB<unset>\fR
++.PP
++The value of this option is a space separated list of records like
++\(dq\fItype:ATTR\fR\(dq, where \fItype\fR is matched against the beginning
++of the device node name (e.g. \fIsd:ATTR\fR matches \fIsda\fR), and
++\fIATTR\fR is the name of the udev property to use for matching devices.
++.PP
++If this option is configured and matches the device
++node name of a device, it overrides any other configured  methods for
++determining the WWID for this device.
++.PP
++The default is: \fB<unset>\fR. To enable uevent merging, set it e.g. to
++\(dqsd:ID_SERIAL dasd:ID_UID nvme:ID_WWN\(dq.
+ .RE
+ .
+ .
+ .TP
+ .B uid_attribute
+-The udev attribute providing a unique path identifier.
++The udev attribute providing a unique path identifier (WWID). If
++\fIuid_attribute\fR is set to the empty string, WWID determination is done
++using the \fIsysfs\fR method rather then using udev (not recommended in
++production; see \fBWWID generation\fR below).
+ .RS
+ .TP
+ The default is: \fBID_SERIAL\fR, for SCSI devices
+@@ -1635,8 +1644,8 @@ WWID is assumed to point to the same device.
+ The WWID is generated by four methods (in the order of preference):
+ .TP 17
+ .B uid_attrs
+-The WWID is derived from udev attributes by matching the device node name. See
+-description of \fIuid_attrs\fR in the defaults section above.
++The WWID is derived from udev attributes by matching the device node name; cf
++\fIuid_attrs\fR above.
+ .TP
+ .B getuid_callout
+ Use the specified external program; cf \fIgetuid_callout\fR above.
+@@ -1651,10 +1660,15 @@ does not need to call any external programs here. However, under
+ certain circumstances udev might not be able to generate the requested
+ variable.
+ .TP
+-.B vpd_pg83
+-If none of the \fIgetuid_callout\fR or \fIuid_attribute\fR parameters
+-are present multipath will try to use the sysfs attribute
+-\fIvpd_pg83\fR to generate the WWID.
++.B sysfs
++Try to determine the WWID from sysfs attributes.
++For SCSI devices, this means reading the Vital Product Data (VPD) page
++\(dqDevice Identification\(dq (0x83).
++.PP
++The default settings (using udev and \fBuid_attribute\fR configured from
++the built-in hardware table) should work fine
++in most scenarios. Users who want to enable uevent merging must set
++\fBuid_attrs\fR.
+ .
+ .
+ .\" ----------------------------------------------------------------------------
 -- 
 2.21.0
