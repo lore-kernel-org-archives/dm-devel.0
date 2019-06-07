@@ -1,14 +1,12 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 02/30] libmultipath: fix gcc
-	-Wstringop-truncation warning in set_value()
-Date: Fri,  7 Jun 2019 15:05:24 +0200
-Message-ID: <20190607130552.13203-3-mwilck@suse.com>
-References: <20190607130552.13203-1-mwilck@suse.com>
+Subject: [PATCH 00/30] multipath-tools: gcc9, VPD parsing,
+	and get_uid fixes
+Date: Fri,  7 Jun 2019 15:05:22 +0200
+Message-ID: <20190607130552.13203-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190607130552.13203-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,47 +20,121 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Rml4ZXMgdGhlIGZvbGxvd2luZyB3YXJuaW5nOgoKSW4gZnVuY3Rpb24g4oCYc3RybmNhdOKAmSwK
-ICAgIGlubGluZWQgZnJvbSDigJhzZXRfdmFsdWXigJkgYXQgcGFyc2VyLmM6MzgyOjM6Ci91c3Iv
-aW5jbHVkZS9iaXRzL3N0cmluZ19mb3J0aWZpZWQuaDoxMzY6MTA6IHdhcm5pbmc6IOKAmF9fYnVp
-bHRpbl9zdHJuY2F04oCZCiAgICBvdXRwdXQgdHJ1bmNhdGVkIGJlZm9yZSB0ZXJtaW5hdGluZyBu
-dWwgY29weWluZyBhcyBtYW55IGJ5dGVzIGZyb20gYQogICAgc3RyaW5nIGFzIGl0cyBsZW5ndGgg
-Wy1Xc3RyaW5nb3AtdHJ1bmNhdGlvbl0KICAxMzYgfCAgIHJldHVybiBfX2J1aWx0aW5fX19zdHJu
-Y2F0X2NoayAoX19kZXN0LCBfX3NyYywgX19sZW4sIF9fYm9zIChfX2Rlc3QpKTsKICAgICAgfCAg
-ICAgICAgICBefn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+
-fn5+fn5+fn5+fn5+fgpwYXJzZXIuYzogSW4gZnVuY3Rpb24g4oCYc2V0X3ZhbHVl4oCZOgpwYXJz
-ZXIuYzozODI6Mzogbm90ZTogbGVuZ3RoIGNvbXB1dGVkIGhlcmUKICAzODIgfCAgIHN0cm5jYXQo
-YWxsb2MsIHN0ciwgc3RybGVuKHN0cikpOwogICAgICB8ICAgXn5+fn5+fn5+fn5+fn5+fn5+fn5+
-fn5+fn5+fn5+fn4KCmdjYydzIHN0cmluZ29wIGNoZWNrZXIgZXhwZWN0cyB0aGF0IHRoZSBzaXpl
-IGFyZ3VtZW50IG9mIHN0cm5jYXQoKSBpcyBkZXJpdmVkCmZyb20gdGhlIGRlc3RpbmF0aW9uLCBu
-b3Qgc291cmNlLCBzaWRlLgpTZWUgaHR0cHM6Ly9kZXZlbG9wZXJzLnJlZGhhdC5jb20vYmxvZy8y
-MDE4LzA1LzI0L2RldGVjdGluZy1zdHJpbmctdHJ1bmNhdGlvbi13aXRoLWdjYy04LwoKRml4IHR5
-cG8gaW4gZXJyb3IgbWVzc2FnZSBhbG9uZyB0aGUgd2F5LgoKU2lnbmVkLW9mZi1ieTogTWFydGlu
-IFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+Ci0tLQogbGlibXVsdGlwYXRoL3BhcnNlci5jIHwgMjAg
-KysrKysrKysrLS0tLS0tLS0tLS0KIDEgZmlsZSBjaGFuZ2VkLCA5IGluc2VydGlvbnMoKyksIDEx
-IGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9wYXJzZXIuYyBiL2xpYm11
-bHRpcGF0aC9wYXJzZXIuYwppbmRleCA5MmVmN2NmNS4uZTAwYzVmZmYgMTAwNjQ0Ci0tLSBhL2xp
-Ym11bHRpcGF0aC9wYXJzZXIuYworKysgYi9saWJtdWx0aXBhdGgvcGFyc2VyLmMKQEAgLTM0NSwx
-NyArMzQ1LDEzIEBAIHNldF92YWx1ZSh2ZWN0b3Igc3RydmVjKQogCQlpZiAoYWxsb2MpCiAJCQlt
-ZW1jcHkoYWxsb2MsIHN0ciwgc2l6ZSk7CiAJCWVsc2UKLQkJCWNvbmRsb2coMCwgImNhbid0IGFs
-bG9jYXRlIG1lbWVvcnkgZm9yIG9wdGlvbiAnJXMnIiwKLQkJCQkoY2hhciAqKVZFQ1RPUl9TTE9U
-KHN0cnZlYywgMCkpOworCQkJZ290byBvb207CiAJCXJldHVybiBhbGxvYzsKIAl9CiAJLyogRXZl
-biBlbXB0eSBxdW90ZXMgY291bnRzIGFzIGEgdmFsdWUgKEFuIGVtcHR5IHN0cmluZykgKi8KIAlh
-bGxvYyA9IChjaGFyICopIE1BTExPQyhzaXplb2YgKGNoYXIpKTsKLQlpZiAoIWFsbG9jKSB7Ci0J
-CWNvbmRsb2coMCwgImNhbid0IGFsbG9jYXRlIG1lbWVvcnkgZm9yIG9wdGlvbiAnJXMnIiwKLQkJ
-CShjaGFyICopVkVDVE9SX1NMT1Qoc3RydmVjLCAwKSk7Ci0JCXJldHVybiBOVUxMOwotCX0KKwlp
-ZiAoIWFsbG9jKQorCQlnb3RvIG9vbTsKIAlmb3IgKGkgPSAyOyBpIDwgVkVDVE9SX1NJWkUoc3Ry
-dmVjKTsgaSsrKSB7CiAJCXN0ciA9IFZFQ1RPUl9TTE9UKHN0cnZlYywgaSk7CiAJCWlmICghc3Ry
-KSB7CkBAIC0zNzMsMTUgKzM2OSwxNyBAQCBzZXRfdmFsdWUodmVjdG9yIHN0cnZlYykKIAkJYWxs
-b2MgPSBSRUFMTE9DKGFsbG9jLCBzaXplb2YgKGNoYXIpICogbGVuKTsKIAkJaWYgKCFhbGxvYykg
-ewogCQkJRlJFRSh0bXApOwotCQkJY29uZGxvZygwLCAiY2FuJ3QgYWxsb2NhdGUgbWVtZW9yeSBm
-b3Igb3B0aW9uICclcyciLAotCQkJCShjaGFyICopVkVDVE9SX1NMT1Qoc3RydmVjLCAwKSk7Ci0J
-CQlyZXR1cm4gTlVMTDsKKwkJCWdvdG8gb29tOwogCQl9CiAJCWlmICgqYWxsb2MgIT0gJ1wwJykK
-IAkJCXN0cm5jYXQoYWxsb2MsICIgIiwgMSk7Ci0JCXN0cm5jYXQoYWxsb2MsIHN0ciwgc3RybGVu
-KHN0cikpOworCQlzdHJuY2F0KGFsbG9jLCBzdHIsIGxlbiAtIHN0cmxlbihhbGxvYykgLSAxKTsK
-IAl9CiAJcmV0dXJuIGFsbG9jOworb29tOgorCWNvbmRsb2coMCwgImNhbid0IGFsbG9jYXRlIG1l
-bW9yeSBmb3Igb3B0aW9uICclcyciLAorCQkoY2hhciAqKVZFQ1RPUl9TTE9UKHN0cnZlYywgMCkp
-OworCXJldHVybiBOVUxMOwogfQogCiAvKiBub24tcmVjdXJzaXZlIGNvbmZpZ3VyYXRpb24gc3Ry
-ZWFtIGhhbmRsZXIgKi8KLS0gCjIuMjEuMAoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
-dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
-LWRldmVs
+Hi Christophe, hi Ben,
+
+This series started out with me trying to fix a couple  of warnings
+emitted by gcc 9, and grew substantially while I encountered other
+issues. Most of this series, except patch 25ff, are cleanups, corner
+case fixes, and unit tests.
+
+The parts of the series with user visible impact are 25, 26, and 29.
+Patch 25/30 implements an earlier idea of mine
+(https://www.redhat.com/archives/dm-devel/2019-April/msg00005.html).
+The idea for patch 29/30 has been discussed before, too
+(https://www.redhat.com/archives/dm-devel/2019-March/msg00201.html)
+The fix for uid_attrs (26/30) occured to me while I was working on the get_uid()
+code path.
+
+Patch 1/30 up to 8/30 are more or less straightforward fixes for gcc
+warnings related to string operations. See
+https://developers.redhat.com/blog/2018/05/24/detecting-string-truncation-with-gcc-8/
+(not sure why it says gcc 8 there, I'm seeing these warnings with gcc9
+only). Most of the gcc warnings have been "solved" by replacing strncpy()
+calls with strlcpy(). That has the disadvantage that the compiler's static
+checking, which caused the warnings in the first place, is now simply
+disabled. Yet in those places where I did the replacement, I reckon that
+strlcpy() semantics is what we actually want. Most of the time, we try to
+ensure that "wwid" fields are properly 0-terminated. The previous code
+attempted to do this using constructs like
+
+  strncpy(x->wwid, y->wwid, WWID_SIZE - 1)
+
+relying on x[WWID_SIZE-1] being 0 already. gcc 9 doesn't appreciate this
+style, and I tend to agree.
+
+This lead me to check the code paths where wwid fields are originally set,
+resulting in patch 9/30 and the series from 14/30 to 24/30. In particular the
+VPD parsing code was full of small mistakes if the possibility of buffer
+overflow is taken into account (unlikely to hurt in practice, as our default
+WWID_SIZE is large enough to hold almost every WWID). In order not to break
+stuff, I added unit test code (10-13). The tests, in turn, made me find some
+more minor problems in the VPD parsing code (patches 14, 18, 21, 22, 24).
+
+Reviews and comments welcome.
+
+Regards,
+Martin
+
+Martin Wilck (30):
+  kpartx: dasd: fix -Waddress-of-packed-member warning from gcc9
+  libmultipath: fix gcc -Wstringop-truncation warning in set_value()
+  libmultipath: remove 'space' argument to merge_words()
+  libmultipath: fix -Wstringop-overflow warning in merge_words()
+  multipath-tools: fix more gcc 9 -Wstringop-truncation warnings
+  multipath-tools: Fix more strncpy(X, Y, size - 1) calls
+  libmpathcmd: use target length in strncpy() call
+  libmultipath: inline set_default()
+  libmultipath: add size argument to dm_get_uuid()
+  multipath-tools tests: omit timestamp in log messages
+  tests/hwtable: decrease log verbosity
+  multipath-tools tests: add strlcpy() tests
+  multipath-tools tests: add test for VPD parsing
+  libmultipath: fix parsing of VPD 83 type 1 (T10 vendor ID)
+  libmultipath: Fix buffer overflow in parse_vpd_pg80()
+  libmultipath: fix possible WWID overflow in parse_vpd_pg83()
+  libmultipath: fix another WWID overflow in parse_vpd_pg83()
+  libmultipath: fix parsing of SCSI name string, iqn format
+  libmultipath: add consistent WWID overflow logging in parse_vpd_pg83
+  libmultipath: parse_vpd_pg83: common code for SCSI string parsing
+  libmultipath: allow zero-padded SCSI names in parse_vpd_pg83()
+  libmultipath: fix parsing of non-space-terminated T10 ID
+  libmultipath: parse_vpd_pg80: fix overflow output
+  libmultipath: parse_vpd_pg80: fix whitespace handling
+  libmultipath: get_uid: straighten the fallback logic
+  libmultipath: fix has_uid_fallback() logic
+  libmultipath: fix memory leak with "uid_attrs" config option
+  multipath-tools tests: add test for uid_attrs parsing
+  libmultipath: more cautious blacklisting by missing property
+  multipath.conf.5: Improve documentation of WWID determination
+
+ kpartx/dasd.h                   |   2 +-
+ libmpathcmd/mpath_cmd.c         |   2 +-
+ libmpathpersist/mpath_persist.c |  10 +-
+ libmultipath/blacklist.c        |  26 +-
+ libmultipath/blacklist.h        |   2 +-
+ libmultipath/config.c           |  51 ++-
+ libmultipath/config.h           |   6 +-
+ libmultipath/configure.c        |  17 +-
+ libmultipath/debug.c            |   1 +
+ libmultipath/defaults.c         |  17 -
+ libmultipath/defaults.h         |  10 +-
+ libmultipath/devmapper.c        |  28 +-
+ libmultipath/devmapper.h        |   2 +-
+ libmultipath/dict.c             |  36 +-
+ libmultipath/discovery.c        | 162 ++++---
+ libmultipath/dmparser.c         |  51 +--
+ libmultipath/hwtable.c          |   2 +-
+ libmultipath/parser.c           |  20 +-
+ libmultipath/prio.c             |   3 +-
+ libmultipath/propsel.c          |   4 +-
+ libmultipath/structs_vec.c      |   3 +-
+ libmultipath/uevent.c           |   5 +-
+ libmultipath/util.c             |  44 +-
+ libmultipath/util.h             |   1 -
+ libmultipath/uxsock.c           |   2 +-
+ libmultipath/wwids.c            |   3 +-
+ multipath/multipath.conf.5      |  56 ++-
+ multipathd/main.c               |   2 +-
+ multipathd/waiter.c             |   3 +-
+ tests/Makefile                  |   4 +-
+ tests/blacklist.c               |  39 +-
+ tests/globals.c                 |   3 +-
+ tests/hwtable.c                 |   6 +-
+ tests/uevent.c                  |  27 ++
+ tests/util.c                    | 142 ++++++
+ tests/vpd.c                     | 790 ++++++++++++++++++++++++++++++++
+ 36 files changed, 1332 insertions(+), 250 deletions(-)
+ create mode 100644 tests/vpd.c
+
+-- 
+2.21.0
