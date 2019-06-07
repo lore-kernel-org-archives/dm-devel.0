@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 24/30] libmultipath: parse_vpd_pg80: fix
-	whitespace handling
-Date: Fri,  7 Jun 2019 15:05:46 +0200
-Message-ID: <20190607130552.13203-25-mwilck@suse.com>
+Subject: [PATCH 25/30] libmultipath: get_uid: straighten the
+	fallback logic
+Date: Fri,  7 Jun 2019 15:05:47 +0200
+Message-ID: <20190607130552.13203-26-mwilck@suse.com>
 References: <20190607130552.13203-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,55 +22,52 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-According to the SPC spec, the unit serial number is right-aligned
-ASCII. Thus leading whitespace must be skipped. Moreover, trailing
-whitespace should be discarded before doing the length check.
+The code had two distinct fallback paths, with non-obvious logic.
+Try to straighten it out. The "allow_fallback" logic from
+ffaf9477d115 "multipathd: Don't use fallback code after getting wwid"
+should only apply in the case where get_udev_uid() failed, not
+if it wasn't even tried. Moreover, uid_attribute is hardly ever NULL
+since ffaf9477; allow the user to set it to the empty string to
+skip udev-based WWID determination. This is rather not meant for
+production, but it's useful for testing. Finally, only set "origin"
+to "udev" if a WWID was actually retrieved from udev.
 
-Fixes: 756ef73b7197 "Separate out vpd parsing functions"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 20 ++++++++++----------
- 1 file changed, 10 insertions(+), 10 deletions(-)
+ libmultipath/discovery.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 931a676f..b10afdef 100644
+index b10afdef..d7eaee68 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -907,9 +907,18 @@ get_geometry(struct path *pp)
- static int
- parse_vpd_pg80(const unsigned char *in, char *out, size_t out_len)
- {
--	char *p = NULL;
- 	int len = get_unaligned_be16(&in[2]);
+@@ -1876,20 +1876,20 @@ get_uid (struct path * pp, int path_state, struct udev_device *udev,
+ 			len = strlen(pp->wwid);
+ 		origin = "callout";
+ 	} else {
++		bool udev_available = udev && pp->uid_attribute
++			&& *pp->uid_attribute;
  
-+	/*
-+	 * Strip leading and trailing whitespace
-+	 */
-+	while (len > 0 && in[len + 3] == ' ')
-+		--len;
-+	while (len > 0 && in[4] == ' ') {
-+		++in;
-+		--len;
-+	}
-+
- 	if (len >= out_len) {
- 		condlog(2, "vpd pg80 overflow, %d/%d bytes required",
- 			len + 1, (int)out_len);
-@@ -919,15 +928,6 @@ parse_vpd_pg80(const unsigned char *in, char *out, size_t out_len)
- 		memcpy(out, in + 4, len);
- 		out[len] = '\0';
- 	}
--	/*
--	 * Strip trailing whitspaces
--	 */
--	p = out + len - 1;
--	while (p > out && *p == ' ') {
--		*p = '\0';
--		p--;
--		len --;
--	}
- 	return len;
- }
- 
+-		if (udev && pp->uid_attribute) {
++		if (udev_available) {
+ 			len = get_udev_uid(pp, pp->uid_attribute, udev);
+-			origin = "udev";
+ 			if (len <= 0)
+ 				condlog(1,
+ 					"%s: failed to get udev uid: %s",
+ 					pp->dev, strerror(-len));
+-
+-		} else if (pp->bus == SYSFS_BUS_SCSI) {
+-			len = get_vpd_uid(pp);
+-			origin = "sysfs";
++			else
++				origin = "udev";
+ 		}
+-		if (len <= 0 && allow_fallback && has_uid_fallback(pp)) {
++		if ((!udev_available || (len <= 0 && allow_fallback))
++		    && has_uid_fallback(pp)) {
+ 			used_fallback = 1;
+ 			len = uid_fallback(pp, path_state, &origin);
+ 		}
 -- 
 2.21.0
