@@ -1,12 +1,12 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 15/30] libmultipath: Fix buffer overflow in
-	parse_vpd_pg80()
-Date: Fri,  7 Jun 2019 15:05:37 +0200
-Message-ID: <20190607130552.13203-16-mwilck@suse.com>
+Subject: [PATCH 04/30] libmultipath: fix -Wstringop-overflow
+	warning in merge_words()
+Date: Fri,  7 Jun 2019 15:05:26 +0200
+Message-ID: <20190607130552.13203-5-mwilck@suse.com>
 References: <20190607130552.13203-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20190607130552.13203-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -22,27 +22,33 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-We set out[len] = '\0' later, thus we should set len to no more then
-out_len - 1.
-
-Fixes: 756ef73b7197 "Separate out vpd parsing functions"
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/discovery.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index f360e306..89c4d2ad 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -913,7 +913,7 @@ parse_vpd_pg80(const unsigned char *in, char *out, size_t out_len)
- 	if (len >= out_len) {
- 		condlog(2, "vpd pg80 overflow, %d/%d bytes required",
- 			len, (int)out_len);
--		len = out_len;
-+		len = out_len - 1;
- 	}
- 	if (len > 0) {
- 		memcpy(out, in + 4, len);
--- 
-2.21.0
+Rml4ZXMgdGhlIGZvbGxvd2luZyB3YXJuaW5nIGZyb20gZ2NjIDk6CgpJbiBmaWxlIGluY2x1ZGVk
+IGZyb20gL3Vzci9pbmNsdWRlL3N0cmluZy5oOjQ5NCwKICAgICAgICAgICAgICAgICBmcm9tIGRt
+cGFyc2VyLmM6ODoKSW4gZnVuY3Rpb24g4oCYc3RybmNweeKAmSwKICAgIGlubGluZWQgZnJvbSDi
+gJhtZXJnZV93b3Jkc+KAmSBhdCBkbXBhcnNlci5jOjQxOjI6Ci91c3IvaW5jbHVkZS9iaXRzL3N0
+cmluZ19mb3J0aWZpZWQuaDoxMDY6MTA6IHdhcm5pbmc6IOKAmF9fYnVpbHRpbl9zdHJuY3B54oCZ
+CiAgICAgICAgICAgICAgICAgc3BlY2lmaWVkIGJvdW5kIGRlcGVuZHMgb24gdGhlIGxlbmd0aCBv
+ZiB0aGUgc291cmNlIGFyZ3VtZW50CiAgICAgICAgICAgICAgICAgWy1Xc3RyaW5nb3Atb3ZlcmZs
+b3c9XQogIDEwNiB8ICAgcmV0dXJuIF9fYnVpbHRpbl9fX3N0cm5jcHlfY2hrIChfX2Rlc3QsIF9f
+c3JjLCBfX2xlbiwgX19ib3MgKF9fZGVzdCkpOwogICAgICB8ICAgICAgICAgIF5+fn5+fn5+fn5+
+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+CmRtcGFy
+c2VyLmM6IEluIGZ1bmN0aW9uIOKAmG1lcmdlX3dvcmRz4oCZOgpkbXBhcnNlci5jOjQxOjE5OiBu
+b3RlOiBsZW5ndGggY29tcHV0ZWQgaGVyZQogICA0MSB8ICBzdHJuY3B5KHAsIHdvcmQsIHN0cmxl
+bih3b3JkKSArIDEpOwogICAgICB8ICAgICAgICAgICAgICAgICAgIF5+fn5+fn5+fn5+fgoKU2ln
+bmVkLW9mZi1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+Ci0tLQogbGlibXVsdGlw
+YXRoL2RtcGFyc2VyLmMgfCAxNSArKysrKystLS0tLS0tLS0KIDEgZmlsZSBjaGFuZ2VkLCA2IGlu
+c2VydGlvbnMoKyksIDkgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2Rt
+cGFyc2VyLmMgYi9saWJtdWx0aXBhdGgvZG1wYXJzZXIuYwppbmRleCAwNGY2NzVjMS4uYThiMGI3
+MWEgMTAwNjQ0Ci0tLSBhL2xpYm11bHRpcGF0aC9kbXBhcnNlci5jCisrKyBiL2xpYm11bHRpcGF0
+aC9kbXBhcnNlci5jCkBAIC0yMSwyNCArMjEsMjEgQEAgc3RhdGljIGludAogbWVyZ2Vfd29yZHMo
+Y2hhciAqKmRzdCwgY2hhciAqd29yZCkKIHsKIAljaGFyICogcCA9ICpkc3Q7Ci0JaW50IGxlbjsK
+KwlpbnQgbGVuLCBkc3RsZW47CiAKLQlsZW4gPSBzdHJsZW4oKmRzdCkgKyBzdHJsZW4od29yZCkg
+KyAxOwotCSpkc3QgPSBSRUFMTE9DKCpkc3QsIGxlbiArIDEpOworCWRzdGxlbiA9IHN0cmxlbigq
+ZHN0KTsKKwlsZW4gPSBkc3RsZW4gKyBzdHJsZW4od29yZCkgKyAyOworCSpkc3QgPSBSRUFMTE9D
+KCpkc3QsIGxlbik7CiAKIAlpZiAoISpkc3QpIHsKIAkJZnJlZShwKTsKIAkJcmV0dXJuIDE7CiAJ
+fQogCi0JcCA9ICpkc3Q7Ci0KLQl3aGlsZSAoKnAgIT0gJ1wwJykKLQkJcCsrOwotCisJcCA9ICpk
+c3QgKyBkc3RsZW47CiAJKnAgPSAnICc7CiAJKytwOwotCXN0cm5jcHkocCwgd29yZCwgc3RybGVu
+KHdvcmQpICsgMSk7CisJc3RybmNweShwLCB3b3JkLCBsZW4gLSBkc3RsZW4gLSAxKTsKIAogCXJl
+dHVybiAwOwogfQotLSAKMi4yMS4wCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
+cmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
+ZWw=
