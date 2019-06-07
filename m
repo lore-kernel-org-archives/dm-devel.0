@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 22/30] libmultipath: fix parsing of
-	non-space-terminated T10 ID
-Date: Fri,  7 Jun 2019 15:05:44 +0200
-Message-ID: <20190607130552.13203-23-mwilck@suse.com>
+Subject: [PATCH 21/30] libmultipath: allow zero-padded SCSI names
+	in parse_vpd_pg83()
+Date: Fri,  7 Jun 2019 15:05:43 +0200
+Message-ID: <20190607130552.13203-22-mwilck@suse.com>
 References: <20190607130552.13203-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,36 +22,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-If the T10 vendor specific ID doesn't end with spaces, the last
-part won't be parsed. Fix it.
+The spec says that SCSI name strings designator length must be a multiple of
+4, and that strings must be zero-terminated and zero-padded.
+Fix the returned string length if the VPD input ends with multiple 0-bytes.
 
-Fixes: 18176202e75c "Read wwid from sysfs vpg_pg83 attribute"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 11 +++++++++++
- 1 file changed, 11 insertions(+)
+ libmultipath/discovery.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 3558e559..efcea468 100644
+index 32e3f9d3..3558e559 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1083,6 +1083,17 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
- 					vpd_len --;
- 				}
- 			}
-+			p_len = vpd_len;
-+			if (p_len > 0 && len < out_len - 1) {
-+				if (len + p_len > out_len - 1) {
-+					condlog(1, "%s: WWID overflow, type 1, %d/%lu bytes required",
-+						__func__, len + p_len + 1, out_len);
-+					p_len = out_len - len - 1;
-+				}
-+				memcpy(out + len, vpd, p_len);
-+				len += p_len;
-+				out[len] = '\0';
-+			}
- 			if (len > 1 && out[len - 1] == '_') {
- 				out[len - 1] = '\0';
- 				len--;
+@@ -1032,6 +1032,8 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ 
+ 			vpd += 4;
+ 			len = vpd_len - 4;
++			while (len > 2 && vpd[len - 2] == '\0')
++				--len;
+ 			if (len > out_len - 1) {
+ 				condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
+ 					__func__, out[0], len + 1, out_len);
 -- 
 2.21.0
