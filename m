@@ -1,12 +1,12 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 01/30] kpartx: dasd: fix
-	-Waddress-of-packed-member warning from gcc9
-Date: Fri,  7 Jun 2019 15:05:23 +0200
-Message-ID: <20190607130552.13203-2-mwilck@suse.com>
+Subject: [PATCH 16/30] libmultipath: fix possible WWID overflow
+	in parse_vpd_pg83()
+Date: Fri,  7 Jun 2019 15:05:38 +0200
+Message-ID: <20190607130552.13203-17-mwilck@suse.com>
 References: <20190607130552.13203-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20190607130552.13203-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -22,26 +22,61 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Rml4ZXMgdGhlIGZvbGxvd2luZyB3YXJuaW5nOgoKZGFzZC5jOiBJbiBmdW5jdGlvbiDigJhyZWFk
-X2Rhc2RfcHTigJk6CmRhc2QuYzoyMDY6Mzogd2FybmluZzogY29udmVydGluZyBhIHBhY2tlZCDi
-gJh2b2x1bWVfbGFiZWxfdOKAmSB7YWthIOKAmHN0cnVjdAp2b2x1bWVfbGFiZWzigJl9IHBvaW50
-ZXIgKGFsaWdubWVudCAxKSB0byBhIOKAmGxhYmVsX2ludHNfdOKAmSB7YWthIOKAmHVuc2lnbmVk
-IGludOKAmX0KcG9pbnRlciAoYWxpZ25tZW50IDQpIG1heSByZXN1bHQgaW4gYW4gdW5hbGlnbmVk
-IHBvaW50ZXIgdmFsdWUKWy1XYWRkcmVzcy1vZi1wYWNrZWQtbWVtYmVyXQogIDIwNiB8ICAgbGFi
-ZWxfaW50c190ICpsYWJlbCA9IChsYWJlbF9pbnRzX3QgKikgJnZsYWJlbDsKICAgICAgfCAgIF5+
-fn5+fn5+fn5+fgoKQXMgdm9sdW1lX2xhYmVsX3QgaXMgb25seSB1c2VkIGluIHJlYWRfZGFzZF9w
-dCgpLCBhbmQgZmlsbGVkIHdpdGggbWVtY3B5KCksCmluY3JlYXNpbmcgaXRzIGFsaWdubWVudCBz
-aG91bGQgYmUgc2FmZS4KClNpZ25lZC1vZmYtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2Uu
-Y29tPgotLS0KIGtwYXJ0eC9kYXNkLmggfCAyICstCiAxIGZpbGUgY2hhbmdlZCwgMSBpbnNlcnRp
-b24oKyksIDEgZGVsZXRpb24oLSkKCmRpZmYgLS1naXQgYS9rcGFydHgvZGFzZC5oIGIva3BhcnR4
-L2Rhc2QuaAppbmRleCA3NDlhZjQ5YS4uOGFkNWQ2MjAgMTAwNjQ0Ci0tLSBhL2twYXJ0eC9kYXNk
-LmgKKysrIGIva3BhcnR4L2Rhc2QuaApAQCAtNjgsNyArNjgsNyBAQCB0eXBlZGVmIHN0cnVjdCB2
-b2x1bWVfbGFiZWwKIAljaGFyIHJlczNbMjhdOwkgICAgICAgIC8qIHJlc2VydmVkICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICovCiAJdWludDhfdCBsZGxfdmVyc2lvbjsgICAgLyog
-dmVyc2lvbiBudW1iZXIsIHZhbGlkIGZvciBsZGwgZm9ybWF0ICAgICAgKi8KIAl1aW50NjRfdCBm
-b3JtYXR0ZWRfYmxvY2tzOyAvKiB2YWxpZCB3aGVuIGxkbF92ZXJzaW9uID49IGYyICAgICAgICAg
-ICAqLwotfSBfX2F0dHJpYnV0ZV9fICgocGFja2VkKSkgdm9sdW1lX2xhYmVsX3Q7Cit9IF9fYXR0
-cmlidXRlX18gKChwYWNrZWQsIGFsaWduZWQoX19hbGlnbm9mX18oaW50KSkpKSB2b2x1bWVfbGFi
-ZWxfdDsKIAogCiB0eXBlZGVmIHN0cnVjdCBleHRlbnQKLS0gCjIuMjEuMAoKLS0KZG0tZGV2ZWwg
-bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
-YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+We have to check the remaining length before printing to the
+output buffer, not afterwards.
+
+Fixes: 18176202e75c "Read wwid from sysfs vpg_pg83 attribute"
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/discovery.c | 16 +++-------------
+ 1 file changed, 3 insertions(+), 13 deletions(-)
+
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 89c4d2ad..eed35284 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1012,11 +1012,9 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ 			int i;
+ 
+ 			len = sprintf(out, "%d", vpd_type);
+-			for (i = 0; i < vpd_len; i++) {
++			for (i = 0; i < vpd_len && len < out_len - 2; i++) {
+ 				len += sprintf(out + len,
+ 					       "%02x", vpd[i]);
+-				if (len >= out_len)
+-					break;
+ 			}
+ 		} else if (vpd_type == 0x8) {
+ 			if (!memcmp("eui.", vpd, 4)) {
+@@ -1024,27 +1022,19 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ 				len = 1;
+ 				vpd += 4;
+ 				vpd_len -= 4;
+-				for (i = 0; i < vpd_len; i++) {
++				for (i = 0; i < vpd_len && len < out_len - 1; i++) {
+ 					len += sprintf(out + len, "%c",
+ 						       tolower(vpd[i]));
+-					if (len >= out_len)
+-						break;
+ 				}
+-				len = vpd_len + 1;
+-				out[len] = '\0';
+ 			} else if (!memcmp("naa.", vpd, 4)) {
+ 				out[0] = '3';
+ 				len = 1;
+ 				vpd += 4;
+ 				vpd_len -= 4;
+-				for (i = 0; i < vpd_len; i++) {
++				for (i = 0; i < vpd_len && len < out_len - 1; i++) {
+ 					len += sprintf(out + len, "%c",
+ 						       tolower(vpd[i]));
+-					if (len >= out_len)
+-						break;
+ 				}
+-				len = vpd_len + 1;
+-				out[len] = '\0';
+ 			} else {
+ 				out[0] = '8';
+ 				len = 1;
+-- 
+2.21.0
