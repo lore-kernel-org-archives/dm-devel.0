@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 07/30] libmpathcmd: use target length in
-	strncpy() call
-Date: Fri,  7 Jun 2019 15:05:29 +0200
-Message-ID: <20190607130552.13203-8-mwilck@suse.com>
+Subject: [PATCH 14/30] libmultipath: fix parsing of VPD 83 type 1
+	(T10 vendor ID)
+Date: Fri,  7 Jun 2019 15:05:36 +0200
+Message-ID: <20190607130552.13203-15-mwilck@suse.com>
 References: <20190607130552.13203-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,23 +22,45 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+In the buffer overflow case, the code would set p_len = out_len - len - 2,
+then len = len + plen = out_len - 2, and check if len >= out_len - 1,
+which is never the case. Rather, set p_len = out_len - len -1, and
+check the length again before appending the underscore.
+
+Fixes: 18176202e75c "Read wwid from sysfs vpg_pg83 attribute"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmpathcmd/mpath_cmd.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/discovery.c | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
 
-diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
-index b681311b..05b69316 100644
---- a/libmpathcmd/mpath_cmd.c
-+++ b/libmpathcmd/mpath_cmd.c
-@@ -104,7 +104,7 @@ int __mpath_connect(int nonblocking)
- 	addr.sun_family = AF_LOCAL;
- 	addr.sun_path[0] = '\0';
- 	len = strlen(DEFAULT_SOCKET) + 1 + sizeof(sa_family_t);
--	strncpy(&addr.sun_path[1], DEFAULT_SOCKET, len);
-+	strncpy(&addr.sun_path[1], DEFAULT_SOCKET, sizeof(addr.sun_path) - 1);
- 
- 	fd = socket(AF_LOCAL, SOCK_STREAM, 0);
- 	if (fd == -1)
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 407e64a0..f360e306 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1065,8 +1065,11 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ 			p = vpd;
+ 			while ((p = memchr(vpd, ' ', vpd_len))) {
+ 				p_len = p - vpd;
+-				if (len + p_len > out_len - 1)
+-					p_len = out_len - len - 2;
++				if (len + p_len > out_len - 1) {
++					condlog(1, "%s: WWID overflow, type 1, %d/%lu bytes required",
++						__func__, len + p_len, out_len);
++					p_len = out_len - len - 1;
++				}
+ 				memcpy(out + len, vpd, p_len);
+ 				len += p_len;
+ 				if (len >= out_len - 1) {
+@@ -1075,6 +1078,10 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ 				}
+ 				out[len] = '_';
+ 				len ++;
++				if (len >= out_len - 1) {
++					out[len] = '\0';
++					break;
++				}
+ 				vpd = p;
+ 				vpd_len -= p_len;
+ 				while (vpd && *vpd == ' ') {
 -- 
 2.21.0
