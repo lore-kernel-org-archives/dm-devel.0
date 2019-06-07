@@ -1,47 +1,28 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 23/30] libmultipath: parse_vpd_pg80: fix overflow
-	output
-Date: Fri,  7 Jun 2019 15:05:45 +0200
-Message-ID: <20190607130552.13203-24-mwilck@suse.com>
-References: <20190607130552.13203-1-mwilck@suse.com>
+From: Jonathan Corbet <corbet@lwn.net>
+Subject: Re: [PATCH] Documentation/dm-init: fix multi device example
+Date: Fri, 7 Jun 2019 11:13:04 -0600
+Message-ID: <20190607111304.767fb038@lwn.net>
+References: <20190604182719.15944-1-helen.koike@collabora.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190607130552.13203-1-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190604182719.15944-1-helen.koike@collabora.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Helen Koike <helen.koike@collabora.com>
+Cc: dm-devel@redhat.com, swboyd@chromium.org, wad@chromium.org, keescook@chromium.org, snitzer@redhat.com, linux-doc@vger.kernel.org, richard.weinberger@gmail.com, linux-kernel@vger.kernel.org, linux-lvm@redhat.com, enric.balletbo@collabora.com, kernel@collabora.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-"vpd pg80 overflow, 20/20 bytes required" looks weird. Make it clear
-that actually 21 bytes are required in this case.
+On Tue,  4 Jun 2019 15:27:19 -0300
+Helen Koike <helen.koike@collabora.com> wrote:
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/discovery.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+> The example in the docs regarding multiple device-mappers is invalid (it
+> has a wrong number of arguments), it's a left over from previous
+> versions of the patch.
+> Replace the example with an valid and tested one.
+> 
+> Signed-off-by: Helen Koike <helen.koike@collabora.com>
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index efcea468..931a676f 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -912,7 +912,7 @@ parse_vpd_pg80(const unsigned char *in, char *out, size_t out_len)
- 
- 	if (len >= out_len) {
- 		condlog(2, "vpd pg80 overflow, %d/%d bytes required",
--			len, (int)out_len);
-+			len + 1, (int)out_len);
- 		len = out_len - 1;
- 	}
- 	if (len > 0) {
--- 
-2.21.0
+Applied, thanks.
+
+jon
