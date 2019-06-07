@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 20/30] libmultipath: parse_vpd_pg83: common code
-	for SCSI string parsing
-Date: Fri,  7 Jun 2019 15:05:42 +0200
-Message-ID: <20190607130552.13203-21-mwilck@suse.com>
+Subject: [PATCH 26/30] libmultipath: fix has_uid_fallback() logic
+Date: Fri,  7 Jun 2019 15:05:48 +0200
+Message-ID: <20190607130552.13203-27-mwilck@suse.com>
 References: <20190607130552.13203-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,81 +21,99 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The three cases for eui, naa, and iqn parsing share almost all code.
+The idea of 061daf40 "Do not automatically fall back to vpd uid
+generation" applies not only to SCSI. Use the same logic for NVMe.
+Allow fallback in two cases:
+ - uid_attribute has the default value for the bus in question
+ - uid_attribute has been set to "" to disable udev-based WWID checking
+As uid_fallback() has only one caller, no need to check the conditions
+there again.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 54 ++++++++++++++++------------------------
- 1 file changed, 21 insertions(+), 33 deletions(-)
+ libmultipath/defaults.h  |  1 +
+ libmultipath/discovery.c | 20 +++++++++++++++-----
+ libmultipath/hwtable.c   |  2 +-
+ tests/hwtable.c          |  2 +-
+ 4 files changed, 18 insertions(+), 7 deletions(-)
 
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index 83f89f37..decc9335 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -5,6 +5,7 @@
+  * and the TEMPLATE in libmultipath/hwtable.c
+  */
+ #define DEFAULT_UID_ATTRIBUTE	"ID_SERIAL"
++#define DEFAULT_NVME_UID_ATTRIBUTE	"ID_WWN"
+ #define DEFAULT_UDEVDIR		"/dev"
+ #define DEFAULT_MULTIPATHDIR	"/" LIB_STRING "/multipath"
+ #define DEFAULT_SELECTOR	"service-time 0"
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index e484ec8d..32e3f9d3 100644
+index d7eaee68..15f5cd4b 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1023,43 +1023,31 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
- 				len += sprintf(out + len,
- 					       "%02x", vpd[i]);
- 		} else if (vpd_type == 0x8) {
--			if (!memcmp("eui.", vpd, 4)) {
-+			if (!memcmp("eui.", vpd, 4))
- 				out[0] =  '2';
--				vpd += 4;
--				len = vpd_len - 4;
--				if (len > out_len - 1) {
--					condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
--						__func__, out[0], len + 1, out_len);
--					len = out_len - 1;
--				}
--				for (i = 0; i < len; ++i)
--					out[1 + i] = tolower(vpd[i]);
--				/* designator should be 0-terminated, but let's make sure */
--				out[len] = '\0';
--			} else if (!memcmp("naa.", vpd, 4)) {
-+			else if (!memcmp("naa.", vpd, 4))
- 				out[0] = '3';
--				vpd += 4;
--				len = vpd_len - 4;
--				if (len > out_len - 1) {
--					condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
--						__func__, out[0], len + 1, out_len);
--					len = out_len - 1;
--				}
--				for (i = 0; i < len; ++i)
--					out[1 + i] = tolower(vpd[i]);
--				out[len] = '\0';
--			} else {
-+			else
- 				out[0] = '8';
--				vpd += 4;
--				len = vpd_len - 4;
--				if (len > out_len - 1) {
--					condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
--						__func__, out[0], len + 1, out_len);
--					len = out_len - 1;
--				}
--				memcpy(out + 1, vpd, len);
--				out[len] = '\0';
-+
-+			vpd += 4;
-+			len = vpd_len - 4;
-+			if (len > out_len - 1) {
-+				condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
-+					__func__, out[0], len + 1, out_len);
-+				len = out_len - 1;
- 			}
-+
-+			if (out[0] == '8')
-+				for (i = 0; i < len; ++i)
-+					out[1 + i] = vpd[i];
-+			else
-+				for (i = 0; i < len; ++i)
-+					out[1 + i] = tolower(vpd[i]);
-+
-+			/* designator should be 0-terminated, but let's make sure */
-+			out[len] = '\0';
-+
- 		} else if (vpd_type == 0x1) {
- 			const unsigned char *p;
- 			int p_len;
+@@ -1802,8 +1802,7 @@ static ssize_t uid_fallback(struct path *pp, int path_state,
+ {
+ 	ssize_t len = -1;
+ 
+-	if (pp->bus == SYSFS_BUS_SCSI &&
+-	    !strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE)) {
++	if (pp->bus == SYSFS_BUS_SCSI) {
+ 		len = get_vpd_uid(pp);
+ 		*origin = "sysfs";
+ 		if (len < 0 && path_state == PATH_UP) {
+@@ -1833,11 +1832,22 @@ static ssize_t uid_fallback(struct path *pp, int path_state,
+ 	return len;
+ }
+ 
+-static int has_uid_fallback(struct path *pp)
++static bool has_uid_fallback(struct path *pp)
+ {
++	/*
++	 * Falling back to direct WWID determination is dangerous
++	 * if uid_attribute is set to something non-standard.
++	 * Allow it only if it's either the default, or if udev
++	 * has been disabled by setting 'uid_attribute ""'.
++	 */
++	if (!pp->uid_attribute)
++		return false;
+ 	return ((pp->bus == SYSFS_BUS_SCSI &&
+-		 !strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE)) ||
+-		pp->bus == SYSFS_BUS_NVME);
++		 (!strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE) ||
++		  !strcmp(pp->uid_attribute, ""))) ||
++		(pp->bus == SYSFS_BUS_NVME &&
++		 (!strcmp(pp->uid_attribute, DEFAULT_NVME_UID_ATTRIBUTE) ||
++		  !strcmp(pp->uid_attribute, ""))));
+ }
+ 
+ int
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 1d964333..46caaf91 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -88,7 +88,7 @@ static struct hwentry default_hw[] = {
+ 		/* Generic NVMe */
+ 		.vendor        = "NVME",
+ 		.product       = ".*",
+-		.uid_attribute = "ID_WWN",
++		.uid_attribute = DEFAULT_NVME_UID_ATTRIBUTE,
+ 		.checker_name  = NONE,
+ 		.retain_hwhandler = RETAIN_HWHANDLER_OFF,
+ 	},
+diff --git a/tests/hwtable.c b/tests/hwtable.c
+index f436f52d..977a5663 100644
+--- a/tests/hwtable.c
++++ b/tests/hwtable.c
+@@ -571,7 +571,7 @@ static void test_internal_nvme(const struct hwt_state *hwt)
+ 	mp = mock_multipath(pp);
+ 	assert_ptr_not_equal(mp, NULL);
+ 	TEST_PROP(checker_name(&pp->checker), NONE);
+-	TEST_PROP(pp->uid_attribute, "ID_WWN");
++	TEST_PROP(pp->uid_attribute, DEFAULT_NVME_UID_ATTRIBUTE);
+ 	assert_int_equal(mp->pgpolicy, DEFAULT_PGPOLICY);
+ 	assert_int_equal(mp->no_path_retry, DEFAULT_NO_PATH_RETRY);
+ 	assert_int_equal(mp->retain_hwhandler, RETAIN_HWHANDLER_OFF);
 -- 
 2.21.0
