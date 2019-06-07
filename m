@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 28/30] multipath-tools tests: add test for
-	uid_attrs parsing
-Date: Fri,  7 Jun 2019 15:05:50 +0200
-Message-ID: <20190607130552.13203-29-mwilck@suse.com>
+Subject: [PATCH 06/30] multipath-tools: Fix more strncpy(X, Y,
+	size - 1) calls
+Date: Fri,  7 Jun 2019 15:05:28 +0200
+Message-ID: <20190607130552.13203-7-mwilck@suse.com>
 References: <20190607130552.13203-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,46 +22,115 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+The compiler emitted no warnings for these, but for consistency
+it makes sense to fix them, too.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/uevent.c | 18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
+ libmpathpersist/mpath_persist.c | 2 +-
+ libmultipath/configure.c        | 4 ++--
+ libmultipath/prio.c             | 3 ++-
+ libmultipath/structs_vec.c      | 3 ++-
+ multipathd/waiter.c             | 3 ++-
+ 5 files changed, 9 insertions(+), 6 deletions(-)
 
-diff --git a/tests/uevent.c b/tests/uevent.c
-index 215d97ad..f4afd9b4 100644
---- a/tests/uevent.c
-+++ b/tests/uevent.c
-@@ -95,6 +95,23 @@ static void test_ro_good(void **state)
- 	assert_int_equal(uevent_get_disk_ro(uev), DISK_RO);
- }
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index 4abcaed5..53022f5b 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -618,7 +618,7 @@ int send_prout_activepath(char * dev, int rq_servact, int rq_scope,
+ 	int rc;
  
-+static void test_uid_attrs(void **state)
-+{
-+	/* see test_uid_attrs above */
-+	struct config *conf = get_multipath_config();
-+	vector attrs = &conf->uid_attrs;
-+
-+	assert_int_equal(VECTOR_SIZE(attrs), 3);
-+	assert_null(get_uid_attribute_by_attrs(conf, "hda"));
-+	assert_string_equal("ID_BOGUS",
-+			    get_uid_attribute_by_attrs(conf, "sdaw"));
-+	assert_string_equal("ID_SPAM",
-+			    get_uid_attribute_by_attrs(conf, "dasdu"));
-+	assert_string_equal("ID_EGGS",
-+			    get_uid_attribute_by_attrs(conf, "nvme2n4"));
-+	put_multipath_config(conf);
-+}
-+
- static void test_wwid(void **state)
- {
- 	struct uevent *uev = *state;
-@@ -280,6 +297,7 @@ int test_uevent_get_XXX(void)
- 		cmocka_unit_test(test_minor_good),
- 		cmocka_unit_test(test_ro_good),
- 		cmocka_unit_test(test_dm_name_good),
-+		cmocka_unit_test(test_uid_attrs),
- 		cmocka_unit_test(test_wwid),
- 		cmocka_unit_test(test_major_bad_0),
- 		cmocka_unit_test(test_major_bad_1),
+ 	memset(&thread, 0, sizeof(thread));
+-	strncpy(param.dev, dev, FILE_NAME_SIZE - 1);
++	strlcpy(param.dev, dev, FILE_NAME_SIZE);
+ 	/* Initialize and set thread joinable attribute */
+ 	pthread_attr_init(&attr);
+ 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index dfee7d24..c8dd69b0 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -650,7 +650,7 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
+ 		if (cmpp) {
+ 			condlog(2, "%s: rename %s to %s", mpp->wwid,
+ 				cmpp->alias, mpp->alias);
+-			strncpy(mpp->alias_old, cmpp->alias, WWID_SIZE - 1);
++			strlcpy(mpp->alias_old, cmpp->alias, WWID_SIZE);
+ 			mpp->action = ACT_RENAME;
+ 			if (force_reload) {
+ 				mpp->force_udev_reload = 1;
+@@ -1257,7 +1257,7 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+ 			if (!deadmap(mpp))
+ 				continue;
+ 
+-			strncpy(alias, mpp->alias, WWID_SIZE - 1);
++			strlcpy(alias, mpp->alias, WWID_SIZE);
+ 
+ 			vector_del_slot(newmp, i);
+ 			i--;
+diff --git a/libmultipath/prio.c b/libmultipath/prio.c
+index 0590218d..87de1f97 100644
+--- a/libmultipath/prio.c
++++ b/libmultipath/prio.c
+@@ -5,6 +5,7 @@
+ #include <sys/stat.h>
+ 
+ #include "debug.h"
++#include "util.h"
+ #include "prio.h"
+ 
+ static LIST_HEAD(prioritizers);
+@@ -166,7 +167,7 @@ void prio_get (char *multipath_dir, struct prio * dst, char * name, char * args)
+ 
+ 	strncpy(dst->name, src->name, PRIO_NAME_LEN);
+ 	if (args)
+-		strncpy(dst->args, args, PRIO_ARGS_LEN - 1);
++		strlcpy(dst->args, args, PRIO_ARGS_LEN);
+ 	dst->getprio = src->getprio;
+ 	dst->handle = NULL;
+ 
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index db5d19da..c43b58fb 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -2,6 +2,7 @@
+ #include <string.h>
+ #include <unistd.h>
+ 
++#include "util.h"
+ #include "checkers.h"
+ #include "vector.h"
+ #include "defaults.h"
+@@ -350,7 +351,7 @@ find_existing_alias (struct multipath * mpp,
+ 
+ 	vector_foreach_slot (vecs->mpvec, mp, i)
+ 		if (strncmp(mp->wwid, mpp->wwid, WWID_SIZE - 1) == 0) {
+-			strncpy(mpp->alias_old, mp->alias, WWID_SIZE - 1);
++			strlcpy(mpp->alias_old, mp->alias, WWID_SIZE);
+ 			return;
+ 		}
+ }
+diff --git a/multipathd/waiter.c b/multipathd/waiter.c
+index 5895f157..eb8d6996 100644
+--- a/multipathd/waiter.c
++++ b/multipathd/waiter.c
+@@ -11,6 +11,7 @@
+ #include <signal.h>
+ #include <urcu.h>
+ 
++#include "util.h"
+ #include "vector.h"
+ #include "memory.h"
+ #include "checkers.h"
+@@ -210,7 +211,7 @@ int start_waiter_thread (struct multipath *mpp, struct vectors *vecs)
+ 	if (!wp)
+ 		goto out;
+ 
+-	strncpy(wp->mapname, mpp->alias, WWID_SIZE - 1);
++	strlcpy(wp->mapname, mpp->alias, WWID_SIZE);
+ 	wp->vecs = vecs;
+ 
+ 	if (pthread_create(&wp->thread, &waiter_attr, waitevent, wp)) {
 -- 
 2.21.0
