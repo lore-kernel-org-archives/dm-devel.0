@@ -1,32 +1,51 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: block: be more careful about status in __bio_chain_endio
-Date: Wed, 12 Jun 2019 00:01:10 -0700
-Message-ID: <20190612070110.GA11707@infradead.org>
-References: <70cda2a3-f246-d45b-f600-1f9d15ba22ff@gmail.com>
- <87eflmpqkb.fsf@notabene.neil.brown.name>
- <20190222211006.GA10987@redhat.com>
- <7f0aeb7b-fdaa-0625-f785-05c342047550@kernel.dk>
- <20190222235459.GA11726@redhat.com>
- <CAMeeMh-2ANOr_Sb66EyA_HULkVRudD7fyOZsDbpRpDrshwnR2w@mail.gmail.com>
- <20190223024402.GA12407@redhat.com>
- <CAMeeMh9qLkTByWJewPR4o844wPkA-g5Hnm7aGjszuPopPAe8vA@mail.gmail.com>
- <CAMeeMh-6KMLgriX_7KT52ynjBMyT9yDWSMKv6YXW+yDpvv0=wA@mail.gmail.com>
+From: Zhengyuan Liu <liuzhengyuan@kylinos.cn>
+Subject: [PATCH] dm-log: use struct_size() to calculate the size
+	of struct
+Date: Wed, 12 Jun 2019 14:14:46 +0800
+Message-ID: <1560320086-14243-2-git-send-email-liuzhengyuan@kylinos.cn>
+References: <1560320086-14243-1-git-send-email-liuzhengyuan@kylinos.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAMeeMh-6KMLgriX_7KT52ynjBMyT9yDWSMKv6YXW+yDpvv0=wA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: John Dorminy <jdorminy@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.com>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1560320086-14243-1-git-send-email-liuzhengyuan@kylinos.cn>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: agk@redhat.com, snitzer@redhat.com
+Cc: dm-devel@redhat.com, Zhengyuan Liu <liuzhengyuan@kylinos.cn>
 List-Id: dm-devel.ids
 
-On Tue, Jun 11, 2019 at 10:56:42PM -0400, John Dorminy wrote:
-> I believe the second of these might, but is not guaranteed to,
-> preserve the first error observed in a child; I believe if you want to
-> definitely save the first error you need an atomic.
+As Gustavo said in other patches doing the same replace, we can now
+use the new struct_size() helper to avoid leaving these open-coded and
+prone to type mistake.
 
-Is there any reason not to simply use a cmpxchg?  Yes, it is a
-relatively expensive operation, but once we are chaining bios we are out
-of the super hot path anyway.  We do something similar in xfs and iomap
-already.
+Signed-off-by: Zhengyuan Liu <liuzhengyuan@kylinos.cn>
+---
+ drivers/md/dm-log-writes.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+index 9ea2b02..cda6363 100644
+--- a/drivers/md/dm-log-writes.c
++++ b/drivers/md/dm-log-writes.c
+@@ -680,7 +680,7 @@ static int log_writes_map(struct dm_target *ti, struct bio *bio)
+ 	if (discard_bio)
+ 		alloc_size = sizeof(struct pending_block);
+ 	else
+-		alloc_size = sizeof(struct pending_block) + sizeof(struct bio_vec) * bio_segments(bio);
++		alloc_size = struct_size(block, vecs, bio_segments(bio));
+ 
+ 	block = kzalloc(alloc_size, GFP_NOIO);
+ 	if (!block) {
+-- 
+2.7.4
+
+
+.
