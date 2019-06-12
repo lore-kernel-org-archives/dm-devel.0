@@ -1,53 +1,58 @@
-From: Pankaj Gupta <pagupta-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [Qemu-devel] [PATCH v12 4/7] dm: enable synchronous dax
-Date: Tue, 11 Jun 2019 22:23:09 -0400 (EDT)
-Message-ID: <332155967.34508010.1560306189624.JavaMail.zimbra@redhat.com>
-References: <20190611163802.25352-1-pagupta@redhat.com>
- <20190611163802.25352-5-pagupta@redhat.com>
- <20190611171416.GA1248@redhat.com>
+From: John Dorminy <jdorminy@redhat.com>
+Subject: Re: block: be more careful about status in __bio_chain_endio
+Date: Tue, 11 Jun 2019 22:56:42 -0400
+Message-ID: <CAMeeMh-6KMLgriX_7KT52ynjBMyT9yDWSMKv6YXW+yDpvv0=wA@mail.gmail.com>
+References: <70cda2a3-f246-d45b-f600-1f9d15ba22ff@gmail.com>
+ <87eflmpqkb.fsf@notabene.neil.brown.name> <20190222211006.GA10987@redhat.com>
+ <7f0aeb7b-fdaa-0625-f785-05c342047550@kernel.dk> <20190222235459.GA11726@redhat.com>
+ <CAMeeMh-2ANOr_Sb66EyA_HULkVRudD7fyOZsDbpRpDrshwnR2w@mail.gmail.com>
+ <20190223024402.GA12407@redhat.com> <CAMeeMh9qLkTByWJewPR4o844wPkA-g5Hnm7aGjszuPopPAe8vA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20190611171416.GA1248-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, adilger kernel <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, zwisler-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jstaron-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, david-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lenb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kilobyte-b9QjgO8OEXPVItvQsEIGlw@public.gmane.org, riel-ebMLmSuQjDVBDgjK7y7TUQ@public.gmane.org, yuval shaia <yuval.shaia-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, stefanha-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, imammedo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lcapitulino-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kwolf-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, nilal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, xiaoguangrong eric <xiaoguangrong.eric-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, cohuck-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, darrick wong <darrick.wong>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAMeeMh9qLkTByWJewPR4o844wPkA-g5Hnm7aGjszuPopPAe8vA@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.com>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
+Having studied the code in question more thoroughly, my first email's
+scenario can't occur, I believe. bio_put() contains a
+atomic_dec_and_test(), which (according to
+Documentation/atomic_t.txt), having a return value, are fully ordered
+and therefore impose a general memory barrier. A general memory
+barrier means that no value set before bio_put() may be observed
+afterwards, if I accurately understand
+Documentation/memory_barriers.txt. Thus, the scenario I imagined, with
+a load from inside __bio_chain_endio() being visible in bi_end_io(),
+cannot occur.
 
-> On Tue, Jun 11 2019 at 12:37pm -0400,
-> Pankaj Gupta <pagupta-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> 
-> > This patch sets dax device 'DAXDEV_SYNC' flag if all the target
-> > devices of device mapper support synchrononous DAX. If device
-> > mapper consists of both synchronous and asynchronous dax devices,
-> > we don't set 'DAXDEV_SYNC' flag.
-> > 
-> > 'dm_table_supports_dax' is refactored to pass 'iterate_devices_fn'
-> > as argument so that the callers can pass the appropriate functions.
-> > 
-> > Suggested-by: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> > Signed-off-by: Pankaj Gupta <pagupta-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> 
-> Thanks, and for the benefit of others, passing function pointers like
-> this is perfectly fine IMHO because this code is _not_ in the fast
-> path.  These methods are only for device creation.
-> 
-> Reviewed-by: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+However, the second email's scenario, of a compiler making two stores
+out of a conditional store, is still accurate according to my
+understanding. I continue to believe setting parent->bi_status needs
+to be a WRITE_ONCE() and any reading of parent->bi_status before
+bio_put() needs to be at least a READ_ONCE(). The last thing in that
+email is wrong for the same reason that the first email couldn't
+happen: the bio_put() general barrier means later accesses to the
+field from a single thread will freshly read the field and thereby not
+get an incorrectly cached value.
 
-Thank you, Mike
+As a concrete proposal, I believe either of the following work and fix
+the race NeilB described, as well as the compiler (or CPU) race I
+described:
 
-Best regards,
-Pankaj
+ -     if (!parent->bi_status)
+ -               parent->bi_status = bio->bi_status;
+ +     if (bio->bi_status)
+ +               WRITE_ONCE(parent->bi_status, bio->bi_status);
 
-> 
-> 
+--or--
+
+ -     if (!parent->bi_status)
+ -               parent->bi_status = bio->bi_status;
+ +     if (!READ_ONCE(parent->bi_status) && bio->bi_status)
+ +               WRITE_ONCE(parent->bi_status, bio->bi_status);
+
+I believe the second of these might, but is not guaranteed to,
+preserve the first error observed in a child; I believe if you want to
+definitely save the first error you need an atomic.
