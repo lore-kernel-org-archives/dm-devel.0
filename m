@@ -1,73 +1,51 @@
-From: Pankaj Gupta <pagupta-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v13 5/7] dax: check synchronous mapping is supported
-Date: Wed, 12 Jun 2019 18:15:25 +0530
-Message-ID: <20190612124527.3763-6-pagupta@redhat.com>
+From: Pankaj Gupta <pagupta@redhat.com>
+Subject: [PATCH v13 6/7] ext4: disable map_sync for async flush
+Date: Wed, 12 Jun 2019 18:15:26 +0530
+Message-ID: <20190612124527.3763-7-pagupta@redhat.com>
 References: <20190612124527.3763-1-pagupta@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20190612124527.3763-1-pagupta-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org, lcapitulino-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, zwisler-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jstaron-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, david-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, nilal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lenb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kilobyte-b9QjgO8OEXPVItvQsEIGlw@public.gmane.org, riel-ebMLmSuQjDVBDgjK7y7TUQ@public.gmane.org, yuval.shaia-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, stefanha-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kwolf-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, xiaoguangrong.eric-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, cohuck-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org, imammedo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190612124527.3763-1-pagupta@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dm-devel@redhat.com, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, kvm@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-acpi@vger.kernel.org, qemu-devel@nongnu.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org
+Cc: dan.j.williams@intel.com, zwisler@kernel.org, vishal.l.verma@intel.com, dave.jiang@intel.com, mst@redhat.com, jasowang@redhat.com, willy@infradead.org, rjw@rjwysocki.net, hch@infradead.org, lenb@kernel.org, jack@suse.cz, tytso@mit.edu, adilger.kernel@dilger.ca, darrick.wong@oracle.com, lcapitulino@redhat.com, kwolf@redhat.com, imammedo@redhat.com, jmoyer@redhat.com, nilal@redhat.com, riel@surriel.com, stefanha@redhat.com, aarcange@redhat.com, david@redhat.com, david@fromorbit.com, cohuck@redhat.com, xiaoguangrong.eric@gmail.com, pagupta@redhat.com, pbonzini@redhat.com, yuval.shaia@oracle.com, kilobyte@angband.pl, jstaron@google.com, rdunlap@infradead.org, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-This patch introduces 'daxdev_mapping_supported' helper
-which checks if 'MAP_SYNC' is supported with filesystem
-mapping. It also checks if corresponding dax_device is
-synchronous. Virtio pmem device is asynchronous and
-does not not support VM_SYNC.
+Dont support 'MAP_SYNC' with non-DAX files and DAX files
+with asynchronous dax_device. Virtio pmem provides
+asynchronous host page cache flush mechanism. We don't
+support 'MAP_SYNC' with virtio pmem and ext4.
 
-Suggested-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Signed-off-by: Pankaj Gupta <pagupta-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Reviewed-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Signed-off-by: Pankaj Gupta <pagupta@redhat.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
 ---
- include/linux/dax.h | 17 +++++++++++++++++
- 1 file changed, 17 insertions(+)
+ fs/ext4/file.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
 
-diff --git a/include/linux/dax.h b/include/linux/dax.h
-index 2b106752b1b8..267251a394fa 100644
---- a/include/linux/dax.h
-+++ b/include/linux/dax.h
-@@ -42,6 +42,18 @@ void dax_write_cache(struct dax_device *dax_dev, bool wc);
- bool dax_write_cache_enabled(struct dax_device *dax_dev);
- bool dax_synchronous(struct dax_device *dax_dev);
- void set_dax_synchronous(struct dax_device *dax_dev);
-+/*
-+ * Check if given mapping is supported by the file / underlying device.
-+ */
-+static inline bool daxdev_mapping_supported(struct vm_area_struct *vma,
-+					    struct dax_device *dax_dev)
-+{
-+	if (!(vma->vm_flags & VM_SYNC))
-+		return true;
-+	if (!IS_DAX(file_inode(vma->vm_file)))
-+		return false;
-+	return dax_synchronous(dax_dev);
-+}
- #else
- static inline struct dax_device *dax_get_by_host(const char *host)
+diff --git a/fs/ext4/file.c b/fs/ext4/file.c
+index 98ec11f69cd4..dee549339e13 100644
+--- a/fs/ext4/file.c
++++ b/fs/ext4/file.c
+@@ -360,15 +360,17 @@ static const struct vm_operations_struct ext4_file_vm_ops = {
+ static int ext4_file_mmap(struct file *file, struct vm_area_struct *vma)
  {
-@@ -69,6 +81,11 @@ static inline bool dax_write_cache_enabled(struct dax_device *dax_dev)
- {
- 	return false;
- }
-+static inline bool daxdev_mapping_supported(struct vm_area_struct *vma,
-+				struct dax_device *dax_dev)
-+{
-+	return !(vma->vm_flags & VM_SYNC);
-+}
- #endif
+ 	struct inode *inode = file->f_mapping->host;
++	struct ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
++	struct dax_device *dax_dev = sbi->s_daxdev;
  
- struct writeback_control;
+-	if (unlikely(ext4_forced_shutdown(EXT4_SB(inode->i_sb))))
++	if (unlikely(ext4_forced_shutdown(sbi)))
+ 		return -EIO;
+ 
+ 	/*
+-	 * We don't support synchronous mappings for non-DAX files. At least
+-	 * until someone comes with a sensible use case.
++	 * We don't support synchronous mappings for non-DAX files and
++	 * for DAX files if underneath dax_device is not synchronous.
+ 	 */
+-	if (!IS_DAX(file_inode(file)) && (vma->vm_flags & VM_SYNC))
++	if (!daxdev_mapping_supported(vma, dax_dev))
+ 		return -EOPNOTSUPP;
+ 
+ 	file_accessed(file);
 -- 
 2.20.1
