@@ -1,11 +1,11 @@
 From: Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>
 Subject: [RFC PATCH v4 0/1] Add dm verity root hash pkcs7 sig validation.
-Date: Wed, 12 Jun 2019 18:06:09 -0700
-Message-ID: <20190613010610.4364-1-jaskarankhurana@linux.microsoft.com>
+Date: Wed, 12 Jun 2019 17:43:27 -0700
+Message-ID: <20190613004328.4274-1-jaskarankhurana@linux.microsoft.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org
-Cc: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org, scottsh@microsoft.com, ebiggers@google.com, mpatocka@redhat.com, jaskarankhurana@linux.microsoft.com
+Cc: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org, scottsh@microsoft.com, ebiggers@google.com, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
 This patch set adds in-kernel pkcs7 signature checking for the roothash of
