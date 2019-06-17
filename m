@@ -1,52 +1,67 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: block: be more careful about status in __bio_chain_endio
-Date: Mon, 17 Jun 2019 09:32:39 +0200
-Message-ID: <b023cf7a-ca86-5516-b441-30bec442dee6@suse.de>
-References: <70cda2a3-f246-d45b-f600-1f9d15ba22ff@gmail.com>
- <87eflmpqkb.fsf@notabene.neil.brown.name> <20190222211006.GA10987@redhat.com>
- <7f0aeb7b-fdaa-0625-f785-05c342047550@kernel.dk>
- <20190222235459.GA11726@redhat.com>
- <CAMeeMh-2ANOr_Sb66EyA_HULkVRudD7fyOZsDbpRpDrshwnR2w@mail.gmail.com>
- <20190223024402.GA12407@redhat.com>
- <CAMeeMh9qLkTByWJewPR4o844wPkA-g5Hnm7aGjszuPopPAe8vA@mail.gmail.com>
- <CAMeeMh-6KMLgriX_7KT52ynjBMyT9yDWSMKv6YXW+yDpvv0=wA@mail.gmail.com>
- <20190612070110.GA11707@infradead.org>
+From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Subject: Re: [RFC PATCH 0/3] crypto: switch to shash for ESSIV
+	generation
+Date: Mon, 17 Jun 2019 11:15:01 +0200
+Message-ID: <CAKv+Gu_r_WXf2y=FVYHL-T8gFSV6e4TmGkLNJ-cw6UjK_s=A=g@mail.gmail.com>
+References: <20190614083404.20514-1-ard.biesheuvel@linaro.org>
+	<20190616204419.GE923@sol.localdomain>
+	<CAOtvUMf86_TGYLoAHWuRW0Jz2=cXbHHJnAsZhEvy6SpSp_xgOQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190612070110.GA11707@infradead.org>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>, John Dorminy <jdorminy@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.com>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAOtvUMf86_TGYLoAHWuRW0Jz2=cXbHHJnAsZhEvy6SpSp_xgOQ@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Gilad Ben-Yossef <gilad@benyossef.com>
+Cc: Eric Biggers <ebiggers@kernel.org>, device-mapper development <dm-devel@redhat.com>, linux-fscrypt@vger.kernel.org, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, Herbert Xu <herbert@gondor.apana.org.au>
 List-Id: dm-devel.ids
 
-On 6/12/19 9:01 AM, Christoph Hellwig wrote:
-> On Tue, Jun 11, 2019 at 10:56:42PM -0400, John Dorminy wrote:
->> I believe the second of these might, but is not guaranteed to,
->> preserve the first error observed in a child; I believe if you want to
->> definitely save the first error you need an atomic.
-> 
-> Is there any reason not to simply use a cmpxchg?  Yes, it is a
-> relatively expensive operation, but once we are chaining bios we are out
-> of the super hot path anyway.  We do something similar in xfs and iomap
-> already.
-> 
-Agree.
-Thing is, we need to check if the parent status is NULL, _and_ the
-parent status might be modified asynchronously.
-So even a READ_ONCE() wouldn't cut it, as it would tell us that the
-parent status _was_ NULL, not that the parent status _is_ NULL by the
-time we're setting it.
-So cmpxchg() is it.
+On Mon, 17 Jun 2019 at 10:52, Gilad Ben-Yossef <gilad@benyossef.com> wrote:
+>
+> On Sun, Jun 16, 2019 at 11:44 PM Eric Biggers <ebiggers@kernel.org> wrote:
+> >
+> > [+Cc dm-devel and linux-fscrypt]
+> >
+> > On Fri, Jun 14, 2019 at 10:34:01AM +0200, Ard Biesheuvel wrote:
+> > > This series is presented as an RFC for a couple of reasons:
+> > > - it is only build tested
+> > > - it is unclear whether this is the right way to move away from the use of
+> > >   bare ciphers in non-crypto code
+> > > - we haven't really discussed whether moving away from the use of bare ciphers
+> > >   in non-crypto code is a goal we agree on
+> > >
+> > > This series creates an ESSIV shash template that takes a (cipher,hash) tuple,
+> > > where the digest size of the hash must be a valid key length for the cipher.
+> > > The setkey() operation takes the hash of the input key, and sets into the
+> > > cipher as the encryption key. Digest operations accept input up to the
+> > > block size of the cipher, and perform a single block encryption operation to
+> > > produce the ESSIV output.
+> ...
+> > I agree that moving away from bare block ciphers is generally a good idea.  For
+> > fscrypt I'm fine with moving ESSIV into the crypto API, though I'm not sure a
+> > shash template is the best approach.  Did you also consider making it a skcipher
+> > template so that users can do e.g. "essiv(cbc(aes),sha256,aes)"?  That would
+> > simplify things much more on the fscrypt side, since then all the ESSIV-related
+> > code would go away entirely except for changing the string "cbc(aes)" to
+> > "essiv(cbc(aes),sha256,aes)".
+>
+> I will also add that going the skcipher route rather than shash will
+> allow hardware tfm providers like CryptoCell that can do the ESSIV
+> part in hardware implement that as a single API call and/or hardware
+> invocation flow.
+> For those system that benefit from hardware providers this can be beneficial.
+>
 
-Cheers,
+Ah yes, thanks for reminding me. There was some debate in the past
+about this, but I don't remember the details.
 
-Hannes
--- 
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
-GF: Felix Imendörffer, Mary Higgins, Sri Rasiah
-HRB 21284 (AG Nürnberg)
+I think implementing essiv() as a skcipher template is indeed going to
+be the best approach, I will look into that.
