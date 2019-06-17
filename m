@@ -1,19 +1,21 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+From: Milan Broz <gmazyland@gmail.com>
 Subject: Re: [RFC PATCH 0/3] crypto: switch to shash for ESSIV
 	generation
-Date: Mon, 17 Jun 2019 15:59:01 +0200
-Message-ID: <CAKv+Gu-LFShLW-Tt7hwBpni1vQRvv7k+L_bpP-wU86x88v+eRg@mail.gmail.com>
+Date: Mon, 17 Jun 2019 16:35:18 +0200
+Message-ID: <90214c3d-55ef-cc3a-3a04-f200d6f96cfd@gmail.com>
 References: <20190614083404.20514-1-ard.biesheuvel@linaro.org>
 	<20190616204419.GE923@sol.localdomain>
 	<CAOtvUMf86_TGYLoAHWuRW0Jz2=cXbHHJnAsZhEvy6SpSp_xgOQ@mail.gmail.com>
 	<CAKv+Gu_r_WXf2y=FVYHL-T8gFSV6e4TmGkLNJ-cw6UjK_s=A=g@mail.gmail.com>
 	<8e58230a-cf0e-5a81-886b-6aa72a8e5265@gmail.com>
 	<CAKv+Gu9sb0t6EC=MwVfqTw5TKtatK-c8k3ryNUhV8O0876NV7g@mail.gmail.com>
+	<CAKv+Gu-LFShLW-Tt7hwBpni1vQRvv7k+L_bpP-wU86x88v+eRg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAKv+Gu9sb0t6EC=MwVfqTw5TKtatK-c8k3ryNUhV8O0876NV7g@mail.gmail.com>
+In-Reply-To: <CAKv+Gu-LFShLW-Tt7hwBpni1vQRvv7k+L_bpP-wU86x88v+eRg@mail.gmail.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,65 +25,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>
+To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 Cc: Herbert Xu <herbert@gondor.apana.org.au>, linux-fscrypt@vger.kernel.org, Eric Biggers <ebiggers@kernel.org>, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Mon, 17 Jun 2019 at 12:58, Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
->
-> On Mon, 17 Jun 2019 at 12:39, Milan Broz <gmazyland@gmail.com> wrote:
-> >
-> > On 17/06/2019 11:15, Ard Biesheuvel wrote:
-> > >> I will also add that going the skcipher route rather than shash will
-> > >> allow hardware tfm providers like CryptoCell that can do the ESSIV
-> > >> part in hardware implement that as a single API call and/or hardware
-> > >> invocation flow.
-> > >> For those system that benefit from hardware providers this can be beneficial.
-> > >>
-> > >
-> > > Ah yes, thanks for reminding me. There was some debate in the past
-> > > about this, but I don't remember the details.
-> > >
-> > > I think implementing essiv() as a skcipher template is indeed going to
-> > > be the best approach, I will look into that.
-> >
-> > For ESSIV (that is de-facto standard now), I think there is no problem
-> > to move it to crypto API.
-> >
-> > The problem is with some other IV generators in dm-crypt.
-> >
-> > Some do a lot of more work than just IV (it is hackish, it can modify data, this applies
-> > for loop AES "lmk" and compatible TrueCrypt "tcw" IV implementations).
-> >
-> > For these I would strongly say it should remain "hacked" inside dm-crypt only
-> > (it is unusable for anything else than disk encryption and should not be visible outside).
-> >
-> > Moreover, it is purely legacy code - we provide it for users can access old systems only.
-> >
-> > If you end with rewriting all IVs as templates, I think it is not a good idea.
-> >
-> > If it is only about ESSIV, and patch for dm-crypt is simple, it is a reasonable approach.
-> >
-> > (The same applies for simple dmcryp IVs like "plain" "plain64", "plain64be and "benbi" that
-> > are just linear IVs in various encoded variants.)
-> >
->
-> Agreed.
->
-> I am mostly only interested in ensuring that the bare 'cipher'
-> interface is no longer used outside of the crypto subsystem itself.
-> Since ESSIV is the only one using that, ESSIV is the only one I intend
-> to change.
+On 17/06/2019 15:59, Ard Biesheuvel wrote:
+> 
+> So my main question/showstopper at the moment is: which modes do we
+> need to support for ESSIV? Only CBC? Any skcipher? Or both skciphers
+> and AEADs?
 
-OK, so inferring the block cipher name from the skcipher algo name is
-a bit finicky, since the dm-crypt code does that *after* allocating
-the TFMs, and allocating the essiv skcipher happens before.
-But more importantly, it appears to be allowed currently to use ESSIV
-with authenticated modes, which means we'd need both a skcipher and a
-aead essiv template, or do some non-trivial hacking to insert the
-essiv template in the right place (which I'm not sure is even
-possible)
+Support, or cover by internal test? I think you nee to support everything
+what dmcrypt currently allows, if you want to port dmcrypt to new API.
 
-So my main question/showstopper at the moment is: which modes do we
-need to support for ESSIV? Only CBC? Any skcipher? Or both skciphers
-and AEADs?
+I know of many systems that use aes-xts-essiv:sha256 (it does not make sense
+much but people just use it).
+
+Some people use serpent and twofish, but we allow any cipher that fits...
+
+For the start, run this
+https://gitlab.com/cryptsetup/cryptsetup/blob/master/tests/mode-test
+
+In other words, if you add some additional limit, we are breaking backward compatibility.
+(Despite the configuration is "wrong" from the security point of view.)
+
+Milan
