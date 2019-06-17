@@ -1,42 +1,60 @@
-From: Jaskaran Singh Khurana <jaskarankhurana@linux.microsoft.com>
-Subject: Re: [RFC PATCH v4 1/1] Add dm verity root hash pkcs7 sig
- validation.
-Date: Mon, 17 Jun 2019 13:39:52 -0700 (PDT)
-Message-ID: <alpine.LRH.2.21.1906171338590.64763@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
-References: <20190613010610.4364-1-jaskarankhurana@linux.microsoft.com> <20190613010610.4364-2-jaskarankhurana@linux.microsoft.com> <ab346931-1d1b-bd2f-8314-ee4779bd44bf@gmail.com>
+From: Gilad Ben-Yossef <gilad@benyossef.com>
+Subject: Re: [RFC PATCH 0/3] crypto: switch to shash for ESSIV
+	generation
+Date: Mon, 17 Jun 2019 11:51:52 +0300
+Message-ID: <CAOtvUMf86_TGYLoAHWuRW0Jz2=cXbHHJnAsZhEvy6SpSp_xgOQ@mail.gmail.com>
+References: <20190614083404.20514-1-ard.biesheuvel@linaro.org>
+	<20190616204419.GE923@sol.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII; format=flowed
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <ab346931-1d1b-bd2f-8314-ee4779bd44bf@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <gmazyland@gmail.com>
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org, scottsh@microsoft.com, ebiggers@google.com, mpatocka@redhat.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190616204419.GE923@sol.localdomain>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, device-mapper development <dm-devel@redhat.com>, linux-fscrypt@vger.kernel.org, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>
 List-Id: dm-devel.ids
 
-
-
-On Mon, 17 Jun 2019, Milan Broz wrote:
-
-> On 13/06/2019 03:06, Jaskaran Khurana wrote:
-> ...
->
->> Adds DM_VERITY_VERIFY_ROOTHASH_SIG_FORCE: roothash signature *must* be
->> specified for all dm verity volumes and verification must succeed prior
->> to creation of device mapper block device.
->
-> I had a quick discussion about this and one suggestion was
-> to add dm-verity kernel module parameter instead of a new config option.
->
-> The idea is that if you can control kernel boot commandline, you can add it
-> there with the same effect (expecting that root device is on dm-verity as well).
->
-> Isn't this better option or it is not going to work for you?
-
-Seems like a better option to me, I will make the change and remove both 
-the configs.
-
->
-> Milan
->
-Regards,
-Jaskaran
+T24gU3VuLCBKdW4gMTYsIDIwMTkgYXQgMTE6NDQgUE0gRXJpYyBCaWdnZXJzIDxlYmlnZ2Vyc0Br
+ZXJuZWwub3JnPiB3cm90ZToKPgo+IFsrQ2MgZG0tZGV2ZWwgYW5kIGxpbnV4LWZzY3J5cHRdCj4K
+PiBPbiBGcmksIEp1biAxNCwgMjAxOSBhdCAxMDozNDowMUFNICswMjAwLCBBcmQgQmllc2hldXZl
+bCB3cm90ZToKPiA+IFRoaXMgc2VyaWVzIGlzIHByZXNlbnRlZCBhcyBhbiBSRkMgZm9yIGEgY291
+cGxlIG9mIHJlYXNvbnM6Cj4gPiAtIGl0IGlzIG9ubHkgYnVpbGQgdGVzdGVkCj4gPiAtIGl0IGlz
+IHVuY2xlYXIgd2hldGhlciB0aGlzIGlzIHRoZSByaWdodCB3YXkgdG8gbW92ZSBhd2F5IGZyb20g
+dGhlIHVzZSBvZgo+ID4gICBiYXJlIGNpcGhlcnMgaW4gbm9uLWNyeXB0byBjb2RlCj4gPiAtIHdl
+IGhhdmVuJ3QgcmVhbGx5IGRpc2N1c3NlZCB3aGV0aGVyIG1vdmluZyBhd2F5IGZyb20gdGhlIHVz
+ZSBvZiBiYXJlIGNpcGhlcnMKPiA+ICAgaW4gbm9uLWNyeXB0byBjb2RlIGlzIGEgZ29hbCB3ZSBh
+Z3JlZSBvbgo+ID4KPiA+IFRoaXMgc2VyaWVzIGNyZWF0ZXMgYW4gRVNTSVYgc2hhc2ggdGVtcGxh
+dGUgdGhhdCB0YWtlcyBhIChjaXBoZXIsaGFzaCkgdHVwbGUsCj4gPiB3aGVyZSB0aGUgZGlnZXN0
+IHNpemUgb2YgdGhlIGhhc2ggbXVzdCBiZSBhIHZhbGlkIGtleSBsZW5ndGggZm9yIHRoZSBjaXBo
+ZXIuCj4gPiBUaGUgc2V0a2V5KCkgb3BlcmF0aW9uIHRha2VzIHRoZSBoYXNoIG9mIHRoZSBpbnB1
+dCBrZXksIGFuZCBzZXRzIGludG8gdGhlCj4gPiBjaXBoZXIgYXMgdGhlIGVuY3J5cHRpb24ga2V5
+LiBEaWdlc3Qgb3BlcmF0aW9ucyBhY2NlcHQgaW5wdXQgdXAgdG8gdGhlCj4gPiBibG9jayBzaXpl
+IG9mIHRoZSBjaXBoZXIsIGFuZCBwZXJmb3JtIGEgc2luZ2xlIGJsb2NrIGVuY3J5cHRpb24gb3Bl
+cmF0aW9uIHRvCj4gPiBwcm9kdWNlIHRoZSBFU1NJViBvdXRwdXQuCi4uLgo+IEkgYWdyZWUgdGhh
+dCBtb3ZpbmcgYXdheSBmcm9tIGJhcmUgYmxvY2sgY2lwaGVycyBpcyBnZW5lcmFsbHkgYSBnb29k
+IGlkZWEuICBGb3IKPiBmc2NyeXB0IEknbSBmaW5lIHdpdGggbW92aW5nIEVTU0lWIGludG8gdGhl
+IGNyeXB0byBBUEksIHRob3VnaCBJJ20gbm90IHN1cmUgYQo+IHNoYXNoIHRlbXBsYXRlIGlzIHRo
+ZSBiZXN0IGFwcHJvYWNoLiAgRGlkIHlvdSBhbHNvIGNvbnNpZGVyIG1ha2luZyBpdCBhIHNrY2lw
+aGVyCj4gdGVtcGxhdGUgc28gdGhhdCB1c2VycyBjYW4gZG8gZS5nLiAiZXNzaXYoY2JjKGFlcyks
+c2hhMjU2LGFlcykiPyAgVGhhdCB3b3VsZAo+IHNpbXBsaWZ5IHRoaW5ncyBtdWNoIG1vcmUgb24g
+dGhlIGZzY3J5cHQgc2lkZSwgc2luY2UgdGhlbiBhbGwgdGhlIEVTU0lWLXJlbGF0ZWQKPiBjb2Rl
+IHdvdWxkIGdvIGF3YXkgZW50aXJlbHkgZXhjZXB0IGZvciBjaGFuZ2luZyB0aGUgc3RyaW5nICJj
+YmMoYWVzKSIgdG8KPiAiZXNzaXYoY2JjKGFlcyksc2hhMjU2LGFlcykiLgoKSSB3aWxsIGFsc28g
+YWRkIHRoYXQgZ29pbmcgdGhlIHNrY2lwaGVyIHJvdXRlIHJhdGhlciB0aGFuIHNoYXNoIHdpbGwK
+YWxsb3cgaGFyZHdhcmUgdGZtIHByb3ZpZGVycyBsaWtlIENyeXB0b0NlbGwgdGhhdCBjYW4gZG8g
+dGhlIEVTU0lWCnBhcnQgaW4gaGFyZHdhcmUgaW1wbGVtZW50IHRoYXQgYXMgYSBzaW5nbGUgQVBJ
+IGNhbGwgYW5kL29yIGhhcmR3YXJlCmludm9jYXRpb24gZmxvdy4KRm9yIHRob3NlIHN5c3RlbSB0
+aGF0IGJlbmVmaXQgZnJvbSBoYXJkd2FyZSBwcm92aWRlcnMgdGhpcyBjYW4gYmUgYmVuZWZpY2lh
+bC4KClRoYW5rcywKR2lsYWQKCi0tIApHaWxhZCBCZW4tWW9zc2VmCkNoaWVmIENvZmZlZSBEcmlu
+a2VyCgp2YWx1ZXMgb2YgzrIgd2lsbCBnaXZlIHJpc2UgdG8gZG9tIQoKLS0KZG0tZGV2ZWwgbWFp
+bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWls
+bWFuL2xpc3RpbmZvL2RtLWRldmVs
