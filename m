@@ -1,47 +1,59 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [RFC PATCH 0/3] crypto: switch to shash for ESSIV
-	generation
-Date: Mon, 17 Jun 2019 11:24:31 +0200
-Message-ID: <CAKv+Gu_34nOAcTBJPi7cR2W7w-1c27ofgoDaXZtuZh8qaaQJSQ@mail.gmail.com>
-References: <20190614083404.20514-1-ard.biesheuvel@linaro.org>
-	<20190616204419.GE923@sol.localdomain>
-	<CAOtvUMf86_TGYLoAHWuRW0Jz2=cXbHHJnAsZhEvy6SpSp_xgOQ@mail.gmail.com>
-	<CAKv+Gu_r_WXf2y=FVYHL-T8gFSV6e4TmGkLNJ-cw6UjK_s=A=g@mail.gmail.com>
-	<20190617092012.gk7wrazxh7bwfmjk@gondor.apana.org.au>
+From: Gen Zhang <blackgod016574@gmail.com>
+Subject: Re: dm-init: fix 2 incorrect use of kstrndup()
+Date: Mon, 17 Jun 2019 02:27:10 -0700
+Message-ID: <20190617092710.GB3764@ubuntu>
+References: <20190529013320.GA3307@zhanggen-UX430UQ>
+ <fcf2c3c0-e479-9e74-59d5-79cd2a0bade6@acm.org>
+ <20190529152443.GA4076@zhanggen-UX430UQ>
+ <20190530161103.GA30026@redhat.com>
+ <20190606092725.GA21792@zhanggen-UX430UQ>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190617092012.gk7wrazxh7bwfmjk@gondor.apana.org.au>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Eric Biggers <ebiggers@kernel.org>, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, linux-fscrypt@vger.kernel.org, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190606092725.GA21792@zhanggen-UX430UQ>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Bart Van Assche <bvanassche@acm.org>, dm-devel@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, 17 Jun 2019 at 11:20, Herbert Xu <herbert@gondor.apana.org.au> wrote:
->
-> On Mon, Jun 17, 2019 at 11:15:01AM +0200, Ard Biesheuvel wrote:
-> >
-> > Ah yes, thanks for reminding me. There was some debate in the past
-> > about this, but I don't remember the details.
->
-> I think there were some controversy regarding whether the resulting
-> code lived in drivers/md or crypto.  I think as long as drivers/md
-> is the only user of the said code then having it in drivers/md should
-> be fine.
->
-> However, if we end up using/reusing the same code for others such as
-> fs/crypto then it might make more sense to have them in crypto.
->
+On Thu, Jun 06, 2019 at 05:27:25PM +0800, Gen Zhang wrote:
+> On Thu, May 30, 2019 at 12:11:03PM -0400, Mike Snitzer wrote:
+> > On Wed, May 29 2019 at 11:24am -0400,
+> > Gen Zhang <blackgod016574@gmail.com> wrote:
+> > 
+> > > On Wed, May 29, 2019 at 05:23:53AM -0700, Bart Van Assche wrote:
+> > > > On 5/28/19 6:33 PM, Gen Zhang wrote:
+> > > > > In drivers/md/dm-init.c, kstrndup() is incorrectly used twice.
+> > > > > 
+> > > > > It should be: char *kstrndup(const char *s, size_t max, gfp_t gfp);
+> > > > 
+> > > > Should the following be added to this patch?
+> > > > 
+> > > > Fixes: 6bbc923dfcf5 ("dm: add support to directly boot to a mapped
+> > > > device") # v5.1.
+> > > > Cc: stable
+> > > > 
+> > > > Thanks,
+> > > > 
+> > > > Bart.
+> > > Personally, I am not quite sure about this question, because I am not 
+> > > the maintainer of this part.
+> > 
+> > Yes, it should have the tags Bart suggested.
+> > 
+> > I'll take care it.
+> > 
+> > Thanks,
+> > Mike
+> Hi,
+> Is there any updates about this patch? I want to check if it is apllied
+> beacause I have to write it down in my paper and the deadline is close.
+> 
+> Thanks
+> Gen
+Could anyone look into this patch? It's not updated for about 20 days.
+And I am really on a deadline to get this patch applied.
 
-Agreed. We could more easily test it in isolation and ensure parity
-between different implementations, especially now that we have Eric's
-improved testing framework that tests against generic implementations.
+Thanks
+Gen
