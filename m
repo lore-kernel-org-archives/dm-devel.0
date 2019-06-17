@@ -1,57 +1,52 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [RFC PATCH 0/3] crypto: switch to shash for ESSIV
- generation
-Date: Sun, 16 Jun 2019 14:09:03 -0700
-Message-ID: <20190616210903.GF923@sol.localdomain>
-References: <20190614083404.20514-1-ard.biesheuvel@linaro.org>
-	<9cd635ec-970b-bd1b-59f4-1a07395e69a0@gmail.com>
-	<CAKv+Gu88tYOmO=8mi7yP2oj=x_SOB_o7D9jo6v_3xfbUxY2R1A@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: block: be more careful about status in __bio_chain_endio
+Date: Mon, 17 Jun 2019 09:32:39 +0200
+Message-ID: <b023cf7a-ca86-5516-b441-30bec442dee6@suse.de>
+References: <70cda2a3-f246-d45b-f600-1f9d15ba22ff@gmail.com>
+ <87eflmpqkb.fsf@notabene.neil.brown.name> <20190222211006.GA10987@redhat.com>
+ <7f0aeb7b-fdaa-0625-f785-05c342047550@kernel.dk>
+ <20190222235459.GA11726@redhat.com>
+ <CAMeeMh-2ANOr_Sb66EyA_HULkVRudD7fyOZsDbpRpDrshwnR2w@mail.gmail.com>
+ <20190223024402.GA12407@redhat.com>
+ <CAMeeMh9qLkTByWJewPR4o844wPkA-g5Hnm7aGjszuPopPAe8vA@mail.gmail.com>
+ <CAMeeMh-6KMLgriX_7KT52ynjBMyT9yDWSMKv6YXW+yDpvv0=wA@mail.gmail.com>
+ <20190612070110.GA11707@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAKv+Gu88tYOmO=8mi7yP2oj=x_SOB_o7D9jo6v_3xfbUxY2R1A@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, device-mapper development <dm-devel@redhat.com>, linux-fscrypt@vger.kernel.org, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190612070110.GA11707@infradead.org>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>, John Dorminy <jdorminy@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.com>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-[+Cc linux-fscrypt]
-
-On Sun, Jun 16, 2019 at 09:13:01PM +0200, Ard Biesheuvel wrote:
-> >
-> >  - ESSIV is useful only for CBC mode. I wish we move to some better mode
-> > in the future instead of cementing CBC use... But if it helps people
-> > to actually use unpredictable IV for CBC, it is the right approach.
-> > (yes, I know XTS has own problems as well... but IMO that should be the default
-> > for sector/fs-block encryption these days :)
-> >
+On 6/12/19 9:01 AM, Christoph Hellwig wrote:
+> On Tue, Jun 11, 2019 at 10:56:42PM -0400, John Dorminy wrote:
+>> I believe the second of these might, but is not guaranteed to,
+>> preserve the first error observed in a child; I believe if you want to
+>> definitely save the first error you need an atomic.
 > 
-> I agree that XTS should be preferred. But for some reason, the
-> kernel's XTS implementation does not support ciphertext stealing (as
-> opposed to, e.g., OpenSSL), and so CBC ended up being used for
-> encrypting the filenames in fscrypt.
+> Is there any reason not to simply use a cmpxchg?  Yes, it is a
+> relatively expensive operation, but once we are chaining bios we are out
+> of the super hot path anyway.  We do something similar in xfs and iomap
+> already.
 > 
+Agree.
+Thing is, we need to check if the parent status is NULL, _and_ the
+parent status might be modified asynchronously.
+So even a READ_ONCE() wouldn't cut it, as it would tell us that the
+parent status _was_ NULL, not that the parent status _is_ NULL by the
+time we're setting it.
+So cmpxchg() is it.
 
-Actually, for fscrypt CTS-CBC was also chosen because all filenames in each
-directory use the same IV, in order to efficiently support all the possible
-filesystem operations and to support filenames up to NAME_MAX.  So there was a
-desire for there to be some propagation across ciphertext blocks rather than use
-XTS which would effectively be ECB in this case.
+Cheers,
 
-Neither solution is great though, since CBC-CTS still has the common prefix
-problem.  Long-term we're planning to switch to an AES-based wide block mode
-such as AES-HEH or AES-HCTR for filenames encryption.  This is already solved
-for Adiantum users since Adiantum is a wide-block mode, but there should be a
-pure AES solution too to go along with AES contents encryption.
-
-- Eric
+Hannes
+-- 
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
+GF: Felix Imendörffer, Mary Higgins, Sri Rasiah
+HRB 21284 (AG Nürnberg)
