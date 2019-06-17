@@ -1,8 +1,8 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+From: Milan Broz <gmazyland@gmail.com>
 Subject: Re: [RFC PATCH 0/3] crypto: switch to shash for ESSIV
 	generation
-Date: Mon, 17 Jun 2019 16:39:45 +0200
-Message-ID: <CAKv+Gu82BLPWrX1UzUBLf7UB+qJT6ZPtkvJ2Sa9t28OpXArhnw@mail.gmail.com>
+Date: Mon, 17 Jun 2019 19:05:51 +0200
+Message-ID: <af1b7ea1-bc98-06ff-e46c-945e6bae20d8@gmail.com>
 References: <20190614083404.20514-1-ard.biesheuvel@linaro.org>
 	<20190616204419.GE923@sol.localdomain>
 	<CAOtvUMf86_TGYLoAHWuRW0Jz2=cXbHHJnAsZhEvy6SpSp_xgOQ@mail.gmail.com>
@@ -11,11 +11,13 @@ References: <20190614083404.20514-1-ard.biesheuvel@linaro.org>
 	<CAKv+Gu9sb0t6EC=MwVfqTw5TKtatK-c8k3ryNUhV8O0876NV7g@mail.gmail.com>
 	<CAKv+Gu-LFShLW-Tt7hwBpni1vQRvv7k+L_bpP-wU86x88v+eRg@mail.gmail.com>
 	<90214c3d-55ef-cc3a-3a04-f200d6f96cfd@gmail.com>
+	<CAKv+Gu82BLPWrX1UzUBLf7UB+qJT6ZPtkvJ2Sa9t28OpXArhnw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <90214c3d-55ef-cc3a-3a04-f200d6f96cfd@gmail.com>
+In-Reply-To: <CAKv+Gu82BLPWrX1UzUBLf7UB+qJT6ZPtkvJ2Sa9t28OpXArhnw@mail.gmail.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,37 +27,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>
+To: Ard Biesheuvel <ard.biesheuvel@linaro.org>, Milan Broz <gmazyland@gmail.com>
 Cc: Herbert Xu <herbert@gondor.apana.org.au>, linux-fscrypt@vger.kernel.org, Eric Biggers <ebiggers@kernel.org>, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Mon, 17 Jun 2019 at 16:35, Milan Broz <gmazyland@gmail.com> wrote:
->
-> On 17/06/2019 15:59, Ard Biesheuvel wrote:
-> >
-> > So my main question/showstopper at the moment is: which modes do we
-> > need to support for ESSIV? Only CBC? Any skcipher? Or both skciphers
-> > and AEADs?
->
-> Support, or cover by internal test? I think you nee to support everything
-> what dmcrypt currently allows, if you want to port dmcrypt to new API.
->
-> I know of many systems that use aes-xts-essiv:sha256 (it does not make sense
-> much but people just use it).
->
-> Some people use serpent and twofish, but we allow any cipher that fits...
->
+On 17/06/2019 16:39, Ard Biesheuvel wrote:
+>>
+>> In other words, if you add some additional limit, we are breaking backward compatibility.
+>> (Despite the configuration is "wrong" from the security point of view.)
+>>
+> 
+> Yes, but breaking backward compatibility only happens if you break
+> something that is actually being *used*. So sure,
+> xts(aes)-essiv:sha256 makes no sense but people use it anyway. But is
+> that also true for, say, gcm(aes)-essiv:sha256 ?
 
-Sure,  that is all fine
+These should not be used.  The only way when ESSIV can combine with AEAD mode
+is when you combine length-preserving mode with additional integrity tag, for example
 
-> For the start, run this
-> https://gitlab.com/cryptsetup/cryptsetup/blob/master/tests/mode-test
->
-> In other words, if you add some additional limit, we are breaking backward compatibility.
-> (Despite the configuration is "wrong" from the security point of view.)
->
+  # cryptsetup luksFormat -c aes-cbc-essiv:sha256 --integrity hmac-sha256 /dev/sdb
 
-Yes, but breaking backward compatibility only happens if you break
-something that is actually being *used*. So sure,
-xts(aes)-essiv:sha256 makes no sense but people use it anyway. But is
-that also true for, say, gcm(aes)-essiv:sha256 ?
+it will produce this dm-crypt cipher spec:
+  capi:authenc(hmac(sha256),cbc(aes))-essiv:sha256
+
+the authenc(hmac(sha256),cbc(aes)) is direct crypto API cipher composition, the essiv:sha256
+IV is processed inside dm-crypt as IV.
+
+So if authenc() composition is problem, then yes, I am afraid these can be used in reality.
+
+But for things like gcm(aes)-essiv:sha256 (IOW real AEAD mode with ESSIV) - these are
+not supported by cryptsetup (we support only random IV in this case), so these should
+not be used anywhere.
+
+Milan
