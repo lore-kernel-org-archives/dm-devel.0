@@ -1,12 +1,14 @@
 From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: [PATCH v2 0/4] crypto: switch to crypto API for ESSIV
-	generation
-Date: Tue, 18 Jun 2019 23:27:45 +0200
-Message-ID: <20190618212749.8995-1-ard.biesheuvel@linaro.org>
+Subject: [PATCH v2 3/4] md: dm-crypt: infer ESSIV block cipher
+	from cipher string directly
+Date: Tue, 18 Jun 2019 23:27:48 +0200
+Message-ID: <20190618212749.8995-4-ard.biesheuvel@linaro.org>
+References: <20190618212749.8995-1-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190618212749.8995-1-ard.biesheuvel@linaro.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,45 +22,92 @@ To: linux-crypto@vger.kernel.org
 Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-This series creates an ESSIV template that produces a skcipher or AEAD
-transform based on a tuple of the form '<skcipher>,<cipher>,<shash>'
-(or '<aead>,<cipher>,<shash>' for the AEAD case). It exposes the
-encapsulated sync or async skcipher/aead by passing through all operations,
-while using the cipher/shash pair to transform the input IV into an ESSIV
-output IV.
+Instead of allocating a crypto skcipher tfm 'foo' and attempting to
+infer the encapsulated block cipher from the driver's 'name' field,
+directly parse the string that we used to allocated the tfm. These
+are always identical (unless the allocation failed, in which case
+we bail anyway), but using the string allows us to use it in the
+allocation, which is something we will need when switching to the
+'essiv' crypto API template.
 
-This matches what both users of ESSIV in the kernel do, and so it is proposed
-as a replacement for those, in patches #2 and #4.
+Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+---
+ drivers/md/dm-crypt.c | 35 +++++++++-----------
+ 1 file changed, 15 insertions(+), 20 deletions(-)
 
-This code has been tested using the fscrypt test suggested by Eric
-(generic/549), as well as the mode-test script suggested by Milan for
-the dm-crypt case. I also tested the aead case in a virtual machine,
-but it definitely needs some wider testing from the dm-crypt experts.
-
-Cc: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Eric Biggers <ebiggers@google.com>
-Cc: dm-devel@redhat.com
-Cc: linux-fscrypt@vger.kernel.org
-Cc: Gilad Ben-Yossef <gilad@benyossef.com>
-Cc: Milan Broz <gmazyland@gmail.com>
-
-Ard Biesheuvel (4):
-  crypto: essiv - create wrapper template for ESSIV generation
-  fs: crypto: invoke crypto API for ESSIV handling
-  md: dm-crypt: infer ESSIV block cipher from cipher string directly
-  md: dm-crypt: switch to ESSIV crypto API template
-
- crypto/Kconfig              |   4 +
- crypto/Makefile             |   1 +
- crypto/essiv.c              | 624 ++++++++++++++++++++
- drivers/md/Kconfig          |   1 +
- drivers/md/dm-crypt.c       | 237 ++------
- fs/crypto/Kconfig           |   1 +
- fs/crypto/crypto.c          |   5 -
- fs/crypto/fscrypt_private.h |   9 -
- fs/crypto/keyinfo.c         |  88 +--
- 9 files changed, 675 insertions(+), 295 deletions(-)
- create mode 100644 crypto/essiv.c
-
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 1b16d34bb785..f001f1104cb5 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -2321,25 +2321,17 @@ static int crypt_ctr_ivmode(struct dm_target *ti, const char *ivmode)
+  * The cc->cipher is currently used only in ESSIV.
+  * This should be probably done by crypto-api calls (once available...)
+  */
+-static int crypt_ctr_blkdev_cipher(struct crypt_config *cc)
++static int crypt_ctr_blkdev_cipher(struct crypt_config *cc, char *alg_name)
+ {
+-	const char *alg_name = NULL;
+ 	char *start, *end;
+ 
+ 	if (crypt_integrity_aead(cc)) {
+-		alg_name = crypto_tfm_alg_name(crypto_aead_tfm(any_tfm_aead(cc)));
+-		if (!alg_name)
+-			return -EINVAL;
+ 		if (crypt_integrity_hmac(cc)) {
+ 			alg_name = strchr(alg_name, ',');
+ 			if (!alg_name)
+ 				return -EINVAL;
+ 		}
+ 		alg_name++;
+-	} else {
+-		alg_name = crypto_tfm_alg_name(crypto_skcipher_tfm(any_tfm(cc)));
+-		if (!alg_name)
+-			return -EINVAL;
+ 	}
+ 
+ 	start = strchr(alg_name, '(');
+@@ -2434,6 +2426,20 @@ static int crypt_ctr_cipher_new(struct dm_target *ti, char *cipher_in, char *key
+ 	if (*ivmode && !strcmp(*ivmode, "lmk"))
+ 		cc->tfms_count = 64;
+ 
++	if (crypt_integrity_aead(cc)) {
++		ret = crypt_ctr_auth_cipher(cc, cipher_api);
++		if (ret < 0) {
++			ti->error = "Invalid AEAD cipher spec";
++			return -ENOMEM;
++	       }
++	}
++
++	ret = crypt_ctr_blkdev_cipher(cc, cipher_api);
++	if (ret < 0) {
++		ti->error = "Cannot allocate cipher string";
++		return -ENOMEM;
++	}
++
+ 	cc->key_parts = cc->tfms_count;
+ 
+ 	/* Allocate cipher */
+@@ -2445,21 +2451,10 @@ static int crypt_ctr_cipher_new(struct dm_target *ti, char *cipher_in, char *key
+ 
+ 	/* Alloc AEAD, can be used only in new format. */
+ 	if (crypt_integrity_aead(cc)) {
+-		ret = crypt_ctr_auth_cipher(cc, cipher_api);
+-		if (ret < 0) {
+-			ti->error = "Invalid AEAD cipher spec";
+-			return -ENOMEM;
+-		}
+ 		cc->iv_size = crypto_aead_ivsize(any_tfm_aead(cc));
+ 	} else
+ 		cc->iv_size = crypto_skcipher_ivsize(any_tfm(cc));
+ 
+-	ret = crypt_ctr_blkdev_cipher(cc);
+-	if (ret < 0) {
+-		ti->error = "Cannot allocate cipher string";
+-		return -ENOMEM;
+-	}
+-
+ 	return 0;
+ }
+ 
 -- 
 2.17.1
