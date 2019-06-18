@@ -1,15 +1,12 @@
-From: Gilad Ben-Yossef <gilad@benyossef.com>
-Subject: Re: [RFC PATCH 0/3] crypto: switch to shash for ESSIV
-	generation
-Date: Mon, 17 Jun 2019 11:51:52 +0300
-Message-ID: <CAOtvUMf86_TGYLoAHWuRW0Jz2=cXbHHJnAsZhEvy6SpSp_xgOQ@mail.gmail.com>
-References: <20190614083404.20514-1-ard.biesheuvel@linaro.org>
-	<20190616204419.GE923@sol.localdomain>
+From: Qu Wenruo <wqu@suse.com>
+Subject: [PATCH] dm log writes: Fix the wrong comment on the
+	logged sequence
+Date: Tue, 18 Jun 2019 13:39:38 +0800
+Message-ID: <20190618053938.13529-1-wqu@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190616204419.GE923@sol.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,42 +16,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, device-mapper development <dm-devel@redhat.com>, linux-fscrypt@vger.kernel.org, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gU3VuLCBKdW4gMTYsIDIwMTkgYXQgMTE6NDQgUE0gRXJpYyBCaWdnZXJzIDxlYmlnZ2Vyc0Br
-ZXJuZWwub3JnPiB3cm90ZToKPgo+IFsrQ2MgZG0tZGV2ZWwgYW5kIGxpbnV4LWZzY3J5cHRdCj4K
-PiBPbiBGcmksIEp1biAxNCwgMjAxOSBhdCAxMDozNDowMUFNICswMjAwLCBBcmQgQmllc2hldXZl
-bCB3cm90ZToKPiA+IFRoaXMgc2VyaWVzIGlzIHByZXNlbnRlZCBhcyBhbiBSRkMgZm9yIGEgY291
-cGxlIG9mIHJlYXNvbnM6Cj4gPiAtIGl0IGlzIG9ubHkgYnVpbGQgdGVzdGVkCj4gPiAtIGl0IGlz
-IHVuY2xlYXIgd2hldGhlciB0aGlzIGlzIHRoZSByaWdodCB3YXkgdG8gbW92ZSBhd2F5IGZyb20g
-dGhlIHVzZSBvZgo+ID4gICBiYXJlIGNpcGhlcnMgaW4gbm9uLWNyeXB0byBjb2RlCj4gPiAtIHdl
-IGhhdmVuJ3QgcmVhbGx5IGRpc2N1c3NlZCB3aGV0aGVyIG1vdmluZyBhd2F5IGZyb20gdGhlIHVz
-ZSBvZiBiYXJlIGNpcGhlcnMKPiA+ICAgaW4gbm9uLWNyeXB0byBjb2RlIGlzIGEgZ29hbCB3ZSBh
-Z3JlZSBvbgo+ID4KPiA+IFRoaXMgc2VyaWVzIGNyZWF0ZXMgYW4gRVNTSVYgc2hhc2ggdGVtcGxh
-dGUgdGhhdCB0YWtlcyBhIChjaXBoZXIsaGFzaCkgdHVwbGUsCj4gPiB3aGVyZSB0aGUgZGlnZXN0
-IHNpemUgb2YgdGhlIGhhc2ggbXVzdCBiZSBhIHZhbGlkIGtleSBsZW5ndGggZm9yIHRoZSBjaXBo
-ZXIuCj4gPiBUaGUgc2V0a2V5KCkgb3BlcmF0aW9uIHRha2VzIHRoZSBoYXNoIG9mIHRoZSBpbnB1
-dCBrZXksIGFuZCBzZXRzIGludG8gdGhlCj4gPiBjaXBoZXIgYXMgdGhlIGVuY3J5cHRpb24ga2V5
-LiBEaWdlc3Qgb3BlcmF0aW9ucyBhY2NlcHQgaW5wdXQgdXAgdG8gdGhlCj4gPiBibG9jayBzaXpl
-IG9mIHRoZSBjaXBoZXIsIGFuZCBwZXJmb3JtIGEgc2luZ2xlIGJsb2NrIGVuY3J5cHRpb24gb3Bl
-cmF0aW9uIHRvCj4gPiBwcm9kdWNlIHRoZSBFU1NJViBvdXRwdXQuCi4uLgo+IEkgYWdyZWUgdGhh
-dCBtb3ZpbmcgYXdheSBmcm9tIGJhcmUgYmxvY2sgY2lwaGVycyBpcyBnZW5lcmFsbHkgYSBnb29k
-IGlkZWEuICBGb3IKPiBmc2NyeXB0IEknbSBmaW5lIHdpdGggbW92aW5nIEVTU0lWIGludG8gdGhl
-IGNyeXB0byBBUEksIHRob3VnaCBJJ20gbm90IHN1cmUgYQo+IHNoYXNoIHRlbXBsYXRlIGlzIHRo
-ZSBiZXN0IGFwcHJvYWNoLiAgRGlkIHlvdSBhbHNvIGNvbnNpZGVyIG1ha2luZyBpdCBhIHNrY2lw
-aGVyCj4gdGVtcGxhdGUgc28gdGhhdCB1c2VycyBjYW4gZG8gZS5nLiAiZXNzaXYoY2JjKGFlcyks
-c2hhMjU2LGFlcykiPyAgVGhhdCB3b3VsZAo+IHNpbXBsaWZ5IHRoaW5ncyBtdWNoIG1vcmUgb24g
-dGhlIGZzY3J5cHQgc2lkZSwgc2luY2UgdGhlbiBhbGwgdGhlIEVTU0lWLXJlbGF0ZWQKPiBjb2Rl
-IHdvdWxkIGdvIGF3YXkgZW50aXJlbHkgZXhjZXB0IGZvciBjaGFuZ2luZyB0aGUgc3RyaW5nICJj
-YmMoYWVzKSIgdG8KPiAiZXNzaXYoY2JjKGFlcyksc2hhMjU2LGFlcykiLgoKSSB3aWxsIGFsc28g
-YWRkIHRoYXQgZ29pbmcgdGhlIHNrY2lwaGVyIHJvdXRlIHJhdGhlciB0aGFuIHNoYXNoIHdpbGwK
-YWxsb3cgaGFyZHdhcmUgdGZtIHByb3ZpZGVycyBsaWtlIENyeXB0b0NlbGwgdGhhdCBjYW4gZG8g
-dGhlIEVTU0lWCnBhcnQgaW4gaGFyZHdhcmUgaW1wbGVtZW50IHRoYXQgYXMgYSBzaW5nbGUgQVBJ
-IGNhbGwgYW5kL29yIGhhcmR3YXJlCmludm9jYXRpb24gZmxvdy4KRm9yIHRob3NlIHN5c3RlbSB0
-aGF0IGJlbmVmaXQgZnJvbSBoYXJkd2FyZSBwcm92aWRlcnMgdGhpcyBjYW4gYmUgYmVuZWZpY2lh
-bC4KClRoYW5rcywKR2lsYWQKCi0tIApHaWxhZCBCZW4tWW9zc2VmCkNoaWVmIENvZmZlZSBEcmlu
-a2VyCgp2YWx1ZXMgb2YgzrIgd2lsbCBnaXZlIHJpc2UgdG8gZG9tIQoKLS0KZG0tZGV2ZWwgbWFp
-bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWls
-bWFuL2xpc3RpbmZvL2RtLWRldmVs
+dm-log-writes records the sequence of completion, not submission, thus
+for the following sequence (W=write, C=complete):
+
+  Wa,Wb,Wc,Cc,Ca,FLUSH,FUAd,Cb,CFLUSH,CFUAd
+
+The logged results in log device should be:
+  c,a,b,flush,fua
+
+Fix the comment to give a better example.
+
+Signed-off-by: Qu Wenruo <wqu@suse.com>
+---
+ drivers/md/dm-log-writes.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+index 9ea2b0291f20..af94bbe77ce2 100644
+--- a/drivers/md/dm-log-writes.c
++++ b/drivers/md/dm-log-writes.c
+@@ -40,7 +40,7 @@
+  *
+  * Would result in the log looking like this:
+  *
+- * c,a,flush,fuad,b,<other writes>,<next flush>
++ * c,a,b,flush,fuad,<other writes>,<next flush>
+  *
+  * This is meant to help expose problems where file systems do not properly wait
+  * on data being written before invoking a FLUSH.  FUA bypasses cache so once it
+-- 
+2.22.0
