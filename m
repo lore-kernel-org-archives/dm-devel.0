@@ -1,94 +1,73 @@
-From: Qu Wenruo <wqu@suse.com>
-Subject: [PATCH 2/2] dm log writes: Introduce dump_type= message type to change dump_type on the fly
-Date: Wed, 19 Jun 2019 16:03:12 +0800
-Message-ID: <20190619080312.11549-3-wqu@suse.com>
-References: <20190619080312.11549-1-wqu@suse.com>
+From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Subject: Re: [PATCH v2 0/4] crypto: switch to crypto API for
+	ESSIV generation
+Date: Wed, 19 Jun 2019 11:14:07 +0200
+Message-ID: <CAKv+Gu9q5qTgEeTLCW6ZM6Wu6RK559SjFhsgWis72_6-p6RrZA@mail.gmail.com>
+References: <20190618212749.8995-1-ard.biesheuvel@linaro.org>
+	<099346ee-af6e-a560-079d-3fb68fb4eeba@gmail.com>
+	<CAKv+Gu9MTGSwZgaHyxJKwfiBQzqgNhTs5ue+TC1Ehte-+VBXqg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <20190619080312.11549-1-wqu@suse.com>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: linux-btrfs@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAKv+Gu9MTGSwZgaHyxJKwfiBQzqgNhTs5ue+TC1Ehte-+VBXqg@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Milan Broz <gmazyland@gmail.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>
 List-Id: dm-devel.ids
 
-The new message format is:
-dump_type=<new dump type>
+On Wed, 19 Jun 2019 at 09:11, Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
+>
+> On Wed, 19 Jun 2019 at 08:56, Milan Broz <gmazyland@gmail.com> wrote:
+> >
+> > On 18/06/2019 23:27, Ard Biesheuvel wrote:
+> > > This series creates an ESSIV template that produces a skcipher or AEAD
+> > > transform based on a tuple of the form '<skcipher>,<cipher>,<shash>'
+> > > (or '<aead>,<cipher>,<shash>' for the AEAD case). It exposes the
+> > > encapsulated sync or async skcipher/aead by passing through all operations,
+> > > while using the cipher/shash pair to transform the input IV into an ESSIV
+> > > output IV.
+> > >
+> > > This matches what both users of ESSIV in the kernel do, and so it is proposed
+> > > as a replacement for those, in patches #2 and #4.
+> > >
+> > > This code has been tested using the fscrypt test suggested by Eric
+> > > (generic/549), as well as the mode-test script suggested by Milan for
+> > > the dm-crypt case. I also tested the aead case in a virtual machine,
+> > > but it definitely needs some wider testing from the dm-crypt experts.
+> >
+> > Well, I just run "make check" on cyptsetup upstream (32bit VM, Linus' tree
+> > with this patcheset applied), and get this on the first api test...
+> >
+>
+> Ugh. Thanks for trying. I will have a look today.
+>
+>
+> > Just try
+> > cryptsetup open --type plain -c aes-cbc-essiv:sha256 /dev/sdd test
+> >
 
-The parameter of dump_type= follows the same one of constructor.
-This allows us to change dump_type on the fly, making the following use
-case possible:
-  # dmsetup create log --table 0 10485760 log-writes \
-    /dev/tests/dest /dev/test/log dump_type=ALL
-  # mkfs.btrfs -f /dev/mapper/log
-  # dmsetup suspend log
-  # dmsetup message log dm_dump_type=METADATA|FLUSH|FUA|DISCARD|MARK
-  # mount /dev/mapper/log
-  # <do some writes>
-  # umount /dev/mapper/log
+Apologies, this was a rebase error on my part.
 
-The log device will record the full mkfs bios (as user space write can't
-generate bios with METADATA flag), then switch to only log METADATA FUA
-FLUSH DISCARD writes.
+Could you please apply the hunk below and try again?
 
-Signed-off-by: Qu Wenruo <wqu@suse.com>
----
- drivers/md/dm-log-writes.c | 31 ++++++++++++++++++++++++++-----
- 1 file changed, 26 insertions(+), 5 deletions(-)
-
-diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-index 9edf0bdcae39..80e872c7dcd3 100644
---- a/drivers/md/dm-log-writes.c
-+++ b/drivers/md/dm-log-writes.c
-@@ -980,7 +980,8 @@ static int log_writes_iterate_devices(struct dm_target *ti,
- 
- /*
-  * Messages supported:
-- *   mark <mark data> - specify the marked data.
-+ *   mark <mark data>	    - specify the marked data.
-+ *   dump_type=<type flags> - change dump type on the fly, suspend recommended
-  */
- static int log_writes_message(struct dm_target *ti, unsigned argc, char **argv,
- 			      char *result, unsigned maxlen)
-@@ -988,15 +989,35 @@ static int log_writes_message(struct dm_target *ti, unsigned argc, char **argv,
- 	int r = -EINVAL;
- 	struct log_writes_c *lc = ti->private;
- 
--	if (argc != 2) {
--		DMWARN("Invalid log-writes message arguments, expect 2 arguments, got %d", argc);
-+	if (argc < 1) {
-+		DMWARN(
-+"Invalid log-writes message arguments, expect at least one argument, got %d",
-+			argc);
- 		return r;
- 	}
- 
--	if (!strcasecmp(argv[0], "mark"))
-+	if (!strcasecmp(argv[0], "mark")) {
-+		if (argc != 2) {
-+			DMWARN(
-+"Invalid log-writes message arguments, expect 2 arguments for mark, got %d",
-+				argc);
-+			return r;
-+		}
- 		r = log_mark(lc, argv[1]);
--	else
-+	} else if (!strncasecmp(argv[0], "dump_type=", strlen("dump_type="))) {
-+		if (argc != 1) {
-+			DMWARN(
-+"Invalid log-writes message arguments, expect 1 argument for dump_type, got %d",
-+				argc);
-+			return r;
-+		}
-+		r = parse_dump_types(lc, argv[0] + strlen("dump_type="));
-+		if (r < 0) {
-+			ti->error = "Bad dump type";
-+		}
-+	} else {
- 		DMWARN("Unrecognised log writes target message received: %s", argv[0]);
-+	}
- 
- 	return r;
+diff --git a/crypto/essiv.c b/crypto/essiv.c
+index 029a65afb4d7..5dc2e592077e 100644
+--- a/crypto/essiv.c
++++ b/crypto/essiv.c
+@@ -243,6 +243,8 @@ static int essiv_aead_encrypt(struct aead_request *req)
+ static int essiv_skcipher_decrypt(struct skcipher_request *req)
+ {
+        struct essiv_skcipher_request_ctx *rctx = skcipher_request_ctx(req);
++
++       essiv_skcipher_prepare_subreq(req);
+        return crypto_skcipher_decrypt(&rctx->blockcipher_req);
  }
--- 
-2.22.0
