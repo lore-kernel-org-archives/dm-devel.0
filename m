@@ -1,16 +1,14 @@
 From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [PATCH v2 1/4] crypto: essiv - create wrapper
-	template for ESSIV generation
-Date: Wed, 19 Jun 2019 17:45:13 +0200
-Message-ID: <CAKv+Gu_okSc=Ep9nbdqnbB1hVRmr8O4tChDPm+m7O+jb1pBD_A@mail.gmail.com>
-References: <20190618212749.8995-1-ard.biesheuvel@linaro.org>
-	<20190618212749.8995-2-ard.biesheuvel@linaro.org>
-	<CAAUqJDsi_acZj09xiimYGfyJVPt0zo=3-2PHuGnSKSaq82-RQA@mail.gmail.com>
+Subject: [PATCH v3 4/6] md: dm-crypt: switch to ESSIV crypto API
+	template
+Date: Wed, 19 Jun 2019 18:29:19 +0200
+Message-ID: <20190619162921.12509-5-ard.biesheuvel@linaro.org>
+References: <20190619162921.12509-1-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAAUqJDsi_acZj09xiimYGfyJVPt0zo=3-2PHuGnSKSaq82-RQA@mail.gmail.com>
+In-Reply-To: <20190619162921.12509-1-ard.biesheuvel@linaro.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,31 +18,313 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: =?UTF-8?B?T25kcmVqIE1vc27DocSNZWs=?= <omosnacek@gmail.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>
+To: linux-crypto@vger.kernel.org
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCAxOSBKdW4gMjAxOSBhdCAxNzoxOCwgT25kcmVqIE1vc27DocSNZWsgPG9tb3NuYWNl
-a0BnbWFpbC5jb20+IHdyb3RlOgo+Cj4gSGkgQXJkLAo+Cj4gdXQgMTguIDYuIDIwMTkgbyAyMzoy
-OCBBcmQgQmllc2hldXZlbCA8YXJkLmJpZXNoZXV2ZWxAbGluYXJvLm9yZz4gbmFww61zYWwoYSk6
-Cj4gPiBJbXBsZW1lbnQgYSB0ZW1wbGF0ZSB0aGF0IHdyYXBzIGEgKHNrY2lwaGVyLGNpcGhlcixz
-aGFzaCkgb3IKPiA+IChhZWFkLGNpcGhlcixzaGFzaCkgdHVwbGUgc28gdGhhdCB3ZSBjYW4gY29u
-c29saWRhdGUgdGhlIEVTU0lWIGhhbmRsaW5nCj4gPiBpbiBmc2NyeXB0IGFuZCBkbS1jcnlwdCBh
-bmQgbW92ZSBpdCBpbnRvIHRoZSBjcnlwdG8gQVBJLiBUaGlzIHdpbGwgcmVzdWx0Cj4gPiBpbiBi
-ZXR0ZXIgdGVzdCBjb3ZlcmFnZSwgYW5kIHdpbGwgYWxsb3cgZnV0dXJlIGNoYW5nZXMgdG8gbWFr
-ZSB0aGUgYmFyZQo+ID4gY2lwaGVyIGludGVyZmFjZSBpbnRlcm5hbCB0byB0aGUgY3J5cHRvIHN1
-YnN5c3RlbSwgaW4gb3JkZXIgdG8gaW5jcmVhc2UKPiA+IHJvYnVzdG5lc3Mgb2YgdGhlIEFQSSBh
-Z2FpbnN0IG1pc3VzZS4KPiA+Cj4gPiBOb3RlIHRoYXQgZXNwZWNpYWxseSB0aGUgQUVBRCBoYW5k
-bGluZyBpcyBhIGJpdCBjb21wbGV4LCBhbmQgaXMgdGlnaHRseQo+ID4gY291cGxlZCB0byB0aGUg
-d2F5IGRtLWNyeXB0IGNvbWJpbmVzIEFFQUQgYmFzZWQgb24gdGhlIGF1dGhlbmMoKSB0ZW1wbGF0
-ZQo+ID4gd2l0aCB0aGUgRVNTSVYgaGFuZGxpbmcuCj4KPiBXb3VsZG4ndCBpdCB3b3JrIGJldHRl
-ciB0byBoYXZlIGEgdGVtcGxhdGUgb25seSBmb3Igc2tjaXBoZXIgYW5kIGluCj4gZG0tY3J5cHQg
-anVzdCBpbmplY3QgdGhlIGVzc2l2KCkgdGVtcGxhdGUgaW50byB0aGUgY2lwaGVyIHN0cmluZz8g
-Rm9yCj4gZXhhbXBsZTogImF1dGhlbmMoaG1hYyhzaGEyNTYpLGNiYyhhZXMpKS1lc3NpdjpzaGEy
-NTYiIC0+Cj4gImF1dGhlbmMoaG1hYyhzaGEyNTYpLGVzc2l2KGNiYyhhZXMpLGFlcyxzaGEyNTYp
-KSIuIFRoYXQgc2VlbXMgdG8gbWUgYQo+IG11Y2ggc2ltcGxlciBoYWNrLiAoQnV0IG1heWJlIEkn
-bSBtaXNzaW5nIHNvbWUgaXNzdWUgaW4gdGhhdAo+IGFwcHJvYWNoLi4uKQo+CgpVbmZvcnR1bmF0
-ZWx5LCB0aGF0IGRvZXNuJ3Qgd29yay4gV2hlbiB1c2luZyBBRUFEcywgZG0tY3J5cHQgYWxzbyBw
-dXRzCnRoZSBJViBpbiB0aGUgQUFEIGFyZWEuCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
-ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8v
-ZG0tZGV2ZWw=
+Replace the explicit ESSIV handling in the dm-crypt driver with calls
+into the crypto API, which now possesses the capability to perform
+this processing within the crypto subsystem.
+
+Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+---
+ drivers/md/Kconfig    |   1 +
+ drivers/md/dm-crypt.c | 208 +++-----------------
+ 2 files changed, 31 insertions(+), 178 deletions(-)
+
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index 45254b3ef715..30ca87cf25db 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -271,6 +271,7 @@ config DM_CRYPT
+ 	depends on BLK_DEV_DM
+ 	select CRYPTO
+ 	select CRYPTO_CBC
++	select CRYPTO_ESSIV
+ 	---help---
+ 	  This device-mapper target allows you to create a device that
+ 	  transparently encrypts the data on it. You'll need to activate
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index f001f1104cb5..12d28880ec34 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -98,11 +98,6 @@ struct crypt_iv_operations {
+ 		    struct dm_crypt_request *dmreq);
+ };
+ 
+-struct iv_essiv_private {
+-	struct crypto_shash *hash_tfm;
+-	u8 *salt;
+-};
+-
+ struct iv_benbi_private {
+ 	int shift;
+ };
+@@ -155,7 +150,6 @@ struct crypt_config {
+ 
+ 	const struct crypt_iv_operations *iv_gen_ops;
+ 	union {
+-		struct iv_essiv_private essiv;
+ 		struct iv_benbi_private benbi;
+ 		struct iv_lmk_private lmk;
+ 		struct iv_tcw_private tcw;
+@@ -165,8 +159,6 @@ struct crypt_config {
+ 	unsigned short int sector_size;
+ 	unsigned char sector_shift;
+ 
+-	/* ESSIV: struct crypto_cipher *essiv_tfm */
+-	void *iv_private;
+ 	union {
+ 		struct crypto_skcipher **tfms;
+ 		struct crypto_aead **tfms_aead;
+@@ -323,161 +315,6 @@ static int crypt_iv_plain64be_gen(struct crypt_config *cc, u8 *iv,
+ 	return 0;
+ }
+ 
+-/* Initialise ESSIV - compute salt but no local memory allocations */
+-static int crypt_iv_essiv_init(struct crypt_config *cc)
+-{
+-	struct iv_essiv_private *essiv = &cc->iv_gen_private.essiv;
+-	SHASH_DESC_ON_STACK(desc, essiv->hash_tfm);
+-	struct crypto_cipher *essiv_tfm;
+-	int err;
+-
+-	desc->tfm = essiv->hash_tfm;
+-
+-	err = crypto_shash_digest(desc, cc->key, cc->key_size, essiv->salt);
+-	shash_desc_zero(desc);
+-	if (err)
+-		return err;
+-
+-	essiv_tfm = cc->iv_private;
+-
+-	err = crypto_cipher_setkey(essiv_tfm, essiv->salt,
+-			    crypto_shash_digestsize(essiv->hash_tfm));
+-	if (err)
+-		return err;
+-
+-	return 0;
+-}
+-
+-/* Wipe salt and reset key derived from volume key */
+-static int crypt_iv_essiv_wipe(struct crypt_config *cc)
+-{
+-	struct iv_essiv_private *essiv = &cc->iv_gen_private.essiv;
+-	unsigned salt_size = crypto_shash_digestsize(essiv->hash_tfm);
+-	struct crypto_cipher *essiv_tfm;
+-	int r, err = 0;
+-
+-	memset(essiv->salt, 0, salt_size);
+-
+-	essiv_tfm = cc->iv_private;
+-	r = crypto_cipher_setkey(essiv_tfm, essiv->salt, salt_size);
+-	if (r)
+-		err = r;
+-
+-	return err;
+-}
+-
+-/* Allocate the cipher for ESSIV */
+-static struct crypto_cipher *alloc_essiv_cipher(struct crypt_config *cc,
+-						struct dm_target *ti,
+-						const u8 *salt,
+-						unsigned int saltsize)
+-{
+-	struct crypto_cipher *essiv_tfm;
+-	int err;
+-
+-	/* Setup the essiv_tfm with the given salt */
+-	essiv_tfm = crypto_alloc_cipher(cc->cipher, 0, 0);
+-	if (IS_ERR(essiv_tfm)) {
+-		ti->error = "Error allocating crypto tfm for ESSIV";
+-		return essiv_tfm;
+-	}
+-
+-	if (crypto_cipher_blocksize(essiv_tfm) != cc->iv_size) {
+-		ti->error = "Block size of ESSIV cipher does "
+-			    "not match IV size of block cipher";
+-		crypto_free_cipher(essiv_tfm);
+-		return ERR_PTR(-EINVAL);
+-	}
+-
+-	err = crypto_cipher_setkey(essiv_tfm, salt, saltsize);
+-	if (err) {
+-		ti->error = "Failed to set key for ESSIV cipher";
+-		crypto_free_cipher(essiv_tfm);
+-		return ERR_PTR(err);
+-	}
+-
+-	return essiv_tfm;
+-}
+-
+-static void crypt_iv_essiv_dtr(struct crypt_config *cc)
+-{
+-	struct crypto_cipher *essiv_tfm;
+-	struct iv_essiv_private *essiv = &cc->iv_gen_private.essiv;
+-
+-	crypto_free_shash(essiv->hash_tfm);
+-	essiv->hash_tfm = NULL;
+-
+-	kzfree(essiv->salt);
+-	essiv->salt = NULL;
+-
+-	essiv_tfm = cc->iv_private;
+-
+-	if (essiv_tfm)
+-		crypto_free_cipher(essiv_tfm);
+-
+-	cc->iv_private = NULL;
+-}
+-
+-static int crypt_iv_essiv_ctr(struct crypt_config *cc, struct dm_target *ti,
+-			      const char *opts)
+-{
+-	struct crypto_cipher *essiv_tfm = NULL;
+-	struct crypto_shash *hash_tfm = NULL;
+-	u8 *salt = NULL;
+-	int err;
+-
+-	if (!opts) {
+-		ti->error = "Digest algorithm missing for ESSIV mode";
+-		return -EINVAL;
+-	}
+-
+-	/* Allocate hash algorithm */
+-	hash_tfm = crypto_alloc_shash(opts, 0, 0);
+-	if (IS_ERR(hash_tfm)) {
+-		ti->error = "Error initializing ESSIV hash";
+-		err = PTR_ERR(hash_tfm);
+-		goto bad;
+-	}
+-
+-	salt = kzalloc(crypto_shash_digestsize(hash_tfm), GFP_KERNEL);
+-	if (!salt) {
+-		ti->error = "Error kmallocing salt storage in ESSIV";
+-		err = -ENOMEM;
+-		goto bad;
+-	}
+-
+-	cc->iv_gen_private.essiv.salt = salt;
+-	cc->iv_gen_private.essiv.hash_tfm = hash_tfm;
+-
+-	essiv_tfm = alloc_essiv_cipher(cc, ti, salt,
+-				       crypto_shash_digestsize(hash_tfm));
+-	if (IS_ERR(essiv_tfm)) {
+-		crypt_iv_essiv_dtr(cc);
+-		return PTR_ERR(essiv_tfm);
+-	}
+-	cc->iv_private = essiv_tfm;
+-
+-	return 0;
+-
+-bad:
+-	if (hash_tfm && !IS_ERR(hash_tfm))
+-		crypto_free_shash(hash_tfm);
+-	kfree(salt);
+-	return err;
+-}
+-
+-static int crypt_iv_essiv_gen(struct crypt_config *cc, u8 *iv,
+-			      struct dm_crypt_request *dmreq)
+-{
+-	struct crypto_cipher *essiv_tfm = cc->iv_private;
+-
+-	memset(iv, 0, cc->iv_size);
+-	*(__le64 *)iv = cpu_to_le64(dmreq->iv_sector);
+-	crypto_cipher_encrypt_one(essiv_tfm, iv, iv);
+-
+-	return 0;
+-}
+-
+ static int crypt_iv_benbi_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 			      const char *opts)
+ {
+@@ -853,14 +690,6 @@ static const struct crypt_iv_operations crypt_iv_plain64be_ops = {
+ 	.generator = crypt_iv_plain64be_gen
+ };
+ 
+-static const struct crypt_iv_operations crypt_iv_essiv_ops = {
+-	.ctr       = crypt_iv_essiv_ctr,
+-	.dtr       = crypt_iv_essiv_dtr,
+-	.init      = crypt_iv_essiv_init,
+-	.wipe      = crypt_iv_essiv_wipe,
+-	.generator = crypt_iv_essiv_gen
+-};
+-
+ static const struct crypt_iv_operations crypt_iv_benbi_ops = {
+ 	.ctr	   = crypt_iv_benbi_ctr,
+ 	.dtr	   = crypt_iv_benbi_dtr,
+@@ -2283,7 +2112,7 @@ static int crypt_ctr_ivmode(struct dm_target *ti, const char *ivmode)
+ 	else if (strcmp(ivmode, "plain64be") == 0)
+ 		cc->iv_gen_ops = &crypt_iv_plain64be_ops;
+ 	else if (strcmp(ivmode, "essiv") == 0)
+-		cc->iv_gen_ops = &crypt_iv_essiv_ops;
++		cc->iv_gen_ops = &crypt_iv_plain64_ops;
+ 	else if (strcmp(ivmode, "benbi") == 0)
+ 		cc->iv_gen_ops = &crypt_iv_benbi_ops;
+ 	else if (strcmp(ivmode, "null") == 0)
+@@ -2397,7 +2226,7 @@ static int crypt_ctr_cipher_new(struct dm_target *ti, char *cipher_in, char *key
+ 				char **ivmode, char **ivopts)
+ {
+ 	struct crypt_config *cc = ti->private;
+-	char *tmp, *cipher_api;
++	char *tmp, *cipher_api, buf[CRYPTO_MAX_ALG_NAME];
+ 	int ret = -EINVAL;
+ 
+ 	cc->tfms_count = 1;
+@@ -2435,9 +2264,19 @@ static int crypt_ctr_cipher_new(struct dm_target *ti, char *cipher_in, char *key
+ 	}
+ 
+ 	ret = crypt_ctr_blkdev_cipher(cc, cipher_api);
+-	if (ret < 0) {
+-		ti->error = "Cannot allocate cipher string";
+-		return -ENOMEM;
++	if (ret < 0)
++		goto bad_mem;
++
++	if (*ivmode && !strcmp(*ivmode, "essiv")) {
++		if (!*ivopts) {
++			ti->error = "Digest algorithm missing for ESSIV mode";
++			return -EINVAL;
++		}
++		ret = snprintf(buf, CRYPTO_MAX_ALG_NAME, "essiv(%s,%s,%s)",
++			       cipher_api, cc->cipher, *ivopts);
++		if (ret < 0)
++			goto bad_mem;
++		cipher_api = buf;
+ 	}
+ 
+ 	cc->key_parts = cc->tfms_count;
+@@ -2456,6 +2295,9 @@ static int crypt_ctr_cipher_new(struct dm_target *ti, char *cipher_in, char *key
+ 		cc->iv_size = crypto_skcipher_ivsize(any_tfm(cc));
+ 
+ 	return 0;
++bad_mem:
++	ti->error = "Cannot allocate cipher string";
++	return -ENOMEM;
+ }
+ 
+ static int crypt_ctr_cipher_old(struct dm_target *ti, char *cipher_in, char *key,
+@@ -2515,8 +2357,18 @@ static int crypt_ctr_cipher_old(struct dm_target *ti, char *cipher_in, char *key
+ 	if (!cipher_api)
+ 		goto bad_mem;
+ 
+-	ret = snprintf(cipher_api, CRYPTO_MAX_ALG_NAME,
+-		       "%s(%s)", chainmode, cipher);
++	if (*ivmode && !strcmp(*ivmode, "essiv")) {
++		if (!*ivopts) {
++			ti->error = "Digest algorithm missing for ESSIV mode";
++			return -EINVAL;
++		}
++		ret = snprintf(cipher_api, CRYPTO_MAX_ALG_NAME,
++			       "essiv(%s(%s),%s,%s)", chainmode, cipher,
++			       cipher, *ivopts);
++	} else {
++		ret = snprintf(cipher_api, CRYPTO_MAX_ALG_NAME,
++			       "%s(%s)", chainmode, cipher);
++	}
+ 	if (ret < 0) {
+ 		kfree(cipher_api);
+ 		goto bad_mem;
+-- 
+2.20.1
