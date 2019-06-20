@@ -1,58 +1,38 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [PATCH v3 1/6] crypto: essiv - create wrapper
-	template for ESSIV generation
-Date: Thu, 20 Jun 2019 15:53:45 +0200
-Message-ID: <CAKv+Gu8OFbDJGoYw_DHresF5HJDSamtw1YtZ13gpOVJCYV+22Q@mail.gmail.com>
-References: <20190619162921.12509-1-ard.biesheuvel@linaro.org>
-	<20190619162921.12509-2-ard.biesheuvel@linaro.org>
-	<20190620010417.GA722@sol.localdomain>
-	<20190620011325.phmxmeqnv2o3wqtr@gondor.apana.org.au>
-	<CAKv+Gu-OwzmoYR5uymSNghEVc9xbkkt5C8MxAYA48UE=yBgb5g@mail.gmail.com>
-	<20190620125339.gqup5623sw4xrsmi@gondor.apana.org.au>
-	<CAKv+Gu_z3oMB-XBHRrNWpXNbSmb4CFC8VNn8s+8bOd-JjiakqQ@mail.gmail.com>
-	<20190620134045.fncibzc7eyufd5sj@gondor.apana.org.au>
+From: "Pavel Begunkov (Silence)" <asml.silence@gmail.com>
+Subject: [PATCH 1/1] dm: Update comment
+Date: Thu, 20 Jun 2019 20:50:50 +0300
+Message-ID: <08f06799d0336322ae85b3f8ba3acfb68180a96d.1561052999.git.asml.silence@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190620134045.fncibzc7eyufd5sj@gondor.apana.org.au>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: linux-fscrypt@vger.kernel.org, Eric Biggers <ebiggers@kernel.org>, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Cc: Pavel Begunkov <asml.silence@gmail.com>
 List-Id: dm-devel.ids
 
-On Thu, 20 Jun 2019 at 15:40, Herbert Xu <herbert@gondor.apana.org.au> wrote:
->
-> On Thu, Jun 20, 2019 at 03:02:04PM +0200, Ard Biesheuvel wrote:
-> >
-> > It also depend on how realistic it is that we will need to support
-> > arbitrary sector sizes in the future. I mean, if we decide today that
-> > essiv() uses an implicit sector size of 4k, we can always add
-> > essiv64k() later, rather than adding lots of complexity now that we
-> > are never going to use. Note that ESSIV is already more or less
-> > deprecated, so there is really no point in inventing these weird and
-> > wonderful things if we want people to move to XTS and plain IV
-> > generation instead.
->
-> Well whatever we do for ESSIV should also extend to other IV
-> generators in dm-crypt so that potentially we can have a single
-> interface for dm-crypt multi-sector processing in future (IOW
-> you don't have special code for ESSIV vs. other algos).
->
-> That is why we should get the ESSIV interface right as it could
-> serve as an example for future implementations.
->
-> What do the dm-crypt people think? Are you ever going to need
-> processing in units other than 4K?
->
+From: Pavel Begunkov <asml.silence@gmail.com>
 
-We'd need at least 512 and 4k for dm-crypt, but I don't think the
-sector size is limited at all tbh
+Since Commit a1ce35fa49852db60fc6e268 ("block: remove dead elevator
+code") blk_end_request() has been replaced with blk_mq_end_request().
+Update comment
+
+Signed-off-by: Pavel Begunkov <asml.silence@gmail.com>
+---
+ drivers/md/dm-rq.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index 5f7063f05ae0..c9e44ac1f9a6 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -115,7 +115,7 @@ static void end_clone_bio(struct bio *clone)
+ 
+ 	/*
+ 	 * Update the original request.
+-	 * Do not use blk_end_request() here, because it may complete
++	 * Do not use blk_mq_end_request() here, because it may complete
+ 	 * the original request before the clone, and break the ordering.
+ 	 */
+ 	if (is_last)
+-- 
+2.22.0
