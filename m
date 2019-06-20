@@ -1,14 +1,17 @@
-From: Gilad Ben-Yossef <gilad@benyossef.com>
-Subject: Re: [PATCH v3 0/6] crypto: switch to crypto API for
-	ESSIV generation
-Date: Thu, 20 Jun 2019 10:07:57 +0300
-Message-ID: <CAOtvUMc0J3ufp3QyPwERdkRKfKzB_avPBoXSNWiCDS03jkNUzg@mail.gmail.com>
+From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Subject: Re: [PATCH v3 1/6] crypto: essiv - create wrapper
+	template for ESSIV generation
+Date: Thu, 20 Jun 2019 09:30:41 +0200
+Message-ID: <CAKv+Gu-OwzmoYR5uymSNghEVc9xbkkt5C8MxAYA48UE=yBgb5g@mail.gmail.com>
 References: <20190619162921.12509-1-ard.biesheuvel@linaro.org>
+	<20190619162921.12509-2-ard.biesheuvel@linaro.org>
+	<20190620010417.GA722@sol.localdomain>
+	<20190620011325.phmxmeqnv2o3wqtr@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190619162921.12509-1-ard.biesheuvel@linaro.org>
+In-Reply-To: <20190620011325.phmxmeqnv2o3wqtr@gondor.apana.org.au>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,57 +21,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, linux-fscrypt@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: linux-fscrypt@vger.kernel.org, Eric Biggers <ebiggers@kernel.org>, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCBKdW4gMTksIDIwMTkgYXQgNzoyOSBQTSBBcmQgQmllc2hldXZlbAo8YXJkLmJpZXNo
-ZXV2ZWxAbGluYXJvLm9yZz4gd3JvdGU6Cj4KPiBUaGlzIHNlcmllcyBjcmVhdGVzIGFuIEVTU0lW
-IHRlbXBsYXRlIHRoYXQgcHJvZHVjZXMgYSBza2NpcGhlciBvciBBRUFECj4gdHJhbnNmb3JtIGJh
-c2VkIG9uIGEgdHVwbGUgb2YgdGhlIGZvcm0gJzxza2NpcGhlcj4sPGNpcGhlcj4sPHNoYXNoPicK
-PiAob3IgJzxhZWFkPiw8Y2lwaGVyPiw8c2hhc2g+JyBmb3IgdGhlIEFFQUQgY2FzZSkuIEl0IGV4
-cG9zZXMgdGhlCj4gZW5jYXBzdWxhdGVkIHN5bmMgb3IgYXN5bmMgc2tjaXBoZXIvYWVhZCBieSBw
-YXNzaW5nIHRocm91Z2ggYWxsIG9wZXJhdGlvbnMsCj4gd2hpbGUgdXNpbmcgdGhlIGNpcGhlci9z
-aGFzaCBwYWlyIHRvIHRyYW5zZm9ybSB0aGUgaW5wdXQgSVYgaW50byBhbiBFU1NJVgo+IG91dHB1
-dCBJVi4KPgo+IFRoaXMgbWF0Y2hlcyB3aGF0IGJvdGggdXNlcnMgb2YgRVNTSVYgaW4gdGhlIGtl
-cm5lbCBkbywgYW5kIHNvIGl0IGlzIHByb3Bvc2VkCj4gYXMgYSByZXBsYWNlbWVudCBmb3IgdGhv
-c2UsIGluIHBhdGNoZXMgIzIgYW5kICM0Lgo+Cj4gVGhpcyBjb2RlIGhhcyBiZWVuIHRlc3RlZCB1
-c2luZyB0aGUgZnNjcnlwdCB0ZXN0IHN1Z2dlc3RlZCBieSBFcmljCj4gKGdlbmVyaWMvNTQ5KSwg
-YXMgd2VsbCBhcyB0aGUgbW9kZS10ZXN0IHNjcmlwdCBzdWdnZXN0ZWQgYnkgTWlsYW4gZm9yCj4g
-dGhlIGRtLWNyeXB0IGNhc2UuIEkgYWxzbyB0ZXN0ZWQgdGhlIGFlYWQgY2FzZSBpbiBhIHZpcnR1
-YWwgbWFjaGluZSwKPiBidXQgaXQgZGVmaW5pdGVseSBuZWVkcyBzb21lIHdpZGVyIHRlc3Rpbmcg
-ZnJvbSB0aGUgZG0tY3J5cHQgZXhwZXJ0cy4KPgo+IENoYW5nZXMgc2luY2UgdjI6Cj4gLSBmaXhl
-ZCBhIGNvdXBsZSBvZiBidWdzIHRoYXQgc251Y2sgaW4gYWZ0ZXIgSSdkIGRvbmUgdGhlIGJ1bGsg
-b2YgbXkKPiAgIHRlc3RpbmcKPiAtIHNvbWUgY29zbWV0aWMgdHdlYWtzIHRvIHRoZSBFU1NJViB0
-ZW1wbGF0ZSBza2NpcGhlciBzZXRrZXkgZnVuY3Rpb24KPiAgIHRvIGFsaWduIGl0IHdpdGggdGhl
-IGFlYWQgb25lCj4gLSBhZGQgYSB0ZXN0IGNhc2UgZm9yIGVzc2l2KGNiYyhhZXMpLGFlcyxzaGEy
-NTYpCj4gLSBhZGQgYW4gYWNjZWxlcmF0ZWQgaW1wbGVtZW50YXRpb24gZm9yIGFybTY0IHRoYXQg
-Y29tYmluZXMgdGhlIElWCj4gICBkZXJpdmF0aW9uIGFuZCB0aGUgYWN0dWFsIGVuL2RlY3J5cHRp
-b24gaW4gYSBzaW5nbGUgYXNtIHJvdXRpbmUKPgo+IFNjcm9sbCBkb3duIGZvciB0Y3J5cHQgc3Bl
-ZWQgdGVzdCByZXN1bHQgY29tcGFyaW5nIHRoZSBlc3NpdiB0ZW1wbGF0ZQo+IHdpdGggdGhlIGFz
-bSBpbXBsZW1lbnRhdGlvbi4gQmFyZSBjYmMoYWVzKSB0ZXN0cyBpbmNsdWRlZCBmb3IgcmVmZXJl
-bmNlCj4gYXMgd2VsbC4gVGFrZW4gb24gYSAyR0h6IENvcnRleC1BNTcgKEFNRCBTZWF0dGxlKQo+
-Cj4gQ29kZSBjYW4gYmUgZm91bmQgaGVyZQo+IGh0dHBzOi8vZ2l0Lmtlcm5lbC5vcmcvcHViL3Nj
-bS9saW51eC9rZXJuZWwvZ2l0L2FyZGIvbGludXguZ2l0L2xvZy8/aD1lc3Npdi12MwoKClRoYW5r
-IHlvdSBBcmQgZm9yIHRoaXMgd29yay4gSXQgaXMgdmVyeSB1c2VmdWwuIEkgYW0gdGVzdGluZyB0
-aGlzIG5vdwp3aXRoIHRoZSBlc3NpdiBpbXBsZW1lbnRhdGlvbiBpbnNpZGUgQ3J5cHRvQ2VsbC4K
-Ck9uZSBwb3NzaWJsZSBmdXR1cmUgb3B0aW1pemF0aW9uIHRoaXMgb3BlbnMgdGhlIGRvb3IgZm9y
-IGlzIGhhdmluZyB0aGUKdGVtcGxhdGUgYXV0by1pbmNyZW1lbnQgdGhlIHNlY3RvciBudW1iZXIu
-CgpUaGlzIHdpbGwgYWxsb3cgdGhlIGRldmljZSBtYW5hZ2VyIG9yIGZzY3J5cHQgY29kZSB0byBh
-c2sgZm9yIGNyeXB0bwpzZXJ2aWNlcyBvbiBidWZmZXIgc3Bhbm5pbmcgb3ZlciBhIHNpbmdsZSBz
-ZWN0b3Igc2l6ZQphbmQgaGF2ZSB0aGUgY3J5cHRvIGNvZGUgYXV0b21hdGljYWxseSBpbmNyZW1l
-bnQgdGhlIHNlY3RvciBudW1iZXIKd2hlbiBwcm9jZXNzaW5nIHRoZSBidWZmZXIuCgpUaGlzIG1h
-eSBwb3RlbnRpYWxseSBzaGF2ZSBhIGZldyBjeWNsZXMgYmVjYXVzZSBpdCBjYW4gcG90ZW50aWFs
-bHkKdHVybiBtdWx0aXBsZSBjYWxscyBpbnRvIHRoZSBjcnlwdG8gQVBJIGluIG9uZSwgZ2l2aW5n
-CnRoZSBjcnlwdG8gY29kZSBhIGxhcmdlciBidWZmZXIgdG8gd29yayBvbi4KClRoaXMgaXMgYWN0
-dWFsbHkgc3VwcG9ydGVkIGJ5IENyeXB0b0NlbGwgaGFyZHdhcmUgYW5kIHRvIHRoZSBiZXN0IG9m
-Cm15IGtub3dsZWRnZSBhbHNvIGJ5IGEgc2ltaWxhciBIVyBmcm9tIFF1YWxjb21tCnZpYSBvdXQt
-b2YtdHJlZSBwYXRjaGVzIGZvdW5kIGluIHRoZSBBbmRyb2lkIHRyZWUuCgpJZiB0aGlzIG1ha2Vz
-IHNlbnNlIHRvIHlvdSBwZXJoYXBzIGl0IGlzIGEgZ29vZCBpZGVhIHRvIGhhdmUgdGhlCnRlbXBs
-YXRlIGZvcm1hdCBiZToKCjxza2NpcGhlcj4sPGNpcGhlcj4sPHNoYXNoPiwgPHNlY3RvciBzaXpl
-PgoKV2hlcmUgZm9yIG5vdyB3ZSB3aWxsIG9ubHkgc3VwcG9ydCBhIHNlY3RvciBzaXplIG9mICcw
-JyAoaS5lLiBkbyBub3QKYXV0by1pbmNyZW1lbnQpIGFuZCBsYXRlciBleHRlbmQgb3IgYW0gSSBv
-dmVyIGVuZ2luZWVyaW5nPyA6LSkKClRoYW5rcywKR2lsYWQKCgotLSAKR2lsYWQgQmVuLVlvc3Nl
-ZgpDaGllZiBDb2ZmZWUgRHJpbmtlcgoKdmFsdWVzIG9mIM6yIHdpbGwgZ2l2ZSByaXNlIHRvIGRv
-bSEKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8v
-d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Thu, 20 Jun 2019 at 03:14, Herbert Xu <herbert@gondor.apana.org.au> wrote:
+>
+> On Wed, Jun 19, 2019 at 06:04:17PM -0700, Eric Biggers wrote:
+> >
+> > > +#define ESSIV_IV_SIZE              sizeof(u64)     // IV size of the outer algo
+> > > +#define MAX_INNER_IV_SIZE  16              // max IV size of inner algo
+> >
+> > Why does the outer algorithm declare a smaller IV size?  Shouldn't it just be
+> > the same as the inner algorithm's?
+>
+> In general we allow outer algorithms to have distinct IV sizes
+> compared to the inner algorithm.  For example, rfc4106 has a
+> different IV size compared to gcm.
+>
+> In this case, the outer IV size is the block number so that's
+> presumably why 64 bits is sufficient.  Do you forsee a case where
+> we need 128-bit block numbers?
+>
+
+Indeed, the whole point of this template is that it turns a 64-bit
+sector number into a n-bit IV, where n equals the block size of the
+essiv cipher, and its min/max keysize covers the digest size of the
+shash.
+
+I don't think it makes sense to generalize this further, and if I
+understand the feedback from Herbert and Gilad correctly, it would
+even be better to define the input IV as a LE 64-bit counter
+explicitly, so we can auto increment it between sectors.
+
+But that leaves the question how to convey the sector size to the
+template. Gilad suggests
+
+essiv(cbc(aes),aes,sha256,xxx)
+
+where xxx is the sector size, and incoming requests whose cryptlen is
+an exact multiple of the sector size will have their LE counter auto
+incremented between sectors. Note that we could make it optional for
+now, and default to 4k, but I will at least have to parse the argument
+if it is present and reject values != 4096
+
+Is this the right approach? Or are there better ways to convey this
+information when instantiating the template?
+Also, it seems to me that the dm-crypt and fscrypt layers would
+require major surgery in order to take advantage of this.
