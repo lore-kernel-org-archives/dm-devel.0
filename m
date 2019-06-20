@@ -1,17 +1,12 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [PATCH v3 1/6] crypto: essiv - create wrapper
- template for ESSIV generation
-Date: Thu, 20 Jun 2019 09:13:25 +0800
-Message-ID: <20190620011325.phmxmeqnv2o3wqtr@gondor.apana.org.au>
-References: <20190619162921.12509-1-ard.biesheuvel@linaro.org>
-	<20190619162921.12509-2-ard.biesheuvel@linaro.org>
-	<20190620010417.GA722@sol.localdomain>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: [PATCH] dm-verity: Use message limit for data block
+	corruption message.
+Date: Thu, 20 Jun 2019 13:00:19 +0200
+Message-ID: <20190620110019.8057-1-gmazyland@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20190620010417.GA722@sol.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,28 +16,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Ard Biesheuvel <ard.biesheuvel@linaro.org>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, linux-crypto@vger.kernel.org, Milan Broz <gmazyland@gmail.com>
+To: dm-devel@redhat.com
+Cc: Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-On Wed, Jun 19, 2019 at 06:04:17PM -0700, Eric Biggers wrote:
->
-> > +#define ESSIV_IV_SIZE		sizeof(u64)	// IV size of the outer algo
-> > +#define MAX_INNER_IV_SIZE	16		// max IV size of inner algo
-> 
-> Why does the outer algorithm declare a smaller IV size?  Shouldn't it just be
-> the same as the inner algorithm's?
+The dm-verity already uses DMERR_LIMIT on other places, so it
+should also limit repeated data block corruption messages.
 
-In general we allow outer algorithms to have distinct IV sizes
-compared to the inner algorithm.  For example, rfc4106 has a
-different IV size compared to gcm.
+Signed-off-by: Milan Broz <gmazyland@gmail.com>
+---
+ drivers/md/dm-verity-target.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-In this case, the outer IV size is the block number so that's
-presumably why 64 bits is sufficient.  Do you forsee a case where
-we need 128-bit block numbers?
-
-Cheers,
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index 720d06531aa3..08f83e160ad5 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -235,7 +235,7 @@ static int verity_handle_err(struct dm_verity *v, enum verity_block_type type,
+ 		BUG();
+ 	}
+ 
+-	DMERR("%s: %s block %llu is corrupted", v->data_dev->name, type_str,
++	DMERR_LIMIT("%s: %s block %llu is corrupted", v->data_dev->name, type_str,
+ 		block);
+ 
+ 	if (v->corrupted_errs == DM_VERITY_MAX_CORRUPTED_ERRS)
 -- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+2.20.1
