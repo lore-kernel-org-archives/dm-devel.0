@@ -1,16 +1,14 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [PATCH v3 1/6] crypto: essiv - create wrapper
- template for ESSIV generation
-Date: Wed, 19 Jun 2019 18:04:17 -0700
-Message-ID: <20190620010417.GA722@sol.localdomain>
+From: Gilad Ben-Yossef <gilad@benyossef.com>
+Subject: Re: [PATCH v3 0/6] crypto: switch to crypto API for
+	ESSIV generation
+Date: Thu, 20 Jun 2019 10:07:57 +0300
+Message-ID: <CAOtvUMc0J3ufp3QyPwERdkRKfKzB_avPBoXSNWiCDS03jkNUzg@mail.gmail.com>
 References: <20190619162921.12509-1-ard.biesheuvel@linaro.org>
-	<20190619162921.12509-2-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20190619162921.12509-2-ard.biesheuvel@linaro.org>
+In-Reply-To: <20190619162921.12509-1-ard.biesheuvel@linaro.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,261 +19,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, linux-crypto@vger.kernel.org, Milan Broz <gmazyland@gmail.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, linux-fscrypt@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-On Wed, Jun 19, 2019 at 06:29:16PM +0200, Ard Biesheuvel wrote:
-> diff --git a/crypto/essiv.c b/crypto/essiv.c
-> new file mode 100644
-> index 000000000000..45e9d10b8614
-> --- /dev/null
-> +++ b/crypto/essiv.c
-> @@ -0,0 +1,630 @@
-> +// SPDX-License-Identifier: GPL-2.0
-> +/*
-> + * ESSIV skcipher template for block encryption
-
-skcipher and aead
-
-A few sentences summary of what this file is for might also be useful to future
-readers.
-
-> + *
-> + * Copyright (c) 2019 Linaro, Ltd. <ard.biesheuvel@linaro.org>
-> + *
-> + * Heavily based on:
-> + * adiantum length-preserving encryption mode
-> + *
-> + * Copyright 2018 Google LLC
-> + */
-> +
-> +#include <crypto/authenc.h>
-> +#include <crypto/internal/aead.h>
-> +#include <crypto/internal/hash.h>
-> +#include <crypto/internal/skcipher.h>
-> +#include <crypto/scatterwalk.h>
-> +#include <linux/module.h>
-> +
-> +#include "internal.h"
-> +
-> +#define ESSIV_IV_SIZE		sizeof(u64)	// IV size of the outer algo
-> +#define MAX_INNER_IV_SIZE	16		// max IV size of inner algo
-
-Why does the outer algorithm declare a smaller IV size?  Shouldn't it just be
-the same as the inner algorithm's?
-
-> +struct essiv_instance_ctx {
-> +	union {
-> +		struct crypto_skcipher_spawn	blockcipher_spawn;
-> +		struct crypto_aead_spawn	aead_spawn;
-> +	} u;
-> +	struct crypto_spawn			essiv_cipher_spawn;
-> +	struct crypto_shash_spawn		hash_spawn;
-> +};
-> +
-> +struct essiv_tfm_ctx {
-> +	union {
-> +		struct crypto_skcipher	*blockcipher;
-> +		struct crypto_aead	*aead;
-> +	} u;
-> +	struct crypto_cipher		*essiv_cipher;
-> +	struct crypto_shash		*hash;
-> +};
-
-Can you fix the naming: 'blockcipher' => 'skcipher' everywhere?
-
-> +static int essiv_skcipher_setkey(struct crypto_skcipher *tfm,
-> +				 const u8 *key, unsigned int keylen)
-> +{
-> +	struct essiv_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
-> +	SHASH_DESC_ON_STACK(desc, tctx->hash);
-> +	unsigned int saltsize;
-> +	u8 *salt;
-> +	int err;
-> +
-> +	crypto_skcipher_clear_flags(tctx->u.blockcipher, CRYPTO_TFM_REQ_MASK);
-> +	crypto_skcipher_set_flags(tctx->u.blockcipher,
-> +				  crypto_skcipher_get_flags(tfm) &
-> +				  CRYPTO_TFM_REQ_MASK);
-> +	err = crypto_skcipher_setkey(tctx->u.blockcipher, key, keylen);
-> +	crypto_skcipher_set_flags(tfm,
-> +				  crypto_skcipher_get_flags(tctx->u.blockcipher) &
-> +				  CRYPTO_TFM_RES_MASK);
-> +	if (err)
-> +		return err;
-> +
-> +	saltsize = crypto_shash_digestsize(tctx->hash);
-> +	salt = kmalloc(saltsize, GFP_KERNEL);
-> +	if (!salt)
-> +		return -ENOMEM;
-
-This could be a stack buffer of length HASH_MAX_DIGESTSIZE (64 bytes).
-Same in essiv_aead_setkey().
-
-> +
-> +	desc->tfm = tctx->hash;
-> +	crypto_shash_digest(desc, key, keylen, salt);
-
-Need to check for error from crypto_shash_digest().
-
-Similarly in essiv_aead_setkey().
-
-> +static int essiv_skcipher_init_tfm(struct crypto_skcipher *tfm)
-> +{
-> +	struct skcipher_instance *inst = skcipher_alg_instance(tfm);
-> +	struct essiv_instance_ctx *ictx = skcipher_instance_ctx(inst);
-> +	struct essiv_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
-> +	struct crypto_skcipher *blockcipher;
-> +	unsigned int subreq_size;
-> +	int err;
-> +
-> +	BUILD_BUG_ON(offsetofend(struct essiv_skcipher_request_ctx,
-> +				 blockcipher_req) !=
-> +		     sizeof(struct essiv_skcipher_request_ctx));
-> +
-> +	blockcipher = crypto_spawn_skcipher(&ictx->u.blockcipher_spawn);
-> +	if (IS_ERR(blockcipher))
-> +		return PTR_ERR(blockcipher);
-> +
-> +	subreq_size = FIELD_SIZEOF(struct essiv_skcipher_request_ctx,
-> +				   blockcipher_req) +
-> +		      crypto_skcipher_reqsize(blockcipher);
-> +
-> +	crypto_skcipher_set_reqsize(tfm, offsetof(struct essiv_skcipher_request_ctx,
-> +						  blockcipher_req) + subreq_size);
-> +
-> +	err = essiv_init_tfm(ictx, tctx);
-> +	if (err)
-> +		crypto_free_skcipher(blockcipher);
-
-Should return in this error case, rather than going ahead and setting
-tctx->u.blockcipher.
-
-> +
-> +	tctx->u.blockcipher = blockcipher;
-> +	return err;
-> +}
-> +
-> +static int essiv_aead_init_tfm(struct crypto_aead *tfm)
-> +{
-> +	struct aead_instance *inst = aead_alg_instance(tfm);
-> +	struct essiv_instance_ctx *ictx = aead_instance_ctx(inst);
-> +	struct essiv_tfm_ctx *tctx = crypto_aead_ctx(tfm);
-> +	struct crypto_aead *aead;
-> +	unsigned int subreq_size;
-> +	int err;
-> +
-> +	BUILD_BUG_ON(offsetofend(struct essiv_aead_request_ctx, aead_req) !=
-> +		     sizeof(struct essiv_aead_request_ctx));
-> +
-> +	aead = crypto_spawn_aead(&ictx->u.aead_spawn);
-> +	if (IS_ERR(aead))
-> +		return PTR_ERR(aead);
-> +
-> +	subreq_size = FIELD_SIZEOF(struct essiv_aead_request_ctx, aead_req) +
-> +		      crypto_aead_reqsize(aead);
-> +
-> +	crypto_aead_set_reqsize(tfm, offsetof(struct essiv_aead_request_ctx,
-> +					      aead_req) + subreq_size);
-> +
-> +	err = essiv_init_tfm(ictx, tctx);
-> +	if (err)
-> +		crypto_free_aead(aead);
-
-Same here.
-
-> +static bool essiv_supported_algorithms(struct crypto_alg *essiv_cipher_alg,
-> +				       struct shash_alg *hash_alg,
-> +				       int ivsize)
-> +{
-> +	if (hash_alg->digestsize < essiv_cipher_alg->cra_cipher.cia_min_keysize ||
-> +	    hash_alg->digestsize > essiv_cipher_alg->cra_cipher.cia_max_keysize)
-> +		return false;
-> +
-> +	if (ivsize != essiv_cipher_alg->cra_blocksize)
-> +		return false;
-> +
-> +	if (ivsize > MAX_INNER_IV_SIZE)
-> +		return false;
-> +
-> +	return true;
-> +}
-
-Also check that the hash algorithm is unkeyed?
-
-> +
-> +static int essiv_create(struct crypto_template *tmpl, struct rtattr **tb)
-> +{
-> +	struct crypto_attr_type *algt;
-> +	const char *blockcipher_name;
-> +	const char *essiv_cipher_name;
-> +	const char *shash_name;
-> +	struct skcipher_instance *skcipher_inst = NULL;
-> +	struct aead_instance *aead_inst = NULL;
-> +	struct crypto_instance *inst;
-> +	struct crypto_alg *base, *block_base;
-> +	struct essiv_instance_ctx *ictx;
-> +	struct skcipher_alg *blockcipher_alg = NULL;
-> +	struct aead_alg *aead_alg = NULL;
-> +	struct crypto_alg *essiv_cipher_alg;
-> +	struct crypto_alg *_hash_alg;
-> +	struct shash_alg *hash_alg;
-> +	int ivsize;
-> +	u32 type;
-> +	int err;
-> +
-> +	algt = crypto_get_attr_type(tb);
-> +	if (IS_ERR(algt))
-> +		return PTR_ERR(algt);
-> +
-> +	blockcipher_name = crypto_attr_alg_name(tb[1]);
-> +	if (IS_ERR(blockcipher_name))
-> +		return PTR_ERR(blockcipher_name);
-> +
-> +	essiv_cipher_name = crypto_attr_alg_name(tb[2]);
-> +	if (IS_ERR(essiv_cipher_name))
-> +		return PTR_ERR(essiv_cipher_name);
-> +
-> +	shash_name = crypto_attr_alg_name(tb[3]);
-> +	if (IS_ERR(shash_name))
-> +		return PTR_ERR(shash_name);
-> +
-> +	type = algt->type & algt->mask;
-> +
-> +	switch (type) {
-> +	case CRYPTO_ALG_TYPE_BLKCIPHER:
-> +		skcipher_inst = kzalloc(sizeof(*skcipher_inst) +
-> +					sizeof(*ictx), GFP_KERNEL);
-> +		if (!skcipher_inst)
-> +			return -ENOMEM;
-> +		inst = skcipher_crypto_instance(skcipher_inst);
-> +		base = &skcipher_inst->alg.base;
-> +		ictx = crypto_instance_ctx(inst);
-> +
-> +		/* Block cipher, e.g. "cbc(aes)" */
-> +		crypto_set_skcipher_spawn(&ictx->u.blockcipher_spawn, inst);
-> +		err = crypto_grab_skcipher(&ictx->u.blockcipher_spawn,
-> +					   blockcipher_name, 0,
-> +					   crypto_requires_sync(algt->type,
-> +								algt->mask));
-> +		if (err)
-> +			goto out_free_inst;
-> +		blockcipher_alg = crypto_spawn_skcipher_alg(&ictx->u.blockcipher_spawn);
-> +		block_base = &blockcipher_alg->base;
-> +		ivsize = blockcipher_alg->ivsize;
-
-This may need to be crypto_skcipher_alg_ivsize(), since the "skcipher" algorithm
-could actually be a "blkcipher" or "ablkcipher".
-
-> +out_drop_blockcipher:
-> +	if (type == CRYPTO_ALG_TYPE_BLKCIPHER) {
-> +		crypto_drop_skcipher(&ictx->u.blockcipher_spawn);
-> +	} else {
-> +		crypto_drop_aead(&ictx->u.aead_spawn);
-> +	}
-
-Unnecessary braces.
-
-Thanks,
-
-- Eric
+T24gV2VkLCBKdW4gMTksIDIwMTkgYXQgNzoyOSBQTSBBcmQgQmllc2hldXZlbAo8YXJkLmJpZXNo
+ZXV2ZWxAbGluYXJvLm9yZz4gd3JvdGU6Cj4KPiBUaGlzIHNlcmllcyBjcmVhdGVzIGFuIEVTU0lW
+IHRlbXBsYXRlIHRoYXQgcHJvZHVjZXMgYSBza2NpcGhlciBvciBBRUFECj4gdHJhbnNmb3JtIGJh
+c2VkIG9uIGEgdHVwbGUgb2YgdGhlIGZvcm0gJzxza2NpcGhlcj4sPGNpcGhlcj4sPHNoYXNoPicK
+PiAob3IgJzxhZWFkPiw8Y2lwaGVyPiw8c2hhc2g+JyBmb3IgdGhlIEFFQUQgY2FzZSkuIEl0IGV4
+cG9zZXMgdGhlCj4gZW5jYXBzdWxhdGVkIHN5bmMgb3IgYXN5bmMgc2tjaXBoZXIvYWVhZCBieSBw
+YXNzaW5nIHRocm91Z2ggYWxsIG9wZXJhdGlvbnMsCj4gd2hpbGUgdXNpbmcgdGhlIGNpcGhlci9z
+aGFzaCBwYWlyIHRvIHRyYW5zZm9ybSB0aGUgaW5wdXQgSVYgaW50byBhbiBFU1NJVgo+IG91dHB1
+dCBJVi4KPgo+IFRoaXMgbWF0Y2hlcyB3aGF0IGJvdGggdXNlcnMgb2YgRVNTSVYgaW4gdGhlIGtl
+cm5lbCBkbywgYW5kIHNvIGl0IGlzIHByb3Bvc2VkCj4gYXMgYSByZXBsYWNlbWVudCBmb3IgdGhv
+c2UsIGluIHBhdGNoZXMgIzIgYW5kICM0Lgo+Cj4gVGhpcyBjb2RlIGhhcyBiZWVuIHRlc3RlZCB1
+c2luZyB0aGUgZnNjcnlwdCB0ZXN0IHN1Z2dlc3RlZCBieSBFcmljCj4gKGdlbmVyaWMvNTQ5KSwg
+YXMgd2VsbCBhcyB0aGUgbW9kZS10ZXN0IHNjcmlwdCBzdWdnZXN0ZWQgYnkgTWlsYW4gZm9yCj4g
+dGhlIGRtLWNyeXB0IGNhc2UuIEkgYWxzbyB0ZXN0ZWQgdGhlIGFlYWQgY2FzZSBpbiBhIHZpcnR1
+YWwgbWFjaGluZSwKPiBidXQgaXQgZGVmaW5pdGVseSBuZWVkcyBzb21lIHdpZGVyIHRlc3Rpbmcg
+ZnJvbSB0aGUgZG0tY3J5cHQgZXhwZXJ0cy4KPgo+IENoYW5nZXMgc2luY2UgdjI6Cj4gLSBmaXhl
+ZCBhIGNvdXBsZSBvZiBidWdzIHRoYXQgc251Y2sgaW4gYWZ0ZXIgSSdkIGRvbmUgdGhlIGJ1bGsg
+b2YgbXkKPiAgIHRlc3RpbmcKPiAtIHNvbWUgY29zbWV0aWMgdHdlYWtzIHRvIHRoZSBFU1NJViB0
+ZW1wbGF0ZSBza2NpcGhlciBzZXRrZXkgZnVuY3Rpb24KPiAgIHRvIGFsaWduIGl0IHdpdGggdGhl
+IGFlYWQgb25lCj4gLSBhZGQgYSB0ZXN0IGNhc2UgZm9yIGVzc2l2KGNiYyhhZXMpLGFlcyxzaGEy
+NTYpCj4gLSBhZGQgYW4gYWNjZWxlcmF0ZWQgaW1wbGVtZW50YXRpb24gZm9yIGFybTY0IHRoYXQg
+Y29tYmluZXMgdGhlIElWCj4gICBkZXJpdmF0aW9uIGFuZCB0aGUgYWN0dWFsIGVuL2RlY3J5cHRp
+b24gaW4gYSBzaW5nbGUgYXNtIHJvdXRpbmUKPgo+IFNjcm9sbCBkb3duIGZvciB0Y3J5cHQgc3Bl
+ZWQgdGVzdCByZXN1bHQgY29tcGFyaW5nIHRoZSBlc3NpdiB0ZW1wbGF0ZQo+IHdpdGggdGhlIGFz
+bSBpbXBsZW1lbnRhdGlvbi4gQmFyZSBjYmMoYWVzKSB0ZXN0cyBpbmNsdWRlZCBmb3IgcmVmZXJl
+bmNlCj4gYXMgd2VsbC4gVGFrZW4gb24gYSAyR0h6IENvcnRleC1BNTcgKEFNRCBTZWF0dGxlKQo+
+Cj4gQ29kZSBjYW4gYmUgZm91bmQgaGVyZQo+IGh0dHBzOi8vZ2l0Lmtlcm5lbC5vcmcvcHViL3Nj
+bS9saW51eC9rZXJuZWwvZ2l0L2FyZGIvbGludXguZ2l0L2xvZy8/aD1lc3Npdi12MwoKClRoYW5r
+IHlvdSBBcmQgZm9yIHRoaXMgd29yay4gSXQgaXMgdmVyeSB1c2VmdWwuIEkgYW0gdGVzdGluZyB0
+aGlzIG5vdwp3aXRoIHRoZSBlc3NpdiBpbXBsZW1lbnRhdGlvbiBpbnNpZGUgQ3J5cHRvQ2VsbC4K
+Ck9uZSBwb3NzaWJsZSBmdXR1cmUgb3B0aW1pemF0aW9uIHRoaXMgb3BlbnMgdGhlIGRvb3IgZm9y
+IGlzIGhhdmluZyB0aGUKdGVtcGxhdGUgYXV0by1pbmNyZW1lbnQgdGhlIHNlY3RvciBudW1iZXIu
+CgpUaGlzIHdpbGwgYWxsb3cgdGhlIGRldmljZSBtYW5hZ2VyIG9yIGZzY3J5cHQgY29kZSB0byBh
+c2sgZm9yIGNyeXB0bwpzZXJ2aWNlcyBvbiBidWZmZXIgc3Bhbm5pbmcgb3ZlciBhIHNpbmdsZSBz
+ZWN0b3Igc2l6ZQphbmQgaGF2ZSB0aGUgY3J5cHRvIGNvZGUgYXV0b21hdGljYWxseSBpbmNyZW1l
+bnQgdGhlIHNlY3RvciBudW1iZXIKd2hlbiBwcm9jZXNzaW5nIHRoZSBidWZmZXIuCgpUaGlzIG1h
+eSBwb3RlbnRpYWxseSBzaGF2ZSBhIGZldyBjeWNsZXMgYmVjYXVzZSBpdCBjYW4gcG90ZW50aWFs
+bHkKdHVybiBtdWx0aXBsZSBjYWxscyBpbnRvIHRoZSBjcnlwdG8gQVBJIGluIG9uZSwgZ2l2aW5n
+CnRoZSBjcnlwdG8gY29kZSBhIGxhcmdlciBidWZmZXIgdG8gd29yayBvbi4KClRoaXMgaXMgYWN0
+dWFsbHkgc3VwcG9ydGVkIGJ5IENyeXB0b0NlbGwgaGFyZHdhcmUgYW5kIHRvIHRoZSBiZXN0IG9m
+Cm15IGtub3dsZWRnZSBhbHNvIGJ5IGEgc2ltaWxhciBIVyBmcm9tIFF1YWxjb21tCnZpYSBvdXQt
+b2YtdHJlZSBwYXRjaGVzIGZvdW5kIGluIHRoZSBBbmRyb2lkIHRyZWUuCgpJZiB0aGlzIG1ha2Vz
+IHNlbnNlIHRvIHlvdSBwZXJoYXBzIGl0IGlzIGEgZ29vZCBpZGVhIHRvIGhhdmUgdGhlCnRlbXBs
+YXRlIGZvcm1hdCBiZToKCjxza2NpcGhlcj4sPGNpcGhlcj4sPHNoYXNoPiwgPHNlY3RvciBzaXpl
+PgoKV2hlcmUgZm9yIG5vdyB3ZSB3aWxsIG9ubHkgc3VwcG9ydCBhIHNlY3RvciBzaXplIG9mICcw
+JyAoaS5lLiBkbyBub3QKYXV0by1pbmNyZW1lbnQpIGFuZCBsYXRlciBleHRlbmQgb3IgYW0gSSBv
+dmVyIGVuZ2luZWVyaW5nPyA6LSkKClRoYW5rcywKR2lsYWQKCgotLSAKR2lsYWQgQmVuLVlvc3Nl
+ZgpDaGllZiBDb2ZmZWUgRHJpbmtlcgoKdmFsdWVzIG9mIM6yIHdpbGwgZ2l2ZSByaXNlIHRvIGRv
+bSEKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8v
+d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
