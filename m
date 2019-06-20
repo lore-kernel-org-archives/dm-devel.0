@@ -1,8 +1,8 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+From: Herbert Xu <herbert@gondor.apana.org.au>
 Subject: Re: [PATCH v3 1/6] crypto: essiv - create wrapper
-	template for ESSIV generation
-Date: Thu, 20 Jun 2019 15:35:28 +0200
-Message-ID: <CAKv+Gu_7dQsJdb1Wmn2mzG7HFcfjF7ggGzUyPB5b_JR0ujHCrQ@mail.gmail.com>
+ template for ESSIV generation
+Date: Thu, 20 Jun 2019 21:40:45 +0800
+Message-ID: <20190620134045.fncibzc7eyufd5sj@gondor.apana.org.au>
 References: <20190619162921.12509-1-ard.biesheuvel@linaro.org>
 	<20190619162921.12509-2-ard.biesheuvel@linaro.org>
 	<20190620010417.GA722@sol.localdomain>
@@ -14,6 +14,7 @@ Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 In-Reply-To: <CAKv+Gu_z3oMB-XBHRrNWpXNbSmb4CFC8VNn8s+8bOd-JjiakqQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -24,28 +25,11 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Herbert Xu <herbert@gondor.apana.org.au>
+To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 Cc: linux-fscrypt@vger.kernel.org, Eric Biggers <ebiggers@kernel.org>, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-On Thu, 20 Jun 2019 at 15:02, Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
->
-> On Thu, 20 Jun 2019 at 14:53, Herbert Xu <herbert@gondor.apana.org.au> wrote:
-> >
-> > On Thu, Jun 20, 2019 at 09:30:41AM +0200, Ard Biesheuvel wrote:
-> > >
-> > > Is this the right approach? Or are there better ways to convey this
-> > > information when instantiating the template?
-> > > Also, it seems to me that the dm-crypt and fscrypt layers would
-> > > require major surgery in order to take advantage of this.
-> >
-> > Oh and you don't have to make dm-crypt use it from the start.  That
-> > is, you can just make things simple by doing it one sector at a
-> > time in the dm-crypt code even though the underlying essiv code
-> > supports multiple sectors.
-> >
-> > Someone who cares about this is sure to come along and fix it later.
-> >
+On Thu, Jun 20, 2019 at 03:02:04PM +0200, Ard Biesheuvel wrote:
 >
 > It also depend on how realistic it is that we will need to support
 > arbitrary sector sizes in the future. I mean, if we decide today that
@@ -56,4 +40,19 @@ On Thu, 20 Jun 2019 at 15:02, Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
 > wonderful things if we want people to move to XTS and plain IV
 > generation instead.
 
-Never mind, the sector size is already variable ...
+Well whatever we do for ESSIV should also extend to other IV
+generators in dm-crypt so that potentially we can have a single
+interface for dm-crypt multi-sector processing in future (IOW
+you don't have special code for ESSIV vs. other algos).
+
+That is why we should get the ESSIV interface right as it could
+serve as an example for future implementations.
+
+What do the dm-crypt people think? Are you ever going to need
+processing in units other than 4K?
+
+Cheers,
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
