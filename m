@@ -1,21 +1,19 @@
 From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH v3 1/6] crypto: essiv - create wrapper
- template for ESSIV generation
-Date: Fri, 21 Jun 2019 08:44:24 +0200
-Message-ID: <8d522740-1c3c-5102-86b8-fb5428a6cb3e@gmail.com>
+Subject: Re: [PATCH v3 0/6] crypto: switch to crypto API for
+	ESSIV generation
+Date: Fri, 21 Jun 2019 09:01:13 +0200
+Message-ID: <b635b78d-cfe8-3fa4-d9b2-6cf4185dac71@gmail.com>
 References: <20190619162921.12509-1-ard.biesheuvel@linaro.org>
-	<20190619162921.12509-2-ard.biesheuvel@linaro.org>
-	<20190620010417.GA722@sol.localdomain>
-	<20190620011325.phmxmeqnv2o3wqtr@gondor.apana.org.au>
-	<CAKv+Gu-OwzmoYR5uymSNghEVc9xbkkt5C8MxAYA48UE=yBgb5g@mail.gmail.com>
-	<20190620125339.gqup5623sw4xrsmi@gondor.apana.org.au>
-	<CAKv+Gu_z3oMB-XBHRrNWpXNbSmb4CFC8VNn8s+8bOd-JjiakqQ@mail.gmail.com>
-	<20190620134045.fncibzc7eyufd5sj@gondor.apana.org.au>
+	<459f5760-3a1c-719d-2b44-824ba6283dd7@gmail.com>
+	<CAKv+Gu9jk8KxWykTcKeh6k0HUb47wgx7iZYuwwN8AUyErFLXxA@mail.gmail.com>
+	<075cddec-1603-4a23-17c4-c766b4bd9086@gmail.com>
+	<6a45dfa5-e383-d8a3-ebf1-abdc43c95ebd@gmail.com>
+	<CAKv+Gu-ZETNJh2VzUkpbQUmYv6Zqb7nVj91bxuxKoNAJwgON=w@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190620134045.fncibzc7eyufd5sj@gondor.apana.org.au>
+In-Reply-To: <CAKv+Gu-ZETNJh2VzUkpbQUmYv6Zqb7nVj91bxuxKoNAJwgON=w@mail.gmail.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -26,42 +24,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Herbert Xu <herbert@gondor.apana.org.au>, Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Cc: Eric Biggers <ebiggers@kernel.org>, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, linux-fscrypt@vger.kernel.org, linux-crypto@vger.kernel.org
+To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, linux-crypto@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 20/06/2019 15:40, Herbert Xu wrote:
-> On Thu, Jun 20, 2019 at 03:02:04PM +0200, Ard Biesheuvel wrote:
+On 20/06/2019 15:52, Ard Biesheuvel wrote:
+>>>> Does this include configurations that combine authenc with essiv?
+>>>
+>>> Hm, seems that we are missing these in luks2-integrity-test. I'll add them there.
+>>>
+>>> I also used this older test
+>>> https://gitlab.com/omos/dm-crypt-test-scripts/blob/master/root/test_dmintegrity.sh
+>>>
+>>> (just aes-gcm-random need to be commented out, we never supported this format, it was
+>>> written for some devel version)
+>>>
+>>> But seems ESSIV is there tested only without AEAD composition...
+>>>
+>>> So yes, this AEAD part need more testing.
 >>
->> It also depend on how realistic it is that we will need to support
->> arbitrary sector sizes in the future. I mean, if we decide today that
->> essiv() uses an implicit sector size of 4k, we can always add
->> essiv64k() later, rather than adding lots of complexity now that we
->> are never going to use. Note that ESSIV is already more or less
->> deprecated, so there is really no point in inventing these weird and
->> wonderful things if we want people to move to XTS and plain IV
->> generation instead.
+>> And unfortunately it does not work - it returns EIO on sectors where it should not be data corruption.
+>>
+>> I added few lines with length-preserving mode with ESSIV + AEAD, please could you run luks2-integrity-test
+>> in cryptsetup upstream?
+>>
+>> This patch adds the tests:
+>> https://gitlab.com/cryptsetup/cryptsetup/commit/4c74ff5e5ae328cb61b44bf99f98d08ffee3366a
+>>
+>> It is ok on mainline kernel, fails with the patchset:
+>>
+>> # ./luks2-integrity-test
+>> [aes-cbc-essiv:sha256:hmac-sha256:128:512][FORMAT][ACTIVATE]sha256sum: /dev/mapper/dmi_test: Input/output error
+>> [FAIL]
+>>  Expecting ee501705a084cd0ab6f4a28014bcf62b8bfa3434de00b82743c50b3abf06232c got .
+>>
+>> FAILED backtrace:
+>> 77 ./luks2-integrity-test
+>> 112 intformat ./luks2-integrity-test
+>> 127 main ./luks2-integrity-test
+>>
 > 
-> Well whatever we do for ESSIV should also extend to other IV
-> generators in dm-crypt so that potentially we can have a single
-> interface for dm-crypt multi-sector processing in future (IOW
-> you don't have special code for ESSIV vs. other algos).
+> OK, I will investigate.
 > 
-> That is why we should get the ESSIV interface right as it could
-> serve as an example for future implementations.
+> I did my testing in a VM using a volume that was created using a
+> distro kernel, and mounted and used it using a kernel with these
+> changes applied.
 > 
-> What do the dm-crypt people think? Are you ever going to need
-> processing in units other than 4K?
+> Likewise, if I take a working key.img and mode-test.img, i can mount
+> it and use it on the system running these patches.
+> 
+> I noticed that this test uses algif_skcipher not algif_aead when it
+> formats the volume, and so I wonder if the way userland creates the
+> image is affected by this?
 
-For the "technical" limit, dm-crypt supports 512, 1024, 2048 and 4096-byte encryption
-sector size (power of two) since commit 8f0009a225171cc1b76a6b443de5137b26e1374b.
+Not sure if I understand the question, but I do not think userspace even touch data area here
+(except direct-io wiping after the format, but it does not read it back).
 
-As the commit says, the 4k limit is because of page limit where whole IO must fit
-(4k is minimal page size).
-I do not want to introduce devices that are created on some architecture
-and cannot be opened elsewhere with a smaller page size.
-But maybe some reason appears, or there is some trick we did not tried...
+It only encrypts keyslots - and here we cannot use AEAD (in fact it is already
+authenticated by a LUKS digest).
 
-(I guess fs has the same limits?)
+So if the data area uses AEAD (or composition of length-preserving mode and
+some authentication tag like HMAC), we fallback to non-AEAD for keyslot encryption.
+
+In short, to test it, you need to activate device (that works ok with your patches)
+and *access* the data, testing LUKS format and just keyslot access will never use AEAD.
+
+So init the data by direct-io writes, and try to read them back (with dd).
+
+For testing data on dm-integrity (or dm-crypt with AEAD encryption stacked oved dm-integrity)
+I used small utility, maybe it could be useful https://github.com/mbroz/dm_int_tools 
 
 Milan
