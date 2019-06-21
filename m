@@ -1,361 +1,190 @@
-From: =?UTF-8?q?Matias=20Bj=C3=B8rling?= <mb@lightnvm.io>
-Subject: [PATCH 1/4] block: add zone open, close and finish support
-Date: Fri, 21 Jun 2019 15:07:08 +0200
-Message-ID: <20190621130711.21986-2-mb@lightnvm.io>
-References: <20190621130711.21986-1-mb@lightnvm.io>
+From: Pankaj Gupta <pagupta-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v14 0/7] virtio pmem driver
+Date: Fri, 21 Jun 2019 19:04:48 +0530
+Message-ID: <20190621133455.3303-1-pagupta@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190621130711.21986-1-mb@lightnvm.io>
-Sender: linux-kernel-owner@vger.kernel.org
-To: axboe@fb.com, hch@lst.de, damien.lemoal@wdc.com, chaitanya.kulkarni@wdc.com, dmitry.fomichev@wdc.com, ajay.joshi@wdc.com, aravind.ramesh@wdc.com, martin.petersen@oracle.com, James.Bottomley@HansenPartnership.com, agk@redhat.com, snitzer@redhat.com
-Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com, =?UTF-8?q?Matias=20Bj=C3=B8rling?= <matias.bjorling@wdc.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org, lcapitulino-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, zwisler-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jstaron-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, david-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, nilal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lenb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kilobyte-b9QjgO8OEXPVItvQsEIGlw@public.gmane.org, riel-ebMLmSuQjDVBDgjK7y7TUQ@public.gmane.org, yuval.shaia-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, stefanha-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kwolf-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, xiaoguangrong.eric-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, cohuck-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org, imammedo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-From: Ajay Joshi <ajay.joshi@wdc.com>
-
-Zoned block devices allows one to control zone transitions by using
-explicit commands. The available transitions are:
-
-  * Open zone: Transition a zone to open state.
-  * Close zone: Transition a zone to closed state.
-  * Finish zone: Transition a zone to full state.
-
-Allow kernel to issue these transitions by introducing
-blkdev_zones_mgmt_op() and add three new request opcodes:
-
-  * REQ_IO_ZONE_OPEN, REQ_IO_ZONE_CLOSE, and REQ_OP_ZONE_FINISH
-
-Allow user-space to issue the transitions through the following ioctls:
-
-  * BLKOPENZONE, BLKCLOSEZONE, and BLKFINISHZONE.
-
-Signed-off-by: Ajay Joshi <ajay.joshi@wdc.com>
-Signed-off-by: Aravind Ramesh <aravind.ramesh@wdc.com>
-Signed-off-by: Matias Bjørling <matias.bjorling@wdc.com>
----
- block/blk-core.c              |  3 ++
- block/blk-zoned.c             | 51 ++++++++++++++++++++++---------
- block/ioctl.c                 |  5 ++-
- include/linux/blk_types.h     | 27 +++++++++++++++--
- include/linux/blkdev.h        | 57 ++++++++++++++++++++++++++++++-----
- include/uapi/linux/blkzoned.h | 17 +++++++++--
- 6 files changed, 133 insertions(+), 27 deletions(-)
-
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 8340f69670d8..c0f0dbad548d 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -897,6 +897,9 @@ generic_make_request_checks(struct bio *bio)
- 			goto not_supported;
- 		break;
- 	case REQ_OP_ZONE_RESET:
-+	case REQ_OP_ZONE_OPEN:
-+	case REQ_OP_ZONE_CLOSE:
-+	case REQ_OP_ZONE_FINISH:
- 		if (!blk_queue_is_zoned(q))
- 			goto not_supported;
- 		break;
-diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index ae7e91bd0618..d0c933593b93 100644
---- a/block/blk-zoned.c
-+++ b/block/blk-zoned.c
-@@ -201,20 +201,22 @@ int blkdev_report_zones(struct block_device *bdev, sector_t sector,
- EXPORT_SYMBOL_GPL(blkdev_report_zones);
- 
- /**
-- * blkdev_reset_zones - Reset zones write pointer
-+ * blkdev_zones_mgmt_op - Perform the specified operation on the zone(s)
-  * @bdev:	Target block device
-- * @sector:	Start sector of the first zone to reset
-- * @nr_sectors:	Number of sectors, at least the length of one zone
-+ * @op:		Operation to be performed on the zone(s)
-+ * @sector:	Start sector of the first zone to operate on
-+ * @nr_sectors:	Number of sectors, at least the length of one zone and
-+ *              must be zone size aligned.
-  * @gfp_mask:	Memory allocation flags (for bio_alloc)
-  *
-  * Description:
-- *    Reset the write pointer of the zones contained in the range
-+ *    Perform the specified operation contained in the range
-  *    @sector..@sector+@nr_sectors. Specifying the entire disk sector range
-  *    is valid, but the specified range should not contain conventional zones.
-  */
--int blkdev_reset_zones(struct block_device *bdev,
--		       sector_t sector, sector_t nr_sectors,
--		       gfp_t gfp_mask)
-+int blkdev_zones_mgmt_op(struct block_device *bdev, enum req_opf op,
-+			 sector_t sector, sector_t nr_sectors,
-+			 gfp_t gfp_mask)
- {
- 	struct request_queue *q = bdev_get_queue(bdev);
- 	sector_t zone_sectors;
-@@ -226,6 +228,9 @@ int blkdev_reset_zones(struct block_device *bdev,
- 	if (!blk_queue_is_zoned(q))
- 		return -EOPNOTSUPP;
- 
-+	if (!op_is_zone_mgmt_op(op))
-+		return -EOPNOTSUPP;
-+
- 	if (bdev_read_only(bdev))
- 		return -EPERM;
- 
-@@ -248,7 +253,7 @@ int blkdev_reset_zones(struct block_device *bdev,
- 		bio = blk_next_bio(bio, 0, gfp_mask);
- 		bio->bi_iter.bi_sector = sector;
- 		bio_set_dev(bio, bdev);
--		bio_set_op_attrs(bio, REQ_OP_ZONE_RESET, 0);
-+		bio_set_op_attrs(bio, op, 0);
- 
- 		sector += zone_sectors;
- 
-@@ -264,7 +269,7 @@ int blkdev_reset_zones(struct block_device *bdev,
- 
- 	return ret;
- }
--EXPORT_SYMBOL_GPL(blkdev_reset_zones);
-+EXPORT_SYMBOL_GPL(blkdev_zones_mgmt_op);
- 
- /*
-  * BLKREPORTZONE ioctl processing.
-@@ -329,15 +334,16 @@ int blkdev_report_zones_ioctl(struct block_device *bdev, fmode_t mode,
- }
- 
- /*
-- * BLKRESETZONE ioctl processing.
-+ * Zone operation (open, close, finish or reset) ioctl processing.
-  * Called from blkdev_ioctl.
-  */
--int blkdev_reset_zones_ioctl(struct block_device *bdev, fmode_t mode,
--			     unsigned int cmd, unsigned long arg)
-+int blkdev_zones_mgmt_op_ioctl(struct block_device *bdev, fmode_t mode,
-+				unsigned int cmd, unsigned long arg)
- {
- 	void __user *argp = (void __user *)arg;
- 	struct request_queue *q;
- 	struct blk_zone_range zrange;
-+	enum req_opf op;
- 
- 	if (!argp)
- 		return -EINVAL;
-@@ -358,8 +364,25 @@ int blkdev_reset_zones_ioctl(struct block_device *bdev, fmode_t mode,
- 	if (copy_from_user(&zrange, argp, sizeof(struct blk_zone_range)))
- 		return -EFAULT;
- 
--	return blkdev_reset_zones(bdev, zrange.sector, zrange.nr_sectors,
--				  GFP_KERNEL);
-+	switch (cmd) {
-+	case BLKRESETZONE:
-+		op = REQ_OP_ZONE_RESET;
-+		break;
-+	case BLKOPENZONE:
-+		op = REQ_OP_ZONE_OPEN;
-+		break;
-+	case BLKCLOSEZONE:
-+		op = REQ_OP_ZONE_CLOSE;
-+		break;
-+	case BLKFINISHZONE:
-+		op = REQ_OP_ZONE_FINISH;
-+		break;
-+	default:
-+		return -ENOTTY;
-+	}
-+
-+	return blkdev_zones_mgmt_op(bdev, op, zrange.sector, zrange.nr_sectors,
-+				    GFP_KERNEL);
- }
- 
- static inline unsigned long *blk_alloc_zone_bitmap(int node,
-diff --git a/block/ioctl.c b/block/ioctl.c
-index 15a0eb80ada9..df7fe54db158 100644
---- a/block/ioctl.c
-+++ b/block/ioctl.c
-@@ -532,7 +532,10 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
- 	case BLKREPORTZONE:
- 		return blkdev_report_zones_ioctl(bdev, mode, cmd, arg);
- 	case BLKRESETZONE:
--		return blkdev_reset_zones_ioctl(bdev, mode, cmd, arg);
-+	case BLKOPENZONE:
-+	case BLKCLOSEZONE:
-+	case BLKFINISHZONE:
-+		return blkdev_zones_mgmt_op_ioctl(bdev, mode, cmd, arg);
- 	case BLKGETZONESZ:
- 		return put_uint(arg, bdev_zone_sectors(bdev));
- 	case BLKGETNRZONES:
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 95202f80676c..067ef9242275 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -284,13 +284,20 @@ enum req_opf {
- 	REQ_OP_DISCARD		= 3,
- 	/* securely erase sectors */
- 	REQ_OP_SECURE_ERASE	= 5,
--	/* reset a zone write pointer */
--	REQ_OP_ZONE_RESET	= 6,
- 	/* write the same sector many times */
- 	REQ_OP_WRITE_SAME	= 7,
- 	/* write the zero filled sector many times */
- 	REQ_OP_WRITE_ZEROES	= 9,
- 
-+	/* reset a zone write pointer */
-+	REQ_OP_ZONE_RESET	= 16,
-+	/* Open zone(s) */
-+	REQ_OP_ZONE_OPEN	= 17,
-+	/* Close zone(s) */
-+	REQ_OP_ZONE_CLOSE	= 18,
-+	/* Finish zone(s) */
-+	REQ_OP_ZONE_FINISH	= 19,
-+
- 	/* SCSI passthrough using struct scsi_request */
- 	REQ_OP_SCSI_IN		= 32,
- 	REQ_OP_SCSI_OUT		= 33,
-@@ -375,6 +382,22 @@ static inline void bio_set_op_attrs(struct bio *bio, unsigned op,
- 	bio->bi_opf = op | op_flags;
- }
- 
-+/*
-+ * Check if the op is zoned operation.
-+ */
-+static inline bool op_is_zone_mgmt_op(enum req_opf op)
-+{
-+	switch (op) {
-+	case REQ_OP_ZONE_RESET:
-+	case REQ_OP_ZONE_OPEN:
-+	case REQ_OP_ZONE_CLOSE:
-+	case REQ_OP_ZONE_FINISH:
-+		return true;
-+	default:
-+		return false;
-+	}
-+}
-+
- static inline bool op_is_write(unsigned int op)
- {
- 	return (op & 1);
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 592669bcc536..943084f9dc9c 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -348,14 +348,15 @@ extern unsigned int blkdev_nr_zones(struct block_device *bdev);
- extern int blkdev_report_zones(struct block_device *bdev,
- 			       sector_t sector, struct blk_zone *zones,
- 			       unsigned int *nr_zones, gfp_t gfp_mask);
--extern int blkdev_reset_zones(struct block_device *bdev, sector_t sectors,
--			      sector_t nr_sectors, gfp_t gfp_mask);
- extern int blk_revalidate_disk_zones(struct gendisk *disk);
- 
- extern int blkdev_report_zones_ioctl(struct block_device *bdev, fmode_t mode,
- 				     unsigned int cmd, unsigned long arg);
--extern int blkdev_reset_zones_ioctl(struct block_device *bdev, fmode_t mode,
--				    unsigned int cmd, unsigned long arg);
-+extern int blkdev_zones_mgmt_op_ioctl(struct block_device *bdev, fmode_t mode,
-+					unsigned int cmd, unsigned long arg);
-+extern int blkdev_zones_mgmt_op(struct block_device *bdev, enum req_opf op,
-+				sector_t sector, sector_t nr_sectors,
-+				gfp_t gfp_mask);
- 
- #else /* CONFIG_BLK_DEV_ZONED */
- 
-@@ -376,15 +377,57 @@ static inline int blkdev_report_zones_ioctl(struct block_device *bdev,
- 	return -ENOTTY;
- }
- 
--static inline int blkdev_reset_zones_ioctl(struct block_device *bdev,
--					   fmode_t mode, unsigned int cmd,
--					   unsigned long arg)
-+static inline int blkdev_zones_mgmt_op_ioctl(struct block_device *bdev,
-+					     fmode_t mode, unsigned int cmd,
-+					     unsigned long arg)
-+{
-+	return -ENOTTY;
-+}
-+
-+static inline int blkdev_zones_mgmt_op(struct block_device *bdev,
-+				       enum req_opf op,
-+				       sector_t sector, sector_t nr_sectors,
-+				       gfp_t gfp_mask)
- {
- 	return -ENOTTY;
- }
- 
- #endif /* CONFIG_BLK_DEV_ZONED */
- 
-+static inline int blkdev_reset_zones(struct block_device *bdev,
-+				     sector_t sector, sector_t nr_sectors,
-+				     gfp_t gfp_mask)
-+{
-+	return blkdev_zones_mgmt_op(bdev, REQ_OP_ZONE_RESET,
-+				    sector, nr_sectors, gfp_mask);
-+}
-+
-+static inline int blkdev_open_zones(struct block_device *bdev,
-+				    sector_t sector, sector_t nr_sectors,
-+				    gfp_t gfp_mask)
-+{
-+	return blkdev_zones_mgmt_op(bdev, REQ_OP_ZONE_OPEN,
-+				    sector, nr_sectors, gfp_mask);
-+}
-+
-+static inline int blkdev_close_zones(struct block_device *bdev,
-+				     sector_t sector, sector_t nr_sectors,
-+				     gfp_t gfp_mask)
-+{
-+	return blkdev_zones_mgmt_op(bdev, REQ_OP_ZONE_CLOSE,
-+				    sector, nr_sectors,
-+				    gfp_mask);
-+}
-+
-+static inline int blkdev_finish_zones(struct block_device *bdev,
-+				      sector_t sector, sector_t nr_sectors,
-+				      gfp_t gfp_mask)
-+{
-+	return blkdev_zones_mgmt_op(bdev, REQ_OP_ZONE_FINISH,
-+				    sector, nr_sectors,
-+				    gfp_mask);
-+}
-+
- struct request_queue {
- 	/*
- 	 * Together with queue_head for cacheline sharing
-diff --git a/include/uapi/linux/blkzoned.h b/include/uapi/linux/blkzoned.h
-index 498eec813494..701e0692b8d3 100644
---- a/include/uapi/linux/blkzoned.h
-+++ b/include/uapi/linux/blkzoned.h
-@@ -120,9 +120,11 @@ struct blk_zone_report {
- };
- 
- /**
-- * struct blk_zone_range - BLKRESETZONE ioctl request
-- * @sector: starting sector of the first zone to issue reset write pointer
-- * @nr_sectors: Total number of sectors of 1 or more zones to reset
-+ * struct blk_zone_range - BLKRESETZONE/BLKOPENZONE/
-+ *			   BLKCLOSEZONE/BLKFINISHZONE ioctl
-+ *			   request
-+ * @sector: starting sector of the first zone to operate on
-+ * @nr_sectors: Total number of sectors of all zones to operate on
-  */
- struct blk_zone_range {
- 	__u64		sector;
-@@ -139,10 +141,19 @@ struct blk_zone_range {
-  *                sector range. The sector range must be zone aligned.
-  * @BLKGETZONESZ: Get the device zone size in number of 512 B sectors.
-  * @BLKGETNRZONES: Get the total number of zones of the device.
-+ * @BLKOPENZONE: Open the zones in the specified sector range. The
-+ *               sector range must be zone aligned.
-+ * @BLKCLOSEZONE: Close the zones in the specified sector range. The
-+ *                sector range must be zone aligned.
-+ * @BLKFINISHZONE: Finish the zones in the specified sector range. The
-+ *                 sector range must be zone aligned.
-  */
- #define BLKREPORTZONE	_IOWR(0x12, 130, struct blk_zone_report)
- #define BLKRESETZONE	_IOW(0x12, 131, struct blk_zone_range)
- #define BLKGETZONESZ	_IOR(0x12, 132, __u32)
- #define BLKGETNRZONES	_IOR(0x12, 133, __u32)
-+#define BLKOPENZONE	_IOW(0x12, 134, struct blk_zone_range)
-+#define BLKCLOSEZONE	_IOW(0x12, 135, struct blk_zone_range)
-+#define BLKFINISHZONE	_IOW(0x12, 136, struct blk_zone_range)
- 
- #endif /* _UAPI_BLKZONED_H */
--- 
-2.19.1
+IFRoaXMgcGF0Y2ggc2VyaWVzIGlzIHJlYWR5IHRvIGJlIG1lcmdlZCB2aWEgbnZkaW1tIHRyZWUK
+IGFzIGRpc2N1c3NlZCB3aXRoIERhbi4gV2UgaGF2ZSBhY2svcmV2aWV3IG9uIFhGUywgRVhUNAog
+ZGV2aWNlIG1hcHBlciAmIFZJUlRJTyBwYXRjaGVzLgoKIFRoaXMgdmVyc2lvbiBoYXMgZml4IGZv
+ciB0ZXN0IGJvdCBidWlsZCBmYWlsdXJlLiBLZWVwaW5nCiBhbGwgdGhlIGV4aXN0aW5nIHItby1i
+cy4gSmFrb2IgQ0NlZCBhbHNvIHRlc3RlZCB0aGUgcGF0Y2gKIHNlcmllcyBhbmQgY29uZmlybWVk
+IHRoZSB3b3JraW5nIG9mIHY5LgogLS0tCgogVGhpcyBwYXRjaCBzZXJpZXMgaGFzIGltcGxlbWVu
+dGF0aW9uIGZvciAidmlydGlvIHBtZW0iLiAKICJ2aXJ0aW8gcG1lbSIgaXMgZmFrZSBwZXJzaXN0
+ZW50IG1lbW9yeShudmRpbW0pIGluIGd1ZXN0IAogd2hpY2ggYWxsb3dzIHRvIGJ5cGFzcyB0aGUg
+Z3Vlc3QgcGFnZSBjYWNoZS4gVGhpcyBhbHNvCiBpbXBsZW1lbnRzIGEgVklSVElPIGJhc2VkIGFz
+eW5jaHJvbm91cyBmbHVzaCBtZWNoYW5pc20uICAKIAogU2hhcmluZyBndWVzdCBrZXJuZWwgZHJp
+dmVyIGluIHRoaXMgcGF0Y2hzZXQgd2l0aCB0aGUgCiBjaGFuZ2VzIHN1Z2dlc3RlZCBpbiB2NC4g
+VGVzdGVkIHdpdGggUWVtdSBzaWRlIGRldmljZSAKIGVtdWxhdGlvbiBbNV0gZm9yIHZpcnRpby1w
+bWVtLiBEb2N1bWVudGVkIHRoZSBpbXBhY3Qgb2YKIHBvc3NpYmxlIHBhZ2UgY2FjaGUgc2lkZSBj
+aGFubmVsIGF0dGFja3Mgd2l0aCBzdWdnZXN0ZWQKIGNvdW50ZXJtZWFzdXJlcy4KCiBEZXRhaWxz
+IG9mIHByb2plY3QgaWRlYSBmb3IgJ3ZpcnRpbyBwbWVtJyBmbHVzaGluZyBpbnRlcmZhY2UgCiBp
+cyBzaGFyZWQgWzNdICYgWzRdLgoKIEltcGxlbWVudGF0aW9uIGlzIGRpdmlkZWQgaW50byB0d28g
+cGFydHM6CiBOZXcgdmlydGlvIHBtZW0gZ3Vlc3QgZHJpdmVyIGFuZCBxZW11IGNvZGUgY2hhbmdl
+cyBmb3IgbmV3IAogdmlydGlvIHBtZW0gcGFyYXZpcnR1YWxpemVkIGRldmljZS4KCjEuIEd1ZXN0
+IHZpcnRpby1wbWVtIGtlcm5lbCBkcml2ZXIKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tCiAgIC0gUmVhZHMgcGVyc2lzdGVudCBtZW1vcnkgcmFuZ2UgZnJvbSBwYXJhdmlydCBkZXZp
+Y2UgYW5kIAogICAgIHJlZ2lzdGVycyB3aXRoICdudmRpbW1fYnVzJy4gIAogICAtICdudmRpbW0v
+cG1lbScgZHJpdmVyIHVzZXMgdGhpcyBpbmZvcm1hdGlvbiB0byBhbGxvY2F0ZSAKICAgICBwZXJz
+aXN0ZW50IG1lbW9yeSByZWdpb24gYW5kIHNldHVwIGZpbGVzeXN0ZW0gb3BlcmF0aW9ucyAKICAg
+ICB0byB0aGUgYWxsb2NhdGVkIG1lbW9yeS4gCiAgIC0gdmlydGlvIHBtZW0gZHJpdmVyIGltcGxl
+bWVudHMgYXN5bmNocm9ub3VzIGZsdXNoaW5nIAogICAgIGludGVyZmFjZSB0byBmbHVzaCBmcm9t
+IGd1ZXN0IHRvIGhvc3QuCgoyLiBRZW11IHZpcnRpby1wbWVtIGRldmljZQotLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0KICAgLSBDcmVhdGVzIHZpcnRpbyBwbWVtIGRldmljZSBhbmQg
+ZXhwb3NlcyBhIG1lbW9yeSByYW5nZSB0byAKICAgICBLVk0gZ3Vlc3QuIAogICAtIEF0IGhvc3Qg
+c2lkZSB0aGlzIGlzIGZpbGUgYmFja2VkIG1lbW9yeSB3aGljaCBhY3RzIGFzIAogICAgIHBlcnNp
+c3RlbnQgbWVtb3J5LiAKICAgLSBRZW11IHNpZGUgZmx1c2ggdXNlcyBhaW8gdGhyZWFkIHBvb2wg
+QVBJJ3MgYW5kIHZpcnRpbyAKICAgICBmb3IgYXN5bmNocm9ub3VzIGd1ZXN0IG11bHRpIHJlcXVl
+c3QgaGFuZGxpbmcuIAoKIFZpcnRpby1wbWVtIHNlY3VyaXR5IGltcGxpY2F0aW9ucyBhbmQgY291
+bnRlcm1lYXN1cmVzOgogLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0KCiBJbiBwcmV2aW91cyBwb3N0aW5nIG9mIGtlcm5lbCBkcml2ZXIsIHRoZXJl
+IHdhcyBkaXNjdXNzaW9uIFs3XQogb24gcG9zc2libGUgaW1wbGljYXRpb25zIG9mIHBhZ2UgY2Fj
+aGUgc2lkZSBjaGFubmVsIGF0dGFja3Mgd2l0aCAKIHZpcnRpbyBwbWVtLiBBZnRlciB0aG9yb3Vn
+aCBhbmFseXNpcyBvZiBkZXRhaWxzIG9mIGtub3duIHNpZGUgCiBjaGFubmVsIGF0dGFja3MsIGJl
+bG93IGFyZSB0aGUgc3VnZ2VzdGlvbnM6CgogLSBEZXBlbmRzIGVudGlyZWx5IG9uIGhvdyBob3N0
+IGJhY2tpbmcgaW1hZ2UgZmlsZSBpcyBtYXBwZWQgCiAgIGludG8gZ3Vlc3QgYWRkcmVzcyBzcGFj
+ZS4gCgogLSB2aXJ0aW8tcG1lbSBkZXZpY2UgZW11bGF0aW9uLCBieSBkZWZhdWx0IHNoYXJlZCBt
+YXBwaW5nIGlzIHVzZWQKICAgdG8gbWFwIGhvc3QgYmFja2luZyBmaWxlLiBJdCBpcyByZWNvbW1l
+bmRlZCB0byB1c2Ugc2VwYXJhdGUKICAgYmFja2luZyBmaWxlIGF0IGhvc3Qgc2lkZSBmb3IgZXZl
+cnkgZ3Vlc3QuIFRoaXMgd2lsbCBwcmV2ZW50CiAgIGFueSBwb3NzaWJpbGl0eSBvZiBleGVjdXRp
+bmcgY29tbW9uIGNvZGUgZnJvbSBtdWx0aXBsZSBndWVzdHMKICAgYW5kIGFueSBjaGFuY2Ugb2Yg
+aW5mZXJyaW5nIGd1ZXN0IGxvY2FsIGRhdGEgYmFzZWQgYmFzZWQgb24gCiAgIGV4ZWN1dGlvbiB0
+aW1lLgoKIC0gSWYgYmFja2luZyBmaWxlIGlzIHJlcXVpcmVkIHRvIGJlIHNoYXJlZCBhbW9uZyBt
+dWx0aXBsZSBndWVzdHMgCiAgIGl0IGlzIHJlY29tbWVuZGVkIHRvIGRvbid0IHN1cHBvcnQgaG9z
+dCBwYWdlIGNhY2hlIGV2aWN0aW9uIAogICBjb21tYW5kcyBmcm9tIHRoZSBndWVzdCBkcml2ZXIu
+IFRoaXMgd2lsbCBhdm9pZCBhbnkgcG9zc2liaWxpdHkKICAgb2YgaW5mZXJyaW5nIGd1ZXN0IGxv
+Y2FsIGRhdGEgb3IgaG9zdCBkYXRhIGZyb20gYW5vdGhlciBndWVzdC4gCgogLSBQcm9wb3NlZCBk
+ZXZpY2Ugc3BlY2lmaWNhdGlvbiBbNl0gZm9yIHZpcnRpby1wbWVtIGRldmljZSB3aXRoIAogICBk
+ZXRhaWxzIG9mIHBvc3NpYmxlIHNlY3VyaXR5IGltcGxpY2F0aW9ucyBhbmQgc3VnZ2VzdGVkIAog
+ICBjb3VudGVybWVhc3VyZXMgZm9yIGRldmljZSBlbXVsYXRpb24uCgogVmlydGlvLXBtZW0gZXJy
+b3JzIGhhbmRsaW5nOgogLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQog
+IENoZWNrZWQgYmVoYXZpb3VyIG9mIHZpcnRpby1wbWVtIGZvciBiZWxvdyB0eXBlcyBvZiBlcnJv
+cnMKICBOZWVkIHN1Z2dlc3Rpb25zIG9uIGV4cGVjdGVkIGJlaGF2aW91ciBmb3IgaGFuZGxpbmcg
+dGhlc2UgZXJyb3JzPwoKICAtIEhhcmR3YXJlIEVycm9yczogVW5jb3JyZWN0YWJsZSByZWNvdmVy
+YWJsZSBFcnJvcnM6IAogIGFdIHZpcnRpby1wbWVtOiAKICAgIC0gQXMgcGVyIGN1cnJlbnQgbG9n
+aWMgaWYgZXJyb3IgcGFnZSBiZWxvbmdzIHRvIFFlbXUgcHJvY2VzcywgCiAgICAgIGhvc3QgTUNF
+IGhhbmRsZXIgaXNvbGF0ZXMoaHdwb2lzb24pIHRoYXQgcGFnZSBhbmQgc2VuZCBTSUdCVVMuIAog
+ICAgICBRZW11IFNJR0JVUyBoYW5kbGVyIGluamVjdHMgZXhjZXB0aW9uIHRvIEtWTSBndWVzdC4g
+CiAgICAtIEtWTSBndWVzdCB0aGVuIGlzb2xhdGVzIHRoZSBwYWdlIGFuZCBzZW5kIFNJR0JVUyB0
+byBndWVzdCAKICAgICAgdXNlcnNwYWNlIHByb2Nlc3Mgd2hpY2ggaGFzIG1hcHBlZCB0aGUgcGFn
+ZS4gCiAgCiAgYl0gRXhpc3RpbmcgaW1wbGVtZW50YXRpb24gZm9yIEFDUEkgcG1lbSBkcml2ZXI6
+IAogICAgLSBIYW5kbGVzIHN1Y2ggZXJyb3JzIHdpdGggTUNFIG5vdGlmaWVyIGFuZCBjcmVhdGVz
+IGEgbGlzdCAKICAgICAgb2YgYmFkIGJsb2Nrcy4gUmVhZC9kaXJlY3QgYWNjZXNzIERBWCBvcGVy
+YXRpb24gcmV0dXJuIEVJTyAKICAgICAgaWYgYWNjZXNzZWQgbWVtb3J5IHBhZ2UgZmFsbCBpbiBi
+YWQgYmxvY2sgbGlzdC4KICAgIC0gSXQgYWxzbyBzdGFydHMgYmFja2dvdW5kIHNjcnViYmluZy4g
+IAogICAgLSBTaW1pbGFyIGZ1bmN0aW9uYWxpdHkgY2FuIGJlIHJldXNlZCBpbiB2aXJ0aW8tcG1l
+bSB3aXRoIE1DRSAKICAgICAgbm90aWZpZXIgYnV0IHdpdGhvdXQgc2NydWJiaW5nKG5vIEFDUEkv
+QVJTKT8gTmVlZCBpbnB1dHMgdG8gCiAgICAgIGNvbmZpcm0gaWYgdGhpcyBiZWhhdmlvdXIgaXMg
+b2sgb3IgbmVlZHMgYW55IGNoYW5nZT8KCkNoYW5nZXMgZnJvbSBQQVRDSCB2MTM6IFsxXSAKIC0g
+UmViYXNlZCB0byBMaW51eC01LjItcmM1CiAtIEZpeCBTMzkweCBidWlsZCBmYWlsdXJlIGluIHBh
+dGNoIDMKIC0gRml4IGZvciAhQ09ORklHX0RBWCB3aXRoIGRheF9zeW5jaHJvbm91cwogLSBGaXgg
+c3BhcnNlIHdhcm5pbmcgaW4gdmlydGlvIHBhdGNoIDIKCkNoYW5nZXMgZnJvbSBQQVRDSCB2MTI6
+IFsyXSAKIC0gTWlub3IgY2hhbmdlcyhmdW5jdGlvbiBuYW1lLCBkZXZfZXJyIC0+IGRldl9pbmZv
+ICYgCiAgIG1ha2UgZnVuY3Rpb24gc3RhdGljIGluIHZpcnRpbyBwYXRjaCAtIFtDb3JuZWxpYV0K
+IC0gQWRkZWQgci1vLWIgb2YgTWlrZSBpbiBwYXRjaCA0CgpDaGFuZ2VzIGZyb20gUEFUQ0ggdjEx
+OiAKIC0gQ2hhbmdlIGltcGxtZW50YXRpb24gZm9yIHNldHRpbmcgb2Ygc3luY2hyb25vdXMgREFY
+IHR5cGUKICAgZm9yIGRldmljZSBtYXBwZXIgLSBbTWlrZV0gCgpDaGFuZ2VzIGZyb20gUEFUQ0gg
+djEwOgogLSBSZWJhc2VkIG9uIExpbnV4LTUuMi1yYzQKCkNoYW5nZXMgZnJvbSBQQVRDSCB2OToK
+IC0gS2NvbmZpZyBoZWxwIHRleHQgYWRkIHR3byBzcGFjZXMgLSBSYW5keQogLSBGaXhlZCBsaWJu
+dmRpbW0gJ2JpbycgaW5jbHVkZSB3YXJuaW5nIC0gRGFuCiAtIHZpcnRpby1wbWVtLCBzZXBhcmF0
+ZSByZXF1ZXN0L3Jlc3Agc3RydWN0IGFuZCAKICAgbW92ZSB0byB1YXBpIGZpbGUgd2l0aCB1cGRh
+dGVkIGxpY2Vuc2UgLSBEYXZpZEgKIC0gVXNlIHZpcnRpbzMyKiB0eXBlIGZvciByZXEvcmVzcCBl
+bmRpYW5lc3MgLSBEYXZpZEgKIC0gQWRkZWQgdGVzdGVkLWJ5ICYgYWNrLWJ5IG9mIEpha29iCiAt
+IFJlYmFzZWQgdG8gNS4yLXJjMQoKQ2hhbmdlcyBmcm9tIFBBVENIIHY4OgogLSBTZXQgZGV2aWNl
+IG1hcHBlciBzeW5jaHJvbm91cyBpZiBhbGwgdGFyZ2V0IGRldmljZXMgc3VwcG9ydCAtIERhbgog
+LSBNb3ZlIHZpcnRpb19wbWVtLmggdG8gbnZkaW1tIGRpcmVjdG9yeSAgLSBEYW4KIC0gU3R5bGUs
+IGluZGVudGF0aW9uICYgYmV0dGVyIGVycm9yIG1lc3NhZ2VzIGluIHBhdGNoIDIgLSBEYXZpZEgK
+IC0gQWRkZWQgTVNUJ3MgYWNrIGluIHBhdGNoIDIuCgpDaGFuZ2VzIGZyb20gUEFUQ0ggdjc6CiAt
+IENvcnJlY3RlZCBwZW5kaW5nIHJlcXVlc3QgcXVldWUgbG9naWMgKHBhdGNoIDIpIC0gSmFrdWIg
+U3Rhcm/FhAogLSBVc2VkIHVuc2lnbmVkIGxvbmcgZmxhZ3MgZm9yIHBhc3NpbmcgREFYREVWX0Zf
+U1lOQyAocGF0Y2ggMykgLSBEYW4KIC0gRml4ZWQgdHlwbyA9PiAgdm1hICdmbGFnJyB0byAndm1f
+ZmxhZycgKHBhdGNoIDQpCiAtIEFkZGVkIHJvYiBpbiBwYXRjaCA2ICYgcGF0Y2ggMgoKQ2hhbmdl
+cyBmcm9tIFBBVENIIHY2OiAKIC0gQ29ycmVjdGVkIGNvbW1lbnQgZm9ybWF0IGluIHBhdGNoIDUg
+JiBwYXRjaCA2LiBbRGF2ZV0KIC0gQ2hhbmdlZCB2YXJpYWJsZSBkZWNsYXJhdGlvbiBpbmRlbnRh
+dGlvbiBpbiBwYXRjaCA2IFtEYXJyaWNrXQogLSBBZGQgUmV2aWV3ZWQtYnkgdGFnIGJ5ICdKYW4g
+S2FyYScgaW4gcGF0Y2ggNCAmIHBhdGNoIDUKCkNoYW5nZXMgZnJvbSBQQVRDSCB2NTogCiAgQ2hh
+bmdlcyBzdWdnZXN0ZWQgaW4gYnkgLSBbQ29ybmVsaWEsIFl1dmFsXQotIFJlbW92ZSBhc3NpZ25t
+ZW50IGNoYWluaW5nIGluIHZpcnRpbyBkcml2ZXIKLSBCZXR0ZXIgZXJyb3IgbWVzc2FnZSBhbmQg
+cmVtb3ZlIG5vdCByZXF1aXJlZCBmcmVlCi0gQ2hlY2sgbmRfcmVnaW9uIGJlZm9yZSB1c2UKCiAg
+Q2hhbmdlcyBzdWdnZXN0ZWQgYnkgLSBbSmFuIEthcmFdCi0gZGF4X3N5bmNocm9ub3VzKCkgZm9y
+ICFDT05GSUdfREFYCi0gQ29ycmVjdCAnZGF4ZGV2X21hcHBpbmdfc3VwcG9ydGVkJyBjb21tZW50
+IGFuZCBub24tZGF4IGltcGxlbWVudGF0aW9uCgogIENoYW5nZXMgc3VnZ2VzdGVkIGJ5IC0gW0Rh
+biBXaWxsaWFtc10KLSBQYXNzIG1lYW5pbmdmdWwgZmxhZyAnREFYREVWX0ZfU1lOQycgdG8gYWxs
+b2NfZGF4Ci0gR2F0ZSBudmRpbW1fZmx1c2ggaW5zdGVhZCBvZiBhZGRpdGlvbmFsIGFzeW5jIHBh
+cmFtZXRlcgotIE1vdmUgYmxvY2sgY2hhaW5pbmcgbG9naWMgdG8gZmx1c2ggY2FsbGJhY2sgdGhh
+biBjb21tb24gbnZkaW1tX2ZsdXNoCi0gVXNlIE5VTEwgZmx1c2ggY2FsbGJhY2sgZm9yIGdlbmVy
+aWMgZmx1c2ggZm9yIGJldHRlciByZWFkYWJpbGl0eSBbRGFuLCBKYW5dCgotIFVzZSB2aXJ0aW8g
+ZGV2aWNlIGlkIDI3IGZyb20gMjUoYWxyZWFkeSB1c2VkKSAtIFtNU1RdCgpDaGFuZ2VzIGZyb20g
+UEFUQ0ggdjQ6Ci0gRmFjdG9yIG91dCBNQVBfU1lOQyBzdXBwb3J0ZWQgZnVuY3Rpb25hbGl0eSB0
+byBhIGNvbW1vbiBoZWxwZXIKCQkJCVtEYXZlLCBEYXJyaWNrLCBKYW5dCi0gQ29tbWVudCwgaW5k
+ZW50YXRpb24gYW5kIHZpcnRxdWV1ZV9raWNrIGZhaWx1cmUgaGFuZGxlIC0gWXV2YWwgU2hhaWEK
+CkNoYW5nZXMgZnJvbSBQQVRDSCB2MzogCi0gVXNlIGdlbmVyaWMgZGF4X3N5bmNocm9ub3VzKCkg
+aGVscGVyIHRvIGNoZWNrIGZvciBEQVhERVZfU1lOQyAKICBmbGFnIC0gW0RhbiwgRGFycmljaywg
+SmFuXQotIEFkZCAnaXNfbnZkaW1tX2FzeW5jJyBmdW5jdGlvbgotIERvY3VtZW50IHBhZ2UgY2Fj
+aGUgc2lkZSBjaGFubmVsIGF0dGFja3MgaW1wbGljYXRpb25zICYgCiAgY291bnRlcm1lYXN1cmVz
+IC0gW0RhdmUgQ2hpbm5lciwgTWljaGFlbF0KCkNoYW5nZXMgZnJvbSBQQVRDSCB2MjogCi0gRGlz
+YWJsZSBNQVBfU1lOQyBmb3IgZXh0NCAmIFhGUyBmaWxlc3lzdGVtcyAtIFtEYW5dIAotIFVzZSBu
+YW1lICd2aXJ0aW8gcG1lbScgaW4gcGxhY2Ugb2YgJ2Zha2UgZGF4JyAKCkNoYW5nZXMgZnJvbSBQ
+QVRDSCB2MTogCi0gMC1kYXkgYnVpbGQgdGVzdCBmb3IgYnVpbGQgZGVwZW5kZW5jeSBvbiBsaWJu
+dmRpbW0gCgogQ2hhbmdlcyBzdWdnZXN0ZWQgYnkgLSBbRGFuIFdpbGxpYW1zXQotIFNwbGl0IHRo
+ZSBkcml2ZXIgaW50byB0d28gcGFydHMgdmlydGlvICYgcG1lbSAgCi0gTW92ZSBxdWV1aW5nIG9m
+IGFzeW5jIGJsb2NrIHJlcXVlc3QgdG8gYmxvY2sgbGF5ZXIKLSBBZGQgInN5bmMiIHBhcmFtZXRl
+ciBpbiBudmRpbW1fZmx1c2ggZnVuY3Rpb24KLSBVc2UgaW5kaXJlY3QgY2FsbCBmb3IgbnZkaW1t
+X2ZsdXNoCi0gRG9u4oCZdCBtb3ZlIGRlY2xhcmF0aW9ucyB0byBjb21tb24gZ2xvYmFsIGhlYWRl
+ciBlLmcgbmQuaAotIG52ZGltbV9mbHVzaCgpIHJldHVybiAwIG9yIC1FSU8gaWYgaXQgZmFpbHMK
+LSBUZWFjaCBuc2lvX3J3X2J5dGVzKCkgdGhhdCB0aGUgZmx1c2ggY2FuIGZhaWwKLSBSZW5hbWUg
+bnZkaW1tX2ZsdXNoKCkgdG8gZ2VuZXJpY19udmRpbW1fZmx1c2goKQotIFVzZSAnbmRfcmVnaW9u
+LT5wcm92aWRlcl9kYXRhJyBmb3IgbG9uZyBkZXJlZmVyZW5jaW5nCi0gUmVtb3ZlIHZpcnRpb19w
+bWVtX2ZyZWV6ZS9yZXN0b3JlIGZ1bmN0aW9ucwotIFJlbW92ZSBCU0QgbGljZW5zZSB0ZXh0IHdp
+dGggU1BEWCBsaWNlbnNlIHRleHQKCi0gQWRkIG1pZ2h0X3NsZWVwKCkgaW4gdmlydGlvX3BtZW1f
+Zmx1c2ggLSBbTHVpel0KLSBNYWtlIHNwaW5fbG9ja19pcnFzYXZlKCkgbmFycm93CgpQYW5rYWog
+R3VwdGEgKDcpOgogICBsaWJudmRpbW06IG5kX3JlZ2lvbiBmbHVzaCBjYWxsYmFjayBzdXBwb3J0
+CiAgIHZpcnRpby1wbWVtOiBBZGQgdmlydGlvLXBtZW0gZ3Vlc3QgZHJpdmVyCiAgIGxpYm52ZGlt
+bTogYWRkIG5kX3JlZ2lvbiBidWZmZXJlZCBkYXhfZGV2IGZsYWcKICAgZGF4OiBjaGVjayBzeW5j
+aHJvbm91cyBtYXBwaW5nIGlzIHN1cHBvcnRlZAogICBkbTogZG06IEVuYWJsZSBzeW5jaHJvbm91
+cyBkYXgKICAgZXh0NDogZGlzYWJsZSBtYXBfc3luYyBmb3IgdmlydGlvIHBtZW0KICAgeGZzOiBk
+aXNhYmxlIG1hcF9zeW5jIGZvciB2aXJ0aW8gcG1lbQoKWzFdIGh0dHBzOi8vbGttbC5vcmcvbGtt
+bC8yMDE5LzYvMTIvNjI0ClsyXSBodHRwczovL2xrbWwub3JnL2xrbWwvMjAxOS82LzExLzgzMQpb
+M10gaHR0cHM6Ly93d3cuc3Bpbmljcy5uZXQvbGlzdHMva3ZtL21zZzE0OTc2MS5odG1sCls0XSBo
+dHRwczovL3d3dy5zcGluaWNzLm5ldC9saXN0cy9rdm0vbXNnMTUzMDk1Lmh0bWwgIApbNV0gaHR0
+cHM6Ly9tYXJjLmluZm8vP2w9cWVtdS1kZXZlbCZtPTE1NTg2MDc1MTIwMjIwMiZ3PTIKWzZdIGh0
+dHBzOi8vbGlzdHMub2FzaXMtb3Blbi5vcmcvYXJjaGl2ZXMvdmlydGlvLWRldi8yMDE5MDMvbXNn
+MDAwODMuaHRtbApbN10gaHR0cHM6Ly9sa21sLm9yZy9sa21sLzIwMTkvMS85LzExOTEKCiBkcml2
+ZXJzL2FjcGkvbmZpdC9jb3JlLmMgICAgICAgICB8ICAgIDQgLQogZHJpdmVycy9kYXgvYnVzLmMg
+ICAgICAgICAgICAgICAgfCAgICAyIAogZHJpdmVycy9kYXgvc3VwZXIuYyAgICAgICAgICAgICAg
+fCAgIDE5ICsrKysrCiBkcml2ZXJzL21kL2RtLXRhYmxlLmMgICAgICAgICAgICB8ICAgMjQgKysr
+KystLQogZHJpdmVycy9tZC9kbS5jICAgICAgICAgICAgICAgICAgfCAgICA1IC0KIGRyaXZlcnMv
+bWQvZG0uaCAgICAgICAgICAgICAgICAgIHwgICAgNSArCiBkcml2ZXJzL252ZGltbS9NYWtlZmls
+ZSAgICAgICAgICB8ICAgIDEgCiBkcml2ZXJzL252ZGltbS9jbGFpbS5jICAgICAgICAgICB8ICAg
+IDYgKwogZHJpdmVycy9udmRpbW0vbmQuaCAgICAgICAgICAgICAgfCAgICAxIAogZHJpdmVycy9u
+dmRpbW0vbmRfdmlydGlvLmMgICAgICAgfCAgMTI1ICsrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKysrKysrKwogZHJpdmVycy9udmRpbW0vcG1lbS5jICAgICAgICAgICAgfCAgIDE4ICsr
+Ky0tCiBkcml2ZXJzL252ZGltbS9yZWdpb25fZGV2cy5jICAgICB8ICAgMzMgKysrKysrKysrLQog
+ZHJpdmVycy9udmRpbW0vdmlydGlvX3BtZW0uYyAgICAgfCAgMTIyICsrKysrKysrKysrKysrKysr
+KysrKysrKysrKysrKysrKysrKysrCiBkcml2ZXJzL252ZGltbS92aXJ0aW9fcG1lbS5oICAgICB8
+ICAgNTUgKysrKysrKysrKysrKysrKysKIGRyaXZlcnMvczM5MC9ibG9jay9kY3NzYmxrLmMgICAg
+IHwgICAgMiAKIGRyaXZlcnMvdmlydGlvL0tjb25maWcgICAgICAgICAgIHwgICAxMSArKysKIGZz
+L2V4dDQvZmlsZS5jICAgICAgICAgICAgICAgICAgIHwgICAxMCArLS0KIGZzL3hmcy94ZnNfZmls
+ZS5jICAgICAgICAgICAgICAgIHwgICAgOSArLQogaW5jbHVkZS9saW51eC9kYXguaCAgICAgICAg
+ICAgICAgfCAgIDQxICsrKysrKysrKysrKwogaW5jbHVkZS9saW51eC9saWJudmRpbW0uaCAgICAg
+ICAgfCAgIDEwICsrLQogaW5jbHVkZS91YXBpL2xpbnV4L3ZpcnRpb19pZHMuaCAgfCAgICAxIAog
+aW5jbHVkZS91YXBpL2xpbnV4L3ZpcnRpb19wbWVtLmggfCAgIDM1ICsrKysrKysrKysKIDIyIGZp
+bGVzIGNoYW5nZWQsIDUwNSBpbnNlcnRpb25zKCspLCAzNCBkZWxldGlvbnMoLSkKCgpfX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpMaW51eC1udmRpbW0gbWFp
+bGluZyBsaXN0CkxpbnV4LW52ZGltbUBsaXN0cy4wMS5vcmcKaHR0cHM6Ly9saXN0cy4wMS5vcmcv
+bWFpbG1hbi9saXN0aW5mby9saW51eC1udmRpbW0K
