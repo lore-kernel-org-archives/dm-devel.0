@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 14/30] libmultipath: fix parsing of VPD 83
-	type 1 (T10 vendor ID)
-Date: Mon, 24 Jun 2019 11:27:40 +0200
-Message-ID: <20190624092756.7769-16-mwilck@suse.com>
+Subject: [PATCH v2 16/30] libmultipath: fix possible WWID
+	overflow in parse_vpd_pg83()
+Date: Mon, 24 Jun 2019 11:27:42 +0200
+Message-ID: <20190624092756.7769-18-mwilck@suse.com>
 References: <20190624092756.7769-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,45 +22,61 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.var
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-In the buffer overflow case, the code would set p_len = out_len - len - 2,
-then len = len + plen = out_len - 2, and check if len >= out_len - 1,
-which is never the case. Rather, set p_len = out_len - len -1, and
-check the length again before appending the underscore.
+We have to check the remaining length before printing to the
+output buffer, not afterwards.
 
 Fixes: 18176202e75c "Read wwid from sysfs vpg_pg83 attribute"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 11 +++++++++--
- 1 file changed, 9 insertions(+), 2 deletions(-)
+ libmultipath/discovery.c | 16 +++-------------
+ 1 file changed, 3 insertions(+), 13 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 407e64a0..f360e306 100644
+index 89c4d2ad..eed35284 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1065,8 +1065,11 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
- 			p = vpd;
- 			while ((p = memchr(vpd, ' ', vpd_len))) {
- 				p_len = p - vpd;
--				if (len + p_len > out_len - 1)
--					p_len = out_len - len - 2;
-+				if (len + p_len > out_len - 1) {
-+					condlog(1, "%s: WWID overflow, type 1, %d/%lu bytes required",
-+						__func__, len + p_len, out_len);
-+					p_len = out_len - len - 1;
-+				}
- 				memcpy(out + len, vpd, p_len);
- 				len += p_len;
- 				if (len >= out_len - 1) {
-@@ -1075,6 +1078,10 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+@@ -1012,11 +1012,9 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ 			int i;
+ 
+ 			len = sprintf(out, "%d", vpd_type);
+-			for (i = 0; i < vpd_len; i++) {
++			for (i = 0; i < vpd_len && len < out_len - 2; i++) {
+ 				len += sprintf(out + len,
+ 					       "%02x", vpd[i]);
+-				if (len >= out_len)
+-					break;
+ 			}
+ 		} else if (vpd_type == 0x8) {
+ 			if (!memcmp("eui.", vpd, 4)) {
+@@ -1024,27 +1022,19 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ 				len = 1;
+ 				vpd += 4;
+ 				vpd_len -= 4;
+-				for (i = 0; i < vpd_len; i++) {
++				for (i = 0; i < vpd_len && len < out_len - 1; i++) {
+ 					len += sprintf(out + len, "%c",
+ 						       tolower(vpd[i]));
+-					if (len >= out_len)
+-						break;
  				}
- 				out[len] = '_';
- 				len ++;
-+				if (len >= out_len - 1) {
-+					out[len] = '\0';
-+					break;
-+				}
- 				vpd = p;
- 				vpd_len -= p_len;
- 				while (vpd && *vpd == ' ') {
+-				len = vpd_len + 1;
+-				out[len] = '\0';
+ 			} else if (!memcmp("naa.", vpd, 4)) {
+ 				out[0] = '3';
+ 				len = 1;
+ 				vpd += 4;
+ 				vpd_len -= 4;
+-				for (i = 0; i < vpd_len; i++) {
++				for (i = 0; i < vpd_len && len < out_len - 1; i++) {
+ 					len += sprintf(out + len, "%c",
+ 						       tolower(vpd[i]));
+-					if (len >= out_len)
+-						break;
+ 				}
+-				len = vpd_len + 1;
+-				out[len] = '\0';
+ 			} else {
+ 				out[0] = '8';
+ 				len = 1;
 -- 
 2.21.0
