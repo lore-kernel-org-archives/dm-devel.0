@@ -1,12 +1,12 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 09/30] libmultipath: add size argument to
-	dm_get_uuid()
-Date: Mon, 24 Jun 2019 11:27:35 +0200
-Message-ID: <20190624092756.7769-11-mwilck@suse.com>
+Subject: [PATCH v2 04/30] libmultipath: fix -Wstringop-overflow
+	warning in merge_words()
+Date: Mon, 24 Jun 2019 11:27:29 +0200
+Message-ID: <20190624092756.7769-5-mwilck@suse.com>
 References: <20190624092756.7769-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20190624092756.7769-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -22,151 +22,33 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.var
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The length of the uuid field in libdm is DM_UUID_LEN, which happens
-to be one byte more than our WWID_SIZE. Handle this cleanly.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/configure.c |  2 +-
- libmultipath/devmapper.c | 28 +++++++++++++++++-----------
- libmultipath/devmapper.h |  2 +-
- libmultipath/wwids.c     |  3 ++-
- multipathd/main.c        |  2 +-
- 5 files changed, 22 insertions(+), 15 deletions(-)
-
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 52afa378..c8dd69b0 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -1451,7 +1451,7 @@ int get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
- 
- 		conf = get_multipath_config();
- 		pthread_cleanup_push(put_multipath_config, conf);
--		if (((dm_get_uuid(dev, tmpwwid)) == 0)
-+		if (((dm_get_uuid(dev, tmpwwid, WWID_SIZE)) == 0)
- 		    && (strlen(tmpwwid))) {
- 			refwwid = tmpwwid;
- 			goto check;
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 2e79667d..0f0c3a34 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -13,7 +13,9 @@
- #include <unistd.h>
- #include <errno.h>
- #include <sys/sysmacros.h>
-+#include <linux/dm-ioctl.h>
- 
-+#include "util.h"
- #include "checkers.h"
- #include "vector.h"
- #include "structs.h"
-@@ -554,7 +556,7 @@ out:
- }
- 
- static int
--dm_get_prefixed_uuid(const char *name, char *uuid)
-+dm_get_prefixed_uuid(const char *name, char *uuid, int uuid_len)
- {
- 	struct dm_task *dmt;
- 	const char *uuidtmp;
-@@ -572,7 +574,7 @@ dm_get_prefixed_uuid(const char *name, char *uuid)
- 
- 	uuidtmp = dm_task_get_uuid(dmt);
- 	if (uuidtmp)
--		strcpy(uuid, uuidtmp);
-+		strlcpy(uuid, uuidtmp, uuid_len);
- 	else
- 		uuid[0] = '\0';
- 
-@@ -582,14 +584,18 @@ uuidout:
- 	return r;
- }
- 
--int dm_get_uuid(const char *name, char *uuid)
-+int dm_get_uuid(const char *name, char *uuid, int uuid_len)
- {
--	if (dm_get_prefixed_uuid(name, uuid))
-+	char tmp[DM_UUID_LEN];
-+
-+	if (dm_get_prefixed_uuid(name, tmp, sizeof(tmp)))
- 		return 1;
- 
--	if (!strncmp(uuid, UUID_PREFIX, UUID_PREFIX_LEN))
--		memmove(uuid, uuid + UUID_PREFIX_LEN,
--			strlen(uuid + UUID_PREFIX_LEN) + 1);
-+	if (!strncmp(tmp, UUID_PREFIX, UUID_PREFIX_LEN))
-+		strlcpy(uuid, tmp + UUID_PREFIX_LEN, uuid_len);
-+	else
-+		uuid[0] = '\0';
-+
- 	return 0;
- }
- 
-@@ -597,12 +603,12 @@ static int
- is_mpath_part(const char *part_name, const char *map_name)
- {
- 	char *p;
--	char part_uuid[WWID_SIZE], map_uuid[WWID_SIZE];
-+	char part_uuid[DM_UUID_LEN], map_uuid[DM_UUID_LEN];
- 
--	if (dm_get_prefixed_uuid(part_name, part_uuid))
-+	if (dm_get_prefixed_uuid(part_name, part_uuid, sizeof(part_uuid)))
- 		return 0;
- 
--	if (dm_get_prefixed_uuid(map_name, map_uuid))
-+	if (dm_get_prefixed_uuid(map_name, map_uuid, sizeof(map_uuid)))
- 		return 0;
- 
- 	if (strncmp(part_uuid, "part", 4) != 0)
-@@ -1066,7 +1072,7 @@ struct multipath *dm_get_multipath(const char *name)
- 	if (dm_get_map(name, &mpp->size, NULL))
- 		goto out;
- 
--	dm_get_uuid(name, mpp->wwid);
-+	dm_get_uuid(name, mpp->wwid, WWID_SIZE);
- 	dm_get_info(name, &mpp->dmi);
- 
- 	return mpp;
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index db75526c..7557a86b 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -63,7 +63,7 @@ int dm_get_major_minor (const char *name, int *major, int *minor);
- char * dm_mapname(int major, int minor);
- int dm_remove_partmaps (const char * mapname, int need_sync,
- 			int deferred_remove);
--int dm_get_uuid(const char *name, char *uuid);
-+int dm_get_uuid(const char *name, char *uuid, int uuid_len);
- int dm_get_info (const char * mapname, struct dm_info ** dmi);
- int dm_rename (const char * old, char * new, char * delim, int skip_kpartx);
- int dm_reassign(const char * mapname);
-diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-index 53e79511..ef748125 100644
---- a/libmultipath/wwids.c
-+++ b/libmultipath/wwids.c
-@@ -294,7 +294,8 @@ should_multipath(struct path *pp1, vector pathvec, vector mpvec)
- 		char tmp_wwid[WWID_SIZE];
- 		struct multipath *mp = find_mp_by_wwid(mpvec, pp1->wwid);
- 
--		if (mp != NULL && dm_get_uuid(mp->alias, tmp_wwid) == 0 &&
-+		if (mp != NULL &&
-+		    dm_get_uuid(mp->alias, tmp_wwid, WWID_SIZE) == 0 &&
- 		    !strncmp(tmp_wwid, pp1->wwid, WWID_SIZE)) {
- 			condlog(3, "wwid %s is already multipathed, keeping it",
- 				pp1->wwid);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index eef84a39..2e4973d7 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -406,7 +406,7 @@ set_multipath_wwid (struct multipath * mpp)
- 	if (strlen(mpp->wwid))
- 		return;
- 
--	dm_get_uuid(mpp->alias, mpp->wwid);
-+	dm_get_uuid(mpp->alias, mpp->wwid, WWID_SIZE);
- }
- 
- static void set_no_path_retry(struct multipath *mpp)
--- 
-2.21.0
+Rml4ZXMgdGhlIGZvbGxvd2luZyB3YXJuaW5nIGZyb20gZ2NjIDk6CgpJbiBmaWxlIGluY2x1ZGVk
+IGZyb20gL3Vzci9pbmNsdWRlL3N0cmluZy5oOjQ5NCwKICAgICAgICAgICAgICAgICBmcm9tIGRt
+cGFyc2VyLmM6ODoKSW4gZnVuY3Rpb24g4oCYc3RybmNweeKAmSwKICAgIGlubGluZWQgZnJvbSDi
+gJhtZXJnZV93b3Jkc+KAmSBhdCBkbXBhcnNlci5jOjQxOjI6Ci91c3IvaW5jbHVkZS9iaXRzL3N0
+cmluZ19mb3J0aWZpZWQuaDoxMDY6MTA6IHdhcm5pbmc6IOKAmF9fYnVpbHRpbl9zdHJuY3B54oCZ
+CiAgICAgICAgICAgICAgICAgc3BlY2lmaWVkIGJvdW5kIGRlcGVuZHMgb24gdGhlIGxlbmd0aCBv
+ZiB0aGUgc291cmNlIGFyZ3VtZW50CiAgICAgICAgICAgICAgICAgWy1Xc3RyaW5nb3Atb3ZlcmZs
+b3c9XQogIDEwNiB8ICAgcmV0dXJuIF9fYnVpbHRpbl9fX3N0cm5jcHlfY2hrIChfX2Rlc3QsIF9f
+c3JjLCBfX2xlbiwgX19ib3MgKF9fZGVzdCkpOwogICAgICB8ICAgICAgICAgIF5+fn5+fn5+fn5+
+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+CmRtcGFy
+c2VyLmM6IEluIGZ1bmN0aW9uIOKAmG1lcmdlX3dvcmRz4oCZOgpkbXBhcnNlci5jOjQxOjE5OiBu
+b3RlOiBsZW5ndGggY29tcHV0ZWQgaGVyZQogICA0MSB8ICBzdHJuY3B5KHAsIHdvcmQsIHN0cmxl
+bih3b3JkKSArIDEpOwogICAgICB8ICAgICAgICAgICAgICAgICAgIF5+fn5+fn5+fn5+fgoKU2ln
+bmVkLW9mZi1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+Ci0tLQogbGlibXVsdGlw
+YXRoL2RtcGFyc2VyLmMgfCAxNSArKysrKystLS0tLS0tLS0KIDEgZmlsZSBjaGFuZ2VkLCA2IGlu
+c2VydGlvbnMoKyksIDkgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2Rt
+cGFyc2VyLmMgYi9saWJtdWx0aXBhdGgvZG1wYXJzZXIuYwppbmRleCAwNGY2NzVjMS4uYThiMGI3
+MWEgMTAwNjQ0Ci0tLSBhL2xpYm11bHRpcGF0aC9kbXBhcnNlci5jCisrKyBiL2xpYm11bHRpcGF0
+aC9kbXBhcnNlci5jCkBAIC0yMSwyNCArMjEsMjEgQEAgc3RhdGljIGludAogbWVyZ2Vfd29yZHMo
+Y2hhciAqKmRzdCwgY2hhciAqd29yZCkKIHsKIAljaGFyICogcCA9ICpkc3Q7Ci0JaW50IGxlbjsK
+KwlpbnQgbGVuLCBkc3RsZW47CiAKLQlsZW4gPSBzdHJsZW4oKmRzdCkgKyBzdHJsZW4od29yZCkg
+KyAxOwotCSpkc3QgPSBSRUFMTE9DKCpkc3QsIGxlbiArIDEpOworCWRzdGxlbiA9IHN0cmxlbigq
+ZHN0KTsKKwlsZW4gPSBkc3RsZW4gKyBzdHJsZW4od29yZCkgKyAyOworCSpkc3QgPSBSRUFMTE9D
+KCpkc3QsIGxlbik7CiAKIAlpZiAoISpkc3QpIHsKIAkJZnJlZShwKTsKIAkJcmV0dXJuIDE7CiAJ
+fQogCi0JcCA9ICpkc3Q7Ci0KLQl3aGlsZSAoKnAgIT0gJ1wwJykKLQkJcCsrOwotCisJcCA9ICpk
+c3QgKyBkc3RsZW47CiAJKnAgPSAnICc7CiAJKytwOwotCXN0cm5jcHkocCwgd29yZCwgc3RybGVu
+KHdvcmQpICsgMSk7CisJc3RybmNweShwLCB3b3JkLCBsZW4gLSBkc3RsZW4gLSAxKTsKIAogCXJl
+dHVybiAwOwogfQotLSAKMi4yMS4wCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
+cmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
+ZWw=
