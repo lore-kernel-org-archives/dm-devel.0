@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 20/30] libmultipath: parse_vpd_pg83: common
-	code for SCSI string parsing
-Date: Mon, 24 Jun 2019 11:27:46 +0200
-Message-ID: <20190624092756.7769-22-mwilck@suse.com>
+Subject: [PATCH v2 08/30] libmultipath: inline set_default()
+Date: Mon, 24 Jun 2019 11:27:34 +0200
+Message-ID: <20190624092756.7769-10-mwilck@suse.com>
 References: <20190624092756.7769-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,81 +21,74 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.var
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The three cases for eui, naa, and iqn parsing share almost all code.
+This is nothing but a reimplementation of strdup(), and it causes gcc 9
+warnings. Remove it.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 54 ++++++++++++++++------------------------
- 1 file changed, 21 insertions(+), 33 deletions(-)
+ libmultipath/debug.c    |  1 +
+ libmultipath/defaults.c | 17 -----------------
+ libmultipath/defaults.h |  9 ++++++++-
+ 3 files changed, 9 insertions(+), 18 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index e484ec8d..32e3f9d3 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1023,43 +1023,31 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
- 				len += sprintf(out + len,
- 					       "%02x", vpd[i]);
- 		} else if (vpd_type == 0x8) {
--			if (!memcmp("eui.", vpd, 4)) {
-+			if (!memcmp("eui.", vpd, 4))
- 				out[0] =  '2';
--				vpd += 4;
--				len = vpd_len - 4;
--				if (len > out_len - 1) {
--					condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
--						__func__, out[0], len + 1, out_len);
--					len = out_len - 1;
--				}
--				for (i = 0; i < len; ++i)
--					out[1 + i] = tolower(vpd[i]);
--				/* designator should be 0-terminated, but let's make sure */
--				out[len] = '\0';
--			} else if (!memcmp("naa.", vpd, 4)) {
-+			else if (!memcmp("naa.", vpd, 4))
- 				out[0] = '3';
--				vpd += 4;
--				len = vpd_len - 4;
--				if (len > out_len - 1) {
--					condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
--						__func__, out[0], len + 1, out_len);
--					len = out_len - 1;
--				}
--				for (i = 0; i < len; ++i)
--					out[1 + i] = tolower(vpd[i]);
--				out[len] = '\0';
--			} else {
-+			else
- 				out[0] = '8';
--				vpd += 4;
--				len = vpd_len - 4;
--				if (len > out_len - 1) {
--					condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
--						__func__, out[0], len + 1, out_len);
--					len = out_len - 1;
--				}
--				memcpy(out + 1, vpd, len);
--				out[len] = '\0';
+diff --git a/libmultipath/debug.c b/libmultipath/debug.c
+index cbf1e570..4128cb90 100644
+--- a/libmultipath/debug.c
++++ b/libmultipath/debug.c
+@@ -4,6 +4,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <stdarg.h>
++#include <string.h>
+ 
+ #include "log_pthread.h"
+ #include <sys/types.h>
+diff --git a/libmultipath/defaults.c b/libmultipath/defaults.c
+index c20bb0d2..082640d3 100644
+--- a/libmultipath/defaults.c
++++ b/libmultipath/defaults.c
+@@ -7,20 +7,3 @@
+ #include "memory.h"
+ 
+ const char * const default_partition_delim = DEFAULT_PARTITION_DELIM;
+-
+-char *
+-set_default (char * str)
+-{
+-	int len;
+-	char * p;
+-
+-	len = strlen(str);
+-	p = MALLOC(len + 1);
+-
+-	if (!p)
+-		return NULL;
+-
+-	strncat(p, str, len);
+-
+-	return p;
+-}
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index 65769398..83f89f37 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -1,3 +1,5 @@
++#ifndef _DEFAULTS_H
++#define _DEFAULTS_H
+ /*
+  * If you add or modify a value also update multipath/multipath.conf.5
+  * and the TEMPLATE in libmultipath/hwtable.c
+@@ -60,5 +62,10 @@
+ #define DEFAULT_CONFIG_DIR	"/etc/multipath/conf.d"
+ #define MULTIPATH_SHM_BASE	"/dev/shm/multipath/"
+ 
+-char * set_default (char * str);
 +
-+			vpd += 4;
-+			len = vpd_len - 4;
-+			if (len > out_len - 1) {
-+				condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
-+					__func__, out[0], len + 1, out_len);
-+				len = out_len - 1;
- 			}
-+
-+			if (out[0] == '8')
-+				for (i = 0; i < len; ++i)
-+					out[1 + i] = vpd[i];
-+			else
-+				for (i = 0; i < len; ++i)
-+					out[1 + i] = tolower(vpd[i]);
-+
-+			/* designator should be 0-terminated, but let's make sure */
-+			out[len] = '\0';
-+
- 		} else if (vpd_type == 0x1) {
- 			const unsigned char *p;
- 			int p_len;
++static inline char *set_default(char *str)
++{
++	return strdup(str);
++}
+ extern const char *const default_partition_delim;
++#endif /* _DEFAULTS_H */
 -- 
 2.21.0
