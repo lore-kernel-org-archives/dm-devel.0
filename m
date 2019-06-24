@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 27/30] libmultipath: fix memory leak with
-	"uid_attrs" config option
-Date: Mon, 24 Jun 2019 11:27:53 +0200
-Message-ID: <20190624092756.7769-29-mwilck@suse.com>
+Subject: [PATCH v2 29/30] libmultipath: more cautious
+	blacklisting by missing property
+Date: Mon, 24 Jun 2019 11:27:55 +0200
+Message-ID: <20190624092756.7769-31-mwilck@suse.com>
 References: <20190624092756.7769-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,338 +19,267 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Tang Junhui <tang.junhui@zte.com.cn>, Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-pp->uid_attribute is normally just a pointer to memory that belongs
-to the configuration. But if "uid_attrs" is used, it's a pointer
-to strdup()d memory returned by parse_uid_attribute_by_attrs().
-Consequently, this strdup()'d memory is never freed.
+If a tool likk sg_inq or scsi_id fails to access a device during uevent
+processing, the required properties for whitelisting a device may be
+missing. This causes the device to be blacklisted and permanently orphaned,
+which is not desired.
 
-Fix this by splitting the uid_attrs string when the configuration is
-read, and using just a refererence to this memory in pp->uid_attribute.
-A side effect is that this makes the code more efficient in both
-memory and CPU terms.
+Rather, blacklisting by missing properties is meant to ensure that the
+WWID determined from udev properties is _reliable_. Therefore, blacklist
+only devices that exhibit ID_SERIAL (or more generally, the configured
+uid_attribute), but do not have the required whitelist properties set. This
+will avoid the above-mentioned problem, because if failed device I/O was
+causing properties to be missing, ID_SERIAL will most likely also not be set.
 
-This requires a change for the uevents test, as uid_attrs must now be
-set up differently.
-
-Cc: Tang Junhui <tang.junhui@zte.com.cn>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.c  | 51 +++++++++++++++++++++++++++++++++++++++---
- libmultipath/config.h  |  6 ++++-
- libmultipath/dict.c    | 36 ++++++++++++++++++++++++++---
- libmultipath/propsel.c |  4 ++--
- libmultipath/uevent.c  |  5 ++---
- libmultipath/util.c    | 42 ----------------------------------
- libmultipath/util.h    |  1 -
- tests/globals.c        |  1 -
- tests/uevent.c         |  9 ++++++++
- 9 files changed, 99 insertions(+), 56 deletions(-)
+ libmultipath/blacklist.c   | 26 +++++++++++++++++++++++--
+ libmultipath/blacklist.h   |  2 +-
+ libmultipath/configure.c   |  6 +++---
+ libmultipath/discovery.c   |  2 +-
+ multipath/multipath.conf.5 |  8 ++++++++
+ tests/blacklist.c          | 39 +++++++++++++++++++++++++++++++++-----
+ 6 files changed, 71 insertions(+), 12 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 141f092b..20e3b8bf 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -585,8 +585,7 @@ free_config (struct config * conf)
- 	if (conf->uid_attribute)
- 		FREE(conf->uid_attribute);
- 
--	if (conf->uid_attrs)
--		FREE(conf->uid_attrs);
-+	vector_reset(&conf->uid_attrs);
- 
- 	if (conf->getuid)
- 		FREE(conf->getuid);
-@@ -718,7 +717,6 @@ load_config (char * file)
- 	conf->remove_retries = 0;
- 	conf->ghost_delay = DEFAULT_GHOST_DELAY;
- 	conf->all_tg_pt = DEFAULT_ALL_TG_PT;
--
- 	/*
- 	 * preload default hwtable
- 	 */
-@@ -853,3 +851,50 @@ out:
- 	free_config(conf);
- 	return NULL;
- }
-+
-+char *get_uid_attribute_by_attrs(struct config *conf,
-+				 const char *path_dev)
-+{
-+	vector uid_attrs = &conf->uid_attrs;
-+	int j;
-+	char *att, *col;
-+
-+	vector_foreach_slot(uid_attrs, att, j) {
-+		col = strrchr(att, ':');
-+		if (!col)
-+			continue;
-+		if (!strncmp(path_dev, att, col - att))
-+			return col + 1;
-+	}
-+	return NULL;
-+}
-+
-+int parse_uid_attrs(char *uid_attrs, struct config *conf)
-+{
-+	vector attrs  = &conf->uid_attrs;
-+	char *uid_attr_record, *tmp;
-+	int  ret = 0, count;
-+
-+	if (!uid_attrs)
-+		return 1;
-+
-+	count = get_word(uid_attrs, &uid_attr_record);
-+	while (uid_attr_record) {
-+		tmp = strchr(uid_attr_record, ':');
-+		if (!tmp) {
-+			condlog(2, "invalid record in uid_attrs: %s",
-+				uid_attr_record);
-+			free(uid_attr_record);
-+			ret = 1;
-+		} else if (!vector_alloc_slot(attrs)) {
-+			free(uid_attr_record);
-+			ret = 1;
-+		} else
-+			vector_set_slot(attrs, uid_attr_record);
-+		if (!count)
-+			break;
-+		uid_attrs += count;
-+		count = get_word(uid_attrs, &uid_attr_record);
-+	}
-+	return ret;
-+}
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index f5bf5b1b..ff2b4e86 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -190,7 +190,7 @@ struct config {
- 
- 	char * multipath_dir;
- 	char * selector;
--	char * uid_attrs;
-+	struct _vector uid_attrs;
- 	char * uid_attribute;
- 	char * getuid;
- 	char * features;
-@@ -250,4 +250,8 @@ void free_config (struct config * conf);
- extern struct config *get_multipath_config(void);
- extern void put_multipath_config(void *);
- 
-+int parse_uid_attrs(char *uid_attrs, struct config *conf);
-+char *get_uid_attribute_by_attrs(struct config *conf,
-+				 const char *path_dev);
-+
- #endif
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 96815f8a..c6eba0f6 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -374,8 +374,38 @@ declare_ovr_snprint(selector, print_str)
- declare_mp_handler(selector, set_str)
- declare_mp_snprint(selector, print_str)
- 
--declare_def_handler(uid_attrs, set_str)
--declare_def_snprint(uid_attrs, print_str)
-+static int snprint_uid_attrs(struct config *conf, char *buff, int len,
-+			     const void *dummy)
-+{
-+	char *p = buff;
-+	int n, j;
-+	const char *att;
-+
-+	vector_foreach_slot(&conf->uid_attrs, att, j) {
-+		n = snprintf(p, len, "%s%s", j == 0 ? "" : " ", att);
-+		if (n >= len)
-+			return (p - buff) + n;
-+		p += n;
-+		len -= n;
-+	}
-+	return p - buff;
-+}
-+
-+static int uid_attrs_handler(struct config *conf, vector strvec)
-+{
-+	char *val;
-+
-+	vector_reset(&conf->uid_attrs);
-+	val = set_value(strvec);
-+	if (!val)
-+		return 1;
-+	if (parse_uid_attrs(val, conf))
-+		condlog(1, "error parsing uid_attrs: \"%s\"", val);
-+	condlog(3, "parsed %d uid_attrs", VECTOR_SIZE(&conf->uid_attrs));
-+	FREE(val);
-+	return 0;
-+}
-+
- declare_def_handler(uid_attribute, set_str)
- declare_def_snprint_defstr(uid_attribute, print_str, DEFAULT_UID_ATTRIBUTE)
- declare_ovr_handler(uid_attribute, set_str)
-@@ -1618,7 +1648,7 @@ init_keywords(vector keywords)
- 	install_keyword("multipath_dir", &def_multipath_dir_handler, &snprint_def_multipath_dir);
- 	install_keyword("path_selector", &def_selector_handler, &snprint_def_selector);
- 	install_keyword("path_grouping_policy", &def_pgpolicy_handler, &snprint_def_pgpolicy);
--	install_keyword("uid_attrs", &def_uid_attrs_handler, &snprint_def_uid_attrs);
-+	install_keyword("uid_attrs", &uid_attrs_handler, &snprint_uid_attrs);
- 	install_keyword("uid_attribute", &def_uid_attribute_handler, &snprint_def_uid_attribute);
- 	install_keyword("getuid_callout", &def_getuid_handler, &snprint_def_getuid);
- 	install_keyword("prio", &def_prio_name_handler, &snprint_def_prio_name);
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index e6263e9b..6af2513d 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -536,9 +536,9 @@ int select_getuid(struct config *conf, struct path *pp)
+diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
+index e0d02794..00e8dbdb 100644
+--- a/libmultipath/blacklist.c
++++ b/libmultipath/blacklist.c
+@@ -366,7 +366,7 @@ filter_path (struct config * conf, struct path * pp)
  {
- 	const char *origin;
+ 	int r;
  
--	pp->uid_attribute = parse_uid_attribute_by_attrs(conf->uid_attrs, pp->dev);
-+	pp->uid_attribute = get_uid_attribute_by_attrs(conf, pp->dev);
- 	if (pp->uid_attribute) {
--		origin = "(setting: multipath.conf defaults section)";
-+		origin = "(setting: multipath.conf defaults section / uid_attrs)";
- 		goto out;
+-	r = filter_property(conf, pp->udev, 3);
++	r = filter_property(conf, pp->udev, 3, pp->uid_attribute);
+ 	if (r > 0)
+ 		return r;
+ 	r = filter_devnode(conf->blist_devnode, conf->elist_devnode, pp->dev);
+@@ -384,7 +384,8 @@ filter_path (struct config * conf, struct path * pp)
+ }
+ 
+ int
+-filter_property(struct config *conf, struct udev_device *udev, int lvl)
++filter_property(struct config *conf, struct udev_device *udev, int lvl,
++		const char *uid_attribute)
+ {
+ 	const char *devname = udev_device_get_sysname(udev);
+ 	struct udev_list_entry *list_entry;
+@@ -395,7 +396,21 @@ filter_property(struct config *conf, struct udev_device *udev, int lvl)
+ 		/*
+ 		 * This is the inverse of the 'normal' matching;
+ 		 * the environment variable _has_ to match.
++		 * But only if the uid_attribute used for determining the WWID
++		 * of the path is is present in the environment
++		 * (uid_attr_seen). If this is not the case, udev probably
++		 * just failed to access the device, which should not cause the
++		 * device to be blacklisted (it won't be used by multipath
++		 * anyway without WWID).
++		 * Likewise, if no uid attribute is defined, udev-based WWID
++		 * determination is effectively off, and devices shouldn't be
++		 * blacklisted by missing properties (check_missing_prop).
+ 		 */
++
++		bool check_missing_prop = uid_attribute != NULL &&
++			*uid_attribute != '\0';
++		bool uid_attr_seen = false;
++
+ 		r = MATCH_PROPERTY_BLIST_MISSING;
+ 		udev_list_entry_foreach(list_entry,
+ 				udev_device_get_properties_list_entry(udev)) {
+@@ -403,6 +418,10 @@ filter_property(struct config *conf, struct udev_device *udev, int lvl)
+ 			env = udev_list_entry_get_name(list_entry);
+ 			if (!env)
+ 				continue;
++
++			if (check_missing_prop && !strcmp(env, uid_attribute))
++				uid_attr_seen = true;
++
+ 			if (_blacklist_exceptions(conf->elist_property, env)) {
+ 				r = MATCH_PROPERTY_BLIST_EXCEPT;
+ 				break;
+@@ -413,6 +432,9 @@ filter_property(struct config *conf, struct udev_device *udev, int lvl)
+ 			}
+ 			env = NULL;
+ 		}
++		if (r == MATCH_PROPERTY_BLIST_MISSING &&
++		    (!check_missing_prop || !uid_attr_seen))
++			r = MATCH_NOTHING;
  	}
  
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index f73de8cc..8f7b2ef5 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -163,13 +163,12 @@ uevent_get_wwid(struct uevent *uev)
+ 	log_filter(devname, NULL, NULL, NULL, env, NULL, r, lvl);
+diff --git a/libmultipath/blacklist.h b/libmultipath/blacklist.h
+index 4c8ec99e..2d721f60 100644
+--- a/libmultipath/blacklist.h
++++ b/libmultipath/blacklist.h
+@@ -37,7 +37,7 @@ int filter_devnode (vector, vector, char *);
+ int filter_wwid (vector, vector, char *, char *);
+ int filter_device (vector, vector, char *, char *, char *);
+ int filter_path (struct config *, struct path *);
+-int filter_property(struct config *, struct udev_device *, int);
++int filter_property(struct config *, struct udev_device *, int, const char*);
+ int filter_protocol(vector, vector, struct path *);
+ int store_ble (vector, char *, int);
+ int set_ble_device (vector, char *, char *, int);
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index c8dd69b0..b09ef529 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -1369,7 +1369,7 @@ int get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
+ 		conf = get_multipath_config();
+ 		pthread_cleanup_push(put_multipath_config, conf);
+ 		if (pp->udev && pp->uid_attribute &&
+-		    filter_property(conf, pp->udev, 3) > 0)
++		    filter_property(conf, pp->udev, 3, pp->uid_attribute) > 0)
+ 			invalid = 1;
+ 		pthread_cleanup_pop(1);
+ 		if (invalid)
+@@ -1409,7 +1409,7 @@ int get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
+ 		conf = get_multipath_config();
+ 		pthread_cleanup_push(put_multipath_config, conf);
+ 		if (pp->udev && pp->uid_attribute &&
+-		    filter_property(conf, pp->udev, 3) > 0)
++		    filter_property(conf, pp->udev, 3, pp->uid_attribute) > 0)
+ 			invalid = 1;
+ 		pthread_cleanup_pop(1);
+ 		if (invalid)
+@@ -1438,7 +1438,7 @@ int get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
+ 		conf = get_multipath_config();
+ 		pthread_cleanup_push(put_multipath_config, conf);
+ 		if (pp->udev && pp->uid_attribute &&
+-		    filter_property(conf, pp->udev, 3) > 0)
++		    filter_property(conf, pp->udev, 3, pp->uid_attribute) > 0)
+ 			invalid = 1;
+ 		pthread_cleanup_pop(1);
+ 		if (invalid)
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 15f5cd4b..acca466c 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1945,7 +1945,7 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 			return PATHINFO_SKIPPED;
+ 		}
+ 		if (is_claimed_by_foreign(pp->udev) ||
+-		    filter_property(conf, pp->udev, 4) > 0)
++		    filter_property(conf, pp->udev, 4, pp->uid_attribute) > 0)
+ 			return PATHINFO_SKIPPED;
+ 	}
  
- 	conf = get_multipath_config();
- 	pthread_cleanup_push(put_multipath_config, conf);
--	uid_attribute = parse_uid_attribute_by_attrs(conf->uid_attrs, uev->kernel);
-+	uid_attribute = get_uid_attribute_by_attrs(conf, uev->kernel);
- 	pthread_cleanup_pop(1);
- 
- 	val = uevent_get_env_var(uev, uid_attribute);
- 	if (val)
- 		uev->wwid = val;
--	FREE(uid_attribute);
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 6f08980a..d5fe38ac 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -1241,6 +1241,14 @@ otherwise they're treated as blacklisted, and the message
+ .
+ .RS
+ .PP
++.B Note:
++The behavior of this option has changed in \fBmultipath-tools\fR 0.8.2
++compared to previous versions.
++Blacklisting by missing properties is only applied to devices which do have the
++property specified by \fIuid_attribute\fR (e.g. \fIID_SERIAL\fR)
++set. Previously, it was applied to every device, possibly causing devices to be
++blacklisted because of temporary I/O error conditions.
++.PP
+ The default \fIblacklist exception\fR is: \fB(SCSI_IDENT_|ID_WWN)\fR, causing
+ well-behaved SCSI devices and devices that provide a WWN (World Wide Number)
+ to be included, and all others to be excluded.
+diff --git a/tests/blacklist.c b/tests/blacklist.c
+index 54d568f5..362c44d9 100644
+--- a/tests/blacklist.c
++++ b/tests/blacklist.c
+@@ -267,7 +267,7 @@ static void test_property_blacklist(void **state)
+ 	static struct udev_device udev = { "sdb", { "ID_FOO", "ID_WWN", "ID_BAR", NULL } };
+ 	conf.blist_property = blist_property_wwn;
+ 	expect_condlog(3, "sdb: udev property ID_WWN blacklisted\n");
+-	assert_int_equal(filter_property(&conf, &udev, 3),
++	assert_int_equal(filter_property(&conf, &udev, 3, "ID_SERIAL"),
+ 			 MATCH_PROPERTY_BLIST);
  }
  
- bool
-@@ -179,7 +178,7 @@ uevent_need_merge(void)
- 	bool need_merge = false;
- 
- 	conf = get_multipath_config();
--	if (conf->uid_attrs)
-+	if (VECTOR_SIZE(&conf->uid_attrs) > 0)
- 		need_merge = true;
- 	put_multipath_config(conf);
- 
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index 8a4be787..28cbf4b9 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -273,48 +273,6 @@ dev_t parse_devt(const char *dev_t)
- 	return makedev(maj, min);
+@@ -281,17 +281,23 @@ static void test_property_whitelist(void **state)
+ 	static struct udev_device udev = { "sdb", { "ID_FOO", "ID_WWN", "ID_BAR", NULL } };
+ 	conf.elist_property = blist_property_wwn;
+ 	expect_condlog(3, "sdb: udev property ID_WWN whitelisted\n");
+-	assert_int_equal(filter_property(&conf, &udev, 3),
++	assert_int_equal(filter_property(&conf, &udev, 3, "ID_SERIAL"),
+ 			 MATCH_PROPERTY_BLIST_EXCEPT);
  }
  
--char *parse_uid_attribute_by_attrs(char *uid_attrs, char *path_dev)
--{
--	char *uid_attribute;
--	char *uid_attr_record;
--	char *dev;
--	char *attr;
--	char *tmp;
--	int  count;
--
--	if(!uid_attrs || !path_dev)
--		return NULL;
--
--	count = get_word(uid_attrs, &uid_attr_record);
--	while (uid_attr_record) {
--		tmp = strrchr(uid_attr_record, ':');
--		if (!tmp) {
--			free(uid_attr_record);
--			if (!count)
--				break;
--			uid_attrs += count;
--			count = get_word(uid_attrs, &uid_attr_record);
--			continue;
--		}
--		dev = uid_attr_record;
--		attr = tmp + 1;
--		*tmp = '\0';
--
--		if(!strncmp(path_dev, dev, strlen(dev))) {
--			uid_attribute = STRDUP(attr);
--			free(uid_attr_record);
--			return uid_attribute;
--		}
--
--		free(uid_attr_record);
--		if (!count)
--			break;
--		uid_attrs += count;
--		count = get_word(uid_attrs, &uid_attr_record);
--	}
--	return NULL;
--}
--
- void
- setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached)
+ static void test_property_missing(void **state)
  {
-diff --git a/libmultipath/util.h b/libmultipath/util.h
-index 1e0d832c..693991c1 100644
---- a/libmultipath/util.h
-+++ b/libmultipath/util.h
-@@ -15,7 +15,6 @@ size_t strlcat(char *dst, const char *src, size_t size);
- int devt2devname (char *, int, char *);
- dev_t parse_devt(const char *dev_t);
- char *convert_dev(char *dev, int is_path_device);
--char *parse_uid_attribute_by_attrs(char *uid_attrs, char *path_dev);
- void setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached);
- int systemd_service_enabled(const char *dev);
- int get_linux_version_code(void);
-diff --git a/tests/globals.c b/tests/globals.c
-index aeb7723f..8add5eb7 100644
---- a/tests/globals.c
-+++ b/tests/globals.c
-@@ -5,7 +5,6 @@
- struct udev *udev;
- int logsink = -1;
- struct config conf = {
--	.uid_attrs = "sd:ID_BOGUS",
- 	.verbosity = 4,
- };
- 
-diff --git a/tests/uevent.c b/tests/uevent.c
-index b0d0bfda..215d97ad 100644
---- a/tests/uevent.c
-+++ b/tests/uevent.c
-@@ -43,7 +43,11 @@ void uevent_get_wwid(struct uevent *uev);
- 
- static int setup_uev(void **state)
- {
-+	static char test_uid_attrs[] =
-+		"dasd:ID_SPAM   sd:ID_BOGUS nvme:ID_EGGS    ";
-+
- 	struct uevent *uev = alloc_uevent();
-+	struct config *conf;
- 
- 	if (uev == NULL)
- 		return -1;
-@@ -51,11 +55,16 @@ static int setup_uev(void **state)
- 	*state = uev;
- 	uev->kernel = "sdo";
- 	uev->envp[0] = "MAJOR=" str(MAJOR);
-+	uev->envp[1] = "ID_SPAM=nonsense";
- 	uev->envp[1] = "ID_BOGUS=" WWID;
- 	uev->envp[2] = "MINOR=" str(MINOR);
- 	uev->envp[3] = "DM_NAME=" DM_NAME;
- 	uev->envp[4] = "DISK_RO=" str(DISK_RO);
- 	uev->envp[5] = NULL;
-+
-+	conf = get_multipath_config();
-+	parse_uid_attrs(test_uid_attrs, conf);
-+	put_multipath_config(conf);
- 	return 0;
+-	static struct udev_device udev = { "sdb", { "ID_FOO", "ID_BAZ", "ID_BAR", NULL } };
++	static struct udev_device udev = { "sdb", { "ID_FOO", "ID_BAZ", "ID_BAR", "ID_SERIAL", NULL } };
+ 	conf.blist_property = blist_property_wwn;
+ 	expect_condlog(3, "sdb: blacklisted, udev property missing\n");
+-	assert_int_equal(filter_property(&conf, &udev, 3),
++	assert_int_equal(filter_property(&conf, &udev, 3, "ID_SERIAL"),
+ 			 MATCH_PROPERTY_BLIST_MISSING);
++	assert_int_equal(filter_property(&conf, &udev, 3, "ID_BLAH"),
++			 MATCH_NOTHING);
++	assert_int_equal(filter_property(&conf, &udev, 3, ""),
++			 MATCH_NOTHING);
++	assert_int_equal(filter_property(&conf, &udev, 3, NULL),
++			 MATCH_NOTHING);
  }
  
+ struct udev_device test_udev = { "sdb", { "ID_FOO", "ID_WWN", "ID_BAR", NULL } };
+@@ -347,16 +353,25 @@ static void test_filter_path_wwid(void **state)
+ 	assert_int_equal(filter_path(&conf, &test_pp), MATCH_WWID_BLIST);
+ }
+ 
+-struct udev_device miss_udev = { "sdb", { "ID_FOO", "ID_BAZ", "ID_BAR", NULL } };
++struct udev_device miss_udev = { "sdb", { "ID_FOO", "ID_BAZ", "ID_BAR", "ID_SERIAL", NULL } };
+ 
+ struct path miss1_pp = { .dev = "sdc", .bus = SYSFS_BUS_SCSI,
+ 			.udev = &miss_udev,
++			 .uid_attribute = "ID_SERIAL",
+ 			.sg_id.proto_id = SCSI_PROTOCOL_ISCSI,
+ 			.vendor_id = "foo", .product_id = "baz",
+ 			.wwid = "plugh" };
+ 
+ struct path miss2_pp = { .dev = "sdc", .bus = SYSFS_BUS_SCSI,
+ 			.udev = &test_udev,
++			 .uid_attribute = "ID_SERIAL",
++			.sg_id.proto_id = SCSI_PROTOCOL_ISCSI,
++			.vendor_id = "foo", .product_id = "baz",
++			.wwid = "plugh" };
++
++struct path miss3_pp = { .dev = "sdc", .bus = SYSFS_BUS_SCSI,
++			.udev = &miss_udev,
++			 .uid_attribute = "ID_EGGS",
+ 			.sg_id.proto_id = SCSI_PROTOCOL_ISCSI,
+ 			.vendor_id = "foo", .product_id = "baz",
+ 			.wwid = "plugh" };
+@@ -387,6 +402,19 @@ static void test_filter_path_missing2(void **state)
+ 			 MATCH_NOTHING);
+ }
+ 
++/* Here we use a different uid_attribute which is also missing, thus
++   the path is not blacklisted */
++static void test_filter_path_missing3(void **state)
++{
++	conf.blist_property = blist_property_wwn;
++	conf.blist_devnode = blist_devnode_sdb;
++	conf.blist_device = blist_device_foo_bar;
++	conf.blist_protocol = blist_protocol_fcp;
++	conf.blist_wwid = blist_wwid_xyzzy;
++	assert_int_equal(filter_path(&conf, &miss3_pp),
++			 MATCH_NOTHING);
++}
++
+ static void test_filter_path_whitelist(void **state)
+ {
+ 	conf.elist_property = blist_property_wwn;
+@@ -495,6 +523,7 @@ int test_blacklist(void)
+ 		test_and_reset(test_filter_path_wwid),
+ 		test_and_reset(test_filter_path_missing1),
+ 		test_and_reset(test_filter_path_missing2),
++		test_and_reset(test_filter_path_missing3),
+ 		test_and_reset(test_filter_path_whitelist),
+ 		test_and_reset(test_filter_path_whitelist_property),
+ 		test_and_reset(test_filter_path_whitelist_devnode),
 -- 
 2.21.0
