@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 18/30] libmultipath: fix parsing of SCSI name
-	string, iqn format
-Date: Mon, 24 Jun 2019 11:27:44 +0200
-Message-ID: <20190624092756.7769-20-mwilck@suse.com>
+Subject: [PATCH v2 23/30] libmultipath: parse_vpd_pg80: fix
+	overflow output
+Date: Mon, 24 Jun 2019 11:27:49 +0200
+Message-ID: <20190624092756.7769-25-mwilck@suse.com>
 References: <20190624092756.7769-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,30 +22,26 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.var
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Do not overwrite the leading '8'.
+"vpd pg80 overflow, 20/20 bytes required" looks weird. Make it clear
+that actually 21 bytes are required in this case.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ libmultipath/discovery.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 10306b22..45c2931e 100644
+index efcea468..931a676f 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1037,12 +1037,11 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
- 				}
- 			} else {
- 				out[0] = '8';
--				len = 1;
- 				vpd += 4;
- 				vpd_len -= 4;
- 				if (vpd_len > out_len - 2)
- 					vpd_len = out_len - 2;
--				memcpy(out, vpd, vpd_len);
-+				memcpy(out + 1, vpd, vpd_len);
- 				len = vpd_len + 1;
- 				out[len] = '\0';
- 			}
+@@ -912,7 +912,7 @@ parse_vpd_pg80(const unsigned char *in, char *out, size_t out_len)
+ 
+ 	if (len >= out_len) {
+ 		condlog(2, "vpd pg80 overflow, %d/%d bytes required",
+-			len, (int)out_len);
++			len + 1, (int)out_len);
+ 		len = out_len - 1;
+ 	}
+ 	if (len > 0) {
 -- 
 2.21.0
