@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 24/30] libmultipath: parse_vpd_pg80: fix
-	whitespace handling
-Date: Mon, 24 Jun 2019 11:27:50 +0200
-Message-ID: <20190624092756.7769-26-mwilck@suse.com>
+Subject: [PATCH v2 19/30] libmultipath: add consistent WWID
+	overflow logging in parse_vpd_pg83
+Date: Mon, 24 Jun 2019 11:27:45 +0200
+Message-ID: <20190624092756.7769-21-mwilck@suse.com>
 References: <20190624092756.7769-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,55 +22,85 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.var
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-According to the SPC spec, the unit serial number is right-aligned
-ASCII. Thus leading whitespace must be skipped. Moreover, trailing
-whitespace should be discarded before doing the length check.
-
-Fixes: 756ef73b7197 "Separate out vpd parsing functions"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 20 ++++++++++----------
- 1 file changed, 10 insertions(+), 10 deletions(-)
+ libmultipath/discovery.c | 49 ++++++++++++++++++++++++++--------------
+ 1 file changed, 32 insertions(+), 17 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 931a676f..b10afdef 100644
+index 45c2931e..e484ec8d 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -907,9 +907,18 @@ get_geometry(struct path *pp)
- static int
- parse_vpd_pg80(const unsigned char *in, char *out, size_t out_len)
- {
--	char *p = NULL;
- 	int len = get_unaligned_be16(&in[2]);
+@@ -1011,38 +1011,53 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ 		if (vpd_type == 0x2 || vpd_type == 0x3) {
+ 			int i;
  
-+	/*
-+	 * Strip leading and trailing whitespace
-+	 */
-+	while (len > 0 && in[len + 3] == ' ')
-+		--len;
-+	while (len > 0 && in[4] == ' ') {
-+		++in;
-+		--len;
-+	}
-+
- 	if (len >= out_len) {
- 		condlog(2, "vpd pg80 overflow, %d/%d bytes required",
- 			len + 1, (int)out_len);
-@@ -919,15 +928,6 @@ parse_vpd_pg80(const unsigned char *in, char *out, size_t out_len)
- 		memcpy(out, in + 4, len);
- 		out[len] = '\0';
- 	}
--	/*
--	 * Strip trailing whitspaces
--	 */
--	p = out + len - 1;
--	while (p > out && *p == ' ') {
--		*p = '\0';
--		p--;
--		len --;
--	}
- 	return len;
- }
- 
++			assert(out_len >= 2);
+ 			len = sprintf(out, "%d", vpd_type);
+-			for (i = 0; i < vpd_len && len < out_len - 2; i++) {
++			if (2 * vpd_len >= out_len - len) {
++				condlog(1, "%s: WWID overflow, type %d, %d/%lu bytes required",
++					__func__, vpd_type,
++					2 * vpd_len + len + 1, out_len);
++				vpd_len = (out_len - len - 1) / 2;
++			}
++			for (i = 0; i < vpd_len; i++)
+ 				len += sprintf(out + len,
+ 					       "%02x", vpd[i]);
+-			}
+ 		} else if (vpd_type == 0x8) {
+ 			if (!memcmp("eui.", vpd, 4)) {
+ 				out[0] =  '2';
+-				len = 1;
+ 				vpd += 4;
+-				vpd_len -= 4;
+-				for (i = 0; i < vpd_len && len < out_len - 1; i++) {
+-					len += sprintf(out + len, "%c",
+-						       tolower(vpd[i]));
++				len = vpd_len - 4;
++				if (len > out_len - 1) {
++					condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
++						__func__, out[0], len + 1, out_len);
++					len = out_len - 1;
+ 				}
++				for (i = 0; i < len; ++i)
++					out[1 + i] = tolower(vpd[i]);
++				/* designator should be 0-terminated, but let's make sure */
++				out[len] = '\0';
+ 			} else if (!memcmp("naa.", vpd, 4)) {
+ 				out[0] = '3';
+-				len = 1;
+ 				vpd += 4;
+-				vpd_len -= 4;
+-				for (i = 0; i < vpd_len && len < out_len - 1; i++) {
+-					len += sprintf(out + len, "%c",
+-						       tolower(vpd[i]));
++				len = vpd_len - 4;
++				if (len > out_len - 1) {
++					condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
++						__func__, out[0], len + 1, out_len);
++					len = out_len - 1;
+ 				}
++				for (i = 0; i < len; ++i)
++					out[1 + i] = tolower(vpd[i]);
++				out[len] = '\0';
+ 			} else {
+ 				out[0] = '8';
+ 				vpd += 4;
+-				vpd_len -= 4;
+-				if (vpd_len > out_len - 2)
+-					vpd_len = out_len - 2;
+-				memcpy(out + 1, vpd, vpd_len);
+-				len = vpd_len + 1;
++				len = vpd_len - 4;
++				if (len > out_len - 1) {
++					condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
++						__func__, out[0], len + 1, out_len);
++					len = out_len - 1;
++				}
++				memcpy(out + 1, vpd, len);
+ 				out[len] = '\0';
+ 			}
+ 		} else if (vpd_type == 0x1) {
 -- 
 2.21.0
