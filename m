@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 17/30] libmultipath: fix another WWID overflow
-	in parse_vpd_pg83()
-Date: Mon, 24 Jun 2019 11:27:43 +0200
-Message-ID: <20190624092756.7769-19-mwilck@suse.com>
+Subject: [PATCH v2 20/30] libmultipath: parse_vpd_pg83: common
+	code for SCSI string parsing
+Date: Mon, 24 Jun 2019 11:27:46 +0200
+Message-ID: <20190624092756.7769-22-mwilck@suse.com>
 References: <20190624092756.7769-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,26 +22,81 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.var
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This one is an obvious typo.
+The three cases for eui, naa, and iqn parsing share almost all code.
 
-Fixes: 18176202e75c "Read wwid from sysfs vpg_pg83 attribute"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/discovery.c | 54 ++++++++++++++++------------------------
+ 1 file changed, 21 insertions(+), 33 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index eed35284..10306b22 100644
+index e484ec8d..32e3f9d3 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1040,7 +1040,7 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
- 				len = 1;
- 				vpd += 4;
- 				vpd_len -= 4;
--				if (vpd_len > out_len + 2)
-+				if (vpd_len > out_len - 2)
- 					vpd_len = out_len - 2;
- 				memcpy(out, vpd, vpd_len);
- 				len = vpd_len + 1;
+@@ -1023,43 +1023,31 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ 				len += sprintf(out + len,
+ 					       "%02x", vpd[i]);
+ 		} else if (vpd_type == 0x8) {
+-			if (!memcmp("eui.", vpd, 4)) {
++			if (!memcmp("eui.", vpd, 4))
+ 				out[0] =  '2';
+-				vpd += 4;
+-				len = vpd_len - 4;
+-				if (len > out_len - 1) {
+-					condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
+-						__func__, out[0], len + 1, out_len);
+-					len = out_len - 1;
+-				}
+-				for (i = 0; i < len; ++i)
+-					out[1 + i] = tolower(vpd[i]);
+-				/* designator should be 0-terminated, but let's make sure */
+-				out[len] = '\0';
+-			} else if (!memcmp("naa.", vpd, 4)) {
++			else if (!memcmp("naa.", vpd, 4))
+ 				out[0] = '3';
+-				vpd += 4;
+-				len = vpd_len - 4;
+-				if (len > out_len - 1) {
+-					condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
+-						__func__, out[0], len + 1, out_len);
+-					len = out_len - 1;
+-				}
+-				for (i = 0; i < len; ++i)
+-					out[1 + i] = tolower(vpd[i]);
+-				out[len] = '\0';
+-			} else {
++			else
+ 				out[0] = '8';
+-				vpd += 4;
+-				len = vpd_len - 4;
+-				if (len > out_len - 1) {
+-					condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
+-						__func__, out[0], len + 1, out_len);
+-					len = out_len - 1;
+-				}
+-				memcpy(out + 1, vpd, len);
+-				out[len] = '\0';
++
++			vpd += 4;
++			len = vpd_len - 4;
++			if (len > out_len - 1) {
++				condlog(1, "%s: WWID overflow, type 8/%c, %d/%lu bytes required",
++					__func__, out[0], len + 1, out_len);
++				len = out_len - 1;
+ 			}
++
++			if (out[0] == '8')
++				for (i = 0; i < len; ++i)
++					out[1 + i] = vpd[i];
++			else
++				for (i = 0; i < len; ++i)
++					out[1 + i] = tolower(vpd[i]);
++
++			/* designator should be 0-terminated, but let's make sure */
++			out[len] = '\0';
++
+ 		} else if (vpd_type == 0x1) {
+ 			const unsigned char *p;
+ 			int p_len;
 -- 
 2.21.0
