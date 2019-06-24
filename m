@@ -1,12 +1,12 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 04/30] libmultipath: fix -Wstringop-overflow
-	warning in merge_words()
-Date: Mon, 24 Jun 2019 11:27:29 +0200
-Message-ID: <20190624092756.7769-5-mwilck@suse.com>
+Subject: [PATCH v2 17/30] libmultipath: fix another WWID overflow
+	in parse_vpd_pg83()
+Date: Mon, 24 Jun 2019 11:27:43 +0200
+Message-ID: <20190624092756.7769-19-mwilck@suse.com>
 References: <20190624092756.7769-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20190624092756.7769-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -22,33 +22,26 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.var
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Rml4ZXMgdGhlIGZvbGxvd2luZyB3YXJuaW5nIGZyb20gZ2NjIDk6CgpJbiBmaWxlIGluY2x1ZGVk
-IGZyb20gL3Vzci9pbmNsdWRlL3N0cmluZy5oOjQ5NCwKICAgICAgICAgICAgICAgICBmcm9tIGRt
-cGFyc2VyLmM6ODoKSW4gZnVuY3Rpb24g4oCYc3RybmNweeKAmSwKICAgIGlubGluZWQgZnJvbSDi
-gJhtZXJnZV93b3Jkc+KAmSBhdCBkbXBhcnNlci5jOjQxOjI6Ci91c3IvaW5jbHVkZS9iaXRzL3N0
-cmluZ19mb3J0aWZpZWQuaDoxMDY6MTA6IHdhcm5pbmc6IOKAmF9fYnVpbHRpbl9zdHJuY3B54oCZ
-CiAgICAgICAgICAgICAgICAgc3BlY2lmaWVkIGJvdW5kIGRlcGVuZHMgb24gdGhlIGxlbmd0aCBv
-ZiB0aGUgc291cmNlIGFyZ3VtZW50CiAgICAgICAgICAgICAgICAgWy1Xc3RyaW5nb3Atb3ZlcmZs
-b3c9XQogIDEwNiB8ICAgcmV0dXJuIF9fYnVpbHRpbl9fX3N0cm5jcHlfY2hrIChfX2Rlc3QsIF9f
-c3JjLCBfX2xlbiwgX19ib3MgKF9fZGVzdCkpOwogICAgICB8ICAgICAgICAgIF5+fn5+fn5+fn5+
-fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+CmRtcGFy
-c2VyLmM6IEluIGZ1bmN0aW9uIOKAmG1lcmdlX3dvcmRz4oCZOgpkbXBhcnNlci5jOjQxOjE5OiBu
-b3RlOiBsZW5ndGggY29tcHV0ZWQgaGVyZQogICA0MSB8ICBzdHJuY3B5KHAsIHdvcmQsIHN0cmxl
-bih3b3JkKSArIDEpOwogICAgICB8ICAgICAgICAgICAgICAgICAgIF5+fn5+fn5+fn5+fgoKU2ln
-bmVkLW9mZi1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+Ci0tLQogbGlibXVsdGlw
-YXRoL2RtcGFyc2VyLmMgfCAxNSArKysrKystLS0tLS0tLS0KIDEgZmlsZSBjaGFuZ2VkLCA2IGlu
-c2VydGlvbnMoKyksIDkgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2Rt
-cGFyc2VyLmMgYi9saWJtdWx0aXBhdGgvZG1wYXJzZXIuYwppbmRleCAwNGY2NzVjMS4uYThiMGI3
-MWEgMTAwNjQ0Ci0tLSBhL2xpYm11bHRpcGF0aC9kbXBhcnNlci5jCisrKyBiL2xpYm11bHRpcGF0
-aC9kbXBhcnNlci5jCkBAIC0yMSwyNCArMjEsMjEgQEAgc3RhdGljIGludAogbWVyZ2Vfd29yZHMo
-Y2hhciAqKmRzdCwgY2hhciAqd29yZCkKIHsKIAljaGFyICogcCA9ICpkc3Q7Ci0JaW50IGxlbjsK
-KwlpbnQgbGVuLCBkc3RsZW47CiAKLQlsZW4gPSBzdHJsZW4oKmRzdCkgKyBzdHJsZW4od29yZCkg
-KyAxOwotCSpkc3QgPSBSRUFMTE9DKCpkc3QsIGxlbiArIDEpOworCWRzdGxlbiA9IHN0cmxlbigq
-ZHN0KTsKKwlsZW4gPSBkc3RsZW4gKyBzdHJsZW4od29yZCkgKyAyOworCSpkc3QgPSBSRUFMTE9D
-KCpkc3QsIGxlbik7CiAKIAlpZiAoISpkc3QpIHsKIAkJZnJlZShwKTsKIAkJcmV0dXJuIDE7CiAJ
-fQogCi0JcCA9ICpkc3Q7Ci0KLQl3aGlsZSAoKnAgIT0gJ1wwJykKLQkJcCsrOwotCisJcCA9ICpk
-c3QgKyBkc3RsZW47CiAJKnAgPSAnICc7CiAJKytwOwotCXN0cm5jcHkocCwgd29yZCwgc3RybGVu
-KHdvcmQpICsgMSk7CisJc3RybmNweShwLCB3b3JkLCBsZW4gLSBkc3RsZW4gLSAxKTsKIAogCXJl
-dHVybiAwOwogfQotLSAKMi4yMS4wCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
-cmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
-ZWw=
+This one is an obvious typo.
+
+Fixes: 18176202e75c "Read wwid from sysfs vpg_pg83 attribute"
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/discovery.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index eed35284..10306b22 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1040,7 +1040,7 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ 				len = 1;
+ 				vpd += 4;
+ 				vpd_len -= 4;
+-				if (vpd_len > out_len + 2)
++				if (vpd_len > out_len - 2)
+ 					vpd_len = out_len - 2;
+ 				memcpy(out, vpd, vpd_len);
+ 				len = vpd_len + 1;
+-- 
+2.21.0
