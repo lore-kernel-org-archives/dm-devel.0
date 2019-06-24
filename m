@@ -1,12 +1,12 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 01/30] kpartx: dasd: fix
-	-Waddress-of-packed-member warning from gcc9
-Date: Mon, 24 Jun 2019 11:27:26 +0200
-Message-ID: <20190624092756.7769-2-mwilck@suse.com>
+Subject: [PATCH v2 03/30] libmultipath: remove 'space' argument
+	to merge_words()
+Date: Mon, 24 Jun 2019 11:27:28 +0200
+Message-ID: <20190624092756.7769-4-mwilck@suse.com>
 References: <20190624092756.7769-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20190624092756.7769-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -22,26 +22,74 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.var
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Rml4ZXMgdGhlIGZvbGxvd2luZyB3YXJuaW5nOgoKZGFzZC5jOiBJbiBmdW5jdGlvbiDigJhyZWFk
-X2Rhc2RfcHTigJk6CmRhc2QuYzoyMDY6Mzogd2FybmluZzogY29udmVydGluZyBhIHBhY2tlZCDi
-gJh2b2x1bWVfbGFiZWxfdOKAmSB7YWthIOKAmHN0cnVjdAp2b2x1bWVfbGFiZWzigJl9IHBvaW50
-ZXIgKGFsaWdubWVudCAxKSB0byBhIOKAmGxhYmVsX2ludHNfdOKAmSB7YWthIOKAmHVuc2lnbmVk
-IGludOKAmX0KcG9pbnRlciAoYWxpZ25tZW50IDQpIG1heSByZXN1bHQgaW4gYW4gdW5hbGlnbmVk
-IHBvaW50ZXIgdmFsdWUKWy1XYWRkcmVzcy1vZi1wYWNrZWQtbWVtYmVyXQogIDIwNiB8ICAgbGFi
-ZWxfaW50c190ICpsYWJlbCA9IChsYWJlbF9pbnRzX3QgKikgJnZsYWJlbDsKICAgICAgfCAgIF5+
-fn5+fn5+fn5+fgoKQXMgdm9sdW1lX2xhYmVsX3QgaXMgb25seSB1c2VkIGluIHJlYWRfZGFzZF9w
-dCgpLCBhbmQgZmlsbGVkIHdpdGggbWVtY3B5KCksCmluY3JlYXNpbmcgaXRzIGFsaWdubWVudCBz
-aG91bGQgYmUgc2FmZS4KClNpZ25lZC1vZmYtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2Uu
-Y29tPgotLS0KIGtwYXJ0eC9kYXNkLmggfCAyICstCiAxIGZpbGUgY2hhbmdlZCwgMSBpbnNlcnRp
-b24oKyksIDEgZGVsZXRpb24oLSkKCmRpZmYgLS1naXQgYS9rcGFydHgvZGFzZC5oIGIva3BhcnR4
-L2Rhc2QuaAppbmRleCA3NDlhZjQ5YS4uOGFkNWQ2MjAgMTAwNjQ0Ci0tLSBhL2twYXJ0eC9kYXNk
-LmgKKysrIGIva3BhcnR4L2Rhc2QuaApAQCAtNjgsNyArNjgsNyBAQCB0eXBlZGVmIHN0cnVjdCB2
-b2x1bWVfbGFiZWwKIAljaGFyIHJlczNbMjhdOwkgICAgICAgIC8qIHJlc2VydmVkICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICovCiAJdWludDhfdCBsZGxfdmVyc2lvbjsgICAgLyog
-dmVyc2lvbiBudW1iZXIsIHZhbGlkIGZvciBsZGwgZm9ybWF0ICAgICAgKi8KIAl1aW50NjRfdCBm
-b3JtYXR0ZWRfYmxvY2tzOyAvKiB2YWxpZCB3aGVuIGxkbF92ZXJzaW9uID49IGYyICAgICAgICAg
-ICAqLwotfSBfX2F0dHJpYnV0ZV9fICgocGFja2VkKSkgdm9sdW1lX2xhYmVsX3Q7Cit9IF9fYXR0
-cmlidXRlX18gKChwYWNrZWQsIGFsaWduZWQoX19hbGlnbm9mX18oaW50KSkpKSB2b2x1bWVfbGFi
-ZWxfdDsKIAogCiB0eXBlZGVmIHN0cnVjdCBleHRlbnQKLS0gCjIuMjEuMAoKLS0KZG0tZGV2ZWwg
-bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
-YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+merge_words() is always called with space = 1. Remove the argument.
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/dmparser.c | 18 +++++++-----------
+ 1 file changed, 7 insertions(+), 11 deletions(-)
+
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index ac13ec06..04f675c1 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -18,12 +18,12 @@
+ #define WORD_SIZE 64
+ 
+ static int
+-merge_words (char ** dst, char * word, int space)
++merge_words(char **dst, char *word)
+ {
+ 	char * p = *dst;
+ 	int len;
+ 
+-	len = strlen(*dst) + strlen(word) + space;
++	len = strlen(*dst) + strlen(word) + 1;
+ 	*dst = REALLOC(*dst, len + 1);
+ 
+ 	if (!*dst) {
+@@ -36,11 +36,8 @@ merge_words (char ** dst, char * word, int space)
+ 	while (*p != '\0')
+ 		p++;
+ 
+-	while (space) {
+-		*p = ' ';
+-		p++;
+-		space--;
+-	}
++	*p = ' ';
++	++p;
+ 	strncpy(p, word, strlen(word) + 1);
+ 
+ 	return 0;
+@@ -163,7 +160,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+ 		if (!word)
+ 			return 1;
+ 
+-		if (merge_words(&mpp->features, word, 1)) {
++		if (merge_words(&mpp->features, word)) {
+ 			FREE(word);
+ 			return 1;
+ 		}
+@@ -187,7 +184,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+ 		if (!word)
+ 			return 1;
+ 
+-		if (merge_words(&mpp->hwhandler, word, 1)) {
++		if (merge_words(&mpp->hwhandler, word)) {
+ 			FREE(word);
+ 			return 1;
+ 		}
+@@ -248,9 +245,8 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+ 
+ 			num_pg_args = atoi(word);
+ 
+-			if (merge_words(&mpp->selector, word, 1)) {
++			if (merge_words(&mpp->selector, word))
+ 				goto out1;
+-			}
+ 			FREE(word);
+ 		} else {
+ 			p += get_word(p, NULL);
+-- 
+2.21.0
