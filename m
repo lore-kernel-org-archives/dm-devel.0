@@ -1,16 +1,15 @@
 From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH v4 0/6] crypto: switch to crypto API for
-	ESSIV generation
-Date: Mon, 24 Jun 2019 08:52:11 +0200
-Message-ID: <5ebd992b-cb01-6dcc-f571-55afbb05c03b@gmail.com>
+Subject: Re: [PATCH v4 4/6] md: dm-crypt: switch to ESSIV crypto
+	API template
+Date: Mon, 24 Jun 2019 09:05:30 +0200
+Message-ID: <af75aefc-438b-9e31-b922-c847879d9dd9@gmail.com>
 References: <20190621080918.22809-1-ard.biesheuvel@arm.com>
-	<CAKv+Gu-ZO9Fnfx06XYJ-tp+6nrk0D8TBGa2chmxFW-kjPMmLCw@mail.gmail.com>
-	<20190623101241.6cr4sbxyviigu3sz@gondor.apana.org.au>
+	<20190621080918.22809-5-ard.biesheuvel@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190623101241.6cr4sbxyviigu3sz@gondor.apana.org.au>
+In-Reply-To: <20190621080918.22809-5-ard.biesheuvel@arm.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -21,33 +20,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Herbert Xu <herbert@gondor.apana.org.au>, Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Cc: Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, linux-fscrypt@vger.kernel.org, linux-crypto@vger.kernel.org, Eric Biggers <ebiggers@google.com>
+To: ard.biesheuvel@linaro.org, linux-crypto@vger.kernel.org
+Cc: Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, linux-fscrypt@vger.kernel.org, Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>
 List-Id: dm-devel.ids
 
-On 23/06/2019 12:12, Herbert Xu wrote:
-> On Sun, Jun 23, 2019 at 11:30:41AM +0200, Ard Biesheuvel wrote:
->>
->> So with that in mind, I think we should decouple the multi-sector
->> discussion and leave it for a followup series, preferably proposed by
->> someone who also has access to some hardware to prototype it on.
+On 21/06/2019 10:09, Ard Biesheuvel wrote:
+> From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 > 
-> Yes that makes sense.
+> Replace the explicit ESSIV handling in the dm-crypt driver with calls
+> into the crypto API, which now possesses the capability to perform
+> this processing within the crypto subsystem.
 
-Yes.
+I tried a few crazy dm-crypt configurations and was not able to crash it this time :-)
 
-And TBH, the most important optimization for dm-crypt in this case
-is processing 8 512-bytes sectors in 4k encryption block (because page
-cache will generate page-sized bios) and with XTS mode and linear IV (plain64),
-not ESSIV.
+So, it definitely need some more testing, but for now, I think it works.
 
-Dm-crypt can use 4k sectors directly, there are only two
-blockers - you need LUKS2 to support it, and many devices
-just do not advertise physical 4k sectors (many SSDs).
-So switching to 4k could cause some problems with partial 4k writes
-(after a crash or power-fail).
+Few comments below for this part:
 
-The plan for the dm-crypt side is more to focus on using 4k native
-sectors than this micro-optimization in HW.
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
 
+>  static const struct crypt_iv_operations crypt_iv_benbi_ops = {
+>  	.ctr	   = crypt_iv_benbi_ctr,
+>  	.dtr	   = crypt_iv_benbi_dtr,
+> @@ -2283,7 +2112,7 @@ static int crypt_ctr_ivmode(struct dm_target *ti, const char *ivmode)
+>  	else if (strcmp(ivmode, "plain64be") == 0)
+>  		cc->iv_gen_ops = &crypt_iv_plain64be_ops;
+>  	else if (strcmp(ivmode, "essiv") == 0)
+> -		cc->iv_gen_ops = &crypt_iv_essiv_ops;
+> +		cc->iv_gen_ops = &crypt_iv_plain64_ops;
+
+This is quite misleading - it looks like you are switching to plain64 here.
+The reality is that it uses plain64 to feed the ESSIV wrapper.
+
+So either it need some comment to explain it here, or just keep simple essiv_iv_ops
+and duplicate that plain64 generator (it is 2 lines of code).
+
+For the clarity, I would prefer the second variant (duplicate ops) here.
+
+> @@ -2515,8 +2357,18 @@ static int crypt_ctr_cipher_old(struct dm_target *ti, char *cipher_in, char *key
+>  	if (!cipher_api)
+>  		goto bad_mem;
+>  
+> -	ret = snprintf(cipher_api, CRYPTO_MAX_ALG_NAME,
+> -		       "%s(%s)", chainmode, cipher);
+> +	if (*ivmode && !strcmp(*ivmode, "essiv")) {
+> +		if (!*ivopts) {
+> +			ti->error = "Digest algorithm missing for ESSIV mode";
+> +			return -EINVAL;
+> +		}
+> +		ret = snprintf(cipher_api, CRYPTO_MAX_ALG_NAME,
+> +			       "essiv(%s(%s),%s,%s)", chainmode, cipher,
+> +			       cipher, *ivopts);
+
+This becomes quite long string already (limit is now 128 bytes), we should probably
+check also for too long string. It will perhaps fail later, but I would better add
+
+	if (ret < 0 || ret >= CRYPTO_MAX_ALG_NAME) {
+	...
+
+> +	} else {
+> +		ret = snprintf(cipher_api, CRYPTO_MAX_ALG_NAME,
+> +			       "%s(%s)", chainmode, cipher);
+> +	}
+>  	if (ret < 0) {
+>  		kfree(cipher_api);
+>  		goto bad_mem;
+> 
+
+Thanks,
 Milan
