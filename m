@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 25/30] libmultipath: get_uid: straighten the
-	fallback logic
-Date: Mon, 24 Jun 2019 11:27:51 +0200
-Message-ID: <20190624092756.7769-27-mwilck@suse.com>
+Subject: [PATCH v2 28/30] multipath-tools tests: add test for
+	uid_attrs parsing
+Date: Mon, 24 Jun 2019 11:27:54 +0200
+Message-ID: <20190624092756.7769-30-mwilck@suse.com>
 References: <20190624092756.7769-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,52 +22,46 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.var
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The code had two distinct fallback paths, with non-obvious logic.
-Try to straighten it out. The "allow_fallback" logic from
-ffaf9477d115 "multipathd: Don't use fallback code after getting wwid"
-should only apply in the case where get_udev_uid() failed, not
-if it wasn't even tried. Moreover, uid_attribute is hardly ever NULL
-since ffaf9477; allow the user to set it to the empty string to
-skip udev-based WWID determination. This is rather not meant for
-production, but it's useful for testing. Finally, only set "origin"
-to "udev" if a WWID was actually retrieved from udev.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ tests/uevent.c | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index b10afdef..d7eaee68 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1876,20 +1876,20 @@ get_uid (struct path * pp, int path_state, struct udev_device *udev,
- 			len = strlen(pp->wwid);
- 		origin = "callout";
- 	} else {
-+		bool udev_available = udev && pp->uid_attribute
-+			&& *pp->uid_attribute;
+diff --git a/tests/uevent.c b/tests/uevent.c
+index 215d97ad..f4afd9b4 100644
+--- a/tests/uevent.c
++++ b/tests/uevent.c
+@@ -95,6 +95,23 @@ static void test_ro_good(void **state)
+ 	assert_int_equal(uevent_get_disk_ro(uev), DISK_RO);
+ }
  
--		if (udev && pp->uid_attribute) {
-+		if (udev_available) {
- 			len = get_udev_uid(pp, pp->uid_attribute, udev);
--			origin = "udev";
- 			if (len <= 0)
- 				condlog(1,
- 					"%s: failed to get udev uid: %s",
- 					pp->dev, strerror(-len));
--
--		} else if (pp->bus == SYSFS_BUS_SCSI) {
--			len = get_vpd_uid(pp);
--			origin = "sysfs";
-+			else
-+				origin = "udev";
- 		}
--		if (len <= 0 && allow_fallback && has_uid_fallback(pp)) {
-+		if ((!udev_available || (len <= 0 && allow_fallback))
-+		    && has_uid_fallback(pp)) {
- 			used_fallback = 1;
- 			len = uid_fallback(pp, path_state, &origin);
- 		}
++static void test_uid_attrs(void **state)
++{
++	/* see test_uid_attrs above */
++	struct config *conf = get_multipath_config();
++	vector attrs = &conf->uid_attrs;
++
++	assert_int_equal(VECTOR_SIZE(attrs), 3);
++	assert_null(get_uid_attribute_by_attrs(conf, "hda"));
++	assert_string_equal("ID_BOGUS",
++			    get_uid_attribute_by_attrs(conf, "sdaw"));
++	assert_string_equal("ID_SPAM",
++			    get_uid_attribute_by_attrs(conf, "dasdu"));
++	assert_string_equal("ID_EGGS",
++			    get_uid_attribute_by_attrs(conf, "nvme2n4"));
++	put_multipath_config(conf);
++}
++
+ static void test_wwid(void **state)
+ {
+ 	struct uevent *uev = *state;
+@@ -280,6 +297,7 @@ int test_uevent_get_XXX(void)
+ 		cmocka_unit_test(test_minor_good),
+ 		cmocka_unit_test(test_ro_good),
+ 		cmocka_unit_test(test_dm_name_good),
++		cmocka_unit_test(test_uid_attrs),
+ 		cmocka_unit_test(test_wwid),
+ 		cmocka_unit_test(test_major_bad_0),
+ 		cmocka_unit_test(test_major_bad_1),
 -- 
 2.21.0
