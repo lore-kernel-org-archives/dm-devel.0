@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 26/30] libmultipath: fix has_uid_fallback()
-	logic
-Date: Mon, 24 Jun 2019 11:27:52 +0200
-Message-ID: <20190624092756.7769-28-mwilck@suse.com>
+Subject: [PATCH v2 25/30] libmultipath: get_uid: straighten the
+	fallback logic
+Date: Mon, 24 Jun 2019 11:27:51 +0200
+Message-ID: <20190624092756.7769-27-mwilck@suse.com>
 References: <20190624092756.7769-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,99 +22,52 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.var
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The idea of 061daf40 "Do not automatically fall back to vpd uid
-generation" applies not only to SCSI. Use the same logic for NVMe.
-Allow fallback in two cases:
- - uid_attribute has the default value for the bus in question
- - uid_attribute has been set to "" to disable udev-based WWID checking
-As uid_fallback() has only one caller, no need to check the conditions
-there again.
+The code had two distinct fallback paths, with non-obvious logic.
+Try to straighten it out. The "allow_fallback" logic from
+ffaf9477d115 "multipathd: Don't use fallback code after getting wwid"
+should only apply in the case where get_udev_uid() failed, not
+if it wasn't even tried. Moreover, uid_attribute is hardly ever NULL
+since ffaf9477; allow the user to set it to the empty string to
+skip udev-based WWID determination. This is rather not meant for
+production, but it's useful for testing. Finally, only set "origin"
+to "udev" if a WWID was actually retrieved from udev.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/defaults.h  |  1 +
- libmultipath/discovery.c | 20 +++++++++++++++-----
- libmultipath/hwtable.c   |  2 +-
- tests/hwtable.c          |  2 +-
- 4 files changed, 18 insertions(+), 7 deletions(-)
+ libmultipath/discovery.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index 83f89f37..decc9335 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -5,6 +5,7 @@
-  * and the TEMPLATE in libmultipath/hwtable.c
-  */
- #define DEFAULT_UID_ATTRIBUTE	"ID_SERIAL"
-+#define DEFAULT_NVME_UID_ATTRIBUTE	"ID_WWN"
- #define DEFAULT_UDEVDIR		"/dev"
- #define DEFAULT_MULTIPATHDIR	"/" LIB_STRING "/multipath"
- #define DEFAULT_SELECTOR	"service-time 0"
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index d7eaee68..15f5cd4b 100644
+index b10afdef..d7eaee68 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1802,8 +1802,7 @@ static ssize_t uid_fallback(struct path *pp, int path_state,
- {
- 	ssize_t len = -1;
+@@ -1876,20 +1876,20 @@ get_uid (struct path * pp, int path_state, struct udev_device *udev,
+ 			len = strlen(pp->wwid);
+ 		origin = "callout";
+ 	} else {
++		bool udev_available = udev && pp->uid_attribute
++			&& *pp->uid_attribute;
  
--	if (pp->bus == SYSFS_BUS_SCSI &&
--	    !strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE)) {
-+	if (pp->bus == SYSFS_BUS_SCSI) {
- 		len = get_vpd_uid(pp);
- 		*origin = "sysfs";
- 		if (len < 0 && path_state == PATH_UP) {
-@@ -1833,11 +1832,22 @@ static ssize_t uid_fallback(struct path *pp, int path_state,
- 	return len;
- }
- 
--static int has_uid_fallback(struct path *pp)
-+static bool has_uid_fallback(struct path *pp)
- {
-+	/*
-+	 * Falling back to direct WWID determination is dangerous
-+	 * if uid_attribute is set to something non-standard.
-+	 * Allow it only if it's either the default, or if udev
-+	 * has been disabled by setting 'uid_attribute ""'.
-+	 */
-+	if (!pp->uid_attribute)
-+		return false;
- 	return ((pp->bus == SYSFS_BUS_SCSI &&
--		 !strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE)) ||
--		pp->bus == SYSFS_BUS_NVME);
-+		 (!strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE) ||
-+		  !strcmp(pp->uid_attribute, ""))) ||
-+		(pp->bus == SYSFS_BUS_NVME &&
-+		 (!strcmp(pp->uid_attribute, DEFAULT_NVME_UID_ATTRIBUTE) ||
-+		  !strcmp(pp->uid_attribute, ""))));
- }
- 
- int
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 1d964333..46caaf91 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -88,7 +88,7 @@ static struct hwentry default_hw[] = {
- 		/* Generic NVMe */
- 		.vendor        = "NVME",
- 		.product       = ".*",
--		.uid_attribute = "ID_WWN",
-+		.uid_attribute = DEFAULT_NVME_UID_ATTRIBUTE,
- 		.checker_name  = NONE,
- 		.retain_hwhandler = RETAIN_HWHANDLER_OFF,
- 	},
-diff --git a/tests/hwtable.c b/tests/hwtable.c
-index f436f52d..977a5663 100644
---- a/tests/hwtable.c
-+++ b/tests/hwtable.c
-@@ -571,7 +571,7 @@ static void test_internal_nvme(const struct hwt_state *hwt)
- 	mp = mock_multipath(pp);
- 	assert_ptr_not_equal(mp, NULL);
- 	TEST_PROP(checker_name(&pp->checker), NONE);
--	TEST_PROP(pp->uid_attribute, "ID_WWN");
-+	TEST_PROP(pp->uid_attribute, DEFAULT_NVME_UID_ATTRIBUTE);
- 	assert_int_equal(mp->pgpolicy, DEFAULT_PGPOLICY);
- 	assert_int_equal(mp->no_path_retry, DEFAULT_NO_PATH_RETRY);
- 	assert_int_equal(mp->retain_hwhandler, RETAIN_HWHANDLER_OFF);
+-		if (udev && pp->uid_attribute) {
++		if (udev_available) {
+ 			len = get_udev_uid(pp, pp->uid_attribute, udev);
+-			origin = "udev";
+ 			if (len <= 0)
+ 				condlog(1,
+ 					"%s: failed to get udev uid: %s",
+ 					pp->dev, strerror(-len));
+-
+-		} else if (pp->bus == SYSFS_BUS_SCSI) {
+-			len = get_vpd_uid(pp);
+-			origin = "sysfs";
++			else
++				origin = "udev";
+ 		}
+-		if (len <= 0 && allow_fallback && has_uid_fallback(pp)) {
++		if ((!udev_available || (len <= 0 && allow_fallback))
++		    && has_uid_fallback(pp)) {
+ 			used_fallback = 1;
+ 			len = uid_fallback(pp, path_state, &origin);
+ 		}
 -- 
 2.21.0
