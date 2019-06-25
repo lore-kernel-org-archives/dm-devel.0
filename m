@@ -1,107 +1,62 @@
-From: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
-Subject: Re: [PATCH 1/4] block: add zone open, close and finish support
-Date: Mon, 24 Jun 2019 22:27:55 +0000
-Message-ID: <BYAPR04MB5749CEFBB45EA34BD3345CD686E00@BYAPR04MB5749.namprd04.prod.outlook.com>
-References: <20190621130711.21986-1-mb@lightnvm.io>
- <20190621130711.21986-2-mb@lightnvm.io>
- <ee5764fb-473a-f118-eaac-95478d885f6f@acm.org>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [RFC][PATCH] wake_up_var() memory ordering
+Date: Tue, 25 Jun 2019 08:51:01 +0100
+Message-ID: <32379.1561449061@warthog.procyon.org.uk>
+References: <20190624165012.GH3436@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Bart Van Assche <bvanassche@acm.org>, =?iso-8859-1?Q?Matias_Bj=F8rling?= <mb@lightnvm.io>, "axboe@fb.com" <axboe@fb.com>, "hch@lst.de" <hch@lst.de>, Damien Le Moal <Damien.LeMoal@wdc.com>, Dmitry Fomichev <Dmitry.Fomichev@wdc.com>, Ajay Joshi <Ajay.Joshi@wdc.com>, Aravind Ramesh <Aravind.Ramesh@wdc.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "James.Bottomley@HansenPartnership.com" <James.Bottomley@HansenPartnership.com>, "agk@redhat.com" <agk@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Matias Bjorling <Matias.Bjorling@wdc.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <20190624165012.GH3436@hirez.programming.kicks-ass.net>
+Content-ID: <32378.1561449061.1@warthog.procyon.org.uk>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Martin Brandenburg <martin@omnibond.com>, linux-cachefs@redhat.com, Mike Snitzer <snitzer@redhat.com>, linux-aio@kvack.org, David Airlie <airlied@linux.ie>, samba-technical@lists.samba.org, Will Deacon <will.deacon@arm.com>, dri-devel@lists.freedesktop.org, dhowells@redhat.com, Chris Mason <clm@fb.com>, dm-devel@redhat.com, keyrings@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, linux-afs@lists.infradead.org, Alasdair Kergon <agk@redhat.com>, Mike Marshall <hubcap@omnibond.com>, linux-cifs@vger.kernel.org, rds-devel@oss.oracle.com, Andreas Gruenbacher <agruenba@redhat.com>, linux-rdma@vger.kernel.org, James Morris <jmorris@namei.org>, cluster-devel@redhat.com, Matthias Brugger <matthias.bgg@gmail.com>, Paul McKenney <paulmck@linux.vnet.ibm.com>, intel-gfx@lists.freedesktop.org, devel@lists.orangefs.org, "Serge E. Hallyn" <serge@hallyn.com>, Santosh Shilimkar <santosh.s>
 List-Id: dm-devel.ids
 
-On 6/24/19 12:43 PM, Bart Van Assche wrote:=0A=
-> On 6/21/19 6:07 AM, Matias Bj=F8rling wrote:=0A=
->> diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h=0A=
->> index 95202f80676c..067ef9242275 100644=0A=
->> --- a/include/linux/blk_types.h=0A=
->> +++ b/include/linux/blk_types.h=0A=
->> @@ -284,13 +284,20 @@ enum req_opf {=0A=
->>    	REQ_OP_DISCARD		=3D 3,=0A=
->>    	/* securely erase sectors */=0A=
->>    	REQ_OP_SECURE_ERASE	=3D 5,=0A=
->> -	/* reset a zone write pointer */=0A=
->> -	REQ_OP_ZONE_RESET	=3D 6,=0A=
->>    	/* write the same sector many times */=0A=
->>    	REQ_OP_WRITE_SAME	=3D 7,=0A=
->>    	/* write the zero filled sector many times */=0A=
->>    	REQ_OP_WRITE_ZEROES	=3D 9,=0A=
->>    =0A=
->> +	/* reset a zone write pointer */=0A=
->> +	REQ_OP_ZONE_RESET	=3D 16,=0A=
->> +	/* Open zone(s) */=0A=
->> +	REQ_OP_ZONE_OPEN	=3D 17,=0A=
->> +	/* Close zone(s) */=0A=
->> +	REQ_OP_ZONE_CLOSE	=3D 18,=0A=
->> +	/* Finish zone(s) */=0A=
->> +	REQ_OP_ZONE_FINISH	=3D 19,=0A=
->> +=0A=
->>    	/* SCSI passthrough using struct scsi_request */=0A=
->>    	REQ_OP_SCSI_IN		=3D 32,=0A=
->>    	REQ_OP_SCSI_OUT		=3D 33,=0A=
->> @@ -375,6 +382,22 @@ static inline void bio_set_op_attrs(struct bio *bio=
-, unsigned op,=0A=
->>    	bio->bi_opf =3D op | op_flags;=0A=
->>    }=0A=
-> =0A=
-> Are the new operation types ever passed to op_is_write()? The definition=
-=0A=
-> of that function is as follows:=0A=
-> =0A=
-May be we should change numbering since blktrace also relies on the =0A=
-having on_is_write() without looking at the rq_ops().=0A=
-=0A=
-197  * Data direction bit lookup=0A=
-  198  */=0A=
-  199 static const u32 ddir_act[2] =3D { BLK_TC_ACT(BLK_TC_READ),=0A=
-  200                                  BLK_TC_ACT(BLK_TC_WRITE) };  <----=
-=0A=
-  201=0A=
-  202 #define BLK_TC_RAHEAD           BLK_TC_AHEAD=0A=
-  203 #define BLK_TC_PREFLUSH         BLK_TC_FLUSH=0A=
-  204=0A=
-  205 /* The ilog2() calls fall out because they're constant */=0A=
-  206 #define MASK_TC_BIT(rw, __name) ((rw & REQ_ ## __name) << \=0A=
-  207           (ilog2(BLK_TC_ ## __name) + BLK_TC_SHIFT - __REQ_ ## =0A=
-__name))=0A=
-  208=0A=
-  209 /*=0A=
-  210  * The worker for the various blk_add_trace*() types. Fills out a=0A=
-  211  * blk_io_trace structure and places it in a per-cpu subbuffer.=0A=
-  212  */=0A=
-  213 static void __blk_add_trace(struct blk_trace *bt, sector_t sector, =
-=0A=
-int bytes,=0A=
-  214                      int op, int op_flags, u32 what, int error, =0A=
-int pdu_len,=0A=
-  215                      void *pdu_data, union kernfs_node_id *cgid)=0A=
-  216 {=0A=
-  217         struct task_struct *tsk =3D current;=0A=
-  218         struct ring_buffer_event *event =3D NULL;=0A=
-  219         struct ring_buffer *buffer =3D NULL;=0A=
-  220         struct blk_io_trace *t;=0A=
-  221         unsigned long flags =3D 0;=0A=
-  222         unsigned long *sequence;=0A=
-  223         pid_t pid;=0A=
-  224         int cpu, pc =3D 0;=0A=
-  225         bool blk_tracer =3D blk_tracer_enabled;=0A=
-  226         ssize_t cgid_len =3D cgid ? sizeof(*cgid) : 0;=0A=
-  227=0A=
-  228         if (unlikely(bt->trace_state !=3D Blktrace_running && =0A=
-!blk_tracer))=0A=
-  229                 return;=0A=
-  230=0A=
-  231         what |=3D ddir_act[op_is_write(op) ? WRITE : READ];  <--- =0A=
-=0A=
-=0A=
-> static inline bool op_is_write(unsigned int op)=0A=
-> {=0A=
-> 	return (op & 1);=0A=
-> }=0A=
-> =0A=
-=0A=
+UGV0ZXIgWmlqbHN0cmEgPHBldGVyekBpbmZyYWRlYWQub3JnPiB3cm90ZToKCj4gSSB0cmllZCB1
+c2luZyB3YWtlX3VwX3ZhcigpIHRvZGF5IGFuZCBhY2NpZGVudGFsbHkgbm90aWNlZCB0aGF0IGl0
+Cj4gZGlkbid0IGltcGx5IGFuIHNtcF9tYigpIGFuZCBzcGVjaWZpY2FsbHkgcmVxdWlyZXMgaXQg
+dGhyb3VnaAo+IHdha2VfdXBfYml0KCkgLyB3YWl0cXVldWVfYWN0aXZlKCkuCgpUaGlua2luZyBh
+Ym91dCBpdCBhZ2FpbiwgSSdtIG5vdCBzdXJlIHdoeSB5b3UgbmVlZCB0byBhZGQgdGhlIGJhcnJp
+ZXIgd2hlbgp3YWtlX3VwKCkgKHdoaWNoIHRoaXMgaXMgYSB3cmFwcGVyIGFyb3VuZCkgaXMgcmVx
+dWlyZWQgdG8gaW1wb3NlIGEgYmFycmllciBhdAp0aGUgZnJvbnQgaWYgdGhlcmUncyBhbnl0aGlu
+ZyB0byB3YWtlIHVwIChpZS4gdGhlIHdhaXQgcXVldWUgaXNuJ3QgZW1wdHkpLgoKSWYgdGhpcyBp
+cyBpbnN1ZmZpY2llbnQsIGRvZXMgaXQgbWFrZSBzZW5zZSBqdXN0IHRvIGhhdmUgd2FrZV91cCoo
+KSBmdW5jdGlvbnMKZG8gYW4gdW5jb25kaXRpb25hbCByZWxlYXNlIG9yIGZ1bGwgYmFycmllciBy
+aWdodCBhdCB0aGUgZnJvbnQsIHJhdGhlciB0aGFuIGl0CmJlaW5nIGNvbmRpdGlvbmFsIG9uIHNv
+bWV0aGluZyBiZWluZyB3b2tlbiB1cD8KCj4gQEAgLTYxOSw5ICs2MTQsNyBAQCBzdGF0aWMgaW50
+IGR2Yl91c2JfZmVfc2xlZXAoc3RydWN0IGR2Yl9mcm9udGVuZCAqZmUpCj4gIGVycjoKPiAgCWlm
+ICghYWRhcC0+c3VzcGVuZF9yZXN1bWVfYWN0aXZlKSB7Cj4gIAkJYWRhcC0+YWN0aXZlX2ZlID0g
+LTE7CgpJJ20gd29uZGVyaW5nIGlmIHRoZXJlJ3MgYSBtaXNzaW5nIGJhcnJpZXIgaGVyZS4gIFNo
+b3VsZCB0aGUgY2xlYXJfYml0KCkgb24KdGhlIG5leHQgbGluZSBiZSBjbGVhcl9iaXRfdW5sb2Nr
+KCkgb3IgY2xlYXJfYml0X3JlbGVhc2UoKT8KCj4gLQkJY2xlYXJfYml0KEFEQVBfU0xFRVAsICZh
+ZGFwLT5zdGF0ZV9iaXRzKTsKPiAtCQlzbXBfbWJfX2FmdGVyX2F0b21pYygpOwo+IC0JCXdha2Vf
+dXBfYml0KCZhZGFwLT5zdGF0ZV9iaXRzLCBBREFQX1NMRUVQKTsKPiArCQljbGVhcl9hbmRfd2Fr
+ZV91cF9iaXQoQURBUF9TTEVFUCwgJmFkYXAtPnN0YXRlX2JpdHMpOwo+ICAJfQo+ICAKPiAgCWRl
+dl9kYmcoJmQtPnVkZXYtPmRldiwgIiVzOiByZXQ9JWRcbiIsIF9fZnVuY19fLCByZXQpOwo+IGRp
+ZmYgLS1naXQgYS9mcy9hZnMvZnNfcHJvYmUuYyBiL2ZzL2Fmcy9mc19wcm9iZS5jCj4gaW5kZXgg
+Y2ZlNjJiMTU0ZjY4Li4zNzdlZTA3ZDVmNzYgMTAwNjQ0Cj4gLS0tIGEvZnMvYWZzL2ZzX3Byb2Jl
+LmMKPiArKysgYi9mcy9hZnMvZnNfcHJvYmUuYwo+IEBAIC0xOCw2ICsxOCw3IEBAIHN0YXRpYyBi
+b29sIGFmc19mc19wcm9iZV9kb25lKHN0cnVjdCBhZnNfc2VydmVyICpzZXJ2ZXIpCj4gIAo+ICAJ
+d2FrZV91cF92YXIoJnNlcnZlci0+cHJvYmVfb3V0c3RhbmRpbmcpOwo+ICAJY2xlYXJfYml0X3Vu
+bG9jayhBRlNfU0VSVkVSX0ZMX1BST0JJTkcsICZzZXJ2ZXItPmZsYWdzKTsKPiArCXNtcF9tYl9f
+YWZ0ZXJfYXRvbWljKCk7Cj4gIAl3YWtlX3VwX2JpdCgmc2VydmVyLT5mbGFncywgQUZTX1NFUlZF
+Ul9GTF9QUk9CSU5HKTsKPiAgCXJldHVybiB0cnVlOwo+ICB9CgpMb29raW5nIGF0IHRoaXMgYW5k
+IHRoZSBkdmIgb25lLCBkb2VzIGl0IG1ha2Ugc2Vuc2UgdG8gc3RpY2sgdGhlIHJlbGVhc2UKc2Vt
+YW50aWNzIG9mIGNsZWFyX2JpdF91bmxvY2soKSBpbnRvIGNsZWFyX2FuZF93YWtlX3VwX2JpdCgp
+PwoKQWxzbywgc2hvdWxkIGNsZWFyX2JpdF91bmxvY2soKSBiZSByZW5hbWVkIHRvIGNsZWFyX2Jp
+dF9yZWxlYXNlKCkgKGFuZApzaW1pbGFybHkgdGVzdF9hbmRfc2V0X2JpdF9sb2NrKCkgLT4gdGVz
+dF9hbmRfc2V0X2JpdF9hY3F1aXJlKCkpIGlmIHdlIHNlZW0gdG8KYmUgdHJ5aW5nIHRvIHN0YW5k
+YXJkaXNlIG9uIHRoYXQgdGVybWlub2xvZ3kuCgpEYXZpZApfX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fXwpkcmktZGV2ZWwgbWFpbGluZyBsaXN0CmRyaS1kZXZl
+bEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cHM6Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFp
+bG1hbi9saXN0aW5mby9kcmktZGV2ZWw=
