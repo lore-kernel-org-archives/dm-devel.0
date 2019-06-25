@@ -1,224 +1,47 @@
-From: =?UTF-8?Q?Matias_Bj=c3=b8rling?= <mb@lightnvm.io>
-Subject: Re: [PATCH 2/4] null_blk: add zone open, close, and finish support
-Date: Tue, 25 Jun 2019 15:03:53 +0200
-Message-ID: <f70736f5-4edf-c925-d22a-a3238761da90@lightnvm.io>
-References: <20190621130711.21986-1-mb@lightnvm.io>
- <20190621130711.21986-3-mb@lightnvm.io>
- <BYAPR04MB5816D471063D970DDCF9AEC7E7E60@BYAPR04MB5816.namprd04.prod.outlook.com>
- <1aa6552c-ecf9-a168-df75-ec8c52ddbea6@lightnvm.io>
- <BYAPR04MB581665C81B89838BC022BF7BE7E30@BYAPR04MB5816.namprd04.prod.outlook.com>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [RFC][PATCH] wake_up_var() memory ordering
+Date: Tue, 25 Jun 2019 15:27:36 +0200
+Message-ID: <20190625132736.GZ3419@hirez.programming.kicks-ass.net>
+References: <20190624165012.GH3436@hirez.programming.kicks-ass.net>
+ <CAHc6FU7j5iW7WQoxN_OSfvK4zxv_MxTWJpiNsqFW8TEDMX1rjw@mail.gmail.com>
+ <20190625103430.GW3402@hirez.programming.kicks-ass.net>
+ <CAHc6FU6zUCdQZ1AfN2KYcPYVKc5bwvc0bD7=-KZpFXws+F9QZQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <BYAPR04MB581665C81B89838BC022BF7BE7E30@BYAPR04MB5816.namprd04.prod.outlook.com>
-Content-Language: en-GB
-Sender: linux-kernel-owner@vger.kernel.org
-To: Damien Le Moal <Damien.LeMoal@wdc.com>, "axboe@fb.com" <axboe@fb.com>, "hch@lst.de" <hch@lst.de>, Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>, Dmitry Fomichev <Dmitry.Fomichev@wdc.com>, Ajay Joshi <Ajay.Joshi@wdc.com>, Aravind Ramesh <Aravind.Ramesh@wdc.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "James.Bottomley@HansenPartnership.com" <James.Bottomley@HansenPartnership.com>, "agk@redhat.com" <agk@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Matias Bjorling <Matias.Bjorling@wdc.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-mediatek-bounces+glpam-linux-mediatek=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAHc6FU6zUCdQZ1AfN2KYcPYVKc5bwvc0bD7=-KZpFXws+F9QZQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mediatek>,
+ <mailto:linux-mediatek-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-mediatek/>
+List-Post: <mailto:linux-mediatek-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+List-Help: <mailto:linux-mediatek-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mediatek>,
+ <mailto:linux-mediatek-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=subscribe>
+Sender: "Linux-mediatek" <linux-mediatek-bounces-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+Errors-To: linux-mediatek-bounces+glpam-linux-mediatek=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Martin Brandenburg <martin-gqc3UtWaqJ5Wk0Htik3J/w@public.gmane.org>, linux-cachefs-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-aio-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, samba-technical <samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org>, Joonas Lahtinen <joonas.lahtinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-afs-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Marshall <hubcap-gqc3UtWaqJ5Wk0Htik3J/w@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, rds-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, cluster-devel <cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Antti Palosaari <crope-X3B1VOXEql0@public.gmane.org>, Matthias Brugger <matthias.bgg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Paul McKenney <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.orgd
 List-Id: dm-devel.ids
 
-On 6/25/19 2:36 PM, Damien Le Moal wrote:
-> On 2019/06/25 20:06, Matias Bjørling wrote:
->> On 6/22/19 3:02 AM, Damien Le Moal wrote:
->>> On 2019/06/21 22:07, Matias Bjørling wrote:
->>>> From: Ajay Joshi <ajay.joshi@wdc.com>
->>>>
->>>> Implement REQ_OP_ZONE_OPEN, REQ_OP_ZONE_CLOSE and REQ_OP_ZONE_FINISH
->>>> support to allow explicit control of zone states.
->>>>
->>>> Signed-off-by: Ajay Joshi <ajay.joshi@wdc.com>
->>>> Signed-off-by: Matias Bjørling <matias.bjorling@wdc.com>
->>>> ---
->>>>    drivers/block/null_blk.h       |  4 ++--
->>>>    drivers/block/null_blk_main.c  | 13 ++++++++++---
->>>>    drivers/block/null_blk_zoned.c | 33 ++++++++++++++++++++++++++++++---
->>>>    3 files changed, 42 insertions(+), 8 deletions(-)
->>>>
->>>> diff --git a/drivers/block/null_blk.h b/drivers/block/null_blk.h
->>>> index 34b22d6523ba..62ef65cb0f3e 100644
->>>> --- a/drivers/block/null_blk.h
->>>> +++ b/drivers/block/null_blk.h
->>>> @@ -93,7 +93,7 @@ int null_zone_report(struct gendisk *disk, sector_t sector,
->>>>    		     gfp_t gfp_mask);
->>>>    void null_zone_write(struct nullb_cmd *cmd, sector_t sector,
->>>>    			unsigned int nr_sectors);
->>>> -void null_zone_reset(struct nullb_cmd *cmd, sector_t sector);
->>>> +void null_zone_mgmt_op(struct nullb_cmd *cmd, sector_t sector);
->>>>    #else
->>>>    static inline int null_zone_init(struct nullb_device *dev)
->>>>    {
->>>> @@ -111,6 +111,6 @@ static inline void null_zone_write(struct nullb_cmd *cmd, sector_t sector,
->>>>    				   unsigned int nr_sectors)
->>>>    {
->>>>    }
->>>> -static inline void null_zone_reset(struct nullb_cmd *cmd, sector_t sector) {}
->>>> +static inline void null_zone_mgmt_op(struct nullb_cmd *cmd, sector_t sector) {}
->>>>    #endif /* CONFIG_BLK_DEV_ZONED */
->>>>    #endif /* __NULL_BLK_H */
->>>> diff --git a/drivers/block/null_blk_main.c b/drivers/block/null_blk_main.c
->>>> index 447d635c79a2..5058fb980c9c 100644
->>>> --- a/drivers/block/null_blk_main.c
->>>> +++ b/drivers/block/null_blk_main.c
->>>> @@ -1209,10 +1209,17 @@ static blk_status_t null_handle_cmd(struct nullb_cmd *cmd)
->>>>    			nr_sectors = blk_rq_sectors(cmd->rq);
->>>>    		}
->>>>    
->>>> -		if (op == REQ_OP_WRITE)
->>>> +		switch (op) {
->>>> +		case REQ_OP_WRITE:
->>>>    			null_zone_write(cmd, sector, nr_sectors);
->>>> -		else if (op == REQ_OP_ZONE_RESET)
->>>> -			null_zone_reset(cmd, sector);
->>>> +			break;
->>>> +		case REQ_OP_ZONE_RESET:
->>>> +		case REQ_OP_ZONE_OPEN:
->>>> +		case REQ_OP_ZONE_CLOSE:
->>>> +		case REQ_OP_ZONE_FINISH:
->>>> +			null_zone_mgmt_op(cmd, sector);
->>>> +			break;
->>>> +		}
->>>>    	}
->>>>    out:
->>>>    	/* Complete IO by inline, softirq or timer */
->>>> diff --git a/drivers/block/null_blk_zoned.c b/drivers/block/null_blk_zoned.c
->>>> index fca0c97ff1aa..47d956b2e148 100644
->>>> --- a/drivers/block/null_blk_zoned.c
->>>> +++ b/drivers/block/null_blk_zoned.c
->>>> @@ -121,17 +121,44 @@ void null_zone_write(struct nullb_cmd *cmd, sector_t sector,
->>>>    	}
->>>>    }
->>>>    
->>>> -void null_zone_reset(struct nullb_cmd *cmd, sector_t sector)
->>>> +void null_zone_mgmt_op(struct nullb_cmd *cmd, sector_t sector)
->>>>    {
->>>>    	struct nullb_device *dev = cmd->nq->dev;
->>>>    	unsigned int zno = null_zone_no(dev, sector);
->>>>    	struct blk_zone *zone = &dev->zones[zno];
->>>> +	enum req_opf op = req_op(cmd->rq);
->>>>    
->>>>    	if (zone->type == BLK_ZONE_TYPE_CONVENTIONAL) {
->>>>    		cmd->error = BLK_STS_IOERR;
->>>>    		return;
->>>>    	}
->>>>    
->>>> -	zone->cond = BLK_ZONE_COND_EMPTY;
->>>> -	zone->wp = zone->start;
->>>> +	switch (op) {
->>>> +	case REQ_OP_ZONE_RESET:
->>>> +		zone->cond = BLK_ZONE_COND_EMPTY;
->>>> +		zone->wp = zone->start;
->>>> +		return;
->>>> +	case REQ_OP_ZONE_OPEN:
->>>> +		if (zone->cond == BLK_ZONE_COND_FULL) {
->>>> +			cmd->error = BLK_STS_IOERR;
->>>> +			return;
->>>> +		}
->>>> +		zone->cond = BLK_ZONE_COND_EXP_OPEN;
->>>
->>>
->>> With ZBC, open of a full zone is a "nop". No error. So I would rather have this as:
->>>
->>> 		if (zone->cond != BLK_ZONE_COND_FULL)
->>> 			zone->cond = BLK_ZONE_COND_EXP_OPEN;
->>> 		
->> Is this only ZBC? I can't find a reference to it in ZAC. I think it
->> should fail. One is trying to open a zone that is full, one can't open
->> it again. It's done for this round.
-> 
-> Page 52/53, section 5.2.6.3.2:
-> 
-> If the OPEN ALL bit is cleared to zero and the zone specified by the ZONE ID
-> field (see 5.2.4.3.3) is in Zone Condition:
-> a) EMPTY, IMPLICITLY OPENED, or CLOSED, then the device shall process an
-> Explicitly Open Zone function
-> (see 4.6.3.4.10) for the zone specified by the ZONE ID field;
-> b) EXPLICITLY OPENED or FULL, then the device shall:
-> 	A) not change the zone's state; and
-> 	B) return successful command completion;
-> 
->>>
->>>> +		return;
->>>> +	case REQ_OP_ZONE_CLOSE:
->>>> +		if (zone->cond == BLK_ZONE_COND_FULL) {
->>>> +			cmd->error = BLK_STS_IOERR;
->>>> +			return;
->>>> +		}
->>>> +		zone->cond = BLK_ZONE_COND_CLOSED;
->>>
->>> Sam as for open. Closing a full zone on ZBC is a nop.
->>
->> I think this should cause error.
-> 
-> See ZAB/ZAC close command description. Same text as above, almost. Not an error.
-> It is a nop. ZAC page 48, section 5.2.4.3.2:
-> 
-> If the CLOSE ALL bit is cleared to zero and the zone specified by the ZONE ID
-> field (see 5.2.4.3.3) is in Zone Condition:
-> a) IMPLICITLY OPENED, or EXPLICITLY OPENED, then the device shall process a
-> Close Zone function
-> (see 4.6.3.4.11) for the zone specified by the ZONE ID field;
-> b) EMPTY, CLOSED, or FULL, then the device shall:
-> 	A) not change the zone's state; and
-> 	B) return successful command completion;
-> 
->>
->> And the code above would
->>> also set an empty zone to closed. Finally, if the zone is open but nothing was
->>> written to it, it must be returned to empty condition, not closed.
->>
->> Only on a reset event right? In general, if I do a expl. open, close it,
->> it should not go to empty.
-> 
-> See the zone state machine. It does return to empty from expl open if nothing
-> was written, that is, if the WP is still at zone start. This text is in ZAC
-> section 4.6.3.4.11 as noted above:
-> 
-> For the specified zone, the Zone Condition state machine processing of this
-> function (e.g., as shown in the ZC2: Implicit_Open state (see 4.6.3.4.3))
-> results in the Zone Condition for the specified zone becoming:
-> a) EMPTY, if the write pointer indicates the lowest LBA in the zone and Non
-> Sequential Write Resources Active is false; or
-> b) CLOSED, if the write pointer does not indicate the lowest LBA in the zone or
-> Non-Sequential Write Resources Active is true.
-> 
+On Tue, Jun 25, 2019 at 02:12:22PM +0200, Andreas Gruenbacher wrote:
 
-Schooled! That is what one gets from having the spec in paper form on 
-the table ;)
+> > Only if we do as David suggested and make clean_and_wake_up_bit()
+> > provide the RELEASE barrier.
+> 
+> (It's clear_and_wake_up_bit, not clean_and_wake_up_bit.)
 
->>
->> So something
->>> like this is needed.
->>>
->>> 		switch (zone->cond) {
->>> 		case BLK_ZONE_COND_FULL:
->>> 		case BLK_ZONE_COND_EMPTY:
->>> 			break;
->>> 		case BLK_ZONE_COND_EXP_OPEN:
->>> 			if (zone->wp == zone->start) {
->>> 				zone->cond = BLK_ZONE_COND_EMPTY;
->>> 				break;
->>> 			}
->>> 		/* fallthrough */
->>> 		default:
->>> 			zone->cond = BLK_ZONE_COND_CLOSED;
->>> 		}
->>>
->>>> +		return;
->>>> +	case REQ_OP_ZONE_FINISH:
->>>> +		zone->cond = BLK_ZONE_COND_FULL;
->>>> +		zone->wp = zone->start + zone->len;
->>>> +		return;
->>>> +	default:
->>>> +		/* Invalid zone condition */
->>>> +		cmd->error = BLK_STS_IOERR;
->>>> +		return;
->>>> +	}
->>>>    }
->>>>
->>>
->>>
->>
->>
-> 
-> 
+Yes, typing hard.
+
+> > That is, currently clear_and_wake_up_bit() is
+> >
+> >         clear_bit()
+> >         smp_mb__after_atomic();
+> >         wake_up_bit();
+> >
+
+> Now I'm confused because clear_and_wake_up_bit() in mainline does use
+> clear_bit_unlock(), so it's the exact opposite of what you just said.
+
+Argh; clearly I couldn't read. And then yes, you're right.
