@@ -1,171 +1,57 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [PATCH v4 0/6] crypto: switch to crypto API for
- ESSIV generation
-Date: Tue, 25 Jun 2019 21:49:42 -0700
-Message-ID: <20190626044942.GB23471@sol.localdomain>
-References: <20190621080918.22809-1-ard.biesheuvel@arm.com>
-	<CAKv+Gu-ZO9Fnfx06XYJ-tp+6nrk0D8TBGa2chmxFW-kjPMmLCw@mail.gmail.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: [RFC PATCH v5 1/1] Add dm verity root hash pkcs7 sig validation.
+Date: Wed, 26 Jun 2019 07:48:49 +0200
+Message-ID: <e0cb17cc-35f9-46e2-ca1a-1c942989ed20@gmail.com>
+References: <20190619191048.20365-1-jaskarankhurana@linux.microsoft.com>
+ <20190619191048.20365-2-jaskarankhurana@linux.microsoft.com>
+ <20190625182004.GA32075@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAKv+Gu-ZO9Fnfx06XYJ-tp+6nrk0D8TBGa2chmxFW-kjPMmLCw@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, device-mapper development <dm-devel@redhat.com>, Gilad Ben-Yossef <gilad@benyossef.com>, linux-fscrypt@vger.kernel.org, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190625182004.GA32075@redhat.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, scottsh@microsoft.com, ebiggers@google.com, jmorris@namei.org, dm-devel@redhat.com, mpatocka@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, Jun 23, 2019 at 11:30:41AM +0200, Ard Biesheuvel wrote:
-> On Fri, 21 Jun 2019 at 10:09, Ard Biesheuvel <ard.biesheuvel@arm.com> wrote:
-> >
-> > From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-> >
-> ...
-> >
-> > - given that hardware already exists that can perform en/decryption including
-> >   ESSIV generation of a range of blocks, it would be useful to encapsulate
-> >   this in the ESSIV template, and teach at least dm-crypt how to use it
-> >   (given that it often processes 8 512-byte sectors at a time)
+On 25/06/2019 20:20, Mike Snitzer wrote:
+> On Wed, Jun 19 2019 at  3:10pm -0400,
+> Jaskaran Khurana <jaskarankhurana@linux.microsoft.com> wrote:
 > 
-> I thought about this a bit more, and it occurred to me that the
-> capability of issuing several sectors at a time and letting the lower
-> layers increment the IV between sectors is orthogonal to whether ESSIV
-> is being used or not, and so it probably belongs in another wrapper.
+>> The verification is to support cases where the roothash is not secured by
+>> Trusted Boot, UEFI Secureboot or similar technologies.
+>> One of the use cases for this is for dm-verity volumes mounted after boot,
+>> the root hash provided during the creation of the dm-verity volume has to
+>> be secure and thus in-kernel validation implemented here will be used
+>> before we trust the root hash and allow the block device to be created.
+>>
+>> The signature being provided for verification must verify the root hash and
+>> must be trusted by the builtin keyring for verification to succeed.
+>>
+>> The hash is added as a key of type "user" and the description is passed to 
+>> the kernel so it can look it up and use it for verification.
+>>
+>> Kernel commandline parameter will indicate whether to check (only if 
+>> specified) or force (for all dm verity volumes) roothash signature 
+>> verification.
+>>
+>> Kernel commandline: dm_verity.verify_sig=1 or 2 for check/force root hash
+>> signature validation respectively.
+>>
+>> Signed-off-by: Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>
 > 
-> I.e., if we define a skcipher template like dmplain64le(), which is
-> defined as taking a sector size as part of the key, and which
-> increments a 64 LE counter between sectors if multiple are passed, it
-> can be used not only for ESSIV but also for XTS, which I assume can be
-> h/w accelerated in the same way.
-> 
-> So with that in mind, I think we should decouple the multi-sector
-> discussion and leave it for a followup series, preferably proposed by
-> someone who also has access to some hardware to prototype it on.
-> 
+> Milan and/or others: could you please provide review and if you're OK
+> with this patch respond accordingly?
 
-This makes sense, but if we're going to leave that functionality out of the
-essiv template, I think we should revisit whether the essiv template takes a
-__le64 sector number vs. just an IV matching the cipher block size.  To me,
-defining the IV to be a __le64 seems like a layering violation.  Also, dm-crypt
-and fscrypt already know how to zero-pad the sector number to form the full 16
-byte IV, and your patch just duplicates that logic in the essiv template too,
-which makes it more complicated than necessary.
+Stand by please :)
 
-E.g., the following incremental patch for the skcipher case would simplify it:
+I like the patch, I think all major problems were solved, but I still need to test it somehow.
 
-(You'd have to do it for the AEAD case too.)
+Anyway, for the time being, I keep all ongoing patches that need some later
+userspace support in my branch
+https://git.kernel.org/pub/scm/linux/kernel/git/mbroz/linux.git/log/?h=dm-cryptsetup
+so at least it get some automated testing.
 
-diff --git a/crypto/essiv.c b/crypto/essiv.c
-index 8e80814ec7d6..737e92ebcbd8 100644
---- a/crypto/essiv.c
-+++ b/crypto/essiv.c
-@@ -57,11 +57,6 @@ struct essiv_tfm_ctx {
- 	struct crypto_shash		*hash;
- };
- 
--struct essiv_skcipher_request_ctx {
--	u8				iv[MAX_INNER_IV_SIZE];
--	struct skcipher_request		skcipher_req;
--};
--
- struct essiv_aead_request_ctx {
- 	u8				iv[2][MAX_INNER_IV_SIZE];
- 	struct scatterlist		src[4], dst[4];
-@@ -161,39 +156,32 @@ static void essiv_skcipher_done(struct crypto_async_request *areq, int err)
- 	skcipher_request_complete(req, err);
- }
- 
--static void essiv_skcipher_prepare_subreq(struct skcipher_request *req)
-+static int essiv_skcipher_crypt(struct skcipher_request *req, bool enc)
- {
- 	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
- 	const struct essiv_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
--	struct essiv_skcipher_request_ctx *rctx = skcipher_request_ctx(req);
--	struct skcipher_request *subreq = &rctx->skcipher_req;
--
--	memset(rctx->iv, 0, crypto_cipher_blocksize(tctx->essiv_cipher));
--	memcpy(rctx->iv, req->iv, crypto_skcipher_ivsize(tfm));
-+	struct skcipher_request *subreq = skcipher_request_ctx(req);
- 
--	crypto_cipher_encrypt_one(tctx->essiv_cipher, rctx->iv, rctx->iv);
-+	crypto_cipher_encrypt_one(tctx->essiv_cipher, req->iv, req->iv);
- 
- 	skcipher_request_set_tfm(subreq, tctx->u.skcipher);
- 	skcipher_request_set_crypt(subreq, req->src, req->dst, req->cryptlen,
--				   rctx->iv);
-+				   req->iv);
- 	skcipher_request_set_callback(subreq, skcipher_request_flags(req),
- 				      essiv_skcipher_done, req);
-+
-+	return enc ? crypto_skcipher_encrypt(subreq) :
-+		     crypto_skcipher_decrypt(subreq);
- }
- 
- static int essiv_skcipher_encrypt(struct skcipher_request *req)
- {
--	struct essiv_skcipher_request_ctx *rctx = skcipher_request_ctx(req);
--
--	essiv_skcipher_prepare_subreq(req);
--	return crypto_skcipher_encrypt(&rctx->skcipher_req);
-+	return essiv_skcipher_crypt(req, true);
- }
- 
- static int essiv_skcipher_decrypt(struct skcipher_request *req)
- {
--	struct essiv_skcipher_request_ctx *rctx = skcipher_request_ctx(req);
--
--	essiv_skcipher_prepare_subreq(req);
--	return crypto_skcipher_decrypt(&rctx->skcipher_req);
-+	return essiv_skcipher_crypt(req, false);
- }
- 
- static void essiv_aead_done(struct crypto_async_request *areq, int err)
-@@ -300,24 +288,14 @@ static int essiv_skcipher_init_tfm(struct crypto_skcipher *tfm)
- 	struct essiv_instance_ctx *ictx = skcipher_instance_ctx(inst);
- 	struct essiv_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
- 	struct crypto_skcipher *skcipher;
--	unsigned int subreq_size;
- 	int err;
- 
--	BUILD_BUG_ON(offsetofend(struct essiv_skcipher_request_ctx,
--				 skcipher_req) !=
--		     sizeof(struct essiv_skcipher_request_ctx));
--
- 	skcipher = crypto_spawn_skcipher(&ictx->u.skcipher_spawn);
- 	if (IS_ERR(skcipher))
- 		return PTR_ERR(skcipher);
- 
--	subreq_size = FIELD_SIZEOF(struct essiv_skcipher_request_ctx,
--				   skcipher_req) +
--		      crypto_skcipher_reqsize(skcipher);
--
--	crypto_skcipher_set_reqsize(tfm,
--				    offsetof(struct essiv_skcipher_request_ctx,
--					     skcipher_req) + subreq_size);
-+	crypto_skcipher_set_reqsize(tfm, sizeof(struct skcipher_request) +
-+				    crypto_skcipher_reqsize(skcipher));
- 
- 	err = essiv_init_tfm(ictx, tctx);
- 	if (err) {
-@@ -567,9 +545,9 @@ static int essiv_create(struct crypto_template *tmpl, struct rtattr **tb)
- 
- 		skcipher_inst->alg.min_keysize	= crypto_skcipher_alg_min_keysize(skcipher_alg);
- 		skcipher_inst->alg.max_keysize	= crypto_skcipher_alg_max_keysize(skcipher_alg);
--		skcipher_inst->alg.ivsize	= ESSIV_IV_SIZE;
--		skcipher_inst->alg.chunksize	= skcipher_alg->chunksize;
--		skcipher_inst->alg.walksize	= skcipher_alg->walksize;
-+		skcipher_inst->alg.ivsize	= crypto_skcipher_alg_ivsize(skcipher_alg);
-+		skcipher_inst->alg.chunksize	= crypto_skcipher_alg_chunksize(skcipher_alg);
-+		skcipher_inst->alg.walksize	= crypto_skcipher_alg_walksize(skcipher_alg);
- 
- 		skcipher_inst->free		= essiv_skcipher_free_instance;
- 
+Milan
