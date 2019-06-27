@@ -1,35 +1,39 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [PATCH v5 7/7] crypto: arm64/aes - implement accelerated
- ESSIV/CBC mode
-Date: Thu, 27 Jun 2019 09:40:45 -0700
-Message-ID: <20190627164045.GE686@sol.localdomain>
-References: <20190626204047.32131-1-ard.biesheuvel@linaro.org>
- <20190626204047.32131-8-ard.biesheuvel@linaro.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-Content-Disposition: inline
-In-Reply-To: <20190626204047.32131-8-ard.biesheuvel@linaro.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, linux-crypto@vger.kernel.org, Milan Broz <gmazyland@gmail.com>, linux-arm-kernel@lists.infradead.org
+From: Fuqian Huang <huangfq.daxian@gmail.com>
+Subject: [PATCH 29/87] md: dm-integrity: replace kmalloc and memset with kzalloc
+Date: Fri, 28 Jun 2019 01:38:14 +0800
+Message-ID: <20190627173814.3361-1-huangfq.daxian@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+Cc: Fuqian Huang <huangfq.daxian@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, Jun 26, 2019 at 10:40:47PM +0200, Ard Biesheuvel wrote:
-> Add an accelerated version of the 'essiv(cbc(aes),aes,sha256'
-> skcipher, which is used by fscrypt, and in some cases, by dm-crypt.
-> This avoids a separate call into the AES cipher for every invocation.
+kmalloc + memset(0) -> kzalloc
 
-This technically should say "in some cases by fscrypt and dm-crypt", since as
-we've discussed previously, most of the time this is not what fscrypt uses.
+Signed-off-by: Fuqian Huang <huangfq.daxian@gmail.com>
+---
+ drivers/md/dm-integrity.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-- Eric
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index 44e76cda087a..f5db89b28757 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -3358,7 +3358,7 @@ static int create_journal(struct dm_integrity_c *ic, char **error)
+ 				goto bad;
+ 			}
+ 
+-			crypt_iv = kmalloc(ivsize, GFP_KERNEL);
++			crypt_iv = kzalloc(ivsize, GFP_KERNEL);
+ 			if (!crypt_iv) {
+ 				*error = "Could not allocate iv";
+ 				r = -ENOMEM;
+@@ -3387,7 +3387,6 @@ static int create_journal(struct dm_integrity_c *ic, char **error)
+ 				sg_set_buf(&sg[i], va, PAGE_SIZE);
+ 			}
+ 			sg_set_buf(&sg[i], &ic->commit_ids, sizeof ic->commit_ids);
+-			memset(crypt_iv, 0x00, ivsize);
+ 
+ 			skcipher_request_set_crypt(req, sg, sg,
+ 						   PAGE_SIZE * ic->journal_pages + sizeof ic->commit_ids, crypt_iv);
+-- 
+2.11.0
