@@ -1,139 +1,67 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [PATCH v5 1/7] crypto: essiv - create wrapper template for ESSIV
- generation
-Date: Thu, 27 Jun 2019 09:04:10 +0200
-Message-ID: <CAKv+Gu8ivcjgM0hjLHrf55kWHpoV8ZYYYLkPuaapMe6Yj37Zbg@mail.gmail.com>
-References: <20190626204047.32131-1-ard.biesheuvel@linaro.org>
- <20190626204047.32131-2-ard.biesheuvel@linaro.org>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: [RFC PATCH v5 1/1] Add dm verity root hash pkcs7 sig validation.
+Date: Thu, 27 Jun 2019 14:17:24 +0200
+Message-ID: <568f2532-e46b-5ac7-4fc5-c96983702f2d@gmail.com>
+References: <20190619191048.20365-1-jaskarankhurana@linux.microsoft.com>
+ <20190619191048.20365-2-jaskarankhurana@linux.microsoft.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <20190626204047.32131-2-ard.biesheuvel@linaro.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>, linux-arm-kernel <linux-arm-kernel@lists.infradead.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190619191048.20365-2-jaskarankhurana@linux.microsoft.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Cc: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org, scottsh@microsoft.com, ebiggers@google.com, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 26 Jun 2019 at 22:40, Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
->
-> Implement a template that wraps a (skcipher,cipher,shash) or
-> (aead,cipher,shash) tuple so that we can consolidate the ESSIV handling
-> in fscrypt and dm-crypt and move it into the crypto API. This will result
-> in better test coverage, and will allow future changes to make the bare
-> cipher interface internal to the crypto subsystem, in order to increase
-> robustness of the API against misuse.
->
-> Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-> ---
->  crypto/Kconfig  |   4 +
->  crypto/Makefile |   1 +
->  crypto/essiv.c  | 636 ++++++++++++++++++++
->  3 files changed, 641 insertions(+)
->
-...
-> diff --git a/crypto/essiv.c b/crypto/essiv.c
-> new file mode 100644
-> index 000000000000..fddf6dcc3823
-> --- /dev/null
-> +++ b/crypto/essiv.c
-> @@ -0,0 +1,636 @@
-...
-> +static void essiv_aead_done(struct crypto_async_request *areq, int err)
-> +{
-> +       struct aead_request *req = areq->data;
-> +       struct essiv_aead_request_ctx *rctx = aead_request_ctx(req);
-> +
-> +       if (rctx->iv)
-> +               kfree(rctx->iv);
-> +       aead_request_complete(req, err);
-> +}
-> +
-> +static int essiv_aead_crypt(struct aead_request *req, bool enc)
-> +{
-> +       gfp_t gfp = (req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP) ? GFP_KERNEL
-> +                                                                : GFP_ATOMIC;
-> +       struct crypto_aead *tfm = crypto_aead_reqtfm(req);
-> +       const struct essiv_tfm_ctx *tctx = crypto_aead_ctx(tfm);
-> +       struct essiv_aead_request_ctx *rctx = aead_request_ctx(req);
-> +       struct aead_request *subreq = &rctx->aead_req;
-> +       struct scatterlist *sg;
-> +       int err;
-> +
-> +       crypto_cipher_encrypt_one(tctx->essiv_cipher, req->iv, req->iv);
-> +
-> +       /*
-> +        * dm-crypt embeds the sector number and the IV in the AAD region, so
-> +        * we have to copy the converted IV into the source scatterlist before
-> +        * we pass it on. If the source and destination scatterlist pointers
-> +        * are the same, we just update the IV copy in the AAD region in-place.
-> +        * However, if they are different, the caller is not expecting us to
-> +        * modify the memory described by the source scatterlist, and so we have
-> +        * to do this little dance to create a new scatterlist that backs the
-> +        * IV slot in the AAD region with a scratch buffer that we can freely
-> +        * modify.
-> +        */
-> +       rctx->iv = NULL;
-> +       if (req->src != req->dst) {
-> +               int ivsize = crypto_aead_ivsize(tfm);
-> +               int ssize = req->assoclen - ivsize;
-> +               u8 *iv;
-> +
-> +               if (ssize < 0 || sg_nents_for_len(req->src, ssize) != 1)
-> +                       return -EINVAL;
-> +
-> +               if (enc) {
-> +                       rctx->iv = iv = kmemdup(req->iv, ivsize, gfp);
+Hi,
 
-This allocation is not really needed - I'll enlarge the request ctx
-struct instead so I can incorporate it as an anonymous member.
+I tried to test test the patch, two comments below.
 
-> +                       if (!iv)
-> +                               return -ENOMEM;
-> +               } else {
-> +                       /*
-> +                        * On the decrypt path, the ahash executes before the
-> +                        * skcipher gets a chance to clobber req->iv with its
-> +                        * output IV, so just map the buffer directly.
-> +                        */
-> +                       iv = req->iv;
-> +               }
-> +
-> +               sg_init_table(rctx->sg, 4);
-> +               sg_set_page(rctx->sg, sg_page(req->src), ssize, req->src->offset);
-> +               sg_set_buf(rctx->sg + 1, iv, ivsize);
-> +               sg = scatterwalk_ffwd(rctx->sg + 2, req->src, req->assoclen);
-> +               if (sg != rctx->sg + 2)
-> +                       sg_chain(rctx->sg, 3, sg);
-> +               sg = rctx->sg;
-> +       } else {
-> +               scatterwalk_map_and_copy(req->iv, req->dst,
-> +                                        req->assoclen - crypto_aead_ivsize(tfm),
-> +                                        crypto_aead_ivsize(tfm), 1);
-> +               sg = req->src;
-> +       }
-> +
-> +       aead_request_set_tfm(subreq, tctx->u.aead);
-> +       aead_request_set_ad(subreq, req->assoclen);
-> +       aead_request_set_callback(subreq, aead_request_flags(req),
-> +                                 essiv_aead_done, req);
-> +       aead_request_set_crypt(subreq, sg, req->dst, req->cryptlen, req->iv);
-> +
-> +       err = enc ? crypto_aead_encrypt(subreq) :
-> +                   crypto_aead_decrypt(subreq);
-> +
-> +       if (rctx->iv && err != -EINPROGRESS)
-> +               kfree(rctx->iv);
-> +
-> +       return err;
-> +}
-> +
-...
+On 19/06/2019 21:10, Jaskaran Khurana wrote:
+> The verification is to support cases where the roothash is not secured by
+> Trusted Boot, UEFI Secureboot or similar technologies.
+> One of the use cases for this is for dm-verity volumes mounted after boot,
+> the root hash provided during the creation of the dm-verity volume has to
+> be secure and thus in-kernel validation implemented here will be used
+> before we trust the root hash and allow the block device to be created.
+> 
+> The signature being provided for verification must verify the root hash and
+> must be trusted by the builtin keyring for verification to succeed.
+> 
+> The hash is added as a key of type "user" and the description is passed to 
+> the kernel so it can look it up and use it for verification.
+> 
+> Kernel commandline parameter will indicate whether to check (only if 
+> specified) or force (for all dm verity volumes) roothash signature 
+> verification.
+> 
+> Kernel commandline: dm_verity.verify_sig=1 or 2 for check/force root hash
+> signature validation respectively.
+
+1) I think the switch should be just boolean - enforce signatures for all dm-verity targets
+(with default to false/off).
+
+The rest should be handled by simple logic - if the root_hash_sig_key_desc option
+is specified, the signature MUST be validated in the constructor, all errors should cause
+failure (bad reference in keyring, bad signature, etc).
+
+(Now it ignores for example bad reference to the keyring, this is quite misleading.)
+
+If a user wants to activate a dm-verity device without a signature, just remove
+optional argument referencing the signature.
+(This is not possible with dm_verity.verify_sig set to true/on.)
+
+
+2) All DM targets must provide the same mapping table status ("dmsetup table"
+command) as initially configured.
+The output of the command should be directly usable as mapping table constructor.
+
+Your patch is missing that part, I tried to fix it, add-on patch is here
+https://git.kernel.org/pub/scm/linux/kernel/git/mbroz/linux.git/commit/?h=dm-cryptsetup&id=a26c10806f5257e255b6a436713127e762935ad3
+(feel free to fold it in your patch)
+
+
+Thanks,
+Milan
