@@ -1,73 +1,53 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 5.2 final
-Date: Thu, 27 Jun 2019 14:19:06 -0400
-Message-ID: <20190627181904.GA10850@redhat.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: Re: [RFC PATCH v5 1/1] Add dm verity root hash pkcs7 sig validation.
+Date: Thu, 27 Jun 2019 16:41:50 -0700
+Message-ID: <20190627234149.GA212823@gmail.com>
+References: <20190619191048.20365-1-jaskarankhurana@linux.microsoft.com>
+ <20190619191048.20365-2-jaskarankhurana@linux.microsoft.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Jerome Marchand <jmarchan@redhat.com>, zhangyi <yi.zhang@huawei.com>, Stephen Boyd <swboyd@chromium.org>, linux-block@vger.kernel.org, dm-devel@redhat.com, Gen Zhang <blackgod016574@gmail.com>, Milan Broz <gmazyland@gmail.com>, Alasdair G Kergon <agk@redhat.com>
+In-Reply-To: <20190619191048.20365-2-jaskarankhurana@linux.microsoft.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org, scottsh@microsoft.com, mpatocka@redhat.com, gmazyland@gmail.com
 List-Id: dm-devel.ids
 
-Hi Linus,
+Hi Jaskaran, one comment (I haven't reviewed this in detail):
 
-The following changes since commit 9e0babf2c06c73cda2c0cd37a1653d823adb40ec:
+On Wed, Jun 19, 2019 at 12:10:48PM -0700, Jaskaran Khurana wrote:
+> diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+> index db269a348b20..2d658a3512cb 100644
+> --- a/drivers/md/Kconfig
+> +++ b/drivers/md/Kconfig
+> @@ -475,6 +475,7 @@ config DM_VERITY
+>  	select CRYPTO
+>  	select CRYPTO_HASH
+>  	select DM_BUFIO
+> +	select SYSTEM_DATA_VERIFICATION
+>  	---help---
+>  	  This device-mapper target creates a read-only device that
+>  	  transparently validates the data on one underlying device against
+> diff --git a/drivers/md/Makefile b/drivers/md/Makefile
+> index be7a6eb92abc..3b47b256b15e 100644
+> --- a/drivers/md/Makefile
+> +++ b/drivers/md/Makefile
+> @@ -18,7 +18,7 @@ dm-cache-y	+= dm-cache-target.o dm-cache-metadata.o dm-cache-policy.o \
+>  		    dm-cache-background-tracker.o
+>  dm-cache-smq-y   += dm-cache-policy-smq.o
+>  dm-era-y	+= dm-era-target.o
+> -dm-verity-y	+= dm-verity-target.o
+> +dm-verity-y	+= dm-verity-target.o dm-verity-verify-sig.o
+>  md-mod-y	+= md.o md-bitmap.o
+>  raid456-y	+= raid5.o raid5-cache.o raid5-ppl.o
+>  dm-zoned-y	+= dm-zoned-target.o dm-zoned-metadata.o dm-zoned-reclaim.o
 
-  Linux 5.2-rc5 (2019-06-16 08:49:45 -1000)
+Perhaps this should be made optional and controlled by a kconfig option
+CONFIG_DM_VERITY_SIGNATURE_VERIFICATION, similar to CONFIG_DM_VERITY_FEC?
 
-are available in the Git repository at:
+CONFIG_SYSTEM_DATA_VERIFICATION brings in a lot of stuff, which might be
+unnecessary for some dm-verity users.  Also, you've already separated most of
+the code out into a separate .c file anyway.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.2/dm-fixes-2
-
-for you to fetch changes up to 2eba4e640b2c4161e31ae20090a53ee02a518657:
-
-  dm verity: use message limit for data block corruption message (2019-06-25 14:09:14 -0400)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-- Fix incorrect uses of kstrndup and DM logging macros in DM's early
-  init code.
-
-- Fix DM log-writes target's handling of super block sectors so updates
-  are made in order through use of completion.
-
-- Fix DM core's argument splitting code to avoid undefined behaviour
-  reported as a side-effect of UBSAN analysis on ppc64le.
-
-- Fix DM verity target to limit the amount of error messages that can
-  result from a corrupt block being found.
-
-----------------------------------------------------------------
-Gen Zhang (1):
-      dm init: fix incorrect uses of kstrndup()
-
-Jerome Marchand (1):
-      dm table: don't copy from a NULL pointer in realloc_argv()
-
-Milan Broz (1):
-      dm verity: use message limit for data block corruption message
-
-Stephen Boyd (1):
-      dm init: remove trailing newline from calls to DMERR() and DMINFO()
-
-zhangyi (F) (1):
-      dm log writes: make sure super sector log updates are written in order
-
- drivers/md/dm-init.c          | 10 +++++-----
- drivers/md/dm-log-writes.c    | 23 +++++++++++++++++++++--
- drivers/md/dm-table.c         |  2 +-
- drivers/md/dm-verity-target.c |  4 ++--
- 4 files changed, 29 insertions(+), 10 deletions(-)
+- Eric
