@@ -1,60 +1,66 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [RFC PATCH v5 0/1] Add dm verity root hash pkcs7 sig validation.
-Date: Thu, 27 Jun 2019 21:00:41 -0700
-Message-ID: <20190628040041.GB673@sol.localdomain>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: [RFC PATCH v5 1/1] Add dm verity root hash pkcs7 sig validation.
+Date: Fri, 28 Jun 2019 07:12:08 +0200
+Message-ID: <264565b3-ff3c-29c0-7df0-d8ff061087d3@gmail.com>
 References: <20190619191048.20365-1-jaskarankhurana@linux.microsoft.com>
+ <20190619191048.20365-2-jaskarankhurana@linux.microsoft.com>
+ <20190627234149.GA212823@gmail.com>
+ <alpine.LRH.2.21.1906271844470.22562@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
+ <20190628030017.GA673@sol.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190619191048.20365-1-jaskarankhurana@linux.microsoft.com>
+In-Reply-To: <20190628030017.GA673@sol.localdomain>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org, scottsh@microsoft.com, mpatocka@redhat.com, gmazyland@gmail.com
+To: Eric Biggers <ebiggers@kernel.org>, Jaskaran Singh Khurana <jaskarankhurana@linux.microsoft.com>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org, scottsh@microsoft.com, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jun 19, 2019 at 12:10:47PM -0700, Jaskaran Khurana wrote:
-> This patch set adds in-kernel pkcs7 signature checking for the roothash of
-> the dm-verity hash tree.
-> The verification is to support cases where the roothash is not secured by
-> Trusted Boot, UEFI Secureboot or similar technologies.
-> One of the use cases for this is for dm-verity volumes mounted after boot,
-> the root hash provided during the creation of the dm-verity volume has to
-> be secure and thus in-kernel validation implemented here will be used
-> before we trust the root hash and allow the block device to be created.
+On 28/06/2019 05:00, Eric Biggers wrote:
+>> Hello Eric,
+>>
+>> This started with a config (see V4). We didnot want scripts that pass this
+>> parameter to suddenly stop working if for some reason the verification is
+>> turned off so the optional parameter was just parsed and no validation
+>> happened if the CONFIG was turned off. This was changed to a commandline
+>> parameter after feedback from the community, so I would prefer to keep it
+>> *now* as commandline parameter. Let me know if you are OK with this.
+>>
+>> Regards,
+>> JK
 > 
-> Why we are doing validation in the Kernel?
-> 
-> The reason is to still be secure in cases where the attacker is able to
-> compromise the user mode application in which case the user mode validation
-> could not have been trusted.
-> The root hash signature validation in the kernel along with existing
-> dm-verity implementation gives a higher level of confidence in the
-> executable code or the protected data. Before allowing the creation of
-> the device mapper block device the kernel code will check that the detached
-> pkcs7 signature passed to it validates the roothash and the signature is
-> trusted by builtin keys set at kernel creation. The kernel should be
-> secured using Verified boot, UEFI Secure Boot or similar technologies so we
-> can trust it.
-> 
-> What about attacker mounting non dm-verity volumes to run executable
-> code?
-> 
-> This verification can be used to have a security architecture where a LSM
-> can enforce this verification for all the volumes and by doing this it can
-> ensure that all executable code runs from signed and trusted dm-verity
-> volumes.
-> 
-> Further patches will be posted that build on this and enforce this
-> verification based on policy for all the volumes on the system.
-> 
+> Sorry, I haven't been following the whole discussion.  (BTW, you sent out
+> multiple versions both called "v4", and using a cover letter for a single patch
+> makes it unnecessarily difficult to review.)  However, it appears Milan were
+> complaining about the DM_VERITY_VERIFY_ROOTHASH_SIG_FORCE option which set the
+> policy for signature verification, *not* the DM_VERITY_VERIFY_ROOTHASH_SIG
+> option which enabled support for signature verification.  Am I missing
+> something?  You can have a module parameter which controls the "signatures
+> required" setting, while also allowing people to compile out kernel support for
+> the signature verification feature.
 
-I don't understand your justification for this feature.
+Yes, this was exactly my point.
 
-If userspace has already been pwned severely enough for the attacker to be
-executing arbitrary code with CAP_SYS_ADMIN (which is what the device mapper
-ioctls need), what good are restrictions on loading more binaries from disk?
+I think I even mention in some reply to use exactly the same config Makefile logic
+as for FEC - to allow completely compile it out of the source:
 
-Please explain your security model.
+ifeq ($(CONFIG_DM_VERITY_FEC),y)
+dm-verity-objs                  += dm-verity-fec.o
+endif
 
-- Eric
+> Sure, it means that the signature verification support won't be guaranteed to be
+> present when dm-verity is.  But the same is true of the hash algorithm (e.g.
+> sha512), and of the forward error correction feature.  Since the signature
+> verification is nontrivial and pulls in a lot of other kernel code which might
+> not be otherwise needed (via SYSTEM_DATA_VERIFICATION), it seems a natural
+> candidate for putting the support behind a Kconfig option.
+
+On the other side, dm-verity is meant for a system verification, so if it depends
+on SYSTEM_DATA_VERIFICATION is ... not so surprising :)
+
+But the change above is quite easy and while we already have FEC as config option,
+perhaps let's do it the same here.
+
+Milan
