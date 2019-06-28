@@ -1,35 +1,69 @@
-From: pr-tracker-bot@kernel.org
-Subject: Re: [git pull] device mapper fixes for 5.2 final
-Date: Fri, 28 Jun 2019 00:55:04 +0000
-Message-ID: <156168330473.8716.11293425856375068132.pr-tracker-bot@kernel.org>
-References: <20190627181904.GA10850@redhat.com>
+From: Jaskaran Singh Khurana <jaskarankhurana@linux.microsoft.com>
+Subject: Re: [RFC PATCH v5 1/1] Add dm verity root hash pkcs7 sig
+ validation.
+Date: Thu, 27 Jun 2019 18:49:58 -0700 (PDT)
+Message-ID: <alpine.LRH.2.21.1906271844470.22562@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
+References: <20190619191048.20365-1-jaskarankhurana@linux.microsoft.com> <20190619191048.20365-2-jaskarankhurana@linux.microsoft.com> <20190627234149.GA212823@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190627181904.GA10850@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jerome Marchand <jmarchan@redhat.com>, zhangyi <yi.zhang@huawei.com>, Stephen Boyd <swboyd@chromium.org>, linux-block@vger.kernel.org, dm-devel@redhat.com, Gen Zhang <blackgod016574@gmail.com>, Linus Torvalds <torvalds@linux-foundation.org>, Milan Broz <gmazyland@gmail.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=US-ASCII; format=flowed
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190627234149.GA212823@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org, scottsh@microsoft.com, mpatocka@redhat.com, gmazyland@gmail.com
 List-Id: dm-devel.ids
 
-The pull request you sent on Thu, 27 Jun 2019 14:19:06 -0400:
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.2/dm-fixes-2
 
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/65ee21eb633c644501185502d51831c4dee22c7b
+On Thu, 27 Jun 2019, Eric Biggers wrote:
 
-Thank you!
+> Hi Jaskaran, one comment (I haven't reviewed this in detail):
+>
+> On Wed, Jun 19, 2019 at 12:10:48PM -0700, Jaskaran Khurana wrote:
+>> diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+>> index db269a348b20..2d658a3512cb 100644
+>> --- a/drivers/md/Kconfig
+>> +++ b/drivers/md/Kconfig
+>> @@ -475,6 +475,7 @@ config DM_VERITY
+>>  	select CRYPTO
+>>  	select CRYPTO_HASH
+>>  	select DM_BUFIO
+>> +	select SYSTEM_DATA_VERIFICATION
+>>  	---help---
+>>  	  This device-mapper target creates a read-only device that
+>>  	  transparently validates the data on one underlying device against
+>> diff --git a/drivers/md/Makefile b/drivers/md/Makefile
+>> index be7a6eb92abc..3b47b256b15e 100644
+>> --- a/drivers/md/Makefile
+>> +++ b/drivers/md/Makefile
+>> @@ -18,7 +18,7 @@ dm-cache-y	+= dm-cache-target.o dm-cache-metadata.o dm-cache-policy.o \
+>>  		    dm-cache-background-tracker.o
+>>  dm-cache-smq-y   += dm-cache-policy-smq.o
+>>  dm-era-y	+= dm-era-target.o
+>> -dm-verity-y	+= dm-verity-target.o
+>> +dm-verity-y	+= dm-verity-target.o dm-verity-verify-sig.o
+>>  md-mod-y	+= md.o md-bitmap.o
+>>  raid456-y	+= raid5.o raid5-cache.o raid5-ppl.o
+>>  dm-zoned-y	+= dm-zoned-target.o dm-zoned-metadata.o dm-zoned-reclaim.o
+>
+> Perhaps this should be made optional and controlled by a kconfig option
+> CONFIG_DM_VERITY_SIGNATURE_VERIFICATION, similar to CONFIG_DM_VERITY_FEC?
+>
+> CONFIG_SYSTEM_DATA_VERIFICATION brings in a lot of stuff, which might be
+> unnecessary for some dm-verity users.  Also, you've already separated most of
+> the code out into a separate .c file anyway.
+>
+> - Eric
+>
+Hello Eric,
 
--- 
-Deet-doot-dot, I am a bot.
-https://korg.wiki.kernel.org/userdoc/prtracker
+This started with a config (see V4). We didnot want scripts that pass this 
+parameter to suddenly stop working if for some reason the 
+verification is turned off so the optional parameter was just 
+parsed and no validation happened if the CONFIG was turned off. This was 
+changed to a commandline parameter after feedback from the community, so I would prefer 
+to keep it *now* as commandline parameter. Let me know if you are OK with 
+this.
+
+Regards,
+JK
