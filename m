@@ -1,73 +1,62 @@
-From: Jaskaran Singh Khurana <jaskarankhurana@linux.microsoft.com>
-Subject: Re: [RFC PATCH v5 1/1] Add dm verity root hash pkcs7 sig
- validation.
-Date: Fri, 28 Jun 2019 10:03:15 -0700 (PDT)
-Message-ID: <alpine.LRH.2.21.1906281001020.119795@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
-References: <20190619191048.20365-1-jaskarankhurana@linux.microsoft.com> <20190619191048.20365-2-jaskarankhurana@linux.microsoft.com> <20190627234149.GA212823@gmail.com> <alpine.LRH.2.21.1906271844470.22562@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
- <20190628030017.GA673@sol.localdomain> <264565b3-ff3c-29c0-7df0-d8ff061087d3@gmail.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: Re: [PATCH v6 2/7] fs: crypto: invoke crypto API for
+	ESSIV handling
+Date: Fri, 28 Jun 2019 11:00:38 -0700
+Message-ID: <20190628180037.GC103946@gmail.com>
+References: <20190628152112.914-1-ard.biesheuvel@linaro.org>
+	<20190628152112.914-3-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII; format=flowed
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <264565b3-ff3c-29c0-7df0-d8ff061087d3@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <gmazyland@gmail.com>
-Cc: Eric Biggers <ebiggers@kernel.org>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org, scottsh@microsoft.com, mpatocka@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20190628152112.914-3-ard.biesheuvel@linaro.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, linux-crypto@vger.kernel.org, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
+On Fri, Jun 28, 2019 at 05:21:07PM +0200, Ard Biesheuvel wrote:
+> diff --git a/fs/crypto/keyinfo.c b/fs/crypto/keyinfo.c
+> index dcd91a3fbe49..f39667d4316a 100644
+> --- a/fs/crypto/keyinfo.c
+> +++ b/fs/crypto/keyinfo.c
+> @@ -13,14 +13,10 @@
+>  #include <linux/hashtable.h>
+>  #include <linux/scatterlist.h>
+>  #include <linux/ratelimit.h>
+> -#include <crypto/aes.h>
+>  #include <crypto/algapi.h>
+> -#include <crypto/sha.h>
+>  #include <crypto/skcipher.h>
+>  #include "fscrypt_private.h"
+>  
+> -static struct crypto_shash *essiv_hash_tfm;
+> -
+>  /* Table of keys referenced by FS_POLICY_FLAG_DIRECT_KEY policies */
+>  static DEFINE_HASHTABLE(fscrypt_master_keys, 6); /* 6 bits = 64 buckets */
+>  static DEFINE_SPINLOCK(fscrypt_master_keys_lock);
+> @@ -144,10 +140,9 @@ static struct fscrypt_mode available_modes[] = {
+>  	},
+>  	[FS_ENCRYPTION_MODE_AES_128_CBC] = {
+>  		.friendly_name = "AES-128-CBC",
+> -		.cipher_str = "cbc(aes)",
+> +		.cipher_str = "essiv(cbc(aes),aes,sha256)",
+>  		.keysize = 16,
+> -		.ivsize = 16,
+> -		.needs_essiv = true,
+> +		.ivsize = 8,
+>  	},
 
-Hello Eric/Milan,
+Now that the essiv template takes the same size IV, the .ivsize here needs to be
+left as 16.
 
-On Fri, 28 Jun 2019, Milan Broz wrote:
-
-> On 28/06/2019 05:00, Eric Biggers wrote:
->>> Hello Eric,
->>>
->>> This started with a config (see V4). We didnot want scripts that pass this
->>> parameter to suddenly stop working if for some reason the verification is
->>> turned off so the optional parameter was just parsed and no validation
->>> happened if the CONFIG was turned off. This was changed to a commandline
->>> parameter after feedback from the community, so I would prefer to keep it
->>> *now* as commandline parameter. Let me know if you are OK with this.
->>>
->>> Regards,
->>> JK
->>
->> Sorry, I haven't been following the whole discussion.  (BTW, you sent out
->> multiple versions both called "v4", and using a cover letter for a single patch
->> makes it unnecessarily difficult to review.)  However, it appears Milan were
->> complaining about the DM_VERITY_VERIFY_ROOTHASH_SIG_FORCE option which set the
->> policy for signature verification, *not* the DM_VERITY_VERIFY_ROOTHASH_SIG
->> option which enabled support for signature verification.  Am I missing
->> something?  You can have a module parameter which controls the "signatures
->> required" setting, while also allowing people to compile out kernel support for
->> the signature verification feature.
->
-> Yes, this was exactly my point.
->
-> I think I even mention in some reply to use exactly the same config Makefile logic
-> as for FEC - to allow completely compile it out of the source:
->
-> ifeq ($(CONFIG_DM_VERITY_FEC),y)
-> dm-verity-objs                  += dm-verity-fec.o
-> endif
->
->> Sure, it means that the signature verification support won't be guaranteed to be
->> present when dm-verity is.  But the same is true of the hash algorithm (e.g.
->> sha512), and of the forward error correction feature.  Since the signature
->> verification is nontrivial and pulls in a lot of other kernel code which might
->> not be otherwise needed (via SYSTEM_DATA_VERIFICATION), it seems a natural
->> candidate for putting the support behind a Kconfig option.
->
-> On the other side, dm-verity is meant for a system verification, so if it depends
-> on SYSTEM_DATA_VERIFICATION is ... not so surprising :)
->
-> But the change above is quite easy and while we already have FEC as config option,
-> perhaps let's do it the same here.
->
-> Milan
->
-Yes, I will make this change. Please consider this discussion as resolved. 
-Thanks.
-
-Regards,
-Jaskaran.
+- Eric
