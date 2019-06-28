@@ -1,39 +1,98 @@
-From: Fuqian Huang <huangfq.daxian@gmail.com>
-Subject: [PATCH v2 10/27] md: use kzalloc instead of kmalloc and memset
-Date: Fri, 28 Jun 2019 10:47:34 +0800
-Message-ID: <20190628024734.15315-1-huangfq.daxian@gmail.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: Re: [RFC PATCH v5 1/1] Add dm verity root hash pkcs7 sig validation.
+Date: Thu, 27 Jun 2019 20:00:17 -0700
+Message-ID: <20190628030017.GA673@sol.localdomain>
+References: <20190619191048.20365-1-jaskarankhurana@linux.microsoft.com>
+ <20190619191048.20365-2-jaskarankhurana@linux.microsoft.com>
+ <20190627234149.GA212823@gmail.com>
+ <alpine.LRH.2.21.1906271844470.22562@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.21.1906271844470.22562@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
 Sender: linux-kernel-owner@vger.kernel.org
-Cc: Fuqian Huang <huangfq.daxian@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Jaskaran Singh Khurana <jaskarankhurana@linux.microsoft.com>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org, scottsh@microsoft.com, mpatocka@redhat.com, gmazyland@gmail.com
 List-Id: dm-devel.ids
 
-Replace kmalloc followed by a memset with kzalloc
+Hi Jaskaran,
 
-Signed-off-by: Fuqian Huang <huangfq.daxian@gmail.com>
----
- drivers/md/dm-integrity.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+On Thu, Jun 27, 2019 at 06:49:58PM -0700, Jaskaran Singh Khurana wrote:
+> 
+> 
+> On Thu, 27 Jun 2019, Eric Biggers wrote:
+> 
+> > Hi Jaskaran, one comment (I haven't reviewed this in detail):
+> > 
+> > On Wed, Jun 19, 2019 at 12:10:48PM -0700, Jaskaran Khurana wrote:
+> > > diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+> > > index db269a348b20..2d658a3512cb 100644
+> > > --- a/drivers/md/Kconfig
+> > > +++ b/drivers/md/Kconfig
+> > > @@ -475,6 +475,7 @@ config DM_VERITY
+> > >  	select CRYPTO
+> > >  	select CRYPTO_HASH
+> > >  	select DM_BUFIO
+> > > +	select SYSTEM_DATA_VERIFICATION
+> > >  	---help---
+> > >  	  This device-mapper target creates a read-only device that
+> > >  	  transparently validates the data on one underlying device against
+> > > diff --git a/drivers/md/Makefile b/drivers/md/Makefile
+> > > index be7a6eb92abc..3b47b256b15e 100644
+> > > --- a/drivers/md/Makefile
+> > > +++ b/drivers/md/Makefile
+> > > @@ -18,7 +18,7 @@ dm-cache-y	+= dm-cache-target.o dm-cache-metadata.o dm-cache-policy.o \
+> > >  		    dm-cache-background-tracker.o
+> > >  dm-cache-smq-y   += dm-cache-policy-smq.o
+> > >  dm-era-y	+= dm-era-target.o
+> > > -dm-verity-y	+= dm-verity-target.o
+> > > +dm-verity-y	+= dm-verity-target.o dm-verity-verify-sig.o
+> > >  md-mod-y	+= md.o md-bitmap.o
+> > >  raid456-y	+= raid5.o raid5-cache.o raid5-ppl.o
+> > >  dm-zoned-y	+= dm-zoned-target.o dm-zoned-metadata.o dm-zoned-reclaim.o
+> > 
+> > Perhaps this should be made optional and controlled by a kconfig option
+> > CONFIG_DM_VERITY_SIGNATURE_VERIFICATION, similar to CONFIG_DM_VERITY_FEC?
+> > 
+> > CONFIG_SYSTEM_DATA_VERIFICATION brings in a lot of stuff, which might be
+> > unnecessary for some dm-verity users.  Also, you've already separated most of
+> > the code out into a separate .c file anyway.
+> > 
+> > - Eric
+> > 
+> Hello Eric,
+> 
+> This started with a config (see V4). We didnot want scripts that pass this
+> parameter to suddenly stop working if for some reason the verification is
+> turned off so the optional parameter was just parsed and no validation
+> happened if the CONFIG was turned off. This was changed to a commandline
+> parameter after feedback from the community, so I would prefer to keep it
+> *now* as commandline parameter. Let me know if you are OK with this.
+> 
+> Regards,
+> JK
 
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 44e76cda087a..f5db89b28757 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -3358,7 +3358,7 @@ static int create_journal(struct dm_integrity_c *ic, char **error)
- 				goto bad;
- 			}
- 
--			crypt_iv = kmalloc(ivsize, GFP_KERNEL);
-+			crypt_iv = kzalloc(ivsize, GFP_KERNEL);
- 			if (!crypt_iv) {
- 				*error = "Could not allocate iv";
- 				r = -ENOMEM;
-@@ -3387,7 +3387,6 @@ static int create_journal(struct dm_integrity_c *ic, char **error)
- 				sg_set_buf(&sg[i], va, PAGE_SIZE);
- 			}
- 			sg_set_buf(&sg[i], &ic->commit_ids, sizeof ic->commit_ids);
--			memset(crypt_iv, 0x00, ivsize);
- 
- 			skcipher_request_set_crypt(req, sg, sg,
- 						   PAGE_SIZE * ic->journal_pages + sizeof ic->commit_ids, crypt_iv);
--- 
-2.11.0
+Sorry, I haven't been following the whole discussion.  (BTW, you sent out
+multiple versions both called "v4", and using a cover letter for a single patch
+makes it unnecessarily difficult to review.)  However, it appears Milan were
+complaining about the DM_VERITY_VERIFY_ROOTHASH_SIG_FORCE option which set the
+policy for signature verification, *not* the DM_VERITY_VERIFY_ROOTHASH_SIG
+option which enabled support for signature verification.  Am I missing
+something?  You can have a module parameter which controls the "signatures
+required" setting, while also allowing people to compile out kernel support for
+the signature verification feature.
+
+Sure, it means that the signature verification support won't be guaranteed to be
+present when dm-verity is.  But the same is true of the hash algorithm (e.g.
+sha512), and of the forward error correction feature.  Since the signature
+verification is nontrivial and pulls in a lot of other kernel code which might
+not be otherwise needed (via SYSTEM_DATA_VERIFICATION), it seems a natural
+candidate for putting the support behind a Kconfig option.
+
+BTW, I'm doing something similar for fs-verity; see
+https://patchwork.kernel.org/patch/11008077/.  The signature verification
+support is behind CONFIG_FS_VERITY_BUILTIN_SIGNATURES, but the policy of
+requiring signatures is a sysctl fs.verity.require_signatures.
+
+- Eric
