@@ -1,42 +1,62 @@
-From: James Morris <jmorris@namei.org>
-Subject: Re: [RFC PATCH v5 0/1] Add dm verity root hash pkcs7 sig
- validation.
-Date: Fri, 28 Jun 2019 21:01:25 -0700 (PDT)
-Message-ID: <alpine.LRH.2.21.1906282040490.15624@namei.org>
-References: <20190619191048.20365-1-jaskarankhurana@linux.microsoft.com> <20190628040041.GB673@sol.localdomain>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: Re: [PATCH v6 1/7] crypto: essiv - create wrapper
+ template for ESSIV generation
+Date: Fri, 28 Jun 2019 21:23:27 -0700
+Message-ID: <20190629042327.GB886@sol.localdomain>
+References: <20190628152112.914-1-ard.biesheuvel@linaro.org>
+	<20190628152112.914-2-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190628040041.GB673@sol.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, scottsh@microsoft.com, mpatocka@redhat.com, gmazyland@gmail.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20190628152112.914-2-ard.biesheuvel@linaro.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, linux-crypto@vger.kernel.org, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-On Thu, 27 Jun 2019, Eric Biggers wrote:
-
-> I don't understand your justification for this feature.
+On Fri, Jun 28, 2019 at 05:21:06PM +0200, Ard Biesheuvel wrote:
+> Implement a template that wraps a (skcipher,cipher,shash) or
+> (aead,cipher,shash) tuple so that we can consolidate the ESSIV handling
+> in fscrypt and dm-crypt and move it into the crypto API. This will result
+> in better test coverage, and will allow future changes to make the bare
+> cipher interface internal to the crypto subsystem, in order to increase
+> robustness of the API against misuse.
 > 
-> If userspace has already been pwned severely enough for the attacker to be
-> executing arbitrary code with CAP_SYS_ADMIN (which is what the device mapper
-> ioctls need), what good are restrictions on loading more binaries from disk?
+> Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+> ---
+>  crypto/Kconfig  |   4 +
+>  crypto/Makefile |   1 +
+>  crypto/essiv.c  | 640 ++++++++++++++++++++
+>  3 files changed, 645 insertions(+)
 > 
-> Please explain your security model.
+> diff --git a/crypto/Kconfig b/crypto/Kconfig
+> index 3d056e7da65f..1aa47087c1a2 100644
+> --- a/crypto/Kconfig
+> +++ b/crypto/Kconfig
+> @@ -1917,6 +1917,10 @@ config CRYPTO_STATS
+>  config CRYPTO_HASH_INFO
+>  	bool
+>  
+> +config CRYPTO_ESSIV
+> +	tristate
+> +	select CRYPTO_AUTHENC
+> +
 
-Let's say the system has a policy where all code must be signed with a 
-valid key, and that one mechanism for enforcing this is via signed 
-dm-verity volumes. Validating the signature within the kernel provides 
-stronger assurance than userspace validation. The kernel validates and 
-executes the code, using kernel-resident keys, and does not need to rely 
-on validation which has occurred across a trust boundary.
+One more request: can you make this symbol explicitly selectable, with prompt
+string and help text?
 
-You don't need arbitrary CAP_SYS_ADMIN code execution, you just need a 
-flaw in the app (or its dependent libraries, or configuration) which 
-allows signature validation to be bypassed.
+As discussed earlier, to reduce bloat I don't really want FS_ENCRYPTION to
+select this.  So the user will need a way to select CRYPTO_ESSIV if they need
+it.
 
-The attacker now needs a kernel rather than a userspace vulnerability to 
-bypass the signed code policy.
-
--- 
-James Morris
-<jmorris@namei.org>
+- Eric
