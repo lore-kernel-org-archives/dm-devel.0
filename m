@@ -1,97 +1,58 @@
 From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH v6 4/7] md: dm-crypt: switch to ESSIV crypto
-	API template
-Date: Mon, 1 Jul 2019 10:59:51 +0200
-Message-ID: <f068888f-1a13-babf-0144-07939a79d9d9@gmail.com>
-References: <20190628152112.914-1-ard.biesheuvel@linaro.org>
-	<20190628152112.914-5-ard.biesheuvel@linaro.org>
+Subject: Re: [RFC PATCH v5 0/1] Add dm verity root hash pkcs7 sig validation.
+Date: Mon, 1 Jul 2019 11:41:37 +0200
+Message-ID: <749ddf56-3cb6-42c8-9ccc-71e09558400f@gmail.com>
+References: <20190619191048.20365-1-jaskarankhurana@linux.microsoft.com>
+ <20190628040041.GB673@sol.localdomain>
+ <alpine.LRH.2.21.1906282040490.15624@namei.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190628152112.914-5-ard.biesheuvel@linaro.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.21.1906282040490.15624@namei.org>
 Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Ard Biesheuvel <ard.biesheuvel@linaro.org>, linux-crypto@vger.kernel.org
-Cc: Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, linux-fscrypt@vger.kernel.org, Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: James Morris <jmorris@namei.org>, Eric Biggers <ebiggers@kernel.org>
+Cc: Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, scottsh@microsoft.com, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-On 28/06/2019 17:21, Ard Biesheuvel wrote:
-> Replace the explicit ESSIV handling in the dm-crypt driver with calls
-> into the crypto API, which now possesses the capability to perform
-> this processing within the crypto subsystem.
+On 29/06/2019 06:01, James Morris wrote:
+> On Thu, 27 Jun 2019, Eric Biggers wrote:
 > 
-> Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+>> I don't understand your justification for this feature.
+>>
+>> If userspace has already been pwned severely enough for the attacker to be
+>> executing arbitrary code with CAP_SYS_ADMIN (which is what the device mapper
+>> ioctls need), what good are restrictions on loading more binaries from disk?
+>>
+>> Please explain your security model.
+> 
+> Let's say the system has a policy where all code must be signed with a 
+> valid key, and that one mechanism for enforcing this is via signed 
+> dm-verity volumes. Validating the signature within the kernel provides 
+> stronger assurance than userspace validation. The kernel validates and 
+> executes the code, using kernel-resident keys, and does not need to rely 
+> on validation which has occurred across a trust boundary.
 
->  drivers/md/dm-crypt.c | 200 ++++----------------
+Yes, but as it is implemented in this patch, a certificate is provided as
+a binary blob by the (super)user that activates the dm-verity device.
 
-...
+Actually, I can put there anything that looks like a correct signature (self-signed
+or so), and dm-verity code is happy because the root hash is now signed.
 
-> -/* Wipe salt and reset key derived from volume key */
-> -static int crypt_iv_essiv_wipe(struct crypt_config *cc)
+Maybe could this concept be extended to support in-kernel compiled certificates?
 
-Do I understand it correctly, that this is now called inside the whole cipher
-set key in wipe command (in crypt_wipe_key())?
+I like the idea of signed root hash, but the truth is that if you have access
+to device activation, it brings nothing, you can just put any cert in the keyring
+and use it.
 
-(Wipe message is meant to suspend the device and wipe all key material
-from memory without actually destroying the device.)
-
-> -{
-> -	struct iv_essiv_private *essiv = &cc->iv_gen_private.essiv;
-> -	unsigned salt_size = crypto_shash_digestsize(essiv->hash_tfm);
-> -	struct crypto_cipher *essiv_tfm;
-> -	int r, err = 0;
-> -
-> -	memset(essiv->salt, 0, salt_size);
-> -
-> -	essiv_tfm = cc->iv_private;
-> -	r = crypto_cipher_setkey(essiv_tfm, essiv->salt, salt_size);
-> -	if (r)
-> -		err = r;
-> -
-> -	return err;
-> -}
-
-...
-
-> @@ -2435,9 +2281,19 @@ static int crypt_ctr_cipher_new(struct dm_target *ti, char *cipher_in, char *key
->  	}
->  
->  	ret = crypt_ctr_blkdev_cipher(cc, cipher_api);
-> -	if (ret < 0) {
-> -		ti->error = "Cannot allocate cipher string";
-> -		return -ENOMEM;
-> +	if (ret < 0)
-> +		goto bad_mem;
-> +
-> +	if (*ivmode && !strcmp(*ivmode, "essiv")) {
-> +		if (!*ivopts) {
-> +			ti->error = "Digest algorithm missing for ESSIV mode";
-> +			return -EINVAL;
-> +		}
-> +		ret = snprintf(buf, CRYPTO_MAX_ALG_NAME, "essiv(%s,%s,%s)",
-> +			       cipher_api, cc->cipher, *ivopts);
-> +		if (ret < 0 || ret >= CRYPTO_MAX_ALG_NAME)
-> +			goto bad_mem;
-
-Hm, nitpicking, but goto from only one place while we have another -ENOMEM above...
-
-Just place this here without goto?
-
-> +	ti->error = "Cannot allocate cipher string";
-> +	return -ENOMEM;
-
-Otherwise
-
-Reviewed-by: Milan Broz <gmazyland@gmail.com>
-
-Thanks,
 Milan
+
+> 
+> You don't need arbitrary CAP_SYS_ADMIN code execution, you just need a 
+> flaw in the app (or its dependent libraries, or configuration) which 
+> allows signature validation to be bypassed.
+> 
+> The attacker now needs a kernel rather than a userspace vulnerability to 
+> bypass the signed code policy.
+> 
