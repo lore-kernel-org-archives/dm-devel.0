@@ -1,16 +1,13 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [PATCH v6 1/7] crypto: essiv - create wrapper
- template for ESSIV generation
-Date: Fri, 28 Jun 2019 21:23:27 -0700
-Message-ID: <20190629042327.GB886@sol.localdomain>
-References: <20190628152112.914-1-ard.biesheuvel@linaro.org>
-	<20190628152112.914-2-ard.biesheuvel@linaro.org>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: [PATCH V6 1/4] block: Allow mapping of vmalloc-ed buffers
+Date: Mon,  1 Jul 2019 14:09:15 +0900
+Message-ID: <20190701050918.27511-2-damien.lemoal@wdc.com>
+References: <20190701050918.27511-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20190628152112.914-2-ard.biesheuvel@linaro.org>
+In-Reply-To: <20190701050918.27511-1-damien.lemoal@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,43 +17,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, linux-crypto@vger.kernel.org, Milan Broz <gmazyland@gmail.com>
+To: linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, linux-f2fs-devel@lists.sourceforge.net, Jaegeuk Kim <jaegeuk@kernel.org>
+Cc: Christoph Hellwig <hch@lst.de>, Bart Van Assche <bvanassche@acm.org>
 List-Id: dm-devel.ids
 
-On Fri, Jun 28, 2019 at 05:21:06PM +0200, Ard Biesheuvel wrote:
-> Implement a template that wraps a (skcipher,cipher,shash) or
-> (aead,cipher,shash) tuple so that we can consolidate the ESSIV handling
-> in fscrypt and dm-crypt and move it into the crypto API. This will result
-> in better test coverage, and will allow future changes to make the bare
-> cipher interface internal to the crypto subsystem, in order to increase
-> robustness of the API against misuse.
-> 
-> Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-> ---
->  crypto/Kconfig  |   4 +
->  crypto/Makefile |   1 +
->  crypto/essiv.c  | 640 ++++++++++++++++++++
->  3 files changed, 645 insertions(+)
-> 
-> diff --git a/crypto/Kconfig b/crypto/Kconfig
-> index 3d056e7da65f..1aa47087c1a2 100644
-> --- a/crypto/Kconfig
-> +++ b/crypto/Kconfig
-> @@ -1917,6 +1917,10 @@ config CRYPTO_STATS
->  config CRYPTO_HASH_INFO
->  	bool
->  
-> +config CRYPTO_ESSIV
-> +	tristate
-> +	select CRYPTO_AUTHENC
-> +
+To allow the SCSI subsystem scsi_execute_req() function to issue
+requests using large buffers that are better allocated with vmalloc()
+rather than kmalloc(), modify bio_map_kern() to allow passing a buffer
+allocated with vmalloc().
 
-One more request: can you make this symbol explicitly selectable, with prompt
-string and help text?
+To do so, detect vmalloc-ed buffers using is_vmalloc_addr(). For
+vmalloc-ed buffers, flush the buffer using flush_kernel_vmap_range(),
+use vmalloc_to_page() instead of virt_to_page() to obtain the pages of
+the buffer, and invalidate the buffer addresses with
+invalidate_kernel_vmap_range() on completion of read BIOs. This last
+point is executed using the function bio_invalidate_vmalloc_pages()
+which is defined only if the architecture defines
+ARCH_HAS_FLUSH_KERNEL_DCACHE_PAGE, that is, if the architecture
+actually needs the invalidation done.
 
-As discussed earlier, to reduce bloat I don't really want FS_ENCRYPTION to
-select this.  So the user will need a way to select CRYPTO_ESSIV if they need
-it.
+Fixes: 515ce6061312 ("scsi: sd_zbc: Fix sd_zbc_report_zones() buffer allocation")
+Fixes: e76239a3748c ("block: add a report_zones method")
+Cc: stable@vger.kernel.org
+Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
+Reviewed-by: Ming Lei <ming.lei@redhat.com>
+---
+ block/bio.c | 28 +++++++++++++++++++++++++++-
+ 1 file changed, 27 insertions(+), 1 deletion(-)
 
-- Eric
+diff --git a/block/bio.c b/block/bio.c
+index 2050bb4aacb5..3b6e35f73fd7 100644
+--- a/block/bio.c
++++ b/block/bio.c
+@@ -16,6 +16,7 @@
+ #include <linux/workqueue.h>
+ #include <linux/cgroup.h>
+ #include <linux/blk-cgroup.h>
++#include <linux/highmem.h>
+ 
+ #include <trace/events/block.h>
+ #include "blk.h"
+@@ -1479,8 +1480,22 @@ void bio_unmap_user(struct bio *bio)
+ 	bio_put(bio);
+ }
+ 
++static void bio_invalidate_vmalloc_pages(struct bio *bio)
++{
++#ifdef ARCH_HAS_FLUSH_KERNEL_DCACHE_PAGE
++	if (bio->bi_private && !op_is_write(bio_op(bio))) {
++		unsigned long i, len = 0;
++
++		for (i = 0; i < bio->bi_vcnt; i++)
++			len += bio->bi_io_vec[i].bv_len;
++		invalidate_kernel_vmap_range(bio->bi_private, len);
++	}
++#endif
++}
++
+ static void bio_map_kern_endio(struct bio *bio)
+ {
++	bio_invalidate_vmalloc_pages(bio);
+ 	bio_put(bio);
+ }
+ 
+@@ -1501,6 +1516,8 @@ struct bio *bio_map_kern(struct request_queue *q, void *data, unsigned int len,
+ 	unsigned long end = (kaddr + len + PAGE_SIZE - 1) >> PAGE_SHIFT;
+ 	unsigned long start = kaddr >> PAGE_SHIFT;
+ 	const int nr_pages = end - start;
++	bool is_vmalloc = is_vmalloc_addr(data);
++	struct page *page;
+ 	int offset, i;
+ 	struct bio *bio;
+ 
+@@ -1508,6 +1525,11 @@ struct bio *bio_map_kern(struct request_queue *q, void *data, unsigned int len,
+ 	if (!bio)
+ 		return ERR_PTR(-ENOMEM);
+ 
++	if (is_vmalloc) {
++		flush_kernel_vmap_range(data, len);
++		bio->bi_private = data;
++	}
++
+ 	offset = offset_in_page(kaddr);
+ 	for (i = 0; i < nr_pages; i++) {
+ 		unsigned int bytes = PAGE_SIZE - offset;
+@@ -1518,7 +1540,11 @@ struct bio *bio_map_kern(struct request_queue *q, void *data, unsigned int len,
+ 		if (bytes > len)
+ 			bytes = len;
+ 
+-		if (bio_add_pc_page(q, bio, virt_to_page(data), bytes,
++		if (!is_vmalloc)
++			page = virt_to_page(data);
++		else
++			page = vmalloc_to_page(data);
++		if (bio_add_pc_page(q, bio, page, bytes,
+ 				    offset) < bytes) {
+ 			/* we don't support partial mappings */
+ 			bio_put(bio);
+-- 
+2.21.0
