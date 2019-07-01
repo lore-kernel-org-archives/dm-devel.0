@@ -1,15 +1,15 @@
 From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH v6 3/7] md: dm-crypt: infer ESSIV block
- cipher from cipher string directly
-Date: Mon, 1 Jul 2019 10:58:47 +0200
-Message-ID: <767ec609-d805-9bc2-1a73-d5000ce7f109@gmail.com>
+Subject: Re: [PATCH v6 4/7] md: dm-crypt: switch to ESSIV crypto
+	API template
+Date: Mon, 1 Jul 2019 10:59:51 +0200
+Message-ID: <f068888f-1a13-babf-0144-07939a79d9d9@gmail.com>
 References: <20190628152112.914-1-ard.biesheuvel@linaro.org>
-	<20190628152112.914-4-ard.biesheuvel@linaro.org>
+	<20190628152112.914-5-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190628152112.914-4-ard.biesheuvel@linaro.org>
+In-Reply-To: <20190628152112.914-5-ard.biesheuvel@linaro.org>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -25,33 +25,69 @@ Cc: Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, linux-fscrypt@v
 List-Id: dm-devel.ids
 
 On 28/06/2019 17:21, Ard Biesheuvel wrote:
-> Instead of allocating a crypto skcipher tfm 'foo' and attempting to
-> infer the encapsulated block cipher from the driver's 'name' field,
-> directly parse the string that we used to allocated the tfm. These
-> are always identical (unless the allocation failed, in which case
-> we bail anyway), but using the string allows us to use it in the
-> allocation, which is something we will need when switching to the
-> 'essiv' crypto API template.
+> Replace the explicit ESSIV handling in the dm-crypt driver with calls
+> into the crypto API, which now possesses the capability to perform
+> this processing within the crypto subsystem.
 > 
 > Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 
->  drivers/md/dm-crypt.c | 35 +++++++++-----------
+>  drivers/md/dm-crypt.c | 200 ++++----------------
 
-> @@ -2445,21 +2451,10 @@ static int crypt_ctr_cipher_new(struct dm_target *ti, char *cipher_in, char *key
+...
+
+> -/* Wipe salt and reset key derived from volume key */
+> -static int crypt_iv_essiv_wipe(struct crypt_config *cc)
+
+Do I understand it correctly, that this is now called inside the whole cipher
+set key in wipe command (in crypt_wipe_key())?
+
+(Wipe message is meant to suspend the device and wipe all key material
+from memory without actually destroying the device.)
+
+> -{
+> -	struct iv_essiv_private *essiv = &cc->iv_gen_private.essiv;
+> -	unsigned salt_size = crypto_shash_digestsize(essiv->hash_tfm);
+> -	struct crypto_cipher *essiv_tfm;
+> -	int r, err = 0;
+> -
+> -	memset(essiv->salt, 0, salt_size);
+> -
+> -	essiv_tfm = cc->iv_private;
+> -	r = crypto_cipher_setkey(essiv_tfm, essiv->salt, salt_size);
+> -	if (r)
+> -		err = r;
+> -
+> -	return err;
+> -}
+
+...
+
+> @@ -2435,9 +2281,19 @@ static int crypt_ctr_cipher_new(struct dm_target *ti, char *cipher_in, char *key
+>  	}
 >  
->  	/* Alloc AEAD, can be used only in new format. */
+>  	ret = crypt_ctr_blkdev_cipher(cc, cipher_api);
+> -	if (ret < 0) {
+> -		ti->error = "Cannot allocate cipher string";
+> -		return -ENOMEM;
+> +	if (ret < 0)
+> +		goto bad_mem;
+> +
+> +	if (*ivmode && !strcmp(*ivmode, "essiv")) {
+> +		if (!*ivopts) {
+> +			ti->error = "Digest algorithm missing for ESSIV mode";
+> +			return -EINVAL;
+> +		}
+> +		ret = snprintf(buf, CRYPTO_MAX_ALG_NAME, "essiv(%s,%s,%s)",
+> +			       cipher_api, cc->cipher, *ivopts);
+> +		if (ret < 0 || ret >= CRYPTO_MAX_ALG_NAME)
+> +			goto bad_mem;
 
-^^ This comment is now obsolete, please move it with the code or remove it.
+Hm, nitpicking, but goto from only one place while we have another -ENOMEM above...
 
->  	if (crypt_integrity_aead(cc)) {
-> -		ret = crypt_ctr_auth_cipher(cc, cipher_api);
-> -		if (ret < 0) {
-> -			ti->error = "Invalid AEAD cipher spec";
-> -			return -ENOMEM;
-> -		}
->  		cc->iv_size = crypto_aead_ivsize(any_tfm_aead(cc));
->  	} else
->  		cc->iv_size = crypto_skcipher_ivsize(any_tfm(cc));
+Just place this here without goto?
+
+> +	ti->error = "Cannot allocate cipher string";
+> +	return -ENOMEM;
 
 Otherwise
 
