@@ -1,12 +1,11 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH] libmultipath: trigger uevents for partitions, too
-Date: Tue, 2 Jul 2019 22:09:42 +0000
-Message-ID: <20190702220911.16157-1-martin.wilck@suse.com>
+From: Junxiao Bi <junxiao.bi@oracle.com>
+Subject: [PATCH] dm bufio: fix deadlock issue with loop device
+Date: Tue,  2 Jul 2019 16:14:56 -0700
+Message-ID: <20190702231456.19121-1-junxiao.bi@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,81 +15,86 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
+To: dm-devel@redhat.com
+Cc: honglei.wang@oracle.com, mpatocka@redhat.com, agk@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-From: Martin Wilck <mwilck@suse.com>
+The following deadlock was caputred on 4.1, since dm_bufio_shrink_count
+still had bufio lock acquired, this was already fixed by mainline. But
+shrinker will also invoke dm_bufio_shrink_scan by ->scan_objects, so
+looks like mainline will suffer the same deadlock issue.
 
-We have added code to re-trigger uevents in various cases where
-the status of a device changes from multipath to non-multipath,
-or vice-versa. When multipathd triggers uevents for paths of a map
-because the status of the map has changed, it needs to trigger
-events for the partitions of the path devices, too. The kernel
-doesn't do this automatically.
+This deadlock happened when both kswapd0 and loop1 were shrinking memory,
+kswapd0 hold bufio lock and waiting for an in-flight io done, but it will
+never done because loop1 who was issuing the io was hung by the same lock
+hold by kswapd0. This was ABBA deadlock.
 
-Fixes: c5023200 libmultipath: indicate wwid failure in dm_addmap_create()
-Fixes: e5d3c3a0 libmultipath: trigger change uevent on new device creation
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+The gfp_flags used in direct IO is GFP_KERNEL, so checking GFP_FS/IO won't
+work, just stop shrinking if lock was hold by others.
+
+PID: 474    TASK: ffff8813e11f4600  CPU: 10  COMMAND: "kswapd0"
+   #0 [ffff8813dedfb938] __schedule at ffffffff8173f405
+   #1 [ffff8813dedfb990] schedule at ffffffff8173fa27
+   #2 [ffff8813dedfb9b0] schedule_timeout at ffffffff81742fec
+   #3 [ffff8813dedfba60] io_schedule_timeout at ffffffff8173f186
+   #4 [ffff8813dedfbaa0] bit_wait_io at ffffffff8174034f
+   #5 [ffff8813dedfbac0] __wait_on_bit at ffffffff8173fec8
+   #6 [ffff8813dedfbb10] out_of_line_wait_on_bit at ffffffff8173ff81
+   #7 [ffff8813dedfbb90] __make_buffer_clean at ffffffffa038736f [dm_bufio]
+   #8 [ffff8813dedfbbb0] __try_evict_buffer at ffffffffa0387bb8 [dm_bufio]
+   #9 [ffff8813dedfbbd0] dm_bufio_shrink_scan at ffffffffa0387cc3 [dm_bufio]
+  #10 [ffff8813dedfbc40] shrink_slab at ffffffff811a87ce
+  #11 [ffff8813dedfbd30] shrink_zone at ffffffff811ad778
+  #12 [ffff8813dedfbdc0] kswapd at ffffffff811ae92f
+  #13 [ffff8813dedfbec0] kthread at ffffffff810a8428
+  #14 [ffff8813dedfbf50] ret_from_fork at ffffffff81745242
+
+  PID: 14127  TASK: ffff881455749c00  CPU: 11  COMMAND: "loop1"
+   #0 [ffff88272f5af228] __schedule at ffffffff8173f405
+   #1 [ffff88272f5af280] schedule at ffffffff8173fa27
+   #2 [ffff88272f5af2a0] schedule_preempt_disabled at ffffffff8173fd5e
+   #3 [ffff88272f5af2b0] __mutex_lock_slowpath at ffffffff81741fb5
+   #4 [ffff88272f5af330] mutex_lock at ffffffff81742133
+   #5 [ffff88272f5af350] dm_bufio_shrink_count at ffffffffa03865f9 [dm_bufio]
+   #6 [ffff88272f5af380] shrink_slab at ffffffff811a86bd
+   #7 [ffff88272f5af470] shrink_zone at ffffffff811ad778
+   #8 [ffff88272f5af500] do_try_to_free_pages at ffffffff811adb34
+   #9 [ffff88272f5af590] try_to_free_pages at ffffffff811adef8
+  #10 [ffff88272f5af610] __alloc_pages_nodemask at ffffffff811a09c3
+  #11 [ffff88272f5af710] alloc_pages_current at ffffffff811e8b71
+  #12 [ffff88272f5af760] new_slab at ffffffff811f4523
+  #13 [ffff88272f5af7b0] __slab_alloc at ffffffff8173a1b5
+  #14 [ffff88272f5af880] kmem_cache_alloc at ffffffff811f484b
+  #15 [ffff88272f5af8d0] do_blockdev_direct_IO at ffffffff812535b3
+  #16 [ffff88272f5afb00] __blockdev_direct_IO at ffffffff81255dc3
+  #17 [ffff88272f5afb30] xfs_vm_direct_IO at ffffffffa01fe3fc [xfs]
+  #18 [ffff88272f5afb90] generic_file_read_iter at ffffffff81198994
+  #19 [ffff88272f5afc50] __dta_xfs_file_read_iter_2398 at ffffffffa020c970 [xfs]
+  #20 [ffff88272f5afcc0] lo_rw_aio at ffffffffa0377042 [loop]
+  #21 [ffff88272f5afd70] loop_queue_work at ffffffffa0377c3b [loop]
+  #22 [ffff88272f5afe60] kthread_worker_fn at ffffffff810a8a0c
+  #23 [ffff88272f5afec0] kthread at ffffffff810a8428
+  #24 [ffff88272f5aff50] ret_from_fork at ffffffff81745242
+
+Signed-off-by: Junxiao Bi <junxiao.bi@oracle.com>
 ---
- libmultipath/configure.c | 38 ++++++++++++++++++++++++++++++++++++++
- 1 file changed, 38 insertions(+)
+ drivers/md/dm-bufio.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index af4d78de..9f100008 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -519,6 +519,42 @@ trigger_udev_change(const struct multipath *mpp)
- 	udev_device_unref(udd);
- }
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index 2a48ea3f1b30..b6b5acc92ca2 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -1599,9 +1599,7 @@ dm_bufio_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
+ 	unsigned long freed;
  
-+static void trigger_partitions_udev_change(struct udev_device *dev,
-+					   const char *action, int len)
-+{
-+	struct udev_enumerate *part_enum;
-+	struct udev_list_entry *item;
-+
-+	part_enum = udev_enumerate_new(udev);
-+	if (!part_enum)
-+		return;
-+
-+	if (udev_enumerate_add_match_parent(part_enum, dev) < 0 ||
-+	    udev_enumerate_add_match_subsystem(part_enum, "block") < 0 ||
-+	    udev_enumerate_scan_devices(part_enum) < 0)
-+		goto unref;
-+
-+	udev_list_entry_foreach(item,
-+				udev_enumerate_get_list_entry(part_enum)) {
-+		const char *syspath;
-+		struct udev_device *part;
-+
-+		syspath = udev_list_entry_get_name(item);
-+		part = udev_device_new_from_syspath(udev, syspath);
-+		if (!part)
-+			continue;
-+
-+		if (!strcmp("partition", udev_device_get_devtype(part))) {
-+			condlog(4, "%s: triggering %s event for %s", __func__,
-+				action, syspath);
-+			sysfs_attr_set_value(part, "uevent", action, len);
-+		}
-+		udev_device_unref(part);
-+	}
-+unref:
-+	udev_enumerate_unref(part_enum);
-+}
-+
- void
- trigger_paths_udev_change(struct multipath *mpp, bool is_mpath)
- {
-@@ -569,6 +605,8 @@ trigger_paths_udev_change(struct multipath *mpp, bool is_mpath)
- 				action, pp->dev, is_mpath ? "" : "no ");
- 			sysfs_attr_set_value(pp->udev, "uevent",
- 					     action, strlen(action));
-+			trigger_partitions_udev_change(pp->udev, action,
-+						       strlen(action));
- 		}
- 	}
+ 	c = container_of(shrink, struct dm_bufio_client, shrinker);
+-	if (sc->gfp_mask & __GFP_FS)
+-		dm_bufio_lock(c);
+-	else if (!dm_bufio_trylock(c))
++	if (!dm_bufio_trylock(c))
+ 		return SHRINK_STOP;
  
+ 	freed  = __scan(c, sc->nr_to_scan, sc->gfp_mask);
 -- 
-2.22.0
+2.17.1
