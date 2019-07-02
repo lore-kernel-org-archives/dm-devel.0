@@ -1,106 +1,165 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [PATCH v6 4/7] md: dm-crypt: switch to ESSIV crypto
-	API template
-Date: Tue, 2 Jul 2019 10:07:32 +0200
-Message-ID: <CAKv+Gu-gnKk2EQ4Asq2evghhyTFYVq9SRQ8tu_p4VCA1dSJfHQ@mail.gmail.com>
-References: <20190628152112.914-1-ard.biesheuvel@linaro.org>
-	<20190628152112.914-5-ard.biesheuvel@linaro.org>
-	<f068888f-1a13-babf-0144-07939a79d9d9@gmail.com>
+From: Hou Tao <houtao1@huawei.com>
+Subject: [RFC PATCH 2/3] md: export inflight io counters and internal stats in debugfs
+Date: Tue, 2 Jul 2019 21:29:17 +0800
+Message-ID: <20190702132918.114818-3-houtao1@huawei.com>
+References: <20190702132918.114818-1-houtao1@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <f068888f-1a13-babf-0144-07939a79d9d9@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190702132918.114818-1-houtao1@huawei.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-raid@vger.kernel.org, songliubraving@fb.com
+Cc: neilb@suse.com, linux-block@vger.kernel.org, snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, houtao1@huawei.com
 List-Id: dm-devel.ids
 
-On Mon, 1 Jul 2019 at 10:59, Milan Broz <gmazyland@gmail.com> wrote:
->
-> On 28/06/2019 17:21, Ard Biesheuvel wrote:
-> > Replace the explicit ESSIV handling in the dm-crypt driver with calls
-> > into the crypto API, which now possesses the capability to perform
-> > this processing within the crypto subsystem.
-> >
-> > Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
->
-> >  drivers/md/dm-crypt.c | 200 ++++----------------
->
-> ...
->
-> > -/* Wipe salt and reset key derived from volume key */
-> > -static int crypt_iv_essiv_wipe(struct crypt_config *cc)
->
-> Do I understand it correctly, that this is now called inside the whole cipher
-> set key in wipe command (in crypt_wipe_key())?
->
-> (Wipe message is meant to suspend the device and wipe all key material
-> from memory without actually destroying the device.)
->
+There are so many io counters and stats/flags in md, so I think
+export these info in debugfs will be helpful for online-debugging,
+especially when the vmlinux and crash utility are not available.
+And these files can also be utilized during code understanding.
 
-Yes, setting the random key in wipe() triggers the SHA256 operation as
-normal, which is slightly wasteful but not a big deal imo.
+Debug info are divided into two debugfs files:
+* iostat
+  contains io counters and io related stats (e.g., mddev->pending_writes
+  and the active status of mddev->sb_wait)
+* stat
+  contains internal stats or flags (e.g., mddev->sb_flags)
 
-> > -{
-> > -     struct iv_essiv_private *essiv = &cc->iv_gen_private.essiv;
-> > -     unsigned salt_size = crypto_shash_digestsize(essiv->hash_tfm);
-> > -     struct crypto_cipher *essiv_tfm;
-> > -     int r, err = 0;
-> > -
-> > -     memset(essiv->salt, 0, salt_size);
-> > -
-> > -     essiv_tfm = cc->iv_private;
-> > -     r = crypto_cipher_setkey(essiv_tfm, essiv->salt, salt_size);
-> > -     if (r)
-> > -             err = r;
-> > -
-> > -     return err;
-> > -}
->
-> ...
->
-> > @@ -2435,9 +2281,19 @@ static int crypt_ctr_cipher_new(struct dm_target *ti, char *cipher_in, char *key
-> >       }
-> >
-> >       ret = crypt_ctr_blkdev_cipher(cc, cipher_api);
-> > -     if (ret < 0) {
-> > -             ti->error = "Cannot allocate cipher string";
-> > -             return -ENOMEM;
-> > +     if (ret < 0)
-> > +             goto bad_mem;
-> > +
-> > +     if (*ivmode && !strcmp(*ivmode, "essiv")) {
-> > +             if (!*ivopts) {
-> > +                     ti->error = "Digest algorithm missing for ESSIV mode";
-> > +                     return -EINVAL;
-> > +             }
-> > +             ret = snprintf(buf, CRYPTO_MAX_ALG_NAME, "essiv(%s,%s,%s)",
-> > +                            cipher_api, cc->cipher, *ivopts);
-> > +             if (ret < 0 || ret >= CRYPTO_MAX_ALG_NAME)
-> > +                     goto bad_mem;
->
-> Hm, nitpicking, but goto from only one place while we have another -ENOMEM above...
->
-> Just place this here without goto?
->
+These two debugfs files will be created both by md-core and the used
+md-personality for each md device. This patch creates debug files
+for md-core under /sys/kernel/debug/block/mdX, and the following patch
+will creates these files for RAID1. The following lines show the hierarchy
+of debugfs files created for a RAID1 device:
 
-OK
+  $ pwd
+  /sys/kernel/debug/block/md0
+  $ tree
+  .
+  ├── iostat
+  ├── raid1
+  │   ├── iostat
+  │   └── stat
+  └── stat
 
-> > +     ti->error = "Cannot allocate cipher string";
-> > +     return -ENOMEM;
->
-> Otherwise
->
-> Reviewed-by: Milan Broz <gmazyland@gmail.com>
->
-> Thanks,
-> Milan
+Signed-off-by: Hou Tao <houtao1@huawei.com>
+---
+ drivers/md/md.c | 65 +++++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/md.h |  1 +
+ 2 files changed, 66 insertions(+)
+
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 9801d540fea1..dceb8fd59ba0 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -64,11 +64,14 @@
+ #include "md.h"
+ #include "md-bitmap.h"
+ #include "md-cluster.h"
++#include "md-debugfs.h"
+ 
+ #ifndef MODULE
+ static void autostart_arrays(int part);
+ #endif
+ 
++extern struct dentry *blk_debugfs_root;
++
+ /* pers_list is a list of registered personalities protected
+  * by pers_lock.
+  * pers_lock does extra service to protect accesses to
+@@ -5191,6 +5194,65 @@ md_attr_store(struct kobject *kobj, struct attribute *attr,
+ 	return rv;
+ }
+ 
++static int md_dbg_iostat_show(struct seq_file *m, void *data)
++{
++	struct mddev *mddev = m->private;
++	int active_bm_io = 0;
++
++	spin_lock(&mddev->lock);
++	if (mddev->bitmap)
++		active_bm_io = atomic_read(&mddev->bitmap->pending_writes);
++	spin_unlock(&mddev->lock);
++
++	seq_printf(m, "active_io %d\n",
++			atomic_read(&mddev->active_io));
++	seq_printf(m, "sb_wait %d pending_writes %d\n",
++			waitqueue_active(&mddev->sb_wait),
++			atomic_read(&mddev->pending_writes));
++	seq_printf(m, "recovery_active %d\n",
++			atomic_read(&mddev->recovery_active));
++	seq_printf(m, "bitmap pending_writes %d\n", active_bm_io);
++
++	return 0;
++}
++
++static int md_dbg_stat_show(struct seq_file *m, void *data)
++{
++	struct mddev *mddev = m->private;
++
++	seq_printf(m, "flags 0x%lx\n", mddev->flags);
++	seq_printf(m, "sb_flags 0x%lx\n", mddev->sb_flags);
++	seq_printf(m, "recovery 0x%lx\n", mddev->recovery);
++
++	return 0;
++}
++
++static const struct md_debugfs_file md_dbg_files[] = {
++	{.name = "iostat", .show = md_dbg_iostat_show},
++	{.name = "stat", .show = md_dbg_stat_show},
++	{},
++};
++
++static void md_unregister_debugfs(struct mddev *mddev)
++{
++	debugfs_remove_recursive(mddev->debugfs_dir);
++}
++
++static void md_register_debugfs(struct mddev *mddev)
++{
++	const char *name;
++	struct dentry *dir;
++
++	name = kobject_name(&disk_to_dev(mddev->gendisk)->kobj);
++	dir = debugfs_create_dir(name, blk_debugfs_root);
++	if (!IS_ERR_OR_NULL(dir)) {
++		md_debugfs_create_files(dir, mddev, md_dbg_files);
++		mddev->debugfs_dir = dir;
++	} else {
++		mddev->debugfs_dir = NULL;
++	}
++}
++
+ static void md_free(struct kobject *ko)
+ {
+ 	struct mddev *mddev = container_of(ko, struct mddev, kobj);
+@@ -5227,6 +5289,7 @@ static void mddev_delayed_delete(struct work_struct *ws)
+ {
+ 	struct mddev *mddev = container_of(ws, struct mddev, del_work);
+ 
++	md_unregister_debugfs(mddev);
+ 	sysfs_remove_group(&mddev->kobj, &md_bitmap_group);
+ 	kobject_del(&mddev->kobj);
+ 	kobject_put(&mddev->kobj);
+@@ -5353,6 +5416,8 @@ static int md_alloc(dev_t dev, char *name)
+ 	if (mddev->kobj.sd &&
+ 	    sysfs_create_group(&mddev->kobj, &md_bitmap_group))
+ 		pr_debug("pointless warning\n");
++
++	md_register_debugfs(mddev);
+ 	mutex_unlock(&mddev->open_mutex);
+  abort:
+ 	mutex_unlock(&disks_mutex);
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index 7c930c091193..e79ef2101c45 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -466,6 +466,7 @@ struct mddev {
+ 	unsigned int			good_device_nr;	/* good device num within cluster raid */
+ 
+ 	bool	has_superblocks:1;
++	struct dentry *debugfs_dir;
+ };
+ 
+ enum recovery_flags {
+-- 
+2.22.0
