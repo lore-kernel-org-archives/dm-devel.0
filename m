@@ -1,110 +1,103 @@
-From: Hou Tao <houtao1@huawei.com>
-Subject: [RFC PATCH 0/3] md: export internal stats through debugfs
-Date: Tue, 2 Jul 2019 21:29:15 +0800
-Message-ID: <20190702132918.114818-1-houtao1@huawei.com>
+From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Subject: Re: [PATCH v6 4/7] md: dm-crypt: switch to ESSIV crypto
+	API template
+Date: Tue, 2 Jul 2019 18:30:30 +0200
+Message-ID: <CAKv+Gu-hATMtNVUJ-WOr0yia0-X=M_ME6CutREy9q_ZyorpCzw@mail.gmail.com>
+References: <20190628152112.914-1-ard.biesheuvel@linaro.org>
+	<20190628152112.914-5-ard.biesheuvel@linaro.org>
+	<f068888f-1a13-babf-0144-07939a79d9d9@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-raid@vger.kernel.org, songliubraving@fb.com
-Cc: neilb@suse.com, linux-block@vger.kernel.org, snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, houtao1@huawei.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <f068888f-1a13-babf-0144-07939a79d9d9@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Milan Broz <gmazyland@gmail.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hi,
+On Mon, 1 Jul 2019 at 10:59, Milan Broz <gmazyland@gmail.com> wrote:
+>
+> On 28/06/2019 17:21, Ard Biesheuvel wrote:
+> > Replace the explicit ESSIV handling in the dm-crypt driver with calls
+> > into the crypto API, which now possesses the capability to perform
+> > this processing within the crypto subsystem.
+> >
+> > Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+>
+> >  drivers/md/dm-crypt.c | 200 ++++----------------
+>
+> ...
+>
+> > -/* Wipe salt and reset key derived from volume key */
+> > -static int crypt_iv_essiv_wipe(struct crypt_config *cc)
+>
+> Do I understand it correctly, that this is now called inside the whole cipher
+> set key in wipe command (in crypt_wipe_key())?
+>
+> (Wipe message is meant to suspend the device and wipe all key material
+> from memory without actually destroying the device.)
+>
+> > -{
+> > -     struct iv_essiv_private *essiv = &cc->iv_gen_private.essiv;
+> > -     unsigned salt_size = crypto_shash_digestsize(essiv->hash_tfm);
+> > -     struct crypto_cipher *essiv_tfm;
+> > -     int r, err = 0;
+> > -
+> > -     memset(essiv->salt, 0, salt_size);
+> > -
+> > -     essiv_tfm = cc->iv_private;
+> > -     r = crypto_cipher_setkey(essiv_tfm, essiv->salt, salt_size);
+> > -     if (r)
+> > -             err = r;
+> > -
+> > -     return err;
+> > -}
+>
+> ...
+>
+> > @@ -2435,9 +2281,19 @@ static int crypt_ctr_cipher_new(struct dm_target *ti, char *cipher_in, char *key
+> >       }
+> >
+> >       ret = crypt_ctr_blkdev_cipher(cc, cipher_api);
+> > -     if (ret < 0) {
+> > -             ti->error = "Cannot allocate cipher string";
+> > -             return -ENOMEM;
+> > +     if (ret < 0)
+> > +             goto bad_mem;
+> > +
+> > +     if (*ivmode && !strcmp(*ivmode, "essiv")) {
+> > +             if (!*ivopts) {
+> > +                     ti->error = "Digest algorithm missing for ESSIV mode";
+> > +                     return -EINVAL;
+> > +             }
+> > +             ret = snprintf(buf, CRYPTO_MAX_ALG_NAME, "essiv(%s,%s,%s)",
+> > +                            cipher_api, cc->cipher, *ivopts);
+> > +             if (ret < 0 || ret >= CRYPTO_MAX_ALG_NAME)
+> > +                     goto bad_mem;
+>
+> Hm, nitpicking, but goto from only one place while we have another -ENOMEM above...
+>
+> Just place this here without goto?
+>
 
-There are so many io counters, stats and flags in md, so I think
-export these info to userspace will be helpful for online-debugging,
-especially when the vmlinux file and the crash utility are not
-available. And these info can also be utilized during code
-understanding.
+Actually, the bad_mem label is used 10 lines up as well.
+So I'll keep this goto in the next revision.
 
-MD has already exported some stats through sysfs files under
-/sys/block/mdX/md, but using sysfs file to export more internal
-stats are not a good choice, because we need to create a single
-sysfs file for each internal stat according to the use convention
-of sysfs and there are too many internal stats. Further, the
-newly-created sysfs files would become APIs for userspace tools,
-but that is not we wanted, because these files are related with
-internal stats and internal stats may change from time to time.
-
-And I think debugfs is a better choice. Because we can show multiple
-related stats in a debugfs file, and the debugfs file will never be
-used as an userspace API.
-
-Two debugfs files are created to expose these internal stats:
-* iostat: io counters and io related stats (e.g., mddev->active_io,
-	r1conf->nr_pending, or r1confi->retry_list)
-* stat: normal stats/flags (e.g., mddev->recovery, conf->array_frozen)
-
-Because internal stats are spreaded all over md-core and md-personality,
-so both md-core and md-personality will create these two debugfs files
-under different debugfs directory.
-
-Patch 1 factors out the debugfs files creation routine for md-core and
-md-personality, patch 2 creates two debugfs files: iostat & stat under
-/sys/kernel/debug/block/mdX for md-core, and patch 3 creates two debugfs
-files: iostat & stat under /sys/kernel/debug/block/mdX/raid1 for md-raid1.
-
-The following lines show the hierarchy and the content of these debugfs
-files for a RAID1 device:
-
-$ pwd
-/sys/kernel/debug/block/md0
-$ tree
-.
-├── iostat
-├── raid1
-│   ├── iostat
-│   └── stat
-└── stat
-
-$ cat iostat
-active_io 0
-sb_wait 0 pending_writes 0
-recovery_active 0
-bitmap pending_writes 0
-
-$ cat stat
-flags 0x20
-sb_flags 0x0
-recovery 0x0
-
-$ cat raid1/iostat
-retry_list active 0
-bio_end_io_list active 0
-pending_bio_list active 0 cnt 0
-sync_pending 0
-nr_pending 0
-nr_waiting 0
-nr_queued 0
-barrier 0
-
-$ cat raid1/stat
-array_frozen 0
-
-I'm not sure whether the division of internal stats is appropriate and
-whether the internal stats in debugfs files are sufficient, so questions
-and comments are weclome.
-
-Regards,
-Tao
-
-Hou Tao (3):
-  md-debugfs: add md_debugfs_create_files()
-  md: export inflight io counters and internal stats in debugfs
-  raid1: export inflight io counters and internal stats in debugfs
-
- drivers/md/Makefile     |  2 +-
- drivers/md/md-debugfs.c | 35 ++++++++++++++++++
- drivers/md/md-debugfs.h | 16 +++++++++
- drivers/md/md.c         | 65 ++++++++++++++++++++++++++++++++++
- drivers/md/md.h         |  1 +
- drivers/md/raid1.c      | 78 +++++++++++++++++++++++++++++++++++++++++
- drivers/md/raid1.h      |  1 +
- 7 files changed, 197 insertions(+), 1 deletion(-)
- create mode 100644 drivers/md/md-debugfs.c
- create mode 100644 drivers/md/md-debugfs.h
-
--- 
-2.22.0
+> > +     ti->error = "Cannot allocate cipher string";
+> > +     return -ENOMEM;
+>
+> Otherwise
+>
+> Reviewed-by: Milan Broz <gmazyland@gmail.com>
+>
+> Thanks,
+> Milan
