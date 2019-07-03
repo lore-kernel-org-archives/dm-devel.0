@@ -1,13 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm snapshot: add optional discard support
-	features
-Date: Wed, 3 Jul 2019 12:25:04 -0400
-Message-ID: <20190703162504.GA34397@lobo>
+From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Subject: Re: [PATCH v7 2/7] fs: crypto: invoke crypto API for
+	ESSIV handling
+Date: Wed, 3 Jul 2019 20:23:31 +0200
+Message-ID: <CAKv+Gu9gcbYrU3EjCuYudoT-vrAp3Q2y7ExpcqgHBLQFPXQsWw@mail.gmail.com>
+References: <20190702164815.6341-1-ard.biesheuvel@linaro.org>
+	<20190702164815.6341-3-ard.biesheuvel@linaro.org>
+	<20190702215517.GA69157@gmail.com>
+	<CAKv+Gu9qPPBpm7aocHCsid6yyL7HyX9Dk2M72A5W9OeHG58MZw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <CAKv+Gu9qPPBpm7aocHCsid6yyL7HyX9Dk2M72A5W9OeHG58MZw@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,386 +21,144 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: John Dorminy <jdorminy@redhat.com>
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-Add 2 _optional_ features to the snapshot target:
+On Wed, 3 Jul 2019 at 00:06, Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
+>
+> On Tue, 2 Jul 2019 at 23:55, Eric Biggers <ebiggers@kernel.org> wrote:
+> >
+> > Hi Ard,
+> >
+> > On Tue, Jul 02, 2019 at 06:48:10PM +0200, Ard Biesheuvel wrote:
+> > > Instead of open coding the calculations for ESSIV handling, use a
+> > > ESSIV skcipher which does all of this under the hood.
+> > >
+> > > Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+> > > ---
+> > >  fs/crypto/Kconfig           |  1 +
+> > >  fs/crypto/crypto.c          |  5 --
+> > >  fs/crypto/fscrypt_private.h |  9 --
+> > >  fs/crypto/keyinfo.c         | 95 +-------------------
+> > >  4 files changed, 5 insertions(+), 105 deletions(-)
+> > >
+> > > diff --git a/fs/crypto/Kconfig b/fs/crypto/Kconfig
+> > > index 24ed99e2eca0..b0292da8613c 100644
+> > > --- a/fs/crypto/Kconfig
+> > > +++ b/fs/crypto/Kconfig
+> > > @@ -5,6 +5,7 @@ config FS_ENCRYPTION
+> > >       select CRYPTO_AES
+> > >       select CRYPTO_CBC
+> > >       select CRYPTO_ECB
+> > > +     select CRYPTO_ESSIV
+> > >       select CRYPTO_XTS
+> > >       select CRYPTO_CTS
+> > >       select CRYPTO_SHA256
+> > > diff --git a/fs/crypto/crypto.c b/fs/crypto/crypto.c
+> > > index 335a362ee446..c53ce262a06c 100644
+> > > --- a/fs/crypto/crypto.c
+> > > +++ b/fs/crypto/crypto.c
+> > > @@ -136,9 +136,6 @@ void fscrypt_generate_iv(union fscrypt_iv *iv, u64 lblk_num,
+> > >
+> > >       if (ci->ci_flags & FS_POLICY_FLAG_DIRECT_KEY)
+> > >               memcpy(iv->nonce, ci->ci_nonce, FS_KEY_DERIVATION_NONCE_SIZE);
+> > > -
+> > > -     if (ci->ci_essiv_tfm != NULL)
+> > > -             crypto_cipher_encrypt_one(ci->ci_essiv_tfm, iv->raw, iv->raw);
+> > >  }
+> > >
+> > >  int fscrypt_do_page_crypto(const struct inode *inode, fscrypt_direction_t rw,
+> > > @@ -492,8 +489,6 @@ static void __exit fscrypt_exit(void)
+> > >               destroy_workqueue(fscrypt_read_workqueue);
+> > >       kmem_cache_destroy(fscrypt_ctx_cachep);
+> > >       kmem_cache_destroy(fscrypt_info_cachep);
+> > > -
+> > > -     fscrypt_essiv_cleanup();
+> > >  }
+> > >  module_exit(fscrypt_exit);
+> > >
+> > > diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
+> > > index 7da276159593..59d0cba9cfb9 100644
+> > > --- a/fs/crypto/fscrypt_private.h
+> > > +++ b/fs/crypto/fscrypt_private.h
+> > > @@ -61,12 +61,6 @@ struct fscrypt_info {
+> > >       /* The actual crypto transform used for encryption and decryption */
+> > >       struct crypto_skcipher *ci_ctfm;
+> > >
+> > > -     /*
+> > > -      * Cipher for ESSIV IV generation.  Only set for CBC contents
+> > > -      * encryption, otherwise is NULL.
+> > > -      */
+> > > -     struct crypto_cipher *ci_essiv_tfm;
+> > > -
+> > >       /*
+> > >        * Encryption mode used for this inode.  It corresponds to either
+> > >        * ci_data_mode or ci_filename_mode, depending on the inode type.
+> > > @@ -166,9 +160,6 @@ struct fscrypt_mode {
+> > >       int keysize;
+> > >       int ivsize;
+> > >       bool logged_impl_name;
+> > > -     bool needs_essiv;
+> > >  };
+> > >
+> > > -extern void __exit fscrypt_essiv_cleanup(void);
+> > > -
+> > >  #endif /* _FSCRYPT_PRIVATE_H */
+> > > diff --git a/fs/crypto/keyinfo.c b/fs/crypto/keyinfo.c
+> > > index dcd91a3fbe49..f39667d4316a 100644
+> > > --- a/fs/crypto/keyinfo.c
+> > > +++ b/fs/crypto/keyinfo.c
+> > > @@ -13,14 +13,10 @@
+> > >  #include <linux/hashtable.h>
+> > >  #include <linux/scatterlist.h>
+> > >  #include <linux/ratelimit.h>
+> > > -#include <crypto/aes.h>
+> > >  #include <crypto/algapi.h>
+> > > -#include <crypto/sha.h>
+> > >  #include <crypto/skcipher.h>
+> > >  #include "fscrypt_private.h"
+> > >
+> > > -static struct crypto_shash *essiv_hash_tfm;
+> > > -
+> > >  /* Table of keys referenced by FS_POLICY_FLAG_DIRECT_KEY policies */
+> > >  static DEFINE_HASHTABLE(fscrypt_master_keys, 6); /* 6 bits = 64 buckets */
+> > >  static DEFINE_SPINLOCK(fscrypt_master_keys_lock);
+> > > @@ -144,10 +140,9 @@ static struct fscrypt_mode available_modes[] = {
+> > >       },
+> > >       [FS_ENCRYPTION_MODE_AES_128_CBC] = {
+> > >               .friendly_name = "AES-128-CBC",
+> > > -             .cipher_str = "cbc(aes)",
+> > > +             .cipher_str = "essiv(cbc(aes),aes,sha256)",
+> > >               .keysize = 16,
+> > > -             .ivsize = 16,
+> > > -             .needs_essiv = true,
+> > > +             .ivsize = 8,
+> >
+> > As I said before, this needs to be kept as .ivsize = 16.
+> >
+> > This bug actually causes the generic/549 test to fail.
+> >
+>
+> Ugh, yes, I intended to fix that. Apologies for the sloppiness, I have
+> been trying to wrap this up in time for my holidays, but the end
+> result is quite the opposite :-)
+>
+> > Otherwise this patch looks good.  FYI: to avoid conflicts with planned fscrypt
+> > work I'd prefer to take this patch through the fscrypt.git tree after the ESSIV
+> > template is merged, rather than have Herbert take it through cryptodev.  (Unless
+> > he's going to apply this whole series for v5.3, in which case I'm fine with him
+> > taking the fscrypt patch too, though it seems too late for that.)
+> >
+>
+> I agree that the fscrypt and dm-crypt changes should not be merged for v5.3
+>
+> I know that Herbert typically prefers not to take any new code without
+> any of its users, but perhaps we can make an exception in this case,
+> and merge patches #1, #5, #6 and #7 now (which is mostly risk free
+> since no code uses essiv yet, and patch #5 is a straight-forward
+> refactor) and take the fscrypt and dm-crypt patches through their
+> respective trees for the next cycle.
 
-discard_zeroes_cow - a discard issued to the snapshot device that maps
-to entire chunks to will zero the corresponding exception(s) in the
-snapshot's exception store.
-
-discard_passdown_origin - a discard to the snapshot device is passed down
-to the snapshot-origin's underlying device.  This doesn't cause copy-out
-to the snapshot exception store because the snapshot-origin target is
-bypassed.
-
-The discard_passdown_origin feature depends on the discard_zeroes_cow
-feature being enabled.
-
-When these 2 features are enabled they allow a temporarily read-only
-device that has completely exhausted its free space to recover space.
-To do so dm-snapshot provides temporary buffer to accommodate writes
-that the temporarily read-only device cannot handle yet.  Once the upper
-layer frees space (e.g. fstrim to XFS) the discards issued to the
-dm-snapshot target will be issued to underlying read-only device whose
-free space was exhausted.  In addition those discards will also cause
-zeroes to be written to the snapshot exception store if corresponding
-exceptions exist.  If the underlying origin device provides
-deduplication for zero blocks then if/when the snapshot is merged backed
-to the origin those blocks will become unused.  Once the origin has
-gained adequate space, merging the snapshot back to the thinly
-provisioned device will permit continued use of that device without the
-temporary space provided by the snapshot.
-
-Requested-by: John Dorminy <jdorminy@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- Documentation/device-mapper/snapshot.txt |  16 +++
- drivers/md/dm-snap.c                     | 168 +++++++++++++++++++++++++++----
- 2 files changed, 167 insertions(+), 17 deletions(-)
-
-diff --git a/Documentation/device-mapper/snapshot.txt b/Documentation/device-mapper/snapshot.txt
-index b8bbb516f989..1810833f6dc6 100644
---- a/Documentation/device-mapper/snapshot.txt
-+++ b/Documentation/device-mapper/snapshot.txt
-@@ -31,6 +31,7 @@ its visible content unchanged, at least until the <COW device> fills up.
- 
- 
- *) snapshot <origin> <COW device> <persistent?> <chunksize>
-+   [<# feature args> [<arg>]*]
- 
- A snapshot of the <origin> block device is created. Changed chunks of
- <chunksize> sectors will be stored on the <COW device>.  Writes will
-@@ -53,8 +54,23 @@ When loading or unloading the snapshot target, the corresponding
- snapshot-origin or snapshot-merge target must be suspended. A failure to
- suspend the origin target could result in data corruption.
- 
-+Optional features:
-+
-+   discard_zeroes_cow - a discard issued to the snapshot device that
-+   maps to entire chunks to will zero the corresponding exception(s) in
-+   the snapshot's exception store.
-+
-+   discard_passdown_origin - a discard to the snapshot device is passed
-+   down to the snapshot-origin's underlying device.  This doesn't cause
-+   copy-out to the snapshot exception store because the snapshot-origin
-+   target is bypassed.
-+
-+   The discard_passdown_origin feature depends on the discard_zeroes_cow
-+   feature being enabled.
-+
- 
- * snapshot-merge <origin> <COW device> <persistent> <chunksize>
-+  [<# feature args> [<arg>]*]
- 
- takes the same table arguments as the snapshot target except it only
- works with persistent snapshots.  This target assumes the role of the
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 3107f2b1988b..e894302619dd 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -134,7 +134,10 @@ struct dm_snapshot {
- 	 * - I/O error while merging
- 	 *	=> stop merging; set merge_failed; process I/O normally.
- 	 */
--	int merge_failed;
-+	bool merge_failed:1;
-+
-+	bool discard_zeroes_cow:1;
-+	bool discard_passdown_origin:1;
- 
- 	/*
- 	 * Incoming bios that overlap with chunks being merged must wait
-@@ -1173,12 +1176,64 @@ static void stop_merge(struct dm_snapshot *s)
- 	clear_bit(SHUTDOWN_MERGE, &s->state_bits);
- }
- 
-+static int parse_snapshot_features(struct dm_arg_set *as, struct dm_snapshot *s,
-+				   struct dm_target *ti)
-+{
-+	int r;
-+	unsigned argc;
-+	const char *arg_name;
-+
-+	static const struct dm_arg _args[] = {
-+		{0, 2, "Invalid number of feature arguments"},
-+	};
-+
-+	/*
-+	 * No feature arguments supplied.
-+	 */
-+	if (!as->argc)
-+		return 0;
-+
-+	r = dm_read_arg_group(_args, as, &argc, &ti->error);
-+	if (r)
-+		return -EINVAL;
-+
-+	while (argc && !r) {
-+		arg_name = dm_shift_arg(as);
-+		argc--;
-+
-+		if (!strcasecmp(arg_name, "discard_zeroes_cow"))
-+			s->discard_zeroes_cow = true;
-+
-+		else if (!strcasecmp(arg_name, "discard_passdown_origin"))
-+			s->discard_passdown_origin = true;
-+
-+		else {
-+			ti->error = "Unrecognised feature requested";
-+			r = -EINVAL;
-+			break;
-+		}
-+	}
-+
-+	if (!s->discard_zeroes_cow && s->discard_passdown_origin) {
-+		/*
-+		 * TODO: really these are disjoint.. but ti->num_discard_bios
-+		 * and dm_bio_get_target_bio_nr() require rigid constraints.
-+		 */
-+		ti->error = "discard_passdown_origin feature depends on discard_zeroes_cow";
-+		r = -EINVAL;
-+	}
-+
-+	return r;
-+}
-+
- /*
-- * Construct a snapshot mapping: <origin_dev> <COW-dev> <p|po|n> <chunk-size>
-+ * Construct a snapshot mapping:
-+ * <origin_dev> <COW-dev> <p|po|n> <chunk-size> [<# feature args> [<arg>]*]
-  */
- static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- {
- 	struct dm_snapshot *s;
-+	struct dm_arg_set as;
- 	int i;
- 	int r = -EINVAL;
- 	char *origin_path, *cow_path;
-@@ -1186,8 +1241,8 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	unsigned args_used, num_flush_bios = 1;
- 	fmode_t origin_mode = FMODE_READ;
- 
--	if (argc != 4) {
--		ti->error = "requires exactly 4 arguments";
-+	if (argc < 4) {
-+		ti->error = "requires 4 or more arguments";
- 		r = -EINVAL;
- 		goto bad;
- 	}
-@@ -1204,6 +1259,13 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		goto bad;
- 	}
- 
-+	as.argc = argc;
-+	as.argv = argv;
-+	dm_consume_args(&as, 4);
-+	r = parse_snapshot_features(&as, s, ti);
-+	if (r)
-+		goto bad_features;
-+
- 	origin_path = argv[0];
- 	argv++;
- 	argc--;
-@@ -1289,6 +1351,8 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 
- 	ti->private = s;
- 	ti->num_flush_bios = num_flush_bios;
-+	if (s->discard_zeroes_cow)
-+		ti->num_discard_bios = (s->discard_passdown_origin ? 2 : 1);
- 	ti->per_io_data_size = sizeof(struct dm_snap_tracked_chunk);
- 
- 	/* Add snapshot to the list of snapshots for this origin */
-@@ -1336,29 +1400,22 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 
- bad_read_metadata:
- 	unregister_snapshot(s);
--
- bad_load_and_register:
- 	mempool_exit(&s->pending_pool);
--
- bad_pending_pool:
- 	dm_kcopyd_client_destroy(s->kcopyd_client);
--
- bad_kcopyd:
- 	dm_exception_table_exit(&s->pending, pending_cache);
- 	dm_exception_table_exit(&s->complete, exception_cache);
--
- bad_hash_tables:
- 	dm_exception_store_destroy(s->store);
--
- bad_store:
- 	dm_put_device(ti, s->cow);
--
- bad_cow:
- 	dm_put_device(ti, s->origin);
--
- bad_origin:
-+bad_features:
- 	kfree(s);
--
- bad:
- 	return r;
- }
-@@ -1806,6 +1863,32 @@ static void remap_exception(struct dm_snapshot *s, struct dm_exception *e,
- 		(bio->bi_iter.bi_sector & s->store->chunk_mask);
- }
- 
-+static void zero_callback(int read_err, unsigned long write_err, void *context)
-+{
-+	struct dm_snapshot *s = context;
-+
-+	up(&s->cow_count);
-+}
-+
-+static void zero_exception(struct dm_snapshot *s, struct dm_exception *e,
-+			   struct bio *bio, chunk_t chunk)
-+{
-+	struct dm_io_region dest;
-+
-+	dest.bdev = s->cow->bdev;
-+	dest.sector = bio->bi_iter.bi_sector;
-+	dest.count = s->store->chunk_size;
-+
-+	down(&s->cow_count);
-+	dm_kcopyd_zero(s->kcopyd_client, 1, &dest, 0, zero_callback, s);
-+}
-+
-+static bool io_overlaps_chunk(struct dm_snapshot *s, struct bio *bio)
-+{
-+	return bio->bi_iter.bi_size ==
-+		(s->store->chunk_size << SECTOR_SHIFT);
-+}
-+
- static int snapshot_map(struct dm_target *ti, struct bio *bio)
- {
- 	struct dm_exception *e;
-@@ -1839,10 +1922,42 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
- 		goto out_unlock;
- 	}
- 
-+	if (unlikely(bio_op(bio) == REQ_OP_DISCARD)) {
-+		if (s->discard_passdown_origin && dm_bio_get_target_bio_nr(bio)) {
-+			/*
-+			 * passdown discard to origin (without triggering
-+			 * snapshot exceptions via do_origin; doing so would
-+			 * defeat the goal of freeing space in origin that is
-+			 * implied by the "discard_passdown_origin" feature)
-+			 */
-+			bio_set_dev(bio, s->origin->bdev);
-+			track_chunk(s, bio, chunk);
-+			goto out_unlock;
-+		}
-+		/* discard to snapshot (target_bio_nr == 0) zeroes exceptions */
-+	}
-+
- 	/* If the block is already remapped - use that, else remap it */
- 	e = dm_lookup_exception(&s->complete, chunk);
- 	if (e) {
- 		remap_exception(s, e, bio, chunk);
-+		if (unlikely(bio_op(bio) == REQ_OP_DISCARD) &&
-+		    io_overlaps_chunk(s, bio)) {
-+			dm_exception_table_unlock(&lock);
-+			up_read(&s->lock);
-+			zero_exception(s, e, bio, chunk);
-+			goto out;
-+		}
-+		goto out_unlock;
-+	}
-+
-+	if (unlikely(bio_op(bio) == REQ_OP_DISCARD)) {
-+		/*
-+		 * If no exception exists, complete discard immediately
-+		 * otherwise it'll trigger copy-out.
-+		 */
-+		bio_endio(bio);
-+		r = DM_MAPIO_SUBMITTED;
- 		goto out_unlock;
- 	}
- 
-@@ -1890,9 +2005,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
- 
- 		r = DM_MAPIO_SUBMITTED;
- 
--		if (!pe->started &&
--		    bio->bi_iter.bi_size ==
--		    (s->store->chunk_size << SECTOR_SHIFT)) {
-+		if (!pe->started && io_overlaps_chunk(s, bio)) {
- 			pe->started = 1;
- 
- 			dm_exception_table_unlock(&lock);
-@@ -2138,6 +2251,7 @@ static void snapshot_status(struct dm_target *ti, status_type_t type,
- {
- 	unsigned sz = 0;
- 	struct dm_snapshot *snap = ti->private;
-+	unsigned num_features;
- 
- 	switch (type) {
- 	case STATUSTYPE_INFO:
-@@ -2180,6 +2294,14 @@ static void snapshot_status(struct dm_target *ti, status_type_t type,
- 		DMEMIT("%s %s", snap->origin->name, snap->cow->name);
- 		snap->store->type->status(snap->store, type, result + sz,
- 					  maxlen - sz);
-+		num_features = snap->discard_zeroes_cow + snap->discard_passdown_origin;
-+		if (num_features) {
-+			DMEMIT(" %u", num_features);
-+			if (snap->discard_zeroes_cow)
-+				DMEMIT(" discard_zeroes_cow");
-+			if (snap->discard_passdown_origin)
-+				DMEMIT(" discard_passdown_origin");
-+		}
- 		break;
- 	}
- }
-@@ -2198,6 +2320,16 @@ static int snapshot_iterate_devices(struct dm_target *ti,
- 	return r;
- }
- 
-+static void snapshot_io_hints(struct dm_target *ti, struct queue_limits *limits)
-+{
-+	struct dm_snapshot *snap = ti->private;
-+
-+	if (snap->discard_zeroes_cow) {
-+		/* All discards are split on chunk_size boundary */
-+		limits->discard_granularity = snap->store->chunk_size;
-+		limits->max_discard_sectors = snap->store->chunk_size;
-+	}
-+}
- 
- /*-----------------------------------------------------------------
-  * Origin methods
-@@ -2522,7 +2654,7 @@ static struct target_type origin_target = {
- 
- static struct target_type snapshot_target = {
- 	.name    = "snapshot",
--	.version = {1, 15, 0},
-+	.version = {1, 16, 0},
- 	.module  = THIS_MODULE,
- 	.ctr     = snapshot_ctr,
- 	.dtr     = snapshot_dtr,
-@@ -2532,11 +2664,12 @@ static struct target_type snapshot_target = {
- 	.resume  = snapshot_resume,
- 	.status  = snapshot_status,
- 	.iterate_devices = snapshot_iterate_devices,
-+	.io_hints = snapshot_io_hints,
- };
- 
- static struct target_type merge_target = {
- 	.name    = dm_snapshot_merge_target_name,
--	.version = {1, 4, 0},
-+	.version = {1, 5, 0},
- 	.module  = THIS_MODULE,
- 	.ctr     = snapshot_ctr,
- 	.dtr     = snapshot_dtr,
-@@ -2547,6 +2680,7 @@ static struct target_type merge_target = {
- 	.resume  = snapshot_merge_resume,
- 	.status  = snapshot_status,
- 	.iterate_devices = snapshot_iterate_devices,
-+	.io_hints = snapshot_io_hints,
- };
- 
- static int __init dm_snapshot_init(void)
--- 
-2.15.0
+Actually, #7 no longer applies cleanly to cryptodev, so I am going to
+respin in any case, and finally fix the ivsize change.
