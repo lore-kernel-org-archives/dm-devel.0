@@ -1,17 +1,15 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [PATCH v7 2/7] fs: crypto: invoke crypto API for
-	ESSIV handling
-Date: Wed, 3 Jul 2019 20:23:31 +0200
-Message-ID: <CAKv+Gu9gcbYrU3EjCuYudoT-vrAp3Q2y7ExpcqgHBLQFPXQsWw@mail.gmail.com>
-References: <20190702164815.6341-1-ard.biesheuvel@linaro.org>
-	<20190702164815.6341-3-ard.biesheuvel@linaro.org>
-	<20190702215517.GA69157@gmail.com>
-	<CAKv+Gu9qPPBpm7aocHCsid6yyL7HyX9Dk2M72A5W9OeHG58MZw@mail.gmail.com>
+From: Junxiao Bi <junxiao.bi@oracle.com>
+Subject: Re: dm bufio: fix deadlock issue with loop device
+Date: Wed, 3 Jul 2019 10:19:02 -0700
+Message-ID: <1aa51708-1c1b-bd12-72ed-ecbae39043f7@oracle.com>
+References: <20190702231456.19121-1-junxiao.bi@oracle.com>
+	<20190703162106.GA13984@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAKv+Gu9qPPBpm7aocHCsid6yyL7HyX9Dk2M72A5W9OeHG58MZw@mail.gmail.com>
+In-Reply-To: <20190703162106.GA13984@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,144 +19,119 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: honglei.wang@oracle.com, dm-devel@redhat.com, mpatocka@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 3 Jul 2019 at 00:06, Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
->
-> On Tue, 2 Jul 2019 at 23:55, Eric Biggers <ebiggers@kernel.org> wrote:
-> >
-> > Hi Ard,
-> >
-> > On Tue, Jul 02, 2019 at 06:48:10PM +0200, Ard Biesheuvel wrote:
-> > > Instead of open coding the calculations for ESSIV handling, use a
-> > > ESSIV skcipher which does all of this under the hood.
-> > >
-> > > Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-> > > ---
-> > >  fs/crypto/Kconfig           |  1 +
-> > >  fs/crypto/crypto.c          |  5 --
-> > >  fs/crypto/fscrypt_private.h |  9 --
-> > >  fs/crypto/keyinfo.c         | 95 +-------------------
-> > >  4 files changed, 5 insertions(+), 105 deletions(-)
-> > >
-> > > diff --git a/fs/crypto/Kconfig b/fs/crypto/Kconfig
-> > > index 24ed99e2eca0..b0292da8613c 100644
-> > > --- a/fs/crypto/Kconfig
-> > > +++ b/fs/crypto/Kconfig
-> > > @@ -5,6 +5,7 @@ config FS_ENCRYPTION
-> > >       select CRYPTO_AES
-> > >       select CRYPTO_CBC
-> > >       select CRYPTO_ECB
-> > > +     select CRYPTO_ESSIV
-> > >       select CRYPTO_XTS
-> > >       select CRYPTO_CTS
-> > >       select CRYPTO_SHA256
-> > > diff --git a/fs/crypto/crypto.c b/fs/crypto/crypto.c
-> > > index 335a362ee446..c53ce262a06c 100644
-> > > --- a/fs/crypto/crypto.c
-> > > +++ b/fs/crypto/crypto.c
-> > > @@ -136,9 +136,6 @@ void fscrypt_generate_iv(union fscrypt_iv *iv, u64 lblk_num,
-> > >
-> > >       if (ci->ci_flags & FS_POLICY_FLAG_DIRECT_KEY)
-> > >               memcpy(iv->nonce, ci->ci_nonce, FS_KEY_DERIVATION_NONCE_SIZE);
-> > > -
-> > > -     if (ci->ci_essiv_tfm != NULL)
-> > > -             crypto_cipher_encrypt_one(ci->ci_essiv_tfm, iv->raw, iv->raw);
-> > >  }
-> > >
-> > >  int fscrypt_do_page_crypto(const struct inode *inode, fscrypt_direction_t rw,
-> > > @@ -492,8 +489,6 @@ static void __exit fscrypt_exit(void)
-> > >               destroy_workqueue(fscrypt_read_workqueue);
-> > >       kmem_cache_destroy(fscrypt_ctx_cachep);
-> > >       kmem_cache_destroy(fscrypt_info_cachep);
-> > > -
-> > > -     fscrypt_essiv_cleanup();
-> > >  }
-> > >  module_exit(fscrypt_exit);
-> > >
-> > > diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
-> > > index 7da276159593..59d0cba9cfb9 100644
-> > > --- a/fs/crypto/fscrypt_private.h
-> > > +++ b/fs/crypto/fscrypt_private.h
-> > > @@ -61,12 +61,6 @@ struct fscrypt_info {
-> > >       /* The actual crypto transform used for encryption and decryption */
-> > >       struct crypto_skcipher *ci_ctfm;
-> > >
-> > > -     /*
-> > > -      * Cipher for ESSIV IV generation.  Only set for CBC contents
-> > > -      * encryption, otherwise is NULL.
-> > > -      */
-> > > -     struct crypto_cipher *ci_essiv_tfm;
-> > > -
-> > >       /*
-> > >        * Encryption mode used for this inode.  It corresponds to either
-> > >        * ci_data_mode or ci_filename_mode, depending on the inode type.
-> > > @@ -166,9 +160,6 @@ struct fscrypt_mode {
-> > >       int keysize;
-> > >       int ivsize;
-> > >       bool logged_impl_name;
-> > > -     bool needs_essiv;
-> > >  };
-> > >
-> > > -extern void __exit fscrypt_essiv_cleanup(void);
-> > > -
-> > >  #endif /* _FSCRYPT_PRIVATE_H */
-> > > diff --git a/fs/crypto/keyinfo.c b/fs/crypto/keyinfo.c
-> > > index dcd91a3fbe49..f39667d4316a 100644
-> > > --- a/fs/crypto/keyinfo.c
-> > > +++ b/fs/crypto/keyinfo.c
-> > > @@ -13,14 +13,10 @@
-> > >  #include <linux/hashtable.h>
-> > >  #include <linux/scatterlist.h>
-> > >  #include <linux/ratelimit.h>
-> > > -#include <crypto/aes.h>
-> > >  #include <crypto/algapi.h>
-> > > -#include <crypto/sha.h>
-> > >  #include <crypto/skcipher.h>
-> > >  #include "fscrypt_private.h"
-> > >
-> > > -static struct crypto_shash *essiv_hash_tfm;
-> > > -
-> > >  /* Table of keys referenced by FS_POLICY_FLAG_DIRECT_KEY policies */
-> > >  static DEFINE_HASHTABLE(fscrypt_master_keys, 6); /* 6 bits = 64 buckets */
-> > >  static DEFINE_SPINLOCK(fscrypt_master_keys_lock);
-> > > @@ -144,10 +140,9 @@ static struct fscrypt_mode available_modes[] = {
-> > >       },
-> > >       [FS_ENCRYPTION_MODE_AES_128_CBC] = {
-> > >               .friendly_name = "AES-128-CBC",
-> > > -             .cipher_str = "cbc(aes)",
-> > > +             .cipher_str = "essiv(cbc(aes),aes,sha256)",
-> > >               .keysize = 16,
-> > > -             .ivsize = 16,
-> > > -             .needs_essiv = true,
-> > > +             .ivsize = 8,
-> >
-> > As I said before, this needs to be kept as .ivsize = 16.
-> >
-> > This bug actually causes the generic/549 test to fail.
-> >
->
-> Ugh, yes, I intended to fix that. Apologies for the sloppiness, I have
-> been trying to wrap this up in time for my holidays, but the end
-> result is quite the opposite :-)
->
-> > Otherwise this patch looks good.  FYI: to avoid conflicts with planned fscrypt
-> > work I'd prefer to take this patch through the fscrypt.git tree after the ESSIV
-> > template is merged, rather than have Herbert take it through cryptodev.  (Unless
-> > he's going to apply this whole series for v5.3, in which case I'm fine with him
-> > taking the fscrypt patch too, though it seems too late for that.)
-> >
->
-> I agree that the fscrypt and dm-crypt changes should not be merged for v5.3
->
-> I know that Herbert typically prefers not to take any new code without
-> any of its users, but perhaps we can make an exception in this case,
-> and merge patches #1, #5, #6 and #7 now (which is mostly risk free
-> since no code uses essiv yet, and patch #5 is a straight-forward
-> refactor) and take the fscrypt and dm-crypt patches through their
-> respective trees for the next cycle.
+Hi Mike,
 
-Actually, #7 no longer applies cleanly to cryptodev, so I am going to
-respin in any case, and finally fix the ivsize change.
+Thanks for reviewing, see comments inlined.
+
+On 7/3/19 9:21 AM, Mike Snitzer wrote:
+> On Tue, Jul 02 2019 at  7:14pm -0400,
+> Junxiao Bi <junxiao.bi@oracle.com> wrote:
+>
+>> The following deadlock was caputred on 4.1, since dm_bufio_shrink_count
+>> still had bufio lock acquired, this was already fixed by mainline. But
+>> shrinker will also invoke dm_bufio_shrink_scan by ->scan_objects, so
+>> looks like mainline will suffer the same deadlock issue.
+>>
+>> This deadlock happened when both kswapd0 and loop1 were shrinking memory,
+>> kswapd0 hold bufio lock and waiting for an in-flight io done, but it will
+>> never done because loop1 who was issuing the io was hung by the same lock
+>> hold by kswapd0. This was ABBA deadlock.
+>>
+>> The gfp_flags used in direct IO is GFP_KERNEL, so checking GFP_FS/IO won't
+>> work, just stop shrinking if lock was hold by others.
+>>
+>> PID: 474    TASK: ffff8813e11f4600  CPU: 10  COMMAND: "kswapd0"
+>>     #0 [ffff8813dedfb938] __schedule at ffffffff8173f405
+>>     #1 [ffff8813dedfb990] schedule at ffffffff8173fa27
+>>     #2 [ffff8813dedfb9b0] schedule_timeout at ffffffff81742fec
+>>     #3 [ffff8813dedfba60] io_schedule_timeout at ffffffff8173f186
+>>     #4 [ffff8813dedfbaa0] bit_wait_io at ffffffff8174034f
+>>     #5 [ffff8813dedfbac0] __wait_on_bit at ffffffff8173fec8
+>>     #6 [ffff8813dedfbb10] out_of_line_wait_on_bit at ffffffff8173ff81
+>>     #7 [ffff8813dedfbb90] __make_buffer_clean at ffffffffa038736f [dm_bufio]
+>>     #8 [ffff8813dedfbbb0] __try_evict_buffer at ffffffffa0387bb8 [dm_bufio]
+>>     #9 [ffff8813dedfbbd0] dm_bufio_shrink_scan at ffffffffa0387cc3 [dm_bufio]
+>>    #10 [ffff8813dedfbc40] shrink_slab at ffffffff811a87ce
+>>    #11 [ffff8813dedfbd30] shrink_zone at ffffffff811ad778
+>>    #12 [ffff8813dedfbdc0] kswapd at ffffffff811ae92f
+>>    #13 [ffff8813dedfbec0] kthread at ffffffff810a8428
+>>    #14 [ffff8813dedfbf50] ret_from_fork at ffffffff81745242
+>>
+>>    PID: 14127  TASK: ffff881455749c00  CPU: 11  COMMAND: "loop1"
+>>     #0 [ffff88272f5af228] __schedule at ffffffff8173f405
+>>     #1 [ffff88272f5af280] schedule at ffffffff8173fa27
+>>     #2 [ffff88272f5af2a0] schedule_preempt_disabled at ffffffff8173fd5e
+>>     #3 [ffff88272f5af2b0] __mutex_lock_slowpath at ffffffff81741fb5
+>>     #4 [ffff88272f5af330] mutex_lock at ffffffff81742133
+>>     #5 [ffff88272f5af350] dm_bufio_shrink_count at ffffffffa03865f9 [dm_bufio]
+>>     #6 [ffff88272f5af380] shrink_slab at ffffffff811a86bd
+>>     #7 [ffff88272f5af470] shrink_zone at ffffffff811ad778
+>>     #8 [ffff88272f5af500] do_try_to_free_pages at ffffffff811adb34
+>>     #9 [ffff88272f5af590] try_to_free_pages at ffffffff811adef8
+>>    #10 [ffff88272f5af610] __alloc_pages_nodemask at ffffffff811a09c3
+>>    #11 [ffff88272f5af710] alloc_pages_current at ffffffff811e8b71
+>>    #12 [ffff88272f5af760] new_slab at ffffffff811f4523
+>>    #13 [ffff88272f5af7b0] __slab_alloc at ffffffff8173a1b5
+>>    #14 [ffff88272f5af880] kmem_cache_alloc at ffffffff811f484b
+>>    #15 [ffff88272f5af8d0] do_blockdev_direct_IO at ffffffff812535b3
+>>    #16 [ffff88272f5afb00] __blockdev_direct_IO at ffffffff81255dc3
+>>    #17 [ffff88272f5afb30] xfs_vm_direct_IO at ffffffffa01fe3fc [xfs]
+>>    #18 [ffff88272f5afb90] generic_file_read_iter at ffffffff81198994
+>>    #19 [ffff88272f5afc50] __dta_xfs_file_read_iter_2398 at ffffffffa020c970 [xfs]
+>>    #20 [ffff88272f5afcc0] lo_rw_aio at ffffffffa0377042 [loop]
+>>    #21 [ffff88272f5afd70] loop_queue_work at ffffffffa0377c3b [loop]
+>>    #22 [ffff88272f5afe60] kthread_worker_fn at ffffffff810a8a0c
+>>    #23 [ffff88272f5afec0] kthread at ffffffff810a8428
+>>    #24 [ffff88272f5aff50] ret_from_fork at ffffffff81745242
+>>
+>> Signed-off-by: Junxiao Bi <junxiao.bi@oracle.com>
+>> ---
+>>   drivers/md/dm-bufio.c | 4 +---
+>>   1 file changed, 1 insertion(+), 3 deletions(-)
+>>
+>> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+>> index 2a48ea3f1b30..b6b5acc92ca2 100644
+>> --- a/drivers/md/dm-bufio.c
+>> +++ b/drivers/md/dm-bufio.c
+>> @@ -1599,9 +1599,7 @@ dm_bufio_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
+>>   	unsigned long freed;
+>>   
+>>   	c = container_of(shrink, struct dm_bufio_client, shrinker);
+>> -	if (sc->gfp_mask & __GFP_FS)
+>> -		dm_bufio_lock(c);
+>> -	else if (!dm_bufio_trylock(c))
+>> +	if (!dm_bufio_trylock(c))
+>>   		return SHRINK_STOP;
+>>   
+>>   	freed  = __scan(c, sc->nr_to_scan, sc->gfp_mask);
+>> -- 
+>> 2.17.1
+>>
+> I don't follow how this fixes the direct IO to DM device ontop of loop
+> case given that you're saying __GFP_FS will not have been set by the
+> direct IO path.  In that case it should resort to the trylock anyway,
+> no?
+See the call trace of loop, in do_blockdev_direct_IO(), to alloc dio, 
+GFP_KERNEL was used, __GFP_FS was implied by it. So it hung by bufio lock.
+>
+> We need a reproducer in the context of the latest upstream kernel code,
+> not some 4.1 branch point for an Oracle kernel.
+>
+> Please submit with a less conflated patch header that has a description
+> of the bufio issue that the upstream kernel has.
+The call trace is just to give an example of the deadlock. Mainline 
+didn't use lock in dm_bufio_shrink_count, but it does use in
+
+dm_bufio_shrink_scan which will be invoked by the memory shrinker in the same context by loop, so it will suffer the same deadlock.
+This is hard to reproduce and customer help us reproduced it, we don't reproduce it.
+
+Thanks,
+Junxiao
+
+>
+> Thanks,
+> Mike
