@@ -1,15 +1,16 @@
-From: Eric Wheeler <bcache@lists.ewheeler.net>
-Subject: Re: I/O Reordering: Cache -> Backing Device
-Date: Sat, 6 Jul 2019 01:07:15 +0000 (UTC)
-Message-ID: <alpine.LRH.2.11.1907060102450.12361@mx.ewheeler.net>
-References: <BYAPR14MB27766E20D92C2A07217C2DF9FCFC0@BYAPR14MB2776.namprd14.prod.outlook.com>
-	<d06e4a83-c314-46b7-72ea-97e455acd69f@suse.de>
-	<BYAPR14MB277641CB1C17C53346C8FDD5FCF90@BYAPR14MB2776.namprd14.prod.outlook.com>
+From: Junxiao Bi <junxiao.bi@oracle.com>
+Subject: Re: dm bufio: fix deadlock issue with loop device
+Date: Fri, 5 Jul 2019 13:24:07 -0700
+Message-ID: <460d932b-e801-e2f8-9d0d-d3c96e1bb1ce@oracle.com>
+References: <20190702231456.19121-1-junxiao.bi@oracle.com>
+	<20190703162106.GA13984@redhat.com>
+	<1aa51708-1c1b-bd12-72ed-ecbae39043f7@oracle.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED;
-	BOUNDARY="-1690155773-992976465-1562375051=:12361"
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <BYAPR14MB277641CB1C17C53346C8FDD5FCF90@BYAPR14MB2776.namprd14.prod.outlook.com>
+In-Reply-To: <1aa51708-1c1b-bd12-72ed-ecbae39043f7@oracle.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,99 +20,113 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Don Doerner <Don.Doerner@Quantum.Com>
-Cc: "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, dm-devel@redhat.com, Coly Li <colyli@suse.de>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: honglei.wang@oracle.com, dm-devel@redhat.com, mpatocka@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
-
----1690155773-992976465-1562375051=:12361
-Content-Type: TEXT/PLAIN; CHARSET=ISO-2022-JP
-
-[+cc dm-devel]
-
-> -----Original Message-----
-> From: linux-bcache-owner@vger.kernel.org <linux-bcache-owner@vger.kernel.org> On Behalf Of Coly Li
-> Sent: Sunday, 30 June, 2019 19:24
-> To: Don Doerner <Don.Doerner@Quantum.Com>
-> Cc: linux-bcache@vger.kernel.org
-> Subject: Re: I/O Reordering: Cache -> Backing Device
-> 
-> On 2019/6/29 5:56 上午, Don Doerner wrote:
-> > Hello, I'm also interested in using bcache to facilitate stripe 
-> > re-ass'y for the backing device.  I've done some experiments that 
-> > dovetail with some of the traffic on this mailing list.  
-> > Specifically, in this message 
-> > (https://nam05.safelinks.protection.outlook.com/?url=https%3A%2F%2Fwww.spinics.net%2Flists%2Flinux-bcache%2Fmsg07590.html&amp;data=02%7C01%7CDon.Doerner%40quantum.com%7Cafa50dd04a914f76bb7808d6fdcb338b%7C322a135f14fb4d72aede122272134ae0%7C1%7C0%7C636975446529502069&amp;sdata=nC3JhPL%2FC6B57uw4xjEkGnV48jd9DqHLf0MQL7AAErs%3D&amp;reserved=0), 
-> > Eric suggested "...turning up 
-> > /sys/block/bcache0/bcache/writeback_percent..." to increase the 
-> > contiguous data in the cache.
-> > My RAID-6 has a stripe size of 2.5MiB, and its bcache'ed with a few 
-> > hundred GB of NVMe storage.  Here's my experiment:
-> > * I made the cache a write back cache: echo writeback >
-> > /sys/block/bcache0/bcache/cache_mode
-> > * I plugged the cache: echo 0 >
-> > /sys/block/bcache0/bcache/writeback_running
-> > * I use a pathological I/O pattern, generated with 'fio': fio 
-> >   --bs=128K --direct=1 --rw=randwrite --ioengine=libaio --iodepth=1 
-> >   --numjobs=1 --size=40G --name=/dev/bcache0.  I let it run to 
-> >   completion, at which point I believe I should have 40 GiB of 
-> >   sequential dirty data in cache, but not put there sequentially.  In 
-> >   essence, I should have ~16K complete stripes sitting in the cache, 
-> >   waiting to be written.
-> > * I set stuff up to go like a bat: echo 0 >
-> > /sys/block/bcache0/bcache/writeback_percent; echo 0 >
-> > /sys/block/bcache0/bcache/writeback_delay; echo 2097152 >
-> > /sys/block/bcache0/bcache/writeback_rate
-> > * And I unplugged the cache: echo 1 >
-> > /sys/block/bcache0/bcache/writeback_running
-> > I then watched 'iostat', and saw that there were lots of read operations (statistically, after merging, about 1 read for every 7 writes) - more than I had expected... that's enough that I concluded it wasn't building full stripes.  It kinda looks like it's playing back a journal sorted in time then LBA, or something like that...
-> > Any suggestions for improving (reducing) the ratio of reads to writes will be gratefully accepted!
-> 
-> Hi Don,
-> 
-> If the backing device has expensive stripe cost, the upper layer should 
-> issue I/Os with stripe size alignment, otherwise bcache cannot to too 
-> much to make the I/O to be stripe optimized.
-> 
-> And you are right that bcache does not writeback in restrict LBA order, 
-> this is because the internal btree is trend to be appended only. The LBA 
-> ordering writeback happens in a reasonable small range, not in whole 
-> cached data, see commit 6e6ccc67b9c7 ("bcache: writeback: properly order 
-> backing device IO").
-> 
-> And I agree with you again that "improving (reducing) the ratio of reads 
-> to writes will be gratefully accepted". Indeed not only reducing reads 
-> to writes ratio, but also increase the reads to writes throughput. This 
-> is something I want to improve, after I understand why the problem 
-> exists in bcache writeback code ...
-
-
-dm-devel list:
-
-Does dm-writecache do any attempt to merge IOs into the io_opt size?
-
-If so, bcache might get some ideas by looking at that codebase for its 
-writeback thread.
-
---
-Eric Wheeler
-
-
-> 
-> Thanks.
-> 
-> --
-> 
-> Coly Li
-> The information contained in this transmission may be confidential. Any disclosure, copying, or further distribution of confidential information is not permitted unless such privilege is explicitly granted in writing by Quantum. Quantum reserves the right to have electronic communications, including email and attachments, sent across its networks filtered through security software programs and retain such messages in order to comply with applicable data security and retention requirements. Quantum is not responsible for the proper and complete transmission of the substance of this communication or for any delay in its receipt.
-> 
----1690155773-992976465-1562375051=:12361
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
----1690155773-992976465-1562375051=:12361--
+SGkgTWlrZSwKCkRvIGkgbWFrZSBzZW5zZSBvbiB0aGlzPwoKVGhhbmtzLAoKSnVueGlhby4KCk9u
+IDcvMy8xOSAxMDoxOSBBTSwgSnVueGlhbyBCaSB3cm90ZToKPiBIaSBNaWtlLAo+Cj4gVGhhbmtz
+IGZvciByZXZpZXdpbmcsIHNlZSBjb21tZW50cyBpbmxpbmVkLgo+Cj4gT24gNy8zLzE5IDk6MjEg
+QU0sIE1pa2UgU25pdHplciB3cm90ZToKPj4gT24gVHVlLCBKdWwgMDIgMjAxOSBhdMKgIDc6MTRw
+bSAtMDQwMCwKPj4gSnVueGlhbyBCaSA8anVueGlhby5iaUBvcmFjbGUuY29tPiB3cm90ZToKPj4K
+Pj4+IFRoZSBmb2xsb3dpbmcgZGVhZGxvY2sgd2FzIGNhcHV0cmVkIG9uIDQuMSwgc2luY2UgZG1f
+YnVmaW9fc2hyaW5rX2NvdW50Cj4+PiBzdGlsbCBoYWQgYnVmaW8gbG9jayBhY3F1aXJlZCwgdGhp
+cyB3YXMgYWxyZWFkeSBmaXhlZCBieSBtYWlubGluZS4gQnV0Cj4+PiBzaHJpbmtlciB3aWxsIGFs
+c28gaW52b2tlIGRtX2J1ZmlvX3Nocmlua19zY2FuIGJ5IC0+c2Nhbl9vYmplY3RzLCBzbwo+Pj4g
+bG9va3MgbGlrZSBtYWlubGluZSB3aWxsIHN1ZmZlciB0aGUgc2FtZSBkZWFkbG9jayBpc3N1ZS4K
+Pj4+Cj4+PiBUaGlzIGRlYWRsb2NrIGhhcHBlbmVkIHdoZW4gYm90aCBrc3dhcGQwIGFuZCBsb29w
+MSB3ZXJlIHNocmlua2luZyAKPj4+IG1lbW9yeSwKPj4+IGtzd2FwZDAgaG9sZCBidWZpbyBsb2Nr
+IGFuZCB3YWl0aW5nIGZvciBhbiBpbi1mbGlnaHQgaW8gZG9uZSwgYnV0IGl0IAo+Pj4gd2lsbAo+
+Pj4gbmV2ZXIgZG9uZSBiZWNhdXNlIGxvb3AxIHdobyB3YXMgaXNzdWluZyB0aGUgaW8gd2FzIGh1
+bmcgYnkgdGhlIHNhbWUgCj4+PiBsb2NrCj4+PiBob2xkIGJ5IGtzd2FwZDAuIFRoaXMgd2FzIEFC
+QkEgZGVhZGxvY2suCj4+Pgo+Pj4gVGhlIGdmcF9mbGFncyB1c2VkIGluIGRpcmVjdCBJTyBpcyBH
+RlBfS0VSTkVMLCBzbyBjaGVja2luZyBHRlBfRlMvSU8gCj4+PiB3b24ndAo+Pj4gd29yaywganVz
+dCBzdG9wIHNocmlua2luZyBpZiBsb2NrIHdhcyBob2xkIGJ5IG90aGVycy4KPj4+Cj4+PiBQSUQ6
+IDQ3NMKgwqDCoCBUQVNLOiBmZmZmODgxM2UxMWY0NjAwwqAgQ1BVOiAxMMKgIENPTU1BTkQ6ICJr
+c3dhcGQwIgo+Pj4gwqDCoMKgICMwIFtmZmZmODgxM2RlZGZiOTM4XSBfX3NjaGVkdWxlIGF0IGZm
+ZmZmZmZmODE3M2Y0MDUKPj4+IMKgwqDCoCAjMSBbZmZmZjg4MTNkZWRmYjk5MF0gc2NoZWR1bGUg
+YXQgZmZmZmZmZmY4MTczZmEyNwo+Pj4gwqDCoMKgICMyIFtmZmZmODgxM2RlZGZiOWIwXSBzY2hl
+ZHVsZV90aW1lb3V0IGF0IGZmZmZmZmZmODE3NDJmZWMKPj4+IMKgwqDCoCAjMyBbZmZmZjg4MTNk
+ZWRmYmE2MF0gaW9fc2NoZWR1bGVfdGltZW91dCBhdCBmZmZmZmZmZjgxNzNmMTg2Cj4+PiDCoMKg
+wqAgIzQgW2ZmZmY4ODEzZGVkZmJhYTBdIGJpdF93YWl0X2lvIGF0IGZmZmZmZmZmODE3NDAzNGYK
+Pj4+IMKgwqDCoCAjNSBbZmZmZjg4MTNkZWRmYmFjMF0gX193YWl0X29uX2JpdCBhdCBmZmZmZmZm
+ZjgxNzNmZWM4Cj4+PiDCoMKgwqAgIzYgW2ZmZmY4ODEzZGVkZmJiMTBdIG91dF9vZl9saW5lX3dh
+aXRfb25fYml0IGF0IGZmZmZmZmZmODE3M2ZmODEKPj4+IMKgwqDCoCAjNyBbZmZmZjg4MTNkZWRm
+YmI5MF0gX19tYWtlX2J1ZmZlcl9jbGVhbiBhdCBmZmZmZmZmZmEwMzg3MzZmIAo+Pj4gW2RtX2J1
+ZmlvXQo+Pj4gwqDCoMKgICM4IFtmZmZmODgxM2RlZGZiYmIwXSBfX3RyeV9ldmljdF9idWZmZXIg
+YXQgZmZmZmZmZmZhMDM4N2JiOCAKPj4+IFtkbV9idWZpb10KPj4+IMKgwqDCoCAjOSBbZmZmZjg4
+MTNkZWRmYmJkMF0gZG1fYnVmaW9fc2hyaW5rX3NjYW4gYXQgZmZmZmZmZmZhMDM4N2NjMyAKPj4+
+IFtkbV9idWZpb10KPj4+IMKgwqAgIzEwIFtmZmZmODgxM2RlZGZiYzQwXSBzaHJpbmtfc2xhYiBh
+dCBmZmZmZmZmZjgxMWE4N2NlCj4+PiDCoMKgICMxMSBbZmZmZjg4MTNkZWRmYmQzMF0gc2hyaW5r
+X3pvbmUgYXQgZmZmZmZmZmY4MTFhZDc3OAo+Pj4gwqDCoCAjMTIgW2ZmZmY4ODEzZGVkZmJkYzBd
+IGtzd2FwZCBhdCBmZmZmZmZmZjgxMWFlOTJmCj4+PiDCoMKgICMxMyBbZmZmZjg4MTNkZWRmYmVj
+MF0ga3RocmVhZCBhdCBmZmZmZmZmZjgxMGE4NDI4Cj4+PiDCoMKgICMxNCBbZmZmZjg4MTNkZWRm
+YmY1MF0gcmV0X2Zyb21fZm9yayBhdCBmZmZmZmZmZjgxNzQ1MjQyCj4+Pgo+Pj4gwqDCoCBQSUQ6
+IDE0MTI3wqAgVEFTSzogZmZmZjg4MTQ1NTc0OWMwMMKgIENQVTogMTHCoCBDT01NQU5EOiAibG9v
+cDEiCj4+PiDCoMKgwqAgIzAgW2ZmZmY4ODI3MmY1YWYyMjhdIF9fc2NoZWR1bGUgYXQgZmZmZmZm
+ZmY4MTczZjQwNQo+Pj4gwqDCoMKgICMxIFtmZmZmODgyNzJmNWFmMjgwXSBzY2hlZHVsZSBhdCBm
+ZmZmZmZmZjgxNzNmYTI3Cj4+PiDCoMKgwqAgIzIgW2ZmZmY4ODI3MmY1YWYyYTBdIHNjaGVkdWxl
+X3ByZWVtcHRfZGlzYWJsZWQgYXQgZmZmZmZmZmY4MTczZmQ1ZQo+Pj4gwqDCoMKgICMzIFtmZmZm
+ODgyNzJmNWFmMmIwXSBfX211dGV4X2xvY2tfc2xvd3BhdGggYXQgZmZmZmZmZmY4MTc0MWZiNQo+
+Pj4gwqDCoMKgICM0IFtmZmZmODgyNzJmNWFmMzMwXSBtdXRleF9sb2NrIGF0IGZmZmZmZmZmODE3
+NDIxMzMKPj4+IMKgwqDCoCAjNSBbZmZmZjg4MjcyZjVhZjM1MF0gZG1fYnVmaW9fc2hyaW5rX2Nv
+dW50IGF0IGZmZmZmZmZmYTAzODY1ZjkgCj4+PiBbZG1fYnVmaW9dCj4+PiDCoMKgwqAgIzYgW2Zm
+ZmY4ODI3MmY1YWYzODBdIHNocmlua19zbGFiIGF0IGZmZmZmZmZmODExYTg2YmQKPj4+IMKgwqDC
+oCAjNyBbZmZmZjg4MjcyZjVhZjQ3MF0gc2hyaW5rX3pvbmUgYXQgZmZmZmZmZmY4MTFhZDc3OAo+
+Pj4gwqDCoMKgICM4IFtmZmZmODgyNzJmNWFmNTAwXSBkb190cnlfdG9fZnJlZV9wYWdlcyBhdCBm
+ZmZmZmZmZjgxMWFkYjM0Cj4+PiDCoMKgwqAgIzkgW2ZmZmY4ODI3MmY1YWY1OTBdIHRyeV90b19m
+cmVlX3BhZ2VzIGF0IGZmZmZmZmZmODExYWRlZjgKPj4+IMKgwqAgIzEwIFtmZmZmODgyNzJmNWFm
+NjEwXSBfX2FsbG9jX3BhZ2VzX25vZGVtYXNrIGF0IGZmZmZmZmZmODExYTA5YzMKPj4+IMKgwqAg
+IzExIFtmZmZmODgyNzJmNWFmNzEwXSBhbGxvY19wYWdlc19jdXJyZW50IGF0IGZmZmZmZmZmODEx
+ZThiNzEKPj4+IMKgwqAgIzEyIFtmZmZmODgyNzJmNWFmNzYwXSBuZXdfc2xhYiBhdCBmZmZmZmZm
+ZjgxMWY0NTIzCj4+PiDCoMKgICMxMyBbZmZmZjg4MjcyZjVhZjdiMF0gX19zbGFiX2FsbG9jIGF0
+IGZmZmZmZmZmODE3M2ExYjUKPj4+IMKgwqAgIzE0IFtmZmZmODgyNzJmNWFmODgwXSBrbWVtX2Nh
+Y2hlX2FsbG9jIGF0IGZmZmZmZmZmODExZjQ4NGIKPj4+IMKgwqAgIzE1IFtmZmZmODgyNzJmNWFm
+OGQwXSBkb19ibG9ja2Rldl9kaXJlY3RfSU8gYXQgZmZmZmZmZmY4MTI1MzViMwo+Pj4gwqDCoCAj
+MTYgW2ZmZmY4ODI3MmY1YWZiMDBdIF9fYmxvY2tkZXZfZGlyZWN0X0lPIGF0IGZmZmZmZmZmODEy
+NTVkYzMKPj4+IMKgwqAgIzE3IFtmZmZmODgyNzJmNWFmYjMwXSB4ZnNfdm1fZGlyZWN0X0lPIGF0
+IGZmZmZmZmZmYTAxZmUzZmMgW3hmc10KPj4+IMKgwqAgIzE4IFtmZmZmODgyNzJmNWFmYjkwXSBn
+ZW5lcmljX2ZpbGVfcmVhZF9pdGVyIGF0IGZmZmZmZmZmODExOTg5OTQKPj4+IMKgwqAgIzE5IFtm
+ZmZmODgyNzJmNWFmYzUwXSBfX2R0YV94ZnNfZmlsZV9yZWFkX2l0ZXJfMjM5OCBhdCAKPj4+IGZm
+ZmZmZmZmYTAyMGM5NzAgW3hmc10KPj4+IMKgwqAgIzIwIFtmZmZmODgyNzJmNWFmY2MwXSBsb19y
+d19haW8gYXQgZmZmZmZmZmZhMDM3NzA0MiBbbG9vcF0KPj4+IMKgwqAgIzIxIFtmZmZmODgyNzJm
+NWFmZDcwXSBsb29wX3F1ZXVlX3dvcmsgYXQgZmZmZmZmZmZhMDM3N2MzYiBbbG9vcF0KPj4+IMKg
+wqAgIzIyIFtmZmZmODgyNzJmNWFmZTYwXSBrdGhyZWFkX3dvcmtlcl9mbiBhdCBmZmZmZmZmZjgx
+MGE4YTBjCj4+PiDCoMKgICMyMyBbZmZmZjg4MjcyZjVhZmVjMF0ga3RocmVhZCBhdCBmZmZmZmZm
+ZjgxMGE4NDI4Cj4+PiDCoMKgICMyNCBbZmZmZjg4MjcyZjVhZmY1MF0gcmV0X2Zyb21fZm9yayBh
+dCBmZmZmZmZmZjgxNzQ1MjQyCj4+Pgo+Pj4gU2lnbmVkLW9mZi1ieTogSnVueGlhbyBCaSA8anVu
+eGlhby5iaUBvcmFjbGUuY29tPgo+Pj4gLS0tCj4+PiDCoCBkcml2ZXJzL21kL2RtLWJ1ZmlvLmMg
+fCA0ICstLS0KPj4+IMKgIDEgZmlsZSBjaGFuZ2VkLCAxIGluc2VydGlvbigrKSwgMyBkZWxldGlv
+bnMoLSkKPj4+Cj4+PiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS1idWZpby5jIGIvZHJpdmVy
+cy9tZC9kbS1idWZpby5jCj4+PiBpbmRleCAyYTQ4ZWEzZjFiMzAuLmI2YjVhY2M5MmNhMiAxMDA2
+NDQKPj4+IC0tLSBhL2RyaXZlcnMvbWQvZG0tYnVmaW8uYwo+Pj4gKysrIGIvZHJpdmVycy9tZC9k
+bS1idWZpby5jCj4+PiBAQCAtMTU5OSw5ICsxNTk5LDcgQEAgZG1fYnVmaW9fc2hyaW5rX3NjYW4o
+c3RydWN0IHNocmlua2VyICpzaHJpbmssIAo+Pj4gc3RydWN0IHNocmlua19jb250cm9sICpzYykK
+Pj4+IMKgwqDCoMKgwqAgdW5zaWduZWQgbG9uZyBmcmVlZDsKPj4+IMKgIMKgwqDCoMKgwqAgYyA9
+IGNvbnRhaW5lcl9vZihzaHJpbmssIHN0cnVjdCBkbV9idWZpb19jbGllbnQsIHNocmlua2VyKTsK
+Pj4+IC3CoMKgwqAgaWYgKHNjLT5nZnBfbWFzayAmIF9fR0ZQX0ZTKQo+Pj4gLcKgwqDCoMKgwqDC
+oMKgIGRtX2J1ZmlvX2xvY2soYyk7Cj4+PiAtwqDCoMKgIGVsc2UgaWYgKCFkbV9idWZpb190cnls
+b2NrKGMpKQo+Pj4gK8KgwqDCoCBpZiAoIWRtX2J1ZmlvX3RyeWxvY2soYykpCj4+PiDCoMKgwqDC
+oMKgwqDCoMKgwqAgcmV0dXJuIFNIUklOS19TVE9QOwo+Pj4gwqAgwqDCoMKgwqDCoCBmcmVlZMKg
+ID0gX19zY2FuKGMsIHNjLT5ucl90b19zY2FuLCBzYy0+Z2ZwX21hc2spOwo+Pj4gLS0gCj4+PiAy
+LjE3LjEKPj4+Cj4+IEkgZG9uJ3QgZm9sbG93IGhvdyB0aGlzIGZpeGVzIHRoZSBkaXJlY3QgSU8g
+dG8gRE0gZGV2aWNlIG9udG9wIG9mIGxvb3AKPj4gY2FzZSBnaXZlbiB0aGF0IHlvdSdyZSBzYXlp
+bmcgX19HRlBfRlMgd2lsbCBub3QgaGF2ZSBiZWVuIHNldCBieSB0aGUKPj4gZGlyZWN0IElPIHBh
+dGguwqAgSW4gdGhhdCBjYXNlIGl0IHNob3VsZCByZXNvcnQgdG8gdGhlIHRyeWxvY2sgYW55d2F5
+LAo+PiBubz8KPiBTZWUgdGhlIGNhbGwgdHJhY2Ugb2YgbG9vcCwgaW4gZG9fYmxvY2tkZXZfZGly
+ZWN0X0lPKCksIHRvIGFsbG9jIGRpbywgCj4gR0ZQX0tFUk5FTCB3YXMgdXNlZCwgX19HRlBfRlMg
+d2FzIGltcGxpZWQgYnkgaXQuIFNvIGl0IGh1bmcgYnkgYnVmaW8gCj4gbG9jay4KPj4KPj4gV2Ug
+bmVlZCBhIHJlcHJvZHVjZXIgaW4gdGhlIGNvbnRleHQgb2YgdGhlIGxhdGVzdCB1cHN0cmVhbSBr
+ZXJuZWwgY29kZSwKPj4gbm90IHNvbWUgNC4xIGJyYW5jaCBwb2ludCBmb3IgYW4gT3JhY2xlIGtl
+cm5lbC4KPj4KPj4gUGxlYXNlIHN1Ym1pdCB3aXRoIGEgbGVzcyBjb25mbGF0ZWQgcGF0Y2ggaGVh
+ZGVyIHRoYXQgaGFzIGEgZGVzY3JpcHRpb24KPj4gb2YgdGhlIGJ1ZmlvIGlzc3VlIHRoYXQgdGhl
+IHVwc3RyZWFtIGtlcm5lbCBoYXMuCj4gVGhlIGNhbGwgdHJhY2UgaXMganVzdCB0byBnaXZlIGFu
+IGV4YW1wbGUgb2YgdGhlIGRlYWRsb2NrLiBNYWlubGluZSAKPiBkaWRuJ3QgdXNlIGxvY2sgaW4g
+ZG1fYnVmaW9fc2hyaW5rX2NvdW50LCBidXQgaXQgZG9lcyB1c2UgaW4KPgo+IGRtX2J1ZmlvX3No
+cmlua19zY2FuIHdoaWNoIHdpbGwgYmUgaW52b2tlZCBieSB0aGUgbWVtb3J5IHNocmlua2VyIGlu
+IAo+IHRoZSBzYW1lIGNvbnRleHQgYnkgbG9vcCwgc28gaXQgd2lsbCBzdWZmZXIgdGhlIHNhbWUg
+ZGVhZGxvY2suCj4gVGhpcyBpcyBoYXJkIHRvIHJlcHJvZHVjZSBhbmQgY3VzdG9tZXIgaGVscCB1
+cyByZXByb2R1Y2VkIGl0LCB3ZSBkb24ndCAKPiByZXByb2R1Y2UgaXQuCj4KPiBUaGFua3MsCj4g
+SnVueGlhbwo+Cj4+Cj4+IFRoYW5rcywKPj4gTWlrZQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0
+CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
+bmZvL2RtLWRldmVs
