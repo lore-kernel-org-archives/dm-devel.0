@@ -1,15 +1,15 @@
-From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: Re: [PATCH] dm snapshot: add optional discard support
- features
-Date: Fri, 5 Jul 2019 19:03:48 +0300
-Message-ID: <fb809628-40e3-245a-dda4-034eee9a931b@arrikto.com>
-References: <20190703162504.GA34397@lobo>
+From: Eric Wheeler <bcache@lists.ewheeler.net>
+Subject: Re: I/O Reordering: Cache -> Backing Device
+Date: Sat, 6 Jul 2019 01:07:15 +0000 (UTC)
+Message-ID: <alpine.LRH.2.11.1907060102450.12361@mx.ewheeler.net>
+References: <BYAPR14MB27766E20D92C2A07217C2DF9FCFC0@BYAPR14MB2776.namprd14.prod.outlook.com>
+	<d06e4a83-c314-46b7-72ea-97e455acd69f@suse.de>
+	<BYAPR14MB277641CB1C17C53346C8FDD5FCF90@BYAPR14MB2776.namprd14.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: MULTIPART/MIXED;
+	BOUNDARY="-1690155773-992976465-1562375051=:12361"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190703162504.GA34397@lobo>
-Content-Language: en-US
+In-Reply-To: <BYAPR14MB277641CB1C17C53346C8FDD5FCF90@BYAPR14MB2776.namprd14.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,405 +19,99 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: John Dorminy <jdorminy@redhat.com>
+To: Don Doerner <Don.Doerner@Quantum.Com>
+Cc: "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, dm-devel@redhat.com, Coly Li <colyli@suse.de>
 List-Id: dm-devel.ids
 
-Hi Mike,
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-A question inline.
+---1690155773-992976465-1562375051=:12361
+Content-Type: TEXT/PLAIN; CHARSET=ISO-2022-JP
 
-On 7/3/19 7:25 PM, Mike Snitzer wrote:
-> Add 2 _optional_ features to the snapshot target:
-> 
-> discard_zeroes_cow - a discard issued to the snapshot device that maps
-> to entire chunks to will zero the corresponding exception(s) in the
-> snapshot's exception store.
-> 
-> discard_passdown_origin - a discard to the snapshot device is passed down
-> to the snapshot-origin's underlying device.  This doesn't cause copy-out
-> to the snapshot exception store because the snapshot-origin target is
-> bypassed.
-> 
-> The discard_passdown_origin feature depends on the discard_zeroes_cow
-> feature being enabled.
-> 
-> When these 2 features are enabled they allow a temporarily read-only
-> device that has completely exhausted its free space to recover space.
-> To do so dm-snapshot provides temporary buffer to accommodate writes
-> that the temporarily read-only device cannot handle yet.  Once the upper
-> layer frees space (e.g. fstrim to XFS) the discards issued to the
-> dm-snapshot target will be issued to underlying read-only device whose
-> free space was exhausted.  In addition those discards will also cause
-> zeroes to be written to the snapshot exception store if corresponding
-> exceptions exist.  If the underlying origin device provides
-> deduplication for zero blocks then if/when the snapshot is merged backed
-> to the origin those blocks will become unused.  Once the origin has
-> gained adequate space, merging the snapshot back to the thinly
-> provisioned device will permit continued use of that device without the
-> temporary space provided by the snapshot.
-> 
-> Requested-by: John Dorminy <jdorminy@redhat.com>
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> ---
->  Documentation/device-mapper/snapshot.txt |  16 +++
->  drivers/md/dm-snap.c                     | 168 +++++++++++++++++++++++++++----
->  2 files changed, 167 insertions(+), 17 deletions(-)
-> 
-> diff --git a/Documentation/device-mapper/snapshot.txt b/Documentation/device-mapper/snapshot.txt
-> index b8bbb516f989..1810833f6dc6 100644
-> --- a/Documentation/device-mapper/snapshot.txt
-> +++ b/Documentation/device-mapper/snapshot.txt
-> @@ -31,6 +31,7 @@ its visible content unchanged, at least until the <COW device> fills up.
->  
->  
->  *) snapshot <origin> <COW device> <persistent?> <chunksize>
-> +   [<# feature args> [<arg>]*]
->  
->  A snapshot of the <origin> block device is created. Changed chunks of
->  <chunksize> sectors will be stored on the <COW device>.  Writes will
-> @@ -53,8 +54,23 @@ When loading or unloading the snapshot target, the corresponding
->  snapshot-origin or snapshot-merge target must be suspended. A failure to
->  suspend the origin target could result in data corruption.
->  
-> +Optional features:
-> +
-> +   discard_zeroes_cow - a discard issued to the snapshot device that
-> +   maps to entire chunks to will zero the corresponding exception(s) in
-> +   the snapshot's exception store.
-> +
-> +   discard_passdown_origin - a discard to the snapshot device is passed
-> +   down to the snapshot-origin's underlying device.  This doesn't cause
-> +   copy-out to the snapshot exception store because the snapshot-origin
-> +   target is bypassed.
-> +
-> +   The discard_passdown_origin feature depends on the discard_zeroes_cow
-> +   feature being enabled.
-> +
->  
->  * snapshot-merge <origin> <COW device> <persistent> <chunksize>
-> +  [<# feature args> [<arg>]*]
->  
->  takes the same table arguments as the snapshot target except it only
->  works with persistent snapshots.  This target assumes the role of the
-> diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-> index 3107f2b1988b..e894302619dd 100644
-> --- a/drivers/md/dm-snap.c
-> +++ b/drivers/md/dm-snap.c
-> @@ -134,7 +134,10 @@ struct dm_snapshot {
->  	 * - I/O error while merging
->  	 *	=> stop merging; set merge_failed; process I/O normally.
->  	 */
-> -	int merge_failed;
-> +	bool merge_failed:1;
-> +
-> +	bool discard_zeroes_cow:1;
-> +	bool discard_passdown_origin:1;
->  
->  	/*
->  	 * Incoming bios that overlap with chunks being merged must wait
-> @@ -1173,12 +1176,64 @@ static void stop_merge(struct dm_snapshot *s)
->  	clear_bit(SHUTDOWN_MERGE, &s->state_bits);
->  }
->  
-> +static int parse_snapshot_features(struct dm_arg_set *as, struct dm_snapshot *s,
-> +				   struct dm_target *ti)
-> +{
-> +	int r;
-> +	unsigned argc;
-> +	const char *arg_name;
-> +
-> +	static const struct dm_arg _args[] = {
-> +		{0, 2, "Invalid number of feature arguments"},
-> +	};
-> +
-> +	/*
-> +	 * No feature arguments supplied.
-> +	 */
-> +	if (!as->argc)
-> +		return 0;
-> +
-> +	r = dm_read_arg_group(_args, as, &argc, &ti->error);
-> +	if (r)
-> +		return -EINVAL;
-> +
-> +	while (argc && !r) {
-> +		arg_name = dm_shift_arg(as);
-> +		argc--;
-> +
-> +		if (!strcasecmp(arg_name, "discard_zeroes_cow"))
-> +			s->discard_zeroes_cow = true;
-> +
-> +		else if (!strcasecmp(arg_name, "discard_passdown_origin"))
-> +			s->discard_passdown_origin = true;
-> +
-> +		else {
-> +			ti->error = "Unrecognised feature requested";
-> +			r = -EINVAL;
-> +			break;
-> +		}
-> +	}
-> +
-> +	if (!s->discard_zeroes_cow && s->discard_passdown_origin) {
-> +		/*
-> +		 * TODO: really these are disjoint.. but ti->num_discard_bios
-> +		 * and dm_bio_get_target_bio_nr() require rigid constraints.
-> +		 */
-> +		ti->error = "discard_passdown_origin feature depends on discard_zeroes_cow";
-> +		r = -EINVAL;
-> +	}
-> +
-> +	return r;
-> +}
-> +
->  /*
-> - * Construct a snapshot mapping: <origin_dev> <COW-dev> <p|po|n> <chunk-size>
-> + * Construct a snapshot mapping:
-> + * <origin_dev> <COW-dev> <p|po|n> <chunk-size> [<# feature args> [<arg>]*]
->   */
->  static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  {
->  	struct dm_snapshot *s;
-> +	struct dm_arg_set as;
->  	int i;
->  	int r = -EINVAL;
->  	char *origin_path, *cow_path;
-> @@ -1186,8 +1241,8 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  	unsigned args_used, num_flush_bios = 1;
->  	fmode_t origin_mode = FMODE_READ;
->  
-> -	if (argc != 4) {
-> -		ti->error = "requires exactly 4 arguments";
-> +	if (argc < 4) {
-> +		ti->error = "requires 4 or more arguments";
->  		r = -EINVAL;
->  		goto bad;
->  	}
-> @@ -1204,6 +1259,13 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  		goto bad;
->  	}
->  
-> +	as.argc = argc;
-> +	as.argv = argv;
-> +	dm_consume_args(&as, 4);
-> +	r = parse_snapshot_features(&as, s, ti);
-> +	if (r)
-> +		goto bad_features;
-> +
->  	origin_path = argv[0];
->  	argv++;
->  	argc--;
-> @@ -1289,6 +1351,8 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  
->  	ti->private = s;
->  	ti->num_flush_bios = num_flush_bios;
-> +	if (s->discard_zeroes_cow)
-> +		ti->num_discard_bios = (s->discard_passdown_origin ? 2 : 1);
->  	ti->per_io_data_size = sizeof(struct dm_snap_tracked_chunk);
->  
->  	/* Add snapshot to the list of snapshots for this origin */
-> @@ -1336,29 +1400,22 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  
->  bad_read_metadata:
->  	unregister_snapshot(s);
-> -
->  bad_load_and_register:
->  	mempool_exit(&s->pending_pool);
-> -
->  bad_pending_pool:
->  	dm_kcopyd_client_destroy(s->kcopyd_client);
-> -
->  bad_kcopyd:
->  	dm_exception_table_exit(&s->pending, pending_cache);
->  	dm_exception_table_exit(&s->complete, exception_cache);
-> -
->  bad_hash_tables:
->  	dm_exception_store_destroy(s->store);
-> -
->  bad_store:
->  	dm_put_device(ti, s->cow);
-> -
->  bad_cow:
->  	dm_put_device(ti, s->origin);
-> -
->  bad_origin:
-> +bad_features:
->  	kfree(s);
-> -
->  bad:
->  	return r;
->  }
-> @@ -1806,6 +1863,32 @@ static void remap_exception(struct dm_snapshot *s, struct dm_exception *e,
->  		(bio->bi_iter.bi_sector & s->store->chunk_mask);
->  }
->  
-> +static void zero_callback(int read_err, unsigned long write_err, void *context)
-> +{
-> +	struct dm_snapshot *s = context;
-> +
-> +	up(&s->cow_count);
-> +}
-> +
-> +static void zero_exception(struct dm_snapshot *s, struct dm_exception *e,
-> +			   struct bio *bio, chunk_t chunk)
-> +{
-> +	struct dm_io_region dest;
-> +
-> +	dest.bdev = s->cow->bdev;
-> +	dest.sector = bio->bi_iter.bi_sector;
-> +	dest.count = s->store->chunk_size;
-> +
-> +	down(&s->cow_count);
-> +	dm_kcopyd_zero(s->kcopyd_client, 1, &dest, 0, zero_callback, s);
-> +}
-> +
-> +static bool io_overlaps_chunk(struct dm_snapshot *s, struct bio *bio)
-> +{
-> +	return bio->bi_iter.bi_size ==
-> +		(s->store->chunk_size << SECTOR_SHIFT);
-> +}
-> +
->  static int snapshot_map(struct dm_target *ti, struct bio *bio)
->  {
->  	struct dm_exception *e;
-> @@ -1839,10 +1922,42 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
->  		goto out_unlock;
->  	}
->  
-> +	if (unlikely(bio_op(bio) == REQ_OP_DISCARD)) {
-> +		if (s->discard_passdown_origin && dm_bio_get_target_bio_nr(bio)) {
-> +			/*
-> +			 * passdown discard to origin (without triggering
-> +			 * snapshot exceptions via do_origin; doing so would
-> +			 * defeat the goal of freeing space in origin that is
-> +			 * implied by the "discard_passdown_origin" feature)
-> +			 */
-> +			bio_set_dev(bio, s->origin->bdev);
-> +			track_chunk(s, bio, chunk);
-> +			goto out_unlock;
-> +		}
-> +		/* discard to snapshot (target_bio_nr == 0) zeroes exceptions */
-> +	}
-> +
->  	/* If the block is already remapped - use that, else remap it */
->  	e = dm_lookup_exception(&s->complete, chunk);
->  	if (e) {
->  		remap_exception(s, e, bio, chunk);
-> +		if (unlikely(bio_op(bio) == REQ_OP_DISCARD) &&
-> +		    io_overlaps_chunk(s, bio)) {
-> +			dm_exception_table_unlock(&lock);
-> +			up_read(&s->lock);
-> +			zero_exception(s, e, bio, chunk);
-> +			goto out;
-> +		}
-> +		goto out_unlock;
-> +	}
+[+cc dm-devel]
 
-In case an exception exists for a chunk and we get a discard for it, we
-want to zero the corresponding exception in the exception store.
-
-The code remaps the discard bio, issues the zeroing operation by calling
-zero_exception() and returns DM_MAPIO_REMAPPED. If I am not missing
-something, device mapper core will then submit the discard bio to the
-COW device, so we end up both zeroing and discarding the chunk in the
-COW device.
-
-Is this deliberate?
-
-Thanks,
-Nikos
-
-> +
-> +	if (unlikely(bio_op(bio) == REQ_OP_DISCARD)) {
-> +		/*
-> +		 * If no exception exists, complete discard immediately
-> +		 * otherwise it'll trigger copy-out.
-> +		 */
-> +		bio_endio(bio);
-> +		r = DM_MAPIO_SUBMITTED;
->  		goto out_unlock;
->  	}
->  
-> @@ -1890,9 +2005,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
->  
->  		r = DM_MAPIO_SUBMITTED;
->  
-> -		if (!pe->started &&
-> -		    bio->bi_iter.bi_size ==
-> -		    (s->store->chunk_size << SECTOR_SHIFT)) {
-> +		if (!pe->started && io_overlaps_chunk(s, bio)) {
->  			pe->started = 1;
->  
->  			dm_exception_table_unlock(&lock);
-> @@ -2138,6 +2251,7 @@ static void snapshot_status(struct dm_target *ti, status_type_t type,
->  {
->  	unsigned sz = 0;
->  	struct dm_snapshot *snap = ti->private;
-> +	unsigned num_features;
->  
->  	switch (type) {
->  	case STATUSTYPE_INFO:
-> @@ -2180,6 +2294,14 @@ static void snapshot_status(struct dm_target *ti, status_type_t type,
->  		DMEMIT("%s %s", snap->origin->name, snap->cow->name);
->  		snap->store->type->status(snap->store, type, result + sz,
->  					  maxlen - sz);
-> +		num_features = snap->discard_zeroes_cow + snap->discard_passdown_origin;
-> +		if (num_features) {
-> +			DMEMIT(" %u", num_features);
-> +			if (snap->discard_zeroes_cow)
-> +				DMEMIT(" discard_zeroes_cow");
-> +			if (snap->discard_passdown_origin)
-> +				DMEMIT(" discard_passdown_origin");
-> +		}
->  		break;
->  	}
->  }
-> @@ -2198,6 +2320,16 @@ static int snapshot_iterate_devices(struct dm_target *ti,
->  	return r;
->  }
->  
-> +static void snapshot_io_hints(struct dm_target *ti, struct queue_limits *limits)
-> +{
-> +	struct dm_snapshot *snap = ti->private;
-> +
-> +	if (snap->discard_zeroes_cow) {
-> +		/* All discards are split on chunk_size boundary */
-> +		limits->discard_granularity = snap->store->chunk_size;
-> +		limits->max_discard_sectors = snap->store->chunk_size;
-> +	}
-> +}
->  
->  /*-----------------------------------------------------------------
->   * Origin methods
-> @@ -2522,7 +2654,7 @@ static struct target_type origin_target = {
->  
->  static struct target_type snapshot_target = {
->  	.name    = "snapshot",
-> -	.version = {1, 15, 0},
-> +	.version = {1, 16, 0},
->  	.module  = THIS_MODULE,
->  	.ctr     = snapshot_ctr,
->  	.dtr     = snapshot_dtr,
-> @@ -2532,11 +2664,12 @@ static struct target_type snapshot_target = {
->  	.resume  = snapshot_resume,
->  	.status  = snapshot_status,
->  	.iterate_devices = snapshot_iterate_devices,
-> +	.io_hints = snapshot_io_hints,
->  };
->  
->  static struct target_type merge_target = {
->  	.name    = dm_snapshot_merge_target_name,
-> -	.version = {1, 4, 0},
-> +	.version = {1, 5, 0},
->  	.module  = THIS_MODULE,
->  	.ctr     = snapshot_ctr,
->  	.dtr     = snapshot_dtr,
-> @@ -2547,6 +2680,7 @@ static struct target_type merge_target = {
->  	.resume  = snapshot_merge_resume,
->  	.status  = snapshot_status,
->  	.iterate_devices = snapshot_iterate_devices,
-> +	.io_hints = snapshot_io_hints,
->  };
->  
->  static int __init dm_snapshot_init(void)
+> -----Original Message-----
+> From: linux-bcache-owner@vger.kernel.org <linux-bcache-owner@vger.kernel.org> On Behalf Of Coly Li
+> Sent: Sunday, 30 June, 2019 19:24
+> To: Don Doerner <Don.Doerner@Quantum.Com>
+> Cc: linux-bcache@vger.kernel.org
+> Subject: Re: I/O Reordering: Cache -> Backing Device
 > 
+> On 2019/6/29 5:56 上午, Don Doerner wrote:
+> > Hello, I'm also interested in using bcache to facilitate stripe 
+> > re-ass'y for the backing device.  I've done some experiments that 
+> > dovetail with some of the traffic on this mailing list.  
+> > Specifically, in this message 
+> > (https://nam05.safelinks.protection.outlook.com/?url=https%3A%2F%2Fwww.spinics.net%2Flists%2Flinux-bcache%2Fmsg07590.html&amp;data=02%7C01%7CDon.Doerner%40quantum.com%7Cafa50dd04a914f76bb7808d6fdcb338b%7C322a135f14fb4d72aede122272134ae0%7C1%7C0%7C636975446529502069&amp;sdata=nC3JhPL%2FC6B57uw4xjEkGnV48jd9DqHLf0MQL7AAErs%3D&amp;reserved=0), 
+> > Eric suggested "...turning up 
+> > /sys/block/bcache0/bcache/writeback_percent..." to increase the 
+> > contiguous data in the cache.
+> > My RAID-6 has a stripe size of 2.5MiB, and its bcache'ed with a few 
+> > hundred GB of NVMe storage.  Here's my experiment:
+> > * I made the cache a write back cache: echo writeback >
+> > /sys/block/bcache0/bcache/cache_mode
+> > * I plugged the cache: echo 0 >
+> > /sys/block/bcache0/bcache/writeback_running
+> > * I use a pathological I/O pattern, generated with 'fio': fio 
+> >   --bs=128K --direct=1 --rw=randwrite --ioengine=libaio --iodepth=1 
+> >   --numjobs=1 --size=40G --name=/dev/bcache0.  I let it run to 
+> >   completion, at which point I believe I should have 40 GiB of 
+> >   sequential dirty data in cache, but not put there sequentially.  In 
+> >   essence, I should have ~16K complete stripes sitting in the cache, 
+> >   waiting to be written.
+> > * I set stuff up to go like a bat: echo 0 >
+> > /sys/block/bcache0/bcache/writeback_percent; echo 0 >
+> > /sys/block/bcache0/bcache/writeback_delay; echo 2097152 >
+> > /sys/block/bcache0/bcache/writeback_rate
+> > * And I unplugged the cache: echo 1 >
+> > /sys/block/bcache0/bcache/writeback_running
+> > I then watched 'iostat', and saw that there were lots of read operations (statistically, after merging, about 1 read for every 7 writes) - more than I had expected... that's enough that I concluded it wasn't building full stripes.  It kinda looks like it's playing back a journal sorted in time then LBA, or something like that...
+> > Any suggestions for improving (reducing) the ratio of reads to writes will be gratefully accepted!
+> 
+> Hi Don,
+> 
+> If the backing device has expensive stripe cost, the upper layer should 
+> issue I/Os with stripe size alignment, otherwise bcache cannot to too 
+> much to make the I/O to be stripe optimized.
+> 
+> And you are right that bcache does not writeback in restrict LBA order, 
+> this is because the internal btree is trend to be appended only. The LBA 
+> ordering writeback happens in a reasonable small range, not in whole 
+> cached data, see commit 6e6ccc67b9c7 ("bcache: writeback: properly order 
+> backing device IO").
+> 
+> And I agree with you again that "improving (reducing) the ratio of reads 
+> to writes will be gratefully accepted". Indeed not only reducing reads 
+> to writes ratio, but also increase the reads to writes throughput. This 
+> is something I want to improve, after I understand why the problem 
+> exists in bcache writeback code ...
+
+
+dm-devel list:
+
+Does dm-writecache do any attempt to merge IOs into the io_opt size?
+
+If so, bcache might get some ideas by looking at that codebase for its 
+writeback thread.
+
+--
+Eric Wheeler
+
+
+> 
+> Thanks.
+> 
+> --
+> 
+> Coly Li
+> The information contained in this transmission may be confidential. Any disclosure, copying, or further distribution of confidential information is not permitted unless such privilege is explicitly granted in writing by Quantum. Quantum reserves the right to have electronic communications, including email and attachments, sent across its networks filtered through security software programs and retain such messages in order to comply with applicable data security and retention requirements. Quantum is not responsible for the proper and complete transmission of the substance of this communication or for any delay in its receipt.
+> 
+---1690155773-992976465-1562375051=:12361
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+---1690155773-992976465-1562375051=:12361--
