@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 1/4] libmultipath: make
- vector_foreach_slot_backwards work as expected
-Date: Tue, 9 Jul 2019 07:40:01 +0000
-Message-ID: <20190709073909.32112-2-martin.wilck@suse.com>
+Subject: [PATCH 4/4] libmultipath: trigger uevents for partitions,
+	too
+Date: Tue, 9 Jul 2019 07:40:05 +0000
+Message-ID: <20190709073909.32112-5-martin.wilck@suse.com>
 References: <20190709073909.32112-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,30 +23,77 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-From: Benjamin Marzinski <bmarzins@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
 
-All of the code that uses vector_foreach_slot_backwards() treats "i" as
-the index of the entry "p", but the way it was coded, that wasn't the
-case. "i" was the number of the entry counting from 1, not 0.
+We have added code to re-trigger uevents in various cases where
+the status of a device changes from multipath to non-multipath,
+or vice-versa. When multipathd triggers uevents for paths of a map
+because the status of the map has changed, it needs to trigger
+events for the partitions of the path devices, too. The kernel
+doesn't do this automatically.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+Fixes: c5023200 libmultipath: indicate wwid failure in dm_addmap_create()
+Fixes: e5d3c3a0 libmultipath: trigger change uevent on new device creation
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/vector.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/configure.c | 38 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
 
-diff --git a/libmultipath/vector.h b/libmultipath/vector.h
-index 41d2b896..344dffd5 100644
---- a/libmultipath/vector.h
-+++ b/libmultipath/vector.h
-@@ -40,7 +40,7 @@ typedef struct _vector *vector;
- #define vector_foreach_slot_after(v,p,i) \
- 	for (; (v) && i < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); i++)
- #define vector_foreach_slot_backwards(v,p,i) \
--	for (i = VECTOR_SIZE(v); i > 0 && ((p) = (v)->slot[i-1]); i--)
-+	for (i = VECTOR_SIZE(v) - 1; (int)i >= 0 && ((p) = (v)->slot[i]); i--)
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index b09ef529..4cdf1363 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -519,6 +519,42 @@ trigger_udev_change(const struct multipath *mpp)
+ 	udev_device_unref(udd);
+ }
  
- #define identity(x) (x)
- /*
++static void trigger_partitions_udev_change(struct udev_device *dev,
++					   const char *action, int len)
++{
++	struct udev_enumerate *part_enum;
++	struct udev_list_entry *item;
++
++	part_enum = udev_enumerate_new(udev);
++	if (!part_enum)
++		return;
++
++	if (udev_enumerate_add_match_parent(part_enum, dev) < 0 ||
++	    udev_enumerate_add_match_subsystem(part_enum, "block") < 0 ||
++	    udev_enumerate_scan_devices(part_enum) < 0)
++		goto unref;
++
++	udev_list_entry_foreach(item,
++				udev_enumerate_get_list_entry(part_enum)) {
++		const char *syspath;
++		struct udev_device *part;
++
++		syspath = udev_list_entry_get_name(item);
++		part = udev_device_new_from_syspath(udev, syspath);
++		if (!part)
++			continue;
++
++		if (!strcmp("partition", udev_device_get_devtype(part))) {
++			condlog(4, "%s: triggering %s event for %s", __func__,
++				action, syspath);
++			sysfs_attr_set_value(part, "uevent", action, len);
++		}
++		udev_device_unref(part);
++	}
++unref:
++	udev_enumerate_unref(part_enum);
++}
++
+ void
+ trigger_paths_udev_change(struct multipath *mpp, bool is_mpath)
+ {
+@@ -569,6 +605,8 @@ trigger_paths_udev_change(struct multipath *mpp, bool is_mpath)
+ 				action, pp->dev, is_mpath ? "" : "no ");
+ 			sysfs_attr_set_value(pp->udev, "uevent",
+ 					     action, strlen(action));
++			trigger_partitions_udev_change(pp->udev, action,
++						       strlen(action));
+ 		}
+ 	}
+ 
 -- 
 2.22.0
