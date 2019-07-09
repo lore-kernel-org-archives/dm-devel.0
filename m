@@ -1,12 +1,19 @@
-From: Petr Vorel <petr.vorel@gmail.com>
-Subject: [PATCH 1/1] kpartx: Use __kernel_daddr_t for
-	solaris_x86_slice.s_start
-Date: Mon,  8 Jul 2019 23:35:51 +0200
-Message-ID: <20190708213551.26349-1-petr.vorel@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm bufio: fix deadlock issue with loop device
+Date: Mon, 8 Jul 2019 20:15:29 -0400
+Message-ID: <20190709001529.GA10643@redhat.com>
+References: <20190702231456.19121-1-junxiao.bi@oracle.com>
+	<20190703162106.GA13984@redhat.com>
+	<1aa51708-1c1b-bd12-72ed-ecbae39043f7@oracle.com>
+	<460d932b-e801-e2f8-9d0d-d3c96e1bb1ce@oracle.com>
+	<20190708141427.GA8414@redhat.com>
+	<8a971872-ca3e-303d-02cd-cf5990bb6ab0@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <8a971872-ca3e-303d-02cd-cf5990bb6ab0@oracle.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,43 +23,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Petr Vorel <petr.vorel@gmail.com>
+To: Junxiao Bi <junxiao.bi@oracle.com>
+Cc: honglei.wang@oracle.com, dm-devel@redhat.com, mpatocka@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-It was meant to be used daddr_t (which is mostly int, only sparc and
-mips have it defined as int), but instead used long.
-But musl libc does not define daddr_t as it's deprecated, therefore
-use __kernel_daddr_t from <linux/types.h>.
+On Mon, Jul 08 2019 at  7:54pm -0400,
+Junxiao Bi <junxiao.bi@oracle.com> wrote:
 
-Signed-off-by: Petr Vorel <petr.vorel@gmail.com>
----
- kpartx/solaris.c | 6 ++----
- 1 file changed, 2 insertions(+), 4 deletions(-)
+> On 7/8/19 7:14 AM, Mike Snitzer wrote:
+> 
+> >On Fri, Jul 05 2019 at  4:24pm -0400,
+> >Junxiao Bi <junxiao.bi@oracle.com> wrote:
+> >
+> >>Hi Mike,
+> >>
+> >>Do i make sense on this?
+> >No, you haven't made your chase for this change.  Sorry.
+> >
+> >Please refine the patch header to _not_ get into context you have from
+> >a vendor kernel.  I know you say this is hard to reproduce, etc.
+> Thanks, I will refine it in v2.
+> >But
+> >you don't even get into ther usecase where the issue was seen.  Was this
+> >DM thinp?  DM cache?  Something else?
+> it's thin-provision target. Customer is using docker.
 
-diff --git a/kpartx/solaris.c b/kpartx/solaris.c
-index 8c1a971b..e7826c62 100644
---- a/kpartx/solaris.c
-+++ b/kpartx/solaris.c
-@@ -1,17 +1,15 @@
- #include "kpartx.h"
- #include <stdio.h>
--#include <sys/types.h>
-+#include <linux/types.h>
- #include <time.h>		/* time_t */
- 
- #define SOLARIS_X86_NUMSLICE	8
- #define SOLARIS_X86_VTOC_SANE	(0x600DDEEEUL)
- 
--//typedef int daddr_t;		/* or long - check */
--
- struct solaris_x86_slice {
- 	unsigned short	s_tag;		/* ID tag of partition */
- 	unsigned short	s_flag;		/* permission flags */
--	long		s_start;	/* start sector no of partition */
-+	__kernel_daddr_t s_start;	/* start sector no of partition */
- 	long		s_size;		/* # of blocks in partition */
- };
- 
--- 
-2.20.1
+OK, with loop files? (really hackish and poor performing but loopback
+enabled the ability to not reinstall, or plan ahead, caused a lot of
+people to use it... that is until overlayfs arrived)
+
+> >Please be as concise and precise as possible.  Saying that shrinker is
+> >the same context as loop doesn't imply a whole lot to me (relative to
+> >why this is prone to deadlock).
+> >
+> >To restate my concern: if __GFP_FS isn't set then why does your patch
+> >help at all?  If __GFP_FS is set, then that changes things..
+> 
+> If __GFP_FS isn't set, the behavior is the same with w/o this patch.
+
+Yes.
+
+> If it is set and the mutex was already hold by others, shrinker
+> stop, deadlock avoid.
+
+Fine, please explain how that happens in the context of existing
+upstream code.  Please make the case for fixing upstream.
+
+Thanks,
+Mike
