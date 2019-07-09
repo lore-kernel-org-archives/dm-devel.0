@@ -1,7 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 2/4] kpartx: recognize DASD on loop devices again
-Date: Tue, 9 Jul 2019 07:40:02 +0000
-Message-ID: <20190709073909.32112-3-martin.wilck@suse.com>
+Subject: [PATCH 1/4] libmultipath: make
+ vector_foreach_slot_backwards work as expected
+Date: Tue, 9 Jul 2019 07:40:01 +0000
+Message-ID: <20190709073909.32112-2-martin.wilck@suse.com>
 References: <20190709073909.32112-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,49 +23,30 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-From: Martin Wilck <mwilck@suse.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
 
-Since 4d57b868, DASD partition tables are only recognized on
-DASD hardware. This turns out to break certain software that works
-e.g. with DASD partition tables on loop devices. The problem that
-4d57b868 attempted to fix was that "unlabeled disk" format has
-no signature at all and is detected on any volume, including
-empty ones.
+All of the code that uses vector_foreach_slot_backwards() treats "i" as
+the index of the entry "p", but the way it was coded, that wasn't the
+case. "i" was the number of the entry counting from 1, not 0.
 
-With this patch, DASD partition table formats other than "unlabeled
-disk" are detected on non-DASD devices again.
-
-Fixes: 4d57b868 "kpartx: only recognize dasd part table on DASD"
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/dasd.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
+ libmultipath/vector.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kpartx/dasd.c b/kpartx/dasd.c
-index d95d8ca0..4e7e4743 100644
---- a/kpartx/dasd.c
-+++ b/kpartx/dasd.c
-@@ -133,9 +133,6 @@ read_dasd_pt(int fd, struct slice all, struct slice *sp, int ns)
- 			/* Couldn't open the device */
- 			return -1;
- 		}
--	} else if ((unsigned int)major(sbuf.st_rdev) != 94) {
--			/* Not a DASD */
--			return -1;
- 	} else {
- 		fd_dasd = dup(fd);
- 		if (fd_dasd < 0)
-@@ -279,6 +276,10 @@ read_dasd_pt(int fd, struct slice all, struct slice *sp, int ns)
- 			size = disksize;
- 			if (fmt_size < size)
- 				size = fmt_size;
-+		} else if ((unsigned int)major(sbuf.st_rdev) != 94) {
-+			/* Not a DASD */
-+			retval = -1;
-+			goto out;
- 		} else
- 			size = disksize;
+diff --git a/libmultipath/vector.h b/libmultipath/vector.h
+index 41d2b896..344dffd5 100644
+--- a/libmultipath/vector.h
++++ b/libmultipath/vector.h
+@@ -40,7 +40,7 @@ typedef struct _vector *vector;
+ #define vector_foreach_slot_after(v,p,i) \
+ 	for (; (v) && i < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); i++)
+ #define vector_foreach_slot_backwards(v,p,i) \
+-	for (i = VECTOR_SIZE(v); i > 0 && ((p) = (v)->slot[i-1]); i--)
++	for (i = VECTOR_SIZE(v) - 1; (int)i >= 0 && ((p) = (v)->slot[i]); i--)
  
+ #define identity(x) (x)
+ /*
 -- 
 2.22.0
