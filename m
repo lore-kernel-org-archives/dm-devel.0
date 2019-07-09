@@ -1,17 +1,11 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 1/1] kpartx: Use __kernel_daddr_t for
- solaris_x86_slice.s_start
-Date: Tue, 9 Jul 2019 06:34:36 -0700
-Message-ID: <20190709133436.GA2231@infradead.org>
-References: <20190708213551.26349-1-petr.vorel@gmail.com>
-	<20190709024742.GA22293@infradead.org>
-	<20190709080204.GA12875@dell5510>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: [RFC PATCH 0/1] dm: add clone target
+Date: Tue,  9 Jul 2019 17:15:21 +0300
+Message-ID: <20190709141522.29606-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20190709080204.GA12875@dell5510>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,29 +15,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Petr Vorel <petr.vorel@gmail.com>
-Cc: Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com
+To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
+Cc: vkoukis@arrikto.com, ntsironis@arrikto.com, iliastsi@arrikto.com
 List-Id: dm-devel.ids
 
-On Tue, Jul 09, 2019 at 10:02:05AM +0200, Petr Vorel wrote:
-> 
-> > What this really should use is fixed size types.
-> If it's not specific to __kernel_daddr_t nor daddr_t ("The type of a disk
-> address") and long is sufficient for all platforms, that's even better.
-> 
-> I'd be just for removing typedef int daddr_t comment.
-> 
-> BTW gpart also uses struct solaris_x86_slice, with daddr_t [1].
-> I've filed a PR [2], but I guess I'll change it to long.
+This patch adds the dm-clone target, which allows cloning of arbitrary
+block devices.
 
-solaris_x86_slice is an on-disk format, defined for good old 32-bit
-x86 Solaris.  So the question is not if it is enough, but if it matches
-what Solaris does.  I don't have the Solaris source at the moment,
-but here is what the Linux kernel uses:
+dm-clone produces a one-to-one copy of an existing, read-only device
+(origin) into a writable device (clone): It presents a virtual block
+device which makes all data appear immediately, and redirects reads and
+writes accordingly.
 
-struct solaris_x86_slice {
-        __le16 s_tag;           /* ID tag of partition */
-        __le16 s_flag;          /* permission flags */
-        __le32 s_start;         /* start sector no of partition */
-        __le32 s_size;          /* # of blocks in partition */
-};
+The main use case of dm-clone is to clone a potentially remote,
+high-latency, read-only, archival-type block device into a writable,
+fast, primary-type device for fast, low-latency I/O. The cloned device
+is visible/mountable immediately and the copy of the origin device to
+the clone device happens in the background, in parallel with user I/O.
+
+For example, one could restore an application backup from a read-only
+copy, accessible through a network storage protocol (NBD, Fibre Channel,
+iSCSI, AoE, etc.), into a local SSD or NVMe device, and start using the
+device immediately, without waiting for the restore to complete.
+
+When the cloning completes, the dm-clone table can be removed altogether
+and be replaced, e.g., by a linear table, mapping directly to the clone
+device.
+
+dm-clone is optimized for small, random writes, with size equal to
+dm-clone's block/region size, e.g., 4K.
+
+For more information regarding dm-clone's operation, please read the
+attached documentation.
+
+A preliminary test suite for dm-clone can be found at
+https://github.com/arrikto/device-mapper-test-suite/tree/feature-dm-clone
+
+Nikos Tsironis (1):
+  dm: add clone target
+
+ Documentation/device-mapper/dm-clone.rst |  334 +++++
+ drivers/md/Kconfig                       |   13 +
+ drivers/md/Makefile                      |    2 +
+ drivers/md/dm-clone-metadata.c           |  991 +++++++++++++
+ drivers/md/dm-clone-metadata.h           |  158 +++
+ drivers/md/dm-clone-target.c             | 2244 ++++++++++++++++++++++++++++++
+ 6 files changed, 3742 insertions(+)
+ create mode 100644 Documentation/device-mapper/dm-clone.rst
+ create mode 100644 drivers/md/dm-clone-metadata.c
+ create mode 100644 drivers/md/dm-clone-metadata.h
+ create mode 100644 drivers/md/dm-clone-target.c
+
+-- 
+2.11.0
