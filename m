@@ -1,14 +1,11 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 4/4] libmultipath: trigger uevents for partitions,
-	too
-Date: Tue, 9 Jul 2019 07:40:05 +0000
-Message-ID: <20190709073909.32112-5-martin.wilck@suse.com>
-References: <20190709073909.32112-1-martin.wilck@suse.com>
+Subject: [PATCH 0/4] multipath-patches for 0.8.2
+Date: Tue, 9 Jul 2019 07:39:59 +0000
+Message-ID: <20190709073909.32112-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190709073909.32112-1-martin.wilck@suse.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -25,75 +22,30 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-We have added code to re-trigger uevents in various cases where
-the status of a device changes from multipath to non-multipath,
-or vice-versa. When multipathd triggers uevents for paths of a map
-because the status of the map has changed, it needs to trigger
-events for the partitions of the path devices, too. The kernel
-doesn't do this automatically.
+Hi Christophe,
 
-Fixes: c5023200 libmultipath: indicate wwid failure in dm_addmap_create()
-Fixes: e5d3c3a0 libmultipath: trigger change uevent on new device creation
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/configure.c | 38 ++++++++++++++++++++++++++++++++++++++
- 1 file changed, 38 insertions(+)
+as you requested, I'm resending the recent kpartx/DASD patch on top of
+0.8.2. I'm resending 3 other previously posted patches, too. First and
+foremost, Ben's "vector_foreach_slot_backwards" patch. The last two
+have not been acked by Ben, or otherwise reviewed, yet.
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index b09ef529..4cdf1363 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -519,6 +519,42 @@ trigger_udev_change(const struct multipath *mpp)
- 	udev_device_unref(udd);
- }
- 
-+static void trigger_partitions_udev_change(struct udev_device *dev,
-+					   const char *action, int len)
-+{
-+	struct udev_enumerate *part_enum;
-+	struct udev_list_entry *item;
-+
-+	part_enum = udev_enumerate_new(udev);
-+	if (!part_enum)
-+		return;
-+
-+	if (udev_enumerate_add_match_parent(part_enum, dev) < 0 ||
-+	    udev_enumerate_add_match_subsystem(part_enum, "block") < 0 ||
-+	    udev_enumerate_scan_devices(part_enum) < 0)
-+		goto unref;
-+
-+	udev_list_entry_foreach(item,
-+				udev_enumerate_get_list_entry(part_enum)) {
-+		const char *syspath;
-+		struct udev_device *part;
-+
-+		syspath = udev_list_entry_get_name(item);
-+		part = udev_device_new_from_syspath(udev, syspath);
-+		if (!part)
-+			continue;
-+
-+		if (!strcmp("partition", udev_device_get_devtype(part))) {
-+			condlog(4, "%s: triggering %s event for %s", __func__,
-+				action, syspath);
-+			sysfs_attr_set_value(part, "uevent", action, len);
-+		}
-+		udev_device_unref(part);
-+	}
-+unref:
-+	udev_enumerate_unref(part_enum);
-+}
-+
- void
- trigger_paths_udev_change(struct multipath *mpp, bool is_mpath)
- {
-@@ -569,6 +605,8 @@ trigger_paths_udev_change(struct multipath *mpp, bool is_mpath)
- 				action, pp->dev, is_mpath ? "" : "no ");
- 			sysfs_attr_set_value(pp->udev, "uevent",
- 					     action, strlen(action));
-+			trigger_partitions_udev_change(pp->udev, action,
-+						       strlen(action));
- 		}
- 	}
- 
+Benjamin Marzinski (1):
+  libmultipath: make vector_foreach_slot_backwards work as expected
+
+Martin Wilck (3):
+  kpartx: recognize DASD on loop devices again
+  multipath-tools (coverity): assert availability of CLOCK_MONOTONIC
+  libmultipath: trigger uevents for partitions, too
+
+ kpartx/dasd.c               |  7 ++++---
+ libmultipath/checkers/tur.c |  6 +++---
+ libmultipath/configure.c    | 38 +++++++++++++++++++++++++++++++++++++
+ libmultipath/time-util.c    |  9 +++++++++
+ libmultipath/time-util.h    |  1 +
+ libmultipath/vector.h       |  2 +-
+ multipathd/main.c           | 34 +++++++++++++--------------------
+ multipathd/uxlsnr.c         |  8 +++-----
+ 8 files changed, 72 insertions(+), 33 deletions(-)
+
 -- 
 2.22.0
