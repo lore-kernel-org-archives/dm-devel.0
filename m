@@ -1,12 +1,17 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: [PATCH v2 1/3] dm-crypt: Wipe private IV struct after
-	key invalid flag is set.
-Date: Tue,  9 Jul 2019 15:22:12 +0200
-Message-ID: <20190709132214.3905-1-gmazyland@gmail.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH 1/1] kpartx: Use __kernel_daddr_t for
+ solaris_x86_slice.s_start
+Date: Tue, 9 Jul 2019 06:34:36 -0700
+Message-ID: <20190709133436.GA2231@infradead.org>
+References: <20190708213551.26349-1-petr.vorel@gmail.com>
+	<20190709024742.GA22293@infradead.org>
+	<20190709080204.GA12875@dell5510>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20190709080204.GA12875@dell5510>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,56 +21,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Milan Broz <gmazyland@gmail.com>
+To: Petr Vorel <petr.vorel@gmail.com>
+Cc: Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If a private IV wipe function fails, the code does not set the key
-invalid flag. This patch moves code after the flag is set and
-prevents the device resume in an inconsistent state.
+On Tue, Jul 09, 2019 at 10:02:05AM +0200, Petr Vorel wrote:
+> 
+> > What this really should use is fixed size types.
+> If it's not specific to __kernel_daddr_t nor daddr_t ("The type of a disk
+> address") and long is sufficient for all platforms, that's even better.
+> 
+> I'd be just for removing typedef int daddr_t comment.
+> 
+> BTW gpart also uses struct solaris_x86_slice, with daddr_t [1].
+> I've filed a PR [2], but I guess I'll change it to long.
 
-Also, it allows using of a randomized key in private wipe function
-(to be used later patches).
+solaris_x86_slice is an on-disk format, defined for good old 32-bit
+x86 Solaris.  So the question is not if it is enough, but if it matches
+what Solaris does.  I don't have the Solaris source at the moment,
+but here is what the Linux kernel uses:
 
-Signed-off-by: Milan Broz <gmazyland@gmail.com>
----
- drivers/md/dm-crypt.c | 16 +++++++++-------
- 1 file changed, 9 insertions(+), 7 deletions(-)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 0fd3ca9bfe54..0e24079e97da 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -2158,6 +2158,14 @@ static int crypt_wipe_key(struct crypt_config *cc)
- 
- 	clear_bit(DM_CRYPT_KEY_VALID, &cc->flags);
- 	get_random_bytes(&cc->key, cc->key_size);
-+
-+	/* Wipe IV private keys */
-+	if (cc->iv_gen_ops && cc->iv_gen_ops->wipe) {
-+		r = cc->iv_gen_ops->wipe(cc);
-+		if (r)
-+			return r;
-+	}
-+
- 	kzfree(cc->key_string);
- 	cc->key_string = NULL;
- 	r = crypt_setkey(cc);
-@@ -3050,14 +3058,8 @@ static int crypt_message(struct dm_target *ti, unsigned argc, char **argv,
- 				memset(cc->key, 0, cc->key_size * sizeof(u8));
- 			return ret;
- 		}
--		if (argc == 2 && !strcasecmp(argv[1], "wipe")) {
--			if (cc->iv_gen_ops && cc->iv_gen_ops->wipe) {
--				ret = cc->iv_gen_ops->wipe(cc);
--				if (ret)
--					return ret;
--			}
-+		if (argc == 2 && !strcasecmp(argv[1], "wipe"))
- 			return crypt_wipe_key(cc);
--		}
- 	}
- 
- error:
--- 
-2.20.1
+struct solaris_x86_slice {
+        __le16 s_tag;           /* ID tag of partition */
+        __le16 s_flag;          /* permission flags */
+        __le32 s_start;         /* start sector no of partition */
+        __le32 s_size;          /* # of blocks in partition */
+};
