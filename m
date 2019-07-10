@@ -1,20 +1,15 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 4/4] libmultipath: trigger uevents for
- partitions, too
-Date: Wed, 10 Jul 2019 20:48:08 +0000
-Message-ID: <d0ac134ae894884f7bbadb3449b11ab2a9867092.camel@suse.com>
-References: <20190709073909.32112-1-martin.wilck@suse.com>
-	<20190709073909.32112-5-martin.wilck@suse.com>
-	<CAAMCDeeC31_C_4_CWXucmA2zeTvVqig3CsUmikfuuJA1V5YWRg@mail.gmail.com>
-	<ba52db4bc532fe1f0ab4af0981c140eb4f339d68.camel@suse.com>
-	<CAAMCDeeiDbQfmF8NrOpy5MHjaX3AvbA7VytAeZSoDb0z9R17vg@mail.gmail.com>
+From: Junxiao Bi <junxiao.bi@oracle.com>
+Subject: Re: [PATCH v2] dm-bufio: fix deadlock with loop device
+Date: Wed, 10 Jul 2019 14:08:36 -0700
+Message-ID: <b1b34b4f-bb25-a6a6-6878-3574b6dda68a@oracle.com>
+References: <20190710001719.2504-1-junxiao.bi@oracle.com>
+	<20190710174801.GA20281@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAAMCDeeiDbQfmF8NrOpy5MHjaX3AvbA7VytAeZSoDb0z9R17vg@mail.gmail.com>
+In-Reply-To: <20190710174801.GA20281@redhat.com>
 Content-Language: en-US
-Content-ID: <541A032FF8465C4F94F947B676A7A4FF@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,82 +19,77 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "rogerheflin@gmail.com" <rogerheflin@gmail.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>, mpatocka@redhat.com
+Cc: honglei.wang@oracle.com, dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 2019-07-10 at 12:42 -0500, Roger Heflin wrote:
-> 
-> The OS we have uses 62-multipath and does not have a global override
-> like that.
-> 
-> I am looking at my notes on the issue and it was this:
-> rootvg gets started directly on /dev/sda2 and then multipath starts
-> up
-> and attempts to mange it and deletes the partition on /dev/sda1
-> causing the by-uuid link to be invalid but multipath fails to create
-> the device with "map in use" because the lv's for rootvg are live on
-> /dev/sda2 directly.   So it does sound like your fix would would
-> correct this issue since on the multipath failure to manage it would
-> recreate the /dev/sda1 device.  
+On 7/10/19 10:48 AM, Mike Snitzer wrote:
 
-Yes, it's certainly worth a try. This is the case the patch was made
-for. You must make sure that your distro contains the commits it builds
-upon (c5023200, e5d3c3a0). All this is fairly recent stuff.
+> On Tue, Jul 09 2019 at  8:17pm -0400,
+> Junxiao Bi <junxiao.bi@oracle.com> wrote:
+>
+>> When thin-volume was built on loop device, if available memory is low,
+>> the following deadlock can be triggered.
+>>
+>> One process P1 was allocating memory with GFP_FS flag, direct alloc fail,
+>> memory reclaim invoked memory shrinker in dm_bufio, dm_bufio_shrink_scan()
+>> run, mutex dm_bufio_client->lock was acquired, then P1 wait for dm_buffer
+>> io done in __try_evict_buffer->()__try_evict_buffer().
+>>
+>> But this io may never done as it was issued to the underlying loop device
+>> who forward it using fs direct-io, there some memory allocation were using
+>> GFP_FS(like do_blockdev_direct_IO()), if direct alloc fail, memory reclaim
+>> will invoke memory shrinker in dm_bufio, where dm_bufio_shrink_scan()
+>> will be invoked, since the mutex was already hold by P1, the loop thread
+>> will hung, io will never done. ABBA deadlock.
+>>
+>> Signed-off-by: Junxiao Bi <junxiao.bi@oracle.com>
+>> ---
+>> Changes in v2:
+>>    - refine the commit log
+>>
+>>   drivers/md/dm-bufio.c | 4 +---
+>>   1 file changed, 1 insertion(+), 3 deletions(-)
+>>
+>> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+>> index 2a48ea3f1b30..b6b5acc92ca2 100644
+>> --- a/drivers/md/dm-bufio.c
+>> +++ b/drivers/md/dm-bufio.c
+>> @@ -1599,9 +1599,7 @@ dm_bufio_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
+>>   	unsigned long freed;
+>>   
+>>   	c = container_of(shrink, struct dm_bufio_client, shrinker);
+>> -	if (sc->gfp_mask & __GFP_FS)
+>> -		dm_bufio_lock(c);
+>> -	else if (!dm_bufio_trylock(c))
+>> +	if (!dm_bufio_trylock(c))
+>>   		return SHRINK_STOP;
+>>   
+>>   	freed  = __scan(c, sc->nr_to_scan, sc->gfp_mask);
+>> -- 
+>> 2.17.1
+>>
+> This needs more careful review and understanding.
+ok.
+>
+> I'll commit to getting that done (hopefully with Mikulas' assistance)
+> during the 5.3-rcX cycle.  But I'm not ready to stage this change yet.
 
-> There appears to be some race
-> condition in the initramfs/systemd where sometimes rootvg gets
-> started
-> before multipath has managed the device causing the partition to be
-> deleted (we have multipath is the initramfs, and that was confirmed).
+Hi Mikulas,
 
-That should never happen. The multipath udev rules set SYSTEMD_READY=0
-on the devices, thus lvm must refrain from grabbing them. Maybe
-multipath_component_detection is off in your LVM2 setup?
+Could you help take a look at this?
 
-> All of our other vg's dont have this issue as we are using the
-> rd.lvm.vg= such that only the rootvg gets turned on early.
-> 
-> > Also, the rule only removes partitions for devices that have been
-> > detected as being eligible for multipathing.
-> > 
-> > > The symbolic link does not appear to get re-created to point to
-> > > the
-> > > new multipath device which would lead one to suspect that there
-> > > was
-> > > no
-> > > event happening for when the multipath device is created.
-> > 
-> > That's very unlikely. You should verify that the multipath device
-> > (for
-> > sda) is created. My patch here relates only to the case where
-> > creating
-> > the multipath device *fails*.
-> > 
-> ?
-> > Maybe. I don't know enough details about your configuration to
-> > tell.
-> > But if this is a device that should not be multipathed, from my
-> > point
-> > of view, proper blacklisting via multipath.conf is the recommended
-> > way
-> > to handle this problem.
-> > 
-> > You can also use "find_multipaths"; please check the documentation.
-> > Note also that since 0.7.8, blacklisting "by protocol" is possible,
-> > which makes it possible e.g. to blacklist local SATA disks with a
-> > simple statement.
-> > 
-> We intentionally have find_multipaths set to allow a single path. 
+Thanks,
 
-But the map which is causing the problem does have multiple paths, if I
-understand correctly? Not all past versions of multipath-tools behaved
-consistently with "find_multipaths yes"; if you have such a version,
-that might even explain the race you were talking about. But this is
-speculation. The behavior depends on which commits exactly are in your
-code base.
+Junxiao.
 
-Anyway, I can't say much about it without knowing all the details. It
-seems that you should contact your distro vendor.
-
-Martin
+>
+> Revisiting dm-bufio on loop is needed.  Commit 9d28eb12447ee ("dm bufio:
+> change __GFP_IO to __GFP_FS in shrinker callbacks") was meant to address
+> deadlocks reported whern running on loop.  And __try_evict_buffer() has
+> a check for GFP_NOFS ("!(gfp & __GFP_FS"); but that is only relevant to
+> __scan() callers and dm_bufio_shrink_scan() is looking to take the lock
+> before __scan() is called.  So it does seem like we have issues in the
+> bufio code in general.  Needs a proper audit though.
+>
+> Mike
