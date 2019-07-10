@@ -1,16 +1,20 @@
-From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: Re: [RFC PATCH 1/1] dm: add clone target
-Date: Wed, 10 Jul 2019 21:45:22 +0300
-Message-ID: <e2b23d5c-0ef2-400b-9697-3fb7899ce3e2@arrikto.com>
-References: <20190709141522.29606-1-ntsironis@arrikto.com>
-	<20190709141522.29606-2-ntsironis@arrikto.com>
-	<a6d47841-fcbc-50b2-724c-082be9e764d1@redhat.com>
+From: Martin Wilck <Martin.Wilck@suse.com>
+Subject: Re: [PATCH 4/4] libmultipath: trigger uevents for
+ partitions, too
+Date: Wed, 10 Jul 2019 20:48:08 +0000
+Message-ID: <d0ac134ae894884f7bbadb3449b11ab2a9867092.camel@suse.com>
+References: <20190709073909.32112-1-martin.wilck@suse.com>
+	<20190709073909.32112-5-martin.wilck@suse.com>
+	<CAAMCDeeC31_C_4_CWXucmA2zeTvVqig3CsUmikfuuJA1V5YWRg@mail.gmail.com>
+	<ba52db4bc532fe1f0ab4af0981c140eb4f339d68.camel@suse.com>
+	<CAAMCDeeiDbQfmF8NrOpy5MHjaX3AvbA7VytAeZSoDb0z9R17vg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <a6d47841-fcbc-50b2-724c-082be9e764d1@redhat.com>
+In-Reply-To: <CAAMCDeeiDbQfmF8NrOpy5MHjaX3AvbA7VytAeZSoDb0z9R17vg@mail.gmail.com>
 Content-Language: en-US
+Content-ID: <541A032FF8465C4F94F947B676A7A4FF@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,101 +24,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Heinz Mauelshagen <heinzm@redhat.com>, snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
-Cc: vkoukis@arrikto.com, iliastsi@arrikto.com
+To: "rogerheflin@gmail.com" <rogerheflin@gmail.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 7/10/19 12:28 AM, Heinz Mauelshagen wrote:
-> Hi Nikos,
+On Wed, 2019-07-10 at 12:42 -0500, Roger Heflin wrote:
 > 
-> what is the crucial factor your target offers vs. resynchronizing such a 
-> latency distinct
-> 2-legged mirror with a read-write snapshot (local, fast exception store) 
-> on top, tearing the
-> mirror down keeping the local leg once fully in sync and merging the 
-> snapshot back into it?
+> The OS we have uses 62-multipath and does not have a global override
+> like that.
 > 
-> Heinz
+> I am looking at my notes on the issue and it was this:
+> rootvg gets started directly on /dev/sda2 and then multipath starts
+> up
+> and attempts to mange it and deletes the partition on /dev/sda1
+> causing the by-uuid link to be invalid but multipath fails to create
+> the device with "map in use" because the lv's for rootvg are live on
+> /dev/sda2 directly.   So it does sound like your fix would would
+> correct this issue since on the multipath failure to manage it would
+> recreate the /dev/sda1 device.  
+
+Yes, it's certainly worth a try. This is the case the patch was made
+for. You must make sure that your distro contains the commits it builds
+upon (c5023200, e5d3c3a0). All this is fairly recent stuff.
+
+> There appears to be some race
+> condition in the initramfs/systemd where sometimes rootvg gets
+> started
+> before multipath has managed the device causing the partition to be
+> deleted (we have multipath is the initramfs, and that was confirmed).
+
+That should never happen. The multipath udev rules set SYSTEMD_READY=0
+on the devices, thus lvm must refrain from grabbing them. Maybe
+multipath_component_detection is off in your LVM2 setup?
+
+> All of our other vg's dont have this issue as we are using the
+> rd.lvm.vg= such that only the rootvg gets turned on early.
 > 
+> > Also, the rule only removes partitions for devices that have been
+> > detected as being eligible for multipathing.
+> > 
+> > > The symbolic link does not appear to get re-created to point to
+> > > the
+> > > new multipath device which would lead one to suspect that there
+> > > was
+> > > no
+> > > event happening for when the multipath device is created.
+> > 
+> > That's very unlikely. You should verify that the multipath device
+> > (for
+> > sda) is created. My patch here relates only to the case where
+> > creating
+> > the multipath device *fails*.
+> > 
+> ?
+> > Maybe. I don't know enough details about your configuration to
+> > tell.
+> > But if this is a device that should not be multipathed, from my
+> > point
+> > of view, proper blacklisting via multipath.conf is the recommended
+> > way
+> > to handle this problem.
+> > 
+> > You can also use "find_multipaths"; please check the documentation.
+> > Note also that since 0.7.8, blacklisting "by protocol" is possible,
+> > which makes it possible e.g. to blacklist local SATA disks with a
+> > simple statement.
+> > 
+> We intentionally have find_multipaths set to allow a single path. 
 
-Hi Heinz,
+But the map which is causing the problem does have multiple paths, if I
+understand correctly? Not all past versions of multipath-tools behaved
+consistently with "find_multipaths yes"; if you have such a version,
+that might even explain the race you were talking about. But this is
+speculation. The behavior depends on which commits exactly are in your
+code base.
 
-The most significant benefits of dm-clone over the solution you propose
-is significantly better performance, no need for extra COW space, no
-need to merge back a snapshot, and the ability to skip syncing the
-unused space of a file system.
+Anyway, I can't say much about it without knowing all the details. It
+seems that you should contact your distro vendor.
 
-1. In order to ensure snapshot consistency, dm-snapshot needs to
-   commit a completed exception, before signaling the completion of the
-   write that triggered it to upper layers.
-
-   The persistent exception store commits exceptions every time a
-   metadata area is filled or when there are no more exceptions
-   in-flight. For a 4K chunk size we have 256 exceptions per metadata
-   area, so the best case scenario is one commit per 256 writes. Here I
-   assume a write with size equal to the chunk size of dm-snapshot,
-   e.g., 4K, so there is no COW overhead, and that we write to new
-   chunks, so we need to allocate new exceptions.
-
-   Part of committing the metadata is flushing the cache of the
-   underlying device, if there is one. We have seen SSDs which can
-   sustain hundreds of thousands of random write IOPS, but they take up
-   to 8ms to flush their cache. In such a case, flushing the SSD cache
-   every few writes significantly degrades performance.
-
-   Moreover, dm-snapshot forces exceptions to complete in the order they
-   were allocated, to avoid snapshot space leak on crash (commit
-   230c83afdd9cd). This inserts further latency in exception completions
-   and thus user write completions.
-
-   On the other hand, when cloning a device we don't need to be so
-   strict and can rely on committing the metadata every time a FLUSH or
-   FUA bio is written, or periodically, like dm-thin and dm-cache do.
-
-   dm-clone does exactly that. When a region/chunk is cloned or
-   over-written by a write, we just set a bit in the relevant in-core
-   bitmap. The metadata are committed once every second or when we
-   receive a FLUSH or FUA bio.
-
-   This improves performance significantly and results in increased IOPS
-   and reduced latency, especially in cases where flushing the disk
-   cache is very expensive.
-
-2. For large devices, e.g. multi terabyte disks, resynchronizing the
-   local leg can take a lot of time. If the application running over the
-   local device is write-heavy, dm-snapshot will end up allocating a
-   large number of exceptions. This increases the number of hash table
-   collisions and thus increases the time we need to do a hash table
-   lookup.
-
-   dm-snapshot needs to look up the exception hash tables in order to
-   service an I/O, so this increases latency and degrades performance.
-
-   On the other hand, dm-clone is just testing a bit to see if a region
-   is cloned or not and decides what to do based on that test.
-
-3. With dm-clone there is no need to reserve extra COW space for
-   temporarily storing the written data, while the clone device is
-   syncing. Nor would one need to worry about monitoring and expanding
-   the COW device to prevent it from filling up.
-
-4. With dm-clone there is no need to merge back potentially several
-   gigabytes once cloning/syncing completes. We also avoid the relevant
-   performance degradation incurred by the merging process. Writes just
-   go directly to the clone device.
-
-5. dm-clone implements support for discards, so it can skip
-   cloning/syncing the relevant regions. In the case of a large block
-   device which contains a filesystem with empty space, e.g. a 2TB
-   device containing 500GB of useful data in a filesystem, this can
-   significantly reduce the time needed to sync/clone.
-
-This was a rather long email, but I hope it makes the significant
-benefits of dm-clone over using dm-snapshot, and our rationale behind
-the decision to implement a new target clearer.
-
-I would be more than happy to continue the conversation and focus on any
-other questions you may have.
-
-Thanks,
-Nikos
+Martin
