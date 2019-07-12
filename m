@@ -1,37 +1,101 @@
-From: Jaskaran Singh Khurana <jaskarankhurana@linux.microsoft.com>
-Subject: Re: [RFC PATCH v6 0/1] Add dm verity root hash pkcs7 sig
- validation.
-Date: Fri, 12 Jul 2019 10:33:02 -0700 (PDT)
-Message-ID: <alpine.LRH.2.21.1907121025510.66082@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
-References: <20190701181958.6493-1-jaskarankhurana@linux.microsoft.com> <MN2PR21MB12008A962D4DD8662B3614508AF20@MN2PR21MB1200.namprd21.prod.outlook.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper changes for 5.3
+Date: Fri, 12 Jul 2019 15:05:52 -0400
+Message-ID: <20190712190552.GA52544@lobo>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII; format=flowed
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <MN2PR21MB12008A962D4DD8662B3614508AF20@MN2PR21MB1200.namprd21.prod.outlook.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: gmazyland@gmail.com
-Cc: ebiggers@google.com, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org, Scott Shell <SCOTTSH@microsoft.com>, Nazmus Sakib <mdsakib@microsoft.com>, mpatocka@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Pavel Begunkov <asml.silence@gmail.com>, Zhengyuan Liu <liuzhengyuan@kylinos.cn>, Junxiao Bi <junxiao.bi@oracle.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Qu Wenruo <wqu@suse.com>, Fuqian Huang <huangfq.daxian@gmail.com>, Milan Broz <gmazyland@gmail.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+Hi Linus,
 
-Hello Milan,
+Merging these DM changes will require manual conflict resolution in the
+snapshot target's Documentation updates due to conflicts with the
+shotgun blast of RST changes to DM documentation that I didn't ack but
+got in anyway -- clearly the RST Documentation train brakes for nobody ;)
+Feel free to have a look at the test merge I did in the linux-dm.git
+'dm-5.3-merge' branch.
 
-> Changes in v6:
->
-> Address comments from Milan Broz and Eric Biggers on v5.
->
-> -Keep the verification code under config DM_VERITY_VERIFY_ROOTHASH_SIG.
->
-> -Change the command line parameter to requires_signatures(bool) which will
-> force root hash to be signed and trusted if specified.
->
-> -Fix the signature not being present in verity_status. Merged the
-> https://nam06.safelinks.protection.outlook.com/?url=https%3A%2F%2Fgit.kernel.org%2Fpub%2Fscm%2Flinux%2Fkernel%2Fgit%2Fmbroz%2Flinux.git%2Fcommit%2F%3Fh%3Ddm-cryptsetup%26id%3Da26c10806f5257e255b6a436713127e762935ad3&amp;data=02%7C01%7CJaskaran.Khurana%40microsoft.com%7C18f92445e46940aeebb008d6fe50c610%7C72f988bf86f141af91ab2d7cd011db47%7C1%7C0%7C636976020210890638&amp;sdata=aY0V9%2FBz2RHryIvoftGKUGnyPp9Fsc1JY4FZbHfW4hg%3D&amp;reserved=0
-> made by Milan Broz and tested it.
->
->
+Also, you'll note that the last 2 commits of this pull were rebased
+today; I did that because the dm-bufio fix's commit header needed a lot
+of grammar fixes and was also missing the stable@vger.kernel.org Cc.
 
-Could you please provide feedback on this v6 version.
+The following changes since commit 2eba4e640b2c4161e31ae20090a53ee02a518657:
 
-Regards,
-Jaskaran
+  dm verity: use message limit for data block corruption message (2019-06-25 14:09:14 -0400)
+
+are available in the Git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.3/dm-changes
+
+for you to fetch changes up to bd293d071ffe65e645b4d8104f9d8fe15ea13862:
+
+  dm bufio: fix deadlock with loop device (2019-07-12 09:59:37 -0400)
+
+Please pull, thanks!
+Mike
+
+----------------------------------------------------------------
+- Add encrypted byte-offset initialization vector (eboiv) to DM crypt.
+
+- Add optional discard features to DM snapshot which allow freeing space
+  from a DM device whose free space was exhausted.
+
+- Various small improvements to use struct_size() and kzalloc().
+
+- Fix to check if DM thin metadata is in fail_io mode before attempting
+  to update the superblock to set the needs_check flag.  Otherwise the
+  DM thin-pool can hang.
+
+- Fix DM bufio shrinker's potential for ABBA recursion deadlock with DM
+  thin provisioning on loop usecase.
+
+----------------------------------------------------------------
+Fuqian Huang (1):
+      dm integrity: use kzalloc() instead of kmalloc() + memset()
+
+Junxiao Bi (1):
+      dm bufio: fix deadlock with loop device
+
+Mike Snitzer (2):
+      dm thin metadata: check if in fail_io mode when setting needs_check
+      dm snapshot: add optional discard support features
+
+Milan Broz (4):
+      dm integrity: always set version on superblock update
+      dm crypt: wipe private IV struct after key invalid flag is set
+      dm crypt: remove obsolete comment about plumb IV
+      dm crypt: implement eboiv - encrypted byte-offset initialization vector
+
+Pavel Begunkov (1):
+      dm: update stale comment in end_clone_bio()
+
+Qu Wenruo (1):
+      dm log writes: fix incorrect comment about the logged sequence example
+
+Zhengyuan Liu (2):
+      dm crypt: use struct_size() when allocating encryption context
+      dm log writes: use struct_size() to calculate size of pending_block
+
+ Documentation/device-mapper/snapshot.txt |  16 +++
+ drivers/md/dm-bufio.c                    |   4 +-
+ drivers/md/dm-crypt.c                    | 101 +++++++++++++++--
+ drivers/md/dm-integrity.c                |   7 +-
+ drivers/md/dm-log-writes.c               |   4 +-
+ drivers/md/dm-rq.c                       |   2 +-
+ drivers/md/dm-snap.c                     | 186 +++++++++++++++++++++++++++----
+ drivers/md/dm-thin-metadata.c            |   7 +-
+ 8 files changed, 284 insertions(+), 43 deletions(-)
