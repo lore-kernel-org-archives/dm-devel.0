@@ -1,13 +1,16 @@
-From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: Re: [PATCH] dm kcopyd: Increase sub-job size to 512KiB
-Date: Fri, 12 Jul 2019 16:45:19 +0300
-Message-ID: <b6cdb071-f8d3-7c09-c938-71689ceb1c95@arrikto.com>
-References: <20190603134017.9323-1-ntsironis@arrikto.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH V6 0/4] Fix zone revalidation memory
+	allocation failures
+Date: Fri, 12 Jul 2019 09:12:54 -0600
+Message-ID: <27386e10-7494-7fcf-f203-484db5c3c69c@kernel.dk>
+References: <20190701050918.27511-1-damien.lemoal@wdc.com>
+	<BYAPR04MB5816BC7EC358F5785AEE1EA9E7F60@BYAPR04MB5816.namprd04.prod.outlook.com>
+	<cb26f686-ce7e-9d1a-4735-2375d65c0ea5@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190603134017.9323-1-ntsironis@arrikto.com>
+In-Reply-To: <cb26f686-ce7e-9d1a-4735-2375d65c0ea5@kernel.dk>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,89 +21,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
+To: Damien Le Moal <Damien.LeMoal@wdc.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Martin K . Petersen" <martin.petersen@oracle.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "linux-f2fs-devel@lists.sourceforge.net" <linux-f2fs-devel@lists.sourceforge.net>, Jaegeuk Kim <jaegeuk@kernel.org>
+Cc: Christoph Hellwig <hch@lst.de>, Bart Van Assche <bvanassche@acm.org>
 List-Id: dm-devel.ids
 
-Hi Mike,
+On 7/11/19 8:05 PM, Jens Axboe wrote:
+> On 7/7/19 8:02 PM, Damien Le Moal wrote:
+>> On 2019/07/01 14:09, Damien Le Moal wrote:
+>>> This series addresses a recuring problem with zone revalidation
+>>> failures observed during extensive testing with memory constrained
+>>> system and device hot-plugging.
+>>
+>> Jens, Martin,
+>>
+>> Any comment regarding this series ?
+> 
+> LGTM, I'll queue it up for this release.
 
-A kind reminder about this patch. Do you require any changes or will you
-merge it as is?
+This broke !CONFIG_BLK_DEV_ZONED builds for null_blk, btw. Please be
+sure to test with zoned enabled and disabled in your builds when
+changing things that affect both.
 
-Thanks,
-Nikos
+I fixed it up:
 
-On 6/3/19 4:40 PM, Nikos Tsironis wrote:
-> Currently, kcopyd has a sub-job size of 64KiB and a maximum number of 8
-> sub-jobs. As a result, for any kcopyd job, we have a maximum of 512KiB
-> of I/O in flight.
-> 
-> This upper limit to the amount of in-flight I/O under-utilizes fast
-> devices and results in decreased throughput, e.g., when writing to a
-> snapshotted thin LV with I/O size less than the pool's block size (so
-> COW is performed using kcopyd).
-> 
-> Increase kcopyd's sub-job size to 512KiB, so we have a maximum of 4MiB
-> of I/O in flight for each kcopyd job. This results in an up to 96%
-> improvement of bandwidth when writing to a snapshotted thin LV, with I/O
-> sizes less than the pool's block size.
-> 
-> We evaluate the performance impact of the change by running the
-> snap_breaking_throughput benchmark, from the device mapper test suite
-> [1].
-> 
-> The benchmark:
-> 
->   1. Creates a 1G thin LV
->   2. Provisions the thin LV
->   3. Takes a snapshot of the thin LV
->   4. Writes to the thin LV with:
-> 
->       dd if=/dev/zero of=/dev/vg/thin_lv oflag=direct bs=<I/O size>
-> 
-> Running this benchmark with various thin pool block sizes and dd I/O
-> sizes (all combinations triggering the use of kcopyd) we get the
-> following results:
-> 
-> +-----------------+-------------+------------------+-----------------+
-> | Pool block size | dd I/O size | BW before (MB/s) | BW after (MB/s) |
-> +-----------------+-------------+------------------+-----------------+
-> |       1 MB      |      256 KB |       242        |       280       |
-> |       1 MB      |      512 KB |       238        |       295       |
-> |                 |             |                  |                 |
-> |       2 MB      |      256 KB |       238        |       354       |
-> |       2 MB      |      512 KB |       241        |       380       |
-> |       2 MB      |        1 MB |       245        |       394       |
-> |                 |             |                  |                 |
-> |       4 MB      |      256 KB |       248        |       412       |
-> |       4 MB      |      512 KB |       234        |       432       |
-> |       4 MB      |        1 MB |       251        |       474       |
-> |       4 MB      |        2 MB |       257        |       504       |
-> |                 |             |                  |                 |
-> |       8 MB      |      256 KB |       239        |       420       |
-> |       8 MB      |      512 KB |       256        |       431       |
-> |       8 MB      |        1 MB |       264        |       467       |
-> |       8 MB      |        2 MB |       264        |       502       |
-> |       8 MB      |        4 MB |       281        |       537       |
-> +-----------------+-------------+------------------+-----------------+
-> 
-> [1] https://github.com/jthornber/device-mapper-test-suite
-> 
-> Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
-> ---
->  drivers/md/dm-kcopyd.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-kcopyd.c b/drivers/md/dm-kcopyd.c
-> index 671c24332802..db0a7d1e33b7 100644
-> --- a/drivers/md/dm-kcopyd.c
-> +++ b/drivers/md/dm-kcopyd.c
-> @@ -28,7 +28,7 @@
->  
->  #include "dm-core.h"
->  
-> -#define SUB_JOB_SIZE	128
-> +#define SUB_JOB_SIZE	1024
->  #define SPLIT_COUNT	8
->  #define MIN_JOBS	8
->  #define RESERVE_PAGES	(DIV_ROUND_UP(SUB_JOB_SIZE << SECTOR_SHIFT, PAGE_SIZE))
-> 
+http://git.kernel.dk/cgit/linux-block/commit/?h=for-linus&id=e347946439ed70e3af0d0c330b36d5648e71727b
+
+-- 
+Jens Axboe
