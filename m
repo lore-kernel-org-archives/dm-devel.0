@@ -1,50 +1,37 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH V6 0/4] Fix zone revalidation memory
-	allocation failures
-Date: Fri, 12 Jul 2019 09:12:54 -0600
-Message-ID: <27386e10-7494-7fcf-f203-484db5c3c69c@kernel.dk>
-References: <20190701050918.27511-1-damien.lemoal@wdc.com>
-	<BYAPR04MB5816BC7EC358F5785AEE1EA9E7F60@BYAPR04MB5816.namprd04.prod.outlook.com>
-	<cb26f686-ce7e-9d1a-4735-2375d65c0ea5@kernel.dk>
+From: Jaskaran Singh Khurana <jaskarankhurana@linux.microsoft.com>
+Subject: Re: [RFC PATCH v6 0/1] Add dm verity root hash pkcs7 sig
+ validation.
+Date: Fri, 12 Jul 2019 10:33:02 -0700 (PDT)
+Message-ID: <alpine.LRH.2.21.1907121025510.66082@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
+References: <20190701181958.6493-1-jaskarankhurana@linux.microsoft.com> <MN2PR21MB12008A962D4DD8662B3614508AF20@MN2PR21MB1200.namprd21.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <cb26f686-ce7e-9d1a-4735-2375d65c0ea5@kernel.dk>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <Damien.LeMoal@wdc.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Martin K . Petersen" <martin.petersen@oracle.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "linux-f2fs-devel@lists.sourceforge.net" <linux-f2fs-devel@lists.sourceforge.net>, Jaegeuk Kim <jaegeuk@kernel.org>
-Cc: Christoph Hellwig <hch@lst.de>, Bart Van Assche <bvanassche@acm.org>
+Content-Type: text/plain; charset=US-ASCII; format=flowed
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <MN2PR21MB12008A962D4DD8662B3614508AF20@MN2PR21MB1200.namprd21.prod.outlook.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: gmazyland@gmail.com
+Cc: ebiggers@google.com, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org, Scott Shell <SCOTTSH@microsoft.com>, Nazmus Sakib <mdsakib@microsoft.com>, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-On 7/11/19 8:05 PM, Jens Axboe wrote:
-> On 7/7/19 8:02 PM, Damien Le Moal wrote:
->> On 2019/07/01 14:09, Damien Le Moal wrote:
->>> This series addresses a recuring problem with zone revalidation
->>> failures observed during extensive testing with memory constrained
->>> system and device hot-plugging.
->>
->> Jens, Martin,
->>
->> Any comment regarding this series ?
-> 
-> LGTM, I'll queue it up for this release.
 
-This broke !CONFIG_BLK_DEV_ZONED builds for null_blk, btw. Please be
-sure to test with zoned enabled and disabled in your builds when
-changing things that affect both.
+Hello Milan,
 
-I fixed it up:
+> Changes in v6:
+>
+> Address comments from Milan Broz and Eric Biggers on v5.
+>
+> -Keep the verification code under config DM_VERITY_VERIFY_ROOTHASH_SIG.
+>
+> -Change the command line parameter to requires_signatures(bool) which will
+> force root hash to be signed and trusted if specified.
+>
+> -Fix the signature not being present in verity_status. Merged the
+> https://nam06.safelinks.protection.outlook.com/?url=https%3A%2F%2Fgit.kernel.org%2Fpub%2Fscm%2Flinux%2Fkernel%2Fgit%2Fmbroz%2Flinux.git%2Fcommit%2F%3Fh%3Ddm-cryptsetup%26id%3Da26c10806f5257e255b6a436713127e762935ad3&amp;data=02%7C01%7CJaskaran.Khurana%40microsoft.com%7C18f92445e46940aeebb008d6fe50c610%7C72f988bf86f141af91ab2d7cd011db47%7C1%7C0%7C636976020210890638&amp;sdata=aY0V9%2FBz2RHryIvoftGKUGnyPp9Fsc1JY4FZbHfW4hg%3D&amp;reserved=0
+> made by Milan Broz and tested it.
+>
+>
 
-http://git.kernel.dk/cgit/linux-block/commit/?h=for-linus&id=e347946439ed70e3af0d0c330b36d5648e71727b
+Could you please provide feedback on this v6 version.
 
--- 
-Jens Axboe
+Regards,
+Jaskaran
