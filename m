@@ -1,101 +1,58 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper changes for 5.3
-Date: Fri, 12 Jul 2019 15:05:52 -0400
-Message-ID: <20190712190552.GA52544@lobo>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [PATCH V6 0/4] Fix zone revalidation memory
+ allocation failures
+Date: Fri, 12 Jul 2019 22:33:21 +0000
+Message-ID: <BYAPR04MB5816F76F09488AE706B49F72E7F20@BYAPR04MB5816.namprd04.prod.outlook.com>
+References: <20190701050918.27511-1-damien.lemoal@wdc.com>
+ <BYAPR04MB5816BC7EC358F5785AEE1EA9E7F60@BYAPR04MB5816.namprd04.prod.outlook.com>
+ <cb26f686-ce7e-9d1a-4735-2375d65c0ea5@kernel.dk>
+ <27386e10-7494-7fcf-f203-484db5c3c69c@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Pavel Begunkov <asml.silence@gmail.com>, Zhengyuan Liu <liuzhengyuan@kylinos.cn>, Junxiao Bi <junxiao.bi@oracle.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Qu Wenruo <wqu@suse.com>, Fuqian Huang <huangfq.daxian@gmail.com>, Milan Broz <gmazyland@gmail.com>, Alasdair G Kergon <agk@redhat.com>
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+Content-Language: en-US
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: Jens Axboe <axboe@kernel.dk>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Martin K . Petersen" <martin.petersen@oracle.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "linux-f2fs-devel@lists.sourceforge.net" <linux-f2fs-devel@lists.sourceforge.net>, Jaegeuk Kim <jaegeuk@kernel.org>
+Cc: Christoph Hellwig <hch@lst.de>, Bart Van Assche <bvanassche@acm.org>
 List-Id: dm-devel.ids
 
-Hi Linus,
+On 2019/07/13 0:13, Jens Axboe wrote:
+> On 7/11/19 8:05 PM, Jens Axboe wrote:
+>> On 7/7/19 8:02 PM, Damien Le Moal wrote:
+>>> On 2019/07/01 14:09, Damien Le Moal wrote:
+>>>> This series addresses a recuring problem with zone revalidation
+>>>> failures observed during extensive testing with memory constrained
+>>>> system and device hot-plugging.
+>>>
+>>> Jens, Martin,
+>>>
+>>> Any comment regarding this series ?
+>>
+>> LGTM, I'll queue it up for this release.
+> 
+> This broke !CONFIG_BLK_DEV_ZONED builds for null_blk, btw. Please be
+> sure to test with zoned enabled and disabled in your builds when
+> changing things that affect both.
 
-Merging these DM changes will require manual conflict resolution in the
-snapshot target's Documentation updates due to conflicts with the
-shotgun blast of RST changes to DM documentation that I didn't ack but
-got in anyway -- clearly the RST Documentation train brakes for nobody ;)
-Feel free to have a look at the test merge I did in the linux-dm.git
-'dm-5.3-merge' branch.
+I always check the !CONFIG_BLK_DEV_ZONED case. But clearly I made a mistake
+somewhere on this one and missed the problem. My apologies for that.
 
-Also, you'll note that the last 2 commits of this pull were rebased
-today; I did that because the dm-bufio fix's commit header needed a lot
-of grammar fixes and was also missing the stable@vger.kernel.org Cc.
+> 
+> I fixed it up:
+> 
+> http://git.kernel.dk/cgit/linux-block/commit/?h=for-linus&id=e347946439ed70e3af0d0c330b36d5648e71727b
 
-The following changes since commit 2eba4e640b2c4161e31ae20090a53ee02a518657:
+Thank you for this.
 
-  dm verity: use message limit for data block corruption message (2019-06-25 14:09:14 -0400)
 
-are available in the Git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.3/dm-changes
-
-for you to fetch changes up to bd293d071ffe65e645b4d8104f9d8fe15ea13862:
-
-  dm bufio: fix deadlock with loop device (2019-07-12 09:59:37 -0400)
-
-Please pull, thanks!
-Mike
-
-----------------------------------------------------------------
-- Add encrypted byte-offset initialization vector (eboiv) to DM crypt.
-
-- Add optional discard features to DM snapshot which allow freeing space
-  from a DM device whose free space was exhausted.
-
-- Various small improvements to use struct_size() and kzalloc().
-
-- Fix to check if DM thin metadata is in fail_io mode before attempting
-  to update the superblock to set the needs_check flag.  Otherwise the
-  DM thin-pool can hang.
-
-- Fix DM bufio shrinker's potential for ABBA recursion deadlock with DM
-  thin provisioning on loop usecase.
-
-----------------------------------------------------------------
-Fuqian Huang (1):
-      dm integrity: use kzalloc() instead of kmalloc() + memset()
-
-Junxiao Bi (1):
-      dm bufio: fix deadlock with loop device
-
-Mike Snitzer (2):
-      dm thin metadata: check if in fail_io mode when setting needs_check
-      dm snapshot: add optional discard support features
-
-Milan Broz (4):
-      dm integrity: always set version on superblock update
-      dm crypt: wipe private IV struct after key invalid flag is set
-      dm crypt: remove obsolete comment about plumb IV
-      dm crypt: implement eboiv - encrypted byte-offset initialization vector
-
-Pavel Begunkov (1):
-      dm: update stale comment in end_clone_bio()
-
-Qu Wenruo (1):
-      dm log writes: fix incorrect comment about the logged sequence example
-
-Zhengyuan Liu (2):
-      dm crypt: use struct_size() when allocating encryption context
-      dm log writes: use struct_size() to calculate size of pending_block
-
- Documentation/device-mapper/snapshot.txt |  16 +++
- drivers/md/dm-bufio.c                    |   4 +-
- drivers/md/dm-crypt.c                    | 101 +++++++++++++++--
- drivers/md/dm-integrity.c                |   7 +-
- drivers/md/dm-log-writes.c               |   4 +-
- drivers/md/dm-rq.c                       |   2 +-
- drivers/md/dm-snap.c                     | 186 +++++++++++++++++++++++++++----
- drivers/md/dm-thin-metadata.c            |   7 +-
- 8 files changed, 284 insertions(+), 43 deletions(-)
+-- 
+Damien Le Moal
+Western Digital Research
