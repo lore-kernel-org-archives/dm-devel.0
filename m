@@ -1,58 +1,35 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH V6 0/4] Fix zone revalidation memory
- allocation failures
-Date: Fri, 12 Jul 2019 22:33:21 +0000
-Message-ID: <BYAPR04MB5816F76F09488AE706B49F72E7F20@BYAPR04MB5816.namprd04.prod.outlook.com>
-References: <20190701050918.27511-1-damien.lemoal@wdc.com>
- <BYAPR04MB5816BC7EC358F5785AEE1EA9E7F60@BYAPR04MB5816.namprd04.prod.outlook.com>
- <cb26f686-ce7e-9d1a-4735-2375d65c0ea5@kernel.dk>
- <27386e10-7494-7fcf-f203-484db5c3c69c@kernel.dk>
+From: pr-tracker-bot@kernel.org
+Subject: Re: [git pull] device mapper changes for 5.3
+Date: Sat, 13 Jul 2019 22:50:16 +0000
+Message-ID: <156305821635.12932.3973331384786871643.pr-tracker-bot@kernel.org>
+References: <20190712190552.GA52544@lobo>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-Content-Language: en-US
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Jens Axboe <axboe@kernel.dk>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Martin K . Petersen" <martin.petersen@oracle.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "linux-f2fs-devel@lists.sourceforge.net" <linux-f2fs-devel@lists.sourceforge.net>, Jaegeuk Kim <jaegeuk@kernel.org>
-Cc: Christoph Hellwig <hch@lst.de>, Bart Van Assche <bvanassche@acm.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190712190552.GA52544@lobo>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Pavel Begunkov <asml.silence@gmail.com>, Zhengyuan Liu <liuzhengyuan@kylinos.cn>, Junxiao Bi <junxiao.bi@oracle.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Qu Wenruo <wqu@suse.com>, Fuqian Huang <huangfq.daxian@gmail.com>, Linus Torvalds <torvalds@linux-foundation.org>, Milan Broz <gmazyland@gmail.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 2019/07/13 0:13, Jens Axboe wrote:
-> On 7/11/19 8:05 PM, Jens Axboe wrote:
->> On 7/7/19 8:02 PM, Damien Le Moal wrote:
->>> On 2019/07/01 14:09, Damien Le Moal wrote:
->>>> This series addresses a recuring problem with zone revalidation
->>>> failures observed during extensive testing with memory constrained
->>>> system and device hot-plugging.
->>>
->>> Jens, Martin,
->>>
->>> Any comment regarding this series ?
->>
->> LGTM, I'll queue it up for this release.
-> 
-> This broke !CONFIG_BLK_DEV_ZONED builds for null_blk, btw. Please be
-> sure to test with zoned enabled and disabled in your builds when
-> changing things that affect both.
+The pull request you sent on Fri, 12 Jul 2019 15:05:52 -0400:
 
-I always check the !CONFIG_BLK_DEV_ZONED case. But clearly I made a mistake
-somewhere on this one and missed the problem. My apologies for that.
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.3/dm-changes
 
-> 
-> I fixed it up:
-> 
-> http://git.kernel.dk/cgit/linux-block/commit/?h=for-linus&id=e347946439ed70e3af0d0c330b36d5648e71727b
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/2260840592fbed5be98ca03c97eb8172941f27ac
 
-Thank you for this.
-
+Thank you!
 
 -- 
-Damien Le Moal
-Western Digital Research
+Deet-doot-dot, I am a bot.
+https://korg.wiki.kernel.org/userdoc/prtracker
