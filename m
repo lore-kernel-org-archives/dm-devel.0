@@ -1,11 +1,18 @@
-From: Pellegrino Prevete <pellegrinoprevete@gmail.com>
-Subject: lvmcache volume gets 100% dirty blocks after power loss
- regardless of previous state
-Date: Fri, 12 Jul 2019 18:22:03 +0200
-Message-ID: <20190712182203.7c1e3591@seagull>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] dm snapshot: add optional discard support
+	features
+Date: Mon, 15 Jul 2019 14:06:54 -0400
+Message-ID: <20190715180654.GA15315@redhat.com>
+References: <20190703162504.GA34397@lobo>
+	<fb809628-40e3-245a-dda4-034eee9a931b@arrikto.com>
+	<20190711203611.GA51041@lobo> <20190711204633.GA51116@lobo>
+	<321dff9f-a55c-e6ac-4a18-2e9eda0d05fe@arrikto.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2831425852437896340=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <321dff9f-a55c-e6ac-4a18-2e9eda0d05fe@arrikto.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,103 +22,144 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Nikos Tsironis <ntsironis@arrikto.com>
+Cc: dm-devel@redhat.com, John Dorminy <jdorminy@redhat.com>
 List-Id: dm-devel.ids
 
---===============2831425852437896340==
-Content-Type: multipart/signed; boundary="Sig_/exE0nx=jtV4S/_jIL7TUM9y";
-	protocol="application/pgp-signature"; micalg=pgp-sha256
+On Fri, Jul 12 2019 at  9:40am -0400,
+Nikos Tsironis <ntsironis@arrikto.com> wrote:
 
---Sig_/exE0nx=jtV4S/_jIL7TUM9y
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+> Hi Mike,
+> 
+> I have reviewed the patch. A few comments below.
 
-Hi everyone,
+Thanks, my email filtering caused this mail to miss my INBOX (still yet
+to reason through why).  So I'm just seeing this now.
 
-I have set up a lvmcache lv (on archlinux) using as fast disk the emmc
-of my laptop and as slow one a microsd card inserted in the integrated
-slot, following the man instructions.
+> On 7/11/19 11:46 PM, Mike Snitzer wrote:
+> > @@ -1839,10 +1925,43 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
+> >  		goto out_unlock;
+> >  	}
+> >  
+> > +	if (unlikely(bio_op(bio) == REQ_OP_DISCARD)) {
+> > +		if (s->discard_passdown_origin && dm_bio_get_target_bio_nr(bio)) {
+> > +			/*
+> > +			 * passdown discard to origin (without triggering
+> > +			 * snapshot exceptions via do_origin; doing so would
+> > +			 * defeat the goal of freeing space in origin that is
+> > +			 * implied by the "discard_passdown_origin" feature)
+> > +			 */
+> > +			bio_set_dev(bio, s->origin->bdev);
+> > +			track_chunk(s, bio, chunk);
+> Why track_chunk() is needed here?
+> 
+> We track snapshot reads redirected to the origin to ensure that the
+> origin will not be written while the reads are in-flight, thus returning
+> corrupted data. Also, we track writes to a merging snapshot, which are
+> redirected to the COW device, to ensure we don't merge these COW chunks
+> before the writes finish.
+> 
+> I am probably missing something, but I can't understand why we need to
+> track the discard to the origin.
 
-Its dimensions are 10gb and 41gb respectively and I am using this lv
-as /home partition.
-I used default options, excluding having set 'writeback' as
-cachemode.
-=20
-After I transferred the data (30gb) I noticed that cache used
-blocks and cache dirty blocks were now both above 99.94%.
+I followed how reads are remapped to origin when remapping the discard
+destined for origin because a competing write to origin could trigger
+copyout that undermines the intent behind passing down the discard to
+the origin.  That said, even if the write is withheld until the discard
+completes that write triggered copyout could still undermine that intent.
 
-When after some time I tried to turn off the laptop, the shutdown
-procedure, being unable to complete the lv unmounting in the time
-frame assigned to the task (4m), simply skipped it and the computer was
-forced to shut down.
+But for this usecase, the origin wouldn't even be mounted (and is
+incapable of being written due to it being full).  So I quickly stopped
+caring and was only interested in ensuring do crash would occur in the
+face of this hypotehtical concurrent access.
 
-On next boots I found that when not booting in recovery mode the drive
-could not be mounted most of the times.
+> > @@ -2198,6 +2324,22 @@ static int snapshot_iterate_devices(struct dm_target *ti,
+> >  	return r;
+> >  }
+> >  > +static void snapshot_io_hints(struct dm_target *ti, struct queue_limits *limits)
+> > +{
+> > +	struct dm_snapshot *snap = ti->private;
+> > +
+> > +	if (snap->discard_zeroes_cow) {
+> > +		struct dm_snapshot *snap_src = NULL, *snap_dest = NULL;
+> > +
+> 
+> I think the following:
+> 
+> > +		(void) __find_snapshots_sharing_cow(snap, &snap_src, &snap_dest, NULL);
+> > +		if (snap_src && snap_dest)
+> > +			snap = snap_src;
+> > +
+> > +		/* All discards are split on chunk_size boundary */
+> > +		limits->discard_granularity = snap->store->chunk_size;
+> > +		limits->max_discard_sectors = snap->store->chunk_size;
+> 
+> should be:
+> 
+> 	down_read(&_origins_lock);
+> 
+> 	(void) __find_snapshots_sharing_cow(snap, &snap_src, &snap_dest, NULL);
+> 	if (snap_src && snap_dest)
+> 		snap = snap_src;
+> 
+> 	/* All discards are split on chunk_size boundary */
+> 	limits->discard_granularity = snap->store->chunk_size;
+> 	limits->max_discard_sectors = snap->store->chunk_size;
+> 
+> 	up_read(&_origins_lock);
+> 
+> Taking _origins_lock protects us against:
+> 
+> 	* Concurrent modification of the _origins hash table by
+> 	  register/unregister_snapshot().
+> 	* snapshot_dtr() unregistering snap_src and freeing the relevant
+> 	  resources, e.g., snap_src->store.
 
-In general, if I shutted down the system before the dirty blocks
-percentage went to 0%, it would become 100% all over again at the next
-boot.
+I agree, will stage incremental fix.
 
-So I decided to change cachemode to 'writethrough' and wait for the
-cache dirty blocks to be zero to see if doing so would solve the
-problem.
+> One final note. The discard features can also be used by the
+> snapshot-merge target. But, snapshot_merge_map() is not doing anything
+> special about discards. They are treated like normal writes.
 
-To my surprise, it took over 24 hours.
+Another oversight, but the usecase of async discards coming in after the
+merge has started (while very much possible) is not the intended
+workflow.
+ 
+> For chunks that reside in the origin this means that the discard will be
+> passed down to it using do_origin(). Although this could trigger
+> exceptions to other snapshots, I think that for the use case these features
+> are trying to solve there is going to be only one active snapshot. Otherwise,
+> if we have multiple snapshots, discard_passdown_origin would mean that
+> discarding one snapshot could affect/corrupt the rest of the snapshots.
 
-With 0% dirty blocks, the system was obviously booting fine.
-Also, having previously switched to 'writethrough', I expected in
-general not to have dirty blocks at all anymore.=20
+Yes, there should probably be a negative check to ensure there is only 1
+active snapshot.  The quirky nature of dm-snap.c's snapshot exception
+store handover is what teased out the need for me to even care about
+multiple "snapshot" or "snapshot-merge" devices sharing the same cow in
+the context of snapshot_io_hints() -- I triggered the need to account
+for this in followup testing that did:
 
-Today I forgot to attach the power cable and the laptop shutted
-down because of low power.
+(snapshot active with table: "0 2097152 snapshot 253:0 253:2 P 8")
+echo "0 2097152 snapshot 253:0 253:2 P 8 2 discard_zeroes_cow discard_passdown_origin" | dmsetup load test-snap
+dmsetup suspend test-snap
+dmsetup resume test-snap
 
-After this, booting has become difficult again and dirty blocks are
-again 99%.
+This reload triggers handover.  That handover caused chunk_size to be 0
+thanks to snapshiot_ctr()'s: s->store->chunk_size = 0; which caused
+snapshot_io_hints() to incorrectly set the 2 discard limits to 0.
 
-Also, judging from iostat output writes on the sd card (happening in
-the background I believe) are really really slow.
+> For the not-yet-merged, remapped chunks the discard will be redirected to
+> the COW device, so discard_zeroes_cow is not really zeroing COW in this
+> case, it is discarding it.
+> 
+> Also, if both discard_zeroes_cow and discard_passdown_origin are enabled,
+> the relevant chunk, either in origin or in COW, will be discarded twice.
 
-I wanted to know:
-- if this behaviour is normal,
-- if there is a way to avoid it apart from clean shutting downs at 0%
-  dirty blocks,
-- why do I have dirty blocks in 'writethrough' mode,
-- if there is a way to empty the cache without erasing the whole volume,
-- if there is a way to trigger the cleaning process directly with an
-  'high' priority.
+snapshot_merge_map() does need to account for discards, not doing so was
+an oversight due to the narrow usecase I was catering to (again, only 1
+snapshot and all IO meant to free space having been completed before
+merge is started).  I'll fix this up as well.
 
-Cheers,
-Pellegrino
+Thanks again for your careful review Nikos, much appreciated!
 
---Sig_/exE0nx=jtV4S/_jIL7TUM9y
-Content-Type: application/pgp-signature
-Content-Description: OpenPGP digital signature
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCAAdFiEErBQraTyBRt4W7kAGmR3ZDmkT6/YFAl0os6sACgkQmR3ZDmkT
-6/YrwRAAjwHnwtQL8CUEOSkziQHGQdLxaV/aw2KQpz1cYyPsi2vKclr8otE2FKwj
-7VtjIFSk3Sm/BUeIKFp5pPCuAJii+kaku036c9Whmud8osgf64pcO+HL63J29fNC
-+SPBzDDBQnKc84nIUor2Pdhz9Pp9VMZ5O+H1myrPZhPojZDAZwpbGSR7MAtYkvrJ
-AzOi2VlnmZbOqPr83K8o81FNhtZD2pxqd8HUHqzoFcvUvvQdFykKQfs+6aMXI+Mq
-Vxcta5vZoGesR3HkOIVI9QKNoZyTBJCL4OTqzUOKDENqqqOO75sKHtZZkGQPQCtZ
-hA8fuqX039BYyE0jUlvXKtfzGY3cSyxinpykpzWWKJe0BiaWcv0Q15uUqC7pDoQB
-3uWvfyQV6fUNPhLN2lg7FwOQtDHwM9ijjaB+je7gM9CnQmxOXs81+80dZtve8OxR
-EfsRD3846Vp/xGMyLhJCRLyFpWyA8TeqxscYCHYS3nDHFkVDZNmSdf9bpZu8uloB
-M8y1nCJc9H+nBxoSguwYjb92Lyx3a+9jkeuosTKfkBQvXWlFANOwjb5e8v5fZ3iD
-uJLB2S32RThwdXIG8BfSR222Rabk86tvy+7uHy8UsTEJJkliLTiXX8NjhBRAS8k0
-FXuVqYuRw0c76H4EO2ghFKYbt2QaOyrRiKGZGwG3wR/YTywjm7U=
-=GSnp
------END PGP SIGNATURE-----
-
---Sig_/exE0nx=jtV4S/_jIL7TUM9y--
-
-
---===============2831425852437896340==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2831425852437896340==--
+Mike
