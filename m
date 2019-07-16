@@ -1,15 +1,11 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm kcopyd: Increase sub-job size to 512KiB
-Date: Mon, 15 Jul 2019 14:22:21 -0400
-Message-ID: <20190715182221.GB15315@redhat.com>
-References: <20190603134017.9323-1-ntsironis@arrikto.com>
-	<b6cdb071-f8d3-7c09-c938-71689ceb1c95@arrikto.com>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: [PATCH] dm-zoned: Fix zone state management race
+Date: Tue, 16 Jul 2019 14:39:34 +0900
+Message-ID: <20190716053934.24132-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <b6cdb071-f8d3-7c09-c938-71689ceb1c95@arrikto.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,34 +15,130 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Nikos Tsironis <ntsironis@arrikto.com>
-Cc: dm-devel@redhat.com, agk@redhat.com
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jul 12 2019 at  9:45am -0400,
-Nikos Tsironis <ntsironis@arrikto.com> wrote:
+dm-zoned uses the zone flag DMZ_ACTIVE to indicate that a zone of the
+backend device is being actively read or written and so cannot be
+reclaimed. This flag is set as long as the zone atomic reference
+counter is not 0. When this atomic is decremented and reaches 0 (e.g.
+on BIO completion), the active flag is cleared and set again whenever
+the zone is reused and BIO issued with the atomic counter incremented.
+These 2 operations (atomic inc/dec and flag set/clear) are however not
+always executed atomically under the target metadata mutex lock and
+this causes the warning:
 
-> Hi Mike,
-> 
-> A kind reminder about this patch. Do you require any changes or will you
-> merge it as is?
+WARN_ON(!test_bit(DMZ_ACTIVE, &zone->flags));
 
-I think we need changes to expose knob(s) to tune this value on a global
-_and_ device level via sysfs.  E.g.:
+in dmz_deactivate_zone() to be displayed. This problem is regularly
+triggered with xfstests generic/209, generic/300, generic/451 and
+xfs/077 with XFS being used as the file system on the dm-zoned target
+device. Similarly, xfstests ext4/303, ext4/304, generic/209 and
+generic/300 trigger the warning with ext4 use.
 
-1) dm_mod module param for global
-2) but also allow a per-device override, like:
-   echo 512 > /sys/block/dm-X/dm/kcopyd_subjob_size
+This problem can be easily fixed by simply removing the DMZ_ACTIVE flag
+and managing the "ACTIVE" state by directly looking at the reference
+counter value. To do so, the functions dmz_activate_zone() and
+dmz_deactivate_zone() are changed to inline functions respectively
+calling atomic_inc() and atomic_dec(), while the dmz_is_active() macro
+is changed to an inline function calling atomic_read().
 
-1 is super easy and is a start.  Layering in 2 is a bit more involved.
+Fixes: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target")
+Cc: stable@vger.kernel.org
+Reported-by: Masato Suzuki <masato.suzuki@wdc.com>
+Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+---
+ drivers/md/dm-zoned-metadata.c | 24 ------------------------
+ drivers/md/dm-zoned.h          | 28 ++++++++++++++++++++++++----
+ 2 files changed, 24 insertions(+), 28 deletions(-)
 
-In hindsight (given how risk-averse I am on changing the default) I
-should've kept the default 128 but allowed override with modparam
-dm_mod.kcopyd_subjob_size=1024
-
-Would this be an OK first step?
-
-If so, we're still in the 5.3 merge window, I'll see what I can do.
-
-Thanks,
-Mike
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index 9faf3e49c7af..8545dcee9fd0 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -1601,30 +1601,6 @@ struct dm_zone *dmz_get_zone_for_reclaim(struct dmz_metadata *zmd)
+ 	return zone;
+ }
+ 
+-/*
+- * Activate a zone (increment its reference count).
+- */
+-void dmz_activate_zone(struct dm_zone *zone)
+-{
+-	set_bit(DMZ_ACTIVE, &zone->flags);
+-	atomic_inc(&zone->refcount);
+-}
+-
+-/*
+- * Deactivate a zone. This decrement the zone reference counter
+- * and clears the active state of the zone once the count reaches 0,
+- * indicating that all BIOs to the zone have completed. Returns
+- * true if the zone was deactivated.
+- */
+-void dmz_deactivate_zone(struct dm_zone *zone)
+-{
+-	if (atomic_dec_and_test(&zone->refcount)) {
+-		WARN_ON(!test_bit(DMZ_ACTIVE, &zone->flags));
+-		clear_bit_unlock(DMZ_ACTIVE, &zone->flags);
+-		smp_mb__after_atomic();
+-	}
+-}
+-
+ /*
+  * Get the zone mapping a chunk, if the chunk is mapped already.
+  * If no mapping exist and the operation is WRITE, a zone is
+diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
+index 12419f0bfe78..ed8de49c9a08 100644
+--- a/drivers/md/dm-zoned.h
++++ b/drivers/md/dm-zoned.h
+@@ -115,7 +115,6 @@ enum {
+ 	DMZ_BUF,
+ 
+ 	/* Zone internal state */
+-	DMZ_ACTIVE,
+ 	DMZ_RECLAIM,
+ 	DMZ_SEQ_WRITE_ERR,
+ };
+@@ -128,7 +127,6 @@ enum {
+ #define dmz_is_empty(z)		((z)->wp_block == 0)
+ #define dmz_is_offline(z)	test_bit(DMZ_OFFLINE, &(z)->flags)
+ #define dmz_is_readonly(z)	test_bit(DMZ_READ_ONLY, &(z)->flags)
+-#define dmz_is_active(z)	test_bit(DMZ_ACTIVE, &(z)->flags)
+ #define dmz_in_reclaim(z)	test_bit(DMZ_RECLAIM, &(z)->flags)
+ #define dmz_seq_write_err(z)	test_bit(DMZ_SEQ_WRITE_ERR, &(z)->flags)
+ 
+@@ -188,8 +186,30 @@ void dmz_unmap_zone(struct dmz_metadata *zmd, struct dm_zone *zone);
+ unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd);
+ unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd);
+ 
+-void dmz_activate_zone(struct dm_zone *zone);
+-void dmz_deactivate_zone(struct dm_zone *zone);
++/*
++ * Activate a zone (increment its reference count).
++ */
++static inline void dmz_activate_zone(struct dm_zone *zone)
++{
++	atomic_inc(&zone->refcount);
++}
++
++/*
++ * Deactivate a zone. This decrement the zone reference counter
++ * indicating that all BIOs to the zone have completed when the count is 0.
++ */
++static inline void dmz_deactivate_zone(struct dm_zone *zone)
++{
++	atomic_dec(&zone->refcount);
++}
++
++/*
++ * Test if a zone is active, that is, has a refcount > 0.
++ */
++static inline bool dmz_is_active(struct dm_zone *zone)
++{
++	return atomic_read(&zone->refcount);
++}
+ 
+ int dmz_lock_zone_reclaim(struct dm_zone *zone);
+ void dmz_unlock_zone_reclaim(struct dm_zone *zone);
+-- 
+2.21.0
