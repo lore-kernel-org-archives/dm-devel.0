@@ -1,144 +1,89 @@
-From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH] dm-zoned: Fix zone state management race
-Date: Tue, 16 Jul 2019 14:39:34 +0900
-Message-ID: <20190716053934.24132-1-damien.lemoal@wdc.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: [RFC PATCH v6 0/1] Add dm verity root hash pkcs7 sig validation.
+Date: Tue, 16 Jul 2019 14:59:11 +0200
+Message-ID: <395efa90-65d8-d832-3e2b-2b8ee3794688@gmail.com>
+References: <20190701181958.6493-1-jaskarankhurana@linux.microsoft.com>
+ <MN2PR21MB12008A962D4DD8662B3614508AF20@MN2PR21MB1200.namprd21.prod.outlook.com>
+ <alpine.LRH.2.21.1907121025510.66082@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.21.1907121025510.66082@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jaskaran Singh Khurana <jaskarankhurana@linux.microsoft.com>
+Cc: ebiggers@google.com, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org, Scott Shell <SCOTTSH@microsoft.com>, Nazmus Sakib <mdsakib@microsoft.com>, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-dm-zoned uses the zone flag DMZ_ACTIVE to indicate that a zone of the
-backend device is being actively read or written and so cannot be
-reclaimed. This flag is set as long as the zone atomic reference
-counter is not 0. When this atomic is decremented and reaches 0 (e.g.
-on BIO completion), the active flag is cleared and set again whenever
-the zone is reused and BIO issued with the atomic counter incremented.
-These 2 operations (atomic inc/dec and flag set/clear) are however not
-always executed atomically under the target metadata mutex lock and
-this causes the warning:
+On 12/07/2019 19:33, Jaskaran Singh Khurana wrote:
+> 
+> Hello Milan,
+> 
+>> Changes in v6:
+>>
+>> Address comments from Milan Broz and Eric Biggers on v5.
+>>
+>> -Keep the verification code under config DM_VERITY_VERIFY_ROOTHASH_SIG.
+>>
+>> -Change the command line parameter to requires_signatures(bool) which will
+>> force root hash to be signed and trusted if specified.
+>>
+>> -Fix the signature not being present in verity_status. Merged the
+>> https://nam06.safelinks.protection.outlook.com/?url=https%3A%2F%2Fgit.kernel.org%2Fpub%2Fscm%2Flinux%2Fkernel%2Fgit%2Fmbroz%2Flinux.git%2Fcommit%2F%3Fh%3Ddm-cryptsetup%26id%3Da26c10806f5257e255b6a436713127e762935ad3&amp;data=02%7C01%7CJaskaran.Khurana%40microsoft.com%7C18f92445e46940aeebb008d6fe50c610%7C72f988bf86f141af91ab2d7cd011db47%7C1%7C0%7C636976020210890638&amp;sdata=aY0V9%2FBz2RHryIvoftGKUGnyPp9Fsc1JY4FZbHfW4hg%3D&amp;reserved=0
+>> made by Milan Broz and tested it.
+>>
+>>
+> 
+> Could you please provide feedback on this v6 version.
 
-WARN_ON(!test_bit(DMZ_ACTIVE, &zone->flags));
+Hi,
 
-in dmz_deactivate_zone() to be displayed. This problem is regularly
-triggered with xfstests generic/209, generic/300, generic/451 and
-xfs/077 with XFS being used as the file system on the dm-zoned target
-device. Similarly, xfstests ext4/303, ext4/304, generic/209 and
-generic/300 trigger the warning with ext4 use.
+I am ok with the v6 patch; I think Mike will return to it in 5.4 reviews.
 
-This problem can be easily fixed by simply removing the DMZ_ACTIVE flag
-and managing the "ACTIVE" state by directly looking at the reference
-counter value. To do so, the functions dmz_activate_zone() and
-dmz_deactivate_zone() are changed to inline functions respectively
-calling atomic_inc() and atomic_dec(), while the dmz_is_active() macro
-is changed to an inline function calling atomic_read().
+But the documentation is very brief. I spent quite a long time to configure the system properly.
+I think you should add more description (at least to patch header) how to use this feature in combination with system keyring.
 
-Fixes: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target")
-Cc: stable@vger.kernel.org
-Reported-by: Masato Suzuki <masato.suzuki@wdc.com>
-Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
----
- drivers/md/dm-zoned-metadata.c | 24 ------------------------
- drivers/md/dm-zoned.h          | 28 ++++++++++++++++++++++++----
- 2 files changed, 24 insertions(+), 28 deletions(-)
+Do I understand correctly that these steps need to be done?
 
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index 9faf3e49c7af..8545dcee9fd0 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -1601,30 +1601,6 @@ struct dm_zone *dmz_get_zone_for_reclaim(struct dmz_metadata *zmd)
- 	return zone;
- }
- 
--/*
-- * Activate a zone (increment its reference count).
-- */
--void dmz_activate_zone(struct dm_zone *zone)
--{
--	set_bit(DMZ_ACTIVE, &zone->flags);
--	atomic_inc(&zone->refcount);
--}
--
--/*
-- * Deactivate a zone. This decrement the zone reference counter
-- * and clears the active state of the zone once the count reaches 0,
-- * indicating that all BIOs to the zone have completed. Returns
-- * true if the zone was deactivated.
-- */
--void dmz_deactivate_zone(struct dm_zone *zone)
--{
--	if (atomic_dec_and_test(&zone->refcount)) {
--		WARN_ON(!test_bit(DMZ_ACTIVE, &zone->flags));
--		clear_bit_unlock(DMZ_ACTIVE, &zone->flags);
--		smp_mb__after_atomic();
--	}
--}
--
- /*
-  * Get the zone mapping a chunk, if the chunk is mapped already.
-  * If no mapping exist and the operation is WRITE, a zone is
-diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
-index 12419f0bfe78..ed8de49c9a08 100644
---- a/drivers/md/dm-zoned.h
-+++ b/drivers/md/dm-zoned.h
-@@ -115,7 +115,6 @@ enum {
- 	DMZ_BUF,
- 
- 	/* Zone internal state */
--	DMZ_ACTIVE,
- 	DMZ_RECLAIM,
- 	DMZ_SEQ_WRITE_ERR,
- };
-@@ -128,7 +127,6 @@ enum {
- #define dmz_is_empty(z)		((z)->wp_block == 0)
- #define dmz_is_offline(z)	test_bit(DMZ_OFFLINE, &(z)->flags)
- #define dmz_is_readonly(z)	test_bit(DMZ_READ_ONLY, &(z)->flags)
--#define dmz_is_active(z)	test_bit(DMZ_ACTIVE, &(z)->flags)
- #define dmz_in_reclaim(z)	test_bit(DMZ_RECLAIM, &(z)->flags)
- #define dmz_seq_write_err(z)	test_bit(DMZ_SEQ_WRITE_ERR, &(z)->flags)
- 
-@@ -188,8 +186,30 @@ void dmz_unmap_zone(struct dmz_metadata *zmd, struct dm_zone *zone);
- unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd);
- unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd);
- 
--void dmz_activate_zone(struct dm_zone *zone);
--void dmz_deactivate_zone(struct dm_zone *zone);
-+/*
-+ * Activate a zone (increment its reference count).
-+ */
-+static inline void dmz_activate_zone(struct dm_zone *zone)
-+{
-+	atomic_inc(&zone->refcount);
-+}
-+
-+/*
-+ * Deactivate a zone. This decrement the zone reference counter
-+ * indicating that all BIOs to the zone have completed when the count is 0.
-+ */
-+static inline void dmz_deactivate_zone(struct dm_zone *zone)
-+{
-+	atomic_dec(&zone->refcount);
-+}
-+
-+/*
-+ * Test if a zone is active, that is, has a refcount > 0.
-+ */
-+static inline bool dmz_is_active(struct dm_zone *zone)
-+{
-+	return atomic_read(&zone->refcount);
-+}
- 
- int dmz_lock_zone_reclaim(struct dm_zone *zone);
- void dmz_unlock_zone_reclaim(struct dm_zone *zone);
--- 
-2.21.0
+ - user configures a certificate and adds it in kernel builtin keyring (I used CONFIG_SYSTEM_TRUSTED_KEYS option).
+ - the dm-verity device root hash is signed directly by a key of this cert
+ - the signature is uploaded to the user keyring
+ - reference to signature in keyring is added as an optional dm-verity table parameter root_hash_sig_key_desc
+ - optionally, require_signatures dm-verity module is set to enforce signatures.
+
+For reference, below is the bash script I used (with unpatched veritysetup to generate working DM table), is the expected workflow here?
+
+#!/bin/bash
+
+NAME=test
+DEV=/dev/sdc
+DEV_HASH=/dev/sdd
+ROOT_HASH=778fccab393842688c9af89cfd0c5cde69377cbe21ed439109ec856f2aa8a423
+SIGN=sign.txt
+SIGN_NAME=verity:$NAME
+
+# get unsigned device-mapper table using unpatched veritysetup
+veritysetup open $DEV $NAME $DEV_HASH $ROOT_HASH
+TABLE=$(dmsetup table $NAME)
+veritysetup close $NAME
+
+# Generate self-signed CA key, must be in .config as CONFIG_SYSTEM_TRUSTED_KEYS="path/ca.pem"
+#openssl req -x509 -newkey rsa:1024 -keyout ca_key.pem -out ca.pem -nodes -days 365 -set_serial 01 -subj /CN=example.com
+
+# sign root hash directly by CA cert
+echo -n $ROOT_HASH | openssl smime -sign -nocerts -noattr -binary -inkey ca_key.pem -signer ca.pem -outform der -out $SIGN
+
+# load signature to keyring
+keyctl padd user $SIGN_NAME @u <$SIGN
+
+# add device-mapper table, now with sighed root hash optional argument
+dmsetup create -r $NAME --table "$TABLE 2 root_hash_sig_key_desc $SIGN_NAME"
+dmsetup table $NAME
+
+# cleanup
+dmsetup remove $NAME
+keyctl clear @u
+
+
+Milan
