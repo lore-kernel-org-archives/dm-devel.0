@@ -1,109 +1,177 @@
-From: Jaskaran Singh Khurana <jaskarankhurana@linux.microsoft.com>
-Subject: Re: [RFC PATCH v6 0/1] Add dm verity root hash pkcs7 sig
- validation.
-Date: Tue, 16 Jul 2019 11:08:44 -0700 (PDT)
-Message-ID: <alpine.LRH.2.21.1907161035490.121213@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
-References: <20190701181958.6493-1-jaskarankhurana@linux.microsoft.com> <MN2PR21MB12008A962D4DD8662B3614508AF20@MN2PR21MB1200.namprd21.prod.outlook.com> <alpine.LRH.2.21.1907121025510.66082@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
- <395efa90-65d8-d832-3e2b-2b8ee3794688@gmail.com>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: [PATCH v2] dm kcopyd: Increase default sub-job size to
+	512KB
+Date: Wed, 17 Jul 2019 14:24:10 +0300
+Message-ID: <20190717112410.3017-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII; format=flowed
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <395efa90-65d8-d832-3e2b-2b8ee3794688@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <gmazyland@gmail.com>
-Cc: ebiggers@google.com, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org, Scott Shell <SCOTTSH@microsoft.com>, Nazmus Sakib <mdsakib@microsoft.com>, mpatocka@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
+Cc: ntsironis@arrikto.com
 List-Id: dm-devel.ids
 
+Currently, kcopyd has a sub-job size of 64KB and a maximum number of 8
+sub-jobs. As a result, for any kcopyd job, we have a maximum of 512KB of
+I/O in flight.
 
-Hello Milan,
-On Tue, 16 Jul 2019, Milan Broz wrote:
+This upper limit to the amount of in-flight I/O under-utilizes fast
+devices and results in decreased throughput, e.g., when writing to a
+snapshotted thin LV with I/O size less than the pool's block size (so
+COW is performed using kcopyd).
 
-> On 12/07/2019 19:33, Jaskaran Singh Khurana wrote:
->>
->> Hello Milan,
->>
->>> Changes in v6:
->>>
->>> Address comments from Milan Broz and Eric Biggers on v5.
->>>
->>> -Keep the verification code under config DM_VERITY_VERIFY_ROOTHASH_SIG.
->>>
->>> -Change the command line parameter to requires_signatures(bool) which will
->>> force root hash to be signed and trusted if specified.
->>>
->>> -Fix the signature not being present in verity_status. Merged the
->>> https://nam06.safelinks.protection.outlook.com/?url=https%3A%2F%2Fgit.kernel.org%2Fpub%2Fscm%2Flinux%2Fkernel%2Fgit%2Fmbroz%2Flinux.git%2Fcommit%2F%3Fh%3Ddm-cryptsetup%26id%3Da26c10806f5257e255b6a436713127e762935ad3&amp;data=02%7C01%7CJaskaran.Khurana%40microsoft.com%7C18f92445e46940aeebb008d6fe50c610%7C72f988bf86f141af91ab2d7cd011db47%7C1%7C0%7C636976020210890638&amp;sdata=aY0V9%2FBz2RHryIvoftGKUGnyPp9Fsc1JY4FZbHfW4hg%3D&amp;reserved=0
->>> made by Milan Broz and tested it.
->>>
->>>
->>
->> Could you please provide feedback on this v6 version.
->
-> Hi,
->
-> I am ok with the v6 patch; I think Mike will return to it in 5.4 reviews.
->
+Increase kcopyd's default sub-job size to 512KB, so we have a maximum of
+4MB of I/O in flight for each kcopyd job. This results in an up to 96%
+improvement of bandwidth when writing to a snapshotted thin LV, with I/O
+sizes less than the pool's block size.
 
-Thanks for the help and also for reviewing this patch. Could you please 
-add Reviewed-by/Tested-by tag to the patch.
+Also, add dm_mod.kcopyd_subjob_size_kb module parameter to allow users
+to fine tune the sub-job size of kcopyd. The default value of this
+parameter is 512KB and the maximum allowed value is 1024KB.
 
-> But the documentation is very brief. I spent quite a long time to configure the system properly.
-> I think you should add more description (at least to patch header) how to use this feature in combination with system keyring.
->
+We evaluate the performance impact of the change by running the
+snap_breaking_throughput benchmark, from the device mapper test suite
+[1].
 
-I will add more documentation to the patch header describing the steps 
-required for setup.
+The benchmark:
 
-> Do I understand correctly that these steps need to be done?
->
-> - user configures a certificate and adds it in kernel builtin keyring (I used CONFIG_SYSTEM_TRUSTED_KEYS option).
-> - the dm-verity device root hash is signed directly by a key of this cert
-> - the signature is uploaded to the user keyring
-> - reference to signature in keyring is added as an optional dm-verity table parameter root_hash_sig_key_desc
-> - optionally, require_signatures dm-verity module is set to enforce signatures.
->
-> For reference, below is the bash script I used (with unpatched veritysetup to generate working DM table), is the expected workflow here?
+  1. Creates a 1G thin LV
+  2. Provisions the thin LV
+  3. Takes a snapshot of the thin LV
+  4. Writes to the thin LV with:
 
-The steps and workflow is correct. I will send the cryptsetup changes for 
-review.
+      dd if=/dev/zero of=/dev/vg/thin_lv oflag=direct bs=<I/O size>
 
->
-> #!/bin/bash
->
-> NAME=test
-> DEV=/dev/sdc
-> DEV_HASH=/dev/sdd
-> ROOT_HASH=778fccab393842688c9af89cfd0c5cde69377cbe21ed439109ec856f2aa8a423
-> SIGN=sign.txt
-> SIGN_NAME=verity:$NAME
->
-> # get unsigned device-mapper table using unpatched veritysetup
-> veritysetup open $DEV $NAME $DEV_HASH $ROOT_HASH
-> TABLE=$(dmsetup table $NAME)
-> veritysetup close $NAME
->
-> # Generate self-signed CA key, must be in .config as CONFIG_SYSTEM_TRUSTED_KEYS="path/ca.pem"
-> #openssl req -x509 -newkey rsa:1024 -keyout ca_key.pem -out ca.pem -nodes -days 365 -set_serial 01 -subj /CN=example.com
->
-> # sign root hash directly by CA cert
-> echo -n $ROOT_HASH | openssl smime -sign -nocerts -noattr -binary -inkey ca_key.pem -signer ca.pem -outform der -out $SIGN
->
-> # load signature to keyring
-> keyctl padd user $SIGN_NAME @u <$SIGN
->
-> # add device-mapper table, now with sighed root hash optional argument
-> dmsetup create -r $NAME --table "$TABLE 2 root_hash_sig_key_desc $SIGN_NAME"
-> dmsetup table $NAME
->
-> # cleanup
-> dmsetup remove $NAME
-> keyctl clear @u
->
->
+Running this benchmark with various thin pool block sizes and dd I/O
+sizes (all combinations triggering the use of kcopyd) we get the
+following results:
 
-Thanks for testing the changes and all the guidance here.
++-----------------+-------------+------------------+-----------------+
+| Pool block size | dd I/O size | BW before (MB/s) | BW after (MB/s) |
++-----------------+-------------+------------------+-----------------+
+|       1 MB      |      256 KB |       242        |       280       |
+|       1 MB      |      512 KB |       238        |       295       |
+|                 |             |                  |                 |
+|       2 MB      |      256 KB |       238        |       354       |
+|       2 MB      |      512 KB |       241        |       380       |
+|       2 MB      |        1 MB |       245        |       394       |
+|                 |             |                  |                 |
+|       4 MB      |      256 KB |       248        |       412       |
+|       4 MB      |      512 KB |       234        |       432       |
+|       4 MB      |        1 MB |       251        |       474       |
+|       4 MB      |        2 MB |       257        |       504       |
+|                 |             |                  |                 |
+|       8 MB      |      256 KB |       239        |       420       |
+|       8 MB      |      512 KB |       256        |       431       |
+|       8 MB      |        1 MB |       264        |       467       |
+|       8 MB      |        2 MB |       264        |       502       |
+|       8 MB      |        4 MB |       281        |       537       |
++-----------------+-------------+------------------+-----------------+
 
-> Milan
->
-Regards,
-Jaskaran.
+[1] https://github.com/jthornber/device-mapper-test-suite
+
+Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+---
+ drivers/md/dm-kcopyd.c | 34 ++++++++++++++++++++++++++++------
+ 1 file changed, 28 insertions(+), 6 deletions(-)
+
+Changes in v2:
+  - Add dm_mod.kcopyd_subjob_size_kb module parameter
+
+v1: https://www.redhat.com/archives/dm-devel/2019-June/msg00003.html
+
+diff --git a/drivers/md/dm-kcopyd.c b/drivers/md/dm-kcopyd.c
+index 671c24332802..df2011de7be2 100644
+--- a/drivers/md/dm-kcopyd.c
++++ b/drivers/md/dm-kcopyd.c
+@@ -28,10 +28,27 @@
+ 
+ #include "dm-core.h"
+ 
+-#define SUB_JOB_SIZE	128
+ #define SPLIT_COUNT	8
+ #define MIN_JOBS	8
+-#define RESERVE_PAGES	(DIV_ROUND_UP(SUB_JOB_SIZE << SECTOR_SHIFT, PAGE_SIZE))
++
++#define DEFAULT_SUB_JOB_SIZE_KB 512
++#define MAX_SUB_JOB_SIZE_KB     1024
++
++static unsigned kcopyd_subjob_size_kb = DEFAULT_SUB_JOB_SIZE_KB;
++
++module_param(kcopyd_subjob_size_kb, uint, S_IRUGO | S_IWUSR);
++MODULE_PARM_DESC(kcopyd_subjob_size_kb, "Sub-job size for dm-kcopyd clients");
++
++static unsigned dm_get_kcopyd_subjob_size(void)
++{
++	unsigned sub_job_size_kb;
++
++	sub_job_size_kb = __dm_get_module_param(&kcopyd_subjob_size_kb,
++						DEFAULT_SUB_JOB_SIZE_KB,
++						MAX_SUB_JOB_SIZE_KB);
++
++	return sub_job_size_kb << 1;
++}
+ 
+ /*-----------------------------------------------------------------
+  * Each kcopyd client has its own little pool of preallocated
+@@ -41,6 +58,7 @@ struct dm_kcopyd_client {
+ 	struct page_list *pages;
+ 	unsigned nr_reserved_pages;
+ 	unsigned nr_free_pages;
++	unsigned sub_job_size;
+ 
+ 	struct dm_io_client *io_client;
+ 
+@@ -693,8 +711,8 @@ static void segment_complete(int read_err, unsigned long write_err,
+ 		progress = job->progress;
+ 		count = job->source.count - progress;
+ 		if (count) {
+-			if (count > SUB_JOB_SIZE)
+-				count = SUB_JOB_SIZE;
++			if (count > kc->sub_job_size)
++				count = kc->sub_job_size;
+ 
+ 			job->progress += count;
+ 		}
+@@ -821,7 +839,7 @@ void dm_kcopyd_copy(struct dm_kcopyd_client *kc, struct dm_io_region *from,
+ 	job->master_job = job;
+ 	job->write_offset = 0;
+ 
+-	if (job->source.count <= SUB_JOB_SIZE)
++	if (job->source.count <= kc->sub_job_size)
+ 		dispatch_job(job);
+ 	else {
+ 		job->progress = 0;
+@@ -888,6 +906,7 @@ int kcopyd_cancel(struct kcopyd_job *job, int block)
+ struct dm_kcopyd_client *dm_kcopyd_client_create(struct dm_kcopyd_throttle *throttle)
+ {
+ 	int r;
++	unsigned reserve_pages;
+ 	struct dm_kcopyd_client *kc;
+ 
+ 	kc = kzalloc(sizeof(*kc), GFP_KERNEL);
+@@ -912,9 +931,12 @@ struct dm_kcopyd_client *dm_kcopyd_client_create(struct dm_kcopyd_throttle *thro
+ 		goto bad_workqueue;
+ 	}
+ 
++	kc->sub_job_size = dm_get_kcopyd_subjob_size();
++	reserve_pages = DIV_ROUND_UP(kc->sub_job_size << SECTOR_SHIFT, PAGE_SIZE);
++
+ 	kc->pages = NULL;
+ 	kc->nr_reserved_pages = kc->nr_free_pages = 0;
+-	r = client_reserve_pages(kc, RESERVE_PAGES);
++	r = client_reserve_pages(kc, reserve_pages);
+ 	if (r)
+ 		goto bad_client_pages;
+ 
+-- 
+2.11.0
