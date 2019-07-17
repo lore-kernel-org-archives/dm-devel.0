@@ -1,17 +1,15 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [RFC PATCH 1/1] dm: add clone target
-Date: Wed, 17 Jul 2019 16:41:49 +0200
-Message-ID: <92afa0f6-90ac-7a3f-8d8a-78fa446fec73@redhat.com>
-References: <20190709141522.29606-1-ntsironis@arrikto.com>
-	<20190709141522.29606-2-ntsironis@arrikto.com>
-	<a6d47841-fcbc-50b2-724c-082be9e764d1@redhat.com>
-	<e2b23d5c-0ef2-400b-9697-3fb7899ce3e2@arrikto.com>
+From: Horia Geanta <horia.geanta@nxp.com>
+Subject: Re: xts fuzz testing and lack of ciphertext stealing
+	support
+Date: Wed, 17 Jul 2019 17:09:31 +0000
+Message-ID: <VI1PR0402MB34857BBB18C2BB8CBA2DEC7198C90@VI1PR0402MB3485.eurprd04.prod.outlook.com>
+References: <VI1PR0402MB34858E4EF0ACA7CDB446FF5798CE0@VI1PR0402MB3485.eurprd04.prod.outlook.com>
+	<20190716221639.GA44406@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <e2b23d5c-0ef2-400b-9697-3fb7899ce3e2@arrikto.com>
-Content-Language: en-MW
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,133 +19,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Nikos Tsironis <ntsironis@arrikto.com>, snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
-Cc: vkoukis@arrikto.com, iliastsi@arrikto.com
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hi Nikos,
-
-thanks for elaborating on those details.
-
-Hash table collisions, exception store entry commit overhead,
-SSD cache flush issues etc. are all valid points relative to performance
-and work set footprints in general.
-
-Do you have any performance numbers for your solution vs.
-a snapshot one showing the approach is actually superior in
-in real configurations?
-
-I'm asking this particularly in the context of your remark
-
-"A write to a not yet hydrated region will be delayed until the 
-corresponding
-region has been hydrated and the hydration of the region starts 
-immediately."
-
-which'll cause a potentially large working set of delayed writes unless 
-those
-cover the whole eventually larger than 4K region.
-How does your 'clone' target perform on such heavy write situations?
-
-In general, performance and storage footprint test results based on the 
-same set
-of read/write tests including heavy loads with region size variations 
-run on 'clone'
-and 'snapshot' would help your point.
-
-Heinz
-
-On 7/10/19 8:45 PM, Nikos Tsironis wrote:
-> On 7/10/19 12:28 AM, Heinz Mauelshagen wrote:
->> Hi Nikos,
+On 7/17/2019 1:16 AM, Eric Biggers wrote:
+> Hi Horia,
+> 
+> On Tue, Jul 16, 2019 at 05:46:29PM +0000, Horia Geanta wrote:
+>> Hi,
 >>
->> what is the crucial factor your target offers vs. resynchronizing such a
->> latency distinct
->> 2-legged mirror with a read-write snapshot (local, fast exception store)
->> on top, tearing the
->> mirror down keeping the local leg once fully in sync and merging the
->> snapshot back into it?
+>> With fuzz testing enabled, I am seeing xts(aes) failures on caam drivers.
 >>
->> Heinz
+>> Below are several failures, extracted from different runs:
 >>
-> Hi Heinz,
->
-> The most significant benefits of dm-clone over the solution you propose
-> is significantly better performance, no need for extra COW space, no
-> need to merge back a snapshot, and the ability to skip syncing the
-> unused space of a file system.
->
-> 1. In order to ensure snapshot consistency, dm-snapshot needs to
->     commit a completed exception, before signaling the completion of the
->     write that triggered it to upper layers.
->
->     The persistent exception store commits exceptions every time a
->     metadata area is filled or when there are no more exceptions
->     in-flight. For a 4K chunk size we have 256 exceptions per metadata
->     area, so the best case scenario is one commit per 256 writes. Here I
->     assume a write with size equal to the chunk size of dm-snapshot,
->     e.g., 4K, so there is no COW overhead, and that we write to new
->     chunks, so we need to allocate new exceptions.
->
->     Part of committing the metadata is flushing the cache of the
->     underlying device, if there is one. We have seen SSDs which can
->     sustain hundreds of thousands of random write IOPS, but they take up
->     to 8ms to flush their cache. In such a case, flushing the SSD cache
->     every few writes significantly degrades performance.
->
->     Moreover, dm-snapshot forces exceptions to complete in the order they
->     were allocated, to avoid snapshot space leak on crash (commit
->     230c83afdd9cd). This inserts further latency in exception completions
->     and thus user write completions.
->
->     On the other hand, when cloning a device we don't need to be so
->     strict and can rely on committing the metadata every time a FLUSH or
->     FUA bio is written, or periodically, like dm-thin and dm-cache do.
->
->     dm-clone does exactly that. When a region/chunk is cloned or
->     over-written by a write, we just set a bit in the relevant in-core
->     bitmap. The metadata are committed once every second or when we
->     receive a FLUSH or FUA bio.
->
->     This improves performance significantly and results in increased IOPS
->     and reduced latency, especially in cases where flushing the disk
->     cache is very expensive.
->
-> 2. For large devices, e.g. multi terabyte disks, resynchronizing the
->     local leg can take a lot of time. If the application running over the
->     local device is write-heavy, dm-snapshot will end up allocating a
->     large number of exceptions. This increases the number of hash table
->     collisions and thus increases the time we need to do a hash table
->     lookup.
->
->     dm-snapshot needs to look up the exception hash tables in order to
->     service an I/O, so this increases latency and degrades performance.
->
->     On the other hand, dm-clone is just testing a bit to see if a region
->     is cloned or not and decides what to do based on that test.
->
-> 3. With dm-clone there is no need to reserve extra COW space for
->     temporarily storing the written data, while the clone device is
->     syncing. Nor would one need to worry about monitoring and expanding
->     the COW device to prevent it from filling up.
->
-> 4. With dm-clone there is no need to merge back potentially several
->     gigabytes once cloning/syncing completes. We also avoid the relevant
->     performance degradation incurred by the merging process. Writes just
->     go directly to the clone device.
->
-> 5. dm-clone implements support for discards, so it can skip
->     cloning/syncing the relevant regions. In the case of a large block
->     device which contains a filesystem with empty space, e.g. a 2TB
->     device containing 500GB of useful data in a filesystem, this can
->     significantly reduce the time needed to sync/clone.
->
-> This was a rather long email, but I hope it makes the significant
-> benefits of dm-clone over using dm-snapshot, and our rationale behind
-> the decision to implement a new target clearer.
->
-> I would be more than happy to continue the conversation and focus on any
-> other questions you may have.
->
-> Thanks,
-> Nikos
+>> [    3.921654] alg: skcipher: xts-aes-caam encryption unexpectedly succeeded on test vector "random: len=40 klen=64"; expected_error=-22, cfg="random: inplace use_finup nosimd src_divs=[57.93%@+11, 37.18%@+164, <reimport>0.68%@+4, 0.50%@+305, 3.71%@alignmask+3975]" 
+>>
+>> [    3.726698] alg: skcipher: xts-aes-caam encryption unexpectedly succeeded on test vector "random: len=369 klen=64"; expected_error=-22, cfg="random: inplace may_sleep use_digest src_divs=[100.0%@alignmask+584]" 
+>>
+>> [    3.741082] alg: skcipher: xts-aes-caam encryption unexpectedly succeeded on test vector "random: len=2801 klen=64"; expected_error=-22, cfg="random: inplace may_sleep use_digest src_divs=[100.0%@+6] iv_offset=18"
+>>
+>> It looks like the problem is not in CAAM driver.
+>> More exactly, fuzz testing is generating random test vectors and running
+>> them through both SW generic (crypto/xts.c) and CAAM implementation:
+>> -SW generic implementation of xts(aes) does not support ciphertext stealing
+>> and throws -EINVAL when input is not a multiple of AES block size (16B)
+>> -caam has support for ciphertext stealing, and allows for any input size
+>> which results in "unexpectedly succeeded" error messages.
+>>
+>> Any suggestion how this should be fixed?
+>>
+>> Thanks,
+>> Horia
+> 
+> I don't think drivers should allow inputs the generic implementation doesn't,
+> since those inputs aren't tested by the crypto self-tests (so how do you know
+How about implementation adding static test vectors and using them to validate
+the standard feature set that's not supported by the generic implementation?
+
+> it's even correct?), and people could accidentally rely on the driver-specific
+> behavior and then be unable to migrate to another platform or implementation.
+> 
+People could also *intentionally* rely on a driver offering an implementation
+that is closer to the spec / standard.
+
+> So for now I recommend just updating the caam driver to return -EINVAL on XTS
+> inputs not evenly divisible by the block size.
+> 
+I was hoping for something more constructive...
+
+> Of course, if there are actual use cases for XTS with ciphertext stealing in the
+> kernel, we could add it to all the other implementations too.  But I'm not aware
+> of any currently.  Don't all XTS users in the kernel pass whole blocks?
+> 
+That's my guess too.
+
+What about user space relying on offloading and xts working
+according to the spec?
+
+Thanks,
+Horia
