@@ -1,8 +1,8 @@
-From: Milan Broz <gmazyland@gmail.com>
+From: Herbert Xu <herbert@gondor.apana.org.au>
 Subject: Re: xts fuzz testing and lack of ciphertext stealing
 	support
-Date: Thu, 18 Jul 2019 09:40:11 +0200
-Message-ID: <36e78459-1594-6d19-0ab4-95b03a6de036@gmail.com>
+Date: Thu, 18 Jul 2019 15:50:41 +0800
+Message-ID: <20190718075041.2mutant44rxx2ipq@gondor.apana.org.au>
 References: <VI1PR0402MB34858E4EF0ACA7CDB446FF5798CE0@VI1PR0402MB3485.eurprd04.prod.outlook.com>
 	<20190716221639.GA44406@gmail.com>
 	<VI1PR0402MB34857BBB18C2BB8CBA2DEC7198C90@VI1PR0402MB3485.eurprd04.prod.outlook.com>
@@ -11,12 +11,13 @@ References: <VI1PR0402MB34858E4EF0ACA7CDB446FF5798CE0@VI1PR0402MB3485.eurprd04.p
 	<20190718065223.4xaefcwjoxvujntw@gondor.apana.org.au>
 	<CAKv+Gu9-EWNpJ9viSsjhYRdOZb=7a=Mpddmyt8SLEq9aFtawjg@mail.gmail.com>
 	<20190718072154.m2umem24x4grbf6w@gondor.apana.org.au>
+	<CAKv+Gu_CVBKUkb19yPPHJp3HcnAgxRn834yfKHcuUD5A69786g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190718072154.m2umem24x4grbf6w@gondor.apana.org.au>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <CAKv+Gu_CVBKUkb19yPPHJp3HcnAgxRn834yfKHcuUD5A69786g@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,45 +27,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Herbert Xu <herbert@gondor.apana.org.au>, Ard Biesheuvel <ard.biesheuvel@linaro.org>
+To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, Horia Geanta <horia.geanta@nxp.com>
 List-Id: dm-devel.ids
 
-On 18/07/2019 09:21, Herbert Xu wrote:
-> On Thu, Jul 18, 2019 at 09:15:39AM +0200, Ard Biesheuvel wrote:
->>
->> Not just the generic implementation: there are numerous synchronous
->> and asynchronous implementations of xts(aes) in the kernel that would
->> have to be fixed, while there are no in-kernel users that actually
->> rely on CTS. Also, in the cbc case, we support CTS by wrapping it into
->> another template, i.e., cts(cbc(aes)).
->>
->> So retroactively redefining what xts(...) means seems like a bad idea
->> to me. If we want to support XTS ciphertext stealing for the benefit
->> of userland, let's do so via the existing cts template, and add
->> support for wrapping XTS to it.
+On Thu, Jul 18, 2019 at 09:28:03AM +0200, Ard Biesheuvel wrote:
+>
+> If we were adding XTS to the kernel today, then I would agree with
+> you. But xts() has an established meaning now, and I don't think it
+> makes sense to update all implementations for a theoretical use case,
+> given that no portable userland code can rely on the correct semantics
+> today, since CAAM is the only one that implements them correctly.
 > 
-> XTS without stealing should be renamed as XEX.  Sure you can then
-> wrap it inside cts to form xts but the end result needs to be called
-> xts.
+> In any case, I won't have time to fix the ARM or arm64 implementations
+> (or review the changes if someone else steps up) until the end of
+> September.
 
-While I fully agree here from the technical point of view,
-academically XEX, XEX* is a different mode.
-It would create even more confusion.
+I'm not asking you or anyone to fix this right away.  I'm just
+saying that this is the direction we should be moving in.
 
-Couldn't resist, but this is a nice example of what happens when academic,
-standardization, and reality meets in one place :)
+After all, there is no immediate crisis as all that is broken
+today is a fuzz test.
 
-XTS is already implemented in gcrypt and OpenSSL.
-IMO all the implementation should be exactly the same.
+It should be possible to do this without causing performance
+regressions for ARM.  We could rename the existing xts to a
+new name (xek perhaps) and add xts into the cts template as
+a wrapper around xek.
 
-I agree with Herbert that the proper way is to implement ciphertext stealing.
-Otherwise, it is just incomplete implementation, not a redefining XTS mode!
+That way you don't have to touch the ARM code at all and it
+should just work.
 
-See the reference in generic code - the 3rd line - link to the IEEE standard.
-We do not implement it properly - for more than 12 years!
+PS should we mark xek or whatever it's called as internal so
+it isn't visible to user-space?
 
-Reality check - nobody in block layer needs ciphertext stealing, we are always
-aligned to block. AF_ALG is a different story, though.
-
-Milan
+Cheers,
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
