@@ -1,18 +1,19 @@
-From: Junxiao Bi <junxiao.bi@oracle.com>
-Subject: Re: dm bufio: fix deadlock issue with loop device
-Date: Mon, 8 Jul 2019 16:54:07 -0700
-Message-ID: <8a971872-ca3e-303d-02cd-cf5990bb6ab0@oracle.com>
-References: <20190702231456.19121-1-junxiao.bi@oracle.com>
-	<20190703162106.GA13984@redhat.com>
-	<1aa51708-1c1b-bd12-72ed-ecbae39043f7@oracle.com>
-	<460d932b-e801-e2f8-9d0d-d3c96e1bb1ce@oracle.com>
-	<20190708141427.GA8414@redhat.com>
+From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Subject: Re: xts fuzz testing and lack of ciphertext stealing
+	support
+Date: Thu, 18 Jul 2019 09:15:39 +0200
+Message-ID: <CAKv+Gu9-EWNpJ9viSsjhYRdOZb=7a=Mpddmyt8SLEq9aFtawjg@mail.gmail.com>
+References: <VI1PR0402MB34858E4EF0ACA7CDB446FF5798CE0@VI1PR0402MB3485.eurprd04.prod.outlook.com>
+	<20190716221639.GA44406@gmail.com>
+	<VI1PR0402MB34857BBB18C2BB8CBA2DEC7198C90@VI1PR0402MB3485.eurprd04.prod.outlook.com>
+	<20190717172823.GA205944@gmail.com>
+	<CAKv+Gu__offPaWvyURJr8v56ig58q-Deo16QhP26EJ32uf5m3w@mail.gmail.com>
+	<20190718065223.4xaefcwjoxvujntw@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190708141427.GA8414@redhat.com>
-Content-Language: en-US
+In-Reply-To: <20190718065223.4xaefcwjoxvujntw@gondor.apana.org.au>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,42 +23,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: honglei.wang@oracle.com, dm-devel@redhat.com, mpatocka@redhat.com, agk@redhat.com
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, Horia Geanta <horia.geanta@nxp.com>
 List-Id: dm-devel.ids
 
-On 7/8/19 7:14 AM, Mike Snitzer wrote:
-
-> On Fri, Jul 05 2019 at  4:24pm -0400,
-> Junxiao Bi <junxiao.bi@oracle.com> wrote:
+On Thu, 18 Jul 2019 at 08:52, Herbert Xu <herbert@gondor.apana.org.au> wrote:
 >
->> Hi Mike,
->>
->> Do i make sense on this?
-> No, you haven't made your chase for this change.  Sorry.
+> On Wed, Jul 17, 2019 at 08:08:27PM +0200, Ard Biesheuvel wrote:
+> >
+> > Since the kernel does not support CTS for XTS any way, and since no
+> > AF_ALG users can portably rely on this, I agree with Eric that the
+> > only sensible way to address this is to disable this functionality in
+> > the driver.
 >
-> Please refine the patch header to _not_ get into context you have from
-> a vendor kernel.  I know you say this is hard to reproduce, etc.
-Thanks, I will refine it in v2.
-> But
-> you don't even get into ther usecase where the issue was seen.  Was this
-> DM thinp?  DM cache?  Something else?
-it's thin-provision target. Customer is using docker.
+> But the whole point of XTS is that it supports sizes that are
+> not multiples of the block size.  So implementing it without
+> supporting ciphertext stealing is just wrong.
 >
-> Please be as concise and precise as possible.  Saying that shrinker is
-> the same context as loop doesn't imply a whole lot to me (relative to
-> why this is prone to deadlock).
+> So let's fix the generic implementation rather than breaking
+> the caam driver.
 >
-> To restate my concern: if __GFP_FS isn't set then why does your patch
-> help at all?  If __GFP_FS is set, then that changes things..
 
-If __GFP_FS isn't set, the behavior is the same with w/o this patch. If 
-it is set and the mutex was already hold by others, shrinker stop, 
-deadlock avoid.
+Not just the generic implementation: there are numerous synchronous
+and asynchronous implementations of xts(aes) in the kernel that would
+have to be fixed, while there are no in-kernel users that actually
+rely on CTS. Also, in the cbc case, we support CTS by wrapping it into
+another template, i.e., cts(cbc(aes)).
 
-Thanks,
-
-Junxiao.
-
->
-> Mike
+So retroactively redefining what xts(...) means seems like a bad idea
+to me. If we want to support XTS ciphertext stealing for the benefit
+of userland, let's do so via the existing cts template, and add
+support for wrapping XTS to it.
