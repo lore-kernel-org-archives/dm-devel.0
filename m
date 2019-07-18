@@ -1,104 +1,213 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: xts fuzz testing and lack of ciphertext stealing
-	support
-Date: Wed, 17 Jul 2019 20:08:27 +0200
-Message-ID: <CAKv+Gu__offPaWvyURJr8v56ig58q-Deo16QhP26EJ32uf5m3w@mail.gmail.com>
-References: <VI1PR0402MB34858E4EF0ACA7CDB446FF5798CE0@VI1PR0402MB3485.eurprd04.prod.outlook.com>
-	<20190716221639.GA44406@gmail.com>
-	<VI1PR0402MB34857BBB18C2BB8CBA2DEC7198C90@VI1PR0402MB3485.eurprd04.prod.outlook.com>
-	<20190717172823.GA205944@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190717172823.GA205944@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Horia Geanta <horia.geanta@nxp.com>, Herbert Xu <herbert@gondor.apana.org.au>, "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+From: Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>
+Subject: [RFC PATCH v7 0/1] Add dm verity root hash pkcs7 sig validation.
+Date: Wed, 17 Jul 2019 17:46:14 -0700
+Message-ID: <20190718004615.16818-1-jaskarankhurana@linux.microsoft.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: gmazyland@gmail.com
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org, scottsh@microsoft.com, mdsakib@microsoft.com, mpatocka@redhat.com, ebiggers@google.com
 List-Id: dm-devel.ids
 
-On Wed, 17 Jul 2019 at 19:28, Eric Biggers <ebiggers@kernel.org> wrote:
->
-> On Wed, Jul 17, 2019 at 05:09:31PM +0000, Horia Geanta wrote:
-> > On 7/17/2019 1:16 AM, Eric Biggers wrote:
-> > > Hi Horia,
-> > >
-> > > On Tue, Jul 16, 2019 at 05:46:29PM +0000, Horia Geanta wrote:
-> > >> Hi,
-> > >>
-> > >> With fuzz testing enabled, I am seeing xts(aes) failures on caam drivers.
-> > >>
-> > >> Below are several failures, extracted from different runs:
-> > >>
-> > >> [    3.921654] alg: skcipher: xts-aes-caam encryption unexpectedly succeeded on test vector "random: len=40 klen=64"; expected_error=-22, cfg="random: inplace use_finup nosimd src_divs=[57.93%@+11, 37.18%@+164, <reimport>0.68%@+4, 0.50%@+305, 3.71%@alignmask+3975]"
-> > >>
-> > >> [    3.726698] alg: skcipher: xts-aes-caam encryption unexpectedly succeeded on test vector "random: len=369 klen=64"; expected_error=-22, cfg="random: inplace may_sleep use_digest src_divs=[100.0%@alignmask+584]"
-> > >>
-> > >> [    3.741082] alg: skcipher: xts-aes-caam encryption unexpectedly succeeded on test vector "random: len=2801 klen=64"; expected_error=-22, cfg="random: inplace may_sleep use_digest src_divs=[100.0%@+6] iv_offset=18"
-> > >>
-> > >> It looks like the problem is not in CAAM driver.
-> > >> More exactly, fuzz testing is generating random test vectors and running
-> > >> them through both SW generic (crypto/xts.c) and CAAM implementation:
-> > >> -SW generic implementation of xts(aes) does not support ciphertext stealing
-> > >> and throws -EINVAL when input is not a multiple of AES block size (16B)
-> > >> -caam has support for ciphertext stealing, and allows for any input size
-> > >> which results in "unexpectedly succeeded" error messages.
-> > >>
-> > >> Any suggestion how this should be fixed?
-> > >>
-> > >> Thanks,
-> > >> Horia
-> > >
-> > > I don't think drivers should allow inputs the generic implementation doesn't,
-> > > since those inputs aren't tested by the crypto self-tests (so how do you know
-> > How about implementation adding static test vectors and using them to validate
-> > the standard feature set that's not supported by the generic implementation?
-> >
-> > > it's even correct?), and people could accidentally rely on the driver-specific
-> > > behavior and then be unable to migrate to another platform or implementation.
-> > >
-> > People could also *intentionally* rely on a driver offering an implementation
-> > that is closer to the spec / standard.
-> >
-> > > So for now I recommend just updating the caam driver to return -EINVAL on XTS
-> > > inputs not evenly divisible by the block size.
-> > >
-> > I was hoping for something more constructive...
-> >
-> > > Of course, if there are actual use cases for XTS with ciphertext stealing in the
-> > > kernel, we could add it to all the other implementations too.  But I'm not aware
-> > > of any currently.  Don't all XTS users in the kernel pass whole blocks?
-> > >
-> > That's my guess too.
-> >
-> > What about user space relying on offloading and xts working
-> > according to the spec?
-> >
->
-> Sure, AF_ALG users could expect ciphertext stealing to work.  I don't know of
-> any actual examples of people saying they want it, but it's possible.
->
-> My point is simply that we add this, we need to find a way to support it in all
-> implementations.  It's not helpful to add it to only one specific driver, as
-> then it's inconsistent and is untestable with the common tests.
->
+This patch set adds in-kernel pkcs7 signature checking for the roothash
+of
+the dm-verity hash tree.
+The verification is to support cases where the roothash is not secured
+by
+Trusted Boot, UEFI Secureboot or similar technologies.
+One of the use cases for this is for dm-verity volumes mounted after
+boot,
+the root hash provided during the creation of the dm-verity volume has
+to
+be secure and thus in-kernel validation implemented here will be used
+before we trust the root hash and allow the block device to be created.
 
-IIRC there are different ways to implement CTS, and the cts template
-we have in the kernel (which is used for CBC in some cases) implements
-the flavor where the last two blocks are reordered if the input size
-is an exact multiple of the block size. If your CTS implementation
-does not implement this reordering (which seems to be the case since
-it is compatible with plain XTS), it implements CTS in an incompatible
-way.
+Why we are doing validation in the Kernel?
+------------------------------------------
+The reason is to still be secure in cases where the attacker is able to
+compromise the user mode application in which case the user mode
+validation
+could not have been trusted.
+The root hash signature validation in the kernel along with existing
+dm-verity implementation gives a higher level of confidence in the
+executable code or the protected data. Before allowing the creation of
+the device mapper block device the kernel code will check that the
+detached
+pkcs7 signature passed to it validates the roothash and the signature is
+trusted by builtin keys set at kernel creation. The kernel should be
+secured using Verified boot, UEFI Secure Boot or similar technologies so
+we
+can trust it.
 
-Since the kernel does not support CTS for XTS any way, and since no
-AF_ALG users can portably rely on this, I agree with Eric that the
-only sensible way to address this is to disable this functionality in
-the driver.
+What about attacker mounting non dm-verity volumes to run executable code?
+--------------------------------------------------------------------------
+This verification can be used to have a security architecture where a
+LSM
+can enforce this verification for all the volumes and by doing this it
+can
+ensure that all executable code runs from signed and trusted dm-verity
+volumes.
+
+Further patches will be posted that build on this and enforce this
+verification based on policy for all the volumes on the system.
+
+Kernel commandline parameter require_signatures will indicate whether to
+force (for all dm verity volumes) roothash signature verification.
+
+How are these changes tested?
+-----------------------------
+
+Build time steps:
+----------------
+
+CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG needs to be turned on in .config.
+
+Add the certificate(pubic key) that will be used to check whether to trust
+the signature of the roothash in a PEM-encoded file to the 
+CONFIG_SYSTEM_TRUSTED_KEYS (example step 1) and step 2) below).
+
+When formatting the fs for verity we need to save and sign the roothash, the 
+signature would be used in verification by the kernel later when we create dm
+verity block device on the test machine/kernel.
+
+Dump the roothash returned by veritysetup format in a text file,
+say roothash.txt and then sign using the openssl command (see below).
+
+1) openssl req -x509 -newkey rsa:1024 -keyout ca_key.pem -out ca.pem -nodes
+   -days 365 -set_serial 01 -subj /CN=example.com
+2) In .config add the certificate as CONFIG_SYSTEM_TRUSTED_KEYS="path/ca.pem"
+3) veritysetup format <fs> <hashdev>, this will return the ROOT_HASH.
+4) Use the roothash returned in step 3) and save it to a file for reference and
+   signing.
+   echo -n <ROOT_HASH> > roothash.txt
+5) openssl smime -sign -nocerts -noattr -binary -in <roothash.txt> 
+   -inkey ca_key.pem -signer ca.pem -outform der -out sign.txt
+
+Kernel Commandline:
+-------------------
+
+To enforce the signatures for all dm verity volumes specify the
+dm_verity.require_signatures=1 on the kernel commandline.
+
+Steps on the test kernel/machine:
+---------------------------------
+
+After the kernel boots try to create device mapper block device by providing
+the roothash and the roothash signature which will be validated by the kernel.
+
+To pass the roothash signature to dm-verity, veritysetup part of
+cryptsetup library was modified to take a optional root-hash-sig parameter.
+
+Use the signature file from above step as a parameter to veritysetup.
+The changes for veritysetup are in a topic branch for now at:
+https://github.com/jaskarankhurana/veritysetup/tree/veritysetup_add_sig
+
+veritysetup open  <data_device> <name> <hash_device> <root_hash>
+ --root-hash-sig=<root_hash_pkcs7_detached_sig>
+
+OR
+--
+We could also use a unpatched veritysetup to test this.
+
+Steps are shown as an example below :
+(The roothash and signature will be obtained from steps 1 to 5 above)
+
+eg:
+NAME=test
+DEV=/dev/sdc
+DEV_HASH=/dev/sdd
+ROOT_HASH=778fccab393842688c9af89cfd0c5cde69377cbe21ed439109ec856f2aa8a423
+SIGN_NAME=verity:$NAME
+SIGN=sign.txt
+# load signature to keyring
+keyctl padd user $SIGN_NAME @u <$SIGN
+
+# add device-mapper table, now with sighed root hash optional argument
+dmsetup create -r $NAME --table "$TABLE 2 root_hash_sig_key_desc $SIGN_NAME"
+dmsetup table $NAME
+
+# cleanup
+dmsetup remove $NAME
+keyctl clear @u
+
+Changelog:
+---------
+
+v7
+  - Changes to patch header to add steps that can help test this.
+  - Use the rebased version of the patch that was tested by Milan Broz from his
+    tree.
+
+v6
+  - Address comments from Milan Broz and Eric Biggers on v5.
+
+  - Keep the verification code under config DM_VERITY_VERIFY_ROOTHASH_SIG.
+
+  - Change the command line parameter to requires_signatures(bool) which will
+    force root hash to be signed and trusted if specified.
+
+  - Fix the signature not being present in verity_status. Merged the
+    https://git.kernel.org/pub/scm/linux/kernel/git/mbroz/linux.git/commit/?h=dm-cryptsetup&id=a26c10806f5257e255b6a436713127e762935ad3
+    made by Milan Broz and tested it.
+
+v5 (since previous):
+  - Code review feedback given by Milan Broz.
+  - Remove the Kconfig for root hash verification and instead add a
+    commandline parameter(dm_verity.verify_sig) that determines whether
+to
+    check or enforce root hash signature validation.
+  - Fixed a small issue when dm-verity was built sepaerately as a
+    module.
+  - Added the openssl commandline that can be used to sign the roothash
+    in the cover letter.
+
+v4:
+  - Code review feedback given by Milan Broz.
+  - Add documentation about the root hash signature parameter.
+  - Bump up the dm-verity target version.
+  - Provided way to sign and test with veritysetup in cover letter.
+
+v3:
+  - Code review feedback given by Sasha Levin.
+  - Removed EXPORT_SYMBOL_GPL since this was not required.
+  - Removed "This file is released under the GPLv2" since we have SPDX
+    identifier.
+  - Inside verity_verify_root_hash changed EINVAL to ENOKEY when the key
+    descriptor is not specified but due to force option being set it is
+    expected.
+  - Moved CONFIG check to inside verity_verify_get_sig_from_key.
+     (Did not move the sig_opts_cleanup to inside verity_dtr as the
+     sig_opts do not need to be allocated for the entire duration the
+block
+     device is active unlike the verity structure, note verity_dtr is
+     called      only if verity_ctr fails or after the lifetime of the
+     block device.)
+
+v2:
+  - Code review feedback to pass the signature binary blob as a key that
+    can be looked up in the kernel and be used to verify the roothash.
+    [Suggested by Milan Broz]
+  - Made the code related change suggested in review of v1.
+    [Suggested by Balbir Singh]
+
+v1:
+  - Add kconfigs to control dm-verity root has signature verification
+    and
+    use the signature if specified to verify the root hash.
+
+
+Jaskaran Khurana (1):
+  Add dm verity root hash pkcs7 sig validation.
+
+ .../admin-guide/device-mapper/verity.rst      |   7 +
+ drivers/md/Kconfig                            |  12 ++
+ drivers/md/Makefile                           |   5 +
+ drivers/md/dm-verity-target.c                 |  43 +++++-
+ drivers/md/dm-verity-verify-sig.c             | 133 ++++++++++++++++++
+ drivers/md/dm-verity-verify-sig.h             |  60 ++++++++
+ drivers/md/dm-verity.h                        |   2 +
+ 7 files changed, 257 insertions(+), 5 deletions(-)
+ create mode 100644 drivers/md/dm-verity-verify-sig.c
+ create mode 100644 drivers/md/dm-verity-verify-sig.h
+
+-- 
+2.17.1
