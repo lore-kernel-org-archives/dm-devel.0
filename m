@@ -1,9 +1,11 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+From: Pascal Van Leeuwen <pvanleeuwen@verimatrix.com>
 Subject: Re: xts fuzz testing and lack of ciphertext stealing
 	support
-Date: Fri, 19 Jul 2019 07:34:33 +0200
-Message-ID: <CAKv+Gu8dE6EO1NOwni91cvEWJvPzieC3wKph73j2jWxzx_xKAw@mail.gmail.com>
-References: <VI1PR0402MB34857BBB18C2BB8CBA2DEC7198C90@VI1PR0402MB3485.eurprd04.prod.outlook.com>
+Date: Thu, 18 Jul 2019 15:43:29 +0000
+Message-ID: <MN2PR20MB2973CC2EFE19B6CBDBBDEA0DCAC80@MN2PR20MB2973.namprd20.prod.outlook.com>
+References: <VI1PR0402MB34858E4EF0ACA7CDB446FF5798CE0@VI1PR0402MB3485.eurprd04.prod.outlook.com>
+	<20190716221639.GA44406@gmail.com>
+	<VI1PR0402MB34857BBB18C2BB8CBA2DEC7198C90@VI1PR0402MB3485.eurprd04.prod.outlook.com>
 	<20190717172823.GA205944@gmail.com>
 	<CAKv+Gu__offPaWvyURJr8v56ig58q-Deo16QhP26EJ32uf5m3w@mail.gmail.com>
 	<20190718065223.4xaefcwjoxvujntw@gondor.apana.org.au>
@@ -12,15 +14,11 @@ References: <VI1PR0402MB34857BBB18C2BB8CBA2DEC7198C90@VI1PR0402MB3485.eurprd04.p
 	<36e78459-1594-6d19-0ab4-95b03a6de036@gmail.com>
 	<MN2PR20MB2973E61815F069E8C7D74177CAC80@MN2PR20MB2973.namprd20.prod.outlook.com>
 	<20190718152908.xiuze3kb3fdc7ov6@gondor.apana.org.au>
-	<MN2PR20MB2973E1A367986303566E80FCCAC80@MN2PR20MB2973.namprd20.prod.outlook.com>
-	<20190718155140.b6ig3zq22askmfpy@gondor.apana.org.au>
-	<CAKv+Gu9qm8mDZASJasq18bW=4_oE-cKPGKvdF9+8=7VNo==_fA@mail.gmail.com>
-	<MN2PR20MB2973DE308D0050DBF3F26870CAC80@MN2PR20MB2973.namprd20.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============6517000384276546426=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <MN2PR20MB2973DE308D0050DBF3F26870CAC80@MN2PR20MB2973.namprd20.prod.outlook.com>
+In-Reply-To: <20190718152908.xiuze3kb3fdc7ov6@gondor.apana.org.au>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -30,80 +28,93 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Pascal Van Leeuwen <pvanleeuwen@verimatrix.com>
-Cc: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, Horia Geanta <horia.geanta@nxp.com>, Milan Broz <gmazyland@gmail.com>
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>, Horia Geanta <horia.geanta@nxp.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>
 List-Id: dm-devel.ids
 
-On Thu, 18 Jul 2019 at 19:03, Pascal Van Leeuwen
-<pvanleeuwen@verimatrix.com> wrote:
->
-> > > > For XTS, you have this additional curve ball being thrown in called the "tweak".
-> > > > For encryption, the underlying "xts" would need to be able to chain the tweak,
-> > > > from what I've seen of the source the implementation cannot do that.
-> > >
-> > > You simply use the underlying xts for the first n - 2 blocks and
-> > > do the last two by hand.
-> > >
-> >
-> > OK, so it appears the XTS ciphertext stealing algorithm does not
-> > include the peculiar reordering of the 2 final blocks, which means
-> > that the kernel's implementation of XTS already conforms to the spec
-> > for inputs that are a multiple of the block size.
-> >
-> Yes, for XTS you effectively don't do CTS if it's a 16 byte multiple ...
->
-> > The reason I am not a fan of making any changes here is that there are
-> > no in-kernel users that require ciphertext stealing for XTS, nor is
-> > anyone aware of any reason why we should be adding it to the userland
-> > interface. So we are basically adding dead code so that we are
-> > theoretically compliant in a way that we will never exercise in
-> > practice.
-> >
-> You know, having worked on all kinds of workarounds for silly irrelevant
-> (IMHO) corner cases in  the inside-secure hardware driver over the past
-> months just to keep testmgr happy, this is kind of ironic ...
->
-> Cipher text stealing happens to be a *major* part of the XTS specification
-> (it's not actually XTS without the CTS part!), yet you are suggesting not
-> to implement it because *you* don't have or know a use case for it.
-> That seems like a pretty bad argument to me. It's not some minor corner
-> case that's not supported.The implementation is just *incomplete*
-> without it.
->
+--===============6517000384276546426==
+Content-Language: en-US
+Content-Type: multipart/signed;
+	boundary="PGP_Universal_161D153D_397DC866_75855059_4C7F9127";
+	protocol="application/pgp-signature"; micalg="pgp-sha256"
 
-I would argue that these cases are diametrically opposite: you
-proposed to remove support for zero length input vectors from the
-entire crypto API to prevent your driver from having to deal with
-inputs that the hardware cannot handle.
+--PGP_Universal_161D153D_397DC866_75855059_4C7F9127
+Content-Type: text/plain;
+	charset="utf-8"
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 
-I am proposing not to add support for cases that we have no need for.
-XTS without CTS is indistinguishable from XTS with CTS if the inputs
-are always a multiple of the block size, and in 12 years, nobody has
-ever raised the issue that our support is limited to that. So what
-problem are we fixing by changing this? dm-crypt does not care,
-fscrypt does not care, userland does not care (given that it does not
-work today and we are only finding out now due to some fuzz test
-failing on CAAM)
-
-
-> > Note that for software algorithms such as the bit sliced NEON
-> > implementation of AES, which can only operate on 8 AES blocks at a
-> > time, doing the final 2 blocks sequentially is going to seriously
-> > impact performance. This means whatever wrapper we invent around xex()
-> > (or whatever we call it) should go out of its way to ensure that the
-> > common, non-CTS case does not regress in performance, and the special
-> > handling is only invoked when necessary (which will be never).
-> >
-> I pretty much made the same argument about all these driver workarounds
-> slowing down my driver fast path but that was considered a non-issue.
+> > In fact, using the current cts template around the current xts template=
+ actually does NOT
+> > implement standards compliant XTS at all, as the CTS *implementation* f=
+or XTS is
+> > different from the one for CBC as implemented by the current CTS templa=
+te.
+>=20
+> The template is just a name.  The implementation can do whatever it
+> wants for each instance.  So obviously we would employ a different
+> implementation for xts compared to cbc.
 >
-> In this particular case, it should not need to be more than:
->
-> if (unlikely(size & 15)) {
->   xts_with_partial_last_block();
-> } else {
->   xts_with_only_full_blocks();
-> }
->
+Hmmm ... so the generic CTS template would have to figure out whether it is=
+ wrapped=20
+around ECB, CBC, XTS or whatever and then adjust to that?
 
-Of course. But why add this at all if it is known to be dead code?
+For ECB and CBC I suppose that's techically possible. But then what do I ge=
+t when I
+try to wrap CTS around some block cipher mode it doesn't recognise? Tricky =
+...
+
+For XTS, you have this additional curve ball being thrown in called the "tw=
+eak".
+For encryption, the underlying "xts" would need to be able to chain the twe=
+ak,
+=66rom what I've seen of the source the implementation cannot do that.
+
+For decryption, you actually first need to decrypt the last block with the =
+last
+tweak before you can decrypt the 2nd last block with the 2nd last tweak.
+
+Not sure how you intend to handle that with some generic wrapper around "xt=
+s".
+
+>=20
+> Cheers,
+> --
+> Email: Herbert Xu <herbert@gondor.apana.org.au>
+> Home Page: http://gondor.apana.org.au/~herbert/
+> PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+
+Regards,
+Pascal van Leeuwen
+Silicon IP Architect, Multi-Protocol Engines @ Verimatrix
+www.insidesecure.com
+
+--PGP_Universal_161D153D_397DC866_75855059_4C7F9127
+Content-Type: application/pgp-signature;
+	name="PGP.sig"
+Content-Transfer-Encoding: 7BIT
+Content-Disposition: attachment;
+	filename="PGP.sig"
+
+-----BEGIN PGP SIGNATURE-----
+Version: 10.4.2 (Build 502)
+
+iQEVAwUBXTCTnvLgekqIHlBwAQgtwQf/Thh49Kl16U2uP/J15s2QZDc74g2waZTz
+HNbH7qW4kNrKXk9WOH2S8en8rjGQpGZvyzeHUtn2oOvrYVau3y+415sULuQ0lTxr
+ON8nCWOebBA54r5eWUTGNNG/MifezbgmatL1iKmqm0cNwmhqO4+/1q2qTJTitCb2
+TqMyFLaevrF7lw4VOjqzJB77MWf6+EV6v0uAZaL74p7USbD2VslZX7rZAbwP3XEQ
+GxtmxgObNGJ4bZ/eD0+qu04n+Hz3iNZ+hM4csdqQLeSxku0Nyw1Ls72J54naes/Q
+g+BUy8frihzuwwfIFxaXhPEuJ9KV0/DgXw+km11q1JE1zWpSKtRC3w==
+=rz3v
+-----END PGP SIGNATURE-----
+
+--PGP_Universal_161D153D_397DC866_75855059_4C7F9127--
+
+
+--===============6517000384276546426==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============6517000384276546426==--
