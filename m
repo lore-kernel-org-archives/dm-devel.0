@@ -1,8 +1,8 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
+From: Milan Broz <gmazyland@gmail.com>
 Subject: Re: xts fuzz testing and lack of ciphertext stealing
 	support
-Date: Thu, 18 Jul 2019 15:50:41 +0800
-Message-ID: <20190718075041.2mutant44rxx2ipq@gondor.apana.org.au>
+Date: Thu, 18 Jul 2019 13:19:41 +0200
+Message-ID: <b042649c-db98-9710-b063-242bdf520252@gmail.com>
 References: <VI1PR0402MB34858E4EF0ACA7CDB446FF5798CE0@VI1PR0402MB3485.eurprd04.prod.outlook.com>
 	<20190716221639.GA44406@gmail.com>
 	<VI1PR0402MB34857BBB18C2BB8CBA2DEC7198C90@VI1PR0402MB3485.eurprd04.prod.outlook.com>
@@ -11,13 +11,14 @@ References: <VI1PR0402MB34858E4EF0ACA7CDB446FF5798CE0@VI1PR0402MB3485.eurprd04.p
 	<20190718065223.4xaefcwjoxvujntw@gondor.apana.org.au>
 	<CAKv+Gu9-EWNpJ9viSsjhYRdOZb=7a=Mpddmyt8SLEq9aFtawjg@mail.gmail.com>
 	<20190718072154.m2umem24x4grbf6w@gondor.apana.org.au>
-	<CAKv+Gu_CVBKUkb19yPPHJp3HcnAgxRn834yfKHcuUD5A69786g@mail.gmail.com>
+	<36e78459-1594-6d19-0ab4-95b03a6de036@gmail.com>
+	<MN2PR20MB2973E61815F069E8C7D74177CAC80@MN2PR20MB2973.namprd20.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAKv+Gu_CVBKUkb19yPPHJp3HcnAgxRn834yfKHcuUD5A69786g@mail.gmail.com>
+In-Reply-To: <MN2PR20MB2973E61815F069E8C7D74177CAC80@MN2PR20MB2973.namprd20.prod.outlook.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,41 +28,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+To: Pascal Van Leeuwen <pvanleeuwen@verimatrix.com>, Herbert Xu <herbert@gondor.apana.org.au>, Ard Biesheuvel <ard.biesheuvel@linaro.org>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, Horia Geanta <horia.geanta@nxp.com>
 List-Id: dm-devel.ids
 
-On Thu, Jul 18, 2019 at 09:28:03AM +0200, Ard Biesheuvel wrote:
->
-> If we were adding XTS to the kernel today, then I would agree with
-> you. But xts() has an established meaning now, and I don't think it
-> makes sense to update all implementations for a theoretical use case,
-> given that no portable userland code can rely on the correct semantics
-> today, since CAAM is the only one that implements them correctly.
+On 18/07/2019 12:40, Pascal Van Leeuwen wrote:
+...
+>> See the reference in generic code - the 3rd line - link to the IEEE standard.
+>> We do not implement it properly - for more than 12 years!
+>>
 > 
-> In any case, I won't have time to fix the ARM or arm64 implementations
-> (or review the changes if someone else steps up) until the end of
-> September.
+> Full XTS is XEX-TCB-CTS so the proper terminology for "XTS without CTS" would be XEX-TCB.
+> But the problem there is that TCB and CTS are generic terms that do not imply a specific 
+> implementation for generating the tweak -or- performing the ciphertext stealing.
+> Only the *full* XTS operation is standardized (as IEEE Std P1619).
 
-I'm not asking you or anyone to fix this right away.  I'm just
-saying that this is the direction we should be moving in.
+Yes. Also XTS is allowed in FIPS now. Because the current code cannot submit
+anything else than aligned blocks, we are ok.
+(I hope. Speaking for disk encryption, dm-crypt, only).
 
-After all, there is no immediate crisis as all that is broken
-today is a fuzz test.
+> In fact, using the current cts template around the current xts template actually does NOT
+> implement standards compliant XTS at all, as the CTS *implementation* for XTS is 
+> different from the one for CBC as implemented by the current CTS template.
+> The actual implementation of the ciphertext stealing has (or may have) a security impact,
+> so the *combined* operation must be cryptanalyzed and adding some random CTS scheme
+> to some random block cipher mode would be a case of "roll your own crypto" (i.e. bad).
 
-It should be possible to do this without causing performance
-regressions for ARM.  We could rename the existing xts to a
-new name (xek perhaps) and add xts into the cts template as
-a wrapper around xek.
+> From that perspective - to prevent people from doing cryptographically stupid things -
+> IMHO it would be better to just pull the CTS into the XTS implementation i.e. make
+> xts natively support blocks that are not a multiple of (but >=) the cipher blocksize ...
 
-That way you don't have to touch the ARM code at all and it
-should just work.
+I would definitely prefer adding CTS directly to XTS (as it is in gcrypt or OpenSSL now)
+instead of some new compositions.
 
-PS should we mark xek or whatever it's called as internal so
-it isn't visible to user-space?
+Also, I would like to avoid another "just because it is nicer" module dependence (XTS->XEX->ECB).
+Last time (when XTS was reimplemented using ECB) we have many reports with initramfs
+missing ECB module preventing boot from AES-XTS encrypted root after kernel upgrade...
+Just saying. (Despite the last time it was keyring what broke encrypted boot ;-)
 
-Cheers,
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+(That said, I will try to find some volunteer to help with CTS in XTS implementation, if needed.)
+
+>> Reality check - nobody in block layer needs ciphertext stealing, we are always
+>> aligned to block. AF_ALG is a different story, though.
+> 
+> So you don't support odd sector sizes like 520 , 528, 4112, 4160 or 4224 bytes?
+
+No. Dm-crypt supports only power of two blocks, up to 4k (IOW: 512, 1024, 2048, 4096 bytes).
+(Not more, because of compatible page size - this could be fixed in future though.)
+
+The 520 hw sector is usually 512 + 8 bytes for DIF (data integrity field).
+We can emulate something similar with dm-integrity, but the data section (input to encryption)
+must be always as specified above (rest is in integrity bio section).
+
+Milan
