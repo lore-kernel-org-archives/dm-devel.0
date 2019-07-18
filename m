@@ -1,55 +1,46 @@
-From: Randy Dunlap <rdunlap@infradead.org>
-Subject: Re: [RFC PATCH v7 1/1] Add dm verity root hash pkcs7 sig validation.
-Date: Wed, 17 Jul 2019 18:04:46 -0700
-Message-ID: <d057b88f-0a21-0843-1212-af46f67343a2@infradead.org>
-References: <20190718004615.16818-1-jaskarankhurana@linux.microsoft.com>
- <20190718004615.16818-2-jaskarankhurana@linux.microsoft.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: [PATCH 0/2] block/scsi/dm-rq: fix leak of request private data in dm-mpath
+Date: Thu, 18 Jul 2019 11:25:17 +0800
+Message-ID: <20190718032519.28306-1-ming.lei@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190718004615.16818-2-jaskarankhurana@linux.microsoft.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>, gmazyland@gmail.com
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, jmorris@namei.org, scottsh@microsoft.com, mdsakib@microsoft.com, mpatocka@redhat.com, ebiggers@google.com
+Content-Transfer-Encoding: 8bit
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-block@vger.kernel.org, "James E . J . Bottomley" <jejb@linux.ibm.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, linux-scsi@vger.kernel.org, Ming Lei <ming.lei@redhat.com>, "Ewan D . Milne" <emilne@redhat.com>, Bart Van Assche <bvanassche@acm.org>, Hannes Reinecke <hare@suse.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
 Hi,
-Just a couple of minor nits:
 
-On 7/17/19 5:46 PM, Jaskaran Khurana wrote:
-> diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-> index 3834332f4963..c2b04d226c90 100644
-> --- a/drivers/md/Kconfig
-> +++ b/drivers/md/Kconfig
-> @@ -490,6 +490,18 @@ config DM_VERITY
->  
->  	  If unsure, say N.
->  
-> +config DM_VERITY_VERIFY_ROOTHASH_SIG
-> +	def_bool n
+When one request is dispatched to LLD via dm-rq, if the result is
+BLK_STS_*RESOURCE, dm-rq will free the request. However, LLD may allocate
+private stuff for this request, so this way will cause memory leak.
 
-It already defaults to n, so we usually try to omit that (don't repeat it).
+Add .cleanup_rq() callback and implement it in SCSI for fixing the issue.
+And SCSI is the only driver which allocates private stuff in .queue_rq()
+path.
 
-> +	bool "Verity data device root hash signature verification support"
-> +	depends on DM_VERITY
-> +	select SYSTEM_DATA_VERIFICATION
-> +	  help
+Another use case of this callback is to free the request and re-submit
+bios during cpu hotplug when the hctx is dead, see the following link:
 
-"help" should only be indented by one tab (and not the extra 2 spaces).
+https://lore.kernel.org/linux-block/f122e8f2-5ede-2d83-9ca0-bc713ce66d01@huawei.com/T/#t
 
-> +	  The device mapper target created by DM-VERITY can be validated if the
-> +	  pre-generated tree of cryptographic checksums passed has a pkcs#7
-> +	  signature file that can validate the roothash of the tree.
-> +
-> +	  If unsure, say N.
-> +
->  config DM_VERITY_FEC
->  	bool "Verity forward error correction support"
->  	depends on DM_VERITY
+Ming Lei (2):
+  blk-mq: add callback of .cleanup_rq
+  scsi: implement .cleanup_rq callback
 
+ drivers/md/dm-rq.c      |  1 +
+ drivers/scsi/scsi_lib.c | 15 +++++++++++++++
+ include/linux/blk-mq.h  | 13 +++++++++++++
+ 3 files changed, 29 insertions(+)
 
-thanks.
+Cc: Ewan D. Milne <emilne@redhat.com>
+Cc: Bart Van Assche <bvanassche@acm.org>
+Cc: Hannes Reinecke <hare@suse.com>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
+Cc: <stable@vger.kernel.org>
+Fixes: 396eaf21ee17 ("blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback")
 -- 
-~Randy
+2.20.1
