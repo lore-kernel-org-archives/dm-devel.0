@@ -1,101 +1,54 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH 1/2] blk-mq: add callback of .cleanup_rq
-Date: Fri, 19 Jul 2019 09:35:47 +0800
-Message-ID: <20190719013546.GA12004@ming.t460p>
-References: <20190718032519.28306-1-ming.lei@redhat.com>
- <20190718032519.28306-2-ming.lei@redhat.com>
- <20190718145201.GA2305@redhat.com>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: xts fuzz testing and lack of ciphertext stealing
+	support
+Date: Fri, 19 Jul 2019 09:47:26 +0800
+Message-ID: <20190719014726.erp3bf26oi4rducm@gondor.apana.org.au>
+References: <CAKv+Gu__offPaWvyURJr8v56ig58q-Deo16QhP26EJ32uf5m3w@mail.gmail.com>
+	<20190718065223.4xaefcwjoxvujntw@gondor.apana.org.au>
+	<CAKv+Gu9-EWNpJ9viSsjhYRdOZb=7a=Mpddmyt8SLEq9aFtawjg@mail.gmail.com>
+	<20190718072154.m2umem24x4grbf6w@gondor.apana.org.au>
+	<36e78459-1594-6d19-0ab4-95b03a6de036@gmail.com>
+	<MN2PR20MB2973E61815F069E8C7D74177CAC80@MN2PR20MB2973.namprd20.prod.outlook.com>
+	<20190718152908.xiuze3kb3fdc7ov6@gondor.apana.org.au>
+	<MN2PR20MB2973E1A367986303566E80FCCAC80@MN2PR20MB2973.namprd20.prod.outlook.com>
+	<20190718155140.b6ig3zq22askmfpy@gondor.apana.org.au>
+	<MN2PR20MB2973DE83980D271CC847CA6BCAC80@MN2PR20MB2973.namprd20.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <stable-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20190718145201.GA2305@redhat.com>
-Sender: stable-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, "James E . J . Bottomley" <jejb@linux.ibm.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, linux-scsi@vger.kernel.org, "Ewan D . Milne" <emilne@redhat.com>, Bart Van Assche <bvanassche@acm.org>, Hannes Reinecke <hare@suse.com>, Christoph Hellwig <hch@lst.de>, dm-devel@redhat.com, stable@vger.kernel.org
+In-Reply-To: <MN2PR20MB2973DE83980D271CC847CA6BCAC80@MN2PR20MB2973.namprd20.prod.outlook.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Pascal Van Leeuwen <pvanleeuwen@verimatrix.com>
+Cc: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>, Horia Geanta <horia.geanta@nxp.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>
 List-Id: dm-devel.ids
 
-On Thu, Jul 18, 2019 at 10:52:01AM -0400, Mike Snitzer wrote:
-> On Wed, Jul 17 2019 at 11:25pm -0400,
-> Ming Lei <ming.lei@redhat.com> wrote:
-> 
-> > dm-rq needs to free request which has been dispatched and not completed
-> > by underlying queue. However, the underlying queue may have allocated
-> > private stuff for this request in .queue_rq(), so dm-rq will leak the
-> > request private part.
-> 
-> No, SCSI (and blk-mq) will leak.  DM doesn't know anything about the
-> internal memory SCSI uses.  That memory is a SCSI implementation detail.
+On Thu, Jul 18, 2019 at 04:35:26PM +0000, Pascal Van Leeuwen wrote:
+>
+> Tthen there's still the issue of advancing that last tweak. From what I've seen,
+> the xts implementation does not output the last tweak so you would have to 
+> recompute it locally in cts.c as block_cipher_enc(iv) * alpha^j. Which is wasteful.
+> Of course this could be solved by redefining xts to output the last tweak
+> like CBC/CTR output their last IV ... Which would probably give us HW guys
+> trouble again because our HW cannot do *that* ... (While the HW very likely 
+> *does* implement the cipher text stealing properly, just to be able to boast
+> about IEEE P1619 compliance ...)
 
-It isn't noting to do with dm-rq, which frees one request after BLK_STS_*RESOURCE
-is returned from blk_insert_cloned_request(), in this case it has to be
-the user for releasing the request private data.
+If your hardware supports XTS properly then you wouldn't even need
+to use this new template.  You would directly export the xts
+interface.
 
-> 
-> Please fix header to properly reflect which layer is doing the leaking.
-
-Fine.
-
-> 
-> > Add one new callback of .cleanup_rq() to fix the memory leak issue.
-> > 
-> > Another use case is to free request when the hctx is dead during
-> > cpu hotplug context.
-> > 
-> > Cc: Ewan D. Milne <emilne@redhat.com>
-> > Cc: Bart Van Assche <bvanassche@acm.org>
-> > Cc: Hannes Reinecke <hare@suse.com>
-> > Cc: Christoph Hellwig <hch@lst.de>
-> > Cc: Mike Snitzer <snitzer@redhat.com>
-> > Cc: dm-devel@redhat.com
-> > Cc: <stable@vger.kernel.org>
-> > Fixes: 396eaf21ee17 ("blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback")
-> > Signed-off-by: Ming Lei <ming.lei@redhat.com>
-> > ---
-> >  drivers/md/dm-rq.c     |  1 +
-> >  include/linux/blk-mq.h | 13 +++++++++++++
-> >  2 files changed, 14 insertions(+)
-> > 
-> > diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-> > index c9e44ac1f9a6..21d5c1784d0c 100644
-> > --- a/drivers/md/dm-rq.c
-> > +++ b/drivers/md/dm-rq.c
-> > @@ -408,6 +408,7 @@ static int map_request(struct dm_rq_target_io *tio)
-> >  		ret = dm_dispatch_clone_request(clone, rq);
-> >  		if (ret == BLK_STS_RESOURCE || ret == BLK_STS_DEV_RESOURCE) {
-> >  			blk_rq_unprep_clone(clone);
-> > +			blk_mq_cleanup_rq(clone);
-> >  			tio->ti->type->release_clone_rq(clone, &tio->info);
-> >  			tio->clone = NULL;
-> >  			return DM_MAPIO_REQUEUE;
-> 
-> Requiring upper layer driver (dm-rq) to explicitly call blk_mq_cleanup_rq() 
-> seems wrong.  In this instance tio->ti->type->release_clone_rq()
-> (dm-mpath's multipath_release_clone) calls blk_put_request().  Why can't
-> blk_put_request(), or blk_mq_free_request(), call blk_mq_cleanup_rq()?
-
-I did think about doing it in blk_put_request(), and I just want to
-avoid the little cost in generic fast path, given freeing request after
-dispatch is very unusual, so far only nvme multipath and dm-rq did in
-that way.
-
-However, if no one objects to move blk_mq_cleanup_rq() to blk_put_request()
-or blk_mq_free_request(), I am fine to do that in V2.
-
-> 
-> Not looked at the cpu hotplug case you mention, but my naive thought is
-> it'd be pretty weird to also sprinkle a call to blk_mq_cleanup_rq() from
-> that specific "dead hctx" code path.
-
-It isn't weird, and it is exactly what NVMe multipath is doing, please see
-nvme_failover_req(). And it is just that nvme doesn't allocate request
-private data.
-
-Wrt. blk-mq cpu hotplug handling: after one hctx is dead, we can't dispatch
-request to this hctx any more, however one request has been bounded to its
-hctx since its allocation and the association can't(or quite hard to) be
-changed any more, do you have any better idea to deal with this issue?
-
-
-Thanks,
-Ming
+Cheers,
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
