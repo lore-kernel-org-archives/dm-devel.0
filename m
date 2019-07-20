@@ -1,104 +1,63 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH V2 2/2] scsi: implement .cleanup_rq callback
-Date: Sat, 20 Jul 2019 11:06:37 +0800
-Message-ID: <20190720030637.14447-3-ming.lei@redhat.com>
-References: <20190720030637.14447-1-ming.lei@redhat.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: Re: xts fuzz testing and lack of ciphertext stealing
+ support
+Date: Fri, 19 Jul 2019 23:58:07 -0700
+Message-ID: <20190720065807.GA711@sol.localdomain>
+References: <20190716221639.GA44406@gmail.com>
+	<VI1PR0402MB34857BBB18C2BB8CBA2DEC7198C90@VI1PR0402MB3485.eurprd04.prod.outlook.com>
+	<20190717172823.GA205944@gmail.com>
+	<CAKv+Gu__offPaWvyURJr8v56ig58q-Deo16QhP26EJ32uf5m3w@mail.gmail.com>
+	<20190718065223.4xaefcwjoxvujntw@gondor.apana.org.au>
+	<CAKv+Gu9-EWNpJ9viSsjhYRdOZb=7a=Mpddmyt8SLEq9aFtawjg@mail.gmail.com>
+	<20190718072154.m2umem24x4grbf6w@gondor.apana.org.au>
+	<36e78459-1594-6d19-0ab4-95b03a6de036@gmail.com>
+	<MN2PR20MB2973E61815F069E8C7D74177CAC80@MN2PR20MB2973.namprd20.prod.outlook.com>
+	<b042649c-db98-9710-b063-242bdf520252@gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20190720030637.14447-1-ming.lei@redhat.com>
-Sender: stable-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-block@vger.kernel.org, "James E . J . Bottomley" <jejb@linux.ibm.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, linux-scsi@vger.kernel.org, Ming Lei <ming.lei@redhat.com>, "Ewan D . Milne" <emilne@redhat.com>, Bart Van Assche <bvanassche@acm.org>, Hannes Reinecke <hare@suse.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, stable@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <b042649c-db98-9710-b063-242bdf520252@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Milan Broz <gmazyland@gmail.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, Horia Geanta <horia.geanta@nxp.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Pascal Van Leeuwen <pvanleeuwen@verimatrix.com>, "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Implement .cleanup_rq() callback for freeing driver private part of the
-request. Then we can avoid to leak request private data if the request
-isn't completed by SCSI, and freed by blk-mq or upper layer(such as dm-rq)
-finally.
+On Thu, Jul 18, 2019 at 01:19:41PM +0200, Milan Broz wrote:
+> 
+> > From that perspective - to prevent people from doing cryptographically stupid things -
+> > IMHO it would be better to just pull the CTS into the XTS implementation i.e. make
+> > xts natively support blocks that are not a multiple of (but >=) the cipher blocksize ...
+> 
+> I would definitely prefer adding CTS directly to XTS (as it is in gcrypt or OpenSSL now)
+> instead of some new compositions.
+> 
+> Also, I would like to avoid another "just because it is nicer" module dependence (XTS->XEX->ECB).
+> Last time (when XTS was reimplemented using ECB) we have many reports with initramfs
+> missing ECB module preventing boot from AES-XTS encrypted root after kernel upgrade...
+> Just saying. (Despite the last time it was keyring what broke encrypted boot ;-)
+> 
 
-Cc: Ewan D. Milne <emilne@redhat.com>
-Cc: Bart Van Assche <bvanassche@acm.org>
-Cc: Hannes Reinecke <hare@suse.com>
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
-Cc: <stable@vger.kernel.org>
-Fixes: 396eaf21ee17 ("blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback")
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
----
- drivers/scsi/scsi_lib.c | 28 ++++++++++++++++++++--------
- 1 file changed, 20 insertions(+), 8 deletions(-)
+Can't the "missing modules in initramfs" issue be solved by using a
+MODULE_SOFTDEP()?  Actually, why isn't that being used for xts -> ecb already?
 
-diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
-index e1da8c70a266..52537c145762 100644
---- a/drivers/scsi/scsi_lib.c
-+++ b/drivers/scsi/scsi_lib.c
-@@ -154,12 +154,9 @@ scsi_set_blocked(struct scsi_cmnd *cmd, int reason)
- 
- static void scsi_mq_requeue_cmd(struct scsi_cmnd *cmd)
- {
--	if (cmd->request->rq_flags & RQF_DONTPREP) {
--		cmd->request->rq_flags &= ~RQF_DONTPREP;
--		scsi_mq_uninit_cmd(cmd);
--	} else {
--		WARN_ON_ONCE(true);
--	}
-+	WARN_ON_ONCE(!(cmd->request->rq_flags & RQF_DONTPREP));
-+
-+	scsi_mq_uninit_cmd(cmd);
- 	blk_mq_requeue_request(cmd->request, true);
- }
- 
-@@ -563,9 +560,13 @@ static void scsi_mq_free_sgtables(struct scsi_cmnd *cmd)
- 
- static void scsi_mq_uninit_cmd(struct scsi_cmnd *cmd)
- {
-+	if (!(cmd->request->rq_flags & RQF_DONTPREP))
-+		return;
-+
- 	scsi_mq_free_sgtables(cmd);
- 	scsi_uninit_cmd(cmd);
- 	scsi_del_cmd_from_list(cmd);
-+	cmd->request->rq_flags &= ~RQF_DONTPREP;
- }
- 
- /* Returns false when no more bytes to process, true if there are more */
-@@ -1089,6 +1090,17 @@ static void scsi_initialize_rq(struct request *rq)
- 	cmd->retries = 0;
- }
- 
-+/*
-+ * Only called when the request isn't completed by SCSI, and not freed by
-+ * SCSI
-+ */
-+static void scsi_cleanup_rq(struct request *rq)
-+{
-+	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(rq);
-+
-+	scsi_mq_uninit_cmd(cmd);
-+}
-+
- /* Add a command to the list used by the aacraid and dpt_i2o drivers */
- void scsi_add_cmd_to_list(struct scsi_cmnd *cmd)
- {
-@@ -1708,8 +1720,7 @@ static blk_status_t scsi_queue_rq(struct blk_mq_hw_ctx *hctx,
- 		 * we hit an error, as we will never see this command
- 		 * again.
- 		 */
--		if (req->rq_flags & RQF_DONTPREP)
--			scsi_mq_uninit_cmd(cmd);
-+		scsi_mq_uninit_cmd(cmd);
- 		break;
- 	}
- 	return ret;
-@@ -1816,6 +1827,7 @@ static const struct blk_mq_ops scsi_mq_ops = {
- 	.init_request	= scsi_mq_init_request,
- 	.exit_request	= scsi_mq_exit_request,
- 	.initialize_rq_fn = scsi_initialize_rq,
-+	.cleanup_rq	= scsi_cleanup_rq,
- 	.busy		= scsi_mq_lld_busy,
- 	.map_queues	= scsi_map_queues,
- };
--- 
-2.20.1
+(There was also a bug where CONFIG_CRYPTO_XTS didn't select CONFIG_CRYPTO_ECB,
+but that was simply a bug, which was fixed.)
+
+Or "xts" and "xex" could go in the same kernel module xts.ko, which would make
+this a non-issue.
+
+Anyway, I agree that the partial block support, if added, should just be made
+available under the name "xts", as people would expect.  It doesn't need a new
+name.
+
+- Eric
