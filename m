@@ -1,15 +1,13 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [PATCH v8 1/7] crypto: essiv - create wrapper
- template for ESSIV generation
-Date: Fri, 26 Jul 2019 14:31:17 +1000
-Message-ID: <20190726043117.GA654@gondor.apana.org.au>
-References: <20190704183017.31570-2-ard.biesheuvel@linaro.org>
+From: Sasha Levin <sashal@kernel.org>
+Subject: Re: [PATCH V3 1/2] blk-mq: add callback of .cleanup_rq
+Date: Wed, 24 Jul 2019 21:03:22 +0000
+Message-ID: <20190724210323.1B74B2189F@mail.kernel.org>
+References: <20190724031258.31688-2-ming.lei@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20190704183017.31570-2-ard.biesheuvel@linaro.org>
+In-Reply-To: <20190724031258.31688-2-ming.lei@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,43 +17,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: ebiggers@google.com, ard.biesheuvel@linaro.org, linux-fscrypt@vger.kernel.org, gilad@benyossef.com, dm-devel@redhat.com, linux-crypto@vger.kernel.org, gmazyland@gmail.com
+To: Sasha Levin <sashal@kernel.org>, Jens Axboe <axboe@kernel.dk>
+Cc: Hannes Reinecke <hare@suse.com>, Bart Van Assche <bvanassche@acm.org>, Mike Snitzer <snitzer@redhat.com>, "Ewan D. Milne" <emilne@redhat.com>, Ming Lei <ming.lei@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, stable@vger.kernel.org, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
->
-> + * The typical use of this template is to instantiate the skcipher
-> + * 'essiv(cbc(aes),aes,sha256)', which is the only instantiation used by
-> + * fscrypt, and the most relevant one for dm-crypt. However, dm-crypt
-> + * also permits ESSIV to be used in combination with the authenc template,
-> + * e.g., 'essiv(authenc(hmac(sha256),cbc(aes)),aes,sha256)', in which case
-> + * we need to instantiate an aead that accepts the same special key format
-> + * as the authenc template, and deals with the way the encrypted IV is
-> + * embedded into the AAD area of the aead request. This means the AEAD
-> + * flavor produced by this template is tightly coupled to the way dm-crypt
-> + * happens to use it.
+Hi,
 
-IIRC only authenc is allowed in dm-crypt currently in conjunction
-with ESSIV.  Does it ever allow a different hash algorithm in
-authenc compared to the one used for ESSIV? IOW given
+[This is an automated email]
 
-	essiv(authenc(hmac(X),cbc(Y)),Z,U)
+This commit has been processed because it contains a "Fixes:" tag,
+fixing commit: 396eaf21ee17 blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback.
 
-is it currently possible for X != U or Y != Z? If not then let's
-just make the algorithm name be essiv(Y,X).
+The bot has tested the following trees: v5.2.2, v5.1.19, v4.19.60.
 
-Because this is legacy stuff, I don't want it to support any more
-than what is currently being supported by dm-crypt.
+v5.2.2: Build OK!
+v5.1.19: Failed to apply! Possible dependencies:
+    5de719e3d01b ("dm mpath: fix missing call of path selector type->end_io")
 
-Similary for the skcipher case, given
+v4.19.60: Failed to apply! Possible dependencies:
+    36e765392e48 ("blk-mq: complete req in softirq context in case of single queue")
+    5de719e3d01b ("dm mpath: fix missing call of path selector type->end_io")
+    7b7ab780a048 ("block: make request_to_qc_t public")
+    9ba20527f4d1 ("blk-mq: provide mq_ops->busy() hook")
+    c7bb9ad1744e ("block: get rid of q->softirq_done_fn()")
 
-	essiv(cbc(X),Y,Z)
 
-is it ever possible for X != Y? If not then we should just make the
-algorithm name essiv(X,Z).
+NOTE: The patch will not be queued to stable trees until it is upstream.
 
+How should we proceed with this patch?
+
+--
 Thanks,
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+Sasha
