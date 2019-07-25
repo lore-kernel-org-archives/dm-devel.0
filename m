@@ -1,63 +1,62 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH V3 1/2] blk-mq: add callback of .cleanup_rq
-Date: Wed, 24 Jul 2019 12:18:13 -0400
-Message-ID: <20190724161813.GA13896@redhat.com>
-References: <20190724031258.31688-1-ming.lei@redhat.com>
- <20190724031258.31688-2-ming.lei@redhat.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: [PATCH V4 0/2] block/scsi/dm-rq: fix leak of request private data in dm-mpath
+Date: Thu, 25 Jul 2019 10:04:58 +0800
+Message-ID: <20190725020500.4317-1-ming.lei@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
 Return-path: <stable-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190724031258.31688-2-ming.lei@redhat.com>
 Sender: stable-owner@vger.kernel.org
-To: Ming Lei <ming.lei@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, "Ewan D . Milne" <emilne@redhat.com>, Bart Van Assche <bvanassche@acm.org>, Hannes Reinecke <hare@suse.com>, Christoph Hellwig <hch@lst.de>, dm-devel@redhat.com, stable@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-block@vger.kernel.org, Ming Lei <ming.lei@redhat.com>, "Ewan D . Milne" <emilne@redhat.com>, Bart Van Assche <bvanassche@acm.org>, Hannes Reinecke <hare@suse.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Jul 23 2019 at 11:12pm -0400,
-Ming Lei <ming.lei@redhat.com> wrote:
+Hi,
 
-> dm-rq needs to free request which has been dispatched and not completed
-> by underlying queue. However, the underlying queue may have allocated
-> private data for this request in .queue_rq(), so the request private data
-> will be leaked in dm multipath IO code path.
-> 
-> Add one new callback of .cleanup_rq() to fix the memory leak.
+When one request is dispatched to LLD via dm-rq, if the result is
+BLK_STS_*RESOURCE, dm-rq will free the request. However, LLD may allocate
+private data for this request, so this way will cause memory leak.
 
-Think the above kind of glosses over the nature of the issue.  While
-this issue _is_ unique to request-based DM multipath's use of blk-mq it
-ultimately is a failing of the existing blk-mq interface that SCSI's
-per-request private data is leaking.  SO all said, I'd rather this patch
-header reflect the nuance of why you skinned the cat like you have.
+Add .cleanup_rq() callback and implement it in SCSI for fixing the issue,
+since SCSI is the only driver which allocates private requst data in
+.queue_rq() path.
 
-Something like this would be a better header IMHO:
+Another use case of this callback is to free the request and re-submit
+bios during cpu hotplug when the hctx is dead, see the following link:
 
-SCSI maintains its own driver private data hooked off of each SCSI
-request.  An upper layer driver (e.g. dm-rq) may need to retry these
-SCSI requests, before SCSI has fully dispatched them, due to a lower
-level SCSI driver's resource limitation identified in scsi_queue_rq().
-Currently SCSI's per-request private data is leaked when the upper layer
-driver (dm-rq) frees and then retries these requests in response to
-BLK_STS_RESOURCE or BLK_STS_DEV_RESOURCE returns from scsi_queue_rq().
+https://lore.kernel.org/linux-block/f122e8f2-5ede-2d83-9ca0-bc713ce66d01@huawei.com/T/#t
 
-This usecase is so specialized that it doesn't warrant training an
-existing blk-mq interface (e.g. blk_mq_free_request) to allow SCSI to
-account for freeing its driver private data -- doing so would add an
-extra branch for handling a special case that all other consumers of
-SCSI (and blk-mq) won't ever need to worry about.
+V4:
+	- add more commit log on the new .cleanup_rq callback, as suggested
+	  by Mike
 
-So the most pragmatic way forward is to delegate freeing SCSI driver
-private data to the upper layer driver (dm-rq).  Do so by calling a new
-blk_mq_cleanup_rq() method from dm-rq.  A following commit will
-implement the .cleanup_rq() hook in scsi_mq_ops.
+V3:
+	- run .cleanup_rq() from dm-rq because this issue is dm-rq specific,
+	and even in future it should be still very unusual to free request
+	in this way. If we call .cleanup_rq() in generic rq free code(fast
+	path), cost will be introduced unnecessarily, also we have to
+	consider related race.
+
+V2:
+	- run .cleanup_rq() in blk_mq_free_request(), as suggested by Mike 
 
 
-> Another use case is to free request when the hctx is dead during
-> cpu hotplug context.
 
-Not seeing any point forecasting this .cleanup_rq() hook's potential
-ability to address that cpu hotplug case; the future patch that provides
-that fix can deal with it.  Reality is the existing SCSI per-request
-private data leak justifies this new hook on its own.
+Ming Lei (2):
+  blk-mq: add callback of .cleanup_rq
+  scsi: implement .cleanup_rq callback
 
-Mike
+ drivers/md/dm-rq.c      |  1 +
+ drivers/scsi/scsi_lib.c | 13 +++++++++++++
+ include/linux/blk-mq.h  | 13 +++++++++++++
+ 3 files changed, 27 insertions(+)
+
+Cc: Ewan D. Milne <emilne@redhat.com>
+Cc: Bart Van Assche <bvanassche@acm.org>
+Cc: Hannes Reinecke <hare@suse.com>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
+Cc: <stable@vger.kernel.org>
+Fixes: 396eaf21ee17 ("blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback")
+-- 
+2.20.1
