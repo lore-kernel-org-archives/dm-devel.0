@@ -1,8 +1,8 @@
 From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 Subject: Re: xts fuzz testing and lack of ciphertext stealing
 	support
-Date: Thu, 25 Jul 2019 09:22:24 +0300
-Message-ID: <CAKv+Gu-8n_DoauycDQS_9zzRew1rTuPaLxHyg6xhXMmqEvMaCA@mail.gmail.com>
+Date: Thu, 25 Jul 2019 11:01:40 +0300
+Message-ID: <CAKv+Gu-j-8-bQS2A46-Kf1KHtkoPJ5Htk8WratqzyngnVu-wpw@mail.gmail.com>
 References: <20190716221639.GA44406@gmail.com>
 	<VI1PR0402MB34857BBB18C2BB8CBA2DEC7198C90@VI1PR0402MB3485.eurprd04.prod.outlook.com>
 	<20190717172823.GA205944@gmail.com>
@@ -19,11 +19,13 @@ References: <20190716221639.GA44406@gmail.com>
 	<MN2PR20MB2973B9C2DDC508A81AF4A207CAC40@MN2PR20MB2973.namprd20.prod.outlook.com>
 	<CAKv+Gu9C2AEbb++W=QTVWbeA_88Fo57NcOwgU5R8HBvzFwXkJw@mail.gmail.com>
 	<MN2PR20MB2973C378AE5674F9E3E29445CAC60@MN2PR20MB2973.namprd20.prod.outlook.com>
+	<CAKv+Gu-8n_DoauycDQS_9zzRew1rTuPaLxHyg6xhXMmqEvMaCA@mail.gmail.com>
+	<MN2PR20MB2973CAE4E9CFFE1F417B2509CAC10@MN2PR20MB2973.namprd20.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <MN2PR20MB2973C378AE5674F9E3E29445CAC60@MN2PR20MB2973.namprd20.prod.outlook.com>
+In-Reply-To: <MN2PR20MB2973CAE4E9CFFE1F417B2509CAC10@MN2PR20MB2973.namprd20.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -37,126 +39,71 @@ To: Pascal Van Leeuwen <pvanleeuwen@verimatrix.com>
 Cc: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>, Horia Geanta <horia.geanta@nxp.com>, Herbert Xu <herbert@gondor.apana.org.au>
 List-Id: dm-devel.ids
 
-On Wed, 24 Jul 2019 at 19:10, Pascal Van Leeuwen
+On Thu, 25 Jul 2019 at 10:49, Pascal Van Leeuwen
 <pvanleeuwen@verimatrix.com> wrote:
 >
-> Ard,
 >
 > > -----Original Message-----
 > > From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-> > Sent: Monday, July 22, 2019 6:43 PM
+> > Sent: Thursday, July 25, 2019 8:22 AM
 > > To: Pascal Van Leeuwen <pvanleeuwen@verimatrix.com>
 > > Cc: Milan Broz <gmazyland@gmail.com>; Herbert Xu <herbert@gondor.apana.org.au>; dm-devel@redhat.com; linux-
 > > crypto@vger.kernel.org; Horia Geanta <horia.geanta@nxp.com>
 > > Subject: Re: [dm-devel] xts fuzz testing and lack of ciphertext stealing support
 > >
-> > On Mon, 22 Jul 2019 at 12:44, Pascal Van Leeuwen
-> > <pvanleeuwen@verimatrix.com> wrote:
-> > >
-> > > > -----Original Message-----
-> > > > From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-> > > > Sent: Sunday, July 21, 2019 11:50 AM
-> > > > To: Milan Broz <gmazyland@gmail.com>
-> > > > Cc: Pascal Van Leeuwen <pvanleeuwen@verimatrix.com>; Herbert Xu <herbert@gondor.apana.org.au>; dm-devel@redhat.com; linux-
-> > > > crypto@vger.kernel.org; Horia Geanta <horia.geanta@nxp.com>
-> > > > Subject: Re: [dm-devel] xts fuzz testing and lack of ciphertext stealing support
 > > > >
-> > > > On Sat, 20 Jul 2019 at 10:35, Milan Broz <gmazyland@gmail.com> wrote:
-> > > > >
-> > > > > On 20/07/2019 08:58, Eric Biggers wrote:
-> > > > > > On Thu, Jul 18, 2019 at 01:19:41PM +0200, Milan Broz wrote:
-> > > > > >> Also, I would like to avoid another "just because it is nicer" module dependence (XTS->XEX->ECB).
-> > > > > >> Last time (when XTS was reimplemented using ECB) we have many reports with initramfs
-> > > > > >> missing ECB module preventing boot from AES-XTS encrypted root after kernel upgrade...
-> > > > > >> Just saying. (Despite the last time it was keyring what broke encrypted boot ;-)
-> > > > > >>
-> > > > > >
-> > > > > > Can't the "missing modules in initramfs" issue be solved by using a
-> > > > > > MODULE_SOFTDEP()?  Actually, why isn't that being used for xts -> ecb already?
-> > > > > >
-> > > > > > (There was also a bug where CONFIG_CRYPTO_XTS didn't select CONFIG_CRYPTO_ECB,
-> > > > > > but that was simply a bug, which was fixed.)
-> > > > >
-> > > > > Sure, and it is solved now. (Some systems with a hardcoded list of modules
-> > > > > have to be manually updated etc., but that is just bad design).
-> > > > > It can be done properly from the beginning.
-> > > > >
-> > > > > I just want to say that that switching to XEX looks like wasting time to me
-> > > > > for no additional benefit.
-> > > > >
-> > > > > Fully implementing XTS does make much more sense for me, even though it is long-term
-> > > > > the effort and the only user, for now, would be testmgr.
-> > > > >
-> > > > > So, there are no users because it does not work. It makes no sense
-> > > > > to implement it, because there are no users... (sorry, sounds like catch 22 :)
-> > > > >
-> > > > > (Maybe someone can use it for keyslot encryption for keys not aligned to
-> > > > > block size, dunno. Actually, some filesystem encryption could have use for it.)
-> > > > >
-> > > > > > Or "xts" and "xex" could go in the same kernel module xts.ko, which would make
-> > > > > > this a non-issue.
-> > > > >
-> > > > > If it is not available for users, I really see no reason to introduce XEX when
-> > > > > it is just XTS with full blocks.
-> > > > >
-> > > > > If it is visible to users, it needs some work in userspace - XEX (as XTS) need two keys,
-> > > > > people are already confused enough that 256bit key in AES-XTS means AES-128...
-> > > > > So the examples, hints, man pages need to be updated, at least.
-> > > > >
+> > > > Actually, that spec has a couple of test vectors. Unfortunately, they
+> > > > are all rather short (except the last one in the 'no multiple of 16
+> > > > bytes' paragraph, but unfortunately, that one is in fact a multiple of
+> > > > 16 bytes)
 > > > >
-> > > > OK, consider me persuaded. We are already exposing xts(...) to
-> > > > userland, and since we already implement a proper subset of true XTS,
-> > > > it will be simply a matter of making sure that the existing XTS
-> > > > implementations don't regress in performance on the non-CTS code
-> > > > paths.
+> > > > I added them here [0] along with an arm64 implementation for the AES
+> > > > instruction based driver. Could you please double check that these
+> > > > work against your driver?
 > > > >
-> > > > It would be useful, though, to have some generic helper functions,
-> > > > e.g., like the one we have for CBC, or the one I recently proposed for
-> > > > CTS, so that existing implementations (such as the bit sliced AES) can
-> > > > easily be augmented with a CTS code path (but performance may not be
-> > > > optimal in those cases). For the ARM implementations based on AES
-> > > > instructions, it should be reasonably straight forward to implement it
-> > > > close to optimally by reusing some of the code I added for CBC-CTS
-> > > > (but I won't get around to doing that for a while). If there are any
-> > > > volunteers for looking into the generic or x86/AES-NI implementations,
-> > > > please come forward :-) Also, if any of the publications that were
-> > > > quoted in this thread have suitable test vectors, that would be good
-> > > > to know.
-> > >
-> > > Unfortunately, these algorithm & protocol specifications tend to be very frugal when it
-> > > comes to providing test vectors, barely scratching the surface of any corner cases, but
-> > > at least there is one non-multiple-of-16 vector in the original IEEE P1619 / D16
-> > > specification in Annex B Test Vectors (last vector, "XTS-AES-128 applied for a data unit
-> > > that is not a multiple of 16 bytes")
+> > > I got XTS working with the inside-secure driver and these (and all other) vectors pass :-)
 > > >
 > >
-> > Actually, that spec has a couple of test vectors. Unfortunately, they
-> > are all rather short (except the last one in the 'no multiple of 16
-> > bytes' paragraph, but unfortunately, that one is in fact a multiple of
-> > 16 bytes)
+> > Excellent, thanks for the report. May I add your Tested-by when I post
+> > the patch? (just the one that adds the test vectors)
 > >
-> > I added them here [0] along with an arm64 implementation for the AES
-> > instruction based driver. Could you please double check that these
-> > work against your driver?
-> >
-> I got XTS working with the inside-secure driver and these (and all other) vectors pass :-)
+> Sure, feel free
 >
 
-Excellent, thanks for the report. May I add your Tested-by when I post
-the patch? (just the one that adds the test vectors)
+Thanks
 
-> > That would establish a ground truth against
-> > which we can implement the generic version as well.
-> >
-> > [0] https://git.kernel.org/pub/scm/linux/kernel/git/ardb/linux.git/log/?h=xts-cts
-> >
-> > > Besides that, I'd be happy to generate some testvectors from our defacto-standard
-> > > implementation ;-)
+> > > > That would establish a ground truth against
+> > > > which we can implement the generic version as well.
+> > > >
+> > > > [0] https://git.kernel.org/pub/scm/linux/kernel/git/ardb/linux.git/log/?h=xts-cts
+> > > >
+> > > > > Besides that, I'd be happy to generate some testvectors from our defacto-standard
+> > > > > implementation ;-)
+> > > > >
+> > > >
+> > > > One or two larger ones would be useful, yes.
+> > > >
+> > > I'll see if I can extract some suitable vectors from our verification suite ...
 > > >
 > >
-> > One or two larger ones would be useful, yes.
+> > Great. Once available, I'll run them against my implementations and report back.
 > >
-> I'll see if I can extract some suitable vectors from our verification suite ...
+> Just wondering ... do you have any particular requirements on the sizes?
+> From my implementation's perspective, it doesn't make a whole lot of sense to test vectors
+> of more than 3 times the cipher block size, but then I realized that you probably need
+> larger vectors due to the loop unrolling you do for the vector implementations?
+> You also don't want them to be too big as they take up space in the kernel image ...
 >
 
-Great. Once available, I'll run them against my implementations and report back.
+We have code that operates on 1 block, 3 blocks (ARM), 4-5 blocks
+(arm64) or 8 blocks (ARM,arm64) at a time. However, the most important
+thing is to test the handover between the block based loop and the
+epilogue that operates on the final 17-31 bytes when ciphertext
+stealing is being done.
+
+So ideally, we'd have 1 full block + 1 full/1 partial, 3 full blocks +
+1 full/1 partial, and so on for 4, 5 and 8 blocks, to cover all the
+code flows, but since the unrolled routines all support arbitrary
+block counts (and so the handover between the multiblock and the
+single block handling is already covered), just having the first two
+would  be sufficient IMO.
