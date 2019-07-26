@@ -1,7 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: reorder vendor in hwtable
-Date: Fri, 26 Jul 2019 21:19:30 +0200
-Message-ID: <20190726191930.23630-3-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: delete examples from
+	mpathpersist output
+Date: Fri, 26 Jul 2019 21:19:29 +0200
+Message-ID: <20190726191930.23630-2-xose.vazquez@gmail.com>
 References: <20190726191930.23630-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,59 +18,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: Yacine Kheddache <yacine@alyseo.com>, DM-DEVEL ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: DM-DEVEL ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Nexenta was acquired by DDN.
+The manual page is more complete and detailed.
 
-Cc: Yacine Kheddache <yacine@alyseo.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM-DEVEL ML <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 23 +++++++++++------------
- 1 file changed, 11 insertions(+), 12 deletions(-)
+ mpathpersist/main.c | 7 +------
+ 1 file changed, 1 insertion(+), 6 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 96e8b25..a06872e 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -300,6 +300,17 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_ALUA,
- 		.no_path_retry = 30,
- 	},
-+	{
-+		/*
-+		 * Nexenta COMSTAR
-+		 *
-+		 * Maintainer: Yacine Kheddache <yacine@alyseo.com>
-+		 */
-+		.vendor        = "NEXENTA",
-+		.product       = "COMSTAR",
-+		.pgpolicy      = GROUP_BY_SERIAL,
-+		.no_path_retry = 30,
-+	},
- 	/*
- 	 * Dell EMC
- 	 */
-@@ -780,18 +791,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = MULTIBUS,
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
- 	},
--	/*
--	 * Nexenta
--	 *
--	 * Maintainer: Yacine Kheddache <yacine@alyseo.com>
--	 */
--	{
--		/* COMSTAR */
--		.vendor        = "NEXENTA",
--		.product       = "COMSTAR",
--		.pgpolicy      = GROUP_BY_SERIAL,
--		.no_path_retry = 30,
--	},
- 	/*
- 	 * NEC
- 	 */
+diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+index 5ad06a9..c451855 100644
+--- a/mpathpersist/main.c
++++ b/mpathpersist/main.c
+@@ -844,12 +844,7 @@ static void usage(void)
+ 			"    --reserve|-R               PR Out: Reserve\n"
+ 			"    --transport-id=TIDS|-X TIDS  TransportIDs can be mentioned\n"
+ 			"                                 in several forms\n"
+-			"    --alloc-length=LEN|-l LEN  PR In: maximum allocation length\n"
+-			" Examples:\n"
+-			"     mpathpersist --out --register --param-sark=123abc --prout-type=5 /dev/mapper/mpath9\n"
+-			"     mpathpersist -i -k /dev/mapper/mpath9\n"
+-			"     mpathpersist --out --reserve --param-sark=123abc --prout-type=8 -d /dev/mapper/mpath9\n"
+-			"     mpathpersist -i -s -d /dev/mapper/mpath9\n");
++			"    --alloc-length=LEN|-l LEN  PR In: maximum allocation length\n");
+ }
+ 
+ void
 -- 
 2.21.0
