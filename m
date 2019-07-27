@@ -1,135 +1,58 @@
-From: Hou Tao <houtao1@huawei.com>
-Subject: Re: [RFC PATCH 0/3] md: export internal stats through debugfs
-Date: Sat, 27 Jul 2019 13:55:06 +0800
-Message-ID: <9e74accf-14c6-91f7-55ca-6bdabe0fb878@huawei.com>
-References: <20190702132918.114818-1-houtao1@huawei.com>
- <1ebcf2e8-f3ce-7417-4060-b9264a5a4e51@oracle.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: xts fuzz testing and lack of ciphertext stealing
+ support
+Date: Sat, 27 Jul 2019 18:04:32 +0200
+Message-ID: <97532fae-4c17-bb8f-d245-04bf97cef4d1@gmail.com>
+References: <20190716221639.GA44406@gmail.com>
+	<20190720065807.GA711@sol.localdomain>
+	<0d4d6387-777c-bfd3-e54a-e7244fde0096@gmail.com>
+	<CAKv+Gu9UF+a1UhVU19g1XcLaEqEaAwwkSm3-2wTHEAdD-q4mLQ@mail.gmail.com>
+	<MN2PR20MB2973B9C2DDC508A81AF4A207CAC40@MN2PR20MB2973.namprd20.prod.outlook.com>
+	<CAKv+Gu9C2AEbb++W=QTVWbeA_88Fo57NcOwgU5R8HBvzFwXkJw@mail.gmail.com>
+	<MN2PR20MB2973C378AE5674F9E3E29445CAC60@MN2PR20MB2973.namprd20.prod.outlook.com>
+	<CAKv+Gu-8n_DoauycDQS_9zzRew1rTuPaLxHyg6xhXMmqEvMaCA@mail.gmail.com>
+	<MN2PR20MB2973CAE4E9CFFE1F417B2509CAC10@MN2PR20MB2973.namprd20.prod.outlook.com>
+	<CAKv+Gu-j-8-bQS2A46-Kf1KHtkoPJ5Htk8WratqzyngnVu-wpw@mail.gmail.com>
+	<MN2PR20MB29739591E1A3E54E7A8A8E18CAC00@MN2PR20MB2973.namprd20.prod.outlook.com>
+	<VI1PR0402MB34850A016F3228124C0D360698C00@VI1PR0402MB3485.eurprd04.prod.outlook.com>
+	<MN2PR20MB29732C3B360EB809EDFBFAC5CAC00@MN2PR20MB2973.namprd20.prod.outlook.com>
+	<CAKv+Gu9krpqWYuD2mQFBTspo3y_TwrN6Arbvkcs=e4MpTeitHA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1ebcf2e8-f3ce-7417-4060-b9264a5a4e51@oracle.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAKv+Gu9krpqWYuD2mQFBTspo3y_TwrN6Arbvkcs=e4MpTeitHA@mail.gmail.com>
 Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Bob Liu <bob.liu@oracle.com>, linux-raid@vger.kernel.org, songliubraving@fb.com
-Cc: neilb@suse.com, linux-block@vger.kernel.org, snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ard Biesheuvel <ard.biesheuvel@linaro.org>, Pascal Van Leeuwen <pvanleeuwen@verimatrix.com>
+Cc: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>, Horia Geanta <horia.geanta@nxp.com>, Herbert Xu <herbert@gondor.apana.org.au>
 List-Id: dm-devel.ids
 
-Hi,
-
-On 2019/7/23 7:30, Bob Liu wrote:
-> On 7/2/19 9:29 PM, Hou Tao wrote:
->> Hi,
->>
->> There are so many io counters, stats and flags in md, so I think
->> export these info to userspace will be helpful for online-debugging,
+On 27/07/2019 07:39, Ard Biesheuvel wrote:
+> Thanks for the additional test vectors. They work fine with my SIMD
+> implementations for ARM [0], so this looks like it might be a CAAM
+> problem, not a problem with the test vectors.
 > 
-> For online-debugging, I'd suggest you have a try eBPF which can be very helpful.
-> 
+> I will try to find some time today to run them through OpenSSL to double check.
 
-Thanks for your suggestion. Using an eBPF program to read these internal status
-from a host which is fully under your control is a good choice, but when
-the dependencies of an eBPF program (e.g., the minor version of the kernel
-and the kernel configuration which will influence the struct layout) is
-out-of-your-control, it's not a good choice.
+I shamelessly copied your test vectors to my vector test for cryptsetup backend.
+
+Both OpenSSL and gcrypt XTS implementation passed all tests here!
+
+If interested - this is copy of backend we have in cryptsetup, vectors added in crypto-vectors.c
+(there are some hard defines in Makefile, cryptsetup uses autoconf instead).
+  OpenSSL: https://github.com/mbroz/cryptsetup_backend_test
+  gcrypt branch: https://github.com/mbroz/cryptsetup_backend_test/tree/gcrypt
+
+Once kernel AF_ALG supports it, I can easily test it the same way.
 
 Thanks,
-Tao
-
-> -Bob
-> 
->> especially when the vmlinux file and the crash utility are not
->> available. And these info can also be utilized during code
->> understanding.
->>
->> MD has already exported some stats through sysfs files under
->> /sys/block/mdX/md, but using sysfs file to export more internal
->> stats are not a good choice, because we need to create a single
->> sysfs file for each internal stat according to the use convention
->> of sysfs and there are too many internal stats. Further, the
->> newly-created sysfs files would become APIs for userspace tools,
->> but that is not we wanted, because these files are related with
->> internal stats and internal stats may change from time to time.
->>
->> And I think debugfs is a better choice. Because we can show multiple
->> related stats in a debugfs file, and the debugfs file will never be
->> used as an userspace API.
->>
->> Two debugfs files are created to expose these internal stats:
->> * iostat: io counters and io related stats (e.g., mddev->active_io,
->> 	r1conf->nr_pending, or r1confi->retry_list)
->> * stat: normal stats/flags (e.g., mddev->recovery, conf->array_frozen)
->>
->> Because internal stats are spreaded all over md-core and md-personality,
->> so both md-core and md-personality will create these two debugfs files
->> under different debugfs directory.
->>
->> Patch 1 factors out the debugfs files creation routine for md-core and
->> md-personality, patch 2 creates two debugfs files: iostat & stat under
->> /sys/kernel/debug/block/mdX for md-core, and patch 3 creates two debugfs
->> files: iostat & stat under /sys/kernel/debug/block/mdX/raid1 for md-raid1.
->>
->> The following lines show the hierarchy and the content of these debugfs
->> files for a RAID1 device:
->>
->> $ pwd
->> /sys/kernel/debug/block/md0
->> $ tree
->> .
->> ├── iostat
->> ├── raid1
->> │   ├── iostat
->> │   └── stat
->> └── stat
->>
->> $ cat iostat
->> active_io 0
->> sb_wait 0 pending_writes 0
->> recovery_active 0
->> bitmap pending_writes 0
->>
->> $ cat stat
->> flags 0x20
->> sb_flags 0x0
->> recovery 0x0
->>
->> $ cat raid1/iostat
->> retry_list active 0
->> bio_end_io_list active 0
->> pending_bio_list active 0 cnt 0
->> sync_pending 0
->> nr_pending 0
->> nr_waiting 0
->> nr_queued 0
->> barrier 0
->>
->> $ cat raid1/stat
->> array_frozen 0
->>
->> I'm not sure whether the division of internal stats is appropriate and
->> whether the internal stats in debugfs files are sufficient, so questions
->> and comments are weclome.
->>
->> Regards,
->> Tao
->>
->> Hou Tao (3):
->>   md-debugfs: add md_debugfs_create_files()
->>   md: export inflight io counters and internal stats in debugfs
->>   raid1: export inflight io counters and internal stats in debugfs
->>
->>  drivers/md/Makefile     |  2 +-
->>  drivers/md/md-debugfs.c | 35 ++++++++++++++++++
->>  drivers/md/md-debugfs.h | 16 +++++++++
->>  drivers/md/md.c         | 65 ++++++++++++++++++++++++++++++++++
->>  drivers/md/md.h         |  1 +
->>  drivers/md/raid1.c      | 78 +++++++++++++++++++++++++++++++++++++++++
->>  drivers/md/raid1.h      |  1 +
->>  7 files changed, 197 insertions(+), 1 deletion(-)
->>  create mode 100644 drivers/md/md-debugfs.c
->>  create mode 100644 drivers/md/md-debugfs.h
->>
-> 
-> 
-> .
-> 
+Milan
