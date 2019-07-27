@@ -1,29 +1,43 @@
 From: Hou Tao <houtao1@huawei.com>
 Subject: Re: [RFC PATCH 0/3] md: export internal stats through debugfs
-Date: Sat, 27 Jul 2019 13:47:19 +0800
-Message-ID: <b047c187-e4a6-a82a-3177-3da7fef2f6b8@huawei.com>
+Date: Sat, 27 Jul 2019 13:55:06 +0800
+Message-ID: <9e74accf-14c6-91f7-55ca-6bdabe0fb878@huawei.com>
 References: <20190702132918.114818-1-houtao1@huawei.com>
- <CAPhsuW6yH7np1=+e5Rgutp3m1VA0TPvtANeX=0ZdpJaRKEvBkQ@mail.gmail.com>
+ <1ebcf2e8-f3ce-7417-4060-b9264a5a4e51@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAPhsuW6yH7np1=+e5Rgutp3m1VA0TPvtANeX=0ZdpJaRKEvBkQ@mail.gmail.com>
+In-Reply-To: <1ebcf2e8-f3ce-7417-4060-b9264a5a4e51@oracle.com>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Song Liu <liu.song.a23@gmail.com>
-Cc: linux-raid <linux-raid@vger.kernel.org>, Song Liu <songliubraving@fb.com>, NeilBrown <neilb@suse.com>, linux-block@vger.kernel.org, snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com, open list <linux-kernel@vger.kernel.org>
+To: Bob Liu <bob.liu@oracle.com>, linux-raid@vger.kernel.org, songliubraving@fb.com
+Cc: neilb@suse.com, linux-block@vger.kernel.org, snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
 Hi,
 
-On 2019/7/23 5:31, Song Liu wrote:
-> On Tue, Jul 2, 2019 at 6:25 AM Hou Tao <houtao1@huawei.com> wrote:
->>
+On 2019/7/23 7:30, Bob Liu wrote:
+> On 7/2/19 9:29 PM, Hou Tao wrote:
 >> Hi,
 >>
 >> There are so many io counters, stats and flags in md, so I think
 >> export these info to userspace will be helpful for online-debugging,
+> 
+> For online-debugging, I'd suggest you have a try eBPF which can be very helpful.
+> 
+
+Thanks for your suggestion. Using an eBPF program to read these internal status
+from a host which is fully under your control is a good choice, but when
+the dependencies of an eBPF program (e.g., the minor version of the kernel
+and the kernel configuration which will influence the struct layout) is
+out-of-your-control, it's not a good choice.
+
+Thanks,
+Tao
+
+> -Bob
+> 
 >> especially when the vmlinux file and the crash utility are not
 >> available. And these info can also be utilized during code
 >> understanding.
@@ -43,7 +57,7 @@ On 2019/7/23 5:31, Song Liu wrote:
 >>
 >> Two debugfs files are created to expose these internal stats:
 >> * iostat: io counters and io related stats (e.g., mddev->active_io,
->>         r1conf->nr_pending, or r1confi->retry_list)
+>> 	r1conf->nr_pending, or r1confi->retry_list)
 >> * stat: normal stats/flags (e.g., mddev->recovery, conf->array_frozen)
 >>
 >> Because internal stats are spreaded all over md-core and md-personality,
@@ -64,8 +78,8 @@ On 2019/7/23 5:31, Song Liu wrote:
 >> .
 >> ├── iostat
 >> ├── raid1
->> │   ├── iostat
->> │   └── stat
+>> │   ├── iostat
+>> │   └── stat
 >> └── stat
 >>
 >> $ cat iostat
@@ -88,28 +102,34 @@ On 2019/7/23 5:31, Song Liu wrote:
 >> nr_waiting 0
 >> nr_queued 0
 >> barrier 0
+>>
+>> $ cat raid1/stat
+>> array_frozen 0
+>>
+>> I'm not sure whether the division of internal stats is appropriate and
+>> whether the internal stats in debugfs files are sufficient, so questions
+>> and comments are weclome.
+>>
+>> Regards,
+>> Tao
+>>
+>> Hou Tao (3):
+>>   md-debugfs: add md_debugfs_create_files()
+>>   md: export inflight io counters and internal stats in debugfs
+>>   raid1: export inflight io counters and internal stats in debugfs
+>>
+>>  drivers/md/Makefile     |  2 +-
+>>  drivers/md/md-debugfs.c | 35 ++++++++++++++++++
+>>  drivers/md/md-debugfs.h | 16 +++++++++
+>>  drivers/md/md.c         | 65 ++++++++++++++++++++++++++++++++++
+>>  drivers/md/md.h         |  1 +
+>>  drivers/md/raid1.c      | 78 +++++++++++++++++++++++++++++++++++++++++
+>>  drivers/md/raid1.h      |  1 +
+>>  7 files changed, 197 insertions(+), 1 deletion(-)
+>>  create mode 100644 drivers/md/md-debugfs.c
+>>  create mode 100644 drivers/md/md-debugfs.h
+>>
 > 
-> Hi,
-> 
-> Sorry for the late reply.
-> 
-> I think these information are really debug information that we should not
-> show in /sys. Once we expose them in /sys, we need to support them
-> because some use space may start searching data from them.
-So debugfs is used to place these debug information instead of sysfs.
-
-It's OK for user-space tools to search data from these files as long as these
-tools don't expect these information to be stable. And the most possible user
-of these files would be test programs, and if some user-space tools may truly
-expect some stable information from the debugfs file, maybe we should move
-these information from debugfs to sysfs file.
-
-Regards,
-Tao
-
-> 
-> Thanks,
-> Song
 > 
 > .
 > 
