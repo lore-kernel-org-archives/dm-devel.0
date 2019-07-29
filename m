@@ -1,76 +1,118 @@
-From: Bob Liu <bob.liu@oracle.com>
-Subject: Re: memory leak in bio_copy_user_iov
-Date: Mon, 29 Jul 2019 09:03:21 +0800
-Message-ID: <81dcfa59-152c-4f22-2054-615662364394@oracle.com>
-References: <000000000000aec4ec058ec71a3d@google.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: snapshot-origin with no snapshot may lead to BUG()
+	in bio_split()
+Date: Mon, 29 Jul 2019 10:38:20 -0400
+Message-ID: <20190729143820.GA8423@redhat.com>
+References: <VI1P191MB0014912D317079AAF7F3870BAECA0@VI1P191MB0014.EURP191.PROD.OUTLOOK.COM>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <000000000000aec4ec058ec71a3d@google.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: syzbot <syzbot+03e5c8ebd22cc6c3a8cb@syzkaller.appspotmail.com>, agk@redhat.com, axboe@kernel.dk, coreteam@netfilter.org, davem@davemloft.net, dm-devel@redhat.com, hdanton@sina.com, kaber@trash.net, kadlec@blackhole.kfki.hu, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, pablo@netfilter.org, shli@kernel.org, snitzer@redhat.com, syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <VI1P191MB0014912D317079AAF7F3870BAECA0@VI1P191MB0014.EURP191.PROD.OUTLOOK.COM>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: =?iso-8859-1?Q?C=E9dric?= Delmas <cedricde@outlook.fr>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 7/29/19 8:38 AM, syzbot wrote:
-> syzbot has bisected this bug to:
-> 
-> commit 664820265d70a759dceca87b6eb200cd2b93cda8
-> Author: Mike Snitzer <snitzer@redhat.com>
-> Date:   Thu Feb 18 20:44:39 2016 +0000
-> 
->     dm: do not return target from dm_get_live_table_for_ioctl()
-> 
+On Sat, Jul 20 2019 at  5:26am -0400,
+C=E9dric Delmas <cedricde@outlook.fr> wrote:
 
-This(and previous bisection) look not related to the reported leak.
+> Hello,
+> =
+
+> I encountered a bug while working with DM snapshot targets: having a
+> snapshot-origin target with all snapshots removed may lead to
+> BUG_ON(sectors <=3D 0) in function bio_split() (file block/bio.c).
+
+...
+ =
+
+> Steps to reproduce:
+> truncate -s 500M origin.bin
+> truncate -s 50M snapshot.bin
+> losetup /dev/loop0 origin.bin
+> losetup /dev/loop1 snapshot.bin
+> mkfs.ext4 /dev/loop0
+> dmsetup create snap --table "0 $(blockdev --getsz /dev/loop0) snapshot /d=
+ev/loop0 /dev/loop1 N 256"
+> dmsetup create orig --table "0 $(blockdev --getsz /dev/loop0) snapshot-or=
+igin /dev/loop0"
+> # use /dev/mapper/snap and /dev/mapper/orig then unmount them
+> dmsetup suspend orig
+> dmsetup remove snap
+> dmsetup resume orig
+> e2fsck /dev/mapper/orig
+> # BUG in bio_split()
+> =
+
+> Steps to reproduce (the express way):
+> truncate -s 500M origin.bin
+> losetup /dev/loop0 origin.bin
+> mkfs.ext4 /dev/loop0
+> dmsetup create orig --table "0 $(blockdev --getsz /dev/loop0) snapshot-or=
+igin /dev/loop0"
+> e2fsck /dev/mapper/orig
+> # BUG in bio_split()
+> =
+
+> =
+
+> I looked at the code and to my opinion the problem comes from function or=
+igin_map (file drivers/md/dm-snap.c). In the following code:
+> =
+
+> static int origin_map(struct dm_target *ti, struct bio *bio)
+> {
+> 	struct dm_origin *o =3D ti->private;
+> 	unsigned available_sectors;
+> ...
+> 	available_sectors =3D o->split_boundary -
+> 		((unsigned)bio->bi_iter.bi_sector & (o->split_boundary - 1));
+> =
+
+> 	if (bio_sectors(bio) > available_sectors)
+> 		dm_accept_partial_bio(bio, available_sectors);
+> ...
+> =
+
+> when there is no snapshot, split_boundary is 0 so available_sectors gets =
+an invalid value.
+> The problem no more appears if the function origin_map early exits using =
+the following patch:
+> --- a/drivers/md/dm-snap.c      2019-07-14 08:11:23.000000000 +0200
+> +++ b/drivers/md/dm-snap.c      2019-07-19 17:50:15.876000000 +0200
+> @@ -2328,6 +2328,9 @@ static int origin_map(struct dm_target *
+>         if (bio_data_dir(bio) !=3D WRITE)
+>                 return DM_MAPIO_REMAPPED;
+>  =
+
+> +       if (unlikely(!o->split_boundary))
+> +               return do_origin(o->dev, bio);
+> +
+>         available_sectors =3D o->split_boundary -
+>                 ((unsigned)bio->bi_iter.bi_sector & (o->split_boundary - =
+1));
+>  =
 
 
-A possible reason may be KASAN can't recognize the failure path of bio_alloc_bioset()
-where mempool_free() is called but not kmalloc(p).
+When there is no snapshot snapshot-origin shouldn't be used.
 
-But it's not a real bug, because we have the condition if (nr_iovecs > inline_vecs).
+So your patch may fix the BUG() you hit but it doesn't go far enough
+with warning the user that they've entered "unsupported" territory.
 
-Below fix may avoid the syzbot bug report..
+Rather than call do_origin() I'm inclined to
+DMERR_LIMIT("... unsupported ...") and error the IO.
 
-diff --git a/block/bio.c b/block/bio.c
-index 4db1008..04a7879 100644
---- a/block/bio.c
-+++ b/block/bio.c
-@@ -513,8 +513,10 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, unsigned int nr_iovecs,
-                        bvl = bvec_alloc(gfp_mask, nr_iovecs, &idx, &bs->bvec_pool);
-                }
- 
--               if (unlikely(!bvl))
--                       goto err_free;
-+               if (unlikely(!bvl)) {
-+                       mempool_free(p, &bs->bio_pool);
-+                       return NULL;
-+               }
- 
-                bio->bi_flags |= idx << BVEC_POOL_OFFSET;
-        } else if (nr_iovecs) {
-@@ -525,10 +527,6 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, unsigned int nr_iovecs,
-        bio->bi_max_vecs = nr_iovecs;
-        bio->bi_io_vec = bvl;
-        return bio;
--
--err_free:
--       mempool_free(p, &bs->bio_pool);
--       return NULL;
- }
- EXPORT_SYMBOL(bio_alloc_bioset);
+What are your reasons for wanting to silently allow this unsupported
+usecase?
 
-
-Regards, -Bob
-
-> bisection log:  https://urldefense.proofpoint.com/v2/url?u=https-3A__syzkaller.appspot.com_x_bisect.txt-3Fx-3D13f4eb64600000&d=DwIBaQ&c=RoP1YumCXCgaWHvlZYR8PZh8Bv7qIrMUB65eapI_JnE&r=1ktT0U2YS_I8Zz2o-MS1YcCAzWZ6hFGtyTgvVMGM7gI&m=NfGQRVxYCfZacAKiml9Wue-G1r2h8qkuAhAMOx_uFcc&s=MNjYy_nft_s0ErmK2n89p7y2yhKmeWlxWch0z7_dsm8&e=start commit:   0011572c Merge branch 'for-5.2-fixes' of git://git.kernel...
-> git tree:       upstream
-> final crash:    https://urldefense.proofpoint.com/v2/url?u=https-3A__syzkaller.appspot.com_x_report.txt-3Fx-3D100ceb64600000&d=DwIBaQ&c=RoP1YumCXCgaWHvlZYR8PZh8Bv7qIrMUB65eapI_JnE&r=1ktT0U2YS_I8Zz2o-MS1YcCAzWZ6hFGtyTgvVMGM7gI&m=NfGQRVxYCfZacAKiml9Wue-G1r2h8qkuAhAMOx_uFcc&s=iviPOQNPEIjkuqBma_VWEQ9l1Ve3eOiTwads42E4ZPo&e=console output: https://urldefense.proofpoint.com/v2/url?u=https-3A__syzkaller.appspot.com_x_log.txt-3Fx-3D17f4eb64600000&d=DwIBaQ&c=RoP1YumCXCgaWHvlZYR8PZh8Bv7qIrMUB65eapI_JnE&r=1ktT0U2YS_I8Zz2o-MS1YcCAzWZ6hFGtyTgvVMGM7gI&m=NfGQRVxYCfZacAKiml9Wue-G1r2h8qkuAhAMOx_uFcc&s=MBwnFwjEcSQfYymfv8EYt_EawVdK9vD-OAqDMutO-YY&e=kernel config:  https://urldefense.proofpoint.com/v2/url?u=https-3A__syzkaller.appspot.com_x_.config-3Fx-3Dcb38d33cd06d8d48&d=DwIBaQ&c=RoP1YumCXCgaWHvlZYR8PZ
- h8Bv7qIrMUB65eapI_JnE&r=1ktT0U2YS_I8Zz2o-MS1YcCAzWZ6hFGtyTgvVMGM7gI&m=NfGQRVxYCfZacAKiml9Wue-G1r2h8qkuAhAMOx_uFcc&s=SqmDUenNFS-961PGgiMW5mIUv0nIBrf0oBrzUxYZ8Do&e=dashboard link:
-> https://urldefense.proofpoint.com/v2/url?u=https-3A__syzkaller.appspot.com_bug-3Fextid-3D03e5c8ebd22cc6c3a8cb&d=DwIBaQ&c=RoP1YumCXCgaWHvlZYR8PZh8Bv7qIrMUB65eapI_JnE&r=1ktT0U2YS_I8Zz2o-MS1YcCAzWZ6hFGtyTgvVMGM7gI&m=NfGQRVxYCfZacAKiml9Wue-G1r2h8qkuAhAMOx_uFcc&s=jKd2ocY5X94uyB8Or-OC3yffbOgClPQPlXqFnLzvvSY&e=syz repro:      https://urldefense.proofpoint.com/v2/url?u=https-3A__syzkaller.appspot.com_x_repro.syz-3Fx-3D13244221a00000&d=DwIBaQ&c=RoP1YumCXCgaWHvlZYR8PZh8Bv7qIrMUB65eapI_JnE&r=1ktT0U2YS_I8Zz2o-MS1YcCAzWZ6hFGtyTgvVMGM7gI&m=NfGQRVxYCfZacAKiml9Wue-G1r2h8qkuAhAMOx_uFcc&s=K-C39Kcd1oEOtJKwnby-s1EyEZZA10mr9bcXZ0J9Kh0&e=C reproducer:   https://urldefense.proofpoint.com/v2/url?u=https-3A__syzkaller.appspot.com_x_repro.c-3Fx-3D117b2432a00000&d=DwIBaQ&c=RoP1YumCXCgaWHvlZYR8PZh8Bv7qIrMUB6
- 5eapI_JnE&r=1ktT0U2YS_I8Zz2o-MS1YcCAzWZ6hFGtyTgvVMGM7gI&m=NfGQRVxYCfZacAKiml9Wue-G1r2h8qkuAhAMOx_uFcc&s=7J685CwQN6_FA2KgO3Vgy1msF0zi5O0OqZj_bgvEqBE&e=
-> Reported-by: syzbot+03e5c8ebd22cc6c3a8cb@syzkaller.appspotmail.com
-> Fixes: 664820265d70 ("dm: do not return target from dm_get_live_table_for_ioctl()")
-> 
-> For information about bisection process see: https://urldefense.proofpoint.com/v2/url?u=https-3A__goo.gl_tpsmEJ-23bisection&d=DwIBaQ&c=RoP1YumCXCgaWHvlZYR8PZh8Bv7qIrMUB65eapI_JnE&r=1ktT0U2YS_I8Zz2o-MS1YcCAzWZ6hFGtyTgvVMGM7gI&m=NfGQRVxYCfZacAKiml9Wue-G1r2h8qkuAhAMOx_uFcc&s=rs52TkiEQCrV4V8YQa2wT55HD8E-0AX9pn7MNIDcje4&e=
+Mike
