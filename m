@@ -1,11 +1,16 @@
-From: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
-Subject: [PATCH 0/2] Introduce new raid0 state 'broken'
-Date: Mon, 29 Jul 2019 17:31:33 -0300
-Message-ID: <20190729203135.12934-1-gpiccoli@canonical.com>
+From: Roman Mamedov <rm@romanrm.net>
+Subject: Re: [PATCH] md/raid0: Fail BIOs if their underlying
+ block device is gone
+Date: Tue, 30 Jul 2019 01:36:55 +0500
+Message-ID: <20190730013655.229020ea@natsu>
+References: <20190729193359.11040-1-gpiccoli@canonical.com>
+	<20190730011850.2f19e140@natsu>
+	<053c88e1-06ec-0db1-de8f-68f63a3a1305@canonical.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <053c88e1-06ec-0db1-de8f-68f63a3a1305@canonical.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,69 +20,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-raid@vger.kernel.org
-Cc: songliubraving@fb.com, gpiccoli@canonical.com, neilb@suse.com, linux-block@vger.kernel.org, dm-devel@redhat.com, jay.vosburgh@canonical.com
+To: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
+Cc: linux-block@vger.kernel.org, Song Liu <songliubraving@fb.com>, NeilBrown <neilb@suse.com>, linux-raid@vger.kernel.org, dm-devel@redhat.com, jay.vosburgh@canonical.com
 List-Id: dm-devel.ids
 
-Currently the md/raid0 device behaves quite differently of other block
-devices when it comes to failure. While other md levels contain vast
-logic to deal with failures, and other non-md devices like scsi disks
-or nvme rely on a dying queue when they fail, md/raid0 for instance
-does not signal failures if an array member is removed while the array
-is mounted; in that case, udev signals the device removal but mdadm
-cannot succeed in the STOP_ARRAY ioctl, since it's mounted.
+On Mon, 29 Jul 2019 17:27:15 -0300
+"Guilherme G. Piccoli" <gpiccoli@canonical.com> wrote:
 
-This behavior was tentatively changed in the past to match the scsi/nvme
-devices (see [0]), but this attempt was quite complex, it had some corner
-cases and (the few) community reviews weren't generally positive.
-So, we are trying again with a simpler approach this time.
+> Hi Roman, I don't think this is usual setup. I understand that there are
+> RAID10 (also known as RAID 0+1) in which we can have like 4 devices, and
+> they pair in 2 sets of two disks using stripping, then these sets are
+> paired using mirroring. This is handled by raid10 driver however, so it
+> won't suffer for this issue.
+> 
+> I don't think it's common or even makes sense to back a raid1 with 2
+> pure raid0 devices.
 
-This series introduces a new array state 'broken' (for raid0 only), which
-mimics the state 'clean'. The main goal for this new state is a way to
-signal the user that something is wrong with the array. We also included a
-warn_once-style message in kernel log to alert the user when the array has
-one failed member.
+It might be not a usual setup, but it is a nice possibility that you get with
+MD. If for the moment you don't have drives of the needed size, but have
+smaller drives. E.g.:
 
-The series encompass changes in the kernel and in mdadm tool. To get the
-'broken' state completely functional one requires both changes, but mdadm
-and kernel can live without their counterpart changes (in case some users
-gets an updated mdadm for example, but keeps using an old kernel).
+- had a 2x1TB RAID1;
+- one disk fails;
+- no 1TB disks at hand;
+- but lots of 500GB disks;
+- let's make a 2x500GB RAID0 and have that stand in for the missing 1TB
+member for the time being;
 
-This series does not affect at all the way md/raid0 will react to I/O
-failures. It was discussed in [0] that it should be better if raid0 could
-fail faster in case it gets a member removed; we just proposed a change in
-that realm too (see [1]), but it seems better to have them reviewed/treated
-separately.
-
-This series was tested with raid0 arrays holding both an ext4 and xfs
-filesystems. Thanks in advance for the reviews/feedbacks.
-Cheers,
-
-
-Guilherme
-
-
-[0] lore.kernel.org/linux-block/20190418220448.7219-1-gpiccoli@canonical.com
-[1] lore.kernel.org/linux-block/20190729193359.11040-1-gpiccoli@canonical.com
-
-
-Guilherme G. Piccoli (1):
-  md/raid0: Introduce new array state 'broken' for raid0
-
-[kernel part]
- drivers/md/md.c    | 23 +++++++++++++++++++----
- drivers/md/md.h    |  2 ++
- drivers/md/raid0.c | 26 ++++++++++++++++++++++++++
- 3 files changed, 47 insertions(+), 4 deletions(-)
-
-[mdadm]
- Detail.c  | 16 ++++++++++++++--
- Monitor.c |  9 +++++++--
- maps.c    |  1 +
- mdadm.h   |  1 +
- mdmon.h   |  2 +-
- monitor.c |  4 ++--
- 6 files changed, 26 insertions(+), 7 deletions(-)
+Or here's for a detailed rationale of a more permanent scenario:
+https://louwrentius.com/building-a-raid-6-array-of-mixed-drives.html
 
 -- 
-2.22.0
+With respect,
+Roman
