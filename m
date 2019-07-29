@@ -1,16 +1,14 @@
 From: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
-Subject: Re: [PATCH] md/raid0: Fail BIOs if their underlying
- block device is gone
-Date: Mon, 29 Jul 2019 17:27:15 -0300
-Message-ID: <053c88e1-06ec-0db1-de8f-68f63a3a1305@canonical.com>
-References: <20190729193359.11040-1-gpiccoli@canonical.com>
-	<20190730011850.2f19e140@natsu>
+Subject: [PATCH 2/2] mdadm: Introduce new array state 'broken'
+	for raid0
+Date: Mon, 29 Jul 2019 17:31:35 -0300
+Message-ID: <20190729203135.12934-3-gpiccoli@canonical.com>
+References: <20190729203135.12934-1-gpiccoli@canonical.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190730011850.2f19e140@natsu>
-Content-Language: en-US
+In-Reply-To: <20190729203135.12934-1-gpiccoli@canonical.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,43 +18,162 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Roman Mamedov <rm@romanrm.net>
-Cc: linux-block@vger.kernel.org, Song Liu <songliubraving@fb.com>, NeilBrown <neilb@suse.com>, linux-raid@vger.kernel.org, dm-devel@redhat.com, jay.vosburgh@canonical.com
+To: linux-raid@vger.kernel.org
+Cc: songliubraving@fb.com, gpiccoli@canonical.com, neilb@suse.com, linux-block@vger.kernel.org, dm-devel@redhat.com, jay.vosburgh@canonical.com
 List-Id: dm-devel.ids
 
+Currently if a md/raid0 array gets one or more members removed while
+being mounted, kernel keeps showing state 'clean' in the 'array_state'
+sysfs attribute. Despite udev signaling the member device is gone, 'mdadm'
+cannot issue the STOP_ARRAY ioctl successfully, given the array is mounted.
 
+Nothing else hints that something is wrong (except that the removed devices
+don't show properly in the output of mdadm 'detail' command). There is no
+other property to be checked, and if user is not performing reads/writes
+to the array, even kernel log is quiet and doesn't give a clue about the
+missing member.
 
-On 29/07/2019 17:18, Roman Mamedov wrote:
-> On Mon, 29 Jul 2019 16:33:59 -0300
-> "Guilherme G. Piccoli" <gpiccoli@canonical.com> wrote:
-> 
->> Currently md/raid0 is not provided with any mechanism to validate if
->> an array member got removed or failed. The driver keeps sending BIOs
->> regardless of the state of array members. This leads to the following
->> situation: if a raid0 array member is removed and the array is mounted,
->> some user writing to this array won't realize that errors are happening
->> unless they check kernel log or perform one fsync per written file.
->>
->> In other words, no -EIO is returned and writes (except direct ones) appear
->> normal. Meaning the user might think the wrote data is correctly stored in
->> the array, but instead garbage was written given that raid0 does stripping
->> (and so, it requires all its members to be working in order to not corrupt
->> data).
-> 
-> If that's correct, then this seems to be a critical weak point in cases when
-> we have a RAID0 as a member device in RAID1/5/6/10 arrays.
-> 
+This patch is the mdadm counterpart of kernel new array state 'broken'.
+The 'broken' state mimics the state 'clean' in every aspect, being useful
+only to distinguish if an array has some member missing. All necessary
+paths in mdadm were changed to deal with 'broken' state, and in case the
+tool runs in a kernel that is not updated, it'll work normally, i.e., it
+doesn't require the 'broken' state in order to work.
+Also, this patch changes the way the array state is showed in the 'detail'
+command (for raid0 only) - now it takes the 'array_state' sysfs attribute
+into account instead of only rely in the MD_SB_CLEAN flag.
 
-Hi Roman, I don't think this is usual setup. I understand that there are
-RAID10 (also known as RAID 0+1) in which we can have like 4 devices, and
-they pair in 2 sets of two disks using stripping, then these sets are
-paired using mirroring. This is handled by raid10 driver however, so it
-won't suffer for this issue.
+Signed-off-by: Guilherme G. Piccoli <gpiccoli@canonical.com>
+---
+ Detail.c  | 16 ++++++++++++++--
+ Monitor.c |  9 +++++++--
+ maps.c    |  1 +
+ mdadm.h   |  1 +
+ mdmon.h   |  2 +-
+ monitor.c |  4 ++--
+ 6 files changed, 26 insertions(+), 7 deletions(-)
 
-I don't think it's common or even makes sense to back a raid1 with 2
-pure raid0 devices.
-Thanks for your comment!
-Cheers,
-
-
-Guilherme
+diff --git a/Detail.c b/Detail.c
+index 20ea03a..4bf86b1 100644
+--- a/Detail.c
++++ b/Detail.c
+@@ -81,6 +81,7 @@ int Detail(char *dev, struct context *c)
+ 	int external;
+ 	int inactive;
+ 	int is_container = 0;
++	char arrayst[12] = { 0 }; /* no state is >10 chars currently */
+ 
+ 	if (fd < 0) {
+ 		pr_err("cannot open %s: %s\n",
+@@ -485,9 +486,20 @@ int Detail(char *dev, struct context *c)
+ 			else
+ 				st = ", degraded";
+ 
++			if (array.state & (1 << MD_SB_CLEAN)) {
++				if (array.level == 0)
++					strncpy(arrayst,
++						map_num(sysfs_array_states,
++							sra->array_state),
++						sizeof(arrayst)-1);
++				else
++					strncpy(arrayst, "clean",
++						sizeof(arrayst)-1);
++			} else
++				strncpy(arrayst, "active", sizeof(arrayst)-1);
++
+ 			printf("             State : %s%s%s%s%s%s \n",
+-			       (array.state & (1 << MD_SB_CLEAN)) ?
+-			       "clean" : "active", st,
++			       arrayst, st,
+ 			       (!e || (e->percent < 0 &&
+ 				       e->percent != RESYNC_PENDING &&
+ 				       e->percent != RESYNC_DELAYED)) ?
+diff --git a/Monitor.c b/Monitor.c
+index 036103f..9a6a250 100644
+--- a/Monitor.c
++++ b/Monitor.c
+@@ -1055,8 +1055,12 @@ int Wait(char *dev)
+ 	}
+ }
+ 
++/* The state "broken" is used only for RAID0 - it's the same as "clean", but
++ * used in case the array has one or more members missing.
++ */
++#define CLEAN_STATES_LAST_POS	5
+ static char *clean_states[] = {
+-	"clear", "inactive", "readonly", "read-auto", "clean", NULL };
++	"clear", "inactive", "readonly", "read-auto", "clean", "broken", NULL };
+ 
+ int WaitClean(char *dev, int verbose)
+ {
+@@ -1116,7 +1120,8 @@ int WaitClean(char *dev, int verbose)
+ 			rv = read(state_fd, buf, sizeof(buf));
+ 			if (rv < 0)
+ 				break;
+-			if (sysfs_match_word(buf, clean_states) <= 4)
++			if (sysfs_match_word(buf, clean_states)
++			    <= CLEAN_STATES_LAST_POS)
+ 				break;
+ 			rv = sysfs_wait(state_fd, &delay);
+ 			if (rv < 0 && errno != EINTR)
+diff --git a/maps.c b/maps.c
+index 02a0474..98ddbbc 100644
+--- a/maps.c
++++ b/maps.c
+@@ -150,6 +150,7 @@ mapping_t sysfs_array_states[] = {
+ 	{ "read-auto", ARRAY_READ_AUTO },
+ 	{ "clean", ARRAY_CLEAN },
+ 	{ "write-pending", ARRAY_WRITE_PENDING },
++	{ "broken", ARRAY_BROKEN_RAID0 },
+ 	{ NULL, ARRAY_UNKNOWN_STATE }
+ };
+ 
+diff --git a/mdadm.h b/mdadm.h
+index c36d7fd..72c2525 100644
+--- a/mdadm.h
++++ b/mdadm.h
+@@ -375,6 +375,7 @@ struct mdinfo {
+ 		ARRAY_ACTIVE,
+ 		ARRAY_WRITE_PENDING,
+ 		ARRAY_ACTIVE_IDLE,
++		ARRAY_BROKEN_RAID0,
+ 		ARRAY_UNKNOWN_STATE,
+ 	} array_state;
+ 	struct md_bb bb;
+diff --git a/mdmon.h b/mdmon.h
+index 818367c..b3d72ac 100644
+--- a/mdmon.h
++++ b/mdmon.h
+@@ -21,7 +21,7 @@
+ extern const char Name[];
+ 
+ enum array_state { clear, inactive, suspended, readonly, read_auto,
+-		   clean, active, write_pending, active_idle, bad_word};
++		   clean, active, write_pending, active_idle, broken, bad_word};
+ 
+ enum sync_action { idle, reshape, resync, recover, check, repair, bad_action };
+ 
+diff --git a/monitor.c b/monitor.c
+index 81537ed..e0d3be6 100644
+--- a/monitor.c
++++ b/monitor.c
+@@ -26,7 +26,7 @@
+ 
+ static char *array_states[] = {
+ 	"clear", "inactive", "suspended", "readonly", "read-auto",
+-	"clean", "active", "write-pending", "active-idle", NULL };
++	"clean", "active", "write-pending", "active-idle", "broken", NULL };
+ static char *sync_actions[] = {
+ 	"idle", "reshape", "resync", "recover", "check", "repair", NULL
+ };
+@@ -476,7 +476,7 @@ static int read_and_act(struct active_array *a, fd_set *fds)
+ 		a->next_state = clean;
+ 		ret |= ARRAY_DIRTY;
+ 	}
+-	if (a->curr_state == clean) {
++	if ((a->curr_state == clean) || (a->curr_state == broken)) {
+ 		a->container->ss->set_array_state(a, 1);
+ 	}
+ 	if (a->curr_state == active ||
+-- 
+2.22.0
