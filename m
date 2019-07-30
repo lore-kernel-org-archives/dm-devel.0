@@ -1,27 +1,23 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Dan Williams <dan.j.williams@intel.com>
 Subject: Re: dm: fix dax_dev NULL dereference
-Date: Tue, 30 Jul 2019 15:07:38 -0400
-Message-ID: <20190730190737.GA14873@redhat.com>
-References: <20190730113708.14660-1-pagupta@redhat.com>
- <2030283543.5419072.1564486701158.JavaMail.zimbra@redhat.com>
+Date: Tue, 30 Jul 2019 14:38:24 -0700
+Message-ID: <CAPcyv4i10K3QdSwa3EF9t8pS-QrB9YcBEMy49N1PnYQzCkBJCw@mail.gmail.com>
+References: <20190730113708.14660-1-pagupta@redhat.com> <2030283543.5419072.1564486701158.JavaMail.zimbra@redhat.com>
+ <20190730190737.GA14873@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <2030283543.5419072.1564486701158.JavaMail.zimbra@redhat.com>
+In-Reply-To: <20190730190737.GA14873@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Pankaj Gupta <pagupta@redhat.com>
-Cc: dan j williams <dan.j.williams@intel.com>, dm-devel@redhat.com, linux-nvdimm@lists.01.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, agk@redhat.com, jencce.kernel@gmail.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Pankaj Gupta <pagupta@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-nvdimm <linux-nvdimm@lists.01.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, jencce.kernel@gmail.com
 List-Id: dm-devel.ids
 
-I staged the fix (which I tweaked) here:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.3&id=95b9ebb78c4c733f8912a195fbd0bc19960e726e
+On Tue, Jul 30, 2019 at 12:07 PM Mike Snitzer <snitzer@redhat.com> wrote:
+>
+> I staged the fix (which I tweaked) here:
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.3&id=95b9ebb78c4c733f8912a195fbd0bc19960e726e
 
-Also, please note this additional related commit that just serves to
-improve a related function name and clean up some whitespace:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.3&id=f965f935a89bb174fd3f6d6b51bba91c1ed258c5
-
-I'll likely send these to Linus for 5.2-rc3 later this week.
-
-Thanks,
-Mike
+Thanks for picking this up Mike, but I'd prefer to just teach
+dax_synchronous() to return false if the passed in dax_dev is NULL.
+Thoughts?
