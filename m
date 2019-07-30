@@ -1,35 +1,68 @@
-From: Pankaj Gupta <pagupta@redhat.com>
-Subject: Re: dm: fix dax_dev NULL dereference
-Date: Tue, 30 Jul 2019 23:50:36 -0400 (EDT)
-Message-ID: <1887039269.5822356.1564545036201.JavaMail.zimbra@redhat.com>
-References: <20190730113708.14660-1-pagupta@redhat.com> <2030283543.5419072.1564486701158.JavaMail.zimbra@redhat.com> <20190730190737.GA14873@redhat.com>
+From: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
+Subject: Re: [PATCH 1/2] md/raid0: Introduce new array state
+ 'broken' for raid0
+Date: Tue, 30 Jul 2019 09:18:54 -0300
+Message-ID: <000c20fe-3bcd-2dff-a5ab-9a294bdc7746@canonical.com>
+References: <20190729203135.12934-1-gpiccoli@canonical.com>
+	<20190729203135.12934-2-gpiccoli@canonical.com>
+	<d730c417-a328-3df3-1e31-32b6df48b6ad@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190730190737.GA14873@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dan j williams <dan.j.williams@intel.com>, dm-devel@redhat.com, linux-nvdimm@lists.01.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, agk@redhat.com, jencce kernel <jencce.kernel@gmail.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <d730c417-a328-3df3-1e31-32b6df48b6ad@oracle.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bob Liu <bob.liu@oracle.com>, linux-raid@vger.kernel.org
+Cc: linux-block@vger.kernel.org, jay.vosburgh@canonical.com, dm-devel@redhat.com, songliubraving@fb.com, neilb@suse.com
 List-Id: dm-devel.ids
 
+On 30/07/2019 03:20, Bob Liu wrote:
+> [...]
+>> + * broken
+>> + *     RAID0-only: same as clean, but array is missing a member.
+>> + *     It's useful because RAID0 mounted-arrays aren't stopped
+>> + *     when a member is gone, so this state will at least alert
+>> + *     the user that something is wrong.
+> 
+> 
+> Curious why only raid0 has this issue? 
+> 
+> Thanks, -Bob
 
-> 
-> I staged the fix (which I tweaked) here:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.3&id=95b9ebb78c4c733f8912a195fbd0bc19960e726e
-> 
-> Also, please note this additional related commit that just serves to
-> improve a related function name and clean up some whitespace:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.3&id=f965f935a89bb174fd3f6d6b51bba91c1ed258c5
-> 
-> I'll likely send these to Linus for 5.2-rc3 later this week.
+Hi Bob, I understand that all other levels have fault-tolerance logic,
+while raid0 is just a "bypass" driver that selects the correct
+underlying device to send the BIO and blindly sends it. It's known to be
+a performance-only /lightweight solution whereas the other levels aim to
+be reliable.
 
-o.k
+I've quickly tested raid5 and rai10, and see messages like this on
+kernel log when removing a device (in raid5):
 
-Thank you,
-Pankaj
+[35.764975] md/raid:md0: Disk failure on nvme1n1, disabling device.
+md/raid:md0: Operation continuing on 1 devices.
 
-> 
-> Thanks,
-> Mike
-> 
+The message seen in raid10 is basically the same. As a (cheap)
+comparison of the complexity among levels, look that:
+
+<...>/linux-mainline/drivers/md# cat raid5* | wc -l
+14191
+
+<...>/linux-mainline/drivers/md# cat raid10* | wc -l
+5135
+
+<...>/linux-mainline/drivers/md# cat raid0* | wc -l
+820
+
+Cheers,
+
+
+Guilherme
