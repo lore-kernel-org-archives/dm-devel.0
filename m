@@ -1,18 +1,17 @@
 From: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
-Subject: Re: [PATCH] md/raid0: Fail BIOs if their underlying
- block device is gone
-Date: Thu, 1 Aug 2019 17:28:24 -0300
-Message-ID: <9674ca8f-4325-3023-8a1d-39782103f55d@canonical.com>
-References: <20190729193359.11040-1-gpiccoli@canonical.com>
-	<87zhkwl6ya.fsf@notabene.neil.brown.name>
-	<6400083b-3cf3-cbc6-650a-c3ae6629b14c@canonical.com>
-	<CAPhsuW69YrpHqBCOob2b5wzzWS9FM087sfe3iC0odX8kZWRwmA@mail.gmail.com>
-	<CAPhsuW5zB=Kik4rq9YA-xBer7Z-h-23QV4WSCWe-jvhFgGc0Cw@mail.gmail.com>
+Subject: Re: [PATCH 1/2] md/raid0: Introduce new array state
+ 'broken' for raid0
+Date: Wed, 31 Jul 2019 10:04:23 -0300
+Message-ID: <9dd836f8-7358-834f-8d29-cd0db717d01b@canonical.com>
+References: <20190729203135.12934-1-gpiccoli@canonical.com>
+	<20190729203135.12934-2-gpiccoli@canonical.com>
+	<d730c417-a328-3df3-1e31-32b6df48b6ad@oracle.com>
+	<87ftmnkpxi.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAPhsuW5zB=Kik4rq9YA-xBer7Z-h-23QV4WSCWe-jvhFgGc0Cw@mail.gmail.com>
+In-Reply-To: <87ftmnkpxi.fsf@notabene.neil.brown.name>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -23,55 +22,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Song Liu <liu.song.a23@gmail.com>
-Cc: Neil F Brown <nfbrown@suse.com>, Song Liu <songliubraving@fb.com>, NeilBrown <neilb@suse.com>, linux-raid <linux-raid@vger.kernel.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, Jay Vosburgh <jay.vosburgh@canonical.com>
+To: NeilBrown <neilb@suse.com>, Bob Liu <bob.liu@oracle.com>, linux-raid@vger.kernel.org
+Cc: linux-block@vger.kernel.org, jay.vosburgh@canonical.com, songliubraving@fb.com, dm-devel@redhat.com, Neil F Brown <nfbrown@suse.com>
 List-Id: dm-devel.ids
 
-
-
-On 31/07/2019 16:56, Song Liu wrote:
-> On Wed, Jul 31, 2019 at 12:54 PM Song Liu <liu.song.a23@gmail.com> wrote:
+On 30/07/2019 21:28, NeilBrown wrote:
+> On Tue, Jul 30 2019, Bob Liu wrote:
 >>
->> On Tue, Jul 30, 2019 at 5:31 AM Guilherme G. Piccoli
->> <gpiccoli@canonical.com> wrote:
->>>
->>> On 29/07/2019 21:08, NeilBrown wrote:
->>>> [...]
->>>>> +    if (unlikely(test_bit(MD_BROKEN, &mddev->flags))) {
->>>>> +            bio_io_error(bio);
->>>>> +            return BLK_QC_T_NONE;
->>>>> +    }
->>>>
->>>> I think this should only fail WRITE requests, not READ requests.
->>>>
->>>> Otherwise the patch is probably reasonable.
->>>>
->>>> NeilBrown
->>>
->>> Thanks for the feedback Neil! I thought about it; it seemed to me better
->>> to deny/fail the reads instead of returning "wrong" reads, since a file
->>> read in a raid0 will be incomplete if one member is missing.
->>> But it's fine for me to change that in the next iteration of this patch.
 >>
->> For reads at block/page level, we will either get EIO or valid data, right?
->>
->> If that's not the case, we should fail all writes.
+>> Curious why only raid0 has this issue? 
 > 
-> Oops, I meant all _reads_.
+> Actually, it isn't only raid0.  'linear' has the same issue.
+> Probably the fix for raid0 should be applied to linear too.
+> 
+> NeilBrown
+> 
 
-Hi Song, thanks for the feedback! After changing the patch and testing a
-bit, it behaves exactly as you said, we got either valid data read from
-the healthy devices or -EIO for the data tentatively read from the
-failed/missing array members.
+Thanks Neil, it makes sense! I didn't considered "linear" and indeed,
+after some testing, it reacts exactly as raid0/stripping.
 
-So, I'll resubmit with that change. Also, I've noticed clearing the
-BROKEN flag seem unnecessary, if user stops the array in order to fix
-the missing member, it'll require a re-assembly and the array is gonna
-work again.
-
-Do you / Neil considers this fix relevant to md/linear too? If so, I can
-also include that in the V2.
-Thanks,
+In case this patch gets good acceptance I can certainly include
+md/linear in that!
+Cheers,
 
 
 Guilherme
