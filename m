@@ -1,58 +1,73 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: dm: fix dax_dev NULL dereference
-Date: Tue, 30 Jul 2019 15:15:30 -0700
-Message-ID: <CAA9_cmd8to1108H+osSuyyRriX50-g1YV3YebJ=PNsKbW0NPFw@mail.gmail.com>
-References: <20190730113708.14660-1-pagupta@redhat.com> <2030283543.5419072.1564486701158.JavaMail.zimbra@redhat.com>
- <20190730190737.GA14873@redhat.com> <CAPcyv4i10K3QdSwa3EF9t8pS-QrB9YcBEMy49N1PnYQzCkBJCw@mail.gmail.com>
- <20190730220102.GA15604@redhat.com>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: [PATCH 1/2] md/raid0: Introduce new array state
+	'broken' for raid0
+Date: Wed, 31 Jul 2019 10:28:41 +1000
+Message-ID: <87ftmnkpxi.fsf@notabene.neil.brown.name>
+References: <20190729203135.12934-1-gpiccoli@canonical.com>
+	<20190729203135.12934-2-gpiccoli@canonical.com>
+	<d730c417-a328-3df3-1e31-32b6df48b6ad@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190730220102.GA15604@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: linux-nvdimm <linux-nvdimm@lists.01.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>
+Content-Type: multipart/mixed; boundary="===============2372846459033689565=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <d730c417-a328-3df3-1e31-32b6df48b6ad@oracle.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bob Liu <bob.liu@oracle.com>, "Guilherme G. Piccoli" <gpiccoli@canonical.com>, linux-raid@vger.kernel.org
+Cc: linux-block@vger.kernel.org, jay.vosburgh@canonical.com, songliubraving@fb.com, dm-devel@redhat.com, Neil F Brown <nfbrown@suse.com>
 List-Id: dm-devel.ids
 
-On Tue, Jul 30, 2019 at 3:01 PM Mike Snitzer <snitzer@redhat.com> wrote:
->
-> On Tue, Jul 30 2019 at  5:38pm -0400,
-> Dan Williams <dan.j.williams@intel.com> wrote:
->
-> > On Tue, Jul 30, 2019 at 12:07 PM Mike Snitzer <snitzer@redhat.com> wrote:
-> > >
-> > > I staged the fix (which I tweaked) here:
-> > > https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.3&id=95b9ebb78c4c733f8912a195fbd0bc19960e726e
-> >
-> > Thanks for picking this up Mike, but I'd prefer to just teach
-> > dax_synchronous() to return false if the passed in dax_dev is NULL.
-> > Thoughts?
->
-> I considered that too but I moved away from it because I'm so used to
-> the various block interfaces requiring the caller pass a non-NULL
-> pointer (e.g. request_queue):
->
-> $ grep -ri return drivers/md/dm-table.c | grep \&\&
-> drivers/md/dm-table.c:        return dev->dax_dev && dax_synchronous(dev->dax_dev);
-> drivers/md/dm-table.c:        return q && blk_queue_zoned_model(q) == *zoned_model;
-> drivers/md/dm-table.c:        return q && blk_queue_zone_sectors(q) == *zone_sectors;
-> drivers/md/dm-table.c:        return q && (q->queue_flags & flush);
-> drivers/md/dm-table.c:        return q && blk_queue_nonrot(q);
-> drivers/md/dm-table.c:        return q && !blk_queue_add_random(q);
-> drivers/md/dm-table.c:        return q && !q->limits.max_write_same_sectors;
-> drivers/md/dm-table.c:        return q && !q->limits.max_write_zeroes_sectors;
-> drivers/md/dm-table.c:        return q && !blk_queue_discard(q);
-> drivers/md/dm-table.c:        return q && !blk_queue_secure_erase(q);
-> drivers/md/dm-table.c:        return q && bdi_cap_stable_pages_required(q->backing_dev_info);
->
-> I'm fine with however you'd like to skin this cat though.
->
-> Just let me know and I'll keep/drop this patch accordingly.
+--===============2372846459033689565==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha256; protocol="application/pgp-signature"
 
-Ok, since you've already got it queued, and there are no other
-required "if (!dax_dev)" fixups go ahead with what you have.
+--=-=-=
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-    Acked-by: Dan Williams <dan.j.williams@intel.com>
+On Tue, Jul 30 2019, Bob Liu wrote:
+>
+>
+> Curious why only raid0 has this issue?=20
 
-I just reserve the right to go push it down a level if the kernel ever
-grows more dax_synchronous() users that do that safety check.
+Actually, it isn't only raid0.  'linear' has the same issue.
+Probably the fix for raid0 should be applied to linear too.
+
+NeilBrown
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAl1A4LoACgkQOeye3VZi
+gbn0wRAAuH9h2Qxza5xLzWsV8tlEajzIAXMeAxp4Q+IY9Na0AgXSZPtyyE5lv2TR
+wcQhQPFc+rDV+GF2rWoDOkhLKhJENtiTUoGH8ZrhU4C9hW5NRjDx80DruXKwBRll
+G5OxcVY9kCDAOPtJnQHw6YjUwvWCiuoYnGqwBqoilnprsH13gPs1YFgaX+wvAj3P
+ReAYsTxXQnPOQScQLJQlyis6s+unhCb8++viZmEVSnjK7i+W4i16p2xKyZTWXmXe
+FZ+rsOiSll2aaYaBHIGH4oIW7wTNFeOt0z9hJ+Ce0aoQDynccbrNgtoKvkS7NN2O
+k8Ci9sGX/GAmUmMD1pZgbJaRaPzMmY61gtVh25hKBMXSe9BTn+B1X9dYm44wQdP0
++hI0lSo4aP0v+aH2KByTg8e2VOOKEgtxJbeqDybgkxjGAiKW8Q82PnCt7jPmAbth
+MCFuLsRp/jBClDvvvQUAYTa5rX4rASKzdFs9bQ3O7xG78SUoBBm9qyXu2HjAbYWO
+BBXKWLqOXkjol1m5NWJMvY8XIvIhl8SDZNy4kzFdbuSD7eXIWBrp+RXFo7aMdRv9
+krY0LAjQKYrzB7TmK7JJmI3rvGnSzBi4pQrJNc6NjOTyaCYF2qg/4LexXa27fNXj
+lmWELXJmHvz4WHPJvjhPY5FAO2NjeNNDGpb5AJy4eDhyuF7hfH8=
+=ErRK
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+
+--===============2372846459033689565==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2372846459033689565==--
