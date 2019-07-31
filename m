@@ -1,18 +1,16 @@
-From: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
-Subject: Re: [PATCH 1/2] md/raid0: Introduce new array state
- 'broken' for raid0
-Date: Wed, 31 Jul 2019 10:04:23 -0300
-Message-ID: <9dd836f8-7358-834f-8d29-cd0db717d01b@canonical.com>
-References: <20190729203135.12934-1-gpiccoli@canonical.com>
-	<20190729203135.12934-2-gpiccoli@canonical.com>
-	<d730c417-a328-3df3-1e31-32b6df48b6ad@oracle.com>
-	<87ftmnkpxi.fsf@notabene.neil.brown.name>
+From: Song Liu <liu.song.a23@gmail.com>
+Subject: Re: [PATCH] md/raid0: Fail BIOs if their underlying
+	block device is gone
+Date: Wed, 31 Jul 2019 12:54:19 -0700
+Message-ID: <CAPhsuW69YrpHqBCOob2b5wzzWS9FM087sfe3iC0odX8kZWRwmA@mail.gmail.com>
+References: <20190729193359.11040-1-gpiccoli@canonical.com>
+	<87zhkwl6ya.fsf@notabene.neil.brown.name>
+	<6400083b-3cf3-cbc6-650a-c3ae6629b14c@canonical.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <87ftmnkpxi.fsf@notabene.neil.brown.name>
-Content-Language: en-US
+In-Reply-To: <6400083b-3cf3-cbc6-650a-c3ae6629b14c@canonical.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,28 +20,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: NeilBrown <neilb@suse.com>, Bob Liu <bob.liu@oracle.com>, linux-raid@vger.kernel.org
-Cc: linux-block@vger.kernel.org, jay.vosburgh@canonical.com, songliubraving@fb.com, dm-devel@redhat.com, Neil F Brown <nfbrown@suse.com>
+To: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
+Cc: Neil F Brown <nfbrown@suse.com>, Song Liu <songliubraving@fb.com>, NeilBrown <neilb@suse.com>, linux-raid <linux-raid@vger.kernel.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, Jay Vosburgh <jay.vosburgh@canonical.com>
 List-Id: dm-devel.ids
 
-On 30/07/2019 21:28, NeilBrown wrote:
-> On Tue, Jul 30 2019, Bob Liu wrote:
->>
->>
->> Curious why only raid0 has this issue? 
-> 
-> Actually, it isn't only raid0.  'linear' has the same issue.
-> Probably the fix for raid0 should be applied to linear too.
-> 
-> NeilBrown
-> 
+On Tue, Jul 30, 2019 at 5:31 AM Guilherme G. Piccoli
+<gpiccoli@canonical.com> wrote:
+>
+> On 29/07/2019 21:08, NeilBrown wrote:
+> >[...]
+> >> +    if (unlikely(test_bit(MD_BROKEN, &mddev->flags))) {
+> >> +            bio_io_error(bio);
+> >> +            return BLK_QC_T_NONE;
+> >> +    }
+> >
+> > I think this should only fail WRITE requests, not READ requests.
+> >
+> > Otherwise the patch is probably reasonable.
+> >
+> > NeilBrown
+>
+> Thanks for the feedback Neil! I thought about it; it seemed to me better
+> to deny/fail the reads instead of returning "wrong" reads, since a file
+> read in a raid0 will be incomplete if one member is missing.
+> But it's fine for me to change that in the next iteration of this patch.
 
-Thanks Neil, it makes sense! I didn't considered "linear" and indeed,
-after some testing, it reacts exactly as raid0/stripping.
+For reads at block/page level, we will either get EIO or valid data, right?
 
-In case this patch gets good acceptance I can certainly include
-md/linear in that!
-Cheers,
+If that's not the case, we should fail all writes.
 
-
-Guilherme
+Thanks,
+Song
