@@ -1,48 +1,36 @@
-From: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
-Subject: Re: [PATCH] md/raid0: Fail BIOs if their underlying
- block device is gone
-Date: Tue, 30 Jul 2019 09:30:31 -0300
-Message-ID: <6400083b-3cf3-cbc6-650a-c3ae6629b14c@canonical.com>
-References: <20190729193359.11040-1-gpiccoli@canonical.com>
-	<87zhkwl6ya.fsf@notabene.neil.brown.name>
+From: Song Liu <liu.song.a23@gmail.com>
+Subject: Re: [RFC PATCH 0/3] md: export internal stats through debugfs
+Date: Wed, 31 Jul 2019 14:07:43 -0700
+Message-ID: <CAPhsuW5c96vQDiwbPhDvKOG8_XkPapW62bkthPAHFOum2N2VhQ@mail.gmail.com>
+References: <20190702132918.114818-1-houtao1@huawei.com> <CAPhsuW6yH7np1=+e5Rgutp3m1VA0TPvtANeX=0ZdpJaRKEvBkQ@mail.gmail.com>
+ <b047c187-e4a6-a82a-3177-3da7fef2f6b8@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <87zhkwl6ya.fsf@notabene.neil.brown.name>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: NeilBrown <neilb@suse.com>, linux-raid@vger.kernel.org
-Cc: linux-block@vger.kernel.org, jay.vosburgh@canonical.com, Song Liu <songliubraving@fb.com>, dm-devel@redhat.com, Neil F Brown <nfbrown@suse.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <b047c187-e4a6-a82a-3177-3da7fef2f6b8@huawei.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Hou Tao <houtao1@huawei.com>
+Cc: linux-raid <linux-raid@vger.kernel.org>, Song Liu <songliubraving@fb.com>, NeilBrown <neilb@suse.com>, linux-block@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, dm-devel@redhat.com, open list <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On 29/07/2019 21:08, NeilBrown wrote:
->[...]
->> +	if (unlikely(test_bit(MD_BROKEN, &mddev->flags))) {
->> +		bio_io_error(bio);
->> +		return BLK_QC_T_NONE;
->> +	}
-> 
-> I think this should only fail WRITE requests, not READ requests.
-> 
-> Otherwise the patch is probably reasonable.
-> 
-> NeilBrown
+On Fri, Jul 26, 2019 at 10:48 PM Hou Tao <houtao1@huawei.com> wrote:
+>
+> Hi,
+>
+[...]
+> >
+> > Hi,
+> >
+> > Sorry for the late reply.
+> >
+> > I think these information are really debug information that we should not
+> > show in /sys. Once we expose them in /sys, we need to support them
+> > because some use space may start searching data from them.
+> So debugfs is used to place these debug information instead of sysfs.
 
-Thanks for the feedback Neil! I thought about it; it seemed to me better
-to deny/fail the reads instead of returning "wrong" reads, since a file
-read in a raid0 will be incomplete if one member is missing.
-But it's fine for me to change that in the next iteration of this patch.
+I don't think we should dump random information into debugfs. It is common
+for the developers to carry some local patches that dumps information for
+debug. We cannot get these patches upstream.
 
-Cheers,
-
-
-Guilherme
+Thanks,
+Song
