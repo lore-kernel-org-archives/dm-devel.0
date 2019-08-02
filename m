@@ -1,13 +1,13 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 15/16] multipathd: use marginal_pathgroups
-Date: Fri,  2 Aug 2019 11:33:41 -0500
-Message-ID: <1564763622-31752-16-git-send-email-bmarzins@redhat.com>
-References: <1564763622-31752-1-git-send-email-bmarzins@redhat.com>
+From: Dmitry Fomichev <dmitry.fomichev@wdc.com>
+Subject: [PATCH 1/2] dm-zoned: add SPDX license identifiers
+Date: Fri,  2 Aug 2019 15:02:50 -0700
+Message-ID: <20190802220251.1217-2-dmitry.fomichev@wdc.com>
+References: <20190802220251.1217-1-dmitry.fomichev@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1564763622-31752-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <20190802220251.1217-1-dmitry.fomichev@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,112 +17,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>, Muneendra Kumar <mkumar@redhat.com>
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Dmitry Fomichev <dmitry.fomichev@wdc.com>, Damien Le Moal <damien.lemoal@wdc.com>
 List-Id: dm-devel.ids
 
-This commit makes the marginal_pathgroups option work with the
-existing methods for determining marginal paths.  It also merges the
-code for the marginal_path and sand_path_err methods. This has the
-side effect of making the marginal_path code set a marginal path's state
-to "delayed" instead of "shaky" like it previously did.
-
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Signed-off-by: Dmitry Fomichev <dmitry.fomichev@wdc.com>
 ---
- multipathd/main.c | 53 +++++++++++++++++++++++++++++++++--------------
- 1 file changed, 38 insertions(+), 15 deletions(-)
+ drivers/md/dm-zoned-metadata.c | 1 +
+ drivers/md/dm-zoned-reclaim.c  | 1 +
+ drivers/md/dm-zoned-target.c   | 1 +
+ drivers/md/dm-zoned.h          | 1 +
+ 4 files changed, 4 insertions(+)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index dca2214c..04b2b56a 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1960,6 +1960,18 @@ reinstate_path:
- 	return 0;
- }
- 
-+static int
-+should_skip_path(struct path *pp){
-+	if (marginal_path_check_enabled(pp->mpp)) {
-+		if (pp->io_err_disable_reinstate && need_io_err_check(pp))
-+			return 1;
-+	} else if (san_path_check_enabled(pp->mpp)) {
-+		if (check_path_reinstate_state(pp))
-+			return 1;
-+	}
-+	return 0;
-+}
-+
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index 8545dcee9fd0..23e9a6d9350b 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -1,3 +1,4 @@
++// SPDX-License-Identifier: GPL-2.0-only
  /*
-  * Returns '1' if the path has been checked, '-1' if it was blacklisted
-  * and '0' otherwise
-@@ -1975,6 +1987,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	int oldchkrstate = pp->chkrstate;
- 	int retrigger_tries, checkint, max_checkint, verbosity;
- 	struct config *conf;
-+	int marginal_pathgroups, marginal_changed = 0;
- 	int ret;
- 
- 	if ((pp->initialized == INIT_OK ||
-@@ -1991,6 +2004,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	checkint = conf->checkint;
- 	max_checkint = conf->max_checkint;
- 	verbosity = conf->verbosity;
-+	marginal_pathgroups = conf->marginal_pathgroups;
- 	put_multipath_config(conf);
- 
- 	if (pp->checkint == CHECKINT_UNDEF) {
-@@ -2106,20 +2120,27 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	set_no_path_retry(pp->mpp);
- 
- 	if ((newstate == PATH_UP || newstate == PATH_GHOST) &&
--			check_path_reinstate_state(pp)) {
--		pp->state = PATH_DELAYED;
--		return 1;
--	}
--
--	if ((newstate == PATH_UP || newstate == PATH_GHOST) &&
--	    pp->io_err_disable_reinstate && need_io_err_check(pp)) {
--		pp->state = PATH_SHAKY;
--		/*
--		 * to reschedule as soon as possible,so that this path can
--		 * be recoverd in time
--		 */
--		pp->tick = 1;
--		return 1;
-+	    (san_path_check_enabled(pp->mpp) ||
-+	     marginal_path_check_enabled(pp->mpp))) {
-+		int was_marginal = pp->marginal;
-+		if (should_skip_path(pp)) {
-+			if (!marginal_pathgroups) {
-+				if (marginal_path_check_enabled(pp->mpp))
-+					/* to reschedule as soon as possible,
-+					 * so that this path can be recovered
-+					 * in time */
-+					pp->tick = 1;
-+				pp->state = PATH_DELAYED;
-+				return 1;
-+			}
-+			if (!was_marginal) {
-+				pp->marginal = 1;
-+				marginal_changed = 1;
-+			}
-+		} else if (marginal_pathgroups && was_marginal) {
-+			pp->marginal = 0;
-+			marginal_changed = 1;
-+		}
- 	}
- 
- 	/*
-@@ -2258,7 +2279,9 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	 */
- 	condlog(4, "path prio refresh");
- 
--	if (update_prio(pp, new_path_up) &&
-+	if (marginal_changed)
-+		update_path_groups(pp->mpp, vecs, 1);
-+	else if (update_prio(pp, new_path_up) &&
- 	    (pp->mpp->pgpolicyfn == (pgpolicyfn *)group_by_prio) &&
- 	     pp->mpp->pgfailback == -FAILBACK_IMMEDIATE)
- 		update_path_groups(pp->mpp, vecs, !new_path_up);
+  * Copyright (C) 2017 Western Digital Corporation or its affiliates.
+  *
+diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+index edf4b95eb075..387894e2add1 100644
+--- a/drivers/md/dm-zoned-reclaim.c
++++ b/drivers/md/dm-zoned-reclaim.c
+@@ -1,3 +1,4 @@
++// SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (C) 2017 Western Digital Corporation or its affiliates.
+  *
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index 51d029bbb740..1bf6e6eebee1 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -1,3 +1,4 @@
++// SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (C) 2017 Western Digital Corporation or its affiliates.
+  *
+diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
+index ed8de49c9a08..1a3b06de2c00 100644
+--- a/drivers/md/dm-zoned.h
++++ b/drivers/md/dm-zoned.h
+@@ -1,3 +1,4 @@
++/* SPDX-License-Identifier: GPL-2.0 */
+ /*
+  * Copyright (C) 2017 Western Digital Corporation or its affiliates.
+  *
 -- 
-2.17.2
+2.21.0
