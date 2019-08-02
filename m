@@ -1,13 +1,13 @@
-From: Dmitry Fomichev <dmitry.fomichev@wdc.com>
-Subject: [PATCH 2/2] dm-zoned: fix a few typos
-Date: Fri,  2 Aug 2019 15:02:51 -0700
-Message-ID: <20190802220251.1217-3-dmitry.fomichev@wdc.com>
-References: <20190802220251.1217-1-dmitry.fomichev@wdc.com>
+From: pr-tracker-bot@kernel.org
+Subject: Re: [git pull] device mapper fixes for 5.3-rc3
+Date: Fri, 02 Aug 2019 22:10:13 +0000
+Message-ID: <156478381353.28292.12883710388695934497.pr-tracker-bot@kernel.org>
+References: <20190802151824.GA86075@lobo>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190802220251.1217-1-dmitry.fomichev@wdc.com>
+In-Reply-To: <20190802151824.GA86075@lobo>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,68 +17,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Cc: Dmitry Fomichev <dmitry.fomichev@wdc.com>, Damien Le Moal <damien.lemoal@wdc.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Pankaj Gupta <pagupta@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Dan Williams <dan.j.williams@intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Signed-off-by: Dmitry Fomichev <dmitry.fomichev@wdc.com>
----
- drivers/md/dm-zoned-metadata.c | 8 ++++----
- drivers/md/dm-zoned-reclaim.c  | 2 +-
- 2 files changed, 5 insertions(+), 5 deletions(-)
+The pull request you sent on Fri, 2 Aug 2019 11:18:25 -0400:
 
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index 23e9a6d9350b..ded4984d18c9 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -35,7 +35,7 @@
-  *    (1) Super block (1 block)
-  *    (2) Chunk mapping table (nr_map_blocks)
-  *    (3) Bitmap blocks (nr_bitmap_blocks)
-- * All metadata blocks are stored in conventional zones, starting from the
-+ * All metadata blocks are stored in conventional zones, starting from
-  * the first conventional zone found on disk.
-  */
- struct dmz_super {
-@@ -234,7 +234,7 @@ void dmz_unlock_map(struct dmz_metadata *zmd)
-  * Lock/unlock metadata access. This is a "read" lock on a semaphore
-  * that prevents metadata flush from running while metadata are being
-  * modified. The actual metadata write mutual exclusion is achieved with
-- * the map lock and zone styate management (active and reclaim state are
-+ * the map lock and zone state management (active and reclaim state are
-  * mutually exclusive).
-  */
- void dmz_lock_metadata(struct dmz_metadata *zmd)
-@@ -1629,7 +1629,7 @@ struct dm_zone *dmz_get_chunk_mapping(struct dmz_metadata *zmd, unsigned int chu
- 		if (op != REQ_OP_WRITE)
- 			goto out;
- 
--		/* Alloate a random zone */
-+		/* Allocate a random zone */
- 		dzone = dmz_alloc_zone(zmd, DMZ_ALLOC_RND);
- 		if (!dzone) {
- 			dmz_wait_for_free_zones(zmd);
-@@ -1726,7 +1726,7 @@ struct dm_zone *dmz_get_chunk_buffer(struct dmz_metadata *zmd,
- 	if (bzone)
- 		goto out;
- 
--	/* Alloate a random zone */
-+	/* Allocate a random zone */
- 	bzone = dmz_alloc_zone(zmd, DMZ_ALLOC_RND);
- 	if (!bzone) {
- 		dmz_wait_for_free_zones(zmd);
-diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
-index 387894e2add1..260e3598199e 100644
---- a/drivers/md/dm-zoned-reclaim.c
-+++ b/drivers/md/dm-zoned-reclaim.c
-@@ -428,7 +428,7 @@ static bool dmz_should_reclaim(struct dmz_reclaim *zrc)
- 		return false;
- 
- 	/*
--	 * If the percentage of unmappped random zones is low,
-+	 * If the percentage of unmapped random zones is low,
- 	 * reclaim even if the target is busy.
- 	 */
- 	return p_unmap_rnd <= DMZ_RECLAIM_LOW_UNMAP_RND;
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.3/dm-fixes-1
+
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/b2c742373d19b356b112d9f3ca4e9377c6f9708d
+
+Thank you!
+
 -- 
-2.21.0
+Deet-doot-dot, I am a bot.
+https://korg.wiki.kernel.org/userdoc/prtracker
