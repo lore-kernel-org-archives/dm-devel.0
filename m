@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 07/16] libmultipath: make one_group allocate a
-	new vector
-Date: Fri,  2 Aug 2019 11:33:33 -0500
-Message-ID: <1564763622-31752-8-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 01/16] libmultipath: make
+	vector_foreach_slot_backwards work as expected
+Date: Fri,  2 Aug 2019 11:33:27 -0500
+Message-ID: <1564763622-31752-2-git-send-email-bmarzins@redhat.com>
 References: <1564763622-31752-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,54 +22,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>, Muneendra Kumar <mkumar@redhat.com>
 List-Id: dm-devel.ids
 
-All the pgpolicy functions besides one_group() allocate a new vector for
-the pathgroups. If one_group() works the same, it is easier to factor
-out the common code.
+All of the code that uses vector_foreach_slot_backwards() treats "i" as
+the index of the entry "p", but the way it was coded, that wasn't the
+case. "i" was the number of the entry counting from 1, not 0.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/pgpolicies.c | 22 +++++++++++-----------
- 1 file changed, 11 insertions(+), 11 deletions(-)
+ libmultipath/vector.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/pgpolicies.c b/libmultipath/pgpolicies.c
-index d447c46e..1af42f52 100644
---- a/libmultipath/pgpolicies.c
-+++ b/libmultipath/pgpolicies.c
-@@ -267,24 +267,24 @@ out:
+diff --git a/libmultipath/vector.h b/libmultipath/vector.h
+index 41d2b896..344dffd5 100644
+--- a/libmultipath/vector.h
++++ b/libmultipath/vector.h
+@@ -40,7 +40,7 @@ typedef struct _vector *vector;
+ #define vector_foreach_slot_after(v,p,i) \
+ 	for (; (v) && i < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); i++)
+ #define vector_foreach_slot_backwards(v,p,i) \
+-	for (i = VECTOR_SIZE(v); i > 0 && ((p) = (v)->slot[i-1]); i--)
++	for (i = VECTOR_SIZE(v) - 1; (int)i >= 0 && ((p) = (v)->slot[i]); i--)
  
- int one_group(struct multipath *mp)	/* aka multibus */
- {
-+	int i;
-+	struct path * pp;
- 	struct pathgroup * pgp;
- 
--	if (VECTOR_SIZE(mp->paths) > 0) {
--		pgp = alloc_pathgroup();
-+	pgp = alloc_pathgroup();
- 
--		if (!pgp)
--			goto out;
-+	if (!pgp)
-+		goto out;
- 
--		vector_free(pgp->paths);
-+	if (add_pathgroup(mp, pgp))
-+		goto out1;
- 
--		if (add_pathgroup(mp, pgp))
--			goto out1;
-+	for (i = 0; i < VECTOR_SIZE(mp->paths); i++) {
-+		pp = VECTOR_SLOT(mp->paths, i);
- 
--		pgp->paths = mp->paths;
--		/* Do this to avoid freeing vector in group_paths */
--		mp->paths = NULL;
-+		if (store_path(pgp->paths, pp))
-+			goto out;
- 	}
--
- 	return 0;
- out1:
- 	free_pathgroup(pgp, KEEP_PATHS);
+ #define identity(x) (x)
+ /*
 -- 
 2.17.2
