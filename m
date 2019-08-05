@@ -1,37 +1,103 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH V4 0/2] block/scsi/dm-rq: fix leak of request private data
- in dm-mpath
-Date: Sun, 4 Aug 2019 20:42:26 -0700
-Message-ID: <c7bd89e5-6fa9-2b3c-94f5-ca7ff9004e6a@kernel.dk>
-References: <20190725020500.4317-1-ming.lei@redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH] libmultipath: trigger uevents for partitions,
+	too
+Date: Mon, 5 Aug 2019 11:14:11 -0500
+Message-ID: <20190805161411.GS3251@octiron.msp.redhat.com>
+References: <20190702220911.16157-1-martin.wilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20190725020500.4317-1-ming.lei@redhat.com>
-Content-Language: en-US
-Sender: stable-owner@vger.kernel.org
-To: Ming Lei <ming.lei@redhat.com>
-Cc: linux-block@vger.kernel.org, "Ewan D . Milne" <emilne@redhat.com>, Bart Van Assche <bvanassche@acm.org>, Hannes Reinecke <hare@suse.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, stable@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20190702220911.16157-1-martin.wilck@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <Martin.Wilck@suse.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 7/24/19 7:04 PM, Ming Lei wrote:
-> Hi,
+On Tue, Jul 02, 2019 at 10:09:42PM +0000, Martin Wilck wrote:
+> From: Martin Wilck <mwilck@suse.com>
 > 
-> When one request is dispatched to LLD via dm-rq, if the result is
-> BLK_STS_*RESOURCE, dm-rq will free the request. However, LLD may allocate
-> private data for this request, so this way will cause memory leak.
+> We have added code to re-trigger uevents in various cases where
+> the status of a device changes from multipath to non-multipath,
+> or vice-versa. When multipathd triggers uevents for paths of a map
+> because the status of the map has changed, it needs to trigger
+> events for the partitions of the path devices, too. The kernel
+> doesn't do this automatically.
 > 
-> Add .cleanup_rq() callback and implement it in SCSI for fixing the issue,
-> since SCSI is the only driver which allocates private requst data in
-> .queue_rq() path.
-> 
-> Another use case of this callback is to free the request and re-submit
-> bios during cpu hotplug when the hctx is dead, see the following link:
-> 
-> https://lore.kernel.org/linux-block/f122e8f2-5ede-2d83-9ca0-bc713ce66d01@huawei.com/T/#t
+> Fixes: c5023200 libmultipath: indicate wwid failure in dm_addmap_create()
+> Fixes: e5d3c3a0 libmultipath: trigger change uevent on new device creation
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
 
-Applied for 5.4, thanks.
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
--- 
-Jens Axboe
+> ---
+>  libmultipath/configure.c | 38 ++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 38 insertions(+)
+> 
+> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> index af4d78de..9f100008 100644
+> --- a/libmultipath/configure.c
+> +++ b/libmultipath/configure.c
+> @@ -519,6 +519,42 @@ trigger_udev_change(const struct multipath *mpp)
+>  	udev_device_unref(udd);
+>  }
+>  
+> +static void trigger_partitions_udev_change(struct udev_device *dev,
+> +					   const char *action, int len)
+> +{
+> +	struct udev_enumerate *part_enum;
+> +	struct udev_list_entry *item;
+> +
+> +	part_enum = udev_enumerate_new(udev);
+> +	if (!part_enum)
+> +		return;
+> +
+> +	if (udev_enumerate_add_match_parent(part_enum, dev) < 0 ||
+> +	    udev_enumerate_add_match_subsystem(part_enum, "block") < 0 ||
+> +	    udev_enumerate_scan_devices(part_enum) < 0)
+> +		goto unref;
+> +
+> +	udev_list_entry_foreach(item,
+> +				udev_enumerate_get_list_entry(part_enum)) {
+> +		const char *syspath;
+> +		struct udev_device *part;
+> +
+> +		syspath = udev_list_entry_get_name(item);
+> +		part = udev_device_new_from_syspath(udev, syspath);
+> +		if (!part)
+> +			continue;
+> +
+> +		if (!strcmp("partition", udev_device_get_devtype(part))) {
+> +			condlog(4, "%s: triggering %s event for %s", __func__,
+> +				action, syspath);
+> +			sysfs_attr_set_value(part, "uevent", action, len);
+> +		}
+> +		udev_device_unref(part);
+> +	}
+> +unref:
+> +	udev_enumerate_unref(part_enum);
+> +}
+> +
+>  void
+>  trigger_paths_udev_change(struct multipath *mpp, bool is_mpath)
+>  {
+> @@ -569,6 +605,8 @@ trigger_paths_udev_change(struct multipath *mpp, bool is_mpath)
+>  				action, pp->dev, is_mpath ? "" : "no ");
+>  			sysfs_attr_set_value(pp->udev, "uevent",
+>  					     action, strlen(action));
+> +			trigger_partitions_udev_change(pp->udev, action,
+> +						       strlen(action));
+>  		}
+>  	}
+>  
+> -- 
+> 2.22.0
