@@ -1,80 +1,37 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH V4 0/2] block/scsi/dm-rq: fix leak of request private
- data in dm-mpath
-Date: Mon, 5 Aug 2019 08:55:33 +0800
-Message-ID: <20190805005532.GA3449@ming.t460p>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH V4 0/2] block/scsi/dm-rq: fix leak of request private data
+ in dm-mpath
+Date: Sun, 4 Aug 2019 20:42:26 -0700
+Message-ID: <c7bd89e5-6fa9-2b3c-94f5-ca7ff9004e6a@kernel.dk>
 References: <20190725020500.4317-1-ming.lei@redhat.com>
- <20190730004359.GA28708@ming.t460p>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <stable-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190730004359.GA28708@ming.t460p>
+In-Reply-To: <20190725020500.4317-1-ming.lei@redhat.com>
+Content-Language: en-US
 Sender: stable-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
+To: Ming Lei <ming.lei@redhat.com>
 Cc: linux-block@vger.kernel.org, "Ewan D . Milne" <emilne@redhat.com>, Bart Van Assche <bvanassche@acm.org>, Hannes Reinecke <hare@suse.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Jul 30, 2019 at 08:43:59AM +0800, Ming Lei wrote:
-> On Thu, Jul 25, 2019 at 10:04:58AM +0800, Ming Lei wrote:
-> > Hi,
-> > 
-> > When one request is dispatched to LLD via dm-rq, if the result is
-> > BLK_STS_*RESOURCE, dm-rq will free the request. However, LLD may allocate
-> > private data for this request, so this way will cause memory leak.
-> > 
-> > Add .cleanup_rq() callback and implement it in SCSI for fixing the issue,
-> > since SCSI is the only driver which allocates private requst data in
-> > .queue_rq() path.
-> > 
-> > Another use case of this callback is to free the request and re-submit
-> > bios during cpu hotplug when the hctx is dead, see the following link:
-> > 
-> > https://lore.kernel.org/linux-block/f122e8f2-5ede-2d83-9ca0-bc713ce66d01@huawei.com/T/#t
-> > 
-> > V4:
-> > 	- add more commit log on the new .cleanup_rq callback, as suggested
-> > 	  by Mike
-> > 
-> > V3:
-> > 	- run .cleanup_rq() from dm-rq because this issue is dm-rq specific,
-> > 	and even in future it should be still very unusual to free request
-> > 	in this way. If we call .cleanup_rq() in generic rq free code(fast
-> > 	path), cost will be introduced unnecessarily, also we have to
-> > 	consider related race.
-> > 
-> > V2:
-> > 	- run .cleanup_rq() in blk_mq_free_request(), as suggested by Mike 
-> > 
-> > 
-> > 
-> > Ming Lei (2):
-> >   blk-mq: add callback of .cleanup_rq
-> >   scsi: implement .cleanup_rq callback
-> > 
-> >  drivers/md/dm-rq.c      |  1 +
-> >  drivers/scsi/scsi_lib.c | 13 +++++++++++++
-> >  include/linux/blk-mq.h  | 13 +++++++++++++
-> >  3 files changed, 27 insertions(+)
-> > 
-> > Cc: Ewan D. Milne <emilne@redhat.com>
-> > Cc: Bart Van Assche <bvanassche@acm.org>
-> > Cc: Hannes Reinecke <hare@suse.com>
-> > Cc: Christoph Hellwig <hch@lst.de>
-> > Cc: Mike Snitzer <snitzer@redhat.com>
-> > Cc: dm-devel@redhat.com
-> > Cc: <stable@vger.kernel.org>
-> > Fixes: 396eaf21ee17 ("blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback")
+On 7/24/19 7:04 PM, Ming Lei wrote:
+> Hi,
 > 
-> Hello Jens & guys,
+> When one request is dispatched to LLD via dm-rq, if the result is
+> BLK_STS_*RESOURCE, dm-rq will free the request. However, LLD may allocate
+> private data for this request, so this way will cause memory leak.
 > 
-> Ping on this fix.
+> Add .cleanup_rq() callback and implement it in SCSI for fixing the issue,
+> since SCSI is the only driver which allocates private requst data in
+> .queue_rq() path.
+> 
+> Another use case of this callback is to free the request and re-submit
+> bios during cpu hotplug when the hctx is dead, see the following link:
+> 
+> https://lore.kernel.org/linux-block/f122e8f2-5ede-2d83-9ca0-bc713ce66d01@huawei.com/T/#t
 
-Hi Jens,
+Applied for 5.4, thanks.
 
-Could you make the patcheset merged for 5.4? And it has been verified
-that big memory leak issue can be fixed by this patchset.
-
-
-thanks,
-Ming
+-- 
+Jens Axboe
