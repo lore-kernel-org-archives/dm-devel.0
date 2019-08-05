@@ -1,66 +1,80 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: xts fuzz testing and lack of ciphertext stealing
-	support
-Date: Sun, 4 Aug 2019 11:36:25 +0300
-Message-ID: <CAKv+Gu9JuXJspTO9tYbBgkdgmUznhgW+DWc029JWR2bqNsW_Bw@mail.gmail.com>
-References: <20190716221639.GA44406@gmail.com>
-	<20190720065807.GA711@sol.localdomain>
-	<0d4d6387-777c-bfd3-e54a-e7244fde0096@gmail.com>
-	<CAKv+Gu9UF+a1UhVU19g1XcLaEqEaAwwkSm3-2wTHEAdD-q4mLQ@mail.gmail.com>
-	<MN2PR20MB2973B9C2DDC508A81AF4A207CAC40@MN2PR20MB2973.namprd20.prod.outlook.com>
-	<CAKv+Gu9C2AEbb++W=QTVWbeA_88Fo57NcOwgU5R8HBvzFwXkJw@mail.gmail.com>
-	<MN2PR20MB2973C378AE5674F9E3E29445CAC60@MN2PR20MB2973.namprd20.prod.outlook.com>
-	<CAKv+Gu-8n_DoauycDQS_9zzRew1rTuPaLxHyg6xhXMmqEvMaCA@mail.gmail.com>
-	<MN2PR20MB2973CAE4E9CFFE1F417B2509CAC10@MN2PR20MB2973.namprd20.prod.outlook.com>
-	<CAKv+Gu-j-8-bQS2A46-Kf1KHtkoPJ5Htk8WratqzyngnVu-wpw@mail.gmail.com>
-	<MN2PR20MB29739591E1A3E54E7A8A8E18CAC00@MN2PR20MB2973.namprd20.prod.outlook.com>
-	<VI1PR0402MB34850A016F3228124C0D360698C00@VI1PR0402MB3485.eurprd04.prod.outlook.com>
-	<MN2PR20MB29732C3B360EB809EDFBFAC5CAC00@MN2PR20MB2973.namprd20.prod.outlook.com>
-	<CAKv+Gu9krpqWYuD2mQFBTspo3y_TwrN6Arbvkcs=e4MpTeitHA@mail.gmail.com>
-	<97532fae-4c17-bb8f-d245-04bf97cef4d1@gmail.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [PATCH V4 0/2] block/scsi/dm-rq: fix leak of request private
+ data in dm-mpath
+Date: Mon, 5 Aug 2019 08:55:33 +0800
+Message-ID: <20190805005532.GA3449@ming.t460p>
+References: <20190725020500.4317-1-ming.lei@redhat.com>
+ <20190730004359.GA28708@ming.t460p>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <97532fae-4c17-bb8f-d245-04bf97cef4d1@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>
-Cc: Pascal Van Leeuwen <pvanleeuwen@verimatrix.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, Horia Geanta <horia.geanta@nxp.com>, "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <stable-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190730004359.GA28708@ming.t460p>
+Sender: stable-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-block@vger.kernel.org, "Ewan D . Milne" <emilne@redhat.com>, Bart Van Assche <bvanassche@acm.org>, Hannes Reinecke <hare@suse.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Sat, 27 Jul 2019 at 19:04, Milan Broz <gmazyland@gmail.com> wrote:
->
-> On 27/07/2019 07:39, Ard Biesheuvel wrote:
-> > Thanks for the additional test vectors. They work fine with my SIMD
-> > implementations for ARM [0], so this looks like it might be a CAAM
-> > problem, not a problem with the test vectors.
-> >
-> > I will try to find some time today to run them through OpenSSL to double check.
->
-> I shamelessly copied your test vectors to my vector test for cryptsetup backend.
->
-> Both OpenSSL and gcrypt XTS implementation passed all tests here!
->
-> If interested - this is copy of backend we have in cryptsetup, vectors added in crypto-vectors.c
-> (there are some hard defines in Makefile, cryptsetup uses autoconf instead).
->   OpenSSL: https://github.com/mbroz/cryptsetup_backend_test
->   gcrypt branch: https://github.com/mbroz/cryptsetup_backend_test/tree/gcrypt
->
-> Once kernel AF_ALG supports it, I can easily test it the same way.
->
+On Tue, Jul 30, 2019 at 08:43:59AM +0800, Ming Lei wrote:
+> On Thu, Jul 25, 2019 at 10:04:58AM +0800, Ming Lei wrote:
+> > Hi,
+> > 
+> > When one request is dispatched to LLD via dm-rq, if the result is
+> > BLK_STS_*RESOURCE, dm-rq will free the request. However, LLD may allocate
+> > private data for this request, so this way will cause memory leak.
+> > 
+> > Add .cleanup_rq() callback and implement it in SCSI for fixing the issue,
+> > since SCSI is the only driver which allocates private requst data in
+> > .queue_rq() path.
+> > 
+> > Another use case of this callback is to free the request and re-submit
+> > bios during cpu hotplug when the hctx is dead, see the following link:
+> > 
+> > https://lore.kernel.org/linux-block/f122e8f2-5ede-2d83-9ca0-bc713ce66d01@huawei.com/T/#t
+> > 
+> > V4:
+> > 	- add more commit log on the new .cleanup_rq callback, as suggested
+> > 	  by Mike
+> > 
+> > V3:
+> > 	- run .cleanup_rq() from dm-rq because this issue is dm-rq specific,
+> > 	and even in future it should be still very unusual to free request
+> > 	in this way. If we call .cleanup_rq() in generic rq free code(fast
+> > 	path), cost will be introduced unnecessarily, also we have to
+> > 	consider related race.
+> > 
+> > V2:
+> > 	- run .cleanup_rq() in blk_mq_free_request(), as suggested by Mike 
+> > 
+> > 
+> > 
+> > Ming Lei (2):
+> >   blk-mq: add callback of .cleanup_rq
+> >   scsi: implement .cleanup_rq callback
+> > 
+> >  drivers/md/dm-rq.c      |  1 +
+> >  drivers/scsi/scsi_lib.c | 13 +++++++++++++
+> >  include/linux/blk-mq.h  | 13 +++++++++++++
+> >  3 files changed, 27 insertions(+)
+> > 
+> > Cc: Ewan D. Milne <emilne@redhat.com>
+> > Cc: Bart Van Assche <bvanassche@acm.org>
+> > Cc: Hannes Reinecke <hare@suse.com>
+> > Cc: Christoph Hellwig <hch@lst.de>
+> > Cc: Mike Snitzer <snitzer@redhat.com>
+> > Cc: dm-devel@redhat.com
+> > Cc: <stable@vger.kernel.org>
+> > Fixes: 396eaf21ee17 ("blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback")
+> 
+> Hello Jens & guys,
+> 
+> Ping on this fix.
 
-Thanks for confirming. So we can be reasonably confident that the test
-vectors contributed by Pascal are sound.
+Hi Jens,
 
-I'll try to send out my ARM/arm64 changes shortly. However, I won't
-have any access to hardware until end of next month, so they are
-tested on QEMU only, which means I won't be able to provide any
-performance numbers.
+Could you make the patcheset merged for 5.4? And it has been verified
+that big memory leak issue can be fixed by this patchset.
+
+
+thanks,
+Ming
