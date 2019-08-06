@@ -1,14 +1,11 @@
-From: Dmitry Fomichev <dmitry.fomichev@wdc.com>
-Subject: [PATCH 2/3] dm-zoned: improve error handling in i/o map
-	code
-Date: Mon,  5 Aug 2019 18:06:24 -0700
-Message-ID: <20190806010625.27503-3-dmitry.fomichev@wdc.com>
-References: <20190806010625.27503-1-dmitry.fomichev@wdc.com>
+From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Subject: [RFC PATCH 0/2] dm-crypt: get rid of cipher API for EBOIV
+Date: Tue,  6 Aug 2019 11:02:32 +0300
+Message-ID: <20190806080234.27998-1-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190806010625.27503-1-dmitry.fomichev@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,107 +15,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Cc: Damien Le Moal <damien.lemoal@wdc.com>
+To: linux-crypto@vger.kernel.org
+Cc: herbert@gondor.apana.org.au, snitzer@redhat.com, Ard Biesheuvel <ard.biesheuvel@linaro.org>, ebiggers@kernel.org, dm-devel@redhat.com, gmazyland@gmail.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Some errors are ignored in the I/O path during queueing chunks
-for processing by chunk works. Since at least these errors are
-transient in nature, it should be possible to retry the failed
-incoming commands.
+This is a follow-up to the discussion [0] started by regarding adding
+new uses of the cipher API to dm-crypt. In particular, the discussion
+was about EBOIV, which is used by BitLocker to generate IVs from byte
+offsets, to be used for AES encryption in CBC mode.
 
-The fix -
+The way EBOIV support is currently integrated does not restrict it at
+all, which means we may paint ourselves into a corner where we are
+forced to support unexpected and novel ways users have decided to
+wire up EBOIV. This may become a maintenance burden going forward,
+and given that EBOIV uses the same key for generating the IV via
+AES encryption as the one used for the data, it may produce configurations
+that are not entirely safe.
 
-Errors that can happen while queueing chunks are carried upwards
-to the main mapping function and it now returns DM_MAPIO_REQUEUE
-for any incoming requests that can not be properly queued.
+So let's restrict EBOIV to cbc(aes) (patch #1), to prevent it from
+being used in arbitrary cipher cocktails, and avoid ending up with
+a disproportionate maintenance burden on the crypto API side.
 
-Error logging/debug messages are added where needed.
+Patch #2 switches the IV generation to the AES library, which avoids
+potential key leaks due to the use of aes-generic as the cipher used
+for IV generation.
 
-Fixes: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target")
-Cc: stable@vger.kernel.org
-Signed-off-by: Dmitry Fomichev <dmitry.fomichev@wdc.com>
----
- drivers/md/dm-zoned-target.c | 22 ++++++++++++++++------
- 1 file changed, 16 insertions(+), 6 deletions(-)
+[0] https://www.redhat.com/archives/dm-devel/2019-July/msg00041.html
 
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index 1bf6e6eebee1..c1992034c099 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -514,22 +514,24 @@ static void dmz_flush_work(struct work_struct *work)
-  * Get a chunk work and start it to process a new BIO.
-  * If the BIO chunk has no work yet, create one.
-  */
--static void dmz_queue_chunk_work(struct dmz_target *dmz, struct bio *bio)
-+static int dmz_queue_chunk_work(struct dmz_target *dmz, struct bio *bio)
- {
- 	unsigned int chunk = dmz_bio_chunk(dmz->dev, bio);
- 	struct dm_chunk_work *cw;
-+	int ret = 0;
- 
- 	mutex_lock(&dmz->chunk_lock);
- 
- 	/* Get the BIO chunk work. If one is not active yet, create one */
- 	cw = radix_tree_lookup(&dmz->chunk_rxtree, chunk);
- 	if (!cw) {
--		int ret;
- 
- 		/* Create a new chunk work */
- 		cw = kmalloc(sizeof(struct dm_chunk_work), GFP_NOIO);
--		if (!cw)
-+		if (unlikely(!cw)) {
-+			ret = -ENOMEM;
- 			goto out;
-+		}
- 
- 		INIT_WORK(&cw->work, dmz_chunk_work);
- 		refcount_set(&cw->refcount, 0);
-@@ -540,7 +542,6 @@ static void dmz_queue_chunk_work(struct dmz_target *dmz, struct bio *bio)
- 		ret = radix_tree_insert(&dmz->chunk_rxtree, chunk, cw);
- 		if (unlikely(ret)) {
- 			kfree(cw);
--			cw = NULL;
- 			goto out;
- 		}
- 	}
-@@ -548,10 +549,12 @@ static void dmz_queue_chunk_work(struct dmz_target *dmz, struct bio *bio)
- 	bio_list_add(&cw->bio_list, bio);
- 	dmz_get_chunk_work(cw);
- 
-+	dmz_reclaim_bio_acc(dmz->reclaim);
- 	if (queue_work(dmz->chunk_wq, &cw->work))
- 		dmz_get_chunk_work(cw);
- out:
- 	mutex_unlock(&dmz->chunk_lock);
-+	return ret;
- }
- 
- /*
-@@ -565,6 +568,7 @@ static int dmz_map(struct dm_target *ti, struct bio *bio)
- 	sector_t sector = bio->bi_iter.bi_sector;
- 	unsigned int nr_sectors = bio_sectors(bio);
- 	sector_t chunk_sector;
-+	int ret;
- 
- 	dmz_dev_debug(dev, "BIO op %d sector %llu + %u => chunk %llu, block %llu, %u blocks",
- 		      bio_op(bio), (unsigned long long)sector, nr_sectors,
-@@ -602,8 +606,14 @@ static int dmz_map(struct dm_target *ti, struct bio *bio)
- 		dm_accept_partial_bio(bio, dev->zone_nr_sectors - chunk_sector);
- 
- 	/* Now ready to handle this BIO */
--	dmz_reclaim_bio_acc(dmz->reclaim);
--	dmz_queue_chunk_work(dmz, bio);
-+	ret = dmz_queue_chunk_work(dmz, bio);
-+	if (ret) {
-+		dmz_dev_debug(dmz->dev,
-+			      "BIO op %d, can't process chunk %llu, err %i\n",
-+			      bio_op(bio), (u64)dmz_bio_chunk(dmz->dev, bio),
-+			      ret);
-+		return DM_MAPIO_REQUEUE;
-+	}
- 
- 	return DM_MAPIO_SUBMITTED;
- }
+Ard Biesheuvel (2):
+  md/dm-crypt - restrict EBOIV to cbc(aes)
+  md/dm-crypt - switch to AES library for EBOIV
+
+ drivers/md/dm-crypt.c | 34 ++++++++------------
+ 1 file changed, 13 insertions(+), 21 deletions(-)
+
 -- 
-2.21.0
+2.17.1
