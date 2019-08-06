@@ -1,11 +1,13 @@
 From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: [RFC PATCH 0/2] dm-crypt: get rid of cipher API for EBOIV
-Date: Tue,  6 Aug 2019 11:02:32 +0300
-Message-ID: <20190806080234.27998-1-ard.biesheuvel@linaro.org>
+Subject: [RFC PATCH 1/2] md/dm-crypt - restrict EBOIV to cbc(aes)
+Date: Tue,  6 Aug 2019 11:02:33 +0300
+Message-ID: <20190806080234.27998-2-ard.biesheuvel@linaro.org>
+References: <20190806080234.27998-1-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190806080234.27998-1-ard.biesheuvel@linaro.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,35 +21,41 @@ To: linux-crypto@vger.kernel.org
 Cc: herbert@gondor.apana.org.au, snitzer@redhat.com, Ard Biesheuvel <ard.biesheuvel@linaro.org>, ebiggers@kernel.org, dm-devel@redhat.com, gmazyland@gmail.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-This is a follow-up to the discussion [0] started by regarding adding
-new uses of the cipher API to dm-crypt. In particular, the discussion
-was about EBOIV, which is used by BitLocker to generate IVs from byte
-offsets, to be used for AES encryption in CBC mode.
+Support for the EBOIV IV mode was introduced this cycle, and is
+explicitly intended for interoperability with BitLocker, which
+only uses it combined with AES in CBC mode.
 
-The way EBOIV support is currently integrated does not restrict it at
-all, which means we may paint ourselves into a corner where we are
-forced to support unexpected and novel ways users have decided to
-wire up EBOIV. This may become a maintenance burden going forward,
-and given that EBOIV uses the same key for generating the IV via
-AES encryption as the one used for the data, it may produce configurations
-that are not entirely safe.
+Using EBOIV in combination with any other skcipher or aead mode
+is not recommended, and so there is no need to support this.
+However, the way the EBOIV support is currently integrated permits
+it to be combined with other skcipher or aead modes, and once the
+cat is out of the bag, we will need to support it indefinitely.
 
-So let's restrict EBOIV to cbc(aes) (patch #1), to prevent it from
-being used in arbitrary cipher cocktails, and avoid ending up with
-a disproportionate maintenance burden on the crypto API side.
+So let's restrict EBOIV to cbc(aes), and reject attempts to
+instantiate it with other modes.
 
-Patch #2 switches the IV generation to the AES library, which avoids
-potential key leaks due to the use of aes-generic as the cipher used
-for IV generation.
+Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+---
+ drivers/md/dm-crypt.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-[0] https://www.redhat.com/archives/dm-devel/2019-July/msg00041.html
-
-Ard Biesheuvel (2):
-  md/dm-crypt - restrict EBOIV to cbc(aes)
-  md/dm-crypt - switch to AES library for EBOIV
-
- drivers/md/dm-crypt.c | 34 ++++++++------------
- 1 file changed, 13 insertions(+), 21 deletions(-)
-
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index d5216bcc4649..a5e8d5bc1581 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -861,6 +861,13 @@ static int crypt_iv_eboiv_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 	struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
+ 	struct crypto_cipher *tfm;
+ 
++	if (test_bit(CRYPT_MODE_INTEGRITY_AEAD, &cc->cipher_flags) ||
++	    strcmp("cbc(aes)",
++	           crypto_tfm_alg_name(crypto_skcipher_tfm(any_tfm(cc))))) {
++		ti->error = "Unsupported encryption mode for EBOIV";
++		return -EINVAL;
++	}
++
+ 	tfm = crypto_alloc_cipher(cc->cipher, 0, 0);
+ 	if (IS_ERR(tfm)) {
+ 		ti->error = "Error allocating crypto tfm for EBOIV";
 -- 
 2.17.1
