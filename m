@@ -1,11 +1,12 @@
-From: Dmitry Fomichev <dmitry.fomichev@wdc.com>
-Subject: [PATCH] dm kcopyd: always complete failed jobs
-Date: Mon,  5 Aug 2019 16:56:03 -0700
-Message-ID: <20190805235603.18337-1-dmitry.fomichev@wdc.com>
+From: "Gustavo A. R. Silva" <gustavo@embeddedor.com>
+Subject: [PATCH] dm raid1: Use struct_size() in kzalloc()
+Date: Mon, 5 Aug 2019 19:18:25 -0500
+Message-ID: <20190806001825.GA6854@embeddedor>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,62 +16,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Cc: Damien Le Moal <damien.lemoal@wdc.com>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Gustavo A. R. Silva" <gustavo@embeddedor.com>
 List-Id: dm-devel.ids
 
-This patch fixes a problem in dm-kcopyd that may leave jobs in
-complete queue indefinitely in the event of backing storage failure.
+One of the more common cases of allocation size calculations is finding
+the size of a structure that has a zero-sized array at the end, along
+with memory for some number of elements for that array. For example:
 
-This behavior has been observed while running 100% write file fio
-workload against an XFS volume created on top of a dm-zoned target
-device. If the underlying storage of dm-zoned goes to offline state
-under I/O, kcopyd sometimes never issues the end copy callback and
-dm-zoned reclaim work hangs indefinitely waiting for that completion.
+struct mirror_set {
+	...
+        struct mirror mirror[0];
+};
 
-This behavior was traced down to the error handling code in
-process_jobs() function that places the failed job to complete_jobs
-queue, but doesn't wake up the job handler. In case of backing device
-failure, all outstanding jobs may end up going to complete_jobs queue
-via this code path and then stay there forever because there are no
-more successful I/O jobs to wake up the job handler.
+size = sizeof(struct mirror_set) + count * sizeof(struct mirror);
+instance = kzalloc(size, GFP_KERNEL)
 
-This patch adds a wake() call to always wake up kcopyd job wait queue
-for all I/O jobs that fail before dm_io() gets called for that job.
+Instead of leaving these open-coded and prone to type mistakes, we can
+now use the new struct_size() helper:
 
-The patch also sets the write error status in all sub jobs that are
-failed because their master job has failed.
+instance = kzalloc(struct_size(instance, mirror, count), GFP_KERNEL)
 
-Fixes: b73c67c2cbb00 ("dm kcopyd: add sequential write feature")
-Cc: stable@vger.kernel.org
-Signed-off-by: Dmitry Fomichev <dmitry.fomichev@wdc.com>
+Notice that, in this case, variable len is not necessary, hence it
+is removed.
+
+This code was detected with the help of Coccinelle.
+
+Signed-off-by: Gustavo A. R. Silva <gustavo@embeddedor.com>
 ---
- drivers/md/dm-kcopyd.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ drivers/md/dm-raid1.c | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
 
-diff --git a/drivers/md/dm-kcopyd.c b/drivers/md/dm-kcopyd.c
-index df2011de7be2..1bbe4a34ef4c 100644
---- a/drivers/md/dm-kcopyd.c
-+++ b/drivers/md/dm-kcopyd.c
-@@ -566,8 +566,10 @@ static int run_io_job(struct kcopyd_job *job)
- 	 * no point in continuing.
- 	 */
- 	if (test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags) &&
--	    job->master_job->write_err)
-+	    job->master_job->write_err) {
-+		job->write_err = job->master_job->write_err;
- 		return -EIO;
-+	}
+diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+index 5a51151f680d..f7226ab57fc8 100644
+--- a/drivers/md/dm-raid1.c
++++ b/drivers/md/dm-raid1.c
+@@ -878,12 +878,9 @@ static struct mirror_set *alloc_context(unsigned int nr_mirrors,
+ 					struct dm_target *ti,
+ 					struct dm_dirty_log *dl)
+ {
+-	size_t len;
+ 	struct mirror_set *ms = NULL;
  
- 	io_job_start(job->kc->throttle);
- 
-@@ -619,6 +621,7 @@ static int process_jobs(struct list_head *jobs, struct dm_kcopyd_client *kc,
- 			else
- 				job->read_err = 1;
- 			push(&kc->complete_jobs, job);
-+			wake(kc);
- 			break;
- 		}
- 
+-	len = sizeof(*ms) + (sizeof(ms->mirror[0]) * nr_mirrors);
+-
+-	ms = kzalloc(len, GFP_KERNEL);
++	ms = kzalloc(struct_size(ms, mirror, nr_mirrors), GFP_KERNEL);
+ 	if (!ms) {
+ 		ti->error = "Cannot allocate mirror context";
+ 		return NULL;
 -- 
-2.21.0
+2.22.0
