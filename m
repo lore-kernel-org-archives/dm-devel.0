@@ -1,8 +1,10 @@
 From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH] dm kcopyd: always complete failed jobs
-Date: Wed, 7 Aug 2019 09:12:43 +0000
-Message-ID: <BYAPR04MB5816ECBD651A16571529695AE7D40@BYAPR04MB5816.namprd04.prod.outlook.com>
-References: <20190805235603.18337-1-dmitry.fomichev@wdc.com>
+Subject: Re: [PATCH 1/3] dm-zoned: improve error handling in
+	reclaim
+Date: Wed, 7 Aug 2019 09:16:14 +0000
+Message-ID: <BYAPR04MB5816DCF509654E00D3241EE0E7D40@BYAPR04MB5816.namprd04.prod.outlook.com>
+References: <20190806010625.27503-1-dmitry.fomichev@wdc.com>
+	<20190806010625.27503-2-dmitry.fomichev@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -20,60 +22,151 @@ Errors-To: dm-devel-bounces@redhat.com
 To: Dmitry Fomichev <Dmitry.Fomichev@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 2019/08/06 8:56, Dmitry Fomichev wrote:
-> This patch fixes a problem in dm-kcopyd that may leave jobs in
-> complete queue indefinitely in the event of backing storage failure.
+On 2019/08/06 10:06, Dmitry Fomichev wrote:
+> There are several places in reclaim code where errors are not
+> propagated to the main function, dmz_reclaim(). This function
+> is responsible for unlocking zones that might be still locked
+> at the end of any failed reclaim iterations. As the result,
+> some device zones may be left permanently locked for reclaim,
+> degrading target's capability to reclaim zones.
 > 
-> This behavior has been observed while running 100% write file fio
-> workload against an XFS volume created on top of a dm-zoned target
-> device. If the underlying storage of dm-zoned goes to offline state
-> under I/O, kcopyd sometimes never issues the end copy callback and
-> dm-zoned reclaim work hangs indefinitely waiting for that completion.
+> This patch fixes these issues as follows -
 > 
-> This behavior was traced down to the error handling code in
-> process_jobs() function that places the failed job to complete_jobs
-> queue, but doesn't wake up the job handler. In case of backing device
-> failure, all outstanding jobs may end up going to complete_jobs queue
-> via this code path and then stay there forever because there are no
-> more successful I/O jobs to wake up the job handler.
+> Make sure that dmz_reclaim_buf(), dmz_reclaim_seq_data() and
+> dmz_reclaim_rnd_data() return error codes to the caller.
 > 
-> This patch adds a wake() call to always wake up kcopyd job wait queue
-> for all I/O jobs that fail before dm_io() gets called for that job.
+> dmz_reclaim() function is renamed to dmz_do_reclaim() to avoid
+> clashing with "struct dmz_reclaim" and is modified to return the
+> error to the caller.
 > 
-> The patch also sets the write error status in all sub jobs that are
-> failed because their master job has failed.
+> dmz_get_zone_for_reclaim() now returns an error instead of NULL
+> pointer and reclaim code checks for that error.
 > 
-> Fixes: b73c67c2cbb00 ("dm kcopyd: add sequential write feature")
+> Error logging/debug messages are added where necessary.
+> 
+> Fixes: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target")
 > Cc: stable@vger.kernel.org
 > Signed-off-by: Dmitry Fomichev <dmitry.fomichev@wdc.com>
 > ---
->  drivers/md/dm-kcopyd.c | 5 ++++-
->  1 file changed, 4 insertions(+), 1 deletion(-)
+>  drivers/md/dm-zoned-metadata.c |  4 ++--
+>  drivers/md/dm-zoned-reclaim.c  | 28 +++++++++++++++++++---------
+>  2 files changed, 21 insertions(+), 11 deletions(-)
 > 
-> diff --git a/drivers/md/dm-kcopyd.c b/drivers/md/dm-kcopyd.c
-> index df2011de7be2..1bbe4a34ef4c 100644
-> --- a/drivers/md/dm-kcopyd.c
-> +++ b/drivers/md/dm-kcopyd.c
-> @@ -566,8 +566,10 @@ static int run_io_job(struct kcopyd_job *job)
->  	 * no point in continuing.
->  	 */
->  	if (test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags) &&
-> -	    job->master_job->write_err)
-> +	    job->master_job->write_err) {
-> +		job->write_err = job->master_job->write_err;
->  		return -EIO;
+> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+> index ded4984d18c9..6b7fbbd735ef 100644
+> --- a/drivers/md/dm-zoned-metadata.c
+> +++ b/drivers/md/dm-zoned-metadata.c
+> @@ -1543,7 +1543,7 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd)
+>  	struct dm_zone *zone;
+>  
+>  	if (list_empty(&zmd->map_rnd_list))
+> -		return NULL;
+> +		return ERR_PTR(-EBUSY);
+>  
+>  	list_for_each_entry(zone, &zmd->map_rnd_list, link) {
+>  		if (dmz_is_buf(zone))
+> @@ -1554,7 +1554,7 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd)
+>  			return dzone;
+>  	}
+>  
+> -	return NULL;
+> +	return ERR_PTR(-EBUSY);
+>  }
+>  
+>  /*
+> diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+> index 260e3598199e..26e34493a2db 100644
+> --- a/drivers/md/dm-zoned-reclaim.c
+> +++ b/drivers/md/dm-zoned-reclaim.c
+> @@ -216,7 +216,7 @@ static int dmz_reclaim_buf(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+>  
+>  	dmz_unlock_flush(zmd);
+>  
+> -	return 0;
+> +	return ret;
+>  }
+>  
+>  /*
+> @@ -260,7 +260,7 @@ static int dmz_reclaim_seq_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+>  
+>  	dmz_unlock_flush(zmd);
+>  
+> -	return 0;
+> +	return ret;
+>  }
+>  
+>  /*
+> @@ -313,7 +313,7 @@ static int dmz_reclaim_rnd_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+>  
+>  	dmz_unlock_flush(zmd);
+>  
+> -	return 0;
+> +	return ret;
+>  }
+>  
+>  /*
+> @@ -335,7 +335,7 @@ static void dmz_reclaim_empty(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+>  /*
+>   * Find a candidate zone for reclaim and process it.
+>   */
+> -static void dmz_reclaim(struct dmz_reclaim *zrc)
+> +static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+>  {
+>  	struct dmz_metadata *zmd = zrc->metadata;
+>  	struct dm_zone *dzone;
+> @@ -345,8 +345,8 @@ static void dmz_reclaim(struct dmz_reclaim *zrc)
+>  
+>  	/* Get a data zone */
+>  	dzone = dmz_get_zone_for_reclaim(zmd);
+> -	if (!dzone)
+> -		return;
+> +	if (IS_ERR(dzone))
+> +		return PTR_ERR(dzone);
+>  
+>  	start = jiffies;
+>  
+> @@ -392,13 +392,20 @@ static void dmz_reclaim(struct dmz_reclaim *zrc)
+>  out:
+>  	if (ret) {
+>  		dmz_unlock_zone_reclaim(dzone);
+> -		return;
+> +		return ret;
+>  	}
+>  
+> -	(void) dmz_flush_metadata(zrc->metadata);
+> +	ret = dmz_flush_metadata(zrc->metadata);
+> +	if (ret) {
+> +		dmz_dev_debug(zrc->dev,
+> +			      "Metadata flush for zone %u failed, err %d\n",
+> +			      dmz_id(zmd, rzone), ret);
+> +		return ret;
 > +	}
 >  
->  	io_job_start(job->kc->throttle);
+>  	dmz_dev_debug(zrc->dev, "Reclaimed zone %u in %u ms",
+>  		      dmz_id(zmd, rzone), jiffies_to_msecs(jiffies - start));
+> +	return 0;
+>  }
 >  
-> @@ -619,6 +621,7 @@ static int process_jobs(struct list_head *jobs, struct dm_kcopyd_client *kc,
->  			else
->  				job->read_err = 1;
->  			push(&kc->complete_jobs, job);
-> +			wake(kc);
->  			break;
->  		}
+>  /*
+> @@ -443,6 +450,7 @@ static void dmz_reclaim_work(struct work_struct *work)
+>  	struct dmz_metadata *zmd = zrc->metadata;
+>  	unsigned int nr_rnd, nr_unmap_rnd;
+>  	unsigned int p_unmap_rnd;
+> +	int ret;
 >  
+>  	if (!dmz_should_reclaim(zrc)) {
+>  		mod_delayed_work(zrc->wq, &zrc->work, DMZ_IDLE_PERIOD);
+> @@ -472,7 +480,9 @@ static void dmz_reclaim_work(struct work_struct *work)
+>  		      (dmz_target_idle(zrc) ? "Idle" : "Busy"),
+>  		      p_unmap_rnd, nr_unmap_rnd, nr_rnd);
+>  
+> -	dmz_reclaim(zrc);
+> +	ret = dmz_do_reclaim(zrc);
+> +	if (ret)
+> +		dmz_dev_debug(zrc->dev, "Reclaim error %d\n", ret);
+>  
+>  	dmz_schedule_reclaim(zrc);
+>  }
 > 
 
 Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
