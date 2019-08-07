@@ -1,14 +1,12 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [RFC PATCH v2] md/dm-crypt - reuse eboiv skcipher
- for IV generation
-Date: Wed, 7 Aug 2019 10:08:58 +0200
-Message-ID: <c83ec561-4359-3f38-3da3-65f9f18c1822@gmail.com>
-References: <20190807055022.15551-1-ard.biesheuvel@linaro.org>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [PATCH] dm kcopyd: always complete failed jobs
+Date: Wed, 7 Aug 2019 09:12:43 +0000
+Message-ID: <BYAPR04MB5816ECBD651A16571529695AE7D40@BYAPR04MB5816.namprd04.prod.outlook.com>
+References: <20190805235603.18337-1-dmitry.fomichev@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190807055022.15551-1-ard.biesheuvel@linaro.org>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,29 +17,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ard Biesheuvel <ard.biesheuvel@linaro.org>, linux-crypto@vger.kernel.org
-Cc: ebiggers@kernel.org, snitzer@redhat.com, dm-devel@redhat.com, herbert@gondor.apana.org.au, agk@redhat.com
+To: Dmitry Fomichev <Dmitry.Fomichev@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 07/08/2019 07:50, Ard Biesheuvel wrote:
-> Instead of instantiating a separate cipher to perform the encryption
-> needed to produce the IV, reuse the skcipher used for the block data
-> and invoke it one additional time for each block to encrypt a zero
-> vector and use the output as the IV.
+On 2019/08/06 8:56, Dmitry Fomichev wrote:
+> This patch fixes a problem in dm-kcopyd that may leave jobs in
+> complete queue indefinitely in the event of backing storage failure.
 > 
-> For CBC mode, this is equivalent to using the bare block cipher, but
-> without the risk of ending up with a non-time invariant implementation
-> of AES when the skcipher itself is time variant (e.g., arm64 without
-> Crypto Extensions has a NEON based time invariant implementation of
-> cbc(aes) but no time invariant implementation of the core cipher other
-> than aes-ti, which is not enabled by default)
+> This behavior has been observed while running 100% write file fio
+> workload against an XFS volume created on top of a dm-zoned target
+> device. If the underlying storage of dm-zoned goes to offline state
+> under I/O, kcopyd sometimes never issues the end copy callback and
+> dm-zoned reclaim work hangs indefinitely waiting for that completion.
 > 
-> This approach is a compromise between dm-crypt API flexibility and
-> reducing dependence on parts of the crypto API that should not usually
-> be exposed to other subsystems, such as the bare cipher API.
+> This behavior was traced down to the error handling code in
+> process_jobs() function that places the failed job to complete_jobs
+> queue, but doesn't wake up the job handler. In case of backing device
+> failure, all outstanding jobs may end up going to complete_jobs queue
+> via this code path and then stay there forever because there are no
+> more successful I/O jobs to wake up the job handler.
 > 
-> Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+> This patch adds a wake() call to always wake up kcopyd job wait queue
+> for all I/O jobs that fail before dm_io() gets called for that job.
+> 
+> The patch also sets the write error status in all sub jobs that are
+> failed because their master job has failed.
+> 
+> Fixes: b73c67c2cbb00 ("dm kcopyd: add sequential write feature")
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Dmitry Fomichev <dmitry.fomichev@wdc.com>
+> ---
+>  drivers/md/dm-kcopyd.c | 5 ++++-
+>  1 file changed, 4 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-kcopyd.c b/drivers/md/dm-kcopyd.c
+> index df2011de7be2..1bbe4a34ef4c 100644
+> --- a/drivers/md/dm-kcopyd.c
+> +++ b/drivers/md/dm-kcopyd.c
+> @@ -566,8 +566,10 @@ static int run_io_job(struct kcopyd_job *job)
+>  	 * no point in continuing.
+>  	 */
+>  	if (test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags) &&
+> -	    job->master_job->write_err)
+> +	    job->master_job->write_err) {
+> +		job->write_err = job->master_job->write_err;
+>  		return -EIO;
+> +	}
+>  
+>  	io_job_start(job->kc->throttle);
+>  
+> @@ -619,6 +621,7 @@ static int process_jobs(struct list_head *jobs, struct dm_kcopyd_client *kc,
+>  			else
+>  				job->read_err = 1;
+>  			push(&kc->complete_jobs, job);
+> +			wake(kc);
+>  			break;
+>  		}
+>  
+> 
 
-Yes, this is a good idea, I'll test it. Thanks!
+Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
 
-Milan
+-- 
+Damien Le Moal
+Western Digital Research
