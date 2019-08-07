@@ -1,18 +1,12 @@
 From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [RFC PATCH 2/2] md/dm-crypt - switch to AES library
-	for EBOIV
-Date: Tue, 6 Aug 2019 17:14:29 +0300
-Message-ID: <CAKv+Gu8mQSb0JX5s0AuKTti+kTFUg=2mFZ+ntoYHvHpP-MDnig@mail.gmail.com>
-References: <20190806080234.27998-1-ard.biesheuvel@linaro.org>
-	<20190806080234.27998-3-ard.biesheuvel@linaro.org>
-	<22f5bfd5-7563-b85b-925e-6d46e7584966@gmail.com>
-	<CAKv+Gu_LQwtM47njiksCJL2tMx_Zv8Paoegfkah--T6Mh55u3A@mail.gmail.com>
-	<922068a1-6123-b4b6-fe2e-d453c28c45dd@gmail.com>
+Subject: [RFC PATCH v2] md/dm-crypt - reuse eboiv skcipher for IV
+	generation
+Date: Wed,  7 Aug 2019 08:50:22 +0300
+Message-ID: <20190807055022.15551-1-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <922068a1-6123-b4b6-fe2e-d453c28c45dd@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,103 +16,151 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Mike Snitzer <snitzer@redhat.com>, Eric Biggers <ebiggers@kernel.org>, device-mapper development <dm-devel@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, "Alasdair G. Kergon" <agk@redhat.com>
+To: linux-crypto@vger.kernel.org
+Cc: herbert@gondor.apana.org.au, snitzer@redhat.com, Ard Biesheuvel <ard.biesheuvel@linaro.org>, ebiggers@kernel.org, dm-devel@redhat.com, gmazyland@gmail.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, 6 Aug 2019 at 16:19, Milan Broz <gmazyland@gmail.com> wrote:
->
-> On 06/08/2019 14:17, Ard Biesheuvel wrote:
-> > On Tue, 6 Aug 2019 at 13:43, Milan Broz <gmazyland@gmail.com> wrote:
-> >>
-> >> On 06/08/2019 10:02, Ard Biesheuvel wrote:
-> >>> The EBOIV IV mode reuses the same AES encryption key that is used for
-> >>> encrypting the data, and uses it to perform a single block encryption
-> >>> of the byte offset to produce the IV.
-> >>>
-> >>> Since table-based AES is known to be susceptible to known-plaintext
-> >>> attacks on the key, and given that the same key is used to encrypt
-> >>> the byte offset (which is known to an attacker), we should be
-> >>> careful not to permit arbitrary instantiations where the allocated
-> >>> AES cipher is provided by aes-generic or other table-based drivers
-> >>> that are known to be time variant and thus susceptible to this kind
-> >>> of attack.
-> >>>
-> >>> Instead, let's switch to the new AES library, which has a D-cache
-> >>> footprint that is only 1/32th of the generic AES driver, and which
-> >>> contains some mitigations to reduce the timing variance even further.
-> >>
-> >> NACK.
-> >>
-> >> We discussed here that we will not limit combinations inside dm-crypt.
-> >> For generic crypto API, this policy should be different, but I really
-> >> do not want these IVs to be visible outside of dm-crypt.
-> >>
-> >> Allowing arbitrary combinations of a cipher, mode, and IV is how dm-crypt
-> >> works since the beginning, and I really do not see the reason to change it.
-> >>
-> >> This IV mode is intended to be used for accessing old BitLocker images,
-> >> so I do not care about performance much.
-> >>
-> >
-> > Apologies for being blunt, but you are basically driving home the
-> > point I made before about why the cipher API should become internal to
-> > the crypto subsystem.
-> >
-> > Even though EBOIV is explicitly only intended for accessing old
-> > BitLocker images, you prioritize non-functional properties like API
-> > symmetry and tradition over sound cryptographic engineering practice,
-> > even after I pointed out to you that
-> > a) the way EBOIV uses the same symmetric key for two different
-> > purposes is a bad idea in general, and
-> > b) table based AES in particular is a hazard for this mode, since the
-> > way the IV is generated is susceptible to exactly the attack that
-> > table based AES is most criticized for.
-> >
-> > So if you insist on supporting EBOIV in combination with arbitrary
-> > skciphers or AEADs (or AES on systems where crypto_alloc_cipher()
-> > produces a table based AES driver), how do you intend to mitigate
-> > these issues?
->  I am not going to mitigate these. We will never format new devices
-> using these exotic configurations. And if user enforces it, there can be
-> a reason - or it is just stupid, like using cipher_null.
-> (Which is entirely insecure but very useful for testing.)
->
-> The IV concept in dm-crypt is straightforward and allows many insecure
-> and obscure combinations (aes-ecb-null, for example - and this is used
-> for millions of chipset encrypted drivers, people used it to access through
-> dmcrypt without the USB bridge.) The same applies for obscure cryptloop
-> image combinations. (I would better spent time to remove cryptoloop,
-> it is much worse that what we are discussing here :)
->
-> So I see no reason to spend hours and hours attacks for devices
-> that use crypto that is obsolete anyway (all new drives use XTS).
->
-> I would like to provide way to access data on existing, maybe obsolete and insecure,
-> encrypted images from foreign OSes.
->
-> But all that said is meant in the isolated context of dm-crypt driver,
-> if you want to provide generic API, it perhaps makes sense to enforce such a policy.
->
-> I understand you want to propose more secure ways of implementing crypto,
-> but then - if you decide to remove existing API I used, we can switch to something better.
-> (Is there something better except AES-only lib you used?)
->
-> I just disagree with adding various checks for cipher/mode/iv combinations inside dm-crypt.
-> It was meant to be configurable from userspace.
->
+Instead of instantiating a separate cipher to perform the encryption
+needed to produce the IV, reuse the skcipher used for the block data
+and invoke it one additional time for each block to encrypt a zero
+vector and use the output as the IV.
 
-OK, so you are using that the dm-crypt user space tools will only
-allow eboiv to be instantiated in combination with cbc(aes)? If so, do
-you have a problem with patch #1 as well, which just double checks
-that at the kernel level. With that patch applied, we can at least
-avoid having to support every combination imaginable forever, while
-the discussion takes place.
+For CBC mode, this is equivalent to using the bare block cipher, but
+without the risk of ending up with a non-time invariant implementation
+of AES when the skcipher itself is time variant (e.g., arm64 without
+Crypto Extensions has a NEON based time invariant implementation of
+cbc(aes) but no time invariant implementation of the core cipher other
+than aes-ti, which is not enabled by default)
 
-In any case, if performance does not really matter, restricting
-ourselves to CBC mode has the beneficial side effect that the same tfm
-used for decrypting the data could be used to encrypt the IV, and you
-don't need to instantiate another cipher at all. On most systems,
-cbc(aes) will be provided by a time invariant driver, and even if it
-is costly to invoke this in some cases, it will at least not create
-any security holes.
+This approach is a compromise between dm-crypt API flexibility and
+reducing dependence on parts of the crypto API that should not usually
+be exposed to other subsystems, such as the bare cipher API.
+
+Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+---
+ drivers/md/dm-crypt.c | 70 ++++++++++++++-----------------------------
+ 1 file changed, 22 insertions(+), 48 deletions(-)
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index d5216bcc4649..48cd76c88d77 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -120,10 +120,6 @@ struct iv_tcw_private {
+ 	u8 *whitening;
+ };
+ 
+-struct iv_eboiv_private {
+-	struct crypto_cipher *tfm;
+-};
+-
+ /*
+  * Crypt: maps a linear range of a block device
+  * and encrypts / decrypts at the same time.
+@@ -163,7 +159,6 @@ struct crypt_config {
+ 		struct iv_benbi_private benbi;
+ 		struct iv_lmk_private lmk;
+ 		struct iv_tcw_private tcw;
+-		struct iv_eboiv_private eboiv;
+ 	} iv_gen_private;
+ 	u64 iv_offset;
+ 	unsigned int iv_size;
+@@ -847,65 +842,47 @@ static int crypt_iv_random_gen(struct crypt_config *cc, u8 *iv,
+ 	return 0;
+ }
+ 
+-static void crypt_iv_eboiv_dtr(struct crypt_config *cc)
+-{
+-	struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
+-
+-	crypto_free_cipher(eboiv->tfm);
+-	eboiv->tfm = NULL;
+-}
+-
+ static int crypt_iv_eboiv_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 			    const char *opts)
+ {
+-	struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
+-	struct crypto_cipher *tfm;
+-
+-	tfm = crypto_alloc_cipher(cc->cipher, 0, 0);
+-	if (IS_ERR(tfm)) {
+-		ti->error = "Error allocating crypto tfm for EBOIV";
+-		return PTR_ERR(tfm);
++	if (test_bit(CRYPT_MODE_INTEGRITY_AEAD, &cc->cipher_flags)) {
++		ti->error = "AEAD transforms not supported for EBOIV";
++		return -EINVAL;
+ 	}
+ 
+-	if (crypto_cipher_blocksize(tfm) != cc->iv_size) {
++	if (crypto_skcipher_blocksize(any_tfm(cc)) != cc->iv_size) {
+ 		ti->error = "Block size of EBOIV cipher does "
+ 			    "not match IV size of block cipher";
+-		crypto_free_cipher(tfm);
+ 		return -EINVAL;
+ 	}
+ 
+-	eboiv->tfm = tfm;
+ 	return 0;
+ }
+ 
+-static int crypt_iv_eboiv_init(struct crypt_config *cc)
++static int crypt_iv_eboiv_gen(struct crypt_config *cc, u8 *iv,
++			    struct dm_crypt_request *dmreq)
+ {
+-	struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
++	u8 buf[MAX_CIPHER_BLOCKSIZE] __aligned(__alignof__(__le64));
++	struct skcipher_request *req;
++	struct scatterlist src, dst;
++	struct crypto_wait wait;
+ 	int err;
+ 
+-	err = crypto_cipher_setkey(eboiv->tfm, cc->key, cc->key_size);
+-	if (err)
+-		return err;
+-
+-	return 0;
+-}
+-
+-static int crypt_iv_eboiv_wipe(struct crypt_config *cc)
+-{
+-	/* Called after cc->key is set to random key in crypt_wipe() */
+-	return crypt_iv_eboiv_init(cc);
+-}
++	req = skcipher_request_alloc(any_tfm(cc), GFP_KERNEL | GFP_NOFS);
++	if (!req)
++		return -ENOMEM;
+ 
+-static int crypt_iv_eboiv_gen(struct crypt_config *cc, u8 *iv,
+-			    struct dm_crypt_request *dmreq)
+-{
+-	struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
++	memset(buf, 0, cc->iv_size);
++	*(__le64 *)buf = cpu_to_le64(dmreq->iv_sector * cc->sector_size);
+ 
+-	memset(iv, 0, cc->iv_size);
+-	*(__le64 *)iv = cpu_to_le64(dmreq->iv_sector * cc->sector_size);
+-	crypto_cipher_encrypt_one(eboiv->tfm, iv, iv);
++	sg_init_one(&src, page_address(ZERO_PAGE(0)), cc->iv_size);
++	sg_init_one(&dst, iv, cc->iv_size);
++	skcipher_request_set_crypt(req, &src, &dst, cc->iv_size, buf);
++	skcipher_request_set_callback(req, 0, crypto_req_done, &wait);
++	err = crypto_wait_req(crypto_skcipher_encrypt(req), &wait);
++	skcipher_request_free(req);
+ 
+-	return 0;
++	return err;
+ }
+ 
+ static const struct crypt_iv_operations crypt_iv_plain_ops = {
+@@ -962,9 +939,6 @@ static struct crypt_iv_operations crypt_iv_random_ops = {
+ 
+ static struct crypt_iv_operations crypt_iv_eboiv_ops = {
+ 	.ctr	   = crypt_iv_eboiv_ctr,
+-	.dtr	   = crypt_iv_eboiv_dtr,
+-	.init	   = crypt_iv_eboiv_init,
+-	.wipe	   = crypt_iv_eboiv_wipe,
+ 	.generator = crypt_iv_eboiv_gen
+ };
+ 
+-- 
+2.17.1
