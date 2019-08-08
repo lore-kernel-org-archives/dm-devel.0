@@ -1,32 +1,23 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] Revert "dm bufio: fix deadlock with loop device"
-Date: Thu, 8 Aug 2019 05:40:04 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1908080537540.15519@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH] direct-io: use GFP_NOIO to avoid deadlock
+Date: Thu, 8 Aug 2019 05:50:10 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1908080540240.15519@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, junxiao.bi@oracle.com
-Cc: honglei.wang@oracle.com, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexander Viro <viro@zeniv.linux.org.uk>, "Darrick J. Wong" <darrick.wong@oracle.com>, Mike Snitzer <msnitzer@redhat.com>, junxiao.bi@oracle.com
+Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, honglei.wang@oracle.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-Revert the patch bd293d071ffe65e645b4d8104f9d8fe15ea13862. A proper fix
-should be not to use GFP_KERNEL in the function do_blockdev_direct_IO.
+A deadlock with this stacktrace was observed.
 
-Note that the patch bd293d071ffe doesn't really prevent the deadlock from
-occuring - if we look at the stacktrace reported by Junxiao Bi, we see
-that it hangs in bit_wait_io and not on the mutex - i.e. it has already
-successfully taken the mutex. Changing the mutex from mutex_lock to
-mutex_trylock won't help with deadlocks that happen afterwards.
+The obvious problem here is that in the call chain 
+xfs_vm_direct_IO->__blockdev_direct_IO->do_blockdev_direct_IO->kmem_cache_alloc 
+we do a GFP_KERNEL allocation while we are in a filesystem driver and in a 
+block device driver.
+
+This patch changes the direct-io code to use GFP_NOIO.
 
 PID: 474    TASK: ffff8813e11f4600  CPU: 10  COMMAND: "kswapd0"
    #0 [ffff8813dedfb938] __schedule at ffffffff8173f405
@@ -45,26 +36,59 @@ PID: 474    TASK: ffff8813e11f4600  CPU: 10  COMMAND: "kswapd0"
   #13 [ffff8813dedfbec0] kthread at ffffffff810a8428
   #14 [ffff8813dedfbf50] ret_from_fork at ffffffff81745242
 
+  PID: 14127  TASK: ffff881455749c00  CPU: 11  COMMAND: "loop1"
+   #0 [ffff88272f5af228] __schedule at ffffffff8173f405
+   #1 [ffff88272f5af280] schedule at ffffffff8173fa27
+   #2 [ffff88272f5af2a0] schedule_preempt_disabled at ffffffff8173fd5e
+   #3 [ffff88272f5af2b0] __mutex_lock_slowpath at ffffffff81741fb5
+   #4 [ffff88272f5af330] mutex_lock at ffffffff81742133
+   #5 [ffff88272f5af350] dm_bufio_shrink_count at ffffffffa03865f9 [dm_bufio]
+   #6 [ffff88272f5af380] shrink_slab at ffffffff811a86bd
+   #7 [ffff88272f5af470] shrink_zone at ffffffff811ad778
+   #8 [ffff88272f5af500] do_try_to_free_pages at ffffffff811adb34
+   #9 [ffff88272f5af590] try_to_free_pages at ffffffff811adef8
+  #10 [ffff88272f5af610] __alloc_pages_nodemask at ffffffff811a09c3
+  #11 [ffff88272f5af710] alloc_pages_current at ffffffff811e8b71
+  #12 [ffff88272f5af760] new_slab at ffffffff811f4523
+  #13 [ffff88272f5af7b0] __slab_alloc at ffffffff8173a1b5
+  #14 [ffff88272f5af880] kmem_cache_alloc at ffffffff811f484b
+  #15 [ffff88272f5af8d0] do_blockdev_direct_IO at ffffffff812535b3
+  #16 [ffff88272f5afb00] __blockdev_direct_IO at ffffffff81255dc3
+  #17 [ffff88272f5afb30] xfs_vm_direct_IO at ffffffffa01fe3fc [xfs]
+  #18 [ffff88272f5afb90] generic_file_read_iter at ffffffff81198994
+  #19 [ffff88272f5afc50] __dta_xfs_file_read_iter_2398 at ffffffffa020c970 [xfs]
+  #20 [ffff88272f5afcc0] lo_rw_aio at ffffffffa0377042 [loop]
+  #21 [ffff88272f5afd70] loop_queue_work at ffffffffa0377c3b [loop]
+  #22 [ffff88272f5afe60] kthread_worker_fn at ffffffff810a8a0c
+  #23 [ffff88272f5afec0] kthread at ffffffff810a8428
+  #24 [ffff88272f5aff50] ret_from_fork at ffffffff81745242
+
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Cc: stable@vger.kernel.org
-Fixes: bd293d071ffe ("dm bufio: fix deadlock with loop device")
 
 ---
- drivers/md/dm-bufio.c |    4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ fs/direct-io.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-bufio.c
+Index: linux-2.6/fs/direct-io.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-bufio.c	2019-08-02 08:52:35.000000000 +0200
-+++ linux-2.6/drivers/md/dm-bufio.c	2019-08-08 11:19:13.000000000 +0200
-@@ -1604,7 +1604,9 @@ dm_bufio_shrink_scan(struct shrinker *sh
- 	unsigned long freed;
+--- linux-2.6.orig/fs/direct-io.c	2019-08-02 08:51:56.000000000 +0200
++++ linux-2.6/fs/direct-io.c	2019-08-08 11:22:18.000000000 +0200
+@@ -436,7 +436,7 @@ dio_bio_alloc(struct dio *dio, struct di
+ 	 * bio_alloc() is guaranteed to return a bio when allowed to sleep and
+ 	 * we request a valid number of vectors.
+ 	 */
+-	bio = bio_alloc(GFP_KERNEL, nr_vecs);
++	bio = bio_alloc(GFP_NOIO, nr_vecs);
  
- 	c = container_of(shrink, struct dm_bufio_client, shrinker);
--	if (!dm_bufio_trylock(c))
-+	if (sc->gfp_mask & __GFP_FS)
-+		dm_bufio_lock(c);
-+	else if (!dm_bufio_trylock(c))
- 		return SHRINK_STOP;
+ 	bio_set_dev(bio, bdev);
+ 	bio->bi_iter.bi_sector = first_sector;
+@@ -1197,7 +1197,7 @@ do_blockdev_direct_IO(struct kiocb *iocb
+ 	if (iov_iter_rw(iter) == READ && !count)
+ 		return 0;
  
- 	freed  = __scan(c, sc->nr_to_scan, sc->gfp_mask);
+-	dio = kmem_cache_alloc(dio_cache, GFP_KERNEL);
++	dio = kmem_cache_alloc(dio_cache, GFP_NOIO);
+ 	retval = -ENOMEM;
+ 	if (!dio)
+ 		goto out;
