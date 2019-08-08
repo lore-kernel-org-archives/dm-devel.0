@@ -1,94 +1,182 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] direct-io: use GFP_NOIO to avoid deadlock
-Date: Thu, 8 Aug 2019 05:50:10 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1908080540240.15519@file01.intranet.prod.int.rdu2.redhat.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: [RFC PATCH v2] md/dm-crypt - reuse eboiv skcipher
+ for IV generation
+Date: Thu, 8 Aug 2019 13:53:11 +0200
+Message-ID: <e13525a4-4885-e0f3-6711-efd83dd4a9fb@gmail.com>
+References: <20190807055022.15551-1-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexander Viro <viro@zeniv.linux.org.uk>, "Darrick J. Wong" <darrick.wong@oracle.com>, Mike Snitzer <msnitzer@redhat.com>, junxiao.bi@oracle.com
-Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, honglei.wang@oracle.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190807055022.15551-1-ard.biesheuvel@linaro.org>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ard Biesheuvel <ard.biesheuvel@linaro.org>, linux-crypto@vger.kernel.org
+Cc: ebiggers@kernel.org, snitzer@redhat.com, dm-devel@redhat.com, herbert@gondor.apana.org.au, agk@redhat.com
 List-Id: dm-devel.ids
 
-A deadlock with this stacktrace was observed.
+Hi,
 
-The obvious problem here is that in the call chain 
-xfs_vm_direct_IO->__blockdev_direct_IO->do_blockdev_direct_IO->kmem_cache_alloc 
-we do a GFP_KERNEL allocation while we are in a filesystem driver and in a 
-block device driver.
+On 07/08/2019 07:50, Ard Biesheuvel wrote:
+> Instead of instantiating a separate cipher to perform the encryption
+> needed to produce the IV, reuse the skcipher used for the block data
+> and invoke it one additional time for each block to encrypt a zero
+> vector and use the output as the IV.
+> 
+> For CBC mode, this is equivalent to using the bare block cipher, but
+> without the risk of ending up with a non-time invariant implementation
+> of AES when the skcipher itself is time variant (e.g., arm64 without
+> Crypto Extensions has a NEON based time invariant implementation of
+> cbc(aes) but no time invariant implementation of the core cipher other
+> than aes-ti, which is not enabled by default)
+> 
+> This approach is a compromise between dm-crypt API flexibility and
+> reducing dependence on parts of the crypto API that should not usually
+> be exposed to other subsystems, such as the bare cipher API.
+> 
+> Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 
-This patch changes the direct-io code to use GFP_NOIO.
+For now I have just pair of images here to test, but seems checksums are ok.
 
-PID: 474    TASK: ffff8813e11f4600  CPU: 10  COMMAND: "kswapd0"
-   #0 [ffff8813dedfb938] __schedule at ffffffff8173f405
-   #1 [ffff8813dedfb990] schedule at ffffffff8173fa27
-   #2 [ffff8813dedfb9b0] schedule_timeout at ffffffff81742fec
-   #3 [ffff8813dedfba60] io_schedule_timeout at ffffffff8173f186
-   #4 [ffff8813dedfbaa0] bit_wait_io at ffffffff8174034f
-   #5 [ffff8813dedfbac0] __wait_on_bit at ffffffff8173fec8
-   #6 [ffff8813dedfbb10] out_of_line_wait_on_bit at ffffffff8173ff81
-   #7 [ffff8813dedfbb90] __make_buffer_clean at ffffffffa038736f [dm_bufio]
-   #8 [ffff8813dedfbbb0] __try_evict_buffer at ffffffffa0387bb8 [dm_bufio]
-   #9 [ffff8813dedfbbd0] dm_bufio_shrink_scan at ffffffffa0387cc3 [dm_bufio]
-  #10 [ffff8813dedfbc40] shrink_slab at ffffffff811a87ce
-  #11 [ffff8813dedfbd30] shrink_zone at ffffffff811ad778
-  #12 [ffff8813dedfbdc0] kswapd at ffffffff811ae92f
-  #13 [ffff8813dedfbec0] kthread at ffffffff810a8428
-  #14 [ffff8813dedfbf50] ret_from_fork at ffffffff81745242
+Tested-by: Milan Broz <gmazyland@gmail.com>
 
-  PID: 14127  TASK: ffff881455749c00  CPU: 11  COMMAND: "loop1"
-   #0 [ffff88272f5af228] __schedule at ffffffff8173f405
-   #1 [ffff88272f5af280] schedule at ffffffff8173fa27
-   #2 [ffff88272f5af2a0] schedule_preempt_disabled at ffffffff8173fd5e
-   #3 [ffff88272f5af2b0] __mutex_lock_slowpath at ffffffff81741fb5
-   #4 [ffff88272f5af330] mutex_lock at ffffffff81742133
-   #5 [ffff88272f5af350] dm_bufio_shrink_count at ffffffffa03865f9 [dm_bufio]
-   #6 [ffff88272f5af380] shrink_slab at ffffffff811a86bd
-   #7 [ffff88272f5af470] shrink_zone at ffffffff811ad778
-   #8 [ffff88272f5af500] do_try_to_free_pages at ffffffff811adb34
-   #9 [ffff88272f5af590] try_to_free_pages at ffffffff811adef8
-  #10 [ffff88272f5af610] __alloc_pages_nodemask at ffffffff811a09c3
-  #11 [ffff88272f5af710] alloc_pages_current at ffffffff811e8b71
-  #12 [ffff88272f5af760] new_slab at ffffffff811f4523
-  #13 [ffff88272f5af7b0] __slab_alloc at ffffffff8173a1b5
-  #14 [ffff88272f5af880] kmem_cache_alloc at ffffffff811f484b
-  #15 [ffff88272f5af8d0] do_blockdev_direct_IO at ffffffff812535b3
-  #16 [ffff88272f5afb00] __blockdev_direct_IO at ffffffff81255dc3
-  #17 [ffff88272f5afb30] xfs_vm_direct_IO at ffffffffa01fe3fc [xfs]
-  #18 [ffff88272f5afb90] generic_file_read_iter at ffffffff81198994
-  #19 [ffff88272f5afc50] __dta_xfs_file_read_iter_2398 at ffffffffa020c970 [xfs]
-  #20 [ffff88272f5afcc0] lo_rw_aio at ffffffffa0377042 [loop]
-  #21 [ffff88272f5afd70] loop_queue_work at ffffffffa0377c3b [loop]
-  #22 [ffff88272f5afe60] kthread_worker_fn at ffffffff810a8a0c
-  #23 [ffff88272f5afec0] kthread at ffffffff810a8428
-  #24 [ffff88272f5aff50] ret_from_fork at ffffffff81745242
+I talked with Mike already, so it should go through DM tree now.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
+Thanks!
+Milan
 
----
- fs/direct-io.c |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
 
-Index: linux-2.6/fs/direct-io.c
-===================================================================
---- linux-2.6.orig/fs/direct-io.c	2019-08-02 08:51:56.000000000 +0200
-+++ linux-2.6/fs/direct-io.c	2019-08-08 11:22:18.000000000 +0200
-@@ -436,7 +436,7 @@ dio_bio_alloc(struct dio *dio, struct di
- 	 * bio_alloc() is guaranteed to return a bio when allowed to sleep and
- 	 * we request a valid number of vectors.
- 	 */
--	bio = bio_alloc(GFP_KERNEL, nr_vecs);
-+	bio = bio_alloc(GFP_NOIO, nr_vecs);
- 
- 	bio_set_dev(bio, bdev);
- 	bio->bi_iter.bi_sector = first_sector;
-@@ -1197,7 +1197,7 @@ do_blockdev_direct_IO(struct kiocb *iocb
- 	if (iov_iter_rw(iter) == READ && !count)
- 		return 0;
- 
--	dio = kmem_cache_alloc(dio_cache, GFP_KERNEL);
-+	dio = kmem_cache_alloc(dio_cache, GFP_NOIO);
- 	retval = -ENOMEM;
- 	if (!dio)
- 		goto out;
+> ---
+>  drivers/md/dm-crypt.c | 70 ++++++++++++++-----------------------------
+>  1 file changed, 22 insertions(+), 48 deletions(-)
+> 
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index d5216bcc4649..48cd76c88d77 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -120,10 +120,6 @@ struct iv_tcw_private {
+>  	u8 *whitening;
+>  };
+>  
+> -struct iv_eboiv_private {
+> -	struct crypto_cipher *tfm;
+> -};
+> -
+>  /*
+>   * Crypt: maps a linear range of a block device
+>   * and encrypts / decrypts at the same time.
+> @@ -163,7 +159,6 @@ struct crypt_config {
+>  		struct iv_benbi_private benbi;
+>  		struct iv_lmk_private lmk;
+>  		struct iv_tcw_private tcw;
+> -		struct iv_eboiv_private eboiv;
+>  	} iv_gen_private;
+>  	u64 iv_offset;
+>  	unsigned int iv_size;
+> @@ -847,65 +842,47 @@ static int crypt_iv_random_gen(struct crypt_config *cc, u8 *iv,
+>  	return 0;
+>  }
+>  
+> -static void crypt_iv_eboiv_dtr(struct crypt_config *cc)
+> -{
+> -	struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
+> -
+> -	crypto_free_cipher(eboiv->tfm);
+> -	eboiv->tfm = NULL;
+> -}
+> -
+>  static int crypt_iv_eboiv_ctr(struct crypt_config *cc, struct dm_target *ti,
+>  			    const char *opts)
+>  {
+> -	struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
+> -	struct crypto_cipher *tfm;
+> -
+> -	tfm = crypto_alloc_cipher(cc->cipher, 0, 0);
+> -	if (IS_ERR(tfm)) {
+> -		ti->error = "Error allocating crypto tfm for EBOIV";
+> -		return PTR_ERR(tfm);
+> +	if (test_bit(CRYPT_MODE_INTEGRITY_AEAD, &cc->cipher_flags)) {
+> +		ti->error = "AEAD transforms not supported for EBOIV";
+> +		return -EINVAL;
+>  	}
+>  
+> -	if (crypto_cipher_blocksize(tfm) != cc->iv_size) {
+> +	if (crypto_skcipher_blocksize(any_tfm(cc)) != cc->iv_size) {
+>  		ti->error = "Block size of EBOIV cipher does "
+>  			    "not match IV size of block cipher";
+> -		crypto_free_cipher(tfm);
+>  		return -EINVAL;
+>  	}
+>  
+> -	eboiv->tfm = tfm;
+>  	return 0;
+>  }
+>  
+> -static int crypt_iv_eboiv_init(struct crypt_config *cc)
+> +static int crypt_iv_eboiv_gen(struct crypt_config *cc, u8 *iv,
+> +			    struct dm_crypt_request *dmreq)
+>  {
+> -	struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
+> +	u8 buf[MAX_CIPHER_BLOCKSIZE] __aligned(__alignof__(__le64));
+> +	struct skcipher_request *req;
+> +	struct scatterlist src, dst;
+> +	struct crypto_wait wait;
+>  	int err;
+>  
+> -	err = crypto_cipher_setkey(eboiv->tfm, cc->key, cc->key_size);
+> -	if (err)
+> -		return err;
+> -
+> -	return 0;
+> -}
+> -
+> -static int crypt_iv_eboiv_wipe(struct crypt_config *cc)
+> -{
+> -	/* Called after cc->key is set to random key in crypt_wipe() */
+> -	return crypt_iv_eboiv_init(cc);
+> -}
+> +	req = skcipher_request_alloc(any_tfm(cc), GFP_KERNEL | GFP_NOFS);
+> +	if (!req)
+> +		return -ENOMEM;
+>  
+> -static int crypt_iv_eboiv_gen(struct crypt_config *cc, u8 *iv,
+> -			    struct dm_crypt_request *dmreq)
+> -{
+> -	struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
+> +	memset(buf, 0, cc->iv_size);
+> +	*(__le64 *)buf = cpu_to_le64(dmreq->iv_sector * cc->sector_size);
+>  
+> -	memset(iv, 0, cc->iv_size);
+> -	*(__le64 *)iv = cpu_to_le64(dmreq->iv_sector * cc->sector_size);
+> -	crypto_cipher_encrypt_one(eboiv->tfm, iv, iv);
+> +	sg_init_one(&src, page_address(ZERO_PAGE(0)), cc->iv_size);
+> +	sg_init_one(&dst, iv, cc->iv_size);
+> +	skcipher_request_set_crypt(req, &src, &dst, cc->iv_size, buf);
+> +	skcipher_request_set_callback(req, 0, crypto_req_done, &wait);
+> +	err = crypto_wait_req(crypto_skcipher_encrypt(req), &wait);
+> +	skcipher_request_free(req);
+>  
+> -	return 0;
+> +	return err;
+>  }
+>  
+>  static const struct crypt_iv_operations crypt_iv_plain_ops = {
+> @@ -962,9 +939,6 @@ static struct crypt_iv_operations crypt_iv_random_ops = {
+>  
+>  static struct crypt_iv_operations crypt_iv_eboiv_ops = {
+>  	.ctr	   = crypt_iv_eboiv_ctr,
+> -	.dtr	   = crypt_iv_eboiv_dtr,
+> -	.init	   = crypt_iv_eboiv_init,
+> -	.wipe	   = crypt_iv_eboiv_wipe,
+>  	.generator = crypt_iv_eboiv_gen
+>  };
+>  
+> 
