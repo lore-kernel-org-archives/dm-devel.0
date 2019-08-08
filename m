@@ -1,124 +1,39 @@
-From: Qu Wenruo <quwenruo.btrfs@gmx.com>
-Subject: Re: [PATCH 0/2] dm log writes: Add support for filter bios based on
- its type
-Date: Thu, 8 Aug 2019 20:54:40 +0800
-Message-ID: <256f2ccc-af5b-e30a-76c1-a911f242d252@gmx.com>
-References: <20190619080312.11549-1-wqu@suse.com>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: Re: [PATCH] direct-io: use GFP_NOIO to avoid deadlock
+Date: Thu, 8 Aug 2019 06:53:29 -0700
+Message-ID: <20190808135329.GG5482@bombadil.infradead.org>
+References: <alpine.LRH.2.02.1908080540240.15519@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature";
- boundary="UJjeYQViLV1ROwxoJtPmPkc7BCH810Ccd"
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <20190619080312.11549-1-wqu@suse.com>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Qu Wenruo <wqu@suse.com>, dm-devel@redhat.com
-Cc: linux-btrfs@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1908080540240.15519@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, "Darrick J. Wong" <darrick.wong@oracle.com>, Mike Snitzer <msnitzer@redhat.com>, junxiao.bi@oracle.com, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, honglei.wang@oracle.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---UJjeYQViLV1ROwxoJtPmPkc7BCH810Ccd
-Content-Type: multipart/mixed; boundary="kUwSWdupgWDROeoUG3SFSfjvAqpoqorlf";
- protected-headers="v1"
-From: Qu Wenruo <quwenruo.btrfs@gmx.com>
-To: Qu Wenruo <wqu@suse.com>, dm-devel@redhat.com
-Cc: linux-btrfs@vger.kernel.org
-Message-ID: <256f2ccc-af5b-e30a-76c1-a911f242d252@gmx.com>
-Subject: Re: [PATCH 0/2] dm log writes: Add support for filter bios based on
- its type
-References: <20190619080312.11549-1-wqu@suse.com>
-In-Reply-To: <20190619080312.11549-1-wqu@suse.com>
+On Thu, Aug 08, 2019 at 05:50:10AM -0400, Mikulas Patocka wrote:
+> A deadlock with this stacktrace was observed.
+> 
+> The obvious problem here is that in the call chain 
+> xfs_vm_direct_IO->__blockdev_direct_IO->do_blockdev_direct_IO->kmem_cache_alloc 
+> we do a GFP_KERNEL allocation while we are in a filesystem driver and in a 
+> block device driver.
 
---kUwSWdupgWDROeoUG3SFSfjvAqpoqorlf
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: quoted-printable
+But that's not the problem.  The problem is the loop driver calls into the
+filesystem without calling memalloc_noio_save() / memalloc_noio_restore().
+There are dozens of places in XFS which use GFP_KERNEL allocations and
+all can trigger this same problem if called from the loop driver.
 
-Gentle ping?
-
-This feature would be pretty useful if we want to really log heavy
-operations on a relatively small log devices.
-
-Thanks,
-Qu
-
-On 2019/6/19 =E4=B8=8B=E5=8D=884:03, Qu Wenruo wrote:
-> Current dm-log-writes will record all bios, no matter if the bios is
-> METADATA (normally what we care) or is DATA (normally we cares less for=
-
-> the log-replay context).
->=20
-> This causes a lot of extra space required for log device. E.g write 10M=
-,
-> sync, overwrite that 10M file, this would cause over 20M for log device=
-
-> just for the data.
->=20
-> This patchset introduces two way to specify the dump type:
-> - dump_type=3D%s optional option for constructor
->   The default dump_type is ALL, thus no behavior change.
->=20
-> - dump_type=3D%s message type to change type on the fly
->=20
-> Also to cooperate the new dump_type=3D option, always output the dump_t=
-ype
-> for STATUSTYPE_TABLE.
->=20
-> A common use case would be:
->  # dmsetup create log --table 0 $(blockdev --getsz $dev) log-writes $de=
-v $log_dev
->  # mkfs.btrfs -f /dev/mapper/log
->  # dmsetup suspend log
->  # dmsetup message log 0 dump_type=3DMETADATA|FUA|FLUSH|DISCARD|MARK
->  # dmsetup resume log
->  # mount /dev/mapper/log <mnt>
->  # <do some work load>
->  # umount <mnt>
->  # dmsetup remove log
->  # <replay>
->=20
-> Now the log device will not record data writes, thus hugely reduce the
-> space requirement for log device, allowing more operations to be down
-> before hitting the space limit.
->=20
-> Currently btrfs check doesn't check data checksum by default, thus even=
-
-> we have wrong data on-disk, we should be fine checking the metadata.
->=20
-> I'm not 100% sure if this applies to other filesystems, but as long as
-> metadata writes is marked correctly, other filesystems can also benifit=
-
-> from this feature.
->=20
-> Qu Wenruo (2):
->   dm log writes: Allow dm-log-writes to filter bios based on types to
->     reduce log device space usage
->   dm log writes: Introduce dump_type=3D message type to change dump_typ=
-e
->     on the fly
->=20
->  drivers/md/dm-log-writes.c | 177 ++++++++++++++++++++++++++++++++++---=
-
->  1 file changed, 167 insertions(+), 10 deletions(-)
->=20
-
-
---kUwSWdupgWDROeoUG3SFSfjvAqpoqorlf--
-
---UJjeYQViLV1ROwxoJtPmPkc7BCH810Ccd
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAEBCAAdFiEELd9y5aWlW6idqkLhwj2R86El/qgFAl1MG5AACgkQwj2R86El
-/qghagf/Q2vvP4Ah6dNhKhOZpgm67p9TSpaMF05UXsYrZ07uebR2QWP7pMoC3eEr
-xLEO9d4ikzfqMRf4c6VOLorjPAVzwML6Wi0PwT5EbhPacBNRLBRxlwOzR99dt2RD
-CvLE2I5pngFyUpikMsYrIpWaGGJ2P4o/DK0iCyUb5ZBE4gTupIQOm6wdRyzXbjx/
-OCm+BHVUNdv2dNDGTOu/08nqyC0ZcKpCkgQWCHfJ0uE16w8SSg8xwl8+vRS9CnK3
-IRqlmsX2JaciMzvphgI1ra6lryRI1s8tarYHy0b7ejLM9BI2zqaZSDsr+Xdsd64A
-YEzpRrrMpX5Nfu7mRJd/QQalC6g0tA==
-=0OJn
------END PGP SIGNATURE-----
-
---UJjeYQViLV1ROwxoJtPmPkc7BCH810Ccd--
+>   #14 [ffff88272f5af880] kmem_cache_alloc at ffffffff811f484b
+>   #15 [ffff88272f5af8d0] do_blockdev_direct_IO at ffffffff812535b3
+>   #16 [ffff88272f5afb00] __blockdev_direct_IO at ffffffff81255dc3
+>   #17 [ffff88272f5afb30] xfs_vm_direct_IO at ffffffffa01fe3fc [xfs]
+>   #18 [ffff88272f5afb90] generic_file_read_iter at ffffffff81198994
+>   #19 [ffff88272f5afc50] __dta_xfs_file_read_iter_2398 at ffffffffa020c970 [xfs]
+>   #20 [ffff88272f5afcc0] lo_rw_aio at ffffffffa0377042 [loop]
+>   #21 [ffff88272f5afd70] loop_queue_work at ffffffffa0377c3b [loop]
+>   #22 [ffff88272f5afe60] kthread_worker_fn at ffffffff810a8a0c
+>   #23 [ffff88272f5afec0] kthread at ffffffff810a8428
+>   #24 [ffff88272f5aff50] ret_from_fork at ffffffff81745242
