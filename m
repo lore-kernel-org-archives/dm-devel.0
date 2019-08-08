@@ -1,14 +1,21 @@
 From: Milan Broz <gmazyland@gmail.com>
 Subject: Re: [RFC PATCH v2] md/dm-crypt - reuse eboiv skcipher
  for IV generation
-Date: Thu, 8 Aug 2019 13:53:11 +0200
-Message-ID: <e13525a4-4885-e0f3-6711-efd83dd4a9fb@gmail.com>
+Date: Thu, 8 Aug 2019 14:52:33 +0200
+Message-ID: <67b4f0ee-b169-8af4-d7af-1c53a66ba587@gmail.com>
 References: <20190807055022.15551-1-ard.biesheuvel@linaro.org>
+	<MN2PR20MB297336108DF89337DDEEE2F6CAD40@MN2PR20MB2973.namprd20.prod.outlook.com>
+	<CAKv+Gu_jFW26boEhpnAZg9sjWWZf60FXSWuSqNvC5FJiL7EVSA@mail.gmail.com>
+	<MN2PR20MB2973A02FC4D6F1D11BA80792CAD40@MN2PR20MB2973.namprd20.prod.outlook.com>
+	<CAKv+Gu8fgg=gt4LSnCfShnf0-PZ=B1TNwM3zdQr+V6hkozgDOA@mail.gmail.com>
+	<MN2PR20MB29733EEF59CCD754256D5621CAD40@MN2PR20MB2973.namprd20.prod.outlook.com>
+	<20190808083059.GB5319@sol.localdomain>
+	<MN2PR20MB297328E243D74E03C1EF54ACCAD70@MN2PR20MB2973.namprd20.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190807055022.15551-1-ard.biesheuvel@linaro.org>
+In-Reply-To: <MN2PR20MB297328E243D74E03C1EF54ACCAD70@MN2PR20MB2973.namprd20.prod.outlook.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,164 +26,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ard Biesheuvel <ard.biesheuvel@linaro.org>, linux-crypto@vger.kernel.org
-Cc: ebiggers@kernel.org, snitzer@redhat.com, dm-devel@redhat.com, herbert@gondor.apana.org.au, agk@redhat.com
+To: Pascal Van Leeuwen <pvanleeuwen@verimatrix.com>, Eric Biggers <ebiggers@kernel.org>
+Cc: "herbert@gondor.apana.org.au" <herbert@gondor.apana.org.au>, "snitzer@redhat.com" <snitzer@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, "agk@redhat.com" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
-
-On 07/08/2019 07:50, Ard Biesheuvel wrote:
-> Instead of instantiating a separate cipher to perform the encryption
-> needed to produce the IV, reuse the skcipher used for the block data
-> and invoke it one additional time for each block to encrypt a zero
-> vector and use the output as the IV.
+On 08/08/2019 11:31, Pascal Van Leeuwen wrote:
+>> -----Original Message-----
+>> From: Eric Biggers <ebiggers@kernel.org>
+>> Sent: Thursday, August 8, 2019 10:31 AM
+>> To: Pascal Van Leeuwen <pvanleeuwen@verimatrix.com>
+>> Cc: Ard Biesheuvel <ard.biesheuvel@linaro.org>; linux-crypto@vger.kernel.org;
+>> herbert@gondor.apana.org.au; agk@redhat.com; snitzer@redhat.com; dm-devel@redhat.com;
+>> gmazyland@gmail.com
+>> Subject: Re: [RFC PATCH v2] md/dm-crypt - reuse eboiv skcipher for IV generation
+>>
+>> On Wed, Aug 07, 2019 at 04:14:22PM +0000, Pascal Van Leeuwen wrote:
+>>>>>> In your case, we are not dealing with known plaintext attacks,
+>>>>>>
+>>>>> Since this is XTS, which is used for disk encryption, I would argue
+>>>>> we do! For the tweak encryption, the sector number is known plaintext,
+>>>>> same as for EBOIV. Also, you may be able to control data being written
+>>>>> to the disk encrypted, either directly or indirectly.
+>>>>> OK, part of the data into the CTS encryption will be previous ciphertext,
+>>>>> but that may be just 1 byte with the rest being the known plaintext.
+>>>>>
+>>>>
+>>>> The tweak encryption uses a dedicated key, so leaking it does not have
+>>>> the same impact as it does in the EBOIV case.
+>>>>
+>>> Well ... yes and no. The spec defines them as seperately controllable -
+>>> deviating from the original XEX definition - but in most practicle use cases
+>>> I've seen, the same key is used for both, as having 2 keys just increases
+>>> key  storage requirements and does not actually improve effective security
+>>> (of the algorithm itself, implementation peculiarities like this one aside
+>>> :-), as  XEX has been proven secure using a single key. And the security
+>>> proof for XTS actually builds on that while using 2 keys deviates from it.
+>>>
+>>
+>> This is a common misconception.  Actually, XTS needs 2 distinct keys to be a
+>> CCA-secure tweakable block cipher, due to another subtle difference from XEX:
+>> XEX (by which I really mean "XEX[E,2]") builds the sequence of masks starting
+>> with x^1, while XTS starts with x^0.  If only 1 key is used, the inclusion of
+>> the 0th power in XTS allows the attack described in Section 6 of the XEX paper
+>> (https://web.cs.ucdavis.edu/~rogaway/papers/offsets.pdf).
+>>
+> Interesting ... I'm not a cryptographer, just a humble HW engineer specialized
+> in implementing crypto. I'm basing my views mostly on the Liskov/Minematsu
+> "Comments on XTS", who assert that using 2 keys in XTS was misguided. 
+> (and I never saw any follow-on comments asserting that this view was wrong ...)
+> On not avoiding j=0 in the XTS spec they actually comment:
+> "This difference is significant in security, but has no impact on effectiveness 
+> for practical applications.", which I read as "not relevant for normal use".
 > 
-> For CBC mode, this is equivalent to using the bare block cipher, but
-> without the risk of ending up with a non-time invariant implementation
-> of AES when the skcipher itself is time variant (e.g., arm64 without
-> Crypto Extensions has a NEON based time invariant implementation of
-> cbc(aes) but no time invariant implementation of the core cipher other
-> than aes-ti, which is not enabled by default)
-> 
-> This approach is a compromise between dm-crypt API flexibility and
-> reducing dependence on parts of the crypto API that should not usually
-> be exposed to other subsystems, such as the bare cipher API.
-> 
-> Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+> In any case, it's frequently *used* with both keys being equal for performance
+> and key storage reasons.
 
-For now I have just pair of images here to test, but seems checksums are ok.
+There is already check in kernel for XTS "weak" keys (tweak and encryption keys must not be the same).
+  https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/crypto/xts.h#n27
 
-Tested-by: Milan Broz <gmazyland@gmail.com>
+For now it applies only in FIPS mode... (and if I see correctly it is duplicated in all drivers).
 
-I talked with Mike already, so it should go through DM tree now.
-
-Thanks!
 Milan
-
-
-> ---
->  drivers/md/dm-crypt.c | 70 ++++++++++++++-----------------------------
->  1 file changed, 22 insertions(+), 48 deletions(-)
-> 
-> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> index d5216bcc4649..48cd76c88d77 100644
-> --- a/drivers/md/dm-crypt.c
-> +++ b/drivers/md/dm-crypt.c
-> @@ -120,10 +120,6 @@ struct iv_tcw_private {
->  	u8 *whitening;
->  };
->  
-> -struct iv_eboiv_private {
-> -	struct crypto_cipher *tfm;
-> -};
-> -
->  /*
->   * Crypt: maps a linear range of a block device
->   * and encrypts / decrypts at the same time.
-> @@ -163,7 +159,6 @@ struct crypt_config {
->  		struct iv_benbi_private benbi;
->  		struct iv_lmk_private lmk;
->  		struct iv_tcw_private tcw;
-> -		struct iv_eboiv_private eboiv;
->  	} iv_gen_private;
->  	u64 iv_offset;
->  	unsigned int iv_size;
-> @@ -847,65 +842,47 @@ static int crypt_iv_random_gen(struct crypt_config *cc, u8 *iv,
->  	return 0;
->  }
->  
-> -static void crypt_iv_eboiv_dtr(struct crypt_config *cc)
-> -{
-> -	struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
-> -
-> -	crypto_free_cipher(eboiv->tfm);
-> -	eboiv->tfm = NULL;
-> -}
-> -
->  static int crypt_iv_eboiv_ctr(struct crypt_config *cc, struct dm_target *ti,
->  			    const char *opts)
->  {
-> -	struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
-> -	struct crypto_cipher *tfm;
-> -
-> -	tfm = crypto_alloc_cipher(cc->cipher, 0, 0);
-> -	if (IS_ERR(tfm)) {
-> -		ti->error = "Error allocating crypto tfm for EBOIV";
-> -		return PTR_ERR(tfm);
-> +	if (test_bit(CRYPT_MODE_INTEGRITY_AEAD, &cc->cipher_flags)) {
-> +		ti->error = "AEAD transforms not supported for EBOIV";
-> +		return -EINVAL;
->  	}
->  
-> -	if (crypto_cipher_blocksize(tfm) != cc->iv_size) {
-> +	if (crypto_skcipher_blocksize(any_tfm(cc)) != cc->iv_size) {
->  		ti->error = "Block size of EBOIV cipher does "
->  			    "not match IV size of block cipher";
-> -		crypto_free_cipher(tfm);
->  		return -EINVAL;
->  	}
->  
-> -	eboiv->tfm = tfm;
->  	return 0;
->  }
->  
-> -static int crypt_iv_eboiv_init(struct crypt_config *cc)
-> +static int crypt_iv_eboiv_gen(struct crypt_config *cc, u8 *iv,
-> +			    struct dm_crypt_request *dmreq)
->  {
-> -	struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
-> +	u8 buf[MAX_CIPHER_BLOCKSIZE] __aligned(__alignof__(__le64));
-> +	struct skcipher_request *req;
-> +	struct scatterlist src, dst;
-> +	struct crypto_wait wait;
->  	int err;
->  
-> -	err = crypto_cipher_setkey(eboiv->tfm, cc->key, cc->key_size);
-> -	if (err)
-> -		return err;
-> -
-> -	return 0;
-> -}
-> -
-> -static int crypt_iv_eboiv_wipe(struct crypt_config *cc)
-> -{
-> -	/* Called after cc->key is set to random key in crypt_wipe() */
-> -	return crypt_iv_eboiv_init(cc);
-> -}
-> +	req = skcipher_request_alloc(any_tfm(cc), GFP_KERNEL | GFP_NOFS);
-> +	if (!req)
-> +		return -ENOMEM;
->  
-> -static int crypt_iv_eboiv_gen(struct crypt_config *cc, u8 *iv,
-> -			    struct dm_crypt_request *dmreq)
-> -{
-> -	struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
-> +	memset(buf, 0, cc->iv_size);
-> +	*(__le64 *)buf = cpu_to_le64(dmreq->iv_sector * cc->sector_size);
->  
-> -	memset(iv, 0, cc->iv_size);
-> -	*(__le64 *)iv = cpu_to_le64(dmreq->iv_sector * cc->sector_size);
-> -	crypto_cipher_encrypt_one(eboiv->tfm, iv, iv);
-> +	sg_init_one(&src, page_address(ZERO_PAGE(0)), cc->iv_size);
-> +	sg_init_one(&dst, iv, cc->iv_size);
-> +	skcipher_request_set_crypt(req, &src, &dst, cc->iv_size, buf);
-> +	skcipher_request_set_callback(req, 0, crypto_req_done, &wait);
-> +	err = crypto_wait_req(crypto_skcipher_encrypt(req), &wait);
-> +	skcipher_request_free(req);
->  
-> -	return 0;
-> +	return err;
->  }
->  
->  static const struct crypt_iv_operations crypt_iv_plain_ops = {
-> @@ -962,9 +939,6 @@ static struct crypt_iv_operations crypt_iv_random_ops = {
->  
->  static struct crypt_iv_operations crypt_iv_eboiv_ops = {
->  	.ctr	   = crypt_iv_eboiv_ctr,
-> -	.dtr	   = crypt_iv_eboiv_dtr,
-> -	.init	   = crypt_iv_eboiv_init,
-> -	.wipe	   = crypt_iv_eboiv_wipe,
->  	.generator = crypt_iv_eboiv_gen
->  };
->  
-> 
