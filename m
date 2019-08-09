@@ -1,185 +1,66 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [RFC PATCH v2] md/dm-crypt - reuse eboiv skcipher
-	for IV generation
-Date: Fri, 9 Aug 2019 21:52:07 +0300
-Message-ID: <CAKv+Gu-X5D8U-getjTmpn1x50E41GvSRTPPvOL=NbB9Q33=PFQ@mail.gmail.com>
-References: <20190807055022.15551-1-ard.biesheuvel@linaro.org>
-	<e13525a4-4885-e0f3-6711-efd83dd4a9fb@gmail.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH] direct-io: use GFP_NOIO to avoid deadlock
+Date: Sat, 10 Aug 2019 07:57:33 +1000
+Message-ID: <20190809215733.GZ7777@dread.disaster.area>
+References: <alpine.LRH.2.02.1908080540240.15519@file01.intranet.prod.int.rdu2.redhat.com>
+ <20190809013403.GY7777@dread.disaster.area>
+ <alpine.LRH.2.02.1908090725290.31061@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <e13525a4-4885-e0f3-6711-efd83dd4a9fb@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Mike Snitzer <snitzer@redhat.com>, Eric Biggers <ebiggers@kernel.org>, device-mapper development <dm-devel@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1908090725290.31061@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, "Darrick J. Wong" <darrick.wong@oracle.com>, Mike Snitzer <msnitzer@redhat.com>, junxiao.bi@oracle.com, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, honglei.wang@oracle.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, 8 Aug 2019 at 14:53, Milan Broz <gmazyland@gmail.com> wrote:
->
-> Hi,
->
-> On 07/08/2019 07:50, Ard Biesheuvel wrote:
-> > Instead of instantiating a separate cipher to perform the encryption
-> > needed to produce the IV, reuse the skcipher used for the block data
-> > and invoke it one additional time for each block to encrypt a zero
-> > vector and use the output as the IV.
-> >
-> > For CBC mode, this is equivalent to using the bare block cipher, but
-> > without the risk of ending up with a non-time invariant implementation
-> > of AES when the skcipher itself is time variant (e.g., arm64 without
-> > Crypto Extensions has a NEON based time invariant implementation of
-> > cbc(aes) but no time invariant implementation of the core cipher other
-> > than aes-ti, which is not enabled by default)
-> >
-> > This approach is a compromise between dm-crypt API flexibility and
-> > reducing dependence on parts of the crypto API that should not usually
-> > be exposed to other subsystems, such as the bare cipher API.
-> >
-> > Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
->
-> For now I have just pair of images here to test, but seems checksums are ok.
->
-> Tested-by: Milan Broz <gmazyland@gmail.com>
->
-> I talked with Mike already, so it should go through DM tree now.
->
+On Fri, Aug 09, 2019 at 07:30:00AM -0400, Mikulas Patocka wrote:
+> 
+> 
+> On Fri, 9 Aug 2019, Dave Chinner wrote:
+> 
+> > And, FWIW, there's an argument to be made here that the underlying
+> > bug is dm_bufio_shrink_scan() blocking kswapd by waiting on IO
+> > completions while holding a mutex that other IO-level reclaim
+> > contexts require to make progress.
+> > 
+> > Cheers,
+> > 
+> > Dave.
+> 
+> The IO-level reclaim contexts should use GFP_NOIO. If the dm-bufio 
+> shrinker is called with GFP_NOIO, it cannot be blocked by kswapd, because:
 
-Thanks!
+No, you misunderstand. I'm talking about blocking kswapd being
+wrong.  i.e. Blocking kswapd in shrinkers causes problems
+because th ememory reclaim code does not expect kswapd to be
+arbitrarily delayed by waiting on IO. We've had this problem with
+the XFS inode cache shrinker for years, and there are many reports
+of extremely long reclaim latencies for both direct and kswapd
+reclaim that result from kswapd not making progress while waiting
+in shrinkers for IO to complete.
+
+The work I'm currently doing to fix this XFS problem can be found
+here:
+
+https://lore.kernel.org/linux-fsdevel/20190801021752.4986-1-david@fromorbit.com/
 
 
->
-> > ---
-> >  drivers/md/dm-crypt.c | 70 ++++++++++++++-----------------------------
-> >  1 file changed, 22 insertions(+), 48 deletions(-)
-> >
-> > diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> > index d5216bcc4649..48cd76c88d77 100644
-> > --- a/drivers/md/dm-crypt.c
-> > +++ b/drivers/md/dm-crypt.c
-> > @@ -120,10 +120,6 @@ struct iv_tcw_private {
-> >       u8 *whitening;
-> >  };
-> >
-> > -struct iv_eboiv_private {
-> > -     struct crypto_cipher *tfm;
-> > -};
-> > -
-> >  /*
-> >   * Crypt: maps a linear range of a block device
-> >   * and encrypts / decrypts at the same time.
-> > @@ -163,7 +159,6 @@ struct crypt_config {
-> >               struct iv_benbi_private benbi;
-> >               struct iv_lmk_private lmk;
-> >               struct iv_tcw_private tcw;
-> > -             struct iv_eboiv_private eboiv;
-> >       } iv_gen_private;
-> >       u64 iv_offset;
-> >       unsigned int iv_size;
-> > @@ -847,65 +842,47 @@ static int crypt_iv_random_gen(struct crypt_config *cc, u8 *iv,
-> >       return 0;
-> >  }
-> >
-> > -static void crypt_iv_eboiv_dtr(struct crypt_config *cc)
-> > -{
-> > -     struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
-> > -
-> > -     crypto_free_cipher(eboiv->tfm);
-> > -     eboiv->tfm = NULL;
-> > -}
-> > -
-> >  static int crypt_iv_eboiv_ctr(struct crypt_config *cc, struct dm_target *ti,
-> >                           const char *opts)
-> >  {
-> > -     struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
-> > -     struct crypto_cipher *tfm;
-> > -
-> > -     tfm = crypto_alloc_cipher(cc->cipher, 0, 0);
-> > -     if (IS_ERR(tfm)) {
-> > -             ti->error = "Error allocating crypto tfm for EBOIV";
-> > -             return PTR_ERR(tfm);
-> > +     if (test_bit(CRYPT_MODE_INTEGRITY_AEAD, &cc->cipher_flags)) {
-> > +             ti->error = "AEAD transforms not supported for EBOIV";
-> > +             return -EINVAL;
-> >       }
-> >
-> > -     if (crypto_cipher_blocksize(tfm) != cc->iv_size) {
-> > +     if (crypto_skcipher_blocksize(any_tfm(cc)) != cc->iv_size) {
-> >               ti->error = "Block size of EBOIV cipher does "
-> >                           "not match IV size of block cipher";
-> > -             crypto_free_cipher(tfm);
-> >               return -EINVAL;
-> >       }
-> >
-> > -     eboiv->tfm = tfm;
-> >       return 0;
-> >  }
-> >
-> > -static int crypt_iv_eboiv_init(struct crypt_config *cc)
-> > +static int crypt_iv_eboiv_gen(struct crypt_config *cc, u8 *iv,
-> > +                         struct dm_crypt_request *dmreq)
-> >  {
-> > -     struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
-> > +     u8 buf[MAX_CIPHER_BLOCKSIZE] __aligned(__alignof__(__le64));
-> > +     struct skcipher_request *req;
-> > +     struct scatterlist src, dst;
-> > +     struct crypto_wait wait;
-> >       int err;
-> >
-> > -     err = crypto_cipher_setkey(eboiv->tfm, cc->key, cc->key_size);
-> > -     if (err)
-> > -             return err;
-> > -
-> > -     return 0;
-> > -}
-> > -
-> > -static int crypt_iv_eboiv_wipe(struct crypt_config *cc)
-> > -{
-> > -     /* Called after cc->key is set to random key in crypt_wipe() */
-> > -     return crypt_iv_eboiv_init(cc);
-> > -}
-> > +     req = skcipher_request_alloc(any_tfm(cc), GFP_KERNEL | GFP_NOFS);
-> > +     if (!req)
-> > +             return -ENOMEM;
-> >
-> > -static int crypt_iv_eboiv_gen(struct crypt_config *cc, u8 *iv,
-> > -                         struct dm_crypt_request *dmreq)
-> > -{
-> > -     struct iv_eboiv_private *eboiv = &cc->iv_gen_private.eboiv;
-> > +     memset(buf, 0, cc->iv_size);
-> > +     *(__le64 *)buf = cpu_to_le64(dmreq->iv_sector * cc->sector_size);
-> >
-> > -     memset(iv, 0, cc->iv_size);
-> > -     *(__le64 *)iv = cpu_to_le64(dmreq->iv_sector * cc->sector_size);
-> > -     crypto_cipher_encrypt_one(eboiv->tfm, iv, iv);
-> > +     sg_init_one(&src, page_address(ZERO_PAGE(0)), cc->iv_size);
-> > +     sg_init_one(&dst, iv, cc->iv_size);
-> > +     skcipher_request_set_crypt(req, &src, &dst, cc->iv_size, buf);
-> > +     skcipher_request_set_callback(req, 0, crypto_req_done, &wait);
-> > +     err = crypto_wait_req(crypto_skcipher_encrypt(req), &wait);
-> > +     skcipher_request_free(req);
-> >
-> > -     return 0;
-> > +     return err;
-> >  }
-> >
-> >  static const struct crypt_iv_operations crypt_iv_plain_ops = {
-> > @@ -962,9 +939,6 @@ static struct crypt_iv_operations crypt_iv_random_ops = {
-> >
-> >  static struct crypt_iv_operations crypt_iv_eboiv_ops = {
-> >       .ctr       = crypt_iv_eboiv_ctr,
-> > -     .dtr       = crypt_iv_eboiv_dtr,
-> > -     .init      = crypt_iv_eboiv_init,
-> > -     .wipe      = crypt_iv_eboiv_wipe,
-> >       .generator = crypt_iv_eboiv_gen
-> >  };
-> >
-> >
+i.e. the point I'm making is that waiting for IO in kswapd reclaim
+context is considered harmful - kswapd context shrinker reclaim
+should be as non-blocking as possible, and any back-off to wait for
+IO to complete should be done by the high level reclaim core once
+it's completed an entire reclaim scan cycle of everything....
+
+What follows from that, and is pertinent for in this situation, is
+that if you don't block kswapd, then other reclaim contexts are not
+going to get stuck waiting for it regardless of the reclaim context
+they use.
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
