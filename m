@@ -1,11 +1,14 @@
 From: Dmitry Fomichev <dmitry.fomichev@wdc.com>
-Subject: [PATCH v2 0/3] dm-zoned: harden error handling
-Date: Sat, 10 Aug 2019 14:43:08 -0700
-Message-ID: <20190810214311.9503-1-dmitry.fomichev@wdc.com>
+Subject: [PATCH v2 1/3] dm-zoned: improve error handling in
+	reclaim
+Date: Sat, 10 Aug 2019 14:43:09 -0700
+Message-ID: <20190810214311.9503-2-dmitry.fomichev@wdc.com>
+References: <20190810214311.9503-1-dmitry.fomichev@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190810214311.9503-1-dmitry.fomichev@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,41 +22,149 @@ To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 Cc: Damien Le Moal <damien.lemoal@wdc.com>
 List-Id: dm-devel.ids
 
-This series contains a few patches aimed to make dm-zoned properly
-handle backing zoned storage device failures.
+There are several places in reclaim code where errors are not
+propagated to the main function, dmz_reclaim(). This function
+is responsible for unlocking zones that might be still locked
+at the end of any failed reclaim iterations. As the result,
+some device zones may be left permanently locked for reclaim,
+degrading target's capability to reclaim zones.
 
-The following test environment was used to trigger device failures:
-A 100% write file I/O fio workload was run against an XFS volume
-created on top of a dm-zoned target device. The dm-zoned device,
-in turn, was created on top of a zoned device provisioned by
-tcmu-runner ZBC file handler. The backing storage file for the
-tcmu-runner handler has been created on a separate ext4 file system.
+This patch fixes these issues as follows -
 
-Two different failure modes were tested -
-1. Removal of the tcmu-runner device under I/O
-2. Complete failure of the backing storage of tcmu-runner under I/O
+Make sure that dmz_reclaim_buf(), dmz_reclaim_seq_data() and
+dmz_reclaim_rnd_data() return error codes to the caller.
 
-In both of these test cases, dm-zoned has been observed to hang and
-the only possible remedy to recover from that state was to reboot the
-test system. The fio test script would also hang forever.
+dmz_reclaim() function is renamed to dmz_do_reclaim() to avoid
+clashing with "struct dmz_reclaim" and is modified to return the
+error to the caller.
 
-With these patches in place, the test script properly reports the
-error and exits. After that, it is possible to remove the dm-zoned
-target device and then recreate it with some working backup storage
-without rebooting the system.
+dmz_get_zone_for_reclaim() now returns an error instead of NULL
+pointer and reclaim code checks for that error.
 
-v1 -> v2:	- don't set dm-zoned disk read-only after BD failure
+Error logging/debug messages are added where necessary.
 
-Dmitry Fomichev (3):
-  dm-zoned: improve error handling in reclaim
-  dm-zoned: improve error handling in i/o map code
-  dm-zoned: properly handle backing device failure
+Fixes: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target")
+Cc: stable@vger.kernel.org
+Signed-off-by: Dmitry Fomichev <dmitry.fomichev@wdc.com>
+---
+ drivers/md/dm-zoned-metadata.c |  4 ++--
+ drivers/md/dm-zoned-reclaim.c  | 28 +++++++++++++++++++---------
+ 2 files changed, 21 insertions(+), 11 deletions(-)
 
- drivers/md/dm-zoned-metadata.c | 55 ++++++++++++++++++++++------
- drivers/md/dm-zoned-reclaim.c  | 44 +++++++++++++++++-----
- drivers/md/dm-zoned-target.c   | 67 ++++++++++++++++++++++++++++++----
- drivers/md/dm-zoned.h          | 10 +++++
- 4 files changed, 146 insertions(+), 30 deletions(-)
-
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index ded4984d18c9..6b7fbbd735ef 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -1543,7 +1543,7 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd)
+ 	struct dm_zone *zone;
+ 
+ 	if (list_empty(&zmd->map_rnd_list))
+-		return NULL;
++		return ERR_PTR(-EBUSY);
+ 
+ 	list_for_each_entry(zone, &zmd->map_rnd_list, link) {
+ 		if (dmz_is_buf(zone))
+@@ -1554,7 +1554,7 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd)
+ 			return dzone;
+ 	}
+ 
+-	return NULL;
++	return ERR_PTR(-EBUSY);
+ }
+ 
+ /*
+diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+index 260e3598199e..26e34493a2db 100644
+--- a/drivers/md/dm-zoned-reclaim.c
++++ b/drivers/md/dm-zoned-reclaim.c
+@@ -216,7 +216,7 @@ static int dmz_reclaim_buf(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+ 
+ 	dmz_unlock_flush(zmd);
+ 
+-	return 0;
++	return ret;
+ }
+ 
+ /*
+@@ -260,7 +260,7 @@ static int dmz_reclaim_seq_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+ 
+ 	dmz_unlock_flush(zmd);
+ 
+-	return 0;
++	return ret;
+ }
+ 
+ /*
+@@ -313,7 +313,7 @@ static int dmz_reclaim_rnd_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+ 
+ 	dmz_unlock_flush(zmd);
+ 
+-	return 0;
++	return ret;
+ }
+ 
+ /*
+@@ -335,7 +335,7 @@ static void dmz_reclaim_empty(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+ /*
+  * Find a candidate zone for reclaim and process it.
+  */
+-static void dmz_reclaim(struct dmz_reclaim *zrc)
++static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+ {
+ 	struct dmz_metadata *zmd = zrc->metadata;
+ 	struct dm_zone *dzone;
+@@ -345,8 +345,8 @@ static void dmz_reclaim(struct dmz_reclaim *zrc)
+ 
+ 	/* Get a data zone */
+ 	dzone = dmz_get_zone_for_reclaim(zmd);
+-	if (!dzone)
+-		return;
++	if (IS_ERR(dzone))
++		return PTR_ERR(dzone);
+ 
+ 	start = jiffies;
+ 
+@@ -392,13 +392,20 @@ static void dmz_reclaim(struct dmz_reclaim *zrc)
+ out:
+ 	if (ret) {
+ 		dmz_unlock_zone_reclaim(dzone);
+-		return;
++		return ret;
+ 	}
+ 
+-	(void) dmz_flush_metadata(zrc->metadata);
++	ret = dmz_flush_metadata(zrc->metadata);
++	if (ret) {
++		dmz_dev_debug(zrc->dev,
++			      "Metadata flush for zone %u failed, err %d\n",
++			      dmz_id(zmd, rzone), ret);
++		return ret;
++	}
+ 
+ 	dmz_dev_debug(zrc->dev, "Reclaimed zone %u in %u ms",
+ 		      dmz_id(zmd, rzone), jiffies_to_msecs(jiffies - start));
++	return 0;
+ }
+ 
+ /*
+@@ -443,6 +450,7 @@ static void dmz_reclaim_work(struct work_struct *work)
+ 	struct dmz_metadata *zmd = zrc->metadata;
+ 	unsigned int nr_rnd, nr_unmap_rnd;
+ 	unsigned int p_unmap_rnd;
++	int ret;
+ 
+ 	if (!dmz_should_reclaim(zrc)) {
+ 		mod_delayed_work(zrc->wq, &zrc->work, DMZ_IDLE_PERIOD);
+@@ -472,7 +480,9 @@ static void dmz_reclaim_work(struct work_struct *work)
+ 		      (dmz_target_idle(zrc) ? "Idle" : "Busy"),
+ 		      p_unmap_rnd, nr_unmap_rnd, nr_rnd);
+ 
+-	dmz_reclaim(zrc);
++	ret = dmz_do_reclaim(zrc);
++	if (ret)
++		dmz_dev_debug(zrc->dev, "Reclaim error %d\n", ret);
+ 
+ 	dmz_schedule_reclaim(zrc);
+ }
 -- 
 2.21.0
