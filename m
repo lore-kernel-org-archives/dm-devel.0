@@ -1,28 +1,12 @@
 From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: xts fuzz testing and lack of ciphertext stealing
-	support
-Date: Sat, 10 Aug 2019 07:39:38 +0300
-Message-ID: <CAKv+Gu-xWxZ58tzyYoH_jDKfJoM+KzOWWpzCeHEmOXQ39Bv15g@mail.gmail.com>
-References: <CAKv+Gu9C2AEbb++W=QTVWbeA_88Fo57NcOwgU5R8HBvzFwXkJw@mail.gmail.com>
-	<MN2PR20MB2973C378AE5674F9E3E29445CAC60@MN2PR20MB2973.namprd20.prod.outlook.com>
-	<CAKv+Gu-8n_DoauycDQS_9zzRew1rTuPaLxHyg6xhXMmqEvMaCA@mail.gmail.com>
-	<MN2PR20MB2973CAE4E9CFFE1F417B2509CAC10@MN2PR20MB2973.namprd20.prod.outlook.com>
-	<CAKv+Gu-j-8-bQS2A46-Kf1KHtkoPJ5Htk8WratqzyngnVu-wpw@mail.gmail.com>
-	<MN2PR20MB29739591E1A3E54E7A8A8E18CAC00@MN2PR20MB2973.namprd20.prod.outlook.com>
-	<20f4832e-e3af-e3c2-d946-13bf8c367a60@nxp.com>
-	<VI1PR0402MB34856F03FCE57AB62FC2257998D40@VI1PR0402MB3485.eurprd04.prod.outlook.com>
-	<MN2PR20MB2973127E4C159A8F5CFDD0C9CAD70@MN2PR20MB2973.namprd20.prod.outlook.com>
-	<VI1PR0402MB3485689B4B65C879BC1D137398D70@VI1PR0402MB3485.eurprd04.prod.outlook.com>
-	<20190809024821.GA7186@gondor.apana.org.au>
-	<CAKv+Gu9hk=PGpsAWWOU61VrA3mVQd10LudA1qg0LbiX7DG9RjA@mail.gmail.com>
-	<VI1PR0402MB3485F94AECC495F133F6B3D798D60@VI1PR0402MB3485.eurprd04.prod.outlook.com>
-	<CAKv+Gu-_WObNm+ySXDWjhqe2YPzajX83MofuF-WKPSdLg5t4Ew@mail.gmail.com>
-	<MN2PR20MB297361CA3C29C236D6D8F6F4CAD60@MN2PR20MB2973.namprd20.prod.outlook.com>
+Subject: [PATCH v9 0/7] crypto: switch to crypto API for ESSIV
+	generation
+Date: Sat, 10 Aug 2019 12:40:46 +0300
+Message-ID: <20190810094053.7423-1-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <MN2PR20MB297361CA3C29C236D6D8F6F4CAD60@MN2PR20MB2973.namprd20.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -32,116 +16,124 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Pascal Van Leeuwen <pvanleeuwen@verimatrix.com>
-Cc: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, Horia Geanta <horia.geanta@nxp.com>, Milan Broz <gmazyland@gmail.com>
+To: linux-crypto@vger.kernel.org
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, 9 Aug 2019 at 23:57, Pascal Van Leeuwen
-<pvanleeuwen@verimatrix.com> wrote:
->
-> > -----Original Message-----
-> > From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-> > Sent: Friday, August 9, 2019 7:49 PM
-> > To: Horia Geanta <horia.geanta@nxp.com>
-> > Cc: Herbert Xu <herbert@gondor.apana.org.au>; Pascal Van Leeuwen
-> > <pvanleeuwen@verimatrix.com>; Milan Broz <gmazyland@gmail.com>; dm-devel@redhat.com; linux-
-> > crypto@vger.kernel.org
-> > Subject: Re: [dm-devel] xts fuzz testing and lack of ciphertext stealing support
-> >
-> > On Fri, 9 Aug 2019 at 10:44, Horia Geanta <horia.geanta@nxp.com> wrote:
-> > >
-> > > On 8/9/2019 9:45 AM, Ard Biesheuvel wrote:
-> > > > On Fri, 9 Aug 2019 at 05:48, Herbert Xu <herbert@gondor.apana.org.au> wrote:
-> > > >>
-> > > >> On Thu, Aug 08, 2019 at 06:01:49PM +0000, Horia Geanta wrote:
-> > > >>>
-> > > >>> -- >8 --
-> > > >>>
-> > > >>> Subject: [PATCH] crypto: testmgr - Add additional AES-XTS vectors for covering
-> > > >>>  CTS (part II)
-> > > >>
-> > > >> Patchwork doesn't like it when you do this and it'll discard
-> > > >> your patch.  To make it into patchwork you need to put the new
-> > > >> Subject in the email headers.
-> > > >>
-> > > >
-> > > > IMO, pretending that your XTS implementation is compliant by only
-> > > I've never said that.
-> > > Some parts are compliant, some are not.
-> > >
-> > > > providing test vectors with the last 8 bytes of IV cleared is not the
-> > > > right fix for this issue. If you want to be compliant, you will need
-> > > It's not a fix.
-> > > It's adding test vectors which are not provided in the P1619 standard,
-> > > where "data unit sequence number" is at most 5B.
-> > >
-> >
-> > Indeed. But I would prefer not to limit ourselves to 5 bytes of sector
-> > numbers in the test vectors. However, we should obviously not add test
-> > vectors that are known to cause breakages on hardware that works fine
-> > in practice.
-> >
-> Well, obviously, the full 16 byte sector number vectors fail on existing
-> CAAM hardware, which I do assume to work fine in practice. And you know
-> I'm not in favor of building all kinds of workarounds into the drivers.
->
-> Fact is, we know there are no current users that need more than 64 bits
-> of IV. Fact is also that having 64 bits of IV in the vectors is already
-> an improvement over the 40 bits in the original vectors. And unlike CTS,
-> I am not aware of any real use case for more than 64 bits.
-> Finally, another fact is that limiting the *vectors* to 64 bits of IV
-> does not prohibit anyone from *using* a full 128 bit IV on an
-> implementation that *does* support this. I would think most users of
-> XTS, like dmcrypt, would allow you to specify the cra_drivername
-> explictly anyway, so just don't select legacy CAAM if you need that.
-> (heck, if it would be reading and writing its own data, and not need
-> compatibility with other implementations, it wouldn't even matter)
->
-> So yes, the specs are quite clear on the sector number being a full
-> 128 bits. But that doesn't prevent us from specifying that the
-> crypto API implementation currently only supports 64 bits, with the
-> remaining bits being forced to 0. We can always revisit that when
-> an actual use case for more than 64 bits arises ...
->
+This series creates an ESSIV template that produces a skcipher or AEAD
+transform based on a tuple of the form '<skcipher>,<shash>' (or '<aead>,<shash>'
+for the AEAD case). It exposes the encapsulated sync or async skcipher/aead by
+passing through all operations, while using the cipher/shash pair to transform
+the input IV into an ESSIV output IV.
 
-You have got it completely backwards:
+This matches what both users of ESSIV in the kernel do, and so it is proposed
+as a replacement for those, in patches #2 and #3.
 
-CTS has never worked in any kernel implementation, so regardless of
-what the spec says, supporting it in the kernel is not a high priority
-issue whichever way you put it. Now is the first time anyone has asked
-for it in 12 years, and only because someone spotted a deviation
-between a h/w and a s/w implementation, not because anyone tried to
-use it and failed. (Note that passing anything other than a multiple
-of the block size will cause an error rather than fail silently)
+Changes since v8:
+- Remove 'cipher' argument from essiv() template, and instead, parse the
+  cra_name of the skcipher to obtain the cipher. This is slightly cleaner
+  than what dm-crypt currently does, since we can get the cra_name from the
+  spawn, and we don't have to actually allocate the TFM. Since this implies
+  that dm-crypt does not need to provide the cipher, we can drop the parsing
+  code from it entirely (assuming the eboiv patch I sent out recently is
+  applied first) (patch #7)
+- Restrict the essiv() AEAD instantiation to AEADs whose cra_name starts with
+  'authenc('
+- Rebase onto cryptodev/master
+- Drop dm-crypt to reorder/refactor cipher name parsing, since it was wrong
+  and it is no longer needed.
+- Drop Milan's R-b since the code has changed
+- Fix bug in accelerated arm64 implementation.
 
-Truncated IVs are a huge issue, since we already expose the correct
-API via AF_ALG (without any restrictions on how many of the IV bits
-are populated), and apparently, if your AF_ALG request for xts(aes)
-happens to be fulfilled by the CAAM driver and your implementation
-uses more than 64 bits for the IV, the top bits get truncated silently
-and your data might get eaten.
+Changes since v7:
+- rebase onto cryptodev/master
+- drop change to ivsize in #2
+- add Milan's R-b's
 
-In my experience, users tend to care more about the latter than the former.
+Changes since v6:
+- make CRYPTO_ESSIV user selectable so we can opt out of selecting it even
+  if FS_ENCRYPTION (which cannot be built as a module) is enabled
+- move a comment along with the code it referred to (#3), not that this change
+  and removing some redundant braces makes the diff look totally different
+- add Milan's R-b to #3 and #4
 
+Changes since v5:
+- drop redundant #includes and drop some unneeded braces (#2)
+- add test case for essiv(authenc(hmac(sha256),cbc(aes)),aes,sha256)
+- make ESSIV driver deal with assoc data that is described by more than two
+  scatterlist entries - this only happens when the extended tests are being
+  performed, so don't optimize for it
+- clarify that both fscrypt and dm-crypt only use ESSIV in special cases (#7)
 
-> > > > to provide a s/w fallback for these cases.
-> > > >
-> > > Yes, the plan is to:
-> > >
-> > > -add 16B IV support for caam versions supporting it - caam Era 9+,
-> > > currently deployed in lx2160a and ls108a
-> > >
-> > > -remove current 8B IV support and add s/w fallback for affected caam versions
-> > > I'd assume this could be done dynamically, i.e. depending on IV provided
-> > > in the crypto request to use either the caam engine or s/w fallback.
-> > >
-> >
-> > Yes. If the IV received from the caller has bytes 8..15 cleared, you
-> > use the limited XTS h/w implementation, otherwise you fall back to
-> > xts(ecb-aes-caam..).
->
-> Regards,
-> Pascal van Leeuwen
-> Silicon IP Architect, Multi-Protocol Engines @ Verimatrix
-> www.insidesecure.com
->
+Changes since v4:
+- make the ESSIV template IV size equal the IV size of the encapsulated
+  cipher - defining it as 8 bytes was needlessly restrictive, and also
+  complicated the code for no reason
+- add a missing kfree() spotted by Smatch
+- add additional algo length name checks when constructing the essiv()
+  cipher name
+- reinstate the 'essiv' IV generation implementation in dm-crypt, but
+  make its generation function identical to plain64le (and drop the other
+  methods)
+- fix a bug in the arm64 CE/NEON code
+- simplify the arm64 code by reusing more of the existing CBC implementation
+  (patch #6 is new to this series and was added for this reason)
+
+Changes since v3:
+- address various review comments from Eric on patch #1
+- use Kconfig's 'imply' instead of 'select' to permit CRYPTO_ESSIV to be
+  enabled as a module or disabled entirely even if fscrypt is compiled in (#2)
+- fix an issue in the AEAD encrypt path caused by the IV being clobbered by
+  the inner skcipher before the hmac was being calculated
+
+Changes since v2:
+- fixed a couple of bugs that snuck in after I'd done the bulk of my
+  testing
+- some cosmetic tweaks to the ESSIV template skcipher setkey function
+  to align it with the aead one
+- add a test case for essiv(cbc(aes),aes,sha256)
+- add an accelerated implementation for arm64 that combines the IV
+  derivation and the actual en/decryption in a single asm routine
+
+Scroll down for tcrypt speed test result comparing the essiv template
+with the asm implementation. Bare cbc(aes) tests included for reference
+as well. Taken on a 2GHz Cortex-A57 (AMD Seattle)
+
+Code can be found here
+https://git.kernel.org/pub/scm/linux/kernel/git/ardb/linux.git/log/?h=essiv-v8
+
+Cc: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Eric Biggers <ebiggers@google.com>
+Cc: dm-devel@redhat.com
+Cc: linux-fscrypt@vger.kernel.org
+Cc: Gilad Ben-Yossef <gilad@benyossef.com>
+Cc: Milan Broz <gmazyland@gmail.com>
+
+Ard Biesheuvel (7):
+  crypto: essiv - create wrapper template for ESSIV generation
+  fs: crypto: invoke crypto API for ESSIV handling
+  md: dm-crypt: switch to ESSIV crypto API template
+  crypto: essiv - add tests for essiv in cbc(aes)+sha256 mode
+  crypto: arm64/aes-cts-cbc - factor out CBC en/decryption of a walk
+  crypto: arm64/aes - implement accelerated ESSIV/CBC mode
+  md: dm-crypt: omit parsing of the encapsulated cipher
+
+ arch/arm64/crypto/aes-glue.c  | 205 ++++--
+ arch/arm64/crypto/aes-modes.S |  28 +
+ crypto/Kconfig                |  28 +
+ crypto/Makefile               |   1 +
+ crypto/essiv.c                | 665 ++++++++++++++++++++
+ crypto/tcrypt.c               |   9 +
+ crypto/testmgr.c              |  14 +
+ crypto/testmgr.h              | 497 +++++++++++++++
+ drivers/md/Kconfig            |   1 +
+ drivers/md/dm-crypt.c         | 252 +-------
+ fs/crypto/Kconfig             |   1 +
+ fs/crypto/crypto.c            |   5 -
+ fs/crypto/fscrypt_private.h   |   9 -
+ fs/crypto/keyinfo.c           |  92 +--
+ 14 files changed, 1442 insertions(+), 365 deletions(-)
+ create mode 100644 crypto/essiv.c
+
+-- 
+2.17.1
