@@ -1,8 +1,8 @@
 From: Dmitry Fomichev <dmitry.fomichev@wdc.com>
-Subject: [PATCH v2 1/3] dm-zoned: improve error handling in
-	reclaim
-Date: Sat, 10 Aug 2019 14:43:09 -0700
-Message-ID: <20190810214311.9503-2-dmitry.fomichev@wdc.com>
+Subject: [PATCH v2 2/3] dm-zoned: improve error handling in i/o
+	map code
+Date: Sat, 10 Aug 2019 14:43:10 -0700
+Message-ID: <20190810214311.9503-3-dmitry.fomichev@wdc.com>
 References: <20190810214311.9503-1-dmitry.fomichev@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,149 +22,103 @@ To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 Cc: Damien Le Moal <damien.lemoal@wdc.com>
 List-Id: dm-devel.ids
 
-There are several places in reclaim code where errors are not
-propagated to the main function, dmz_reclaim(). This function
-is responsible for unlocking zones that might be still locked
-at the end of any failed reclaim iterations. As the result,
-some device zones may be left permanently locked for reclaim,
-degrading target's capability to reclaim zones.
+Some errors are ignored in the I/O path during queueing chunks
+for processing by chunk works. Since at least these errors are
+transient in nature, it should be possible to retry the failed
+incoming commands.
 
-This patch fixes these issues as follows -
+The fix -
 
-Make sure that dmz_reclaim_buf(), dmz_reclaim_seq_data() and
-dmz_reclaim_rnd_data() return error codes to the caller.
+Errors that can happen while queueing chunks are carried upwards
+to the main mapping function and it now returns DM_MAPIO_REQUEUE
+for any incoming requests that can not be properly queued.
 
-dmz_reclaim() function is renamed to dmz_do_reclaim() to avoid
-clashing with "struct dmz_reclaim" and is modified to return the
-error to the caller.
-
-dmz_get_zone_for_reclaim() now returns an error instead of NULL
-pointer and reclaim code checks for that error.
-
-Error logging/debug messages are added where necessary.
+Error logging/debug messages are added where needed.
 
 Fixes: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target")
 Cc: stable@vger.kernel.org
 Signed-off-by: Dmitry Fomichev <dmitry.fomichev@wdc.com>
 ---
- drivers/md/dm-zoned-metadata.c |  4 ++--
- drivers/md/dm-zoned-reclaim.c  | 28 +++++++++++++++++++---------
- 2 files changed, 21 insertions(+), 11 deletions(-)
+ drivers/md/dm-zoned-target.c | 22 ++++++++++++++++------
+ 1 file changed, 16 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index ded4984d18c9..6b7fbbd735ef 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -1543,7 +1543,7 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd)
- 	struct dm_zone *zone;
- 
- 	if (list_empty(&zmd->map_rnd_list))
--		return NULL;
-+		return ERR_PTR(-EBUSY);
- 
- 	list_for_each_entry(zone, &zmd->map_rnd_list, link) {
- 		if (dmz_is_buf(zone))
-@@ -1554,7 +1554,7 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd)
- 			return dzone;
- 	}
- 
--	return NULL;
-+	return ERR_PTR(-EBUSY);
- }
- 
- /*
-diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
-index 260e3598199e..26e34493a2db 100644
---- a/drivers/md/dm-zoned-reclaim.c
-+++ b/drivers/md/dm-zoned-reclaim.c
-@@ -216,7 +216,7 @@ static int dmz_reclaim_buf(struct dmz_reclaim *zrc, struct dm_zone *dzone)
- 
- 	dmz_unlock_flush(zmd);
- 
--	return 0;
-+	return ret;
- }
- 
- /*
-@@ -260,7 +260,7 @@ static int dmz_reclaim_seq_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
- 
- 	dmz_unlock_flush(zmd);
- 
--	return 0;
-+	return ret;
- }
- 
- /*
-@@ -313,7 +313,7 @@ static int dmz_reclaim_rnd_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
- 
- 	dmz_unlock_flush(zmd);
- 
--	return 0;
-+	return ret;
- }
- 
- /*
-@@ -335,7 +335,7 @@ static void dmz_reclaim_empty(struct dmz_reclaim *zrc, struct dm_zone *dzone)
- /*
-  * Find a candidate zone for reclaim and process it.
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index 1bf6e6eebee1..c1992034c099 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -514,22 +514,24 @@ static void dmz_flush_work(struct work_struct *work)
+  * Get a chunk work and start it to process a new BIO.
+  * If the BIO chunk has no work yet, create one.
   */
--static void dmz_reclaim(struct dmz_reclaim *zrc)
-+static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+-static void dmz_queue_chunk_work(struct dmz_target *dmz, struct bio *bio)
++static int dmz_queue_chunk_work(struct dmz_target *dmz, struct bio *bio)
  {
- 	struct dmz_metadata *zmd = zrc->metadata;
- 	struct dm_zone *dzone;
-@@ -345,8 +345,8 @@ static void dmz_reclaim(struct dmz_reclaim *zrc)
+ 	unsigned int chunk = dmz_bio_chunk(dmz->dev, bio);
+ 	struct dm_chunk_work *cw;
++	int ret = 0;
  
- 	/* Get a data zone */
- 	dzone = dmz_get_zone_for_reclaim(zmd);
--	if (!dzone)
--		return;
-+	if (IS_ERR(dzone))
-+		return PTR_ERR(dzone);
+ 	mutex_lock(&dmz->chunk_lock);
  
- 	start = jiffies;
+ 	/* Get the BIO chunk work. If one is not active yet, create one */
+ 	cw = radix_tree_lookup(&dmz->chunk_rxtree, chunk);
+ 	if (!cw) {
+-		int ret;
  
-@@ -392,13 +392,20 @@ static void dmz_reclaim(struct dmz_reclaim *zrc)
- out:
- 	if (ret) {
- 		dmz_unlock_zone_reclaim(dzone);
--		return;
-+		return ret;
+ 		/* Create a new chunk work */
+ 		cw = kmalloc(sizeof(struct dm_chunk_work), GFP_NOIO);
+-		if (!cw)
++		if (unlikely(!cw)) {
++			ret = -ENOMEM;
+ 			goto out;
++		}
+ 
+ 		INIT_WORK(&cw->work, dmz_chunk_work);
+ 		refcount_set(&cw->refcount, 0);
+@@ -540,7 +542,6 @@ static void dmz_queue_chunk_work(struct dmz_target *dmz, struct bio *bio)
+ 		ret = radix_tree_insert(&dmz->chunk_rxtree, chunk, cw);
+ 		if (unlikely(ret)) {
+ 			kfree(cw);
+-			cw = NULL;
+ 			goto out;
+ 		}
  	}
+@@ -548,10 +549,12 @@ static void dmz_queue_chunk_work(struct dmz_target *dmz, struct bio *bio)
+ 	bio_list_add(&cw->bio_list, bio);
+ 	dmz_get_chunk_work(cw);
  
--	(void) dmz_flush_metadata(zrc->metadata);
-+	ret = dmz_flush_metadata(zrc->metadata);
-+	if (ret) {
-+		dmz_dev_debug(zrc->dev,
-+			      "Metadata flush for zone %u failed, err %d\n",
-+			      dmz_id(zmd, rzone), ret);
-+		return ret;
-+	}
- 
- 	dmz_dev_debug(zrc->dev, "Reclaimed zone %u in %u ms",
- 		      dmz_id(zmd, rzone), jiffies_to_msecs(jiffies - start));
-+	return 0;
++	dmz_reclaim_bio_acc(dmz->reclaim);
+ 	if (queue_work(dmz->chunk_wq, &cw->work))
+ 		dmz_get_chunk_work(cw);
+ out:
+ 	mutex_unlock(&dmz->chunk_lock);
++	return ret;
  }
  
  /*
-@@ -443,6 +450,7 @@ static void dmz_reclaim_work(struct work_struct *work)
- 	struct dmz_metadata *zmd = zrc->metadata;
- 	unsigned int nr_rnd, nr_unmap_rnd;
- 	unsigned int p_unmap_rnd;
+@@ -565,6 +568,7 @@ static int dmz_map(struct dm_target *ti, struct bio *bio)
+ 	sector_t sector = bio->bi_iter.bi_sector;
+ 	unsigned int nr_sectors = bio_sectors(bio);
+ 	sector_t chunk_sector;
 +	int ret;
  
- 	if (!dmz_should_reclaim(zrc)) {
- 		mod_delayed_work(zrc->wq, &zrc->work, DMZ_IDLE_PERIOD);
-@@ -472,7 +480,9 @@ static void dmz_reclaim_work(struct work_struct *work)
- 		      (dmz_target_idle(zrc) ? "Idle" : "Busy"),
- 		      p_unmap_rnd, nr_unmap_rnd, nr_rnd);
+ 	dmz_dev_debug(dev, "BIO op %d sector %llu + %u => chunk %llu, block %llu, %u blocks",
+ 		      bio_op(bio), (unsigned long long)sector, nr_sectors,
+@@ -602,8 +606,14 @@ static int dmz_map(struct dm_target *ti, struct bio *bio)
+ 		dm_accept_partial_bio(bio, dev->zone_nr_sectors - chunk_sector);
  
--	dmz_reclaim(zrc);
-+	ret = dmz_do_reclaim(zrc);
-+	if (ret)
-+		dmz_dev_debug(zrc->dev, "Reclaim error %d\n", ret);
+ 	/* Now ready to handle this BIO */
+-	dmz_reclaim_bio_acc(dmz->reclaim);
+-	dmz_queue_chunk_work(dmz, bio);
++	ret = dmz_queue_chunk_work(dmz, bio);
++	if (ret) {
++		dmz_dev_debug(dmz->dev,
++			      "BIO op %d, can't process chunk %llu, err %i\n",
++			      bio_op(bio), (u64)dmz_bio_chunk(dmz->dev, bio),
++			      ret);
++		return DM_MAPIO_REQUEUE;
++	}
  
- 	dmz_schedule_reclaim(zrc);
+ 	return DM_MAPIO_SUBMITTED;
  }
 -- 
 2.21.0
