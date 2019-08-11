@@ -1,8 +1,10 @@
 From: Huaisheng Ye <yehs2007@zoho.com>
-Subject: dm writecache: remove unused member pointer in writeback_struct
-Date: Mon, 12 Aug 2019 00:12:32 +0800
-Message-ID: <20190811161233.7616-1-yehs2007@zoho.com>
+Subject: dm writecache: add unlikely for getting two block with same LBA
+Date: Mon, 12 Aug 2019 00:12:33 +0800
+Message-ID: <20190811161233.7616-2-yehs2007@zoho.com>
+References: <20190811161233.7616-1-yehs2007@zoho.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190811161233.7616-1-yehs2007@zoho.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: mpatocka@redhat.com, snitzer@redhat.com, agk@redhat.com
 Cc: prarit@redhat.com, tyu1@lenovo.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Huaisheng Ye <yehs1@lenovo.com>
@@ -10,25 +12,32 @@ List-Id: dm-devel.ids
 
 From: Huaisheng Ye <yehs1@lenovo.com>
 
-The stucture member pointer page in writeback_struct never has been
-used actually. Remove it.
+In function writecache_writeback, entries g and f has same original
+sector only happens at entry f has been committed, but entry g has
+NOT yet.
+
+The probability of this happening is very low in the following
+ 256 blocks at most of entry e, so add unlikely for the result.
 
 Signed-off-by: Huaisheng Ye <yehs1@lenovo.com>
 ---
- drivers/md/dm-writecache.c | 1 -
- 1 file changed, 1 deletion(-)
+ drivers/md/dm-writecache.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-index 1cb137f..5c7009d 100644
+index 5c7009d..3643084 100644
 --- a/drivers/md/dm-writecache.c
 +++ b/drivers/md/dm-writecache.c
-@@ -190,7 +190,6 @@ struct writeback_struct {
- 	struct dm_writecache *wc;
- 	struct wc_entry **wc_list;
- 	unsigned wc_list_n;
--	struct page *page;
- 	struct wc_entry *wc_list_inline[WB_LIST_INLINE];
- 	struct bio bio;
- };
+@@ -1628,8 +1628,8 @@ static void writecache_writeback(struct work_struct *work)
+ 			if (unlikely(!next_node))
+ 				break;
+ 			g = container_of(next_node, struct wc_entry, rb_node);
+-			if (read_original_sector(wc, g) ==
+-			    read_original_sector(wc, f)) {
++			if (unlikely(read_original_sector(wc, g) ==
++			    read_original_sector(wc, f))) {
+ 				f = g;
+ 				continue;
+ 			}
 -- 
 1.8.3.1
