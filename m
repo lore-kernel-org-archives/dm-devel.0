@@ -1,16 +1,16 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [PATCH v10 1/7] crypto: essiv - create wrapper
- template for ESSIV generation
-Date: Mon, 12 Aug 2019 12:38:50 -0700
-Message-ID: <20190812193849.GA131059@gmail.com>
+Subject: Re: [PATCH v10 2/7] fs: crypto: invoke crypto API for
+	ESSIV handling
+Date: Mon, 12 Aug 2019 12:47:48 -0700
+Message-ID: <20190812194747.GB131059@gmail.com>
 References: <20190812145324.27090-1-ard.biesheuvel@linaro.org>
-	<20190812145324.27090-2-ard.biesheuvel@linaro.org>
+	<20190812145324.27090-3-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20190812145324.27090-2-ard.biesheuvel@linaro.org>
+In-Reply-To: <20190812145324.27090-3-ard.biesheuvel@linaro.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,76 +24,53 @@ To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 Cc: Herbert Xu <herbert@gondor.apana.org.au>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, linux-crypto@vger.kernel.org, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-On Mon, Aug 12, 2019 at 05:53:18PM +0300, Ard Biesheuvel wrote:
-> +	switch (type) {
-> +	case CRYPTO_ALG_TYPE_BLKCIPHER:
-> +		skcipher_inst = kzalloc(sizeof(*skcipher_inst) +
-> +					sizeof(*ictx), GFP_KERNEL);
-> +		if (!skcipher_inst)
-> +			return -ENOMEM;
-> +		inst = skcipher_crypto_instance(skcipher_inst);
-> +		base = &skcipher_inst->alg.base;
-> +		ictx = crypto_instance_ctx(inst);
-> +
-> +		/* Block cipher, e.g. "cbc(aes)" */
-> +		crypto_set_skcipher_spawn(&ictx->u.skcipher_spawn, inst);
-> +		err = crypto_grab_skcipher(&ictx->u.skcipher_spawn,
-> +					   inner_cipher_name, 0,
-> +					   crypto_requires_sync(algt->type,
-> +								algt->mask));
-> +		if (err)
-> +			goto out_free_inst;
+On Mon, Aug 12, 2019 at 05:53:19PM +0300, Ard Biesheuvel wrote:
+> Instead of open coding the calculations for ESSIV handling, use a
+> ESSIV skcipher which does all of this under the hood.
+> 
+> Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 
-This should say "Symmetric cipher", not "Block cipher".
+This looks fine (except for one comment below), but this heavily conflicts with
+the fscrypt patches planned for v5.4.  So I suggest moving this to the end of
+the series and having Herbert take only 1-6, and I'll apply this one to the
+fscrypt tree later.
 
-> +
-> +	if (!parse_cipher_name(essiv_cipher_name, block_base->cra_name)) {
-> +		pr_warn("Failed to parse ESSIV cipher name from skcipher cra_name\n");
-> +		goto out_drop_skcipher;
-> +	}
+Thanks!
 
-This is missing:
-		
-		err = -EINVAL;
+> ---
+>  fs/crypto/Kconfig           |  1 +
+>  fs/crypto/crypto.c          |  5 --
+>  fs/crypto/fscrypt_private.h |  9 --
+>  fs/crypto/keyinfo.c         | 92 +-------------------
+>  4 files changed, 4 insertions(+), 103 deletions(-)
+> 
+> diff --git a/fs/crypto/Kconfig b/fs/crypto/Kconfig
+> index 5fdf24877c17..6f3d59b880b7 100644
+> --- a/fs/crypto/Kconfig
+> +++ b/fs/crypto/Kconfig
+> @@ -5,6 +5,7 @@ config FS_ENCRYPTION
+>  	select CRYPTO_AES
+>  	select CRYPTO_CBC
+>  	select CRYPTO_ECB
+> +	select CRYPTO_ESSIV
+>  	select CRYPTO_XTS
+>  	select CRYPTO_CTS
+>  	select KEYS
 
-> +	if (type == CRYPTO_ALG_TYPE_BLKCIPHER) {
-> +		skcipher_inst->alg.setkey	= essiv_skcipher_setkey;
-> +		skcipher_inst->alg.encrypt	= essiv_skcipher_encrypt;
-> +		skcipher_inst->alg.decrypt	= essiv_skcipher_decrypt;
-> +		skcipher_inst->alg.init		= essiv_skcipher_init_tfm;
-> +		skcipher_inst->alg.exit		= essiv_skcipher_exit_tfm;
-> +
-> +		skcipher_inst->alg.min_keysize	= crypto_skcipher_alg_min_keysize(skcipher_alg);
-> +		skcipher_inst->alg.max_keysize	= crypto_skcipher_alg_max_keysize(skcipher_alg);
-> +		skcipher_inst->alg.ivsize	= crypto_skcipher_alg_ivsize(skcipher_alg);
-> +		skcipher_inst->alg.chunksize	= crypto_skcipher_alg_chunksize(skcipher_alg);
-> +		skcipher_inst->alg.walksize	= crypto_skcipher_alg_walksize(skcipher_alg);
-> +
-> +		skcipher_inst->free		= essiv_skcipher_free_instance;
-> +
-> +		err = skcipher_register_instance(tmpl, skcipher_inst);
-> +	} else {
-> +		aead_inst->alg.setkey		= essiv_aead_setkey;
-> +		aead_inst->alg.setauthsize	= essiv_aead_setauthsize;
-> +		aead_inst->alg.encrypt		= essiv_aead_encrypt;
-> +		aead_inst->alg.decrypt		= essiv_aead_decrypt;
-> +		aead_inst->alg.init		= essiv_aead_init_tfm;
-> +		aead_inst->alg.exit		= essiv_aead_exit_tfm;
-> +
-> +		aead_inst->alg.ivsize		= crypto_aead_alg_ivsize(aead_alg);
-> +		aead_inst->alg.maxauthsize	= crypto_aead_alg_maxauthsize(aead_alg);
-> +		aead_inst->alg.chunksize	= crypto_aead_alg_chunksize(aead_alg);
-> +
-> +		aead_inst->free			= essiv_aead_free_instance;
-> +
-> +		err = aead_register_instance(tmpl, aead_inst);
-> +	}
+In v5.3 I removed the 'select CRYPTO_SHA256', so now ESSIV shouldn't be selected
+here either.  Instead we should just update the documentation:
 
-'ivsize' is already in a variable, so could use
-
-		skcipher_inst->alg.ivsize       = ivsize;
-
-	and
-		aead_inst->alg.ivsize           = ivsize;
-		
-- Eric
+diff --git a/Documentation/filesystems/fscrypt.rst b/Documentation/filesystems/fscrypt.rst
+index 82efa41b0e6c02..a1e2ab12a99943 100644
+--- a/Documentation/filesystems/fscrypt.rst
++++ b/Documentation/filesystems/fscrypt.rst
+@@ -193,7 +193,8 @@ If unsure, you should use the (AES-256-XTS, AES-256-CTS-CBC) pair.
+ AES-128-CBC was added only for low-powered embedded devices with
+ crypto accelerators such as CAAM or CESA that do not support XTS.  To
+ use AES-128-CBC, CONFIG_CRYPTO_SHA256 (or another SHA-256
+-implementation) must be enabled so that ESSIV can be used.
++implementation) and CONFIG_CRYPTO_ESSIV must be enabled so that ESSIV
++can be used.
+ 
+ Adiantum is a (primarily) stream cipher-based mode that is fast even
+ on CPUs without dedicated crypto instructions.  It's also a true
