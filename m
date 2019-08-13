@@ -1,60 +1,64 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] direct-io: use GFP_NOIO to avoid deadlock
-Date: Tue, 13 Aug 2019 12:35:49 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1908131231010.6852@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1908080540240.15519@file01.intranet.prod.int.rdu2.redhat.com> <20190809013403.GY7777@dread.disaster.area> <alpine.LRH.2.02.1908090725290.31061@file01.intranet.prod.int.rdu2.redhat.com>
- <20190809215733.GZ7777@dread.disaster.area>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: Re: [PATCH v10 2/7] fs: crypto: invoke crypto API for
+ ESSIV handling
+Date: Tue, 13 Aug 2019 11:00:21 -0700
+Message-ID: <20190813180020.GA233786@gmail.com>
+References: <20190812145324.27090-1-ard.biesheuvel@linaro.org>
+	<20190812145324.27090-3-ard.biesheuvel@linaro.org>
+	<20190812194747.GB131059@gmail.com>
+	<CAKv+Gu-9aHY0op6MEmN8PfQhNa0kv=xNYB6rqtaCoiUdH4OASA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190809215733.GZ7777@dread.disaster.area>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, "Darrick J. Wong" <darrick.wong@oracle.com>, Mike Snitzer <msnitzer@redhat.com>, junxiao.bi@oracle.com, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, honglei.wang@oracle.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <CAKv+Gu-9aHY0op6MEmN8PfQhNa0kv=xNYB6rqtaCoiUdH4OASA@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-
-
-On Sat, 10 Aug 2019, Dave Chinner wrote:
-
-> No, you misunderstand. I'm talking about blocking kswapd being
-> wrong.  i.e. Blocking kswapd in shrinkers causes problems
-> because th ememory reclaim code does not expect kswapd to be
-> arbitrarily delayed by waiting on IO. We've had this problem with
-> the XFS inode cache shrinker for years, and there are many reports
-> of extremely long reclaim latencies for both direct and kswapd
-> reclaim that result from kswapd not making progress while waiting
-> in shrinkers for IO to complete.
+On Tue, Aug 13, 2019 at 08:09:41AM +0300, Ard Biesheuvel wrote:
+> On Mon, 12 Aug 2019 at 22:47, Eric Biggers <ebiggers@kernel.org> wrote:
+> >
+> > On Mon, Aug 12, 2019 at 05:53:19PM +0300, Ard Biesheuvel wrote:
+> > > Instead of open coding the calculations for ESSIV handling, use a
+> > > ESSIV skcipher which does all of this under the hood.
+> > >
+> > > Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+> >
+> > This looks fine (except for one comment below), but this heavily conflicts with
+> > the fscrypt patches planned for v5.4.  So I suggest moving this to the end of
+> > the series and having Herbert take only 1-6, and I'll apply this one to the
+> > fscrypt tree later.
+> >
 > 
-> The work I'm currently doing to fix this XFS problem can be found
-> here:
+> I think the same applies to dm-crypt: at least patch #7 cannot be
+> applied until my eboiv patch is applied there as well, but [Milan
+> should confirm] I'd expect them to prefer taking those patches via the
+> dm tree anyway.
 > 
-> https://lore.kernel.org/linux-fsdevel/20190801021752.4986-1-david@fromorbit.com/
+> Herbert, what would you prefer:
+> - taking a pull request from a [signed] tag based on v4.3-rc1 that
+> contains patches #1, #4, #5 and #6, allowing Eric and Milan/Mike to
+> merge it as well, and apply the respective fscrypt and dm-crypt
+> changes on top
+> - just take patches #1, #4, #5 and #6 as usual, and let the fscrypt
+> and dm-crypt changes be reposted to the respective lists during the
+> next cycle
 > 
-> 
-> i.e. the point I'm making is that waiting for IO in kswapd reclaim
-> context is considered harmful - kswapd context shrinker reclaim
-> should be as non-blocking as possible, and any back-off to wait for
-> IO to complete should be done by the high level reclaim core once
-> it's completed an entire reclaim scan cycle of everything....
-> 
-> What follows from that, and is pertinent for in this situation, is
-> that if you don't block kswapd, then other reclaim contexts are not
-> going to get stuck waiting for it regardless of the reclaim context
-> they use.
-> 
-> Cheers,
-> 
-> Dave.
 
-So, what do you think the dm-bufio shrinker should do?
+FWIW I'd much prefer the second option, to minimize the number of special things
+that Linus will have to consider or deal with.  (There's also going to be a
+conflict between the fscrypt and keyrings trees.)  I'd be glad to take the
+fscrypt patch for 5.5, if the essiv template is added in 5.4.
 
-Currently it tries to free buffers on the clean list and if there are not 
-enough buffers on the clean list, it goes into the dirty list - it writes 
-the buffers back and then frees them.
-
-What should it do? Should it just start writeback of the dirty list 
-without waiting for it? What should it do if all the buffers are under 
-writeback?
-
-Mikulas
+- Eric
