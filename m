@@ -1,16 +1,15 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 14/16] libmutipath: deprecate delay_*_checks
-Date: Wed, 14 Aug 2019 21:20:46 +0000
-Message-ID: <af2c96e14df9aad64dbeded65e6e0c02c9ff45cf.camel@suse.com>
-References: <1564763622-31752-1-git-send-email-bmarzins@redhat.com>
-	<1564763622-31752-15-git-send-email-bmarzins@redhat.com>
+Subject: Re: [PATCH] multipath: add print_foreign option
+Date: Wed, 14 Aug 2019 21:27:49 +0000
+Message-ID: <e81dedea972b6471cc2fd9b8ae0660c06b766b43.camel@suse.com>
+References: <1565803320-6996-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1564763622-31752-15-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1565803320-6996-1-git-send-email-bmarzins@redhat.com>
 Content-Language: en-US
-Content-ID: <8C87C81792E4F749AAB7A5E637BF26B4@namprd18.prod.outlook.com>
+Content-ID: <EA6F3C3E3A0D1C4EBFAE487B1AE3F2BC@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,56 +20,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "mkumar@redhat.com" <mkumar@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 2019-08-02 at 11:33 -0500, Benjamin Marzinski wrote:
-> The delay_checks shaky paths detection method works the same way as
-> the
-> san_path_err method, but not as well, with less configurability, and
-> with the code spread all over check_path(). The only real difference
-> is
-> that marks the path as marginal for a certain number of path checks
-> instead of for a specific time. This patch deprecates the
-> delay_checks
-> method and maps it to the the san_path_err method.
+On Wed, 2019-08-14 at 12:22 -0500, Benjamin Marzinski wrote:
+> This adds a print_foreign multipath.conf defaults option, that allows
+> users to disable printing foreign devices and paths. It defaults to
+> "yes".
 > 
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  libmultipath/configure.c   | 17 +----------
->  libmultipath/propsel.c     | 62 +++++++++++++++++++++++++++++-------
+>  libmultipath/config.c      |  1 +
+>  libmultipath/config.h      |  1 +
+>  libmultipath/defaults.h    |  1 +
+>  libmultipath/dict.c        |  4 ++++
+>  multipath/main.c           |  4 ++--
+>  multipath/multipath.conf.5 | 12 ++++++++++++
+>  multipathd/cli_handlers.c  | 40 ++++++++++++++++++++++++++++++----
+> ----
+>  7 files changed, 53 insertions(+), 10 deletions(-)
+> 
 
-I suppose that quite a few users are working with "delay_*_checks" in
-production. If we remove the option, we should at least clearly
-document how to map existing delay_*_checks parameters to san_path_err*
-parameters.
+The general idea is good, and has been requested from SUSE, too.
 
-IIUC, to (roughly) imitate the settings
+But, as "foreign" is designed to be generic and different foreign
+libraries might be possible in the future, I'd like to this a bit
+differently:
 
-  delay_watch_checks = C
-  delay_wait_checks = W
+    enable_foreign = "$REGEXP"
 
-I need to set
+Where REGEXP would be used to match the foreign library names.
+The default value of REGEXP would be ".*" or "nvme". Users who want
+to disable printing foreign maps would set it e.g. to "^$", or "NONE".
 
-  san_path_err_threshold = 2
-  san_path_err_forget_rate = C
-  san_path_err_recovery_time = W
+I'll send a patch soon.
 
-Correct? Or can it be done better?
-
-(It's not exactly the same, as delay_watch_checks starts counting when
-a path is reinstated after a failure, while san_path_err_threshold
-counts good->bad transitions, and the threshold would be reached if a
-path fails more often than every C ticks _on average_).
-
-If the above is fine, we might as well map these settings in the code
-directly. IOW, instead of ignoring "delay_*_checks" altogether, we
-should ignore it only if either san_path_* or marginal_path_*
-parameters are set; Otherwise, we could simply map the delay_*_checks
-parameters as shown above.
-
-That would be a bit more user friendly in terms of backwards
-compatibility.
-
-Regards
+Regards,
 Martin
