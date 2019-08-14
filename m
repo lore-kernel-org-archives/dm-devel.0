@@ -1,16 +1,16 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 16/16] multipath: update man pages
-Date: Wed, 14 Aug 2019 21:21:32 +0000
-Message-ID: <d563722667ec1caba7a072b6df632844e64ea690.camel@suse.com>
+Subject: Re: [PATCH 14/16] libmutipath: deprecate delay_*_checks
+Date: Wed, 14 Aug 2019 21:20:46 +0000
+Message-ID: <af2c96e14df9aad64dbeded65e6e0c02c9ff45cf.camel@suse.com>
 References: <1564763622-31752-1-git-send-email-bmarzins@redhat.com>
-	<1564763622-31752-17-git-send-email-bmarzins@redhat.com>
+	<1564763622-31752-15-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1564763622-31752-17-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1564763622-31752-15-git-send-email-bmarzins@redhat.com>
 Content-Language: en-US
-Content-ID: <A5462B9F62218F4B999B21B49DE3353D@namprd18.prod.outlook.com>
+Content-ID: <8C87C81792E4F749AAB7A5E637BF26B4@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,41 +25,52 @@ Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "mkumar@redhat.com" <mkumar@red
 List-Id: dm-devel.ids
 
 On Fri, 2019-08-02 at 11:33 -0500, Benjamin Marzinski wrote:
-> Add documentation for the marginal_pathgroups option and the
-> (un)setmarginal commands.
+> The delay_checks shaky paths detection method works the same way as
+> the
+> san_path_err method, but not as well, with less configurability, and
+> with the code spread all over check_path(). The only real difference
+> is
+> that marks the path as marginal for a certain number of path checks
+> instead of for a specific time. This patch deprecates the
+> delay_checks
+> method and maps it to the the san_path_err method.
 > 
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  multipath/multipath.conf.5 | 34 ++++++++++++++++++++++++++++++----
->  multipathd/multipathd.8    | 19 +++++++++++++++++++
->  2 files changed, 49 insertions(+), 4 deletions(-)
-> 
-> --- a/multipathd/multipathd.8
-> +++ b/multipathd/multipathd.8
-> @@ -277,6 +277,25 @@ Remove the persistent reservation key associated
-> with $map from the
->  \fIreservation_key\fR is set to \fBfile\fR in
-> \fI/etc/multipath.conf\fR.
->  .
->  .TP
-> +.B path $path setmarginal
-> +move $path to a marginal pathgroup. The path will remain in the
-> marginal
-> +path group until \fIunsetmarginal\fR is called. This command will
-> only
-> +work if \fImarginal_pathgroups\fR is enabled and there is no Shaky
-> paths
-> +detection method configured (see the multipath.conf man page for
-> details).
+>  libmultipath/configure.c   | 17 +----------
+>  libmultipath/propsel.c     | 62 +++++++++++++++++++++++++++++-------
 
-This is counter-intuitive. It's unclear to me why we need these
-commands at all. By nature of "shaky" paths, it doesn't make a lot of
-sense to make these settings (only) manually. I'd like it better if the
-cli commands somehow hooked into the different "shaky" algorithms. E.g.
-for the san_path_err_ algorithm, setting a path to marginal would mean
-artificially setting its failure count to a value above the configured
-threshold. That way, the manual settings could work togehter with the
-automatic detection methods, and could be used for overriding them
-in special cases.
+I suppose that quite a few users are working with "delay_*_checks" in
+production. If we remove the option, we should at least clearly
+document how to map existing delay_*_checks parameters to san_path_err*
+parameters.
 
+IIUC, to (roughly) imitate the settings
+
+  delay_watch_checks = C
+  delay_wait_checks = W
+
+I need to set
+
+  san_path_err_threshold = 2
+  san_path_err_forget_rate = C
+  san_path_err_recovery_time = W
+
+Correct? Or can it be done better?
+
+(It's not exactly the same, as delay_watch_checks starts counting when
+a path is reinstated after a failure, while san_path_err_threshold
+counts good->bad transitions, and the threshold would be reached if a
+path fails more often than every C ticks _on average_).
+
+If the above is fine, we might as well map these settings in the code
+directly. IOW, instead of ignoring "delay_*_checks" altogether, we
+should ignore it only if either san_path_* or marginal_path_*
+parameters are set; Otherwise, we could simply map the delay_*_checks
+parameters as shown above.
+
+That would be a bit more user friendly in terms of backwards
+compatibility.
+
+Regards
 Martin
