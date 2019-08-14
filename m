@@ -1,14 +1,11 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: [PATCH v11 4/4] crypto: arm64/aes - implement
-	accelerated ESSIV/CBC mode
-Date: Wed, 14 Aug 2019 19:37:46 +0300
-Message-ID: <20190814163746.3525-5-ard.biesheuvel@linaro.org>
-References: <20190814163746.3525-1-ard.biesheuvel@linaro.org>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] multipath: add print_foreign option
+Date: Wed, 14 Aug 2019 12:22:00 -0500
+Message-ID: <1565803320-6996-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190814163746.3525-1-ard.biesheuvel@linaro.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,274 +15,212 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-crypto@vger.kernel.org
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, Milan Broz <gmazyland@gmail.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-Add an accelerated version of the 'essiv(cbc(aes),sha256)' skcipher,
-which is used by fscrypt or dm-crypt on systems where CBC mode is
-signficantly more performant than XTS mode (e.g., when using a h/w
-accelerator which supports the former but not the latter) This avoids
-a separate call into the AES cipher for every invocation.
+This adds a print_foreign multipath.conf defaults option, that allows
+users to disable printing foreign devices and paths. It defaults to
+"yes".
 
-Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- arch/arm64/crypto/aes-glue.c  | 124 ++++++++++++++++++++
- arch/arm64/crypto/aes-modes.S |  28 +++++
- 2 files changed, 152 insertions(+)
+ libmultipath/config.c      |  1 +
+ libmultipath/config.h      |  1 +
+ libmultipath/defaults.h    |  1 +
+ libmultipath/dict.c        |  4 ++++
+ multipath/main.c           |  4 ++--
+ multipath/multipath.conf.5 | 12 ++++++++++++
+ multipathd/cli_handlers.c  | 40 ++++++++++++++++++++++++++++++--------
+ 7 files changed, 53 insertions(+), 10 deletions(-)
 
-diff --git a/arch/arm64/crypto/aes-glue.c b/arch/arm64/crypto/aes-glue.c
-index 23abf335f1ee..ca0c84d56cba 100644
---- a/arch/arm64/crypto/aes-glue.c
-+++ b/arch/arm64/crypto/aes-glue.c
-@@ -10,6 +10,7 @@
- #include <asm/simd.h>
- #include <crypto/aes.h>
- #include <crypto/ctr.h>
-+#include <crypto/sha.h>
- #include <crypto/internal/hash.h>
- #include <crypto/internal/simd.h>
- #include <crypto/internal/skcipher.h>
-@@ -30,6 +31,8 @@
- #define aes_cbc_decrypt		ce_aes_cbc_decrypt
- #define aes_cbc_cts_encrypt	ce_aes_cbc_cts_encrypt
- #define aes_cbc_cts_decrypt	ce_aes_cbc_cts_decrypt
-+#define aes_essiv_cbc_encrypt	ce_aes_essiv_cbc_encrypt
-+#define aes_essiv_cbc_decrypt	ce_aes_essiv_cbc_decrypt
- #define aes_ctr_encrypt		ce_aes_ctr_encrypt
- #define aes_xts_encrypt		ce_aes_xts_encrypt
- #define aes_xts_decrypt		ce_aes_xts_decrypt
-@@ -44,6 +47,8 @@ MODULE_DESCRIPTION("AES-ECB/CBC/CTR/XTS using ARMv8 Crypto Extensions");
- #define aes_cbc_decrypt		neon_aes_cbc_decrypt
- #define aes_cbc_cts_encrypt	neon_aes_cbc_cts_encrypt
- #define aes_cbc_cts_decrypt	neon_aes_cbc_cts_decrypt
-+#define aes_essiv_cbc_encrypt	neon_aes_essiv_cbc_encrypt
-+#define aes_essiv_cbc_decrypt	neon_aes_essiv_cbc_decrypt
- #define aes_ctr_encrypt		neon_aes_ctr_encrypt
- #define aes_xts_encrypt		neon_aes_xts_encrypt
- #define aes_xts_decrypt		neon_aes_xts_decrypt
-@@ -51,6 +56,7 @@ MODULE_DESCRIPTION("AES-ECB/CBC/CTR/XTS using ARMv8 Crypto Extensions");
- MODULE_DESCRIPTION("AES-ECB/CBC/CTR/XTS using ARMv8 NEON");
- MODULE_ALIAS_CRYPTO("ecb(aes)");
- MODULE_ALIAS_CRYPTO("cbc(aes)");
-+MODULE_ALIAS_CRYPTO("essiv(cbc(aes),sha256)");
- MODULE_ALIAS_CRYPTO("ctr(aes)");
- MODULE_ALIAS_CRYPTO("xts(aes)");
- MODULE_ALIAS_CRYPTO("cmac(aes)");
-@@ -87,6 +93,13 @@ asmlinkage void aes_xts_decrypt(u8 out[], u8 const in[], u32 const rk1[],
- 				int rounds, int blocks, u32 const rk2[], u8 iv[],
- 				int first);
- 
-+asmlinkage void aes_essiv_cbc_encrypt(u8 out[], u8 const in[], u32 const rk1[],
-+				      int rounds, int blocks, u8 iv[],
-+				      u32 const rk2[]);
-+asmlinkage void aes_essiv_cbc_decrypt(u8 out[], u8 const in[], u32 const rk1[],
-+				      int rounds, int blocks, u8 iv[],
-+				      u32 const rk2[]);
-+
- asmlinkage void aes_mac_update(u8 const in[], u32 const rk[], int rounds,
- 			       int blocks, u8 dg[], int enc_before,
- 			       int enc_after);
-@@ -102,6 +115,12 @@ struct crypto_aes_xts_ctx {
- 	struct crypto_aes_ctx __aligned(8) key2;
- };
- 
-+struct crypto_aes_essiv_cbc_ctx {
-+	struct crypto_aes_ctx key1;
-+	struct crypto_aes_ctx __aligned(8) key2;
-+	struct crypto_shash *hash;
-+};
-+
- struct mac_tfm_ctx {
- 	struct crypto_aes_ctx key;
- 	u8 __aligned(8) consts[];
-@@ -146,6 +165,31 @@ static int xts_set_key(struct crypto_skcipher *tfm, const u8 *in_key,
- 	return -EINVAL;
- }
- 
-+static int essiv_cbc_set_key(struct crypto_skcipher *tfm, const u8 *in_key,
-+			     unsigned int key_len)
-+{
-+	struct crypto_aes_essiv_cbc_ctx *ctx = crypto_skcipher_ctx(tfm);
-+	SHASH_DESC_ON_STACK(desc, ctx->hash);
-+	u8 digest[SHA256_DIGEST_SIZE];
-+	int ret;
-+
-+	ret = aes_expandkey(&ctx->key1, in_key, key_len);
-+	if (ret)
-+		goto out;
-+
-+	desc->tfm = ctx->hash;
-+	crypto_shash_digest(desc, in_key, key_len, digest);
-+
-+	ret = aes_expandkey(&ctx->key2, digest, sizeof(digest));
-+	if (ret)
-+		goto out;
-+
-+	return 0;
-+out:
-+	crypto_skcipher_set_flags(tfm, CRYPTO_TFM_RES_BAD_KEY_LEN);
-+	return -EINVAL;
-+}
-+
- static int ecb_encrypt(struct skcipher_request *req)
- {
- 	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-@@ -360,6 +404,68 @@ static int cts_cbc_decrypt(struct skcipher_request *req)
- 	return skcipher_walk_done(&walk, 0);
- }
- 
-+static int essiv_cbc_init_tfm(struct crypto_skcipher *tfm)
-+{
-+	struct crypto_aes_essiv_cbc_ctx *ctx = crypto_skcipher_ctx(tfm);
-+
-+	ctx->hash = crypto_alloc_shash("sha256", 0, 0);
-+	if (IS_ERR(ctx->hash))
-+		return PTR_ERR(ctx->hash);
-+
-+	return 0;
-+}
-+
-+static void essiv_cbc_exit_tfm(struct crypto_skcipher *tfm)
-+{
-+	struct crypto_aes_essiv_cbc_ctx *ctx = crypto_skcipher_ctx(tfm);
-+
-+	crypto_free_shash(ctx->hash);
-+}
-+
-+static int essiv_cbc_encrypt(struct skcipher_request *req)
-+{
-+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-+	struct crypto_aes_essiv_cbc_ctx *ctx = crypto_skcipher_ctx(tfm);
-+	int err, rounds = 6 + ctx->key1.key_length / 4;
-+	struct skcipher_walk walk;
-+	unsigned int blocks;
-+
-+	err = skcipher_walk_virt(&walk, req, false);
-+
-+	blocks = walk.nbytes / AES_BLOCK_SIZE;
-+	if (blocks) {
-+		kernel_neon_begin();
-+		aes_essiv_cbc_encrypt(walk.dst.virt.addr, walk.src.virt.addr,
-+				      ctx->key1.key_enc, rounds, blocks,
-+				      req->iv, ctx->key2.key_enc);
-+		kernel_neon_end();
-+		err = skcipher_walk_done(&walk, walk.nbytes % AES_BLOCK_SIZE);
-+	}
-+	return err ?: cbc_encrypt_walk(req, &walk);
-+}
-+
-+static int essiv_cbc_decrypt(struct skcipher_request *req)
-+{
-+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-+	struct crypto_aes_essiv_cbc_ctx *ctx = crypto_skcipher_ctx(tfm);
-+	int err, rounds = 6 + ctx->key1.key_length / 4;
-+	struct skcipher_walk walk;
-+	unsigned int blocks;
-+
-+	err = skcipher_walk_virt(&walk, req, false);
-+
-+	blocks = walk.nbytes / AES_BLOCK_SIZE;
-+	if (blocks) {
-+		kernel_neon_begin();
-+		aes_essiv_cbc_decrypt(walk.dst.virt.addr, walk.src.virt.addr,
-+				      ctx->key1.key_dec, rounds, blocks,
-+				      req->iv, ctx->key2.key_enc);
-+		kernel_neon_end();
-+		err = skcipher_walk_done(&walk, walk.nbytes % AES_BLOCK_SIZE);
-+	}
-+	return err ?: cbc_decrypt_walk(req, &walk);
-+}
-+
- static int ctr_encrypt(struct skcipher_request *req)
- {
- 	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-@@ -515,6 +621,24 @@ static struct skcipher_alg aes_algs[] = { {
- 	.encrypt	= cts_cbc_encrypt,
- 	.decrypt	= cts_cbc_decrypt,
- 	.init		= cts_cbc_init_tfm,
-+}, {
-+	.base = {
-+		.cra_name		= "__essiv(cbc(aes),sha256)",
-+		.cra_driver_name	= "__essiv-cbc-aes-sha256-" MODE,
-+		.cra_priority		= PRIO + 1,
-+		.cra_flags		= CRYPTO_ALG_INTERNAL,
-+		.cra_blocksize		= AES_BLOCK_SIZE,
-+		.cra_ctxsize		= sizeof(struct crypto_aes_essiv_cbc_ctx),
-+		.cra_module		= THIS_MODULE,
-+	},
-+	.min_keysize	= AES_MIN_KEY_SIZE,
-+	.max_keysize	= AES_MAX_KEY_SIZE,
-+	.ivsize		= AES_BLOCK_SIZE,
-+	.setkey		= essiv_cbc_set_key,
-+	.encrypt	= essiv_cbc_encrypt,
-+	.decrypt	= essiv_cbc_decrypt,
-+	.init		= essiv_cbc_init_tfm,
-+	.exit		= essiv_cbc_exit_tfm,
- }, {
- 	.base = {
- 		.cra_name		= "__ctr(aes)",
-diff --git a/arch/arm64/crypto/aes-modes.S b/arch/arm64/crypto/aes-modes.S
-index 324039b72094..2879f030a749 100644
---- a/arch/arm64/crypto/aes-modes.S
-+++ b/arch/arm64/crypto/aes-modes.S
-@@ -118,8 +118,23 @@ AES_ENDPROC(aes_ecb_decrypt)
- 	 *		   int blocks, u8 iv[])
- 	 * aes_cbc_decrypt(u8 out[], u8 const in[], u8 const rk[], int rounds,
- 	 *		   int blocks, u8 iv[])
-+	 * aes_essiv_cbc_encrypt(u8 out[], u8 const in[], u32 const rk1[],
-+	 *			 int rounds, int blocks, u8 iv[],
-+	 *			 u32 const rk2[]);
-+	 * aes_essiv_cbc_decrypt(u8 out[], u8 const in[], u32 const rk1[],
-+	 *			 int rounds, int blocks, u8 iv[],
-+	 *			 u32 const rk2[]);
- 	 */
- 
-+AES_ENTRY(aes_essiv_cbc_encrypt)
-+	ld1		{v4.16b}, [x5]			/* get iv */
-+
-+	mov		w8, #14				/* AES-256: 14 rounds */
-+	enc_prepare	w8, x6, x7
-+	encrypt_block	v4, w8, x6, x7, w9
-+	enc_switch_key	w3, x2, x6
-+	b		.Lcbcencloop4x
-+
- AES_ENTRY(aes_cbc_encrypt)
- 	ld1		{v4.16b}, [x5]			/* get iv */
- 	enc_prepare	w3, x2, x6
-@@ -153,13 +168,25 @@ AES_ENTRY(aes_cbc_encrypt)
- 	st1		{v4.16b}, [x5]			/* return iv */
- 	ret
- AES_ENDPROC(aes_cbc_encrypt)
-+AES_ENDPROC(aes_essiv_cbc_encrypt)
-+
-+AES_ENTRY(aes_essiv_cbc_decrypt)
-+	stp		x29, x30, [sp, #-16]!
-+	mov		x29, sp
-+
-+	ld1		{cbciv.16b}, [x5]		/* get iv */
- 
-+	mov		w8, #14				/* AES-256: 14 rounds */
-+	enc_prepare	w8, x6, x7
-+	encrypt_block	cbciv, w8, x6, x7, w9
-+	b		.Lessivcbcdecstart
- 
- AES_ENTRY(aes_cbc_decrypt)
- 	stp		x29, x30, [sp, #-16]!
- 	mov		x29, sp
- 
- 	ld1		{cbciv.16b}, [x5]		/* get iv */
-+.Lessivcbcdecstart:
- 	dec_prepare	w3, x2, x6
- 
- .LcbcdecloopNx:
-@@ -212,6 +239,7 @@ ST5(	st1		{v4.16b}, [x0], #16		)
- 	ldp		x29, x30, [sp], #16
- 	ret
- AES_ENDPROC(aes_cbc_decrypt)
-+AES_ENDPROC(aes_essiv_cbc_decrypt)
- 
- 
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 20e3b8bf..ec437a15 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -717,6 +717,7 @@ load_config (char * file)
+ 	conf->remove_retries = 0;
+ 	conf->ghost_delay = DEFAULT_GHOST_DELAY;
+ 	conf->all_tg_pt = DEFAULT_ALL_TG_PT;
++	conf->print_foreign = DEFAULT_PRINT_FOREIGN;
  	/*
+ 	 * preload default hwtable
+ 	 */
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 0b978970..f3060ff9 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -187,6 +187,7 @@ struct config {
+ 	int ghost_delay;
+ 	int find_multipaths_timeout;
+ 	int marginal_pathgroups;
++	int print_foreign;
+ 	unsigned int version[3];
+ 
+ 	char * multipath_dir;
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index decc9335..926ba7a3 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -48,6 +48,7 @@
+ #define DEFAULT_FIND_MULTIPATHS_TIMEOUT -10
+ #define DEFAULT_UNKNOWN_FIND_MULTIPATHS_TIMEOUT 1
+ #define DEFAULT_ALL_TG_PT ALL_TG_PT_OFF
++#define DEFAULT_PRINT_FOREIGN	1
+ 
+ #define CHECKINT_UNDEF		(~0U)
+ #define DEFAULT_CHECKINT	5
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index b5feb884..dcf4599b 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -1342,6 +1342,9 @@ declare_hw_snprint(all_tg_pt, print_yes_no_undef)
+ declare_def_handler(marginal_pathgroups, set_yes_no)
+ declare_def_snprint(marginal_pathgroups, print_yes_no)
+ 
++declare_def_handler(print_foreign, set_yes_no)
++declare_def_snprint(print_foreign, print_yes_no)
++
+ static int
+ def_uxsock_timeout_handler(struct config *conf, vector strvec)
+ {
+@@ -1713,6 +1716,7 @@ init_keywords(vector keywords)
+ 			&def_find_multipaths_timeout_handler,
+ 			&snprint_def_find_multipaths_timeout);
+ 	install_keyword("marginal_pathgroups", &def_marginal_pathgroups_handler, &snprint_def_marginal_pathgroups);
++	install_keyword("print_foreign", &def_print_foreign_handler, &snprint_def_print_foreign);
+ 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
+ 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
+ 	__deprecated install_keyword("default_uid_attribute", &def_uid_attribute_handler, NULL);
+diff --git a/multipath/main.c b/multipath/main.c
+index 96a11468..4f3f8641 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -304,8 +304,8 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+ 
+ 	if (cmd == CMD_LIST_SHORT || cmd == CMD_LIST_LONG) {
+ 		struct config *conf = get_multipath_config();
+-
+-		print_foreign_topology(conf->verbosity);
++		if (conf->print_foreign)
++			print_foreign_topology(conf->verbosity);
+ 		put_multipath_config(conf);
+ 	}
+ 
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index a85a8a60..c1711a20 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -1224,6 +1224,18 @@ The default is: \fBno\fR
+ .RE
+ .
+ .
++.TP
++.B print_foreign
++This controls whether or not multipath's path and device listings show natively
++multipathed devices, that are not managed by the multipath and multipathd
++programs. Currently this only controls wherely native nvme multipathed
++devices and paths will be shown.
++.RS
++.TP
++The default is: \fByes\fR
++.RE
++.
++.
+ .\" ----------------------------------------------------------------------------
+ .SH "blacklist and blacklist_exceptions sections"
+ .\" ----------------------------------------------------------------------------
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 8a899049..c401f9e3 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -42,9 +42,16 @@ show_paths (char ** r, int * len, struct vectors * vecs, char * style,
+ 	char * reply, * header;
+ 	unsigned int maxlen = INITIAL_REPLY_LEN;
+ 	int again = 1;
++	struct config *conf;
++	int print_foreign;
++
++	conf = get_multipath_config();
++	print_foreign = conf->print_foreign;
++	put_multipath_config(conf);
+ 
+ 	get_path_layout(vecs->pathvec, 1);
+-	foreign_path_layout();
++	if (print_foreign)
++		foreign_path_layout();
+ 
+ 	reply = MALLOC(maxlen);
+ 
+@@ -63,8 +70,9 @@ show_paths (char ** r, int * len, struct vectors * vecs, char * style,
+ 			c += snprint_path(c, reply + maxlen - c,
+ 					  style, pp, pretty);
+ 
+-		c += snprint_foreign_paths(c, reply + maxlen - c,
+-					   style, pretty);
++		if (print_foreign)
++			c += snprint_foreign_paths(c, reply + maxlen - c,
++						   style, pretty);
+ 
+ 		again = ((c - reply) == (maxlen - 1));
+ 
+@@ -149,9 +157,16 @@ show_maps_topology (char ** r, int * len, struct vectors * vecs)
+ 	char * reply;
+ 	unsigned int maxlen = INITIAL_REPLY_LEN;
+ 	int again = 1;
++	struct config *conf;
++	int print_foreign;
++
++	conf = get_multipath_config();
++	print_foreign = conf->print_foreign;
++	put_multipath_config(conf);
+ 
+ 	get_path_layout(vecs->pathvec, 0);
+-	foreign_path_layout();
++	if (print_foreign)
++		foreign_path_layout();
+ 
+ 	reply = MALLOC(maxlen);
+ 
+@@ -169,7 +184,8 @@ show_maps_topology (char ** r, int * len, struct vectors * vecs)
+ 			c += snprint_multipath_topology(c, reply + maxlen - c,
+ 							mpp, 2);
+ 		}
+-		c += snprint_foreign_topology(c, reply + maxlen - c, 2);
++		if (print_foreign)
++			c += snprint_foreign_topology(c, reply + maxlen - c, 2);
+ 
+ 		again = ((c - reply) == (maxlen - 1));
+ 
+@@ -506,9 +522,16 @@ show_maps (char ** r, int *len, struct vectors * vecs, char * style,
+ 	char * reply;
+ 	unsigned int maxlen = INITIAL_REPLY_LEN;
+ 	int again = 1;
++	struct config *conf;
++	int print_foreign;
++
++	conf = get_multipath_config();
++	print_foreign = conf->print_foreign;
++	put_multipath_config(conf);
+ 
+ 	get_multipath_layout(vecs->mpvec, 1);
+-	foreign_multipath_layout();
++	if (print_foreign)
++		foreign_multipath_layout();
+ 
+ 	reply = MALLOC(maxlen);
+ 
+@@ -531,8 +554,9 @@ show_maps (char ** r, int *len, struct vectors * vecs, char * style,
+ 					       style, mpp, pretty);
+ 
+ 		}
+-		c += snprint_foreign_multipaths(c, reply + maxlen - c,
+-						style, pretty);
++		if (print_foreign)
++			c += snprint_foreign_multipaths(c, reply + maxlen - c,
++							style, pretty);
+ 		again = ((c - reply) == (maxlen - 1));
+ 
+ 		REALLOC_REPLY(reply, again, maxlen);
 -- 
-2.17.1
+2.17.2
