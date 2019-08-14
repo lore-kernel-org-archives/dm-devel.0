@@ -1,17 +1,16 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 03/16] tests: add path grouping policy unit
-	tests.
-Date: Wed, 14 Aug 2019 21:22:17 +0000
-Message-ID: <7840aab31dd06de729f124af98da3498e0256556.camel@suse.com>
+Subject: Re: [PATCH 16/16] multipath: update man pages
+Date: Wed, 14 Aug 2019 21:21:32 +0000
+Message-ID: <d563722667ec1caba7a072b6df632844e64ea690.camel@suse.com>
 References: <1564763622-31752-1-git-send-email-bmarzins@redhat.com>
-	<1564763622-31752-4-git-send-email-bmarzins@redhat.com>
+	<1564763622-31752-17-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1564763622-31752-4-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1564763622-31752-17-git-send-email-bmarzins@redhat.com>
 Content-Language: en-US
-Content-ID: <98A6E2C30FB1524AA4CDDBBBE6000F3B@namprd18.prod.outlook.com>
+Content-ID: <A5462B9F62218F4B999B21B49DE3353D@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,44 +25,41 @@ Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "mkumar@redhat.com" <mkumar@red
 List-Id: dm-devel.ids
 
 On Fri, 2019-08-02 at 11:33 -0500, Benjamin Marzinski wrote:
-> In preparation for changing the path grouping code, add some unit
-> tests
-> to verify that it works correctly. The only test that currently fails
-> (and so it being skipped) is using MULTIBUS when mp->paths is empty.
-> All
-> the other path grouping policies free mp->paths, even if it is empty.
-> one_group() should as well. This will be fixed when the path grouping
-> code is updated.
+> Add documentation for the marginal_pathgroups option and the
+> (un)setmarginal commands.
 > 
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  tests/Makefile   |   2 +-
->  tests/pgpolicy.c | 708
-> +++++++++++++++++++++++++++++++++++++++++++++++
->  2 files changed, 709 insertions(+), 1 deletion(-)
->  create mode 100644 tests/pgpolicy.c
+>  multipath/multipath.conf.5 | 34 ++++++++++++++++++++++++++++++----
+>  multipathd/multipathd.8    | 19 +++++++++++++++++++
+>  2 files changed, 49 insertions(+), 4 deletions(-)
 > 
-> +
-> +static void test_group_by_node_name_3_groups4(void **state)
-> +{
-> +	char *node_name[] = {"a","b","c","a"};
-> +	int prio[] = {3,1,3,1};
-> +	int group0[] = {2};
-> +	int group1[] = {0,3};
-> +	int group2[] = {1};
-> +	int *groups[] = {group0, group1, group2};
-> +	int group_size[] = {1,2,1};
-> +
-> +	set_priority(p4, prio, 4);
-> +	set_tgt_node_name(p4, node_name, 4);
-> +	assert_int_equal(group_by_node_name(&mp4), 0);
-> +	verify_pathgroups(&mp4, p4, groups, group_size, 3);
-> +}
+> --- a/multipathd/multipathd.8
+> +++ b/multipathd/multipathd.8
+> @@ -277,6 +277,25 @@ Remove the persistent reservation key associated
+> with $map from the
+>  \fIreservation_key\fR is set to \fBfile\fR in
+> \fI/etc/multipath.conf\fR.
+>  .
+>  .TP
+> +.B path $path setmarginal
+> +move $path to a marginal pathgroup. The path will remain in the
+> marginal
+> +path group until \fIunsetmarginal\fR is called. This command will
+> only
+> +work if \fImarginal_pathgroups\fR is enabled and there is no Shaky
+> paths
+> +detection method configured (see the multipath.conf man page for
+> details).
 
-Nothing wrong with your code, but this is one example where I would say
-our prio group ordering is counter-intuitive. Does it really make sense
-to order the group of two paths with prio {3, 1} *after* the group with
-just one prio 3 path?
+This is counter-intuitive. It's unclear to me why we need these
+commands at all. By nature of "shaky" paths, it doesn't make a lot of
+sense to make these settings (only) manually. I'd like it better if the
+cli commands somehow hooked into the different "shaky" algorithms. E.g.
+for the san_path_err_ algorithm, setting a path to marginal would mean
+artificially setting its failure count to a value above the configured
+threshold. That way, the manual settings could work togehter with the
+automatic detection methods, and could be used for overriding them
+in special cases.
 
-Regards,
 Martin
