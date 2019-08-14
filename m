@@ -1,18 +1,15 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [PATCH v11 1/4] crypto: essiv - create wrapper
-	template for ESSIV generation
-Date: Thu, 15 Aug 2019 08:15:29 +0300
-Message-ID: <CAKv+Gu_OVUfXW6t+j1RHA4_Uc43o50Sspke2KkVw9djbFDd04g@mail.gmail.com>
-References: <20190814163746.3525-1-ard.biesheuvel@linaro.org>
-	<20190814163746.3525-2-ard.biesheuvel@linaro.org>
-	<20190815023734.GB23782@gondor.apana.org.au>
-	<CAKv+Gu_maif=kZk-HRMx7pP=ths1vuTgcu4kFpzz0tCkO2+DFA@mail.gmail.com>
-	<20190815051320.GA24982@gondor.apana.org.au>
+From: "Schremmer, Steven" <Steve.Schremmer@netapp.com>
+Subject: Re: [PATCH] libmultipath: builtin config for NetApp
+	E-Series
+Date: Wed, 14 Aug 2019 19:43:21 +0000
+Message-ID: <BN8PR06MB5793EA4523DC5D0BBDEB10F98CAD0@BN8PR06MB5793.namprd06.prod.outlook.com>
+References: <1565810083-10744-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190815051320.GA24982@gondor.apana.org.au>
+In-Reply-To: <1565810083-10744-1-git-send-email-bmarzins@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,28 +19,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Eric Biggers <ebiggers@google.com>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 15 Aug 2019 at 08:13, Herbert Xu <herbert@gondor.apana.org.au> wrote:
->
-> On Thu, Aug 15, 2019 at 07:59:34AM +0300, Ard Biesheuvel wrote:
-> >
-> > So how do I ensure that the cipher and shash are actually loaded at
-> > create() time, and that they are still loaded at TFM init time?
->
-> If they're not available at TFM init then you just fail the init
-> and therefore the TFM allocation.  What is the problem?
->
-> IOW the presence of the block cipher and unkeyed hash does not
-> affect the creation of the instance object.
->
+Nak. We would rather not have this in the builtin config at this time.
 
-Right.
+Thanks,
+Steve
 
-So what about checking that the cipher key size matches the shash
-digest size, or that the cipher block size matches the skcipher IV
-size? This all moves to the TFM init function?
+-----Original Message-----
+From: Benjamin Marzinski <bmarzins@redhat.com> 
+Sent: Wednesday, August 14, 2019 2:15 PM
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>; Schremmer, Steven <Steve.Schremmer@netapp.com>
+Subject: [PATCH] libmultipath: builtin config for NetApp E-Series
 
-Are there any existing templates that use this approach?
+Cc: Steve Schremmer <sschremm@netapp.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/hwtable.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c index 96e8b25d..94af153d 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -780,6 +780,14 @@ static struct hwentry default_hw[] = {
+                .pgpolicy      = MULTIBUS,
+                .no_path_retry = NO_PATH_RETRY_QUEUE,
+        },
++       {
++               /* NetApp E-Series */
++               .vendor        = "NVME",
++               .product       = "NetApp E-Series",
++               .pgpolicy      = GROUP_BY_PRIO,
++               .pgfailback    = -FAILBACK_IMMEDIATE,
++               .no_path_retry = 30,
++       },
+        /*
+         * Nexenta
+         *
+--
+2.17.2
