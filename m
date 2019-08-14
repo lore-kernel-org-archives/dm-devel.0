@@ -1,17 +1,17 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 03/16] tests: add path grouping policy unit
-	tests.
-Date: Wed, 14 Aug 2019 21:38:04 +0000
-Message-ID: <439ed044f9e9b2986e32f7c393367c16eb787a4a.camel@suse.com>
+Subject: Re: [PATCH 05/16] libmultipath: fix double free in
+ pgpolicyfn error paths
+Date: Wed, 14 Aug 2019 21:39:52 +0000
+Message-ID: <eac4f53c801150b81a743f2f7218913d67a8cacc.camel@suse.com>
 References: <1564763622-31752-1-git-send-email-bmarzins@redhat.com>
-	<1564763622-31752-4-git-send-email-bmarzins@redhat.com>
+	<1564763622-31752-6-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1564763622-31752-4-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1564763622-31752-6-git-send-email-bmarzins@redhat.com>
 Content-Language: en-US
-Content-ID: <FEB16C9133CCDB41BA61CAD02F10DB68@namprd18.prod.outlook.com>
+Content-ID: <77904F945B953F479426852A92D1F0FE@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,14 +26,15 @@ Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "mkumar@redhat.com" <mkumar@red
 List-Id: dm-devel.ids
 
 On Fri, 2019-08-02 at 11:33 -0500, Benjamin Marzinski wrote:
-> In preparation for changing the path grouping code, add some unit
-> tests
-> to verify that it works correctly. The only test that currently fails
-> (and so it being skipped) is using MULTIBUS when mp->paths is empty.
-> All
-> the other path grouping policies free mp->paths, even if it is empty.
-> one_group() should as well. This will be fixed when the path grouping
-> code is updated.
+> In the pgpolicy functions, if an error is encountered after
+> alloc_pathgroup() is called, but before the path group is added to a
+> multipath device with add_pathgroup(), the pathgroup needs to be
+> cleaned
+> up by calling free_pathgroup(). However, after the pathgroup has been
+> added to the multipath device, calling free_pgvec() will clean it up.
+> In
+> this case, if free_pathgroup() is called first, the recently added
+> pathgroup will be freed twice.
 > 
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
