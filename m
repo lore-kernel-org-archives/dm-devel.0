@@ -1,57 +1,96 @@
-From: Jaskaran Singh Khurana <jaskarankhurana@linux.microsoft.com>
-Subject: Re: [RFC PATCH v5 1/1] Add dm verity root hash pkcs7 sig
- validation.
-Date: Tue, 13 Aug 2019 11:49:39 -0700 (PDT)
-Message-ID: <alpine.LRH.2.21.1908131147390.95186@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
-References: <20190619191048.20365-1-jaskarankhurana@linux.microsoft.com> <20190619191048.20365-2-jaskarankhurana@linux.microsoft.com> <20190625182004.GA32075@redhat.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH] direct-io: use GFP_NOIO to avoid deadlock
+Date: Wed, 14 Aug 2019 20:43:10 +1000
+Message-ID: <20190814104310.GN6129@dread.disaster.area>
+References: <alpine.LRH.2.02.1908080540240.15519@file01.intranet.prod.int.rdu2.redhat.com>
+ <20190809013403.GY7777@dread.disaster.area>
+ <alpine.LRH.2.02.1908090725290.31061@file01.intranet.prod.int.rdu2.redhat.com>
+ <20190809215733.GZ7777@dread.disaster.area>
+ <alpine.LRH.2.02.1908131231010.6852@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII; format=flowed
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190625182004.GA32075@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1908131231010.6852@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: gmazyland@gmail.com, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-fsdevel@vger.kernel.org, scottsh@microsoft.com, ebiggers@google.com, jmorris@namei.org, dm-devel@redhat.com, mpatocka@redhat.com, agk@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, "Darrick J. Wong" <darrick.wong@oracle.com>, Mike Snitzer <msnitzer@redhat.com>, junxiao.bi@oracle.com, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, honglei.wang@oracle.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org
 List-Id: dm-devel.ids
 
+On Tue, Aug 13, 2019 at 12:35:49PM -0400, Mikulas Patocka wrote:
+> 
+> 
+> On Sat, 10 Aug 2019, Dave Chinner wrote:
+> 
+> > No, you misunderstand. I'm talking about blocking kswapd being
+> > wrong.  i.e. Blocking kswapd in shrinkers causes problems
+> > because th ememory reclaim code does not expect kswapd to be
+> > arbitrarily delayed by waiting on IO. We've had this problem with
+> > the XFS inode cache shrinker for years, and there are many reports
+> > of extremely long reclaim latencies for both direct and kswapd
+> > reclaim that result from kswapd not making progress while waiting
+> > in shrinkers for IO to complete.
+> > 
+> > The work I'm currently doing to fix this XFS problem can be found
+> > here:
+> > 
+> > https://lore.kernel.org/linux-fsdevel/20190801021752.4986-1-david@fromorbit.com/
+> > 
+> > 
+> > i.e. the point I'm making is that waiting for IO in kswapd reclaim
+> > context is considered harmful - kswapd context shrinker reclaim
+> > should be as non-blocking as possible, and any back-off to wait for
+> > IO to complete should be done by the high level reclaim core once
+> > it's completed an entire reclaim scan cycle of everything....
+> > 
+> > What follows from that, and is pertinent for in this situation, is
+> > that if you don't block kswapd, then other reclaim contexts are not
+> > going to get stuck waiting for it regardless of the reclaim context
+> > they use.
+> > 
+> > Cheers,
+> > 
+> > Dave.
+> 
+> So, what do you think the dm-bufio shrinker should do?
 
-Hello Mike,
-On Tue, 25 Jun 2019, Mike Snitzer wrote:
+I'm not familiar with the constraints the code operates under, so
+I can't guarantee that I have an answer for you... :/
 
-> On Wed, Jun 19 2019 at  3:10pm -0400,
-> Jaskaran Khurana <jaskarankhurana@linux.microsoft.com> wrote:
->
->> The verification is to support cases where the roothash is not secured by
->> Trusted Boot, UEFI Secureboot or similar technologies.
->> One of the use cases for this is for dm-verity volumes mounted after boot,
->> the root hash provided during the creation of the dm-verity volume has to
->> be secure and thus in-kernel validation implemented here will be used
->> before we trust the root hash and allow the block device to be created.
->>
->> The signature being provided for verification must verify the root hash and
->> must be trusted by the builtin keyring for verification to succeed.
->>
->> The hash is added as a key of type "user" and the description is passed to
->> the kernel so it can look it up and use it for verification.
->>
->> Kernel commandline parameter will indicate whether to check (only if
->> specified) or force (for all dm verity volumes) roothash signature
->> verification.
->>
->> Kernel commandline: dm_verity.verify_sig=1 or 2 for check/force root hash
->> signature validation respectively.
->>
->> Signed-off-by: Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>
->
-> Milan and/or others: could you please provide review and if you're OK
-> with this patch respond accordingly?
->
+> Currently it tries to free buffers on the clean list and if there are not 
+> enough buffers on the clean list, it goes into the dirty list - it writes 
+> the buffers back and then frees them.
+> 
+> What should it do? Should it just start writeback of the dirty list 
+> without waiting for it? What should it do if all the buffers are under 
+> writeback?
 
-The v7 of this patch was Reviewed and Tested by Milan Broz. Could you tell 
-me when this will be merged/next steps, if required I can post the patches 
-again.
+For kswapd, it should do what it can without blocking. e.g. kicking
+an async writer thread rather than submitting the IO itself. That's
+what I changes XFS to do.
 
-> Thanks,
-> Mike
->
-Regards,
-Jaskaran
+And if you look at the patchset in the above link, it also
+introduced a mechanism for shrinkers to communicate back to the high
+level reclaim code that kswapd needs to back off
+(reclaim_state->need_backoff).
+
+With these mechanism, the shrinker can start IO without blocking
+kswapd on congested request queues and tell memory reclaim to wait
+before calling this shrinker again. This allows kswapd to aggregate
+all the waits that shrinkers and page reclaim require to all
+progress to be made into a single backoff event. That means kswapd
+does other scanning work while background writeback goes on, and
+once everythign is scanned it does a single wait for everything that
+needs time to make progress...
+
+I think that should also work for the dm-bufio shrinker, and the the
+direct reclaim backoff parts of the patchset should work for
+non-blocking direct reclaim scanning as well, like it now does for
+XFS.
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
