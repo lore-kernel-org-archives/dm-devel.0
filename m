@@ -1,16 +1,16 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 1/2] multipath.conf: add "enable_foreign"
-	parameter
-Date: Fri, 16 Aug 2019 15:12:18 -0500
-Message-ID: <20190816201218.GF25414@octiron.msp.redhat.com>
-References: <20190815144638.5664-1-martin.wilck@suse.com>
-	<20190815144638.5664-2-martin.wilck@suse.com>
+Subject: Re: [PATCH 14/16] libmutipath: deprecate delay_*_checks
+Date: Fri, 16 Aug 2019 15:47:34 -0500
+Message-ID: <20190816204734.GG25414@octiron.msp.redhat.com>
+References: <1564763622-31752-1-git-send-email-bmarzins@redhat.com>
+	<1564763622-31752-15-git-send-email-bmarzins@redhat.com>
+	<af2c96e14df9aad64dbeded65e6e0c02c9ff45cf.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20190815144638.5664-2-martin.wilck@suse.com>
+In-Reply-To: <af2c96e14df9aad64dbeded65e6e0c02c9ff45cf.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,242 +21,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Martin Wilck <Martin.Wilck@suse.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "mkumar@redhat.com" <mkumar@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Aug 15, 2019 at 02:46:54PM +0000, Martin Wilck wrote:
-> From: Martin Wilck <mwilck@suse.com>
+On Wed, Aug 14, 2019 at 09:20:46PM +0000, Martin Wilck wrote:
+> On Fri, 2019-08-02 at 11:33 -0500, Benjamin Marzinski wrote:
+> > The delay_checks shaky paths detection method works the same way as
+> > the
+> > san_path_err method, but not as well, with less configurability, and
+> > with the code spread all over check_path(). The only real difference
+> > is
+> > that marks the path as marginal for a certain number of path checks
+> > instead of for a specific time. This patch deprecates the
+> > delay_checks
+> > method and maps it to the the san_path_err method.
+> > 
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  libmultipath/configure.c   | 17 +----------
+> >  libmultipath/propsel.c     | 62 +++++++++++++++++++++++++++++-------
 > 
-> This new configuration parameter can be used to selectively
-> enable foreign libraries. The value is a regular expression,
-> against which foreign library names such as "nvme" are matched.
-> By setting this to a value that matches no foreign library
-> (e.g. "^$" or "NONE"), foreign code is completely disabled.
-> By default, all available foreign libraries are loaded.
+> I suppose that quite a few users are working with "delay_*_checks" in
+> production. If we remove the option, we should at least clearly
+> document how to map existing delay_*_checks parameters to san_path_err*
+> parameters.
+
+Didn't I? My patch does include changes to the man page that tells how
+it gets remapped.
+ 
+> IIUC, to (roughly) imitate the settings
 > 
+>   delay_watch_checks = C
+>   delay_wait_checks = W
+> 
+> I need to set
+> 
+>   san_path_err_threshold = 2
+>   san_path_err_forget_rate = C
+>   san_path_err_recovery_time = W
+> 
+> Correct? Or can it be done better?
 
-This will stop the foreign libraries from even claiming devices. Won't
-this mean that pathinfo() will now treat these devices as multipathable
-paths, since is_claimed_by_foreign() will return false? While I do see
-the value in disabling foreign libraries completely, that's not the
-intent of my patch.  The goal of my patch is simply to not print the
-devices have been claimed by the foreign libraries.
+Well, the code uses
 
+san_path_err_threshold = 1 (since checks for a number of errors greater
+			    than this threshold)
+san_path_err_forget_rate = C
+san_path_err_recovery_time = W * polling_interval
+
+
+> (It's not exactly the same, as delay_watch_checks starts counting when
+> a path is reinstated after a failure, while san_path_err_threshold
+> counts good->bad transitions, and the threshold would be reached if a
+> path fails more often than every C ticks _on average_).
+
+> If the above is fine, we might as well map these settings in the code
+> directly. IOW, instead of ignoring "delay_*_checks" altogether, we
+> should ignore it only if either san_path_* or marginal_path_*
+> parameters are set; Otherwise, we could simply map the delay_*_checks
+> parameters as shown above.
+
+Err.. This patch does do the remapping in code (in propsel.c) just as
+you suggest..  right?
+
+I'm confused here.
 -Ben
 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/config.h   |  1 +
->  libmultipath/defaults.h |  2 ++
->  libmultipath/dict.c     |  6 +++++
->  libmultipath/foreign.c  | 53 +++++++++++++++++++++++++++++++++++++----
->  libmultipath/foreign.h  |  3 ++-
->  multipath/main.c        |  2 +-
->  multipathd/main.c       |  2 +-
->  7 files changed, 62 insertions(+), 7 deletions(-)
+> That would be a bit more user friendly in terms of backwards
+> compatibility.
 > 
-> diff --git a/libmultipath/config.h b/libmultipath/config.h
-> index ff2b4e86..36e99196 100644
-> --- a/libmultipath/config.h
-> +++ b/libmultipath/config.h
-> @@ -224,6 +224,7 @@ struct config {
->  	vector elist_device;
->  	vector elist_property;
->  	vector elist_protocol;
-> +	char *enable_foreign;
->  };
->  
->  extern struct udev * udev;
-> diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-> index decc9335..4dfe007c 100644
-> --- a/libmultipath/defaults.h
-> +++ b/libmultipath/defaults.h
-> @@ -48,6 +48,8 @@
->  #define DEFAULT_FIND_MULTIPATHS_TIMEOUT -10
->  #define DEFAULT_UNKNOWN_FIND_MULTIPATHS_TIMEOUT 1
->  #define DEFAULT_ALL_TG_PT ALL_TG_PT_OFF
-> +/* Enable all foreign libraries by default */
-> +#define DEFAULT_ENABLE_FOREIGN ""
->  
->  #define CHECKINT_UNDEF		(~0U)
->  #define DEFAULT_CHECKINT	5
-> diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-> index c6eba0f6..9f282c3f 100644
-> --- a/libmultipath/dict.c
-> +++ b/libmultipath/dict.c
-> @@ -610,6 +610,10 @@ declare_def_handler(find_multipaths_timeout, set_int)
->  declare_def_snprint_defint(find_multipaths_timeout, print_int,
->  			   DEFAULT_FIND_MULTIPATHS_TIMEOUT)
->  
-> +declare_def_handler(enable_foreign, set_str)
-> +declare_def_snprint_defstr(enable_foreign, print_str,
-> +			   DEFAULT_ENABLE_FOREIGN)
-> +
->  static int
->  def_config_dir_handler(struct config *conf, vector strvec)
->  {
-> @@ -1710,6 +1714,8 @@ init_keywords(vector keywords)
->  	install_keyword("find_multipaths_timeout",
->  			&def_find_multipaths_timeout_handler,
->  			&snprint_def_find_multipaths_timeout);
-> +	install_keyword("enable_foreign", &def_enable_foreign_handler,
-> +			&snprint_def_enable_foreign);
->  	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
->  	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
->  	__deprecated install_keyword("default_uid_attribute", &def_uid_attribute_handler, NULL);
-> diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
-> index 48e8d247..4b34e141 100644
-> --- a/libmultipath/foreign.c
-> +++ b/libmultipath/foreign.c
-> @@ -16,6 +16,7 @@
->  */
->  
->  #include <sys/sysmacros.h>
-> +#include <sys/types.h>
->  #include <stdio.h>
->  #include <string.h>
->  #include <stdlib.h>
-> @@ -25,6 +26,7 @@
->  #include <fnmatch.h>
->  #include <dlfcn.h>
->  #include <libudev.h>
-> +#include <regex.h>
->  #include "vector.h"
->  #include "debug.h"
->  #include "util.h"
-> @@ -111,17 +113,45 @@ static int select_foreign_libs(const struct dirent *di)
->  	return fnmatch(foreign_pattern, di->d_name, FNM_FILE_NAME) == 0;
->  }
->  
-> -static int _init_foreign(const char *multipath_dir)
-> +static void free_pre(void *arg)
-> +{
-> +	regex_t **pre = arg;
-> +
-> +	if (pre != NULL && *pre != NULL) {
-> +		regfree(*pre);
-> +		free(*pre);
-> +		*pre = NULL;
-> +	}
-> +}
-> +
-> +static int _init_foreign(const char *multipath_dir, const char *enable)
->  {
->  	char pathbuf[PATH_MAX];
->  	struct dirent **di;
->  	struct scandir_result sr;
->  	int r, i;
-> +	regex_t *enable_re = NULL;
->  
->  	foreigns = vector_alloc();
->  	if (foreigns == NULL)
->  		return -ENOMEM;
->  
-> +	pthread_cleanup_push(free_pre, &enable_re);
-> +	enable_re = calloc(1, sizeof(*enable_re));
-> +	if (enable_re) {
-> +		const char *str = enable ? enable : DEFAULT_ENABLE_FOREIGN;
-> +
-> +		r = regcomp(enable_re, str, REG_EXTENDED|REG_NOSUB);
-> +		if (r != 0) {
-> +			char errbuf[64];
-> +
-> +			(void)regerror(r, enable_re, errbuf, sizeof(errbuf));
-> +			condlog (2, "%s: error compiling enable_foreign = \"%s\": \"%s\"",
-> +				 __func__, str, errbuf);
-> +			free_pre(&enable_re);
-> +		}
-> +	}
-> +
->  	r = scandir(multipath_dir, &di, select_foreign_libs, alphasort);
->  
->  	if (r == 0) {
-> @@ -163,6 +193,20 @@ static int _init_foreign(const char *multipath_dir)
->  		memset(fgn, 0, sizeof(*fgn));
->  		strlcpy((char*)fgn + offsetof(struct foreign, name), c, namesz);
->  
-> +		if (enable_re != NULL) {
-> +			int ret = regexec(enable_re, fgn->name, 0, NULL, 0);
-> +
-> +			if (ret == REG_NOMATCH) {
-> +				condlog(3, "%s: foreign library \"%s\" is not enabled",
-> +					__func__, fgn->name);
-> +				free(fgn);
-> +				continue;
-> +			} else if (ret != 0)
-> +				/* assume it matches */
-> +				condlog(2, "%s: error %d in regexec() for %s",
-> +					__func__, ret, fgn->name);
-> +		}
-> +
->  		snprintf(pathbuf, sizeof(pathbuf), "%s/%s", multipath_dir, fn);
->  		fgn->handle = dlopen(pathbuf, RTLD_NOW|RTLD_LOCAL);
->  		msg = dlerror();
-> @@ -205,11 +249,12 @@ static int _init_foreign(const char *multipath_dir)
->  	dl_err:
->  		free_foreign(fgn);
->  	}
-> -	pthread_cleanup_pop(1);
-> +	pthread_cleanup_pop(1); /* free_scandir_result */
-> +	pthread_cleanup_pop(1); /* free_pre */
->  	return 0;
->  }
->  
-> -int init_foreign(const char *multipath_dir)
-> +int init_foreign(const char *multipath_dir, const char *enable)
->  {
->  	int ret;
->  
-> @@ -222,7 +267,7 @@ int init_foreign(const char *multipath_dir)
->  	}
->  
->  	pthread_cleanup_push(unlock_foreigns, NULL);
-> -	ret = _init_foreign(multipath_dir);
-> +	ret = _init_foreign(multipath_dir, enable);
->  	pthread_cleanup_pop(1);
->  
->  	return ret;
-> diff --git a/libmultipath/foreign.h b/libmultipath/foreign.h
-> index 697f12f8..acd33601 100644
-> --- a/libmultipath/foreign.h
-> +++ b/libmultipath/foreign.h
-> @@ -195,9 +195,10 @@ struct foreign {
->   * init_foreign(dir)
->   * load and initialize foreign multipath libraries in dir (libforeign-*.so).
->   * @param dir: directory to search
-> + * @param enable: regex to match foreign library name ("*" above) against
->   * @returns: 0 on success, negative value on failure.
->   */
-> -int init_foreign(const char *multipath_dir);
-> +int init_foreign(const char *multipath_dir, const char *enable);
->  
->  /**
->   * cleanup_foreign(dir)
-> diff --git a/multipath/main.c b/multipath/main.c
-> index 96a11468..4f4d8e89 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -1050,7 +1050,7 @@ main (int argc, char *argv[])
->  		goto out;
->  	}
->  	/* Failing here is non-fatal */
-> -	init_foreign(conf->multipath_dir);
-> +	init_foreign(conf->multipath_dir, conf->enable_foreign);
->  	if (cmd == CMD_USABLE_PATHS) {
->  		r = check_usable_paths(conf, dev, dev_type) ?
->  			RTVL_FAIL : RTVL_OK;
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 7a5cd115..b5f08617 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -2848,7 +2848,7 @@ child (void * param)
->  	}
->  	/* Failing this is non-fatal */
->  
-> -	init_foreign(conf->multipath_dir);
-> +	init_foreign(conf->multipath_dir, conf->enable_foreign);
->  
->  	if (poll_dmevents)
->  		poll_dmevents = dmevent_poll_supported();
-> -- 
-> 2.22.0
+> Regards
+> Martin
+> 
