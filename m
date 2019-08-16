@@ -1,14 +1,21 @@
 From: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
-Subject: [PATCH v2 2/2] mdadm: Introduce new array state 'broken'
-	for raid0/linear
-Date: Fri, 16 Aug 2019 10:41:00 -0300
-Message-ID: <20190816134059.29751-2-gpiccoli@canonical.com>
-References: <20190816134059.29751-1-gpiccoli@canonical.com>
+Subject: Re: [PATCH] md/raid0: Fail BIOs if their underlying
+ block device is gone
+Date: Fri, 16 Aug 2019 10:45:48 -0300
+Message-ID: <47eea35a-c932-66e6-159e-37936b8e60f6@canonical.com>
+References: <20190729193359.11040-1-gpiccoli@canonical.com>
+	<87zhkwl6ya.fsf@notabene.neil.brown.name>
+	<6400083b-3cf3-cbc6-650a-c3ae6629b14c@canonical.com>
+	<CAPhsuW69YrpHqBCOob2b5wzzWS9FM087sfe3iC0odX8kZWRwmA@mail.gmail.com>
+	<CAPhsuW5zB=Kik4rq9YA-xBer7Z-h-23QV4WSCWe-jvhFgGc0Cw@mail.gmail.com>
+	<9674ca8f-4325-3023-8a1d-39782103f55d@canonical.com>
+	<72C166DF-3984-4330-8C60-BBDA07358771@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190816134059.29751-1-gpiccoli@canonical.com>
+In-Reply-To: <72C166DF-3984-4330-8C60-BBDA07358771@fb.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,170 +25,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-raid@vger.kernel.org
-Cc: Song Liu <songliubraving@fb.com>, gpiccoli@canonical.com, NeilBrown <neilb@suse.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, jay.vosburgh@canonical.com
+To: Song Liu <songliubraving@fb.com>
+Cc: Neil F Brown <nfbrown@suse.com>, Song Liu <liu.song.a23@gmail.com>, NeilBrown <neilb@suse.com>, linux-raid <linux-raid@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Jay Vosburgh <jay.vosburgh@canonical.com>
 List-Id: dm-devel.ids
 
-Currently if a md raid0/linear array gets one or more members removed while
-being mounted, kernel keeps showing state 'clean' in the 'array_state'
-sysfs attribute. Despite udev signaling the member device is gone, 'mdadm'
-cannot issue the STOP_ARRAY ioctl successfully, given the array is mounted.
+On 01/08/2019 19:43, Song Liu wrote:
+> 
+> [...]
+>> Hi Song, thanks for the feedback! After changing the patch and testing a
+>> bit, it behaves exactly as you said, we got either valid data read from
+>> the healthy devices or -EIO for the data tentatively read from the
+>> failed/missing array members.
+> 
+> Thanks for testing this out. 
+> 
+>>
+>> So, I'll resubmit with that change. Also, I've noticed clearing the
+>> BROKEN flag seem unnecessary, if user stops the array in order to fix
+>> the missing member, it'll require a re-assembly and the array is gonna
+>> work again.
+>>
+>> Do you / Neil considers this fix relevant to md/linear too? If so, I can
+>> also include that in the V2.
+> 
+> Yes, please also include fix for md/linear. 
+> 
+> Song
+> 
 
-Nothing else hints that something is wrong (except that the removed devices
-don't show properly in the output of mdadm 'detail' command). There is no
-other property to be checked, and if user is not performing reads/writes
-to the array, even kernel log is quiet and doesn't give a clue about the
-missing member.
+V2 just sent:
+lore.kernel.org/linux-block/20190816133441.29350-1-gpiccoli@canonical.com
 
-This patch is the mdadm counterpart of kernel new array state 'broken'.
-The 'broken' state mimics the state 'clean' in every aspect, being useful
-only to distinguish if an array has some member missing. All necessary
-paths in mdadm were changed to deal with 'broken' state, and in case the
-tool runs in a kernel that is not updated, it'll work normally, i.e., it
-doesn't require the 'broken' state in order to work.
-Also, this patch changes the way the array state is showed in the 'detail'
-command (for raid0/linear only) - now it takes the 'array_state' sysfs
-attribute into account instead of only rely in the MD_SB_CLEAN flag.
-
-Cc: NeilBrown <neilb@suse.com>
-Cc: Song Liu <songliubraving@fb.com>
-Signed-off-by: Guilherme G. Piccoli <gpiccoli@canonical.com>
----
-
-v1 -> v2:
-* Added handling for md/linear 'broken' state.
+Thanks,
 
 
- Detail.c  | 17 +++++++++++++++--
- Monitor.c |  9 +++++++--
- maps.c    |  1 +
- mdadm.h   |  1 +
- mdmon.h   |  2 +-
- monitor.c |  4 ++--
- 6 files changed, 27 insertions(+), 7 deletions(-)
-
-diff --git a/Detail.c b/Detail.c
-index ad60434..cc7e9f1 100644
---- a/Detail.c
-+++ b/Detail.c
-@@ -81,6 +81,7 @@ int Detail(char *dev, struct context *c)
- 	int external;
- 	int inactive;
- 	int is_container = 0;
-+	char arrayst[12] = { 0 }; /* no state is >10 chars currently */
- 
- 	if (fd < 0) {
- 		pr_err("cannot open %s: %s\n",
-@@ -485,9 +486,21 @@ int Detail(char *dev, struct context *c)
- 			else
- 				st = ", degraded";
- 
-+			if (array.state & (1 << MD_SB_CLEAN)) {
-+				if ((array.level == 0) ||
-+				    (array.level == LEVEL_LINEAR))
-+					strncpy(arrayst,
-+						map_num(sysfs_array_states,
-+							sra->array_state),
-+						sizeof(arrayst)-1);
-+				else
-+					strncpy(arrayst, "clean",
-+						sizeof(arrayst)-1);
-+			} else
-+				strncpy(arrayst, "active", sizeof(arrayst)-1);
-+
- 			printf("             State : %s%s%s%s%s%s \n",
--			       (array.state & (1 << MD_SB_CLEAN)) ?
--			       "clean" : "active", st,
-+			       arrayst, st,
- 			       (!e || (e->percent < 0 &&
- 				       e->percent != RESYNC_PENDING &&
- 				       e->percent != RESYNC_DELAYED)) ?
-diff --git a/Monitor.c b/Monitor.c
-index 036103f..9fd5406 100644
---- a/Monitor.c
-+++ b/Monitor.c
-@@ -1055,8 +1055,12 @@ int Wait(char *dev)
- 	}
- }
- 
-+/* The state "broken" is used only for RAID0/LINEAR - it's the same as
-+ * "clean", but used in case the array has one or more members missing.
-+ */
-+#define CLEAN_STATES_LAST_POS	5
- static char *clean_states[] = {
--	"clear", "inactive", "readonly", "read-auto", "clean", NULL };
-+	"clear", "inactive", "readonly", "read-auto", "clean", "broken", NULL };
- 
- int WaitClean(char *dev, int verbose)
- {
-@@ -1116,7 +1120,8 @@ int WaitClean(char *dev, int verbose)
- 			rv = read(state_fd, buf, sizeof(buf));
- 			if (rv < 0)
- 				break;
--			if (sysfs_match_word(buf, clean_states) <= 4)
-+			if (sysfs_match_word(buf, clean_states)
-+			    <= CLEAN_STATES_LAST_POS)
- 				break;
- 			rv = sysfs_wait(state_fd, &delay);
- 			if (rv < 0 && errno != EINTR)
-diff --git a/maps.c b/maps.c
-index 02a0474..49b7f2c 100644
---- a/maps.c
-+++ b/maps.c
-@@ -150,6 +150,7 @@ mapping_t sysfs_array_states[] = {
- 	{ "read-auto", ARRAY_READ_AUTO },
- 	{ "clean", ARRAY_CLEAN },
- 	{ "write-pending", ARRAY_WRITE_PENDING },
-+	{ "broken", ARRAY_BROKEN },
- 	{ NULL, ARRAY_UNKNOWN_STATE }
- };
- 
-diff --git a/mdadm.h b/mdadm.h
-index 43b07d5..c88ceab 100644
---- a/mdadm.h
-+++ b/mdadm.h
-@@ -373,6 +373,7 @@ struct mdinfo {
- 		ARRAY_ACTIVE,
- 		ARRAY_WRITE_PENDING,
- 		ARRAY_ACTIVE_IDLE,
-+		ARRAY_BROKEN,
- 		ARRAY_UNKNOWN_STATE,
- 	} array_state;
- 	struct md_bb bb;
-diff --git a/mdmon.h b/mdmon.h
-index 818367c..b3d72ac 100644
---- a/mdmon.h
-+++ b/mdmon.h
-@@ -21,7 +21,7 @@
- extern const char Name[];
- 
- enum array_state { clear, inactive, suspended, readonly, read_auto,
--		   clean, active, write_pending, active_idle, bad_word};
-+		   clean, active, write_pending, active_idle, broken, bad_word};
- 
- enum sync_action { idle, reshape, resync, recover, check, repair, bad_action };
- 
-diff --git a/monitor.c b/monitor.c
-index 81537ed..e0d3be6 100644
---- a/monitor.c
-+++ b/monitor.c
-@@ -26,7 +26,7 @@
- 
- static char *array_states[] = {
- 	"clear", "inactive", "suspended", "readonly", "read-auto",
--	"clean", "active", "write-pending", "active-idle", NULL };
-+	"clean", "active", "write-pending", "active-idle", "broken", NULL };
- static char *sync_actions[] = {
- 	"idle", "reshape", "resync", "recover", "check", "repair", NULL
- };
-@@ -476,7 +476,7 @@ static int read_and_act(struct active_array *a, fd_set *fds)
- 		a->next_state = clean;
- 		ret |= ARRAY_DIRTY;
- 	}
--	if (a->curr_state == clean) {
-+	if ((a->curr_state == clean) || (a->curr_state == broken)) {
- 		a->container->ss->set_array_state(a, 1);
- 	}
- 	if (a->curr_state == active ||
--- 
-2.22.0
+Guilherme
