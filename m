@@ -1,17 +1,11 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH v12 0/4] crypto: switch to crypto API for
-	ESSIV generation
-Date: Fri, 16 Aug 2019 10:26:20 +0200
-Message-ID: <d509ce52-1ae1-f785-fe5a-7d5a0e2bc8d0@gmail.com>
-References: <20190815192858.28125-1-ard.biesheuvel@linaro.org>
-	<1463bca3-77dc-42be-7624-e8eaf5cfbf32@gmail.com>
-	<CAKv+Gu9CtMMAjtjfR=uuB-+x0Lhy8gnme2HhExckW+eVZ8B_Ow@mail.gmail.com>
+From: Bryan Gurney <bgurney@redhat.com>
+Subject: [PATCH] dm dust: use dust blksz for badblocklist index
+Date: Fri, 16 Aug 2019 10:09:53 -0400
+Message-ID: <1565964593-13195-1-git-send-email-bgurney@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAKv+Gu9CtMMAjtjfR=uuB-+x0Lhy8gnme2HhExckW+eVZ8B_Ow@mail.gmail.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,42 +15,87 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>
+To: dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com
+Cc: Bryan Gurney <bgurney@redhat.com>
 List-Id: dm-devel.ids
 
-On 16/08/2019 10:18, Ard Biesheuvel wrote:
-> On Fri, 16 Aug 2019 at 10:29, Milan Broz <gmazyland@gmail.com> wrote:
->>
->> Hi Ard,
->>
->> On 15/08/2019 21:28, Ard Biesheuvel wrote:
->>> Changes since v10:
->>> - Drop patches against fscrypt and dm-crypt - these will be routed via the
->>>   respective maintainer trees during the next cycle
->>
->> I tested the previous dm-crypt patches (I also try to keep them in my kernel.org tree),
->> it works and looks fine to me (and I like the final cleanup :)
->>
->> Once all maintainers are happy with the current state, I think it should go to
->> the next release (5.4; IMO both ESSIV API and dm-crypt changes).
->> Maybe you could keep sending dm-crypt patches in the end of the series (to help testing it)?
->>
-> 
-> OK. But we'll need to coordinate a bit so that the first patch (the
-> one that introduces the template) is available in both branches,
-> otherwise ESSIV will be broken in the dm branch until it hits another
-> branch (-next or mainline) that also contains cryptodev.
+Change the "frontend" dust_remove_block, dust_add_block, and
+dust_query_block functions to store the "dust block number", instead
+of the sector number corresponding to the "dust block number"
 
-Yes, I know. I'll ask Mike what is his preference here...
-For now, it should appear at least in the cryptodev tree :)
+For the "backend" functions dust_map_read and dust_map_write,
+right-shift by sect_per_block_shift.  This fixes the inability
+to emulate failure beyond the first sector of each "dust block",
+for devices with a "dust block size" larger than 512 bytes.
 
-...
+Signed-off-by: Bryan Gurney <bgurney@redhat.com>
+---
+ drivers/md/dm-dust.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
+index 845f376a72d9..8288887b7f94 100644
+--- a/drivers/md/dm-dust.c
++++ b/drivers/md/dm-dust.c
+@@ -25,6 +25,7 @@ struct dust_device {
+ 	unsigned long long badblock_count;
+ 	spinlock_t dust_lock;
+ 	unsigned int blksz;
++	int sect_per_block_shift;
+ 	unsigned int sect_per_block;
+ 	sector_t start;
+ 	bool fail_read_on_bb:1;
+@@ -79,7 +80,7 @@ static int dust_remove_block(struct dust_device *dd, unsigned long long block)
+ 	unsigned long flags;
  
-> Any idea about the status of the EBOIV patch?
-
-It is in the queue for 5.4 (should be in linux-next already), I guess 5.4 target is ok here.
-
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-5.4
-
-Milan
+ 	spin_lock_irqsave(&dd->dust_lock, flags);
+-	bblock = dust_rb_search(&dd->badblocklist, block * dd->sect_per_block);
++	bblock = dust_rb_search(&dd->badblocklist, block);
+ 
+ 	if (bblock == NULL) {
+ 		if (!dd->quiet_mode) {
+@@ -113,7 +114,7 @@ static int dust_add_block(struct dust_device *dd, unsigned long long block)
+ 	}
+ 
+ 	spin_lock_irqsave(&dd->dust_lock, flags);
+-	bblock->bb = block * dd->sect_per_block;
++	bblock->bb = block;
+ 	if (!dust_rb_insert(&dd->badblocklist, bblock)) {
+ 		if (!dd->quiet_mode) {
+ 			DMERR("%s: block %llu already in badblocklist",
+@@ -138,7 +139,7 @@ static int dust_query_block(struct dust_device *dd, unsigned long long block)
+ 	unsigned long flags;
+ 
+ 	spin_lock_irqsave(&dd->dust_lock, flags);
+-	bblock = dust_rb_search(&dd->badblocklist, block * dd->sect_per_block);
++	bblock = dust_rb_search(&dd->badblocklist, block);
+ 	if (bblock != NULL)
+ 		DMINFO("%s: block %llu found in badblocklist", __func__, block);
+ 	else
+@@ -165,6 +166,7 @@ static int dust_map_read(struct dust_device *dd, sector_t thisblock,
+ 	int ret = DM_MAPIO_REMAPPED;
+ 
+ 	if (fail_read_on_bb) {
++		thisblock >>= dd->sect_per_block_shift;
+ 		spin_lock_irqsave(&dd->dust_lock, flags);
+ 		ret = __dust_map_read(dd, thisblock);
+ 		spin_unlock_irqrestore(&dd->dust_lock, flags);
+@@ -195,6 +197,7 @@ static int dust_map_write(struct dust_device *dd, sector_t thisblock,
+ 	unsigned long flags;
+ 
+ 	if (fail_read_on_bb) {
++		thisblock >>= dd->sect_per_block_shift;
+ 		spin_lock_irqsave(&dd->dust_lock, flags);
+ 		__dust_map_write(dd, thisblock);
+ 		spin_unlock_irqrestore(&dd->dust_lock, flags);
+@@ -331,6 +334,8 @@ static int dust_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	dd->blksz = blksz;
+ 	dd->start = tmp;
+ 
++	dd->sect_per_block_shift = __ffs(sect_per_block);
++
+ 	/*
+ 	 * Whether to fail a read on a "bad" block.
+ 	 * Defaults to false; enabled later by message.
+-- 
+2.21.0
