@@ -1,12 +1,14 @@
 From: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
-Subject: [PATCH v2 1/2] md raid0/linear: Introduce new array
-	state 'broken'
-Date: Fri, 16 Aug 2019 10:40:58 -0300
-Message-ID: <20190816134059.29751-1-gpiccoli@canonical.com>
+Subject: [PATCH v2 2/2] mdadm: Introduce new array state 'broken'
+	for raid0/linear
+Date: Fri, 16 Aug 2019 10:41:00 -0300
+Message-ID: <20190816134059.29751-2-gpiccoli@canonical.com>
+References: <20190816134059.29751-1-gpiccoli@canonical.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190816134059.29751-1-gpiccoli@canonical.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,227 +22,166 @@ To: linux-raid@vger.kernel.org
 Cc: Song Liu <songliubraving@fb.com>, gpiccoli@canonical.com, NeilBrown <neilb@suse.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, jay.vosburgh@canonical.com
 List-Id: dm-devel.ids
 
-Currently if md raid0/linear array gets one or more members removed while
+Currently if a md raid0/linear array gets one or more members removed while
 being mounted, kernel keeps showing state 'clean' in the 'array_state'
 sysfs attribute. Despite udev signaling the member device is gone, 'mdadm'
 cannot issue the STOP_ARRAY ioctl successfully, given the array is mounted.
 
 Nothing else hints that something is wrong (except that the removed devices
-don't show properly in the output of 'mdadm detail' command). There is no
+don't show properly in the output of mdadm 'detail' command). There is no
 other property to be checked, and if user is not performing reads/writes
 to the array, even kernel log is quiet and doesn't give a clue about the
 missing member.
 
-This patch changes this behavior; when 'array_state' is read we introduce
-a non-expensive check (only for raid0/md-linear) that relies in the
-comparison of the total number of disks when array was assembled with
-gendisk flags of those devices to validate if all members are available
-and functional. A new array state 'broken' was added: it mimics the state
-'clean' in every aspect, being useful only to distinguish if such array
-has some member missing. Also, we show a rate-limited warning in kernel
-log in such case.
-
-This patch has no proper functional change other than adding the
-'clean'-like state; it was tested with ext4 and xfs filesystems. It
-requires a 'mdadm' counterpart to handle the 'broken' state.
+This patch is the mdadm counterpart of kernel new array state 'broken'.
+The 'broken' state mimics the state 'clean' in every aspect, being useful
+only to distinguish if an array has some member missing. All necessary
+paths in mdadm were changed to deal with 'broken' state, and in case the
+tool runs in a kernel that is not updated, it'll work normally, i.e., it
+doesn't require the 'broken' state in order to work.
+Also, this patch changes the way the array state is showed in the 'detail'
+command (for raid0/linear only) - now it takes the 'array_state' sysfs
+attribute into account instead of only rely in the MD_SB_CLEAN flag.
 
 Cc: NeilBrown <neilb@suse.com>
 Cc: Song Liu <songliubraving@fb.com>
 Signed-off-by: Guilherme G. Piccoli <gpiccoli@canonical.com>
 ---
 
-Cover-letter from v1:
-lore.kernel.org/linux-block/20190729203135.12934-1-gpiccoli@canonical.com
-
 v1 -> v2:
-* Added handling for md/linear 'broken' state;
-* Check for is_missing_dev() instead of personality (thanks Neil for
-the suggestion);
-* Changed is_missing_dev() handlers to static;
-* Print rate-limited warning in case of more members go away, not only
-the first.
-
-Song, after thinking and experimenting a bit more, I don't think it
-makes sense to allow setting the 'broken' state, unless we refactor
-and "re-purpose" this state. What 'broken' really means is a 'clean'
-state but with 1+ members missing - setting it is the same as set
-'clean', so it'd be counter-intuitive to set 'broken' but having in
-fact set 'clean' merely with the name 'broken'.
-
-The purpose of 'broken' is really to only indicate a missing member,
-as noticed by kernel in array_state reads.
-If you really think we should use 'broken' for other purposes and hence
-users should be allowed to set it, let's discuss and rewrite it.
-Personally I think the less we change, the better. We just need
-some way to warn users about the missing members of their arrays.
-Thanks,
-
-Guilherme
+* Added handling for md/linear 'broken' state.
 
 
- drivers/md/md-linear.c | 25 +++++++++++++++++++++++++
- drivers/md/md.c        | 22 ++++++++++++++++++----
- drivers/md/md.h        |  2 ++
- drivers/md/raid0.c     | 26 ++++++++++++++++++++++++++
- 4 files changed, 71 insertions(+), 4 deletions(-)
+ Detail.c  | 17 +++++++++++++++--
+ Monitor.c |  9 +++++++--
+ maps.c    |  1 +
+ mdadm.h   |  1 +
+ mdmon.h   |  2 +-
+ monitor.c |  4 ++--
+ 6 files changed, 27 insertions(+), 7 deletions(-)
 
-diff --git a/drivers/md/md-linear.c b/drivers/md/md-linear.c
-index ed2297541414..a404f700e3f8 100644
---- a/drivers/md/md-linear.c
-+++ b/drivers/md/md-linear.c
-@@ -237,6 +237,30 @@ static void linear_free(struct mddev *mddev, void *priv)
- 	kfree(conf);
+diff --git a/Detail.c b/Detail.c
+index ad60434..cc7e9f1 100644
+--- a/Detail.c
++++ b/Detail.c
+@@ -81,6 +81,7 @@ int Detail(char *dev, struct context *c)
+ 	int external;
+ 	int inactive;
+ 	int is_container = 0;
++	char arrayst[12] = { 0 }; /* no state is >10 chars currently */
+ 
+ 	if (fd < 0) {
+ 		pr_err("cannot open %s: %s\n",
+@@ -485,9 +486,21 @@ int Detail(char *dev, struct context *c)
+ 			else
+ 				st = ", degraded";
+ 
++			if (array.state & (1 << MD_SB_CLEAN)) {
++				if ((array.level == 0) ||
++				    (array.level == LEVEL_LINEAR))
++					strncpy(arrayst,
++						map_num(sysfs_array_states,
++							sra->array_state),
++						sizeof(arrayst)-1);
++				else
++					strncpy(arrayst, "clean",
++						sizeof(arrayst)-1);
++			} else
++				strncpy(arrayst, "active", sizeof(arrayst)-1);
++
+ 			printf("             State : %s%s%s%s%s%s \n",
+-			       (array.state & (1 << MD_SB_CLEAN)) ?
+-			       "clean" : "active", st,
++			       arrayst, st,
+ 			       (!e || (e->percent < 0 &&
+ 				       e->percent != RESYNC_PENDING &&
+ 				       e->percent != RESYNC_DELAYED)) ?
+diff --git a/Monitor.c b/Monitor.c
+index 036103f..9fd5406 100644
+--- a/Monitor.c
++++ b/Monitor.c
+@@ -1055,8 +1055,12 @@ int Wait(char *dev)
+ 	}
  }
  
-+static bool linear_is_missing_dev(struct mddev *mddev)
-+{
-+	struct md_rdev *rdev;
-+	static int already_missing;
-+	int def_disks, work_disks = 0;
-+
-+	def_disks = mddev->raid_disks;
-+	rdev_for_each(rdev, mddev)
-+		if (rdev->bdev->bd_disk->flags & GENHD_FL_UP)
-+			work_disks++;
-+
-+	if (unlikely(def_disks - work_disks)) {
-+		if (already_missing < (def_disks - work_disks)) {
-+			already_missing = def_disks - work_disks;
-+			pr_warn("md: %s: linear array has %d missing/failed members\n",
-+				mdname(mddev), already_missing);
-+		}
-+		return true;
-+	}
-+
-+	already_missing = 0;
-+	return false;
-+}
-+
- static bool linear_make_request(struct mddev *mddev, struct bio *bio)
++/* The state "broken" is used only for RAID0/LINEAR - it's the same as
++ * "clean", but used in case the array has one or more members missing.
++ */
++#define CLEAN_STATES_LAST_POS	5
+ static char *clean_states[] = {
+-	"clear", "inactive", "readonly", "read-auto", "clean", NULL };
++	"clear", "inactive", "readonly", "read-auto", "clean", "broken", NULL };
+ 
+ int WaitClean(char *dev, int verbose)
  {
- 	char b[BDEVNAME_SIZE];
-@@ -325,6 +349,7 @@ static struct md_personality linear_personality =
- 	.size		= linear_size,
- 	.quiesce	= linear_quiesce,
- 	.congested	= linear_congested,
-+	.is_missing_dev	= linear_is_missing_dev,
+@@ -1116,7 +1120,8 @@ int WaitClean(char *dev, int verbose)
+ 			rv = read(state_fd, buf, sizeof(buf));
+ 			if (rv < 0)
+ 				break;
+-			if (sysfs_match_word(buf, clean_states) <= 4)
++			if (sysfs_match_word(buf, clean_states)
++			    <= CLEAN_STATES_LAST_POS)
+ 				break;
+ 			rv = sysfs_wait(state_fd, &delay);
+ 			if (rv < 0 && errno != EINTR)
+diff --git a/maps.c b/maps.c
+index 02a0474..49b7f2c 100644
+--- a/maps.c
++++ b/maps.c
+@@ -150,6 +150,7 @@ mapping_t sysfs_array_states[] = {
+ 	{ "read-auto", ARRAY_READ_AUTO },
+ 	{ "clean", ARRAY_CLEAN },
+ 	{ "write-pending", ARRAY_WRITE_PENDING },
++	{ "broken", ARRAY_BROKEN },
+ 	{ NULL, ARRAY_UNKNOWN_STATE }
  };
  
- static int __init linear_init (void)
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index ba4de55eea13..0ef93d21cab6 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -4160,12 +4160,17 @@ __ATTR_PREALLOC(resync_start, S_IRUGO|S_IWUSR,
-  * active-idle
-  *     like active, but no writes have been seen for a while (100msec).
-  *
-+ * broken
-+ *     RAID0/LINEAR-only: same as clean, but array is missing a member.
-+ *     It's useful because RAID0/LINEAR mounted-arrays aren't stopped
-+ *     when a member is gone, so this state will at least alert the
-+ *     user that something is wrong.
-  */
- enum array_state { clear, inactive, suspended, readonly, read_auto, clean, active,
--		   write_pending, active_idle, bad_word};
-+		   write_pending, active_idle, broken, bad_word};
+diff --git a/mdadm.h b/mdadm.h
+index 43b07d5..c88ceab 100644
+--- a/mdadm.h
++++ b/mdadm.h
+@@ -373,6 +373,7 @@ struct mdinfo {
+ 		ARRAY_ACTIVE,
+ 		ARRAY_WRITE_PENDING,
+ 		ARRAY_ACTIVE_IDLE,
++		ARRAY_BROKEN,
+ 		ARRAY_UNKNOWN_STATE,
+ 	} array_state;
+ 	struct md_bb bb;
+diff --git a/mdmon.h b/mdmon.h
+index 818367c..b3d72ac 100644
+--- a/mdmon.h
++++ b/mdmon.h
+@@ -21,7 +21,7 @@
+ extern const char Name[];
+ 
+ enum array_state { clear, inactive, suspended, readonly, read_auto,
+-		   clean, active, write_pending, active_idle, bad_word};
++		   clean, active, write_pending, active_idle, broken, bad_word};
+ 
+ enum sync_action { idle, reshape, resync, recover, check, repair, bad_action };
+ 
+diff --git a/monitor.c b/monitor.c
+index 81537ed..e0d3be6 100644
+--- a/monitor.c
++++ b/monitor.c
+@@ -26,7 +26,7 @@
+ 
  static char *array_states[] = {
- 	"clear", "inactive", "suspended", "readonly", "read-auto", "clean", "active",
--	"write-pending", "active-idle", NULL };
-+	"write-pending", "active-idle", "broken", NULL };
- 
- static int match_word(const char *word, char **list)
- {
-@@ -4181,7 +4186,7 @@ array_state_show(struct mddev *mddev, char *page)
- {
- 	enum array_state st = inactive;
- 
--	if (mddev->pers)
-+	if (mddev->pers) {
- 		switch(mddev->ro) {
- 		case 1:
- 			st = readonly;
-@@ -4201,7 +4206,15 @@ array_state_show(struct mddev *mddev, char *page)
- 				st = active;
- 			spin_unlock(&mddev->lock);
- 		}
--	else {
-+
-+		if ((mddev->pers->is_missing_dev) &&
-+		   ((st == clean) || (st == broken))) {
-+			if (mddev->pers->is_missing_dev(mddev))
-+				st = broken;
-+			else
-+				st = clean;
-+		}
-+	} else {
- 		if (list_empty(&mddev->disks) &&
- 		    mddev->raid_disks == 0 &&
- 		    mddev->dev_sectors == 0)
-@@ -4315,6 +4328,7 @@ array_state_store(struct mddev *mddev, const char *buf, size_t len)
- 		break;
- 	case write_pending:
- 	case active_idle:
-+	case broken:
- 		/* these cannot be set */
- 		break;
- 	}
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index 5d7c1cad4946..2b40990c7642 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -590,6 +590,8 @@ struct md_personality
- 	int (*congested)(struct mddev *mddev, int bits);
- 	/* Changes the consistency policy of an active array. */
- 	int (*change_consistency_policy)(struct mddev *mddev, const char *buf);
-+	/* Check if there are any missing/failed members - RAID0/LINEAR only. */
-+	bool (*is_missing_dev)(struct mddev *mddev);
+ 	"clear", "inactive", "suspended", "readonly", "read-auto",
+-	"clean", "active", "write-pending", "active-idle", NULL };
++	"clean", "active", "write-pending", "active-idle", "broken", NULL };
+ static char *sync_actions[] = {
+ 	"idle", "reshape", "resync", "recover", "check", "repair", NULL
  };
- 
- struct md_sysfs_entry {
-diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-index ef896ee7198b..f7144be96029 100644
---- a/drivers/md/raid0.c
-+++ b/drivers/md/raid0.c
-@@ -455,6 +455,31 @@ static inline int is_io_in_chunk_boundary(struct mddev *mddev,
+@@ -476,7 +476,7 @@ static int read_and_act(struct active_array *a, fd_set *fds)
+ 		a->next_state = clean;
+ 		ret |= ARRAY_DIRTY;
  	}
- }
- 
-+static bool raid0_is_missing_dev(struct mddev *mddev)
-+{
-+	struct md_rdev *rdev;
-+	static int already_missing;
-+	int def_disks, work_disks = 0;
-+	struct r0conf *conf = mddev->private;
-+
-+	def_disks = conf->strip_zone[0].nb_dev;
-+	rdev_for_each(rdev, mddev)
-+		if (rdev->bdev->bd_disk->flags & GENHD_FL_UP)
-+			work_disks++;
-+
-+	if (unlikely(def_disks - work_disks)) {
-+		if (already_missing < (def_disks - work_disks)) {
-+			already_missing = def_disks - work_disks;
-+			pr_warn("md: %s: raid0 array has %d missing/failed members\n",
-+				mdname(mddev), already_missing);
-+		}
-+		return true;
-+	}
-+
-+	already_missing = 0;
-+	return false;
-+}
-+
- static void raid0_handle_discard(struct mddev *mddev, struct bio *bio)
- {
- 	struct r0conf *conf = mddev->private;
-@@ -788,6 +813,7 @@ static struct md_personality raid0_personality=
- 	.takeover	= raid0_takeover,
- 	.quiesce	= raid0_quiesce,
- 	.congested	= raid0_congested,
-+	.is_missing_dev	= raid0_is_missing_dev,
- };
- 
- static int __init raid0_init (void)
+-	if (a->curr_state == clean) {
++	if ((a->curr_state == clean) || (a->curr_state == broken)) {
+ 		a->container->ss->set_array_state(a, 1);
+ 	}
+ 	if (a->curr_state == active ||
 -- 
 2.22.0
