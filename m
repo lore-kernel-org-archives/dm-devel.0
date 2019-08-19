@@ -1,16 +1,18 @@
-From: Dmitry Fomichev <Dmitry.Fomichev@wdc.com>
-Subject: Re: [PATCH] dm zoned: Potential NULL dereference in
-	dmz_do_reclaim()
-Date: Mon, 19 Aug 2019 16:11:18 +0000
-Message-ID: <d53fb01681501c2a777f74a3acc145df37b97458.camel@wdc.com>
-References: <20190819095814.GA19905@mwanda>
+From: Martin Wilck <Martin.Wilck@suse.com>
+Subject: Re: [PATCH 1/2] multipath.conf: add "enable_foreign"
+	parameter
+Date: Mon, 19 Aug 2019 20:32:37 +0000
+Message-ID: <da712bc269003e39dd35e8d7799992ff1d650c6a.camel@suse.com>
+References: <20190815144638.5664-1-martin.wilck@suse.com>
+	<20190815144638.5664-2-martin.wilck@suse.com>
+	<20190816201218.GF25414@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190819095814.GA19905@mwanda>
+In-Reply-To: <20190816201218.GF25414@octiron.msp.redhat.com>
 Content-Language: en-US
-Content-ID: <7183DCDF3A8793459F8D2975F778DB12@namprd04.prod.outlook.com>
+Content-ID: <CD4C0E7ED279B04CA14B6419438E6737@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,46 +22,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "agk@redhat.com" <agk@redhat.com>, "dan.carpenter@oracle.com" <dan.carpenter@oracle.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "kernel-janitors@vger.kernel.org" <kernel-janitors@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Dan,
-
-On Mon, 2019-08-19 at 12:58 +0300, Dan Carpenter wrote:
-> This function is supposed to return error pointers so it matches the
-> dmz_get_rnd_zone_for_reclaim() function.  The current code could lead to
-> a NULL dereference in dmz_do_reclaim()
+On Fri, 2019-08-16 at 15:12 -0500, Benjamin Marzinski wrote:
+> On Thu, Aug 15, 2019 at 02:46:54PM +0000, Martin Wilck wrote:
+> > From: Martin Wilck <mwilck@suse.com>
+> > 
+> > This new configuration parameter can be used to selectively
+> > enable foreign libraries. The value is a regular expression,
+> > against which foreign library names such as "nvme" are matched.
+> > By setting this to a value that matches no foreign library
+> > (e.g. "^$" or "NONE"), foreign code is completely disabled.
+> > By default, all available foreign libraries are loaded.
+> > 
 > 
-> Fixes: b234c6d7a703 ("dm zoned: improve error handling in reclaim")
-> Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
-> ---
->  drivers/md/dm-zoned-metadata.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-> index 2a5bc51fd6d5..595a73110e17 100644
-> --- a/drivers/md/dm-zoned-metadata.c
-> +++ b/drivers/md/dm-zoned-metadata.c
-> @@ -1588,7 +1588,7 @@ static struct dm_zone *dmz_get_seq_zone_for_reclaim(struct dmz_metadata *zmd)
->  	struct dm_zone *zone;
->  
->  	if (list_empty(&zmd->map_seq_list))
-> -		return NULL;
-> +		return ERR_PTR(-EBUSY);
->  
->  	list_for_each_entry(zone, &zmd->map_seq_list, link) {
->  		if (!zone->bzone)
-> @@ -1597,7 +1597,7 @@ static struct dm_zone *dmz_get_seq_zone_for_reclaim(struct dmz_metadata *zmd)
->  			return zone;
->  	}
->  
-> -	return NULL;
-> +	return ERR_PTR(-EBUSY);
->  }
->  
->  /*
+> This will stop the foreign libraries from even claiming devices.
+> Won't
+> this mean that pathinfo() will now treat these devices as
+> multipathable
+> paths, since is_claimed_by_foreign() will return false? 
 
-thanks for noticing this -
+IMO this won't happen, because we ignore the native multipath path
+devices anyway as they're "hidden", and we ignore native NVMe multipath
+maps because they have "nvme-subsystem" subsystem rather than "nvme"
+(commit b18ed66). But I'll double-check again.
 
-Reviewed-by: Dmitry Fomichev <dmitry.fomichev@wdc.com>
+Martin
