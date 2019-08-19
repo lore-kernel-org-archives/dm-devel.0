@@ -1,15 +1,16 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: reorder NVDISK devices
-Date: Mon, 19 Aug 2019 17:45:42 +0200
-Message-ID: <894a30db-0af2-6598-e37e-26617ff2b3ea@gmail.com>
-References: <20190801172138.15049-1-xose.vazquez@gmail.com>
-	<20190814154111.GE25414@octiron.msp.redhat.com>
+From: Dmitry Fomichev <Dmitry.Fomichev@wdc.com>
+Subject: Re: [PATCH] dm zoned: Potential NULL dereference in
+	dmz_do_reclaim()
+Date: Mon, 19 Aug 2019 16:11:18 +0000
+Message-ID: <d53fb01681501c2a777f74a3acc145df37b97458.camel@wdc.com>
+References: <20190819095814.GA19905@mwanda>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190814154111.GE25414@octiron.msp.redhat.com>
-Content-Language: en-GB
+In-Reply-To: <20190819095814.GA19905@mwanda>
+Content-Language: en-US
+Content-ID: <7183DCDF3A8793459F8D2975F778DB12@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,73 +20,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Brian King <brking@linux.vnet.ibm.com>, DM-DEVEL ML <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: "agk@redhat.com" <agk@redhat.com>, "dan.carpenter@oracle.com" <dan.carpenter@oracle.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "kernel-janitors@vger.kernel.org" <kernel-janitors@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 8/14/19 5:41 PM, Benjamin Marzinski wrote:
+Dan,
 
-> On Thu, Aug 01, 2019 at 07:21:38PM +0200, Xose Vazquez Perez wrote:
->> Otherwise "3303[ ]+NVDISK" is never reached, because "NVDISK" regex takes
->> priority over it.
+On Mon, 2019-08-19 at 12:58 +0300, Dan Carpenter wrote:
+> This function is supposed to return error pointers so it matches the
+> dmz_get_rnd_zone_for_reclaim() function.  The current code could lead to
+> a NULL dereference in dmz_do_reclaim()
 > 
-> Huh? I don't understand why this is necessary. First off, with Martin's
-> hwentry code, all matching hardware entries are used, not just the
-> latest. But second, and more importantly, the AIX NVDISK entry won't
-> ever match the same disks as the IBM 3303[ ]+NVDISK, since they have
-> different vendors.  Right?
-
-Yes, you are right. I mixed badly IBM-AIX in my head.
-
-I'm sorry for the noise.
-
-Christophe, remove this patch from your queue.
-
-
-Thanks.
-
->> Cc: Brian King <brking@linux.vnet.ibm.com>
->> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
->> Cc: DM-DEVEL ML <dm-devel@redhat.com>
->> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
->> ---
->>  libmultipath/hwtable.c | 12 ++++++------
->>  1 file changed, 6 insertions(+), 6 deletions(-)
->>
->> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
->> index a06872e..8209554 100644
->> --- a/libmultipath/hwtable.c
->> +++ b/libmultipath/hwtable.c
->> @@ -696,12 +696,6 @@ static struct hwentry default_hw[] = {
->>  		.pgpolicy      = MULTIBUS,
->>  		.no_path_retry = (300 / DEFAULT_CHECKINT),
->>  	},
->> -	{
->> -		/* 3303 NVDISK */
->> -		.vendor        = "IBM",
->> -		.product       = "3303[ ]+NVDISK",
->> -		.no_path_retry = (300 / DEFAULT_CHECKINT),
->> -	},
->>  	{
->>  		/* AIX NVDISK */
->>  		.vendor        = "AIX",
->> @@ -712,6 +706,12 @@ static struct hwentry default_hw[] = {
->>  		.no_path_retry = (300 / DEFAULT_CHECKINT),
->>  		.prio_name     = PRIO_ALUA,
->>  	},
->> +	{
->> +		/* 3303 NVDISK */
->> +		.vendor        = "IBM",
->> +		.product       = "3303[ ]+NVDISK",
->> +		.no_path_retry = (300 / DEFAULT_CHECKINT),
->> +	},
->>          /*
->>           * Lenovo
->>           */
->> -- 
->> 2.21.0
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
+> Fixes: b234c6d7a703 ("dm zoned: improve error handling in reclaim")
+> Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
+> ---
+>  drivers/md/dm-zoned-metadata.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
 > 
+> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+> index 2a5bc51fd6d5..595a73110e17 100644
+> --- a/drivers/md/dm-zoned-metadata.c
+> +++ b/drivers/md/dm-zoned-metadata.c
+> @@ -1588,7 +1588,7 @@ static struct dm_zone *dmz_get_seq_zone_for_reclaim(struct dmz_metadata *zmd)
+>  	struct dm_zone *zone;
+>  
+>  	if (list_empty(&zmd->map_seq_list))
+> -		return NULL;
+> +		return ERR_PTR(-EBUSY);
+>  
+>  	list_for_each_entry(zone, &zmd->map_seq_list, link) {
+>  		if (!zone->bzone)
+> @@ -1597,7 +1597,7 @@ static struct dm_zone *dmz_get_seq_zone_for_reclaim(struct dmz_metadata *zmd)
+>  			return zone;
+>  	}
+>  
+> -	return NULL;
+> +	return ERR_PTR(-EBUSY);
+>  }
+>  
+>  /*
+
+thanks for noticing this -
+
+Reviewed-by: Dmitry Fomichev <dmitry.fomichev@wdc.com>
