@@ -1,12 +1,16 @@
-From: ZhangXiaoxu <zhangxiaoxu5@huawei.com>
-Subject: [PATCH] dm space map metadata: Fix lost checking the
-	return value of the 'apply_bops'.
-Date: Mon, 19 Aug 2019 11:31:21 +0800
-Message-ID: <1566185481-56934-1-git-send-email-zhangxiaoxu5@huawei.com>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH v12 1/4] crypto: essiv - create wrapper
+ template for ESSIV generation
+Date: Mon, 19 Aug 2019 16:32:18 +1000
+Message-ID: <20190819063218.GA31821@gondor.apana.org.au>
+References: <20190815192858.28125-1-ard.biesheuvel@linaro.org>
+	<20190815192858.28125-2-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20190815192858.28125-2-ard.biesheuvel@linaro.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,35 +20,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, zhangxiaoxu5@huawei.com
+To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Cc: Eric Biggers <ebiggers@google.com>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, linux-crypto@vger.kernel.org, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-In commit 6096d91af0b6 ("dm space map metadata: fix occasional leak
-of a metadata block on resize"), we refactor the commit logical to
-a new function 'apply_bops'.
+On Thu, Aug 15, 2019 at 10:28:55PM +0300, Ard Biesheuvel wrote:
+>
+> +	/* Synchronous hash, e.g., "sha256" */
+> +	ictx->hash = crypto_alloc_shash(shash_name, 0, 0);
+> +	if (IS_ERR(ictx->hash)) {
+> +		err = PTR_ERR(ictx->hash);
+> +		goto out_drop_skcipher;
+> +	}
 
-But when replace it in 'out' function, the return value was not checked.
-This may lead 'out' function return a wrong value to the caller.
+Holding a reference to this algorithm for the life-time of the
+instance is not nice.  How about just doing a lookup as you were
+doing before with crypto_alg_mod_lookup and getting the cra_name
+from that?
 
-Fixes: 6096d91af0b6 ("dm space map metadata: fix occasional leak of a
-metadata block on resize")
-Signed-off-by: ZhangXiaoxu <zhangxiaoxu5@huawei.com>
----
- drivers/md/persistent-data/dm-space-map-metadata.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/drivers/md/persistent-data/dm-space-map-metadata.c b/drivers/md/persistent-data/dm-space-map-metadata.c
-index aec4492..2532858 100644
---- a/drivers/md/persistent-data/dm-space-map-metadata.c
-+++ b/drivers/md/persistent-data/dm-space-map-metadata.c
-@@ -249,7 +249,7 @@ static int out(struct sm_metadata *smm)
- 	}
- 
- 	if (smm->recursion_count == 1)
--		apply_bops(smm);
-+		r = apply_bops(smm);
- 
- 	smm->recursion_count--;
- 
+Thanks,
 -- 
-2.7.4
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
