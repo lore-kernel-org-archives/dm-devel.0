@@ -1,13 +1,16 @@
-From: Dan Carpenter <dan.carpenter@oracle.com>
-Subject: [PATCH] dm zoned: Potential NULL dereference in
-	dmz_do_reclaim()
-Date: Mon, 19 Aug 2019 12:58:14 +0300
-Message-ID: <20190819095814.GA19905@mwanda>
+From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Subject: Re: [PATCH v12 1/4] crypto: essiv - create wrapper
+	template for ESSIV generation
+Date: Mon, 19 Aug 2019 17:14:25 +0300
+Message-ID: <CAKv+Gu9Zcaq5gygGtgmf5f4L6U6sBDd0CVAzrBydjiLDenyrag@mail.gmail.com>
+References: <20190815192858.28125-1-ard.biesheuvel@linaro.org>
+	<20190815192858.28125-2-ard.biesheuvel@linaro.org>
+	<20190819063218.GA31821@gondor.apana.org.au>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <20190819063218.GA31821@gondor.apana.org.au>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,41 +20,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>, Dmitry Fomichev <dmitry.fomichev@wdc.com>
-Cc: dm-devel@redhat.com, kernel-janitors@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Eric Biggers <ebiggers@google.com>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-This function is supposed to return error pointers so it matches the
-dmz_get_rnd_zone_for_reclaim() function.  The current code could lead to
-a NULL dereference in dmz_do_reclaim()
+On Mon, 19 Aug 2019 at 09:32, Herbert Xu <herbert@gondor.apana.org.au> wrote:
+>
+> On Thu, Aug 15, 2019 at 10:28:55PM +0300, Ard Biesheuvel wrote:
+> >
+> > +     /* Synchronous hash, e.g., "sha256" */
+> > +     ictx->hash = crypto_alloc_shash(shash_name, 0, 0);
+> > +     if (IS_ERR(ictx->hash)) {
+> > +             err = PTR_ERR(ictx->hash);
+> > +             goto out_drop_skcipher;
+> > +     }
+>
+> Holding a reference to this algorithm for the life-time of the
+> instance is not nice.  How about just doing a lookup as you were
+> doing before with crypto_alg_mod_lookup and getting the cra_name
+> from that?
+>
 
-Fixes: b234c6d7a703 ("dm zoned: improve error handling in reclaim")
-Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
----
- drivers/md/dm-zoned-metadata.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index 2a5bc51fd6d5..595a73110e17 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -1588,7 +1588,7 @@ static struct dm_zone *dmz_get_seq_zone_for_reclaim(struct dmz_metadata *zmd)
- 	struct dm_zone *zone;
- 
- 	if (list_empty(&zmd->map_seq_list))
--		return NULL;
-+		return ERR_PTR(-EBUSY);
- 
- 	list_for_each_entry(zone, &zmd->map_seq_list, link) {
- 		if (!zone->bzone)
-@@ -1597,7 +1597,7 @@ static struct dm_zone *dmz_get_seq_zone_for_reclaim(struct dmz_metadata *zmd)
- 			return zone;
- 	}
- 
--	return NULL;
-+	return ERR_PTR(-EBUSY);
- }
- 
- /*
--- 
-2.20.1
+OK, but it should be the cra_driver_name not the cra_name. Otherwise,
+allocating essiv(cbc(aes),sha256-generic) may end up using a different
+implementation of sha256, which would be bad.
