@@ -1,8 +1,8 @@
 From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: [PATCH v13 6/6] md: dm-crypt: omit parsing of the
-	encapsulated cipher
-Date: Mon, 19 Aug 2019 17:17:38 +0300
-Message-ID: <20190819141738.1231-7-ard.biesheuvel@linaro.org>
+Subject: [PATCH v13 3/6] crypto: arm64/aes-cts-cbc - factor out
+	CBC en/decryption of a walk
+Date: Mon, 19 Aug 2019 17:17:35 +0300
+Message-ID: <20190819141738.1231-4-ard.biesheuvel@linaro.org>
 References: <20190819141738.1231-1-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,112 +22,152 @@ To: linux-crypto@vger.kernel.org
 Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-Only the ESSIV IV generation mode used to use cc->cipher so it could
-instantiate the bare cipher used to encrypt the IV. However, this is
-now taken care of by the ESSIV template, and so no users of cc->cipher
-remain. So remove it altogether.
+The plain CBC driver and the CTS one share some code that iterates over
+a scatterwalk and invokes the CBC asm code to do the processing. The
+upcoming ESSIV/CBC mode will clone that pattern for the third time, so
+let's factor it out first.
 
 Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 ---
- drivers/md/dm-crypt.c | 58 --------------------
- 1 file changed, 58 deletions(-)
+ arch/arm64/crypto/aes-glue.c | 82 ++++++++++----------
+ 1 file changed, 40 insertions(+), 42 deletions(-)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index e3e6e111edfc..0dd1fb027ac0 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -147,7 +147,6 @@ struct crypt_config {
- 	struct task_struct *write_thread;
- 	struct rb_root write_tree;
- 
--	char *cipher;
- 	char *cipher_string;
- 	char *cipher_auth;
- 	char *key_string;
-@@ -2166,7 +2165,6 @@ static void crypt_dtr(struct dm_target *ti)
- 	if (cc->dev)
- 		dm_put_device(ti, cc->dev);
- 
--	kzfree(cc->cipher);
- 	kzfree(cc->cipher_string);
- 	kzfree(cc->key_string);
- 	kzfree(cc->cipher_auth);
-@@ -2247,52 +2245,6 @@ static int crypt_ctr_ivmode(struct dm_target *ti, const char *ivmode)
- 	return 0;
+diff --git a/arch/arm64/crypto/aes-glue.c b/arch/arm64/crypto/aes-glue.c
+index 55d6d4838708..23abf335f1ee 100644
+--- a/arch/arm64/crypto/aes-glue.c
++++ b/arch/arm64/crypto/aes-glue.c
+@@ -186,46 +186,64 @@ static int ecb_decrypt(struct skcipher_request *req)
+ 	return err;
  }
  
--/*
-- * Workaround to parse cipher algorithm from crypto API spec.
-- * The cc->cipher is currently used only in ESSIV.
-- * This should be probably done by crypto-api calls (once available...)
-- */
--static int crypt_ctr_blkdev_cipher(struct crypt_config *cc)
--{
--	const char *alg_name = NULL;
--	char *start, *end;
--
--	if (crypt_integrity_aead(cc)) {
--		alg_name = crypto_tfm_alg_name(crypto_aead_tfm(any_tfm_aead(cc)));
--		if (!alg_name)
--			return -EINVAL;
--		if (crypt_integrity_hmac(cc)) {
--			alg_name = strchr(alg_name, ',');
--			if (!alg_name)
--				return -EINVAL;
--		}
--		alg_name++;
--	} else {
--		alg_name = crypto_tfm_alg_name(crypto_skcipher_tfm(any_tfm(cc)));
--		if (!alg_name)
--			return -EINVAL;
--	}
--
--	start = strchr(alg_name, '(');
--	end = strchr(alg_name, ')');
--
--	if (!start && !end) {
--		cc->cipher = kstrdup(alg_name, GFP_KERNEL);
--		return cc->cipher ? 0 : -ENOMEM;
--	}
--
--	if (!start || !end || ++start >= end)
--		return -EINVAL;
--
--	cc->cipher = kzalloc(end - start + 1, GFP_KERNEL);
--	if (!cc->cipher)
--		return -ENOMEM;
--
--	strncpy(cc->cipher, start, end - start);
--
--	return 0;
--}
--
- /*
-  * Workaround to parse HMAC algorithm from AEAD crypto API spec.
-  * The HMAC is needed to calculate tag size (HMAC digest size).
-@@ -2402,12 +2354,6 @@ static int crypt_ctr_cipher_new(struct dm_target *ti, char *cipher_in, char *key
- 	else
- 		cc->iv_size = crypto_skcipher_ivsize(any_tfm(cc));
+-static int cbc_encrypt(struct skcipher_request *req)
++static int cbc_encrypt_walk(struct skcipher_request *req,
++			    struct skcipher_walk *walk)
+ {
+ 	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+ 	struct crypto_aes_ctx *ctx = crypto_skcipher_ctx(tfm);
+-	int err, rounds = 6 + ctx->key_length / 4;
+-	struct skcipher_walk walk;
++	int err = 0, rounds = 6 + ctx->key_length / 4;
+ 	unsigned int blocks;
  
--	ret = crypt_ctr_blkdev_cipher(cc);
--	if (ret < 0) {
--		ti->error = "Cannot allocate cipher string";
--		return -ENOMEM;
--	}
+-	err = skcipher_walk_virt(&walk, req, false);
 -
- 	return 0;
- }
- 
-@@ -2442,10 +2388,6 @@ static int crypt_ctr_cipher_old(struct dm_target *ti, char *cipher_in, char *key
+-	while ((blocks = (walk.nbytes / AES_BLOCK_SIZE))) {
++	while ((blocks = (walk->nbytes / AES_BLOCK_SIZE))) {
+ 		kernel_neon_begin();
+-		aes_cbc_encrypt(walk.dst.virt.addr, walk.src.virt.addr,
+-				ctx->key_enc, rounds, blocks, walk.iv);
++		aes_cbc_encrypt(walk->dst.virt.addr, walk->src.virt.addr,
++				ctx->key_enc, rounds, blocks, walk->iv);
+ 		kernel_neon_end();
+-		err = skcipher_walk_done(&walk, walk.nbytes % AES_BLOCK_SIZE);
++		err = skcipher_walk_done(walk, walk->nbytes % AES_BLOCK_SIZE);
  	}
- 	cc->key_parts = cc->tfms_count;
+ 	return err;
+ }
  
--	cc->cipher = kstrdup(cipher, GFP_KERNEL);
--	if (!cc->cipher)
--		goto bad_mem;
+-static int cbc_decrypt(struct skcipher_request *req)
++static int cbc_encrypt(struct skcipher_request *req)
+ {
+-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+-	struct crypto_aes_ctx *ctx = crypto_skcipher_ctx(tfm);
+-	int err, rounds = 6 + ctx->key_length / 4;
+ 	struct skcipher_walk walk;
+-	unsigned int blocks;
++	int err;
+ 
+ 	err = skcipher_walk_virt(&walk, req, false);
++	if (err)
++		return err;
++	return cbc_encrypt_walk(req, &walk);
++}
+ 
+-	while ((blocks = (walk.nbytes / AES_BLOCK_SIZE))) {
++static int cbc_decrypt_walk(struct skcipher_request *req,
++			    struct skcipher_walk *walk)
++{
++	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
++	struct crypto_aes_ctx *ctx = crypto_skcipher_ctx(tfm);
++	int err = 0, rounds = 6 + ctx->key_length / 4;
++	unsigned int blocks;
++
++	while ((blocks = (walk->nbytes / AES_BLOCK_SIZE))) {
+ 		kernel_neon_begin();
+-		aes_cbc_decrypt(walk.dst.virt.addr, walk.src.virt.addr,
+-				ctx->key_dec, rounds, blocks, walk.iv);
++		aes_cbc_decrypt(walk->dst.virt.addr, walk->src.virt.addr,
++				ctx->key_dec, rounds, blocks, walk->iv);
+ 		kernel_neon_end();
+-		err = skcipher_walk_done(&walk, walk.nbytes % AES_BLOCK_SIZE);
++		err = skcipher_walk_done(walk, walk->nbytes % AES_BLOCK_SIZE);
+ 	}
+ 	return err;
+ }
+ 
++static int cbc_decrypt(struct skcipher_request *req)
++{
++	struct skcipher_walk walk;
++	int err;
++
++	err = skcipher_walk_virt(&walk, req, false);
++	if (err)
++		return err;
++	return cbc_decrypt_walk(req, &walk);
++}
++
+ static int cts_cbc_init_tfm(struct crypto_skcipher *tfm)
+ {
+ 	crypto_skcipher_set_reqsize(tfm, sizeof(struct cts_cbc_req_ctx));
+@@ -251,22 +269,12 @@ static int cts_cbc_encrypt(struct skcipher_request *req)
+ 	}
+ 
+ 	if (cbc_blocks > 0) {
+-		unsigned int blocks;
 -
- 	chainmode = strsep(&tmp, "-");
- 	*ivmode = strsep(&tmp, ":");
- 	*ivopts = tmp;
+ 		skcipher_request_set_crypt(&rctx->subreq, req->src, req->dst,
+ 					   cbc_blocks * AES_BLOCK_SIZE,
+ 					   req->iv);
+ 
+-		err = skcipher_walk_virt(&walk, &rctx->subreq, false);
+-
+-		while ((blocks = (walk.nbytes / AES_BLOCK_SIZE))) {
+-			kernel_neon_begin();
+-			aes_cbc_encrypt(walk.dst.virt.addr, walk.src.virt.addr,
+-					ctx->key_enc, rounds, blocks, walk.iv);
+-			kernel_neon_end();
+-			err = skcipher_walk_done(&walk,
+-						 walk.nbytes % AES_BLOCK_SIZE);
+-		}
++		err = skcipher_walk_virt(&walk, &rctx->subreq, false) ?:
++		      cbc_encrypt_walk(&rctx->subreq, &walk);
+ 		if (err)
+ 			return err;
+ 
+@@ -316,22 +324,12 @@ static int cts_cbc_decrypt(struct skcipher_request *req)
+ 	}
+ 
+ 	if (cbc_blocks > 0) {
+-		unsigned int blocks;
+-
+ 		skcipher_request_set_crypt(&rctx->subreq, req->src, req->dst,
+ 					   cbc_blocks * AES_BLOCK_SIZE,
+ 					   req->iv);
+ 
+-		err = skcipher_walk_virt(&walk, &rctx->subreq, false);
+-
+-		while ((blocks = (walk.nbytes / AES_BLOCK_SIZE))) {
+-			kernel_neon_begin();
+-			aes_cbc_decrypt(walk.dst.virt.addr, walk.src.virt.addr,
+-					ctx->key_dec, rounds, blocks, walk.iv);
+-			kernel_neon_end();
+-			err = skcipher_walk_done(&walk,
+-						 walk.nbytes % AES_BLOCK_SIZE);
+-		}
++		err = skcipher_walk_virt(&walk, &rctx->subreq, false) ?:
++		      cbc_decrypt_walk(&rctx->subreq, &walk);
+ 		if (err)
+ 			return err;
+ 
 -- 
 2.17.1
