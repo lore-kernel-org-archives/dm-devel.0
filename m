@@ -1,18 +1,18 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 1/2] multipath.conf: add "enable_foreign"
-	parameter
-Date: Mon, 19 Aug 2019 20:32:37 +0000
-Message-ID: <da712bc269003e39dd35e8d7799992ff1d650c6a.camel@suse.com>
-References: <20190815144638.5664-1-martin.wilck@suse.com>
-	<20190815144638.5664-2-martin.wilck@suse.com>
-	<20190816201218.GF25414@octiron.msp.redhat.com>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH v12 1/4] crypto: essiv - create wrapper
+ template for ESSIV generation
+Date: Tue, 20 Aug 2019 09:35:38 +1000
+Message-ID: <20190819233538.GB9089@gondor.apana.org.au>
+References: <20190815192858.28125-1-ard.biesheuvel@linaro.org>
+	<20190815192858.28125-2-ard.biesheuvel@linaro.org>
+	<20190819063218.GA31821@gondor.apana.org.au>
+	<CAKv+Gu9Zcaq5gygGtgmf5f4L6U6sBDd0CVAzrBydjiLDenyrag@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190816201218.GF25414@octiron.msp.redhat.com>
-Content-Language: en-US
-Content-ID: <CD4C0E7ED279B04CA14B6419438E6737@namprd18.prod.outlook.com>
+Content-Disposition: inline
+In-Reply-To: <CAKv+Gu9Zcaq5gygGtgmf5f4L6U6sBDd0CVAzrBydjiLDenyrag@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,31 +22,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Cc: Eric Biggers <ebiggers@google.com>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, 2019-08-16 at 15:12 -0500, Benjamin Marzinski wrote:
-> On Thu, Aug 15, 2019 at 02:46:54PM +0000, Martin Wilck wrote:
-> > From: Martin Wilck <mwilck@suse.com>
-> > 
-> > This new configuration parameter can be used to selectively
-> > enable foreign libraries. The value is a regular expression,
-> > against which foreign library names such as "nvme" are matched.
-> > By setting this to a value that matches no foreign library
-> > (e.g. "^$" or "NONE"), foreign code is completely disabled.
-> > By default, all available foreign libraries are loaded.
-> > 
-> 
-> This will stop the foreign libraries from even claiming devices.
-> Won't
-> this mean that pathinfo() will now treat these devices as
-> multipathable
-> paths, since is_claimed_by_foreign() will return false? 
+On Mon, Aug 19, 2019 at 05:14:25PM +0300, Ard Biesheuvel wrote:
+>
+> OK, but it should be the cra_driver_name not the cra_name. Otherwise,
+> allocating essiv(cbc(aes),sha256-generic) may end up using a different
+> implementation of sha256, which would be bad.
 
-IMO this won't happen, because we ignore the native multipath path
-devices anyway as they're "hidden", and we ignore native NVMe multipath
-maps because they have "nvme-subsystem" subsystem rather than "nvme"
-(commit b18ed66). But I'll double-check again.
+I agree.
 
-Martin
+Thanks,
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
