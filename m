@@ -1,50 +1,60 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: Re: Backport request for bcb44433bba5 ("dm: disable DISCARD if the
- underlying storage no longer supports it")
-Date: Tue, 20 Aug 2019 09:23:25 -0700
-Message-ID: <20190820162325.GB8214@kroah.com>
-References: <20190818155941.GA26766@eldamar.local>
- <20190818183305.GA1181@kroah.com>
- <20190818204436.GA27437@eldamar.local>
+From: Martin Wilck <Martin.Wilck@suse.com>
+Subject: Re: [PATCH 1/2] multipath.conf: add "enable_foreign"
+ parameter
+Date: Tue, 20 Aug 2019 16:24:58 +0000
+Message-ID: <3913aa7aa45297995fc8776bc7d4496ef9fbe3f8.camel@suse.com>
+References: <20190815144638.5664-1-martin.wilck@suse.com>
+	<20190815144638.5664-2-martin.wilck@suse.com>
+	<20190816201218.GF25414@octiron.msp.redhat.com>
+	<da712bc269003e39dd35e8d7799992ff1d650c6a.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <stable-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190818204436.GA27437@eldamar.local>
-Sender: stable-owner@vger.kernel.org
-To: Salvatore Bonaccorso <carnil@debian.org>
-Cc: Sasha Levin <sashal@kernel.org>, Mike Snitzer <snitzer@redhat.com>, stable@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Chris Hofstaedtler <zeha@debian.org>, David Jeffery <djeffery@redhat.com>, Ben Hutchings <ben@decadent.org.uk>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <da712bc269003e39dd35e8d7799992ff1d650c6a.camel@suse.com>
+Content-Language: en-US
+Content-ID: <A0E4AF764AC64A4788D3F8AA6B3AC521@namprd18.prod.outlook.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sun, Aug 18, 2019 at 10:44:36PM +0200, Salvatore Bonaccorso wrote:
-> hi Greg,
-> 
-> On Sun, Aug 18, 2019 at 08:33:05PM +0200, Greg Kroah-Hartman wrote:
-> > On Sun, Aug 18, 2019 at 05:59:41PM +0200, Salvatore Bonaccorso wrote:
-> > > Hi
+On Mon, 2019-08-19 at 20:32 +0000, Martin Wilck wrote:
+> On Fri, 2019-08-16 at 15:12 -0500, Benjamin Marzinski wrote:
+> > On Thu, Aug 15, 2019 at 02:46:54PM +0000, Martin Wilck wrote:
+> > > From: Martin Wilck <mwilck@suse.com>
 > > > 
-> > > In Debian bug https://bugs.debian.org/934331 ran into issues which
-> > > match the upstream commit bcb44433bba5 ("dm: disable DISCARD if the
-> > > underlying storage no longer supports it").
+> > > This new configuration parameter can be used to selectively
+> > > enable foreign libraries. The value is a regular expression,
+> > > against which foreign library names such as "nvme" are matched.
+> > > By setting this to a value that matches no foreign library
+> > > (e.g. "^$" or "NONE"), foreign code is completely disabled.
+> > > By default, all available foreign libraries are loaded.
 > > > 
-> > > This commit was CC'ed to stable, but only got applied in v5.0.8 (and
-> > > later on backported by Ben Hutchings to v3.16.72).
-> > > 
-> > > Mike, I have not checked how easily that would be for older stable
-> > > versions, but can the backport be considered for versions down to 4.9?
-> > > Apparently Ben did succeed with some changes needed. To 4.19 it should
-> > > apply with a small conflict in drivers/md/dm-core.h AFAICS.
 > > 
-> > If someone sends the backports to the list, I will be glad to queue them
-> > up.
+> > This will stop the foreign libraries from even claiming devices.
+> > Won't
+> > this mean that pathinfo() will now treat these devices as
+> > multipathable
+> > paths, since is_claimed_by_foreign() will return false? 
 > 
-> Here is the one for 4.19 on top of 4.19.67. It's my first contribution
-> on this regard. Given the change to be applied was only about the
-> context change in drivers/md/dm-core.h I'm unsure if the Signed-off-by
-> is the right addition to do as well.
+> IMO this won't happen, because we ignore the native multipath path
+> devices anyway as they're "hidden", and we ignore native NVMe
+> multipath
+> maps because they have "nvme-subsystem" subsystem rather than "nvme"
+> (commit b18ed66). But I'll double-check again.
 
-Yes it is!
+Confirmed. With nvme_core.multipath=Y and the nvme library disabled,no
+NVMe-related output is printed.
 
-Now queued up, thanks.
+Ben, with that in mind, would you ACK this patch?
 
-greg k-h
+Martin
