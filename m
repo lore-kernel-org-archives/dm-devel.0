@@ -1,19 +1,18 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 1/2] multipath.conf: add "enable_foreign"
- parameter
-Date: Tue, 20 Aug 2019 14:24:46 -0500
-Message-ID: <20190820192446.GM25414@octiron.msp.redhat.com>
-References: <20190815144638.5664-1-martin.wilck@suse.com>
-	<20190815144638.5664-2-martin.wilck@suse.com>
-	<20190816201218.GF25414@octiron.msp.redhat.com>
-	<da712bc269003e39dd35e8d7799992ff1d650c6a.camel@suse.com>
-	<3913aa7aa45297995fc8776bc7d4496ef9fbe3f8.camel@suse.com>
+Subject: Re: [PATCH 10/16] libmultipath: make pgpolicyfn take a
+ paths vector
+Date: Tue, 20 Aug 2019 17:55:04 -0500
+Message-ID: <20190820225504.GN25414@octiron.msp.redhat.com>
+References: <1564763622-31752-1-git-send-email-bmarzins@redhat.com>
+	<1564763622-31752-11-git-send-email-bmarzins@redhat.com>
+	<1f9360e75494c4597d80a08677a34441159b3af4.camel@suse.com>
+	<20190816212837.GK25414@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <3913aa7aa45297995fc8776bc7d4496ef9fbe3f8.camel@suse.com>
+In-Reply-To: <20190816212837.GK25414@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,43 +23,126 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Martin Wilck <Martin.Wilck@suse.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "mkumar@redhat.com" <mkumar@redhat.com>, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
-On Tue, Aug 20, 2019 at 04:24:58PM +0000, Martin Wilck wrote:
-> On Mon, 2019-08-19 at 20:32 +0000, Martin Wilck wrote:
-> > On Fri, 2019-08-16 at 15:12 -0500, Benjamin Marzinski wrote:
-> > > On Thu, Aug 15, 2019 at 02:46:54PM +0000, Martin Wilck wrote:
-> > > > From: Martin Wilck <mwilck@suse.com>
-> > > > 
-> > > > This new configuration parameter can be used to selectively
-> > > > enable foreign libraries. The value is a regular expression,
-> > > > against which foreign library names such as "nvme" are matched.
-> > > > By setting this to a value that matches no foreign library
-> > > > (e.g. "^$" or "NONE"), foreign code is completely disabled.
-> > > > By default, all available foreign libraries are loaded.
-> > > > 
-> > > 
-> > > This will stop the foreign libraries from even claiming devices.
-> > > Won't
-> > > this mean that pathinfo() will now treat these devices as
-> > > multipathable
-> > > paths, since is_claimed_by_foreign() will return false? 
+On Fri, Aug 16, 2019 at 04:28:37PM -0500, Benjamin Marzinski wrote:
+> On Wed, Aug 14, 2019 at 10:05:45PM +0000, Martin Wilck wrote:
+
+> > OK: This is future material. But if we take this patch and its
+> > successors, be'd have it cast in stone that "marginal/normal" is the
+> > main distinction, taking precedence over everything else, and I'm not
+> > convinced that that's the way to go.
 > > 
-> > IMO this won't happen, because we ignore the native multipath path
-> > devices anyway as they're "hidden", and we ignore native NVMe
-> > multipath
-> > maps because they have "nvme-subsystem" subsystem rather than "nvme"
-> > (commit b18ed66). But I'll double-check again.
+> > We could obtain the semantics of your current patch set by assigning a
+> > negative prio bias to marginal paths, and changing the grouping
+> > algorithms (except group_by_prio) such that they take the marginal
+> > property into account (e.g. group_by_node_name would pretend that all
+> > marginal paths have a common "node name" and lump them together). This
+> > would allow us to keep our current simple mpp->pg vector and represent
+> > the marginal paths simply by one (the last) PG in this vector. 
+> > 
+> > The benefit would be that this model would be more flexible for more
+> > sophisticated priority models in the future.
 > 
-> Confirmed. With nvme_core.multipath=Y and the nvme library disabled,no
-> NVMe-related output is printed.
-> 
-> Ben, with that in mind, would you ACK this patch?
+> I'll take a look at doing this in a way that would make it easier to
+> fine tune this in the future.
 
-Sure. Sorry about the confusion
+So, I've looked at this, and I'd like to make the case that these
+patches don't put multipath into an inflexible method of dealing with
+path groups. In my mind, there are three issues with path grouping that
+my patches deal with
 
-Reviewed-by: Benjamin Marzinksi <bmarzins@redhat.com>
- 
-> Martin
+1. How the paths are grouped together
+2. How the pathgroups are ordered
+3. How the best pathgroup is chosen
+
+I'd argue that the only issue where my patches really adds some
+significant code is on 1. I think that my choice of groups for 1 is
+correct, and I have a suggestion for making issue 3 go away.
+
+In regards to the first issue, how the paths are grouped together, my
+patch basically follows two rules:
+
+1. Marginal paths shouldn't be grouped with non-marginal paths.
+
+Obviously, if you want the marginal paths to stay in the same group as
+they would normally be in, then you don't want marginal path detection
+at all. Further, I don't see a scenario where we would like the marginal
+paths to be grouped with non-marginal paths that they wouldn't normally
+be grouped with.
+
+2. Marginal paths should be grouped with other marginal paths using the
+same rules as for non-marginal paths.
+
+There are often very good reasons why paths are grouped the way they
+are.  For instance, if the marginal path is passive (I'm not even sure
+that we should keep paths in the marginal state if they are PATH_GHOST,
+but we currently do), we really don't want to put it in a pathgroup with
+active paths. There probably are cases where it is safe to put all, or
+some, of the marginal paths together, but it's not easy to know when
+that is, and I don't think there is much benefit from doing the work to
+figure it out, and it is always safe to group them like you would if
+they were non-marginal paths.
+
+I don't see a better way to set up the groups than what my patch does,
+so I'm not particularly worried about all the code involved in making
+sure that the groups look like this.
+
+As for the second issue, how the pathgroups are ordered, I don't think
+my code locks us in at all.  The functions that order the pathgroups are
+path_group_prio_update() and sort_pathgroups().  If you wanted to make
+multipath just change the priority of marginal pathgroups, you would
+just need to set that priority in path_group_prio_update(), and if you
+only wanted to use the priority for sorting them, you would just change
+sort_pathgroups() to only sort by priority. If you wanted to change
+pgp->marginal from something binary to something that reflected how
+marginal a path was, and you want to have that to change how a path was
+sorted vs other paths with different marginal and priority values, you
+could do all of that by simply changing the values set in
+path_group_prio_update() and how those values are sorted in
+sort_pathgroups(). I don't think my code does anything to make this less
+flexible.
+
+As for the third issue, how the best pathgroup is chosen, this is also a
+case where changing things just involves changing how things are done in
+one function, select_path_group(), to match what's done in
+sort_pathgroups(). But since the pathgroups are already in order from
+the best one to use to the worst, the multipath userspace tools could
+just work how the kernel works, and pick the first usable pathgroup.
+This won't always give the same answer that multipath currently does,
+since the current code looks at the number of enabled paths. But the
+only times when it will be different is when there are multiple
+pathgroups with the same priority, and the first one has some failed
+paths.  Since we rarely have multiple pathgroups with the same priorty
+except when using the failover policy (group_by_serial and
+group_by_node_name being rarely used), and you will always have one path
+per pathgroup with failover, in practice this will almost never occur.
+
+Oh, I did notice a bug in my select_path_group() code. I should be
+calling path_group_prio_update() before checking if the pathgroup
+is marginal or not. I'll fix that.
+
+So, I'm not against making this all work with priorities if there is a
+reason to do so, but doing that will just involve changes in 3
+straightforward functions, or 2 if we decide to simplify
+select_path_group() so it just uses the order from sort_pathgroups() as
+a guide.
+
+If you feel strongly about doing this with priorities, I can add a patch
+that changes this. But if it gets us the same results, then I don't see
+much benefit. We can always change it laster if we want to change how
+the groups actually end up.
+
+-Ben
+
+> -Ben
 > 
+> > Regards,
+> > Martin
+> > 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
