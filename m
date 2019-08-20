@@ -1,46 +1,50 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [PATCH v13 0/6] crypto: switch to crypto API for
-	ESSIV generation
-Date: Tue, 20 Aug 2019 14:03:02 +0300
-Message-ID: <CAKv+Gu_ZoQ+mfchJMigoy32DtAMbzRU3fOZS4YjBMS-2ZMvebg@mail.gmail.com>
-References: <20190819141738.1231-1-ard.biesheuvel@linaro.org>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: Backport request for bcb44433bba5 ("dm: disable DISCARD if the
+ underlying storage no longer supports it")
+Date: Tue, 20 Aug 2019 09:23:25 -0700
+Message-ID: <20190820162325.GB8214@kroah.com>
+References: <20190818155941.GA26766@eldamar.local>
+ <20190818183305.GA1181@kroah.com>
+ <20190818204436.GA27437@eldamar.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190819141738.1231-1-ard.biesheuvel@linaro.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, linux-fscrypt@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, device-mapper development <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <stable-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190818204436.GA27437@eldamar.local>
+Sender: stable-owner@vger.kernel.org
+To: Salvatore Bonaccorso <carnil@debian.org>
+Cc: Sasha Levin <sashal@kernel.org>, Mike Snitzer <snitzer@redhat.com>, stable@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Chris Hofstaedtler <zeha@debian.org>, David Jeffery <djeffery@redhat.com>, Ben Hutchings <ben@decadent.org.uk>
 List-Id: dm-devel.ids
 
-On Mon, 19 Aug 2019 at 17:17, Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
->
-> This series creates an ESSIV template that produces a skcipher or AEAD
-> transform based on a tuple of the form '<skcipher>,<shash>' (or '<aead>,<shash>'
-> for the AEAD case). It exposes the encapsulated sync or async skcipher/aead by
-> passing through all operations, while using the cipher/shash pair to transform
-> the input IV into an ESSIV output IV.
->
-> Changes since v12:
-> - don't use a per-instance shash but only record the cra_driver_name of the
->   shash when instantiating the template, and allocate the shash for each
->   allocated transform instead
-> - add back the dm-crypt patch -> as Milan has indicated, his preference would
->   be to queue these changes for v5.4 (with the first patch shared between the
->   cryptodev and md trees on a stable branch based on v5.3-rc1 - if needed,
->   I can provide a signed tag)
->
+On Sun, Aug 18, 2019 at 10:44:36PM +0200, Salvatore Bonaccorso wrote:
+> hi Greg,
+> 
+> On Sun, Aug 18, 2019 at 08:33:05PM +0200, Greg Kroah-Hartman wrote:
+> > On Sun, Aug 18, 2019 at 05:59:41PM +0200, Salvatore Bonaccorso wrote:
+> > > Hi
+> > > 
+> > > In Debian bug https://bugs.debian.org/934331 ran into issues which
+> > > match the upstream commit bcb44433bba5 ("dm: disable DISCARD if the
+> > > underlying storage no longer supports it").
+> > > 
+> > > This commit was CC'ed to stable, but only got applied in v5.0.8 (and
+> > > later on backported by Ben Hutchings to v3.16.72).
+> > > 
+> > > Mike, I have not checked how easily that would be for older stable
+> > > versions, but can the backport be considered for versions down to 4.9?
+> > > Apparently Ben did succeed with some changes needed. To 4.19 it should
+> > > apply with a small conflict in drivers/md/dm-core.h AFAICS.
+> > 
+> > If someone sends the backports to the list, I will be glad to queue them
+> > up.
+> 
+> Here is the one for 4.19 on top of 4.19.67. It's my first contribution
+> on this regard. Given the change to be applied was only about the
+> context change in drivers/md/dm-core.h I'm unsure if the Signed-off-by
+> is the right addition to do as well.
 
-Actually, since Eric has indicated that he does not want to take the
-associated fscrypt change for v5.4 anyway, patch #1 could simply be
-routed through the md tree instead, while the others are taken through
-cryptodev.
+Yes it is!
+
+Now queued up, thanks.
+
+greg k-h
