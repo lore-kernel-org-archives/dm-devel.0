@@ -1,8 +1,8 @@
 From: "boojin.kim" <boojin.kim@samsung.com>
-Subject: [PATCH 3/9] mmc: dw_mmc: support crypto operation
-Date: Wed, 21 Aug 2019 15:42:18 +0900
-Message-ID: <003f01d557eb$94210260$bc630720$@samsung.com>
-References: <CGME20190821064219epcas2p28b42391923012ecc7875313b8b2b9a1a@epcas2p2.samsung.com>
+Subject: [PATCH 4/9] mmc: dw_mmc-exynos: support FMP
+Date: Wed, 21 Aug 2019 15:42:22 +0900
+Message-ID: <004001d557eb$9697f5d0$c3c7e170$@samsung.com>
+References: <CGME20190821064223epcas2p18a14724427711e22c6c76b24bce1c8e0@epcas2p1.samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,97 +19,177 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 Cc: 'Ulf Hansson' <ulf.hansson@linaro.org>, 'Mike Snitzer' <snitzer@redhat.com>, dm-devel@redhat.com, 'Andreas Dilger' <adilger.kernel@dilger.ca>, 'Alasdair Kergon' <agk@redhat.com>, 'Eric Biggers' <ebiggers@kernel.org>, linux-samsung-soc@vger.kernel.org, 'Herbert Xu' <herbert@gondor.apana.org.au>, 'Krzysztof Kozlowski' <krzk@kernel.org>, 'Jaehoon Chung' <jh80.chung@samsung.com>, 'Kukjin Kim' <kgene@kernel.org>, linux-ext4@vger.kernel.org, linux-block@vger.kernel.org, linux-fscrypt@vger.kernel.org, 'Jaegeuk Kim' <jaegeuk@kernel.org>, linux-arm-kernel@lists.infradead.org, 'Jens Axboe' <axboe@kernel.dk>, 'Theodore Ts'o' <tytso@mit.edu>, linux-mmc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, "'David S. Miller'" <davem@davemloft.net>
 List-Id: dm-devel.ids
 
-This patch supports the crypto operation in mmc driver.
-Two vops are added to dw_mci_drv_data for it.
-The crypto_engine_cfg() is required to set crypto information such as
-key and algorithm modes before I/O.
-The crypto_engine_clear() is required to clear the crypto information
-set in the H/W after I/O.
+Exynos MMC uses FMP to encrypt data stored on MMC device.
+FMP H/W reads crypto information from MMC descriptor.
+So, when using FMP H/W, the format of MMC descriptor should be extended.
+The FMP driver is registered with the diskcipher algorithm,
+so exynos MMC calls diskcipher API to use FMP.
 
-Cc: Jaehoon Chung <jh80.chung@samsung.com>
 Cc: Ulf Hansson <ulf.hansson@linaro.org>
+Cc: Kukjin Kim <kgene@kernel.org>
+Cc: Krzysztof Kozlowski <krzk@kernel.org>
 Signed-off-by: Boojin Kim <boojin.kim@samsung.com>
 ---
- drivers/mmc/host/dw_mmc.c | 22 +++++++++++++++++++++-
- drivers/mmc/host/dw_mmc.h |  6 ++++++
- 2 files changed, 27 insertions(+), 1 deletion(-)
+ drivers/mmc/host/Kconfig         |  8 ++++++
+ drivers/mmc/host/dw_mmc-exynos.c | 62
+++++++++++++++++++++++++++++++++++++++++
+ drivers/mmc/host/dw_mmc.c        | 26 +++++++++++++++++
+ 3 files changed, 96 insertions(+)
 
+diff --git a/drivers/mmc/host/Kconfig b/drivers/mmc/host/Kconfig
+index 14d89a1..f6c5a54 100644
+--- a/drivers/mmc/host/Kconfig
++++ b/drivers/mmc/host/Kconfig
+@@ -761,6 +761,14 @@ config MMC_DW_EXYNOS
+ 	  Synopsys DesignWare Memory Card Interface driver. Select this
+option
+ 	  for platforms based on Exynos4 and Exynos5 SoC's.
+ 
++config MMC_DW_EXYNOS_FMP
++	tristate "EXYNOS Flash Memory Protector for MMC_DW"
++	depends on MMC_DW_EXYNOS
++	---help---
++	  This selects the EXYNOS MMC_DW FMP Driver.
++
++	  If you have a controller with this interface, say Y or M here.
++
+ config MMC_DW_HI3798CV200
+ 	tristate "Hi3798CV200 specific extensions for Synopsys DW Memory
+Card Interface"
+ 	depends on MMC_DW
+diff --git a/drivers/mmc/host/dw_mmc-exynos.c
+b/drivers/mmc/host/dw_mmc-exynos.c
+index 5e3d95b..d3848ba 100644
+--- a/drivers/mmc/host/dw_mmc-exynos.c
++++ b/drivers/mmc/host/dw_mmc-exynos.c
+@@ -14,10 +14,12 @@
+ #include <linux/of_gpio.h>
+ #include <linux/pm_runtime.h>
+ #include <linux/slab.h>
++#include <crypto/fmp.h>
+ 
+ #include "dw_mmc.h"
+ #include "dw_mmc-pltfm.h"
+ #include "dw_mmc-exynos.h"
++#include "../core/queue.h"
+ 
+ /* Variations in Exynos specific dw-mshc controller */
+ enum dw_mci_exynos_type {
+@@ -508,6 +510,62 @@ static int dw_mci_exynos_prepare_hs400_tuning(struct
+dw_mci *host,
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_MMC_DW_EXYNOS_FMP
++static struct bio *get_bio(struct dw_mci *host,
++				struct mmc_data *data, bool cmdq_enabled)
++{
++	struct bio *bio = NULL;
++	struct mmc_queue_req *mq_rq = NULL;
++	struct request *req = NULL;
++	struct mmc_blk_request *brq = NULL;
++
++	if (!host || !data) {
++		pr_err("%s: Invalid MMC:%p data:%p\n", __func__, host,
+data);
++		return NULL;
++	}
++
++	if (cmdq_enabled) {
++		pr_err("%s: no support cmdq yet:%p\n", __func__, host);
++		bio = NULL;
++	} else {
++		brq = container_of(data, struct mmc_blk_request, data);
++		if (!brq)
++			return NULL;
++
++		mq_rq = container_of(brq, struct mmc_queue_req, brq);
++		if (virt_addr_valid(mq_rq))
++			req = mmc_queue_req_to_req(mq_rq);
++			if (virt_addr_valid(req))
++				bio = req->bio;
++	}
++	return bio;
++}
++
++static int dw_mci_exynos_crypto_engine_cfg(struct dw_mci *host,
++					void *desc, struct mmc_data *data,
++					struct page *page, int page_index,
++					int sector_offset, bool
+cmdq_enabled)
++{
++	struct bio *bio = get_bio(host, host->data, cmdq_enabled);
++
++	if (!bio)
++		return 0;
++
++	return exynos_fmp_crypt_cfg(bio, desc, page_index, sector_offset);
++}
++
++static int dw_mci_exynos_crypto_engine_clear(struct dw_mci *host,
++					void *desc, bool cmdq_enabled)
++{
++	struct bio *bio = get_bio(host, host->data, cmdq_enabled);
++
++	if (!bio)
++		return 0;
++
++	return exynos_fmp_crypt_clear(bio, desc);
++}
++#endif
++
+ /* Common capabilities of Exynos4/Exynos5 SoC */
+ static unsigned long exynos_dwmmc_caps[4] = {
+ 	MMC_CAP_1_8V_DDR | MMC_CAP_8_BIT_DATA | MMC_CAP_CMD23,
+@@ -524,6 +582,10 @@ static const struct dw_mci_drv_data exynos_drv_data = {
+ 	.parse_dt		= dw_mci_exynos_parse_dt,
+ 	.execute_tuning		= dw_mci_exynos_execute_tuning,
+ 	.prepare_hs400_tuning	= dw_mci_exynos_prepare_hs400_tuning,
++#ifdef CONFIG_MMC_DW_EXYNOS_FMP
++	.crypto_engine_cfg = dw_mci_exynos_crypto_engine_cfg,
++	.crypto_engine_clear = dw_mci_exynos_crypto_engine_clear,
++#endif
+ };
+ 
+ static const struct of_device_id dw_mci_exynos_match[] = {
 diff --git a/drivers/mmc/host/dw_mmc.c b/drivers/mmc/host/dw_mmc.c
-index eea52e2..0cdf574 100644
+index 0cdf574..4de476a 100644
 --- a/drivers/mmc/host/dw_mmc.c
 +++ b/drivers/mmc/host/dw_mmc.c
-@@ -470,6 +470,7 @@ static void dw_mci_dmac_complete_dma(void *arg)
- {
- 	struct dw_mci *host = arg;
- 	struct mmc_data *data = host->data;
-+	const struct dw_mci_drv_data *drv_data = host->drv_data;
+@@ -79,6 +79,32 @@ struct idmac_desc_64addr {
  
- 	dev_vdbg(host->dev, "DMA complete\n");
- 
-@@ -481,6 +482,9 @@ static void dw_mci_dmac_complete_dma(void *arg)
- 				    data->sg_len,
- 				    DMA_FROM_DEVICE);
- 
-+	if (drv_data && drv_data->crypto_engine_clear)
-+		drv_data->crypto_engine_clear(host, host->sg_cpu, false);
-+
- 	host->dma_ops->cleanup(host);
- 
- 	/*
-@@ -577,8 +581,10 @@ static inline int dw_mci_prepare_desc64(struct dw_mci
-*host,
- {
- 	unsigned int desc_len;
- 	struct idmac_desc_64addr *desc_first, *desc_last, *desc;
-+	int i, ret;
-+	const struct dw_mci_drv_data *drv_data = host->drv_data;
-+	int sector_offset = 0;
- 	u32 val;
--	int i;
- 
- 	desc_first = desc_last = desc = host->sg_cpu;
- 
-@@ -618,6 +624,20 @@ static inline int dw_mci_prepare_desc64(struct dw_mci
-*host,
- 			desc->des4 = mem_addr & 0xffffffff;
- 			desc->des5 = mem_addr >> 32;
- 
-+			if (drv_data && drv_data->crypto_engine_cfg) {
-+				ret = drv_data->crypto_engine_cfg(host,
-desc,
-+						data, sg_page(&data->sg[i]),
-i,
-+						sector_offset, false);
-+				if (ret) {
-+					dev_err(host->dev,
-+						"%s: fail to set
-crypto(%d)\n",
-+						__func__, ret);
-+					return -EPERM;
-+				}
-+				/* mmc sector size */
-+				sector_offset += desc_len / 512;
-+			}
-+
- 			/* Update physical address for the next desc */
- 			mem_addr += desc_len;
- 
-diff --git a/drivers/mmc/host/dw_mmc.h b/drivers/mmc/host/dw_mmc.h
-index da5923a..b32d39b 100644
---- a/drivers/mmc/host/dw_mmc.h
-+++ b/drivers/mmc/host/dw_mmc.h
-@@ -563,5 +563,11 @@ struct dw_mci_drv_data {
- 						struct mmc_ios *ios);
- 	int		(*switch_voltage)(struct mmc_host *mmc,
- 					  struct mmc_ios *ios);
-+	int		(*crypto_engine_cfg)(struct dw_mci *host, void
-*desc,
-+				struct mmc_data *data, struct page *page,
-+				int page_offset, int sector_offset,
-+				bool cmdq_enabled);
-+	int		(*crypto_engine_clear)(struct dw_mci *host,
-+				void *desc, bool cmdq_enabled);
+ 	u32		des6;	/* Lower 32-bits of Next Descriptor Address
+*/
+ 	u32		des7;	/* Upper 32-bits of Next Descriptor Address
+*/
++#if defined(CONFIG_MMC_DW_EXYNOS_FMP)
++	u32 des8;		/* File IV 0 */
++	u32 des9;		/* File IV 1 */
++	u32 des10;		/* File IV 2 */
++	u32 des11;		/* File IV 3 */
++	u32 des12;		/* File EncKey 0 */
++	u32 des13;		/* File EncKey 1 */
++	u32 des14;		/* File EncKey 2 */
++	u32 des15;		/* File EncKey 3 */
++	u32 des16;		/* File EncKey 4 */
++	u32 des17;		/* File EncKey 5 */
++	u32 des18;		/* File EncKey 6 */
++	u32 des19;		/* File EncKey 7 */
++	u32 des20;		/* File TwKey 0 */
++	u32 des21;		/* File TwKey 1 */
++	u32 des22;		/* File TwKey 2 */
++	u32 des23;		/* File TwKey 3 */
++	u32 des24;		/* File TwKey 4 */
++	u32 des25;		/* File TwKey 5 */
++	u32 des26;		/* File TwKey 6 */
++	u32 des27;		/* File TwKey 7 */
++	u32 des28;		/* Disk IV 0 */
++	u32 des29;		/* Disk IV 1 */
++	u32 des30;		/* Disk IV 2 */
++	u32 des31;		/* Disk IV 3 */
++#endif
  };
- #endif /* _DW_MMC_H_ */
+ 
+ struct idmac_desc {
 -- 
 2.7.4
