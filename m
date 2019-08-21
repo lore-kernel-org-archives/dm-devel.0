@@ -1,195 +1,331 @@
 From: "boojin.kim" <boojin.kim@samsung.com>
-Subject: [PATCH 4/9] mmc: dw_mmc-exynos: support FMP
-Date: Wed, 21 Aug 2019 15:42:22 +0900
-Message-ID: <004001d557eb$9697f5d0$c3c7e170$@samsung.com>
-References: <CGME20190821064223epcas2p18a14724427711e22c6c76b24bce1c8e0@epcas2p1.samsung.com>
+Subject: [PATCH 6/9] dm crypt: support diskcipher
+Date: Wed, 21 Aug 2019 15:42:30 +0900
+Message-ID: <004201d557eb$9b0a4410$d11ecc30$@samsung.com>
+References: <CGME20190821064230epcas2p1ad7301f2b1331bcab3126e6e37c0e272@epcas2p1.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Language: ko
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-Cc: 'Ulf Hansson' <ulf.hansson@linaro.org>, 'Mike Snitzer' <snitzer@redhat.com>, dm-devel@redhat.com, 'Andreas Dilger' <adilger.kernel@dilger.ca>, 'Alasdair Kergon' <agk@redhat.com>, 'Eric Biggers' <ebiggers@kernel.org>, linux-samsung-soc@vger.kernel.org, 'Herbert Xu' <herbert@gondor.apana.org.au>, 'Krzysztof Kozlowski' <krzk@kernel.org>, 'Jaehoon Chung' <jh80.chung@samsung.com>, 'Kukjin Kim' <kgene@kernel.org>, linux-ext4@vger.kernel.org, linux-block@vger.kernel.org, linux-fscrypt@vger.kernel.org, 'Jaegeuk Kim' <jaegeuk@kernel.org>, linux-arm-kernel@lists.infradead.org, 'Jens Axboe' <axboe@kernel.dk>, 'Theodore Ts'o' <tytso@mit.edu>, linux-mmc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, "'David S. Miller'" <davem@davemloft.net>
+Sender: linux-kernel-owner@vger.kernel.org
+Cc: 'Herbert Xu' <herbert@gondor.apana.org.au>, "'David S. Miller'" <davem@davemloft.net>, 'Eric Biggers' <ebiggers@kernel.org>, "'Theodore Y. Ts'o'" <tytso@mit.edu>, 'Chao Yu' <chao@kernel.org>, 'Jaegeuk Kim' <jaegeuk@kernel.org>, 'Andreas Dilger' <adilger.kernel@dilger.ca>'Theodore Ts'o' <tytso@mit.edu>, dm-devel@redhat.com, 'Mike Snitzer' <snitzer@redhat.com>, 'Alasdair Kergon' <agk@redhat.com>, 'Jens Axboe' <axboe@kernel.dk>, 'Krzysztof Kozlowski' <krzk@kernel.org>, 'Kukjin Kim' <kgene@kernel.org>, 'Jaehoon Chung' <jh80.chung@samsung.com>, 'Ulf Hansson' <ulf.hansson@linaro.org>, linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-mmc@vger.kernel.org, linux-samsung-soc
 List-Id: dm-devel.ids
 
-Exynos MMC uses FMP to encrypt data stored on MMC device.
-FMP H/W reads crypto information from MMC descriptor.
-So, when using FMP H/W, the format of MMC descriptor should be extended.
-The FMP driver is registered with the diskcipher algorithm,
-so exynos MMC calls diskcipher API to use FMP.
+This patch supports dm-crypt to use diskcipher in a specific ivmode
+(disk or fmp).
+Dm-crypt allocates diskcipher and sets the key on it.
+Then, dm-crypt sets diskcipher into BIO and submits the BIO without
+any additional data encryption.
 
-Cc: Ulf Hansson <ulf.hansson@linaro.org>
-Cc: Kukjin Kim <kgene@kernel.org>
-Cc: Krzysztof Kozlowski <krzk@kernel.org>
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
 Signed-off-by: Boojin Kim <boojin.kim@samsung.com>
 ---
- drivers/mmc/host/Kconfig         |  8 ++++++
- drivers/mmc/host/dw_mmc-exynos.c | 62
-++++++++++++++++++++++++++++++++++++++++
- drivers/mmc/host/dw_mmc.c        | 26 +++++++++++++++++
- 3 files changed, 96 insertions(+)
+ drivers/md/dm-crypt.c | 112
+++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 103 insertions(+), 9 deletions(-)
 
-diff --git a/drivers/mmc/host/Kconfig b/drivers/mmc/host/Kconfig
-index 14d89a1..f6c5a54 100644
---- a/drivers/mmc/host/Kconfig
-+++ b/drivers/mmc/host/Kconfig
-@@ -761,6 +761,14 @@ config MMC_DW_EXYNOS
- 	  Synopsys DesignWare Memory Card Interface driver. Select this
-option
- 	  for platforms based on Exynos4 and Exynos5 SoC's.
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 9f8b654..271cfcc 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -37,6 +37,7 @@
+ #include <keys/user-type.h>
  
-+config MMC_DW_EXYNOS_FMP
-+	tristate "EXYNOS Flash Memory Protector for MMC_DW"
-+	depends on MMC_DW_EXYNOS
-+	---help---
-+	  This selects the EXYNOS MMC_DW FMP Driver.
+ #include <linux/device-mapper.h>
++#include <crypto/diskcipher.h>
+ 
+ #define DM_MSG_PREFIX "crypt"
+ 
+@@ -130,6 +131,8 @@ enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID,
+ enum cipher_flags {
+ 	CRYPT_MODE_INTEGRITY_AEAD,	/* Use authenticated mode for cihper
+*/
+ 	CRYPT_IV_LARGE_SECTORS,		/* Calculate IV from sector_size,
+not 512B sectors */
++	CRYPT_MODE_DISKCIPHER,
++	CRYPT_MODE_SKCIPHER,
+ };
+ 
+ /*
+@@ -170,6 +173,7 @@ struct crypt_config {
+ 	union {
+ 		struct crypto_skcipher **tfms;
+ 		struct crypto_aead **tfms_aead;
++		struct crypto_diskcipher **tfms_diskc;
+ 	} cipher_tfm;
+ 	unsigned tfms_count;
+ 	unsigned long cipher_flags;
+@@ -955,6 +959,17 @@ static bool crypt_integrity_hmac(struct crypt_config
+*cc)
+ 	return crypt_integrity_aead(cc) && cc->key_mac_size;
+ }
+ 
++static bool crypt_mode_diskcipher(struct crypt_config *cc)
++{
++	return test_bit(CRYPT_MODE_DISKCIPHER, &cc->cipher_flags);
++}
 +
-+	  If you have a controller with this interface, say Y or M here.
++static bool crypt_mode_skcipher(struct crypt_config *cc)
++{
++	return test_bit(CRYPT_MODE_SKCIPHER, &cc->cipher_flags);
++}
 +
- config MMC_DW_HI3798CV200
- 	tristate "Hi3798CV200 specific extensions for Synopsys DW Memory
-Card Interface"
- 	depends on MMC_DW
-diff --git a/drivers/mmc/host/dw_mmc-exynos.c
-b/drivers/mmc/host/dw_mmc-exynos.c
-index 5e3d95b..d3848ba 100644
---- a/drivers/mmc/host/dw_mmc-exynos.c
-+++ b/drivers/mmc/host/dw_mmc-exynos.c
-@@ -14,10 +14,12 @@
- #include <linux/of_gpio.h>
- #include <linux/pm_runtime.h>
- #include <linux/slab.h>
-+#include <crypto/fmp.h>
++
+ /* Get sg containing data */
+ static struct scatterlist *crypt_get_sg_data(struct crypt_config *cc,
+ 					     struct scatterlist *sg)
+@@ -1573,13 +1588,13 @@ static void crypt_endio(struct bio *clone)
+ 	/*
+ 	 * free the processed pages
+ 	 */
+-	if (rw == WRITE)
++	if ((rw == WRITE) && !crypt_mode_diskcipher(cc))
+ 		crypt_free_buffer_pages(cc, clone);
  
- #include "dw_mmc.h"
- #include "dw_mmc-pltfm.h"
- #include "dw_mmc-exynos.h"
-+#include "../core/queue.h"
+ 	error = clone->bi_status;
+ 	bio_put(clone);
  
- /* Variations in Exynos specific dw-mshc controller */
- enum dw_mci_exynos_type {
-@@ -508,6 +510,62 @@ static int dw_mci_exynos_prepare_hs400_tuning(struct
-dw_mci *host,
+-	if (rw == READ && !error) {
++	if (rw == READ && !error && !crypt_mode_diskcipher(cc)) {
+ 		kcryptd_queue_crypt(io);
+ 		return;
+ 	}
+@@ -1618,6 +1633,11 @@ static int kcryptd_io_read(struct dm_crypt_io *io,
+gfp_t gfp)
+ 	crypt_inc_pending(io);
+ 
+ 	clone_init(io, clone);
++
++	if (crypt_mode_diskcipher(cc))
++		crypto_diskcipher_set(clone,
++			cc->cipher_tfm.tfms_diskc[0], NULL, 0);
++
+ 	clone->bi_iter.bi_sector = cc->start + io->sector;
+ 
+ 	if (dm_crypt_integrity_io_alloc(io, clone)) {
+@@ -1907,10 +1927,29 @@ static void crypt_free_tfms_skcipher(struct
+crypt_config *cc)
+ 	cc->cipher_tfm.tfms = NULL;
+ }
+ 
++static void crypt_free_tfms_diskcipher(struct crypt_config *cc)
++{
++	if (!crypt_mode_diskcipher(cc))
++		return;
++
++	if (cc->cipher_tfm.tfms_diskc[0] &&
++		!IS_ERR(cc->cipher_tfm.tfms_diskc[0])) {
++		crypto_diskcipher_clearkey(cc->cipher_tfm.tfms_diskc[0]);
++		crypto_free_diskcipher(cc->cipher_tfm.tfms_diskc[0]);
++		cc->cipher_tfm.tfms_diskc[0] = NULL;
++	}
++
++	kfree(cc->cipher_tfm.tfms_diskc);
++	cc->cipher_tfm.tfms_diskc = NULL;
++}
++
++
+ static void crypt_free_tfms(struct crypt_config *cc)
+ {
+ 	if (crypt_integrity_aead(cc))
+ 		crypt_free_tfms_aead(cc);
++	else if (crypt_mode_diskcipher(cc))
++		crypt_free_tfms_diskcipher(cc);
+ 	else
+ 		crypt_free_tfms_skcipher(cc);
+ }
+@@ -1934,6 +1973,7 @@ static int crypt_alloc_tfms_skcipher(struct
+crypt_config *cc, char *ciphermode)
+ 			return err;
+ 		}
+ 	}
++	set_bit(CRYPT_MODE_SKCIPHER, &cc->cipher_flags);
+ 
+ 	/*
+ 	 * dm-crypt performance can vary greatly depending on which crypto
+@@ -1965,10 +2005,34 @@ static int crypt_alloc_tfms_aead(struct crypt_config
+*cc, char *ciphermode)
  	return 0;
  }
  
-+#ifdef CONFIG_MMC_DW_EXYNOS_FMP
-+static struct bio *get_bio(struct dw_mci *host,
-+				struct mmc_data *data, bool cmdq_enabled)
++static int crypt_alloc_tfms_diskcipher(struct crypt_config *cc,
++				char *ciphermode)
 +{
-+	struct bio *bio = NULL;
-+	struct mmc_queue_req *mq_rq = NULL;
-+	struct request *req = NULL;
-+	struct mmc_blk_request *brq = NULL;
++	int err;
 +
-+	if (!host || !data) {
-+		pr_err("%s: Invalid MMC:%p data:%p\n", __func__, host,
-data);
-+		return NULL;
++	cc->cipher_tfm.tfms = kmalloc(sizeof(struct crypto_aead *),
+GFP_KERNEL);
++	if (!cc->cipher_tfm.tfms)
++		return -ENOMEM;
++
++	cc->cipher_tfm.tfms_diskc[0] =
++	    crypto_alloc_diskcipher(ciphermode, 0, 0, 1);
++	if (IS_ERR(cc->cipher_tfm.tfms_diskc[0])) {
++		err = PTR_ERR(cc->cipher_tfm.tfms_diskc[0]);
++		crypt_free_tfms(cc);
++		pr_err("%s: no diskcipher with %s\n", __func__, ciphermode);
++		return err;
++	}
++	pr_info("%s is done with %s\n", __func__, ciphermode);
++
++	return 0;
++}
++
+ static int crypt_alloc_tfms(struct crypt_config *cc, char *ciphermode)
+ {
+ 	if (crypt_integrity_aead(cc))
+ 		return crypt_alloc_tfms_aead(cc, ciphermode);
++	else if (crypt_mode_diskcipher(cc))
++		return crypt_alloc_tfms_diskcipher(cc, ciphermode);
+ 	else
+ 		return crypt_alloc_tfms_skcipher(cc, ciphermode);
+ }
+@@ -2030,6 +2094,11 @@ static int crypt_setkey(struct crypt_config *cc)
+ 			r = crypto_aead_setkey(cc->cipher_tfm.tfms_aead[i],
+ 					       cc->key + (i * subkey_size),
+ 					       subkey_size);
++		else if (crypt_mode_diskcipher(cc))
++			r = crypto_diskcipher_setkey(
++
+cc->cipher_tfm.tfms_diskc[i],
++						cc->key + (i * subkey_size),
++						subkey_size, 1);
+ 		else
+ 			r = crypto_skcipher_setkey(cc->cipher_tfm.tfms[i],
+ 						   cc->key + (i *
+subkey_size),
+@@ -2510,7 +2579,7 @@ static int crypt_ctr_cipher_new(struct dm_target *ti,
+char *cipher_in, char *key
+ 			return -ENOMEM;
+ 		}
+ 		cc->iv_size = crypto_aead_ivsize(any_tfm_aead(cc));
+-	} else
++	} else if (crypt_mode_skcipher(cc))
+ 		cc->iv_size = crypto_skcipher_ivsize(any_tfm(cc));
+ 
+ 	ret = crypt_ctr_blkdev_cipher(cc);
+@@ -2560,6 +2629,9 @@ static int crypt_ctr_cipher_old(struct dm_target *ti,
+char *cipher_in, char *key
+ 	chainmode = strsep(&tmp, "-");
+ 	*ivmode = strsep(&tmp, ":");
+ 	*ivopts = tmp;
++	if (*ivmode)
++		if (!strcmp(*ivmode, "disk") || !strcmp(*ivmode, "fmp"))
++			set_bit(CRYPT_MODE_DISKCIPHER, &cc->cipher_flags);
+ 
+ 	/*
+ 	 * For compatibility with the original dm-crypt mapping format, if
+@@ -2621,9 +2693,11 @@ static int crypt_ctr_cipher(struct dm_target *ti,
+char *cipher_in, char *key)
+ 		return ret;
+ 
+ 	/* Initialize IV */
+-	ret = crypt_ctr_ivmode(ti, ivmode);
+-	if (ret < 0)
+-		return ret;
++	if (!crypt_mode_diskcipher(cc)) {
++		ret = crypt_ctr_ivmode(ti, ivmode);
++		if (ret < 0)
++			return ret;
++	}
+ 
+ 	/* Initialize and set key */
+ 	ret = crypt_set_key(cc, key);
+@@ -2654,6 +2728,11 @@ static int crypt_ctr_cipher(struct dm_target *ti,
+char *cipher_in, char *key)
+ 	if (cc->key_string)
+ 		memset(cc->key, 0, cc->key_size * sizeof(u8));
+ 
++	pr_info("%s with ivmode:%s, ivopts:%s, aead:%d, diskcipher:%d(%p),
+skcipher:%d\n",
++			__func__, ivmode, ivopts, crypt_integrity_aead(cc),
++			crypt_mode_diskcipher(cc),
+cc->cipher_tfm.tfms_diskc[0],
++			crypt_mode_skcipher(cc));
++
+ 	return ret;
+ }
+ 
+@@ -2788,11 +2867,15 @@ static int crypt_ctr(struct dm_target *ti, unsigned
+int argc, char **argv)
+ 	ret = crypt_ctr_cipher(ti, argv[0], argv[1]);
+ 	if (ret < 0)
+ 		goto bad;
+-
+ 	if (crypt_integrity_aead(cc)) {
+ 		cc->dmreq_start = sizeof(struct aead_request);
+ 		cc->dmreq_start += crypto_aead_reqsize(any_tfm_aead(cc));
+ 		align_mask = crypto_aead_alignmask(any_tfm_aead(cc));
++	} else if (crypt_mode_diskcipher(cc)) {
++		cc->per_bio_data_size = ti->per_io_data_size =
++			ALIGN(sizeof(struct dm_crypt_io),
++			ARCH_KMALLOC_MINALIGN);
++		goto get_bio;
+ 	} else {
+ 		cc->dmreq_start = sizeof(struct skcipher_request);
+ 		cc->dmreq_start += crypto_skcipher_reqsize(any_tfm(cc));
+@@ -2836,6 +2919,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned
+int argc, char **argv)
+ 		goto bad;
+ 	}
+ 
++get_bio:
+ 	ret = bioset_init(&cc->bs, MIN_IOS, 0, BIOSET_NEED_BVECS);
+ 	if (ret) {
+ 		ti->error = "Cannot allocate crypt bioset";
+@@ -2893,6 +2977,12 @@ static int crypt_ctr(struct dm_target *ti, unsigned
+int argc, char **argv)
+ 		goto bad;
+ 	}
+ 
++	if (crypt_mode_diskcipher(cc)) {
++		cc->crypt_queue = NULL;
++		cc->write_thread = NULL;
++		goto out;
 +	}
 +
-+	if (cmdq_enabled) {
-+		pr_err("%s: no support cmdq yet:%p\n", __func__, host);
-+		bio = NULL;
-+	} else {
-+		brq = container_of(data, struct mmc_blk_request, data);
-+		if (!brq)
-+			return NULL;
-+
-+		mq_rq = container_of(brq, struct mmc_queue_req, brq);
-+		if (virt_addr_valid(mq_rq))
-+			req = mmc_queue_req_to_req(mq_rq);
-+			if (virt_addr_valid(req))
-+				bio = req->bio;
-+	}
-+	return bio;
-+}
-+
-+static int dw_mci_exynos_crypto_engine_cfg(struct dw_mci *host,
-+					void *desc, struct mmc_data *data,
-+					struct page *page, int page_index,
-+					int sector_offset, bool
-cmdq_enabled)
-+{
-+	struct bio *bio = get_bio(host, host->data, cmdq_enabled);
-+
-+	if (!bio)
-+		return 0;
-+
-+	return exynos_fmp_crypt_cfg(bio, desc, page_index, sector_offset);
-+}
-+
-+static int dw_mci_exynos_crypto_engine_clear(struct dw_mci *host,
-+					void *desc, bool cmdq_enabled)
-+{
-+	struct bio *bio = get_bio(host, host->data, cmdq_enabled);
-+
-+	if (!bio)
-+		return 0;
-+
-+	return exynos_fmp_crypt_clear(bio, desc);
-+}
-+#endif
-+
- /* Common capabilities of Exynos4/Exynos5 SoC */
- static unsigned long exynos_dwmmc_caps[4] = {
- 	MMC_CAP_1_8V_DDR | MMC_CAP_8_BIT_DATA | MMC_CAP_CMD23,
-@@ -524,6 +582,10 @@ static const struct dw_mci_drv_data exynos_drv_data = {
- 	.parse_dt		= dw_mci_exynos_parse_dt,
- 	.execute_tuning		= dw_mci_exynos_execute_tuning,
- 	.prepare_hs400_tuning	= dw_mci_exynos_prepare_hs400_tuning,
-+#ifdef CONFIG_MMC_DW_EXYNOS_FMP
-+	.crypto_engine_cfg = dw_mci_exynos_crypto_engine_cfg,
-+	.crypto_engine_clear = dw_mci_exynos_crypto_engine_clear,
-+#endif
- };
+ 	if (test_bit(DM_CRYPT_SAME_CPU, &cc->flags))
+ 		cc->crypt_queue = alloc_workqueue("kcryptd/%s",
+ 						  WQ_HIGHPRI |
+WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM,
+@@ -2918,6 +3008,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned
+int argc, char **argv)
+ 	}
+ 	wake_up_process(cc->write_thread);
  
- static const struct of_device_id dw_mci_exynos_match[] = {
-diff --git a/drivers/mmc/host/dw_mmc.c b/drivers/mmc/host/dw_mmc.c
-index 0cdf574..4de476a 100644
---- a/drivers/mmc/host/dw_mmc.c
-+++ b/drivers/mmc/host/dw_mmc.c
-@@ -79,6 +79,32 @@ struct idmac_desc_64addr {
++out:
+ 	ti->num_flush_bios = 1;
  
- 	u32		des6;	/* Lower 32-bits of Next Descriptor Address
-*/
- 	u32		des7;	/* Upper 32-bits of Next Descriptor Address
-*/
-+#if defined(CONFIG_MMC_DW_EXYNOS_FMP)
-+	u32 des8;		/* File IV 0 */
-+	u32 des9;		/* File IV 1 */
-+	u32 des10;		/* File IV 2 */
-+	u32 des11;		/* File IV 3 */
-+	u32 des12;		/* File EncKey 0 */
-+	u32 des13;		/* File EncKey 1 */
-+	u32 des14;		/* File EncKey 2 */
-+	u32 des15;		/* File EncKey 3 */
-+	u32 des16;		/* File EncKey 4 */
-+	u32 des17;		/* File EncKey 5 */
-+	u32 des18;		/* File EncKey 6 */
-+	u32 des19;		/* File EncKey 7 */
-+	u32 des20;		/* File TwKey 0 */
-+	u32 des21;		/* File TwKey 1 */
-+	u32 des22;		/* File TwKey 2 */
-+	u32 des23;		/* File TwKey 3 */
-+	u32 des24;		/* File TwKey 4 */
-+	u32 des25;		/* File TwKey 5 */
-+	u32 des26;		/* File TwKey 6 */
-+	u32 des27;		/* File TwKey 7 */
-+	u32 des28;		/* Disk IV 0 */
-+	u32 des29;		/* Disk IV 1 */
-+	u32 des30;		/* Disk IV 2 */
-+	u32 des31;		/* Disk IV 3 */
-+#endif
- };
+ 	return 0;
+@@ -2981,10 +3072,10 @@ static int crypt_map(struct dm_target *ti, struct
+bio *bio)
  
- struct idmac_desc {
+ 	if (crypt_integrity_aead(cc))
+ 		io->ctx.r.req_aead = (struct aead_request *)(io + 1);
+-	else
++	else if (crypt_mode_skcipher(cc))
+ 		io->ctx.r.req = (struct skcipher_request *)(io + 1);
+ 
+-	if (bio_data_dir(io->base_bio) == READ) {
++	if ((bio_data_dir(io->base_bio) == READ) ||
+crypt_mode_diskcipher(cc)) {
+ 		if (kcryptd_io_read(io, GFP_NOWAIT))
+ 			kcryptd_queue_read(io);
+ 	} else
+@@ -3143,6 +3234,9 @@ static void crypt_io_hints(struct dm_target *ti,
+struct queue_limits *limits)
+ 	limits->physical_block_size =
+ 		max_t(unsigned, limits->physical_block_size,
+cc->sector_size);
+ 	limits->io_min = max_t(unsigned, limits->io_min, cc->sector_size);
++
++	if (crypt_mode_diskcipher(cc))
++		limits->logical_block_size = PAGE_SIZE;
+ }
+ 
+ static struct target_type crypt_target = {
 -- 
 2.7.4
