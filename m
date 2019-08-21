@@ -1,331 +1,400 @@
 From: "boojin.kim" <boojin.kim@samsung.com>
-Subject: [PATCH 6/9] dm crypt: support diskcipher
-Date: Wed, 21 Aug 2019 15:42:30 +0900
-Message-ID: <004201d557eb$9b0a4410$d11ecc30$@samsung.com>
-References: <CGME20190821064230epcas2p1ad7301f2b1331bcab3126e6e37c0e272@epcas2p1.samsung.com>
+Subject: [PATCH 7/9] fscrypt: support diskcipher
+Date: Wed, 21 Aug 2019 15:42:36 +0900
+Message-ID: <004301d557eb$9ef2c8e0$dcd85aa0$@samsung.com>
+References: <CGME20190821064237epcas2p4d8bc4858fda55be213eb51b19e52fc71@epcas2p4.samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Language: ko
 Sender: linux-kernel-owner@vger.kernel.org
+To: linux-fsdevel@vger.kernel.org
 Cc: 'Herbert Xu' <herbert@gondor.apana.org.au>, "'David S. Miller'" <davem@davemloft.net>, 'Eric Biggers' <ebiggers@kernel.org>, "'Theodore Y. Ts'o'" <tytso@mit.edu>, 'Chao Yu' <chao@kernel.org>, 'Jaegeuk Kim' <jaegeuk@kernel.org>, 'Andreas Dilger' <adilger.kernel@dilger.ca>'Theodore Ts'o' <tytso@mit.edu>, dm-devel@redhat.com, 'Mike Snitzer' <snitzer@redhat.com>, 'Alasdair Kergon' <agk@redhat.com>, 'Jens Axboe' <axboe@kernel.dk>, 'Krzysztof Kozlowski' <krzk@kernel.org>, 'Kukjin Kim' <kgene@kernel.org>, 'Jaehoon Chung' <jh80.chung@samsung.com>, 'Ulf Hansson' <ulf.hansson@linaro.org>, linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-mmc@vger.kernel.org, linux-samsung-soc
 List-Id: dm-devel.ids
 
-This patch supports dm-crypt to use diskcipher in a specific ivmode
-(disk or fmp).
-Dm-crypt allocates diskcipher and sets the key on it.
-Then, dm-crypt sets diskcipher into BIO and submits the BIO without
-any additional data encryption.
+This patch support fscrypt to use diskcipher in a specific crypto mode
+(FSCRYPT_MODE_PRIVATE).
+Fscrypt allocates diskcipher and sets the key on diskcipher.
+Fscrypt doesn't handle additional data encryption when using diskcipher.
 
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+Cc: Theodore Y. Ts'o <tytso@mit.edu>
+Cc: Jaegeuk Kim <jaegeuk@kernel.org>
+Cc: Eric Biggers <ebiggers@kernel.org>
 Signed-off-by: Boojin Kim <boojin.kim@samsung.com>
 ---
- drivers/md/dm-crypt.c | 112
-++++++++++++++++++++++++++++++++++++++++++++++----
- 1 file changed, 103 insertions(+), 9 deletions(-)
+ fs/buffer.c                   |  2 ++
+ fs/crypto/bio.c               | 43 ++++++++++++++++++++++++++-----
+ fs/crypto/fscrypt_private.h   | 28 +++++++++++++++++++-
+ fs/crypto/keysetup.c          | 60
++++++++++++++++++++++++++++++++++++++++++--
+ fs/crypto/keysetup_v1.c       |  2 +-
+ include/linux/fscrypt.h       | 19 ++++++++++++++
+ include/uapi/linux/fscrypt.h  |  2 ++
+ tools/include/uapi/linux/fs.h |  1 +
+ 8 files changed, 147 insertions(+), 10 deletions(-)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 9f8b654..271cfcc 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -37,6 +37,7 @@
- #include <keys/user-type.h>
- 
- #include <linux/device-mapper.h>
-+#include <crypto/diskcipher.h>
- 
- #define DM_MSG_PREFIX "crypt"
- 
-@@ -130,6 +131,8 @@ enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID,
- enum cipher_flags {
- 	CRYPT_MODE_INTEGRITY_AEAD,	/* Use authenticated mode for cihper
-*/
- 	CRYPT_IV_LARGE_SECTORS,		/* Calculate IV from sector_size,
-not 512B sectors */
-+	CRYPT_MODE_DISKCIPHER,
-+	CRYPT_MODE_SKCIPHER,
- };
- 
- /*
-@@ -170,6 +173,7 @@ struct crypt_config {
- 	union {
- 		struct crypto_skcipher **tfms;
- 		struct crypto_aead **tfms_aead;
-+		struct crypto_diskcipher **tfms_diskc;
- 	} cipher_tfm;
- 	unsigned tfms_count;
- 	unsigned long cipher_flags;
-@@ -955,6 +959,17 @@ static bool crypt_integrity_hmac(struct crypt_config
-*cc)
- 	return crypt_integrity_aead(cc) && cc->key_mac_size;
- }
- 
-+static bool crypt_mode_diskcipher(struct crypt_config *cc)
-+{
-+	return test_bit(CRYPT_MODE_DISKCIPHER, &cc->cipher_flags);
-+}
-+
-+static bool crypt_mode_skcipher(struct crypt_config *cc)
-+{
-+	return test_bit(CRYPT_MODE_SKCIPHER, &cc->cipher_flags);
-+}
-+
-+
- /* Get sg containing data */
- static struct scatterlist *crypt_get_sg_data(struct crypt_config *cc,
- 					     struct scatterlist *sg)
-@@ -1573,13 +1588,13 @@ static void crypt_endio(struct bio *clone)
- 	/*
- 	 * free the processed pages
- 	 */
--	if (rw == WRITE)
-+	if ((rw == WRITE) && !crypt_mode_diskcipher(cc))
- 		crypt_free_buffer_pages(cc, clone);
- 
- 	error = clone->bi_status;
- 	bio_put(clone);
- 
--	if (rw == READ && !error) {
-+	if (rw == READ && !error && !crypt_mode_diskcipher(cc)) {
- 		kcryptd_queue_crypt(io);
- 		return;
+diff --git a/fs/buffer.c b/fs/buffer.c
+index 131d39e..a7de079 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -3129,6 +3129,8 @@ static int submit_bh_wbc(int op, int op_flags, struct
+buffer_head *bh,
+ 		wbc_account_cgroup_owner(wbc, bh->b_page, bh->b_size);
  	}
-@@ -1618,6 +1633,11 @@ static int kcryptd_io_read(struct dm_crypt_io *io,
-gfp_t gfp)
- 	crypt_inc_pending(io);
  
- 	clone_init(io, clone);
-+
-+	if (crypt_mode_diskcipher(cc))
-+		crypto_diskcipher_set(clone,
-+			cc->cipher_tfm.tfms_diskc[0], NULL, 0);
-+
- 	clone->bi_iter.bi_sector = cc->start + io->sector;
- 
- 	if (dm_crypt_integrity_io_alloc(io, clone)) {
-@@ -1907,10 +1927,29 @@ static void crypt_free_tfms_skcipher(struct
-crypt_config *cc)
- 	cc->cipher_tfm.tfms = NULL;
- }
- 
-+static void crypt_free_tfms_diskcipher(struct crypt_config *cc)
-+{
-+	if (!crypt_mode_diskcipher(cc))
-+		return;
-+
-+	if (cc->cipher_tfm.tfms_diskc[0] &&
-+		!IS_ERR(cc->cipher_tfm.tfms_diskc[0])) {
-+		crypto_diskcipher_clearkey(cc->cipher_tfm.tfms_diskc[0]);
-+		crypto_free_diskcipher(cc->cipher_tfm.tfms_diskc[0]);
-+		cc->cipher_tfm.tfms_diskc[0] = NULL;
-+	}
-+
-+	kfree(cc->cipher_tfm.tfms_diskc);
-+	cc->cipher_tfm.tfms_diskc = NULL;
-+}
-+
-+
- static void crypt_free_tfms(struct crypt_config *cc)
- {
- 	if (crypt_integrity_aead(cc))
- 		crypt_free_tfms_aead(cc);
-+	else if (crypt_mode_diskcipher(cc))
-+		crypt_free_tfms_diskcipher(cc);
- 	else
- 		crypt_free_tfms_skcipher(cc);
- }
-@@ -1934,6 +1973,7 @@ static int crypt_alloc_tfms_skcipher(struct
-crypt_config *cc, char *ciphermode)
- 			return err;
- 		}
- 	}
-+	set_bit(CRYPT_MODE_SKCIPHER, &cc->cipher_flags);
- 
- 	/*
- 	 * dm-crypt performance can vary greatly depending on which crypto
-@@ -1965,10 +2005,34 @@ static int crypt_alloc_tfms_aead(struct crypt_config
-*cc, char *ciphermode)
++	if (bio->bi_opf & REQ_CRYPT)
++		bio->bi_aux_private = bh->b_private;
+ 	submit_bio(bio);
  	return 0;
  }
+diff --git a/fs/crypto/bio.c b/fs/crypto/bio.c
+index 82da251..9e4bf9b 100644
+--- a/fs/crypto/bio.c
++++ b/fs/crypto/bio.c
+@@ -24,6 +24,7 @@
+ #include <linux/module.h>
+ #include <linux/bio.h>
+ #include <linux/namei.h>
++#include <crypto/diskcipher.h>
+ #include "fscrypt_private.h"
  
-+static int crypt_alloc_tfms_diskcipher(struct crypt_config *cc,
-+				char *ciphermode)
-+{
-+	int err;
-+
-+	cc->cipher_tfm.tfms = kmalloc(sizeof(struct crypto_aead *),
-GFP_KERNEL);
-+	if (!cc->cipher_tfm.tfms)
-+		return -ENOMEM;
-+
-+	cc->cipher_tfm.tfms_diskc[0] =
-+	    crypto_alloc_diskcipher(ciphermode, 0, 0, 1);
-+	if (IS_ERR(cc->cipher_tfm.tfms_diskc[0])) {
-+		err = PTR_ERR(cc->cipher_tfm.tfms_diskc[0]);
-+		crypt_free_tfms(cc);
-+		pr_err("%s: no diskcipher with %s\n", __func__, ciphermode);
-+		return err;
+ static void __fscrypt_decrypt_bio(struct bio *bio, bool done)
+@@ -81,13 +82,19 @@ int fscrypt_zeroout_range(const struct inode *inode,
+pgoff_t lblk,
+ 	if (!ciphertext_page)
+ 		return -ENOMEM;
+ 
+-	while (len--) {
+-		err = fscrypt_crypt_block(inode, FS_ENCRYPT, lblk,
+-					  ZERO_PAGE(0), ciphertext_page,
+-					  blocksize, 0, GFP_NOFS);
+-		if (err)
+-			goto errout;
++	if (__fscrypt_disk_encrypted(inode)) {
++		memset(page_address(ciphertext_page), 0, PAGE_SIZE);
++		ciphertext_page->mapping = inode->i_mapping;
 +	}
-+	pr_info("%s is done with %s\n", __func__, ciphermode);
+ 
++	while (len--) {
++		if (!__fscrypt_disk_encrypted(inode))  {
++			err = fscrypt_crypt_block(inode, FS_ENCRYPT, lblk,
++						  ZERO_PAGE(0),
+ciphertext_page,
++						  blocksize, 0, GFP_NOFS);
++			if (err)
++				goto errout;
++		}
+ 		bio = bio_alloc(GFP_NOWAIT, 1);
+ 		if (!bio) {
+ 			err = -ENOMEM;
+@@ -103,6 +110,7 @@ int fscrypt_zeroout_range(const struct inode *inode,
+pgoff_t lblk,
+ 			err = -EIO;
+ 			goto errout;
+ 		}
++		fscrypt_set_bio(inode, bio, 0);
+ 		err = submit_bio_wait(bio);
+ 		if (err == 0 && bio->bi_status)
+ 			err = -EIO;
+@@ -118,3 +126,26 @@ int fscrypt_zeroout_range(const struct inode *inode,
+pgoff_t lblk,
+ 	return err;
+ }
+ EXPORT_SYMBOL(fscrypt_zeroout_range);
 +
++int fscrypt_disk_encrypted(const struct inode *inode)
++{
++	return __fscrypt_disk_encrypted(inode);
++}
++
++void fscrypt_set_bio(const struct inode *inode, struct bio *bio, u64 dun)
++{
++#ifdef CONFIG_CRYPTO_DISKCIPHER
++	if (__fscrypt_disk_encrypted(inode))
++		crypto_diskcipher_set(bio, inode->i_crypt_info->ci_dtfm,
++					inode, dun);
++#endif
++}
++
++void *fscrypt_get_diskcipher(const struct inode *inode)
++{
++#ifdef CONFIG_CRYPTO_DISKCIPHER
++	if (fscrypt_has_encryption_key(inode))
++		return inode->i_crypt_info->ci_dtfm;
++#endif
++	return NULL;
++}
+diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
+index e84efc0..d2b5fb6 100644
+--- a/fs/crypto/fscrypt_private.h
++++ b/fs/crypto/fscrypt_private.h
+@@ -163,6 +163,10 @@ struct fscrypt_info {
+ 	/* The actual crypto transform used for encryption and decryption */
+ 	struct crypto_skcipher *ci_ctfm;
+ 
++	/* Cipher for inline encryption engine */
++#ifdef CONFIG_CRYPTO_DISKCIPHER
++	struct crypto_diskcipher *ci_dtfm;
++#endif
+ 	/*
+ 	 * Cipher for ESSIV IV generation.  Only set for CBC contents
+ 	 * encryption, otherwise is NULL.
+@@ -226,6 +230,10 @@ static inline bool fscrypt_valid_enc_modes(u32
+contents_mode,
+ 	    filenames_mode == FSCRYPT_MODE_ADIANTUM)
+ 		return true;
+ 
++	if (contents_mode == FSCRYPT_MODE_PRIVATE &&
++		filenames_mode == FSCRYPT_MODE_AES_256_CTS)
++		return true;
++
+ 	return false;
+ }
+ 
+@@ -438,13 +446,19 @@ extern int __init fscrypt_init_keyring(void);
+ 
+ /* keysetup.c */
+ 
++enum cipher_flags {
++	CRYPT_MODE_SKCIPHER,
++	CRYPT_MODE_ESSIV,
++	CRYPT_MODE_DISKCIPHER,
++};
++
+ struct fscrypt_mode {
+ 	const char *friendly_name;
+ 	const char *cipher_str;
+ 	int keysize;
+ 	int ivsize;
+ 	bool logged_impl_name;
+-	bool needs_essiv;
++	enum cipher_flags flags;
+ };
+ 
+ static inline bool
+@@ -453,6 +467,18 @@ fscrypt_mode_supports_direct_key(const struct
+fscrypt_mode *mode)
+ 	return mode->ivsize >= offsetofend(union fscrypt_iv, nonce);
+ }
+ 
++static inline int __fscrypt_disk_encrypted(const struct inode *inode)
++{
++#if IS_ENABLED(CONFIG_FS_ENCRYPTION)
++#if IS_ENABLED(CONFIG_CRYPTO_DISKCIPHER)
++	if (inode && inode->i_crypt_info)
++		return S_ISREG(inode->i_mode) &&
++			(inode->i_crypt_info->ci_dtfm != NULL);
++#endif
++#endif
 +	return 0;
 +}
 +
- static int crypt_alloc_tfms(struct crypt_config *cc, char *ciphermode)
+ extern struct crypto_skcipher *
+ fscrypt_allocate_skcipher(struct fscrypt_mode *mode, const u8 *raw_key,
+ 			  const struct inode *inode);
+diff --git a/fs/crypto/keysetup.c b/fs/crypto/keysetup.c
+index d71c2d6..06d9609 100644
+--- a/fs/crypto/keysetup.c
++++ b/fs/crypto/keysetup.c
+@@ -11,6 +11,7 @@
+ #include <crypto/aes.h>
+ #include <crypto/sha.h>
+ #include <crypto/skcipher.h>
++#include <crypto/diskcipher.h>
+ #include <linux/key.h>
+ 
+ #include "fscrypt_private.h"
+@@ -35,7 +36,7 @@ static struct fscrypt_mode available_modes[] = {
+ 		.cipher_str = "cbc(aes)",
+ 		.keysize = 16,
+ 		.ivsize = 16,
+-		.needs_essiv = true,
++		.flags = CRYPT_MODE_ESSIV,
+ 	},
+ 	[FSCRYPT_MODE_AES_128_CTS] = {
+ 		.friendly_name = "AES-128-CTS-CBC",
+@@ -49,6 +50,13 @@ static struct fscrypt_mode available_modes[] = {
+ 		.keysize = 32,
+ 		.ivsize = 32,
+ 	},
++	[FSCRYPT_MODE_PRIVATE] = {
++		.friendly_name = "AES-256-XTS-DISK",
++		.cipher_str = "xts(aes)-disk",
++		.keysize = 64,
++		.ivsize = 16,
++		.flags = CRYPT_MODE_DISKCIPHER,
++	},
+ };
+ 
+ static struct fscrypt_mode *
+@@ -111,6 +119,35 @@ struct crypto_skcipher
+*fscrypt_allocate_skcipher(struct fscrypt_mode *mode,
+ 	return ERR_PTR(err);
+ }
+ 
++#if defined(CONFIG_CRYPTO_DISKCIPHER)
++/* Create a diskcipher cipher object for the given encryption mode and key
+*/
++static struct crypto_diskcipher *fscrypt_allocate_diskcipher(
++		struct fscrypt_mode *mode, const u8 *raw_key,
++			   const struct inode *inode)
++{
++	struct crypto_diskcipher *tfm;
++	int err;
++	bool force = (mode->flags == CRYPT_MODE_DISKCIPHER) ? 0 : 1;
++
++	tfm = crypto_alloc_diskcipher(mode->cipher_str, 0, 0, force);
++	if (IS_ERR(tfm)) {
++		fscrypt_warn(inode->i_sb,
++				 "error allocating '%s' transform for inode
+%lu: %ld",
++				 mode->cipher_str, inode->i_ino,
+PTR_ERR(tfm));
++		return tfm;
++	}
++	err = crypto_diskcipher_setkey(tfm, raw_key, mode->keysize, 0);
++	if (err)
++		goto err_free_dtfm;
++
++	return tfm;
++
++err_free_dtfm:
++	crypto_free_diskcipher(tfm);
++	return ERR_PTR(err);
++}
++#endif
++
+ static int derive_essiv_salt(const u8 *key, int keysize, u8 *salt)
  {
- 	if (crypt_integrity_aead(cc))
- 		return crypt_alloc_tfms_aead(cc, ciphermode);
-+	else if (crypt_mode_diskcipher(cc))
-+		return crypt_alloc_tfms_diskcipher(cc, ciphermode);
- 	else
- 		return crypt_alloc_tfms_skcipher(cc, ciphermode);
- }
-@@ -2030,6 +2094,11 @@ static int crypt_setkey(struct crypt_config *cc)
- 			r = crypto_aead_setkey(cc->cipher_tfm.tfms_aead[i],
- 					       cc->key + (i * subkey_size),
- 					       subkey_size);
-+		else if (crypt_mode_diskcipher(cc))
-+			r = crypto_diskcipher_setkey(
+ 	struct crypto_shash *tfm = READ_ONCE(essiv_hash_tfm);
+@@ -187,13 +224,29 @@ int fscrypt_set_derived_key(struct fscrypt_info *ci,
+const u8 *derived_key)
+ 	struct crypto_skcipher *ctfm;
+ 	int err;
+ 
++#if defined(CONFIG_CRYPTO_DISKCIPHER)
++	if (S_ISREG(ci->ci_inode->i_mode) &&
++		(mode->flags == CRYPT_MODE_DISKCIPHER)) {
++		ci->ci_dtfm = fscrypt_allocate_diskcipher(mode, derived_key,
 +
-cc->cipher_tfm.tfms_diskc[i],
-+						cc->key + (i * subkey_size),
-+						subkey_size, 1);
- 		else
- 			r = crypto_skcipher_setkey(cc->cipher_tfm.tfms[i],
- 						   cc->key + (i *
-subkey_size),
-@@ -2510,7 +2579,7 @@ static int crypt_ctr_cipher_new(struct dm_target *ti,
-char *cipher_in, char *key
- 			return -ENOMEM;
- 		}
- 		cc->iv_size = crypto_aead_ivsize(any_tfm_aead(cc));
--	} else
-+	} else if (crypt_mode_skcipher(cc))
- 		cc->iv_size = crypto_skcipher_ivsize(any_tfm(cc));
- 
- 	ret = crypt_ctr_blkdev_cipher(cc);
-@@ -2560,6 +2629,9 @@ static int crypt_ctr_cipher_old(struct dm_target *ti,
-char *cipher_in, char *key
- 	chainmode = strsep(&tmp, "-");
- 	*ivmode = strsep(&tmp, ":");
- 	*ivopts = tmp;
-+	if (*ivmode)
-+		if (!strcmp(*ivmode, "disk") || !strcmp(*ivmode, "fmp"))
-+			set_bit(CRYPT_MODE_DISKCIPHER, &cc->cipher_flags);
- 
- 	/*
- 	 * For compatibility with the original dm-crypt mapping format, if
-@@ -2621,9 +2693,11 @@ static int crypt_ctr_cipher(struct dm_target *ti,
-char *cipher_in, char *key)
- 		return ret;
- 
- 	/* Initialize IV */
--	ret = crypt_ctr_ivmode(ti, ivmode);
--	if (ret < 0)
--		return ret;
-+	if (!crypt_mode_diskcipher(cc)) {
-+		ret = crypt_ctr_ivmode(ti, ivmode);
-+		if (ret < 0)
-+			return ret;
+ci->ci_inode);
++		if (IS_ERR(ci->ci_dtfm)) {
++			fscrypt_warn(ci->ci_inode,
++				     "Error allocating Diskcipher: %p",
++				     PTR_ERR(ci->ci_dtfm));
++			ci->ci_dtfm = NULL;
++			return -EINVAL;
++		}
++		return 0;
 +	}
- 
- 	/* Initialize and set key */
- 	ret = crypt_set_key(cc, key);
-@@ -2654,6 +2728,11 @@ static int crypt_ctr_cipher(struct dm_target *ti,
-char *cipher_in, char *key)
- 	if (cc->key_string)
- 		memset(cc->key, 0, cc->key_size * sizeof(u8));
- 
-+	pr_info("%s with ivmode:%s, ivopts:%s, aead:%d, diskcipher:%d(%p),
-skcipher:%d\n",
-+			__func__, ivmode, ivopts, crypt_integrity_aead(cc),
-+			crypt_mode_diskcipher(cc),
-cc->cipher_tfm.tfms_diskc[0],
-+			crypt_mode_skcipher(cc));
++#endif
 +
- 	return ret;
+ 	ctfm = fscrypt_allocate_skcipher(mode, derived_key, ci->ci_inode);
+ 	if (IS_ERR(ctfm))
+ 		return PTR_ERR(ctfm);
+ 
+ 	ci->ci_ctfm = ctfm;
+ 
+-	if (mode->needs_essiv) {
++	if (mode->flags == CRYPT_MODE_ESSIV) {
+ 		err = init_essiv_generator(ci, derived_key, mode->keysize);
+ 		if (err) {
+ 			fscrypt_warn(ci->ci_inode,
+@@ -394,6 +447,9 @@ static void put_crypt_info(struct fscrypt_info *ci)
+ 		   !fscrypt_is_direct_key_policy(&ci->ci_policy)) {
+ 		crypto_free_skcipher(ci->ci_ctfm);
+ 		crypto_free_cipher(ci->ci_essiv_tfm);
++#if defined(CONFIG_CRYPTO_DISKCIPHER)
++		crypto_free_diskcipher(ci->ci_dtfm);
++#endif
+ 	}
+ 
+ 	key = ci->ci_master_key;
+diff --git a/fs/crypto/keysetup_v1.c b/fs/crypto/keysetup_v1.c
+index 0727251..22d0330 100644
+--- a/fs/crypto/keysetup_v1.c
++++ b/fs/crypto/keysetup_v1.c
+@@ -271,7 +271,7 @@ static int setup_v1_file_key_direct(struct fscrypt_info
+*ci,
+ 	}
+ 
+ 	/* ESSIV implies 16-byte IVs which implies !DIRECT_KEY */
+-	if (WARN_ON(mode->needs_essiv))
++	if (WARN_ON(mode->flags == CRYPT_MODE_ESSIV))
+ 		return -EINVAL;
+ 
+ 	dk = fscrypt_get_direct_key(ci, raw_master_key);
+diff --git a/include/linux/fscrypt.h b/include/linux/fscrypt.h
+index f622f74..e0f99db 100644
+--- a/include/linux/fscrypt.h
++++ b/include/linux/fscrypt.h
+@@ -274,6 +274,11 @@ static inline void fscrypt_set_ops(struct super_block
+*sb,
+ {
+ 	sb->s_cop = s_cop;
+ }
++
++void fscrypt_set_bio(const struct inode *inode, struct bio *bio, u64 dun);
++void *fscrypt_get_diskcipher(const struct inode *inode);
++int fscrypt_disk_encrypted(const struct inode *inode);
++
+ #else  /* !CONFIG_FS_ENCRYPTION */
+ 
+ static inline bool fscrypt_has_encryption_key(const struct inode *inode)
+@@ -556,6 +561,20 @@ static inline void fscrypt_set_ops(struct super_block
+*sb,
+ {
  }
  
-@@ -2788,11 +2867,15 @@ static int crypt_ctr(struct dm_target *ti, unsigned
-int argc, char **argv)
- 	ret = crypt_ctr_cipher(ti, argv[0], argv[1]);
- 	if (ret < 0)
- 		goto bad;
--
- 	if (crypt_integrity_aead(cc)) {
- 		cc->dmreq_start = sizeof(struct aead_request);
- 		cc->dmreq_start += crypto_aead_reqsize(any_tfm_aead(cc));
- 		align_mask = crypto_aead_alignmask(any_tfm_aead(cc));
-+	} else if (crypt_mode_diskcipher(cc)) {
-+		cc->per_bio_data_size = ti->per_io_data_size =
-+			ALIGN(sizeof(struct dm_crypt_io),
-+			ARCH_KMALLOC_MINALIGN);
-+		goto get_bio;
- 	} else {
- 		cc->dmreq_start = sizeof(struct skcipher_request);
- 		cc->dmreq_start += crypto_skcipher_reqsize(any_tfm(cc));
-@@ -2836,6 +2919,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned
-int argc, char **argv)
- 		goto bad;
- 	}
- 
-+get_bio:
- 	ret = bioset_init(&cc->bs, MIN_IOS, 0, BIOSET_NEED_BVECS);
- 	if (ret) {
- 		ti->error = "Cannot allocate crypt bioset";
-@@ -2893,6 +2977,12 @@ static int crypt_ctr(struct dm_target *ti, unsigned
-int argc, char **argv)
- 		goto bad;
- 	}
- 
-+	if (crypt_mode_diskcipher(cc)) {
-+		cc->crypt_queue = NULL;
-+		cc->write_thread = NULL;
-+		goto out;
-+	}
++static inline int fscrypt_disk_encrypted(const struct inode *inode)
++{
++	return 0;
++}
 +
- 	if (test_bit(DM_CRYPT_SAME_CPU, &cc->flags))
- 		cc->crypt_queue = alloc_workqueue("kcryptd/%s",
- 						  WQ_HIGHPRI |
-WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM,
-@@ -2918,6 +3008,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned
-int argc, char **argv)
- 	}
- 	wake_up_process(cc->write_thread);
- 
-+out:
- 	ti->num_flush_bios = 1;
- 
- 	return 0;
-@@ -2981,10 +3072,10 @@ static int crypt_map(struct dm_target *ti, struct
-bio *bio)
- 
- 	if (crypt_integrity_aead(cc))
- 		io->ctx.r.req_aead = (struct aead_request *)(io + 1);
--	else
-+	else if (crypt_mode_skcipher(cc))
- 		io->ctx.r.req = (struct skcipher_request *)(io + 1);
- 
--	if (bio_data_dir(io->base_bio) == READ) {
-+	if ((bio_data_dir(io->base_bio) == READ) ||
-crypt_mode_diskcipher(cc)) {
- 		if (kcryptd_io_read(io, GFP_NOWAIT))
- 			kcryptd_queue_read(io);
- 	} else
-@@ -3143,6 +3234,9 @@ static void crypt_io_hints(struct dm_target *ti,
-struct queue_limits *limits)
- 	limits->physical_block_size =
- 		max_t(unsigned, limits->physical_block_size,
-cc->sector_size);
- 	limits->io_min = max_t(unsigned, limits->io_min, cc->sector_size);
++static inline void fscrypt_set_bio(const struct inode *inode,
++					struct bio *bio, u64 dun)
++{
++}
 +
-+	if (crypt_mode_diskcipher(cc))
-+		limits->logical_block_size = PAGE_SIZE;
- }
++static inline void *fscrypt_get_diskcipher(const struct inode *inode)
++{
++	return NULL;
++}
+ #endif	/* !CONFIG_FS_ENCRYPTION */
  
- static struct target_type crypt_target = {
+ /**
+diff --git a/include/uapi/linux/fscrypt.h b/include/uapi/linux/fscrypt.h
+index 39ccfe9..b9978c4 100644
+--- a/include/uapi/linux/fscrypt.h
++++ b/include/uapi/linux/fscrypt.h
+@@ -25,6 +25,7 @@
+ #define FSCRYPT_MODE_AES_128_CBC		5
+ #define FSCRYPT_MODE_AES_128_CTS		6
+ #define FSCRYPT_MODE_ADIANTUM			9
++#define FSCRYPT_MODE_PRIVATE			127
+ #define __FSCRYPT_MODE_MAX			9
+ 
+ /*
+@@ -173,6 +174,7 @@ struct fscrypt_get_key_status_arg {
+ #define FS_ENCRYPTION_MODE_SPECK128_256_XTS	7	/* removed */
+ #define FS_ENCRYPTION_MODE_SPECK128_256_CTS	8	/* removed */
+ #define FS_ENCRYPTION_MODE_ADIANTUM	FSCRYPT_MODE_ADIANTUM
++#define FS_ENCRYPTION_MODE_PRIVATE	FSCRYPT_MODE_PRIVATE
+ #define FS_KEY_DESC_PREFIX		FSCRYPT_KEY_DESC_PREFIX
+ #define FS_KEY_DESC_PREFIX_SIZE		FSCRYPT_KEY_DESC_PREFIX_SIZE
+ #define FS_MAX_KEY_SIZE			FSCRYPT_MAX_KEY_SIZE
+diff --git a/tools/include/uapi/linux/fs.h b/tools/include/uapi/linux/fs.h
+index 2a616aa..dd3566a 100644
+--- a/tools/include/uapi/linux/fs.h
++++ b/tools/include/uapi/linux/fs.h
+@@ -237,6 +237,7 @@ struct fsxattr {
+ #define FS_ENCRYPTION_MODE_SPECK128_256_XTS	7 /* Removed, do not use. */
+ #define FS_ENCRYPTION_MODE_SPECK128_256_CTS	8 /* Removed, do not use. */
+ #define FS_ENCRYPTION_MODE_ADIANTUM		9
++#define FS_ENCRYPTION_MODE_PRIVATE		127
+ 
+ struct fscrypt_policy {
+ 	__u8 version;
 -- 
 2.7.4
