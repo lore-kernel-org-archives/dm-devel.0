@@ -1,400 +1,284 @@
 From: "boojin.kim" <boojin.kim@samsung.com>
-Subject: [PATCH 7/9] fscrypt: support diskcipher
-Date: Wed, 21 Aug 2019 15:42:36 +0900
-Message-ID: <004301d557eb$9ef2c8e0$dcd85aa0$@samsung.com>
-References: <CGME20190821064237epcas2p4d8bc4858fda55be213eb51b19e52fc71@epcas2p4.samsung.com>
+Subject: [PATCH 9/9] fs: f2fs: support diskcipher
+Date: Wed, 21 Aug 2019 15:42:43 +0900
+Message-ID: <004501d557eb$a31dd4f0$e9597ed0$@samsung.com>
+References: <CGME20190821064244epcas2p1e3d77667eed99670611d9353cf365f8b@epcas2p1.samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Language: ko
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org
+To: linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org
 Cc: 'Herbert Xu' <herbert@gondor.apana.org.au>, "'David S. Miller'" <davem@davemloft.net>, 'Eric Biggers' <ebiggers@kernel.org>, "'Theodore Y. Ts'o'" <tytso@mit.edu>, 'Chao Yu' <chao@kernel.org>, 'Jaegeuk Kim' <jaegeuk@kernel.org>, 'Andreas Dilger' <adilger.kernel@dilger.ca>'Theodore Ts'o' <tytso@mit.edu>, dm-devel@redhat.com, 'Mike Snitzer' <snitzer@redhat.com>, 'Alasdair Kergon' <agk@redhat.com>, 'Jens Axboe' <axboe@kernel.dk>, 'Krzysztof Kozlowski' <krzk@kernel.org>, 'Kukjin Kim' <kgene@kernel.org>, 'Jaehoon Chung' <jh80.chung@samsung.com>, 'Ulf Hansson' <ulf.hansson@linaro.org>, linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-mmc@vger.kernel.org, linux-samsung-soc
 List-Id: dm-devel.ids
 
-This patch support fscrypt to use diskcipher in a specific crypto mode
-(FSCRYPT_MODE_PRIVATE).
-Fscrypt allocates diskcipher and sets the key on diskcipher.
-Fscrypt doesn't handle additional data encryption when using diskcipher.
+F2FS checks the crypto properties of the inode, and if it is a diskcipher,
+sets it to BIO before submitting the BIO.
+When using diskcipher, F2FS does not encrypt the data before submitting
+the bio and decrypt the data on complete of the BIO.
 
-Cc: Theodore Y. Ts'o <tytso@mit.edu>
+F2FS uses DUN(device unit number) as the IV(initial vector)
+for cryptographic operations.
+DUN can support the Garbage collection of f2fs.
+Even if a data is moved in the storage device by garbage collection,
+the data has same DUN, so that the data can be decrypted.
+F2FS calculates DUN of data and sets it to BIO.
+
 Cc: Jaegeuk Kim <jaegeuk@kernel.org>
-Cc: Eric Biggers <ebiggers@kernel.org>
+Cc: Chao Yu <chao@kernel.org>
 Signed-off-by: Boojin Kim <boojin.kim@samsung.com>
 ---
- fs/buffer.c                   |  2 ++
- fs/crypto/bio.c               | 43 ++++++++++++++++++++++++++-----
- fs/crypto/fscrypt_private.h   | 28 +++++++++++++++++++-
- fs/crypto/keysetup.c          | 60
-+++++++++++++++++++++++++++++++++++++++++--
- fs/crypto/keysetup_v1.c       |  2 +-
- include/linux/fscrypt.h       | 19 ++++++++++++++
- include/uapi/linux/fscrypt.h  |  2 ++
- tools/include/uapi/linux/fs.h |  1 +
- 8 files changed, 147 insertions(+), 10 deletions(-)
+ fs/f2fs/data.c | 98
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+ fs/f2fs/f2fs.h |  2 +-
+ 2 files changed, 97 insertions(+), 3 deletions(-)
 
-diff --git a/fs/buffer.c b/fs/buffer.c
-index 131d39e..a7de079 100644
---- a/fs/buffer.c
-+++ b/fs/buffer.c
-@@ -3129,6 +3129,8 @@ static int submit_bh_wbc(int op, int op_flags, struct
-buffer_head *bh,
- 		wbc_account_cgroup_owner(wbc, bh->b_page, bh->b_size);
- 	}
+diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
+index 3dfefab..c8252bf 100644
+--- a/fs/f2fs/data.c
++++ b/fs/f2fs/data.c
+@@ -85,6 +85,52 @@ struct bio_post_read_ctx {
+ 	unsigned int enabled_steps;
+ };
  
-+	if (bio->bi_opf & REQ_CRYPT)
-+		bio->bi_aux_private = bh->b_private;
- 	submit_bio(bio);
- 	return 0;
- }
-diff --git a/fs/crypto/bio.c b/fs/crypto/bio.c
-index 82da251..9e4bf9b 100644
---- a/fs/crypto/bio.c
-+++ b/fs/crypto/bio.c
-@@ -24,6 +24,7 @@
- #include <linux/module.h>
- #include <linux/bio.h>
- #include <linux/namei.h>
-+#include <crypto/diskcipher.h>
- #include "fscrypt_private.h"
- 
- static void __fscrypt_decrypt_bio(struct bio *bio, bool done)
-@@ -81,13 +82,19 @@ int fscrypt_zeroout_range(const struct inode *inode,
-pgoff_t lblk,
- 	if (!ciphertext_page)
- 		return -ENOMEM;
- 
--	while (len--) {
--		err = fscrypt_crypt_block(inode, FS_ENCRYPT, lblk,
--					  ZERO_PAGE(0), ciphertext_page,
--					  blocksize, 0, GFP_NOFS);
--		if (err)
--			goto errout;
-+	if (__fscrypt_disk_encrypted(inode)) {
-+		memset(page_address(ciphertext_page), 0, PAGE_SIZE);
-+		ciphertext_page->mapping = inode->i_mapping;
-+	}
- 
-+	while (len--) {
-+		if (!__fscrypt_disk_encrypted(inode))  {
-+			err = fscrypt_crypt_block(inode, FS_ENCRYPT, lblk,
-+						  ZERO_PAGE(0),
-ciphertext_page,
-+						  blocksize, 0, GFP_NOFS);
-+			if (err)
-+				goto errout;
-+		}
- 		bio = bio_alloc(GFP_NOWAIT, 1);
- 		if (!bio) {
- 			err = -ENOMEM;
-@@ -103,6 +110,7 @@ int fscrypt_zeroout_range(const struct inode *inode,
-pgoff_t lblk,
- 			err = -EIO;
- 			goto errout;
- 		}
-+		fscrypt_set_bio(inode, bio, 0);
- 		err = submit_bio_wait(bio);
- 		if (err == 0 && bio->bi_status)
- 			err = -EIO;
-@@ -118,3 +126,26 @@ int fscrypt_zeroout_range(const struct inode *inode,
-pgoff_t lblk,
- 	return err;
- }
- EXPORT_SYMBOL(fscrypt_zeroout_range);
++/* device unit number for iv sector */
++#define PG_DUN(i, p)	\
++	((((i)->i_ino & 0xffffffff) << 32) | (p & 0xffffffff))
 +
-+int fscrypt_disk_encrypted(const struct inode *inode)
-+{
-+	return __fscrypt_disk_encrypted(inode);
-+}
-+
-+void fscrypt_set_bio(const struct inode *inode, struct bio *bio, u64 dun)
++static inline bool f2fs_may_encrypt_bio(struct inode *inode,
++		struct f2fs_io_info *fio)
 +{
 +#ifdef CONFIG_CRYPTO_DISKCIPHER
-+	if (__fscrypt_disk_encrypted(inode))
-+		crypto_diskcipher_set(bio, inode->i_crypt_info->ci_dtfm,
-+					inode, dun);
++	if (fio && (fio->type != DATA || fio->encrypted_page))
++		return false;
++
++	return (f2fs_encrypted_file(inode) &&
++			fscrypt_disk_encrypted(inode));
++#else
++	return false;
 +#endif
 +}
 +
-+void *fscrypt_get_diskcipher(const struct inode *inode)
++static inline bool f2fs_bio_disk_encrypted(unsigned int bi_opf)
++{
++	if (bi_opf & REQ_CRYPT)
++		return true;
++	else
++		return false;
++}
++
++static bool f2fs_mergeable_bio(struct bio *bio, u64 dun, void *ci,
++				bool bio_encrypted)
 +{
 +#ifdef CONFIG_CRYPTO_DISKCIPHER
-+	if (fscrypt_has_encryption_key(inode))
-+		return inode->i_crypt_info->ci_dtfm;
-+#endif
-+	return NULL;
-+}
-diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
-index e84efc0..d2b5fb6 100644
---- a/fs/crypto/fscrypt_private.h
-+++ b/fs/crypto/fscrypt_private.h
-@@ -163,6 +163,10 @@ struct fscrypt_info {
- 	/* The actual crypto transform used for encryption and decryption */
- 	struct crypto_skcipher *ci_ctfm;
- 
-+	/* Cipher for inline encryption engine */
-+#ifdef CONFIG_CRYPTO_DISKCIPHER
-+	struct crypto_diskcipher *ci_dtfm;
-+#endif
- 	/*
- 	 * Cipher for ESSIV IV generation.  Only set for CBC contents
- 	 * encryption, otherwise is NULL.
-@@ -226,6 +230,10 @@ static inline bool fscrypt_valid_enc_modes(u32
-contents_mode,
- 	    filenames_mode == FSCRYPT_MODE_ADIANTUM)
- 		return true;
- 
-+	if (contents_mode == FSCRYPT_MODE_PRIVATE &&
-+		filenames_mode == FSCRYPT_MODE_AES_256_CTS)
++	if (!bio)
 +		return true;
 +
- 	return false;
- }
- 
-@@ -438,13 +446,19 @@ extern int __init fscrypt_init_keyring(void);
- 
- /* keysetup.c */
- 
-+enum cipher_flags {
-+	CRYPT_MODE_SKCIPHER,
-+	CRYPT_MODE_ESSIV,
-+	CRYPT_MODE_DISKCIPHER,
-+};
++	/* if both of them are not encrypted, no further check is needed */
++	if (!f2fs_bio_disk_encrypted(bio->bi_opf) && !bio_encrypted)
++		return true;
 +
- struct fscrypt_mode {
- 	const char *friendly_name;
- 	const char *cipher_str;
- 	int keysize;
- 	int ivsize;
- 	bool logged_impl_name;
--	bool needs_essiv;
-+	enum cipher_flags flags;
- };
- 
- static inline bool
-@@ -453,6 +467,18 @@ fscrypt_mode_supports_direct_key(const struct
-fscrypt_mode *mode)
- 	return mode->ivsize >= offsetofend(union fscrypt_iv, nonce);
- }
- 
-+static inline int __fscrypt_disk_encrypted(const struct inode *inode)
-+{
-+#if IS_ENABLED(CONFIG_FS_ENCRYPTION)
-+#if IS_ENABLED(CONFIG_CRYPTO_DISKCIPHER)
-+	if (inode && inode->i_crypt_info)
-+		return S_ISREG(inode->i_mode) &&
-+			(inode->i_crypt_info->ci_dtfm != NULL);
++	if (bio->bi_aux_private == ci)
++		return bio_end_dun(bio) == dun;
++	else
++		return false;
++#else
++	return true;
 +#endif
-+#endif
-+	return 0;
 +}
 +
- extern struct crypto_skcipher *
- fscrypt_allocate_skcipher(struct fscrypt_mode *mode, const u8 *raw_key,
- 			  const struct inode *inode);
-diff --git a/fs/crypto/keysetup.c b/fs/crypto/keysetup.c
-index d71c2d6..06d9609 100644
---- a/fs/crypto/keysetup.c
-+++ b/fs/crypto/keysetup.c
-@@ -11,6 +11,7 @@
- #include <crypto/aes.h>
- #include <crypto/sha.h>
- #include <crypto/skcipher.h>
-+#include <crypto/diskcipher.h>
- #include <linux/key.h>
- 
- #include "fscrypt_private.h"
-@@ -35,7 +36,7 @@ static struct fscrypt_mode available_modes[] = {
- 		.cipher_str = "cbc(aes)",
- 		.keysize = 16,
- 		.ivsize = 16,
--		.needs_essiv = true,
-+		.flags = CRYPT_MODE_ESSIV,
- 	},
- 	[FSCRYPT_MODE_AES_128_CTS] = {
- 		.friendly_name = "AES-128-CTS-CBC",
-@@ -49,6 +50,13 @@ static struct fscrypt_mode available_modes[] = {
- 		.keysize = 32,
- 		.ivsize = 32,
- 	},
-+	[FSCRYPT_MODE_PRIVATE] = {
-+		.friendly_name = "AES-256-XTS-DISK",
-+		.cipher_str = "xts(aes)-disk",
-+		.keysize = 64,
-+		.ivsize = 16,
-+		.flags = CRYPT_MODE_DISKCIPHER,
-+	},
- };
- 
- static struct fscrypt_mode *
-@@ -111,6 +119,35 @@ struct crypto_skcipher
-*fscrypt_allocate_skcipher(struct fscrypt_mode *mode,
- 	return ERR_PTR(err);
- }
- 
-+#if defined(CONFIG_CRYPTO_DISKCIPHER)
-+/* Create a diskcipher cipher object for the given encryption mode and key
-*/
-+static struct crypto_diskcipher *fscrypt_allocate_diskcipher(
-+		struct fscrypt_mode *mode, const u8 *raw_key,
-+			   const struct inode *inode)
-+{
-+	struct crypto_diskcipher *tfm;
-+	int err;
-+	bool force = (mode->flags == CRYPT_MODE_DISKCIPHER) ? 0 : 1;
-+
-+	tfm = crypto_alloc_diskcipher(mode->cipher_str, 0, 0, force);
-+	if (IS_ERR(tfm)) {
-+		fscrypt_warn(inode->i_sb,
-+				 "error allocating '%s' transform for inode
-%lu: %ld",
-+				 mode->cipher_str, inode->i_ino,
-PTR_ERR(tfm));
-+		return tfm;
-+	}
-+	err = crypto_diskcipher_setkey(tfm, raw_key, mode->keysize, 0);
-+	if (err)
-+		goto err_free_dtfm;
-+
-+	return tfm;
-+
-+err_free_dtfm:
-+	crypto_free_diskcipher(tfm);
-+	return ERR_PTR(err);
-+}
-+#endif
-+
- static int derive_essiv_salt(const u8 *key, int keysize, u8 *salt)
+ static void __read_end_io(struct bio *bio)
  {
- 	struct crypto_shash *tfm = READ_ONCE(essiv_hash_tfm);
-@@ -187,13 +224,29 @@ int fscrypt_set_derived_key(struct fscrypt_info *ci,
-const u8 *derived_key)
- 	struct crypto_skcipher *ctfm;
- 	int err;
+ 	struct page *page;
+@@ -174,6 +220,9 @@ static void f2fs_read_end_io(struct bio *bio)
+ 		bio->bi_status = BLK_STS_IOERR;
+ 	}
  
-+#if defined(CONFIG_CRYPTO_DISKCIPHER)
-+	if (S_ISREG(ci->ci_inode->i_mode) &&
-+		(mode->flags == CRYPT_MODE_DISKCIPHER)) {
-+		ci->ci_dtfm = fscrypt_allocate_diskcipher(mode, derived_key,
++	if (f2fs_bio_disk_encrypted(bio->bi_opf))
++		goto end_io;
 +
-ci->ci_inode);
-+		if (IS_ERR(ci->ci_dtfm)) {
-+			fscrypt_warn(ci->ci_inode,
-+				     "Error allocating Diskcipher: %p",
-+				     PTR_ERR(ci->ci_dtfm));
-+			ci->ci_dtfm = NULL;
-+			return -EINVAL;
-+		}
+ 	if (f2fs_bio_post_read_required(bio)) {
+ 		struct bio_post_read_ctx *ctx = bio->bi_private;
+ 
+@@ -182,6 +231,7 @@ static void f2fs_read_end_io(struct bio *bio)
+ 		return;
+ 	}
+ 
++end_io:
+ 	__read_end_io(bio);
+ }
+ 
+@@ -362,7 +412,10 @@ static void __submit_merged_bio(struct f2fs_bio_info
+*io)
+ 	if (!io->bio)
+ 		return;
+ 
+-	bio_set_op_attrs(io->bio, fio->op, fio->op_flags);
++	if (f2fs_bio_disk_encrypted(io->bio->bi_opf))
++		bio_set_op_attrs(io->bio, fio->op, fio->op_flags |
+REQ_CRYPT);
++	else
++		bio_set_op_attrs(io->bio, fio->op, fio->op_flags);
+ 
+ 	if (is_read_io(fio->op))
+ 		trace_f2fs_prepare_read_bio(io->sbi->sb, fio->type,
+io->bio);
+@@ -476,6 +529,7 @@ int f2fs_submit_page_bio(struct f2fs_io_info *fio)
+ 	struct bio *bio;
+ 	struct page *page = fio->encrypted_page ?
+ 			fio->encrypted_page : fio->page;
++	struct inode *inode = fio->page->mapping->host;
+ 
+ 	if (!f2fs_is_valid_blkaddr(fio->sbi, fio->new_blkaddr,
+ 			fio->is_por ? META_POR : (__is_meta_io(fio) ?
+@@ -502,6 +556,9 @@ int f2fs_submit_page_bio(struct f2fs_io_info *fio)
+ 	inc_page_count(fio->sbi, is_read_io(fio->op) ?
+ 			__read_io_type(page): WB_DATA_TYPE(fio->page));
+ 
++	if (f2fs_may_encrypt_bio(inode, fio))
++		fscrypt_set_bio(inode, bio, PG_DUN(inode,
+fio->page->index));
++
+ 	__submit_bio(fio->sbi, bio, fio->type);
+ 	return 0;
+ }
+@@ -604,6 +661,9 @@ void f2fs_submit_page_write(struct f2fs_io_info *fio)
+ 	enum page_type btype = PAGE_TYPE_OF_BIO(fio->type);
+ 	struct f2fs_bio_info *io = sbi->write_io[btype] + fio->temp;
+ 	struct page *bio_page;
++	struct inode *inode;
++	bool bio_encrypted;
++	u64 dun;
+ 
+ 	f2fs_bug_on(sbi, is_read_io(fio->op));
+ 
+@@ -624,6 +684,9 @@ void f2fs_submit_page_write(struct f2fs_io_info *fio)
+ 	verify_fio_blkaddr(fio);
+ 
+ 	bio_page = fio->encrypted_page ? fio->encrypted_page : fio->page;
++	inode = fio->page->mapping->host;
++	dun = PG_DUN(inode, fio->page->index);
++	bio_encrypted = f2fs_may_encrypt_bio(inode, fio);
+ 
+ 	/* set submitted = true as a return value */
+ 	fio->submitted = true;
+@@ -633,6 +696,10 @@ void f2fs_submit_page_write(struct f2fs_io_info *fio)
+ 	if (io->bio && !io_is_mergeable(sbi, io->bio, io, fio,
+ 			io->last_block_in_bio, fio->new_blkaddr))
+ 		__submit_merged_bio(io);
++
++	if (!f2fs_mergeable_bio(io->bio, dun,
++			fscrypt_get_diskcipher(inode), bio_encrypted))
++		__submit_merged_bio(io);
+ alloc_new:
+ 	if (io->bio == NULL) {
+ 		if ((fio->type == DATA || fio->type == NODE) &&
+@@ -644,6 +711,9 @@ void f2fs_submit_page_write(struct f2fs_io_info *fio)
+ 		io->bio = __bio_alloc(sbi, fio->new_blkaddr, fio->io_wbc,
+ 						BIO_MAX_PAGES, false,
+ 						fio->type, fio->temp);
++		if (bio_encrypted)
++			fscrypt_set_bio(inode, io->bio, dun);
++
+ 		io->fio = *fio;
+ 	}
+ 
+@@ -691,7 +761,7 @@ static struct bio *f2fs_grab_read_bio(struct inode
+*inode, block_t blkaddr,
+ 	bio->bi_end_io = f2fs_read_end_io;
+ 	bio_set_op_attrs(bio, REQ_OP_READ, op_flag);
+ 
+-	if (f2fs_encrypted_file(inode))
++	if (f2fs_encrypted_file(inode) && !fscrypt_disk_encrypted(inode))
+ 		post_read_steps |= 1 << STEP_DECRYPT;
+ 
+ 	if (f2fs_need_verity(inode, first_idx))
+@@ -731,6 +801,10 @@ static int f2fs_submit_page_read(struct inode *inode,
+struct page *page,
+ 	}
+ 	ClearPageError(page);
+ 	inc_page_count(sbi, F2FS_RD_DATA);
++
++	if (f2fs_may_encrypt_bio(inode, NULL))
++		fscrypt_set_bio(inode, bio, PG_DUN(inode, page->index));
++
+ 	__submit_bio(sbi, bio, DATA);
+ 	return 0;
+ }
+@@ -1665,6 +1739,8 @@ static int f2fs_read_single_page(struct inode *inode,
+struct page *page,
+ 	sector_t last_block_in_file;
+ 	sector_t block_nr;
+ 	int ret = 0;
++	bool bio_encrypted;
++	u64 dun;
+ 
+ 	block_in_file = (sector_t)page_index(page);
+ 	last_block = block_in_file + nr_pages;
+@@ -1734,6 +1810,15 @@ static int f2fs_read_single_page(struct inode *inode,
+struct page *page,
+ 		__submit_bio(F2FS_I_SB(inode), bio, DATA);
+ 		bio = NULL;
+ 	}
++
++	dun = PG_DUN(inode, page->index);
++	bio_encrypted = f2fs_may_encrypt_bio(inode, NULL);
++	if (!f2fs_mergeable_bio(bio, dun, fscrypt_get_diskcipher(inode),
++				bio_encrypted)) {
++		__submit_bio(F2FS_I_SB(inode), bio, DATA);
++		bio = NULL;
++	}
++
+ 	if (bio == NULL) {
+ 		bio = f2fs_grab_read_bio(inode, block_nr, nr_pages,
+ 				is_readahead ? REQ_RAHEAD : 0, page->index);
+@@ -1742,6 +1827,8 @@ static int f2fs_read_single_page(struct inode *inode,
+struct page *page,
+ 			bio = NULL;
+ 			goto out;
+ 		}
++		if (f2fs_may_encrypt_bio(inode, NULL))
++			fscrypt_set_bio(inode, bio, dun);
+ 	}
+ 
+ 	/*
+@@ -1870,6 +1957,9 @@ static int encrypt_one_page(struct f2fs_io_info *fio)
+ 	f2fs_wait_on_block_writeback(inode, fio->old_blkaddr);
+ 
+ retry_encrypt:
++	if (fscrypt_disk_encrypted(inode))
 +		return 0;
-+	}
-+#endif
 +
- 	ctfm = fscrypt_allocate_skcipher(mode, derived_key, ci->ci_inode);
- 	if (IS_ERR(ctfm))
- 		return PTR_ERR(ctfm);
+ 	fio->encrypted_page = fscrypt_encrypt_pagecache_blocks(fio->page,
+ 							       PAGE_SIZE, 0,
+ 							       gfp_flags);
+@@ -2804,6 +2894,10 @@ static void f2fs_dio_submit_bio(struct bio *bio,
+struct inode *inode,
+ 	if (!dio)
+ 		goto out;
  
- 	ci->ci_ctfm = ctfm;
- 
--	if (mode->needs_essiv) {
-+	if (mode->flags == CRYPT_MODE_ESSIV) {
- 		err = init_essiv_generator(ci, derived_key, mode->keysize);
- 		if (err) {
- 			fscrypt_warn(ci->ci_inode,
-@@ -394,6 +447,9 @@ static void put_crypt_info(struct fscrypt_info *ci)
- 		   !fscrypt_is_direct_key_policy(&ci->ci_policy)) {
- 		crypto_free_skcipher(ci->ci_ctfm);
- 		crypto_free_cipher(ci->ci_essiv_tfm);
-+#if defined(CONFIG_CRYPTO_DISKCIPHER)
-+		crypto_free_diskcipher(ci->ci_dtfm);
-+#endif
- 	}
- 
- 	key = ci->ci_master_key;
-diff --git a/fs/crypto/keysetup_v1.c b/fs/crypto/keysetup_v1.c
-index 0727251..22d0330 100644
---- a/fs/crypto/keysetup_v1.c
-+++ b/fs/crypto/keysetup_v1.c
-@@ -271,7 +271,7 @@ static int setup_v1_file_key_direct(struct fscrypt_info
-*ci,
- 	}
- 
- 	/* ESSIV implies 16-byte IVs which implies !DIRECT_KEY */
--	if (WARN_ON(mode->needs_essiv))
-+	if (WARN_ON(mode->flags == CRYPT_MODE_ESSIV))
- 		return -EINVAL;
- 
- 	dk = fscrypt_get_direct_key(ci, raw_master_key);
-diff --git a/include/linux/fscrypt.h b/include/linux/fscrypt.h
-index f622f74..e0f99db 100644
---- a/include/linux/fscrypt.h
-+++ b/include/linux/fscrypt.h
-@@ -274,6 +274,11 @@ static inline void fscrypt_set_ops(struct super_block
-*sb,
- {
- 	sb->s_cop = s_cop;
- }
++	if (dio->inode && fscrypt_has_encryption_key(dio->inode))
++		fscrypt_set_bio(inode, bio, PG_DUN(inode,
++				file_offset >> PAGE_SHIFT));
 +
-+void fscrypt_set_bio(const struct inode *inode, struct bio *bio, u64 dun);
-+void *fscrypt_get_diskcipher(const struct inode *inode);
-+int fscrypt_disk_encrypted(const struct inode *inode);
-+
- #else  /* !CONFIG_FS_ENCRYPTION */
+ 	dio->inode = inode;
+ 	dio->orig_end_io = bio->bi_end_io;
+ 	dio->orig_private = bio->bi_private;
+diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
+index 0cbf1d4..8447542 100644
+--- a/fs/f2fs/f2fs.h
++++ b/fs/f2fs/f2fs.h
+@@ -3706,7 +3706,7 @@ static inline bool f2fs_force_buffered_io(struct inode
+*inode,
+ 	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+ 	int rw = iov_iter_rw(iter);
  
- static inline bool fscrypt_has_encryption_key(const struct inode *inode)
-@@ -556,6 +561,20 @@ static inline void fscrypt_set_ops(struct super_block
-*sb,
- {
- }
- 
-+static inline int fscrypt_disk_encrypted(const struct inode *inode)
-+{
-+	return 0;
-+}
-+
-+static inline void fscrypt_set_bio(const struct inode *inode,
-+					struct bio *bio, u64 dun)
-+{
-+}
-+
-+static inline void *fscrypt_get_diskcipher(const struct inode *inode)
-+{
-+	return NULL;
-+}
- #endif	/* !CONFIG_FS_ENCRYPTION */
- 
- /**
-diff --git a/include/uapi/linux/fscrypt.h b/include/uapi/linux/fscrypt.h
-index 39ccfe9..b9978c4 100644
---- a/include/uapi/linux/fscrypt.h
-+++ b/include/uapi/linux/fscrypt.h
-@@ -25,6 +25,7 @@
- #define FSCRYPT_MODE_AES_128_CBC		5
- #define FSCRYPT_MODE_AES_128_CTS		6
- #define FSCRYPT_MODE_ADIANTUM			9
-+#define FSCRYPT_MODE_PRIVATE			127
- #define __FSCRYPT_MODE_MAX			9
- 
- /*
-@@ -173,6 +174,7 @@ struct fscrypt_get_key_status_arg {
- #define FS_ENCRYPTION_MODE_SPECK128_256_XTS	7	/* removed */
- #define FS_ENCRYPTION_MODE_SPECK128_256_CTS	8	/* removed */
- #define FS_ENCRYPTION_MODE_ADIANTUM	FSCRYPT_MODE_ADIANTUM
-+#define FS_ENCRYPTION_MODE_PRIVATE	FSCRYPT_MODE_PRIVATE
- #define FS_KEY_DESC_PREFIX		FSCRYPT_KEY_DESC_PREFIX
- #define FS_KEY_DESC_PREFIX_SIZE		FSCRYPT_KEY_DESC_PREFIX_SIZE
- #define FS_MAX_KEY_SIZE			FSCRYPT_MAX_KEY_SIZE
-diff --git a/tools/include/uapi/linux/fs.h b/tools/include/uapi/linux/fs.h
-index 2a616aa..dd3566a 100644
---- a/tools/include/uapi/linux/fs.h
-+++ b/tools/include/uapi/linux/fs.h
-@@ -237,6 +237,7 @@ struct fsxattr {
- #define FS_ENCRYPTION_MODE_SPECK128_256_XTS	7 /* Removed, do not use. */
- #define FS_ENCRYPTION_MODE_SPECK128_256_CTS	8 /* Removed, do not use. */
- #define FS_ENCRYPTION_MODE_ADIANTUM		9
-+#define FS_ENCRYPTION_MODE_PRIVATE		127
- 
- struct fscrypt_policy {
- 	__u8 version;
+-	if (f2fs_post_read_required(inode))
++	if (f2fs_post_read_required(inode) &&
+!fscrypt_disk_encrypted(inode))
+ 		return true;
+ 	if (f2fs_is_multi_device(sbi))
+ 		return true;
 -- 
 2.7.4
