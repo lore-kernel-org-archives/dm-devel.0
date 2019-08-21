@@ -1,187 +1,355 @@
-From: "boojin.kim" <boojin.kim@samsung.com>
-Subject: [PATCH 8/9] fs: ext4: support diskcipher
-Date: Wed, 21 Aug 2019 15:42:41 +0900
-Message-ID: <004401d557eb$a1989480$e4c9bd80$@samsung.com>
-References: <CGME20190821064241epcas2p2bf71ad8055188f8b47870b06480c8368@epcas2p2.samsung.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: [PATCH 6/9] dm crypt: support diskcipher
+Date: Wed, 21 Aug 2019 09:13:36 +0200
+Message-ID: <cc484ef6-aacc-7864-0e6d-313b2e1c5d92@gmail.com>
+References: <CGME20190821064230epcas2p1ad7301f2b1331bcab3126e6e37c0e272@epcas2p1.samsung.com>
+ <004201d557eb$9b0a4410$d11ecc30$@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: ko
+In-Reply-To: <004201d557eb$9b0a4410$d11ecc30$@samsung.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-ext4@vger.kernel.org, linux-fsdevel@vger.kernel.org
-Cc: 'Herbert Xu' <herbert@gondor.apana.org.au>, "'David S. Miller'" <davem@davemloft.net>, 'Eric Biggers' <ebiggers@kernel.org>, "'Theodore Y. Ts'o'" <tytso@mit.edu>, 'Chao Yu' <chao@kernel.org>, 'Jaegeuk Kim' <jaegeuk@kernel.org>, 'Andreas Dilger' <adilger.kernel@dilger.ca>'Theodore Ts'o' <tytso@mit.edu>, dm-devel@redhat.com, 'Mike Snitzer' <snitzer@redhat.com>, 'Alasdair Kergon' <agk@redhat.com>, 'Jens Axboe' <axboe@kernel.dk>, 'Krzysztof Kozlowski' <krzk@kernel.org>, 'Kukjin Kim' <kgene@kernel.org>, 'Jaehoon Chung' <jh80.chung@samsung.com>, 'Ulf Hansson' <ulf.hansson@linaro.org>, linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-mmc@vger.kernel.org, linux-samsung-soc
+To: "boojin.kim" <boojin.kim@samsung.com>, 'Alasdair Kergon' <agk@redhat.com>, 'Mike Snitzer' <snitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Cc: 'Herbert Xu' <herbert@gondor.apana.org.au>, "'David S. Miller'" <davem@davemloft.net>, 'Eric Biggers' <ebiggers@kernel.org>, "'Theodore Y. Ts'o'" <tytso@mit.edu>, 'Chao Yu' <chao@kernel.org>, 'Jaegeuk Kim' <jaegeuk@kernel.org>, 'Andreas Dilger' <adilger.kernel@dilger.ca>, 'Jens Axboe' <axboe@kernel.dk>, 'Krzysztof Kozlowski' <krzk@kernel.org>, 'Kukjin Kim' <kgene@kernel.org>, 'Jaehoon Chung' <jh80.chung@samsung.com>, 'Ulf Hansson' <ulf.hansson@linaro.org>, linux-crypto@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-mmc@vger.kernel.org
 List-Id: dm-devel.ids
 
-Ext4 checks the crypto properties of the inode,
-and if it is a diskcipher, sets it to BIO before submitting the BIO.
-When using diskcipher, Ext4 does not encrypt the data before submitting
-the BIO and decrypt the data on complete of the BIO.
+On 21/08/2019 08:42, boojin.kim wrote:
+> This patch supports dm-crypt to use diskcipher in a specific ivmode
+> (disk or fmp).
+> Dm-crypt allocates diskcipher and sets the key on it.
+> Then, dm-crypt sets diskcipher into BIO and submits the BIO without
+> any additional data encryption.
 
-Cc: Theodore Ts'o <tytso@mit.edu>
-Cc: Andreas Dilger <adilger.kernel@dilger.ca>
-Signed-off-by: Boojin Kim <boojin.kim@samsung.com>
----
- fs/ext4/inode.c    | 39 +++++++++++++++++++++++++++++++++------
- fs/ext4/page-io.c  |  8 +++++++-
- fs/ext4/readpage.c |  7 +++++++
- 3 files changed, 47 insertions(+), 7 deletions(-)
+NACK.
 
-diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index 5bcc96f..7f9e1fa 100644
---- a/fs/ext4/inode.c
-+++ b/fs/ext4/inode.c
-@@ -1223,7 +1223,14 @@ static int ext4_block_write_begin(struct page *page,
-loff_t pos, unsigned len,
- 		if (!buffer_uptodate(bh) && !buffer_delay(bh) &&
- 		    !buffer_unwritten(bh) &&
- 		    (block_start < from || block_end > to)) {
--			ll_rw_block(REQ_OP_READ, 0, 1, &bh);
-+			if (S_ISREG(inode->i_mode) && IS_ENCRYPTED(inode)
-+					&&
-fscrypt_has_encryption_key(inode)) {
-+				bh->b_private =
-fscrypt_get_diskcipher(inode);
-+				ll_rw_block(REQ_OP_READ,
-+					bh->b_private ? REQ_CRYPT : 0, 1,
-&bh);
-+			} else {
-+				ll_rw_block(REQ_OP_READ, 0, 1, &bh);
-+			}
- 			wait[nr_wait++] = bh;
- 		}
- 	}
-@@ -1237,7 +1244,8 @@ static int ext4_block_write_begin(struct page *page,
-loff_t pos, unsigned len,
- 	}
- 	if (unlikely(err)) {
- 		page_zero_new_buffers(page, from, to);
--	} else if (IS_ENCRYPTED(inode) && S_ISREG(inode->i_mode)) {
-+	} else if (IS_ENCRYPTED(inode) && S_ISREG(inode->i_mode) &&
-+			!bh->b_private) {
- 		for (i = 0; i < nr_wait; i++) {
- 			int err2;
- 
-@@ -3670,6 +3678,13 @@ const struct iomap_ops ext4_iomap_ops = {
- 	.iomap_end		= ext4_iomap_end,
- };
- 
-+static void ext4_submit_dio(struct bio *bio, struct inode *inode,
-+							loff_t file_offset)
-+{
-+	fscrypt_set_bio(inode, bio, 0);
-+	submit_bio(bio);
-+}
-+
- static int ext4_end_io_dio(struct kiocb *iocb, loff_t offset,
- 			    ssize_t size, void *private)
- {
-@@ -3801,7 +3816,9 @@ static ssize_t ext4_direct_IO_write(struct kiocb
-*iocb, struct iov_iter *iter)
- 		dio_flags = DIO_LOCKING;
- 	}
- 	ret = __blockdev_direct_IO(iocb, inode, inode->i_sb->s_bdev, iter,
--				   get_block_func, ext4_end_io_dio, NULL,
-+				   get_block_func, ext4_end_io_dio,
-+				   !fscrypt_disk_encrypted(inode) ?
-+				   NULL : ext4_submit_dio,
- 				   dio_flags);
- 
- 	if (ret > 0 && !overwrite && ext4_test_inode_state(inode,
-@@ -3909,7 +3926,8 @@ static ssize_t ext4_direct_IO(struct kiocb *iocb,
-struct iov_iter *iter)
- 	ssize_t ret;
- 
- #ifdef CONFIG_FS_ENCRYPTION
--	if (IS_ENCRYPTED(inode) && S_ISREG(inode->i_mode))
-+	if (IS_ENCRYPTED(inode) && S_ISREG(inode->i_mode)
-+		&& !fscrypt_disk_encrypted(inode))
- 		return 0;
- #endif
- 	if (fsverity_active(inode))
-@@ -4090,7 +4108,15 @@ static int __ext4_block_zero_page_range(handle_t
-*handle,
- 
- 	if (!buffer_uptodate(bh)) {
- 		err = -EIO;
--		ll_rw_block(REQ_OP_READ, 0, 1, &bh);
-+		if (S_ISREG(inode->i_mode) && IS_ENCRYPTED(inode)
-+				&& fscrypt_has_encryption_key(inode)) {
-+			bh->b_private = fscrypt_get_diskcipher(inode);
-+			ll_rw_block(REQ_OP_READ, bh->b_private ? REQ_CRYPT :
-0,
-+					1, &bh);
-+		} else {
-+			ll_rw_block(REQ_OP_READ, 0, 1, &bh);
-+		}
-+
- 		wait_on_buffer(bh);
- 		/* Uhhuh. Read error. Complain and punt. */
- 		if (!buffer_uptodate(bh))
-@@ -4098,7 +4124,8 @@ static int __ext4_block_zero_page_range(handle_t
-*handle,
- 		if (S_ISREG(inode->i_mode) && IS_ENCRYPTED(inode)) {
- 			/* We expect the key to be set. */
- 			BUG_ON(!fscrypt_has_encryption_key(inode));
--			WARN_ON_ONCE(fscrypt_decrypt_pagecache_blocks(
-+			if (!bh->b_private)
-+
-WARN_ON_ONCE(fscrypt_decrypt_pagecache_blocks(
- 					page, blocksize, bh_offset(bh)));
- 		}
- 	}
-diff --git a/fs/ext4/page-io.c b/fs/ext4/page-io.c
-index 12ceadef..3e41788 100644
---- a/fs/ext4/page-io.c
-+++ b/fs/ext4/page-io.c
-@@ -345,6 +345,11 @@ void ext4_io_submit(struct ext4_io_submit *io)
- 				  REQ_SYNC : 0;
- 		io->io_bio->bi_write_hint = io->io_end->inode->i_write_hint;
- 		bio_set_op_attrs(io->io_bio, REQ_OP_WRITE, io_op_flags);
-+#if defined(CONFIG_FS_ENCRYPTION) && defined(CONFIG_CRYPTO_DISKCIPHER)
-+		if (IS_ENCRYPTED(io->io_end->inode) &&
-+				S_ISREG(io->io_end->inode->i_mode))
-+			fscrypt_set_bio(io->io_end->inode, io->io_bio, 0);
-+#endif
- 		submit_bio(io->io_bio);
- 	}
- 	io->io_bio = NULL;
-@@ -474,7 +479,8 @@ int ext4_bio_write_page(struct ext4_io_submit *io,
- 	 * (e.g. holes) to be unnecessarily encrypted, but this is rare and
- 	 * can't happen in the common case of blocksize == PAGE_SIZE.
- 	 */
--	if (IS_ENCRYPTED(inode) && S_ISREG(inode->i_mode) && nr_to_submit) {
-+	if (IS_ENCRYPTED(inode) && S_ISREG(inode->i_mode) && nr_to_submit &&
-+			!fscrypt_disk_encrypted(inode)) {
- 		gfp_t gfp_flags = GFP_NOFS;
- 		unsigned int enc_bytes = round_up(len, i_blocksize(inode));
- 
-diff --git a/fs/ext4/readpage.c b/fs/ext4/readpage.c
-index a30b203..aab2cf7c 100644
---- a/fs/ext4/readpage.c
-+++ b/fs/ext4/readpage.c
-@@ -183,6 +183,9 @@ static struct bio_post_read_ctx
-*get_bio_post_read_ctx(struct inode *inode,
- 	unsigned int post_read_steps = 0;
- 	struct bio_post_read_ctx *ctx = NULL;
- 
-+	if (fscrypt_disk_encrypted(inode))
-+		return NULL;
-+
- 	if (IS_ENCRYPTED(inode) && S_ISREG(inode->i_mode))
- 		post_read_steps |= 1 << STEP_DECRYPT;
- 
-@@ -376,6 +379,10 @@ int ext4_mpage_readpages(struct address_space *mapping,
- 			bio->bi_private = ctx;
- 			bio_set_op_attrs(bio, REQ_OP_READ,
- 						is_readahead ? REQ_RAHEAD :
-0);
-+#if defined(CONFIG_FS_ENCRYPTION) && defined(CONFIG_CRYPTO_DISKCIPHER)
-+			if (IS_ENCRYPTED(inode) && S_ISREG(inode->i_mode))
-+				fscrypt_set_bio(inode, bio, 0);
-+#endif
- 		}
- 
- 		length = first_hole << blkbits;
--- 
-2.7.4
+The whole principle of dm-crypt target is that it NEVER EVER submits
+plaintext data down the stack in bio.
+
+If you want to do some lower/higher layer encryption, use key management
+on a different layer.
+So here, just setup encryption for fs, do not stack it with dm-crypt.
+
+Also, dm-crypt is software-independent solution
+(software-based full disk encryption), it must not depend on
+any underlying hardware.
+Hardware can be of course used used for acceleration, but then
+just implement proper crypto API module that accelerates particular cipher.
+
+I really hope we do not want to repeat the same mistake like presented here
+https://www.ru.nl/english/news-agenda/news/vm/icis/cyber-security/2018/radboud-university-researchers-discover-security/
+
+Milan
+
+> 
+> Cc: Alasdair Kergon <agk@redhat.com>
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Cc: dm-devel@redhat.com
+> Signed-off-by: Boojin Kim <boojin.kim@samsung.com>
+> ---
+>  drivers/md/dm-crypt.c | 112
+> ++++++++++++++++++++++++++++++++++++++++++++++----
+>  1 file changed, 103 insertions(+), 9 deletions(-)
+> 
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index 9f8b654..271cfcc 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -37,6 +37,7 @@
+>  #include <keys/user-type.h>
+>  
+>  #include <linux/device-mapper.h>
+> +#include <crypto/diskcipher.h>
+>  
+>  #define DM_MSG_PREFIX "crypt"
+>  
+> @@ -130,6 +131,8 @@ enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID,
+>  enum cipher_flags {
+>  	CRYPT_MODE_INTEGRITY_AEAD,	/* Use authenticated mode for cihper
+> */
+>  	CRYPT_IV_LARGE_SECTORS,		/* Calculate IV from sector_size,
+> not 512B sectors */
+> +	CRYPT_MODE_DISKCIPHER,
+> +	CRYPT_MODE_SKCIPHER,
+>  };
+>  
+>  /*
+> @@ -170,6 +173,7 @@ struct crypt_config {
+>  	union {
+>  		struct crypto_skcipher **tfms;
+>  		struct crypto_aead **tfms_aead;
+> +		struct crypto_diskcipher **tfms_diskc;
+>  	} cipher_tfm;
+>  	unsigned tfms_count;
+>  	unsigned long cipher_flags;
+> @@ -955,6 +959,17 @@ static bool crypt_integrity_hmac(struct crypt_config
+> *cc)
+>  	return crypt_integrity_aead(cc) && cc->key_mac_size;
+>  }
+>  
+> +static bool crypt_mode_diskcipher(struct crypt_config *cc)
+> +{
+> +	return test_bit(CRYPT_MODE_DISKCIPHER, &cc->cipher_flags);
+> +}
+> +
+> +static bool crypt_mode_skcipher(struct crypt_config *cc)
+> +{
+> +	return test_bit(CRYPT_MODE_SKCIPHER, &cc->cipher_flags);
+> +}
+> +
+> +
+>  /* Get sg containing data */
+>  static struct scatterlist *crypt_get_sg_data(struct crypt_config *cc,
+>  					     struct scatterlist *sg)
+> @@ -1573,13 +1588,13 @@ static void crypt_endio(struct bio *clone)
+>  	/*
+>  	 * free the processed pages
+>  	 */
+> -	if (rw == WRITE)
+> +	if ((rw == WRITE) && !crypt_mode_diskcipher(cc))
+>  		crypt_free_buffer_pages(cc, clone);
+>  
+>  	error = clone->bi_status;
+>  	bio_put(clone);
+>  
+> -	if (rw == READ && !error) {
+> +	if (rw == READ && !error && !crypt_mode_diskcipher(cc)) {
+>  		kcryptd_queue_crypt(io);
+>  		return;
+>  	}
+> @@ -1618,6 +1633,11 @@ static int kcryptd_io_read(struct dm_crypt_io *io,
+> gfp_t gfp)
+>  	crypt_inc_pending(io);
+>  
+>  	clone_init(io, clone);
+> +
+> +	if (crypt_mode_diskcipher(cc))
+> +		crypto_diskcipher_set(clone,
+> +			cc->cipher_tfm.tfms_diskc[0], NULL, 0);
+> +
+>  	clone->bi_iter.bi_sector = cc->start + io->sector;
+>  
+>  	if (dm_crypt_integrity_io_alloc(io, clone)) {
+> @@ -1907,10 +1927,29 @@ static void crypt_free_tfms_skcipher(struct
+> crypt_config *cc)
+>  	cc->cipher_tfm.tfms = NULL;
+>  }
+>  
+> +static void crypt_free_tfms_diskcipher(struct crypt_config *cc)
+> +{
+> +	if (!crypt_mode_diskcipher(cc))
+> +		return;
+> +
+> +	if (cc->cipher_tfm.tfms_diskc[0] &&
+> +		!IS_ERR(cc->cipher_tfm.tfms_diskc[0])) {
+> +		crypto_diskcipher_clearkey(cc->cipher_tfm.tfms_diskc[0]);
+> +		crypto_free_diskcipher(cc->cipher_tfm.tfms_diskc[0]);
+> +		cc->cipher_tfm.tfms_diskc[0] = NULL;
+> +	}
+> +
+> +	kfree(cc->cipher_tfm.tfms_diskc);
+> +	cc->cipher_tfm.tfms_diskc = NULL;
+> +}
+> +
+> +
+>  static void crypt_free_tfms(struct crypt_config *cc)
+>  {
+>  	if (crypt_integrity_aead(cc))
+>  		crypt_free_tfms_aead(cc);
+> +	else if (crypt_mode_diskcipher(cc))
+> +		crypt_free_tfms_diskcipher(cc);
+>  	else
+>  		crypt_free_tfms_skcipher(cc);
+>  }
+> @@ -1934,6 +1973,7 @@ static int crypt_alloc_tfms_skcipher(struct
+> crypt_config *cc, char *ciphermode)
+>  			return err;
+>  		}
+>  	}
+> +	set_bit(CRYPT_MODE_SKCIPHER, &cc->cipher_flags);
+>  
+>  	/*
+>  	 * dm-crypt performance can vary greatly depending on which crypto
+> @@ -1965,10 +2005,34 @@ static int crypt_alloc_tfms_aead(struct crypt_config
+> *cc, char *ciphermode)
+>  	return 0;
+>  }
+>  
+> +static int crypt_alloc_tfms_diskcipher(struct crypt_config *cc,
+> +				char *ciphermode)
+> +{
+> +	int err;
+> +
+> +	cc->cipher_tfm.tfms = kmalloc(sizeof(struct crypto_aead *),
+> GFP_KERNEL);
+> +	if (!cc->cipher_tfm.tfms)
+> +		return -ENOMEM;
+> +
+> +	cc->cipher_tfm.tfms_diskc[0] =
+> +	    crypto_alloc_diskcipher(ciphermode, 0, 0, 1);
+> +	if (IS_ERR(cc->cipher_tfm.tfms_diskc[0])) {
+> +		err = PTR_ERR(cc->cipher_tfm.tfms_diskc[0]);
+> +		crypt_free_tfms(cc);
+> +		pr_err("%s: no diskcipher with %s\n", __func__, ciphermode);
+> +		return err;
+> +	}
+> +	pr_info("%s is done with %s\n", __func__, ciphermode);
+> +
+> +	return 0;
+> +}
+> +
+>  static int crypt_alloc_tfms(struct crypt_config *cc, char *ciphermode)
+>  {
+>  	if (crypt_integrity_aead(cc))
+>  		return crypt_alloc_tfms_aead(cc, ciphermode);
+> +	else if (crypt_mode_diskcipher(cc))
+> +		return crypt_alloc_tfms_diskcipher(cc, ciphermode);
+>  	else
+>  		return crypt_alloc_tfms_skcipher(cc, ciphermode);
+>  }
+> @@ -2030,6 +2094,11 @@ static int crypt_setkey(struct crypt_config *cc)
+>  			r = crypto_aead_setkey(cc->cipher_tfm.tfms_aead[i],
+>  					       cc->key + (i * subkey_size),
+>  					       subkey_size);
+> +		else if (crypt_mode_diskcipher(cc))
+> +			r = crypto_diskcipher_setkey(
+> +
+> cc->cipher_tfm.tfms_diskc[i],
+> +						cc->key + (i * subkey_size),
+> +						subkey_size, 1);
+>  		else
+>  			r = crypto_skcipher_setkey(cc->cipher_tfm.tfms[i],
+>  						   cc->key + (i *
+> subkey_size),
+> @@ -2510,7 +2579,7 @@ static int crypt_ctr_cipher_new(struct dm_target *ti,
+> char *cipher_in, char *key
+>  			return -ENOMEM;
+>  		}
+>  		cc->iv_size = crypto_aead_ivsize(any_tfm_aead(cc));
+> -	} else
+> +	} else if (crypt_mode_skcipher(cc))
+>  		cc->iv_size = crypto_skcipher_ivsize(any_tfm(cc));
+>  
+>  	ret = crypt_ctr_blkdev_cipher(cc);
+> @@ -2560,6 +2629,9 @@ static int crypt_ctr_cipher_old(struct dm_target *ti,
+> char *cipher_in, char *key
+>  	chainmode = strsep(&tmp, "-");
+>  	*ivmode = strsep(&tmp, ":");
+>  	*ivopts = tmp;
+> +	if (*ivmode)
+> +		if (!strcmp(*ivmode, "disk") || !strcmp(*ivmode, "fmp"))
+> +			set_bit(CRYPT_MODE_DISKCIPHER, &cc->cipher_flags);
+>  
+>  	/*
+>  	 * For compatibility with the original dm-crypt mapping format, if
+> @@ -2621,9 +2693,11 @@ static int crypt_ctr_cipher(struct dm_target *ti,
+> char *cipher_in, char *key)
+>  		return ret;
+>  
+>  	/* Initialize IV */
+> -	ret = crypt_ctr_ivmode(ti, ivmode);
+> -	if (ret < 0)
+> -		return ret;
+> +	if (!crypt_mode_diskcipher(cc)) {
+> +		ret = crypt_ctr_ivmode(ti, ivmode);
+> +		if (ret < 0)
+> +			return ret;
+> +	}
+>  
+>  	/* Initialize and set key */
+>  	ret = crypt_set_key(cc, key);
+> @@ -2654,6 +2728,11 @@ static int crypt_ctr_cipher(struct dm_target *ti,
+> char *cipher_in, char *key)
+>  	if (cc->key_string)
+>  		memset(cc->key, 0, cc->key_size * sizeof(u8));
+>  
+> +	pr_info("%s with ivmode:%s, ivopts:%s, aead:%d, diskcipher:%d(%p),
+> skcipher:%d\n",
+> +			__func__, ivmode, ivopts, crypt_integrity_aead(cc),
+> +			crypt_mode_diskcipher(cc),
+> cc->cipher_tfm.tfms_diskc[0],
+> +			crypt_mode_skcipher(cc));
+> +
+>  	return ret;
+>  }
+>  
+> @@ -2788,11 +2867,15 @@ static int crypt_ctr(struct dm_target *ti, unsigned
+> int argc, char **argv)
+>  	ret = crypt_ctr_cipher(ti, argv[0], argv[1]);
+>  	if (ret < 0)
+>  		goto bad;
+> -
+>  	if (crypt_integrity_aead(cc)) {
+>  		cc->dmreq_start = sizeof(struct aead_request);
+>  		cc->dmreq_start += crypto_aead_reqsize(any_tfm_aead(cc));
+>  		align_mask = crypto_aead_alignmask(any_tfm_aead(cc));
+> +	} else if (crypt_mode_diskcipher(cc)) {
+> +		cc->per_bio_data_size = ti->per_io_data_size =
+> +			ALIGN(sizeof(struct dm_crypt_io),
+> +			ARCH_KMALLOC_MINALIGN);
+> +		goto get_bio;
+>  	} else {
+>  		cc->dmreq_start = sizeof(struct skcipher_request);
+>  		cc->dmreq_start += crypto_skcipher_reqsize(any_tfm(cc));
+> @@ -2836,6 +2919,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned
+> int argc, char **argv)
+>  		goto bad;
+>  	}
+>  
+> +get_bio:
+>  	ret = bioset_init(&cc->bs, MIN_IOS, 0, BIOSET_NEED_BVECS);
+>  	if (ret) {
+>  		ti->error = "Cannot allocate crypt bioset";
+> @@ -2893,6 +2977,12 @@ static int crypt_ctr(struct dm_target *ti, unsigned
+> int argc, char **argv)
+>  		goto bad;
+>  	}
+>  
+> +	if (crypt_mode_diskcipher(cc)) {
+> +		cc->crypt_queue = NULL;
+> +		cc->write_thread = NULL;
+> +		goto out;
+> +	}
+> +
+>  	if (test_bit(DM_CRYPT_SAME_CPU, &cc->flags))
+>  		cc->crypt_queue = alloc_workqueue("kcryptd/%s",
+>  						  WQ_HIGHPRI |
+> WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM,
+> @@ -2918,6 +3008,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned
+> int argc, char **argv)
+>  	}
+>  	wake_up_process(cc->write_thread);
+>  
+> +out:
+>  	ti->num_flush_bios = 1;
+>  
+>  	return 0;
+> @@ -2981,10 +3072,10 @@ static int crypt_map(struct dm_target *ti, struct
+> bio *bio)
+>  
+>  	if (crypt_integrity_aead(cc))
+>  		io->ctx.r.req_aead = (struct aead_request *)(io + 1);
+> -	else
+> +	else if (crypt_mode_skcipher(cc))
+>  		io->ctx.r.req = (struct skcipher_request *)(io + 1);
+>  
+> -	if (bio_data_dir(io->base_bio) == READ) {
+> +	if ((bio_data_dir(io->base_bio) == READ) ||
+> crypt_mode_diskcipher(cc)) {
+>  		if (kcryptd_io_read(io, GFP_NOWAIT))
+>  			kcryptd_queue_read(io);
+>  	} else
+> @@ -3143,6 +3234,9 @@ static void crypt_io_hints(struct dm_target *ti,
+> struct queue_limits *limits)
+>  	limits->physical_block_size =
+>  		max_t(unsigned, limits->physical_block_size,
+> cc->sector_size);
+>  	limits->io_min = max_t(unsigned, limits->io_min, cc->sector_size);
+> +
+> +	if (crypt_mode_diskcipher(cc))
+> +		limits->logical_block_size = PAGE_SIZE;
+>  }
+>  
+>  static struct target_type crypt_target = {
+> 
