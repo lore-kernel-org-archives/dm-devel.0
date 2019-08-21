@@ -1,54 +1,42 @@
-From: Denis Efremov <efremov@ispras.ru>
-Subject: [PATCH] lib/memweight.c: optimize by inlining bitmap_weight()
-Date: Wed, 21 Aug 2019 10:42:00 +0300
-Message-ID: <20190821074200.2203-1-efremov@ispras.ru>
+From: "boojin.kim" <boojin.kim@samsung.com>
+Subject: Re: [PATCH 6/9] dm crypt: support diskcipher
+Date: Wed, 21 Aug 2019 16:54:32 +0900
+Message-ID: <001a01d557f5$ab0a4a40$011edec0$@samsung.com>
+References: <CGME20190821075432epcas2p3758bf7b07f209fb4094d79bf46c8f4e9@epcas2p3.samsung.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Language: ko
 Sender: linux-kernel-owner@vger.kernel.org
-To: akpm@linux-foundation.org
-Cc: Denis Efremov <efremov@ispras.ru>, Akinobu Mita <akinobu.mita@gmail.com>, Jan Kara <jack@suse.cz>, Matthew Wilcox <matthew@wil.cx>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-media@vger.kernel.org, Erdem Tumurov <erdemus@gmail.com>, Vladimir Shelekhov <vshel@iis.nsk.su>
+Cc: 'Herbert Xu' <herbert@gondor.apana.org.au>, "'David S. Miller'" <davem@davemloft.net>, 'Eric Biggers' <ebiggers@kernel.org>, "'Theodore Y. Ts'o'" <tytso@mit.edu>, 'Chao Yu' <chao@kernel.org>, 'Jaegeuk Kim' <jaegeuk@kernel.org>, 'Andreas Dilger' <adilger.kernel@dilger.ca>'Theodore Ts'o' <tytso@mit.edu>, dm-devel@redhat.com, 'Mike Snitzer' <snitzer@redhat.com>, 'Alasdair Kergon' <agk@redhat.com>, 'Jens Axboe' <axboe@kernel.dk>, 'Krzysztof Kozlowski' <krzk@kernel.org>, 'Kukjin Kim' <kgene@kernel.org>, 'Jaehoon Chung' <jh80.chung@samsung.com>, 'Ulf Hansson' <ulf.hansson@linaro.org>, linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-mmc@vger.kernel.org, linux-samsung-soc
 List-Id: dm-devel.ids
 
-This patch inlines bitmap_weight() call. Thus, removing the BUG_ON,
-and 'longs to bits -> bits to longs' conversion by directly calling
-hweight_long().
+On Wed, Aug 21, 2019 at 09:13:36AM +0200, Milan Broz wrote: 
+>
+> NACK.
+> 
+> The whole principle of dm-crypt target is that it NEVER EVER submits
+> plaintext data down the stack in bio.
+> 
+> If you want to do some lower/higher layer encryption, use key management
+> on a different layer.
+> So here, just setup encryption for fs, do not stack it with dm-crypt.
+> 
+> Also, dm-crypt is software-independent solution
+> (software-based full disk encryption), it must not depend on
+> any underlying hardware.
+> Hardware can be of course used used for acceleration, but then
+> just implement proper crypto API module that accelerates particular
+cipher.
 
-./scripts/bloat-o-meter lib/memweight.o.old lib/memweight.o.new
-add/remove: 0/0 grow/shrink: 0/1 up/down: 0/-10 (-10)
-Function                                     old     new   delta
-memweight                                    162     152     -10
+I'm sorry for breaking the basic rules of dm-crypt. 
+But, if I want to use the H/W crypto accelerator running in storage
+controller,
+I have to drop plaintext to bio.
+I think the "proper crypto API module" that you mentioned is diskcipher
+because diskcipher isn't only for FMP.
+Diskcipher is a crypto API that supports encryption on storage controllers.
 
-Co-developed-by: Erdem Tumurov <erdemus@gmail.com>
-Co-developed-by: Vladimir Shelekhov <vshel@iis.nsk.su>
-Signed-off-by: Erdem Tumurov <erdemus@gmail.com>
-Signed-off-by: Vladimir Shelekhov <vshel@iis.nsk.su>
-Signed-off-by: Denis Efremov <efremov@ispras.ru>
----
- lib/memweight.c | 10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
-
-diff --git a/lib/memweight.c b/lib/memweight.c
-index 94dd72ccaa7f..f050b2b4c5e2 100644
---- a/lib/memweight.c
-+++ b/lib/memweight.c
-@@ -20,11 +20,13 @@ size_t memweight(const void *ptr, size_t bytes)
- 
- 	longs = bytes / sizeof(long);
- 	if (longs) {
--		BUG_ON(longs >= INT_MAX / BITS_PER_LONG);
--		ret += bitmap_weight((unsigned long *)bitmap,
--				longs * BITS_PER_LONG);
-+		const unsigned long *bitmap_long =
-+			(const unsigned long *)bitmap;
-+
- 		bytes -= longs * sizeof(long);
--		bitmap += longs * sizeof(long);
-+		for (; longs > 0; longs--, bitmap_long++)
-+			ret += hweight_long(*bitmap_long);
-+		bitmap = (const unsigned char *)bitmap_long;
- 	}
- 	/*
- 	 * The reason that this last loop is distinct from the preceding
--- 
-2.21.0
+Thanks
+Boojin Kim
