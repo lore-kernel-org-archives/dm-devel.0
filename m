@@ -1,24 +1,17 @@
-From: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
-Subject: Re: [PATCH v2 1/2] md raid0/linear: Introduce new array
- state 'broken'
-Date: Thu, 22 Aug 2019 13:16:02 -0300
-Message-ID: <f6c361ea-5f46-5a13-2b53-e48e404c91e2@canonical.com>
-References: <20190816134059.29751-1-gpiccoli@canonical.com>
-	<CAPhsuW7aGze5p9DgNAe=KakJGXTNqRZpNCtvi8nKxzS2MPXrNQ@mail.gmail.com>
-	<1f16110b-b798-806f-638b-57bbbedfea49@canonical.com>
-	<1725F15D-7CA2-4B8D-949A-4D8078D53AA9@fb.com>
-	<4c95f76c-dfbc-150c-2950-d34521d1e39d@canonical.com>
-	<8E880472-67DA-4597-AFAD-0DAFFD223620@fb.com>
-	<c35cd395-fc54-24c0-1175-d3ea0ab0413d@canonical.com>
-	<B7287054-70AC-47A8-BA5A-4D3D7C3F689F@fb.com>
-	<d0a3709e-c3a9-c0b1-c3c1-bf5a6d6932af@canonical.com>
-	<EB40716A-CD63-46B1-97B8-B8C039E08548@fb.com>
+From: Song Liu <songliubraving@fb.com>
+Subject: Re: [PATCH v3 2/2] mdadm: Introduce new array state
+ 'broken' for raid0/linear
+Date: Thu, 22 Aug 2019 21:56:17 +0000
+Message-ID: <060E4BAF-E16D-4ADF-AE93-39097DB739DD@fb.com>
+References: <20190822161318.26236-1-gpiccoli@canonical.com>
+	<20190822161318.26236-2-gpiccoli@canonical.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <EB40716A-CD63-46B1-97B8-B8C039E08548@fb.com>
+In-Reply-To: <20190822161318.26236-2-gpiccoli@canonical.com>
 Content-Language: en-US
+Content-ID: <0A4251BD5941054E95657177F60BA997@namprd15.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,20 +21,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Song Liu <songliubraving@fb.com>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Song Liu <liu.song.a23@gmail.com>, NeilBrown <neilb@suse.com>, linux-raid <linux-raid@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Jay Vosburgh <jay.vosburgh@canonical.com>
+To: "Guilherme G. Piccoli" <gpiccoli@canonical.com>, Jes Sorensen <jes.sorensen@gmail.com>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "liu.song.a23@gmail.com" <liu.song.a23@gmail.com>, NeilBrown <neilb@suse.com>, linux-raid <linux-raid@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "jay.vosburgh@canonical.com" <jay.vosburgh@canonical.com>
 List-Id: dm-devel.ids
 
-On 21/08/2019 16:22, Song Liu wrote:
-> [...] 
+
+
+> On Aug 22, 2019, at 9:13 AM, Guilherme G. Piccoli <gpiccoli@canonical.com> wrote:
 > 
-> I think this makes sense. Please send the patch and we can discuss
-> further while looking at the code. 
+> Currently if a md raid0/linear array gets one or more members removed while
+> being mounted, kernel keeps showing state 'clean' in the 'array_state'
+> sysfs attribute. Despite udev signaling the member device is gone, 'mdadm'
+> cannot issue the STOP_ARRAY ioctl successfully, given the array is mounted.
+> 
+> Nothing else hints that something is wrong (except that the removed devices
+> don't show properly in the output of mdadm 'detail' command). There is no
+> other property to be checked, and if user is not performing reads/writes
+> to the array, even kernel log is quiet and doesn't give a clue about the
+> missing member.
+> 
+> This patch is the mdadm counterpart of kernel new array state 'broken'.
+> The 'broken' state mimics the state 'clean' in every aspect, being useful
+> only to distinguish if an array has some member missing. All necessary
+> paths in mdadm were changed to deal with 'broken' state, and in case the
+> tool runs in a kernel that is not updated, it'll work normally, i.e., it
+> doesn't require the 'broken' state in order to work.
+> Also, this patch changes the way the array state is showed in the 'detail'
+> command (for raid0/linear only) - now it takes the 'array_state' sysfs
+> attribute into account instead of only rely in the MD_SB_CLEAN flag.
+> 
+> Cc: NeilBrown <neilb@suse.com>
+> Cc: Song Liu <songliubraving@fb.com>
+> Signed-off-by: Guilherme G. Piccoli <gpiccoli@canonical.com>
 
-Thanks Song, just sent the V3:
-lore.kernel.org/linux-block/20190822161318.26236-1-gpiccoli@canonical.com
-
-Cheers,
-
-
-Guilherme
+CC Jes, who maintains mdadm. 
