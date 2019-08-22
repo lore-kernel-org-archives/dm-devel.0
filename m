@@ -1,15 +1,23 @@
 From: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
 Subject: Re: [PATCH v2 1/2] md raid0/linear: Introduce new array
  state 'broken'
-Date: Thu, 22 Aug 2019 12:35:31 -0300
-Message-ID: <51d10dea-4148-6a2c-8e70-7cc977ce1def@canonical.com>
+Date: Thu, 22 Aug 2019 13:16:02 -0300
+Message-ID: <f6c361ea-5f46-5a13-2b53-e48e404c91e2@canonical.com>
 References: <20190816134059.29751-1-gpiccoli@canonical.com>
-	<ca2096ca-8cb2-468f-89d4-24cd059b8a6b@cloud.ionos.com>
+	<CAPhsuW7aGze5p9DgNAe=KakJGXTNqRZpNCtvi8nKxzS2MPXrNQ@mail.gmail.com>
+	<1f16110b-b798-806f-638b-57bbbedfea49@canonical.com>
+	<1725F15D-7CA2-4B8D-949A-4D8078D53AA9@fb.com>
+	<4c95f76c-dfbc-150c-2950-d34521d1e39d@canonical.com>
+	<8E880472-67DA-4597-AFAD-0DAFFD223620@fb.com>
+	<c35cd395-fc54-24c0-1175-d3ea0ab0413d@canonical.com>
+	<B7287054-70AC-47A8-BA5A-4D3D7C3F689F@fb.com>
+	<d0a3709e-c3a9-c0b1-c3c1-bf5a6d6932af@canonical.com>
+	<EB40716A-CD63-46B1-97B8-B8C039E08548@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <ca2096ca-8cb2-468f-89d4-24cd059b8a6b@cloud.ionos.com>
+In-Reply-To: <EB40716A-CD63-46B1-97B8-B8C039E08548@fb.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,35 +28,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Guoqing Jiang <guoqing.jiang@cloud.ionos.com>, linux-raid@vger.kernel.org
-Cc: linux-block@vger.kernel.org, jay.vosburgh@canonical.com, dm-devel@redhat.com, Song Liu <songliubraving@fb.com>, NeilBrown <neilb@suse.com>
+To: Song Liu <songliubraving@fb.com>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Song Liu <liu.song.a23@gmail.com>, NeilBrown <neilb@suse.com>, linux-raid <linux-raid@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Jay Vosburgh <jay.vosburgh@canonical.com>
 List-Id: dm-devel.ids
 
-T24gMjIvMDgvMjAxOSAwNTo0OSwgR3VvcWluZyBKaWFuZyB3cm90ZToKPiBIaSwKCkhpIEd1b3Fp
-bmcsIHRoYW5rcyBmb3IgdGhlIHJldmlldyEKCgo+IAo+IE9uIDgvMTYvMTkgMzo0MCBQTSwgR3Vp
-bGhlcm1lIEcuIFBpY2NvbGkgd3JvdGU6Cj4+ICtzdGF0aWMgYm9vbCBsaW5lYXJfaXNfbWlzc2lu
-Z19kZXYoc3RydWN0IG1kZGV2ICptZGRldikKPj4gK3sKPj4gK8KgwqDCoCBzdHJ1Y3QgbWRfcmRl
-diAqcmRldjsKPj4gK8KgwqDCoCBzdGF0aWMgaW50IGFscmVhZHlfbWlzc2luZzsKPj4gK8KgwqDC
-oCBpbnQgZGVmX2Rpc2tzLCB3b3JrX2Rpc2tzID0gMDsKPj4gKwo+PiArwqDCoMKgIGRlZl9kaXNr
-cyA9IG1kZGV2LT5yYWlkX2Rpc2tzOwo+PiArwqDCoMKgIHJkZXZfZm9yX2VhY2gocmRldiwgbWRk
-ZXYpCj4+ICvCoMKgwqDCoMKgwqDCoCBpZiAocmRldi0+YmRldi0+YmRfZGlzay0+ZmxhZ3MgJiBH
-RU5IRF9GTF9VUCkKPj4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqAgd29ya19kaXNrcysrOwo+PiAr
-Cj4+ICvCoMKgwqAgaWYgKHVubGlrZWx5KGRlZl9kaXNrcyAtIHdvcmtfZGlza3MpKSB7Cj4gCj4g
-SWYgbXkgdW5kZXJzdGFuZGluZyBpcyBjb3JyZWN0LCBhZnRlciBlbnRlciB0aGUgYnJhbmNoLAo+
-IAo+PiArwqDCoMKgwqDCoMKgwqAgaWYgKGFscmVhZHlfbWlzc2luZyA8IChkZWZfZGlza3MgLSB3
-b3JrX2Rpc2tzKSkgewo+IAo+IHRoZSBhYm92ZSBpcyBhbHdheXMgdHJ1ZSBzaW5jZSBhbHJlYWR5
-X21pc3Npbmcgc2hvdWxkIGJlICcwJywgcmlnaHQ/Cj4gSWYgc28sIG1heWJlIHRoZSBhYm92ZSBj
-aGVja2luZyBpcyBwb2ludGxlc3MuCgpUaGUgdmFyaWFibGUgJ2FscmVhZHlfbWlzc2luZycgaXMg
-c3RhdGljLCBzbyBpbmRlZWQgaXQgc3RhcnRzIHdpdGggMC4KV2hlbiB0aGVyZSBhcmUgbWlzc2lu
-ZyBkaXNrcywgd2UnbGwgZW50ZXIgdGhlICdpZihkZWZfZGlza3MgLQp3b3JrX2Rpc2tzKScgYW5k
-IGluZGVlZCBwcmludCB0aGUgbWVzc2FnZS4gQnV0IG5vdGljZSB3ZSdsbCBzZXQKJ2FscmVhZHlf
-bWlzc2luZyA9IGRlZl9kaXNrcyAtIHdvcmtfZGlza3MnLCBzbyB3ZSB3b24ndCBlbnRlciB0aGUg
-aWYgYW5kCnByaW50IHRoZSBtZXNzYWdlIGFueW1vcmUgX3VubGVzc18gYSBuZXcgbWVtYmVyIGlz
-IHJlbW92ZWQgYW5kCidhbHJlYWR5X21pc3NpbmcnIGdldHMgdW5iYWxhbmNlZCB3aXRoIHJlZ2Fy
-ZHMgdG8gJ2RlZl9kaXNrcyAtIHdvcmtfZGlza3MnLgoKVGhlIGlkZWEgYmVoaW5kIGl0IGlzIHRv
-IHNob3cgYSBzaW5nbGUgbWVzc2FnZSB3aGVuZXZlciBhIG5ldyBtZW1iZXIgaXMKcmVtb3ZlZC4g
-VGhlIHVzZSBvZiBhIHN0YXRpYyB2YXJpYWJsZSBhbGxvd3MgdXMgdG8gZG8gdGhhdC4KCk5ldmVy
-dGhlbGVzcywgdGhpcyBwYXRoIHdpbGwgYmUgZHJvcHBlZCBpbiB0aGUgVjMgdGhhdCBpcyByZWFk
-eSB0byBiZSBzZW50LgpDaGVlcnMsCgoKR3VpbGhlcm1lCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxp
-c3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlz
-dGluZm8vZG0tZGV2ZWw=
+On 21/08/2019 16:22, Song Liu wrote:
+> [...] 
+> 
+> I think this makes sense. Please send the patch and we can discuss
+> further while looking at the code. 
+
+Thanks Song, just sent the V3:
+lore.kernel.org/linux-block/20190822161318.26236-1-gpiccoli@canonical.com
+
+Cheers,
+
+
+Guilherme
