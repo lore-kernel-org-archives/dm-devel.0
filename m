@@ -1,97 +1,73 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [PATCH] dm table: fix a potential array out of
- bounds
-Date: Fri, 23 Aug 2019 07:28:16 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1908230705510.5296@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1566351211-13280-1-git-send-email-kontais@zoho.com>
+From: Song Liu <songliubraving@fb.com>
+Subject: Re: [PATCH v3 1/2] md raid0/linear: Mark array as
+ 'broken' and fail BIOs if a member is gone
+Date: Thu, 22 Aug 2019 21:55:23 +0000
+Message-ID: <73C4747E-7A9E-4833-8393-B6A06C935DBE@fb.com>
+References: <20190822161318.26236-1-gpiccoli@canonical.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1566351211-13280-1-git-send-email-kontais@zoho.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Zhang Tao <kontais@zoho.com>
-Cc: agk@redhat.com, snitzer@redhat.com, Zhang Tao <zhangtao27@lenovo.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190822161318.26236-1-gpiccoli@canonical.com>
+Content-Language: en-US
+Content-ID: <9EB021AC02A93A41880C260032233E66@namprd15.prod.outlook.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Song Liu <liu.song.a23@gmail.com>, NeilBrown <neilb@suse.com>, linux-raid <linux-raid@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Jay Vosburgh <jay.vosburgh@canonical.com>
 List-Id: dm-devel.ids
 
-Hi
-
-I tested it and the bug is real - with some table sizes, 
-dm_table_find_target will access memory out of bounds if the sector 
-argument is beyond limit.
-
-Your patch fixes some of these cases, but not all of them.
-
-I used this script to test all possible table sizes:
-#!/bin/bash -e
-sync
-dmsetup remove_all || true
-rmmod dm_mod || true
->t.txt
-for i in `seq 1 10000`; do
-        echo $i
-        echo $((i-1)) 1 error >>t.txt
-        dmsetup create error <t.txt
-        dmsetup remove error
-done
-
-and I modified dm_table_find_target to call dm_table_find_target with too 
-high sector number. Without your patch, it fails on table with 16 entries; 
-with your patch applied, it fails on 144 entries.
-
-I'll make another patch that passes the test.
-
-Mikulas
 
 
-On Wed, 21 Aug 2019, Zhang Tao wrote:
-
-> From: Zhang Tao <zhangtao27@lenovo.com>
+> On Aug 22, 2019, at 9:13 AM, Guilherme G. Piccoli <gpiccoli@canonical.com> wrote:
 > 
-> allocate num + 1 for target and offset array, n_highs need num + 1
-> elements, the last element will be used for node lookup in function
-> dm_table_find_target.
+> Currently md raid0/linear are not provided with any mechanism to validate
+> if an array member got removed or failed. The driver keeps sending BIOs
+> regardless of the state of array members, and kernel shows state 'clean'
+> in the 'array_state' sysfs attribute. This leads to the following
+> situation: if a raid0/linear array member is removed and the array is
+> mounted, some user writing to this array won't realize that errors are
+> happening unless they check dmesg or perform one fsync per written file.
+> Despite udev signaling the member device is gone, 'mdadm' cannot issue the
+> STOP_ARRAY ioctl successfully, given the array is mounted.
+
+[...]
+
+> drivers/md/md-linear.c |  9 +++++++++
+> drivers/md/md.c        | 22 ++++++++++++++++++----
+> drivers/md/md.h        |  3 +++
+> drivers/md/raid0.c     | 10 ++++++++++
+> 4 files changed, 40 insertions(+), 4 deletions(-)
 > 
-> Signed-off-by: Zhang Tao <zhangtao27@lenovo.com>
-> ---
->  drivers/md/dm-table.c | 8 +++++---
->  1 file changed, 5 insertions(+), 3 deletions(-)
+> diff --git a/drivers/md/md-linear.c b/drivers/md/md-linear.c
+> index 7354466ddc90..0479ccdbdeeb 100644
+> --- a/drivers/md/md-linear.c
+> +++ b/drivers/md/md-linear.c
+> @@ -258,6 +258,15 @@ static bool linear_make_request(struct mddev *mddev, struct bio *bio)
+> 		     bio_sector < start_sector))
+> 		goto out_of_bounds;
 > 
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index 7b6c3ee..fd7f604 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -160,20 +160,22 @@ static int alloc_targets(struct dm_table *t, unsigned int num)
->  {
->  	sector_t *n_highs;
->  	struct dm_target *n_targets;
-> +	unsigned int alloc_num;
->  
->  	/*
->  	 * Allocate both the target array and offset array at once.
->  	 * Append an empty entry to catch sectors beyond the end of
->  	 * the device.
->  	 */
-> -	n_highs = (sector_t *) dm_vcalloc(num + 1, sizeof(struct dm_target) +
-> +	alloc_num = num + 1;
-> +	n_highs = (sector_t *) dm_vcalloc(alloc_num, sizeof(struct dm_target) +
->  					  sizeof(sector_t));
->  	if (!n_highs)
->  		return -ENOMEM;
->  
-> -	n_targets = (struct dm_target *) (n_highs + num);
-> +	n_targets = (struct dm_target *) (n_highs + alloc_num);
->  
-> -	memset(n_highs, -1, sizeof(*n_highs) * num);
-> +	memset(n_highs, -1, sizeof(*n_highs) * alloc_num);
->  	vfree(t->highs);
->  
->  	t->num_allocated = num;
-> -- 
-> 1.8.3.1
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+> +	if (unlikely(!(tmp_dev->rdev->bdev->bd_disk->flags & GENHD_FL_UP))) {
+> +		if (!test_bit(MD_BROKEN, &mddev->flags))
+> +			pr_warn("md: %s: linear array has a missing/failed member\n",
+> +				mdname(mddev));
+> +		set_bit(MD_BROKEN, &mddev->flags);
+> +		bio_io_error(bio);
+> +		return true;
+> +	}
+> +
+
+Maybe we can somehow put this block in a helper and use it in both raid0
+and linear code?
+
+Otherwise, looks good to me. 
+
+Thanks,
+Song
