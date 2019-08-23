@@ -1,12 +1,11 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 5.3-rc6
-Date: Fri, 23 Aug 2019 11:41:53 -0400
-Message-ID: <20190823154153.GA24648@lobo>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH v2 00/14] multipath marginal pathgroups
+Date: Fri, 23 Aug 2019 12:48:44 -0500
+Message-ID: <1566582538-5979-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,86 +15,88 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Wenwen Wang <wenwen@cs.uga.edu>, Dmitry Fomichev <dmitry.fomichev@wdc.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>, ZhangXiaoxu <zhangxiaoxu5@huawei.com>, Dan Carpenter <dan.carpenter@oracle.com>, Bryan Gurney <bgurney@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Muneendra Kumar <mkumar@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-Hi Linus,
+The first patch in this series is simply a resend of my previous patch
+to fix vector_foreach_slot_backwards(). The rest of the patches are
+related to adding support for an alternative way to deal with marginal
+paths. Instead of delaying their reinstatement, which can cause problems
+if multipath isn't set to queue IO when there are no usable paths, this
+patchset adds a marginal_pathgroups option. If this is set, marginal
+paths will be reinstated, but added to seperate marginal pathgroups.
+They will remain there until the time when they would normally be
+reinstated, at which point they will be returned to their regular
+pathgroups. Marginal pathgroups will have a priority lower than all
+regular pathgroups. This has the advantage of continuing to track
+marginal paths, even if all the other paths go down temporarily, so that
+multipath can switch back to the normal paths as soon as they come back
+up.  This code also allows users to manually move paths between marginal
+and regular pathgroups. This is especially important for Broadcom's
+Fiber Channel Transport Daemon, since it doesn't use the multipathd
+marginal path detectors, and thus will not automatically reinstate
+marginal paths when all other paths have failed.
 
-More fixes than usual from DM at this stage in a release but...
+https://www.mail-archive.com/dm-devel@redhat.com/msg12956.html
 
-The following changes since commit d45331b00ddb179e291766617259261c112db872:
+Changes in v2:
+- patch 04/14 is a combination of the old 04/16, 06/16, and 07/16
+  patches, based on Martin's suggestion. Since all the code is the same
+  as the previous patches, I have kept Martin's Reviewed-by
 
-  Linux 5.3-rc4 (2019-08-11 13:26:41 -0700)
+- old patch 09/16 has been moved up to 05/14 based on Martin's
+  suggestion. There are no code changes
 
-are available in the Git repository at:
+- patch 09/14 (old patch 11/16) moves path_group_prio_update()
+  earlier in select_path_group() to make sure the pgp->marginal check
+  uses a current value.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.3/dm-fixes-2
+- patch 12/14 (old patch 14/16) changes how delay_checks is selected,
+  to ignore the delay_checks values if any san_path_err options are
+  set, based on Martin's suggestions. It also changes the man page
+  wording.
 
-for you to fetch changes up to 1cfd5d3399e87167b7f9157ef99daa0e959f395d:
+Benjamin Marzinski (14):
+  libmultipath: make vector_foreach_slot_backwards work as expected
+  libmultipath: add marginal paths and groups infrastructure
+  tests: add path grouping policy unit tests.
+  libmultipath: add wrapper function around pgpolicyfn
+  tests: update pgpolicy tests to work with group_paths()
+  libmultipath: fix double free in pgpolicyfn error paths
+  libmultipath: consolidate group_by_* functions
+  libmultipath: make pgpolicyfn take a paths vector
+  libmultipath: make group_paths handle marginal paths
+  tests: add tests for grouping marginal paths.
+  libmultipath: add marginal_pathgroups config option
+  libmutipath: deprecate delay_*_checks
+  multipathd: use marginal_pathgroups
+  multipath: update man pages
 
-  dm table: fix invalid memory accesses with too high sector number (2019-08-23 10:11:42 -0400)
+ libmultipath/config.h      |    1 +
+ libmultipath/configure.c   |   23 +-
+ libmultipath/dict.c        |    3 +
+ libmultipath/pgpolicies.c  |  346 +++++-------
+ libmultipath/pgpolicies.h  |   12 +-
+ libmultipath/print.c       |   18 +
+ libmultipath/print.h       |    6 +-
+ libmultipath/propsel.c     |   89 +++-
+ libmultipath/propsel.h     |    3 +-
+ libmultipath/structs.c     |   16 +-
+ libmultipath/structs.h     |   15 +-
+ libmultipath/switchgroup.c |   15 +-
+ libmultipath/vector.h      |    2 +-
+ multipath/multipath.conf.5 |   74 ++-
+ multipathd/cli.c           |    5 +
+ multipathd/cli.h           |    4 +
+ multipathd/cli_handlers.c  |   91 ++++
+ multipathd/cli_handlers.h  |    3 +
+ multipathd/main.c          |   90 ++--
+ multipathd/multipathd.8    |   19 +
+ tests/Makefile             |    2 +-
+ tests/pgpolicy.c           | 1036 ++++++++++++++++++++++++++++++++++++
+ 22 files changed, 1523 insertions(+), 350 deletions(-)
+ create mode 100644 tests/pgpolicy.c
 
-Please pull, thanks!
-Mike
-
-----------------------------------------------------------------
-- Revert a DM bufio change from during the 5.3 merge window now that a
-  proper fix has been made to the block loopback driver.
-
-- Fix DM kcopyd to wakeup so failed subjobs get completed.
-
-- Various fixes to DM zoned target to address error handling, and other
-  small tweaks (SPDX license identifiers and fix typos).
-
-- Fix DM integrity range locking race by tracking whether journal has
-  changed.
-
-- Fix DM dust target to detect reads of badblocks beyond the first 512b
-  sector (applicable if blocksize is larger than 512b).
-
-- Fix DM persistent-data issue in both the DM btree and DM
-  space-map-metadata interfaces.
-
-- Fix out of bounds memory access with certain DM table configurations.
-
-----------------------------------------------------------------
-Bryan Gurney (1):
-      dm dust: use dust block size for badblocklist index
-
-Dan Carpenter (1):
-      dm zoned: fix potential NULL dereference in dmz_do_reclaim()
-
-Dmitry Fomichev (6):
-      dm kcopyd: always complete failed jobs
-      dm zoned: improve error handling in reclaim
-      dm zoned: improve error handling in i/o map code
-      dm zoned: properly handle backing device failure
-      dm zoned: add SPDX license identifiers
-      dm zoned: fix a few typos
-
-Mikulas Patocka (3):
-      Revert "dm bufio: fix deadlock with loop device"
-      dm integrity: fix a crash due to BUG_ON in __journal_read_write()
-      dm table: fix invalid memory accesses with too high sector number
-
-Wenwen Wang (1):
-      dm raid: add missing cleanup in raid_ctr()
-
-ZhangXiaoxu (2):
-      dm btree: fix order of block initialization in btree_split_beneath
-      dm space map metadata: fix missing store of apply_bops() return value
-
- drivers/md/dm-bufio.c                              |  4 +-
- drivers/md/dm-dust.c                               | 11 +++-
- drivers/md/dm-integrity.c                          | 15 +++++
- drivers/md/dm-kcopyd.c                             |  5 +-
- drivers/md/dm-raid.c                               |  2 +-
- drivers/md/dm-table.c                              |  5 +-
- drivers/md/dm-zoned-metadata.c                     | 68 ++++++++++++++++------
- drivers/md/dm-zoned-reclaim.c                      | 47 +++++++++++----
- drivers/md/dm-zoned-target.c                       | 68 +++++++++++++++++++---
- drivers/md/dm-zoned.h                              | 11 ++++
- drivers/md/persistent-data/dm-btree.c              | 31 +++++-----
- drivers/md/persistent-data/dm-space-map-metadata.c |  2 +-
- 12 files changed, 209 insertions(+), 60 deletions(-)
+-- 
+2.17.2
