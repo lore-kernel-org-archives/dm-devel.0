@@ -1,13 +1,13 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 14/14] multipath: update man pages
-Date: Fri, 23 Aug 2019 12:48:58 -0500
-Message-ID: <1566582538-5979-15-git-send-email-bmarzins@redhat.com>
-References: <1566582538-5979-1-git-send-email-bmarzins@redhat.com>
+From: pr-tracker-bot@kernel.org
+Subject: Re: [git pull] device mapper fixes for 5.3-rc6
+Date: Fri, 23 Aug 2019 18:00:08 +0000
+Message-ID: <156658320865.8315.6721871049498316785.pr-tracker-bot@kernel.org>
+References: <20190823154153.GA24648@lobo>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1566582538-5979-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <20190823154153.GA24648@lobo>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,100 +17,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Muneendra Kumar <mkumar@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Wenwen Wang <wenwen@cs.uga.edu>, Dmitry Fomichev <dmitry.fomichev@wdc.com>, ZhangXiaoxu <zhangxiaoxu5@huawei.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Dan Carpenter <dan.carpenter@oracle.com>, Bryan Gurney <bgurney@redhat.com>
 List-Id: dm-devel.ids
 
-Add documentation for the marginal_pathgroups option and the
-(un)setmarginal commands.
+The pull request you sent on Fri, 23 Aug 2019 11:41:53 -0400:
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipath/multipath.conf.5 | 34 ++++++++++++++++++++++++++++++----
- multipathd/multipathd.8    | 19 +++++++++++++++++++
- 2 files changed, 49 insertions(+), 4 deletions(-)
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.3/dm-fixes-2
 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 08297a41..ac8eadd0 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -1042,6 +1042,28 @@ The default is: \fBno\fR
- .
- .
- .TP
-+.B marginal_pathgroups
-+If set to \fIno\fR, the \fIdelay_*_checks\fR, \fImarginal_path_*\fR, and
-+\fIsan_path_err_*\fR options will keep marginal, or \(dqshaky\(dq, paths from
-+being reinstated until they have been monitored for some time. This can cause
-+situations where all non-marginal paths are down, and no paths are usable
-+until multipathd detects this and reinstates a marginal path. If the multipath
-+device is not configured to queue IO in this case, it can cause IO errors to
-+occur, even though there are marginal paths available.  However, if this
-+option is set to \fIyes\fR, when one of the marginal path detecting methods
-+determines that a path is marginal, it will be reinstated and placed in a
-+seperate pathgroup that will only be used after all the non-marginal pathgroups
-+have been tried first. This prevents the possibility of IO errors occuring
-+while marginal paths are still usable. After the path has been monitored
-+for the configured time, and is declared healthy, it will be returned to its
-+normal pathgroup. See "Shaky paths detection" below for more information.
-+.RS
-+.TP
-+The default  is: \fBno\fR
-+.RE
-+.
-+.
-+.TP
- .B find_multipaths
- This option controls whether multipath and multipathd try to create multipath
- maps over non-blacklisted devices they encounter. This matters a) when a device is
-@@ -1689,10 +1711,14 @@ events. \fImultipathd\fR supports three different methods for detecting this
- situation and dealing with it. All methods share the same basic mode of
- operation: If a path is found to be \(dqshaky\(dq or \(dqflipping\(dq,
- and appears to be in healthy status, it is not reinstated (put back to use)
--immediately. Instead, it is watched for some time, and only reinstated
--if the healthy state appears to be stable. The logic of determining
--\(dqshaky\(dq condition, as well as the logic when to reinstate,
--differs between the three methods.
-+immediately. Instead, it is placed in the \(dqdelayed\(dq state and watched
-+for some time, and only reinstated if the healthy state appears to be stable.
-+If the \fImarginal_pathgroups\fR option is set, the path will reinstated
-+immediately, but placed in a special pathgroup for marginal paths. Marginal
-+pathgroups will not be used until all other pathgroups have been tried. At the
-+time when the path would normally be reinstated, it will be returned to its
-+normal pathgroup. The logic of determining \(dqshaky\(dq condition, as well as
-+the logic when to reinstate, differs between the three methods.
- .TP 8
- .B \(dqdelay_checks\(dq failure tracking
- This method is \fBdeprecated\fR and mapped to the \(dqsan_path_err\(dq method.
-diff --git a/multipathd/multipathd.8 b/multipathd/multipathd.8
-index edac7a92..048a838d 100644
---- a/multipathd/multipathd.8
-+++ b/multipathd/multipathd.8
-@@ -277,6 +277,25 @@ Remove the persistent reservation key associated with $map from the
- \fIreservation_key\fR is set to \fBfile\fR in \fI/etc/multipath.conf\fR.
- .
- .TP
-+.B path $path setmarginal
-+move $path to a marginal pathgroup. The path will remain in the marginal
-+path group until \fIunsetmarginal\fR is called. This command will only
-+work if \fImarginal_pathgroups\fR is enabled and there is no Shaky paths
-+detection method configured (see the multipath.conf man page for details).
-+.
-+.TP
-+.B path $path unsetmarginal
-+return marginal path $path to its normal pathgroup. This command will only
-+work if \fImarginal_pathgroups\fR is enabled and there is no Shaky paths
-+detection method configured (see the multipath.conf man page for details).
-+.
-+.TP
-+.B map $map unsetmarginal
-+return all marginal paths in $map to their normal pathgroups. This command
-+will only work if \fImarginal_pathgroups\fR is enabled and there is no Shaky
-+paths detection method configured (see the multipath.conf man page for details).
-+.
-+.TP
- .B quit|exit
- End interactive session.
- .
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/dd469a456047af5eb1ee0bcfc8fe61f5940ef0e0
+
+Thank you!
+
 -- 
-2.17.2
+Deet-doot-dot, I am a bot.
+https://korg.wiki.kernel.org/userdoc/prtracker
