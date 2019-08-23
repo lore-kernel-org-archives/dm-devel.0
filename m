@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 04/14] libmultipath: add wrapper function
-	around pgpolicyfn
-Date: Fri, 23 Aug 2019 12:48:48 -0500
-Message-ID: <1566582538-5979-5-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 02/14] libmultipath: add marginal paths and
+	groups infrastructure
+Date: Fri, 23 Aug 2019 12:48:46 -0500
+Message-ID: <1566582538-5979-3-git-send-email-bmarzins@redhat.com>
 References: <1566582538-5979-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,258 +22,299 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Muneendra Kumar <mkumar@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-group_paths() is a wrapper around the pgpolicy functions, that pulls out
-the common code from the beginning and the end. For this to work,
-one_group() needs to change how it sets up the pathgroups vector to work
-like the other pgpolicy functions. This does means that the pathgroups
-in group_by_prio are now needlessly sorted afterwards. That will be
-dealt with in a later patch.  Also, since store_pathgroup() is only
-called by add_pathgroup(), it doesn't need to exist as a seperate
-function.
+This commit adds a marginal variable ot the paths and pathgroups structs.
+The marginal paths variable can be set by
+
+multipathd path <path> setmarginal
+
+and cleared by
+
+multipathd path <path> unsetmarginal
+
+All of the marginal paths on a multipath device can be cleared by
+
+multipathd map <map> unsetmarginal
+
+Currently, the marginal variable of a pathgroup will not change. This
+will be added by a future commit. The marginal state of a path or
+pathgroup is printable with the %M wildcard, and is displayed in the
+json output.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/configure.c  |  2 +-
- libmultipath/pgpolicies.c | 83 ++++++++++++++-------------------------
- libmultipath/pgpolicies.h |  2 +-
- libmultipath/structs.c    | 16 ++------
- libmultipath/structs.h    |  1 -
- 5 files changed, 35 insertions(+), 69 deletions(-)
+ libmultipath/print.c      | 18 ++++++++
+ libmultipath/print.h      |  6 ++-
+ libmultipath/structs.h    |  2 +
+ multipathd/cli.c          |  5 +++
+ multipathd/cli.h          |  4 ++
+ multipathd/cli_handlers.c | 91 +++++++++++++++++++++++++++++++++++++++
+ multipathd/cli_handlers.h |  3 ++
+ multipathd/main.c         |  3 ++
+ 8 files changed, 130 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index b09ef529..3c309d64 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -387,7 +387,7 @@ int setup_map(struct multipath *mpp, char *params, int params_size,
- 		vector_free(mpp->pg);
- 		mpp->pg = NULL;
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index fc40b0f0..907469ad 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -502,6 +502,14 @@ snprint_pg_state (char * buff, size_t len, const struct pathgroup * pgp)
  	}
--	if (mpp->pgpolicyfn && mpp->pgpolicyfn(mpp))
-+	if (group_paths(mpp))
- 		return 1;
- 
- 	/*
-diff --git a/libmultipath/pgpolicies.c b/libmultipath/pgpolicies.c
-index 660768a4..1b59485c 100644
---- a/libmultipath/pgpolicies.c
-+++ b/libmultipath/pgpolicies.c
-@@ -84,6 +84,26 @@ sort_pathgroups (struct multipath *mp) {
  }
  
- 
-+int group_paths(struct multipath *mp)
++static int
++snprint_pg_marginal (char * buff, size_t len, const struct pathgroup * pgp)
 +{
-+	if (!mp->pg)
-+		mp->pg = vector_alloc();
-+	if (!mp->pg)
++	if (pgp->marginal)
++		return snprintf(buff, len, "marginal");
++	return snprintf(buff, len, "normal");
++}
++
+ static int
+ snprint_path_size (char * buff, size_t len, const struct path * pp)
+ {
+@@ -672,6 +680,14 @@ snprint_path_protocol(char * buff, size_t len, const struct path * pp)
+ 	}
+ }
+ 
++int
++snprint_path_marginal(char * buff, size_t len, const struct path * pp)
++{
++	if (pp->marginal)
++		return snprintf(buff, len, "marginal");
++	return snprintf(buff, len, "normal");
++}
++
+ struct multipath_data mpd[] = {
+ 	{'n', "name",          0, snprint_name},
+ 	{'w', "uuid",          0, snprint_multipath_uuid},
+@@ -713,6 +729,7 @@ struct path_data pd[] = {
+ 	{'p', "pri",           0, snprint_pri},
+ 	{'S', "size",          0, snprint_path_size},
+ 	{'z', "serial",        0, snprint_path_serial},
++	{'M', "marginal_st",   0, snprint_path_marginal},
+ 	{'m', "multipath",     0, snprint_path_mpp},
+ 	{'N', "host WWNN",     0, snprint_host_wwnn},
+ 	{'n', "target WWNN",   0, snprint_tgt_wwnn},
+@@ -729,6 +746,7 @@ struct pathgroup_data pgd[] = {
+ 	{'s', "selector",      0, snprint_pg_selector},
+ 	{'p', "pri",           0, snprint_pg_pri},
+ 	{'t', "dm_st",         0, snprint_pg_state},
++	{'M', "marginal_st",   0, snprint_pg_marginal},
+ 	{0, NULL, 0 , NULL}
+ };
+ 
+diff --git a/libmultipath/print.h b/libmultipath/print.h
+index e2fb865c..7e36ec63 100644
+--- a/libmultipath/print.h
++++ b/libmultipath/print.h
+@@ -50,7 +50,8 @@
+ #define PRINT_JSON_GROUP     "{\n" \
+ 			     "         \"selector\" : \"%s\",\n" \
+ 			     "         \"pri\" : %p,\n" \
+-			     "         \"dm_st\" : \"%t\","
++			     "         \"dm_st\" : \"%t\",\n" \
++			     "         \"marginal_st\" : \"%M\","
+ 
+ #define PRINT_JSON_GROUP_NUM "         \"group\" : %d,\n"
+ 
+@@ -66,7 +67,8 @@
+ 			     "            \"target_wwnn\" : \"%n\",\n" \
+ 			     "            \"host_wwpn\" : \"%R\",\n" \
+ 			     "            \"target_wwpn\" : \"%r\",\n" \
+-			     "            \"host_adapter\" : \"%a\""
++			     "            \"host_adapter\" : \"%a\",\n" \
++			     "            \"marginal_st\" : \"%M\""
+ 
+ #define MAX_LINE_LEN  80
+ #define MAX_LINES     64
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 7879d763..1a3d827b 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -289,6 +289,7 @@ struct path {
+ 	int io_err_pathfail_cnt;
+ 	int io_err_pathfail_starttime;
+ 	int find_multipaths_timeout;
++	int marginal;
+ 	/* configlet pointers */
+ 	vector hwe;
+ 	struct gen_path generic_path;
+@@ -403,6 +404,7 @@ struct pathgroup {
+ 	int status;
+ 	int priority;
+ 	int enabled_paths;
++	int marginal;
+ 	vector paths;
+ 	struct multipath *mpp;
+ 	struct gen_pathgroup generic_pg;
+diff --git a/multipathd/cli.c b/multipathd/cli.c
+index 17795b61..800c0fbe 100644
+--- a/multipathd/cli.c
++++ b/multipathd/cli.c
+@@ -215,6 +215,8 @@ load_keys (void)
+ 	r += add_key(keys, "unsetprkey", UNSETPRKEY, 0);
+ 	r += add_key(keys, "key", KEY, 1);
+ 	r += add_key(keys, "local", LOCAL, 0);
++	r += add_key(keys, "setmarginal", SETMARGINAL, 0);
++	r += add_key(keys, "unsetmarginal", UNSETMARGINAL, 0);
+ 
+ 
+ 	if (r) {
+@@ -589,6 +591,9 @@ cli_init (void) {
+ 	add_handler(UNSETPRKEY+MAP, NULL);
+ 	add_handler(FORCEQ+DAEMON, NULL);
+ 	add_handler(RESTOREQ+DAEMON, NULL);
++	add_handler(SETMARGINAL+PATH, NULL);
++	add_handler(UNSETMARGINAL+PATH, NULL);
++	add_handler(UNSETMARGINAL+MAP, NULL);
+ 
+ 	return 0;
+ }
+diff --git a/multipathd/cli.h b/multipathd/cli.h
+index 32dcffac..fdfb9aed 100644
+--- a/multipathd/cli.h
++++ b/multipathd/cli.h
+@@ -45,6 +45,8 @@ enum {
+ 	__UNSETPRKEY,
+ 	__KEY,
+ 	__LOCAL,
++	__SETMARGINAL,
++	__UNSETMARGINAL,
+ };
+ 
+ #define LIST		(1 << __LIST)
+@@ -89,6 +91,8 @@ enum {
+ #define UNSETPRKEY	(1ULL << __UNSETPRKEY)
+ #define KEY		(1ULL << __KEY)
+ #define LOCAL		(1ULL << __LOCAL)
++#define SETMARGINAL	(1ULL << __SETMARGINAL)
++#define UNSETMARGINAL	(1ULL << __UNSETMARGINAL)
+ 
+ #define INITIAL_REPLY_LEN	1200
+ 
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 4c32d953..8a899049 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -1537,3 +1537,94 @@ cli_setprkey(void * v, char ** reply, int * len, void * data)
+ 
+ 	return ret;
+ }
++
++int cli_set_marginal(void * v, char ** reply, int * len, void * data)
++{
++	struct vectors * vecs = (struct vectors *)data;
++	char * param = get_keyparam(v, PATH);
++	struct path * pp;
++
++	param = convert_dev(param, 1);
++	pp = find_path_by_dev(vecs->pathvec, param);
++
++	if (!pp)
++		pp = find_path_by_devt(vecs->pathvec, param);
++
++	if (!pp || !pp->mpp || !pp->mpp->alias)
 +		return 1;
 +
-+	if (VECTOR_SIZE(mp->paths) > 0 &&
-+	    (!mp->pgpolicyfn || mp->pgpolicyfn(mp))) {
-+		vector_free(mp->pg);
-+		mp->pg = NULL;
++	condlog(2, "%s: set marginal path %s (operator)",
++		pp->mpp->alias, pp->dev_t);
++	if (pp->mpp->wait_for_udev) {
++		condlog(2, "%s: device not fully created, failing set marginal",
++			pp->mpp->alias);
++		return 1;
++	}
++	pp->marginal = 1;
++
++	return update_path_groups(pp->mpp, vecs, 0);
++}
++
++int cli_unset_marginal(void * v, char ** reply, int * len, void * data)
++{
++	struct vectors * vecs = (struct vectors *)data;
++	char * param = get_keyparam(v, PATH);
++	struct path * pp;
++
++	param = convert_dev(param, 1);
++	pp = find_path_by_dev(vecs->pathvec, param);
++
++	if (!pp)
++		pp = find_path_by_devt(vecs->pathvec, param);
++
++	if (!pp || !pp->mpp || !pp->mpp->alias)
++		return 1;
++
++	condlog(2, "%s: unset marginal path %s (operator)",
++		pp->mpp->alias, pp->dev_t);
++	if (pp->mpp->wait_for_udev) {
++		condlog(2, "%s: device not fully created, "
++			"failing unset marginal", pp->mpp->alias);
++		return 1;
++	}
++	pp->marginal = 0;
++
++	return update_path_groups(pp->mpp, vecs, 0);
++}
++
++int cli_unset_all_marginal(void * v, char ** reply, int * len, void * data)
++{
++	struct vectors * vecs = (struct vectors *)data;
++	char * mapname = get_keyparam(v, MAP);
++	struct multipath *mpp;
++	struct pathgroup * pgp;
++	struct path * pp;
++	unsigned int i, j;
++	int minor;
++
++	mapname = convert_dev(mapname, 0);
++	condlog(2, "%s: unset all marginal paths (operator)",
++		mapname);
++
++	if (sscanf(mapname, "dm-%d", &minor) == 1)
++		mpp = find_mp_by_minor(vecs->mpvec, minor);
++	else
++		mpp = find_mp_by_alias(vecs->mpvec, mapname);
++
++	if (!mpp) {
++		condlog(0, "%s: invalid map name. "
++			"cannot unset marginal paths", mapname);
++		return 1;
++	}
++	if (mpp->wait_for_udev) {
++		condlog(2, "%s: device not fully created, "
++			"failing unset all marginal", mpp->alias);
 +		return 1;
 +	}
 +
-+	sort_pathgroups(mp);
-+	vector_free(mp->paths);
-+	mp->paths = NULL;
-+	return 0;
-+}
++	vector_foreach_slot (mpp->pg, pgp, i)
++		vector_foreach_slot (pgp->paths, pp, j)
++			pp->marginal = 0;
 +
- /*
-  * One path group per unique tgt_node_name present in the path vector
-  */
-@@ -95,12 +115,6 @@ int group_by_node_name(struct multipath * mp)
- 	struct pathgroup * pgp;
- 	struct path * pp2;
++	return update_path_groups(mpp, vecs, 0);
++}
+diff --git a/multipathd/cli_handlers.h b/multipathd/cli_handlers.h
+index edbdf063..0f451064 100644
+--- a/multipathd/cli_handlers.h
++++ b/multipathd/cli_handlers.h
+@@ -49,3 +49,6 @@ int cli_unsetprstatus(void * v, char ** reply, int * len, void * data);
+ int cli_getprkey(void * v, char ** reply, int * len, void * data);
+ int cli_setprkey(void * v, char ** reply, int * len, void * data);
+ int cli_unsetprkey(void * v, char ** reply, int * len, void * data);
++int cli_set_marginal(void * v, char ** reply, int * len, void * data);
++int cli_unset_marginal(void * v, char ** reply, int * len, void * data);
++int cli_unset_all_marginal(void * v, char ** reply, int * len, void * data);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 7a5cd115..7db15736 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1609,6 +1609,9 @@ uxlsnrloop (void * ap)
+ 	set_handler_callback(GETPRKEY+MAP, cli_getprkey);
+ 	set_handler_callback(SETPRKEY+MAP+KEY, cli_setprkey);
+ 	set_handler_callback(UNSETPRKEY+MAP, cli_unsetprkey);
++	set_handler_callback(SETMARGINAL+PATH, cli_set_marginal);
++	set_handler_callback(UNSETMARGINAL+PATH, cli_unset_marginal);
++	set_handler_callback(UNSETMARGINAL+MAP, cli_unset_all_marginal);
  
--	if (!mp->pg)
--		mp->pg = vector_alloc();
--
--	if (!mp->pg)
--		return 1;
--
- 	/* init the bitmap */
- 	bitmap = (int *)MALLOC(VECTOR_SIZE(mp->paths) * sizeof (int));
- 
-@@ -146,9 +160,6 @@ int group_by_node_name(struct multipath * mp)
- 		}
- 	}
- 	FREE(bitmap);
--	sort_pathgroups(mp);
--	free_pathvec(mp->paths, KEEP_PATHS);
--	mp->paths = NULL;
- 	return 0;
- out2:
- 	free_pathgroup(pgp, KEEP_PATHS);
-@@ -171,12 +182,6 @@ int group_by_serial(struct multipath * mp)
- 	struct pathgroup * pgp;
- 	struct path * pp2;
- 
--	if (!mp->pg)
--		mp->pg = vector_alloc();
--
--	if (!mp->pg)
--		return 1;
--
- 	/* init the bitmap */
- 	bitmap = (int *)MALLOC(VECTOR_SIZE(mp->paths) * sizeof (int));
- 
-@@ -221,9 +226,6 @@ int group_by_serial(struct multipath * mp)
- 		}
- 	}
- 	FREE(bitmap);
--	sort_pathgroups(mp);
--	free_pathvec(mp->paths, KEEP_PATHS);
--	mp->paths = NULL;
- 	return 0;
- out2:
- 	free_pathgroup(pgp, KEEP_PATHS);
-@@ -241,12 +243,6 @@ int one_path_per_group(struct multipath *mp)
- 	struct path * pp;
- 	struct pathgroup * pgp;
- 
--	if (!mp->pg)
--		mp->pg = vector_alloc();
--
--	if (!mp->pg)
--		return 1;
--
- 	for (i = 0; i < VECTOR_SIZE(mp->paths); i++) {
- 		pp = VECTOR_SLOT(mp->paths, i);
- 		pgp = alloc_pathgroup();
-@@ -260,9 +256,6 @@ int one_path_per_group(struct multipath *mp)
- 		if (store_path(pgp->paths, pp))
- 			goto out1;
- 	}
--	sort_pathgroups(mp);
--	free_pathvec(mp->paths, KEEP_PATHS);
--	mp->paths = NULL;
- 	return 0;
- out1:
- 	free_pathgroup(pgp, KEEP_PATHS);
-@@ -274,32 +267,24 @@ out:
- 
- int one_group(struct multipath *mp)	/* aka multibus */
- {
-+	int i;
-+	struct path * pp;
- 	struct pathgroup * pgp;
- 
--	if (VECTOR_SIZE(mp->paths) < 0)
--		return 0;
-+	pgp = alloc_pathgroup();
- 
--	if (!mp->pg)
--		mp->pg = vector_alloc();
-+	if (!pgp)
-+		goto out;
- 
--	if (!mp->pg)
--		return 1;
-+	if (add_pathgroup(mp, pgp))
-+		goto out1;
- 
--	if (VECTOR_SIZE(mp->paths) > 0) {
--		pgp = alloc_pathgroup();
-+	for (i = 0; i < VECTOR_SIZE(mp->paths); i++) {
-+		pp = VECTOR_SLOT(mp->paths, i);
- 
--		if (!pgp)
-+		if (store_path(pgp->paths, pp))
- 			goto out;
--
--		vector_free(pgp->paths);
--
--		if (add_pathgroup(mp, pgp))
--			goto out1;
--
--		pgp->paths = mp->paths;
--		mp->paths = NULL;
- 	}
--
- 	return 0;
- out1:
- 	free_pathgroup(pgp, KEEP_PATHS);
-@@ -317,12 +302,6 @@ int group_by_prio(struct multipath *mp)
- 	struct pathgroup * pgp;
- 	vector pathvec = NULL;
- 
--	if (!mp->pg)
--		mp->pg = vector_alloc();
--
--	if (!mp->pg)
--		return 1;
--
- 	pathvec = vector_alloc();
- 	if (!pathvec)
- 		goto out;
-@@ -387,8 +366,6 @@ int group_by_prio(struct multipath *mp)
- 		}
- 	}
- 	free_pathvec(pathvec, KEEP_PATHS);
--	free_pathvec(mp->paths, KEEP_PATHS);
--	mp->paths = NULL;
- 	return 0;
- out2:
- 	free_pathgroup(pgp, KEEP_PATHS);
-diff --git a/libmultipath/pgpolicies.h b/libmultipath/pgpolicies.h
-index c0eaa7f4..11834011 100644
---- a/libmultipath/pgpolicies.h
-+++ b/libmultipath/pgpolicies.h
-@@ -21,7 +21,7 @@ enum iopolicies {
- 
- int get_pgpolicy_id(char *);
- int get_pgpolicy_name (char *, int, int);
--
-+int group_paths(struct multipath *);
- /*
-  * policies
-  */
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index fee899bd..bf7fdd73 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -318,23 +318,13 @@ store_path (vector pathvec, struct path * pp)
- 	return 0;
- }
- 
--int
--store_pathgroup (vector pgvec, struct pathgroup * pgp)
-+int add_pathgroup(struct multipath *mpp, struct pathgroup *pgp)
- {
--	if (!vector_alloc_slot(pgvec))
-+	if (!vector_alloc_slot(mpp->pg))
- 		return 1;
- 
--	vector_set_slot(pgvec, pgp);
--
--	return 0;
--}
--
--int add_pathgroup(struct multipath *mpp, struct pathgroup *pgp)
--{
--	int ret = store_pathgroup(mpp->pg, pgp);
-+	vector_set_slot(mpp->pg, pgp);
- 
--	if (ret)
--		return ret;
- 	pgp->mpp = mpp;
- 	return 0;
- }
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 1a3d827b..893074eb 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -445,7 +445,6 @@ int store_adaptergroup(vector adapters, struct adapter_group *agp);
- int store_hostgroup(vector hostgroupvec, struct host_group *hgp);
- 
- int store_path (vector pathvec, struct path * pp);
--int store_pathgroup (vector pgvec, struct pathgroup * pgp);
- int add_pathgroup(struct multipath*, struct pathgroup *);
- 
- struct multipath * find_mp_by_alias (const struct _vector *mp, const char *alias);
+ 	umask(077);
+ 	uxsock_listen(&uxsock_trigger, ux_sock, ap);
 -- 
 2.17.2
