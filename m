@@ -1,14 +1,12 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 2/2] dm: make dm_table_find_target return NULL
-Date: Fri, 23 Aug 2019 09:55:26 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1908230954190.22174@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1566351211-13280-1-git-send-email-kontais@zoho.com>
-	<alpine.LRH.2.02.1908230705510.5296@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fixes for 5.3-rc6
+Date: Fri, 23 Aug 2019 11:41:53 -0400
+Message-ID: <20190823154153.GA24648@lobo>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1908230705510.5296@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,130 +16,86 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zhang Tao <kontais@zoho.com>
-Cc: Zhang Tao <zhangtao27@lenovo.com>, dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Wenwen Wang <wenwen@cs.uga.edu>, Dmitry Fomichev <dmitry.fomichev@wdc.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>, ZhangXiaoxu <zhangxiaoxu5@huawei.com>, Dan Carpenter <dan.carpenter@oracle.com>, Bryan Gurney <bgurney@redhat.com>
 List-Id: dm-devel.ids
 
-Currently, if we pass too high sector number to dm_table_find_target, it
-returns zeroed dm_target structure and callers test if the structure is
-zeroed with the macro dm_target_is_valid.
+Hi Linus,
 
-However, returning NULL is common practice to indicate errors.
+More fixes than usual from DM at this stage in a release but...
 
-This patch refactors the dm code, so that dm_table_find_target returns
-NULL and its callers test the returned value for NULL. The macro
-dm_target_is_valid is deleted. In alloc_targets, we no longer allocate an
-extra zeroed target.
+The following changes since commit d45331b00ddb179e291766617259261c112db872:
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+  Linux 5.3-rc4 (2019-08-11 13:26:41 -0700)
 
----
- drivers/md/dm-ioctl.c |    2 +-
- drivers/md/dm-table.c |    8 +++-----
- drivers/md/dm.c       |    8 ++++----
- drivers/md/dm.h       |    5 -----
- 4 files changed, 8 insertions(+), 15 deletions(-)
+are available in the Git repository at:
 
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c	2019-08-23 15:45:46.000000000 +0200
-+++ linux-2.6/drivers/md/dm.c	2019-08-23 15:45:46.000000000 +0200
-@@ -457,7 +457,7 @@ static int dm_blk_report_zones(struct ge
- 		return -EIO;
- 
- 	tgt = dm_table_find_target(map, sector);
--	if (!dm_target_is_valid(tgt)) {
-+	if (!tgt) {
- 		ret = -EIO;
- 		goto out;
- 	}
-@@ -1072,7 +1072,7 @@ static struct dm_target *dm_dax_get_live
- 		return NULL;
- 
- 	ti = dm_table_find_target(map, sector);
--	if (!dm_target_is_valid(ti))
-+	if (!ti)
- 		return NULL;
- 
- 	return ti;
-@@ -1572,7 +1572,7 @@ static int __split_and_process_non_flush
- 	int r;
- 
- 	ti = dm_table_find_target(ci->map, ci->sector);
--	if (!dm_target_is_valid(ti))
-+	if (!ti)
- 		return -EIO;
- 
- 	if (__process_abnormal_io(ci, ti, &r))
-@@ -1748,7 +1748,7 @@ static blk_qc_t dm_process_bio(struct ma
- 
- 	if (!ti) {
- 		ti = dm_table_find_target(map, bio->bi_iter.bi_sector);
--		if (unlikely(!ti || !dm_target_is_valid(ti))) {
-+		if (unlikely(!ti)) {
- 			bio_io_error(bio);
- 			return ret;
- 		}
-Index: linux-2.6/drivers/md/dm-ioctl.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-ioctl.c	2019-08-23 15:45:46.000000000 +0200
-+++ linux-2.6/drivers/md/dm-ioctl.c	2019-08-23 15:45:46.000000000 +0200
-@@ -1592,7 +1592,7 @@ static int target_message(struct file *f
- 	}
- 
- 	ti = dm_table_find_target(table, tmsg->sector);
--	if (!dm_target_is_valid(ti)) {
-+	if (!ti) {
- 		DMWARN("Target message sector outside device.");
- 		r = -EINVAL;
- 	} else if (ti->type->message)
-Index: linux-2.6/drivers/md/dm-table.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-table.c	2019-08-23 15:45:46.000000000 +0200
-+++ linux-2.6/drivers/md/dm-table.c	2019-08-23 15:47:18.000000000 +0200
-@@ -163,10 +163,8 @@ static int alloc_targets(struct dm_table
- 
- 	/*
- 	 * Allocate both the target array and offset array at once.
--	 * Append an empty entry to catch sectors beyond the end of
--	 * the device.
- 	 */
--	n_highs = (sector_t *) dm_vcalloc(num + 1, sizeof(struct dm_target) +
-+	n_highs = (sector_t *) dm_vcalloc(num, sizeof(struct dm_target) +
- 					  sizeof(sector_t));
- 	if (!n_highs)
- 		return -ENOMEM;
-@@ -1359,7 +1357,7 @@ struct dm_target *dm_table_get_target(st
- /*
-  * Search the btree for the correct target.
-  *
-- * Caller should check returned pointer with dm_target_is_valid()
-+ * Caller should check returned pointer for NULL
-  * to trap I/O beyond end of device.
-  */
- struct dm_target *dm_table_find_target(struct dm_table *t, sector_t sector)
-@@ -1368,7 +1366,7 @@ struct dm_target *dm_table_find_target(s
- 	sector_t *node;
- 
- 	if (unlikely(sector >= dm_table_get_size(t)))
--		return &t->targets[t->num_targets];
-+		return NULL;
- 
- 	for (l = 0; l < t->depth; l++) {
- 		n = get_child(n, k);
-Index: linux-2.6/drivers/md/dm.h
-===================================================================
---- linux-2.6.orig/drivers/md/dm.h	2019-08-23 15:45:46.000000000 +0200
-+++ linux-2.6/drivers/md/dm.h	2019-08-23 15:45:46.000000000 +0200
-@@ -86,11 +86,6 @@ struct target_type *dm_get_immutable_tar
- int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t);
- 
- /*
-- * To check the return value from dm_table_find_target().
-- */
--#define dm_target_is_valid(t) ((t)->table)
--
--/*
-  * To check whether the target type is bio-based or not (request-based).
-  */
- #define dm_target_bio_based(t) ((t)->type->map != NULL)
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.3/dm-fixes-2
+
+for you to fetch changes up to 1cfd5d3399e87167b7f9157ef99daa0e959f395d:
+
+  dm table: fix invalid memory accesses with too high sector number (2019-08-23 10:11:42 -0400)
+
+Please pull, thanks!
+Mike
+
+----------------------------------------------------------------
+- Revert a DM bufio change from during the 5.3 merge window now that a
+  proper fix has been made to the block loopback driver.
+
+- Fix DM kcopyd to wakeup so failed subjobs get completed.
+
+- Various fixes to DM zoned target to address error handling, and other
+  small tweaks (SPDX license identifiers and fix typos).
+
+- Fix DM integrity range locking race by tracking whether journal has
+  changed.
+
+- Fix DM dust target to detect reads of badblocks beyond the first 512b
+  sector (applicable if blocksize is larger than 512b).
+
+- Fix DM persistent-data issue in both the DM btree and DM
+  space-map-metadata interfaces.
+
+- Fix out of bounds memory access with certain DM table configurations.
+
+----------------------------------------------------------------
+Bryan Gurney (1):
+      dm dust: use dust block size for badblocklist index
+
+Dan Carpenter (1):
+      dm zoned: fix potential NULL dereference in dmz_do_reclaim()
+
+Dmitry Fomichev (6):
+      dm kcopyd: always complete failed jobs
+      dm zoned: improve error handling in reclaim
+      dm zoned: improve error handling in i/o map code
+      dm zoned: properly handle backing device failure
+      dm zoned: add SPDX license identifiers
+      dm zoned: fix a few typos
+
+Mikulas Patocka (3):
+      Revert "dm bufio: fix deadlock with loop device"
+      dm integrity: fix a crash due to BUG_ON in __journal_read_write()
+      dm table: fix invalid memory accesses with too high sector number
+
+Wenwen Wang (1):
+      dm raid: add missing cleanup in raid_ctr()
+
+ZhangXiaoxu (2):
+      dm btree: fix order of block initialization in btree_split_beneath
+      dm space map metadata: fix missing store of apply_bops() return value
+
+ drivers/md/dm-bufio.c                              |  4 +-
+ drivers/md/dm-dust.c                               | 11 +++-
+ drivers/md/dm-integrity.c                          | 15 +++++
+ drivers/md/dm-kcopyd.c                             |  5 +-
+ drivers/md/dm-raid.c                               |  2 +-
+ drivers/md/dm-table.c                              |  5 +-
+ drivers/md/dm-zoned-metadata.c                     | 68 ++++++++++++++++------
+ drivers/md/dm-zoned-reclaim.c                      | 47 +++++++++++----
+ drivers/md/dm-zoned-target.c                       | 68 +++++++++++++++++++---
+ drivers/md/dm-zoned.h                              | 11 ++++
+ drivers/md/persistent-data/dm-btree.c              | 31 +++++-----
+ drivers/md/persistent-data/dm-space-map-metadata.c |  2 +-
+ 12 files changed, 209 insertions(+), 60 deletions(-)
