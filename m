@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 01/14] libmultipath: make
-	vector_foreach_slot_backwards work as expected
-Date: Fri, 23 Aug 2019 12:48:45 -0500
-Message-ID: <1566582538-5979-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 06/14] libmultipath: fix double free in
+	pgpolicyfn error paths
+Date: Fri, 23 Aug 2019 12:48:50 -0500
+Message-ID: <1566582538-5979-7-git-send-email-bmarzins@redhat.com>
 References: <1566582538-5979-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,28 +22,77 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Muneendra Kumar <mkumar@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-All of the code that uses vector_foreach_slot_backwards() treats "i" as
-the index of the entry "p", but the way it was coded, that wasn't the
-case. "i" was the number of the entry counting from 1, not 0.
+In the pgpolicy functions, if an error is encountered after
+alloc_pathgroup() is called, but before the path group is added to a
+multipath device with add_pathgroup(), the pathgroup needs to be cleaned
+up by calling free_pathgroup(). However, after the pathgroup has been
+added to the multipath device, calling free_pgvec() will clean it up. In
+this case, if free_pathgroup() is called first, the recently added
+pathgroup will be freed twice.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/vector.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/pgpolicies.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/libmultipath/vector.h b/libmultipath/vector.h
-index 41d2b896..344dffd5 100644
---- a/libmultipath/vector.h
-+++ b/libmultipath/vector.h
-@@ -40,7 +40,7 @@ typedef struct _vector *vector;
- #define vector_foreach_slot_after(v,p,i) \
- 	for (; (v) && i < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); i++)
- #define vector_foreach_slot_backwards(v,p,i) \
--	for (i = VECTOR_SIZE(v); i > 0 && ((p) = (v)->slot[i-1]); i--)
-+	for (i = VECTOR_SIZE(v) - 1; (int)i >= 0 && ((p) = (v)->slot[i]); i--)
+diff --git a/libmultipath/pgpolicies.c b/libmultipath/pgpolicies.c
+index 1b59485c..1af42f52 100644
+--- a/libmultipath/pgpolicies.c
++++ b/libmultipath/pgpolicies.c
+@@ -139,7 +139,7 @@ int group_by_node_name(struct multipath * mp)
  
- #define identity(x) (x)
- /*
+ 		/* feed the first path */
+ 		if (store_path(pgp->paths, pp))
+-			goto out2;
++			goto out1;
+ 
+ 		bitmap[i] = 1;
+ 
+@@ -153,7 +153,7 @@ int group_by_node_name(struct multipath * mp)
+ 			if (!strncmp(pp->tgt_node_name, pp2->tgt_node_name,
+ 					NODE_NAME_SIZE)) {
+ 				if (store_path(pgp->paths, pp2))
+-					goto out2;
++					goto out1;
+ 
+ 				bitmap[j] = 1;
+ 			}
+@@ -206,7 +206,7 @@ int group_by_serial(struct multipath * mp)
+ 
+ 		/* feed the first path */
+ 		if (store_path(pgp->paths, pp))
+-			goto out2;
++			goto out1;
+ 
+ 		bitmap[i] = 1;
+ 
+@@ -219,7 +219,7 @@ int group_by_serial(struct multipath * mp)
+ 
+ 			if (0 == strcmp(pp->serial, pp2->serial)) {
+ 				if (store_path(pgp->paths, pp2))
+-					goto out2;
++					goto out1;
+ 
+ 				bitmap[j] = 1;
+ 			}
+@@ -254,7 +254,7 @@ int one_path_per_group(struct multipath *mp)
+ 			goto out1;
+ 
+ 		if (store_path(pgp->paths, pp))
+-			goto out1;
++			goto out;
+ 	}
+ 	return 0;
+ out1:
+@@ -358,7 +358,7 @@ int group_by_prio(struct multipath *mp)
+ 		vector_foreach_slot(pathvec, pp, i) {
+ 			if (pp->priority == prio) {
+ 				if (store_path(pgp->paths, pp))
+-					goto out2;
++					goto out1;
+ 
+ 				vector_del_slot(pathvec, i);
+ 				i--;
 -- 
 2.17.2
