@@ -1,11 +1,14 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 00/14] multipath marginal pathgroups
-Date: Fri, 23 Aug 2019 12:48:44 -0500
-Message-ID: <1566582538-5979-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 04/14] libmultipath: add wrapper function
+	around pgpolicyfn
+Date: Fri, 23 Aug 2019 12:48:48 -0500
+Message-ID: <1566582538-5979-5-git-send-email-bmarzins@redhat.com>
+References: <1566582538-5979-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1566582538-5979-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,84 +22,258 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Muneendra Kumar <mkumar@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-The first patch in this series is simply a resend of my previous patch
-to fix vector_foreach_slot_backwards(). The rest of the patches are
-related to adding support for an alternative way to deal with marginal
-paths. Instead of delaying their reinstatement, which can cause problems
-if multipath isn't set to queue IO when there are no usable paths, this
-patchset adds a marginal_pathgroups option. If this is set, marginal
-paths will be reinstated, but added to seperate marginal pathgroups.
-They will remain there until the time when they would normally be
-reinstated, at which point they will be returned to their regular
-pathgroups. Marginal pathgroups will have a priority lower than all
-regular pathgroups. This has the advantage of continuing to track
-marginal paths, even if all the other paths go down temporarily, so that
-multipath can switch back to the normal paths as soon as they come back
-up.  This code also allows users to manually move paths between marginal
-and regular pathgroups. This is especially important for Broadcom's
-Fiber Channel Transport Daemon, since it doesn't use the multipathd
-marginal path detectors, and thus will not automatically reinstate
-marginal paths when all other paths have failed.
+group_paths() is a wrapper around the pgpolicy functions, that pulls out
+the common code from the beginning and the end. For this to work,
+one_group() needs to change how it sets up the pathgroups vector to work
+like the other pgpolicy functions. This does means that the pathgroups
+in group_by_prio are now needlessly sorted afterwards. That will be
+dealt with in a later patch.  Also, since store_pathgroup() is only
+called by add_pathgroup(), it doesn't need to exist as a seperate
+function.
 
-https://www.mail-archive.com/dm-devel@redhat.com/msg12956.html
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/configure.c  |  2 +-
+ libmultipath/pgpolicies.c | 83 ++++++++++++++-------------------------
+ libmultipath/pgpolicies.h |  2 +-
+ libmultipath/structs.c    | 16 ++------
+ libmultipath/structs.h    |  1 -
+ 5 files changed, 35 insertions(+), 69 deletions(-)
 
-Changes in v2:
-- patch 04/14 is a combination of the old 04/16, 06/16, and 07/16
-  patches, based on Martin's suggestion. Since all the code is the same
-  as the previous patches, I have kept Martin's Reviewed-by
-
-- old patch 09/16 has been moved up to 05/14 based on Martin's
-  suggestion. There are no code changes
-
-- patch 09/14 (old patch 11/16) moves path_group_prio_update()
-  earlier in select_path_group() to make sure the pgp->marginal check
-  uses a current value.
-
-- patch 12/14 (old patch 14/16) changes how delay_checks is selected,
-  to ignore the delay_checks values if any san_path_err options are
-  set, based on Martin's suggestions. It also changes the man page
-  wording.
-
-Benjamin Marzinski (14):
-  libmultipath: make vector_foreach_slot_backwards work as expected
-  libmultipath: add marginal paths and groups infrastructure
-  tests: add path grouping policy unit tests.
-  libmultipath: add wrapper function around pgpolicyfn
-  tests: update pgpolicy tests to work with group_paths()
-  libmultipath: fix double free in pgpolicyfn error paths
-  libmultipath: consolidate group_by_* functions
-  libmultipath: make pgpolicyfn take a paths vector
-  libmultipath: make group_paths handle marginal paths
-  tests: add tests for grouping marginal paths.
-  libmultipath: add marginal_pathgroups config option
-  libmutipath: deprecate delay_*_checks
-  multipathd: use marginal_pathgroups
-  multipath: update man pages
-
- libmultipath/config.h      |    1 +
- libmultipath/configure.c   |   23 +-
- libmultipath/dict.c        |    3 +
- libmultipath/pgpolicies.c  |  346 +++++-------
- libmultipath/pgpolicies.h  |   12 +-
- libmultipath/print.c       |   18 +
- libmultipath/print.h       |    6 +-
- libmultipath/propsel.c     |   89 +++-
- libmultipath/propsel.h     |    3 +-
- libmultipath/structs.c     |   16 +-
- libmultipath/structs.h     |   15 +-
- libmultipath/switchgroup.c |   15 +-
- libmultipath/vector.h      |    2 +-
- multipath/multipath.conf.5 |   74 ++-
- multipathd/cli.c           |    5 +
- multipathd/cli.h           |    4 +
- multipathd/cli_handlers.c  |   91 ++++
- multipathd/cli_handlers.h  |    3 +
- multipathd/main.c          |   90 ++--
- multipathd/multipathd.8    |   19 +
- tests/Makefile             |    2 +-
- tests/pgpolicy.c           | 1036 ++++++++++++++++++++++++++++++++++++
- 22 files changed, 1523 insertions(+), 350 deletions(-)
- create mode 100644 tests/pgpolicy.c
-
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index b09ef529..3c309d64 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -387,7 +387,7 @@ int setup_map(struct multipath *mpp, char *params, int params_size,
+ 		vector_free(mpp->pg);
+ 		mpp->pg = NULL;
+ 	}
+-	if (mpp->pgpolicyfn && mpp->pgpolicyfn(mpp))
++	if (group_paths(mpp))
+ 		return 1;
+ 
+ 	/*
+diff --git a/libmultipath/pgpolicies.c b/libmultipath/pgpolicies.c
+index 660768a4..1b59485c 100644
+--- a/libmultipath/pgpolicies.c
++++ b/libmultipath/pgpolicies.c
+@@ -84,6 +84,26 @@ sort_pathgroups (struct multipath *mp) {
+ }
+ 
+ 
++int group_paths(struct multipath *mp)
++{
++	if (!mp->pg)
++		mp->pg = vector_alloc();
++	if (!mp->pg)
++		return 1;
++
++	if (VECTOR_SIZE(mp->paths) > 0 &&
++	    (!mp->pgpolicyfn || mp->pgpolicyfn(mp))) {
++		vector_free(mp->pg);
++		mp->pg = NULL;
++		return 1;
++	}
++
++	sort_pathgroups(mp);
++	vector_free(mp->paths);
++	mp->paths = NULL;
++	return 0;
++}
++
+ /*
+  * One path group per unique tgt_node_name present in the path vector
+  */
+@@ -95,12 +115,6 @@ int group_by_node_name(struct multipath * mp)
+ 	struct pathgroup * pgp;
+ 	struct path * pp2;
+ 
+-	if (!mp->pg)
+-		mp->pg = vector_alloc();
+-
+-	if (!mp->pg)
+-		return 1;
+-
+ 	/* init the bitmap */
+ 	bitmap = (int *)MALLOC(VECTOR_SIZE(mp->paths) * sizeof (int));
+ 
+@@ -146,9 +160,6 @@ int group_by_node_name(struct multipath * mp)
+ 		}
+ 	}
+ 	FREE(bitmap);
+-	sort_pathgroups(mp);
+-	free_pathvec(mp->paths, KEEP_PATHS);
+-	mp->paths = NULL;
+ 	return 0;
+ out2:
+ 	free_pathgroup(pgp, KEEP_PATHS);
+@@ -171,12 +182,6 @@ int group_by_serial(struct multipath * mp)
+ 	struct pathgroup * pgp;
+ 	struct path * pp2;
+ 
+-	if (!mp->pg)
+-		mp->pg = vector_alloc();
+-
+-	if (!mp->pg)
+-		return 1;
+-
+ 	/* init the bitmap */
+ 	bitmap = (int *)MALLOC(VECTOR_SIZE(mp->paths) * sizeof (int));
+ 
+@@ -221,9 +226,6 @@ int group_by_serial(struct multipath * mp)
+ 		}
+ 	}
+ 	FREE(bitmap);
+-	sort_pathgroups(mp);
+-	free_pathvec(mp->paths, KEEP_PATHS);
+-	mp->paths = NULL;
+ 	return 0;
+ out2:
+ 	free_pathgroup(pgp, KEEP_PATHS);
+@@ -241,12 +243,6 @@ int one_path_per_group(struct multipath *mp)
+ 	struct path * pp;
+ 	struct pathgroup * pgp;
+ 
+-	if (!mp->pg)
+-		mp->pg = vector_alloc();
+-
+-	if (!mp->pg)
+-		return 1;
+-
+ 	for (i = 0; i < VECTOR_SIZE(mp->paths); i++) {
+ 		pp = VECTOR_SLOT(mp->paths, i);
+ 		pgp = alloc_pathgroup();
+@@ -260,9 +256,6 @@ int one_path_per_group(struct multipath *mp)
+ 		if (store_path(pgp->paths, pp))
+ 			goto out1;
+ 	}
+-	sort_pathgroups(mp);
+-	free_pathvec(mp->paths, KEEP_PATHS);
+-	mp->paths = NULL;
+ 	return 0;
+ out1:
+ 	free_pathgroup(pgp, KEEP_PATHS);
+@@ -274,32 +267,24 @@ out:
+ 
+ int one_group(struct multipath *mp)	/* aka multibus */
+ {
++	int i;
++	struct path * pp;
+ 	struct pathgroup * pgp;
+ 
+-	if (VECTOR_SIZE(mp->paths) < 0)
+-		return 0;
++	pgp = alloc_pathgroup();
+ 
+-	if (!mp->pg)
+-		mp->pg = vector_alloc();
++	if (!pgp)
++		goto out;
+ 
+-	if (!mp->pg)
+-		return 1;
++	if (add_pathgroup(mp, pgp))
++		goto out1;
+ 
+-	if (VECTOR_SIZE(mp->paths) > 0) {
+-		pgp = alloc_pathgroup();
++	for (i = 0; i < VECTOR_SIZE(mp->paths); i++) {
++		pp = VECTOR_SLOT(mp->paths, i);
+ 
+-		if (!pgp)
++		if (store_path(pgp->paths, pp))
+ 			goto out;
+-
+-		vector_free(pgp->paths);
+-
+-		if (add_pathgroup(mp, pgp))
+-			goto out1;
+-
+-		pgp->paths = mp->paths;
+-		mp->paths = NULL;
+ 	}
+-
+ 	return 0;
+ out1:
+ 	free_pathgroup(pgp, KEEP_PATHS);
+@@ -317,12 +302,6 @@ int group_by_prio(struct multipath *mp)
+ 	struct pathgroup * pgp;
+ 	vector pathvec = NULL;
+ 
+-	if (!mp->pg)
+-		mp->pg = vector_alloc();
+-
+-	if (!mp->pg)
+-		return 1;
+-
+ 	pathvec = vector_alloc();
+ 	if (!pathvec)
+ 		goto out;
+@@ -387,8 +366,6 @@ int group_by_prio(struct multipath *mp)
+ 		}
+ 	}
+ 	free_pathvec(pathvec, KEEP_PATHS);
+-	free_pathvec(mp->paths, KEEP_PATHS);
+-	mp->paths = NULL;
+ 	return 0;
+ out2:
+ 	free_pathgroup(pgp, KEEP_PATHS);
+diff --git a/libmultipath/pgpolicies.h b/libmultipath/pgpolicies.h
+index c0eaa7f4..11834011 100644
+--- a/libmultipath/pgpolicies.h
++++ b/libmultipath/pgpolicies.h
+@@ -21,7 +21,7 @@ enum iopolicies {
+ 
+ int get_pgpolicy_id(char *);
+ int get_pgpolicy_name (char *, int, int);
+-
++int group_paths(struct multipath *);
+ /*
+  * policies
+  */
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index fee899bd..bf7fdd73 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -318,23 +318,13 @@ store_path (vector pathvec, struct path * pp)
+ 	return 0;
+ }
+ 
+-int
+-store_pathgroup (vector pgvec, struct pathgroup * pgp)
++int add_pathgroup(struct multipath *mpp, struct pathgroup *pgp)
+ {
+-	if (!vector_alloc_slot(pgvec))
++	if (!vector_alloc_slot(mpp->pg))
+ 		return 1;
+ 
+-	vector_set_slot(pgvec, pgp);
+-
+-	return 0;
+-}
+-
+-int add_pathgroup(struct multipath *mpp, struct pathgroup *pgp)
+-{
+-	int ret = store_pathgroup(mpp->pg, pgp);
++	vector_set_slot(mpp->pg, pgp);
+ 
+-	if (ret)
+-		return ret;
+ 	pgp->mpp = mpp;
+ 	return 0;
+ }
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 1a3d827b..893074eb 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -445,7 +445,6 @@ int store_adaptergroup(vector adapters, struct adapter_group *agp);
+ int store_hostgroup(vector hostgroupvec, struct host_group *hgp);
+ 
+ int store_path (vector pathvec, struct path * pp);
+-int store_pathgroup (vector pgvec, struct pathgroup * pgp);
+ int add_pathgroup(struct multipath*, struct pathgroup *);
+ 
+ struct multipath * find_mp_by_alias (const struct _vector *mp, const char *alias);
 -- 
 2.17.2
