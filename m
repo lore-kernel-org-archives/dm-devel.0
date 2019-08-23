@@ -1,36 +1,73 @@
-From: "boojin.kim" <boojin.kim@samsung.com>
-Subject: Re: [PATCH 1/9] crypt: Add diskcipher
-Date: Fri, 23 Aug 2019 09:50:41 +0900
-Message-ID: <00da01d5594c$c9d87390$5d895ab0$@samsung.com>
-References: <CGME20190823005041epcas2p3c8550c3fabbd6a6db6429cb06dbbf3a6@epcas2p3.samsung.com>
+From: Satya Tangirala <satyat@google.com>
+Subject: Re: [PATCH 5/9] block: support diskcipher
+Date: Thu, 22 Aug 2019 19:35:16 -0700
+Message-ID: <CAA+FYZc6G0xk7Dhx0b9xNRoK+b+DpfuS+OK4wn4bpKpFPiiGUQ@mail.gmail.com>
+References: <CGME20190821064226epcas2p2835b8a9084988b79107e54abfc5e7dab@epcas2p2.samsung.com>
+ <004101d557eb$98b00060$ca100120$@samsung.com> <6ea5e5db-4dd4-719f-3b3e-b89099636ea6@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-Content-Language: ko
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-Cc: 'Ulf Hansson' <ulf.hansson@linaro.org>, 'Mike Snitzer' <snitzer@redhat.com>, dm-devel@redhat.com, 'Andreas Dilger' <adilger.kernel@dilger.ca>, 'Alasdair Kergon' <agk@redhat.com>, 'Eric Biggers' <ebiggers@kernel.org>, linux-samsung-soc@vger.kernel.org, 'Herbert Xu' <herbert@gondor.apana.org.au>, 'Krzysztof Kozlowski' <krzk@kernel.org>, 'Jaehoon Chung' <jh80.chung@samsung.com>, 'Kukjin Kim' <kgene@kernel.org>, linux-ext4@vger.kernel.org, linux-block@vger.kernel.org, linux-fscrypt@vger.kernel.org, 'Jaegeuk Kim' <jaegeuk@kernel.org>, linux-arm-kernel@lists.infradead.org, 'Jens Axboe' <axboe@kernel.dk>, 'Theodore Ts'o' <tytso@mit.edu>, linux-mmc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, "'David S. Miller'" <davem@davemloft.net>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <6ea5e5db-4dd4-719f-3b3e-b89099636ea6@kernel.dk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>, boojin.kim@samsung.com
+Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Eric Biggers <ebiggers@kernel.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Chao Yu <chao@kernel.org>, Jaegeuk Kim <jaegeuk@kernel.org>, Andreas Dilger <adilger.kernel@dilger.ca>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>, Krzysztof Kozlowski <krzk@kernel.org>, Kukjin Kim <kgene@kernel.org>, Jaehoon Chung <jh80.chung@samsung.com>, Ulf Hansson <ulf.hansson@linaro.org>, linux-crypto@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-mmc@vger.kernel.org, linux-samsung-soc@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-arm-kernel@list
 List-Id: dm-devel.ids
 
-On Wed, 22 Aug 2019 at 17:37, Krzysztof Kozlowski <krzk@kernel.org> wrote:
+On Wed, Aug 21, 2019 at 5:10 AM Jens Axboe <axboe@kernel.dk> wrote:
 >
-> Your patch looks corrupted - wrapped by mailer. The easiest way
-> usually is to use git format-patch and git send-email - then you do
-> not have to worry about formatting etc.
+> On 8/21/19 12:42 AM, boojin.kim wrote:
+> > This patch supports crypto information to be maintained via BIO
+> > and passed to the storage driver.
+> >
+> > To do this, 'bi_aux_private', 'REQ_CYPTE' and 'bi_dun' are added
+> > to the block layer.
+> >
+> > 'bi_aux_private' is added for loading additional private information into
+> > BIO.
+> > 'REQ_CRYPT' is added to distinguish that bi_aux_private is being used
+> > for diskcipher.
+> > F2FS among encryption users uses DUN(device unit number) as
+> > the IV(initial vector) for cryptographic operations.
+> > DUN is stored in 'bi_dun' of bi_iter as a specific value for each BIO.
+> >
+> > Before attempting to merge the two BIOs, the operation is also added to
+> > verify that the crypto information contained in two BIOs is consistent.
 >
-> Best regards,
-> Krzysztof
+> This isn't going to happen. With this, and the inline encryption
+> proposed by Google, we'll bloat the bio even more. At least the Google
+> approach didn't include bio iter changes as well.
+>
+> Please work it out between yourselves so we can have a single, clean
+> abstraction that works for both.
+>
+> --
+> Jens Axboe
+>
 
-I'm using outlook instead of 'git send-email' because of workplace policy.
-It's probably broken when I copied the code.
-Thanks for your notice. I will be more careful.
+Hi Boojin,
 
-Thanks for your reply
-Boojin Kim.
+We're very keen to make sure that our approach to inline encryption can
+work with diverse hardware, including Samsung's FMP hardware; if you
+can see any issues with using our approach with your hardware please
+let us know.
+
+We understand that a possible concern for getting FMP working with our
+patch series for Inline Encryption Support at
+
+https://lore.kernel.org/linux-block/20190821075714.65140-1-satyat@google.com/
+
+is that unlike some inline encryption hardware (and also unlike the JEDEC
+UFS v2.1 spec), FMP doesn't have the concept of a limited number of
+keyslots - to address that difference we have a "passthrough keyslot
+manager", which we put up on top of our patch series for inline encryption
+support at
+
+https://android-review.googlesource.com/c/kernel/common/+/980137/2
+
+Setting up a passthrough keyslot manager in the request queue of a
+device allows the device to receive a bio's encryption context as-is with
+the bio, which is what FMP would prefer. Are there any issues with
+using the passthrough keyslot manager for FMP?
+
+Thanks!
+Satya
