@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 13/14] multipathd: use marginal_pathgroups
-Date: Fri, 23 Aug 2019 12:48:57 -0500
-Message-ID: <1566582538-5979-14-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 07/14] libmultipath: consolidate group_by_*
+	functions
+Date: Fri, 23 Aug 2019 12:48:51 -0500
+Message-ID: <1566582538-5979-8-git-send-email-bmarzins@redhat.com>
 References: <1566582538-5979-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,108 +22,251 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Muneendra Kumar <mkumar@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-This commit makes the marginal_pathgroups option work with the
-existing methods for determining marginal paths.  It also merges the
-code for the marginal_path and sand_path_err methods. This has the
-side effect of making the marginal_path code set a marginal path's state
-to "delayed" instead of "shaky" like it previously did.
+group_by_node_name() and group_by_serial() are exactly the same except
+for how the paths are compared. group_by_prio() is different but its
+pathvec solves the same issue as the bitmap from the other two
+functions, and since we are always running sort_pathgroups() after
+calling pgpriorityfn, there is no need to sort the pathgroups in
+group_by_prio(). This means that all three functions can be replaced
+with one function, group_by_match() that takes a match function as an
+argument.
 
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 53 +++++++++++++++++++++++++++++++++--------------
- 1 file changed, 38 insertions(+), 15 deletions(-)
+ libmultipath/pgpolicies.c | 189 +++++++++-----------------------------
+ 1 file changed, 41 insertions(+), 148 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index dca2214c..04b2b56a 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1960,6 +1960,18 @@ reinstate_path:
+diff --git a/libmultipath/pgpolicies.c b/libmultipath/pgpolicies.c
+index 1af42f52..2e4db74c 100644
+--- a/libmultipath/pgpolicies.c
++++ b/libmultipath/pgpolicies.c
+@@ -4,6 +4,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <stdbool.h>
+ 
+ #include "checkers.h"
+ #include "util.h"
+@@ -104,10 +105,29 @@ int group_paths(struct multipath *mp)
  	return 0;
  }
  
-+static int
-+should_skip_path(struct path *pp){
-+	if (marginal_path_check_enabled(pp->mpp)) {
-+		if (pp->io_err_disable_reinstate && need_io_err_check(pp))
-+			return 1;
-+	} else if (san_path_check_enabled(pp->mpp)) {
-+		if (check_path_reinstate_state(pp))
-+			return 1;
-+	}
-+	return 0;
+-/*
+- * One path group per unique tgt_node_name present in the path vector
+- */
+-int group_by_node_name(struct multipath * mp)
++typedef bool (path_match_fn)(struct path *pp1, struct path *pp2);
++
++bool
++node_names_match(struct path *pp1, struct path *pp2)
++{
++	return (strncmp(pp1->tgt_node_name, pp2->tgt_node_name,
++			NODE_NAME_SIZE) == 0);
++}
++
++bool
++serials_match(struct path *pp1, struct path *pp2)
++{
++	return (strncmp(pp1->serial, pp2->serial, SERIAL_SIZE) == 0);
++}
++
++bool
++prios_match(struct path *pp1, struct path *pp2)
++{
++	return (pp1->priority == pp2->priority);
++}
++
++int group_by_match(struct multipath * mp,
++		   bool (*path_match_fn)(struct path *, struct path *))
+ {
+ 	int i, j;
+ 	int * bitmap;
+@@ -150,8 +170,7 @@ int group_by_node_name(struct multipath * mp)
+ 
+ 			pp2 = VECTOR_SLOT(mp->paths, j);
+ 
+-			if (!strncmp(pp->tgt_node_name, pp2->tgt_node_name,
+-					NODE_NAME_SIZE)) {
++			if (path_match_fn(pp, pp2)) {
+ 				if (store_path(pgp->paths, pp2))
+ 					goto out1;
+ 
+@@ -171,70 +190,28 @@ out:
+ 	return 1;
+ }
+ 
++/*
++ * One path group per unique tgt_node_name present in the path vector
++ */
++int group_by_node_name(struct multipath * mp)
++{
++	return group_by_match(mp, node_names_match);
 +}
 +
  /*
-  * Returns '1' if the path has been checked, '-1' if it was blacklisted
-  * and '0' otherwise
-@@ -1975,6 +1987,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	int oldchkrstate = pp->chkrstate;
- 	int retrigger_tries, checkint, max_checkint, verbosity;
- 	struct config *conf;
-+	int marginal_pathgroups, marginal_changed = 0;
- 	int ret;
+  * One path group per unique serial number present in the path vector
+  */
+ int group_by_serial(struct multipath * mp)
+ {
+-	int i, j;
+-	int * bitmap;
+-	struct path * pp;
+-	struct pathgroup * pgp;
+-	struct path * pp2;
+-
+-	/* init the bitmap */
+-	bitmap = (int *)MALLOC(VECTOR_SIZE(mp->paths) * sizeof (int));
+-
+-	if (!bitmap)
+-		goto out;
+-
+-	for (i = 0; i < VECTOR_SIZE(mp->paths); i++) {
+-
+-		if (bitmap[i])
+-			continue;
+-
+-		pp = VECTOR_SLOT(mp->paths, i);
+-
+-		/* here, we really got a new pg */
+-		pgp = alloc_pathgroup();
+-
+-		if (!pgp)
+-			goto out1;
+-
+-		if (add_pathgroup(mp, pgp))
+-			goto out2;
+-
+-		/* feed the first path */
+-		if (store_path(pgp->paths, pp))
+-			goto out1;
+-
+-		bitmap[i] = 1;
+-
+-		for (j = i + 1; j < VECTOR_SIZE(mp->paths); j++) {
+-
+-			if (bitmap[j])
+-				continue;
+-
+-			pp2 = VECTOR_SLOT(mp->paths, j);
+-
+-			if (0 == strcmp(pp->serial, pp2->serial)) {
+-				if (store_path(pgp->paths, pp2))
+-					goto out1;
++	return group_by_match(mp, serials_match);
++}
  
- 	if ((pp->initialized == INIT_OK ||
-@@ -1991,6 +2004,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	checkint = conf->checkint;
- 	max_checkint = conf->max_checkint;
- 	verbosity = conf->verbosity;
-+	marginal_pathgroups = conf->marginal_pathgroups;
- 	put_multipath_config(conf);
+-				bitmap[j] = 1;
+-			}
+-		}
+-	}
+-	FREE(bitmap);
+-	return 0;
+-out2:
+-	free_pathgroup(pgp, KEEP_PATHS);
+-out1:
+-	FREE(bitmap);
+-out:
+-	free_pgvec(mp->pg, KEEP_PATHS);
+-	mp->pg = NULL;
+-	return 1;
++/*
++ * One path group per priority present in the path vector
++ */
++int group_by_prio(struct multipath *mp)
++{
++	return group_by_match(mp, prios_match);
+ }
  
- 	if (pp->checkint == CHECKINT_UNDEF) {
-@@ -2106,20 +2120,27 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	set_no_path_retry(pp->mpp);
- 
- 	if ((newstate == PATH_UP || newstate == PATH_GHOST) &&
--			check_path_reinstate_state(pp)) {
--		pp->state = PATH_DELAYED;
--		return 1;
+ int one_path_per_group(struct multipath *mp)
+@@ -293,87 +270,3 @@ out:
+ 	mp->pg = NULL;
+ 	return 1;
+ }
+-
+-int group_by_prio(struct multipath *mp)
+-{
+-	int i;
+-	int prio;
+-	struct path * pp;
+-	struct pathgroup * pgp;
+-	vector pathvec = NULL;
+-
+-	pathvec = vector_alloc();
+-	if (!pathvec)
+-		goto out;
+-
+-	vector_foreach_slot(mp->paths, pp, i) {
+-		if (!vector_alloc_slot(pathvec))
+-			goto out1;
+-		vector_set_slot(pathvec, pp);
 -	}
 -
--	if ((newstate == PATH_UP || newstate == PATH_GHOST) &&
--	    pp->io_err_disable_reinstate && need_io_err_check(pp)) {
--		pp->state = PATH_SHAKY;
+-	while (VECTOR_SIZE(pathvec) > 0) {
+-		pp = VECTOR_SLOT(pathvec, 0);
+-		prio = pp->priority;
+-
 -		/*
--		 * to reschedule as soon as possible,so that this path can
--		 * be recoverd in time
+-		 * Find the position to insert the new path group. All groups
+-		 * are ordered by the priority value (higher value first).
 -		 */
--		pp->tick = 1;
--		return 1;
-+	    (san_path_check_enabled(pp->mpp) ||
-+	     marginal_path_check_enabled(pp->mpp))) {
-+		int was_marginal = pp->marginal;
-+		if (should_skip_path(pp)) {
-+			if (!marginal_pathgroups) {
-+				if (marginal_path_check_enabled(pp->mpp))
-+					/* to reschedule as soon as possible,
-+					 * so that this path can be recovered
-+					 * in time */
-+					pp->tick = 1;
-+				pp->state = PATH_DELAYED;
-+				return 1;
-+			}
-+			if (!was_marginal) {
-+				pp->marginal = 1;
-+				marginal_changed = 1;
-+			}
-+		} else if (marginal_pathgroups && was_marginal) {
-+			pp->marginal = 0;
-+			marginal_changed = 1;
-+		}
- 	}
- 
- 	/*
-@@ -2258,7 +2279,9 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	 */
- 	condlog(4, "path prio refresh");
- 
--	if (update_prio(pp, new_path_up) &&
-+	if (marginal_changed)
-+		update_path_groups(pp->mpp, vecs, 1);
-+	else if (update_prio(pp, new_path_up) &&
- 	    (pp->mpp->pgpolicyfn == (pgpolicyfn *)group_by_prio) &&
- 	     pp->mpp->pgfailback == -FAILBACK_IMMEDIATE)
- 		update_path_groups(pp->mpp, vecs, !new_path_up);
+-		vector_foreach_slot(mp->pg, pgp, i) {
+-			pp  = VECTOR_SLOT(pgp->paths, 0);
+-
+-			if (prio > pp->priority)
+-				break;
+-		}
+-
+-		/*
+-		 * Initialize the new path group.
+-		 */
+-		pgp = alloc_pathgroup();
+-
+-		if (!pgp)
+-			goto out1;
+-
+-		if (store_path(pgp->paths, VECTOR_SLOT(pathvec, 0)))
+-			goto out2;
+-
+-		vector_del_slot(pathvec, 0);
+-
+-		/*
+-		 * Store the new path group into the vector.
+-		 */
+-		if (i < VECTOR_SIZE(mp->pg)) {
+-			if (!vector_insert_slot(mp->pg, i, pgp))
+-				goto out2;
+-			pgp->mpp = mp;
+-		} else {
+-			if (add_pathgroup(mp, pgp))
+-				goto out2;
+-		}
+-
+-		/*
+-		 * add the other paths with the same prio
+-		 */
+-		vector_foreach_slot(pathvec, pp, i) {
+-			if (pp->priority == prio) {
+-				if (store_path(pgp->paths, pp))
+-					goto out1;
+-
+-				vector_del_slot(pathvec, i);
+-				i--;
+-			}
+-		}
+-	}
+-	free_pathvec(pathvec, KEEP_PATHS);
+-	return 0;
+-out2:
+-	free_pathgroup(pgp, KEEP_PATHS);
+-out1:
+-	free_pathvec(pathvec, KEEP_PATHS);
+-out:
+-	free_pgvec(mp->pg, KEEP_PATHS);
+-	mp->pg = NULL;
+-	return 1;
+-
+-}
 -- 
 2.17.2
