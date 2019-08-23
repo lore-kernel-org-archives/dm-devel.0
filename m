@@ -1,39 +1,97 @@
-From: "boojin.kim" <boojin.kim@samsung.com>
-Subject: Re: [PATCH 6/9] dm crypt: support diskcipher
-Date: Fri, 23 Aug 2019 16:18:47 +0900
-Message-ID: <002b01d55983$01b40320$051c0960$@samsung.com>
-References: <CGME20190823071848epcas2p3fe4d229d22b14162c354f88a29f366c2@epcas2p3.samsung.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [PATCH] dm table: fix a potential array out of
+ bounds
+Date: Fri, 23 Aug 2019 07:28:16 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1908230705510.5296@file01.intranet.prod.int.rdu2.redhat.com>
+References: <1566351211-13280-1-git-send-email-kontais@zoho.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: ko
+In-Reply-To: <1566351211-13280-1-git-send-email-kontais@zoho.com>
 Sender: linux-kernel-owner@vger.kernel.org
-Cc: 'Herbert Xu' <herbert@gondor.apana.org.au>, "'David S. Miller'" <davem@davemloft.net>, 'Eric Biggers' <ebiggers@kernel.org>, "'Theodore Y. Ts'o'" <tytso@mit.edu>, 'Chao Yu' <chao@kernel.org>, 'Jaegeuk Kim' <jaegeuk@kernel.org>, 'Andreas Dilger' <adilger.kernel@dilger.ca>'Theodore Ts'o' <tytso@mit.edu>, dm-devel@redhat.com, 'Mike Snitzer' <snitzer@redhat.com>, 'Alasdair Kergon' <agk@redhat.com>, 'Jens Axboe' <axboe@kernel.dk>, 'Krzysztof Kozlowski' <krzk@kernel.org>, 'Kukjin Kim' <kgene@kernel.org>, 'Jaehoon Chung' <jh80.chung@samsung.com>, 'Ulf Hansson' <ulf.hansson@linaro.org>, linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-mmc@vger.kernel.org, linux-samsung-soc
+To: Zhang Tao <kontais@zoho.com>
+Cc: agk@redhat.com, snitzer@redhat.com, Zhang Tao <zhangtao27@lenovo.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Aug 23, 2019 at 01:28:37PM +0900, Herbert Xu wrote:
->
-> No.  If you're after total offload then the crypto API is not for
-> you.  What we can support is the offloading of encryption/decryption
-> over many sectors.
->
-> Cheers,
+Hi
 
-FMP doesn't use encrypt/decrypt of crypto API because it doesn't
-expose cipher-text to DRAM.
-But, Crypto API has many useful features such as cipher management,
-cipher allocation with cipher name, key management and test manager.
-All these features are useful for FMP.
-FMP has been cerified with FIPS as below by using test vectors and
-test manager of Crypto API.
-https://csrc.nist.gov/projects/cryptographic-module-validation-program/Certi
-ficate/3255
-https://csrc.nist.gov/CSRC/media/projects/cryptographic-module-validation-pr
-ogram/documents/security-policies/140sp3255.pdf
+I tested it and the bug is real - with some table sizes, 
+dm_table_find_target will access memory out of bounds if the sector 
+argument is beyond limit.
 
-Can't I use crypto APIs to take advantage of this?
-I want to find a good way that FMP can use crypto API.
+Your patch fixes some of these cases, but not all of them.
 
-Thanks
-Boojin Kim.
+I used this script to test all possible table sizes:
+#!/bin/bash -e
+sync
+dmsetup remove_all || true
+rmmod dm_mod || true
+>t.txt
+for i in `seq 1 10000`; do
+        echo $i
+        echo $((i-1)) 1 error >>t.txt
+        dmsetup create error <t.txt
+        dmsetup remove error
+done
+
+and I modified dm_table_find_target to call dm_table_find_target with too 
+high sector number. Without your patch, it fails on table with 16 entries; 
+with your patch applied, it fails on 144 entries.
+
+I'll make another patch that passes the test.
+
+Mikulas
+
+
+On Wed, 21 Aug 2019, Zhang Tao wrote:
+
+> From: Zhang Tao <zhangtao27@lenovo.com>
+> 
+> allocate num + 1 for target and offset array, n_highs need num + 1
+> elements, the last element will be used for node lookup in function
+> dm_table_find_target.
+> 
+> Signed-off-by: Zhang Tao <zhangtao27@lenovo.com>
+> ---
+>  drivers/md/dm-table.c | 8 +++++---
+>  1 file changed, 5 insertions(+), 3 deletions(-)
+> 
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index 7b6c3ee..fd7f604 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -160,20 +160,22 @@ static int alloc_targets(struct dm_table *t, unsigned int num)
+>  {
+>  	sector_t *n_highs;
+>  	struct dm_target *n_targets;
+> +	unsigned int alloc_num;
+>  
+>  	/*
+>  	 * Allocate both the target array and offset array at once.
+>  	 * Append an empty entry to catch sectors beyond the end of
+>  	 * the device.
+>  	 */
+> -	n_highs = (sector_t *) dm_vcalloc(num + 1, sizeof(struct dm_target) +
+> +	alloc_num = num + 1;
+> +	n_highs = (sector_t *) dm_vcalloc(alloc_num, sizeof(struct dm_target) +
+>  					  sizeof(sector_t));
+>  	if (!n_highs)
+>  		return -ENOMEM;
+>  
+> -	n_targets = (struct dm_target *) (n_highs + num);
+> +	n_targets = (struct dm_target *) (n_highs + alloc_num);
+>  
+> -	memset(n_highs, -1, sizeof(*n_highs) * num);
+> +	memset(n_highs, -1, sizeof(*n_highs) * alloc_num);
+>  	vfree(t->highs);
+>  
+>  	t->num_allocated = num;
+> -- 
+> 1.8.3.1
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
