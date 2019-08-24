@@ -1,35 +1,63 @@
-From: pr-tracker-bot@kernel.org
-Subject: Re: [git pull] device mapper fixes for 5.3-rc6
-Date: Fri, 23 Aug 2019 18:00:08 +0000
-Message-ID: <156658320865.8315.6721871049498316785.pr-tracker-bot@kernel.org>
-References: <20190823154153.GA24648@lobo>
+From: Denis Efremov <efremov@ispras.ru>
+Subject: [PATCH v2] lib/memweight.c: open codes bitmap_weight()
+Date: Sat, 24 Aug 2019 13:01:02 +0300
+Message-ID: <20190824100102.1167-1-efremov@ispras.ru>
+References: <20190821074200.2203-1-efremov@ispras.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190823154153.GA24648@lobo>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Wenwen Wang <wenwen@cs.uga.edu>, Dmitry Fomichev <dmitry.fomichev@wdc.com>, ZhangXiaoxu <zhangxiaoxu5@huawei.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Dan Carpenter <dan.carpenter@oracle.com>, Bryan Gurney <bgurney@redhat.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190821074200.2203-1-efremov@ispras.ru>
+Sender: linux-kernel-owner@vger.kernel.org
+To: akpm@linux-foundation.org
+Cc: Denis Efremov <efremov@ispras.ru>, Akinobu Mita <akinobu.mita@gmail.com>, Jan Kara <jack@suse.cz>, linux-kernel@vger.kernel.org, Matthew Wilcox <matthew@wil.cx>, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-media@vger.kernel.org, Erdem Tumurov <erdemus@gmail.com>, Vladimir Shelekhov <vshel@iis.nsk.su>
 List-Id: dm-devel.ids
 
-The pull request you sent on Fri, 23 Aug 2019 11:41:53 -0400:
+This patch open codes the bitmap_weight() call. The direct
+invocation of hweight_long() allows to remove the BUG_ON and
+excessive "longs to bits, bits to longs" conversion.
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.3/dm-fixes-2
+BUG_ON was required to check that bitmap_weight() will return
+a correct value, i.e. the computed weight will fit the int type
+of the return value. With this patch memweight() controls the
+computation directly with size_t type everywhere. Thus, the BUG_ON
+becomes unnecessary.
 
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/dd469a456047af5eb1ee0bcfc8fe61f5940ef0e0
+Total size reduced:
+./scripts/bloat-o-meter lib/memweight.o.old lib/memweight.o.new
+add/remove: 0/0 grow/shrink: 0/1 up/down: 0/-10 (-10)
+Function                                     old     new   delta
+memweight                                    162     152     -10
 
-Thank you!
+Co-developed-by: Erdem Tumurov <erdemus@gmail.com>
+Signed-off-by: Erdem Tumurov <erdemus@gmail.com>
+Co-developed-by: Vladimir Shelekhov <vshel@iis.nsk.su>
+Signed-off-by: Vladimir Shelekhov <vshel@iis.nsk.su>
+Signed-off-by: Denis Efremov <efremov@ispras.ru>
+---
+ lib/memweight.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
 
+diff --git a/lib/memweight.c b/lib/memweight.c
+index 94dd72ccaa7f..f050b2b4c5e2 100644
+--- a/lib/memweight.c
++++ b/lib/memweight.c
+@@ -20,11 +20,13 @@ size_t memweight(const void *ptr, size_t bytes)
+ 
+ 	longs = bytes / sizeof(long);
+ 	if (longs) {
+-		BUG_ON(longs >= INT_MAX / BITS_PER_LONG);
+-		ret += bitmap_weight((unsigned long *)bitmap,
+-				longs * BITS_PER_LONG);
++		const unsigned long *bitmap_long =
++			(const unsigned long *)bitmap;
++
+ 		bytes -= longs * sizeof(long);
+-		bitmap += longs * sizeof(long);
++		for (; longs > 0; longs--, bitmap_long++)
++			ret += hweight_long(*bitmap_long);
++		bitmap = (const unsigned char *)bitmap_long;
+ 	}
+ 	/*
+ 	 * The reason that this last loop is distinct from the preceding
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.wiki.kernel.org/userdoc/prtracker
+2.21.0
