@@ -1,114 +1,119 @@
-From: Huaisheng Ye <yehs2007@zoho.com>
-Subject: [PATCH 3/3] dm writecache: optimize performance by sorting the blocks for writeback_all
-Date: Sun, 25 Aug 2019 15:24:33 +0800
-Message-ID: <20190825072433.2628-4-yehs2007@zoho.com>
-References: <20190825072433.2628-1-yehs2007@zoho.com>
+From: Denis Efremov <efremov@ispras.ru>
+Subject: Re: [PATCH v2] lib/memweight.c: open codes bitmap_weight()
+Date: Sun, 25 Aug 2019 14:39:47 +0300
+Message-ID: <ba051566-0343-ea75-0484-8852f65a15da@ispras.ru>
+References: <20190821074200.2203-1-efremov@ispras.ru>
+ <20190824100102.1167-1-efremov@ispras.ru>
+ <20190825061158.GC28002@bombadil.infradead.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190825072433.2628-1-yehs2007@zoho.com>
+In-Reply-To: <20190825061158.GC28002@bombadil.infradead.org>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: mpatocka@redhat.com, snitzer@redhat.com, agk@redhat.com
-Cc: prarit@redhat.com, tyu1@lenovo.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Huaisheng Ye <yehs1@lenovo.com>
+To: Matthew Wilcox <willy@infradead.org>
+Cc: akpm@linux-foundation.org, Akinobu Mita <akinobu.mita@gmail.com>, Jan Kara <jack@suse.cz>, linux-kernel@vger.kernel.org, Matthew Wilcox <matthew@wil.cx>, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-media@vger.kernel.org, Erdem Tumurov <erdemus@gmail.com>, Vladimir Shelekhov <vshel@iis.nsk.su>
 List-Id: dm-devel.ids
 
-From: Huaisheng Ye <yehs1@lenovo.com>
 
-During the process of writeback, the blocks, which have been placed in wbl.list
-for writeback soon, are partially ordered for the contiguous ones.
 
-When writeback_all has been set, for most cases, also by default, there will be
-a lot of blocks in pmem need to writeback at the same time.
-For this case, we could optimize the performance by sorting all blocks in
-wbl.list. writecache_writeback doesn't need to get blocks from the tail of
-wc->lru, whereas from the first rb_node from the rb_tree.
+On 25.08.2019 09:11, Matthew Wilcox wrote:
+> On Sat, Aug 24, 2019 at 01:01:02PM +0300, Denis Efremov wrote:
+>> This patch open codes the bitmap_weight() call. The direct
+>> invocation of hweight_long() allows to remove the BUG_ON and
+>> excessive "longs to bits, bits to longs" conversion.
+> 
+> Honestly, that's not the problem with this function.  Take a look
+> at https://danluu.com/assembly-intrinsics/ for a _benchmarked_
+> set of problems with popcnt.
+> 
+>> BUG_ON was required to check that bitmap_weight() will return
+>> a correct value, i.e. the computed weight will fit the int type
+>> of the return value.
+> 
+> What?  No.  Look at the _arguments_ of bitmap_weight():
+> 
+> static __always_inline int bitmap_weight(const unsigned long *src, unsigned int nbits)
 
-The benefit is that, writecache_writeback doesn't need to have any cost to sort
-the blocks, because of all blocks are incremental originally in rb_tree.
-There will be a writecache_flush when writeback_all begins to work, that will
-eliminate duplicate blocks in cache by committed/uncommitted.
-
-Testing platform: Thinksystem SR630 with persistent memory.
-The cache comes from pmem, which has 1006MB size. The origin device is HDD, 2GB
-of which for using.
-
-Testing steps:
- 1) dmsetup create mycache --table '0 4194304 writecache p /dev/sdb1 /dev/pmem4  4096 0'
- 2) fio -filename=/dev/mapper/mycache -direct=1 -iodepth=20 -rw=randwrite
- -ioengine=libaio -bs=4k -loops=1  -size=2g -group_reporting -name=mytest1
- 3) time dmsetup message /dev/mapper/mycache 0 flush
-
-Here is the results below,
-With the patch:
- # fio -filename=/dev/mapper/mycache -direct=1 -iodepth=20 -rw=randwrite
- -ioengine=libaio -bs=4k -loops=1  -size=2g -group_reporting -name=mytest1
-   iops        : min= 1582, max=199470, avg=5305.94, stdev=21273.44, samples=197
- # time dmsetup message /dev/mapper/mycache 0 flush
-real	0m44.020s
-user	0m0.002s
-sys	0m0.003s
-
-Without the patch:
- # fio -filename=/dev/mapper/mycache -direct=1 -iodepth=20 -rw=randwrite
- -ioengine=libaio -bs=4k -loops=1  -size=2g -group_reporting -name=mytest1
-   iops        : min= 1202, max=197650, avg=4968.67, stdev=20480.17, samples=211
- # time dmsetup message /dev/mapper/mycache 0 flush
-real	1m39.221s
-user	0m0.001s
-sys	0m0.003s
-
-I also have checked the data accuracy with this patch by making EXT4 filesystem
-on mycache, then mount it for checking md5 of files on that.
-The test result is positive, with this patch it could save more than half of time
-when writeback_all.
-
-Signed-off-by: Huaisheng Ye <yehs1@lenovo.com>
----
- drivers/md/dm-writecache.c | 19 ++++++++++++++++---
- 1 file changed, 16 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-index 3643084..c481947 100644
---- a/drivers/md/dm-writecache.c
-+++ b/drivers/md/dm-writecache.c
-@@ -1560,7 +1560,7 @@ static void writecache_writeback(struct work_struct *work)
- {
- 	struct dm_writecache *wc = container_of(work, struct dm_writecache, writeback_work);
- 	struct blk_plug plug;
--	struct wc_entry *e, *f, *g;
-+	struct wc_entry *f, *g, *e = NULL;
- 	struct rb_node *node, *next_node;
- 	struct list_head skipped;
- 	struct writeback_list wbl;
-@@ -1597,7 +1597,14 @@ static void writecache_writeback(struct work_struct *work)
- 			break;
- 		}
+I'm not sure why it is INT_MAX then? I would expect in case we care only about arguments
+something like:
  
--		e = container_of(wc->lru.prev, struct wc_entry, lru);
-+		if (unlikely(wc->writeback_all)) {
-+			if (unlikely(!e)) {
-+				writecache_flush(wc);
-+				e = container_of(rb_first(&wc->tree), struct wc_entry, rb_node);
-+			} else
-+				e = g;
-+		} else
-+			e = container_of(wc->lru.prev, struct wc_entry, lru);
- 		BUG_ON(e->write_in_progress);
- 		if (unlikely(!writecache_entry_is_committed(wc, e))) {
- 			writecache_flush(wc);
-@@ -1658,8 +1665,14 @@ static void writecache_writeback(struct work_struct *work)
- 			g->wc_list_contiguous = BIO_MAX_PAGES;
- 			f = g;
- 			e->wc_list_contiguous++;
--			if (unlikely(e->wc_list_contiguous == BIO_MAX_PAGES))
-+			if (unlikely(e->wc_list_contiguous == BIO_MAX_PAGES)) {
-+				if (unlikely(wc->writeback_all)) {
-+					next_node = rb_next(&f->rb_node);
-+					if (likely(next_node))
-+						g = container_of(next_node, struct wc_entry, rb_node);
-+				}
- 				break;
-+			}
- 		}
- 		cond_resched();
- 	}
--- 
-1.8.3.1
+BUG_ON(longs >= UINT_MAX / BITS_PER_LONG);
+
+> 
+>> With this patch memweight() controls the
+>> computation directly with size_t type everywhere. Thus, the BUG_ON
+>> becomes unnecessary.
+> 
+> Why are you bothering?  How are you allocating half a gigabyte of memory?
+> Why are you calling memweight() on half a gigabyte of memory?
+> 
+
+No, we don't use such big arrays. However, it's possible to remove BUG_ON and make
+the code more "straight". Why do we need to "artificially" limit this function
+to arrays of a particular size if we can relatively simple omit this restriction?
+
+> 
+> If you really must change anything, I'd rather see this turned into a
+> loop:
+> 
+> 	while (longs) {
+> 		unsigned int nbits;
+> 
+> 		if (longs >= INT_MAX / BITS_PER_LONG)
+> 			nbits = INT_MAX + 1;
+> 		else
+> 			nbits = longs * BITS_PER_LONG;
+> 
+> 		ret += bitmap_weight((unsigned long *)bitmap, sz);
+> 		bytes -= nbits / 8;
+> 		bitmap += nbits / 8;
+> 		longs -= nbits / BITS_PER_LONG;
+> 	}
+> 
+> then we only have to use Dan Luu's optimisation in bitmap_weight()
+> and not in memweight() as well.
+
+I don't know how the implementation of this optimization will look like in it's
+final shape, because of different hardware/compiler issues. It looks there are
+a number of different ways to do it https://arxiv.org/pdf/1611.07612.pdf, 
+http://0x80.pl/articles/sse-popcount.html.
+
+However, if it will be based on popcnt instruction I would expect that
+hweight_long will also contain this intrinsics. Since version 4.9.2
+https://gcc.gnu.org/bugzilla/show_bug.cgi?id=62011#c13 GCC knows of the
+false-dependency in popcnt and generates code to handle it
+(e.g. xor https://godbolt.org/z/Q7AW_d) Thus, I would expect that it's
+possible to use popcnt intrinsics in hweight_long that would be natively
+optimized in all loops like "for (...) { res += hweight_long() }" without
+requiring manual unrolling like in builtin_popcnt_unrolled_errata_manual
+example of Dan Luu's optimization.
+
+> 
+> Also, why does the trailer do this:
+> 
+>         for (; bytes > 0; bytes--, bitmap++)
+>                 ret += hweight8(*bitmap);
+> 
+> instead of calling hweight_long on *bitmap & mask?
+> 
+
+Do you mean something like this?
+
+        longs = bytes;
+        bytes = do_div(longs, sizeof(long));
+        bitmap_long = (const unsigned long *)bitmap;
+        if (longs) {
+                for (; longs > 0; longs--, bitmap_long++)
+                        ret += hweight_long(*bitmap_long);
+        }
+        if (bytes) {
+                ret += hweight_long(*bitmap_long &
+                                   ((0x1 << bytes * BITS_PER_BYTE) - 1));
+        }
+
+The *bitmap_long will lead to buffer overflow here.
+
+Thanks,
+Denis
