@@ -1,18 +1,15 @@
-From: Song Liu <songliubraving@fb.com>
-Subject: Re: [PATCH v3 1/2] md raid0/linear: Mark array as
- 'broken' and fail BIOs if a member is gone
-Date: Fri, 23 Aug 2019 17:51:18 +0000
-Message-ID: <F0E716F8-76EC-4315-933D-A547B52F1D27@fb.com>
-References: <20190822161318.26236-1-gpiccoli@canonical.com>
-	<73C4747E-7A9E-4833-8393-B6A06C935DBE@fb.com>
-	<8163258e-839c-e0b8-fc4b-74c94c9dae1d@canonical.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] accessing invalid memory in "dm zoned:
+ properly handle backing device failure"
+Date: Mon, 26 Aug 2019 06:14:34 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1908260613330.12106@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1908260232180.7419@file01.intranet.prod.int.rdu2.redhat.com>
+	<BYAPR04MB58169660ACD5E6B68DBCB070E7A10@BYAPR04MB5816.namprd04.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8163258e-839c-e0b8-fc4b-74c94c9dae1d@canonical.com>
-Content-Language: en-US
-Content-ID: <0674B3614E0FBC4BABE51F8D02901F68@namprd15.prod.outlook.com>
+In-Reply-To: <BYAPR04MB58169660ACD5E6B68DBCB070E7A10@BYAPR04MB5816.namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,45 +19,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Song Liu <liu.song.a23@gmail.com>, NeilBrown <neilb@suse.com>, linux-raid <linux-raid@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Jay Vosburgh <jay.vosburgh@canonical.com>
+To: Damien Le Moal <Damien.LeMoal@wdc.com>
+Cc: Dmitry Fomichev <Dmitry.Fomichev@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
 
 
-> On Aug 23, 2019, at 10:48 AM, Guilherme G. Piccoli <gpiccoli@canonical.com> wrote:
-> 
-> On 22/08/2019 18:55, Song Liu wrote:
->> [...] 
->>> +	if (unlikely(!(tmp_dev->rdev->bdev->bd_disk->flags & GENHD_FL_UP))) {
->>> +		if (!test_bit(MD_BROKEN, &mddev->flags))
->>> +			pr_warn("md: %s: linear array has a missing/failed member\n",
->>> +				mdname(mddev));
->>> +		set_bit(MD_BROKEN, &mddev->flags);
->>> +		bio_io_error(bio);
->>> +		return true;
->>> +	}
->>> +
->> 
->> Maybe we can somehow put this block in a helper and use it in both raid0
->> and linear code?
->> 
->> Otherwise, looks good to me. 
->> 
->> Thanks,
->> Song
->> 
-> 
-> OK, so something as a function with a prototype like
-> "void md_is_broken(struct md_rdev *rd, const char *md_type)"
-> is good for you?
-> Then we can use that as the check if a member failed and in positive
-> case, we can print the message (if not printed before) and return to the
-> raid0/linear driver in order it fails the bio and returns.
-> I'd prefer keeping the bio out of the helper, agreed?
-> 
+On Mon, 26 Aug 2019, Damien Le Moal wrote:
 
-I guess md_is_broken() should return bool? Otherwise, looks good to me. 
+> On 2019/08/26 15:41, Mikulas Patocka wrote:
+> > The patch 75d66ffb48efb30f2dd42f041ba8b39c5b2bd115 ("dm zoned: properly 
+> > handle backing device failure") triggers a coverity warning:
+> > 
+> > *** CID 1452808:  Memory - illegal accesses  (USE_AFTER_FREE)
+> > /drivers/md/dm-zoned-target.c: 137 in dmz_submit_bio()
+> > 131             clone->bi_private = bioctx;
+> > 132
+> > 133             bio_advance(bio, clone->bi_iter.bi_size);
+> > 134
+> > 135             refcount_inc(&bioctx->ref);
+> > 136             generic_make_request(clone);
+> >>>>     CID 1452808:  Memory - illegal accesses  (USE_AFTER_FREE)
+> >>>>     Dereferencing freed pointer "clone".
+> > 137             if (clone->bi_status == BLK_STS_IOERR)
+> > 138                     return -EIO;
+> > 139
+> > 140             if (bio_op(bio) == REQ_OP_WRITE && dmz_is_seq(zone))
+> > 141                     zone->wp_block += nr_blocks;
+> > 142
+> > 
+> > The "clone" bio may be processed and freed before the check 
+> > "clone->bi_status == BLK_STS_IOERR" - so this check can access invalid 
+> > memory.
+> > 
+> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > Cc: stable@vger.kernel.org
 
-Thanks,
-Song
+We should also append this line:
+
+Fixes: 75d66ffb48ef ("dm zoned: properly handle backing device failure")
+
+Mikulas
+
+> > ---
+> >  drivers/md/dm-zoned-target.c |    2 --
+> >  1 file changed, 2 deletions(-)
+> > 
+> > Index: linux-2.6/drivers/md/dm-zoned-target.c
+> > ===================================================================
+> > --- linux-2.6.orig/drivers/md/dm-zoned-target.c	2019-08-26 08:30:30.000000000 +0200
+> > +++ linux-2.6/drivers/md/dm-zoned-target.c	2019-08-26 08:36:23.000000000 +0200
+> > @@ -134,8 +134,6 @@ static int dmz_submit_bio(struct dmz_tar
+> >  
+> >  	refcount_inc(&bioctx->ref);
+> >  	generic_make_request(clone);
+> > -	if (clone->bi_status == BLK_STS_IOERR)
+> > -		return -EIO;
+> >  
+> >  	if (bio_op(bio) == REQ_OP_WRITE && dmz_is_seq(zone))
+> >  		zone->wp_block += nr_blocks;
+> > 
+> 
+> Argh... Indeed. Thanks Mikulas.
+> 
+> Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
+> 
+> -- 
+> Damien Le Moal
+> Western Digital Research
+> 
