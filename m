@@ -1,90 +1,128 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] accessing invalid memory in "dm zoned:
- properly handle backing device failure"
-Date: Mon, 26 Aug 2019 06:14:34 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1908260613330.12106@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1908260232180.7419@file01.intranet.prod.int.rdu2.redhat.com>
-	<BYAPR04MB58169660ACD5E6B68DBCB070E7A10@BYAPR04MB5816.namprd04.prod.outlook.com>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: Re: [PATCH v2] lib/memweight.c: open codes bitmap_weight()
+Date: Mon, 26 Aug 2019 11:39:56 -0700
+Message-ID: <20190826183956.GF15933@bombadil.infradead.org>
+References: <20190821074200.2203-1-efremov@ispras.ru>
+ <20190824100102.1167-1-efremov@ispras.ru>
+ <20190825061158.GC28002@bombadil.infradead.org>
+ <ba051566-0343-ea75-0484-8852f65a15da@ispras.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <BYAPR04MB58169660ACD5E6B68DBCB070E7A10@BYAPR04MB5816.namprd04.prod.outlook.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <Damien.LeMoal@wdc.com>
-Cc: Dmitry Fomichev <Dmitry.Fomichev@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <ba051566-0343-ea75-0484-8852f65a15da@ispras.ru>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Denis Efremov <efremov@ispras.ru>
+Cc: akpm@linux-foundation.org, Akinobu Mita <akinobu.mita@gmail.com>, Jan Kara <jack@suse.cz>, linux-kernel@vger.kernel.org, Matthew Wilcox <matthew@wil.cx>, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-media@vger.kernel.org, Erdem Tumurov <erdemus@gmail.com>, Vladimir Shelekhov <vshel@iis.nsk.su>
 List-Id: dm-devel.ids
 
-
-
-On Mon, 26 Aug 2019, Damien Le Moal wrote:
-
-> On 2019/08/26 15:41, Mikulas Patocka wrote:
-> > The patch 75d66ffb48efb30f2dd42f041ba8b39c5b2bd115 ("dm zoned: properly 
-> > handle backing device failure") triggers a coverity warning:
+On Sun, Aug 25, 2019 at 02:39:47PM +0300, Denis Efremov wrote:
+> On 25.08.2019 09:11, Matthew Wilcox wrote:
+> > On Sat, Aug 24, 2019 at 01:01:02PM +0300, Denis Efremov wrote:
+> >> This patch open codes the bitmap_weight() call. The direct
+> >> invocation of hweight_long() allows to remove the BUG_ON and
+> >> excessive "longs to bits, bits to longs" conversion.
 > > 
-> > *** CID 1452808:  Memory - illegal accesses  (USE_AFTER_FREE)
-> > /drivers/md/dm-zoned-target.c: 137 in dmz_submit_bio()
-> > 131             clone->bi_private = bioctx;
-> > 132
-> > 133             bio_advance(bio, clone->bi_iter.bi_size);
-> > 134
-> > 135             refcount_inc(&bioctx->ref);
-> > 136             generic_make_request(clone);
-> >>>>     CID 1452808:  Memory - illegal accesses  (USE_AFTER_FREE)
-> >>>>     Dereferencing freed pointer "clone".
-> > 137             if (clone->bi_status == BLK_STS_IOERR)
-> > 138                     return -EIO;
-> > 139
-> > 140             if (bio_op(bio) == REQ_OP_WRITE && dmz_is_seq(zone))
-> > 141                     zone->wp_block += nr_blocks;
-> > 142
+> > Honestly, that's not the problem with this function.  Take a look
+> > at https://danluu.com/assembly-intrinsics/ for a _benchmarked_
+> > set of problems with popcnt.
 > > 
-> > The "clone" bio may be processed and freed before the check 
-> > "clone->bi_status == BLK_STS_IOERR" - so this check can access invalid 
-> > memory.
+> >> BUG_ON was required to check that bitmap_weight() will return
+> >> a correct value, i.e. the computed weight will fit the int type
+> >> of the return value.
 > > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > Cc: stable@vger.kernel.org
-
-We should also append this line:
-
-Fixes: 75d66ffb48ef ("dm zoned: properly handle backing device failure")
-
-Mikulas
-
-> > ---
-> >  drivers/md/dm-zoned-target.c |    2 --
-> >  1 file changed, 2 deletions(-)
+> > What?  No.  Look at the _arguments_ of bitmap_weight():
 > > 
-> > Index: linux-2.6/drivers/md/dm-zoned-target.c
-> > ===================================================================
-> > --- linux-2.6.orig/drivers/md/dm-zoned-target.c	2019-08-26 08:30:30.000000000 +0200
-> > +++ linux-2.6/drivers/md/dm-zoned-target.c	2019-08-26 08:36:23.000000000 +0200
-> > @@ -134,8 +134,6 @@ static int dmz_submit_bio(struct dmz_tar
-> >  
-> >  	refcount_inc(&bioctx->ref);
-> >  	generic_make_request(clone);
-> > -	if (clone->bi_status == BLK_STS_IOERR)
-> > -		return -EIO;
-> >  
-> >  	if (bio_op(bio) == REQ_OP_WRITE && dmz_is_seq(zone))
-> >  		zone->wp_block += nr_blocks;
+> > static __always_inline int bitmap_weight(const unsigned long *src, unsigned int nbits)
+> 
+> I'm not sure why it is INT_MAX then? I would expect in case we care only about arguments
+> something like:
+>  
+> BUG_ON(longs >= UINT_MAX / BITS_PER_LONG);
+
+People aren't always terribly consistent with INT_MAX vs UINT_MAX.
+Also, bitmap_weight() should arguably return an unisnged int (it can't
+legitimately return a negative value).
+
+> >> With this patch memweight() controls the
+> >> computation directly with size_t type everywhere. Thus, the BUG_ON
+> >> becomes unnecessary.
+> > 
+> > Why are you bothering?  How are you allocating half a gigabyte of memory?
+> > Why are you calling memweight() on half a gigabyte of memory?
 > > 
 > 
-> Argh... Indeed. Thanks Mikulas.
+> No, we don't use such big arrays. However, it's possible to remove BUG_ON and make
+> the code more "straight". Why do we need to "artificially" limit this function
+> to arrays of a particular size if we can relatively simple omit this restriction?
+
+You're not making a great case for changing the implementation of
+memweight() here ...
+
+> I don't know how the implementation of this optimization will look like in it's
+> final shape, because of different hardware/compiler issues. It looks there are
+> a number of different ways to do it https://arxiv.org/pdf/1611.07612.pdf, 
+> http://0x80.pl/articles/sse-popcount.html.
+
+The problem with using XMM registers is that they have to be saved/restored.
+Not to mention the thermal issues caused by heavy usage of AVX instructions.
+
+> However, if it will be based on popcnt instruction I would expect that
+> hweight_long will also contain this intrinsics. Since version 4.9.2
+> https://gcc.gnu.org/bugzilla/show_bug.cgi?id=62011#c13 GCC knows of the
+> false-dependency in popcnt and generates code to handle it
+
+Ah!  Glad to see GCC knows about this problem and has worked around it.
+
+> (e.g. xor https://godbolt.org/z/Q7AW_d) Thus, I would expect that it's
+> possible to use popcnt intrinsics in hweight_long that would be natively
+> optimized in all loops like "for (...) { res += hweight_long() }" without
+> requiring manual unrolling like in builtin_popcnt_unrolled_errata_manual
+> example of Dan Luu's optimization.
+
+That might be expecting rather more from our compiler than is reasonable ...
+
+> > 
+> > Also, why does the trailer do this:
+> > 
+> >         for (; bytes > 0; bytes--, bitmap++)
+> >                 ret += hweight8(*bitmap);
+> > 
+> > instead of calling hweight_long on *bitmap & mask?
+> > 
 > 
-> Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
+> Do you mean something like this?
 > 
-> -- 
-> Damien Le Moal
-> Western Digital Research
+>         longs = bytes;
+>         bytes = do_div(longs, sizeof(long));
+>         bitmap_long = (const unsigned long *)bitmap;
+>         if (longs) {
+>                 for (; longs > 0; longs--, bitmap_long++)
+>                         ret += hweight_long(*bitmap_long);
+>         }
+>         if (bytes) {
+>                 ret += hweight_long(*bitmap_long &
+>                                    ((0x1 << bytes * BITS_PER_BYTE) - 1));
+>         }
 > 
+> The *bitmap_long will lead to buffer overflow here.
+
+No it won't.  The CPU will access more bytes than the `bytes' argument
+would seem to imply -- but it's going to have fetched that entire
+cacheline anyway.  It might confuse a very strict bounds checking library,
+but usually those just check you're not accessing outside your object,
+which is going to be a multiple of 'sizeof(long)' anyway.
+
+If we do something like this, we'll need to use an 'inverse' of that mask
+on big-endian machines.  ie something more like:
+
+	if (bytes) {
+		unsigned long mask;
+		if (_BIG_ENDIAN)
+			mask = ~0UL >> (bytes * 8);
+		else
+			mask = ~0UL << (bytes * 8);
+		ret += hweight_long(*bitmap_long & ~mask);
+	}
+
+Also we need a memweight() test to be sure we didn't get that wrong.
