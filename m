@@ -1,62 +1,51 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RFC PATCH 1/1] dm: add clone target
-Date: Tue, 27 Aug 2019 11:34:47 -0400
-Message-ID: <20190827153447.GA3920@redhat.com>
-References: <20190709141522.29606-1-ntsironis@arrikto.com>
-	<20190709141522.29606-2-ntsironis@arrikto.com>
-	<a6d47841-fcbc-50b2-724c-082be9e764d1@redhat.com>
-	<e2b23d5c-0ef2-400b-9697-3fb7899ce3e2@arrikto.com>
-	<92afa0f6-90ac-7a3f-8d8a-78fa446fec73@redhat.com>
-	<d06576ba-2bcf-5e6f-7f4b-5dec61c807b5@arrikto.com>
-	<859d881b-2c33-f49d-2fac-fcd8a22810f5@redhat.com>
-	<5c127a57-127b-ff2e-c3f6-5cef626b1367@arrikto.com>
-	<0a780ffc-c34c-2da4-80d1-8598d116c93f@arrikto.com>
+From: "Theodore Y. Ts'o" <tytso@mit.edu>
+Subject: Re: [PATCH 5/9] block: support diskcipher
+Date: Tue, 27 Aug 2019 12:40:12 -0400
+Message-ID: <20190827164012.GN28066@mit.edu>
+References: <CGME20190827083334epcas2p115d479190b9a72c886f66569add78203@epcas2p1.samsung.com>
+ <03b201d55cb2$1d4d31b0$57e79510$@samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 Content-Disposition: inline
-In-Reply-To: <0a780ffc-c34c-2da4-80d1-8598d116c93f@arrikto.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Nikos Tsironis <ntsironis@arrikto.com>
-Cc: vkoukis@arrikto.com, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, agk@redhat.com, iliastsi@arrikto.com
+In-Reply-To: <03b201d55cb2$1d4d31b0$57e79510$@samsung.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: "boojin.kim" <boojin.kim@samsung.com>
+Cc: 'Ulf Hansson' <ulf.hansson@linaro.org>, 'Mike Snitzer' <snitzer@redhat.com>, dm-devel@redhat.com, 'Andreas Dilger' <adilger.kernel@dilger.ca>, 'Alasdair Kergon' <agk@redhat.com>, 'Eric Biggers' <ebiggers@kernel.org>, linux-samsung-soc@vger.kernel.org, 'Herbert Xu' <herbert@gondor.apana.org.au>, 'Krzysztof Kozlowski' <krzk@kernel.org>, 'Satya Tangirala' <satyat@google.com>, 'Jaehoon Chung' <jh80.chung@samsung.com>, 'Kukjin Kim' <kgene@kernel.org>, linux-ext4@vger.kernel.org, 'Chao Yu' <chao@kernel.org>, linux-block@vger.kernel.org, linux-fscrypt@vger.kernel.org, 'Jaegeuk Kim' <jaegeuk@kernel.org>, linux-arm-kernel@lists.infradead.org, 'Jens Axboe' <axboe@kernel.dk>, linux-mmc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, "'David S. Miller'" <davem@davemloft.net>
 List-Id: dm-devel.ids
 
-On Tue, Aug 27 2019 at 10:09am -0400,
-Nikos Tsironis <ntsironis@arrikto.com> wrote:
-
-> Hello,
+On Tue, Aug 27, 2019 at 05:33:33PM +0900, boojin.kim wrote:
 > 
-> This is a kind reminder for this patch set. I'm bumping this thread to
-> solicit your feedback.
-> 
-> Following the discussion with Heinz, I have provided extensive
-> benchmarks that show dm-clone's significant performance increase
-> compared to a dm-snapshot/dm-raid1 stack.
-> 
-> How can we move forward with the review of dm-clone, so it can
-> eventually be merged upstream?
-> 
-> Looking forward to your feedback,
+> Dear Satya.
+> Keyslot manager is a good solution for ICE. And probably no issue for FMP.
+> But, I think it's complicated for FMP because FMP doesn't need
+> any keyslot control.
 
-I actually pulled it into my local dm-5.4 branch yesterday and have
-started reviewing.  Firrst pass it looks like you've got solid code; a
-lot of familiar code patterns too (barrowed from thinp, etc).
+Hi Boojin,
 
-But the first thing that is tripping me up is the name "dm-clone"
-considering how cloning is so fundamental to all DM.  The second term
-that is just awkward is "hydration".  But that is just my initial
-thought.  I'll need the rest of the week to really dig in and have more
-constructive feedback for you.
+I think the important thing to realize here is that there are a large
+number of hardware devices for which the keyslot manager *is* needed.
+And from the upstream kernel's perspective, supporting two different
+schemes for supporting the inline encryption feature is more
+complexity than just supporting one which is general enough to support
+a wider variety of hardware devices.
 
-Thanks for the ping; wasn't needed in this instance but it never hurts.
+If you want somethig which is only good for the hardware platform you
+are charged to support, that's fine if it's only going to be in a
+Samsung-specific kernel.  But if your goal is to get something that
+works upstream, especially if it requires changes in core layers of
+the kernel, it's important that it's general enough to support most,
+if not all, if the hardware devices in the industry.
 
-Mike
+Regards,
+
+					- Ted
