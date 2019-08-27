@@ -1,60 +1,69 @@
-From: "boojin.kim" <boojin.kim@samsung.com>
-Subject: Re: [PATCH 5/9] block: support diskcipher
-Date: Tue, 27 Aug 2019 17:33:33 +0900
-Message-ID: <03b201d55cb2$1d4d31b0$57e79510$@samsung.com>
-References: <CGME20190827083334epcas2p115d479190b9a72c886f66569add78203@epcas2p1.samsung.com>
+From: Chongyun Wu <wu.chongyun@h3c.com>
+Subject: [PATCH] multipathd: "san_path_err" failure optimization
+Date: Tue, 27 Aug 2019 12:28:14 +0000
+Message-ID: <CEB9978CF3252343BE3C67AC9F0086A378D9A799@H3CMLB12-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: ko
-Sender: linux-kernel-owner@vger.kernel.org
-To: 'Satya Tangirala' <satyat@google.com>
-Cc: 'Herbert Xu' <herbert@gondor.apana.org.au>, "'David S. Miller'" <davem@davemloft.net>, 'Eric Biggers' <ebiggers@kernel.org>, "'Theodore Y. Ts'o'" <tytso@mit.edu>, 'Chao Yu' <chao@kernel.org>, 'Jaegeuk Kim' <jaegeuk@kernel.org>, 'Andreas Dilger' <adilger.kernel@dilger.ca>'Theodore Ts'o' <tytso@mit.edu>, dm-devel@redhat.com, 'Mike Snitzer' <snitzer@redhat.com>, 'Alasdair Kergon' <agk@redhat.com>, 'Jens Axboe' <axboe@kernel.dk>, 'Krzysztof Kozlowski' <krzk@kernel.org>, 'Kukjin Kim' <kgene@kernel.org>, 'Jaehoon Chung' <jh80.chung@samsung.com>, 'Ulf Hansson' <ulf.hansson@linaro.org>, linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-mmc@vger.kernel.org, linux-samsung-soc
+Content-Type: text/plain; charset="gb2312"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: zh-CN
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Martin Wilck (mwilck@suse.com)" <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Guozhonghua <guozhonghua@h3c.com>, Changlimin <changlimin@h3c.com>, Wangyong <wang.yongD@h3c.com>, Zhangguanghui <zhang.guanghui@h3c.com>
 List-Id: dm-devel.ids
 
-On Wed, Aug 21, 2019 at 5:10 AM Satya Tangirala <satyat@kernel.dk> wrote:
-> 
-> Hi Boojin,
->
-> We're very keen to make sure that our approach to inline encryption can
-> work with diverse hardware, including Samsung's FMP hardware; if you
-> can see any issues with using our approach with your hardware please
-> let us know.
->
-> We understand that a possible concern for getting FMP working with our
-> patch series for Inline Encryption Support at
->
->
-https://lore.kernel.org/linux-block/20190821075714.65140-1-satyat@google.com
-/
->
-> is that unlike some inline encryption hardware (and also unlike the JEDEC
-> UFS v2.1 spec), FMP doesn't have the concept of a limited number of
-> keyslots - to address that difference we have a "passthrough keyslot
-> manager", which we put up on top of our patch series for inline encryption
-> support at
->
-> https://android-review.googlesource.com/c/kernel/common/+/980137/2
->
-> Setting up a passthrough keyslot manager in the request queue of a
-> device allows the device to receive a bio's encryption context as-is with
-> the bio, which is what FMP would prefer. Are there any issues with
-> using the passthrough keyslot manager for FMP?
->
-> Thanks!
-> Satya
-
-Dear Satya.
-Keyslot manager is a good solution for ICE. And probably no issue for FMP.
-But, I think it's complicated for FMP because FMP doesn't need
-any keyslot control.
-Crypto API that FMP's using is simply, stable, and supports test. 
-FMP has been mass producing and certificating using crypto APIs
-for several years. 
-So I wants to keep  our current crypto API solution.
-But, I'm looking at your patch.  And I will keep examining at your patch
-because our goal is to run the FMP on the mainline kernel.
-
-Thanks for your reply.
-Boojin Kim.
+SGkgTWFydGluIGFuZCBCZW4sCgpDbG91ZCB5b3UgaGVscCB0byB2aWV3IGJlbG93IHBhdGNoLCB0
+aGFua3MuCgo+RnJvbSBhNzEyNmUzM2U3ZWZmOGE5ODU2MDBiNDFiMTcyM2VlNjZiMTgzNTg2IE1v
+biBTZXAgMTcgMDA6MDA6MDAgMjAwMQpGcm9tOiBDaG9uZ3l1biBXdSA8d3UuY2hvbmd5dW5AaDNj
+LmNvbT4KRGF0ZTogVHVlLCAyNyBBdWcgMjAxOSAxMDoyMzo1MCArMDgwMApTdWJqZWN0OiBbUEFU
+Q0hdIG11bHRpcGF0aGQ6ICJzYW5fcGF0aF9lcnIiIGZhaWx1cmUgb3B0aW1pemF0aW9uCgpMZXQg
+c2FuX3BhdGhfZXJyX3JlY292ZXJ5X3RpbWUgcGF0aCB1bnN0YWJsZSBjYW4gYmUKZGV0ZWN0ZWQg
+YW5kIG5vdCByZWluc3RhdGUgaXQgdW50aWwgdGhpcyBwYXRoIGtlZXAgdXAgaW4Kc2FuX3BhdGhf
+ZXJyX3JlY292ZXJ5X3RpbWUuIEl0IHdpbGwgZml4IGhlYXZ5IElPIGRlbGF5CmNhdXNlZCBieSBw
+YXJ0cyBvZiBwYXRocyBzdGF0ZSBzaGFreSBpbiBtdWx0aXBhdGggZGV2aWNlLgoKVGVzdCBhbmQg
+cmVzdWx0OgpSdW4gdXAgZXRoMSAzMHMgYW5kIGRvd24gZXRoMSAzMHMgd2l0aCAxMDAgbG9vcHMg
+c2NyaXB0IHRvCm1ha2Ugc29tZSBwYXRocyBzaGFreSBpbiBlYWNoIG11bHRpcGF0aCBkZXZpY2Vz
+LgpVc2luZyBiZWxvdyBtdWx0aXBhdGguY29uZiBjb25maWd1cmUgaW4gZGVmYXVsdHMgc2VjdGlv
+bjoKICAgIHNhbl9wYXRoX2Vycl9yZWNvdmVyeV90aW1lIDMwCiAgICBzYW5fcGF0aF9lcnJfdGhy
+ZXNob2xkIDIKICAgIHNhbl9wYXRoX2Vycl9mb3JnZXRfcmF0ZSA2CkFmdGVyIHRlc3QsIG5vdCBm
+b3VuZCBhbnkgSU8gZGVsYXkgbG9ncyBleGNlcHQgc2V2ZXJhbCBsb2dzIGluIHRoZSB2ZXJ5CmJl
+Z2lubmluZyB3aGljaCBiZWZvcmUgc2FuX3BhdGhfZXJyIGZpbHRlciBzaGFreSBwYXRoIHdvcmtz
+IC4KSWYgd2l0aG91dCBhYm92ZSBjb25maWcgYW5kIHRoaXMgcGF0Y2ggdGhlcmUgd2lsbCBiZSBs
+b3RzIG9mIElPIGRlbGF5CmluIHN5c2xvZyBhbmQgc29tZSBwYXRocyBzdGF0ZSBjaGFuZ2UgZnJv
+bSB1cCB0byBkb3duIGFnYWluIGFuZCBhZ2Fpbi4KClNpZ25lZC1vZmYtYnk6IENob25neXVuIFd1
+IDx3dS5jaG9uZ3l1bkBoM2MuY29tPgotLS0KIG11bHRpcGF0aGQvbWFpbi5jIHwgMTcgKysrKysr
+KysrKysrKysrKysKIDEgZmlsZSBjaGFuZ2VkLCAxNyBpbnNlcnRpb25zKCspCgpkaWZmIC0tZ2l0
+IGEvbXVsdGlwYXRoZC9tYWluLmMgYi9tdWx0aXBhdGhkL21haW4uYwppbmRleCA3YTVjZDExLi44
+YWNkMDgwIDEwMDY0NAotLS0gYS9tdWx0aXBhdGhkL21haW4uYworKysgYi9tdWx0aXBhdGhkL21h
+aW4uYwpAQCAtMTg5Nyw2ICsxODk3LDE4IEBAIHN0YXRpYyBpbnQgY2hlY2tfcGF0aF9yZWluc3Rh
+dGVfc3RhdGUoc3RydWN0IHBhdGggKiBwcCkgewogCQkJY29uZGxvZygyLCAiJXMgOiByZWluc3Rh
+dGluZyBwYXRoIGVhcmx5IiwgcHAtPmRldik7CiAJCQlnb3RvIHJlaW5zdGF0ZV9wYXRoOwogCQl9
+CisKKwkJLyogSWYgcGF0aCBiZWNhbWUgZmFpbGVkIGFnYWluIG9yIGNvbnRpbnVlIGZhaWxlZCwg
+c2hvdWxkIHJlc2V0CisJCSAqIHBhdGggc2FuX3BhdGhfZXJyX2ZvcmdldF9yYXRlIGFuZCBwYXRo
+IGRpc19yZWluc3RhdGVfdGltZSB0bworCQkgKiBzdGFydCBhIG5ldyBzdGFibGUgY2hlY2suIAor
+CQkgKi8KKwkJaWYgKChwcC0+c3RhdGUgIT0gUEFUSF9VUCkgJiYgKHBwLT5zdGF0ZSAhPSBQQVRI
+X0dIT1NUKSAmJgorCQkJKHBwLT5zdGF0ZSAhPSBQQVRIX0RFTEFZRUQpKSB7CisJCQlwcC0+c2Fu
+X3BhdGhfZXJyX2ZvcmdldF9yYXRlID0KKwkJCQlwcC0+bXBwLT5zYW5fcGF0aF9lcnJfZm9yZ2V0
+X3JhdGU7CisJCQlwcC0+ZGlzX3JlaW5zdGF0ZV90aW1lID0gY3Vycl90aW1lLnR2X3NlYzsKKwkJ
+fQorCiAJCWlmICgoY3Vycl90aW1lLnR2X3NlYyAtIHBwLT5kaXNfcmVpbnN0YXRlX3RpbWUgKSA+
+IHBwLT5tcHAtPnNhbl9wYXRoX2Vycl9yZWNvdmVyeV90aW1lKSB7CiAJCQljb25kbG9nKDIsIiVz
+IDogcmVpbnN0YXRlIHRoZSBwYXRoIGFmdGVyIGVyciByZWNvdmVyeSB0aW1lIiwgcHAtPmRldik7
+CiAJCQlnb3RvIHJlaW5zdGF0ZV9wYXRoOwpAQCAtMjEwNiw2ICsyMTE4LDExIEBAIGNoZWNrX3Bh
+dGggKHN0cnVjdCB2ZWN0b3JzICogdmVjcywgc3RydWN0IHBhdGggKiBwcCwgaW50IHRpY2tzKQog
+CQkJY2hlY2tfcGF0aF9yZWluc3RhdGVfc3RhdGUocHApKSB7CiAJCXBwLT5zdGF0ZSA9IFBBVEhf
+REVMQVlFRDsKIAkJcmV0dXJuIDE7CisJfSBlbHNlIGlmICgobmV3c3RhdGUgIT0gUEFUSF9VUCAm
+JiBuZXdzdGF0ZSAhPSBQQVRIX0dIT1NUKSAmJgorCQkJKHBwLT5zdGF0ZSA9PSBQQVRIX0RFTEFZ
+RUQpKSB7CisJCS8qIElmIHBhdGggc3RhdGUgYmVjb21lIGZhaWxlZCBhZ2FpbiBjYW5jZWwgcGF0
+aCBkZWxheSBzdGF0ZSAqLworCQlwcC0+c3RhdGUgPSBuZXdzdGF0ZTsKKwkJcmV0dXJuIDE7CiAJ
+fQogCiAJaWYgKChuZXdzdGF0ZSA9PSBQQVRIX1VQIHx8IG5ld3N0YXRlID09IFBBVEhfR0hPU1Qp
+ICYmCi0tIAoKQmVzdCBSZWdhcmRzo6wKQ2hvbmd5dW4gV3UKCgotLQpkbS1kZXZlbCBtYWlsaW5n
+IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
+bGlzdGluZm8vZG0tZGV2ZWw=
