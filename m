@@ -1,49 +1,75 @@
-From: "boojin.kim" <boojin.kim@samsung.com>
-Subject: Re: [PATCH 5/9] block: support diskcipher
-Date: Wed, 28 Aug 2019 11:20:53 +0900
-Message-ID: <009301d55d47$38606400$a9212c00$@samsung.com>
-References: <CGME20190828022055epcas2p25525077d0a5a3fa5a2027bac06a10bc1@epcas2p2.samsung.com>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: Re: [RFC PATCH 1/1] dm: add clone target
+Date: Wed, 28 Aug 2019 17:23:53 +0300
+Message-ID: <b913670c-8aea-2acf-e022-e13b0630a36d@arrikto.com>
+References: <20190709141522.29606-1-ntsironis@arrikto.com>
+	<20190709141522.29606-2-ntsironis@arrikto.com>
+	<a6d47841-fcbc-50b2-724c-082be9e764d1@redhat.com>
+	<e2b23d5c-0ef2-400b-9697-3fb7899ce3e2@arrikto.com>
+	<92afa0f6-90ac-7a3f-8d8a-78fa446fec73@redhat.com>
+	<d06576ba-2bcf-5e6f-7f4b-5dec61c807b5@arrikto.com>
+	<859d881b-2c33-f49d-2fac-fcd8a22810f5@redhat.com>
+	<5c127a57-127b-ff2e-c3f6-5cef626b1367@arrikto.com>
+	<0a780ffc-c34c-2da4-80d1-8598d116c93f@arrikto.com>
+	<20190827153447.GA3920@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: ko
-Sender: linux-kernel-owner@vger.kernel.org
-Cc: 'Herbert Xu' <herbert@gondor.apana.org.au>, "'David S. Miller'" <davem@davemloft.net>, 'Eric Biggers' <ebiggers@kernel.org>, "'Theodore Y. Ts'o'" <tytso@mit.edu>, 'Chao Yu' <chao@kernel.org>, 'Jaegeuk Kim' <jaegeuk@kernel.org>, 'Andreas Dilger' <adilger.kernel@dilger.ca>'Theodore Ts'o' <tytso@mit.edu>, dm-devel@redhat.com, 'Mike Snitzer' <snitzer@redhat.com>, 'Alasdair Kergon' <agk@redhat.com>, 'Jens Axboe' <axboe@kernel.dk>, 'Krzysztof Kozlowski' <krzk@kernel.org>, 'Kukjin Kim' <kgene@kernel.org>, 'Jaehoon Chung' <jh80.chung@samsung.com>, 'Ulf Hansson' <ulf.hansson@linaro.org>, linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-mmc@vger.kernel.org, linux-samsung-soc
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190827153447.GA3920@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: vkoukis@arrikto.com, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, agk@redhat.com, iliastsi@arrikto.com
 List-Id: dm-devel.ids
 
-On Tue, Aug 27, 2019 at 05:33:33PM +0900, boojin.kim wrote:
->
-> Hi Boojin,
->
-> I think the important thing to realize here is that there are a large
-> number of hardware devices for which the keyslot manager *is* needed.
-> And from the upstream kernel's perspective, supporting two different
-> schemes for supporting the inline encryption feature is more
-> complexity than just supporting one which is general enough to support
-> a wider variety of hardware devices.
->
-> If you want somethig which is only good for the hardware platform you
-> are charged to support, that's fine if it's only going to be in a
-> Samsung-specific kernel.  But if your goal is to get something that
-> works upstream, especially if it requires changes in core layers of
-> the kernel, it's important that it's general enough to support most,
-> if not all, if the hardware devices in the industry.
->
-> Regards,
+On 8/27/19 6:34 PM, Mike Snitzer wrote:
+> On Tue, Aug 27 2019 at 10:09am -0400,
+> Nikos Tsironis <ntsironis@arrikto.com> wrote:
+> 
+>> Hello,
+>>
+>> This is a kind reminder for this patch set. I'm bumping this thread to
+>> solicit your feedback.
+>>
+>> Following the discussion with Heinz, I have provided extensive
+>> benchmarks that show dm-clone's significant performance increase
+>> compared to a dm-snapshot/dm-raid1 stack.
+>>
+>> How can we move forward with the review of dm-clone, so it can
+>> eventually be merged upstream?
+>>
+>> Looking forward to your feedback,
+> 
+> I actually pulled it into my local dm-5.4 branch yesterday and have
+> started reviewing.  Firrst pass it looks like you've got solid code; a
+> lot of familiar code patterns too (barrowed from thinp, etc).
+> 
+> But the first thing that is tripping me up is the name "dm-clone"
+> considering how cloning is so fundamental to all DM.  The second term
+> that is just awkward is "hydration".  But that is just my initial
+> thought.  I'll need the rest of the week to really dig in and have more
+> constructive feedback for you.
+> 
 
-I understood your reply.
-But, Please consider the diskcipher isn't just for FMP. 
-The UFS in Samsung SoC also has UFS ICE. This UFS ICE can be registered 
-as an algorithm of diskcipher like FMP.
+Hi Mike,
 
-Following is my opinion to introduce diskcipher.
-I think the common feature of ICE like FMP and UFS ICE, 
-is 'exposing cipher text to storage".
-And, Crypto test is also important for ICE.  Diskcipher supports
-the common feature of ICE. 
-I think specific functions for each ICE such as the key control of UFS ICE
-and the writing crypto table of FMP can be processed at algorithm level.
+Thank you for your prompt response and also thank you in advance for all
+the effort you will put in reviewing dm-clone.
 
-Thanks for your reply.
-Boojin Kim.
+Looking forward to your feedback,
+
+Nikos
+
+> Thanks for the ping; wasn't needed in this instance but it never hurts.
+> 
+> Mike
+> 
