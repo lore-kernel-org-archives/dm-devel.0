@@ -1,23 +1,17 @@
-From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: Re: [RFC PATCH 1/1] dm: add clone target
-Date: Wed, 28 Aug 2019 17:23:53 +0300
-Message-ID: <b913670c-8aea-2acf-e022-e13b0630a36d@arrikto.com>
-References: <20190709141522.29606-1-ntsironis@arrikto.com>
-	<20190709141522.29606-2-ntsironis@arrikto.com>
-	<a6d47841-fcbc-50b2-724c-082be9e764d1@redhat.com>
-	<e2b23d5c-0ef2-400b-9697-3fb7899ce3e2@arrikto.com>
-	<92afa0f6-90ac-7a3f-8d8a-78fa446fec73@redhat.com>
-	<d06576ba-2bcf-5e6f-7f4b-5dec61c807b5@arrikto.com>
-	<859d881b-2c33-f49d-2fac-fcd8a22810f5@redhat.com>
-	<5c127a57-127b-ff2e-c3f6-5cef626b1367@arrikto.com>
-	<0a780ffc-c34c-2da4-80d1-8598d116c93f@arrikto.com>
-	<20190827153447.GA3920@redhat.com>
+From: Martin Wilck <Martin.Wilck@suse.com>
+Subject: Re: [PATCH] multipathd: "san_path_err" failure
+ optimization
+Date: Thu, 29 Aug 2019 15:24:07 +0000
+Message-ID: <0a5e3a891eafe3efa950f4a1abfe3190143f8dcc.camel@suse.com>
+References: <CEB9978CF3252343BE3C67AC9F0086A378D9A799@H3CMLB12-EX.srv.huawei-3com.com>
+	<933edbd8794512cd35a48c596b36634b1bcd820c.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190827153447.GA3920@redhat.com>
+In-Reply-To: <933edbd8794512cd35a48c596b36634b1bcd820c.camel@suse.com>
 Content-Language: en-US
+Content-ID: <66D1F5B6A735C7488C41EE78508AEACD@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,49 +21,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: vkoukis@arrikto.com, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, agk@redhat.com, iliastsi@arrikto.com
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "wu.chongyun@h3c.com" <wu.chongyun@h3c.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "guozhonghua@h3c.com" <guozhonghua@h3c.com>, "changlimin@h3c.com" <changlimin@h3c.com>, "wang.yongD@h3c.com" <wang.yongD@h3c.com>, "zhang.guanghui@h3c.com" <zhang.guanghui@h3c.com>
 List-Id: dm-devel.ids
 
-On 8/27/19 6:34 PM, Mike Snitzer wrote:
-> On Tue, Aug 27 2019 at 10:09am -0400,
-> Nikos Tsironis <ntsironis@arrikto.com> wrote:
+On Tue, 2019-08-27 at 19:57 +0000, Martin Wilck wrote:
+> On Tue, 2019-08-27 at 12:28 +0000, Chongyun Wu wrote:
+> > Hi Martin and Ben,
+> > 
+> > Cloud you help to view below patch, thanks.
+> > 
+> > From a7126e33e7eff8a985600b41b1723ee66b183586 Mon Sep 17 00:00:00
+> > 2001
+> > From: Chongyun Wu <wu.chongyun@h3c.com>
+> > Date: Tue, 27 Aug 2019 10:23:50 +0800
+> > Subject: [PATCH] multipathd: "san_path_err" failure optimization
+> > 
+> > Let san_path_err_recovery_time path unstable can be
+> > detected and not reinstate it until this path keep up in
+> > san_path_err_recovery_time. It will fix heavy IO delay
+> > caused by parts of paths state shaky in multipath device.
+> > 
+> > Test and result:
+> > Run up eth1 30s and down eth1 30s with 100 loops script to
+> > make some paths shaky in each multipath devices.
+> > Using below multipath.conf configure in defaults section:
+> >     san_path_err_recovery_time 30
+> >     san_path_err_threshold 2
+> >     san_path_err_forget_rate 6
+> > After test, not found any IO delay logs except several logs in the
+> > very
+> > beginning which before san_path_err filter shaky path works .
+> > If without above config and this patch there will be lots of IO
+> > delay
+> > in syslog and some paths state change from up to down again and
+> > again.
+> > 
+> > Signed-off-by: Chongyun Wu <wu.chongyun@h3c.com>
+> > ---
+> >  multipathd/main.c | 17 +++++++++++++++++
+> >  1 file changed, 17 insertions(+)
+> > 
 > 
->> Hello,
->>
->> This is a kind reminder for this patch set. I'm bumping this thread to
->> solicit your feedback.
->>
->> Following the discussion with Heinz, I have provided extensive
->> benchmarks that show dm-clone's significant performance increase
->> compared to a dm-snapshot/dm-raid1 stack.
->>
->> How can we move forward with the review of dm-clone, so it can
->> eventually be merged upstream?
->>
->> Looking forward to your feedback,
+> Hello Chongyun,
 > 
-> I actually pulled it into my local dm-5.4 branch yesterday and have
-> started reviewing.  Firrst pass it looks like you've got solid code; a
-> lot of familiar code patterns too (barrowed from thinp, etc).
-> 
-> But the first thing that is tripping me up is the name "dm-clone"
-> considering how cloning is so fundamental to all DM.  The second term
-> that is just awkward is "hydration".  But that is just my initial
-> thought.  I'll need the rest of the week to really dig in and have more
-> constructive feedback for you.
-> 
+> Your patch makes sense to me. Ben has worked much more than myself on
+> marginal paths recently, so I'd want to see his opinion, too.
 
-Hi Mike,
+I've now tested this, and indeed it improves the behavior of the
+san_path_err algorithm. It's also consistent with how delay_wait_checks
+used to behave. So:
 
-Thank you for your prompt response and also thank you in advance for all
-the effort you will put in reviewing dm-clone.
-
-Looking forward to your feedback,
-
-Nikos
-
-> Thanks for the ping; wasn't needed in this instance but it never hurts.
-> 
-> Mike
-> 
+Reviewed-by: Martin Wilck <mwilck@suse.com>
