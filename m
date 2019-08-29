@@ -1,11 +1,15 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] blkid: retport block size of a filesystem
-Date: Thu, 29 Aug 2019 11:52:13 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1908291142470.17653@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [RFC PATCH 1/1] dm: add clone target
+Date: Thu, 29 Aug 2019 12:19:30 -0400
+Message-ID: <20190829161929.GA34247@lobo>
+References: <20190709141522.29606-1-ntsironis@arrikto.com>
+	<20190709141522.29606-2-ntsironis@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20190709141522.29606-2-ntsironis@arrikto.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,668 +19,753 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Karel Zak <kzak@redhat.com>, Patrick Steinhardt <ps@pks.im>, util-linux@vger.kernel.org
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, lvm-devel@redhat.com
+To: Nikos Tsironis <ntsironis@arrikto.com>
+Cc: vkoukis@arrikto.com, dm-devel@redhat.com, agk@redhat.com, iliastsi@arrikto.com
 List-Id: dm-devel.ids
 
-This patch extends libblkid, so that it reports filesystem block size.
+On Tue, Jul 09 2019 at 10:15am -0400,
+Nikos Tsironis <ntsironis@arrikto.com> wrote:
 
-When blkid returns a specific number in the BLOCK_SIZE attribute, it 
-guarantees that all the bios submitted by the filesystem are aligned on 
-this boundary.
+> Add the dm-clone target, which allows cloning of arbitrary block
+> devices.
+> 
+> dm-clone produces a one-to-one copy of an existing, read-only device
+> (origin) into a writable device (clone): It presents a virtual block
+> device which makes all data appear immediately, and redirects reads and
+> writes accordingly.
+> 
+> The main use case of dm-clone is to clone a potentially remote,
+> high-latency, read-only, archival-type block device into a writable,
+> fast, primary-type device for fast, low-latency I/O. The cloned device
+> is visible/mountable immediately and the copy of the origin device to
+> the clone device happens in the background, in parallel with user I/O.
+> 
+> When the cloning completes, the dm-clone table can be removed altogether
+> and be replaced, e.g., by a linear table, mapping directly to the clone
+> device.
+> 
+> For further information and examples of how to use dm-clone, please read
+> Documentation/device-mapper/dm-clone.rst
+> 
+> Suggested-by: Vangelis Koukis <vkoukis@arrikto.com>
+> Co-developed-by: Ilias Tsitsimpis <iliastsi@arrikto.com>
+> Signed-off-by: Ilias Tsitsimpis <iliastsi@arrikto.com>
+> Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+> ---
+>  Documentation/device-mapper/dm-clone.rst |  334 +++++
+>  drivers/md/Kconfig                       |   13 +
+>  drivers/md/Makefile                      |    2 +
+>  drivers/md/dm-clone-metadata.c           |  991 +++++++++++++
+>  drivers/md/dm-clone-metadata.h           |  158 +++
+>  drivers/md/dm-clone-target.c             | 2244 ++++++++++++++++++++++++++++++
+>  6 files changed, 3742 insertions(+)
+>  create mode 100644 Documentation/device-mapper/dm-clone.rst
+>  create mode 100644 drivers/md/dm-clone-metadata.c
+>  create mode 100644 drivers/md/dm-clone-metadata.h
+>  create mode 100644 drivers/md/dm-clone-target.c
+> 
+> diff --git a/Documentation/device-mapper/dm-clone.rst b/Documentation/device-mapper/dm-clone.rst
+> new file mode 100644
+> index 000000000000..948b7ce31ce3
+> --- /dev/null
+> +++ b/Documentation/device-mapper/dm-clone.rst
+> @@ -0,0 +1,334 @@
+> +.. SPDX-License-Identifier: GPL-2.0-only
+> +
+> +========
+> +dm-clone
+> +========
+> +
+> +Introduction
+> +============
+> +
+> +dm-clone is a device mapper target which produces a one-to-one copy of an
+> +existing, read-only device (origin) into a writable device (clone): It presents
+> +a virtual block device which makes all data appear immediately, and redirects
+> +reads and writes accordingly.
+> +
+> +The main use case of dm-clone is to clone a potentially remote, high-latency,
+> +read-only, archival-type block device into a writable, fast, primary-type device
+> +for fast, low-latency I/O. The cloned device is visible/mountable immediately
+> +and the copy of the origin device to the clone device happens in the background,
+> +in parallel with user I/O.
+> +
+> +For example, one could restore an application backup from a read-only copy,
+> +accessible through a network storage protocol (NBD, Fibre Channel, iSCSI, AoE,
+> +etc.), into a local SSD or NVMe device, and start using the device immediately,
+> +without waiting for the restore to complete.
+> +
+> +When the cloning completes, the dm-clone table can be removed altogether and be
+> +replaced, e.g., by a linear table, mapping directly to the clone device.
+> +
+> +The dm-clone target reuses the metadata library used by the thin-provisioning
+> +target.
+> +
+> +Glossary
+> +========
+> +
+> +   Region
+> +     A fixed sized block. The unit of hydration.
+> +
+> +   Hydration
+> +     The process of filling a region of the clone device with data from the same
+> +     region of the origin device, i.e., copying the region from the origin to
+> +     the clone device.
+> +
+> +Once a region gets hydrated we redirect all I/O regarding it to the clone
+> +device.
 
-We need this because when we want to enable dm-integrity or dm-writecache 
-on an existing filesystem, we need to know filesystem block size, so that 
-dm-integrity or dm-writecache is initialized with matching block size.
+There is a lot of awkward jargon that you're mixing into this target.
 
-We could always use block size 512 for dm-integrity and dm-writecache, but
-that would cause metadata overhead and performance degradation. On the
-other hand, if we used block size 4096, it would fail if the filesystem
-has smaller blocksize.
+Why "region" and not "block"?  I can let "region" go but please be
+consistent (don't fall back to calling a region a block anywhere).
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Why "hydration"?  Just needed to call it _something_?  I can let it go
+as long as it is a construct internal to the target's implementation.  I
+see no point making consumers of this target, that copies data from a
+source to destination, have to call something "hydration".
 
+And while we're at it why "origin" device instead of "source"?
+Why "clone" device instead of "dest" or "destination"?
+
+I can give the target name "dm-clone" a pass.. but dm-copy is less
+opaque IMHO.. I could go either way on those.
+
+
+> +Background Hydration
+> +--------------------
+> +
+> +dm-clone copies continuously from the origin to the clone device, until all of
+> +the device has been copied.
+> +
+> +Copying data from the origin to the clone device uses bandwidth. The user can
+> +set a throttle to prevent more than a certain amount of copying occurring at any
+> +one time. Moreover, dm-clone takes into account user I/O traffic going to the
+> +devices and pauses the background hydration when there is I/O in-flight.
+> +
+> +A message `hydration_threshold <#sectors>` can be used to set the maximum number
+> +of sectors being copied, the default being 2048 sectors (1MB).
+
+Think this should really be expressed in multiples of a region, e.g.:
+copy_threshold <# regions> (or clone_threshold)
+
+> +dm-clone employs dm-kcopyd for copying portions of the origin device to the
+> +clone device. By default, we issue copy requests of size equal to the region
+> +size. A message `hydration_block_size <#sectors>` can be used to tune the size
+> +of these copy requests. Increasing the hydration block size results in dm-clone
+> +trying to batch together contiguous regions, so we copy the data in blocks of
+> +this size.
+
+It is awkward to have 'hydration_block_size' vs target ctr
+provided "region size".  copy_batch_size <# regions>?  (or
+clone_batch_size)?
+
+Please take care of the external facing documentation to not use
+"hydration".  Of all the naming I dislike it the most.. sorry.
+
+Also, please fold the following patch in before making any edits to the
+.c files for v2.
+
+This review pass is the most trivial of the high level review, I'll be
+drilling in on other aspects of the implementation now.  But I suspect
+you've done a solid job with those details (based on what I've seen so
+far).
+
+Thanks,
+Mike
+
+From 5cc5479c68f87876d7aaf796d611a69d8e645618 Mon Sep 17 00:00:00 2001
+From: Mike Snitzer <snitzer@redhat.com>
+Date: Tue, 27 Aug 2019 17:00:24 -0400
+Subject: [PATCH] dm clone: remove needless empty newlines
+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- libblkid/src/superblocks/apfs.c        |    2 
- libblkid/src/superblocks/befs.c        |    3 +
- libblkid/src/superblocks/btrfs.c       |    1 
- libblkid/src/superblocks/exfat.c       |    2 
- libblkid/src/superblocks/exfs.c        |    4 +
- libblkid/src/superblocks/ext.c         |    3 +
- libblkid/src/superblocks/f2fs.c        |    2 
- libblkid/src/superblocks/gfs.c         |    1 
- libblkid/src/superblocks/hfs.c         |    2 
- libblkid/src/superblocks/hpfs.c        |    1 
- libblkid/src/superblocks/iso9660.c     |    2 
- libblkid/src/superblocks/jfs.c         |    1 
- libblkid/src/superblocks/minix.c       |    5 ++
- libblkid/src/superblocks/nilfs.c       |    3 +
- libblkid/src/superblocks/ntfs.c        |    2 
- libblkid/src/superblocks/ocfs.c        |    3 +
- libblkid/src/superblocks/reiserfs.c    |   10 +++-
- libblkid/src/superblocks/romfs.c       |    3 +
- libblkid/src/superblocks/squashfs.c    |    2 
- libblkid/src/superblocks/superblocks.c |    7 +++
- libblkid/src/superblocks/superblocks.h |    2 
- libblkid/src/superblocks/udf.c         |    2 
- libblkid/src/superblocks/ufs.c         |    5 ++
- libblkid/src/superblocks/vfat.c        |    2 
- libblkid/src/superblocks/vxfs.c        |   18 +++++++
- libblkid/src/superblocks/xfs.c         |    1 
- libblkid/src/superblocks/zfs.c         |   76 ++++++++++++++++++++++++---------
- 27 files changed, 144 insertions(+), 21 deletions(-)
+ drivers/md/dm-clone-metadata.c | 35 +++---------------------
+ drivers/md/dm-clone-target.c   | 61 +++---------------------------------------
+ 2 files changed, 7 insertions(+), 89 deletions(-)
 
-Index: util-linux/libblkid/src/superblocks/ext.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/ext.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/ext.c	2019-08-29 15:44:56.000000000 +0200
-@@ -187,6 +187,9 @@ static void ext_get_info(blkid_probe pr,
- 	blkid_probe_sprintf_version(pr, "%u.%u",
- 		le32_to_cpu(es->s_rev_level),
- 		le16_to_cpu(es->s_minor_rev_level));
-+
-+	if (le32_to_cpu(es->s_log_block_size) < 32)
-+		blkid_probe_set_block_size(pr, 1024U << le32_to_cpu(es->s_log_block_size));
- }
+diff --git a/drivers/md/dm-clone-metadata.c b/drivers/md/dm-clone-metadata.c
+index db2f86d8356b..77480e94532b 100644
+--- a/drivers/md/dm-clone-metadata.c
++++ b/drivers/md/dm-clone-metadata.c
+@@ -184,7 +184,6 @@ static int sb_check(struct dm_block_validator *v, struct dm_block *b,
  
+ 	csum = dm_bm_checksum(&sb->flags, sb_block_size - sizeof(__le32),
+ 			      SUPERBLOCK_CSUM_XOR);
+-
+ 	if (sb->csum != cpu_to_le32(csum)) {
+ 		DMERR("Superblock check failed: checksum %u, expected %u",
+ 		      csum, le32_to_cpu(sb->csum));
+@@ -193,7 +192,6 @@ static int sb_check(struct dm_block_validator *v, struct dm_block *b,
  
-Index: util-linux/libblkid/src/superblocks/superblocks.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/superblocks.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/superblocks.c	2019-08-29 15:44:38.000000000 +0200
-@@ -74,6 +74,8 @@
-  * @APPLICATION_ID: ISO9660 application identifier
-  *
-  * @BOOT_SYSTEM_ID: ISO9660 boot system identifier
-+ *
-+ * @BLOCK_SIZE: block size
-  */
+ 	/* Check metadata version */
+ 	metadata_version = le32_to_cpu(sb->version);
+-
+ 	if (metadata_version < DM_CLONE_MIN_METADATA_VERSION ||
+ 	    metadata_version > DM_CLONE_MAX_METADATA_VERSION) {
+ 		DMERR("Clone metadata version %u found, but only versions between %u and %u supported.",
+@@ -227,7 +225,6 @@ static int __superblock_all_zeroes(struct dm_block_manager *bm, bool *formatted)
+ 	 * zeroes.
+ 	 */
+ 	r = dm_bm_read_lock(bm, SUPERBLOCK_LOCATION, NULL, &sblock);
+-
+ 	if (r) {
+ 		DMERR("Failed to read_lock superblock");
+ 		return r;
+@@ -280,7 +277,6 @@ static int __copy_sm_root(struct dm_clone_metadata *md)
+ 	size_t root_size;
  
- static int superblocks_probe(blkid_probe pr, struct blkid_chain *chn);
-@@ -553,6 +555,11 @@ int blkid_probe_sprintf_version(blkid_pr
- 	return rc;
- }
+ 	r = dm_sm_root_size(md->sm, &root_size);
+-
+ 	if (r)
+ 		return r;
  
-+int blkid_probe_set_block_size(blkid_probe pr, unsigned block_size)
-+{
-+	return blkid_probe_sprintf_value(pr, "BLOCK_SIZE", "%u", block_size);
-+}
-+
- static int blkid_probe_set_usage(blkid_probe pr, int usage)
- {
- 	struct blkid_chain *chn = blkid_probe_get_chain(pr);
-Index: util-linux/libblkid/src/superblocks/superblocks.h
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/superblocks.h	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/superblocks.h	2019-08-29 15:44:38.000000000 +0200
-@@ -108,6 +108,8 @@ extern int blkid_probe_set_id_label(blki
- extern int blkid_probe_set_utf8_id_label(blkid_probe pr, const char *name,
- 			     const unsigned char *data, size_t len, int enc);
+@@ -357,7 +353,6 @@ static int __format_metadata(struct dm_clone_metadata *md)
+ 	struct superblock_disk *sb;
  
-+int blkid_probe_set_block_size(blkid_probe pr, unsigned block_size);
-+
- extern int blkid_probe_is_bitlocker(blkid_probe pr);
+ 	r = dm_tm_create_with_sm(md->bm, SUPERBLOCK_LOCATION, &md->tm, &md->sm);
+-
+ 	if (r) {
+ 		DMERR("Failed to create transaction manager");
+ 		return r;
+@@ -366,7 +361,6 @@ static int __format_metadata(struct dm_clone_metadata *md)
+ 	dm_disk_bitset_init(md->tm, &md->bitset_info);
  
- #endif /* _BLKID_SUPERBLOCKS_H */
-Index: util-linux/libblkid/src/superblocks/apfs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/apfs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/apfs.c	2019-08-29 15:44:38.000000000 +0200
-@@ -65,6 +65,8 @@ static int probe_apfs(blkid_probe pr, co
- 	if (blkid_probe_set_uuid(pr, sb->uuid) < 0)
- 		return BLKID_PROBE_NONE;
+ 	r = dm_bitset_empty(&md->bitset_info, &md->bitset_root);
+-
+ 	if (r) {
+ 		DMERR("Failed to create empty on-disk bitset");
+ 		goto err_with_tm;
+@@ -374,7 +368,6 @@ static int __format_metadata(struct dm_clone_metadata *md)
  
-+	blkid_probe_set_block_size(pr, le32_to_cpu(sb->block_size));
-+
- 	return BLKID_PROBE_OK;
- }
+ 	r = dm_bitset_resize(&md->bitset_info, md->bitset_root, 0,
+ 			     md->nr_regions, false, &md->bitset_root);
+-
+ 	if (r) {
+ 		DMERR("Failed to resize on-disk bitset to %lu entries", md->nr_regions);
+ 		goto err_with_tm;
+@@ -382,21 +375,18 @@ static int __format_metadata(struct dm_clone_metadata *md)
  
-Index: util-linux/libblkid/src/superblocks/btrfs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/btrfs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/btrfs.c	2019-08-29 15:44:38.000000000 +0200
-@@ -74,6 +74,7 @@ static int probe_btrfs(blkid_probe pr, c
- 
- 	blkid_probe_set_uuid(pr, bfs->fsid);
- 	blkid_probe_set_uuid_as(pr, bfs->dev_item.uuid, "UUID_SUB");
-+	blkid_probe_set_block_size(pr, le32_to_cpu(bfs->sectorsize));
- 
- 	return 0;
- }
-Index: util-linux/libblkid/src/superblocks/hfs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/hfs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/hfs.c	2019-08-29 15:44:38.000000000 +0200
-@@ -241,6 +241,8 @@ static int probe_hfsplus(blkid_probe pr,
- 	if (blocksize < HFSPLUS_SECTOR_SIZE)
- 		return 1;
- 
-+	blkid_probe_set_block_size(pr, blocksize);
-+
- 	memcpy(extents, hfsplus->cat_file.extents, sizeof(extents));
- 	cat_block = be32_to_cpu(extents[0].start_block);
- 
-Index: util-linux/libblkid/src/superblocks/hpfs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/hpfs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/hpfs.c	2019-08-29 15:44:38.000000000 +0200
-@@ -99,6 +99,7 @@ static int probe_hpfs(blkid_probe pr, co
- 				hbb->vol_serno[1], hbb->vol_serno[0]);
- 	}
- 	blkid_probe_sprintf_version(pr, "%u", version);
-+	blkid_probe_set_block_size(pr, 512);
- 
- 	return 0;
- }
-Index: util-linux/libblkid/src/superblocks/iso9660.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/iso9660.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/iso9660.c	2019-08-29 15:44:38.000000000 +0200
-@@ -182,6 +182,8 @@ static int probe_iso9660(blkid_probe pr,
- 
- 	memcpy(label, iso->volume_id, sizeof(label));
- 
-+	blkid_probe_set_block_size(pr, 2048);
-+
- 	if (!is_str_empty(iso->system_id, sizeof(iso->system_id)))
- 		blkid_probe_set_id_label(pr, "SYSTEM_ID",
- 				iso->system_id, sizeof(iso->system_id));
-Index: util-linux/libblkid/src/superblocks/jfs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/jfs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/jfs.c	2019-08-29 15:44:38.000000000 +0200
-@@ -52,6 +52,7 @@ static int probe_jfs(blkid_probe pr, con
- 	if (*((char *) js->js_label) != '\0')
- 		blkid_probe_set_label(pr, js->js_label, sizeof(js->js_label));
- 	blkid_probe_set_uuid(pr, js->js_uuid);
-+	blkid_probe_set_block_size(pr, le32_to_cpu(js->js_bsize));
- 	return 0;
- }
- 
-Index: util-linux/libblkid/src/superblocks/minix.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/minix.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/minix.c	2019-08-29 15:44:38.000000000 +0200
-@@ -80,6 +80,7 @@ static int probe_minix(blkid_probe pr,
- 	unsigned long zones, ninodes, imaps, zmaps;
- 	off_t firstz;
- 	size_t zone_size;
-+	unsigned block_size;
- 
- 	data = blkid_probe_get_buffer(pr, 1024,
- 			max(sizeof(struct minix_super_block),
-@@ -103,6 +104,7 @@ static int probe_minix(blkid_probe pr,
- 		zmaps   = minix_swab16(swabme, sb->s_zmap_blocks);
- 		firstz  = minix_swab16(swabme, sb->s_firstdatazone);
- 		zone_size = sb->s_log_zone_size;
-+		block_size = 1024;
- 		break;
- 	}
- 	case 3: {
-@@ -114,6 +116,8 @@ static int probe_minix(blkid_probe pr,
- 		zmaps   = minix_swab16(swabme, sb->s_zmap_blocks);
- 		firstz  = minix_swab16(swabme, sb->s_firstdatazone);
- 		zone_size = sb->s_log_zone_size;
-+		block_size = minix_swab16(swabme, sb->s_blocksize);
-+
- 		break;
- 	}
- 	default:
-@@ -143,6 +147,7 @@ static int probe_minix(blkid_probe pr,
- 		return 1;
- 
- 	blkid_probe_sprintf_version(pr, "%d", version);
-+	blkid_probe_set_block_size(pr, block_size);
- 	return 0;
- }
- 
-Index: util-linux/libblkid/src/superblocks/nilfs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/nilfs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/nilfs.c	2019-08-29 15:45:18.000000000 +0200
-@@ -157,6 +157,9 @@ static int probe_nilfs2(blkid_probe pr,
- 				(unsigned char *) &sb->s_magic))
- 		return 1;
- 
-+	if (le32_to_cpu(sb->s_log_block_size) < 32)
-+		blkid_probe_set_block_size(pr, 1024U << le32_to_cpu(sb->s_log_block_size));
-+
- 	return 0;
- }
- 
-Index: util-linux/libblkid/src/superblocks/ocfs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/ocfs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/ocfs.c	2019-08-29 15:45:45.000000000 +0200
-@@ -153,6 +153,9 @@ static int probe_ocfs2(blkid_probe pr, c
- 		le16_to_cpu(osb->s_major_rev_level),
- 		le16_to_cpu(osb->s_minor_rev_level));
- 
-+	if (le32_to_cpu(osb->s_blocksize_bits) < 32)
-+		blkid_probe_set_block_size(pr, 1U << le32_to_cpu(osb->s_blocksize_bits));
-+
- 	return 0;
- }
- 
-Index: util-linux/libblkid/src/superblocks/reiserfs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/reiserfs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/reiserfs.c	2019-08-29 15:44:38.000000000 +0200
-@@ -32,7 +32,8 @@ struct reiserfs_super_block {
- 
- struct reiser4_super_block {
- 	unsigned char	rs4_magic[16];
--	uint16_t	rs4_dummy[2];
-+	uint8_t		rs4_dummy[3];
-+	uint8_t		rs4_blocksize;
- 	unsigned char	rs4_uuid[16];
- 	unsigned char	rs4_label[16];
- 	uint64_t	rs4_dummy2;
-@@ -73,22 +74,29 @@ static int probe_reiser(blkid_probe pr,
- 	else
- 		blkid_probe_set_version(pr, "3.5");
- 
-+	blkid_probe_set_block_size(pr, blocksize);
-+
- 	return 0;
- }
- 
- static int probe_reiser4(blkid_probe pr, const struct blkid_idmag *mag)
- {
- 	struct reiser4_super_block *rs4;
-+	unsigned int blocksize;
- 
- 	rs4 = blkid_probe_get_sb(pr, mag, struct reiser4_super_block);
- 	if (!rs4)
- 		return errno ? -errno : 1;
- 
-+	blocksize = rs4->rs4_blocksize * 256;
-+
- 	if (*rs4->rs4_label)
- 		blkid_probe_set_label(pr, rs4->rs4_label, sizeof(rs4->rs4_label));
- 	blkid_probe_set_uuid(pr, rs4->rs4_uuid);
- 	blkid_probe_set_version(pr, "4");
- 
-+	blkid_probe_set_block_size(pr, blocksize);
-+
- 	return 0;
- }
- 
-Index: util-linux/libblkid/src/superblocks/xfs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/xfs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/xfs.c	2019-08-29 15:44:38.000000000 +0200
-@@ -173,6 +173,7 @@ static int probe_xfs(blkid_probe pr, con
- 		blkid_probe_set_label(pr, (unsigned char *) xs->sb_fname,
- 				sizeof(xs->sb_fname));
- 	blkid_probe_set_uuid(pr, xs->sb_uuid);
-+	blkid_probe_set_block_size(pr, xs->sb_sectsize * 256);
- 	return 0;
- }
- 
-Index: util-linux/libblkid/src/superblocks/vfat.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/vfat.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/vfat.c	2019-08-29 15:44:38.000000000 +0200
-@@ -220,6 +220,8 @@ static int fat_valid_superblock(blkid_pr
- 	    sector_size < 512 || sector_size > 4096)
- 		return 0;
- 
-+	blkid_probe_set_block_size(pr, sector_size);
-+
- 	dir_entries = unaligned_le16(&ms->ms_dir_entries);
- 	reserved =  le16_to_cpu(ms->ms_reserved);
- 	sect_count = unaligned_le16(&ms->ms_sectors);
-Index: util-linux/libblkid/src/superblocks/gfs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/gfs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/gfs.c	2019-08-29 15:44:38.000000000 +0200
-@@ -98,6 +98,7 @@ static int probe_gfs2(blkid_probe pr, co
- 				sizeof(sbd->sb_locktable));
- 		blkid_probe_set_uuid(pr, sbd->sb_uuid);
- 		blkid_probe_set_version(pr, "1");
-+		blkid_probe_set_block_size(pr, be32_to_cpu(sbd->sb_bsize));
- 		return 0;
- 	}
- 	return 1;
-Index: util-linux/libblkid/src/superblocks/befs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/befs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/befs.c	2019-08-29 15:44:38.000000000 +0200
-@@ -519,6 +519,9 @@ static int probe_befs(blkid_probe pr, co
- 		blkid_probe_sprintf_uuid(pr, (unsigned char *) &volume_id,
- 					sizeof(volume_id), "%016" PRIx64,
- 					FS64_TO_CPU(volume_id, fs_le));
-+
-+	blkid_probe_set_block_size(pr, block_size);
-+
- 	return BLKID_PROBE_OK;
- }
- 
-Index: util-linux/libblkid/src/superblocks/exfat.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/exfat.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/exfat.c	2019-08-29 15:44:38.000000000 +0200
-@@ -137,6 +137,8 @@ static int probe_exfat(blkid_probe pr, c
- 	blkid_probe_sprintf_version(pr, "%u.%u",
- 			sb->version.vermaj, sb->version.vermin);
- 
-+	blkid_probe_set_block_size(pr, BLOCK_SIZE(sb));
-+
- 	return BLKID_PROBE_OK;
- }
- 
-Index: util-linux/libblkid/src/superblocks/exfs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/exfs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/exfs.c	2019-08-29 15:44:38.000000000 +0200
-@@ -170,7 +170,11 @@ static int probe_exfs(blkid_probe pr, co
- 	if (*xs->sb_fname != '\0')
- 		blkid_probe_set_label(pr, (unsigned char *) xs->sb_fname,
- 				sizeof(xs->sb_fname));
-+
- 	blkid_probe_set_uuid(pr, xs->sb_uuid);
-+
-+	blkid_probe_set_block_size(pr, be32_to_cpu(xs->sb_blocksize));
-+
- 	return 0;
- }
- 
-Index: util-linux/libblkid/src/superblocks/f2fs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/f2fs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/f2fs.c	2019-08-29 15:46:17.000000000 +0200
-@@ -78,6 +78,8 @@ static int probe_f2fs(blkid_probe pr, co
- 
- 	blkid_probe_set_uuid(pr, sb->uuid);
- 	blkid_probe_sprintf_version(pr, "%u.%u", vermaj, vermin);
-+	if (le32_to_cpu(sb->log_blocksize) < 32)
-+		blkid_probe_set_block_size(pr, 1U << le32_to_cpu(sb->log_blocksize));
- 	return 0;
- }
- 
-Index: util-linux/libblkid/src/superblocks/ntfs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/ntfs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/ntfs.c	2019-08-29 15:44:38.000000000 +0200
-@@ -204,6 +204,8 @@ static int probe_ntfs(blkid_probe pr, co
- 		attr_off += attr_len;
+ 	/* Flush to disk all blocks, except the superblock */
+ 	r = dm_tm_pre_commit(md->tm);
+-
+ 	if (r) {
+ 		DMERR("dm_tm_pre_commit failed");
+ 		goto err_with_tm;
  	}
  
-+	blkid_probe_set_block_size(pr, sector_size);
-+
- 	blkid_probe_sprintf_uuid(pr,
- 			(unsigned char *) &ns->volume_serial,
- 			sizeof(ns->volume_serial),
-Index: util-linux/libblkid/src/superblocks/romfs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/romfs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/romfs.c	2019-08-29 15:44:38.000000000 +0200
-@@ -34,6 +34,9 @@ static int probe_romfs(blkid_probe pr, c
- 	if (*((char *) ros->ros_volume) != '\0')
- 		blkid_probe_set_label(pr, ros->ros_volume,
- 				sizeof(ros->ros_volume));
-+
-+	blkid_probe_set_block_size(pr, 1024);
-+
- 	return 0;
- }
+ 	r = __copy_sm_root(md);
+-
+ 	if (r) {
+ 		DMERR("__copy_sm_root failed");
+ 		goto err_with_tm;
+ 	}
  
-Index: util-linux/libblkid/src/superblocks/squashfs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/squashfs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/squashfs.c	2019-08-29 15:44:38.000000000 +0200
-@@ -71,6 +71,8 @@ static int probe_squashfs3(blkid_probe p
+ 	r = superblock_write_lock_zero(md, &sblock);
+-
+ 	if (r) {
+ 		DMERR("Failed to write_lock superblock");
+ 		goto err_with_tm;
+@@ -405,7 +395,6 @@ static int __format_metadata(struct dm_clone_metadata *md)
+ 	sb = dm_block_data(sblock);
+ 	__prepare_superblock(md, sb);
+ 	r = dm_tm_commit(md->tm, sblock);
+-
+ 	if (r) {
+ 		DMERR("Failed to commit superblock");
+ 		goto err_with_tm;
+@@ -426,7 +415,6 @@ static int __open_or_format_metadata(struct dm_clone_metadata *md, bool may_form
+ 	bool formatted = false;
  
- 	blkid_probe_sprintf_version(pr, "%u.%u", vermaj, vermin);
+ 	r = __superblock_all_zeroes(md->bm, &formatted);
+-
+ 	if (r)
+ 		return r;
  
-+	blkid_probe_set_block_size(pr, 1024);
-+
- 	return 0;
- }
+@@ -445,14 +433,12 @@ static int __create_persistent_data_structures(struct dm_clone_metadata *md,
+ 	md->bm = dm_block_manager_create(md->bdev,
+ 					 DM_CLONE_METADATA_BLOCK_SIZE << SECTOR_SHIFT,
+ 					 DM_CLONE_MAX_CONCURRENT_LOCKS);
+-
+ 	if (IS_ERR(md->bm)) {
+ 		DMERR("Failed to create block manager");
+ 		return PTR_ERR(md->bm);
+ 	}
  
-Index: util-linux/libblkid/src/superblocks/udf.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/udf.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/udf.c	2019-08-29 15:44:38.000000000 +0200
-@@ -464,6 +464,8 @@ real_blksz:
- 		 * E.g. number 0x0150 is revision 1.50, number 0x0201 is revision 2.01. */
- 		blkid_probe_sprintf_version(pr, "%x.%02x", (unsigned int)(udf_rev >> 8), (unsigned int)(udf_rev & 0xFF));
+ 	r = __open_or_format_metadata(md, may_format_device);
+-
+ 	if (r)
+ 		dm_block_manager_destroy(md->bm);
  
-+	blkid_probe_set_block_size(pr, bs);
-+
- 	return 0;
- }
+@@ -511,12 +497,10 @@ int __load_bitset_in_core(struct dm_clone_metadata *md)
  
-Index: util-linux/libblkid/src/superblocks/ufs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/ufs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/ufs.c	2019-08-29 15:44:38.000000000 +0200
-@@ -233,6 +233,11 @@ found:
- 			(unsigned char *) &ufs->fs_magic))
- 		return 1;
+ 	/* Flush bitset cache */
+ 	r = dm_bitset_flush(&md->bitset_info, md->bitset_root, &md->bitset_root);
+-
+ 	if (r)
+ 		return r;
  
-+	if (!is_be)
-+		blkid_probe_set_block_size(pr, le32_to_cpu(ufs->fs_fsize));
-+	else
-+		blkid_probe_set_block_size(pr, be32_to_cpu(ufs->fs_fsize));
-+
- 	return 0;
- }
+ 	r = dm_bitset_cursor_begin(&md->bitset_info, md->bitset_root, md->nr_regions, &c);
+-
+ 	if (r)
+ 		return r;
  
-Index: util-linux/libblkid/src/superblocks/vxfs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/vxfs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/vxfs.c	2019-08-29 15:44:38.000000000 +0200
-@@ -12,6 +12,15 @@
- struct vxfs_super_block {
- 	uint32_t		vs_magic;
- 	int32_t			vs_version;
-+	uint32_t		vs_ctime;
-+	uint32_t		vs_cutime;
-+	uint32_t		__unused1;
-+	uint32_t		__unused2;
-+	uint32_t		vs_old_logstart;
-+	uint32_t		vs_old_logend;
-+	uint32_t		vs_bsize;
-+	uint32_t		vs_size;
-+	uint32_t		vs_dsize;
- };
+@@ -548,7 +532,6 @@ struct dm_clone_metadata *dm_clone_metadata_open(struct block_device *bdev,
+ 	struct dm_clone_metadata *md;
  
- static int probe_vxfs(blkid_probe pr, const struct blkid_idmag *mag)
-@@ -22,7 +31,13 @@ static int probe_vxfs(blkid_probe pr, co
- 	if (!vxs)
- 		return errno ? -errno : 1;
+ 	md = kzalloc(sizeof(*md), GFP_KERNEL);
+-
+ 	if (!md) {
+ 		DMERR("Failed to allocate memory for dm-clone metadata");
+ 		return ERR_PTR(-ENOMEM);
+@@ -567,7 +550,6 @@ struct dm_clone_metadata *dm_clone_metadata_open(struct block_device *bdev,
+ 	md->hydration_done = false;
  
--	blkid_probe_sprintf_version(pr, "%u", (unsigned int) vxs->vs_version);
-+	if (le32_to_cpu(vxs->vs_magic) == 0xa501fcf5) {
-+		blkid_probe_sprintf_version(pr, "%u", (unsigned int)le32_to_cpu(vxs->vs_version));
-+		blkid_probe_set_block_size(pr, le32_to_cpu(vxs->vs_bsize));
-+	} else if (be32_to_cpu(vxs->vs_magic) == 0xa501fcf5) {
-+		blkid_probe_sprintf_version(pr, "%u", (unsigned int)be32_to_cpu(vxs->vs_version));
-+		blkid_probe_set_block_size(pr, be32_to_cpu(vxs->vs_bsize));
+ 	md->region_map = vmalloc(bitmap_size(md->nr_regions));
+-
+ 	if (!md->region_map) {
+ 		DMERR("Failed to allocate memory for region bitmap");
+ 		r = -ENOMEM;
+@@ -575,19 +557,16 @@ struct dm_clone_metadata *dm_clone_metadata_open(struct block_device *bdev,
+ 	}
+ 
+ 	r = __create_persistent_data_structures(md, true);
+-
+ 	if (r)
+ 		goto out_with_region_map;
+ 
+ 	r = __load_bitset_in_core(md);
+-
+ 	if (r) {
+ 		DMERR("Failed to load on-disk region map");
+ 		goto out_with_pds;
+ 	}
+ 
+ 	r = dirty_map_init(md);
+-
+ 	if (r)
+ 		goto out_with_pds;
+ 
+@@ -682,7 +661,6 @@ int __metadata_commit(struct dm_clone_metadata *md)
+ 
+ 	/* Flush bitset cache */
+ 	r = dm_bitset_flush(&md->bitset_info, md->bitset_root, &md->bitset_root);
+-
+ 	if (r) {
+ 		DMERR("dm_bitset_flush failed");
+ 		return r;
+@@ -690,7 +668,6 @@ int __metadata_commit(struct dm_clone_metadata *md)
+ 
+ 	/* Flush to disk all blocks, except the superblock */
+ 	r = dm_tm_pre_commit(md->tm);
+-
+ 	if (r) {
+ 		DMERR("dm_tm_pre_commit failed");
+ 		return r;
+@@ -698,7 +675,6 @@ int __metadata_commit(struct dm_clone_metadata *md)
+ 
+ 	/* Save the space map root in md->metadata_space_map_root */
+ 	r = __copy_sm_root(md);
+-
+ 	if (r) {
+ 		DMERR("__copy_sm_root failed");
+ 		return r;
+@@ -706,7 +682,6 @@ int __metadata_commit(struct dm_clone_metadata *md)
+ 
+ 	/* Lock the superblock */
+ 	r = superblock_write_lock_zero(md, &sblock);
+-
+ 	if (r) {
+ 		DMERR("Failed to write_lock superblock");
+ 		return r;
+@@ -718,7 +693,6 @@ int __metadata_commit(struct dm_clone_metadata *md)
+ 
+ 	/* Unlock superblock and commit it to disk */
+ 	r = dm_tm_commit(md->tm, sblock);
+-
+ 	if (r) {
+ 		DMERR("Failed to commit superblock");
+ 		return r;
+@@ -859,7 +833,6 @@ int dm_clone_cond_set_range(struct dm_clone_metadata *md, unsigned long start,
+ 			dmap->changed = 1;
+ 		}
+ 	}
+-
+ out:
+ 	spin_unlock_irqrestore(&md->bitmap_lock, flags);
+ 
+@@ -886,7 +859,6 @@ int dm_clone_reload_in_core_bitset(struct dm_clone_metadata *md)
+ 		goto out;
+ 
+ 	r = __load_bitset_in_core(md);
+-
+ out:
+ 	up_write(&md->lock);
+ 
+@@ -917,11 +889,10 @@ int dm_clone_metadata_abort(struct dm_clone_metadata *md)
+ 	__destroy_persistent_data_structures(md);
+ 
+ 	r = __create_persistent_data_structures(md, false);
+-
+-	/* If something went wrong we can neither write nor read the metadata */
+-	if (r)
++	if (r) {
++		/* If something went wrong we can neither write nor read the metadata */
+ 		md->fail_io = true;
+-
 +	}
- 	return 0;
- }
+ out:
+ 	up_write(&md->lock);
  
-@@ -35,6 +50,7 @@ const struct blkid_idinfo vxfs_idinfo =
- 	.magics		=
- 	{
- 		{ .magic = "\365\374\001\245", .len = 4, .kboff = 1 },
-+		{ .magic = "\245\001\374\365", .len = 4, .kboff = 8 },
- 		{ NULL }
- 	}
- };
-Index: util-linux/libblkid/src/superblocks/zfs.c
-===================================================================
---- util-linux.orig/libblkid/src/superblocks/zfs.c	2019-08-29 15:44:38.000000000 +0200
-+++ util-linux/libblkid/src/superblocks/zfs.c	2019-08-29 15:46:36.000000000 +0200
-@@ -37,6 +37,7 @@ struct zfs_uberblock {
- 
- #define DATA_TYPE_UINT64 8
- #define DATA_TYPE_STRING 9
-+#define DATA_TYPE_DIRECTORY 19
- 
- struct nvpair {
- 	uint32_t	nvp_size;
-@@ -60,32 +61,37 @@ struct nvuint64 {
- 	uint64_t	nvu_value;
- };
- 
-+struct nvdirectory {
-+	uint32_t	nvd_type;
-+	uint32_t	nvd_unknown[3];
-+};
-+
- struct nvlist {
- 	uint32_t	nvl_unknown[3];
- 	struct nvpair	nvl_nvpair;
- };
- 
--static int zfs_process_value(blkid_probe pr, char *name, size_t namelen,
--			     void *value, size_t max_value_size)
-+static void zfs_process_value(blkid_probe pr, char *name, size_t namelen,
-+			     void *value, size_t max_value_size, unsigned directory_level)
- {
- 	if (strncmp(name, "name", namelen) == 0 &&
--	    sizeof(struct nvstring) <= max_value_size) {
-+	    sizeof(struct nvstring) <= max_value_size &&
-+	    !directory_level) {
- 		struct nvstring *nvs = value;
- 		uint32_t nvs_type = be32_to_cpu(nvs->nvs_type);
- 		uint32_t nvs_strlen = be32_to_cpu(nvs->nvs_strlen);
- 
- 		if (nvs_type != DATA_TYPE_STRING ||
- 		    (uint64_t)nvs_strlen + sizeof(*nvs) > max_value_size)
--			return 0;
-+			return;
- 
- 		DBG(LOWPROBE, ul_debug("nvstring: type %u string %*s\n",
- 				       nvs_type, nvs_strlen, nvs->nvs_string));
- 
- 		blkid_probe_set_label(pr, nvs->nvs_string, nvs_strlen);
+diff --git a/drivers/md/dm-clone-target.c b/drivers/md/dm-clone-target.c
+index 2ce7524616f8..d10b149b54f5 100644
+--- a/drivers/md/dm-clone-target.c
++++ b/drivers/md/dm-clone-target.c
+@@ -459,11 +459,9 @@ static void complete_discard_bio(struct clone *clone, struct bio *bio, bool succ
+ 		bio_region_range(clone, bio, &rs, &re);
+ 		trim_bio(bio, rs << clone->region_shift,
+ 			 (re - rs) << clone->region_shift);
 -
--		return 1;
- 	} else if (strncmp(name, "guid", namelen) == 0 &&
--		   sizeof(struct nvuint64) <= max_value_size) {
-+		   sizeof(struct nvuint64) <= max_value_size &&
-+		   !directory_level) {
- 		struct nvuint64 *nvu = value;
- 		uint32_t nvu_type = be32_to_cpu(nvu->nvu_type);
- 		uint64_t nvu_value;
-@@ -94,17 +100,16 @@ static int zfs_process_value(blkid_probe
- 		nvu_value = be64_to_cpu(nvu_value);
- 
- 		if (nvu_type != DATA_TYPE_UINT64)
--			return 0;
-+			return;
- 
- 		DBG(LOWPROBE, ul_debug("nvuint64: type %u value %"PRIu64"\n",
- 				       nvu_type, nvu_value));
- 
- 		blkid_probe_sprintf_value(pr, "UUID_SUB",
- 					  "%"PRIu64, nvu_value);
--
--		return 1;
- 	} else if (strncmp(name, "pool_guid", namelen) == 0 &&
--		   sizeof(struct nvuint64) <= max_value_size) {
-+		   sizeof(struct nvuint64) <= max_value_size &&
-+		   !directory_level) {
- 		struct nvuint64 *nvu = value;
- 		uint32_t nvu_type = be32_to_cpu(nvu->nvu_type);
- 		uint64_t nvu_value;
-@@ -113,7 +118,7 @@ static int zfs_process_value(blkid_probe
- 		nvu_value = be64_to_cpu(nvu_value);
- 
- 		if (nvu_type != DATA_TYPE_UINT64)
--			return 0;
-+			return;
- 
- 		DBG(LOWPROBE, ul_debug("nvuint64: type %u value %"PRIu64"\n",
- 				       nvu_type, nvu_value));
-@@ -121,10 +126,21 @@ static int zfs_process_value(blkid_probe
- 		blkid_probe_sprintf_uuid(pr, (unsigned char *) &nvu_value,
- 					 sizeof(nvu_value),
- 					 "%"PRIu64, nvu_value);
--		return 1;
+ 		generic_make_request(bio);
+-	} else {
++	} else
+ 		bio_endio(bio);
 -	}
-+	} else if (strncmp(name, "ashift", namelen) == 0 &&
-+		   sizeof(struct nvuint64) <= max_value_size) {
-+		struct nvuint64 *nvu = value;
-+		uint32_t nvu_type = be32_to_cpu(nvu->nvu_type);
-+		uint64_t nvu_value;
- 
--	return 0;
-+		memcpy(&nvu_value, &nvu->nvu_value, sizeof(nvu_value));
-+		nvu_value = be64_to_cpu(nvu_value);
-+
-+		if (nvu_type != DATA_TYPE_UINT64)
-+			return;
-+
-+		if (nvu_value < 32)
-+			blkid_probe_set_block_size(pr, 1U << nvu_value);
-+	}
  }
  
- static void zfs_extract_guid_name(blkid_probe pr, loff_t offset)
-@@ -133,7 +149,7 @@ static void zfs_extract_guid_name(blkid_
- 	struct nvlist *nvl;
- 	struct nvpair *nvp;
- 	size_t left = 4096;
--	int found = 0;
-+	unsigned directory_level = 0;
+ static void process_discard_bio(struct clone *clone, struct bio *bio)
+@@ -561,7 +559,6 @@ static int hash_table_init(struct clone *clone)
+ 	sz = 1 << HASH_TABLE_BITS;
  
- 	offset = (offset & ~(VDEV_LABEL_SIZE - 1)) + VDEV_LABEL_NVPAIR;
+ 	clone->ht = vmalloc(sz * sizeof(struct hash_table_bucket));
+-
+ 	if (!clone->ht)
+ 		return -ENOMEM;
  
-@@ -152,16 +168,26 @@ static void zfs_extract_guid_name(blkid_
- 	nvp = &nvl->nvl_nvpair;
- 	left -= (unsigned char *)nvp - p; /* Already used up 12 bytes */
+@@ -629,7 +626,6 @@ __find_or_insert_region_hydration(struct hash_table_bucket *bucket,
+ 	struct dm_clone_region_hydration *hd2;
  
--	while (left > sizeof(*nvp) && nvp->nvp_size != 0 && found < 3) {
-+	while (left > sizeof(*nvp)) {
- 		uint32_t nvp_size = be32_to_cpu(nvp->nvp_size);
- 		uint32_t nvp_namelen = be32_to_cpu(nvp->nvp_namelen);
- 		uint64_t namesize = ((uint64_t)nvp_namelen + 3) & ~3;
- 		size_t max_value_size;
- 		void *value;
+ 	hd2 = __hash_find(bucket, hd->region_nr);
+-
+ 	if (hd2)
+ 		return hd2;
  
-+		if (!nvp->nvp_size) {
-+			if (!directory_level)
-+				break;
-+			directory_level--;
-+			nvp_size = 8;
-+			goto cont;
-+		}
-+
- 		DBG(LOWPROBE, ul_debug("left %zd nvp_size %u\n",
- 				       left, nvp_size));
+@@ -650,7 +646,6 @@ static struct dm_clone_region_hydration *alloc_hydration(struct clone *clone)
+ 	 * This might block but it can't fail.
+ 	 */
+ 	hd = mempool_alloc(&clone->hydration_pool, GFP_NOIO);
+-
+ 	hd->clone = clone;
  
-+		fprintf(stderr, "processing: '%.*s'\n", nvp_namelen, nvp->nvp_name);
-+
- 		/* nvpair fits in buffer and name fits in nvpair? */
- 		if (nvp_size > left || namesize + sizeof(*nvp) > nvp_size)
+ 	return hd;
+@@ -665,11 +660,8 @@ static inline void free_hydration(struct dm_clone_region_hydration *hd)
+ static void hydration_init(struct dm_clone_region_hydration *hd, unsigned long region_nr)
+ {
+ 	hd->region_nr = region_nr;
+-
+ 	hd->overwrite_bio = NULL;
+-
+ 	bio_list_init(&hd->deferred_bios);
+-
+ 	hd->status = 0;
+ 
+ 	INIT_LIST_HEAD(&hd->list);
+@@ -867,16 +859,15 @@ static void hydrate_bio_region(struct clone *clone, struct bio *bio)
+ 	bucket_lock_irqsave(bucket, flags);
+ 
+ 	hd = __hash_find(bucket, region_nr);
+-
+-	/* Someone else is hydrating the region */
+ 	if (hd) {
++		/* Someone else is hydrating the region */
+ 		bio_list_add(&hd->deferred_bios, bio);
+ 		bucket_unlock_irqrestore(bucket, flags);
+ 		return;
+ 	}
+ 
+-	/* The region has been hydrated */
+ 	if (dm_clone_is_region_hydrated(clone->md, region_nr)) {
++		/* The region has been hydrated */
+ 		bucket_unlock_irqrestore(bucket, flags);
+ 		issue_bio(clone, bio);
+ 		return;
+@@ -902,9 +893,8 @@ static void hydrate_bio_region(struct clone *clone, struct bio *bio)
+ 	}
+ 
+ 	hd2 = __find_or_insert_region_hydration(bucket, hd);
+-
+-	/* Someone else started the region's hydration. */
+ 	if (hd2 != hd) {
++		/* Someone else started the region's hydration. */
+ 		bio_list_add(&hd2->deferred_bios, bio);
+ 		bucket_unlock_irqrestore(bucket, flags);
+ 		free_hydration(hd);
+@@ -937,7 +927,6 @@ static void hydrate_bio_region(struct clone *clone, struct bio *bio)
+ 	} else {
+ 		bio_list_add(&hd->deferred_bios, bio);
+ 		bucket_unlock_irqrestore(bucket, flags);
+-
+ 		hydration_copy(hd, 1);
+ 	}
+ }
+@@ -1138,7 +1127,6 @@ static int commit_metadata(struct clone *clone)
+ 
+ 	if (dm_clone_is_hydration_done(clone->md))
+ 		dm_table_event(clone->ti->table);
+-
+ out:
+ 	mutex_unlock(&clone->commit_lock);
+ 
+@@ -1177,13 +1165,10 @@ static void process_deferred_discards(struct clone *clone)
+ 		if (unlikely(r))
  			break;
-@@ -174,9 +200,21 @@ static void zfs_extract_guid_name(blkid_
- 		max_value_size = nvp_size - (namesize + sizeof(*nvp));
- 		value = nvp->nvp_name + namesize;
+ 	}
+-
+ out:
+ 	blk_start_plug(&plug);
+-
+ 	while ((bio = bio_list_pop(&discards)))
+ 		complete_discard_bio(clone, bio, r == 0);
+-
+ 	blk_finish_plug(&plug);
+ }
  
--		found += zfs_process_value(pr, nvp->nvp_name, nvp_namelen,
--					   value, max_value_size);
-+		if (sizeof(struct nvdirectory) <= max_value_size) {
-+			struct nvdirectory *nvu = value;
-+			if (be32_to_cpu(nvu->nvd_type) == DATA_TYPE_DIRECTORY) {
-+				nvp_size = sizeof(*nvp) + namesize + sizeof(*nvu);
-+				directory_level++;
-+				goto cont;
-+			}
-+		}
+@@ -1530,7 +1515,6 @@ static int parse_feature_args(struct dm_arg_set *as, struct clone *clone)
+ 		return 0;
  
-+		zfs_process_value(pr, nvp->nvp_name, nvp_namelen,
-+				  value, max_value_size, directory_level);
-+
-+cont:
-+		if (nvp_size > left)
-+			break;
- 		left -= nvp_size;
+ 	r = dm_read_arg_group(&args, as, &argc, &ti->error);
+-
+ 	if (r)
+ 		return r;
  
- 		nvp = (struct nvpair *)((char *)nvp + nvp_size);
+@@ -1575,7 +1559,6 @@ static int parse_core_args(struct dm_arg_set *as, struct clone *clone)
+ 		return 0;
+ 
+ 	r = dm_read_arg_group(&args, as, &argc, &ti->error);
+-
+ 	if (r)
+ 		return r;
+ 
+@@ -1620,7 +1603,6 @@ static int parse_region_size(struct clone *clone, struct dm_arg_set *as, char **
+ 	arg.error = "Invalid region size";
+ 
+ 	r = dm_read_arg(&arg, as, &region_size, error);
+-
+ 	if (r)
+ 		return r;
+ 
+@@ -1664,14 +1646,12 @@ static int parse_metadata_dev(struct clone *clone, struct dm_arg_set *as, char *
+ 
+ 	r = dm_get_device(clone->ti, dm_shift_arg(as), FMODE_READ | FMODE_WRITE,
+ 			  &clone->metadata_dev);
+-
+ 	if (r) {
+ 		*error = "Error opening metadata device";
+ 		return r;
+ 	}
+ 
+ 	metadata_dev_size = get_dev_size(clone->metadata_dev);
+-
+ 	if (metadata_dev_size > DM_CLONE_METADATA_MAX_SECTORS_WARNING)
+ 		DMWARN("Metadata device %s is larger than %u sectors: excess space will not be used.",
+ 		       bdevname(clone->metadata_dev->bdev, b), DM_CLONE_METADATA_MAX_SECTORS);
+@@ -1686,17 +1666,14 @@ static int parse_clone_dev(struct clone *clone, struct dm_arg_set *as, char **er
+ 
+ 	r = dm_get_device(clone->ti, dm_shift_arg(as), FMODE_READ | FMODE_WRITE,
+ 			  &clone->clone_dev);
+-
+ 	if (r) {
+ 		*error = "Error opening clone device";
+ 		return r;
+ 	}
+ 
+ 	clone_dev_size = get_dev_size(clone->clone_dev);
+-
+ 	if (clone_dev_size < clone->ti->len) {
+ 		dm_put_device(clone->ti, clone->clone_dev);
+-
+ 		*error = "Device size larger than clone device";
+ 		return -EINVAL;
+ 	}
+@@ -1711,17 +1688,14 @@ static int parse_origin_dev(struct clone *clone, struct dm_arg_set *as, char **e
+ 
+ 	r = dm_get_device(clone->ti, dm_shift_arg(as), FMODE_READ,
+ 			  &clone->origin_dev);
+-
+ 	if (r) {
+ 		*error = "Error opening origin device";
+ 		return r;
+ 	}
+ 
+ 	origin_dev_size = get_dev_size(clone->origin_dev);
+-
+ 	if (origin_dev_size < clone->ti->len) {
+ 		dm_put_device(clone->ti, clone->origin_dev);
+-
+ 		*error = "Device size larger than origin device";
+ 		return -EINVAL;
+ 	}
+@@ -1735,7 +1709,6 @@ static int copy_ctr_args(struct clone *clone, int argc, const char **argv, char
+ 	const char **copy;
+ 
+ 	copy = kcalloc(argc, sizeof(*copy), GFP_KERNEL);
+-
+ 	if (!copy)
+ 		goto error;
+ 
+@@ -1752,7 +1725,6 @@ static int copy_ctr_args(struct clone *clone, int argc, const char **argv, char
+ 
+ 	clone->nr_ctr_args = argc;
+ 	clone->ctr_args = copy;
+-
+ 	return 0;
+ 
+ error:
+@@ -1775,7 +1747,6 @@ static int clone_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	as.argv = argv;
+ 
+ 	clone = kzalloc(sizeof(*clone), GFP_KERNEL);
+-
+ 	if (!clone) {
+ 		ti->error = "Failed to allocate clone structure";
+ 		return -ENOMEM;
+@@ -1789,22 +1760,18 @@ static int clone_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	__set_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags);
+ 
+ 	r = parse_metadata_dev(clone, &as, &ti->error);
+-
+ 	if (r)
+ 		goto out_with_clone;
+ 
+ 	r = parse_clone_dev(clone, &as, &ti->error);
+-
+ 	if (r)
+ 		goto out_with_meta_dev;
+ 
+ 	r = parse_origin_dev(clone, &as, &ti->error);
+-
+ 	if (r)
+ 		goto out_with_clone_dev;
+ 
+ 	r = parse_region_size(clone, &as, &ti->error);
+-
+ 	if (r)
+ 		goto out_with_origin_dev;
+ 
+@@ -1812,31 +1779,26 @@ static int clone_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	clone->nr_regions = dm_sector_div_up(ti->len, clone->region_size);
+ 
+ 	r = validate_nr_regions(clone->nr_regions, &ti->error);
+-
+ 	if (r)
+ 		goto out_with_origin_dev;
+ 
+ 	r = dm_set_target_max_io_len(ti, clone->region_size);
+-
+ 	if (r) {
+ 		ti->error = "Failed to set max io len";
+ 		goto out_with_origin_dev;
+ 	}
+ 
+ 	r = parse_feature_args(&as, clone);
+-
+ 	if (r)
+ 		goto out_with_origin_dev;
+ 
+ 	r = parse_core_args(&as, clone);
+-
+ 	if (r)
+ 		goto out_with_origin_dev;
+ 
+ 	/* Load metadata */
+ 	clone->md = dm_clone_metadata_open(clone->metadata_dev->bdev, ti->len,
+ 					   clone->region_size);
+-
+ 	if (IS_ERR(clone->md)) {
+ 		ti->error = "Failed to load metadata";
+ 		r = PTR_ERR(clone->md);
+@@ -1855,7 +1817,6 @@ static int clone_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ 	/* Allocate hydration hash table */
+ 	r = hash_table_init(clone);
+-
+ 	if (r) {
+ 		ti->error = "Failed to allocate hydration hash table";
+ 		goto out_with_metadata;
+@@ -1872,7 +1833,6 @@ static int clone_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	atomic_set(&clone->hydrations_in_flight, 0);
+ 
+ 	clone->wq = alloc_workqueue("dm-" DM_MSG_PREFIX, WQ_MEM_RECLAIM, 0);
+-
+ 	if (!clone->wq) {
+ 		ti->error = "Failed to allocate workqueue";
+ 		r = -ENOMEM;
+@@ -1883,7 +1843,6 @@ static int clone_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	INIT_DELAYED_WORK(&clone->waker, do_waker);
+ 
+ 	clone->kcopyd_client = dm_kcopyd_client_create(&dm_kcopyd_throttle);
+-
+ 	if (IS_ERR(clone->kcopyd_client)) {
+ 		r = PTR_ERR(clone->kcopyd_client);
+ 		goto out_with_wq;
+@@ -1891,7 +1850,6 @@ static int clone_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ 	r = mempool_init_slab_pool(&clone->hydration_pool, MIN_HYDRATIONS,
+ 				   _hydration_cache);
+-
+ 	if (r) {
+ 		ti->error = "Failed to create dm_clone_region_hydration memory pool";
+ 		goto out_with_kcopyd;
+@@ -1899,7 +1857,6 @@ static int clone_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ 	/* Save a copy of the table line */
+ 	r = copy_ctr_args(clone, argc - 3, (const char **)argv + 3, &ti->error);
+-
+ 	if (r)
+ 		goto out_with_mempool;
+ 
+@@ -1921,28 +1878,20 @@ static int clone_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ out_with_mempool:
+ 	mempool_exit(&clone->hydration_pool);
+-
+ out_with_kcopyd:
+ 	dm_kcopyd_client_destroy(clone->kcopyd_client);
+-
+ out_with_wq:
+ 	destroy_workqueue(clone->wq);
+-
+ out_with_ht:
+ 	hash_table_exit(clone);
+-
+ out_with_metadata:
+ 	dm_clone_metadata_close(clone->md);
+-
+ out_with_origin_dev:
+ 	dm_put_device(ti, clone->origin_dev);
+-
+ out_with_clone_dev:
+ 	dm_put_device(ti, clone->clone_dev);
+-
+ out_with_meta_dev:
+ 	dm_put_device(ti, clone->metadata_dev);
+-
+ out_with_clone:
+ 	kfree(clone);
+ 
+@@ -2213,12 +2162,10 @@ static int __init dm_clone_init(void)
+ 	int r;
+ 
+ 	_hydration_cache = KMEM_CACHE(dm_clone_region_hydration, 0);
+-
+ 	if (!_hydration_cache)
+ 		return -ENOMEM;
+ 
+ 	r = dm_register_target(&clone_target);
+-
+ 	if (r < 0) {
+ 		DMERR("Failed to register clone target");
+ 		return r;
+-- 
+2.15.0
