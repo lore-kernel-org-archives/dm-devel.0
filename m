@@ -1,17 +1,12 @@
-From: Wols Lists <antlists@youngman.org.uk>
-Subject: Re: [PATCH v3 1/2] md raid0/linear: Mark array as
- 'broken' and fail BIOs if a member is gone
-Date: Fri, 30 Aug 2019 11:47:24 +0100
-Message-ID: <5D68FEBC.9060709@youngman.org.uk>
-References: <20190822161318.26236-1-gpiccoli@canonical.com>
-	<73C4747E-7A9E-4833-8393-B6A06C935DBE@fb.com>
-	<8163258e-839c-e0b8-fc4b-74c94c9dae1d@canonical.com>
-	<F0E716F8-76EC-4315-933D-A547B52F1D27@fb.com>
+From: Turritopsis Dohrnii Teo En Ming <tdteoenming@gmail.com>
+Subject: Singaporean Mr. Teo En Ming's Refugee Seeking Attempts,
+ In Search of a Substantially Better Life
+Date: Sat, 31 Aug 2019 08:27:39 +0800
+Message-ID: <CANnei0HbqysOC-fDdcU8DRaL+QuKTXYyO6v3j+3UzqCNFfZvyw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <F0E716F8-76EC-4315-933D-A547B52F1D27@fb.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,20 +16,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Song Liu <songliubraving@fb.com>, "Guilherme G. Piccoli" <gpiccoli@canonical.com>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Song Liu <liu.song.a23@gmail.com>, NeilBrown <neilb@suse.com>, linux-raid <linux-raid@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Jay Vosburgh <jay.vosburgh@canonical.com>
+To: dm-devel@redhat.com
+Cc: Turritopsis Dohrnii Teo En Ming <tdteoenming@gmail.com>
 List-Id: dm-devel.ids
 
-On 23/08/19 18:51, Song Liu wrote:
-> I guess md_is_broken() should return bool? Otherwise, looks good to me. 
+Subject: Singaporean Mr. Teo En Ming's Refugee Seeking Attempts, In
+Search of a Substantially Better Life
 
-Just an outsider's observation - if the function is actually checking
-whether a member is missing maybe it should read
+In reverse chronological order:
 
-   broken = md_member_is_missing();
+[1] Petition to the Government of Taiwan for Refugee Status, 5th
+August 2019 Monday
 
-That way the function says what it does, and the assignment says what
-you're doing with it.
+Photo #1: At the building of the National Immigration Agency, Ministry
+of the Interior, Taipei, Taiwan, 5th August 2019
 
-Cheers,
-Wol
+Photo #2: Queue ticket no. 515 at the National Immigration Agency,
+Ministry of the Interior, Taipei, Taiwan, 5th August 2019
+
+Photo #3: Submission of documents/petition to the National Immigration
+Agency, Ministry of the Interior, Taipei, Taiwan, 5th August 2019
+
+Photos #4 and #5: Acknowledgement of Receipt (no. 03142) for the
+submission of documents/petition from the National Immigration Agency,
+Ministry of the Interior, Taipei, Taiwan, 5th August 2019, 10:00 AM
+
+References:
+
+(a) Petition to the Government of Taiwan for Refugee Status, 5th
+August 2019 Monday (Blogspot blog)
+
+Link: https://tdtemcerts.blogspot.sg/2019/08/petition-to-government-of-taiwan-for.html
+
+(b) Petition to the Government of Taiwan for Refugee Status, 5th
+August 2019 Monday (Wordpress blog)
+
+Link: https://tdtemcerts.wordpress.com/2019/08/23/petition-to-the-government-of-taiwan-for-refugee-status/
+
+[2] Application for Refugee Status at the United Nations Refugee
+Agency, Bangkok, Thailand, 21st March 2017 Tuesday
+
+References:
+
+(a) [YOUTUBE] Vlog: The Road to Application for Refugee Status at the
+United Nations High Commissioner for Refugees, Bangkok
+
+Link: https://www.youtube.com/watch?v=utpuAa1eUNI
+
+YouTube video Published on March 22nd, 2017
+
+Views as at 31st August 2019: 593
+
+YouTube Channel: Turritopsis Dohrnii Teo En Ming
+Subscribers as at 31st August 2019: 2815
+Link: https://www.youtube.com/channel/UC__F2hzlqNEEGx-IXxQi3hA
+
+
+
+
+-----BEGIN EMAIL SIGNATURE-----
+
+The Gospel for all Targeted Individuals (TIs):
+
+[The New York Times] Microwave Weapons Are Prime Suspect in Ills of
+U.S. Embassy Workers
+
+Link: https://www.nytimes.com/2018/09/01/science/sonic-attack-cuba-microwave.html
+
+********************************************************************************************
+
+Singaporean Mr. Turritopsis Dohrnii Teo En Ming's Academic
+Qualifications as at 14 Feb 2019
+
+[1] https://tdtemcerts.wordpress.com/
+
+[2] https://tdtemcerts.blogspot.sg/
+
+[3] https://www.scribd.com/user/270125049/Teo-En-Ming
+
+-----END EMAIL SIGNATURE-----
