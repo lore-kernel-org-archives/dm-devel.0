@@ -1,12 +1,16 @@
-From: Turritopsis Dohrnii Teo En Ming <tdteoenming@gmail.com>
-Subject: Singaporean Mr. Teo En Ming's Refugee Seeking Attempts,
- In Search of a Substantially Better Life
-Date: Sat, 31 Aug 2019 08:27:39 +0800
-Message-ID: <CANnei0HbqysOC-fDdcU8DRaL+QuKTXYyO6v3j+3UzqCNFfZvyw@mail.gmail.com>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: Re: [RFC PATCH 1/1] dm: add clone target
+Date: Sat, 31 Aug 2019 12:55:50 +0300
+Message-ID: <d33e472f-1413-d311-5659-94d2709b3fe1@arrikto.com>
+References: <20190709141522.29606-1-ntsironis@arrikto.com>
+	<20190709141522.29606-2-ntsironis@arrikto.com>
+	<20190829161929.GA34247@lobo>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190829161929.GA34247@lobo>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,82 +20,209 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Turritopsis Dohrnii Teo En Ming <tdteoenming@gmail.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: vkoukis@arrikto.com, dm-devel@redhat.com, agk@redhat.com, iliastsi@arrikto.com
 List-Id: dm-devel.ids
 
-Subject: Singaporean Mr. Teo En Ming's Refugee Seeking Attempts, In
-Search of a Substantially Better Life
+On 8/29/19 7:19 PM, Mike Snitzer wrote:
+> On Tue, Jul 09 2019 at 10:15am -0400,
+> Nikos Tsironis <ntsironis@arrikto.com> wrote:
+> 
+>> Add the dm-clone target, which allows cloning of arbitrary block
+>> devices.
+>>
+>> dm-clone produces a one-to-one copy of an existing, read-only device
+>> (origin) into a writable device (clone): It presents a virtual block
+>> device which makes all data appear immediately, and redirects reads and
+>> writes accordingly.
+>>
+>> The main use case of dm-clone is to clone a potentially remote,
+>> high-latency, read-only, archival-type block device into a writable,
+>> fast, primary-type device for fast, low-latency I/O. The cloned device
+>> is visible/mountable immediately and the copy of the origin device to
+>> the clone device happens in the background, in parallel with user I/O.
+>>
+>> When the cloning completes, the dm-clone table can be removed altogether
+>> and be replaced, e.g., by a linear table, mapping directly to the clone
+>> device.
+>>
+>> For further information and examples of how to use dm-clone, please read
+>> Documentation/device-mapper/dm-clone.rst
+>>
+>> Suggested-by: Vangelis Koukis <vkoukis@arrikto.com>
+>> Co-developed-by: Ilias Tsitsimpis <iliastsi@arrikto.com>
+>> Signed-off-by: Ilias Tsitsimpis <iliastsi@arrikto.com>
+>> Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+>> ---
+>>  Documentation/device-mapper/dm-clone.rst |  334 +++++
+>>  drivers/md/Kconfig                       |   13 +
+>>  drivers/md/Makefile                      |    2 +
+>>  drivers/md/dm-clone-metadata.c           |  991 +++++++++++++
+>>  drivers/md/dm-clone-metadata.h           |  158 +++
+>>  drivers/md/dm-clone-target.c             | 2244 ++++++++++++++++++++++++++++++
+>>  6 files changed, 3742 insertions(+)
+>>  create mode 100644 Documentation/device-mapper/dm-clone.rst
+>>  create mode 100644 drivers/md/dm-clone-metadata.c
+>>  create mode 100644 drivers/md/dm-clone-metadata.h
+>>  create mode 100644 drivers/md/dm-clone-target.c
+>>
+>> diff --git a/Documentation/device-mapper/dm-clone.rst b/Documentation/device-mapper/dm-clone.rst
+>> new file mode 100644
+>> index 000000000000..948b7ce31ce3
+>> --- /dev/null
+>> +++ b/Documentation/device-mapper/dm-clone.rst
+>> @@ -0,0 +1,334 @@
+>> +.. SPDX-License-Identifier: GPL-2.0-only
+>> +
+>> +========
+>> +dm-clone
+>> +========
+>> +
+>> +Introduction
+>> +============
+>> +
+>> +dm-clone is a device mapper target which produces a one-to-one copy of an
+>> +existing, read-only device (origin) into a writable device (clone): It presents
+>> +a virtual block device which makes all data appear immediately, and redirects
+>> +reads and writes accordingly.
+>> +
+>> +The main use case of dm-clone is to clone a potentially remote, high-latency,
+>> +read-only, archival-type block device into a writable, fast, primary-type device
+>> +for fast, low-latency I/O. The cloned device is visible/mountable immediately
+>> +and the copy of the origin device to the clone device happens in the background,
+>> +in parallel with user I/O.
+>> +
+>> +For example, one could restore an application backup from a read-only copy,
+>> +accessible through a network storage protocol (NBD, Fibre Channel, iSCSI, AoE,
+>> +etc.), into a local SSD or NVMe device, and start using the device immediately,
+>> +without waiting for the restore to complete.
+>> +
+>> +When the cloning completes, the dm-clone table can be removed altogether and be
+>> +replaced, e.g., by a linear table, mapping directly to the clone device.
+>> +
+>> +The dm-clone target reuses the metadata library used by the thin-provisioning
+>> +target.
+>> +
+>> +Glossary
+>> +========
+>> +
+>> +   Region
+>> +     A fixed sized block. The unit of hydration.
+>> +
+>> +   Hydration
+>> +     The process of filling a region of the clone device with data from the same
+>> +     region of the origin device, i.e., copying the region from the origin to
+>> +     the clone device.
+>> +
+>> +Once a region gets hydrated we redirect all I/O regarding it to the clone
+>> +device.
+> 
+> There is a lot of awkward jargon that you're mixing into this target.
+> 
+> Why "region" and not "block"?  I can let "region" go but please be
+> consistent (don't fall back to calling a region a block anywhere).
+> 
 
-In reverse chronological order:
+I used the term "region" to avoid confusion with a device's
+logical/physical block size. A "region" is the unit of copying from the
+source to the destination device. dm-raid, also, uses the term "region".
 
-[1] Petition to the Government of Taiwan for Refugee Status, 5th
-August 2019 Monday
+But you are right that I should be consistent and never fall back to
+calling it a block. I will fix this in v2.
 
-Photo #1: At the building of the National Immigration Agency, Ministry
-of the Interior, Taipei, Taiwan, 5th August 2019
+> Why "hydration"?  Just needed to call it _something_?  I can let it go
+> as long as it is a construct internal to the target's implementation.  I
+> see no point making consumers of this target, that copies data from a
+> source to destination, have to call something "hydration".
+> 
 
-Photo #2: Queue ticket no. 515 at the National Immigration Agency,
-Ministry of the Interior, Taipei, Taiwan, 5th August 2019
+Hydration refers to the process of filling an object, a region in the
+case of dm-clone, with data from a data source, which is the source
+device in our case.
 
-Photo #3: Submission of documents/petition to the National Immigration
-Agency, Ministry of the Interior, Taipei, Taiwan, 5th August 2019
+Please see the below links for a more detailed definition of the term:
 
-Photos #4 and #5: Acknowledgement of Receipt (no. 03142) for the
-submission of documents/petition from the National Immigration Agency,
-Ministry of the Interior, Taipei, Taiwan, 5th August 2019, 10:00 AM
+https://stackoverflow.com/questions/6991135/what-does-it-mean-to-hydrate-an-object/20787106#20787106
+https://www.snaplogic.com/glossary/data-hydration
 
-References:
+I think the term "hydration" is fit to what dm-clone is doing, but if
+you insist I can change it to "background copying" both in the user
+facing documentation and internally.
 
-(a) Petition to the Government of Taiwan for Refugee Status, 5th
-August 2019 Monday (Blogspot blog)
+Please let me know what you think.
 
-Link: https://tdtemcerts.blogspot.sg/2019/08/petition-to-government-of-taiwan-for.html
+> And while we're at it why "origin" device instead of "source"?
+> Why "clone" device instead of "dest" or "destination"?
+> 
 
-(b) Petition to the Government of Taiwan for Refugee Status, 5th
-August 2019 Monday (Wordpress blog)
+You are right. The terms "source" and "destination" are better and less
+confusing than "origin" and "clone". I will rename both of these to
+"source" and "destination" in v2.
 
-Link: https://tdtemcerts.wordpress.com/2019/08/23/petition-to-the-government-of-taiwan-for-refugee-status/
+> I can give the target name "dm-clone" a pass.. but dm-copy is less
+> opaque IMHO.. I could go either way on those.
+> 
 
-[2] Application for Refugee Status at the United Nations Refugee
-Agency, Bangkok, Thailand, 21st March 2017 Tuesday
+I think the term "clone" describes the functionality of the target
+better than the term "copy". Even if we disable the background copying,
+the target exposes a "clone" of the source device, which can be used for
+I/O right away, even if no regions have been cloned/copied to the
+destination device yet.
 
-References:
+Moreover, the term "clone" describes better the intended use case of the
+target, i.e., to clone a read-only snapshot to a writable block device.
 
-(a) [YOUTUBE] Vlog: The Road to Application for Refugee Status at the
-United Nations High Commissioner for Refugees, Bangkok
+> 
+>> +Background Hydration
+>> +--------------------
+>> +
+>> +dm-clone copies continuously from the origin to the clone device, until all of
+>> +the device has been copied.
+>> +
+>> +Copying data from the origin to the clone device uses bandwidth. The user can
+>> +set a throttle to prevent more than a certain amount of copying occurring at any
+>> +one time. Moreover, dm-clone takes into account user I/O traffic going to the
+>> +devices and pauses the background hydration when there is I/O in-flight.
+>> +
+>> +A message `hydration_threshold <#sectors>` can be used to set the maximum number
+>> +of sectors being copied, the default being 2048 sectors (1MB).
+> 
+> Think this should really be expressed in multiples of a region, e.g.:
+> copy_threshold <# regions> (or clone_threshold)
+> 
 
-Link: https://www.youtube.com/watch?v=utpuAa1eUNI
+Ack, I will fix it in v2.
 
-YouTube video Published on March 22nd, 2017
+>> +dm-clone employs dm-kcopyd for copying portions of the origin device to the
+>> +clone device. By default, we issue copy requests of size equal to the region
+>> +size. A message `hydration_block_size <#sectors>` can be used to tune the size
+>> +of these copy requests. Increasing the hydration block size results in dm-clone
+>> +trying to batch together contiguous regions, so we copy the data in blocks of
+>> +this size.
+> 
+> It is awkward to have 'hydration_block_size' vs target ctr
+> provided "region size".  copy_batch_size <# regions>?  (or
+> clone_batch_size)?
+> 
 
-Views as at 31st August 2019: 593
+You are right, I will fix this also in v2.
 
-YouTube Channel: Turritopsis Dohrnii Teo En Ming
-Subscribers as at 31st August 2019: 2815
-Link: https://www.youtube.com/channel/UC__F2hzlqNEEGx-IXxQi3hA
+> Please take care of the external facing documentation to not use
+> "hydration".  Of all the naming I dislike it the most.. sorry.
+> 
+> Also, please fold the following patch in before making any edits to the
+> .c files for v2.
+> 
 
+Yes, of course. Thank you for the patch.
 
+Nikos
 
-
------BEGIN EMAIL SIGNATURE-----
-
-The Gospel for all Targeted Individuals (TIs):
-
-[The New York Times] Microwave Weapons Are Prime Suspect in Ills of
-U.S. Embassy Workers
-
-Link: https://www.nytimes.com/2018/09/01/science/sonic-attack-cuba-microwave.html
-
-********************************************************************************************
-
-Singaporean Mr. Turritopsis Dohrnii Teo En Ming's Academic
-Qualifications as at 14 Feb 2019
-
-[1] https://tdtemcerts.wordpress.com/
-
-[2] https://tdtemcerts.blogspot.sg/
-
-[3] https://www.scribd.com/user/270125049/Teo-En-Ming
-
------END EMAIL SIGNATURE-----
+> This review pass is the most trivial of the high level review, I'll be
+> drilling in on other aspects of the implementation now.  But I suspect
+> you've done a solid job with those details (based on what I've seen so
+> far).
+> 
+> Thanks,
+> Mike
+> 
