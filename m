@@ -1,52 +1,75 @@
-From: Karel Zak <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] blkid: retport block size of a filesystem
-Date: Mon, 2 Sep 2019 12:59:09 +0200
-Message-ID: <20190902105909.ah4pi4nwjefygskd@10.255.255.10>
-References: <alpine.LRH.2.02.1908291142470.17653@file01.intranet.prod.int.rdu2.redhat.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: Kernel error at a LVM snapshot creation
+Date: Mon, 2 Sep 2019 16:01:20 +0200
+Message-ID: <fe6b92b3-abec-6c07-d1b6-a358094ec96f@redhat.com>
+References: <20190829081514.29660-1-yuyufen@huawei.com>
+	<877e6vf45p.fsf@notabene.neil.brown.name>
+	<07ffeca5-6b69-0602-0981-2221cfb682af@huawei.com>
+	<8a1c4146-fdc5-138d-af2d-a77b606b59e2@gusev.co>
+	<1cd9447e-9d84-e7f3-3b5f-c3064537e6e3@redhat.com>
+	<24771f1a-7b0c-d63f-1df1-3349c5c0f6c6@gusev.co>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1908291142470.17653-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
-Sender: util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Patrick Steinhardt <ps-0xjaXlKx8rE@public.gmane.org>, util-linux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mike Snitzer <msnitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Heinz Mauelshagen <heinzm-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lvm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <24771f1a-7b0c-d63f-1df1-3349c5c0f6c6@gusev.co>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Dmitrij Gusev <dmitrij@gusev.co>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Aug 29, 2019 at 11:52:13AM -0400, Mikulas Patocka wrote:
->  libblkid/src/superblocks/apfs.c        |    2 
->  libblkid/src/superblocks/befs.c        |    3 +
->  libblkid/src/superblocks/btrfs.c       |    1 
->  libblkid/src/superblocks/exfat.c       |    2 
->  libblkid/src/superblocks/exfs.c        |    4 +
->  libblkid/src/superblocks/ext.c         |    3 +
->  libblkid/src/superblocks/f2fs.c        |    2 
->  libblkid/src/superblocks/gfs.c         |    1 
->  libblkid/src/superblocks/hfs.c         |    2 
->  libblkid/src/superblocks/hpfs.c        |    1 
->  libblkid/src/superblocks/iso9660.c     |    2 
->  libblkid/src/superblocks/jfs.c         |    1 
->  libblkid/src/superblocks/minix.c       |    5 ++
->  libblkid/src/superblocks/nilfs.c       |    3 +
->  libblkid/src/superblocks/ntfs.c        |    2 
->  libblkid/src/superblocks/ocfs.c        |    3 +
->  libblkid/src/superblocks/reiserfs.c    |   10 +++-
->  libblkid/src/superblocks/romfs.c       |    3 +
->  libblkid/src/superblocks/squashfs.c    |    2 
->  libblkid/src/superblocks/superblocks.c |    7 +++
->  libblkid/src/superblocks/superblocks.h |    2 
->  libblkid/src/superblocks/udf.c         |    2 
->  libblkid/src/superblocks/ufs.c         |    5 ++
->  libblkid/src/superblocks/vfat.c        |    2 
->  libblkid/src/superblocks/vxfs.c        |   18 +++++++
->  libblkid/src/superblocks/xfs.c         |    1 
->  libblkid/src/superblocks/zfs.c         |   76 ++++++++++++++++++++++++---------
->  27 files changed, 144 insertions(+), 21 deletions(-)
+Dne 02. 09. 19 v 15:58 Dmitrij Gusev napsal(a):
+> Hello.
+> 
+> Please find answers below.
+> Thank you.
+> Dmitrij
+> 
+> On 2019-09-02 11:32, Zdenek Kabelac wrote:
+>> Dne 02. 09. 19 v 3:04 Dmitrij Gusev napsal(a):
+>>> Hello.
+>>>
+>>> I get a kernel error every time I create LVM snapshot - at the creation and 
+>>> at boot time, though the snapshot itself is working properly.
+>>>
+>>> Linux nexus 4.19.69 #2 SMP Thu Aug 29 16:33:35 CDT 2019 x86_64 Intel(R) 
+>>> Xeon(R) E-2174G CPU @ 3.80GHz GenuineIntel GNU/Linux
+>>
+>> Hi
+>>
+>>
+>> This is likely not a kernel error.
+>>
+>> In which way are you creating your snapshot ?
+>> Seems like it's made read-only ?
+> 
+> Yes, I create read-only snapshot in this case.
+> 
+> cmd line: lvcreate -pr --size $size --snapshot -n $snap $lv $pv
+> 
+>>
+>> What version of lvm2 are you using ?
+>> (there used to be bug when creating COW as read-only device)
+> 
+> I use lvm2 format.
+> 
+> LVM utility version: lvm2-2.02.154 (Slackware 14.2).
+> 
 
-Applied (with two small fixes), thanks!
 
-    Karel
+Yep - so please try to use lvm2 version >= 2.02.178
+(contains fix for COW to be read-write even for read-only snapshots)
 
--- 
- Karel Zak  <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
- http://karelzak.blogspot.com
+
+Regards
+
+Zdenek
