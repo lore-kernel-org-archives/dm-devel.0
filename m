@@ -1,49 +1,38 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: Kernel error at a LVM snapshot creation
-Date: Mon, 2 Sep 2019 10:32:28 +0200
-Message-ID: <1cd9447e-9d84-e7f3-3b5f-c3064537e6e3@redhat.com>
-References: <20190829081514.29660-1-yuyufen@huawei.com>
-	<877e6vf45p.fsf@notabene.neil.brown.name>
-	<07ffeca5-6b69-0602-0981-2221cfb682af@huawei.com>
-	<8a1c4146-fdc5-138d-af2d-a77b606b59e2@gusev.co>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8a1c4146-fdc5-138d-af2d-a77b606b59e2@gusev.co>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Dmitrij Gusev <dmitrij@gusev.co>, device-mapper development <dm-devel@redhat.com>
+From: Huaisheng Ye <yehs2007@zoho.com>
+Subject: [PATCH] dm writecache: skip writecache_wait for pmem mode
+Date: Mon,  2 Sep 2019 18:04:50 +0800
+Message-ID: <20190902100450.10600-1-yehs2007@zoho.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: mpatocka@redhat.com, snitzer@redhat.com, agk@redhat.com
+Cc: prarit@redhat.com, tyu1@lenovo.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Huaisheng Ye <yehs1@lenovo.com>
 List-Id: dm-devel.ids
 
-Dne 02. 09. 19 v 3:04 Dmitrij Gusev napsal(a):
-> Hello.
-> 
-> I get a kernel error every time I create LVM snapshot - at the creation and at 
-> boot time, though the snapshot itself is working properly.
-> 
-> Linux nexus 4.19.69 #2 SMP Thu Aug 29 16:33:35 CDT 2019 x86_64 Intel(R) 
-> Xeon(R) E-2174G CPU @ 3.80GHz GenuineIntel GNU/Linux
+From: Huaisheng Ye <yehs1@lenovo.com>
 
-Hi
+The array bio_in_progress[2] only have chance to be increased and
+decreased with ssd mode. For pmem mode, they are not involved at all.
+So skip writecache_wait_for_ios in writecache_flush for pmem.
 
+Suggested-by: Doris Yu <tyu1@lenovo.com>
+Signed-off-by: Huaisheng Ye <yehs1@lenovo.com>
+---
+ drivers/md/dm-writecache.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-This is likely not a kernel error.
-
-In which way are you creating your snapshot ?
-Seems like it's made read-only ?
-
-What version of lvm2 are you using ?
-(there used to be bug when creating COW as read-only device)
-
-Regard
-
-Zdenek
+diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+index c481947..d06b8aa 100644
+--- a/drivers/md/dm-writecache.c
++++ b/drivers/md/dm-writecache.c
+@@ -726,7 +726,8 @@ static void writecache_flush(struct dm_writecache *wc)
+ 	}
+ 	writecache_commit_flushed(wc);
+ 
+-	writecache_wait_for_ios(wc, WRITE);
++	if (!WC_MODE_PMEM(wc))
++		writecache_wait_for_ios(wc, WRITE);
+ 
+ 	wc->seq_count++;
+ 	pmem_assign(sb(wc)->seq_count, cpu_to_le64(wc->seq_count));
+-- 
+1.8.3.1
