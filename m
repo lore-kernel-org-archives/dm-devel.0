@@ -1,38 +1,52 @@
-From: Huaisheng Ye <yehs2007@zoho.com>
-Subject: [PATCH] dm writecache: skip writecache_wait for pmem mode
-Date: Mon,  2 Sep 2019 18:04:50 +0800
-Message-ID: <20190902100450.10600-1-yehs2007@zoho.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: mpatocka@redhat.com, snitzer@redhat.com, agk@redhat.com
-Cc: prarit@redhat.com, tyu1@lenovo.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Huaisheng Ye <yehs1@lenovo.com>
+From: Karel Zak <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] blkid: retport block size of a filesystem
+Date: Mon, 2 Sep 2019 12:59:09 +0200
+Message-ID: <20190902105909.ah4pi4nwjefygskd@10.255.255.10>
+References: <alpine.LRH.2.02.1908291142470.17653@file01.intranet.prod.int.rdu2.redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1908291142470.17653-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
+Sender: util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Patrick Steinhardt <ps-0xjaXlKx8rE@public.gmane.org>, util-linux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mike Snitzer <msnitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Heinz Mauelshagen <heinzm-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lvm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-From: Huaisheng Ye <yehs1@lenovo.com>
+On Thu, Aug 29, 2019 at 11:52:13AM -0400, Mikulas Patocka wrote:
+>  libblkid/src/superblocks/apfs.c        |    2 
+>  libblkid/src/superblocks/befs.c        |    3 +
+>  libblkid/src/superblocks/btrfs.c       |    1 
+>  libblkid/src/superblocks/exfat.c       |    2 
+>  libblkid/src/superblocks/exfs.c        |    4 +
+>  libblkid/src/superblocks/ext.c         |    3 +
+>  libblkid/src/superblocks/f2fs.c        |    2 
+>  libblkid/src/superblocks/gfs.c         |    1 
+>  libblkid/src/superblocks/hfs.c         |    2 
+>  libblkid/src/superblocks/hpfs.c        |    1 
+>  libblkid/src/superblocks/iso9660.c     |    2 
+>  libblkid/src/superblocks/jfs.c         |    1 
+>  libblkid/src/superblocks/minix.c       |    5 ++
+>  libblkid/src/superblocks/nilfs.c       |    3 +
+>  libblkid/src/superblocks/ntfs.c        |    2 
+>  libblkid/src/superblocks/ocfs.c        |    3 +
+>  libblkid/src/superblocks/reiserfs.c    |   10 +++-
+>  libblkid/src/superblocks/romfs.c       |    3 +
+>  libblkid/src/superblocks/squashfs.c    |    2 
+>  libblkid/src/superblocks/superblocks.c |    7 +++
+>  libblkid/src/superblocks/superblocks.h |    2 
+>  libblkid/src/superblocks/udf.c         |    2 
+>  libblkid/src/superblocks/ufs.c         |    5 ++
+>  libblkid/src/superblocks/vfat.c        |    2 
+>  libblkid/src/superblocks/vxfs.c        |   18 +++++++
+>  libblkid/src/superblocks/xfs.c         |    1 
+>  libblkid/src/superblocks/zfs.c         |   76 ++++++++++++++++++++++++---------
+>  27 files changed, 144 insertions(+), 21 deletions(-)
 
-The array bio_in_progress[2] only have chance to be increased and
-decreased with ssd mode. For pmem mode, they are not involved at all.
-So skip writecache_wait_for_ios in writecache_flush for pmem.
+Applied (with two small fixes), thanks!
 
-Suggested-by: Doris Yu <tyu1@lenovo.com>
-Signed-off-by: Huaisheng Ye <yehs1@lenovo.com>
----
- drivers/md/dm-writecache.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+    Karel
 
-diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-index c481947..d06b8aa 100644
---- a/drivers/md/dm-writecache.c
-+++ b/drivers/md/dm-writecache.c
-@@ -726,7 +726,8 @@ static void writecache_flush(struct dm_writecache *wc)
- 	}
- 	writecache_commit_flushed(wc);
- 
--	writecache_wait_for_ios(wc, WRITE);
-+	if (!WC_MODE_PMEM(wc))
-+		writecache_wait_for_ios(wc, WRITE);
- 
- 	wc->seq_count++;
- 	pmem_assign(sb(wc)->seq_count, cpu_to_le64(wc->seq_count));
 -- 
-1.8.3.1
+ Karel Zak  <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+ http://karelzak.blogspot.com
