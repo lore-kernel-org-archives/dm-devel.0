@@ -1,37 +1,54 @@
 From: Valentin Schneider <valentin.schneider@arm.com>
 Subject: Re: [PATCH] sched: make struct task_struct::state 32-bit
-Date: Tue, 3 Sep 2019 17:31:46 +0100
-Message-ID: <64003dcd-d954-b76d-856a-214ff11ac000@arm.com>
+Date: Tue, 3 Sep 2019 18:29:06 +0100
+Message-ID: <d8ad0be1-4ed7-df74-d415-2b1c9a44bac7@arm.com>
 References: <20190902210558.GA23013@avx2>
- <7b94004e-4a65-462b-cd6b-5cbd23d607bf@arm.com> <20190903162303.GA2173@avx2>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190903162303.GA2173@avx2>
+In-Reply-To: <20190902210558.GA23013@avx2>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: mingo@redhat.com, peterz@infradead.org, linux-kernel@vger.kernel.org, rcu@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, aarcange@redhat.com
+To: Alexey Dobriyan <adobriyan@gmail.com>, mingo@redhat.com, peterz@infradead.org
+Cc: linux-kernel@vger.kernel.org, rcu@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, aarcange@redhat.com
 List-Id: dm-devel.ids
 
-
-
-On 03/09/2019 17:23, Alexey Dobriyan wrote:
-> On Tue, Sep 03, 2019 at 12:02:38AM +0100, Valentin Schneider wrote:
->> struct task_struct {
->> 	struct thread_info         thread_info;          /*     0    24 */
->> 	volatile int               state;                /*    24     4 */
->>
->> 	/* XXX 4 bytes hole, try to pack */
->>
->> 	void *                     stack;                /*    32     8 */
->>
->> Though seeing as this is also the boundary of the randomized layout we can't
->> really do much better without changing the boundary itself. So much for
->> cacheline use :/
+On 02/09/2019 22:05, Alexey Dobriyan wrote:
+> 32-bit accesses are shorter than 64-bit accesses on x86_64.
+> Nothing uses 64-bitness of ->state.
 > 
-> Cacheline use of task_struct is pretty hopeless because of all the ifdefs.
+> Space savings are ~2KB on F30 kernel config.
+> 
+> Signed-off-by: Alexey Dobriyan <adobriyan@gmail.com>
+> ---
+> 
+>  arch/ia64/kernel/perfmon.c   |    4 ++--
+>  block/blk-mq.c               |    2 +-
+>  drivers/md/dm.c              |    4 ++--
+>  fs/userfaultfd.c             |    2 +-
+>  include/linux/sched.h        |    6 +++---
+>  include/linux/sched/debug.h  |    2 +-
+>  include/linux/sched/signal.h |    2 +-
+>  kernel/freezer.c             |    2 +-
+>  kernel/kthread.c             |    4 ++--
+>  kernel/locking/mutex.c       |    6 +++---
+>  kernel/locking/semaphore.c   |    2 +-
+>  kernel/rcu/rcutorture.c      |    4 ++--
+>  kernel/rcu/tree_stall.h      |    6 +++---
+>  kernel/sched/core.c          |    8 ++++----
+>  lib/syscall.c                |    2 +-
+>  15 files changed, 28 insertions(+), 28 deletions(-)
 > 
 
-Yeah I figured, then had a minute of silence for those forsaken bytes.
+It looks like you missed a few places. There's a long prev_state in
+sched/core.c::finish_task_switch() for instance.
+
+I suppose that's where coccinelle oughta help but I'm really not fluent
+in that. Is there a way to make it match p.state accesses with p task_struct?
+And if so, can we make it change the type of the variable being read from
+/ written to?
+
+How did you come up with this changeset, did you pickaxe for some regexp?
+
+[...]
