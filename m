@@ -1,16 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v13 5/6] md: dm-crypt: switch to ESSIV crypto
-	API template
-Date: Tue, 3 Sep 2019 14:55:37 -0400
-Message-ID: <20190903185537.GC13472@redhat.com>
+Subject: Re: [PATCH v13 6/6] md: dm-crypt: omit parsing of the
+ encapsulated cipher
+Date: Tue, 3 Sep 2019 14:58:28 -0400
+Message-ID: <20190903185827.GD13472@redhat.com>
 References: <20190819141738.1231-1-ard.biesheuvel@linaro.org>
-	<20190819141738.1231-6-ard.biesheuvel@linaro.org>
+	<20190819141738.1231-7-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20190819141738.1231-6-ard.biesheuvel@linaro.org>
+In-Reply-To: <20190819141738.1231-7-ard.biesheuvel@linaro.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,24 +27,19 @@ List-Id: dm-devel.ids
 On Mon, Aug 19 2019 at 10:17am -0400,
 Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
 
-> Replace the explicit ESSIV handling in the dm-crypt driver with calls
-> into the crypto API, which now possesses the capability to perform
-> this processing within the crypto subsystem.
-> 
-> Note that we reorder the AEAD cipher_api string parsing with the TFM
-> instantiation: this is needed because cipher_api is mangled by the
-> ESSIV handling, and throws off the parsing of "authenc(" otherwise.
+> Only the ESSIV IV generation mode used to use cc->cipher so it could
+> instantiate the bare cipher used to encrypt the IV. However, this is
+> now taken care of by the ESSIV template, and so no users of cc->cipher
+> remain. So remove it altogether.
 > 
 > Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 
-I really like to see this type of factoring out to the crypto API;
-nicely done.
-
 Acked-by: Mike Snitzer <snitzer@redhat.com>
 
-Herbert, please feel free to pull this, and the next 6/6 patch, into
-your crypto tree for 5.4.  I see no need to complicate matters by me
-having to rebase my dm-5.4 branch ontop of the crypto tree, etc.
+Might be wise to bump the dm-crypt target's version number (from
+{1, 19, 0} to {1, 20, 0}) at the end of this patch too though...
+
+But again, Herbert please feel free to pull this into your 5.4 branch.
 
 Thanks,
 Mike
