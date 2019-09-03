@@ -1,42 +1,50 @@
-From: Alexey Dobriyan <adobriyan@gmail.com>
-Subject: Re: [PATCH] sched: make struct task_struct::state 32-bit
-Date: Tue, 3 Sep 2019 21:19:20 +0300
-Message-ID: <20190903181920.GA22358@avx2>
-References: <20190902210558.GA23013@avx2>
- <d8ad0be1-4ed7-df74-d415-2b1c9a44bac7@arm.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v13 5/6] md: dm-crypt: switch to ESSIV crypto
+	API template
+Date: Tue, 3 Sep 2019 14:55:37 -0400
+Message-ID: <20190903185537.GC13472@redhat.com>
+References: <20190819141738.1231-1-ard.biesheuvel@linaro.org>
+	<20190819141738.1231-6-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <d8ad0be1-4ed7-df74-d415-2b1c9a44bac7@arm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Valentin Schneider <valentin.schneider@arm.com>
-Cc: mingo@redhat.com, peterz@infradead.org, linux-kernel@vger.kernel.org, rcu@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, aarcange@redhat.com
+In-Reply-To: <20190819141738.1231-6-ard.biesheuvel@linaro.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, dm-devel@redhat.com, Gilad Ben-Yossef <gilad@benyossef.com>, linux-fscrypt@vger.kernel.org, linux-crypto@vger.kernel.org, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-On Tue, Sep 03, 2019 at 06:29:06PM +0100, Valentin Schneider wrote:
-> On 02/09/2019 22:05, Alexey Dobriyan wrote:
-> > 32-bit accesses are shorter than 64-bit accesses on x86_64.
-> > Nothing uses 64-bitness of ->state.
+On Mon, Aug 19 2019 at 10:17am -0400,
+Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
 
-> It looks like you missed a few places. There's a long prev_state in
-> sched/core.c::finish_task_switch() for instance.
+> Replace the explicit ESSIV handling in the dm-crypt driver with calls
+> into the crypto API, which now possesses the capability to perform
+> this processing within the crypto subsystem.
 > 
-> I suppose that's where coccinelle oughta help but I'm really not fluent
-> in that. Is there a way to make it match p.state accesses with p task_struct?
-> And if so, can we make it change the type of the variable being read from
-> / written to?
+> Note that we reorder the AEAD cipher_api string parsing with the TFM
+> instantiation: this is needed because cipher_api is mangled by the
+> ESSIV handling, and throws off the parsing of "authenc(" otherwise.
+> 
+> Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 
-Coccinelle is interesting: basic
+I really like to see this type of factoring out to the crypto API;
+nicely done.
 
-	- foo
-	+ bar
+Acked-by: Mike Snitzer <snitzer@redhat.com>
 
-doesn't find "foo" in function arguments.
+Herbert, please feel free to pull this, and the next 6/6 patch, into
+your crypto tree for 5.4.  I see no need to complicate matters by me
+having to rebase my dm-5.4 branch ontop of the crypto tree, etc.
 
-I'm scared of coccinelle.
-
-> How did you come up with this changeset, did you pickaxe for some regexp?
-
-No, manually, backtracking up to the call chain.
-Maybe I missed a few places.
+Thanks,
+Mike
