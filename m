@@ -1,73 +1,108 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v13 5/6] md: dm-crypt: switch to ESSIV crypto
-	API template
-Date: Tue, 3 Sep 2019 16:51:26 -0400
-Message-ID: <20190903205126.GA13753@redhat.com>
-References: <20190819141738.1231-1-ard.biesheuvel@linaro.org>
-	<20190819141738.1231-6-ard.biesheuvel@linaro.org>
-	<20190903185537.GC13472@redhat.com>
-	<CAKv+Gu8wr3HnP7uVDAOY=o54dWVkPoWm5V43LU_QNVMK_Cc2GA@mail.gmail.com>
+From: Valentin Schneider <valentin.schneider@arm.com>
+Subject: Re: [PATCH] sched: make struct task_struct::state 32-bit
+Date: Tue, 3 Sep 2019 22:51:30 +0100
+Message-ID: <92ead22e-0580-c720-1a29-7db79d76f7d7@arm.com>
+References: <20190902210558.GA23013@avx2>
+ <d8ad0be1-4ed7-df74-d415-2b1c9a44bac7@arm.com> <20190903181920.GA22358@avx2>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAKv+Gu8wr3HnP7uVDAOY=o54dWVkPoWm5V43LU_QNVMK_Cc2GA@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, device-mapper development <dm-devel@redhat.com>, Gilad Ben-Yossef <gilad@benyossef.com>, linux-fscrypt@vger.kernel.org, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190903181920.GA22358@avx2>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexey Dobriyan <adobriyan@gmail.com>
+Cc: mingo@redhat.com, peterz@infradead.org, linux-kernel@vger.kernel.org, rcu@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, aarcange@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Sep 03 2019 at  3:16pm -0400,
-Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
-
-> On Tue, 3 Sep 2019 at 11:55, Mike Snitzer <snitzer@redhat.com> wrote:
-> >
-> > On Mon, Aug 19 2019 at 10:17am -0400,
-> > Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
-> >
-> > > Replace the explicit ESSIV handling in the dm-crypt driver with calls
-> > > into the crypto API, which now possesses the capability to perform
-> > > this processing within the crypto subsystem.
-> > >
-> > > Note that we reorder the AEAD cipher_api string parsing with the TFM
-> > > instantiation: this is needed because cipher_api is mangled by the
-> > > ESSIV handling, and throws off the parsing of "authenc(" otherwise.
-> > >
-> > > Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-> >
-> > I really like to see this type of factoring out to the crypto API;
-> > nicely done.
-> >
-> > Acked-by: Mike Snitzer <snitzer@redhat.com>
-> >
-> > Herbert, please feel free to pull this, and the next 6/6 patch, into
-> > your crypto tree for 5.4.  I see no need to complicate matters by me
-> > having to rebase my dm-5.4 branch ontop of the crypto tree, etc.
-> >
+On 03/09/2019 19:19, Alexey Dobriyan wrote:
+> On Tue, Sep 03, 2019 at 06:29:06PM +0100, Valentin Schneider wrote:
+>> On 02/09/2019 22:05, Alexey Dobriyan wrote:
+>>> 32-bit accesses are shorter than 64-bit accesses on x86_64.
+>>> Nothing uses 64-bitness of ->state.
 > 
-> Thanks Mike.
+>> It looks like you missed a few places. There's a long prev_state in
+>> sched/core.c::finish_task_switch() for instance.
+>>
+>> I suppose that's where coccinelle oughta help but I'm really not fluent
+>> in that. Is there a way to make it match p.state accesses with p task_struct?
+>> And if so, can we make it change the type of the variable being read from
+>> / written to?
 > 
-> There is no need to rebase your branch - there is only a single
-> dependency, which is the essiv template itself, and the patch that
-> adds that (#1 in this series) was acked by Herbert, specifically so
-> that it can be taken via another tree. The crypto tree has no
-> interdependencies with this template, and the other patches in this
-> series are not required for essiv in dm-crypt.
+> Coccinelle is interesting: basic
+> 
+> 	- foo
+> 	+ bar
+> 
+> doesn't find "foo" in function arguments.
+> 
+> I'm scared of coccinelle.> 
 
-Ah ok, thanks for clarifying.
+So am I, but I'm even more scared of having no other way of verifying this
+than doing it "by hand". It's nothing critical here - just some variables
+that will remain long instead of being int, but I'd like to have some way to
+verify the change. A coccinelle script would be great, even if it misses
+some places, I can at least have some trust in it.
 
-I just picked up patches 1, 5, and 6 and staged them in linux-next via
-dm-5.4, please see:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-5.4
+If I have to verify the whole tree by hand, even with grep/ag, I don't trust
+I'll do it right.
 
-Thanks,
-Mike
+
+I gave Coccinelle a try, I think I got something for in-function variables:
+
+---
+@state_var@
+struct task_struct *p;
+identifier prev_state;
+@@
+prev_state = p->state
+
+@@
+identifier state_var.prev_state;
+@@
+- long prev_state;
++ int prev_state;
+---
+
+I tried something for function parameters, which seems to be feasible
+according to [1], but couldn't get it to work (yet). Here's what I have
+so far:
+
+---
+@func_param@
+identifier func;
+identifier p;
+identifier state;
+identifier mask;
+@@
+
+func(struct task_struct *p, const struct cpumask *mask, long state)
+{
+...
+}
+
+@@
+identifier func_param.func;
+identifier func_param.state;
+expression E1;
+expression E2;
+@@
+
+func(E1,
+- long state,
++ int state,
+E2)
+---
+
+(it should match against kernel/kthread.c::__kthread_bind_mask() but it
+complains about me not knowing how to write coccinelle patches).
+
+With a mix of these we might get somewhere...
+
+[1]: http://coccinelle.lip6.fr/docs/main_grammar016.html
+
+>> How did you come up with this changeset, did you pickaxe for some regexp?
+> 
+> No, manually, backtracking up to the call chain.
+> Maybe I missed a few places.
+> 
