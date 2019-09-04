@@ -1,60 +1,54 @@
-From: Valentin Schneider <valentin.schneider@arm.com>
-Subject: Re: [PATCH] sched: make struct task_struct::state 32-bit
-Date: Wed, 4 Sep 2019 11:25:14 +0100
-Message-ID: <d46b479b-247b-a291-75f9-b60dd7114440@arm.com>
-References: <20190902210558.GA23013@avx2>
- <d8ad0be1-4ed7-df74-d415-2b1c9a44bac7@arm.com> <20190903181920.GA22358@avx2>
- <651c419e45e043e9be8d0877b5a5406d@AcuMS.aculab.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: [PATCH v13 6/6] md: dm-crypt: omit parsing of the
+ encapsulated cipher
+Date: Wed, 4 Sep 2019 13:01:29 +0200
+Message-ID: <403192f0-d1c4-0c60-5af1-7dee8516d629@gmail.com>
+References: <20190819141738.1231-1-ard.biesheuvel@linaro.org>
+	<20190819141738.1231-7-ard.biesheuvel@linaro.org>
+	<20190903185827.GD13472@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <651c419e45e043e9be8d0877b5a5406d@AcuMS.aculab.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190903185827.GD13472@redhat.com>
 Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Laight <David.Laight@ACULAB.COM>, 'Alexey Dobriyan' <adobriyan@gmail.com>
-Cc: "mingo@redhat.com" <mingo@redhat.com>, "peterz@infradead.org" <peterz@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "rcu@vger.kernel.org" <rcu@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "aarcange@redhat.com" <aarcange@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, Eric Biggers <ebiggers@google.com>, dm-devel@redhat.com, Gilad Ben-Yossef <gilad@benyossef.com>, linux-fscrypt@vger.kernel.org, linux-crypto@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 04/09/2019 10:43, David Laight wrote:
-> From: Alexey Dobriyan
->> Sent: 03 September 2019 19:19
-> ...
->>> How did you come up with this changeset, did you pickaxe for some regexp?
+On 03/09/2019 20:58, Mike Snitzer wrote:
+> On Mon, Aug 19 2019 at 10:17am -0400,
+> Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
+> 
+>> Only the ESSIV IV generation mode used to use cc->cipher so it could
+>> instantiate the bare cipher used to encrypt the IV. However, this is
+>> now taken care of by the ESSIV template, and so no users of cc->cipher
+>> remain. So remove it altogether.
 >>
->> No, manually, backtracking up to the call chain.
->> Maybe I missed a few places.
+>> Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 > 
-> Renaming the structure field and getting the compiler to find all the uses can help.
+> Acked-by: Mike Snitzer <snitzer@redhat.com>
 > 
-> 	David
-> 
+> Might be wise to bump the dm-crypt target's version number (from
+> {1, 19, 0} to {1, 20, 0}) at the end of this patch too though...
 
-It's a good idea but sadly doesn't cover whatever the config doesn't
-compile. A safer starting point could be
+The function should be exactly the same, dependencies on needed modules are set.
 
----
-@state_var@
-struct task_struct *p;
-identifier var;
-@@
-(
-var = p->state
-|
-p->state = var
-)
+In cryptsetup we always report dm target + kernel version,
+so we know that since version 5.4 it uses crypto API for ESSIV.
+I think version bump here is really not so important.
 
-@@
-identifier state_var.var;
-@@
-- var
-+ FIXME
----
+Just my two cents :)
 
-But I'm hoping we can get something even better from coccinelle, stay
-tuned...
+Anyway, thanks everyone.
 
-> -
-> Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT, UK
-> Registration No: 1397386 (Wales)
-> 
+Milan
