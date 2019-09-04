@@ -1,114 +1,25 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH v3 5/7] block: Delay default elevator
-	initialization
-Date: Wed, 4 Sep 2019 17:29:17 +0800
-Message-ID: <20190904092915.GF7578@ming.t460p>
-References: <20190904084247.23338-1-damien.lemoal@wdc.com>
-	<20190904084247.23338-6-damien.lemoal@wdc.com>
+From: David Laight <David.Laight@ACULAB.COM>
+Subject: RE: [PATCH] sched: make struct task_struct::state 32-bit
+Date: Wed, 4 Sep 2019 09:43:23 +0000
+Message-ID: <651c419e45e043e9be8d0877b5a5406d@AcuMS.aculab.com>
+References: <20190902210558.GA23013@avx2>
+ <d8ad0be1-4ed7-df74-d415-2b1c9a44bac7@arm.com> <20190903181920.GA22358@avx2>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20190904084247.23338-6-damien.lemoal@wdc.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <damien.lemoal@wdc.com>
-Cc: Jens Axboe <axboe@kernel.dk>, "Martin K . Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: base64
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190903181920.GA22358@avx2>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: 'Alexey Dobriyan' <adobriyan@gmail.com>, Valentin Schneider <valentin.schneider@arm.com>
+Cc: "mingo@redhat.com" <mingo@redhat.com>, "peterz@infradead.org" <peterz@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "rcu@vger.kernel.org" <rcu@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "aarcange@redhat.com" <aarcange@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Sep 04, 2019 at 05:42:45PM +0900, Damien Le Moal wrote:
-> When elevator_init_mq() is called from blk_mq_init_allocated_queue(),
-> the only information known about the device is the number of hardware
-> queues as the block device scan by the device driver is not completed
-> yet. The device type and the device required features are not set yet,
-> preventing to correctly choose the default elevator most suitable for
-> the device.
-> 
-> This currently affects all multi-queue zoned block devices which default
-> to the "none" elevator instead of the required "mq-deadline" elevator.
-> These drives currently include host-managed SMR disks connected to a
-> smartpqi HBA and null_blk block devices with zoned mode enabled.
-> Upcoming NVMe Zoned Namespace devices will also be affected.
-> 
-> Fix this by moving the execution of elevator_init_mq() from
-> blk_mq_init_allocated_queue() into __device_add_disk() to allow for the
-> device driver to probe the device characteristics and set attributes
-> of the device request queue prior to the elevator initialization.
-> 
-> Also to make sure that the elevator initialization is never done while
-> requests are in-flight (there should be none when the device driver
-> calls device_add_disk()), freeze and quiesce the device request queue
-> before executing blk_mq_init_sched().
-> 
-> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
-> ---
->  block/blk-mq.c   | 2 --
->  block/elevator.c | 7 +++++++
->  block/genhd.c    | 8 ++++++++
->  3 files changed, 15 insertions(+), 2 deletions(-)
-> 
-> diff --git a/block/blk-mq.c b/block/blk-mq.c
-> index ee4caf0c0807..a37503984206 100644
-> --- a/block/blk-mq.c
-> +++ b/block/blk-mq.c
-> @@ -2902,8 +2902,6 @@ struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
->  	blk_mq_add_queue_tag_set(set, q);
->  	blk_mq_map_swqueue(q);
->  
-> -	elevator_init_mq(q);
-> -
->  	return q;
->  
->  err_hctxs:
-> diff --git a/block/elevator.c b/block/elevator.c
-> index 520d6b224b74..096a670d22d7 100644
-> --- a/block/elevator.c
-> +++ b/block/elevator.c
-> @@ -712,7 +712,14 @@ void elevator_init_mq(struct request_queue *q)
->  	if (!e)
->  		return;
->  
-> +	blk_mq_freeze_queue(q);
-> +	blk_mq_quiesce_queue(q);
-> +
->  	err = blk_mq_init_sched(q, e);
-> +
-> +	blk_mq_unquiesce_queue(q);
-> +	blk_mq_unfreeze_queue(q);
-> +
->  	if (err) {
->  		pr_warn("\"%s\" elevator initialization failed, "
->  			"falling back to \"none\"\n", e->elevator_name);
-> diff --git a/block/genhd.c b/block/genhd.c
-> index 54f1f0d381f4..7380dd7b2257 100644
-> --- a/block/genhd.c
-> +++ b/block/genhd.c
-> @@ -695,6 +695,13 @@ static void __device_add_disk(struct device *parent, struct gendisk *disk,
->  	dev_t devt;
->  	int retval;
->  
-> +	/*
-> +	 * The disk queue should now be all set with enough information about
-> +	 * the device for the elevator code to pick an adequate default
-> +	 * elevator.
-> +	 */
-> +	elevator_init_mq(disk->queue);
-> +
-
-For dm-rq, add_disk_no_queue_reg() is called before blk_mq_init_allocated_queue().
-
-That means this patch actually sets elevator early for dm-rq, and I
-guess this way may not work as expected since hw/sw queues aren't allocated
-yet.
-
-
-Thanks,
-Ming
+RnJvbTogQWxleGV5IERvYnJpeWFuDQo+IFNlbnQ6IDAzIFNlcHRlbWJlciAyMDE5IDE5OjE5DQou
+Li4NCj4gPiBIb3cgZGlkIHlvdSBjb21lIHVwIHdpdGggdGhpcyBjaGFuZ2VzZXQsIGRpZCB5b3Ug
+cGlja2F4ZSBmb3Igc29tZSByZWdleHA/DQo+IA0KPiBObywgbWFudWFsbHksIGJhY2t0cmFja2lu
+ZyB1cCB0byB0aGUgY2FsbCBjaGFpbi4NCj4gTWF5YmUgSSBtaXNzZWQgYSBmZXcgcGxhY2VzLg0K
+DQpSZW5hbWluZyB0aGUgc3RydWN0dXJlIGZpZWxkIGFuZCBnZXR0aW5nIHRoZSBjb21waWxlciB0
+byBmaW5kIGFsbCB0aGUgdXNlcyBjYW4gaGVscC4NCg0KCURhdmlkDQoNCi0NClJlZ2lzdGVyZWQg
+QWRkcmVzcyBMYWtlc2lkZSwgQnJhbWxleSBSb2FkLCBNb3VudCBGYXJtLCBNaWx0b24gS2V5bmVz
+LCBNSzEgMVBULCBVSw0KUmVnaXN0cmF0aW9uIE5vOiAxMzk3Mzg2IChXYWxlcykNCg==
