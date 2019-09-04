@@ -1,16 +1,16 @@
-From: Song Liu <songliubraving@fb.com>
-Subject: Re: [PATCH v4 1/2] md raid0/linear: Mark array as
- 'broken' and fail BIOs if a member is gone
-Date: Tue, 3 Sep 2019 21:56:26 +0000
-Message-ID: <E393EAA5-6A9D-464A-A70E-56A258559712@fb.com>
-References: <20190903194901.13524-1-gpiccoli@canonical.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [PATCH v3 5/7] block: Delay default elevator
+	initialization
+Date: Wed, 4 Sep 2019 17:29:17 +0800
+Message-ID: <20190904092915.GF7578@ming.t460p>
+References: <20190904084247.23338-1-damien.lemoal@wdc.com>
+	<20190904084247.23338-6-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190903194901.13524-1-gpiccoli@canonical.com>
-Content-Language: en-US
-Content-ID: <FB31AF236DA4D745910BA0DA75430503@namprd15.prod.outlook.com>
+Content-Disposition: inline
+In-Reply-To: <20190904084247.23338-6-damien.lemoal@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,58 +20,95 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "jes.sorensen@gmail.com" <jes.sorensen@gmail.com>, "nfbrown@suse.com" <nfbrown@suse.com>, "liu.song.a23@gmail.com" <liu.song.a23@gmail.com>, linux-raid <linux-raid@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "jay.vosburgh@canonical.com" <jay.vosburgh@canonical.com>
+To: Damien Le Moal <damien.lemoal@wdc.com>
+Cc: Jens Axboe <axboe@kernel.dk>, "Martin K . Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
+On Wed, Sep 04, 2019 at 05:42:45PM +0900, Damien Le Moal wrote:
+> When elevator_init_mq() is called from blk_mq_init_allocated_queue(),
+> the only information known about the device is the number of hardware
+> queues as the block device scan by the device driver is not completed
+> yet. The device type and the device required features are not set yet,
+> preventing to correctly choose the default elevator most suitable for
+> the device.
+> 
+> This currently affects all multi-queue zoned block devices which default
+> to the "none" elevator instead of the required "mq-deadline" elevator.
+> These drives currently include host-managed SMR disks connected to a
+> smartpqi HBA and null_blk block devices with zoned mode enabled.
+> Upcoming NVMe Zoned Namespace devices will also be affected.
+> 
+> Fix this by moving the execution of elevator_init_mq() from
+> blk_mq_init_allocated_queue() into __device_add_disk() to allow for the
+> device driver to probe the device characteristics and set attributes
+> of the device request queue prior to the elevator initialization.
+> 
+> Also to make sure that the elevator initialization is never done while
+> requests are in-flight (there should be none when the device driver
+> calls device_add_disk()), freeze and quiesce the device request queue
+> before executing blk_mq_init_sched().
+> 
+> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+> ---
+>  block/blk-mq.c   | 2 --
+>  block/elevator.c | 7 +++++++
+>  block/genhd.c    | 8 ++++++++
+>  3 files changed, 15 insertions(+), 2 deletions(-)
+> 
+> diff --git a/block/blk-mq.c b/block/blk-mq.c
+> index ee4caf0c0807..a37503984206 100644
+> --- a/block/blk-mq.c
+> +++ b/block/blk-mq.c
+> @@ -2902,8 +2902,6 @@ struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
+>  	blk_mq_add_queue_tag_set(set, q);
+>  	blk_mq_map_swqueue(q);
+>  
+> -	elevator_init_mq(q);
+> -
+>  	return q;
+>  
+>  err_hctxs:
+> diff --git a/block/elevator.c b/block/elevator.c
+> index 520d6b224b74..096a670d22d7 100644
+> --- a/block/elevator.c
+> +++ b/block/elevator.c
+> @@ -712,7 +712,14 @@ void elevator_init_mq(struct request_queue *q)
+>  	if (!e)
+>  		return;
+>  
+> +	blk_mq_freeze_queue(q);
+> +	blk_mq_quiesce_queue(q);
+> +
+>  	err = blk_mq_init_sched(q, e);
+> +
+> +	blk_mq_unquiesce_queue(q);
+> +	blk_mq_unfreeze_queue(q);
+> +
+>  	if (err) {
+>  		pr_warn("\"%s\" elevator initialization failed, "
+>  			"falling back to \"none\"\n", e->elevator_name);
+> diff --git a/block/genhd.c b/block/genhd.c
+> index 54f1f0d381f4..7380dd7b2257 100644
+> --- a/block/genhd.c
+> +++ b/block/genhd.c
+> @@ -695,6 +695,13 @@ static void __device_add_disk(struct device *parent, struct gendisk *disk,
+>  	dev_t devt;
+>  	int retval;
+>  
+> +	/*
+> +	 * The disk queue should now be all set with enough information about
+> +	 * the device for the elevator code to pick an adequate default
+> +	 * elevator.
+> +	 */
+> +	elevator_init_mq(disk->queue);
+> +
+
+For dm-rq, add_disk_no_queue_reg() is called before blk_mq_init_allocated_queue().
+
+That means this patch actually sets elevator early for dm-rq, and I
+guess this way may not work as expected since hw/sw queues aren't allocated
+yet.
 
 
-> On Sep 3, 2019, at 12:49 PM, Guilherme G. Piccoli <gpiccoli@canonical.com> wrote:
-> 
-> Currently md raid0/linear are not provided with any mechanism to validate
-> if an array member got removed or failed. The driver keeps sending BIOs
-> regardless of the state of array members, and kernel shows state 'clean'
-> in the 'array_state' sysfs attribute. This leads to the following
-> situation: if a raid0/linear array member is removed and the array is
-> mounted, some user writing to this array won't realize that errors are
-> happening unless they check dmesg or perform one fsync per written file.
-> Despite udev signaling the member device is gone, 'mdadm' cannot issue the
-> STOP_ARRAY ioctl successfully, given the array is mounted.
-> 
-> In other words, no -EIO is returned and writes (except direct ones) appear
-> normal. Meaning the user might think the wrote data is correctly stored in
-> the array, but instead garbage was written given that raid0 does stripping
-> (and so, it requires all its members to be working in order to not corrupt
-> data). For md/linear, writes to the available members will work fine, but
-> if the writes go to the missing member(s), it'll cause a file corruption
-> situation, whereas the portion of the writes to the missing devices aren't
-> written effectively.
-> 
-> This patch changes this behavior: we check if the block device's gendisk
-> is UP when submitting the BIO to the array member, and if it isn't, we flag
-> the md device as MD_BROKEN and fail subsequent I/Os to that device; a read
-> request to the array requiring data from a valid member is still completed.
-> While flagging the device as MD_BROKEN, we also show a rate-limited warning
-> in the kernel log.
-> 
-> A new array state 'broken' was added too: it mimics the state 'clean' in
-> every aspect, being useful only to distinguish if the array has some member
-> missing. We rely on the MD_BROKEN flag to put the array in the 'broken'
-> state. This state cannot be written in 'array_state' as it just shows
-> one or more members of the array are missing but acts like 'clean', it
-> wouldn't make sense to write it.
-> 
-> With this patch, the filesystem reacts much faster to the event of missing
-> array member: after some I/O errors, ext4 for instance aborts the journal
-> and prevents corruption. Without this change, we're able to keep writing
-> in the disk and after a machine reboot, e2fsck shows some severe fs errors
-> that demand fixing. This patch was tested in ext4 and xfs filesystems, and
-> requires a 'mdadm' counterpart to handle the 'broken' state.
-> 
-> Cc: Song Liu <songliubraving@fb.com>
-> Reviewed-by: NeilBrown <neilb@suse.de>
-> Signed-off-by: Guilherme G. Piccoli <gpiccoli@canonical.com>
-
-Applied to md-next. 
-
-Thanks!
+Thanks,
+Ming
