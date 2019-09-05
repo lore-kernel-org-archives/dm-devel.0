@@ -1,16 +1,11 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH v4 5/7] block: Delay default elevator
-	initialization
-Date: Thu, 5 Sep 2019 15:19:24 +0800
-Message-ID: <20190905071923.GA8898@ming.t460p>
-References: <20190905042901.5830-1-damien.lemoal@wdc.com>
-	<20190905042901.5830-6-damien.lemoal@wdc.com>
+From: jianchao wang <jianchao.wan9@gmail.com>
+Subject: Why does dm-thin pool metadata space map use 4K page to
+	carry index ?
+Date: Thu, 5 Sep 2019 14:43:28 +0800
+Message-ID: <CAC-DDmMQu38J6kCirxK=axwEguEpaN+H1JJVPbUsyqtxcx5KEw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============4593842141826827868=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20190905042901.5830-6-damien.lemoal@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,97 +15,109 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <damien.lemoal@wdc.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, "Martin K . Petersen" <martin.petersen@oracle.com>, linux-scsi@vger.kernel.org
+To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Sep 05, 2019 at 01:28:59PM +0900, Damien Le Moal wrote:
-> When elevator_init_mq() is called from blk_mq_init_allocated_queue(),
-> the only information known about the device is the number of hardware
-> queues as the block device scan by the device driver is not completed
-> yet. The device type and the device required features are not set yet,
-> preventing to correctly choose the default elevator most suitable for
-> the device.
-> 
-> This currently affects all multi-queue zoned block devices which default
-> to the "none" elevator instead of the required "mq-deadline" elevator.
-> These drives currently include host-managed SMR disks connected to a
-> smartpqi HBA and null_blk block devices with zoned mode enabled.
-> Upcoming NVMe Zoned Namespace devices will also be affected.
-> 
-> Fix this by moving the execution of elevator_init_mq() from
-> blk_mq_init_allocated_queue() into __device_add_disk() to allow for the
-> device driver to probe the device characteristics and set attributes
-> of the device request queue prior to the elevator initialization. This
-> initialization is skipped for DM devices using
-> device_add_disk_no_queue_reg() as this also skips the queue
-> registration.
-> 
-> Additionally, to make sure that the elevator initialization is never
-> done while requests are in-flight (there should be none when the device
-> driver calls device_add_disk()), freeze and quiesce the device request
-> queue before calling blk_mq_init_sched() in elevator_init_mq().
-> 
-> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
-> ---
->  block/blk-mq.c   | 2 --
->  block/elevator.c | 7 +++++++
->  block/genhd.c    | 9 +++++++++
->  3 files changed, 16 insertions(+), 2 deletions(-)
-> 
-> diff --git a/block/blk-mq.c b/block/blk-mq.c
-> index ee4caf0c0807..a37503984206 100644
-> --- a/block/blk-mq.c
-> +++ b/block/blk-mq.c
-> @@ -2902,8 +2902,6 @@ struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
->  	blk_mq_add_queue_tag_set(set, q);
->  	blk_mq_map_swqueue(q);
->  
-> -	elevator_init_mq(q);
-> -
->  	return q;
->  
->  err_hctxs:
-> diff --git a/block/elevator.c b/block/elevator.c
-> index 520d6b224b74..096a670d22d7 100644
-> --- a/block/elevator.c
-> +++ b/block/elevator.c
-> @@ -712,7 +712,14 @@ void elevator_init_mq(struct request_queue *q)
->  	if (!e)
->  		return;
->  
-> +	blk_mq_freeze_queue(q);
-> +	blk_mq_quiesce_queue(q);
-> +
->  	err = blk_mq_init_sched(q, e);
-> +
-> +	blk_mq_unquiesce_queue(q);
-> +	blk_mq_unfreeze_queue(q);
-> +
->  	if (err) {
->  		pr_warn("\"%s\" elevator initialization failed, "
->  			"falling back to \"none\"\n", e->elevator_name);
-> diff --git a/block/genhd.c b/block/genhd.c
-> index 54f1f0d381f4..26b31fcae217 100644
-> --- a/block/genhd.c
-> +++ b/block/genhd.c
-> @@ -695,6 +695,15 @@ static void __device_add_disk(struct device *parent, struct gendisk *disk,
->  	dev_t devt;
->  	int retval;
->  
-> +	/*
-> +	 * The disk queue should now be all set with enough information about
-> +	 * the device for the elevator code to pick an adequate default
-> +	 * elevator if one is needed, that is, for devices requesting queue
-> +	 * registration.
-> +	 */
-> +	if (register_queue)
-> +		elevator_init_mq(disk->queue);
-> +
+--===============4593842141826827868==
+Content-Type: multipart/alternative; boundary="0000000000004736ac0591c8a4c0"
 
-This way is better, but still changes the default elevator to 'none'
-for dm-rq always.
+--0000000000004736ac0591c8a4c0
+Content-Type: text/plain; charset="UTF-8"
+
+Hi
+
+As the code,
+
+The metadata space map use following structure which locates on a 4K page
+on disk
+to carry the disk_index_entry.
+
+The on-disk format of metadata spacemap
+
+The metadata space's bitmap root is a
+#define MAX_METADATA_BITMAPS 255
+struct disk_metadata_index {
+    __le32 csum;
+    __le32 padding;
+    __le64 blocknr;
+
+    struct disk_index_entry index[MAX_METADATA_BITMAPS];
+} __packed;
+
+It will be read in when open the pool
+sm_ll_open_metadata
+  -> set ll callbacks
+  -> ll->open_index
+metadata_ll_open
+---
+    r = dm_tm_read_lock(ll->tm, ll->bitmap_root,
+                &index_validator, &block);
+    if (r)
+        return r;
+
+    memcpy(&ll->mi_le, dm_block_data(block), sizeof(ll->mi_le));
+    dm_tm_unlock(ll->tm, block);
+
+---
+The size of struct disk_metadata_index is 4096.
+The disk_index_entry's size is 8 bytes
+
+4096 * 8 / 2 = 16K    blocks per page
+
+metadata block = 4K
+
+256 * 16K * 4K = 16G
+
+Then it have a 6G limit on metadata blocks size.
+
+But why does it use this 4K page instead of btree as the disk sm ?
+
+The brb mechanism seem be able to avoid the nested block allocation
+when do COW on the metadata sm btree.
+
+Would anyone please help to tell why does it use this 4K page instead of a
+btree ?
 
 
-thanks,
-Ming
+Thanks in advance
+Jianchao
+
+--0000000000004736ac0591c8a4c0
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi<br><br>As the code,<br><br>The metadata space map use f=
+ollowing structure which locates on a 4K page on disk<br>to carry the disk_=
+index_entry.<br><br>The on-disk format of metadata spacemap<br><br>The meta=
+data space&#39;s bitmap root is a<br>#define MAX_METADATA_BITMAPS 255<br>st=
+ruct disk_metadata_index {<br>=C2=A0 =C2=A0 __le32 csum;<br>=C2=A0 =C2=A0 _=
+_le32 padding;<br>=C2=A0 =C2=A0 __le64 blocknr;<br><br>=C2=A0 =C2=A0 struct=
+ disk_index_entry index[MAX_METADATA_BITMAPS];<br>} __packed;<br><br>It wil=
+l be read in when open the pool<br>sm_ll_open_metadata<br>=C2=A0 -&gt; set =
+ll callbacks<br>=C2=A0 -&gt; ll-&gt;open_index<br>metadata_ll_open<br>---<b=
+r>=C2=A0 =C2=A0 r =3D dm_tm_read_lock(ll-&gt;tm, ll-&gt;bitmap_root,<br>=C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &amp;index_validator, =
+&amp;block);<br>=C2=A0 =C2=A0 if (r)<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 return =
+r;<br><br>=C2=A0 =C2=A0 memcpy(&amp;ll-&gt;mi_le, dm_block_data(block), siz=
+eof(ll-&gt;mi_le));<br>=C2=A0 =C2=A0 dm_tm_unlock(ll-&gt;tm, block);<br><br=
+>---<br>The size of struct disk_metadata_index is 4096.<br>The disk_index_e=
+ntry&#39;s size is 8 bytes<br><br>4096 * 8 / 2 =3D 16K =C2=A0 =C2=A0blocks =
+per page<br><br>metadata block =3D 4K<br><br>256 * 16K * 4K =3D 16G<br><br>=
+Then it have a 6G limit on metadata blocks size.<br><br>But why does it use=
+ this 4K page instead of btree as the disk sm ?<br><br>The brb mechanism se=
+em be able to avoid the nested block allocation<br>when do COW on the metad=
+ata sm btree.<br><br>Would anyone please help to tell why does it use this =
+4K page instead of a btree ?<br><br>=C2=A0<br>Thanks in advance<br>Jianchao=
+<br><br><br></div>
+
+--0000000000004736ac0591c8a4c0--
+
+
+--===============4593842141826827868==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============4593842141826827868==--
