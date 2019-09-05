@@ -1,11 +1,13 @@
 From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH v5 0/7] Elevator cleanups and improvements
-Date: Thu,  5 Sep 2019 18:51:28 +0900
-Message-ID: <20190905095135.26026-1-damien.lemoal@wdc.com>
+Subject: [PATCH v5 1/7] block: Cleanup elevator_init_mq() use
+Date: Thu,  5 Sep 2019 18:51:29 +0900
+Message-ID: <20190905095135.26026-2-damien.lemoal@wdc.com>
+References: <20190905095135.26026-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190905095135.26026-1-damien.lemoal@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,71 +21,87 @@ To: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.k
 Cc: Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-This patch series implements some cleanup of the elevator initialization
-code and introduces elevator features identification and device matching
-to enhance checks for elevator/device compatibility and fitness.
+Instead of checking a queue tag_set BLK_MQ_F_NO_SCHED flag before
+calling elevator_init_mq() to make sure that the queue supports IO
+scheduling, use the elevator.c function elv_support_iosched() in
+elevator_init_mq(). This does not introduce any functional change but
+ensure that elevator_init_mq() does the right thing based on the queue
+settings.
 
-The first 2 patches of the series are simple cleanups which simplify 
-elevator initialization for newly allocated device queues.
+Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+Reviewed-by: Johannes Thumshirn <jthumshirn@suse.de>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+---
+ block/blk-mq.c   |  8 +++-----
+ block/elevator.c | 23 +++++++++++++----------
+ 2 files changed, 16 insertions(+), 15 deletions(-)
 
-Patch 3 introduce elevator features, allowing a clean and extensible
-definition of devices and features that an elevator supports and match
-these against features required by a block device. With this, the sysfs
-elevator list for a device always shows only elevators matching the
-features that a particular device requires, with the exception of the
-none elevator which has no features but is always available for use
-with any device.
-
-The first feature defined is for zoned block device sequential write
-constraint support through zone write locking which prevents the use of
-any elevator that does not support this feature with zoned devices.
-
-The last 4 patches of this series rework the default elevator selection
-and initialization to allow for the elevator/device features matching
-to work, doing so addressing cases not currently well supported, namely,
-multi-queue zoned block devices.
-
-Changes from v4:
-* Fix patch 5 again to correctly handle request based DM devices and
-  avoid that default queue elevator of these devices end up always
-  being "none".
-
-Changes from v3:
-* Fixed patch 5 to correctly handle DM devices which do not register a
-  request queue and so do not need elevator initialization.
-
-Changes from v2:
-* Fixed patch 4
-* Call elevator_init_mq() earlier in device_add_disk() as suggested by
-  Christoph (patch 5)
-* Fixed title of patch 7
-
-Changes from v1:
-* Addressed Johannes comments
-* Rebased on newest for-next branch to include Ming's sysfs lock changes
-
-Damien Le Moal (7):
-  block: Cleanup elevator_init_mq() use
-  block: Change elevator_init_mq() to always succeed
-  block: Introduce elevator features
-  block: Improve default elevator selection
-  block: Delay default elevator initialization
-  block: Set ELEVATOR_F_ZBD_SEQ_WRITE for nullblk zoned disks
-  sd: Set ELEVATOR_F_ZBD_SEQ_WRITE for ZBC disks
-
- block/blk-mq.c                |  20 +++--
- block/blk-settings.c          |  16 ++++
- block/blk.h                   |   2 +-
- block/elevator.c              | 137 ++++++++++++++++++++++++++--------
- block/genhd.c                 |   9 +++
- block/mq-deadline.c           |   1 +
- drivers/block/null_blk_main.c |   2 +
- drivers/md/dm-rq.c            |   2 +-
- drivers/scsi/sd_zbc.c         |   2 +
- include/linux/blk-mq.h        |   3 +-
- include/linux/blkdev.h        |   4 +
- include/linux/elevator.h      |   8 ++
- 12 files changed, 161 insertions(+), 45 deletions(-)
-
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index b622029b19ea..13923630e00a 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -2904,11 +2904,9 @@ struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
+ 	blk_mq_add_queue_tag_set(set, q);
+ 	blk_mq_map_swqueue(q);
+ 
+-	if (!(set->flags & BLK_MQ_F_NO_SCHED)) {
+-		ret = elevator_init_mq(q);
+-		if (ret)
+-			goto err_tag_set;
+-	}
++	ret = elevator_init_mq(q);
++	if (ret)
++		goto err_tag_set;
+ 
+ 	return q;
+ 
+diff --git a/block/elevator.c b/block/elevator.c
+index 86100de88883..4721834815bb 100644
+--- a/block/elevator.c
++++ b/block/elevator.c
+@@ -619,16 +619,26 @@ int elevator_switch_mq(struct request_queue *q,
+ 	return ret;
+ }
+ 
++static inline bool elv_support_iosched(struct request_queue *q)
++{
++	if (q->tag_set && (q->tag_set->flags & BLK_MQ_F_NO_SCHED))
++		return false;
++	return true;
++}
++
+ /*
+- * For blk-mq devices, we default to using mq-deadline, if available, for single
+- * queue devices.  If deadline isn't available OR we have multiple queues,
+- * default to "none".
++ * For blk-mq devices supporting IO scheduling, we default to using mq-deadline,
++ * if available, for single queue devices. If deadline isn't available OR we
++ * have multiple queues, default to "none".
+  */
+ int elevator_init_mq(struct request_queue *q)
+ {
+ 	struct elevator_type *e;
+ 	int err = 0;
+ 
++	if (!elv_support_iosched(q))
++		return 0;
++
+ 	if (q->nr_hw_queues != 1)
+ 		return 0;
+ 
+@@ -706,13 +716,6 @@ static int __elevator_change(struct request_queue *q, const char *name)
+ 	return elevator_switch(q, e);
+ }
+ 
+-static inline bool elv_support_iosched(struct request_queue *q)
+-{
+-	if (q->tag_set && (q->tag_set->flags & BLK_MQ_F_NO_SCHED))
+-		return false;
+-	return true;
+-}
+-
+ ssize_t elv_iosched_store(struct request_queue *q, const char *name,
+ 			  size_t count)
+ {
 -- 
 2.21.0
