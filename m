@@ -1,114 +1,63 @@
-From: Valentin Schneider <valentin.schneider@arm.com>
-Subject: Re: [PATCH] sched: make struct task_struct::state 32-bit
-Date: Wed, 4 Sep 2019 18:48:49 +0100
-Message-ID: <f0328a66-ca9f-974d-3799-e73308fb1d34@arm.com>
-References: <20190902210558.GA23013@avx2>
- <d8ad0be1-4ed7-df74-d415-2b1c9a44bac7@arm.com> <20190903181920.GA22358@avx2>
- <92ead22e-0580-c720-1a29-7db79d76f7d7@arm.com>
- <a43fe392-bd6a-71f5-8611-c6b764ba56c3@arm.com>
+From: Chongyun Wu <wu.chongyun@h3c.com>
+Subject: [PATCH] libmultipath: multipath active paths count
+ optimization
+Date: Thu, 5 Sep 2019 02:58:36 +0000
+Message-ID: <413f046d0cfc4d5dbd39ebed92068c8b@h3c.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <a43fe392-bd6a-71f5-8611-c6b764ba56c3@arm.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: mingo@redhat.com, peterz@infradead.org, linux-kernel@vger.kernel.org, rcu@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk, aarcange@redhat.com
+Content-Type: text/plain; charset="gb2312"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: zh-CN
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Martin Wilck (mwilck@suse.com)" <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Liucong <liu.cong@h3c.com>, Zhangcheng <zhang.chengA@h3c.com>, Guozhonghua <guozhonghua@h3c.com>, Zhangduan <zhang.duan@h3c.com>, Zhangguanghui <zhang.guanghui@h3c.com>, Changlimin <changlimin@h3c.com>, Renqinwei <ren.qinwei@h3c.com>, Wangxibo <wang.xibo@h3c.com>, Likai <li.kai4@h3c.com>, Liliang <li.liangA@h3c.com>, Wangyong <wang.yongD@h3c.com>, Huangyong <huang.yongA@h3c.com>
 List-Id: dm-devel.ids
 
-On 04/09/2019 13:07, Valentin Schneider wrote:
-> [...]
-> Baby steps...
-
-
-There's something regarding coccinelle disjunctions that just can't grasp,
-and this also fails to recognize "current" as being "struct task_struct*".
-
-Once I fix these, it's "just" a matter of finding out how to write a rule
-for layered calls (e.g. __kthread_bind() -> __kthread_bind_mask() ->
-wait_task_inactive()), and we should be close to having something somewhat
-usable.
-
----
-virtual patch
-virtual report
-
-@state_access@
-identifier func;
-struct task_struct *p;
-identifier state_var;
-position fpos;
-position epos;
-@@
-
-func(...)@fpos
-{
-	<...
-(
-  p->state & state_var@epos
-|
-  p->state | state_var@epos
-|
-  p->state < state_var@epos
-|
-  p->state > state_var@epos
-|
-  state_var@epos = p->state
-// For some reason adding this disjunction gives us more matches, but causes
-// some to go away :/
-// |
-//   p->state == state_var@epos
-|
-  p->state != state_var@epos
-)
-	...>
-}
-
-@depends on patch@
-identifier fn = state_access.func;
-identifier state_var = state_access.state_var;
-@@
-
-fn(...,
-- long state_var
-+ int state_var
-,...)
-{
-	...
-}
-
-// Should be merged in the above but can't get disjunction to work
-@depends on patch@
-identifier fn = state_access.func;
-identifier state_var = state_access.state_var;
-@@
-
-fn(...,
-- unsigned long state_var
-+ unsigned int state_var
-,...)
-{
-	...
-}
-
-// Is it possible to match without semicolons? :/
-@depends on patch@
-identifier state_var = state_access.state_var;
-expression E;
-@@
-
-(
-- long state_var;
-+ int state_var;
-|
-- long state_var = E;
-+ int state_var = E;
-)
-
-@script:python depends on report@
-fp << state_access.fpos;
-ep << state_access.epos;
-@@
-cocci.print_main("Func at", fp)
-cocci.print_main("Expr at", ep)
+SGkgTWFydGluLCBCZW4gYW5kIG90aGVyIHZpZXdlcnMKCkNsb3VkIHlvdSBoZWxwIHRvIHZpZXcg
+YmVsb3cgcGF0Y2ggd2hpY2ggdHJ5IHRvIGRlYWwgd2l0aCBhIG11bHRpcGF0aCBhY3RpdmUgcGF0
+aHMKY291bnQgbm90IHJpZ2h0IGlzc3VlLCB0aGFua3MgYSBsb3QuCgo+RnJvbSBkZWVlNzE5NmVj
+ZTQzYjAxYjhlZTYzNWU2MGNlNDY1MDgwOTA1YjVlIE1vbiBTZXAgMTcgMDA6MDA6MDAgMjAwMQpG
+cm9tOiBDaG9uZ3l1biBXdSA8d3UuY2hvbmd5dW5AaDNjLmNvbT4KRGF0ZTogVHVlLCAyNyBBdWcg
+MjAxOSAxMzo1ODozMyArMDgwMApTdWJqZWN0OiBbUEFUQ0hdIGxpYm11bHRpcGF0aDogIG11bHRp
+cGF0aCBhY3RpdmUgcGF0aHMgY291bnQgb3B0aW1pemF0aW9uCgpSZWFsbHkgY291bnQgbXVsdGlw
+YXRoIGFjdGl2ZSBwYXRocyBub3QgdXNlIG1wcC0+bnJfYWN0aXZlKysKb3IgbXBwLT5ucl9hY3Rp
+dmUtLSwgYmVjYXVzZSB0aGVyZSBhcmUgb3RoZXIgcGxhY2VzIG1pZ2h0IGNhbGwKcGF0aGluZm8g
+dG8gY2hhbmdlIHBhdGggc3RhdGUgbm90IG9ubHkgaW4gY2hlY2tfcGF0aCwgaWYgb3RoZXIKcGxh
+Y2VzIGRldGVjdCBhbmQgY2hhbmdlZCBwYXRoIHN0YXRlIGJ1dCBub3QgZG8gbXBwLT5ucl9hY3Rp
+dmUrKwpvciBtcHAtPm5yX2FjdGl2ZS0tLCB0aGUgYWN0aXZlIHBhdGhzIG1pZ2h0IG5vdCByaWdo
+dCBhbnkgbW9yZS4KCldlIG1lZXQgYW4gaXNzdWUgd2hpY2ggYWN0dWFsbHkgaGF2ZSB0aHJlZSBw
+YXRocyBidXQgYWZ0ZXIgYWxsCnBhdGhzIGRvd24gc3lzbG9nIHJlcG9ydCBoYXZlIHRocmVlIHBh
+dGhzIHJlbWFpbmluZyBzbyBtdWx0aXBhdGhkCm5vdCBzZW5kIGRpc2FibGUgcXVldWVpbmcgdG8g
+ZG0gYW5kIHRoaXMgZG0gZGV2aWNlIGJlZW4gYmxvY2tlZC4KVGhpcyBwYXRjaCBtaWdodCBmaXgg
+dGhpcyBpc3N1ZS4KClNpZ25lZC1vZmYtYnk6IENob25neXVuIFd1IDx3dS5jaG9uZ3l1bkBoM2Mu
+Y29tPgotLS0KIGxpYm11bHRpcGF0aC9zdHJ1Y3RzX3ZlYy5jIHwgOCArKysrKystLQogMSBmaWxl
+IGNoYW5nZWQsIDYgaW5zZXJ0aW9ucygrKSwgMiBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9s
+aWJtdWx0aXBhdGgvc3RydWN0c192ZWMuYyBiL2xpYm11bHRpcGF0aC9zdHJ1Y3RzX3ZlYy5jCmlu
+ZGV4IGM0M2I1OGYuLjdlMjQ0MWIgMTAwNjQ0Ci0tLSBhL2xpYm11bHRpcGF0aC9zdHJ1Y3RzX3Zl
+Yy5jCisrKyBiL2xpYm11bHRpcGF0aC9zdHJ1Y3RzX3ZlYy5jCkBAIC00NTAsNyArNDUwLDggQEAg
+aW50IHZlcmlmeV9wYXRocyhzdHJ1Y3QgbXVsdGlwYXRoICptcHAsIHN0cnVjdCB2ZWN0b3JzICp2
+ZWNzKQogICovCiB2b2lkIHVwZGF0ZV9xdWV1ZV9tb2RlX2RlbF9wYXRoKHN0cnVjdCBtdWx0aXBh
+dGggKm1wcCkKIHsKLQlpZiAoLS1tcHAtPm5yX2FjdGl2ZSA9PSAwKSB7CisJbXBwLT5ucl9hY3Rp
+dmUgPSBwYXRoY291bnQobXBwLCBQQVRIX1VQKSArIHBhdGhjb3VudChtcHAsIFBBVEhfR0hPU1Qp
+OworCWlmIChtcHAtPm5yX2FjdGl2ZSA9PSAwKSB7CiAJCWlmIChtcHAtPm5vX3BhdGhfcmV0cnkg
+PiAwKQogCQkJZW50ZXJfcmVjb3ZlcnlfbW9kZShtcHApOwogCQllbHNlIGlmIChtcHAtPm5vX3Bh
+dGhfcmV0cnkgIT0gTk9fUEFUSF9SRVRSWV9RVUVVRSkKQEAgLTQ2MSw3ICs0NjIsMTAgQEAgdm9p
+ZCB1cGRhdGVfcXVldWVfbW9kZV9kZWxfcGF0aChzdHJ1Y3QgbXVsdGlwYXRoICptcHApCiAKIHZv
+aWQgdXBkYXRlX3F1ZXVlX21vZGVfYWRkX3BhdGgoc3RydWN0IG11bHRpcGF0aCAqbXBwKQogewot
+CWlmIChtcHAtPm5yX2FjdGl2ZSsrID09IDAgJiYgbXBwLT5ub19wYXRoX3JldHJ5ID4gMCkgewor
+CWludCBvbGRfYWN0aXZlX3BhdGhzID0gbXBwLT5ucl9hY3RpdmU7CisJbXBwLT5ucl9hY3RpdmUg
+PSBwYXRoY291bnQobXBwLCBQQVRIX1VQKSArIHBhdGhjb3VudChtcHAsIFBBVEhfR0hPU1QpOwor
+CWlmICgob2xkX2FjdGl2ZV9wYXRocyA9PSAwICYmIG1wcC0+bnJfYWN0aXZlID09IDEpCisJCSYm
+IG1wcC0+bm9fcGF0aF9yZXRyeSA+IDApIHsKIAkJLyogY29tZSBiYWNrIHRvIG5vcm1hbCBtb2Rl
+IGZyb20gcmV0cnkgbW9kZSAqLwogCQltcHAtPnJldHJ5X3RpY2sgPSAwOwogCQlkbV9xdWV1ZV9p
+Zl9ub19wYXRoKG1wcC0+YWxpYXMsIDEpOwotLSAKCkJlc3QgUmVnYXJkc6OsCkNob25neXVuIFd1
+CgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93
+d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
