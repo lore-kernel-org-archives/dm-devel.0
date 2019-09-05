@@ -1,16 +1,11 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH v4 5/7] block: Delay default elevator
-	initialization
-Date: Thu, 5 Sep 2019 07:58:30 +0000
-Message-ID: <BYAPR04MB581640203E7CCD2F8F34D0D3E7BB0@BYAPR04MB5816.namprd04.prod.outlook.com>
-References: <20190905042901.5830-1-damien.lemoal@wdc.com>
-	<20190905042901.5830-6-damien.lemoal@wdc.com>
-	<20190905071923.GA8898@ming.t460p>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: [PATCH v5 0/7] Elevator cleanups and improvements
+Date: Thu,  5 Sep 2019 18:51:28 +0900
+Message-ID: <20190905095135.26026-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,107 +15,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ming Lei <ming.lei@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, "Martin K . Petersen" <martin.petersen@oracle.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+To: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-On 2019/09/05 16:19, Ming Lei wrote:
-> On Thu, Sep 05, 2019 at 01:28:59PM +0900, Damien Le Moal wrote:
->> When elevator_init_mq() is called from blk_mq_init_allocated_queue(),
->> the only information known about the device is the number of hardware
->> queues as the block device scan by the device driver is not completed
->> yet. The device type and the device required features are not set yet,
->> preventing to correctly choose the default elevator most suitable for
->> the device.
->>
->> This currently affects all multi-queue zoned block devices which default
->> to the "none" elevator instead of the required "mq-deadline" elevator.
->> These drives currently include host-managed SMR disks connected to a
->> smartpqi HBA and null_blk block devices with zoned mode enabled.
->> Upcoming NVMe Zoned Namespace devices will also be affected.
->>
->> Fix this by moving the execution of elevator_init_mq() from
->> blk_mq_init_allocated_queue() into __device_add_disk() to allow for the
->> device driver to probe the device characteristics and set attributes
->> of the device request queue prior to the elevator initialization. This
->> initialization is skipped for DM devices using
->> device_add_disk_no_queue_reg() as this also skips the queue
->> registration.
->>
->> Additionally, to make sure that the elevator initialization is never
->> done while requests are in-flight (there should be none when the device
->> driver calls device_add_disk()), freeze and quiesce the device request
->> queue before calling blk_mq_init_sched() in elevator_init_mq().
->>
->> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
->> ---
->>  block/blk-mq.c   | 2 --
->>  block/elevator.c | 7 +++++++
->>  block/genhd.c    | 9 +++++++++
->>  3 files changed, 16 insertions(+), 2 deletions(-)
->>
->> diff --git a/block/blk-mq.c b/block/blk-mq.c
->> index ee4caf0c0807..a37503984206 100644
->> --- a/block/blk-mq.c
->> +++ b/block/blk-mq.c
->> @@ -2902,8 +2902,6 @@ struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
->>  	blk_mq_add_queue_tag_set(set, q);
->>  	blk_mq_map_swqueue(q);
->>  
->> -	elevator_init_mq(q);
->> -
->>  	return q;
->>  
->>  err_hctxs:
->> diff --git a/block/elevator.c b/block/elevator.c
->> index 520d6b224b74..096a670d22d7 100644
->> --- a/block/elevator.c
->> +++ b/block/elevator.c
->> @@ -712,7 +712,14 @@ void elevator_init_mq(struct request_queue *q)
->>  	if (!e)
->>  		return;
->>  
->> +	blk_mq_freeze_queue(q);
->> +	blk_mq_quiesce_queue(q);
->> +
->>  	err = blk_mq_init_sched(q, e);
->> +
->> +	blk_mq_unquiesce_queue(q);
->> +	blk_mq_unfreeze_queue(q);
->> +
->>  	if (err) {
->>  		pr_warn("\"%s\" elevator initialization failed, "
->>  			"falling back to \"none\"\n", e->elevator_name);
->> diff --git a/block/genhd.c b/block/genhd.c
->> index 54f1f0d381f4..26b31fcae217 100644
->> --- a/block/genhd.c
->> +++ b/block/genhd.c
->> @@ -695,6 +695,15 @@ static void __device_add_disk(struct device *parent, struct gendisk *disk,
->>  	dev_t devt;
->>  	int retval;
->>  
->> +	/*
->> +	 * The disk queue should now be all set with enough information about
->> +	 * the device for the elevator code to pick an adequate default
->> +	 * elevator if one is needed, that is, for devices requesting queue
->> +	 * registration.
->> +	 */
->> +	if (register_queue)
->> +		elevator_init_mq(disk->queue);
->> +
-> 
-> This way is better, but still changes the default elevator to 'none'
-> for dm-rq always.
+This patch series implements some cleanup of the elevator initialization
+code and introduces elevator features identification and device matching
+to enhance checks for elevator/device compatibility and fitness.
 
-Got it ! I was looking only at mapped_device() in dm.c. But for request based
-DMs, the queue is prepared differently in dm_mq_init_request_queue(), using
-blk_mq_init_allocated_queue() and blk_register_queue() afterward in
-dm_setup_md_queue().
+The first 2 patches of the series are simple cleanups which simplify 
+elevator initialization for newly allocated device queues.
 
-Sending a V5 to fix that.
+Patch 3 introduce elevator features, allowing a clean and extensible
+definition of devices and features that an elevator supports and match
+these against features required by a block device. With this, the sysfs
+elevator list for a device always shows only elevators matching the
+features that a particular device requires, with the exception of the
+none elevator which has no features but is always available for use
+with any device.
 
-Thanks.
+The first feature defined is for zoned block device sequential write
+constraint support through zone write locking which prevents the use of
+any elevator that does not support this feature with zoned devices.
+
+The last 4 patches of this series rework the default elevator selection
+and initialization to allow for the elevator/device features matching
+to work, doing so addressing cases not currently well supported, namely,
+multi-queue zoned block devices.
+
+Changes from v4:
+* Fix patch 5 again to correctly handle request based DM devices and
+  avoid that default queue elevator of these devices end up always
+  being "none".
+
+Changes from v3:
+* Fixed patch 5 to correctly handle DM devices which do not register a
+  request queue and so do not need elevator initialization.
+
+Changes from v2:
+* Fixed patch 4
+* Call elevator_init_mq() earlier in device_add_disk() as suggested by
+  Christoph (patch 5)
+* Fixed title of patch 7
+
+Changes from v1:
+* Addressed Johannes comments
+* Rebased on newest for-next branch to include Ming's sysfs lock changes
+
+Damien Le Moal (7):
+  block: Cleanup elevator_init_mq() use
+  block: Change elevator_init_mq() to always succeed
+  block: Introduce elevator features
+  block: Improve default elevator selection
+  block: Delay default elevator initialization
+  block: Set ELEVATOR_F_ZBD_SEQ_WRITE for nullblk zoned disks
+  sd: Set ELEVATOR_F_ZBD_SEQ_WRITE for ZBC disks
+
+ block/blk-mq.c                |  20 +++--
+ block/blk-settings.c          |  16 ++++
+ block/blk.h                   |   2 +-
+ block/elevator.c              | 137 ++++++++++++++++++++++++++--------
+ block/genhd.c                 |   9 +++
+ block/mq-deadline.c           |   1 +
+ drivers/block/null_blk_main.c |   2 +
+ drivers/md/dm-rq.c            |   2 +-
+ drivers/scsi/sd_zbc.c         |   2 +
+ include/linux/blk-mq.h        |   3 +-
+ include/linux/blkdev.h        |   4 +
+ include/linux/elevator.h      |   8 ++
+ 12 files changed, 161 insertions(+), 45 deletions(-)
 
 -- 
-Damien Le Moal
-Western Digital Research
+2.21.0
