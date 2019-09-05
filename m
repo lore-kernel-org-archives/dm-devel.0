@@ -1,14 +1,16 @@
-From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH v5 7/7] sd: Set ELEVATOR_F_ZBD_SEQ_WRITE for ZBC
-	disks
-Date: Thu,  5 Sep 2019 18:51:35 +0900
-Message-ID: <20190905095135.26026-8-damien.lemoal@wdc.com>
-References: <20190905095135.26026-1-damien.lemoal@wdc.com>
+From: Chongyun Wu <wu.chongyun@h3c.com>
+Subject: =?utf-8?b?562U5aSNOiAgW1BBVENIXSBsaWJtdWx0aXBhdGg6ICBt?=
+ =?utf-8?q?ultipath_active_paths_count_optimization?=
+Date: Thu, 5 Sep 2019 10:03:57 +0000
+Message-ID: <5c5907c12623406c8d2da30bf31a180e@h3c.com>
+References: <413f046d0cfc4d5dbd39ebed92068c8b@h3c.com>
+	<e33a9aefa073e1d9c107dce12c32608afc50090e.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190905095135.26026-1-damien.lemoal@wdc.com>
+In-Reply-To: <e33a9aefa073e1d9c107dce12c32608afc50090e.camel@suse.com>
+Content-Language: zh-CN
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,37 +20,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Cc: Ming Lei <ming.lei@redhat.com>
+To: Martin Wilck <Martin.Wilck@suse.com>, "bmarzins@redhat.com" <bmarzins@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Liucong <liu.cong@h3c.com>, Zhangcheng <zhang.chengA@h3c.com>, Guozhonghua <guozhonghua@h3c.com>, Zhangduan <zhang.duan@h3c.com>, Liliang <li.liangA@h3c.com>, Changlimin <changlimin@h3c.com>, Renqinwei <ren.qinwei@h3c.com>, Wangxibo <wang.xibo@h3c.com>, Likai <li.kai4@h3c.com>, Zhangguanghui <zhang.guanghui@h3c.com>, Wangyong <wang.yongD@h3c.com>, Huangyong <huang.yongA@h3c.com>
 List-Id: dm-devel.ids
 
-Using the helper blk_queue_required_elevator_features(), set the
-elevator feature ELEVATOR_F_ZBD_SEQ_WRITE as required for the request
-queue of SCSI ZBC disks.
-
-This feature requirement can always be satisfied as the mq-deadline
-elevator is always selected for in-kernel compilation when
-CONFIG_BLK_DEV_ZONED (zoned block device support) is enabled.
-
-Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Johannes Thumshirn <jthumshirn@suse.de>
----
- drivers/scsi/sd_zbc.c | 2 ++
- 1 file changed, 2 insertions(+)
-
-diff --git a/drivers/scsi/sd_zbc.c b/drivers/scsi/sd_zbc.c
-index 367614f0e34f..de4019dc0f0b 100644
---- a/drivers/scsi/sd_zbc.c
-+++ b/drivers/scsi/sd_zbc.c
-@@ -493,6 +493,8 @@ int sd_zbc_read_zones(struct scsi_disk *sdkp, unsigned char *buf)
- 	blk_queue_chunk_sectors(sdkp->disk->queue,
- 			logical_to_sectors(sdkp->device, zone_blocks));
- 	blk_queue_flag_set(QUEUE_FLAG_ZONE_RESETALL, sdkp->disk->queue);
-+	blk_queue_required_elevator_features(sdkp->disk->queue,
-+					     ELEVATOR_F_ZBD_SEQ_WRITE);
- 	nr_zones = round_up(sdkp->capacity, zone_blocks) >> ilog2(zone_blocks);
- 
- 	/* READ16/WRITE16 is mandatory for ZBC disks */
--- 
-2.21.0
+SGkgTWFydGluLAoKVGhhbmtzIGEgbG90LiAKSSB0aGluayBwYXRjaCBlMjI0ZDU3ICJsaWJtdXRp
+cGF0aDogY29udGludWUgdG8gdXNlIG9sZCBzdGF0ZSBvbiBQQVRIX1BFTkRJTkciIG1pZ2h0IGZp
+eCBvdXIgaXNzdWUgY29tcGFyZSB0byBvdXIgc3lzbG9nIG91dHB1dCwgSSB3aWxsIGNoZXJyeS1w
+aWNrIGl0LiAKQW5kIGFsc28gbmVlZCBjaGVycnktcGljayA5YjcxNWJmICJtdWx0aXBhdGhkOiBG
+aXggbWlzY291bnRpbmcgYWN0aXZlIHBhdGhzIiBmb3IgZ29vZC4KClJlZ2FyZHMKQ2hvbmd5dW4g
+V3UKCi0tLS0t6YKu5Lu25Y6f5Lu2LS0tLS0K5Y+R5Lu25Lq6OiBNYXJ0aW4gV2lsY2sgW21haWx0
+bzpNYXJ0aW4uV2lsY2tAc3VzZS5jb21dIArlj5HpgIHml7bpl7Q6IDIwMTnlubQ55pyINeaXpSAx
+NTozNwrmlLbku7bkuro6IGJtYXJ6aW5zQHJlZGhhdC5jb207IGRtLWRldmVsQHJlZGhhdC5jb207
+IHd1Y2hvbmd5dW4gKENsb3VkKSA8d3UuY2hvbmd5dW5AaDNjLmNvbT4K5oqE6YCBOiBndW96aG9u
+Z2h1YSAoQ2xvdWQpIDxndW96aG9uZ2h1YUBoM2MuY29tPjsgbGlrYWkgKENsb3VkKSA8bGkua2Fp
+NEBoM2MuY29tPjsgcmVucWlud2VpIChDbG91ZCkgPHJlbi5xaW53ZWlAaDNjLmNvbT47IGxpbGlh
+bmcgKENsb3VkKSA8bGkubGlhbmdBQGgzYy5jb20+OyBsaXVjb25nIChDbG91ZCkgPGxpdS5jb25n
+QGgzYy5jb20+OyB3YW5neW9uZyAoQ2xvdWQpIDx3YW5nLnlvbmdEQGgzYy5jb20+OyBjaGFuZ2xp
+bWluIChDbG91ZCkgPGNoYW5nbGltaW5AaDNjLmNvbT47IHpoYW5nZHVhbiAoQ2xvdWQpIDx6aGFu
+Zy5kdWFuQGgzYy5jb20+OyBodWFuZ3lvbmcgKENsb3VkKSA8aHVhbmcueW9uZ0FAaDNjLmNvbT47
+IHdhbmd4aWJvIChDbG91ZCkgPHdhbmcueGlib0BoM2MuY29tPjsgemhhbmdndWFuZ2h1aSAoQ2xv
+dWQpIDx6aGFuZy5ndWFuZ2h1aUBoM2MuY29tPjsgemhhbmdjaGVuZyAoQ2xvdWQpIDx6aGFuZy5j
+aGVuZ0FAaDNjLmNvbT4K5Li76aKYOiBSZTogW2RtLWRldmVsXSBbUEFUQ0hdIGxpYm11bHRpcGF0
+aDogbXVsdGlwYXRoIGFjdGl2ZSBwYXRocyBjb3VudCBvcHRpbWl6YXRpb24KCkhpIENob25neXVu
+LAoKT24gVGh1LCAyMDE5LTA5LTA1IGF0IDAyOjU4ICswMDAwLCBDaG9uZ3l1biBXdSB3cm90ZToK
+PiBIaSBNYXJ0aW4sIEJlbiBhbmQgb3RoZXIgdmlld2Vycwo+IAo+IENsb3VkIHlvdSBoZWxwIHRv
+IHZpZXcgYmVsb3cgcGF0Y2ggd2hpY2ggdHJ5IHRvIGRlYWwgd2l0aCBhIG11bHRpcGF0aCAKPiBh
+Y3RpdmUgcGF0aHMgY291bnQgbm90IHJpZ2h0IGlzc3VlLCB0aGFua3MgYSBsb3QuCj4gCj4gRnJv
+bSBkZWVlNzE5NmVjZTQzYjAxYjhlZTYzNWU2MGNlNDY1MDgwOTA1YjVlIE1vbiBTZXAgMTcgMDA6
+MDA6MDAKPiAyMDAxCj4gRnJvbTogQ2hvbmd5dW4gV3UgPHd1LmNob25neXVuQGgzYy5jb20+Cj4g
+RGF0ZTogVHVlLCAyNyBBdWcgMjAxOSAxMzo1ODozMyArMDgwMAo+IFN1YmplY3Q6IFtQQVRDSF0g
+bGlibXVsdGlwYXRoOiAgbXVsdGlwYXRoIGFjdGl2ZSBwYXRocyBjb3VudCAKPiBvcHRpbWl6YXRp
+b24KPiAKPiBSZWFsbHkgY291bnQgbXVsdGlwYXRoIGFjdGl2ZSBwYXRocyBub3QgdXNlIG1wcC0+
+bnJfYWN0aXZlKysgb3IgCj4gbXBwLT5ucl9hY3RpdmUtLSwgYmVjYXVzZSB0aGVyZSBhcmUgb3Ro
+ZXIgcGxhY2VzIG1pZ2h0IGNhbGwgcGF0aGluZm8gCj4gdG8gY2hhbmdlIHBhdGggc3RhdGUgbm90
+IG9ubHkgaW4gY2hlY2tfcGF0aCwgaWYgb3RoZXIgcGxhY2VzIGRldGVjdCAKPiBhbmQgY2hhbmdl
+ZCBwYXRoIHN0YXRlIGJ1dCBub3QgZG8gbXBwLT5ucl9hY3RpdmUrKyBvciAKPiBtcHAtPm5yX2Fj
+dGl2ZS0tLCB0aGUgYWN0aXZlIHBhdGhzIG1pZ2h0IG5vdCByaWdodCBhbnkgbW9yZS4KPiAKPiBX
+ZSBtZWV0IGFuIGlzc3VlIHdoaWNoIGFjdHVhbGx5IGhhdmUgdGhyZWUgcGF0aHMgYnV0IGFmdGVy
+IGFsbCBwYXRocyAKPiBkb3duIHN5c2xvZyByZXBvcnQgaGF2ZSB0aHJlZSBwYXRocyByZW1haW5p
+bmcgc28gbXVsdGlwYXRoZCBub3Qgc2VuZCAKPiBkaXNhYmxlIHF1ZXVlaW5nIHRvIGRtIGFuZCB0
+aGlzIGRtIGRldmljZSBiZWVuIGJsb2NrZWQuCj4gVGhpcyBwYXRjaCBtaWdodCBmaXggdGhpcyBp
+c3N1ZS4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBDaG9uZ3l1biBXdSA8d3UuY2hvbmd5dW5AaDNjLmNv
+bT4KPiAtLS0KPiAgbGlibXVsdGlwYXRoL3N0cnVjdHNfdmVjLmMgfCA4ICsrKysrKy0tCj4gIDEg
+ZmlsZSBjaGFuZ2VkLCA2IGluc2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0pCgoKVGhhbmtzIGEg
+bG90IGZvciB5b3VyIHBhdGNoLiBXZSd2ZSBkaXNjdXNzZWQgdGhpcyBwcmV2aW91c2x5LCBhbmQg
+aW4gZ2VuZXJhbCwgdGhlcmUncyBsaXR0bGUgcmVhc29uIG5vdCB0byBkbyBpdCAtIHBhdGhjb3Vu
+dCgpIGlzIGZhc3QsIGFuZCBjb3VsZCBiZSBtYWRlIGV2ZW4gZmFzdGVyLiBCdXQgaWYgd2UgZG8s
+IHdlIHNob3VsZCBkaXRjaCB0aGUgbnJfYWN0aXZlIGZpZWxkIGFsdG9nZXRoZXIgLSBubyBuZWVk
+IHRvIGNhcnJ5IGl0IGFyb3VuZCBpZiB3ZSByZS1jYWxjdWxhdGUgaXQgYW55d2F5IHdoZW4gd2Ug
+bmVlZCBpdC4KCkhvd2V2ZXIsIGl0IHdvcnJpZXMgbWUgYSBiaXQgdGhhdCBucl9hY3RpdmUgbWF5
+IGdvIHdyb25nLiBCb3RoIEJlbiBhbmQgSSBoYXZlIHJldmlld2VkIHRoZSBjb2RlIGFuZCB3ZSB0
+aG91Z2h0IHRoZSBucl9hY3RpdmUgdHJhY2tpbmcgd2FzIGNvcnJlY3QuIFNvbWV0aGluZyBzZWVt
+cyB0byBoYXBwZW4gaW4gb3VyIGNvZGUgdGhhdCB3ZSBkb24ndCB1bmRlcnN0YW5kLgoKIC0gY2Fu
+IHlvdSBwbGVhc2UgY29uZmlybSB0aGF0IHlvdSBhcmUgdXNpbmcgdGhlIGxhdGVzdCBjb2RlLCBj
+b250YWluaW5nIGUyMjRkNTcgImxpYm11dGlwYXRoOiBjb250aW51ZSB0byB1c2Ugb2xkIHN0YXRl
+IG9uIFBBVEhfUEVORElORyIsIDliNzE1YmYgIm11bHRpcGF0aGQ6IEZpeCBtaXNjb3VudGluZyBh
+Y3RpdmUgcGF0aHMiIGFuZCAoaW4gY2FzZSB5b3UncmUgdXNpbmcgdGhlIG1hcmdpbmFsX3BhdGhz
+IG9wdGlvbnMpIGFsc28gN2Q0YjQwZiBhbmQKMDU4ZGY3NyA/CgogLSBJZiB5b3UgaGF2ZSBhIHJl
+bGlhYmxlIHJlcHJvZHVjZXIsIHdvdWxkIHlvdSBtaW5kIGFkZGluZyBsb2cgbWVzc2FnZXMgdG8g
+dGhlIGNvZGUgeW91IGp1c3Qgc3VibWl0dGVkLCBzbyB0aGF0IHdlIGNhbiBvYnNlcnZlIGhvdyBu
+cl9hY3RpdmUgZXZvbHZlcyBpbiB0aW1lLCBhbmQgcGVyaGFwcyB1bmRlcnN0YW5kIHdoeSBpdCdz
+IGdvaW5nIHdyb25nPwoKUmVnYXJkcwpNYXJ0aW4KCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QK
+ZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGlu
+Zm8vZG0tZGV2ZWw=
