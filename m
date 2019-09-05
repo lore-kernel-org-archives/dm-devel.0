@@ -1,8 +1,7 @@
 From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH v5 2/7] block: Change elevator_init_mq() to
-	always succeed
-Date: Thu,  5 Sep 2019 18:51:30 +0900
-Message-ID: <20190905095135.26026-3-damien.lemoal@wdc.com>
+Subject: [PATCH v5 4/7] block: Improve default elevator selection
+Date: Thu,  5 Sep 2019 18:51:32 +0900
+Message-ID: <20190905095135.26026-5-damien.lemoal@wdc.com>
 References: <20190905095135.26026-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,118 +21,95 @@ To: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.k
 Cc: Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-If the default elevator chosen is mq-deadline, elevator_init_mq() may
-return an error if mq-deadline initialization fails, leading to
-blk_mq_init_allocated_queue() returning an error, which in turn will
-cause the block device initialization to fail and the device not being
-exposed.
+For block devices that do not specify required features, preserve the
+current default elevator selection (mq-deadline for single queue
+devices, none for multi-queue devices). However, for devices specifying
+required features (e.g. zoned block devices ELEVATOR_F_ZBD_SEQ_WRITE
+feature), select the first available elevator providing the required
+features.
 
-Instead of taking such extreme measure, handle mq-deadline
-initialization failures in the same manner as when mq-deadline is not
-available (no module to load), that is, default to the "none" scheduler.
-With this change, elevator_init_mq() return type can be changed to void.
+In all cases, default to "none" if no elevator is available or if the
+initialization of the default elevator fails.
 
 Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
 Reviewed-by: Johannes Thumshirn <jthumshirn@suse.de>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
 ---
- block/blk-mq.c   |  8 +-------
- block/blk.h      |  2 +-
- block/elevator.c | 23 ++++++++++++-----------
- 3 files changed, 14 insertions(+), 19 deletions(-)
+ block/elevator.c | 51 +++++++++++++++++++++++++++++++++++++++++-------
+ 1 file changed, 44 insertions(+), 7 deletions(-)
 
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index 13923630e00a..ee4caf0c0807 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -2842,8 +2842,6 @@ static unsigned int nr_hw_queues(struct blk_mq_tag_set *set)
- struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
- 						  struct request_queue *q)
- {
--	int ret = -ENOMEM;
--
- 	/* mark the queue as mq asap */
- 	q->mq_ops = set->ops;
- 
-@@ -2904,14 +2902,10 @@ struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
- 	blk_mq_add_queue_tag_set(set, q);
- 	blk_mq_map_swqueue(q);
- 
--	ret = elevator_init_mq(q);
--	if (ret)
--		goto err_tag_set;
-+	elevator_init_mq(q);
- 
- 	return q;
- 
--err_tag_set:
--	blk_mq_del_queue_tag_set(q);
- err_hctxs:
- 	kfree(q->queue_hw_ctx);
- 	q->nr_hw_queues = 0;
-diff --git a/block/blk.h b/block/blk.h
-index e4619fc5c99a..ed347f7a97b1 100644
---- a/block/blk.h
-+++ b/block/blk.h
-@@ -184,7 +184,7 @@ void blk_account_io_done(struct request *req, u64 now);
- 
- void blk_insert_flush(struct request *rq);
- 
--int elevator_init_mq(struct request_queue *q);
-+void elevator_init_mq(struct request_queue *q);
- int elevator_switch_mq(struct request_queue *q,
- 			      struct elevator_type *new_e);
- void __elevator_exit(struct request_queue *, struct elevator_queue *);
 diff --git a/block/elevator.c b/block/elevator.c
-index 4721834815bb..2944c129760c 100644
+index ac7c8ad580ba..520d6b224b74 100644
 --- a/block/elevator.c
 +++ b/block/elevator.c
-@@ -628,34 +628,35 @@ static inline bool elv_support_iosched(struct request_queue *q)
+@@ -651,9 +651,46 @@ static inline bool elv_support_iosched(struct request_queue *q)
+ }
  
  /*
-  * For blk-mq devices supporting IO scheduling, we default to using mq-deadline,
-- * if available, for single queue devices. If deadline isn't available OR we
-- * have multiple queues, default to "none".
-+ * if available, for single queue devices. If deadline isn't available OR
-+ * deadline initialization fails OR we have multiple queues, default to "none".
+- * For blk-mq devices supporting IO scheduling, we default to using mq-deadline,
+- * if available, for single queue devices. If deadline isn't available OR
+- * deadline initialization fails OR we have multiple queues, default to "none".
++ * For single queue devices, default to using mq-deadline. If we have multiple
++ * queues or mq-deadline is not available, default to "none".
++ */
++static struct elevator_type *elevator_get_default(struct request_queue *q)
++{
++	if (q->nr_hw_queues != 1)
++		return NULL;
++
++	return elevator_get(q, "mq-deadline", false);
++}
++
++/*
++ * Get the first elevator providing the features required by the request queue.
++ * Default to "none" if no matching elevator is found.
++ */
++static struct elevator_type *elevator_get_by_features(struct request_queue *q)
++{
++	struct elevator_type *e;
++
++	spin_lock(&elv_list_lock);
++
++	list_for_each_entry(e, &elv_list, list) {
++		if (elv_support_features(e->elevator_features,
++					 q->required_elevator_features))
++			break;
++	}
++
++	if (e && !try_module_get(e->elevator_owner))
++		e = NULL;
++
++	spin_unlock(&elv_list_lock);
++
++	return e;
++}
++
++/*
++ * For a device queue that has no required features, use the default elevator
++ * settings. Otherwise, use the first elevator available matching the required
++ * features. If no suitable elevator is find or if the chosen elevator
++ * initialization fails, fall back to the "none" elevator (no elevator).
   */
--int elevator_init_mq(struct request_queue *q)
-+void elevator_init_mq(struct request_queue *q)
+ void elevator_init_mq(struct request_queue *q)
  {
- 	struct elevator_type *e;
--	int err = 0;
-+	int err;
- 
+@@ -663,15 +700,15 @@ void elevator_init_mq(struct request_queue *q)
  	if (!elv_support_iosched(q))
--		return 0;
-+		return;
+ 		return;
  
- 	if (q->nr_hw_queues != 1)
--		return 0;
-+		return;
- 
+-	if (q->nr_hw_queues != 1)
+-		return;
+-
  	WARN_ON_ONCE(test_bit(QUEUE_FLAG_REGISTERED, &q->queue_flags));
  
  	if (unlikely(q->elevator))
--		goto out;
-+		return;
+ 		return;
  
- 	e = elevator_get(q, "mq-deadline", false);
+-	e = elevator_get(q, "mq-deadline", false);
++	if (!q->required_elevator_features)
++		e = elevator_get_default(q);
++	else
++		e = elevator_get_by_features(q);
  	if (!e)
--		goto out;
-+		return;
- 
- 	err = blk_mq_init_sched(q, e);
--	if (err)
-+	if (err) {
-+		pr_warn("\"%s\" elevator initialization failed, "
-+			"falling back to \"none\"\n", e->elevator_name);
- 		elevator_put(e);
--out:
--	return err;
-+	}
- }
- 
+ 		return;
  
 -- 
 2.21.0
