@@ -1,14 +1,14 @@
-From: Ming Lei <ming.lei@redhat.com>
+From: Jens Axboe <axboe@kernel.dk>
 Subject: Re: [PATCH v5 0/7] Elevator cleanups and improvements
-Date: Fri, 6 Sep 2019 08:31:30 +0800
-Message-ID: <20190906003129.GA27116@ming.t460p>
+Date: Thu, 5 Sep 2019 19:53:11 -0600
+Message-ID: <b0913603-5a3f-472d-1013-9b12835e77fe@kernel.dk>
 References: <20190905095135.26026-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 In-Reply-To: <20190905095135.26026-1-damien.lemoal@wdc.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,16 +18,16 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <damien.lemoal@wdc.com>
-Cc: Jens Axboe <axboe@kernel.dk>, "Martin K . Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org
+To: Damien Le Moal <damien.lemoal@wdc.com>, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Sep 05, 2019 at 06:51:28PM +0900, Damien Le Moal wrote:
+On 9/5/19 3:51 AM, Damien Le Moal wrote:
 > This patch series implements some cleanup of the elevator initialization
 > code and introduces elevator features identification and device matching
 > to enhance checks for elevator/device compatibility and fitness.
 > 
-> The first 2 patches of the series are simple cleanups which simplify 
+> The first 2 patches of the series are simple cleanups which simplify
 > elevator initialization for newly allocated device queues.
 > 
 > Patch 3 introduce elevator features, allowing a clean and extensible
@@ -46,53 +46,8 @@ On Thu, Sep 05, 2019 at 06:51:28PM +0900, Damien Le Moal wrote:
 > and initialization to allow for the elevator/device features matching
 > to work, doing so addressing cases not currently well supported, namely,
 > multi-queue zoned block devices.
-> 
-> Changes from v4:
-> * Fix patch 5 again to correctly handle request based DM devices and
->   avoid that default queue elevator of these devices end up always
->   being "none".
-> 
-> Changes from v3:
-> * Fixed patch 5 to correctly handle DM devices which do not register a
->   request queue and so do not need elevator initialization.
-> 
-> Changes from v2:
-> * Fixed patch 4
-> * Call elevator_init_mq() earlier in device_add_disk() as suggested by
->   Christoph (patch 5)
-> * Fixed title of patch 7
-> 
-> Changes from v1:
-> * Addressed Johannes comments
-> * Rebased on newest for-next branch to include Ming's sysfs lock changes
-> 
-> Damien Le Moal (7):
->   block: Cleanup elevator_init_mq() use
->   block: Change elevator_init_mq() to always succeed
->   block: Introduce elevator features
->   block: Improve default elevator selection
->   block: Delay default elevator initialization
->   block: Set ELEVATOR_F_ZBD_SEQ_WRITE for nullblk zoned disks
->   sd: Set ELEVATOR_F_ZBD_SEQ_WRITE for ZBC disks
-> 
->  block/blk-mq.c                |  20 +++--
->  block/blk-settings.c          |  16 ++++
->  block/blk.h                   |   2 +-
->  block/elevator.c              | 137 ++++++++++++++++++++++++++--------
->  block/genhd.c                 |   9 +++
->  block/mq-deadline.c           |   1 +
->  drivers/block/null_blk_main.c |   2 +
->  drivers/md/dm-rq.c            |   2 +-
->  drivers/scsi/sd_zbc.c         |   2 +
->  include/linux/blk-mq.h        |   3 +-
->  include/linux/blkdev.h        |   4 +
->  include/linux/elevator.h      |   8 ++
->  12 files changed, 161 insertions(+), 45 deletions(-)
 
-Looks fine for the series:
+Applied for 5.4, thanks.
 
-Reviewed-by: Ming Lei <ming.lei@redhat.com>
-
-
-Thanks,
-Ming
+-- 
+Jens Axboe
