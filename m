@@ -1,58 +1,98 @@
-From: Valentin Schneider <valentin.schneider@arm.com>
-Subject: Re: sched: make struct task_struct::state 32-bit
-Date: Thu, 5 Sep 2019 17:52:32 +0100
-Message-ID: <0c4dcb91-4830-0013-b8c6-64b9e1ce47d4@arm.com>
-References: <a43fe392-bd6a-71f5-8611-c6b764ba56c3@arm.com>
- <7e3e784c-e8e6-f9ba-490f-ec3bf956d96b@web.de>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [PATCH v5 0/7] Elevator cleanups and improvements
+Date: Fri, 6 Sep 2019 08:31:30 +0800
+Message-ID: <20190906003129.GA27116@ming.t460p>
+References: <20190905095135.26026-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <7e3e784c-e8e6-f9ba-490f-ec3bf956d96b@web.de>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Markus Elfring <Markus.Elfring@web.de>, Alexey Dobriyan <adobriyan@gmail.com>, dm-devel@redhat.com, linux-block@vger.kernel.org, rcu@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, Andrea Arcangeli <aarcange@redhat.com>, Ingo Molnar <mingo@redhat.com>, Jens Axboe <axboe@kernel.dk>, Peter Zijlstra <peterz@infradead.org>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20190905095135.26026-1-damien.lemoal@wdc.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Damien Le Moal <damien.lemoal@wdc.com>
+Cc: Jens Axboe <axboe@kernel.dk>, "Martin K . Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
+On Thu, Sep 05, 2019 at 06:51:28PM +0900, Damien Le Moal wrote:
+> This patch series implements some cleanup of the elevator initialization
+> code and introduces elevator features identification and device matching
+> to enhance checks for elevator/device compatibility and fitness.
+> 
+> The first 2 patches of the series are simple cleanups which simplify 
+> elevator initialization for newly allocated device queues.
+> 
+> Patch 3 introduce elevator features, allowing a clean and extensible
+> definition of devices and features that an elevator supports and match
+> these against features required by a block device. With this, the sysfs
+> elevator list for a device always shows only elevators matching the
+> features that a particular device requires, with the exception of the
+> none elevator which has no features but is always available for use
+> with any device.
+> 
+> The first feature defined is for zoned block device sequential write
+> constraint support through zone write locking which prevents the use of
+> any elevator that does not support this feature with zoned devices.
+> 
+> The last 4 patches of this series rework the default elevator selection
+> and initialization to allow for the elevator/device features matching
+> to work, doing so addressing cases not currently well supported, namely,
+> multi-queue zoned block devices.
+> 
+> Changes from v4:
+> * Fix patch 5 again to correctly handle request based DM devices and
+>   avoid that default queue elevator of these devices end up always
+>   being "none".
+> 
+> Changes from v3:
+> * Fixed patch 5 to correctly handle DM devices which do not register a
+>   request queue and so do not need elevator initialization.
+> 
+> Changes from v2:
+> * Fixed patch 4
+> * Call elevator_init_mq() earlier in device_add_disk() as suggested by
+>   Christoph (patch 5)
+> * Fixed title of patch 7
+> 
+> Changes from v1:
+> * Addressed Johannes comments
+> * Rebased on newest for-next branch to include Ming's sysfs lock changes
+> 
+> Damien Le Moal (7):
+>   block: Cleanup elevator_init_mq() use
+>   block: Change elevator_init_mq() to always succeed
+>   block: Introduce elevator features
+>   block: Improve default elevator selection
+>   block: Delay default elevator initialization
+>   block: Set ELEVATOR_F_ZBD_SEQ_WRITE for nullblk zoned disks
+>   sd: Set ELEVATOR_F_ZBD_SEQ_WRITE for ZBC disks
+> 
+>  block/blk-mq.c                |  20 +++--
+>  block/blk-settings.c          |  16 ++++
+>  block/blk.h                   |   2 +-
+>  block/elevator.c              | 137 ++++++++++++++++++++++++++--------
+>  block/genhd.c                 |   9 +++
+>  block/mq-deadline.c           |   1 +
+>  drivers/block/null_blk_main.c |   2 +
+>  drivers/md/dm-rq.c            |   2 +-
+>  drivers/scsi/sd_zbc.c         |   2 +
+>  include/linux/blk-mq.h        |   3 +-
+>  include/linux/blkdev.h        |   4 +
+>  include/linux/elevator.h      |   8 ++
+>  12 files changed, 161 insertions(+), 45 deletions(-)
+
+Looks fine for the series:
+
+Reviewed-by: Ming Lei <ming.lei@redhat.com>
 
 
-On 05/09/2019 16:51, Markus Elfring wrote:
-> Can a transformation approach like the following work also
-> for your software?
-> 
-> @replacement@
-> 
-> identifier func, p, state_var;
-> 
-> @@
-> 
->  func(...,
->       struct task_struct *p,
->       ...
-> ,
-> -     long
-> +     int
->       state_var
-> ,
->       ...)
-> 
->  {
-> 
->  ...
-> 
->  }
-> 
-> 
-
-I actually got rid of the task_struct* parameter and now just match
-against task_struct.p accesses in the function body, which has the
-added bonus of not caring about the order of the parameters.
-
-Still not there yet but making progress in the background, hope it's
-passable entertainment to see me struggle my way there :)
-
-> 
-> Regards,
-> Markus
-> 
+Thanks,
+Ming
