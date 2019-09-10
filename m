@@ -1,56 +1,45 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Martijn Coenen <maco@android.com>
 Subject: Re: dm-bufio: Allow clients to specify an upper bound on cache size.
-Date: Mon, 9 Sep 2019 10:57:04 -0400
-Message-ID: <20190909145703.GA16249@redhat.com>
-References: <20190906074526.169194-1-maco@android.com>
+Date: Tue, 10 Sep 2019 10:55:58 +0200
+Message-ID: <CAB0TPYEb-WdggSj=i+tpABfkO9KFqcgMc0twMx0L=ZcAN4HDfw@mail.gmail.com>
+References: <20190906074526.169194-1-maco@android.com> <20190909145703.GA16249@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190906074526.169194-1-maco@android.com>
+In-Reply-To: <20190909145703.GA16249@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Martijn Coenen <maco@android.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: agk@redhat.com, dm-devel@redhat.com, dariofreni@google.com, jiyong@google.com, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, maco@google.com, ioffe@google.com, narayan@google.com, kernel-team@android.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, agk@redhat.com, dm-devel@redhat.com, Dario Freni <dariofreni@google.com>, Jiyong Park <jiyong@google.com>, Greg KH <gregkh@linuxfoundation.org>, LKML <linux-kernel@vger.kernel.org>, Martijn Coenen <maco@google.com>, Nikita Ioffe <ioffe@google.com>, Narayan Kamath <narayan@google.com>, kernel-team@android.com
 List-Id: dm-devel.ids
 
-On Fri, Sep 06 2019 at  3:45am -0400,
-Martijn Coenen <maco@android.com> wrote:
+Hi Mike,
 
-> The upper limit on the cache size of a client is currently determined by
-> dividing the total cache size by the number of clients. However, in some
-> cases it is beneficial to give one client a higher limit than others; an
-> example is a device with many dm-verity targets, where one target has a
-> very large hashtree, and all the others have a small hashtree. Giving
-> the target with the large hashtree a higher limit will be beneficial.
-> Another example is dm-verity-fec: FEC is only used in (rare) error
-> conditions, yet for every dm-verity target with FEC, we create two FEC
-> dm-bufio clients, which together have a higher cache limit than the
-> dm-verity target itself.
-> 
-> This patchset allows a client to indicate a maximum cache size for its
-> client; if that maximum is lower than the calculated per-client limit,
-> that maximum will be used instead, and the freed up cache size will be
-> allocated to other clients (that haven't set a maximum).
-> 
-> Note that this algorithm is not perfect; if we have 100MB with 3
-> clients, where the first set a max of 1MB, the second set a max of 40MB,
-> and the third set no maximumm, the ideal allocation would be 1:40:59,
-> respectively. However, because the initial per-client limit is 100 / 3
-> =~33MB, the requested max of 40MB is over the per-client limit, and
-> instead the allocation will end up being ~ 1:40:49. This is still better
-> than the original 33:33:33 allocation. An iterative algorithm could do
-> better, but it also complicates the code significantly.
+On Mon, Sep 9, 2019 at 4:57 PM Mike Snitzer <snitzer@redhat.com> wrote:
+> Definitely not very intuitive.. but yes I think it is a reasonable
+> tradeoff between your goals and further code complexity to be able to
+> achieve the "ideal".
 
-Definitely not very intuitive.. but yes I think it is a reasonable
-tradeoff between your goals and further code complexity to be able to
-achieve the "ideal".
+Thanks for the feedback. I do have a patch for the "optimal"
+allocation lying around as well, if you'd like to take a look. It's
+not as bad as I thought, but it does require another list_head in
+dm_bufio_client; other than that it's just O(N), so not so bad.
 
-Think the documented example can be made clearer by documenting that
-dm_bufio_cache_size_per_client = 49.  And that _that_ is the reason why
-the client that didn't set a maximum is bounded to 49.
+> Think the documented example can be made clearer by documenting that
+> dm_bufio_cache_size_per_client = 49.  And that _that_ is the reason why
+> the client that didn't set a maximum is bounded to 49.
 
-Overall I think this patch looks reasonable, but I'd like Mikulas to
-review this closer before I pick it up.
+Ack, will send a v2 to clarify.
+
+>
+> Overall I think this patch looks reasonable, but I'd like Mikulas to
+> review this closer before I pick it up.
+
+Thanks; let me know if you want to see the alternative as an RFC, and
+I'll clean it up and send it out.
 
 Thanks,
-Mike
+Martijn
+
+>
+> Thanks,
+> Mike
