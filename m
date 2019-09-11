@@ -1,17 +1,15 @@
-From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: Re: [dm:for-next 29/30]
- drivers//md/dm-clone-target.c:563:14: error: implicit declaration of
- function 'vmalloc'; did you mean 'kmalloc'?
-Date: Wed, 11 Sep 2019 21:46:53 +0300
-Message-ID: <c35fcc93-91a2-20c2-da4c-9bbdee94e510@arrikto.com>
-References: <201909120035.YsFPOauD%lkp@intel.com>
-	<20190911182251.GA634@redhat.com>
+From: "John Stoffel" <john@stoffel.org>
+Subject: Re: [PATCH V2] dm-raid: fix updating
+	of	max_discard_sectors limit
+Date: Wed, 11 Sep 2019 14:59:28 -0400
+Message-ID: <23929.17424.161332.501830@quad.stoffel.home>
+References: <20190911113133.837-1-ming.lei@redhat.com>
+	<20190911133523.GA32121@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190911182251.GA634@redhat.com>
-Content-Language: en-US
+In-Reply-To: <20190911133523.GA32121@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,138 +19,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, kbuild test robot <lkp@intel.com>
-Cc: dm-devel@redhat.com, kbuild-all@01.org, Ilias Tsitsimpis <iliastsi@arrikto.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, stable@vger.kernel.org, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-On 9/11/19 9:22 PM, Mike Snitzer wrote:> 
-> I resolved this and pushed new code, thanks!
-> 
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
-Hi Mike,
+Mike> On Wed, Sep 11 2019 at  7:31am -0400,
+Mike> Ming Lei <ming.lei@redhat.com> wrote:
 
-I just saw the report and was about to fix it, but I noticed you have
-already fixed it. Thanks a lot.
-
-I had forgotten to include the header file for vmalloc(), but I saw you
-used kvmalloc(), which is even better.
-
-I took a quick look at the diff and there are a few places that still
-need fixing:
-
-drivers/md/dm-clone-target.c:563: clone->ht = vmalloc(sz *sizeof(struct hash_table_bucket));
-drivers/md/dm-clone-target.c:579: vfree(clone->ht);
-
-Also, the allocation of cmd->region_map is done with kvmalloc(), but the
-deallocation is still done with vfree():
-
-drivers/md/dm-clone-metadata.c:597: vfree(cmd->region_map);
-
-I will be away from keyboard for the rest of the day, but I will take a
-closer look at the diff tomorrow and I will send a new version fixing
-these and any other issues I might find.
-
-Thanks,
-Nikos.
-
-> On Wed, Sep 11 2019 at 12:03pm -0400,
-> kbuild test robot <lkp@intel.com> wrote:
-> 
->> tree:   https://kernel.googlesource.com/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
->> head:   509818079bf1fefff4ed02d6a1b994e20efc0480
->> commit: 1529a543debdf75fb26e7ecd732da0cc36f78a36 [29/30] dm: add clone target
->> config: sparc64-allmodconfig (attached as .config)
->> compiler: sparc64-linux-gcc (GCC) 7.4.0
->> reproduce:
->>         wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
->>         chmod +x ~/bin/make.cross
->>         git checkout 1529a543debdf75fb26e7ecd732da0cc36f78a36
->>         # save the attached .config to linux build tree
->>         GCC_VERSION=7.4.0 make.cross ARCH=sparc64 
->>
->> If you fix the issue, kindly add following tag
->> Reported-by: kbuild test robot <lkp@intel.com>
->>
->> All error/warnings (new ones prefixed by >>):
->>
->>    drivers//md/dm-clone-target.c: In function 'hash_table_init':
->>>> drivers//md/dm-clone-target.c:563:14: error: implicit declaration of function 'vmalloc'; did you mean 'kmalloc'? [-Werror=implicit-function-declaration]
->>      clone->ht = vmalloc(sz * sizeof(struct hash_table_bucket));
->>                  ^~~~~~~
->>                  kmalloc
->>>> drivers//md/dm-clone-target.c:563:12: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
->>      clone->ht = vmalloc(sz * sizeof(struct hash_table_bucket));
->>                ^
->>    drivers//md/dm-clone-target.c: In function 'hash_table_exit':
->>>> drivers//md/dm-clone-target.c:579:2: error: implicit declaration of function 'vfree'; did you mean 'kfree'? [-Werror=implicit-function-declaration]
->>      vfree(clone->ht);
->>      ^~~~~
->>      kfree
->>    cc1: some warnings being treated as errors
->> --
->>    drivers//md/dm-clone-metadata.c: In function 'dirty_map_init':
->>>> drivers//md/dm-clone-metadata.c:466:28: error: implicit declaration of function 'vzalloc'; did you mean 'kvzalloc'? [-Werror=implicit-function-declaration]
->>      md->dmap[0].dirty_words = vzalloc(bitmap_size(md->nr_words));
->>                                ^~~~~~~
->>                                kvzalloc
->>>> drivers//md/dm-clone-metadata.c:466:26: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
->>      md->dmap[0].dirty_words = vzalloc(bitmap_size(md->nr_words));
->>                              ^
->>    drivers//md/dm-clone-metadata.c:474:26: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
->>      md->dmap[1].dirty_words = vzalloc(bitmap_size(md->nr_words));
->>                              ^
->>>> drivers//md/dm-clone-metadata.c:478:3: error: implicit declaration of function 'vfree'; did you mean 'kvfree'? [-Werror=implicit-function-declaration]
->>       vfree(md->dmap[0].dirty_words);
->>       ^~~~~
->>       kvfree
->>    drivers//md/dm-clone-metadata.c: In function 'dm_clone_metadata_open':
->>>> drivers//md/dm-clone-metadata.c:553:19: error: implicit declaration of function 'vmalloc'; did you mean 'kvmalloc'? [-Werror=implicit-function-declaration]
->>      md->region_map = vmalloc(bitmap_size(md->nr_regions));
->>                       ^~~~~~~
->>                       kvmalloc
->>    drivers//md/dm-clone-metadata.c:553:17: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
->>      md->region_map = vmalloc(bitmap_size(md->nr_regions));
->>                     ^
->>    cc1: some warnings being treated as errors
->>
->> vim +563 drivers//md/dm-clone-target.c
->>
->>    549	
->>    550	#define bucket_lock_irqsave(bucket, flags) \
->>    551		spin_lock_irqsave(&(bucket)->lock, flags)
->>    552	
->>    553	#define bucket_unlock_irqrestore(bucket, flags) \
->>    554		spin_unlock_irqrestore(&(bucket)->lock, flags)
->>    555	
->>    556	static int hash_table_init(struct clone *clone)
->>    557	{
->>    558		unsigned int i, sz;
->>    559		struct hash_table_bucket *bucket;
->>    560	
->>    561		sz = 1 << HASH_TABLE_BITS;
->>    562	
->>  > 563		clone->ht = vmalloc(sz * sizeof(struct hash_table_bucket));
->>    564		if (!clone->ht)
->>    565			return -ENOMEM;
->>    566	
->>    567		for (i = 0; i < sz; i++) {
->>    568			bucket = clone->ht + i;
->>    569	
->>    570			INIT_HLIST_HEAD(&bucket->head);
->>    571			spin_lock_init(&bucket->lock);
->>    572		}
->>    573	
->>    574		return 0;
->>    575	}
->>    576	
->>    577	static void hash_table_exit(struct clone *clone)
->>    578	{
->>  > 579		vfree(clone->ht);
->>    580	}
->>    581	
->>
+>> Unit of 'chunk_size' is byte, instead of sector, so fix it.
+>> 
+>> Without this fix, too big max_discard_sectors is applied on the request queue
+>> of dm-raid, finally raid code has to split the bio again.
+>> 
+>> This re-split done by raid causes the following nested clone_endio:
+>> 
+>> 1) one big bio 'A' is submitted to dm queue, and served as the original
+>> bio
+>> 
+>> 2) one new bio 'B' is cloned from the original bio 'A', and .map()
+>> is run on this bio of 'B', and B's original bio points to 'A'
+>> 
+>> 3) raid code sees that 'B' is too big, and split 'B' and re-submit
+>> the remainded part of 'B' to dm-raid queue via generic_make_request().
+>> 
+>> 4) now dm will hanlde 'B' as new original bio, then allocate a new
+>> clone bio of 'C' and run .map() on 'C'. Meantime C's original bio
+>> points to 'B'.
+>> 
+>> 5) suppose now 'C' is completed by raid direclty, then the following
+>> clone_endio() is called recursively:
+>> 
+>> clone_endio(C)
+-> clone_endio(B)		#B is original bio of 'C'
+-> bio_endio(A)
+>> 
+>> 'A' can be big enough to make handreds of nested clone_endio(), then
+>> stack can be corrupted easily.
+>> 
+>> Cc: <stable@vger.kernel.org>
+>> Signed-off-by: Ming Lei <ming.lei@redhat.com>
 >> ---
->> 0-DAY kernel test infrastructure                Open Source Technology Center
->> https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
-> 
-> 
+>> V2:
+>> - fix commit log a bit
+>> 
+>> drivers/md/dm-raid.c | 2 +-
+>> 1 file changed, 1 insertion(+), 1 deletion(-)
+>> 
+>> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+>> index 8a60a4a070ac..c26aa4e8207a 100644
+>> --- a/drivers/md/dm-raid.c
+>> +++ b/drivers/md/dm-raid.c
+>> @@ -3749,7 +3749,7 @@ static void raid_io_hints(struct dm_target *ti, struct queue_limits *limits)
+>> */
+>> if (rs_is_raid1(rs) || rs_is_raid10(rs)) {
+limits-> discard_granularity = chunk_size;
+>> -		limits->max_discard_sectors = chunk_size;
+>> +		limits->max_discard_sectors = chunk_size >> 9;
+>> }
+>> }
+>> 
+>> -- 
+>> 2.20.1
+>> 
+
+Mike> Thanks a lot Ming!  But oof, really embarassing oversight on my part!
+
+Mike> FYI, I added a "Fixes:" tag to the commit header and switched to
+Mike> shifting by SECTOR_SHIFT instead of 9, staged commit for 5.4 is here:
+
+Mike> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.4&id=509818079bf1fefff4ed02d6a1b994e20efc0480
+
+Mike> --
+Mike> dm-devel mailing list
+Mike> dm-devel@redhat.com
+Mike> https://www.redhat.com/mailman/listinfo/dm-devel
+
+
+
+Would it make sense to re-name the variable to chunk_size_bytes as
+well?  
