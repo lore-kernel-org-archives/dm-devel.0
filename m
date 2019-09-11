@@ -1,7 +1,7 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH] dm-raid: fix updating of max_discard_sectors limit
-Date: Wed, 11 Sep 2019 19:12:49 +0800
-Message-ID: <20190911111249.19772-1-ming.lei@redhat.com>
+Subject: [PATCH V2] dm-raid: fix updating of max_discard_sectors limit
+Date: Wed, 11 Sep 2019 19:31:33 +0800
+Message-ID: <20190911113133.837-1-ming.lei@redhat.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <stable-owner@vger.kernel.org>
@@ -15,7 +15,7 @@ Unit of 'chunk_size' is byte, instead of sector, so fix it.
 Without this fix, too big max_discard_sectors is applied on the request queue
 of dm-raid, finally raid code has to split the bio again.
 
-This re-split by raid may cause the following nested clone_endio:
+This re-split done by raid causes the following nested clone_endio:
 
 1) one big bio 'A' is submitted to dm queue, and served as the original
 bio
@@ -30,19 +30,22 @@ the remainded part of 'B' to dm-raid queue via generic_make_request().
 clone bio of 'C' and run .map() on 'C'. Meantime C's original bio
 points to 'B'.
 
-5) suppose now 'C' can be completed by raid direclty, then the following
+5) suppose now 'C' is completed by raid direclty, then the following
 clone_endio() is called recursively:
 
 	clone_endio(C)
 		->clone_endio(B)		#B is original bio of 'C'
-			->clone_endio(A)	#A is original bio of 'B'
+			->bio_endio(A)
 
-'A' can be big enough to make such handreds of nested clone_endio(), then
-stack is corrupted.
+'A' can be big enough to make handreds of nested clone_endio(), then
+stack can be corrupted easily.
 
 Cc: <stable@vger.kernel.org>
 Signed-off-by: Ming Lei <ming.lei@redhat.com>
 ---
+V2:
+	- fix commit log a bit
+
  drivers/md/dm-raid.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
