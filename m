@@ -1,14 +1,12 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 1/5] dm-bufio: call adjust_total_allocated from
-	__link_buffer and __unlink_buffer
-Date: Thu, 12 Sep 2019 10:44:44 +0200
-Message-ID: <20190912084545.276409400@debian-a64.vm>
+Subject: [PATCH 3/5] dm-bufio: introduce a global queue
+Date: Thu, 12 Sep 2019 10:44:46 +0200
+Message-ID: <20190912084547.836289000@debian-a64.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline;
-	filename=dm-bufio-call-adjust_total_allocated-from-__link_buffer-and-__unlink_buffer.patch
+Content-Disposition: inline; filename=dm-bufio-global-queue.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,53 +20,59 @@ To: Martijn Coenen <maco@android.com>, Mike Snitzer <msnitzer@redhat.com>, Alasd
 Cc: dariofreni@google.com, jiyong@google.com, dm-devel@redhat.com, maco@google.com, Mikulas Patocka <mpatocka@redhat.com>, kernel-team@android.com
 List-Id: dm-devel.ids
 
-Move the call to adjust_total_allocated to __link_buffer and
-__unlink_buffer, so that only used buffers are counted. Reserved buffers
-are not.
+Rename param_spinlock to global_spinlock and introduce a global queue of
+all used buffers. The queue will be used in the following patches.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-bufio.c |    8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ drivers/md/dm-bufio.c |   15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
 
 Index: linux-2.6/drivers/md/dm-bufio.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-bufio.c	2019-09-10 09:35:40.000000000 +0200
-+++ linux-2.6/drivers/md/dm-bufio.c	2019-09-10 16:36:06.000000000 +0200
-@@ -432,8 +432,6 @@ static struct dm_buffer *alloc_buffer(st
- 		return NULL;
- 	}
+--- linux-2.6.orig/drivers/md/dm-bufio.c	2019-09-10 16:54:13.000000000 +0200
++++ linux-2.6/drivers/md/dm-bufio.c	2019-09-11 19:40:27.000000000 +0200
+@@ -133,6 +133,7 @@ enum data_mode {
+ struct dm_buffer {
+ 	struct rb_node node;
+ 	struct list_head lru_list;
++	struct list_head global_list;
+ 	sector_t block;
+ 	void *data;
+ 	unsigned char data_mode;		/* DATA_MODE_* */
+@@ -193,7 +194,9 @@ static unsigned long dm_bufio_cache_size
+  */
+ static unsigned long dm_bufio_cache_size_latch;
  
--	adjust_total_allocated(b->data_mode, (long)c->block_size);
--
- #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
- 	b->stack_len = 0;
- #endif
-@@ -447,8 +445,6 @@ static void free_buffer(struct dm_buffer
- {
- 	struct dm_bufio_client *c = b->c;
- 
--	adjust_total_allocated(b->data_mode, -(long)c->block_size);
--
- 	free_buffer_data(c, b->data, b->data_mode);
- 	kmem_cache_free(c->slab_buffer, b);
- }
-@@ -466,6 +462,8 @@ static void __link_buffer(struct dm_buff
- 	list_add(&b->lru_list, &c->lru[dirty]);
- 	__insert(b->c, b);
- 	b->last_accessed = jiffies;
+-static DEFINE_SPINLOCK(param_spinlock);
++static DEFINE_SPINLOCK(global_spinlock);
 +
-+	adjust_total_allocated(b->data_mode, (long)c->block_size);
- }
++static LIST_HEAD(global_queue);
  
  /*
-@@ -480,6 +478,8 @@ static void __unlink_buffer(struct dm_bu
- 	c->n_buffers[b->list_mode]--;
- 	__remove(b->c, b);
- 	list_del(&b->lru_list);
+  * Buffers are freed after this timeout
+@@ -302,7 +305,7 @@ static void adjust_total_allocated(struc
+ 	if (unlink)
+ 		diff = -diff;
+ 
+-	spin_lock(&param_spinlock);
++	spin_lock(&global_spinlock);
+ 
+ 	*class_ptr[data_mode] += diff;
+ 
+@@ -311,7 +314,13 @@ static void adjust_total_allocated(struc
+ 	if (dm_bufio_current_allocated > dm_bufio_peak_allocated)
+ 		dm_bufio_peak_allocated = dm_bufio_current_allocated;
+ 
+-	spin_unlock(&param_spinlock);
++	if (!unlink) {
++		list_add(&b->global_list, &global_queue);
++	} else {
++		list_del(&b->global_list);
++	}
 +
-+	adjust_total_allocated(b->data_mode, -(long)c->block_size);
++	spin_unlock(&global_spinlock);
  }
  
  /*
