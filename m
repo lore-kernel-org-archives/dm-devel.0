@@ -1,15 +1,11 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH 5/5] dm-bufio: introduce a global cache
- replacement
-Date: Thu, 12 Sep 2019 13:59:00 +0200
-Message-ID: <03876828-40a1-7adc-d40c-939853e8259c@redhat.com>
-References: <20190912084550.401229120@debian-a64.vm>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: [PATCH 0/2] dm clone: Minor fixes
+Date: Thu, 12 Sep 2019 15:11:35 +0300
+Message-ID: <20190912121137.26567-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190912084550.401229120@debian-a64.vm>
-Content-Language: en-MW
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,12 +15,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>, Martijn Coenen <maco@android.com>, Mike Snitzer <msnitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>
-Cc: maco@google.com, dariofreni@google.com, jiyong@google.com, kernel-team@android.com, dm-devel@redhat.com
+To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
+Cc: vkoukis@arrikto.com, ntsironis@arrikto.com, iliastsi@arrikto.com
 List-Id: dm-devel.ids
 
-Mikulas,
+Hi Mike,
 
-please use list_move instead of list_del/list_add pairs.
+I examined the diff between v3 of dm-clone and the staged version and it
+looks fine.
 
-Heinz
+This patch set includes some minor fixes to fold in:
+
+  - Rename 'md' to 'cmd' also in dm-clone-metadata.h, to be consistent
+    with the changes in dm-clone-metadata.c
+
+  - Explicitly include the header file for kvmalloc(). This is not
+    strictly required, as the header file is included indirectly by
+    other header files, but I think it's safer to include it anyway.
+
+Thanks,
+Nikos
+
+Nikos Tsironis (2):
+  dm clone metadata: Rename md to cmd
+  dm clone: Explicitly include header file for kvmalloc()
+
+ drivers/md/dm-clone-metadata.c |  1 +
+ drivers/md/dm-clone-metadata.h | 36 ++++++++++++++++++------------------
+ drivers/md/dm-clone-target.c   |  1 +
+ 3 files changed, 20 insertions(+), 18 deletions(-)
+
+-- 
+2.11.0
