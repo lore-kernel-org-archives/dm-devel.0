@@ -1,11 +1,14 @@
 From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: [PATCH 0/2] dm clone: Minor fixes
-Date: Thu, 12 Sep 2019 15:11:35 +0300
-Message-ID: <20190912121137.26567-1-ntsironis@arrikto.com>
+Subject: [PATCH 2/2] dm clone: Explicitly include header file for
+	kvmalloc()
+Date: Thu, 12 Sep 2019 15:11:37 +0300
+Message-ID: <20190912121137.26567-3-ntsironis@arrikto.com>
+References: <20190912121137.26567-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20190912121137.26567-1-ntsironis@arrikto.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,31 +22,35 @@ To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
 Cc: vkoukis@arrikto.com, ntsironis@arrikto.com, iliastsi@arrikto.com
 List-Id: dm-devel.ids
 
-Hi Mike,
+Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+---
+ drivers/md/dm-clone-metadata.c | 1 +
+ drivers/md/dm-clone-target.c   | 1 +
+ 2 files changed, 2 insertions(+)
 
-I examined the diff between v3 of dm-clone and the staged version and it
-looks fine.
-
-This patch set includes some minor fixes to fold in:
-
-  - Rename 'md' to 'cmd' also in dm-clone-metadata.h, to be consistent
-    with the changes in dm-clone-metadata.c
-
-  - Explicitly include the header file for kvmalloc(). This is not
-    strictly required, as the header file is included indirectly by
-    other header files, but I think it's safer to include it anyway.
-
-Thanks,
-Nikos
-
-Nikos Tsironis (2):
-  dm clone metadata: Rename md to cmd
-  dm clone: Explicitly include header file for kvmalloc()
-
- drivers/md/dm-clone-metadata.c |  1 +
- drivers/md/dm-clone-metadata.h | 36 ++++++++++++++++++------------------
- drivers/md/dm-clone-target.c   |  1 +
- 3 files changed, 20 insertions(+), 18 deletions(-)
-
+diff --git a/drivers/md/dm-clone-metadata.c b/drivers/md/dm-clone-metadata.c
+index 50abc2fb4c7a..6bc8c1d1c351 100644
+--- a/drivers/md/dm-clone-metadata.c
++++ b/drivers/md/dm-clone-metadata.c
+@@ -3,6 +3,7 @@
+  * Copyright (C) 2019 Arrikto, Inc. All Rights Reserved.
+  */
+ 
++#include <linux/mm.h>
+ #include <linux/err.h>
+ #include <linux/slab.h>
+ #include <linux/rwsem.h>
+diff --git a/drivers/md/dm-clone-target.c b/drivers/md/dm-clone-target.c
+index f80250c3103e..cd6f9e9fc98e 100644
+--- a/drivers/md/dm-clone-target.c
++++ b/drivers/md/dm-clone-target.c
+@@ -3,6 +3,7 @@
+  * Copyright (C) 2019 Arrikto, Inc. All Rights Reserved.
+  */
+ 
++#include <linux/mm.h>
+ #include <linux/bio.h>
+ #include <linux/err.h>
+ #include <linux/hash.h>
 -- 
 2.11.0
