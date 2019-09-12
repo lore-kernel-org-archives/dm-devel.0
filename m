@@ -1,12 +1,13 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 4/5] dm-bufio: remove old-style buffer cleanup
-Date: Thu, 12 Sep 2019 10:44:47 +0200
-Message-ID: <20190912084549.114522000@debian-a64.vm>
+Subject: [PATCH 5/5] dm-bufio: introduce a global cache
+	replacement
+Date: Thu, 12 Sep 2019 10:44:48 +0200
+Message-ID: <20190912084550.401229120@debian-a64.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm-bufio-remove-old-cleanup.patch
+Content-Disposition: inline; filename=dm-bufio-global-cleanup.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,120 +21,205 @@ To: Martijn Coenen <maco@android.com>, Mike Snitzer <msnitzer@redhat.com>, Alasd
 Cc: dariofreni@google.com, jiyong@google.com, dm-devel@redhat.com, maco@google.com, Mikulas Patocka <mpatocka@redhat.com>, kernel-team@android.com
 List-Id: dm-devel.ids
 
-Remove a code that cleans up buffers if the cache size grows over the limit.
+This patch introduces a global cache replacement (instead of per-client
+cleanup).
 
-The next patch will introduce a new global cleanup.
+If one bufio client uses the cache heavily and another client is not using
+it, we want to let the first client use most of the cache. The old
+algorithm would partition the cache equally betwen the clients and that is
+inoptimal.
+
+For cache replacement, we use the clock algorithm because it doesn't
+require taking any lock when the buffer is accessed.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-bufio.c |   61 ++------------------------------------------------
- 1 file changed, 3 insertions(+), 58 deletions(-)
+ drivers/md/dm-bufio.c |  103 ++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 96 insertions(+), 7 deletions(-)
 
 Index: linux-2.6/drivers/md/dm-bufio.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-bufio.c	2019-09-10 17:34:24.000000000 +0200
-+++ linux-2.6/drivers/md/dm-bufio.c	2019-09-10 17:34:29.000000000 +0200
-@@ -33,7 +33,7 @@
- 
+--- linux-2.6.orig/drivers/md/dm-bufio.c	2019-09-11 20:32:15.000000000 +0200
++++ linux-2.6/drivers/md/dm-bufio.c	2019-09-12 10:23:57.000000000 +0200
+@@ -34,6 +34,7 @@
  #define DM_BUFIO_MEMORY_PERCENT		2
  #define DM_BUFIO_VMALLOC_PERCENT	25
--#define DM_BUFIO_WRITEBACK_PERCENT	75
-+#define DM_BUFIO_WRITEBACK_RATIO	3
+ #define DM_BUFIO_WRITEBACK_RATIO	3
++#define DM_BUFIO_LOW_WATERMARK		16
  
  /*
   * Check buffer ages in this interval (seconds)
-@@ -213,11 +213,6 @@ static unsigned long dm_bufio_current_al
- /*----------------------------------------------------------------*/
+@@ -140,6 +141,7 @@ struct dm_buffer {
+ 	unsigned char list_mode;		/* LIST_* */
+ 	blk_status_t read_error;
+ 	blk_status_t write_error;
++	unsigned accessed;
+ 	unsigned hold_count;
+ 	unsigned long state;
+ 	unsigned long last_accessed;
+@@ -198,6 +200,8 @@ static DEFINE_SPINLOCK(global_spinlock);
  
+ static LIST_HEAD(global_queue);
+ 
++static unsigned long global_num = 0;
++
  /*
-- * Per-client cache: dm_bufio_cache_size / dm_bufio_client_count
-- */
--static unsigned long dm_bufio_cache_size_per_client;
--
--/*
-  * The current number of clients.
+  * Buffers are freed after this timeout
   */
- static int dm_bufio_client_count;
-@@ -228,8 +223,7 @@ static int dm_bufio_client_count;
- static LIST_HEAD(dm_bufio_all_clients);
- 
- /*
-- * This mutex protects dm_bufio_cache_size_latch,
-- * dm_bufio_cache_size_per_client and dm_bufio_client_count
-+ * This mutex protects dm_bufio_cache_size_latch and dm_bufio_client_count
+@@ -227,6 +231,12 @@ static LIST_HEAD(dm_bufio_all_clients);
   */
  static DEFINE_MUTEX(dm_bufio_clients_lock);
  
-@@ -341,9 +335,6 @@ static void __cache_size_refresh(void)
- 			      dm_bufio_default_cache_size);
- 		dm_bufio_cache_size_latch = dm_bufio_default_cache_size;
- 	}
--
--	dm_bufio_cache_size_per_client = dm_bufio_cache_size_latch /
--					 (dm_bufio_client_count ? : 1);
- }
- 
- /*
-@@ -927,36 +918,6 @@ static void __write_dirty_buffers_async(
- }
- 
- /*
-- * Get writeback threshold and buffer limit for a given client.
-- */
--static void __get_memory_limit(struct dm_bufio_client *c,
--			       unsigned long *threshold_buffers,
--			       unsigned long *limit_buffers)
--{
--	unsigned long buffers;
--
--	if (unlikely(READ_ONCE(dm_bufio_cache_size) != dm_bufio_cache_size_latch)) {
--		if (mutex_trylock(&dm_bufio_clients_lock)) {
--			__cache_size_refresh();
--			mutex_unlock(&dm_bufio_clients_lock);
--		}
--	}
--
--	buffers = dm_bufio_cache_size_per_client;
--	if (likely(c->sectors_per_block_bits >= 0))
--		buffers >>= c->sectors_per_block_bits + SECTOR_SHIFT;
--	else
--		buffers /= c->block_size;
--
--	if (buffers < c->minimum_buffers)
--		buffers = c->minimum_buffers;
--
--	*limit_buffers = buffers;
--	*threshold_buffers = mult_frac(buffers,
--				       DM_BUFIO_WRITEBACK_PERCENT, 100);
--}
--
--/*
-  * Check if we're over watermark.
-  * If we are over threshold_buffers, start freeing buffers.
-  * If we're over "limit_buffers", block until we get under the limit.
-@@ -964,23 +925,7 @@ static void __get_memory_limit(struct dm
- static void __check_watermark(struct dm_bufio_client *c,
- 			      struct list_head *write_list)
++
++static struct workqueue_struct *dm_bufio_wq;
++static struct delayed_work dm_bufio_cleanup_old_work;
++static struct work_struct dm_bufio_replacement_work;
++
++
+ #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+ static void buffer_record_stack(struct dm_buffer *b)
  {
--	unsigned long threshold_buffers, limit_buffers;
--
--	__get_memory_limit(c, &threshold_buffers, &limit_buffers);
--
--	while (c->n_buffers[LIST_CLEAN] + c->n_buffers[LIST_DIRTY] >
--	       limit_buffers) {
--
--		struct dm_buffer *b = __get_unclaimed_buffer(c);
--
--		if (!b)
--			return;
--
--		__free_buffer_wake(b);
--		cond_resched();
--	}
--
--	if (c->n_buffers[LIST_DIRTY] > threshold_buffers)
-+	if (c->n_buffers[LIST_DIRTY] > c->n_buffers[LIST_CLEAN] * DM_BUFIO_WRITEBACK_RATIO)
- 		__write_dirty_buffers_async(c, 1, write_list);
+@@ -308,10 +318,16 @@ static void adjust_total_allocated(struc
+ 	if (dm_bufio_current_allocated > dm_bufio_peak_allocated)
+ 		dm_bufio_peak_allocated = dm_bufio_current_allocated;
+ 
++	b->accessed = 1;
++
+ 	if (!unlink) {
+ 		list_add(&b->global_list, &global_queue);
++		global_num++;
++		if (dm_bufio_current_allocated > dm_bufio_cache_size)
++			queue_work(dm_bufio_wq, &dm_bufio_replacement_work);
+ 	} else {
+ 		list_del(&b->global_list);
++		global_num--;
+ 	}
+ 
+ 	spin_unlock(&global_spinlock);
+@@ -497,6 +513,8 @@ static void __relink_lru(struct dm_buffe
+ {
+ 	struct dm_bufio_client *c = b->c;
+ 
++	b->accessed = 1;
++
+ 	BUG_ON(!c->n_buffers[b->list_mode]);
+ 
+ 	c->n_buffers[b->list_mode]--;
+@@ -1814,6 +1832,78 @@ static void __evict_old_buffers(struct d
+ 	dm_bufio_unlock(c);
  }
  
++static void do_global_cleanup(struct work_struct *w)
++{
++	struct dm_bufio_client *locked_client = NULL;
++	struct dm_bufio_client *current_client;
++	struct dm_buffer *b;
++	unsigned spinlock_hold_count;
++	unsigned long threshold = dm_bufio_cache_size - dm_bufio_cache_size / DM_BUFIO_LOW_WATERMARK;
++	unsigned long loops = global_num * 2;
++
++	mutex_lock(&dm_bufio_clients_lock);
++
++reacquire_spinlock:
++	cond_resched();
++
++	spin_lock(&global_spinlock);
++	if (unlikely(dm_bufio_current_allocated <= threshold))
++		goto exit;
++
++	spinlock_hold_count = 0;
++get_next:
++	if (!loops--)
++		goto exit;
++	if (unlikely(list_empty(&global_queue)))
++		goto exit;
++	b = list_entry(global_queue.prev, struct dm_buffer, global_list);
++
++	if (b->accessed) {
++		b->accessed = 0;
++		list_del(&b->global_list);
++		list_add(&b->global_list, &global_queue);
++		if (likely(++spinlock_hold_count < 16)) {
++			goto get_next;
++		}
++		spin_unlock(&global_spinlock);
++		goto reacquire_spinlock;
++	}
++
++	current_client = b->c;
++	if (unlikely(current_client != locked_client)) {
++		if (locked_client)
++			dm_bufio_unlock(locked_client);
++
++		if (!dm_bufio_trylock(current_client)) {
++			spin_unlock(&global_spinlock);
++			dm_bufio_lock(current_client);
++			locked_client = current_client;
++			goto reacquire_spinlock;
++		}
++
++		locked_client = current_client;
++	}
++
++	spin_unlock(&global_spinlock);
++
++	if (unlikely(!__try_evict_buffer(b, GFP_KERNEL))) {
++		spin_lock(&global_spinlock);
++		list_del(&b->global_list);
++		list_add(&b->global_list, &global_queue);
++		spin_unlock(&global_spinlock);
++	}
++
++	goto reacquire_spinlock;
++
++exit:
++	spin_unlock(&global_spinlock);
++
++	if (locked_client)
++		dm_bufio_unlock(locked_client);
++
++	mutex_unlock(&dm_bufio_clients_lock);
++}
++
+ static void cleanup_old_buffers(void)
+ {
+ 	unsigned long max_age_hz = get_max_age_hz();
+@@ -1829,14 +1919,11 @@ static void cleanup_old_buffers(void)
+ 	mutex_unlock(&dm_bufio_clients_lock);
+ }
+ 
+-static struct workqueue_struct *dm_bufio_wq;
+-static struct delayed_work dm_bufio_work;
+-
+ static void work_fn(struct work_struct *w)
+ {
+ 	cleanup_old_buffers();
+ 
+-	queue_delayed_work(dm_bufio_wq, &dm_bufio_work,
++	queue_delayed_work(dm_bufio_wq, &dm_bufio_cleanup_old_work,
+ 			   DM_BUFIO_WORK_TIMER_SECS * HZ);
+ }
+ 
+@@ -1878,8 +1965,9 @@ static int __init dm_bufio_init(void)
+ 	if (!dm_bufio_wq)
+ 		return -ENOMEM;
+ 
+-	INIT_DELAYED_WORK(&dm_bufio_work, work_fn);
+-	queue_delayed_work(dm_bufio_wq, &dm_bufio_work,
++	INIT_DELAYED_WORK(&dm_bufio_cleanup_old_work, work_fn);
++	INIT_WORK(&dm_bufio_replacement_work, do_global_cleanup);
++	queue_delayed_work(dm_bufio_wq, &dm_bufio_cleanup_old_work,
+ 			   DM_BUFIO_WORK_TIMER_SECS * HZ);
+ 
+ 	return 0;
+@@ -1892,7 +1980,8 @@ static void __exit dm_bufio_exit(void)
+ {
+ 	int bug = 0;
+ 
+-	cancel_delayed_work_sync(&dm_bufio_work);
++	cancel_delayed_work_sync(&dm_bufio_cleanup_old_work);
++	flush_workqueue(dm_bufio_wq);
+ 	destroy_workqueue(dm_bufio_wq);
+ 
+ 	if (dm_bufio_client_count) {
