@@ -1,18 +1,14 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [dm:for-next 29/30]
- drivers//md/dm-clone-target.c:563:14: error: implicit declaration of
- function 'vmalloc'; did you mean 'kmalloc'?
-Date: Wed, 11 Sep 2019 16:22:27 -0400
-Message-ID: <20190911202227.GA1413@redhat.com>
-References: <201909120035.YsFPOauD%lkp@intel.com>
-	<20190911182251.GA634@redhat.com>
-	<c35fcc93-91a2-20c2-da4c-9bbdee94e510@arrikto.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+From: Brian Bunker <brian@purestorage.com>
+Subject: Re: [PATCH] ALUA support for PURE FlashArray
+Date: Wed, 11 Sep 2019 18:52:56 -0700
+Message-ID: <0A7F7644-C70C-4EEC-B697-AD3B3D8B58DC@purestorage.com>
+References: <EF473529-CF81-4AE9-BD96-08624B59BA10@purestorage.com>
+	<ef113ecf-e564-a959-870e-b80af8fe5a30@gmail.com>
+Mime-Version: 1.0 (Mac OS X Mail 13.0 \(3594.4.2\))
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <c35fcc93-91a2-20c2-da4c-9bbdee94e510@arrikto.com>
+In-Reply-To: <ef113ecf-e564-a959-870e-b80af8fe5a30@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,43 +18,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Nikos Tsironis <ntsironis@arrikto.com>
-Cc: dm-devel@redhat.com, Ilias Tsitsimpis <iliastsi@arrikto.com>, kbuild test robot <lkp@intel.com>, kbuild-all@01.org
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Sep 11 2019 at  2:46pm -0400,
-Nikos Tsironis <ntsironis@arrikto.com> wrote:
-
-> On 9/11/19 9:22 PM, Mike Snitzer wrote:> 
-> > I resolved this and pushed new code, thanks!
-> > 
-> 
-> Hi Mike,
-> 
-> I just saw the report and was about to fix it, but I noticed you have
-> already fixed it. Thanks a lot.
-> 
-> I had forgotten to include the header file for vmalloc(), but I saw you
-> used kvmalloc(), which is even better.
-> 
-> I took a quick look at the diff and there are a few places that still
-> need fixing:
-> 
-> drivers/md/dm-clone-target.c:563: clone->ht = vmalloc(sz *sizeof(struct hash_table_bucket));
-> drivers/md/dm-clone-target.c:579: vfree(clone->ht);
-> 
-> Also, the allocation of cmd->region_map is done with kvmalloc(), but the
-> deallocation is still done with vfree():
-> 
-> drivers/md/dm-clone-metadata.c:597: vfree(cmd->region_map);
-> 
-> I will be away from keyboard for the rest of the day, but I will take a
-> closer look at the diff tomorrow and I will send a new version fixing
-> these and any other issues I might find.
-
-I fixed the above up, thanks.
-
-Please just send any incremental patches relative to what I have staged
-now.
-
-Mike
+WG9zZSwKCkkganVzdCBzYXcgdGhpcy4gU29ycnkgZm9yIHRoZSBsYXRlIHJlc3BvbnNlLgoKSSBh
+bSBub3Qgc3VyZSBpZiB0aGUgbWF4X3NlY3RvcnNfa2IgaXMgYSBrZXJuZWwgb3IgdWRldiBidWcu
+IFdoYXQgSSB3b3VsZCBleHBlY3QgaXMgZm9yIHRoZSBibG9jayBsaW1pdHMgCklOUVVJUlkgVlBE
+ICBwYWdlLCAweEIwLCB0byBiZSB1c2VkIHRvIHBvcHVsYXRlIHRoZSAvc3lzL2Jsb2NrIGVudHJp
+ZXMgZm9yIG1heF9zZWN0b3JzX2tiLiBXZSBoYXZlIApzZWVuIExpbnV4IGRpc3RyaWJ1dGlvbnMg
+dGhhdCBkb27igJl0IHNlZW0gdG8gZG8gdGhhdCBidXQgaW5zdGVhZCBwb3B1bGF0ZSB0aGF0IGVu
+dHJ5IHdpdGggMzIgTUIgZXZlbiB0aG91Z2ggCndlIHJldHVybiA0IE1CIGFzIG91ciBsaW1pdC4g
+V2UgYWRkIHRoZSA0IE1CIGxpbWl0IGluIGEgdWRldiBydWxlIHRoYXQgd2UgaGF2ZSBjcmVhdGVk
+IGFuZCBwcm92aWRlIHRvIG91ciAKY3VzdG9tZXJzLiAgQWRkaW5nIGl0IGluIG11bHRpcGF0aC5j
+b25mIHdpbGwgYWxzbyBnZXQgdXMgNCBNQiBmb3IgdGhlIGRtIGRldmljZSBhbmQgaXRzIHNsYXZl
+cyB3aGljaCBpcyB3aGF0IHdlIAp3YW50LiBJIGRvbuKAmXQga25vdyBpZiB0aGVyZSBpcyBhIHBy
+ZWZlcnJlZCB3YXkgYnV0IGlmIHdlIHVzZSBtdWx0aXBhdGguY29uZiB0aGVuIGhvcGVmdWxseSBu
+byB1c2VycyB3aWxsIGV2ZXIgCmhhdmUgdG8gZGVhbCB3aXRoIHRoZSBoaWdoZXIgdmFsdWUgdGhh
+dCB3aWxsIGVycm9yIG91dCBpZiBhIFNDU0kgcmVhZCBvciB3cml0ZSBpcyBhY3R1YWxseSBzZW50
+IGxhcmdlciB0aGFuIAp0aGUgNCBNQiBtYXhpbXVtIHNpemUuCgpUaGFua3MsCkJyaWFuCgpCcmlh
+biBCdW5rZXIKU1cgRW5nCmJyaWFuQHB1cmVzdG9yYWdlLmNvbQoKCgo+IE9uIEF1ZyA3LCAyMDE5
+LCBhdCA5OjA1IEFNLCBYb3NlIFZhenF1ZXogUGVyZXogPHhvc2UudmF6cXVlekBnbWFpbC5jb20+
+IHdyb3RlOgo+IAo+IE9uIDYvMjYvMTkgNzozNyBQTSwgQnJpYW4gQnVua2VyIHdyb3RlOgo+IAo+
+PiBJdCBoYXMgYmVlbiBzb21lIHRpbWUgc2luY2Ugd2UgdXBkYXRlZCBvdXIgUFVSRSBGbGFzaEFy
+cmF5IGNvbmZpZ3VyYXRpb24uIFRoZQo+PiBMaW51eCB2ZW5kb3JzIHRoYXQgd2UgaGFkIGJlZW4g
+c2VlaW5nIGluIHRoZSBmaWVsZCB3ZXJlIHVzaW5nIHZlcnkgb2xkIHZlcnNpb25zCj4+IG9mIG11
+bHRpcGF0aC10b29scywgc28gd2UgaGF2ZW7igJl0IG5lZWRlZCB0byBjaGFuZ2UgYW55dGhpbmcg
+Zm9yIHNvbWUgdGltZS4gV2l0aAo+PiB0aGUgcmVsZWFzZSBvZiBSSEVMOCwgc29tZSBvZiBvdXIg
+ZWFybGllciB2YWx1ZXMgaGF2ZSBiZWVuIGxvc3QgYnkgdXBzdHJlYW0KPj4gY2hhbmdlcy4gCj4+
+IAo+PiBJbiBhZGRpdGlvbiB3ZSBoYXZlIG91ciBBY3RpdmUgQ2x1c3RlciBmZWF0dXJlIHdoaWNo
+IGxldmVyYWdlcyBBTFVBIHNpbmNlIG91cgo+PiBsYXN0IHBhdGNoLiBUaGUgQUxVQSBjb25mZ3Vy
+YXRpb24gd2lsbCB3b3JrIGZvciBhbGwgRmxhc2hBcnJheXMgd2l0aCBvciB3aXRob3V0Cj4+IEFj
+dGl2ZSBDbHVzdGVyLgo+PiAKPj4gV2UgYXJlIGNoYW5naW5nIDMgdGhpbmdzLgo+PiAKPj4gMS4g
+QUxVQSBzdXBwb3J0Cj4+IAo+PiAyLiBGYXN0IGZhaWwgdGltZW91dCBmcm9tIHRoZSBkZWZhdWx0
+IG9mIDUgc2Vjb25kcyB0byAxMCBzZWNvbmRzIChXZSBuZWVkIHRoaXMKPj4gZm9yIG91ciBGQyBO
+UElWIHBvcnQgbWlncmF0aW9uKS4KPj4gCj4+IDMuIE1heGltdW0gc2VjdG9yIHNpemUgb2YgNE1C
+LiBTb21lIExpbnV4IHZlbmRvcnMgZG9u4oCZdCBob25vciB0aGUgYmxvY2sgbGltaXRzCj4+IFZQ
+RCBwYWdlIG9mIElOUVVJUlkpLgo+IAo+IAo+ICMzLCBrZXJuZWwgb3IgdWRldiBidWc/Cj4gCj4g
+Cj4+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvaHd0YWJsZS5jIGIvbGlibXVsdGlwYXRoL2h3
+dGFibGUuYwo+PiBpbmRleCAxZDk2NDMzMy4uMzdlOTdmNjAgMTAwNjQ0Cj4+IC0tLSBhL2xpYm11
+bHRpcGF0aC9od3RhYmxlLmMKPj4gKysrIGIvbGlibXVsdGlwYXRoL2h3dGFibGUuYwo+PiBAQCAt
+MTAyNCw3ICsxMDI0LDEyIEBAIHN0YXRpYyBzdHJ1Y3QgaHdlbnRyeSBkZWZhdWx0X2h3W10gPSB7
+Cj4+ICAgICAgICAgICAgICAgIC8qIEZsYXNoQXJyYXkgKi8KPj4gICAgICAgICAgICAgICAgLnZl
+bmRvciAgICAgICAgPSAiUFVSRSIsCj4+ICAgICAgICAgICAgICAgIC5wcm9kdWN0ICAgICAgID0g
+IkZsYXNoQXJyYXkiLAo+PiAtICAgICAgICAgICAgICAgLnBncG9saWN5ICAgICAgPSBNVUxUSUJV
+UywKPj4gKyAgICAgICAgICAgICAgIC5wZ3BvbGljeSAgICAgID0gR1JPVVBfQllfUFJJTywKPj4g
+KyAgICAgICAgICAgICAgIC5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lNTUVESUFURSwKPj4g
+KyAgICAgICAgICAgICAgIC5od2hhbmRsZXIgICAgID0gIjEgYWx1YSIsCj4+ICsgICAgICAgICAg
+ICAgICAucHJpb19uYW1lICAgICA9IFBSSU9fQUxVQSwKPj4gKyAgICAgICAgICAgICAgIC5mYXN0
+X2lvX2ZhaWwgID0gMTAsCj4+ICsgICAgICAgICAgICAgICAubWF4X3NlY3RvcnNfa2IgPSA0MDk2
+LAoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8v
+d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
