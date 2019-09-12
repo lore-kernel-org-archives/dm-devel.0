@@ -1,10 +1,10 @@
 From: Sasha Levin <sashal@kernel.org>
-Subject: Re: [PATCH] dm-raid: fix updating of max_discard_sectors limit
-Date: Thu, 12 Sep 2019 07:30:41 +0000
-Message-ID: <20190912073042.AD65A2075C@mail.kernel.org>
-References: <20190911111249.19772-1-ming.lei@redhat.com>
+Subject: Re: [PATCH V2] dm-raid: fix updating of max_discard_sectors limit
+Date: Thu, 12 Sep 2019 07:30:44 +0000
+Message-ID: <20190912073045.1A2B520CC7@mail.kernel.org>
+References: <20190911113133.837-1-ming.lei@redhat.com>
 Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20190911111249.19772-1-ming.lei@redhat.com>
+In-Reply-To: <20190911113133.837-1-ming.lei@redhat.com>
 Sender: stable-owner@vger.kernel.org
 To: Sasha Levin <sashal@kernel.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
 Cc: Ming Lei <ming.lei@redhat.com>, stable@vger.kernel.orgstable@vger.kernel.orgstable@vger.kernel.org
