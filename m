@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 1/4] mpathpersist: remove broken/unused code
-Date: Fri, 13 Sep 2019 17:04:01 -0500
-Message-ID: <1568412244-23982-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 2/4] libmultipath: EMC PowerMax NVMe device
+	config
+Date: Fri, 13 Sep 2019 17:04:02 -0500
+Message-ID: <1568412244-23982-3-git-send-email-bmarzins@redhat.com>
 References: <1568412244-23982-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,52 +19,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>, heyi <yi.he@dell.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-The test for an empty pp->dev in updatepaths() dates back to when
-disassemble_map() didn't fill in pp->dev for newly added paths, and it
-was meant to catch paths that got added by disassemble_map().  With the
-mpathpersist speedup code, all paths get added by disassemble_map().
-However, disassemble_map() now calls devt2devname() to set pp->dev if
-possible.  This means that there is no point in calling devt2devname()
-again in updatepaths(). If for some reason it did return success, the
-current code would still fail, since it doesn't set pp->udev in this
-code path. The best thing to do if disassemble_map() couldn't set
-pp->dev is simply to fail the path.
+Got this config from Dell.
 
+Cc: heyi <yi.he@dell.com>
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmpathpersist/mpath_persist.c | 16 ++++------------
- 1 file changed, 4 insertions(+), 12 deletions(-)
+ libmultipath/hwtable.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 53022f5b..603cfc3b 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -82,18 +82,10 @@ updatepaths (struct multipath * mpp)
- 
- 		vector_foreach_slot (pgp->paths, pp, j){
- 			if (!strlen(pp->dev)){
--				if (devt2devname(pp->dev, FILE_NAME_SIZE,
--						 pp->dev_t)){
--					/*
--					 * path is not in sysfs anymore
--					 */
--					pp->state = PATH_DOWN;
--					continue;
--				}
--				pp->mpp = mpp;
--				conf = get_multipath_config();
--				pathinfo(pp, conf, DI_ALL);
--				put_multipath_config(conf);
-+				/*
-+				 * path is not in sysfs anymore
-+				 */
-+				pp->state = PATH_DOWN;
- 				continue;
- 			}
- 			pp->mpp = mpp;
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 96e8b25d..ca217e65 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -360,6 +360,12 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.no_path_retry = 30,
+ 	},
++	{
++		/* EMC PowerMax NVMe */
++		.vendor        = "NVME",
++		.product       = "^EMC PowerMax_",
++		.pgpolicy      = MULTIBUS,
++	},
+ 	/*
+ 	 * Fujitsu
+ 	 */
 -- 
 2.17.2
