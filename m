@@ -1,17 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2 5/5] dm-bufio: introduce a global cache
-	replacement
-Date: Fri, 13 Sep 2019 12:00:06 -0400
-Message-ID: <20190913160006.GA59158@lobo>
-References: <20190912084550.401229120@debian-a64.vm>
-	<03876828-40a1-7adc-d40c-939853e8259c@redhat.com>
-	<alpine.LRH.2.02.1909121206130.31437@file01.intranet.prod.int.rdu2.redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 3/4] mpathpersist: fix leaks
+Date: Fri, 13 Sep 2019 12:17:06 -0500
+Message-ID: <20190913171706.GU25414@octiron.msp.redhat.com>
+References: <1568155161-9343-1-git-send-email-bmarzins@redhat.com>
+	<1568155161-9343-4-git-send-email-bmarzins@redhat.com>
+	<cfec1a7ebbe1e62699d26b9978a8643a798c05dd.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1909121206130.31437@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <cfec1a7ebbe1e62699d26b9978a8643a798c05dd.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,158 +20,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, jiyong@google.com, kernel-team@android.com, Heinz Mauelshagen <heinzm@redhat.com>, dariofreni@google.com, dm-devel@redhat.com, maco@google.com, Martijn Coenen <maco@android.com>, Alasdair G Kergon <agk@redhat.com>
+To: Martin Wilck <Martin.Wilck@suse.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Sep 12 2019 at 12:07P -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
-
-> 
-> 
-> On Thu, 12 Sep 2019, Heinz Mauelshagen wrote:
-> 
-> > Mikulas,
+On Fri, Sep 13, 2019 at 07:56:13AM +0000, Martin Wilck wrote:
+> On Tue, 2019-09-10 at 17:39 -0500, Benjamin Marzinski wrote:
+> > If handle_args() fails while looping through the argument list, it
+> > needs
+> > to free batch_fn, if it has been set. Also handle_args() needs to
+> > make
+> > sure to free the file descriptor after it has been opened.
 > > 
-> > please use list_move instead of list_del/list_add pairs.
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  mpathpersist/main.c | 31 ++++++++++++++++++++-----------
+> >  1 file changed, 20 insertions(+), 11 deletions(-)
 > > 
-> > Heinz
-> 
-> OK. Here I resend it.
 > 
 > 
+> Looking at this code again, I wonder why we don't "goto out" in this
+> code in the "else if (prin_flag)" case:
 > 
-> From: Mikulas Patocka <mpatocka@redhat.com>
+> 		if (0 == num_prin_sa)
+> 		{
+> 			fprintf (stderr,
+> 					" No service action given for Persistent Reserve IN\n");
+> 			ret = MPATH_PR_SYNTAX_ERROR;
+> 		}
+> 		else if (num_prin_sa > 1)
+> 		{
+> 			fprintf (stderr, " Too many service actions given; choose "
+> 					"one only\n");
+> 			ret = MPATH_PR_SYNTAX_ERROR;
+> 		}
 > 
-> This patch introduces a global cache replacement (instead of per-client
-> cleanup).
-> 
-> If one bufio client uses the cache heavily and another client is not using
-> it, we want to let the first client use most of the cache. The old
-> algorithm would partition the cache equally betwen the clients and that is
-> inoptimal.
-> 
-> For cache replacement, we use the clock algorithm because it doesn't
-> require taking any lock when the buffer is accessed.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> At least in the first case, prin_sa would be -1, and trying to continue
+> looks unhealthy. In the second case, the error message might be treated
+> as a warning and the second prin action would override the first. I
+> personally would think that it would be better to assume the user made
+> a mistake, and do nothing, in this case as well.
 
-I'd like to fold in this cleanup if you're OK with it.
+I agree. I'll respin the patches with this included.
 
-Rather use a main control structure for the loop rather than gotos.
+-Ben
 
-You OK with this?
-
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index 8c6edec8a838..2d519c223562 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -230,7 +230,6 @@ static LIST_HEAD(dm_bufio_all_clients);
-  */
- static DEFINE_MUTEX(dm_bufio_clients_lock);
- 
--
- static struct workqueue_struct *dm_bufio_wq;
- static struct delayed_work dm_bufio_cleanup_old_work;
- static struct work_struct dm_bufio_replacement_work;
-@@ -1827,62 +1826,60 @@ static void do_global_cleanup(struct work_struct *w)
- 	struct dm_bufio_client *current_client;
- 	struct dm_buffer *b;
- 	unsigned spinlock_hold_count;
--	unsigned long threshold = dm_bufio_cache_size - dm_bufio_cache_size / DM_BUFIO_LOW_WATERMARK_RATIO;
-+	unsigned long threshold = dm_bufio_cache_size -
-+		dm_bufio_cache_size / DM_BUFIO_LOW_WATERMARK_RATIO;
- 	unsigned long loops = global_num * 2;
- 
- 	mutex_lock(&dm_bufio_clients_lock);
- 
--reacquire_spinlock:
--	cond_resched();
-+	while (1) {
-+		cond_resched();
- 
--	spin_lock(&global_spinlock);
--	if (unlikely(dm_bufio_current_allocated <= threshold))
--		goto exit;
-+		spin_lock(&global_spinlock);
-+		if (unlikely(dm_bufio_current_allocated <= threshold))
-+			break;
- 
--	spinlock_hold_count = 0;
-+		spinlock_hold_count = 0;
- get_next:
--	if (!loops--)
--		goto exit;
--	if (unlikely(list_empty(&global_queue)))
--		goto exit;
--	b = list_entry(global_queue.prev, struct dm_buffer, global_list);
--
--	if (b->accessed) {
--		b->accessed = 0;
--		list_move(&b->global_list, &global_queue);
--		if (likely(++spinlock_hold_count < 16)) {
--			goto get_next;
--		}
--		spin_unlock(&global_spinlock);
--		goto reacquire_spinlock;
--	}
--
--	current_client = b->c;
--	if (unlikely(current_client != locked_client)) {
--		if (locked_client)
--			dm_bufio_unlock(locked_client);
-+		if (!loops--)
-+			break;
-+		if (unlikely(list_empty(&global_queue)))
-+			break;
-+		b = list_entry(global_queue.prev, struct dm_buffer, global_list);
- 
--		if (!dm_bufio_trylock(current_client)) {
-+		if (b->accessed) {
-+			b->accessed = 0;
-+			list_move(&b->global_list, &global_queue);
-+			if (likely(++spinlock_hold_count < 16))
-+				goto get_next;
- 			spin_unlock(&global_spinlock);
--			dm_bufio_lock(current_client);
--			locked_client = current_client;
--			goto reacquire_spinlock;
-+			continue;
- 		}
- 
--		locked_client = current_client;
--	}
-+		current_client = b->c;
-+		if (unlikely(current_client != locked_client)) {
-+			if (locked_client)
-+				dm_bufio_unlock(locked_client);
- 
--	spin_unlock(&global_spinlock);
-+			if (!dm_bufio_trylock(current_client)) {
-+				spin_unlock(&global_spinlock);
-+				dm_bufio_lock(current_client);
-+				locked_client = current_client;
-+				continue;
-+			}
-+
-+			locked_client = current_client;
-+		}
- 
--	if (unlikely(!__try_evict_buffer(b, GFP_KERNEL))) {
--		spin_lock(&global_spinlock);
--		list_move(&b->global_list, &global_queue);
- 		spin_unlock(&global_spinlock);
--	}
- 
--	goto reacquire_spinlock;
-+		if (unlikely(!__try_evict_buffer(b, GFP_KERNEL))) {
-+			spin_lock(&global_spinlock);
-+			list_move(&b->global_list, &global_queue);
-+			spin_unlock(&global_spinlock);
-+		}
-+	}
- 
--exit:
- 	spin_unlock(&global_spinlock);
- 
- 	if (locked_client)
+> Anyway, that's not your patch's fault. So:
+> 
+> Reviewed-by: Martin Wilck <mwilck@suse.com>
+> 
+> 
