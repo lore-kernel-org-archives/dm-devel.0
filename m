@@ -1,70 +1,57 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 4/4] libmultipath: fix mpcontext
-	initialization
-Date: Fri, 13 Sep 2019 08:28:59 +0000
-Message-ID: <a7b7b31b82369a51e9490c1a6fd7ce770be3bfbe.camel@suse.com>
-References: <1568155161-9343-1-git-send-email-bmarzins@redhat.com>
-	<1568155161-9343-5-git-send-email-bmarzins@redhat.com>
+From: Denis Efremov <efremov@ispras.ru>
+Subject: Re: [PATCH v2] lib/memweight.c: open codes bitmap_weight()
+Date: Fri, 13 Sep 2019 14:48:15 +0300
+Message-ID: <85d9e45a-9631-a139-2d65-86a6753a35e6@ispras.ru>
+References: <20190821074200.2203-1-efremov@ispras.ru>
+ <20190824100102.1167-1-efremov@ispras.ru>
+ <20190825061158.GC28002@bombadil.infradead.org>
+ <ba051566-0343-ea75-0484-8852f65a15da@ispras.ru>
+ <20190826183956.GF15933@bombadil.infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1568155161-9343-5-git-send-email-bmarzins@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190826183956.GF15933@bombadil.infradead.org>
 Content-Language: en-US
-Content-ID: <B0A02253C443C74FAD92DC3F381D4ABE@namprd18.prod.outlook.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Matthew Wilcox <willy@infradead.org>
+Cc: akpm@linux-foundation.org, Akinobu Mita <akinobu.mita@gmail.com>, Jan Kara <jack@suse.cz>, linux-kernel@vger.kernel.org, Matthew Wilcox <matthew@wil.cx>, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-media@vger.kernel.org, Erdem Tumurov <erdemus@gmail.com>, Vladimir Shelekhov <vshel@iis.nsk.su>
 List-Id: dm-devel.ids
 
-On Tue, 2019-09-10 at 17:39 -0500, Benjamin Marzinski wrote:
-> If a path is discovered before there is a multipath device for it to
-> belong to, the checker will not have its mpcontext initialized, even
-> if
-> that path later belongs to a multipath device. A checker's mpcontext
-> is
-> only set when the checker is selected, and is set to NULL if there is
-> no
-> multipath device associated with the path. This only impacts the emc
-> checker. However, it makes the emc checker unable to determine if a
-> passive path is connected to an inactive snapshot or not.
-> 
-> This can be solved by adding a new checker class function, mp_init().
-> This is called when the checker is first initialized, and whenever
-> the
-> checker is called, if the checker's mpcontext hasn't been
-> initialized.
-> 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  libmultipath/checkers.c              | 29
-> ++++++++++++++++++++++++++--
->  libmultipath/checkers.h              |  1 +
->  libmultipath/checkers/cciss_tur.c    |  5 +++++
->  libmultipath/checkers/directio.c     |  5 +++++
->  libmultipath/checkers/emc_clariion.c |  7 +++++++
->  libmultipath/checkers/hp_sw.c        |  5 +++++
->  libmultipath/checkers/rdac.c         |  5 +++++
->  libmultipath/checkers/readsector0.c  |  5 +++++
->  libmultipath/checkers/tur.c          |  5 +++++
->  libmultipath/discovery.c             |  2 ++
->  10 files changed, 67 insertions(+), 2 deletions(-)
-> 
+Hi,
 
-I see the problem and agree the solution is correct. But I'd prefer if
-the mp_init() method was optional and, if not defined in the
-libcheckX.so, would simply be set to NULL. So you wouldn't need to
-define empty methods for all checkers except emc. 
+Sorry for reviving this conversation, but it looks to me like
+this function could be reduced to a single bitmap_weight call:
 
-checker_mp_init() checks for mp_init() being non-NULL anyway.
+static inline size_t memweight(const void *ptr, size_t bytes)
+{
+        BUG_ON(bytes >= UINT_MAX / BITS_PER_BYTE);
+        return bitmap_weight(ptr, bytes * BITS_PER_BYTE);
+}
 
-Thanks,
-Martin
+Comparing to the current implementation
+https://elixir.bootlin.com/linux/latest/source/lib/memweight.c#L11 
+this results in a signification simplification. 
+
+__bitmap_weight already count last bits with hweight_long as we
+discussed earlier.
+
+int __bitmap_weight(const unsigned long *bitmap, unsigned int bits)
+{
+	...
+	if (bits % BITS_PER_LONG)
+		w += hweight_long(bitmap[k] & BITMAP_LAST_WORD_MASK(bits));
+	...
+}
+
+and __arch_hweight* functions use popcnt instruction.
+
+I've briefly tested the equivalence of 2 implementations on x86_64 with
+fuzzing here: https://gist.github.com/evdenis/95a8b9b8041e09368b31c3a9510491a5
+
+What do you think making this function static inline and moving it
+to include/linux/string.h? I could prepare a patch for it and add some tests for
+memweight and bitmap_weight. Or maybe I miss something again?
+
+Best regards,
+Denis
