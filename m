@@ -1,63 +1,178 @@
-From: efremov <efremov@ispras.ru>
-Subject: Re: [PATCH v2] lib/memweight.c: open codes bitmap_weight()
-Date: Fri, 13 Sep 2019 16:41:24 +0300
-Message-ID: <b9471f7165bf57e348729a09e07d7055@ispras.ru>
-References: <20190821074200.2203-1-efremov@ispras.ru>
- <20190824100102.1167-1-efremov@ispras.ru>
- <20190825061158.GC28002@bombadil.infradead.org>
- <ba051566-0343-ea75-0484-8852f65a15da@ispras.ru>
- <20190826183956.GF15933@bombadil.infradead.org>
- <85d9e45a-9631-a139-2d65-86a6753a35e6@ispras.ru>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2 5/5] dm-bufio: introduce a global cache
+	replacement
+Date: Fri, 13 Sep 2019 12:00:06 -0400
+Message-ID: <20190913160006.GA59158@lobo>
+References: <20190912084550.401229120@debian-a64.vm>
+	<03876828-40a1-7adc-d40c-939853e8259c@redhat.com>
+	<alpine.LRH.2.02.1909121206130.31437@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
- format=flowed
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <85d9e45a-9631-a139-2d65-86a6753a35e6@ispras.ru>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Denis Efremov <efremov@ispras.ru>
-Cc: Matthew Wilcox <willy@infradead.org>, akpm@linux-foundation.org, Akinobu Mita <akinobu.mita@gmail.com>, Jan Kara <jack@suse.cz>, linux-kernel@vger.kernel.org, Matthew Wilcox <matthew@wil.cx>, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-media@vger.kernel.org, Erdem Tumurov <erdemus@gmail.com>, Vladimir Shelekhov <vshel@iis.nsk.su>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1909121206130.31437@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, jiyong@google.com, kernel-team@android.com, Heinz Mauelshagen <heinzm@redhat.com>, dariofreni@google.com, dm-devel@redhat.com, maco@google.com, Martijn Coenen <maco@android.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Sorry, no question, pointer alignment of course.
+On Thu, Sep 12 2019 at 12:07P -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-Denis Efremov писал 2019-09-13 14:48:
-> Hi,
 > 
-> Sorry for reviving this conversation, but it looks to me like
-> this function could be reduced to a single bitmap_weight call:
 > 
-> static inline size_t memweight(const void *ptr, size_t bytes)
-> {
->         BUG_ON(bytes >= UINT_MAX / BITS_PER_BYTE);
->         return bitmap_weight(ptr, bytes * BITS_PER_BYTE);
-> }
+> On Thu, 12 Sep 2019, Heinz Mauelshagen wrote:
 > 
-> Comparing to the current implementation
-> https://elixir.bootlin.com/linux/latest/source/lib/memweight.c#L11
-> this results in a signification simplification.
+> > Mikulas,
+> > 
+> > please use list_move instead of list_del/list_add pairs.
+> > 
+> > Heinz
 > 
-> __bitmap_weight already count last bits with hweight_long as we
-> discussed earlier.
+> OK. Here I resend it.
 > 
-> int __bitmap_weight(const unsigned long *bitmap, unsigned int bits)
-> {
-> 	...
-> 	if (bits % BITS_PER_LONG)
-> 		w += hweight_long(bitmap[k] & BITMAP_LAST_WORD_MASK(bits));
-> 	...
-> }
 > 
-> and __arch_hweight* functions use popcnt instruction.
 > 
-> I've briefly tested the equivalence of 2 implementations on x86_64 with
-> fuzzing here: 
-> https://gist.github.com/evdenis/95a8b9b8041e09368b31c3a9510491a5
+> From: Mikulas Patocka <mpatocka@redhat.com>
 > 
-> What do you think making this function static inline and moving it
-> to include/linux/string.h? I could prepare a patch for it and add some 
-> tests for
-> memweight and bitmap_weight. Or maybe I miss something again?
+> This patch introduces a global cache replacement (instead of per-client
+> cleanup).
 > 
-> Best regards,
-> Denis
+> If one bufio client uses the cache heavily and another client is not using
+> it, we want to let the first client use most of the cache. The old
+> algorithm would partition the cache equally betwen the clients and that is
+> inoptimal.
+> 
+> For cache replacement, we use the clock algorithm because it doesn't
+> require taking any lock when the buffer is accessed.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+I'd like to fold in this cleanup if you're OK with it.
+
+Rather use a main control structure for the loop rather than gotos.
+
+You OK with this?
+
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index 8c6edec8a838..2d519c223562 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -230,7 +230,6 @@ static LIST_HEAD(dm_bufio_all_clients);
+  */
+ static DEFINE_MUTEX(dm_bufio_clients_lock);
+ 
+-
+ static struct workqueue_struct *dm_bufio_wq;
+ static struct delayed_work dm_bufio_cleanup_old_work;
+ static struct work_struct dm_bufio_replacement_work;
+@@ -1827,62 +1826,60 @@ static void do_global_cleanup(struct work_struct *w)
+ 	struct dm_bufio_client *current_client;
+ 	struct dm_buffer *b;
+ 	unsigned spinlock_hold_count;
+-	unsigned long threshold = dm_bufio_cache_size - dm_bufio_cache_size / DM_BUFIO_LOW_WATERMARK_RATIO;
++	unsigned long threshold = dm_bufio_cache_size -
++		dm_bufio_cache_size / DM_BUFIO_LOW_WATERMARK_RATIO;
+ 	unsigned long loops = global_num * 2;
+ 
+ 	mutex_lock(&dm_bufio_clients_lock);
+ 
+-reacquire_spinlock:
+-	cond_resched();
++	while (1) {
++		cond_resched();
+ 
+-	spin_lock(&global_spinlock);
+-	if (unlikely(dm_bufio_current_allocated <= threshold))
+-		goto exit;
++		spin_lock(&global_spinlock);
++		if (unlikely(dm_bufio_current_allocated <= threshold))
++			break;
+ 
+-	spinlock_hold_count = 0;
++		spinlock_hold_count = 0;
+ get_next:
+-	if (!loops--)
+-		goto exit;
+-	if (unlikely(list_empty(&global_queue)))
+-		goto exit;
+-	b = list_entry(global_queue.prev, struct dm_buffer, global_list);
+-
+-	if (b->accessed) {
+-		b->accessed = 0;
+-		list_move(&b->global_list, &global_queue);
+-		if (likely(++spinlock_hold_count < 16)) {
+-			goto get_next;
+-		}
+-		spin_unlock(&global_spinlock);
+-		goto reacquire_spinlock;
+-	}
+-
+-	current_client = b->c;
+-	if (unlikely(current_client != locked_client)) {
+-		if (locked_client)
+-			dm_bufio_unlock(locked_client);
++		if (!loops--)
++			break;
++		if (unlikely(list_empty(&global_queue)))
++			break;
++		b = list_entry(global_queue.prev, struct dm_buffer, global_list);
+ 
+-		if (!dm_bufio_trylock(current_client)) {
++		if (b->accessed) {
++			b->accessed = 0;
++			list_move(&b->global_list, &global_queue);
++			if (likely(++spinlock_hold_count < 16))
++				goto get_next;
+ 			spin_unlock(&global_spinlock);
+-			dm_bufio_lock(current_client);
+-			locked_client = current_client;
+-			goto reacquire_spinlock;
++			continue;
+ 		}
+ 
+-		locked_client = current_client;
+-	}
++		current_client = b->c;
++		if (unlikely(current_client != locked_client)) {
++			if (locked_client)
++				dm_bufio_unlock(locked_client);
+ 
+-	spin_unlock(&global_spinlock);
++			if (!dm_bufio_trylock(current_client)) {
++				spin_unlock(&global_spinlock);
++				dm_bufio_lock(current_client);
++				locked_client = current_client;
++				continue;
++			}
++
++			locked_client = current_client;
++		}
+ 
+-	if (unlikely(!__try_evict_buffer(b, GFP_KERNEL))) {
+-		spin_lock(&global_spinlock);
+-		list_move(&b->global_list, &global_queue);
+ 		spin_unlock(&global_spinlock);
+-	}
+ 
+-	goto reacquire_spinlock;
++		if (unlikely(!__try_evict_buffer(b, GFP_KERNEL))) {
++			spin_lock(&global_spinlock);
++			list_move(&b->global_list, &global_queue);
++			spin_unlock(&global_spinlock);
++		}
++	}
+ 
+-exit:
+ 	spin_unlock(&global_spinlock);
+ 
+ 	if (locked_client)
