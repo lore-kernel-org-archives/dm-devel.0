@@ -1,15 +1,17 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH v2 0/4] misc multipath patches
-Date: Fri, 13 Sep 2019 22:48:21 +0000
-Message-ID: <c0e38dc7cbcf8f676868447828632cd7aadbfc96.camel@suse.com>
-References: <1568412244-23982-1-git-send-email-bmarzins@redhat.com>
+From: "Guilherme G. Piccoli" <gpiccoli@canonical.com>
+Subject: Re: [PATCH v4 2/2] mdadm: Introduce new array state
+ 'broken' for raid0/linear
+Date: Sun, 15 Sep 2019 16:39:11 -0300
+Message-ID: <5a17d353-3d47-d994-d462-cbe1e9d75778@canonical.com>
+References: <20190903194901.13524-1-gpiccoli@canonical.com>
+	<20190903194901.13524-2-gpiccoli@canonical.com>
+	<A0D1B6AB-50CF-4B38-8452-A4E18AFDC8EB@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1568412244-23982-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <A0D1B6AB-50CF-4B38-8452-A4E18AFDC8EB@fb.com>
 Content-Language: en-US
-Content-ID: <B228C6E1BB4D9F40961461E389ECBE6A@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,39 +21,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Jes Sorensen <jsorensen@fb.com>, "jes.sorensen@gmail.com" <jes.sorensen@gmail.com>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Song Liu <songliubraving@fb.com>, "nfbrown@suse.com" <nfbrown@suse.com>, "liu.song.a23@gmail.com" <liu.song.a23@gmail.com>, linux-raid <linux-raid@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "jay.vosburgh@canonical.com" <jay.vosburgh@canonical.com>
 List-Id: dm-devel.ids
 
-On Fri, 2019-09-13 at 17:04 -0500, Benjamin Marzinski wrote:
-> These are a couple of disconnected multipath patches.
+On 04/09/2019 12:51, Song Liu wrote:
+> [...] 
+>>
+>> Cc: Jes Sorensen <jes.sorensen@gmail.com>
+>> Cc: NeilBrown <neilb@suse.de>
+>> Cc: Song Liu <songliubraving@fb.com>
+>> Signed-off-by: Guilherme G. Piccoli <gpiccoli@canonical.com>
 > 
-> Changes in v2:
+> Acked-by: Song Liu <songliubraving@fb.com>
 > 
-> 0003: As Martin suggested, fail immediately on wrong number of prin
->       actions.
+> Jes, does this look good?
 > 
-> 0004: mp_init now is an optional symbol for checker DSOs, and is
-> ignored
->       if it's missing, again at Martin's suggestion.
-> 
-> Benjamin Marzinski (4):
->   mpathpersist: remove broken/unused code
->   libmultipath: EMC PowerMax NVMe device config
->   mpathpersist: fix leaks
->   libmultipath: fix mpcontext initialization
-> 
->  libmpathpersist/mpath_persist.c      | 16 ++++----------
->  libmultipath/checkers.c              | 27 +++++++++++++++++++++--
->  libmultipath/checkers.h              |  1 +
->  libmultipath/checkers/emc_clariion.c |  7 ++++++
->  libmultipath/discovery.c             |  2 ++
->  libmultipath/hwtable.c               |  6 +++++
->  mpathpersist/main.c                  | 33 ++++++++++++++++++------
-> ----
->  7 files changed, 67 insertions(+), 25 deletions(-)
+> Thanks,
+> Song
 > 
 
-For this v2 series:
+Jes, do you have any comment about this patch? It'd be good having this
+code merged before the 5.4 kernel windows ends, since the kernel
+counterpart is ready to get merged (it's on Jens' tree).
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+Thanks in advance,
+
+
+Guilherme
