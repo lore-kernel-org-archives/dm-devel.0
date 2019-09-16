@@ -1,11 +1,13 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm: introduce DM_GET_TARGET_VERSION
-Date: Mon, 16 Sep 2019 05:55:42 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1909160553360.11421@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH] lvm: introduce DM_GET_TARGET_VERSION
+Date: Mon, 16 Sep 2019 05:58:10 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1909160555580.11421@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1909160553360.11421@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1909160553360.11421@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,97 +21,131 @@ To: Milan Broz <mbroz@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Zdenek Ka
 Cc: dm-devel@redhat.com, lvm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch introduces a new ioctl DM_GET_TARGET_VERSION. It will load a
-target that is specified in the "name" entry in the parameter structure
-and return its version.
-
-This functionality is intended to be used by cryptsetup, so that it can
-query kernel capabilities before activating the device.
+This is userspace patch that adds support for the DM_GET_TARGET_VERSION to 
+dmsetup. It introduces a new comman "target-version" that will accept list 
+of targets and print their version.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-ioctl.c         |   32 +++++++++++++++++++++++++++++---
- include/uapi/linux/dm-ioctl.h |    6 ++++--
- 2 files changed, 33 insertions(+), 5 deletions(-)
+ device_mapper/all.h               |    4 +++-
+ device_mapper/ioctl/libdm-iface.c |    3 +++
+ device_mapper/misc/dm-ioctl.h     |    3 +++
+ libdm/dm-tools/dmsetup.c          |   28 ++++++++++++++++++++++++++++
+ libdm/ioctl/libdm-iface.c         |    3 +++
+ libdm/libdevmapper.h              |    4 +++-
+ libdm/misc/dm-ioctl.h             |    2 ++
+ 7 files changed, 45 insertions(+), 2 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-ioctl.c
+Index: lvm2/libdm/dm-tools/dmsetup.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-ioctl.c	2019-09-16 11:42:45.000000000 +0200
-+++ linux-2.6/drivers/md/dm-ioctl.c	2019-09-16 11:50:10.000000000 +0200
-@@ -601,17 +601,27 @@ static void list_version_get_info(struct
-     info->vers = align_ptr(((void *) ++info->vers) + strlen(tt->name) + 1);
+--- lvm2.orig/libdm/dm-tools/dmsetup.c	2019-09-16 10:11:12.000000000 +0200
++++ lvm2/libdm/dm-tools/dmsetup.c	2019-09-16 10:35:21.000000000 +0200
+@@ -2587,6 +2587,33 @@ out:
+ 	return r;
  }
  
--static int list_versions(struct file *filp, struct dm_ioctl *param, size_t param_size)
-+static int __list_versions(struct dm_ioctl *param, size_t param_size, const char *name)
- {
- 	size_t len, needed = 0;
- 	struct dm_target_versions *vers;
- 	struct vers_iter iter_info;
-+	struct target_type *tt = NULL;
-+
-+	if (name) {
-+		tt = dm_get_target_type(name);
-+		if (!tt)
-+			return -EINVAL;
-+	}
- 
- 	/*
- 	 * Loop through all the devices working out how much
- 	 * space we need.
- 	 */
--	dm_target_iterate(list_version_get_needed, &needed);
-+	if (!tt)
-+		dm_target_iterate(list_version_get_needed, &needed);
-+	else
-+		list_version_get_needed(tt, &needed);
- 
- 	/*
- 	 * Grab our output buffer.
-@@ -632,13 +642,28 @@ static int list_versions(struct file *fi
- 	/*
- 	 * Now loop through filling out the names & versions.
- 	 */
--	dm_target_iterate(list_version_get_info, &iter_info);
-+	if (!tt)
-+		dm_target_iterate(list_version_get_info, &iter_info);
-+	else
-+		list_version_get_info(tt, &iter_info);
- 	param->flags |= iter_info.flags;
- 
-  out:
-+	if (tt)
-+		dm_put_target_type(tt);
- 	return 0;
- }
- 
-+static int list_versions(struct file *filp, struct dm_ioctl *param, size_t param_size)
++/* Show target names and their version numbers */
++static int _target_version(CMD_ARGS)
 +{
-+	return __list_versions(param, param_size, NULL);
++	int r = 0;
++	struct dm_task *dmt;
++	struct dm_versions *target;
++
++	if (!(dmt = dm_task_create(DM_GET_TARGET_VERSION)))
++		return_0;
++
++	if (!dm_task_set_name(dmt, argv[0]))
++		goto_out;
++
++	if (!_task_run(dmt))
++		goto_out;
++
++	target = dm_task_get_versions(dmt);
++	printf("%-16s v%d.%d.%d\n", target->name, target->version[0],
++	       target->version[1], target->version[2]);
++
++	r = 1;
++
++out:
++	dm_task_destroy(dmt);
++	return r;
 +}
 +
-+static int get_target_version(struct file *filp, struct dm_ioctl *param, size_t param_size)
-+{
-+	return __list_versions(param, param_size, param->name);
-+}
-+
- static int check_name(const char *name)
+ static int _info(CMD_ARGS)
  {
- 	if (strchr(name, '/')) {
-@@ -1664,6 +1689,7 @@ static ioctl_fn lookup_ioctl(unsigned in
- 		{DM_TARGET_MSG_CMD, 0, target_message},
- 		{DM_DEV_SET_GEOMETRY_CMD, 0, dev_set_geometry},
- 		{DM_DEV_ARM_POLL, IOCTL_FLAGS_NO_PARAMS, dev_arm_poll},
-+		{DM_GET_TARGET_VERSION, 0, get_target_version},
- 	};
- 
- 	if (unlikely(cmd >= ARRAY_SIZE(_ioctls)))
-Index: linux-2.6/include/uapi/linux/dm-ioctl.h
+ 	int r = 0;
+@@ -6239,6 +6266,7 @@ static struct command _dmsetup_commands[
+ 	{"udevcomplete", "<cookie>", 1, 1, 0, 0, _udevcomplete},
+ 	{"udevcomplete_all", "[<age_in_minutes>]", 0, 1, 0, 0, _udevcomplete_all},
+ 	{"udevcookies", "", 0, 0, 0, 0, _udevcookies},
++	{"target-version", "[<target>...]", 1, -1, 1, 0, _target_version},
+ 	{"targets", "", 0, 0, 0, 0, _targets},
+ 	{"version", "", 0, 0, 0, 0, _version},
+ 	{"setgeometry", "<device> <cyl> <head> <sect> <start>", 5, 5, 0, 0, _setgeometry},
+Index: lvm2/device_mapper/all.h
 ===================================================================
---- linux-2.6.orig/include/uapi/linux/dm-ioctl.h	2019-09-16 11:42:45.000000000 +0200
-+++ linux-2.6/include/uapi/linux/dm-ioctl.h	2019-09-16 11:50:37.000000000 +0200
-@@ -243,6 +243,7 @@ enum {
+--- lvm2.orig/device_mapper/all.h	2019-09-16 09:58:45.000000000 +0200
++++ lvm2/device_mapper/all.h	2019-09-16 10:19:16.000000000 +0200
+@@ -121,7 +121,9 @@ enum {
+ 
+ 	DM_DEVICE_SET_GEOMETRY,
+ 
+-	DM_DEVICE_ARM_POLL
++	DM_DEVICE_ARM_POLL,
++
++	DM_GET_TARGET_VERSION
+ };
+ 
+ /*
+Index: lvm2/libdm/libdevmapper.h
+===================================================================
+--- lvm2.orig/libdm/libdevmapper.h	2019-09-16 09:58:45.000000000 +0200
++++ lvm2/libdm/libdevmapper.h	2019-09-16 10:18:50.000000000 +0200
+@@ -121,7 +121,9 @@ enum {
+ 
+ 	DM_DEVICE_SET_GEOMETRY,
+ 
+-	DM_DEVICE_ARM_POLL
++	DM_DEVICE_ARM_POLL,
++
++	DM_GET_TARGET_VERSION
+ };
+ 
+ /*
+Index: lvm2/device_mapper/ioctl/libdm-iface.c
+===================================================================
+--- lvm2.orig/device_mapper/ioctl/libdm-iface.c	2019-09-16 09:58:45.000000000 +0200
++++ lvm2/device_mapper/ioctl/libdm-iface.c	2019-09-16 10:23:48.000000000 +0200
+@@ -119,6 +119,9 @@ static struct cmd_data _cmd_data_v4[] =
+ #ifdef DM_DEV_ARM_POLL
+ 	{"armpoll",	DM_DEV_ARM_POLL,	{4, 36, 0}},
+ #endif
++#ifdef DM_GET_TARGET_VERSION
++	{"target-version", DM_GET_TARGET_VERSION, {4, 41, 0}},
++#endif
+ };
+ /* *INDENT-ON* */
+ 
+Index: lvm2/libdm/ioctl/libdm-iface.c
+===================================================================
+--- lvm2.orig/libdm/ioctl/libdm-iface.c	2019-09-16 09:58:45.000000000 +0200
++++ lvm2/libdm/ioctl/libdm-iface.c	2019-09-16 10:30:24.000000000 +0200
+@@ -118,6 +118,9 @@ static struct cmd_data _cmd_data_v4[] =
+ #ifdef DM_DEV_ARM_POLL
+ 	{"armpoll",	DM_DEV_ARM_POLL,	{4, 36, 0}},
+ #endif
++#ifdef DM_GET_TARGET_VERSION
++	{"target-version", DM_GET_TARGET_VERSION, {4, 41, 0}},
++#endif
+ };
+ /* *INDENT-ON* */
+ 
+Index: lvm2/device_mapper/misc/dm-ioctl.h
+===================================================================
+--- lvm2.orig/device_mapper/misc/dm-ioctl.h	2019-09-16 09:58:45.000000000 +0200
++++ lvm2/device_mapper/misc/dm-ioctl.h	2019-09-16 10:29:24.000000000 +0200
+@@ -244,6 +244,7 @@ enum {
  	DM_TARGET_MSG_CMD,
  	DM_DEV_SET_GEOMETRY_CMD,
  	DM_DEV_ARM_POLL_CMD,
@@ -117,21 +153,32 @@ Index: linux-2.6/include/uapi/linux/dm-ioctl.h
  };
  
  #define DM_IOCTL 0xfd
-@@ -265,14 +266,15 @@ enum {
- #define DM_TABLE_STATUS  _IOWR(DM_IOCTL, DM_TABLE_STATUS_CMD, struct dm_ioctl)
- 
- #define DM_LIST_VERSIONS _IOWR(DM_IOCTL, DM_LIST_VERSIONS_CMD, struct dm_ioctl)
-+#define DM_GET_TARGET_VERSION _IOWR(DM_IOCTL, DM_GET_TARGET_VERSION_CMD, struct dm_ioctl)
- 
+@@ -270,6 +271,8 @@ enum {
  #define DM_TARGET_MSG	 _IOWR(DM_IOCTL, DM_TARGET_MSG_CMD, struct dm_ioctl)
  #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
  
++#define DM_GET_TARGET_VERSION	_IOWR(DM_IOCTL, DM_GET_TARGET_VERSION_CMD, struct dm_ioctl)
++
  #define DM_VERSION_MAJOR	4
--#define DM_VERSION_MINOR	40
-+#define DM_VERSION_MINOR	41
+ #define DM_VERSION_MINOR	36
  #define DM_VERSION_PATCHLEVEL	0
--#define DM_VERSION_EXTRA	"-ioctl (2019-01-18)"
-+#define DM_VERSION_EXTRA	"-ioctl (2019-09-16)"
+Index: lvm2/libdm/misc/dm-ioctl.h
+===================================================================
+--- lvm2.orig/libdm/misc/dm-ioctl.h	2019-09-16 09:58:45.000000000 +0200
++++ lvm2/libdm/misc/dm-ioctl.h	2019-09-16 10:30:04.000000000 +0200
+@@ -244,6 +244,7 @@ enum {
+ 	DM_TARGET_MSG_CMD,
+ 	DM_DEV_SET_GEOMETRY_CMD,
+ 	DM_DEV_ARM_POLL_CMD,
++	DM_GET_TARGET_VERSION_CMD,
+ };
  
- /* Status bits */
- #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
+ #define DM_IOCTL 0xfd
+@@ -269,6 +270,7 @@ enum {
+ 
+ #define DM_TARGET_MSG	 _IOWR(DM_IOCTL, DM_TARGET_MSG_CMD, struct dm_ioctl)
+ #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
++#define DM_GET_TARGET_VERSION	_IOWR(DM_IOCTL, DM_GET_TARGET_VERSION_CMD, struct dm_ioctl)
+ 
+ #define DM_VERSION_MAJOR	4
+ #define DM_VERSION_MINOR	36
