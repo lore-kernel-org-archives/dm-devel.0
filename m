@@ -1,18 +1,18 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: dm: introduce DM_GET_TARGET_VERSION
-Date: Tue, 17 Sep 2019 10:06:32 -0400
-Message-ID: <20190917140632.GA3728@redhat.com>
+Date: Tue, 17 Sep 2019 11:38:33 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1909171133100.1876@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1909160553360.11421@file01.intranet.prod.int.rdu2.redhat.com>
 	<20190916180107.GA725@infradead.org>
 	<127b8c4e-a6dc-6d5e-caff-fe1a0ca3a5bb@gmail.com>
 	<CAMeeMh9t4LBwJn_CPQgFNa_Tyj22fJYHK-4qAnyn0RXm9RzCnw@mail.gmail.com>
+	<20190917140632.GA3728@redhat.com>
 Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <lvm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAMeeMh9t4LBwJn_CPQgFNa_Tyj22fJYHK-4qAnyn0RXm9RzCnw@mail.gmail.com>
+In-Reply-To: <20190917140632.GA3728@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
 	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/lvm-devel>
@@ -22,32 +22,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
 	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
 Sender: lvm-devel-bounces@redhat.com
 Errors-To: lvm-devel-bounces@redhat.com
-To: John Dorminy <jdorminy@redhat.com>
-Cc: lvm-devel@redhat.com, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, Milan Broz <gmazyland@gmail.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: John Dorminy <jdorminy@redhat.com>, lvm-devel@redhat.com, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-On Tue, Sep 17 2019 at  9:56am -0400,
-John Dorminy <jdorminy@redhat.com> wrote:
 
->    I'm confused here:
 
->    >...and then it fails on activation because DM table load detects old (or
->    missing) dm-crypt feature.
->    >(There was no way to get dm target version before table load if module is
->    not loaded.)
->    >And I tried to avoid modprobe calls from libcryptsetup.
+On Tue, 17 Sep 2019, Mike Snitzer wrote:
+
+> On Tue, Sep 17 2019 at  9:56am -0400,
+> John Dorminy <jdorminy@redhat.com> wrote:
 > 
->    I'm not understanding how this could work. Let's say there's a module
->    providing target 'splice' which is currently unloaded. Then `dmsetup
->    target-version splice` is unaware of the splice target, and thus reports
->    nothing. So in order to get the proper version number, we do have to do a
->    modprobe first.
->    But, if the module providing splice *is* already loaded, `dmsetup targets`
->    will report splice's version number already, so `dmsetup target-version
->    splice` is a convenience instead of parsing `dmsetup targets` output?
+> >    I'm confused here:
+> 
+> >    >...and then it fails on activation because DM table load detects old (or
+> >    missing) dm-crypt feature.
+> >    >(There was no way to get dm target version before table load if module is
+> >    not loaded.)
+> >    >And I tried to avoid modprobe calls from libcryptsetup.
+> > 
+> >    I'm not understanding how this could work. Let's say there's a module
+> >    providing target 'splice' which is currently unloaded. Then `dmsetup
+> >    target-version splice` is unaware of the splice target, and thus reports
+> >    nothing. So in order to get the proper version number, we do have to do a
+> >    modprobe first.
+> >    But, if the module providing splice *is* already loaded, `dmsetup targets`
+> >    will report splice's version number already, so `dmsetup target-version
+> >    splice` is a convenience instead of parsing `dmsetup targets` output?
+> 
+> dm_get_target_type() loads the requested module.  No userspace modprobe
+> needed.
 
-dm_get_target_type() loads the requested module.  No userspace modprobe
-needed.
+The reason why Milan wanted it is - that it is bad practice to call 
+external processes from libraries. He doesn't want to call modprobe from 
+libcryptsetup. So I created this patch that calls modprobe from the kernel 
+ioctl.
+
+Mikulas
 
 --
 lvm-devel mailing list
