@@ -1,65 +1,59 @@
 From: Steffen Maier <maier@linux.ibm.com>
-Subject: [PATCH] compat_ioctl: fix reimplemented SG_IO handling causing -EINVAL from sg_io()
-Date: Wed, 18 Sep 2019 17:34:45 +0200
-Message-ID: <20190918153445.1241-1-maier@linux.ibm.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>, "James E . J . Bottomley" <jejb@linux.ibm.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, Doug Gilbert <dgilbert@interlog.com>
-Cc: linux-scsi@vger.kernel.org, linux-s390@vger.kernel.org, Benjamin Block <bblock@linux.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Steffen Maier <maier@linux.ibm.com>, linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>, Thomas Gleixner <tglx@linutronix.de>, Mauro Carvalho Chehab <mchehab+samsung@kernel.org>, Omar Sandoval <osandov@fb.com>, linux-block@vger.kernel.org, linux-next@vger.kernel.org, Mark Brown <broonie@kernel.org>, dm-devel@redhat.com
+Subject: Re: [PATCH 1/2] scsi: core: fix missing .cleanup_rq for
+ SCSI hosts without request batching
+Date: Wed, 18 Sep 2019 17:09:50 +0200
+Message-ID: <bec80a65-9a8c-54a9-fe70-876fcbe3d592@linux.ibm.com>
+References: <20190807144948.28265-1-maier@linux.ibm.com>
+	<20190807144948.28265-2-maier@linux.ibm.com>
+	<CACVXFVM0tFj8CmcHON04_KjxR=QErCbUx0abJgG2W9OBb7akZA@mail.gmail.com>
+	<yq136iccsbw.fsf@oracle.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <yq136iccsbw.fsf@oracle.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Martin K. Petersen" <martin.petersen@oracle.com>, Ming Lei <tom.leiming@gmail.com>, Paolo Bonzini <pbonzini@redhat.com>, Mark Brown <broonie@kernel.org>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-s390 <linux-s390@vger.kernel.org>, Benjamin Block <bblock@linux.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Linux SCSI List <linux-scsi@vger.kernel.org>, "James E . J . Bottomley" <jejb@linux.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Hannes Reinecke <hare@suse.com>, "Ewan D . Milne" <emilne@redhat.com>, Ming Lei <ming.lei@redhat.com>, linux-block <linux-block@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Linux-Next Mailing List <linux-next@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, Bart Van Assche <bvanassche@acm.org>
 List-Id: dm-devel.ids
 
-scsi_cmd_ioctl() had hdr as on stack auto variable and called
-copy_{from,to}_user with the address operator &hdr and sizeof(hdr).
+On 8/8/19 4:18 AM, Martin K. Petersen wrote:
+> 
+> Ming,
+> 
+>>> +       .cleanup_rq     = scsi_cleanup_rq,
+>>>          .busy           = scsi_mq_lld_busy,
+>>>          .map_queues     = scsi_map_queues,
+>>>   };
+>>
+>> This one is a cross-tree thing, either scsi/5.4/scsi-queue needs to
+>> pull for-5.4/block, or do it after both land linus tree.
+> 
+> I'll set up an amalgamated for-next branch tomorrow.
 
-After the refactoring, {get,put}_sg_io_hdr() takes a pointer &hdr.
-So the copy_{from,to}_user within the new helper functions should
-just take the given pointer argument hdr and sizeof(*hdr).
+Martin, is it possible that you re-wrote your for-next and it now no longer 
+contains a merged 5.4/scsi-postmerge with those fixes?
+At least I cannot find the fix code in next-20190917 and it fails again for me.
 
-I saw -EINVAL from sg_io() done by /usr/lib/udev/scsi_id which could
-in turn no longer whitelist SCSI disks for devicemapper multipath.
 
-Signed-off-by: Steffen Maier <maier@linux.ibm.com>
-Fixes: 4f45155c29fd ("compat_ioctl: reimplement SG_IO handling")
----
-
-Arnd, I'm not sure about the sizeof(hdr32) change in the compat part in
-put_sg_io_hdr().
-
-This is for next, probably via Arnd's y2038/y2038,
-and it fixes next-20190917 for me regarding SCSI generic.
-
- block/scsi_ioctl.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
-
-diff --git a/block/scsi_ioctl.c b/block/scsi_ioctl.c
-index cbeb629ee917..650bade5ea5a 100644
---- a/block/scsi_ioctl.c
-+++ b/block/scsi_ioctl.c
-@@ -607,14 +607,14 @@ int put_sg_io_hdr(const struct sg_io_hdr *hdr, void __user *argp)
- 			.info		 = hdr->info,
- 		};
- 
--		if (copy_to_user(argp, &hdr32, sizeof(hdr)))
-+		if (copy_to_user(argp, &hdr32, sizeof(hdr32)))
- 			return -EFAULT;
- 
- 		return 0;
- 	}
- #endif
- 
--	if (copy_to_user(argp, &hdr, sizeof(hdr)))
-+	if (copy_to_user(argp, hdr, sizeof(*hdr)))
- 		return -EFAULT;
- 
- 	return 0;
-@@ -659,7 +659,7 @@ int get_sg_io_hdr(struct sg_io_hdr *hdr, const void __user *argp)
- 	}
- #endif
- 
--	if (copy_from_user(&hdr, argp, sizeof(hdr)))
-+	if (copy_from_user(hdr, argp, sizeof(*hdr)))
- 		return -EFAULT;
- 
- 	return 0;
 -- 
-2.17.1
+Mit freundlichen Gruessen / Kind regards
+Steffen Maier
+
+Linux on IBM Z Development
+
+https://www.ibm.com/privacy/us/en/
+IBM Deutschland Research & Development GmbH
+Vorsitzender des Aufsichtsrats: Matthias Hartmann
+Geschaeftsfuehrung: Dirk Wittkopp
+Sitz der Gesellschaft: Boeblingen
+Registergericht: Amtsgericht Stuttgart, HRB 243294
