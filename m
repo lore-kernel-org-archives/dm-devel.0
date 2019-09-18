@@ -1,26 +1,49 @@
-From: Huaisheng HS1 Ye <yehs1@lenovo.com>
-Subject: RE: [External]  Re: [PATCH] dm writecache: skip writecache_wait for
- pmem mode
-Date: Wed, 18 Sep 2019 12:48:19 +0000
-Message-ID: <HK2PR03MB44187A842A32DDE799E33088928E0@HK2PR03MB4418.apcprd03.prod.outlook.com>
-References: <HK2PR03MB4418CB96B9E7B640B8B9CFB192BB0@HK2PR03MB4418.apcprd03.prod.outlook.com>
- <alpine.LRH.2.02.1909180621001.29703@file01.intranet.prod.int.rdu2.redhat.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [PATCH 1/2] scsi: core: fix missing .cleanup_rq for
+	SCSI hosts without request batching
+Date: Wed, 18 Sep 2019 11:22:39 -0400
+Message-ID: <yq1lful8w8w.fsf@oracle.com>
+References: <20190807144948.28265-1-maier@linux.ibm.com>
+	<20190807144948.28265-2-maier@linux.ibm.com>
+	<CACVXFVM0tFj8CmcHON04_KjxR=QErCbUx0abJgG2W9OBb7akZA@mail.gmail.com>
+	<yq136iccsbw.fsf@oracle.com>
+	<bec80a65-9a8c-54a9-fe70-876fcbe3d592@linux.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="gb2312"
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1909180621001.29703@file01.intranet.prod.int.rdu2.redhat.com>
-Content-Language: zh-CN
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: "snitzer@redhat.com" <snitzer@redhat.com>, "agk@redhat.com" <agk@redhat.com>, "prarit@redhat.com" <prarit@redhat.com>, Tzu ting Yu1 <tyu1@lenovo.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Huaisheng Ye <yehs2007@zoho.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <bec80a65-9a8c-54a9-fe70-876fcbe3d592@linux.ibm.com> (Steffen
+	Maier's message of "Wed, 18 Sep 2019 17:09:50 +0200")
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Steffen Maier <maier@linux.ibm.com>
+Cc: Vasily Gorbik <gor@linux.ibm.com>, linux-s390 <linux-s390@vger.kernel.org>, Benjamin Block <bblock@linux.ibm.com>, Linux SCSI List <linux-scsi@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Ming Lei <tom.leiming@gmail.com>, "James E . J . Bottomley" <jejb@linux.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Hannes Reinecke <hare@suse.com>, "Ewan D . Milne" <emilne@redhat.com>, Ming Lei <ming.lei@redhat.com>, linux-block <linux-block@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Mark Brown <broonie@kernel.org>, Mike Snitzer <snitzer@redhat.com>, Linux-Next Mailing List <linux-next@vger.kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@lst.de>, Bart Van Assche <bvanassche@acm.org>
 List-Id: dm-devel.ids
 
-PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KPiBGcm9tOiBNaWt1bGFzIFBhdG9ja2EgPG1w
-YXRvY2thQHJlZGhhdC5jb20+DQo+IFNlbnQ6IFdlZG5lc2RheSwgU2VwdGVtYmVyIDE4LCAyMDE5
-IDY6MjQgUE0NCj4gVGhlIGRtLXdyaXRlY2FjaGUgdGFyZ2V0IGlzIHN1cHBvc2VkIHRvIG9wdGlt
-aXplIHdyaXRlcywgbm90IHJlYWRzLg0KPiBOb3JtYWxseSwgdGhlcmUgd29uJ3QgYmUgYW55IHJl
-YWRzIGZvbGxvd2luZyBhIHdyaXRlLCBiZWNhdXNlIHRoZSBkYXRhIHdvdWxkIGJlDQo+IHN0b3Jl
-ZCBpbiB0aGUgY2FjaGUgaW4gUkFNLg0KPiANCj4gTWlrdWxhcw0KDQpHb3QgaXQsIFRoYW5rcyBm
-b3IgcG9pbnRpbmcgdGhhdCBvdXQuDQoNCkNoZWVycywNCkh1YWlzaGVuZyBZZSB8INK2u7PKpA0K
-TGludXgga2VybmVsIHwgTGVub3ZvIERDRw0K
+
+Steffen,
+
+> Martin, is it possible that you re-wrote your for-next and it now no
+> longer contains a merged 5.4/scsi-postmerge with those fixes?  At
+> least I cannot find the fix code in next-20190917 and it fails again
+> for me.
+
+Yes, looks like you're right. Not sure how I managed to mess that up. I
+must have inadvertently done a reset in the wrong worktree because my
+for-next branch maintenance script only does merges.
+
+In any case, since Linus has pulled the block tree dependencies, I'll
+rebase the postmerge branch on top of current linus/master and create a
+new for-next.
+
+Thanks for the heads-up!
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
