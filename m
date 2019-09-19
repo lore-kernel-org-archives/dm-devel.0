@@ -1,17 +1,12 @@
-From: Mark Brown <broonie@kernel.org>
-Subject: Re: [PATCH 1/2] scsi: core: fix missing .cleanup_rq for
- SCSI hosts without request batching
-Date: Wed, 18 Sep 2019 16:32:17 +0100
-Message-ID: <20190918153217.GN2596@sirena.co.uk>
-References: <20190807144948.28265-1-maier@linux.ibm.com>
-	<20190807144948.28265-2-maier@linux.ibm.com>
-	<CACVXFVM0tFj8CmcHON04_KjxR=QErCbUx0abJgG2W9OBb7akZA@mail.gmail.com>
-	<yq136iccsbw.fsf@oracle.com>
-	<bec80a65-9a8c-54a9-fe70-876fcbe3d592@linux.ibm.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper changes for 5.4
+Date: Thu, 19 Sep 2019 17:19:24 -0400
+Message-ID: <20190919211923.GA16508@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4859397541990601135=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <bec80a65-9a8c-54a9-fe70-876fcbe3d592@linux.ibm.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,56 +16,127 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Steffen Maier <maier@linux.ibm.com>
-Cc: Vasily Gorbik <gor@linux.ibm.com>, linux-s390 <linux-s390@vger.kernel.org>, Benjamin Block <bblock@linux.ibm.com>, Linux SCSI List <linux-scsi@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Ming Lei <tom.leiming@gmail.com>, "James E . J . Bottomley" <jejb@linux.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Hannes Reinecke <hare@suse.com>, "Ewan D . Milne" <emilne@redhat.com>, Ming Lei <ming.lei@redhat.com>, linux-block <linux-block@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Linux-Next Mailing List <linux-next@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, Paolo Bonzini <pbonzini@redhat.com>, Christoph Hellwig <hch@lst.de>, Bart Van Assche <bvanassche@acm.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Nikos Tsironis <ntsironis@arrikto.com>, Huaisheng Ye <yehs1@lenovo.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Ming Lei <ming.lei@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, ZhangXiaoxu <zhangxiaoxu5@huawei.com>, Alasdair G Kergon <agk@redhat.com>, Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>
 List-Id: dm-devel.ids
 
+Hi Linus,
 
---===============4859397541990601135==
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="0NB0lE7sNnW8+0qW"
-Content-Disposition: inline
+The following changes since commit 1cfd5d3399e87167b7f9157ef99daa0e959f395d:
 
+  dm table: fix invalid memory accesses with too high sector number (2019-08-23 10:11:42 -0400)
 
---0NB0lE7sNnW8+0qW
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+are available in the Git repository at:
 
-On Wed, Sep 18, 2019 at 05:09:50PM +0200, Steffen Maier wrote:
-> On 8/8/19 4:18 AM, Martin K. Petersen wrote:
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.4/dm-changes
 
-> > I'll set up an amalgamated for-next branch tomorrow.
+for you to fetch changes up to afa179eb603847494aa5061d4f501224a30dd187:
 
-> Martin, is it possible that you re-wrote your for-next and it now no longer
-> contains a merged 5.4/scsi-postmerge with those fixes?
-> At least I cannot find the fix code in next-20190917 and it fails again for me.
+  dm: introduce DM_GET_TARGET_VERSION (2019-09-16 10:18:01 -0400)
 
-Well, there's no sign of a branch called postmerge in the SCSI history
-recently and I've not run into any SCSI-related conflicts so...
+Please pull, thanks!
+Mike
 
---0NB0lE7sNnW8+0qW
-Content-Type: application/pgp-signature; name="signature.asc"
+----------------------------------------------------------------
+- crypto and DM crypt advances that allow the crypto API to reclaim
+  implementation details that do not belong in DM crypt.  The wrapper
+  template for ESSIV generation that was factored out will also be used
+  by fscrypt in the future.
 
------BEGIN PGP SIGNATURE-----
+- Add root hash pkcs#7 signature verification to the DM verity target.
 
-iQEzBAABCgAdFiEEreZoqmdXGLWf4p/qJNaLcl1Uh9AFAl2CTgAACgkQJNaLcl1U
-h9DyCQgAhI9PE5cah3tJXlfm2IgfE6DGqrY+ZgkKfYQRbESZUGGvH0C8ZHzfdF9s
-ew1oLds2WQCiwXttdV/OQrmwkkHibCqk7ZruKQJpmIDN9CmRPnO1EHunK1UFVuli
-YGsRLI1Lp/gzfAzbaoA7BihFFKukgTxrZYcH9SfERbpf/raKMrEB9HUbyFDeBBKN
-btGkV2DjeLMwQxiwQLTNDZ8NQ9oUwkaX1kGOv3CilW2qDkueaghQnMpyw05kuddR
-4F5rE8+vA4jHJssZOqsoUJiNFzc9lloTdKeUDd4tR0qgY/thaG+RA2OVgh1XR1x1
-wYZjyEIwrB4FhNOMDMiIl6jcM6uoqw==
-=63JF
------END PGP SIGNATURE-----
+- Add a new "clone" DM target that allows for efficient remote
+  replication of a device.
 
---0NB0lE7sNnW8+0qW--
+- Enhance DM bufio's cache to be tailored to each client based on use.
+  Clients that make heavy use of the cache get more of it, and those
+  that use less have reduced cache usage.
 
+- Add a new DM_GET_TARGET_VERSION ioctl to allow userspace to query the
+  version number of a DM target (even if the associated module isn't yet
+  loaded).
 
---===============4859397541990601135==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+- Fix invalid memory access in DM zoned target.
 
+- Fix the max_discard_sectors limit advertised by the DM raid target; it
+  was mistakenly storing the limit in bytes rather than sectors.
 
---===============4859397541990601135==--
+- Small optimizations and cleanups in DM writecache target.
+
+- Various fixes and cleanups in DM core, DM raid1 and space map portion
+  of DM persistent data library.
+
+----------------------------------------------------------------
+Ard Biesheuvel (4):
+      dm crypt: reuse eboiv skcipher for IV generation
+      crypto: essiv - create wrapper template for ESSIV generation
+      dm crypt: switch to ESSIV crypto API template
+      dm crypt: omit parsing of the encapsulated cipher
+
+Gustavo A. R. Silva (2):
+      dm raid1: use struct_size() with kzalloc()
+      dm stats: use struct_size() helper
+
+Huaisheng Ye (4):
+      dm writecache: remove unused member pointer in writeback_struct
+      dm writecache: add unlikely for getting two block with same LBA
+      dm writecache: optimize performance by sorting the blocks for writeback_all
+      dm writecache: skip writecache_wait for pmem mode
+
+Jaskaran Khurana (1):
+      dm verity: add root hash pkcs#7 signature verification
+
+Mikulas Patocka (8):
+      dm: make dm_table_find_target return NULL
+      dm zoned: fix invalid memory access
+      dm bufio: call adjust_total_allocated from __link_buffer and __unlink_buffer
+      dm bufio: refactor adjust_total_allocated
+      dm bufio: introduce a global queue
+      dm bufio: remove old-style buffer cleanup
+      dm bufio: introduce a global cache replacement
+      dm: introduce DM_GET_TARGET_VERSION
+
+Ming Lei (1):
+      dm raid: fix updating of max_discard_sectors limit
+
+Nikos Tsironis (1):
+      dm: add clone target
+
+ZhangXiaoxu (1):
+      dm space map common: remove check for impossible sm_find_free() return value
+
+ .../admin-guide/device-mapper/dm-clone.rst         |  333 +++
+ Documentation/admin-guide/device-mapper/verity.rst |    7 +
+ crypto/Kconfig                                     |   28 +
+ crypto/Makefile                                    |    1 +
+ crypto/essiv.c                                     |  663 ++++++
+ drivers/md/Kconfig                                 |   27 +
+ drivers/md/Makefile                                |    6 +
+ drivers/md/dm-bufio.c                              |  192 +-
+ drivers/md/dm-clone-metadata.c                     |  964 +++++++++
+ drivers/md/dm-clone-metadata.h                     |  158 ++
+ drivers/md/dm-clone-target.c                       | 2191 ++++++++++++++++++++
+ drivers/md/dm-crypt.c                              |  341 +--
+ drivers/md/dm-ioctl.c                              |   34 +-
+ drivers/md/dm-raid.c                               |   10 +-
+ drivers/md/dm-raid1.c                              |    7 +-
+ drivers/md/dm-stats.c                              |    2 +-
+ drivers/md/dm-table.c                              |    8 +-
+ drivers/md/dm-verity-target.c                      |   43 +-
+ drivers/md/dm-verity-verify-sig.c                  |  133 ++
+ drivers/md/dm-verity-verify-sig.h                  |   60 +
+ drivers/md/dm-verity.h                             |    2 +
+ drivers/md/dm-writecache.c                         |   27 +-
+ drivers/md/dm-zoned-target.c                       |    2 -
+ drivers/md/dm.c                                    |    8 +-
+ drivers/md/dm.h                                    |    5 -
+ drivers/md/persistent-data/dm-space-map-common.c   |    4 -
+ include/uapi/linux/dm-ioctl.h                      |    6 +-
+ 27 files changed, 4864 insertions(+), 398 deletions(-)
+ create mode 100644 Documentation/admin-guide/device-mapper/dm-clone.rst
+ create mode 100644 crypto/essiv.c
+ create mode 100644 drivers/md/dm-clone-metadata.c
+ create mode 100644 drivers/md/dm-clone-metadata.h
+ create mode 100644 drivers/md/dm-clone-target.c
+ create mode 100644 drivers/md/dm-verity-verify-sig.c
+ create mode 100644 drivers/md/dm-verity-verify-sig.h
