@@ -1,13 +1,11 @@
-From: pr-tracker-bot@kernel.org
-Subject: Re: [git pull] device mapper changes for 5.4
-Date: Sat, 21 Sep 2019 18:15:34 +0000
-Message-ID: <156908973452.32474.7118884566596438956.pr-tracker-bot@kernel.org>
-References: <20190919211923.GA16508@redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: cosmetic changes in hwtable
+Date: Sun, 22 Sep 2019 01:40:39 +0200
+Message-ID: <20190921234039.26515-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190919211923.GA16508@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,19 +15,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Nikos Tsironis <ntsironis@arrikto.com>, Huaisheng Ye <yehs1@lenovo.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, ZhangXiaoxu <zhangxiaoxu5@huawei.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Ming Lei <ming.lei@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>
+Cc: DM-DEVEL ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-The pull request you sent on Thu, 19 Sep 2019 17:19:24 -0400:
+Tegile IntelliFlash was acquired by DDN, from WD.
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.4/dm-changes
+HPE Primera is also identified as 3PARdata/VV
 
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/3e414b5bd28f965fb39b9e9419d877df0cf3111a
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEVEL ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 25 +++++++++++--------------
+ 1 file changed, 11 insertions(+), 14 deletions(-)
 
-Thank you!
-
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index a06872e..7a8f276 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -107,7 +107,7 @@ static struct hwentry default_hw[] = {
+ 	 * HPE
+ 	 */
+ 	{
+-		/* 3PAR */
++		/* 3PAR / Primera */
+ 		.vendor        = "3PARdata",
+ 		.product       = "VV",
+ 		.pgpolicy      = GROUP_BY_PRIO,
+@@ -311,6 +311,16 @@ static struct hwentry default_hw[] = {
+ 		.pgpolicy      = GROUP_BY_SERIAL,
+ 		.no_path_retry = 30,
+ 	},
++	{
++		/* Tegile IntelliFlash */
++		.vendor        = "TEGILE",
++		.product       = "(ZEBI-(FC|ISCSI)|INTELLIFLASH)",
++		.hwhandler     = "1 alua",
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.prio_name     = PRIO_ALUA,
++		.no_path_retry = 10,
++	},
+ 	/*
+ 	 * Dell EMC
+ 	 */
+@@ -1074,19 +1084,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "K2",
+ 		.pgpolicy      = MULTIBUS,
+ 	},
+-	/*
+-	 * Western Digital (Tegile Systems)
+-	 */
+-	{
+-		/* IntelliFlash */
+-		.vendor        = "TEGILE",
+-		.product       = "(ZEBI-(FC|ISCSI)|INTELLIFLASH)",
+-		.hwhandler     = "1 alua",
+-		.pgpolicy      = GROUP_BY_PRIO,
+-		.pgfailback    = -FAILBACK_IMMEDIATE,
+-		.prio_name     = PRIO_ALUA,
+-		.no_path_retry = 10,
+-	},
+ 	/*
+ 	 * Imation/Nexsan
+ 	 */
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.wiki.kernel.org/userdoc/prtracker
+2.23.0
