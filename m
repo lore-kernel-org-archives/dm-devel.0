@@ -1,119 +1,116 @@
-From: Thibaut Sautereau <thibaut.sautereau@clip-os.org>
-Subject: Re: [dm-devel] dm-crypt error when CONFIG_CRYPTO_AUTHENC is disabled
-Date: Mon, 23 Sep 2019 10:20:16 +0200
-Message-ID: <20190923082016.GA913@gandi.net>
-References: <20190920154434.GA923@gandi.net>
- <20190920173707.GA21143@redhat.com>
- <13e25b01-f344-ea1d-8f6c-9d0a60eb1e0f@gmail.com>
- <20190920212746.GA22061@redhat.com>
- <20190920214758.GA162854@gmail.com>
+From: Maged Mokhtar <mmokhtar@petasan.org>
+Subject: [PATCH] dm-writecache: change config parameters using
+ messages
+Date: Sun, 22 Sep 2019 21:39:06 +0200
+Message-ID: <fa95f1f0-67d6-d02e-6999-ba1f90d70fe2@petasan.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190920214758.GA162854@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: mpatocka@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Sep 20, 2019 at 02:47:59PM -0700, Eric Biggers wrote:
-> On Fri, Sep 20, 2019 at 05:27:46PM -0400, Mike Snitzer wrote:
-> > On Fri, Sep 20 2019 at  3:21pm -0400,
-> > Milan Broz <gmazyland@gmail.com> wrote:
-> > 
-> > > On 20/09/2019 19:37, Mike Snitzer wrote:
-> > > > On Fri, Sep 20 2019 at 11:44am -0400,
-> > > > Thibaut Sautereau <thibaut.sautereau@clip-os.org> wrote:
-> > > > 
-> > > >> Hi,
-> > > >>
-> > > >> I just got a dm-crypt "crypt: Error allocating crypto tfm" error when
-> > > >> trying to "cryptsetup open" a volume. I found out that it was only
-> > > >> happening when I disabled CONFIG_CRYPTO_AUTHENC.
-> > > >>
-> > > >> drivers/md/dm-crypt.c includes the crypto/authenc.h header and seems to
-> > > >> use some CRYPTO_AUTHENC-related stuff. Therefore, shouldn't
-> > > >> CONFIG_DM_CRYPT select CONFIG_CRYPTO_AUTHENC?
-> > > > 
-> > > > Yes, it looks like commit ef43aa38063a6 ("dm crypt: add cryptographic
-> > > > data integrity protection (authenticated encryption)") should've added
-> > > > 'select CRYPTO_AUTHENC' to dm-crypt's Kconfig.  I'll let Milan weigh-in
-> > > > but that seems like the right way forward.
-> > > 
-> > > No, I don't this so. It is like you use some algorithm that is just not compiled-in,
-> > > or it is disabled in the current state (because of FIPS mode od so) - it fails
-> > > to initialize it.
-> > > 
-> > > I think we should not force dm-crypt to depend on AEAD - most users
-> > > do not use authenticated encryption, it is perfectly ok to keep this compiled out.
-> > > 
-> > > I do not see any principal difference from disabling any other crypto
-> > > (if you disable XTS mode, it fails to open device that uses it).
+Support changing configuration parameters using device-mapper messages
+E.g.
+    dmsetup message vg1/lv1 0 high_watermark 60
 
-Fair enough. However, in the XTS case you mention, I think it's easier
-to remember that you set up XTS mode for your disk encryption and thus
-that you should enable it in your config. By the way, the CRYPTO_AUTHENC
-Kconfig help text only and specifically mentions IPsec, which can be a
-lot confusing for people trying to find out what option of which they
-got rid is actually causing an issue.
+Signed-off-by: Maged Mokhtar <mmokhtar@petasan.org>
+---
+  drivers/md/dm-writecache.c |   68 +++++++++++++++++++++++++++++++++++
+  1 file changed, 68 insertions(+)
 
-On top of that, there's no hint in kernel logs about a particular
-algorithm, feature or Kconfig option that could be missing. Do we really
-expect people simply tuning their kernel configuration to go and read
-the source code to ensure they are not breaking their system?
+--- a/drivers/md/dm-writecache.c	2019-08-25 16:13:54.000000000 +0200
++++ b/drivers/md/dm-writecache.c	2019-09-21 16:22:23.000000000 +0200
+@@ -1009,6 +1009,69 @@ static int process_flush_on_suspend_mesg
+  	return 0;
+  }
 
-As for your "most users do not use authenticated encryption" argument, I
-agree, but note that cryptsetup with LUKS2 makes it quite easy to setup
-authenticated disk encryption, and I bet more and more people are using
-it. It's working most of the time because people are either using a
-distro kernel with everything enabled, or compiling their own one but
-being security-minded enough to use stuff like IPsec which then selects
-CRYPTO_AUTHENC.
-
-> > > 
-> > > IMO the current config dependence is ok.
-> > 
-> > That is a good point.  I hadn't considered the kernel compiles just fine
-> > without CRYPTO_AUTHENC.. which it clearly does.
-> > 
-> > SO I retract the question/thought of updating the Kconfig for dm-crypt
-> > in my previous mail.
-> > 
-> > Though in hindsight: wonder whether the dm-integrity based dm-crypt
-> > authenticated encryption support should have been exposed as a proper
-> > CONFIG option within the DM_CRYPT section?  Rather than lean on the
-> > crypto subsystem to happily stub out the dm-crypt AEAD and AUTHENC
-> > related code dm-crypt could've established #ifdef boundaries for that
-> > code.
-> > 
-> > I'm open to suggestions and/or confirmation that the way things are now
-> > is perfectly fine.  But I do see this report as something that should
-> > drive some improvement.
-> > 
-> 
-> FWIW, I think you're being saved right now by the craziness in the crypto
-> subsystem Kconfig options: CONFIG_DM_CRYPT selects CONFIG_CBC, which selects
-> CONFIG_CRYPTO_MANAGER, which selects CONFIG_CRYPTO_MANAGER2, which selects
-> CONFIG_CRYPTO_AEAD2 (and all the other algorithm types, for that matter).
-> This makes the AEAD API available.
-> 
-> If this wasn't the case, dm-crypt's use of crypto_alloc_aead() would be causing
-> a link error in some kernel configurations, since CONFIG_DM_CRYPT doesn't
-> actually select the AEAD API itself.
-> 
-> At some point I (or someone else up to the task) might try to fix the crypto
-> subsystem to not make every template select every algorithm type.  In that
-> happens, we'll need to update the users like dm-crypt to explicitly select the
-> algorithm types they're using, if they were being implicitly selected before.
-> 
-> In any case, allowing users to compile out the AEAD support in dm-crypt would
-> also be nice if it's not too difficult, since not everyone needs it.
-
-After reading all that, I'm wondering if this is not a good example of
-where the "imply" keyword should be used.
-
-Thanks for your hindsight,
-
--- 
-Thibaut Sautereau
-CLIP OS developer
++static int set_config_value(struct dm_writecache *wc, char *key, char *val)
++{
++	unsigned v,x;
++	if (sscanf(val, "%u", &v) != 1)
++		return -EINVAL;
++	if (!strcasecmp(key, "high_watermark")) {
++		if (v < 0 || v > 100)
++			return -EINVAL;
++		wc_lock(wc);
++		x = (uint64_t)wc->n_blocks * (100 - v);
++		x += 50;
++		do_div(x, 100);
++		if (wc->freelist_low_watermark < x) {
++			wc_unlock(wc);
++			return -EINVAL;
++		}
++		wc->freelist_high_watermark = x;
++		wc->high_wm_percent_set = true;
++		if (wc->freelist_size + wc->writeback_size
++			<= wc->freelist_high_watermark)
++			queue_work(wc->writeback_wq, &wc->writeback_work);
++		wc_unlock(wc);
++	}
++	else if (!strcasecmp(key, "low_watermark")) {
++		if (v < 0 || v > 100)
++			return -EINVAL;
++		wc_lock(wc);
++		x = (uint64_t)wc->n_blocks * (100 - v);
++		x += 50;
++		do_div(x, 100);
++		if (x < wc->freelist_high_watermark) {
++			wc_unlock(wc);
++			return -EINVAL;
++		}
++		wc->freelist_low_watermark = x;
++		wc->low_wm_percent_set = true;
++		wc_unlock(wc);
++	}
++	else if (!strcasecmp(key, "writeback_jobs")) {
++		wc_lock(wc);
++		wc->max_writeback_jobs = v;
++		wc->max_writeback_jobs_set = true;
++		wc_unlock(wc);
++	}
++	else if (!strcasecmp(key, "autocommit_blocks")) {
++		wc_lock(wc);
++		wc->autocommit_blocks = v;
++		wc->autocommit_blocks_set = true;
++		wc_unlock(wc);
++	}
++	else if (!strcasecmp(key, "autocommit_time")) {
++		if (v < 1 || v > 3600000)
++			return -EINVAL;
++		wc_lock(wc);
++		wc->autocommit_jiffies = msecs_to_jiffies(v);
++		wc->autocommit_time_set = true;
++		wc_unlock(wc);
++	}
++	else
++		return -EINVAL;
++	return 0;
++}
++
+  static int writecache_message(struct dm_target *ti, unsigned argc, 
+char **argv,
+  			      char *result, unsigned maxlen)
+  {
+@@ -1019,6 +1082,11 @@ static int writecache_message(struct dm_
+  		r = process_flush_mesg(argc, argv, wc);
+  	else if (!strcasecmp(argv[0], "flush_on_suspend"))
+  		r = process_flush_on_suspend_mesg(argc, argv, wc);
++	else if (argc==2) {
++		r = set_config_value(wc, argv[0], argv[1]);
++		if (r==-EINVAL)
++			DMERR("invalid message received: %s %s", argv[0], argv[1]);
++	}
+  	else
+  		DMERR("unrecognised message received: %s", argv[0]);
