@@ -1,116 +1,35 @@
-From: Maged Mokhtar <mmokhtar@petasan.org>
-Subject: [PATCH] dm-writecache: change config parameters using
- messages
-Date: Sun, 22 Sep 2019 21:39:06 +0200
-Message-ID: <fa95f1f0-67d6-d02e-6999-ba1f90d70fe2@petasan.org>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: [dm-devel] dm-crypt error when CONFIG_CRYPTO_AUTHENC is disabled
+Date: Mon, 23 Sep 2019 11:46:55 +0200
+Message-ID: <f820c3e8-8538-ac95-9303-eeee77c903ee@gmail.com>
+References: <20190920154434.GA923@gandi.net>
+ <20190920173707.GA21143@redhat.com>
+ <13e25b01-f344-ea1d-8f6c-9d0a60eb1e0f@gmail.com>
+ <20190920212746.GA22061@redhat.com> <20190920214758.GA162854@gmail.com>
+ <20190923082016.GA913@gandi.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190923082016.GA913@gandi.net>
 Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: mpatocka@redhat.com
-Cc: dm-devel@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
+To: Thibaut Sautereau <thibaut.sautereau@clip-os.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Support changing configuration parameters using device-mapper messages
-E.g.
-    dmsetup message vg1/lv1 0 high_watermark 60
+On 23/09/2019 10:20, Thibaut Sautereau wrote:
+> 
+> On top of that, there's no hint in kernel logs about a particular
+> algorithm, feature or Kconfig option that could be missing. Do we really
+> expect people simply tuning their kernel configuration to go and read
+> the source code to ensure they are not breaking their system?
 
-Signed-off-by: Maged Mokhtar <mmokhtar@petasan.org>
----
-  drivers/md/dm-writecache.c |   68 +++++++++++++++++++++++++++++++++++
-  1 file changed, 68 insertions(+)
+AFAIK all standard Linux kernels in distros have these options enabled,
+so it works out of the box.
 
---- a/drivers/md/dm-writecache.c	2019-08-25 16:13:54.000000000 +0200
-+++ b/drivers/md/dm-writecache.c	2019-09-21 16:22:23.000000000 +0200
-@@ -1009,6 +1009,69 @@ static int process_flush_on_suspend_mesg
-  	return 0;
-  }
+So it is the opposite view - if you are setting your kernel options,
+you need to dig much deeper...
 
-+static int set_config_value(struct dm_writecache *wc, char *key, char *val)
-+{
-+	unsigned v,x;
-+	if (sscanf(val, "%u", &v) != 1)
-+		return -EINVAL;
-+	if (!strcasecmp(key, "high_watermark")) {
-+		if (v < 0 || v > 100)
-+			return -EINVAL;
-+		wc_lock(wc);
-+		x = (uint64_t)wc->n_blocks * (100 - v);
-+		x += 50;
-+		do_div(x, 100);
-+		if (wc->freelist_low_watermark < x) {
-+			wc_unlock(wc);
-+			return -EINVAL;
-+		}
-+		wc->freelist_high_watermark = x;
-+		wc->high_wm_percent_set = true;
-+		if (wc->freelist_size + wc->writeback_size
-+			<= wc->freelist_high_watermark)
-+			queue_work(wc->writeback_wq, &wc->writeback_work);
-+		wc_unlock(wc);
-+	}
-+	else if (!strcasecmp(key, "low_watermark")) {
-+		if (v < 0 || v > 100)
-+			return -EINVAL;
-+		wc_lock(wc);
-+		x = (uint64_t)wc->n_blocks * (100 - v);
-+		x += 50;
-+		do_div(x, 100);
-+		if (x < wc->freelist_high_watermark) {
-+			wc_unlock(wc);
-+			return -EINVAL;
-+		}
-+		wc->freelist_low_watermark = x;
-+		wc->low_wm_percent_set = true;
-+		wc_unlock(wc);
-+	}
-+	else if (!strcasecmp(key, "writeback_jobs")) {
-+		wc_lock(wc);
-+		wc->max_writeback_jobs = v;
-+		wc->max_writeback_jobs_set = true;
-+		wc_unlock(wc);
-+	}
-+	else if (!strcasecmp(key, "autocommit_blocks")) {
-+		wc_lock(wc);
-+		wc->autocommit_blocks = v;
-+		wc->autocommit_blocks_set = true;
-+		wc_unlock(wc);
-+	}
-+	else if (!strcasecmp(key, "autocommit_time")) {
-+		if (v < 1 || v > 3600000)
-+			return -EINVAL;
-+		wc_lock(wc);
-+		wc->autocommit_jiffies = msecs_to_jiffies(v);
-+		wc->autocommit_time_set = true;
-+		wc_unlock(wc);
-+	}
-+	else
-+		return -EINVAL;
-+	return 0;
-+}
-+
-  static int writecache_message(struct dm_target *ti, unsigned argc, 
-char **argv,
-  			      char *result, unsigned maxlen)
-  {
-@@ -1019,6 +1082,11 @@ static int writecache_message(struct dm_
-  		r = process_flush_mesg(argc, argv, wc);
-  	else if (!strcasecmp(argv[0], "flush_on_suspend"))
-  		r = process_flush_on_suspend_mesg(argc, argv, wc);
-+	else if (argc==2) {
-+		r = set_config_value(wc, argv[0], argv[1]);
-+		if (r==-EINVAL)
-+			DMERR("invalid message received: %s %s", argv[0], argv[1]);
-+	}
-  	else
-  		DMERR("unrecognised message received: %s", argv[0]);
+I can perhaps add some hint to userspace if this is detectable from errno though.
+
+Milan
