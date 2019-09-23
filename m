@@ -1,83 +1,39 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: cosmetic changes in hwtable
-Date: Sun, 22 Sep 2019 01:40:39 +0200
-Message-ID: <20190921234039.26515-1-xose.vazquez@gmail.com>
+From: YueHaibing <yuehaibing@huawei.com>
+Subject: [PATCH -next] dm clone: Make __hash_find static
+Date: Mon, 23 Sep 2019 14:11:11 +0800
+Message-ID: <20190923061111.39956-1-yuehaibing@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: DM-DEVEL ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, ntsironis@arrikto.com, iliastsi@arrikto.com
+Cc: linux-kernel@vger.kernel.org, YueHaibing <yuehaibing@huawei.com>
 List-Id: dm-devel.ids
 
-Tegile IntelliFlash was acquired by DDN, from WD.
+drivers/md/dm-clone-target.c:594:34: warning:
+ symbol '__hash_find' was not declared. Should it be static?
 
-HPE Primera is also identified as 3PARdata/VV
-
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEVEL ML <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Reported-by: Hulk Robot <hulkci@huawei.com>
+Signed-off-by: YueHaibing <yuehaibing@huawei.com>
 ---
- libmultipath/hwtable.c | 25 +++++++++++--------------
- 1 file changed, 11 insertions(+), 14 deletions(-)
+ drivers/md/dm-clone-target.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index a06872e..7a8f276 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -107,7 +107,7 @@ static struct hwentry default_hw[] = {
- 	 * HPE
- 	 */
- 	{
--		/* 3PAR */
-+		/* 3PAR / Primera */
- 		.vendor        = "3PARdata",
- 		.product       = "VV",
- 		.pgpolicy      = GROUP_BY_PRIO,
-@@ -311,6 +311,16 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_SERIAL,
- 		.no_path_retry = 30,
- 	},
-+	{
-+		/* Tegile IntelliFlash */
-+		.vendor        = "TEGILE",
-+		.product       = "(ZEBI-(FC|ISCSI)|INTELLIFLASH)",
-+		.hwhandler     = "1 alua",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.prio_name     = PRIO_ALUA,
-+		.no_path_retry = 10,
-+	},
- 	/*
- 	 * Dell EMC
- 	 */
-@@ -1074,19 +1084,6 @@ static struct hwentry default_hw[] = {
- 		.product       = "K2",
- 		.pgpolicy      = MULTIBUS,
- 	},
--	/*
--	 * Western Digital (Tegile Systems)
--	 */
--	{
--		/* IntelliFlash */
--		.vendor        = "TEGILE",
--		.product       = "(ZEBI-(FC|ISCSI)|INTELLIFLASH)",
--		.hwhandler     = "1 alua",
--		.pgpolicy      = GROUP_BY_PRIO,
--		.pgfailback    = -FAILBACK_IMMEDIATE,
--		.prio_name     = PRIO_ALUA,
--		.no_path_retry = 10,
--	},
- 	/*
- 	 * Imation/Nexsan
- 	 */
+diff --git a/drivers/md/dm-clone-target.c b/drivers/md/dm-clone-target.c
+index cd6f9e9..0f99b68 100644
+--- a/drivers/md/dm-clone-target.c
++++ b/drivers/md/dm-clone-target.c
+@@ -591,8 +591,9 @@ static struct hash_table_bucket *get_hash_table_bucket(struct clone *clone,
+  *
+  * NOTE: Must be called with the bucket lock held
+  */
+-struct dm_clone_region_hydration *__hash_find(struct hash_table_bucket *bucket,
+-					      unsigned long region_nr)
++static struct
++dm_clone_region_hydration *__hash_find(struct hash_table_bucket *bucket,
++				       unsigned long region_nr)
+ {
+ 	struct dm_clone_region_hydration *hd;
+ 
 -- 
-2.23.0
+2.7.4
