@@ -2,8 +2,8 @@ From: Eric Wheeler <dm-devel@lists.ewheeler.net>
 Subject: Re: kernel BUG at
  drivers/md/persistent-data/dm-space-map-disk.c:178 with
  scsi_mod.use_blk_mq=y
-Date: Wed, 25 Sep 2019 20:33:28 +0000 (UTC)
-Message-ID: <alpine.LRH.2.11.1909252030160.15810@mx.ewheeler.net>
+Date: Thu, 26 Sep 2019 18:27:09 +0000 (UTC)
+Message-ID: <alpine.LRH.2.11.1909261819300.15810@mx.ewheeler.net>
 References: <alpine.LRH.2.11.1909251814220.15810@mx.ewheeler.net>
 	<20190925200138.GA20584@redhat.com>
 Mime-Version: 1.0
@@ -20,12 +20,13 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Coly Li <colyli@suse.de>
-Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-bcache@vger.kernel.org, lvm-devel@redhat.com, linux-block@vger.kernel.org, ejt@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, linux-bcache@vger.kernel.org, lvm-devel@redhat.com, linux-block@vger.kernel.org, ejt@redhat.com, Coly Li <colyli@suse.de>
 List-Id: dm-devel.ids
 
 On Wed, 25 Sep 2019, Mike Snitzer wrote:
-> On Wed, Sep 25 2019 at  2:40pm -0400, Eric Wheeler <dm-devel@lists.ewheeler.net> wrote:
+> On Wed, Sep 25 2019 at  2:40pm -0400,
+> Eric Wheeler <dm-devel@lists.ewheeler.net> wrote:
 > 
 > > Hello,
 > > 
@@ -64,7 +65,23 @@ On Wed, 25 Sep 2019, Mike Snitzer wrote:
 > 
 > So bcache is be used for both data and metadata.
 
-Correct.
+Hi Mike, 
+
+I pvmoved the tmeta to an SSD logical volume (dm-linear) on a non-bcache 
+volume and we got the same trace this morning, so while the tdata still 
+passes through bcache, all meta operations are direct to an SSD. This is 
+still using multi-queue scsi, but dm_mod.use_blk_mq=N.
+
+Since bcache is no longer involved with metadata operations, and since 
+this appears to be a metadata issue, are there any other reasons to 
+suspect bcache?
+
+Since we seem to hit this every night, I can try any patches that you 
+would like for testing. I appreciate your help, hopefully we can solve 
+this quickly. 
+
+
+-Eric
   
 > > We were transferring data to the new thin volumes and it ran for about 12 
 > > hours and then gave the trace below.  So far it has only happened once 
@@ -134,11 +151,7 @@ Correct.
 > But could it be that bcache is the source of the data device race (same
 > block used concurrently)?  And DM thinp is acting as the canary in the
 > coal mine?
-
-Hi Mike, thanks for the detail.  
-
-Coly, any idea on the possible bcache interaction here?
-
-
---
-Eric Wheeler
+> 
+> Thanks,
+> Mike
+> 
