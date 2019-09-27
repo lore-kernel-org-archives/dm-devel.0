@@ -1,93 +1,119 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH] multipathd: warn when configuration has been
-	changed.
-Date: Fri, 27 Sep 2019 15:59:05 +0000
-Message-ID: <6af607515513ef1a39869aed35c15774046a1bda.camel@suse.com>
-References: <1569266956-6339-1-git-send-email-bmarzins@redhat.com>
+From: Eric Wheeler <dm-devel@lists.ewheeler.net>
+Subject: Re: kernel BUG at
+ drivers/md/persistent-data/dm-space-map-disk.c:178 with
+ scsi_mod.use_blk_mq=y
+Date: Fri, 27 Sep 2019 18:45:33 +0000 (UTC)
+Message-ID: <alpine.LRH.2.11.1909271819450.20939@mx.ewheeler.net>
+References: <alpine.LRH.2.11.1909251814220.15810@mx.ewheeler.net>
+	<20190925200138.GA20584@redhat.com>
+	<alpine.LRH.2.11.1909261819300.15810@mx.ewheeler.net>
+	<20190927083239.xy6jwbkbektwqu3h@reti>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1569266956-6339-1-git-send-email-bmarzins@redhat.com>
-Content-Language: en-US
-Content-ID: <F1D7AB8130B4764FAB8D0ACFA6C17CB2@namprd18.prod.outlook.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Return-path: <lvm-devel-bounces@redhat.com>
+In-Reply-To: <20190927083239.xy6jwbkbektwqu3h@reti>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: Joe Thornber <thornber@redhat.com>
+Cc: joe.thornber@gmail.com, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-bcache@vger.kernel.org, Coly Li <colyli@suse.de>, linux-block@vger.kernel.org, ejt@redhat.com, lvm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 2019-09-23 at 14:29 -0500, Benjamin Marzinski wrote:
-> It would be helpful if multipathd could log a message when
-> multipath.conf or files in the config_dir have been written to, both
-> so
-> that it can be used to send a notification to users, and to help with
-> determining after the fact if multipathd was running with an older
-> config, when the logs of multipathd's behaviour don't match with the
-> current multipath.conf.
+On Fri, 27 Sep 2019, Joe Thornber wrote:
+
+> Hi Eric,
 > 
-> To do this, the multipathd uxlsnr thread now sets up inotify watches
-> on
-> both /etc/multipath.conf and the config_dir to watch if the files are
-> deleted or closed after being opened for writing.  In order to keep
-> uxlsnr from polling repeatedly if the multipath.conf or the
-> config_dir
-> aren't present, it will only set up the watches once per reconfigure.
-> However, since multipath.conf is far more likely to be replaced by a
-> text editor than modified in place, if it gets removed, multipathd
-> will
-> immediately try to restart the watch on it (which will succeed if the
-> file was simply replaced by a new copy).  This does mean that if
-> multipath.conf or the config_dir are actually removed and then later
-> re-added, multipathd won't log any more messages for changes until
-> the
-> next reconfigure. But that seems like a fair trade-off to avoid
-> repeatedly polling for files that aren't likely to appear.
+> On Thu, Sep 26, 2019 at 06:27:09PM +0000, Eric Wheeler wrote:
+> > I pvmoved the tmeta to an SSD logical volume (dm-linear) on a non-bcache 
+> > volume and we got the same trace this morning, so while the tdata still 
+> > passes through bcache, all meta operations are direct to an SSD. This is 
+> > still using multi-queue scsi, but dm_mod.use_blk_mq=N.
+> > 
+> > Since bcache is no longer involved with metadata operations, and since 
+> > this appears to be a metadata issue, are there any other reasons to 
+> > suspect bcache?
 > 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  libmultipath/config.h |   1 +
->  multipathd/main.c     |   1 +
->  multipathd/uxlsnr.c   | 134
-> ++++++++++++++++++++++++++++++++++++++++--
->  3 files changed, 130 insertions(+), 6 deletions(-)
+> Did you recreate the pool, or are you just using the existing pool but with
+> a different IO path?  If it's the latter then there could still be something
+> wrong with the metadata, introduced while bcache was in the stack.
+
+We did not create the pool after the initial problem, though the pool was 
+new just before the problem occurred. 
+ 
+> Would it be possible to send me a copy of the metadata device please so
+> I can double check the space maps (I presume you've run thin_check on it)?
+
+~]# /usr/local/bin/thin_check /dev/mapper/data-data--pool_tmeta 
+examining superblock
+TRANSACTION_ID=2347
+METADATA_FREE_BLOCKS=4145151
+examining devices tree
+examining mapping tree
+checking space map counts
+
+~]# echo $?
+0
+
+~]# /usr/local/bin/thin_check -V
+0.8.5
+
+> [Assuming you're using the existing pool] Another useful experiment would be to 
+> thump_dump and then thin_restore the metadata, which will create totally fresh
+> metadata and see if you can still reproduce the issue.
+
+It didn't lockup last night, but I'll keep working to reproduce the 
+problem and let you know what we find.
+
+Mike said it could be a race:
+
+> The stack shows the call to sm_disk_new_block() is due to
+> dm_pool_alloc_data_block().
+> 
+> sm_disk_new_block()'s BUG_ON(ev != SM_ALLOC) indicates that somehow it is
+> getting called without the passed 'ev' being set to SM_ALLOC.  Only
+> drivers/md/persistent-dat/dm-space-map-common.c:sm_ll_mutate() sets
+> SM_ALLOC. sm_disk_new_block() is indirectly calling sm_ll_mutate()
+> 
+> sm_ll_mutate() will only return 0 if ll->save_ie() does, the ll_disk *ll
+> should be ll_disk, and so disk_ll_save_ie()'s call to dm_btree_insert()
+> returns 0 -- which simply means success.  And on success
+> sm_disk_new_block() assumes ev was set to SM_ALLOC (by sm_ll_mutate).
+> 
+> sm_ll_mutate() decided to _not_ set SM_ALLOC because either:
+> 1) ref_count wasn't set
+> or
+> 2) old was identified
+> 
+> So all said: somehow a new data block was found to already be in use.
+> _WHY_ that is the case isn't clear from this stack...
+>
+> But it does speak to the possibility of data block allocation racing
+> with other operations to the same block.  Which implies missing locking.
+
+Would a spinlock on the block solve the issue?
+
+Where might such a spinlock be added?
+
+
+--
+Eric Wheeler
+
+
+> 
+> Thanks,
+> 
+> - Joe
 > 
 
-So, next, after we get a notification, we wait a few seconds and call
-reconfigure() automatically? Well I guess before we do that we should
-implement a dry-run with a syntax check...
-
-I found one minor issue, see below. Otherwise, ACK.
-
-Thanks,
-Martin
-
-> +void handle_inotify(int fd, int  *wds)
-> +{
-> +	char buff[1024]
-> +		__attribute__ ((aligned(__alignof__(struct
-> inotify_event))));
-> +	const struct inotify_event *event;
-> +	ssize_t len;
-> +	char *ptr;
-> +	int i, got_notify = 0;
-> +
-> +	for (;;) {
-> +		len = read(fd, buff, sizeof(buff));
-> +		if (len <= 0) {
-> +			if (len < 0 && errno != EAGAIN) {
-> +				condlog(3, "error reading from
-> inotify_fd");
-> +				for (i = 0; i < 2; i++) {
-> +					if (wds[i] != -1) {
-> +						inotify_rm_watch(fd,
-> wds[0]);
-
-Should this be wds[i] instead?
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
