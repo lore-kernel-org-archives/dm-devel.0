@@ -1,18 +1,16 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: kernel BUG at
- drivers/md/persistent-data/dm-space-map-disk.c:178 with
- scsi_mod.use_blk_mq=y
-Date: Fri, 27 Sep 2019 09:32:39 +0100
-Message-ID: <20190927083239.xy6jwbkbektwqu3h@reti>
-References: <alpine.LRH.2.11.1909251814220.15810@mx.ewheeler.net>
-	<20190925200138.GA20584@redhat.com>
-	<alpine.LRH.2.11.1909261819300.15810@mx.ewheeler.net>
+From: Martin Wilck <Martin.Wilck@suse.com>
+Subject: Re: [PATCH] multipathd: warn when configuration has been
+	changed.
+Date: Fri, 27 Sep 2019 15:59:05 +0000
+Message-ID: <6af607515513ef1a39869aed35c15774046a1bda.camel@suse.com>
+References: <1569266956-6339-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.11.1909261819300.15810@mx.ewheeler.net>
+In-Reply-To: <1569266956-6339-1-git-send-email-bmarzins@redhat.com>
+Content-Language: en-US
+Content-ID: <F1D7AB8130B4764FAB8D0ACFA6C17CB2@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,33 +20,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Eric Wheeler <dm-devel@lists.ewheeler.net>
-Cc: joe.thornber@gmail.com, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-bcache@vger.kernel.org, Coly Li <colyli@suse.de>, linux-block@vger.kernel.org, ejt@redhat.com, lvm-devel@redhat.com
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Eric,
-
-On Thu, Sep 26, 2019 at 06:27:09PM +0000, Eric Wheeler wrote:
-> I pvmoved the tmeta to an SSD logical volume (dm-linear) on a non-bcache 
-> volume and we got the same trace this morning, so while the tdata still 
-> passes through bcache, all meta operations are direct to an SSD. This is 
-> still using multi-queue scsi, but dm_mod.use_blk_mq=N.
+On Mon, 2019-09-23 at 14:29 -0500, Benjamin Marzinski wrote:
+> It would be helpful if multipathd could log a message when
+> multipath.conf or files in the config_dir have been written to, both
+> so
+> that it can be used to send a notification to users, and to help with
+> determining after the fact if multipathd was running with an older
+> config, when the logs of multipathd's behaviour don't match with the
+> current multipath.conf.
 > 
-> Since bcache is no longer involved with metadata operations, and since 
-> this appears to be a metadata issue, are there any other reasons to 
-> suspect bcache?
+> To do this, the multipathd uxlsnr thread now sets up inotify watches
+> on
+> both /etc/multipath.conf and the config_dir to watch if the files are
+> deleted or closed after being opened for writing.  In order to keep
+> uxlsnr from polling repeatedly if the multipath.conf or the
+> config_dir
+> aren't present, it will only set up the watches once per reconfigure.
+> However, since multipath.conf is far more likely to be replaced by a
+> text editor than modified in place, if it gets removed, multipathd
+> will
+> immediately try to restart the watch on it (which will succeed if the
+> file was simply replaced by a new copy).  This does mean that if
+> multipath.conf or the config_dir are actually removed and then later
+> re-added, multipathd won't log any more messages for changes until
+> the
+> next reconfigure. But that seems like a fair trade-off to avoid
+> repeatedly polling for files that aren't likely to appear.
+> 
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>  libmultipath/config.h |   1 +
+>  multipathd/main.c     |   1 +
+>  multipathd/uxlsnr.c   | 134
+> ++++++++++++++++++++++++++++++++++++++++--
+>  3 files changed, 130 insertions(+), 6 deletions(-)
+> 
 
-Did you recreate the pool, or are you just using the existing pool but with
-a different IO path?  If it's the latter then there could still be something
-wrong with the metadata, introduced while bcache was in the stack.
+So, next, after we get a notification, we wait a few seconds and call
+reconfigure() automatically? Well I guess before we do that we should
+implement a dry-run with a syntax check...
 
-Would it be possible to send me a copy of the metadata device please so
-I can double check the space maps (I presume you've run thin_check on it)?
-
-[Assuming you're using the existing pool] Another useful experiment would be to 
-thump_dump and then thin_restore the metadata, which will create totally fresh
-metadata and see if you can still reproduce the issue.
+I found one minor issue, see below. Otherwise, ACK.
 
 Thanks,
+Martin
 
-- Joe
+> +void handle_inotify(int fd, int  *wds)
+> +{
+> +	char buff[1024]
+> +		__attribute__ ((aligned(__alignof__(struct
+> inotify_event))));
+> +	const struct inotify_event *event;
+> +	ssize_t len;
+> +	char *ptr;
+> +	int i, got_notify = 0;
+> +
+> +	for (;;) {
+> +		len = read(fd, buff, sizeof(buff));
+> +		if (len <= 0) {
+> +			if (len < 0 && errno != EAGAIN) {
+> +				condlog(3, "error reading from
+> inotify_fd");
+> +				for (i = 0; i < 2; i++) {
+> +					if (wds[i] != -1) {
+> +						inotify_rm_watch(fd,
+> wds[0]);
+
+Should this be wds[i] instead?
