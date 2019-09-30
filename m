@@ -1,16 +1,16 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH] libmultipath: multipath active paths count
- optimization
-Date: Thu, 5 Sep 2019 07:36:52 +0000
-Message-ID: <e33a9aefa073e1d9c107dce12c32608afc50090e.camel@suse.com>
-References: <413f046d0cfc4d5dbd39ebed92068c8b@h3c.com>
+From: Jes Sorensen <jes.sorensen@gmail.com>
+Subject: Re: [PATCH v4 2/2] mdadm: Introduce new array state
+ 'broken' for raid0/linear
+Date: Mon, 30 Sep 2019 15:36:15 -0400
+Message-ID: <608284db-7b82-6545-74bf-7a9f1d578c2f@gmail.com>
+References: <20190903194901.13524-1-gpiccoli@canonical.com>
+	<20190903194901.13524-2-gpiccoli@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <413f046d0cfc4d5dbd39ebed92068c8b@h3c.com>
+In-Reply-To: <20190903194901.13524-2-gpiccoli@canonical.com>
 Content-Language: en-US
-Content-ID: <99742E329A7D324DA053E4F0448D2E2F@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,63 +20,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "wu.chongyun@h3c.com" <wu.chongyun@h3c.com>
-Cc: "liu.cong@h3c.com" <liu.cong@h3c.com>, "zhang.chengA@h3c.com" <zhang.chengA@h3c.com>, "guozhonghua@h3c.com" <guozhonghua@h3c.com>, "zhang.duan@h3c.com" <zhang.duan@h3c.com>, "li.liangA@h3c.com" <li.liangA@h3c.com>, "changlimin@h3c.com" <changlimin@h3c.com>, "ren.qinwei@h3c.com" <ren.qinwei@h3c.com>, "wang.xibo@h3c.com" <wang.xibo@h3c.com>, "li.kai4@h3c.com" <li.kai4@h3c.com>, "zhang.guanghui@h3c.com" <zhang.guanghui@h3c.com>, "wang.yongD@h3c.com" <wang.yongD@h3c.com>, "huang.yongA@h3c.com" <huang.yongA@h3c.com>
+To: "Guilherme G. Piccoli" <gpiccoli@canonical.com>, linux-raid@vger.kernel.org
+Cc: nfbrown@suse.com, Song Liu <songliubraving@fb.com>, liu.song.a23@gmail.com, linux-block@vger.kernel.org, dm-devel@redhat.com, jay.vosburgh@canonical.com
 List-Id: dm-devel.ids
 
-Hi Chongyun,
-
-On Thu, 2019-09-05 at 02:58 +0000, Chongyun Wu wrote:
-> Hi Martin, Ben and other viewers
+On 9/3/19 3:49 PM, Guilherme G. Piccoli wrote:
+> Currently if a md raid0/linear array gets one or more members removed while
+> being mounted, kernel keeps showing state 'clean' in the 'array_state'
+> sysfs attribute. Despite udev signaling the member device is gone, 'mdadm'
+> cannot issue the STOP_ARRAY ioctl successfully, given the array is mounted.
 > 
-> Cloud you help to view below patch which try to deal with a multipath
-> active paths
-> count not right issue, thanks a lot.
+> Nothing else hints that something is wrong (except that the removed devices
+> don't show properly in the output of mdadm 'detail' command). There is no
+> other property to be checked, and if user is not performing reads/writes
+> to the array, even kernel log is quiet and doesn't give a clue about the
+> missing member.
 > 
-> From deee7196ece43b01b8ee635e60ce465080905b5e Mon Sep 17 00:00:00
-> 2001
-> From: Chongyun Wu <wu.chongyun@h3c.com>
-> Date: Tue, 27 Aug 2019 13:58:33 +0800
-> Subject: [PATCH] libmultipath:  multipath active paths count
-> optimization
+> This patch is the mdadm counterpart of kernel new array state 'broken'.
+> The 'broken' state mimics the state 'clean' in every aspect, being useful
+> only to distinguish if an array has some member missing. All necessary
+> paths in mdadm were changed to deal with 'broken' state, and in case the
+> tool runs in a kernel that is not updated, it'll work normally, i.e., it
+> doesn't require the 'broken' state in order to work.
+> Also, this patch changes the way the array state is showed in the 'detail'
+> command (for raid0/linear only) - now it takes the 'array_state' sysfs
+> attribute into account instead of only rely in the MD_SB_CLEAN flag.
 > 
-> Really count multipath active paths not use mpp->nr_active++
-> or mpp->nr_active--, because there are other places might call
-> pathinfo to change path state not only in check_path, if other
-> places detect and changed path state but not do mpp->nr_active++
-> or mpp->nr_active--, the active paths might not right any more.
-> 
-> We meet an issue which actually have three paths but after all
-> paths down syslog report have three paths remaining so multipathd
-> not send disable queueing to dm and this dm device been blocked.
-> This patch might fix this issue.
-> 
-> Signed-off-by: Chongyun Wu <wu.chongyun@h3c.com>
+> Cc: Jes Sorensen <jes.sorensen@gmail.com>
+> Cc: NeilBrown <neilb@suse.de>
+> Cc: Song Liu <songliubraving@fb.com>
+> Signed-off-by: Guilherme G. Piccoli <gpiccoli@canonical.com>
 > ---
->  libmultipath/structs_vec.c | 8 ++++++--
->  1 file changed, 6 insertions(+), 2 deletions(-)
 
+Applied thanks!
 
-Thanks a lot for your patch. We've discussed this previously, and in
-general, there's little reason not to do it - pathcount() is fast, and
-could be made even faster. But if we do, we should ditch the nr_active
-field altogether - no need to carry it around if we re-calculate it
-anyway when we need it.
+I fixed up one minor nit rather than having to do the merry-go-round by 
+email one more time:
 
-However, it worries me a bit that nr_active may go wrong. Both Ben and
-I have reviewed the code and we thought the nr_active tracking was
-correct. Something seems to happen in our code that we don't
-understand.
+> diff --git a/Monitor.c b/Monitor.c
+> index 036103f..cf0610b 100644
+> --- a/Monitor.c
+> +++ b/Monitor.c
+[snip]
 
- - can you please confirm that you are using the latest code,
-containing e224d57 "libmutipath: continue to use old state on
-PATH_PENDING", 9b715bf "multipathd: Fix miscounting active paths" and
-(in case you're using the marginal_paths options) also 7d4b40f and
-058df77 ?
+> @@ -1116,7 +1119,8 @@ int WaitClean(char *dev, int verbose)
+>   			rv = read(state_fd, buf, sizeof(buf));
+>   			if (rv < 0)
+>   				break;
+> -			if (sysfs_match_word(buf, clean_states) <= 4)
+> +			if (sysfs_match_word(buf, clean_states)
+> +			    < (int)ARRAY_SIZE(clean_states)-1)
 
- - If you have a reliable reproducer, would you mind adding log
-messages to the code you just submitted, so that we can observe how
-nr_active evolves in time, and perhaps understand why it's going wrong?
+I moved the < up to the correct line where it belongs, and added spaces 
+") - 1)"
 
-Regards
-Martin
+Cheers,
+Jes
