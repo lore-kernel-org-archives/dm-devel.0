@@ -1,11 +1,9 @@
-From: <gregkh@linuxfoundation.org>
-Subject: Patch "scsi: implement .cleanup_rq callback" has been
-	added to the 5.3-stable tree
-Date: Tue, 01 Oct 2019 20:06:38 +0200
-Message-ID: <156995319823252@kroah.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: [multipath-tools] merges
+Date: Tue, 1 Oct 2019 22:30:24 +0200
+Message-ID: <CABr-Gncq_wj6iv7knLFLU-oEMBXtP2oPfOjUFUNMMRC6Q_F12g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============8502878492485126767=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,86 +14,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: axboe@kernel.dk, bvanassche@acm.org, dm-devel@redhat.com, emilne@redhat.com, gregkh@linuxfoundation.org, hare@suse.com, hch@lst.de, ming.lei@redhat.com, snitzer@redhat.com
-Cc: stable-commits@vger.kernel.org
+To: petr.vorel@gmail.com, Martin Wilck <Martin.Wilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, Chongyun Wu <wu.chongyun@h3c.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+--===============8502878492485126767==
+Content-Type: multipart/alternative; boundary="0000000000008799370593df3900"
 
-This is a note to let you know that I've just added the patch titled
+--0000000000008799370593df3900
+Content-Type: text/plain; charset="UTF-8"
 
-    scsi: implement .cleanup_rq callback
+Hi,
 
-to the 5.3-stable tree which can be found at:
-    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
+I merged the patchsets posted and reviewed in past months.
 
-The filename of the patch is:
-     scsi-implement-.cleanup_rq-callback.patch
-and it can be found in the queue-5.3 subdirectory.
+Here are the remaining sets needing rebase:
 
-If you, or anyone else, feels it should not be added to the stable tree,
-please let <stable@vger.kernel.org> know about it.
+* Martin's "enable_foreign" patchset from aug 15
+* Chongyun's "san_path_err" optimization patchset from aug 27
 
+I'll bump the version after merging these missing patchs.
 
-From b7e9e1fb7a9227be34ad4a5e778022c3164494cf Mon Sep 17 00:00:00 2001
-From: Ming Lei <ming.lei@redhat.com>
-Date: Thu, 25 Jul 2019 10:05:00 +0800
-Subject: scsi: implement .cleanup_rq callback
+Petr, do you intent to submit a v2 of the s/daddr_t/__kernel_daddr_t/ patch
+posted jul 08, following Christoph H's comment ... or is the posted version
+fit for inclusion ?
 
-From: Ming Lei <ming.lei@redhat.com>
+Thanks,
+Christophe
 
-commit b7e9e1fb7a9227be34ad4a5e778022c3164494cf upstream.
+--0000000000008799370593df3900
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Implement .cleanup_rq() callback for freeing driver private part
-of the request. Then we can avoid to leak this part if the request isn't
-completed by SCSI, and freed by blk-mq or upper layer(such as dm-rq) finally.
+<div dir=3D"ltr">Hi,<div><br></div><div>I merged the patchsets posted and r=
+eviewed in past months.</div><div><br></div><div>Here are the remaining set=
+s needing rebase:</div><div><br></div><div>* Martin&#39;s &quot;enable_fore=
+ign&quot; patchset from aug 15</div><div>* Chongyun&#39;s &quot;san_path_er=
+r&quot; optimization patchset from aug 27</div><div><br></div><div>I&#39;ll=
+ bump the version after merging these missing patchs.</div><div><br></div><=
+div>Petr, do you intent to submit a v2 of the s/daddr_t/__kernel_daddr_t/ p=
+atch posted jul 08, following Christoph H&#39;s comment ... or is the poste=
+d version fit for inclusion ?</div><div><br></div><div>Thanks,</div><div>Ch=
+ristophe</div></div>
 
-Cc: Ewan D. Milne <emilne@redhat.com>
-Cc: Bart Van Assche <bvanassche@acm.org>
-Cc: Hannes Reinecke <hare@suse.com>
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
-Cc: <stable@vger.kernel.org>
-Fixes: 396eaf21ee17 ("blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback")
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
-Signed-off-by: Jens Axboe <axboe@kernel.dk>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-
----
- drivers/scsi/scsi_lib.c |   13 +++++++++++++
- 1 file changed, 13 insertions(+)
-
---- a/drivers/scsi/scsi_lib.c
-+++ b/drivers/scsi/scsi_lib.c
-@@ -1089,6 +1089,18 @@ static void scsi_initialize_rq(struct re
- 	cmd->retries = 0;
- }
- 
-+/*
-+ * Only called when the request isn't completed by SCSI, and not freed by
-+ * SCSI
-+ */
-+static void scsi_cleanup_rq(struct request *rq)
-+{
-+	if (rq->rq_flags & RQF_DONTPREP) {
-+		scsi_mq_uninit_cmd(blk_mq_rq_to_pdu(rq));
-+		rq->rq_flags &= ~RQF_DONTPREP;
-+	}
-+}
-+
- /* Add a command to the list used by the aacraid and dpt_i2o drivers */
- void scsi_add_cmd_to_list(struct scsi_cmnd *cmd)
- {
-@@ -1821,6 +1833,7 @@ static const struct blk_mq_ops scsi_mq_o
- 	.init_request	= scsi_mq_init_request,
- 	.exit_request	= scsi_mq_exit_request,
- 	.initialize_rq_fn = scsi_initialize_rq,
-+	.cleanup_rq	= scsi_cleanup_rq,
- 	.busy		= scsi_mq_lld_busy,
- 	.map_queues	= scsi_map_queues,
- };
+--0000000000008799370593df3900--
 
 
-Patches currently in stable-queue which might be from ming.lei@redhat.com are
+--===============8502878492485126767==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-queue-5.3/scsi-implement-.cleanup_rq-callback.patch
+
+--===============8502878492485126767==--
