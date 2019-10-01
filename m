@@ -1,8 +1,8 @@
 From: <gregkh@linuxfoundation.org>
 Subject: Patch "scsi: implement .cleanup_rq callback" has been
-	added to the 5.2-stable tree
-Date: Tue, 01 Oct 2019 20:06:35 +0200
-Message-ID: <1569953195239166@kroah.com>
+	added to the 5.3-stable tree
+Date: Tue, 01 Oct 2019 20:06:38 +0200
+Message-ID: <156995319823252@kroah.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -25,12 +25,12 @@ This is a note to let you know that I've just added the patch titled
 
     scsi: implement .cleanup_rq callback
 
-to the 5.2-stable tree which can be found at:
+to the 5.3-stable tree which can be found at:
     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
 The filename of the patch is:
      scsi-implement-.cleanup_rq-callback.patch
-and it can be found in the queue-5.2 subdirectory.
+and it can be found in the queue-5.3 subdirectory.
 
 If you, or anyone else, feels it should not be added to the stable tree,
 please let <stable@vger.kernel.org> know about it.
@@ -67,7 +67,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
 --- a/drivers/scsi/scsi_lib.c
 +++ b/drivers/scsi/scsi_lib.c
-@@ -1073,6 +1073,18 @@ static void scsi_initialize_rq(struct re
+@@ -1089,6 +1089,18 @@ static void scsi_initialize_rq(struct re
  	cmd->retries = 0;
  }
  
@@ -86,7 +86,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  /* Add a command to the list used by the aacraid and dpt_i2o drivers */
  void scsi_add_cmd_to_list(struct scsi_cmnd *cmd)
  {
-@@ -1800,6 +1812,7 @@ static const struct blk_mq_ops scsi_mq_o
+@@ -1821,6 +1833,7 @@ static const struct blk_mq_ops scsi_mq_o
  	.init_request	= scsi_mq_init_request,
  	.exit_request	= scsi_mq_exit_request,
  	.initialize_rq_fn = scsi_initialize_rq,
@@ -98,4 +98,4 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
 Patches currently in stable-queue which might be from ming.lei@redhat.com are
 
-queue-5.2/scsi-implement-.cleanup_rq-callback.patch
+queue-5.3/scsi-implement-.cleanup_rq-callback.patch
