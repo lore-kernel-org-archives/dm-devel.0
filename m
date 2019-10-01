@@ -1,10 +1,13 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: [multipath-tools] merges
-Date: Tue, 1 Oct 2019 22:30:24 +0200
-Message-ID: <CABr-Gncq_wj6iv7knLFLU-oEMBXtP2oPfOjUFUNMMRC6Q_F12g@mail.gmail.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: [PATCH 5/4] dm raid: revert recovery offset definition
+Date: Tue,  1 Oct 2019 22:37:47 +0200
+Message-ID: <53c8e7d1576cb4471cb399a3630d021087a150f3.1569962154.git.heinzm@redhat.com>
+References: <c38233bcdbd0d33e1bcf71bf0ad01335e79c845e.1569962154.git.heinzm@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============8502878492485126767=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <c38233bcdbd0d33e1bcf71bf0ad01335e79c845e.1569962154.git.heinzm@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,57 +17,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: petr.vorel@gmail.com, Martin Wilck <Martin.Wilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, Chongyun Wu <wu.chongyun@h3c.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com, snitzer@redhat.com
+Cc: heinzm@redhat.com
 List-Id: dm-devel.ids
 
---===============8502878492485126767==
-Content-Type: multipart/alternative; boundary="0000000000008799370593df3900"
+Previous patch "dm raid: streamline rs_get_progress() and its
+raid_status() caller side" mistakenly simplified the definition
+of the recovery offset.  This caused the offset to immediately be
+resync maximum when checks or repairs are requested.
 
---0000000000008799370593df3900
-Content-Type: text/plain; charset="UTF-8"
+Revert to the old definition.
 
-Hi,
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+---
+ drivers/md/dm-raid.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-I merged the patchsets posted and reviewed in past months.
-
-Here are the remaining sets needing rebase:
-
-* Martin's "enable_foreign" patchset from aug 15
-* Chongyun's "san_path_err" optimization patchset from aug 27
-
-I'll bump the version after merging these missing patchs.
-
-Petr, do you intent to submit a v2 of the s/daddr_t/__kernel_daddr_t/ patch
-posted jul 08, following Christoph H's comment ... or is the posted version
-fit for inclusion ?
-
-Thanks,
-Christophe
-
---0000000000008799370593df3900
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Hi,<div><br></div><div>I merged the patchsets posted and r=
-eviewed in past months.</div><div><br></div><div>Here are the remaining set=
-s needing rebase:</div><div><br></div><div>* Martin&#39;s &quot;enable_fore=
-ign&quot; patchset from aug 15</div><div>* Chongyun&#39;s &quot;san_path_er=
-r&quot; optimization patchset from aug 27</div><div><br></div><div>I&#39;ll=
- bump the version after merging these missing patchs.</div><div><br></div><=
-div>Petr, do you intent to submit a v2 of the s/daddr_t/__kernel_daddr_t/ p=
-atch posted jul 08, following Christoph H&#39;s comment ... or is the poste=
-d version fit for inclusion ?</div><div><br></div><div>Thanks,</div><div>Ch=
-ristophe</div></div>
-
---0000000000008799370593df3900--
-
-
---===============8502878492485126767==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============8502878492485126767==--
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 63a4a26fae3e..13fa90546a0f 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3426,7 +3426,10 @@ static sector_t rs_get_progress(struct raid_set *rs, unsigned long recovery,
+ 		set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
+ 
+ 	} else {
+-		r = max(mddev->recovery_cp, mddev->curr_resync_completed);
++		if (state == st_idle && !test_bit(MD_RECOVERY_INTR, &recovery))
++			r = mddev->recovery_cp;
++		else
++			r = mddev->curr_resync_completed;
+ 
+ 		if (state == st_idle && r >= resync_max_sectors) {
+ 			/*
+-- 
+2.21.0
