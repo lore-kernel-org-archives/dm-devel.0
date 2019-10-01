@@ -1,8 +1,8 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH 3/4] dm raid: simplify rs_setup_recovery call
-	chain
-Date: Tue,  1 Oct 2019 17:47:54 +0200
-Message-ID: <c1c8b850f2b3ad5eb11fac92e1716187f65a57ea.1569888100.git.heinzm@redhat.com>
+Subject: [PATCH 4/4] dm raid: streamline rs_get_progress() and
+	its raid_status() caller side
+Date: Tue,  1 Oct 2019 17:47:55 +0200
+Message-ID: <1bf5a0b2c4de7dfa013e7d8ea451af3a5398f8f4.1569888100.git.heinzm@redhat.com>
 References: <cover.1569888100.git.heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,82 +21,136 @@ Errors-To: dm-devel-bounces@redhat.com
 To: heinzm@redhat.com, dm-devel@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-rs_setup_recovery() sets the starting recovery offset.
-
-Drop superfluous rs_setup_recovery() and replace with __rs_setup_recovery().
+Pass already deciphered state into rs_get_progress, simplify recovery offset
+definition and combine two st_resync, st_reshape conditionals into one as is
+already the case with st_check and st_repair.
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid.c | 27 ++++++---------------------
- 1 file changed, 6 insertions(+), 21 deletions(-)
+ drivers/md/dm-raid.c | 52 ++++++++++++++++++--------------------------
+ 1 file changed, 21 insertions(+), 31 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index b600b335ce88..9aa830c53844 100644
+index 9aa830c53844..153654ae84ae 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -1670,7 +1670,7 @@ static int rs_set_dev_and_array_sectors(struct raid_set *rs, sector_t sectors, b
- }
+@@ -3413,10 +3413,9 @@ static const char *__raid_dev_status(struct raid_set *rs, struct md_rdev *rdev)
  
- /* Setup recovery on @rs */
--static void __rs_setup_recovery(struct raid_set *rs, sector_t dev_sectors)
-+static void rs_setup_recovery(struct raid_set *rs, sector_t dev_sectors)
+ /* Helper to return resync/reshape progress for @rs and runtime flags for raid set in sync / resynching */
+ static sector_t rs_get_progress(struct raid_set *rs, unsigned long recovery,
+-				sector_t resync_max_sectors)
++				enum sync_state state, sector_t resync_max_sectors)
  {
- 	/* raid0 does not recover */
- 	if (rs_is_raid0(rs))
-@@ -1691,22 +1691,6 @@ static void __rs_setup_recovery(struct raid_set *rs, sector_t dev_sectors)
- 				     ? MaxSector : dev_sectors;
- }
+ 	sector_t r;
+-	enum sync_state state;
+ 	struct mddev *mddev = &rs->md;
  
--/* Setup recovery on @rs based on raid type, device size and 'nosync' flag */
--static void rs_setup_recovery(struct raid_set *rs, sector_t dev_sectors)
--{
--	if (!dev_sectors)
--		/* New raid set or 'sync' flag provided */
--		__rs_setup_recovery(rs, 0);
--	else if (dev_sectors == MaxSector)
--		/* Prevent recovery */
--		__rs_setup_recovery(rs, MaxSector);
--	else if (__rdev_sectors(rs) < dev_sectors)
--		/* Grown raid set */
--		__rs_setup_recovery(rs, __rdev_sectors(rs));
--	else
--		__rs_setup_recovery(rs, MaxSector);
--}
+ 	clear_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
+@@ -3427,12 +3426,7 @@ static sector_t rs_get_progress(struct raid_set *rs, unsigned long recovery,
+ 		set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
+ 
+ 	} else {
+-		state = decipher_sync_action(mddev, recovery);
 -
- static void do_table_event(struct work_struct *ws)
- {
- 	struct raid_set *rs = container_of(ws, struct raid_set, md.event_work);
-@@ -2474,7 +2458,7 @@ static int super_validate(struct raid_set *rs, struct md_rdev *rdev)
- 		return -EINVAL;
- 	}
+-		if (state == st_idle && !test_bit(MD_RECOVERY_INTR, &recovery))
+-			r = mddev->recovery_cp;
+-		else
+-			r = mddev->curr_resync_completed;
++		r = max(mddev->recovery_cp, mddev->curr_resync_completed);
  
--	/* Enable bitmap creation for RAID levels != 0 */
-+	/* Enable bitmap creation on @rs unless no metadevs or raid0 or journaled raid4/5/6 set. */
- 	mddev->bitmap_info.offset = (rt_is_raid0(rs->raid_type) || rs->journal_dev.dev) ? 0 : to_sector(4096);
- 	mddev->bitmap_info.default_offset = mddev->bitmap_info.offset;
+ 		if (state == st_idle && r >= resync_max_sectors) {
+ 			/*
+@@ -3446,18 +3440,14 @@ static sector_t rs_get_progress(struct raid_set *rs, unsigned long recovery,
+ 			/*
+ 			 * In case we are recovering, the array is not in sync
+ 			 * and health chars should show the recovering legs.
++			 *
++			 * Already retrieved recovery offset from curr_resync_completed above.
+ 			 */
+ 			;
+-		else if (state == st_resync)
+-			/*
+-			 * If "resync" is occurring, the raid set
+-			 * is or may be out of sync hence the health
+-			 * characters shall be 'a'.
+-			 */
+-			set_bit(RT_FLAG_RS_RESYNCING, &rs->runtime_flags);
+-		else if (state == st_reshape)
++
++		else if (state == st_resync || state == st_reshape)
+ 			/*
+-			 * If "reshape" is occurring, the raid set
++			 * If "resync/reshape" is occurring, the raid set
+ 			 * is or may be out of sync hence the health
+ 			 * characters shall be 'a'.
+ 			 */
+@@ -3471,22 +3461,22 @@ static sector_t rs_get_progress(struct raid_set *rs, unsigned long recovery,
+ 			 */
+ 			set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
  
-@@ -3173,7 +3157,7 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		rs_setup_recovery(rs, MaxSector);
- 		rs_set_new(rs);
- 	} else if (rs_reshape_requested(rs)) {
--		/* Only on size extensions, not on reshapes. */
-+		/* Only request grow on raid set size extensions, not on reshapes. */
- 		clear_bit(RT_FLAG_RS_GROW, &rs->runtime_flags);
+-		else {
+-			struct md_rdev *rdev;
+-
++		else if (test_bit(MD_RECOVERY_NEEDED, &recovery))
+ 			/*
+ 			 * We are idle and recovery is needed, prevent 'A' chars race
+ 			 * caused by components still set to in-sync by constructor.
+ 			 */
+-			if (test_bit(MD_RECOVERY_NEEDED, &recovery))
+-				set_bit(RT_FLAG_RS_RESYNCING, &rs->runtime_flags);
++			set_bit(RT_FLAG_RS_RESYNCING, &rs->runtime_flags);
+ 
++		else {
+ 			/*
+-			 * The raid set may be doing an initial sync, or it may
+-			 * be rebuilding individual components.	 If all the
+-			 * devices are In_sync, then it is the raid set that is
+-			 * being initialized.
++			 * We are idle and the raid set may be doing an initial
++			 * sync, or it may be rebuilding individual components.
++			 * If all the devices are In_sync, then it is the raid set
++			 * that is being initialized.
+ 			 */
++			struct md_rdev *rdev;
++
+ 			set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
+ 			rdev_for_each(rdev, mddev)
+ 				if (!test_bit(Journal, &rdev->flags) &&
+@@ -3519,7 +3509,7 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 	unsigned int rebuild_disks;
+ 	unsigned int write_mostly_params = 0;
+ 	sector_t progress, resync_max_sectors, resync_mismatches;
+-	const char *sync_action;
++	enum sync_state state;
+ 	struct raid_type *rt;
+ 
+ 	switch (type) {
+@@ -3533,14 +3523,14 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 
+ 		/* Access most recent mddev properties for status output */
+ 		smp_rmb();
+-		recovery = rs->md.recovery;
+ 		/* Get sensible max sectors even if raid set not yet started */
+ 		resync_max_sectors = test_bit(RT_FLAG_RS_PRERESUMED, &rs->runtime_flags) ?
+ 				      mddev->resync_max_sectors : mddev->dev_sectors;
+-		progress = rs_get_progress(rs, recovery, resync_max_sectors);
++		recovery = rs->md.recovery;
++		state = decipher_sync_action(mddev, recovery);
++		progress = rs_get_progress(rs, recovery, state, resync_max_sectors);
+ 		resync_mismatches = (mddev->last_sync_action && !strcasecmp(mddev->last_sync_action, "check")) ?
+ 				    atomic64_read(&mddev->resync_mismatches) : 0;
+-		sync_action = sync_str(decipher_sync_action(&rs->md, recovery));
+ 
+ 		/* HM FIXME: do we want another state char for raid0? It shows 'D'/'A'/'-' now */
+ 		for (i = 0; i < rs->raid_disks; i++)
+@@ -3568,7 +3558,7 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 		 *   See Documentation/admin-guide/device-mapper/dm-raid.rst for
+ 		 *   information on each of these states.
+ 		 */
+-		DMEMIT(" %s", sync_action);
++		DMEMIT(" %s", sync_str(state));
  
  		/*
-@@ -3211,10 +3195,11 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		if (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags)) {
- 			clear_bit(RT_FLAG_RS_GROW, &rs->runtime_flags);
- 			set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
-+			rs_setup_recovery(rs, MaxSector);
- 		} else if (test_bit(RT_FLAG_RS_GROW, &rs->runtime_flags)) {
- 			/*
--			 * Set raid set to current size, i.e. non-grown size
--			 * as of superblocks to grow to new size in preresume.
-+			 * Set raid set to current size, i.e. size as of
-+			 * superblocks to grow to larger size in preresume.
- 			 */
- 			r = rs_set_dev_and_array_sectors(rs, sb_array_sectors, false);
- 			if (r)
+ 		 * v1.5.0+:
 -- 
 2.21.0
