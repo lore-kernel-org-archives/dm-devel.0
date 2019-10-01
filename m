@@ -1,13 +1,14 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH 5/4] dm raid: revert recovery offset definition
-Date: Tue,  1 Oct 2019 22:37:47 +0200
-Message-ID: <53c8e7d1576cb4471cb399a3630d021087a150f3.1569962154.git.heinzm@redhat.com>
-References: <c38233bcdbd0d33e1bcf71bf0ad01335e79c845e.1569962154.git.heinzm@redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: cosmetic changes in hwtable
+Date: Wed, 2 Oct 2019 00:42:32 +0200
+Message-ID: <617b928c-cbf2-a8b3-723b-b0066c96e24a@gmail.com>
+References: <20190921234039.26515-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <c38233bcdbd0d33e1bcf71bf0ad01335e79c845e.1569962154.git.heinzm@redhat.com>
+In-Reply-To: <20190921234039.26515-1-xose.vazquez@gmail.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,37 +18,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, snitzer@redhat.com
-Cc: heinzm@redhat.com
+Cc: DM-DEVEL ML <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Previous patch "dm raid: streamline rs_get_progress() and its
-raid_status() caller side" mistakenly simplified the definition
-of the recovery offset.  This caused the offset to immediately be
-resync maximum when checks or repairs are requested.
+On 9/22/19 1:40 AM, Xose Vazquez Perez wrote:
 
-Revert to the old definition.
+> Tegile IntelliFlash was acquired by DDN, from WD.
+> 
+> HPE Primera is also identified as 3PARdata/VV
 
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
----
- drivers/md/dm-raid.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+Christophe, this one is missing. Thanks.
 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 63a4a26fae3e..13fa90546a0f 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -3426,7 +3426,10 @@ static sector_t rs_get_progress(struct raid_set *rs, unsigned long recovery,
- 		set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
- 
- 	} else {
--		r = max(mddev->recovery_cp, mddev->curr_resync_completed);
-+		if (state == st_idle && !test_bit(MD_RECOVERY_INTR, &recovery))
-+			r = mddev->recovery_cp;
-+		else
-+			r = mddev->curr_resync_completed;
- 
- 		if (state == st_idle && r >= resync_max_sectors) {
- 			/*
--- 
-2.21.0
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM-DEVEL ML <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+>   libmultipath/hwtable.c | 25 +++++++++++--------------
+>   1 file changed, 11 insertions(+), 14 deletions(-)
+> 
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index a06872e..7a8f276 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -107,7 +107,7 @@ static struct hwentry default_hw[] = {
+>   	 * HPE
+>   	 */
+>   	{
+> -		/* 3PAR */
+> +		/* 3PAR / Primera */
+>   		.vendor        = "3PARdata",
+>   		.product       = "VV",
+>   		.pgpolicy      = GROUP_BY_PRIO,
+> @@ -311,6 +311,16 @@ static struct hwentry default_hw[] = {
+>   		.pgpolicy      = GROUP_BY_SERIAL,
+>   		.no_path_retry = 30,
+>   	},
+> +	{
+> +		/* Tegile IntelliFlash */
+> +		.vendor        = "TEGILE",
+> +		.product       = "(ZEBI-(FC|ISCSI)|INTELLIFLASH)",
+> +		.hwhandler     = "1 alua",
+> +		.pgpolicy      = GROUP_BY_PRIO,
+> +		.pgfailback    = -FAILBACK_IMMEDIATE,
+> +		.prio_name     = PRIO_ALUA,
+> +		.no_path_retry = 10,
+> +	},
+>   	/*
+>   	 * Dell EMC
+>   	 */
+> @@ -1074,19 +1084,6 @@ static struct hwentry default_hw[] = {
+>   		.product       = "K2",
+>   		.pgpolicy      = MULTIBUS,
+>   	},
+> -	/*
+> -	 * Western Digital (Tegile Systems)
+> -	 */
+> -	{
+> -		/* IntelliFlash */
+> -		.vendor        = "TEGILE",
+> -		.product       = "(ZEBI-(FC|ISCSI)|INTELLIFLASH)",
+> -		.hwhandler     = "1 alua",
+> -		.pgpolicy      = GROUP_BY_PRIO,
+> -		.pgfailback    = -FAILBACK_IMMEDIATE,
+> -		.prio_name     = PRIO_ALUA,
+> -		.no_path_retry = 10,
+> -	},
+>   	/*
+>   	 * Imation/Nexsan
+>   	 */
+> 
