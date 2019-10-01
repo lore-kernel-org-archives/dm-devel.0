@@ -1,8 +1,8 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH 1/4] dm raid: change rs_set_dev_and_array_sectors
-	API and callers
-Date: Tue,  1 Oct 2019 17:47:52 +0200
-Message-ID: <61aa36cbaa3b61834c4aece52f6c37ff79a6bd3f.1569888100.git.heinzm@redhat.com>
+Subject: [PATCH 3/4] dm raid: simplify rs_setup_recovery call
+	chain
+Date: Tue,  1 Oct 2019 17:47:54 +0200
+Message-ID: <c1c8b850f2b3ad5eb11fac92e1716187f65a57ea.1569888100.git.heinzm@redhat.com>
 References: <cover.1569888100.git.heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,70 +21,82 @@ Errors-To: dm-devel-bounces@redhat.com
 To: heinzm@redhat.com, dm-devel@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-Add a size argument to rs_set_dev_and_array_sectors as prerequisite
-to fixing grown device resynchronization not occuring when new MD
-bitmap pages have to be allocated as a result of the extension in
-a follwup patch.
+rs_setup_recovery() sets the starting recovery offset.
 
-Also avoid code duplication by using rs_set_rdev_sectors
-in the aforementioned function.
+Drop superfluous rs_setup_recovery() and replace with __rs_setup_recovery().
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid.c | 14 +++++---------
- 1 file changed, 5 insertions(+), 9 deletions(-)
+ drivers/md/dm-raid.c | 27 ++++++---------------------
+ 1 file changed, 6 insertions(+), 21 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index b0aa595e4375..89f805e851cf 100644
+index b600b335ce88..9aa830c53844 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -1615,13 +1615,12 @@ static int _check_data_dev_sectors(struct raid_set *rs)
+@@ -1670,7 +1670,7 @@ static int rs_set_dev_and_array_sectors(struct raid_set *rs, sector_t sectors, b
  }
  
- /* Calculate the sectors per device and per array used for @rs */
--static int rs_set_dev_and_array_sectors(struct raid_set *rs, bool use_mddev)
-+static int rs_set_dev_and_array_sectors(struct raid_set *rs, sector_t sectors, bool use_mddev)
+ /* Setup recovery on @rs */
+-static void __rs_setup_recovery(struct raid_set *rs, sector_t dev_sectors)
++static void rs_setup_recovery(struct raid_set *rs, sector_t dev_sectors)
  {
- 	int delta_disks;
- 	unsigned int data_stripes;
-+	sector_t array_sectors = sectors, dev_sectors = sectors;
- 	struct mddev *mddev = &rs->md;
--	struct md_rdev *rdev;
--	sector_t array_sectors = rs->ti->len, dev_sectors = rs->ti->len;
+ 	/* raid0 does not recover */
+ 	if (rs_is_raid0(rs))
+@@ -1691,22 +1691,6 @@ static void __rs_setup_recovery(struct raid_set *rs, sector_t dev_sectors)
+ 				     ? MaxSector : dev_sectors;
+ }
  
- 	if (use_mddev) {
- 		delta_disks = mddev->delta_disks;
-@@ -1656,12 +1655,9 @@ static int rs_set_dev_and_array_sectors(struct raid_set *rs, bool use_mddev)
- 		/* Striped layouts */
- 		array_sectors = (data_stripes + delta_disks) * dev_sectors;
- 
--	rdev_for_each(rdev, mddev)
--		if (!test_bit(Journal, &rdev->flags))
--			rdev->sectors = dev_sectors;
+-/* Setup recovery on @rs based on raid type, device size and 'nosync' flag */
+-static void rs_setup_recovery(struct raid_set *rs, sector_t dev_sectors)
+-{
+-	if (!dev_sectors)
+-		/* New raid set or 'sync' flag provided */
+-		__rs_setup_recovery(rs, 0);
+-	else if (dev_sectors == MaxSector)
+-		/* Prevent recovery */
+-		__rs_setup_recovery(rs, MaxSector);
+-	else if (__rdev_sectors(rs) < dev_sectors)
+-		/* Grown raid set */
+-		__rs_setup_recovery(rs, __rdev_sectors(rs));
+-	else
+-		__rs_setup_recovery(rs, MaxSector);
+-}
 -
- 	mddev->array_sectors = array_sectors;
- 	mddev->dev_sectors = dev_sectors;
-+	rs_set_rdev_sectors(rs);
+ static void do_table_event(struct work_struct *ws)
+ {
+ 	struct raid_set *rs = container_of(ws, struct raid_set, md.event_work);
+@@ -2474,7 +2458,7 @@ static int super_validate(struct raid_set *rs, struct md_rdev *rdev)
+ 		return -EINVAL;
+ 	}
  
- 	return _check_data_dev_sectors(rs);
- bad:
-@@ -2911,7 +2907,7 @@ static int rs_setup_reshape(struct raid_set *rs)
+-	/* Enable bitmap creation for RAID levels != 0 */
++	/* Enable bitmap creation on @rs unless no metadevs or raid0 or journaled raid4/5/6 set. */
+ 	mddev->bitmap_info.offset = (rt_is_raid0(rs->raid_type) || rs->journal_dev.dev) ? 0 : to_sector(4096);
+ 	mddev->bitmap_info.default_offset = mddev->bitmap_info.offset;
  
- 	/* Remove disk(s) */
- 	} else if (rs->delta_disks < 0) {
--		r = rs_set_dev_and_array_sectors(rs, true);
-+		r = rs_set_dev_and_array_sectors(rs, rs->ti->len, true);
- 		mddev->reshape_backwards = 1; /* removing disk(s) -> backward reshape */
+@@ -3173,7 +3157,7 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		rs_setup_recovery(rs, MaxSector);
+ 		rs_set_new(rs);
+ 	} else if (rs_reshape_requested(rs)) {
+-		/* Only on size extensions, not on reshapes. */
++		/* Only request grow on raid set size extensions, not on reshapes. */
+ 		clear_bit(RT_FLAG_RS_GROW, &rs->runtime_flags);
  
- 	/* Change layout and/or chunk size */
-@@ -3067,7 +3063,7 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	 *
- 	 * Any existing superblock will overwrite the array and device sizes
- 	 */
--	r = rs_set_dev_and_array_sectors(rs, false);
-+	r = rs_set_dev_and_array_sectors(rs, rs->ti->len, false);
- 	if (r)
- 		goto bad;
- 
+ 		/*
+@@ -3211,10 +3195,11 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		if (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags)) {
+ 			clear_bit(RT_FLAG_RS_GROW, &rs->runtime_flags);
+ 			set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
++			rs_setup_recovery(rs, MaxSector);
+ 		} else if (test_bit(RT_FLAG_RS_GROW, &rs->runtime_flags)) {
+ 			/*
+-			 * Set raid set to current size, i.e. non-grown size
+-			 * as of superblocks to grow to new size in preresume.
++			 * Set raid set to current size, i.e. size as of
++			 * superblocks to grow to larger size in preresume.
+ 			 */
+ 			r = rs_set_dev_and_array_sectors(rs, sb_array_sectors, false);
+ 			if (r)
 -- 
 2.21.0
