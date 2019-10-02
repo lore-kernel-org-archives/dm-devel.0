@@ -1,14 +1,15 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: cosmetic changes in hwtable
-Date: Wed, 2 Oct 2019 00:42:32 +0200
-Message-ID: <617b928c-cbf2-a8b3-723b-b0066c96e24a@gmail.com>
-References: <20190921234039.26515-1-xose.vazquez@gmail.com>
+From: Petr Vorel <petr.vorel@gmail.com>
+Subject: Re: [multipath-tools] merges
+Date: Wed, 2 Oct 2019 07:49:43 +0200
+Message-ID: <20191002054942.GA3544@x230>
+References: <CABr-Gncq_wj6iv7knLFLU-oEMBXtP2oPfOjUFUNMMRC6Q_F12g@mail.gmail.com>
+Reply-To: Petr Vorel <petr.vorel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20190921234039.26515-1-xose.vazquez@gmail.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <CABr-Gncq_wj6iv7knLFLU-oEMBXtP2oPfOjUFUNMMRC6Q_F12g@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,72 +19,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: DM-DEVEL ML <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Chongyun Wu <wu.chongyun@h3c.com>, device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-On 9/22/19 1:40 AM, Xose Vazquez Perez wrote:
+Hi Christophe,
 
-> Tegile IntelliFlash was acquired by DDN, from WD.
-> 
-> HPE Primera is also identified as 3PARdata/VV
+> Petr, do you intent to submit a v2 of the s/daddr_t/__kernel_daddr_t/ patch
+> posted jul 08, following Christoph H's comment ... or is the posted version
+> fit for inclusion ?
+I see you already merged it as
+129e6fe6 ("kpartx: Use __kernel_daddr_t for solaris_x86_slice.s_start").
+So I'll reply to the original thread.
 
-Christophe, this one is missing. Thanks.
+> Thanks,
+> Christophe
 
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM-DEVEL ML <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->   libmultipath/hwtable.c | 25 +++++++++++--------------
->   1 file changed, 11 insertions(+), 14 deletions(-)
-> 
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index a06872e..7a8f276 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -107,7 +107,7 @@ static struct hwentry default_hw[] = {
->   	 * HPE
->   	 */
->   	{
-> -		/* 3PAR */
-> +		/* 3PAR / Primera */
->   		.vendor        = "3PARdata",
->   		.product       = "VV",
->   		.pgpolicy      = GROUP_BY_PRIO,
-> @@ -311,6 +311,16 @@ static struct hwentry default_hw[] = {
->   		.pgpolicy      = GROUP_BY_SERIAL,
->   		.no_path_retry = 30,
->   	},
-> +	{
-> +		/* Tegile IntelliFlash */
-> +		.vendor        = "TEGILE",
-> +		.product       = "(ZEBI-(FC|ISCSI)|INTELLIFLASH)",
-> +		.hwhandler     = "1 alua",
-> +		.pgpolicy      = GROUP_BY_PRIO,
-> +		.pgfailback    = -FAILBACK_IMMEDIATE,
-> +		.prio_name     = PRIO_ALUA,
-> +		.no_path_retry = 10,
-> +	},
->   	/*
->   	 * Dell EMC
->   	 */
-> @@ -1074,19 +1084,6 @@ static struct hwentry default_hw[] = {
->   		.product       = "K2",
->   		.pgpolicy      = MULTIBUS,
->   	},
-> -	/*
-> -	 * Western Digital (Tegile Systems)
-> -	 */
-> -	{
-> -		/* IntelliFlash */
-> -		.vendor        = "TEGILE",
-> -		.product       = "(ZEBI-(FC|ISCSI)|INTELLIFLASH)",
-> -		.hwhandler     = "1 alua",
-> -		.pgpolicy      = GROUP_BY_PRIO,
-> -		.pgfailback    = -FAILBACK_IMMEDIATE,
-> -		.prio_name     = PRIO_ALUA,
-> -		.no_path_retry = 10,
-> -	},
->   	/*
->   	 * Imation/Nexsan
->   	 */
-> 
+Kind regards,
+Petr
