@@ -1,14 +1,14 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 2/2] dm-snapshot: Reimplement the cow limit.
-Date: Thu, 3 Oct 2019 16:06:43 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1910031601030.26094@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1910020614190.973@file01.intranet.prod.int.rdu2.redhat.com>
-	<b63d2544-64fd-de75-15c1-d85be0cd887e@arrikto.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: multipath-tools: RH-patches for upstream ???
+Date: Thu, 3 Oct 2019 16:44:20 -0500
+Message-ID: <20191003214420.GE25414@octiron.msp.redhat.com>
+References: <e2b955d0-69ea-2c2b-9f0f-ccf3b5f369d0@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <b63d2544-64fd-de75-15c1-d85be0cd887e@arrikto.com>
+Content-Disposition: inline
+In-Reply-To: <e2b955d0-69ea-2c2b-9f0f-ccf3b5f369d0@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,278 +18,117 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Nikos Tsironis <ntsironis@arrikto.com>
-Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, guru2018@gmail.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: DM-DEVEL ML <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+On Thu, Oct 03, 2019 at 08:28:06PM +0200, Xose Vazquez Perez wrote:
+> Hi Benjamin,
+> 
+> 
+> Is there any relevant RH-patch for upstream in fedora repo:
+> https://src.fedoraproject.org/rpms/device-mapper-multipath/ ???
+> 
+> Maybe:
+> 
+> - https://src.fedoraproject.org/rpms/device-mapper-multipath/blob/master/f/0022-RH-Remove-the-property-blacklist-exception-builtin.patch
+> 
+>    Subject: [PATCH] RH: Remove the property blacklist exception builtin
+> 
+>     Multipath set the default property blacklist exceptions to	
+>     (ID_SCSI_VPD|ID_WWN).  This has the effect of blacklisting some internal
+>     devices.  These devices may never have multiple paths, but it is nice
+>     to be able to set multipath up on them all the same.  This patch simply
+>     removes the default, and makes it so that if no property
+>     blacklist_exception is given, then devices aren't failed for not matching
+>     it.
 
+Redhat doesn't include the udev rules file that sets ID_SCSI_VPD, so
+there are some rare cases where this property blacklists valid devices.
+Thus, it's easier for us to simply include this property line in the
+default multipath.conf, and let users remove it if necessary. I would be
+fine with this being included upstream, but I suspect it would mess with
+other ditsros which are currently assuming that it is there.
 
-On Wed, 2 Oct 2019, Nikos Tsironis wrote:
+> 
+> 
+> - https://src.fedoraproject.org/rpms/device-mapper-multipath/blob/master/f/0026-RH-add-wwids-from-kernel-cmdline-mpath.wwids-with-A.patch
+> 
+>    Subject: [PATCH] RH: add wwids from kernel cmdline mpath.wwids with -A
+> 
+>     This patch adds another option to multipath, "-A", which reads
+>     /proc/cmdline for mpath.wwid=<WWID> options, and adds any wwids it finds
+>     to /etc/multipath/wwids.  While this isn't usually important during
+>     normal operation, since these wwids should already be added, it can be
+>     helpful during installation, to make sure that multipath can claim
+>     devices as its own, before LVM or something else makes use of them.  The
+>     patch also execs "/sbin/multipath -A" before running multipathd in
+>     multipathd.service
+> 
 
-> Hi Mikulas,
-> 
-> I agree that it's better to avoid holding any locks while waiting for
-> some pending kcopyd jobs to finish, but please see the comments below.
-> 
-> On 10/2/19 1:15 PM, Mikulas Patocka wrote:
-> > Commit 721b1d98fb517a ("dm snapshot: Fix excessive memory usage and
-> > workqueue stalls") introduced a semaphore to limit the maximum number of
-> > in-flight kcopyd (COW) jobs.
-> > 
-> > The implementation of this throttling mechanism is prone to a deadlock:
-> > 
-> > 1. One or more threads write to the origin device causing COW, which is
-> >    performed by kcopyd.
-> > 
-> > 2. At some point some of these threads might reach the s->cow_count
-> >    semaphore limit and block in down(&s->cow_count), holding a read lock
-> >    on _origins_lock.
-> > 
-> > 3. Someone tries to acquire a write lock on _origins_lock, e.g.,
-> >    snapshot_ctr(), which blocks because the threads at step (2) already
-> >    hold a read lock on it.
-> > 
-> > 4. A COW operation completes and kcopyd runs dm-snapshot's completion
-> >    callback, which ends up calling pending_complete().
-> >    pending_complete() tries to resubmit any deferred origin bios. This
-> >    requires acquiring a read lock on _origins_lock, which blocks.
-> > 
-> >    This happens because the read-write semaphore implementation gives
-> >    priority to writers, meaning that as soon as a writer tries to enter
-> >    the critical section, no readers will be allowed in, until all
-> >    writers have completed their work.
-> > 
-> >    So, pending_complete() waits for the writer at step (3) to acquire
-> >    and release the lock. This writer waits for the readers at step (2)
-> >    to release the read lock and those readers wait for
-> >    pending_complete() (the kcopyd thread) to signal the s->cow_count
-> >    semaphore: DEADLOCK.
-> > 
-> > In order to fix the bug, I reworked limiting, so that it waits without 
-> > holding any locks. The patch adds a variable in_progress that counts how 
-> > many kcopyd jobs are running. A function wait_for_in_progress will sleep 
-> > if the variable in_progress is over the limit. It drops _origins_lock in 
-> > order to avoid the deadlock.
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > Cc: stable@vger.kernel.org	# v5.0+
-> > Fixes: 721b1d98fb51 ("dm snapshot: Fix excessive memory usage and workqueue stalls")
-> > 
-> > ---
-> >  drivers/md/dm-snap.c |   69 ++++++++++++++++++++++++++++++++++++++++-----------
-> >  1 file changed, 55 insertions(+), 14 deletions(-)
-> > 
-> > Index: linux-2.6/drivers/md/dm-snap.c
-> > ===================================================================
-> > --- linux-2.6.orig/drivers/md/dm-snap.c	2019-10-01 15:23:42.000000000 +0200
-> > +++ linux-2.6/drivers/md/dm-snap.c	2019-10-02 12:01:23.000000000 +0200
-> > @@ -18,7 +18,6 @@
-> >  #include <linux/vmalloc.h>
-> >  #include <linux/log2.h>
-> >  #include <linux/dm-kcopyd.h>
-> > -#include <linux/semaphore.h>
-> >  
-> >  #include "dm.h"
-> >  
-> > @@ -107,8 +106,8 @@ struct dm_snapshot {
-> >  	/* The on disk metadata handler */
-> >  	struct dm_exception_store *store;
-> >  
-> > -	/* Maximum number of in-flight COW jobs. */
-> > -	struct semaphore cow_count;
-> > +	unsigned in_progress;
-> > +	struct wait_queue_head in_progress_wait;
-> >  
-> >  	struct dm_kcopyd_client *kcopyd_client;
-> >  
-> > @@ -162,8 +161,8 @@ struct dm_snapshot {
-> >   */
-> >  #define DEFAULT_COW_THRESHOLD 2048
-> >  
-> > -static int cow_threshold = DEFAULT_COW_THRESHOLD;
-> > -module_param_named(snapshot_cow_threshold, cow_threshold, int, 0644);
-> > +static unsigned cow_threshold = DEFAULT_COW_THRESHOLD;
-> > +module_param_named(snapshot_cow_threshold, cow_threshold, uint, 0644);
-> >  MODULE_PARM_DESC(snapshot_cow_threshold, "Maximum number of chunks being copied on write");
-> >  
-> >  DECLARE_DM_KCOPYD_THROTTLE_WITH_MODULE_PARM(snapshot_copy_throttle,
-> > @@ -1327,7 +1326,7 @@ static int snapshot_ctr(struct dm_target
-> >  		goto bad_hash_tables;
-> >  	}
-> >  
-> > -	sema_init(&s->cow_count, (cow_threshold > 0) ? cow_threshold : INT_MAX);
-> > +	init_waitqueue_head(&s->in_progress_wait);
-> >  
-> >  	s->kcopyd_client = dm_kcopyd_client_create(&dm_kcopyd_throttle);
-> >  	if (IS_ERR(s->kcopyd_client)) {
-> > @@ -1509,17 +1508,46 @@ static void snapshot_dtr(struct dm_targe
-> >  
-> >  	dm_put_device(ti, s->origin);
-> >  
-> > +	WARN_ON(s->in_progress);
-> > +
-> >  	kfree(s);
-> >  }
-> >  
-> >  static void account_start_copy(struct dm_snapshot *s)
-> >  {
-> > -	down(&s->cow_count);
-> > +	spin_lock(&s->in_progress_wait.lock);
-> > +	s->in_progress++;
-> > +	spin_unlock(&s->in_progress_wait.lock);
-> >  }
-> >  
-> >  static void account_end_copy(struct dm_snapshot *s)
-> >  {
-> > -	up(&s->cow_count);
-> > +	spin_lock(&s->in_progress_wait.lock);
-> > +	BUG_ON(!s->in_progress);
-> > +	s->in_progress--;
-> > +	if (likely(s->in_progress <= cow_threshold) && unlikely(waitqueue_active(&s->in_progress_wait)))
-> > +		wake_up_locked(&s->in_progress_wait);
-> > +	spin_unlock(&s->in_progress_wait.lock);
-> > +}
-> > +
-> > +static bool wait_for_in_progress(struct dm_snapshot *s, bool unlock_origins)
-> > +{
-> > +	if (unlikely(s->in_progress > cow_threshold)) {
-> > +		spin_lock(&s->in_progress_wait.lock);
-> > +		if (likely(s->in_progress > cow_threshold)) {
-> > +			DECLARE_WAITQUEUE(wait, current);
-> > +			__add_wait_queue(&s->in_progress_wait, &wait);
-> > +			__set_current_state(TASK_UNINTERRUPTIBLE);
-> > +			spin_unlock(&s->in_progress_wait.lock);
-> > +			if (unlock_origins)
-> > +				up_read(&_origins_lock);
-> > +			io_schedule();
-> > +			remove_wait_queue(&s->in_progress_wait, &wait);
-> > +			return false;
-> > +		}
-> > +		spin_unlock(&s->in_progress_wait.lock);
-> > +	}
-> > +	return true;
-> >  }
-> 
-> wait_for_in_progress() doesn't take into account which chunk is written
-> and whether it has already been reallocated or it is currently
-> reallocating.
-> 
-> This means, if I am not missing something, that both origin_map() and
-> snapshot_map() might unnecessarily throttle writes that don't need any
-> COW to take place.
+I posted this upstream and Hannes NAKed it a while back. We still find
+it useful, since the default multipath.conf file for Redhat sets
+find_multipaths to yes. You can currently avoid the race that this is
+fixing by setting find_multipaths to smart, but there were objections to
+using that as a default in Redhat. However, I never really understood
+the objection to this patch, and I'd be fine with re-posting it.
 
-I know about it, but I think it's not serious problem - if there are 2048 
-outstanding I/Os the system is already heavily congested. It doesn't 
-matter if you allow a few more writes or not.
+> - https://src.fedoraproject.org/rpms/device-mapper-multipath/blob/master/f/0027-RH-warn-on-invalid-regex-instead-of-failing.patch
+> 
+>    Subject: [PATCH] RH: warn on invalid regex instead of failing
+> 
+>     multipath.conf used to allow "*" as a match everything regular expression,
+>     instead of requiring ".*". Instead of erroring when the old style
+>     regular expressions are used, it should print a warning and convert
+>     them.
 
-Mikulas
+When multipath used its old regex code, "*" worked to match everything.
+This patch just exists to make sure that customers didn't need to change
+their configs when the regex code changed. Since it's been there posting
+warning messages for a while, I plan to eventually drop it entirely, and
+let anyone who has been ignoring the warning messages for years finally
+have their config error. I see no reason to add it back to the upstream
+code now.
+ 
+> 
+> - https://src.fedoraproject.org/rpms/device-mapper-multipath/blob/master/f/0028-RH-reset-default-find_mutipaths-value-to-off.patch
+> 
+>    Subject: [PATCH] RH: reset default find_mutipaths value to off
+> 
+>     Upstream has changed to default find_multipaths to "strict". For now
+>     Redhat will retain the previous default of "off".
 
-> For example, if we have some writes coming in, that trigger COW and
-> cause the COW limit to be reached, and then some more writes come in for
-> chunks that have already been reallocated (and before any kcopyd job
-> finishes and decrements s->in_progress), the latter writes would be
-> delayed without a reason, as they don't require any COW to be performed.
+This is simply to retain the previous default behavior, for much the
+same reason as the above patch. I see no reason to change this upstream.
+
 > 
-> It seems strange that the COW throttling mechanism might also throttle
-> writes that don't require any COW.
+> - https://src.fedoraproject.org/rpms/device-mapper-multipath/blob/master/f/0029-RH-Fix-nvme-compilation-warning.patch
 > 
-> Moreover, if we have reached the COW limit and we get a write for a
-> chunk that is currently reallocating we will block the thread, when we
-> could just add the bio to the origin_bios list of the pending exception
-> and move on.
+>    Subject: [PATCH] RH: Fix nvme compilation warning
+>
+
+I assume that other people aren't seeing these compilation warnings, and
+this it due to different options that redhat uses when compiling.  I
+really should push this patch upstream, but that upstream isn't
+multipath-tools, its nvme-cli, where we copied this file from. Once it's
+changed there, we can pull the updated files back to multipath-tools.
+ 
+>
+> - https://src.fedoraproject.org/rpms/device-mapper-multipath/blob/master/f/0030-RH-attempt-to-get-ANA-info-via-sysfs-first.patch
 > 
-> wait_for_in_progress() could check if the exception is already
-> reallocated or is being reallocated, but the extra locking in the
-> critical path might have an adverse effect on performance, especially in
-> multi-threaded workloads. Maybe some benchmarks would help clarify that.
+>    Subject: [PATCH] RH: attempt to get ANA info via sysfs first
 > 
-> As a final note, in case the devices are slow, there might be many
-> writers waiting in s->in_progress_wait. When a kcopyd job finishes, all
-> of them will wake up and in some cases we might end up issuing more COW
-> jobs than the cow_count limit, as the accounting for new COW jobs
-> doesn't happen atomically with the check for the cow_count limit in
-> wait_for_in_progress().
+>     When the ANA prioritizer is run, first see if the "ana_state" sysfs file
+>     exists, and if it does, try to read the state from there. If that fails,
+>     fallback to using an ioctl.
 > 
-> That said, I don't think having a few more COW jobs in flight, than the
-> defined limit, will cause any issues.
-> 
-> Nikos
-> 
-> >  
-> >  /*
-> > @@ -1537,7 +1565,7 @@ static void flush_bios(struct bio *bio)
-> >  	}
-> >  }
-> >  
-> > -static int do_origin(struct dm_dev *origin, struct bio *bio);
-> > +static int do_origin(struct dm_dev *origin, struct bio *bio, bool limit);
-> >  
-> >  /*
-> >   * Flush a list of buffers.
-> > @@ -1550,7 +1578,7 @@ static void retry_origin_bios(struct dm_
-> >  	while (bio) {
-> >  		n = bio->bi_next;
-> >  		bio->bi_next = NULL;
-> > -		r = do_origin(s->origin, bio);
-> > +		r = do_origin(s->origin, bio, false);
-> >  		if (r == DM_MAPIO_REMAPPED)
-> >  			generic_make_request(bio);
-> >  		bio = n;
-> > @@ -1926,6 +1954,10 @@ static int snapshot_map(struct dm_target
-> >  	if (!s->valid)
-> >  		return DM_MAPIO_KILL;
-> >  
-> > +	if (bio_data_dir(bio) == WRITE) {
-> > +		while (unlikely(!wait_for_in_progress(s, false))) ;
-> > +	}
-> > +
-> >  	down_read(&s->lock);
-> >  	dm_exception_table_lock(&lock);
-> >  
-> > @@ -2122,7 +2154,7 @@ redirect_to_origin:
-> >  
-> >  	if (bio_data_dir(bio) == WRITE) {
-> >  		up_write(&s->lock);
-> > -		return do_origin(s->origin, bio);
-> > +		return do_origin(s->origin, bio, false);
-> >  	}
-> >  
-> >  out_unlock:
-> > @@ -2497,15 +2529,24 @@ next_snapshot:
-> >  /*
-> >   * Called on a write from the origin driver.
-> >   */
-> > -static int do_origin(struct dm_dev *origin, struct bio *bio)
-> > +static int do_origin(struct dm_dev *origin, struct bio *bio, bool limit)
-> >  {
-> >  	struct origin *o;
-> >  	int r = DM_MAPIO_REMAPPED;
-> >  
-> > +again:
-> >  	down_read(&_origins_lock);
-> >  	o = __lookup_origin(origin->bdev);
-> > -	if (o)
-> > +	if (o) {
-> > +		struct dm_snapshot *s;
-> > +		if (limit) {
-> > +			list_for_each_entry(s, &o->snapshots, list)
-> > +				if (unlikely(!wait_for_in_progress(s, true)))
-> > +					goto again;
-> > +		}
-> > +
-> >  		r = __origin_write(&o->snapshots, bio->bi_iter.bi_sector, bio);
-> > +	}
-> >  	up_read(&_origins_lock);
-> >  
-> >  	return r;
-> > @@ -2618,7 +2659,7 @@ static int origin_map(struct dm_target *
-> >  		dm_accept_partial_bio(bio, available_sectors);
-> >  
-> >  	/* Only tell snapshots if this is a write */
-> > -	return do_origin(o->dev, bio);
-> > +	return do_origin(o->dev, bio, true);
-> >  }
-> >  
-> >  /*
-> > 
-> 
+
+This won't do anything upstream. This requires a redhat specific kernel
+patch that wasn't accepted in the upstream nvme kernel code.  It really
+doesn't make much of a difference. It just makes multipath try to grab
+ANA state info from sysfs, before failing back to the same ioctl that
+upstream uses.
+
+- Ben
+
+> Thank you.
