@@ -1,11 +1,14 @@
-From: Bryan Gurney <bgurney@redhat.com>
-Subject: [PATCH] dm dust: convert documentation to ReST
-Date: Thu,  3 Oct 2019 16:01:21 -0400
-Message-ID: <1570132881-25114-1-git-send-email-bgurney@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 2/2] dm-snapshot: Reimplement the cow limit.
+Date: Thu, 3 Oct 2019 16:06:43 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1910031601030.26094@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1910020614190.973@file01.intranet.prod.int.rdu2.redhat.com>
+	<b63d2544-64fd-de75-15c1-d85be0cd887e@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <b63d2544-64fd-de75-15c1-d85be0cd887e@arrikto.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,375 +18,278 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com
-Cc: Bryan Gurney <bgurney@redhat.com>
+To: Nikos Tsironis <ntsironis@arrikto.com>
+Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, guru2018@gmail.com
 List-Id: dm-devel.ids
 
-Convert the dm-dust documentation to ReST formatting, using literal
-blocks for all of the shell command, shell output, and log output
-examples.
 
-Add dm-dust to index.rst.
 
-Additionally, fix an annotation in the "querying for specific bad
-blocks" section, on the "queryblock ... not found in badblocklist"
-example, to properly state that the message appears when a given
-block is not found.
+On Wed, 2 Oct 2019, Nikos Tsironis wrote:
 
-Signed-off-by: Bryan Gurney <bgurney@redhat.com>
----
- .../{dm-dust.txt => dm-dust.rst}              | 192 ++++++++++++------
- .../admin-guide/device-mapper/index.rst       |   1 +
- 2 files changed, 126 insertions(+), 67 deletions(-)
- rename Documentation/admin-guide/device-mapper/{dm-dust.txt => dm-dust.rst} (64%)
+> Hi Mikulas,
+> 
+> I agree that it's better to avoid holding any locks while waiting for
+> some pending kcopyd jobs to finish, but please see the comments below.
+> 
+> On 10/2/19 1:15 PM, Mikulas Patocka wrote:
+> > Commit 721b1d98fb517a ("dm snapshot: Fix excessive memory usage and
+> > workqueue stalls") introduced a semaphore to limit the maximum number of
+> > in-flight kcopyd (COW) jobs.
+> > 
+> > The implementation of this throttling mechanism is prone to a deadlock:
+> > 
+> > 1. One or more threads write to the origin device causing COW, which is
+> >    performed by kcopyd.
+> > 
+> > 2. At some point some of these threads might reach the s->cow_count
+> >    semaphore limit and block in down(&s->cow_count), holding a read lock
+> >    on _origins_lock.
+> > 
+> > 3. Someone tries to acquire a write lock on _origins_lock, e.g.,
+> >    snapshot_ctr(), which blocks because the threads at step (2) already
+> >    hold a read lock on it.
+> > 
+> > 4. A COW operation completes and kcopyd runs dm-snapshot's completion
+> >    callback, which ends up calling pending_complete().
+> >    pending_complete() tries to resubmit any deferred origin bios. This
+> >    requires acquiring a read lock on _origins_lock, which blocks.
+> > 
+> >    This happens because the read-write semaphore implementation gives
+> >    priority to writers, meaning that as soon as a writer tries to enter
+> >    the critical section, no readers will be allowed in, until all
+> >    writers have completed their work.
+> > 
+> >    So, pending_complete() waits for the writer at step (3) to acquire
+> >    and release the lock. This writer waits for the readers at step (2)
+> >    to release the read lock and those readers wait for
+> >    pending_complete() (the kcopyd thread) to signal the s->cow_count
+> >    semaphore: DEADLOCK.
+> > 
+> > In order to fix the bug, I reworked limiting, so that it waits without 
+> > holding any locks. The patch adds a variable in_progress that counts how 
+> > many kcopyd jobs are running. A function wait_for_in_progress will sleep 
+> > if the variable in_progress is over the limit. It drops _origins_lock in 
+> > order to avoid the deadlock.
+> > 
+> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > Cc: stable@vger.kernel.org	# v5.0+
+> > Fixes: 721b1d98fb51 ("dm snapshot: Fix excessive memory usage and workqueue stalls")
+> > 
+> > ---
+> >  drivers/md/dm-snap.c |   69 ++++++++++++++++++++++++++++++++++++++++-----------
+> >  1 file changed, 55 insertions(+), 14 deletions(-)
+> > 
+> > Index: linux-2.6/drivers/md/dm-snap.c
+> > ===================================================================
+> > --- linux-2.6.orig/drivers/md/dm-snap.c	2019-10-01 15:23:42.000000000 +0200
+> > +++ linux-2.6/drivers/md/dm-snap.c	2019-10-02 12:01:23.000000000 +0200
+> > @@ -18,7 +18,6 @@
+> >  #include <linux/vmalloc.h>
+> >  #include <linux/log2.h>
+> >  #include <linux/dm-kcopyd.h>
+> > -#include <linux/semaphore.h>
+> >  
+> >  #include "dm.h"
+> >  
+> > @@ -107,8 +106,8 @@ struct dm_snapshot {
+> >  	/* The on disk metadata handler */
+> >  	struct dm_exception_store *store;
+> >  
+> > -	/* Maximum number of in-flight COW jobs. */
+> > -	struct semaphore cow_count;
+> > +	unsigned in_progress;
+> > +	struct wait_queue_head in_progress_wait;
+> >  
+> >  	struct dm_kcopyd_client *kcopyd_client;
+> >  
+> > @@ -162,8 +161,8 @@ struct dm_snapshot {
+> >   */
+> >  #define DEFAULT_COW_THRESHOLD 2048
+> >  
+> > -static int cow_threshold = DEFAULT_COW_THRESHOLD;
+> > -module_param_named(snapshot_cow_threshold, cow_threshold, int, 0644);
+> > +static unsigned cow_threshold = DEFAULT_COW_THRESHOLD;
+> > +module_param_named(snapshot_cow_threshold, cow_threshold, uint, 0644);
+> >  MODULE_PARM_DESC(snapshot_cow_threshold, "Maximum number of chunks being copied on write");
+> >  
+> >  DECLARE_DM_KCOPYD_THROTTLE_WITH_MODULE_PARM(snapshot_copy_throttle,
+> > @@ -1327,7 +1326,7 @@ static int snapshot_ctr(struct dm_target
+> >  		goto bad_hash_tables;
+> >  	}
+> >  
+> > -	sema_init(&s->cow_count, (cow_threshold > 0) ? cow_threshold : INT_MAX);
+> > +	init_waitqueue_head(&s->in_progress_wait);
+> >  
+> >  	s->kcopyd_client = dm_kcopyd_client_create(&dm_kcopyd_throttle);
+> >  	if (IS_ERR(s->kcopyd_client)) {
+> > @@ -1509,17 +1508,46 @@ static void snapshot_dtr(struct dm_targe
+> >  
+> >  	dm_put_device(ti, s->origin);
+> >  
+> > +	WARN_ON(s->in_progress);
+> > +
+> >  	kfree(s);
+> >  }
+> >  
+> >  static void account_start_copy(struct dm_snapshot *s)
+> >  {
+> > -	down(&s->cow_count);
+> > +	spin_lock(&s->in_progress_wait.lock);
+> > +	s->in_progress++;
+> > +	spin_unlock(&s->in_progress_wait.lock);
+> >  }
+> >  
+> >  static void account_end_copy(struct dm_snapshot *s)
+> >  {
+> > -	up(&s->cow_count);
+> > +	spin_lock(&s->in_progress_wait.lock);
+> > +	BUG_ON(!s->in_progress);
+> > +	s->in_progress--;
+> > +	if (likely(s->in_progress <= cow_threshold) && unlikely(waitqueue_active(&s->in_progress_wait)))
+> > +		wake_up_locked(&s->in_progress_wait);
+> > +	spin_unlock(&s->in_progress_wait.lock);
+> > +}
+> > +
+> > +static bool wait_for_in_progress(struct dm_snapshot *s, bool unlock_origins)
+> > +{
+> > +	if (unlikely(s->in_progress > cow_threshold)) {
+> > +		spin_lock(&s->in_progress_wait.lock);
+> > +		if (likely(s->in_progress > cow_threshold)) {
+> > +			DECLARE_WAITQUEUE(wait, current);
+> > +			__add_wait_queue(&s->in_progress_wait, &wait);
+> > +			__set_current_state(TASK_UNINTERRUPTIBLE);
+> > +			spin_unlock(&s->in_progress_wait.lock);
+> > +			if (unlock_origins)
+> > +				up_read(&_origins_lock);
+> > +			io_schedule();
+> > +			remove_wait_queue(&s->in_progress_wait, &wait);
+> > +			return false;
+> > +		}
+> > +		spin_unlock(&s->in_progress_wait.lock);
+> > +	}
+> > +	return true;
+> >  }
+> 
+> wait_for_in_progress() doesn't take into account which chunk is written
+> and whether it has already been reallocated or it is currently
+> reallocating.
+> 
+> This means, if I am not missing something, that both origin_map() and
+> snapshot_map() might unnecessarily throttle writes that don't need any
+> COW to take place.
 
-diff --git a/Documentation/admin-guide/device-mapper/dm-dust.txt b/Documentation/admin-guide/device-mapper/dm-dust.rst
-similarity index 64%
-rename from Documentation/admin-guide/device-mapper/dm-dust.txt
-rename to Documentation/admin-guide/device-mapper/dm-dust.rst
-index 954d402a1f6a..ab3e15827a30 100644
---- a/Documentation/admin-guide/device-mapper/dm-dust.txt
-+++ b/Documentation/admin-guide/device-mapper/dm-dust.rst
-@@ -37,8 +37,11 @@ Table parameters:
- 
- Mandatory parameters:
-     <device_path>: path to the block device.
-+
-     <offset>: offset to data area from start of device_path
-+
-     <blksz>: block size in bytes
-+
- 	     (minimum 512, maximum 1073741824, must be a power of 2)
- 
- Usage instructions:
-@@ -46,28 +49,39 @@ Usage instructions:
- 
- First, find the size (in 512-byte sectors) of the device to be used:
- 
--$ sudo blockdev --getsz /dev/vdb1
--33552384
-+::
-+
-+        $ sudo blockdev --getsz /dev/vdb1
-+        33552384
- 
- Create the dm-dust device:
- (For a device with a block size of 512 bytes)
--$ sudo dmsetup create dust1 --table '0 33552384 dust /dev/vdb1 0 512'
-+
-+::
-+
-+        $ sudo dmsetup create dust1 --table '0 33552384 dust /dev/vdb1 0 512'
- 
- (For a device with a block size of 4096 bytes)
--$ sudo dmsetup create dust1 --table '0 33552384 dust /dev/vdb1 0 4096'
-+
-+::
-+
-+        $ sudo dmsetup create dust1 --table '0 33552384 dust /dev/vdb1 0 4096'
- 
- Check the status of the read behavior ("bypass" indicates that all I/O
- will be passed through to the underlying device):
--$ sudo dmsetup status dust1
--0 33552384 dust 252:17 bypass
- 
--$ sudo dd if=/dev/mapper/dust1 of=/dev/null bs=512 count=128 iflag=direct
--128+0 records in
--128+0 records out
-+::
-+
-+        $ sudo dmsetup status dust1
-+        0 33552384 dust 252:17 bypass
- 
--$ sudo dd if=/dev/zero of=/dev/mapper/dust1 bs=512 count=128 oflag=direct
--128+0 records in
--128+0 records out
-+        $ sudo dd if=/dev/mapper/dust1 of=/dev/null bs=512 count=128 iflag=direct
-+        128+0 records in
-+        128+0 records out
-+
-+        $ sudo dd if=/dev/zero of=/dev/mapper/dust1 bs=512 count=128 oflag=direct
-+        128+0 records in
-+        128+0 records out
- 
- Adding and removing bad blocks:
- -------------------------------
-@@ -76,52 +90,62 @@ At any time (i.e.: whether the device has the "bad block" emulation
- enabled or disabled), bad blocks may be added or removed from the
- device via the "addbadblock" and "removebadblock" messages:
- 
--$ sudo dmsetup message dust1 0 addbadblock 60
--kernel: device-mapper: dust: badblock added at block 60
-+::
-+
-+        $ sudo dmsetup message dust1 0 addbadblock 60
-+        kernel: device-mapper: dust: badblock added at block 60
- 
--$ sudo dmsetup message dust1 0 addbadblock 67
--kernel: device-mapper: dust: badblock added at block 67
-+        $ sudo dmsetup message dust1 0 addbadblock 67
-+        kernel: device-mapper: dust: badblock added at block 67
- 
--$ sudo dmsetup message dust1 0 addbadblock 72
--kernel: device-mapper: dust: badblock added at block 72
-+        $ sudo dmsetup message dust1 0 addbadblock 72
-+        kernel: device-mapper: dust: badblock added at block 72
- 
- These bad blocks will be stored in the "bad block list".
- While the device is in "bypass" mode, reads and writes will succeed:
- 
--$ sudo dmsetup status dust1
--0 33552384 dust 252:17 bypass
-+::
-+
-+        $ sudo dmsetup status dust1
-+        0 33552384 dust 252:17 bypass
- 
- Enabling block read failures:
- -----------------------------
- 
- To enable the "fail read on bad block" behavior, send the "enable" message:
- 
--$ sudo dmsetup message dust1 0 enable
--kernel: device-mapper: dust: enabling read failures on bad sectors
-+::
-+
-+        $ sudo dmsetup message dust1 0 enable
-+        kernel: device-mapper: dust: enabling read failures on bad sectors
- 
--$ sudo dmsetup status dust1
--0 33552384 dust 252:17 fail_read_on_bad_block
-+        $ sudo dmsetup status dust1
-+        0 33552384 dust 252:17 fail_read_on_bad_block
- 
- With the device in "fail read on bad block" mode, attempting to read a
- block will encounter an "Input/output error":
- 
--$ sudo dd if=/dev/mapper/dust1 of=/dev/null bs=512 count=1 skip=67 iflag=direct
--dd: error reading '/dev/mapper/dust1': Input/output error
--0+0 records in
--0+0 records out
--0 bytes copied, 0.00040651 s, 0.0 kB/s
-+::
-+
-+        $ sudo dd if=/dev/mapper/dust1 of=/dev/null bs=512 count=1 skip=67 iflag=direct
-+        dd: error reading '/dev/mapper/dust1': Input/output error
-+        0+0 records in
-+        0+0 records out
-+        0 bytes copied, 0.00040651 s, 0.0 kB/s
- 
- ...and writing to the bad blocks will remove the blocks from the list,
- therefore emulating the "remap" behavior of hard disk drives:
- 
--$ sudo dd if=/dev/zero of=/dev/mapper/dust1 bs=512 count=128 oflag=direct
--128+0 records in
--128+0 records out
-+::
-+
-+        $ sudo dd if=/dev/zero of=/dev/mapper/dust1 bs=512 count=128 oflag=direct
-+        128+0 records in
-+        128+0 records out
- 
--kernel: device-mapper: dust: block 60 removed from badblocklist by write
--kernel: device-mapper: dust: block 67 removed from badblocklist by write
--kernel: device-mapper: dust: block 72 removed from badblocklist by write
--kernel: device-mapper: dust: block 87 removed from badblocklist by write
-+        kernel: device-mapper: dust: block 60 removed from badblocklist by write
-+        kernel: device-mapper: dust: block 67 removed from badblocklist by write
-+        kernel: device-mapper: dust: block 72 removed from badblocklist by write
-+        kernel: device-mapper: dust: block 87 removed from badblocklist by write
- 
- Bad block add/remove error handling:
- ------------------------------------
-@@ -129,16 +153,20 @@ Bad block add/remove error handling:
- Attempting to add a bad block that already exists in the list will
- result in an "Invalid argument" error, as well as a helpful message:
- 
--$ sudo dmsetup message dust1 0 addbadblock 88
--device-mapper: message ioctl on dust1  failed: Invalid argument
--kernel: device-mapper: dust: block 88 already in badblocklist
-+::
-+
-+        $ sudo dmsetup message dust1 0 addbadblock 88
-+        device-mapper: message ioctl on dust1  failed: Invalid argument
-+        kernel: device-mapper: dust: block 88 already in badblocklist
- 
- Attempting to remove a bad block that doesn't exist in the list will
- result in an "Invalid argument" error, as well as a helpful message:
- 
--$ sudo dmsetup message dust1 0 removebadblock 87
--device-mapper: message ioctl on dust1  failed: Invalid argument
--kernel: device-mapper: dust: block 87 not found in badblocklist
-+::
-+
-+        $ sudo dmsetup message dust1 0 removebadblock 87
-+        device-mapper: message ioctl on dust1  failed: Invalid argument
-+        kernel: device-mapper: dust: block 87 not found in badblocklist
- 
- Counting the number of bad blocks in the bad block list:
- --------------------------------------------------------
-@@ -146,12 +174,16 @@ Counting the number of bad blocks in the bad block list:
- To count the number of bad blocks configured in the device, run the
- following message command:
- 
--$ sudo dmsetup message dust1 0 countbadblocks
-+::
-+
-+        $ sudo dmsetup message dust1 0 countbadblocks
- 
- A message will print with the number of bad blocks currently
- configured on the device:
- 
--kernel: device-mapper: dust: countbadblocks: 895 badblock(s) found
-+::
-+
-+        kernel: device-mapper: dust: countbadblocks: 895 badblock(s) found
- 
- Querying for specific bad blocks:
- ---------------------------------
-@@ -159,13 +191,21 @@ Querying for specific bad blocks:
- To find out if a specific block is in the bad block list, run the
- following message command:
- 
--$ sudo dmsetup message dust1 0 queryblock 72
-+::
- 
--The following message will print if the block is in the list:
--device-mapper: dust: queryblock: block 72 found in badblocklist
-+        $ sudo dmsetup message dust1 0 queryblock 72
- 
- The following message will print if the block is in the list:
--device-mapper: dust: queryblock: block 72 not found in badblocklist
-+
-+::
-+
-+        device-mapper: dust: queryblock: block 72 found in badblocklist
-+
-+The following message will print if the block is not in the list:
-+
-+::
-+
-+        device-mapper: dust: queryblock: block 72 not found in badblocklist
- 
- The "queryblock" message command will work in both the "enabled"
- and "disabled" modes, allowing the verification of whether a block
-@@ -179,16 +219,22 @@ To clear the bad block list (without needing to individually run
- a "removebadblock" message command for every block), run the
- following message command:
- 
--$ sudo dmsetup message dust1 0 clearbadblocks
-+::
-+
-+        $ sudo dmsetup message dust1 0 clearbadblocks
- 
- After clearing the bad block list, the following message will appear:
- 
--kernel: device-mapper: dust: clearbadblocks: badblocks cleared
-+::
-+
-+        kernel: device-mapper: dust: clearbadblocks: badblocks cleared
- 
- If there were no bad blocks to clear, the following message will
- appear:
- 
--kernel: device-mapper: dust: clearbadblocks: no badblocks found
-+::
-+
-+        kernel: device-mapper: dust: clearbadblocks: no badblocks found
- 
- Message commands list:
- ----------------------
-@@ -197,27 +243,33 @@ Below is a list of the messages that can be sent to a dust device:
- 
- Operations on blocks (requires a <blknum> argument):
- 
--addbadblock <blknum>
--queryblock <blknum>
--removebadblock <blknum>
-+::
-+
-+        addbadblock <blknum>
-+        queryblock <blknum>
-+        removebadblock <blknum>
- 
- ...where <blknum> is a block number within range of the device
--  (corresponding to the block size of the device.)
-+(corresponding to the block size of the device.)
- 
- Single argument message commands:
- 
--countbadblocks
--clearbadblocks
--disable
--enable
--quiet
-+::
-+
-+        countbadblocks
-+        clearbadblocks
-+        disable
-+        enable
-+        quiet
- 
- Device removal:
- ---------------
- 
- When finished, remove the device via the "dmsetup remove" command:
- 
--$ sudo dmsetup remove dust1
-+::
-+
-+        $ sudo dmsetup remove dust1
- 
- Quiet mode:
- -----------
-@@ -226,7 +278,9 @@ On test runs with many bad blocks, it may be desirable to avoid
- excessive logging (from bad blocks added, removed, or "remapped").
- This can be done by enabling "quiet mode" via the following message:
- 
--$ sudo dmsetup message dust1 0 quiet
-+::
-+
-+        $ sudo dmsetup message dust1 0 quiet
- 
- This will suppress log messages from add / remove / removed by write
- operations.  Log messages from "countbadblocks" or "queryblock"
-@@ -234,15 +288,19 @@ message commands will still print in quiet mode.
- 
- The status of quiet mode can be seen by running "dmsetup status":
- 
--$ sudo dmsetup status dust1
--0 33552384 dust 252:17 fail_read_on_bad_block quiet
-+::
-+
-+        $ sudo dmsetup status dust1
-+        0 33552384 dust 252:17 fail_read_on_bad_block quiet
- 
- To disable quiet mode, send the "quiet" message again:
- 
--$ sudo dmsetup message dust1 0 quiet
-+::
-+
-+        $ sudo dmsetup message dust1 0 quiet
- 
--$ sudo dmsetup status dust1
--0 33552384 dust 252:17 fail_read_on_bad_block verbose
-+        $ sudo dmsetup status dust1
-+        0 33552384 dust 252:17 fail_read_on_bad_block verbose
- 
- (The presence of "verbose" indicates normal logging.)
- 
-diff --git a/Documentation/admin-guide/device-mapper/index.rst b/Documentation/admin-guide/device-mapper/index.rst
-index c77c58b8f67b..4872fb6d2952 100644
---- a/Documentation/admin-guide/device-mapper/index.rst
-+++ b/Documentation/admin-guide/device-mapper/index.rst
-@@ -9,6 +9,7 @@ Device Mapper
-     cache
-     delay
-     dm-crypt
-+    dm-dust
-     dm-flakey
-     dm-init
-     dm-integrity
--- 
-2.21.0
+I know about it, but I think it's not serious problem - if there are 2048 
+outstanding I/Os the system is already heavily congested. It doesn't 
+matter if you allow a few more writes or not.
+
+Mikulas
+
+> For example, if we have some writes coming in, that trigger COW and
+> cause the COW limit to be reached, and then some more writes come in for
+> chunks that have already been reallocated (and before any kcopyd job
+> finishes and decrements s->in_progress), the latter writes would be
+> delayed without a reason, as they don't require any COW to be performed.
+> 
+> It seems strange that the COW throttling mechanism might also throttle
+> writes that don't require any COW.
+> 
+> Moreover, if we have reached the COW limit and we get a write for a
+> chunk that is currently reallocating we will block the thread, when we
+> could just add the bio to the origin_bios list of the pending exception
+> and move on.
+> 
+> wait_for_in_progress() could check if the exception is already
+> reallocated or is being reallocated, but the extra locking in the
+> critical path might have an adverse effect on performance, especially in
+> multi-threaded workloads. Maybe some benchmarks would help clarify that.
+> 
+> As a final note, in case the devices are slow, there might be many
+> writers waiting in s->in_progress_wait. When a kcopyd job finishes, all
+> of them will wake up and in some cases we might end up issuing more COW
+> jobs than the cow_count limit, as the accounting for new COW jobs
+> doesn't happen atomically with the check for the cow_count limit in
+> wait_for_in_progress().
+> 
+> That said, I don't think having a few more COW jobs in flight, than the
+> defined limit, will cause any issues.
+> 
+> Nikos
+> 
+> >  
+> >  /*
+> > @@ -1537,7 +1565,7 @@ static void flush_bios(struct bio *bio)
+> >  	}
+> >  }
+> >  
+> > -static int do_origin(struct dm_dev *origin, struct bio *bio);
+> > +static int do_origin(struct dm_dev *origin, struct bio *bio, bool limit);
+> >  
+> >  /*
+> >   * Flush a list of buffers.
+> > @@ -1550,7 +1578,7 @@ static void retry_origin_bios(struct dm_
+> >  	while (bio) {
+> >  		n = bio->bi_next;
+> >  		bio->bi_next = NULL;
+> > -		r = do_origin(s->origin, bio);
+> > +		r = do_origin(s->origin, bio, false);
+> >  		if (r == DM_MAPIO_REMAPPED)
+> >  			generic_make_request(bio);
+> >  		bio = n;
+> > @@ -1926,6 +1954,10 @@ static int snapshot_map(struct dm_target
+> >  	if (!s->valid)
+> >  		return DM_MAPIO_KILL;
+> >  
+> > +	if (bio_data_dir(bio) == WRITE) {
+> > +		while (unlikely(!wait_for_in_progress(s, false))) ;
+> > +	}
+> > +
+> >  	down_read(&s->lock);
+> >  	dm_exception_table_lock(&lock);
+> >  
+> > @@ -2122,7 +2154,7 @@ redirect_to_origin:
+> >  
+> >  	if (bio_data_dir(bio) == WRITE) {
+> >  		up_write(&s->lock);
+> > -		return do_origin(s->origin, bio);
+> > +		return do_origin(s->origin, bio, false);
+> >  	}
+> >  
+> >  out_unlock:
+> > @@ -2497,15 +2529,24 @@ next_snapshot:
+> >  /*
+> >   * Called on a write from the origin driver.
+> >   */
+> > -static int do_origin(struct dm_dev *origin, struct bio *bio)
+> > +static int do_origin(struct dm_dev *origin, struct bio *bio, bool limit)
+> >  {
+> >  	struct origin *o;
+> >  	int r = DM_MAPIO_REMAPPED;
+> >  
+> > +again:
+> >  	down_read(&_origins_lock);
+> >  	o = __lookup_origin(origin->bdev);
+> > -	if (o)
+> > +	if (o) {
+> > +		struct dm_snapshot *s;
+> > +		if (limit) {
+> > +			list_for_each_entry(s, &o->snapshots, list)
+> > +				if (unlikely(!wait_for_in_progress(s, true)))
+> > +					goto again;
+> > +		}
+> > +
+> >  		r = __origin_write(&o->snapshots, bio->bi_iter.bi_sector, bio);
+> > +	}
+> >  	up_read(&_origins_lock);
+> >  
+> >  	return r;
+> > @@ -2618,7 +2659,7 @@ static int origin_map(struct dm_target *
+> >  		dm_accept_partial_bio(bio, available_sectors);
+> >  
+> >  	/* Only tell snapshots if this is a write */
+> > -	return do_origin(o->dev, bio);
+> > +	return do_origin(o->dev, bio, true);
+> >  }
+> >  
+> >  /*
+> > 
+> 
