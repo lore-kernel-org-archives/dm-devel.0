@@ -1,16 +1,14 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: multipath-tools: RH-patches for upstream ???
-Date: Fri, 4 Oct 2019 12:52:21 -0500
-Message-ID: <20191004175221.GG25414@octiron.msp.redhat.com>
-References: <e2b955d0-69ea-2c2b-9f0f-ccf3b5f369d0@gmail.com>
-	<20191003214420.GE25414@octiron.msp.redhat.com>
-	<5d38873e4ea51f00d1d49e9e9fb86419542598e8.camel@suse.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] ALUA support for PURE FlashArray
+Date: Fri, 4 Oct 2019 22:51:19 +0200
+Message-ID: <dd8cbe47-3dc8-4136-2e75-5c8694e6c412@gmail.com>
+References: <EF473529-CF81-4AE9-BD96-08624B59BA10@purestorage.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <5d38873e4ea51f00d1d49e9e9fb86419542598e8.camel@suse.com>
+In-Reply-To: <EF473529-CF81-4AE9-BD96-08624B59BA10@purestorage.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,71 +18,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <Martin.Wilck@suse.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>, Hannes Reinecke <hare@suse.com>
+To: Brian Bunker <brian@purestorage.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 04, 2019 at 07:03:26AM +0000, Martin Wilck wrote:
-> Hi Xose, hi Ben,
-> 
-> On Thu, 2019-10-03 at 16:44 -0500, Benjamin Marzinski wrote:
-> > On Thu, Oct 03, 2019 at 08:28:06PM +0200, Xose Vazquez Perez wrote:
-> > 
-> > Redhat doesn't include the udev rules file that sets ID_SCSI_VPD, so
-> > there are some rare cases where this property blacklists valid
-> > devices.
-> > Thus, it's easier for us to simply include this property line in the
-> > default multipath.conf, and let users remove it if necessary. I would
-> > be
-> > fine with this being included upstream, but I suspect it would mess
-> > with
-> > other ditsros which are currently assuming that it is there.
-> 
-> Hm. ID_SCSI_VPD is nowhere referenced in the upstream code. The default
-> is "(SCSI_IDENT_|ID_WWN)", where SCSI_IDENT_ could be regarded as a
-> SUSE-ism because the SCSI_IDENT_* properties are set by sg_inq / sg_vpd
-> calls, and I'm not sure if other distros consequently use sg_inq rather
-> than scs_id like we do. We (SUSE) have been working on replacing
-> scsi_id by sg3_utils calls in upstream systemd, but so far that hasn't
-> been merged, systemd maintainers are very cautious about touching these
-> udev rules.
-
-Sorry, I meant SCSI_IDENT_. The properties blacklist line originally was
-(ID_SCSI_VPD|ID_WWN). I never bothered to update the commit message when
-I changed this commit to deal with the new line.
- 
-> 
-> I'd be interested in seeing an example for a device that is erroneously
-> excluded by the default blacklist rule.
-
-I'm not sure if there are any specific arrays that always fail to set
-ID_WWN. I've gotten rare reports about this failing, but after I tell
-them to not use that property blacklist line, they go away, and I never
-get enough information to figure out what specifically is happening that
-means that ID_WWN isn't getting set. It's something that I've been
-meaning to look into, but with this patch, there's not much urgency
-around it.
- 
-> > I posted this upstream and Hannes NAKed it a while back. We still
-> > find
-> > it useful, since the default multipath.conf file for Redhat sets
-> > find_multipaths to yes. You can currently avoid the race that this is
-> > fixing by setting find_multipaths to smart, but there were objections
-> > to
-> > using that as a default in Redhat. However, I never really understood
-> > the objection to this patch, and I'd be fine with re-posting it.
-> 
-> https://www.redhat.com/archives/dm-devel/2014-July/msg00011.html
-> 
-> I'm with Hannes. Doing this in dracut, udev rules, or systemd service
-> files seems cleaner to me than yet another daemon that tries to
-> interpret the kernel command line.
-> 
-> See e.g. how we implemented multipath=off (cd3184e).
-
-Yep. But again, this is already solveable now by running multipath with
-find_multipaths=smart, so I'm not sure that there's a need for it
-upstream at all.  If I rework this patch to something that would be
-accpetable upstream, I'll post it, in case anyone is interested in it.  
- 
--Ben
+T24gNi8yNi8xOSA3OjM3IFBNLCBCcmlhbiBCdW5rZXIgd3JvdGU6Cgo+IEl0IGhhcyBiZWVuIHNv
+bWUgdGltZSBzaW5jZSB3ZSB1cGRhdGVkIG91ciBQVVJFIEZsYXNoQXJyYXkgY29uZmlndXJhdGlv
+bi4gVGhlCj4gTGludXggdmVuZG9ycyB0aGF0IHdlIGhhZCBiZWVuIHNlZWluZyBpbiB0aGUgZmll
+bGQgd2VyZSB1c2luZyB2ZXJ5IG9sZCB2ZXJzaW9ucwo+IG9mIG11bHRpcGF0aC10b29scywgc28g
+d2UgaGF2ZW7igJl0IG5lZWRlZCB0byBjaGFuZ2UgYW55dGhpbmcgZm9yIHNvbWUgdGltZS4gV2l0
+aAo+IHRoZSByZWxlYXNlIG9mIFJIRUw4LCBzb21lIG9mIG91ciBlYXJsaWVyIHZhbHVlcyBoYXZl
+IGJlZW4gbG9zdCBieSB1cHN0cmVhbQo+IGNoYW5nZXMuIAoKUmVzZW5kIGl0LCB3aXRoIENDOiBD
+aHJpc3RvcGhlIFZhcm9xdWkgPGNocmlzdG9waGUudmFyb3F1aUBvcGVuc3ZjLmNvbT4KCj4gSW4g
+YWRkaXRpb24gd2UgaGF2ZSBvdXIgQWN0aXZlIENsdXN0ZXIgZmVhdHVyZSB3aGljaCBsZXZlcmFn
+ZXMgQUxVQSBzaW5jZSBvdXIKPiBsYXN0IHBhdGNoLiBUaGUgQUxVQSBjb25mZ3VyYXRpb24gd2ls
+bCB3b3JrIGZvciBhbGwgRmxhc2hBcnJheXMgd2l0aCBvciB3aXRob3V0Cj4gQWN0aXZlIENsdXN0
+ZXIuCj4gCj4gV2UgYXJlIGNoYW5naW5nIDMgdGhpbmdzLgo+IAo+IDEuIEFMVUEgc3VwcG9ydAo+
+Cj4gMi4gRmFzdCBmYWlsIHRpbWVvdXQgZnJvbSB0aGUgZGVmYXVsdCBvZiA1IHNlY29uZHMgdG8g
+MTAgc2Vjb25kcyAoV2UgbmVlZCB0aGlzCj4gZm9yIG91ciBGQyBOUElWIHBvcnQgbWlncmF0aW9u
+KS4KPgo+IDMuIE1heGltdW0gc2VjdG9yIHNpemUgb2YgNE1CLiBTb21lIExpbnV4IHZlbmRvcnMg
+ZG9u4oCZdCBob25vciB0aGUgYmxvY2sgbGltaXRzCj4gVlBEIHBhZ2Ugb2YgSU5RVUlSWSkuCiA+
+Cj4gZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9od3RhYmxlLmMgYi9saWJtdWx0aXBhdGgvaHd0
+YWJsZS5jCj4gaW5kZXggMWQ5NjQzMzMuLjM3ZTk3ZjYwIDEwMDY0NAo+IC0tLSBhL2xpYm11bHRp
+cGF0aC9od3RhYmxlLmMKPiArKysgYi9saWJtdWx0aXBhdGgvaHd0YWJsZS5jCj4gQEAgLTEwMjQs
+NyArMTAyNCwxMiBAQCBzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewo+ICAg
+ICAgICAgICAgICAgICAvKiBGbGFzaEFycmF5ICovCj4gICAgICAgICAgICAgICAgIC52ZW5kb3Ig
+ICAgICAgID0gIlBVUkUiLAo+ICAgICAgICAgICAgICAgICAucHJvZHVjdCAgICAgICA9ICJGbGFz
+aEFycmF5IiwKPiAtICAgICAgICAgICAgICAgLnBncG9saWN5ICAgICAgPSBNVUxUSUJVUywKPiAr
+ICAgICAgICAgICAgICAgLnBncG9saWN5ICAgICAgPSBHUk9VUF9CWV9QUklPLAo+ICsgICAgICAg
+ICAgICAgICAucGdmYWlsYmFjayAgICA9IC1GQUlMQkFDS19JTU1FRElBVEUsCj4gKyAgICAgICAg
+ICAgICAgIC5od2hhbmRsZXIgICAgID0gIjEgYWx1YSIsCj4gKyAgICAgICAgICAgICAgIC5wcmlv
+X25hbWUgICAgID0gUFJJT19BTFVBLAo+ICsgICAgICAgICAgICAgICAuZmFzdF9pb19mYWlsICA9
+IDEwLAo+ICsgICAgICAgICAgICAgICAubWF4X3NlY3RvcnNfa2IgPSA0MDk2LAoKLS0KZG0tZGV2
+ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNv
+bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
