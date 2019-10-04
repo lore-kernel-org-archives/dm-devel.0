@@ -1,7 +1,8 @@
 From: Bryan Gurney <bgurney@redhat.com>
-Subject: [PATCH 1/2] dm dust: change result vars to r
-Date: Fri,  4 Oct 2019 11:42:08 -0400
-Message-ID: <1570203729-22034-2-git-send-email-bgurney@redhat.com>
+Subject: [PATCH 2/2] dm dust: change ret to r in dust_map_read
+	and dust_map
+Date: Fri,  4 Oct 2019 11:42:09 -0400
+Message-ID: <1570203729-22034-3-git-send-email-bgurney@redhat.com>
 References: <1570203729-22034-1-git-send-email-bgurney@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,108 +22,60 @@ To: dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com
 Cc: Bryan Gurney <bgurney@redhat.com>
 List-Id: dm-devel.ids
 
-Change the "result" variables to "r" in dust_status() and
-dust_message().
+In the dust_map_read() and dust_map() functions, change the
+return code variable "ret" to "r", to match the convention of the
+other device-mapper targets.
 
 Signed-off-by: Bryan Gurney <bgurney@redhat.com>
 ---
- drivers/md/dm-dust.c | 32 ++++++++++++++++----------------
- 1 file changed, 16 insertions(+), 16 deletions(-)
+ drivers/md/dm-dust.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
-index 8288887b7f94..29626ff8b8e8 100644
+index 29626ff8b8e8..9a926a799fb4 100644
 --- a/drivers/md/dm-dust.c
 +++ b/drivers/md/dm-dust.c
-@@ -375,7 +375,7 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
- 	struct dust_device *dd = ti->private;
- 	sector_t size = i_size_read(dd->dev->bdev->bd_inode) >> SECTOR_SHIFT;
- 	bool invalid_msg = false;
--	int result = -EINVAL;
-+	int r = -EINVAL;
- 	unsigned long long tmp, block;
- 	unsigned long flags;
- 	char dummy;
-@@ -388,45 +388,45 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
- 		} else if (!strcasecmp(argv[0], "disable")) {
- 			DMINFO("disabling read failures on bad sectors");
- 			dd->fail_read_on_bb = false;
--			result = 0;
-+			r = 0;
- 		} else if (!strcasecmp(argv[0], "enable")) {
- 			DMINFO("enabling read failures on bad sectors");
- 			dd->fail_read_on_bb = true;
--			result = 0;
-+			r = 0;
- 		} else if (!strcasecmp(argv[0], "countbadblocks")) {
- 			spin_lock_irqsave(&dd->dust_lock, flags);
- 			DMINFO("countbadblocks: %llu badblock(s) found",
- 			       dd->badblock_count);
- 			spin_unlock_irqrestore(&dd->dust_lock, flags);
--			result = 0;
-+			r = 0;
- 		} else if (!strcasecmp(argv[0], "clearbadblocks")) {
--			result = dust_clear_badblocks(dd);
-+			r = dust_clear_badblocks(dd);
- 		} else if (!strcasecmp(argv[0], "quiet")) {
- 			if (!dd->quiet_mode)
- 				dd->quiet_mode = true;
- 			else
- 				dd->quiet_mode = false;
--			result = 0;
-+			r = 0;
- 		} else {
- 			invalid_msg = true;
- 		}
- 	} else if (argc == 2) {
- 		if (sscanf(argv[1], "%llu%c", &tmp, &dummy) != 1)
--			return result;
-+			return r;
- 
- 		block = tmp;
- 		sector_div(size, dd->sect_per_block);
- 		if (block > size) {
- 			DMERR("selected block value out of range");
--			return result;
-+			return r;
- 		}
- 
- 		if (!strcasecmp(argv[0], "addbadblock"))
--			result = dust_add_block(dd, block);
-+			r = dust_add_block(dd, block);
- 		else if (!strcasecmp(argv[0], "removebadblock"))
--			result = dust_remove_block(dd, block);
-+			r = dust_remove_block(dd, block);
- 		else if (!strcasecmp(argv[0], "queryblock"))
--			result = dust_query_block(dd, block);
-+			r = dust_query_block(dd, block);
- 		else
- 			invalid_msg = true;
- 
-@@ -436,7 +436,7 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
- 	if (invalid_msg)
- 		DMERR("unrecognized message '%s' received", argv[0]);
- 
--	return result;
-+	return r;
- }
- 
- static void dust_status(struct dm_target *ti, status_type_t type,
-@@ -499,12 +499,12 @@ static struct target_type dust_target = {
- 
- static int __init dm_dust_init(void)
+@@ -163,16 +163,16 @@ static int dust_map_read(struct dust_device *dd, sector_t thisblock,
+ 			 bool fail_read_on_bb)
  {
--	int result = dm_register_target(&dust_target);
-+	int r = dm_register_target(&dust_target);
+ 	unsigned long flags;
+-	int ret = DM_MAPIO_REMAPPED;
++	int r = DM_MAPIO_REMAPPED;
  
--	if (result < 0)
--		DMERR("dm_register_target failed %d", result);
-+	if (r < 0)
-+		DMERR("dm_register_target failed %d", r);
+ 	if (fail_read_on_bb) {
+ 		thisblock >>= dd->sect_per_block_shift;
+ 		spin_lock_irqsave(&dd->dust_lock, flags);
+-		ret = __dust_map_read(dd, thisblock);
++		r = __dust_map_read(dd, thisblock);
+ 		spin_unlock_irqrestore(&dd->dust_lock, flags);
+ 	}
  
--	return result;
+-	return ret;
 +	return r;
  }
  
- static void __exit dm_dust_exit(void)
+ static void __dust_map_write(struct dust_device *dd, sector_t thisblock)
+@@ -209,17 +209,17 @@ static int dust_map_write(struct dust_device *dd, sector_t thisblock,
+ static int dust_map(struct dm_target *ti, struct bio *bio)
+ {
+ 	struct dust_device *dd = ti->private;
+-	int ret;
++	int r;
+ 
+ 	bio_set_dev(bio, dd->dev->bdev);
+ 	bio->bi_iter.bi_sector = dd->start + dm_target_offset(ti, bio->bi_iter.bi_sector);
+ 
+ 	if (bio_data_dir(bio) == READ)
+-		ret = dust_map_read(dd, bio->bi_iter.bi_sector, dd->fail_read_on_bb);
++		r = dust_map_read(dd, bio->bi_iter.bi_sector, dd->fail_read_on_bb);
+ 	else
+-		ret = dust_map_write(dd, bio->bi_iter.bi_sector, dd->fail_read_on_bb);
++		r = dust_map_write(dd, bio->bi_iter.bi_sector, dd->fail_read_on_bb);
+ 
+-	return ret;
++	return r;
+ }
+ 
+ static bool __dust_clear_badblocks(struct rb_root *tree,
 -- 
 2.21.0
