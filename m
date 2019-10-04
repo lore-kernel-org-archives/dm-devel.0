@@ -1,16 +1,11 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: multipath-tools: RH-patches for upstream ???
-Date: Fri, 4 Oct 2019 17:16:54 +0200
-Message-ID: <7d9b044e-9da9-7009-dd4f-f38621d40153@gmail.com>
-References: <e2b955d0-69ea-2c2b-9f0f-ccf3b5f369d0@gmail.com>
-	<20191003214420.GE25414@octiron.msp.redhat.com>
-	<5d38873e4ea51f00d1d49e9e9fb86419542598e8.camel@suse.com>
+From: Bryan Gurney <bgurney@redhat.com>
+Subject: [PATCH 0/2] dm-dust: return variable cleanups
+Date: Fri,  4 Oct 2019 11:42:07 -0400
+Message-ID: <1570203729-22034-1-git-send-email-bgurney@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5d38873e4ea51f00d1d49e9e9fb86419542598e8.camel@suse.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,28 +15,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <Martin.Wilck@suse.com>, "bmarzins@redhat.com" <bmarzins@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Hannes Reinecke <hare@suse.com>
+To: dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com
+Cc: Bryan Gurney <bgurney@redhat.com>
 List-Id: dm-devel.ids
 
-On 10/4/19 9:03 AM, Martin Wilck wrote:
+This patch series cleans up the return / result variables in dm-dust
+to use the conventional "r" return variable.
 
->>> https://src.fedoraproject.org/rpms/device-mapper-multipath/blob/master/f/0029-RH-Fix-nvme-compilation-warning.patch
->>>
->>>     Subject: [PATCH] RH: Fix nvme compilation warning
->>>
->>
->> I assume that other people aren't seeing these compilation warnings,
->> and
->> this it due to different options that redhat uses when compiling.  I
->> really should push this patch upstream, but that upstream isn't
->> multipath-tools, its nvme-cli, where we copied this file from. Once
->> it's
->> changed there, we can pull the updated files back to multipath-tools.
-> 
-> Ack. Which compiler option triggers this warning?
+Bryan Gurney (2):
+  dm dust: change result vars to r
+  dm dust: change ret to r in dust_map_read and dust_map
 
-With this patch: https://src.fedoraproject.org/rpms/device-mapper-multipath/blob/master/f/0024-RH-use-rpm-optflags-if-present.patch
-and /usr/lib/rpm/redhat/redhat-hardened-cc1 :
-*cc1_options:
-+ %{!r:%{!fpie:%{!fPIE:%{!fpic:%{!fPIC:%{!fno-pic:-fPIE}}}}}}
+ drivers/md/dm-dust.c | 46 ++++++++++++++++++++++----------------------
+ 1 file changed, 23 insertions(+), 23 deletions(-)
+
+-- 
+2.21.0
