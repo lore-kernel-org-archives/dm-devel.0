@@ -1,102 +1,47 @@
-From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: Re: Fix "dm kcopyd: Fix bug causing workqueue stalls"
- causes dead lock
-Date: Wed, 9 Oct 2019 18:44:49 +0300
-Message-ID: <d6aaebd8-ed3e-2e6a-14ea-33bf023ee4bb@arrikto.com>
-References: <CAHSpA58dehDfou0ogCYnkziBt4oU5yo1SGHLhJb7vFKy9HhJPQ@mail.gmail.com>
-	<db9a2b56-244b-1285-208c-14944f559f36@arrikto.com>
-	<CAHSpA58H_Vuhub6Eqqmi2QZ2g4AAUX8KCCUMzMvyc87hDaVDKg@mail.gmail.com>
-	<1b2b06a1-0b68-c265-e211-48273f26efaf@arrikto.com>
-	<CAHSpA59rG7qhEDjtUUTNv5evyWHS_iTL0o8utRCr9MQvMDsEgw@mail.gmail.com>
-	<e15bb4d9-d19b-f954-f71d-2985dd6e455a@arrikto.com>
-	<20191009141308.GA1670@redhat.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH] compat_ioctl: fix reimplemented SG_IO handling causing
+ -EINVAL from sg_io()
+Date: Wed, 9 Oct 2019 18:01:29 +0200
+Message-ID: <CAK8P3a1HBog84Wvdgm1ccz1gRJRxHm8ucsxwUTTqh02gOt9WbQ@mail.gmail.com>
+References: <20190918153445.1241-1-maier@linux.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191009141308.GA1670@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Guruswamy Basavaiah <guru2018@gmail.com>
-Cc: dm-devel@redhat.com, agk@redhat.com, iliastsi@arrikto.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190918153445.1241-1-maier@linux.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Steffen Maier <maier@linux.ibm.com>
+Cc: "James E . J . Bottomley" <jejb@linux.ibm.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, Doug Gilbert <dgilbert@interlog.com>, linux-scsi <linux-scsi@vger.kernel.org>, linux-s390 <linux-s390@vger.kernel.org>, Benjamin Block <bblock@linux.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, Al Viro <viro@zeniv.linux.org.uk>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>, Thomas Gleixner <tglx@linutronix.de>, Mauro Carvalho Chehab <mchehab+samsung@kernel.org>, Omar Sandoval <osandov@fb.com>, linux-block <linux-block@vger.kernel.org>, Linux-Next
 List-Id: dm-devel.ids
 
-On 10/9/19 5:13 PM, Mike Snitzer wrote:> On Tue, Oct 01 2019 at  8:43am -0400,
-> Nikos Tsironis <ntsironis@arrikto.com> wrote:
-> 
->> On 10/1/19 3:27 PM, Guruswamy Basavaiah wrote:
->>> Hello Nikos,
->>>  Yes, issue is consistently reproducible with us, in a particular
->>> set-up and test case.
->>>  I will get the access to set-up next week, will try to test and let
->>> you know the results before end of next week.
->>>
->>
->> That sounds great!
->>
->> Thanks a lot,
->> Nikos
-> 
-> Hi Guru,
-> 
-> Any chance you could try this fix that I've staged to send to Linus?
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.4&id=633b1613b2a49304743c18314bb6e6465c21fd8a
-> 
-> Shiort of that, Nikos: do you happen to have a test scenario that teases
-> out this deadlock?
-> 
+On Wed, Sep 18, 2019 at 5:35 PM Steffen Maier <maier@linux.ibm.com> wrote:
+>
+> scsi_cmd_ioctl() had hdr as on stack auto variable and called
+> copy_{from,to}_user with the address operator &hdr and sizeof(hdr).
+>
+> After the refactoring, {get,put}_sg_io_hdr() takes a pointer &hdr.
+> So the copy_{from,to}_user within the new helper functions should
+> just take the given pointer argument hdr and sizeof(*hdr).
+>
+> I saw -EINVAL from sg_io() done by /usr/lib/udev/scsi_id which could
+> in turn no longer whitelist SCSI disks for devicemapper multipath.
+>
+> Signed-off-by: Steffen Maier <maier@linux.ibm.com>
+> Fixes: 4f45155c29fd ("compat_ioctl: reimplement SG_IO handling")
+> ---
+>
+> Arnd, I'm not sure about the sizeof(hdr32) change in the compat part in
+> put_sg_io_hdr().
+>
+> This is for next, probably via Arnd's y2038/y2038,
+> and it fixes next-20190917 for me regarding SCSI generic.
 
-Hi Mike,
+Hi Steffen,
 
-Yes,
+Sorry for the long delay. I ended up not sending my pull request for
+v5.4, so the bug is not there. I have now rebased my branch
+on top of v5.4-rc2 and plan to send it for the v5.5 merge window.
 
-I created a 50G LV and took a snapshot of the same size:
+I have folded your bugfix into my original patch, hope that's ok with
+you. Tomorrow's linux-next should be fixed.
 
-  lvcreate -n data-lv -L50G testvg
-  lvcreate -n snap-lv -L50G -s testvg/data-lv
-
-Then I ran the following fio job:
-
-[global]
-randrepeat=1
-ioengine=libaio
-bs=1M
-size=6G
-offset_increment=6G
-numjobs=8
-direct=1
-iodepth=32
-group_reporting
-filename=/dev/testvg/data-lv
-
-[test]
-rw=write
-timeout=180
-
-, concurrently with the following script:
-
-lvcreate -n dummy-lv -L1G testvg
-
-while true
-do
- lvcreate -n dummy-snap -L1M -s testvg/dummy-lv
- lvremove -f testvg/dummy-snap
-done
-
-This reproduced the deadlock for me. I also ran 'echo 30 >
-/proc/sys/kernel/hung_task_timeout_secs', to reduce the hung task
-timeout.
-
-Nikos.
-
-> Thanks,
-> Mike
-> 
+    Arnd
