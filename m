@@ -1,20 +1,20 @@
-From: Petr Vorel <petr.vorel@gmail.com>
-Subject: Re: [PATCH 1/1] kpartx: Use __kernel_daddr_t for
- solaris_x86_slice.s_start
-Date: Tue, 8 Oct 2019 10:18:32 +0200
-Message-ID: <20191008081831.GA29132@dell5510>
-References: <20190708213551.26349-1-petr.vorel@gmail.com>
-	<20190709024742.GA22293@infradead.org>
-	<20190709080204.GA12875@dell5510>
-	<20190709133436.GA2231@infradead.org> <20191002060508.GA16684@x230>
-	<20191007165732.GA4805@infradead.org>
-Reply-To: Petr Vorel <petr.vorel@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Fix "dm kcopyd: Fix bug causing workqueue stalls"
+ causes dead lock
+Date: Wed, 9 Oct 2019 10:13:08 -0400
+Message-ID: <20191009141308.GA1670@redhat.com>
+References: <CAHSpA58dehDfou0ogCYnkziBt4oU5yo1SGHLhJb7vFKy9HhJPQ@mail.gmail.com>
+	<db9a2b56-244b-1285-208c-14944f559f36@arrikto.com>
+	<CAHSpA58H_Vuhub6Eqqmi2QZ2g4AAUX8KCCUMzMvyc87hDaVDKg@mail.gmail.com>
+	<1b2b06a1-0b68-c265-e211-48273f26efaf@arrikto.com>
+	<CAHSpA59rG7qhEDjtUUTNv5evyWHS_iTL0o8utRCr9MQvMDsEgw@mail.gmail.com>
+	<e15bb4d9-d19b-f954-f71d-2985dd6e455a@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20191007165732.GA4805@infradead.org>
+In-Reply-To: <e15bb4d9-d19b-f954-f71d-2985dd6e455a@arrikto.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,28 +24,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@infradead.org>
-Cc: dm-devel@redhat.com, Baruch Even <baruch@ev-en.org>
+To: Nikos Tsironis <ntsironis@arrikto.com>, Guruswamy Basavaiah <guru2018@gmail.com>
+Cc: dm-devel@redhat.com, agk@redhat.com, iliastsi@arrikto.com
 List-Id: dm-devel.ids
 
-Hi Christoph,
+On Tue, Oct 01 2019 at  8:43am -0400,
+Nikos Tsironis <ntsironis@arrikto.com> wrote:
 
-> On Wed, Oct 02, 2019 at 08:05:09AM +0200, Petr Vorel wrote:
-> > I tried to search in [1], with not much success, I don't know the original name
-> > of the struct and struct members are quite similar. Do you have a tip, where it
-> > could be or would you dare to search?
+> On 10/1/19 3:27 PM, Guruswamy Basavaiah wrote:
+> > Hello Nikos,
+> >  Yes, issue is consistently reproducible with us, in a particular
+> > set-up and test case.
+> >  I will get the access to set-up next week, will try to test and let
+> > you know the results before end of next week.
+> > 
+> 
+> That sounds great!
+> 
+> Thanks a lot,
+> Nikos
 
-> No, I don't know Solaris very well.
+Hi Guru,
 
-> > Christophe already merged my patch as
-> > 129e6fe6 ("kpartx: Use __kernel_daddr_t for solaris_x86_slice.s_start")
+Any chance you could try this fix that I've staged to send to Linus?
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.4&id=633b1613b2a49304743c18314bb6e6465c21fd8a
 
-> > But, according to your comments it looks to me better to use the exact structure
-> > kernel uses. So, if we don't find anything, I'd be for using kernel struct.
+Shiort of that, Nikos: do you happen to have a test scenario that teases
+out this deadlock?
 
-> Thanks, that would be great.
-I've sent a patch, as RFC, Cc also Baruch Even, the gpart maintainer.
-I wonder, if there is anybody actually using this code nowadays.
-
-Kind regards,
-Petr
+Thanks,
+Mike
