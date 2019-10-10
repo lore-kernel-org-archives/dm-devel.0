@@ -1,23 +1,15 @@
-From: Guruswamy Basavaiah <guru2018@gmail.com>
-Subject: Re: Fix "dm kcopyd: Fix bug causing workqueue stalls"
-	causes dead lock
-Date: Thu, 10 Oct 2019 12:04:50 +0530
-Message-ID: <CAHSpA5_miJX74Th-_hinLr_q-sVR2G3M-_aS2c2fJBSr1eDnfg@mail.gmail.com>
-References: <CAHSpA58dehDfou0ogCYnkziBt4oU5yo1SGHLhJb7vFKy9HhJPQ@mail.gmail.com>
-	<db9a2b56-244b-1285-208c-14944f559f36@arrikto.com>
-	<CAHSpA58H_Vuhub6Eqqmi2QZ2g4AAUX8KCCUMzMvyc87hDaVDKg@mail.gmail.com>
-	<1b2b06a1-0b68-c265-e211-48273f26efaf@arrikto.com>
-	<CAHSpA59rG7qhEDjtUUTNv5evyWHS_iTL0o8utRCr9MQvMDsEgw@mail.gmail.com>
-	<e15bb4d9-d19b-f954-f71d-2985dd6e455a@arrikto.com>
-	<20191009141308.GA1670@redhat.com>
-	<d6aaebd8-ed3e-2e6a-14ea-33bf023ee4bb@arrikto.com>
-	<20191009160446.GA2284@redhat.com>
-	<CAHSpA59T+JCR+_3ZCYShXa6GtQddAcaQE0OP5GWbSEG0qMAQOg@mail.gmail.com>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: Re: [PATCH 1/2] dm-snapshot: introduce
+ account_start_copy and account_end_copy
+Date: Thu, 10 Oct 2019 14:38:03 +0300
+Message-ID: <546fde99-ad48-9b36-d21b-00f463b5a8fc@arrikto.com>
+References: <alpine.LRH.2.02.1910020613070.973@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAHSpA59T+JCR+_3ZCYShXa6GtQddAcaQE0OP5GWbSEG0qMAQOg@mail.gmail.com>
+In-Reply-To: <alpine.LRH.2.02.1910020613070.973@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,125 +19,89 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Nikos Tsironis <ntsironis@arrikto.com>, agk@redhat.com, iliastsi@arrikto.com
+To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, guru2018@gmail.com
 List-Id: dm-devel.ids
 
-Hello,
-We use 4.4.184 in our builds and the patch fails to apply.
-Is it possible to give a patch for 4.4.x branch ?
+On 10/2/19 1:14 PM, Mikulas Patocka wrote:
+> This is simple refactoring that moves code for modifying the semaphore
+> cow_count into separate functions. It is needed by the following patch.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: stable@vger.kernel.org	# v5.0+
+> Fixes: 721b1d98fb51 ("dm snapshot: Fix excessive memory usage and workqueue stalls")
+> 
 
-patching Logs.
-patching file drivers/md/dm-snap.c
-Hunk #1 succeeded at 19 (offset 1 line).
-Hunk #2 succeeded at 105 (offset -1 lines).
-Hunk #3 succeeded at 157 (offset -4 lines).
-Hunk #4 succeeded at 1206 (offset -120 lines).
-Hunk #5 FAILED at 1508.
-Hunk #6 succeeded at 1412 (offset -124 lines).
-Hunk #7 succeeded at 1425 (offset -124 lines).
-Hunk #8 FAILED at 1925.
-Hunk #9 succeeded at 1866 with fuzz 2 (offset -255 lines).
-Hunk #10 succeeded at 2202 (offset -294 lines).
-Hunk #11 succeeded at 2332 (offset -294 lines).
-2 out of 11 hunks FAILED -- saving rejects to file drivers/md/dm-snap.c.rej
+Reviewed-by: Nikos Tsironis <ntsironis@arrikto.com>
 
-Guru
-
-On Thu, 10 Oct 2019 at 01:33, Guruswamy Basavaiah <guru2018@gmail.com> wrote:
->
-> Hello Mike,
->  I will get the testing result before end of Thursday.
-> Guru
->
-> On Wed, 9 Oct 2019 at 21:34, Mike Snitzer <snitzer@redhat.com> wrote:
-> >
-> > On Wed, Oct 09 2019 at 11:44am -0400,
-> > Nikos Tsironis <ntsironis@arrikto.com> wrote:
-> >
-> > > On 10/9/19 5:13 PM, Mike Snitzer wrote:> On Tue, Oct 01 2019 at  8:43am -0400,
-> > > > Nikos Tsironis <ntsironis@arrikto.com> wrote:
-> > > >
-> > > >> On 10/1/19 3:27 PM, Guruswamy Basavaiah wrote:
-> > > >>> Hello Nikos,
-> > > >>>  Yes, issue is consistently reproducible with us, in a particular
-> > > >>> set-up and test case.
-> > > >>>  I will get the access to set-up next week, will try to test and let
-> > > >>> you know the results before end of next week.
-> > > >>>
-> > > >>
-> > > >> That sounds great!
-> > > >>
-> > > >> Thanks a lot,
-> > > >> Nikos
-> > > >
-> > > > Hi Guru,
-> > > >
-> > > > Any chance you could try this fix that I've staged to send to Linus?
-> > > > https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.4&id=633b1613b2a49304743c18314bb6e6465c21fd8a
-> > > >
-> > > > Shiort of that, Nikos: do you happen to have a test scenario that teases
-> > > > out this deadlock?
-> > > >
-> > >
-> > > Hi Mike,
-> > >
-> > > Yes,
-> > >
-> > > I created a 50G LV and took a snapshot of the same size:
-> > >
-> > >   lvcreate -n data-lv -L50G testvg
-> > >   lvcreate -n snap-lv -L50G -s testvg/data-lv
-> > >
-> > > Then I ran the following fio job:
-> > >
-> > > [global]
-> > > randrepeat=1
-> > > ioengine=libaio
-> > > bs=1M
-> > > size=6G
-> > > offset_increment=6G
-> > > numjobs=8
-> > > direct=1
-> > > iodepth=32
-> > > group_reporting
-> > > filename=/dev/testvg/data-lv
-> > >
-> > > [test]
-> > > rw=write
-> > > timeout=180
-> > >
-> > > , concurrently with the following script:
-> > >
-> > > lvcreate -n dummy-lv -L1G testvg
-> > >
-> > > while true
-> > > do
-> > >  lvcreate -n dummy-snap -L1M -s testvg/dummy-lv
-> > >  lvremove -f testvg/dummy-snap
-> > > done
-> > >
-> > > This reproduced the deadlock for me. I also ran 'echo 30 >
-> > > /proc/sys/kernel/hung_task_timeout_secs', to reduce the hung task
-> > > timeout.
-> > >
-> > > Nikos.
-> >
-> > Very nice, well done.  Curious if you've tested with the fix I've staged
-> > (see above)?  If so, does it resolve the deadlock?  If you've had
-> > success I'd be happy to update the tags in the commit header to include
-> > your Tested-by before sending it to Linus.  Also, any review of the
-> > patch that you can do would be appreciated and with your formal
-> > Reviewed-by reply would be welcomed and folded in too.
-> >
-> > Mike
->
->
->
-> --
-> Guruswamy Basavaiah
-
-
-
--- 
-Guruswamy Basavaiah
+> ---
+>  drivers/md/dm-snap.c |   20 +++++++++++++++-----
+>  1 file changed, 15 insertions(+), 5 deletions(-)
+> 
+> Index: linux-2.6/drivers/md/dm-snap.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-snap.c	2019-10-01 15:19:20.000000000 +0200
+> +++ linux-2.6/drivers/md/dm-snap.c	2019-10-01 15:23:10.000000000 +0200
+> @@ -1512,6 +1512,16 @@ static void snapshot_dtr(struct dm_targe
+>  	kfree(s);
+>  }
+>  
+> +static void account_start_copy(struct dm_snapshot *s)
+> +{
+> +	down(&s->cow_count);
+> +}
+> +
+> +static void account_end_copy(struct dm_snapshot *s)
+> +{
+> +	up(&s->cow_count);
+> +}
+> +
+>  /*
+>   * Flush a list of buffers.
+>   */
+> @@ -1732,7 +1742,7 @@ static void copy_callback(int read_err,
+>  		rb_link_node(&pe->out_of_order_node, parent, p);
+>  		rb_insert_color(&pe->out_of_order_node, &s->out_of_order_tree);
+>  	}
+> -	up(&s->cow_count);
+> +	account_end_copy(s);
+>  }
+>  
+>  /*
+> @@ -1756,7 +1766,7 @@ static void start_copy(struct dm_snap_pe
+>  	dest.count = src.count;
+>  
+>  	/* Hand over to kcopyd */
+> -	down(&s->cow_count);
+> +	account_start_copy(s);
+>  	dm_kcopyd_copy(s->kcopyd_client, &src, 1, &dest, 0, copy_callback, pe);
+>  }
+>  
+> @@ -1776,7 +1786,7 @@ static void start_full_bio(struct dm_sna
+>  	pe->full_bio = bio;
+>  	pe->full_bio_end_io = bio->bi_end_io;
+>  
+> -	down(&s->cow_count);
+> +	account_start_copy(s);
+>  	callback_data = dm_kcopyd_prepare_callback(s->kcopyd_client,
+>  						   copy_callback, pe);
+>  
+> @@ -1866,7 +1876,7 @@ static void zero_callback(int read_err,
+>  	struct bio *bio = context;
+>  	struct dm_snapshot *s = bio->bi_private;
+>  
+> -	up(&s->cow_count);
+> +	account_end_copy(s);
+>  	bio->bi_status = write_err ? BLK_STS_IOERR : 0;
+>  	bio_endio(bio);
+>  }
+> @@ -1880,7 +1890,7 @@ static void zero_exception(struct dm_sna
+>  	dest.sector = bio->bi_iter.bi_sector;
+>  	dest.count = s->store->chunk_size;
+>  
+> -	down(&s->cow_count);
+> +	account_start_copy(s);
+>  	WARN_ON_ONCE(bio->bi_private);
+>  	bio->bi_private = s;
+>  	dm_kcopyd_zero(s->kcopyd_client, 1, &dest, 0, zero_callback, bio);
+> 
