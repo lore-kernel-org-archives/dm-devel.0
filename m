@@ -1,13 +1,22 @@
 From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: Re: [PATCH 2/2] dm-snapshot: Reimplement the cow limit.
-Date: Thu, 10 Oct 2019 14:42:31 +0300
-Message-ID: <9f9f4c6b-0910-7086-da48-c42795b5a416@arrikto.com>
-References: <alpine.LRH.2.02.1910020614190.973@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: Re: Fix "dm kcopyd: Fix bug causing workqueue stalls"
+ causes dead lock
+Date: Thu, 10 Oct 2019 14:58:35 +0300
+Message-ID: <eaf08505-40a1-0419-ad28-5504ab9ab355@arrikto.com>
+References: <CAHSpA58dehDfou0ogCYnkziBt4oU5yo1SGHLhJb7vFKy9HhJPQ@mail.gmail.com>
+	<db9a2b56-244b-1285-208c-14944f559f36@arrikto.com>
+	<CAHSpA58H_Vuhub6Eqqmi2QZ2g4AAUX8KCCUMzMvyc87hDaVDKg@mail.gmail.com>
+	<1b2b06a1-0b68-c265-e211-48273f26efaf@arrikto.com>
+	<CAHSpA59rG7qhEDjtUUTNv5evyWHS_iTL0o8utRCr9MQvMDsEgw@mail.gmail.com>
+	<e15bb4d9-d19b-f954-f71d-2985dd6e455a@arrikto.com>
+	<20191009141308.GA1670@redhat.com>
+	<d6aaebd8-ed3e-2e6a-14ea-33bf023ee4bb@arrikto.com>
+	<20191009160446.GA2284@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1910020614190.973@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <20191009160446.GA2284@redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,225 +27,99 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com, guru2018@gmail.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, iliastsi@arrikto.com, agk@redhat.com, Guruswamy Basavaiah <guru2018@gmail.com>
 List-Id: dm-devel.ids
 
-On 10/2/19 1:15 PM, Mikulas Patocka wrote:
-> Commit 721b1d98fb517a ("dm snapshot: Fix excessive memory usage and
-> workqueue stalls") introduced a semaphore to limit the maximum number of
-> in-flight kcopyd (COW) jobs.
+On 10/9/19 7:04 PM, Mike Snitzer wrote:
+> On Wed, Oct 09 2019 at 11:44am -0400,
+> Nikos Tsironis <ntsironis@arrikto.com> wrote:
 > 
-> The implementation of this throttling mechanism is prone to a deadlock:
+>> On 10/9/19 5:13 PM, Mike Snitzer wrote:> On Tue, Oct 01 2019 at  8:43am -0400,
+>>> Nikos Tsironis <ntsironis@arrikto.com> wrote:
+>>>
+>>>> On 10/1/19 3:27 PM, Guruswamy Basavaiah wrote:
+>>>>> Hello Nikos,
+>>>>>  Yes, issue is consistently reproducible with us, in a particular
+>>>>> set-up and test case.
+>>>>>  I will get the access to set-up next week, will try to test and let
+>>>>> you know the results before end of next week.
+>>>>>
+>>>>
+>>>> That sounds great!
+>>>>
+>>>> Thanks a lot,
+>>>> Nikos
+>>>
+>>> Hi Guru,
+>>>
+>>> Any chance you could try this fix that I've staged to send to Linus?
+>>> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.4&id=633b1613b2a49304743c18314bb6e6465c21fd8a
+>>>
+>>> Shiort of that, Nikos: do you happen to have a test scenario that teases
+>>> out this deadlock?
+>>>
+>>
+>> Hi Mike,
+>>
+>> Yes,
+>>
+>> I created a 50G LV and took a snapshot of the same size:
+>>
+>>   lvcreate -n data-lv -L50G testvg
+>>   lvcreate -n snap-lv -L50G -s testvg/data-lv
+>>
+>> Then I ran the following fio job:
+>>
+>> [global]
+>> randrepeat=1
+>> ioengine=libaio
+>> bs=1M
+>> size=6G
+>> offset_increment=6G
+>> numjobs=8
+>> direct=1
+>> iodepth=32
+>> group_reporting
+>> filename=/dev/testvg/data-lv
+>>
+>> [test]
+>> rw=write
+>> timeout=180
+>>
+>> , concurrently with the following script:
+>>
+>> lvcreate -n dummy-lv -L1G testvg
+>>
+>> while true
+>> do
+>>  lvcreate -n dummy-snap -L1M -s testvg/dummy-lv
+>>  lvremove -f testvg/dummy-snap
+>> done
+>>
+>> This reproduced the deadlock for me. I also ran 'echo 30 >
+>> /proc/sys/kernel/hung_task_timeout_secs', to reduce the hung task
+>> timeout.
+>>
+>> Nikos.
 > 
-> 1. One or more threads write to the origin device causing COW, which is
->    performed by kcopyd.
-> 
-> 2. At some point some of these threads might reach the s->cow_count
->    semaphore limit and block in down(&s->cow_count), holding a read lock
->    on _origins_lock.
-> 
-> 3. Someone tries to acquire a write lock on _origins_lock, e.g.,
->    snapshot_ctr(), which blocks because the threads at step (2) already
->    hold a read lock on it.
-> 
-> 4. A COW operation completes and kcopyd runs dm-snapshot's completion
->    callback, which ends up calling pending_complete().
->    pending_complete() tries to resubmit any deferred origin bios. This
->    requires acquiring a read lock on _origins_lock, which blocks.
-> 
->    This happens because the read-write semaphore implementation gives
->    priority to writers, meaning that as soon as a writer tries to enter
->    the critical section, no readers will be allowed in, until all
->    writers have completed their work.
-> 
->    So, pending_complete() waits for the writer at step (3) to acquire
->    and release the lock. This writer waits for the readers at step (2)
->    to release the read lock and those readers wait for
->    pending_complete() (the kcopyd thread) to signal the s->cow_count
->    semaphore: DEADLOCK.
-> 
-> In order to fix the bug, I reworked limiting, so that it waits without 
-> holding any locks. The patch adds a variable in_progress that counts how 
-> many kcopyd jobs are running. A function wait_for_in_progress will sleep 
-> if the variable in_progress is over the limit. It drops _origins_lock in 
-> order to avoid the deadlock.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: stable@vger.kernel.org	# v5.0+
-> Fixes: 721b1d98fb51 ("dm snapshot: Fix excessive memory usage and workqueue stalls")
+> Very nice, well done.  Curious if you've tested with the fix I've staged
+> (see above)?  If so, does it resolve the deadlock?  If you've had
+> success I'd be happy to update the tags in the commit header to include
+> your Tested-by before sending it to Linus.  Also, any review of the
+> patch that you can do would be appreciated and with your formal
+> Reviewed-by reply would be welcomed and folded in too.
 > 
 
-Reviewed-by: Nikos Tsironis <ntsironis@arrikto.com>
+Yes, I have tested the staged fix. I forgot to mention it in my previous
+mail.
 
-> ---
->  drivers/md/dm-snap.c |   69 ++++++++++++++++++++++++++++++++++++++++-----------
->  1 file changed, 55 insertions(+), 14 deletions(-)
-> 
-> Index: linux-2.6/drivers/md/dm-snap.c
-> ===================================================================
-> --- linux-2.6.orig/drivers/md/dm-snap.c	2019-10-01 15:23:42.000000000 +0200
-> +++ linux-2.6/drivers/md/dm-snap.c	2019-10-02 12:01:23.000000000 +0200
-> @@ -18,7 +18,6 @@
->  #include <linux/vmalloc.h>
->  #include <linux/log2.h>
->  #include <linux/dm-kcopyd.h>
-> -#include <linux/semaphore.h>
->  
->  #include "dm.h"
->  
-> @@ -107,8 +106,8 @@ struct dm_snapshot {
->  	/* The on disk metadata handler */
->  	struct dm_exception_store *store;
->  
-> -	/* Maximum number of in-flight COW jobs. */
-> -	struct semaphore cow_count;
-> +	unsigned in_progress;
-> +	struct wait_queue_head in_progress_wait;
->  
->  	struct dm_kcopyd_client *kcopyd_client;
->  
-> @@ -162,8 +161,8 @@ struct dm_snapshot {
->   */
->  #define DEFAULT_COW_THRESHOLD 2048
->  
-> -static int cow_threshold = DEFAULT_COW_THRESHOLD;
-> -module_param_named(snapshot_cow_threshold, cow_threshold, int, 0644);
-> +static unsigned cow_threshold = DEFAULT_COW_THRESHOLD;
-> +module_param_named(snapshot_cow_threshold, cow_threshold, uint, 0644);
->  MODULE_PARM_DESC(snapshot_cow_threshold, "Maximum number of chunks being copied on write");
->  
->  DECLARE_DM_KCOPYD_THROTTLE_WITH_MODULE_PARM(snapshot_copy_throttle,
-> @@ -1327,7 +1326,7 @@ static int snapshot_ctr(struct dm_target
->  		goto bad_hash_tables;
->  	}
->  
-> -	sema_init(&s->cow_count, (cow_threshold > 0) ? cow_threshold : INT_MAX);
-> +	init_waitqueue_head(&s->in_progress_wait);
->  
->  	s->kcopyd_client = dm_kcopyd_client_create(&dm_kcopyd_throttle);
->  	if (IS_ERR(s->kcopyd_client)) {
-> @@ -1509,17 +1508,46 @@ static void snapshot_dtr(struct dm_targe
->  
->  	dm_put_device(ti, s->origin);
->  
-> +	WARN_ON(s->in_progress);
-> +
->  	kfree(s);
->  }
->  
->  static void account_start_copy(struct dm_snapshot *s)
->  {
-> -	down(&s->cow_count);
-> +	spin_lock(&s->in_progress_wait.lock);
-> +	s->in_progress++;
-> +	spin_unlock(&s->in_progress_wait.lock);
->  }
->  
->  static void account_end_copy(struct dm_snapshot *s)
->  {
-> -	up(&s->cow_count);
-> +	spin_lock(&s->in_progress_wait.lock);
-> +	BUG_ON(!s->in_progress);
-> +	s->in_progress--;
-> +	if (likely(s->in_progress <= cow_threshold) && unlikely(waitqueue_active(&s->in_progress_wait)))
-> +		wake_up_locked(&s->in_progress_wait);
-> +	spin_unlock(&s->in_progress_wait.lock);
-> +}
-> +
-> +static bool wait_for_in_progress(struct dm_snapshot *s, bool unlock_origins)
-> +{
-> +	if (unlikely(s->in_progress > cow_threshold)) {
-> +		spin_lock(&s->in_progress_wait.lock);
-> +		if (likely(s->in_progress > cow_threshold)) {
-> +			DECLARE_WAITQUEUE(wait, current);
-> +			__add_wait_queue(&s->in_progress_wait, &wait);
-> +			__set_current_state(TASK_UNINTERRUPTIBLE);
-> +			spin_unlock(&s->in_progress_wait.lock);
-> +			if (unlock_origins)
-> +				up_read(&_origins_lock);
-> +			io_schedule();
-> +			remove_wait_queue(&s->in_progress_wait, &wait);
-> +			return false;
-> +		}
-> +		spin_unlock(&s->in_progress_wait.lock);
-> +	}
-> +	return true;
->  }
->  
->  /*
-> @@ -1537,7 +1565,7 @@ static void flush_bios(struct bio *bio)
->  	}
->  }
->  
-> -static int do_origin(struct dm_dev *origin, struct bio *bio);
-> +static int do_origin(struct dm_dev *origin, struct bio *bio, bool limit);
->  
->  /*
->   * Flush a list of buffers.
-> @@ -1550,7 +1578,7 @@ static void retry_origin_bios(struct dm_
->  	while (bio) {
->  		n = bio->bi_next;
->  		bio->bi_next = NULL;
-> -		r = do_origin(s->origin, bio);
-> +		r = do_origin(s->origin, bio, false);
->  		if (r == DM_MAPIO_REMAPPED)
->  			generic_make_request(bio);
->  		bio = n;
-> @@ -1926,6 +1954,10 @@ static int snapshot_map(struct dm_target
->  	if (!s->valid)
->  		return DM_MAPIO_KILL;
->  
-> +	if (bio_data_dir(bio) == WRITE) {
-> +		while (unlikely(!wait_for_in_progress(s, false))) ;
-> +	}
-> +
->  	down_read(&s->lock);
->  	dm_exception_table_lock(&lock);
->  
-> @@ -2122,7 +2154,7 @@ redirect_to_origin:
->  
->  	if (bio_data_dir(bio) == WRITE) {
->  		up_write(&s->lock);
-> -		return do_origin(s->origin, bio);
-> +		return do_origin(s->origin, bio, false);
->  	}
->  
->  out_unlock:
-> @@ -2497,15 +2529,24 @@ next_snapshot:
->  /*
->   * Called on a write from the origin driver.
->   */
-> -static int do_origin(struct dm_dev *origin, struct bio *bio)
-> +static int do_origin(struct dm_dev *origin, struct bio *bio, bool limit)
->  {
->  	struct origin *o;
->  	int r = DM_MAPIO_REMAPPED;
->  
-> +again:
->  	down_read(&_origins_lock);
->  	o = __lookup_origin(origin->bdev);
-> -	if (o)
-> +	if (o) {
-> +		struct dm_snapshot *s;
-> +		if (limit) {
-> +			list_for_each_entry(s, &o->snapshots, list)
-> +				if (unlikely(!wait_for_in_progress(s, true)))
-> +					goto again;
-> +		}
-> +
->  		r = __origin_write(&o->snapshots, bio->bi_iter.bi_sector, bio);
-> +	}
->  	up_read(&_origins_lock);
->  
->  	return r;
-> @@ -2618,7 +2659,7 @@ static int origin_map(struct dm_target *
->  		dm_accept_partial_bio(bio, available_sectors);
->  
->  	/* Only tell snapshots if this is a write */
-> -	return do_origin(o->dev, bio);
-> +	return do_origin(o->dev, bio, true);
->  }
->  
->  /*
+I ran the test for the default 'snapshot_cow_threshold' value of 2048
+and I also ran it for a value of 1, to stress it a little more.
+
+In both cases everything went fine, the deadlock was gone.
+
+Nikos
+
+> Mike
 > 
