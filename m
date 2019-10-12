@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 41/72] multipath-tools tests: add
-	-Wno-unused-parameter
-Date: Sat, 12 Oct 2019 21:28:28 +0000
-Message-ID: <20191012212703.12989-42-martin.wilck@suse.com>
+Subject: [PATCH 30/72] multipath tools: mark unused arguments in
+ thread routines
+Date: Sat, 12 Oct 2019 21:28:14 +0000
+Message-ID: <20191012212703.12989-31-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,32 +25,37 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Too many unused "void **state" parameters unders tests.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/Makefile | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ libmultipath/log_pthread.c | 2 +-
+ multipathd/main.c          | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/tests/Makefile b/tests/Makefile
-index 0dce8571..60338f14 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -1,6 +1,6 @@
- include ../Makefile.inc
+diff --git a/libmultipath/log_pthread.c b/libmultipath/log_pthread.c
+index be57bb1a..15baef88 100644
+--- a/libmultipath/log_pthread.c
++++ b/libmultipath/log_pthread.c
+@@ -56,7 +56,7 @@ static void flush_logqueue (void)
+ 	} while (empty == 0);
+ }
  
--CFLAGS += $(BIN_CFLAGS) -I$(multipathdir) -I$(mpathcmddir)
-+CFLAGS += $(BIN_CFLAGS) -I$(multipathdir) -I$(mpathcmddir) -Wno-unused-parameter
- LIBDEPS += -L$(multipathdir) -lmultipath -lcmocka
+-static void * log_thread (void * et)
++static void * log_thread (__attribute__((unused)) void * et)
+ {
+ 	int running;
  
- TESTS := uevent parser util dmevents hwtable blacklist unaligned vpd pgpolicy alias
-@@ -56,6 +56,7 @@ dep_clean:
- 	@sed -n 's/^.*__wrap_\([a-zA-Z0-9_]*\).*$$/-Wl,--wrap=\1/p' $< | \
- 		sort -u | tr '\n' ' ' >$@
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 43ae42d4..e55f2795 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2792,7 +2792,7 @@ set_oom_adj (void)
+ }
  
-+
- # COLON will get expanded during second expansion below
- COLON:=:
- .SECONDEXPANSION:
+ static int
+-child (void * param)
++child (__attribute__((unused)) void *param)
+ {
+ 	pthread_t check_thr, uevent_thr, uxlsnr_thr, uevq_thr, dmevent_thr;
+ 	pthread_attr_t log_attr, misc_attr, uevent_attr;
 -- 
 2.23.0
