@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 22/72] libmultipath: mark unused arguments in
- partmap functions
-Date: Sat, 12 Oct 2019 21:28:04 +0000
-Message-ID: <20191012212703.12989-23-martin.wilck@suse.com>
+Subject: [PATCH 28/72] libmultipath: checkers: mark unused
+ arguments in methods
+Date: Sat, 12 Oct 2019 21:28:12 +0000
+Message-ID: <20191012212703.12989-29-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -27,31 +27,81 @@ From: Martin Wilck <mwilck@suse.com>
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/devmapper.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ libmultipath/checkers/cciss_tur.c   | 4 ++--
+ libmultipath/checkers/hp_sw.c       | 4 ++--
+ libmultipath/checkers/rdac.c        | 2 +-
+ libmultipath/checkers/readsector0.c | 4 ++--
+ 4 files changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 0f0c3a34..f478ac2d 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -812,7 +812,8 @@ dm_get_major_minor(const char *name, int *major, int *minor)
+diff --git a/libmultipath/checkers/cciss_tur.c b/libmultipath/checkers/cciss_tur.c
+index ea843742..eaf67b35 100644
+--- a/libmultipath/checkers/cciss_tur.c
++++ b/libmultipath/checkers/cciss_tur.c
+@@ -46,12 +46,12 @@ struct cciss_tur_checker_context {
+ 	void * dummy;
+ };
+ 
+-int libcheck_init (struct checker * c)
++int libcheck_init (__attribute__((unused)) struct checker * c)
+ {
+ 	return 0;
  }
  
- static int
--has_partmap(const char *name, void *data)
-+has_partmap(const char *name __attribute__((unused)),
-+	    void *data __attribute__((unused)))
+-void libcheck_free (struct checker * c)
++void libcheck_free (__attribute__((unused)) struct checker * c)
  {
- 	return 1;
+ 	return;
  }
-@@ -1308,7 +1309,7 @@ dm_remove_partmaps (const char * mapname, int need_sync, int deferred_remove)
- #ifdef LIBDM_API_DEFERRED
+diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
+index eabfa93c..915918c0 100644
+--- a/libmultipath/checkers/hp_sw.c
++++ b/libmultipath/checkers/hp_sw.c
+@@ -32,12 +32,12 @@ struct sw_checker_context {
+ 	void * dummy;
+ };
  
- static int
--cancel_remove_partmap (const char *name, void *unused)
-+cancel_remove_partmap (const char *name, void *unused __attribute__((unused)))
+-int libcheck_init (struct checker * c)
++int libcheck_init (__attribute__((unused)) struct checker * c)
  {
- 	if (dm_get_opencount(name))
- 		dm_cancel_remove_partmaps(name);
+ 	return 0;
+ }
+ 
+-void libcheck_free (struct checker * c)
++void libcheck_free (__attribute__((unused)) struct checker * c)
+ {
+ 	return;
+ }
+diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c
+index 8a3b73ec..d924a9f7 100644
+--- a/libmultipath/checkers/rdac.c
++++ b/libmultipath/checkers/rdac.c
+@@ -133,7 +133,7 @@ out:
+ 	return 0;
+ }
+ 
+-void libcheck_free (struct checker * c)
++void libcheck_free(__attribute__((unused)) struct checker *c)
+ {
+ 	return;
+ }
+diff --git a/libmultipath/checkers/readsector0.c b/libmultipath/checkers/readsector0.c
+index cf79e067..b041f110 100644
+--- a/libmultipath/checkers/readsector0.c
++++ b/libmultipath/checkers/readsector0.c
+@@ -10,12 +10,12 @@ struct readsector0_checker_context {
+ 	void * dummy;
+ };
+ 
+-int libcheck_init (struct checker * c)
++int libcheck_init (__attribute__((unused)) struct checker * c)
+ {
+ 	return 0;
+ }
+ 
+-void libcheck_free (struct checker * c)
++void libcheck_free (__attribute__((unused)) struct checker * c)
+ {
+ 	return;
+ }
 -- 
 2.23.0
