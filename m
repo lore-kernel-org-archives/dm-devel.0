@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 08/72] libmultipath: rlookup_binding(): removed
- unused parameter
-Date: Sat, 12 Oct 2019 21:27:46 +0000
-Message-ID: <20191012212703.12989-9-martin.wilck@suse.com>
+Subject: [PATCH 50/72] libmultipath: set_int(): add error check
+	and set_uint()
+Date: Sat, 12 Oct 2019 21:28:39 +0000
+Message-ID: <20191012212703.12989-51-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,43 +25,80 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-The parameter "prefix" is unused in this function.
+Use strtol() to check for valid input, but don't return error
+as that would cause config file parsing to fail because of a
+single typo. Also, add set_uint() to parse an unsigned parameter.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/alias.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ libmultipath/dict.c | 48 ++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 45 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/alias.c b/libmultipath/alias.c
-index ac342a54..767800d0 100644
---- a/libmultipath/alias.c
-+++ b/libmultipath/alias.c
-@@ -183,7 +183,7 @@ lookup_binding(FILE *f, const char *map_wwid, char **map_alias,
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 2b046e1d..c23d525b 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -31,16 +31,58 @@ static int
+ set_int(vector strvec, void *ptr)
+ {
+ 	int *int_ptr = (int *)ptr;
+-	char * buff;
++	char *buff, *eptr;
++	long res;
++	int rc;
+ 
+ 	buff = set_value(strvec);
+ 	if (!buff)
+ 		return 1;
+ 
+-	*int_ptr = atoi(buff);
++	res = strtol(buff, &eptr, 10);
++	if (eptr > buff)
++		while (isspace(*eptr))
++			eptr++;
++	if (*buff == '\0' || *eptr != '\0' || res > INT_MAX || res < INT_MIN) {
++		condlog(1, "%s: invalid value for %s: \"%s\"",
++			__func__, (char*)VECTOR_SLOT(strvec, 0), buff);
++		rc = 1;
++	} else {
++		rc = 0;
++		*int_ptr = res;
++	}
+ 
+ 	FREE(buff);
+-	return 0;
++	return rc;
++}
++
++static int
++set_uint(vector strvec, void *ptr)
++{
++	unsigned int *uint_ptr = (unsigned int *)ptr;
++	char *buff, *eptr;
++	long res;
++	int rc;
++
++	buff = set_value(strvec);
++	if (!buff)
++		return 1;
++
++	res = strtol(buff, &eptr, 10);
++	if (eptr > buff)
++		while (isspace(*eptr))
++			eptr++;
++	if (*buff == '\0' || *eptr != '\0' || res < 0 || res > UINT_MAX) {
++		condlog(1, "%s: invalid value for %s: \"%s\"",
++			__func__, (char*)VECTOR_SLOT(strvec, 0), buff);
++		rc = 1;
++	} else {
++		rc = 0;
++		*uint_ptr = res;
++	}
++
++	FREE(buff);
++	return rc;
  }
  
  static int
--rlookup_binding(FILE *f, char *buff, const char *map_alias, const char *prefix)
-+rlookup_binding(FILE *f, char *buff, const char *map_alias)
- {
- 	char line[LINE_MAX];
- 	unsigned int line_nr = 0;
-@@ -297,7 +297,7 @@ use_existing_alias (const char *wwid, const char *file, const char *alias_old,
- 	/* lookup the binding. if it exists, the wwid will be in buff
- 	 * either way, id contains the id for the alias
- 	 */
--	rlookup_binding(f, buff, alias_old, prefix);
-+	rlookup_binding(f, buff, alias_old);
- 
- 	if (strlen(buff) > 0) {
- 		/* if buff is our wwid, it's already
-@@ -412,7 +412,7 @@ get_user_friendly_wwid(const char *alias, char *buff, const char *file)
- 		return -1;
- 	}
- 
--	rlookup_binding(f, buff, alias, NULL);
-+	rlookup_binding(f, buff, alias);
- 	if (!strlen(buff)) {
- 		fclose(f);
- 		return -1;
 -- 
 2.23.0
