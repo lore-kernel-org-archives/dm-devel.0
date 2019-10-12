@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 42/72] multipath-tools: Makefile.inc: remove
- -Wno-unused-parameter
-Date: Sat, 12 Oct 2019 21:28:29 +0000
-Message-ID: <20191012212703.12989-43-martin.wilck@suse.com>
+Subject: [PATCH 38/72] multipathd: use -Wno-unused-parameter for
+ cli_handlers.c
+Date: Sat, 12 Oct 2019 21:28:24 +0000
+Message-ID: <20191012212703.12989-39-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,25 +25,26 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-All warnings have been eliminated now.
+This file contains many handlers that don't use all their arguments.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- Makefile.inc | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipathd/Makefile | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index 56c3eda0..da9a3d7d 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -93,7 +93,7 @@ ERROR_DISCARDED_QUALIFIERS := $(call TEST_CC_OPTION,-Werror=discarded-qualifiers
+diff --git a/multipathd/Makefile b/multipathd/Makefile
+index d1a98637..8d901178 100644
+--- a/multipathd/Makefile
++++ b/multipathd/Makefile
+@@ -36,6 +36,9 @@ $(EXEC): $(OBJS) $(multipathdir)/libmultipath.so $(mpathcmddir)/libmpathcmd.so
+ 	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(EXEC) $(LIBDEPS)
+ 	$(GZIP) $(EXEC).8 > $(EXEC).8.gz
  
- OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
- 		  -Werror=implicit-function-declaration -Werror=format-security \
--		  -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered \
-+		  -Wno-sign-compare -Wno-clobbered \
- 		  -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS) \
- 		  -Wp,-D_FORTIFY_SOURCE=2 $(STACKPROT) \
- 		  --param=ssp-buffer-size=4
++cli_handlers.o:	cli_handlers.c
++	$(CC) $(CFLAGS) -Wno-unused-parameter -c -o $@ $<
++
+ install:
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(bindir)
+ 	$(INSTALL_PROGRAM) -m 755 $(EXEC) $(DESTDIR)$(bindir)
 -- 
 2.23.0
