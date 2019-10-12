@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 31/72] kpartx: gpt: remove unused arg in
-	read_lastoddsector()
-Date: Sat, 12 Oct 2019 21:28:16 +0000
-Message-ID: <20191012212703.12989-32-martin.wilck@suse.com>
+Subject: [PATCH 35/72] libmultipath:
+ snprint_multipath_map_json(): remove unused argument
+Date: Sat, 12 Oct 2019 21:28:20 +0000
+Message-ID: <20191012212703.12989-36-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -27,30 +27,51 @@ From: Martin Wilck <mwilck@suse.com>
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/gpt.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/print.c      | 4 ++--
+ libmultipath/print.h      | 2 +-
+ multipathd/cli_handlers.c | 2 +-
+ 3 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/kpartx/gpt.c b/kpartx/gpt.c
-index e31611a3..f3216ba2 100644
---- a/kpartx/gpt.c
-+++ b/kpartx/gpt.c
-@@ -182,7 +182,7 @@ last_lba(int filedes)
- 
- 
- static ssize_t
--read_lastoddsector(int fd, uint64_t lba, void *buffer, size_t count)
-+read_lastoddsector(int fd, void *buffer, size_t count)
- {
- 	int rc;
- 	struct blkdev_ioctl_param ioctl_param;
-@@ -221,7 +221,7 @@ read_lba(int fd, uint64_t lba, void *buffer, size_t bytes)
- 	   one sector, so we don't have to be fancy.
- 	*/
- 	if (!bytesread && !(lastlba & 1) && lba == lastlba) {
--		bytesread = read_lastoddsector(fd, lba, buffer, bytes);
-+		bytesread = read_lastoddsector(fd, buffer, bytes);
- 	}
- 	return bytesread;
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 74c0d62d..8fa86267 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -1339,8 +1339,8 @@ snprint_multipath_fields_json (char * buff, int len,
  }
+ 
+ int
+-snprint_multipath_map_json (char * buff, int len,
+-		const struct multipath * mpp, int last){
++snprint_multipath_map_json (char * buff, int len, const struct multipath * mpp)
++{
+ 	int fwd = 0;
+ 
+ 	fwd +=  snprint_json_header(buff, len);
+diff --git a/libmultipath/print.h b/libmultipath/print.h
+index 7e36ec63..0c909e75 100644
+--- a/libmultipath/print.h
++++ b/libmultipath/print.h
+@@ -125,7 +125,7 @@ char *snprint_config(const struct config *conf, int *len,
+ 		     const struct _vector *hwtable,
+ 		     const struct _vector *mpvec);
+ int snprint_multipath_map_json (char * buff, int len,
+-				const struct multipath * mpp, int last);
++				const struct multipath * mpp);
+ int snprint_blacklist_report (struct config *, char *, int);
+ int snprint_wildcards (char *, int);
+ int snprint_status (char *, int, const struct vectors *);
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 8a899049..371b0a79 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -237,7 +237,7 @@ show_map_json (char ** r, int * len, struct multipath * mpp,
+ 
+ 		c = reply;
+ 
+-		c += snprint_multipath_map_json(c, maxlen, mpp, 1);
++		c += snprint_multipath_map_json(c, maxlen, mpp);
+ 		again = ((c - reply) == maxlen);
+ 
+ 		REALLOC_REPLY(reply, again, maxlen);
 -- 
 2.23.0
