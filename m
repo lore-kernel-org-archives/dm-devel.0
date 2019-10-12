@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 03/72] libmultipath: alias.c: constify function
-	arguments
-Date: Sat, 12 Oct 2019 21:27:40 +0000
-Message-ID: <20191012212703.12989-4-martin.wilck@suse.com>
+Subject: [PATCH 07/72] libmultipath: lookup_binding(): don't rely
+ on int overflow
+Date: Sat, 12 Oct 2019 21:27:45 +0000
+Message-ID: <20191012212703.12989-8-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,143 +25,103 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+lookup_binding() would return a negative result and issue an error
+message if variable "id" became negative. But id is only incremented,
+starting from 1. Relying on an int overflow is wrong, because the result
+is undefined behavior in C. Also, an overflow might as well (actually, more
+likely) occur if biggest_id == INT_MAX.
+
+Also, lookup_binding() would return 0 both in an error case and if a
+matching wwid was found. While the two cases could be distinguished
+by checking if *map_alias was NULL after return, this is highly
+non-standard and confusing. Return -1 in error case.
+
+Because of the semantics of lookup_binding(), the test for "id" before calling
+allocate_binding() in get_user_friendly_alias() is redundant.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/alias.c | 29 ++++++++++++++++-------------
- libmultipath/alias.h | 12 +++++++-----
- 2 files changed, 23 insertions(+), 18 deletions(-)
+ libmultipath/alias.c | 41 ++++++++++++++++++++++++++++++-----------
+ 1 file changed, 30 insertions(+), 11 deletions(-)
 
 diff --git a/libmultipath/alias.c b/libmultipath/alias.c
-index fd6b7f91..5b05ff69 100644
+index a96ba5cc..ac342a54 100644
 --- a/libmultipath/alias.c
 +++ b/libmultipath/alias.c
-@@ -37,7 +37,7 @@
-  */
+@@ -104,6 +104,13 @@ scan_devname(const char *alias, const char *prefix)
+ 	return n;
+ }
  
- int
--valid_alias(char *alias)
-+valid_alias(const char *alias)
- {
- 	if (strchr(alias, '/') != NULL)
- 		return 0;
-@@ -46,7 +46,7 @@ valid_alias(char *alias)
- 
++/*
++ * Returns: 0   if matching entry in WWIDs file found
++ *         -1   if an error occurs
++ *         >0   a free ID that could be used for the WWID at hand
++ * *map_alias is set to a freshly allocated string with the matching alias if
++ * the function returns 0, or to NULL otherwise.
++ */
+ static int
+ lookup_binding(FILE *f, const char *map_wwid, char **map_alias,
+ 	       const char *prefix)
+@@ -130,8 +137,14 @@ lookup_binding(FILE *f, const char *map_wwid, char **map_alias,
+ 		if (!alias) /* blank line */
+ 			continue;
+ 		curr_id = scan_devname(alias, prefix);
+-		if (curr_id == id)
+-			id++;
++		if (curr_id == id) {
++			if (id < INT_MAX)
++				id++;
++			else {
++				id = -1;
++				break;
++			}
++		}
+ 		if (curr_id > biggest_id)
+ 			biggest_id = curr_id;
+ 		if (curr_id > id && curr_id < smallest_bigger_id)
+@@ -147,20 +160,26 @@ lookup_binding(FILE *f, const char *map_wwid, char **map_alias,
+ 			condlog(3, "Found matching wwid [%s] in bindings file."
+ 				" Setting alias to %s", wwid, alias);
+ 			*map_alias = strdup(alias);
+-			if (*map_alias == NULL)
++			if (*map_alias == NULL) {
+ 				condlog(0, "Cannot copy alias from bindings "
+-					"file : %s", strerror(errno));
++					"file: out of memory");
++				return -1;
++			}
+ 			return 0;
+ 		}
+ 	}
+-	condlog(3, "No matching wwid [%s] in bindings file.", map_wwid);
++	if (id >= smallest_bigger_id) {
++		if (biggest_id < INT_MAX)
++			id = biggest_id + 1;
++		else
++			id = -1;
++	}
+ 	if (id < 0) {
+ 		condlog(0, "no more available user_friendly_names");
+-		return 0;
+-	}
+-	if (id < smallest_bigger_id)
+-		return id;
+-	return biggest_id + 1;
++		return -1;
++	} else
++		condlog(3, "No matching wwid [%s] in bindings file.", map_wwid);
++	return id;
+ }
  
  static int
--format_devname(char *name, int id, int len, char *prefix)
-+format_devname(char *name, int id, int len, const char *prefix)
- {
- 	int pos;
- 	int prefix_len = strlen(prefix);
-@@ -66,9 +66,9 @@ format_devname(char *name, int id, int len, char *prefix)
- }
+@@ -363,7 +382,7 @@ get_user_friendly_alias(const char *wwid, const char *file, const char *prefix,
+ 		return NULL;
+ 	}
  
- static int
--scan_devname(char *alias, char *prefix)
-+scan_devname(const char *alias, const char *prefix)
- {
--	char *c;
-+	const char *c;
- 	int i, n = 0;
+-	if (!alias && can_write && !bindings_read_only && id)
++	if (can_write && !bindings_read_only && !alias)
+ 		alias = allocate_binding(fd, wwid, id, prefix);
  
- 	if (!prefix || strncmp(alias, prefix, strlen(prefix)))
-@@ -97,7 +97,8 @@ scan_devname(char *alias, char *prefix)
- }
- 
- static int
--lookup_binding(FILE *f, char *map_wwid, char **map_alias, char *prefix)
-+lookup_binding(FILE *f, const char *map_wwid, char **map_alias,
-+	       const char *prefix)
- {
- 	char buf[LINE_MAX];
- 	unsigned int line_nr = 0;
-@@ -109,7 +110,8 @@ lookup_binding(FILE *f, char *map_wwid, char **map_alias, char *prefix)
- 
- 	rewind(f);
- 	while (fgets(buf, LINE_MAX, f)) {
--		char *c, *alias, *wwid;
-+		const char *alias, *wwid;
-+		char *c;
- 		int curr_id;
- 
- 		line_nr++;
-@@ -154,7 +156,7 @@ lookup_binding(FILE *f, char *map_wwid, char **map_alias, char *prefix)
- }
- 
- static int
--rlookup_binding(FILE *f, char *buff, char *map_alias, char *prefix)
-+rlookup_binding(FILE *f, char *buff, const char *map_alias, const char *prefix)
- {
- 	char line[LINE_MAX];
- 	unsigned int line_nr = 0;
-@@ -162,7 +164,8 @@ rlookup_binding(FILE *f, char *buff, char *map_alias, char *prefix)
- 	buff[0] = '\0';
- 
- 	while (fgets(line, LINE_MAX, f)) {
--		char *c, *alias, *wwid;
-+		char *c;
-+		const char *alias, *wwid;
- 
- 		line_nr++;
- 		c = strpbrk(line, "#\n\r");
-@@ -197,7 +200,7 @@ rlookup_binding(FILE *f, char *buff, char *map_alias, char *prefix)
- }
- 
- static char *
--allocate_binding(int fd, char *wwid, int id, char *prefix)
-+allocate_binding(int fd, const char *wwid, int id, const char *prefix)
- {
- 	char buf[LINE_MAX];
- 	off_t offset;
-@@ -243,8 +246,8 @@ allocate_binding(int fd, char *wwid, int id, char *prefix)
- }
- 
- char *
--use_existing_alias (char *wwid, char *file, char *alias_old,
--		char *prefix, int bindings_read_only)
-+use_existing_alias (const char *wwid, const char *file, const char *alias_old,
-+		    const char *prefix, int bindings_read_only)
- {
- 	char *alias = NULL;
- 	int id = 0;
-@@ -311,7 +314,7 @@ out:
- }
- 
- char *
--get_user_friendly_alias(char *wwid, char *file, char *prefix,
-+get_user_friendly_alias(const char *wwid, const char *file, const char *prefix,
- 			int bindings_read_only)
- {
- 	char *alias;
-@@ -358,7 +361,7 @@ get_user_friendly_alias(char *wwid, char *file, char *prefix,
- }
- 
- int
--get_user_friendly_wwid(char *alias, char *buff, char *file)
-+get_user_friendly_wwid(const char *alias, char *buff, const char *file)
- {
- 	int fd, unused;
- 	FILE *f;
-diff --git a/libmultipath/alias.h b/libmultipath/alias.h
-index 95473ff9..7c4b302b 100644
---- a/libmultipath/alias.h
-+++ b/libmultipath/alias.h
-@@ -7,9 +7,11 @@
- "# alias wwid\n" \
- "#\n"
- 
--int valid_alias(char *alias);
--char *get_user_friendly_alias(char *wwid, char *file, char *prefix,
-+int valid_alias(const char *alias);
-+char *get_user_friendly_alias(const char *wwid, const char *file,
-+			      const char *prefix,
- 			      int bindings_readonly);
--int get_user_friendly_wwid(char *alias, char *buff, char *file);
--char *use_existing_alias (char *wwid, char *file, char *alias_old,
--		char *prefix, int bindings_read_only);
-+int get_user_friendly_wwid(const char *alias, char *buff, const char *file);
-+char *use_existing_alias (const char *wwid, const char *file,
-+			  const char *alias_old,
-+			  const char *prefix, int bindings_read_only);
+ 	fclose(f);
 -- 
 2.23.0
