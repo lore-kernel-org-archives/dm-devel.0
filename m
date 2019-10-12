@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 32/72] kpartx: mark unused arguments in ptreader
-	methods
-Date: Sat, 12 Oct 2019 21:28:17 +0000
-Message-ID: <20191012212703.12989-33-martin.wilck@suse.com>
+Subject: [PATCH 64/72] multipath tests: util: fix clang strlcpy
+	warnings
+Date: Sat, 12 Oct 2019 21:28:57 +0000
+Message-ID: <20191012212703.12989-65-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,69 +25,55 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+clang erroneously thought that we were using the size of the source
+for the destination, while they are equal. Trick it into accepting
+the code.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/dasd.c | 3 ++-
- kpartx/gpt.c  | 3 ++-
- kpartx/mac.c  | 3 ++-
- kpartx/ps3.c  | 3 ++-
- 4 files changed, 8 insertions(+), 4 deletions(-)
+ tests/util.c | 16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
 
-diff --git a/kpartx/dasd.c b/kpartx/dasd.c
-index 4e7e4743..4f3f744e 100644
---- a/kpartx/dasd.c
-+++ b/kpartx/dasd.c
-@@ -65,7 +65,8 @@ typedef unsigned int __attribute__((__may_alias__)) label_ints_t;
- /*
-  */
- int
--read_dasd_pt(int fd, struct slice all, struct slice *sp, int ns)
-+read_dasd_pt(int fd, __attribute__((unused)) struct slice all,
-+	     struct slice *sp, __attribute__((unused)) int ns)
+diff --git a/tests/util.c b/tests/util.c
+index 4e04a480..7c486fca 100644
+--- a/tests/util.c
++++ b/tests/util.c
+@@ -328,11 +328,12 @@ static void test_strlcpy_5(void **state)
  {
- 	int retval = -1;
- 	int blocksize;
-diff --git a/kpartx/gpt.c b/kpartx/gpt.c
-index f3216ba2..4f88d486 100644
---- a/kpartx/gpt.c
-+++ b/kpartx/gpt.c
-@@ -601,7 +601,8 @@ fail:
-  *
-  */
- int
--read_gpt_pt (int fd, struct slice all, struct slice *sp, int ns)
-+read_gpt_pt (int fd, __attribute__((unused)) struct slice all,
-+	     struct slice *sp, int ns)
- {
- 	gpt_header *gpt = NULL;
- 	gpt_entry *ptes = NULL;
-diff --git a/kpartx/mac.c b/kpartx/mac.c
-index 6e82c95e..6aeac4e9 100644
---- a/kpartx/mac.c
-+++ b/kpartx/mac.c
-@@ -5,7 +5,8 @@
- #include "mac.h"
+ 	char *tst;
+ 	int rc;
++	const int sz = sizeof(src_str);
  
- int
--read_mac_pt(int fd, struct slice all, struct slice *sp, int ns) {
-+read_mac_pt(int fd, __attribute__((unused)) struct slice all,
-+	    struct slice *sp, int ns) {
- 	struct mac_driver_desc *md;
- 	struct mac_partition *part;
- 	unsigned secsize;
-diff --git a/kpartx/ps3.c b/kpartx/ps3.c
-index 84550978..2cf4ffa2 100644
---- a/kpartx/ps3.c
-+++ b/kpartx/ps3.c
-@@ -48,7 +48,8 @@ read_disklabel(int fd, struct disklabel *label) {
+-	tst = malloc(sizeof(src_str));
++	tst = malloc(sz);
+ 	memset(tst, 'f', sizeof(src_str));
+ 
+-	rc = strlcpy(tst, src_str, sizeof(src_str));
++	rc = strlcpy(tst, src_str, sz);
+ 	assert_int_equal(rc, strlen(src_str));
+ 	assert_string_equal(src_str, tst);
+ 
+@@ -344,15 +345,16 @@ static void test_strlcpy_6(void **state)
+ {
+ 	char *tst;
+ 	int rc;
++	const int sz = sizeof(src_str);
+ 
+-	tst = malloc(sizeof(src_str) + 2);
+-	memset(tst, 'f', sizeof(src_str) + 2);
++	tst = malloc(sz + 2);
++	memset(tst, 'f', sz + 2);
+ 
+-	rc = strlcpy(tst, src_str, sizeof(src_str) + 2);
++	rc = strlcpy(tst, src_str, sz + 2);
+ 	assert_int_equal(rc, strlen(src_str));
+ 	assert_string_equal(src_str, tst);
+-	assert_int_equal(tst[sizeof(src_str)], 'f');
+-	assert_int_equal(tst[sizeof(src_str) + 1], 'f');
++	assert_int_equal(tst[sz], 'f');
++	assert_int_equal(tst[sz + 1], 'f');
+ 
+ 	free(tst);
  }
- 
- int
--read_ps3_pt(int fd, struct slice all, struct slice *sp, int ns) {
-+read_ps3_pt(int fd, __attribute__((unused)) struct slice all,
-+	    struct slice *sp, __attribute__((unused)) int ns) {
- 	struct disklabel label;
- 	int n = 0;
- 	int i;
 -- 
 2.23.0
