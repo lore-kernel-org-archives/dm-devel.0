@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 15/72] libmultipath: path_discovery: handle
-	libudev errors
-Date: Sat, 12 Oct 2019 21:27:55 +0000
-Message-ID: <20191012212703.12989-16-martin.wilck@suse.com>
+Subject: [PATCH 27/72] libmultipath: hp_sw: remove usused
+	argument in do_inq()
+Date: Sat, 12 Oct 2019 21:28:11 +0000
+Message-ID: <20191012212703.12989-28-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,53 +25,32 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-pass out if any libudev helpers return an error code.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 16 +++++++++++-----
- 1 file changed, 11 insertions(+), 5 deletions(-)
+ libmultipath/checkers/hp_sw.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 72f455e8..e68b0e9f 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -148,15 +148,19 @@ path_discovery (vector pathvec, int flag)
- 	struct udev_device *udevice;
- 	struct config *conf;
- 	const char *devpath;
--	int num_paths = 0, total_paths = 0;
-+	int num_paths = 0, total_paths = 0, ret;
+diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
+index 1a820223..eabfa93c 100644
+--- a/libmultipath/checkers/hp_sw.c
++++ b/libmultipath/checkers/hp_sw.c
+@@ -44,7 +44,7 @@ void libcheck_free (struct checker * c)
  
- 	udev_iter = udev_enumerate_new(udev);
- 	if (!udev_iter)
- 		return -ENOMEM;
+ static int
+ do_inq(int sg_fd, int cmddt, int evpd, unsigned int pg_op,
+-       void *resp, int mx_resp_len, int noisy, unsigned int timeout)
++       void *resp, int mx_resp_len, unsigned int timeout)
+ {
+ 	unsigned char inqCmdBlk[INQUIRY_CMDLEN] =
+ 		{ INQUIRY_CMD, 0, 0, 0, 0, 0 };
+@@ -130,7 +130,7 @@ do_tur (int fd, unsigned int timeout)
+ int libcheck_check(struct checker * c)
+ {
+ 	char buff[MX_ALLOC_LEN];
+-	int ret = do_inq(c->fd, 0, 1, 0x80, buff, MX_ALLOC_LEN, 0, c->timeout);
++	int ret = do_inq(c->fd, 0, 1, 0x80, buff, MX_ALLOC_LEN, c->timeout);
  
--	udev_enumerate_add_match_subsystem(udev_iter, "block");
--	udev_enumerate_add_match_is_initialized(udev_iter);
--	udev_enumerate_scan_devices(udev_iter);
-+	if (udev_enumerate_add_match_subsystem(udev_iter, "block") < 0 ||
-+	    udev_enumerate_add_match_is_initialized(udev_iter) < 0 ||
-+	    udev_enumerate_scan_devices(udev_iter) < 0) {
-+		condlog(1, "%s: error setting up udev_enumerate: %m", __func__);
-+		ret = -1;
-+		goto out;
-+	}
- 
- 	udev_list_entry_foreach(entry,
- 				udev_enumerate_get_list_entry(udev_iter)) {
-@@ -180,9 +184,11 @@ path_discovery (vector pathvec, int flag)
- 		}
- 		udev_device_unref(udevice);
- 	}
-+	ret = total_paths - num_paths;
-+out:
- 	udev_enumerate_unref(udev_iter);
- 	condlog(4, "Discovered %d/%d paths", num_paths, total_paths);
--	return (total_paths - num_paths);
-+	return ret;
- }
- 
- #define declare_sysfs_get_str(fname)					\
+ 	if (ret == PATH_WILD) {
+ 		c->msgid = CHECKER_MSGID_UNSUPPORTED;
 -- 
 2.23.0
