@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 29/72] multipathd: stop_waiter_thread(): removed
- unused parameter
-Date: Sat, 12 Oct 2019 21:28:13 +0000
-Message-ID: <20191012212703.12989-30-martin.wilck@suse.com>
+Subject: [PATCH 25/72] libmultipath: get_ana_info(): remove
+	unused parameter
+Date: Sat, 12 Oct 2019 21:28:08 +0000
+Message-ID: <20191012212703.12989-26-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -27,58 +27,30 @@ From: Martin Wilck <mwilck@suse.com>
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c   | 4 ++--
- multipathd/waiter.c | 2 +-
- multipathd/waiter.h | 2 +-
- 3 files changed, 4 insertions(+), 4 deletions(-)
+ libmultipath/prioritizers/ana.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index ef128a32..43ae42d4 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -377,7 +377,7 @@ remove_map_and_stop_waiter(struct multipath *mpp, struct vectors *vecs)
- 	 * so they don't need to be manually removed here */
- 	condlog(3, "%s: removing map from internal tables", mpp->alias);
- 	if (!poll_dmevents)
--		stop_waiter_thread(mpp, vecs);
-+		stop_waiter_thread(mpp);
- 	remove_map(mpp, vecs, PURGE_VEC);
+diff --git a/libmultipath/prioritizers/ana.c b/libmultipath/prioritizers/ana.c
+index 2673d9d9..bcb1dbf8 100644
+--- a/libmultipath/prioritizers/ana.c
++++ b/libmultipath/prioritizers/ana.c
+@@ -106,7 +106,7 @@ static int get_ana_state(__u32 nsid, __u32 anagrpid, void *ana_log,
+ 	return -ANA_ERR_GETANAS_NOTFOUND;
  }
  
-@@ -392,7 +392,7 @@ remove_maps_and_stop_waiters(struct vectors *vecs)
- 
- 	if (!poll_dmevents) {
- 		vector_foreach_slot(vecs->mpvec, mpp, i)
--			stop_waiter_thread(mpp, vecs);
-+			stop_waiter_thread(mpp);
- 	}
- 	else
- 		unwatch_all_dmevents();
-diff --git a/multipathd/waiter.c b/multipathd/waiter.c
-index eb8d6996..e6457663 100644
---- a/multipathd/waiter.c
-+++ b/multipathd/waiter.c
-@@ -49,7 +49,7 @@ static void free_waiter (void *data)
- 	FREE(wp);
- }
- 
--void stop_waiter_thread (struct multipath *mpp, struct vectors *vecs)
-+void stop_waiter_thread (struct multipath *mpp)
+-int get_ana_info(struct path * pp, unsigned int timeout)
++static int get_ana_info(struct path * pp)
  {
- 	pthread_t thread;
+ 	int	rc;
+ 	__u32 nsid;
+@@ -209,7 +209,7 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
+ 	if (pp->fd < 0)
+ 		rc = -ANA_ERR_NO_INFORMATION;
+ 	else
+-		rc = get_ana_info(pp, timeout);
++		rc = get_ana_info(pp);
  
-diff --git a/multipathd/waiter.h b/multipathd/waiter.h
-index 0cfae46f..28e0f6d5 100644
---- a/multipathd/waiter.h
-+++ b/multipathd/waiter.h
-@@ -11,7 +11,7 @@ struct event_thread {
- 	struct vectors *vecs;
- };
- 
--void stop_waiter_thread (struct multipath *mpp, struct vectors *vecs);
-+void stop_waiter_thread (struct multipath *mpp);
- int start_waiter_thread (struct multipath *mpp, struct vectors *vecs);
- 
- #endif /* _WAITER_H */
+ 	switch (rc) {
+ 	case NVME_ANA_OPTIMIZED:
 -- 
 2.23.0
