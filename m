@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 69/72] multipath tests: Makefile: fix "clean"
-	target
-Date: Sat, 12 Oct 2019 21:29:03 +0000
-Message-ID: <20191012212703.12989-70-martin.wilck@suse.com>
+Subject: [PATCH 71/72] multipath-tools: Makefile.inc: enable
+	-Werror
+Date: Sat, 12 Oct 2019 21:29:06 +0000
+Message-ID: <20191012212703.12989-72-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -27,21 +27,21 @@ From: Martin Wilck <mwilck@suse.com>
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/Makefile | 2 +-
+ Makefile.inc | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/tests/Makefile b/tests/Makefile
-index 60338f14..c70b8399 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -42,7 +42,7 @@ lib/libchecktur.so:
- OBJS = $(TESTS:%=%.o) test-lib.o
+diff --git a/Makefile.inc b/Makefile.inc
+index f309a274..59a36cd3 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -92,7 +92,7 @@ TEST_CC_OPTION = $(shell \
+ STACKPROT := $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)
+ ERROR_DISCARDED_QUALIFIERS := $(call TEST_CC_OPTION,-Werror=discarded-qualifiers,)
  
- clean: dep_clean
--	$(RM) $(TESTS:%=%-test) $(TESTS:%=%.out) $(OBJS)
-+	$(RM) $(TESTS:%=%-test) $(TESTS:%=%.out) $(OBJS) *.o.wrap
- 	$(RM) -rf lib
- 
- .SECONDARY: $(OBJS)
+-OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
++OPTFLAGS	= -O2 -g -pipe -Werror -Wall -Wextra -Wformat=2 -Werror=implicit-int \
+ 		  -Werror=implicit-function-declaration -Werror=format-security \
+ 		  -Wno-clobbered \
+ 		  -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS) \
 -- 
 2.23.0
