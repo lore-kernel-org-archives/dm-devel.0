@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 70/72] multipath tests: Makefile: avoid gcc 4.8
- missing initializers failure
-Date: Sat, 12 Oct 2019 21:29:04 +0000
-Message-ID: <20191012212703.12989-71-martin.wilck@suse.com>
+Subject: [PATCH 23/72] libmultipath: scsi_ioctl_pathinfo():
+ remove unused argument
+Date: Sat, 12 Oct 2019 21:28:06 +0000
+Message-ID: <20191012212703.12989-24-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,47 +25,32 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-With -Wmissing-field-initializers (implied by our current compiler flags),
-gcc 4.8 errors out if nested initializers are missing:
-
-struct A {
-       int a, b;
-};
-
-struct B {
-       struct A a;
-       int c;
-} b = { .a.a = 1; }
-
-Later gcc versions and clang accept it just fine.
-Add a test to tests/Makefile and use -Wno-missing-initializers if gcc 4.8
-behavior is detected.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/Makefile | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
+ libmultipath/discovery.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/tests/Makefile b/tests/Makefile
-index c70b8399..c9406e75 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -1,6 +1,15 @@
- include ../Makefile.inc
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index d217ca92..4d93c91b 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1571,7 +1571,7 @@ sysfs_pathinfo(struct path * pp, vector hwtable)
+ }
  
--CFLAGS += $(BIN_CFLAGS) -I$(multipathdir) -I$(mpathcmddir) -Wno-unused-parameter
-+# Test special behavior of gcc 4.8 with nested initializers
-+# gcc 4.8 compiles blacklist.c only with -Wno-missing-field-initializers
-+TEST_MISSING_INITIALIZERS = $(shell \
-+	echo 'struct A {int a, b;}; struct B {struct A a; int b;} b = {.a.a=1};' | \
-+		$(CC) -c -Werror -Wmissing-field-initializers -o /dev/null -xc - >/dev/null 2>&1 \
-+	|| echo -Wno-missing-field-initializers)
-+W_MISSING_INITIALIZERS := $(call TEST_MISSING_INITIALIZERS)
-+
-+CFLAGS += $(BIN_CFLAGS) -I$(multipathdir) -I$(mpathcmddir) \
-+	-Wno-unused-parameter $(W_MISSING_INITIALIZERS)
- LIBDEPS += -L$(multipathdir) -lmultipath -lcmocka
+ static void
+-scsi_ioctl_pathinfo (struct path * pp, struct config *conf, int mask)
++scsi_ioctl_pathinfo (struct path * pp, int mask)
+ {
+ 	struct udev_device *parent;
+ 	const char *attr_path = NULL;
+@@ -2050,7 +2050,7 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 		get_geometry(pp);
  
- TESTS := uevent parser util dmevents hwtable blacklist unaligned vpd pgpolicy alias
+ 	if (path_state == PATH_UP && pp->bus == SYSFS_BUS_SCSI)
+-		scsi_ioctl_pathinfo(pp, conf, mask);
++		scsi_ioctl_pathinfo(pp, mask);
+ 
+ 	if (pp->bus == SYSFS_BUS_CCISS && mask & DI_SERIAL)
+ 		cciss_ioctl_pathinfo(pp);
 -- 
 2.23.0
