@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 37/72] libmultipath: use -Wno-unused-parameter
-	for dict.c
-Date: Sat, 12 Oct 2019 21:28:23 +0000
-Message-ID: <20191012212703.12989-38-martin.wilck@suse.com>
+Subject: [PATCH 61/72] multipath tests: blacklist: remove
+ always-true condition
+Date: Sat, 12 Oct 2019 21:28:53 +0000
+Message-ID: <20191012212703.12989-62-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,29 +25,25 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This file contains just too many "handler" and "snprintf" methods
-which don't use every argument.
+clang warns about this (udev_device->property_list can't be NULL).
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/Makefile | 5 +++++
- 1 file changed, 5 insertions(+)
+ tests/blacklist.c | 2 --
+ 1 file changed, 2 deletions(-)
 
-diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-index a2be42ea..e5651e49 100644
---- a/libmultipath/Makefile
-+++ b/libmultipath/Makefile
-@@ -50,6 +50,11 @@ all: $(LIBS)
- nvme-lib.o: nvme-lib.c nvme-ioctl.c nvme-ioctl.h
- 	$(CC) $(CFLAGS) -Wno-unused-function -c -o $@ $<
- 
-+# there are lots of "unused parameters" in dict.c
-+# because not all handler / snprint methods nees all parameters
-+dict.o:	dict.c
-+	$(CC) $(CFLAGS) -Wno-unused-parameter -c -o $@ $<
-+
- make_static = $(shell sed '/^static/!s/^\([a-z]\{1,\} \)/static \1/' <$1 >$2)
- 
- nvme-ioctl.c: nvme/nvme-ioctl.c
+diff --git a/tests/blacklist.c b/tests/blacklist.c
+index 733ee398..6e7c1864 100644
+--- a/tests/blacklist.c
++++ b/tests/blacklist.c
+@@ -40,8 +40,6 @@ struct udev_list_entry *
+ __wrap_udev_device_get_properties_list_entry(struct udev_device *udev_device)
+ {
+ 	assert_non_null(udev_device);
+-	if (!udev_device->property_list)
+-		return NULL;
+ 	if (!*udev_device->property_list)
+ 		return NULL;
+ 	return (struct udev_list_entry *)udev_device->property_list;
 -- 
 2.23.0
