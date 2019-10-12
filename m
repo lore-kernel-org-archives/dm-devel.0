@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 25/72] libmultipath: get_ana_info(): remove
-	unused parameter
-Date: Sat, 12 Oct 2019 21:28:08 +0000
-Message-ID: <20191012212703.12989-26-martin.wilck@suse.com>
+Subject: [PATCH 58/72] multipath-tools: Makefile.inc: enable
+	-Wsign-compare
+Date: Sat, 12 Oct 2019 21:28:49 +0000
+Message-ID: <20191012212703.12989-59-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,32 +25,25 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+With the previous patches, there are no signedness warnings any more.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/prioritizers/ana.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ Makefile.inc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/prioritizers/ana.c b/libmultipath/prioritizers/ana.c
-index 2673d9d9..bcb1dbf8 100644
---- a/libmultipath/prioritizers/ana.c
-+++ b/libmultipath/prioritizers/ana.c
-@@ -106,7 +106,7 @@ static int get_ana_state(__u32 nsid, __u32 anagrpid, void *ana_log,
- 	return -ANA_ERR_GETANAS_NOTFOUND;
- }
+diff --git a/Makefile.inc b/Makefile.inc
+index da9a3d7d..0c800ab3 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -93,7 +93,7 @@ ERROR_DISCARDED_QUALIFIERS := $(call TEST_CC_OPTION,-Werror=discarded-qualifiers
  
--int get_ana_info(struct path * pp, unsigned int timeout)
-+static int get_ana_info(struct path * pp)
- {
- 	int	rc;
- 	__u32 nsid;
-@@ -209,7 +209,7 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
- 	if (pp->fd < 0)
- 		rc = -ANA_ERR_NO_INFORMATION;
- 	else
--		rc = get_ana_info(pp, timeout);
-+		rc = get_ana_info(pp);
- 
- 	switch (rc) {
- 	case NVME_ANA_OPTIMIZED:
+ OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
+ 		  -Werror=implicit-function-declaration -Werror=format-security \
+-		  -Wno-sign-compare -Wno-clobbered \
++		  -Wno-clobbered \
+ 		  -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS) \
+ 		  -Wp,-D_FORTIFY_SOURCE=2 $(STACKPROT) \
+ 		  --param=ssp-buffer-size=4
 -- 
 2.23.0
