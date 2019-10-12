@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 36/72] multipath: delegate_to_multipathd: mark
- unused arguments
-Date: Sat, 12 Oct 2019 21:28:22 +0000
-Message-ID: <20191012212703.12989-37-martin.wilck@suse.com>
+Subject: [PATCH 42/72] multipath-tools: Makefile.inc: remove
+ -Wno-unused-parameter
+Date: Sat, 12 Oct 2019 21:28:29 +0000
+Message-ID: <20191012212703.12989-43-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,29 +25,25 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-... for now.
+All warnings have been eliminated now.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/main.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ Makefile.inc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index b3f8c99b..c2ef8c7b 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -811,8 +811,10 @@ enum {
- 	NOT_DELEGATED = 1,
- };
+diff --git a/Makefile.inc b/Makefile.inc
+index 56c3eda0..da9a3d7d 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -93,7 +93,7 @@ ERROR_DISCARDED_QUALIFIERS := $(call TEST_CC_OPTION,-Werror=discarded-qualifiers
  
--int delegate_to_multipathd(enum mpath_cmds cmd, const char *dev,
--			   enum devtypes dev_type, const struct config *conf)
-+int delegate_to_multipathd(enum mpath_cmds cmd,
-+			   __attribute__((unused)) const char *dev,
-+			   __attribute__((unused)) enum devtypes dev_type,
-+			   const struct config *conf)
- {
- 	int fd;
- 	char command[1024], *p, *reply = NULL;
+ OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
+ 		  -Werror=implicit-function-declaration -Werror=format-security \
+-		  -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered \
++		  -Wno-sign-compare -Wno-clobbered \
+ 		  -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS) \
+ 		  -Wp,-D_FORTIFY_SOURCE=2 $(STACKPROT) \
+ 		  --param=ssp-buffer-size=4
 -- 
 2.23.0
