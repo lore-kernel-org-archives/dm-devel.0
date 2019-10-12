@@ -1,7 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 43/72] libmultipath: dev_loss_tmo is unsigned
-Date: Sat, 12 Oct 2019 21:28:31 +0000
-Message-ID: <20191012212703.12989-44-martin.wilck@suse.com>
+Subject: [PATCH 59/72] libdmmp: fix clang -Wformat-nonliteral
+	warnings
+Date: Sat, 12 Oct 2019 21:28:50 +0000
+Message-ID: <20191012212703.12989-60-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,77 +25,44 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Make MAX_DEV_LOSS_TMO reflect the fact that the kernel supports
-timeouts up to UINT_MAX, and fix comparisons in discovery.c.
+clang enables -Wformat-nonliteral with our compiler flags, and
+thus needs these format(printf, ...) attributes.
 
-Cc: Hannes Reinecke <hare@suse.de>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/defaults.h  |  4 +++-
- libmultipath/discovery.c | 13 ++++++++-----
- 2 files changed, 11 insertions(+), 6 deletions(-)
+ libdmmp/libdmmp_private.h | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index 4dfe007c..d7034655 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -1,5 +1,7 @@
- #ifndef _DEFAULTS_H
- #define _DEFAULTS_H
-+#include <limits.h>
-+
- /*
-  * If you add or modify a value also update multipath/multipath.conf.5
-  * and the TEMPLATE in libmultipath/hwtable.c
-@@ -55,7 +57,7 @@
- #define DEFAULT_CHECKINT	5
- #define MAX_CHECKINT(a)		(a << 2)
+diff --git a/libdmmp/libdmmp_private.h b/libdmmp/libdmmp_private.h
+index 3e813cb4..ac85b63f 100644
+--- a/libdmmp/libdmmp_private.h
++++ b/libdmmp/libdmmp_private.h
+@@ -131,13 +131,15 @@ DMMP_DLL_LOCAL void _dmmp_path_free(struct dmmp_path *dmmp_p);
+ DMMP_DLL_LOCAL void _dmmp_log(struct dmmp_context *ctx, int priority,
+ 			      const char *file, int line,
+ 			      const char *func_name,
+-			      const char *format, ...);
++			      const char *format, ...)
++	__attribute__((format(printf, 6, 7)));
+ DMMP_DLL_LOCAL void _dmmp_log_err_str(struct dmmp_context *ctx, int rc);
  
--#define MAX_DEV_LOSS_TMO	0x7FFFFFFF
-+#define MAX_DEV_LOSS_TMO	UINT_MAX
- #define DEFAULT_PIDFILE		"/" RUN_DIR "/multipathd.pid"
- #define DEFAULT_SOCKET		"/org/kernel/linux/storage/multipathd"
- #define DEFAULT_CONFIGFILE	"/etc/multipath.conf"
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 4d93c91b..5fbc2ac7 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -624,9 +624,10 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 	    mpp->fast_io_fail != MP_FAST_IO_FAIL_ZERO &&
- 	    mpp->fast_io_fail != MP_FAST_IO_FAIL_OFF) {
- 		/* Check if we need to temporarily increase dev_loss_tmo */
--		if (mpp->fast_io_fail >= tmo) {
-+		if ((unsigned int)mpp->fast_io_fail >= tmo) {
- 			/* Increase dev_loss_tmo temporarily */
--			snprintf(value, 16, "%u", mpp->fast_io_fail + 1);
-+			snprintf(value, sizeof(value), "%u",
-+				 (unsigned int)mpp->fast_io_fail + 1);
- 			ret = sysfs_attr_set_value(rport_dev, "dev_loss_tmo",
- 						   value, strlen(value));
- 			if (ret <= 0) {
-@@ -757,10 +758,11 @@ sysfs_set_scsi_tmo (struct multipath *mpp, int checkint)
- {
- 	struct path *pp;
- 	int i;
--	int dev_loss_tmo = mpp->dev_loss;
-+	unsigned int dev_loss_tmo = mpp->dev_loss;
+ DMMP_DLL_LOCAL void _dmmp_log_stderr(struct dmmp_context *ctx, int priority,
+ 				     const char *file, int line,
+ 				     const char *func_name, const char *format,
+-				     va_list args);
++				     va_list args)
++	__attribute__((format(printf, 6, 0)));
  
- 	if (mpp->no_path_retry > 0) {
--		uint64_t no_path_retry_tmo = (uint64_t)mpp->no_path_retry * checkint;
-+		uint64_t no_path_retry_tmo =
-+			(uint64_t)mpp->no_path_retry * checkint;
  
- 		if (no_path_retry_tmo > MAX_DEV_LOSS_TMO)
- 			no_path_retry_tmo = MAX_DEV_LOSS_TMO;
-@@ -774,7 +776,8 @@ sysfs_set_scsi_tmo (struct multipath *mpp, int checkint)
- 			mpp->alias, dev_loss_tmo);
- 	}
- 	mpp->dev_loss = dev_loss_tmo;
--	if (mpp->dev_loss && mpp->fast_io_fail >= (int)mpp->dev_loss) {
-+	if (mpp->dev_loss && mpp->fast_io_fail > 0 &&
-+	    (unsigned int)mpp->fast_io_fail >= mpp->dev_loss) {
- 		condlog(3, "%s: turning off fast_io_fail (%d is not smaller than dev_loss_tmo)",
- 			mpp->alias, mpp->fast_io_fail);
- 		mpp->fast_io_fail = MP_FAST_IO_FAIL_OFF;
+ #define _dmmp_log_cond(ctx, prio, arg...) \
+@@ -164,7 +166,7 @@ DMMP_DLL_LOCAL void _dmmp_log_stderr(struct dmmp_context *ctx, int priority,
+ 	do { \
+ 		if (ptr == NULL) { \
+ 			rc = DMMP_ERR_NO_MEMORY; \
+-			_error(ctx, dmmp_strerror(rc)); \
++			_error(ctx, "%s", dmmp_strerror(rc));	\
+ 			goto goto_out; \
+ 		} \
+ 	} while(0)
 -- 
 2.23.0
