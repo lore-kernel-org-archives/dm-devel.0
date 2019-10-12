@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 20/72] libmultipath: _init_foreign(): fix
-	possible memory leak
-Date: Sat, 12 Oct 2019 21:28:02 +0000
-Message-ID: <20191012212703.12989-21-martin.wilck@suse.com>
+Subject: [PATCH 32/72] kpartx: mark unused arguments in ptreader
+	methods
+Date: Sat, 12 Oct 2019 21:28:17 +0000
+Message-ID: <20191012212703.12989-33-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,57 +25,69 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-free_pre() wasn't called if scandir() failed. Fix it.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/foreign.c | 16 +++++++++-------
- 1 file changed, 9 insertions(+), 7 deletions(-)
+ kpartx/dasd.c | 3 ++-
+ kpartx/gpt.c  | 3 ++-
+ kpartx/mac.c  | 3 ++-
+ kpartx/ps3.c  | 3 ++-
+ 4 files changed, 8 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
-index 4b34e141..9ef8ad19 100644
---- a/libmultipath/foreign.c
-+++ b/libmultipath/foreign.c
-@@ -148,7 +148,7 @@ static int _init_foreign(const char *multipath_dir, const char *enable)
- 			(void)regerror(r, enable_re, errbuf, sizeof(errbuf));
- 			condlog (2, "%s: error compiling enable_foreign = \"%s\": \"%s\"",
- 				 __func__, str, errbuf);
--			free_pre(&enable_re);
-+			goto out_free_pre;
- 		}
- 	}
+diff --git a/kpartx/dasd.c b/kpartx/dasd.c
+index 4e7e4743..4f3f744e 100644
+--- a/kpartx/dasd.c
++++ b/kpartx/dasd.c
+@@ -65,7 +65,8 @@ typedef unsigned int __attribute__((__may_alias__)) label_ints_t;
+ /*
+  */
+ int
+-read_dasd_pt(int fd, struct slice all, struct slice *sp, int ns)
++read_dasd_pt(int fd, __attribute__((unused)) struct slice all,
++	     struct slice *sp, __attribute__((unused)) int ns)
+ {
+ 	int retval = -1;
+ 	int blocksize;
+diff --git a/kpartx/gpt.c b/kpartx/gpt.c
+index f3216ba2..4f88d486 100644
+--- a/kpartx/gpt.c
++++ b/kpartx/gpt.c
+@@ -601,7 +601,8 @@ fail:
+  *
+  */
+ int
+-read_gpt_pt (int fd, struct slice all, struct slice *sp, int ns)
++read_gpt_pt (int fd, __attribute__((unused)) struct slice all,
++	     struct slice *sp, int ns)
+ {
+ 	gpt_header *gpt = NULL;
+ 	gpt_entry *ptes = NULL;
+diff --git a/kpartx/mac.c b/kpartx/mac.c
+index 6e82c95e..6aeac4e9 100644
+--- a/kpartx/mac.c
++++ b/kpartx/mac.c
+@@ -5,7 +5,8 @@
+ #include "mac.h"
  
-@@ -157,13 +157,13 @@ static int _init_foreign(const char *multipath_dir, const char *enable)
- 	if (r == 0) {
- 		condlog(3, "%s: no foreign multipath libraries found",
- 			__func__);
--		return 0;
-+		goto out_free_pre;
- 	} else if (r < 0) {
--		r = errno;
--		condlog(1, "%s: error %d scanning foreign multipath libraries",
--			__func__, r);
-+		r = -errno;
-+		condlog(1, "%s: error scanning foreign multipath libraries: %m",
-+			__func__);
- 		_cleanup_foreign();
--		return -r;
-+		goto out_free_pre;
- 	}
- 
- 	sr.di = di;
-@@ -249,9 +249,11 @@ static int _init_foreign(const char *multipath_dir, const char *enable)
- 	dl_err:
- 		free_foreign(fgn);
- 	}
-+	r = 0;
- 	pthread_cleanup_pop(1); /* free_scandir_result */
-+out_free_pre:
- 	pthread_cleanup_pop(1); /* free_pre */
--	return 0;
-+	return r;
+ int
+-read_mac_pt(int fd, struct slice all, struct slice *sp, int ns) {
++read_mac_pt(int fd, __attribute__((unused)) struct slice all,
++	    struct slice *sp, int ns) {
+ 	struct mac_driver_desc *md;
+ 	struct mac_partition *part;
+ 	unsigned secsize;
+diff --git a/kpartx/ps3.c b/kpartx/ps3.c
+index 84550978..2cf4ffa2 100644
+--- a/kpartx/ps3.c
++++ b/kpartx/ps3.c
+@@ -48,7 +48,8 @@ read_disklabel(int fd, struct disklabel *label) {
  }
  
- int init_foreign(const char *multipath_dir, const char *enable)
+ int
+-read_ps3_pt(int fd, struct slice all, struct slice *sp, int ns) {
++read_ps3_pt(int fd, __attribute__((unused)) struct slice all,
++	    struct slice *sp, __attribute__((unused)) int ns) {
+ 	struct disklabel label;
+ 	int n = 0;
+ 	int i;
 -- 
 2.23.0
