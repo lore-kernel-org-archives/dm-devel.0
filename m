@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 16/72] libmultipath: make path_discovery()
- pthread_cancel()-safe
-Date: Sat, 12 Oct 2019 21:27:57 +0000
-Message-ID: <20191012212703.12989-17-martin.wilck@suse.com>
+Subject: [PATCH 12/72] multipath tests: alias: add format/scan
+	test
+Date: Sat, 12 Oct 2019 21:27:52 +0000
+Message-ID: <20191012212703.12989-13-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,104 +25,60 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-The udev_enumerate and udev_device refs wouldn't be released
-if the thread was cancelled. Fix it.
+Test scan_devname(format_devname(id)) == id.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 51 +++++++++++++++++++++++++++++++---------
- 1 file changed, 40 insertions(+), 11 deletions(-)
+ tests/alias.c | 30 ++++++++++++++++++++++++++++++
+ 1 file changed, 30 insertions(+)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index e68b0e9f..d217ca92 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -140,19 +140,47 @@ path_discover (vector pathvec, struct config * conf,
- 	return pathinfo(pp, conf, flag);
+diff --git a/tests/alias.c b/tests/alias.c
+index 170ebbeb..30414db0 100644
+--- a/tests/alias.c
++++ b/tests/alias.c
+@@ -297,6 +297,34 @@ static void sd_max_p1(void **state)
  }
+ #endif
  
-+static void cleanup_udev_enumerate_ptr(void *arg)
++static void sd_fd_many(void **state)
 +{
-+	struct udev_enumerate *ue;
++	char buf[32];
++	int rc, i;
 +
-+	if (!arg)
-+		return;
-+	ue = *((struct udev_enumerate**) arg);
-+	if (ue)
-+		(void)udev_enumerate_unref(ue);
-+}
-+
-+static void cleanup_udev_device_ptr(void *arg)
-+{
-+	struct udev_device *ud;
-+
-+	if (!arg)
-+		return;
-+	ud = *((struct udev_device**) arg);
-+	if (ud)
-+		(void)udev_device_unref(ud);
-+}
-+
- int
- path_discovery (vector pathvec, int flag)
- {
--	struct udev_enumerate *udev_iter;
-+	struct udev_enumerate *udev_iter = NULL;
- 	struct udev_list_entry *entry;
--	struct udev_device *udevice;
-+	struct udev_device *udevice = NULL;
- 	struct config *conf;
--	const char *devpath;
- 	int num_paths = 0, total_paths = 0, ret;
- 
-+	pthread_cleanup_push(cleanup_udev_enumerate_ptr, &udev_iter);
-+	pthread_cleanup_push(cleanup_udev_device_ptr, &udevice);
-+	conf = get_multipath_config();
-+	pthread_cleanup_push(put_multipath_config, conf);
-+
- 	udev_iter = udev_enumerate_new(udev);
--	if (!udev_iter)
--		return -ENOMEM;
-+	if (!udev_iter) {
-+		ret = -ENOMEM;
-+		goto out;
++	for (i = 1; i < 5000; i++) {
++		rc = format_devname(buf, i, sizeof(buf), "MPATH");
++		assert_in_range(rc, 6, 8);
++		rc = scan_devname(buf, "MPATH");
++		assert_int_equal(rc, i);
 +	}
- 
- 	if (udev_enumerate_add_match_subsystem(udev_iter, "block") < 0 ||
- 	    udev_enumerate_add_match_is_initialized(udev_iter) < 0 ||
-@@ -165,6 +193,8 @@ path_discovery (vector pathvec, int flag)
- 	udev_list_entry_foreach(entry,
- 				udev_enumerate_get_list_entry(udev_iter)) {
- 		const char *devtype;
-+		const char *devpath;
++}
 +
- 		devpath = udev_list_entry_get_name(entry);
- 		condlog(4, "Discover device %s", devpath);
- 		udevice = udev_device_new_from_syspath(udev, devpath);
-@@ -175,19 +205,18 @@ path_discovery (vector pathvec, int flag)
- 		devtype = udev_device_get_devtype(udevice);
- 		if(devtype && !strncmp(devtype, "disk", 4)) {
- 			total_paths++;
--			conf = get_multipath_config();
--			pthread_cleanup_push(put_multipath_config, conf);
- 			if (path_discover(pathvec, conf,
- 					  udevice, flag) == PATHINFO_OK)
- 				num_paths++;
--			pthread_cleanup_pop(1);
- 		}
--		udev_device_unref(udevice);
-+		udevice = udev_device_unref(udevice);
- 	}
- 	ret = total_paths - num_paths;
--out:
--	udev_enumerate_unref(udev_iter);
- 	condlog(4, "Discovered %d/%d paths", num_paths, total_paths);
-+out:
-+	pthread_cleanup_pop(1);
-+	pthread_cleanup_pop(1);
-+	pthread_cleanup_pop(1);
- 	return ret;
- }
++static void sd_fd_random(void **state)
++{
++	char buf[32];
++	int rc, i, n;
++
++	srandom(1);
++	for (i = 1; i < 1000; i++) {
++		n = random() & 0xffff;
++		rc = format_devname(buf, n, sizeof(buf), "MPATH");
++		assert_in_range(rc, 6, 9);
++		rc = scan_devname(buf, "MPATH");
++		assert_int_equal(rc, n);
++	}
++}
++
+ static int test_scan_devname(void)
+ {
+ 	const struct CMUnitTest tests[] = {
+@@ -314,6 +342,8 @@ static int test_scan_devname(void)
+ 		cmocka_unit_test(sd_max),
+ 		cmocka_unit_test(sd_max_p1),
+ #endif
++		cmocka_unit_test(sd_fd_many),
++		cmocka_unit_test(sd_fd_random),
+ 	};
  
+ 	return cmocka_run_group_tests(tests, NULL, NULL);
 -- 
 2.23.0
