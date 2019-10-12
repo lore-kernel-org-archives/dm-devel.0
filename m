@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 18/72] libmultipath: replace_wwids(): fix
-	possible fd leak
-Date: Sat, 12 Oct 2019 21:27:59 +0000
-Message-ID: <20191012212703.12989-19-martin.wilck@suse.com>
+Subject: [PATCH 05/72] libmultipath: format_devname: avoid buffer
+	overflow
+Date: Sat, 12 Oct 2019 21:27:43 +0000
+Message-ID: <20191012212703.12989-6-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,52 +25,58 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-... in case the thread is cancelled.
+If the buffer was too short, the current code could write
+the terminating 0 byte after the actual buffer.
+
+Also, assert sufficient buffer length, and positive id.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/wwids.c | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+ libmultipath/alias.c | 17 +++++++++++++----
+ 1 file changed, 13 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-index ef748125..f69ed6f5 100644
---- a/libmultipath/wwids.c
-+++ b/libmultipath/wwids.c
-@@ -7,6 +7,7 @@
- #include <sys/types.h>
- #include <sys/stat.h>
+diff --git a/libmultipath/alias.c b/libmultipath/alias.c
+index 412ab5b4..0fb206d1 100644
+--- a/libmultipath/alias.c
++++ b/libmultipath/alias.c
+@@ -52,18 +52,24 @@ format_devname(char *name, int id, int len, const char *prefix)
+ 	int pos;
+ 	int prefix_len = strlen(prefix);
  
-+#include "util.h"
- #include "checkers.h"
- #include "vector.h"
- #include "structs.h"
-@@ -87,7 +88,8 @@ write_out_wwid(int fd, char *wwid) {
- int
- replace_wwids(vector mp)
- {
--	int i, fd, can_write;
-+	int i, can_write;
-+	long fd;
- 	struct multipath * mpp;
- 	size_t len;
- 	int ret = -1;
-@@ -99,6 +101,8 @@ replace_wwids(vector mp)
- 	pthread_cleanup_pop(1);
- 	if (fd < 0)
- 		goto out;
+-	memset(name,0, len);
++	if (len <= prefix_len + 1 || id <= 0)
++		return -1;
 +
-+	pthread_cleanup_push(close_fd, (void*)fd);
- 	if (!can_write) {
- 		condlog(0, "cannot replace wwids. wwids file is read-only");
- 		goto out_file;
-@@ -132,7 +136,7 @@ replace_wwids(vector mp)
++	memset(name, 0, len);
+ 	strcpy(name, prefix);
+-	for (pos = len - 1; pos >= prefix_len; pos--) {
++	name[len - 1] = '\0';
++	for (pos = len - 2; pos >= prefix_len; pos--) {
+ 		id--;
+ 		name[pos] = 'a' + id % 26;
+ 		if (id < 26)
+ 			break;
+ 		id /= 26;
  	}
- 	ret = 0;
- out_file:
--	close(fd);
-+	pthread_cleanup_pop(1);
- out:
- 	return ret;
++	if (pos < prefix_len)
++		return -1;
++
+ 	memmove(name + prefix_len, name + pos, len - pos);
+-	name[prefix_len + len - pos] = '\0';
+-	return (prefix_len + len - pos);
++	return (prefix_len + len - pos - 1);
  }
+ 
+ static int
+@@ -213,6 +219,9 @@ allocate_binding(int fd, const char *wwid, int id, const char *prefix)
+ 	}
+ 
+ 	i = format_devname(buf, id, LINE_MAX, prefix);
++	if (i == -1)
++		return NULL;
++
+ 	c = buf + i;
+ 	snprintf(c, LINE_MAX - i, " %s\n", wwid);
+ 	buf[LINE_MAX - 1] = '\0';
 -- 
 2.23.0
