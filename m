@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 63/72] multipath tests: fix -Wformat-literal
-	warning
-Date: Sat, 12 Oct 2019 21:28:56 +0000
-Message-ID: <20191012212703.12989-64-martin.wilck@suse.com>
+Subject: [PATCH 72/72] multipath-tools: Makefile.inc: test for
+ -Wno-clobbered support
+Date: Sat, 12 Oct 2019 21:29:07 +0000
+Message-ID: <20191012212703.12989-73-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,22 +25,29 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+clang doesn't support this option.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/test-log.c | 1 +
- 1 file changed, 1 insertion(+)
+ Makefile.inc | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/tests/test-log.c b/tests/test-log.c
-index 76a266eb..d685d582 100644
---- a/tests/test-log.c
-+++ b/tests/test-log.c
-@@ -6,6 +6,7 @@
- #include "log.h"
- #include "test-log.h"
+diff --git a/Makefile.inc b/Makefile.inc
+index 59a36cd3..d4d1e0dd 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -91,10 +91,11 @@ TEST_CC_OPTION = $(shell \
  
-+__attribute__((format(printf, 3, 0)))
- void __wrap_dlog (int sink, int prio, const char * fmt, ...)
- {
- 	char buff[MAX_MSG_SIZE];
+ STACKPROT := $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)
+ ERROR_DISCARDED_QUALIFIERS := $(call TEST_CC_OPTION,-Werror=discarded-qualifiers,)
++WNOCLOBBERED := $(call TEST_CC_OPTION,-Wno-clobbered,)
+ 
+ OPTFLAGS	= -O2 -g -pipe -Werror -Wall -Wextra -Wformat=2 -Werror=implicit-int \
+ 		  -Werror=implicit-function-declaration -Werror=format-security \
+-		  -Wno-clobbered \
++		  $(WNOCLOBBERED) \
+ 		  -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS) \
+ 		  $(STACKPROT) --param=ssp-buffer-size=4
+ CPPFLAGS	:= -Wp,-D_FORTIFY_SOURCE=2 
 -- 
 2.23.0
