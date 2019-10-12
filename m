@@ -1,12 +1,15 @@
-From: Petr Vorel <pvorel@suse.cz>
-Subject: [RFC PATCH v2 1/2] kpartx: Use fixed size types in
-	struct solaris_x86_slice
-Date: Sat, 12 Oct 2019 21:29:37 +0200
-Message-ID: <20191012192938.17652-1-pvorel@suse.cz>
+From: Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH 01/72] multipath tests: move condlog test
+ wrappers to separate file
+Date: Sat, 12 Oct 2019 21:27:38 +0000
+Message-ID: <20191012212703.12989-2-martin.wilck@suse.com>
+References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20191012212703.12989-1-martin.wilck@suse.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,57 +19,118 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Christoph Hellwig <hch@infradead.org>, Petr Vorel <pvorel@suse.cz>, Baruch Even <baruch@ev-en.org>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-struct solaris_x86_slice defined in kernel uses fixed size types
-(with specified byte order). We're not able to find original 32-bit
-x86 Solaris sources, but expect struct definition in kernel is correct,
-therefore use it as a source of size of struct items. (just don't use
-original kernel byte order fixed types __le{16,32}, but normal user
-space fixed size types)
+From: Martin Wilck <mwilck@suse.com>
 
-129e6fe6 used __kernel_daddr_t instead of one of these: long / int / daddr_t,
-which is IMHO wrong and tried to address only s_start struct member.
+These helpers can be useful in other tests.
 
-Fixes: 129e6fe6 ("kpartx: Use __kernel_daddr_t for solaris_x86_slice.s_start")
-
-Cc: Christoph Hellwig <hch@infradead.org>
-Cc: Baruch Even <baruch@ev-en.org>
-Signed-off-by: Petr Vorel <pvorel@suse.cz>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
-changes v1->v2:
-* use user space types __le{16,32} => uint{16,32}_t
+ tests/Makefile    |  1 +
+ tests/blacklist.c | 20 +-------------------
+ tests/test-log.c  | 26 ++++++++++++++++++++++++++
+ tests/test-log.h  |  7 +++++++
+ 4 files changed, 35 insertions(+), 19 deletions(-)
+ create mode 100644 tests/test-log.c
+ create mode 100644 tests/test-log.h
 
- kpartx/solaris.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
-
-diff --git a/kpartx/solaris.c b/kpartx/solaris.c
-index e7826c62..0fda10ad 100644
---- a/kpartx/solaris.c
-+++ b/kpartx/solaris.c
-@@ -1,16 +1,16 @@
- #include "kpartx.h"
-+#include <stdint.h>
- #include <stdio.h>
--#include <linux/types.h>
- #include <time.h>		/* time_t */
+diff --git a/tests/Makefile b/tests/Makefile
+index a5cdf390..fb3c067b 100644
+--- a/tests/Makefile
++++ b/tests/Makefile
+@@ -23,6 +23,7 @@ hwtable-test_TESTDEPS := test-lib.o
+ hwtable-test_OBJDEPS := ../libmultipath/discovery.o ../libmultipath/blacklist.o \
+ 	../libmultipath/prio.o ../libmultipath/callout.o ../libmultipath/structs.o
+ hwtable-test_LIBDEPS := -ludev -lpthread -ldl
++blacklist-test_TESTDEPS := test-log.o
+ blacklist-test_OBJDEPS := ../libmultipath/blacklist.o
+ blacklist-test_LIBDEPS := -ludev
+ vpd-test_OBJDEPS :=  ../libmultipath/discovery.o
+diff --git a/tests/blacklist.c b/tests/blacklist.c
+index 362c44d9..733ee398 100644
+--- a/tests/blacklist.c
++++ b/tests/blacklist.c
+@@ -21,7 +21,7 @@
+ #include <cmocka.h>
+ #include "globals.c"
+ #include "blacklist.h"
+-#include "log.h"
++#include "test-log.h"
  
- #define SOLARIS_X86_NUMSLICE	8
- #define SOLARIS_X86_VTOC_SANE	(0x600DDEEEUL)
+ struct udev_device {
+ 	const char *sysname;
+@@ -62,24 +62,6 @@ __wrap_udev_list_entry_get_name(struct udev_list_entry *list_entry)
+ 	return *(const char **)list_entry;
+ }
  
- struct solaris_x86_slice {
--	unsigned short	s_tag;		/* ID tag of partition */
--	unsigned short	s_flag;		/* permission flags */
--	__kernel_daddr_t s_start;	/* start sector no of partition */
--	long		s_size;		/* # of blocks in partition */
-+	uint16_t s_tag;		/* ID tag of partition */
-+	uint16_t s_flag;	/* permission flags */
-+	uint32_t s_start;	/* start sector no of partition */
-+	uint32_t s_size;	/* # of blocks in partition */
- };
- 
- struct solaris_x86_vtoc {
+-void __wrap_dlog (int sink, int prio, const char * fmt, ...)
+-{
+-	char buff[MAX_MSG_SIZE];
+-	va_list ap;
+-
+-	assert_int_equal(prio, mock_type(int));
+-	va_start(ap, fmt);
+-	vsnprintf(buff, MAX_MSG_SIZE, fmt, ap);
+-	va_end(ap);
+-	assert_string_equal(buff, mock_ptr_type(char *));
+-}
+-
+-void expect_condlog(int prio, char *string)
+-{
+-	will_return(__wrap_dlog, prio);
+-	will_return(__wrap_dlog, string);
+-}
+-
+ vector blist_devnode_sdb;
+ vector blist_all;
+ vector blist_device_foo_bar;
+diff --git a/tests/test-log.c b/tests/test-log.c
+new file mode 100644
+index 00000000..76a266eb
+--- /dev/null
++++ b/tests/test-log.c
+@@ -0,0 +1,26 @@
++#include <setjmp.h>
++#include <stddef.h>
++#include <stdarg.h>
++#include <stdio.h>
++#include <cmocka.h>
++#include "log.h"
++#include "test-log.h"
++
++void __wrap_dlog (int sink, int prio, const char * fmt, ...)
++{
++	char buff[MAX_MSG_SIZE];
++	va_list ap;
++
++	assert_int_equal(prio, mock_type(int));
++	va_start(ap, fmt);
++	vsnprintf(buff, MAX_MSG_SIZE, fmt, ap);
++	va_end(ap);
++	assert_string_equal(buff, mock_ptr_type(char *));
++}
++
++void expect_condlog(int prio, char *string)
++{
++	will_return(__wrap_dlog, prio);
++	will_return(__wrap_dlog, string);
++}
++
+diff --git a/tests/test-log.h b/tests/test-log.h
+new file mode 100644
+index 00000000..2c878c63
+--- /dev/null
++++ b/tests/test-log.h
+@@ -0,0 +1,7 @@
++#ifndef _TEST_LOG_H
++#define _TEST_LOG_H
++
++void __wrap_dlog (int sink, int prio, const char * fmt, ...);
++void expect_condlog(int prio, char *string);
++
++#endif
 -- 
 2.23.0
