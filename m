@@ -1,8 +1,7 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 61/72] multipath tests: blacklist: remove
- always-true condition
-Date: Sat, 12 Oct 2019 21:28:53 +0000
-Message-ID: <20191012212703.12989-62-martin.wilck@suse.com>
+Subject: [PATCH 54/72] libmpathcmd: fix -Wsign-compare warnings
+Date: Sat, 12 Oct 2019 21:28:44 +0000
+Message-ID: <20191012212703.12989-55-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,25 +24,33 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-clang warns about this (udev_device->property_list can't be NULL).
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/blacklist.c | 2 --
- 1 file changed, 2 deletions(-)
+ libmpathcmd/mpath_cmd.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/tests/blacklist.c b/tests/blacklist.c
-index 733ee398..6e7c1864 100644
---- a/tests/blacklist.c
-+++ b/tests/blacklist.c
-@@ -40,8 +40,6 @@ struct udev_list_entry *
- __wrap_udev_device_get_properties_list_entry(struct udev_device *udev_device)
+diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
+index f00bf7e1..60b2d965 100644
+--- a/libmpathcmd/mpath_cmd.c
++++ b/libmpathcmd/mpath_cmd.c
+@@ -96,7 +96,8 @@ static size_t write_all(int fd, const void *buf, size_t len)
+  */
+ int __mpath_connect(int nonblocking)
  {
- 	assert_non_null(udev_device);
--	if (!udev_device->property_list)
--		return NULL;
- 	if (!*udev_device->property_list)
- 		return NULL;
- 	return (struct udev_list_entry *)udev_device->property_list;
+-	int fd, len;
++	int fd;
++	size_t len;
+ 	struct sockaddr_un addr;
+ 	int flags = 0;
+ 
+@@ -172,7 +173,7 @@ int mpath_recv_reply_data(int fd, char *reply, size_t len,
+ 	ret = read_all(fd, reply, len, timeout);
+ 	if (ret < 0)
+ 		return ret;
+-	if (ret != len) {
++	if ((size_t)ret != len) {
+ 		errno = EIO;
+ 		return -1;
+ 	}
 -- 
 2.23.0
