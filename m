@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 50/72] libmultipath: set_int(): add error check
-	and set_uint()
-Date: Sat, 12 Oct 2019 21:28:39 +0000
-Message-ID: <20191012212703.12989-51-martin.wilck@suse.com>
+Subject: [PATCH 19/72] libmultipath: remove_wwids(): fix possible
+	leaks
+Date: Sat, 12 Oct 2019 21:28:00 +0000
+Message-ID: <20191012212703.12989-20-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,80 +25,68 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Use strtol() to check for valid input, but don't return error
-as that would cause config file parsing to fail because of a
-single typo. Also, add set_uint() to parse an unsigned parameter.
+... of fd and memory.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/dict.c | 48 ++++++++++++++++++++++++++++++++++++++++++---
- 1 file changed, 45 insertions(+), 3 deletions(-)
+ libmultipath/wwids.c | 25 ++++++++++++++++---------
+ 1 file changed, 16 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 2b046e1d..c23d525b 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -31,16 +31,58 @@ static int
- set_int(vector strvec, void *ptr)
- {
- 	int *int_ptr = (int *)ptr;
--	char * buff;
-+	char *buff, *eptr;
-+	long res;
-+	int rc;
+diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
+index f69ed6f5..d02a7072 100644
+--- a/libmultipath/wwids.c
++++ b/libmultipath/wwids.c
+@@ -195,7 +195,8 @@ do_remove_wwid(int fd, char *str) {
  
- 	buff = set_value(strvec);
- 	if (!buff)
- 		return 1;
+ int
+ remove_wwid(char *wwid) {
+-	int fd, len, can_write;
++	long fd;
++	int len, can_write;
+ 	char *str;
+ 	int ret = -1;
+ 	struct config *conf;
+@@ -207,8 +208,10 @@ remove_wwid(char *wwid) {
+ 			strerror(errno));
+ 		return -1;
+ 	}
++	pthread_cleanup_push(free, str);
+ 	if (snprintf(str, len, "/%s/\n", wwid) >= len) {
+ 		condlog(0, "string overflow trying to remove wwid");
++		ret = -1;
+ 		goto out;
+ 	}
+ 	condlog(3, "removing line '%s' from wwids file", str);
+@@ -216,18 +219,22 @@ remove_wwid(char *wwid) {
+ 	pthread_cleanup_push(put_multipath_config, conf);
+ 	fd = open_file(conf->wwids_file, &can_write, WWIDS_FILE_HEADER);
+ 	pthread_cleanup_pop(1);
+-	if (fd < 0)
++
++	if (fd < 0) {
++		ret = -1;
+ 		goto out;
+-	if (!can_write) {
+-		condlog(0, "cannot remove wwid. wwids file is read-only");
+-		goto out_file;
+ 	}
+-	ret = do_remove_wwid(fd, str);
  
--	*int_ptr = atoi(buff);
-+	res = strtol(buff, &eptr, 10);
-+	if (eptr > buff)
-+		while (isspace(*eptr))
-+			eptr++;
-+	if (*buff == '\0' || *eptr != '\0' || res > INT_MAX || res < INT_MIN) {
-+		condlog(1, "%s: invalid value for %s: \"%s\"",
-+			__func__, (char*)VECTOR_SLOT(strvec, 0), buff);
-+		rc = 1;
-+	} else {
-+		rc = 0;
-+		*int_ptr = res;
-+	}
- 
- 	FREE(buff);
--	return 0;
-+	return rc;
-+}
-+
-+static int
-+set_uint(vector strvec, void *ptr)
-+{
-+	unsigned int *uint_ptr = (unsigned int *)ptr;
-+	char *buff, *eptr;
-+	long res;
-+	int rc;
-+
-+	buff = set_value(strvec);
-+	if (!buff)
-+		return 1;
-+
-+	res = strtol(buff, &eptr, 10);
-+	if (eptr > buff)
-+		while (isspace(*eptr))
-+			eptr++;
-+	if (*buff == '\0' || *eptr != '\0' || res < 0 || res > UINT_MAX) {
-+		condlog(1, "%s: invalid value for %s: \"%s\"",
-+			__func__, (char*)VECTOR_SLOT(strvec, 0), buff);
-+		rc = 1;
-+	} else {
-+		rc = 0;
-+		*uint_ptr = res;
-+	}
-+
-+	FREE(buff);
-+	return rc;
+-out_file:
+-	close(fd);
++	pthread_cleanup_push(close_fd, (void*)fd);
++	if (!can_write) {
++		ret = -1;
++		condlog(0, "cannot remove wwid. wwids file is read-only");
++	} else
++		ret = do_remove_wwid(fd, str);
++	pthread_cleanup_pop(1);
+ out:
+-	free(str);
++	/* free(str) */
++	pthread_cleanup_pop(1);
+ 	return ret;
  }
  
- static int
 -- 
 2.23.0
