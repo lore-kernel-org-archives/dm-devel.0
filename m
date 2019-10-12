@@ -1,7 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 51/72] libmultipath: make "checkint" unsigned
-Date: Sat, 12 Oct 2019 21:28:40 +0000
-Message-ID: <20191012212703.12989-52-martin.wilck@suse.com>
+Subject: [PATCH 11/72] multipath tests: alias: add tests for
+ allocate_binding()
+Date: Sat, 12 Oct 2019 21:27:50 +0000
+Message-ID: <20191012212703.12989-12-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,149 +25,166 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-path->checkint was unsigned already, now use this type everywhere.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.h      |  4 ++--
- libmultipath/dict.c        |  4 ++--
- libmultipath/discovery.c   |  2 +-
- libmultipath/discovery.h   |  2 +-
- libmultipath/io_err_stat.c |  2 +-
- libmultipath/structs_vec.c |  2 +-
- multipathd/main.c          | 10 ++++++----
- 7 files changed, 14 insertions(+), 12 deletions(-)
+ tests/alias.c | 124 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 124 insertions(+)
 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index ffec3103..2ab7b42c 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -137,8 +137,8 @@ struct config {
- 	int pgpolicy;
- 	int minio;
- 	int minio_rq;
--	int checkint;
--	int max_checkint;
-+	unsigned int checkint;
-+	unsigned int max_checkint;
- 	int pgfailback;
- 	int remove;
- 	int rr_weight;
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index c23d525b..a90690fa 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -314,7 +314,7 @@ snprint_mp_ ## option (struct config *conf, char * buff, int len,	\
+diff --git a/tests/alias.c b/tests/alias.c
+index 32fdc697..170ebbeb 100644
+--- a/tests/alias.c
++++ b/tests/alias.c
+@@ -5,6 +5,7 @@
+ #include "util.h"
+ #include "alias.h"
+ #include "test-log.h"
++#include <errno.h>
  
- static int checkint_handler(struct config *conf, vector strvec)
- {
--	int rc = set_int(strvec, &conf->checkint);
-+	int rc = set_uint(strvec, &conf->checkint);
- 
- 	if (rc)
- 		return rc;
-@@ -325,7 +325,7 @@ static int checkint_handler(struct config *conf, vector strvec)
- 
- declare_def_snprint(checkint, print_int)
- 
--declare_def_handler(max_checkint, set_int)
-+declare_def_handler(max_checkint, set_uint)
- declare_def_snprint(max_checkint, print_int)
- 
- declare_def_handler(verbosity, set_int)
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 6288c3e0..4288c9fd 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -754,7 +754,7 @@ sysfs_set_nexus_loss_tmo(struct multipath *mpp, struct path *pp)
+ #include "globals.c"
+ #include "../libmultipath/alias.c"
+@@ -30,6 +31,36 @@ char *__wrap_fgets(char *buf, int n, FILE *stream)
+ 	return buf;
  }
  
- int
--sysfs_set_scsi_tmo (struct multipath *mpp, int checkint)
-+sysfs_set_scsi_tmo (struct multipath *mpp, unsigned int checkint)
++static int __set_errno(int err)
++{
++	if (err >= 0) {
++		errno = 0;
++		return err;
++	} else {
++		errno = -err;
++		return -1;
++	}
++}
++
++off_t __wrap_lseek(int fd, off_t offset, int whence)
++{
++	return __set_errno(mock_type(int));
++
++}
++
++ssize_t __wrap_write(int fd, const void *buf, size_t count)
++{
++	check_expected(count);
++	check_expected(buf);
++	return __set_errno(mock_type(int));
++}
++
++int __wrap_ftruncate(int fd, off_t length)
++{
++	check_expected(length);
++	return __set_errno(mock_type(int));
++}
++
+ static void fd_mpatha(void **state)
  {
- 	struct path *pp;
- 	int i;
-diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
-index 8d04c2af..0516e41b 100644
---- a/libmultipath/discovery.h
-+++ b/libmultipath/discovery.h
-@@ -42,7 +42,7 @@ int alloc_path_with_pathinfo (struct config *conf, struct udev_device *udevice,
- int store_pathinfo (vector pathvec, struct config *conf,
- 		    struct udev_device *udevice, int flag,
- 		    struct path **pp_ptr);
--int sysfs_set_scsi_tmo (struct multipath *mpp, int checkint);
-+int sysfs_set_scsi_tmo (struct multipath *mpp, unsigned int checkint);
- int sysfs_get_timeout(const struct path *pp, unsigned int *timeout);
- int sysfs_get_host_pci_name(const struct path *pp, char *pci_name);
- int sysfs_get_iscsi_ip_address(const struct path *pp, char *ip_address);
-diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
-index 6b3a3e19..d7e296fa 100644
---- a/libmultipath/io_err_stat.c
-+++ b/libmultipath/io_err_stat.c
-@@ -357,7 +357,7 @@ int io_err_stat_handle_pathfail(struct path *path)
- 		if (path->state != PATH_DOWN) {
- 			struct config *conf;
- 			int oldstate = path->state;
--			int checkint;
-+			unsigned int checkint;
+ 	char buf[32];
+@@ -577,6 +608,98 @@ static int test_rlookup_binding(void)
+ 	return cmocka_run_group_tests(tests, NULL, NULL);
+ }
  
- 			conf = get_multipath_config();
- 			checkint = conf->checkint;
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index c43b58fb..6991f9ac 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -292,7 +292,7 @@ update_multipath_strings(struct multipath *mpp, vector pathvec, int is_daemon)
- 
- void enter_recovery_mode(struct multipath *mpp)
++static void al_a(void **state)
++{
++	static const char ln[] = "MPATHa WWIDa\n";
++	char *alias;
++
++	will_return(__wrap_lseek, 0);
++	expect_value(__wrap_write, count, strlen(ln));
++	expect_string(__wrap_write, buf, ln);
++	will_return(__wrap_write, strlen(ln));
++	expect_condlog(3, "Created new binding [MPATHa] for WWID [WWIDa]\n");
++
++	alias = allocate_binding(0, "WWIDa", 1, "MPATH");
++	assert_ptr_not_equal(alias, NULL);
++	assert_string_equal(alias, "MPATHa");
++}
++
++static void al_zz(void **state)
++{
++	static const char ln[] = "MPATHzz WWIDzz\n";
++	char *alias;
++
++	will_return(__wrap_lseek, 0);
++	expect_value(__wrap_write, count, strlen(ln));
++	expect_string(__wrap_write, buf, ln);
++	will_return(__wrap_write, strlen(ln));
++	expect_condlog(3, "Created new binding [MPATHzz] for WWID [WWIDzz]\n");
++
++	alias = allocate_binding(0, "WWIDzz", 26*26 + 26, "MPATH");
++	assert_ptr_not_equal(alias, NULL);
++	assert_string_equal(alias, "MPATHzz");
++}
++
++static void al_0(void **state)
++{
++	char *alias;
++
++	expect_condlog(0, "allocate_binding: cannot allocate new binding for id 0\n");
++	alias = allocate_binding(0, "WWIDa", 0, "MPATH");
++	assert_ptr_equal(alias, NULL);
++}
++
++static void al_m2(void **state)
++{
++	char *alias;
++
++	expect_condlog(0, "allocate_binding: cannot allocate new binding for id -2\n");
++	alias = allocate_binding(0, "WWIDa", -2, "MPATH");
++	assert_ptr_equal(alias, NULL);
++}
++
++static void al_lseek_err(void **state)
++{
++	char *alias;
++
++	will_return(__wrap_lseek, -ENODEV);
++	expect_condlog(0, "Cannot seek to end of bindings file : No such device\n");
++	alias = allocate_binding(0, "WWIDa", 1, "MPATH");
++	assert_ptr_equal(alias, NULL);
++}
++
++static void al_write_err(void **state)
++{
++	static const char ln[] = "MPATHa WWIDa\n";
++	const int offset = 20;
++	char *alias;
++
++	will_return(__wrap_lseek, offset);
++	expect_value(__wrap_write, count, strlen(ln));
++	expect_string(__wrap_write, buf, ln);
++	will_return(__wrap_write, strlen(ln) - 1);
++	expect_value(__wrap_ftruncate, length, offset);
++	will_return(__wrap_ftruncate, 0);
++	expect_condlog(0, "Cannot write binding to bindings file : Success\n");
++
++	alias = allocate_binding(0, "WWIDa", 1, "MPATH");
++	assert_ptr_equal(alias, NULL);
++}
++
++static int test_allocate_binding(void)
++{
++	const struct CMUnitTest tests[] = {
++		cmocka_unit_test(al_a),
++		cmocka_unit_test(al_zz),
++		cmocka_unit_test(al_0),
++		cmocka_unit_test(al_m2),
++		cmocka_unit_test(al_lseek_err),
++		cmocka_unit_test(al_write_err),
++	};
++
++	return cmocka_run_group_tests(tests, NULL, NULL);
++}
++
+ int main(void)
  {
--	int checkint;
-+	unsigned int checkint;
- 	struct config *conf = get_multipath_config();
- 	checkint = conf->checkint;
- 	put_multipath_config(conf);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 26d5aa9c..bb5c1f1d 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -493,7 +493,7 @@ int update_multipath (struct vectors *vecs, char *mapname, int reset)
- 			if (pp->state != PATH_DOWN) {
- 				struct config *conf;
- 				int oldstate = pp->state;
--				int checkint;
-+				unsigned int checkint;
+ 	int ret = 0;
+@@ -585,6 +708,7 @@ int main(void)
+ 	ret += test_scan_devname();
+ 	ret += test_lookup_binding();
+ 	ret += test_rlookup_binding();
++	ret += test_allocate_binding();
  
- 				conf = get_multipath_config();
- 				checkint = conf->checkint;
-@@ -1985,7 +1985,7 @@ should_skip_path(struct path *pp){
-  * and '0' otherwise
-  */
- int
--check_path (struct vectors * vecs, struct path * pp, int ticks)
-+check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
- {
- 	int newstate;
- 	int new_path_up = 0;
-@@ -1993,7 +1993,8 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 	int add_active;
- 	int disable_reinstate = 0;
- 	int oldchkrstate = pp->chkrstate;
--	int retrigger_tries, checkint, max_checkint, verbosity;
-+	int retrigger_tries, verbosity;
-+	unsigned int checkint, max_checkint;
- 	struct config *conf;
- 	int marginal_pathgroups, marginal_changed = 0;
- 	int ret;
-@@ -2333,7 +2334,8 @@ checkerloop (void *ap)
- 
- 	while (1) {
- 		struct timespec diff_time, start_time, end_time;
--		int num_paths = 0, ticks = 0, strict_timing, rc = 0;
-+		int num_paths = 0, strict_timing, rc = 0;
-+		unsigned int ticks = 0;
- 
- 		get_monotonic_time(&start_time);
- 		if (start_time.tv_sec && last_time.tv_sec) {
+ 	return ret;
+ }
 -- 
 2.23.0
