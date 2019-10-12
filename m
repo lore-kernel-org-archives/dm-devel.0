@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 55/72] libmpathpersist: fix -Wsign-compare
-	warnings
-Date: Sat, 12 Oct 2019 21:28:45 +0000
-Message-ID: <20191012212703.12989-56-martin.wilck@suse.com>
+Subject: [PATCH 67/72] multipath-tools: Makefile.inc: use -Wp,
+ ... for compiling only
+Date: Sat, 12 Oct 2019 21:29:01 +0000
+Message-ID: <20191012212703.12989-68-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,63 +25,35 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+clang-3.9 errors out if -Wp,... preprocessor flags are used in the
+linking stage.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmpathpersist/mpath_persist.c  |  3 ++-
- libmpathpersist/mpath_pr_ioctl.c | 10 +++++-----
- 2 files changed, 7 insertions(+), 6 deletions(-)
+ Makefile.inc | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 603cfc3b..0c57dd92 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -854,7 +854,8 @@ int update_map_pr(struct multipath *mpp)
- {
- 	int noisy=0;
- 	struct prin_resp *resp;
--	int i, ret, isFound;
-+	unsigned int i;
-+	int ret, isFound;
+diff --git a/Makefile.inc b/Makefile.inc
+index d4d08fe9..f309a274 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -96,9 +96,8 @@ OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
+ 		  -Werror=implicit-function-declaration -Werror=format-security \
+ 		  -Wno-clobbered \
+ 		  -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS) \
+-		  -Wp,-D_FORTIFY_SOURCE=2 $(STACKPROT) \
+-		  --param=ssp-buffer-size=4
+-
++		  $(STACKPROT) --param=ssp-buffer-size=4
++CPPFLAGS	:= -Wp,-D_FORTIFY_SOURCE=2 
+ CFLAGS		:= $(OPTFLAGS) -DBIN_DIR=\"$(bindir)\" -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\" \
+ 		   -MMD -MP $(CFLAGS)
+ BIN_CFLAGS	= -fPIE -DPIE
+@@ -135,4 +134,4 @@ check_file = $(shell \
  
- 	if (!get_be64(mpp->reservation_key))
- 	{
-diff --git a/libmpathpersist/mpath_pr_ioctl.c b/libmpathpersist/mpath_pr_ioctl.c
-index 05b30b56..74b26b0c 100644
---- a/libmpathpersist/mpath_pr_ioctl.c
-+++ b/libmpathpersist/mpath_pr_ioctl.c
-@@ -140,7 +140,7 @@ retry :
- 
- uint32_t  format_transportids(struct prout_param_descriptor *paramp)
- {
--	int i = 0, len;
-+	unsigned int i = 0, len;
- 	uint32_t buff_offset = 4;
- 	memset(paramp->private_buffer, 0, MPATH_MAX_PARAM_LEN);
- 	for (i=0; i < paramp->num_transportid; i++ )
-@@ -204,11 +204,11 @@ static void mpath_format_reportcapabilities(struct prin_resp *pr_buff)
- 
- static void mpath_format_readfullstatus(struct prin_resp *pr_buff)
- {
--	int num, k, tid_len_len=0;
-+	int num;
- 	uint32_t fdesc_count=0;
- 	unsigned char *p;
- 	char  *ppbuff;
--	uint32_t additional_length;
-+	uint32_t additional_length, k, tid_len_len = 0;
- 	char tempbuff[MPATH_MAX_PARAM_LEN];
- 	struct prin_fulldescr fdesc;
- 
-@@ -269,8 +269,8 @@ static void mpath_format_readfullstatus(struct prin_resp *pr_buff)
- void
- decode_transport_id(struct prin_fulldescr *fdesc, unsigned char * p, int length)
- {
--	int num, k;
--	int jump;
-+	unsigned int num;
-+	int jump, k;
- 	for (k = 0, jump = 24; k < length; k += jump, p += jump) {
- 		fdesc->trnptid.format_code = ((p[0] >> 6) & 0x3);
- 		fdesc->trnptid.protocol_id = (p[0] & 0xf);
+ %.o:	%.c
+ 	@echo building $@ because of $?
+-	$(CC) $(CFLAGS) -c -o $@ $<
++	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 -- 
 2.23.0
