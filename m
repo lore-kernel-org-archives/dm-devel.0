@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 09/72] libmultipath: allocate_binding(): error
-	out for id=0
-Date: Sat, 12 Oct 2019 21:27:48 +0000
-Message-ID: <20191012212703.12989-10-martin.wilck@suse.com>
+Subject: [PATCH 04/72] libmultipath: alias.c: use strlcpy(),
+	and 2 minor fixes
+Date: Sat, 12 Oct 2019 21:27:41 +0000
+Message-ID: <20191012212703.12989-5-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,30 +25,50 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Only for positive id can we allocate a binding. All current
-callers make sure the id is positive. Yet, fix the implementation
-in allocate_binding(), too.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/alias.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ libmultipath/alias.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/libmultipath/alias.c b/libmultipath/alias.c
-index 767800d0..2df34f32 100644
+index 5b05ff69..412ab5b4 100644
 --- a/libmultipath/alias.c
 +++ b/libmultipath/alias.c
-@@ -233,8 +233,9 @@ allocate_binding(int fd, const char *wwid, int id, const char *prefix)
- 	char *alias, *c;
- 	int i;
+@@ -10,6 +10,7 @@
+ #include <stdio.h>
  
--	if (id < 0) {
--		condlog(0, "Bindings file full. Cannot allocate new binding");
-+	if (id <= 0) {
-+		condlog(0, "%s: cannot allocate new binding for id %d",
-+			__func__, id);
+ #include "debug.h"
++#include "util.h"
+ #include "uxsock.h"
+ #include "alias.h"
+ #include "file.h"
+@@ -189,8 +190,7 @@ rlookup_binding(FILE *f, char *buff, const char *map_alias, const char *prefix)
+ 		if (strcmp(alias, map_alias) == 0){
+ 			condlog(3, "Found matching alias [%s] in bindings file."
+ 				"\nSetting wwid to %s", alias, wwid);
+-			strncpy(buff, wwid, WWID_SIZE);
+-			buff[WWID_SIZE - 1] = '\0';
++			strlcpy(buff, wwid, WWID_SIZE);
+ 			return 0;
+ 		}
+ 	}
+@@ -214,7 +214,7 @@ allocate_binding(int fd, const char *wwid, int id, const char *prefix)
+ 
+ 	i = format_devname(buf, id, LINE_MAX, prefix);
+ 	c = buf + i;
+-	snprintf(c,LINE_MAX - i, " %s\n", wwid);
++	snprintf(c, LINE_MAX - i, " %s\n", wwid);
+ 	buf[LINE_MAX - 1] = '\0';
+ 
+ 	offset = lseek(fd, 0, SEEK_END);
+@@ -265,7 +265,7 @@ use_existing_alias (const char *wwid, const char *file, const char *alias_old,
+ 		close(fd);
  		return NULL;
  	}
- 
+-	/* lookup the binding. if it exsists, the wwid will be in buff
++	/* lookup the binding. if it exists, the wwid will be in buff
+ 	 * either way, id contains the id for the alias
+ 	 */
+ 	rlookup_binding(f, buff, alias_old, prefix);
 -- 
 2.23.0
