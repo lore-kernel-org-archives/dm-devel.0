@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 17/72] libmultipath: uevent_listen(): fix poll()
-	retval check
-Date: Sat, 12 Oct 2019 21:27:58 +0000
-Message-ID: <20191012212703.12989-18-martin.wilck@suse.com>
+Subject: [PATCH 21/72] libmultipath: process_config_dir(): remove
+ unused argument
+Date: Sat, 12 Oct 2019 21:28:03 +0000
+Message-ID: <20191012212703.12989-22-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,25 +25,32 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Only check revents if poll() returns a positive value.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/uevent.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/config.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index 8f7b2ef5..f128ced2 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -853,7 +853,7 @@ int uevent_listen(struct udev *udev)
- 		poll_timeout = timeout * 1000;
- 		errno = 0;
- 		fdcount = poll(&ev_poll, 1, poll_timeout);
--		if (fdcount && ev_poll.revents & POLLIN) {
-+		if (fdcount > 0 && ev_poll.revents & POLLIN) {
- 			timeout = uevent_burst(&start_time, events + 1) ? 1 : 0;
- 			dev = udev_monitor_receive_device(monitor);
- 			if (!dev) {
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 20e3b8bf..49723add 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -644,7 +644,7 @@ free_config (struct config * conf)
+ /* if multipath fails to process the config directory, it should continue,
+  * with just a warning message */
+ static void
+-process_config_dir(struct config *conf, vector keywords, char *dir)
++process_config_dir(struct config *conf, char *dir)
+ {
+ 	struct dirent **namelist;
+ 	struct scandir_result sr;
+@@ -749,7 +749,7 @@ load_config (char * file)
+ 	if (conf->config_dir == NULL)
+ 		conf->config_dir = set_default(DEFAULT_CONFIG_DIR);
+ 	if (conf->config_dir && conf->config_dir[0] != '\0')
+-		process_config_dir(conf, conf->keywords, conf->config_dir);
++		process_config_dir(conf, conf->config_dir);
+ 
+ 	/*
+ 	 * fill the voids left in the config file
 -- 
 2.23.0
