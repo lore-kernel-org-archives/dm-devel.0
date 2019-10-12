@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 67/72] multipath-tools: Makefile.inc: use -Wp,
- ... for compiling only
-Date: Sat, 12 Oct 2019 21:29:01 +0000
-Message-ID: <20191012212703.12989-68-martin.wilck@suse.com>
+Subject: [PATCH 62/72] multipath tests: hwtable: fix strncat()
+	invocation
+Date: Sat, 12 Oct 2019 21:28:54 +0000
+Message-ID: <20191012212703.12989-63-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,35 +25,25 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-clang-3.9 errors out if -Wp,... preprocessor flags are used in the
-linking stage.
+clang detected this error.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- Makefile.inc | 7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+ tests/hwtable.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index d4d08fe9..f309a274 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -96,9 +96,8 @@ OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
- 		  -Werror=implicit-function-declaration -Werror=format-security \
- 		  -Wno-clobbered \
- 		  -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS) \
--		  -Wp,-D_FORTIFY_SOURCE=2 $(STACKPROT) \
--		  --param=ssp-buffer-size=4
--
-+		  $(STACKPROT) --param=ssp-buffer-size=4
-+CPPFLAGS	:= -Wp,-D_FORTIFY_SOURCE=2 
- CFLAGS		:= $(OPTFLAGS) -DBIN_DIR=\"$(bindir)\" -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\" \
- 		   -MMD -MP $(CFLAGS)
- BIN_CFLAGS	= -fPIE -DPIE
-@@ -135,4 +134,4 @@ check_file = $(shell \
- 
- %.o:	%.c
- 	@echo building $@ because of $?
--	$(CC) $(CFLAGS) -c -o $@ $<
-+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+diff --git a/tests/hwtable.c b/tests/hwtable.c
+index 977a5663..473028b7 100644
+--- a/tests/hwtable.c
++++ b/tests/hwtable.c
+@@ -261,7 +261,7 @@ static void write_defaults(const struct hwt_state *hwt)
+ 	defaults[0].value = hwt->dirname;
+ 	defaults[1].value = buf;
+ 	assert_ptr_not_equal(getcwd(dirbuf, sizeof(dirbuf)), NULL);
+-	strncat(dirbuf, "/lib", sizeof(dirbuf));
++	strncat(dirbuf, "/lib", sizeof(dirbuf) - 5);
+ 	defaults[2].value = dirbuf;
+ 	write_section(hwt->config_file, "defaults",
+ 		      ARRAY_SIZE(defaults), defaults);
 -- 
 2.23.0
