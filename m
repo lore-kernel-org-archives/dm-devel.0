@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 05/72] libmultipath: format_devname: avoid buffer
-	overflow
-Date: Sat, 12 Oct 2019 21:27:43 +0000
-Message-ID: <20191012212703.12989-6-martin.wilck@suse.com>
+Subject: [PATCH 26/72] libmultipath: mark unused params in
+	getprio() methods
+Date: Sat, 12 Oct 2019 21:28:09 +0000
+Message-ID: <20191012212703.12989-27-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,58 +25,191 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-If the buffer was too short, the current code could write
-the terminating 0 byte after the actual buffer.
-
-Also, assert sufficient buffer length, and positive id.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/alias.c | 17 +++++++++++++----
- 1 file changed, 13 insertions(+), 4 deletions(-)
+ libmultipath/prioritizers/ana.c          | 3 ++-
+ libmultipath/prioritizers/const.c        | 4 +++-
+ libmultipath/prioritizers/datacore.c     | 3 ++-
+ libmultipath/prioritizers/emc.c          | 3 ++-
+ libmultipath/prioritizers/hds.c          | 3 ++-
+ libmultipath/prioritizers/hp_sw.c        | 3 ++-
+ libmultipath/prioritizers/iet.c          | 3 ++-
+ libmultipath/prioritizers/ontap.c        | 3 ++-
+ libmultipath/prioritizers/random.c       | 4 +++-
+ libmultipath/prioritizers/rdac.c         | 3 ++-
+ libmultipath/prioritizers/sysfs.c        | 3 ++-
+ libmultipath/prioritizers/weightedpath.c | 3 ++-
+ 12 files changed, 26 insertions(+), 12 deletions(-)
 
-diff --git a/libmultipath/alias.c b/libmultipath/alias.c
-index 412ab5b4..0fb206d1 100644
---- a/libmultipath/alias.c
-+++ b/libmultipath/alias.c
-@@ -52,18 +52,24 @@ format_devname(char *name, int id, int len, const char *prefix)
- 	int pos;
- 	int prefix_len = strlen(prefix);
+diff --git a/libmultipath/prioritizers/ana.c b/libmultipath/prioritizers/ana.c
+index bcb1dbf8..9f7adfa5 100644
+--- a/libmultipath/prioritizers/ana.c
++++ b/libmultipath/prioritizers/ana.c
+@@ -202,7 +202,8 @@ static int get_ana_info(struct path * pp)
+  * - ALUA's LBA-dependent state has no ANA equivalent.
+  */
  
--	memset(name,0, len);
-+	if (len <= prefix_len + 1 || id <= 0)
-+		return -1;
-+
-+	memset(name, 0, len);
- 	strcpy(name, prefix);
--	for (pos = len - 1; pos >= prefix_len; pos--) {
-+	name[len - 1] = '\0';
-+	for (pos = len - 2; pos >= prefix_len; pos--) {
- 		id--;
- 		name[pos] = 'a' + id % 26;
- 		if (id < 26)
- 			break;
- 		id /= 26;
- 	}
-+	if (pos < prefix_len)
-+		return -1;
-+
- 	memmove(name + prefix_len, name + pos, len - pos);
--	name[prefix_len + len - pos] = '\0';
--	return (prefix_len + len - pos);
-+	return (prefix_len + len - pos - 1);
+-int getprio(struct path *pp, char *args, unsigned int timeout)
++int getprio(struct path *pp, __attribute__((unused)) char *args,
++	    __attribute__((unused)) unsigned int timeout)
+ {
+ 	int rc;
+ 
+diff --git a/libmultipath/prioritizers/const.c b/libmultipath/prioritizers/const.c
+index aad69274..059d8593 100644
+--- a/libmultipath/prioritizers/const.c
++++ b/libmultipath/prioritizers/const.c
+@@ -2,7 +2,9 @@
+ 
+ #include "prio.h"
+ 
+-int getprio(struct path * pp, char * args, unsigned int timeout)
++int getprio(__attribute__((unused)) struct path * pp,
++	    __attribute__((unused)) char * args,
++	    __attribute__((unused)) unsigned int timeout)
+ {
+ 	return 1;
+ }
+diff --git a/libmultipath/prioritizers/datacore.c b/libmultipath/prioritizers/datacore.c
+index 59c98164..02dc2e27 100644
+--- a/libmultipath/prioritizers/datacore.c
++++ b/libmultipath/prioritizers/datacore.c
+@@ -98,7 +98,8 @@ int datacore_prio (const char *dev, int sg_fd, char * args)
+ 	return 0;
  }
  
- static int
-@@ -213,6 +219,9 @@ allocate_binding(int fd, const char *wwid, int id, const char *prefix)
- 	}
+-int getprio(struct path * pp, char * args, unsigned int timeout)
++int getprio(struct path * pp, char * args,
++	    __attribute__((unused)) unsigned int timeout)
+ {
+ 	return datacore_prio(pp->dev, pp->fd, args);
+ }
+diff --git a/libmultipath/prioritizers/emc.c b/libmultipath/prioritizers/emc.c
+index a2f74875..3b63cca0 100644
+--- a/libmultipath/prioritizers/emc.c
++++ b/libmultipath/prioritizers/emc.c
+@@ -81,7 +81,8 @@ out:
+ 	return(ret);
+ }
  
- 	i = format_devname(buf, id, LINE_MAX, prefix);
-+	if (i == -1)
-+		return NULL;
-+
- 	c = buf + i;
- 	snprintf(c, LINE_MAX - i, " %s\n", wwid);
- 	buf[LINE_MAX - 1] = '\0';
+-int getprio (struct path * pp, char * args, unsigned int timeout)
++int getprio (struct path *pp, __attribute__((unused)) char *args,
++	     unsigned int timeout)
+ {
+ 	return emc_clariion_prio(pp->dev, pp->fd, timeout);
+ }
+diff --git a/libmultipath/prioritizers/hds.c b/libmultipath/prioritizers/hds.c
+index 70fb5d19..88cac5f0 100644
+--- a/libmultipath/prioritizers/hds.c
++++ b/libmultipath/prioritizers/hds.c
+@@ -168,7 +168,8 @@ int hds_modular_prio (const char *dev, int fd, unsigned int timeout)
+ 	return -1;
+ }
+ 
+-int getprio (struct path * pp, char * args, unsigned int timeout)
++int getprio (struct path * pp, __attribute__((unused)) char *args,
++	     unsigned int timeout)
+ {
+ 	return hds_modular_prio(pp->dev, pp->fd, timeout);
+ }
+diff --git a/libmultipath/prioritizers/hp_sw.c b/libmultipath/prioritizers/hp_sw.c
+index 6b0ed398..5b85ad2e 100644
+--- a/libmultipath/prioritizers/hp_sw.c
++++ b/libmultipath/prioritizers/hp_sw.c
+@@ -95,7 +95,8 @@ out:
+ 	return(ret);
+ }
+ 
+-int getprio (struct path * pp, char * args, unsigned int timeout)
++int getprio (struct path *pp, __attribute__((unused)) char *args,
++	     unsigned int timeout)
+ {
+ 	return hp_sw_prio(pp->dev, pp->fd, timeout);
+ }
+diff --git a/libmultipath/prioritizers/iet.c b/libmultipath/prioritizers/iet.c
+index a4ea61ef..e98773cf 100644
+--- a/libmultipath/prioritizers/iet.c
++++ b/libmultipath/prioritizers/iet.c
+@@ -138,7 +138,8 @@ int iet_prio(const char *dev, char * args)
+ 	return 10;
+ }
+ 
+-int getprio(struct path * pp, char * args, unsigned int timeout)
++int getprio(struct path * pp, char * args,
++	    __attribute__((unused)) unsigned int timeout)
+ {
+ 	return iet_prio(pp->dev, args);
+ }
+diff --git a/libmultipath/prioritizers/ontap.c b/libmultipath/prioritizers/ontap.c
+index 6505033f..262e69d2 100644
+--- a/libmultipath/prioritizers/ontap.c
++++ b/libmultipath/prioritizers/ontap.c
+@@ -241,7 +241,8 @@ prio_select:
+ 	}
+ }
+ 
+-int getprio (struct path * pp, char * args, unsigned int timeout)
++int getprio (struct path *pp, __attribute__((unused)) char *args,
++	     unsigned int timeout)
+ {
+ 	return ontap_prio(pp->dev, pp->fd, timeout);
+ }
+diff --git a/libmultipath/prioritizers/random.c b/libmultipath/prioritizers/random.c
+index 4a27123b..b742ac23 100644
+--- a/libmultipath/prioritizers/random.c
++++ b/libmultipath/prioritizers/random.c
+@@ -5,7 +5,9 @@
+ 
+ #include "prio.h"
+ 
+-int getprio(struct path * pp, char * args, unsigned int timeout)
++int getprio(__attribute__((unused)) struct path *pp,
++	    __attribute__((unused)) char *args,
++	    __attribute__((unused)) unsigned int timeout)
+ {
+ 	struct timeval tv;
+ 
+diff --git a/libmultipath/prioritizers/rdac.c b/libmultipath/prioritizers/rdac.c
+index f5df0321..92a2fb85 100644
+--- a/libmultipath/prioritizers/rdac.c
++++ b/libmultipath/prioritizers/rdac.c
+@@ -91,7 +91,8 @@ out:
+ 	return(ret);
+ }
+ 
+-int getprio (struct path * pp, char * args, unsigned int timeout)
++int getprio (struct path *pp, __attribute__((unused)) char *args,
++	     unsigned int timeout)
+ {
+ 	return rdac_prio(pp->dev, pp->fd, timeout);
+ }
+diff --git a/libmultipath/prioritizers/sysfs.c b/libmultipath/prioritizers/sysfs.c
+index ff567df7..a6feb421 100644
+--- a/libmultipath/prioritizers/sysfs.c
++++ b/libmultipath/prioritizers/sysfs.c
+@@ -36,7 +36,8 @@ int get_exclusive_pref_arg(char *args)
+ 	return 1;
+ }
+ 
+-int getprio (struct path * pp, char * args, unsigned int timeout)
++int getprio (struct path * pp, char *args,
++	     __attribute__((unused)) unsigned int timeout)
+ {
+ 	int prio = 0, rc, i;
+ 	char buff[512];
+diff --git a/libmultipath/prioritizers/weightedpath.c b/libmultipath/prioritizers/weightedpath.c
+index e0f3efbb..916970df 100644
+--- a/libmultipath/prioritizers/weightedpath.c
++++ b/libmultipath/prioritizers/weightedpath.c
+@@ -143,7 +143,8 @@ int prio_path_weight(struct path *pp, char *prio_args)
+ 	return priority;
+ }
+ 
+-int getprio(struct path *pp, char *args, unsigned int timeout)
++int getprio(struct path *pp, char *args,
++	    __attribute__((unused)) unsigned int timeout)
+ {
+ 	return prio_path_weight(pp, args);
+ }
 -- 
 2.23.0
