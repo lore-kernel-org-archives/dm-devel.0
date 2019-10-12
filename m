@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 23/72] libmultipath: scsi_ioctl_pathinfo():
- remove unused argument
-Date: Sat, 12 Oct 2019 21:28:06 +0000
-Message-ID: <20191012212703.12989-24-martin.wilck@suse.com>
+Subject: [PATCH 14/72] multipath tests: use -lpthread for alias
+	test
+Date: Sat, 12 Oct 2019 21:27:54 +0000
+Message-ID: <20191012212703.12989-15-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,32 +25,24 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+This becomes necessary because of the previous patch.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ tests/Makefile | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index d217ca92..4d93c91b 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1571,7 +1571,7 @@ sysfs_pathinfo(struct path * pp, vector hwtable)
- }
+diff --git a/tests/Makefile b/tests/Makefile
+index 0ce318c6..0dce8571 100644
+--- a/tests/Makefile
++++ b/tests/Makefile
+@@ -29,6 +29,7 @@ blacklist-test_LIBDEPS := -ludev
+ vpd-test_OBJDEPS :=  ../libmultipath/discovery.o
+ vpd-test_LIBDEPS := -ludev -lpthread -ldl
+ alias-test_TESTDEPS := test-log.o
++alias-test_LIBDEPS := -lpthread -ldl
  
- static void
--scsi_ioctl_pathinfo (struct path * pp, struct config *conf, int mask)
-+scsi_ioctl_pathinfo (struct path * pp, int mask)
- {
- 	struct udev_device *parent;
- 	const char *attr_path = NULL;
-@@ -2050,7 +2050,7 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 		get_geometry(pp);
- 
- 	if (path_state == PATH_UP && pp->bus == SYSFS_BUS_SCSI)
--		scsi_ioctl_pathinfo(pp, conf, mask);
-+		scsi_ioctl_pathinfo(pp, mask);
- 
- 	if (pp->bus == SYSFS_BUS_CCISS && mask & DI_SERIAL)
- 		cciss_ioctl_pathinfo(pp);
+ lib/libchecktur.so:
+ 	mkdir lib
 -- 
 2.23.0
