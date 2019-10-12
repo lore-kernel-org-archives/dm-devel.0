@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 10/72] libmultipath: allocate_binding(): detect
-	line overflow
-Date: Sat, 12 Oct 2019 21:27:49 +0000
-Message-ID: <20191012212703.12989-11-martin.wilck@suse.com>
+Subject: [PATCH 08/72] libmultipath: rlookup_binding(): removed
+ unused parameter
+Date: Sat, 12 Oct 2019 21:27:46 +0000
+Message-ID: <20191012212703.12989-9-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,29 +25,43 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Be sure not to truncate the WWID. This shouldn't happen under
-normal circumstances, but play it safe.
+The parameter "prefix" is unused in this function.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/alias.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ libmultipath/alias.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/libmultipath/alias.c b/libmultipath/alias.c
-index 2df34f32..15bbc8ed 100644
+index ac342a54..767800d0 100644
 --- a/libmultipath/alias.c
 +++ b/libmultipath/alias.c
-@@ -244,7 +244,10 @@ allocate_binding(int fd, const char *wwid, int id, const char *prefix)
- 		return NULL;
+@@ -183,7 +183,7 @@ lookup_binding(FILE *f, const char *map_wwid, char **map_alias,
+ }
  
- 	c = buf + i;
--	snprintf(c, LINE_MAX - i, " %s\n", wwid);
-+	if (snprintf(c, LINE_MAX - i, " %s\n", wwid) >= LINE_MAX - i) {
-+		condlog(1, "%s: line too long for %s\n", __func__, wwid);
-+		return NULL;
-+	}
- 	buf[LINE_MAX - 1] = '\0';
+ static int
+-rlookup_binding(FILE *f, char *buff, const char *map_alias, const char *prefix)
++rlookup_binding(FILE *f, char *buff, const char *map_alias)
+ {
+ 	char line[LINE_MAX];
+ 	unsigned int line_nr = 0;
+@@ -297,7 +297,7 @@ use_existing_alias (const char *wwid, const char *file, const char *alias_old,
+ 	/* lookup the binding. if it exists, the wwid will be in buff
+ 	 * either way, id contains the id for the alias
+ 	 */
+-	rlookup_binding(f, buff, alias_old, prefix);
++	rlookup_binding(f, buff, alias_old);
  
- 	offset = lseek(fd, 0, SEEK_END);
+ 	if (strlen(buff) > 0) {
+ 		/* if buff is our wwid, it's already
+@@ -412,7 +412,7 @@ get_user_friendly_wwid(const char *alias, char *buff, const char *file)
+ 		return -1;
+ 	}
+ 
+-	rlookup_binding(f, buff, alias, NULL);
++	rlookup_binding(f, buff, alias);
+ 	if (!strlen(buff)) {
+ 		fclose(f);
+ 		return -1;
 -- 
 2.23.0
