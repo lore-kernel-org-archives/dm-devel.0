@@ -1,7 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 54/72] libmpathcmd: fix -Wsign-compare warnings
-Date: Sat, 12 Oct 2019 21:28:44 +0000
-Message-ID: <20191012212703.12989-55-martin.wilck@suse.com>
+Subject: [PATCH 66/72] multipath-tools: Makefile.inc: fix
+	TEST_CC_OPTION
+Date: Sat, 12 Oct 2019 21:28:59 +0000
+Message-ID: <20191012212703.12989-67-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,33 +25,27 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+The test works only if the compiler actually errors out for an
+unsupported warning option, which requires setting -Werror.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmpathcmd/mpath_cmd.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ Makefile.inc | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
-index f00bf7e1..60b2d965 100644
---- a/libmpathcmd/mpath_cmd.c
-+++ b/libmpathcmd/mpath_cmd.c
-@@ -96,7 +96,8 @@ static size_t write_all(int fd, const void *buf, size_t len)
-  */
- int __mpath_connect(int nonblocking)
- {
--	int fd, len;
-+	int fd;
-+	size_t len;
- 	struct sockaddr_un addr;
- 	int flags = 0;
- 
-@@ -172,7 +173,7 @@ int mpath_recv_reply_data(int fd, char *reply, size_t len,
- 	ret = read_all(fd, reply, len, timeout);
- 	if (ret < 0)
- 		return ret;
--	if (ret != len) {
-+	if ((size_t)ret != len) {
- 		errno = EIO;
- 		return -1;
- 	}
+diff --git a/Makefile.inc b/Makefile.inc
+index 0c800ab3..d4d08fe9 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -81,7 +81,8 @@ INSTALL_PROGRAM	= install
+ # Test if the C compiler supports the option.
+ # Evaluates to "option" if yes, and "fallback" otherwise.
+ TEST_CC_OPTION = $(shell \
+-	if echo 'int main(void){return 0;}' | $(CC) -o /dev/null -c "$(1)" -xc - >/dev/null 2>&1; \
++	if echo 'int main(void){return 0;}' | \
++		$(CC) -o /dev/null -c -Werror "$(1)" -xc - >/dev/null 2>&1; \
+ 	then \
+ 		echo "$(1)"; \
+ 	else \
 -- 
 2.23.0
