@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 60/72] libmultipath: fix clang -Wformat-literal
-	warnings
-Date: Sat, 12 Oct 2019 21:28:52 +0000
-Message-ID: <20191012212703.12989-61-martin.wilck@suse.com>
+Subject: [PATCH 53/72] libmultipath,
+ kpartx: byteorder: always use unsigned types
+Date: Sat, 12 Oct 2019 21:28:42 +0000
+Message-ID: <20191012212703.12989-54-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,53 +25,61 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+The swapped results are unsigned, so the non-swapped ones should
+be unsigned, too.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/devmapper.c   | 2 +-
- libmultipath/log.h         | 3 ++-
- libmultipath/log_pthread.h | 3 ++-
- 3 files changed, 5 insertions(+), 3 deletions(-)
+ kpartx/gpt.c             |  6 +++---
+ libmultipath/byteorder.h | 12 ++++++------
+ 2 files changed, 9 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 4bff37d0..acf576aa 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -59,7 +59,7 @@ void dm_udev_set_sync_support(int c)
+diff --git a/kpartx/gpt.c b/kpartx/gpt.c
+index 4f88d486..aa2a440c 100644
+--- a/kpartx/gpt.c
++++ b/kpartx/gpt.c
+@@ -40,9 +40,9 @@
+ #include "kpartx.h"
  
+ #if BYTE_ORDER == LITTLE_ENDIAN
+-#  define __le16_to_cpu(x) (x)
+-#  define __le32_to_cpu(x) (x)
+-#  define __le64_to_cpu(x) (x)
++#  define __le16_to_cpu(x) (uint16_t)(x)
++#  define __le32_to_cpu(x) (uint32_t)(x)
++#  define __le64_to_cpu(x) (uint64_t)(x)
+ #  define __cpu_to_le32(x) (x)
+ #elif BYTE_ORDER == BIG_ENDIAN
+ #  define __le16_to_cpu(x) bswap_16(x)
+diff --git a/libmultipath/byteorder.h b/libmultipath/byteorder.h
+index 5c771467..0a862447 100644
+--- a/libmultipath/byteorder.h
++++ b/libmultipath/byteorder.h
+@@ -9,19 +9,19 @@
  #endif
  
--static void
-+__attribute__((format(printf, 4, 5))) static void
- dm_write_log (int level, const char *file, int line, const char *f, ...)
- {
- 	va_list ap;
-diff --git a/libmultipath/log.h b/libmultipath/log.h
-index 6551b5cf..d2448f6a 100644
---- a/libmultipath/log.h
-+++ b/libmultipath/log.h
-@@ -34,7 +34,8 @@ extern struct logarea* la;
- int log_init (char * progname, int size);
- void log_close (void);
- void log_reset (char * progname);
--int log_enqueue (int prio, const char * fmt, va_list ap);
-+int log_enqueue (int prio, const char * fmt, va_list ap)
-+	__attribute__((format(printf, 2, 0)));
- int log_dequeue (void *);
- void log_syslog (void *);
- void dump_logmsg (void *);
-diff --git a/libmultipath/log_pthread.h b/libmultipath/log_pthread.h
-index 7e138a00..810ac920 100644
---- a/libmultipath/log_pthread.h
-+++ b/libmultipath/log_pthread.h
-@@ -3,7 +3,8 @@
- 
- #include <pthread.h>
- 
--void log_safe(int prio, const char * fmt, va_list ap);
-+void log_safe(int prio, const char * fmt, va_list ap)
-+	__attribute__((format(printf, 2, 0)));
- void log_thread_start(pthread_attr_t *attr);
- void log_thread_reset (void);
- void log_thread_stop(void);
+ #if BYTE_ORDER == LITTLE_ENDIAN
+-#  define le16_to_cpu(x) (x)
++#  define le16_to_cpu(x) (uint16_t)(x)
+ #  define be16_to_cpu(x) bswap_16(x)
+-#  define le32_to_cpu(x) (x)
+-#  define le64_to_cpu(x) (x)
++#  define le32_to_cpu(x) (uint32_t)(x)
++#  define le64_to_cpu(x) (uint64_t)(x)
+ #  define be32_to_cpu(x) bswap_32(x)
+ #  define be64_to_cpu(x) bswap_64(x)
+ #elif BYTE_ORDER == BIG_ENDIAN
+ #  define le16_to_cpu(x) bswap_16(x)
+-#  define be16_to_cpu(x) (x)
++#  define be16_to_cpu(x) (uint16_t)(x)
+ #  define le32_to_cpu(x) bswap_32(x)
+ #  define le64_to_cpu(x) bswap_64(x)
+-#  define be32_to_cpu(x) (x)
+-#  define be64_to_cpu(x) (x)
++#  define be32_to_cpu(x) (uint32_t)(x)
++#  define be64_to_cpu(x) (uint64_t)(x)
+ #else
+ #  error unsupported
+ #endif
 -- 
 2.23.0
