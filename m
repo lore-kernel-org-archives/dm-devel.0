@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 21/72] libmultipath: process_config_dir(): remove
- unused argument
-Date: Sat, 12 Oct 2019 21:28:03 +0000
-Message-ID: <20191012212703.12989-22-martin.wilck@suse.com>
+Subject: [PATCH 15/72] libmultipath: path_discovery: handle
+	libudev errors
+Date: Sat, 12 Oct 2019 21:27:55 +0000
+Message-ID: <20191012212703.12989-16-martin.wilck@suse.com>
 References: <20191012212703.12989-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,32 +25,53 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+pass out if any libudev helpers return an error code.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/discovery.c | 16 +++++++++++-----
+ 1 file changed, 11 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 20e3b8bf..49723add 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -644,7 +644,7 @@ free_config (struct config * conf)
- /* if multipath fails to process the config directory, it should continue,
-  * with just a warning message */
- static void
--process_config_dir(struct config *conf, vector keywords, char *dir)
-+process_config_dir(struct config *conf, char *dir)
- {
- 	struct dirent **namelist;
- 	struct scandir_result sr;
-@@ -749,7 +749,7 @@ load_config (char * file)
- 	if (conf->config_dir == NULL)
- 		conf->config_dir = set_default(DEFAULT_CONFIG_DIR);
- 	if (conf->config_dir && conf->config_dir[0] != '\0')
--		process_config_dir(conf, conf->keywords, conf->config_dir);
-+		process_config_dir(conf, conf->config_dir);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 72f455e8..e68b0e9f 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -148,15 +148,19 @@ path_discovery (vector pathvec, int flag)
+ 	struct udev_device *udevice;
+ 	struct config *conf;
+ 	const char *devpath;
+-	int num_paths = 0, total_paths = 0;
++	int num_paths = 0, total_paths = 0, ret;
  
- 	/*
- 	 * fill the voids left in the config file
+ 	udev_iter = udev_enumerate_new(udev);
+ 	if (!udev_iter)
+ 		return -ENOMEM;
+ 
+-	udev_enumerate_add_match_subsystem(udev_iter, "block");
+-	udev_enumerate_add_match_is_initialized(udev_iter);
+-	udev_enumerate_scan_devices(udev_iter);
++	if (udev_enumerate_add_match_subsystem(udev_iter, "block") < 0 ||
++	    udev_enumerate_add_match_is_initialized(udev_iter) < 0 ||
++	    udev_enumerate_scan_devices(udev_iter) < 0) {
++		condlog(1, "%s: error setting up udev_enumerate: %m", __func__);
++		ret = -1;
++		goto out;
++	}
+ 
+ 	udev_list_entry_foreach(entry,
+ 				udev_enumerate_get_list_entry(udev_iter)) {
+@@ -180,9 +184,11 @@ path_discovery (vector pathvec, int flag)
+ 		}
+ 		udev_device_unref(udevice);
+ 	}
++	ret = total_paths - num_paths;
++out:
+ 	udev_enumerate_unref(udev_iter);
+ 	condlog(4, "Discovered %d/%d paths", num_paths, total_paths);
+-	return (total_paths - num_paths);
++	return ret;
+ }
+ 
+ #define declare_sysfs_get_str(fname)					\
 -- 
 2.23.0
