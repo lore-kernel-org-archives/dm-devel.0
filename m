@@ -1,8 +1,8 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-bio-prison-v1: replace spin_lock_irqsave with
- spin_lock_irq
-Date: Tue, 15 Oct 2019 08:16:51 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1910150408480.26857@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH] dm-cache: fix bugs when a GFP_NOWAIT allocation
+	fails
+Date: Wed, 16 Oct 2019 09:21:50 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1910160917260.8310@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,97 +16,115 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, Joe Thornber <thornber@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: Joe Thornber <thornber@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Replace spin_lock_irqsave/irqrestore with spin_lock_irq/spin_unlock_irq.
+GFP_NOWAIT allocation can fail anytime - it doesn't wait for memory being
+available and it fails if the mempool is exhausted and there is not enough
+memory.
+
+If we go down this path:
+  map_bio -> mg_start -> alloc_migration -> mempool_alloc(GFP_NOWAIT)
+we can see that map_bio doesn't check the return value of mg_start, and
+the bio is leaked.
+
+If we go down this path:
+  map_bio -> mg_start -> mg_lock_writes -> alloc_prison_cell ->
+  dm_bio_prison_alloc_cell_v2 -> mempool_alloc(GFP_NOWAIT) ->
+  mg_lock_writes -> mg_complete
+the bio is ended with an error - it is unacceptable because it could cause
+filesystem corruption if the machine ran out of memory temporarily.
+
+This pactch changes GFP_NOWAIT to GFP_NOIO, so that the mempool code will
+properly wait until memory becomes available. mempool_alloc with GFP_NOIO
+can't fail, so I deleted the code paths that deal with the failure.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
 
 ---
- drivers/md/dm-bio-prison-v1.c |   27 ++++++++++-----------------
- 1 file changed, 10 insertions(+), 17 deletions(-)
+ drivers/md/dm-cache-target.c |   28 ++--------------------------
+ 1 file changed, 2 insertions(+), 26 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-bio-prison-v1.c
+Index: linux-2.6/drivers/md/dm-cache-target.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-bio-prison-v1.c	2019-10-10 16:52:03.000000000 +0200
-+++ linux-2.6/drivers/md/dm-bio-prison-v1.c	2019-10-11 21:37:00.000000000 +0200
-@@ -150,11 +150,10 @@ static int bio_detain(struct dm_bio_pris
- 		      struct dm_bio_prison_cell **cell_result)
+--- linux-2.6.orig/drivers/md/dm-cache-target.c	2019-10-10 16:52:03.000000000 +0200
++++ linux-2.6/drivers/md/dm-cache-target.c	2019-10-16 13:23:13.000000000 +0200
+@@ -542,7 +542,7 @@ static void wake_migration_worker(struct
+ 
+ static struct dm_bio_prison_cell_v2 *alloc_prison_cell(struct cache *cache)
  {
- 	int r;
--	unsigned long flags;
- 
--	spin_lock_irqsave(&prison->lock, flags);
-+	spin_lock_irq(&prison->lock);
- 	r = __bio_detain(prison, key, inmate, cell_prealloc, cell_result);
--	spin_unlock_irqrestore(&prison->lock, flags);
-+	spin_unlock_irq(&prison->lock);
- 
- 	return r;
+-	return dm_bio_prison_alloc_cell_v2(cache->prison, GFP_NOWAIT);
++	return dm_bio_prison_alloc_cell_v2(cache->prison, GFP_NOIO);
  }
-@@ -198,11 +197,9 @@ void dm_cell_release(struct dm_bio_priso
- 		     struct dm_bio_prison_cell *cell,
- 		     struct bio_list *bios)
+ 
+ static void free_prison_cell(struct cache *cache, struct dm_bio_prison_cell_v2 *cell)
+@@ -554,9 +554,7 @@ static struct dm_cache_migration *alloc_
  {
--	unsigned long flags;
--
--	spin_lock_irqsave(&prison->lock, flags);
-+	spin_lock_irq(&prison->lock);
- 	__cell_release(prison, cell, bios);
--	spin_unlock_irqrestore(&prison->lock, flags);
-+	spin_unlock_irq(&prison->lock);
- }
- EXPORT_SYMBOL_GPL(dm_cell_release);
+ 	struct dm_cache_migration *mg;
  
-@@ -250,12 +247,10 @@ void dm_cell_visit_release(struct dm_bio
- 			   void *context,
- 			   struct dm_bio_prison_cell *cell)
- {
--	unsigned long flags;
--
--	spin_lock_irqsave(&prison->lock, flags);
-+	spin_lock_irq(&prison->lock);
- 	visit_fn(context, cell);
- 	rb_erase(&cell->node, &prison->cells);
--	spin_unlock_irqrestore(&prison->lock, flags);
-+	spin_unlock_irq(&prison->lock);
- }
- EXPORT_SYMBOL_GPL(dm_cell_visit_release);
+-	mg = mempool_alloc(&cache->migration_pool, GFP_NOWAIT);
+-	if (!mg)
+-		return NULL;
++	mg = mempool_alloc(&cache->migration_pool, GFP_NOIO);
  
-@@ -275,11 +270,10 @@ int dm_cell_promote_or_release(struct dm
- 			       struct dm_bio_prison_cell *cell)
- {
- 	int r;
--	unsigned long flags;
+ 	memset(mg, 0, sizeof(*mg));
  
--	spin_lock_irqsave(&prison->lock, flags);
-+	spin_lock_irq(&prison->lock);
- 	r = __promote_or_release(prison, cell);
--	spin_unlock_irqrestore(&prison->lock, flags);
-+	spin_unlock_irq(&prison->lock);
+@@ -664,10 +662,6 @@ static bool bio_detain_shared(struct cac
+ 	struct dm_bio_prison_cell_v2 *cell_prealloc, *cell;
  
- 	return r;
- }
-@@ -379,10 +373,9 @@ EXPORT_SYMBOL_GPL(dm_deferred_entry_dec)
- int dm_deferred_set_add_work(struct dm_deferred_set *ds, struct list_head *work)
- {
- 	int r = 1;
--	unsigned long flags;
- 	unsigned next_entry;
+ 	cell_prealloc = alloc_prison_cell(cache); /* FIXME: allow wait if calling from worker */
+-	if (!cell_prealloc) {
+-		defer_bio(cache, bio);
+-		return false;
+-	}
  
--	spin_lock_irqsave(&ds->lock, flags);
-+	spin_lock_irq(&ds->lock);
- 	if ((ds->sweeper == ds->current_entry) &&
- 	    !ds->entries[ds->current_entry].count)
- 		r = 0;
-@@ -392,7 +385,7 @@ int dm_deferred_set_add_work(struct dm_d
- 		if (!ds->entries[next_entry].count)
- 			ds->current_entry = next_entry;
+ 	build_key(oblock, end, &key);
+ 	r = dm_cell_get_v2(cache->prison, &key, lock_level(bio), bio, cell_prealloc, &cell);
+@@ -1493,11 +1487,6 @@ static int mg_lock_writes(struct dm_cach
+ 	struct dm_bio_prison_cell_v2 *prealloc;
+ 
+ 	prealloc = alloc_prison_cell(cache);
+-	if (!prealloc) {
+-		DMERR_LIMIT("%s: alloc_prison_cell failed", cache_device_name(cache));
+-		mg_complete(mg, false);
+-		return -ENOMEM;
+-	}
+ 
+ 	/*
+ 	 * Prevent writes to the block, but allow reads to continue.
+@@ -1535,11 +1524,6 @@ static int mg_start(struct cache *cache,
  	}
--	spin_unlock_irqrestore(&ds->lock, flags);
-+	spin_unlock_irq(&ds->lock);
  
- 	return r;
- }
+ 	mg = alloc_migration(cache);
+-	if (!mg) {
+-		policy_complete_background_work(cache->policy, op, false);
+-		background_work_end(cache);
+-		return -ENOMEM;
+-	}
+ 
+ 	mg->op = op;
+ 	mg->overwrite_bio = bio;
+@@ -1628,10 +1612,6 @@ static int invalidate_lock(struct dm_cac
+ 	struct dm_bio_prison_cell_v2 *prealloc;
+ 
+ 	prealloc = alloc_prison_cell(cache);
+-	if (!prealloc) {
+-		invalidate_complete(mg, false);
+-		return -ENOMEM;
+-	}
+ 
+ 	build_key(mg->invalidate_oblock, oblock_succ(mg->invalidate_oblock), &key);
+ 	r = dm_cell_lock_v2(cache->prison, &key,
+@@ -1669,10 +1649,6 @@ static int invalidate_start(struct cache
+ 		return -EPERM;
+ 
+ 	mg = alloc_migration(cache);
+-	if (!mg) {
+-		background_work_end(cache);
+-		return -ENOMEM;
+-	}
+ 
+ 	mg->overwrite_bio = bio;
+ 	mg->invalidate_cblock = cblock;
