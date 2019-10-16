@@ -1,29 +1,17 @@
-From: Guruswamy Basavaiah <guru2018@gmail.com>
-Subject: Re: Fix "dm kcopyd: Fix bug causing workqueue stalls"
-	causes dead lock
-Date: Thu, 17 Oct 2019 11:28:05 +0530
-Message-ID: <CAHSpA5_F3=kfz8aduj=A1XfaOKhfJjqWNrOCveeM41tyUz2Tjg@mail.gmail.com>
-References: <CAHSpA58dehDfou0ogCYnkziBt4oU5yo1SGHLhJb7vFKy9HhJPQ@mail.gmail.com>
-	<db9a2b56-244b-1285-208c-14944f559f36@arrikto.com>
-	<CAHSpA58H_Vuhub6Eqqmi2QZ2g4AAUX8KCCUMzMvyc87hDaVDKg@mail.gmail.com>
-	<1b2b06a1-0b68-c265-e211-48273f26efaf@arrikto.com>
-	<CAHSpA59rG7qhEDjtUUTNv5evyWHS_iTL0o8utRCr9MQvMDsEgw@mail.gmail.com>
-	<e15bb4d9-d19b-f954-f71d-2985dd6e455a@arrikto.com>
-	<20191009141308.GA1670@redhat.com>
-	<d6aaebd8-ed3e-2e6a-14ea-33bf023ee4bb@arrikto.com>
-	<20191009160446.GA2284@redhat.com>
-	<CAHSpA59T+JCR+_3ZCYShXa6GtQddAcaQE0OP5GWbSEG0qMAQOg@mail.gmail.com>
-	<CAHSpA5_miJX74Th-_hinLr_q-sVR2G3M-_aS2c2fJBSr1eDnfg@mail.gmail.com>
-	<ecf3c2cc-a0c0-ec34-7a74-8d715f774df9@arrikto.com>
-	<CAHSpA5-wbyaNmnOMq+rTbuXh2eJ6y=iVjVR52OvmWLbLnUkTAw@mail.gmail.com>
-	<b8246b84-957d-1903-4ab0-3f4b940b779d@arrikto.com>
-	<a1205abe-8675-a2d7-5ef8-3bcd00290f08@arrikto.com>
-	<CAHSpA5_yNRpnTEy8zNMukZFrqamKkK7cZnTAXnbC53EeHfFn4g@mail.gmail.com>
+From: Eric Farman <farman@linux.ibm.com>
+Subject: Re: [PATCH v5 5/7] block: Delay default elevator
+	initialization
+Date: Wed, 16 Oct 2019 14:51:10 -0400
+Message-ID: <f5f3a25b-19f5-bf29-2f38-f40f59860aeb@linux.ibm.com>
+References: <20190905095135.26026-1-damien.lemoal@wdc.com>
+	<20190905095135.26026-6-damien.lemoal@wdc.com>
+	<9355c25f-61d7-b290-7d60-552ef4206e8c@linux.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAHSpA5_yNRpnTEy8zNMukZFrqamKkK7cZnTAXnbC53EeHfFn4g@mail.gmail.com>
+In-Reply-To: <9355c25f-61d7-b290-7d60-552ef4206e8c@linux.ibm.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -33,201 +21,227 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Nikos Tsironis <ntsironis@arrikto.com>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, agk@redhat.com, Mike Snitzer <snitzer@redhat.com>, iliastsi@arrikto.com
+To: Damien Le Moal <damien.lemoal@wdc.com>, linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Christian Borntraeger <borntraeger@de.ibm.com>, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-Hello Nikos,
- Tested with your new patches. Issue is resolved. Thank you.
- In second patch "struct wait_queue_head" to "wait_queue_head_t" for
-variable in_progress_wait, else compilation is failing with error
- "error: field 'in_progress_wait' has incomplete type
-  struct wait_queue_head in_progress_wait;"
- Attached the changed patch.
-
-Guru
-
-On Sat, 12 Oct 2019 at 14:16, Guruswamy Basavaiah <guru2018@gmail.com> wrote:
->
-> Hello Nikos,
->  I am having some issues in our set-up, I will try to get the results ASAP.
-> Guru
->
->
-> On Fri, 11 Oct 2019 at 17:47, Nikos Tsironis <ntsironis@arrikto.com> wrote:
-> >
-> > On 10/11/19 2:39 PM, Nikos Tsironis wrote:
-> > > On 10/11/19 1:17 PM, Guruswamy Basavaiah wrote:
-> > >> Hello Nikos,
-> > >>  Applied these patches and tested.
-> > >>  We still see hung_task_timeout back traces and the drbd Resync is blocked.
-> > >>  Attached the back trace, please let me know if you need any other information.
-> > >>
-> > >
-> > > Hi Guru,
-> > >
-> > > Can you provide more information about your setup? The output of
-> > > 'dmsetup table', 'dmsetup ls --tree' and the DRBD configuration would
-> > > help to get a better picture of your I/O stack.
-> > >
-> > > Also, is it possible to describe the test case you are running and
-> > > exactly what it does?
-> > >
-> > > Thanks,
-> > > Nikos
-> > >
-> >
-> > Hi Guru,
-> >
-> > I believe I found the mistake. The in_progress variable was never
-> > initialized to zero.
-> >
-> > I attach a new version of the second patch correcting this.
-> >
-> > Can you please test again with this patch?
-> >
-> > Thanks,
-> > Nikos
-> >
-> > >>  In patch "0002-dm-snapshot-rework-COW-throttling-to-fix-deadlock.patch"
-> > >> I change "struct wait_queue_head" to "wait_queue_head_t" as i was
-> > >> getting compilation error with former one.
-> > >>
-> > >> On Thu, 10 Oct 2019 at 17:33, Nikos Tsironis <ntsironis@arrikto.com> wrote:
-> > >>>
-> > >>> On 10/10/19 9:34 AM, Guruswamy Basavaiah wrote:
-> > >>>> Hello,
-> > >>>> We use 4.4.184 in our builds and the patch fails to apply.
-> > >>>> Is it possible to give a patch for 4.4.x branch ?
-> > >>> Hi Guru,
-> > >>>
-> > >>> I attach the two patches fixing the deadlock rebased on the 4.4.x branch.
-> > >>>
-> > >>> Nikos
-> > >>>
-> > >>>>
-> > >>>> patching Logs.
-> > >>>> patching file drivers/md/dm-snap.c
-> > >>>> Hunk #1 succeeded at 19 (offset 1 line).
-> > >>>> Hunk #2 succeeded at 105 (offset -1 lines).
-> > >>>> Hunk #3 succeeded at 157 (offset -4 lines).
-> > >>>> Hunk #4 succeeded at 1206 (offset -120 lines).
-> > >>>> Hunk #5 FAILED at 1508.
-> > >>>> Hunk #6 succeeded at 1412 (offset -124 lines).
-> > >>>> Hunk #7 succeeded at 1425 (offset -124 lines).
-> > >>>> Hunk #8 FAILED at 1925.
-> > >>>> Hunk #9 succeeded at 1866 with fuzz 2 (offset -255 lines).
-> > >>>> Hunk #10 succeeded at 2202 (offset -294 lines).
-> > >>>> Hunk #11 succeeded at 2332 (offset -294 lines).
-> > >>>> 2 out of 11 hunks FAILED -- saving rejects to file drivers/md/dm-snap.c.rej
-> > >>>>
-> > >>>> Guru
-> > >>>>
-> > >>>> On Thu, 10 Oct 2019 at 01:33, Guruswamy Basavaiah <guru2018@gmail.com> wrote:
-> > >>>>>
-> > >>>>> Hello Mike,
-> > >>>>>  I will get the testing result before end of Thursday.
-> > >>>>> Guru
-> > >>>>>
-> > >>>>> On Wed, 9 Oct 2019 at 21:34, Mike Snitzer <snitzer@redhat.com> wrote:
-> > >>>>>>
-> > >>>>>> On Wed, Oct 09 2019 at 11:44am -0400,
-> > >>>>>> Nikos Tsironis <ntsironis@arrikto.com> wrote:
-> > >>>>>>
-> > >>>>>>> On 10/9/19 5:13 PM, Mike Snitzer wrote:> On Tue, Oct 01 2019 at  8:43am -0400,
-> > >>>>>>>> Nikos Tsironis <ntsironis@arrikto.com> wrote:
-> > >>>>>>>>
-> > >>>>>>>>> On 10/1/19 3:27 PM, Guruswamy Basavaiah wrote:
-> > >>>>>>>>>> Hello Nikos,
-> > >>>>>>>>>>  Yes, issue is consistently reproducible with us, in a particular
-> > >>>>>>>>>> set-up and test case.
-> > >>>>>>>>>>  I will get the access to set-up next week, will try to test and let
-> > >>>>>>>>>> you know the results before end of next week.
-> > >>>>>>>>>>
-> > >>>>>>>>>
-> > >>>>>>>>> That sounds great!
-> > >>>>>>>>>
-> > >>>>>>>>> Thanks a lot,
-> > >>>>>>>>> Nikos
-> > >>>>>>>>
-> > >>>>>>>> Hi Guru,
-> > >>>>>>>>
-> > >>>>>>>> Any chance you could try this fix that I've staged to send to Linus?
-> > >>>>>>>> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.4&id=633b1613b2a49304743c18314bb6e6465c21fd8a
-> > >>>>>>>>
-> > >>>>>>>> Shiort of that, Nikos: do you happen to have a test scenario that teases
-> > >>>>>>>> out this deadlock?
-> > >>>>>>>>
-> > >>>>>>>
-> > >>>>>>> Hi Mike,
-> > >>>>>>>
-> > >>>>>>> Yes,
-> > >>>>>>>
-> > >>>>>>> I created a 50G LV and took a snapshot of the same size:
-> > >>>>>>>
-> > >>>>>>>   lvcreate -n data-lv -L50G testvg
-> > >>>>>>>   lvcreate -n snap-lv -L50G -s testvg/data-lv
-> > >>>>>>>
-> > >>>>>>> Then I ran the following fio job:
-> > >>>>>>>
-> > >>>>>>> [global]
-> > >>>>>>> randrepeat=1
-> > >>>>>>> ioengine=libaio
-> > >>>>>>> bs=1M
-> > >>>>>>> size=6G
-> > >>>>>>> offset_increment=6G
-> > >>>>>>> numjobs=8
-> > >>>>>>> direct=1
-> > >>>>>>> iodepth=32
-> > >>>>>>> group_reporting
-> > >>>>>>> filename=/dev/testvg/data-lv
-> > >>>>>>>
-> > >>>>>>> [test]
-> > >>>>>>> rw=write
-> > >>>>>>> timeout=180
-> > >>>>>>>
-> > >>>>>>> , concurrently with the following script:
-> > >>>>>>>
-> > >>>>>>> lvcreate -n dummy-lv -L1G testvg
-> > >>>>>>>
-> > >>>>>>> while true
-> > >>>>>>> do
-> > >>>>>>>  lvcreate -n dummy-snap -L1M -s testvg/dummy-lv
-> > >>>>>>>  lvremove -f testvg/dummy-snap
-> > >>>>>>> done
-> > >>>>>>>
-> > >>>>>>> This reproduced the deadlock for me. I also ran 'echo 30 >
-> > >>>>>>> /proc/sys/kernel/hung_task_timeout_secs', to reduce the hung task
-> > >>>>>>> timeout.
-> > >>>>>>>
-> > >>>>>>> Nikos.
-> > >>>>>>
-> > >>>>>> Very nice, well done.  Curious if you've tested with the fix I've staged
-> > >>>>>> (see above)?  If so, does it resolve the deadlock?  If you've had
-> > >>>>>> success I'd be happy to update the tags in the commit header to include
-> > >>>>>> your Tested-by before sending it to Linus.  Also, any review of the
-> > >>>>>> patch that you can do would be appreciated and with your formal
-> > >>>>>> Reviewed-by reply would be welcomed and folded in too.
-> > >>>>>>
-> > >>>>>> Mike
-> > >>>>>
-> > >>>>>
-> > >>>>>
-> > >>>>> --
-> > >>>>> Guruswamy Basavaiah
-> > >>>>
-> > >>>>
-> > >>>>
-> > >>
-> > >>
-> > >>
->
->
->
-> --
-> Guruswamy Basavaiah
 
 
+On 10/1/19 4:46 PM, Eric Farman wrote:
+> 
+> 
+> On 9/5/19 5:51 AM, Damien Le Moal wrote:
+>> When elevator_init_mq() is called from blk_mq_init_allocated_queue(),
+>> the only information known about the device is the number of hardware
+>> queues as the block device scan by the device driver is not completed
+>> yet for most drivers. The device type and elevator required features
+>> are not set yet, preventing to correctly select the default elevator
+>> most suitable for the device.
+>>
+>> This currently affects all multi-queue zoned block devices which default
+>> to the "none" elevator instead of the required "mq-deadline" elevator.
+>> These drives currently include host-managed SMR disks connected to a
+>> smartpqi HBA and null_blk block devices with zoned mode enabled.
+>> Upcoming NVMe Zoned Namespace devices will also be affected.
+>>
+>> Fix this by adding the boolean elevator_init argument to
+>> blk_mq_init_allocated_queue() to control the execution of
+>> elevator_init_mq(). Two cases exist:
+>> 1) elevator_init = false is used for calls to
+>>    blk_mq_init_allocated_queue() within blk_mq_init_queue(). In this
+>>    case, a call to elevator_init_mq() is added to __device_add_disk(),
+>>    resulting in the delayed initialization of the queue elevator
+>>    after the device driver finished probing the device information. This
+>>    effectively allows elevator_init_mq() access to more information
+>>    about the device.
+>> 2) elevator_init = true preserves the current behavior of initializing
+>>    the elevator directly from blk_mq_init_allocated_queue(). This case
+>>    is used for the special request based DM devices where the device
+>>    gendisk is created before the queue initialization and device
+>>    information (e.g. queue limits) is already known when the queue
+>>    initialization is executed.
+>>
+>> Additionally, to make sure that the elevator initialization is never
+>> done while requests are in-flight (there should be none when the device
+>> driver calls device_add_disk()), freeze and quiesce the device request
+>> queue before calling blk_mq_init_sched() in elevator_init_mq().
+>>
+>> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+> 
+> Coincidentally, I had been looking into a problem that is fixed in
+> 5.4-rc1 by this patch.  Thanks for that!
+> 
+> The problem was a delay during boot of a KVM guest with virtio-scsi
+> devices (or hotplug of such a device to a guest) in recent releases,
+> especially when virtio-scsi is configured as a module.  The symptoms
+> look like:
+> 
+> [    0.975315] virtio_blk virtio2: [vda] 1803060 4096-byte logical
+> blocks (7.39 GB/6.88 GiB)
+> [    0.977859] scsi host0: Virtio SCSI HBA
+> [    0.980339] scsi 0:0:0:0: Direct-Access     QEMU     QEMU HARDDISK
+> 2.5+ PQ: 0 ANSI: 5
+> [    0.981685]  vda:VOL1/  0XA906: vda1
+> [    0.988253] alg: No test for crc32be (crc32be-vx)
+> ...stall...
+> [   24.544920] sd 0:0:0:0: Power-on or device reset occurred
+> [   24.545176] sd 0:0:0:0: Attached scsi generic sg0 type 0
+> [   24.545292] sd 0:0:0:0: [sda] 385 512-byte logical blocks: (197
+> kB/193 KiB)
+> [   24.545368] sd 0:0:0:0: [sda] Write Protect is off
+> [   24.545416] sd 0:0:0:0: [sda] Mode Sense: 63 00 00 08
+> [   24.545456] sd 0:0:0:0: [sda] Write cache: enabled, read cache:
+> enabled, doesn't support DPO or FUA
+> [   24.547033] sd 0:0:0:0: [sda] Attached SCSI disk
+> 
+> I debugged this down to the same behavior described/fixed back in 3.18
+> by commit 17497acbdce9 ("blk-mq, percpu_ref: start q->mq_usage_counter
+> in atomic mode"), and for the same reason.  The delay starts occurring
+> as soon as q->q_usage_counter is converted to percpu for the one LUN tha
+> twas found, while scsi_scan_channel() is still working on its loop of
+> mostly non-existent devices.  Exactly when this problem started
+> re-occuring is not certain to me, though I did see this problem with 5.2
+> on linux-stable.
 
--- 
-Guruswamy Basavaiah
+This problem started occurring reliably with kernel 4.16 because of
+commit b5b6e8c8d3b4 ("scsi: virtio_scsi: fix IO hang caused by automatic
+irq vector affinity") which forced blk-mq on for virtio-scsi devices.
+
+I'm able to reproduce the behavior (fixed by this commit) on 4.15.0, as
+well as 4.14.0 and 4.9.0, if I enable SCSI_MQ_DEFAULT in the kernel
+config.  I cannot reproduce it with 4.4.0, but didn't chase further to
+see why that was the case.
+
+That force_blk_mq commit went into linux-stable, so SCSI_MQ_DEFAULT need
+not be enabled on 4.14.y or 4.9.y stable branches to see the behavior
+fixed by this commit.
+
+> 
+> When I run with a 5.3 kernel, the problem is easily reproducible.  So I
+> bisected between 5.3 and 5.4-rc1, and got here.  Cherry-picking this
+> patch on top of 5.3 cleans up the boot/hotplug process and removes any
+> stall.  Any chance this could be cc'd to stable?  
+
+Please?  Anything I can do to help with that effort?
+
+Thanks,
+Eric
+
+> Any data someone wants
+> to see behavioral changes?
+> 
+> Thanks,
+> Eric
+> 
+>> ---
+>>  block/blk-mq.c         | 12 +++++++++---
+>>  block/elevator.c       |  7 +++++++
+>>  block/genhd.c          |  9 +++++++++
+>>  drivers/md/dm-rq.c     |  2 +-
+>>  include/linux/blk-mq.h |  3 ++-
+>>  5 files changed, 28 insertions(+), 5 deletions(-)
+>>
+>> diff --git a/block/blk-mq.c b/block/blk-mq.c
+>> index ee4caf0c0807..240416057f28 100644
+>> --- a/block/blk-mq.c
+>> +++ b/block/blk-mq.c
+>> @@ -2689,7 +2689,11 @@ struct request_queue *blk_mq_init_queue(struct blk_mq_tag_set *set)
+>>  	if (!uninit_q)
+>>  		return ERR_PTR(-ENOMEM);
+>>  
+>> -	q = blk_mq_init_allocated_queue(set, uninit_q);
+>> +	/*
+>> +	 * Initialize the queue without an elevator. device_add_disk() will do
+>> +	 * the initialization.
+>> +	 */
+>> +	q = blk_mq_init_allocated_queue(set, uninit_q, false);
+>>  	if (IS_ERR(q))
+>>  		blk_cleanup_queue(uninit_q);
+>>  
+>> @@ -2840,7 +2844,8 @@ static unsigned int nr_hw_queues(struct blk_mq_tag_set *set)
+>>  }
+>>  
+>>  struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
+>> -						  struct request_queue *q)
+>> +						  struct request_queue *q,
+>> +						  bool elevator_init)
+>>  {
+>>  	/* mark the queue as mq asap */
+>>  	q->mq_ops = set->ops;
+>> @@ -2902,7 +2907,8 @@ struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
+>>  	blk_mq_add_queue_tag_set(set, q);
+>>  	blk_mq_map_swqueue(q);
+>>  
+>> -	elevator_init_mq(q);
+>> +	if (elevator_init)
+>> +		elevator_init_mq(q);
+>>  
+>>  	return q;
+>>  
+>> diff --git a/block/elevator.c b/block/elevator.c
+>> index 520d6b224b74..096a670d22d7 100644
+>> --- a/block/elevator.c
+>> +++ b/block/elevator.c
+>> @@ -712,7 +712,14 @@ void elevator_init_mq(struct request_queue *q)
+>>  	if (!e)
+>>  		return;
+>>  
+>> +	blk_mq_freeze_queue(q);
+>> +	blk_mq_quiesce_queue(q);
+>> +
+>>  	err = blk_mq_init_sched(q, e);
+>> +
+>> +	blk_mq_unquiesce_queue(q);
+>> +	blk_mq_unfreeze_queue(q);
+>> +
+>>  	if (err) {
+>>  		pr_warn("\"%s\" elevator initialization failed, "
+>>  			"falling back to \"none\"\n", e->elevator_name);
+>> diff --git a/block/genhd.c b/block/genhd.c
+>> index 54f1f0d381f4..26b31fcae217 100644
+>> --- a/block/genhd.c
+>> +++ b/block/genhd.c
+>> @@ -695,6 +695,15 @@ static void __device_add_disk(struct device *parent, struct gendisk *disk,
+>>  	dev_t devt;
+>>  	int retval;
+>>  
+>> +	/*
+>> +	 * The disk queue should now be all set with enough information about
+>> +	 * the device for the elevator code to pick an adequate default
+>> +	 * elevator if one is needed, that is, for devices requesting queue
+>> +	 * registration.
+>> +	 */
+>> +	if (register_queue)
+>> +		elevator_init_mq(disk->queue);
+>> +
+>>  	/* minors == 0 indicates to use ext devt from part0 and should
+>>  	 * be accompanied with EXT_DEVT flag.  Make sure all
+>>  	 * parameters make sense.
+>> diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+>> index 21d5c1784d0c..3f8577e2c13b 100644
+>> --- a/drivers/md/dm-rq.c
+>> +++ b/drivers/md/dm-rq.c
+>> @@ -563,7 +563,7 @@ int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t)
+>>  	if (err)
+>>  		goto out_kfree_tag_set;
+>>  
+>> -	q = blk_mq_init_allocated_queue(md->tag_set, md->queue);
+>> +	q = blk_mq_init_allocated_queue(md->tag_set, md->queue, true);
+>>  	if (IS_ERR(q)) {
+>>  		err = PTR_ERR(q);
+>>  		goto out_tag_set;
+>> diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
+>> index 62a3bb715899..0bf056de5cc3 100644
+>> --- a/include/linux/blk-mq.h
+>> +++ b/include/linux/blk-mq.h
+>> @@ -248,7 +248,8 @@ enum {
+>>  
+>>  struct request_queue *blk_mq_init_queue(struct blk_mq_tag_set *);
+>>  struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
+>> -						  struct request_queue *q);
+>> +						  struct request_queue *q,
+>> +						  bool elevator_init);
+>>  struct request_queue *blk_mq_init_sq_queue(struct blk_mq_tag_set *set,
+>>  						const struct blk_mq_ops *ops,
+>>  						unsigned int queue_depth,
+>>
