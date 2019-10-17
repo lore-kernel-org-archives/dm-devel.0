@@ -1,12 +1,17 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-cache: fix bugs when a GFP_NOWAIT allocation
-	fails
-Date: Wed, 16 Oct 2019 09:21:50 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1910160917260.8310@file01.intranet.prod.int.rdu2.redhat.com>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [PATCH v5 5/7] block: Delay default elevator
+	initialization
+Date: Thu, 17 Oct 2019 02:39:03 +0000
+Message-ID: <BYAPR04MB5816A2CFCDA1D7ED10455D93E76D0@BYAPR04MB5816.namprd04.prod.outlook.com>
+References: <20190905095135.26026-1-damien.lemoal@wdc.com>
+	<20190905095135.26026-6-damien.lemoal@wdc.com>
+	<9355c25f-61d7-b290-7d60-552ef4206e8c@linux.ibm.com>
+	<f5f3a25b-19f5-bf29-2f38-f40f59860aeb@linux.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,115 +21,243 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <thornber@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: Eric Farman <farman@linux.ibm.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Martin K .
+	Petersen" <martin.petersen@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Christian Borntraeger <borntraeger@de.ibm.com>, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-GFP_NOWAIT allocation can fail anytime - it doesn't wait for memory being
-available and it fails if the mempool is exhausted and there is not enough
-memory.
+On 2019/10/17 3:51, Eric Farman wrote:
+> 
+> 
+> On 10/1/19 4:46 PM, Eric Farman wrote:
+>>
+>>
+>> On 9/5/19 5:51 AM, Damien Le Moal wrote:
+>>> When elevator_init_mq() is called from blk_mq_init_allocated_queue(),
+>>> the only information known about the device is the number of hardware
+>>> queues as the block device scan by the device driver is not completed
+>>> yet for most drivers. The device type and elevator required features
+>>> are not set yet, preventing to correctly select the default elevator
+>>> most suitable for the device.
+>>>
+>>> This currently affects all multi-queue zoned block devices which default
+>>> to the "none" elevator instead of the required "mq-deadline" elevator.
+>>> These drives currently include host-managed SMR disks connected to a
+>>> smartpqi HBA and null_blk block devices with zoned mode enabled.
+>>> Upcoming NVMe Zoned Namespace devices will also be affected.
+>>>
+>>> Fix this by adding the boolean elevator_init argument to
+>>> blk_mq_init_allocated_queue() to control the execution of
+>>> elevator_init_mq(). Two cases exist:
+>>> 1) elevator_init = false is used for calls to
+>>>    blk_mq_init_allocated_queue() within blk_mq_init_queue(). In this
+>>>    case, a call to elevator_init_mq() is added to __device_add_disk(),
+>>>    resulting in the delayed initialization of the queue elevator
+>>>    after the device driver finished probing the device information. This
+>>>    effectively allows elevator_init_mq() access to more information
+>>>    about the device.
+>>> 2) elevator_init = true preserves the current behavior of initializing
+>>>    the elevator directly from blk_mq_init_allocated_queue(). This case
+>>>    is used for the special request based DM devices where the device
+>>>    gendisk is created before the queue initialization and device
+>>>    information (e.g. queue limits) is already known when the queue
+>>>    initialization is executed.
+>>>
+>>> Additionally, to make sure that the elevator initialization is never
+>>> done while requests are in-flight (there should be none when the device
+>>> driver calls device_add_disk()), freeze and quiesce the device request
+>>> queue before calling blk_mq_init_sched() in elevator_init_mq().
+>>>
+>>> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+>>
+>> Coincidentally, I had been looking into a problem that is fixed in
+>> 5.4-rc1 by this patch.  Thanks for that!
+>>
+>> The problem was a delay during boot of a KVM guest with virtio-scsi
+>> devices (or hotplug of such a device to a guest) in recent releases,
+>> especially when virtio-scsi is configured as a module.  The symptoms
+>> look like:
+>>
+>> [    0.975315] virtio_blk virtio2: [vda] 1803060 4096-byte logical
+>> blocks (7.39 GB/6.88 GiB)
+>> [    0.977859] scsi host0: Virtio SCSI HBA
+>> [    0.980339] scsi 0:0:0:0: Direct-Access     QEMU     QEMU HARDDISK
+>> 2.5+ PQ: 0 ANSI: 5
+>> [    0.981685]  vda:VOL1/  0XA906: vda1
+>> [    0.988253] alg: No test for crc32be (crc32be-vx)
+>> ...stall...
+>> [   24.544920] sd 0:0:0:0: Power-on or device reset occurred
+>> [   24.545176] sd 0:0:0:0: Attached scsi generic sg0 type 0
+>> [   24.545292] sd 0:0:0:0: [sda] 385 512-byte logical blocks: (197
+>> kB/193 KiB)
+>> [   24.545368] sd 0:0:0:0: [sda] Write Protect is off
+>> [   24.545416] sd 0:0:0:0: [sda] Mode Sense: 63 00 00 08
+>> [   24.545456] sd 0:0:0:0: [sda] Write cache: enabled, read cache:
+>> enabled, doesn't support DPO or FUA
+>> [   24.547033] sd 0:0:0:0: [sda] Attached SCSI disk
+>>
+>> I debugged this down to the same behavior described/fixed back in 3.18
+>> by commit 17497acbdce9 ("blk-mq, percpu_ref: start q->mq_usage_counter
+>> in atomic mode"), and for the same reason.  The delay starts occurring
+>> as soon as q->q_usage_counter is converted to percpu for the one LUN tha
+>> twas found, while scsi_scan_channel() is still working on its loop of
+>> mostly non-existent devices.  Exactly when this problem started
+>> re-occuring is not certain to me, though I did see this problem with 5.2
+>> on linux-stable.
+> 
+> This problem started occurring reliably with kernel 4.16 because of
+> commit b5b6e8c8d3b4 ("scsi: virtio_scsi: fix IO hang caused by automatic
+> irq vector affinity") which forced blk-mq on for virtio-scsi devices.
+> 
+> I'm able to reproduce the behavior (fixed by this commit) on 4.15.0, as
+> well as 4.14.0 and 4.9.0, if I enable SCSI_MQ_DEFAULT in the kernel
+> config.  I cannot reproduce it with 4.4.0, but didn't chase further to
+> see why that was the case.
 
-If we go down this path:
-  map_bio -> mg_start -> alloc_migration -> mempool_alloc(GFP_NOWAIT)
-we can see that map_bio doesn't check the return value of mg_start, and
-the bio is leaked.
+This is really strange since in 4.9 there is no elevator initialization being
+done for a mq device. So with SCSI_MQ_DEFAULT set, you should end up with no
+elevator for your disk and the presence or not of this patch or variations of it
+should not change anything.
 
-If we go down this path:
-  map_bio -> mg_start -> mg_lock_writes -> alloc_prison_cell ->
-  dm_bio_prison_alloc_cell_v2 -> mempool_alloc(GFP_NOWAIT) ->
-  mg_lock_writes -> mg_complete
-the bio is ended with an error - it is unacceptable because it could cause
-filesystem corruption if the machine ran out of memory temporarily.
+This patch may be hiding your problem root cause rather than fixing it...
 
-This pactch changes GFP_NOWAIT to GFP_NOIO, so that the mempool code will
-properly wait until memory becomes available. mempool_alloc with GFP_NOIO
-can't fail, so I deleted the code paths that deal with the failure.
+> 
+> That force_blk_mq commit went into linux-stable, so SCSI_MQ_DEFAULT need
+> not be enabled on 4.14.y or 4.9.y stable branches to see the behavior
+> fixed by this commit.
+> 
+>>
+>> When I run with a 5.3 kernel, the problem is easily reproducible.  So I
+>> bisected between 5.3 and 5.4-rc1, and got here.  Cherry-picking this
+>> patch on top of 5.3 cleans up the boot/hotplug process and removes any
+>> stall.  Any chance this could be cc'd to stable?  
+> 
+> Please?  Anything I can do to help with that effort?
+> 
+> Thanks,
+> Eric
+> 
+>> Any data someone wants
+>> to see behavioral changes?
+>>
+>> Thanks,
+>> Eric
+>>
+>>> ---
+>>>  block/blk-mq.c         | 12 +++++++++---
+>>>  block/elevator.c       |  7 +++++++
+>>>  block/genhd.c          |  9 +++++++++
+>>>  drivers/md/dm-rq.c     |  2 +-
+>>>  include/linux/blk-mq.h |  3 ++-
+>>>  5 files changed, 28 insertions(+), 5 deletions(-)
+>>>
+>>> diff --git a/block/blk-mq.c b/block/blk-mq.c
+>>> index ee4caf0c0807..240416057f28 100644
+>>> --- a/block/blk-mq.c
+>>> +++ b/block/blk-mq.c
+>>> @@ -2689,7 +2689,11 @@ struct request_queue *blk_mq_init_queue(struct blk_mq_tag_set *set)
+>>>  	if (!uninit_q)
+>>>  		return ERR_PTR(-ENOMEM);
+>>>  
+>>> -	q = blk_mq_init_allocated_queue(set, uninit_q);
+>>> +	/*
+>>> +	 * Initialize the queue without an elevator. device_add_disk() will do
+>>> +	 * the initialization.
+>>> +	 */
+>>> +	q = blk_mq_init_allocated_queue(set, uninit_q, false);
+>>>  	if (IS_ERR(q))
+>>>  		blk_cleanup_queue(uninit_q);
+>>>  
+>>> @@ -2840,7 +2844,8 @@ static unsigned int nr_hw_queues(struct blk_mq_tag_set *set)
+>>>  }
+>>>  
+>>>  struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
+>>> -						  struct request_queue *q)
+>>> +						  struct request_queue *q,
+>>> +						  bool elevator_init)
+>>>  {
+>>>  	/* mark the queue as mq asap */
+>>>  	q->mq_ops = set->ops;
+>>> @@ -2902,7 +2907,8 @@ struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
+>>>  	blk_mq_add_queue_tag_set(set, q);
+>>>  	blk_mq_map_swqueue(q);
+>>>  
+>>> -	elevator_init_mq(q);
+>>> +	if (elevator_init)
+>>> +		elevator_init_mq(q);
+>>>  
+>>>  	return q;
+>>>  
+>>> diff --git a/block/elevator.c b/block/elevator.c
+>>> index 520d6b224b74..096a670d22d7 100644
+>>> --- a/block/elevator.c
+>>> +++ b/block/elevator.c
+>>> @@ -712,7 +712,14 @@ void elevator_init_mq(struct request_queue *q)
+>>>  	if (!e)
+>>>  		return;
+>>>  
+>>> +	blk_mq_freeze_queue(q);
+>>> +	blk_mq_quiesce_queue(q);
+>>> +
+>>>  	err = blk_mq_init_sched(q, e);
+>>> +
+>>> +	blk_mq_unquiesce_queue(q);
+>>> +	blk_mq_unfreeze_queue(q);
+>>> +
+>>>  	if (err) {
+>>>  		pr_warn("\"%s\" elevator initialization failed, "
+>>>  			"falling back to \"none\"\n", e->elevator_name);
+>>> diff --git a/block/genhd.c b/block/genhd.c
+>>> index 54f1f0d381f4..26b31fcae217 100644
+>>> --- a/block/genhd.c
+>>> +++ b/block/genhd.c
+>>> @@ -695,6 +695,15 @@ static void __device_add_disk(struct device *parent, struct gendisk *disk,
+>>>  	dev_t devt;
+>>>  	int retval;
+>>>  
+>>> +	/*
+>>> +	 * The disk queue should now be all set with enough information about
+>>> +	 * the device for the elevator code to pick an adequate default
+>>> +	 * elevator if one is needed, that is, for devices requesting queue
+>>> +	 * registration.
+>>> +	 */
+>>> +	if (register_queue)
+>>> +		elevator_init_mq(disk->queue);
+>>> +
+>>>  	/* minors == 0 indicates to use ext devt from part0 and should
+>>>  	 * be accompanied with EXT_DEVT flag.  Make sure all
+>>>  	 * parameters make sense.
+>>> diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+>>> index 21d5c1784d0c..3f8577e2c13b 100644
+>>> --- a/drivers/md/dm-rq.c
+>>> +++ b/drivers/md/dm-rq.c
+>>> @@ -563,7 +563,7 @@ int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t)
+>>>  	if (err)
+>>>  		goto out_kfree_tag_set;
+>>>  
+>>> -	q = blk_mq_init_allocated_queue(md->tag_set, md->queue);
+>>> +	q = blk_mq_init_allocated_queue(md->tag_set, md->queue, true);
+>>>  	if (IS_ERR(q)) {
+>>>  		err = PTR_ERR(q);
+>>>  		goto out_tag_set;
+>>> diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
+>>> index 62a3bb715899..0bf056de5cc3 100644
+>>> --- a/include/linux/blk-mq.h
+>>> +++ b/include/linux/blk-mq.h
+>>> @@ -248,7 +248,8 @@ enum {
+>>>  
+>>>  struct request_queue *blk_mq_init_queue(struct blk_mq_tag_set *);
+>>>  struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
+>>> -						  struct request_queue *q);
+>>> +						  struct request_queue *q,
+>>> +						  bool elevator_init);
+>>>  struct request_queue *blk_mq_init_sq_queue(struct blk_mq_tag_set *set,
+>>>  						const struct blk_mq_ops *ops,
+>>>  						unsigned int queue_depth,
+>>>
+> 
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
 
----
- drivers/md/dm-cache-target.c |   28 ++--------------------------
- 1 file changed, 2 insertions(+), 26 deletions(-)
-
-Index: linux-2.6/drivers/md/dm-cache-target.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-cache-target.c	2019-10-10 16:52:03.000000000 +0200
-+++ linux-2.6/drivers/md/dm-cache-target.c	2019-10-16 13:23:13.000000000 +0200
-@@ -542,7 +542,7 @@ static void wake_migration_worker(struct
- 
- static struct dm_bio_prison_cell_v2 *alloc_prison_cell(struct cache *cache)
- {
--	return dm_bio_prison_alloc_cell_v2(cache->prison, GFP_NOWAIT);
-+	return dm_bio_prison_alloc_cell_v2(cache->prison, GFP_NOIO);
- }
- 
- static void free_prison_cell(struct cache *cache, struct dm_bio_prison_cell_v2 *cell)
-@@ -554,9 +554,7 @@ static struct dm_cache_migration *alloc_
- {
- 	struct dm_cache_migration *mg;
- 
--	mg = mempool_alloc(&cache->migration_pool, GFP_NOWAIT);
--	if (!mg)
--		return NULL;
-+	mg = mempool_alloc(&cache->migration_pool, GFP_NOIO);
- 
- 	memset(mg, 0, sizeof(*mg));
- 
-@@ -664,10 +662,6 @@ static bool bio_detain_shared(struct cac
- 	struct dm_bio_prison_cell_v2 *cell_prealloc, *cell;
- 
- 	cell_prealloc = alloc_prison_cell(cache); /* FIXME: allow wait if calling from worker */
--	if (!cell_prealloc) {
--		defer_bio(cache, bio);
--		return false;
--	}
- 
- 	build_key(oblock, end, &key);
- 	r = dm_cell_get_v2(cache->prison, &key, lock_level(bio), bio, cell_prealloc, &cell);
-@@ -1493,11 +1487,6 @@ static int mg_lock_writes(struct dm_cach
- 	struct dm_bio_prison_cell_v2 *prealloc;
- 
- 	prealloc = alloc_prison_cell(cache);
--	if (!prealloc) {
--		DMERR_LIMIT("%s: alloc_prison_cell failed", cache_device_name(cache));
--		mg_complete(mg, false);
--		return -ENOMEM;
--	}
- 
- 	/*
- 	 * Prevent writes to the block, but allow reads to continue.
-@@ -1535,11 +1524,6 @@ static int mg_start(struct cache *cache,
- 	}
- 
- 	mg = alloc_migration(cache);
--	if (!mg) {
--		policy_complete_background_work(cache->policy, op, false);
--		background_work_end(cache);
--		return -ENOMEM;
--	}
- 
- 	mg->op = op;
- 	mg->overwrite_bio = bio;
-@@ -1628,10 +1612,6 @@ static int invalidate_lock(struct dm_cac
- 	struct dm_bio_prison_cell_v2 *prealloc;
- 
- 	prealloc = alloc_prison_cell(cache);
--	if (!prealloc) {
--		invalidate_complete(mg, false);
--		return -ENOMEM;
--	}
- 
- 	build_key(mg->invalidate_oblock, oblock_succ(mg->invalidate_oblock), &key);
- 	r = dm_cell_lock_v2(cache->prison, &key,
-@@ -1669,10 +1649,6 @@ static int invalidate_start(struct cache
- 		return -EPERM;
- 
- 	mg = alloc_migration(cache);
--	if (!mg) {
--		background_work_end(cache);
--		return -ENOMEM;
--	}
- 
- 	mg->overwrite_bio = bio;
- 	mg->invalidate_cblock = cblock;
+-- 
+Damien Le Moal
+Western Digital Research
