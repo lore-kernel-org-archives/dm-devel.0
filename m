@@ -1,20 +1,11 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 45/72] libmultipath: fix -Wsign-compare
- warnings with snprintf()
-Date: Tue, 22 Oct 2019 20:34:21 +0000
-Message-ID: <690ab1be1dc189c6efebf5fb953f31f9f0341286.camel@suse.com>
-References: <20191012212703.12989-1-martin.wilck@suse.com>
-	<20191012212703.12989-46-martin.wilck@suse.com>
-	<34e6fc87-10f6-efd7-c8df-710e56cc1956@acm.org>
-	<f895f01df7c429abf4a32a395764513c92ecc3af.camel@suse.com>
-	<42e85b61-3f38-af4e-a485-1ba230506d0f@acm.org>
+From: Bryan Gurney <bgurney@redhat.com>
+Subject: [PATCH RFC] dm dust: add limited write failure mode
+Date: Tue, 22 Oct 2019 16:46:01 -0400
+Message-ID: <1571777161-12082-1-git-send-email-bgurney@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=WINDOWS-1252
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <42e85b61-3f38-af4e-a485-1ba230506d0f@acm.org>
-Content-Language: en-US
-Content-ID: <D189813CC7E6714DBF77E8B71FEA1A9F@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,39 +15,167 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "bvanassche@acm.org" <bvanassche@acm.org>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com
+Cc: Bryan Gurney <bgurney@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 2019-10-22 at 09:47 -0700, Bart Van Assche wrote:
-> On 2019-10-22 09:07, Martin Wilck wrote:
-> >=20
-> > In this particular case, we're dealing with a historically-caused
-> > property of snprintf(), as you are probably aware=20
-> > (
-> > https://stackoverflow.com/questions/45740276/why-does-printf-return-an-=
-int-instead-of-a-size-t-in-c
-> > ),
-> > so I'd argue the ugliness is forced upon us, sort of.
-> >=20
-> > We can hide the ugliness in a macro if you prefer. Actually, we
-> > have
-> > safe_snprintf() already. We just need to use it in all places where
-> > this kind of comparison is made. Would that be acceptable to you?
->=20
-> Hi Martin,
->=20
-> Have you considered to use asprintf() instead of snprintf() and a
-> check
-> whether the output buffer overflows? I think the former is a more
-> elegant solution.
+Add a limited write failure mode, which will allow a write to a
+block to fail a specified amount of times, prior to remapping.
 
-Most uses of snprintf() are in libmultipath printing code, where items
-are printed sequentially into a big buffer, advancing the buffer
-pointer on the way. asprintf() doesn't match that use case well,
-AFAICS. But in some other places, switching to asprintf would certainly
-make sense. Anyway, I'd like to do that in a separate patch set if you
-don't mind; this one is big enough already.
+Add an interface for limited write failures, to be added by the
+following message:
 
-Thanks,
-Martin
+(Example: add bad block on block 60, with 5 write failures)
+
+dmsetup message 0 dust1 addbadblock 60 5
+
+The write failure counter will be printed for newly added
+bad blocks.
+
+Signed-off-by: Bryan Gurney <bgurney@redhat.com>
+---
+ drivers/md/dm-dust.c | 48 ++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 42 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
+index 8288887b7f94..3aecc0cb0fbd 100644
+--- a/drivers/md/dm-dust.c
++++ b/drivers/md/dm-dust.c
+@@ -17,6 +17,7 @@
+ struct badblock {
+ =09struct rb_node node;
+ =09sector_t bb;
++=09unsigned char wr_fail_cnt;
+ };
+=20
+ struct dust_device {
+@@ -101,7 +102,9 @@ static int dust_remove_block(struct dust_device *dd, un=
+signed long long block)
+ =09return 0;
+ }
+=20
+-static int dust_add_block(struct dust_device *dd, unsigned long long block=
+)
++static int dust_add_block(struct dust_device *dd,
++=09=09=09=09unsigned long long block,
++=09=09=09=09unsigned char wr_fail_cnt)
+ {
+ =09struct badblock *bblock;
+ =09unsigned long flags;
+@@ -115,6 +118,7 @@ static int dust_add_block(struct dust_device *dd, unsig=
+ned long long block)
+=20
+ =09spin_lock_irqsave(&dd->dust_lock, flags);
+ =09bblock->bb =3D block;
++=09bblock->wr_fail_cnt =3D wr_fail_cnt;
+ =09if (!dust_rb_insert(&dd->badblocklist, bblock)) {
+ =09=09if (!dd->quiet_mode) {
+ =09=09=09DMERR("%s: block %llu already in badblocklist",
+@@ -127,7 +131,7 @@ static int dust_add_block(struct dust_device *dd, unsig=
+ned long long block)
+=20
+ =09dd->badblock_count++;
+ =09if (!dd->quiet_mode)
+-=09=09DMINFO("%s: badblock added at block %llu", __func__, block);
++=09=09DMINFO("%s: badblock added at block %llu with write fail count %hhu"=
+, __func__, block, wr_fail_cnt);
+ =09spin_unlock_irqrestore(&dd->dust_lock, flags);
+=20
+ =09return 0;
+@@ -175,10 +179,15 @@ static int dust_map_read(struct dust_device *dd, sect=
+or_t thisblock,
+ =09return ret;
+ }
+=20
+-static void __dust_map_write(struct dust_device *dd, sector_t thisblock)
++static int __dust_map_write(struct dust_device *dd, sector_t thisblock)
+ {
+ =09struct badblock *bblk =3D dust_rb_search(&dd->badblocklist, thisblock);
+=20
++=09if (bblk && bblk->wr_fail_cnt > 0) {
++=09=09bblk->wr_fail_cnt--;
++=09=09return DM_MAPIO_KILL;
++=09}
++
+ =09if (bblk) {
+ =09=09rb_erase(&bblk->node, &dd->badblocklist);
+ =09=09dd->badblock_count--;
+@@ -189,21 +198,24 @@ static void __dust_map_write(struct dust_device *dd, =
+sector_t thisblock)
+ =09=09=09       (unsigned long long)thisblock);
+ =09=09}
+ =09}
++
++=09return DM_MAPIO_REMAPPED;
+ }
+=20
+ static int dust_map_write(struct dust_device *dd, sector_t thisblock,
+ =09=09=09  bool fail_read_on_bb)
+ {
+ =09unsigned long flags;
++=09int ret =3D DM_MAPIO_REMAPPED;
+=20
+ =09if (fail_read_on_bb) {
+ =09=09thisblock >>=3D dd->sect_per_block_shift;
+ =09=09spin_lock_irqsave(&dd->dust_lock, flags);
+-=09=09__dust_map_write(dd, thisblock);
++=09=09ret =3D __dust_map_write(dd, thisblock);
+ =09=09spin_unlock_irqrestore(&dd->dust_lock, flags);
+ =09}
+=20
+-=09return DM_MAPIO_REMAPPED;
++=09return ret;
+ }
+=20
+ static int dust_map(struct dm_target *ti, struct bio *bio)
+@@ -377,6 +389,8 @@ static int dust_message(struct dm_target *ti, unsigned =
+int argc, char **argv,
+ =09bool invalid_msg =3D false;
+ =09int result =3D -EINVAL;
+ =09unsigned long long tmp, block;
++=09unsigned char wr_fail_cnt;
++=09unsigned int tmp_ui;
+ =09unsigned long flags;
+ =09char dummy;
+=20
+@@ -422,14 +436,36 @@ static int dust_message(struct dm_target *ti, unsigne=
+d int argc, char **argv,
+ =09=09}
+=20
+ =09=09if (!strcasecmp(argv[0], "addbadblock"))
+-=09=09=09result =3D dust_add_block(dd, block);
++=09=09=09result =3D dust_add_block(dd, block, 0);
+ =09=09else if (!strcasecmp(argv[0], "removebadblock"))
+ =09=09=09result =3D dust_remove_block(dd, block);
+ =09=09else if (!strcasecmp(argv[0], "queryblock"))
+ =09=09=09result =3D dust_query_block(dd, block);
+ =09=09else
+ =09=09=09invalid_msg =3D true;
++=09} else if (argc =3D=3D 3) {
++=09=09if (sscanf(argv[1], "%llu%c", &tmp, &dummy) !=3D 1)
++=09=09=09return result;
++
++=09=09if (sscanf(argv[2], "%u%c", &tmp_ui, &dummy) !=3D 1)
++=09=09=09return result;
+=20
++=09=09block =3D tmp;
++=09=09if (tmp_ui > 255) {
++=09=09=09DMERR("selected write fail count out of range");
++=09=09=09return result;
++=09=09}
++=09=09wr_fail_cnt =3D tmp_ui;
++=09=09sector_div(size, dd->sect_per_block);
++=09=09if (block > size) {
++=09=09=09DMERR("selected block value out of range");
++=09=09=09return result;
++=09=09}
++
++=09=09if (!strcasecmp(argv[0], "addbadblock"))
++=09=09=09result =3D dust_add_block(dd, block, wr_fail_cnt);
++=09=09else
++=09=09=09invalid_msg =3D true;
+ =09} else
+ =09=09DMERR("invalid number of arguments '%d'", argc);
+=20
+--=20
+2.21.0
