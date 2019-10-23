@@ -1,15 +1,12 @@
-From: Keith Busch <kbusch@kernel.org>
-Subject: Re: [PATCH 1/4] block: Enhance
-	blk_revalidate_disk_zones()
-Date: Thu, 24 Oct 2019 16:20:31 +0900
-Message-ID: <20191024072031.GA29028@redsun51.ssa.fujisawa.hgst.com>
-References: <20191024065006.8684-1-damien.lemoal@wdc.com>
-	<20191024065006.8684-2-damien.lemoal@wdc.com>
+From: Maged Mokhtar <mmokhtar@petasan.org>
+Subject: [PATCH] dm writecache: handle REQ_FUA
+Date: Wed, 23 Oct 2019 22:41:17 +0200
+Message-ID: <be77e96c-5d37-a9de-b0ed-ee15d0c59215@petasan.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191024065006.8684-2-damien.lemoal@wdc.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,17 +16,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Damien Le Moal <damien.lemoal@wdc.com>
-Cc: Jens Axboe <axboe@kernel.dk>, "Martin K . Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Oct 24, 2019 at 03:50:03PM +0900, Damien Le Moal wrote:
-> -=09/* Do a report zone to get max_lba and the same field */
-> -=09ret =3D sd_zbc_do_report_zones(sdkp, buf, bufsize, 0, false);
-> +=09/* Do a report zone to get max_lba and the size of the first zone */
-> +=09ret =3D sd_zbc_do_report_zones(sdkp, buf, SD_BUF_SIZE, 0, false);
+Call writecache_flush() on REQ_FUA.
 
-This is no longer reading all the zones here, so you could set the
-'partial' field to true. And then since this was the only caller that
-had set partial to false, you can also remove that parameter.
+Signed-off-by: Maged Mokhtar <mmokhtar@petasan.org>
+---
+  drivers/md/dm-writecache.c |    3 ++-
+  1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/drivers/md/dm-writecache.c	2019-10-23 22:01:18.480115962 +0200
++++ b/drivers/md/dm-writecache.c	2019-10-23 22:02:08.616113729 +0200
+@@ -1218,7 +1218,8 @@ bio_copy:
+  			}
+  		} while (bio->bi_iter.bi_size);
+
+-		if (unlikely(wc->uncommitted_blocks >= wc->autocommit_blocks))
++		if (unlikely(bio->bi_opf & REQ_FUA ||
++				wc->uncommitted_blocks >= wc->autocommit_blocks))
+  			writecache_flush(wc);
+  		else
+  			writecache_schedule_autocommit(wc);
