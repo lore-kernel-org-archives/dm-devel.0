@@ -1,14 +1,12 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH v2 45/72] libmultipath: fix -Wsign-compare
- warnings with snprintf()
-Date: Thu, 24 Oct 2019 15:06:10 +0000
-Message-ID: <20191024150556.19575-2-martin.wilck@suse.com>
-References: <20191024150556.19575-1-martin.wilck@suse.com>
+Subject: [PATCH v2 00/72] multipath-tools: cleanup and warning
+	enablement
+Date: Thu, 24 Oct 2019 15:06:08 +0000
+Message-ID: <20191024150556.19575-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191024150556.19575-1-martin.wilck@suse.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -25,187 +23,259 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-snprintf() returns int, but the size argument "n" is size_t.
-Use safe_snprintf() to avoid -Wsign-compare warnings. At the same
-time, improve these macros to check for errors in snprintf(), too.
+Hi Christophe, hi Ben, hi Bart,
 
-Note: there are more uses of snprintf() in our code that may
-need review, too. For now, I'm fixing only those that were causing
-warnings.
+here is a series with cleanup patches and minor fixes for multipath-tools.
+Sorry about the number of patches, I hope this way the series will be easie=
+r
+to review. There are lots of obvious, short hunks. In terms of LoC, most
+of the changes are in a new unit test, in the NVMe code update, and in
+a (necessary) indentation change in the VPD code.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- kpartx/devmapper.c          |  3 ++-
- kpartx/kpartx.h             | 11 ++++++++++-
- libmultipath/foreign/nvme.c |  6 ++----
- libmultipath/sysfs.c        |  7 +++----
- libmultipath/util.c         |  3 +--
- libmultipath/util.h         | 11 +++++++++--
- libmultipath/wwids.c        |  3 +--
- multipath/main.c            |  3 +--
- 8 files changed, 29 insertions(+), 18 deletions(-)
+Patch 01-14 are part of a recent effort to go over the multipath-tools
+code, re-review, and modernize the code a bit. Part of that is adding "cons=
+t"
+qualifiers to function arguments, as I did before. I happened to start with
+"alias.c", for alphabetic reasons. Other parts of the code will hopefully
+follow.
 
-diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
-index 3aa4988d..b100b5ef 100644
---- a/kpartx/devmapper.c
-+++ b/kpartx/devmapper.c
-@@ -10,6 +10,7 @@
- #include <errno.h>
- #include <sys/sysmacros.h>
- #include "devmapper.h"
-+#include "kpartx.h"
-=20
- #define _UUID_PREFIX "part"
- #define UUID_PREFIX _UUID_PREFIX "%d-"
-@@ -107,7 +108,7 @@ strip_slash (char * device)
- static int format_partname(char *buf, size_t bufsiz,
- =09=09=09   const char *mapname, const char *delim, int part)
- {
--=09if (snprintf(buf, bufsiz, "%s%s%d", mapname, delim, part) >=3D bufsiz)
-+=09if (safe_snprintf(buf, bufsiz, "%s%s%d", mapname, delim, part))
- =09=09return 0;
- =09strip_slash(buf);
- =09return 1;
-diff --git a/kpartx/kpartx.h b/kpartx/kpartx.h
-index 52920e43..2d36b0b5 100644
---- a/kpartx/kpartx.h
-+++ b/kpartx/kpartx.h
-@@ -16,8 +16,17 @@
- #define likely(x)       __builtin_expect(!!(x), 1)
- #define unlikely(x)     __builtin_expect(!!(x), 0)
-=20
-+#define safe_snprintf(var, size, format, args...)=09=09=09\
-+=09({=09=09=09=09=09=09=09=09\
-+=09=09size_t __size =3D size;=09=09=09=09=09\
-+=09=09int __ret;=09=09=09=09=09=09\
-+=09=09=09=09=09=09=09=09=09\
-+=09=09__ret =3D snprintf(var, size, format, ##args);=09=09\
-+=09=09__ret < 0 || (size_t)__ret >=3D __size;=09=09=09\
-+=09})
-+
- #define safe_sprintf(var, format, args...)=09\
--=09snprintf(var, sizeof(var), format, ##args) >=3D sizeof(var)
-+=09=09safe_snprintf(var, sizeof(var), format, ##args)
-=20
- #ifndef BLKSSZGET
- #define BLKSSZGET  _IO(0x12,104)=09/* get block device sector size */
-diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
-index e8ca516c..09cdddf0 100644
---- a/libmultipath/foreign/nvme.c
-+++ b/libmultipath/foreign/nvme.c
-@@ -591,8 +591,7 @@ static void test_ana_support(struct nvme_map *map, stru=
-ct udev_device *ctl)
- =09=09return;
-=20
- =09dev_t =3D udev_device_get_sysattr_value(ctl, "dev");
--=09if (snprintf(sys_path, sizeof(sys_path), "/dev/char/%s", dev_t)
--=09    >=3D sizeof(sys_path))
-+=09if (safe_sprintf(sys_path, "/dev/char/%s", dev_t))
- =09=09return;
-=20
- =09fd =3D open(sys_path, O_RDONLY);
-@@ -663,8 +662,7 @@ static void _find_controllers(struct context *ctx, stru=
-ct nvme_map *map)
- =09=09char *fn =3D di[i]->d_name;
- =09=09struct udev_device *ctrl, *udev;
-=20
--=09=09if (snprintf(pathbuf + n, sizeof(pathbuf) - n, "/%s", fn)
--=09=09    >=3D sizeof(pathbuf) - n)
-+=09=09if (safe_snprintf(pathbuf + n, sizeof(pathbuf) - n, "/%s", fn))
- =09=09=09continue;
- =09=09if (realpath(pathbuf, realbuf) =3D=3D NULL) {
- =09=09=09condlog(3, "%s: %s: realpath: %s", __func__, THIS,
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index 923b529b..62ec2ed7 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -306,7 +306,7 @@ bool sysfs_is_multipathed(const struct path *pp)
- =09n =3D snprintf(pathbuf, sizeof(pathbuf), "/sys/block/%s/holders",
- =09=09     pp->dev);
-=20
--=09if (n >=3D sizeof(pathbuf)) {
-+=09if (n < 0 || (size_t)n >=3D sizeof(pathbuf)) {
- =09=09condlog(1, "%s: pathname overflow", __func__);
- =09=09return false;
- =09}
-@@ -327,9 +327,8 @@ bool sysfs_is_multipathed(const struct path *pp)
- =09=09int nr;
- =09=09char uuid[6];
-=20
--=09=09if (snprintf(pathbuf + n, sizeof(pathbuf) - n,
--=09=09=09     "/%s/dm/uuid", di[i]->d_name)
--=09=09    >=3D sizeof(pathbuf) - n)
-+=09=09if (safe_snprintf(pathbuf + n, sizeof(pathbuf) - n,
-+=09=09=09=09  "/%s/dm/uuid", di[i]->d_name))
- =09=09=09continue;
-=20
- =09=09fd =3D open(pathbuf, O_RDONLY);
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index ccc0de29..51c38c87 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -212,8 +212,7 @@ int devt2devname(char *devname, int devname_len, char *=
-devt)
- =09=09=09continue;
-=20
- =09=09if ((major =3D=3D tmpmaj) && (minor =3D=3D tmpmin)) {
--=09=09=09if (snprintf(block_path, sizeof(block_path),
--=09=09=09=09     "/sys/block/%s", dev) >=3D sizeof(block_path)) {
-+=09=09=09if (safe_sprintf(block_path, "/sys/block/%s", dev)) {
- =09=09=09=09condlog(0, "device name %s is too long", dev);
- =09=09=09=09fclose(fd);
- =09=09=09=09return 1;
-diff --git a/libmultipath/util.h b/libmultipath/util.h
-index 913ab7c2..12ce723f 100644
---- a/libmultipath/util.h
-+++ b/libmultipath/util.h
-@@ -29,9 +29,16 @@ void set_max_fds(rlim_t max_fds);
- #define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
-=20
- #define safe_sprintf(var, format, args...)=09\
--=09snprintf(var, sizeof(var), format, ##args) >=3D sizeof(var)
-+=09safe_snprintf(var, sizeof(var), format, ##args)
-+
- #define safe_snprintf(var, size, format, args...)      \
--=09snprintf(var, size, format, ##args) >=3D size
-+=09({=09=09=09=09=09=09=09=09\
-+=09=09size_t __size =3D size;=09=09=09=09=09\
-+=09=09int __ret;=09=09=09=09=09=09\
-+=09=09=09=09=09=09=09=09=09\
-+=09=09__ret =3D snprintf(var, size, format, ##args);=09=09\
-+=09=09__ret < 0 || (size_t)__ret >=3D __size;=09=09=09\
-+=09})
-=20
- #define pthread_cleanup_push_cast(f, arg)=09=09\
- =09pthread_cleanup_push(((void (*)(void *))&f), (arg))
-diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-index 291db8f5..28a2150d 100644
---- a/libmultipath/wwids.c
-+++ b/libmultipath/wwids.c
-@@ -393,8 +393,7 @@ static int _failed_wwid_op(const char *wwid, bool rw,
- =09long lockfd;
- =09int r =3D -1;
-=20
--=09if (snprintf(path, sizeof(path), "%s/%s", shm_dir, wwid)
--=09    >=3D sizeof(path)) {
-+=09if (safe_sprintf(path, "%s/%s", shm_dir, wwid)) {
- =09=09condlog(1, "%s: path name overflow", __func__);
- =09=09return -1;
- =09}
-diff --git a/multipath/main.c b/multipath/main.c
-index c2ef8c7b..c553437b 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -423,8 +423,7 @@ static int find_multipaths_check_timeout(const struct p=
-ath *pp, long tmo,
-=20
- =09clock_gettime(CLOCK_REALTIME, &now);
-=20
--=09if (snprintf(path, sizeof(path), "%s/%s", shm_find_mp_dir, pp->dev_t)
--=09    >=3D sizeof(path)) {
-+=09if (safe_sprintf(path, "%s/%s", shm_find_mp_dir, pp->dev_t)) {
- =09=09condlog(1, "%s: path name overflow", __func__);
- =09=09return FIND_MULTIPATHS_ERROR;
- =09}
+15-20 are misc fixes for stuff I came across while working on the
+"-Wclobbered" flag (see below).
+
+The rest of the series is an attempt to get rid of the disablement of
+warnings that we had so far in multipath-tools. I believe we agree that
+warning-free code is a good thing and that disabling warnings should be
+avoided if possible. My goal was to be able to set "-Werror" and compile
+successfully with all currently relevant compilers.
+
+Patch 21-42 fix issues with -Wunused-parameter and finally enable that
+warning. -Wno-unused-parameter is only kept in place for
+libmultipath/dict.c and multipathd/cli-handlers.c, which basically consist
+only of implementations of certain prototypes where many functions don't
+use every argument, and hundreds of "unused" attributes would pollute the
+code too much. Patch 53-58 fix issues with "-Wsign-compare". This was
+actually a good excercise, because I was forced to think twice which
+signedness was correct for certain variables and expressions. Patch 59-64
+fix some warnings that are issued by clang with our current warning setting=
+s
+(in particular, -Wformat-literal).
+
+Patch 65 is an update of our nvme code from nvme-cli 1.9. Patch 66-71
+contain some make file fixes and cleanups, and adaptations for older
+compilers. Finally, Patch 71 enables -Werror, and patch 72 tests for
+"-Wno-clobbered", which clang doesn't support.
+
+I can proudly say that multipath-tools now compiles without warnings or
+errors with -Werror and with a large set of compilers. I tested gcc 4.8,
+7, 8, 9 and clang 3.9, 6, 7, and 8.
+
+The only "-Wno" option that now remains is "-Wclobbered". I have put
+considerable work into trying to eliminate that as well. The result
+can be examined in the "Wclobbered" branch of my github fork:
+https://github.com/mwilck/multipath-tools/commits/Wclobbered
+(yes, that's another 37 patches on top of this already long series).
+
+I have pondered this back and forth whether to submit that part of the
+series, too. All the -Wclobbered warnings are caused by pthread_cleanup_pus=
+h()
+calls, of which our code has a lot, and which glibc implements using a
+sigsetjmp() call. These warnings are arguably a false positives, and
+a bug of either gcc, glibc, or both
+(see e.g. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=3D61118).=20
+
+Eliminating these warnings is possible, but it requires a lot of changes
+in the code. Some of them are actually beneficial for readability, but
+others are rather not. Some are outright mysterious (e.g.
+https://github.com/mwilck/multipath-tools/commit/bb53d666777f072e60372979ee=
+d51752db03cec4),
+and finding the workarounds was trial-and error work. Also, there are
+variations between gcc versions.
+
+The bottom line is, while I feel sorry about the vain effort=20
+I put into this, my personal opinion is that silencing just this single
+warning isn't worth that big amount of changes.
+
+Reviews and opinions welcome.
+
+Regards
+Martin
+
+Changes in v2:
+  45/72: The way I handled snprintf() was wrong. Fix it, and use
+         safe_sn?printf() to hide cast ugliness (Bart van Assche)
+
+  All other patches remain unchanged, not resending them.
+
+Martin Wilck (72):
+  multipath tests: move condlog test wrappers to separate file
+  multipath tests: add tests for alias handling
+  libmultipath: alias.c: constify function arguments
+  libmultipath: alias.c: use strlcpy(), and 2 minor fixes
+  libmultipath: format_devname: avoid buffer overflow
+  libmultipath: scan_devname: fix int overflow detection
+  libmultipath: lookup_binding(): don't rely on int overflow
+  libmultipath: rlookup_binding(): removed unused parameter
+  libmultipath: allocate_binding(): error out for id=3D0
+  libmultipath: allocate_binding(): detect line overflow
+  multipath tests: alias: add tests for allocate_binding()
+  multipath tests: alias: add format/scan test
+  libmultipath: alias.c: prepare for cancel-safe allocation
+  multipath tests: use -lpthread for alias test
+  libmultipath: path_discovery: handle libudev errors
+  libmultipath: make path_discovery() pthread_cancel()-safe
+  libmultipath: uevent_listen(): fix poll() retval check
+  libmultipath: replace_wwids(): fix possible fd leak
+  libmultipath: remove_wwids(): fix possible leaks
+  libmultipath: _init_foreign(): fix possible memory leak
+  libmultipath: process_config_dir(): remove unused argument
+  libmultipath: mark unused arguments in partmap functions
+  libmultipath: scsi_ioctl_pathinfo(): remove unused argument
+  multipath-tools: mark unused params in signal and cleanup handlers
+  libmultipath: get_ana_info(): remove unused parameter
+  libmultipath: mark unused params in getprio() methods
+  libmultipath: hp_sw: remove usused argument in do_inq()
+  libmultipath: checkers: mark unused arguments in methods
+  multipathd: stop_waiter_thread(): removed unused parameter
+  multipath tools: mark unused arguments in thread routines
+  kpartx: gpt: remove unused arg in read_lastoddsector()
+  kpartx: mark unused arguments in ptreader methods
+  libmultipath: mark missing arguments in functions matching prototypes
+  libmultipath: get_pgpolicy_name(): use "len" parameter
+  libmultipath: snprint_multipath_map_json(): remove unused argument
+  multipath: delegate_to_multipathd: mark unused arguments
+  libmultipath: use -Wno-unused-parameter for dict.c
+  multipathd: use -Wno-unused-parameter for cli_handlers.c
+  libmpathpersist: remove unused "noisy" argument in various functions
+  libmpathpersist: fix copy-paste error in mpath_format_readresv()
+  multipath-tools tests: add -Wno-unused-parameter
+  multipath-tools: Makefile.inc: remove -Wno-unused-parameter
+  libmultipath: dev_loss_tmo is unsigned
+  libmultipath: trivial changes for -Wsign-compare
+  libmultipath: fix -Wsign-compare warnings with snprintf()
+  libmultipath: parse_vpd_pg83(): sanitize indentation
+  libmultipath: parse_vpd_pg83(): fix -Wsign-compare warnings
+  libmultipath: print: use unsigned int for "width" field
+  libmultipath: vector_for_each_slot: fix -Wsign-compare warnings
+  libmultipath: set_int(): add error check and set_uint()
+  libmultipath: make "checkint" unsigned
+  libmultipath: use unsigned blksize in directio context
+  libmultipath, kpartx: byteorder: always use unsigned types
+  libmpathcmd: fix -Wsign-compare warnings
+  libmpathpersist: fix -Wsign-compare warnings
+  kpartx: use unsigned arguments in dm_devn() and dm_prereq()
+  kpartx: use unsigned int for "ns" argument of ptreader
+  multipath-tools: Makefile.inc: enable -Wsign-compare
+  libdmmp: fix clang -Wformat-nonliteral warnings
+  libmultipath: fix clang -Wformat-literal warnings
+  multipath tests: blacklist: remove always-true condition
+  multipath tests: hwtable: fix strncat() invocation
+  multipath tests: fix -Wformat-literal warning
+  multipath tests: util: fix clang strlcpy warnings
+  libmultipath: nvme: update to nvme-cli v1.9
+  multipath-tools: Makefile.inc: fix TEST_CC_OPTION
+  multipath-tools: Makefile.inc: use -Wp,... for compiling only
+  multipath-tools: Makefile: use proper directory recursion
+  multipath tests: Makefile: fix "clean" target
+  multipath tests: Makefile: avoid gcc 4.8 missing initializers failure
+  multipath-tools: Makefile.inc: enable -Werror
+  multipath-tools: Makefile.inc: test for -Wno-clobbered support
+
+ Makefile                                 |  38 +-
+ Makefile.inc                             |  15 +-
+ kpartx/bsd.c                             |   4 +-
+ kpartx/dasd.c                            |   3 +-
+ kpartx/devmapper.c                       |  13 +-
+ kpartx/devmapper.h                       |   7 +-
+ kpartx/dos.c                             |   4 +-
+ kpartx/gpt.c                             |  15 +-
+ kpartx/gpt.h                             |   2 +-
+ kpartx/kpartx.h                          |  20 +-
+ kpartx/mac.c                             |   5 +-
+ kpartx/ps3.c                             |   5 +-
+ kpartx/solaris.c                         |   4 +-
+ kpartx/sun.c                             |   4 +-
+ kpartx/unixware.c                        |   4 +-
+ libdmmp/libdmmp_private.h                |   8 +-
+ libmpathcmd/mpath_cmd.c                  |   5 +-
+ libmpathpersist/mpath_persist.c          |   3 +-
+ libmpathpersist/mpath_pr_ioctl.c         |  40 +-
+ libmultipath/Makefile                    |   5 +
+ libmultipath/alias.c                     | 134 ++--
+ libmultipath/alias.h                     |  12 +-
+ libmultipath/byteorder.h                 |  12 +-
+ libmultipath/checkers/cciss_tur.c        |   4 +-
+ libmultipath/checkers/directio.c         |   2 +-
+ libmultipath/checkers/hp_sw.c            |   8 +-
+ libmultipath/checkers/rdac.c             |   2 +-
+ libmultipath/checkers/readsector0.c      |   4 +-
+ libmultipath/config.c                    |   4 +-
+ libmultipath/config.h                    |   4 +-
+ libmultipath/defaults.h                  |   4 +-
+ libmultipath/devmapper.c                 |  10 +-
+ libmultipath/dict.c                      |  52 +-
+ libmultipath/discovery.c                 | 284 +++++----
+ libmultipath/discovery.h                 |   2 +-
+ libmultipath/dm-generic.c                |   6 +-
+ libmultipath/file.c                      |   5 +-
+ libmultipath/foreign.c                   |  20 +-
+ libmultipath/foreign/nvme.c              |  26 +-
+ libmultipath/generic.c                   |   2 +-
+ libmultipath/io_err_stat.c               |  10 +-
+ libmultipath/log.h                       |   3 +-
+ libmultipath/log_pthread.c               |   2 +-
+ libmultipath/log_pthread.h               |   3 +-
+ libmultipath/nvme/linux/nvme.h           | 136 ++++-
+ libmultipath/nvme/nvme-ioctl.c           | 229 ++++---
+ libmultipath/nvme/nvme-ioctl.h           |  31 +-
+ libmultipath/nvme/nvme.h                 | 121 +++-
+ libmultipath/parser.c                    |   2 +-
+ libmultipath/pgpolicies.c                |   2 +-
+ libmultipath/print.c                     |  14 +-
+ libmultipath/print.h                     |   8 +-
+ libmultipath/prioritizers/alua_rtpg.c    |   2 +-
+ libmultipath/prioritizers/ana.c          |  14 +-
+ libmultipath/prioritizers/const.c        |   4 +-
+ libmultipath/prioritizers/datacore.c     |   3 +-
+ libmultipath/prioritizers/emc.c          |   3 +-
+ libmultipath/prioritizers/hds.c          |   3 +-
+ libmultipath/prioritizers/hp_sw.c        |   3 +-
+ libmultipath/prioritizers/iet.c          |   3 +-
+ libmultipath/prioritizers/ontap.c        |   3 +-
+ libmultipath/prioritizers/random.c       |   4 +-
+ libmultipath/prioritizers/rdac.c         |   3 +-
+ libmultipath/prioritizers/sysfs.c        |   3 +-
+ libmultipath/prioritizers/weightedpath.c |   3 +-
+ libmultipath/structs.c                   |   4 +-
+ libmultipath/structs.h                   |   3 +-
+ libmultipath/structs_vec.c               |   2 +-
+ libmultipath/sysfs.c                     |  13 +-
+ libmultipath/time-util.c                 |   6 +-
+ libmultipath/uevent.c                    |   5 +-
+ libmultipath/util.c                      |   7 +-
+ libmultipath/util.h                      |  15 +-
+ libmultipath/uxsock.c                    |   3 +-
+ libmultipath/vector.h                    |   4 +-
+ libmultipath/wwids.c                     |  40 +-
+ mpathpersist/main.c                      |   2 +-
+ multipath/main.c                         |  11 +-
+ multipathd/Makefile                      |   3 +
+ multipathd/cli_handlers.c                |   2 +-
+ multipathd/dmevents.c                    |   4 +-
+ multipathd/main.c                        |  36 +-
+ multipathd/pidfile.c                     |   2 +-
+ multipathd/waiter.c                      |   2 +-
+ multipathd/waiter.h                      |   2 +-
+ tests/Makefile                           |  19 +-
+ tests/alias.c                            | 744 +++++++++++++++++++++++
+ tests/blacklist.c                        |  22 +-
+ tests/hwtable.c                          |   2 +-
+ tests/test-log.c                         |  27 +
+ tests/test-log.h                         |   7 +
+ tests/util.c                             |  16 +-
+ 92 files changed, 1818 insertions(+), 598 deletions(-)
+ create mode 100644 tests/alias.c
+ create mode 100644 tests/test-log.c
+ create mode 100644 tests/test-log.h
+
 --=20
 2.23.0
