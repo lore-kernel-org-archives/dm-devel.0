@@ -1,16 +1,14 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH 1/4] block: Enhance
-	blk_revalidate_disk_zones()
-Date: Fri, 25 Oct 2019 05:15:06 +0000
-Message-ID: <BN8PR04MB58124835167609CED0AD69FAE7650@BN8PR04MB5812.namprd04.prod.outlook.com>
+From: Javier =?utf-8?B?R29uesOhbGV6?= <javier@javigon.com>
+Subject: Re: [PATCH 2/4] block: Simplify report zones execution
+Date: Fri, 25 Oct 2019 07:17:48 +0200
+Message-ID: <20191025051748.2etv67wvb264mn3n@mpHalley>
 References: <20191024065006.8684-1-damien.lemoal@wdc.com>
-	<20191024065006.8684-2-damien.lemoal@wdc.com>
-	<20191024070838.GA19572@infradead.org>
+	<20191024065006.8684-3-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <20191024065006.8684-3-damien.lemoal@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,53 +18,77 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Jens Axboe <axboe@kernel.dk>, "Martin K . Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Disposition: inline
+To: Damien Le Moal <damien.lemoal@wdc.com>
+Cc: Jens Axboe <axboe@kernel.dk>, "Martin K . Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 2019/10/24 16:08, Christoph Hellwig wrote:
->> diff --git a/block/blk-zoned.c b/block/blk-zoned.c
->> index 4bc5f260248a..293891b7068a 100644
->> --- a/block/blk-zoned.c
->> +++ b/block/blk-zoned.c
->> @@ -441,6 +441,57 @@ void blk_queue_free_zone_bitmaps(struct request_queue *q)
->>  	q->seq_zones_wlock = NULL;
->>  }
->>  
->> +/**
->> + * blk_check_zone - Check a zone information
->> + * @q:		request queue
->> + * @zone:	the zone to  check
->> + * @sector:	start sector of the zone
->> + *
->> + * Helper function to check zones of a zoned block device. Returns true if the
->> + * zone is correct and false if a problem is detected.
->> + */
->> +static bool blk_check_zone(struct gendisk *disk, struct blk_zone *zone,
->> +			   sector_t *sector)
-> 
-> Maybe call this blk_zone_valid?  Also in many places we don't really
-> do the verbose kerneldoc comments with the duplicated parameter names
-> for local functions, as the scripts only pick up non-stack ones anyway.
-> 
->> +	/*
->> +	 * All zones must have the same size, with the exception on an eventual
->> +	 * smaller last zone.
->> +	 */
->> +	if (zone->start + zone_sectors < capacity &&
->> +	    zone->len != zone_sectors) {
->> +		pr_warn("%s: Invalid zone device with non constant zone size\n",
->> +			disk->disk_name);
->> +		return false;
->> +	}
-> 
-> I think we should also move the power of two zone size check here
-> instead of leaving it in the driver.
-
-We should not since the drivers calls blk_queue_chunk_sectors() first to
-set the zone size and that function has a power of 2 check. So better
-check that earlier than here.
-
--- 
-Damien Le Moal
-Western Digital Research
+T24gMjQuMTAuMjAxOSAxNTo1MCwgRGFtaWVuIExlIE1vYWwgd3JvdGU6Cj5BbGwga2VybmVsIHVz
+ZXJzIG9mIGJsa2Rldl9yZXBvcnRfem9uZXMoKSBhcyB3ZWxsIGFzIGFwcGxpY2F0aW9ucyB1c2UK
+PnRocm91Z2ggaW9jdGwoQkxLWk9ORVJFUE9SVCkgZXhwZWN0IHRvIHBvdGVudGlhbGx5IGdldCBs
+ZXNzIHpvbmUKPmRlc2NyaXB0b3JzIHRoYW4gcmVxdWVzdGVkLiBBcyBzdWNoLCB0aGUgdXNlIG9m
+IHRoZSBpbnRlcm5hbCByZXBvcnQKPnpvbmVzIGNvbW1hbmQgZXhlY3V0aW9uIGxvb3AgaW1wbGVt
+ZW50ZWQgYnkgYmxrX3JlcG9ydF96b25lcygpIGlzCj5ub3QgbmVjZXNzYXJ5IGFuZCBjYW4gZXZl
+biBiZSBoYXJtZnVsIHRvIHBlcmZvcm1hbmNlIGJ5IGNhdXNpbmcgdGhlCj5leGVjdXRpb24gb2Yg
+aW5lZmZpY2llbnQgc21hbGwgem9uZXMgcmVwb3J0IGNvbW1hbmQgdG8gc2VydmljZSB0aGUKPnJl
+bWluZGVyIG9mIGEgcmVxdWVzdGVkIHpvbmUgYXJyYXkuCj4KPlRoaXMgcGF0Y2ggcmVtb3ZlcyBi
+bGtfcmVwb3J0X3pvbmVzKCksIHNpbXBsaWZ5aW5nIHRoZSBjb2RlLiBBbHNvCj5yZW1vdmUgYSBu
+b3cgaW5jb3JyZWN0IGNvbW1lbnQgaW4gZG1fYmxrX3JlcG9ydF96b25lcygpLgo+Cj5TaWduZWQt
+b2ZmLWJ5OiBEYW1pZW4gTGUgTW9hbCA8ZGFtaWVuLmxlbW9hbEB3ZGMuY29tPgo+LS0tCj4gYmxv
+Y2svYmxrLXpvbmVkLmMgfCAzNCArKysrKy0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCj4g
+ZHJpdmVycy9tZC9kbS5jICAgfCAgNiAtLS0tLS0KPiAyIGZpbGVzIGNoYW5nZWQsIDUgaW5zZXJ0
+aW9ucygrKSwgMzUgZGVsZXRpb25zKC0pCj4KPmRpZmYgLS1naXQgYS9ibG9jay9ibGstem9uZWQu
+YyBiL2Jsb2NrL2Jsay16b25lZC5jCj5pbmRleCAyOTM4OTFiNzA2OGEuLjQzYmZkMWJlMDk4NSAx
+MDA2NDQKPi0tLSBhL2Jsb2NrL2Jsay16b25lZC5jCj4rKysgYi9ibG9jay9ibGstem9uZWQuYwo+
+QEAgLTExOSwzMSArMTE5LDYgQEAgc3RhdGljIGJvb2wgYmxrZGV2X3JlcG9ydF96b25lKHN0cnVj
+dCBibG9ja19kZXZpY2UgKmJkZXYsIHN0cnVjdCBibGtfem9uZSAqcmVwKQo+IAlyZXR1cm4gdHJ1
+ZTsKPiB9Cj4KPi1zdGF0aWMgaW50IGJsa19yZXBvcnRfem9uZXMoc3RydWN0IGdlbmRpc2sgKmRp
+c2ssIHNlY3Rvcl90IHNlY3RvciwKPi0JCQkgICAgc3RydWN0IGJsa196b25lICp6b25lcywgdW5z
+aWduZWQgaW50ICpucl96b25lcykKPi17Cj4tCXN0cnVjdCByZXF1ZXN0X3F1ZXVlICpxID0gZGlz
+ay0+cXVldWU7Cj4tCXVuc2lnbmVkIGludCB6ID0gMCwgbiwgbnJ6ID0gKm5yX3pvbmVzOwo+LQlz
+ZWN0b3JfdCBjYXBhY2l0eSA9IGdldF9jYXBhY2l0eShkaXNrKTsKPi0JaW50IHJldDsKPi0KPi0J
+d2hpbGUgKHogPCBucnogJiYgc2VjdG9yIDwgY2FwYWNpdHkpIHsKPi0JCW4gPSBucnogLSB6Owo+
+LQkJcmV0ID0gZGlzay0+Zm9wcy0+cmVwb3J0X3pvbmVzKGRpc2ssIHNlY3RvciwgJnpvbmVzW3pd
+LCAmbik7Cj4tCQlpZiAocmV0KQo+LQkJCXJldHVybiByZXQ7Cj4tCQlpZiAoIW4pCj4tCQkJYnJl
+YWs7Cj4tCQlzZWN0b3IgKz0gYmxrX3F1ZXVlX3pvbmVfc2VjdG9ycyhxKSAqIG47Cj4tCQl6ICs9
+IG47Cj4tCX0KPi0KPi0JV0FSTl9PTih6ID4gKm5yX3pvbmVzKTsKPi0JKm5yX3pvbmVzID0gejsK
+Pi0KPi0JcmV0dXJuIDA7Cj4tfQo+LQo+IC8qKgo+ICAqIGJsa2Rldl9yZXBvcnRfem9uZXMgLSBH
+ZXQgem9uZXMgaW5mb3JtYXRpb24KPiAgKiBAYmRldjoJVGFyZ2V0IGJsb2NrIGRldmljZQo+QEAg
+LTE2NCw2ICsxMzksNyBAQCBpbnQgYmxrZGV2X3JlcG9ydF96b25lcyhzdHJ1Y3QgYmxvY2tfZGV2
+aWNlICpiZGV2LCBzZWN0b3JfdCBzZWN0b3IsCj4gCQkJc3RydWN0IGJsa196b25lICp6b25lcywg
+dW5zaWduZWQgaW50ICpucl96b25lcykKPiB7Cj4gCXN0cnVjdCByZXF1ZXN0X3F1ZXVlICpxID0g
+YmRldl9nZXRfcXVldWUoYmRldik7Cj4rCXN0cnVjdCBnZW5kaXNrICpkaXNrID0gYmRldi0+YmRf
+ZGlzazsKPiAJdW5zaWduZWQgaW50IGksIG5yejsKPiAJaW50IHJldDsKPgo+QEAgLTE3NSw3ICsx
+NTEsNyBAQCBpbnQgYmxrZGV2X3JlcG9ydF96b25lcyhzdHJ1Y3QgYmxvY2tfZGV2aWNlICpiZGV2
+LCBzZWN0b3JfdCBzZWN0b3IsCj4gCSAqIHJlcG9ydF96b25lcyBtZXRob2QuIElmIGl0IGRvZXMg
+bm90IGhhdmUgb25lIGRlZmluZWQsIHRoZSBkZXZpY2UKPiAJICogZHJpdmVyIGhhcyBhIGJ1Zy4g
+U28gd2FybiBhYm91dCB0aGF0Lgo+IAkgKi8KPi0JaWYgKFdBUk5fT05fT05DRSghYmRldi0+YmRf
+ZGlzay0+Zm9wcy0+cmVwb3J0X3pvbmVzKSkKPisJaWYgKFdBUk5fT05fT05DRSghZGlzay0+Zm9w
+cy0+cmVwb3J0X3pvbmVzKSkKPiAJCXJldHVybiAtRU9QTk9UU1VQUDsKPgo+IAlpZiAoISpucl96
+b25lcyB8fCBzZWN0b3IgPj0gYmRldi0+YmRfcGFydC0+bnJfc2VjdHMpIHsKPkBAIC0xODUsOCAr
+MTYxLDggQEAgaW50IGJsa2Rldl9yZXBvcnRfem9uZXMoc3RydWN0IGJsb2NrX2RldmljZSAqYmRl
+diwgc2VjdG9yX3Qgc2VjdG9yLAo+Cj4gCW5yeiA9IG1pbigqbnJfem9uZXMsCj4gCQkgIF9fYmxr
+ZGV2X25yX3pvbmVzKHEsIGJkZXYtPmJkX3BhcnQtPm5yX3NlY3RzIC0gc2VjdG9yKSk7Cj4tCXJl
+dCA9IGJsa19yZXBvcnRfem9uZXMoYmRldi0+YmRfZGlzaywgZ2V0X3N0YXJ0X3NlY3QoYmRldikg
+KyBzZWN0b3IsCj4tCQkJICAgICAgIHpvbmVzLCAmbnJ6KTsKPisJcmV0ID0gZGlzay0+Zm9wcy0+
+cmVwb3J0X3pvbmVzKGRpc2ssIGdldF9zdGFydF9zZWN0KGJkZXYpICsgc2VjdG9yLAo+KwkJCQkg
+ICAgICAgem9uZXMsICZucnopOwo+IAlpZiAocmV0KQo+IAkJcmV0dXJuIHJldDsKPgo+QEAgLTU1
+Miw3ICs1MjgsNyBAQCBpbnQgYmxrX3JldmFsaWRhdGVfZGlza196b25lcyhzdHJ1Y3QgZ2VuZGlz
+ayAqZGlzaykKPgo+IAl3aGlsZSAoeiA8IG5yX3pvbmVzKSB7Cj4gCQlucnogPSBtaW4obnJfem9u
+ZXMgLSB6LCByZXBfbnJfem9uZXMpOwo+LQkJcmV0ID0gYmxrX3JlcG9ydF96b25lcyhkaXNrLCBz
+ZWN0b3IsIHpvbmVzLCAmbnJ6KTsKPisJCXJldCA9IGRpc2stPmZvcHMtPnJlcG9ydF96b25lcyhk
+aXNrLCBzZWN0b3IsIHpvbmVzLCAmbnJ6KTsKPiAJCWlmIChyZXQpCj4gCQkJZ290byBvdXQ7Cj4g
+CQlpZiAoIW5yeikKPmRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLmMgYi9kcml2ZXJzL21kL2Rt
+LmMKPmluZGV4IDFhNWUzMjhjNDQzYS4uNjQ3YWE1YjAyMzNiIDEwMDY0NAo+LS0tIGEvZHJpdmVy
+cy9tZC9kbS5jCj4rKysgYi9kcml2ZXJzL21kL2RtLmMKPkBAIC00NzMsMTIgKzQ3Myw2IEBAIHN0
+YXRpYyBpbnQgZG1fYmxrX3JlcG9ydF96b25lcyhzdHJ1Y3QgZ2VuZGlzayAqZGlzaywgc2VjdG9y
+X3Qgc2VjdG9yLAo+IAkJZ290byBvdXQ7Cj4gCX0KPgo+LQkvKgo+LQkgKiBibGtkZXZfcmVwb3J0
+X3pvbmVzKCkgd2lsbCBsb29wIGFuZCBjYWxsIHRoaXMgYWdhaW4gdG8gY292ZXIgYWxsIHRoZQo+
+LQkgKiB6b25lcyBvZiB0aGUgdGFyZ2V0LCBldmVudHVhbGx5IG1vdmluZyBvbiB0byB0aGUgbmV4
+dCB0YXJnZXQuCj4tCSAqIFNvIHRoZXJlIGlzIG5vIG5lZWQgdG8gbG9vcCBoZXJlIHRyeWluZyB0
+byBmaWxsIHRoZSBlbnRpcmUgYXJyYXkKPi0JICogb2Ygem9uZXMuCj4tCSAqLwo+IAlyZXQgPSB0
+Z3QtPnR5cGUtPnJlcG9ydF96b25lcyh0Z3QsIHNlY3Rvciwgem9uZXMsIG5yX3pvbmVzKTsKPgo+
+IG91dDoKPi0tIAo+Mi4yMS4wCj4KCkxvb2tzIGdvb2QgdG8gbWUuCgpSZXZpZXdlZC1ieTogSmF2
+aWVyIEdvbnrDoWxleiA8amF2aWVyQGphdmlnb24uY29tPgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBs
+aXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xp
+c3RpbmZvL2RtLWRldmVs
