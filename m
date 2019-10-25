@@ -1,94 +1,86 @@
-From: Javier =?utf-8?B?R29uesOhbGV6?= <javier@javigon.com>
-Subject: Re: [PATCH 2/4] block: Simplify report zones execution
-Date: Fri, 25 Oct 2019 07:17:48 +0200
-Message-ID: <20191025051748.2etv67wvb264mn3n@mpHalley>
-References: <20191024065006.8684-1-damien.lemoal@wdc.com>
-	<20191024065006.8684-3-damien.lemoal@wdc.com>
+From: Alessio Balsini <balsini@android.com>
+Subject: dm-snapshot for system updates in Android
+Date: Fri, 25 Oct 2019 11:16:24 +0100
+Message-ID: <20191025101624.GA61225@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191024065006.8684-3-damien.lemoal@wdc.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-To: Damien Le Moal <damien.lemoal@wdc.com>
-Cc: Jens Axboe <axboe@kernel.dk>, "Martin K . Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+Cc: elsk@google.com, dvander@google.com, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@android.com
 List-Id: dm-devel.ids
 
-T24gMjQuMTAuMjAxOSAxNTo1MCwgRGFtaWVuIExlIE1vYWwgd3JvdGU6Cj5BbGwga2VybmVsIHVz
-ZXJzIG9mIGJsa2Rldl9yZXBvcnRfem9uZXMoKSBhcyB3ZWxsIGFzIGFwcGxpY2F0aW9ucyB1c2UK
-PnRocm91Z2ggaW9jdGwoQkxLWk9ORVJFUE9SVCkgZXhwZWN0IHRvIHBvdGVudGlhbGx5IGdldCBs
-ZXNzIHpvbmUKPmRlc2NyaXB0b3JzIHRoYW4gcmVxdWVzdGVkLiBBcyBzdWNoLCB0aGUgdXNlIG9m
-IHRoZSBpbnRlcm5hbCByZXBvcnQKPnpvbmVzIGNvbW1hbmQgZXhlY3V0aW9uIGxvb3AgaW1wbGVt
-ZW50ZWQgYnkgYmxrX3JlcG9ydF96b25lcygpIGlzCj5ub3QgbmVjZXNzYXJ5IGFuZCBjYW4gZXZl
-biBiZSBoYXJtZnVsIHRvIHBlcmZvcm1hbmNlIGJ5IGNhdXNpbmcgdGhlCj5leGVjdXRpb24gb2Yg
-aW5lZmZpY2llbnQgc21hbGwgem9uZXMgcmVwb3J0IGNvbW1hbmQgdG8gc2VydmljZSB0aGUKPnJl
-bWluZGVyIG9mIGEgcmVxdWVzdGVkIHpvbmUgYXJyYXkuCj4KPlRoaXMgcGF0Y2ggcmVtb3ZlcyBi
-bGtfcmVwb3J0X3pvbmVzKCksIHNpbXBsaWZ5aW5nIHRoZSBjb2RlLiBBbHNvCj5yZW1vdmUgYSBu
-b3cgaW5jb3JyZWN0IGNvbW1lbnQgaW4gZG1fYmxrX3JlcG9ydF96b25lcygpLgo+Cj5TaWduZWQt
-b2ZmLWJ5OiBEYW1pZW4gTGUgTW9hbCA8ZGFtaWVuLmxlbW9hbEB3ZGMuY29tPgo+LS0tCj4gYmxv
-Y2svYmxrLXpvbmVkLmMgfCAzNCArKysrKy0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCj4g
-ZHJpdmVycy9tZC9kbS5jICAgfCAgNiAtLS0tLS0KPiAyIGZpbGVzIGNoYW5nZWQsIDUgaW5zZXJ0
-aW9ucygrKSwgMzUgZGVsZXRpb25zKC0pCj4KPmRpZmYgLS1naXQgYS9ibG9jay9ibGstem9uZWQu
-YyBiL2Jsb2NrL2Jsay16b25lZC5jCj5pbmRleCAyOTM4OTFiNzA2OGEuLjQzYmZkMWJlMDk4NSAx
-MDA2NDQKPi0tLSBhL2Jsb2NrL2Jsay16b25lZC5jCj4rKysgYi9ibG9jay9ibGstem9uZWQuYwo+
-QEAgLTExOSwzMSArMTE5LDYgQEAgc3RhdGljIGJvb2wgYmxrZGV2X3JlcG9ydF96b25lKHN0cnVj
-dCBibG9ja19kZXZpY2UgKmJkZXYsIHN0cnVjdCBibGtfem9uZSAqcmVwKQo+IAlyZXR1cm4gdHJ1
-ZTsKPiB9Cj4KPi1zdGF0aWMgaW50IGJsa19yZXBvcnRfem9uZXMoc3RydWN0IGdlbmRpc2sgKmRp
-c2ssIHNlY3Rvcl90IHNlY3RvciwKPi0JCQkgICAgc3RydWN0IGJsa196b25lICp6b25lcywgdW5z
-aWduZWQgaW50ICpucl96b25lcykKPi17Cj4tCXN0cnVjdCByZXF1ZXN0X3F1ZXVlICpxID0gZGlz
-ay0+cXVldWU7Cj4tCXVuc2lnbmVkIGludCB6ID0gMCwgbiwgbnJ6ID0gKm5yX3pvbmVzOwo+LQlz
-ZWN0b3JfdCBjYXBhY2l0eSA9IGdldF9jYXBhY2l0eShkaXNrKTsKPi0JaW50IHJldDsKPi0KPi0J
-d2hpbGUgKHogPCBucnogJiYgc2VjdG9yIDwgY2FwYWNpdHkpIHsKPi0JCW4gPSBucnogLSB6Owo+
-LQkJcmV0ID0gZGlzay0+Zm9wcy0+cmVwb3J0X3pvbmVzKGRpc2ssIHNlY3RvciwgJnpvbmVzW3pd
-LCAmbik7Cj4tCQlpZiAocmV0KQo+LQkJCXJldHVybiByZXQ7Cj4tCQlpZiAoIW4pCj4tCQkJYnJl
-YWs7Cj4tCQlzZWN0b3IgKz0gYmxrX3F1ZXVlX3pvbmVfc2VjdG9ycyhxKSAqIG47Cj4tCQl6ICs9
-IG47Cj4tCX0KPi0KPi0JV0FSTl9PTih6ID4gKm5yX3pvbmVzKTsKPi0JKm5yX3pvbmVzID0gejsK
-Pi0KPi0JcmV0dXJuIDA7Cj4tfQo+LQo+IC8qKgo+ICAqIGJsa2Rldl9yZXBvcnRfem9uZXMgLSBH
-ZXQgem9uZXMgaW5mb3JtYXRpb24KPiAgKiBAYmRldjoJVGFyZ2V0IGJsb2NrIGRldmljZQo+QEAg
-LTE2NCw2ICsxMzksNyBAQCBpbnQgYmxrZGV2X3JlcG9ydF96b25lcyhzdHJ1Y3QgYmxvY2tfZGV2
-aWNlICpiZGV2LCBzZWN0b3JfdCBzZWN0b3IsCj4gCQkJc3RydWN0IGJsa196b25lICp6b25lcywg
-dW5zaWduZWQgaW50ICpucl96b25lcykKPiB7Cj4gCXN0cnVjdCByZXF1ZXN0X3F1ZXVlICpxID0g
-YmRldl9nZXRfcXVldWUoYmRldik7Cj4rCXN0cnVjdCBnZW5kaXNrICpkaXNrID0gYmRldi0+YmRf
-ZGlzazsKPiAJdW5zaWduZWQgaW50IGksIG5yejsKPiAJaW50IHJldDsKPgo+QEAgLTE3NSw3ICsx
-NTEsNyBAQCBpbnQgYmxrZGV2X3JlcG9ydF96b25lcyhzdHJ1Y3QgYmxvY2tfZGV2aWNlICpiZGV2
-LCBzZWN0b3JfdCBzZWN0b3IsCj4gCSAqIHJlcG9ydF96b25lcyBtZXRob2QuIElmIGl0IGRvZXMg
-bm90IGhhdmUgb25lIGRlZmluZWQsIHRoZSBkZXZpY2UKPiAJICogZHJpdmVyIGhhcyBhIGJ1Zy4g
-U28gd2FybiBhYm91dCB0aGF0Lgo+IAkgKi8KPi0JaWYgKFdBUk5fT05fT05DRSghYmRldi0+YmRf
-ZGlzay0+Zm9wcy0+cmVwb3J0X3pvbmVzKSkKPisJaWYgKFdBUk5fT05fT05DRSghZGlzay0+Zm9w
-cy0+cmVwb3J0X3pvbmVzKSkKPiAJCXJldHVybiAtRU9QTk9UU1VQUDsKPgo+IAlpZiAoISpucl96
-b25lcyB8fCBzZWN0b3IgPj0gYmRldi0+YmRfcGFydC0+bnJfc2VjdHMpIHsKPkBAIC0xODUsOCAr
-MTYxLDggQEAgaW50IGJsa2Rldl9yZXBvcnRfem9uZXMoc3RydWN0IGJsb2NrX2RldmljZSAqYmRl
-diwgc2VjdG9yX3Qgc2VjdG9yLAo+Cj4gCW5yeiA9IG1pbigqbnJfem9uZXMsCj4gCQkgIF9fYmxr
-ZGV2X25yX3pvbmVzKHEsIGJkZXYtPmJkX3BhcnQtPm5yX3NlY3RzIC0gc2VjdG9yKSk7Cj4tCXJl
-dCA9IGJsa19yZXBvcnRfem9uZXMoYmRldi0+YmRfZGlzaywgZ2V0X3N0YXJ0X3NlY3QoYmRldikg
-KyBzZWN0b3IsCj4tCQkJICAgICAgIHpvbmVzLCAmbnJ6KTsKPisJcmV0ID0gZGlzay0+Zm9wcy0+
-cmVwb3J0X3pvbmVzKGRpc2ssIGdldF9zdGFydF9zZWN0KGJkZXYpICsgc2VjdG9yLAo+KwkJCQkg
-ICAgICAgem9uZXMsICZucnopOwo+IAlpZiAocmV0KQo+IAkJcmV0dXJuIHJldDsKPgo+QEAgLTU1
-Miw3ICs1MjgsNyBAQCBpbnQgYmxrX3JldmFsaWRhdGVfZGlza196b25lcyhzdHJ1Y3QgZ2VuZGlz
-ayAqZGlzaykKPgo+IAl3aGlsZSAoeiA8IG5yX3pvbmVzKSB7Cj4gCQlucnogPSBtaW4obnJfem9u
-ZXMgLSB6LCByZXBfbnJfem9uZXMpOwo+LQkJcmV0ID0gYmxrX3JlcG9ydF96b25lcyhkaXNrLCBz
-ZWN0b3IsIHpvbmVzLCAmbnJ6KTsKPisJCXJldCA9IGRpc2stPmZvcHMtPnJlcG9ydF96b25lcyhk
-aXNrLCBzZWN0b3IsIHpvbmVzLCAmbnJ6KTsKPiAJCWlmIChyZXQpCj4gCQkJZ290byBvdXQ7Cj4g
-CQlpZiAoIW5yeikKPmRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLmMgYi9kcml2ZXJzL21kL2Rt
-LmMKPmluZGV4IDFhNWUzMjhjNDQzYS4uNjQ3YWE1YjAyMzNiIDEwMDY0NAo+LS0tIGEvZHJpdmVy
-cy9tZC9kbS5jCj4rKysgYi9kcml2ZXJzL21kL2RtLmMKPkBAIC00NzMsMTIgKzQ3Myw2IEBAIHN0
-YXRpYyBpbnQgZG1fYmxrX3JlcG9ydF96b25lcyhzdHJ1Y3QgZ2VuZGlzayAqZGlzaywgc2VjdG9y
-X3Qgc2VjdG9yLAo+IAkJZ290byBvdXQ7Cj4gCX0KPgo+LQkvKgo+LQkgKiBibGtkZXZfcmVwb3J0
-X3pvbmVzKCkgd2lsbCBsb29wIGFuZCBjYWxsIHRoaXMgYWdhaW4gdG8gY292ZXIgYWxsIHRoZQo+
-LQkgKiB6b25lcyBvZiB0aGUgdGFyZ2V0LCBldmVudHVhbGx5IG1vdmluZyBvbiB0byB0aGUgbmV4
-dCB0YXJnZXQuCj4tCSAqIFNvIHRoZXJlIGlzIG5vIG5lZWQgdG8gbG9vcCBoZXJlIHRyeWluZyB0
-byBmaWxsIHRoZSBlbnRpcmUgYXJyYXkKPi0JICogb2Ygem9uZXMuCj4tCSAqLwo+IAlyZXQgPSB0
-Z3QtPnR5cGUtPnJlcG9ydF96b25lcyh0Z3QsIHNlY3Rvciwgem9uZXMsIG5yX3pvbmVzKTsKPgo+
-IG91dDoKPi0tIAo+Mi4yMS4wCj4KCkxvb2tzIGdvb2QgdG8gbWUuCgpSZXZpZXdlZC1ieTogSmF2
-aWVyIEdvbnrDoWxleiA8amF2aWVyQGphdmlnb24uY29tPgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBs
-aXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xp
-c3RpbmZvL2RtLWRldmVs
+Hello everyone!
+
+I hope you will appreciate knowing that we are currently evaluating the use of
+dm-snapshot to implement a mechanism to obtain revertible, space-efficient
+system upgrades in Android.  More specifically, we are using
+dm-snapshot-persistent to test the updated device after reboot, then issue a
+merge in case of success, otherwise, destroy the snapshot.
+This new update mechanism is still under evaluation, but its development is
+openly done in AOSP.
+
+At the current stage, we have a prototype we are happy with, both in terms of
+space consumption overhead (for the COW device) and benchmarking results for
+read-write and merge operations.
+
+I would be glad if you could provide some feedback on a few points that I don't
+have completely clear.
+
+
+-- Interface stability
+
+To obtain an initial, empty COW device as quick as possible, we force to 0 only
+its first 32 bit (magic field). This solution looks clear from the kernel code,
+but can we rely on that for all the kernels with SNAPSHOT_DISK_VERSION == 1?
+Would you appreciate it if a similar statement is added as part of
+/Documentation, making this solution more stable? Or maybe I can think of
+adding an initialization flag to the dm-snapshot table to explicitly request
+the COW initialization within the kernel?
+
+Another issue we are facing is to be able to know in advance what the minimum
+COW device size would be for a given update to be able to allocate the right
+size for the COW device in advance.  To do so, we rely on the current COW
+structure that seems to have kept the same stable shape in the last decade, and
+compute the total COW size by knowing the number of modified chunks. The
+formula would be something like that:
+
+  table_line_bytes      = 64 * 2 / 8;
+  exceptions_per_chunk  = chunk_size_bytes / table_line_bytes;
+  total_cow_size_chunks = 1 + 1 + modified_chunks
+                        + modified_chunks / exceptions_per_chunk;
+
+This formula seems to be valid for all the recent kernels we checked. Again,
+can we assume it to be valid for all the kernels for which
+SNAPSHOT_DISK_VERSION == 1?
+
+
+-- Alignment
+
+Our approach follows the solution proposed by Mikulas [1].
+Being the block alignment of file extents automatically managed by the
+filesystem, using FIEMAP should have no alignment-related performance issue.
+But in our implementation we hit a misalignment [2] branch which leads to
+dmwarning messages [3, 4].
+
+I have a limited experience with the block layer and dm, so I'm still
+struggling in finding the root cause for this, either in user space or kernel
+space.
+But our benchmarks seems to be good, so we were thinking as last option to
+rate-limit or directly remove that warning from our kernels as a temporary
+solution, but we prefer to avoid diverging from mainline. Rate-limiting is a
+solution that would make sense also to be proposed in the list, but completely
+removing the warning doesn't seem the right thing to do. Maybe we are
+benchmarking something else? What do you think?
+
+Many thanks for taking the time to read this, feedbacks would be highly
+appreciated.
+
+Regards.
+Alessio
+
+[1] https://www.redhat.com/archives/dm-devel/2018-October/msg00363.html
+[2] https://elixir.bootlin.com/linux/v5.3/source/block/blk-settings.c#L540
+[3] https://elixir.bootlin.com/linux/v5.3/source/drivers/md/dm-table.c#L484
+[4] https://elixir.bootlin.com/linux/v5.3/source/drivers/md/dm-table.c#L1558
