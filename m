@@ -1,16 +1,11 @@
-From: Dmitry Fomichev <Dmitry.Fomichev@wdc.com>
-Subject: Re: dm-zoned performance degradation after apply
- 75d66ffb48efb3 ("dm zoned:, properly handle backing device failure")
-Date: Sun, 27 Oct 2019 02:56:20 +0000
-Message-ID: <38d2a401ad8111ec0e6806f3e165916b18769d6d.camel@wdc.com>
-References: <203cc4c8-b380-5b2f-c9e7-766b3f031c8c@huawei.com>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: [PATCH 0/8] Zone management commands support
+Date: Sun, 27 Oct 2019 23:05:41 +0900
+Message-ID: <20191027140549.26272-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <203cc4c8-b380-5b2f-c9e7-766b3f031c8c@huawei.com>
-Content-Language: en-US
-Content-ID: <EBFC659219E425459E666222A676A219@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,75 +15,66 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "agk@redhat.com" <agk@redhat.com>, Damien Le Moal <Damien.LeMoal@wdc.com>, "zhangxiaoxu5@huawei.com" <zhangxiaoxu5@huawei.com>, "snitzer@redhat.com" <snitzer@redhat.com>
+To: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Dmitry Fomichev <dmitry.fomichev@wdc.com>, Keith Busch <kbusch@kernel.org>, Hans Holmberg <Hans.Holmberg@wdc.com>, Ajay Joshi <ajay.joshi@wdc.com>, Matias Bjorling <matias.bjorling@wdc.com>
 List-Id: dm-devel.ids
 
-Zhang,
+This series implements a few improvements and cleanups to zone block
+device zone reset operations with the first three patches.
 
-I just did some testing of this scenario with a recent kernel that includes this patch.
+The remaining of the series patches introduce zone open, close and
+finish support, allowing users of zoned block devices to explicitly
+control the condition (state) of zones.
 
-The log below is a run in QEMU with 8 CPUs and it took 18.5 minutes to create the FS on a
-14TB ATA drive. Doing the same thing on bare metal with 32 CPUs takes 10.5 minutes in my
-environment. However, when doing the same test with a SAS drive, the run takes 43 minutes.
-This is not quite the degradation you are observing, but still a big performance hit.
+While these operations are not stricktly necessary for the correct
+operation of zoned block devices, the open and close operations can
+improve performance for some device implementations of the ZBC and ZAC
+standards under write workloads. The finish zone operation, which
+transition a zone to the full state, can also be useful to protect a
+zone data by preventing further zone writes.
 
-Is the disk that you are using SAS or SATA?
+These operations are implemented by introducing the new
+REQ_OP_ZONE_OPEN, REQ_OP_ZONE_CLOSE and REQ_OP_ZONE_FINISH request codes
+and the function blkdev_zone_mgmt() to issue these requests. This new
+function also replaces the former blkdev_reset_zones() function to reset
+zones write pointer.
 
-My current guess is that sd driver may generate some TEST UNIT READY commands to check if
-the drive is really online as a part of check_events() processing. For ATA drives, this is
-nearly a NOP since all TURs are completed internally in libata. But, in SCSI case, these
-blocking TURs are issued to the drive and certainly may degrade performance.
+The new ioctls BLKOPENZONE, BLKCLOSEZONE and BLKFINISHZONE are also
+defined to allow applications to issue these new requests without
+resorting to a device passthrough interface (e.g. SG_IO).
 
-The check_events() call has been added to bdev_device_is_dying() because simply calling
-bdev_queue_dying() doesn't cover the situation when the drive gets offlined in SCSI layer.
-It might be possible to only call check_events() once before every reclaim run and to avoid
-calling it in I/O mapping path. If this works, the overhead would likely be acceptable.
-I am going to take a look into this.
+Support for these operations is added to the SCSI sd driver, to the dm
+infrastructure (dm-linear and dm-flakey targets) and to the null_blk
+driver.
 
-Regards,
-Dmitry
+Ajay Joshi (5):
+  block: add zone open, close and finish operations
+  block: add zone open, close and finish ioctl support
+  scsi: sd_zbc: add zone open, close, and finish support
+  dm: add zone open, close and finish support
+  null_blk: add zone open, close, and finish support
 
-[root@xxx dmz]# uname -a
-Linux xxx 5.4.0-rc1-DMZ+ #1 SMP Fri Oct 11 11:23:13 PDT 2019 x86_64 x86_64 x86_64 GNU/Linux
-[root@xxx dmz]# lsscsi
-[0:0:0:0]    disk    QEMU     QEMU HARDDISK    2.5+  /dev/sda 
-[1:0:0:0]    zbc     ATA      HGST HSH721415AL T240  /dev/sdb 
-[root@xxx dmz]# ./setup-dmz test /dev/sdb
-[root@xxx dmz]# cat /proc/kallsyms | grep dmz_bdev_is_dying
-(standard input):90782:ffffffffc070a401 t dmz_bdev_is_dying.cold	[dm_zoned]
-(standard input):90849:ffffffffc0706e10 t dmz_bdev_is_dying	[dm_zoned]
-[root@xxx dmz]# time mkfs.ext4 /dev/mapper/test
-mke2fs 1.44.6 (5-Mar-2019)
-Discarding device blocks: done                            
-Creating filesystem with 3660840960 4k blocks and 457605120 inodes
-Filesystem UUID: 4536bacd-cfb5-41b2-b0bf-c2513e6e3360
-Superblock backups stored on blocks: 
-	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
-	4096000, 7962624, 11239424, 20480000, 23887872, 71663616, 78675968, 
-	102400000, 214990848, 512000000, 550731776, 644972544, 1934917632, 
-	2560000000
+Damien Le Moal (3):
+  block: Remove REQ_OP_ZONE_RESET plugging
+  block: Simplify REQ_OP_ZONE_RESET_ALL handling
+  scsi: sd_zbc: Fix sd_zbc_complete()
 
-Allocating group tables: done                            
-Writing inode tables: done                            
-Creating journal (262144 blocks): done
-Writing superblocks and filesystem accounting information: done         
+ block/blk-core.c               | 12 +++--
+ block/blk-zoned.c              | 99 ++++++++++++++++++----------------
+ block/ioctl.c                  |  5 +-
+ drivers/block/null_blk_zoned.c | 33 ++++++++++--
+ drivers/md/dm-flakey.c         |  7 ++-
+ drivers/md/dm-linear.c         |  2 +-
+ drivers/md/dm-zoned-metadata.c |  6 +--
+ drivers/md/dm.c                |  5 +-
+ drivers/scsi/sd.c              | 15 +++++-
+ drivers/scsi/sd.h              |  8 +--
+ drivers/scsi/sd_zbc.c          | 43 +++++++--------
+ fs/f2fs/segment.c              |  3 +-
+ include/linux/blk_types.h      | 25 +++++++++
+ include/linux/blkdev.h         | 15 +++---
+ include/uapi/linux/blkzoned.h  | 17 ++++--
+ 15 files changed, 192 insertions(+), 103 deletions(-)
 
-
-real	18m30.867s
-user	0m0.172s
-sys	0m11.198s
-
-
-On Sat, 2019-10-26 at 09:56 +0800, zhangxiaoxu (A) wrote:
-> Hi all, when I 'mkfs.ext4' on the dmz device based on 10T smr disk,
-> it takes more than 10 hours after apply 75d66ffb48efb3 ("dm zoned:
-> properly handle backing device failure").
-> 
-> After delete the 'check_events' in 'dmz_bdev_is_dying', it just
-> take less than 12 mins.
-> 
-> I test it based on 4.19 branch.
-> Must we do the 'check_events' at mapping path, reclaim or metadata I/O?
-> 
-> Thanks.
-> 
+-- 
+2.21.0
