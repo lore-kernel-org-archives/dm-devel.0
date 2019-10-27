@@ -1,8 +1,8 @@
 From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH 5/8] block: add zone open,
-	close and finish ioctl support
-Date: Sun, 27 Oct 2019 23:05:46 +0900
-Message-ID: <20191027140549.26272-6-damien.lemoal@wdc.com>
+Subject: [PATCH 6/8] scsi: sd_zbc: add zone open, close,
+	and finish support
+Date: Sun, 27 Oct 2019 23:05:47 +0900
+Message-ID: <20191027140549.26272-7-damien.lemoal@wdc.com>
 References: <20191027140549.26272-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,161 +24,136 @@ List-Id: dm-devel.ids
 
 From: Ajay Joshi <ajay.joshi@wdc.com>
 
-Introduce three new ioctl commands BLKOPENZONE, BLKCLOSEZONE and
-BLKFINISHZONE to allow applications to control the condition of zones
-on a zoned block device through the execution of the REQ_OP_ZONE_OPEN,
-REQ_OP_ZONE_CLOSE and REQ_OP_ZONE_FINISH operations.
+Implement REQ_OP_ZONE_OPEN, REQ_OP_ZONE_CLOSE and REQ_OP_ZONE_FINISH
+support to allow explicit control of zone states.
 
 Contains contributions from Matias Bjorling, Hans Holmberg,
-Dmitry Fomichev, Keith Busch, Damien Le Moal and Christoph Hellwig.
+Keith Busch and Damien Le Moal.
 
 Signed-off-by: Ajay Joshi <ajay.joshi@wdc.com>
 Signed-off-by: Matias Bjorling <matias.bjorling@wdc.com>
 Signed-off-by: Hans Holmberg <hans.holmberg@wdc.com>
-Signed-off-by: Dmitry Fomichev <dmitry.fomichev@wdc.com>
 Signed-off-by: Keith Busch <kbusch@kernel.org>
 Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
 ---
- block/blk-zoned.c             | 28 +++++++++++++++++++++++-----
- block/ioctl.c                 |  5 ++++-
- include/linux/blkdev.h        | 10 +++++-----
- include/uapi/linux/blkzoned.h | 17 ++++++++++++++---
- 4 files changed, 46 insertions(+), 14 deletions(-)
+ drivers/scsi/sd.c     | 15 +++++++++++++--
+ drivers/scsi/sd.h     |  8 +++++---
+ drivers/scsi/sd_zbc.c | 22 +++++++++++++---------
+ 3 files changed, 31 insertions(+), 14 deletions(-)
 
-diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index dab34dc48fb6..481eaf7d04d4 100644
---- a/block/blk-zoned.c
-+++ b/block/blk-zoned.c
-@@ -357,15 +357,16 @@ int blkdev_report_zones_ioctl(struct block_device *bdev, fmode_t mode,
- }
+diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+index 03163ac5fe95..ff0a22e2a34e 100644
+--- a/drivers/scsi/sd.c
++++ b/drivers/scsi/sd.c
+@@ -1290,9 +1290,17 @@ static blk_status_t sd_init_command(struct scsi_cmnd *cmd)
+ 	case REQ_OP_WRITE:
+ 		return sd_setup_read_write_cmnd(cmd);
+ 	case REQ_OP_ZONE_RESET:
+-		return sd_zbc_setup_reset_cmnd(cmd, false);
++		return sd_zbc_setup_zone_mgmt_cmnd(cmd, ZO_RESET_WRITE_POINTER,
++						   false);
+ 	case REQ_OP_ZONE_RESET_ALL:
+-		return sd_zbc_setup_reset_cmnd(cmd, true);
++		return sd_zbc_setup_zone_mgmt_cmnd(cmd, ZO_RESET_WRITE_POINTER,
++						   true);
++	case REQ_OP_ZONE_OPEN:
++		return sd_zbc_setup_zone_mgmt_cmnd(cmd, ZO_OPEN_ZONE, false);
++	case REQ_OP_ZONE_CLOSE:
++		return sd_zbc_setup_zone_mgmt_cmnd(cmd, ZO_CLOSE_ZONE, false);
++	case REQ_OP_ZONE_FINISH:
++		return sd_zbc_setup_zone_mgmt_cmnd(cmd, ZO_FINISH_ZONE, false);
+ 	default:
+ 		WARN_ON_ONCE(1);
+ 		return BLK_STS_NOTSUPP;
+@@ -1960,6 +1968,9 @@ static int sd_done(struct scsi_cmnd *SCpnt)
+ 	case REQ_OP_WRITE_SAME:
+ 	case REQ_OP_ZONE_RESET:
+ 	case REQ_OP_ZONE_RESET_ALL:
++	case REQ_OP_ZONE_OPEN:
++	case REQ_OP_ZONE_CLOSE:
++	case REQ_OP_ZONE_FINISH:
+ 		if (!result) {
+ 			good_bytes = blk_rq_bytes(req);
+ 			scsi_set_resid(SCpnt, 0);
+diff --git a/drivers/scsi/sd.h b/drivers/scsi/sd.h
+index 1eab779f812b..bf2102a749bc 100644
+--- a/drivers/scsi/sd.h
++++ b/drivers/scsi/sd.h
+@@ -209,7 +209,8 @@ static inline int sd_is_zoned(struct scsi_disk *sdkp)
  
- /*
-- * BLKRESETZONE ioctl processing.
-+ * BLKRESETZONE, BLKOPENZONE, BLKCLOSEZONE and BLKFINISHZONE ioctl processing.
-  * Called from blkdev_ioctl.
-  */
--int blkdev_reset_zones_ioctl(struct block_device *bdev, fmode_t mode,
--			     unsigned int cmd, unsigned long arg)
-+int blkdev_zone_mgmt_ioctl(struct block_device *bdev, fmode_t mode,
-+			   unsigned int cmd, unsigned long arg)
+ extern int sd_zbc_read_zones(struct scsi_disk *sdkp, unsigned char *buffer);
+ extern void sd_zbc_print_zones(struct scsi_disk *sdkp);
+-extern blk_status_t sd_zbc_setup_reset_cmnd(struct scsi_cmnd *cmd, bool all);
++blk_status_t sd_zbc_setup_zone_mgmt_cmnd(struct scsi_cmnd *cmd,
++					 unsigned char op, bool all);
+ extern void sd_zbc_complete(struct scsi_cmnd *cmd, unsigned int good_bytes,
+ 			    struct scsi_sense_hdr *sshdr);
+ extern int sd_zbc_report_zones(struct gendisk *disk, sector_t sector,
+@@ -225,8 +226,9 @@ static inline int sd_zbc_read_zones(struct scsi_disk *sdkp,
+ 
+ static inline void sd_zbc_print_zones(struct scsi_disk *sdkp) {}
+ 
+-static inline blk_status_t sd_zbc_setup_reset_cmnd(struct scsi_cmnd *cmd,
+-						   bool all)
++static inline blk_status_t sd_zbc_setup_zone_mgmt_cmnd(struct scsi_cmnd *cmd,
++						       unsigned char op,
++						       bool all)
  {
- 	void __user *argp = (void __user *)arg;
- 	struct request_queue *q;
- 	struct blk_zone_range zrange;
-+	enum req_opf op;
- 
- 	if (!argp)
- 		return -EINVAL;
-@@ -386,8 +387,25 @@ int blkdev_reset_zones_ioctl(struct block_device *bdev, fmode_t mode,
- 	if (copy_from_user(&zrange, argp, sizeof(struct blk_zone_range)))
- 		return -EFAULT;
- 
--	return blkdev_zone_mgmt(bdev, REQ_OP_ZONE_RESET,
--				zrange.sector, zrange.nr_sectors, GFP_KERNEL);
-+	switch (cmd) {
-+	case BLKRESETZONE:
-+		op = REQ_OP_ZONE_RESET;
-+		break;
-+	case BLKOPENZONE:
-+		op = REQ_OP_ZONE_OPEN;
-+		break;
-+	case BLKCLOSEZONE:
-+		op = REQ_OP_ZONE_CLOSE;
-+		break;
-+	case BLKFINISHZONE:
-+		op = REQ_OP_ZONE_FINISH;
-+		break;
-+	default:
-+		return -ENOTTY;
-+	}
-+
-+	return blkdev_zone_mgmt(bdev, op, zrange.sector, zrange.nr_sectors,
-+				GFP_KERNEL);
+ 	return BLK_STS_TARGET;
  }
- 
- static inline unsigned long *blk_alloc_zone_bitmap(int node,
-diff --git a/block/ioctl.c b/block/ioctl.c
-index 15a0eb80ada9..8756efb1419e 100644
---- a/block/ioctl.c
-+++ b/block/ioctl.c
-@@ -532,7 +532,10 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
- 	case BLKREPORTZONE:
- 		return blkdev_report_zones_ioctl(bdev, mode, cmd, arg);
- 	case BLKRESETZONE:
--		return blkdev_reset_zones_ioctl(bdev, mode, cmd, arg);
-+	case BLKOPENZONE:
-+	case BLKCLOSEZONE:
-+	case BLKFINISHZONE:
-+		return blkdev_zone_mgmt_ioctl(bdev, mode, cmd, arg);
- 	case BLKGETZONESZ:
- 		return put_uint(arg, bdev_zone_sectors(bdev));
- 	case BLKGETNRZONES:
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index bf797a63388c..dbef541c2530 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -367,8 +367,8 @@ extern int blk_revalidate_disk_zones(struct gendisk *disk);
- 
- extern int blkdev_report_zones_ioctl(struct block_device *bdev, fmode_t mode,
- 				     unsigned int cmd, unsigned long arg);
--extern int blkdev_reset_zones_ioctl(struct block_device *bdev, fmode_t mode,
--				    unsigned int cmd, unsigned long arg);
-+extern int blkdev_zone_mgmt_ioctl(struct block_device *bdev, fmode_t mode,
-+				  unsigned int cmd, unsigned long arg);
- 
- #else /* CONFIG_BLK_DEV_ZONED */
- 
-@@ -389,9 +389,9 @@ static inline int blkdev_report_zones_ioctl(struct block_device *bdev,
- 	return -ENOTTY;
+diff --git a/drivers/scsi/sd_zbc.c b/drivers/scsi/sd_zbc.c
+index 1efc69e194f8..39f10ec0dfcf 100644
+--- a/drivers/scsi/sd_zbc.c
++++ b/drivers/scsi/sd_zbc.c
+@@ -207,13 +207,17 @@ static inline sector_t sd_zbc_zone_sectors(struct scsi_disk *sdkp)
  }
- 
--static inline int blkdev_reset_zones_ioctl(struct block_device *bdev,
--					   fmode_t mode, unsigned int cmd,
--					   unsigned long arg)
-+static inline int blkdev_zone_mgmt_ioctl(struct block_device *bdev,
-+					 fmode_t mode, unsigned int cmd,
-+					 unsigned long arg)
- {
- 	return -ENOTTY;
- }
-diff --git a/include/uapi/linux/blkzoned.h b/include/uapi/linux/blkzoned.h
-index 498eec813494..0cdef67135f0 100644
---- a/include/uapi/linux/blkzoned.h
-+++ b/include/uapi/linux/blkzoned.h
-@@ -120,9 +120,11 @@ struct blk_zone_report {
- };
  
  /**
-- * struct blk_zone_range - BLKRESETZONE ioctl request
-- * @sector: starting sector of the first zone to issue reset write pointer
-- * @nr_sectors: Total number of sectors of 1 or more zones to reset
-+ * struct blk_zone_range - BLKRESETZONE/BLKOPENZONE/
-+ *                         BLKCLOSEZONE/BLKFINISHZONE ioctl
-+ *                         requests
-+ * @sector: Starting sector of the first zone to operate on.
-+ * @nr_sectors: Total number of sectors of all zones to operate on.
+- * sd_zbc_setup_reset_cmnd - Prepare a RESET WRITE POINTER scsi command.
++ * sd_zbc_setup_zone_mgmt_cmnd - Prepare a zone ZBC_OUT command. The operations
++ *			can be RESET WRITE POINTER, OPEN, CLOSE or FINISH.
+  * @cmd: the command to setup
+- * @all: Reset all zones control.
++ * @op: Operation to be performed
++ * @all: All zones control
+  *
+- * Called from sd_init_command() for a REQ_OP_ZONE_RESET request.
++ * Called from sd_init_command() for REQ_OP_ZONE_RESET, REQ_OP_ZONE_RESET_ALL,
++ * REQ_OP_ZONE_OPEN, REQ_OP_ZONE_CLOSE or REQ_OP_ZONE_FINISH requests.
   */
- struct blk_zone_range {
- 	__u64		sector;
-@@ -139,10 +141,19 @@ struct blk_zone_range {
-  *                sector range. The sector range must be zone aligned.
-  * @BLKGETZONESZ: Get the device zone size in number of 512 B sectors.
-  * @BLKGETNRZONES: Get the total number of zones of the device.
-+ * @BLKOPENZONE: Open the zones in the specified sector range.
-+ *               The 512 B sector range must be zone aligned.
-+ * @BLKCLOSEZONE: Close the zones in the specified sector range.
-+ *                The 512 B sector range must be zone aligned.
-+ * @BLKFINISHZONE: Mark the zones as full in the specified sector range.
-+ *                 The 512 B sector range must be zone aligned.
-  */
- #define BLKREPORTZONE	_IOWR(0x12, 130, struct blk_zone_report)
- #define BLKRESETZONE	_IOW(0x12, 131, struct blk_zone_range)
- #define BLKGETZONESZ	_IOR(0x12, 132, __u32)
- #define BLKGETNRZONES	_IOR(0x12, 133, __u32)
-+#define BLKOPENZONE	_IOW(0x12, 134, struct blk_zone_range)
-+#define BLKCLOSEZONE	_IOW(0x12, 135, struct blk_zone_range)
-+#define BLKFINISHZONE	_IOW(0x12, 136, struct blk_zone_range)
+-blk_status_t sd_zbc_setup_reset_cmnd(struct scsi_cmnd *cmd, bool all)
++blk_status_t sd_zbc_setup_zone_mgmt_cmnd(struct scsi_cmnd *cmd,
++					 unsigned char op, bool all)
+ {
+ 	struct request *rq = cmd->request;
+ 	struct scsi_disk *sdkp = scsi_disk(rq->rq_disk);
+@@ -234,7 +238,7 @@ blk_status_t sd_zbc_setup_reset_cmnd(struct scsi_cmnd *cmd, bool all)
+ 	cmd->cmd_len = 16;
+ 	memset(cmd->cmnd, 0, cmd->cmd_len);
+ 	cmd->cmnd[0] = ZBC_OUT;
+-	cmd->cmnd[1] = ZO_RESET_WRITE_POINTER;
++	cmd->cmnd[1] = op;
+ 	if (all)
+ 		cmd->cmnd[14] = 0x1;
+ 	else
+@@ -263,14 +267,14 @@ void sd_zbc_complete(struct scsi_cmnd *cmd, unsigned int good_bytes,
+ 	int result = cmd->result;
+ 	struct request *rq = cmd->request;
  
- #endif /* _UAPI_BLKZONED_H */
+-	if (req_op(rq) == REQ_OP_ZONE_RESET &&
++	if (op_is_zone_mgmt(req_op(rq)) &&
+ 	    result &&
+ 	    sshdr->sense_key == ILLEGAL_REQUEST &&
+ 	    sshdr->asc == 0x24) {
+ 		/*
+-		 * INVALID FIELD IN CDB error: reset of a conventional
+-		 * zone was attempted. Nothing to worry about, so be
+-		 * quiet about the error.
++		 * INVALID FIELD IN CDB error: a zone management command was
++		 * attempted on a conventional zone. Nothing to worry about,
++		 * so be quiet about the error.
+ 		 */
+ 		rq->rq_flags |= RQF_QUIET;
+ 	}
 -- 
 2.21.0
