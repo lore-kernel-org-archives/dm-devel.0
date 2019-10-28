@@ -1,10 +1,9 @@
 From: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
-Subject: Re: [PATCH 2/8] block: Simplify REQ_OP_ZONE_RESET_ALL
-	handling
-Date: Mon, 28 Oct 2019 07:49:19 +0000
-Message-ID: <BYAPR04MB5749C25A8558C0ED9AB3EA6786660@BYAPR04MB5749.namprd04.prod.outlook.com>
+Subject: Re: [PATCH 1/8] block: Remove REQ_OP_ZONE_RESET plugging
+Date: Mon, 28 Oct 2019 07:50:57 +0000
+Message-ID: <BYAPR04MB57491FE7167788107DD1BE0086660@BYAPR04MB5749.namprd04.prod.outlook.com>
 References: <20191027140549.26272-1-damien.lemoal@wdc.com>
-	<20191027140549.26272-3-damien.lemoal@wdc.com>
+	<20191027140549.26272-2-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -24,18 +23,49 @@ To: Damien Le Moal <Damien.LeMoal@wdc.com>, "linux-block@vger.kernel.org" <linux
 Cc: Ajay Joshi <Ajay.Joshi@wdc.com>, Fomichev <Dmitry.Fomichev@wdc.com>, Hans Holmberg <Hans.Holmberg@wdc.com>, Keith Busch <kbusch@kernel.org>Dmitry, Matias Bjorling <Matias.Bjorling@wdc.com>
 List-Id: dm-devel.ids
 
-The reason code for REQ_OP_RESET_ALL is kept in a different function so
-we can clearly differentiate between REQ_OP_RESET and REQ_OP_RESET_ALL
-when we add new tracepoints with blktrace framework.
-
-But if that is acceptable, then,
+Looks good,
 
 Reviewed-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 
 On 10/27/19 7:06 AM, Damien Le Moal wrote:
-> There is no need for the function __blkdev_reset_all_zones() as
-> REQ_OP_ZONE_RESET_ALL can be handled directly in blkdev_reset_zones()
-> bio loop with an early break from the loop. This patch removes this
-> function and modifies blkdev_reset_zones(), simplifying the code.
+> REQ_OP_ZONE_RESET operations cannot be merged as these bios and requests
+> do not have a size and are never sequential due to the zone start sector
+> position required for their execution. As a result, there is no point in
+> using a plug around blkdev_reset_zones() bio issuing loop. This patch
+> removes this unnecessary plugging.
 > 
-> Signed-off-by: Damien Le Moal<damien.lemoal@wdc.com>
+> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+> ---
+>   block/blk-zoned.c | 4 ----
+>   1 file changed, 4 deletions(-)
+> 
+> diff --git a/block/blk-zoned.c b/block/blk-zoned.c
+> index 4bc5f260248a..7fe376eede86 100644
+> --- a/block/blk-zoned.c
+> +++ b/block/blk-zoned.c
+> @@ -258,7 +258,6 @@ int blkdev_reset_zones(struct block_device *bdev,
+>   	sector_t zone_sectors;
+>   	sector_t end_sector = sector + nr_sectors;
+>   	struct bio *bio = NULL;
+> -	struct blk_plug plug;
+>   	int ret;
+>   
+>   	if (!blk_queue_is_zoned(q))
+> @@ -283,7 +282,6 @@ int blkdev_reset_zones(struct block_device *bdev,
+>   	    end_sector != bdev->bd_part->nr_sects)
+>   		return -EINVAL;
+>   
+> -	blk_start_plug(&plug);
+>   	while (sector < end_sector) {
+>   
+>   		bio = blk_next_bio(bio, 0, gfp_mask);
+> @@ -301,8 +299,6 @@ int blkdev_reset_zones(struct block_device *bdev,
+>   	ret = submit_bio_wait(bio);
+>   	bio_put(bio);
+>   
+> -	blk_finish_plug(&plug);
+> -
+>   	return ret;
+>   }
+>   EXPORT_SYMBOL_GPL(blkdev_reset_zones);
+> 
