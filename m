@@ -1,145 +1,52 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm-snapshot for system updates in Android
-Date: Tue, 29 Oct 2019 10:21:14 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1910290957220.25731@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20191025101624.GA61225@google.com>
+From: Javier =?utf-8?B?R29uesOhbGV6?= <javier@javigon.com>
+Subject: Re: [PATCH 1/8] block: Remove REQ_OP_ZONE_RESET plugging
+Date: Tue, 29 Oct 2019 13:13:16 +0100
+Message-ID: <20191029121316.o7o7cjurn6qp2gse@MacBook-Pro.gnusmas>
+References: <20191027140549.26272-1-damien.lemoal@wdc.com>
+	<20191027140549.26272-2-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191025101624.GA61225@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alessio Balsini <balsini@android.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>, elsk@google.com, dvander@google.com, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@android.com
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20191027140549.26272-2-damien.lemoal@wdc.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Damien Le Moal <damien.lemoal@wdc.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Ajay Joshi <ajay.joshi@wdc.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Dmitry Fomichev <dmitry.fomichev@wdc.com>, Hans Holmberg <Hans.Holmberg@wdc.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org, Keith Busch <kbusch@kernel.org>, Matias Bjorling <matias.bjorling@wdc.com>
 List-Id: dm-devel.ids
 
-Hi
-
-On Fri, 25 Oct 2019, Alessio Balsini wrote:
-
-> Hello everyone!
->=20
-> I hope you will appreciate knowing that we are currently evaluating the u=
-se of
-> dm-snapshot to implement a mechanism to obtain revertible, space-efficien=
-t
-> system upgrades in Android.  More specifically, we are using
-> dm-snapshot-persistent to test the updated device after reboot, then issu=
-e a
-> merge in case of success, otherwise, destroy the snapshot.
-> This new update mechanism is still under evaluation, but its development =
-is
-> openly done in AOSP.
->=20
-> At the current stage, we have a prototype we are happy with, both in term=
-s of
-> space consumption overhead (for the COW device) and benchmarking results =
-for
-> read-write and merge operations.
->=20
-> I would be glad if you could provide some feedback on a few points that I=
- don't
-> have completely clear.
->=20
->=20
-> -- Interface stability
->=20
-> To obtain an initial, empty COW device as quick as possible, we force to =
-0 only
-> its first 32 bit (magic field). This solution looks clear from the kernel=
- code,
-> but can we rely on that for all the kernels with SNAPSHOT_DISK_VERSION =
-=3D=3D 1?
-
-It will work, but, to be consistent with lvm, I suggest to overwrite the=20
-first 4k with zeroes.
-
-> Would you appreciate it if a similar statement is added as part of
-> /Documentation, making this solution more stable? Or maybe I can think of
-> adding an initialization flag to the dm-snapshot table to explicitly requ=
-est
-> the COW initialization within the kernel?
->=20
-> Another issue we are facing is to be able to know in advance what the min=
-imum
-> COW device size would be for a given update to be able to allocate the ri=
-ght
-
-This is hard to say, it depends on what the user is doing with the phone.=
-=20
-When dm-snapshot runs out of space, it invalidates the whole snapshot.=20
-You'll have to monitor the snapshot space very carefully and take action=20
-before it fills up.
-
-I suggest - run main system on the origin target and attach a snapshot=20
-that will be used for backup of the data overwritten in the origin. If the=
-=20
-updated system fails, merge the snapshot back into the origin; if the=20
-update succeeds, drop the snapshot. If the user writes too much data to=20
-the device, it would invalidate the only the snapshot (so he can't revert=
-=20
-anymore), but it would not invalidate the origin and the data would not be=
-=20
-lost.
-
-> size for the COW device in advance.  To do so, we rely on the current COW
-> structure that seems to have kept the same stable shape in the last decad=
-e, and
-> compute the total COW size by knowing the number of modified chunks. The
-> formula would be something like that:
->=20
->   table_line_bytes      =3D 64 * 2 / 8;
->   exceptions_per_chunk  =3D chunk_size_bytes / table_line_bytes;
->   total_cow_size_chunks =3D 1 + 1 + modified_chunks
->                         + modified_chunks / exceptions_per_chunk;
->=20
-> This formula seems to be valid for all the recent kernels we checked. Aga=
-in,
-> can we assume it to be valid for all the kernels for which
-> SNAPSHOT_DISK_VERSION =3D=3D 1?
-
-Yes, we don't plan to change it.
-
-> -- Alignment
->=20
-> Our approach follows the solution proposed by Mikulas [1].
-> Being the block alignment of file extents automatically managed by the
-> filesystem, using FIEMAP should have no alignment-related performance iss=
-ue.
-> But in our implementation we hit a misalignment [2] branch which leads to
-> dmwarning messages [3, 4].
->=20
-> I have a limited experience with the block layer and dm, so I'm still
-> struggling in finding the root cause for this, either in user space or ke=
-rnel
-> space.
-
-I don't know. What is the block size of the filesystem? Are all mappings=20
-aligned to this block size?
-
-> But our benchmarks seems to be good, so we were thinking as last option t=
-o
-> rate-limit or directly remove that warning from our kernels as a temporar=
-y
-> solution, but we prefer to avoid diverging from mainline. Rate-limiting i=
-s a
-> solution that would make sense also to be proposed in the list, but compl=
-etely
-> removing the warning doesn't seem the right thing to do. Maybe we are
-> benchmarking something else? What do you think?
->=20
-> Many thanks for taking the time to read this, feedbacks would be highly
-> appreciated.
->=20
-> Regards.
-> Alessio
->=20
-> [1] https://www.redhat.com/archives/dm-devel/2018-October/msg00363.html
-> [2] https://elixir.bootlin.com/linux/v5.3/source/block/blk-settings.c#L54=
-0
-> [3] https://elixir.bootlin.com/linux/v5.3/source/drivers/md/dm-table.c#L4=
-84
-> [4] https://elixir.bootlin.com/linux/v5.3/source/drivers/md/dm-table.c#L1=
-558
-
-Mikulas
+T24gMjcuMTAuMjAxOSAyMzowNSwgRGFtaWVuIExlIE1vYWwgd3JvdGU6Cj5SRVFfT1BfWk9ORV9S
+RVNFVCBvcGVyYXRpb25zIGNhbm5vdCBiZSBtZXJnZWQgYXMgdGhlc2UgYmlvcyBhbmQgcmVxdWVz
+dHMKPmRvIG5vdCBoYXZlIGEgc2l6ZSBhbmQgYXJlIG5ldmVyIHNlcXVlbnRpYWwgZHVlIHRvIHRo
+ZSB6b25lIHN0YXJ0IHNlY3Rvcgo+cG9zaXRpb24gcmVxdWlyZWQgZm9yIHRoZWlyIGV4ZWN1dGlv
+bi4gQXMgYSByZXN1bHQsIHRoZXJlIGlzIG5vIHBvaW50IGluCj51c2luZyBhIHBsdWcgYXJvdW5k
+IGJsa2Rldl9yZXNldF96b25lcygpIGJpbyBpc3N1aW5nIGxvb3AuIFRoaXMgcGF0Y2gKPnJlbW92
+ZXMgdGhpcyB1bm5lY2Vzc2FyeSBwbHVnZ2luZy4KPgo+U2lnbmVkLW9mZi1ieTogRGFtaWVuIExl
+IE1vYWwgPGRhbWllbi5sZW1vYWxAd2RjLmNvbT4KPi0tLQo+IGJsb2NrL2Jsay16b25lZC5jIHwg
+NCAtLS0tCj4gMSBmaWxlIGNoYW5nZWQsIDQgZGVsZXRpb25zKC0pCj4KPmRpZmYgLS1naXQgYS9i
+bG9jay9ibGstem9uZWQuYyBiL2Jsb2NrL2Jsay16b25lZC5jCj5pbmRleCA0YmM1ZjI2MDI0OGEu
+LjdmZTM3NmVlZGU4NiAxMDA2NDQKPi0tLSBhL2Jsb2NrL2Jsay16b25lZC5jCj4rKysgYi9ibG9j
+ay9ibGstem9uZWQuYwo+QEAgLTI1OCw3ICsyNTgsNiBAQCBpbnQgYmxrZGV2X3Jlc2V0X3pvbmVz
+KHN0cnVjdCBibG9ja19kZXZpY2UgKmJkZXYsCj4gCXNlY3Rvcl90IHpvbmVfc2VjdG9yczsKPiAJ
+c2VjdG9yX3QgZW5kX3NlY3RvciA9IHNlY3RvciArIG5yX3NlY3RvcnM7Cj4gCXN0cnVjdCBiaW8g
+KmJpbyA9IE5VTEw7Cj4tCXN0cnVjdCBibGtfcGx1ZyBwbHVnOwo+IAlpbnQgcmV0Owo+Cj4gCWlm
+ICghYmxrX3F1ZXVlX2lzX3pvbmVkKHEpKQo+QEAgLTI4Myw3ICsyODIsNiBAQCBpbnQgYmxrZGV2
+X3Jlc2V0X3pvbmVzKHN0cnVjdCBibG9ja19kZXZpY2UgKmJkZXYsCj4gCSAgICBlbmRfc2VjdG9y
+ICE9IGJkZXYtPmJkX3BhcnQtPm5yX3NlY3RzKQo+IAkJcmV0dXJuIC1FSU5WQUw7Cj4KPi0JYmxr
+X3N0YXJ0X3BsdWcoJnBsdWcpOwo+IAl3aGlsZSAoc2VjdG9yIDwgZW5kX3NlY3Rvcikgewo+Cj4g
+CQliaW8gPSBibGtfbmV4dF9iaW8oYmlvLCAwLCBnZnBfbWFzayk7Cj5AQCAtMzAxLDggKzI5OSw2
+IEBAIGludCBibGtkZXZfcmVzZXRfem9uZXMoc3RydWN0IGJsb2NrX2RldmljZSAqYmRldiwKPiAJ
+cmV0ID0gc3VibWl0X2Jpb193YWl0KGJpbyk7Cj4gCWJpb19wdXQoYmlvKTsKPgo+LQlibGtfZmlu
+aXNoX3BsdWcoJnBsdWcpOwo+LQo+IAlyZXR1cm4gcmV0Owo+IH0KPiBFWFBPUlRfU1lNQk9MX0dQ
+TChibGtkZXZfcmVzZXRfem9uZXMpOwo+LS0gCj4yLjIxLjAKPgoKTG9va3MgZ29vZCB0byBtZS4K
+ClJldmlld2VkLWJ5OiBKYXZpZXIgR29uesOhbGV6IDxqYXZpZXJAamF2aWdvbi5jb20+CgotLQpk
+bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
+YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
