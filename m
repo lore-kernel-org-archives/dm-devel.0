@@ -1,71 +1,145 @@
-From: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
-Subject: Re: [PATCH 2/8] block: Simplify REQ_OP_ZONE_RESET_ALL
-	handling
-Date: Mon, 28 Oct 2019 08:37:17 +0000
-Message-ID: <BYAPR04MB57490F22E67DC5B172A3A9FE86660@BYAPR04MB5749.namprd04.prod.outlook.com>
-References: <20191027140549.26272-1-damien.lemoal@wdc.com>
-	<20191027140549.26272-3-damien.lemoal@wdc.com>
-	<BYAPR04MB5749C25A8558C0ED9AB3EA6786660@BYAPR04MB5749.namprd04.prod.outlook.com>
-	<BYAPR04MB58160668CEB54919B22AC2FBE7660@BYAPR04MB5816.namprd04.prod.outlook.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: dm-snapshot for system updates in Android
+Date: Tue, 29 Oct 2019 10:21:14 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1910290957220.25731@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20191025101624.GA61225@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <Damien.LeMoal@wdc.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Martin K .
-	Petersen" <martin.petersen@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: Ajay Joshi <Ajay.Joshi@wdc.com>, Fomichev <Dmitry.Fomichev@wdc.com>, Hans Holmberg <Hans.Holmberg@wdc.com>, Keith Busch <kbusch@kernel.org>Dmitry, Matias Bjorling <Matias.Bjorling@wdc.com>
+Content-Type: TEXT/PLAIN; charset=WINDOWS-1252
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20191025101624.GA61225@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alessio Balsini <balsini@android.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>, elsk@google.com, dvander@google.com, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@android.com
 List-Id: dm-devel.ids
 
-On 10/28/19 12:54 AM, Damien Le Moal wrote:
-> Isn't the trace point under submit_bio() in
-> generic_make_request_checks() ? So removing the function is not a
-> problem for tracing as far as I can tell. Am I missing something ?
+Hi
 
-Yes you are right, I completely missed that.
+On Fri, 25 Oct 2019, Alessio Balsini wrote:
 
-Sorry I've created confusion with block_dump and tracepoint.
+> Hello everyone!
+>=20
+> I hope you will appreciate knowing that we are currently evaluating the u=
+se of
+> dm-snapshot to implement a mechanism to obtain revertible, space-efficien=
+t
+> system upgrades in Android.  More specifically, we are using
+> dm-snapshot-persistent to test the updated device after reboot, then issu=
+e a
+> merge in case of success, otherwise, destroy the snapshot.
+> This new update mechanism is still under evaluation, but its development =
+is
+> openly done in AOSP.
+>=20
+> At the current stage, we have a prototype we are happy with, both in term=
+s of
+> space consumption overhead (for the COW device) and benchmarking results =
+for
+> read-write and merge operations.
+>=20
+> I would be glad if you could provide some feedback on a few points that I=
+ don't
+> have completely clear.
+>=20
+>=20
+> -- Interface stability
+>=20
+> To obtain an initial, empty COW device as quick as possible, we force to =
+0 only
+> its first 32 bit (magic field). This solution looks clear from the kernel=
+ code,
+> but can we rely on that for all the kernels with SNAPSHOT_DISK_VERSION =
+=3D=3D 1?
 
-Block trace code is fine.
+It will work, but, to be consistent with lvm, I suggest to overwrite the=20
+first 4k with zeroes.
 
-The block_dump code under the submit_bio() is only dumps the bios with
-the data:-
+> Would you appreciate it if a similar statement is added as part of
+> /Documentation, making this solution more stable? Or maybe I can think of
+> adding an initialization flag to the dm-snapshot table to explicitly requ=
+est
+> the COW initialization within the kernel?
+>=20
+> Another issue we are facing is to be able to know in advance what the min=
+imum
+> COW device size would be for a given update to be able to allocate the ri=
+ght
 
+This is hard to say, it depends on what the user is doing with the phone.=
+=20
+When dm-snapshot runs out of space, it invalidates the whole snapshot.=20
+You'll have to monitor the snapshot space very carefully and take action=20
+before it fills up.
 
-1171                 if (unlikely(block_dump)) {
-1172                         char b[BDEVNAME_SIZE];
-1173                         printk(KERN_DEBUG "%s(%d): %s block %Lu on 
-%s (%u sectors)\n",
-1174                         current->comm, task_pid_nr(current),
-1175                                 op_is_write(bio_op(bio)) ? "WRITE" 
-: "READ",
-1176                                 (unsigned long 
-long)bio->bi_iter.bi_sector,
-1177                                 bio_devname(bio, b), count);
-1178                 }
+I suggest - run main system on the origin target and attach a snapshot=20
+that will be used for backup of the data overwritten in the origin. If the=
+=20
+updated system fails, merge the snapshot back into the origin; if the=20
+update succeeds, drop the snapshot. If the user writes too much data to=20
+the device, it would invalidate the only the snapshot (so he can't revert=
+=20
+anymore), but it would not invalidate the origin and the data would not be=
+=20
+lost.
 
+> size for the COW device in advance.  To do so, we rely on the current COW
+> structure that seems to have kept the same stable shape in the last decad=
+e, and
+> compute the total COW size by knowing the number of modified chunks. The
+> formula would be something like that:
+>=20
+>   table_line_bytes      =3D 64 * 2 / 8;
+>   exceptions_per_chunk  =3D chunk_size_bytes / table_line_bytes;
+>   total_cow_size_chunks =3D 1 + 1 + modified_chunks
+>                         + modified_chunks / exceptions_per_chunk;
+>=20
+> This formula seems to be valid for all the recent kernels we checked. Aga=
+in,
+> can we assume it to be valid for all the kernels for which
+> SNAPSHOT_DISK_VERSION =3D=3D 1?
 
-I've posted patch-series [1] in the past to move that code out but it 
-didn't go anywhere in anticipation of more data less requests.
+Yes, we don't plan to change it.
 
-Since it is taking longer to have blktrace extensions RFC to move 
-forward and [1] didn't go anywhere I wanted to use block_dump
-parameter in the blk-zoned.c (not an ideal situation) so that we can 
-have atleast minimal debug support for the new REQ_OP_ZONE_XXX 
-operations until we get block trace extensions in the kernel.
+> -- Alignment
+>=20
+> Our approach follows the solution proposed by Mikulas [1].
+> Being the block alignment of file extents automatically managed by the
+> filesystem, using FIEMAP should have no alignment-related performance iss=
+ue.
+> But in our implementation we hit a misalignment [2] branch which leads to
+> dmwarning messages [3, 4].
+>=20
+> I have a limited experience with the block layer and dm, so I'm still
+> struggling in finding the root cause for this, either in user space or ke=
+rnel
+> space.
 
-Nonetheless, I'll just a send a patch on the top of this which will
-make discussion much easier.
+I don't know. What is the block size of the filesystem? Are all mappings=20
+aligned to this block size?
 
+> But our benchmarks seems to be good, so we were thinking as last option t=
+o
+> rate-limit or directly remove that warning from our kernels as a temporar=
+y
+> solution, but we prefer to avoid diverging from mainline. Rate-limiting i=
+s a
+> solution that would make sense also to be proposed in the list, but compl=
+etely
+> removing the warning doesn't seem the right thing to do. Maybe we are
+> benchmarking something else? What do you think?
+>=20
+> Many thanks for taking the time to read this, feedbacks would be highly
+> appreciated.
+>=20
+> Regards.
+> Alessio
+>=20
+> [1] https://www.redhat.com/archives/dm-devel/2018-October/msg00363.html
+> [2] https://elixir.bootlin.com/linux/v5.3/source/block/blk-settings.c#L54=
+0
+> [3] https://elixir.bootlin.com/linux/v5.3/source/drivers/md/dm-table.c#L4=
+84
+> [4] https://elixir.bootlin.com/linux/v5.3/source/drivers/md/dm-table.c#L1=
+558
 
-[1] :- 
-https://lore.kernel.org/linux-block/DM6PR04MB57546ECC4CFDDB5535E3382586FB0@DM6PR04MB5754.namprd04.prod.outlook.com/T/
+Mikulas
