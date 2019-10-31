@@ -1,14 +1,15 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 00/72] multipath-tools: cleanup and
-	warning enablement
-Date: Wed, 30 Oct 2019 09:59:49 -0500
-Message-ID: <20191030145949.GP25414@octiron.msp.redhat.com>
-References: <20191024150556.19575-1-martin.wilck@suse.com>
+From: "zhangxiaoxu (A)" <zhangxiaoxu5@huawei.com>
+Subject: Re: dm-zoned performance degradation after apply
+ 75d66ffb48efb3 ("dm zoned:, properly handle backing device failure")
+Date: Thu, 31 Oct 2019 16:20:55 +0800
+Message-ID: <63f060dc-d3b9-f4d1-8c86-27e75f1d1441@huawei.com>
+References: <203cc4c8-b380-5b2f-c9e7-766b3f031c8c@huawei.com>
+	<38d2a401ad8111ec0e6806f3e165916b18769d6d.camel@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191024150556.19575-1-martin.wilck@suse.com>
+In-Reply-To: <38d2a401ad8111ec0e6806f3e165916b18769d6d.camel@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,276 +19,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Martin Wilck <Martin.Wilck@suse.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Bart Van Assche <Bart.VanAssche@sandisk.com>
+To: Dmitry Fomichev <Dmitry.Fomichev@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "agk@redhat.com" <agk@redhat.com>, Damien Le Moal <Damien.LeMoal@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Oct 24, 2019 at 03:06:08PM +0000, Martin Wilck wrote:
-> From: Martin Wilck <mwilck@suse.com>
-
-ACK for all the patches except 16
-"libmultipath: make path_discovery() pthread_cancel()-safe"
-
--Ben
-
->=20
-> Hi Christophe, hi Ben, hi Bart,
->=20
-> here is a series with cleanup patches and minor fixes for multipath-tools=
-.
-> Sorry about the number of patches, I hope this way the series will be eas=
-ier
-> to review. There are lots of obvious, short hunks. In terms of LoC, most
-> of the changes are in a new unit test, in the NVMe code update, and in
-> a (necessary) indentation change in the VPD code.
->=20
-> Patch 01-14 are part of a recent effort to go over the multipath-tools
-> code, re-review, and modernize the code a bit. Part of that is adding "co=
-nst"
-> qualifiers to function arguments, as I did before. I happened to start wi=
-th
-> "alias.c", for alphabetic reasons. Other parts of the code will hopefully
-> follow.
->=20
-> 15-20 are misc fixes for stuff I came across while working on the
-> "-Wclobbered" flag (see below).
->=20
-> The rest of the series is an attempt to get rid of the disablement of
-> warnings that we had so far in multipath-tools. I believe we agree that
-> warning-free code is a good thing and that disabling warnings should be
-> avoided if possible. My goal was to be able to set "-Werror" and compile
-> successfully with all currently relevant compilers.
->=20
-> Patch 21-42 fix issues with -Wunused-parameter and finally enable that
-> warning. -Wno-unused-parameter is only kept in place for
-> libmultipath/dict.c and multipathd/cli-handlers.c, which basically consis=
-t
-> only of implementations of certain prototypes where many functions don't
-> use every argument, and hundreds of "unused" attributes would pollute the
-> code too much. Patch 53-58 fix issues with "-Wsign-compare". This was
-> actually a good excercise, because I was forced to think twice which
-> signedness was correct for certain variables and expressions. Patch 59-64
-> fix some warnings that are issued by clang with our current warning setti=
-ngs
-> (in particular, -Wformat-literal).
->=20
-> Patch 65 is an update of our nvme code from nvme-cli 1.9. Patch 66-71
-> contain some make file fixes and cleanups, and adaptations for older
-> compilers. Finally, Patch 71 enables -Werror, and patch 72 tests for
-> "-Wno-clobbered", which clang doesn't support.
->=20
-> I can proudly say that multipath-tools now compiles without warnings or
-> errors with -Werror and with a large set of compilers. I tested gcc 4.8,
-> 7, 8, 9 and clang 3.9, 6, 7, and 8.
->=20
-> The only "-Wno" option that now remains is "-Wclobbered". I have put
-> considerable work into trying to eliminate that as well. The result
-> can be examined in the "Wclobbered" branch of my github fork:
-> https://github.com/mwilck/multipath-tools/commits/Wclobbered
-> (yes, that's another 37 patches on top of this already long series).
->=20
-> I have pondered this back and forth whether to submit that part of the
-> series, too. All the -Wclobbered warnings are caused by pthread_cleanup_p=
-ush()
-> calls, of which our code has a lot, and which glibc implements using a
-> sigsetjmp() call. These warnings are arguably a false positives, and
-> a bug of either gcc, glibc, or both
-> (see e.g. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=3D61118).=20
->=20
-> Eliminating these warnings is possible, but it requires a lot of changes
-> in the code. Some of them are actually beneficial for readability, but
-> others are rather not. Some are outright mysterious (e.g.
-> https://github.com/mwilck/multipath-tools/commit/bb53d666777f072e60372979=
-eed51752db03cec4),
-> and finding the workarounds was trial-and error work. Also, there are
-> variations between gcc versions.
->=20
-> The bottom line is, while I feel sorry about the vain effort=20
-> I put into this, my personal opinion is that silencing just this single
-> warning isn't worth that big amount of changes.
->=20
-> Reviews and opinions welcome.
->=20
-> Regards
-> Martin
->=20
-> Changes in v2:
->   45/72: The way I handled snprintf() was wrong. Fix it, and use
->          safe_sn?printf() to hide cast ugliness (Bart van Assche)
->=20
->   All other patches remain unchanged, not resending them.
->=20
-> Martin Wilck (72):
->   multipath tests: move condlog test wrappers to separate file
->   multipath tests: add tests for alias handling
->   libmultipath: alias.c: constify function arguments
->   libmultipath: alias.c: use strlcpy(), and 2 minor fixes
->   libmultipath: format_devname: avoid buffer overflow
->   libmultipath: scan_devname: fix int overflow detection
->   libmultipath: lookup_binding(): don't rely on int overflow
->   libmultipath: rlookup_binding(): removed unused parameter
->   libmultipath: allocate_binding(): error out for id=3D0
->   libmultipath: allocate_binding(): detect line overflow
->   multipath tests: alias: add tests for allocate_binding()
->   multipath tests: alias: add format/scan test
->   libmultipath: alias.c: prepare for cancel-safe allocation
->   multipath tests: use -lpthread for alias test
->   libmultipath: path_discovery: handle libudev errors
->   libmultipath: make path_discovery() pthread_cancel()-safe
->   libmultipath: uevent_listen(): fix poll() retval check
->   libmultipath: replace_wwids(): fix possible fd leak
->   libmultipath: remove_wwids(): fix possible leaks
->   libmultipath: _init_foreign(): fix possible memory leak
->   libmultipath: process_config_dir(): remove unused argument
->   libmultipath: mark unused arguments in partmap functions
->   libmultipath: scsi_ioctl_pathinfo(): remove unused argument
->   multipath-tools: mark unused params in signal and cleanup handlers
->   libmultipath: get_ana_info(): remove unused parameter
->   libmultipath: mark unused params in getprio() methods
->   libmultipath: hp_sw: remove usused argument in do_inq()
->   libmultipath: checkers: mark unused arguments in methods
->   multipathd: stop_waiter_thread(): removed unused parameter
->   multipath tools: mark unused arguments in thread routines
->   kpartx: gpt: remove unused arg in read_lastoddsector()
->   kpartx: mark unused arguments in ptreader methods
->   libmultipath: mark missing arguments in functions matching prototypes
->   libmultipath: get_pgpolicy_name(): use "len" parameter
->   libmultipath: snprint_multipath_map_json(): remove unused argument
->   multipath: delegate_to_multipathd: mark unused arguments
->   libmultipath: use -Wno-unused-parameter for dict.c
->   multipathd: use -Wno-unused-parameter for cli_handlers.c
->   libmpathpersist: remove unused "noisy" argument in various functions
->   libmpathpersist: fix copy-paste error in mpath_format_readresv()
->   multipath-tools tests: add -Wno-unused-parameter
->   multipath-tools: Makefile.inc: remove -Wno-unused-parameter
->   libmultipath: dev_loss_tmo is unsigned
->   libmultipath: trivial changes for -Wsign-compare
->   libmultipath: fix -Wsign-compare warnings with snprintf()
->   libmultipath: parse_vpd_pg83(): sanitize indentation
->   libmultipath: parse_vpd_pg83(): fix -Wsign-compare warnings
->   libmultipath: print: use unsigned int for "width" field
->   libmultipath: vector_for_each_slot: fix -Wsign-compare warnings
->   libmultipath: set_int(): add error check and set_uint()
->   libmultipath: make "checkint" unsigned
->   libmultipath: use unsigned blksize in directio context
->   libmultipath, kpartx: byteorder: always use unsigned types
->   libmpathcmd: fix -Wsign-compare warnings
->   libmpathpersist: fix -Wsign-compare warnings
->   kpartx: use unsigned arguments in dm_devn() and dm_prereq()
->   kpartx: use unsigned int for "ns" argument of ptreader
->   multipath-tools: Makefile.inc: enable -Wsign-compare
->   libdmmp: fix clang -Wformat-nonliteral warnings
->   libmultipath: fix clang -Wformat-literal warnings
->   multipath tests: blacklist: remove always-true condition
->   multipath tests: hwtable: fix strncat() invocation
->   multipath tests: fix -Wformat-literal warning
->   multipath tests: util: fix clang strlcpy warnings
->   libmultipath: nvme: update to nvme-cli v1.9
->   multipath-tools: Makefile.inc: fix TEST_CC_OPTION
->   multipath-tools: Makefile.inc: use -Wp,... for compiling only
->   multipath-tools: Makefile: use proper directory recursion
->   multipath tests: Makefile: fix "clean" target
->   multipath tests: Makefile: avoid gcc 4.8 missing initializers failure
->   multipath-tools: Makefile.inc: enable -Werror
->   multipath-tools: Makefile.inc: test for -Wno-clobbered support
->=20
->  Makefile                                 |  38 +-
->  Makefile.inc                             |  15 +-
->  kpartx/bsd.c                             |   4 +-
->  kpartx/dasd.c                            |   3 +-
->  kpartx/devmapper.c                       |  13 +-
->  kpartx/devmapper.h                       |   7 +-
->  kpartx/dos.c                             |   4 +-
->  kpartx/gpt.c                             |  15 +-
->  kpartx/gpt.h                             |   2 +-
->  kpartx/kpartx.h                          |  20 +-
->  kpartx/mac.c                             |   5 +-
->  kpartx/ps3.c                             |   5 +-
->  kpartx/solaris.c                         |   4 +-
->  kpartx/sun.c                             |   4 +-
->  kpartx/unixware.c                        |   4 +-
->  libdmmp/libdmmp_private.h                |   8 +-
->  libmpathcmd/mpath_cmd.c                  |   5 +-
->  libmpathpersist/mpath_persist.c          |   3 +-
->  libmpathpersist/mpath_pr_ioctl.c         |  40 +-
->  libmultipath/Makefile                    |   5 +
->  libmultipath/alias.c                     | 134 ++--
->  libmultipath/alias.h                     |  12 +-
->  libmultipath/byteorder.h                 |  12 +-
->  libmultipath/checkers/cciss_tur.c        |   4 +-
->  libmultipath/checkers/directio.c         |   2 +-
->  libmultipath/checkers/hp_sw.c            |   8 +-
->  libmultipath/checkers/rdac.c             |   2 +-
->  libmultipath/checkers/readsector0.c      |   4 +-
->  libmultipath/config.c                    |   4 +-
->  libmultipath/config.h                    |   4 +-
->  libmultipath/defaults.h                  |   4 +-
->  libmultipath/devmapper.c                 |  10 +-
->  libmultipath/dict.c                      |  52 +-
->  libmultipath/discovery.c                 | 284 +++++----
->  libmultipath/discovery.h                 |   2 +-
->  libmultipath/dm-generic.c                |   6 +-
->  libmultipath/file.c                      |   5 +-
->  libmultipath/foreign.c                   |  20 +-
->  libmultipath/foreign/nvme.c              |  26 +-
->  libmultipath/generic.c                   |   2 +-
->  libmultipath/io_err_stat.c               |  10 +-
->  libmultipath/log.h                       |   3 +-
->  libmultipath/log_pthread.c               |   2 +-
->  libmultipath/log_pthread.h               |   3 +-
->  libmultipath/nvme/linux/nvme.h           | 136 ++++-
->  libmultipath/nvme/nvme-ioctl.c           | 229 ++++---
->  libmultipath/nvme/nvme-ioctl.h           |  31 +-
->  libmultipath/nvme/nvme.h                 | 121 +++-
->  libmultipath/parser.c                    |   2 +-
->  libmultipath/pgpolicies.c                |   2 +-
->  libmultipath/print.c                     |  14 +-
->  libmultipath/print.h                     |   8 +-
->  libmultipath/prioritizers/alua_rtpg.c    |   2 +-
->  libmultipath/prioritizers/ana.c          |  14 +-
->  libmultipath/prioritizers/const.c        |   4 +-
->  libmultipath/prioritizers/datacore.c     |   3 +-
->  libmultipath/prioritizers/emc.c          |   3 +-
->  libmultipath/prioritizers/hds.c          |   3 +-
->  libmultipath/prioritizers/hp_sw.c        |   3 +-
->  libmultipath/prioritizers/iet.c          |   3 +-
->  libmultipath/prioritizers/ontap.c        |   3 +-
->  libmultipath/prioritizers/random.c       |   4 +-
->  libmultipath/prioritizers/rdac.c         |   3 +-
->  libmultipath/prioritizers/sysfs.c        |   3 +-
->  libmultipath/prioritizers/weightedpath.c |   3 +-
->  libmultipath/structs.c                   |   4 +-
->  libmultipath/structs.h                   |   3 +-
->  libmultipath/structs_vec.c               |   2 +-
->  libmultipath/sysfs.c                     |  13 +-
->  libmultipath/time-util.c                 |   6 +-
->  libmultipath/uevent.c                    |   5 +-
->  libmultipath/util.c                      |   7 +-
->  libmultipath/util.h                      |  15 +-
->  libmultipath/uxsock.c                    |   3 +-
->  libmultipath/vector.h                    |   4 +-
->  libmultipath/wwids.c                     |  40 +-
->  mpathpersist/main.c                      |   2 +-
->  multipath/main.c                         |  11 +-
->  multipathd/Makefile                      |   3 +
->  multipathd/cli_handlers.c                |   2 +-
->  multipathd/dmevents.c                    |   4 +-
->  multipathd/main.c                        |  36 +-
->  multipathd/pidfile.c                     |   2 +-
->  multipathd/waiter.c                      |   2 +-
->  multipathd/waiter.h                      |   2 +-
->  tests/Makefile                           |  19 +-
->  tests/alias.c                            | 744 +++++++++++++++++++++++
->  tests/blacklist.c                        |  22 +-
->  tests/hwtable.c                          |   2 +-
->  tests/test-log.c                         |  27 +
->  tests/test-log.h                         |   7 +
->  tests/util.c                             |  16 +-
->  92 files changed, 1818 insertions(+), 598 deletions(-)
->  create mode 100644 tests/alias.c
->  create mode 100644 tests/test-log.c
->  create mode 100644 tests/test-log.h
->=20
-> --=20
-> 2.23.0
+aGkgRG1pdHJ5LCB0aGFua3MgZm9yIHlvdXIgcmVwbHkuCgpJIGFsc28gdGVzdCBpdCB1c2UgdGhl
+IG1haW5saW5lLCBpdCBhbHNvIHRha2VzIG1vcmUgdGhhbiAxIGhvdXJzLgpteSBtZWNoaW5lIGhh
+cyA2NCBDUFVzIGNvcmUgYW5kIHRoZSBkaXNrIGlzIFNBVEEuCgp3aGVuIG1rZnMuZXh0NCwgSSBm
+b3VuZCB0aGUgJ3Njc2lfdGVzdF91bml0X3JlYWR5JyBydW4gbW9yZSB0aGFuIDEwMDAgdGltZXMK
+cGVyIHNlY29uZCBieSB0aGUgZGlmZmVyZW50IGt3b3JrZXIuCmFuZCBldmVyeSAnc2NzaV90ZXN0
+X3VuaXRfcmVhZHknIHRha2VzIG1vcmUgdGhhbiAyMDB1cywgYW5kIHRoZSBpbnRlcnZhbApsZXNz
+IHRoYW4gMjB1cy4KU28sIEkgdGhpbmsgeW91ciBndWVzcyBpcyByaWdodC4KCmJ1dCB0aGVyZSBp
+cyBhbm90aGVyIHF1ZXN0aW9uLCB3aHkgNC4xOSBicmFuY2ggdGFrZXMgbW9yZSB0aGFuIDEwIGhv
+dXI/Ckkgd2lsbCB3b3JrIG9uIGl0LCBpZiBhbnkgaW5mb3JtYXRpb24gYWJvdXQgaXQsIEkgd2ls
+bCByZXBseSB5b3UuCgpUaGFua3MuCgpteSBzY3JpcHQ6CglkbXphZG0gLS1mb3JtYXQgL2Rldi9z
+ZGkKCWVjaG8gIjAgMjE0ODUzMjIyNDAgem9uZWQgL2Rldi9zZGkiIHwgZG1zZXR1cCBjcmVhdGUg
+ZG16LXNkaQoJZGF0ZTsgbWtmcy5leHQ0IC9kZXYvbWFwcGVyL2Rtei1zZGk7IGRhdGUKCm1haW5s
+aW5lOgoJW3Jvb3RAbG9jYWxob3N0IH5dIyB1bmFtZSAtYQoJTGludXggbG9jYWxob3N0IDUuNC4w
+LXJjNSAjMSBTTVAgVGh1IE9jdCAzMSAxMTo0MToyMCBDU1QgMjAxOSBhYXJjaDY0IGFhcmNoNjQg
+YWFyY2g2NCBHTlUvTGludXgKCglUaHUgT2N0IDMxIDEzOjU4OjU1IENTVCAyMDE5Cglta2UyZnMg
+MS40My42ICgyOS1BdWctMjAxNykKCURpc2NhcmRpbmcgZGV2aWNlIGJsb2NrczogZG9uZQoJQ3Jl
+YXRpbmcgZmlsZXN5c3RlbSB3aXRoIDI2ODQzNTQ1NjAgNGsgYmxvY2tzIGFuZCAzMzU1NDQzMjAg
+aW5vZGVzCglGaWxlc3lzdGVtIFVVSUQ6IGUwZDhlMDFlLWVmYTgtNDdmZC1hMDE5LWIxODRlNjZm
+NjViMAoJU3VwZXJibG9jayBiYWNrdXBzIHN0b3JlZCBvbiBibG9ja3M6CgkJMzI3NjgsIDk4MzA0
+LCAxNjM4NDAsIDIyOTM3NiwgMjk0OTEyLCA4MTkyMDAsIDg4NDczNiwgMTYwNTYzMiwgMjY1NDIw
+OCwKCQk0MDk2MDAwLCA3OTYyNjI0LCAxMTIzOTQyNCwgMjA0ODAwMDAsIDIzODg3ODcyLCA3MTY2
+MzYxNiwgNzg2NzU5NjgsCgkJMTAyNDAwMDAwLCAyMTQ5OTA4NDgsIDUxMjAwMDAwMCwgNTUwNzMx
+Nzc2LCA2NDQ5NzI1NDQsIDE5MzQ5MTc2MzIsCgkJMjU2MDAwMDAwMAoKCUFsbG9jYXRpbmcgZ3Jv
+dXAgdGFibGVzOiBkb25lCglXcml0aW5nIGlub2RlIHRhYmxlczogZG9uZQoJQ3JlYXRpbmcgam91
+cm5hbCAoMjYyMTQ0IGJsb2Nrcyk6IGRvbmUKCVdyaXRpbmcgc3VwZXJibG9ja3MgYW5kIGZpbGVz
+eXN0ZW0gYWNjb3VudGluZyBpbmZvcm1hdGlvbjogZG9uZQoKCVRodSBPY3QgMzEgMTU6MDE6MDEg
+Q1NUIDIwMTkKCmFmdGVyIGRlbGV0ZSB0aGUgJ2NoZWNrX2V2ZW50cycgb24gbWFpbmxpbmU6Cglb
+cm9vdEBsb2NhbGhvc3Qgfl0jIHVuYW1lIC1hCglMaW51eCBsb2NhbGhvc3QgNS40LjAtcmM1KyAj
+MiBTTVAgVGh1IE9jdCAzMSAxNTowNzozNiBDU1QgMjAxOSBhYXJjaDY0IGFhcmNoNjQgYWFyY2g2
+NCBHTlUvTGludXgKCVRodSBPY3QgMzEgMTU6MTk6NTYgQ1NUIDIwMTkKCW1rZTJmcyAxLjQzLjYg
+KDI5LUF1Zy0yMDE3KQoJRGlzY2FyZGluZyBkZXZpY2UgYmxvY2tzOiBkb25lCglDcmVhdGluZyBm
+aWxlc3lzdGVtIHdpdGggMjY4NDM1NDU2MCA0ayBibG9ja3MgYW5kIDMzNTU0NDMyMCBpbm9kZXMK
+CUZpbGVzeXN0ZW0gVVVJRDogNzM1MTk4ZTgtOWRmMC00OWZjLWFhYTgtMjNiMDg2OWRmYTA1CglT
+dXBlcmJsb2NrIGJhY2t1cHMgc3RvcmVkIG9uIGJsb2NrczoKCQkzMjc2OCwgOTgzMDQsIDE2Mzg0
+MCwgMjI5Mzc2LCAyOTQ5MTIsIDgxOTIwMCwgODg0NzM2LCAxNjA1NjMyLCAyNjU0MjA4LAoJCTQw
+OTYwMDAsIDc5NjI2MjQsIDExMjM5NDI0LCAyMDQ4MDAwMCwgMjM4ODc4NzIsIDcxNjYzNjE2LCA3
+ODY3NTk2OCwKCQkxMDI0MDAwMDAsIDIxNDk5MDg0OCwgNTEyMDAwMDAwLCA1NTA3MzE3NzYsIDY0
+NDk3MjU0NCwgMTkzNDkxNzYzMiwKCQkyNTYwMDAwMDAwCgoJQWxsb2NhdGluZyBncm91cCB0YWJs
+ZXM6IGRvbmUKCVdyaXRpbmcgaW5vZGUgdGFibGVzOiBkb25lCglDcmVhdGluZyBqb3VybmFsICgy
+NjIxNDQgYmxvY2tzKTogZG9uZQoJV3JpdGluZyBzdXBlcmJsb2NrcyBhbmQgZmlsZXN5c3RlbSBh
+Y2NvdW50aW5nIGluZm9ybWF0aW9uOiBkb25lCgoJVGh1IE9jdCAzMSAxNTozMDo1MSBDU1QgMjAx
+OQoK5ZyoIDIwMTkvMTAvMjcgMTA6NTYsIERtaXRyeSBGb21pY2hldiDlhpnpgZM6Cj4gWmhhbmcs
+Cj4gCj4gSSBqdXN0IGRpZCBzb21lIHRlc3Rpbmcgb2YgdGhpcyBzY2VuYXJpbyB3aXRoIGEgcmVj
+ZW50IGtlcm5lbCB0aGF0IGluY2x1ZGVzIHRoaXMgcGF0Y2guCj4gCj4gVGhlIGxvZyBiZWxvdyBp
+cyBhIHJ1biBpbiBRRU1VIHdpdGggOCBDUFVzIGFuZCBpdCB0b29rIDE4LjUgbWludXRlcyB0byBj
+cmVhdGUgdGhlIEZTIG9uIGEKPiAxNFRCIEFUQSBkcml2ZS4gRG9pbmcgdGhlIHNhbWUgdGhpbmcg
+b24gYmFyZSBtZXRhbCB3aXRoIDMyIENQVXMgdGFrZXMgMTAuNSBtaW51dGVzIGluIG15Cj4gZW52
+aXJvbm1lbnQuIEhvd2V2ZXIsIHdoZW4gZG9pbmcgdGhlIHNhbWUgdGVzdCB3aXRoIGEgU0FTIGRy
+aXZlLCB0aGUgcnVuIHRha2VzIDQzIG1pbnV0ZXMuCj4gVGhpcyBpcyBub3QgcXVpdGUgdGhlIGRl
+Z3JhZGF0aW9uIHlvdSBhcmUgb2JzZXJ2aW5nLCBidXQgc3RpbGwgYSBiaWcgcGVyZm9ybWFuY2Ug
+aGl0Lgo+IAo+IElzIHRoZSBkaXNrIHRoYXQgeW91IGFyZSB1c2luZyBTQVMgb3IgU0FUQT8KPiAK
+PiBNeSBjdXJyZW50IGd1ZXNzIGlzIHRoYXQgc2QgZHJpdmVyIG1heSBnZW5lcmF0ZSBzb21lIFRF
+U1QgVU5JVCBSRUFEWSBjb21tYW5kcyB0byBjaGVjayBpZgo+IHRoZSBkcml2ZSBpcyByZWFsbHkg
+b25saW5lIGFzIGEgcGFydCBvZiBjaGVja19ldmVudHMoKSBwcm9jZXNzaW5nLiBGb3IgQVRBIGRy
+aXZlcywgdGhpcyBpcwo+IG5lYXJseSBhIE5PUCBzaW5jZSBhbGwgVFVScyBhcmUgY29tcGxldGVk
+IGludGVybmFsbHkgaW4gbGliYXRhLiBCdXQsIGluIFNDU0kgY2FzZSwgdGhlc2UKPiBibG9ja2lu
+ZyBUVVJzIGFyZSBpc3N1ZWQgdG8gdGhlIGRyaXZlIGFuZCBjZXJ0YWlubHkgbWF5IGRlZ3JhZGUg
+cGVyZm9ybWFuY2UuCj4gCj4gVGhlIGNoZWNrX2V2ZW50cygpIGNhbGwgaGFzIGJlZW4gYWRkZWQg
+dG8gYmRldl9kZXZpY2VfaXNfZHlpbmcoKSBiZWNhdXNlIHNpbXBseSBjYWxsaW5nCj4gYmRldl9x
+dWV1ZV9keWluZygpIGRvZXNuJ3QgY292ZXIgdGhlIHNpdHVhdGlvbiB3aGVuIHRoZSBkcml2ZSBn
+ZXRzIG9mZmxpbmVkIGluIFNDU0kgbGF5ZXIuCj4gSXQgbWlnaHQgYmUgcG9zc2libGUgdG8gb25s
+eSBjYWxsIGNoZWNrX2V2ZW50cygpIG9uY2UgYmVmb3JlIGV2ZXJ5IHJlY2xhaW0gcnVuIGFuZCB0
+byBhdm9pZAo+IGNhbGxpbmcgaXQgaW4gSS9PIG1hcHBpbmcgcGF0aC4gSWYgdGhpcyB3b3Jrcywg
+dGhlIG92ZXJoZWFkIHdvdWxkIGxpa2VseSBiZSBhY2NlcHRhYmxlLgo+IEkgYW0gZ29pbmcgdG8g
+dGFrZSBhIGxvb2sgaW50byB0aGlzLgo+IAo+IFJlZ2FyZHMsCj4gRG1pdHJ5Cj4gCj4gW3Jvb3RA
+eHh4IGRtel0jIHVuYW1lIC1hCj4gTGludXggeHh4IDUuNC4wLXJjMS1ETVorICMxIFNNUCBGcmkg
+T2N0IDExIDExOjIzOjEzIFBEVCAyMDE5IHg4Nl82NCB4ODZfNjQgeDg2XzY0IEdOVS9MaW51eAo+
+IFtyb290QHh4eCBkbXpdIyBsc3Njc2kKPiBbMDowOjA6MF0gICAgZGlzayAgICBRRU1VICAgICBR
+RU1VIEhBUkRESVNLICAgIDIuNSsgIC9kZXYvc2RhCj4gWzE6MDowOjBdICAgIHpiYyAgICAgQVRB
+ICAgICAgSEdTVCBIU0g3MjE0MTVBTCBUMjQwICAvZGV2L3NkYgo+IFtyb290QHh4eCBkbXpdIyAu
+L3NldHVwLWRteiB0ZXN0IC9kZXYvc2RiCj4gW3Jvb3RAeHh4IGRtel0jIGNhdCAvcHJvYy9rYWxs
+c3ltcyB8IGdyZXAgZG16X2JkZXZfaXNfZHlpbmcKPiAoc3RhbmRhcmQgaW5wdXQpOjkwNzgyOmZm
+ZmZmZmZmYzA3MGE0MDEgdCBkbXpfYmRldl9pc19keWluZy5jb2xkCVtkbV96b25lZF0KPiAoc3Rh
+bmRhcmQgaW5wdXQpOjkwODQ5OmZmZmZmZmZmYzA3MDZlMTAgdCBkbXpfYmRldl9pc19keWluZwlb
+ZG1fem9uZWRdCj4gW3Jvb3RAeHh4IGRtel0jIHRpbWUgbWtmcy5leHQ0IC9kZXYvbWFwcGVyL3Rl
+c3QKPiBta2UyZnMgMS40NC42ICg1LU1hci0yMDE5KQo+IERpc2NhcmRpbmcgZGV2aWNlIGJsb2Nr
+czogZG9uZQo+IENyZWF0aW5nIGZpbGVzeXN0ZW0gd2l0aCAzNjYwODQwOTYwIDRrIGJsb2NrcyBh
+bmQgNDU3NjA1MTIwIGlub2Rlcwo+IEZpbGVzeXN0ZW0gVVVJRDogNDUzNmJhY2QtY2ZiNS00MWIy
+LWIwYmYtYzI1MTNlNmUzMzYwCj4gU3VwZXJibG9jayBiYWNrdXBzIHN0b3JlZCBvbiBibG9ja3M6
+Cj4gCTMyNzY4LCA5ODMwNCwgMTYzODQwLCAyMjkzNzYsIDI5NDkxMiwgODE5MjAwLCA4ODQ3MzYs
+IDE2MDU2MzIsIDI2NTQyMDgsCj4gCTQwOTYwMDAsIDc5NjI2MjQsIDExMjM5NDI0LCAyMDQ4MDAw
+MCwgMjM4ODc4NzIsIDcxNjYzNjE2LCA3ODY3NTk2OCwKPiAJMTAyNDAwMDAwLCAyMTQ5OTA4NDgs
+IDUxMjAwMDAwMCwgNTUwNzMxNzc2LCA2NDQ5NzI1NDQsIDE5MzQ5MTc2MzIsCj4gCTI1NjAwMDAw
+MDAKPiAKPiBBbGxvY2F0aW5nIGdyb3VwIHRhYmxlczogZG9uZQo+IFdyaXRpbmcgaW5vZGUgdGFi
+bGVzOiBkb25lCj4gQ3JlYXRpbmcgam91cm5hbCAoMjYyMTQ0IGJsb2Nrcyk6IGRvbmUKPiBXcml0
+aW5nIHN1cGVyYmxvY2tzIGFuZCBmaWxlc3lzdGVtIGFjY291bnRpbmcgaW5mb3JtYXRpb246IGRv
+bmUKPiAKPiAKPiByZWFsCTE4bTMwLjg2N3MKPiB1c2VyCTBtMC4xNzJzCj4gc3lzCTBtMTEuMTk4
+cwo+IAo+IAo+IE9uIFNhdCwgMjAxOS0xMC0yNiBhdCAwOTo1NiArMDgwMCwgemhhbmd4aWFveHUg
+KEEpIHdyb3RlOgo+PiBIaSBhbGwsIHdoZW4gSSAnbWtmcy5leHQ0JyBvbiB0aGUgZG16IGRldmlj
+ZSBiYXNlZCBvbiAxMFQgc21yIGRpc2ssCj4+IGl0IHRha2VzIG1vcmUgdGhhbiAxMCBob3VycyBh
+ZnRlciBhcHBseSA3NWQ2NmZmYjQ4ZWZiMyAoImRtIHpvbmVkOgo+PiBwcm9wZXJseSBoYW5kbGUg
+YmFja2luZyBkZXZpY2UgZmFpbHVyZSIpLgo+Pgo+PiBBZnRlciBkZWxldGUgdGhlICdjaGVja19l
+dmVudHMnIGluICdkbXpfYmRldl9pc19keWluZycsIGl0IGp1c3QKPj4gdGFrZSBsZXNzIHRoYW4g
+MTIgbWlucy4KPj4KPj4gSSB0ZXN0IGl0IGJhc2VkIG9uIDQuMTkgYnJhbmNoLgo+PiBNdXN0IHdl
+IGRvIHRoZSAnY2hlY2tfZXZlbnRzJyBhdCBtYXBwaW5nIHBhdGgsIHJlY2xhaW0gb3IgbWV0YWRh
+dGEgSS9PPwo+Pgo+PiBUaGFua3MuCj4+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2
+ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0t
+ZGV2ZWw=
