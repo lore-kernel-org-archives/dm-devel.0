@@ -1,16 +1,11 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH 0/8] Zone management commands support
-Date: Tue, 5 Nov 2019 05:08:33 +0000
-Message-ID: <BYAPR04MB58164F042DA0D67A3FC21686E77E0@BYAPR04MB5816.namprd04.prod.outlook.com>
-References: <20191027140549.26272-1-damien.lemoal@wdc.com>
-	<926948c1-d9a0-4156-4639-bbac1d0ba10b@kernel.dk>
-	<BYAPR04MB5816539DCBED2D2C93254D36E77C0@BYAPR04MB5816.namprd04.prod.outlook.com>
-	<yq1r22n3ozf.fsf@oracle.com>
+From: David Michael <fedora.dm0@gmail.com>
+Subject: Making udev aware of dm-init devices
+Date: Mon, 4 Nov 2019 10:43:11 -0500
+Message-ID: <CAEvUa7nAYkrdsPhmQpV_ChP5Jtnn9oR2Xb=KmBbXJyTZpGUAzg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,21 +15,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Ajay Joshi <Ajay.Joshi@wdc.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, Dmitry Fomichev <Dmitry.Fomichev@wdc.com>, Hans Holmberg <Hans.Holmberg@wdc.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Keith Busch <kbusch@kernel.org>, Bjorling <Matias.Bjorling@wdc.com>Matias
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2019/11/05 13:53, Martin K. Petersen wrote:
-> 
-> Damien,
-> 
->> Can you take patch 3 now ?
-> 
-> Yep. Applied to 5.4/scsi-fixes.
+Hi,
 
-Thanks !
+I would like to be able to use a root device configured by
+dm-mod.create with an initrd in some scenarios, but it appears that
+the default udev rules do not recognize this setup which prevents
+systemd from mounting the root file system.  There is a systemd bug
+report with a demo script to illustrate what I mean.[1]  Has anyone
+here encountered this, or is there a solution already?
 
+Thanks.
 
--- 
-Damien Le Moal
-Western Digital Research
+David
+
+[1] https://github.com/systemd/systemd/issues/13618#issuecomment-539566330
