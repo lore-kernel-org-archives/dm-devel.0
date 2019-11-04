@@ -1,163 +1,158 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 16/72] libmultipath: make path_discovery()
- pthread_cancel()-safe
-Date: Mon, 4 Nov 2019 08:29:21 +0000
-Message-ID: <1dafb5da296c6eec383213ec04dcf399fe45c0f6.camel@suse.com>
-References: <20191012212703.12989-1-martin.wilck@suse.com>
-	<20191012212703.12989-17-martin.wilck@suse.com>
-	<20191030145333.GN25414@octiron.msp.redhat.com>
+From: Alessio Balsini <balsini@android.com>
+Subject: Re: dm-snapshot for system updates in Android
+Date: Mon, 4 Nov 2019 16:49:00 +0000
+Message-ID: <20191104164900.GA10934@google.com>
+References: <20191025101624.GA61225@google.com>
+ <alpine.LRH.2.02.1910290957220.25731@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191030145333.GN25414@octiron.msp.redhat.com>
-Content-Language: en-US
-Content-ID: <E780AEFB409EB5488FA4192F92BFD6F3@namprd18.prod.outlook.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1910290957220.25731@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Alasdair G Kergon <agk@redhat.com>, elsk@google.com, dvander@google.com, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@android.com
 List-Id: dm-devel.ids
 
-Hi Ben,
+Hi Mikulas,
 
-thanks for looking into this.
+Thank you for your answer and suggestions.
 
-On Wed, 2019-10-30 at 09:53 -0500, Benjamin Marzinski wrote:
-> On Sat, Oct 12, 2019 at 09:27:57PM +0000, Martin Wilck wrote:
-> > From: Martin Wilck <mwilck@suse.com>
-> >=20
-> > The udev_enumerate and udev_device refs wouldn't be released
-> > if the thread was cancelled. Fix it.
-> >=20
-> > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > ---
-> >  libmultipath/discovery.c | 51 +++++++++++++++++++++++++++++++-----
-> > ----
-> >  1 file changed, 40 insertions(+), 11 deletions(-)
-> >=20
-> > diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-> > index e68b0e9f..d217ca92 100644
-> > --- a/libmultipath/discovery.c
-> > +++ b/libmultipath/discovery.c
-> > @@ -140,19 +140,47 @@ path_discover (vector pathvec, struct config
-> > * conf,
-> >  =09return pathinfo(pp, conf, flag);
-> >  }
-> > =20
-> > +static void cleanup_udev_enumerate_ptr(void *arg)
-> > +{
-> > +=09struct udev_enumerate *ue;
-> > +
-> > +=09if (!arg)
-> > +=09=09return;
-> > +=09ue =3D *((struct udev_enumerate**) arg);
-> > +=09if (ue)
-> > +=09=09(void)udev_enumerate_unref(ue);
-> > +}
-> > +
-> > +static void cleanup_udev_device_ptr(void *arg)
-> > +{
-> > +=09struct udev_device *ud;
-> > +
-> > +=09if (!arg)
-> > +=09=09return;
-> > +=09ud =3D *((struct udev_device**) arg);
-> > +=09if (ud)
-> > +=09=09(void)udev_device_unref(ud);
-> > +}
-> > +
-> >  int
-> >  path_discovery (vector pathvec, int flag)
-> >  {
-> > -=09struct udev_enumerate *udev_iter;
-> > +=09struct udev_enumerate *udev_iter =3D NULL;
-> >  =09struct udev_list_entry *entry;
-> > -=09struct udev_device *udevice;
-> > +=09struct udev_device *udevice =3D NULL;
-> >  =09struct config *conf;
-> > -=09const char *devpath;
-> >  =09int num_paths =3D 0, total_paths =3D 0, ret;
-> > =20
-> > +=09pthread_cleanup_push(cleanup_udev_enumerate_ptr, &udev_iter);
-> > +=09pthread_cleanup_push(cleanup_udev_device_ptr, &udevice);
-> > +=09conf =3D get_multipath_config();
-> > +=09pthread_cleanup_push(put_multipath_config, conf);
-> > +
-> >  =09udev_iter =3D udev_enumerate_new(udev);
-> > -=09if (!udev_iter)
-> > -=09=09return -ENOMEM;
-> > +=09if (!udev_iter) {
-> > +=09=09ret =3D -ENOMEM;
-> > +=09=09goto out;
-> > +=09}
-> > =20
-> >  =09if (udev_enumerate_add_match_subsystem(udev_iter, "block") < 0
-> > ||
-> >  =09    udev_enumerate_add_match_is_initialized(udev_iter) < 0 ||
-> > @@ -165,6 +193,8 @@ path_discovery (vector pathvec, int flag)
-> >  =09udev_list_entry_foreach(entry,
-> >  =09=09=09=09udev_enumerate_get_list_entry(udev_iter
-> > )) {
-> >  =09=09const char *devtype;
-> > +=09=09const char *devpath;
-> > +
-> >  =09=09devpath =3D udev_list_entry_get_name(entry);
-> >  =09=09condlog(4, "Discover device %s", devpath);
-> >  =09=09udevice =3D udev_device_new_from_syspath(udev, devpath);
-> > @@ -175,19 +205,18 @@ path_discovery (vector pathvec, int flag)
-> >  =09=09devtype =3D udev_device_get_devtype(udevice);
-> >  =09=09if(devtype && !strncmp(devtype, "disk", 4)) {
-> >  =09=09=09total_paths++;
-> > -=09=09=09conf =3D get_multipath_config();
-> > -=09=09=09pthread_cleanup_push(put_multipath_config,
-> > conf);
->=20
-> Why move grabbing the config RCU lock out of the loop?=20
+On Tue, Oct 29, 2019 at 10:21:14AM -0400, Mikulas Patocka wrote:
+> Hi
+> 
+> On Fri, 25 Oct 2019, Alessio Balsini wrote:
+> 
+> > Hello everyone!
+> > 
+> > I hope you will appreciate knowing that we are currently evaluating the use of
+> > dm-snapshot to implement a mechanism to obtain revertible, space-efficient
+> > system upgrades in Android.  More specifically, we are using
+> > dm-snapshot-persistent to test the updated device after reboot, then issue a
+> > merge in case of success, otherwise, destroy the snapshot.
+> > This new update mechanism is still under evaluation, but its development is
+> > openly done in AOSP.
+> > 
+> > At the current stage, we have a prototype we are happy with, both in terms of
+> > space consumption overhead (for the COW device) and benchmarking results for
+> > read-write and merge operations.
+> > 
+> > I would be glad if you could provide some feedback on a few points that I don't
+> > have completely clear.
+> > 
+> > 
+> > -- Interface stability
+> > 
+> > To obtain an initial, empty COW device as quick as possible, we force to 0 only
+> > its first 32 bit (magic field). This solution looks clear from the kernel code,
+> > but can we rely on that for all the kernels with SNAPSHOT_DISK_VERSION == 1?
+> 
+> It will work, but, to be consistent with lvm, I suggest to overwrite the 
+> first 4k with zeroes.
+> 
+> > Would you appreciate it if a similar statement is added as part of
+> > /Documentation, making this solution more stable? Or maybe I can think of
+> > adding an initialization flag to the dm-snapshot table to explicitly request
+> > the COW initialization within the kernel?
+> > 
+> > Another issue we are facing is to be able to know in advance what the minimum
+> > COW device size would be for a given update to be able to allocate the right
+> 
+> This is hard to say, it depends on what the user is doing with the phone. 
+> When dm-snapshot runs out of space, it invalidates the whole snapshot. 
+> You'll have to monitor the snapshot space very carefully and take action 
+> before it fills up.
 
-Yes, that was the idea.
+I forgot to mention that all the partitions we are updating are
+read-only, and can only be modified by snapshot-merge. This allows us to
+establish a direct relation between the required COW device size and the
+operations performed by the update (i.e. the number of chunks that are
+going to be modified).
 
-> All things being
-> equal, it seems like we'd rather hold this for less time, and
-> rcu_read_lock() is designed to be lightweight, so calling it more
-> times
-> shouldn't be an issue.=20
+> 
+> I suggest - run main system on the origin target and attach a snapshot 
+> that will be used for backup of the data overwritten in the origin. If the 
+> updated system fails, merge the snapshot back into the origin; if the 
+> update succeeds, drop the snapshot. If the user writes too much data to 
+> the device, it would invalidate the only the snapshot (so he can't revert 
+> anymore), but it would not invalidate the origin and the data would not be 
+> lost.
 
-It's not the execution time of rcu_read_lock() that I'm concerned
-about.=20
+This is an approach we evaluated, but the main reason why we decided for
+the solution of updating the snapshot and then merging it to the base
+device is that we want to be sure that the update was successful before
+permanently change to the base device. For example, if for some reason
+the update is interrupted, it would be more difficult to roll-back or
+restore the update. Additionally, if the update wants to resize the
+partitions, this operation could not be done until reboot.
 
-In this particular loop, my estimate is that >90% of time is spent in
-path_discover()/pathinfo(), so time-during-which-lock-is-held-wise, we
-gain little by taking and releasing the RCU lock in every iteration.=20
+> 
+> > size for the COW device in advance.  To do so, we rely on the current COW
+> > structure that seems to have kept the same stable shape in the last decade, and
+> > compute the total COW size by knowing the number of modified chunks. The
+> > formula would be something like that:
+> > 
+> >   table_line_bytes      = 64 * 2 / 8;
+> >   exceptions_per_chunk  = chunk_size_bytes / table_line_bytes;
+> >   total_cow_size_chunks = 1 + 1 + modified_chunks
+> >                         + modified_chunks / exceptions_per_chunk;
+> > 
+> > This formula seems to be valid for all the recent kernels we checked. Again,
+> > can we assume it to be valid for all the kernels for which
+> > SNAPSHOT_DISK_VERSION == 1?
+> 
+> Yes, we don't plan to change it.
+> 
+> > -- Alignment
+> > 
+> > Our approach follows the solution proposed by Mikulas [1].
+> > Being the block alignment of file extents automatically managed by the
+> > filesystem, using FIEMAP should have no alignment-related performance issue.
+> > But in our implementation we hit a misalignment [2] branch which leads to
+> > dmwarning messages [3, 4].
+> > 
+> > I have a limited experience with the block layer and dm, so I'm still
+> > struggling in finding the root cause for this, either in user space or kernel
+> > space.
+> 
+> I don't know. What is the block size of the filesystem? Are all mappings 
+> aligned to this block size?
 
-Right, we might catch a configuration change _earlier_ if we release
-the lock between pathinfo() invocations. But - do we actually want
-that? This lock protects us against corruption of the multipathd
-configuration, basically against someone calling "multipathd
-reconfigure" while our code is running. But if the configuration ins
-really changed, what we're currently doing is vain anyway - once the
-configure() call is finished, we will go through yet another full
-reconfigure cycle. IOW: Do we seriously want to call pathinfo() for the
-different paths in the system with  different configuration, once with
-and once without "user_friendly_names", for example?
+Here follows a just generated warning coming from a Pixel 4 kernel (4.14):
 
-Given that the code we're talking about is only called from
-reconfigure(), multipath_conf having just been reassigned, IMO it's an
-improvement to hold the lock through the entire loop. It might even be
-good to hold the lock for the complete invocation of configure(), but I
-haven't thought about that in detail yet.
+[ 3093.443808] device-mapper: table: 253:16: adding target device dm-15
+caused an alignment inconsistency: physical_block_size=4096,
+logical_block_size=4096, alignment_offset=61440, start=0
 
-Does this make sense?
+Does this contain all the info you asked for?
 
-Besides, to my taste at least, it improves readability of the code to
-move get_multipath_config() out of certain loops.
+I started investigating this issue, but since we didn't notice any
+performance degradation, I prioritized other things. I'll be hopefully
+able to get back to this warning in the next months.
+Please let me know if I can help you with that or if you need additional
+information.
 
-Thanks,
-Martin
+> 
+> > But our benchmarks seems to be good, so we were thinking as last option to
+> > rate-limit or directly remove that warning from our kernels as a temporary
+> > solution, but we prefer to avoid diverging from mainline. Rate-limiting is a
+> > solution that would make sense also to be proposed in the list, but completely
+> > removing the warning doesn't seem the right thing to do. Maybe we are
+> > benchmarking something else? What do you think?
+> > 
+> > Many thanks for taking the time to read this, feedbacks would be highly
+> > appreciated.
+> > 
+> > Regards.
+> > Alessio
+> > 
+> > [1] https://www.redhat.com/archives/dm-devel/2018-October/msg00363.html
+> > [2] https://elixir.bootlin.com/linux/v5.3/source/block/blk-settings.c#L540
+> > [3] https://elixir.bootlin.com/linux/v5.3/source/drivers/md/dm-table.c#L484
+> > [4] https://elixir.bootlin.com/linux/v5.3/source/drivers/md/dm-table.c#L1558
+> 
+> Mikulas
+> 
+
+Thanks again,
+Alessio
