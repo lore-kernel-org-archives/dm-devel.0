@@ -1,14 +1,18 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH 0/8] Zone management commands support
-Date: Sun, 3 Nov 2019 23:41:10 +0000
-Message-ID: <BYAPR04MB5816539DCBED2D2C93254D36E77C0@BYAPR04MB5816.namprd04.prod.outlook.com>
-References: <20191027140549.26272-1-damien.lemoal@wdc.com>
-	<926948c1-d9a0-4156-4639-bbac1d0ba10b@kernel.dk>
+From: Martin Wilck <Martin.Wilck@suse.com>
+Subject: Re: [PATCH 16/72] libmultipath: make path_discovery()
+ pthread_cancel()-safe
+Date: Mon, 4 Nov 2019 08:29:21 +0000
+Message-ID: <1dafb5da296c6eec383213ec04dcf399fe45c0f6.camel@suse.com>
+References: <20191012212703.12989-1-martin.wilck@suse.com>
+	<20191012212703.12989-17-martin.wilck@suse.com>
+	<20191030145333.GN25414@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20191030145333.GN25414@octiron.msp.redhat.com>
 Content-Language: en-US
+Content-ID: <E780AEFB409EB5488FA4192F92BFD6F3@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,55 +22,142 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Martin K . Petersen" <martin.petersen@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: Ajay Joshi <Ajay.Joshi@wdc.com>, Fomichev <Dmitry.Fomichev@wdc.com>, Hans Holmberg <Hans.Holmberg@wdc.com>, Keith Busch <kbusch@kernel.org>Dmitry, Matias Bjorling <Matias.Bjorling@wdc.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2019/11/02 4:01, Jens Axboe wrote:
-> On 10/27/19 8:05 AM, Damien Le Moal wrote:
->> This series implements a few improvements and cleanups to zone block
->> device zone reset operations with the first three patches.
->>
->> The remaining of the series patches introduce zone open, close and
->> finish support, allowing users of zoned block devices to explicitly
->> control the condition (state) of zones.
->>
->> While these operations are not stricktly necessary for the correct
->> operation of zoned block devices, the open and close operations can
->> improve performance for some device implementations of the ZBC and ZAC
->> standards under write workloads. The finish zone operation, which
->> transition a zone to the full state, can also be useful to protect a
->> zone data by preventing further zone writes.
->>
->> These operations are implemented by introducing the new
->> REQ_OP_ZONE_OPEN, REQ_OP_ZONE_CLOSE and REQ_OP_ZONE_FINISH request codes
->> and the function blkdev_zone_mgmt() to issue these requests. This new
->> function also replaces the former blkdev_reset_zones() function to reset
->> zones write pointer.
->>
->> The new ioctls BLKOPENZONE, BLKCLOSEZONE and BLKFINISHZONE are also
->> defined to allow applications to issue these new requests without
->> resorting to a device passthrough interface (e.g. SG_IO).
->>
->> Support for these operations is added to the SCSI sd driver, to the dm
->> infrastructure (dm-linear and dm-flakey targets) and to the null_blk
->> driver.
-> 
-> Can patch 3 go in separately, doesn't look like we need it in this
-> series?
+Hi Ben,
 
-Yes, I think it can go in now in 5.4-rc if Martin is willing to take it.
-That will create a small conflict in your tree for patch 6 though.
+thanks for looking into this.
 
-Martin,
+On Wed, 2019-10-30 at 09:53 -0500, Benjamin Marzinski wrote:
+> On Sat, Oct 12, 2019 at 09:27:57PM +0000, Martin Wilck wrote:
+> > From: Martin Wilck <mwilck@suse.com>
+> >=20
+> > The udev_enumerate and udev_device refs wouldn't be released
+> > if the thread was cancelled. Fix it.
+> >=20
+> > Signed-off-by: Martin Wilck <mwilck@suse.com>
+> > ---
+> >  libmultipath/discovery.c | 51 +++++++++++++++++++++++++++++++-----
+> > ----
+> >  1 file changed, 40 insertions(+), 11 deletions(-)
+> >=20
+> > diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> > index e68b0e9f..d217ca92 100644
+> > --- a/libmultipath/discovery.c
+> > +++ b/libmultipath/discovery.c
+> > @@ -140,19 +140,47 @@ path_discover (vector pathvec, struct config
+> > * conf,
+> >  =09return pathinfo(pp, conf, flag);
+> >  }
+> > =20
+> > +static void cleanup_udev_enumerate_ptr(void *arg)
+> > +{
+> > +=09struct udev_enumerate *ue;
+> > +
+> > +=09if (!arg)
+> > +=09=09return;
+> > +=09ue =3D *((struct udev_enumerate**) arg);
+> > +=09if (ue)
+> > +=09=09(void)udev_enumerate_unref(ue);
+> > +}
+> > +
+> > +static void cleanup_udev_device_ptr(void *arg)
+> > +{
+> > +=09struct udev_device *ud;
+> > +
+> > +=09if (!arg)
+> > +=09=09return;
+> > +=09ud =3D *((struct udev_device**) arg);
+> > +=09if (ud)
+> > +=09=09(void)udev_device_unref(ud);
+> > +}
+> > +
+> >  int
+> >  path_discovery (vector pathvec, int flag)
+> >  {
+> > -=09struct udev_enumerate *udev_iter;
+> > +=09struct udev_enumerate *udev_iter =3D NULL;
+> >  =09struct udev_list_entry *entry;
+> > -=09struct udev_device *udevice;
+> > +=09struct udev_device *udevice =3D NULL;
+> >  =09struct config *conf;
+> > -=09const char *devpath;
+> >  =09int num_paths =3D 0, total_paths =3D 0, ret;
+> > =20
+> > +=09pthread_cleanup_push(cleanup_udev_enumerate_ptr, &udev_iter);
+> > +=09pthread_cleanup_push(cleanup_udev_device_ptr, &udevice);
+> > +=09conf =3D get_multipath_config();
+> > +=09pthread_cleanup_push(put_multipath_config, conf);
+> > +
+> >  =09udev_iter =3D udev_enumerate_new(udev);
+> > -=09if (!udev_iter)
+> > -=09=09return -ENOMEM;
+> > +=09if (!udev_iter) {
+> > +=09=09ret =3D -ENOMEM;
+> > +=09=09goto out;
+> > +=09}
+> > =20
+> >  =09if (udev_enumerate_add_match_subsystem(udev_iter, "block") < 0
+> > ||
+> >  =09    udev_enumerate_add_match_is_initialized(udev_iter) < 0 ||
+> > @@ -165,6 +193,8 @@ path_discovery (vector pathvec, int flag)
+> >  =09udev_list_entry_foreach(entry,
+> >  =09=09=09=09udev_enumerate_get_list_entry(udev_iter
+> > )) {
+> >  =09=09const char *devtype;
+> > +=09=09const char *devpath;
+> > +
+> >  =09=09devpath =3D udev_list_entry_get_name(entry);
+> >  =09=09condlog(4, "Discover device %s", devpath);
+> >  =09=09udevice =3D udev_device_new_from_syspath(udev, devpath);
+> > @@ -175,19 +205,18 @@ path_discovery (vector pathvec, int flag)
+> >  =09=09devtype =3D udev_device_get_devtype(udevice);
+> >  =09=09if(devtype && !strncmp(devtype, "disk", 4)) {
+> >  =09=09=09total_paths++;
+> > -=09=09=09conf =3D get_multipath_config();
+> > -=09=09=09pthread_cleanup_push(put_multipath_config,
+> > conf);
+>=20
+> Why move grabbing the config RCU lock out of the loop?=20
 
-Can you take patch 3 now ?
+Yes, that was the idea.
 
-> 
-> Also need the DM folks to review/sign off on patch 7. Mike?
-> 
+> All things being
+> equal, it seems like we'd rather hold this for less time, and
+> rcu_read_lock() is designed to be lightweight, so calling it more
+> times
+> shouldn't be an issue.=20
 
+It's not the execution time of rcu_read_lock() that I'm concerned
+about.=20
 
--- 
-Damien Le Moal
-Western Digital Research
+In this particular loop, my estimate is that >90% of time is spent in
+path_discover()/pathinfo(), so time-during-which-lock-is-held-wise, we
+gain little by taking and releasing the RCU lock in every iteration.=20
+
+Right, we might catch a configuration change _earlier_ if we release
+the lock between pathinfo() invocations. But - do we actually want
+that? This lock protects us against corruption of the multipathd
+configuration, basically against someone calling "multipathd
+reconfigure" while our code is running. But if the configuration ins
+really changed, what we're currently doing is vain anyway - once the
+configure() call is finished, we will go through yet another full
+reconfigure cycle. IOW: Do we seriously want to call pathinfo() for the
+different paths in the system with  different configuration, once with
+and once without "user_friendly_names", for example?
+
+Given that the code we're talking about is only called from
+reconfigure(), multipath_conf having just been reassigned, IMO it's an
+improvement to hold the lock through the entire loop. It might even be
+good to hold the lock for the complete invocation of configure(), but I
+haven't thought about that in detail yet.
+
+Does this make sense?
+
+Besides, to my taste at least, it improves readability of the code to
+move get_multipath_config() out of certain loops.
+
+Thanks,
+Martin
