@@ -1,14 +1,15 @@
-From: David Michael <fedora.dm0@gmail.com>
-Subject: Re: Making udev aware of dm-init devices
-Date: Tue, 5 Nov 2019 12:47:54 -0500
-Message-ID: <CAEvUa7n9HTc=4is6ESTWR8S1jzjGisSv_tGcVX7_O_QoYGSUCg@mail.gmail.com>
-References: <CAEvUa7nAYkrdsPhmQpV_ChP5Jtnn9oR2Xb=KmBbXJyTZpGUAzg@mail.gmail.com>
-	<20191105170445.GA22109@redhat.com>
+From: Maged Mokhtar <mmokhtar@petasan.org>
+Subject: Re: [PATCH] dm-writecache: change config parameters
+ using messages
+Date: Tue, 5 Nov 2019 23:19:40 +0200
+Message-ID: <8388b99a-a531-981e-9e36-8aeb3dffd18e@petasan.org>
+References: <fa95f1f0-67d6-d02e-6999-ba1f90d70fe2@petasan.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191105170445.GA22109@redhat.com>
+In-Reply-To: <fa95f1f0-67d6-d02e-6999-ba1f90d70fe2@petasan.org>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,41 +19,77 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
+To: mpatocka@redhat.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Nov 5, 2019 at 12:04 PM Mike Snitzer <snitzer@redhat.com> wrote:
-> On Mon, Nov 04 2019 at 10:43am -0500,
-> David Michael <fedora.dm0@gmail.com> wrote:
->
-> > Hi,
-> >
-> > I would like to be able to use a root device configured by
-> > dm-mod.create with an initrd in some scenarios, but it appears that
-> > the default udev rules do not recognize this setup which prevents
-> > systemd from mounting the root file system.  There is a systemd bug
-> > report with a demo script to illustrate what I mean.[1]  Has anyone
-> > here encountered this, or is there a solution already?
->
-> Why do you want this?  dm-mod.create and initrd are mutually
-> exclussive... that was/is the point.
-
-I am using the same image building process for custom systems with
-dm-init etc. built into the kernel and for Fedora-based systems, which
-require an initrd to load the device mapper kernel modules as well as
-NVMe support so it can find the devices in the first place.  I'd
-prefer to be uniform and use dm-mod.create everywhere rather than
-bundle the configuration into an initrd for certain distros (or be
-uniform by creating initrds for my custom builds that don't otherwise
-need one).
-
-As mentioned in the systemd bug, dm-mod.create works correctly with an
-initrd aside from udev needing to be manually triggered before systemd
-can use it.  I was looking for suggestions for how this could be
-handled upstream ideally so I don't have to customize an initrd to add
-a udevadm trigger.
-
-Thanks.
-
-David
+R2VudGxlIHBpbmcgcGxlYXNlLgoKSXQgY291bGQgYWRkIGZsZXhpYmlsaXR5IGluIGNoYW5naW5n
+IGNhY2hlIHBhcmFtZXRlcnMgYWZ0ZXIgZGV2aWNlIGNyZWF0aW9uLgoKT24gMjIvMDkvMjAxOSAy
+MTozOSwgTWFnZWQgTW9raHRhciB3cm90ZToKPiBTdXBwb3J0IGNoYW5naW5nIGNvbmZpZ3VyYXRp
+b24gcGFyYW1ldGVycyB1c2luZyBkZXZpY2UtbWFwcGVyIG1lc3NhZ2VzCj4gRS5nLgo+IMKgwqAg
+ZG1zZXR1cCBtZXNzYWdlIHZnMS9sdjEgMCBoaWdoX3dhdGVybWFyayA2MAo+Cj4gU2lnbmVkLW9m
+Zi1ieTogTWFnZWQgTW9raHRhciA8bW1va2h0YXJAcGV0YXNhbi5vcmc+Cj4gLS0tCj4gwqBkcml2
+ZXJzL21kL2RtLXdyaXRlY2FjaGUuYyB8wqDCoCA2OCArKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKysrKwo+IMKgMSBmaWxlIGNoYW5nZWQsIDY4IGluc2VydGlvbnMoKykKPgo+IC0tLSBh
+L2RyaXZlcnMvbWQvZG0td3JpdGVjYWNoZS5jwqDCoMKgIDIwMTktMDgtMjUgMTY6MTM6NTQuMDAw
+MDAwMDAwICswMjAwCj4gKysrIGIvZHJpdmVycy9tZC9kbS13cml0ZWNhY2hlLmPCoMKgwqAgMjAx
+OS0wOS0yMSAxNjoyMjoyMy4wMDAwMDAwMDAgKzAyMDAKPiBAQCAtMTAwOSw2ICsxMDA5LDY5IEBA
+IHN0YXRpYyBpbnQgcHJvY2Vzc19mbHVzaF9vbl9zdXNwZW5kX21lc2cKPiDCoMKgwqDCoCByZXR1
+cm4gMDsKPiDCoH0KPgo+ICtzdGF0aWMgaW50IHNldF9jb25maWdfdmFsdWUoc3RydWN0IGRtX3dy
+aXRlY2FjaGUgKndjLCBjaGFyICprZXksIGNoYXIgCj4gKnZhbCkKPiArewo+ICvCoMKgwqAgdW5z
+aWduZWQgdix4Owo+ICvCoMKgwqAgaWYgKHNzY2FuZih2YWwsICIldSIsICZ2KSAhPSAxKQo+ICvC
+oMKgwqDCoMKgwqDCoCByZXR1cm4gLUVJTlZBTDsKPiArwqDCoMKgIGlmICghc3RyY2FzZWNtcChr
+ZXksICJoaWdoX3dhdGVybWFyayIpKSB7Cj4gK8KgwqDCoMKgwqDCoMKgIGlmICh2IDwgMCB8fCB2
+ID4gMTAwKQo+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIHJldHVybiAtRUlOVkFMOwo+ICvCoMKg
+wqDCoMKgwqDCoCB3Y19sb2NrKHdjKTsKPiArwqDCoMKgwqDCoMKgwqAgeCA9ICh1aW50NjRfdCl3
+Yy0+bl9ibG9ja3MgKiAoMTAwIC0gdik7Cj4gK8KgwqDCoMKgwqDCoMKgIHggKz0gNTA7Cj4gK8Kg
+wqDCoMKgwqDCoMKgIGRvX2Rpdih4LCAxMDApOwo+ICvCoMKgwqDCoMKgwqDCoCBpZiAod2MtPmZy
+ZWVsaXN0X2xvd193YXRlcm1hcmsgPCB4KSB7Cj4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqAgd2Nf
+dW5sb2NrKHdjKTsKPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCByZXR1cm4gLUVJTlZBTDsKPiAr
+wqDCoMKgwqDCoMKgwqAgfQo+ICvCoMKgwqDCoMKgwqDCoCB3Yy0+ZnJlZWxpc3RfaGlnaF93YXRl
+cm1hcmsgPSB4Owo+ICvCoMKgwqDCoMKgwqDCoCB3Yy0+aGlnaF93bV9wZXJjZW50X3NldCA9IHRy
+dWU7Cj4gK8KgwqDCoMKgwqDCoMKgIGlmICh3Yy0+ZnJlZWxpc3Rfc2l6ZSArIHdjLT53cml0ZWJh
+Y2tfc2l6ZQo+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIDw9IHdjLT5mcmVlbGlzdF9oaWdoX3dh
+dGVybWFyaykKPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBxdWV1ZV93b3JrKHdjLT53cml0ZWJh
+Y2tfd3EsICZ3Yy0+d3JpdGViYWNrX3dvcmspOwo+ICvCoMKgwqDCoMKgwqDCoCB3Y191bmxvY2so
+d2MpOwo+ICvCoMKgwqAgfQo+ICvCoMKgwqAgZWxzZSBpZiAoIXN0cmNhc2VjbXAoa2V5LCAibG93
+X3dhdGVybWFyayIpKSB7Cj4gK8KgwqDCoMKgwqDCoMKgIGlmICh2IDwgMCB8fCB2ID4gMTAwKQo+
+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIHJldHVybiAtRUlOVkFMOwo+ICvCoMKgwqDCoMKgwqDC
+oCB3Y19sb2NrKHdjKTsKPiArwqDCoMKgwqDCoMKgwqAgeCA9ICh1aW50NjRfdCl3Yy0+bl9ibG9j
+a3MgKiAoMTAwIC0gdik7Cj4gK8KgwqDCoMKgwqDCoMKgIHggKz0gNTA7Cj4gK8KgwqDCoMKgwqDC
+oMKgIGRvX2Rpdih4LCAxMDApOwo+ICvCoMKgwqDCoMKgwqDCoCBpZiAoeCA8IHdjLT5mcmVlbGlz
+dF9oaWdoX3dhdGVybWFyaykgewo+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIHdjX3VubG9jayh3
+Yyk7Cj4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqAgcmV0dXJuIC1FSU5WQUw7Cj4gK8KgwqDCoMKg
+wqDCoMKgIH0KPiArwqDCoMKgwqDCoMKgwqAgd2MtPmZyZWVsaXN0X2xvd193YXRlcm1hcmsgPSB4
+Owo+ICvCoMKgwqDCoMKgwqDCoCB3Yy0+bG93X3dtX3BlcmNlbnRfc2V0ID0gdHJ1ZTsKPiArwqDC
+oMKgwqDCoMKgwqAgd2NfdW5sb2NrKHdjKTsKPiArwqDCoMKgIH0KPiArwqDCoMKgIGVsc2UgaWYg
+KCFzdHJjYXNlY21wKGtleSwgIndyaXRlYmFja19qb2JzIikpIHsKPiArwqDCoMKgwqDCoMKgwqAg
+d2NfbG9jayh3Yyk7Cj4gK8KgwqDCoMKgwqDCoMKgIHdjLT5tYXhfd3JpdGViYWNrX2pvYnMgPSB2
+Owo+ICvCoMKgwqDCoMKgwqDCoCB3Yy0+bWF4X3dyaXRlYmFja19qb2JzX3NldCA9IHRydWU7Cj4g
+K8KgwqDCoMKgwqDCoMKgIHdjX3VubG9jayh3Yyk7Cj4gK8KgwqDCoCB9Cj4gK8KgwqDCoCBlbHNl
+IGlmICghc3RyY2FzZWNtcChrZXksICJhdXRvY29tbWl0X2Jsb2NrcyIpKSB7Cj4gK8KgwqDCoMKg
+wqDCoMKgIHdjX2xvY2sod2MpOwo+ICvCoMKgwqDCoMKgwqDCoCB3Yy0+YXV0b2NvbW1pdF9ibG9j
+a3MgPSB2Owo+ICvCoMKgwqDCoMKgwqDCoCB3Yy0+YXV0b2NvbW1pdF9ibG9ja3Nfc2V0ID0gdHJ1
+ZTsKPiArwqDCoMKgwqDCoMKgwqAgd2NfdW5sb2NrKHdjKTsKPiArwqDCoMKgIH0KPiArwqDCoMKg
+IGVsc2UgaWYgKCFzdHJjYXNlY21wKGtleSwgImF1dG9jb21taXRfdGltZSIpKSB7Cj4gK8KgwqDC
+oMKgwqDCoMKgIGlmICh2IDwgMSB8fCB2ID4gMzYwMDAwMCkKPiArwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoCByZXR1cm4gLUVJTlZBTDsKPiArwqDCoMKgwqDCoMKgwqAgd2NfbG9jayh3Yyk7Cj4gK8Kg
+wqDCoMKgwqDCoMKgIHdjLT5hdXRvY29tbWl0X2ppZmZpZXMgPSBtc2Vjc190b19qaWZmaWVzKHYp
+Owo+ICvCoMKgwqDCoMKgwqDCoCB3Yy0+YXV0b2NvbW1pdF90aW1lX3NldCA9IHRydWU7Cj4gK8Kg
+wqDCoMKgwqDCoMKgIHdjX3VubG9jayh3Yyk7Cj4gK8KgwqDCoCB9Cj4gK8KgwqDCoCBlbHNlCj4g
+K8KgwqDCoMKgwqDCoMKgIHJldHVybiAtRUlOVkFMOwo+ICvCoMKgwqAgcmV0dXJuIDA7Cj4gK30K
+PiArCj4gwqBzdGF0aWMgaW50IHdyaXRlY2FjaGVfbWVzc2FnZShzdHJ1Y3QgZG1fdGFyZ2V0ICp0
+aSwgdW5zaWduZWQgYXJnYywgCj4gY2hhciAqKmFyZ3YsCj4gwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgIGNoYXIgKnJlc3VsdCwgdW5zaWduZWQgbWF4bGVuKQo+IMKgewo+IEBA
+IC0xMDE5LDYgKzEwODIsMTEgQEAgc3RhdGljIGludCB3cml0ZWNhY2hlX21lc3NhZ2Uoc3RydWN0
+IGRtXwo+IMKgwqDCoMKgwqDCoMKgwqAgciA9IHByb2Nlc3NfZmx1c2hfbWVzZyhhcmdjLCBhcmd2
+LCB3Yyk7Cj4gwqDCoMKgwqAgZWxzZSBpZiAoIXN0cmNhc2VjbXAoYXJndlswXSwgImZsdXNoX29u
+X3N1c3BlbmQiKSkKPiDCoMKgwqDCoMKgwqDCoMKgIHIgPSBwcm9jZXNzX2ZsdXNoX29uX3N1c3Bl
+bmRfbWVzZyhhcmdjLCBhcmd2LCB3Yyk7Cj4gK8KgwqDCoCBlbHNlIGlmIChhcmdjPT0yKSB7Cj4g
+K8KgwqDCoMKgwqDCoMKgIHIgPSBzZXRfY29uZmlnX3ZhbHVlKHdjLCBhcmd2WzBdLCBhcmd2WzFd
+KTsKPiArwqDCoMKgwqDCoMKgwqAgaWYgKHI9PS1FSU5WQUwpCj4gK8KgwqDCoMKgwqDCoMKgwqDC
+oMKgwqAgRE1FUlIoImludmFsaWQgbWVzc2FnZSByZWNlaXZlZDogJXMgJXMiLCBhcmd2WzBdLCBh
+cmd2WzFdKTsKPiArwqDCoMKgIH0KPiDCoMKgwqDCoCBlbHNlCj4gwqDCoMKgwqDCoMKgwqDCoCBE
+TUVSUigidW5yZWNvZ25pc2VkIG1lc3NhZ2UgcmVjZWl2ZWQ6ICVzIiwgYXJndlswXSk7Cj4KCi0t
+CmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJl
+ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
