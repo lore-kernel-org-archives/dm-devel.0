@@ -1,15 +1,13 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 7/8] dm: add zone open,
-	close and finish support
-Date: Tue, 5 Nov 2019 11:34:21 -0500
-Message-ID: <20191105163421.GA22009@redhat.com>
-References: <20191027140549.26272-1-damien.lemoal@wdc.com>
-	<20191027140549.26272-8-damien.lemoal@wdc.com>
+Subject: Re: Making udev aware of dm-init devices
+Date: Tue, 5 Nov 2019 12:04:45 -0500
+Message-ID: <20191105170445.GA22109@redhat.com>
+References: <CAEvUa7nAYkrdsPhmQpV_ChP5Jtnn9oR2Xb=KmBbXJyTZpGUAzg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=WINDOWS-1252
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191027140549.26272-8-damien.lemoal@wdc.com>
+In-Reply-To: <CAEvUa7nAYkrdsPhmQpV_ChP5Jtnn9oR2Xb=KmBbXJyTZpGUAzg@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,24 +18,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
-To: Damien Le Moal <damien.lemoal@wdc.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Ajay Joshi <ajay.joshi@wdc.com>, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, Dmitry Fomichev <dmitry.fomichev@wdc.com>, Hans Holmberg <Hans.Holmberg@wdc.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Keith Busch <kbusch@kernel.org>, Matias Bjorling <matias.bjorling@wdc.com>
+To: David Michael <fedora.dm0@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, Oct 27 2019 at 10:05am -0400,
-Damien Le Moal <damien.lemoal@wdc.com> wrote:
+On Mon, Nov 04 2019 at 10:43am -0500,
+David Michael <fedora.dm0@gmail.com> wrote:
 
-> From: Ajay Joshi <ajay.joshi@wdc.com>
+> Hi,
 >=20
-> Implement REQ_OP_ZONE_OPEN, REQ_OP_ZONE_CLOSE and REQ_OP_ZONE_FINISH
-> support to allow explicit control of zone states.
->=20
-> Contains contributions from Matias Bjorling, Hans Holmberg and
-> Damien Le Moal.
->=20
-> Signed-off-by: Ajay Joshi <ajay.joshi@wdc.com>
-> Signed-off-by: Matias Bjorling <matias.bjorling@wdc.com>
-> Signed-off-by: Hans Holmberg <hans.holmberg@wdc.com>
-> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+> I would like to be able to use a root device configured by
+> dm-mod.create with an initrd in some scenarios, but it appears that
+> the default udev rules do not recognize this setup which prevents
+> systemd from mounting the root file system.  There is a systemd bug
+> report with a demo script to illustrate what I mean.[1]  Has anyone
+> here encountered this, or is there a solution already?
 
-Acked-by: Mike Snitzer <snitzer@redhat.com>
+Why do you want this?  dm-mod.create and initrd are mutually
+exclussive... that was/is the point.
