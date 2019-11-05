@@ -1,12 +1,14 @@
-From: Maged Mokhtar <mmokhtar@petasan.org>
-Subject: [PATCH v1] dm writecache: handle REQ_FUA
-Date: Tue, 5 Nov 2019 22:56:07 +0200
-Message-ID: <10babc69-1bbf-bd98-23ba-a6f1dbf137a1@petasan.org>
+From: David Michael <fedora.dm0@gmail.com>
+Subject: Re: Making udev aware of dm-init devices
+Date: Tue, 5 Nov 2019 12:47:54 -0500
+Message-ID: <CAEvUa7n9HTc=4is6ESTWR8S1jzjGisSv_tGcVX7_O_QoYGSUCg@mail.gmail.com>
+References: <CAEvUa7nAYkrdsPhmQpV_ChP5Jtnn9oR2Xb=KmBbXJyTZpGUAzg@mail.gmail.com>
+	<20191105170445.GA22109@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <20191105170445.GA22109@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,27 +18,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: msnitzer@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Call writecache_flush() on REQ_FUA
+On Tue, Nov 5, 2019 at 12:04 PM Mike Snitzer <snitzer@redhat.com> wrote:
+> On Mon, Nov 04 2019 at 10:43am -0500,
+> David Michael <fedora.dm0@gmail.com> wrote:
+>
+> > Hi,
+> >
+> > I would like to be able to use a root device configured by
+> > dm-mod.create with an initrd in some scenarios, but it appears that
+> > the default udev rules do not recognize this setup which prevents
+> > systemd from mounting the root file system.  There is a systemd bug
+> > report with a demo script to illustrate what I mean.[1]  Has anyone
+> > here encountered this, or is there a solution already?
+>
+> Why do you want this?  dm-mod.create and initrd are mutually
+> exclussive... that was/is the point.
 
-Signed-off-by: Maged Mokhtar <mmokhtar@petasan.org>
-Acked-By: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org	# 4.18+
----
-  drivers/md/dm-writecache.c |    3 ++-
-  1 file changed, 2 insertions(+), 1 deletion(-)
+I am using the same image building process for custom systems with
+dm-init etc. built into the kernel and for Fedora-based systems, which
+require an initrd to load the device mapper kernel modules as well as
+NVMe support so it can find the devices in the first place.  I'd
+prefer to be uniform and use dm-mod.create everywhere rather than
+bundle the configuration into an initrd for certain distros (or be
+uniform by creating initrds for my custom builds that don't otherwise
+need one).
 
---- a/drivers/md/dm-writecache.c    2019-10-23 22:01:18.480115962 +0200
-+++ b/drivers/md/dm-writecache.c    2019-10-23 22:02:08.616113729 +0200
-@@ -1218,7 +1218,8 @@ bio_copy:
-              }
-          } while (bio->bi_iter.bi_size);
+As mentioned in the systemd bug, dm-mod.create works correctly with an
+initrd aside from udev needing to be manually triggered before systemd
+can use it.  I was looking for suggestions for how this could be
+handled upstream ideally so I don't have to customize an initrd to add
+a udevadm trigger.
 
--        if (unlikely(wc->uncommitted_blocks >= wc->autocommit_blocks))
-+        if (unlikely(bio->bi_opf & REQ_FUA ||
-+                wc->uncommitted_blocks >= wc->autocommit_blocks))
-              writecache_flush(wc);
-          else
-              writecache_schedule_autocommit(wc);
+Thanks.
+
+David
