@@ -1,12 +1,18 @@
-From: Dmitry Fomichev <dmitry.fomichev@wdc.com>
-Subject: [PATCH] dm-zoned: reduce overhead of backing device
-	checks
-Date: Wed,  6 Nov 2019 14:34:35 -0800
-Message-ID: <20191106223435.30840-1-dmitry.fomichev@wdc.com>
+From: Dmitry Fomichev <Dmitry.Fomichev@wdc.com>
+Subject: Re: dm-zoned performance degradation after apply
+ 75d66ffb48efb3 ("dm zoned:, properly handle backing device failure")
+Date: Wed, 6 Nov 2019 23:00:59 +0000
+Message-ID: <283fcf104cab4c99e2e1665a05e13829c4f125b6.camel@wdc.com>
+References: <203cc4c8-b380-5b2f-c9e7-766b3f031c8c@huawei.com>
+	<38d2a401ad8111ec0e6806f3e165916b18769d6d.camel@wdc.com>
+	<63f060dc-d3b9-f4d1-8c86-27e75f1d1441@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <63f060dc-d3b9-f4d1-8c86-27e75f1d1441@huawei.com>
+Content-Language: en-US
+Content-ID: <3C293C767C08BE46BAA1C8FC0EE988EA@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,265 +22,119 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, zhangxiaoxu <zhangxiaoxu5@huawei.com>
-Cc: Dmitry Fomichev <dmitry.fomichev@wdc.com>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "agk@redhat.com" <agk@redhat.com>, Damien Le Moal <Damien.LeMoal@wdc.com>, "zhangxiaoxu5@huawei.com" <zhangxiaoxu5@huawei.com>, "snitzer@redhat.com" <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Commit 75d66ffb48efb3 added backing device health checks and as a part
-of these checks, check_events() block ops template call is invoked
-in dm-zoned mapping path as well as in reclaim and flush path. Calling
-check_events() with ATA or SCSI backing devices introduces a blocking
-scsi_test_unit_ready() call being made in sd_check_events().
-Even though the overhead of calling scsi_test_unit_ready() is small
-for ATA zoned devices, it is much larger for SCSI and it affects
-performance in a very negative way.
-
-This commit fixes this performance regression by executing
-check_events() only in case of any I/O errors. The function
-dmz_bdev_is_dying() is modified to call only blk_queue_dying(),
-while calls to check_events() are made in a new helper function,
-dmz_check_bdev().
-
-Cc: stable@vger.kernel.org
-Fixes: 75d66ffb48efb3 ("dm zoned: properly handle backing device failure")
-Signed-off-by: Dmitry Fomichev <dmitry.fomichev@wdc.com>
----
- drivers/md/dm-zoned-metadata.c | 29 +++++++++++-------
- drivers/md/dm-zoned-reclaim.c  |  8 ++---
- drivers/md/dm-zoned-target.c   | 54 ++++++++++++++++++++++++----------
- drivers/md/dm-zoned.h          |  2 ++
- 4 files changed, 61 insertions(+), 32 deletions(-)
-
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index 595a73110e17..ac1179ca80d9 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -554,6 +554,7 @@ static struct dmz_mblock *dmz_get_mblock(struct dmz_metadata *zmd,
- 		       TASK_UNINTERRUPTIBLE);
- 	if (test_bit(DMZ_META_ERROR, &mblk->state)) {
- 		dmz_release_mblock(zmd, mblk);
-+		dmz_check_bdev(zmd->dev);
- 		return ERR_PTR(-EIO);
- 	}
- 
-@@ -625,6 +626,8 @@ static int dmz_rdwr_block(struct dmz_metadata *zmd, int op, sector_t block,
- 	ret = submit_bio_wait(bio);
- 	bio_put(bio);
- 
-+	if (ret)
-+		dmz_check_bdev(zmd->dev);
- 	return ret;
- }
- 
-@@ -691,6 +694,7 @@ static int dmz_write_dirty_mblocks(struct dmz_metadata *zmd,
- 			       TASK_UNINTERRUPTIBLE);
- 		if (test_bit(DMZ_META_ERROR, &mblk->state)) {
- 			clear_bit(DMZ_META_ERROR, &mblk->state);
-+			dmz_check_bdev(zmd->dev);
- 			ret = -EIO;
- 		}
- 		nr_mblks_submitted--;
-@@ -768,7 +772,7 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
- 	/* If there are no dirty metadata blocks, just flush the device cache */
- 	if (list_empty(&write_list)) {
- 		ret = blkdev_issue_flush(zmd->dev->bdev, GFP_NOIO, NULL);
--		goto out;
-+		goto err;
- 	}
- 
- 	/*
-@@ -778,7 +782,7 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
- 	 */
- 	ret = dmz_log_dirty_mblocks(zmd, &write_list);
- 	if (ret)
--		goto out;
-+		goto err;
- 
- 	/*
- 	 * The log is on disk. It is now safe to update in place
-@@ -786,11 +790,11 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
- 	 */
- 	ret = dmz_write_dirty_mblocks(zmd, &write_list, zmd->mblk_primary);
- 	if (ret)
--		goto out;
-+		goto err;
- 
- 	ret = dmz_write_sb(zmd, zmd->mblk_primary);
- 	if (ret)
--		goto out;
-+		goto err;
- 
- 	while (!list_empty(&write_list)) {
- 		mblk = list_first_entry(&write_list, struct dmz_mblock, link);
-@@ -805,16 +809,20 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
- 
- 	zmd->sb_gen++;
- out:
--	if (ret && !list_empty(&write_list)) {
--		spin_lock(&zmd->mblk_lock);
--		list_splice(&write_list, &zmd->mblk_dirty_list);
--		spin_unlock(&zmd->mblk_lock);
--	}
--
- 	dmz_unlock_flush(zmd);
- 	up_write(&zmd->mblk_sem);
- 
- 	return ret;
-+
-+err:
-+	if (!list_empty(&write_list)) {
-+		spin_lock(&zmd->mblk_lock);
-+		list_splice(&write_list, &zmd->mblk_dirty_list);
-+		spin_unlock(&zmd->mblk_lock);
-+	}
-+	if (!dmz_check_bdev(zmd->dev))
-+		ret = -EIO;
-+	goto out;
- }
- 
- /*
-@@ -1244,6 +1252,7 @@ static int dmz_update_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
- 	if (ret) {
- 		dmz_dev_err(zmd->dev, "Get zone %u report failed",
- 			    dmz_id(zmd, zone));
-+		dmz_check_bdev(zmd->dev);
- 		return ret;
- 	}
- 
-diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
-index d240d7ca8a8a..e7ace908a9b7 100644
---- a/drivers/md/dm-zoned-reclaim.c
-+++ b/drivers/md/dm-zoned-reclaim.c
-@@ -82,6 +82,7 @@ static int dmz_reclaim_align_wp(struct dmz_reclaim *zrc, struct dm_zone *zone,
- 			    "Align zone %u wp %llu to %llu (wp+%u) blocks failed %d",
- 			    dmz_id(zmd, zone), (unsigned long long)wp_block,
- 			    (unsigned long long)block, nr_blocks, ret);
-+		dmz_check_bdev(zrc->dev);
- 		return ret;
- 	}
- 
-@@ -489,12 +490,7 @@ static void dmz_reclaim_work(struct work_struct *work)
- 	ret = dmz_do_reclaim(zrc);
- 	if (ret) {
- 		dmz_dev_debug(zrc->dev, "Reclaim error %d\n", ret);
--		if (ret == -EIO)
--			/*
--			 * LLD might be performing some error handling sequence
--			 * at the underlying device. To not interfere, do not
--			 * attempt to schedule the next reclaim run immediately.
--			 */
-+		if (!dmz_check_bdev(zrc->dev))
- 			return;
- 	}
- 
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index 09f5a63e0803..e0b809bb4885 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -85,6 +85,8 @@ static inline void dmz_bio_endio(struct bio *bio, blk_status_t status)
- 
- 	if (status != BLK_STS_OK && bio->bi_status == BLK_STS_OK)
- 		bio->bi_status = status;
-+	if (bio->bi_status != BLK_STS_OK)
-+		bioctx->target->dev->flags |= DMZ_CHECK_BDEV;
- 
- 	if (refcount_dec_and_test(&bioctx->ref)) {
- 		struct dm_zone *zone = bioctx->zone;
-@@ -570,31 +572,51 @@ static int dmz_queue_chunk_work(struct dmz_target *dmz, struct bio *bio)
- }
- 
- /*
-- * Check the backing device availability. If it's on the way out,
-+ * Check if the backing device is being removed. If it's on the way out,
-  * start failing I/O. Reclaim and metadata components also call this
-  * function to cleanly abort operation in the event of such failure.
-  */
- bool dmz_bdev_is_dying(struct dmz_dev *dmz_dev)
- {
--	struct gendisk *disk;
-+	if (dmz_dev->flags & DMZ_BDEV_DYING)
-+		return true;
- 
--	if (!(dmz_dev->flags & DMZ_BDEV_DYING)) {
--		disk = dmz_dev->bdev->bd_disk;
--		if (blk_queue_dying(bdev_get_queue(dmz_dev->bdev))) {
--			dmz_dev_warn(dmz_dev, "Backing device queue dying");
--			dmz_dev->flags |= DMZ_BDEV_DYING;
--		} else if (disk->fops->check_events) {
--			if (disk->fops->check_events(disk, 0) &
--					DISK_EVENT_MEDIA_CHANGE) {
--				dmz_dev_warn(dmz_dev, "Backing device offline");
--				dmz_dev->flags |= DMZ_BDEV_DYING;
--			}
--		}
-+	if (dmz_dev->flags & DMZ_CHECK_BDEV)
-+		return !dmz_check_bdev(dmz_dev);
-+
-+	if (blk_queue_dying(bdev_get_queue(dmz_dev->bdev))) {
-+		dmz_dev_warn(dmz_dev, "Backing device queue dying");
-+		dmz_dev->flags |= DMZ_BDEV_DYING;
- 	}
- 
- 	return dmz_dev->flags & DMZ_BDEV_DYING;
- }
- 
-+/*
-+ * Check the backing device availability. This detects such events as
-+ * backing device going offline due to errors, media removals, etc.
-+ * This check is less efficient than dmz_bdev_is_dying() and should
-+ * only be performed as a part of error handling.
-+ */
-+bool dmz_check_bdev(struct dmz_dev *dmz_dev)
-+{
-+	struct gendisk *disk;
-+
-+	dmz_dev->flags &= ~DMZ_CHECK_BDEV;
-+
-+	if (dmz_bdev_is_dying(dmz_dev))
-+		return false;
-+
-+	disk = dmz_dev->bdev->bd_disk;
-+	if (disk->fops->check_events &&
-+	    disk->fops->check_events(disk, 0) & DISK_EVENT_MEDIA_CHANGE) {
-+		dmz_dev_warn(dmz_dev, "Backing device offline");
-+		dmz_dev->flags |= DMZ_BDEV_DYING;
-+	}
-+
-+	return !(dmz_dev->flags & DMZ_BDEV_DYING);
-+}
-+
- /*
-  * Process a new BIO.
-  */
-@@ -907,8 +929,8 @@ static int dmz_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
- {
- 	struct dmz_target *dmz = ti->private;
- 
--	if (dmz_bdev_is_dying(dmz->dev))
--		return -ENODEV;
-+	if (!dmz_check_bdev(dmz->dev))
-+		return -EIO;
- 
- 	*bdev = dmz->dev->bdev;
- 
-diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
-index d8e70b0ade35..5b5e493d479c 100644
---- a/drivers/md/dm-zoned.h
-+++ b/drivers/md/dm-zoned.h
-@@ -72,6 +72,7 @@ struct dmz_dev {
- 
- /* Device flags. */
- #define DMZ_BDEV_DYING		(1 << 0)
-+#define DMZ_CHECK_BDEV		(2 << 0)
- 
- /*
-  * Zone descriptor.
-@@ -255,5 +256,6 @@ void dmz_schedule_reclaim(struct dmz_reclaim *zrc);
-  * Functions defined in dm-zoned-target.c
-  */
- bool dmz_bdev_is_dying(struct dmz_dev *dmz_dev);
-+bool dmz_check_bdev(struct dmz_dev *dmz_dev);
- 
- #endif /* DM_ZONED_H */
--- 
-2.21.0
+SGkgWmhhbmcsCgpJIGp1c3QgcG9zdGVkIHRoZSBwYXRjaCB0aGF0IGZpeGVzIHRoaXMgaXNzdWUu
+IENvdWxkIHlvdSBwbGVhc2UgdHJ5IGl0IGFuZCBsZXQKbWUga25vdyBob3cgdGhpcyBwYXRjaCB3
+b3JrcyBmb3IgeW91PyBJbiBteSB0ZXN0aW5nLCBJIGRvbid0IHNlZSBhbnkgZXhjZXNzaXZlClRV
+UnMgaXNzdWVkIHdpdGggdGhpcyBwYXRjaCBpbiBwbGFjZS4gSXQgdGFrZXMgYXJvdW5kIDEyIG1p
+bnV0ZXMgdG8gcnVuCm1rZnMuZXh0NCBvbiBhIGZyZXNobHkgY3JlYXRlZCBkbS16b25lZCBkZXZp
+Y2Ugb24gdG9wIG9mIGEgMTRUQiBTQ1NJIGRyaXZlLgpUaGUgc2FtZSB0ZXN0IG9uIHRvcCBvZiBh
+IDE0VEIgU0FUQSBkcml2ZSB0YWtlcyBhcm91bmQgMTAgbWludXRlcy4gVGhlc2UgYXJlCmRpcmVj
+dCBhdHRhY2hlZCBkcml2ZXMgb24gYSBwaHlzaWNhbCBzZXJ2ZXIuCgpJIGRpZG4ndCB0ZXN0IHRo
+aXMgcGF0Y2ggb24gNC4xOSBrZXJuZWwuIElmIHlvdSBoYXZlIGFueSBmaW5kaW5ncyBhYm91dCBo
+b3cKaXQgYmVoYXZlcywgZG8gbGV0IG1lIGtub3cuCgpSZWdhcmRzLApEbWl0cnkKCk9uIFRodSwg
+MjAxOS0xMC0zMSBhdCAxNjoyMCArMDgwMCwgemhhbmd4aWFveHUgKEEpIHdyb3RlOgo+IGhpIERt
+aXRyeSwgdGhhbmtzIGZvciB5b3VyIHJlcGx5Lgo+IAo+IEkgYWxzbyB0ZXN0IGl0IHVzZSB0aGUg
+bWFpbmxpbmUsIGl0IGFsc28gdGFrZXMgbW9yZSB0aGFuIDEgaG91cnMuCj4gbXkgbWVjaGluZSBo
+YXMgNjQgQ1BVcyBjb3JlIGFuZCB0aGUgZGlzayBpcyBTQVRBLgo+IAo+IHdoZW4gbWtmcy5leHQ0
+LCBJIGZvdW5kIHRoZSAnc2NzaV90ZXN0X3VuaXRfcmVhZHknIHJ1biBtb3JlIHRoYW4gMTAwMCB0
+aW1lcwo+IHBlciBzZWNvbmQgYnkgdGhlIGRpZmZlcmVudCBrd29ya2VyLgo+IGFuZCBldmVyeSAn
+c2NzaV90ZXN0X3VuaXRfcmVhZHknIHRha2VzIG1vcmUgdGhhbiAyMDB1cywgYW5kIHRoZSBpbnRl
+cnZhbAo+IGxlc3MgdGhhbiAyMHVzLgo+IFNvLCBJIHRoaW5rIHlvdXIgZ3Vlc3MgaXMgcmlnaHQu
+Cj4gCj4gYnV0IHRoZXJlIGlzIGFub3RoZXIgcXVlc3Rpb24sIHdoeSA0LjE5IGJyYW5jaCB0YWtl
+cyBtb3JlIHRoYW4gMTAgaG91cj8KPiBJIHdpbGwgd29yayBvbiBpdCwgaWYgYW55IGluZm9ybWF0
+aW9uIGFib3V0IGl0LCBJIHdpbGwgcmVwbHkgeW91Lgo+IAo+IFRoYW5rcy4KPiAKPiBteSBzY3Jp
+cHQ6Cj4gCWRtemFkbSAtLWZvcm1hdCAvZGV2L3NkaQo+IAllY2hvICIwIDIxNDg1MzIyMjQwIHpv
+bmVkIC9kZXYvc2RpIiB8IGRtc2V0dXAgY3JlYXRlIGRtei1zZGkKPiAJZGF0ZTsgbWtmcy5leHQ0
+IC9kZXYvbWFwcGVyL2Rtei1zZGk7IGRhdGUKPiAKPiBtYWlubGluZToKPiAJW3Jvb3RAbG9jYWxo
+b3N0IH5dIyB1bmFtZSAtYQo+IAlMaW51eCBsb2NhbGhvc3QgNS40LjAtcmM1ICMxIFNNUCBUaHUg
+T2N0IDMxIDExOjQxOjIwIENTVCAyMDE5IGFhcmNoNjQgYWFyY2g2NCBhYXJjaDY0IEdOVS9MaW51
+eAo+IAo+IAlUaHUgT2N0IDMxIDEzOjU4OjU1IENTVCAyMDE5Cj4gCW1rZTJmcyAxLjQzLjYgKDI5
+LUF1Zy0yMDE3KQo+IAlEaXNjYXJkaW5nIGRldmljZSBibG9ja3M6IGRvbmUKPiAJQ3JlYXRpbmcg
+ZmlsZXN5c3RlbSB3aXRoIDI2ODQzNTQ1NjAgNGsgYmxvY2tzIGFuZCAzMzU1NDQzMjAgaW5vZGVz
+Cj4gCUZpbGVzeXN0ZW0gVVVJRDogZTBkOGUwMWUtZWZhOC00N2ZkLWEwMTktYjE4NGU2NmY2NWIw
+Cj4gCVN1cGVyYmxvY2sgYmFja3VwcyBzdG9yZWQgb24gYmxvY2tzOgo+IAkJMzI3NjgsIDk4MzA0
+LCAxNjM4NDAsIDIyOTM3NiwgMjk0OTEyLCA4MTkyMDAsIDg4NDczNiwgMTYwNTYzMiwgMjY1NDIw
+OCwKPiAJCTQwOTYwMDAsIDc5NjI2MjQsIDExMjM5NDI0LCAyMDQ4MDAwMCwgMjM4ODc4NzIsIDcx
+NjYzNjE2LCA3ODY3NTk2OCwKPiAJCTEwMjQwMDAwMCwgMjE0OTkwODQ4LCA1MTIwMDAwMDAsIDU1
+MDczMTc3NiwgNjQ0OTcyNTQ0LCAxOTM0OTE3NjMyLAo+IAkJMjU2MDAwMDAwMAo+IAo+IAlBbGxv
+Y2F0aW5nIGdyb3VwIHRhYmxlczogZG9uZQo+IAlXcml0aW5nIGlub2RlIHRhYmxlczogZG9uZQo+
+IAlDcmVhdGluZyBqb3VybmFsICgyNjIxNDQgYmxvY2tzKTogZG9uZQo+IAlXcml0aW5nIHN1cGVy
+YmxvY2tzIGFuZCBmaWxlc3lzdGVtIGFjY291bnRpbmcgaW5mb3JtYXRpb246IGRvbmUKPiAKPiAJ
+VGh1IE9jdCAzMSAxNTowMTowMSBDU1QgMjAxOQo+IAo+IGFmdGVyIGRlbGV0ZSB0aGUgJ2NoZWNr
+X2V2ZW50cycgb24gbWFpbmxpbmU6Cj4gCVtyb290QGxvY2FsaG9zdCB+XSMgdW5hbWUgLWEKPiAJ
+TGludXggbG9jYWxob3N0IDUuNC4wLXJjNSsgIzIgU01QIFRodSBPY3QgMzEgMTU6MDc6MzYgQ1NU
+IDIwMTkgYWFyY2g2NCBhYXJjaDY0IGFhcmNoNjQgR05VL0xpbnV4Cj4gCVRodSBPY3QgMzEgMTU6
+MTk6NTYgQ1NUIDIwMTkKPiAJbWtlMmZzIDEuNDMuNiAoMjktQXVnLTIwMTcpCj4gCURpc2NhcmRp
+bmcgZGV2aWNlIGJsb2NrczogZG9uZQo+IAlDcmVhdGluZyBmaWxlc3lzdGVtIHdpdGggMjY4NDM1
+NDU2MCA0ayBibG9ja3MgYW5kIDMzNTU0NDMyMCBpbm9kZXMKPiAJRmlsZXN5c3RlbSBVVUlEOiA3
+MzUxOThlOC05ZGYwLTQ5ZmMtYWFhOC0yM2IwODY5ZGZhMDUKPiAJU3VwZXJibG9jayBiYWNrdXBz
+IHN0b3JlZCBvbiBibG9ja3M6Cj4gCQkzMjc2OCwgOTgzMDQsIDE2Mzg0MCwgMjI5Mzc2LCAyOTQ5
+MTIsIDgxOTIwMCwgODg0NzM2LCAxNjA1NjMyLCAyNjU0MjA4LAo+IAkJNDA5NjAwMCwgNzk2MjYy
+NCwgMTEyMzk0MjQsIDIwNDgwMDAwLCAyMzg4Nzg3MiwgNzE2NjM2MTYsIDc4Njc1OTY4LAo+IAkJ
+MTAyNDAwMDAwLCAyMTQ5OTA4NDgsIDUxMjAwMDAwMCwgNTUwNzMxNzc2LCA2NDQ5NzI1NDQsIDE5
+MzQ5MTc2MzIsCj4gCQkyNTYwMDAwMDAwCj4gCj4gCUFsbG9jYXRpbmcgZ3JvdXAgdGFibGVzOiBk
+b25lCj4gCVdyaXRpbmcgaW5vZGUgdGFibGVzOiBkb25lCj4gCUNyZWF0aW5nIGpvdXJuYWwgKDI2
+MjE0NCBibG9ja3MpOiBkb25lCj4gCVdyaXRpbmcgc3VwZXJibG9ja3MgYW5kIGZpbGVzeXN0ZW0g
+YWNjb3VudGluZyBpbmZvcm1hdGlvbjogZG9uZQo+IAo+IAlUaHUgT2N0IDMxIDE1OjMwOjUxIENT
+VCAyMDE5Cj4gCj4g5ZyoIDIwMTkvMTAvMjcgMTA6NTYsIERtaXRyeSBGb21pY2hldiDlhpnpgZM6
+Cj4gPiBaaGFuZywKPiA+IAo+ID4gSSBqdXN0IGRpZCBzb21lIHRlc3Rpbmcgb2YgdGhpcyBzY2Vu
+YXJpbyB3aXRoIGEgcmVjZW50IGtlcm5lbCB0aGF0IGluY2x1ZGVzIHRoaXMgcGF0Y2guCj4gPiAK
+PiA+IFRoZSBsb2cgYmVsb3cgaXMgYSBydW4gaW4gUUVNVSB3aXRoIDggQ1BVcyBhbmQgaXQgdG9v
+ayAxOC41IG1pbnV0ZXMgdG8gY3JlYXRlIHRoZSBGUyBvbiBhCj4gPiAxNFRCIEFUQSBkcml2ZS4g
+RG9pbmcgdGhlIHNhbWUgdGhpbmcgb24gYmFyZSBtZXRhbCB3aXRoIDMyIENQVXMgdGFrZXMgMTAu
+NSBtaW51dGVzIGluIG15Cj4gPiBlbnZpcm9ubWVudC4gSG93ZXZlciwgd2hlbiBkb2luZyB0aGUg
+c2FtZSB0ZXN0IHdpdGggYSBTQVMgZHJpdmUsIHRoZSBydW4gdGFrZXMgNDMgbWludXRlcy4KPiA+
+IFRoaXMgaXMgbm90IHF1aXRlIHRoZSBkZWdyYWRhdGlvbiB5b3UgYXJlIG9ic2VydmluZywgYnV0
+IHN0aWxsIGEgYmlnIHBlcmZvcm1hbmNlIGhpdC4KPiA+IAo+ID4gSXMgdGhlIGRpc2sgdGhhdCB5
+b3UgYXJlIHVzaW5nIFNBUyBvciBTQVRBPwo+ID4gCj4gPiBNeSBjdXJyZW50IGd1ZXNzIGlzIHRo
+YXQgc2QgZHJpdmVyIG1heSBnZW5lcmF0ZSBzb21lIFRFU1QgVU5JVCBSRUFEWSBjb21tYW5kcyB0
+byBjaGVjayBpZgo+ID4gdGhlIGRyaXZlIGlzIHJlYWxseSBvbmxpbmUgYXMgYSBwYXJ0IG9mIGNo
+ZWNrX2V2ZW50cygpIHByb2Nlc3NpbmcuIEZvciBBVEEgZHJpdmVzLCB0aGlzIGlzCj4gPiBuZWFy
+bHkgYSBOT1Agc2luY2UgYWxsIFRVUnMgYXJlIGNvbXBsZXRlZCBpbnRlcm5hbGx5IGluIGxpYmF0
+YS4gQnV0LCBpbiBTQ1NJIGNhc2UsIHRoZXNlCj4gPiBibG9ja2luZyBUVVJzIGFyZSBpc3N1ZWQg
+dG8gdGhlIGRyaXZlIGFuZCBjZXJ0YWlubHkgbWF5IGRlZ3JhZGUgcGVyZm9ybWFuY2UuCj4gPiAK
+PiA+IFRoZSBjaGVja19ldmVudHMoKSBjYWxsIGhhcyBiZWVuIGFkZGVkIHRvIGJkZXZfZGV2aWNl
+X2lzX2R5aW5nKCkgYmVjYXVzZSBzaW1wbHkgY2FsbGluZwo+ID4gYmRldl9xdWV1ZV9keWluZygp
+IGRvZXNuJ3QgY292ZXIgdGhlIHNpdHVhdGlvbiB3aGVuIHRoZSBkcml2ZSBnZXRzIG9mZmxpbmVk
+IGluIFNDU0kgbGF5ZXIuCj4gPiBJdCBtaWdodCBiZSBwb3NzaWJsZSB0byBvbmx5IGNhbGwgY2hl
+Y2tfZXZlbnRzKCkgb25jZSBiZWZvcmUgZXZlcnkgcmVjbGFpbSBydW4gYW5kIHRvIGF2b2lkCj4g
+PiBjYWxsaW5nIGl0IGluIEkvTyBtYXBwaW5nIHBhdGguIElmIHRoaXMgd29ya3MsIHRoZSBvdmVy
+aGVhZCB3b3VsZCBsaWtlbHkgYmUgYWNjZXB0YWJsZS4KPiA+IEkgYW0gZ29pbmcgdG8gdGFrZSBh
+IGxvb2sgaW50byB0aGlzLgo+ID4gCj4gPiBSZWdhcmRzLAo+ID4gRG1pdHJ5Cj4gPiAKPiA+IFty
+b290QHh4eCBkbXpdIyB1bmFtZSAtYQo+ID4gTGludXggeHh4IDUuNC4wLXJjMS1ETVorICMxIFNN
+UCBGcmkgT2N0IDExIDExOjIzOjEzIFBEVCAyMDE5IHg4Nl82NCB4ODZfNjQgeDg2XzY0IEdOVS9M
+aW51eAo+ID4gW3Jvb3RAeHh4IGRtel0jIGxzc2NzaQo+ID4gWzA6MDowOjBdICAgIGRpc2sgICAg
+UUVNVSAgICAgUUVNVSBIQVJERElTSyAgICAyLjUrICAvZGV2L3NkYQo+ID4gWzE6MDowOjBdICAg
+IHpiYyAgICAgQVRBICAgICAgSEdTVCBIU0g3MjE0MTVBTCBUMjQwICAvZGV2L3NkYgo+ID4gW3Jv
+b3RAeHh4IGRtel0jIC4vc2V0dXAtZG16IHRlc3QgL2Rldi9zZGIKPiA+IFtyb290QHh4eCBkbXpd
+IyBjYXQgL3Byb2Mva2FsbHN5bXMgfCBncmVwIGRtel9iZGV2X2lzX2R5aW5nCj4gPiAoc3RhbmRh
+cmQgaW5wdXQpOjkwNzgyOmZmZmZmZmZmYzA3MGE0MDEgdCBkbXpfYmRldl9pc19keWluZy5jb2xk
+CVtkbV96b25lZF0KPiA+IChzdGFuZGFyZCBpbnB1dCk6OTA4NDk6ZmZmZmZmZmZjMDcwNmUxMCB0
+IGRtel9iZGV2X2lzX2R5aW5nCVtkbV96b25lZF0KPiA+IFtyb290QHh4eCBkbXpdIyB0aW1lIG1r
+ZnMuZXh0NCAvZGV2L21hcHBlci90ZXN0Cj4gPiBta2UyZnMgMS40NC42ICg1LU1hci0yMDE5KQo+
+ID4gRGlzY2FyZGluZyBkZXZpY2UgYmxvY2tzOiBkb25lCj4gPiBDcmVhdGluZyBmaWxlc3lzdGVt
+IHdpdGggMzY2MDg0MDk2MCA0ayBibG9ja3MgYW5kIDQ1NzYwNTEyMCBpbm9kZXMKPiA+IEZpbGVz
+eXN0ZW0gVVVJRDogNDUzNmJhY2QtY2ZiNS00MWIyLWIwYmYtYzI1MTNlNmUzMzYwCj4gPiBTdXBl
+cmJsb2NrIGJhY2t1cHMgc3RvcmVkIG9uIGJsb2NrczoKPiA+IAkzMjc2OCwgOTgzMDQsIDE2Mzg0
+MCwgMjI5Mzc2LCAyOTQ5MTIsIDgxOTIwMCwgODg0NzM2LCAxNjA1NjMyLCAyNjU0MjA4LAo+ID4g
+CTQwOTYwMDAsIDc5NjI2MjQsIDExMjM5NDI0LCAyMDQ4MDAwMCwgMjM4ODc4NzIsIDcxNjYzNjE2
+LCA3ODY3NTk2OCwKPiA+IAkxMDI0MDAwMDAsIDIxNDk5MDg0OCwgNTEyMDAwMDAwLCA1NTA3MzE3
+NzYsIDY0NDk3MjU0NCwgMTkzNDkxNzYzMiwKPiA+IAkyNTYwMDAwMDAwCj4gPiAKPiA+IEFsbG9j
+YXRpbmcgZ3JvdXAgdGFibGVzOiBkb25lCj4gPiBXcml0aW5nIGlub2RlIHRhYmxlczogZG9uZQo+
+ID4gQ3JlYXRpbmcgam91cm5hbCAoMjYyMTQ0IGJsb2Nrcyk6IGRvbmUKPiA+IFdyaXRpbmcgc3Vw
+ZXJibG9ja3MgYW5kIGZpbGVzeXN0ZW0gYWNjb3VudGluZyBpbmZvcm1hdGlvbjogZG9uZQo+ID4g
+Cj4gPiAKPiA+IHJlYWwJMThtMzAuODY3cwo+ID4gdXNlcgkwbTAuMTcycwo+ID4gc3lzCTBtMTEu
+MTk4cwo+ID4gCj4gPiAKPiA+IE9uIFNhdCwgMjAxOS0xMC0yNiBhdCAwOTo1NiArMDgwMCwgemhh
+bmd4aWFveHUgKEEpIHdyb3RlOgo+ID4gPiBIaSBhbGwsIHdoZW4gSSAnbWtmcy5leHQ0JyBvbiB0
+aGUgZG16IGRldmljZSBiYXNlZCBvbiAxMFQgc21yIGRpc2ssCj4gPiA+IGl0IHRha2VzIG1vcmUg
+dGhhbiAxMCBob3VycyBhZnRlciBhcHBseSA3NWQ2NmZmYjQ4ZWZiMyAoImRtIHpvbmVkOgo+ID4g
+PiBwcm9wZXJseSBoYW5kbGUgYmFja2luZyBkZXZpY2UgZmFpbHVyZSIpLgo+ID4gPiAKPiA+ID4g
+QWZ0ZXIgZGVsZXRlIHRoZSAnY2hlY2tfZXZlbnRzJyBpbiAnZG16X2JkZXZfaXNfZHlpbmcnLCBp
+dCBqdXN0Cj4gPiA+IHRha2UgbGVzcyB0aGFuIDEyIG1pbnMuCj4gPiA+IAo+ID4gPiBJIHRlc3Qg
+aXQgYmFzZWQgb24gNC4xOSBicmFuY2guCj4gPiA+IE11c3Qgd2UgZG8gdGhlICdjaGVja19ldmVu
+dHMnIGF0IG1hcHBpbmcgcGF0aCwgcmVjbGFpbSBvciBtZXRhZGF0YSBJL08/Cj4gPiA+IAo+ID4g
+PiBUaGFua3MuCj4gPiA+IAoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
+dC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
