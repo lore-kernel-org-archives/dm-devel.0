@@ -1,18 +1,15 @@
-From: Dmitry Fomichev <Dmitry.Fomichev@wdc.com>
-Subject: Re: dm-zoned performance degradation after apply
- 75d66ffb48efb3 ("dm zoned:, properly handle backing device failure")
-Date: Wed, 6 Nov 2019 23:00:59 +0000
-Message-ID: <283fcf104cab4c99e2e1665a05e13829c4f125b6.camel@wdc.com>
-References: <203cc4c8-b380-5b2f-c9e7-766b3f031c8c@huawei.com>
-	<38d2a401ad8111ec0e6806f3e165916b18769d6d.camel@wdc.com>
-	<63f060dc-d3b9-f4d1-8c86-27e75f1d1441@huawei.com>
+From: Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH v3 45/72] libmultipath: fix -Wsign-compare
+ warnings with snprintf()
+Date: Thu, 7 Nov 2019 09:27:41 +0000
+Message-ID: <20191107092651.10975-2-martin.wilck@suse.com>
+References: <20191107092651.10975-1-martin.wilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <63f060dc-d3b9-f4d1-8c86-27e75f1d1441@huawei.com>
+In-Reply-To: <20191107092651.10975-1-martin.wilck@suse.com>
 Content-Language: en-US
-Content-ID: <3C293C767C08BE46BAA1C8FC0EE988EA@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,119 +19,193 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "agk@redhat.com" <agk@redhat.com>, Damien Le Moal <Damien.LeMoal@wdc.com>, "zhangxiaoxu5@huawei.com" <zhangxiaoxu5@huawei.com>, "snitzer@redhat.com" <snitzer@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Bart Van Assche <Bart.VanAssche@sandisk.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-SGkgWmhhbmcsCgpJIGp1c3QgcG9zdGVkIHRoZSBwYXRjaCB0aGF0IGZpeGVzIHRoaXMgaXNzdWUu
-IENvdWxkIHlvdSBwbGVhc2UgdHJ5IGl0IGFuZCBsZXQKbWUga25vdyBob3cgdGhpcyBwYXRjaCB3
-b3JrcyBmb3IgeW91PyBJbiBteSB0ZXN0aW5nLCBJIGRvbid0IHNlZSBhbnkgZXhjZXNzaXZlClRV
-UnMgaXNzdWVkIHdpdGggdGhpcyBwYXRjaCBpbiBwbGFjZS4gSXQgdGFrZXMgYXJvdW5kIDEyIG1p
-bnV0ZXMgdG8gcnVuCm1rZnMuZXh0NCBvbiBhIGZyZXNobHkgY3JlYXRlZCBkbS16b25lZCBkZXZp
-Y2Ugb24gdG9wIG9mIGEgMTRUQiBTQ1NJIGRyaXZlLgpUaGUgc2FtZSB0ZXN0IG9uIHRvcCBvZiBh
-IDE0VEIgU0FUQSBkcml2ZSB0YWtlcyBhcm91bmQgMTAgbWludXRlcy4gVGhlc2UgYXJlCmRpcmVj
-dCBhdHRhY2hlZCBkcml2ZXMgb24gYSBwaHlzaWNhbCBzZXJ2ZXIuCgpJIGRpZG4ndCB0ZXN0IHRo
-aXMgcGF0Y2ggb24gNC4xOSBrZXJuZWwuIElmIHlvdSBoYXZlIGFueSBmaW5kaW5ncyBhYm91dCBo
-b3cKaXQgYmVoYXZlcywgZG8gbGV0IG1lIGtub3cuCgpSZWdhcmRzLApEbWl0cnkKCk9uIFRodSwg
-MjAxOS0xMC0zMSBhdCAxNjoyMCArMDgwMCwgemhhbmd4aWFveHUgKEEpIHdyb3RlOgo+IGhpIERt
-aXRyeSwgdGhhbmtzIGZvciB5b3VyIHJlcGx5Lgo+IAo+IEkgYWxzbyB0ZXN0IGl0IHVzZSB0aGUg
-bWFpbmxpbmUsIGl0IGFsc28gdGFrZXMgbW9yZSB0aGFuIDEgaG91cnMuCj4gbXkgbWVjaGluZSBo
-YXMgNjQgQ1BVcyBjb3JlIGFuZCB0aGUgZGlzayBpcyBTQVRBLgo+IAo+IHdoZW4gbWtmcy5leHQ0
-LCBJIGZvdW5kIHRoZSAnc2NzaV90ZXN0X3VuaXRfcmVhZHknIHJ1biBtb3JlIHRoYW4gMTAwMCB0
-aW1lcwo+IHBlciBzZWNvbmQgYnkgdGhlIGRpZmZlcmVudCBrd29ya2VyLgo+IGFuZCBldmVyeSAn
-c2NzaV90ZXN0X3VuaXRfcmVhZHknIHRha2VzIG1vcmUgdGhhbiAyMDB1cywgYW5kIHRoZSBpbnRl
-cnZhbAo+IGxlc3MgdGhhbiAyMHVzLgo+IFNvLCBJIHRoaW5rIHlvdXIgZ3Vlc3MgaXMgcmlnaHQu
-Cj4gCj4gYnV0IHRoZXJlIGlzIGFub3RoZXIgcXVlc3Rpb24sIHdoeSA0LjE5IGJyYW5jaCB0YWtl
-cyBtb3JlIHRoYW4gMTAgaG91cj8KPiBJIHdpbGwgd29yayBvbiBpdCwgaWYgYW55IGluZm9ybWF0
-aW9uIGFib3V0IGl0LCBJIHdpbGwgcmVwbHkgeW91Lgo+IAo+IFRoYW5rcy4KPiAKPiBteSBzY3Jp
-cHQ6Cj4gCWRtemFkbSAtLWZvcm1hdCAvZGV2L3NkaQo+IAllY2hvICIwIDIxNDg1MzIyMjQwIHpv
-bmVkIC9kZXYvc2RpIiB8IGRtc2V0dXAgY3JlYXRlIGRtei1zZGkKPiAJZGF0ZTsgbWtmcy5leHQ0
-IC9kZXYvbWFwcGVyL2Rtei1zZGk7IGRhdGUKPiAKPiBtYWlubGluZToKPiAJW3Jvb3RAbG9jYWxo
-b3N0IH5dIyB1bmFtZSAtYQo+IAlMaW51eCBsb2NhbGhvc3QgNS40LjAtcmM1ICMxIFNNUCBUaHUg
-T2N0IDMxIDExOjQxOjIwIENTVCAyMDE5IGFhcmNoNjQgYWFyY2g2NCBhYXJjaDY0IEdOVS9MaW51
-eAo+IAo+IAlUaHUgT2N0IDMxIDEzOjU4OjU1IENTVCAyMDE5Cj4gCW1rZTJmcyAxLjQzLjYgKDI5
-LUF1Zy0yMDE3KQo+IAlEaXNjYXJkaW5nIGRldmljZSBibG9ja3M6IGRvbmUKPiAJQ3JlYXRpbmcg
-ZmlsZXN5c3RlbSB3aXRoIDI2ODQzNTQ1NjAgNGsgYmxvY2tzIGFuZCAzMzU1NDQzMjAgaW5vZGVz
-Cj4gCUZpbGVzeXN0ZW0gVVVJRDogZTBkOGUwMWUtZWZhOC00N2ZkLWEwMTktYjE4NGU2NmY2NWIw
-Cj4gCVN1cGVyYmxvY2sgYmFja3VwcyBzdG9yZWQgb24gYmxvY2tzOgo+IAkJMzI3NjgsIDk4MzA0
-LCAxNjM4NDAsIDIyOTM3NiwgMjk0OTEyLCA4MTkyMDAsIDg4NDczNiwgMTYwNTYzMiwgMjY1NDIw
-OCwKPiAJCTQwOTYwMDAsIDc5NjI2MjQsIDExMjM5NDI0LCAyMDQ4MDAwMCwgMjM4ODc4NzIsIDcx
-NjYzNjE2LCA3ODY3NTk2OCwKPiAJCTEwMjQwMDAwMCwgMjE0OTkwODQ4LCA1MTIwMDAwMDAsIDU1
-MDczMTc3NiwgNjQ0OTcyNTQ0LCAxOTM0OTE3NjMyLAo+IAkJMjU2MDAwMDAwMAo+IAo+IAlBbGxv
-Y2F0aW5nIGdyb3VwIHRhYmxlczogZG9uZQo+IAlXcml0aW5nIGlub2RlIHRhYmxlczogZG9uZQo+
-IAlDcmVhdGluZyBqb3VybmFsICgyNjIxNDQgYmxvY2tzKTogZG9uZQo+IAlXcml0aW5nIHN1cGVy
-YmxvY2tzIGFuZCBmaWxlc3lzdGVtIGFjY291bnRpbmcgaW5mb3JtYXRpb246IGRvbmUKPiAKPiAJ
-VGh1IE9jdCAzMSAxNTowMTowMSBDU1QgMjAxOQo+IAo+IGFmdGVyIGRlbGV0ZSB0aGUgJ2NoZWNr
-X2V2ZW50cycgb24gbWFpbmxpbmU6Cj4gCVtyb290QGxvY2FsaG9zdCB+XSMgdW5hbWUgLWEKPiAJ
-TGludXggbG9jYWxob3N0IDUuNC4wLXJjNSsgIzIgU01QIFRodSBPY3QgMzEgMTU6MDc6MzYgQ1NU
-IDIwMTkgYWFyY2g2NCBhYXJjaDY0IGFhcmNoNjQgR05VL0xpbnV4Cj4gCVRodSBPY3QgMzEgMTU6
-MTk6NTYgQ1NUIDIwMTkKPiAJbWtlMmZzIDEuNDMuNiAoMjktQXVnLTIwMTcpCj4gCURpc2NhcmRp
-bmcgZGV2aWNlIGJsb2NrczogZG9uZQo+IAlDcmVhdGluZyBmaWxlc3lzdGVtIHdpdGggMjY4NDM1
-NDU2MCA0ayBibG9ja3MgYW5kIDMzNTU0NDMyMCBpbm9kZXMKPiAJRmlsZXN5c3RlbSBVVUlEOiA3
-MzUxOThlOC05ZGYwLTQ5ZmMtYWFhOC0yM2IwODY5ZGZhMDUKPiAJU3VwZXJibG9jayBiYWNrdXBz
-IHN0b3JlZCBvbiBibG9ja3M6Cj4gCQkzMjc2OCwgOTgzMDQsIDE2Mzg0MCwgMjI5Mzc2LCAyOTQ5
-MTIsIDgxOTIwMCwgODg0NzM2LCAxNjA1NjMyLCAyNjU0MjA4LAo+IAkJNDA5NjAwMCwgNzk2MjYy
-NCwgMTEyMzk0MjQsIDIwNDgwMDAwLCAyMzg4Nzg3MiwgNzE2NjM2MTYsIDc4Njc1OTY4LAo+IAkJ
-MTAyNDAwMDAwLCAyMTQ5OTA4NDgsIDUxMjAwMDAwMCwgNTUwNzMxNzc2LCA2NDQ5NzI1NDQsIDE5
-MzQ5MTc2MzIsCj4gCQkyNTYwMDAwMDAwCj4gCj4gCUFsbG9jYXRpbmcgZ3JvdXAgdGFibGVzOiBk
-b25lCj4gCVdyaXRpbmcgaW5vZGUgdGFibGVzOiBkb25lCj4gCUNyZWF0aW5nIGpvdXJuYWwgKDI2
-MjE0NCBibG9ja3MpOiBkb25lCj4gCVdyaXRpbmcgc3VwZXJibG9ja3MgYW5kIGZpbGVzeXN0ZW0g
-YWNjb3VudGluZyBpbmZvcm1hdGlvbjogZG9uZQo+IAo+IAlUaHUgT2N0IDMxIDE1OjMwOjUxIENT
-VCAyMDE5Cj4gCj4g5ZyoIDIwMTkvMTAvMjcgMTA6NTYsIERtaXRyeSBGb21pY2hldiDlhpnpgZM6
-Cj4gPiBaaGFuZywKPiA+IAo+ID4gSSBqdXN0IGRpZCBzb21lIHRlc3Rpbmcgb2YgdGhpcyBzY2Vu
-YXJpbyB3aXRoIGEgcmVjZW50IGtlcm5lbCB0aGF0IGluY2x1ZGVzIHRoaXMgcGF0Y2guCj4gPiAK
-PiA+IFRoZSBsb2cgYmVsb3cgaXMgYSBydW4gaW4gUUVNVSB3aXRoIDggQ1BVcyBhbmQgaXQgdG9v
-ayAxOC41IG1pbnV0ZXMgdG8gY3JlYXRlIHRoZSBGUyBvbiBhCj4gPiAxNFRCIEFUQSBkcml2ZS4g
-RG9pbmcgdGhlIHNhbWUgdGhpbmcgb24gYmFyZSBtZXRhbCB3aXRoIDMyIENQVXMgdGFrZXMgMTAu
-NSBtaW51dGVzIGluIG15Cj4gPiBlbnZpcm9ubWVudC4gSG93ZXZlciwgd2hlbiBkb2luZyB0aGUg
-c2FtZSB0ZXN0IHdpdGggYSBTQVMgZHJpdmUsIHRoZSBydW4gdGFrZXMgNDMgbWludXRlcy4KPiA+
-IFRoaXMgaXMgbm90IHF1aXRlIHRoZSBkZWdyYWRhdGlvbiB5b3UgYXJlIG9ic2VydmluZywgYnV0
-IHN0aWxsIGEgYmlnIHBlcmZvcm1hbmNlIGhpdC4KPiA+IAo+ID4gSXMgdGhlIGRpc2sgdGhhdCB5
-b3UgYXJlIHVzaW5nIFNBUyBvciBTQVRBPwo+ID4gCj4gPiBNeSBjdXJyZW50IGd1ZXNzIGlzIHRo
-YXQgc2QgZHJpdmVyIG1heSBnZW5lcmF0ZSBzb21lIFRFU1QgVU5JVCBSRUFEWSBjb21tYW5kcyB0
-byBjaGVjayBpZgo+ID4gdGhlIGRyaXZlIGlzIHJlYWxseSBvbmxpbmUgYXMgYSBwYXJ0IG9mIGNo
-ZWNrX2V2ZW50cygpIHByb2Nlc3NpbmcuIEZvciBBVEEgZHJpdmVzLCB0aGlzIGlzCj4gPiBuZWFy
-bHkgYSBOT1Agc2luY2UgYWxsIFRVUnMgYXJlIGNvbXBsZXRlZCBpbnRlcm5hbGx5IGluIGxpYmF0
-YS4gQnV0LCBpbiBTQ1NJIGNhc2UsIHRoZXNlCj4gPiBibG9ja2luZyBUVVJzIGFyZSBpc3N1ZWQg
-dG8gdGhlIGRyaXZlIGFuZCBjZXJ0YWlubHkgbWF5IGRlZ3JhZGUgcGVyZm9ybWFuY2UuCj4gPiAK
-PiA+IFRoZSBjaGVja19ldmVudHMoKSBjYWxsIGhhcyBiZWVuIGFkZGVkIHRvIGJkZXZfZGV2aWNl
-X2lzX2R5aW5nKCkgYmVjYXVzZSBzaW1wbHkgY2FsbGluZwo+ID4gYmRldl9xdWV1ZV9keWluZygp
-IGRvZXNuJ3QgY292ZXIgdGhlIHNpdHVhdGlvbiB3aGVuIHRoZSBkcml2ZSBnZXRzIG9mZmxpbmVk
-IGluIFNDU0kgbGF5ZXIuCj4gPiBJdCBtaWdodCBiZSBwb3NzaWJsZSB0byBvbmx5IGNhbGwgY2hl
-Y2tfZXZlbnRzKCkgb25jZSBiZWZvcmUgZXZlcnkgcmVjbGFpbSBydW4gYW5kIHRvIGF2b2lkCj4g
-PiBjYWxsaW5nIGl0IGluIEkvTyBtYXBwaW5nIHBhdGguIElmIHRoaXMgd29ya3MsIHRoZSBvdmVy
-aGVhZCB3b3VsZCBsaWtlbHkgYmUgYWNjZXB0YWJsZS4KPiA+IEkgYW0gZ29pbmcgdG8gdGFrZSBh
-IGxvb2sgaW50byB0aGlzLgo+ID4gCj4gPiBSZWdhcmRzLAo+ID4gRG1pdHJ5Cj4gPiAKPiA+IFty
-b290QHh4eCBkbXpdIyB1bmFtZSAtYQo+ID4gTGludXggeHh4IDUuNC4wLXJjMS1ETVorICMxIFNN
-UCBGcmkgT2N0IDExIDExOjIzOjEzIFBEVCAyMDE5IHg4Nl82NCB4ODZfNjQgeDg2XzY0IEdOVS9M
-aW51eAo+ID4gW3Jvb3RAeHh4IGRtel0jIGxzc2NzaQo+ID4gWzA6MDowOjBdICAgIGRpc2sgICAg
-UUVNVSAgICAgUUVNVSBIQVJERElTSyAgICAyLjUrICAvZGV2L3NkYQo+ID4gWzE6MDowOjBdICAg
-IHpiYyAgICAgQVRBICAgICAgSEdTVCBIU0g3MjE0MTVBTCBUMjQwICAvZGV2L3NkYgo+ID4gW3Jv
-b3RAeHh4IGRtel0jIC4vc2V0dXAtZG16IHRlc3QgL2Rldi9zZGIKPiA+IFtyb290QHh4eCBkbXpd
-IyBjYXQgL3Byb2Mva2FsbHN5bXMgfCBncmVwIGRtel9iZGV2X2lzX2R5aW5nCj4gPiAoc3RhbmRh
-cmQgaW5wdXQpOjkwNzgyOmZmZmZmZmZmYzA3MGE0MDEgdCBkbXpfYmRldl9pc19keWluZy5jb2xk
-CVtkbV96b25lZF0KPiA+IChzdGFuZGFyZCBpbnB1dCk6OTA4NDk6ZmZmZmZmZmZjMDcwNmUxMCB0
-IGRtel9iZGV2X2lzX2R5aW5nCVtkbV96b25lZF0KPiA+IFtyb290QHh4eCBkbXpdIyB0aW1lIG1r
-ZnMuZXh0NCAvZGV2L21hcHBlci90ZXN0Cj4gPiBta2UyZnMgMS40NC42ICg1LU1hci0yMDE5KQo+
-ID4gRGlzY2FyZGluZyBkZXZpY2UgYmxvY2tzOiBkb25lCj4gPiBDcmVhdGluZyBmaWxlc3lzdGVt
-IHdpdGggMzY2MDg0MDk2MCA0ayBibG9ja3MgYW5kIDQ1NzYwNTEyMCBpbm9kZXMKPiA+IEZpbGVz
-eXN0ZW0gVVVJRDogNDUzNmJhY2QtY2ZiNS00MWIyLWIwYmYtYzI1MTNlNmUzMzYwCj4gPiBTdXBl
-cmJsb2NrIGJhY2t1cHMgc3RvcmVkIG9uIGJsb2NrczoKPiA+IAkzMjc2OCwgOTgzMDQsIDE2Mzg0
-MCwgMjI5Mzc2LCAyOTQ5MTIsIDgxOTIwMCwgODg0NzM2LCAxNjA1NjMyLCAyNjU0MjA4LAo+ID4g
-CTQwOTYwMDAsIDc5NjI2MjQsIDExMjM5NDI0LCAyMDQ4MDAwMCwgMjM4ODc4NzIsIDcxNjYzNjE2
-LCA3ODY3NTk2OCwKPiA+IAkxMDI0MDAwMDAsIDIxNDk5MDg0OCwgNTEyMDAwMDAwLCA1NTA3MzE3
-NzYsIDY0NDk3MjU0NCwgMTkzNDkxNzYzMiwKPiA+IAkyNTYwMDAwMDAwCj4gPiAKPiA+IEFsbG9j
-YXRpbmcgZ3JvdXAgdGFibGVzOiBkb25lCj4gPiBXcml0aW5nIGlub2RlIHRhYmxlczogZG9uZQo+
-ID4gQ3JlYXRpbmcgam91cm5hbCAoMjYyMTQ0IGJsb2Nrcyk6IGRvbmUKPiA+IFdyaXRpbmcgc3Vw
-ZXJibG9ja3MgYW5kIGZpbGVzeXN0ZW0gYWNjb3VudGluZyBpbmZvcm1hdGlvbjogZG9uZQo+ID4g
-Cj4gPiAKPiA+IHJlYWwJMThtMzAuODY3cwo+ID4gdXNlcgkwbTAuMTcycwo+ID4gc3lzCTBtMTEu
-MTk4cwo+ID4gCj4gPiAKPiA+IE9uIFNhdCwgMjAxOS0xMC0yNiBhdCAwOTo1NiArMDgwMCwgemhh
-bmd4aWFveHUgKEEpIHdyb3RlOgo+ID4gPiBIaSBhbGwsIHdoZW4gSSAnbWtmcy5leHQ0JyBvbiB0
-aGUgZG16IGRldmljZSBiYXNlZCBvbiAxMFQgc21yIGRpc2ssCj4gPiA+IGl0IHRha2VzIG1vcmUg
-dGhhbiAxMCBob3VycyBhZnRlciBhcHBseSA3NWQ2NmZmYjQ4ZWZiMyAoImRtIHpvbmVkOgo+ID4g
-PiBwcm9wZXJseSBoYW5kbGUgYmFja2luZyBkZXZpY2UgZmFpbHVyZSIpLgo+ID4gPiAKPiA+ID4g
-QWZ0ZXIgZGVsZXRlIHRoZSAnY2hlY2tfZXZlbnRzJyBpbiAnZG16X2JkZXZfaXNfZHlpbmcnLCBp
-dCBqdXN0Cj4gPiA+IHRha2UgbGVzcyB0aGFuIDEyIG1pbnMuCj4gPiA+IAo+ID4gPiBJIHRlc3Qg
-aXQgYmFzZWQgb24gNC4xOSBicmFuY2guCj4gPiA+IE11c3Qgd2UgZG8gdGhlICdjaGVja19ldmVu
-dHMnIGF0IG1hcHBpbmcgcGF0aCwgcmVjbGFpbSBvciBtZXRhZGF0YSBJL08/Cj4gPiA+IAo+ID4g
-PiBUaGFua3MuCj4gPiA+IAoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
-dC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+From: Martin Wilck <mwilck@suse.com>
+
+snprintf() returns int, but the size argument "n" is size_t.
+Use safe_snprintf() to avoid -Wsign-compare warnings. At the same
+time, improve these macros to check for errors in snprintf(), too.
+
+Note: there are more uses of snprintf() in our code that may
+need review, too. For now, I'm fixing only those that were causing
+warnings.
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ kpartx/devmapper.c          |  3 ++-
+ kpartx/kpartx.h             | 11 ++++++++++-
+ libmultipath/foreign/nvme.c |  6 ++----
+ libmultipath/sysfs.c        |  7 +++----
+ libmultipath/util.c         |  3 +--
+ libmultipath/util.h         | 11 +++++++++--
+ libmultipath/wwids.c        |  3 +--
+ multipath/main.c            |  3 +--
+ 8 files changed, 29 insertions(+), 18 deletions(-)
+
+diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
+index 3aa4988d..b100b5ef 100644
+--- a/kpartx/devmapper.c
++++ b/kpartx/devmapper.c
+@@ -10,6 +10,7 @@
+ #include <errno.h>
+ #include <sys/sysmacros.h>
+ #include "devmapper.h"
++#include "kpartx.h"
+=20
+ #define _UUID_PREFIX "part"
+ #define UUID_PREFIX _UUID_PREFIX "%d-"
+@@ -107,7 +108,7 @@ strip_slash (char * device)
+ static int format_partname(char *buf, size_t bufsiz,
+ =09=09=09   const char *mapname, const char *delim, int part)
+ {
+-=09if (snprintf(buf, bufsiz, "%s%s%d", mapname, delim, part) >=3D bufsiz)
++=09if (safe_snprintf(buf, bufsiz, "%s%s%d", mapname, delim, part))
+ =09=09return 0;
+ =09strip_slash(buf);
+ =09return 1;
+diff --git a/kpartx/kpartx.h b/kpartx/kpartx.h
+index 52920e43..8a2db046 100644
+--- a/kpartx/kpartx.h
++++ b/kpartx/kpartx.h
+@@ -16,8 +16,17 @@
+ #define likely(x)       __builtin_expect(!!(x), 1)
+ #define unlikely(x)     __builtin_expect(!!(x), 0)
+=20
++#define safe_snprintf(var, size, format, args...)=09=09=09\
++=09({=09=09=09=09=09=09=09=09\
++=09=09size_t __size =3D size;=09=09=09=09=09\
++=09=09int __ret;=09=09=09=09=09=09\
++=09=09=09=09=09=09=09=09=09\
++=09=09__ret =3D snprintf(var, __size, format, ##args);=09=09\
++=09=09__ret < 0 || (size_t)__ret >=3D __size;=09=09=09\
++=09})
++
+ #define safe_sprintf(var, format, args...)=09\
+-=09snprintf(var, sizeof(var), format, ##args) >=3D sizeof(var)
++=09=09safe_snprintf(var, sizeof(var), format, ##args)
+=20
+ #ifndef BLKSSZGET
+ #define BLKSSZGET  _IO(0x12,104)=09/* get block device sector size */
+diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
+index e8ca516c..09cdddf0 100644
+--- a/libmultipath/foreign/nvme.c
++++ b/libmultipath/foreign/nvme.c
+@@ -591,8 +591,7 @@ static void test_ana_support(struct nvme_map *map, stru=
+ct udev_device *ctl)
+ =09=09return;
+=20
+ =09dev_t =3D udev_device_get_sysattr_value(ctl, "dev");
+-=09if (snprintf(sys_path, sizeof(sys_path), "/dev/char/%s", dev_t)
+-=09    >=3D sizeof(sys_path))
++=09if (safe_sprintf(sys_path, "/dev/char/%s", dev_t))
+ =09=09return;
+=20
+ =09fd =3D open(sys_path, O_RDONLY);
+@@ -663,8 +662,7 @@ static void _find_controllers(struct context *ctx, stru=
+ct nvme_map *map)
+ =09=09char *fn =3D di[i]->d_name;
+ =09=09struct udev_device *ctrl, *udev;
+=20
+-=09=09if (snprintf(pathbuf + n, sizeof(pathbuf) - n, "/%s", fn)
+-=09=09    >=3D sizeof(pathbuf) - n)
++=09=09if (safe_snprintf(pathbuf + n, sizeof(pathbuf) - n, "/%s", fn))
+ =09=09=09continue;
+ =09=09if (realpath(pathbuf, realbuf) =3D=3D NULL) {
+ =09=09=09condlog(3, "%s: %s: realpath: %s", __func__, THIS,
+diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+index 923b529b..62ec2ed7 100644
+--- a/libmultipath/sysfs.c
++++ b/libmultipath/sysfs.c
+@@ -306,7 +306,7 @@ bool sysfs_is_multipathed(const struct path *pp)
+ =09n =3D snprintf(pathbuf, sizeof(pathbuf), "/sys/block/%s/holders",
+ =09=09     pp->dev);
+=20
+-=09if (n >=3D sizeof(pathbuf)) {
++=09if (n < 0 || (size_t)n >=3D sizeof(pathbuf)) {
+ =09=09condlog(1, "%s: pathname overflow", __func__);
+ =09=09return false;
+ =09}
+@@ -327,9 +327,8 @@ bool sysfs_is_multipathed(const struct path *pp)
+ =09=09int nr;
+ =09=09char uuid[6];
+=20
+-=09=09if (snprintf(pathbuf + n, sizeof(pathbuf) - n,
+-=09=09=09     "/%s/dm/uuid", di[i]->d_name)
+-=09=09    >=3D sizeof(pathbuf) - n)
++=09=09if (safe_snprintf(pathbuf + n, sizeof(pathbuf) - n,
++=09=09=09=09  "/%s/dm/uuid", di[i]->d_name))
+ =09=09=09continue;
+=20
+ =09=09fd =3D open(pathbuf, O_RDONLY);
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index ccc0de29..51c38c87 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -212,8 +212,7 @@ int devt2devname(char *devname, int devname_len, char *=
+devt)
+ =09=09=09continue;
+=20
+ =09=09if ((major =3D=3D tmpmaj) && (minor =3D=3D tmpmin)) {
+-=09=09=09if (snprintf(block_path, sizeof(block_path),
+-=09=09=09=09     "/sys/block/%s", dev) >=3D sizeof(block_path)) {
++=09=09=09if (safe_sprintf(block_path, "/sys/block/%s", dev)) {
+ =09=09=09=09condlog(0, "device name %s is too long", dev);
+ =09=09=09=09fclose(fd);
+ =09=09=09=09return 1;
+diff --git a/libmultipath/util.h b/libmultipath/util.h
+index 913ab7c2..56bd78c7 100644
+--- a/libmultipath/util.h
++++ b/libmultipath/util.h
+@@ -29,9 +29,16 @@ void set_max_fds(rlim_t max_fds);
+ #define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
+=20
+ #define safe_sprintf(var, format, args...)=09\
+-=09snprintf(var, sizeof(var), format, ##args) >=3D sizeof(var)
++=09safe_snprintf(var, sizeof(var), format, ##args)
++
+ #define safe_snprintf(var, size, format, args...)      \
+-=09snprintf(var, size, format, ##args) >=3D size
++=09({=09=09=09=09=09=09=09=09\
++=09=09size_t __size =3D size;=09=09=09=09=09\
++=09=09int __ret;=09=09=09=09=09=09\
++=09=09=09=09=09=09=09=09=09\
++=09=09__ret =3D snprintf(var, __size, format, ##args);=09=09\
++=09=09__ret < 0 || (size_t)__ret >=3D __size;=09=09=09\
++=09})
+=20
+ #define pthread_cleanup_push_cast(f, arg)=09=09\
+ =09pthread_cleanup_push(((void (*)(void *))&f), (arg))
+diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
+index 291db8f5..28a2150d 100644
+--- a/libmultipath/wwids.c
++++ b/libmultipath/wwids.c
+@@ -393,8 +393,7 @@ static int _failed_wwid_op(const char *wwid, bool rw,
+ =09long lockfd;
+ =09int r =3D -1;
+=20
+-=09if (snprintf(path, sizeof(path), "%s/%s", shm_dir, wwid)
+-=09    >=3D sizeof(path)) {
++=09if (safe_sprintf(path, "%s/%s", shm_dir, wwid)) {
+ =09=09condlog(1, "%s: path name overflow", __func__);
+ =09=09return -1;
+ =09}
+diff --git a/multipath/main.c b/multipath/main.c
+index c2ef8c7b..c553437b 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -423,8 +423,7 @@ static int find_multipaths_check_timeout(const struct p=
+ath *pp, long tmo,
+=20
+ =09clock_gettime(CLOCK_REALTIME, &now);
+=20
+-=09if (snprintf(path, sizeof(path), "%s/%s", shm_find_mp_dir, pp->dev_t)
+-=09    >=3D sizeof(path)) {
++=09if (safe_sprintf(path, "%s/%s", shm_find_mp_dir, pp->dev_t)) {
+ =09=09condlog(1, "%s: path name overflow", __func__);
+ =09=09return FIND_MULTIPATHS_ERROR;
+ =09}
+--=20
+2.23.0
