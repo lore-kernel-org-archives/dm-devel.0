@@ -1,15 +1,15 @@
 From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 6/8] scsi: sd_zbc: add zone open, close,
- and finish support
-Date: Thu, 7 Nov 2019 01:53:14 -0800
-Message-ID: <20191107095314.GE2024@infradead.org>
+Subject: Re: [PATCH 7/8] dm: add zone open,
+	close and finish support
+Date: Thu, 7 Nov 2019 01:53:31 -0800
+Message-ID: <20191107095331.GF2024@infradead.org>
 References: <20191027140549.26272-1-damien.lemoal@wdc.com>
-	<20191027140549.26272-7-damien.lemoal@wdc.com>
+	<20191027140549.26272-8-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191027140549.26272-7-damien.lemoal@wdc.com>
+In-Reply-To: <20191027140549.26272-8-damien.lemoal@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
