@@ -1,14 +1,17 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 0/8] Zone management commands support
-Date: Thu, 7 Nov 2019 06:40:16 -0700
-Message-ID: <31755ade-ae21-8842-05c0-47017cea7e29@kernel.dk>
-References: <20191027140549.26272-1-damien.lemoal@wdc.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-writecache: change config parameters using
+	messages
+Date: Thu, 7 Nov 2019 14:09:58 -0500
+Message-ID: <20191107190958.GA2821@redhat.com>
+References: <fa95f1f0-67d6-d02e-6999-ba1f90d70fe2@petasan.org>
+	<8388b99a-a531-981e-9e36-8aeb3dffd18e@petasan.org>
+	<20191106150831.GA27888@redhat.com>
+	<5370f009-c324-1530-4400-adf1b59f0bbd@petasan.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191027140549.26272-1-damien.lemoal@wdc.com>
-Content-Language: en-US
+In-Reply-To: <5370f009-c324-1530-4400-adf1b59f0bbd@petasan.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,42 +21,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <damien.lemoal@wdc.com>, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Cc: Dmitry Fomichev <dmitry.fomichev@wdc.com>, Keith Busch <kbusch@kernel.org>, Hans Holmberg <Hans.Holmberg@wdc.com>, Ajay Joshi <ajay.joshi@wdc.com>, Matias Bjorling <matias.bjorling@wdc.com>
+Content-Disposition: inline
+To: Maged Mokhtar <mmokhtar@petasan.org>
+Cc: dm-devel@redhat.com, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-On 10/27/19 8:05 AM, Damien Le Moal wrote:
-> This series implements a few improvements and cleanups to zone block
-> device zone reset operations with the first three patches.
-> 
-> The remaining of the series patches introduce zone open, close and
-> finish support, allowing users of zoned block devices to explicitly
-> control the condition (state) of zones.
-> 
-> While these operations are not stricktly necessary for the correct
-> operation of zoned block devices, the open and close operations can
-> improve performance for some device implementations of the ZBC and ZAC
-> standards under write workloads. The finish zone operation, which
-> transition a zone to the full state, can also be useful to protect a
-> zone data by preventing further zone writes.
-> 
-> These operations are implemented by introducing the new
-> REQ_OP_ZONE_OPEN, REQ_OP_ZONE_CLOSE and REQ_OP_ZONE_FINISH request codes
-> and the function blkdev_zone_mgmt() to issue these requests. This new
-> function also replaces the former blkdev_reset_zones() function to reset
-> zones write pointer.
-> 
-> The new ioctls BLKOPENZONE, BLKCLOSEZONE and BLKFINISHZONE are also
-> defined to allow applications to issue these new requests without
-> resorting to a device passthrough interface (e.g. SG_IO).
-> 
-> Support for these operations is added to the SCSI sd driver, to the dm
-> infrastructure (dm-linear and dm-flakey targets) and to the null_blk
-> driver.
+On Thu, Nov 07 2019 at  1:55pm -0500,
+Maged Mokhtar <mmokhtar@petasan.org> wrote:
 
-Applied for 5.5, thanks. I've got the last sd patch pending, the conflict
-is rather ugly. I'll setup a post branch for drivers with this in, once
-the dependent fix has landed in Linus's tree.
+>=20
+>=20
+> On 06/11/2019 17:08, Mike Snitzer wrote:
+> >On Tue, Nov 05 2019 at  4:19pm -0500,
+> >Maged Mokhtar <mmokhtar@petasan.org> wrote:
+> >
+> >>Gentle ping please.
+> >>
+> >>It could add flexibility in changing cache parameters after device crea=
+tion.
+> >
+> >I'm inclined to _not_ take this type of change.
+> >
+> >Why isn't changing the config parameters via table reload viable for
+> >you?
+> >
+>=20
+>=20
+> Hi Mike,
+>=20
+> Thank you for your response. The main issue is to enable setting
+> some config parameters while the device is mounted and running and
+> avoid calling target ctr() by sending parameter changes via
+> messages. A similar setup was used in dm-cache.
+>=20
+> The reason is that tuning the write cache may require run time
+> changes. If un-tuned we can observes periods of spikes and/or step
+> like disk utilization on the slow device during writeback using
+> iostat, and these spikes correspond to periods of increased client
+> io latency. Utilization can be tuned by varying the number of active
+> writeback jobs + the gap between high and low marks to achieve a
+> smooth high utilization.  Such tuning is difficult to do when
+> creating the cache device as it depends on the hardware and io
+> workload. We are hoping to use some userspace monitoring and tuning
+> tool to periodically adjust these values while the device is
+> running.
 
--- 
-Jens Axboe
+I think you're missing that any actively used DM device can be
+suspended, table reloaded, resumed.  So the tuning at runtime is still
+possible, it just requires more steps.
+
+And I'm saying that unless/until there is a better reason other than
+"dm-cache allowed tuning via messages" I'm not interested in having
+multiple methods for tuning dm-writecache.
+
+Mike
