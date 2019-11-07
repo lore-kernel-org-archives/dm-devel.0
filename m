@@ -1,15 +1,15 @@
 From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 4/8] block: add zone open,
-	close and finish operations
-Date: Thu, 7 Nov 2019 01:52:11 -0800
-Message-ID: <20191107095211.GC2024@infradead.org>
+Subject: Re: [PATCH 5/8] block: add zone open,
+	close and finish ioctl support
+Date: Thu, 7 Nov 2019 01:52:46 -0800
+Message-ID: <20191107095246.GD2024@infradead.org>
 References: <20191027140549.26272-1-damien.lemoal@wdc.com>
-	<20191027140549.26272-5-damien.lemoal@wdc.com>
+	<20191027140549.26272-6-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191027140549.26272-5-damien.lemoal@wdc.com>
+In-Reply-To: <20191027140549.26272-6-damien.lemoal@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
