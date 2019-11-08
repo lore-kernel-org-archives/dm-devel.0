@@ -1,83 +1,92 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: dm-writecache: change config parameters using
-	messages
-Date: Thu, 7 Nov 2019 21:16:18 +0100
-Message-ID: <0fe12edd-c959-a870-0e15-988209cd629a@redhat.com>
-References: <fa95f1f0-67d6-d02e-6999-ba1f90d70fe2@petasan.org>
-	<8388b99a-a531-981e-9e36-8aeb3dffd18e@petasan.org>
-	<20191106150831.GA27888@redhat.com>
-	<5370f009-c324-1530-4400-adf1b59f0bbd@petasan.org>
-	<20191107190958.GA2821@redhat.com>
-	<cba8f93a-3477-9c87-0bff-fe7e6962d606@petasan.org>
-	<alpine.LRH.2.02.1911071448290.20334@file01.intranet.prod.int.rdu2.redhat.com>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: [PATCH 0/9] Zoned block device enhancements and zone
+ report rework
+Date: Fri,  8 Nov 2019 10:56:53 +0900
+Message-ID: <20191108015702.233102-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252; format=flowed
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1911071448290.20334@file01.intranet.prod.int.rdu2.redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>, Maged Mokhtar <mmokhtar@petasan.org>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, linux-f2fs-devel@lists.sourceforge.net, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>
 List-Id: dm-devel.ids
 
-Dne 07. 11. 19 v 20:50 Mikulas Patocka napsal(a):
->=20
->=20
-> On Thu, 7 Nov 2019, Maged Mokhtar wrote:
->=20
->>
->>
->> On 07/11/2019 21:09, Mike Snitzer wrote:
->>> On Thu, Nov 07 2019 at  1:55pm -0500,
->>> Maged Mokhtar <mmokhtar@petasan.org> wrote:
->>>
->>>>
->>>>
->>>> On 06/11/2019 17:08, Mike Snitzer wrote:
->>>>> On Tue, Nov 05 2019 at  4:19pm -0500,
->>>>> Maged Mokhtar <mmokhtar@petasan.org> wrote:
->>>>>
->>>>>> Gentle ping please.
->>>>>>
->>>>>> It could add flexibility in changing cache parameters after device
->>>>>> creation.
->>>>>
->>>>> I'm inclined to _not_ take this type of change.
->>>>>
->>>>> Why isn't changing the config parameters via table reload viable for
->>>>> you?
->>>>>
->>>>
->>
+This series of patches introduces changes to zoned block device handling
+code with the intent to simplify the code while optimizing run-time
+operation, particularly in the area of zone reporting.
 
-IMHO any target update that is changing behavior of target should be made v=
-ia=20
-table reload - typical symptom of such requirement is - that change may
-requires some memory allocation, metadata updates, synchronization of data =
-on=20
-used disks...
+The first patch lifts the device zone check code out of the sd driver
+and reimplements these zone checks generically as part of
+blk_revalidate_disk_zones(). This avoids zoned block device drivers to
+have to implement these checks. The second patch simplifies this
+function code for the !zoned case.
 
-If these things are made via messages - there is 'no simply way' back
-(while with table reload - we drop table if 'suspend' cannot proceed).
+The third patch is a small cleanup of zone report processing in
+preparation for the fourth patch which removes support for partitions
+on zoned block devices. As mentioned in that patch commit message, none
+of the known partitioning tools support zoned devices and there are no
+known use case in the field of SMR disks being used with partitions.
+Dropping partition supports allows to significantly simplify the code
+for zone report as zone sector values remapping becomes unnecessary.
 
-Another problem is - that if change is not visible via 'table line',
-future table access might be unaware of the change  and may reload
-table and expect different behavior.
+Patch 5 to 6 are small cleanups and fixes of the null_blk driver zoned
+mode.
 
-Also actual table update via  suspend & resume cannot be much slower then=
-=20
-message anyway - you can use 'noflush' if you need to - depending on the
-situation it might be usable -  and such operation is very quick.
+The prep patch 7 optimizes zone report buffer allocation for the SCSI
+sd driver. Finally, patch 8 introduces a new interface for report zones
+handling using a callback function executed per zone reported by the
+device. This allows avoiding the need to allocate large arrays of
+blk_zone structures for the execution of zone reports. This can
+significantly reduce memory usage and pressure on the memory management
+system while significantly simplify the code all over.
 
-Regards
+Overall, this series not only reduces significantly the code size, it
+also improves run-time memory usage for zone report execution.
 
-Zdenek
+This series applies cleanly on the for-next block tree on top of the
+zone management operation series. It may however create a conflict with
+Christoph's reqork of disk size revalidation. Please consider this
+series for inclusion in the 5.5 kernel.
+
+As always, comments are welcome.
+
+
+Christoph Hellwig (4):
+  block: cleanup the !zoned case in blk_revalidate_disk_zones
+  null_blk: clean up the block device operations
+  null_blk: clean up report zones
+  block: rework zone reporting
+
+Damien Le Moal (5):
+  block: Enhance blk_revalidate_disk_zones()
+  block: Simplify report zones execution
+  block: Remove partition support for zoned block devices
+  null_blk: Add zone_nr_conv to features
+  scsi: sd_zbc: Cleanup sd_zbc_alloc_report_buffer()
+
+ block/blk-core.c               |   6 +-
+ block/blk-zoned.c              | 356 ++++++++++++++-------------------
+ block/partition-generic.c      |  74 +------
+ drivers/block/null_blk.h       |  11 +-
+ drivers/block/null_blk_main.c  |  21 +-
+ drivers/block/null_blk_zoned.c |  33 ++-
+ drivers/md/dm-flakey.c         |  18 +-
+ drivers/md/dm-linear.c         |  20 +-
+ drivers/md/dm-zoned-metadata.c | 131 +++++-------
+ drivers/md/dm.c                | 130 +++++-------
+ drivers/scsi/sd.h              |   4 +-
+ drivers/scsi/sd_zbc.c          | 235 ++++++++--------------
+ fs/f2fs/super.c                |  51 ++---
+ include/linux/blkdev.h         |  15 +-
+ include/linux/device-mapper.h  |  24 ++-
+ 15 files changed, 427 insertions(+), 702 deletions(-)
+
+-- 
+2.23.0
