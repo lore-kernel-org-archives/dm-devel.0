@@ -1,9 +1,10 @@
 From: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
-Subject: Re: [PATCH 7/9] null_blk: Add zone_nr_conv to features
-Date: Fri, 8 Nov 2019 18:48:43 +0000
-Message-ID: <DM6PR04MB5754124089E14F2575C8412B867B0@DM6PR04MB5754.namprd04.prod.outlook.com>
+Subject: Re: [PATCH 2/9] block: cleanup the !zoned case in
+ blk_revalidate_disk_zones
+Date: Fri, 8 Nov 2019 18:50:22 +0000
+Message-ID: <DM6PR04MB5754E84538F2E0AC9C3FD797867B0@DM6PR04MB5754.namprd04.prod.outlook.com>
 References: <20191108015702.233102-1-damien.lemoal@wdc.com>
- <20191108015702.233102-8-damien.lemoal@wdc.com>
+ <20191108015702.233102-3-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -26,8 +27,11 @@ Looks good to me.
 Reviewed-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 
 On 11/07/2019 05:57 PM, Damien Le Moal wrote:
-> For a null_blk device with zoned mode enabled, the number of
-> conventional zones can be configured through configfs with the
-> zone_nr_conv parameter. Add this missing parameter in the features
-> string.
+> From: Christoph Hellwig<hch@lst.de>
 >
+> blk_revalidate_disk_zones is never called for non-zoned devices.  Just
+> return early and warn instead of trying to handle this case.
+>
+> Signed-off-by: Christoph Hellwig<hch@lst.de>
+> Signed-off-by: Damien Le Moal<damien.lemoal@wdc.com>
+> ---
