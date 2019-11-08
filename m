@@ -1,19 +1,15 @@
-From: Maged Mokhtar <mmokhtar@petasan.org>
-Subject: Re: dm-writecache: change config parameters using
-	messages
-Date: Thu, 7 Nov 2019 21:29:56 +0200
-Message-ID: <cba8f93a-3477-9c87-0bff-fe7e6962d606@petasan.org>
-References: <fa95f1f0-67d6-d02e-6999-ba1f90d70fe2@petasan.org>
-	<8388b99a-a531-981e-9e36-8aeb3dffd18e@petasan.org>
-	<20191106150831.GA27888@redhat.com>
-	<5370f009-c324-1530-4400-adf1b59f0bbd@petasan.org>
-	<20191107190958.GA2821@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: dm-snapshot for system updates in Android
+Date: Fri, 8 Nov 2019 07:31:44 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1911080723130.3392@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20191025101624.GA61225@google.com>
+	<alpine.LRH.2.02.1910290957220.25731@file01.intranet.prod.int.rdu2.redhat.com>
+	<20191104164900.GA10934@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191107190958.GA2821@redhat.com>
-Content-Language: en-US
+In-Reply-To: <20191104164900.GA10934@google.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,61 +19,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, mpatocka@redhat.com
+To: Alessio Balsini <balsini@android.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, elsk@google.com, dm-devel@redhat.com, dvander@google.com, kernel-team@android.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
 
 
-On 07/11/2019 21:09, Mike Snitzer wrote:
-> On Thu, Nov 07 2019 at  1:55pm -0500,
-> Maged Mokhtar <mmokhtar@petasan.org> wrote:
-> 
->>
->>
->> On 06/11/2019 17:08, Mike Snitzer wrote:
->>> On Tue, Nov 05 2019 at  4:19pm -0500,
->>> Maged Mokhtar <mmokhtar@petasan.org> wrote:
->>>
->>>> Gentle ping please.
->>>>
->>>> It could add flexibility in changing cache parameters after device creation.
->>>
->>> I'm inclined to _not_ take this type of change.
->>>
->>> Why isn't changing the config parameters via table reload viable for
->>> you?
->>>
->>
->>
->> Hi Mike,
->>
->> Thank you for your response. The main issue is to enable setting
->> some config parameters while the device is mounted and running and
->> avoid calling target ctr() by sending parameter changes via
->> messages. A similar setup was used in dm-cache.
->>
->> The reason is that tuning the write cache may require run time
->> changes. If un-tuned we can observes periods of spikes and/or step
->> like disk utilization on the slow device during writeback using
->> iostat, and these spikes correspond to periods of increased client
->> io latency. Utilization can be tuned by varying the number of active
->> writeback jobs + the gap between high and low marks to achieve a
->> smooth high utilization.  Such tuning is difficult to do when
->> creating the cache device as it depends on the hardware and io
->> workload. We are hoping to use some userspace monitoring and tuning
->> tool to periodically adjust these values while the device is
->> running.
-> 
-> I think you're missing that any actively used DM device can be
-> suspended, table reloaded, resumed.  So the tuning at runtime is still
-> possible, it just requires more steps.
-> 
-> And I'm saying that unless/until there is a better reason other than
-> "dm-cache allowed tuning via messages" I'm not interested in having
-> multiple methods for tuning dm-writecache.
-> 
-> Mike
-> 
-just for my understanding, does not table reload call _ctr() and 
-re-initializes things like threads/read metadada ..?
+On Mon, 4 Nov 2019, Alessio Balsini wrote:
+
+> > > -- Alignment
+> > >=20
+> > > Our approach follows the solution proposed by Mikulas [1].
+> > > Being the block alignment of file extents automatically managed by th=
+e
+> > > filesystem, using FIEMAP should have no alignment-related performance=
+ issue.
+> > > But in our implementation we hit a misalignment [2] branch which lead=
+s to
+> > > dmwarning messages [3, 4].
+> > >=20
+> > > I have a limited experience with the block layer and dm, so I'm still
+> > > struggling in finding the root cause for this, either in user space o=
+r kernel
+> > > space.
+> >=20
+> > I don't know. What is the block size of the filesystem? Are all mapping=
+s=20
+> > aligned to this block size?
+>=20
+> Here follows a just generated warning coming from a Pixel 4 kernel (4.14)=
+:
+>=20
+> [ 3093.443808] device-mapper: table: 253:16: adding target device dm-15
+> caused an alignment inconsistency: physical_block_size=3D4096,
+> logical_block_size=3D4096, alignment_offset=3D61440, start=3D0
+>=20
+> Does this contain all the info you asked for?
+
+Look at the function blk_stack_limits - it has various checks that make it=
+=20
+return -1. Insert some debugging printk's there and find out which check=20
+made the function return -1.
+
+Based on this, we can find out which of the limits triggered the error=20
+message.
+
+> I started investigating this issue, but since we didn't notice any
+> performance degradation, I prioritized other things. I'll be hopefully
+> able to get back to this warning in the next months.
+> Please let me know if I can help you with that or if you need additional
+> information.
+
+Mikulas
