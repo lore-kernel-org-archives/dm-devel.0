@@ -1,15 +1,14 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm-snapshot for system updates in Android
-Date: Fri, 8 Nov 2019 07:31:44 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1911080723130.3392@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20191025101624.GA61225@google.com>
-	<alpine.LRH.2.02.1910290957220.25731@file01.intranet.prod.int.rdu2.redhat.com>
-	<20191104164900.GA10934@google.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 9/9] block: rework zone reporting
+Date: Fri, 8 Nov 2019 10:16:16 -0500
+Message-ID: <20191108151616.GA8047@redhat.com>
+References: <20191108015702.233102-1-damien.lemoal@wdc.com>
+	<20191108015702.233102-10-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=WINDOWS-1252
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191104164900.GA10934@google.com>
+In-Reply-To: <20191108015702.233102-10-damien.lemoal@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,55 +18,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alessio Balsini <balsini@android.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, elsk@google.com, dm-devel@redhat.com, dvander@google.com, kernel-team@android.com, Alasdair G Kergon <agk@redhat.com>
+Content-Disposition: inline
+To: Damien Le Moal <damien.lemoal@wdc.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, Chao Yu <yuchao0@huawei.com>, linux-f2fs-devel@lists.sourceforge.net, linux-block@vger.kernel.org, dm-devel@redhat.com, Jaegeuk Kim <jaegeuk@kernel.org>
 List-Id: dm-devel.ids
 
+On Thu, Nov 07 2019 at  8:57pm -0500,
+Damien Le Moal <damien.lemoal@wdc.com> wrote:
 
-
-On Mon, 4 Nov 2019, Alessio Balsini wrote:
-
-> > > -- Alignment
-> > >=20
-> > > Our approach follows the solution proposed by Mikulas [1].
-> > > Being the block alignment of file extents automatically managed by th=
-e
-> > > filesystem, using FIEMAP should have no alignment-related performance=
- issue.
-> > > But in our implementation we hit a misalignment [2] branch which lead=
-s to
-> > > dmwarning messages [3, 4].
-> > >=20
-> > > I have a limited experience with the block layer and dm, so I'm still
-> > > struggling in finding the root cause for this, either in user space o=
-r kernel
-> > > space.
-> >=20
-> > I don't know. What is the block size of the filesystem? Are all mapping=
-s=20
-> > aligned to this block size?
+> From: Christoph Hellwig <hch@lst.de>
 >=20
-> Here follows a just generated warning coming from a Pixel 4 kernel (4.14)=
-:
+> Avoid the need to allocate a potentially large array of struct blk_zone
+> in the block layer by switching the ->report_zones method interface to
+> a callback model. Now the caller simply supplies a callback that is
+> executed on each reported zone, and private data for it.
 >=20
-> [ 3093.443808] device-mapper: table: 253:16: adding target device dm-15
-> caused an alignment inconsistency: physical_block_size=3D4096,
-> logical_block_size=3D4096, alignment_offset=3D61440, start=3D0
->=20
-> Does this contain all the info you asked for?
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> Signed-off-by: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
 
-Look at the function blk_stack_limits - it has various checks that make it=
-=20
-return -1. Insert some debugging printk's there and find out which check=20
-made the function return -1.
-
-Based on this, we can find out which of the limits triggered the error=20
-message.
-
-> I started investigating this issue, but since we didn't notice any
-> performance degradation, I prioritized other things. I'll be hopefully
-> able to get back to this warning in the next months.
-> Please let me know if I can help you with that or if you need additional
-> information.
-
-Mikulas
+Reviewed-by: Mike Snitzer <snitzer@redhat.com>
