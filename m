@@ -1,7 +1,7 @@
 From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH v2 6/9] null_blk: clean up report zones
-Date: Mon, 11 Nov 2019 11:39:27 +0900
-Message-ID: <20191111023930.638129-7-damien.lemoal@wdc.com>
+Subject: [PATCH v2 7/9] null_blk: Add zone_nr_conv to features
+Date: Mon, 11 Nov 2019 11:39:28 +0900
+Message-ID: <20191111023930.638129-8-damien.lemoal@wdc.com>
 References: <20191111023930.638129-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,84 +19,30 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, linux-f2fs-devel@lists.sourceforge.net, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>
 List-Id: dm-devel.ids
 
-From: Christoph Hellwig <hch@lst.de>
+For a null_blk device with zoned mode enabled, the number of
+conventional zones can be configured through configfs with the
+zone_nr_conv parameter. Add this missing parameter in the features
+string.
 
-Make the instance name match the method name and define the name to NULL
-instead of providing an inline stub, which is rather pointless for a
-method call.
-
-Signed-off-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
 Reviewed-by: Hannes Reinecke <hare@suse.de>
 Reviewed-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 ---
- drivers/block/null_blk.h       | 11 +++--------
- drivers/block/null_blk_main.c  |  2 +-
- drivers/block/null_blk_zoned.c |  4 ++--
- 3 files changed, 6 insertions(+), 11 deletions(-)
+ drivers/block/null_blk_main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/block/null_blk.h b/drivers/block/null_blk.h
-index 93c2a3d403da..9bf56fbab091 100644
---- a/drivers/block/null_blk.h
-+++ b/drivers/block/null_blk.h
-@@ -91,8 +91,8 @@ struct nullb {
- #ifdef CONFIG_BLK_DEV_ZONED
- int null_zone_init(struct nullb_device *dev);
- void null_zone_exit(struct nullb_device *dev);
--int null_zone_report(struct gendisk *disk, sector_t sector,
--		     struct blk_zone *zones, unsigned int *nr_zones);
-+int null_report_zones(struct gendisk *disk, sector_t sector,
-+		      struct blk_zone *zones, unsigned int *nr_zones);
- blk_status_t null_handle_zoned(struct nullb_cmd *cmd,
- 				enum req_opf op, sector_t sector,
- 				sector_t nr_sectors);
-@@ -105,12 +105,6 @@ static inline int null_zone_init(struct nullb_device *dev)
- 	return -EINVAL;
- }
- static inline void null_zone_exit(struct nullb_device *dev) {}
--static inline int null_zone_report(struct gendisk *disk, sector_t sector,
--				   struct blk_zone *zones,
--				   unsigned int *nr_zones)
--{
--	return -EOPNOTSUPP;
--}
- static inline blk_status_t null_handle_zoned(struct nullb_cmd *cmd,
- 					     enum req_opf op, sector_t sector,
- 					     sector_t nr_sectors)
-@@ -123,5 +117,6 @@ static inline size_t null_zone_valid_read_len(struct nullb *nullb,
- {
- 	return len;
- }
-+#define null_report_zones	NULL
- #endif /* CONFIG_BLK_DEV_ZONED */
- #endif /* __NULL_BLK_H */
 diff --git a/drivers/block/null_blk_main.c b/drivers/block/null_blk_main.c
-index 89d385bab45b..2687eb36441c 100644
+index 2687eb36441c..27fb34d7da31 100644
 --- a/drivers/block/null_blk_main.c
 +++ b/drivers/block/null_blk_main.c
-@@ -1444,7 +1444,7 @@ static void null_config_discard(struct nullb *nullb)
+@@ -467,7 +467,7 @@ nullb_group_drop_item(struct config_group *group, struct config_item *item)
  
- static const struct block_device_operations null_ops = {
- 	.owner		= THIS_MODULE,
--	.report_zones	= null_zone_report,
-+	.report_zones	= null_report_zones,
- };
- 
- static void null_init_queue(struct nullb *nullb, struct nullb_queue *nq)
-diff --git a/drivers/block/null_blk_zoned.c b/drivers/block/null_blk_zoned.c
-index 02f41a3bc4cb..00696f16664b 100644
---- a/drivers/block/null_blk_zoned.c
-+++ b/drivers/block/null_blk_zoned.c
-@@ -66,8 +66,8 @@ void null_zone_exit(struct nullb_device *dev)
- 	kvfree(dev->zones);
+ static ssize_t memb_group_features_show(struct config_item *item, char *page)
+ {
+-	return snprintf(page, PAGE_SIZE, "memory_backed,discard,bandwidth,cache,badblocks,zoned,zone_size\n");
++	return snprintf(page, PAGE_SIZE, "memory_backed,discard,bandwidth,cache,badblocks,zoned,zone_size,zone_nr_conv\n");
  }
  
--int null_zone_report(struct gendisk *disk, sector_t sector,
--		     struct blk_zone *zones, unsigned int *nr_zones)
-+int null_report_zones(struct gendisk *disk, sector_t sector,
-+		      struct blk_zone *zones, unsigned int *nr_zones)
- {
- 	struct nullb *nullb = disk->private_data;
- 	struct nullb_device *dev = nullb->dev;
+ CONFIGFS_ATTR_RO(memb_group_, features);
 -- 
 2.23.0
