@@ -1,8 +1,7 @@
 From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH v2 5/9] null_blk: clean up the block device
- operations
-Date: Mon, 11 Nov 2019 11:39:26 +0900
-Message-ID: <20191111023930.638129-6-damien.lemoal@wdc.com>
+Subject: [PATCH v2 3/9] block: Simplify report zones execution
+Date: Mon, 11 Nov 2019 11:39:24 +0900
+Message-ID: <20191111023930.638129-4-damien.lemoal@wdc.com>
 References: <20191111023930.638129-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,56 +19,115 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, linux-f2fs-devel@lists.sourceforge.net, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>
 List-Id: dm-devel.ids
 
-From: Christoph Hellwig <hch@lst.de>
+All kernel users of blkdev_report_zones() as well as applications use
+through ioctl(BLKZONEREPORT) expect to potentially get less zone
+descriptors than requested. As such, the use of the internal report
+zones command execution loop implemented by blk_report_zones() is
+not necessary and can even be harmful to performance by causing the
+execution of inefficient small zones report command to service the
+reminder of a requested zone array.
 
-Remove the pointless stub open and release methods, give the operations
-vector a slightly less confusing name, and use normal alignment for the
-assignment operators.
+This patch removes blk_report_zones(), simplifying the code. Also
+remove a now incorrect comment in dm_blk_report_zones().
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Javier Gonzalez <javier@javigon.com>
 Reviewed-by: Hannes Reinecke <hare@suse.de>
-Reviewed-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 ---
- drivers/block/null_blk_main.c | 19 ++++---------------
- 1 file changed, 4 insertions(+), 15 deletions(-)
+ block/blk-zoned.c | 34 +++++-----------------------------
+ drivers/md/dm.c   |  6 ------
+ 2 files changed, 5 insertions(+), 35 deletions(-)
 
-diff --git a/drivers/block/null_blk_main.c b/drivers/block/null_blk_main.c
-index 40a64bdd8ea7..89d385bab45b 100644
---- a/drivers/block/null_blk_main.c
-+++ b/drivers/block/null_blk_main.c
-@@ -1442,20 +1442,9 @@ static void null_config_discard(struct nullb *nullb)
- 	blk_queue_flag_set(QUEUE_FLAG_DISCARD, nullb->q);
+diff --git a/block/blk-zoned.c b/block/blk-zoned.c
+index 523a28d7a15c..ea4e086ba00e 100644
+--- a/block/blk-zoned.c
++++ b/block/blk-zoned.c
+@@ -119,31 +119,6 @@ static bool blkdev_report_zone(struct block_device *bdev, struct blk_zone *rep)
+ 	return true;
  }
  
--static int null_open(struct block_device *bdev, fmode_t mode)
+-static int blk_report_zones(struct gendisk *disk, sector_t sector,
+-			    struct blk_zone *zones, unsigned int *nr_zones)
 -{
+-	struct request_queue *q = disk->queue;
+-	unsigned int z = 0, n, nrz = *nr_zones;
+-	sector_t capacity = get_capacity(disk);
+-	int ret;
+-
+-	while (z < nrz && sector < capacity) {
+-		n = nrz - z;
+-		ret = disk->fops->report_zones(disk, sector, &zones[z], &n);
+-		if (ret)
+-			return ret;
+-		if (!n)
+-			break;
+-		sector += blk_queue_zone_sectors(q) * n;
+-		z += n;
+-	}
+-
+-	WARN_ON(z > *nr_zones);
+-	*nr_zones = z;
+-
 -	return 0;
 -}
 -
--static void null_release(struct gendisk *disk, fmode_t mode)
--{
--}
--
--static const struct block_device_operations null_fops = {
--	.owner =	THIS_MODULE,
--	.open =		null_open,
--	.release =	null_release,
--	.report_zones =	null_zone_report,
-+static const struct block_device_operations null_ops = {
-+	.owner		= THIS_MODULE,
-+	.report_zones	= null_zone_report,
- };
+ /**
+  * blkdev_report_zones - Get zones information
+  * @bdev:	Target block device
+@@ -164,6 +139,7 @@ int blkdev_report_zones(struct block_device *bdev, sector_t sector,
+ 			struct blk_zone *zones, unsigned int *nr_zones)
+ {
+ 	struct request_queue *q = bdev_get_queue(bdev);
++	struct gendisk *disk = bdev->bd_disk;
+ 	unsigned int i, nrz;
+ 	int ret;
  
- static void null_init_queue(struct nullb *nullb, struct nullb_queue *nq)
-@@ -1556,7 +1545,7 @@ static int null_gendisk_register(struct nullb *nullb)
- 	disk->flags |= GENHD_FL_EXT_DEVT | GENHD_FL_SUPPRESS_PARTITION_INFO;
- 	disk->major		= null_major;
- 	disk->first_minor	= nullb->index;
--	disk->fops		= &null_fops;
-+	disk->fops		= &null_ops;
- 	disk->private_data	= nullb;
- 	disk->queue		= nullb->q;
- 	strncpy(disk->disk_name, nullb->disk_name, DISK_NAME_LEN);
+@@ -175,7 +151,7 @@ int blkdev_report_zones(struct block_device *bdev, sector_t sector,
+ 	 * report_zones method. If it does not have one defined, the device
+ 	 * driver has a bug. So warn about that.
+ 	 */
+-	if (WARN_ON_ONCE(!bdev->bd_disk->fops->report_zones))
++	if (WARN_ON_ONCE(!disk->fops->report_zones))
+ 		return -EOPNOTSUPP;
+ 
+ 	if (!*nr_zones || sector >= bdev->bd_part->nr_sects) {
+@@ -185,8 +161,8 @@ int blkdev_report_zones(struct block_device *bdev, sector_t sector,
+ 
+ 	nrz = min(*nr_zones,
+ 		  __blkdev_nr_zones(q, bdev->bd_part->nr_sects - sector));
+-	ret = blk_report_zones(bdev->bd_disk, get_start_sect(bdev) + sector,
+-			       zones, &nrz);
++	ret = disk->fops->report_zones(disk, get_start_sect(bdev) + sector,
++				       zones, &nrz);
+ 	if (ret)
+ 		return ret;
+ 
+@@ -561,7 +537,7 @@ int blk_revalidate_disk_zones(struct gendisk *disk)
+ 
+ 	while (z < nr_zones) {
+ 		nrz = min(nr_zones - z, rep_nr_zones);
+-		ret = blk_report_zones(disk, sector, zones, &nrz);
++		ret = disk->fops->report_zones(disk, sector, zones, &nrz);
+ 		if (ret)
+ 			goto out;
+ 		if (!nrz)
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index bc143c1b2333..89189c29438f 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -473,12 +473,6 @@ static int dm_blk_report_zones(struct gendisk *disk, sector_t sector,
+ 		goto out;
+ 	}
+ 
+-	/*
+-	 * blkdev_report_zones() will loop and call this again to cover all the
+-	 * zones of the target, eventually moving on to the next target.
+-	 * So there is no need to loop here trying to fill the entire array
+-	 * of zones.
+-	 */
+ 	ret = tgt->type->report_zones(tgt, sector, zones, nr_zones);
+ 
+ out:
 -- 
 2.23.0
