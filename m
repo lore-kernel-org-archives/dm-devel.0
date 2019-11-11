@@ -1,18 +1,12 @@
-From: Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [dm-devel] [PATCH 8/9] scsi: sd_zbc: Cleanup
- sd_zbc_alloc_report_buffer()
-Date: Fri, 8 Nov 2019 19:02:26 -0800
-Message-ID: <639eae70-bb57-0c49-0ae9-aed8d33df271@acm.org>
-References: <20191108015702.233102-1-damien.lemoal@wdc.com>
- <20191108015702.233102-9-damien.lemoal@wdc.com>
- <6a1e0a08-d65c-b075-9bac-23519e9e91c3@acm.org>
- <BYAPR04MB5816C442BE08F9973C2CDF15E77A0@BYAPR04MB5816.namprd04.prod.outlook.com>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: [PATCH v2 0/9] Zoned block device enhancements and zone
+ report rework
+Date: Mon, 11 Nov 2019 11:39:21 +0900
+Message-ID: <20191111023930.638129-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-In-Reply-To: <BYAPR04MB5816C442BE08F9973C2CDF15E77A0@BYAPR04MB5816.namprd04.prod.outlook.com>
-Content-Language: en-US
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
 List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
@@ -21,54 +15,81 @@ List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
 List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
 Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Damien Le Moal <Damien.LeMoal@wdc.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Martin K . Petersen" <martin.petersen@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "linux-f2fs-devel@lists.sourceforge.net" <linux-f2fs-devel@lists.sourceforge.net>, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>
+To: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, linux-f2fs-devel@lists.sourceforge.net, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>
 List-Id: dm-devel.ids
 
-On 2019-11-08 18:54, Damien Le Moal wrote:
-> On 2019/11/09 4:06, Bart Van Assche wrote:
->> On 11/7/19 5:57 PM, Damien Le Moal wrote:
->>> -	buf = vzalloc(bufsize);
->>> -	if (buf)
->>> -		*buflen = bufsize;
->>> +	while (bufsize >= SECTOR_SIZE) {
->>> +		buf = vzalloc(bufsize);
->>> +		if (buf) {
->>> +			*buflen = bufsize;
->>> +			return buf;
->>> +		}
->>> +		bufsize >>= 1;
->>> +	}
->>
->> Hi Damien,
->>
->> Has it been considered to pass the __GFP_NORETRY flag to this vzalloc() 
->> call?
-> 
-> Do you mean using
-> 
-> __vmalloc(bufsize,
-> 	  GFP_KERNEL | __GFP_ZERO | __GFP_NORETRY, PAGE_KERNEL);
-> 
-> instead of vzalloc() ? (since we cannot pass GFP flags to vzalloc()...)
-> 
-> Note that this is called with GFP_NOIO set for the caller context in the
-> case of revalidate zones, and default to GFP_KERNEL for
-> blkdev_report_zones() unless the caller also tweaks the context memalloc
-> flags.
+This series of patches introduces changes to zoned block device handling
+code with the intent to simplify the code while optimizing run-time
+operation, particularly in the area of zone reporting.
 
-Hi Damien,
+The first patch lifts the device zone check code out of the sd driver
+and reimplements these zone checks generically as part of
+blk_revalidate_disk_zones(). This avoids zoned block device drivers to
+have to implement these checks. The second patch simplifies this
+function code for the !zoned case.
 
-Yes, that's what I meant. The following comment from mm/util.c explains
-why __GFP_RETRY should be used if it is OK for an allocation to fail:
+The third patch is a small cleanup of zone report processing in
+preparation for the fourth patch which removes support for partitions
+on zoned block devices. As mentioned in that patch commit message, none
+of the known partitioning tools support zoned devices and there are no
+known use case in the field of SMR disks being used with partitions.
+Dropping partition supports allows to significantly simplify the code
+for zone report as zone sector values remapping becomes unnecessary.
 
-/*
- * We want to attempt a large physically contiguous block first because
- * it is less likely to fragment multiple larger blocks and therefore
- * contribute to a long term fragmentation less than vmalloc fallback.
- * However make sure that larger requests are not too disruptive - no
- * OOM killer and no allocation failure warnings as we have a fallback.
- */
+Patch 5 to 6 are small cleanups and fixes of the null_blk driver zoned
+mode.
 
-Thanks,
+The prep patch 7 optimizes zone report buffer allocation for the SCSI
+sd driver. Finally, patch 8 introduces a new interface for report zones
+handling using a callback function executed per zone reported by the
+device. This allows avoiding the need to allocate large arrays of
+blk_zone structures for the execution of zone reports. This can
+significantly reduce memory usage and pressure on the memory management
+system while significantly simplify the code all over.
 
-Bart.
+Overall, this series not only reduces significantly the code size, it
+also improves run-time memory usage for zone report execution.
+
+This series applies cleanly on the for-next block tree on top of the
+zone management operation series. It may however create a conflict with
+Christoph's reqork of disk size revalidation. Please consider this
+series for inclusion in the 5.5 kernel.
+
+As always, comments are welcome.
+
+Changes from V1:
+* Use __GFP_NORETRY in patch 8 as suggested by Bart.
+* Added reviewed-by tags.
+
+Christoph Hellwig (4):
+  block: cleanup the !zoned case in blk_revalidate_disk_zones
+  null_blk: clean up the block device operations
+  null_blk: clean up report zones
+  block: rework zone reporting
+
+Damien Le Moal (5):
+  block: Enhance blk_revalidate_disk_zones()
+  block: Simplify report zones execution
+  block: Remove partition support for zoned block devices
+  null_blk: Add zone_nr_conv to features
+  scsi: sd_zbc: Cleanup sd_zbc_alloc_report_buffer()
+
+ block/blk-core.c               |   6 +-
+ block/blk-zoned.c              | 356 ++++++++++++++-------------------
+ block/partition-generic.c      |  74 +------
+ drivers/block/null_blk.h       |  11 +-
+ drivers/block/null_blk_main.c  |  21 +-
+ drivers/block/null_blk_zoned.c |  33 ++-
+ drivers/md/dm-flakey.c         |  18 +-
+ drivers/md/dm-linear.c         |  20 +-
+ drivers/md/dm-zoned-metadata.c | 131 +++++-------
+ drivers/md/dm.c                | 130 +++++-------
+ drivers/scsi/sd.h              |   4 +-
+ drivers/scsi/sd_zbc.c          | 237 ++++++++--------------
+ fs/f2fs/super.c                |  51 ++---
+ include/linux/blkdev.h         |  15 +-
+ include/linux/device-mapper.h  |  24 ++-
+ 15 files changed, 429 insertions(+), 702 deletions(-)
+
+-- 
+2.23.0
