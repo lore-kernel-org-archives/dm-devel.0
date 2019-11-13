@@ -1,67 +1,107 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH v2 0/9] Zoned block device enhancements and
- zone report rework
-Date: Tue, 12 Nov 2019 19:16:39 -0700
-Message-ID: <a0c1c1bf-d6e5-8be1-ed99-6bfed3483d1d@kernel.dk>
-References: <20191111023930.638129-1-damien.lemoal@wdc.com>
+From: Scott Wood <swood@redhat.com>
+Subject: Re: [PATCH 1/2] dm-snapshot: fix crash with the realtime kernel
+Date: Wed, 13 Nov 2019 00:01:06 -0600
+Message-ID: <048d9e5ea9ea9cebe18aa96d59bd0a67b3429529.camel@redhat.com>
+References: <alpine.LRH.2.02.1911110811060.28408@file01.intranet.prod.int.rdu2.redhat.com>
+         <c9a772e9-e305-cf0b-1155-fb19bdb84e55@arrikto.com>
+         <20191112011444.GA32220@redhat.com>
+         <alpine.LRH.2.02.1911120240020.25757@file01.intranet.prod.int.rdu2.redhat.com>
+         <a6f588d3-2403-d50a-70a1-ed644082cc83@arrikto.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-In-Reply-To: <20191111023930.638129-1-damien.lemoal@wdc.com>
-Content-Language: en-US
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Damien Le Moal <damien.lemoal@wdc.com>, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, linux-f2fs-devel@lists.sourceforge.net, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <a6f588d3-2403-d50a-70a1-ed644082cc83@arrikto.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Nikos Tsironis <ntsironis@arrikto.com>, Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Ilias Tsitsimpis <iliastsi@arrikto.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Daniel Wagner <dwagner@suse.de>, tglx@linutronix.de, linux-rt-users@vger.kernel.org, Paul Gortmaker <paul.gortmaker@windriver.com>
 List-Id: dm-devel.ids
 
-On 11/10/19 6:39 PM, Damien Le Moal wrote:
-> This series of patches introduces changes to zoned block device handling
-> code with the intent to simplify the code while optimizing run-time
-> operation, particularly in the area of zone reporting.
-> 
-> The first patch lifts the device zone check code out of the sd driver
-> and reimplements these zone checks generically as part of
-> blk_revalidate_disk_zones(). This avoids zoned block device drivers to
-> have to implement these checks. The second patch simplifies this
-> function code for the !zoned case.
-> 
-> The third patch is a small cleanup of zone report processing in
-> preparation for the fourth patch which removes support for partitions
-> on zoned block devices. As mentioned in that patch commit message, none
-> of the known partitioning tools support zoned devices and there are no
-> known use case in the field of SMR disks being used with partitions.
-> Dropping partition supports allows to significantly simplify the code
-> for zone report as zone sector values remapping becomes unnecessary.
-> 
-> Patch 5 to 6 are small cleanups and fixes of the null_blk driver zoned
-> mode.
-> 
-> The prep patch 7 optimizes zone report buffer allocation for the SCSI
-> sd driver. Finally, patch 8 introduces a new interface for report zones
-> handling using a callback function executed per zone reported by the
-> device. This allows avoiding the need to allocate large arrays of
-> blk_zone structures for the execution of zone reports. This can
-> significantly reduce memory usage and pressure on the memory management
-> system while significantly simplify the code all over.
-> 
-> Overall, this series not only reduces significantly the code size, it
-> also improves run-time memory usage for zone report execution.
-> 
-> This series applies cleanly on the for-next block tree on top of the
-> zone management operation series. It may however create a conflict with
-> Christoph's reqork of disk size revalidation. Please consider this
-> series for inclusion in the 5.5 kernel.
+On Tue, 2019-11-12 at 13:45 +0200, Nikos Tsironis wrote:
+> On 11/12/19 9:50 AM, Mikulas Patocka wrote:
+> >=20
+> > On Mon, 11 Nov 2019, Mike Snitzer wrote:
+> >=20
+> > > On Mon, Nov 11 2019 at 11:37am -0500,
+> > > Nikos Tsironis <ntsironis@arrikto.com> wrote:
+> > >=20
+> > > > On 11/11/19 3:59 PM, Mikulas Patocka wrote:
+> > > > > Snapshot doesn't work with realtime kernels since the commit
+> > > > > f79ae415b64c.
+> > > > > hlist_bl is implemented as a raw spinlock and the code takes two
+> > > > > non-raw
+> > > > > spinlocks while holding hlist_bl (non-raw spinlocks are blocking
+> > > > > mutexes
+> > > > > in the realtime kernel, so they couldn't be taken inside a raw
+> > > > > spinlock).
+> > > > >=20
+> > > > > This patch fixes the problem by using non-raw spinlock
+> > > > > exception_table_lock instead of the hlist_bl lock.
+> > > > >=20
+> > > > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > > > > Fixes: f79ae415b64c ("dm snapshot: Make exception tables
+> > > > > scalable")
+> > > > >=20
+> > > >=20
+> > > > Hi Mikulas,
+> > > >=20
+> > > > I wasn't aware that hlist_bl is implemented as a raw spinlock in th=
+e
+> > > > real time kernel. I would expect it to be a standard non-raw
+> > > > spinlock,
+> > > > so everything works as expected. But, after digging further in the
+> > > > real
+> > > > time tree, I found commit ad7675b15fd87f1 ("list_bl: Make list head
+> > > > locking RT safe") which suggests that such a conversion would break
+> > > > other parts of the kernel.
+> > >=20
+> > > Right, the proper fix is to update list_bl to work on realtime (which
+> > > I
+> > > assume the referenced commit does).  I do not want to take this
+> > > dm-snapshot specific workaround that open-codes what should be done
+> > > within hlist_{bl_lock,unlock}, etc.
+> >=20
+> > If we change list_bl to use non-raw spinlock, it fails in dentry lookup=
+=20
+> > code. The dentry code takes a seqlock (which is implemented as preempt=
+=20
+> > disable in the realtime kernel) and then takes a list_bl lock.
+> >=20
+> > This is wrong from the real-time perspective (the chain in the hash
+> > could=20
+> > be arbitrarily long, so using non-raw spinlock could cause unbounded=20
+> > wait), however we can't do anything with it.
+> >=20
+> > I think that fixing dm-snapshot is way easier than fixing the dentry
+> > code.=20
+> > If you have an idea how to fix the dentry code, tell us.
+>=20
+> I too think that it would be better to fix list_bl. dm-snapshot isn't
+> really broken. One should be able to acquire a spinlock while holding
+> another spinlock.
 
-We're taking branching to new levels... I created for-5.5/zoned for this,
-which is for-5.5/block + for-5.5/drivers + for-5.5/drivers-post combined.
-The latter is a branch with the SCSI dependencies from Martin pulled in.
+That's not universally true -- even in the absence of RT there are nesting
+considerations.  But it would probably be good if raw locks weren't hidden
+inside other locking primitives without making it clear (ideally in the
+function names) that it's a raw lock.
 
--- 
-Jens Axboe
+> Moreover, apart from dm-snapshot, anyone ever using list_bl is at risk
+> of breaking the realtime kernel, if he or she is not aware of that
+> particular limitation of list_bl's implementation in the realtime tree.
+
+In particular the non-rcu variant seems inherently bad unless you protect
+traversal with some other lock (in which case why use bl at all?).  Maybe
+fully separate the rcu version of list_bl and keep using raw locks there
+(with the name clearly indicating so), with the side benefit that
+accidentally mixing rcu and non-rcu operations on the same list would becom=
+e
+a build error, and convert the non-rcu list_bl to use non-raw locks on RT.
+
+BTW, I'm wondering what makes bit spinlocks worse than raw spinlocks on
+RT...  commit ad7675b15fd87f19 says there's no lockdep visibility, but that
+seems orthogonal to RT, and could be addressed by adding a dep_map on debug
+builds the same way the raw lock is currently added.  The other bit spinloc=
+k
+conversion commits that I could find are replacing them with non-raw locks.
+
+-Scott
