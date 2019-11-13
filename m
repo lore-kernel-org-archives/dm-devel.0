@@ -1,32 +1,112 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH v2 0/9] Zoned block device enhancements and
- zone report rework
-Date: Tue, 12 Nov 2019 23:06:10 -0800
-Message-ID: <20191113070610.GA17875@infradead.org>
-References: <20191111023930.638129-1-damien.lemoal@wdc.com>
- <a0c1c1bf-d6e5-8be1-ed99-6bfed3483d1d@kernel.dk>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: Re: [PATCH RT 1/2 v2] dm-snapshot: fix crash with the realtime kernel
+Date: Wed, 13 Nov 2019 11:20:35 +0200
+Message-ID: <ab6fa08d-256a-1f8c-24dd-e5c23b3328bf@arrikto.com>
+References: <alpine.LRH.2.02.1911121057490.12815@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-Content-Disposition: inline
-In-Reply-To: <a0c1c1bf-d6e5-8be1-ed99-6bfed3483d1d@kernel.dk>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Damien Le Moal <damien.lemoal@wdc.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, linux-f2fs-devel@lists.sourceforge.net, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.02.1911121057490.12815@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
+Cc: Scott Wood <swood@redhat.com>, Ilias Tsitsimpis <iliastsi@arrikto.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Daniel Wagner <dwagner@suse.de>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, linux-rt-users@vger.kernel.org, tglx@linutronix.de
 List-Id: dm-devel.ids
 
-On Tue, Nov 12, 2019 at 07:16:39PM -0700, Jens Axboe wrote:
-> We're taking branching to new levels... I created for-5.5/zoned for this,
-> which is for-5.5/block + for-5.5/drivers + for-5.5/drivers-post combined.
-> The latter is a branch with the SCSI dependencies from Martin pulled in.
+On 11/12/19 6:09 PM, Mikulas Patocka wrote:
+> Snapshot doesn't work with realtime kernels since the commit f79ae415b64c.
+> hlist_bl is implemented as a raw spinlock and the code takes two non-raw
+> spinlocks while holding hlist_bl (non-raw spinlocks are blocking mutexes
+> in the realtime kernel).
+> 
+> We can't change hlist_bl to use non-raw spinlocks, this triggers warnings 
+> in dentry lookup code, because the dentry lookup code uses hlist_bl while 
+> holding a seqlock.
+> 
+> This patch fixes the problem by using non-raw spinlock 
+> exception_table_lock instead of the hlist_bl lock.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Fixes: f79ae415b64c ("dm snapshot: Make exception tables scalable")
+> 
 
-So I guess the report of the partitioning series has to go on top of
-that?  Let me try..
+Reviewed-by: Nikos Tsironis <ntsironis@arrikto.com>
+
+> ---
+>  drivers/md/dm-snap.c |   23 +++++++++++++++++++++++
+>  1 file changed, 23 insertions(+)
+> 
+> Index: linux-2.6/drivers/md/dm-snap.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-snap.c	2019-11-12 16:44:36.000000000 +0100
+> +++ linux-2.6/drivers/md/dm-snap.c	2019-11-12 17:01:46.000000000 +0100
+> @@ -141,6 +141,10 @@ struct dm_snapshot {
+>  	 * for them to be committed.
+>  	 */
+>  	struct bio_list bios_queued_during_merge;
+> +
+> +#ifdef CONFIG_PREEMPT_RT_BASE
+> +	spinlock_t exception_table_lock;
+> +#endif
+>  };
+>  
+>  /*
+> @@ -625,30 +629,46 @@ static uint32_t exception_hash(struct dm
+>  
+>  /* Lock to protect access to the completed and pending exception hash tables. */
+>  struct dm_exception_table_lock {
+> +#ifndef CONFIG_PREEMPT_RT_BASE
+>  	struct hlist_bl_head *complete_slot;
+>  	struct hlist_bl_head *pending_slot;
+> +#else
+> +	spinlock_t *lock;
+> +#endif
+>  };
+>  
+>  static void dm_exception_table_lock_init(struct dm_snapshot *s, chunk_t chunk,
+>  					 struct dm_exception_table_lock *lock)
+>  {
+> +#ifndef CONFIG_PREEMPT_RT_BASE
+>  	struct dm_exception_table *complete = &s->complete;
+>  	struct dm_exception_table *pending = &s->pending;
+>  
+>  	lock->complete_slot = &complete->table[exception_hash(complete, chunk)];
+>  	lock->pending_slot = &pending->table[exception_hash(pending, chunk)];
+> +#else
+> +	lock->lock = &s->exception_table_lock;
+> +#endif
+>  }
+>  
+>  static void dm_exception_table_lock(struct dm_exception_table_lock *lock)
+>  {
+> +#ifndef CONFIG_PREEMPT_RT_BASE
+>  	hlist_bl_lock(lock->complete_slot);
+>  	hlist_bl_lock(lock->pending_slot);
+> +#else
+> +	spin_lock(lock->lock);
+> +#endif
+>  }
+>  
+>  static void dm_exception_table_unlock(struct dm_exception_table_lock *lock)
+>  {
+> +#ifndef CONFIG_PREEMPT_RT_BASE
+>  	hlist_bl_unlock(lock->pending_slot);
+>  	hlist_bl_unlock(lock->complete_slot);
+> +#else
+> +	spin_unlock(lock->lock);
+> +#endif
+>  }
+>  
+>  static int dm_exception_table_init(struct dm_exception_table *et,
+> @@ -1318,6 +1338,9 @@ static int snapshot_ctr(struct dm_target
+>  	s->first_merging_chunk = 0;
+>  	s->num_merging_chunks = 0;
+>  	bio_list_init(&s->bios_queued_during_merge);
+> +#ifdef CONFIG_PREEMPT_RT_BASE
+> +	spin_lock_init(&s->exception_table_lock);
+> +#endif
+>  
+>  	/* Allocate hash table for COW data */
+>  	if (init_hash_tables(s)) {
+> 
