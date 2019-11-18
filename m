@@ -1,55 +1,68 @@
-From: Stephen Rothwell <sfr@canb.auug.org.au>
-Subject: Re: linux-next: Tree for Nov 15 (drivers/md/dm-integrity)
-Date: Sat, 16 Nov 2019 10:32:13 +1100
-Message-ID: <20191116103213.47a1991f@canb.auug.org.au>
-References: <20191115190525.77efdf6c@canb.auug.org.au>
-        <f368f431-b741-d04f-440b-3d8c3c035537@infradead.org>
-        <20191116094620.497663ab@canb.auug.org.au>
-        <20191115231050.GA29649@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] dm-thin: wakeup worker only when deferred
+	bios exist
+Date: Mon, 18 Nov 2019 10:13:30 -0500
+Message-ID: <20191118151330.GA9830@redhat.com>
+References: <1574041838-92149-1-git-send-email-jefflexu@linux.alibaba.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="Sig_/rpeBUN6Yd2jv+1d_t4lJIva";
- protocol="application/pgp-signature"; micalg=pgp-sha256
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191115231050.GA29649@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Alasdair G Kergon <agk@redhat.com>, Randy Dunlap <rdunlap@infradead.org>, Linux Next Mailing List <linux-next@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Joe Thornber <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1574041838-92149-1-git-send-email-jefflexu@linux.alibaba.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Jeffle Xu <jefflexu@linux.alibaba.com>
+Cc: joseph.qi@linux.alibaba.com, ejt@redhat.com, dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
---Sig_/rpeBUN6Yd2jv+1d_t4lJIva
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+On Sun, Nov 17 2019 at  8:50pm -0500,
+Jeffle Xu <jefflexu@linux.alibaba.com> wrote:
 
-Hi Mike,
-
-On Fri, 15 Nov 2019 18:10:51 -0500 Mike Snitzer <snitzer@redhat.com> wrote:
->
-> Yes, I've pushed a fixed commit, please see:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.gi=
-t/commit/?h=3Dfor-next&id=3Dd537858ac8aaf4311b51240893add2fc62003b97
+> Single thread fio test (read, bs=3D4k, ioengine=3Dlibaio, iodepth=3D128,
+> numjobs=3D1) over dm-thin device has poor performance versus bare nvme
+> disk.
 >=20
+> Further investigation with perf indicates that queue_work_on() consumes
+> over 20% CPU time when doing IO over dm-thin device. The call stack is
+> as follows.
+>=20
+> - 40.57% thin_map
+>     + 22.07% queue_work_on
+>     + 9.95% dm_thin_find_block
+>     + 2.80% cell_defer_no_holder
+>       1.91% inc_all_io_entry.isra.33.part.34
+>     + 1.78% bio_detain.isra.35
+>=20
+> In cell_defer_no_holder(), wakeup_worker() is always called, no matter
+> whether the tc->deferred_bio_list list is empty or not. In single thread
+> IO model, this list is most likely empty. So skip waking up worker thread
+> if tc->deferred_bio_list list is empty.
+>=20
+> A significant IO performance of single thread can be seen with this patch=
+.
+> The original IO performance is 448 MiB/s with the fio test previously
+> described, while it is 646 MiB/s after applying the patch, which is a
+> 44% performance improvement.
+>=20
+> Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
+> ---
+> Changes since V1:
+> 1. Check whether tc->deferred_bio_list list is empty or not, rather than
+> cell->bios as before.
+> 2. Retest the performance with the new version of this patch, and update
+> the statistics in the commit message.
 
-Yeah, sorry for the noise, I should read more ahead in my email before
-replying.
+I've staged this with slight revisions to the header and renamed the
+empty variable to has_work, please see:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/=
+commit/?h=3Ddm-5.5&id=3Dd256d796279de0bdc227ff4daef565aa7e80c898
 
---=20
-Cheers,
-Stephen Rothwell
-
---Sig_/rpeBUN6Yd2jv+1d_t4lJIva
-Content-Type: application/pgp-signature
-Content-Description: OpenPGP digital signature
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAEBCAAdFiEENIC96giZ81tWdLgKAVBC80lX0GwFAl3PNX0ACgkQAVBC80lX
-0GzR8ggAnIPyKhzm9H/UEtVk/yhaIGtHCjjs3bGYL0WnIFjfa9I3QyTttf+sA2S7
-BbQrSZxaAP0M5G3/RLp1ES+xe0Ep8unh8hV7dj47we8J0pAUyd7o92vtnOUjlWiQ
-dRAt4rYCmY9meDb+frH1Uzhn2jM3bHtwuWL6X2b6+xF5JQLFx3qi9AnXtgRgpQ0L
-/yNiZAEnFSCLyTOMlcbteqHhxVirJ7VTN4Iq0JgEg19vf4UiT8RF78cvjwial1Io
-dfK7pCF+yD7IwXzkkCYbVyys5EALWQZS9xLM48QkKCgeigMBjvSt3LUxuaatrqfb
-IKWgWFF28iHGlTx1oGWlgySZbuatkA==
-=GAOr
------END PGP SIGNATURE-----
-
---Sig_/rpeBUN6Yd2jv+1d_t4lJIva--
+Thanks.
