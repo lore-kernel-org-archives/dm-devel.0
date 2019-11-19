@@ -1,15 +1,15 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 1/5] multipathd: move set_no_path_retry()
- back to libmultipath
-Date: Tue, 19 Nov 2019 16:30:37 -0600
-Message-ID: <20191119223037.GN30153@octiron.msp.redhat.com>
+Subject: Re: [PATCH 2/5] libmultipath: dict.c: rename duplicate
+ set_no_path_retry()
+Date: Tue, 19 Nov 2019 16:30:53 -0600
+Message-ID: <20191119223053.GO30153@octiron.msp.redhat.com>
 References: <20191115143403.31692-1-martin.wilck@suse.com>
-	<20191115143403.31692-2-martin.wilck@suse.com>
+	<20191115143403.31692-3-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=WINDOWS-1252
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191115143403.31692-2-martin.wilck@suse.com>
+In-Reply-To: <20191115143403.31692-3-martin.wilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,115 +24,48 @@ To: Martin Wilck <Martin.Wilck@suse.com>
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Chongyun Wu <wu.chongyun@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Bart Van Assche <Bart.VanAssche@sandisk.com>
 List-Id: dm-devel.ids
 
-On Fri, Nov 15, 2019 at 02:41:46PM +0000, Martin Wilck wrote:
+On Fri, Nov 15, 2019 at 02:41:48PM +0000, Martin Wilck wrote:
 > From: Martin Wilck <mwilck@suse.com>
 >=20
-> This function is useful elsewhere, too. No code changes except
-> for changing the linkage.
+> We have two functions called set_no_path_retry(). Fix that by
+> renaming the function in dict.c to no_path_retry_helper().
 >=20
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/structs_vec.c | 30 ++++++++++++++++++++++++++++++
->  libmultipath/structs_vec.h |  1 +
->  multipathd/main.c          | 30 ------------------------------
->  3 files changed, 31 insertions(+), 30 deletions(-)
+>  libmultipath/dict.c | 10 +++++-----
+>  1 file changed, 5 insertions(+), 5 deletions(-)
 >=20
-> diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-> index 6991f9ac..fbe97662 100644
-> --- a/libmultipath/structs_vec.c
-> +++ b/libmultipath/structs_vec.c
-> @@ -308,6 +308,36 @@ void enter_recovery_mode(struct multipath *mpp)
->  =09=09mpp->alias, mpp->no_path_retry);
+> diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+> index a90690fa..e8a5ecb2 100644
+> --- a/libmultipath/dict.c
+> +++ b/libmultipath/dict.c
+> @@ -1099,7 +1099,7 @@ declare_mp_handler(pgfailback, set_pgfailback)
+>  declare_mp_snprint(pgfailback, print_pgfailback)
+> =20
+>  static int
+> -set_no_path_retry(vector strvec, void *ptr)
+> +no_path_retry_helper(vector strvec, void *ptr)
+>  {
+>  =09int *int_ptr =3D (int *)ptr;
+>  =09char * buff;
+> @@ -1134,13 +1134,13 @@ print_no_path_retry(char * buff, int len, long v)
+>  =09}
 >  }
 > =20
-> +void set_no_path_retry(struct multipath *mpp)
-> +{
-> +=09char is_queueing =3D 0;
-> +
-> +=09mpp->nr_active =3D pathcount(mpp, PATH_UP) + pathcount(mpp, PATH_GHOS=
-T);
-> +=09if (mpp->features && strstr(mpp->features, "queue_if_no_path"))
-> +=09=09is_queueing =3D 1;
-> +
-> +=09switch (mpp->no_path_retry) {
-> +=09case NO_PATH_RETRY_UNDEF:
-> +=09=09break;
-> +=09case NO_PATH_RETRY_FAIL:
-> +=09=09if (is_queueing)
-> +=09=09=09dm_queue_if_no_path(mpp->alias, 0);
-> +=09=09break;
-> +=09case NO_PATH_RETRY_QUEUE:
-> +=09=09if (!is_queueing)
-> +=09=09=09dm_queue_if_no_path(mpp->alias, 1);
-> +=09=09break;
-> +=09default:
-> +=09=09if (mpp->nr_active > 0) {
-> +=09=09=09mpp->retry_tick =3D 0;
-> +=09=09=09if (!is_queueing)
-> +=09=09=09=09dm_queue_if_no_path(mpp->alias, 1);
-> +=09=09} else if (is_queueing && mpp->retry_tick =3D=3D 0)
-> +=09=09=09enter_recovery_mode(mpp);
-> +=09=09break;
-> +=09}
-> +}
-> +
->  void
->  sync_map_state(struct multipath *mpp)
->  {
-> diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
-> index f8b9f63e..d3219278 100644
-> --- a/libmultipath/structs_vec.h
-> +++ b/libmultipath/structs_vec.h
-> @@ -11,6 +11,7 @@ struct vectors {
->  =09vector mpvec;
->  };
+> -declare_def_handler(no_path_retry, set_no_path_retry)
+> +declare_def_handler(no_path_retry, no_path_retry_helper)
+>  declare_def_snprint(no_path_retry, print_no_path_retry)
+> -declare_ovr_handler(no_path_retry, set_no_path_retry)
+> +declare_ovr_handler(no_path_retry, no_path_retry_helper)
+>  declare_ovr_snprint(no_path_retry, print_no_path_retry)
+> -declare_hw_handler(no_path_retry, set_no_path_retry)
+> +declare_hw_handler(no_path_retry, no_path_retry_helper)
+>  declare_hw_snprint(no_path_retry, print_no_path_retry)
+> -declare_mp_handler(no_path_retry, set_no_path_retry)
+> +declare_mp_handler(no_path_retry, no_path_retry_helper)
+>  declare_mp_snprint(no_path_retry, print_no_path_retry)
 > =20
-> +void set_no_path_retry(struct multipath *mpp);
->  void enter_recovery_mode(struct multipath *mpp);
-> =20
->  int adopt_paths (vector pathvec, struct multipath * mpp);
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index bb5c1f1d..a21d96e4 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -409,36 +409,6 @@ set_multipath_wwid (struct multipath * mpp)
->  =09dm_get_uuid(mpp->alias, mpp->wwid, WWID_SIZE);
->  }
-> =20
-> -static void set_no_path_retry(struct multipath *mpp)
-> -{
-> -=09char is_queueing =3D 0;
-> -
-> -=09mpp->nr_active =3D pathcount(mpp, PATH_UP) + pathcount(mpp, PATH_GHOS=
-T);
-> -=09if (mpp->features && strstr(mpp->features, "queue_if_no_path"))
-> -=09=09is_queueing =3D 1;
-> -
-> -=09switch (mpp->no_path_retry) {
-> -=09case NO_PATH_RETRY_UNDEF:
-> -=09=09break;
-> -=09case NO_PATH_RETRY_FAIL:
-> -=09=09if (is_queueing)
-> -=09=09=09dm_queue_if_no_path(mpp->alias, 0);
-> -=09=09break;
-> -=09case NO_PATH_RETRY_QUEUE:
-> -=09=09if (!is_queueing)
-> -=09=09=09dm_queue_if_no_path(mpp->alias, 1);
-> -=09=09break;
-> -=09default:
-> -=09=09if (mpp->nr_active > 0) {
-> -=09=09=09mpp->retry_tick =3D 0;
-> -=09=09=09if (!is_queueing)
-> -=09=09=09=09dm_queue_if_no_path(mpp->alias, 1);
-> -=09=09} else if (is_queueing && mpp->retry_tick =3D=3D 0)
-> -=09=09=09enter_recovery_mode(mpp);
-> -=09=09break;
-> -=09}
-> -}
-> -
->  int __setup_multipath(struct vectors *vecs, struct multipath *mpp,
->  =09=09      int reset)
->  {
+>  static int
 > --=20
 > 2.24.0
