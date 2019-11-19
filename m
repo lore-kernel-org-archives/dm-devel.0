@@ -1,27 +1,25 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: linux-next: Tree for Nov 15 (drivers/md/dm-integrity)
-Date: Mon, 18 Nov 2019 16:32:18 +0000
-Message-ID: <20191118163218.GF1800@agk-dp.fab.redhat.com>
-References: <20191115190525.77efdf6c@canb.auug.org.au> <f368f431-b741-d04f-440b-3d8c3c035537@infradead.org> <d3a96436-0d9c-a13f-7524-33b203910367@infradead.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH RT 1/2 v2] dm-snapshot: fix crash with the realtime kernel
+Date: Tue, 19 Nov 2019 09:48:39 +0100
+Message-ID: <20191119084839.dvzfettd6vbvqd4w@linutronix.de>
+References: <alpine.LRH.2.02.1911121057490.12815@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <d3a96436-0d9c-a13f-7524-33b203910367@infradead.org>
 Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1911121057490.12815@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Randy Dunlap <rdunlap@infradead.org>
-Cc: Stephen Rothwell <sfr@canb.auug.org.au>, Linux Next Mailing List <linux-next@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Nikos Tsironis <ntsironis@arrikto.com>, Scott Wood <swood@redhat.com>, Ilias Tsitsimpis <iliastsi@arrikto.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Daniel Wagner <dwagner@suse.de>, linux-rt-users@vger.kernel.org, tglx@linutronix.de
 List-Id: dm-devel.ids
 
-On Fri, Nov 15, 2019 at 08:19:53AM -0800, Randy Dunlap wrote:
-> BTW, dm-devel@redhat.com seems to be invalid or dead.
+On 2019-11-12 11:09:51 [-0500], Mikulas Patocka wrote:
+> Snapshot doesn't work with realtime kernels since the commit f79ae415b64c.
+> hlist_bl is implemented as a raw spinlock and the code takes two non-raw
+> spinlocks while holding hlist_bl (non-raw spinlocks are blocking mutexes
+> in the realtime kernel).
 
-Red Hat made a few changes to its mail configuration over the last
-week.
+this series is still on the list of things for me to look at…
 
-If anyone reading this still has problems that might be related to
-this, please send me the relevant details privately (e.g. full headers
-of messages) and I'll try to engage the right people to help.
-
-Alasdair
+Sebastian
