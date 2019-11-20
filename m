@@ -1,136 +1,141 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH v2 1/5] multipathd: move set_no_path_retry() back
- to libmultipath
-Date: Wed, 20 Nov 2019 12:55:01 +0000
-Message-ID: <20191120125437.19372-2-martin.wilck@suse.com>
-References: <20191120125437.19372-1-martin.wilck@suse.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191120125437.19372-1-martin.wilck@suse.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>, Chongyun Wu <wu.chongyun@h3c.com>
+From: Krzysztof Kozlowski <krzk@kernel.org>
+Subject: [PATCH] md: Fix Kconfig indentation
+Date: Wed, 20 Nov 2019 21:41:10 +0800
+Message-ID: <20191120134110.14859-1-krzk@kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Krzysztof Kozlowski <krzk@kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Song Liu <song@kernel.org>, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Martin Wilck <mwilck@suse.com>
+Adjust indentation from spaces to tab (+optional two spaces) as in
+coding style with command like:
+	$ sed -e 's/^        /\t/' -i */Kconfig
 
-This function is useful elsewhere, too. No code changes except
-for changing the linkage.
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Krzysztof Kozlowski <krzk@kernel.org>
 ---
- libmultipath/structs_vec.c | 30 ++++++++++++++++++++++++++++++
- libmultipath/structs_vec.h |  1 +
- multipathd/main.c          | 30 ------------------------------
- 3 files changed, 31 insertions(+), 30 deletions(-)
+ drivers/md/Kconfig | 54 +++++++++++++++++++++++-----------------------
+ 1 file changed, 27 insertions(+), 27 deletions(-)
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 6991f9ac..fbe97662 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -308,6 +308,36 @@ void enter_recovery_mode(struct multipath *mpp)
- =09=09mpp->alias, mpp->no_path_retry);
- }
-=20
-+void set_no_path_retry(struct multipath *mpp)
-+{
-+=09char is_queueing =3D 0;
-+
-+=09mpp->nr_active =3D pathcount(mpp, PATH_UP) + pathcount(mpp, PATH_GHOST)=
-;
-+=09if (mpp->features && strstr(mpp->features, "queue_if_no_path"))
-+=09=09is_queueing =3D 1;
-+
-+=09switch (mpp->no_path_retry) {
-+=09case NO_PATH_RETRY_UNDEF:
-+=09=09break;
-+=09case NO_PATH_RETRY_FAIL:
-+=09=09if (is_queueing)
-+=09=09=09dm_queue_if_no_path(mpp->alias, 0);
-+=09=09break;
-+=09case NO_PATH_RETRY_QUEUE:
-+=09=09if (!is_queueing)
-+=09=09=09dm_queue_if_no_path(mpp->alias, 1);
-+=09=09break;
-+=09default:
-+=09=09if (mpp->nr_active > 0) {
-+=09=09=09mpp->retry_tick =3D 0;
-+=09=09=09if (!is_queueing)
-+=09=09=09=09dm_queue_if_no_path(mpp->alias, 1);
-+=09=09} else if (is_queueing && mpp->retry_tick =3D=3D 0)
-+=09=09=09enter_recovery_mode(mpp);
-+=09=09break;
-+=09}
-+}
-+
- void
- sync_map_state(struct multipath *mpp)
- {
-diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
-index f8b9f63e..d3219278 100644
---- a/libmultipath/structs_vec.h
-+++ b/libmultipath/structs_vec.h
-@@ -11,6 +11,7 @@ struct vectors {
- =09vector mpvec;
- };
-=20
-+void set_no_path_retry(struct multipath *mpp);
- void enter_recovery_mode(struct multipath *mpp);
-=20
- int adopt_paths (vector pathvec, struct multipath * mpp);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index bb5c1f1d..a21d96e4 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -409,36 +409,6 @@ set_multipath_wwid (struct multipath * mpp)
- =09dm_get_uuid(mpp->alias, mpp->wwid, WWID_SIZE);
- }
-=20
--static void set_no_path_retry(struct multipath *mpp)
--{
--=09char is_queueing =3D 0;
--
--=09mpp->nr_active =3D pathcount(mpp, PATH_UP) + pathcount(mpp, PATH_GHOST)=
-;
--=09if (mpp->features && strstr(mpp->features, "queue_if_no_path"))
--=09=09is_queueing =3D 1;
--
--=09switch (mpp->no_path_retry) {
--=09case NO_PATH_RETRY_UNDEF:
--=09=09break;
--=09case NO_PATH_RETRY_FAIL:
--=09=09if (is_queueing)
--=09=09=09dm_queue_if_no_path(mpp->alias, 0);
--=09=09break;
--=09case NO_PATH_RETRY_QUEUE:
--=09=09if (!is_queueing)
--=09=09=09dm_queue_if_no_path(mpp->alias, 1);
--=09=09break;
--=09default:
--=09=09if (mpp->nr_active > 0) {
--=09=09=09mpp->retry_tick =3D 0;
--=09=09=09if (!is_queueing)
--=09=09=09=09dm_queue_if_no_path(mpp->alias, 1);
--=09=09} else if (is_queueing && mpp->retry_tick =3D=3D 0)
--=09=09=09enter_recovery_mode(mpp);
--=09=09break;
--=09}
--}
--
- int __setup_multipath(struct vectors *vecs, struct multipath *mpp,
- =09=09      int reset)
- {
---=20
-2.24.0
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index aa98953f4462..d6d5ab23c088 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -38,9 +38,9 @@ config MD_AUTODETECT
+ 	default y
+ 	---help---
+ 	  If you say Y here, then the kernel will try to autodetect raid
+-	  arrays as part of its boot process. 
++	  arrays as part of its boot process.
+ 
+-	  If you don't use raid and say Y, this autodetection can cause 
++	  If you don't use raid and say Y, this autodetection can cause
+ 	  a several-second delay in the boot time due to various
+ 	  synchronisation steps that are part of this step.
+ 
+@@ -290,7 +290,7 @@ config DM_SNAPSHOT
+        depends on BLK_DEV_DM
+        select DM_BUFIO
+        ---help---
+-         Allow volume managers to take writable snapshots of a device.
++	 Allow volume managers to take writable snapshots of a device.
+ 
+ config DM_THIN_PROVISIONING
+        tristate "Thin provisioning target"
+@@ -298,7 +298,7 @@ config DM_THIN_PROVISIONING
+        select DM_PERSISTENT_DATA
+        select DM_BIO_PRISON
+        ---help---
+-         Provides thin provisioning and snapshots that share a data store.
++	 Provides thin provisioning and snapshots that share a data store.
+ 
+ config DM_CACHE
+        tristate "Cache target (EXPERIMENTAL)"
+@@ -307,23 +307,23 @@ config DM_CACHE
+        select DM_PERSISTENT_DATA
+        select DM_BIO_PRISON
+        ---help---
+-         dm-cache attempts to improve performance of a block device by
+-         moving frequently used data to a smaller, higher performance
+-         device.  Different 'policy' plugins can be used to change the
+-         algorithms used to select which blocks are promoted, demoted,
+-         cleaned etc.  It supports writeback and writethrough modes.
++	 dm-cache attempts to improve performance of a block device by
++	 moving frequently used data to a smaller, higher performance
++	 device.  Different 'policy' plugins can be used to change the
++	 algorithms used to select which blocks are promoted, demoted,
++	 cleaned etc.  It supports writeback and writethrough modes.
+ 
+ config DM_CACHE_SMQ
+        tristate "Stochastic MQ Cache Policy (EXPERIMENTAL)"
+        depends on DM_CACHE
+        default y
+        ---help---
+-         A cache policy that uses a multiqueue ordered by recent hits
+-         to select which blocks should be promoted and demoted.
+-         This is meant to be a general purpose policy.  It prioritises
+-         reads over writes.  This SMQ policy (vs MQ) offers the promise
+-         of less memory utilization, improved performance and increased
+-         adaptability in the face of changing workloads.
++	 A cache policy that uses a multiqueue ordered by recent hits
++	 to select which blocks should be promoted and demoted.
++	 This is meant to be a general purpose policy.  It prioritises
++	 reads over writes.  This SMQ policy (vs MQ) offers the promise
++	 of less memory utilization, improved performance and increased
++	 adaptability in the face of changing workloads.
+ 
+ config DM_WRITECACHE
+ 	tristate "Writecache target"
+@@ -343,9 +343,9 @@ config DM_ERA
+        select DM_PERSISTENT_DATA
+        select DM_BIO_PRISON
+        ---help---
+-         dm-era tracks which parts of a block device are written to
+-         over time.  Useful for maintaining cache coherency when using
+-         vendor snapshots.
++	 dm-era tracks which parts of a block device are written to
++	 over time.  Useful for maintaining cache coherency when using
++	 vendor snapshots.
+ 
+ config DM_CLONE
+        tristate "Clone target (EXPERIMENTAL)"
+@@ -353,20 +353,20 @@ config DM_CLONE
+        default n
+        select DM_PERSISTENT_DATA
+        ---help---
+-         dm-clone produces a one-to-one copy of an existing, read-only source
+-         device into a writable destination device. The cloned device is
+-         visible/mountable immediately and the copy of the source device to the
+-         destination device happens in the background, in parallel with user
+-         I/O.
++	 dm-clone produces a one-to-one copy of an existing, read-only source
++	 device into a writable destination device. The cloned device is
++	 visible/mountable immediately and the copy of the source device to the
++	 destination device happens in the background, in parallel with user
++	 I/O.
+ 
+-         If unsure, say N.
++	 If unsure, say N.
+ 
+ config DM_MIRROR
+        tristate "Mirror target"
+        depends on BLK_DEV_DM
+        ---help---
+-         Allow volume managers to mirror logical volumes, also
+-         needed for live data migration tools such as 'pvmove'.
++	 Allow volume managers to mirror logical volumes, also
++	 needed for live data migration tools such as 'pvmove'.
+ 
+ config DM_LOG_USERSPACE
+ 	tristate "Mirror userspace logging"
+@@ -483,7 +483,7 @@ config DM_FLAKEY
+        tristate "Flakey target"
+        depends on BLK_DEV_DM
+        ---help---
+-         A target that intermittently fails I/O for debugging purposes.
++	 A target that intermittently fails I/O for debugging purposes.
+ 
+ config DM_VERITY
+ 	tristate "Verity target support"
+-- 
+2.17.1
