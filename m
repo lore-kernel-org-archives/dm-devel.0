@@ -1,100 +1,84 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 5/5] libmultipath: fix ALUA autodetection
- when paths are down
-Date: Wed, 20 Nov 2019 11:01:23 -0600
-Message-ID: <20191120170122.GQ30153@octiron.msp.redhat.com>
-References: <20191115143403.31692-1-martin.wilck@suse.com>
-	<20191115143403.31692-6-martin.wilck@suse.com>
-	<20191119222954.GM30153@octiron.msp.redhat.com>
-	<9dbb15bcf8c527c950876505aaf52e0ea606cb5e.camel@suse.com>
+From: Sasha Levin <sashal@kernel.org>
+Subject: [PATCH AUTOSEL 4.9 32/91] dm flakey: Properly corrupt multi-page bios.
+Date: Fri, 22 Nov 2019 01:00:30 -0500
+Message-ID: <20191122060129.4239-31-sashal@kernel.org>
+References: <20191122060129.4239-1-sashal@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <9dbb15bcf8c527c950876505aaf52e0ea606cb5e.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Martin Wilck <Martin.Wilck@suse.com>
-Cc: "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>, "wu.chongyun@h3c.com" <wu.chongyun@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "Bart.VanAssche@sandisk.com" <Bart.VanAssche@sandisk.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20191122060129.4239-1-sashal@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Cc: Sweet Tea <sweettea@redhat.com>, John Dorminy <jdorminy@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Sasha Levin <sashal@kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Nov 20, 2019 at 12:33:15PM +0000, Martin Wilck wrote:
-> On Tue, 2019-11-19 at 16:29 -0600, Benjamin Marzinski wrote:
-> > On Fri, Nov 15, 2019 at 02:41:54PM +0000, Martin Wilck wrote:
-> > > From: Martin Wilck <mwilck@suse.com>
-> > >=20
-> > > If a single path was offline when detect_alua() was called,
-> > > multipathd would assume ALUA was generally unsupported.
-> > >=20
-> > > Fix that by assuming that if at least one path has ALUA support and
-> > > no path explicitly does not have it, ALUA is supported.
-> > >=20
-> > > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > > ---
-> > >  libmultipath/discovery.c | 22 +++++++++++++++++++++-
-> > >  libmultipath/propsel.c   | 20 +++++++++++++++++---
-> > >  2 files changed, 38 insertions(+), 4 deletions(-)
-> > >=20
-> > > diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-> > > index 4288c9fd..5f41dcb7 100644
-> > > --- a/libmultipath/discovery.c
-> > > +++ b/libmultipath/discovery.c
-> > > @@ -871,6 +871,10 @@ get_serial (char * str, int maxlen, int fd)
-> > >  =09return 1;
-> > >  }
-> > > =20
-> > > /*
-> > > + * Side effect: sets pp->tpgs if it could be determined.
-> > > + * If ALUA calls fail because paths are unreachable, pp->tpgs
-> > > remains unchanged.
-> > > + */
-> > >  static void
-> > >  detect_alua(struct path * pp)
-> > >  {
-> > > @@ -881,12 +885,28 @@ detect_alua(struct path * pp)
-> > >  =09if (sysfs_get_timeout(pp, &timeout) <=3D 0)
-> > >  =09=09timeout =3D DEF_TIMEOUT;
-> > > =20
-> > > -=09if ((tpgs =3D get_target_port_group_support(pp, timeout)) <=3D 0)=
+From: Sweet Tea <sweettea@redhat.com>
+
+[ Upstream commit a00f5276e26636cbf72f24f79831026d2e2868e7 ]
+
+The flakey target is documented to be able to corrupt the Nth byte in
+a bio, but does not corrupt byte indices after the first biovec in the
+bio. Change the corrupting function to actually corrupt the Nth byte
+no matter in which biovec that index falls.
+
+A test device generating two-page bios, atop a flakey device configured
+to corrupt a byte index on the second page, verified both the failure
+to corrupt before this patch and the expected corruption after this
+change.
+
+Signed-off-by: John Dorminy <jdorminy@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
+---
+ drivers/md/dm-flakey.c | 33 ++++++++++++++++++++++-----------
+ 1 file changed, 22 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index 3643cba713518..742c1fa870dae 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -258,20 +258,31 @@ static void flakey_map_bio(struct dm_target *ti, struct bio *bio)
+ 
+ static void corrupt_bio_data(struct bio *bio, struct flakey_c *fc)
  {
-> > > +=09tpgs =3D get_target_port_group_support(pp, timeout);
-> > > +=09if (tpgs =3D=3D -RTPG_INQUIRY_FAILED)
-> > > +=09=09return;
-> > > +=09else if (tpgs <=3D 0) {
-> > >  =09=09pp->tpgs =3D TPGS_NONE;
-> > >  =09=09return;
-> > >  =09}
-> > > +
-> > > +=09if (pp->fd =3D=3D -1 || pp->offline)
-> > > +=09=09return;
-> > > +
-> > =20
-> > This is just a nitpick, but won't tpgs already be
-> > -RTPG_INQUIRY_FAILED
-> > if pp->fd =3D=3D -1. This check makes more sense before
-> > get_target_port_group_support().
->=20
-> Not really, because get_target_port_group_support() normally obtains
-> INQUIRY data from sysfs, which can return something reasonable even
-> if fd =3D=3D -1 (e.g. if the path is temporarily offline). In particular,
-> it could indicate that the device has no TPGS support. That's why I
-> call it first.
-
-Oops. My bad.
-
-Reviewed-by: Benjamin Marzinsk <bmarzins@redhat.com>
-
--Ben
-
->=20
-> Regards,
-> Martin
->=20
+-	unsigned bio_bytes = bio_cur_bytes(bio);
+-	char *data = bio_data(bio);
++	unsigned int corrupt_bio_byte = fc->corrupt_bio_byte - 1;
++
++	struct bvec_iter iter;
++	struct bio_vec bvec;
++
++	if (!bio_has_data(bio))
++		return;
+ 
+ 	/*
+-	 * Overwrite the Nth byte of the data returned.
++	 * Overwrite the Nth byte of the bio's data, on whichever page
++	 * it falls.
+ 	 */
+-	if (data && bio_bytes >= fc->corrupt_bio_byte) {
+-		data[fc->corrupt_bio_byte - 1] = fc->corrupt_bio_value;
+-
+-		DMDEBUG("Corrupting data bio=%p by writing %u to byte %u "
+-			"(rw=%c bi_opf=%u bi_sector=%llu cur_bytes=%u)\n",
+-			bio, fc->corrupt_bio_value, fc->corrupt_bio_byte,
+-			(bio_data_dir(bio) == WRITE) ? 'w' : 'r', bio->bi_opf,
+-			(unsigned long long)bio->bi_iter.bi_sector, bio_bytes);
++	bio_for_each_segment(bvec, bio, iter) {
++		if (bio_iter_len(bio, iter) > corrupt_bio_byte) {
++			char *segment = (page_address(bio_iter_page(bio, iter))
++					 + bio_iter_offset(bio, iter));
++			segment[corrupt_bio_byte] = fc->corrupt_bio_value;
++			DMDEBUG("Corrupting data bio=%p by writing %u to byte %u "
++				"(rw=%c bi_opf=%u bi_sector=%llu size=%u)\n",
++				bio, fc->corrupt_bio_value, fc->corrupt_bio_byte,
++				(bio_data_dir(bio) == WRITE) ? 'w' : 'r', bio->bi_opf,
++				(unsigned long long)bio->bi_iter.bi_sector, bio->bi_iter.bi_size);
++			break;
++		}
++		corrupt_bio_byte -= bio_iter_len(bio, iter);
+ 	}
+ }
+ 
+-- 
+2.20.1
