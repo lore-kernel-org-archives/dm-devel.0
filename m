@@ -1,7 +1,7 @@
 From: JeffleXu <jefflexu@linux.alibaba.com>
 Subject: dm-thin: Several Questions on dm-thin performance.
-Date: Fri, 22 Nov 2019 11:14:15 +0800
-Message-ID: <35cf1ecf-5cd8-604b-ec4e-18c9fd4a4195@linux.alibaba.com>
+Date: Fri, 22 Nov 2019 11:43:00 +0800
+Message-ID: <95b81e25-49ed-71a9-5dcf-0ff3618f2ea6@linux.alibaba.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: base64
@@ -15,7 +15,8 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: agk@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 SGkgZ3V5cywKCkkgaGF2ZSBzZXZlcmFsIHF1ZXN0aW9ucyBvbiBkbS10aGluIHdoZW4gSSdtIHRl
@@ -45,6 +46,8 @@ YnM9NGspLCB0aGUgYmFuZHdpZHRoIG9uIGJhcmUgbnZtZSBpcyAxNTg5TWlCL3MuIFRoZSAKYmFu
 ZHdpZHRoIG9uIHRoaW4gZGV2aWNlIGlzIG9ubHkgMTI3NE1pQi9zLCB3aGlsZSB0aGUgZm91ciBm
 aW8gdGhyZWFkcyAKcnVuIGF0IDIwMCUgQ1BVIGFuZCB0aGUgc2luZ2xlIHdvcmtlciB0aHJlYWQg
 aXMgYWx3YXlzIHJ1bmluZyBhdCAxMDAlIApDUFUuIHBlcmYgb2Ygd29ya2VyIHRocmVhZCBzaG93
-ZXMgdGhhdCBwcm9jZXNzX2JpbygpIGNvbnN1bWVzIDg2JSBvZiB0aGUgCnRpbWUuCgoKUmVnYXJk
-cwoKSmVmZmxlIFh1CgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
-b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+ZXMgdGhhdCBwcm9jZXNzX2JpbygpIGNvbnN1bWVzIDg2JSBvZiB0aGUgCnRpbWUuCgoKQmVzaWRl
+cyBpdCBzZWVtcyB0aGF0IEkgY2FuJ3Qgc2VuZCBlbWFpbCB0byBkbS1kZXZlbEByZWRoYXQuY29t
+IG1haWxpbmcgCmxpc3QuCgoKUmVnYXJkcwoKSmVmZmxlIFh1CgoKLS0KZG0tZGV2ZWwgbWFpbGlu
+ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
+L2xpc3RpbmZvL2RtLWRldmVs
