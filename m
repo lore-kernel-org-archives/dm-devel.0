@@ -1,10 +1,10 @@
-From: Drew Hastings <dhastings@crucialwebhost.com>
-Subject: multipath - unable to use multiple active paths at once,
- and deprecated example in docs
-Date: Fri, 22 Nov 2019 13:27:04 -0700
-Message-ID: <CAN-y+EJOt=MRDEXCx9_U4zmDs+i9yXj364E4+z=xC=u8+Ao1PQ@mail.gmail.com>
+From: Erich Eckner <device-mapper@eckner.net>
+Subject: ignore/update integrity checksums
+Date: Fri, 22 Nov 2019 09:54:13 +0100 (CET)
+Message-ID: <alpine.LNX.2.21.99999.375.1911220937550.2770450@nlopc43.ioq.uni-jena.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2426868199381452598=="
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,113 +18,72 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============2426868199381452598==
-Content-Type: multipart/alternative; boundary="0000000000005630f60597f53dff"
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA256
 
---0000000000005630f60597f53dff
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Hi,
 
-My use case doesn't lend itself well to multipathd, so I'm trying to
-implement multipathing with device mapper directly.
+I have multiple disks with LUKS+integrity created by
 
-My table is (kernel 4.19.79):
+cryptsetup luksFormat /dev/sde --key-file /mnt/key/key --integrity hmac-sha256
 
-0 1562378240 multipath 4 queue_if_no_path retain_attached_hw_handler
-queue_mode bio 0 1 1 queue-length 0 4 1 253:11 1 253:8 1 253:9 1 253:10 1
+which are part of a raid6. Details of the device:
 
-What I've found with this setup is that, aside from the first path in the
-group, none of the other paths receive IO/bios.
-
-The only "real" path is 253:11, the rest of them are to dm error targets.
-Still though, you can see the status of this multipath target is:
-
-0 1562378240 multipath 2 0 0 0 1 1 A 0 4 1 253:11 A 0 309 253:8 A 0 0 253:9
-A 0 0 253:10 A 0 0
-
-So 253:11 has a queue of 309, while the rest of the devices have a queue of
-zero and show an active status, indicating no IO has triggered the
-underlying dm error target causing the 2nd, 3rd, and 4th paths to fail.
-
-Before diving much deeper into the relevant kernel code, I figured I'd
-check to see if there's any obvious reason this should not work the way I
-expect (where individual paths are balanced within the group).
-
-I realize that Documentation/device-mapper/dm-queue-length.txt is also
-out-dated (it makes suggestions that are deprecated), but still that
-documentation implies this table would balance the load. Here is the table
-from those docs.
-
-test: 0 10 multipath 0 0 1 1 queue-length 0 2 1 8:0 128 8:16 128 ( >1 is
-deprecated since those docs)
-
-My only assumption is that the multipath features, in particular queue_mode
-bio, prevent this from behaving properly. If that is the case, why can this
-not be achieved with bios, as this is not a limitation of raid1 (which will
-load balance read IO to device mapper targets). I also believe this is the
-only feature option that is viable for me, since this multipath device is
-on top of device mapper targets.
-
-The documentation would imply that the queue should be roughly the same to
-every device, and that after every IO a new path is chosen for the next IO
-based on the lowest entry. The code looks like it does this as described,
-but maybe there's some condition preventing it from doing so (while still
-counting the queue). Is there anything I can do to get this target to
-behave as I assumed it would from
-Documentation/device-mapper/dm-queue-length.txt ?
-
-Also, for what it's worth, round-robin behaves the same way as queue-length=
-.
-
-Thank you for your time!
-- Drew
-
---0000000000005630f60597f53dff
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">My use case doesn&#39;t lend itself well to multipathd, so=
- I&#39;m trying to implement multipathing with device mapper directly.<br><=
-br>My table is (kernel 4.19.79):<br><br>0 1562378240 multipath 4 queue_if_n=
-o_path retain_attached_hw_handler queue_mode bio 0 1 1 queue-length 0 4 1 2=
-53:11 1 253:8 1 253:9 1 253:10 1<br><br>What I&#39;ve found with this setup=
- is that, aside from the first path in the group, none of the other paths r=
-eceive IO/bios.<br><br>The only &quot;real&quot; path is 253:11, the rest o=
-f them are to dm error targets. Still though, you can see the status of thi=
-s multipath target is:<br><br>0 1562378240 multipath 2 0 0 0 1 1 A 0 4 1 25=
-3:11 A 0 309 253:8 A 0 0 253:9 A 0 0 253:10 A 0 0 <br><br>So 253:11 has a q=
-ueue of 309, while the rest of the devices have a queue of zero and show an=
- active status, indicating no IO has triggered the underlying dm error targ=
-et causing the 2nd, 3rd, and 4th paths to fail.<br><br>Before diving much d=
-eeper into the relevant kernel code, I figured I&#39;d check to see if ther=
-e&#39;s any obvious reason this should not work the way I expect (where ind=
-ividual paths are balanced within the group).<br><br>I realize that Documen=
-tation/device-mapper/dm-queue-length.txt is also out-dated (it makes sugges=
-tions that are deprecated), but still that documentation implies this table=
- would balance the load. Here is the table from those docs.<br><br>test: 0 =
-10 multipath 0 0 1 1 queue-length 0 2 1 8:0 128 8:16 128 ( &gt;1 is depreca=
-ted since those docs)<br><br>My only assumption is that the multipath featu=
-res, in particular queue_mode bio, prevent this from behaving properly. If =
-that is the case, why can this not be achieved with bios, as this is not a =
-limitation of raid1 (which will load balance read IO to device mapper targe=
-ts). I also believe this is the only feature option that is viable for me, =
-since this multipath device is on top of device mapper targets.<br><br>The =
-documentation would imply that the queue should be roughly the same to ever=
-y device, and that after every IO a new path is chosen for the next IO base=
-d on the lowest entry. The code looks like it does this as described, but m=
-aybe there&#39;s some condition preventing it from doing so (while still co=
-unting the queue). Is there anything I can do to get this target to behave =
-as I assumed it would from Documentation/device-mapper/dm-queue-length.txt =
-?<br><br>Also, for what it&#39;s worth, round-robin behaves the same way as=
- queue-length.<br><br>Thank you for your time!<br>- Drew</div>
-
---0000000000005630f60597f53dff--
-
---===============2426868199381452598==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+/dev/mapper/leg0 is active.
+   type:    LUKS2
+   cipher:  aes-xts-plain64
+   keysize: 768 bits
+   key location: keyring
+   integrity: hmac(sha256)
+   integrity keysize: 256 bits
+   device:  /dev/sdb
+   sector size:  512
+   offset:  0 sectors
+   size:    11031354576 sectors
+   mode:    read/write
 
 
---===============2426868199381452598==--
+Recently, I rebooted this box and apparently, I missed to cleanly sync the 
+disks, so they now report integrity errors, when mdadm probes (during 
+assemble) for the raid superblock:
+
+device-mapper: crypt: dm-1: INTEGRITY AEAD ERROR, sector 11031354368
+
+There was no write activity on the raid before the reboot except for a 
+running
+
+mdadm /dev/md0 --replace /dev/dm-0 --with /dev/dm-1
+
+which of course might have written a lot to all superblocks.
+
+Since I believe, the superblocks should be mostly in-sync (except for 
+event-counters?): Is there a way to ignore or re-calculate the integrity 
+checks?
+
+Also: What is the correct way to assure, that data has been synced to the 
+disk(s) before switching off power? (If that matters, there is a 
+raid-controller underneath: "06:00.0 RAID bus controller: Hewlett-Packard 
+Company Smart Array G6 controllers (rev 01)" - but it does not actually 
+handle the raid, it only feeds the disks through to the os) I can execute 
+any command after closing the luks-integrity device, my question aims at: 
+what should I execute?
+
+regards,
+Erich
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEE3p92iMrPBP64GmxZCu7JB1Xae1oFAl3XojcACgkQCu7JB1Xa
+e1q17g//TCKyH5US3c5j+FHH/90gsAoW8LuMzeIV3KnswtJm1fA/lWhbJMbKG/8r
+eo1P48wOKLRTNT5RJV+M3+we/80la/x6PGl2IM/WXTGT8TAdOISKksifzJ7/wXhd
+UxIjzhenc2mFnpYjrMABY3BYGvJf7AkrmrmliGe/BO9sMKej6R1WlE17ZOD+sGFN
+/FWLPtgcBcfVFNk+tn2aUa6oovLxpzzhYUcktuqpI0WQOOydQwRsb3sIM0bYHpNZ
+99ieIHyIDY7p0V/Ym0Msm/ic1PIzsPtWl6MiRmzjXf8v0UVVFKb23kuPxXHKEBLV
+5u/DOzbrBpT+w5hI8eUk5me/qUPWEnrY/4AodZEJxwOpbeqOEbLPa15cPxwT5s3b
++45mpf0raREAI4WANNym5FmAxVukaQKaEGJ7Q8AyVJtN76oGaPNhxEQ4BDxQXOsV
+RituTR17MULV80jpVS2atwRNkged9H6aRaDtcmrkx2qyaAHSLghXTLySID9XumbW
+pkH45nWvsU1z8t8Lvxy81CrMnB8cmy6Iud3yH1WVKvCnjqmbSZQ4FMXw0fiAas+C
+Q1ipkMdKg2mgLUQCRgwWpbvtVR14kZnQjZoPAhOTzbGaYTRbaEPkOMoKqCRStUkb
+3l+Hg+AGeP9CR19sFYoR2HSnJGdeK/kYUEBuNfHrOjop2yi+lZY=
+=aG59
+-----END PGP SIGNATURE-----
