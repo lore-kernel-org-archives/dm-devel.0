@@ -1,84 +1,50 @@
-From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 4.19 098/219] dm flakey: Properly corrupt multi-page bios.
-Date: Fri, 22 Nov 2019 00:47:10 -0500
-Message-ID: <20191122054911.1750-91-sashal@kernel.org>
-References: <20191122054911.1750-1-sashal@kernel.org>
+From: JeffleXu <jefflexu@linux.alibaba.com>
+Subject: dm-thin: Several Questions on dm-thin performance.
+Date: Fri, 22 Nov 2019 11:14:15 +0800
+Message-ID: <35cf1ecf-5cd8-604b-ec4e-18c9fd4a4195@linux.alibaba.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191122054911.1750-1-sashal@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc: Sweet Tea <sweettea@redhat.com>, John Dorminy <jdorminy@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Sasha Levin <sashal@kernel.org>, dm-devel@redhat.com
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Sweet Tea <sweettea@redhat.com>
-
-[ Upstream commit a00f5276e26636cbf72f24f79831026d2e2868e7 ]
-
-The flakey target is documented to be able to corrupt the Nth byte in
-a bio, but does not corrupt byte indices after the first biovec in the
-bio. Change the corrupting function to actually corrupt the Nth byte
-no matter in which biovec that index falls.
-
-A test device generating two-page bios, atop a flakey device configured
-to corrupt a byte index on the second page, verified both the failure
-to corrupt before this patch and the expected corruption after this
-change.
-
-Signed-off-by: John Dorminy <jdorminy@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Signed-off-by: Sasha Levin <sashal@kernel.org>
----
- drivers/md/dm-flakey.c | 33 ++++++++++++++++++++++-----------
- 1 file changed, 22 insertions(+), 11 deletions(-)
-
-diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
-index b86d2439ffc76..2fcf62fb2844f 100644
---- a/drivers/md/dm-flakey.c
-+++ b/drivers/md/dm-flakey.c
-@@ -287,20 +287,31 @@ static void flakey_map_bio(struct dm_target *ti, struct bio *bio)
- 
- static void corrupt_bio_data(struct bio *bio, struct flakey_c *fc)
- {
--	unsigned bio_bytes = bio_cur_bytes(bio);
--	char *data = bio_data(bio);
-+	unsigned int corrupt_bio_byte = fc->corrupt_bio_byte - 1;
-+
-+	struct bvec_iter iter;
-+	struct bio_vec bvec;
-+
-+	if (!bio_has_data(bio))
-+		return;
- 
- 	/*
--	 * Overwrite the Nth byte of the data returned.
-+	 * Overwrite the Nth byte of the bio's data, on whichever page
-+	 * it falls.
- 	 */
--	if (data && bio_bytes >= fc->corrupt_bio_byte) {
--		data[fc->corrupt_bio_byte - 1] = fc->corrupt_bio_value;
--
--		DMDEBUG("Corrupting data bio=%p by writing %u to byte %u "
--			"(rw=%c bi_opf=%u bi_sector=%llu cur_bytes=%u)\n",
--			bio, fc->corrupt_bio_value, fc->corrupt_bio_byte,
--			(bio_data_dir(bio) == WRITE) ? 'w' : 'r', bio->bi_opf,
--			(unsigned long long)bio->bi_iter.bi_sector, bio_bytes);
-+	bio_for_each_segment(bvec, bio, iter) {
-+		if (bio_iter_len(bio, iter) > corrupt_bio_byte) {
-+			char *segment = (page_address(bio_iter_page(bio, iter))
-+					 + bio_iter_offset(bio, iter));
-+			segment[corrupt_bio_byte] = fc->corrupt_bio_value;
-+			DMDEBUG("Corrupting data bio=%p by writing %u to byte %u "
-+				"(rw=%c bi_opf=%u bi_sector=%llu size=%u)\n",
-+				bio, fc->corrupt_bio_value, fc->corrupt_bio_byte,
-+				(bio_data_dir(bio) == WRITE) ? 'w' : 'r', bio->bi_opf,
-+				(unsigned long long)bio->bi_iter.bi_sector, bio->bi_iter.bi_size);
-+			break;
-+		}
-+		corrupt_bio_byte -= bio_iter_len(bio, iter);
- 	}
- }
- 
--- 
-2.20.1
+SGkgZ3V5cywKCkkgaGF2ZSBzZXZlcmFsIHF1ZXN0aW9ucyBvbiBkbS10aGluIHdoZW4gSSdtIHRl
+c3RpbmcgYW5kIGV2YWx1YXRpbmcgSU8gCnBlcmZvcm1hbmNlIG9mIGRtLXRoaW4uIEkgd291bGQg
+YmUgZ3JhdGVmdWwgaWYgc29tZW9uZSBjb3VsZCBzcGVuZCBhIApsaXR0bGUgdGltZSBvbiBpdC4K
+CgpUaGUgZmlyc3QgcXVlc3Rpb24gaXMgd2hhdCdzIHRoZSBwdXJwb3NlIG9mIGRhdGEgY2VsbD8g
+SW4gCnRoaW5fYmlvX21hcCgpLCBub3JtYWwgYmlvIHdpbGwgYmUgcGFja2VkIGFzIGEgdmlydHVh
+bCBjZWxsIGFuZCBkYXRhIApjZWxsLiBJIGNhbiB1bmRlcnN0YW5kIHRoYXQgdmlydHVhbCBjZWxs
+IGlzIHVzZWQgdG8gcHJldmVudCBkaXNjYXJkIGJpbyAKYW5kIG5vbi1kaXNjYXJkIGJpbyB0YXJn
+ZXRpbmcgdGhlIHNhbWUgYmxvY2sgZnJvbSBiZWluZyBwcm9jZXNzZWQgYXQgdGhlIApzYW1lIHRp
+bWUuIEkgZmluZCBpdCB3YXMgYWRkZWQgaW4gY29tbWl0IMKgwqDCoCAKZTgwODgwNzNjOTYxMGFm
+MDE3ZmQ0N2ZkZGQxMDRhMmMzYWZiMzJlOCAoZG0gdGhpbjogZml4IHJhY2UgYmV0d2VlbiAKc2lt
+dWx0YW5lb3VzIGlvIGFuZCBkaXNjYXJkcyB0byBzYW1lIGJsb2NrKSwgYnV0IEknbSBzdGlsbCBj
+b25mdXNlZCAKYWJvdXQgdGhlIHVzZSBvZiBkYXRhIGNlbGwuCgoKVGhlIHNlY29uZCBxdWVzdGlv
+biBpcyB0aGUgaW1wYWN0IG9mIHZpcnR1YWwgY2VsbCBhbmQgZGF0YSBjZWxsIG9uIElPIApwZXJm
+b3JtYW5jZS4gSWYgJGRhdGFfYmxvY2tfc2l6ZSBpcyBsYXJnZSBmb3IgZXhhbXBsZSAxRywgaW4g
+bXVsdGl0aHJlYWQgCmZpbyB0ZXN0LCBtb3N0IGJpbyB3aWxsIGJlIGJ1ZmZlcmVkIGluIGNlbGwt
+PmJpb3MgbGlzdCBhbmQgdGhlbiBiZSAKcHJvY2Vzc2VkIGJ5IHdvcmtlciB0aHJlYWQgYXN5bmNo
+cm9ub3VzbHksIGV2ZW4gd2hlbiB0aGVyZSdzIG5vIGRpc2NhcmQgCmJpby4gVGh1cyB0aGUgb3Jp
+Z2luYWwgcGFyYWxsZWwgSU8gaXMgcHJvY2Vzc2VkIGJ5IHdvcmtlciB0aHJlYWQgCnNlcmlhbGx5
+IG5vdy4gQXMgdGhlIG51bWJlciBvZiBmaW8gdGVzdCB0aHJlYWRzIGluY3JlYXNlLCB0aGUgc2lu
+Z2xlIAp3b3JrZXIgdGhyZWFkIGNhbiBlYXNpbHkgZ2V0IENQVSAxMDAlLCBhbmQgdGh1cyBiZWNv
+bWUgdGhlIGJvdHRsZW5lY2sgb2YgCnRoZSBwZXJmb3JtYW5jZSBzaW5jZSBkbS10aGluIHdvcmtx
+dWV1ZSBpcyBvcmRlcmVkIHVuYm91bmQuCgpVc2luZyBhbiBudm1lIFNTRCBhbmQgZmlvIChkaXJl
+Y3Q9MSwgaW9lbmdpbmU9bGliYWlvLCBpb2RlcHRoPTEyOCwgCm51bWpvYnM9NCwgcnc9cmVhZCwg
+YnM9NGspLCB0aGUgYmFuZHdpZHRoIG9uIGJhcmUgbnZtZSBpcyAxNTg5TWlCL3MuIFRoZSAKYmFu
+ZHdpZHRoIG9uIHRoaW4gZGV2aWNlIGlzIG9ubHkgMTI3NE1pQi9zLCB3aGlsZSB0aGUgZm91ciBm
+aW8gdGhyZWFkcyAKcnVuIGF0IDIwMCUgQ1BVIGFuZCB0aGUgc2luZ2xlIHdvcmtlciB0aHJlYWQg
+aXMgYWx3YXlzIHJ1bmluZyBhdCAxMDAlIApDUFUuIHBlcmYgb2Ygd29ya2VyIHRocmVhZCBzaG93
+ZXMgdGhhdCBwcm9jZXNzX2JpbygpIGNvbnN1bWVzIDg2JSBvZiB0aGUgCnRpbWUuCgoKUmVnYXJk
+cwoKSmVmZmxlIFh1CgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
+b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
