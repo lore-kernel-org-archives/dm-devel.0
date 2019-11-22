@@ -1,13 +1,11 @@
-From: Erich Eckner <device-mapper@eckner.net>
-Subject: Re: ignore/update integrity checksums
-Date: Fri, 22 Nov 2019 11:09:10 +0100 (CET)
-Message-ID: <alpine.LNX.2.21.99999.375.1911221102150.1609868@nlopc43.ioq.uni-jena.de>
-References: <alpine.LNX.2.21.99999.375.1911221006490.1609868@nlopc43.ioq.uni-jena.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper changes for 5.5
+Date: Fri, 22 Nov 2019 10:37:47 -0500
+Message-ID: <20191122153747.GA23143@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LNX.2.21.99999.375.1911221006490.1609868@nlopc43.ioq.uni-jena.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,122 +15,122 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Disposition: inline
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Nikos Tsironis <ntsironis@arrikto.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Dmitry Fomichev <dmitry.fomichev@wdc.com>, Heinz Mauelshagen <heinzm@redhat.com>, Krzysztof Kozlowski <krzk@kernel.org>, linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jeffle Xu <jefflexu@linux.alibaba.com>, Nathan Chancellor <natechancellor@gmail.com>, Maged Mokhtar <mmokhtar@petasan.org>, Alasdair G Kergon <agk@redhat.com>, Bryan Gurney <bgurney@redhat.com>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA256
+Hi Linus,
 
-On Fri, 22 Nov 2019, Erich Eckner wrote:
+The following changes since commit a99d8080aaf358d5d23581244e5da23b35e340b9:
 
-> Hi,
->
-> I have multiple disks with LUKS+integrity created by
->
-> cryptsetup luksFormat /dev/sde --key-file /mnt/key/key --integrity=20
-> hmac-sha256
->
-> which are part of a raid6. Details of the device:
->
-> /dev/mapper/leg0 is active.
->  type:    LUKS2
->  cipher:  aes-xts-plain64
->  keysize: 768 bits
->  key location: keyring
->  integrity: hmac(sha256)
->  integrity keysize: 256 bits
->  device:  /dev/sdb
->  sector size:  512
->  offset:  0 sectors
->  size:    11031354576 sectors
->  mode:    read/write
->
->
-> Recently, I rebooted this box and apparently, I missed to cleanly sync th=
-e=20
-> disks, so they now report integrity errors, when mdadm probes (during=20
-> assemble) for the raid superblock:
->
-> device-mapper: crypt: dm-1: INTEGRITY AEAD ERROR, sector 11031354368
->
-> There was no write activity on the raid before the reboot except for a=20
-> running
->
-> mdadm /dev/md0 --replace /dev/dm-0 --with /dev/dm-1
->
-> which of course might have written a lot to all superblocks.
->
-> Since I believe, the superblocks should be mostly in-sync (except for=20
-> event-counters?): Is there a way to ignore or re-calculate the integrity=
-=20
-> checks?
->
-> Also: What is the correct way to assure, that data has been synced to the=
-=20
-> disk(s) before switching off power? (If that matters, there is a=20
-> raid-controller underneath: "06:00.0 RAID bus controller: Hewlett-Packard=
-=20
-> Company Smart Array G6 controllers (rev 01)" - but it
-> does not actually handle the raid, it only feeds the disks through to the=
- os)=20
-> I can execute any command after closing the luks-integrity device, my=20
-> question aims at: what should I execute?
->
-> regards,
-> Erich
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+  Linux 5.4-rc6 (2019-11-03 14:07:26 -0800)
 
-just a follow-up experimentation with the broken disks:
+are available in the Git repository at:
 
-I noticed /sys/block/dm-0/integrity/read_verify and similar which should=20
-manipulate verification upon read and updating upon write, according to
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.5/dm-changes
 
-https://github.com/ibuildthecloud/ubuntu-kernel/blob/master/Documentation/b=
-lock/data-integrity.txt#L169
+for you to fetch changes up to f612b2132db529feac4f965f28a1b9258ea7c22b:
 
-However, changing /sys/block/dm-0/integrity/read_verify to 0 (it was at 1=
-=20
-before) does not change the behaviour: `mdadm --examine` still generates=20
-read errors and cannot find its superblock for the corresponding crypt=20
-device.
+  Revert "dm crypt: use WQ_HIGHPRI for the IO and crypt workqueues" (2019-11-20 17:27:39 -0500)
 
-Oh, I just see, that I forgot all the details of my system in the first=20
-email - sry! - here it comes:
+Please pull, thanks!
+Mike
 
-This box is running arch linux with up-to-date packages.
+----------------------------------------------------------------
+- Fix DM core to disallow stacking request-based DM on partitions.
 
-# uname -a
-Linux backup 5.3.12-arch1-1 #1 SMP PREEMPT Wed, 20 Nov 2019 19:45:16 +0000=
-=20
-x86_64 GNU/Linux
+- Fix DM raid target to properly resync raidset even if bitmap needed
+  additional pages.
 
-# pacman -Q cryptsetup mdadm
-cryptsetup 2.2.2-1
-mdadm 4.1-2
+- Fix DM crypt performance regression due to use of WQ_HIGHPRI for the
+  IO and crypt workqueues.
 
-regards,
-Erich
+- Fix DM integrity metadata layout that was aligned on 128K boundary
+  rather than the intended 4K boundary (removes 124K of wasted space for
+  each metadata block).
 
+- Improve the DM thin, cache and clone targets to use spin_lock_irq
+  rather than spin_lock_irqsave where possible.
 
------BEGIN PGP SIGNATURE-----
+- Fix DM thin single thread performance that was lost due to needless
+  workqueue wakeups.
 
-iQIzBAEBCAAdFiEE3p92iMrPBP64GmxZCu7JB1Xae1oFAl3Xs8gACgkQCu7JB1Xa
-e1qykQ//cTcBJ1NGt2R3Cs23AGwdsUzsqyrf3ahPPWryFvN53GbYT6LOrjCqpF8n
-DWNFQ/xBqDwpuQh3l3MatEoaIewGMgkjt2gcpG1aVPnZWJo1hgJDhpXW8locBpN+
-h/q8bxcD9nOkMApDwu9bQxLIJcqBZISTgE8QmAvKvXFiPSuh22Gbth6NtSki2G3U
-95TPvNbdMJCSG32SEQ1F3/4nky20CMkd31sam44pL//Mr9a6sSeKeaUeQ9rX13Oe
-58kmkKp3d8ZIp89ruWgca2wEE5SZA3qdewWs5dfkCnLxzIs8tjL9jfrp1wR+yKNb
-DiDj2i203IPxxIgcwu+aDPxboCrJDu3zEE1OcQf6ZDd7nGqsdaf2aGp/F/SkqQ9s
-d20+DZSi+2NSQ8n782/zXuroVmy1of4eDn2flFSZFOKfuqgtWcQFnN+JZsZT/bIQ
-xNKuD8eIY5lvO58Rpkg38JjIMfVuQiGdjfh1CK/ZUeYOXC6YnGgmOaZqdIWMH4ya
-JknY7oXkCluGRNKn3wObufRMa3LkAjoRTmHRw4JpLWJgBxXaj7vsc/thrWy+Uw+3
-cmwTMQBR3YttEAYsMRp+s6QNvN6ny3FlNAupnrSTiujjSnO7RZKTV5VeBOcAeoL4
-4dTi0FTpehWWA6U3UlmUOafyZjGCHuXDVHKAbVUHiHjQJIpSztw=3D
-=3D9Xhi
------END PGP SIGNATURE-----
+- Fix DM zoned target performance that was lost due to excessive backing
+  device checks.
+
+- Add ability to trigger write failure with the DM dust test target.
+
+- Fix whitespace indentation in drivers/md/Kconfig.
+
+- Various smalls fixes and cleanups (e.g. use struct_size, fix
+  uninitialized variable, variable renames, etc).
+
+----------------------------------------------------------------
+Bryan Gurney (3):
+      dm dust: change result vars to r
+      dm dust: change ret to r in dust_map_read and dust_map
+      dm dust: add limited write failure mode
+
+Dmitry Fomichev (1):
+      dm zoned: reduce overhead of backing device checks
+
+Gustavo A. R. Silva (1):
+      dm stripe: use struct_size() in kmalloc()
+
+Heinz Mauelshagen (4):
+      dm raid: change rs_set_dev_and_array_sectors API and callers
+      dm raid: to ensure resynchronization, perform raid set grow in preresume
+      dm raid: simplify rs_setup_recovery call chain
+      dm raid: streamline rs_get_progress() and its raid_status() caller side
+
+Jeffle Xu (1):
+      dm thin: wakeup worker only when deferred bios exist
+
+Krzysztof Kozlowski (1):
+      dm: Fix Kconfig indentation
+
+Maged Mokhtar (1):
+      dm writecache: handle REQ_FUA
+
+Mike Snitzer (2):
+      dm table: do not allow request-based DM to stack on partitions
+      Revert "dm crypt: use WQ_HIGHPRI for the IO and crypt workqueues"
+
+Mikulas Patocka (6):
+      dm writecache: fix uninitialized variable warning
+      dm clone: replace spin_lock_irqsave with spin_lock_irq
+      dm thin: replace spin_lock_irqsave with spin_lock_irq
+      dm bio prison: replace spin_lock_irqsave with spin_lock_irq
+      dm cache: replace spin_lock_irqsave with spin_lock_irq
+      dm integrity: fix excessive alignment of metadata runs
+
+Nathan Chancellor (1):
+      dm raid: Remove unnecessary negation of a shift in raid10_format_to_md_layout
+
+Nikos Tsironis (1):
+      dm clone: add bucket_lock_irq/bucket_unlock_irq helpers
+
+ .../admin-guide/device-mapper/dm-integrity.rst     |   5 +
+ .../admin-guide/device-mapper/dm-raid.rst          |   2 +
+ drivers/md/Kconfig                                 |  54 +++----
+ drivers/md/dm-bio-prison-v1.c                      |  27 ++--
+ drivers/md/dm-bio-prison-v2.c                      |  26 ++--
+ drivers/md/dm-cache-target.c                       |  77 ++++------
+ drivers/md/dm-clone-metadata.c                     |  29 ++--
+ drivers/md/dm-clone-metadata.h                     |   4 +-
+ drivers/md/dm-clone-target.c                       |  62 ++++----
+ drivers/md/dm-crypt.c                              |   9 +-
+ drivers/md/dm-dust.c                               |  97 ++++++++----
+ drivers/md/dm-integrity.c                          |  28 +++-
+ drivers/md/dm-raid.c                               | 164 +++++++++++----------
+ drivers/md/dm-stripe.c                             |  15 +-
+ drivers/md/dm-table.c                              |  27 +---
+ drivers/md/dm-thin.c                               | 118 +++++++--------
+ drivers/md/dm-writecache.c                         |   5 +-
+ drivers/md/dm-zoned-metadata.c                     |  29 ++--
+ drivers/md/dm-zoned-reclaim.c                      |   8 +-
+ drivers/md/dm-zoned-target.c                       |  54 +++++--
+ drivers/md/dm-zoned.h                              |   2 +
+ include/linux/device-mapper.h                      |   3 -
+ 22 files changed, 433 insertions(+), 412 deletions(-)
