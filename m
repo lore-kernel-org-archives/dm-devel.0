@@ -1,7 +1,7 @@
 From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 4.19 100/219] dm raid: fix false -EBUSY when handling check/repair message
-Date: Fri, 22 Nov 2019 00:47:12 -0500
-Message-ID: <20191122054911.1750-93-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 4.19 098/219] dm flakey: Properly corrupt multi-page bios.
+Date: Fri, 22 Nov 2019 00:47:10 -0500
+Message-ID: <20191122054911.1750-91-sashal@kernel.org>
 References: <20191122054911.1750-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,40 +9,76 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20191122054911.1750-1-sashal@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Sasha Levin <sashal@kernel.org>, dm-devel@redhat.com
+Cc: Sweet Tea <sweettea@redhat.com>, John Dorminy <jdorminy@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Sasha Levin <sashal@kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Heinz Mauelshagen <heinzm@redhat.com>
+From: Sweet Tea <sweettea@redhat.com>
 
-[ Upstream commit 74694bcbdf7e28a5ad548cdda9ac56d30be00d13 ]
+[ Upstream commit a00f5276e26636cbf72f24f79831026d2e2868e7 ]
 
-Sending a check/repair message infrequently leads to -EBUSY instead of
-properly identifying an active resync.  This occurs because
-raid_message() is testing recovery bits in a racy way.
+The flakey target is documented to be able to corrupt the Nth byte in
+a bio, but does not corrupt byte indices after the first biovec in the
+bio. Change the corrupting function to actually corrupt the Nth byte
+no matter in which biovec that index falls.
 
-Fix by calling decipher_sync_action() from raid_message() to properly
-identify the idle state of the RAID device.
+A test device generating two-page bios, atop a flakey device configured
+to corrupt a byte index on the second page, verified both the failure
+to corrupt before this patch and the expected corruption after this
+change.
 
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+Signed-off-by: John Dorminy <jdorminy@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- drivers/md/dm-raid.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ drivers/md/dm-flakey.c | 33 ++++++++++++++++++++++-----------
+ 1 file changed, 22 insertions(+), 11 deletions(-)
 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index b78a8a4d061ca..416998523d455 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -3690,8 +3690,7 @@ static int raid_message(struct dm_target *ti, unsigned int argc, char **argv,
- 			set_bit(MD_RECOVERY_INTR, &mddev->recovery);
- 			md_reap_sync_thread(mddev);
- 		}
--	} else if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) ||
--		   test_bit(MD_RECOVERY_NEEDED, &mddev->recovery))
-+	} else if (decipher_sync_action(mddev, mddev->recovery) != st_idle)
- 		return -EBUSY;
- 	else if (!strcasecmp(argv[0], "resync"))
- 		; /* MD_RECOVERY_NEEDED set below */
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index b86d2439ffc76..2fcf62fb2844f 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -287,20 +287,31 @@ static void flakey_map_bio(struct dm_target *ti, struct bio *bio)
+ 
+ static void corrupt_bio_data(struct bio *bio, struct flakey_c *fc)
+ {
+-	unsigned bio_bytes = bio_cur_bytes(bio);
+-	char *data = bio_data(bio);
++	unsigned int corrupt_bio_byte = fc->corrupt_bio_byte - 1;
++
++	struct bvec_iter iter;
++	struct bio_vec bvec;
++
++	if (!bio_has_data(bio))
++		return;
+ 
+ 	/*
+-	 * Overwrite the Nth byte of the data returned.
++	 * Overwrite the Nth byte of the bio's data, on whichever page
++	 * it falls.
+ 	 */
+-	if (data && bio_bytes >= fc->corrupt_bio_byte) {
+-		data[fc->corrupt_bio_byte - 1] = fc->corrupt_bio_value;
+-
+-		DMDEBUG("Corrupting data bio=%p by writing %u to byte %u "
+-			"(rw=%c bi_opf=%u bi_sector=%llu cur_bytes=%u)\n",
+-			bio, fc->corrupt_bio_value, fc->corrupt_bio_byte,
+-			(bio_data_dir(bio) == WRITE) ? 'w' : 'r', bio->bi_opf,
+-			(unsigned long long)bio->bi_iter.bi_sector, bio_bytes);
++	bio_for_each_segment(bvec, bio, iter) {
++		if (bio_iter_len(bio, iter) > corrupt_bio_byte) {
++			char *segment = (page_address(bio_iter_page(bio, iter))
++					 + bio_iter_offset(bio, iter));
++			segment[corrupt_bio_byte] = fc->corrupt_bio_value;
++			DMDEBUG("Corrupting data bio=%p by writing %u to byte %u "
++				"(rw=%c bi_opf=%u bi_sector=%llu size=%u)\n",
++				bio, fc->corrupt_bio_value, fc->corrupt_bio_byte,
++				(bio_data_dir(bio) == WRITE) ? 'w' : 'r', bio->bi_opf,
++				(unsigned long long)bio->bi_iter.bi_sector, bio->bi_iter.bi_size);
++			break;
++		}
++		corrupt_bio_byte -= bio_iter_len(bio, iter);
+ 	}
+ }
+ 
 -- 
 2.20.1
