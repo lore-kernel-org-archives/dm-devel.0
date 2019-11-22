@@ -1,13 +1,11 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: dm-thin: Several Questions on dm-thin performance.
-Date: Fri, 22 Nov 2019 18:55:30 +0000
-Message-ID: <20191122185530.pcrgmb655dkdbdcq@reti>
-References: <35cf1ecf-5cd8-604b-ec4e-18c9fd4a4195@linux.alibaba.com>
+From: Drew Hastings <dhastings@crucialwebhost.com>
+Subject: multipath - unable to use multiple active paths at once,
+ and deprecated example in docs
+Date: Fri, 22 Nov 2019 13:27:04 -0700
+Message-ID: <CAN-y+EJOt=MRDEXCx9_U4zmDs+i9yXj364E4+z=xC=u8+Ao1PQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============2426868199381452598=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <35cf1ecf-5cd8-604b-ec4e-18c9fd4a4195@linux.alibaba.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,59 +15,116 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: JeffleXu <jefflexu@linux.alibaba.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Nov 22, 2019 at 11:14:15AM +0800, JeffleXu wrote:
+--===============2426868199381452598==
+Content-Type: multipart/alternative; boundary="0000000000005630f60597f53dff"
 
-> The first question is what's the purpose of data cell? In thin_bio_map(),
-> normal bio will be packed as a virtual cell and data cell. I can understa=
-nd
-> that virtual cell is used to prevent discard bio and non-discard bio
-> targeting the same block from being processed at the same time. I find it
-> was added in commit =A0=A0=A0 e8088073c9610af017fd47fddd104a2c3afb32e8 (d=
-m thin:
-> fix race between simultaneous io and discards to same block), but I'm sti=
-ll
-> confused about the use of data cell.
+--0000000000005630f60597f53dff
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-As you are aware there are two address spaces for the locks.  The 'virtual'=
- one
-refers to cells in the logical address space of the thin devices, and the '=
-data' one
-refers to the underlying data device.  There are certain conditions where w=
-e=20
-unfortunately need to hold both of these (eg, to prevent a data block being=
- reprovisioned
-before an io to it has completed).
+My use case doesn't lend itself well to multipathd, so I'm trying to
+implement multipathing with device mapper directly.
 
-> The second question is the impact of virtual cell and data cell on IO
-> performance. If $data_block_size is large for example 1G, in multithread =
-fio
-> test, most bio will be buffered in cell->bios list and then be processed =
-by
-> worker thread asynchronously, even when there's no discard bio. Thus the
-> original parallel IO is processed by worker thread serially now. As the
-> number of fio test threads increase, the single worker thread can easily =
-get
-> CPU 100%, and thus become the bottleneck of the performance since dm-thin
-> workqueue is ordered unbound.
+My table is (kernel 4.19.79):
 
-Yep, this is a big issue.  Take a look at dm-bio-prison-v2.h, this is the
-new interface that we need to move dm-thin across to use (dm-cache already =
-uses it).
-It allows concurrent holders of a cell (ie, read locks), so we'll be able t=
-o remap
-much more io without handing it off to a worker thread.  Once this is done =
-I want
-to add an extra field to cells that will cache the mapping, this way if you=
- acquire a
-cell that is already held then you can avoid the expensive btree lookup.  T=
-ogether=20
-these changes should make a huge difference to the performance.
+0 1562378240 multipath 4 queue_if_no_path retain_attached_hw_handler
+queue_mode bio 0 1 1 queue-length 0 4 1 253:11 1 253:8 1 253:9 1 253:10 1
 
-If you've got some spare coding cycles I'd love some help with this ;)
+What I've found with this setup is that, aside from the first path in the
+group, none of the other paths receive IO/bios.
 
-- Joe
+The only "real" path is 253:11, the rest of them are to dm error targets.
+Still though, you can see the status of this multipath target is:
+
+0 1562378240 multipath 2 0 0 0 1 1 A 0 4 1 253:11 A 0 309 253:8 A 0 0 253:9
+A 0 0 253:10 A 0 0
+
+So 253:11 has a queue of 309, while the rest of the devices have a queue of
+zero and show an active status, indicating no IO has triggered the
+underlying dm error target causing the 2nd, 3rd, and 4th paths to fail.
+
+Before diving much deeper into the relevant kernel code, I figured I'd
+check to see if there's any obvious reason this should not work the way I
+expect (where individual paths are balanced within the group).
+
+I realize that Documentation/device-mapper/dm-queue-length.txt is also
+out-dated (it makes suggestions that are deprecated), but still that
+documentation implies this table would balance the load. Here is the table
+from those docs.
+
+test: 0 10 multipath 0 0 1 1 queue-length 0 2 1 8:0 128 8:16 128 ( >1 is
+deprecated since those docs)
+
+My only assumption is that the multipath features, in particular queue_mode
+bio, prevent this from behaving properly. If that is the case, why can this
+not be achieved with bios, as this is not a limitation of raid1 (which will
+load balance read IO to device mapper targets). I also believe this is the
+only feature option that is viable for me, since this multipath device is
+on top of device mapper targets.
+
+The documentation would imply that the queue should be roughly the same to
+every device, and that after every IO a new path is chosen for the next IO
+based on the lowest entry. The code looks like it does this as described,
+but maybe there's some condition preventing it from doing so (while still
+counting the queue). Is there anything I can do to get this target to
+behave as I assumed it would from
+Documentation/device-mapper/dm-queue-length.txt ?
+
+Also, for what it's worth, round-robin behaves the same way as queue-length=
+.
+
+Thank you for your time!
+- Drew
+
+--0000000000005630f60597f53dff
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">My use case doesn&#39;t lend itself well to multipathd, so=
+ I&#39;m trying to implement multipathing with device mapper directly.<br><=
+br>My table is (kernel 4.19.79):<br><br>0 1562378240 multipath 4 queue_if_n=
+o_path retain_attached_hw_handler queue_mode bio 0 1 1 queue-length 0 4 1 2=
+53:11 1 253:8 1 253:9 1 253:10 1<br><br>What I&#39;ve found with this setup=
+ is that, aside from the first path in the group, none of the other paths r=
+eceive IO/bios.<br><br>The only &quot;real&quot; path is 253:11, the rest o=
+f them are to dm error targets. Still though, you can see the status of thi=
+s multipath target is:<br><br>0 1562378240 multipath 2 0 0 0 1 1 A 0 4 1 25=
+3:11 A 0 309 253:8 A 0 0 253:9 A 0 0 253:10 A 0 0 <br><br>So 253:11 has a q=
+ueue of 309, while the rest of the devices have a queue of zero and show an=
+ active status, indicating no IO has triggered the underlying dm error targ=
+et causing the 2nd, 3rd, and 4th paths to fail.<br><br>Before diving much d=
+eeper into the relevant kernel code, I figured I&#39;d check to see if ther=
+e&#39;s any obvious reason this should not work the way I expect (where ind=
+ividual paths are balanced within the group).<br><br>I realize that Documen=
+tation/device-mapper/dm-queue-length.txt is also out-dated (it makes sugges=
+tions that are deprecated), but still that documentation implies this table=
+ would balance the load. Here is the table from those docs.<br><br>test: 0 =
+10 multipath 0 0 1 1 queue-length 0 2 1 8:0 128 8:16 128 ( &gt;1 is depreca=
+ted since those docs)<br><br>My only assumption is that the multipath featu=
+res, in particular queue_mode bio, prevent this from behaving properly. If =
+that is the case, why can this not be achieved with bios, as this is not a =
+limitation of raid1 (which will load balance read IO to device mapper targe=
+ts). I also believe this is the only feature option that is viable for me, =
+since this multipath device is on top of device mapper targets.<br><br>The =
+documentation would imply that the queue should be roughly the same to ever=
+y device, and that after every IO a new path is chosen for the next IO base=
+d on the lowest entry. The code looks like it does this as described, but m=
+aybe there&#39;s some condition preventing it from doing so (while still co=
+unting the queue). Is there anything I can do to get this target to behave =
+as I assumed it would from Documentation/device-mapper/dm-queue-length.txt =
+?<br><br>Also, for what it&#39;s worth, round-robin behaves the same way as=
+ queue-length.<br><br>Thank you for your time!<br>- Drew</div>
+
+--0000000000005630f60597f53dff--
+
+--===============2426868199381452598==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2426868199381452598==--
