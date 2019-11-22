@@ -1,10 +1,10 @@
-From: JeffleXu <jefflexu@linux.alibaba.com>
-Subject: dm-thin: Several Questions on dm-thin performance.
-Date: Fri, 22 Nov 2019 11:43:00 +0800
-Message-ID: <95b81e25-49ed-71a9-5dcf-0ff3618f2ea6@linux.alibaba.com>
+From: Erich Eckner <device-mapper@eckner.net>
+Subject: ignore/update integrity checksums
+Date: Fri, 22 Nov 2019 10:07:14 +0100 (CET)
+Message-ID: <alpine.LNX.2.21.99999.375.1911221006490.1609868@nlopc43.ioq.uni-jena.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=WINDOWS-1252; format=flowed
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -15,39 +15,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-SGkgZ3V5cywKCkkgaGF2ZSBzZXZlcmFsIHF1ZXN0aW9ucyBvbiBkbS10aGluIHdoZW4gSSdtIHRl
-c3RpbmcgYW5kIGV2YWx1YXRpbmcgSU8gCnBlcmZvcm1hbmNlIG9mIGRtLXRoaW4uIEkgd291bGQg
-YmUgZ3JhdGVmdWwgaWYgc29tZW9uZSBjb3VsZCBzcGVuZCBhIApsaXR0bGUgdGltZSBvbiBpdC4K
-CgpUaGUgZmlyc3QgcXVlc3Rpb24gaXMgd2hhdCdzIHRoZSBwdXJwb3NlIG9mIGRhdGEgY2VsbD8g
-SW4gCnRoaW5fYmlvX21hcCgpLCBub3JtYWwgYmlvIHdpbGwgYmUgcGFja2VkIGFzIGEgdmlydHVh
-bCBjZWxsIGFuZCBkYXRhIApjZWxsLiBJIGNhbiB1bmRlcnN0YW5kIHRoYXQgdmlydHVhbCBjZWxs
-IGlzIHVzZWQgdG8gcHJldmVudCBkaXNjYXJkIGJpbyAKYW5kIG5vbi1kaXNjYXJkIGJpbyB0YXJn
-ZXRpbmcgdGhlIHNhbWUgYmxvY2sgZnJvbSBiZWluZyBwcm9jZXNzZWQgYXQgdGhlIApzYW1lIHRp
-bWUuIEkgZmluZCBpdCB3YXMgYWRkZWQgaW4gY29tbWl0IMKgwqDCoCAKZTgwODgwNzNjOTYxMGFm
-MDE3ZmQ0N2ZkZGQxMDRhMmMzYWZiMzJlOCAoZG0gdGhpbjogZml4IHJhY2UgYmV0d2VlbiAKc2lt
-dWx0YW5lb3VzIGlvIGFuZCBkaXNjYXJkcyB0byBzYW1lIGJsb2NrKSwgYnV0IEknbSBzdGlsbCBj
-b25mdXNlZCAKYWJvdXQgdGhlIHVzZSBvZiBkYXRhIGNlbGwuCgoKVGhlIHNlY29uZCBxdWVzdGlv
-biBpcyB0aGUgaW1wYWN0IG9mIHZpcnR1YWwgY2VsbCBhbmQgZGF0YSBjZWxsIG9uIElPIApwZXJm
-b3JtYW5jZS4gSWYgJGRhdGFfYmxvY2tfc2l6ZSBpcyBsYXJnZSBmb3IgZXhhbXBsZSAxRywgaW4g
-bXVsdGl0aHJlYWQgCmZpbyB0ZXN0LCBtb3N0IGJpbyB3aWxsIGJlIGJ1ZmZlcmVkIGluIGNlbGwt
-PmJpb3MgbGlzdCBhbmQgdGhlbiBiZSAKcHJvY2Vzc2VkIGJ5IHdvcmtlciB0aHJlYWQgYXN5bmNo
-cm9ub3VzbHksIGV2ZW4gd2hlbiB0aGVyZSdzIG5vIGRpc2NhcmQgCmJpby4gVGh1cyB0aGUgb3Jp
-Z2luYWwgcGFyYWxsZWwgSU8gaXMgcHJvY2Vzc2VkIGJ5IHdvcmtlciB0aHJlYWQgCnNlcmlhbGx5
-IG5vdy4gQXMgdGhlIG51bWJlciBvZiBmaW8gdGVzdCB0aHJlYWRzIGluY3JlYXNlLCB0aGUgc2lu
-Z2xlIAp3b3JrZXIgdGhyZWFkIGNhbiBlYXNpbHkgZ2V0IENQVSAxMDAlLCBhbmQgdGh1cyBiZWNv
-bWUgdGhlIGJvdHRsZW5lY2sgb2YgCnRoZSBwZXJmb3JtYW5jZSBzaW5jZSBkbS10aGluIHdvcmtx
-dWV1ZSBpcyBvcmRlcmVkIHVuYm91bmQuCgpVc2luZyBhbiBudm1lIFNTRCBhbmQgZmlvIChkaXJl
-Y3Q9MSwgaW9lbmdpbmU9bGliYWlvLCBpb2RlcHRoPTEyOCwgCm51bWpvYnM9NCwgcnc9cmVhZCwg
-YnM9NGspLCB0aGUgYmFuZHdpZHRoIG9uIGJhcmUgbnZtZSBpcyAxNTg5TWlCL3MuIFRoZSAKYmFu
-ZHdpZHRoIG9uIHRoaW4gZGV2aWNlIGlzIG9ubHkgMTI3NE1pQi9zLCB3aGlsZSB0aGUgZm91ciBm
-aW8gdGhyZWFkcyAKcnVuIGF0IDIwMCUgQ1BVIGFuZCB0aGUgc2luZ2xlIHdvcmtlciB0aHJlYWQg
-aXMgYWx3YXlzIHJ1bmluZyBhdCAxMDAlIApDUFUuIHBlcmYgb2Ygd29ya2VyIHRocmVhZCBzaG93
-ZXMgdGhhdCBwcm9jZXNzX2JpbygpIGNvbnN1bWVzIDg2JSBvZiB0aGUgCnRpbWUuCgoKQmVzaWRl
-cyBpdCBzZWVtcyB0aGF0IEkgY2FuJ3Qgc2VuZCBlbWFpbCB0byBkbS1kZXZlbEByZWRoYXQuY29t
-IG1haWxpbmcgCmxpc3QuCgoKUmVnYXJkcwoKSmVmZmxlIFh1CgoKLS0KZG0tZGV2ZWwgbWFpbGlu
-ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
-L2xpc3RpbmZvL2RtLWRldmVs
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA256
+
+Hi,
+
+I have multiple disks with LUKS+integrity created by
+
+cryptsetup luksFormat /dev/sde --key-file /mnt/key/key --integrity hmac-sha=
+256
+
+which are part of a raid6. Details of the device:
+
+/dev/mapper/leg0 is active.
+   type:    LUKS2
+   cipher:  aes-xts-plain64
+   keysize: 768 bits
+   key location: keyring
+   integrity: hmac(sha256)
+   integrity keysize: 256 bits
+   device:  /dev/sdb
+   sector size:  512
+   offset:  0 sectors
+   size:    11031354576 sectors
+   mode:    read/write
+
+
+Recently, I rebooted this box and apparently, I missed to cleanly sync the=
+=20
+disks, so they now report integrity errors, when mdadm probes (during=20
+assemble) for the raid superblock:
+
+device-mapper: crypt: dm-1: INTEGRITY AEAD ERROR, sector 11031354368
+
+There was no write activity on the raid before the reboot except for a=20
+running
+
+mdadm /dev/md0 --replace /dev/dm-0 --with /dev/dm-1
+
+which of course might have written a lot to all superblocks.
+
+Since I believe, the superblocks should be mostly in-sync (except for=20
+event-counters?): Is there a way to ignore or re-calculate the integrity=20
+checks?
+
+Also: What is the correct way to assure, that data has been synced to the=
+=20
+disk(s) before switching off power? (If that matters, there is a=20
+raid-controller underneath: "06:00.0 RAID bus controller: Hewlett-Packard=
+=20
+Company Smart Array G6 controllers (rev 01)" - but it
+does not actually handle the raid, it only feeds the disks through to the=
+=20
+os) I can execute any command after closing the luks-integrity device, my=
+=20
+question aims at: what should I execute?
+
+regards,
+Erich
+
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEE3p92iMrPBP64GmxZCu7JB1Xae1oFAl3XpUQACgkQCu7JB1Xa
+e1ry/hAAsWBT+D4UgVEbLNQj8s2cpFP8z4iTfT2vTG9UeEilxjpxrU5tPcRGKANv
+qewyTwC5JrH6Mst3AE6P+ToSUWisMOcUXSg663dh4q8lmJjL/IdBrTU6cMqrFJV/
+QXx3crf3j6soZ9AXSQgGRJm0wIV24WKg5vgTTDug56TR0ifUK+KJrWsqtforhtYu
+hynMYlMHOcYUX4aPRHL6M56K9dSt92/9i5oRcm+jmKKSnTceJHduSD4RPMs93Lb9
+JYIef1Qg+0wZqPZr1JD5AR+IU4J4dvysiqP9H3XYNIZaGYo2dGI6q6+6ksuGDxDu
+sCeMFNlOdftptC8HlVUm29sERNEXqN+cWZ5X9OdEPKPuY+fQtF4vugy9rRcw+Q41
+FHLGs5Aip/jGbXxh0vtOflcpZF4O4j4mu5r0KWEh1YgMIOb+JeWueGamSCdvb0yP
+p/ZwfCM0a3sncOw5YRIIS6YXshCl57xzgRv326Z199Y9uROAd0pGvW2B91pKS2QM
+W++AaEozRAT5X/5PSSJpw9bx2iprS6YwkygCeFuIswcrMfvbaiwBdXeIVvPZRJjO
+lTVMnxWIqt3zkDWaZdwJzQCFycLtlGGXlei4Y3TCBfwRRGBWj6iLRY6t7SlKX9ST
+7KHoha1dp2EheKJV6eZXo0mxrF7bt6gcPeVpPZIKKGJG5XkgHMA=3D
+=3DVedA
+-----END PGP SIGNATURE-----
