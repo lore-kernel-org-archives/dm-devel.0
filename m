@@ -1,12 +1,12 @@
 From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 4.9 32/91] dm flakey: Properly corrupt multi-page bios.
-Date: Fri, 22 Nov 2019 01:00:30 -0500
-Message-ID: <20191122060129.4239-31-sashal@kernel.org>
-References: <20191122060129.4239-1-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 4.14 046/127] dm flakey: Properly corrupt multi-page bios.
+Date: Fri, 22 Nov 2019 00:54:24 -0500
+Message-ID: <20191122055544.3299-45-sashal@kernel.org>
+References: <20191122055544.3299-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191122060129.4239-1-sashal@kernel.org>
+In-Reply-To: <20191122055544.3299-1-sashal@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
 Cc: Sweet Tea <sweettea@redhat.com>, John Dorminy <jdorminy@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Sasha Levin <sashal@kernel.org>, dm-devel@redhat.com
@@ -34,10 +34,10 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 22 insertions(+), 11 deletions(-)
 
 diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
-index 3643cba713518..742c1fa870dae 100644
+index 0c1ef63c3461b..b1b68e01b889c 100644
 --- a/drivers/md/dm-flakey.c
 +++ b/drivers/md/dm-flakey.c
-@@ -258,20 +258,31 @@ static void flakey_map_bio(struct dm_target *ti, struct bio *bio)
+@@ -282,20 +282,31 @@ static void flakey_map_bio(struct dm_target *ti, struct bio *bio)
  
  static void corrupt_bio_data(struct bio *bio, struct flakey_c *fc)
  {
