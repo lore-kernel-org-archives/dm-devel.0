@@ -1,16 +1,13 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: multipath - unable to use multiple active paths at
- once, and deprecated example in docs
-Date: Mon, 25 Nov 2019 22:07:48 +0100
-Message-ID: <a9b5e49f6c6ef0fedaa403ce02cf0d1b39912cff.camel@suse.de>
-References: <CAN-y+EJOt=MRDEXCx9_U4zmDs+i9yXj364E4+z=xC=u8+Ao1PQ@mail.gmail.com>
-	<329fd408ea605f1f14c0eebb46209fd3c46c3af8.camel@suse.de>
-	<CAN-y+E+65bgiUSL6VMvRJLd3AiqD7xApbm1nA69ue_M6tTsGrA@mail.gmail.com>
+From: pr-tracker-bot@kernel.org
+Subject: Re: [git pull] device mapper changes for 5.5
+Date: Mon, 25 Nov 2019 22:45:10 +0000
+Message-ID: <157472191073.22729.17157564640043635383.pr-tracker-bot@kernel.org>
+References: <20191122153747.GA23143@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAN-y+E+65bgiUSL6VMvRJLd3AiqD7xApbm1nA69ue_M6tTsGrA@mail.gmail.com>
+In-Reply-To: <20191122153747.GA23143@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,49 +17,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Drew Hastings <dhastings@crucialwebhost.com>, dm-devel@redhat.com
-Cc: Mike Snitzer <snitzer@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Nikos Tsironis <ntsironis@arrikto.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Dmitry Fomichev <dmitry.fomichev@wdc.com>, Heinz Mauelshagen <heinzm@redhat.com>, Krzysztof Kozlowski <krzk@kernel.org>, linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jeffle Xu <jefflexu@linux.alibaba.com>, Nathan Chancellor <natechancellor@gmail.com>, Maged Mokhtar <mmokhtar@petasan.org>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, Bryan Gurney <bgurney@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 2019-11-25 at 13:42 -0700, Drew Hastings wrote:
-> On Mon, Nov 25, 2019 at 12:48 PM Martin Wilck <mwilck@suse.de> wrote:
-> > I think you are seeing this FIXME:
-> > 
-> > https://elixir.bootlin.com/linux/v4.19.79/source/drivers/md/dm-mpath.c#L612
-> > 
-> > For your testing, perhaps you just remove that if(!pgpath)
-> > condition.
-> > 
-> > Regards,
-> > Martin
-> 
-> That's correct, thanks. It works as expected after removing that
-> condition.
-> 
-> With some limited testing using fio, I don't see any obvious negative
-> impacts of allowing choose_pgpath to run each bio mapping. I also
-> don't see any significant increase in CPU usage or IO latency during
-> benchmarking.
-> 
-> The FIXME comment acknowledges that this sort of defeats the
-> balancing function of multipath, so I'm assuming this was removed for
-> a good reason. Does anyone know why this was done? In my particular
-> use case, I benefit from balancing the paths for throughput, so it's
-> useful to me.
+The pull request you sent on Fri, 22 Nov 2019 10:37:47 -0500:
 
-This originates from the former use of dm-multipath for NVMe devices,
-the now obsolete "nvme" queue mode, and from the attempt to separate
-dm-multipath from SCSI and its device handler model. See 8d47e65948dd
-("dm mpath: remove unnecessary NVMe branching in favor of scsi_dh
-checks").
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.5/dm-changes
 
-It seems indeed strange to skip choosing the path in the absence of the
-SCSI device handler, which is (with a grain of salt) responsible for
-switching *path groups*, not paths inside a group. It's a corner case,
-I don't think many real-world multipath setups deploy bio-based dm-
-mpath without a device handler.
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/eeee2827ae75ca58a6965e1b6d208576a5a01920
 
-So, I suggest you submit a patch and discuss this with Mike :-)
+Thank you!
 
-Regards,
-Martin
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.wiki.kernel.org/userdoc/prtracker
