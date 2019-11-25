@@ -1,34 +1,37 @@
-From: Ric Wheeler <ricwheeler@gmail.com>
-Subject: USENIX Vault - open source storage call for talks - CFP
- deadline extended
-Date: Fri, 22 Nov 2019 11:01:14 -0500
-Message-ID: <727e2a7a-eab7-9ba7-e1b8-d75eb853245a@gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH RT 1/2 v2] dm-snapshot: fix crash with the realtime kernel
+Date: Mon, 25 Nov 2019 18:25:12 +0100
+Message-ID: <20191125172512.q65pmda66un3cm2e@linutronix.de>
+References: <alpine.LRH.2.02.1911121057490.12815@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-block@vger.kernel.org
-Cc: Vault '20 Program Co-Chairs <vault20chairs@usenix.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1911121057490.12815@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Nikos Tsironis <ntsironis@arrikto.com>, Scott Wood <swood@redhat.com>, Ilias Tsitsimpis <iliastsi@arrikto.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Daniel Wagner <dwagner@suse.de>, linux-rt-users@vger.kernel.org, tglx@linutronix.de
 List-Id: dm-devel.ids
 
-Hi all,
+On 2019-11-12 11:09:51 [-0500], Mikulas Patocka wrote:
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-snap.c	2019-11-12 16:44:36.000000000 +0100
+> +++ linux-2.6/drivers/md/dm-snap.c	2019-11-12 17:01:46.000000000 +0100
+…
+>  static void dm_exception_table_lock(struct dm_exception_table_lock *lock)
+>  {
+> +#ifndef CONFIG_PREEMPT_RT_BASE
+>  	hlist_bl_lock(lock->complete_slot);
+>  	hlist_bl_lock(lock->pending_slot);
+> +#else
+> +	spin_lock(lock->lock);
 
-We decided to push the CFP deadline for USENIX Vault back until Dec 3rd given 
-the holiday and some slowness we had in opening the CFP site. We already have a 
-good set of submissions, so please do submit any talk ideas as soon as possible.
+if you also set the lowest bit for complete_slot + pending_slot then
+patch 2 of this mini series wouldn't be required. That means we could
+keep the debug code on -RT. Or am I missing something?
 
-See here for more information on how to submit your talk proposals:
+> +#endif
+>  }
 
-https://www.usenix.org/conference/vault20
-
-Hope to see you all there!
+Sebastian
