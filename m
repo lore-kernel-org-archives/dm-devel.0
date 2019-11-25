@@ -1,37 +1,43 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT 1/2 v2] dm-snapshot: fix crash with the realtime kernel
-Date: Mon, 25 Nov 2019 18:25:12 +0100
-Message-ID: <20191125172512.q65pmda66un3cm2e@linutronix.de>
-References: <alpine.LRH.2.02.1911121057490.12815@file01.intranet.prod.int.rdu2.redhat.com>
+From: Martin Wilck <mwilck@suse.de>
+Subject: Re: multipath - unable to use multiple active paths at
+ once, and deprecated example in docs
+Date: Mon, 25 Nov 2019 20:49:05 +0100
+Message-ID: <329fd408ea605f1f14c0eebb46209fd3c46c3af8.camel@suse.de>
+References: <CAN-y+EJOt=MRDEXCx9_U4zmDs+i9yXj364E4+z=xC=u8+Ao1PQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1911121057490.12815@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Nikos Tsironis <ntsironis@arrikto.com>, Scott Wood <swood@redhat.com>, Ilias Tsitsimpis <iliastsi@arrikto.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Daniel Wagner <dwagner@suse.de>, linux-rt-users@vger.kernel.org, tglx@linutronix.de
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAN-y+EJOt=MRDEXCx9_U4zmDs+i9yXj364E4+z=xC=u8+Ao1PQ@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Drew Hastings <dhastings@crucialwebhost.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2019-11-12 11:09:51 [-0500], Mikulas Patocka wrote:
-> ===================================================================
-> --- linux-2.6.orig/drivers/md/dm-snap.c	2019-11-12 16:44:36.000000000 +0100
-> +++ linux-2.6/drivers/md/dm-snap.c	2019-11-12 17:01:46.000000000 +0100
-…
->  static void dm_exception_table_lock(struct dm_exception_table_lock *lock)
->  {
-> +#ifndef CONFIG_PREEMPT_RT_BASE
->  	hlist_bl_lock(lock->complete_slot);
->  	hlist_bl_lock(lock->pending_slot);
-> +#else
-> +	spin_lock(lock->lock);
+On Fri, 2019-11-22 at 13:27 -0700, Drew Hastings wrote:
+> My use case doesn't lend itself well to multipathd, so I'm trying to
+> implement multipathing with device mapper directly.
+> 
+> My only assumption is that the multipath features, in particular
+> queue_mode bio, prevent this from behaving properly. If that is the
+> case, why can this not be achieved with bios, as this is not a
+> limitation of raid1 (which will load balance read IO to device mapper
+> targets). I also believe this is the only feature option that is
+> viable for me, since this multipath device is on top of device mapper
+> targets.
 
-if you also set the lowest bit for complete_slot + pending_slot then
-patch 2 of this mini series wouldn't be required. That means we could
-keep the debug code on -RT. Or am I missing something?
+I think you are seeing this FIXME:
 
-> +#endif
->  }
+https://elixir.bootlin.com/linux/v4.19.79/source/drivers/md/dm-mpath.c#L612
 
-Sebastian
+For your testing, perhaps you just remove that if(!pgpath) condition.
+
+Regards,
+Martin
