@@ -1,13 +1,14 @@
-From: pr-tracker-bot@kernel.org
-Subject: Re: [git pull] device mapper changes for 5.5
-Date: Mon, 25 Nov 2019 22:45:10 +0000
-Message-ID: <157472191073.22729.17157564640043635383.pr-tracker-bot@kernel.org>
-References: <20191122153747.GA23143@redhat.com>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: [PATCH] dm clone: Add to the documentation index
+Date: Tue, 26 Nov 2019 14:00:31 +0200
+Message-ID: <6635828b-2ca6-c4d4-fc70-46e9a0bd2ed5@arrikto.com>
+References: <2044145.ITN4Tc4rAJ@archlinux>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191122153747.GA23143@redhat.com>
+In-Reply-To: <2044145.ITN4Tc4rAJ@archlinux>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,19 +18,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Nikos Tsironis <ntsironis@arrikto.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Dmitry Fomichev <dmitry.fomichev@wdc.com>, Heinz Mauelshagen <heinzm@redhat.com>, Krzysztof Kozlowski <krzk@kernel.org>, linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jeffle Xu <jefflexu@linux.alibaba.com>, Nathan Chancellor <natechancellor@gmail.com>, Maged Mokhtar <mmokhtar@petasan.org>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, Bryan Gurney <bgurney@redhat.com>
+To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
+Cc: diegocg@gmail.com
 List-Id: dm-devel.ids
 
-The pull request you sent on Fri, 22 Nov 2019 10:37:47 -0500:
+From: Diego Calleja <diegocg@gmail.com>
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.5/dm-changes
+It was missing from the initial commit
 
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/eeee2827ae75ca58a6965e1b6d208576a5a01920
+Signed-off-by: Diego Calleja <diegocg@gmail.com>
 
-Thank you!
+---
+  Documentation/admin-guide/device-mapper/index.rst | 1 +
+  1 file changed, 1 insertion(+)
 
+diff --git a/Documentation/admin-guide/device-mapper/index.rst b/
+Documentation/admin-guide/device-mapper/index.rst
+index c77c58b8f67b..d8dec8911eb3 100644
+--- a/Documentation/admin-guide/device-mapper/index.rst
++++ b/Documentation/admin-guide/device-mapper/index.rst
+@@ -8,6 +8,7 @@ Device Mapper
+      cache-policies
+      cache
+      delay
++    dm-clone
+      dm-crypt
+      dm-flakey
+      dm-init
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.wiki.kernel.org/userdoc/prtracker
+2.24.0
