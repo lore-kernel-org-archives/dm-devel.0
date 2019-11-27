@@ -1,32 +1,71 @@
-From: Jonathan Corbet <corbet@lwn.net>
-Subject: Re: docs: device-mapper: Add dm-clone to documentation index
-Date: Tue, 26 Nov 2019 14:37:08 -0700
-Message-ID: <20191126143708.1921e442@lwn.net>
-References: <20191126185627.970-1-geert+renesas@glider.be>
-        <20191126201613.GA3750@redhat.com>
+From: Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH v2 RESEND 0/5]  Drop nr_active,
+	and some more fixes
+Date: Wed, 27 Nov 2019 15:05:46 +0000
+Message-ID: <20191127150604.31417-1-martin.wilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191126201613.GA3750@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Geert Uytterhoeven <geert+renesas@glider.be>, Nikos Tsironis <ntsironis@arrikto.com>, Ilias Tsitsimpis <iliastsi@arrikto.com>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Chongyun Wu <wu.chongyun@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-On Tue, 26 Nov 2019 15:16:13 -0500
-Mike Snitzer <snitzer@redhat.com> wrote:
+From: Martin Wilck <mwilck@suse.com>
 
-> I already staged this for 5.5 here:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.5&id=484e0d2b11e1fdd0d17702b282eb2ed56148385f
-> 
-> But I don't plan to send to Linus for a week or 2...
-> 
-> If Jon and/or someone else would like to send it along before then
-> that'd be fine with me.
+(Resending this, as it didn't make it to the ML last time).
 
-It seems like things are well in hand to me, no need to do anything else.
+This series applies on top of my late "multipath-tools: cleanup and 
+warning enablement" series.
 
-Thanks,
+Patch 3/5 is a rework of my RFC patch with the same subject
+submitted on Nov. 13th, trying to accomodate Ben's suggestions.
+Patch 1 and 2 are trivial refactorings to prepare for it.
+Patch 4 and 5 are fixes for bugs that I encountered when
+testing patch 3.
 
-jon
+As usual, reviews and comments are welcome.
+
+Changes v1 -> v2:
+
+ * Added Reviewed-by's from Ben where appropriate
+ * 03/05: don't check current state when calling set_no_path_retry()
+   from cli_handler code (Ben)
+
+Martin Wilck (5):
+  multipathd: move set_no_path_retry() back to libmultipath
+  libmultipath: dict.c: rename duplicate set_no_path_retry()
+  libmultipath: drop mpp->nr_active field
+  libmultipath: fix (max_)polling_interval setting logic
+  libmultipath: fix ALUA autodetection when paths are down
+
+ libmultipath/config.c      | 40 +++++++++++++++--
+ libmultipath/config.h      |  1 +
+ libmultipath/configure.c   |  5 +--
+ libmultipath/defaults.h    |  3 +-
+ libmultipath/devmapper.c   |  2 +-
+ libmultipath/dict.c        | 10 ++---
+ libmultipath/discovery.c   | 22 +++++++++-
+ libmultipath/io_err_stat.c |  4 +-
+ libmultipath/print.c       |  5 ++-
+ libmultipath/propsel.c     | 20 +++++++--
+ libmultipath/structs.c     | 19 ++++++++
+ libmultipath/structs.h     |  4 +-
+ libmultipath/structs_vec.c | 89 +++++++++++++++++++++++++++++++-------
+ libmultipath/structs_vec.h |  3 +-
+ multipathd/cli_handlers.c  | 41 ++++++++----------
+ multipathd/main.c          | 75 +++++---------------------------
+ 16 files changed, 217 insertions(+), 126 deletions(-)
+
+-- 
+2.24.0
