@@ -1,8 +1,8 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH v2 5/5] libmultipath: fix ALUA autodetection when
- paths are down
-Date: Wed, 27 Nov 2019 15:05:53 +0000
-Message-ID: <20191127150604.31417-6-martin.wilck@suse.com>
+Subject: [PATCH v2 1/5] multipathd: move set_no_path_retry() back
+ to libmultipath
+Date: Wed, 27 Nov 2019 15:05:48 +0000
+Message-ID: <20191127150604.31417-2-martin.wilck@suse.com>
 References: <20191127150604.31417-1-martin.wilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,98 +25,110 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-If a single path was offline when detect_alua() was called,
-multipathd would assume ALUA was generally unsupported.
+This function is useful elsewhere, too. No code changes except
+for changing the linkage.
 
-Fix that by assuming that if at least one path has ALUA support and
-no path explicitly does not have it, ALUA is supported.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 22 +++++++++++++++++++++-
- libmultipath/propsel.c   | 20 +++++++++++++++++---
- 2 files changed, 38 insertions(+), 4 deletions(-)
+ libmultipath/structs_vec.c | 30 ++++++++++++++++++++++++++++++
+ libmultipath/structs_vec.h |  1 +
+ multipathd/main.c          | 30 ------------------------------
+ 3 files changed, 31 insertions(+), 30 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 4288c9fd..5f41dcb7 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -871,6 +871,10 @@ get_serial (char * str, int maxlen, int fd)
- 	return 1;
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 6991f9ac..fbe97662 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -308,6 +308,36 @@ void enter_recovery_mode(struct multipath *mpp)
+ 		mpp->alias, mpp->no_path_retry);
  }
  
-+/*
-+ * Side effect: sets pp->tpgs if it could be determined.
-+ * If ALUA calls fail because paths are unreachable, pp->tpgs remains unchanged.
-+ */
- static void
- detect_alua(struct path * pp)
- {
-@@ -881,12 +885,28 @@ detect_alua(struct path * pp)
- 	if (sysfs_get_timeout(pp, &timeout) <= 0)
- 		timeout = DEF_TIMEOUT;
- 
--	if ((tpgs = get_target_port_group_support(pp, timeout)) <= 0) {
-+	tpgs = get_target_port_group_support(pp, timeout);
-+	if (tpgs == -RTPG_INQUIRY_FAILED)
-+		return;
-+	else if (tpgs <= 0) {
- 		pp->tpgs = TPGS_NONE;
- 		return;
- 	}
++void set_no_path_retry(struct multipath *mpp)
++{
++	char is_queueing = 0;
 +
-+	if (pp->fd == -1 || pp->offline)
-+		return;
++	mpp->nr_active = pathcount(mpp, PATH_UP) + pathcount(mpp, PATH_GHOST);
++	if (mpp->features && strstr(mpp->features, "queue_if_no_path"))
++		is_queueing = 1;
 +
- 	ret = get_target_port_group(pp, timeout);
- 	if (ret < 0 || get_asymmetric_access_state(pp, ret, timeout) < 0) {
-+		int state;
-+
-+		if (ret == -RTPG_INQUIRY_FAILED)
-+			return;
-+
-+		state = path_offline(pp);
-+		if (state == PATH_DOWN || state == PATH_PENDING)
-+			return;
-+
- 		pp->tpgs = TPGS_NONE;
- 		return;
- 	}
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 27e8d68a..a5fc6ba0 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -432,12 +432,26 @@ int select_hwhandler(struct config *conf, struct multipath *mp)
- 	static const char tpgs_origin[]= "(setting: autodetected from TPGS)";
- 	char *dh_state;
- 	int i;
--	bool all_tpgs = true;
-+	bool all_tpgs = true, one_tpgs = false;
- 
- 	dh_state = &handler[2];
- 
--	vector_foreach_slot(mp->paths, pp, i)
--		all_tpgs = all_tpgs && (path_get_tpgs(pp) > 0);
-+	/*
-+	 * TPGS_UNDEF means that ALUA support couldn't determined either way
-+	 * yet, probably because the path was always down.
-+	 * If at least one path does have TPGS support, and no path has
-+	 * TPGS_NONE, assume that TPGS would be supported by all paths if
-+	 * all were up.
-+	 */
-+	vector_foreach_slot(mp->paths, pp, i) {
-+		int tpgs = path_get_tpgs(pp);
-+
-+		all_tpgs = all_tpgs && tpgs != TPGS_NONE;
-+		one_tpgs = one_tpgs ||
-+			(tpgs != TPGS_NONE && tpgs != TPGS_UNDEF);
++	switch (mpp->no_path_retry) {
++	case NO_PATH_RETRY_UNDEF:
++		break;
++	case NO_PATH_RETRY_FAIL:
++		if (is_queueing)
++			dm_queue_if_no_path(mpp->alias, 0);
++		break;
++	case NO_PATH_RETRY_QUEUE:
++		if (!is_queueing)
++			dm_queue_if_no_path(mpp->alias, 1);
++		break;
++	default:
++		if (mpp->nr_active > 0) {
++			mpp->retry_tick = 0;
++			if (!is_queueing)
++				dm_queue_if_no_path(mpp->alias, 1);
++		} else if (is_queueing && mpp->retry_tick == 0)
++			enter_recovery_mode(mpp);
++		break;
 +	}
-+	all_tpgs = all_tpgs && one_tpgs;
++}
 +
- 	if (mp->retain_hwhandler != RETAIN_HWHANDLER_OFF) {
- 		vector_foreach_slot(mp->paths, pp, i) {
- 			if (get_dh_state(pp, dh_state, sizeof(handler) - 2) > 0
+ void
+ sync_map_state(struct multipath *mpp)
+ {
+diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
+index f8b9f63e..d3219278 100644
+--- a/libmultipath/structs_vec.h
++++ b/libmultipath/structs_vec.h
+@@ -11,6 +11,7 @@ struct vectors {
+ 	vector mpvec;
+ };
+ 
++void set_no_path_retry(struct multipath *mpp);
+ void enter_recovery_mode(struct multipath *mpp);
+ 
+ int adopt_paths (vector pathvec, struct multipath * mpp);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index bb5c1f1d..a21d96e4 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -409,36 +409,6 @@ set_multipath_wwid (struct multipath * mpp)
+ 	dm_get_uuid(mpp->alias, mpp->wwid, WWID_SIZE);
+ }
+ 
+-static void set_no_path_retry(struct multipath *mpp)
+-{
+-	char is_queueing = 0;
+-
+-	mpp->nr_active = pathcount(mpp, PATH_UP) + pathcount(mpp, PATH_GHOST);
+-	if (mpp->features && strstr(mpp->features, "queue_if_no_path"))
+-		is_queueing = 1;
+-
+-	switch (mpp->no_path_retry) {
+-	case NO_PATH_RETRY_UNDEF:
+-		break;
+-	case NO_PATH_RETRY_FAIL:
+-		if (is_queueing)
+-			dm_queue_if_no_path(mpp->alias, 0);
+-		break;
+-	case NO_PATH_RETRY_QUEUE:
+-		if (!is_queueing)
+-			dm_queue_if_no_path(mpp->alias, 1);
+-		break;
+-	default:
+-		if (mpp->nr_active > 0) {
+-			mpp->retry_tick = 0;
+-			if (!is_queueing)
+-				dm_queue_if_no_path(mpp->alias, 1);
+-		} else if (is_queueing && mpp->retry_tick == 0)
+-			enter_recovery_mode(mpp);
+-		break;
+-	}
+-}
+-
+ int __setup_multipath(struct vectors *vecs, struct multipath *mpp,
+ 		      int reset)
+ {
 -- 
 2.24.0
