@@ -1,641 +1,692 @@
-From: kbuild test robot <lkp@intel.com>
-Subject: Re: [PATCH 1/2] drivers: md: dm-log.c: Remove unused variable 'sz'
-Date: Sun, 1 Dec 2019 15:46:08 +0800
-Message-ID: <201912011539.mNLLB6ra%lkp@intel.com>
-References: <20191201054219.13146-1-Jieun.Kim4758@gmail.com>
+From: sekhar satapathy soumendu <satapathy.soumendu@gmail.com>
+Subject: [PATCH 1/1] md dm-dust: Functionality for write error emulation along
+ with the existing read error functionality
+Date: Sun, 1 Dec 2019 16:32:39 -0500
+Message-ID: <CA+v+z+WDbzgrMtq=AYn203h-9W+EK5j7w1AduuivfmmHtzgejw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="5ia5eydcs65f6lyi"
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20191201054219.13146-1-Jieun.Kim4758@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jieun Kim <jieun.kim4758@gmail.com>
-Cc: kbuild-all@lists.01.org, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org, Jieun Kim <Jieun.Kim4758@gmail.com>
+To: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
+Hi there,
 
---5ia5eydcs65f6lyi
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+I have modified the existing dm-dust functionality(all changes have
+been applied  to one file drivers/md/dust.c ) to add write error
+emulation along with the existing read error. Intention was not to
+change the existing functionality but to have a add-on write error
+emulation along with it.I thought this may be a good to have
+modification for the testers who would like to have a functionality to
+add/remove bad blocks at will for "write error" and be able to
+modulate it along with the existing "read error" emulation
+functionality that dm-dust already has.
 
-Hi Jieun,
+Thank you all for you time. The following is the patch.
 
-Thank you for the patch! Yet something to improve:
 
-[auto build test ERROR on dm/for-next]
-[also build test ERROR on v5.4 next-20191129]
-[if your patch is applied to the wrong git tree, please drop us a note to help
-improve the system. BTW, we also suggest to use '--base' option to specify the
-base tree in git format-patch, please see https://stackoverflow.com/a/37406982]
+Signed-off-by: Soumendu Sekhar Satapathy <satapathy.soumendu@gmail.com>
 
-url:    https://github.com/0day-ci/linux/commits/Jieun-Kim/drivers-md-dm-log-c-Remove-unused-variable-sz/20191201-134548
-base:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
-config: i386-defconfig (attached as .config)
-compiler: gcc-7 (Debian 7.5.0-1) 7.5.0
-reproduce:
-        # save the attached .config to linux build tree
-        make ARCH=i386 
 
-If you fix the issue, kindly add following tag
-Reported-by: kbuild test robot <lkp@intel.com>
 
-All error/warnings (new ones prefixed by >>):
+--- linux-5.4.1.old/drivers/md/dm-dust.c    2019-11-29 04:10:32.000000000 -0500
++++ linux-5.4.1.new/drivers/md/dm-dust.c    2019-12-01 15:19:32.784275979 -0500
+@@ -1,3 +1,4 @@
++
+ // SPDX-License-Identifier: GPL-2.0
+ /*
+  * Copyright (c) 2018 Red Hat, Inc.
+@@ -6,6 +7,22 @@
+  * sectors, emulating the behavior of a hard disk drive sending
+  * a "Read Medium Error" sense.
+  *
++ *
++ *
++ *
++ * Soumendu Sekhar Satapathy email satapathy.soumendu@gmail.com
++ * 30th Nov 2019
++ * I  have modified  the  ~/drivers/md/dm-dust.c  file present in the
++ * linux kernel stable ver 5.4.1 (version as of writing this comment)
++ * and have added functionality for emulating disk with "write errors"
++ * also. The added functionality does not intend to change the existing
++ * read error functionality. The added functionality which is added is
++ * in same lines as the already existing read error functionality.
++ *
++ * Soumendu Sekhar Satapathy email satapathy.soumendu@gmail.com
++ * 01 Dec 2019
++ * Did some code cleanups
++ *
+  */
 
-   In file included from include/linux/dm-dirty-log.h:16:0,
-                    from drivers/md/dm-log.c:13:
-   drivers/md/dm-log.c: In function 'core_status':
->> include/linux/device-mapper.h:551:22: error: 'sz' undeclared (first use in this function); did you mean 's8'?
-    #define DMEMIT(x...) sz += ((sz >= maxlen) ? \
-                         ^
->> drivers/md/dm-log.c:788:3: note: in expansion of macro 'DMEMIT'
-      DMEMIT("1 %s", log->type->name);
-      ^~~~~~
-   include/linux/device-mapper.h:551:22: note: each undeclared identifier is reported only once for each function it appears in
-    #define DMEMIT(x...) sz += ((sz >= maxlen) ? \
-                         ^
->> drivers/md/dm-log.c:788:3: note: in expansion of macro 'DMEMIT'
-      DMEMIT("1 %s", log->type->name);
-      ^~~~~~
---
-   In file included from include/linux/dm-dirty-log.h:16:0,
-                    from drivers//md/dm-log.c:13:
-   drivers//md/dm-log.c: In function 'core_status':
->> include/linux/device-mapper.h:551:22: error: 'sz' undeclared (first use in this function); did you mean 's8'?
-    #define DMEMIT(x...) sz += ((sz >= maxlen) ? \
-                         ^
-   drivers//md/dm-log.c:788:3: note: in expansion of macro 'DMEMIT'
-      DMEMIT("1 %s", log->type->name);
-      ^~~~~~
-   include/linux/device-mapper.h:551:22: note: each undeclared identifier is reported only once for each function it appears in
-    #define DMEMIT(x...) sz += ((sz >= maxlen) ? \
-                         ^
-   drivers//md/dm-log.c:788:3: note: in expansion of macro 'DMEMIT'
-      DMEMIT("1 %s", log->type->name);
-      ^~~~~~
+ #include <linux/device-mapper.h>
+@@ -14,20 +31,27 @@
 
-vim +/DMEMIT +788 drivers/md/dm-log.c
+ #define DM_MSG_PREFIX "dust"
 
-^1da177e4c3f41 Linus Torvalds     2005-04-16  776  
-^1da177e4c3f41 Linus Torvalds     2005-04-16  777  #define	DMEMIT_SYNC \
-^1da177e4c3f41 Linus Torvalds     2005-04-16  778  	if (lc->sync != DEFAULTSYNC) \
-^1da177e4c3f41 Linus Torvalds     2005-04-16  779  		DMEMIT("%ssync ", lc->sync == NOSYNC ? "no" : "")
-^1da177e4c3f41 Linus Torvalds     2005-04-16  780  
-416cd17b198221 Heinz Mauelshagen  2008-04-24  781  static int core_status(struct dm_dirty_log *log, status_type_t status,
-^1da177e4c3f41 Linus Torvalds     2005-04-16  782  		       char *result, unsigned int maxlen)
-^1da177e4c3f41 Linus Torvalds     2005-04-16  783  {
-^1da177e4c3f41 Linus Torvalds     2005-04-16  784  	struct log_c *lc = log->context;
-^1da177e4c3f41 Linus Torvalds     2005-04-16  785  
-^1da177e4c3f41 Linus Torvalds     2005-04-16  786  	switch(status) {
-^1da177e4c3f41 Linus Torvalds     2005-04-16  787  	case STATUSTYPE_INFO:
-315dcc226f066c Jonathan E Brassow 2007-05-09 @788  		DMEMIT("1 %s", log->type->name);
-^1da177e4c3f41 Linus Torvalds     2005-04-16  789  		break;
-^1da177e4c3f41 Linus Torvalds     2005-04-16  790  
-^1da177e4c3f41 Linus Torvalds     2005-04-16  791  	case STATUSTYPE_TABLE:
-^1da177e4c3f41 Linus Torvalds     2005-04-16  792  		DMEMIT("%s %u %u ", log->type->name,
-^1da177e4c3f41 Linus Torvalds     2005-04-16  793  		       lc->sync == DEFAULTSYNC ? 1 : 2, lc->region_size);
-^1da177e4c3f41 Linus Torvalds     2005-04-16  794  		DMEMIT_SYNC;
-^1da177e4c3f41 Linus Torvalds     2005-04-16  795  	}
-^1da177e4c3f41 Linus Torvalds     2005-04-16  796  
-2a79ee10b97355 Jieun Kim          2019-12-01  797  	return 0;
-^1da177e4c3f41 Linus Torvalds     2005-04-16  798  }
-^1da177e4c3f41 Linus Torvalds     2005-04-16  799  
++#define RD false
++#define WR true
++
+ struct badblock {
+     struct rb_node node;
+     sector_t bb;
++    unsigned char wr_fail_cnt;
+ };
 
-:::::: The code at line 788 was first introduced by commit
-:::::: 315dcc226f066c1d3cef79283dcde807fe0e32d1 dm log: report fault status
+ struct dust_device {
+     struct dm_dev *dev;
+-    struct rb_root badblocklist;
+-    unsigned long long badblock_count;
++    struct rb_root badblocklist_read;
++    struct rb_root badblocklist_write;
++    unsigned long long badblock_count_read;
++    unsigned long long badblock_count_write;
+     spinlock_t dust_lock;
+     unsigned int blksz;
+     int sect_per_block_shift;
+     unsigned int sect_per_block;
+     sector_t start;
++    bool fail_write_on_bb:1;
+     bool fail_read_on_bb:1;
+     bool quiet_mode:1;
+ };
+@@ -50,6 +74,7 @@
+     return NULL;
+ }
 
-:::::: TO: Jonathan E Brassow <jbrassow@redhat.com>
-:::::: CC: Linus Torvalds <torvalds@woody.linux-foundation.org>
++
+ static bool dust_rb_insert(struct rb_root *root, struct badblock *new)
+ {
+     struct badblock *bblk;
+@@ -74,25 +99,34 @@
+     return true;
+ }
 
----
-0-DAY kernel test infrastructure                 Open Source Technology Center
-https://lists.01.org/hyperkitty/list/kbuild-all@lists.01.org Intel Corporation
+-static int dust_remove_block(struct dust_device *dd, unsigned long long block)
++static int dust_remove_block(struct dust_device *dd, unsigned long
+long block, bool mode)
+ {
+     struct badblock *bblock;
+     unsigned long flags;
 
---5ia5eydcs65f6lyi
-Content-Type: application/gzip
-Content-Disposition: attachment; filename=".config.gz"
-Content-Transfer-Encoding: base64
+     spin_lock_irqsave(&dd->dust_lock, flags);
+-    bblock = dust_rb_search(&dd->badblocklist, block);
++    if(mode == RD)
++        bblock = dust_rb_search(&dd->badblocklist_read, block);
++    else
++        bblock = dust_rb_search(&dd->badblocklist_write, block);
 
-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
-YVxXO6VC/D/K5Pc+c9gBAA==
+     if (bblock == NULL) {
+         if (!dd->quiet_mode) {
+-            DMERR("%s: block %llu not found in badblocklist",
++            DMERR("%s: block %llu not found in badblocklist_read",
+                   __func__, block);
+         }
+         spin_unlock_irqrestore(&dd->dust_lock, flags);
+         return -EINVAL;
+     }
 
---5ia5eydcs65f6lyi--
+-    rb_erase(&bblock->node, &dd->badblocklist);
+-    dd->badblock_count--;
++    if(mode == RD)
++        rb_erase(&bblock->node, &dd->badblocklist_read);
++    else
++        rb_erase(&bblock->node, &dd->badblocklist_write);
++    if(mode == RD)
++        dd->badblock_count_read--;
++    else
++        dd->badblock_count_write--;
+     if (!dd->quiet_mode)
+         DMINFO("%s: badblock removed at block %llu", __func__, block);
+     kfree(bblock);
+@@ -101,7 +135,8 @@
+     return 0;
+ }
+
+-static int dust_add_block(struct dust_device *dd, unsigned long long block)
++static int dust_add_block(struct dust_device *dd, unsigned long long block,
++              unsigned char wr_fail_cnt, bool mode)
+ {
+     struct badblock *bblock;
+     unsigned long flags;
+@@ -115,31 +150,55 @@
+
+     spin_lock_irqsave(&dd->dust_lock, flags);
+     bblock->bb = block;
+-    if (!dust_rb_insert(&dd->badblocklist, bblock)) {
+-        if (!dd->quiet_mode) {
+-            DMERR("%s: block %llu already in badblocklist",
+-                  __func__, block);
++    bblock->wr_fail_cnt = wr_fail_cnt;
++    if(mode == RD) {
++        if (!dust_rb_insert(&dd->badblocklist_read, bblock)) {
++            if (!dd->quiet_mode) {
++                DMERR("%s: block %llu already in badblocklist",
++                          __func__, block);
++            }
++            spin_unlock_irqrestore(&dd->dust_lock, flags);
++            kfree(bblock);
++            return -EINVAL;
++        }
++    }
++    else {
++        if (!dust_rb_insert(&dd->badblocklist_write, bblock)) {
++            if (!dd->quiet_mode) {
++                DMERR("%s: block %llu already in badblocklist",
++                          __func__, block);
++            }
++            spin_unlock_irqrestore(&dd->dust_lock, flags);
++            kfree(bblock);
++            return -EINVAL;
+         }
+-        spin_unlock_irqrestore(&dd->dust_lock, flags);
+-        kfree(bblock);
+-        return -EINVAL;
+     }
+
+-    dd->badblock_count++;
+-    if (!dd->quiet_mode)
+-        DMINFO("%s: badblock added at block %llu", __func__, block);
++    if(mode == RD)
++        dd->badblock_count_read++;
++    else
++        dd->badblock_count_write++;
++
++    if (!dd->quiet_mode) {
++        DMINFO("%s: badblock added at block %llu with write fail count %hhu",
++               __func__, block, wr_fail_cnt);
++    }
+     spin_unlock_irqrestore(&dd->dust_lock, flags);
+
+     return 0;
+ }
+
+-static int dust_query_block(struct dust_device *dd, unsigned long long block)
++
++static int dust_query_block(struct dust_device *dd, unsigned long
+long block, bool mode)
+ {
+     struct badblock *bblock;
+     unsigned long flags;
+
+     spin_lock_irqsave(&dd->dust_lock, flags);
+-    bblock = dust_rb_search(&dd->badblocklist, block);
++    if(mode == RD)
++        bblock = dust_rb_search(&dd->badblocklist_read, block);
++    else
++        bblock = dust_rb_search(&dd->badblocklist_write, block);
+     if (bblock != NULL)
+         DMINFO("%s: block %llu found in badblocklist", __func__, block);
+     else
+@@ -151,7 +210,7 @@
+
+ static int __dust_map_read(struct dust_device *dd, sector_t thisblock)
+ {
+-    struct badblock *bblk = dust_rb_search(&dd->badblocklist, thisblock);
++    struct badblock *bblk = dust_rb_search(&dd->badblocklist_read, thisblock);
+
+     if (bblk)
+         return DM_MAPIO_KILL;
+@@ -163,63 +222,85 @@
+              bool fail_read_on_bb)
+ {
+     unsigned long flags;
+-    int ret = DM_MAPIO_REMAPPED;
++    int r = DM_MAPIO_REMAPPED;
+
+     if (fail_read_on_bb) {
+         thisblock >>= dd->sect_per_block_shift;
+         spin_lock_irqsave(&dd->dust_lock, flags);
+-        ret = __dust_map_read(dd, thisblock);
++        r = __dust_map_read(dd, thisblock);
+         spin_unlock_irqrestore(&dd->dust_lock, flags);
+     }
+
+-    return ret;
++    return r;
+ }
+
+-static void __dust_map_write(struct dust_device *dd, sector_t thisblock)
++static int __dust_map_write(struct dust_device *dd, sector_t thisblock)
+ {
+-    struct badblock *bblk = dust_rb_search(&dd->badblocklist, thisblock);
++    struct badblock *bblk_r = dust_rb_search(&dd->badblocklist_read,
+thisblock);
++    struct badblock *bblk_w = dust_rb_search(&dd->badblocklist_write,
+thisblock);
+
+-    if (bblk) {
+-        rb_erase(&bblk->node, &dd->badblocklist);
+-        dd->badblock_count--;
+-        kfree(bblk);
+-        if (!dd->quiet_mode) {
+-            sector_div(thisblock, dd->sect_per_block);
+-            DMINFO("block %llu removed from badblocklist by write",
+-                   (unsigned long long)thisblock);
++    if(dd->fail_write_on_bb) {
++        if (bblk_w)
++            return DM_MAPIO_KILL;
++    }
++
++    if(dd->fail_read_on_bb) {
++        if (bblk_r && bblk_r->wr_fail_cnt > 0) {
++            bblk_r->wr_fail_cnt--;
++            return DM_MAPIO_KILL;
++        }
++
++        if (bblk_r) {
++            rb_erase(&bblk_r->node, &dd->badblocklist_read);
++            dd->badblock_count_read--;
++            kfree(bblk_r);
++            if (!dd->quiet_mode) {
++                sector_div(thisblock, dd->sect_per_block);
++                DMINFO("block %llu removed from badblocklist_read by write",
++                           (unsigned long long)thisblock);
++            }
+         }
+     }
++
++    return DM_MAPIO_REMAPPED;
+ }
+
+ static int dust_map_write(struct dust_device *dd, sector_t thisblock,
+-              bool fail_read_on_bb)
++              bool fail_read_on_bb, bool fail_write_on_bb)
+ {
+     unsigned long flags;
++    int ret = DM_MAPIO_REMAPPED;
+
+-    if (fail_read_on_bb) {
++    if (fail_write_on_bb) {
+         thisblock >>= dd->sect_per_block_shift;
+         spin_lock_irqsave(&dd->dust_lock, flags);
+-        __dust_map_write(dd, thisblock);
++        ret = __dust_map_write(dd, thisblock);
++        spin_unlock_irqrestore(&dd->dust_lock, flags);
++    }
++    else if (fail_read_on_bb) {
++        thisblock >>= dd->sect_per_block_shift;
++        spin_lock_irqsave(&dd->dust_lock, flags);
++        ret = __dust_map_write(dd, thisblock);
+         spin_unlock_irqrestore(&dd->dust_lock, flags);
+     }
+
+-    return DM_MAPIO_REMAPPED;
++    return ret;
+ }
+
+ static int dust_map(struct dm_target *ti, struct bio *bio)
+ {
+     struct dust_device *dd = ti->private;
+-    int ret;
++    int r;
+
+     bio_set_dev(bio, dd->dev->bdev);
+     bio->bi_iter.bi_sector = dd->start + dm_target_offset(ti,
+bio->bi_iter.bi_sector);
+
+     if (bio_data_dir(bio) == READ)
+-        ret = dust_map_read(dd, bio->bi_iter.bi_sector, dd->fail_read_on_bb);
++        r = dust_map_read(dd, bio->bi_iter.bi_sector, dd->fail_read_on_bb);
+     else
+-        ret = dust_map_write(dd, bio->bi_iter.bi_sector, dd->fail_read_on_bb);
++        r = dust_map_write(dd, bio->bi_iter.bi_sector,
+dd->fail_read_on_bb, dd->fail_write_on_bb);
+
+-    return ret;
++    return r;
+ }
+
+ static bool __dust_clear_badblocks(struct rb_root *tree,
+@@ -246,23 +327,41 @@
+     return true;
+ }
+
+-static int dust_clear_badblocks(struct dust_device *dd)
++static int dust_clear_badblocks(struct dust_device *dd, bool mode)
+ {
+     unsigned long flags;
+-    struct rb_root badblocklist;
+-    unsigned long long badblock_count;
++    struct rb_root badblocklist_read;
++    struct rb_root badblocklist_write;
++    unsigned long long badblock_count_read;
++    unsigned long long badblock_count_write;
+
+     spin_lock_irqsave(&dd->dust_lock, flags);
+-    badblocklist = dd->badblocklist;
+-    badblock_count = dd->badblock_count;
+-    dd->badblocklist = RB_ROOT;
+-    dd->badblock_count = 0;
++    if(mode == RD) {
++        badblocklist_read = dd->badblocklist_read;
++        badblock_count_read = dd->badblock_count_read;
++        dd->badblocklist_read = RB_ROOT;
++        dd->badblock_count_read = 0;
++    }
++    else {
++        badblocklist_write = dd->badblocklist_write;
++        badblock_count_write = dd->badblock_count_write;
++        dd->badblocklist_write = RB_ROOT;
++        dd->badblock_count_write = 0;
++    }
+     spin_unlock_irqrestore(&dd->dust_lock, flags);
+
+-    if (!__dust_clear_badblocks(&badblocklist, badblock_count))
+-        DMINFO("%s: no badblocks found", __func__);
+-    else
+-        DMINFO("%s: badblocks cleared", __func__);
++    if(mode == RD) {
++        if (!__dust_clear_badblocks(&badblocklist_read, badblock_count_read))
++            DMINFO("%s: no read badblocks found", __func__);
++        else
++            DMINFO("%s: read badblocks cleared", __func__);
++    }
++    else {
++        if (!__dust_clear_badblocks(&badblocklist_write, badblock_count_write))
++            DMINFO("%s: no write badblocks found", __func__);
++        else
++            DMINFO("%s: write badblocks cleared", __func__);
++    }
+
+     return 0;
+ }
+@@ -343,10 +442,18 @@
+     dd->fail_read_on_bb = false;
+
+     /*
++     * Fail a write on a "bad" block.
++     * Defaults to false; enabled later by message.
++     */
++    dd->fail_write_on_bb = false;
++
++    /*
+      * Initialize bad block list rbtree.
+      */
+-    dd->badblocklist = RB_ROOT;
+-    dd->badblock_count = 0;
++    dd->badblocklist_read = RB_ROOT;
++    dd->badblock_count_read = 0;
++    dd->badblocklist_write = RB_ROOT;
++    dd->badblock_count_write = 0;
+     spin_lock_init(&dd->dust_lock);
+
+     dd->quiet_mode = false;
+@@ -364,7 +471,8 @@
+ {
+     struct dust_device *dd = ti->private;
+
+-    __dust_clear_badblocks(&dd->badblocklist, dd->badblock_count);
++    __dust_clear_badblocks(&dd->badblocklist_read, dd->badblock_count_read);
++    __dust_clear_badblocks(&dd->badblocklist_write, dd->badblock_count_write);
+     dm_put_device(ti, dd->dev);
+     kfree(dd);
+ }
+@@ -375,8 +483,10 @@
+     struct dust_device *dd = ti->private;
+     sector_t size = i_size_read(dd->dev->bdev->bd_inode) >> SECTOR_SHIFT;
+     bool invalid_msg = false;
+-    int result = -EINVAL;
++    int r = -EINVAL;
+     unsigned long long tmp, block;
++    unsigned char wr_fail_cnt;
++    unsigned int tmp_ui;
+     unsigned long flags;
+     char dummy;
+
+@@ -384,59 +494,204 @@
+         if (!strcasecmp(argv[0], "addbadblock") ||
+             !strcasecmp(argv[0], "removebadblock") ||
+             !strcasecmp(argv[0], "queryblock")) {
+-            DMERR("%s requires an additional argument", argv[0]);
++            DMERR("%s requires 2 additional argument", argv[0]);
+         } else if (!strcasecmp(argv[0], "disable")) {
+-            DMINFO("disabling read failures on bad sectors");
+-            dd->fail_read_on_bb = false;
+-            result = 0;
++            DMERR("%s requires 1 additional argument", argv[0]);
+         } else if (!strcasecmp(argv[0], "enable")) {
+-            DMINFO("enabling read failures on bad sectors");
+-            dd->fail_read_on_bb = true;
+-            result = 0;
++            DMERR("%s requires 1 additional argument", argv[0]);
+         } else if (!strcasecmp(argv[0], "countbadblocks")) {
+-            spin_lock_irqsave(&dd->dust_lock, flags);
+-            DMINFO("countbadblocks: %llu badblock(s) found",
+-                   dd->badblock_count);
+-            spin_unlock_irqrestore(&dd->dust_lock, flags);
+-            result = 0;
++            DMERR("%s requires 1 additional argument", argv[0]);
+         } else if (!strcasecmp(argv[0], "clearbadblocks")) {
+-            result = dust_clear_badblocks(dd);
++            DMERR("%s requires 1 additional argument", argv[0]);
+         } else if (!strcasecmp(argv[0], "quiet")) {
+             if (!dd->quiet_mode)
+                 dd->quiet_mode = true;
+             else
+                 dd->quiet_mode = false;
+-            result = 0;
++            r = 0;
+         } else {
+             invalid_msg = true;
+         }
+     } else if (argc == 2) {
+-        if (sscanf(argv[1], "%llu%c", &tmp, &dummy) != 1)
+-            return result;
++        if (!strcasecmp(argv[0], "addbadblock")) {
++            if (!strcasecmp(argv[1], "read"))
++                DMERR("%s requires 1 additional argument", argv[0]);
++            else if (!strcasecmp(argv[1], "write"))
++                DMERR("%s requires 1 additional argument", argv[0]);
++            else
++                invalid_msg = true;
++        }
++        else if (!strcasecmp(argv[0], "enable")) {
++            if (!strcasecmp(argv[1], "read")) {
++                DMINFO("enabling read failures on bad sectors");
++                dd->fail_read_on_bb = true;
++                r = 0;
++                invalid_msg = false;
++            }
++            else if (!strcasecmp(argv[1], "write")) {
++                DMINFO("enabling write failures on bad sectors");
++                dd->fail_write_on_bb = true;
++                r = 0;
++                invalid_msg = false;
++            }
++            else
++                invalid_msg = true;
++        }
++        else if (!strcasecmp(argv[0], "disable")) {
++            if (!strcasecmp(argv[1], "read")) {
++                DMINFO("disabling read failures on bad sectors");
++                dd->fail_read_on_bb = false;
++                r = 0;
++                invalid_msg = false;
++            }
++            else if (!strcasecmp(argv[1], "write")) {
++                DMINFO("disabling write failures on bad sectors");
++                dd->fail_write_on_bb = false;
++                r = 0;
++                invalid_msg = false;
++            }
++            else
++                invalid_msg = true;
++        }
++        else if (!strcasecmp(argv[0], "removebadblock")) {
++            if (!strcasecmp(argv[1], "read"))
++                DMERR("%s requires 1 additional argument", argv[0]);
++            else if (!strcasecmp(argv[1], "write"))
++                DMERR("%s requires 1 additional argument", argv[0]);
++            else
++                invalid_msg = true;
++        }
++        else if (!strcasecmp(argv[0], "queryblock")) {
++            if (!strcasecmp(argv[1], "read"))
++                DMERR("%s requires 1 additional argument", argv[0]);
++            else if (!strcasecmp(argv[1], "write"))
++                DMERR("%s requires 1 additional argument", argv[0]);
++            else
++                invalid_msg = true;
++        }
++        else if (!strcasecmp(argv[0], "clearbadblocks")) {
++            if (!strcasecmp(argv[1], "read")) {
++                r = dust_clear_badblocks(dd,false);
++                invalid_msg = false;
++            }
++            else if (!strcasecmp(argv[1], "write")) {
++                r = dust_clear_badblocks(dd,true);
++                invalid_msg = false;
++            }
++            else
++                invalid_msg = true;
++        }
++        else if (!strcasecmp(argv[0], "countbadblocks")) {
++            if (!strcasecmp(argv[1], "read")) {
++                spin_lock_irqsave(&dd->dust_lock, flags);
++                DMINFO("countbadblocks: %llu read badblock(s) found",
++                           dd->badblock_count_read);
++                spin_unlock_irqrestore(&dd->dust_lock, flags);
++                r = 0;
++                invalid_msg = false;
++            }
++            else if (!strcasecmp(argv[1], "write")) {
++                spin_lock_irqsave(&dd->dust_lock, flags);
++                DMINFO("countbadblocks: %llu write badblock(s) found",
++                           dd->badblock_count_write);
++                spin_unlock_irqrestore(&dd->dust_lock, flags);
++                r = 0;
++                invalid_msg = false;
++            }
++            else
++                invalid_msg = true;
++        }
++        else
++            invalid_msg = true;
++    } else if (argc == 3) {
++        if (sscanf(argv[2], "%llu%c", &tmp, &dummy) != 1)
++            return r;
+
+         block = tmp;
+         sector_div(size, dd->sect_per_block);
+         if (block > size) {
+             DMERR("selected block value out of range");
+-            return result;
++            return r;
+         }
+
+-        if (!strcasecmp(argv[0], "addbadblock"))
+-            result = dust_add_block(dd, block);
+-        else if (!strcasecmp(argv[0], "removebadblock"))
+-            result = dust_remove_block(dd, block);
+-        else if (!strcasecmp(argv[0], "queryblock"))
+-            result = dust_query_block(dd, block);
++        if (!strcasecmp(argv[0], "addbadblock")) {
++            if (!strcasecmp(argv[1], "read")) {
++                r = dust_add_block(dd, block, 0, false);
++                invalid_msg = false;
++            }
++            else if (!strcasecmp(argv[1], "write")) {
++                r = dust_add_block(dd, block, 0, true);
++                invalid_msg = false;
++            }
++            else
++                invalid_msg = true;
++        }
++        else if (!strcasecmp(argv[0], "removebadblock")) {
++            if (!strcasecmp(argv[1], "read")) {
++                r = dust_remove_block(dd, block, false);
++                invalid_msg = false;
++            }
++            else if (!strcasecmp(argv[1], "write")) {
++                r = dust_remove_block(dd, block, true);
++                invalid_msg = false;
++            }
++            else
++                invalid_msg = true;
++        }
++        else if (!strcasecmp(argv[0], "queryblock")) {
++            if (!strcasecmp(argv[1], "read")) {
++                r = dust_query_block(dd, block, false);
++                invalid_msg = false;
++            }
++            else if (!strcasecmp(argv[1], "write")) {
++                r = dust_query_block(dd, block, true);
++                invalid_msg = false;
++            }
++            else
++                invalid_msg = true;
++        }
+         else
+             invalid_msg = true;
+-
++    } else if (argc == 4) {
++            if (sscanf(argv[2], "%llu%c", &tmp, &dummy) != 1)
++                        return r;
++
++                if (sscanf(argv[3], "%u%c", &tmp_ui, &dummy) != 1)
++                        return r;
++
++                block = tmp;
++                if (tmp_ui > 255) {
++                        DMERR("selected write fail count out of range");
++                        return r;
++                }
++                wr_fail_cnt = tmp_ui;
++                sector_div(size, dd->sect_per_block);
++                if (block > size) {
++                        DMERR("selected block value out of range");
++                        return r;
++                }
++
++                if (!strcasecmp(argv[0], "addbadblock")) {
++            if (!strcasecmp(argv[1], "read")) {
++                r = dust_add_block(dd, block, wr_fail_cnt, false);
++                invalid_msg = false;
++            }
++            else if (!strcasecmp(argv[1], "write")) {
++                r = dust_add_block(dd, block, wr_fail_cnt, true);
++                invalid_msg = false;
++            }
++            else
++                invalid_msg = true;
++        }
++                else
++                        invalid_msg = true;
+     } else
+         DMERR("invalid number of arguments '%d'", argc);
+
+     if (invalid_msg)
+         DMERR("unrecognized message '%s' received", argv[0]);
+
+-    return result;
++    return r;
+ }
+
+ static void dust_status(struct dm_target *ti, status_type_t type,
+@@ -450,6 +705,9 @@
+         DMEMIT("%s %s %s", dd->dev->name,
+                dd->fail_read_on_bb ? "fail_read_on_bad_block" : "bypass",
+                dd->quiet_mode ? "quiet" : "verbose");
++        DMEMIT("\n%s %s %s", dd->dev->name,
++               dd->fail_write_on_bb ? "fail_write_on_bad_block" : "bypass",
++               dd->quiet_mode ? "quiet" : "verbose");
+         break;
+
+     case STATUSTYPE_TABLE:
+@@ -499,12 +757,12 @@
+
+ static int __init dm_dust_init(void)
+ {
+-    int result = dm_register_target(&dust_target);
++    int r = dm_register_target(&dust_target);
+
+-    if (result < 0)
+-        DMERR("dm_register_target failed %d", result);
++    if (r < 0)
++        DMERR("dm_register_target failed %d", r);
+
+-    return result;
++    return r;
+ }
+
+ static void __exit dm_dust_exit(void)
