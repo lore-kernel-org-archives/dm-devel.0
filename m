@@ -1,12 +1,14 @@
-From: Jieun Kim <jieun.kim4758@gmail.com>
-Subject: [PATCH 2/2] drivers: md: dm-log.c: Remove unused
-	variable 'sz'
-Date: Sun,  1 Dec 2019 14:42:57 +0900
-Message-ID: <20191201054257.13199-1-Jieun.Kim4758@gmail.com>
+From: JeffleXu <jefflexu@linux.alibaba.com>
+Subject: Re: dm-thin: Several Questions on dm-thin performance.
+Date: Mon, 2 Dec 2019 15:50:03 +0800
+Message-ID: <6b12137e-411e-0368-518e-41ae54e138e0@linux.alibaba.com>
+References: <35cf1ecf-5cd8-604b-ec4e-18c9fd4a4195@linux.alibaba.com>
+	<20191122185530.pcrgmb655dkdbdcq@reti>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20191122185530.pcrgmb655dkdbdcq@reti>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,38 +18,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jieun Kim <Jieun.Kim4758@gmail.com>, dm-devel@redhat.com, kernel-janitors@vger.kernel.org, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Remove unused variable 'sz' in disk_status function
-detected by coccinelle scripts(returnvar.cocci)
-
-Signed-off-by: Jieun Kim <Jieun.Kim4758@gmail.com>
----
- drivers/md/dm-log.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
-index 8800ec1847b5..67e74362c6ac 100644
---- a/drivers/md/dm-log.c
-+++ b/drivers/md/dm-log.c
-@@ -800,7 +800,6 @@ static int core_status(struct dm_dirty_log *log, status_type_t status,
- static int disk_status(struct dm_dirty_log *log, status_type_t status,
- 		       char *result, unsigned int maxlen)
- {
--	int sz = 0;
- 	struct log_c *lc = log->context;
- 
- 	switch(status) {
-@@ -818,7 +817,7 @@ static int disk_status(struct dm_dirty_log *log, status_type_t status,
- 		DMEMIT_SYNC;
- 	}
- 
--	return sz;
-+	return 0;
- }
- 
- static struct dm_dirty_log_type _core_type = {
--- 
-2.17.1
+VGhhbmtzIGZvciByZXBseWluZyBhbmQgZXhwbGFuYXRpb24uCgpBbnl3YXksIGl0IHNlZW1zIGEg
+c2lnbmlmaWNhbnQgd29ya2xvYWQgdG8gdHJhbnNmb3JtIHRvIGJpby1wcmlzb24tY2VsbC12Mi4K
+CgpSZWdhcmRzCgpKZWZmbGUKCgrlnKggMjAxOS8xMS8yMyDkuIrljYgyOjU1LCBKb2UgVGhvcm5i
+ZXIg5YaZ6YGTOgoKPiBPbiBGcmksIE5vdiAyMiwgMjAxOSBhdCAxMToxNDoxNUFNICswODAwLCBK
+ZWZmbGVYdSB3cm90ZToKPgo+PiBUaGUgZmlyc3QgcXVlc3Rpb24gaXMgd2hhdCdzIHRoZSBwdXJw
+b3NlIG9mIGRhdGEgY2VsbD8gSW4gdGhpbl9iaW9fbWFwKCksCj4+IG5vcm1hbCBiaW8gd2lsbCBi
+ZSBwYWNrZWQgYXMgYSB2aXJ0dWFsIGNlbGwgYW5kIGRhdGEgY2VsbC4gSSBjYW4gdW5kZXJzdGFu
+ZAo+PiB0aGF0IHZpcnR1YWwgY2VsbCBpcyB1c2VkIHRvIHByZXZlbnQgZGlzY2FyZCBiaW8gYW5k
+IG5vbi1kaXNjYXJkIGJpbwo+PiB0YXJnZXRpbmcgdGhlIHNhbWUgYmxvY2sgZnJvbSBiZWluZyBw
+cm9jZXNzZWQgYXQgdGhlIHNhbWUgdGltZS4gSSBmaW5kIGl0Cj4+IHdhcyBhZGRlZCBpbiBjb21t
+aXQgwqDCoMKgIGU4MDg4MDczYzk2MTBhZjAxN2ZkNDdmZGRkMTA0YTJjM2FmYjMyZTggKGRtIHRo
+aW46Cj4+IGZpeCByYWNlIGJldHdlZW4gc2ltdWx0YW5lb3VzIGlvIGFuZCBkaXNjYXJkcyB0byBz
+YW1lIGJsb2NrKSwgYnV0IEknbSBzdGlsbAo+PiBjb25mdXNlZCBhYm91dCB0aGUgdXNlIG9mIGRh
+dGEgY2VsbC4KPiBBcyB5b3UgYXJlIGF3YXJlIHRoZXJlIGFyZSB0d28gYWRkcmVzcyBzcGFjZXMg
+Zm9yIHRoZSBsb2Nrcy4gIFRoZSAndmlydHVhbCcgb25lCj4gcmVmZXJzIHRvIGNlbGxzIGluIHRo
+ZSBsb2dpY2FsIGFkZHJlc3Mgc3BhY2Ugb2YgdGhlIHRoaW4gZGV2aWNlcywgYW5kIHRoZSAnZGF0
+YScgb25lCj4gcmVmZXJzIHRvIHRoZSB1bmRlcmx5aW5nIGRhdGEgZGV2aWNlLiAgVGhlcmUgYXJl
+IGNlcnRhaW4gY29uZGl0aW9ucyB3aGVyZSB3ZQo+IHVuZm9ydHVuYXRlbHkgbmVlZCB0byBob2xk
+IGJvdGggb2YgdGhlc2UgKGVnLCB0byBwcmV2ZW50IGEgZGF0YSBibG9jayBiZWluZyByZXByb3Zp
+c2lvbmVkCj4gYmVmb3JlIGFuIGlvIHRvIGl0IGhhcyBjb21wbGV0ZWQpLgo+Cj4+IFRoZSBzZWNv
+bmQgcXVlc3Rpb24gaXMgdGhlIGltcGFjdCBvZiB2aXJ0dWFsIGNlbGwgYW5kIGRhdGEgY2VsbCBv
+biBJTwo+PiBwZXJmb3JtYW5jZS4gSWYgJGRhdGFfYmxvY2tfc2l6ZSBpcyBsYXJnZSBmb3IgZXhh
+bXBsZSAxRywgaW4gbXVsdGl0aHJlYWQgZmlvCj4+IHRlc3QsIG1vc3QgYmlvIHdpbGwgYmUgYnVm
+ZmVyZWQgaW4gY2VsbC0+YmlvcyBsaXN0IGFuZCB0aGVuIGJlIHByb2Nlc3NlZCBieQo+PiB3b3Jr
+ZXIgdGhyZWFkIGFzeW5jaHJvbm91c2x5LCBldmVuIHdoZW4gdGhlcmUncyBubyBkaXNjYXJkIGJp
+by4gVGh1cyB0aGUKPj4gb3JpZ2luYWwgcGFyYWxsZWwgSU8gaXMgcHJvY2Vzc2VkIGJ5IHdvcmtl
+ciB0aHJlYWQgc2VyaWFsbHkgbm93LiBBcyB0aGUKPj4gbnVtYmVyIG9mIGZpbyB0ZXN0IHRocmVh
+ZHMgaW5jcmVhc2UsIHRoZSBzaW5nbGUgd29ya2VyIHRocmVhZCBjYW4gZWFzaWx5IGdldAo+PiBD
+UFUgMTAwJSwgYW5kIHRodXMgYmVjb21lIHRoZSBib3R0bGVuZWNrIG9mIHRoZSBwZXJmb3JtYW5j
+ZSBzaW5jZSBkbS10aGluCj4+IHdvcmtxdWV1ZSBpcyBvcmRlcmVkIHVuYm91bmQuCj4gWWVwLCB0
+aGlzIGlzIGEgYmlnIGlzc3VlLiAgVGFrZSBhIGxvb2sgYXQgZG0tYmlvLXByaXNvbi12Mi5oLCB0
+aGlzIGlzIHRoZQo+IG5ldyBpbnRlcmZhY2UgdGhhdCB3ZSBuZWVkIHRvIG1vdmUgZG0tdGhpbiBh
+Y3Jvc3MgdG8gdXNlIChkbS1jYWNoZSBhbHJlYWR5IHVzZXMgaXQpLgo+IEl0IGFsbG93cyBjb25j
+dXJyZW50IGhvbGRlcnMgb2YgYSBjZWxsIChpZSwgcmVhZCBsb2NrcyksIHNvIHdlJ2xsIGJlIGFi
+bGUgdG8gcmVtYXAKPiBtdWNoIG1vcmUgaW8gd2l0aG91dCBoYW5kaW5nIGl0IG9mZiB0byBhIHdv
+cmtlciB0aHJlYWQuICBPbmNlIHRoaXMgaXMgZG9uZSBJIHdhbnQKPiB0byBhZGQgYW4gZXh0cmEg
+ZmllbGQgdG8gY2VsbHMgdGhhdCB3aWxsIGNhY2hlIHRoZSBtYXBwaW5nLCB0aGlzIHdheSBpZiB5
+b3UgYWNxdWlyZSBhCj4gY2VsbCB0aGF0IGlzIGFscmVhZHkgaGVsZCB0aGVuIHlvdSBjYW4gYXZv
+aWQgdGhlIGV4cGVuc2l2ZSBidHJlZSBsb29rdXAuICBUb2dldGhlcgo+IHRoZXNlIGNoYW5nZXMg
+c2hvdWxkIG1ha2UgYSBodWdlIGRpZmZlcmVuY2UgdG8gdGhlIHBlcmZvcm1hbmNlLgo+Cj4gSWYg
+eW91J3ZlIGdvdCBzb21lIHNwYXJlIGNvZGluZyBjeWNsZXMgSSdkIGxvdmUgc29tZSBoZWxwIHdp
+dGggdGhpcyA7KQo+Cj4gLSBKb2UKPgo+IC0tCj4gZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj4gZG0t
+ZGV2ZWxAcmVkaGF0LmNvbQo+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
+by9kbS1kZXZlbAoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29t
+Cmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
