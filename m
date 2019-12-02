@@ -1,68 +1,140 @@
-From: JeffleXu <jefflexu@linux.alibaba.com>
-Subject: Re: dm-thin: Several Questions on dm-thin performance.
-Date: Mon, 2 Dec 2019 15:50:03 +0800
-Message-ID: <6b12137e-411e-0368-518e-41ae54e138e0@linux.alibaba.com>
-References: <35cf1ecf-5cd8-604b-ec4e-18c9fd4a4195@linux.alibaba.com>
-	<20191122185530.pcrgmb655dkdbdcq@reti>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 1/2] drivers: md: dm-log.c: Remove unused variable 'sz'
+Date: Mon, 2 Dec 2019 12:39:10 -0500
+Message-ID: <20191202173909.GA15687@redhat.com>
+References: <20191201054219.13146-1-Jieun.Kim4758@gmail.com>
+ <201912011539.mNLLB6ra%lkp@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191122185530.pcrgmb655dkdbdcq@reti>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <201912011539.mNLLB6ra%lkp@intel.com>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jieun Kim <jieun.kim4758@gmail.com>
+Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org
 List-Id: dm-devel.ids
 
-VGhhbmtzIGZvciByZXBseWluZyBhbmQgZXhwbGFuYXRpb24uCgpBbnl3YXksIGl0IHNlZW1zIGEg
-c2lnbmlmaWNhbnQgd29ya2xvYWQgdG8gdHJhbnNmb3JtIHRvIGJpby1wcmlzb24tY2VsbC12Mi4K
-CgpSZWdhcmRzCgpKZWZmbGUKCgrlnKggMjAxOS8xMS8yMyDkuIrljYgyOjU1LCBKb2UgVGhvcm5i
-ZXIg5YaZ6YGTOgoKPiBPbiBGcmksIE5vdiAyMiwgMjAxOSBhdCAxMToxNDoxNUFNICswODAwLCBK
-ZWZmbGVYdSB3cm90ZToKPgo+PiBUaGUgZmlyc3QgcXVlc3Rpb24gaXMgd2hhdCdzIHRoZSBwdXJw
-b3NlIG9mIGRhdGEgY2VsbD8gSW4gdGhpbl9iaW9fbWFwKCksCj4+IG5vcm1hbCBiaW8gd2lsbCBi
-ZSBwYWNrZWQgYXMgYSB2aXJ0dWFsIGNlbGwgYW5kIGRhdGEgY2VsbC4gSSBjYW4gdW5kZXJzdGFu
-ZAo+PiB0aGF0IHZpcnR1YWwgY2VsbCBpcyB1c2VkIHRvIHByZXZlbnQgZGlzY2FyZCBiaW8gYW5k
-IG5vbi1kaXNjYXJkIGJpbwo+PiB0YXJnZXRpbmcgdGhlIHNhbWUgYmxvY2sgZnJvbSBiZWluZyBw
-cm9jZXNzZWQgYXQgdGhlIHNhbWUgdGltZS4gSSBmaW5kIGl0Cj4+IHdhcyBhZGRlZCBpbiBjb21t
-aXQgwqDCoMKgIGU4MDg4MDczYzk2MTBhZjAxN2ZkNDdmZGRkMTA0YTJjM2FmYjMyZTggKGRtIHRo
-aW46Cj4+IGZpeCByYWNlIGJldHdlZW4gc2ltdWx0YW5lb3VzIGlvIGFuZCBkaXNjYXJkcyB0byBz
-YW1lIGJsb2NrKSwgYnV0IEknbSBzdGlsbAo+PiBjb25mdXNlZCBhYm91dCB0aGUgdXNlIG9mIGRh
-dGEgY2VsbC4KPiBBcyB5b3UgYXJlIGF3YXJlIHRoZXJlIGFyZSB0d28gYWRkcmVzcyBzcGFjZXMg
-Zm9yIHRoZSBsb2Nrcy4gIFRoZSAndmlydHVhbCcgb25lCj4gcmVmZXJzIHRvIGNlbGxzIGluIHRo
-ZSBsb2dpY2FsIGFkZHJlc3Mgc3BhY2Ugb2YgdGhlIHRoaW4gZGV2aWNlcywgYW5kIHRoZSAnZGF0
-YScgb25lCj4gcmVmZXJzIHRvIHRoZSB1bmRlcmx5aW5nIGRhdGEgZGV2aWNlLiAgVGhlcmUgYXJl
-IGNlcnRhaW4gY29uZGl0aW9ucyB3aGVyZSB3ZQo+IHVuZm9ydHVuYXRlbHkgbmVlZCB0byBob2xk
-IGJvdGggb2YgdGhlc2UgKGVnLCB0byBwcmV2ZW50IGEgZGF0YSBibG9jayBiZWluZyByZXByb3Zp
-c2lvbmVkCj4gYmVmb3JlIGFuIGlvIHRvIGl0IGhhcyBjb21wbGV0ZWQpLgo+Cj4+IFRoZSBzZWNv
-bmQgcXVlc3Rpb24gaXMgdGhlIGltcGFjdCBvZiB2aXJ0dWFsIGNlbGwgYW5kIGRhdGEgY2VsbCBv
-biBJTwo+PiBwZXJmb3JtYW5jZS4gSWYgJGRhdGFfYmxvY2tfc2l6ZSBpcyBsYXJnZSBmb3IgZXhh
-bXBsZSAxRywgaW4gbXVsdGl0aHJlYWQgZmlvCj4+IHRlc3QsIG1vc3QgYmlvIHdpbGwgYmUgYnVm
-ZmVyZWQgaW4gY2VsbC0+YmlvcyBsaXN0IGFuZCB0aGVuIGJlIHByb2Nlc3NlZCBieQo+PiB3b3Jr
-ZXIgdGhyZWFkIGFzeW5jaHJvbm91c2x5LCBldmVuIHdoZW4gdGhlcmUncyBubyBkaXNjYXJkIGJp
-by4gVGh1cyB0aGUKPj4gb3JpZ2luYWwgcGFyYWxsZWwgSU8gaXMgcHJvY2Vzc2VkIGJ5IHdvcmtl
-ciB0aHJlYWQgc2VyaWFsbHkgbm93LiBBcyB0aGUKPj4gbnVtYmVyIG9mIGZpbyB0ZXN0IHRocmVh
-ZHMgaW5jcmVhc2UsIHRoZSBzaW5nbGUgd29ya2VyIHRocmVhZCBjYW4gZWFzaWx5IGdldAo+PiBD
-UFUgMTAwJSwgYW5kIHRodXMgYmVjb21lIHRoZSBib3R0bGVuZWNrIG9mIHRoZSBwZXJmb3JtYW5j
-ZSBzaW5jZSBkbS10aGluCj4+IHdvcmtxdWV1ZSBpcyBvcmRlcmVkIHVuYm91bmQuCj4gWWVwLCB0
-aGlzIGlzIGEgYmlnIGlzc3VlLiAgVGFrZSBhIGxvb2sgYXQgZG0tYmlvLXByaXNvbi12Mi5oLCB0
-aGlzIGlzIHRoZQo+IG5ldyBpbnRlcmZhY2UgdGhhdCB3ZSBuZWVkIHRvIG1vdmUgZG0tdGhpbiBh
-Y3Jvc3MgdG8gdXNlIChkbS1jYWNoZSBhbHJlYWR5IHVzZXMgaXQpLgo+IEl0IGFsbG93cyBjb25j
-dXJyZW50IGhvbGRlcnMgb2YgYSBjZWxsIChpZSwgcmVhZCBsb2NrcyksIHNvIHdlJ2xsIGJlIGFi
-bGUgdG8gcmVtYXAKPiBtdWNoIG1vcmUgaW8gd2l0aG91dCBoYW5kaW5nIGl0IG9mZiB0byBhIHdv
-cmtlciB0aHJlYWQuICBPbmNlIHRoaXMgaXMgZG9uZSBJIHdhbnQKPiB0byBhZGQgYW4gZXh0cmEg
-ZmllbGQgdG8gY2VsbHMgdGhhdCB3aWxsIGNhY2hlIHRoZSBtYXBwaW5nLCB0aGlzIHdheSBpZiB5
-b3UgYWNxdWlyZSBhCj4gY2VsbCB0aGF0IGlzIGFscmVhZHkgaGVsZCB0aGVuIHlvdSBjYW4gYXZv
-aWQgdGhlIGV4cGVuc2l2ZSBidHJlZSBsb29rdXAuICBUb2dldGhlcgo+IHRoZXNlIGNoYW5nZXMg
-c2hvdWxkIG1ha2UgYSBodWdlIGRpZmZlcmVuY2UgdG8gdGhlIHBlcmZvcm1hbmNlLgo+Cj4gSWYg
-eW91J3ZlIGdvdCBzb21lIHNwYXJlIGNvZGluZyBjeWNsZXMgSSdkIGxvdmUgc29tZSBoZWxwIHdp
-dGggdGhpcyA7KQo+Cj4gLSBKb2UKPgo+IC0tCj4gZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj4gZG0t
-ZGV2ZWxAcmVkaGF0LmNvbQo+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
-by9kbS1kZXZlbAoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29t
-Cmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+As you can see below: your patches to remove the seemingly unused sz
+variables won't even compile.  The sz variable is used by the DMEMIT()
+macro.
+
+Nacked-by: Mike Snitzer <snitzer@redhat.com>
+
+On Sun, Dec 01 2019 at  2:46am -0500,
+kbuild test robot <lkp@intel.com> wrote:
+
+> Hi Jieun,
+>=20
+> Thank you for the patch! Yet something to improve:
+>=20
+> [auto build test ERROR on dm/for-next]
+> [also build test ERROR on v5.4 next-20191129]
+> [if your patch is applied to the wrong git tree, please drop us a note to=
+ help
+> improve the system. BTW, we also suggest to use '--base' option to specif=
+y the
+> base tree in git format-patch, please see https://stackoverflow.com/a/374=
+06982]
+>=20
+> url:    https://github.com/0day-ci/linux/commits/Jieun-Kim/drivers-md-dm-=
+log-c-Remove-unused-variable-sz/20191201-134548
+> base:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/lin=
+ux-dm.git for-next
+> config: i386-defconfig (attached as .config)
+> compiler: gcc-7 (Debian 7.5.0-1) 7.5.0
+> reproduce:
+>         # save the attached .config to linux build tree
+>         make ARCH=3Di386=20
+>=20
+> If you fix the issue, kindly add following tag
+> Reported-by: kbuild test robot <lkp@intel.com>
+>=20
+> All error/warnings (new ones prefixed by >>):
+>=20
+>    In file included from include/linux/dm-dirty-log.h:16:0,
+>                     from drivers/md/dm-log.c:13:
+>    drivers/md/dm-log.c: In function 'core_status':
+> >> include/linux/device-mapper.h:551:22: error: 'sz' undeclared (first us=
+e in this function); did you mean 's8'?
+>     #define DMEMIT(x...) sz +=3D ((sz >=3D maxlen) ? \
+>                          ^
+> >> drivers/md/dm-log.c:788:3: note: in expansion of macro 'DMEMIT'
+>       DMEMIT("1 %s", log->type->name);
+>       ^~~~~~
+>    include/linux/device-mapper.h:551:22: note: each undeclared identifier=
+ is reported only once for each function it appears in
+>     #define DMEMIT(x...) sz +=3D ((sz >=3D maxlen) ? \
+>                          ^
+> >> drivers/md/dm-log.c:788:3: note: in expansion of macro 'DMEMIT'
+>       DMEMIT("1 %s", log->type->name);
+>       ^~~~~~
+> --
+>    In file included from include/linux/dm-dirty-log.h:16:0,
+>                     from drivers//md/dm-log.c:13:
+>    drivers//md/dm-log.c: In function 'core_status':
+> >> include/linux/device-mapper.h:551:22: error: 'sz' undeclared (first us=
+e in this function); did you mean 's8'?
+>     #define DMEMIT(x...) sz +=3D ((sz >=3D maxlen) ? \
+>                          ^
+>    drivers//md/dm-log.c:788:3: note: in expansion of macro 'DMEMIT'
+>       DMEMIT("1 %s", log->type->name);
+>       ^~~~~~
+>    include/linux/device-mapper.h:551:22: note: each undeclared identifier=
+ is reported only once for each function it appears in
+>     #define DMEMIT(x...) sz +=3D ((sz >=3D maxlen) ? \
+>                          ^
+>    drivers//md/dm-log.c:788:3: note: in expansion of macro 'DMEMIT'
+>       DMEMIT("1 %s", log->type->name);
+>       ^~~~~~
+>=20
+> vim +/DMEMIT +788 drivers/md/dm-log.c
+>=20
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  776 =20
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  777  #define=09DMEMIT_SYNC =
+\
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  778  =09if (lc->sync !=3D D=
+EFAULTSYNC) \
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  779  =09=09DMEMIT("%ssync "=
+, lc->sync =3D=3D NOSYNC ? "no" : "")
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  780 =20
+> 416cd17b198221 Heinz Mauelshagen  2008-04-24  781  static int core_status=
+(struct dm_dirty_log *log, status_type_t status,
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  782  =09=09       char *res=
+ult, unsigned int maxlen)
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  783  {
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  784  =09struct log_c *lc =
+=3D log->context;
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  785 =20
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  786  =09switch(status) {
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  787  =09case STATUSTYPE_INF=
+O:
+> 315dcc226f066c Jonathan E Brassow 2007-05-09 @788  =09=09DMEMIT("1 %s", l=
+og->type->name);
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  789  =09=09break;
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  790 =20
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  791  =09case STATUSTYPE_TAB=
+LE:
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  792  =09=09DMEMIT("%s %u %u=
+ ", log->type->name,
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  793  =09=09       lc->sync =
+=3D=3D DEFAULTSYNC ? 1 : 2, lc->region_size);
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  794  =09=09DMEMIT_SYNC;
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  795  =09}
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  796 =20
+> 2a79ee10b97355 Jieun Kim          2019-12-01  797  =09return 0;
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  798  }
+> ^1da177e4c3f41 Linus Torvalds     2005-04-16  799 =20
+>=20
+> :::::: The code at line 788 was first introduced by commit
+> :::::: 315dcc226f066c1d3cef79283dcde807fe0e32d1 dm log: report fault stat=
+us
+>=20
+> :::::: TO: Jonathan E Brassow <jbrassow@redhat.com>
+> :::::: CC: Linus Torvalds <torvalds@woody.linux-foundation.org>
+>=20
+> ---
+> 0-DAY kernel test infrastructure                 Open Source Technology C=
+enter
+> https://lists.01.org/hyperkitty/list/kbuild-all@lists.01.org Intel Corpor=
+ation
