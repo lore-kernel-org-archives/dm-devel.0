@@ -1,12 +1,13 @@
 From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: [PATCH 0/3] dm clone: Flush destination device before
-	committing metadata to avoid data corruption
-Date: Wed,  4 Dec 2019 16:06:51 +0200
-Message-ID: <20191204140654.26214-1-ntsironis@arrikto.com>
+Subject: [PATCH 2/3] dm clone metadata: Use a two phase commit
+Date: Wed,  4 Dec 2019 16:06:53 +0200
+Message-ID: <20191204140654.26214-3-ntsironis@arrikto.com>
+References: <20191204140654.26214-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20191204140654.26214-1-ntsironis@arrikto.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,50 +21,175 @@ To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
 Cc: vkoukis@arrikto.com, ntsironis@arrikto.com, iliastsi@arrikto.com
 List-Id: dm-devel.ids
 
-dm-clone maintains an on-disk bitmap which records which regions are
-valid in the destination device, i.e., which regions have already been
-hydrated, or have been written to directly, via user I/O.
+Split the metadata commit in two parts:
 
-Setting a bit in the on-disk bitmap meas the corresponding region is
-valid in the destination device and we redirect all I/O regarding it to
-the destination device.
+1. dm_clone_metadata_pre_commit(): Prepare the current transaction for
+   committing. After this is called, all subsequent metadata updates,
+   done through either dm_clone_set_region_hydrated() or
+   dm_clone_cond_set_range(), will be part of the next transaction.
 
-Suppose the destination device has a volatile write-back cache and the
-following sequence of events occur:
+2. dm_clone_metadata_commit(): Actually commit the current transaction
+   to disk and start a new transaction.
 
-1. A region gets hydrated, either through the background hydration or
-   because it was written to directly, via user I/O.
+This is required by the following commit. It allows dm-clone to flush
+the destination device after step (1) to ensure that all freshly
+hydrated regions, for which we are updating the metadata, are properly
+written to non-volatile storage and won't be lost in case of a crash.
 
-2. The commit timeout expires and we commit the metadata, marking that
-   region as valid in the destination device.
+Fixes: 7431b7835f55 ("dm: add clone target")
+Cc: stable@vger.kernel.org # v5.4+
+Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+---
+ drivers/md/dm-clone-metadata.c | 46 +++++++++++++++++++++++++++++++++---------
+ drivers/md/dm-clone-metadata.h | 17 ++++++++++++++++
+ drivers/md/dm-clone-target.c   |  7 ++++++-
+ 3 files changed, 60 insertions(+), 10 deletions(-)
 
-3. The system crashes and the destination device's cache has not been
-   flushed, meaning the region's data are lost.
-
-The next time we read that region we read it from the destination
-device, since the metadata have been successfully committed, but the
-data are lost due to the crash, so we read garbage instead of the old
-data.
-
-For more information regarding the implications of this please see the
-relevant commit.
-
-To solve this and avoid the potential data corruption we have to flush
-the destination device before committing the metadata.
-
-This ensures that any freshly hydrated regions, for which we commit the
-metadata, are properly written to non-volatile storage and won't be lost
-in case of a crash.
-
-Nikos Tsironis (3):
-  dm clone metadata: Track exact changes per transaction
-  dm clone metadata: Use a two phase commit
-  dm clone: Flush destination device before committing metadata
-
- drivers/md/dm-clone-metadata.c | 136 ++++++++++++++++++++++++++++++-----------
- drivers/md/dm-clone-metadata.h |  17 ++++++
- drivers/md/dm-clone-target.c   |  53 +++++++++++++---
- 3 files changed, 162 insertions(+), 44 deletions(-)
-
+diff --git a/drivers/md/dm-clone-metadata.c b/drivers/md/dm-clone-metadata.c
+index ee870a425ab8..c05b12110456 100644
+--- a/drivers/md/dm-clone-metadata.c
++++ b/drivers/md/dm-clone-metadata.c
+@@ -127,6 +127,9 @@ struct dm_clone_metadata {
+ 	struct dirty_map dmap[2];
+ 	struct dirty_map *current_dmap;
+ 
++	/* Protected by lock */
++	struct dirty_map *committing_dmap;
++
+ 	/*
+ 	 * In core copy of the on-disk bitmap to save constantly doing look ups
+ 	 * on disk.
+@@ -511,6 +514,7 @@ static int dirty_map_init(struct dm_clone_metadata *cmd)
+ 	}
+ 
+ 	cmd->current_dmap = &cmd->dmap[0];
++	cmd->committing_dmap = NULL;
+ 
+ 	return 0;
+ }
+@@ -775,15 +779,17 @@ static int __flush_dmap(struct dm_clone_metadata *cmd, struct dirty_map *dmap)
+ 	return 0;
+ }
+ 
+-int dm_clone_metadata_commit(struct dm_clone_metadata *cmd)
++int dm_clone_metadata_pre_commit(struct dm_clone_metadata *cmd)
+ {
+-	int r = -EPERM;
++	int r = 0;
+ 	struct dirty_map *dmap, *next_dmap;
+ 
+ 	down_write(&cmd->lock);
+ 
+-	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm))
++	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm)) {
++		r = -EPERM;
+ 		goto out;
++	}
+ 
+ 	/* Get current dirty bitmap */
+ 	dmap = cmd->current_dmap;
+@@ -795,7 +801,7 @@ int dm_clone_metadata_commit(struct dm_clone_metadata *cmd)
+ 	 * The last commit failed, so we don't have a clean dirty-bitmap to
+ 	 * use.
+ 	 */
+-	if (WARN_ON(next_dmap->changed)) {
++	if (WARN_ON(next_dmap->changed || cmd->committing_dmap)) {
+ 		r = -EINVAL;
+ 		goto out;
+ 	}
+@@ -805,11 +811,33 @@ int dm_clone_metadata_commit(struct dm_clone_metadata *cmd)
+ 	cmd->current_dmap = next_dmap;
+ 	spin_unlock_irq(&cmd->bitmap_lock);
+ 
+-	/*
+-	 * No one is accessing the old dirty bitmap anymore, so we can flush
+-	 * it.
+-	 */
+-	r = __flush_dmap(cmd, dmap);
++	/* Set old dirty bitmap as currently committing */
++	cmd->committing_dmap = dmap;
++out:
++	up_write(&cmd->lock);
++
++	return r;
++}
++
++int dm_clone_metadata_commit(struct dm_clone_metadata *cmd)
++{
++	int r = -EPERM;
++
++	down_write(&cmd->lock);
++
++	if (cmd->fail_io || dm_bm_is_read_only(cmd->bm))
++		goto out;
++
++	if (WARN_ON(!cmd->committing_dmap)) {
++		r = -EINVAL;
++		goto out;
++	}
++
++	r = __flush_dmap(cmd, cmd->committing_dmap);
++	if (!r) {
++		/* Clear committing dmap */
++		cmd->committing_dmap = NULL;
++	}
+ out:
+ 	up_write(&cmd->lock);
+ 
+diff --git a/drivers/md/dm-clone-metadata.h b/drivers/md/dm-clone-metadata.h
+index 3fe50a781c11..14af1ebd853f 100644
+--- a/drivers/md/dm-clone-metadata.h
++++ b/drivers/md/dm-clone-metadata.h
+@@ -75,7 +75,23 @@ void dm_clone_metadata_close(struct dm_clone_metadata *cmd);
+ 
+ /*
+  * Commit dm-clone metadata to disk.
++ *
++ * We use a two phase commit:
++ *
++ * 1. dm_clone_metadata_pre_commit(): Prepare the current transaction for
++ *    committing. After this is called, all subsequent metadata updates, done
++ *    through either dm_clone_set_region_hydrated() or
++ *    dm_clone_cond_set_range(), will be part of the **next** transaction.
++ *
++ * 2. dm_clone_metadata_commit(): Actually commit the current transaction to
++ *    disk and start a new transaction.
++ *
++ * This allows dm-clone to flush the destination device after step (1) to
++ * ensure that all freshly hydrated regions, for which we are updating the
++ * metadata, are properly written to non-volatile storage and won't be lost in
++ * case of a crash.
+  */
++int dm_clone_metadata_pre_commit(struct dm_clone_metadata *cmd);
+ int dm_clone_metadata_commit(struct dm_clone_metadata *cmd);
+ 
+ /*
+@@ -112,6 +128,7 @@ int dm_clone_metadata_abort(struct dm_clone_metadata *cmd);
+  * Switches metadata to a read only mode. Once read-only mode has been entered
+  * the following functions will return -EPERM:
+  *
++ *   dm_clone_metadata_pre_commit()
+  *   dm_clone_metadata_commit()
+  *   dm_clone_set_region_hydrated()
+  *   dm_clone_cond_set_range()
+diff --git a/drivers/md/dm-clone-target.c b/drivers/md/dm-clone-target.c
+index b3d89072d21c..613c913c296c 100644
+--- a/drivers/md/dm-clone-target.c
++++ b/drivers/md/dm-clone-target.c
+@@ -1122,8 +1122,13 @@ static int commit_metadata(struct clone *clone)
+ 		goto out;
+ 	}
+ 
+-	r = dm_clone_metadata_commit(clone->cmd);
++	r = dm_clone_metadata_pre_commit(clone->cmd);
++	if (unlikely(r)) {
++		__metadata_operation_failed(clone, "dm_clone_metadata_pre_commit", r);
++		goto out;
++	}
+ 
++	r = dm_clone_metadata_commit(clone->cmd);
+ 	if (unlikely(r)) {
+ 		__metadata_operation_failed(clone, "dm_clone_metadata_commit", r);
+ 		goto out;
 -- 
 2.11.0
