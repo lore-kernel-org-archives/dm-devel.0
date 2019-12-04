@@ -1,19 +1,11 @@
 From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: Re: [PATCH 2/2] dm thin: Flush data device before
-	committing metadata
-Date: Wed, 4 Dec 2019 18:47:34 +0200
-Message-ID: <79971756-2f21-09e1-bfec-7fbc16eba44e@arrikto.com>
-References: <20191204140742.26273-1-ntsironis@arrikto.com>
-	<20191204140742.26273-3-ntsironis@arrikto.com>
-	<20191204152759.qhh2f6ybhww7ivel@reti>
-	<4627d4b3-fced-0d22-34c5-258733c9afa9@arrikto.com>
-	<20191204163939.GA30305@redhat.com>
+Subject: [PATCH] dm thin: Avoid flushing the data device twice
+Date: Wed,  4 Dec 2019 19:06:38 +0200
+Message-ID: <20191204170638.28163-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191204163939.GA30305@redhat.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,76 +15,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, thornber@redhat.com, agk@redhat.com
+To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
+Cc: thornber@redhat.com, ntsironis@arrikto.com
 List-Id: dm-devel.ids
 
-On 12/4/19 6:39 PM, Mike Snitzer wrote:>
-On Wed, Dec 04 2019 at 11:17am -0500,
-> Nikos Tsironis <ntsironis@arrikto.com> wrote:
-> 
->> On 12/4/19 5:27 PM, Joe Thornber wrote:
->>> On Wed, Dec 04, 2019 at 04:07:42PM +0200, Nikos Tsironis wrote:
->>>> The thin provisioning target maintains per thin device mappings that map
->>>> virtual blocks to data blocks in the data device.
->>>
->>>
->>> Ack.  But I think we're issuing the FLUSH twice with your patch.  Since the
->>> original bio is still remapped and issued at the end of process_deferred_bios?
->>>
->>
->> Yes, that's correct. I thought of it and of putting a check in
->> process_deferred_bios() to complete FLUSH bios immediately, but I have
->> one concern and I preferred to be safe than sorry.
->>
->> In __commit_transaction() there is the following check:
->>
->>    if (unlikely(!pmd->in_service))
->>              return 0;
->>
->> , which means we don't commit the metadata, and thus we don't flush the
->> data device, in case the pool is not in service.
->>
->> Opening a thin device doesn't seem to put the pool in service, since
->> dm_pool_open_thin_device() uses pmd_write_lock_in_core().
->>
->> Can I assume that the pool is in service if I/O can be mapped to a thin
->> device? If so, it's safe to put such a check in process_deferred_bios().
-> 
-> In service means upper layer has issued a write to a thin device of a
-> pool.  The header for commit 873f258becca87 gets into more detail.
-> 
->> On second thought though, in order for a flush bio to end up in
->> deferred_flush_bios in the first place, someone must have changed the
->> metadata and thus put the pool in service. Otherwise, it would have been
->> submitted directly to the data device. So, it's probably safe to check
->> for flush bios after commit() in process_deferred_bios() and complete
->> them immediately.
-> 
-> Yes, I think so, which was Joe's original point.
->   
->> If you confirm too that this is safe, I will send a second version of
->> the patch adding the check.
-> 
-> Not seeing why we need another in_service check.  After your changes are
-> applied, any commit will trigger a preceeding flush.. so the deferred
-> flushes are redundant.
-> 
+Since we flush the data device as part of a metadata commit, it's
+redundant to then submit any deferred REQ_PREFLUSH bios.
 
-Yes, I meant add a check in process_deferred_bios(), after commit(), to
-check for REQ_PREFLUSH bios and complete them immediately. I should have
-clarified that.
+Add a check in process_deferred_bios() for deferred REQ_PREFLUSH bios
+and complete them immediately.
 
-> By definition, these deferred bios imply the pool is in service.
-> 
-> I'd be fine with seeing a 3rd follow-on thinp patch that completes the
-> redundant flushes immediately.
-> 
+Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+---
+ drivers/md/dm-thin.c | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
 
-Ack, I will send another patch fixing this.
-
-Nikos
-
-> Thanks,
-> Mike
-> 
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index e0be545080d0..40d8a255dbc3 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -2383,8 +2383,18 @@ static void process_deferred_bios(struct pool *pool)
+ 	while ((bio = bio_list_pop(&bio_completions)))
+ 		bio_endio(bio);
+ 
+-	while ((bio = bio_list_pop(&bios)))
+-		generic_make_request(bio);
++	while ((bio = bio_list_pop(&bios))) {
++		if (bio->bi_opf & REQ_PREFLUSH) {
++			/*
++			 * We just flushed the data device as part of the
++			 * metadata commit, so there is no reason to send
++			 * another flush.
++			 */
++			bio_endio(bio);
++		} else {
++			generic_make_request(bio);
++		}
++	}
+ }
+ 
+ static void do_worker(struct work_struct *ws)
+-- 
+2.11.0
