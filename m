@@ -1,17 +1,12 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: dm-thin: Several Questions on dm-thin performance.
-Date: Wed, 4 Dec 2019 12:11:06 +0000
-Message-ID: <20191204121106.lw32xoe7mil274of@reti>
-References: <35cf1ecf-5cd8-604b-ec4e-18c9fd4a4195@linux.alibaba.com>
-	<20191122185530.pcrgmb655dkdbdcq@reti>
-	<6b12137e-411e-0368-518e-41ae54e138e0@linux.alibaba.com>
-	<alpine.LRH.2.11.1912022002210.11561@mx.ewheeler.net>
-	<20191203125115.rdc74jgjdz2673ig@reti>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: [PATCH 0/3] dm clone: Flush destination device before
+	committing metadata to avoid data corruption
+Date: Wed,  4 Dec 2019 16:06:51 +0200
+Message-ID: <20191204140654.26214-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191203125115.rdc74jgjdz2673ig@reti>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,302 +16,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Eric Wheeler <dm-devel@lists.ewheeler.net>, JeffleXu <jefflexu@linux.alibaba.com>, dm-devel@redhat.com
+To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
+Cc: vkoukis@arrikto.com, ntsironis@arrikto.com, iliastsi@arrikto.com
 List-Id: dm-devel.ids
 
-(These notes are for my own benefit as much as anything, I haven't
-worked on this for a couple of years and will forget it all completely
-if I don't write it down somewhere).
+dm-clone maintains an on-disk bitmap which records which regions are
+valid in the destination device, i.e., which regions have already been
+hydrated, or have been written to directly, via user I/O.
 
-Let's start by writing some pseudocode for what the remap function for
-thin provisioning actually does.
+Setting a bit in the on-disk bitmap meas the corresponding region is
+valid in the destination device and we redirect all I/O regarding it to
+the destination device.
 
-	----------------------------------------------------------
-	-- Metadata
+Suppose the destination device has a volatile write-back cache and the
+following sequence of events occur:
 
-	newtype ThinId = Int
-	data Bio = Bio
-	newtype VBlock = Integer	-- virtual block
-	newtype DBlock = Integer	-- data block
+1. A region gets hydrated, either through the background hydration or
+   because it was written to directly, via user I/O.
 
-	data LookupResult =
-	    Unprovisioned |
-	    Provisioned { lrDBlock :: DataBlock,
-	                  lrShared :: Bool
-	                }
+2. The commit timeout expires and we commit the metadata, marking that
+   region as valid in the destination device.
 
-	metadataLookup :: ThinId -> VBlock -> Task LookupResult
-	metadataLookup = undefined
+3. The system crashes and the destination device's cache has not been
+   flushed, meaning the region's data are lost.
 
-	metadataInsert :: ThinId -> VBlock -> DBlock -> Task ()
-	metadataInsert = undefined
+The next time we read that region we read it from the destination
+device, since the metadata have been successfully committed, but the
+data are lost due to the crash, so we read garbage instead of the old
+data.
 
-	metadataRemove :: ThinId -> VBlock -> Task ()
-	metadataRemove = undefined
+For more information regarding the implications of this please see the
+relevant commit.
 
-	-- Blocks all other metadata operations while running
-	metadataCommit :: Task ()
-	metadataCommit = undefined
+To solve this and avoid the potential data corruption we have to flush
+the destination device before committing the metadata.
 
-	----------------------------------------------------------
-	-- Tasks
+This ensures that any freshly hydrated regions, for which we commit the
+metadata, are properly written to non-volatile storage and won't be lost
+in case of a crash.
 
-	-- Many steps of servicing a bio can block.  eg, taking a lock,
-	-- reading metadata, updating metadata, zeroing data, copying
-	-- data ...
-	-- So we completely side step the issue in this pseudocode by
-	-- running everything in a magic light weight thread.
-	spawn :: Task () -> IO ()
-	spawn = undefined
+Nikos Tsironis (3):
+  dm clone metadata: Track exact changes per transaction
+  dm clone metadata: Use a two phase commit
+  dm clone: Flush destination device before committing metadata
 
-	----------------------------------------------------------
-	-- Locking
+ drivers/md/dm-clone-metadata.c | 136 ++++++++++++++++++++++++++++++-----------
+ drivers/md/dm-clone-metadata.h |  17 ++++++
+ drivers/md/dm-clone-target.c   |  53 +++++++++++++---
+ 3 files changed, 162 insertions(+), 44 deletions(-)
 
-	-- These 'with' primitives acquire a lock (can block of course), perform
-	-- an action, and then automatically release the lock.
-	 
-	-- Shared lock can be upgraded, so we need to pass the lock into
-	-- the action body.
-	withSharedLock :: ThinId -> VBlock -> (Lock -> Task ()) -> Task ()
-	withSharedLock thinId vblock actionFn = undefined
-
-	withExclusiveLock :: ThinId -> VBlock -> Task () -> Task ()
-	withExclusiveLock thinId vblock action = undefined
-
-	-- This promotes a shared lock to exclusive.
-	withUpgradedLock :: Lock -> Task () -> Task ()
-	withUpgradedLock lock action = undefined
-
-	-- Data locks are always exclusive
-	withDataLock :: DBlock -> Task () -> Task ()
-	withDataLock dblock action = undefined
-
-	----------------------------------------------------------
-
-	-- Top level remap function.  Kicks off a green thread for each bio.
-	-- How we handle a bio depends on whether it's a read, write, discard
-	-- or flush bio.  Whether the block is already provisioned, and if so
-	-- whether it is shared between snapshots.
-	remap :: ThinId -> Bio -> IO ()
-	remap thinId bio = spawn $ remapFn thinId bio vblock
-	    where
-	        vblock = virtBlock bio
-	        remapFn = case classifyBio bio of
-	            ReadBio -> remapRead
-	            WriteBio -> remapWrite
-	            DiscardBio -> remapDiscard
-	            FlushBio -> remapFlush
-
-	----------------------------------------------------------
-
-	remapRead :: ThinId -> Bio -> VBlock -> Task ()
-	remapRead thinId bio vblock = do
-	    withSharedLock thinId vblock $ \_ -> do
-	        lr <- metadataLookup thinId vblock
-	        case lr of
-	            -- Read, Unprovisioned, Shared/!Shared
-	            Unprovisioned -> do
-	                fillWithZeroes bio
-	                complete bio Success
-
-	            -- Read, Provisioned, Shared/!Shared
-	            (Provisioned dblock _) ->
-	                remapAndWait bio dblock
-
-	----------------------------------------------------------
-
-	remapWrite :: ThinId -> Bio -> VBlock -> Task ()
-	remapWrite thinId bio vblock = do
-	    withSharedLock thinId vblock $ \lock -> do
-	        lr <- metadataLookup thinId vblock
-	        case lr of
-	            -- Write, Unprovisioned
-	            Unprovisioned ->
-	                withUpgradedLock lock $
-	                    provision thinId bio vblock
-
-	            -- Write, Provisioned, !Shared
-	            (Provisioned dblock False) ->
-	                remapAndWait bio dblock
-
-	            -- Write, Provisioned, Shared
-	            (Provisioned dblock True) ->
-	                withUpgradedLock lock $
-	                    breakSharing thinId bio vblock dblock
-
-	breakSharing :: ThinId -> Bio -> VBlock -> DataBlock -> Task ()
-	breakSharing thinId bio vblock dblockOld = do
-	    ab <- allocateBlock
-	   case ab of
-	       NoDataSpace ->
-	           complete bio Failure
-
-	       (Allocated dblockNew) ->
-	           withDataLock dblockOld $		-- we grab data locks to avoid races with discard
-	               withDataLock dblockNew $ do
-	                   copy dblockOld dblockNew
-	                   metadataInsert thinId vblock dblockNew
-	           remapAndWait thinId bio dblockNew
-
-	provision :: ThinId -> Bio -> VBlock -> Task ()
-	provision thinId bio vblock = do
-	    case allocateBlock of
-	        NoDataSpace ->
-	            complete bio Failure
-
-	        (Allocated dblock) ->
-	            withDataLock dblock $ do
-	                metadataInsert thinId vblock dblock
-	                remapAndWait thinId bio dblock
-	            
-	----------------------------------------------------------
-
-	discard :: ThinId -> Bio -> VBlock -> Task ()
-	discard thinId bio vblock = do
-	    withExclusiveLock thinId vblock $ do
-	        lr <- metadataLookup thinId vblock
-	        case lr of
-	            -- Discard, Unprovisioned
-	            Unprovisioned ->
-	                complete bio Success
-
-	            -- Discard, Provisioned, !Shared
-	            (Provisioned dblock False) ->
-	                withDataLock dblock $ do
-	                    remapAndWait bio dblock  		-- passdown
-	                    metadataRemove thinId dblock
-
-	            -- Discard, Provisioned, Shared
-	           (Provisioned dblock True) ->
-	               withDataLock dblock $ do
-	                   metadataRemove thinId dblock
-	                   complete bio Success
-
-	----------------------------------------------------------
-
-	flush :: Task ()
-	flush = metadataCommit
-	    
-	----------------------------------------------------------
-
-	remapAndWait :: Bio -> DataBlock -> Task ()
-	remapAndWait bio dblock = do
-	    remap bio dblock
-	    issue bio
-	    wait bio
-   
-The above is a simplification (eg, discards can cover more than a single
-block, the pool has multiple modes like OUT_OF_DATA_SPACE).  But it gives
-a good idea of what the dm target needs to do, and in a succinct manner.
-
-Now dm-thin.c is anything but succinct, for a couple of reasons:
-
-- Because of where we are in the IO stack we cannot allocate memory.
-  This means we either use memory preallocated via mempools, or allocate
-  a fixed size block before a bio is processed.
-
-- We don't have a magic green threads library that hides the numerous
-  blocking operations that we need.  Instead we have low level facilities
-  like workqueues etc.  This tends to have the effect of breaking up the logic
-  and scattering it across lots of little completion functions.
-
-
-How we handle blocking, locking, and quiescing IO are all intertwined.
-Which is why switching over to the new bio_prison interface is going to
-involve an awful lot of churn.
-
-In the upstream code
-====================
-
-- Locking
-
-  The locks provided by bio_prison (v1), are all exclusive locks.  As such
-  we take pains to hold them for as short a period as possible.  This means
-  holding them for the duration of an IO is completely out of the question.
-  Nonetheless, as pointed out in the original post for this thread, this
-  can cause bad lock contention, especially if the data block size is large.
-
-- Quiescing
-
-  Because we do not hold locks for the lifetime of the bios, we need
-  another way of tracking IO and quiescing regions.  This is what the
-  deferred_set component does.  Effectively it divides time up into
-  bins, and keeps a reference count of how many IOs are still in flight
-  for each bin.  To quiesce we grab a lock, and then wait for all bins
-  before this lock was acquired to drain.  Advantages of this approach
-  is it uses very little memory (I think we're currently running with
-  64 bins), and consumes v. little cpu.  But we're never specific about
-  which region we're waiting to quiesce, instead always waiting for all
-  IO older than a certain point to drain.  So we are certainly introducing
-  more latency here.
-
-- Blocking
-
-  A single thread services any operations that could block.
-  When there is work for this thread to perform a work queue item
-  is queued (do_worker()).  This then examines linked lists of work
-  (prepared_mappings, discard_pt1, discard_pt2, prefetches etc), and
-  processes each list as a batch.  Batching like this is a mixed blessing;
-  it allows us to sort incoming bios so we can process bios to the same
-  region at the same time, but it is also v. bad for max latency, as we
-  have no idea which piece of work was there the longest.
-
-Next iteration of the code
-========================== 
-
-- Locking
-
-  bio_prison (v2) provides shared locks, and custom lock levels.  So,
-  at the expense of memory, we can hold shared locks for long periods
-  that cover the lifetime of the bio.  Acquiring a lock now blocks.
-
-- Quiescing
-
-  Because we hold the locks for long periods we can now do away with the
-  deferred set completely.  If you want to quiesce a region, just grab
-  the exclusive lock associated with it, when it's finally granted you
-  know it's also quiesced.
-
-- Blocking
-
-  I want to move away from the idea of a single worker function that
-  has different categories of work stored for it in different lists.
-  Instead, storing specific work structs on the work queue for each bio.
-  Partly this is to reduce latency by increasing 'fairness'.  But also
-  the fact that acquiring a lock now blocks means there are a lot more
-  block operations to handle, and we'd just end up with a lot of these
-  lists of work.  It would also allow us to have multiple kernel threads
-  servicing the workqueue.
-
-  If you look at dm-cache-target.c you'll see this has already been
-  done for that target.  We have continuation structs that represent
-  the work to be performed after the current blocking op has completed.
-  dm-cache uses this for migrations, which have a much simpler state model
-  than dm-thin.  Even so there are a lot of these little continuation
-  functions (eg, mg_start, mg_lock_writes, mg_copy, mg_full_copy,
-  mg_upgrade_lock, mg_update_metadata_after_copy, mg_update_metadata,
-  mg_success, mg_complete).
-
-
-Where are we now?
-=================
-
-I did a lot of work on this a couple of years ago.  First I just dove
-in, trying to code things up by hand.  But it quickly devolved into a
-maze of badly named continuation functions, all alike.  It's very hard
-to give these functions meaningful names; go through the pseudocode at
-the top of this email and for each place where we could block, try to
-describe where we are.  The biggest problem is as we introduce more of
-these continuations big picture logic receeds and it becomes v. hard to
-reason about the code.
-
-I then experimented with automatically generating all the code from a
-simpler specification (I used a lispy version of the pseudocode above).
-This showed promise and I got it generating kernel code that would
-compile.  I was debugging this when I got dragged onto other work,
-and this has stagnated since.
-
-
-So that's where we are.
- 
+-- 
+2.11.0
