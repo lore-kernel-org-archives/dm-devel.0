@@ -1,11 +1,14 @@
-From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: [PATCH] dm thin: Avoid flushing the data device twice
-Date: Wed,  4 Dec 2019 19:06:38 +0200
-Message-ID: <20191204170638.28163-1-ntsironis@arrikto.com>
+From: Eric Wheeler <dm-devel@lists.ewheeler.net>
+Subject: Re: [PATCH 0/2] dm thin: Flush data device before
+ committing metadata to avoid data corruption
+Date: Wed, 4 Dec 2019 19:58:21 +0000 (UTC)
+Message-ID: <alpine.LRH.2.11.1912041907490.11561@mx.ewheeler.net>
+References: <20191204140742.26273-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20191204140742.26273-1-ntsironis@arrikto.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,45 +18,78 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
-Cc: thornber@redhat.com, ntsironis@arrikto.com
+To: Nikos Tsironis <ntsironis@arrikto.com>
+Cc: dm-devel@redhat.com, thornber@redhat.com, agk@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-Since we flush the data device as part of a metadata commit, it's
-redundant to then submit any deferred REQ_PREFLUSH bios.
+On Wed, 4 Dec 2019, Nikos Tsironis wrote:
 
-Add a check in process_deferred_bios() for deferred REQ_PREFLUSH bios
-and complete them immediately.
+> The thin provisioning target maintains per thin device mappings that map
+> virtual blocks to data blocks in the data device.
+> 
+> When we write to a shared block, in case of internal snapshots, or
+> provision a new block, in case of external snapshots, we copy the shared
+> block to a new data block (COW), update the mapping for the relevant
+> virtual block and then issue the write to the new data block.
+> 
+> Suppose the data device has a volatile write-back cache and the
+> following sequence of events occur:
 
-Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
----
- drivers/md/dm-thin.c | 14 ++++++++++++--
- 1 file changed, 12 insertions(+), 2 deletions(-)
+For those with NV caches, can the data disk flush be optional (maybe as a 
+table flag)?
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index e0be545080d0..40d8a255dbc3 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -2383,8 +2383,18 @@ static void process_deferred_bios(struct pool *pool)
- 	while ((bio = bio_list_pop(&bio_completions)))
- 		bio_endio(bio);
- 
--	while ((bio = bio_list_pop(&bios)))
--		generic_make_request(bio);
-+	while ((bio = bio_list_pop(&bios))) {
-+		if (bio->bi_opf & REQ_PREFLUSH) {
-+			/*
-+			 * We just flushed the data device as part of the
-+			 * metadata commit, so there is no reason to send
-+			 * another flush.
-+			 */
-+			bio_endio(bio);
-+		} else {
-+			generic_make_request(bio);
-+		}
-+	}
- }
- 
- static void do_worker(struct work_struct *ws)
--- 
-2.11.0
+--
+Eric Wheeler
+
+
+
+> 
+> 1. We write to a shared block
+> 2. A new data block is allocated
+> 3. We copy the shared block to the new data block using kcopyd (COW)
+> 4. We insert the new mapping for the virtual block in the btree for that
+>    thin device.
+> 5. The commit timeout expires and we commit the metadata, that now
+>    includes the new mapping from step (4).
+> 6. The system crashes and the data device's cache has not been flushed,
+>    meaning that the COWed data are lost.
+> 
+> The next time we read that virtual block of the thin device we read it
+> from the data block allocated in step (2), since the metadata have been
+> successfully committed. The data are lost due to the crash, so we read
+> garbage instead of the old, shared data.
+> 
+> Moreover, apart from internal and external snapshots, the same issue
+> exists for newly provisioned blocks, when block zeroing is enabled.
+> After the system recovers the provisioned blocks might contain garbage
+> instead of zeroes.
+> 
+> For more information regarding the implications of this please see the
+> relevant commit.
+> 
+> To solve this and avoid the potential data corruption we have to flush
+> the pool's data device before committing its metadata.
+> 
+> This ensures that the data blocks of any newly inserted mappings are
+> properly written to non-volatile storage and won't be lost in case of a
+> crash.
+> 
+> Nikos Tsironis (2):
+>   dm thin metadata: Add support for a pre-commit callback
+>   dm thin: Flush data device before committing metadata
+> 
+>  drivers/md/dm-thin-metadata.c | 29 +++++++++++++++++++++++++++++
+>  drivers/md/dm-thin-metadata.h |  7 +++++++
+>  drivers/md/dm-thin.c          | 32 ++++++++++++++++++++++++++++++++
+>  3 files changed, 68 insertions(+)
+> 
+> -- 
+> 2.11.0
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> 
