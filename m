@@ -1,14 +1,12 @@
 From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: [PATCH 1/2] dm thin metadata: Add support for a
-	pre-commit callback
-Date: Wed,  4 Dec 2019 16:07:41 +0200
-Message-ID: <20191204140742.26273-2-ntsironis@arrikto.com>
-References: <20191204140742.26273-1-ntsironis@arrikto.com>
+Subject: [PATCH 0/2] dm thin: Flush data device before committing
+	metadata to avoid data corruption
+Date: Wed,  4 Dec 2019 16:07:40 +0200
+Message-ID: <20191204140742.26273-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191204140742.26273-1-ntsironis@arrikto.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,97 +20,55 @@ To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
 Cc: thornber@redhat.com, ntsironis@arrikto.com
 List-Id: dm-devel.ids
 
-Add support for one pre-commit callback which is run right before the
-metadata are committed.
+The thin provisioning target maintains per thin device mappings that map
+virtual blocks to data blocks in the data device.
 
-This allows the thin provisioning target to run a callback before the
-metadata are committed and is required by the next commit.
+When we write to a shared block, in case of internal snapshots, or
+provision a new block, in case of external snapshots, we copy the shared
+block to a new data block (COW), update the mapping for the relevant
+virtual block and then issue the write to the new data block.
 
-Cc: stable@vger.kernel.org
-Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
----
+Suppose the data device has a volatile write-back cache and the
+following sequence of events occur:
+
+1. We write to a shared block
+2. A new data block is allocated
+3. We copy the shared block to the new data block using kcopyd (COW)
+4. We insert the new mapping for the virtual block in the btree for that
+   thin device.
+5. The commit timeout expires and we commit the metadata, that now
+   includes the new mapping from step (4).
+6. The system crashes and the data device's cache has not been flushed,
+   meaning that the COWed data are lost.
+
+The next time we read that virtual block of the thin device we read it
+from the data block allocated in step (2), since the metadata have been
+successfully committed. The data are lost due to the crash, so we read
+garbage instead of the old, shared data.
+
+Moreover, apart from internal and external snapshots, the same issue
+exists for newly provisioned blocks, when block zeroing is enabled.
+After the system recovers the provisioned blocks might contain garbage
+instead of zeroes.
+
+For more information regarding the implications of this please see the
+relevant commit.
+
+To solve this and avoid the potential data corruption we have to flush
+the pool's data device before committing its metadata.
+
+This ensures that the data blocks of any newly inserted mappings are
+properly written to non-volatile storage and won't be lost in case of a
+crash.
+
+Nikos Tsironis (2):
+  dm thin metadata: Add support for a pre-commit callback
+  dm thin: Flush data device before committing metadata
+
  drivers/md/dm-thin-metadata.c | 29 +++++++++++++++++++++++++++++
  drivers/md/dm-thin-metadata.h |  7 +++++++
- 2 files changed, 36 insertions(+)
+ drivers/md/dm-thin.c          | 32 ++++++++++++++++++++++++++++++++
+ 3 files changed, 68 insertions(+)
 
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index 4c68a7b93d5e..b88d6d701f5b 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -189,6 +189,15 @@ struct dm_pool_metadata {
- 	sector_t data_block_size;
- 
- 	/*
-+	 * Pre-commit callback.
-+	 *
-+	 * This allows the thin provisioning target to run a callback before
-+	 * the metadata are committed.
-+	 */
-+	dm_pool_pre_commit_fn pre_commit_fn;
-+	void *pre_commit_context;
-+
-+	/*
- 	 * We reserve a section of the metadata for commit overhead.
- 	 * All reported space does *not* include this.
- 	 */
-@@ -826,6 +835,14 @@ static int __commit_transaction(struct dm_pool_metadata *pmd)
- 	if (unlikely(!pmd->in_service))
- 		return 0;
- 
-+	if (pmd->pre_commit_fn) {
-+		r = pmd->pre_commit_fn(pmd->pre_commit_context);
-+		if (r < 0) {
-+			DMERR("pre-commit callback failed");
-+			return r;
-+		}
-+	}
-+
- 	r = __write_changed_details(pmd);
- 	if (r < 0)
- 		return r;
-@@ -892,6 +909,8 @@ struct dm_pool_metadata *dm_pool_metadata_open(struct block_device *bdev,
- 	pmd->in_service = false;
- 	pmd->bdev = bdev;
- 	pmd->data_block_size = data_block_size;
-+	pmd->pre_commit_fn = NULL;
-+	pmd->pre_commit_context = NULL;
- 
- 	r = __create_persistent_data_objects(pmd, format_device);
- 	if (r) {
-@@ -2044,6 +2063,16 @@ int dm_pool_register_metadata_threshold(struct dm_pool_metadata *pmd,
- 	return r;
- }
- 
-+void dm_pool_register_pre_commit_callback(struct dm_pool_metadata *pmd,
-+					  dm_pool_pre_commit_fn fn,
-+					  void *context)
-+{
-+	pmd_write_lock_in_core(pmd);
-+	pmd->pre_commit_fn = fn;
-+	pmd->pre_commit_context = context;
-+	pmd_write_unlock(pmd);
-+}
-+
- int dm_pool_metadata_set_needs_check(struct dm_pool_metadata *pmd)
- {
- 	int r = -EINVAL;
-diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
-index f6be0d733c20..7ef56bd2a7e3 100644
---- a/drivers/md/dm-thin-metadata.h
-+++ b/drivers/md/dm-thin-metadata.h
-@@ -230,6 +230,13 @@ bool dm_pool_metadata_needs_check(struct dm_pool_metadata *pmd);
-  */
- void dm_pool_issue_prefetches(struct dm_pool_metadata *pmd);
- 
-+/* Pre-commit callback */
-+typedef int (*dm_pool_pre_commit_fn)(void *context);
-+
-+void dm_pool_register_pre_commit_callback(struct dm_pool_metadata *pmd,
-+					  dm_pool_pre_commit_fn fn,
-+					  void *context);
-+
- /*----------------------------------------------------------------*/
- 
- #endif
 -- 
 2.11.0
