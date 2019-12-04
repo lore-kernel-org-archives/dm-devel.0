@@ -1,8 +1,8 @@
 From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: [PATCH 1/3] dm clone metadata: Track exact changes per
-	transaction
-Date: Wed,  4 Dec 2019 16:06:52 +0200
-Message-ID: <20191204140654.26214-2-ntsironis@arrikto.com>
+Subject: [PATCH 3/3] dm clone: Flush destination device before
+	committing metadata
+Date: Wed,  4 Dec 2019 16:06:54 +0200
+Message-ID: <20191204140654.26214-4-ntsironis@arrikto.com>
 References: <20191204140654.26214-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,199 +22,194 @@ To: snitzer@redhat.com, agk@redhat.com, dm-devel@redhat.com
 Cc: vkoukis@arrikto.com, ntsironis@arrikto.com, iliastsi@arrikto.com
 List-Id: dm-devel.ids
 
-Extend struct dirty_map with a second bitmap which tracks the exact
-regions that were hydrated during the current metadata transaction.
+dm-clone maintains an on-disk bitmap which records which regions are
+valid in the destination device, i.e., which regions have already been
+hydrated, or have been written to directly, via user I/O.
 
-Moreover, fix __flush_dmap() to only commit the metadata of the regions
-that were hydrated during the current transaction.
+Setting a bit in the on-disk bitmap meas the corresponding region is
+valid in the destination device and we redirect all I/O regarding it to
+the destination device.
 
-This is required by the following commits to fix a data corruption bug.
+Suppose the destination device has a volatile write-back cache and the
+following sequence of events occur:
+
+1. A region gets hydrated, either through the background hydration or
+   because it was written to directly, via user I/O.
+
+2. The commit timeout expires and we commit the metadata, marking that
+   region as valid in the destination device.
+
+3. The system crashes and the destination device's cache has not been
+   flushed, meaning the region's data are lost.
+
+The next time we read that region we read it from the destination
+device, since the metadata have been successfully committed, but the
+data are lost due to the crash, so we read garbage instead of the old
+data.
+
+This has several implications:
+
+1. In case of background hydration or of writes with size smaller than
+   the region size (which means we first copy the whole region and then
+   issue the smaller write), we corrupt data that the user never
+   touched.
+
+2. In case of writes with size equal to the device's logical block size,
+   we fail to provide atomic sector writes. When the system recovers the
+   user will read garbage from the sector instead of the old data or the
+   new data.
+
+3. In case of writes without the FUA flag set, after the system
+   recovers, the written sectors will contain garbage instead of a
+   random mix of sectors containing either old data or new data, thus we
+   fail again to provide atomic sector writes.
+
+4. Even when the user flushes the dm-clone device, because we first
+   commit the metadata and then pass down the flush, the same risk for
+   corruption exists (if the system crashes after the metadata have been
+   committed but before the flush is passed down).
+
+The only case which is unaffected is that of writes with size equal to
+the region size and with the FUA flag set. But, because FUA writes
+trigger metadata commits, this case can trigger the corruption
+indirectly.
+
+To solve this and avoid the potential data corruption we flush the
+destination device **before** committing the metadata.
+
+This ensures that any freshly hydrated regions, for which we commit the
+metadata, are properly written to non-volatile storage and won't be lost
+in case of a crash.
 
 Fixes: 7431b7835f55 ("dm: add clone target")
 Cc: stable@vger.kernel.org # v5.4+
 Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
 ---
- drivers/md/dm-clone-metadata.c | 90 +++++++++++++++++++++++++++++-------------
- 1 file changed, 62 insertions(+), 28 deletions(-)
+ drivers/md/dm-clone-target.c | 46 ++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 40 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/md/dm-clone-metadata.c b/drivers/md/dm-clone-metadata.c
-index 08c552e5e41b..ee870a425ab8 100644
---- a/drivers/md/dm-clone-metadata.c
-+++ b/drivers/md/dm-clone-metadata.c
-@@ -67,23 +67,34 @@ struct superblock_disk {
-  * To save constantly doing look ups on disk we keep an in core copy of the
-  * on-disk bitmap, the region_map.
-  *
-- * To further reduce metadata I/O overhead we use a second bitmap, the dmap
-- * (dirty bitmap), which tracks the dirty words, i.e. longs, of the region_map.
-+ * In order to track which regions are hydrated during a metadata transaction,
-+ * we use a second set of bitmaps, the dmap (dirty bitmap), which includes two
-+ * bitmaps, namely dirty_regions and dirty_words. The dirty_regions bitmap
-+ * tracks the regions that got hydrated during the current metadata
-+ * transaction. The dirty_words bitmap tracks the dirty words, i.e. longs, of
-+ * the dirty_regions bitmap.
-+ *
-+ * This allows us to precisely track the regions that were hydrated during the
-+ * current metadata transaction and update the metadata accordingly, when we
-+ * commit the current transaction. This is important because dm-clone should
-+ * only commit the metadata of regions that were properly flushed to the
-+ * destination device beforehand. Otherwise, in case of a crash, we could end
-+ * up with a corrupted dm-clone device.
-  *
-  * When a region finishes hydrating dm-clone calls
-  * dm_clone_set_region_hydrated(), or for discard requests
-  * dm_clone_cond_set_range(), which sets the corresponding bits in region_map
-  * and dmap.
-  *
-- * During a metadata commit we scan the dmap for dirty region_map words (longs)
-- * and update accordingly the on-disk metadata. Thus, we don't have to flush to
-- * disk the whole region_map. We can just flush the dirty region_map words.
-+ * During a metadata commit we scan dmap->dirty_words and dmap->dirty_regions
-+ * and update the on-disk metadata accordingly. Thus, we don't have to flush to
-+ * disk the whole region_map. We can just flush the dirty region_map bits.
-  *
-- * We use a dirty bitmap, which is smaller than the original region_map, to
-- * reduce the amount of memory accesses during a metadata commit. As dm-bitset
-- * accesses the on-disk bitmap in 64-bit word granularity, there is no
-- * significant benefit in tracking the dirty region_map bits with a smaller
-- * granularity.
-+ * We use the helper dmap->dirty_words bitmap, which is smaller than the
-+ * original region_map, to reduce the amount of memory accesses during a
-+ * metadata commit. Moreover, as dm-bitset also accesses the on-disk bitmap in
-+ * 64-bit word granularity, the dirty_words bitmap helps us avoid useless disk
-+ * accesses.
-  *
-  * We could update directly the on-disk bitmap, when dm-clone calls either
-  * dm_clone_set_region_hydrated() or dm_clone_cond_set_range(), buts this
-@@ -92,12 +103,13 @@ struct superblock_disk {
-  * e.g., in a hooked overwrite bio's completion routine, and further reduce the
-  * I/O completion latency.
-  *
-- * We maintain two dirty bitmaps. During a metadata commit we atomically swap
-- * the currently used dmap with the unused one. This allows the metadata update
-- * functions to run concurrently with an ongoing commit.
-+ * We maintain two dirty bitmap sets. During a metadata commit we atomically
-+ * swap the currently used dmap with the unused one. This allows the metadata
-+ * update functions to run concurrently with an ongoing commit.
-  */
- struct dirty_map {
- 	unsigned long *dirty_words;
-+	unsigned long *dirty_regions;
- 	unsigned int changed;
- };
+diff --git a/drivers/md/dm-clone-target.c b/drivers/md/dm-clone-target.c
+index 613c913c296c..d1e1b5b56b1b 100644
+--- a/drivers/md/dm-clone-target.c
++++ b/drivers/md/dm-clone-target.c
+@@ -86,6 +86,12 @@ struct clone {
  
-@@ -461,22 +473,40 @@ static size_t bitmap_size(unsigned long nr_bits)
- 	return BITS_TO_LONGS(nr_bits) * sizeof(long);
- }
+ 	struct dm_clone_metadata *cmd;
  
--static int dirty_map_init(struct dm_clone_metadata *cmd)
-+static int __dirty_map_init(struct dirty_map *dmap, unsigned long nr_words,
-+			    unsigned long nr_regions)
- {
--	cmd->dmap[0].changed = 0;
--	cmd->dmap[0].dirty_words = kvzalloc(bitmap_size(cmd->nr_words), GFP_KERNEL);
-+	dmap->changed = 0;
- 
--	if (!cmd->dmap[0].dirty_words) {
--		DMERR("Failed to allocate dirty bitmap");
-+	dmap->dirty_words = kvzalloc(bitmap_size(nr_words), GFP_KERNEL);
-+	if (!dmap->dirty_words)
-+		return -ENOMEM;
++	/*
++	 * bio used to flush the destination device, before committing the
++	 * metadata.
++	 */
++	struct bio flush_bio;
 +
-+	dmap->dirty_regions = kvzalloc(bitmap_size(nr_regions), GFP_KERNEL);
-+	if (!dmap->dirty_regions) {
-+		kvfree(dmap->dirty_words);
- 		return -ENOMEM;
+ 	/* Region hydration hash table */
+ 	struct hash_table_bucket *ht;
+ 
+@@ -1108,10 +1114,13 @@ static bool need_commit_due_to_time(struct clone *clone)
+ /*
+  * A non-zero return indicates read-only or fail mode.
+  */
+-static int commit_metadata(struct clone *clone)
++static int commit_metadata(struct clone *clone, bool *dest_dev_flushed)
+ {
+ 	int r = 0;
+ 
++	if (dest_dev_flushed)
++		*dest_dev_flushed = false;
++
+ 	mutex_lock(&clone->commit_lock);
+ 
+ 	if (!dm_clone_changed_this_transaction(clone->cmd))
+@@ -1128,6 +1137,19 @@ static int commit_metadata(struct clone *clone)
+ 		goto out;
  	}
  
--	cmd->dmap[1].changed = 0;
--	cmd->dmap[1].dirty_words = kvzalloc(bitmap_size(cmd->nr_words), GFP_KERNEL);
-+	return 0;
-+}
- 
--	if (!cmd->dmap[1].dirty_words) {
-+static void __dirty_map_exit(struct dirty_map *dmap)
-+{
-+	kvfree(dmap->dirty_words);
-+	kvfree(dmap->dirty_regions);
-+}
++	bio_reset(&clone->flush_bio);
++	bio_set_dev(&clone->flush_bio, clone->dest_dev->bdev);
++	clone->flush_bio.bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
 +
-+static int dirty_map_init(struct dm_clone_metadata *cmd)
-+{
-+	if (__dirty_map_init(&cmd->dmap[0], cmd->nr_words, cmd->nr_regions)) {
- 		DMERR("Failed to allocate dirty bitmap");
--		kvfree(cmd->dmap[0].dirty_words);
-+		return -ENOMEM;
++	r = submit_bio_wait(&clone->flush_bio);
++	if (unlikely(r)) {
++		__metadata_operation_failed(clone, "flush destination device", r);
++		goto out;
 +	}
 +
-+	if (__dirty_map_init(&cmd->dmap[1], cmd->nr_words, cmd->nr_regions)) {
-+		DMERR("Failed to allocate dirty bitmap");
-+		__dirty_map_exit(&cmd->dmap[0]);
- 		return -ENOMEM;
- 	}
- 
-@@ -487,8 +517,8 @@ static int dirty_map_init(struct dm_clone_metadata *cmd)
- 
- static void dirty_map_exit(struct dm_clone_metadata *cmd)
++	if (dest_dev_flushed)
++		*dest_dev_flushed = true;
++
+ 	r = dm_clone_metadata_commit(clone->cmd);
+ 	if (unlikely(r)) {
+ 		__metadata_operation_failed(clone, "dm_clone_metadata_commit", r);
+@@ -1199,6 +1221,7 @@ static void process_deferred_bios(struct clone *clone)
+ static void process_deferred_flush_bios(struct clone *clone)
  {
--	kvfree(cmd->dmap[0].dirty_words);
--	kvfree(cmd->dmap[1].dirty_words);
-+	__dirty_map_exit(&cmd->dmap[0]);
-+	__dirty_map_exit(&cmd->dmap[1]);
+ 	struct bio *bio;
++	bool dest_dev_flushed;
+ 	struct bio_list bios = BIO_EMPTY_LIST;
+ 	struct bio_list bio_completions = BIO_EMPTY_LIST;
+ 
+@@ -1218,7 +1241,7 @@ static void process_deferred_flush_bios(struct clone *clone)
+ 	    !(dm_clone_changed_this_transaction(clone->cmd) && need_commit_due_to_time(clone)))
+ 		return;
+ 
+-	if (commit_metadata(clone)) {
++	if (commit_metadata(clone, &dest_dev_flushed)) {
+ 		bio_list_merge(&bios, &bio_completions);
+ 
+ 		while ((bio = bio_list_pop(&bios)))
+@@ -1232,8 +1255,17 @@ static void process_deferred_flush_bios(struct clone *clone)
+ 	while ((bio = bio_list_pop(&bio_completions)))
+ 		bio_endio(bio);
+ 
+-	while ((bio = bio_list_pop(&bios)))
+-		generic_make_request(bio);
++	while ((bio = bio_list_pop(&bios))) {
++		if ((bio->bi_opf & REQ_PREFLUSH) && dest_dev_flushed) {
++			/* We just flushed the destination device as part of
++			 * the metadata commit, so there is no reason to send
++			 * another flush.
++			 */
++			bio_endio(bio);
++		} else {
++			generic_make_request(bio);
++		}
++	}
  }
  
- static int __load_bitset_in_core(struct dm_clone_metadata *cmd)
-@@ -633,21 +663,23 @@ unsigned long dm_clone_find_next_unhydrated_region(struct dm_clone_metadata *cmd
- 	return find_next_zero_bit(cmd->region_map, cmd->nr_regions, start);
+ static void do_worker(struct work_struct *work)
+@@ -1405,7 +1437,7 @@ static void clone_status(struct dm_target *ti, status_type_t type,
+ 
+ 		/* Commit to ensure statistics aren't out-of-date */
+ 		if (!(status_flags & DM_STATUS_NOFLUSH_FLAG) && !dm_suspended(ti))
+-			(void) commit_metadata(clone);
++			(void) commit_metadata(clone, NULL);
+ 
+ 		r = dm_clone_get_free_metadata_block_count(clone->cmd, &nr_free_metadata_blocks);
+ 
+@@ -1839,6 +1871,7 @@ static int clone_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	bio_list_init(&clone->deferred_flush_completions);
+ 	clone->hydration_offset = 0;
+ 	atomic_set(&clone->hydrations_in_flight, 0);
++	bio_init(&clone->flush_bio, NULL, 0);
+ 
+ 	clone->wq = alloc_workqueue("dm-" DM_MSG_PREFIX, WQ_MEM_RECLAIM, 0);
+ 	if (!clone->wq) {
+@@ -1912,6 +1945,7 @@ static void clone_dtr(struct dm_target *ti)
+ 	struct clone *clone = ti->private;
+ 
+ 	mutex_destroy(&clone->commit_lock);
++	bio_uninit(&clone->flush_bio);
+ 
+ 	for (i = 0; i < clone->nr_ctr_args; i++)
+ 		kfree(clone->ctr_args[i]);
+@@ -1966,7 +2000,7 @@ static void clone_postsuspend(struct dm_target *ti)
+ 	wait_event(clone->hydration_stopped, !atomic_read(&clone->hydrations_in_flight));
+ 	flush_workqueue(clone->wq);
+ 
+-	(void) commit_metadata(clone);
++	(void) commit_metadata(clone, NULL);
  }
  
--static int __update_metadata_word(struct dm_clone_metadata *cmd, unsigned long word)
-+static int __update_metadata_word(struct dm_clone_metadata *cmd,
-+				  unsigned long *dirty_regions,
-+				  unsigned long word)
- {
- 	int r;
- 	unsigned long index = word * BITS_PER_LONG;
- 	unsigned long max_index = min(cmd->nr_regions, (word + 1) * BITS_PER_LONG);
- 
- 	while (index < max_index) {
--		if (test_bit(index, cmd->region_map)) {
-+		if (test_bit(index, dirty_regions)) {
- 			r = dm_bitset_set_bit(&cmd->bitset_info, cmd->bitset_root,
- 					      index, &cmd->bitset_root);
--
- 			if (r) {
- 				DMERR("dm_bitset_set_bit failed");
- 				return r;
- 			}
-+			__clear_bit(index, dirty_regions);
- 		}
- 		index++;
- 	}
-@@ -721,7 +753,7 @@ static int __flush_dmap(struct dm_clone_metadata *cmd, struct dirty_map *dmap)
- 		if (word == cmd->nr_words)
- 			break;
- 
--		r = __update_metadata_word(cmd, word);
-+		r = __update_metadata_word(cmd, dmap->dirty_regions, word);
- 
- 		if (r)
- 			return r;
-@@ -802,6 +834,7 @@ int dm_clone_set_region_hydrated(struct dm_clone_metadata *cmd, unsigned long re
- 	dmap = cmd->current_dmap;
- 
- 	__set_bit(word, dmap->dirty_words);
-+	__set_bit(region_nr, dmap->dirty_regions);
- 	__set_bit(region_nr, cmd->region_map);
- 	dmap->changed = 1;
- 
-@@ -830,6 +863,7 @@ int dm_clone_cond_set_range(struct dm_clone_metadata *cmd, unsigned long start,
- 		if (!test_bit(region_nr, cmd->region_map)) {
- 			word = region_nr / BITS_PER_LONG;
- 			__set_bit(word, dmap->dirty_words);
-+			__set_bit(region_nr, dmap->dirty_regions);
- 			__set_bit(region_nr, cmd->region_map);
- 			dmap->changed = 1;
- 		}
+ static void clone_resume(struct dm_target *ti)
 -- 
 2.11.0
