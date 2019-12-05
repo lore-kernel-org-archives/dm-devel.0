@@ -1,15 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Nikos Tsironis <ntsironis@arrikto.com>
 Subject: Re: [PATCH 0/2] dm thin: Flush data device before
  committing metadata to avoid data corruption
-Date: Wed, 4 Dec 2019 15:17:10 -0500
-Message-ID: <20191204201710.GA31432@redhat.com>
+Date: Thu, 5 Dec 2019 17:31:37 +0200
+Message-ID: <a60f1571-fff1-8be8-5537-f604747b39c9@arrikto.com>
 References: <20191204140742.26273-1-ntsironis@arrikto.com>
 	<alpine.LRH.2.11.1912041907490.11561@mx.ewheeler.net>
+	<20191204201710.GA31432@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.11.1912041907490.11561@mx.ewheeler.net>
+In-Reply-To: <20191204201710.GA31432@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,31 +21,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Eric Wheeler <dm-devel@lists.ewheeler.net>
-Cc: dm-devel@redhat.com, thornber@redhat.com, Nikos Tsironis <ntsironis@arrikto.com>, agk@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>, Eric Wheeler <dm-devel@lists.ewheeler.net>
+Cc: dm-devel@redhat.com, thornber@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Dec 04 2019 at  2:58pm -0500,
-Eric Wheeler <dm-devel@lists.ewheeler.net> wrote:
-
-> On Wed, 4 Dec 2019, Nikos Tsironis wrote:
+On 12/4/19 10:17 PM, Mike Snitzer wrote:
+> On Wed, Dec 04 2019 at  2:58pm -0500,
+> Eric Wheeler <dm-devel@lists.ewheeler.net> wrote:
 > 
-> > The thin provisioning target maintains per thin device mappings that map
-> > virtual blocks to data blocks in the data device.
-> > 
-> > When we write to a shared block, in case of internal snapshots, or
-> > provision a new block, in case of external snapshots, we copy the shared
-> > block to a new data block (COW), update the mapping for the relevant
-> > virtual block and then issue the write to the new data block.
-> > 
-> > Suppose the data device has a volatile write-back cache and the
-> > following sequence of events occur:
+>> On Wed, 4 Dec 2019, Nikos Tsironis wrote:
+>>
+>>> The thin provisioning target maintains per thin device mappings that map
+>>> virtual blocks to data blocks in the data device.
+>>>
+>>> When we write to a shared block, in case of internal snapshots, or
+>>> provision a new block, in case of external snapshots, we copy the shared
+>>> block to a new data block (COW), update the mapping for the relevant
+>>> virtual block and then issue the write to the new data block.
+>>>
+>>> Suppose the data device has a volatile write-back cache and the
+>>> following sequence of events occur:
+>>
+>> For those with NV caches, can the data disk flush be optional (maybe as a
+>> table flag)?
 > 
-> For those with NV caches, can the data disk flush be optional (maybe as a 
-> table flag)?
+> IIRC block core should avoid issuing the flush if not needed.  I'll have
+> a closer look to verify as much.
+> 
 
-IIRC block core should avoid issuing the flush if not needed.  I'll have
-a closer look to verify as much.
+For devices without a volatile write-back cache block core strips off
+the REQ_PREFLUSH and REQ_FUA bits from requests with a payload and
+completes empty REQ_PREFLUSH requests before entering the driver.
 
-Mike
+This happens in generic_make_request_checks():
+
+		/*
+		 * Filter flush bio's early so that make_request based
+		 * drivers without flush support don't have to worry
+		 * about them.
+		 */
+		if (op_is_flush(bio->bi_opf) &&
+		    !test_bit(QUEUE_FLAG_WC, &q->queue_flags)) {
+		        bio->bi_opf &= ~(REQ_PREFLUSH | REQ_FUA);
+		        if (!nr_sectors) {
+		                status = BLK_STS_OK;
+		                goto end_io;
+		        }
+		}
+
+If I am not mistaken, it all depends on whether the underlying device
+reports the existence of a write back cache or not.
+
+You could check this by looking at /sys/block/<device>/queue/write_cache
+If it says "write back" then flushes will be issued.
+
+In case the sysfs entry reports a "write back" cache for a device with a
+non-volatile write cache, I think you can change the kernel's view of
+the device by writing to this entry (you could also create a udev rule
+for this).
+
+This way you can set the write cache as write through. This will
+eliminate the cache flushes issued by the kernel, without altering the
+device state (Documentation/block/queue-sysfs.rst).
+
+Nikos
+
+> Mike
+> 
