@@ -1,11 +1,17 @@
-From: Bryan Gurney <bgurney@redhat.com>
-Subject: [PATCH] dm dust: change ret to r in dust_map_write
-Date: Thu,  5 Dec 2019 17:08:37 -0500
-Message-ID: <1575583717-12502-1-git-send-email-bgurney@redhat.com>
+From: Eric Wheeler <dm-devel@lists.ewheeler.net>
+Subject: Re: [PATCH 0/2] dm thin: Flush data device before
+ committing metadata to avoid data corruption
+Date: Thu, 5 Dec 2019 22:34:01 +0000 (UTC)
+Message-ID: <alpine.LRH.2.11.1912052227130.11561@mx.ewheeler.net>
+References: <20191204140742.26273-1-ntsironis@arrikto.com>
+	<alpine.LRH.2.11.1912041907490.11561@mx.ewheeler.net>
+	<20191204201710.GA31432@redhat.com>
+	<a60f1571-fff1-8be8-5537-f604747b39c9@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <a60f1571-fff1-8be8-5537-f604747b39c9@arrikto.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,42 +21,88 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com
-Cc: Bryan Gurney <bgurney@redhat.com>
+To: Nikos Tsironis <ntsironis@arrikto.com>
+Cc: dm-devel@redhat.com, thornber@redhat.com, agk@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-In the dust_map_write() function, change the return code variable
-"ret" to "r", to match the convention of the other device-mapper
-targets.
+On Thu, 5 Dec 2019, Nikos Tsironis wrote:
+> On 12/4/19 10:17 PM, Mike Snitzer wrote:
+> > On Wed, Dec 04 2019 at  2:58pm -0500,
+> > Eric Wheeler <dm-devel@lists.ewheeler.net> wrote:
+> > 
+> > > On Wed, 4 Dec 2019, Nikos Tsironis wrote:
+> > >
+> > > > The thin provisioning target maintains per thin device mappings that map
+> > > > virtual blocks to data blocks in the data device.
+> > > >
+> > > > When we write to a shared block, in case of internal snapshots, or
+> > > > provision a new block, in case of external snapshots, we copy the shared
+> > > > block to a new data block (COW), update the mapping for the relevant
+> > > > virtual block and then issue the write to the new data block.
+> > > >
+> > > > Suppose the data device has a volatile write-back cache and the
+> > > > following sequence of events occur:
+> > >
+> > > For those with NV caches, can the data disk flush be optional (maybe as a
+> > > table flag)?
+> > 
+> > IIRC block core should avoid issuing the flush if not needed.  I'll have
+> > a closer look to verify as much.
+> > 
+> 
+> For devices without a volatile write-back cache block core strips off
+> the REQ_PREFLUSH and REQ_FUA bits from requests with a payload and
+> completes empty REQ_PREFLUSH requests before entering the driver.
+> 
+> This happens in generic_make_request_checks():
+> 
+> 		/*
+> 		 * Filter flush bio's early so that make_request based
+> 		 * drivers without flush support don't have to worry
+> 		 * about them.
+> 		 */
+> 		if (op_is_flush(bio->bi_opf) &&
+> 		    !test_bit(QUEUE_FLAG_WC, &q->queue_flags)) {
+> 		        bio->bi_opf &= ~(REQ_PREFLUSH | REQ_FUA);
+> 		        if (!nr_sectors) {
+> 		                status = BLK_STS_OK;
+> 		                goto end_io;
+> 		        }
+> 		}
+> 
+> If I am not mistaken, it all depends on whether the underlying device
+> reports the existence of a write back cache or not.
+> 
+> You could check this by looking at /sys/block/<device>/queue/write_cache
+> If it says "write back" then flushes will be issued.
+> 
+> In case the sysfs entry reports a "write back" cache for a device with a
+> non-volatile write cache, I think you can change the kernel's view of
+> the device by writing to this entry (you could also create a udev rule
+> for this).
+> 
+> This way you can set the write cache as write through. This will
+> eliminate the cache flushes issued by the kernel, without altering the
+> device state (Documentation/block/queue-sysfs.rst).
 
-Signed-off-by: Bryan Gurney <bgurney@redhat.com>
----
- drivers/md/dm-dust.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+Interesting, I'll remember that. I think this is a documentation bug, isn't this backwards:
+	'This means that it might not be safe to toggle the setting from 
+	"write back" to "write through", since that will also eliminate
+	cache flushes issued by the kernel.'
+	[https://www.kernel.org/doc/Documentation/block/queue-sysfs.rst]
 
-diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
-index eb37584427a4..ff03b90072c5 100644
---- a/drivers/md/dm-dust.c
-+++ b/drivers/md/dm-dust.c
-@@ -207,16 +207,16 @@ static int dust_map_write(struct dust_device *dd, sector_t thisblock,
- 			  bool fail_read_on_bb)
- {
- 	unsigned long flags;
--	int ret = DM_MAPIO_REMAPPED;
-+	int r = DM_MAPIO_REMAPPED;
- 
- 	if (fail_read_on_bb) {
- 		thisblock >>= dd->sect_per_block_shift;
- 		spin_lock_irqsave(&dd->dust_lock, flags);
--		ret = __dust_map_write(dd, thisblock);
-+		r = __dust_map_write(dd, thisblock);
- 		spin_unlock_irqrestore(&dd->dust_lock, flags);
- 	}
- 
--	return ret;
-+	return r;
- }
- 
- static int dust_map(struct dm_target *ti, struct bio *bio)
--- 
-2.21.0
+
+How does this work with stacking blockdevs?  Does it inherit from the 
+lower-level dev? If an upper-level is misconfigured, would a writeback at 
+higher levels would clear the flush for lower levels?
+
+--
+Eric Wheeler
+
+
+
+> Nikos
+> 
+> > Mike
+> > 
+> 
