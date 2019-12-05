@@ -1,19 +1,15 @@
-From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: Re: [PATCH 0/2] dm thin: Flush data device before
- committing metadata to avoid data corruption
-Date: Thu, 5 Dec 2019 18:02:45 +0200
-Message-ID: <56a62880-ce3f-6f94-a18e-3fcd7db6f286@arrikto.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 1/2] dm thin metadata: Add support for a
+ pre-commit callback
+Date: Thu, 5 Dec 2019 14:40:49 -0500
+Message-ID: <20191205193157.GA95063@lobo>
 References: <20191204140742.26273-1-ntsironis@arrikto.com>
-	<alpine.LRH.2.11.1912041907490.11561@mx.ewheeler.net>
-	<20191204201710.GA31432@redhat.com>
-	<a60f1571-fff1-8be8-5537-f604747b39c9@arrikto.com>
-	<20191205154221.GA4792@redhat.com>
+	<20191204140742.26273-2-ntsironis@arrikto.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191205154221.GA4792@redhat.com>
-Content-Language: en-US
+In-Reply-To: <20191204140742.26273-2-ntsironis@arrikto.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,97 +19,139 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Eric Wheeler <dm-devel@lists.ewheeler.net>, dm-devel@redhat.com, thornber@redhat.com, agk@redhat.com
+Content-Disposition: inline
+To: Nikos Tsironis <ntsironis@arrikto.com>
+Cc: dm-devel@redhat.com, thornber@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On 12/5/19 5:42 PM, Mike Snitzer wrote:
-> On Thu, Dec 05 2019 at 10:31am -0500,
-> Nikos Tsironis <ntsironis@arrikto.com> wrote:
+On Wed, Dec 04 2019 at  9:07P -0500,
+Nikos Tsironis <ntsironis@arrikto.com> wrote:
+
+> Add support for one pre-commit callback which is run right before the
+> metadata are committed.
 > 
->> On 12/4/19 10:17 PM, Mike Snitzer wrote:
->>> On Wed, Dec 04 2019 at  2:58pm -0500,
->>> Eric Wheeler <dm-devel@lists.ewheeler.net> wrote:
->>>
->>>> On Wed, 4 Dec 2019, Nikos Tsironis wrote:
->>>>
->>>>> The thin provisioning target maintains per thin device mappings that map
->>>>> virtual blocks to data blocks in the data device.
->>>>>
->>>>> When we write to a shared block, in case of internal snapshots, or
->>>>> provision a new block, in case of external snapshots, we copy the shared
->>>>> block to a new data block (COW), update the mapping for the relevant
->>>>> virtual block and then issue the write to the new data block.
->>>>>
->>>>> Suppose the data device has a volatile write-back cache and the
->>>>> following sequence of events occur:
->>>>
->>>> For those with NV caches, can the data disk flush be optional (maybe as a
->>>> table flag)?
->>>
->>> IIRC block core should avoid issuing the flush if not needed.  I'll have
->>> a closer look to verify as much.
->>>
->>
->> For devices without a volatile write-back cache block core strips off
->> the REQ_PREFLUSH and REQ_FUA bits from requests with a payload and
->> completes empty REQ_PREFLUSH requests before entering the driver.
->>
->> This happens in generic_make_request_checks():
->>
->> 		/*
->> 		 * Filter flush bio's early so that make_request based
->> 		 * drivers without flush support don't have to worry
->> 		 * about them.
->> 		 */
->> 		if (op_is_flush(bio->bi_opf) &&
->> 		    !test_bit(QUEUE_FLAG_WC, &q->queue_flags)) {
->> 		        bio->bi_opf &= ~(REQ_PREFLUSH | REQ_FUA);
->> 		        if (!nr_sectors) {
->> 		                status = BLK_STS_OK;
->> 		                goto end_io;
->> 		        }
->> 		}
->>
->> If I am not mistaken, it all depends on whether the underlying device
->> reports the existence of a write back cache or not.
+> This allows the thin provisioning target to run a callback before the
+> metadata are committed and is required by the next commit.
 > 
-> Yes, thanks for confirming my memory of the situation.
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+> ---
+>  drivers/md/dm-thin-metadata.c | 29 +++++++++++++++++++++++++++++
+>  drivers/md/dm-thin-metadata.h |  7 +++++++
+>  2 files changed, 36 insertions(+)
 > 
->> You could check this by looking at /sys/block/<device>/queue/write_cache
->> If it says "write back" then flushes will be issued.
->>
->> In case the sysfs entry reports a "write back" cache for a device with a
->> non-volatile write cache, I think you can change the kernel's view of
->> the device by writing to this entry (you could also create a udev rule
->> for this).
->>
->> This way you can set the write cache as write through. This will
->> eliminate the cache flushes issued by the kernel, without altering the
->> device state (Documentation/block/queue-sysfs.rst).
-> 
-> Not delved into this aspect of Linux's capabilities but it strikes me as
-> "dangerous" to twiddle device capabilities like this.  Best to fix
-> driver to properly expose cache (or not, as the case may be).  It should
-> also be noted that with DM; the capabilities are stac ked up at device
-> creation time.  So any changes to the underlying devices will _not_ be
-> reflected to the high level DM device.
+> diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+> index 4c68a7b93d5e..b88d6d701f5b 100644
+> --- a/drivers/md/dm-thin-metadata.c
+> +++ b/drivers/md/dm-thin-metadata.c
+> @@ -189,6 +189,15 @@ struct dm_pool_metadata {
+>  	sector_t data_block_size;
+>  
+>  	/*
+> +	 * Pre-commit callback.
+> +	 *
+> +	 * This allows the thin provisioning target to run a callback before
+> +	 * the metadata are committed.
+> +	 */
+> +	dm_pool_pre_commit_fn pre_commit_fn;
+> +	void *pre_commit_context;
+> +
+> +	/*
+>  	 * We reserve a section of the metadata for commit overhead.
+>  	 * All reported space does *not* include this.
+>  	 */
+> @@ -826,6 +835,14 @@ static int __commit_transaction(struct dm_pool_metadata *pmd)
+>  	if (unlikely(!pmd->in_service))
+>  		return 0;
+>  
+> +	if (pmd->pre_commit_fn) {
+> +		r = pmd->pre_commit_fn(pmd->pre_commit_context);
+> +		if (r < 0) {
+> +			DMERR("pre-commit callback failed");
+> +			return r;
+> +		}
+> +	}
+> +
+>  	r = __write_changed_details(pmd);
+>  	if (r < 0)
+>  		return r;
+> @@ -892,6 +909,8 @@ struct dm_pool_metadata *dm_pool_metadata_open(struct block_device *bdev,
+>  	pmd->in_service = false;
+>  	pmd->bdev = bdev;
+>  	pmd->data_block_size = data_block_size;
+> +	pmd->pre_commit_fn = NULL;
+> +	pmd->pre_commit_context = NULL;
+>  
+>  	r = __create_persistent_data_objects(pmd, format_device);
+>  	if (r) {
+> @@ -2044,6 +2063,16 @@ int dm_pool_register_metadata_threshold(struct dm_pool_metadata *pmd,
+>  	return r;
+>  }
+>  
+> +void dm_pool_register_pre_commit_callback(struct dm_pool_metadata *pmd,
+> +					  dm_pool_pre_commit_fn fn,
+> +					  void *context)
+> +{
+> +	pmd_write_lock_in_core(pmd);
+> +	pmd->pre_commit_fn = fn;
+> +	pmd->pre_commit_context = context;
+> +	pmd_write_unlock(pmd);
+> +}
+> +
+>  int dm_pool_metadata_set_needs_check(struct dm_pool_metadata *pmd)
+>  {
+>  	int r = -EINVAL;
+> diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
+> index f6be0d733c20..7ef56bd2a7e3 100644
+> --- a/drivers/md/dm-thin-metadata.h
+> +++ b/drivers/md/dm-thin-metadata.h
+> @@ -230,6 +230,13 @@ bool dm_pool_metadata_needs_check(struct dm_pool_metadata *pmd);
+>   */
+>  void dm_pool_issue_prefetches(struct dm_pool_metadata *pmd);
+>  
+> +/* Pre-commit callback */
+> +typedef int (*dm_pool_pre_commit_fn)(void *context);
+> +
+> +void dm_pool_register_pre_commit_callback(struct dm_pool_metadata *pmd,
+> +					  dm_pool_pre_commit_fn fn,
+> +					  void *context);
+> +
+>  /*----------------------------------------------------------------*/
+>  
+>  #endif
+> -- 
+> 2.11.0
 > 
 
-Yes, I agree completely. The queue-sysfs doc also mentions that it's not
-safe to do that. I just mentioned it for completeness.
+I have this incremental, not seeing need to avoid using blkdev_issue_flush
 
-As far as DM is concerned, you are right. You would have to deactivate
-and reactivate all DM devices for the change to propagate to upper
-layers. That's why I mentioned udev, because that way the change will be
-made to the lower level device when its queue is first created and it
-will be properly propagated to upper layers.
+---
+ drivers/md/dm-thin.c | 12 +-----------
+ 1 file changed, 1 insertion(+), 11 deletions(-)
 
-But, again, I agree that this is not something safe to do and it's
-better to make sure the driver properly exposes the cache capabilities,
-as you said.
-
-Nikos
-
-> Mike
-> 
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 9c9a323c0c30..255a52f7bbf0 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -3203,18 +3203,8 @@ static void metadata_low_callback(void *context)
+ static int metadata_pre_commit_callback(void *context)
+ {
+ 	struct pool_c *pt = context;
+-	struct bio bio;
+-	int r;
+-
+-	bio_init(&bio, NULL, 0);
+-	bio_set_dev(&bio, pt->data_dev->bdev);
+-	bio.bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
+-
+-	r = submit_bio_wait(&bio);
+ 
+-	bio_uninit(&bio);
+-
+-	return r;
++	return blkdev_issue_flush(pt->data_dev->bdev, GFP_NOIO, NULL);
+ }
+ 
+ static sector_t get_dev_size(struct block_device *bdev)
+-- 
+2.15.0
