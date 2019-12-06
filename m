@@ -1,14 +1,18 @@
 From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: Re: dm-thin: Several Questions on dm-thin performance.
-Date: Fri, 6 Dec 2019 16:15:09 +0200
-Message-ID: <629bd851-8d89-00bd-0fea-d140961e8752@arrikto.com>
-References: <35cf1ecf-5cd8-604b-ec4e-18c9fd4a4195@linux.alibaba.com>
-	<20191122185530.pcrgmb655dkdbdcq@reti>
+Subject: Re: [PATCH 0/2] dm thin: Flush data device before
+ committing metadata to avoid data corruption
+Date: Fri, 6 Dec 2019 17:14:11 +0200
+Message-ID: <d5000bac-208b-a9d3-1990-4517d72b2965@arrikto.com>
+References: <20191204140742.26273-1-ntsironis@arrikto.com>
+	<alpine.LRH.2.11.1912041907490.11561@mx.ewheeler.net>
+	<20191204201710.GA31432@redhat.com>
+	<a60f1571-fff1-8be8-5537-f604747b39c9@arrikto.com>
+	<alpine.LRH.2.11.1912052227130.11561@mx.ewheeler.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20191122185530.pcrgmb655dkdbdcq@reti>
+In-Reply-To: <alpine.LRH.2.11.1912052227130.11561@mx.ewheeler.net>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,60 +23,125 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: thornber@redhat.com
-Cc: JeffleXu <jefflexu@linux.alibaba.com>, dm-devel@redhat.com
+To: Eric Wheeler <dm-devel@lists.ewheeler.net>
+Cc: dm-devel@redhat.com, thornber@redhat.com, agk@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 11/22/19 8:55 PM, Joe Thornber wrote:
-> On Fri, Nov 22, 2019 at 11:14:15AM +0800, JeffleXu wrote:
+On 12/6/19 12:34 AM, Eric Wheeler wrote:
+> On Thu, 5 Dec 2019, Nikos Tsironis wrote:
+>> On 12/4/19 10:17 PM, Mike Snitzer wrote:
+>>> On Wed, Dec 04 2019 at  2:58pm -0500,
+>>> Eric Wheeler <dm-devel@lists.ewheeler.net> wrote:
+>>>
+>>>> On Wed, 4 Dec 2019, Nikos Tsironis wrote:
+>>>>
+>>>>> The thin provisioning target maintains per thin device mappings that map
+>>>>> virtual blocks to data blocks in the data device.
+>>>>>
+>>>>> When we write to a shared block, in case of internal snapshots, or
+>>>>> provision a new block, in case of external snapshots, we copy the shared
+>>>>> block to a new data block (COW), update the mapping for the relevant
+>>>>> virtual block and then issue the write to the new data block.
+>>>>>
+>>>>> Suppose the data device has a volatile write-back cache and the
+>>>>> following sequence of events occur:
+>>>>
+>>>> For those with NV caches, can the data disk flush be optional (maybe as a
+>>>> table flag)?
+>>>
+>>> IIRC block core should avoid issuing the flush if not needed.  I'll have
+>>> a closer look to verify as much.
+>>>
+>>
+>> For devices without a volatile write-back cache block core strips off
+>> the REQ_PREFLUSH and REQ_FUA bits from requests with a payload and
+>> completes empty REQ_PREFLUSH requests before entering the driver.
+>>
+>> This happens in generic_make_request_checks():
+>>
+>> 		/*
+>> 		 * Filter flush bio's early so that make_request based
+>> 		 * drivers without flush support don't have to worry
+>> 		 * about them.
+>> 		 */
+>> 		if (op_is_flush(bio->bi_opf) &&
+>> 		    !test_bit(QUEUE_FLAG_WC, &q->queue_flags)) {
+>> 		        bio->bi_opf &= ~(REQ_PREFLUSH | REQ_FUA);
+>> 		        if (!nr_sectors) {
+>> 		                status = BLK_STS_OK;
+>> 		                goto end_io;
+>> 		        }
+>> 		}
+>>
+>> If I am not mistaken, it all depends on whether the underlying device
+>> reports the existence of a write back cache or not.
+>>
+>> You could check this by looking at /sys/block/<device>/queue/write_cache
+>> If it says "write back" then flushes will be issued.
+>>
+>> In case the sysfs entry reports a "write back" cache for a device with a
+>> non-volatile write cache, I think you can change the kernel's view of
+>> the device by writing to this entry (you could also create a udev rule
+>> for this).
+>>
+>> This way you can set the write cache as write through. This will
+>> eliminate the cache flushes issued by the kernel, without altering the
+>> device state (Documentation/block/queue-sysfs.rst).
 > 
->> The first question is what's the purpose of data cell? In thin_bio_map(),
->> normal bio will be packed as a virtual cell and data cell. I can understand
->> that virtual cell is used to prevent discard bio and non-discard bio
->> targeting the same block from being processed at the same time. I find it
->> was added in commit     e8088073c9610af017fd47fddd104a2c3afb32e8 (dm thin:
->> fix race between simultaneous io and discards to same block), but I'm still
->> confused about the use of data cell.
+> Interesting, I'll remember that. I think this is a documentation bug, isn't this backwards:
+> 	'This means that it might not be safe to toggle the setting from
+> 	"write back" to "write through", since that will also eliminate
+> 	cache flushes issued by the kernel.'
+> 	[https://www.kernel.org/doc/Documentation/block/queue-sysfs.rst]
 > 
-> As you are aware there are two address spaces for the locks.  The 'virtual' one
-> refers to cells in the logical address space of the thin devices, and the 'data' one
-> refers to the underlying data device.  There are certain conditions where we
-> unfortunately need to hold both of these (eg, to prevent a data block being reprovisioned
-> before an io to it has completed).
-> 
->> The second question is the impact of virtual cell and data cell on IO
->> performance. If $data_block_size is large for example 1G, in multithread fio
->> test, most bio will be buffered in cell->bios list and then be processed by
->> worker thread asynchronously, even when there's no discard bio. Thus the
->> original parallel IO is processed by worker thread serially now. As the
->> number of fio test threads increase, the single worker thread can easily get
->> CPU 100%, and thus become the bottleneck of the performance since dm-thin
->> workqueue is ordered unbound.
-> 
-> Yep, this is a big issue.  Take a look at dm-bio-prison-v2.h, this is the
-> new interface that we need to move dm-thin across to use (dm-cache already uses it).
-> It allows concurrent holders of a cell (ie, read locks), so we'll be able to remap
-> much more io without handing it off to a worker thread.  Once this is done I want
-> to add an extra field to cells that will cache the mapping, this way if you acquire a
-> cell that is already held then you can avoid the expensive btree lookup.  Together
-> these changes should make a huge difference to the performance.
-> 
-> If you've got some spare coding cycles I'd love some help with this ;)
 > 
 
-Hi Joe,
+If a device has a volatile cache then the write_cache sysfs entry will
+be "write back" and we have to issue flushes to the device. In all other
+cases write_cache will be "write through".
 
-I would be interested in helping you with this task. I can't make any
-promises, but I believe I could probably spare some time to work on it.
+It's not safe to toggle write_cache from "write back" to "write through"
+because this stops the kernel from sending flushes to the device, but
+the device will continue caching the writes. So, in case something goes
+wrong, you might lose your writes or end up with some kind of
+corruption.
 
-If you think you could use the extra help, let me know.
+> How does this work with stacking blockdevs?  Does it inherit from the
+> lower-level dev? If an upper-level is misconfigured, would a writeback at
+> higher levels would clear the flush for lower levels?
+> 
+
+As Mike already mentioned in another reply to this thread, the device
+capabilities are stacked up when each device is created and are
+inherited from component devices.
+
+The logic for device stacking is implemented in various functions in
+block/blk-settings.c (blk_set_stacking_limits(), blk_stack_limits(),
+etc.), which are used also by DM core in dm-table.c to set the
+capabilities of DM devices.
+
+If an upper layer device reports a "write back" cache then flushes will
+be issued to it by the kernel, no matter what the capabilities of the
+underlying devices are.
+
+Normally an upper layer device would report a "write back" cache if at
+least one underlying device supports flushes. But, some DM devices
+report a "write back" cache irrespective of the underlying devices,
+e.g., dm-thin, dm-clone, dm-cache. This is required so they can flush
+their own metadata. They then pass the flush request down to the
+underlying device and rely on block core to do the right thing. Either
+actually send the flush to the device, if it has a volatile cache, or
+complete it immediately.
 
 Nikos
 
-> - Joe
-> 
 > --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> Eric Wheeler
 > 
+> 
+> 
+>> Nikos
+>>
+>>> Mike
+>>>
+>>
