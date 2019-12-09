@@ -1,11 +1,20 @@
-From: Maged Mokhtar <mmokhtar@petasan.org>
-Subject: [PATCH] dm writecache: SB remove seq_count
-Date: Fri, 6 Dec 2019 21:03:25 +0200
-Message-ID: <598c7c64-9b11-3407-2060-8d43b1ef1241@petasan.org>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: Re: [PATCH 0/2] dm thin: Flush data device before
+ committing metadata to avoid data corruption
+Date: Mon, 9 Dec 2019 16:25:10 +0200
+Message-ID: <130e52a1-ba9a-e77b-aedd-87e5985c32bd@arrikto.com>
+References: <20191204140742.26273-1-ntsironis@arrikto.com>
+	<alpine.LRH.2.11.1912041907490.11561@mx.ewheeler.net>
+	<20191204201710.GA31432@redhat.com>
+	<a60f1571-fff1-8be8-5537-f604747b39c9@arrikto.com>
+	<alpine.LRH.2.11.1912052227130.11561@mx.ewheeler.net>
+	<d5000bac-208b-a9d3-1990-4517d72b2965@arrikto.com>
+	<alpine.LRH.2.11.1912061953560.11561@mx.ewheeler.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.11.1912061953560.11561@mx.ewheeler.net>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,144 +25,194 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: mpatocka@redhat.com
-Cc: dm-devel@redhat.com
+To: Eric Wheeler <dm-devel@lists.ewheeler.net>
+Cc: dm-devel@redhat.com, thornber@redhat.com, agk@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Removes seq_count from super block. Currently the super block gets 
-written in each commit to update the seq_count which is just used when 
-the target is restarted/resumed. This extra iop has a performance impact 
-on small block size writes which do FUA/sync on every request. A 4k sync 
-write currently requires 3 write ops: submitted data, metadata + super 
-block seq_count update, removal of seq_count update reduces required 
-write ops to 2.
+On 12/6/19 10:06 PM, Eric Wheeler wrote:
+> On Fri, 6 Dec 2019, Nikos Tsironis wrote:
+>> On 12/6/19 12:34 AM, Eric Wheeler wrote:
+>>> On Thu, 5 Dec 2019, Nikos Tsironis wrote:
+>>>> On 12/4/19 10:17 PM, Mike Snitzer wrote:
+>>>>> On Wed, Dec 04 2019 at  2:58pm -0500,
+>>>>> Eric Wheeler <dm-devel@lists.ewheeler.net> wrote:
+>>>>>
+>>>>>> On Wed, 4 Dec 2019, Nikos Tsironis wrote:
+>>>>>>
+>>>>>>> The thin provisioning target maintains per thin device mappings that
+>>>>>>> map
+>>>>>>> virtual blocks to data blocks in the data device.
+>>>>>>>
+>>>>>>> When we write to a shared block, in case of internal snapshots, or
+>>>>>>> provision a new block, in case of external snapshots, we copy the
+>>>>>>> shared
+>>>>>>> block to a new data block (COW), update the mapping for the relevant
+>>>>>>> virtual block and then issue the write to the new data block.
+>>>>>>>
+>>>>>>> Suppose the data device has a volatile write-back cache and the
+>>>>>>> following sequence of events occur:
+>>>>>>
+>>>>>> For those with NV caches, can the data disk flush be optional (maybe
+>>>>>> as a
+>>>>>> table flag)?
+>>>>>
+>>>>> IIRC block core should avoid issuing the flush if not needed.  I'll have
+>>>>> a closer look to verify as much.
+>>>>>
+>>>>
+>>>> For devices without a volatile write-back cache block core strips off
+>>>> the REQ_PREFLUSH and REQ_FUA bits from requests with a payload and
+>>>> completes empty REQ_PREFLUSH requests before entering the driver.
+>>>>
+>>>> This happens in generic_make_request_checks():
+>>>>
+>>>>    /*
+>>>>     * Filter flush bio's early so that make_request based
+>>>>     * drivers without flush support don't have to worry
+>>>>     * about them.
+>>>>     */
+>>>>    if (op_is_flush(bio->bi_opf) &&
+>>>>        !test_bit(QUEUE_FLAG_WC, &q->queue_flags)) {
+>>>>            bio->bi_opf &= ~(REQ_PREFLUSH | REQ_FUA);
+>>>>            if (!nr_sectors) {
+>>>>                    status = BLK_STS_OK;
+>>>>                    goto end_io;
+>>>>            }
+>>>>    }
+>>>>
+>>>> If I am not mistaken, it all depends on whether the underlying device
+>>>> reports the existence of a write back cache or not.
+>>>>
+>>>> You could check this by looking at /sys/block/<device>/queue/write_cache
+>>>> If it says "write back" then flushes will be issued.
+>>>>
+>>>> In case the sysfs entry reports a "write back" cache for a device with a
+>>>> non-volatile write cache, I think you can change the kernel's view of
+>>>> the device by writing to this entry (you could also create a udev rule
+>>>> for this).
+>>>>
+>>>> This way you can set the write cache as write through. This will
+>>>> eliminate the cache flushes issued by the kernel, without altering the
+>>>> device state (Documentation/block/queue-sysfs.rst).
+>>>
+>>> Interesting, I'll remember that. I think this is a documentation bug, isn't
+>>> this backwards:
+>>>   'This means that it might not be safe to toggle the setting from
+>>>   "write back" to "write through", since that will also eliminate
+>>>   cache flushes issued by the kernel.'
+>>>   [https://www.kernel.org/doc/Documentation/block/queue-sysfs.rst]
+>>>
+>>>
+>>
+>> If a device has a volatile cache then the write_cache sysfs entry will
+>> be "write back" and we have to issue flushes to the device. In all other
+>> cases write_cache will be "write through".
+> 
+> Forgive my misunderstanding, but if I have a RAID controller with a cache
+> and BBU with the RAID volume set to write-back mode in the controller, are
+> you saying that the sysfs entry should show "write through"? I had always
+> understood that it was safe to disable flushes with a non-volatile cache
+> and a non-volatile cache is called a write-back cache.
+> 
 
-Rebuild of seq_count at start/resumption can be done quickly by looping 
-through memory entry metadata within the resume() function.
+ From the device perspective, a non-volatile cache operating in
+write-back mode is indeed called a write-back cache.
 
-Signed-off-by: Maged Mokhtar <mmokhtar@petasan.org>
----
-  drivers/md/dm-writecache.c |   56 ++++++++++++++++++++++++++---------
-  1 file changed, 42 insertions(+), 14 deletions(-)
+But, from the OS perspective, a non-volatile cache (whether it operates
+in write-back or write-through mode), for all intents and purposes, is
+equivalent to a write-through cache: when the device acknowledges a
+write it's guaranteed that the written data won't be lost in case of
+power loss.
 
---- a/drivers/md/dm-writecache.c	2019-12-06 03:07:53.000000000 -0800
-+++ b/drivers/md/dm-writecache.c	2019-12-06 09:25:45.000000000 -0800
-@@ -52,7 +52,8 @@ do {								\
-  #endif
+So, in the case of a controller with a BBU and/or a non-volatile cache,
+you don't care what the device does internally. All that matters is that
+acked writes won't be lost in case of power failure.
 
-  #define MEMORY_SUPERBLOCK_MAGIC		0x23489321
--#define MEMORY_SUPERBLOCK_VERSION	1
-+#define MEMORY_SUPERBLOCK_VERSION_1	1
-+#define MEMORY_SUPERBLOCK_VERSION_2	2
+I believe that the sysfs entry reports exactly that. Whether the kernel
+should treat the device as having a volatile write-back cache, so we
+have to issue flushes to ensure the data are properly persisted, or as
+having no cache or a write-through cache, so flushes are not necessary.
 
-  struct wc_memory_entry {
-  	__le64 original_sector;
-@@ -67,7 +68,6 @@ struct wc_memory_superblock {
-  			__le32 block_size;
-  			__le32 pad;
-  			__le64 n_blocks;
--			__le64 seq_count;
-  		};
-  		__le64 padding[8];
-  	};
-@@ -380,6 +380,41 @@ static uint64_t read_seq_count(struct dm
-  #endif
-  }
+> It is strange to me that this terminology in the kernel would be backwards
+> from how it is expressed in a RAID controller. Incidentally, I have an
+> Avago MegaRAID 9460 with 2 volumes. The first volume (sda) is in
+> write-back mode and the second volume is write-through. In both cases
+> sysfs reports "write through":
+> 
+> [root@hv1-he ~]# cat /sys/block/sda/queue/write_cache
+> write through
+> [root@hv1-he ~]# cat /sys/block/sdb/queue/write_cache
+> write through
+> 
+> This is running 4.19.75, so we can at least say that the 9460 does not
+> support proper representation of the VD cache mode in sysfs, but which is
+> correct? Should it not be that the sysfs entry reports the same cache mode
+> of the RAID controller?
+> 
 
-+static uint64_t read_last_seq_count(struct dm_writecache *wc)
-+{
-+	size_t b;
-+	uint64_t last_seq_count = 0;
-+	uint64_t seq_count;
-+	__le64 empty = cpu_to_le64(-1);
-+
-+	if (WC_MODE_PMEM(wc)) {
-+		struct wc_memory_entry wme;
-+		for (b = 0; b < wc->n_blocks; b++) {
-+			BUG_ON(memcpy_mcsafe(&wme, &sb(wc)->entries[b],
-+				sizeof(struct wc_memory_entry)));
-+			if (wme.seq_count != empty) {
-+				seq_count = le64_to_cpu(wme.seq_count);
-+				if (last_seq_count < seq_count)
-+					last_seq_count = seq_count;
-+			}
-+		}
-+	}
-+	else {
-+		struct wc_memory_entry *p = &sb(wc)->entries[0];
-+		b = wc->n_blocks;
-+		while (0 < b) {
-+			if (p->seq_count != empty) {	
-+				seq_count = le64_to_cpu(p->seq_count);
-+				if (last_seq_count < seq_count)
-+					last_seq_count = seq_count;
-+			}
-+			p++;		
-+			b--;
-+		}
-+	}
-+	return last_seq_count;
-+}
-+
-  static void clear_seq_count(struct dm_writecache *wc, struct wc_entry *e)
-  {
-  #ifdef DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
-@@ -730,8 +765,6 @@ static void writecache_flush(struct dm_w
-  		writecache_wait_for_ios(wc, WRITE);
+My guess is that the controller reports to the kernel that it has a
+write-through cache (or no cache at all) on purpose, to avoid
+unnecessary flushes. Since it can ensure the persistence of acked writes
+with other means, e.g., a BBU unit, as far as the kernel is concerned
+the device can be treated as one with a write-through cache.
 
-  	wc->seq_count++;
--	pmem_assign(sb(wc)->seq_count, cpu_to_le64(wc->seq_count));
--	writecache_flush_region(wc, &sb(wc)->seq_count, sizeof sb(wc)->seq_count);
-  	writecache_commit_flushed(wc);
+Moreover, I think that MegaRAID controllers, in the default write back
+mode, automatically switch the write policy to write-through if the BBU
+is low, has failed or is being charged.
 
-  	wc->overwrote_committed = false;
-@@ -876,7 +909,6 @@ static void writecache_resume(struct dm_
-  	struct dm_writecache *wc = ti->private;
-  	size_t b;
-  	bool need_flush = false;
--	__le64 sb_seq_count;
-  	int r;
+So, I think it makes sense to report to the kernel that the device has a
+write-through cache, even though internally the device operates the
+cache in write-back mode.
 
-  	wc_lock(wc);
-@@ -894,12 +926,7 @@ static void writecache_resume(struct dm_
-  	}
-  	wc->freelist_size = 0;
+Nikos
 
--	r = memcpy_mcsafe(&sb_seq_count, &sb(wc)->seq_count, sizeof(uint64_t));
--	if (r) {
--		writecache_error(wc, r, "hardware memory error when reading 
-superblock: %d", r);
--		sb_seq_count = cpu_to_le64(0);
--	}
--	wc->seq_count = le64_to_cpu(sb_seq_count);
-+	wc->seq_count = read_last_seq_count(wc) + 1;
-
-  #ifdef DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
-  	for (b = 0; b < wc->n_blocks; b++) {
-@@ -1757,10 +1784,9 @@ static int init_memory(struct dm_writeca
-
-  	for (b = 0; b < ARRAY_SIZE(sb(wc)->padding); b++)
-  		pmem_assign(sb(wc)->padding[b], cpu_to_le64(0));
--	pmem_assign(sb(wc)->version, cpu_to_le32(MEMORY_SUPERBLOCK_VERSION));
-+	pmem_assign(sb(wc)->version, cpu_to_le32(MEMORY_SUPERBLOCK_VERSION_2));
-  	pmem_assign(sb(wc)->block_size, cpu_to_le32(wc->block_size));
-  	pmem_assign(sb(wc)->n_blocks, cpu_to_le64(wc->n_blocks));
--	pmem_assign(sb(wc)->seq_count, cpu_to_le64(0));
-
-  	for (b = 0; b < wc->n_blocks; b++)
-  		write_original_sector_seq_count(wc, &wc->entries[b], -1, -1);
-@@ -2159,11 +2185,13 @@ invalid_optional:
-  		goto bad;
-  	}
-
--	if (le32_to_cpu(s.version) != MEMORY_SUPERBLOCK_VERSION) {
-+	if (le32_to_cpu(s.version) != MEMORY_SUPERBLOCK_VERSION_1 &&
-+		le32_to_cpu(s.version) != MEMORY_SUPERBLOCK_VERSION_2) {
-  		ti->error = "Invalid version in the superblock";
-  		r = -EINVAL;
-  		goto bad;
-  	}
-+	pmem_assign(sb(wc)->version, cpu_to_le32(MEMORY_SUPERBLOCK_VERSION_2));
-
-  	if (le32_to_cpu(s.block_size) != wc->block_size) {
-  		ti->error = "Block size does not match superblock";
+> -Eric
+> 
+>>
+>> It's not safe to toggle write_cache from "write back" to "write through"
+>> because this stops the kernel from sending flushes to the device, but
+>> the device will continue caching the writes. So, in case something goes
+>> wrong, you might lose your writes or end up with some kind of
+>> corruption.
+>>
+>>> How does this work with stacking blockdevs?  Does it inherit from the
+>>> lower-level dev? If an upper-level is misconfigured, would a writeback at
+>>> higher levels would clear the flush for lower levels?
+>>>
+>>
+>> As Mike already mentioned in another reply to this thread, the device
+>> capabilities are stacked up when each device is created and are
+>> inherited from component devices.
+>>
+>> The logic for device stacking is implemented in various functions in
+>> block/blk-settings.c (blk_set_stacking_limits(), blk_stack_limits(),
+>> etc.), which are used also by DM core in dm-table.c to set the
+>> capabilities of DM devices.
+>>
+>> If an upper layer device reports a "write back" cache then flushes will
+>> be issued to it by the kernel, no matter what the capabilities of the
+>> underlying devices are.
+>>
+>> Normally an upper layer device would report a "write back" cache if at
+>> least one underlying device supports flushes. But, some DM devices
+>> report a "write back" cache irrespective of the underlying devices,
+>> e.g., dm-thin, dm-clone, dm-cache. This is required so they can flush
+>> their own metadata. They then pass the flush request down to the
+>> underlying device and rely on block core to do the right thing. Either
+>> actually send the flush to the device, if it has a volatile cache, or
+>> complete it immediately.
+>>
+>> Nikos
+>>
+>>> --
+>>> Eric Wheeler
+>>>
+>>>
+>>>
+>>>> Nikos
+>>>>
+>>>>> Mike
+>>>>>
+>>>>
+>>
+>>
