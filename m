@@ -1,11 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 5.5-rc2
-Date: Thu, 12 Dec 2019 09:58:57 -0500
-Message-ID: <20191212145857.GA27301@redhat.com>
+From: Eric Wheeler <dm-devel@lists.ewheeler.net>
+Subject: Re: dm-thin: Several Questions on dm-thin performance.
+Date: Fri, 13 Dec 2019 01:32:37 +0000 (UTC)
+Message-ID: <alpine.LRH.2.11.1912130129120.11561@mx.ewheeler.net>
+References: <35cf1ecf-5cd8-604b-ec4e-18c9fd4a4195@linux.alibaba.com>
+	<20191122185530.pcrgmb655dkdbdcq@reti>
+	<629bd851-8d89-00bd-0fea-d140961e8752@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <629bd851-8d89-00bd-0fea-d140961e8752@arrikto.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,71 +19,101 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Diego Calleja <diegocg@gmail.com>, Nikos Tsironis <ntsironis@arrikto.com>, Eric Biggers <ebiggers@google.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Hou Tao <houtao1@huawei.com>, Alasdair G Kergon <agk@redhat.com>
+To: Nikos Tsironis <ntsironis@arrikto.com>
+Cc: JeffleXu <jefflexu@linux.alibaba.com>, dm-devel@redhat.com, thornber@redhat.com
 List-Id: dm-devel.ids
 
-Hi Linus,
+On Fri, 6 Dec 2019, Nikos Tsironis wrote:
+> On 11/22/19 8:55 PM, Joe Thornber wrote:
+> > On Fri, Nov 22, 2019 at 11:14:15AM +0800, JeffleXu wrote:
+> > 
+> > > The first question is what's the purpose of data cell? In thin_bio_map(),
+> > > normal bio will be packed as a virtual cell and data cell. I can
+> > > understand
+> > > that virtual cell is used to prevent discard bio and non-discard bio
+> > > targeting the same block from being processed at the same time. I find it
+> > > was added in commit     e8088073c9610af017fd47fddd104a2c3afb32e8 (dm thin:
+> > > fix race between simultaneous io and discards to same block), but I'm
+> > > still
+> > > confused about the use of data cell.
+> > 
+> > As you are aware there are two address spaces for the locks.  The 'virtual'
+> > one
+> > refers to cells in the logical address space of the thin devices, and the
+> > 'data' one
+> > refers to the underlying data device.  There are certain conditions where we
+> > unfortunately need to hold both of these (eg, to prevent a data block being
+> > reprovisioned
+> > before an io to it has completed).
+> > 
+> > > The second question is the impact of virtual cell and data cell on IO
+> > > performance. If $data_block_size is large for example 1G, in multithread
+> > > fio
+> > > test, most bio will be buffered in cell->bios list and then be processed
+> > > by
+> > > worker thread asynchronously, even when there's no discard bio. Thus the
+> > > original parallel IO is processed by worker thread serially now. As the
+> > > number of fio test threads increase, the single worker thread can easily
+> > > get
+> > > CPU 100%, and thus become the bottleneck of the performance since dm-thin
+> > > workqueue is ordered unbound.
+> > 
+> > Yep, this is a big issue.  Take a look at dm-bio-prison-v2.h, this is the
+> > new interface that we need to move dm-thin across to use (dm-cache already
+> > uses it).
+> > It allows concurrent holders of a cell (ie, read locks), so we'll be able to
+> > remap
+> > much more io without handing it off to a worker thread.  Once this is done I
+> > want
+> > to add an extra field to cells that will cache the mapping, this way if you
+> > acquire a
+> > cell that is already held then you can avoid the expensive btree lookup.
+> > Together
+> > these changes should make a huge difference to the performance.
+> > 
+> > If you've got some spare coding cycles I'd love some help with this ;)
+> > 
+> 
+> Hi Joe,
+> 
+> I would be interested in helping you with this task. I can't make any
+> promises, but I believe I could probably spare some time to work on it.
 
-The following changes since commit f612b2132db529feac4f965f28a1b9258ea7c22b:
 
-  Revert "dm crypt: use WQ_HIGHPRI for the IO and crypt workqueues" (2019-11-20 17:27:39 -0500)
+Hi Nikos, it would be great if you are able help with the 
+dm-thin port to dm-bio-prison-v2.  I'm glad to see you are interested in 
+dm-thin performance too.
 
-are available in the Git repository at:
+These are the commits that implemented dm-bio-prison-v2 in dm-cache back 
+in ~4.12, maybe it can give you a good start on what the conversion might 
+look like:
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.5/dm-fixes
+b29d4986d dm cache: significant rework to leverage dm-bio-prison-v2
 
-for you to fetch changes up to 7fc979f8204fb763e203d3e716c17d352eb96b35:
+Here's a related bugfix:
 
-  docs: dm-integrity: remove reference to ARC4 (2019-12-10 10:02:43 -0500)
+d1260e2a3 dm cache: fix race condition in the writeback mode overwrite_bio optimisation
 
-Please pull, thanks!
-Mike
 
-----------------------------------------------------------------
-- Fix DM multipath by restoring full path selector functionality for
-  bio-based configurations that don't haave a SCSI device handler.
 
-- Fix dm-btree removal to ensure non-root btree nodes have at least
-  (max_entries / 3) entries.  This resolves userspace thin_check
-  utility's report of "too few entries in btree_node".
+--
+Eric Wheeler
 
-- Fix both the DM thin-provisioning and dm-clone targets to properly
-  flush the data device prior to metadata commit.  This resolves the
-  potential for inconsistency across a power loss event when the data
-  device has a volatile writeback cache.
 
-- Small documentation fixes to dm-clone and dm-integrity.
-
-----------------------------------------------------------------
-Diego Calleja (1):
-      dm: add dm-clone to the documentation index
-
-Eric Biggers (1):
-      docs: dm-integrity: remove reference to ARC4
-
-Hou Tao (1):
-      dm btree: increase rebalance threshold in __rebalance2()
-
-Mike Snitzer (1):
-      dm mpath: remove harmful bio-based optimization
-
-Nikos Tsironis (5):
-      dm clone metadata: Track exact changes per transaction
-      dm clone metadata: Use a two phase commit
-      dm clone: Flush destination device before committing metadata
-      dm thin metadata: Add support for a pre-commit callback
-      dm thin: Flush data device before committing metadata
-
- .../admin-guide/device-mapper/dm-integrity.rst     |   2 +-
- Documentation/admin-guide/device-mapper/index.rst  |   1 +
- drivers/md/dm-clone-metadata.c                     | 136 +++++++++++++++------
- drivers/md/dm-clone-metadata.h                     |  17 +++
- drivers/md/dm-clone-target.c                       |  53 ++++++--
- drivers/md/dm-mpath.c                              |  37 +-----
- drivers/md/dm-thin-metadata.c                      |  29 +++++
- drivers/md/dm-thin-metadata.h                      |   7 ++
- drivers/md/dm-thin.c                               |  42 ++++++-
- drivers/md/persistent-data/dm-btree-remove.c       |   8 +-
- 10 files changed, 248 insertions(+), 84 deletions(-)
+> 
+> Nikos
+> 
+> > - Joe
+> > 
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> > 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> 
