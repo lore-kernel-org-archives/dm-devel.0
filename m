@@ -1,14 +1,14 @@
 From: xianrong_zhou@163.com
-Subject: [PATCH] dm: shrink data blocks using bitmap for hash reading
-Date: Sun, 15 Dec 2019 12:13:22 +0800
-Message-ID: <20191215041322.7874-1-xianrong_zhou@163.com>
+Subject: dm: shrink data blocks using bitmap for hash reading
+Date: Sun, 15 Dec 2019 12:58:40 +0800
+Message-ID: <20191215045840.9834-1-xianrong_zhou@163.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: dm-devel@redhat.com
-Cc: linux-kernel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, haizhou.song@transsion.com, xianrong.zhou@transsion.com, zhouxianrong <xianrong_zhou@163.com>, "yuanjiong . gao" <yuanjiong.gao@transsion.com>, "ruxian . feng" <ruxian.feng@transsion.com>
+Cc: linux-kernel@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, haizhou.song@transsion.com, xianrong.zhou@transsion.com, xianrong_zhou <xianrong_zhou@163.com>, "yuanjiong . gao" <yuanjiong.gao@transsion.com>, "ruxian . feng" <ruxian.feng@transsion.com>
 List-Id: dm-devel.ids
 
-From: zhouxianrong <xianrong_zhou@163.com>
+From: xianrong_zhou <xianrong_zhou@163.com>
 
 If check_at_most_once enabled, just like verity work,
 the prefetching work should check for data block bitmap
@@ -18,7 +18,7 @@ firstly before reading hash block as well.This can reduce
 The reduced data blocks would be enlarged again by cluster
 reading later.
 
-Signed-off-by: zhouxianrong <xianrong_zhou@163.com>
+Signed-off-by: xianrong_zhou <xianrong_zhou@163.com>
 Signed-off-by: yuanjiong.gao <yuanjiong.gao@transsion.com>
 Signed-off-by: ruxian.feng <ruxian.feng@transsion.com>
 ---
