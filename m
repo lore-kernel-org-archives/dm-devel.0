@@ -1,145 +1,57 @@
-From: Eric Wheeler <dm-devel@lists.ewheeler.net>
-Subject: Re: dm-thin: Several Questions on dm-thin performance.
-Date: Sun, 15 Dec 2019 21:44:49 +0000 (UTC)
-Message-ID: <alpine.LRH.2.11.1912152140020.11561@mx.ewheeler.net>
-References: <35cf1ecf-5cd8-604b-ec4e-18c9fd4a4195@linux.alibaba.com>
-	<20191122185530.pcrgmb655dkdbdcq@reti>
-	<629bd851-8d89-00bd-0fea-d140961e8752@arrikto.com>
-	<alpine.LRH.2.11.1912130129120.11561@mx.ewheeler.net>
+From: =?gb2312?B?eGlhbnJvbmcuemhvdSjW3M/IyNkp?=
+        <xianrong.zhou@transsion.com>
+Subject: Reply [PATCH] dm-verity: unnecessary data blocks that need not read
+ hash blocks
+Date: Mon, 16 Dec 2019 02:02:33 +0000
+Message-ID: <727b9e9279a546beb2ae63a18eae6ab0@transsion.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.11.1912130129120.11561@mx.ewheeler.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: thornber@redhat.com
-Cc: JeffleXu <jefflexu@linux.alibaba.com>, dm-devel@redhat.com, Nikos Tsironis <ntsironis@arrikto.com>
+Content-Type: text/plain; charset="gb2312"
+Content-Transfer-Encoding: base64
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Language: zh-CN
+Sender: linux-kernel-owner@vger.kernel.org
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, =?gb2312?B?d2VpbWluLm1hbyjDq87Aw/Ep?= <weimin.mao@transsion.com>, =?gb2312?B?aGFpemhvdS5zb25nKMvOuqPW2yk=?= <haizhou.song@transsion.com>, "snitzer@redhat.com" <snitzer@redhat.com>, =?gb2312?B?d2FuYmluLndhbmcozfTN8rHzKQ==?= <wanbin.wang@transsion.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, =?gb2312?B?eXVhbmppb25nLmdhbyi439Sovrwp?= <yuanjiong.gao@transsion.com>, =?gb2312?B?cnV4aWFuLmZlbmcot+vI5ea1KQ==?= <ruxian.feng@transsion.com>, "agk@redhat.com" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 13 Dec 2019, Eric Wheeler wrote:
-> On Fri, 6 Dec 2019, Nikos Tsironis wrote:
-> > On 11/22/19 8:55 PM, Joe Thornber wrote:
-> > > On Fri, Nov 22, 2019 at 11:14:15AM +0800, JeffleXu wrote:
-> > > 
-> > > > The first question is what's the purpose of data cell? In thin_bio_map(),
-> > > > normal bio will be packed as a virtual cell and data cell. I can
-> > > > understand
-> > > > that virtual cell is used to prevent discard bio and non-discard bio
-> > > > targeting the same block from being processed at the same time. I find it
-> > > > was added in commit     e8088073c9610af017fd47fddd104a2c3afb32e8 (dm thin:
-> > > > fix race between simultaneous io and discards to same block), but I'm
-> > > > still
-> > > > confused about the use of data cell.
-> > > 
-> > > As you are aware there are two address spaces for the locks.  The 'virtual'
-> > > one
-> > > refers to cells in the logical address space of the thin devices, and the
-> > > 'data' one
-> > > refers to the underlying data device.  There are certain conditions where we
-> > > unfortunately need to hold both of these (eg, to prevent a data block being
-> > > reprovisioned
-> > > before an io to it has completed).
-> > > 
-> > > > The second question is the impact of virtual cell and data cell on IO
-> > > > performance. If $data_block_size is large for example 1G, in multithread
-> > > > fio
-> > > > test, most bio will be buffered in cell->bios list and then be processed
-> > > > by
-> > > > worker thread asynchronously, even when there's no discard bio. Thus the
-> > > > original parallel IO is processed by worker thread serially now. As the
-> > > > number of fio test threads increase, the single worker thread can easily
-> > > > get
-> > > > CPU 100%, and thus become the bottleneck of the performance since dm-thin
-> > > > workqueue is ordered unbound.
-> > > 
-> > > Yep, this is a big issue.  Take a look at dm-bio-prison-v2.h, this is the
-> > > new interface that we need to move dm-thin across to use (dm-cache already
-> > > uses it).
-> > > It allows concurrent holders of a cell (ie, read locks), so we'll be able to
-> > > remap
-> > > much more io without handing it off to a worker thread.  Once this is done I
-> > > want
-> > > to add an extra field to cells that will cache the mapping, this way if you
-> > > acquire a
-> > > cell that is already held then you can avoid the expensive btree lookup.
-> > > Together
-> > > these changes should make a huge difference to the performance.
-> > > 
-> > > If you've got some spare coding cycles I'd love some help with this ;)
-> > > 
-> > 
-> > Hi Joe,
-> > 
-> > I would be interested in helping you with this task. I can't make any
-> > promises, but I believe I could probably spare some time to work on it.
-> 
-> 
-> Hi Nikos, it would be great if you are able help with the 
-> dm-thin port to dm-bio-prison-v2.  I'm glad to see you are interested in 
-> dm-thin performance too.
-> 
-> These are the commits that implemented dm-bio-prison-v2 in dm-cache back 
-> in ~4.12, maybe it can give you a good start on what the conversion might 
-> look like:
-> 
-> b29d4986d dm cache: significant rework to leverage dm-bio-prison-v2
-> 
-> Here's a related bugfix:
-> 
-> d1260e2a3 dm cache: fix race condition in the writeback mode overwrite_bio optimisation
-
-Hi Joe,
-
-I was looking through the dm-bio-prison-v2 commit for dm-cache (b29d4986d) 
-and it is huge, ~5k lines.  Do you still have a git branch with these 
-commits in smaller pieces (not squashed) so we can find the bits that 
-might be informative for converting lv-thin to use dm-bio-prison-v2?
-
-For example, I think that, at least, the policy changes and 
-btracker code is dm-cache specific and just a distraction when trying to 
-understand the dm-bio-prison-v2 conversion.
-
---
-Eric Wheeler
-
-
-> 
-> 
-> 
-> --
-> Eric Wheeler
-> 
-> 
-> > 
-> > Nikos
-> > 
-> > > - Joe
-> > > 
-> > > --
-> > > dm-devel mailing list
-> > > dm-devel@redhat.com
-> > > https://www.redhat.com/mailman/listinfo/dm-devel
-> > > 
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> > 
-> > 
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
-> 
+aGV5IEVyaWM6DQoNCk9uIFdlZCwgRGVjIDExLCAyMDE5IGF0IDExOjMyOjQwQU0gKzA4MDAsIHpo
+b3UgeGlhbnJvbmcgd3JvdGU6DQo+IEZyb206ICJ4aWFucm9uZy56aG91IiA8eGlhbnJvbmcuemhv
+dUB0cmFuc3Npb24uY29tPg0KPiANCj4gSWYgY2hlY2tfYXRfbW9zdF9vbmNlIGVuYWJsZWQsIGp1
+c3QgbGlrZSB2ZXJpdHkgd29yayB0aGUgcHJlZmV0Y2hpbmcgDQo+IHdvcmsgc2hvdWxkIGNoZWNr
+IGZvciBkYXRhIGJsb2NrIGJpdG1hcCBmaXJzdGx5IGJlZm9yZSByZWFkaW5nIGhhc2ggDQo+IGJs
+b2NrIGFzIHdlbGwuIFNraXAgYml0LXNldCBkYXRhIGJsb2NrcyBmcm9tIGJvdGggZW5kcyBvZiBk
+YXRhIGJsb2NrIA0KPiByYW5nZSBieSB0ZXN0aW5nIHRoZSB2YWxpZGF0ZWQgYml0bWFwLiBUaGlz
+IGNhbiByZWR1Y2UgdGhlIGFtb3VudHMgb2YgDQo+IGRhdGEgYmxvY2tzIHdoaWNoIG5lZWQgdG8g
+cmVhZCBoYXNoIGJsb2Nrcy4NCj4gDQo+IExhdW5jaGluZyA5MSBhcHBzIGV2ZXJ5IDE1cyBhbmQg
+cmVwZWF0IDIxIHJvdW5kcyBvbiBBbmRyb2lkIFEuDQo+IEluIHByZWZldGNoaW5nIHdvcmsgd2Ug
+Y2FuIGxldCBvbmx5IDI2MDIvMzYwMzEyID0gMC43MiUgZGF0YSBibG9ja3MgDQo+IHJlYWxseSBu
+ZWVkIHRvIHJlYWQgaGFzaCBibG9ja3MuDQo+IA0KPiBCdXQgdGhlIHJlZHVjZWQgZGF0YSBibG9j
+a3MgcmFuZ2Ugd291bGQgYmUgZW5sYXJnZWQgYWdhaW4gYnkgDQo+IGRtX3Zlcml0eV9wcmVmZXRj
+aF9jbHVzdGVyIGxhdGVyLg0KPiANCj4gU2lnbmVkLW9mZi1ieTogeGlhbnJvbmcuemhvdSA8eGlh
+bnJvbmcuemhvdUB0cmFuc3Npb24uY29tPg0KPiBTaWduZWQtb2ZmLWJ5OiB5dWFuamlvbmcuZ2Fv
+IDx5dWFuamlvbmcuZ2FvQHRyYW5zc2lvbi5jb20+DQo+IFRlc3RlZC1ieTogcnV4aWFuLmZlbmcg
+PHJ1eGlhbi5mZW5nQHRyYW5zc2lvbi5jb20+DQo+IC0tLQ0KPiAgZHJpdmVycy9tZC9kbS12ZXJp
+dHktdGFyZ2V0LmMgfCAxNiArKysrKysrKysrKysrKysrDQo+ICAxIGZpbGUgY2hhbmdlZCwgMTYg
+aW5zZXJ0aW9ucygrKQ0KPiANCj4gZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0tdmVyaXR5LXRh
+cmdldC5jIA0KPiBiL2RyaXZlcnMvbWQvZG0tdmVyaXR5LXRhcmdldC5jIGluZGV4IDRmYjMzZTc1
+NjJjNS4uN2I4ZWI3NTRjMGI2IA0KPiAxMDA2NDQNCj4gLS0tIGEvZHJpdmVycy9tZC9kbS12ZXJp
+dHktdGFyZ2V0LmMNCj4gKysrIGIvZHJpdmVycy9tZC9kbS12ZXJpdHktdGFyZ2V0LmMNCj4gQEAg
+LTU4MSw2ICs1ODEsMjIgQEAgc3RhdGljIHZvaWQgdmVyaXR5X3ByZWZldGNoX2lvKHN0cnVjdCB3
+b3JrX3N0cnVjdCAqd29yaykNCj4gIAlzdHJ1Y3QgZG1fdmVyaXR5ICp2ID0gcHctPnY7DQo+ICAJ
+aW50IGk7DQo+ICANCj4gKwlpZiAodi0+dmFsaWRhdGVkX2Jsb2Nrcykgew0KPiArCQl3aGlsZSAo
+cHctPm5fYmxvY2tzKSB7DQo+ICsJCQlpZiAodW5saWtlbHkoIXRlc3RfYml0KHB3LT5ibG9jaywg
+di0+dmFsaWRhdGVkX2Jsb2NrcykpKQ0KPiArCQkJCWJyZWFrOw0KPiArCQkJcHctPmJsb2NrKys7
+DQo+ICsJCQlwdy0+bl9ibG9ja3MtLTsNCj4gKwkJfQ0KPiArCQl3aGlsZSAocHctPm5fYmxvY2tz
+KSB7DQo+ICsJCQlpZiAodW5saWtlbHkoIXRlc3RfYml0KHB3LT5ibG9jayArIHB3LT5uX2Jsb2Nr
+cyAtIDEsDQo+ICsJCQkJdi0+dmFsaWRhdGVkX2Jsb2NrcykpKQ0KPiArCQkJCWJyZWFrOw0KPiAr
+CQkJcHctPm5fYmxvY2tzLS07DQo+ICsJCX0NCj4gKwkJaWYgKCFwdy0+bl9ibG9ja3MpDQo+ICsJ
+CQlyZXR1cm47DQo+ICsJfQ0KDQpUaGlzIGlzIGEgZ29vZCBpZGVhLCBidXQgc2hvdWxkbid0IHRo
+aXMgbG9naWMgZ28gaW4gdmVyaXR5X3N1Ym1pdF9wcmVmZXRjaCgpIHByaW9yIHRvIHRoZSBzdHJ1
+Y3QgZG1fdmVyaXR5X3ByZWZldGNoX3dvcmsgYmVpbmcgYWxsb2NhdGVkPyAgVGhlbiBpZiBubyBw
+cmVmZWNoaW5nIGlzIG5lZWRlZCwgYWxsb2NhdGluZyBhbmQgc2NoZWR1bGluZyB0aGUgd29yayBv
+YmplY3QgY2FuIGJlIHNraXBwZWQuDQoNCkVyaWMsIERvIHlvdSBtZWFuIGl0IGlzIG1vcmUgc3Vp
+dGFibGUgaW4gZG1fYnVmaW9fcHJlZmV0Y2ggd2hpY2ggaXMgY2FsbGVkIG9uIGRpZmZlcmVudCBw
+YXRocyBldmVuIHRob3VnaCBwcmVmZWNoaW5nIGlzIGRpc2FibGVkID8NCg0KQWxzbyBub3RlIHRo
+YXQgeW91J3JlIGN1cnJlbnRseSBsZWFraW5nIHRoZSB3b3JrIG9iamVjdCB3aXRoIHRoZSBlYXJs
+eSByZXR1cm4uCQ0KDQpSaWdodCEgSSBsZWFrZWQgdGhpcy4gYWx3YXlzIHNvLiBUaGFua3MhISEN
+Cg0KLSBFcmljDQo=
