@@ -1,57 +1,48 @@
-From: =?gb2312?B?eGlhbnJvbmcuemhvdSjW3M/IyNkp?=
-        <xianrong.zhou@transsion.com>
-Subject: Reply [PATCH] dm-verity: unnecessary data blocks that need not read
- hash blocks
-Date: Mon, 16 Dec 2019 02:02:33 +0000
-Message-ID: <727b9e9279a546beb2ae63a18eae6ab0@transsion.com>
+From: Xu Zaibo <xuzaibo@huawei.com>
+Subject: [Question] Confusion of the meaning for encrypto API's
+	return value
+Date: Mon, 16 Dec 2019 15:18:54 +0800
+Message-ID: <7a4edfcb-c140-bf1b-c674-dbb1b30f9b07@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="gb2312"
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: zh-CN
-Sender: linux-kernel-owner@vger.kernel.org
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, =?gb2312?B?d2VpbWluLm1hbyjDq87Aw/Ep?= <weimin.mao@transsion.com>, =?gb2312?B?aGFpemhvdS5zb25nKMvOuqPW2yk=?= <haizhou.song@transsion.com>, "snitzer@redhat.com" <snitzer@redhat.com>, =?gb2312?B?d2FuYmluLndhbmcozfTN8rHzKQ==?= <wanbin.wang@transsion.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, =?gb2312?B?eXVhbmppb25nLmdhbyi439Sovrwp?= <yuanjiong.gao@transsion.com>, =?gb2312?B?cnV4aWFuLmZlbmcot+vI5ea1KQ==?= <ruxian.feng@transsion.com>, "agk@redhat.com" <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-crypto@vger.kernel.org, dm-devel@redhat.com
+Cc: forest.zhouchang@huawei.com, zhangwei375@huawei.com
 List-Id: dm-devel.ids
 
-aGV5IEVyaWM6DQoNCk9uIFdlZCwgRGVjIDExLCAyMDE5IGF0IDExOjMyOjQwQU0gKzA4MDAsIHpo
-b3UgeGlhbnJvbmcgd3JvdGU6DQo+IEZyb206ICJ4aWFucm9uZy56aG91IiA8eGlhbnJvbmcuemhv
-dUB0cmFuc3Npb24uY29tPg0KPiANCj4gSWYgY2hlY2tfYXRfbW9zdF9vbmNlIGVuYWJsZWQsIGp1
-c3QgbGlrZSB2ZXJpdHkgd29yayB0aGUgcHJlZmV0Y2hpbmcgDQo+IHdvcmsgc2hvdWxkIGNoZWNr
-IGZvciBkYXRhIGJsb2NrIGJpdG1hcCBmaXJzdGx5IGJlZm9yZSByZWFkaW5nIGhhc2ggDQo+IGJs
-b2NrIGFzIHdlbGwuIFNraXAgYml0LXNldCBkYXRhIGJsb2NrcyBmcm9tIGJvdGggZW5kcyBvZiBk
-YXRhIGJsb2NrIA0KPiByYW5nZSBieSB0ZXN0aW5nIHRoZSB2YWxpZGF0ZWQgYml0bWFwLiBUaGlz
-IGNhbiByZWR1Y2UgdGhlIGFtb3VudHMgb2YgDQo+IGRhdGEgYmxvY2tzIHdoaWNoIG5lZWQgdG8g
-cmVhZCBoYXNoIGJsb2Nrcy4NCj4gDQo+IExhdW5jaGluZyA5MSBhcHBzIGV2ZXJ5IDE1cyBhbmQg
-cmVwZWF0IDIxIHJvdW5kcyBvbiBBbmRyb2lkIFEuDQo+IEluIHByZWZldGNoaW5nIHdvcmsgd2Ug
-Y2FuIGxldCBvbmx5IDI2MDIvMzYwMzEyID0gMC43MiUgZGF0YSBibG9ja3MgDQo+IHJlYWxseSBu
-ZWVkIHRvIHJlYWQgaGFzaCBibG9ja3MuDQo+IA0KPiBCdXQgdGhlIHJlZHVjZWQgZGF0YSBibG9j
-a3MgcmFuZ2Ugd291bGQgYmUgZW5sYXJnZWQgYWdhaW4gYnkgDQo+IGRtX3Zlcml0eV9wcmVmZXRj
-aF9jbHVzdGVyIGxhdGVyLg0KPiANCj4gU2lnbmVkLW9mZi1ieTogeGlhbnJvbmcuemhvdSA8eGlh
-bnJvbmcuemhvdUB0cmFuc3Npb24uY29tPg0KPiBTaWduZWQtb2ZmLWJ5OiB5dWFuamlvbmcuZ2Fv
-IDx5dWFuamlvbmcuZ2FvQHRyYW5zc2lvbi5jb20+DQo+IFRlc3RlZC1ieTogcnV4aWFuLmZlbmcg
-PHJ1eGlhbi5mZW5nQHRyYW5zc2lvbi5jb20+DQo+IC0tLQ0KPiAgZHJpdmVycy9tZC9kbS12ZXJp
-dHktdGFyZ2V0LmMgfCAxNiArKysrKysrKysrKysrKysrDQo+ICAxIGZpbGUgY2hhbmdlZCwgMTYg
-aW5zZXJ0aW9ucygrKQ0KPiANCj4gZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0tdmVyaXR5LXRh
-cmdldC5jIA0KPiBiL2RyaXZlcnMvbWQvZG0tdmVyaXR5LXRhcmdldC5jIGluZGV4IDRmYjMzZTc1
-NjJjNS4uN2I4ZWI3NTRjMGI2IA0KPiAxMDA2NDQNCj4gLS0tIGEvZHJpdmVycy9tZC9kbS12ZXJp
-dHktdGFyZ2V0LmMNCj4gKysrIGIvZHJpdmVycy9tZC9kbS12ZXJpdHktdGFyZ2V0LmMNCj4gQEAg
-LTU4MSw2ICs1ODEsMjIgQEAgc3RhdGljIHZvaWQgdmVyaXR5X3ByZWZldGNoX2lvKHN0cnVjdCB3
-b3JrX3N0cnVjdCAqd29yaykNCj4gIAlzdHJ1Y3QgZG1fdmVyaXR5ICp2ID0gcHctPnY7DQo+ICAJ
-aW50IGk7DQo+ICANCj4gKwlpZiAodi0+dmFsaWRhdGVkX2Jsb2Nrcykgew0KPiArCQl3aGlsZSAo
-cHctPm5fYmxvY2tzKSB7DQo+ICsJCQlpZiAodW5saWtlbHkoIXRlc3RfYml0KHB3LT5ibG9jaywg
-di0+dmFsaWRhdGVkX2Jsb2NrcykpKQ0KPiArCQkJCWJyZWFrOw0KPiArCQkJcHctPmJsb2NrKys7
-DQo+ICsJCQlwdy0+bl9ibG9ja3MtLTsNCj4gKwkJfQ0KPiArCQl3aGlsZSAocHctPm5fYmxvY2tz
-KSB7DQo+ICsJCQlpZiAodW5saWtlbHkoIXRlc3RfYml0KHB3LT5ibG9jayArIHB3LT5uX2Jsb2Nr
-cyAtIDEsDQo+ICsJCQkJdi0+dmFsaWRhdGVkX2Jsb2NrcykpKQ0KPiArCQkJCWJyZWFrOw0KPiAr
-CQkJcHctPm5fYmxvY2tzLS07DQo+ICsJCX0NCj4gKwkJaWYgKCFwdy0+bl9ibG9ja3MpDQo+ICsJ
-CQlyZXR1cm47DQo+ICsJfQ0KDQpUaGlzIGlzIGEgZ29vZCBpZGVhLCBidXQgc2hvdWxkbid0IHRo
-aXMgbG9naWMgZ28gaW4gdmVyaXR5X3N1Ym1pdF9wcmVmZXRjaCgpIHByaW9yIHRvIHRoZSBzdHJ1
-Y3QgZG1fdmVyaXR5X3ByZWZldGNoX3dvcmsgYmVpbmcgYWxsb2NhdGVkPyAgVGhlbiBpZiBubyBw
-cmVmZWNoaW5nIGlzIG5lZWRlZCwgYWxsb2NhdGluZyBhbmQgc2NoZWR1bGluZyB0aGUgd29yayBv
-YmplY3QgY2FuIGJlIHNraXBwZWQuDQoNCkVyaWMsIERvIHlvdSBtZWFuIGl0IGlzIG1vcmUgc3Vp
-dGFibGUgaW4gZG1fYnVmaW9fcHJlZmV0Y2ggd2hpY2ggaXMgY2FsbGVkIG9uIGRpZmZlcmVudCBw
-YXRocyBldmVuIHRob3VnaCBwcmVmZWNoaW5nIGlzIGRpc2FibGVkID8NCg0KQWxzbyBub3RlIHRo
-YXQgeW91J3JlIGN1cnJlbnRseSBsZWFraW5nIHRoZSB3b3JrIG9iamVjdCB3aXRoIHRoZSBlYXJs
-eSByZXR1cm4uCQ0KDQpSaWdodCEgSSBsZWFrZWQgdGhpcy4gYWx3YXlzIHNvLiBUaGFua3MhISEN
-Cg0KLSBFcmljDQo=
+Hi,
+
+I get a confusion.
+
+According to my understanding, That 'crypto_skcipher_encrypt(request)' 
+returns '-EBUSY '
+
+means the caller should call this API again with the request. However, 
+as my knowledge in
+
+'dm-crypt', this means the caller need not call this request again, 
+because 'dm-crypt' thinks
+
+that the driver of 'crypto_skcipher_encrypt' will send the request again 
+as it is not busy.
+
+    So, my question is: what's the meaning of 
+'crypto_skcipher_encrypt(request)' returning '-EBUSY '?
+
+
+Cheers,
+
+Zaibo
+
+
+.
