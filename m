@@ -1,84 +1,50 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [PATCH] dm-verity: unnecessary data blocks that need not read
- hash blocks
-Date: Mon, 16 Dec 2019 10:50:26 -0800
-Message-ID: <20191216185025.GF139479@gmail.com>
-References: <727b9e9279a546beb2ae63a18eae6ab0@transsion.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: dm-thin: Several Questions on dm-thin performance.
+Date: Wed, 18 Dec 2019 13:13:34 +0000
+Message-ID: <20191218131334.pngvyqoebsdmicun@reti>
+References: <35cf1ecf-5cd8-604b-ec4e-18c9fd4a4195@linux.alibaba.com>
+	<20191122185530.pcrgmb655dkdbdcq@reti>
+	<629bd851-8d89-00bd-0fea-d140961e8752@arrikto.com>
+	<alpine.LRH.2.11.1912130129120.11561@mx.ewheeler.net>
+	<alpine.LRH.2.11.1912152140020.11561@mx.ewheeler.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.11.1912152140020.11561@mx.ewheeler.net>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
-In-Reply-To: <727b9e9279a546beb2ae63a18eae6ab0@transsion.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: =?utf-8?B?eGlhbnJvbmcuemhvdSjlkajlhYjojaMp?= <xianrong.zhou@transsion.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, =?utf-8?B?d2VpbWluLm1hbyjmr5vljavmsJEp?= <weimin.mao@transsion.com>, =?utf-8?B?aGFpemhvdS5zb25nKOWui+a1t+iInyk=?= <haizhou.song@transsion.com>, "snitzer@redhat.com" <snitzer@redhat.com>, =?utf-8?B?d2FuYmluLndhbmco5rGq5LiH5paMKQ==?= <wanbin.wang@transsion.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, =?utf-8?B?eXVhbmppb25nLmdhbyjpq5jmuIrngq8p?= <yuanjiong.gao@transsion.com>, =?utf-8?B?cnV4aWFuLmZlbmco5Yav5YSS5ai0KQ==?= <ruxian.feng@transsion.com>, "agk@redhat.com" <agk@redhat.com>
+To: Eric Wheeler <dm-devel@lists.ewheeler.net>
+Cc: JeffleXu <jefflexu@linux.alibaba.com>, dm-devel@redhat.com, Nikos Tsironis <ntsironis@arrikto.com>
 List-Id: dm-devel.ids
 
-On Mon, Dec 16, 2019 at 02:02:33AM +0000, xianrong.zhou(周先荣) wrote:
-> hey Eric:
+On Sun, Dec 15, 2019 at 09:44:49PM +0000, Eric Wheeler wrote:
+> I was looking through the dm-bio-prison-v2 commit for dm-cache (b29d4986d) 
+> and it is huge, ~5k lines.  Do you still have a git branch with these 
+> commits in smaller pieces (not squashed) so we can find the bits that 
+> might be informative for converting lv-thin to use dm-bio-prison-v2?
 > 
-> On Wed, Dec 11, 2019 at 11:32:40AM +0800, zhou xianrong wrote:
-> > From: "xianrong.zhou" <xianrong.zhou@transsion.com>
-> > 
-> > If check_at_most_once enabled, just like verity work the prefetching 
-> > work should check for data block bitmap firstly before reading hash 
-> > block as well. Skip bit-set data blocks from both ends of data block 
-> > range by testing the validated bitmap. This can reduce the amounts of 
-> > data blocks which need to read hash blocks.
-> > 
-> > Launching 91 apps every 15s and repeat 21 rounds on Android Q.
-> > In prefetching work we can let only 2602/360312 = 0.72% data blocks 
-> > really need to read hash blocks.
-> > 
-> > But the reduced data blocks range would be enlarged again by 
-> > dm_verity_prefetch_cluster later.
-> > 
-> > Signed-off-by: xianrong.zhou <xianrong.zhou@transsion.com>
-> > Signed-off-by: yuanjiong.gao <yuanjiong.gao@transsion.com>
-> > Tested-by: ruxian.feng <ruxian.feng@transsion.com>
-> > ---
-> >  drivers/md/dm-verity-target.c | 16 ++++++++++++++++
-> >  1 file changed, 16 insertions(+)
-> > 
-> > diff --git a/drivers/md/dm-verity-target.c 
-> > b/drivers/md/dm-verity-target.c index 4fb33e7562c5..7b8eb754c0b6 
-> > 100644
-> > --- a/drivers/md/dm-verity-target.c
-> > +++ b/drivers/md/dm-verity-target.c
-> > @@ -581,6 +581,22 @@ static void verity_prefetch_io(struct work_struct *work)
-> >  	struct dm_verity *v = pw->v;
-> >  	int i;
-> >  
-> > +	if (v->validated_blocks) {
-> > +		while (pw->n_blocks) {
-> > +			if (unlikely(!test_bit(pw->block, v->validated_blocks)))
-> > +				break;
-> > +			pw->block++;
-> > +			pw->n_blocks--;
-> > +		}
-> > +		while (pw->n_blocks) {
-> > +			if (unlikely(!test_bit(pw->block + pw->n_blocks - 1,
-> > +				v->validated_blocks)))
-> > +				break;
-> > +			pw->n_blocks--;
-> > +		}
-> > +		if (!pw->n_blocks)
-> > +			return;
-> > +	}
-> 
-> This is a good idea, but shouldn't this logic go in verity_submit_prefetch()
-> prior to the struct dm_verity_prefetch_work being allocated?  Then if no
-> prefeching is needed, allocating and scheduling the work object can be
-> skipped.
-> 
-> Eric, Do you mean it is more suitable in dm_bufio_prefetch which is called on
-> different paths even though prefeching is disabled ?
-> 
+> For example, I think that, at least, the policy changes and 
+> btracker code is dm-cache specific and just a distraction when trying to 
+> understand the dm-bio-prison-v2 conversion.
 
-No, I'm talking about verity_submit_prefetch().  verity_submit_prefetch()
-allocates and schedules a work object, which executes verity_prefetch_io().
-If all data blocks in the I/O request were already validated, there's no need to
-allocate and schedule the prefetch work.
+To be honest I would hold off for a couple of months.  I've been working
+on the design for thinp 2 and have got to the point where I need to write
+a userland proof of concept implementation.  In particular I've focussed on
+packing more into btree nodes, and separating transactions so IO to different
+thins has no locking contention.  The proof of concept will tell me just how
+small I can get the metadata.  If the level of metadata compression is ~1/10th
+we'll plug the new btrees into the existing design and switch to bio prison v2.
+If it's greater, say 1/50th, then I'll rewrite the whole target to
+use write-ahead logging for transactionality and ditch all metadata sharing altogether.
+When the metadata is that small we can copy entire btrees to implement snapshots.
 
-- Eric
+- Joe
