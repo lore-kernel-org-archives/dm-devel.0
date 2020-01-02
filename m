@@ -1,8 +1,7 @@
-From: Jeffle Xu <jefflexu@linux.alibaba.com>
-Subject: [PATCH] dm-thin: Fix trivial error in comment
-	documentation
-Date: Mon, 30 Dec 2019 10:54:32 +0800
-Message-ID: <1577674472-14110-1-git-send-email-jefflexu@linux.alibaba.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-crypt: fix GFP flags
+Date: Thu, 2 Jan 2020 08:23:32 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.2001020822080.32205@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,30 +15,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: snitzer@redhat.com, dm-devel@redhat.com, agk@redhat.com
-Cc: joseph.qi@linux.alibaba.com
+To: Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-It's a trivial error in comment documentation, but it may be
-confusing to new developers. So just fix it.
+GFP_KERNEL is not supposed to be ored with GFP_NOFS (the result is
+equivalent to GFP_KERNEL). Also, we use GFP_NOIO instead of GFP_NOFS,
+because we don't want any I/O being submitted in the direct reclaim path.
 
-Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org	# v5.4+
+
 ---
- drivers/md/dm-thin-metadata.c | 2 +-
+ drivers/md/dm-crypt.c |    2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index b88d6d7..df8b804 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -28,7 +28,7 @@
-  *
-  * - A hierarchical btree, with 2 levels which effectively maps (thin
-  *   dev id, virtual block) -> block_time.  Block time is a 64-bit
-- *   field holding the time in the low 24 bits, and block in the top 48
-+ *   field holding the time in the low 24 bits, and block in the top 40
-  *   bits.
-  *
-  * BTrees consist solely of btree_nodes, that fill a block.  Some are
--- 
-1.8.3.1
+Index: linux-2.6/drivers/md/dm-crypt.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-crypt.c	2020-01-02 14:16:21.000000000 +0100
++++ linux-2.6/drivers/md/dm-crypt.c	2020-01-02 14:16:21.000000000 +0100
+@@ -717,7 +717,7 @@ static int crypt_iv_eboiv_gen(struct cry
+ 	struct crypto_wait wait;
+ 	int err;
+ 
+-	req = skcipher_request_alloc(any_tfm(cc), GFP_KERNEL | GFP_NOFS);
++	req = skcipher_request_alloc(any_tfm(cc), GFP_NOIO);
+ 	if (!req)
+ 		return -ENOMEM;
+ 
