@@ -1,12 +1,14 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: [PATCH] dm-crypt: Implement Elephant diffuser for
-	Bitlocker compatibility
-Date: Fri,  3 Jan 2020 09:20:22 +0100
-Message-ID: <20200103082022.1283126-1-gmazyland@gmail.com>
+From: Maged Mokhtar <mmokhtar@petasan.org>
+Subject: Re: [PATCH] dm writecache: SB remove seq_count
+Date: Thu, 2 Jan 2020 17:37:19 +0200
+Message-ID: <d76f7245-034c-f225-00fe-f33c5e9abf1a@petasan.org>
+References: <598c7c64-9b11-3407-2060-8d43b1ef1241@petasan.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <598c7c64-9b11-3407-2060-8d43b1ef1241@petasan.org>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,433 +18,115 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Milan Broz <gmazyland@gmail.com>
+To: mpatocka@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch adds experimental support for BitLocker encryption
-with CBC mode and additional Elephant diffuser.
-
-The mode was used in older Windows systems and it is provided
-mainly for compatibility reasons. The userspace support
-to activate these devices is being added to cryptsetup utility.
-
-Read-write activation of such a device is very simple, for example
-  echo <password> | cryptsetup bitlkOpen bitlk_image.img test
-
-The Elephant diffuser uses two rotations in opposite direction
-for data (Diffuser A and B) and also XOR operation with Sector key
-over the sector data; Sector key is derived from additional key data.
-The original public documentation is available here
-  http://download.microsoft.com/download/0/2/3/0238acaf-d3bf-4a6d-b3d6-0a0be4bbb36e/bitlockercipher200608.pdf
-
-The dm-crypt implementation is embedded to "elephant" IV
-(similar to tcw IV construction).
-
-Because we cannot modify original bio data for write (before
-encryption), an additional internal flag to pre-process data is added.
-
-Signed-off-by: Milan Broz <gmazyland@gmail.com>
----
- drivers/md/dm-crypt.c | 323 +++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 319 insertions(+), 4 deletions(-)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index eb9782fc93fe..f9370a1a574b 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1,8 +1,8 @@
- /*
-  * Copyright (C) 2003 Jana Saout <jana@saout.de>
-  * Copyright (C) 2004 Clemens Fruhwirth <clemens@endorphin.org>
-- * Copyright (C) 2006-2017 Red Hat, Inc. All rights reserved.
-- * Copyright (C) 2013-2017 Milan Broz <gmazyland@gmail.com>
-+ * Copyright (C) 2006-2020 Red Hat, Inc. All rights reserved.
-+ * Copyright (C) 2013-2020 Milan Broz <gmazyland@gmail.com>
-  *
-  * This file is released under the GPL.
-  */
-@@ -115,6 +115,11 @@ struct iv_tcw_private {
- 	u8 *whitening;
- };
- 
-+#define ELEPHANT_MAX_KEY_SIZE 32
-+struct iv_elephant_private {
-+	struct crypto_skcipher *tfm;
-+};
-+
- /*
-  * Crypt: maps a linear range of a block device
-  * and encrypts / decrypts at the same time.
-@@ -125,6 +130,7 @@ enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID,
- enum cipher_flags {
- 	CRYPT_MODE_INTEGRITY_AEAD,	/* Use authenticated mode for cihper */
- 	CRYPT_IV_LARGE_SECTORS,		/* Calculate IV from sector_size, not 512B sectors */
-+	CRYPT_ENCRYPT_PREPROCESS,	/* Must preprocess data for encryption (elephant) */
- };
- 
- /*
-@@ -152,6 +158,7 @@ struct crypt_config {
- 		struct iv_benbi_private benbi;
- 		struct iv_lmk_private lmk;
- 		struct iv_tcw_private tcw;
-+		struct iv_elephant_private elephant;
- 	} iv_gen_private;
- 	u64 iv_offset;
- 	unsigned int iv_size;
-@@ -285,6 +292,11 @@ static struct crypto_aead *any_tfm_aead(struct crypt_config *cc)
-  * eboiv: Encrypted byte-offset IV (used in Bitlocker in CBC mode)
-  *        The IV is encrypted little-endian byte-offset (with the same key
-  *        and cipher as the volume).
-+ *
-+ * elephant: The extended version of eboiv with additional Elephant diffuser
-+ *           used with Bitlocker CBC mode.
-+ *           This mode was used in older Windows systems
-+ *           http://download.microsoft.com/download/0/2/3/0238acaf-d3bf-4a6d-b3d6-0a0be4bbb36e/bitlockercipher200608.pdf
-  */
- 
- static int crypt_iv_plain_gen(struct crypt_config *cc, u8 *iv,
-@@ -734,6 +746,290 @@ static int crypt_iv_eboiv_gen(struct crypt_config *cc, u8 *iv,
- 	return err;
- }
- 
-+static void crypt_iv_elephant_dtr(struct crypt_config *cc)
-+{
-+	struct iv_elephant_private *elephant = &cc->iv_gen_private.elephant;
-+
-+	crypto_free_skcipher(elephant->tfm);
-+	elephant->tfm = NULL;
-+}
-+
-+static int crypt_iv_elephant_ctr(struct crypt_config *cc, struct dm_target *ti,
-+			    const char *opts)
-+{
-+	struct iv_elephant_private *elephant = &cc->iv_gen_private.elephant;
-+	int r;
-+
-+	elephant->tfm = crypto_alloc_skcipher("ecb(aes)", 0, 0);
-+	if (IS_ERR(elephant->tfm)) {
-+		r = PTR_ERR(elephant->tfm);
-+		elephant->tfm = NULL;
-+		return r;
-+	}
-+
-+	r = crypt_iv_eboiv_ctr(cc, ti, NULL);
-+	if (r)
-+		crypt_iv_elephant_dtr(cc);
-+	return r;
-+}
-+
-+static void diffuser_disk_to_cpu(u32 *d, size_t n)
-+{
-+#ifndef __LITTLE_ENDIAN
-+	int i;
-+
-+	for (i = 0; i < n; i++)
-+		d[i] = le32_to_cpu((__le32)d[i]);
-+#endif
-+}
-+
-+static void diffuser_cpu_to_disk(__le32 *d, size_t n)
-+{
-+#ifndef __LITTLE_ENDIAN
-+	int i;
-+
-+	for (i = 0; i < n; i++)
-+		d[i] = cpu_to_le32((u32)d[i]);
-+#endif
-+}
-+
-+static void diffuser_a_decrypt(u32 *d, size_t n)
-+{
-+	int i, i1, i2, i3;
-+
-+	for (i = 0; i < 5; i++) {
-+		i1 = 0;
-+		i2 = n - 2;
-+		i3 = n - 5;
-+
-+		while (i1 < (n - 1)) {
-+			d[i1] += d[i2] ^ (d[i3] << 9 | d[i3] >> 23);
-+			i1++; i2++; i3++;
-+
-+			if (i3 >= n)
-+				i3 -= n;
-+
-+			d[i1] += d[i2] ^ d[i3];
-+			i1++; i2++; i3++;
-+
-+			if (i2 >= n)
-+				i2 -= n;
-+
-+			d[i1] += d[i2] ^ (d[i3] << 13 | d[i3] >> 19);
-+			i1++; i2++; i3++;
-+
-+			d[i1] += d[i2] ^ d[i3];
-+			i1++; i2++; i3++;
-+		}
-+	}
-+}
-+
-+static void diffuser_a_encrypt(u32 *d, size_t n)
-+{
-+	int i, i1, i2, i3;
-+
-+	for (i = 0; i < 5; i++) {
-+		i1 = n - 1;
-+		i2 = n - 2 - 1;
-+		i3 = n - 5 - 1;
-+
-+		while (i1 > 0) {
-+			d[i1] -= d[i2] ^ d[i3];
-+			i1--; i2--; i3--;
-+
-+			d[i1] -= d[i2] ^ (d[i3] << 13 | d[i3] >> 19);
-+			i1--; i2--; i3--;
-+
-+			if (i2 < 0)
-+				i2 += n;
-+
-+			d[i1] -= d[i2] ^ d[i3];
-+			i1--; i2--; i3--;
-+
-+			if (i3 < 0)
-+				i3 += n;
-+
-+			d[i1] -= d[i2] ^ (d[i3] << 9 | d[i3] >> 23);
-+			i1--; i2--; i3--;
-+		}
-+	}
-+}
-+
-+static void diffuser_b_decrypt(u32 *d, size_t n)
-+{
-+	int i, i1, i2, i3;
-+
-+	for (i = 0; i < 3; i++) {
-+		i1 = 0;
-+		i2 = 2;
-+		i3 = 5;
-+
-+		while (i1 < (n - 1)) {
-+			d[i1] += d[i2] ^ d[i3];
-+			i1++; i2++; i3++;
-+
-+			d[i1] += d[i2] ^ (d[i3] << 10 | d[i3] >> 22);
-+			i1++; i2++; i3++;
-+
-+			if (i2 >= n)
-+				i2 -= n;
-+
-+			d[i1] += d[i2] ^ d[i3];
-+			i1++; i2++; i3++;
-+
-+			if (i3 >= n)
-+				i3 -= n;
-+
-+			d[i1] += d[i2] ^ (d[i3] << 25 | d[i3] >> 7);
-+			i1++; i2++; i3++;
-+		}
-+	}
-+}
-+
-+static void diffuser_b_encrypt(u32 *d, size_t n)
-+{
-+	int i, i1, i2, i3;
-+
-+	for (i = 0; i < 3; i++) {
-+		i1 = n - 1;
-+		i2 = 2 - 1;
-+		i3 = 5 - 1;
-+
-+		while (i1 > 0) {
-+			d[i1] -= d[i2] ^ (d[i3] << 25 | d[i3] >> 7);
-+			i1--; i2--; i3--;
-+
-+			if (i3 < 0)
-+				i3 += n;
-+
-+			d[i1] -= d[i2] ^ d[i3];
-+			i1--; i2--; i3--;
-+
-+			if (i2 < 0)
-+				i2 += n;
-+
-+			d[i1] -= d[i2] ^ (d[i3] << 10 | d[i3] >> 22);
-+			i1--; i2--; i3--;
-+
-+			d[i1] -= d[i2] ^ d[i3];
-+			i1--; i2--; i3--;
-+		}
-+	}
-+}
-+
-+static int crypt_iv_elephant(struct crypt_config *cc, struct dm_crypt_request *dmreq)
-+{
-+	struct iv_elephant_private *elephant = &cc->iv_gen_private.elephant;
-+	u8 *es, *ks, *data, *data2, *data_offset;
-+	struct skcipher_request *req;
-+	struct scatterlist *sg, *sg2, src, dst;
-+	struct crypto_wait wait;
-+	int i, r;
-+
-+	req = skcipher_request_alloc(elephant->tfm, GFP_NOIO);
-+	es = kzalloc(16, GFP_NOIO); /* Key for AES */
-+	ks = kzalloc(32, GFP_NOIO); /* Elephant sector key */
-+
-+	if (!req || !es || !ks) {
-+		r = -ENOMEM;
-+		goto out;
-+	}
-+
-+	*(__le64 *)es = cpu_to_le64(dmreq->iv_sector * cc->sector_size);
-+
-+	/* E(Ks, e(s)) */
-+	sg_init_one(&src, es, 16);
-+	sg_init_one(&dst, ks, 16);
-+	skcipher_request_set_crypt(req, &src, &dst, 16, NULL);
-+	skcipher_request_set_callback(req, 0, crypto_req_done, &wait);
-+	r = crypto_wait_req(crypto_skcipher_encrypt(req), &wait);
-+	if (r)
-+		goto out;
-+
-+	/* E(Ks, e'(s)) */
-+	es[15] = 0x80;
-+	sg_init_one(&dst, &ks[16], 16);
-+	r = crypto_wait_req(crypto_skcipher_encrypt(req), &wait);
-+	if (r)
-+		goto out;
-+
-+	sg = crypt_get_sg_data(cc, dmreq->sg_out);
-+	data = kmap_atomic(sg_page(sg));
-+	data_offset = data + sg->offset;
-+
-+	/* Cannot modify original bio, copy to sg_out and apply Elephant to it */
-+	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE) {
-+		sg2 = crypt_get_sg_data(cc, dmreq->sg_in);
-+		data2 = kmap_atomic(sg_page(sg2));
-+		memcpy(data_offset, data2 + sg2->offset, cc->sector_size);
-+		kunmap_atomic(data2);
-+	}
-+
-+	if (bio_data_dir(dmreq->ctx->bio_in) != WRITE) {
-+		diffuser_disk_to_cpu((u32*)data_offset, cc->sector_size / sizeof(u32));
-+		diffuser_b_decrypt((u32*)data_offset, cc->sector_size / sizeof(u32));
-+		diffuser_a_decrypt((u32*)data_offset, cc->sector_size / sizeof(u32));
-+		diffuser_cpu_to_disk((__le32*)data_offset, cc->sector_size / sizeof(u32));
-+	}
-+
-+	for (i = 0; i < (cc->sector_size / 32); i++)
-+		crypto_xor(data_offset + i * 32, ks, 32);
-+
-+	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE) {
-+		diffuser_disk_to_cpu((u32*)data_offset, cc->sector_size / sizeof(u32));
-+		diffuser_a_encrypt((u32*)data_offset, cc->sector_size / sizeof(u32));
-+		diffuser_b_encrypt((u32*)data_offset, cc->sector_size / sizeof(u32));
-+		diffuser_cpu_to_disk((__le32*)data_offset, cc->sector_size / sizeof(u32));
-+	}
-+
-+	kunmap_atomic(data);
-+out:
-+	kzfree(ks);
-+	kzfree(es);
-+	skcipher_request_free(req);
-+	return r;
-+}
-+
-+static int crypt_iv_elephant_gen(struct crypt_config *cc, u8 *iv,
-+			    struct dm_crypt_request *dmreq)
-+{
-+	int r;
-+
-+	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE) {
-+		r = crypt_iv_elephant(cc, dmreq);
-+		if (r)
-+			return r;
-+	}
-+
-+	return crypt_iv_eboiv_gen(cc, iv, dmreq);
-+}
-+
-+static int crypt_iv_elephant_post(struct crypt_config *cc, u8 *iv,
-+				  struct dm_crypt_request *dmreq)
-+{
-+	if (bio_data_dir(dmreq->ctx->bio_in) != WRITE)
-+		return crypt_iv_elephant(cc, dmreq);
-+
-+	return 0;
-+}
-+
-+static int crypt_iv_elephant_init(struct crypt_config *cc)
-+{
-+	struct iv_elephant_private *elephant = &cc->iv_gen_private.elephant;
-+	int key_offset = cc->key_size - cc->key_extra_size;
-+
-+	return crypto_skcipher_setkey(elephant->tfm, &cc->key[key_offset], cc->key_extra_size);
-+}
-+
-+static int crypt_iv_elephant_wipe(struct crypt_config *cc)
-+{
-+	struct iv_elephant_private *elephant = &cc->iv_gen_private.elephant;
-+	u8 key[ELEPHANT_MAX_KEY_SIZE];
-+
-+	memset(key, 0, cc->key_extra_size);
-+	return crypto_skcipher_setkey(elephant->tfm, key, cc->key_extra_size);
-+}
-+
- static const struct crypt_iv_operations crypt_iv_plain_ops = {
- 	.generator = crypt_iv_plain_gen
- };
-@@ -787,6 +1083,15 @@ static struct crypt_iv_operations crypt_iv_eboiv_ops = {
- 	.generator = crypt_iv_eboiv_gen
- };
- 
-+static struct crypt_iv_operations crypt_iv_elephant_ops = {
-+	.ctr	   = crypt_iv_elephant_ctr,
-+	.dtr	   = crypt_iv_elephant_dtr,
-+	.init	   = crypt_iv_elephant_init,
-+	.wipe	   = crypt_iv_elephant_wipe,
-+	.generator = crypt_iv_elephant_gen,
-+	.post	   = crypt_iv_elephant_post
-+};
-+
- /*
-  * Integrity extensions
-  */
-@@ -1103,6 +1408,9 @@ static int crypt_convert_block_skcipher(struct crypt_config *cc,
- 			r = cc->iv_gen_ops->generator(cc, org_iv, dmreq);
- 			if (r < 0)
- 				return r;
-+			/* Data can be already preprocessed in generator */
-+			if (test_bit(CRYPT_ENCRYPT_PREPROCESS, &cc->cipher_flags))
-+				sg_in = sg_out;
- 			/* Store generated IV in integrity metadata */
- 			if (cc->integrity_iv_size)
- 				memcpy(tag_iv, org_iv, cc->integrity_iv_size);
-@@ -2191,7 +2499,14 @@ static int crypt_ctr_ivmode(struct dm_target *ti, const char *ivmode)
- 		cc->iv_gen_ops = &crypt_iv_null_ops;
- 	else if (strcmp(ivmode, "eboiv") == 0)
- 		cc->iv_gen_ops = &crypt_iv_eboiv_ops;
--	else if (strcmp(ivmode, "lmk") == 0) {
-+	else if (strcmp(ivmode, "elephant") == 0) {
-+		cc->iv_gen_ops = &crypt_iv_elephant_ops;
-+		cc->key_parts = 2;
-+		cc->key_extra_size = cc->key_size / 2;
-+		if (cc->key_extra_size > ELEPHANT_MAX_KEY_SIZE)
-+			return -EINVAL;
-+		set_bit(CRYPT_ENCRYPT_PREPROCESS, &cc->cipher_flags);
-+	} else if (strcmp(ivmode, "lmk") == 0) {
- 		cc->iv_gen_ops = &crypt_iv_lmk_ops;
- 		/*
- 		 * Version 2 and 3 is recognised according
-@@ -2959,7 +3274,7 @@ static void crypt_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 
- static struct target_type crypt_target = {
- 	.name   = "crypt",
--	.version = {1, 19, 0},
-+	.version = {1, 20, 0},
- 	.module = THIS_MODULE,
- 	.ctr    = crypt_ctr,
- 	.dtr    = crypt_dtr,
--- 
-2.25.0.rc0
+QW55IGZlZWRiYWNrIG9uIHRoaXMgcGF0Y2ggcGxlYXNlLgoKCk9uIDA2LzEyLzIwMTkgMjE6MDMs
+IE1hZ2VkIE1va2h0YXIgd3JvdGU6Cj4gUmVtb3ZlcyBzZXFfY291bnQgZnJvbSBzdXBlciBibG9j
+ay4gQ3VycmVudGx5IHRoZSBzdXBlciBibG9jayBnZXRzIAo+IHdyaXR0ZW4gaW4gZWFjaCBjb21t
+aXQgdG8gdXBkYXRlIHRoZSBzZXFfY291bnQgd2hpY2ggaXMganVzdCB1c2VkIHdoZW4gCj4gdGhl
+IHRhcmdldCBpcyByZXN0YXJ0ZWQvcmVzdW1lZC4gVGhpcyBleHRyYSBpb3AgaGFzIGEgcGVyZm9y
+bWFuY2UgaW1wYWN0IAo+IG9uIHNtYWxsIGJsb2NrIHNpemUgd3JpdGVzIHdoaWNoIGRvIEZVQS9z
+eW5jIG9uIGV2ZXJ5IHJlcXVlc3QuIEEgNGsgc3luYyAKPiB3cml0ZSBjdXJyZW50bHkgcmVxdWly
+ZXMgMyB3cml0ZSBvcHM6IHN1Ym1pdHRlZCBkYXRhLCBtZXRhZGF0YSArIHN1cGVyIAo+IGJsb2Nr
+IHNlcV9jb3VudCB1cGRhdGUsIHJlbW92YWwgb2Ygc2VxX2NvdW50IHVwZGF0ZSByZWR1Y2VzIHJl
+cXVpcmVkIAo+IHdyaXRlIG9wcyB0byAyLgo+IAo+IFJlYnVpbGQgb2Ygc2VxX2NvdW50IGF0IHN0
+YXJ0L3Jlc3VtcHRpb24gY2FuIGJlIGRvbmUgcXVpY2tseSBieSBsb29waW5nIAo+IHRocm91Z2gg
+bWVtb3J5IGVudHJ5IG1ldGFkYXRhIHdpdGhpbiB0aGUgcmVzdW1lKCkgZnVuY3Rpb24uCj4gCj4g
+U2lnbmVkLW9mZi1ieTogTWFnZWQgTW9raHRhciA8bW1va2h0YXJAcGV0YXNhbi5vcmc+Cj4gLS0t
+Cj4gIMKgZHJpdmVycy9tZC9kbS13cml0ZWNhY2hlLmMgfMKgwqAgNTYgKysrKysrKysrKysrKysr
+KysrKysrKysrKystLS0tLS0tLS0KPiAgwqAxIGZpbGUgY2hhbmdlZCwgNDIgaW5zZXJ0aW9ucygr
+KSwgMTQgZGVsZXRpb25zKC0pCj4gCj4gLS0tIGEvZHJpdmVycy9tZC9kbS13cml0ZWNhY2hlLmPC
+oMKgwqAgMjAxOS0xMi0wNiAwMzowNzo1My4wMDAwMDAwMDAgLTA4MDAKPiArKysgYi9kcml2ZXJz
+L21kL2RtLXdyaXRlY2FjaGUuY8KgwqDCoCAyMDE5LTEyLTA2IDA5OjI1OjQ1LjAwMDAwMDAwMCAt
+MDgwMAo+IEBAIC01Miw3ICs1Miw4IEBAIGRvIHvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBcCj4gIMKgI2VuZGlmCj4gCj4gIMKg
+I2RlZmluZSBNRU1PUllfU1VQRVJCTE9DS19NQUdJQ8KgwqDCoMKgwqDCoMKgIDB4MjM0ODkzMjEK
+PiAtI2RlZmluZSBNRU1PUllfU1VQRVJCTE9DS19WRVJTSU9OwqDCoMKgIDEKPiArI2RlZmluZSBN
+RU1PUllfU1VQRVJCTE9DS19WRVJTSU9OXzHCoMKgwqAgMQo+ICsjZGVmaW5lIE1FTU9SWV9TVVBF
+UkJMT0NLX1ZFUlNJT05fMsKgwqDCoCAyCj4gCj4gIMKgc3RydWN0IHdjX21lbW9yeV9lbnRyeSB7
+Cj4gIMKgwqDCoMKgIF9fbGU2NCBvcmlnaW5hbF9zZWN0b3I7Cj4gQEAgLTY3LDcgKzY4LDYgQEAg
+c3RydWN0IHdjX21lbW9yeV9zdXBlcmJsb2NrIHsKPiAgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+IF9fbGUzMiBibG9ja19zaXplOwo+ICDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgX19sZTMyIHBh
+ZDsKPiAgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIF9fbGU2NCBuX2Jsb2NrczsKPiAtwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoCBfX2xlNjQgc2VxX2NvdW50Owo+ICDCoMKgwqDCoMKgwqDCoMKgIH07
+Cj4gIMKgwqDCoMKgwqDCoMKgwqAgX19sZTY0IHBhZGRpbmdbOF07Cj4gIMKgwqDCoMKgIH07Cj4g
+QEAgLTM4MCw2ICszODAsNDEgQEAgc3RhdGljIHVpbnQ2NF90IHJlYWRfc2VxX2NvdW50KHN0cnVj
+dCBkbQo+ICDCoCNlbmRpZgo+ICDCoH0KPiAKPiArc3RhdGljIHVpbnQ2NF90IHJlYWRfbGFzdF9z
+ZXFfY291bnQoc3RydWN0IGRtX3dyaXRlY2FjaGUgKndjKQo+ICt7Cj4gK8KgwqDCoCBzaXplX3Qg
+YjsKPiArwqDCoMKgIHVpbnQ2NF90IGxhc3Rfc2VxX2NvdW50ID0gMDsKPiArwqDCoMKgIHVpbnQ2
+NF90IHNlcV9jb3VudDsKPiArwqDCoMKgIF9fbGU2NCBlbXB0eSA9IGNwdV90b19sZTY0KC0xKTsK
+PiArCj4gK8KgwqDCoCBpZiAoV0NfTU9ERV9QTUVNKHdjKSkgewo+ICvCoMKgwqDCoMKgwqDCoCBz
+dHJ1Y3Qgd2NfbWVtb3J5X2VudHJ5IHdtZTsKPiArwqDCoMKgwqDCoMKgwqAgZm9yIChiID0gMDsg
+YiA8IHdjLT5uX2Jsb2NrczsgYisrKSB7Cj4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqAgQlVHX09O
+KG1lbWNweV9tY3NhZmUoJndtZSwgJnNiKHdjKS0+ZW50cmllc1tiXSwKPiArwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgIHNpemVvZihzdHJ1Y3Qgd2NfbWVtb3J5X2VudHJ5KSkpOwo+ICvC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgIGlmICh3bWUuc2VxX2NvdW50ICE9IGVtcHR5KSB7Cj4gK8Kg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBzZXFfY291bnQgPSBsZTY0X3RvX2NwdSh3bWUu
+c2VxX2NvdW50KTsKPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGlmIChsYXN0X3Nl
+cV9jb3VudCA8IHNlcV9jb3VudCkKPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqAgbGFzdF9zZXFfY291bnQgPSBzZXFfY291bnQ7Cj4gK8KgwqDCoMKgwqDCoMKgwqDCoMKg
+wqAgfQo+ICvCoMKgwqDCoMKgwqDCoCB9Cj4gK8KgwqDCoCB9Cj4gK8KgwqDCoCBlbHNlIHsKPiAr
+wqDCoMKgwqDCoMKgwqAgc3RydWN0IHdjX21lbW9yeV9lbnRyeSAqcCA9ICZzYih3YyktPmVudHJp
+ZXNbMF07Cj4gK8KgwqDCoMKgwqDCoMKgIGIgPSB3Yy0+bl9ibG9ja3M7Cj4gK8KgwqDCoMKgwqDC
+oMKgIHdoaWxlICgwIDwgYikgewo+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGlmIChwLT5zZXFf
+Y291bnQgIT0gZW1wdHkpIHsKPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIHNlcV9j
+b3VudCA9IGxlNjRfdG9fY3B1KHAtPnNlcV9jb3VudCk7Cj4gK8KgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoCBpZiAobGFzdF9zZXFfY291bnQgPCBzZXFfY291bnQpCj4gK8KgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGxhc3Rfc2VxX2NvdW50ID0gc2VxX2NvdW50Owo+
+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIH0KPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBwKys7
+Cj4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqAgYi0tOwo+ICvCoMKgwqDCoMKgwqDCoCB9Cj4gK8Kg
+wqDCoCB9Cj4gK8KgwqDCoCByZXR1cm4gbGFzdF9zZXFfY291bnQ7Cj4gK30KPiArCj4gIMKgc3Rh
+dGljIHZvaWQgY2xlYXJfc2VxX2NvdW50KHN0cnVjdCBkbV93cml0ZWNhY2hlICp3Yywgc3RydWN0
+IHdjX2VudHJ5ICplKQo+ICDCoHsKPiAgwqAjaWZkZWYgRE1fV1JJVEVDQUNIRV9IQU5ETEVfSEFS
+RFdBUkVfRVJST1JTCj4gQEAgLTczMCw4ICs3NjUsNiBAQCBzdGF0aWMgdm9pZCB3cml0ZWNhY2hl
+X2ZsdXNoKHN0cnVjdCBkbV93Cj4gIMKgwqDCoMKgwqDCoMKgwqAgd3JpdGVjYWNoZV93YWl0X2Zv
+cl9pb3Mod2MsIFdSSVRFKTsKPiAKPiAgwqDCoMKgwqAgd2MtPnNlcV9jb3VudCsrOwo+IC3CoMKg
+wqAgcG1lbV9hc3NpZ24oc2Iod2MpLT5zZXFfY291bnQsIGNwdV90b19sZTY0KHdjLT5zZXFfY291
+bnQpKTsKPiAtwqDCoMKgIHdyaXRlY2FjaGVfZmx1c2hfcmVnaW9uKHdjLCAmc2Iod2MpLT5zZXFf
+Y291bnQsIHNpemVvZiAKPiBzYih3YyktPnNlcV9jb3VudCk7Cj4gIMKgwqDCoMKgIHdyaXRlY2Fj
+aGVfY29tbWl0X2ZsdXNoZWQod2MpOwo+IAo+ICDCoMKgwqDCoCB3Yy0+b3Zlcndyb3RlX2NvbW1p
+dHRlZCA9IGZhbHNlOwo+IEBAIC04NzYsNyArOTA5LDYgQEAgc3RhdGljIHZvaWQgd3JpdGVjYWNo
+ZV9yZXN1bWUoc3RydWN0IGRtXwo+ICDCoMKgwqDCoCBzdHJ1Y3QgZG1fd3JpdGVjYWNoZSAqd2Mg
+PSB0aS0+cHJpdmF0ZTsKPiAgwqDCoMKgwqAgc2l6ZV90IGI7Cj4gIMKgwqDCoMKgIGJvb2wgbmVl
+ZF9mbHVzaCA9IGZhbHNlOwo+IC3CoMKgwqAgX19sZTY0IHNiX3NlcV9jb3VudDsKPiAgwqDCoMKg
+wqAgaW50IHI7Cj4gCj4gIMKgwqDCoMKgIHdjX2xvY2sod2MpOwo+IEBAIC04OTQsMTIgKzkyNiw3
+IEBAIHN0YXRpYyB2b2lkIHdyaXRlY2FjaGVfcmVzdW1lKHN0cnVjdCBkbV8KPiAgwqDCoMKgwqAg
+fQo+ICDCoMKgwqDCoCB3Yy0+ZnJlZWxpc3Rfc2l6ZSA9IDA7Cj4gCj4gLcKgwqDCoCByID0gbWVt
+Y3B5X21jc2FmZSgmc2Jfc2VxX2NvdW50LCAmc2Iod2MpLT5zZXFfY291bnQsIAo+IHNpemVvZih1
+aW50NjRfdCkpOwo+IC3CoMKgwqAgaWYgKHIpIHsKPiAtwqDCoMKgwqDCoMKgwqAgd3JpdGVjYWNo
+ZV9lcnJvcih3YywgciwgImhhcmR3YXJlIG1lbW9yeSBlcnJvciB3aGVuIHJlYWRpbmcgCj4gc3Vw
+ZXJibG9jazogJWQiLCByKTsKPiAtwqDCoMKgwqDCoMKgwqAgc2Jfc2VxX2NvdW50ID0gY3B1X3Rv
+X2xlNjQoMCk7Cj4gLcKgwqDCoCB9Cj4gLcKgwqDCoCB3Yy0+c2VxX2NvdW50ID0gbGU2NF90b19j
+cHUoc2Jfc2VxX2NvdW50KTsKPiArwqDCoMKgIHdjLT5zZXFfY291bnQgPSByZWFkX2xhc3Rfc2Vx
+X2NvdW50KHdjKSArIDE7Cj4gCj4gIMKgI2lmZGVmIERNX1dSSVRFQ0FDSEVfSEFORExFX0hBUkRX
+QVJFX0VSUk9SUwo+ICDCoMKgwqDCoCBmb3IgKGIgPSAwOyBiIDwgd2MtPm5fYmxvY2tzOyBiKysp
+IHsKPiBAQCAtMTc1NywxMCArMTc4NCw5IEBAIHN0YXRpYyBpbnQgaW5pdF9tZW1vcnkoc3RydWN0
+IGRtX3dyaXRlY2EKPiAKPiAgwqDCoMKgwqAgZm9yIChiID0gMDsgYiA8IEFSUkFZX1NJWkUoc2Io
+d2MpLT5wYWRkaW5nKTsgYisrKQo+ICDCoMKgwqDCoMKgwqDCoMKgIHBtZW1fYXNzaWduKHNiKHdj
+KS0+cGFkZGluZ1tiXSwgY3B1X3RvX2xlNjQoMCkpOwo+IC3CoMKgwqAgcG1lbV9hc3NpZ24oc2Io
+d2MpLT52ZXJzaW9uLCBjcHVfdG9fbGUzMihNRU1PUllfU1VQRVJCTE9DS19WRVJTSU9OKSk7Cj4g
+K8KgwqDCoCBwbWVtX2Fzc2lnbihzYih3YyktPnZlcnNpb24sIAo+IGNwdV90b19sZTMyKE1FTU9S
+WV9TVVBFUkJMT0NLX1ZFUlNJT05fMikpOwo+ICDCoMKgwqDCoCBwbWVtX2Fzc2lnbihzYih3Yykt
+PmJsb2NrX3NpemUsIGNwdV90b19sZTMyKHdjLT5ibG9ja19zaXplKSk7Cj4gIMKgwqDCoMKgIHBt
+ZW1fYXNzaWduKHNiKHdjKS0+bl9ibG9ja3MsIGNwdV90b19sZTY0KHdjLT5uX2Jsb2NrcykpOwo+
+IC3CoMKgwqAgcG1lbV9hc3NpZ24oc2Iod2MpLT5zZXFfY291bnQsIGNwdV90b19sZTY0KDApKTsK
+PiAKPiAgwqDCoMKgwqAgZm9yIChiID0gMDsgYiA8IHdjLT5uX2Jsb2NrczsgYisrKQo+ICDCoMKg
+wqDCoMKgwqDCoMKgIHdyaXRlX29yaWdpbmFsX3NlY3Rvcl9zZXFfY291bnQod2MsICZ3Yy0+ZW50
+cmllc1tiXSwgLTEsIC0xKTsKPiBAQCAtMjE1OSwxMSArMjE4NSwxMyBAQCBpbnZhbGlkX29wdGlv
+bmFsOgo+ICDCoMKgwqDCoMKgwqDCoMKgIGdvdG8gYmFkOwo+ICDCoMKgwqDCoCB9Cj4gCj4gLcKg
+wqDCoCBpZiAobGUzMl90b19jcHUocy52ZXJzaW9uKSAhPSBNRU1PUllfU1VQRVJCTE9DS19WRVJT
+SU9OKSB7Cj4gK8KgwqDCoCBpZiAobGUzMl90b19jcHUocy52ZXJzaW9uKSAhPSBNRU1PUllfU1VQ
+RVJCTE9DS19WRVJTSU9OXzEgJiYKPiArwqDCoMKgwqDCoMKgwqAgbGUzMl90b19jcHUocy52ZXJz
+aW9uKSAhPSBNRU1PUllfU1VQRVJCTE9DS19WRVJTSU9OXzIpIHsKPiAgwqDCoMKgwqDCoMKgwqDC
+oCB0aS0+ZXJyb3IgPSAiSW52YWxpZCB2ZXJzaW9uIGluIHRoZSBzdXBlcmJsb2NrIjsKPiAgwqDC
+oMKgwqDCoMKgwqDCoCByID0gLUVJTlZBTDsKPiAgwqDCoMKgwqDCoMKgwqDCoCBnb3RvIGJhZDsK
+PiAgwqDCoMKgwqAgfQo+ICvCoMKgwqAgcG1lbV9hc3NpZ24oc2Iod2MpLT52ZXJzaW9uLCAKPiBj
+cHVfdG9fbGUzMihNRU1PUllfU1VQRVJCTE9DS19WRVJTSU9OXzIpKTsKPiAKPiAgwqDCoMKgwqAg
+aWYgKGxlMzJfdG9fY3B1KHMuYmxvY2tfc2l6ZSkgIT0gd2MtPmJsb2NrX3NpemUpIHsKPiAgwqDC
+oMKgwqDCoMKgwqDCoCB0aS0+ZXJyb3IgPSAiQmxvY2sgc2l6ZSBkb2VzIG5vdCBtYXRjaCBzdXBl
+cmJsb2NrIjsKCi0tIApNYWdlZCBNb2todGFyCkNFTyBQZXRhU0FOCjQgRW1hZCBFbCBEZWVuIEth
+bWVsCkNhaXJvIDExMzcxLCBFZ3lwdAp3d3cucGV0YXNhbi5vcmcKKzIwMTAwNjk3OTkzMQpza3lw
+ZTogbWFnZWQubW9raHRhcgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
+YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
