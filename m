@@ -1,99 +1,91 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: About dm-integrity layer and fsync
-Date: Fri, 3 Jan 2020 12:14:07 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.2001031206190.11685@file01.intranet.prod.int.rdu2.redhat.com>
-References: <CAJTWkdu1-k5m0F-uzp-EMrncL1w4wLqEi8LgF0U1Js_Nf-YphQ@mail.gmail.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: Re: [dm-devel] [PATCH] dm-verity: unnecessary data blocks that need
+ not read hash blocks
+Date: Fri, 3 Jan 2020 10:24:19 -0800
+Message-ID: <20200103182418.GQ19521@gmail.com>
+References: <727b9e9279a546beb2ae63a18eae6ab0@transsion.com>
+ <20191216185025.GF139479@gmail.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED;
-	BOUNDARY="185206533-1783000016-1578071647=:11685"
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAJTWkdu1-k5m0F-uzp-EMrncL1w4wLqEi8LgF0U1Js_Nf-YphQ@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Patrick Dung <patdung100@gmail.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20191216185025.GF139479@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?utf-8?B?eGlhbnJvbmcuemhvdSjlkajlhYjojaMp?= <xianrong.zhou@transsion.com>
+Cc: =?utf-8?B?d2VpbWluLm1hbyjmr5vljavmsJEp?= <weimin.mao@transsion.com>, =?utf-8?B?aGFpemhvdS5zb25nKOWui+a1t+iInyk=?= <haizhou.song@transsion.com>, "snitzer@redhat.com" <snitzer@redhat.com>, =?utf-8?B?d2FuYmluLndhbmco5rGq5LiH5paMKQ==?= <wanbin.wang@transsion.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, =?utf-8?B?eXVhbmppb25nLmdhbyjpq5jmuIrngq8p?= <yuanjiong.gao@transsion.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, =?utf-8?B?cnV4aWFuLmZlbmco5Yav5YSS5ai0KQ==?= <ruxian.feng@transsion.com>, "agk@redhat.com" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
---185206533-1783000016-1578071647=:11685
-Content-Type: TEXT/PLAIN; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-
-
-On Fri, 3 Jan 2020, Patrick Dung wrote:
-
-> Hello,
->=20
-> A quick question on dm-integrity. Does dm-integrity layer honors fsync?
-
-Yes it does.
-
-However, it writes data into the journal and when the journal is flushed,=
-=20
-it reports the fsync function as finished.
-
-On a mechanical disk, writes to contiguous space (i.e. the journal) are=20
-faster than random writes all over the disk, that's why you see better=20
-performance with dm-integrity than without it.
-
-Mikulas
-
-> I was testing dm-integrity and performance. It had a strange result that =
-using dm-integrity with journal is faster than a normal file system or dm-i=
-ntegrity with
-> bitmap (no journal). fio is used for testing the storage performance. The=
- device is a SATA hard disk drive. Then I created a 100GB partition for tes=
-ting.
->=20
-> Below is the test cases:
->=20
-> 1) XFS on a partition directly test case
->=20
-> 2) dm-integrity: crc32c on a partition with default setting journal commi=
-t interval is 10 seconds. Then create XFS on it. test case
->=20
-> 3) dm-integrity: crc32c on a partition default setting journal commit int=
-erval set to 5 seconds. Then create XFS on it.
->=20
-> 4) dm-integrity:=C2=A0 crc32c on a partition default setting but using bi=
-tmap instead of journal. Then create XFS on it.
->=20
-> FIO command:
->=20
-> fio --filename=3D./t1 --direct=3D1 --rw=3Drandrw --refill_buffers --noran=
-dommap --randrepeat=3D0 --ioengine=3Dsync --bs=3D4k --rwmixread=3D75 --iode=
-pth=3D16 --numjobs=3D8 --runtime=3D60
-> --group_reporting --fsync=3D1 --name=3D4ktest --size=3D4G
->=20
-> Result:
->=20
->  1. Read/Write IOPS: 117/41. Read/Write Speed 481KB/s 168KB/s
->  2. Read/Write IOPS: 178/59. Read/Write Speed 732KB/s 244KB/s
->  3. Read/Write IOPS: 169/57. Read/Write Speed 695KB/s 236KB/s
->  4. Read/Write IOPS: 97/32. Read/Write Speed 400K/s 131KB/s
-> The original discussion in: https://gitlab.com/cryptsetup/cryptsetup/issu=
-es/513 . Milan Broz said the dm-devel mailing list is a suitable place to d=
-iscuss the probem.
->=20
-> Thanks in advance.
->=20
-> Patrick
->=20
+On Mon, Dec 16, 2019 at 10:50:26AM -0800, Eric Biggers wrote:
+> On Mon, Dec 16, 2019 at 02:02:33AM +0000, xianrong.zhou(周先荣) wrote:
+> > hey Eric:
+> > 
+> > On Wed, Dec 11, 2019 at 11:32:40AM +0800, zhou xianrong wrote:
+> > > From: "xianrong.zhou" <xianrong.zhou@transsion.com>
+> > > 
+> > > If check_at_most_once enabled, just like verity work the prefetching 
+> > > work should check for data block bitmap firstly before reading hash 
+> > > block as well. Skip bit-set data blocks from both ends of data block 
+> > > range by testing the validated bitmap. This can reduce the amounts of 
+> > > data blocks which need to read hash blocks.
+> > > 
+> > > Launching 91 apps every 15s and repeat 21 rounds on Android Q.
+> > > In prefetching work we can let only 2602/360312 = 0.72% data blocks 
+> > > really need to read hash blocks.
+> > > 
+> > > But the reduced data blocks range would be enlarged again by 
+> > > dm_verity_prefetch_cluster later.
+> > > 
+> > > Signed-off-by: xianrong.zhou <xianrong.zhou@transsion.com>
+> > > Signed-off-by: yuanjiong.gao <yuanjiong.gao@transsion.com>
+> > > Tested-by: ruxian.feng <ruxian.feng@transsion.com>
+> > > ---
+> > >  drivers/md/dm-verity-target.c | 16 ++++++++++++++++
+> > >  1 file changed, 16 insertions(+)
+> > > 
+> > > diff --git a/drivers/md/dm-verity-target.c 
+> > > b/drivers/md/dm-verity-target.c index 4fb33e7562c5..7b8eb754c0b6 
+> > > 100644
+> > > --- a/drivers/md/dm-verity-target.c
+> > > +++ b/drivers/md/dm-verity-target.c
+> > > @@ -581,6 +581,22 @@ static void verity_prefetch_io(struct work_struct *work)
+> > >  	struct dm_verity *v = pw->v;
+> > >  	int i;
+> > >  
+> > > +	if (v->validated_blocks) {
+> > > +		while (pw->n_blocks) {
+> > > +			if (unlikely(!test_bit(pw->block, v->validated_blocks)))
+> > > +				break;
+> > > +			pw->block++;
+> > > +			pw->n_blocks--;
+> > > +		}
+> > > +		while (pw->n_blocks) {
+> > > +			if (unlikely(!test_bit(pw->block + pw->n_blocks - 1,
+> > > +				v->validated_blocks)))
+> > > +				break;
+> > > +			pw->n_blocks--;
+> > > +		}
+> > > +		if (!pw->n_blocks)
+> > > +			return;
+> > > +	}
+> > 
+> > This is a good idea, but shouldn't this logic go in verity_submit_prefetch()
+> > prior to the struct dm_verity_prefetch_work being allocated?  Then if no
+> > prefeching is needed, allocating and scheduling the work object can be
+> > skipped.
+> > 
+> > Eric, Do you mean it is more suitable in dm_bufio_prefetch which is called on
+> > different paths even though prefeching is disabled ?
+> > 
 > 
---185206533-1783000016-1578071647=:11685
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+> No, I'm talking about verity_submit_prefetch().  verity_submit_prefetch()
+> allocates and schedules a work object, which executes verity_prefetch_io().
+> If all data blocks in the I/O request were already validated, there's no need to
+> allocate and schedule the prefetch work.
+> 
+> - Eric
+> 
 
+Are you planning to send a new version of this patch?
 
---185206533-1783000016-1578071647=:11685--
+- Eric
