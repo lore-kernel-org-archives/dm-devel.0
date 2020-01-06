@@ -1,57 +1,67 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: [PATCH] dm-crypt: Fix benbi IV constructor if used in authenticated mode
-Date: Mon,  6 Jan 2020 10:11:47 +0100
-Message-ID: <20200106091147.1485292-1-gmazyland@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm mpath: Add timeout mechanism for queue_if_no_path
+Date: Mon, 6 Jan 2020 11:28:33 -0500
+Message-ID: <20200106162833.GA15829@redhat.com>
+References: <20200102224512.3605010-1-krisman@collabora.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <stable-owner@vger.kernel.org>
-Sender: stable-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: Milan Broz <gmazyland@gmail.com>, stable@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200102224512.3605010-1-krisman@collabora.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Gabriel Krisman Bertazi <krisman@collabora.com>
+Cc: Bharath Ravi <rbharath@google.com>, Khazhismel Kumykov <khazhy@google.com>, dm-devel@redhat.com, Anatol Pomazau <anatol@google.com>, kernel@collabora.com, Frank Mayhar <fmayhar@google.com>, agk@redhat.com
 List-Id: dm-devel.ids
 
-If benbi IV is used in AEAD constructionm for example
-  cryptsetup luksFormat <device> --cipher twofish-xts-benbi --key-size 512 --integrity=hmac-sha256
-the constructor ues wrong skcipher function and crashes.
+On Thu, Jan 02 2020 at  5:45pm -0500,
+Gabriel Krisman Bertazi <krisman@collabora.com> wrote:
 
- BUG: kernel NULL pointer dereference, address: 00000014
- ...
- EIP: crypt_iv_benbi_ctr+0x15/0x70 [dm_crypt]
- Call Trace:
-  ? crypt_subkey_size+0x20/0x20 [dm_crypt]
-  crypt_ctr+0x567/0xfc0 [dm_crypt]
-  dm_table_add_target+0x15f/0x340 [dm_mod]
+> From: Anatol Pomazau <anatol@google.com>
+> 
+> Add a configurable timeout mechanism to disable queue_if_no_path without
+> assistance from multipathd.  In reality, this reimplements the
+> no_path_retry mechanism from multipathd in kernel space, which is
+> interesting for cases where we cannot rely on a daemon being present all
+> the time, in case of failure or to reduce the guest footprint of cloud
+> services.
+> 
+> Despite replicating the policy configuration on kernel space, it is
+> quite an important case to prevent IOs from hanging forever, waiting for
+> userspace to behave correctly.
+> 
+> Co-developed-by: Frank Mayhar <fmayhar@google.com>
+> Signed-off-by: Frank Mayhar <fmayhar@google.com>
+> Co-developed-by: Bharath Ravi <rbharath@google.com>
+> Signed-off-by: Bharath Ravi <rbharath@google.com>
+> Co-developed-by: Khazhismel Kumykov <khazhy@google.com>
+> Signed-off-by: Khazhismel Kumykov <khazhy@google.com>
+> Signed-off-by: Anatol Pomazau <anatol@google.com>
+> Co-developed-by: Gabriel Krisman Bertazi <krisman@collabora.com>
+> Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
 
-This patch fixes the problem with properly using crypt_aead_blocksize() in this case.
+This seems like a slippery slope.
 
-Reported in https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=941051
+I've heard this line of dm-multipath concern from Google before
+(e.g. doesn't want to rely on availability of userspace component).
 
-Signed-off-by: Milan Broz <gmazyland@gmail.com>
-Cc: <stable@vger.kernel.org> # v4.12+
----
- drivers/md/dm-crypt.c | 10 ++++++++--
- 1 file changed, 8 insertions(+), 2 deletions(-)
+Thing is, to properly use dm-multipath (e.g. to reinstate failed paths)
+multipathd really is needed no?
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index f9370a1a574b..fd30143dca91 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -343,8 +343,14 @@ static int crypt_iv_essiv_gen(struct crypt_config *cc, u8 *iv,
- static int crypt_iv_benbi_ctr(struct crypt_config *cc, struct dm_target *ti,
- 			      const char *opts)
- {
--	unsigned bs = crypto_skcipher_blocksize(any_tfm(cc));
--	int log = ilog2(bs);
-+	unsigned bs;
-+	int log;
-+
-+	if (test_bit(CRYPT_MODE_INTEGRITY_AEAD, &cc->cipher_flags))
-+		bs = crypto_aead_blocksize(any_tfm_aead(cc));
-+	else
-+		bs = crypto_skcipher_blocksize(any_tfm(cc));
-+	log = ilog2(bs);
- 
- 	/* we need to calculate how far we must shift the sector count
- 	 * to get the cipher block count, we use this shift in _gen */
--- 
-2.25.0.rc1
+If not, how is it that the proposed patch is all that is missing when
+multipathd isn't running?  I find that hard to appreciate.
+
+So I'm inclined to not accept this type of change.  But especially not
+until more comprehensive context is given for how Google is using
+dm-multipath without multipathd.
+
+Thanks,
+Mike
