@@ -1,70 +1,57 @@
-From: =?utf-8?B?eGlhbnJvbmcuemhvdSjlkajlhYjojaMp?=
-        <xianrong.zhou@transsion.com>
-Subject: Reply: [dm-devel] [PATCH] dm-verity: unnecessary data blocks that
- need not read hash blocks
-Date: Mon, 6 Jan 2020 03:00:30 +0000
-Message-ID: <f6f161812916479bbe23ab7c8fe9ea32@transsion.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: [PATCH] dm-crypt: Fix benbi IV constructor if used in authenticated mode
+Date: Mon,  6 Jan 2020 10:11:47 +0100
+Message-ID: <20200106091147.1485292-1-gmazyland@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: zh-CN
-Sender: linux-kernel-owner@vger.kernel.org
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, =?utf-8?B?aGFpemhvdS5zb25nKOWui+a1t+iInyk=?= <haizhou.song@transsion.com>, "snitzer@redhat.com" <snitzer@redhat.com>, =?utf-8?B?d2FuYmluLndhbmco5rGq5LiH5paMKQ==?= <wanbin.wang@transsion.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, =?utf-8?B?eXVhbmppb25nLmdhbyjpq5jmuIrngq8p?= <yuanjiong.gao@transsion.com>, =?utf-8?B?cnV4aWFuLmZlbmco5Yav5YSS5ai0KQ==?= <ruxian.feng@transsion.com>, "agk@redhat.com" <agk@redhat.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: Milan Broz <gmazyland@gmail.com>, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gTW9uLCBEZWMgMTYsIDIwMTkgYXQgMTA6NTA6MjZBTSAtMDgwMCwgRXJpYyBCaWdnZXJzIHdy
-b3RlOg0KPiBPbiBNb24sIERlYyAxNiwgMjAxOSBhdCAwMjowMjozM0FNICswMDAwLCB4aWFucm9u
-Zy56aG91KOWRqOWFiOiNoykgd3JvdGU6DQo+ID4gaGV5IEVyaWM6DQo+ID4gDQo+ID4gT24gV2Vk
-LCBEZWMgMTEsIDIwMTkgYXQgMTE6MzI6NDBBTSArMDgwMCwgemhvdSB4aWFucm9uZyB3cm90ZToN
-Cj4gPiA+IEZyb206ICJ4aWFucm9uZy56aG91IiA8eGlhbnJvbmcuemhvdUB0cmFuc3Npb24uY29t
-Pg0KPiA+ID4gDQo+ID4gPiBJZiBjaGVja19hdF9tb3N0X29uY2UgZW5hYmxlZCwganVzdCBsaWtl
-IHZlcml0eSB3b3JrIHRoZSANCj4gPiA+IHByZWZldGNoaW5nIHdvcmsgc2hvdWxkIGNoZWNrIGZv
-ciBkYXRhIGJsb2NrIGJpdG1hcCBmaXJzdGx5IGJlZm9yZSANCj4gPiA+IHJlYWRpbmcgaGFzaCBi
-bG9jayBhcyB3ZWxsLiBTa2lwIGJpdC1zZXQgZGF0YSBibG9ja3MgZnJvbSBib3RoIA0KPiA+ID4g
-ZW5kcyBvZiBkYXRhIGJsb2NrIHJhbmdlIGJ5IHRlc3RpbmcgdGhlIHZhbGlkYXRlZCBiaXRtYXAu
-IFRoaXMgY2FuIA0KPiA+ID4gcmVkdWNlIHRoZSBhbW91bnRzIG9mIGRhdGEgYmxvY2tzIHdoaWNo
-IG5lZWQgdG8gcmVhZCBoYXNoIGJsb2Nrcy4NCj4gPiA+IA0KPiA+ID4gTGF1bmNoaW5nIDkxIGFw
-cHMgZXZlcnkgMTVzIGFuZCByZXBlYXQgMjEgcm91bmRzIG9uIEFuZHJvaWQgUS4NCj4gPiA+IElu
-IHByZWZldGNoaW5nIHdvcmsgd2UgY2FuIGxldCBvbmx5IDI2MDIvMzYwMzEyID0gMC43MiUgZGF0
-YSANCj4gPiA+IGJsb2NrcyByZWFsbHkgbmVlZCB0byByZWFkIGhhc2ggYmxvY2tzLg0KPiA+ID4g
-DQo+ID4gPiBCdXQgdGhlIHJlZHVjZWQgZGF0YSBibG9ja3MgcmFuZ2Ugd291bGQgYmUgZW5sYXJn
-ZWQgYWdhaW4gYnkgDQo+ID4gPiBkbV92ZXJpdHlfcHJlZmV0Y2hfY2x1c3RlciBsYXRlci4NCj4g
-PiA+IA0KPiA+ID4gU2lnbmVkLW9mZi1ieTogeGlhbnJvbmcuemhvdSA8eGlhbnJvbmcuemhvdUB0
-cmFuc3Npb24uY29tPg0KPiA+ID4gU2lnbmVkLW9mZi1ieTogeXVhbmppb25nLmdhbyA8eXVhbmpp
-b25nLmdhb0B0cmFuc3Npb24uY29tPg0KPiA+ID4gVGVzdGVkLWJ5OiBydXhpYW4uZmVuZyA8cnV4
-aWFuLmZlbmdAdHJhbnNzaW9uLmNvbT4NCj4gPiA+IC0tLQ0KPiA+ID4gIGRyaXZlcnMvbWQvZG0t
-dmVyaXR5LXRhcmdldC5jIHwgMTYgKysrKysrKysrKysrKysrKw0KPiA+ID4gIDEgZmlsZSBjaGFu
-Z2VkLCAxNiBpbnNlcnRpb25zKCspDQo+ID4gPiANCj4gPiA+IGRpZmYgLS1naXQgYS9kcml2ZXJz
-L21kL2RtLXZlcml0eS10YXJnZXQuYyANCj4gPiA+IGIvZHJpdmVycy9tZC9kbS12ZXJpdHktdGFy
-Z2V0LmMgaW5kZXggNGZiMzNlNzU2MmM1Li43YjhlYjc1NGMwYjYNCj4gPiA+IDEwMDY0NA0KPiA+
-ID4gLS0tIGEvZHJpdmVycy9tZC9kbS12ZXJpdHktdGFyZ2V0LmMNCj4gPiA+ICsrKyBiL2RyaXZl
-cnMvbWQvZG0tdmVyaXR5LXRhcmdldC5jDQo+ID4gPiBAQCAtNTgxLDYgKzU4MSwyMiBAQCBzdGF0
-aWMgdm9pZCB2ZXJpdHlfcHJlZmV0Y2hfaW8oc3RydWN0IHdvcmtfc3RydWN0ICp3b3JrKQ0KPiA+
-ID4gIAlzdHJ1Y3QgZG1fdmVyaXR5ICp2ID0gcHctPnY7DQo+ID4gPiAgCWludCBpOw0KPiA+ID4g
-IA0KPiA+ID4gKwlpZiAodi0+dmFsaWRhdGVkX2Jsb2Nrcykgew0KPiA+ID4gKwkJd2hpbGUgKHB3
-LT5uX2Jsb2Nrcykgew0KPiA+ID4gKwkJCWlmICh1bmxpa2VseSghdGVzdF9iaXQocHctPmJsb2Nr
-LCB2LT52YWxpZGF0ZWRfYmxvY2tzKSkpDQo+ID4gPiArCQkJCWJyZWFrOw0KPiA+ID4gKwkJCXB3
-LT5ibG9jaysrOw0KPiA+ID4gKwkJCXB3LT5uX2Jsb2Nrcy0tOw0KPiA+ID4gKwkJfQ0KPiA+ID4g
-KwkJd2hpbGUgKHB3LT5uX2Jsb2Nrcykgew0KPiA+ID4gKwkJCWlmICh1bmxpa2VseSghdGVzdF9i
-aXQocHctPmJsb2NrICsgcHctPm5fYmxvY2tzIC0gMSwNCj4gPiA+ICsJCQkJdi0+dmFsaWRhdGVk
-X2Jsb2NrcykpKQ0KPiA+ID4gKwkJCQlicmVhazsNCj4gPiA+ICsJCQlwdy0+bl9ibG9ja3MtLTsN
-Cj4gPiA+ICsJCX0NCj4gPiA+ICsJCWlmICghcHctPm5fYmxvY2tzKQ0KPiA+ID4gKwkJCXJldHVy
-bjsNCj4gPiA+ICsJfQ0KPiA+IA0KPiA+IFRoaXMgaXMgYSBnb29kIGlkZWEsIGJ1dCBzaG91bGRu
-J3QgdGhpcyBsb2dpYyBnbyBpbg0KPiA+IHZlcml0eV9zdWJtaXRfcHJlZmV0Y2goKSBwcmlvciB0
-byB0aGUgc3RydWN0IGRtX3Zlcml0eV9wcmVmZXRjaF93b3JrIA0KPiA+IGJlaW5nIGFsbG9jYXRl
-ZD8gIFRoZW4gaWYgbm8gcHJlZmVjaGluZyBpcyBuZWVkZWQsIGFsbG9jYXRpbmcgYW5kIA0KPiA+
-IHNjaGVkdWxpbmcgdGhlIHdvcmsgb2JqZWN0IGNhbiBiZSBza2lwcGVkLg0KPiA+IA0KPiA+IEVy
-aWMsIERvIHlvdSBtZWFuIGl0IGlzIG1vcmUgc3VpdGFibGUgaW4gZG1fYnVmaW9fcHJlZmV0Y2gg
-d2hpY2ggaXMgDQo+ID4gY2FsbGVkIG9uIGRpZmZlcmVudCBwYXRocyBldmVuIHRob3VnaCBwcmVm
-ZWNoaW5nIGlzIGRpc2FibGVkID8NCj4gPiANCj4gDQo+IE5vLCBJJ20gdGFsa2luZyBhYm91dCB2
-ZXJpdHlfc3VibWl0X3ByZWZldGNoKCkuICANCj4gdmVyaXR5X3N1Ym1pdF9wcmVmZXRjaCgpIGFs
-bG9jYXRlcyBhbmQgc2NoZWR1bGVzIGEgd29yayBvYmplY3QsIHdoaWNoIGV4ZWN1dGVzIHZlcml0
-eV9wcmVmZXRjaF9pbygpLg0KPiBJZiBhbGwgZGF0YSBibG9ja3MgaW4gdGhlIEkvTyByZXF1ZXN0
-IHdlcmUgYWxyZWFkeSB2YWxpZGF0ZWQsIHRoZXJlJ3MgDQo+IG5vIG5lZWQgdG8gYWxsb2NhdGUg
-YW5kIHNjaGVkdWxlIHRoZSBwcmVmZXRjaCB3b3JrLg0KPiANCj4gLSBFcmljDQo+IA0KDQpVbmRl
-cnN0YW5kLiBUaGFua3MuDQoNCkFyZSB5b3UgcGxhbm5pbmcgdG8gc2VuZCBhIG5ldyB2ZXJzaW9u
-IG9mIHRoaXMgcGF0Y2g/DQoNCi0gRXJpYw0KDQpTb3JyeSBmb3IgZGVsYXlpbmcuDQoNClllcywg
-c28gSSBzaG91bGQgbW92ZSB0aGUgbW9kaWZpY2F0aW9uIGludG8gdmVyaXR5X3N1Ym1pdF9wcmVm
-ZXRjaCBhbmQgcGxhY2UgaXQgYmVmb3JlIGttYWxsb2Mgd29yayBvYmplY3QuIElzIGl0IG9rPw0K
+If benbi IV is used in AEAD constructionm for example
+  cryptsetup luksFormat <device> --cipher twofish-xts-benbi --key-size 512 --integrity=hmac-sha256
+the constructor ues wrong skcipher function and crashes.
+
+ BUG: kernel NULL pointer dereference, address: 00000014
+ ...
+ EIP: crypt_iv_benbi_ctr+0x15/0x70 [dm_crypt]
+ Call Trace:
+  ? crypt_subkey_size+0x20/0x20 [dm_crypt]
+  crypt_ctr+0x567/0xfc0 [dm_crypt]
+  dm_table_add_target+0x15f/0x340 [dm_mod]
+
+This patch fixes the problem with properly using crypt_aead_blocksize() in this case.
+
+Reported in https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=941051
+
+Signed-off-by: Milan Broz <gmazyland@gmail.com>
+Cc: <stable@vger.kernel.org> # v4.12+
+---
+ drivers/md/dm-crypt.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index f9370a1a574b..fd30143dca91 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -343,8 +343,14 @@ static int crypt_iv_essiv_gen(struct crypt_config *cc, u8 *iv,
+ static int crypt_iv_benbi_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 			      const char *opts)
+ {
+-	unsigned bs = crypto_skcipher_blocksize(any_tfm(cc));
+-	int log = ilog2(bs);
++	unsigned bs;
++	int log;
++
++	if (test_bit(CRYPT_MODE_INTEGRITY_AEAD, &cc->cipher_flags))
++		bs = crypto_aead_blocksize(any_tfm_aead(cc));
++	else
++		bs = crypto_skcipher_blocksize(any_tfm(cc));
++	log = ilog2(bs);
+ 
+ 	/* we need to calculate how far we must shift the sector count
+ 	 * to get the cipher block count, we use this shift in _gen */
+-- 
+2.25.0.rc1
