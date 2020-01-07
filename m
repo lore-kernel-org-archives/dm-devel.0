@@ -1,12 +1,11 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [RFC PATCH] dm-zoned: extend the way of exposing
- zoned block device
-Date: Wed, 8 Jan 2020 07:40:54 +0000
-Message-ID: <BYAPR04MB5816BA749332D2FC6CE3993AE73E0@BYAPR04MB5816.namprd04.prod.outlook.com>
-References: <20200108071212.27230-1-Nobody@nobody.com>
+From: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
+Subject: [LSF/MM/BFP ATTEND] [LSF/MM/BFP TOPIC] Storage: Copy
+	Offload
+Date: Tue, 7 Jan 2020 18:14:17 +0000
+Message-ID: <BYAPR04MB5749820C322B40C7DBBBCA02863F0@BYAPR04MB5749.namprd04.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -18,176 +17,132 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Nobody <Nobody@nobody.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: "snitzer@redhat.com" <snitzer@redhat.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, Dmitry Fomichev <Dmitry.Fomichev@wdc.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Bob Liu <bob.liu@oracle.com>, "shirley.ma@oracle.com" <shirley.ma@oracle.com>
+To: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "msnitzer@redhat.com" <msnitzer@redhat.com>, "bvanassche@acm.org" <bvanassche@acm.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Christoph, Matias Bjorling <Matias.Bjorling@wdc.com>, Stephen Bates <sbates@raithlin.com>, "roland@purestorage.com" <roland@purestorage.com>, "mpatocka@redhat.com" <mpatocka@redhat.com>, Keith Busch <kbusch@kernel.org>, "rwheeler@redhat.com" <rwheeler@redhat.com>, Hellwig <hch@lst.de>, "frederick.knight@netapp.com" <frederick.knight@netapp.com>, "zach.brown@ni.com" <zach.brown@ni.com>
 List-Id: dm-devel.ids
 
-On 2020/01/08 16:13, Nobody wrote:
-> From: Bob Liu <bob.liu@oracle.com>
-> 
-> Motivation:
-> Now the dm-zoned device mapper target exposes a zoned block device(ZBC) as a
-> regular block device by storing metadata and buffering random writes in
-> conventional zones.
-> This way is not very flexible, there must be enough conventional zones and the
-> performance may be constrained.
-> By putting metadata(also buffering random writes) in separated device we can get
-> more flexibility and potential performance improvement e.g by storing metadata
-> in faster device like persistent memory.
-> 
-> This patch try to split the metadata of dm-zoned to an extra block
-> device instead of zoned block device itself.
-> (Buffering random writes also in the todo list.)
-> 
-> Patch is at the very early stage, just want to receive some feedback about
-> this extension.
-> Another option is to create an new md-zoned device with separated metadata
-> device based on md framework.
+Hi all,
 
-For metadata only, it should not be hard at all to move to another
-conventional zone device. It will however be a little more tricky for
-conventional zones used for data since dm-zoned assumes that this random
-write space is also zoned. Moving this space to a conventional device
-requires implementing a zone emulation (fake zones) for the regular
-drive, using a zone size that matches the size of sequential zones.
+* Background :-
+-----------------------------------------------------------------------
 
-Beyond this, dm-zoned also needs to be changed to accept partial drives
-and the dm core code to accept mixing of regular and zoned disks (that
-is forbidden now).
+Copy offload is a feature that allows file-systems or storage devices
+to be instructed to copy files/logical blocks without requiring
+involvement of the local CPU.
 
-Another approach worth exploring is stacking dm-zoned as is on top of a
-modified dm-linear with the ability to emulate conventional zones on top
-of a regular block device (you only need report zones method
-implemented). That is much easier to do. We actually hacked something
-like that last month to see the performance change and saw a jump from
-56 MB/s to 250 MB/s for write intensive workloads (file creation on
-ext4). I am not so warm in this approach though as it modifies dm-linear
-and we want to keep it very lean and simple. Modifying dm-zoned to allow
-support for a device pair is a better approach I think.
+With reference to the RISC-V summit keynote [1] single threaded
+performance is limiting due to Denard scaling and multi-threaded
+performance is slowing down due Moore's law limitations. With the rise
+of SNIA Computation Technical Storage Working Group (TWG) [2],
+offloading computations to the device or over the fabrics is becoming
+popular as there are several solutions available [2]. One of the common
+operation which is popular in the kernel and is not merged yet is Copy
+offload over the fabrics or on to the device.
 
-> 
-> Signed-off-by: Bob Liu <bob.liu@oracle.com>
-> ---
->  drivers/md/dm-zoned-metadata.c |  6 +++---
->  drivers/md/dm-zoned-target.c   | 15 +++++++++++++--
->  drivers/md/dm-zoned.h          |  1 +
->  3 files changed, 17 insertions(+), 5 deletions(-)
-> 
-> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-> index 22b3cb0..89cd554 100644
-> --- a/drivers/md/dm-zoned-metadata.c
-> +++ b/drivers/md/dm-zoned-metadata.c
-> @@ -439,7 +439,7 @@ static struct dmz_mblock *dmz_get_mblock_slow(struct dmz_metadata *zmd,
->  
->  	/* Submit read BIO */
->  	bio->bi_iter.bi_sector = dmz_blk2sect(block);
-> -	bio_set_dev(bio, zmd->dev->bdev);
-> +	bio_set_dev(bio, zmd->dev->meta_bdev);
->  	bio->bi_private = mblk;
->  	bio->bi_end_io = dmz_mblock_bio_end_io;
->  	bio_set_op_attrs(bio, REQ_OP_READ, REQ_META | REQ_PRIO);
-> @@ -593,7 +593,7 @@ static int dmz_write_mblock(struct dmz_metadata *zmd, struct dmz_mblock *mblk,
->  	set_bit(DMZ_META_WRITING, &mblk->state);
->  
->  	bio->bi_iter.bi_sector = dmz_blk2sect(block);
-> -	bio_set_dev(bio, zmd->dev->bdev);
-> +	bio_set_dev(bio, zmd->dev->meta_bdev);
->  	bio->bi_private = mblk;
->  	bio->bi_end_io = dmz_mblock_bio_end_io;
->  	bio_set_op_attrs(bio, REQ_OP_WRITE, REQ_META | REQ_PRIO);
-> @@ -620,7 +620,7 @@ static int dmz_rdwr_block(struct dmz_metadata *zmd, int op, sector_t block,
->  		return -ENOMEM;
->  
->  	bio->bi_iter.bi_sector = dmz_blk2sect(block);
-> -	bio_set_dev(bio, zmd->dev->bdev);
-> +	bio_set_dev(bio, zmd->dev->meta_bdev);
->  	bio_set_op_attrs(bio, op, REQ_SYNC | REQ_META | REQ_PRIO);
->  	bio_add_page(bio, page, DMZ_BLOCK_SIZE, 0);
->  	ret = submit_bio_wait(bio);
-> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-> index 70a1063..55c64fe 100644
-> --- a/drivers/md/dm-zoned-target.c
-> +++ b/drivers/md/dm-zoned-target.c
-> @@ -39,6 +39,7 @@ struct dm_chunk_work {
->   */
->  struct dmz_target {
->  	struct dm_dev		*ddev;
-> +	struct dm_dev           *metadata_dev;
+* Problem :-
+-----------------------------------------------------------------------
 
-This naming would be confusing as it implies metadata only. If you also
-want to move the random write zones to a regular device, then I would
-suggest names like:
+The original work which is done by Martin is present here [3]. The
+latest work which is posted by Mikulas [4] is not merged yet. These two
+approaches are totally different from each other. Several storage
+vendors discourage mixing copy offload requests with regular READ/WRITE
+I/O. Also, the fact that the operation fails if a copy request ever
+needs to be split as it traverses the stack it has the unfortunate
+side-effect of preventing copy offload from working in pretty much
+every common deployment configuration out there.
 
-ddev -> zoned_bdev (the zoned device, e.g. SMR disk)
-metadata_dev -> reg_bdev (regular block device, e.g. an SSD)
+* Current state of the work :-
+-----------------------------------------------------------------------
 
-The metadata+random write (fake) zones space can use the regular block
-device, and all sequential zones are assumed to be on the zoned device.
-Care must be taken to handle the case of a zoned device that has
-conventional zones: these could be used as is, not needing any reclaim,
-so potentially contributing to further optimization.
+With [3] being hard to handle arbitrary DM/MD stacking without
+splitting the command in two, one for copying IN and one for copying
+OUT. Which is then demonstrated by the [4] why [3] it is not a suitable
+candidate. Also, with [4] there is an unresolved problem with the
+two-command approach about how to handle changes to the DM layout
+between an IN and OUT operations.
 
->  
->  	unsigned long		flags;
->  
-> @@ -701,6 +702,7 @@ static int dmz_get_zoned_device(struct dm_target *ti, char *path)
->  		goto err;
->  	}
->  
-> +	dev->meta_bdev = dmz->metadata_dev->bdev;
->  	dev->bdev = dmz->ddev->bdev;
->  	(void)bdevname(dev->bdev, dev->name);
->  
-> @@ -761,7 +763,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  	int ret;
->  
->  	/* Check arguments */
-> -	if (argc != 1) {
-> +	if (argc != 2) {
->  		ti->error = "Invalid argument count";
->  		return -EINVAL;
->  	}
-> @@ -774,8 +776,16 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  	}
->  	ti->private = dmz;
->  
-> +	/* Get the metadata block device */
-> +	ret = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
-> +			&dmz->metadata_dev);
-> +	if (ret) {
-> +		dmz->metadata_dev = NULL;
-> +		goto err;
-> +	}
-> +
->  	/* Get the target zoned block device */
-> -	ret = dmz_get_zoned_device(ti, argv[0]);
-> +	ret = dmz_get_zoned_device(ti, argv[1]);
->  	if (ret) {
->  		dmz->ddev = NULL;
->  		goto err;
-> @@ -856,6 +866,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  err_dev:
->  	dmz_put_zoned_device(ti);
->  err:
-> +	dm_put_device(ti, dmz->metadata_dev);
->  	kfree(dmz);
->  
->  	return ret;
-> diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
-> index 5b5e493..e789ff5 100644
-> --- a/drivers/md/dm-zoned.h
-> +++ b/drivers/md/dm-zoned.h
-> @@ -50,6 +50,7 @@
->   */
->  struct dmz_dev {
->  	struct block_device	*bdev;
-> +	struct block_device     *meta_bdev;
->  
->  	char			name[BDEVNAME_SIZE];
->  
-> 
+* Why Linux Kernel Storage System needs Copy Offload support now ?
+-----------------------------------------------------------------------
 
+With the rise of the SNIA Computational Storage TWG and solutions [2],
+existing SCSI XCopy support in the protocol, recent advancement in the
+Linux Kernel File System for Zoned devices (Zonefs [5]), Peer to Peer
+DMA support in the Linux Kernel mainly for NVMe devices [7] and
+eventually NVMe Devices and subsystem (NVMe PCIe/NVMeOF) will benefit
+from Copy offload operation.
 
--- 
-Damien Le Moal
-Western Digital Research
+With this background we have significant number of use-cases which are
+strong candidates waiting for outstanding Linux Kernel Block Layer Copy
+Offload support, so that Linux Kernel Storage subsystem can to address
+previously mentioned problems [1] and allow efficient offloading of the
+data related operations. (Such as move/copy etc.)
+
+For reference following is the list of the use-cases/candidates waiting
+for Copy Offload support :-
+
+1. SCSI-attached storage arrays.
+2. Stacking drivers supporting XCopy DM/MD.
+3. Computational Storage solutions.
+7. File systems :- Local, NFS and Zonefs.
+4. Block devices :- Distributed, local, and Zoned devices.
+5. Peer to Peer DMA support solutions.
+6. Potentially NVMe subsystem both NVMe PCIe and NVMeOF.
+
+* What we will discuss in the proposed session ?
+-----------------------------------------------------------------------
+
+I'd like to propose a session to go over this topic to understand :-
+
+1. What are the blockers for Copy Offload implementation ?
+2. Discussion about having a file system interface.
+3. Discussion about having right system call for user-space.
+4. What is the right way to move this work forward ?
+5. How can we help to contribute and move this work forward ?
+
+* Required Participants :-
+-----------------------------------------------------------------------
+
+I'd like to invite block layer, device drivers and file system
+developers to:-
+
+1. Share their opinion on the topic.
+2. Share their experience and any other issues with [4].
+3. Uncover additional details that are missing from this proposal.
+
+Required attendees :-
+
+Martin K. Petersen
+Jens Axboe
+Christoph Hellwig
+Bart Van Assche
+Stephen Bates
+Zach Brown
+Roland Dreier
+Ric Wheeler
+Trond Myklebust
+Mike Snitzer
+Keith Busch
+Sagi Grimberg
+Hannes Reinecke
+Frederick Knight
+Mikulas Patocka
+Matias Bj=F8rling
+
+[1]https://content.riscv.org/wp-content/uploads/2018/12/A-New-Golden-Age-fo=
+r-Computer-Architecture-History-Challenges-and-Opportunities-David-Patterso=
+n-.pdf
+[2] https://www.snia.org/computational
+https://www.napatech.com/support/resources/solution-descriptions/napatech-s=
+martnic-solution-for-hardware-offload/
+      https://www.eideticom.com/products.html
+https://www.xilinx.com/applications/data-center/computational-storage.html
+[3] git://git.kernel.org/pub/scm/linux/kernel/git/mkp/linux.git xcopy
+[4] https://www.spinics.net/lists/linux-block/msg00599.html
+[5] https://lwn.net/Articles/793585/
+[6] https://nvmexpress.org/new-nvmetm-specification-defines-zoned-
+namespaces-zns-as-go-to-industry-technology/
+[7] https://github.com/sbates130272/linux-p2pmem
+[8] https://kernel.dk/io_uring.pdf
+
+Regards,
+Chaitanya
