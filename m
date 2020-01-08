@@ -1,17 +1,16 @@
-From: Bob Liu <bob.liu@oracle.com>
-Subject: Re: [RFC PATCH] dm-zoned: extend the way of exposing
- zoned block device
-Date: Thu, 9 Jan 2020 08:57:36 +0800
-Message-ID: <d098d71b-be6f-2ddc-09f6-dd0e55bd1a66@oracle.com>
-References: <20200108071212.27230-1-Nobody@nobody.com>
-	<BYAPR04MB5816BA749332D2FC6CE3993AE73E0@BYAPR04MB5816.namprd04.prod.outlook.com>
-	<9e7d2f84-6efa-7c44-2313-860d5e8ed067@oracle.com>
-	<BN8PR04MB6433B93DE0B03DC0EC30DD44E13E0@BN8PR04MB6433.namprd04.prod.outlook.com>
+From: Maged Mokhtar <mmokhtar@petasan.org>
+Subject: Re: [PATCH] dm writecache: SB remove seq_count
+Date: Wed, 8 Jan 2020 21:14:48 +0200
+Message-ID: <9322edba-14b2-fafd-b49e-96af15fdb029@petasan.org>
+References: <598c7c64-9b11-3407-2060-8d43b1ef1241@petasan.org>
+	<d76f7245-034c-f225-00fe-f33c5e9abf1a@petasan.org>
+	<alpine.LRH.2.02.2001021144450.18253@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.2001081202001.7856@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <BN8PR04MB6433B93DE0B03DC0EC30DD44E13E0@BN8PR04MB6433.namprd04.prod.outlook.com>
+In-Reply-To: <alpine.LRH.2.02.2001081202001.7856@file01.intranet.prod.int.rdu2.redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -22,235 +21,152 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Dmitry Fomichev <Dmitry.Fomichev@wdc.com>, Damien Le Moal <Damien.LeMoal@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "shirley.ma@oracle.com" <shirley.ma@oracle.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "snitzer@redhat.com" <snitzer@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 1/9/20 6:46 AM, Dmitry Fomichev wrote:
->> -----Original Message-----
->> From: linux-block-owner@vger.kernel.org <linux-block-
->> owner@vger.kernel.org> On Behalf Of Bob Liu
->> Sent: Wednesday, January 8, 2020 8:46 AM
->> To: Damien Le Moal <Damien.LeMoal@wdc.com>; dm-devel@redhat.com
->> Cc: linux-block@vger.kernel.org; snitzer@redhat.com; Dmitry Fomichev
->> <Dmitry.Fomichev@wdc.com>; martin.petersen@oracle.com;
->> shirley.ma@oracle.com
->> Subject: Re: [RFC PATCH] dm-zoned: extend the way of exposing zoned
->> block device
->>
->> On 1/8/20 3:40 PM, Damien Le Moal wrote:
->>> On 2020/01/08 16:13, Nobody wrote:
->>>> From: Bob Liu <bob.liu@oracle.com>
->>>>
->>>> Motivation:
->>>> Now the dm-zoned device mapper target exposes a zoned block
->> device(ZBC) as a
->>>> regular block device by storing metadata and buffering random writes in
->>>> conventional zones.
->>>> This way is not very flexible, there must be enough conventional zones
->> and the
->>>> performance may be constrained.
->>>> By putting metadata(also buffering random writes) in separated device
->> we can get
->>>> more flexibility and potential performance improvement e.g by storing
->> metadata
->>>> in faster device like persistent memory.
->>>>
->>>> This patch try to split the metadata of dm-zoned to an extra block
->>>> device instead of zoned block device itself.
->>>> (Buffering random writes also in the todo list.)
->>>>
->>>> Patch is at the very early stage, just want to receive some feedback about
->>>> this extension.
->>>> Another option is to create an new md-zoned device with separated
->> metadata
->>>> device based on md framework.
->>>
->>> For metadata only, it should not be hard at all to move to another
->>> conventional zone device. It will however be a little more tricky for
->>> conventional zones used for data since dm-zoned assumes that this
->> random
->>> write space is also zoned. Moving this space to a conventional device
->>> requires implementing a zone emulation (fake zones) for the regular
->>> drive, using a zone size that matches the size of sequential zones.
->>>
->>
->> Indeed.
->> I'll try to implement zone emulation next version.
->>
->>> Beyond this, dm-zoned also needs to be changed to accept partial drives
->>> and the dm core code to accept mixing of regular and zoned disks (that
->>> is forbidden now).
->>>
->>
->> Do you mean the check in device_area_is_invalid()?
->>
->>  320         /*
->>  321          * If the target is mapped to zoned block device(s), check
->>  322          * that the zones are not partially mapped.
->>  323          */
->>  324         if (bdev_zoned_model(bdev) != BLK_ZONED_NONE) {
->>
->>> Another approach worth exploring is stacking dm-zoned as is on top of a
->>> modified dm-linear with the ability to emulate conventional zones on top
->>> of a regular block device (you only need report zones method
->>> implemented). That is much easier to do. We actually hacked something
->>> like that last month to see the performance change and saw a jump from
->>> 56 MB/s to 250 MB/s for write intensive workloads (file creation on
->>> ext4). I am not so warm in this approach though as it modifies dm-linear
->>> and we want to keep it very lean and simple. Modifying dm-zoned to allow
->>> support for a device pair is a better approach I think.
->>>
->>>>
->>>> Signed-off-by: Bob Liu <bob.liu@oracle.com>
->>>> ---
->>>>  drivers/md/dm-zoned-metadata.c |  6 +++---
->>>>  drivers/md/dm-zoned-target.c   | 15 +++++++++++++--
->>>>  drivers/md/dm-zoned.h          |  1 +
->>>>  3 files changed, 17 insertions(+), 5 deletions(-)
->>>>
->>>> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-
->> metadata.c
->>>> index 22b3cb0..89cd554 100644
->>>> --- a/drivers/md/dm-zoned-metadata.c
->>>> +++ b/drivers/md/dm-zoned-metadata.c
->>>> @@ -439,7 +439,7 @@ static struct dmz_mblock
->> *dmz_get_mblock_slow(struct dmz_metadata *zmd,
->>>>
->>>>  	/* Submit read BIO */
->>>>  	bio->bi_iter.bi_sector = dmz_blk2sect(block);
->>>> -	bio_set_dev(bio, zmd->dev->bdev);
->>>> +	bio_set_dev(bio, zmd->dev->meta_bdev);
->>>>  	bio->bi_private = mblk;
->>>>  	bio->bi_end_io = dmz_mblock_bio_end_io;
->>>>  	bio_set_op_attrs(bio, REQ_OP_READ, REQ_META | REQ_PRIO);
->>>> @@ -593,7 +593,7 @@ static int dmz_write_mblock(struct dmz_metadata
->> *zmd, struct dmz_mblock *mblk,
->>>>  	set_bit(DMZ_META_WRITING, &mblk->state);
->>>>
->>>>  	bio->bi_iter.bi_sector = dmz_blk2sect(block);
->>>> -	bio_set_dev(bio, zmd->dev->bdev);
->>>> +	bio_set_dev(bio, zmd->dev->meta_bdev);
->>>>  	bio->bi_private = mblk;
->>>>  	bio->bi_end_io = dmz_mblock_bio_end_io;
->>>>  	bio_set_op_attrs(bio, REQ_OP_WRITE, REQ_META | REQ_PRIO);
->>>> @@ -620,7 +620,7 @@ static int dmz_rdwr_block(struct dmz_metadata
->> *zmd, int op, sector_t block,
->>>>  		return -ENOMEM;
->>>>
->>>>  	bio->bi_iter.bi_sector = dmz_blk2sect(block);
->>>> -	bio_set_dev(bio, zmd->dev->bdev);
->>>> +	bio_set_dev(bio, zmd->dev->meta_bdev);
->>>>  	bio_set_op_attrs(bio, op, REQ_SYNC | REQ_META | REQ_PRIO);
->>>>  	bio_add_page(bio, page, DMZ_BLOCK_SIZE, 0);
->>>>  	ret = submit_bio_wait(bio);
->>>> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-
->> target.c
->>>> index 70a1063..55c64fe 100644
->>>> --- a/drivers/md/dm-zoned-target.c
->>>> +++ b/drivers/md/dm-zoned-target.c
->>>> @@ -39,6 +39,7 @@ struct dm_chunk_work {
->>>>   */
->>>>  struct dmz_target {
->>>>  	struct dm_dev		*ddev;
->>>> +	struct dm_dev           *metadata_dev;
->>>
->>> This naming would be confusing as it implies metadata only. If you also
->>> want to move the random write zones to a regular device, then I would
->>> suggest names like:
->>>
->>> ddev -> zoned_bdev (the zoned device, e.g. SMR disk)
->>> metadata_dev -> reg_bdev (regular block device, e.g. an SSD)
->>>
->>
->> Will update.
->>
->>> The metadata+random write (fake) zones space can use the regular block
->>> device, and all sequential zones are assumed to be on the zoned device.
->>> Care must be taken to handle the case of a zoned device that has
->>> conventional zones: these could be used as is, not needing any reclaim,
->>
->> Agree, that won't make things too complicate.
->> Thank you for all the suggestions.
->>
->> Regards,
->> Bob
->>
->>> so potentially contributing to further optimization.
->>>
->>>>
->>>>  	unsigned long		flags;
->>>>
->>>> @@ -701,6 +702,7 @@ static int dmz_get_zoned_device(struct dm_target
->> *ti, char *path)
->>>>  		goto err;
->>>>  	}
->>>>
->>>> +	dev->meta_bdev = dmz->metadata_dev->bdev;
->>>>  	dev->bdev = dmz->ddev->bdev;
->>>>  	(void)bdevname(dev->bdev, dev->name);
->>>>
->>>> @@ -761,7 +763,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned
->> int argc, char **argv)
->>>>  	int ret;
->>>>
->>>>  	/* Check arguments */
->>>> -	if (argc != 1) {
->>>> +	if (argc != 2) {
->>>>  		ti->error = "Invalid argument count";
->>>>  		return -EINVAL;
->>>>  	}
-> 
-> I like the idea to have an additional device in dm-zoned as the source of random
-> zones as opposed to using block range concatenation via dm-linear. But,
-> shouldn't we retain the possibility to use just the conventional zones that exist
-> on the drive? This seems necessary for backwards compatibility. In the code
-> above, if the arg count is one, the processing probably should fall back to the
-> existing way of using drive's conventional zones.
-> 
+Yes sure. i will send you something early next week.
 
-Yeah, that's better. Will update.
-Thanks! -Bob
+/Maged
 
->>>> @@ -774,8 +776,16 @@ static int dmz_ctr(struct dm_target *ti, unsigned
->> int argc, char **argv)
->>>>  	}
->>>>  	ti->private = dmz;
->>>>
->>>> +	/* Get the metadata block device */
->>>> +	ret = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
->>>> +			&dmz->metadata_dev);
->>>> +	if (ret) {
->>>> +		dmz->metadata_dev = NULL;
->>>> +		goto err;
->>>> +	}
->>>> +
->>>>  	/* Get the target zoned block device */
->>>> -	ret = dmz_get_zoned_device(ti, argv[0]);
->>>> +	ret = dmz_get_zoned_device(ti, argv[1]);
->>>>  	if (ret) {
->>>>  		dmz->ddev = NULL;
->>>>  		goto err;
->>>> @@ -856,6 +866,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned
->> int argc, char **argv)
->>>>  err_dev:
->>>>  	dmz_put_zoned_device(ti);
->>>>  err:
->>>> +	dm_put_device(ti, dmz->metadata_dev);
->>>>  	kfree(dmz);
->>>>
->>>>  	return ret;
->>>> diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
->>>> index 5b5e493..e789ff5 100644
->>>> --- a/drivers/md/dm-zoned.h
->>>> +++ b/drivers/md/dm-zoned.h
->>>> @@ -50,6 +50,7 @@
->>>>   */
->>>>  struct dmz_dev {
->>>>  	struct block_device	*bdev;
->>>> +	struct block_device     *meta_bdev;
->>>>
->>>>  	char			name[BDEVNAME_SIZE];
->>>>
->>>>
+On 08/01/2020 19:04, Mikulas Patocka wrote:
+> BTW. I would be interested if this patch improves performance for you.
+> Could you test it?
+> 
+> (you also need my previous patch posted here
+> https://www.redhat.com/archives/dm-devel/2020-January/msg00027.html )
+> 
+> Mikulas
+> 
+> 
+> 
+> 
+> dm-writecache: use REQ_FUA when writing the superblock
+> 
+> When writing the superblock, it may be better to submit just one I/O with
+> the FUA bit set instead of two I/Os.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> ---
+>   drivers/md/dm-writecache.c |   29 +++++++++++++++--------------
+>   1 file changed, 15 insertions(+), 14 deletions(-)
+> 
+> Index: linux-2.6/drivers/md/dm-writecache.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-writecache.c	2020-01-08 17:56:41.000000000 +0100
+> +++ linux-2.6/drivers/md/dm-writecache.c	2020-01-08 17:56:49.000000000 +0100
+> @@ -448,7 +448,7 @@ static void writecache_wait_for_ios(stru
+>   		   !atomic_read(&wc->bio_in_progress[direction]));
+>   }
+>   
+> -static void ssd_commit_flushed(struct dm_writecache *wc, bool wait_for_ios)
+> +static void ssd_commit_flushed(struct dm_writecache *wc, bool wait_for_ios, bool use_fua)
+>   {
+>   	struct dm_io_region region;
+>   	struct dm_io_request req;
+> @@ -479,7 +479,7 @@ static void ssd_commit_flushed(struct dm
+>   		region.sector += wc->start_sector;
+>   		atomic_inc(&endio.count);
+>   		req.bi_op = REQ_OP_WRITE;
+> -		req.bi_op_flags = REQ_SYNC;
+> +		req.bi_op_flags = REQ_SYNC | (use_fua ? REQ_FUA : 0);
+>   		req.mem.type = DM_IO_VMA;
+>   		req.mem.ptr.vma = (char *)wc->memory_map + (size_t)i * BITMAP_GRANULARITY;
+>   		req.client = wc->dm_io;
+> @@ -497,17 +497,18 @@ static void ssd_commit_flushed(struct dm
+>   	if (wait_for_ios)
+>   		writecache_wait_for_ios(wc, WRITE);
+>   
+> -	writecache_disk_flush(wc, wc->ssd_dev);
+> +	if (!use_fua)
+> +		writecache_disk_flush(wc, wc->ssd_dev);
+>   
+>   	memset(wc->dirty_bitmap, 0, wc->dirty_bitmap_size);
+>   }
+>   
+> -static void writecache_commit_flushed(struct dm_writecache *wc, bool wait_for_ios)
+> +static void writecache_commit_flushed(struct dm_writecache *wc, bool wait_for_ios, bool use_fua)
+>   {
+>   	if (WC_MODE_PMEM(wc))
+>   		wmb();
+>   	else
+> -		ssd_commit_flushed(wc, wait_for_ios);
+> +		ssd_commit_flushed(wc, wait_for_ios, use_fua);
+>   }
+>   
+>   static void writecache_disk_flush(struct dm_writecache *wc, struct dm_dev *dev)
+> @@ -727,12 +728,12 @@ static void writecache_flush(struct dm_w
+>   		e = e2;
+>   		cond_resched();
+>   	}
+> -	writecache_commit_flushed(wc, true);
+> +	writecache_commit_flushed(wc, true, false);
+>   
+>   	wc->seq_count++;
+>   	pmem_assign(sb(wc)->seq_count, cpu_to_le64(wc->seq_count));
+>   	writecache_flush_region(wc, &sb(wc)->seq_count, sizeof sb(wc)->seq_count);
+> -	writecache_commit_flushed(wc, false);
+> +	writecache_commit_flushed(wc, false, true);
+>   
+>   	wc->overwrote_committed = false;
+>   
+> @@ -756,7 +757,7 @@ static void writecache_flush(struct dm_w
+>   	}
+>   
+>   	if (need_flush_after_free)
+> -		writecache_commit_flushed(wc, false);
+> +		writecache_commit_flushed(wc, false, false);
+>   }
+>   
+>   static void writecache_flush_work(struct work_struct *work)
+> @@ -809,7 +810,7 @@ static void writecache_discard(struct dm
+>   	}
+>   
+>   	if (discarded_something)
+> -		writecache_commit_flushed(wc, false);
+> +		writecache_commit_flushed(wc, false, false);
+>   }
+>   
+>   static bool writecache_wait_for_writeback(struct dm_writecache *wc)
+> @@ -958,7 +959,7 @@ erase_this:
+>   
+>   	if (need_flush) {
+>   		writecache_flush_all_metadata(wc);
+> -		writecache_commit_flushed(wc, false);
+> +		writecache_commit_flushed(wc, false, false);
+>   	}
+>   
+>   	wc_unlock(wc);
+> @@ -1342,7 +1343,7 @@ static void __writecache_endio_pmem(stru
+>   			wc->writeback_size--;
+>   			n_walked++;
+>   			if (unlikely(n_walked >= ENDIO_LATENCY)) {
+> -				writecache_commit_flushed(wc, false);
+> +				writecache_commit_flushed(wc, false, false);
+>   				wc_unlock(wc);
+>   				wc_lock(wc);
+>   				n_walked = 0;
+> @@ -1423,7 +1424,7 @@ pop_from_list:
+>   			writecache_wait_for_ios(wc, READ);
+>   		}
+>   
+> -		writecache_commit_flushed(wc, false);
+> +		writecache_commit_flushed(wc, false, false);
+>   
+>   		wc_unlock(wc);
+>   	}
+> @@ -1766,10 +1767,10 @@ static int init_memory(struct dm_writeca
+>   		write_original_sector_seq_count(wc, &wc->entries[b], -1, -1);
+>   
+>   	writecache_flush_all_metadata(wc);
+> -	writecache_commit_flushed(wc, false);
+> +	writecache_commit_flushed(wc, false, false);
+>   	pmem_assign(sb(wc)->magic, cpu_to_le32(MEMORY_SUPERBLOCK_MAGIC));
+>   	writecache_flush_region(wc, &sb(wc)->magic, sizeof sb(wc)->magic);
+> -	writecache_commit_flushed(wc, false);
+> +	writecache_commit_flushed(wc, false, false);
+>   
+>   	return 0;
+>   }
 > 
