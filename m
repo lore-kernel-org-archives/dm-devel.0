@@ -1,13 +1,14 @@
-From: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
-Subject: [LSF/MM/BFP ATTEND] [LSF/MM/BFP TOPIC] Storage: Copy
-	Offload
-Date: Tue, 7 Jan 2020 18:14:17 +0000
-Message-ID: <BYAPR04MB5749820C322B40C7DBBBCA02863F0@BYAPR04MB5749.namprd04.prod.outlook.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] dm writecache: SB remove seq_count
+Date: Wed, 8 Jan 2020 08:54:00 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.2001021144450.18253@file01.intranet.prod.int.rdu2.redhat.com>
+References: <598c7c64-9b11-3407-2060-8d43b1ef1241@petasan.org>
+	<d76f7245-034c-f225-00fe-f33c5e9abf1a@petasan.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: MULTIPART/MIXED; BOUNDARY="185206533-718882174-1577985305=:18253"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <d76f7245-034c-f225-00fe-f33c5e9abf1a@petasan.org>
+Content-ID: <alpine.LRH.2.02.2001021312320.25908@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,132 +18,235 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "msnitzer@redhat.com" <msnitzer@redhat.com>, "bvanassche@acm.org" <bvanassche@acm.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Christoph, Matias Bjorling <Matias.Bjorling@wdc.com>, Stephen Bates <sbates@raithlin.com>, "roland@purestorage.com" <roland@purestorage.com>, "mpatocka@redhat.com" <mpatocka@redhat.com>, Keith Busch <kbusch@kernel.org>, "rwheeler@redhat.com" <rwheeler@redhat.com>, Hellwig <hch@lst.de>, "frederick.knight@netapp.com" <frederick.knight@netapp.com>, "zach.brown@ni.com" <zach.brown@ni.com>
+To: Maged Mokhtar <mmokhtar@petasan.org>
+Cc: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Hi all,
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+--185206533-718882174-1577985305=:18253
+Content-Type: TEXT/PLAIN; CHARSET=ISO-8859-15
+Content-ID: <alpine.LRH.2.02.2001021312321.25908@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Transfer-Encoding: quoted-printable
 
-* Background :-
------------------------------------------------------------------------
+Hi
 
-Copy offload is a feature that allows file-systems or storage devices
-to be instructed to copy files/logical blocks without requiring
-involvement of the local CPU.
 
-With reference to the RISC-V summit keynote [1] single threaded
-performance is limiting due to Denard scaling and multi-threaded
-performance is slowing down due Moore's law limitations. With the rise
-of SNIA Computation Technical Storage Working Group (TWG) [2],
-offloading computations to the device or over the fabrics is becoming
-popular as there are several solutions available [2]. One of the common
-operation which is popular in the kernel and is not merged yet is Copy
-offload over the fabrics or on to the device.
+On Thu, 2 Jan 2020, Maged Mokhtar wrote:
 
-* Problem :-
------------------------------------------------------------------------
+> Any feedback on this patch please.
 
-The original work which is done by Martin is present here [3]. The
-latest work which is posted by Mikulas [4] is not merged yet. These two
-approaches are totally different from each other. Several storage
-vendors discourage mixing copy offload requests with regular READ/WRITE
-I/O. Also, the fact that the operation fails if a copy request ever
-needs to be split as it traverses the stack it has the unfortunate
-side-effect of preventing copy offload from working in pretty much
-every common deployment configuration out there.
+This will definitely not work for persistent memory - it could corrupt=20
+data if a crash happens. The CPU can flush data in arbitrary order and it=
+=20
+may happen that the seq count is flushed before the pertaining data.
 
-* Current state of the work :-
------------------------------------------------------------------------
+As for SSD mode - we could avoid updating the refcount in the superblock,=
+=20
+but it wouldn't be much helpful.
 
-With [3] being hard to handle arbitrary DM/MD stacking without
-splitting the command in two, one for copying IN and one for copying
-OUT. Which is then demonstrated by the [4] why [3] it is not a suitable
-candidate. Also, with [4] there is an unresolved problem with the
-two-command approach about how to handle changes to the DM layout
-between an IN and OUT operations.
+I.e. normally, commit is done this way:
+1. submit data writes
+2. submit metadata writes
+3. flush disk cache
+4. submit the write of superblock with increased seq_count
+5. flush disk cache
 
-* Why Linux Kernel Storage System needs Copy Offload support now ?
------------------------------------------------------------------------
+If we wanted to avoid writing the seq_count, we would need to change it=20
+to:
+1. submit data writes
+2. flush disk cache
+3. submit metadata writes
+4. flush disk cache
 
-With the rise of the SNIA Computational Storage TWG and solutions [2],
-existing SCSI XCopy support in the protocol, recent advancement in the
-Linux Kernel File System for Zoned devices (Zonefs [5]), Peer to Peer
-DMA support in the Linux Kernel mainly for NVMe devices [7] and
-eventually NVMe Devices and subsystem (NVMe PCIe/NVMeOF) will benefit
-from Copy offload operation.
+- i.e. it sill needs two disk cache flushes per one commit request - and=20
+it is not much better than the existing solution.
 
-With this background we have significant number of use-cases which are
-strong candidates waiting for outstanding Linux Kernel Block Layer Copy
-Offload support, so that Linux Kernel Storage subsystem can to address
-previously mentioned problems [1] and allow efficient offloading of the
-data related operations. (Such as move/copy etc.)
+Mikulas
 
-For reference following is the list of the use-cases/candidates waiting
-for Copy Offload support :-
+> On 06/12/2019 21:03, Maged Mokhtar wrote:
+> > Removes seq_count from super block. Currently the super block gets writ=
+ten
+> > in each commit to update the seq_count which is just used when the targ=
+et is
+> > restarted/resumed. This extra iop has a performance impact on small blo=
+ck
+> > size writes which do FUA/sync on every request. A 4k sync write current=
+ly
+> > requires 3 write ops: submitted data, metadata + super block seq_count
+> > update, removal of seq_count update reduces required write ops to 2.
+> >=20
+> > Rebuild of seq_count at start/resumption can be done quickly by looping
+> > through memory entry metadata within the resume() function.
+> >=20
+> > Signed-off-by: Maged Mokhtar <mmokhtar@petasan.org>
+> > ---
+> >  =A0drivers/md/dm-writecache.c |=A0=A0 56 ++++++++++++++++++++++++++---=
+------
+> >  =A01 file changed, 42 insertions(+), 14 deletions(-)
+> >=20
+> > --- a/drivers/md/dm-writecache.c=A0=A0=A0 2019-12-06 03:07:53.000000000=
+ -0800
+> > +++ b/drivers/md/dm-writecache.c=A0=A0=A0 2019-12-06 09:25:45.000000000=
+ -0800
+> > @@ -52,7 +52,8 @@ do {=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 \
+> >  =A0#endif
+> >=20
+> >  =A0#define MEMORY_SUPERBLOCK_MAGIC=A0=A0=A0=A0=A0=A0=A0 0x23489321
+> > -#define MEMORY_SUPERBLOCK_VERSION=A0=A0=A0 1
+> > +#define MEMORY_SUPERBLOCK_VERSION_1=A0=A0=A0 1
+> > +#define MEMORY_SUPERBLOCK_VERSION_2=A0=A0=A0 2
+> >=20
+> >  =A0struct wc_memory_entry {
+> >  =A0=A0=A0=A0 __le64 original_sector;
+> > @@ -67,7 +68,6 @@ struct wc_memory_superblock {
+> >  =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 __le32 block_size;
+> >  =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 __le32 pad;
+> >  =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 __le64 n_blocks;
+> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 __le64 seq_count;
+> >  =A0=A0=A0=A0=A0=A0=A0=A0 };
+> >  =A0=A0=A0=A0=A0=A0=A0=A0 __le64 padding[8];
+> >  =A0=A0=A0=A0 };
+> > @@ -380,6 +380,41 @@ static uint64_t read_seq_count(struct dm
+> >  =A0#endif
+> >  =A0}
+> >=20
+> > +static uint64_t read_last_seq_count(struct dm_writecache *wc)
+> > +{
+> > +=A0=A0=A0 size_t b;
+> > +=A0=A0=A0 uint64_t last_seq_count =3D 0;
+> > +=A0=A0=A0 uint64_t seq_count;
+> > +=A0=A0=A0 __le64 empty =3D cpu_to_le64(-1);
+> > +
+> > +=A0=A0=A0 if (WC_MODE_PMEM(wc)) {
+> > +=A0=A0=A0=A0=A0=A0=A0 struct wc_memory_entry wme;
+> > +=A0=A0=A0=A0=A0=A0=A0 for (b =3D 0; b < wc->n_blocks; b++) {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 BUG_ON(memcpy_mcsafe(&wme, &sb(wc)->=
+entries[b],
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 sizeof(struct wc_memory_=
+entry)));
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 if (wme.seq_count !=3D empty) {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 seq_count =3D le64_to_cp=
+u(wme.seq_count);
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 if (last_seq_count < seq=
+_count)
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 last_seq_cou=
+nt =3D seq_count;
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 }
+> > +=A0=A0=A0=A0=A0=A0=A0 }
+> > +=A0=A0=A0 }
+> > +=A0=A0=A0 else {
+> > +=A0=A0=A0=A0=A0=A0=A0 struct wc_memory_entry *p =3D &sb(wc)->entries[0=
+];
+> > +=A0=A0=A0=A0=A0=A0=A0 b =3D wc->n_blocks;
+> > +=A0=A0=A0=A0=A0=A0=A0 while (0 < b) {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 if (p->seq_count !=3D empty) {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 seq_count =3D le64_to_cp=
+u(p->seq_count);
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 if (last_seq_count < seq=
+_count)
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 last_seq_cou=
+nt =3D seq_count;
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 }
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 p++;
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 b--;
+> > +=A0=A0=A0=A0=A0=A0=A0 }
+> > +=A0=A0=A0 }
+> > +=A0=A0=A0 return last_seq_count;
+> > +}
+> > +
+> >  =A0static void clear_seq_count(struct dm_writecache *wc, struct wc_ent=
+ry *e)
+> >  =A0{
+> >  =A0#ifdef DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
+> > @@ -730,8 +765,6 @@ static void writecache_flush(struct dm_w
+> >  =A0=A0=A0=A0=A0=A0=A0=A0 writecache_wait_for_ios(wc, WRITE);
+> >=20
+> >  =A0=A0=A0=A0 wc->seq_count++;
+> > -=A0=A0=A0 pmem_assign(sb(wc)->seq_count, cpu_to_le64(wc->seq_count));
+> > -=A0=A0=A0 writecache_flush_region(wc, &sb(wc)->seq_count, sizeof
+> > sb(wc)->seq_count);
+> >  =A0=A0=A0=A0 writecache_commit_flushed(wc);
+> >=20
+> >  =A0=A0=A0=A0 wc->overwrote_committed =3D false;
+> > @@ -876,7 +909,6 @@ static void writecache_resume(struct dm_
+> >  =A0=A0=A0=A0 struct dm_writecache *wc =3D ti->private;
+> >  =A0=A0=A0=A0 size_t b;
+> >  =A0=A0=A0=A0 bool need_flush =3D false;
+> > -=A0=A0=A0 __le64 sb_seq_count;
+> >  =A0=A0=A0=A0 int r;
+> >=20
+> >  =A0=A0=A0=A0 wc_lock(wc);
+> > @@ -894,12 +926,7 @@ static void writecache_resume(struct dm_
+> >  =A0=A0=A0=A0 }
+> >  =A0=A0=A0=A0 wc->freelist_size =3D 0;
+> >=20
+> > -=A0=A0=A0 r =3D memcpy_mcsafe(&sb_seq_count, &sb(wc)->seq_count, sizeo=
+f(uint64_t));
+> > -=A0=A0=A0 if (r) {
+> > -=A0=A0=A0=A0=A0=A0=A0 writecache_error(wc, r, "hardware memory error w=
+hen reading
+> > superblock: %d", r);
+> > -=A0=A0=A0=A0=A0=A0=A0 sb_seq_count =3D cpu_to_le64(0);
+> > -=A0=A0=A0 }
+> > -=A0=A0=A0 wc->seq_count =3D le64_to_cpu(sb_seq_count);
+> > +=A0=A0=A0 wc->seq_count =3D read_last_seq_count(wc) + 1;
+> >=20
+> >  =A0#ifdef DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
+> >  =A0=A0=A0=A0 for (b =3D 0; b < wc->n_blocks; b++) {
+> > @@ -1757,10 +1784,9 @@ static int init_memory(struct dm_writeca
+> >=20
+> >  =A0=A0=A0=A0 for (b =3D 0; b < ARRAY_SIZE(sb(wc)->padding); b++)
+> >  =A0=A0=A0=A0=A0=A0=A0=A0 pmem_assign(sb(wc)->padding[b], cpu_to_le64(0=
+));
+> > -=A0=A0=A0 pmem_assign(sb(wc)->version, cpu_to_le32(MEMORY_SUPERBLOCK_V=
+ERSION));
+> > +=A0=A0=A0 pmem_assign(sb(wc)->version, cpu_to_le32(MEMORY_SUPERBLOCK_V=
+ERSION_2));
+> >  =A0=A0=A0=A0 pmem_assign(sb(wc)->block_size, cpu_to_le32(wc->block_siz=
+e));
+> >  =A0=A0=A0=A0 pmem_assign(sb(wc)->n_blocks, cpu_to_le64(wc->n_blocks));
+> > -=A0=A0=A0 pmem_assign(sb(wc)->seq_count, cpu_to_le64(0));
+> >=20
+> >  =A0=A0=A0=A0 for (b =3D 0; b < wc->n_blocks; b++)
+> >  =A0=A0=A0=A0=A0=A0=A0=A0 write_original_sector_seq_count(wc, &wc->entr=
+ies[b], -1, -1);
+> > @@ -2159,11 +2185,13 @@ invalid_optional:
+> >  =A0=A0=A0=A0=A0=A0=A0=A0 goto bad;
+> >  =A0=A0=A0=A0 }
+> >=20
+> > -=A0=A0=A0 if (le32_to_cpu(s.version) !=3D MEMORY_SUPERBLOCK_VERSION) {
+> > +=A0=A0=A0 if (le32_to_cpu(s.version) !=3D MEMORY_SUPERBLOCK_VERSION_1 =
+&&
+> > +=A0=A0=A0=A0=A0=A0=A0 le32_to_cpu(s.version) !=3D MEMORY_SUPERBLOCK_VE=
+RSION_2) {
+> >  =A0=A0=A0=A0=A0=A0=A0=A0 ti->error =3D "Invalid version in the superbl=
+ock";
+> >  =A0=A0=A0=A0=A0=A0=A0=A0 r =3D -EINVAL;
+> >  =A0=A0=A0=A0=A0=A0=A0=A0 goto bad;
+> >  =A0=A0=A0=A0 }
+> > +=A0=A0=A0 pmem_assign(sb(wc)->version, cpu_to_le32(MEMORY_SUPERBLOCK_V=
+ERSION_2));
+> >=20
+> >  =A0=A0=A0=A0 if (le32_to_cpu(s.block_size) !=3D wc->block_size) {
+> >  =A0=A0=A0=A0=A0=A0=A0=A0 ti->error =3D "Block size does not match supe=
+rblock";
+>=20
+> --=20
+> Maged Mokhtar
+> CEO PetaSAN
+> 4 Emad El Deen Kamel
+> Cairo 11371, Egypt
+> www.petasan.org
+> +201006979931
+> skype: maged.mokhtar
+> 
+--185206533-718882174-1577985305=:18253
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-1. SCSI-attached storage arrays.
-2. Stacking drivers supporting XCopy DM/MD.
-3. Computational Storage solutions.
-7. File systems :- Local, NFS and Zonefs.
-4. Block devices :- Distributed, local, and Zoned devices.
-5. Peer to Peer DMA support solutions.
-6. Potentially NVMe subsystem both NVMe PCIe and NVMeOF.
 
-* What we will discuss in the proposed session ?
------------------------------------------------------------------------
-
-I'd like to propose a session to go over this topic to understand :-
-
-1. What are the blockers for Copy Offload implementation ?
-2. Discussion about having a file system interface.
-3. Discussion about having right system call for user-space.
-4. What is the right way to move this work forward ?
-5. How can we help to contribute and move this work forward ?
-
-* Required Participants :-
------------------------------------------------------------------------
-
-I'd like to invite block layer, device drivers and file system
-developers to:-
-
-1. Share their opinion on the topic.
-2. Share their experience and any other issues with [4].
-3. Uncover additional details that are missing from this proposal.
-
-Required attendees :-
-
-Martin K. Petersen
-Jens Axboe
-Christoph Hellwig
-Bart Van Assche
-Stephen Bates
-Zach Brown
-Roland Dreier
-Ric Wheeler
-Trond Myklebust
-Mike Snitzer
-Keith Busch
-Sagi Grimberg
-Hannes Reinecke
-Frederick Knight
-Mikulas Patocka
-Matias Bj=F8rling
-
-[1]https://content.riscv.org/wp-content/uploads/2018/12/A-New-Golden-Age-fo=
-r-Computer-Architecture-History-Challenges-and-Opportunities-David-Patterso=
-n-.pdf
-[2] https://www.snia.org/computational
-https://www.napatech.com/support/resources/solution-descriptions/napatech-s=
-martnic-solution-for-hardware-offload/
-      https://www.eideticom.com/products.html
-https://www.xilinx.com/applications/data-center/computational-storage.html
-[3] git://git.kernel.org/pub/scm/linux/kernel/git/mkp/linux.git xcopy
-[4] https://www.spinics.net/lists/linux-block/msg00599.html
-[5] https://lwn.net/Articles/793585/
-[6] https://nvmexpress.org/new-nvmetm-specification-defines-zoned-
-namespaces-zns-as-go-to-industry-technology/
-[7] https://github.com/sbates130272/linux-p2pmem
-[8] https://kernel.dk/io_uring.pdf
-
-Regards,
-Chaitanya
+--185206533-718882174-1577985305=:18253--
