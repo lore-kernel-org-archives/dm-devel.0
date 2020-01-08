@@ -1,15 +1,14 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
+From: Javier =?utf-8?B?R29uesOhbGV6?= <javier@javigon.com>
 Subject: Re: [LSF/MM/BFP ATTEND] [LSF/MM/BFP TOPIC] Storage: Copy
 	Offload
-Date: Thu, 9 Jan 2020 05:56:07 +0000
-Message-ID: <BYAPR04MB581697B0367321CBAD04F9C4E7390@BYAPR04MB5816.namprd04.prod.outlook.com>
+Date: Wed, 8 Jan 2020 11:17:59 +0100
+Message-ID: <20200108101759.32gkjxakxigolail@mpHalley.local>
 References: <BYAPR04MB5749820C322B40C7DBBBCA02863F0@BYAPR04MB5749.namprd04.prod.outlook.com>
-	<fda88fd3-2d75-085e-ca15-a29f89c1e781@acm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <BYAPR04MB5749820C322B40C7DBBBCA02863F0@BYAPR04MB5749.namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,164 +18,111 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bvanassche@acm.org>, Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "msnitzer@redhat.com" <msnitzer@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Matias Bjorling <Matias.Bjorling@wdc.com>, Stephen Bates <sbates@raithlin.com>, "roland@purestorage.com" <roland@purestorage.com>, "mpatocka@redhat.com" <mpatocka@redhat.com>, Keith Busch <kbusch@kernel.org>, "rwheeler@redhat.com" <rwheeler@redhat.com>, Christoph Hellwig <hch@lst.de>, "frederick.knight@netapp.com" <frederick.knight@netapp.com>, "zach.brown@ni.com" <zach.brown@ni.com>
+Content-Disposition: inline
+To: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
+Cc: "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Stephen Bates <sbates@raithlin.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, "msnitzer@redhat.com" <msnitzer@redhat.com>, "bvanassche@acm.org" <bvanassche@acm.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "roland@purestorage.com" <roland@purestorage.com>, "frederick.knight@netapp.com" <frederick.knight@netapp.com>, "zach.brown@ni.com" <zach.brown@ni.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "mpatocka@redhat.com" <mpatocka@redhat.com>, Keith Busch <kbusch@kernel.org>, Matias Bjorling <Matias.Bjorling@wdc.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "Martin K. Petersen" <martin.petersen@oracle.com>, Kanchan Joshi <joshi.k@samsung.com>, "rwheeler@redhat.com" <rwheeler@redhat.com>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@li>
 List-Id: dm-devel.ids
 
-On 2020/01/09 12:19, Bart Van Assche wrote:
-> On 2020-01-07 10:14, Chaitanya Kulkarni wrote:
->> * Current state of the work :-
->> -----------------------------------------------------------------------
->>
->> With [3] being hard to handle arbitrary DM/MD stacking without
->> splitting the command in two, one for copying IN and one for copying
->> OUT. Which is then demonstrated by the [4] why [3] it is not a suitable
->> candidate. Also, with [4] there is an unresolved problem with the
->> two-command approach about how to handle changes to the DM layout
->> between an IN and OUT operations.
-> 
-> Was this last discussed during the 2018 edition of LSF/MM (see also
-> https://www.spinics.net/lists/linux-block/msg24986.html)? Has anyone
-> taken notes during that session? I haven't found a report of that
-> session in the official proceedings (https://lwn.net/Articles/752509/).
-
-Yes, I think it was discussed but I do not think much progress has been
-made. With NVMe simple copy added to the potential targets, I think it
-is worthwhile to have this discussion again and come up with a clear plan.
-
-> 
-> Thanks,
-> 
-> Bart.
-> 
-> 
-> This is my own collection with two year old notes about copy offloading
-> for the Linux Kernel:
-> 
-> Potential Users
-> * All dm-kcopyd users, e.g. dm-cache-target, dm-raid1, dm-snap, dm-thin,
->   dm-writecache and dm-zoned.
-> * Local filesystems like BTRFS, f2fs and bcachefs: garbage collection
->   and RAID, at least if RAID is supported by the filesystem. Note: the
->   BTRFS_IOC_CLONE_RANGE ioctl is no longer supported. Applications
->   should use FICLONERANGE instead.
-> * Network filesystems, e.g. NFS. Copying at the server side can reduce
->   network traffic significantly.
-> * Linux SCSI initiator systems connected to SAN systems such that
->   copying can happen locally on the storage array. XCOPY is widely used
->   for provisioning virtual machine images.
-> * Copy offloading in NVMe fabrics using PCIe peer-to-peer communication.
-> 
-> Requirements
-> * The block layer must gain support for XCOPY. The new XCOPY API must
->   support asynchronous operation such that users of this API are not
->   blocked while the XCOPY operation is in progress.
-> * Copying must be supported not only within a single storage device but
->   also between storage devices.
-> * The SCSI sd driver must gain support for XCOPY.
-> * A user space API must be added and that API must support asynchronous
->   (non-blocking) operation.
-> * The block layer XCOPY primitive must be support by the device mapper.
-> 
-> SCSI Extended Copy (ANSI T10 SPC)
-> The SCSI commands that support extended copy operations are:
-> * POPULATE TOKEN + WRITE USING TOKEN.
-> * EXTENDED COPY(LID1/4) + RECEIVE COPY STATUS(LID1/4). LID1 stands for a
->   List Identifier length of 1 byte and LID4 stands for a List Identifier
->   length of 4 bytes.
-> * SPC-3 and before define EXTENDED COPY(LID1) (83h/00h). SPC-4 added
->   EXTENDED COPY(LID4) (83h/01h).
-> 
-> Existing Users and Implementations of SCSI XCOPY
-> * VMware, which uses XCOPY (with a one-byte length ID, aka LID1).
-> * Microsoft, which uses ODX (aka LID4 because it has a four-byte length
->   ID).
-> * Storage vendors all support XCOPY, but ODX support is growing.
-> 
-> Block Layer Notes
-> The block layer supports the following types of block drivers:
-> * blk-mq request-based drivers.
-> * make_request drivers.
-> 
-> Notes:
-> With each request a list of bio's is associated.
-> Since submit_bio() only accepts a single bio and not a bio list this
-> means that all make_request block drivers process one bio at a time.
-> 
-> Device Mapper
-> The device mapper core supports bio processing and blk-mq requests. The
-> function in the device mapper that creates a request queue is called
-> alloc_dev(). That function not only allocates a request queue but also
-> associates a struct gendisk with the request queue. The
-> DM_DEV_CREATE_CMD ioctl triggers a call of alloc_dev(). The
-> DM_TABLE_LOAD ioctl loads a table definition. Loading a table definition
-> causes the type of a dm device to be set to one of the following:
-> DM_TYPE_NONE;
-> DM_TYPE_BIO_BASED;
-> DM_TYPE_REQUEST_BASED;
-> DM_TYPE_MQ_REQUEST_BASED;
-> DM_TYPE_DAX_BIO_BASED;
-> DM_TYPE_NVME_BIO_BASED.
-> 
-> Device mapper drivers must implement target_type.map(),
-> target_type.clone_and_map_rq() or both. .map() maps a bio list.
-> .clone_and_map_rq() maps a single request. The multipath and error
-> device mapper drivers implement both methods. All other dm drivers only
-> implement the .map() method.
-> 
-> Device mapper bio processing
-> submit_bio()
-> -> generic_make_request()
->   -> dm_make_request()
->     -> __dm_make_request()
->       -> __split_and_process_bio()
->         -> __split_and_process_non_flush()
->           -> __clone_and_map_data_bio()
->           -> alloc_tio()
->           -> clone_bio()
->             -> bio_advance()
->           -> __map_bio()
-> 
-> Existing Linux Copy Offload APIs
-> * The FICLONERANGE ioctl. From <include/linux/fs.h>:
->   #define FICLONERANGE _IOW(0x94, 13, struct file_clone_range)
-> 
-> struct file_clone_range {
-> 	__s64 src_fd;
-> 	__u64 src_offset;
-> 	__u64 src_length;
-> 	__u64 dest_offset;
-> };
-> 
-> * The sendfile() system call. sendfile() copies a given number of bytes
->   from one file to another. The output offset is the offset of the
->   output file descriptor. The input offset is either the input file
->   descriptor offset or can be specified explicitly. The sendfile()
->   prototype is as follows:
->   ssize_t sendfile(int out_fd, int in_fd, off_t *ppos, size_t count);
->   ssize_t sendfile64(int out_fd, int in_fd, loff_t *ppos, size_t count);
-> * The copy_file_range() system call. See also vfs_copy_file_range(). Its
->   prototype is as follows:
->   ssize_t copy_file_range(int fd_in, loff_t *off_in, int fd_out,
->      loff_t *off_out, size_t len, unsigned int flags);
-> * The splice() system call is not appropriate for adding extended copy
->   functionality since it copies data from or to a pipe. Its prototype is
->   as follows:
->   long splice(struct file *in, loff_t *off_in, struct file *out,
->     loff_t *off_out, size_t len, unsigned int flags);
-> 
-> Existing Linux Block Layer Copy Offload Implementations
-> * Martin Petersen's REQ_COPY bio, where source and destination block
->   device are both specified in the same bio. Only works for block
->   devices. Does not work for files. Adds a new blocking ioctl() for
->   XCOPY from user space.
-> * Mikulas Patocka's approach: separate REQ_OP_COPY_WRITE and
->   REQ_OP_COPY_READ operations. These are sent individually down stacked
->   drivers and are paired by the driver at the bottom of the stack.
-> 
-> 
-
-
--- 
-Damien Le Moal
-Western Digital Research
+T24gMDcuMDEuMjAyMCAxODoxNCwgQ2hhaXRhbnlhIEt1bGthcm5pIHdyb3RlOgo+SGkgYWxsLAo+
+Cj4qIEJhY2tncm91bmQgOi0KPi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCj4KPkNvcHkgb2ZmbG9hZCBpcyBhIGZl
+YXR1cmUgdGhhdCBhbGxvd3MgZmlsZS1zeXN0ZW1zIG9yIHN0b3JhZ2UgZGV2aWNlcwo+dG8gYmUg
+aW5zdHJ1Y3RlZCB0byBjb3B5IGZpbGVzL2xvZ2ljYWwgYmxvY2tzIHdpdGhvdXQgcmVxdWlyaW5n
+Cj5pbnZvbHZlbWVudCBvZiB0aGUgbG9jYWwgQ1BVLgo+Cj5XaXRoIHJlZmVyZW5jZSB0byB0aGUg
+UklTQy1WIHN1bW1pdCBrZXlub3RlIFsxXSBzaW5nbGUgdGhyZWFkZWQKPnBlcmZvcm1hbmNlIGlz
+IGxpbWl0aW5nIGR1ZSB0byBEZW5hcmQgc2NhbGluZyBhbmQgbXVsdGktdGhyZWFkZWQKPnBlcmZv
+cm1hbmNlIGlzIHNsb3dpbmcgZG93biBkdWUgTW9vcmUncyBsYXcgbGltaXRhdGlvbnMuIFdpdGgg
+dGhlIHJpc2UKPm9mIFNOSUEgQ29tcHV0YXRpb24gVGVjaG5pY2FsIFN0b3JhZ2UgV29ya2luZyBH
+cm91cCAoVFdHKSBbMl0sCj5vZmZsb2FkaW5nIGNvbXB1dGF0aW9ucyB0byB0aGUgZGV2aWNlIG9y
+IG92ZXIgdGhlIGZhYnJpY3MgaXMgYmVjb21pbmcKPnBvcHVsYXIgYXMgdGhlcmUgYXJlIHNldmVy
+YWwgc29sdXRpb25zIGF2YWlsYWJsZSBbMl0uIE9uZSBvZiB0aGUgY29tbW9uCj5vcGVyYXRpb24g
+d2hpY2ggaXMgcG9wdWxhciBpbiB0aGUga2VybmVsIGFuZCBpcyBub3QgbWVyZ2VkIHlldCBpcyBD
+b3B5Cj5vZmZsb2FkIG92ZXIgdGhlIGZhYnJpY3Mgb3Igb24gdG8gdGhlIGRldmljZS4KPgo+KiBQ
+cm9ibGVtIDotCj4tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQo+Cj5UaGUgb3JpZ2luYWwgd29yayB3aGljaCBpcyBk
+b25lIGJ5IE1hcnRpbiBpcyBwcmVzZW50IGhlcmUgWzNdLiBUaGUKPmxhdGVzdCB3b3JrIHdoaWNo
+IGlzIHBvc3RlZCBieSBNaWt1bGFzIFs0XSBpcyBub3QgbWVyZ2VkIHlldC4gVGhlc2UgdHdvCj5h
+cHByb2FjaGVzIGFyZSB0b3RhbGx5IGRpZmZlcmVudCBmcm9tIGVhY2ggb3RoZXIuIFNldmVyYWwg
+c3RvcmFnZQo+dmVuZG9ycyBkaXNjb3VyYWdlIG1peGluZyBjb3B5IG9mZmxvYWQgcmVxdWVzdHMg
+d2l0aCByZWd1bGFyIFJFQUQvV1JJVEUKPkkvTy4gQWxzbywgdGhlIGZhY3QgdGhhdCB0aGUgb3Bl
+cmF0aW9uIGZhaWxzIGlmIGEgY29weSByZXF1ZXN0IGV2ZXIKPm5lZWRzIHRvIGJlIHNwbGl0IGFz
+IGl0IHRyYXZlcnNlcyB0aGUgc3RhY2sgaXQgaGFzIHRoZSB1bmZvcnR1bmF0ZQo+c2lkZS1lZmZl
+Y3Qgb2YgcHJldmVudGluZyBjb3B5IG9mZmxvYWQgZnJvbSB3b3JraW5nIGluIHByZXR0eSBtdWNo
+Cj5ldmVyeSBjb21tb24gZGVwbG95bWVudCBjb25maWd1cmF0aW9uIG91dCB0aGVyZS4KPgo+KiBD
+dXJyZW50IHN0YXRlIG9mIHRoZSB3b3JrIDotCj4tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQo+Cj5XaXRoIFszXSBi
+ZWluZyBoYXJkIHRvIGhhbmRsZSBhcmJpdHJhcnkgRE0vTUQgc3RhY2tpbmcgd2l0aG91dAo+c3Bs
+aXR0aW5nIHRoZSBjb21tYW5kIGluIHR3bywgb25lIGZvciBjb3B5aW5nIElOIGFuZCBvbmUgZm9y
+IGNvcHlpbmcKPk9VVC4gV2hpY2ggaXMgdGhlbiBkZW1vbnN0cmF0ZWQgYnkgdGhlIFs0XSB3aHkg
+WzNdIGl0IGlzIG5vdCBhIHN1aXRhYmxlCj5jYW5kaWRhdGUuIEFsc28sIHdpdGggWzRdIHRoZXJl
+IGlzIGFuIHVucmVzb2x2ZWQgcHJvYmxlbSB3aXRoIHRoZQo+dHdvLWNvbW1hbmQgYXBwcm9hY2gg
+YWJvdXQgaG93IHRvIGhhbmRsZSBjaGFuZ2VzIHRvIHRoZSBETSBsYXlvdXQKPmJldHdlZW4gYW4g
+SU4gYW5kIE9VVCBvcGVyYXRpb25zLgo+Cj4qIFdoeSBMaW51eCBLZXJuZWwgU3RvcmFnZSBTeXN0
+ZW0gbmVlZHMgQ29weSBPZmZsb2FkIHN1cHBvcnQgbm93ID8KPi0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCj4KPldp
+dGggdGhlIHJpc2Ugb2YgdGhlIFNOSUEgQ29tcHV0YXRpb25hbCBTdG9yYWdlIFRXRyBhbmQgc29s
+dXRpb25zIFsyXSwKPmV4aXN0aW5nIFNDU0kgWENvcHkgc3VwcG9ydCBpbiB0aGUgcHJvdG9jb2ws
+IHJlY2VudCBhZHZhbmNlbWVudCBpbiB0aGUKPkxpbnV4IEtlcm5lbCBGaWxlIFN5c3RlbSBmb3Ig
+Wm9uZWQgZGV2aWNlcyAoWm9uZWZzIFs1XSksIFBlZXIgdG8gUGVlcgo+RE1BIHN1cHBvcnQgaW4g
+dGhlIExpbnV4IEtlcm5lbCBtYWlubHkgZm9yIE5WTWUgZGV2aWNlcyBbN10gYW5kCj5ldmVudHVh
+bGx5IE5WTWUgRGV2aWNlcyBhbmQgc3Vic3lzdGVtIChOVk1lIFBDSWUvTlZNZU9GKSB3aWxsIGJl
+bmVmaXQKPmZyb20gQ29weSBvZmZsb2FkIG9wZXJhdGlvbi4KPgo+V2l0aCB0aGlzIGJhY2tncm91
+bmQgd2UgaGF2ZSBzaWduaWZpY2FudCBudW1iZXIgb2YgdXNlLWNhc2VzIHdoaWNoIGFyZQo+c3Ry
+b25nIGNhbmRpZGF0ZXMgd2FpdGluZyBmb3Igb3V0c3RhbmRpbmcgTGludXggS2VybmVsIEJsb2Nr
+IExheWVyIENvcHkKPk9mZmxvYWQgc3VwcG9ydCwgc28gdGhhdCBMaW51eCBLZXJuZWwgU3RvcmFn
+ZSBzdWJzeXN0ZW0gY2FuIHRvIGFkZHJlc3MKPnByZXZpb3VzbHkgbWVudGlvbmVkIHByb2JsZW1z
+IFsxXSBhbmQgYWxsb3cgZWZmaWNpZW50IG9mZmxvYWRpbmcgb2YgdGhlCj5kYXRhIHJlbGF0ZWQg
+b3BlcmF0aW9ucy4gKFN1Y2ggYXMgbW92ZS9jb3B5IGV0Yy4pCj4KPkZvciByZWZlcmVuY2UgZm9s
+bG93aW5nIGlzIHRoZSBsaXN0IG9mIHRoZSB1c2UtY2FzZXMvY2FuZGlkYXRlcyB3YWl0aW5nCj5m
+b3IgQ29weSBPZmZsb2FkIHN1cHBvcnQgOi0KPgo+MS4gU0NTSS1hdHRhY2hlZCBzdG9yYWdlIGFy
+cmF5cy4KPjIuIFN0YWNraW5nIGRyaXZlcnMgc3VwcG9ydGluZyBYQ29weSBETS9NRC4KPjMuIENv
+bXB1dGF0aW9uYWwgU3RvcmFnZSBzb2x1dGlvbnMuCj43LiBGaWxlIHN5c3RlbXMgOi0gTG9jYWws
+IE5GUyBhbmQgWm9uZWZzLgo+NC4gQmxvY2sgZGV2aWNlcyA6LSBEaXN0cmlidXRlZCwgbG9jYWws
+IGFuZCBab25lZCBkZXZpY2VzLgo+NS4gUGVlciB0byBQZWVyIERNQSBzdXBwb3J0IHNvbHV0aW9u
+cy4KPjYuIFBvdGVudGlhbGx5IE5WTWUgc3Vic3lzdGVtIGJvdGggTlZNZSBQQ0llIGFuZCBOVk1l
+T0YuCj4KPiogV2hhdCB3ZSB3aWxsIGRpc2N1c3MgaW4gdGhlIHByb3Bvc2VkIHNlc3Npb24gPwo+
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0KPgo+SSdkIGxpa2UgdG8gcHJvcG9zZSBhIHNlc3Npb24gdG8gZ28gb3Zl
+ciB0aGlzIHRvcGljIHRvIHVuZGVyc3RhbmQgOi0KPgo+MS4gV2hhdCBhcmUgdGhlIGJsb2NrZXJz
+IGZvciBDb3B5IE9mZmxvYWQgaW1wbGVtZW50YXRpb24gPwo+Mi4gRGlzY3Vzc2lvbiBhYm91dCBo
+YXZpbmcgYSBmaWxlIHN5c3RlbSBpbnRlcmZhY2UuCj4zLiBEaXNjdXNzaW9uIGFib3V0IGhhdmlu
+ZyByaWdodCBzeXN0ZW0gY2FsbCBmb3IgdXNlci1zcGFjZS4KPjQuIFdoYXQgaXMgdGhlIHJpZ2h0
+IHdheSB0byBtb3ZlIHRoaXMgd29yayBmb3J3YXJkID8KPjUuIEhvdyBjYW4gd2UgaGVscCB0byBj
+b250cmlidXRlIGFuZCBtb3ZlIHRoaXMgd29yayBmb3J3YXJkID8KPgo+KiBSZXF1aXJlZCBQYXJ0
+aWNpcGFudHMgOi0KPi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCj4KPkknZCBsaWtlIHRvIGludml0ZSBibG9jayBs
+YXllciwgZGV2aWNlIGRyaXZlcnMgYW5kIGZpbGUgc3lzdGVtCj5kZXZlbG9wZXJzIHRvOi0KPgo+
+MS4gU2hhcmUgdGhlaXIgb3BpbmlvbiBvbiB0aGUgdG9waWMuCj4yLiBTaGFyZSB0aGVpciBleHBl
+cmllbmNlIGFuZCBhbnkgb3RoZXIgaXNzdWVzIHdpdGggWzRdLgo+My4gVW5jb3ZlciBhZGRpdGlv
+bmFsIGRldGFpbHMgdGhhdCBhcmUgbWlzc2luZyBmcm9tIHRoaXMgcHJvcG9zYWwuCj4KPlJlcXVp
+cmVkIGF0dGVuZGVlcyA6LQo+Cj5NYXJ0aW4gSy4gUGV0ZXJzZW4KPkplbnMgQXhib2UKPkNocmlz
+dG9waCBIZWxsd2lnCj5CYXJ0IFZhbiBBc3NjaGUKPlN0ZXBoZW4gQmF0ZXMKPlphY2ggQnJvd24K
+PlJvbGFuZCBEcmVpZXIKPlJpYyBXaGVlbGVyCj5Ucm9uZCBNeWtsZWJ1c3QKPk1pa2UgU25pdHpl
+cgo+S2VpdGggQnVzY2gKPlNhZ2kgR3JpbWJlcmcKPkhhbm5lcyBSZWluZWNrZQo+RnJlZGVyaWNr
+IEtuaWdodAo+TWlrdWxhcyBQYXRvY2thCj5NYXRpYXMgQmrDuHJsaW5nCj4KPlsxXWh0dHBzOi8v
+Y29udGVudC5yaXNjdi5vcmcvd3AtY29udGVudC91cGxvYWRzLzIwMTgvMTIvQS1OZXctR29sZGVu
+LUFnZS1mb3ItQ29tcHV0ZXItQXJjaGl0ZWN0dXJlLUhpc3RvcnktQ2hhbGxlbmdlcy1hbmQtT3Bw
+b3J0dW5pdGllcy1EYXZpZC1QYXR0ZXJzb24tLnBkZgo+WzJdIGh0dHBzOi8vd3d3LnNuaWEub3Jn
+L2NvbXB1dGF0aW9uYWwKPmh0dHBzOi8vd3d3Lm5hcGF0ZWNoLmNvbS9zdXBwb3J0L3Jlc291cmNl
+cy9zb2x1dGlvbi1kZXNjcmlwdGlvbnMvbmFwYXRlY2gtc21hcnRuaWMtc29sdXRpb24tZm9yLWhh
+cmR3YXJlLW9mZmxvYWQvCj4gICAgICBodHRwczovL3d3dy5laWRldGljb20uY29tL3Byb2R1Y3Rz
+Lmh0bWwKPmh0dHBzOi8vd3d3LnhpbGlueC5jb20vYXBwbGljYXRpb25zL2RhdGEtY2VudGVyL2Nv
+bXB1dGF0aW9uYWwtc3RvcmFnZS5odG1sCj5bM10gZ2l0Oi8vZ2l0Lmtlcm5lbC5vcmcvcHViL3Nj
+bS9saW51eC9rZXJuZWwvZ2l0L21rcC9saW51eC5naXQgeGNvcHkKPls0XSBodHRwczovL3d3dy5z
+cGluaWNzLm5ldC9saXN0cy9saW51eC1ibG9jay9tc2cwMDU5OS5odG1sCj5bNV0gaHR0cHM6Ly9s
+d24ubmV0L0FydGljbGVzLzc5MzU4NS8KPls2XSBodHRwczovL252bWV4cHJlc3Mub3JnL25ldy1u
+dm1ldG0tc3BlY2lmaWNhdGlvbi1kZWZpbmVzLXpvbmVkLQo+bmFtZXNwYWNlcy16bnMtYXMtZ28t
+dG8taW5kdXN0cnktdGVjaG5vbG9neS8KPls3XSBodHRwczovL2dpdGh1Yi5jb20vc2JhdGVzMTMw
+MjcyL2xpbnV4LXAycG1lbQo+WzhdIGh0dHBzOi8va2VybmVsLmRrL2lvX3VyaW5nLnBkZgo+Cj5S
+ZWdhcmRzLAo+Q2hhaXRhbnlhCgpJIHRoaW5rIHRoaXMgaXMgZ29vZCB0b3BpYyBhbmQgSSB3b3Vs
+ZCBsaWtlIHRvIHBhcnRpY2lwYXRlIGluIHRoZQpkaXNjdXNzaW9uIHRvby4gSSB0aGluayB0aGF0
+IExvZ2FuIEd1bnRob3JwZSB3b3VsZCBhbHNvIGJlIGludGVyZXN0ZWQKKENjKS4gQWRkaW5nIEth
+bmNoYW4gdG9vLCB3aG8gaXMgYWxzbyB3b3JraW5nIG9uIHRoaXMgYW5kIGNhbiBjb250cmlidXRl
+CnRvIHRoZSBkaXNjdXNzaW9uCgpXZSBkaXNjdXNzZWQgdGhpcyBpbiB0aGUgY29udGV4dCBvZiBQ
+MlAgYXQgZGlmZmVyZW50IFNOSUEgZXZlbnRzIGluIHRoZQpjb250ZXh0IG9mIGNvbXB1dGF0aW9u
+YWwgb2ZmbG9hZHMgYW5kIGFsc28gYXMgdGhlIGJhY2tlbmQgaW1wbGVtZW50YXRpb24KZm9yIFNp
+bXBsZSBDb3B5LCB3aGljaCBpcyBjb21pbmcgaW4gTlZNZS4gRGlzY3Vzc2luZyB0aGlzIChhZ2Fp
+bikgYXQKTFNGL01NIGFuZCBmaW5kaW5nIGEgd2F5IHRvIGZpbmFsbHkgZ2V0IFhDT1BZIG1lcmdl
+ZCB3b3VsZCBiZSBncmVhdC4KClRoYW5rcywKSmF2aWVyCgoKCgotLQpkbS1kZXZlbCBtYWlsaW5n
+IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
+bGlzdGluZm8vZG0tZGV2ZWw=
