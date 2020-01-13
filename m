@@ -1,7 +1,8 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 1/2] dm-thin: don't allow changing the data device
-Date: Mon, 13 Jan 2020 15:15:00 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.2001131514060.15900@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH 2/2] dm-thin: fix use-after-free in
+ metadata_pre_commit_callback
+Date: Mon, 13 Jan 2020 15:15:25 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.2001131515010.15900@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,95 +20,102 @@ To: Mike Snitzer <msnitzer@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, Jo
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The existing code allow changing the data device when the dm-thin-pool
-target is reloaded.
+dm-thin uses struct pool to hold the state of the pool. There may be
+multiple pool_c's pointing to a given pool, each pool_c represents a
+loaded target. pool_c's may be created and destroyed arbitrarily and the
+pool contains a reference count of pool_c's pointing to it.
 
-This can cause crashes like the one reported here:
-	https://bugzilla.redhat.com/show_bug.cgi?id=1788596
-where the kernel tries to issue a flush bio located in a structure that
-was already freed.
+A pointer to pool_c is passed to dm_pool_register_pre_commit_callback and
+this function stores it in pmd->pre_commit_context. If this pool_c is
+freed, but pool is not (because there is another pool_c referencing it),
+we end up in a situation where pmd->pre_commit_context structure points to
+freed pool_c. It causes a crash in metadata_pre_commit_callback.
 
-Locking the data device would be quite tricky, so a better solution is to
-disallow changing it - it is set in pool_create and it can never be
-changed for the given pool.
+This patch fixes the bug by passing pool instead of pool_c to
+dm_pool_register_pre_commit_callback.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Cc: stable@vger.kernel.org
 Fixes: 694cfe7f31db ("dm thin: Flush data device before committing metadata")
 
 ---
- drivers/md/dm-thin.c |   16 ++++++++++++++--
- 1 file changed, 14 insertions(+), 2 deletions(-)
+ drivers/md/dm-thin.c |   15 ++++++++-------
+ 1 file changed, 8 insertions(+), 7 deletions(-)
 
 Index: linux-2.6/drivers/md/dm-thin.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-thin.c	2020-01-13 16:13:42.000000000 +0100
-+++ linux-2.6/drivers/md/dm-thin.c	2020-01-13 18:47:50.000000000 +0100
-@@ -231,6 +231,7 @@ struct pool {
- 	struct dm_target *ti;	/* Only set if a pool target is bound */
+--- linux-2.6.orig/drivers/md/dm-thin.c	2020-01-13 18:56:55.000000000 +0100
++++ linux-2.6/drivers/md/dm-thin.c	2020-01-13 18:56:55.000000000 +0100
+@@ -282,6 +282,8 @@ struct pool {
+ 	struct dm_bio_prison_cell **cell_sort_array;
  
- 	struct mapped_device *pool_md;
-+	struct block_device *data_dev;
- 	struct block_device *md_dev;
- 	struct dm_pool_metadata *pmd;
+ 	mempool_t mapping_pool;
++
++	struct bio flush_bio;
+ };
  
-@@ -2933,6 +2934,7 @@ static struct kmem_cache *_new_mapping_c
+ static void metadata_operation_failed(struct pool *pool, const char *op, int r);
+@@ -329,7 +331,6 @@ struct pool_c {
+ 	dm_block_t low_water_blocks;
+ 	struct pool_features requested_pf; /* Features requested during table load */
+ 	struct pool_features adjusted_pf;  /* Features used after adjusting for constituent devices */
+-	struct bio flush_bio;
+ };
  
- static struct pool *pool_create(struct mapped_device *pool_md,
- 				struct block_device *metadata_dev,
-+				struct block_device *data_dev,
- 				unsigned long block_size,
- 				int read_only, char **error)
+ /*
+@@ -2925,6 +2926,7 @@ static void __pool_destroy(struct pool *
+ 	if (pool->next_mapping)
+ 		mempool_free(pool->next_mapping, &pool->mapping_pool);
+ 	mempool_exit(&pool->mapping_pool);
++	bio_uninit(&pool->flush_bio);
+ 	dm_deferred_set_destroy(pool->shared_read_ds);
+ 	dm_deferred_set_destroy(pool->all_io_ds);
+ 	kfree(pool);
+@@ -3005,6 +3007,7 @@ static struct pool *pool_create(struct m
+ 	pool->low_water_triggered = false;
+ 	pool->suspended = true;
+ 	pool->out_of_data_space = false;
++	bio_init(&pool->flush_bio, NULL, 0);
+ 
+ 	pool->shared_read_ds = dm_deferred_set_create();
+ 	if (!pool->shared_read_ds) {
+@@ -3136,7 +3139,6 @@ static void pool_dtr(struct dm_target *t
+ 	__pool_dec(pt->pool);
+ 	dm_put_device(ti, pt->metadata_dev);
+ 	dm_put_device(ti, pt->data_dev);
+-	bio_uninit(&pt->flush_bio);
+ 	kfree(pt);
+ 
+ 	mutex_unlock(&dm_thin_pool_table.mutex);
+@@ -3215,11 +3217,11 @@ static void metadata_low_callback(void *
+  */
+ static int metadata_pre_commit_callback(void *context)
  {
-@@ -3040,6 +3042,7 @@ static struct pool *pool_create(struct m
- 	pool->last_commit_jiffies = jiffies;
- 	pool->pool_md = pool_md;
- 	pool->md_dev = metadata_dev;
-+	pool->data_dev = data_dev;
- 	__pool_table_insert(pool);
+-	struct pool_c *pt = context;
+-	struct bio *flush_bio = &pt->flush_bio;
++	struct pool *pool = context;
++	struct bio *flush_bio = &pool->flush_bio;
  
- 	return pool;
-@@ -3081,6 +3084,7 @@ static void __pool_dec(struct pool *pool
+ 	bio_reset(flush_bio);
+-	bio_set_dev(flush_bio, pt->data_dev->bdev);
++	bio_set_dev(flush_bio, pool->data_dev);
+ 	flush_bio->bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
  
- static struct pool *__pool_find(struct mapped_device *pool_md,
- 				struct block_device *metadata_dev,
-+				struct block_device *data_dev,
- 				unsigned long block_size, int read_only,
- 				char **error, int *created)
- {
-@@ -3091,6 +3095,10 @@ static struct pool *__pool_find(struct m
- 			*error = "metadata device already in use by a pool";
- 			return ERR_PTR(-EBUSY);
- 		}
-+		if (pool->data_dev != data_dev) {
-+			*error = "data device already in use by a pool";
-+			return ERR_PTR(-EBUSY);
-+		}
- 		__pool_inc(pool);
+ 	return submit_bio_wait(flush_bio);
+@@ -3393,7 +3395,6 @@ static int pool_ctr(struct dm_target *ti
+ 	pt->data_dev = data_dev;
+ 	pt->low_water_blocks = low_water_blocks;
+ 	pt->adjusted_pf = pt->requested_pf = pf;
+-	bio_init(&pt->flush_bio, NULL, 0);
+ 	ti->num_flush_bios = 1;
  
- 	} else {
-@@ -3100,10 +3108,14 @@ static struct pool *__pool_find(struct m
- 				*error = "different pool cannot replace a pool";
- 				return ERR_PTR(-EINVAL);
- 			}
-+			if (pool->data_dev != data_dev) {
-+				*error = "different pool cannot replace a pool";
-+				return ERR_PTR(-EINVAL);
-+			}
- 			__pool_inc(pool);
+ 	/*
+@@ -3422,7 +3423,7 @@ static int pool_ctr(struct dm_target *ti
  
- 		} else {
--			pool = pool_create(pool_md, metadata_dev, block_size, read_only, error);
-+			pool = pool_create(pool_md, metadata_dev, data_dev, block_size, read_only, error);
- 			*created = 1;
- 		}
- 	}
-@@ -3356,7 +3368,7 @@ static int pool_ctr(struct dm_target *ti
- 		goto out;
- 	}
+ 	dm_pool_register_pre_commit_callback(pt->pool->pmd,
+ 					     metadata_pre_commit_callback,
+-					     pt);
++					     pt->pool);
  
--	pool = __pool_find(dm_table_get_md(ti->table), metadata_dev->bdev,
-+	pool = __pool_find(dm_table_get_md(ti->table), metadata_dev->bdev, data_dev->bdev,
- 			   block_size, pf.mode == PM_READ_ONLY, &ti->error, &pool_created);
- 	if (IS_ERR(pool)) {
- 		r = PTR_ERR(pool);
+ 	pt->callbacks.congested_fn = pool_is_congested;
+ 	dm_table_add_target_callbacks(ti->table, &pt->callbacks);
