@@ -1,15 +1,16 @@
 From: Maged Mokhtar <mmokhtar@petasan.org>
 Subject: Re: [PATCH] dm writecache: SB remove seq_count
-Date: Mon, 13 Jan 2020 22:02:52 +0200
-Message-ID: <a858b409-d3d5-b439-5f15-563fb5316d2a@petasan.org>
+Date: Mon, 13 Jan 2020 21:35:17 +0200
+Message-ID: <1559eac4-3d99-2eb5-3137-1f194f5461b5@petasan.org>
 References: <598c7c64-9b11-3407-2060-8d43b1ef1241@petasan.org>
 	<d76f7245-034c-f225-00fe-f33c5e9abf1a@petasan.org>
 	<alpine.LRH.2.02.2001021144450.18253@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.2001081202001.7856@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.2001021144450.18253@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.2001081202001.7856@file01.intranet.prod.int.rdu2.redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -26,253 +27,190 @@ List-Id: dm-devel.ids
 
 
 
-> Hi
->=20
->=20
-> On Thu, 2 Jan 2020, Maged Mokhtar wrote:
->=20
->> Any feedback on this patch please.
->=20
-> This will definitely not work for persistent memory - it could corrupt
-> data if a crash happens. The CPU can flush data in arbitrary order and it
-> may happen that the seq count is flushed before the pertaining data.
->=20
-> As for SSD mode - we could avoid updating the refcount in the superblock,
-> but it wouldn't be much helpful.
->=20
-> I.e. normally, commit is done this way:
-> 1. submit data writes
-> 2. submit metadata writes
-> 3. flush disk cache
-> 4. submit the write of superblock with increased seq_count
-> 5. flush disk cache
->=20
-> If we wanted to avoid writing the seq_count, we would need to change it
-> to:
-> 1. submit data writes
-> 2. flush disk cache
-> 3. submit metadata writes
-> 4. flush disk cache
->=20
-> - i.e. it sill needs two disk cache flushes per one commit request - and
-> it is not much better than the existing solution.
->=20
+On 08/01/2020 19:04, Mikulas Patocka wrote:
+> BTW. I would be interested if this patch improves performance for you.
+> Could you test it?
+> 
+> (you also need my previous patch posted here
+> https://www.redhat.com/archives/dm-devel/2020-January/msg00027.html )
+> 
 > Mikulas
->=20
+> 
+> 
+> 
+> 
+> dm-writecache: use REQ_FUA when writing the superblock
+> 
+> When writing the superblock, it may be better to submit just one I/O with
+> the FUA bit set instead of two I/Os.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> ---
+>   drivers/md/dm-writecache.c |   29 +++++++++++++++--------------
+>   1 file changed, 15 insertions(+), 14 deletions(-)
+> 
+> Index: linux-2.6/drivers/md/dm-writecache.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-writecache.c	2020-01-08 17:56:41.000000000 +0100
+> +++ linux-2.6/drivers/md/dm-writecache.c	2020-01-08 17:56:49.000000000 +0100
+> @@ -448,7 +448,7 @@ static void writecache_wait_for_ios(stru
+>   		   !atomic_read(&wc->bio_in_progress[direction]));
+>   }
+>   
+> -static void ssd_commit_flushed(struct dm_writecache *wc, bool wait_for_ios)
+> +static void ssd_commit_flushed(struct dm_writecache *wc, bool wait_for_ios, bool use_fua)
+>   {
+>   	struct dm_io_region region;
+>   	struct dm_io_request req;
+> @@ -479,7 +479,7 @@ static void ssd_commit_flushed(struct dm
+>   		region.sector += wc->start_sector;
+>   		atomic_inc(&endio.count);
+>   		req.bi_op = REQ_OP_WRITE;
+> -		req.bi_op_flags = REQ_SYNC;
+> +		req.bi_op_flags = REQ_SYNC | (use_fua ? REQ_FUA : 0);
+>   		req.mem.type = DM_IO_VMA;
+>   		req.mem.ptr.vma = (char *)wc->memory_map + (size_t)i * BITMAP_GRANULARITY;
+>   		req.client = wc->dm_io;
+> @@ -497,17 +497,18 @@ static void ssd_commit_flushed(struct dm
+>   	if (wait_for_ios)
+>   		writecache_wait_for_ios(wc, WRITE);
+>   
+> -	writecache_disk_flush(wc, wc->ssd_dev);
+> +	if (!use_fua)
+> +		writecache_disk_flush(wc, wc->ssd_dev);
+>   
+>   	memset(wc->dirty_bitmap, 0, wc->dirty_bitmap_size);
+>   }
+>   
+> -static void writecache_commit_flushed(struct dm_writecache *wc, bool wait_for_ios)
+> +static void writecache_commit_flushed(struct dm_writecache *wc, bool wait_for_ios, bool use_fua)
+>   {
+>   	if (WC_MODE_PMEM(wc))
+>   		wmb();
+>   	else
+> -		ssd_commit_flushed(wc, wait_for_ios);
+> +		ssd_commit_flushed(wc, wait_for_ios, use_fua);
+>   }
+>   
+>   static void writecache_disk_flush(struct dm_writecache *wc, struct dm_dev *dev)
+> @@ -727,12 +728,12 @@ static void writecache_flush(struct dm_w
+>   		e = e2;
+>   		cond_resched();
+>   	}
+> -	writecache_commit_flushed(wc, true);
+> +	writecache_commit_flushed(wc, true, false);
+>   
+>   	wc->seq_count++;
+>   	pmem_assign(sb(wc)->seq_count, cpu_to_le64(wc->seq_count));
+>   	writecache_flush_region(wc, &sb(wc)->seq_count, sizeof sb(wc)->seq_count);
+> -	writecache_commit_flushed(wc, false);
+> +	writecache_commit_flushed(wc, false, true);
+>   
+>   	wc->overwrote_committed = false;
+>   
+> @@ -756,7 +757,7 @@ static void writecache_flush(struct dm_w
+>   	}
+>   
+>   	if (need_flush_after_free)
+> -		writecache_commit_flushed(wc, false);
+> +		writecache_commit_flushed(wc, false, false);
+>   }
+>   
+>   static void writecache_flush_work(struct work_struct *work)
+> @@ -809,7 +810,7 @@ static void writecache_discard(struct dm
+>   	}
+>   
+>   	if (discarded_something)
+> -		writecache_commit_flushed(wc, false);
+> +		writecache_commit_flushed(wc, false, false);
+>   }
+>   
+>   static bool writecache_wait_for_writeback(struct dm_writecache *wc)
+> @@ -958,7 +959,7 @@ erase_this:
+>   
+>   	if (need_flush) {
+>   		writecache_flush_all_metadata(wc);
+> -		writecache_commit_flushed(wc, false);
+> +		writecache_commit_flushed(wc, false, false);
+>   	}
+>   
+>   	wc_unlock(wc);
+> @@ -1342,7 +1343,7 @@ static void __writecache_endio_pmem(stru
+>   			wc->writeback_size--;
+>   			n_walked++;
+>   			if (unlikely(n_walked >= ENDIO_LATENCY)) {
+> -				writecache_commit_flushed(wc, false);
+> +				writecache_commit_flushed(wc, false, false);
+>   				wc_unlock(wc);
+>   				wc_lock(wc);
+>   				n_walked = 0;
+> @@ -1423,7 +1424,7 @@ pop_from_list:
+>   			writecache_wait_for_ios(wc, READ);
+>   		}
+>   
+> -		writecache_commit_flushed(wc, false);
+> +		writecache_commit_flushed(wc, false, false);
+>   
+>   		wc_unlock(wc);
+>   	}
+> @@ -1766,10 +1767,10 @@ static int init_memory(struct dm_writeca
+>   		write_original_sector_seq_count(wc, &wc->entries[b], -1, -1);
+>   
+>   	writecache_flush_all_metadata(wc);
+> -	writecache_commit_flushed(wc, false);
+> +	writecache_commit_flushed(wc, false, false);
+>   	pmem_assign(sb(wc)->magic, cpu_to_le32(MEMORY_SUPERBLOCK_MAGIC));
+>   	writecache_flush_region(wc, &sb(wc)->magic, sizeof sb(wc)->magic);
+> -	writecache_commit_flushed(wc, false);
+> +	writecache_commit_flushed(wc, false, false);
+>   
+>   	return 0;
+>   }
+> 
+
+Hi Mikulas
+
+On a test disk, performance is same with or without patch.
+Using fio 4k rand write iops:
+12 K iops with sync/fua = 0
+2.7K iops with sync/fua = 1
+
+------- Without patch ----------
+
+fio --name=4kiops --filename=/dev/vg1/slow --rw=randwrite --bs=4k 
+--direct=1 --sync=0 --runtime=10 --time_based --numjobs=16 --iodepth=1 
+--group_reporting
+
+Run status group 0 (all jobs):
+   WRITE: bw=46.9MiB/s (49.2MB/s), 46.9MiB/s-46.9MiB/s 
+(49.2MB/s-49.2MB/s), io=469MiB (492MB), run=10005-10005msec
+
+fio --name=4kiops --filename=/dev/vg1/slow --rw=randwrite --bs=4k 
+--direct=1 --sync=1 --runtime=10 --time_based --numjobs=16 --iodepth=1 
+--group_reporting
+
+Run status group 0 (all jobs):
+   WRITE: bw=10.7MiB/s (11.2MB/s), 10.7MiB/s-10.7MiB/s 
+(11.2MB/s-11.2MB/s), io=107MiB (112MB), run=10007-1000    7msec
 
 
-Hi Mikulas,
+------- With patch ----------
 
-I appreciate your review. For SSD mode, I see the advantages of SB=20
-writes for handling crash recovery and agree with what you say. Note=20
-however that after a crash a proper client should not assume the data is=20
-valid on a device, only at the point it last issued a successful flush=20
-should the data be consistent, after this it should not assume so. A=20
-filesystem/db should handle journals/transaction at a higher level than=20
-the device. But again anything we can do on the device/target to make=20
-things more consistent, the better, so i agree there.
+fio --name=4kiops --filename=/dev/vg1/slow --rw=randwrite --bs=4k 
+--direct=1 --sync=0 --runtime=10 --time_based --numjobs=16 --iodepth=1 
+--group_reporting
 
-There is also limit to what the current crash recovery code can do, as i=20
-understand it if you have metadata already committed, their seq count is=20
-not incremented for new io on the same blocks, the crash recovery code=20
-will therefore not detect or recover cases where new data is written to=20
-existing 4k blocks at the time of crash, some blocks will end up with=20
-new data, others will not. Again this is my understanding so i could be=20
-wrong.
+Run status group 0 (all jobs):
+   WRITE: bw=46.8MiB/s (49.0MB/s), 46.8MiB/s-46.8MiB/s 
+(49.0MB/s-49.0MB/s), io=468MiB (491MB), run=10004-10004msec
 
-I think if crash consistency needs to be enhanced, it should take into=20
-account that most consumer/non-enterprise SSDs do not offer power loss=20
-protection. For many such devices power loss can corrupt data that is=20
-already written as they commit data in larger chunks via a=20
-read/modify/erase/write cycle. It is particularly bad for metadata as it=20
-could affect many data blocks. Maybe it could be good to have metadata=20
-writes via transactions or journaling, dm-cache and thin provisioning do=20
-something like this i think.
+fio --name=4kiops --filename=/dev/vg1/slow --rw=randwrite --bs=4k 
+--direct=1 --sync=1 --runtime=10 --time_based --numjobs=16 --iodepth=1 
+--group_reporting
 
-i also think your suggestion of:
- > If we wanted to avoid writing the seq_count, we would need to change it
- > to:
- > 1. submit data writes
- > 2. flush disk cache
- > 3. submit metadata writes
- > 4. flush disk cache
-
-could be better in terms of prolonging SSD lifetime, as currently the=20
-superblock gets much higher write frequency.
+Run status group 0 (all jobs):
+   WRITE: bw=10.8MiB/s (11.3MB/s), 10.8MiB/s-10.8MiB/s 
+(11.3MB/s-11.3MB/s), io=108MiB (113MB), run=10005-10005msec
 
 /Maged
-
-
-
-
->> On 06/12/2019 21:03, Maged Mokhtar wrote:
->>> Removes seq_count from super block. Currently the super block gets writ=
-ten
->>> in each commit to update the seq_count which is just used when the targ=
-et is
->>> restarted/resumed. This extra iop has a performance impact on small blo=
-ck
->>> size writes which do FUA/sync on every request. A 4k sync write current=
-ly
->>> requires 3 write ops: submitted data, metadata + super block seq_count
->>> update, removal of seq_count update reduces required write ops to 2.
->>>
->>> Rebuild of seq_count at start/resumption can be done quickly by looping
->>> through memory entry metadata within the resume() function.
->>>
->>> Signed-off-by: Maged Mokhtar <mmokhtar@petasan.org>
->>> ---
->>>   =A0drivers/md/dm-writecache.c |=A0=A0 56 ++++++++++++++++++++++++++--=
--------
->>>   =A01 file changed, 42 insertions(+), 14 deletions(-)
->>>
->>> --- a/drivers/md/dm-writecache.c=A0=A0=A0 2019-12-06 03:07:53.000000000=
- -0800
->>> +++ b/drivers/md/dm-writecache.c=A0=A0=A0 2019-12-06 09:25:45.000000000=
- -0800
->>> @@ -52,7 +52,8 @@ do {=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 \
->>>   =A0#endif
->>>
->>>   =A0#define MEMORY_SUPERBLOCK_MAGIC=A0=A0=A0=A0=A0=A0=A0 0x23489321
->>> -#define MEMORY_SUPERBLOCK_VERSION=A0=A0=A0 1
->>> +#define MEMORY_SUPERBLOCK_VERSION_1=A0=A0=A0 1
->>> +#define MEMORY_SUPERBLOCK_VERSION_2=A0=A0=A0 2
->>>
->>>   =A0struct wc_memory_entry {
->>>   =A0=A0=A0=A0 __le64 original_sector;
->>> @@ -67,7 +68,6 @@ struct wc_memory_superblock {
->>>   =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 __le32 block_size;
->>>   =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 __le32 pad;
->>>   =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 __le64 n_blocks;
->>> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 __le64 seq_count;
->>>   =A0=A0=A0=A0=A0=A0=A0=A0 };
->>>   =A0=A0=A0=A0=A0=A0=A0=A0 __le64 padding[8];
->>>   =A0=A0=A0=A0 };
->>> @@ -380,6 +380,41 @@ static uint64_t read_seq_count(struct dm
->>>   =A0#endif
->>>   =A0}
->>>
->>> +static uint64_t read_last_seq_count(struct dm_writecache *wc)
->>> +{
->>> +=A0=A0=A0 size_t b;
->>> +=A0=A0=A0 uint64_t last_seq_count =3D 0;
->>> +=A0=A0=A0 uint64_t seq_count;
->>> +=A0=A0=A0 __le64 empty =3D cpu_to_le64(-1);
->>> +
->>> +=A0=A0=A0 if (WC_MODE_PMEM(wc)) {
->>> +=A0=A0=A0=A0=A0=A0=A0 struct wc_memory_entry wme;
->>> +=A0=A0=A0=A0=A0=A0=A0 for (b =3D 0; b < wc->n_blocks; b++) {
->>> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 BUG_ON(memcpy_mcsafe(&wme, &sb(wc)->=
-entries[b],
->>> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 sizeof(struct wc_memory_=
-entry)));
->>> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 if (wme.seq_count !=3D empty) {
->>> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 seq_count =3D le64_to_cp=
-u(wme.seq_count);
->>> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 if (last_seq_count < seq=
-_count)
->>> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 last_seq_cou=
-nt =3D seq_count;
->>> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 }
->>> +=A0=A0=A0=A0=A0=A0=A0 }
->>> +=A0=A0=A0 }
->>> +=A0=A0=A0 else {
->>> +=A0=A0=A0=A0=A0=A0=A0 struct wc_memory_entry *p =3D &sb(wc)->entries[0=
-];
->>> +=A0=A0=A0=A0=A0=A0=A0 b =3D wc->n_blocks;
->>> +=A0=A0=A0=A0=A0=A0=A0 while (0 < b) {
->>> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 if (p->seq_count !=3D empty) {
->>> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 seq_count =3D le64_to_cp=
-u(p->seq_count);
->>> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 if (last_seq_count < seq=
-_count)
->>> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 last_seq_cou=
-nt =3D seq_count;
->>> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 }
->>> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 p++;
->>> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 b--;
->>> +=A0=A0=A0=A0=A0=A0=A0 }
->>> +=A0=A0=A0 }
->>> +=A0=A0=A0 return last_seq_count;
->>> +}
->>> +
->>>   =A0static void clear_seq_count(struct dm_writecache *wc, struct wc_en=
-try *e)
->>>   =A0{
->>>   =A0#ifdef DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
->>> @@ -730,8 +765,6 @@ static void writecache_flush(struct dm_w
->>>   =A0=A0=A0=A0=A0=A0=A0=A0 writecache_wait_for_ios(wc, WRITE);
->>>
->>>   =A0=A0=A0=A0 wc->seq_count++;
->>> -=A0=A0=A0 pmem_assign(sb(wc)->seq_count, cpu_to_le64(wc->seq_count));
->>> -=A0=A0=A0 writecache_flush_region(wc, &sb(wc)->seq_count, sizeof
->>> sb(wc)->seq_count);
->>>   =A0=A0=A0=A0 writecache_commit_flushed(wc);
->>>
->>>   =A0=A0=A0=A0 wc->overwrote_committed =3D false;
->>> @@ -876,7 +909,6 @@ static void writecache_resume(struct dm_
->>>   =A0=A0=A0=A0 struct dm_writecache *wc =3D ti->private;
->>>   =A0=A0=A0=A0 size_t b;
->>>   =A0=A0=A0=A0 bool need_flush =3D false;
->>> -=A0=A0=A0 __le64 sb_seq_count;
->>>   =A0=A0=A0=A0 int r;
->>>
->>>   =A0=A0=A0=A0 wc_lock(wc);
->>> @@ -894,12 +926,7 @@ static void writecache_resume(struct dm_
->>>   =A0=A0=A0=A0 }
->>>   =A0=A0=A0=A0 wc->freelist_size =3D 0;
->>>
->>> -=A0=A0=A0 r =3D memcpy_mcsafe(&sb_seq_count, &sb(wc)->seq_count, sizeo=
-f(uint64_t));
->>> -=A0=A0=A0 if (r) {
->>> -=A0=A0=A0=A0=A0=A0=A0 writecache_error(wc, r, "hardware memory error w=
-hen reading
->>> superblock: %d", r);
->>> -=A0=A0=A0=A0=A0=A0=A0 sb_seq_count =3D cpu_to_le64(0);
->>> -=A0=A0=A0 }
->>> -=A0=A0=A0 wc->seq_count =3D le64_to_cpu(sb_seq_count);
->>> +=A0=A0=A0 wc->seq_count =3D read_last_seq_count(wc) + 1;
->>>
->>>   =A0#ifdef DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
->>>   =A0=A0=A0=A0 for (b =3D 0; b < wc->n_blocks; b++) {
->>> @@ -1757,10 +1784,9 @@ static int init_memory(struct dm_writeca
->>>
->>>   =A0=A0=A0=A0 for (b =3D 0; b < ARRAY_SIZE(sb(wc)->padding); b++)
->>>   =A0=A0=A0=A0=A0=A0=A0=A0 pmem_assign(sb(wc)->padding[b], cpu_to_le64(=
-0));
->>> -=A0=A0=A0 pmem_assign(sb(wc)->version, cpu_to_le32(MEMORY_SUPERBLOCK_V=
-ERSION));
->>> +=A0=A0=A0 pmem_assign(sb(wc)->version, cpu_to_le32(MEMORY_SUPERBLOCK_V=
-ERSION_2));
->>>   =A0=A0=A0=A0 pmem_assign(sb(wc)->block_size, cpu_to_le32(wc->block_si=
-ze));
->>>   =A0=A0=A0=A0 pmem_assign(sb(wc)->n_blocks, cpu_to_le64(wc->n_blocks))=
-;
->>> -=A0=A0=A0 pmem_assign(sb(wc)->seq_count, cpu_to_le64(0));
->>>
->>>   =A0=A0=A0=A0 for (b =3D 0; b < wc->n_blocks; b++)
->>>   =A0=A0=A0=A0=A0=A0=A0=A0 write_original_sector_seq_count(wc, &wc->ent=
-ries[b], -1, -1);
->>> @@ -2159,11 +2185,13 @@ invalid_optional:
->>>   =A0=A0=A0=A0=A0=A0=A0=A0 goto bad;
->>>   =A0=A0=A0=A0 }
->>>
->>> -=A0=A0=A0 if (le32_to_cpu(s.version) !=3D MEMORY_SUPERBLOCK_VERSION) {
->>> +=A0=A0=A0 if (le32_to_cpu(s.version) !=3D MEMORY_SUPERBLOCK_VERSION_1 =
-&&
->>> +=A0=A0=A0=A0=A0=A0=A0 le32_to_cpu(s.version) !=3D MEMORY_SUPERBLOCK_VE=
-RSION_2) {
->>>   =A0=A0=A0=A0=A0=A0=A0=A0 ti->error =3D "Invalid version in the superb=
-lock";
->>>   =A0=A0=A0=A0=A0=A0=A0=A0 r =3D -EINVAL;
->>>   =A0=A0=A0=A0=A0=A0=A0=A0 goto bad;
->>>   =A0=A0=A0=A0 }
->>> +=A0=A0=A0 pmem_assign(sb(wc)->version, cpu_to_le32(MEMORY_SUPERBLOCK_V=
-ERSION_2));
->>>
->>>   =A0=A0=A0=A0 if (le32_to_cpu(s.block_size) !=3D wc->block_size) {
->>>   =A0=A0=A0=A0=A0=A0=A0=A0 ti->error =3D "Block size does not match sup=
-erblock";
->>
->> --=20
