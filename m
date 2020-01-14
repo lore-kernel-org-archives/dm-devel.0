@@ -1,109 +1,69 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] dm mpath: Add timeout mechanism for
-	queue_if_no_path
-Date: Tue, 14 Jan 2020 11:53:29 -0500
-Message-ID: <20200114165329.GA11499@redhat.com>
-References: <20200113224127.3367484-1-krisman@collabora.com>
-	<20200114161505.GA48507@lobo> <85pnfmyp7t.fsf@collabora.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: Re: kernel BUG at drivers/md/persistent-data/dm-space-map-disk.c:178
+Date: Tue, 14 Jan 2020 13:52:48 -0800
+Message-ID: <20200114215248.GK41220@gmail.com>
+References: <alpine.LRH.2.11.1909251814220.15810@mx.ewheeler.net>
+ <alpine.LRH.2.11.1912201829300.26683@mx.ewheeler.net>
+ <alpine.LRH.2.11.1912270137420.26683@mx.ewheeler.net>
+ <alpine.LRH.2.11.1912271946380.26683@mx.ewheeler.net>
+ <20200107103546.asf4tmlfdmk6xsub@reti>
+ <20200107104627.plviq37qhok2igt4@reti>
+ <20200107122825.qr7o5d6dpwa6kv62@reti>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <85pnfmyp7t.fsf@collabora.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-To: Gabriel Krisman Bertazi <krisman@collabora.com>
-Cc: dm-devel@redhat.com, kernel@collabora.com, khazhy@google.com
+In-Reply-To: <20200107122825.qr7o5d6dpwa6kv62@reti>
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: LVM2 development <lvm-devel@redhat.com>, markus.schade@gmail.com, ejt@redhat.com, linux-block@vger.kernel.org, dm-devel@redhat.com, joe.thornber@gmail.com, dm-devel@lists.ewheeler.net
 List-Id: dm-devel.ids
 
-On Tue, Jan 14 2020 at 11:31am -0500,
-Gabriel Krisman Bertazi <krisman@collabora.com> wrote:
-
-> Mike Snitzer <snitzer@redhat.com> writes:
+On Tue, Jan 07, 2020 at 12:28:25PM +0000, Joe Thornber wrote:
+> On Tue, Jan 07, 2020 at 10:46:27AM +0000, Joe Thornber wrote:
+> > I'll get a patch to you later today.
 > 
-> > On Mon, Jan 13 2020 at  5:41P -0500,
-> > Gabriel Krisman Bertazi <krisman@collabora.com> wrote:
-> >
-> >> From: Anatol Pomazau <anatol@google.com>
-> >> 
-> >> Add a configurable timeout mechanism to disable queue_if_no_path without
-> >> assistance from multipathd.  In reality, this reimplements the
-> >> no_path_retry mechanism from multipathd in kernel space, which is
-> >> interesting to prevent processes from hanging indefinitely in cases
-> >> where the daemon might be unable to respond, after a failure or for
-> >> whatever reason.
-> >> 
-> >> Despite replicating the policy configuration on kernel space, it is
-> >> quite an important case to prevent IOs from hanging forever, waiting for
-> >> userspace to behave correctly.
-> >> 
-> >> v2:
-> >>   - Use a module parameter instead of configuring per table
-> >>   - Simplify code
-> >> 
-> >> Co-developed-by: Frank Mayhar <fmayhar@google.com>
-> >> Signed-off-by: Frank Mayhar <fmayhar@google.com>
-> >> Co-developed-by: Bharath Ravi <rbharath@google.com>
-> >> Signed-off-by: Bharath Ravi <rbharath@google.com>
-> >> Co-developed-by: Khazhismel Kumykov <khazhy@google.com>
-> >> Signed-off-by: Khazhismel Kumykov <khazhy@google.com>
-> >> Signed-off-by: Anatol Pomazau <anatol@google.com>
-> >> Co-developed-by: Gabriel Krisman Bertazi <krisman@collabora.com>
-> >> Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
-> >
-> > All these tags seem rather excessive (especially in that you aren't cc
-> > most of them on the submission).  Please review/scrub.  Just seems odd
-> > that so many had a hand in this relatively small patch.
+> Eric,
 > 
-> Hey,
+> Patch below.  I've run it through a bunch of tests in the dm test suite.  But
+> obviously I have never hit your issue.  Will do more testing today.
 > 
-> I removed some of the Cc's because those emails addresses were bouncing.
-> Still, I kept the lines for credits.  I got the bounces when sending v1.
-
-Hmm, if their emails bounce, not a lot of point detailing them.
-
-> > The Signed-off-by for anatol@google.com seems wrong, or did Anatol
-> > shephard this patch at some point?  Or did you mean Reviewed-by?
-> > Something else?
+> - Joe
 > 
-> Anatol was the main author, as listed in the From: header.  This
-> seems correct with regard to the ordering rules of
-> Documentation/process/submitting-patches.rst, in particular the second
-> example, (Example of a patch submitted by a Co-developed-by: author::).
 > 
-> Am I missing something?
-
-No, I missed that Anatol is main author.  I'd have noticed once I
-applied the patch via 'git am' but...
-
 > 
-> >
-> > Anyway, if in the end you hold these tags to reflect the development
-> > evolution of this patch then so be it ;)
-> >
-> > I've reviewed the changes and found various things I felt were
-> > worthwhile to modify.  Summary:
-> >
-> > - included missing <linux/timer.h>
-> > - added MODULE_PARM_DESC
-> > - moved new functions to reduce needed forward declarations
-> > - tweaked queue_if_no_path_timeout_work's DMWARN message
-> > - added lockdep_assert_held to enable_nopath_timeout
-> > - renamed static queue_if_no_path_timeout to queue_if_no_path_timeout_secs
-> > - use READ_ONCE when accessing queue_if_no_path_timeout_secs
-> >
+> Author: Joe Thornber <ejt@redhat.com>
+> Date:   Tue Jan 7 11:58:42 2020 +0000
 > 
-> The changes you made look good to me and your version of the patch
-> passes my testcase.
+>     [dm-thin, dm-cache] Fix bug in space-maps.
+>     
+>     The space-maps track the reference counts for disk blocks.  There are variants
+>     for tracking metadata blocks, and data blocks.
+>     
+>     We implement transactionality by never touching blocks from the previous
+>     transaction, so we can rollback in the event of a crash.
+>     
+>     When allocating a new block we need to ensure the block is free (has reference
+>     count of 0) in both the current and previous transaction.  Prior to this patch we
+>     were doing this by searching for a free block in the previous transaction, and
+>     relying on a 'begin' counter to track where the last allocation in the current
+>     transaction was.  This 'begin' field was not being updated in all code paths (eg,
+>     increment of a data block reference count due to breaking sharing of a neighbour
+>     block in the same btree leaf).
+>     
+>     This patch keeps the 'begin' field, but now it's just a hint to speed up the search.
+>     Instead we search the current transaction for a free block, and then double check
+>     it's free in the old transaction.  Much simpler.
+> 
 
-OK, thanks.
+I happened to notice this patch is on the linux-dm/for-next branch
+(https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=2137c0dcc04b24efb4c38d4b46b7194575718dd5)
+and it has:
 
-Mike
+	Reported-by: Eric Biggers <ebiggers@google.com>
+
+This is wrong, I didn't report this.  I think you meant to put:
+
+	Reported-by: Eric Wheeler <dm-devel@lists.ewheeler.net>
+
+- Eric (the other one)
