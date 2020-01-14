@@ -1,16 +1,14 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm writecache: SB remove seq_count
-Date: Tue, 14 Jan 2020 09:50:20 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.2001140943090.15105@file01.intranet.prod.int.rdu2.redhat.com>
-References: <598c7c64-9b11-3407-2060-8d43b1ef1241@petasan.org>
-	<d76f7245-034c-f225-00fe-f33c5e9abf1a@petasan.org>
-	<alpine.LRH.2.02.2001021144450.18253@file01.intranet.prod.int.rdu2.redhat.com>
-	<a858b409-d3d5-b439-5f15-563fb5316d2a@petasan.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] dm mpath: Add timeout mechanism for
+	queue_if_no_path
+Date: Tue, 14 Jan 2020 11:15:05 -0500
+Message-ID: <20200114161505.GA48507@lobo>
+References: <20200113224127.3367484-1-krisman@collabora.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <a858b409-d3d5-b439-5f15-563fb5316d2a@petasan.org>
+In-Reply-To: <20200113224127.3367484-1-krisman@collabora.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,107 +18,214 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Maged Mokhtar <mmokhtar@petasan.org>
-Cc: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>
+Content-Disposition: inline
+To: Gabriel Krisman Bertazi <krisman@collabora.com>
+Cc: dm-devel@redhat.com, kernel@collabora.com, khazhy@google.com
 List-Id: dm-devel.ids
 
+On Mon, Jan 13 2020 at  5:41P -0500,
+Gabriel Krisman Bertazi <krisman@collabora.com> wrote:
 
-
-On Mon, 13 Jan 2020, Maged Mokhtar wrote:
-
+> From: Anatol Pomazau <anatol@google.com>
 > 
+> Add a configurable timeout mechanism to disable queue_if_no_path without
+> assistance from multipathd.  In reality, this reimplements the
+> no_path_retry mechanism from multipathd in kernel space, which is
+> interesting to prevent processes from hanging indefinitely in cases
+> where the daemon might be unable to respond, after a failure or for
+> whatever reason.
 > 
-> > Hi
-> > 
-> > 
-> > On Thu, 2 Jan 2020, Maged Mokhtar wrote:
-> > 
-> > > Any feedback on this patch please.
-> > 
-> > This will definitely not work for persistent memory - it could corrupt
-> > data if a crash happens. The CPU can flush data in arbitrary order and it
-> > may happen that the seq count is flushed before the pertaining data.
-> > 
-> > As for SSD mode - we could avoid updating the refcount in the superblock,
-> > but it wouldn't be much helpful.
-> > 
-> > I.e. normally, commit is done this way:
-> > 1. submit data writes
-> > 2. submit metadata writes
-> > 3. flush disk cache
-> > 4. submit the write of superblock with increased seq_count
-> > 5. flush disk cache
-> > 
-> > If we wanted to avoid writing the seq_count, we would need to change it
-> > to:
-> > 1. submit data writes
-> > 2. flush disk cache
-> > 3. submit metadata writes
-> > 4. flush disk cache
-> > 
-> > - i.e. it sill needs two disk cache flushes per one commit request - and
-> > it is not much better than the existing solution.
-> > 
-> > Mikulas
-> > 
+> Despite replicating the policy configuration on kernel space, it is
+> quite an important case to prevent IOs from hanging forever, waiting for
+> userspace to behave correctly.
 > 
+> v2:
+>   - Use a module parameter instead of configuring per table
+>   - Simplify code
 > 
-> Hi Mikulas,
-> 
-> I appreciate your review. For SSD mode, I see the advantages of SB writes for
-> handling crash recovery and agree with what you say. Note however that after a
-> crash a proper client should not assume the data is valid on a device, only at
-> the point it last issued a successful flush should the data be consistent,
+> Co-developed-by: Frank Mayhar <fmayhar@google.com>
+> Signed-off-by: Frank Mayhar <fmayhar@google.com>
+> Co-developed-by: Bharath Ravi <rbharath@google.com>
+> Signed-off-by: Bharath Ravi <rbharath@google.com>
+> Co-developed-by: Khazhismel Kumykov <khazhy@google.com>
+> Signed-off-by: Khazhismel Kumykov <khazhy@google.com>
+> Signed-off-by: Anatol Pomazau <anatol@google.com>
+> Co-developed-by: Gabriel Krisman Bertazi <krisman@collabora.com>
+> Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
 
-Yes.
+All these tags seem rather excessive (especially in that you aren't cc
+most of them on the submission).  Please review/scrub.  Just seems odd
+that so many had a hand in this relatively small patch.
 
-> after this it should not assume so. A filesystem/db should handle
-> journals/transaction at a higher level than the device. But again anything we
-> can do on the device/target to make things more consistent, the better, so i
-> agree there.
-> 
-> There is also limit to what the current crash recovery code can do, as i
-> understand it if you have metadata already committed, their seq count is not
-> incremented for new io on the same blocks, the crash recovery code will
-> therefore not detect or recover cases where new data is written to existing 4k
-> blocks at the time of crash, some blocks will end up with new data, others
-> will not. Again this is my understanding so i could be wrong.
+The Signed-off-by for anatol@google.com seems wrong, or did Anatol
+shephard this patch at some point?  Or did you mean Reviewed-by?
+Something else?
 
-If the userspace writes some block, it is unspecified if the block will 
-contain old data or new data after a crash. (the SCSI standard at some 
-point even specified that the written block may contain arbitrary data - 
-not just old or new).
+Anyway, if in the end you hold these tags to reflect the development
+evolution of this patch then so be it ;)
 
-> I think if crash consistency needs to be enhanced, it should take into account
-> that most consumer/non-enterprise SSDs do not offer power loss protection. For
+I've reviewed the changes and found various things I felt were
+worthwhile to modify.  Summary:
 
-Both SATA and SCSI standard have command that flushes the cache in the 
-disk or SSD. If the SSD ignores this command, it is broken.
+- included missing <linux/timer.h>
+- added MODULE_PARM_DESC
+- moved new functions to reduce needed forward declarations
+- tweaked queue_if_no_path_timeout_work's DMWARN message
+- added lockdep_assert_held to enable_nopath_timeout
+- renamed static queue_if_no_path_timeout to queue_if_no_path_timeout_secs
+- use READ_ONCE when accessing queue_if_no_path_timeout_secs
 
-> many such devices power loss can corrupt data that is already written as they
-> commit data in larger chunks via a read/modify/erase/write cycle. It is
-> particularly bad for metadata as it could affect many data blocks. Maybe it
-> could be good to have metadata writes via transactions or journaling, dm-cache
-> and thin provisioning do something like this i think.
+Think that was it.
 
-Both dm-cache and dm-writecache use the flush command to write the device 
-cache.
+Please review/apply//test and if you're OK with the end result I'll
+get it staged for 5.6 inclusion.
 
-> i also think your suggestion of:
-> > If we wanted to avoid writing the seq_count, we would need to change it
-> > to:
-> > 1. submit data writes
-> > 2. flush disk cache
-> > 3. submit metadata writes
-> > 4. flush disk cache
-> 
-> could be better in terms of prolonging SSD lifetime, as currently the
-> superblock gets much higher write frequency.
+Thanks,
+Mike
 
-The SSDs allocate new blocks with each write, so it doesn't matter that we 
-write the same block multiple times. With real persistent memory, it may 
-be an issue.
 
-> /Maged
-
-Mikulas
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index b09e3f925f47..2bc18c9c3abc 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -20,6 +20,7 @@
+ #include <linux/pagemap.h>
+ #include <linux/slab.h>
+ #include <linux/time.h>
++#include <linux/timer.h>
+ #include <linux/workqueue.h>
+ #include <linux/delay.h>
+ #include <scsi/scsi_dh.h>
+@@ -31,6 +32,8 @@
+ #define DM_PG_INIT_DELAY_DEFAULT ((unsigned) -1)
+ #define QUEUE_IF_NO_PATH_TIMEOUT_DEFAULT 0
+ 
++static unsigned long queue_if_no_path_timeout_secs = QUEUE_IF_NO_PATH_TIMEOUT_DEFAULT;
++
+ /* Path properties */
+ struct pgpath {
+ 	struct list_head list;
+@@ -104,10 +107,6 @@ struct dm_mpath_io {
+ 	size_t nr_bytes;
+ };
+ 
+-static unsigned long queue_if_no_path_timeout = QUEUE_IF_NO_PATH_TIMEOUT_DEFAULT;
+-module_param_named(queue_if_no_path_timeout_secs,
+-                  queue_if_no_path_timeout, ulong, 0644);
+-
+ typedef int (*action_fn) (struct pgpath *pgpath);
+ 
+ static struct workqueue_struct *kmultipathd, *kmpath_handlerd;
+@@ -115,10 +114,7 @@ static void trigger_event(struct work_struct *work);
+ static void activate_or_offline_path(struct pgpath *pgpath);
+ static void activate_path_work(struct work_struct *work);
+ static void process_queued_bios(struct work_struct *work);
+-
+ static void queue_if_no_path_timeout_work(struct timer_list *t);
+-static void enable_nopath_timeout(struct multipath *m);
+-static void disable_nopath_timeout(struct multipath *m);
+ 
+ /*-----------------------------------------------
+  * Multipath state flags.
+@@ -730,6 +726,43 @@ static int queue_if_no_path(struct multipath *m, bool queue_if_no_path,
+ 	return 0;
+ }
+ 
++/*
++ * If the queue_if_no_path timeout fires, turn off queue_if_no_path and
++ * process any queued I/O.
++ */
++static void queue_if_no_path_timeout_work(struct timer_list *t)
++{
++	struct multipath *m = from_timer(m, t, nopath_timer);
++	struct mapped_device *md = dm_table_get_md(m->ti->table);
++
++	DMWARN("queue_if_no_path timeout on %s, failing queued IO", dm_device_name(md));
++	queue_if_no_path(m, false, false);
++}
++
++/*
++ * Enable the queue_if_no_path timeout if necessary.
++ * Called with m->lock held.
++ */
++static void enable_nopath_timeout(struct multipath *m)
++{
++	unsigned long queue_if_no_path_timeout =
++		READ_ONCE(queue_if_no_path_timeout_secs) * HZ;
++
++	lockdep_assert_held(&m->lock);
++
++	if (queue_if_no_path_timeout > 0 &&
++	    atomic_read(&m->nr_valid_paths) == 0 &&
++	    test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
++		mod_timer(&m->nopath_timer,
++			  jiffies + queue_if_no_path_timeout);
++	}
++}
++
++static void disable_nopath_timeout(struct multipath *m)
++{
++	del_timer_sync(&m->nopath_timer);
++}
++
+ /*
+  * An event is triggered whenever a path is taken out of use.
+  * Includes path failure and PG bypass.
+@@ -1231,20 +1264,6 @@ static void multipath_dtr(struct dm_target *ti)
+ 	free_multipath(m);
+ }
+ 
+-/*
+- * If the queue_if_no_path timeout fires, turn off queue_if_no_path and
+- * process any queued I/O.
+- */
+-static void queue_if_no_path_timeout_work(struct timer_list *t)
+-{
+-	struct multipath *m = from_timer(m, t, nopath_timer);
+-	struct mapped_device *md = dm_table_get_md((m)->ti->table);
+-
+-	DMWARN("queue_if_no_path timeout on %s", dm_device_name(md));
+-
+-	queue_if_no_path(m, false, false);
+-}
+-
+ /*
+  * Take a path out of use.
+  */
+@@ -1352,25 +1371,6 @@ static int action_dev(struct multipath *m, struct dm_dev *dev,
+ 	return r;
+ }
+ 
+-/*
+- * Enable the queue_if_no_path timeout if necessary.  Called with m->lock
+- * held.
+- */
+-static void enable_nopath_timeout(struct multipath *m)
+-{
+-	if (queue_if_no_path_timeout > 0 &&
+-	    atomic_read(&m->nr_valid_paths) == 0 &&
+-	    test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
+-		mod_timer(&m->nopath_timer,
+-			  jiffies + queue_if_no_path_timeout * HZ);
+-	}
+-}
+-
+-static void disable_nopath_timeout(struct multipath *m)
+-{
+-	del_timer_sync(&m->nopath_timer);
+-}
+-
+ /*
+  * Temporarily try to avoid having to use the specified PG
+  */
+@@ -2127,6 +2127,10 @@ static void __exit dm_multipath_exit(void)
+ module_init(dm_multipath_init);
+ module_exit(dm_multipath_exit);
+ 
++module_param_named(queue_if_no_path_timeout_secs,
++		   queue_if_no_path_timeout_secs, ulong, S_IRUGO | S_IWUSR);
++MODULE_PARM_DESC(queue_if_no_path_timeout_secs, "No available paths queue IO timeout in seconds");
++
+ MODULE_DESCRIPTION(DM_NAME " multipath target");
+ MODULE_AUTHOR("Sistina Software <dm-devel@redhat.com>");
+ MODULE_LICENSE("GPL");
