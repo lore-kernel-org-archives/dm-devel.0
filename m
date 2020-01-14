@@ -1,12 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] block: fix an integer overflow in logical block
-	size
-Date: Wed, 15 Jan 2020 08:35:25 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.2001150833180.31494@file01.intranet.prod.int.rdu2.redhat.com>
+From: Gabriel Krisman Bertazi <krisman@collabora.com>
+Subject: Re: [PATCH v2] dm mpath: Add timeout mechanism for
+	queue_if_no_path
+Date: Tue, 14 Jan 2020 11:31:18 -0500
+Message-ID: <85pnfmyp7t.fsf@collabora.com>
+References: <20200113224127.3367484-1-krisman@collabora.com>
+	<20200114161505.GA48507@lobo>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200114161505.GA48507@lobo> (Mike Snitzer's message of "Tue, 14
+	Jan 2020 11:15:05 -0500")
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,122 +20,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, kernel@collabora.com, khazhy@google.com
 List-Id: dm-devel.ids
 
-Logical block size has type unsigned short. That means that it can be at
-most 32768. However, there are architectures that can run with 64k pages
-(for example arm64) and on these architectures, it may be possible to
-create block devices with 64k block size.
+Mike Snitzer <snitzer@redhat.com> writes:
 
-For exmaple (run this on an architecture with 64k pages):
-# modprobe brd rd_size=1048576
-# dmsetup create cache --table "0 `blockdev --getsize /dev/ram0` writecache s /dev/ram0 /dev/ram1 65536 0"
-# mkfs.ext4 -b 65536 /dev/mapper/cache
-# mount -t ext4 /dev/mapper/cache /mnt/test
+> On Mon, Jan 13 2020 at  5:41P -0500,
+> Gabriel Krisman Bertazi <krisman@collabora.com> wrote:
+>
+>> From: Anatol Pomazau <anatol@google.com>
+>> 
+>> Add a configurable timeout mechanism to disable queue_if_no_path without
+>> assistance from multipathd.  In reality, this reimplements the
+>> no_path_retry mechanism from multipathd in kernel space, which is
+>> interesting to prevent processes from hanging indefinitely in cases
+>> where the daemon might be unable to respond, after a failure or for
+>> whatever reason.
+>> 
+>> Despite replicating the policy configuration on kernel space, it is
+>> quite an important case to prevent IOs from hanging forever, waiting for
+>> userspace to behave correctly.
+>> 
+>> v2:
+>>   - Use a module parameter instead of configuring per table
+>>   - Simplify code
+>> 
+>> Co-developed-by: Frank Mayhar <fmayhar@google.com>
+>> Signed-off-by: Frank Mayhar <fmayhar@google.com>
+>> Co-developed-by: Bharath Ravi <rbharath@google.com>
+>> Signed-off-by: Bharath Ravi <rbharath@google.com>
+>> Co-developed-by: Khazhismel Kumykov <khazhy@google.com>
+>> Signed-off-by: Khazhismel Kumykov <khazhy@google.com>
+>> Signed-off-by: Anatol Pomazau <anatol@google.com>
+>> Co-developed-by: Gabriel Krisman Bertazi <krisman@collabora.com>
+>> Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
+>
+> All these tags seem rather excessive (especially in that you aren't cc
+> most of them on the submission).  Please review/scrub.  Just seems odd
+> that so many had a hand in this relatively small patch.
 
-Mount will fail with this error because it tries to read the superblock using 2-sector
-access:
-  device-mapper: writecache: I/O is not aligned, sector 2, size 1024, block size 65536
-  EXT4-fs (dm-0): unable to read superblock
+Hey,
 
-This patch changes the logical block size from unsigned short to unsigned
-int to avoid the overflow.
+I removed some of the Cc's because those emails addresses were bouncing.
+Still, I kept the lines for credits.  I got the bounces when sending v1.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
+> The Signed-off-by for anatol@google.com seems wrong, or did Anatol
+> shephard this patch at some point?  Or did you mean Reviewed-by?
+> Something else?
 
----
- block/blk-settings.c            |    2 +-
- drivers/md/dm-snap-persistent.c |    2 +-
- drivers/md/raid0.c              |    2 +-
- include/linux/blkdev.h          |    8 ++++----
- 4 files changed, 7 insertions(+), 7 deletions(-)
+Anatol was the main author, as listed in the From: header.  This
+seems correct with regard to the ordering rules of
+Documentation/process/submitting-patches.rst, in particular the second
+example, (Example of a patch submitted by a Co-developed-by: author::).
 
-Index: linux-2.6/block/blk-settings.c
-===================================================================
---- linux-2.6.orig/block/blk-settings.c	2020-01-15 14:02:54.000000000 +0100
-+++ linux-2.6/block/blk-settings.c	2020-01-15 14:02:54.000000000 +0100
-@@ -328,7 +328,7 @@ EXPORT_SYMBOL(blk_queue_max_segment_size
-  *   storage device can address.  The default of 512 covers most
-  *   hardware.
-  **/
--void blk_queue_logical_block_size(struct request_queue *q, unsigned short size)
-+void blk_queue_logical_block_size(struct request_queue *q, unsigned int size)
- {
- 	q->limits.logical_block_size = size;
- 
-Index: linux-2.6/include/linux/blkdev.h
-===================================================================
---- linux-2.6.orig/include/linux/blkdev.h	2020-01-15 14:02:54.000000000 +0100
-+++ linux-2.6/include/linux/blkdev.h	2020-01-15 14:11:07.000000000 +0100
-@@ -328,6 +328,7 @@ struct queue_limits {
- 	unsigned int		max_sectors;
- 	unsigned int		max_segment_size;
- 	unsigned int		physical_block_size;
-+	unsigned int		logical_block_size;
- 	unsigned int		alignment_offset;
- 	unsigned int		io_min;
- 	unsigned int		io_opt;
-@@ -338,7 +339,6 @@ struct queue_limits {
- 	unsigned int		discard_granularity;
- 	unsigned int		discard_alignment;
- 
--	unsigned short		logical_block_size;
- 	unsigned short		max_segments;
- 	unsigned short		max_integrity_segments;
- 	unsigned short		max_discard_segments;
-@@ -1077,7 +1077,7 @@ extern void blk_queue_max_write_same_sec
- 		unsigned int max_write_same_sectors);
- extern void blk_queue_max_write_zeroes_sectors(struct request_queue *q,
- 		unsigned int max_write_same_sectors);
--extern void blk_queue_logical_block_size(struct request_queue *, unsigned short);
-+extern void blk_queue_logical_block_size(struct request_queue *, unsigned int);
- extern void blk_queue_physical_block_size(struct request_queue *, unsigned int);
- extern void blk_queue_alignment_offset(struct request_queue *q,
- 				       unsigned int alignment);
-@@ -1291,7 +1291,7 @@ static inline unsigned int queue_max_seg
- 	return q->limits.max_segment_size;
- }
- 
--static inline unsigned short queue_logical_block_size(const struct request_queue *q)
-+static inline unsigned queue_logical_block_size(const struct request_queue *q)
- {
- 	int retval = 512;
- 
-@@ -1301,7 +1301,7 @@ static inline unsigned short queue_logic
- 	return retval;
- }
- 
--static inline unsigned short bdev_logical_block_size(struct block_device *bdev)
-+static inline unsigned int bdev_logical_block_size(struct block_device *bdev)
- {
- 	return queue_logical_block_size(bdev_get_queue(bdev));
- }
-Index: linux-2.6/drivers/md/dm-snap-persistent.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-snap-persistent.c	2019-10-10 16:52:03.000000000 +0200
-+++ linux-2.6/drivers/md/dm-snap-persistent.c	2020-01-15 14:14:11.000000000 +0100
-@@ -17,7 +17,7 @@
- #include <linux/dm-bufio.h>
- 
- #define DM_MSG_PREFIX "persistent snapshot"
--#define DM_CHUNK_SIZE_DEFAULT_SECTORS 32	/* 16KB */
-+#define DM_CHUNK_SIZE_DEFAULT_SECTORS 32U	/* 16KB */
- 
- #define DM_PREFETCH_CHUNKS		12
- 
-Index: linux-2.6/drivers/md/raid0.c
-===================================================================
---- linux-2.6.orig/drivers/md/raid0.c	2019-12-11 09:31:25.000000000 +0100
-+++ linux-2.6/drivers/md/raid0.c	2020-01-15 14:15:14.000000000 +0100
-@@ -87,7 +87,7 @@ static int create_strip_zones(struct mdd
- 	char b[BDEVNAME_SIZE];
- 	char b2[BDEVNAME_SIZE];
- 	struct r0conf *conf = kzalloc(sizeof(*conf), GFP_KERNEL);
--	unsigned short blksize = 512;
-+	unsigned blksize = 512;
- 
- 	*private_conf = ERR_PTR(-ENOMEM);
- 	if (!conf)
+Am I missing something?
+
+>
+> Anyway, if in the end you hold these tags to reflect the development
+> evolution of this patch then so be it ;)
+>
+> I've reviewed the changes and found various things I felt were
+> worthwhile to modify.  Summary:
+>
+> - included missing <linux/timer.h>
+> - added MODULE_PARM_DESC
+> - moved new functions to reduce needed forward declarations
+> - tweaked queue_if_no_path_timeout_work's DMWARN message
+> - added lockdep_assert_held to enable_nopath_timeout
+> - renamed static queue_if_no_path_timeout to queue_if_no_path_timeout_secs
+> - use READ_ONCE when accessing queue_if_no_path_timeout_secs
+>
+
+The changes you made look good to me and your version of the patch
+passes my testcase.
+
+-- 
+Gabriel Krisman Bertazi
