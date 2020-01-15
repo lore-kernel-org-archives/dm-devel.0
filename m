@@ -1,16 +1,12 @@
-From: Gabriel Krisman Bertazi <krisman@collabora.com>
-Subject: Re: [PATCH v2] dm mpath: Add timeout mechanism for
-	queue_if_no_path
-Date: Tue, 14 Jan 2020 11:31:18 -0500
-Message-ID: <85pnfmyp7t.fsf@collabora.com>
-References: <20200113224127.3367484-1-krisman@collabora.com>
-	<20200114161505.GA48507@lobo>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-writecache: improve performance of large
+ linear writes on SSDs
+Date: Wed, 15 Jan 2020 04:35:22 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.2001150432500.10972@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200114161505.GA48507@lobo> (Mike Snitzer's message of "Tue, 14
-	Jan 2020 11:15:05 -0500")
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,80 +16,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, kernel@collabora.com, khazhy@google.com
+To: Mike Snitzer <msnitzer@redhat.com>, Nikhil Kshirsagar <nkshirsa@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Mike Snitzer <snitzer@redhat.com> writes:
+When dm-writecache is used with SSD as a cache device, it would submit
+separate bio for each written block. The I/Os would be merged by the disk
+scheduler, but this merging degrades performance.
 
-> On Mon, Jan 13 2020 at  5:41P -0500,
-> Gabriel Krisman Bertazi <krisman@collabora.com> wrote:
->
->> From: Anatol Pomazau <anatol@google.com>
->> 
->> Add a configurable timeout mechanism to disable queue_if_no_path without
->> assistance from multipathd.  In reality, this reimplements the
->> no_path_retry mechanism from multipathd in kernel space, which is
->> interesting to prevent processes from hanging indefinitely in cases
->> where the daemon might be unable to respond, after a failure or for
->> whatever reason.
->> 
->> Despite replicating the policy configuration on kernel space, it is
->> quite an important case to prevent IOs from hanging forever, waiting for
->> userspace to behave correctly.
->> 
->> v2:
->>   - Use a module parameter instead of configuring per table
->>   - Simplify code
->> 
->> Co-developed-by: Frank Mayhar <fmayhar@google.com>
->> Signed-off-by: Frank Mayhar <fmayhar@google.com>
->> Co-developed-by: Bharath Ravi <rbharath@google.com>
->> Signed-off-by: Bharath Ravi <rbharath@google.com>
->> Co-developed-by: Khazhismel Kumykov <khazhy@google.com>
->> Signed-off-by: Khazhismel Kumykov <khazhy@google.com>
->> Signed-off-by: Anatol Pomazau <anatol@google.com>
->> Co-developed-by: Gabriel Krisman Bertazi <krisman@collabora.com>
->> Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
->
-> All these tags seem rather excessive (especially in that you aren't cc
-> most of them on the submission).  Please review/scrub.  Just seems odd
-> that so many had a hand in this relatively small patch.
+This patch makes dm-writecache submit larger bios - we can submit large
+bio as long as there is consecutive free space on the cache device.
 
-Hey,
+Benchmark (arm64 with 64k page size, using /dev/ram0 as a cache device):
 
-I removed some of the Cc's because those emails addresses were bouncing.
-Still, I kept the lines for credits.  I got the bounces when sending v1.
+fio --bs=512k --iodepth=32 --size=400M --direct=1 --filename=/dev/mapper/cache --rw=randwrite --numjobs=1 --name=test
 
-> The Signed-off-by for anatol@google.com seems wrong, or did Anatol
-> shephard this patch at some point?  Or did you mean Reviewed-by?
-> Something else?
+block	old	new
+size	MiB/s	MiB/s
+---------------------
+512	181	700
+1k	347	1256
+2k	644	2020
+4k	1183	2759
+8k	1852	3333
+16k	2469	3509
+32k	2974	3670
+64k	3404	3810
 
-Anatol was the main author, as listed in the From: header.  This
-seems correct with regard to the ordering rules of
-Documentation/process/submitting-patches.rst, in particular the second
-example, (Example of a patch submitted by a Co-developed-by: author::).
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-Am I missing something?
+---
+ drivers/md/dm-writecache.c |   28 ++++++++++++++++++++++++----
+ 1 file changed, 24 insertions(+), 4 deletions(-)
 
->
-> Anyway, if in the end you hold these tags to reflect the development
-> evolution of this patch then so be it ;)
->
-> I've reviewed the changes and found various things I felt were
-> worthwhile to modify.  Summary:
->
-> - included missing <linux/timer.h>
-> - added MODULE_PARM_DESC
-> - moved new functions to reduce needed forward declarations
-> - tweaked queue_if_no_path_timeout_work's DMWARN message
-> - added lockdep_assert_held to enable_nopath_timeout
-> - renamed static queue_if_no_path_timeout to queue_if_no_path_timeout_secs
-> - use READ_ONCE when accessing queue_if_no_path_timeout_secs
->
-
-The changes you made look good to me and your version of the patch
-passes my testcase.
-
--- 
-Gabriel Krisman Bertazi
+Index: linux-2.6/drivers/md/dm-writecache.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-writecache.c	2020-01-14 16:11:09.000000000 +0100
++++ linux-2.6/drivers/md/dm-writecache.c	2020-01-14 21:42:44.000000000 +0100
+@@ -626,7 +626,7 @@ static void writecache_add_to_freelist(s
+ 	wc->freelist_size++;
+ }
+ 
+-static struct wc_entry *writecache_pop_from_freelist(struct dm_writecache *wc)
++static struct wc_entry *writecache_pop_from_freelist(struct dm_writecache *wc, sector_t expected_sector)
+ {
+ 	struct wc_entry *e;
+ 
+@@ -635,6 +635,8 @@ static struct wc_entry *writecache_pop_f
+ 		if (unlikely(!wc->current_free))
+ 			return NULL;
+ 		e = wc->current_free;
++		if (expected_sector != (sector_t)-1 && unlikely(cache_sector(wc, e) != expected_sector))
++			return NULL;
+ 		next = rb_next(&e->rb_node);
+ 		rb_erase(&e->rb_node, &wc->freetree);
+ 		if (unlikely(!next))
+@@ -644,6 +646,8 @@ static struct wc_entry *writecache_pop_f
+ 		if (unlikely(list_empty(&wc->freelist)))
+ 			return NULL;
+ 		e = container_of(wc->freelist.next, struct wc_entry, lru);
++		if (expected_sector != (sector_t)-1 && unlikely(cache_sector(wc, e) != expected_sector))
++			return NULL;
+ 		list_del(&e->lru);
+ 	}
+ 	wc->freelist_size--;
+@@ -1194,7 +1198,7 @@ read_next_block:
+ 					goto bio_copy;
+ 				}
+ 			}
+-			e = writecache_pop_from_freelist(wc);
++			e = writecache_pop_from_freelist(wc, (sector_t)-1);
+ 			if (unlikely(!e)) {
+ 				writecache_wait_on_freelist(wc);
+ 				continue;
+@@ -1206,9 +1210,25 @@ bio_copy:
+ 			if (WC_MODE_PMEM(wc)) {
+ 				bio_copy_block(wc, bio, memory_data(wc, e));
+ 			} else {
+-				dm_accept_partial_bio(bio, wc->block_size >> SECTOR_SHIFT);
++				unsigned bio_size = wc->block_size;
++				sector_t start_cache_sec = cache_sector(wc, e);
++				sector_t current_cache_sec = start_cache_sec + (bio_size >> SECTOR_SHIFT);
++
++				while (bio_size < bio->bi_iter.bi_size) {
++					struct wc_entry *f = writecache_pop_from_freelist(wc, current_cache_sec);
++					if (!f)
++						break;
++					write_original_sector_seq_count(wc, f, bio->bi_iter.bi_sector + (bio_size >> SECTOR_SHIFT), wc->seq_count);
++					writecache_insert_entry(wc, f);
++					wc->uncommitted_blocks++;
++					bio_size += wc->block_size;
++					current_cache_sec += wc->block_size >> SECTOR_SHIFT;
++				}
++
+ 				bio_set_dev(bio, wc->ssd_dev->bdev);
+-				bio->bi_iter.bi_sector = cache_sector(wc, e);
++				bio->bi_iter.bi_sector = start_cache_sec;
++				dm_accept_partial_bio(bio, bio_size >> SECTOR_SHIFT);
++
+ 				if (unlikely(wc->uncommitted_blocks >= wc->autocommit_blocks)) {
+ 					wc->uncommitted_blocks = 0;
+ 					queue_work(wc->writeback_wq, &wc->flush_work);
