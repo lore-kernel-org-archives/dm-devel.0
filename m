@@ -1,10 +1,12 @@
 From: <Sreenivas.Honnur@dell.com>
 Subject: device blacklisting and suspend issue
-Date: Wed, 15 Jan 2020 07:11:39 +0000
-Message-ID: <451c7e3b120e4880b9ed178850f15285@BLRX13MDC423.AMER.DELL.COM>
+Date: Wed, 15 Jan 2020 09:38:15 +0000
+Message-ID: <c552c34848e146b49861b4ac28690d6b@BLRX13MDC423.AMER.DELL.COM>
+References: <451c7e3b120e4880b9ed178850f15285@BLRX13MDC423.AMER.DELL.COM>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7129444931359559740=="
+Content-Type: multipart/mixed; boundary="===============8619715706011029612=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <451c7e3b120e4880b9ed178850f15285@BLRX13MDC423.AMER.DELL.COM>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,12 +20,12 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============7129444931359559740==
+--===============8619715706011029612==
 Content-Language: en-US
 Content-Type: multipart/alternative;
-	boundary="_000_451c7e3b120e4880b9ed178850f15285BLRX13MDC423AMERDELLCOM_"
+	boundary="_000_c552c34848e146b49861b4ac28690d6bBLRX13MDC423AMERDELLCOM_"
 
---_000_451c7e3b120e4880b9ed178850f15285BLRX13MDC423AMERDELLCOM_
+--_000_c552c34848e146b49861b4ac28690d6bBLRX13MDC423AMERDELLCOM_
 Content-Type: text/plain; charset=WINDOWS-1252
 Content-Transfer-Encoding: quoted-printable
 
@@ -53,7 +55,7 @@ sume"
 
 
 
---_000_451c7e3b120e4880b9ed178850f15285BLRX13MDC423AMERDELLCOM_
+--_000_c552c34848e146b49861b4ac28690d6bBLRX13MDC423AMERDELLCOM_
 Content-Type: text/html; charset=WINDOWS-1252
 Content-Transfer-Encoding: quoted-printable
 
@@ -96,13 +98,25 @@ p.MsoListParagraph, li.MsoListParagraph, div.MsoListParagraph
 =09margin-bottom:.0001pt;
 =09font-size:11.0pt;
 =09font-family:"Calibri",sans-serif;}
-span.EmailStyle17
-=09{mso-style-type:personal-compose;
+p.msonormal0, li.msonormal0, div.msonormal0
+=09{mso-style-name:msonormal;
+=09mso-margin-top-alt:auto;
+=09margin-right:0in;
+=09mso-margin-bottom-alt:auto;
+=09margin-left:0in;
+=09font-size:11.0pt;
+=09font-family:"Calibri",sans-serif;}
+span.EmailStyle19
+=09{mso-style-type:personal;
+=09font-family:"Calibri",sans-serif;
+=09color:windowtext;}
+span.EmailStyle20
+=09{mso-style-type:personal-reply;
 =09font-family:"Calibri",sans-serif;
 =09color:windowtext;}
 .MsoChpDefault
 =09{mso-style-type:export-only;
-=09font-family:"Calibri",sans-serif;}
+=09font-size:10.0pt;}
 @page WordSection1
 =09{size:8.5in 11.0in;
 =09margin:1.0in 1.0in 1.0in 1.0in;}
@@ -110,56 +124,12 @@ div.WordSection1
 =09{page:WordSection1;}
 /* List Definitions */
 @list l0
+=09{mso-list-id:222982715;
+=09mso-list-template-ids:286786354;}
+@list l1
 =09{mso-list-id:847448017;
 =09mso-list-type:hybrid;
 =09mso-list-template-ids:-612727868 67698703 67698713 67698715 67698703 676=
-98713 67698715 67698703 67698713 67698715;}
-@list l0:level1
-=09{mso-level-tab-stop:none;
-=09mso-level-number-position:left;
-=09text-indent:-.25in;}
-@list l0:level2
-=09{mso-level-number-format:alpha-lower;
-=09mso-level-tab-stop:none;
-=09mso-level-number-position:left;
-=09text-indent:-.25in;}
-@list l0:level3
-=09{mso-level-number-format:roman-lower;
-=09mso-level-tab-stop:none;
-=09mso-level-number-position:right;
-=09text-indent:-9.0pt;}
-@list l0:level4
-=09{mso-level-tab-stop:none;
-=09mso-level-number-position:left;
-=09text-indent:-.25in;}
-@list l0:level5
-=09{mso-level-number-format:alpha-lower;
-=09mso-level-tab-stop:none;
-=09mso-level-number-position:left;
-=09text-indent:-.25in;}
-@list l0:level6
-=09{mso-level-number-format:roman-lower;
-=09mso-level-tab-stop:none;
-=09mso-level-number-position:right;
-=09text-indent:-9.0pt;}
-@list l0:level7
-=09{mso-level-tab-stop:none;
-=09mso-level-number-position:left;
-=09text-indent:-.25in;}
-@list l0:level8
-=09{mso-level-number-format:alpha-lower;
-=09mso-level-tab-stop:none;
-=09mso-level-number-position:left;
-=09text-indent:-.25in;}
-@list l0:level9
-=09{mso-level-number-format:roman-lower;
-=09mso-level-tab-stop:none;
-=09mso-level-number-position:right;
-=09text-indent:-9.0pt;}
-@list l1
-=09{mso-list-id:1682581990;
-=09mso-list-type:hybrid;
-=09mso-list-template-ids:1190816600 67698703 67698713 67698715 67698703 676=
 98713 67698715 67698703 67698713 67698715;}
 @list l1:level1
 =09{mso-level-tab-stop:none;
@@ -203,6 +173,14 @@ div.WordSection1
 =09mso-level-tab-stop:none;
 =09mso-level-number-position:right;
 =09text-indent:-9.0pt;}
+@list l2
+=09{mso-list-id:1929272034;
+=09mso-list-template-ids:-933040778;}
+@list l2:level1
+=09{mso-level-start-at:2;
+=09mso-level-tab-stop:.5in;
+=09mso-level-number-position:left;
+=09text-indent:-.25in;}
 ol
 =09{margin-bottom:0in;}
 ul
@@ -218,8 +196,8 @@ ul
 <div class=3D"WordSection1">
 <p class=3D"MsoNormal">I have two queries:<o:p></o:p></p>
 <ol style=3D"margin-top:0in" start=3D"1" type=3D"1">
-<li class=3D"MsoListParagraph" style=3D"margin-left:0in;mso-list:l0 level1 =
-lfo2">We have an issue with device blacklisting. We add an entry in /etc/mu=
+<li class=3D"MsoListParagraph" style=3D"margin-left:0in;mso-list:l1 level1 =
+lfo3">We have an issue with device blacklisting. We add an entry in /etc/mu=
 ltipath.conf&#8221; and do &#8220;service multipathd reload&#8221;.<o:p></o=
 :p></li></ol>
 <p class=3D"MsoNormal">After this to check if device is blacklisted we issu=
@@ -231,8 +209,8 @@ if device is blacklisted? Or is there any other way to do it?<o:p></o:p></p=
 >
 <p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
 <ol style=3D"margin-top:0in" start=3D"2" type=3D"1">
-<li class=3D"MsoListParagraph" style=3D"margin-left:0in;mso-list:l0 level1 =
-lfo2">After suspending (dmsetup suspend wwid) a device, &nbsp;is there a wa=
+<li class=3D"MsoListParagraph" style=3D"margin-left:0in;mso-list:l1 level1 =
+lfo3">After suspending (dmsetup suspend wwid) a device, &nbsp;is there a wa=
 y to inform multipathd not to make it active if some events happen on this =
 device(like new path added..etc&#8230;I see that
  the table is reloaded and device becomes active)<o:p></o:p></li></ol>
@@ -247,13 +225,13 @@ e&#8221;<o:p></o:p></p>
 </body>
 </html>
 
---_000_451c7e3b120e4880b9ed178850f15285BLRX13MDC423AMERDELLCOM_--
+--_000_c552c34848e146b49861b4ac28690d6bBLRX13MDC423AMERDELLCOM_--
 
---===============7129444931359559740==
+--===============8619715706011029612==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============7129444931359559740==--
+--===============8619715706011029612==--
