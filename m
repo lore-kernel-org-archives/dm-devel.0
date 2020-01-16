@@ -1,27 +1,29 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
+From: Ming Lei <ming.lei@redhat.com>
 Subject: Re: [PATCH] block: fix an integer overflow in logical block size
-Date: Wed, 15 Jan 2020 20:59:29 -0500
-Message-ID: <yq1sgkgp3em.fsf@oracle.com>
+Date: Thu, 16 Jan 2020 11:02:44 +0800
+Message-ID: <20200116030244.GB24105@ming.t460p>
 References: <alpine.LRH.2.02.2001150833180.31494@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <alpine.LRH.2.02.2001150833180.31494@file01.intranet.prod.int.rdu2.redhat.com>
-        (Mikulas Patocka's message of "Wed, 15 Jan 2020 08:35:25 -0500 (EST)")
 Sender: linux-block-owner@vger.kernel.org
 To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com, linux-block@vger.kernel.org, Mike Snitzer <msnitzer@redhat.com>
 List-Id: dm-devel.ids
 
+On Wed, Jan 15, 2020 at 08:35:25AM -0500, Mikulas Patocka wrote:
+> Logical block size has type unsigned short. That means that it can be at
+> most 32768. However, there are architectures that can run with 64k pages
+> (for example arm64) and on these architectures, it may be possible to
+> create block devices with 64k block size.
 
-Mikulas,
+The patch looks fine, and other drivers(loop, nbd, virtio_blk, ...) allow
+user to pass customized logical block size, and the passed size can be > 32k.
 
-> This patch changes the logical block size from unsigned short to
-> unsigned int to avoid the overflow.
+Reviewed-by: Ming Lei <ming.lei@redhat.com>
 
-Looks fine.
 
-Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
-
--- 
-Martin K. Petersen	Oracle Linux Engineering
+Thanks,
+Ming
