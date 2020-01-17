@@ -1,7 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 05/15] libmultipath: constify get_unaligned_be*
-Date: Thu, 16 Jan 2020 20:18:10 -0600
-Message-ID: <1579227500-17196-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 04/15] libmultipath: remove unused path->prio_args
+Date: Thu, 16 Jan 2020 20:18:09 -0600
+Message-ID: <1579227500-17196-5-git-send-email-bmarzins@redhat.com>
 References: <1579227500-17196-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,29 +23,20 @@ List-Id: dm-devel.ids
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/unaligned.h | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/structs.h | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/libmultipath/unaligned.h b/libmultipath/unaligned.h
-index 68c07742..b9eaa7cb 100644
---- a/libmultipath/unaligned.h
-+++ b/libmultipath/unaligned.h
-@@ -10,14 +10,14 @@ static inline uint16_t get_unaligned_be16(const void *ptr)
- 	return p[0] << 8 | p[1];
- }
- 
--static inline uint32_t get_unaligned_be32(void *ptr)
-+static inline uint32_t get_unaligned_be32(const void *ptr)
- {
- 	const uint8_t *p = ptr;
- 
- 	return p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
- }
- 
--static inline uint64_t get_unaligned_be64(void *ptr)
-+static inline uint64_t get_unaligned_be64(const void *ptr)
- {
- 	uint32_t low = get_unaligned_be32(ptr + 4);
- 	uint64_t high = get_unaligned_be32(ptr);
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index a3adf906..1c32a799 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -272,7 +272,6 @@ struct path {
+ 	char * uid_attribute;
+ 	char * getuid;
+ 	struct prio prio;
+-	char * prio_args;
+ 	struct checker checker;
+ 	struct multipath * mpp;
+ 	int fd;
 -- 
 2.17.2
