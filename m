@@ -1,8 +1,8 @@
-From: Martin Wilck <mwilck@suse.com>
+From: Martin Wilck <Martin.Wilck@suse.com>
 Subject: Re: [PATCH 10/15] libmultipath: change how the checker
 	async is set
-Date: Fri, 17 Jan 2020 18:04:05 +0100
-Message-ID: <f0b452a278052a9f9b1cc49c59005544ce07cd90.camel@suse.de>
+Date: Fri, 17 Jan 2020 17:02:27 +0000
+Message-ID: <6f1d40b5dcaba49653c3221304248b13fccafd0d.camel@suse.com>
 References: <1579227500-17196-1-git-send-email-bmarzins@redhat.com>
 	<1579227500-17196-11-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
@@ -10,6 +10,8 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <1579227500-17196-11-git-send-email-bmarzins@redhat.com>
+Content-Language: en-US
+Content-ID: <58455056AC826649A7D2B75E2A775A68@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,8 +21,8 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 On Thu, 2020-01-16 at 20:18 -0600, Benjamin Marzinski wrote:
