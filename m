@@ -1,17 +1,14 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 01/15] multipathd: warn when configuration
- has been changed.
-Date: Fri, 17 Jan 2020 15:45:34 +0000
-Message-ID: <586e8c02fc60cde6771c14f7aa012c3fd55cc3ca.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 07/15] libmultipath: fix sgio_get_vpd looping
+Date: Fri, 17 Jan 2020 17:27:00 +0100
+Message-ID: <42675e7de2ed4c56762438e2cae803da8de9118e.camel@suse.de>
 References: <1579227500-17196-1-git-send-email-bmarzins@redhat.com>
-	<1579227500-17196-2-git-send-email-bmarzins@redhat.com>
+	<1579227500-17196-8-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1579227500-17196-2-git-send-email-bmarzins@redhat.com>
-Content-Language: en-US
-Content-ID: <5DDD81ADB4FF68469CBF63451B8FE689@namprd18.prod.outlook.com>
+In-Reply-To: <1579227500-17196-8-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,261 +18,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 On Thu, 2020-01-16 at 20:18 -0600, Benjamin Marzinski wrote:
-> It would be helpful if multipathd could log a message when
-> multipath.conf or files in the config_dir have been written to, both
-> so
-> that it can be used to send a notification to users, and to help with
-> determining after the fact if multipathd was running with an older
-> config, when the logs of multipathd's behaviour don't match with the
-> current multipath.conf.
->=20
-> To do this, the multipathd uxlsnr thread now sets up inotify watches
-> on
-> both /etc/multipath.conf and the config_dir to watch if the files are
-> deleted or closed after being opened for writing.  In order to keep
-> uxlsnr from polling repeatedly if the multipath.conf or the
-> config_dir
-> aren't present, it will only set up the watches once per reconfigure.
-> However, since multipath.conf is far more likely to be replaced by a
-> text editor than modified in place, if it gets removed, multipathd
-> will
-> immediately try to restart the watch on it (which will succeed if the
-> file was simply replaced by a new copy).  This does mean that if
-> multipath.conf or the config_dir are actually removed and then later
-> re-added, multipathd won't log any more messages for changes until
-> the
-> next reconfigure. But that seems like a fair trade-off to avoid
-> repeatedly polling for files that aren't likely to appear.
->=20
+> If do_inq returns a page with a length that is less than maxlen, but
+> larger than DEFAULT_SGIO_LEN, this function will loop forever. Also
+> if do_inq returns with a length equal to or greater than maxlen,
+> sgio_get_vpd will exit immediately, even if it hasn't read the entire
+> page.  Fix these issues, modify the tests to verify the new behavior.
+> 
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  libmultipath/config.h |   1 +
->  multipathd/main.c     |   1 +
->  multipathd/uxlsnr.c   | 134
-> ++++++++++++++++++++++++++++++++++++++++--
->  3 files changed, 130 insertions(+), 6 deletions(-)
-
-I know I reviewed this already, but this time I have some more remarks,
-mostly style.
-
->=20
-> diff --git a/libmultipath/config.h b/libmultipath/config.h
-> index ffec3103..e69aa07c 100644
-> --- a/libmultipath/config.h
-> +++ b/libmultipath/config.h
-> @@ -188,6 +188,7 @@ struct config {
->  =09int find_multipaths_timeout;
->  =09int marginal_pathgroups;
->  =09unsigned int version[3];
-> +=09unsigned int sequence_nr;
-> =20
->  =09char * multipath_dir;
->  =09char * selector;
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 34a57689..7b364cfe 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -2618,6 +2618,7 @@ reconfigure (struct vectors * vecs)
->  =09uxsock_timeout =3D conf->uxsock_timeout;
-> =20
->  =09old =3D rcu_dereference(multipath_conf);
-> +=09conf->sequence_nr =3D old->sequence_nr + 1;
->  =09rcu_assign_pointer(multipath_conf, conf);
->  =09call_rcu(&old->rcu, rcu_free_config);
-> =20
-> diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-> index bc71679e..92d9a79a 100644
-> --- a/multipathd/uxlsnr.c
-> +++ b/multipathd/uxlsnr.c
-> @@ -23,6 +23,7 @@
->  #include <sys/time.h>
->  #include <signal.h>
->  #include <stdbool.h>
-> +#include <sys/inotify.h>
->  #include "checkers.h"
->  #include "memory.h"
->  #include "debug.h"
-> @@ -51,6 +52,8 @@ struct client {
->  LIST_HEAD(clients);
->  pthread_mutex_t client_lock =3D PTHREAD_MUTEX_INITIALIZER;
->  struct pollfd *polls;
-> +int notify_fd =3D -1;
-> +char *config_dir;
-
-Nit: please declare these as static, as they are used only in this
-file. Also, naming the variable differently, e.g. conf_dir, would
-decrease the number of false hits when grepping for the variable name.
-
-> =20
->  static bool _socket_client_is_root(int fd);
-> =20
-> @@ -151,6 +154,8 @@ void uxsock_cleanup(void *arg)
->  =09long ux_sock =3D (long)arg;
-> =20
->  =09close(ux_sock);
-> +=09close(notify_fd);
-> +=09free(config_dir);
-> =20
->  =09pthread_mutex_lock(&client_lock);
->  =09list_for_each_entry_safe(client_loop, client_tmp, &clients,
-> node) {
-> @@ -162,6 +167,106 @@ void uxsock_cleanup(void *arg)
->  =09free_polls();
+>  libmultipath/discovery.c | 12 +++---
+>  tests/vpd.c              | 84 ++++++++++++++++++++++++------------
+> ----
+>  2 files changed, 57 insertions(+), 39 deletions(-)
+> 
+> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> index 72f455e8..3c72a80a 100644
+> --- a/libmultipath/discovery.c
+> +++ b/libmultipath/discovery.c
+> @@ -870,6 +870,7 @@ static int
+>  sgio_get_vpd (unsigned char * buff, int maxlen, int fd, int pg)
+>  {
+>  	int len = DEFAULT_SGIO_LEN;
+> +	int rlen;
+>  
+>  	if (fd < 0) {
+>  		errno = EBADF;
+> @@ -877,12 +878,11 @@ sgio_get_vpd (unsigned char * buff, int maxlen,
+> int fd, int pg)
+>  	}
+>  retry:
+>  	if (0 == do_inq(fd, 0, 1, pg, buff, len)) {
+> -		len = get_unaligned_be16(&buff[2]) + 4;
+> -		if (len >= maxlen)
+> -			return len;
+> -		if (len > DEFAULT_SGIO_LEN)
+> -			goto retry;
+> -		return len;
+> +		rlen = get_unaligned_be16(&buff[2]) + 4;
+> +		if (rlen <= len || len >= maxlen)
+> +			return rlen;
+> +		len = (rlen < maxlen)? rlen : maxlen;
+> +		goto retry;
+>  	}
+>  	return -1;
 >  }
-> =20
-> +/* failing to set the watch descriptor is o.k. we just miss a
-> warning
-> + * message */
-> +void reset_watch(int notify_fd, int *wds, unsigned int *sequence_nr)
 
-This function could also be static.
+This looks good.
 
-> +{
-> +=09struct config *conf;
-> +=09int dir_reset =3D 0;
-> +=09int conf_reset =3D 0;
-> +
-> +=09if (notify_fd =3D=3D -1)
-> +=09=09return;
-> +
-> +=09conf =3D get_multipath_config();
-> +=09/* instead of repeatedly try to reset the inotify watch if
-> +=09 * the config directory or multipath.conf isn't there, just
-> +=09 * do it once per reconfigure */
-> +=09if (*sequence_nr !=3D conf->sequence_nr) {
-> +=09=09*sequence_nr =3D conf->sequence_nr;
-> +=09=09if (wds[0] =3D=3D -1)
-> +=09=09=09conf_reset =3D 1;
-> +=09=09if (!config_dir || !conf->config_dir ||
-> +=09=09    strcmp(config_dir, conf->config_dir)) {
-> +=09=09=09dir_reset =3D 1;
-> +=09=09=09if (config_dir)
-> +=09=09=09=09free(config_dir);
-> +=09=09=09if (conf->config_dir)
-> +=09=09=09=09config_dir =3D strdup(conf->config_dir);
-> +=09=09=09else
-> +=09=09=09=09config_dir =3D NULL;
-> +=09=09} else if (wds[1] =3D=3D -1)
-> +=09=09=09dir_reset =3D 1;
-> +=09}
-> +=09put_multipath_config(conf);
-> +
-> +=09if (dir_reset) {
-> +=09=09if (wds[1] !=3D -1) {
-> +=09=09=09inotify_rm_watch(notify_fd, wds[1]);
-> +=09=09=09wds[1] =3D -1;
-> +=09=09}
-> +=09=09if (config_dir) {
-> +=09=09=09wds[1] =3D inotify_add_watch(notify_fd,
-> config_dir,
-> +=09=09=09=09=09=09   IN_CLOSE_WRITE |
-> IN_DELETE |
-> +=09=09=09=09=09=09   IN_ONLYDIR);
-> +=09=09=09if (wds[1] =3D=3D -1)
-> +=09=09=09=09condlog(3, "didn't set up notifications
-> on %s: %s", config_dir, strerror(errno));
+> diff --git a/tests/vpd.c b/tests/vpd.c
+> index d9f80eaa..4dbce010 100644
+> --- a/tests/vpd.c
+> +++ b/tests/vpd.c
+> @@ -306,7 +306,7 @@ static int create_vpd83(unsigned char *buf,
+> size_t bufsiz, const char *id,
+>  	default:
+>  		break;
+>  	}
+> -	put_unaligned_be16(n, buf + 2);
+> +	put_unaligned_be16(bufsiz, buf + 2);
+>  	return n + 4;
+>  }
 
-Another nitpick: IMO we should be using "%m" for this in new code.
+I can see that you are trying to create a VPD with a certain given
+length. But this way you intentionally create a VPD that doesn't
+conform to the spec (offset 2 should contain the real length of the
+designator list, not some arbitrary value). This is dangerous, in the
+future someone may copy this code thinking that it creates a valid
+VPD. At least you should add a big fat comment. Better even, you
+should leave out this hunk and override the length value in the
+actual test (make_test_vpd_eui) if (sml == 1) (and also add a comment).
 
-> +=09=09}
-> +=09}
-> +=09if (conf_reset) {
-> +=09=09wds[0] =3D inotify_add_watch(notify_fd,
-> DEFAULT_CONFIGFILE,
-> +=09=09=09=09=09   IN_CLOSE_WRITE);
-> +=09=09if (wds[0] =3D=3D -1)
-> +=09=09=09condlog(3, "didn't set up notifications on
-> /etc/multipath.conf: %s", strerror(errno));
-> +=09}
-> +=09return;
-> +}
-> +
-> +void handle_inotify(int fd, int  *wds)
-
-Again, static.
-
-> +{
-> +=09char buff[1024]
-> +=09=09__attribute__ ((aligned(__alignof__(struct
-> inotify_event))));
-> +=09const struct inotify_event *event;
-> +=09ssize_t len;
-> +=09char *ptr;
-> +=09int i, got_notify =3D 0;
-> +
-> +=09for (;;) {
-> +=09=09len =3D read(fd, buff, sizeof(buff));
-> +=09=09if (len <=3D 0) {
-> +=09=09=09if (len < 0 && errno !=3D EAGAIN) {
-> +=09=09=09=09condlog(3, "error reading from
-> inotify_fd");
-> +=09=09=09=09for (i =3D 0; i < 2; i++) {
-> +=09=09=09=09=09if (wds[i] !=3D -1) {
-> +=09=09=09=09=09=09inotify_rm_watch(fd,
-> wds[i]);
-> +=09=09=09=09=09=09wds[i] =3D -1;
-> +=09=09=09=09=09}
-> +=09=09=09=09}
-> +=09=09=09}
-> +=09=09=09break;
-> +=09=09}
-> +
-> +=09=09got_notify =3D 1;
-> +=09=09for (ptr =3D buff; ptr < buff + len;
-> +=09=09     ptr +=3D sizeof(struct inotify_event) + event->len)
-> {
-> +=09=09=09event =3D (const struct inotify_event *) ptr;
-> +
-> +=09=09=09if (event->mask & IN_IGNORED) {
-> +=09=09=09=09/* multipathd.conf may have been
-> overwritten.
-> +=09=09=09=09 * Try once to reset the notification
-> */
-> +=09=09=09=09if (wds[0] =3D=3D event->wd)
-> +=09=09=09=09=09wds[0] =3D
-> inotify_add_watch(notify_fd,
-> +=09=09=09=09=09=09=09DEFAULT_CONFIGF
-> ILE,
-> +=09=09=09=09=09=09=09IN_CLOSE_WRITE)
-> ;
-> +=09=09=09=09else if (wds[1] =3D=3D event->wd)
-> +=09=09=09=09=09wds[1] =3D -1;
-> +=09=09=09}
-> +=09=09}
-> +=09}
-> +=09if (got_notify)
-> +=09=09condlog(1, "Multipath configuration updated.\nReload
-> multipathd for changes to take effect");
-> +}
-> +
->  /*
->   * entry point
->   */
-> @@ -173,13 +278,19 @@ void * uxsock_listen(uxsock_trigger_fn
-> uxsock_trigger, long ux_sock,
->  =09char *reply;
->  =09sigset_t mask;
->  =09int old_clients =3D MIN_POLLS;
-> +=09/* conf->sequence_nr will be 1 when uxsock_listen is first
-> called */
-> +=09unsigned int sequence_nr =3D 0;
-> +=09int wds[2] =3D { -1, -1 };
-
-Style issue: The code might be better readable if we used a struct for
-this,
-
-struct watch_descriptors {
-=09int conf_wd;
-=09int dir_wd;
-};=09
-
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+Regards
+Martin
