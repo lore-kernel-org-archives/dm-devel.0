@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 12/15] multipathd: add new paths under vecs lock
-Date: Thu, 16 Jan 2020 20:18:17 -0600
-Message-ID: <1579227500-17196-13-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 10/15] libmultipath: change how the checker async
+	is set
+Date: Thu, 16 Jan 2020 20:18:15 -0600
+Message-ID: <1579227500-17196-11-git-send-email-bmarzins@redhat.com>
 References: <1579227500-17196-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,85 +22,67 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-Right now, multipathd only ever calls pathinfo on a path outside of the
-vecs lock in one circumstance, when it's adding a new path from a
-uevent. Doing this can cause weirdness or crash multipathd.
-
-First off, the path checker code is written assuming that only one
-checker instance will be active at a time.  If this isn't the case, two
-processes can modify the checker's refcounts at the same time,
-potentially causing a checker to get removed while still in use (if two
-threads try to increment the refcount at the same time, causing it to
-only increment once).
-
-Another issue is that since the vecs lock isn't grabbed until after all
-of the pathinfo is gathered, and the vecs lock is the only thing keeping
-the uevent servicing thread from running at the same time as a
-reconfigure is happening, it is possible to have multipathd add a path
-using the old config after reconfigure has already added that path using
-the new config. Leading to two versions of the path on the pathvec.
-There are possibly other issues with running pathinfo outside of the
-vecs lock that I haven't noticed, as well.
-
-The easiest solution is to call pathinfo on the path while holding the
-vecs lock, to keep other threads from modifying the checker structure or
-the config while setting up the path. This is what happens every other
-time multipathd calls pathinfo, including when a path is added through
-the multipathd command interface.
-
-This does mean that any time spent calling pathinfo on new paths will
-block other threads that need the vecs lock, but since the checker is
-now always called in async mode, and the prio function will use a
-short timeout if called on a failed path, this shouldn't be any more
-noticeable than the calls to check_path() for already existing paths.
+The way that the checkers async mode worked in multipathd didn't make
+much sense. When multipathd starts up, all checker classes are in the
+sync mode, and any pathinfo() calls on devices would run the checker in
+sync mode. However, the First time a checker class was used in
+checkerloop, it would set that checker class to async (assuming
+force_sync wasn't set).  After that, no matter when a checker from that
+class was called, it would always run in async mode.  Multipathd doesn't
+need to run checkers in sync mode at all, so don't.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ libmpathpersist/mpath_persist.c |  2 +-
+ libmultipath/discovery.c        | 10 ++++------
+ multipath/main.c                |  1 +
+ 3 files changed, 6 insertions(+), 7 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 7b364cfe..9e01cfaa 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -906,9 +906,8 @@ uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
- 			}
- 		}
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index 603cfc3b..b2238f00 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -47,7 +47,7 @@ mpath_lib_init (void)
+ 		condlog(0, "Failed to initialize multipath config.");
+ 		return NULL;
  	}
--	lock_cleanup_pop(vecs->lock);
- 	if (pp)
--		return ret;
-+		goto out;
+-
++	conf->force_sync = 1;
+ 	set_max_fds(conf->max_fds);
  
- 	/*
- 	 * get path vital state
-@@ -920,13 +919,13 @@ uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
- 	pthread_cleanup_pop(1);
- 	if (!pp) {
- 		if (ret == PATHINFO_SKIPPED)
--			return 0;
--		condlog(3, "%s: failed to get path info", uev->kernel);
--		return 1;
-+			ret = 0;
-+		else {
-+			condlog(3, "%s: failed to get path info", uev->kernel);
-+			ret = 1;
-+		}
-+		goto out;
- 	}
--	pthread_cleanup_push(cleanup_lock, &vecs->lock);
--	lock(&vecs->lock);
--	pthread_testcancel();
- 	ret = store_path(vecs->pathvec, pp);
- 	if (!ret) {
- 		conf = get_multipath_config();
-@@ -940,6 +939,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
- 		free_path(pp);
- 		ret = 1;
- 	}
-+out:
- 	lock_cleanup_pop(vecs->lock);
- 	return ret;
- }
+ 	return conf;
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index d2773c3a..1ab093f4 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1643,12 +1643,10 @@ get_state (struct path * pp, struct config *conf, int daemon, int oldstate)
+ 	if (pp->mpp && !c->mpcontext)
+ 		checker_mp_init(c, &pp->mpp->mpcontext);
+ 	checker_clear_message(c);
+-	if (daemon) {
+-		if (conf->force_sync == 0)
+-			checker_set_async(c);
+-		else
+-			checker_set_sync(c);
+-	}
++	if (conf->force_sync == 0)
++		checker_set_async(c);
++	else
++		checker_set_sync(c);
+ 	if (!conf->checker_timeout &&
+ 	    sysfs_get_timeout(pp, &(c->timeout)) <= 0)
+ 		c->timeout = DEF_TIMEOUT;
+diff --git a/multipath/main.c b/multipath/main.c
+index 4f4d8e89..aebabd9b 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -905,6 +905,7 @@ main (int argc, char *argv[])
+ 		exit(RTVL_FAIL);
+ 	multipath_conf = conf;
+ 	conf->retrigger_tries = 0;
++	conf->force_sync = 1;
+ 	while ((arg = getopt(argc, argv, ":adcChl::FfM:v:p:b:BrR:itTquUwW")) != EOF ) {
+ 		switch(arg) {
+ 		case 1: printf("optarg : %s\n",optarg);
 -- 
 2.17.2
