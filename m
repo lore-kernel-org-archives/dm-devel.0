@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 06/15] libmultipath: add missing hwe mpe variable
-	merges
-Date: Thu, 16 Jan 2020 20:18:11 -0600
-Message-ID: <1579227500-17196-7-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 05/15] libmultipath: constify get_unaligned_be*
+Date: Thu, 16 Jan 2020 20:18:10 -0600
+Message-ID: <1579227500-17196-6-git-send-email-bmarzins@redhat.com>
 References: <1579227500-17196-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,46 +21,31 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-There were some variables in the hwe and mpe structs that weren't being
-merged by merge_hwe() and merge_mpe().
-
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/config.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ libmultipath/unaligned.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 20e3b8bf..85626e96 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -372,6 +372,10 @@ merge_hwe (struct hwentry * dst, struct hwentry * src)
- 	merge_num(san_path_err_threshold);
- 	merge_num(san_path_err_forget_rate);
- 	merge_num(san_path_err_recovery_time);
-+	merge_num(marginal_path_err_sample_time);
-+	merge_num(marginal_path_err_rate_threshold);
-+	merge_num(marginal_path_err_recheck_gap_time);
-+	merge_num(marginal_path_double_failed_time);
+diff --git a/libmultipath/unaligned.h b/libmultipath/unaligned.h
+index 68c07742..b9eaa7cb 100644
+--- a/libmultipath/unaligned.h
++++ b/libmultipath/unaligned.h
+@@ -10,14 +10,14 @@ static inline uint16_t get_unaligned_be16(const void *ptr)
+ 	return p[0] << 8 | p[1];
+ }
  
- 	snprintf(id, sizeof(id), "%s/%s", dst->vendor, dst->product);
- 	reconcile_features_with_options(id, &dst->features,
-@@ -397,6 +401,7 @@ merge_mpe(struct mpentry *dst, struct mpentry *src)
- 	if (dst->prkey_source == PRKEY_SOURCE_NONE &&
- 	    src->prkey_source != PRKEY_SOURCE_NONE) {
- 		dst->prkey_source = src->prkey_source;
-+		dst->sa_flags = src->sa_flags;
- 		memcpy(&dst->reservation_key, &src->reservation_key,
- 		       sizeof(dst->reservation_key));
- 	}
-@@ -413,6 +418,9 @@ merge_mpe(struct mpentry *dst, struct mpentry *src)
- 	merge_num(deferred_remove);
- 	merge_num(delay_watch_checks);
- 	merge_num(delay_wait_checks);
-+	merge_num(san_path_err_threshold);
-+	merge_num(san_path_err_forget_rate);
-+	merge_num(san_path_err_recovery_time);
- 	merge_num(marginal_path_err_sample_time);
- 	merge_num(marginal_path_err_rate_threshold);
- 	merge_num(marginal_path_err_recheck_gap_time);
+-static inline uint32_t get_unaligned_be32(void *ptr)
++static inline uint32_t get_unaligned_be32(const void *ptr)
+ {
+ 	const uint8_t *p = ptr;
+ 
+ 	return p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
+ }
+ 
+-static inline uint64_t get_unaligned_be64(void *ptr)
++static inline uint64_t get_unaligned_be64(const void *ptr)
+ {
+ 	uint32_t low = get_unaligned_be32(ptr + 4);
+ 	uint64_t high = get_unaligned_be32(ptr);
 -- 
 2.17.2
