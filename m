@@ -1,15 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 08/15] libmultipath: add vend_id to
-	get_vpd_sgio
-Date: Fri, 17 Jan 2020 17:58:25 +0100
-Message-ID: <6ba3a8191f39080ac5923da7b744c968e2b41b21.camel@suse.de>
+Subject: Re: [PATCH 10/15] libmultipath: change how the checker
+	async is set
+Date: Fri, 17 Jan 2020 18:04:05 +0100
+Message-ID: <f0b452a278052a9f9b1cc49c59005544ce07cd90.camel@suse.de>
 References: <1579227500-17196-1-git-send-email-bmarzins@redhat.com>
-	<1579227500-17196-9-git-send-email-bmarzins@redhat.com>
+	<1579227500-17196-11-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1579227500-17196-9-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1579227500-17196-11-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,16 +24,24 @@ Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 On Thu, 2020-01-16 at 20:18 -0600, Benjamin Marzinski wrote:
-> This tells multipath how it should decode vendor specific pages. It
-> will
-> be used by a future patch.
+> The way that the checkers async mode worked in multipathd didn't make
+> much sense. When multipathd starts up, all checker classes are in the
+> sync mode, and any pathinfo() calls on devices would run the checker
+> in
+> sync mode. However, the First time a checker class was used in
+> checkerloop, it would set that checker class to async (assuming
+> force_sync wasn't set).  After that, no matter when a checker from
+> that
+> class was called, it would always run in async mode.  Multipathd
+> doesn't
+> need to run checkers in sync mode at all, so don't.
 > 
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  libmultipath/discovery.c |  4 ++--
->  libmultipath/discovery.h |  2 +-
->  libmultipath/propsel.c   |  2 +-
->  tests/vpd.c              | 10 +++++-----
->  4 files changed, 9 insertions(+), 9 deletions(-)
+>  libmpathpersist/mpath_persist.c |  2 +-
+>  libmultipath/discovery.c        | 10 ++++------
+>  multipath/main.c                |  1 +
+>  3 files changed, 6 insertions(+), 7 deletions(-)
+> 
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
