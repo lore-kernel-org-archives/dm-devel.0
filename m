@@ -1,15 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 11/15] libmultipath: change failed path prio
-	timeout
-Date: Fri, 17 Jan 2020 18:18:46 +0100
-Message-ID: <7b276f0772bf9aeb92d3af16e3072f717de5318e.camel@suse.de>
+Subject: Re: [PATCH 12/15] multipathd: add new paths under vecs
+	lock
+Date: Fri, 17 Jan 2020 18:39:18 +0100
+Message-ID: <cdc0343992fcf82bc55f167644e4cdccd29b4883.camel@suse.de>
 References: <1579227500-17196-1-git-send-email-bmarzins@redhat.com>
-	<1579227500-17196-12-git-send-email-bmarzins@redhat.com>
+	<1579227500-17196-13-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1579227500-17196-12-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1579227500-17196-13-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,102 +24,120 @@ Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 On Thu, 2020-01-16 at 20:18 -0600, Benjamin Marzinski wrote:
-> multipath will try to get the priority from a PATH_DOWN path, if the
-> path doesn't currently have a valid priority. However, if the
-> priority
-> code needs to contact the device to get the priority, this is likely
-> to
-> fail for PATH_DOWN paths.  This code dates back to when multipathd
-> could
-> not easily reload device tables with failed paths, so getting the
-> correct priority was important to have a correctly configured device.
-> Now multipathd can simply reload the device to move the path to the
-> correct pathgroup when the path comes back up.  Since there are a
-> number
-> of prioritizers that don't require talking to the device, multipath
-> shouldn't completely skip attempting to get the priority of these
-> paths,
-> but it should set a small timeout, so that it isn't hanging in the
-> case where it needs to contact a device through a failed path.
+> Right now, multipathd only ever calls pathinfo on a path outside of
+> the
+> vecs lock in one circumstance, when it's adding a new path from a
+> uevent. Doing this can cause weirdness or crash multipathd.
+> 
+> First off, the path checker code is written assuming that only one
+> checker instance will be active at a time.  If this isn't the case,
+> two
+> processes can modify the checker's refcounts at the same time,
+> potentially causing a checker to get removed while still in use (if
+> two
+> threads try to increment the refcount at the same time, causing it to
+> only increment once).
+
+The obvious solution to that problem would be making the refcount an
+atomic variable.
+
+> Another issue is that since the vecs lock isn't grabbed until after
+> all
+> of the pathinfo is gathered, and the vecs lock is the only thing
+> keeping
+> the uevent servicing thread from running at the same time as a
+> reconfigure is happening, it is possible to have multipathd add a
+> path
+> using the old config after reconfigure has already added that path
+> using
+> the new config. Leading to two versions of the path on the pathvec.
+
+This is a valid argument, but strengthens the gut feeling that I've had
+for some time: that it was not a good idea to handle the multipath
+configuration with RCU. Using RCU means that while a new configuration
+is already in place, other threads may (continue to) use the old
+configuration, and that's dangerous. I believe that the configuration
+should be protected by a lock. When reconfigure() is called, all
+asynchrous processing should essentially stop, and be allowed to
+continue only after reconfigure() has finished.
+
+> There are possibly other issues with running pathinfo outside of the
+> vecs lock that I haven't noticed, as well.
+
+Sooner or later we should reach a point where it's not necessary
+any more to take the global lock just to call pathinfo(). But for the
+current situation, I guess you're right.
+
+> The easiest solution is to call pathinfo on the path while holding
+> the
+> vecs lock, to keep other threads from modifying the checker structure
+> or
+> the config while setting up the path. This is what happens every
+> other
+> time multipathd calls pathinfo, including when a path is added
+> through
+> the multipathd command interface.
+> 
+> This does mean that any time spent calling pathinfo on new paths will
+> block other threads that need the vecs lock, but since the checker is
+> now always called in async mode, and the prio function will use a
+> short timeout if called on a failed path, this shouldn't be any more
+> noticeable than the calls to check_path() for already existing paths.
 > 
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  libmultipath/discovery.c | 14 ++++++--------
->  libmultipath/prio.c      |  2 +-
->  2 files changed, 7 insertions(+), 9 deletions(-)
+>  multipathd/main.c | 16 ++++++++--------
+>  1 file changed, 8 insertions(+), 8 deletions(-)
+
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+
+
+
 > 
-> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-> index 1ab093f4..2c331db8 100644
-> --- a/libmultipath/discovery.c
-> +++ b/libmultipath/discovery.c
-> @@ -1661,11 +1661,10 @@ get_state (struct path * pp, struct config
-> *conf, int daemon, int oldstate)
->  }
->  
->  static int
-> -get_prio (struct path * pp)
-> +get_prio (struct path * pp, int timeout)
->  {
->  	struct prio * p;
->  	struct config *conf;
-> -	int checker_timeout;
->  	int old_prio;
->  
->  	if (!pp)
-> @@ -1684,11 +1683,8 @@ get_prio (struct path * pp)
->  			return 1;
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 7b364cfe..9e01cfaa 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -906,9 +906,8 @@ uev_add_path (struct uevent *uev, struct vectors
+> * vecs, int need_do_map)
+>  			}
 >  		}
 >  	}
-> -	conf = get_multipath_config();
-> -	checker_timeout = conf->checker_timeout;
-> -	put_multipath_config(conf);
->  	old_prio = pp->priority;
-> -	pp->priority = prio_getprio(p, pp, checker_timeout);
-> +	pp->priority = prio_getprio(p, pp, timeout);
->  	if (pp->priority < 0) {
->  		/* this changes pp->offline, but why not */
->  		int state = path_offline(pp);
-> @@ -2095,11 +2091,13 @@ int pathinfo(struct path *pp, struct config
-> *conf, int mask)
+> -	lock_cleanup_pop(vecs->lock);
+>  	if (pp)
+> -		return ret;
+> +		goto out;
 >  
->  	 /*
->  	  * Retrieve path priority, even for PATH_DOWN paths if it has
-> never
-> -	  * been successfully obtained before.
-> +	  * been successfully obtained before. If path is down don't
-> try
-> +	  * for too long.
->  	  */
->  	if ((mask & DI_PRIO) && path_state == PATH_UP && strlen(pp-
-> >wwid)) {
->  		if (pp->state != PATH_DOWN || pp->priority ==
-> PRIO_UNDEF) {
-> -			get_prio(pp);
-> +			get_prio(pp, (pp->state != PATH_DOWN)?
-> +				     (conf->checker_timeout * 1000) :
-> 10);
->  		}
+>  	/*
+>  	 * get path vital state
+> @@ -920,13 +919,13 @@ uev_add_path (struct uevent *uev, struct
+> vectors * vecs, int need_do_map)
+>  	pthread_cleanup_pop(1);
+>  	if (!pp) {
+>  		if (ret == PATHINFO_SKIPPED)
+> -			return 0;
+> -		condlog(3, "%s: failed to get path info", uev->kernel);
+> -		return 1;
+> +			ret = 0;
+> +		else {
+> +			condlog(3, "%s: failed to get path info", uev-
+> >kernel);
+> +			ret = 1;
+> +		}
+> +		goto out;
 >  	}
->  
-> diff --git a/libmultipath/prio.c b/libmultipath/prio.c
-> index 87de1f97..21c1b092 100644
-> --- a/libmultipath/prio.c
-> +++ b/libmultipath/prio.c
-> @@ -14,7 +14,7 @@ unsigned int get_prio_timeout(unsigned int
-> checker_timeout,
->  			      unsigned int default_timeout)
->  {
->  	if (checker_timeout)
-> -		return checker_timeout * 1000;
-> +		return checker_timeout;
->  	return default_timeout;
+> -	pthread_cleanup_push(cleanup_lock, &vecs->lock);
+> -	lock(&vecs->lock);
+> -	pthread_testcancel();
+>  	ret = store_path(vecs->pathvec, pp);
+>  	if (!ret) {
+>  		conf = get_multipath_config();
+> @@ -940,6 +939,7 @@ uev_add_path (struct uevent *uev, struct vectors
+> * vecs, int need_do_map)
+>  		free_path(pp);
+>  		ret = 1;
+>  	}
+> +out:
+>  	lock_cleanup_pop(vecs->lock);
+>  	return ret;
 >  }
-> 
-
-This changes the unit of the first get_prio_timeout() argument from
-seconds to milliseconds. While that's a good thing (it was questionable
-design to have the same function take several "timeout" arguments in
-different units), we should rename the argument there to avoid
-confusion (checker_timeout's unit is seconds all around).
-
-Apart from that, ACK.
