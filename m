@@ -1,15 +1,17 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 07/15] libmultipath: fix sgio_get_vpd looping
-Date: Mon, 20 Jan 2020 10:59:54 -0600
-Message-ID: <20200120165954.GT30153@octiron.msp.redhat.com>
+From: "John Stoffel" <john@stoffel.org>
+Subject: Re: [PATCH 10/15] libmultipath: change how the checker
+ async is set
+Date: Mon, 20 Jan 2020 15:20:14 -0500
+Message-ID: <24102.2942.443422.59933@quad.stoffel.home>
 References: <1579227500-17196-1-git-send-email-bmarzins@redhat.com>
-	<1579227500-17196-8-git-send-email-bmarzins@redhat.com>
-	<42675e7de2ed4c56762438e2cae803da8de9118e.camel@suse.de>
+	<1579227500-17196-11-git-send-email-bmarzins@redhat.com>
+	<24099.17365.933723.879139@quad.stoffel.home>
+	<20200120150745.GO30153@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <42675e7de2ed4c56762438e2cae803da8de9118e.camel@suse.de>
+In-Reply-To: <20200120150745.GO30153@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,42 +21,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Martin Wilck <mwilck@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, John Stoffel <john@stoffel.org>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-On Fri, Jan 17, 2020 at 05:27:00PM +0100, Martin Wilck wrote:
-> On Thu, 2020-01-16 at 20:18 -0600, Benjamin Marzinski wrote:
-> 
-> > diff --git a/tests/vpd.c b/tests/vpd.c
-> > index d9f80eaa..4dbce010 100644
-> > --- a/tests/vpd.c
-> > +++ b/tests/vpd.c
-> > @@ -306,7 +306,7 @@ static int create_vpd83(unsigned char *buf,
-> > size_t bufsiz, const char *id,
-> >  	default:
-> >  		break;
-> >  	}
-> > -	put_unaligned_be16(n, buf + 2);
-> > +	put_unaligned_be16(bufsiz, buf + 2);
-> >  	return n + 4;
-> >  }
-> 
-> I can see that you are trying to create a VPD with a certain given
-> length. But this way you intentionally create a VPD that doesn't
-> conform to the spec (offset 2 should contain the real length of the
-> designator list, not some arbitrary value). This is dangerous, in the
-> future someone may copy this code thinking that it creates a valid
-> VPD. At least you should add a big fat comment. Better even, you
-> should leave out this hunk and override the length value in the
-> actual test (make_test_vpd_eui) if (sml == 1) (and also add a comment).
+>>>>> "Benjamin" == Benjamin Marzinski <bmarzins@redhat.com> writes:
 
-Sure.
+Benjamin> On Sat, Jan 18, 2020 at 12:43:49PM -0500, John Stoffel wrote:
+>> >>>>> "Benjamin" == Benjamin Marzinski <bmarzins@redhat.com> writes:
+>> 
+Benjamin> The way that the checkers async mode worked in multipathd didn't make
+Benjamin> much sense. When multipathd starts up, all checker classes are in the
+Benjamin> sync mode, and any pathinfo() calls on devices would run the checker in
+Benjamin> sync mode. However, the First time a checker class was used in
+Benjamin> checkerloop, it would set that checker class to async (assuming
+Benjamin> force_sync wasn't set).  After that, no matter when a checker from that
+Benjamin> class was called, it would always run in async mode.  Multipathd doesn't
+Benjamin> need to run checkers in sync mode at all, so don't.
+>> 
+>> Sorry, I had a hard time parsing this description, especially the last
+>> sentence.  Do you mean that checkers should default to async then,
+>> instead of sync mode?  And from looking at the code, don't you mean
+>> that you force sync mode?  I guess the question is whether checker
+>> classes should default sync, or async.  And if they move to async,
+>> should they stay there?
+>> 
 
--Ben
+Benjamin> Sorry. I mean that right now multipathd runs the checkers from pathinfo(),
+Benjamin> wait_for_pending_paths() and check_path(). When multipathd starts, all
+Benjamin> checkers are in sync mode. The first time a checker is run from
+Benjamin> check_path(), it is switched to async mode, and stays there for the rest
+Benjamin> of the time multipathd is runing.
 
-> 
-> Regards
-> Martin
-> 
+Benjamin> There is no need for multipathd to run checkers in sync mode at all, so
+Benjamin> we shouldn't be doing so for these first checks.
+
+Thanks, that makes the entire issue much more clear.  This raises the
+question of why there is a sync mode at all then?  In any case, the
+above makes the issue more understandable.
+
+John
