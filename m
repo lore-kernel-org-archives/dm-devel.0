@@ -1,71 +1,56 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 10/15] libmultipath: change how the checker
- async is set
-Date: Tue, 21 Jan 2020 06:49:49 -0600
-Message-ID: <20200121124949.GU30153@octiron.msp.redhat.com>
-References: <1579227500-17196-1-git-send-email-bmarzins@redhat.com>
-	<1579227500-17196-11-git-send-email-bmarzins@redhat.com>
-	<24099.17365.933723.879139@quad.stoffel.home>
-	<20200120150745.GO30153@octiron.msp.redhat.com>
-	<24102.2942.443422.59933@quad.stoffel.home>
+From: Kirill Tkhai <ktkhai@virtuozzo.com>
+Subject: Re: [PATCH v4 6/7] dm: Directly disable max_allocate_sectors for now
+Date: Tue, 21 Jan 2020 16:33:50 +0300
+Message-ID: <619a7a14-44e6-eca7-c1ea-3f04abeee53d@virtuozzo.com>
+References: <157960325642.108120.13626623438131044304.stgit@localhost.localdomain>
+ <157960337238.108120.18048939587162465175.stgit@localhost.localdomain>
+ <20200121122458.GA9365@redhat.com>
+ <f7e0fb38-a894-da33-c46b-e192ed907ee0@virtuozzo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <24102.2942.443422.59933@quad.stoffel.home>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: John Stoffel <john@stoffel.org>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <f7e0fb38-a894-da33-c46b-e192ed907ee0@virtuozzo.com>
+Content-Language: en-US
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, bob.liu@oracle.com, axboe@kernel.dk, agk@redhat.com, dm-devel@redhat.com, song@kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, Chaitanya.Kulkarni@wdc.com, darrick.wong@oracle.com, ming.lei@redhat.com, osandov@fb.com, jthumshirn@suse.de, minwoo.im.dev@gmail.com, damien.lemoal@wdc.com, andrea.parri@amarulasolutions.com, hare@suse.com, tj@kernel.org, ajay.joshi@wdc.com, sagi@grimberg.me, dsterba@suse.com, bvanassche@acm.org, dhowells@redhat.com, asml.silence@gmail.com
 List-Id: dm-devel.ids
 
-On Mon, Jan 20, 2020 at 03:20:14PM -0500, John Stoffel wrote:
-> >>>>> "Benjamin" == Benjamin Marzinski <bmarzins@redhat.com> writes:
+On 21.01.2020 15:36, Kirill Tkhai wrote:
+> On 21.01.2020 15:24, Mike Snitzer wrote:
+>> On Tue, Jan 21 2020 at  5:42am -0500,
+>> Kirill Tkhai <ktkhai@virtuozzo.com> wrote:
+>>
+>>> Since dm inherits limits from underlining block devices,
+>>> this patch directly disables max_allocate_sectors for dm
+>>> till full allocation support is implemented.
+>>>
+>>> This prevents high-level primitives (generic_make_request_checks(),
+>>> __blkdev_issue_write_zeroes(), ...) from sending REQ_ALLOCATE
+>>> requests.
+>>>
+>>> Signed-off-by: Kirill Tkhai <ktkhai@virtuozzo.com>
+>>> ---
+>>>  drivers/md/dm-table.c |    2 ++
+>>>  drivers/md/md.h       |    1 +
+>>>  2 files changed, 3 insertions(+)
+>>
+>> You're mixing DM and MD changes in the same patch.
+>>
+>> But I'm wondering if it might be best to set this default for stacking
+>> devices in blk_set_stacking_limits()?
+>>
+>> And then it is up to each stacking driver to override as needed.
 > 
-> Benjamin> On Sat, Jan 18, 2020 at 12:43:49PM -0500, John Stoffel wrote:
-> >> >>>>> "Benjamin" == Benjamin Marzinski <bmarzins@redhat.com> writes:
-> >> 
-> Benjamin> The way that the checkers async mode worked in multipathd didn't make
-> Benjamin> much sense. When multipathd starts up, all checker classes are in the
-> Benjamin> sync mode, and any pathinfo() calls on devices would run the checker in
-> Benjamin> sync mode. However, the First time a checker class was used in
-> Benjamin> checkerloop, it would set that checker class to async (assuming
-> Benjamin> force_sync wasn't set).  After that, no matter when a checker from that
-> Benjamin> class was called, it would always run in async mode.  Multipathd doesn't
-> Benjamin> need to run checkers in sync mode at all, so don't.
-> >> 
-> >> Sorry, I had a hard time parsing this description, especially the last
-> >> sentence.  Do you mean that checkers should default to async then,
-> >> instead of sync mode?  And from looking at the code, don't you mean
-> >> that you force sync mode?  I guess the question is whether checker
-> >> classes should default sync, or async.  And if they move to async,
-> >> should they stay there?
-> >> 
+> Hm. Sound like a good idea. This "lim->max_allocate_sectors = 0" in blk_set_stacking_limits()
+> should work for dm's dm_calculate_queue_limits(), since it calls blk_stack_limits(), which is:
 > 
-> Benjamin> Sorry. I mean that right now multipathd runs the checkers from pathinfo(),
-> Benjamin> wait_for_pending_paths() and check_path(). When multipathd starts, all
-> Benjamin> checkers are in sync mode. The first time a checker is run from
-> Benjamin> check_path(), it is switched to async mode, and stays there for the rest
-> Benjamin> of the time multipathd is runing.
+> 	t->max_allocate_sectors = min(t->max_allocate_sectors,
+> 				      b->max_allocate_sectors);
 > 
-> Benjamin> There is no need for multipathd to run checkers in sync mode at all, so
-> Benjamin> we shouldn't be doing so for these first checks.
-> 
-> Thanks, that makes the entire issue much more clear.  This raises the
-> question of why there is a sync mode at all then?  In any case, the
-> above makes the issue more understandable.
+> Could you please tell is this fix is also enough for md?
 
-The multipath command, which uses the same checkers, runs in sync mode.
-
--Ben
-
-> 
-> John
+It looks like it's enough since queue defaults are set in md_alloc()->blk_set_stacking_limits().
+In case of we set "max_allocate_sectors = 0", in further it can be changed only manually,
+but nobody does this.
