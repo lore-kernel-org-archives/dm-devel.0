@@ -1,7 +1,7 @@
 From: Kirill Tkhai <ktkhai@virtuozzo.com>
-Subject: [PATCH v3 6/7] dm: Directly disable max_allocate_sectors for now
-Date: Tue, 21 Jan 2020 13:19:12 +0300
-Message-ID: <157960195201.97730.125791396853976710.stgit@localhost.localdomain>
+Subject: [PATCH v3 5/7] block: Add blk_queue_max_allocate_sectors()
+Date: Tue, 21 Jan 2020 13:19:06 +0300
+Message-ID: <157960194662.97730.18163991586346980476.stgit@localhost.localdomain>
 References: <157960153921.97730.9973412459876396302.stgit@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -12,48 +12,49 @@ Sender: linux-kernel-owner@vger.kernel.org
 To: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, bob.liu@oracle.com, axboe@kernel.dk, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, song@kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, Chaitanya.Kulkarni@wdc.com, darrick.wong@oracle.com, ming.lei@redhat.com, osandov@fb.com, jthumshirn@suse.de, minwoo.im.dev@gmail.com, damien.lemoal@wdc.com, andrea.parri@amarulasolutions.com, hare@suse.com, tj@kernel.org, ajay.joshi@wdc.com, sagi@grimberg.me, dsterba@suse.com, chaitanya.kulkarni@wdc.com, bvanassche@acm.org, dhowells@redhat.com, asml.silence@gmail.com, ktkhai@virtuozzo.com
 List-Id: dm-devel.ids
 
-Since dm inherits limits from underlining block devices,
-this patch directly disables max_allocate_sectors for dm
-till full allocation support is implemented.
-
-This prevents high-level primitives (generic_make_request_checks(),
-__blkdev_issue_write_zeroes(), ...) from sending REQ_ALLOCATE
-requests.
+This is a new helper to assign max_allocate_sectors
+limit of block device queue.
 
 Signed-off-by: Kirill Tkhai <ktkhai@virtuozzo.com>
 ---
- drivers/md/dm-table.c |    2 ++
- drivers/md/md.h       |    1 +
- 2 files changed, 3 insertions(+)
+ block/blk-settings.c   |   13 +++++++++++++
+ include/linux/blkdev.h |    2 ++
+ 2 files changed, 15 insertions(+)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 0a2cc197f62b..e245c0d882aa 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -489,6 +489,7 @@ static int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
- 		       (unsigned long long) start << SECTOR_SHIFT);
- 
- 	limits->zoned = blk_queue_zoned_model(q);
-+	blk_queue_max_allocate_sectors(q, 0);
- 
- 	return 0;
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index 81468cd454a6..8d2fcbd693f9 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -259,6 +259,19 @@ void blk_queue_max_write_zeroes_sectors(struct request_queue *q,
  }
-@@ -1548,6 +1549,7 @@ int dm_calculate_queue_limits(struct dm_table *table,
- 			       dm_device_name(table->md),
- 			       (unsigned long long) ti->begin,
- 			       (unsigned long long) ti->len);
-+		limits->max_allocate_sectors = 0;
+ EXPORT_SYMBOL(blk_queue_max_write_zeroes_sectors);
  
- 		/*
- 		 * FIXME: this should likely be moved to blk_stack_limits(), would
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index acd681939112..b9b6d78035a2 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -798,5 +798,6 @@ static inline void mddev_check_write_zeroes(struct mddev *mddev, struct bio *bio
- 	if (bio_op(bio) == REQ_OP_WRITE_ZEROES &&
- 	    !bio->bi_disk->queue->limits.max_write_zeroes_sectors)
- 		mddev->queue->limits.max_write_zeroes_sectors = 0;
-+	blk_queue_max_allocate_sectors(mddev->queue);
- }
- #endif /* _MD_MD_H */
++/**
++ * blk_queue_max_allocate_sectors - set max sectors for a single
++ *                                  allocate request
++ * @q:  the request queue for the device
++ * @max_allocate_sectors: maximum number of sectors to write per command
++ **/
++void blk_queue_max_allocate_sectors(struct request_queue *q,
++		unsigned int max_allocate_sectors)
++{
++	q->limits.max_allocate_sectors = max_allocate_sectors;
++}
++EXPORT_SYMBOL(blk_queue_max_allocate_sectors);
++
+ /**
+  * blk_queue_max_segments - set max hw segments for a request for this queue
+  * @q:  the request queue for the device
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 20c94a7f9411..249dce6dd436 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1089,6 +1089,8 @@ extern void blk_queue_max_write_same_sectors(struct request_queue *q,
+ 		unsigned int max_write_same_sectors);
+ extern void blk_queue_max_write_zeroes_sectors(struct request_queue *q,
+ 		unsigned int max_write_same_sectors);
++extern void blk_queue_max_allocate_sectors(struct request_queue *q,
++		unsigned int max_allocate_sectors);
+ extern void blk_queue_logical_block_size(struct request_queue *, unsigned int);
+ extern void blk_queue_physical_block_size(struct request_queue *, unsigned int);
+ extern void blk_queue_alignment_offset(struct request_queue *q,
