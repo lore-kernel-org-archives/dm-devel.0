@@ -1,14 +1,19 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH] libmultipath: fix compilation with
-	-fno-common
-Date: Tue, 21 Jan 2020 09:58:26 -0600
-Message-ID: <20200121155826.GV30153@octiron.msp.redhat.com>
-References: <20200116215514.20718-1-mwilck@suse.com>
+From: "John Stoffel" <john@stoffel.org>
+Subject: Re: [PATCH 10/15] libmultipath: change how the checker
+ async is set
+Date: Tue, 21 Jan 2020 15:13:47 -0500
+Message-ID: <24103.23419.410978.188164@quad.stoffel.home>
+References: <1579227500-17196-1-git-send-email-bmarzins@redhat.com>
+	<1579227500-17196-11-git-send-email-bmarzins@redhat.com>
+	<24099.17365.933723.879139@quad.stoffel.home>
+	<20200120150745.GO30153@octiron.msp.redhat.com>
+	<24102.2942.443422.59933@quad.stoffel.home>
+	<20200121124949.GU30153@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200116215514.20718-1-mwilck@suse.com>
+In-Reply-To: <20200121124949.GU30153@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,35 +23,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: mwilck@suse.com
-Cc: dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, John Stoffel <john@stoffel.org>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-On Thu, Jan 16, 2020 at 10:55:14PM +0100, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
+>>>>> "Benjamin" == Benjamin Marzinski <bmarzins@redhat.com> writes:
 
+Benjamin> On Mon, Jan 20, 2020 at 03:20:14PM -0500, John Stoffel wrote:
+>> >>>>> "Benjamin" == Benjamin Marzinski <bmarzins@redhat.com> writes:
+>> 
+Benjamin> On Sat, Jan 18, 2020 at 12:43:49PM -0500, John Stoffel wrote:
+>> >> >>>>> "Benjamin" == Benjamin Marzinski <bmarzins@redhat.com> writes:
+>> >> 
+Benjamin> The way that the checkers async mode worked in multipathd didn't make
+Benjamin> much sense. When multipathd starts up, all checker classes are in the
+Benjamin> sync mode, and any pathinfo() calls on devices would run the checker in
+Benjamin> sync mode. However, the First time a checker class was used in
+Benjamin> checkerloop, it would set that checker class to async (assuming
+Benjamin> force_sync wasn't set).  After that, no matter when a checker from that
+Benjamin> class was called, it would always run in async mode.  Multipathd doesn't
+Benjamin> need to run checkers in sync mode at all, so don't.
+>> >> 
+>> >> Sorry, I had a hard time parsing this description, especially the last
+>> >> sentence.  Do you mean that checkers should default to async then,
+>> >> instead of sync mode?  And from looking at the code, don't you mean
+>> >> that you force sync mode?  I guess the question is whether checker
+>> >> classes should default sync, or async.  And if they move to async,
+>> >> should they stay there?
+>> >> 
+>> 
+Benjamin> Sorry. I mean that right now multipathd runs the checkers from pathinfo(),
+Benjamin> wait_for_pending_paths() and check_path(). When multipathd starts, all
+Benjamin> checkers are in sync mode. The first time a checker is run from
+Benjamin> check_path(), it is switched to async mode, and stays there for the rest
+Benjamin> of the time multipathd is runing.
+>> 
+Benjamin> There is no need for multipathd to run checkers in sync mode at all, so
+Benjamin> we shouldn't be doing so for these first checks.
+>> 
+>> Thanks, that makes the entire issue much more clear.  This raises the
+>> question of why there is a sync mode at all then?  In any case, the
+>> above makes the issue more understandable.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> 
-> This never-used variable must be declared extern in order to avoid
-> a link stage error with -fno-common.
-> ---
->  libmultipath/structs.h | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-> index a3adf906..4bb567d3 100644
-> --- a/libmultipath/structs.h
-> +++ b/libmultipath/structs.h
-> @@ -106,7 +106,7 @@ enum yes_no_undef_states {
->   * _FIND_MULTIPATHS_F must have the same value as YNU_YES.
->   * Generate a compile time error if that isn't the case.
->   */
-> -char ___error1___[-(_FIND_MULTIPATHS_F != YNU_YES)];
-> +extern char ___error1___[-(_FIND_MULTIPATHS_F != YNU_YES)];
->  
->  #define find_multipaths_on(conf) \
->  	(!!((conf)->find_multipaths & _FIND_MULTIPATHS_F))
-> -- 
-> 2.24.1
+Benjamin> The multipath command, which uses the same checkers, runs in sync mode.
+
+Crystal clean now.  Thanks for your patience!
