@@ -1,19 +1,16 @@
-From: "John Stoffel" <john@stoffel.org>
-Subject: Re: [PATCH 10/15] libmultipath: change how the checker
- async is set
-Date: Tue, 21 Jan 2020 15:13:47 -0500
-Message-ID: <24103.23419.410978.188164@quad.stoffel.home>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 09/15] libmultipath: add code to get vendor
+ specific vpd data
+Date: Wed, 22 Jan 2020 02:51:44 -0600
+Message-ID: <20200122085143.GW30153@octiron.msp.redhat.com>
 References: <1579227500-17196-1-git-send-email-bmarzins@redhat.com>
-	<1579227500-17196-11-git-send-email-bmarzins@redhat.com>
-	<24099.17365.933723.879139@quad.stoffel.home>
-	<20200120150745.GO30153@octiron.msp.redhat.com>
-	<24102.2942.443422.59933@quad.stoffel.home>
-	<20200121124949.GU30153@octiron.msp.redhat.com>
+	<1579227500-17196-10-git-send-email-bmarzins@redhat.com>
+	<6d1c7f92c9d68c8a1e602ecb36cc1390e0f936de.camel@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200121124949.GU30153@octiron.msp.redhat.com>
+In-Reply-To: <6d1c7f92c9d68c8a1e602ecb36cc1390e0f936de.camel@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,48 +20,162 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, John Stoffel <john@stoffel.org>, Martin Wilck <Martin.Wilck@suse.com>
+Content-Disposition: inline
+To: Martin Wilck <mwilck@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
->>>>> "Benjamin" == Benjamin Marzinski <bmarzins@redhat.com> writes:
+On Fri, Jan 17, 2020 at 05:56:40PM +0100, Martin Wilck wrote:
+> On Thu, 2020-01-16 at 20:18 -0600, Benjamin Marzinski wrote:
+> > This adds the wildcard 'g' for multipath and path formatted printing,
+> > which returns extra data from a device's vendor specific vpd
+> > page.  The
+> > specific vendor vpd page to use, and the vendor/product id to decode
+> > it
+> > can be set in the hwentry with vpd_vendor_pg and vpd_vendor_id. It
+> > can
+> > be configured in the devices section of multipath.conf with the
+> > vpd_vendor parameter. Currently, the only devices that use this are
+> > HPE
+> > 3PAR arrays, to return the Volume Name.
+> >=20
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  libmultipath/config.c      |  4 ++++
+> >  libmultipath/config.h      |  2 ++
+> >  libmultipath/dict.c        | 34 ++++++++++++++++++++++++++++++++++
+> >  libmultipath/discovery.c   | 34 +++++++++++++++++++++++++++++++++-
+> >  libmultipath/hwtable.c     |  2 ++
+> >  libmultipath/print.c       | 27 +++++++++++++++++++++++++++
+> >  libmultipath/propsel.c     | 24 ++++++++++++++++++++++++
+> >  libmultipath/propsel.h     |  2 ++
+> >  libmultipath/structs.h     |  9 +++++++++
+> >  multipath/multipath.conf.5 |  8 ++++++++
+> >  10 files changed, 145 insertions(+), 1 deletion(-)
+> >=20
+> > diff --git a/libmultipath/config.c b/libmultipath/config.c
+> > index 85626e96..72b8d37c 100644
+> > --- a/libmultipath/config.c
+> > +++ b/libmultipath/config.c
+> > @@ -369,6 +369,8 @@ merge_hwe (struct hwentry * dst, struct hwentry *
+> > src)
+> >  =09merge_num(max_sectors_kb);
+> >  =09merge_num(ghost_delay);
+> >  =09merge_num(all_tg_pt);
+> > +=09merge_num(vpd_vendor_pg);
+> > +=09merge_num(vpd_vendor_id);
+> >  =09merge_num(san_path_err_threshold);
+> >  =09merge_num(san_path_err_forget_rate);
+> >  =09merge_num(san_path_err_recovery_time);
+> > @@ -517,6 +519,8 @@ store_hwe (vector hwtable, struct hwentry * dhwe)
+> >  =09hwe->detect_prio =3D dhwe->detect_prio;
+> >  =09hwe->detect_checker =3D dhwe->detect_checker;
+> >  =09hwe->ghost_delay =3D dhwe->ghost_delay;
+> > +=09hwe->vpd_vendor_pg =3D dhwe->vpd_vendor_pg;
+> > +=09hwe->vpd_vendor_id =3D dhwe->vpd_vendor_id;
+> > =20
+> >  =09if (dhwe->bl_product && !(hwe->bl_product =3D set_param_str(dhwe-
+> > >bl_product)))
+> >  =09=09goto out;
+> > diff --git a/libmultipath/config.h b/libmultipath/config.h
+> > index e69aa07c..589146de 100644
+> > --- a/libmultipath/config.h
+> > +++ b/libmultipath/config.h
+> > @@ -87,6 +87,8 @@ struct hwentry {
+> >  =09int max_sectors_kb;
+> >  =09int ghost_delay;
+> >  =09int all_tg_pt;
+> > +=09int vpd_vendor_pg;
+> > +=09int vpd_vendor_id;
+> >  =09char * bl_product;
+> >  };
+> > =20
+> > diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+> > index 2b046e1d..d6d8b79b 100644
+> > --- a/libmultipath/dict.c
+> > +++ b/libmultipath/dict.c
+> > @@ -1366,6 +1366,39 @@ def_uxsock_timeout_handler(struct config
+> > *conf, vector strvec)
+> >  =09return 0;
+> >  }
+> > =20
+> > +static int
+> > +hw_vpd_vendor_handler(struct config *conf, vector strvec)
+> > +{
+> > +=09int rc =3D 0;
+> > +=09char *buff;
+> > +
+> > +=09struct hwentry * hwe =3D VECTOR_LAST_SLOT(conf->hwtable);
+> > +=09if (!hwe)
+> > +=09=09return 1;
+> > +
+> > +=09buff =3D set_value(strvec);
+> > +=09if (!buff)
+> > +=09=09return 1;
+> > +=09if (strcmp(buff, "hp3par") =3D=3D 0) {
+> > +=09=09hwe->vpd_vendor_pg =3D 0xc0;
+> > +=09=09hwe->vpd_vendor_id =3D VPD_VP_HP3PAR;
+> > +=09} else
+> > +=09=09rc =3D 1;
+> > +=09FREE(buff);
+> > +=09return rc;
+> > +}
+> > +
+> > +static int
+> > +snprint_hw_vpd_vendor(struct config *conf, char * buff, int len,
+> > +=09=09      const void * data)
+> > +{
+> > +=09const struct hwentry * hwe =3D (const struct hwentry *)data;
+> > +
+> > +=09if (hwe->vpd_vendor_pg =3D=3D 0xc0 && hwe->vpd_vendor_id =3D=3D
+> > VPD_VP_HP3PAR)
+> > +=09=09return snprintf(buff, len, "hp3par");
+> > +=09return 0;
+> > +}
+>=20
+> I don't understand this design. The way you set up the hwe, it would be
+> logical to add "vpd_vendor_page" and "vpd_vendor_id" properties for
+> device entries.
 
-Benjamin> On Mon, Jan 20, 2020 at 03:20:14PM -0500, John Stoffel wrote:
->> >>>>> "Benjamin" == Benjamin Marzinski <bmarzins@redhat.com> writes:
->> 
-Benjamin> On Sat, Jan 18, 2020 at 12:43:49PM -0500, John Stoffel wrote:
->> >> >>>>> "Benjamin" == Benjamin Marzinski <bmarzins@redhat.com> writes:
->> >> 
-Benjamin> The way that the checkers async mode worked in multipathd didn't make
-Benjamin> much sense. When multipathd starts up, all checker classes are in the
-Benjamin> sync mode, and any pathinfo() calls on devices would run the checker in
-Benjamin> sync mode. However, the First time a checker class was used in
-Benjamin> checkerloop, it would set that checker class to async (assuming
-Benjamin> force_sync wasn't set).  After that, no matter when a checker from that
-Benjamin> class was called, it would always run in async mode.  Multipathd doesn't
-Benjamin> need to run checkers in sync mode at all, so don't.
->> >> 
->> >> Sorry, I had a hard time parsing this description, especially the last
->> >> sentence.  Do you mean that checkers should default to async then,
->> >> instead of sync mode?  And from looking at the code, don't you mean
->> >> that you force sync mode?  I guess the question is whether checker
->> >> classes should default sync, or async.  And if they move to async,
->> >> should they stay there?
->> >> 
->> 
-Benjamin> Sorry. I mean that right now multipathd runs the checkers from pathinfo(),
-Benjamin> wait_for_pending_paths() and check_path(). When multipathd starts, all
-Benjamin> checkers are in sync mode. The first time a checker is run from
-Benjamin> check_path(), it is switched to async mode, and stays there for the rest
-Benjamin> of the time multipathd is runing.
->> 
-Benjamin> There is no need for multipathd to run checkers in sync mode at all, so
-Benjamin> we shouldn't be doing so for these first checks.
->> 
->> Thanks, that makes the entire issue much more clear.  This raises the
->> question of why there is a sync mode at all then?  In any case, the
->> above makes the issue more understandable.
+The vpd page abbreviations specify both the page to read, and the vendor
+id to use to decode it, and they are more user readable. It seemed like
+a much more foolproof way to have people specify this.
+=20
+> BUT ok, that's overengineered with just one supported combination of
+> page and vendor. I can understand that. But then, it seems also
+> overengineered to carry around vpd_vendor_pg and vpd_vendor_id in the
+> hwe.=20
+>=20
+> I'd suggest creating a hard-coded table with "vendor vpd schemes",
+>=20
+> struct {
+> =09int pg;
+> =09int vendor_id;
+> =09const char *name;
+> } vendor_vpd_schemes[]  =3D {=20
+>     { 0xc0, VPD_VP_HP3PAR, "hp3par", },=20
+>     { 0, },=20
+> };
+>=20
+> and in the hwentry, only carry around the index into this table,
+> and look up the page and vendor ID there. Actually, with just that
+> single user, we might as well not introduce a new device property at
+> all, but simply use a separate hardcoded table with lookup values for
+> vendor and product ID. I'm unsure if it's wise to make this
+> configurable via multipath.conf.
 
-Benjamin> The multipath command, which uses the same checkers, runs in sync mode.
+Sure. I can make the hwe change. The reason why I added this to
+multipath.conf is that I'm not sure what devices actually support these
+vpd information pages.  So, if we miss one, or a new device comes out
+that isn't in the built-in config, the user can still get this info.
 
-Crystal clean now.  Thanks for your patience!
+> Regards,
+> Martin
+>=20
+> --=20
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE
+> Software Solutions Germany GmbH=20
+> HRB 36809 (AG N=FCrnberg) GF: Felix
+> Imend=F6rffer
+>=20
