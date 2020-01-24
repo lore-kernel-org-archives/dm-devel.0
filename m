@@ -1,134 +1,153 @@
-From: Stefan Bader <stefan.bader@canonical.com>
-Subject: Re: [PATCH 1/1] blk/core: Gracefully handle unset make_request_fn
-Date: Fri, 24 Jan 2020 08:04:07 +0200
-Message-ID: <c733639c-421d-19af-81fd-61d7b2ad019e@canonical.com>
-References: <20200123091713.12623-1-stefan.bader@canonical.com>
- <20200123091713.12623-2-stefan.bader@canonical.com>
- <20200123103541.GA28102@redhat.com> <20200123172816.GA31063@redhat.com>
- <81055166-37fb-ad65-6a53-11c22c626ab1@kernel.dk>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+Subject: Re: [LSF/MM/BFP ATTEND] [LSF/MM/BFP TOPIC] Storage: Copy Offload
+Date: Fri, 24 Jan 2020 16:23:18 +0200
+Message-ID: <e67bf36e-18cb-a170-39ad-a1081fae5e50@arrikto.com>
+References: <BYAPR04MB5749820C322B40C7DBBBCA02863F0@BYAPR04MB5749.namprd04.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="zTLhkZGxdCktEkSjLInMVv7empLOhgroL"
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <81055166-37fb-ad65-6a53-11c22c626ab1@kernel.dk>
-Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>
-Cc: linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, Tyler Hicks <tyler.hicks@canonical.com>, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <BYAPR04MB5749820C322B40C7DBBBCA02863F0@BYAPR04MB5749.namprd04.prod.outlook.com>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "bvanassche@acm.org" <bvanassche@acm.org>, "hare@suse.de" <hare@suse.de>, "Martin K. Petersen" <martin.petersen@oracle.com>, Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>, Stephen Bates <sbates@raithlin.com>, "msnitzer@redhat.com" <msnitzer@redhat.com>, "mpatocka@redhat.com" <mpatocka@redhat.com>, "zach.brown@ni.com" <zach.brown@ni.com>, "roland@purestorage.com" <roland@purestorage.com>, "rwheeler@redhat.com" <rwheeler@redhat.com>, "frederick.knight@netapp.com" <frederick.knight@netapp.com>, Matias Bjorling <Matias.Bjorling@wdc.com>
 List-Id: dm-devel.ids
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---zTLhkZGxdCktEkSjLInMVv7empLOhgroL
-Content-Type: multipart/mixed; boundary="YFDhP2D9xiAic0tOcuyovTHE0VS66F84F"
+On 1/7/20 8:14 PM, Chaitanya Kulkarni wrote:
+> Hi all,
+> 
+> * Background :-
+> -----------------------------------------------------------------------
+> 
+> Copy offload is a feature that allows file-systems or storage devices
+> to be instructed to copy files/logical blocks without requiring
+> involvement of the local CPU.
+> 
+> With reference to the RISC-V summit keynote [1] single threaded
+> performance is limiting due to Denard scaling and multi-threaded
+> performance is slowing down due Moore's law limitations. With the rise
+> of SNIA Computation Technical Storage Working Group (TWG) [2],
+> offloading computations to the device or over the fabrics is becoming
+> popular as there are several solutions available [2]. One of the common
+> operation which is popular in the kernel and is not merged yet is Copy
+> offload over the fabrics or on to the device.
+> 
+> * Problem :-
+> -----------------------------------------------------------------------
+> 
+> The original work which is done by Martin is present here [3]. The
+> latest work which is posted by Mikulas [4] is not merged yet. These two
+> approaches are totally different from each other. Several storage
+> vendors discourage mixing copy offload requests with regular READ/WRITE
+> I/O. Also, the fact that the operation fails if a copy request ever
+> needs to be split as it traverses the stack it has the unfortunate
+> side-effect of preventing copy offload from working in pretty much
+> every common deployment configuration out there.
+> 
+> * Current state of the work :-
+> -----------------------------------------------------------------------
+> 
+> With [3] being hard to handle arbitrary DM/MD stacking without
+> splitting the command in two, one for copying IN and one for copying
+> OUT. Which is then demonstrated by the [4] why [3] it is not a suitable
+> candidate. Also, with [4] there is an unresolved problem with the
+> two-command approach about how to handle changes to the DM layout
+> between an IN and OUT operations.
+> 
+> * Why Linux Kernel Storage System needs Copy Offload support now ?
+> -----------------------------------------------------------------------
+> 
+> With the rise of the SNIA Computational Storage TWG and solutions [2],
+> existing SCSI XCopy support in the protocol, recent advancement in the
+> Linux Kernel File System for Zoned devices (Zonefs [5]), Peer to Peer
+> DMA support in the Linux Kernel mainly for NVMe devices [7] and
+> eventually NVMe Devices and subsystem (NVMe PCIe/NVMeOF) will benefit
+> from Copy offload operation.
+> 
+> With this background we have significant number of use-cases which are
+> strong candidates waiting for outstanding Linux Kernel Block Layer Copy
+> Offload support, so that Linux Kernel Storage subsystem can to address
+> previously mentioned problems [1] and allow efficient offloading of the
+> data related operations. (Such as move/copy etc.)
+> 
+> For reference following is the list of the use-cases/candidates waiting
+> for Copy Offload support :-
+> 
+> 1. SCSI-attached storage arrays.
+> 2. Stacking drivers supporting XCopy DM/MD.
+> 3. Computational Storage solutions.
+> 7. File systems :- Local, NFS and Zonefs.
+> 4. Block devices :- Distributed, local, and Zoned devices.
+> 5. Peer to Peer DMA support solutions.
+> 6. Potentially NVMe subsystem both NVMe PCIe and NVMeOF.
+> 
+> * What we will discuss in the proposed session ?
+> -----------------------------------------------------------------------
+> 
+> I'd like to propose a session to go over this topic to understand :-
+> 
+> 1. What are the blockers for Copy Offload implementation ?
+> 2. Discussion about having a file system interface.
+> 3. Discussion about having right system call for user-space.
+> 4. What is the right way to move this work forward ?
+> 5. How can we help to contribute and move this work forward ?
+> 
+> * Required Participants :-
+> -----------------------------------------------------------------------
+> 
+> I'd like to invite block layer, device drivers and file system
+> developers to:-
+> 
+> 1. Share their opinion on the topic.
+> 2. Share their experience and any other issues with [4].
+> 3. Uncover additional details that are missing from this proposal.
+> 
+> Required attendees :-
+> 
+> Martin K. Petersen
+> Jens Axboe
+> Christoph Hellwig
+> Bart Van Assche
+> Stephen Bates
+> Zach Brown
+> Roland Dreier
+> Ric Wheeler
+> Trond Myklebust
+> Mike Snitzer
+> Keith Busch
+> Sagi Grimberg
+> Hannes Reinecke
+> Frederick Knight
+> Mikulas Patocka
+> Matias Bjørling
+> 
+> [1]https://content.riscv.org/wp-content/uploads/2018/12/A-New-Golden-Age-for-Computer-Architecture-History-Challenges-and-Opportunities-David-Patterson-.pdf
+> [2] https://www.snia.org/computational
+> https://www.napatech.com/support/resources/solution-descriptions/napatech-smartnic-solution-for-hardware-offload/
+>        https://www.eideticom.com/products.html
+> https://www.xilinx.com/applications/data-center/computational-storage.html
+> [3] git://git.kernel.org/pub/scm/linux/kernel/git/mkp/linux.git xcopy
+> [4] https://www.spinics.net/lists/linux-block/msg00599.html
+> [5] https://lwn.net/Articles/793585/
+> [6] https://nvmexpress.org/new-nvmetm-specification-defines-zoned-
+> namespaces-zns-as-go-to-industry-technology/
+> [7] https://github.com/sbates130272/linux-p2pmem
+> [8] https://kernel.dk/io_uring.pdf
+> 
+> Regards,
+> Chaitanya
+> 
 
---YFDhP2D9xiAic0tOcuyovTHE0VS66F84F
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: quoted-printable
+This is a very interesting topic and I would like to participate in the
+discussion too.
 
-On 23.01.20 20:52, Jens Axboe wrote:
-> On 1/23/20 10:28 AM, Mike Snitzer wrote:
->> On Thu, Jan 23 2020 at  5:35am -0500,
->> Mike Snitzer <snitzer@redhat.com> wrote:
->>
->>> On Thu, Jan 23 2020 at  4:17am -0500,
->>> Stefan Bader <stefan.bader@canonical.com> wrote:
->>>
->>>> When device-mapper adapted for multi-queue functionality, they
->>>> also re-organized the way the make-request function was set.
->>>> Before, this happened when the device-mapper logical device was
->>>> created. Now it is done once the mapping table gets loaded the
->>>> first time (this also decides whether the block device is request
->>>> or bio based).
->>>>
->>>> However in generic_make_request(), the request function gets used
->>>> without further checks and this happens if one tries to mount such
->>>> a partially set up device.
->>>>
->>>> This can easily be reproduced with the following steps:
->>>>  - dmsetup create -n test
->>>>  - mount /dev/dm-<#> /mnt
->>>>
->>>> This maybe is something which also should be fixed up in device-
->>>> mapper.
->>>
->>> I'll look closer at other options.
->>>
->>>> But given there is already a check for an unset queue
->>>> pointer and potentially there could be other drivers which do or
->>>> might do the same, it sounds like a good move to add another check
->>>> to generic_make_request_checks() and to bail out if the request
->>>> function has not been set, yet.
->>>>
->>>> BugLink: https://bugs.launchpad.net/bugs/1860231
->>>
->>> >From that bug;
->>> "The currently proposed fix introduces no chance of stability
->>> regressions. There is a chance of a very small performance regression=
+The dm-clone target would also benefit from copy offload, as it heavily
+employs dm-kcopyd. I have been exploring redesigning kcopyd in order to
+achieve increased IOPS in dm-clone and dm-snapshot for small copies over
+NVMe devices, but copy offload sounds even more promising, especially
+for larger copies happening in the background (as is the case with
+dm-clone's background hydration).
 
->>> since an additional pointer comparison is performed on each block lay=
-er
->>> request but this is unlikely to be noticeable."
->>>
->>> This captures my immediate concern: slowing down everyone for this DM=
-
->>> edge-case isn't desirable.
->>
->> SO I had a look and there isn't anything easier than adding the propos=
-ed
->> NULL check in generic_make_request_checks().  Given the many
->> conditionals in that  function.. what's one more? ;)
->>
->> I looked at marking the queue frozen to prevent IO via
->> blk_queue_enter()'s existing cheeck -- but that quickly felt like an
->> abuse, especially in that there isn't a queue unfreeze for bio-based.
->>
->> Jens, I'll defer to you to judge this patch further.  If you're OK wit=
-h
->> it: cool.  If not, I'm open to suggestions for how to proceed. =20
->>
->=20
-> It does kinda suck... The generic_make_request_checks() is a mess, and
-> this doesn't make it any better. Any reason why we can't solve this
-> two step setup in a clean fashion instead of patching around it like
-> this? Feels like a pretty bad hack, tbh.
->=20
-
-Tyler spent some time thinking about delaying the allocation of the queue=
-
-structure until later but that seemed rather dangerous. IIRC there are pl=
-aces
-during registration of the (generic) block device which expect this to be=
- done.
-
-Not sure whether it would be feasible to start with one kind of dummy
-make_request_fn and then switch that over to the proper one once that dec=
-ision
-can be made...
-
-
---YFDhP2D9xiAic0tOcuyovTHE0VS66F84F--
-
---zTLhkZGxdCktEkSjLInMVv7empLOhgroL
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCgAdFiEE2118yvOZTjOV2k0+6Gdd7svuzqMFAl4qiNcACgkQ6Gdd7svu
-zqMScQ//Vf/z7PoK3uToouYs/S2bQ0nQ0P3kOSlp5L81Oo5rhIEn/6c6mkCbc/NI
-dvgPAllLo7IeYSnR1Ha8NYvnJXSVl7e/AW0bH/CHJVhDO/fe5RRbGQUANc8ykK8K
-ovTKsi88/0eoQGXajgKXxr+mnO21U+RHYzMl9x472l6gr+sSZ1aLWE8qvo4jvVPu
-iNKXnVw37I7VLv6eMauBMBZGnlSwfmJfdyEq2v5SeljQSWRSk7h+Y3WOKEvFhRWa
-ehmlz4Xb/mQhxURQyCsvn0rUn2EDF8OrdGdkY79ddD2h9A7YuUqd12YmbZF9xe36
-f7ndEWW9TZsa6eIjuVMkzVHALMfPVwUynOKrBiChtMLzdXkF84rAy1jutWF2KP+M
-ZrngByxOqheaHweUeExo9BNPne5hEID+aInEVDgm2zmoagHDzOsHAmc0H8PLwQx1
-0vmHUGAzAZbs4BesoV2rdAhM9SSGpx8oVUys3hZj6KKBvRyXEQO64X9KZmpjpoWt
-+qhcT5593Dodl/Vgawpc5AnXMq6sFJg+R5V6kcY+ac6H12p8mtS4nnREKjtq/li1
-lNSju1n1cjqTBrJPyVZTYzdhHPY6NIAbkg8CVFUd9DYQ3HmPj4ftz8mTTjF72XjU
-70vNsGCvEYMMjC1doXBuRj/DPjiA6i/Z6EYRcZw9iPWkyzuWO6E=
-=h/Df
------END PGP SIGNATURE-----
-
---zTLhkZGxdCktEkSjLInMVv7empLOhgroL--
+Thanks,
+Nikos
