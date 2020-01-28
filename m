@@ -1,92 +1,147 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 1/1] blk/core: Gracefully handle unset make_request_fn
-Date: Mon, 27 Jan 2020 12:39:04 -0700
-Message-ID: <988c930f-b4ee-6387-e1b4-6bfe7af9bcaf@kernel.dk>
-References: <20200123091713.12623-1-stefan.bader@canonical.com>
- <20200123091713.12623-2-stefan.bader@canonical.com>
- <20200123103541.GA28102@redhat.com> <20200123172816.GA31063@redhat.com>
- <81055166-37fb-ad65-6a53-11c22c626ab1@kernel.dk>
- <20200127193225.GA5065@redhat.com>
+From: Naresh Kamboju <naresh.kamboju@linaro.org>
+Subject: Re: [PATCH v4 3/5] bitmap: Add bitmap_alloc(), bitmap_zalloc() and bitmap_free()
+Date: Tue, 28 Jan 2020 17:08:27 +0530
+Message-ID: <CA+G9fYs3GPid5fcHEWp2i9NKR1hQGc5h0zKaUK5xr1RGJ83xLg@mail.gmail.com>
+References: <20180630201750.2588-1-andriy.shevchenko@linux.intel.com> <20180630201750.2588-4-andriy.shevchenko@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200127193225.GA5065@redhat.com>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Stefan Bader <stefan.bader@canonical.com>, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, Tyler Hicks <tyler.hicks@canonical.com>, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-input-owner@vger.kernel.org>
+In-Reply-To: <20180630201750.2588-4-andriy.shevchenko@linux.intel.com>
+Sender: linux-input-owner@vger.kernel.org
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Sasha Levin <sashal@kernel.org>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-input@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Yury Norov <ynorov@caviumnetworks.com>, open list <linux-kernel@vger.kernel.org>, mika.westerberg@linux.intel.com, Joe Perches <joe@perches.com>, linux- stable <stable@vger.kernel.org>, lkft-triage@lists.linaro.org
 List-Id: dm-devel.ids
 
-On 1/27/20 12:32 PM, Mike Snitzer wrote:
-> On Thu, Jan 23 2020 at  1:52pm -0500,
-> Jens Axboe <axboe@kernel.dk> wrote:
-> 
->> On 1/23/20 10:28 AM, Mike Snitzer wrote:
->>> On Thu, Jan 23 2020 at  5:35am -0500,
->>> Mike Snitzer <snitzer@redhat.com> wrote:
->>>
->>>> On Thu, Jan 23 2020 at  4:17am -0500,
->>>> Stefan Bader <stefan.bader@canonical.com> wrote:
->>>>
->>>>> When device-mapper adapted for multi-queue functionality, they
->>>>> also re-organized the way the make-request function was set.
->>>>> Before, this happened when the device-mapper logical device was
->>>>> created. Now it is done once the mapping table gets loaded the
->>>>> first time (this also decides whether the block device is request
->>>>> or bio based).
->>>>>
->>>>> However in generic_make_request(), the request function gets used
->>>>> without further checks and this happens if one tries to mount such
->>>>> a partially set up device.
->>>>>
->>>>> This can easily be reproduced with the following steps:
->>>>>  - dmsetup create -n test
->>>>>  - mount /dev/dm-<#> /mnt
->>>>>
->>>>> This maybe is something which also should be fixed up in device-
->>>>> mapper.
->>>>
->>>> I'll look closer at other options.
->>>>
->>>>> But given there is already a check for an unset queue
->>>>> pointer and potentially there could be other drivers which do or
->>>>> might do the same, it sounds like a good move to add another check
->>>>> to generic_make_request_checks() and to bail out if the request
->>>>> function has not been set, yet.
->>>>>
->>>>> BugLink: https://bugs.launchpad.net/bugs/1860231
->>>>
->>>> >From that bug;
->>>> "The currently proposed fix introduces no chance of stability
->>>> regressions. There is a chance of a very small performance regression
->>>> since an additional pointer comparison is performed on each block layer
->>>> request but this is unlikely to be noticeable."
->>>>
->>>> This captures my immediate concern: slowing down everyone for this DM
->>>> edge-case isn't desirable.
->>>
->>> SO I had a look and there isn't anything easier than adding the proposed
->>> NULL check in generic_make_request_checks().  Given the many
->>> conditionals in that  function.. what's one more? ;)
->>>
->>> I looked at marking the queue frozen to prevent IO via
->>> blk_queue_enter()'s existing cheeck -- but that quickly felt like an
->>> abuse, especially in that there isn't a queue unfreeze for bio-based.
->>>
->>> Jens, I'll defer to you to judge this patch further.  If you're OK with
->>> it: cool.  If not, I'm open to suggestions for how to proceed.  
->>>
->>
->> It does kinda suck... The generic_make_request_checks() is a mess, and
->> this doesn't make it any better. Any reason why we can't solve this
->> two step setup in a clean fashion instead of patching around it like
->> this? Feels like a pretty bad hack, tbh.
-> 
-> I just staged the following DM fix:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.6&id=28a101d6b344f5a38d482a686d18b1205bc92333
+On Sun, 1 Jul 2018 at 01:49, Andy Shevchenko
+<andriy.shevchenko@linux.intel.com> wrote:
+>
+> A lot of code become ugly because of open coding allocations for bitmaps.
+>
+> Introduce three helpers to allow users be more clear of intention
+> and keep their code neat.
+>
+> Note, due to multiple circular dependencies we may not provide
+> the helpers as inliners. For now we keep them exported and, perhaps,
+> at some point in the future we will sort out header inclusion and
+> inheritance.
+>
+> Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+> ---
+>  include/linux/bitmap.h |  8 ++++++++
+>  lib/bitmap.c           | 19 +++++++++++++++++++
+>  2 files changed, 27 insertions(+)
+>
+> diff --git a/include/linux/bitmap.h b/include/linux/bitmap.h
+> index 1ee46f492267..acf5e8df3504 100644
+> --- a/include/linux/bitmap.h
+> +++ b/include/linux/bitmap.h
+> @@ -104,6 +104,14 @@
+>   * contain all bit positions from 0 to 'bits' - 1.
+>   */
+>
+> +/*
+> + * Allocation and deallocation of bitmap.
+> + * Provided in lib/bitmap.c to avoid circular dependency.
+> + */
+> +extern unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags);
+> +extern unsigned long *bitmap_zalloc(unsigned int nbits, gfp_t flags);
+> +extern void bitmap_free(const unsigned long *bitmap);
+> +
+>  /*
+>   * lib/bitmap.c provides these functions:
+>   */
+> diff --git a/lib/bitmap.c b/lib/bitmap.c
+> index 33e95cd359a2..09acf2fd6a35 100644
+> --- a/lib/bitmap.c
+> +++ b/lib/bitmap.c
+> @@ -13,6 +13,7 @@
+>  #include <linux/bitops.h>
+>  #include <linux/bug.h>
+>  #include <linux/kernel.h>
+> +#include <linux/slab.h>
+>  #include <linux/string.h>
+>  #include <linux/uaccess.h>
+>
+> @@ -1125,6 +1126,24 @@ void bitmap_copy_le(unsigned long *dst, const unsigned long *src, unsigned int n
+>  EXPORT_SYMBOL(bitmap_copy_le);
+>  #endif
+>
+> +unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags)
+> +{
+> +       return kmalloc_array(BITS_TO_LONGS(nbits), sizeof(unsigned long), flags);
+> +}
+> +EXPORT_SYMBOL(bitmap_alloc);
+> +
+> +unsigned long *bitmap_zalloc(unsigned int nbits, gfp_t flags)
+> +{
+> +       return bitmap_alloc(nbits, flags | __GFP_ZERO);
+> +}
+> +EXPORT_SYMBOL(bitmap_zalloc);
+> +
+> +void bitmap_free(const unsigned long *bitmap)
+> +{
+> +       kfree(bitmap);
+> +}
+> +EXPORT_SYMBOL(bitmap_free);
+> +
+>  #if BITS_PER_LONG == 64
+>  /**
+>   * bitmap_from_arr32 - copy the contents of u32 array of bits to bitmap
 
-I like that a lot more than the NULL check in the core.
+stable-rc 4.14 build failed due to these build error,
 
--- 
-Jens Axboe
+lib/bitmap.c: In function 'bitmap_from_u32array':
+lib/bitmap.c:1133:1: warning: ISO C90 forbids mixed declarations and
+code [-Wdeclaration-after-statement]
+ unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags)
+ ^~~~~~~~
+In file included from
+/srv/oe/build/tmp-lkft-glibc/work-shared/intel-corei7-64/kernel-source/lib/bitmap.c:8:0:
+lib/bitmap.c:1138:15: error: non-static declaration of 'bitmap_alloc'
+follows static declaration
+ EXPORT_SYMBOL(bitmap_alloc);
+               ^
+include/linux/export.h:65:21: note: in definition of macro '___EXPORT_SYMBOL'
+  extern typeof(sym) sym;      \
+                     ^~~
+lib/bitmap.c:1138:1: note: in expansion of macro 'EXPORT_SYMBOL'
+ EXPORT_SYMBOL(bitmap_alloc);
+ ^~~~~~~~~~~~~
+lib/bitmap.c:1133:16: note: previous definition of 'bitmap_alloc' was here
+ unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags)
+                ^~~~~~~~~~~~
+In file included from
+/srv/oe/build/tmp-lkft-glibc/work-shared/intel-corei7-64/kernel-source/lib/bitmap.c:8:0:
+lib/bitmap.c:1144:15: error: non-static declaration of 'bitmap_zalloc'
+follows static declaration
+ EXPORT_SYMBOL(bitmap_zalloc);
+               ^
+include/linux/export.h:65:21: note: in definition of macro '___EXPORT_SYMBOL'
+  extern typeof(sym) sym;      \
+                     ^~~
+lib/bitmap.c:1144:1: note: in expansion of macro 'EXPORT_SYMBOL'
+ EXPORT_SYMBOL(bitmap_zalloc);
+ ^~~~~~~~~~~~~
+lib/bitmap.c:1140:16: note: previous definition of 'bitmap_zalloc' was here
+ unsigned long *bitmap_zalloc(unsigned int nbits, gfp_t flags)
+                ^~~~~~~~~~~~~
+In file included from
+/srv/oe/build/tmp-lkft-glibc/work-shared/intel-corei7-64/kernel-source/lib/bitmap.c:8:0:
+lib/bitmap.c:1150:15: error: non-static declaration of 'bitmap_free'
+follows static declaration
+ EXPORT_SYMBOL(bitmap_free);
+               ^
+include/linux/export.h:65:21: note: in definition of macro '___EXPORT_SYMBOL'
+  extern typeof(sym) sym;      \
+                     ^~~
+lib/bitmap.c:1150:1: note: in expansion of macro 'EXPORT_SYMBOL'
+ EXPORT_SYMBOL(bitmap_free);
+ ^~~~~~~~~~~~~
+lib/bitmap.c:1146:6: note: previous definition of 'bitmap_free' was here
+ void bitmap_free(const unsigned long *bitmap)
+      ^~~~~~~~~~~
+  CC      drivers/char/random.o
+scripts/Makefile.build:326: recipe for target 'lib/bitmap.o' failed
+make[3]: *** [lib/bitmap.o] Error 1
+Makefile:1052: recipe for target 'lib' failed
+make[2]: *** [lib] Error 2
