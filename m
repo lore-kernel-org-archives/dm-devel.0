@@ -1,101 +1,32 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH v4 3/5] bitmap: Add bitmap_alloc(), bitmap_zalloc() and
- bitmap_free()
-Date: Tue, 28 Jan 2020 12:44:50 +0100
-Message-ID: <20200128114450.GA2672297@kroah.com>
-References: <20180630201750.2588-1-andriy.shevchenko@linux.intel.com>
- <20180630201750.2588-4-andriy.shevchenko@linux.intel.com>
- <CA+G9fYs3GPid5fcHEWp2i9NKR1hQGc5h0zKaUK5xr1RGJ83xLg@mail.gmail.com>
+From: <Sreenivas.Honnur@dell.com>
+Subject: device blacklisting and suspend issue
+Date: Tue, 28 Jan 2020 13:22:23 +0000
+Message-ID: <5fb5dfe2cd274b0091076df214fd25a5@BLRX13MDC419.AMER.DELL.COM>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CA+G9fYs3GPid5fcHEWp2i9NKR1hQGc5h0zKaUK5xr1RGJ83xLg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Naresh Kamboju <naresh.kamboju@linaro.org>
-Cc: Sasha Levin <sashal@kernel.org>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-input@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Yury Norov <ynorov@caviumnetworks.com>, open list <linux-kernel@vger.kernel.org>, mika.westerberg@linux.intel.com, Joe Perches <joe@perches.com>, linux- stable <stable@vger.kernel.org>, lkft-triage@lists.linaro.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Jan 28, 2020 at 05:08:27PM +0530, Naresh Kamboju wrote:
-> On Sun, 1 Jul 2018 at 01:49, Andy Shevchenko
-> <andriy.shevchenko@linux.intel.com> wrote:
-> >
-> > A lot of code become ugly because of open coding allocations for bitmaps.
-> >
-> > Introduce three helpers to allow users be more clear of intention
-> > and keep their code neat.
-> >
-> > Note, due to multiple circular dependencies we may not provide
-> > the helpers as inliners. For now we keep them exported and, perhaps,
-> > at some point in the future we will sort out header inclusion and
-> > inheritance.
-> >
-> > Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-> > ---
-> >  include/linux/bitmap.h |  8 ++++++++
-> >  lib/bitmap.c           | 19 +++++++++++++++++++
-> >  2 files changed, 27 insertions(+)
-> >
-> > diff --git a/include/linux/bitmap.h b/include/linux/bitmap.h
-> > index 1ee46f492267..acf5e8df3504 100644
-> > --- a/include/linux/bitmap.h
-> > +++ b/include/linux/bitmap.h
-> > @@ -104,6 +104,14 @@
-> >   * contain all bit positions from 0 to 'bits' - 1.
-> >   */
-> >
-> > +/*
-> > + * Allocation and deallocation of bitmap.
-> > + * Provided in lib/bitmap.c to avoid circular dependency.
-> > + */
-> > +extern unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags);
-> > +extern unsigned long *bitmap_zalloc(unsigned int nbits, gfp_t flags);
-> > +extern void bitmap_free(const unsigned long *bitmap);
-> > +
-> >  /*
-> >   * lib/bitmap.c provides these functions:
-> >   */
-> > diff --git a/lib/bitmap.c b/lib/bitmap.c
-> > index 33e95cd359a2..09acf2fd6a35 100644
-> > --- a/lib/bitmap.c
-> > +++ b/lib/bitmap.c
-> > @@ -13,6 +13,7 @@
-> >  #include <linux/bitops.h>
-> >  #include <linux/bug.h>
-> >  #include <linux/kernel.h>
-> > +#include <linux/slab.h>
-> >  #include <linux/string.h>
-> >  #include <linux/uaccess.h>
-> >
-> > @@ -1125,6 +1126,24 @@ void bitmap_copy_le(unsigned long *dst, const unsigned long *src, unsigned int n
-> >  EXPORT_SYMBOL(bitmap_copy_le);
-> >  #endif
-> >
-> > +unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags)
-> > +{
-> > +       return kmalloc_array(BITS_TO_LONGS(nbits), sizeof(unsigned long), flags);
-> > +}
-> > +EXPORT_SYMBOL(bitmap_alloc);
-> > +
-> > +unsigned long *bitmap_zalloc(unsigned int nbits, gfp_t flags)
-> > +{
-> > +       return bitmap_alloc(nbits, flags | __GFP_ZERO);
-> > +}
-> > +EXPORT_SYMBOL(bitmap_zalloc);
-> > +
-> > +void bitmap_free(const unsigned long *bitmap)
-> > +{
-> > +       kfree(bitmap);
-> > +}
-> > +EXPORT_SYMBOL(bitmap_free);
-> > +
-> >  #if BITS_PER_LONG == 64
-> >  /**
-> >   * bitmap_from_arr32 - copy the contents of u32 array of bits to bitmap
-> 
-> stable-rc 4.14 build failed due to these build error,
+I have below queries, help is appreciated.
 
-Yeah, sorry, I noticed this right before I had to leave for a few hours.
-I'll go fix this up now...
+1.	We have an issue with device blacklisting. To blacklist a device we add an entry in /etc/multipath.conf" and do "service multipathd reload". After this to check if device is blacklisted we issue "multipathd show blacklist" command in a loop(with a delay of 10 second). Sometimes I see that this command takes too much time to come out or sometimes it just hangs. 
+	a. Is this the correct way to check if device is blacklisted? Or is there any other way to do it?
+	b. Is "multipathd reload" a async call? Is there a way to know that "multipathd reload" is completed?
 
-greg k-h
+2.	After suspending (dmsetup suspend wwid) a device,  is there a way to inform multipathd not to make it active if some events happen on this device(like new path added..etc...I see that the table is reloaded and device becomes active)
+How to avoid this i.e. the device should be in "suspended" state until I do a "resume" on it, "multipathd" should not enable it until I do "dmsetup resume"
+
+3.  " blk_cloned_rq_check_limits: over max size limit." Error I have a requirement to change(decrease) the max_sector_kb value of a device, when I do that (using "echo value /sys/block/dm-x/queue/max_sector_kb) I hit above error.
+How I can I avoid this error when I change the max_sector_kb value?
