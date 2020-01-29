@@ -1,71 +1,134 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 1/1] blk/core: Gracefully handle unset make_request_fn
-Date: Tue, 28 Jan 2020 11:26:10 -0500
-Message-ID: <20200128162610.GA15575@redhat.com>
-References: <20200123091713.12623-1-stefan.bader@canonical.com>
- <20200123091713.12623-2-stefan.bader@canonical.com>
- <20200123103541.GA28102@redhat.com>
- <20200123172816.GA31063@redhat.com>
- <81055166-37fb-ad65-6a53-11c22c626ab1@kernel.dk>
- <20200127193225.GA5065@redhat.com>
- <e0475dae-a55f-f30e-a82f-ee35cdb171c4@canonical.com>
+Subject: [git pull] device mapper changes for 5.6
+Date: Wed, 29 Jan 2020 12:17:03 -0500
+Message-ID: <20200129171703.GA26110@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <e0475dae-a55f-f30e-a82f-ee35cdb171c4@canonical.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Stefan Bader <stefan.bader@canonical.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, Tyler Hicks <tyler.hicks@canonical.com>, Alasdair Kergon <agk@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Anatol Pomazau <anatol@google.com>, Bryan Gurney <bgurney@redhat.com>, Dmitry Fomichev <dmitry.fomichev@wdc.com>, Heinz Mauelshagen <heinzm@redhat.com>, Jeffle Xu <jefflexu@linux.alibaba.com>, Joe Thornber <ejt@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <gmazyland@gmail.com>, "xianrong.zhou" <xianrong.zhou@transsion.com>, zhengbin <zhengbin13@huawei.com>
 List-Id: dm-devel.ids
 
-On Tue, Jan 28 2020 at  9:32am -0500,
-Stefan Bader <stefan.bader@canonical.com> wrote:
+Hi Linus,
 
-> On 27.01.20 20:32, Mike Snitzer wrote:
-> > 
-> > I just staged the following DM fix:
-> > https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.6&id=28a101d6b344f5a38d482a686d18b1205bc92333
-> 
-> Thanks Mike,
-> 
-> yeah this looks like it resolves the problem without adding any impact on the
-> generic I/O path. We certainly had thought about that but felt uncertain whether
-> it would not open other risks. Like something adding requests just before the
-> table load. Could this cause some I/O be handled by one function and the rest by
-> another? And would that really matter?
+The following changes since commit c79f46a282390e0f5b306007bf7b11a46d529538:
 
-I considered this too.  Any IO issued to the device before it is "ready"
-won't matter anyway (no where to send the IO due to not having a DM
-table -- such IO should result in an error (from dm.c:dm_process_bio's
-!map check).  But given the device has no size, a simple write will hit
--ENOSPC before.
+  Linux 5.5-rc5 (2020-01-05 14:23:27 -0800)
 
-And the only way to get the DM device to have a proper destination for
-its IO is to load a table, which requires a sequence like:
+are available in the Git repository at:
 
-# dmsetup create -n test
-# dmsetup table
-test:
-# echo "0 20971520 linear 259:0 2048" | dmsetup load test
-# dmsetup table --inactive
-test: 0 20971520 linear 259:0 2048
-# dmsetup suspend test
-# dmsetup resume test
-# dmsetup table
-test: 0 20971520 linear 259:0 2048
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.6/dm-changes
 
-And once a table is loaded there will be accompanying change
-uevents that trigger udev, blkid, etc.
+for you to fetch changes up to 47ace7e012b9f7ad71d43ac9063d335ea3d6820b:
 
-(NOTE: the suspend phase implies a flush of all outstanding IO, but even
-if 'dmsetup suspend --noflush test' were used the IO would just get
-pushed onto a list in DM core and it would be issued after the new table
-is in place).
+  dm: fix potential for q->make_request_fn NULL pointer (2020-01-27 14:52:36 -0500)
 
-> The other thing that was a bit strange but maybe someone else's problem is that
-> mount generated I/O requests to start with. The device size should be 0 still.
-
-That's just mount not having a negative check for device size being 0.
-
+Please pull, thanks!
 Mike
+
+----------------------------------------------------------------
+- Fix DM core's potential for q->make_request_fn NULL pointer in the
+  unlikely case that a DM device is created without a DM table and
+  then accessed due to upper-layer userspace code or user error.
+
+- Fix DM thin-provisioning's metadata_pre_commit_callback to not use
+  memory after it is free'd.  Also refactor code to disallow changing
+  the thin-pool's data device once in use -- doing so guarantees smae
+  lifetime of pool's data device relative to the pool metadata.
+
+- Fix DM space maps used by DM thinp and DM cache to avoid reuse of a
+  already used block. This race was identified with extremely heavy
+  snapshot use in the context of DM thin provisioning.
+
+- Fix DM raid's table status relative to an active rebuild.
+
+- Fix DM crypt to use GFP_NOIO rather than GFP_NOFS in call to
+  skcipher_request_alloc(). Also fix benbi IV constructor crash if
+  used in authenticated mode.
+
+- Add DM crypt support for Elephant diffuser to allow for Bitlocker
+  compatibility.
+
+- Fix DM verity target to not prefetch hash blocks for data that has
+  already been verified.
+
+- Fix DM writecache's incorrect flush sequence during commit when in
+  SSD mode.
+
+- Improve DM writecache's sequential write performance on SSDs.
+
+- Add DM zoned target support for zone sizes smaller than 128MiB.
+
+- Add DM multipath 'queue_if_no_path_timeout_secs' module param to
+  allow timeout if path isn't reinstated. This allows users a kernel
+  safety-net against IO hanging indefinitely, due to no active paths,
+  that has historically only been provided by multipathd userspace.
+
+- Various DM code cleanups to use true/false rather than 1/0, a
+  variable rename in dm-dust, and fix for a math error in comment for
+  DM thin metadata's ondisk format.
+
+----------------------------------------------------------------
+Anatol Pomazau (1):
+      dm mpath: Add timeout mechanism for queue_if_no_path
+
+Bryan Gurney (1):
+      dm dust: change ret to r in dust_map_write
+
+Dmitry Fomichev (1):
+      dm zoned: support zone sizes smaller than 128MiB
+
+Heinz Mauelshagen (1):
+      dm raid: table line rebuild status fixes
+
+Jeffle Xu (1):
+      dm thin metadata: Fix trivial math error in on-disk format documentation
+
+Joe Thornber (1):
+      dm space map common: fix to ensure new block isn't already in use
+
+Mike Snitzer (3):
+      dm thin metadata: use pool locking at end of dm_pool_metadata_close
+      dm thin: fix use-after-free in metadata_pre_commit_callback
+      dm: fix potential for q->make_request_fn NULL pointer
+
+Mikulas Patocka (5):
+      dm crypt: fix GFP flags passed to skcipher_request_alloc()
+      dm writecache: fix incorrect flush sequence when doing SSD mode commit
+      dm thin: don't allow changing data device during thin-pool reload
+      dm thin: change data device's flush_bio to be member of struct pool
+      dm writecache: improve performance of large linear writes on SSDs
+
+Milan Broz (2):
+      dm crypt: Implement Elephant diffuser for Bitlocker compatibility
+      dm crypt: fix benbi IV constructor crash if used in authenticated mode
+
+xianrong.zhou (1):
+      dm verity: don't prefetch hash blocks for already-verified data
+
+zhengbin (4):
+      dm mpath: use true/false for bool variable
+      dm bio prison v2: use true/false for bool variable
+      dm snapshot: use true/false for bool variable
+      dm thin metadata: use true/false for bool variable
+
+ .../admin-guide/device-mapper/dm-raid.rst          |   2 +
+ drivers/md/dm-bio-prison-v2.c                      |   2 +-
+ drivers/md/dm-crypt.c                              | 335 ++++++++++++++++++++-
+ drivers/md/dm-dust.c                               |   6 +-
+ drivers/md/dm-mpath.c                              |  68 ++++-
+ drivers/md/dm-raid.c                               |  43 +--
+ drivers/md/dm-snap.c                               |   6 +-
+ drivers/md/dm-thin-metadata.c                      |  22 +-
+ drivers/md/dm-thin.c                               |  36 ++-
+ drivers/md/dm-verity-target.c                      |  18 +-
+ drivers/md/dm-writecache.c                         |  71 +++--
+ drivers/md/dm-zoned-metadata.c                     |  23 +-
+ drivers/md/dm.c                                    |   9 +-
+ drivers/md/persistent-data/dm-space-map-common.c   |  27 ++
+ drivers/md/persistent-data/dm-space-map-common.h   |   2 +
+ drivers/md/persistent-data/dm-space-map-disk.c     |   6 +-
+ drivers/md/persistent-data/dm-space-map-metadata.c |   5 +-
+ 17 files changed, 580 insertions(+), 101 deletions(-)
