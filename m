@@ -1,8 +1,8 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 0/3] dm-integrity: make it possible to change the
-	size of dm-integrity device
-Date: Thu, 30 Jan 2020 18:25:39 +0100
-Message-ID: <20200130172539.890730920@debian-a64.vm>
+Subject: [PATCH 2/3] dm-integrity: introduce
+	get_provided_data_sectors
+Date: Thu, 30 Jan 2020 18:25:41 +0100
+Message-ID: <20200130173417.840042000@debian-a64.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,19 +16,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline;
+	filename=dm-integrity-get_provided_data_sectors.patch
 To: Mike Snitzer <msnitzer@redhat.com>, David Teigland <teigland@redhat.com>
-Cc: dm-devel@redhat.com
+Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+Refactoring: move code to a new function get_provided_data_sectors.
 
-This patchset makes it possible to enlarge or shrink a dm-integrity device.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-Without this patchset, dm-integrity would set the field
-provided_data_sectors only once and would not change it when being
-reloaded with different size.
+---
+ drivers/md/dm-integrity.c |   54 +++++++++++++++++++++++++++++++---------------
+ 1 file changed, 37 insertions(+), 17 deletions(-)
 
-This patch makes dm-integrity update provided_data_sectors at each
-invocation.
-
-Mikulas
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2020-01-29 15:21:08.000000000 +0100
++++ linux-2.6/drivers/md/dm-integrity.c	2020-01-29 20:29:32.000000000 +0100
+@@ -3086,6 +3093,24 @@ static int calculate_device_limits(struc
+ 	return 0;
+ }
+ 
++static void get_provided_data_sectors(struct dm_integrity_c *ic)
++{
++	if (!ic->meta_dev) {
++		int test_bit;
++		ic->provided_data_sectors = 0;
++		for (test_bit = fls64(ic->meta_device_sectors) - 1; test_bit >= 3; test_bit--) {
++			__u64 prev_data_sectors = ic->provided_data_sectors;
++
++			ic->provided_data_sectors |= (sector_t)1 << test_bit;
++			if (calculate_device_limits(ic))
++				ic->provided_data_sectors = prev_data_sectors;
++		}
++	} else {
++		ic->provided_data_sectors = ic->data_device_sectors;
++		ic->provided_data_sectors &= ~(sector_t)(ic->sectors_per_block - 1);
++	}
++}
++
+ static int initialize_superblock(struct dm_integrity_c *ic, unsigned journal_sectors, unsigned interleave_sectors)
+ {
+ 	unsigned journal_sections;
+@@ -3113,20 +3138,15 @@ static int initialize_superblock(struct
+ 		ic->sb->log2_interleave_sectors = max((__u8)MIN_LOG2_INTERLEAVE_SECTORS, ic->sb->log2_interleave_sectors);
+ 		ic->sb->log2_interleave_sectors = min((__u8)MAX_LOG2_INTERLEAVE_SECTORS, ic->sb->log2_interleave_sectors);
+ 
+-		ic->provided_data_sectors = 0;
+-		for (test_bit = fls64(ic->meta_device_sectors) - 1; test_bit >= 3; test_bit--) {
+-			__u64 prev_data_sectors = ic->provided_data_sectors;
+-
+-			ic->provided_data_sectors |= (sector_t)1 << test_bit;
+-			if (calculate_device_limits(ic))
+-				ic->provided_data_sectors = prev_data_sectors;
+-		}
++		get_provided_data_sectors(ic);
+ 		if (!ic->provided_data_sectors)
+ 			return -EINVAL;
+ 	} else {
+ 		ic->sb->log2_interleave_sectors = 0;
+-		ic->provided_data_sectors = ic->data_device_sectors;
+-		ic->provided_data_sectors &= ~(sector_t)(ic->sectors_per_block - 1);
++
++		get_provided_data_sectors(ic);
++		if (!ic->provided_data_sectors)
++			return -EINVAL;
+ 
+ try_smaller_buffer:
+ 		ic->sb->journal_sections = cpu_to_le32(0);
