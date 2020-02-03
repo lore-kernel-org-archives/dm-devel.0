@@ -1,79 +1,53 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: expose dm_copy_name_and_uuid()
-Date: Mon, 3 Feb 2020 11:54:02 -0500
-Message-ID: <20200203165402.GA11874@redhat.com>
-References: <20200201005524.23405-1-jdorminy@redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: [PATCH 2/5] s390,dax: Add dax zero_page_range operation to dcssblk driver
+Date: Mon,  3 Feb 2020 15:00:26 -0500
+Message-ID: <20200203200029.4592-3-vgoyal@redhat.com>
+References: <20200203200029.4592-1-vgoyal@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200201005524.23405-1-jdorminy@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: John Dorminy <jdorminy@redhat.com>
-Cc: dm-devel@redhat.com, agk@redhat.com
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20200203200029.4592-1-vgoyal@redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, dan.j.williams@intel.com, hch@infradead.org
+Cc: vgoyal@redhat.com, vishal.l.verma@intel.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Jan 31 2020 at  7:55pm -0500,
-John Dorminy <jdorminy@redhat.com> wrote:
+Add dax operation zero_page_range. This just calls generic helper
+generic_dax_zero_page_range().
 
-> While dm_device_name() returns the MAJOR:MINOR numbers of a device,
-> some targets would like to know the pretty name of a device, and
-> some targets would like to know the uuid expected for the device.
-> 
-> The MAJOR:MINOR name is useful for logging, but printing the long
-> name of the device can make it easier for the user to correlate
-> messages with the device names they know in userspace.
-> 
-> The UUID can be useful for devices which store a UUID on disk, and
-> would like to verify the on-disk UUID matches the UUID known by DM.
-> 
-> dm_copy_name_and_uuid() appears to be the only way to get at the
-> pretty name and the UUID at present, and this change exports the
-> function for use by GPLd modules.
-> 
-> Signed-off-by: John Dorminy <jdorminy@redhat.com>
-> ---
->  drivers/md/dm-ioctl.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-> index 1e03bc89e20f..711a46015696 100644
-> --- a/drivers/md/dm-ioctl.c
-> +++ b/drivers/md/dm-ioctl.c
-> @@ -2018,7 +2018,7 @@ int dm_copy_name_and_uuid(struct mapped_device *md, char *name, char *uuid)
->  
->  	return r;
->  }
-> -
-> +EXPORT_SYMBOL_GPL(dm_copy_name_and_uuid);
->  
->  /**
->   * dm_early_create - create a mapped device in early boot.
-> -- 
-> 2.20.1
+Suggested-by: Christoph Hellwig <hch@infradead.org>
+Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+---
+ drivers/s390/block/dcssblk.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-These are already available to userspace via sysfs, e.g.:
-
-# dmsetup ls
-test-test        (253:0)
-# cat /sys/block/dm-0/dm/name
-test-test
-# cat /sys/block/dm-0/dm/uuid
-LVM-IFFqf0id2DX3IgGmu6izzJW1rBoWmsC61hwGobtrD60aCMh6zJwK3uiYUS6rbNoY
-
-Verification of the UUID that a target happens to store in its ondisk
-metadata seems like it'd best be done by userspace, _before_ activating
-the DM device, no?  Or are you saying that the target would do this
-verification as part of its .ctr method?
-
-Anyway, I'm fine with exporting it.. just think the proposed usecases
-are not a "slam-dunk" for why you need it.
+diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
+index 63502ca537eb..f6709200bcd0 100644
+--- a/drivers/s390/block/dcssblk.c
++++ b/drivers/s390/block/dcssblk.c
+@@ -62,6 +62,7 @@ static const struct dax_operations dcssblk_dax_ops =3D =
+{
+ 	.dax_supported =3D generic_fsdax_supported,
+ 	.copy_from_iter =3D dcssblk_dax_copy_from_iter,
+ 	.copy_to_iter =3D dcssblk_dax_copy_to_iter,
++	.zero_page_range =3D dcssblk_dax_zero_page_range,
+ };
+=20
+ struct dcssblk_dev_info {
+@@ -941,6 +942,12 @@ dcssblk_dax_direct_access(struct dax_device *dax_dev=
+, pgoff_t pgoff,
+ 	return __dcssblk_direct_access(dev_info, pgoff, nr_pages, kaddr, pfn);
+ }
+=20
++static int dcssblk_dax_zero_page_range(struct dax_device *dax_dev,pgoff_=
+t pgoff,
++				       unsigned offset, size_t len)
++{
++	return generic_dax_zero_page_range(dax_dev, pgoff, offset, len);
++}
++
+ static void
+ dcssblk_check_params(void)
+ {
+--=20
+2.18.1
