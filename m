@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 07/17] libmultipath: add missing hwe mpe
-	variable merges
-Date: Wed,  5 Feb 2020 12:58:10 -0600
-Message-ID: <1580929100-32572-8-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 08/17] libmultipath: fix sgio_get_vpd looping
+Date: Wed,  5 Feb 2020 12:58:11 -0600
+Message-ID: <1580929100-32572-9-git-send-email-bmarzins@redhat.com>
 References: <1580929100-32572-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,47 +21,165 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-There were some variables in the hwe and mpe structs that weren't being
-merged by merge_hwe() and merge_mpe().
+If do_inq returns a page with a length that is less than maxlen, but
+larger than DEFAULT_SGIO_LEN, this function will loop forever. Also
+if do_inq returns with a length equal to or greater than maxlen,
+sgio_get_vpd will exit immediately, even if it hasn't read the entire
+page.  Fix these issues, modify the tests to verify the new behavior.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/config.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ libmultipath/discovery.c | 12 +++----
+ tests/vpd.c              | 77 ++++++++++++++++++++++++----------------
+ 2 files changed, 52 insertions(+), 37 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 20e3b8bf..85626e96 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -372,6 +372,10 @@ merge_hwe (struct hwentry * dst, struct hwentry * src)
- 	merge_num(san_path_err_threshold);
- 	merge_num(san_path_err_forget_rate);
- 	merge_num(san_path_err_recovery_time);
-+	merge_num(marginal_path_err_sample_time);
-+	merge_num(marginal_path_err_rate_threshold);
-+	merge_num(marginal_path_err_recheck_gap_time);
-+	merge_num(marginal_path_double_failed_time);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 72f455e8..3c72a80a 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -870,6 +870,7 @@ static int
+ sgio_get_vpd (unsigned char * buff, int maxlen, int fd, int pg)
+ {
+ 	int len = DEFAULT_SGIO_LEN;
++	int rlen;
  
- 	snprintf(id, sizeof(id), "%s/%s", dst->vendor, dst->product);
- 	reconcile_features_with_options(id, &dst->features,
-@@ -397,6 +401,7 @@ merge_mpe(struct mpentry *dst, struct mpentry *src)
- 	if (dst->prkey_source == PRKEY_SOURCE_NONE &&
- 	    src->prkey_source != PRKEY_SOURCE_NONE) {
- 		dst->prkey_source = src->prkey_source;
-+		dst->sa_flags = src->sa_flags;
- 		memcpy(&dst->reservation_key, &src->reservation_key,
- 		       sizeof(dst->reservation_key));
+ 	if (fd < 0) {
+ 		errno = EBADF;
+@@ -877,12 +878,11 @@ sgio_get_vpd (unsigned char * buff, int maxlen, int fd, int pg)
  	}
-@@ -413,6 +418,9 @@ merge_mpe(struct mpentry *dst, struct mpentry *src)
- 	merge_num(deferred_remove);
- 	merge_num(delay_watch_checks);
- 	merge_num(delay_wait_checks);
-+	merge_num(san_path_err_threshold);
-+	merge_num(san_path_err_forget_rate);
-+	merge_num(san_path_err_recovery_time);
- 	merge_num(marginal_path_err_sample_time);
- 	merge_num(marginal_path_err_rate_threshold);
- 	merge_num(marginal_path_err_recheck_gap_time);
+ retry:
+ 	if (0 == do_inq(fd, 0, 1, pg, buff, len)) {
+-		len = get_unaligned_be16(&buff[2]) + 4;
+-		if (len >= maxlen)
+-			return len;
+-		if (len > DEFAULT_SGIO_LEN)
+-			goto retry;
+-		return len;
++		rlen = get_unaligned_be16(&buff[2]) + 4;
++		if (rlen <= len || len >= maxlen)
++			return rlen;
++		len = (rlen < maxlen)? rlen : maxlen;
++		goto retry;
+ 	}
+ 	return -1;
+ }
+diff --git a/tests/vpd.c b/tests/vpd.c
+index d9f80eaa..1e653ed4 100644
+--- a/tests/vpd.c
++++ b/tests/vpd.c
+@@ -506,9 +506,10 @@ static void test_vpd_naa_ ## naa ## _ ## wlen(void **state)             \
+  * test_vpd_eui_LEN_WLEN() - test code for VPD 83, EUI64
+  * @LEN:	EUI64 length (8, 12, or 16)
+  * @WLEN:	WWID buffer size
++ * @SML:	Use small VPD page size
+  */
+-#define make_test_vpd_eui(len, wlen)					\
+-static void test_vpd_eui_ ## len ## _ ## wlen(void **state)             \
++#define make_test_vpd_eui(len, wlen, sml)				\
++static void test_vpd_eui_ ## len ## _ ## wlen ## _ ## sml(void **state)	\
+ {									\
+ 	struct vpdtest *vt = *state;                                    \
+ 	int n, ret;							\
+@@ -518,10 +519,16 @@ static void test_vpd_eui_ ## len ## _ ## wlen(void **state)             \
+ 									\
+ 	n = create_vpd83(vt->vpdbuf, sizeof(vt->vpdbuf), test_id,	\
+ 			 2, 0, len);					\
++	if (sml) {							\
++		/* overwrite the page side to DEFAULT_SGIO_LEN + 1 */	\
++		put_unaligned_be16(255, vt->vpdbuf + 2);		\
++		will_return(__wrap_ioctl, n);				\
++		will_return(__wrap_ioctl, vt->vpdbuf);			\
++	}								\
+ 	will_return(__wrap_ioctl, n);					\
+ 	will_return(__wrap_ioctl, vt->vpdbuf);				\
+ 	ret = get_vpd_sgio(10, 0x83, vt->wwid, wlen);			\
+-	assert_correct_wwid("test_vpd_eui_" #len "_" #wlen,		\
++	assert_correct_wwid("test_vpd_eui_" #len "_" #wlen "_" #sml,	\
+ 			    exp_len, ret, '2', 0, true,			\
+ 			    test_id, vt->wwid);				\
+ }
+@@ -603,25 +610,30 @@ make_test_vpd_vnd(20, 10);
+ make_test_vpd_vnd(10, 10);
+ 
+ /* EUI64 tests */
++/* small vpd page test */
++make_test_vpd_eui(8, 32, 1);
++make_test_vpd_eui(12, 32, 1);
++make_test_vpd_eui(16, 40, 1);
++
+ /* 64bit, WWID size: 18 */
+-make_test_vpd_eui(8, 32);
+-make_test_vpd_eui(8, 18);
+-make_test_vpd_eui(8, 17);
+-make_test_vpd_eui(8, 16);
+-make_test_vpd_eui(8, 10);
++make_test_vpd_eui(8, 32, 0);
++make_test_vpd_eui(8, 18, 0);
++make_test_vpd_eui(8, 17, 0);
++make_test_vpd_eui(8, 16, 0);
++make_test_vpd_eui(8, 10, 0);
+ 
+ /* 96 bit, WWID size: 26 */
+-make_test_vpd_eui(12, 32);
+-make_test_vpd_eui(12, 26);
+-make_test_vpd_eui(12, 25);
+-make_test_vpd_eui(12, 20);
+-make_test_vpd_eui(12, 10);
++make_test_vpd_eui(12, 32, 0);
++make_test_vpd_eui(12, 26, 0);
++make_test_vpd_eui(12, 25, 0);
++make_test_vpd_eui(12, 20, 0);
++make_test_vpd_eui(12, 10, 0);
+ 
+ /* 128 bit, WWID size: 34 */
+-make_test_vpd_eui(16, 40);
+-make_test_vpd_eui(16, 34);
+-make_test_vpd_eui(16, 33);
+-make_test_vpd_eui(16, 20);
++make_test_vpd_eui(16, 40, 0);
++make_test_vpd_eui(16, 34, 0);
++make_test_vpd_eui(16, 33, 0);
++make_test_vpd_eui(16, 20, 0);
+ 
+ /* NAA IEEE registered extended (36), WWID size: 34 */
+ make_test_vpd_naa(6, 40);
+@@ -722,20 +734,23 @@ static int test_vpd(void)
+ 		cmocka_unit_test(test_vpd_vnd_19_20),
+ 		cmocka_unit_test(test_vpd_vnd_20_10),
+ 		cmocka_unit_test(test_vpd_vnd_10_10),
+-		cmocka_unit_test(test_vpd_eui_8_32),
+-		cmocka_unit_test(test_vpd_eui_8_18),
+-		cmocka_unit_test(test_vpd_eui_8_17),
+-		cmocka_unit_test(test_vpd_eui_8_16),
+-		cmocka_unit_test(test_vpd_eui_8_10),
+-		cmocka_unit_test(test_vpd_eui_12_32),
+-		cmocka_unit_test(test_vpd_eui_12_26),
+-		cmocka_unit_test(test_vpd_eui_12_25),
+-		cmocka_unit_test(test_vpd_eui_12_20),
+-		cmocka_unit_test(test_vpd_eui_12_10),
+-		cmocka_unit_test(test_vpd_eui_16_40),
+-		cmocka_unit_test(test_vpd_eui_16_34),
+-		cmocka_unit_test(test_vpd_eui_16_33),
+-		cmocka_unit_test(test_vpd_eui_16_20),
++		cmocka_unit_test(test_vpd_eui_8_32_1),
++		cmocka_unit_test(test_vpd_eui_12_32_1),
++		cmocka_unit_test(test_vpd_eui_16_40_1),
++		cmocka_unit_test(test_vpd_eui_8_32_0),
++		cmocka_unit_test(test_vpd_eui_8_18_0),
++		cmocka_unit_test(test_vpd_eui_8_17_0),
++		cmocka_unit_test(test_vpd_eui_8_16_0),
++		cmocka_unit_test(test_vpd_eui_8_10_0),
++		cmocka_unit_test(test_vpd_eui_12_32_0),
++		cmocka_unit_test(test_vpd_eui_12_26_0),
++		cmocka_unit_test(test_vpd_eui_12_25_0),
++		cmocka_unit_test(test_vpd_eui_12_20_0),
++		cmocka_unit_test(test_vpd_eui_12_10_0),
++		cmocka_unit_test(test_vpd_eui_16_40_0),
++		cmocka_unit_test(test_vpd_eui_16_34_0),
++		cmocka_unit_test(test_vpd_eui_16_33_0),
++		cmocka_unit_test(test_vpd_eui_16_20_0),
+ 		cmocka_unit_test(test_vpd_naa_6_40),
+ 		cmocka_unit_test(test_vpd_naa_6_34),
+ 		cmocka_unit_test(test_vpd_naa_6_33),
 -- 
 2.17.2
