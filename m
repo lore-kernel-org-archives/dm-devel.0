@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 03/17] libmultipath: fix leak in foreign code
-Date: Wed,  5 Feb 2020 12:58:06 -0600
-Message-ID: <1580929100-32572-4-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 05/17] libmultipath: remove unused
+	path->prio_args
+Date: Wed,  5 Feb 2020 12:58:08 -0600
+Message-ID: <1580929100-32572-6-git-send-email-bmarzins@redhat.com>
 References: <1580929100-32572-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,57 +22,23 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-If scandir fails or finds no foreign libraries, enable_re needs to be
-freed before exitting.
-
-Fixes: 8d03eda4 'multipath.conf: add "enable_foreign" parameter'
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/foreign.c | 11 +++++++----
- 1 file changed, 7 insertions(+), 4 deletions(-)
+ libmultipath/structs.h | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
-index 4b34e141..68e9a9b8 100644
---- a/libmultipath/foreign.c
-+++ b/libmultipath/foreign.c
-@@ -129,7 +129,7 @@ static int _init_foreign(const char *multipath_dir, const char *enable)
- 	char pathbuf[PATH_MAX];
- 	struct dirent **di;
- 	struct scandir_result sr;
--	int r, i;
-+	int r, i, ret = 0;
- 	regex_t *enable_re = NULL;
- 
- 	foreigns = vector_alloc();
-@@ -157,13 +157,15 @@ static int _init_foreign(const char *multipath_dir, const char *enable)
- 	if (r == 0) {
- 		condlog(3, "%s: no foreign multipath libraries found",
- 			__func__);
--		return 0;
-+		ret = 0;
-+		goto out;
- 	} else if (r < 0) {
- 		r = errno;
- 		condlog(1, "%s: error %d scanning foreign multipath libraries",
- 			__func__, r);
- 		_cleanup_foreign();
--		return -r;
-+		ret = -r;
-+		goto out;
- 	}
- 
- 	sr.di = di;
-@@ -250,8 +252,9 @@ static int _init_foreign(const char *multipath_dir, const char *enable)
- 		free_foreign(fgn);
- 	}
- 	pthread_cleanup_pop(1); /* free_scandir_result */
-+out:
- 	pthread_cleanup_pop(1); /* free_pre */
--	return 0;
-+	return ret;
- }
- 
- int init_foreign(const char *multipath_dir, const char *enable)
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index a3adf906..1c32a799 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -272,7 +272,6 @@ struct path {
+ 	char * uid_attribute;
+ 	char * getuid;
+ 	struct prio prio;
+-	char * prio_args;
+ 	struct checker checker;
+ 	struct multipath * mpp;
+ 	int fd;
 -- 
 2.17.2
