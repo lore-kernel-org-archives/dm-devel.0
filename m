@@ -1,61 +1,46 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 5/5] dax,iomap: Add helper dax_iomap_zero() to zero a
- range
-Date: Wed, 5 Feb 2020 10:36:09 -0800
-Message-ID: <20200205183609.GE26711@infradead.org>
-References: <20200203200029.4592-1-vgoyal@redhat.com>
- <20200203200029.4592-6-vgoyal@redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH v2 04/17] Fix leak in mpathpersist
+Date: Wed,  5 Feb 2020 12:58:07 -0600
+Message-ID: <1580929100-32572-5-git-send-email-bmarzins@redhat.com>
+References: <1580929100-32572-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200203200029.4592-6-vgoyal@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, dan.j.williams@intel.com, hch@infradead.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1580929100-32572-1-git-send-email-bmarzins@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-> +int dax_iomap_zero(loff_t pos, unsigned offset, unsigned size,
-> +			      struct iomap *iomap)
->  {
->  	pgoff_t pgoff;
->  	long rc, id;
-> +	sector_t sector = iomap_sector(iomap, pos & PAGE_MASK);
->  
-> -	rc = bdev_dax_pgoff(bdev, sector, PAGE_SIZE, &pgoff);
-> +	rc = bdev_dax_pgoff(iomap->bdev, sector, PAGE_SIZE, &pgoff);
->  	if (rc)
->  		return rc;
->  
->  	id = dax_read_lock();
-> -	rc = dax_zero_page_range(dax_dev, pgoff, offset, size);
-> +	rc = dax_zero_page_range(iomap->dax_dev, pgoff, offset, size);
->  	dax_read_unlock(id);
->  	return rc;
->  }
-> -EXPORT_SYMBOL_GPL(__dax_zero_page_range);
-> +EXPORT_SYMBOL_GPL(dax_iomap_zero);
+If the persistent in command fails, the response buffer must be freed.
+Found by Coverity
 
-This function is only used by fs/iomap/buffered-io.c, so no need to
-export it.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ mpathpersist/main.c | 1 +
+ 1 file changed, 1 insertion(+)
 
->  #ifdef CONFIG_FS_DAX
-> -int __dax_zero_page_range(struct block_device *bdev,
-> -		struct dax_device *dax_dev, sector_t sector,
-> -		unsigned int offset, unsigned int length);
-> +int dax_iomap_zero(loff_t pos, unsigned offset, unsigned size,
-> +			      struct iomap *iomap);
->  #else
-> -static inline int __dax_zero_page_range(struct block_device *bdev,
-> -		struct dax_device *dax_dev, sector_t sector,
-> -		unsigned int offset, unsigned int length)
-> +static inline int dax_iomap_zero(loff_t pos, unsigned offset, unsigned size,
-> +				 struct iomap *iomap)
->  {
->  	return -ENXIO;
->  }
-
-Given that the only caller is under an IS_DAX() check you could just
-declare the function unconditionally and let the compiler optimize
-away the guaranteed dead call for the !CONFIG_FS_DAX case, like we
-do with various other functions.
+diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+index 278b8d51..920e686c 100644
+--- a/mpathpersist/main.c
++++ b/mpathpersist/main.c
+@@ -499,6 +499,7 @@ static int handle_args(int argc, char * argv[], int nline)
+ 		if (ret != MPATH_PR_SUCCESS )
+ 		{
+ 			fprintf (stderr, "Persistent Reserve IN command failed\n");
++			free(resp);
+ 			goto out_fd;
+ 		}
+ 
+-- 
+2.17.2
