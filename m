@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 02/17] multipathd: staticify uxlsnr
-	variables/functions
-Date: Wed,  5 Feb 2020 12:58:05 -0600
-Message-ID: <1580929100-32572-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 06/17] libmultipath: constify get_unaligned_be*
+Date: Wed,  5 Feb 2020 12:58:09 -0600
+Message-ID: <1580929100-32572-7-git-send-email-bmarzins@redhat.com>
 References: <1580929100-32572-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,52 +21,32 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/uxlsnr.c | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
+ libmultipath/unaligned.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index 020d7a9b..1c5ce9d2 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -40,7 +40,7 @@
- #include "cli.h"
- #include "uxlsnr.h"
- 
--struct timespec sleep_time = {5, 0};
-+static struct timespec sleep_time = {5, 0};
- 
- struct client {
- 	struct list_head node;
-@@ -49,9 +49,9 @@ struct client {
- 
- #define MIN_POLLS 1023
- 
--LIST_HEAD(clients);
--pthread_mutex_t client_lock = PTHREAD_MUTEX_INITIALIZER;
--struct pollfd *polls;
-+static LIST_HEAD(clients);
-+static pthread_mutex_t client_lock = PTHREAD_MUTEX_INITIALIZER;
-+static struct pollfd *polls;
- static int notify_fd = -1;
- static char *watch_config_dir;
- 
-@@ -122,13 +122,13 @@ static void dead_client(struct client *c)
- 	pthread_cleanup_pop(1);
+diff --git a/libmultipath/unaligned.h b/libmultipath/unaligned.h
+index 68c07742..b9eaa7cb 100644
+--- a/libmultipath/unaligned.h
++++ b/libmultipath/unaligned.h
+@@ -10,14 +10,14 @@ static inline uint16_t get_unaligned_be16(const void *ptr)
+ 	return p[0] << 8 | p[1];
  }
  
--void free_polls (void)
-+static void free_polls (void)
+-static inline uint32_t get_unaligned_be32(void *ptr)
++static inline uint32_t get_unaligned_be32(const void *ptr)
  {
- 	if (polls)
- 		FREE(polls);
+ 	const uint8_t *p = ptr;
+ 
+ 	return p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
  }
  
--void check_timeout(struct timespec start_time, char *inbuf,
-+static void check_timeout(struct timespec start_time, char *inbuf,
- 		   unsigned int timeout)
+-static inline uint64_t get_unaligned_be64(void *ptr)
++static inline uint64_t get_unaligned_be64(const void *ptr)
  {
- 	struct timespec diff_time, end_time;
+ 	uint32_t low = get_unaligned_be32(ptr + 4);
+ 	uint64_t high = get_unaligned_be32(ptr);
 -- 
 2.17.2
