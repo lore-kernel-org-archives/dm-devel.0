@@ -1,70 +1,57 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH 5/5] dax,iomap: Add helper dax_iomap_zero() to zero a
- range
-Date: Wed, 5 Feb 2020 15:15:57 -0500
-Message-ID: <20200205201557.GH14544@redhat.com>
-References: <20200203200029.4592-1-vgoyal@redhat.com>
- <20200203200029.4592-6-vgoyal@redhat.com>
- <20200205183609.GE26711@infradead.org>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH 1/5] dax, pmem: Add a dax operation zero_page_range
+Date: Wed, 5 Feb 2020 16:40:44 -0800
+Message-ID: <CAPcyv4iY=gw86UDLqpiCtathGXRUuxOMuU=unwxzA-cm=0x+Sg@mail.gmail.com>
+References: <20200203200029.4592-1-vgoyal@redhat.com> <20200203200029.4592-2-vgoyal@redhat.com>
+ <20200205183050.GA26711@infradead.org> <20200205200259.GE14544@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200205183609.GE26711@infradead.org>
+In-Reply-To: <20200205200259.GE14544@redhat.com>
 Sender: linux-fsdevel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, dan.j.williams@intel.com, dm-devel@redhat.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-nvdimm <linux-nvdimm@lists.01.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Feb 05, 2020 at 10:36:09AM -0800, Christoph Hellwig wrote:
-> > +int dax_iomap_zero(loff_t pos, unsigned offset, unsigned size,
-> > +			      struct iomap *iomap)
-> >  {
-> >  	pgoff_t pgoff;
-> >  	long rc, id;
-> > +	sector_t sector = iomap_sector(iomap, pos & PAGE_MASK);
-> >  
-> > -	rc = bdev_dax_pgoff(bdev, sector, PAGE_SIZE, &pgoff);
-> > +	rc = bdev_dax_pgoff(iomap->bdev, sector, PAGE_SIZE, &pgoff);
-> >  	if (rc)
-> >  		return rc;
-> >  
-> >  	id = dax_read_lock();
-> > -	rc = dax_zero_page_range(dax_dev, pgoff, offset, size);
-> > +	rc = dax_zero_page_range(iomap->dax_dev, pgoff, offset, size);
-> >  	dax_read_unlock(id);
-> >  	return rc;
-> >  }
-> > -EXPORT_SYMBOL_GPL(__dax_zero_page_range);
-> > +EXPORT_SYMBOL_GPL(dax_iomap_zero);
-> 
-> This function is only used by fs/iomap/buffered-io.c, so no need to
-> export it.
+On Wed, Feb 5, 2020 at 12:03 PM Vivek Goyal <vgoyal@redhat.com> wrote:
+>
+> On Wed, Feb 05, 2020 at 10:30:50AM -0800, Christoph Hellwig wrote:
+> > > +   /*
+> > > +    * There are no users as of now. Once users are there, fix dm code
+> > > +    * to be able to split a long range across targets.
+> > > +    */
+> >
+> > This comment confused me.  I think this wants to say something like:
+> >
+> >       /*
+> >        * There are now callers that want to zero across a page boundary as of
+> >        * now.  Once there are users this check can be removed after the
+> >        * device mapper code has been updated to split ranges across targets.
+> >        */
+>
+> Yes, that's what I wanted to say but I missed one line. Thanks. Will fix
+> it.
+>
+> >
+> > > +static int pmem_dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
+> > > +                               unsigned int offset, size_t len)
+> > > +{
+> > > +   int rc = 0;
+> > > +   phys_addr_t phys_pos = pgoff * PAGE_SIZE + offset;
+> >
+> > Any reason not to pass a phys_addr_t in the calling convention for the
+> > method and maybe also for dax_zero_page_range itself?
+>
+> I don't have any reason not to pass phys_addr_t. If that sounds better,
+> will make changes.
 
-Will do.
+The problem is device-mapper. That wants to use offset to route
+through the map to the leaf device. If it weren't for the firmware
+communication requirement you could do:
 
-> 
-> >  #ifdef CONFIG_FS_DAX
-> > -int __dax_zero_page_range(struct block_device *bdev,
-> > -		struct dax_device *dax_dev, sector_t sector,
-> > -		unsigned int offset, unsigned int length);
-> > +int dax_iomap_zero(loff_t pos, unsigned offset, unsigned size,
-> > +			      struct iomap *iomap);
-> >  #else
-> > -static inline int __dax_zero_page_range(struct block_device *bdev,
-> > -		struct dax_device *dax_dev, sector_t sector,
-> > -		unsigned int offset, unsigned int length)
-> > +static inline int dax_iomap_zero(loff_t pos, unsigned offset, unsigned size,
-> > +				 struct iomap *iomap)
-> >  {
-> >  	return -ENXIO;
-> >  }
-> 
-> Given that the only caller is under an IS_DAX() check you could just
-> declare the function unconditionally and let the compiler optimize
-> away the guaranteed dead call for the !CONFIG_FS_DAX case, like we
-> do with various other functions.
+dax_direct_access(...)
+generic_dax_zero_page_range(...)
 
-Sure, will do.
-
-Vivek
+...but as long as the firmware error clearing path is required I think
+we need to do pass the pgoff through the interface and do the pgoff to
+virt / phys translation inside the ops handler.
