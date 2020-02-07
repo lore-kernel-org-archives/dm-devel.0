@@ -1,117 +1,39 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-bufio: implement discard
-Date: Fri, 7 Feb 2020 11:44:10 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.2002071143390.32552@file01.intranet.prod.int.rdu2.redhat.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH 1/5] dax, pmem: Add a dax operation zero_page_range
+Date: Fri, 7 Feb 2020 08:57:39 -0800
+Message-ID: <CAPcyv4iTBTOuKjQX3eoojLM=Eai_pfARXmzpMAtgi5OWBHXvzQ@mail.gmail.com>
+References: <20200203200029.4592-1-vgoyal@redhat.com> <20200203200029.4592-2-vgoyal@redhat.com>
+ <20200205183050.GA26711@infradead.org> <20200205200259.GE14544@redhat.com>
+ <CAPcyv4iY=gw86UDLqpiCtathGXRUuxOMuU=unwxzA-cm=0x+Sg@mail.gmail.com> <20200206074142.GB28365@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20200206074142.GB28365@infradead.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Vivek Goyal <vgoyal@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-nvdimm <linux-nvdimm@lists.01.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Add functions dm_bufio_issue_discard and dm_bufio_discard_buffers.
-dm_bufio_issue_discard sends discard request to the underlying device.
-dm_bufio_discard_buffers frees buffers in the range and then calls
-dm_bufio_issue_discard.
+On Wed, Feb 5, 2020 at 11:41 PM Christoph Hellwig <hch@infradead.org> wrote:
+>
+> On Wed, Feb 05, 2020 at 04:40:44PM -0800, Dan Williams wrote:
+> > > I don't have any reason not to pass phys_addr_t. If that sounds better,
+> > > will make changes.
+> >
+> > The problem is device-mapper. That wants to use offset to route
+> > through the map to the leaf device. If it weren't for the firmware
+> > communication requirement you could do:
+> >
+> > dax_direct_access(...)
+> > generic_dax_zero_page_range(...)
+> >
+> > ...but as long as the firmware error clearing path is required I think
+> > we need to do pass the pgoff through the interface and do the pgoff to
+> > virt / phys translation inside the ops handler.
+>
+> Maybe phys_addr_t was the wrong type - but why do we split the offset
+> into the block device argument into a pgoff and offset into page instead
+> of a single 64-bit value?
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-bufio.c    |   50 +++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/dm-bufio.h |   12 +++++++++++
- 2 files changed, 62 insertions(+)
-
-Index: linux-2.6/drivers/md/dm-bufio.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-bufio.c	2020-02-07 17:14:08.000000000 +0100
-+++ linux-2.6/drivers/md/dm-bufio.c	2020-02-07 17:29:42.000000000 +0100
-@@ -1338,6 +1338,56 @@ int dm_bufio_issue_flush(struct dm_bufio
- EXPORT_SYMBOL_GPL(dm_bufio_issue_flush);
- 
- /*
-+ * Use dm-io to send a discard request to flush the device.
-+ */
-+int dm_bufio_issue_discard(struct dm_bufio_client *c, sector_t block, sector_t count)
-+{
-+	struct dm_io_request io_req = {
-+		.bi_op = REQ_OP_DISCARD,
-+		.bi_op_flags = REQ_SYNC,
-+		.mem.type = DM_IO_KMEM,
-+		.mem.ptr.addr = NULL,
-+		.client = c->dm_io,
-+	};
-+	struct dm_io_region io_reg = {
-+		.bdev = c->bdev,
-+		.sector = block_to_sector(c, block),
-+		.count = block_to_sector(c, count),
-+	};
-+
-+	BUG_ON(dm_bufio_in_request());
-+
-+	return dm_io(&io_req, 1, &io_reg, NULL);
-+}
-+EXPORT_SYMBOL_GPL(dm_bufio_issue_discard);
-+
-+/*
-+ * Free the specified range of buffers. If a buffer is held by other process, it
-+ * is not freed. If a buffer is dirty, it is discarded without writeback.
-+ * Finally, send the discard request to the device.
-+ */
-+int dm_bufio_discard_buffers(struct dm_bufio_client *c, sector_t block, sector_t count)
-+{
-+	sector_t i;
-+
-+	for (i = block; i < block + count; i++) {
-+		struct dm_buffer *b;
-+		dm_bufio_lock(c);
-+		b = __find(c, i);
-+		if (b && likely(!b->hold_count)) {
-+			wait_on_bit_io(&b->state, B_READING, TASK_UNINTERRUPTIBLE);
-+			wait_on_bit_io(&b->state, B_WRITING, TASK_UNINTERRUPTIBLE);
-+			__unlink_buffer(b);
-+			__free_buffer_wake(b);
-+		}
-+		dm_bufio_unlock(c);
-+	}
-+
-+	return dm_bufio_issue_discard(c, block, count);
-+}
-+EXPORT_SYMBOL_GPL(dm_bufio_discard_buffers);
-+
-+/*
-  * We first delete any other buffer that may be at that new location.
-  *
-  * Then, we write the buffer to the original location if it was dirty.
-Index: linux-2.6/include/linux/dm-bufio.h
-===================================================================
---- linux-2.6.orig/include/linux/dm-bufio.h	2020-02-07 17:14:08.000000000 +0100
-+++ linux-2.6/include/linux/dm-bufio.h	2020-02-07 17:29:46.000000000 +0100
-@@ -126,6 +126,18 @@ int dm_bufio_write_dirty_buffers(struct
- int dm_bufio_issue_flush(struct dm_bufio_client *c);
- 
- /*
-+ * Send a discard request to the underlying device.
-+ */
-+int dm_bufio_issue_discard(struct dm_bufio_client *c, sector_t block, sector_t count);
-+
-+/*
-+ * Free the specified range of buffers. If a buffer is held by other process, it
-+ * is not freed. If a buffer is dirty, it is discarded without writeback.
-+ * Finally, send the discard request to the device.
-+ */
-+int dm_bufio_discard_buffers(struct dm_bufio_client *c, sector_t block, sector_t count);
-+
-+/*
-  * Like dm_bufio_release but also move the buffer to the new
-  * block. dm_bufio_write_dirty_buffers is needed to commit the new block.
-  */
+Oh, got it yes, that looks odd for sub-page zeroing. Yes, let's just
+have one device relative byte-offset.
