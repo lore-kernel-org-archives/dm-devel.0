@@ -1,53 +1,73 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH 1/5] dax, pmem: Add a dax operation zero_page_range
-Date: Fri, 7 Feb 2020 09:06:32 -0800
-Message-ID: <CAPcyv4g8jUhaKXhoh-1cvE4oi2v0JQcLrnFUW9zsRiC4F-7-zQ@mail.gmail.com>
-References: <20200203200029.4592-1-vgoyal@redhat.com> <20200203200029.4592-2-vgoyal@redhat.com>
- <20200205183050.GA26711@infradead.org> <20200205200259.GE14544@redhat.com>
- <CAPcyv4iY=gw86UDLqpiCtathGXRUuxOMuU=unwxzA-cm=0x+Sg@mail.gmail.com>
- <20200206074142.GB28365@infradead.org> <CAPcyv4iTBTOuKjQX3eoojLM=Eai_pfARXmzpMAtgi5OWBHXvzQ@mail.gmail.com>
- <20200207170150.GC11998@redhat.com>
+From: Martin Wilck <Martin.Wilck@suse.com>
+Subject: Re: [PATCH 1/1] libmultipath: fix files read from
+	config_dir
+Date: Fri, 7 Feb 2020 17:08:11 +0000
+Message-ID: <39d70ac4e03d9f75b51ef49c078b11e6ed662e0f.camel@suse.com>
+References: <20200207144525.16341-1-ematsumiya@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20200207170150.GC11998@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-nvdimm <linux-nvdimm@lists.01.org>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200207144525.16341-1-ematsumiya@suse.de>
+Content-Language: en-US
+Content-ID: <FB025A6B43E5744E887310A6CF45906B@namprd18.prod.outlook.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "ematsumiya@suse.de" <ematsumiya@suse.de>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Feb 7, 2020 at 9:02 AM Vivek Goyal <vgoyal@redhat.com> wrote:
->
-> On Fri, Feb 07, 2020 at 08:57:39AM -0800, Dan Williams wrote:
-> > On Wed, Feb 5, 2020 at 11:41 PM Christoph Hellwig <hch@infradead.org> wrote:
-> > >
-> > > On Wed, Feb 05, 2020 at 04:40:44PM -0800, Dan Williams wrote:
-> > > > > I don't have any reason not to pass phys_addr_t. If that sounds better,
-> > > > > will make changes.
-> > > >
-> > > > The problem is device-mapper. That wants to use offset to route
-> > > > through the map to the leaf device. If it weren't for the firmware
-> > > > communication requirement you could do:
-> > > >
-> > > > dax_direct_access(...)
-> > > > generic_dax_zero_page_range(...)
-> > > >
-> > > > ...but as long as the firmware error clearing path is required I think
-> > > > we need to do pass the pgoff through the interface and do the pgoff to
-> > > > virt / phys translation inside the ops handler.
-> > >
-> > > Maybe phys_addr_t was the wrong type - but why do we split the offset
-> > > into the block device argument into a pgoff and offset into page instead
-> > > of a single 64-bit value?
-> >
-> > Oh, got it yes, that looks odd for sub-page zeroing. Yes, let's just
-> > have one device relative byte-offset.
->
-> So what's the best type to represent this offset. "u64" or "phys_addr_t"
-> or "loff_t" or something else.  I like phys_addr_t followed by u64.
+On Fri, 2020-02-07 at 11:45 -0300, Enzo Matsumiya wrote:
+> If config_dir contains a file named, for example, "some.conf.backup",
+> this file
+> will still be loaded by multipath because process_config_dir()
+> (libmultipath/config.c) uses strstr() to check for the ".conf"
+> extension, but
+> that doesn't guarantee that ".conf" is at the end of the filename.
+>=20
+> This patch will make sure that only files ending in ".conf" are
+> loaded from
+> config_dir.
+>=20
+> This is to comply with config_dir entry description in man 5
+> multipath.conf.
+>=20
+> Signed-off-by: Enzo Matsumiya <ematsumiya@suse.de>
+> ---
+>  libmultipath/config.c | 5 ++++-
+>  1 file changed, 4 insertions(+), 1 deletion(-)
+>=20
+> diff --git a/libmultipath/config.c b/libmultipath/config.c
+> index 20e3b8bf..4785ade8 100644
+> --- a/libmultipath/config.c
+> +++ b/libmultipath/config.c
+> @@ -671,8 +671,11 @@ process_config_dir(struct config *conf, vector
+> keywords, char *dir)
+>  =09sr.n =3D n;
+>  =09pthread_cleanup_push_cast(free_scandir_result, &sr);
+>  =09for (i =3D 0; i < n; i++) {
+> -=09=09if (!strstr(namelist[i]->d_name, ".conf"))
+> +=09=09char *ext =3D strrchr(namelist[i]->d_name, '.');
+> +
+> +=09=09if (!ext || strcmp(ext, ".conf"))
+>  =09=09=09continue;
+> +
+>  =09=09old_hwtable_size =3D VECTOR_SIZE(conf->hwtable);
+>  =09=09snprintf(path, LINE_MAX, "%s/%s", dir, namelist[i]-
+> >d_name);
+>  =09=09path[LINE_MAX-1] =3D '\0';
 
-Let's make it u64.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-phys_addr_t has already led to confusion in this thread because the
-first question I ask when I read it is "why call ->direct_access() to
-do the translation when you already have the physical address?".
+--=20
+Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+SUSE  Software Solutions Germany GmbH
+HRB 36809, AG N=FCrnberg GF: Felix
+Imend=F6rffer
