@@ -1,89 +1,71 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH v3 6/7] dax,iomap: Start using dax native zero_page_range()
-Date: Fri,  7 Feb 2020 15:26:51 -0500
-Message-ID: <20200207202652.1439-7-vgoyal@redhat.com>
-References: <20200207202652.1439-1-vgoyal@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 1/2] dm-bufio: introduce block_to_sector
+Date: Fri, 7 Feb 2020 15:59:25 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.2002071558040.24277@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20200207202652.1439-1-vgoyal@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, hch@infradead.org, dan.j.williams@intel.com
-Cc: dm-devel@redhat.com, vishal.l.verma@intel.com, vgoyal@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Get rid of calling block device interface for zeroing in iomap dax
-zeroing path and use dax native zeroing interface instead.
+Introduce a function block_to_sector to avoid repetitive code in
+the next patch.
 
-Suggested-by: Christoph Hellwig <hch@infradead.org>
-Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
 ---
- fs/dax.c | 45 +++++++++------------------------------------
- 1 file changed, 9 insertions(+), 36 deletions(-)
+ drivers/md/dm-bufio.c |   23 ++++++++++++++++-------
+ 1 file changed, 16 insertions(+), 7 deletions(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index 1f1f0201cad1..6757e12b86b2 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -1044,48 +1044,21 @@ static vm_fault_t dax_load_hole(struct xa_state *=
-xas,
- 	return ret;
+Index: linux-2.6/drivers/md/dm-bufio.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-bufio.c	2020-02-07 17:09:44.000000000 +0100
++++ linux-2.6/drivers/md/dm-bufio.c	2020-02-07 17:13:09.000000000 +0100
+@@ -632,6 +632,21 @@ dmio:
+ 	submit_bio(bio);
  }
-=20
--static bool dax_range_is_aligned(struct block_device *bdev,
--				 unsigned int offset, unsigned int length)
--{
--	unsigned short sector_size =3D bdev_logical_block_size(bdev);
--
--	if (!IS_ALIGNED(offset, sector_size))
--		return false;
--	if (!IS_ALIGNED(length, sector_size))
--		return false;
--
--	return true;
--}
--
- int __dax_zero_page_range(struct block_device *bdev,
- 		struct dax_device *dax_dev, sector_t sector,
- 		unsigned int offset, unsigned int size)
+ 
++static inline sector_t block_to_sector(struct dm_bufio_client *c, sector_t block)
++{
++	sector_t sector;
++
++	if (unlikely(c->raw_sectors))
++		sector = block;
++	else if (likely(c->sectors_per_block_bits >= 0))
++		sector = block << c->sectors_per_block_bits;
++	else
++		sector = block * (c->block_size >> SECTOR_SHIFT);
++	sector += c->start;
++
++	return sector;
++}
++
+ static void submit_io(struct dm_buffer *b, int rw, void (*end_io)(struct dm_buffer *, blk_status_t))
  {
--	if (dax_range_is_aligned(bdev, offset, size)) {
--		sector_t start_sector =3D sector + (offset >> 9);
--
--		return blkdev_issue_zeroout(bdev, start_sector,
--				size >> 9, GFP_NOFS, 0);
--	} else {
--		pgoff_t pgoff;
--		long rc, id;
--		void *kaddr;
-+	pgoff_t pgoff;
-+	long rc, id;
-=20
--		rc =3D bdev_dax_pgoff(bdev, sector, PAGE_SIZE, &pgoff);
--		if (rc)
--			return rc;
-+	rc =3D bdev_dax_pgoff(bdev, sector, PAGE_SIZE, &pgoff);
-+	if (rc)
-+		return rc;
-=20
--		id =3D dax_read_lock();
--		rc =3D dax_direct_access(dax_dev, pgoff, 1, &kaddr, NULL);
--		if (rc < 0) {
--			dax_read_unlock(id);
--			return rc;
--		}
--		memset(kaddr + offset, 0, size);
--		dax_flush(dax_dev, kaddr + offset, size);
--		dax_read_unlock(id);
--	}
--	return 0;
-+	id =3D dax_read_lock();
-+	rc =3D dax_zero_page_range(dax_dev, (pgoff << PAGE_SHIFT) + offset, siz=
-e);
-+	dax_read_unlock(id);
-+	return rc;
- }
- EXPORT_SYMBOL_GPL(__dax_zero_page_range);
-=20
---=20
-2.20.1
+ 	unsigned n_sectors;
+@@ -640,13 +655,7 @@ static void submit_io(struct dm_buffer *
+ 
+ 	b->end_io = end_io;
+ 
+-	if (unlikely(b->c->raw_sectors))
+-		sector = b->block;
+-	else if (likely(b->c->sectors_per_block_bits >= 0))
+-		sector = b->block << b->c->sectors_per_block_bits;
+-	else
+-		sector = b->block * (b->c->block_size >> SECTOR_SHIFT);
+-	sector += b->c->start;
++	sector = block_to_sector(b->c, b->block);
+ 
+ 	if (rw != REQ_OP_WRITE) {
+ 		n_sectors = b->c->block_size >> SECTOR_SHIFT;
