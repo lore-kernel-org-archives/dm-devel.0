@@ -1,7 +1,7 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH v3 5/7] dm,dax: Add dax zero_page_range operation
-Date: Fri,  7 Feb 2020 15:26:50 -0500
-Message-ID: <20200207202652.1439-6-vgoyal@redhat.com>
+Subject: [PATCH v3 2/7] pmem: Enable pmem_do_write() to deal with arbitrary ranges
+Date: Fri,  7 Feb 2020 15:26:47 -0500
+Message-ID: <20200207202652.1439-3-vgoyal@redhat.com>
 References: <20200207202652.1439-1-vgoyal@redhat.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -12,233 +12,79 @@ To: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, hch@infradead.org,
 Cc: dm-devel@redhat.com, vishal.l.verma@intel.com, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-This patch adds support for dax zero_page_range operation to dm targets.
+Currently pmem_do_write() is written with assumption that all I/O is
+sector aligned. Soon I want to use this function in zero_page_range()
+where range passed in does not have to be sector aligned.
+
+Modify this function to be able to deal with an arbitrary range. Which
+is specified by pmem_off and len.
 
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- drivers/md/dm-linear.c        | 21 +++++++++++++++++++++
- drivers/md/dm-log-writes.c    | 19 +++++++++++++++++++
- drivers/md/dm-stripe.c        | 26 ++++++++++++++++++++++++++
- drivers/md/dm.c               | 31 +++++++++++++++++++++++++++++++
- include/linux/device-mapper.h |  3 +++
- 5 files changed, 100 insertions(+)
+ drivers/nvdimm/pmem.c | 30 ++++++++++++++++++++++--------
+ 1 file changed, 22 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 8d07fdf63a47..03f99e6ad372 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -201,10 +201,30 @@ static size_t linear_dax_copy_to_iter(struct dm_tar=
-get *ti, pgoff_t pgoff,
- 	return dax_copy_to_iter(dax_dev, pgoff, addr, bytes, i);
- }
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index 9ad07cb8c9fc..281fe04d25fd 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -154,15 +154,23 @@ static blk_status_t pmem_do_read(struct pmem_device=
+ *pmem,
 =20
-+static int linear_dax_zero_page_range(struct dm_target *ti, u64 offset,
-+				      size_t len)
-+{
-+	int ret;
-+	struct linear_c *lc =3D ti->private;
-+	struct block_device *bdev =3D lc->dev->bdev;
-+	struct dax_device *dax_dev =3D lc->dev->dax_dev;
-+	pgoff_t pgoff =3D offset >> PAGE_SHIFT;
-+	unsigned page_offset =3D offset_in_page(offset);
-+	sector_t dev_sector, sector =3D pgoff * PAGE_SECTORS;
+ static blk_status_t pmem_do_write(struct pmem_device *pmem,
+ 			struct page *page, unsigned int page_off,
+-			sector_t sector, unsigned int len)
++			u64 pmem_off, unsigned int len)
+ {
+ 	blk_status_t rc =3D BLK_STS_OK;
+ 	bool bad_pmem =3D false;
+-	phys_addr_t pmem_off =3D sector * 512 + pmem->data_offset;
+-	void *pmem_addr =3D pmem->virt_addr + pmem_off;
+-
+-	if (unlikely(is_bad_pmem(&pmem->bb, sector, len)))
+-		bad_pmem =3D true;
++	phys_addr_t pmem_real_off =3D pmem_off + pmem->data_offset;
++	void *pmem_addr =3D pmem->virt_addr + pmem_real_off;
++	sector_t sector_start, sector_end;
++	unsigned nr_sectors;
 +
-+	dev_sector =3D linear_map_sector(ti, sector);
-+	ret =3D bdev_dax_pgoff(bdev, dev_sector, ALIGN(len, PAGE_SIZE), &pgoff)=
-;
-+	if (ret)
-+		return ret;
-+	return dax_zero_page_range(dax_dev, (pgoff << PAGE_SHIFT) + page_offset=
-,
-+				   len);
-+}
-+
- #else
- #define linear_dax_direct_access NULL
- #define linear_dax_copy_from_iter NULL
- #define linear_dax_copy_to_iter NULL
-+#define linear_dax_zero_page_range NULL
- #endif
-=20
- static struct target_type linear_target =3D {
-@@ -226,6 +246,7 @@ static struct target_type linear_target =3D {
- 	.direct_access =3D linear_dax_direct_access,
- 	.dax_copy_from_iter =3D linear_dax_copy_from_iter,
- 	.dax_copy_to_iter =3D linear_dax_copy_to_iter,
-+	.dax_zero_page_range =3D linear_dax_zero_page_range,
- };
-=20
- int __init dm_linear_init(void)
-diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-index 99721c76225d..f36ee223cb60 100644
---- a/drivers/md/dm-log-writes.c
-+++ b/drivers/md/dm-log-writes.c
-@@ -994,10 +994,28 @@ static size_t log_writes_dax_copy_to_iter(struct dm=
-_target *ti,
- 	return dax_copy_to_iter(lc->dev->dax_dev, pgoff, addr, bytes, i);
- }
-=20
-+static int log_writes_dax_zero_page_range(struct dm_target *ti, u64 offs=
-et,
-+					  size_t len)
-+{
-+	int ret;
-+	struct log_writes_c *lc =3D ti->private;
-+	pgoff_t pgoff =3D offset >> PAGE_SHIFT;
-+	unsigned page_offset =3D offset_in_page(offset);
-+	sector_t sector =3D pgoff * PAGE_SECTORS;
-+
-+	ret =3D bdev_dax_pgoff(lc->dev->bdev, sector, ALIGN(len, PAGE_SIZE),
-+			     &pgoff);
-+	if (ret)
-+		return ret;
-+	return dax_zero_page_range(lc->dev->dax_dev,
-+				   (pgoff << PAGE_SHIFT) + page_offset, len);
-+}
-+
- #else
- #define log_writes_dax_direct_access NULL
- #define log_writes_dax_copy_from_iter NULL
- #define log_writes_dax_copy_to_iter NULL
-+#define log_writes_dax_zero_page_range NULL
- #endif
-=20
- static struct target_type log_writes_target =3D {
-@@ -1016,6 +1034,7 @@ static struct target_type log_writes_target =3D {
- 	.direct_access =3D log_writes_dax_direct_access,
- 	.dax_copy_from_iter =3D log_writes_dax_copy_from_iter,
- 	.dax_copy_to_iter =3D log_writes_dax_copy_to_iter,
-+	.dax_zero_page_range =3D log_writes_dax_zero_page_range,
- };
-=20
- static int __init dm_log_writes_init(void)
-diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-index 63bbcc20f49a..f5e17284c615 100644
---- a/drivers/md/dm-stripe.c
-+++ b/drivers/md/dm-stripe.c
-@@ -360,10 +360,35 @@ static size_t stripe_dax_copy_to_iter(struct dm_tar=
-get *ti, pgoff_t pgoff,
- 	return dax_copy_to_iter(dax_dev, pgoff, addr, bytes, i);
- }
-=20
-+static int stripe_dax_zero_page_range(struct dm_target *ti, u64 offset,
-+				      size_t len)
-+{
-+	int ret;
-+	pgoff_t pgoff =3D offset >> PAGE_SHIFT;
-+	unsigned page_offset =3D offset_in_page(offset);
-+	sector_t dev_sector, sector =3D pgoff * PAGE_SECTORS;
-+	struct stripe_c *sc =3D ti->private;
-+	struct dax_device *dax_dev;
-+	struct block_device *bdev;
-+	uint32_t stripe;
-+
-+	stripe_map_sector(sc, sector, &stripe, &dev_sector);
-+	dev_sector +=3D sc->stripe[stripe].physical_start;
-+	dax_dev =3D sc->stripe[stripe].dev->dax_dev;
-+	bdev =3D sc->stripe[stripe].dev->bdev;
-+
-+	ret =3D bdev_dax_pgoff(bdev, dev_sector, ALIGN(len, PAGE_SIZE), &pgoff)=
-;
-+	if (ret)
-+		return ret;
-+	return dax_zero_page_range(dax_dev, (pgoff << PAGE_SHIFT) + page_offset=
-,
-+				   len);
-+}
-+
- #else
- #define stripe_dax_direct_access NULL
- #define stripe_dax_copy_from_iter NULL
- #define stripe_dax_copy_to_iter NULL
-+#define stripe_dax_zero_page_range NULL
- #endif
-=20
- /*
-@@ -486,6 +511,7 @@ static struct target_type stripe_target =3D {
- 	.direct_access =3D stripe_dax_direct_access,
- 	.dax_copy_from_iter =3D stripe_dax_copy_from_iter,
- 	.dax_copy_to_iter =3D stripe_dax_copy_to_iter,
-+	.dax_zero_page_range =3D stripe_dax_zero_page_range,
- };
-=20
- int __init dm_stripe_init(void)
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index e8f9661a10a1..4d2a6eadd901 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1198,6 +1198,36 @@ static size_t dm_dax_copy_to_iter(struct dax_devic=
-e *dax_dev, pgoff_t pgoff,
- 	return ret;
- }
-=20
-+static int dm_dax_zero_page_range(struct dax_device *dax_dev, u64 offset=
-,
-+				  size_t len)
-+{
-+	struct mapped_device *md =3D dax_get_private(dax_dev);
-+	pgoff_t pgoff =3D offset >> PAGE_SHIFT;
-+	sector_t sector =3D pgoff * PAGE_SECTORS;
-+	struct dm_target *ti;
-+	int ret =3D -EIO;
-+	int srcu_idx;
-+
-+	ti =3D dm_dax_get_live_target(md, sector, &srcu_idx);
-+
-+	if (!ti)
-+		goto out;
-+	if (WARN_ON(!ti->type->dax_zero_page_range)) {
-+		/*
-+		 * ->zero_page_range() is mandatory dax operation. If we are
-+		 *  here, something is wrong.
-+		 */
-+		dm_put_live_table(md, srcu_idx);
-+		goto out;
++	sector_start =3D DIV_ROUND_UP(pmem_off, SECTOR_SIZE);
++	sector_end =3D (pmem_off + len) >> SECTOR_SHIFT;
++	if (sector_end > sector_start) {
++		nr_sectors =3D sector_end - sector_start;
++		if (unlikely(is_bad_pmem(&pmem->bb, sector_start,
++					 nr_sectors << SECTOR_SHIFT)))
++			bad_pmem =3D true;
 +	}
-+	ret =3D ti->type->dax_zero_page_range(ti, offset, len);
-+
-+ out:
-+	dm_put_live_table(md, srcu_idx);
-+
-+	return ret;
-+}
-+
- /*
-  * A target may call dm_accept_partial_bio only from the map routine.  I=
-t is
-  * allowed for all bio types except REQ_PREFLUSH, REQ_OP_ZONE_RESET,
-@@ -3194,6 +3224,7 @@ static const struct dax_operations dm_dax_ops =3D {
- 	.dax_supported =3D dm_dax_supported,
- 	.copy_from_iter =3D dm_dax_copy_from_iter,
- 	.copy_to_iter =3D dm_dax_copy_to_iter,
-+	.zero_page_range =3D dm_dax_zero_page_range,
- };
 =20
- /*
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.=
-h
-index 475668c69dbc..b4ef5b07be74 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -141,6 +141,8 @@ typedef long (*dm_dax_direct_access_fn) (struct dm_ta=
-rget *ti, pgoff_t pgoff,
- 		long nr_pages, void **kaddr, pfn_t *pfn);
- typedef size_t (*dm_dax_copy_iter_fn)(struct dm_target *ti, pgoff_t pgof=
-f,
- 		void *addr, size_t bytes, struct iov_iter *i);
-+typedef int (*dm_dax_zero_page_range_fn)(struct dm_target *ti, u64 offse=
-t,
-+		size_t len);
- #define PAGE_SECTORS (PAGE_SIZE / 512)
+ 	/*
+ 	 * Note that we write the data both before and after
+@@ -181,7 +189,13 @@ static blk_status_t pmem_do_write(struct pmem_device=
+ *pmem,
+ 	flush_dcache_page(page);
+ 	write_pmem(pmem_addr, page, page_off, len);
+ 	if (unlikely(bad_pmem)) {
+-		rc =3D pmem_clear_poison(pmem, pmem_off, len);
++		/*
++		 * Pass sector aligned offset and length. That seems
++		 * to work as of now. Other finer grained alignment
++		 * cases can be addressed later if need be.
++		 */
++		rc =3D pmem_clear_poison(pmem, ALIGN(pmem_real_off, SECTOR_SIZE),
++				       nr_sectors << SECTOR_SHIFT);
+ 		write_pmem(pmem_addr, page, page_off, len);
+ 	}
 =20
- void dm_error(const char *message);
-@@ -195,6 +197,7 @@ struct target_type {
- 	dm_dax_direct_access_fn direct_access;
- 	dm_dax_copy_iter_fn dax_copy_from_iter;
- 	dm_dax_copy_iter_fn dax_copy_to_iter;
-+	dm_dax_zero_page_range_fn dax_zero_page_range;
+@@ -195,7 +209,7 @@ static blk_status_t pmem_do_bvec(struct pmem_device *=
+pmem, struct page *page,
+ 	if (!op_is_write(op))
+ 		return pmem_do_read(pmem, page, off, sector, len);
 =20
- 	/* For internal device-mapper use. */
- 	struct list_head list;
+-	return pmem_do_write(pmem, page, off, sector, len);
++	return pmem_do_write(pmem, page, off, sector << SECTOR_SHIFT, len);
+ }
+=20
+ static blk_qc_t pmem_make_request(struct request_queue *q, struct bio *b=
+io)
 --=20
 2.20.1
