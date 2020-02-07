@@ -1,71 +1,55 @@
-From: Kirill Tkhai <ktkhai@virtuozzo.com>
-Subject: [PATCH v6 2/6] block: Pass op_flags into blk_queue_get_max_sectors()
-Date: Mon, 10 Feb 2020 12:33:42 +0300
-Message-ID: <158132722235.239613.17443829991733096212.stgit@localhost.localdomain>
-References: <158132703141.239613.3550455492676290009.stgit@localhost.localdomain>
+From: Enzo Matsumiya <ematsumiya@suse.de>
+Subject: [PATCH 1/1] libmultipath: fix files read from config_dir
+Date: Fri,  7 Feb 2020 11:45:25 -0300
+Message-ID: <20200207144525.16341-1-ematsumiya@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <158132703141.239613.3550455492676290009.stgit@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-To: martin.petersen@oracle.com, bob.liu@oracle.com, axboe@kernel.dk
-Cc: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, song@kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, Chaitanya.Kulkarni@wdc.com, darrick.wong@oracle.com, ming.lei@redhat.com, osandov@fb.com, jthumshirn@suse.de, minwoo.im.dev@gmail.com, damien.lemoal@wdc.com, andrea.parri@amarulasolutions.com, hare@suse.com, tj@kernel.org, ajay.joshi@wdc.com, sagi@grimberg.me, dsterba@suse.com, chaitanya.kulkarni@wdc.com, bvanassche@acm.org, dhowells@redhat.com, asml.silence@gmail.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, ktkhai@virtuozzo.com
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: christophe.varoqui@opensvc.com
+Cc: Enzo Matsumiya <ematsumiya@suse.de>, dm-devel@redhat.com, Martin.Wilck@suse.com
 List-Id: dm-devel.ids
 
-This preparation patch changes argument type, and now
-the function takes full op_flags instead of just op code.
+If config_dir contains a file named, for example, "some.conf.backup", this file
+will still be loaded by multipath because process_config_dir()
+(libmultipath/config.c) uses strstr() to check for the ".conf" extension, but
+that doesn't guarantee that ".conf" is at the end of the filename.
 
-Signed-off-by: Kirill Tkhai <ktkhai@virtuozzo.com>
-Reviewed-by: Bob Liu <bob.liu@oracle.com>
+This patch will make sure that only files ending in ".conf" are loaded from
+config_dir.
+
+This is to comply with config_dir entry description in man 5 multipath.conf.
+
+Signed-off-by: Enzo Matsumiya <ematsumiya@suse.de>
 ---
- block/blk-core.c       |    4 ++--
- include/linux/blkdev.h |    8 +++++---
- 2 files changed, 7 insertions(+), 5 deletions(-)
+ libmultipath/config.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 089e890ab208..28a6d46eb982 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -1221,10 +1221,10 @@ EXPORT_SYMBOL(submit_bio);
- static int blk_cloned_rq_check_limits(struct request_queue *q,
- 				      struct request *rq)
- {
--	if (blk_rq_sectors(rq) > blk_queue_get_max_sectors(q, req_op(rq))) {
-+	if (blk_rq_sectors(rq) > blk_queue_get_max_sectors(q, rq->cmd_flags)) {
- 		printk(KERN_ERR "%s: over max size limit. (%u > %u)\n",
- 			__func__, blk_rq_sectors(rq),
--			blk_queue_get_max_sectors(q, req_op(rq)));
-+			blk_queue_get_max_sectors(q, rq->cmd_flags));
- 		return -EIO;
- 	}
- 
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 1e3c08854b09..f4ec7ae214ab 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -988,8 +988,10 @@ static inline struct bio_vec req_bvec(struct request *rq)
- }
- 
- static inline unsigned int blk_queue_get_max_sectors(struct request_queue *q,
--						     int op)
-+						     unsigned int op_flags)
- {
-+	int op = op_flags & REQ_OP_MASK;
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 20e3b8bf..4785ade8 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -671,8 +671,11 @@ process_config_dir(struct config *conf, vector keywords, char *dir)
+ 	sr.n = n;
+ 	pthread_cleanup_push_cast(free_scandir_result, &sr);
+ 	for (i = 0; i < n; i++) {
+-		if (!strstr(namelist[i]->d_name, ".conf"))
++		char *ext = strrchr(namelist[i]->d_name, '.');
 +
- 	if (unlikely(op == REQ_OP_DISCARD || op == REQ_OP_SECURE_ERASE))
- 		return min(q->limits.max_discard_sectors,
- 			   UINT_MAX >> SECTOR_SHIFT);
-@@ -1028,10 +1030,10 @@ static inline unsigned int blk_rq_get_max_sectors(struct request *rq,
- 	if (!q->limits.chunk_sectors ||
- 	    req_op(rq) == REQ_OP_DISCARD ||
- 	    req_op(rq) == REQ_OP_SECURE_ERASE)
--		return blk_queue_get_max_sectors(q, req_op(rq));
-+		return blk_queue_get_max_sectors(q, rq->cmd_flags);
- 
- 	return min(blk_max_size_offset(q, offset),
--			blk_queue_get_max_sectors(q, req_op(rq)));
-+			blk_queue_get_max_sectors(q, rq->cmd_flags));
- }
- 
- static inline unsigned int blk_rq_count_bios(struct request *rq)
++		if (!ext || strcmp(ext, ".conf"))
+ 			continue;
++
+ 		old_hwtable_size = VECTOR_SIZE(conf->hwtable);
+ 		snprintf(path, LINE_MAX, "%s/%s", dir, namelist[i]->d_name);
+ 		path[LINE_MAX-1] = '\0';
+-- 
+2.16.4
