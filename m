@@ -1,17 +1,16 @@
-From: John Dorminy <jdorminy@redhat.com>
-Subject: Re: [PATCH] dm-bufio: implement discard
-Date: Mon, 10 Feb 2020 12:54:41 -0500
-Message-ID: <CAMeeMh-ZP04_YCXLaJ7s8AQ7w-uhzFL7sd320OVr2gY8HmCbgA@mail.gmail.com>
-References: <alpine.LRH.2.02.2002071143390.32552@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAMeeMh-8MN=Jf4YhJ+Vx9-=Xa84EAPuDFyUk+jNU7ChB_EJ-6Q@mail.gmail.com>
-	<alpine.LRH.2.02.2002071259240.7925@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAMeeMh-r9Hxj+FCxg510wrfYb=Hhnz2wVbxLHfjVTz3i23XHHA@mail.gmail.com>
-	<alpine.LRH.2.02.2002071456370.16613@file01.intranet.prod.int.rdu2.redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH v2 10/17] libmultipath: add code to get
+ vendor specific vpd data
+Date: Mon, 10 Feb 2020 14:49:42 -0600
+Message-ID: <20200210204942.GD30153@octiron.msp.redhat.com>
+References: <1580929100-32572-1-git-send-email-bmarzins@redhat.com>
+	<1580929100-32572-11-git-send-email-bmarzins@redhat.com>
+	<ad6542e5dce892c1b631f661c51c2e4d107d699c.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.2002071456370.16613@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <ad6542e5dce892c1b631f661c51c2e4d107d699c.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,55 +20,96 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Content-Disposition: inline
+To: Martin Wilck <Martin.Wilck@suse.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Yeah, that's a great point. Now that I've reviewed the code a little
-more, I understand how it's not safe to do the thing I described in
-the first place, and how this change is safe and correct.
+On Mon, Feb 10, 2020 at 02:49:38PM +0000, Martin Wilck wrote:
+> On Wed, 2020-02-05 at 12:58 -0600, Benjamin Marzinski wrote:
+> > This adds the wildcard 'g' for multipath and path formatted printing,
+> > which returns extra data from a device's vendor specific vpd
+> > page.  The
+> > specific vendor vpd page to use, and the vendor/product id to decode
+> > it
+> > can be set in the hwentry with vpd_vendor_pg and vpd_vendor_id. It
+> > can
+> > be configured in the devices section of multipath.conf with the
+> > vpd_vendor parameter. Currently, the only devices that use this are
+> > HPE
+> > 3PAR arrays, to return the Volume Name.
+> >=20
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  libmultipath/config.c      |  2 ++
+> >  libmultipath/config.h      |  1 +
+> >  libmultipath/dict.c        | 38 ++++++++++++++++++++++++++++++++++++
+> >  libmultipath/discovery.c   | 40
+> > +++++++++++++++++++++++++++++++++++++-
+> >  libmultipath/hwtable.c     |  1 +
+> >  libmultipath/print.c       | 25 ++++++++++++++++++++++++
+> >  libmultipath/propsel.c     | 18 +++++++++++++++++
+> >  libmultipath/propsel.h     |  1 +
+> >  libmultipath/structs.h     | 15 ++++++++++++++
+> >  multipath/multipath.conf.5 |  8 ++++++++
+> >  10 files changed, 148 insertions(+), 1 deletion(-)
+> >=20
+> > diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+> > index 1c32a799..6c03ee5d 100644
+> > --- a/libmultipath/structs.h
+> > +++ b/libmultipath/structs.h
+> > @@ -21,6 +21,7 @@
+> >  #define HOST_NAME_LEN=09=0916
+> >  #define SLOT_NAME_SIZE=09=0940
+> >  #define PRKEY_SIZE=09=0919
+> > +#define VPD_DATA_SIZE=09=09128
+> > =20
+> >  #define SCSI_VENDOR_SIZE=099
+> >  #define SCSI_PRODUCT_SIZE=0917
+> > @@ -221,6 +222,18 @@ enum all_tg_pt_states {
+> >  =09ALL_TG_PT_ON =3D YNU_YES,
+> >  };
+> > =20
+> > +enum vpd_vendor_ids {
+> > +=09VPD_VP_UNDEF,
+> > +=09VPD_VP_HP3PAR,
+> > +=09VPD_VP_ARRAY_SIZE, /* This must remain the last entry */
+> > +};
+> > +
+> > +struct vpd_vendor_page {
+> > +=09int pg;
+> > +=09const char *name;
+> > +};
+> > +extern struct vpd_vendor_page vpd_vendor_pages[VPD_VP_ARRAY_SIZE];
+> > +
+> >  struct sg_id {
+> >  =09int host_no;
+> >  =09int channel;
+> > @@ -255,6 +268,7 @@ struct path {
+> >  =09char rev[PATH_REV_SIZE];
+> >  =09char serial[SERIAL_SIZE];
+> >  =09char tgt_node_name[NODE_NAME_SIZE];
+> > +=09char vpd_data[VPD_DATA_SIZE];
+>=20
+>=20
+> Hm, 128 more bytes per path for a rarely-used property... do we need to
+> store this in "struct path"? Can't we simply fetch that information
+> when someone requests it with the %g format wildcard? It doesn't matter
+> much today as "struct path" is really thick already, but I have hopes
+> to make it a bit leaner some day.
 
-Please feel free to add my
+Well, the thought was that this information (which should help map the
+path to a physical array) would most often be wanted when things were
+going badly, and you might not be able to access the device.
 
-Reviewed-by: John Dorminy <jdorminy@redhat.com>
+-Ben
 
-Thanks!
-
-
-On Fri, Feb 7, 2020 at 3:07 PM Mikulas Patocka <mpatocka@redhat.com> wrote:
->
->
->
-> On Fri, 7 Feb 2020, John Dorminy wrote:
->
-> > There's no obvious way for the other process to wait for the discard
-> > to be complete at the present time, though -- suppose there were two
-> > holders of a given buffer, and one decided to discard -- how will the
-> > second one to wait for the discard to complete, or even tell that it's
-> > currently being discarded from another thread? I would naively guess
-> > that __write_dirty_buffer() waits via wait_on_bit_io(&b->state,
-> > B_WRITING, ...) to make sure nobody else is doing IO on the buffer
-> > location at the moment, but a discard doesn't currently set that bit,
-> > as far as I can see.
-> >
-> > (If there is a way to wait, perhaps it should be documented at
-> > dm_bufio_discard_buffers() -- "If there is another process holding the
-> > buffer, the other process should be sure to [do stuff] before issuing
-> > a write, lest the write potentially be dropped or corrupted."
->
-> If two processes write to the same buffer, it is undefined behavior. If
-> both of them do this:
->         1) dm_bufio_get
->         2) ... write to the buffer
->         3) dm_bufio_mark_buffer_dirty
->         4) dm_bufio_release
-> it is undefined what data the buffer would hold. It can even hold mixture
-> of data written by those two processes. You must design your code in such
-> a way that this doesn't happen.
->
-> The same is with discards - if you want to use them, you must design your
-> code so that it doesn't overlay discards with other I/O. If you can't
-> design it this way, then don't use discard.
->
-> Mikulas
->
+> Regards
+> Martin
+>=20
+> --=20
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE  Software Solutions Germany GmbH
+> HRB 36809, AG N=FCrnberg GF: Felix
+> Imend=F6rffer
+>=20
