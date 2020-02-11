@@ -1,18 +1,16 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 15/17] libmultipath: make directio checker
- share io contexts
-Date: Tue, 11 Feb 2020 16:21:07 -0600
-Message-ID: <20200211222107.GG30153@octiron.msp.redhat.com>
+Subject: Re: [PATCH v2 03/17] libmultipath: fix leak in foreign
+	code
+Date: Tue, 11 Feb 2020 16:47:55 -0600
+Message-ID: <20200211224755.GH30153@octiron.msp.redhat.com>
 References: <1580929100-32572-1-git-send-email-bmarzins@redhat.com>
-	<1580929100-32572-16-git-send-email-bmarzins@redhat.com>
-	<5f6810410ac8deac3e335ad45ba02184eff155ac.camel@suse.com>
-	<20200210231553.GE30153@octiron.msp.redhat.com>
-	<531a70cb9fe8a62a5ad5eed4ddfc437f8930c088.camel@suse.com>
+	<1580929100-32572-4-git-send-email-bmarzins@redhat.com>
+	<10b549834e581e0ec3b9aba230c2f01c43db6c11.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <531a70cb9fe8a62a5ad5eed4ddfc437f8930c088.camel@suse.com>
+In-Reply-To: <10b549834e581e0ec3b9aba230c2f01c43db6c11.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,150 +25,101 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Feb 11, 2020 at 09:38:39AM +0100, Martin Wilck wrote:
-> On Mon, 2020-02-10 at 17:15 -0600, Benjamin Marzinski wrote:
-> > On Mon, Feb 10, 2020 at 06:08:14PM +0100, Martin Wilck wrote:
-> > > On Wed, 2020-02-05 at 12:58 -0600, Benjamin Marzinski wrote:
-> > > > On systems with a large number of cores (>500), io_destroy() can
-> > > > take
-> > > > tens to hundreds of milliseconds to complete, due to RCU
-> > > > synchronization. If there are a large number of paths using the
-> > > > directio
-> > > > checker on such a system, this can lead to multipath taking
-> > > > almost a
-> > > > minute to complete, with the vast majority of time taken up by
-> > > > io_destroy().
-> > > > 
-> > > > To solve this, the directio checker now allocates one aio context
-> > > > for
-> > > > every 1024 checkers. This reduces the io_destroy() delay to a
-> > > > thousandth
-> > > > of its previous level. However, this means that muliple checkers
-> > > > are
-> > > > sharing the same aio context, and must be able to handle getting
-> > > > results
-> > > > for other checkers.  Because only one checker is ever running at
-> > > > a
-> > > > time, this doesn't require any locking.  However, locking could
-> > > > be added
-> > > > in the future if necessary, to allow multiple checkers to run at
-> > > > the
-> > > > same time.
-> > > > 
-> > > > When checkers are freed, they usually no longer destroy the io
-> > > > context.
-> > > > Instead, they attempt to cancel any outstanding request. If that
-> > > > fails,
-> > > > they put the request on an orphan list, so that it can be freed
-> > > > by other
-> > > > checkers, once it has completed. IO contexts are only destroyed
-> > > > at three
-> > > > times, during reconfigure (to deal with the possibility that
-> > > > multipathd
-> > > > is holding more aio events than it needs to be, since there is a
-> > > > single
-> > > > limit for the whole system), when the checker class is unloaded,
-> > > > and
-> > > > in a corner case when checkers are freed. If an aio_group (which
-> > > > contains the aio context) is entirely full of orphaned requests,
-> > > > then
-> > > > no checker can use it. Since no checker is using it, there is no
-> > > > checker
-> > > > to clear out the orphaned requests. In this (likely rare) case,
-> > > > the
-> > > > last checker from that group to be freed and leave behind an
-> > > > orphaned
-> > > > request will call io_destroy() and remove the group.
-> > > > 
-> > > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > > > ---
-> > > >  libmultipath/checkers/directio.c | 336
-> > > > +++++++++++++++++++++++++------
-> > > >  multipath/multipath.conf.5       |   7 +-
-> > > >  2 files changed, 281 insertions(+), 62 deletions(-)
-> > > 
-> > > Although I concur now that your design is sound, I still have some
-> > > issues, see below.
-> > > ...
-> > >  	}
-> > > >  	ct->running++;
-> > > 
-> > > This looks to me as if in the case (ct->running && ct->req->state
-> > > ==
-> > > PATH_PENDING), ct->running could become > 1, even though you don't
-> > > start a new IO. Is that intended? I don't think it matters because
-> > > you
-> > > never decrement, but it looks weird.
+On Tue, Feb 11, 2020 at 10:36:19AM +0100, Martin Wilck wrote:
+> Hi Ben, hi Christophe,
+> 
+> On Wed, 2020-02-05 at 12:58 -0600, Benjamin Marzinski wrote:
+> > If scandir fails or finds no foreign libraries, enable_re needs to be
+> > freed before exitting.
 > > 
-> > That's necessary for how the checker currently works. In async mode
-> > checker doesn't actually wait for a specific number of seconds (and
-> > didn't before my patch). It assumes 1 sec call times for pending
-> > paths,
-> > and times out after ct->running > timeout_secs. That's why the unit
-> > tests can get away with simply calling the checker repeatedly,
-> > without
-> > waiting, to make it timeout. But I suppose that
-> > wait_for_pending_paths()
-> > will also be making the checker time out quicker, so this should
-> > probably be changed. However, since check_path won't set a paths
-> > state
-> > to PATH_PENDING if it wasn't already, it's not really a very likely
-> > issue to occur.
+> > Fixes: 8d03eda4 'multipath.conf: add "enable_foreign" parameter'
+> > Reviewed-by: Martin Wilck <mwilck@suse.com>
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  libmultipath/foreign.c | 11 +++++++----
+> >  1 file changed, 7 insertions(+), 4 deletions(-)
 > 
-> Bah. I should have realized that, of course. Yet measuring the timeout
-> in *seconds*, and polling for it the way we currently do, is really 80s
-> design... I guess I was confused by the use of ns timeout calculation
-> for the get_events() call (suggesting high-res timing), and the use of
-> "ct->running" as both indicator of running IO and "abstract run time".
+> While trying to merge your series into my tree, I realized that this
+> patch conflicts with my previously submitted patch "libmultipath:
+> _init_foreign(): fix possible memory leak"
+> https://www.redhat.com/archives/dm-devel/2019-October/msg00104.html
+> which fixed the same issue.
 > 
-> I hope you admit that the logic in check_path() is convoluted and hard
-> to understand :-/ . For example here:
+> The two patches are almost equal, so I really don't care which one
+> is eventually taken. I just wanted to alert Christophe about the
+> conflict.
 > 
-> > 	while(1) {
-> > 		r = get_events(ct->aio_grp, timep);
-> > 
-> > 		if (ct->req->state != PATH_PENDING) {
-> > 			ct->running = 0;
-> > 			return ct->req->state;
-> > 		} else if (r == 0 || !timep)
-> > 			break;
-> > 
-> > 		get_monotonic_time(&currtime);
-> > 		timespecsub(&endtime, &currtime, &timeout);
-> > 		if (timeout.tv_sec < 0)
-> > 			timep = NULL;
+> Anyway, I thought that you'd ACK'd my October 72-part patch series in
+> the following messages:
 > 
-> We're past the timeout already, having seen some events, just not for
-> the path we're currently looking at. Why do we go through another
-> iteration?
+> https://www.redhat.com/archives/dm-devel/2019-October/msg00214.html
+>   (Ben: ACK on v2 of 72-part series "multipath-tools: cleanup and
+> warning enablement", except 16/72 "libmultipath: make path_discovery()
+> pthread_cancel()-safe")
+> https://www.redhat.com/archives/dm-devel/2019-November/msg00016.html
+>   (Ben: ACK on 16/72 "libmultipath: make path_discovery()
+> pthread_cancel()-safe", after discussion)
+> https://www.redhat.com/archives/dm-devel/2019-November/msg00085.html
+>   (Ben: Ack on v2->v3 change, updated patch v3 45/72 "libmultipath: fix
+> -Wsign-compare warnings with snprintf()")
+> 
+> Please clarify if I misunderstood that and the series still needs work
+> from your PoV.
 
-Well, in this case we are past the timeout now, but weren't when
-io_getevents() completed, so the code loops one more time to check
-(without waiting) if the current path's request has completed. Since we
-call io_getevents() after setting the timeout to be all the remaining
-time, this should only ever happen if io_getevents() exitted early.
-Granted, it likely didn't exit very early (unless the thread was
-preempted afterwards), since it is now past the timeout.
+No. Your fix is fine. It's my bad. I didn't rebase my branch on top of
+your fixes.
 
 -Ben
-
-> 
-> > 	}
-> > 	if (ct->running > timeout_secs || sync) {
-> >  
-> > > See comment for get_events() above. Why don't you simply do this?
-> > > 
-> > >     timeout.tv_sec = timeout.tv_nsec = 0;
-> > > 
-> > 
-> > Sure.
-> > 
-> > So, If I will post a seperate patch that resolves these issues, can
-> > this
-> > one have an ack?
-> 
-> Yes. I agree we should move forward.
-> 
+ 
 > Regards
 > Martin
+> 
+> 
+> > 
+> > diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
+> > index 4b34e141..68e9a9b8 100644
+> > --- a/libmultipath/foreign.c
+> > +++ b/libmultipath/foreign.c
+> > @@ -129,7 +129,7 @@ static int _init_foreign(const char
+> > *multipath_dir, const char *enable)
+> >  	char pathbuf[PATH_MAX];
+> >  	struct dirent **di;
+> >  	struct scandir_result sr;
+> > -	int r, i;
+> > +	int r, i, ret = 0;
+> >  	regex_t *enable_re = NULL;
+> >  
+> >  	foreigns = vector_alloc();
+> > @@ -157,13 +157,15 @@ static int _init_foreign(const char
+> > *multipath_dir, const char *enable)
+> >  	if (r == 0) {
+> >  		condlog(3, "%s: no foreign multipath libraries found",
+> >  			__func__);
+> > -		return 0;
+> > +		ret = 0;
+> > +		goto out;
+> >  	} else if (r < 0) {
+> >  		r = errno;
+> >  		condlog(1, "%s: error %d scanning foreign multipath
+> > libraries",
+> >  			__func__, r);
+> >  		_cleanup_foreign();
+> > -		return -r;
+> > +		ret = -r;
+> > +		goto out;
+> >  	}
+> >  
+> >  	sr.di = di;
+> > @@ -250,8 +252,9 @@ static int _init_foreign(const char
+> > *multipath_dir, const char *enable)
+> >  		free_foreign(fgn);
+> >  	}
+> >  	pthread_cleanup_pop(1); /* free_scandir_result */
+> > +out:
+> >  	pthread_cleanup_pop(1); /* free_pre */
+> > -	return 0;
+> > +	return ret;
+> >  }
+> >  
+> >  int init_foreign(const char *multipath_dir, const char *enable)
 > 
