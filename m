@@ -1,37 +1,73 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v2 00/17] Multipath patch dump
-Date: Tue, 11 Feb 2020 11:18:12 +0100
-Message-ID: <10f7773039b69ada2692a5361f54b0c704c0e1a2.camel@suse.com>
-References: <1580929100-32572-1-git-send-email-bmarzins@redhat.com>
-	<f031e9fa9fdc4be08ee76a2d65ea2c99f8cf0fb3.camel@suse.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH v3 4/7] s390,dcssblk,dax: Add dax zero_page_range
+ operation to dcssblk driver
+Date: Tue, 11 Feb 2020 10:11:14 -0500
+Message-ID: <20200211151114.GA8590@redhat.com>
+References: <20200207202652.1439-1-vgoyal@redhat.com>
+ <20200207202652.1439-5-vgoyal@redhat.com>
+ <20200210215315.27b7e310@thinkpad>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <f031e9fa9fdc4be08ee76a2d65ea2c99f8cf0fb3.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200210215315.27b7e310@thinkpad>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Gerald Schaefer <gerald.schaefer@de.ibm.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, hch@infradead.org, dan.j.williams@intel.com, dm-devel@redhat.com, vishal.l.verma@intel.com, linux-s390@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Christophe,
-
-On Tue, 2020-02-11 at 09:45 +0100, Martin Wilck wrote:
+On Mon, Feb 10, 2020 at 09:53:15PM +0100, Gerald Schaefer wrote:
+> On Fri,  7 Feb 2020 15:26:49 -0500
+> Vivek Goyal <vgoyal@redhat.com> wrote:
 > 
-> ACK for the series: Martin Wilck <mwilck@suse.com>
+> > Add dax operation zero_page_range for dcssblk driver.
+> > 
+> > CC: linux-s390@vger.kernel.org
+> > Suggested-by: Christoph Hellwig <hch@infradead.org>
+> > Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+> > ---
+> >  drivers/s390/block/dcssblk.c | 17 +++++++++++++++++
+> >  1 file changed, 17 insertions(+)
+> > 
+> > diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
+> > index 63502ca537eb..331abab5d066 100644
+> > --- a/drivers/s390/block/dcssblk.c
+> > +++ b/drivers/s390/block/dcssblk.c
+> > @@ -57,11 +57,28 @@ static size_t dcssblk_dax_copy_to_iter(struct dax_device *dax_dev,
+> >  	return copy_to_iter(addr, bytes, i);
+> >  }
+> >  
+> > +static int dcssblk_dax_zero_page_range(struct dax_device *dax_dev, u64 offset,
+> > +				       size_t len)
+> > +{
+> > +	long rc;
+> > +	void *kaddr;
+> > +	pgoff_t pgoff = offset >> PAGE_SHIFT;
+> > +	unsigned page_offset = offset_in_page(offset);
+> > +
+> > +	rc = dax_direct_access(dax_dev, pgoff, 1, &kaddr, NULL);
 > 
-> Ben and I agreed that he'll follow up with some minor fixes, but
-> there's no reason to hold this back.
+> Why do you pass only 1 page as nr_pages argument for dax_direct_access()?
+> In some other patch in this series there is a comment that this will
+> currently only be used for one page, but support for more pages might be
+> added later. Wouldn't it make sense to rather use something like
+> PAGE_ALIGN(page_offset + len) >> PAGE_SHIFT instead of 1 here, so that
+> this won't have to be changed when callers will be ready to use it
+> with more than one page?
+> 
+> Of course, I guess then we'd also need some check on the return value
+> from dax_direct_access(), i.e. if the returned available range is
+> large enough for the requested range.
 
-There are a number of conflicts between Ben's series and my previous
-72-part series from October/November. Ben and I will sort this out.
+I left it at 1 page because that's the current limitation of this
+interface and there are no callers which are zeroing across page
+boundaries.
 
-Martin
+I prefer to keep it this way and modify it when we are extending this
+interface to allow zeroing across page boundaries. Because even if I add
+that logic, I can't test it.
+
+But if you still prefer to change it, I am open to make that change.
+
+Thanks
+Vivek
