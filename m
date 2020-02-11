@@ -1,15 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v2 03/17] libmultipath: fix leak in foreign
-	code
-Date: Tue, 11 Feb 2020 10:36:19 +0100
-Message-ID: <10b549834e581e0ec3b9aba230c2f01c43db6c11.camel@suse.com>
+Subject: Re: [PATCH v2 00/17] Multipath patch dump
+Date: Tue, 11 Feb 2020 11:18:12 +0100
+Message-ID: <10f7773039b69ada2692a5361f54b0c704c0e1a2.camel@suse.com>
 References: <1580929100-32572-1-git-send-email-bmarzins@redhat.com>
-	<1580929100-32572-4-git-send-email-bmarzins@redhat.com>
+	<f031e9fa9fdc4be08ee76a2d65ea2c99f8cf0fb3.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1580929100-32572-4-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <f031e9fa9fdc4be08ee76a2d65ea2c99f8cf0fb3.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,94 +22,16 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.var
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Ben, hi Christophe,
+Hi Christophe,
 
-On Wed, 2020-02-05 at 12:58 -0600, Benjamin Marzinski wrote:
-> If scandir fails or finds no foreign libraries, enable_re needs to be
-> freed before exitting.
+On Tue, 2020-02-11 at 09:45 +0100, Martin Wilck wrote:
 > 
-> Fixes: 8d03eda4 'multipath.conf: add "enable_foreign" parameter'
-> Reviewed-by: Martin Wilck <mwilck@suse.com>
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  libmultipath/foreign.c | 11 +++++++----
->  1 file changed, 7 insertions(+), 4 deletions(-)
+> ACK for the series: Martin Wilck <mwilck@suse.com>
+> 
+> Ben and I agreed that he'll follow up with some minor fixes, but
+> there's no reason to hold this back.
 
-While trying to merge your series into my tree, I realized that this
-patch conflicts with my previously submitted patch "libmultipath:
-_init_foreign(): fix possible memory leak"
-https://www.redhat.com/archives/dm-devel/2019-October/msg00104.html
-which fixed the same issue.
+There are a number of conflicts between Ben's series and my previous
+72-part series from October/November. Ben and I will sort this out.
 
-The two patches are almost equal, so I really don't care which one
-is eventually taken. I just wanted to alert Christophe about the
-conflict.
-
-Anyway, I thought that you'd ACK'd my October 72-part patch series in
-the following messages:
-
-https://www.redhat.com/archives/dm-devel/2019-October/msg00214.html
-  (Ben: ACK on v2 of 72-part series "multipath-tools: cleanup and
-warning enablement", except 16/72 "libmultipath: make path_discovery()
-pthread_cancel()-safe")
-https://www.redhat.com/archives/dm-devel/2019-November/msg00016.html
-  (Ben: ACK on 16/72 "libmultipath: make path_discovery()
-pthread_cancel()-safe", after discussion)
-https://www.redhat.com/archives/dm-devel/2019-November/msg00085.html
-  (Ben: Ack on v2->v3 change, updated patch v3 45/72 "libmultipath: fix
--Wsign-compare warnings with snprintf()")
-
-Please clarify if I misunderstood that and the series still needs work
-from your PoV.
-
-Regards
 Martin
-
-
-> 
-> diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
-> index 4b34e141..68e9a9b8 100644
-> --- a/libmultipath/foreign.c
-> +++ b/libmultipath/foreign.c
-> @@ -129,7 +129,7 @@ static int _init_foreign(const char
-> *multipath_dir, const char *enable)
->  	char pathbuf[PATH_MAX];
->  	struct dirent **di;
->  	struct scandir_result sr;
-> -	int r, i;
-> +	int r, i, ret = 0;
->  	regex_t *enable_re = NULL;
->  
->  	foreigns = vector_alloc();
-> @@ -157,13 +157,15 @@ static int _init_foreign(const char
-> *multipath_dir, const char *enable)
->  	if (r == 0) {
->  		condlog(3, "%s: no foreign multipath libraries found",
->  			__func__);
-> -		return 0;
-> +		ret = 0;
-> +		goto out;
->  	} else if (r < 0) {
->  		r = errno;
->  		condlog(1, "%s: error %d scanning foreign multipath
-> libraries",
->  			__func__, r);
->  		_cleanup_foreign();
-> -		return -r;
-> +		ret = -r;
-> +		goto out;
->  	}
->  
->  	sr.di = di;
-> @@ -250,8 +252,9 @@ static int _init_foreign(const char
-> *multipath_dir, const char *enable)
->  		free_foreign(fgn);
->  	}
->  	pthread_cleanup_pop(1); /* free_scandir_result */
-> +out:
->  	pthread_cleanup_pop(1); /* free_pre */
-> -	return 0;
-> +	return ret;
->  }
->  
->  int init_foreign(const char *multipath_dir, const char *enable)
