@@ -1,78 +1,64 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm-writecache: fix a crash when unloading
-Date: Wed, 12 Feb 2020 13:44:07 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.2002121338450.3607@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.2002121015310.19039@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAMeeMh9NyhQAEVOhHMTOBMxXM4Tt=_k5UwY_M2uXZmwwsRBhZw@mail.gmail.com>
+From: Kirill Tkhai <ktkhai@virtuozzo.com>
+Subject: Re: [PATCH v6 6/6] loop: Add support for REQ_ALLOCATE
+Date: Wed, 12 Feb 2020 23:00:15 +0300
+Message-ID: <f108e700-62fb-6ecd-2bba-0ab7a6b9ef7b@virtuozzo.com>
+References: <158132703141.239613.3550455492676290009.stgit@localhost.localdomain>
+ <158132724397.239613.16927024926439560344.stgit@localhost.localdomain>
+ <20200212170156.GM6874@magnolia>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAMeeMh9NyhQAEVOhHMTOBMxXM4Tt=_k5UwY_M2uXZmwwsRBhZw@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: John Dorminy <jdorminy@redhat.com>
-Cc: Corey Marthaler <cmarthal@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, David Teigland <teigland@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200212170156.GM6874@magnolia>
+Content-Language: en-US
+Sender: linux-block-owner@vger.kernel.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: martin.petersen@oracle.com, bob.liu@oracle.com, axboe@kernel.dk, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, song@kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, Chaitanya.Kulkarni@wdc.com, ming.lei@redhat.com, osandov@fb.com, jthumshirn@suse.de, minwoo.im.dev@gmail.com, damien.lemoal@wdc.com, andrea.parri@amarulasolutions.com, hare@suse.com, tj@kernel.org, ajay.joshi@wdc.com, sagi@grimberg.me, dsterba@suse.com, bvanassche@acm.org, dhowells@redhat.com, asml.silence@gmail.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-
-
-On Wed, 12 Feb 2020, John Dorminy wrote:
-
-> > Also, the test "!dm_suspended(wc->ti)" in writecache_writeback is not
-> > sufficient, because dm_suspended returns zero while writecache_suspend is
-> > in progress. We add a variable wc->suspending and set it in
-> > writecache_suspend. Without this variable, drain_workqueue would spit
-> > warnings:
-> > workqueue writecache-writeback: drain_workqueue() isn't complete after 10 tries
-> > workqueue writecache-writeback: drain_workqueue() isn't complete after 100 tries
-> > workqueue writecache-writeback: drain_workqueue() isn't complete after 200 tries
-> > workqueue writecache-writeback: drain_workqueue() isn't complete after 300 tries
-> > workqueue writecache-writeback: drain_workqueue() isn't complete after 400 tries
+On 12.02.2020 20:01, Darrick J. Wong wrote:
+> On Mon, Feb 10, 2020 at 12:34:04PM +0300, Kirill Tkhai wrote:
+>> Support for new modifier of REQ_OP_WRITE_ZEROES command.
+>> This results in allocation extents in backing file instead
+>> of actual blocks zeroing.
+>>
+>> Signed-off-by: Kirill Tkhai <ktkhai@virtuozzo.com>
+>> Reviewed-by: Bob Liu <bob.liu@oracle.com>
+>> ---
+>>  drivers/block/loop.c |   15 ++++++++++++---
+>>  1 file changed, 12 insertions(+), 3 deletions(-)
+>>
+>> diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+>> index 739b372a5112..bfe76d9adf09 100644
+>> --- a/drivers/block/loop.c
+>> +++ b/drivers/block/loop.c
+>> @@ -581,6 +581,15 @@ static int lo_rw_aio(struct loop_device *lo, struct loop_cmd *cmd,
+>>  	return 0;
+>>  }
+>>  
+>> +static unsigned int write_zeroes_to_fallocate_mode(unsigned int flags)
+>> +{
+>> +	if (flags & REQ_ALLOCATE)
+>> +		return 0;
+>> +	if (flags & REQ_NOUNMAP)
+>> +		return FALLOC_FL_ZERO_RANGE;
+>> +	return FALLOC_FL_PUNCH_HOLE;
+>> +}
+>> +
+>>  static int do_req_filebacked(struct loop_device *lo, struct request *rq)
+>>  {
+>>  	struct loop_cmd *cmd = blk_mq_rq_to_pdu(rq);
+>> @@ -604,9 +613,7 @@ static int do_req_filebacked(struct loop_device *lo, struct request *rq)
+>>  		 * write zeroes the range.  Otherwise, punch them out.
+>>  		 */
 > 
-> This I don't understand.
+> Please update this comment to reflect the new REQ_ALLOCATE mode, and
+> move it to where you define write_zeroes_to_fallocate_mode().
 > 
-> writecache_suspend is a postsuspend function.
+> With that fixed,
 > 
-> Here's a partial call chain representing suspending a table:
-> dm_suspend()
->   __dm_suspend(...,DMF_SUSPENDED)
->     ...do suspend stuff...
->     set_bit(dmf_suspended_flags, ...) // DMF_SUSPENDED
->   dm_table_postsuspend_targets()
->     // for each segment, call that segments' postsuspend function
-> 
-> And dm_suspended() calls dm_suspended_md() which checks whether
-> DMF_SUSPENDED is set.
-> 
-> So, by the time the targets' postsuspend function gets called,
-> dm_suspended() should be returning 1, and the existing conditional
-> should be preventing requeuing. So I worry there's something deeper
-> going on here...
+> Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
 
-When the device is being deleted, the postsuspend function is called 
-without the DMF_SUSPENDED flag - see the function __dm_destroy. We could 
-test for DMF_DELETING or DMF_FREEING, but there is no exported function 
-that checks them.
+Just to clarify. Is this "Reviewed-by:" tag for this patch or for the whole series?
 
-Should we set DMF_SUSPENDED when deleting the device? Perhaps yes, but it 
-could change behavior of other targets.
-
-> Additionally, I don't think wc->suspending is multithread safe -- it's
-> getting set on one thread and getting checked on another thread,
-> right? So the CPU running the workqueue thread is free to read
-> wc->suspending and then later on write it to the value it read, even
-> if the other thread has attempted to write a different value in
-> between.
-
-In all three cases where wc->suspending is accessed, we hold the 
-writecache lock.
-
-Mikulas
+Kirill
