@@ -1,7 +1,7 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 1/6] dax: Define a helper dax_pgoff() which takes in dax_offset as argument
-Date: Wed, 12 Feb 2020 12:07:28 -0500
-Message-ID: <20200212170733.8092-2-vgoyal@redhat.com>
+Subject: [PATCH 5/6] drivers/dax: Use dax_pgoff() instead of bdev_dax_pgoff()
+Date: Wed, 12 Feb 2020 12:07:32 -0500
+Message-ID: <20200212170733.8092-6-vgoyal@redhat.com>
 References: <20200212170733.8092-1-vgoyal@redhat.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -12,60 +12,37 @@ To: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, dan.j.williams@int
 Cc: vgoyal@redhat.com, dm-devel@redhat.com, jack@suse.cz
 List-Id: dm-devel.ids
 
-Create a new helper dax_pgoff() which will replace bdev_dax_pgoff(). Diff=
-erence
-between two is that dax_pgoff() takes in "sector_t dax_offset" as an argu=
-ment
-instead of "struct block_device".
-
-dax_offset specifies any offset into dax device which should be added to
-sector while calculating pgoff.
+Start using dax_pgoff() instead of bdev_dax_pgoff().
 
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- drivers/dax/super.c | 12 ++++++++++++
- include/linux/dax.h |  1 +
- 2 files changed, 13 insertions(+)
+ drivers/dax/super.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-index 0aa4b6bc5101..e9daa30e4250 100644
+index e9daa30e4250..ee35ecc61545 100644
 --- a/drivers/dax/super.c
 +++ b/drivers/dax/super.c
-@@ -56,6 +56,18 @@ int bdev_dax_pgoff(struct block_device *bdev, sector_t=
- sector, size_t size,
- }
- EXPORT_SYMBOL(bdev_dax_pgoff);
+@@ -97,7 +97,7 @@ bool __generic_fsdax_supported(struct dax_device *dax_d=
+ev,
+ 		return false;
+ 	}
 =20
-+int dax_pgoff(sector_t dax_offset, sector_t sector, size_t size, pgoff_t=
- *pgoff)
-+{
-+	phys_addr_t phys_off =3D (dax_offset + sector) * 512;
-+
-+	if (pgoff)
-+		*pgoff =3D PHYS_PFN(phys_off);
-+	if (phys_off % PAGE_SIZE || size % PAGE_SIZE)
-+		return -EINVAL;
-+	return 0;
-+}
-+EXPORT_SYMBOL(dax_pgoff);
-+
- #if IS_ENABLED(CONFIG_FS_DAX)
- struct dax_device *fs_dax_get_by_bdev(struct block_device *bdev)
- {
-diff --git a/include/linux/dax.h b/include/linux/dax.h
-index 328c2dbb4409..5101a4b5c1f9 100644
---- a/include/linux/dax.h
-+++ b/include/linux/dax.h
-@@ -111,6 +111,7 @@ static inline bool daxdev_mapping_supported(struct vm=
-_area_struct *vma,
+-	err =3D bdev_dax_pgoff(bdev, start, PAGE_SIZE, &pgoff);
++	err =3D dax_pgoff(get_start_sect(bdev), start, PAGE_SIZE, &pgoff);
+ 	if (err) {
+ 		pr_debug("%s: error: unaligned partition for dax\n",
+ 				bdevname(bdev, buf));
+@@ -105,7 +105,7 @@ bool __generic_fsdax_supported(struct dax_device *dax=
+_dev,
+ 	}
 =20
- struct writeback_control;
- int bdev_dax_pgoff(struct block_device *, sector_t, size_t, pgoff_t *pgo=
-ff);
-+int dax_pgoff(sector_t dax_offset, sector_t, size_t, pgoff_t *pgoff);
- #if IS_ENABLED(CONFIG_FS_DAX)
- bool __bdev_dax_supported(struct block_device *bdev, int blocksize);
- static inline bool bdev_dax_supported(struct block_device *bdev, int blo=
-cksize)
+ 	last_page =3D PFN_DOWN((start + sectors - 1) * 512) * PAGE_SIZE / 512;
+-	err =3D bdev_dax_pgoff(bdev, last_page, PAGE_SIZE, &pgoff_end);
++	err =3D dax_pgoff(get_start_sect(bdev), last_page, PAGE_SIZE, &pgoff_en=
+d);
+ 	if (err) {
+ 		pr_debug("%s: error: unaligned partition for dax\n",
+ 				bdevname(bdev, buf));
 --=20
 2.20.1
