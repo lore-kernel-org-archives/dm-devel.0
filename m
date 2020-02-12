@@ -1,7 +1,7 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 3/6] fs/dax.c: Start using dax_pgoff() instead of bdev_dax_pgoff()
-Date: Wed, 12 Feb 2020 12:07:30 -0500
-Message-ID: <20200212170733.8092-4-vgoyal@redhat.com>
+Subject: [PATCH 2/6] dax,iomap,ext4,ext2,xfs: Save dax_offset in "struct iomap"
+Date: Wed, 12 Feb 2020 12:07:29 -0500
+Message-ID: <20200212170733.8092-3-vgoyal@redhat.com>
 References: <20200212170733.8092-1-vgoyal@redhat.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -12,87 +12,77 @@ To: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, dan.j.williams@int
 Cc: vgoyal@redhat.com, dm-devel@redhat.com, jack@suse.cz
 List-Id: dm-devel.ids
 
-Replace usage of bdev_dax_pgoff() with dax_pgoff() in fs/dax.c
+Add a new field "sector_t dax_offset" to "struct iomap". This will be
+filled by filesystems and dax code will make use of this to convert
+sector into page offset (dax_pgoff()), instead of bdev_dax_pgoff(). This
+removes the dependency of having to pass in block device for dax operatio=
+ns.
 
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- fs/dax.c | 13 ++++++-------
- 1 file changed, 6 insertions(+), 7 deletions(-)
+ fs/ext2/inode.c       | 1 +
+ fs/ext4/inode.c       | 1 +
+ fs/xfs/xfs_iomap.c    | 2 ++
+ include/linux/iomap.h | 1 +
+ 4 files changed, 5 insertions(+)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index 35da144375a0..921042a81538 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -680,7 +680,7 @@ int dax_invalidate_mapping_entry_sync(struct address_=
-space *mapping,
- 	return __dax_invalidate_entry(mapping, index, false);
+diff --git a/fs/ext2/inode.c b/fs/ext2/inode.c
+index c885cf7d724b..5c3379e78d49 100644
+--- a/fs/ext2/inode.c
++++ b/fs/ext2/inode.c
+@@ -823,6 +823,7 @@ static int ext2_iomap_begin(struct inode *inode, loff=
+_t offset, loff_t length,
+ 	iomap->bdev =3D inode->i_sb->s_bdev;
+ 	iomap->offset =3D (u64)first_block << blkbits;
+ 	iomap->dax_dev =3D sbi->s_daxdev;
++	iomap->dax_offset =3D get_start_sect(iomap->bdev);
+=20
+ 	if (ret =3D=3D 0) {
+ 		iomap->type =3D IOMAP_HOLE;
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 1305b810c44a..0ea7fbb8076f 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -3330,6 +3330,7 @@ static void ext4_set_iomap(struct inode *inode, str=
+uct iomap *iomap,
+=20
+ 	iomap->bdev =3D inode->i_sb->s_bdev;
+ 	iomap->dax_dev =3D EXT4_SB(inode->i_sb)->s_daxdev;
++	iomap->dax_offset =3D get_start_sect(iomap->bdev);
+ 	iomap->offset =3D (u64) map->m_lblk << blkbits;
+ 	iomap->length =3D (u64) map->m_len << blkbits;
+=20
+diff --git a/fs/xfs/xfs_iomap.c b/fs/xfs/xfs_iomap.c
+index bb590a267a7f..ad8b18fc96fd 100644
+--- a/fs/xfs/xfs_iomap.c
++++ b/fs/xfs/xfs_iomap.c
+@@ -80,6 +80,7 @@ xfs_bmbt_to_iomap(
+ 	iomap->length =3D XFS_FSB_TO_B(mp, imap->br_blockcount);
+ 	iomap->bdev =3D target->bt_bdev;
+ 	iomap->dax_dev =3D target->bt_daxdev;
++	iomap->dax_offset =3D get_start_sect(iomap->bdev);
+ 	iomap->flags =3D flags;
+=20
+ 	if (xfs_ipincount(ip) &&
+@@ -103,6 +104,7 @@ xfs_hole_to_iomap(
+ 	iomap->length =3D XFS_FSB_TO_B(ip->i_mount, end_fsb - offset_fsb);
+ 	iomap->bdev =3D target->bt_bdev;
+ 	iomap->dax_dev =3D target->bt_daxdev;
++	iomap->dax_offset =3D get_start_sect(iomap->bdev);
  }
 =20
--static int copy_user_dax(struct block_device *bdev, struct dax_device *d=
-ax_dev,
-+static int copy_user_dax(struct dax_device *dax_dev, sector_t dax_offset=
-,
- 		sector_t sector, size_t size, struct page *to,
- 		unsigned long vaddr)
- {
-@@ -689,7 +689,7 @@ static int copy_user_dax(struct block_device *bdev, s=
-truct dax_device *dax_dev,
- 	long rc;
- 	int id;
-=20
--	rc =3D bdev_dax_pgoff(bdev, sector, size, &pgoff);
-+	rc =3D dax_pgoff(dax_offset, sector, size, &pgoff);
- 	if (rc)
- 		return rc;
-=20
-@@ -990,7 +990,7 @@ static int dax_iomap_pfn(struct iomap *iomap, loff_t =
-pos, size_t size,
- 	int id, rc;
- 	long length;
-=20
--	rc =3D bdev_dax_pgoff(iomap->bdev, sector, size, &pgoff);
-+	rc =3D dax_pgoff(iomap->dax_offset, sector, size, &pgoff);
- 	if (rc)
- 		return rc;
- 	id =3D dax_read_lock();
-@@ -1065,7 +1065,7 @@ int __dax_zero_page_range(struct block_device *bdev=
-,
- 		long rc, id;
- 		void *kaddr;
-=20
--		rc =3D bdev_dax_pgoff(bdev, sector, PAGE_SIZE, &pgoff);
-+		rc =3D dax_pgoff(get_start_sect(bdev), sector, PAGE_SIZE, &pgoff);
- 		if (rc)
- 			return rc;
-=20
-@@ -1087,7 +1087,6 @@ static loff_t
- dax_iomap_actor(struct inode *inode, loff_t pos, loff_t length, void *da=
-ta,
- 		struct iomap *iomap, struct iomap *srcmap)
- {
--	struct block_device *bdev =3D iomap->bdev;
- 	struct dax_device *dax_dev =3D iomap->dax_dev;
- 	struct iov_iter *iter =3D data;
- 	loff_t end =3D pos + length, done =3D 0;
-@@ -1132,7 +1131,7 @@ dax_iomap_actor(struct inode *inode, loff_t pos, lo=
-ff_t length, void *data,
- 			break;
- 		}
-=20
--		ret =3D bdev_dax_pgoff(bdev, sector, size, &pgoff);
-+		ret =3D dax_pgoff(iomap->dax_offset, sector, size, &pgoff);
- 		if (ret)
- 			break;
-=20
-@@ -1312,7 +1311,7 @@ static vm_fault_t dax_iomap_pte_fault(struct vm_fau=
-lt *vmf, pfn_t *pfnp,
- 			clear_user_highpage(vmf->cow_page, vaddr);
- 			break;
- 		case IOMAP_MAPPED:
--			error =3D copy_user_dax(iomap.bdev, iomap.dax_dev,
-+			error =3D copy_user_dax(iomap.dax_dev, iomap.dax_offset,
- 					sector, PAGE_SIZE, vmf->cow_page, vaddr);
- 			break;
- 		default:
+ static inline xfs_fileoff_t
+diff --git a/include/linux/iomap.h b/include/linux/iomap.h
+index 8b09463dae0d..cac5d667aa74 100644
+--- a/include/linux/iomap.h
++++ b/include/linux/iomap.h
+@@ -84,6 +84,7 @@ struct iomap {
+ 	u16			flags;	/* flags for mapping */
+ 	struct block_device	*bdev;	/* block device for I/O */
+ 	struct dax_device	*dax_dev; /* dax_dev for dax operations */
++	sector_t		dax_offset; /* offset in dax device */
+ 	void			*inline_data;
+ 	void			*private; /* filesystem private */
+ 	const struct iomap_page_ops *page_ops;
 --=20
 2.20.1
