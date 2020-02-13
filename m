@@ -1,212 +1,105 @@
 From: Kirill Tkhai <ktkhai@virtuozzo.com>
-Subject: [PATCH v7 4/6] block: Add support for REQ_ALLOCATE flag
-Date: Thu, 13 Feb 2020 10:39:24 +0300
-Message-ID: <158157956448.111879.4846533854153943119.stgit@localhost.localdomain>
+Subject: Re: [PATCH v7 0/6] block: Introduce REQ_ALLOCATE flag for
+ REQ_OP_WRITE_ZEROES
+Date: Thu, 13 Feb 2020 10:55:01 +0300
+Message-ID: <e2b7cbab-d91f-fd7b-de6f-a671caa6f5eb@virtuozzo.com>
 References: <158157930219.111879.12072477040351921368.stgit@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <158157930219.111879.12072477040351921368.stgit@localhost.localdomain>
+Content-Language: en-US
 Sender: linux-block-owner@vger.kernel.org
-To: martin.petersen@oracle.com, bob.liu@oracle.com, axboe@kernel.dk, darrick.wong@oracle.com
-Cc: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, song@kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, Chaitanya.Kulkarni@wdc.com, ming.lei@redhat.com, osandov@fb.com, jthumshirn@suse.de, minwoo.im.dev@gmail.com, damien.lemoal@wdc.com, andrea.parri@amarulasolutions.com, hare@suse.com, tj@kernel.org, ajay.joshi@wdc.com, sagi@grimberg.me, dsterba@suse.com, chaitanya.kulkarni@wdc.com, bvanassche@acm.org, dhowells@redhat.com, asml.silence@gmail.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, ktkhai@virtuozzo.com
+To: axboe@kernel.dk
+Cc: martin.petersen@oracle.com, bob.liu@oracle.com, darrick.wong@oracle.com, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, song@kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, Chaitanya.Kulkarni@wdc.com, ming.lei@redhat.com, osandov@fb.com, jthumshirn@suse.de, minwoo.im.dev@gmail.com, damien.lemoal@wdc.com, andrea.parri@amarulasolutions.com, hare@suse.com, tj@kernel.org, ajay.joshi@wdc.com, sagi@grimberg.me, dsterba@suse.com, bvanassche@acm.org, dhowells@redhat.com, asml.silence@gmail.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-This adds support for REQ_ALLOCATE extension of REQ_OP_WRITE_ZEROES
-operation, which encourages a block device driver to just allocate
-blocks (or mark them allocated) instead of actual blocks zeroing.
-REQ_ALLOCATE is aimed to be used for network filesystems providing
-a block device interface. Also, block devices, which map a file
-on other filesystem (like loop), may use this for less fragmentation
-and batching fallocate() requests. Hypervisors like QEMU may
-introduce optimizations of clusters allocations based on this.
+Hi, Jens,
 
-BLKDEV_ZERO_ALLOCATE is a new corresponding flag for
-blkdev_issue_zeroout().
+could you please provide some comments on this? I sent v1 two months ago,
+and it would be great to know your vision of the functionality and
+the approach and whether it is going to go to block tree.
 
-Stacking devices start from zero max_allocate_sectors limit for now,
-and the support is going to be implemented separate for each device
-in the future.
+Thanks,
+Kirill
 
-Signed-off-by: Kirill Tkhai <ktkhai@virtuozzo.com>
-Reviewed-by: Bob Liu <bob.liu@oracle.com>
----
- block/blk-lib.c           |   17 ++++++++++-------
- block/blk-settings.c      |    4 ++++
- fs/block_dev.c            |    4 ++++
- include/linux/blk_types.h |    6 ++++++
- include/linux/blkdev.h    |   13 ++++++++++---
- 5 files changed, 34 insertions(+), 10 deletions(-)
-
-diff --git a/block/blk-lib.c b/block/blk-lib.c
-index 3e38c93cfc53..9cd6f86523ba 100644
---- a/block/blk-lib.c
-+++ b/block/blk-lib.c
-@@ -214,7 +214,7 @@ static int __blkdev_issue_write_zeroes(struct block_device *bdev,
- 		struct bio **biop, unsigned flags)
- {
- 	struct bio *bio = *biop;
--	unsigned int max_write_zeroes_sectors;
-+	unsigned int max_write_zeroes_sectors, req_flags = 0;
- 	struct request_queue *q = bdev_get_queue(bdev);
- 
- 	if (!q)
-@@ -224,18 +224,21 @@ static int __blkdev_issue_write_zeroes(struct block_device *bdev,
- 		return -EPERM;
- 
- 	/* Ensure that max_write_zeroes_sectors doesn't overflow bi_size */
--	max_write_zeroes_sectors = bdev_write_zeroes_sectors(bdev, 0);
-+	max_write_zeroes_sectors = bdev_write_zeroes_sectors(bdev, flags);
- 
- 	if (max_write_zeroes_sectors == 0)
- 		return -EOPNOTSUPP;
- 
-+	if (flags & BLKDEV_ZERO_NOUNMAP)
-+		req_flags |= REQ_NOUNMAP;
-+	if (flags & BLKDEV_ZERO_ALLOCATE)
-+		req_flags |= REQ_ALLOCATE|REQ_NOUNMAP;
-+
- 	while (nr_sects) {
- 		bio = blk_next_bio(bio, 0, gfp_mask);
- 		bio->bi_iter.bi_sector = sector;
- 		bio_set_dev(bio, bdev);
--		bio->bi_opf = REQ_OP_WRITE_ZEROES;
--		if (flags & BLKDEV_ZERO_NOUNMAP)
--			bio->bi_opf |= REQ_NOUNMAP;
-+		bio->bi_opf = REQ_OP_WRITE_ZEROES | req_flags;
- 
- 		if (nr_sects > max_write_zeroes_sectors) {
- 			bio->bi_iter.bi_size = max_write_zeroes_sectors << 9;
-@@ -362,7 +365,7 @@ int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
- 	sector_t bs_mask;
- 	struct bio *bio;
- 	struct blk_plug plug;
--	bool try_write_zeroes = !!bdev_write_zeroes_sectors(bdev, 0);
-+	bool try_write_zeroes = !!bdev_write_zeroes_sectors(bdev, flags);
- 
- 	bs_mask = (bdev_logical_block_size(bdev) >> 9) - 1;
- 	if ((sector | nr_sects) & bs_mask)
-@@ -391,7 +394,7 @@ int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
- 			try_write_zeroes = false;
- 			goto retry;
- 		}
--		if (!bdev_write_zeroes_sectors(bdev, 0)) {
-+		if (!bdev_write_zeroes_sectors(bdev, flags)) {
- 			/*
- 			 * Zeroing offload support was indicated, but the
- 			 * device reported ILLEGAL REQUEST (for some devices
-diff --git a/block/blk-settings.c b/block/blk-settings.c
-index c8eda2e7b91e..8d5df9d37239 100644
---- a/block/blk-settings.c
-+++ b/block/blk-settings.c
-@@ -48,6 +48,7 @@ void blk_set_default_limits(struct queue_limits *lim)
- 	lim->chunk_sectors = 0;
- 	lim->max_write_same_sectors = 0;
- 	lim->max_write_zeroes_sectors = 0;
-+	lim->max_allocate_sectors = 0;
- 	lim->max_discard_sectors = 0;
- 	lim->max_hw_discard_sectors = 0;
- 	lim->discard_granularity = 0;
-@@ -83,6 +84,7 @@ void blk_set_stacking_limits(struct queue_limits *lim)
- 	lim->max_dev_sectors = UINT_MAX;
- 	lim->max_write_same_sectors = UINT_MAX;
- 	lim->max_write_zeroes_sectors = UINT_MAX;
-+	lim->max_allocate_sectors = 0;
- }
- EXPORT_SYMBOL(blk_set_stacking_limits);
- 
-@@ -506,6 +508,8 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
- 					b->max_write_same_sectors);
- 	t->max_write_zeroes_sectors = min(t->max_write_zeroes_sectors,
- 					b->max_write_zeroes_sectors);
-+	t->max_allocate_sectors = min(t->max_allocate_sectors,
-+					b->max_allocate_sectors);
- 	t->bounce_pfn = min_not_zero(t->bounce_pfn, b->bounce_pfn);
- 
- 	t->seg_boundary_mask = min_not_zero(t->seg_boundary_mask,
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 69bf2fb6f7cd..1ffef894b3bd 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -2122,6 +2122,10 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
- 		error = blkdev_issue_zeroout(bdev, start >> 9, len >> 9,
- 					     GFP_KERNEL, BLKDEV_ZERO_NOFALLBACK);
- 		break;
-+	case FALLOC_FL_KEEP_SIZE:
-+		error = blkdev_issue_zeroout(bdev, start >> 9, len >> 9,
-+			GFP_KERNEL, BLKDEV_ZERO_ALLOCATE | BLKDEV_ZERO_NOFALLBACK);
-+		break;
- 	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE | FALLOC_FL_NO_HIDE_STALE:
- 		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
- 					     GFP_KERNEL, 0);
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 70254ae11769..6f34f5d6edf1 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -335,6 +335,11 @@ enum req_flag_bits {
- 
- 	/* command specific flags for REQ_OP_WRITE_ZEROES: */
- 	__REQ_NOUNMAP,		/* do not free blocks when zeroing */
-+	/*
-+	 * Ensure the LBA range is backed by physical storage
-+	 * without writing zeroes to the blocks.
-+	 */
-+	__REQ_ALLOCATE,
- 
- 	__REQ_HIPRI,
- 
-@@ -362,6 +367,7 @@ enum req_flag_bits {
- #define REQ_CGROUP_PUNT		(1ULL << __REQ_CGROUP_PUNT)
- 
- #define REQ_NOUNMAP		(1ULL << __REQ_NOUNMAP)
-+#define REQ_ALLOCATE		(1ULL << __REQ_ALLOCATE)
- #define REQ_HIPRI		(1ULL << __REQ_HIPRI)
- 
- #define REQ_DRV			(1ULL << __REQ_DRV)
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 55a714161684..40707f980a2e 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -336,6 +336,7 @@ struct queue_limits {
- 	unsigned int		max_hw_discard_sectors;
- 	unsigned int		max_write_same_sectors;
- 	unsigned int		max_write_zeroes_sectors;
-+	unsigned int		max_allocate_sectors;
- 	unsigned int		discard_granularity;
- 	unsigned int		discard_alignment;
- 
-@@ -990,6 +991,8 @@ static inline struct bio_vec req_bvec(struct request *rq)
- static inline unsigned int blk_queue_get_max_write_zeroes_sectors(
- 		struct request_queue *q, unsigned int op_flags)
- {
-+	if (op_flags & REQ_ALLOCATE)
-+		return q->limits.max_allocate_sectors;
- 	return q->limits.max_write_zeroes_sectors;
- }
- 
-@@ -1226,6 +1229,7 @@ extern int __blkdev_issue_discard(struct block_device *bdev, sector_t sector,
- 
- #define BLKDEV_ZERO_NOUNMAP	(1 << 0)  /* do not free blocks */
- #define BLKDEV_ZERO_NOFALLBACK	(1 << 1)  /* don't write explicit zeroes */
-+#define BLKDEV_ZERO_ALLOCATE	(1 << 2)  /* allocate range of blocks */
- 
- extern int __blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
- 		sector_t nr_sects, gfp_t gfp_mask, struct bio **biop,
-@@ -1430,10 +1434,13 @@ static inline unsigned int bdev_write_zeroes_sectors(struct block_device *bdev,
- {
- 	struct request_queue *q = bdev_get_queue(bdev);
- 
--	if (q)
--		return q->limits.max_write_zeroes_sectors;
-+	if (!q)
-+		return 0;
- 
--	return 0;
-+	if (flags & BLKDEV_ZERO_ALLOCATE)
-+		return q->limits.max_allocate_sectors;
-+	else
-+		return q->limits.max_write_zeroes_sectors;
- }
- 
- static inline enum blk_zoned_model bdev_zoned_model(struct block_device *bdev)
+On 13.02.2020 10:39, Kirill Tkhai wrote:
+> (was "[PATCH block v2 0/3] block: Introduce REQ_NOZERO flag
+>       for REQ_OP_WRITE_ZEROES operation";
+>  was "[PATCH RFC 0/3] block,ext4: Introduce REQ_OP_ASSIGN_RANGE
+>       to reflect extents allocation in block device internals")
+> 
+> v7: Two comments changed.
+> 
+> v6: req_op() cosmetic change.
+> 
+> v5: Kill dm|md patch, which disables REQ_ALLOCATE for these devices.
+>     Disable REQ_ALLOCATE for all stacking devices instead of this.
+> 
+> v4: Correct argument for mddev_check_write_zeroes().
+> 
+> v3: Rename REQ_NOZERO to REQ_ALLOCATE.
+>     Split helpers to separate patches.
+>     Add a patch, disabling max_allocate_sectors inheritance for dm.
+> 
+> v2: Introduce new flag for REQ_OP_WRITE_ZEROES instead of
+>     introduction a new operation as suggested by Martin K. Petersen.
+>     Removed ext4-related patch to focus on block changes
+>     for now.
+> 
+> Information about continuous extent placement may be useful
+> for some block devices. Say, distributed network filesystems,
+> which provide block device interface, may use this information
+> for better blocks placement over the nodes in their cluster,
+> and for better performance. Block devices, which map a file
+> on another filesystem (loop), may request the same length extent
+> on underlining filesystem for less fragmentation and for batching
+> allocation requests. Also, hypervisors like QEMU may use this
+> information for optimization of cluster allocations.
+> 
+> This patchset introduces REQ_ALLOCATE flag for REQ_OP_WRITE_ZEROES,
+> which makes a block device to allocate blocks instead of actual
+> blocks zeroing. This may be used for forwarding user's fallocate(0)
+> requests into block device internals. E.g., in loop driver this
+> will result in allocation extents in backing-file, so subsequent
+> write won't fail by the reason of no available space. Distributed
+> network filesystems will be able to assign specific servers for
+> specific extents, so subsequent write will be more efficient.
+> 
+> Patches [1-3/6] are preparation on helper functions, patch [4/6]
+> introduces REQ_ALLOCATE flag and implements all the logic,
+> patch [5/6] adds one more helper, patch [6/6] adds loop
+> as the first user of the flag.
+> 
+> Note, that here is only block-related patches, example of usage
+> for ext4 with a performance numbers may be seen in [1].
+> 
+> [1] https://lore.kernel.org/linux-ext4/157599697369.12112.10138136904533871162.stgit@localhost.localdomain/T/#me5bdd5cc313e14de615d81bea214f355ae975db0
+> ---
+> 
+> Kirill Tkhai (6):
+>       block: Add @flags argument to bdev_write_zeroes_sectors()
+>       block: Pass op_flags into blk_queue_get_max_sectors()
+>       block: Introduce blk_queue_get_max_write_zeroes_sectors()
+>       block: Add support for REQ_ALLOCATE flag
+>       block: Add blk_queue_max_allocate_sectors()
+>       loop: Add support for REQ_ALLOCATE
+> 
+> 
+>  block/blk-core.c                    |    6 +++---
+>  block/blk-lib.c                     |   17 ++++++++++-------
+>  block/blk-merge.c                   |    9 ++++++---
+>  block/blk-settings.c                |   17 +++++++++++++++++
+>  drivers/block/loop.c                |   20 +++++++++++++-------
+>  drivers/md/dm-kcopyd.c              |    2 +-
+>  drivers/target/target_core_iblock.c |    4 ++--
+>  fs/block_dev.c                      |    4 ++++
+>  include/linux/blk_types.h           |    6 ++++++
+>  include/linux/blkdev.h              |   34 ++++++++++++++++++++++++++--------
+>  10 files changed, 88 insertions(+), 31 deletions(-)
+> 
+> --
+> Signed-off-by: Kirill Tkhai <ktkhai@virtuozzo.com>
+> Reviewed-by: Bob Liu <bob.liu@oracle.com>
+> 
