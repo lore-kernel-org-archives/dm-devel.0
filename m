@@ -1,130 +1,145 @@
 From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 5.4 314/459] dm thin: don't allow changing data device during thin-pool reload
-Date: Fri, 14 Feb 2020 10:59:24 -0500
-Message-ID: <20200214160149.11681-314-sashal@kernel.org>
-References: <20200214160149.11681-1-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 5.5 053/542] dm raid: table line rebuild status fixes
+Date: Fri, 14 Feb 2020 10:40:45 -0500
+Message-ID: <20200214154854.6746-53-sashal@kernel.org>
+References: <20200214154854.6746-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20200214160149.11681-1-sashal@kernel.org>
-Sender: stable-owner@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200214154854.6746-1-sashal@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Sasha Levin <sashal@kernel.org>, dm-devel@redhat.com
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Sasha Levin <sashal@kernel.org>, dm-devel@redhat.com, linux-doc@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-[ Upstream commit 873937e75f9a8ea231a502c3d29d9cb6ad91b3ef ]
+[ Upstream commit 43f3952a51f8198d365acb7f51fe42d578fe5d0a ]
 
-The existing code allows changing the data device when the thin-pool
-target is reloaded.
+raid_status() wasn't emitting rebuild flags on the table line properly
+because the rdev number was not yet set properly; index raid component
+devices array directly to solve.
 
-This capability is not required and only complicates device lifetime
-guarantees. This can cause crashes like the one reported here:
-	https://bugzilla.redhat.com/show_bug.cgi?id=1788596
-where the kernel tries to issue a flush bio located in a structure that
-was already freed.
+Also fix wrong argument count on emitted table line caused by 1 too
+many rebuild/write_mostly argument and consider any journal_(dev|mode)
+pairs.
 
-Take the first step to simplifying the thin-pool's data device lifetime
-by disallowing changing it. Like the thin-pool's metadata device, the
-data device is now set in pool_create() and it cannot be changed for a
-given thin-pool.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Link: https://bugzilla.redhat.com/1782045
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- drivers/md/dm-thin.c | 18 +++++++++++++-----
- 1 file changed, 13 insertions(+), 5 deletions(-)
+ .../admin-guide/device-mapper/dm-raid.rst     |  2 +
+ drivers/md/dm-raid.c                          | 43 ++++++++++---------
+ 2 files changed, 24 insertions(+), 21 deletions(-)
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 69201bdf7f4c6..1b2c98b43519f 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -231,6 +231,7 @@ struct pool {
- 	struct dm_target *ti;	/* Only set if a pool target is bound */
+diff --git a/Documentation/admin-guide/device-mapper/dm-raid.rst b/Documentation/admin-guide/device-mapper/dm-raid.rst
+index f6344675e3951..695a2ea1d1ae2 100644
+--- a/Documentation/admin-guide/device-mapper/dm-raid.rst
++++ b/Documentation/admin-guide/device-mapper/dm-raid.rst
+@@ -419,3 +419,5 @@ Version History
+ 	rebuild errors.
+  1.15.0 Fix size extensions not being synchronized in case of new MD bitmap
+         pages allocated;  also fix those not occuring after previous reductions
++ 1.15.1 Fix argument count and arguments for rebuild/write_mostly/journal_(dev|mode)
++        on the status line.
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index c412eaa975fc0..9a18bef0a5ff0 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -129,7 +129,9 @@ struct raid_dev {
+ 				  CTR_FLAG_RAID10_COPIES | \
+ 				  CTR_FLAG_RAID10_FORMAT | \
+ 				  CTR_FLAG_DELTA_DISKS | \
+-				  CTR_FLAG_DATA_OFFSET)
++				  CTR_FLAG_DATA_OFFSET | \
++				  CTR_FLAG_JOURNAL_DEV | \
++				  CTR_FLAG_JOURNAL_MODE)
  
- 	struct mapped_device *pool_md;
-+	struct block_device *data_dev;
- 	struct block_device *md_dev;
- 	struct dm_pool_metadata *pmd;
+ /* Valid options definitions per raid level... */
  
-@@ -2945,6 +2946,7 @@ static struct kmem_cache *_new_mapping_cache;
+@@ -3001,7 +3003,6 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		{ 1, 254, "Cannot understand number of raid devices parameters" }
+ 	};
  
- static struct pool *pool_create(struct mapped_device *pool_md,
- 				struct block_device *metadata_dev,
-+				struct block_device *data_dev,
- 				unsigned long block_size,
- 				int read_only, char **error)
- {
-@@ -3052,6 +3054,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
- 	pool->last_commit_jiffies = jiffies;
- 	pool->pool_md = pool_md;
- 	pool->md_dev = metadata_dev;
-+	pool->data_dev = data_dev;
- 	__pool_table_insert(pool);
+-	/* Must have <raid_type> */
+ 	arg = dm_shift_arg(&as);
+ 	if (!arg) {
+ 		ti->error = "No arguments";
+@@ -3508,8 +3509,7 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 	unsigned long recovery;
+ 	unsigned int raid_param_cnt = 1; /* at least 1 for chunksize */
+ 	unsigned int sz = 0;
+-	unsigned int rebuild_disks;
+-	unsigned int write_mostly_params = 0;
++	unsigned int rebuild_writemostly_count = 0;
+ 	sector_t progress, resync_max_sectors, resync_mismatches;
+ 	enum sync_state state;
+ 	struct raid_type *rt;
+@@ -3593,18 +3593,20 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 	case STATUSTYPE_TABLE:
+ 		/* Report the table line string you would use to construct this raid set */
  
- 	return pool;
-@@ -3093,6 +3096,7 @@ static void __pool_dec(struct pool *pool)
- 
- static struct pool *__pool_find(struct mapped_device *pool_md,
- 				struct block_device *metadata_dev,
-+				struct block_device *data_dev,
- 				unsigned long block_size, int read_only,
- 				char **error, int *created)
- {
-@@ -3103,19 +3107,23 @@ static struct pool *__pool_find(struct mapped_device *pool_md,
- 			*error = "metadata device already in use by a pool";
- 			return ERR_PTR(-EBUSY);
- 		}
-+		if (pool->data_dev != data_dev) {
-+			*error = "data device already in use by a pool";
-+			return ERR_PTR(-EBUSY);
+-		/* Calculate raid parameter count */
+-		for (i = 0; i < rs->raid_disks; i++)
+-			if (test_bit(WriteMostly, &rs->dev[i].rdev.flags))
+-				write_mostly_params += 2;
+-		rebuild_disks = memweight(rs->rebuild_disks, DISKS_ARRAY_ELEMS * sizeof(*rs->rebuild_disks));
+-		raid_param_cnt += rebuild_disks * 2 +
+-				  write_mostly_params +
++		/*
++		 * Count any rebuild or writemostly argument pairs and subtract the
++		 * hweight count being added below of any rebuild and writemostly ctr flags.
++		 */
++		for (i = 0; i < rs->raid_disks; i++) {
++			rebuild_writemostly_count += (test_bit(i, (void *) rs->rebuild_disks) ? 2 : 0) +
++						     (test_bit(WriteMostly, &rs->dev[i].rdev.flags) ? 2 : 0);
 +		}
- 		__pool_inc(pool);
++		rebuild_writemostly_count -= (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags) ? 2 : 0) +
++					     (test_bit(__CTR_FLAG_WRITE_MOSTLY, &rs->ctr_flags) ? 2 : 0);
++		/* Calculate raid parameter count based on ^ rebuild/writemostly argument counts and ctr flags set. */
++		raid_param_cnt += rebuild_writemostly_count +
+ 				  hweight32(rs->ctr_flags & CTR_FLAG_OPTIONS_NO_ARGS) +
+-				  hweight32(rs->ctr_flags & CTR_FLAG_OPTIONS_ONE_ARG) * 2 +
+-				  (test_bit(__CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags) ? 2 : 0) +
+-				  (test_bit(__CTR_FLAG_JOURNAL_MODE, &rs->ctr_flags) ? 2 : 0);
+-
++				  hweight32(rs->ctr_flags & CTR_FLAG_OPTIONS_ONE_ARG) * 2;
+ 		/* Emit table line */
+ 		/* This has to be in the documented order for userspace! */
+ 		DMEMIT("%s %u %u", rs->raid_type->name, raid_param_cnt, mddev->new_chunk_sectors);
+@@ -3612,11 +3614,10 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 			DMEMIT(" %s", dm_raid_arg_name_by_flag(CTR_FLAG_SYNC));
+ 		if (test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags))
+ 			DMEMIT(" %s", dm_raid_arg_name_by_flag(CTR_FLAG_NOSYNC));
+-		if (rebuild_disks)
++		if (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags))
+ 			for (i = 0; i < rs->raid_disks; i++)
+-				if (test_bit(rs->dev[i].rdev.raid_disk, (void *) rs->rebuild_disks))
+-					DMEMIT(" %s %u", dm_raid_arg_name_by_flag(CTR_FLAG_REBUILD),
+-							 rs->dev[i].rdev.raid_disk);
++				if (test_bit(i, (void *) rs->rebuild_disks))
++					DMEMIT(" %s %u", dm_raid_arg_name_by_flag(CTR_FLAG_REBUILD), i);
+ 		if (test_bit(__CTR_FLAG_DAEMON_SLEEP, &rs->ctr_flags))
+ 			DMEMIT(" %s %lu", dm_raid_arg_name_by_flag(CTR_FLAG_DAEMON_SLEEP),
+ 					  mddev->bitmap_info.daemon_sleep);
+@@ -3626,7 +3627,7 @@ static void raid_status(struct dm_target *ti, status_type_t type,
+ 		if (test_bit(__CTR_FLAG_MAX_RECOVERY_RATE, &rs->ctr_flags))
+ 			DMEMIT(" %s %d", dm_raid_arg_name_by_flag(CTR_FLAG_MAX_RECOVERY_RATE),
+ 					 mddev->sync_speed_max);
+-		if (write_mostly_params)
++		if (test_bit(__CTR_FLAG_WRITE_MOSTLY, &rs->ctr_flags))
+ 			for (i = 0; i < rs->raid_disks; i++)
+ 				if (test_bit(WriteMostly, &rs->dev[i].rdev.flags))
+ 					DMEMIT(" %s %d", dm_raid_arg_name_by_flag(CTR_FLAG_WRITE_MOSTLY),
+@@ -4029,7 +4030,7 @@ static void raid_resume(struct dm_target *ti)
  
- 	} else {
- 		pool = __pool_table_lookup(pool_md);
- 		if (pool) {
--			if (pool->md_dev != metadata_dev) {
-+			if (pool->md_dev != metadata_dev || pool->data_dev != data_dev) {
- 				*error = "different pool cannot replace a pool";
- 				return ERR_PTR(-EINVAL);
- 			}
- 			__pool_inc(pool);
- 
- 		} else {
--			pool = pool_create(pool_md, metadata_dev, block_size, read_only, error);
-+			pool = pool_create(pool_md, metadata_dev, data_dev, block_size, read_only, error);
- 			*created = 1;
- 		}
- 	}
-@@ -3368,7 +3376,7 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 		goto out;
- 	}
- 
--	pool = __pool_find(dm_table_get_md(ti->table), metadata_dev->bdev,
-+	pool = __pool_find(dm_table_get_md(ti->table), metadata_dev->bdev, data_dev->bdev,
- 			   block_size, pf.mode == PM_READ_ONLY, &ti->error, &pool_created);
- 	if (IS_ERR(pool)) {
- 		r = PTR_ERR(pool);
-@@ -4114,7 +4122,7 @@ static struct target_type pool_target = {
- 	.name = "thin-pool",
- 	.features = DM_TARGET_SINGLETON | DM_TARGET_ALWAYS_WRITEABLE |
- 		    DM_TARGET_IMMUTABLE,
--	.version = {1, 21, 0},
-+	.version = {1, 22, 0},
+ static struct target_type raid_target = {
+ 	.name = "raid",
+-	.version = {1, 15, 0},
++	.version = {1, 15, 1},
  	.module = THIS_MODULE,
- 	.ctr = pool_ctr,
- 	.dtr = pool_dtr,
-@@ -4493,7 +4501,7 @@ static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 
- static struct target_type thin_target = {
- 	.name = "thin",
--	.version = {1, 21, 0},
-+	.version = {1, 22, 0},
- 	.module	= THIS_MODULE,
- 	.ctr = thin_ctr,
- 	.dtr = thin_dtr,
+ 	.ctr = raid_ctr,
+ 	.dtr = raid_dtr,
 -- 
 2.20.1
