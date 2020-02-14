@@ -1,19 +1,18 @@
-From: Gao Xiang <gaoxiang25@huawei.com>
+From: Zhou Wang <wangzhou1@hisilicon.com>
 Subject: Re: [PATCH] Remove WQ_CPU_INTENSIVE flag from unbound wq's
-Date: Fri, 14 Feb 2020 09:39:33 +0800
-Message-ID: <20200214013932.GA73422@architecture4>
+Date: Fri, 14 Feb 2020 11:47:47 +0800
+Message-ID: <5E461863.3000004@hisilicon.com>
 References: <20200213141823.2174236-1-mplaneta@os.inf.tu-dresden.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-raid-owner@vger.kernel.org>
 In-Reply-To: <20200213141823.2174236-1-mplaneta@os.inf.tu-dresden.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Maksym Planeta <mplaneta@os.inf.tu-dresden.de>
-Cc: Zhou Wang <wangzhou1@hisilicon.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Song Liu <song@kernel.org>, Gao Xiang <xiang@kernel.org>, Chao Yu <chao@kernel.org>, linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-erofs@lists.ozlabs.org
+Sender: linux-raid-owner@vger.kernel.org
+To: Maksym Planeta <mplaneta@os.inf.tu-dresden.de>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Song Liu <song@kernel.org>, Gao Xiang <xiang@kernel.org>, Chao Yu <chao@kernel.org>, linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-erofs@lists.ozlabs.org
 List-Id: dm-devel.ids
 
-On Thu, Feb 13, 2020 at 03:18:23PM +0100, Maksym Planeta wrote:
+On 2020/2/13 22:18, Maksym Planeta wrote:
 > The documentation [1] says that WQ_CPU_INTENSIVE is "meaningless" for
 > unbound wq. I remove this flag from places where unbound queue is
 > allocated. This is supposed to improve code readability.
@@ -27,14 +26,6 @@ On Thu, Feb 13, 2020 at 03:18:23PM +0100, Maksym Planeta wrote:
 >  drivers/md/dm-verity-target.c | 2 +-
 >  drivers/md/raid5.c            | 2 +-
 >  fs/erofs/zdata.c              | 2 +-
-
-I'm okay for EROFS part,
-
-Acked-by: Gao Xiang <gaoxiang25@huawei.com>
-
-Thanks,
-Gao Xiang
-
 >  5 files changed, 5 insertions(+), 6 deletions(-)
 > 
 > diff --git a/drivers/crypto/hisilicon/qm.c b/drivers/crypto/hisilicon/qm.c
@@ -48,6 +39,12 @@ Gao Xiang
 > -	qp->wq = alloc_workqueue("hisi_qm", WQ_UNBOUND | WQ_HIGHPRI |
 > -				 WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM, 0);
 > +	qp->wq = alloc_workqueue("hisi_qm", WQ_UNBOUND | WQ_HIGHPRI | WQ_MEM_RECLAIM, 0);
+
+I am OK with qm code.
+
+Thanks!
+Zhou
+
 >  	if (!qp->wq) {
 >  		ret = -EFAULT;
 >  		goto err_free_qp_mem;
@@ -103,6 +100,4 @@ Gao Xiang
 >  
 >  	/*
 >  	 * no need to spawn too many threads, limiting threads could minimum
-> -- 
-> 2.24.1
 > 
