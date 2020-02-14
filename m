@@ -1,37 +1,130 @@
-From: Roger Heflin <rogerheflin@gmail.com>
-Subject: question about multipathd patch thought.
-Date: Fri, 14 Feb 2020 08:47:33 -0600
-Message-ID: <CAAMCDefQhNmMN+bys+ASU8sw4zu-FkbC7o=emzYhpzOKy7N0jg@mail.gmail.com>
+From: Sasha Levin <sashal@kernel.org>
+Subject: [PATCH AUTOSEL 5.5 360/542] dm thin: don't allow changing data device during thin-pool reload
+Date: Fri, 14 Feb 2020 10:45:52 -0500
+Message-ID: <20200214154854.6746-360-sashal@kernel.org>
+References: <20200214154854.6746-1-sashal@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200214154854.6746-1-sashal@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Sasha Levin <sashal@kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Because of some tools we use to "move" luns from one array to another,
-we have ended up with duplicate lunids (human errors around the
-designed process) on 2 separate arrays presented to the exact same
-hosts.  This has caused multipath to assemble all 4 paths into the
-same device, 2 of which don't have the same data.  The environment I
-work in has 1000's of physical hosts, and 100's arrays.
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-If I were to create and submit a patch to validate (if say we set
-verify_new_path_matches to yes in the config file, default is no) that
-the new paths size, vendor, and model match, if they don't match then
-print to syslog, and don't add it to the path. It is understood that
-when we use this option when we are using the tool that causes the
-above problem we would need to disable that option, and once that
-process is finished then re-enable the option.   If such a patch was
-created would the patch be accepted to the multipath upstream?
+[ Upstream commit 873937e75f9a8ea231a502c3d29d9cb6ad91b3ef ]
 
-Roger Heflin
+The existing code allows changing the data device when the thin-pool
+target is reloaded.
+
+This capability is not required and only complicates device lifetime
+guarantees. This can cause crashes like the one reported here:
+	https://bugzilla.redhat.com/show_bug.cgi?id=1788596
+where the kernel tries to issue a flush bio located in a structure that
+was already freed.
+
+Take the first step to simplifying the thin-pool's data device lifetime
+by disallowing changing it. Like the thin-pool's metadata device, the
+data device is now set in pool_create() and it cannot be changed for a
+given thin-pool.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
+---
+ drivers/md/dm-thin.c | 18 +++++++++++++-----
+ 1 file changed, 13 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index a2bb2622cdbd5..4fb6e89c87862 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -231,6 +231,7 @@ struct pool {
+ 	struct dm_target *ti;	/* Only set if a pool target is bound */
+ 
+ 	struct mapped_device *pool_md;
++	struct block_device *data_dev;
+ 	struct block_device *md_dev;
+ 	struct dm_pool_metadata *pmd;
+ 
+@@ -2933,6 +2934,7 @@ static struct kmem_cache *_new_mapping_cache;
+ 
+ static struct pool *pool_create(struct mapped_device *pool_md,
+ 				struct block_device *metadata_dev,
++				struct block_device *data_dev,
+ 				unsigned long block_size,
+ 				int read_only, char **error)
+ {
+@@ -3040,6 +3042,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
+ 	pool->last_commit_jiffies = jiffies;
+ 	pool->pool_md = pool_md;
+ 	pool->md_dev = metadata_dev;
++	pool->data_dev = data_dev;
+ 	__pool_table_insert(pool);
+ 
+ 	return pool;
+@@ -3081,6 +3084,7 @@ static void __pool_dec(struct pool *pool)
+ 
+ static struct pool *__pool_find(struct mapped_device *pool_md,
+ 				struct block_device *metadata_dev,
++				struct block_device *data_dev,
+ 				unsigned long block_size, int read_only,
+ 				char **error, int *created)
+ {
+@@ -3091,19 +3095,23 @@ static struct pool *__pool_find(struct mapped_device *pool_md,
+ 			*error = "metadata device already in use by a pool";
+ 			return ERR_PTR(-EBUSY);
+ 		}
++		if (pool->data_dev != data_dev) {
++			*error = "data device already in use by a pool";
++			return ERR_PTR(-EBUSY);
++		}
+ 		__pool_inc(pool);
+ 
+ 	} else {
+ 		pool = __pool_table_lookup(pool_md);
+ 		if (pool) {
+-			if (pool->md_dev != metadata_dev) {
++			if (pool->md_dev != metadata_dev || pool->data_dev != data_dev) {
+ 				*error = "different pool cannot replace a pool";
+ 				return ERR_PTR(-EINVAL);
+ 			}
+ 			__pool_inc(pool);
+ 
+ 		} else {
+-			pool = pool_create(pool_md, metadata_dev, block_size, read_only, error);
++			pool = pool_create(pool_md, metadata_dev, data_dev, block_size, read_only, error);
+ 			*created = 1;
+ 		}
+ 	}
+@@ -3356,7 +3364,7 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		goto out;
+ 	}
+ 
+-	pool = __pool_find(dm_table_get_md(ti->table), metadata_dev->bdev,
++	pool = __pool_find(dm_table_get_md(ti->table), metadata_dev->bdev, data_dev->bdev,
+ 			   block_size, pf.mode == PM_READ_ONLY, &ti->error, &pool_created);
+ 	if (IS_ERR(pool)) {
+ 		r = PTR_ERR(pool);
+@@ -4098,7 +4106,7 @@ static struct target_type pool_target = {
+ 	.name = "thin-pool",
+ 	.features = DM_TARGET_SINGLETON | DM_TARGET_ALWAYS_WRITEABLE |
+ 		    DM_TARGET_IMMUTABLE,
+-	.version = {1, 21, 0},
++	.version = {1, 22, 0},
+ 	.module = THIS_MODULE,
+ 	.ctr = pool_ctr,
+ 	.dtr = pool_dtr,
+@@ -4475,7 +4483,7 @@ static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ 
+ static struct target_type thin_target = {
+ 	.name = "thin",
+-	.version = {1, 21, 0},
++	.version = {1, 22, 0},
+ 	.module	= THIS_MODULE,
+ 	.ctr = thin_ctr,
+ 	.dtr = thin_dtr,
+-- 
+2.20.1
