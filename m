@@ -1,13 +1,13 @@
 From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 5.5 360/542] dm thin: don't allow changing data device during thin-pool reload
-Date: Fri, 14 Feb 2020 10:45:52 -0500
-Message-ID: <20200214154854.6746-360-sashal@kernel.org>
-References: <20200214154854.6746-1-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 5.4 314/459] dm thin: don't allow changing data device during thin-pool reload
+Date: Fri, 14 Feb 2020 10:59:24 -0500
+Message-ID: <20200214160149.11681-314-sashal@kernel.org>
+References: <20200214160149.11681-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200214154854.6746-1-sashal@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20200214160149.11681-1-sashal@kernel.org>
+Sender: stable-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
 Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Sasha Levin <sashal@kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
@@ -38,7 +38,7 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 13 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index a2bb2622cdbd5..4fb6e89c87862 100644
+index 69201bdf7f4c6..1b2c98b43519f 100644
 --- a/drivers/md/dm-thin.c
 +++ b/drivers/md/dm-thin.c
 @@ -231,6 +231,7 @@ struct pool {
@@ -49,7 +49,7 @@ index a2bb2622cdbd5..4fb6e89c87862 100644
  	struct block_device *md_dev;
  	struct dm_pool_metadata *pmd;
  
-@@ -2933,6 +2934,7 @@ static struct kmem_cache *_new_mapping_cache;
+@@ -2945,6 +2946,7 @@ static struct kmem_cache *_new_mapping_cache;
  
  static struct pool *pool_create(struct mapped_device *pool_md,
  				struct block_device *metadata_dev,
@@ -57,7 +57,7 @@ index a2bb2622cdbd5..4fb6e89c87862 100644
  				unsigned long block_size,
  				int read_only, char **error)
  {
-@@ -3040,6 +3042,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
+@@ -3052,6 +3054,7 @@ static struct pool *pool_create(struct mapped_device *pool_md,
  	pool->last_commit_jiffies = jiffies;
  	pool->pool_md = pool_md;
  	pool->md_dev = metadata_dev;
@@ -65,7 +65,7 @@ index a2bb2622cdbd5..4fb6e89c87862 100644
  	__pool_table_insert(pool);
  
  	return pool;
-@@ -3081,6 +3084,7 @@ static void __pool_dec(struct pool *pool)
+@@ -3093,6 +3096,7 @@ static void __pool_dec(struct pool *pool)
  
  static struct pool *__pool_find(struct mapped_device *pool_md,
  				struct block_device *metadata_dev,
@@ -73,7 +73,7 @@ index a2bb2622cdbd5..4fb6e89c87862 100644
  				unsigned long block_size, int read_only,
  				char **error, int *created)
  {
-@@ -3091,19 +3095,23 @@ static struct pool *__pool_find(struct mapped_device *pool_md,
+@@ -3103,19 +3107,23 @@ static struct pool *__pool_find(struct mapped_device *pool_md,
  			*error = "metadata device already in use by a pool";
  			return ERR_PTR(-EBUSY);
  		}
@@ -99,7 +99,7 @@ index a2bb2622cdbd5..4fb6e89c87862 100644
  			*created = 1;
  		}
  	}
-@@ -3356,7 +3364,7 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
+@@ -3368,7 +3376,7 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
  		goto out;
  	}
  
@@ -108,7 +108,7 @@ index a2bb2622cdbd5..4fb6e89c87862 100644
  			   block_size, pf.mode == PM_READ_ONLY, &ti->error, &pool_created);
  	if (IS_ERR(pool)) {
  		r = PTR_ERR(pool);
-@@ -4098,7 +4106,7 @@ static struct target_type pool_target = {
+@@ -4114,7 +4122,7 @@ static struct target_type pool_target = {
  	.name = "thin-pool",
  	.features = DM_TARGET_SINGLETON | DM_TARGET_ALWAYS_WRITEABLE |
  		    DM_TARGET_IMMUTABLE,
@@ -117,7 +117,7 @@ index a2bb2622cdbd5..4fb6e89c87862 100644
  	.module = THIS_MODULE,
  	.ctr = pool_ctr,
  	.dtr = pool_dtr,
-@@ -4475,7 +4483,7 @@ static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
+@@ -4493,7 +4501,7 @@ static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
  
  static struct target_type thin_target = {
  	.name = "thin",
