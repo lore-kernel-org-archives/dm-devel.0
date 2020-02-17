@@ -1,57 +1,90 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH v3 3/7] dax, pmem: Add a dax operation zero_page_range
-Date: Mon, 17 Feb 2020 13:08:07 -0500
-Message-ID: <20200217180807.GC24816@redhat.com>
-References: <20200207202652.1439-1-vgoyal@redhat.com>
- <20200207202652.1439-4-vgoyal@redhat.com>
- <20200217132607.GD14490@infradead.org>
+Subject: [PATCH v4 6/7] dax,iomap: Start using dax native zero_page_range()
+Date: Mon, 17 Feb 2020 13:16:52 -0500
+Message-ID: <20200217181653.4706-7-vgoyal@redhat.com>
+References: <20200217181653.4706-1-vgoyal@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200217132607.GD14490@infradead.org>
+In-Reply-To: <20200217181653.4706-1-vgoyal@redhat.com>
 Sender: linux-fsdevel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, dan.j.williams@intel.com, dm-devel@redhat.com, vishal.l.verma@intel.com
+To: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, hch@infradead.org, dan.j.williams@intel.com
+Cc: dm-devel@redhat.com, vishal.l.verma@intel.com, vgoyal@redhat.com, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-On Mon, Feb 17, 2020 at 05:26:07AM -0800, Christoph Hellwig wrote:
-> > +	int rc;
-> > +	struct pmem_device *pmem = dax_get_private(dax_dev);
-> > +	struct page *page = ZERO_PAGE(0);
-> 
-> Nit: I tend to find code easier to read if variable declarations
-> with assignments are above those without.
+Get rid of calling block device interface for zeroing in iomap dax
+zeroing path and use dax native zeroing interface instead.
 
-Fixed in V4. 
+Suggested-by: Christoph Hellwig <hch@infradead.org>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+---
+ fs/dax.c | 45 +++++++++------------------------------------
+ 1 file changed, 9 insertions(+), 36 deletions(-)
 
-> 
-> Also I don't think we need the page variable here.
-
-Fixed in V4.
-
-> 
-> > +	rc = pmem_do_write(pmem, page, 0, offset, len);
-> > +	if (rc > 0)
-> > +		return -EIO;
-> 
-> pmem_do_write returns a blk_status_t, so the type of rc and the > check
-> seem odd.  But I think pmem_do_write (and pmem_do_read) might be better
-> off returning a normal errno anyway.
-
-Now I am using blk_status_to_errno() to convert error in V4.
-
-        rc = pmem_do_write(pmem, ZERO_PAGE(0), 0, offset, len);
-        return blk_status_to_errno(rc);
-
-Did not modify pmem_do_read()/pmem_do_write() to return errno as there
-is still one caller which expects to return blk_status_t and then that
-caller will have to do the converstion.
-
-Having said that, it probably is good idea to clean up functions called
-by pmem_do_read()/pmem_do_write() to return errno. I prefer not to take
-that work in that patch series as that seems like a nice to have thing
-and can be handled in a separate patch series.
-
-Thanks
-Vivek
+diff --git a/fs/dax.c b/fs/dax.c
+index 1f1f0201cad1..6757e12b86b2 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -1044,48 +1044,21 @@ static vm_fault_t dax_load_hole(struct xa_state *=
+xas,
+ 	return ret;
+ }
+=20
+-static bool dax_range_is_aligned(struct block_device *bdev,
+-				 unsigned int offset, unsigned int length)
+-{
+-	unsigned short sector_size =3D bdev_logical_block_size(bdev);
+-
+-	if (!IS_ALIGNED(offset, sector_size))
+-		return false;
+-	if (!IS_ALIGNED(length, sector_size))
+-		return false;
+-
+-	return true;
+-}
+-
+ int __dax_zero_page_range(struct block_device *bdev,
+ 		struct dax_device *dax_dev, sector_t sector,
+ 		unsigned int offset, unsigned int size)
+ {
+-	if (dax_range_is_aligned(bdev, offset, size)) {
+-		sector_t start_sector =3D sector + (offset >> 9);
+-
+-		return blkdev_issue_zeroout(bdev, start_sector,
+-				size >> 9, GFP_NOFS, 0);
+-	} else {
+-		pgoff_t pgoff;
+-		long rc, id;
+-		void *kaddr;
++	pgoff_t pgoff;
++	long rc, id;
+=20
+-		rc =3D bdev_dax_pgoff(bdev, sector, PAGE_SIZE, &pgoff);
+-		if (rc)
+-			return rc;
++	rc =3D bdev_dax_pgoff(bdev, sector, PAGE_SIZE, &pgoff);
++	if (rc)
++		return rc;
+=20
+-		id =3D dax_read_lock();
+-		rc =3D dax_direct_access(dax_dev, pgoff, 1, &kaddr, NULL);
+-		if (rc < 0) {
+-			dax_read_unlock(id);
+-			return rc;
+-		}
+-		memset(kaddr + offset, 0, size);
+-		dax_flush(dax_dev, kaddr + offset, size);
+-		dax_read_unlock(id);
+-	}
+-	return 0;
++	id =3D dax_read_lock();
++	rc =3D dax_zero_page_range(dax_dev, (pgoff << PAGE_SHIFT) + offset, siz=
+e);
++	dax_read_unlock(id);
++	return rc;
+ }
+ EXPORT_SYMBOL_GPL(__dax_zero_page_range);
+=20
+--=20
+2.20.1
