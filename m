@@ -1,7 +1,7 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH v4 1/7] pmem: Add functions for reading/writing page to/from pmem
-Date: Mon, 17 Feb 2020 13:16:47 -0500
-Message-ID: <20200217181653.4706-2-vgoyal@redhat.com>
+Subject: [PATCH v4 2/7] pmem: Enable pmem_do_write() to deal with arbitrary ranges
+Date: Mon, 17 Feb 2020 13:16:48 -0500
+Message-ID: <20200217181653.4706-3-vgoyal@redhat.com>
 References: <20200217181653.4706-1-vgoyal@redhat.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -12,138 +12,88 @@ To: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, hch@infradead.org,
 Cc: dm-devel@redhat.com, vishal.l.verma@intel.com, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-This splits pmem_do_bvec() into pmem_do_read() and pmem_do_write().
-pmem_do_write() will be used by pmem zero_page_range() as well. Hence
-sharing the same code.
+Currently pmem_do_write() is written with assumption that all I/O is
+sector aligned. Soon I want to use this function in zero_page_range()
+where range passed in does not have to be sector aligned.
 
-Suggested-by: Christoph Hellwig <hch@infradead.org>
+Modify this function to be able to deal with an arbitrary range. Which
+is specified by pmem_off and len.
+
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- drivers/nvdimm/pmem.c | 86 +++++++++++++++++++++++++------------------
- 1 file changed, 50 insertions(+), 36 deletions(-)
+ drivers/nvdimm/pmem.c | 32 +++++++++++++++++++++++---------
+ 1 file changed, 23 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index 4eae441f86c9..075b11682192 100644
+index 075b11682192..fae8f67da9de 100644
 --- a/drivers/nvdimm/pmem.c
 +++ b/drivers/nvdimm/pmem.c
-@@ -136,9 +136,25 @@ static blk_status_t read_pmem(struct page *page, uns=
-igned int off,
- 	return BLK_STS_OK;
- }
+@@ -154,15 +154,23 @@ static blk_status_t pmem_do_read(struct pmem_device=
+ *pmem,
 =20
--static blk_status_t pmem_do_bvec(struct pmem_device *pmem, struct page *=
-page,
--			unsigned int len, unsigned int off, unsigned int op,
--			sector_t sector)
-+static blk_status_t pmem_do_read(struct pmem_device *pmem,
-+			struct page *page, unsigned int page_off,
-+			sector_t sector, unsigned int len)
-+{
-+	blk_status_t rc;
-+	phys_addr_t pmem_off =3D sector * 512 + pmem->data_offset;
-+	void *pmem_addr =3D pmem->virt_addr + pmem_off;
-+
-+	if (unlikely(is_bad_pmem(&pmem->bb, sector, len)))
-+		return BLK_STS_IOERR;
-+
-+	rc =3D read_pmem(page, page_off, pmem_addr, len);
-+	flush_dcache_page(page);
-+	return rc;
-+}
-+
-+static blk_status_t pmem_do_write(struct pmem_device *pmem,
-+			struct page *page, unsigned int page_off,
-+			sector_t sector, unsigned int len)
+ static blk_status_t pmem_do_write(struct pmem_device *pmem,
+ 			struct page *page, unsigned int page_off,
+-			sector_t sector, unsigned int len)
++			u64 pmem_off, unsigned int len)
  {
  	blk_status_t rc =3D BLK_STS_OK;
  	bool bad_pmem =3D false;
-@@ -148,34 +164,25 @@ static blk_status_t pmem_do_bvec(struct pmem_device=
- *pmem, struct page *page,
- 	if (unlikely(is_bad_pmem(&pmem->bb, sector, len)))
- 		bad_pmem =3D true;
+-	phys_addr_t pmem_off =3D sector * 512 + pmem->data_offset;
+-	void *pmem_addr =3D pmem->virt_addr + pmem_off;
+-
+-	if (unlikely(is_bad_pmem(&pmem->bb, sector, len)))
+-		bad_pmem =3D true;
++	phys_addr_t pmem_real_off =3D pmem_off + pmem->data_offset;
++	void *pmem_addr =3D pmem->virt_addr + pmem_real_off;
++	sector_t sector_start, sector_end;
++	unsigned nr_sectors;
++
++	sector_start =3D DIV_ROUND_UP(pmem_off, SECTOR_SIZE);
++	sector_end =3D (pmem_off + len) >> SECTOR_SHIFT;
++	if (sector_end > sector_start) {
++		nr_sectors =3D sector_end - sector_start;
++		if (is_bad_pmem(&pmem->bb, sector_start,
++				nr_sectors << SECTOR_SHIFT))
++			bad_pmem =3D true;
++	}
 =20
--	if (!op_is_write(op)) {
--		if (unlikely(bad_pmem))
--			rc =3D BLK_STS_IOERR;
--		else {
--			rc =3D read_pmem(page, off, pmem_addr, len);
--			flush_dcache_page(page);
--		}
--	} else {
--		/*
--		 * Note that we write the data both before and after
--		 * clearing poison.  The write before clear poison
--		 * handles situations where the latest written data is
--		 * preserved and the clear poison operation simply marks
--		 * the address range as valid without changing the data.
--		 * In this case application software can assume that an
--		 * interrupted write will either return the new good
--		 * data or an error.
--		 *
--		 * However, if pmem_clear_poison() leaves the data in an
--		 * indeterminate state we need to perform the write
--		 * after clear poison.
--		 */
--		flush_dcache_page(page);
--		write_pmem(pmem_addr, page, off, len);
--		if (unlikely(bad_pmem)) {
--			rc =3D pmem_clear_poison(pmem, pmem_off, len);
--			write_pmem(pmem_addr, page, off, len);
--		}
-+	/*
-+	 * Note that we write the data both before and after
-+	 * clearing poison.  The write before clear poison
-+	 * handles situations where the latest written data is
-+	 * preserved and the clear poison operation simply marks
-+	 * the address range as valid without changing the data.
-+	 * In this case application software can assume that an
-+	 * interrupted write will either return the new good
-+	 * data or an error.
-+	 *
-+	 * However, if pmem_clear_poison() leaves the data in an
-+	 * indeterminate state we need to perform the write
-+	 * after clear poison.
-+	 */
-+	flush_dcache_page(page);
-+	write_pmem(pmem_addr, page, page_off, len);
-+	if (unlikely(bad_pmem)) {
-+		rc =3D pmem_clear_poison(pmem, pmem_off, len);
-+		write_pmem(pmem_addr, page, page_off, len);
+ 	/*
+ 	 * Note that we write the data both before and after
+@@ -181,7 +189,13 @@ static blk_status_t pmem_do_write(struct pmem_device=
+ *pmem,
+ 	flush_dcache_page(page);
+ 	write_pmem(pmem_addr, page, page_off, len);
+ 	if (unlikely(bad_pmem)) {
+-		rc =3D pmem_clear_poison(pmem, pmem_off, len);
++		/*
++		 * Pass sector aligned offset and length. That seems
++		 * to work as of now. Other finer grained alignment
++		 * cases can be addressed later if need be.
++		 */
++		rc =3D pmem_clear_poison(pmem, ALIGN(pmem_real_off, SECTOR_SIZE),
++				       nr_sectors << SECTOR_SHIFT);
+ 		write_pmem(pmem_addr, page, page_off, len);
  	}
 =20
- 	return rc;
-@@ -197,8 +204,12 @@ static blk_qc_t pmem_make_request(struct request_que=
-ue *q, struct bio *bio)
-=20
- 	do_acct =3D nd_iostat_start(bio, &start);
+@@ -206,7 +220,7 @@ static blk_qc_t pmem_make_request(struct request_queu=
+e *q, struct bio *bio)
  	bio_for_each_segment(bvec, bio, iter) {
--		rc =3D pmem_do_bvec(pmem, bvec.bv_page, bvec.bv_len,
--				bvec.bv_offset, bio_op(bio), iter.bi_sector);
-+		if (op_is_write(bio_op(bio)))
-+			rc =3D pmem_do_write(pmem, bvec.bv_page, bvec.bv_offset,
-+				iter.bi_sector, bvec.bv_len);
-+		else
-+			rc =3D pmem_do_read(pmem, bvec.bv_page, bvec.bv_offset,
-+				iter.bi_sector, bvec.bv_len);
- 		if (rc) {
- 			bio->bi_status =3D rc;
- 			break;
-@@ -223,9 +234,12 @@ static int pmem_rw_page(struct block_device *bdev, s=
-ector_t sector,
- 	struct pmem_device *pmem =3D bdev->bd_queue->queuedata;
+ 		if (op_is_write(bio_op(bio)))
+ 			rc =3D pmem_do_write(pmem, bvec.bv_page, bvec.bv_offset,
+-				iter.bi_sector, bvec.bv_len);
++				iter.bi_sector << SECTOR_SHIFT, bvec.bv_len);
+ 		else
+ 			rc =3D pmem_do_read(pmem, bvec.bv_page, bvec.bv_offset,
+ 				iter.bi_sector, bvec.bv_len);
+@@ -235,7 +249,7 @@ static int pmem_rw_page(struct block_device *bdev, se=
+ctor_t sector,
  	blk_status_t rc;
 =20
--	rc =3D pmem_do_bvec(pmem, page, hpage_nr_pages(page) * PAGE_SIZE,
--			  0, op, sector);
--
-+	if (op_is_write(op))
-+		rc =3D pmem_do_write(pmem, page, 0, sector,
-+				   hpage_nr_pages(page) * PAGE_SIZE);
-+	else
-+		rc =3D pmem_do_read(pmem, page, 0, sector,
-+				   hpage_nr_pages(page) * PAGE_SIZE);
- 	/*
- 	 * The ->rw_page interface is subtle and tricky.  The core
- 	 * retries on any error, so we can only invoke page_endio() in
+ 	if (op_is_write(op))
+-		rc =3D pmem_do_write(pmem, page, 0, sector,
++		rc =3D pmem_do_write(pmem, page, 0, sector << SECTOR_SHIFT,
+ 				   hpage_nr_pages(page) * PAGE_SIZE);
+ 	else
+ 		rc =3D pmem_do_read(pmem, page, 0, sector,
 --=20
 2.20.1
