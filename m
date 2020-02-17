@@ -1,8 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH v2] dm integrity: fix a deadlock due to
- offloading to an incorrect workqueue (fwd)
-Date: Mon, 17 Feb 2020 07:43:03 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.2002170739420.18605@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH] dm-integrity: fix invalid table returned
+Date: Mon, 17 Feb 2020 08:11:35 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.2002170809280.18605@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,112 +15,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, David Teigland <teigland@redhat.com>, Ondrej Kozina <okozina@redhat.com>
+To: Mike Snitzer <msnitzer@redhat.com>, Ondrej Kozina <okozina@redhat.com>, Milan Broz <mbroz@redhat.com>, David Teigland <teigland@redhat.com>, Alasdair Kergon <agk@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If we need to perform synchronous I/O in the function
-dm_integrity_map_continue, we must make sure that we are not in the map
-function - in order to avoid the deadlock due to bio queuing in
-generic_make_request. To avoid the deadlock, we offload the request to
-metadata_wq.
+If the flag SB_FLAG_RECALCULATE is present in the superblock, but it was
+not specified on the command line (i.e. ic->recalculate_flag is false),
+dm-integrity would return invalid table line - the reported number of
+arguments would not match the real number.
 
-However, metadata_wq also processes metadata updates for write requests.
-If there are too many requests that get offloaded to metadata_wq at the
-beginning of dm_integrity_map_continue, the workqueue metadata_wq
-becomes clogged and the system is incapable of processing any metadata updates.
-
-This causes a deadlock because all the requests that need to do metadata
-updates wait for metadata_wq to proceed and metadata_wq waits inside
-wait_and_add_new_range until some existing request releases its range
-lock (which doesn't happen because the range lock is released after
-metadata update).
-
-In order to fix the deadlock, we create a new workqueue offload_wq and
-offload requests to it - so that processing of offload_wq is independent
-from processing of metadata_wq.
+This patch fixes the argument mismatch.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Reported-by: Heinz Mauelshagen <heinzm@redhat.com>
-Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
-Cc: stable@vger.kernel.org	# v4.12+
-Fixes: 7eada909bfd7 ("dm: add integrity target")
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
----
- drivers/md/dm-integrity.c | 19 +++++++++++++++----
- 1 file changed, 15 insertions(+), 4 deletions(-)
+Reported-by: Ondrej Kozina <okozina@redhat.com>
+Cc: stable@vger.kernel.org	# v5.2+
+Fixes: 468dfca38b1a ("dm integrity: add a bitmap mode")
 
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index b225b3e445fa..996215d7dd61 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -212,6 +212,7 @@ struct dm_integrity_c {
- 	struct list_head wait_list;
- 	wait_queue_head_t endio_wait;
- 	struct workqueue_struct *wait_wq;
-+	struct workqueue_struct *offload_wq;
- 
- 	unsigned char commit_seq;
- 	commit_id_t commit_ids[N_COMMIT_IDS];
-@@ -1439,7 +1440,7 @@ static void dec_in_flight(struct dm_integrity_io *dio)
- 			dio->range.logical_sector += dio->range.n_sectors;
- 			bio_advance(bio, dio->range.n_sectors << SECTOR_SHIFT);
- 			INIT_WORK(&dio->work, integrity_bio_wait);
--			queue_work(ic->wait_wq, &dio->work);
-+			queue_work(ic->offload_wq, &dio->work);
- 			return;
- 		}
- 		do_endio_flush(ic, dio);
-@@ -1865,7 +1866,7 @@ static void dm_integrity_map_continue(struct dm_integrity_io *dio, bool from_map
- 
- 	if (need_sync_io && from_map) {
- 		INIT_WORK(&dio->work, integrity_bio_wait);
--		queue_work(ic->metadata_wq, &dio->work);
-+		queue_work(ic->offload_wq, &dio->work);
- 		return;
- 	}
- 
-@@ -2501,7 +2502,7 @@ static void bitmap_block_work(struct work_struct *w)
- 				    dio->range.n_sectors, BITMAP_OP_TEST_ALL_SET)) {
- 			remove_range(ic, &dio->range);
- 			INIT_WORK(&dio->work, integrity_bio_wait);
--			queue_work(ic->wait_wq, &dio->work);
-+			queue_work(ic->offload_wq, &dio->work);
- 		} else {
- 			block_bitmap_op(ic, ic->journal, dio->range.logical_sector,
- 					dio->range.n_sectors, BITMAP_OP_SET);
-@@ -2524,7 +2525,7 @@ static void bitmap_block_work(struct work_struct *w)
- 
- 		remove_range(ic, &dio->range);
- 		INIT_WORK(&dio->work, integrity_bio_wait);
--		queue_work(ic->wait_wq, &dio->work);
-+		queue_work(ic->offload_wq, &dio->work);
- 	}
- 
- 	queue_delayed_work(ic->commit_wq, &ic->bitmap_flush_work, ic->bitmap_flush_interval);
-@@ -3836,6 +3837,14 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 		goto bad;
- 	}
- 
-+	ic->offload_wq = alloc_workqueue("dm-integrity-offload", WQ_MEM_RECLAIM,
-+					  METADATA_WORKQUEUE_MAX_ACTIVE);
-+	if (!ic->offload_wq) {
-+		ti->error = "Cannot allocate workqueue";
-+		r = -ENOMEM;
-+		goto bad;
-+	}
-+
- 	ic->commit_wq = alloc_workqueue("dm-integrity-commit", WQ_MEM_RECLAIM, 1);
- 	if (!ic->commit_wq) {
- 		ti->error = "Cannot allocate workqueue";
-@@ -4140,6 +4149,8 @@ static void dm_integrity_dtr(struct dm_target *ti)
- 		destroy_workqueue(ic->metadata_wq);
- 	if (ic->wait_wq)
- 		destroy_workqueue(ic->wait_wq);
-+	if (ic->offload_wq)
-+		destroy_workqueue(ic->offload_wq);
- 	if (ic->commit_wq)
- 		destroy_workqueue(ic->commit_wq);
- 	if (ic->writer_wq)
--- 
-2.24.1
+---
+ drivers/md/dm-integrity.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2020-02-14 17:19:16.000000000 +0100
++++ linux-2.6/drivers/md/dm-integrity.c	2020-02-17 13:58:05.000000000 +0100
+@@ -2982,7 +2982,7 @@ static void dm_integrity_status(struct d
+ 			DMEMIT(" meta_device:%s", ic->meta_dev->name);
+ 		if (ic->sectors_per_block != 1)
+ 			DMEMIT(" block_size:%u", ic->sectors_per_block << SECTOR_SHIFT);
+-		if (ic->recalculate_flag)
++		if (ic->sb->flags & cpu_to_le32(SB_FLAG_RECALCULATING))
+ 			DMEMIT(" recalculate");
+ 		DMEMIT(" journal_sectors:%u", ic->initial_sectors - SB_SECTORS);
+ 		DMEMIT(" interleave_sectors:%u", 1U << ic->sb->log2_interleave_sectors);
