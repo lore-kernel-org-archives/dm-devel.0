@@ -1,145 +1,127 @@
-From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 5.5 053/542] dm raid: table line rebuild status fixes
-Date: Fri, 14 Feb 2020 10:40:45 -0500
-Message-ID: <20200214154854.6746-53-sashal@kernel.org>
-References: <20200214154854.6746-1-sashal@kernel.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH v2] dm integrity: fix a deadlock due to
+ offloading to an incorrect workqueue (fwd)
+Date: Mon, 17 Feb 2020 07:43:03 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.2002170739420.18605@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200214154854.6746-1-sashal@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Sasha Levin <sashal@kernel.org>, dm-devel@redhat.com, linux-doc@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, David Teigland <teigland@redhat.com>, Ondrej Kozina <okozina@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Heinz Mauelshagen <heinzm@redhat.com>
+If we need to perform synchronous I/O in the function
+dm_integrity_map_continue, we must make sure that we are not in the map
+function - in order to avoid the deadlock due to bio queuing in
+generic_make_request. To avoid the deadlock, we offload the request to
+metadata_wq.
 
-[ Upstream commit 43f3952a51f8198d365acb7f51fe42d578fe5d0a ]
+However, metadata_wq also processes metadata updates for write requests.
+If there are too many requests that get offloaded to metadata_wq at the
+beginning of dm_integrity_map_continue, the workqueue metadata_wq
+becomes clogged and the system is incapable of processing any metadata updates.
 
-raid_status() wasn't emitting rebuild flags on the table line properly
-because the rdev number was not yet set properly; index raid component
-devices array directly to solve.
+This causes a deadlock because all the requests that need to do metadata
+updates wait for metadata_wq to proceed and metadata_wq waits inside
+wait_and_add_new_range until some existing request releases its range
+lock (which doesn't happen because the range lock is released after
+metadata update).
 
-Also fix wrong argument count on emitted table line caused by 1 too
-many rebuild/write_mostly argument and consider any journal_(dev|mode)
-pairs.
+In order to fix the deadlock, we create a new workqueue offload_wq and
+offload requests to it - so that processing of offload_wq is independent
+from processing of metadata_wq.
 
-Link: https://bugzilla.redhat.com/1782045
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Reported-by: Heinz Mauelshagen <heinzm@redhat.com>
+Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
+Cc: stable@vger.kernel.org	# v4.12+
+Fixes: 7eada909bfd7 ("dm: add integrity target")
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- .../admin-guide/device-mapper/dm-raid.rst     |  2 +
- drivers/md/dm-raid.c                          | 43 ++++++++++---------
- 2 files changed, 24 insertions(+), 21 deletions(-)
+ drivers/md/dm-integrity.c | 19 +++++++++++++++----
+ 1 file changed, 15 insertions(+), 4 deletions(-)
 
-diff --git a/Documentation/admin-guide/device-mapper/dm-raid.rst b/Documentation/admin-guide/device-mapper/dm-raid.rst
-index f6344675e3951..695a2ea1d1ae2 100644
---- a/Documentation/admin-guide/device-mapper/dm-raid.rst
-+++ b/Documentation/admin-guide/device-mapper/dm-raid.rst
-@@ -419,3 +419,5 @@ Version History
- 	rebuild errors.
-  1.15.0 Fix size extensions not being synchronized in case of new MD bitmap
-         pages allocated;  also fix those not occuring after previous reductions
-+ 1.15.1 Fix argument count and arguments for rebuild/write_mostly/journal_(dev|mode)
-+        on the status line.
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index c412eaa975fc0..9a18bef0a5ff0 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -129,7 +129,9 @@ struct raid_dev {
- 				  CTR_FLAG_RAID10_COPIES | \
- 				  CTR_FLAG_RAID10_FORMAT | \
- 				  CTR_FLAG_DELTA_DISKS | \
--				  CTR_FLAG_DATA_OFFSET)
-+				  CTR_FLAG_DATA_OFFSET | \
-+				  CTR_FLAG_JOURNAL_DEV | \
-+				  CTR_FLAG_JOURNAL_MODE)
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index b225b3e445fa..996215d7dd61 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -212,6 +212,7 @@ struct dm_integrity_c {
+ 	struct list_head wait_list;
+ 	wait_queue_head_t endio_wait;
+ 	struct workqueue_struct *wait_wq;
++	struct workqueue_struct *offload_wq;
  
- /* Valid options definitions per raid level... */
+ 	unsigned char commit_seq;
+ 	commit_id_t commit_ids[N_COMMIT_IDS];
+@@ -1439,7 +1440,7 @@ static void dec_in_flight(struct dm_integrity_io *dio)
+ 			dio->range.logical_sector += dio->range.n_sectors;
+ 			bio_advance(bio, dio->range.n_sectors << SECTOR_SHIFT);
+ 			INIT_WORK(&dio->work, integrity_bio_wait);
+-			queue_work(ic->wait_wq, &dio->work);
++			queue_work(ic->offload_wq, &dio->work);
+ 			return;
+ 		}
+ 		do_endio_flush(ic, dio);
+@@ -1865,7 +1866,7 @@ static void dm_integrity_map_continue(struct dm_integrity_io *dio, bool from_map
  
-@@ -3001,7 +3003,6 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		{ 1, 254, "Cannot understand number of raid devices parameters" }
- 	};
+ 	if (need_sync_io && from_map) {
+ 		INIT_WORK(&dio->work, integrity_bio_wait);
+-		queue_work(ic->metadata_wq, &dio->work);
++		queue_work(ic->offload_wq, &dio->work);
+ 		return;
+ 	}
  
--	/* Must have <raid_type> */
- 	arg = dm_shift_arg(&as);
- 	if (!arg) {
- 		ti->error = "No arguments";
-@@ -3508,8 +3509,7 @@ static void raid_status(struct dm_target *ti, status_type_t type,
- 	unsigned long recovery;
- 	unsigned int raid_param_cnt = 1; /* at least 1 for chunksize */
- 	unsigned int sz = 0;
--	unsigned int rebuild_disks;
--	unsigned int write_mostly_params = 0;
-+	unsigned int rebuild_writemostly_count = 0;
- 	sector_t progress, resync_max_sectors, resync_mismatches;
- 	enum sync_state state;
- 	struct raid_type *rt;
-@@ -3593,18 +3593,20 @@ static void raid_status(struct dm_target *ti, status_type_t type,
- 	case STATUSTYPE_TABLE:
- 		/* Report the table line string you would use to construct this raid set */
+@@ -2501,7 +2502,7 @@ static void bitmap_block_work(struct work_struct *w)
+ 				    dio->range.n_sectors, BITMAP_OP_TEST_ALL_SET)) {
+ 			remove_range(ic, &dio->range);
+ 			INIT_WORK(&dio->work, integrity_bio_wait);
+-			queue_work(ic->wait_wq, &dio->work);
++			queue_work(ic->offload_wq, &dio->work);
+ 		} else {
+ 			block_bitmap_op(ic, ic->journal, dio->range.logical_sector,
+ 					dio->range.n_sectors, BITMAP_OP_SET);
+@@ -2524,7 +2525,7 @@ static void bitmap_block_work(struct work_struct *w)
  
--		/* Calculate raid parameter count */
--		for (i = 0; i < rs->raid_disks; i++)
--			if (test_bit(WriteMostly, &rs->dev[i].rdev.flags))
--				write_mostly_params += 2;
--		rebuild_disks = memweight(rs->rebuild_disks, DISKS_ARRAY_ELEMS * sizeof(*rs->rebuild_disks));
--		raid_param_cnt += rebuild_disks * 2 +
--				  write_mostly_params +
-+		/*
-+		 * Count any rebuild or writemostly argument pairs and subtract the
-+		 * hweight count being added below of any rebuild and writemostly ctr flags.
-+		 */
-+		for (i = 0; i < rs->raid_disks; i++) {
-+			rebuild_writemostly_count += (test_bit(i, (void *) rs->rebuild_disks) ? 2 : 0) +
-+						     (test_bit(WriteMostly, &rs->dev[i].rdev.flags) ? 2 : 0);
-+		}
-+		rebuild_writemostly_count -= (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags) ? 2 : 0) +
-+					     (test_bit(__CTR_FLAG_WRITE_MOSTLY, &rs->ctr_flags) ? 2 : 0);
-+		/* Calculate raid parameter count based on ^ rebuild/writemostly argument counts and ctr flags set. */
-+		raid_param_cnt += rebuild_writemostly_count +
- 				  hweight32(rs->ctr_flags & CTR_FLAG_OPTIONS_NO_ARGS) +
--				  hweight32(rs->ctr_flags & CTR_FLAG_OPTIONS_ONE_ARG) * 2 +
--				  (test_bit(__CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags) ? 2 : 0) +
--				  (test_bit(__CTR_FLAG_JOURNAL_MODE, &rs->ctr_flags) ? 2 : 0);
--
-+				  hweight32(rs->ctr_flags & CTR_FLAG_OPTIONS_ONE_ARG) * 2;
- 		/* Emit table line */
- 		/* This has to be in the documented order for userspace! */
- 		DMEMIT("%s %u %u", rs->raid_type->name, raid_param_cnt, mddev->new_chunk_sectors);
-@@ -3612,11 +3614,10 @@ static void raid_status(struct dm_target *ti, status_type_t type,
- 			DMEMIT(" %s", dm_raid_arg_name_by_flag(CTR_FLAG_SYNC));
- 		if (test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags))
- 			DMEMIT(" %s", dm_raid_arg_name_by_flag(CTR_FLAG_NOSYNC));
--		if (rebuild_disks)
-+		if (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags))
- 			for (i = 0; i < rs->raid_disks; i++)
--				if (test_bit(rs->dev[i].rdev.raid_disk, (void *) rs->rebuild_disks))
--					DMEMIT(" %s %u", dm_raid_arg_name_by_flag(CTR_FLAG_REBUILD),
--							 rs->dev[i].rdev.raid_disk);
-+				if (test_bit(i, (void *) rs->rebuild_disks))
-+					DMEMIT(" %s %u", dm_raid_arg_name_by_flag(CTR_FLAG_REBUILD), i);
- 		if (test_bit(__CTR_FLAG_DAEMON_SLEEP, &rs->ctr_flags))
- 			DMEMIT(" %s %lu", dm_raid_arg_name_by_flag(CTR_FLAG_DAEMON_SLEEP),
- 					  mddev->bitmap_info.daemon_sleep);
-@@ -3626,7 +3627,7 @@ static void raid_status(struct dm_target *ti, status_type_t type,
- 		if (test_bit(__CTR_FLAG_MAX_RECOVERY_RATE, &rs->ctr_flags))
- 			DMEMIT(" %s %d", dm_raid_arg_name_by_flag(CTR_FLAG_MAX_RECOVERY_RATE),
- 					 mddev->sync_speed_max);
--		if (write_mostly_params)
-+		if (test_bit(__CTR_FLAG_WRITE_MOSTLY, &rs->ctr_flags))
- 			for (i = 0; i < rs->raid_disks; i++)
- 				if (test_bit(WriteMostly, &rs->dev[i].rdev.flags))
- 					DMEMIT(" %s %d", dm_raid_arg_name_by_flag(CTR_FLAG_WRITE_MOSTLY),
-@@ -4029,7 +4030,7 @@ static void raid_resume(struct dm_target *ti)
+ 		remove_range(ic, &dio->range);
+ 		INIT_WORK(&dio->work, integrity_bio_wait);
+-		queue_work(ic->wait_wq, &dio->work);
++		queue_work(ic->offload_wq, &dio->work);
+ 	}
  
- static struct target_type raid_target = {
- 	.name = "raid",
--	.version = {1, 15, 0},
-+	.version = {1, 15, 1},
- 	.module = THIS_MODULE,
- 	.ctr = raid_ctr,
- 	.dtr = raid_dtr,
+ 	queue_delayed_work(ic->commit_wq, &ic->bitmap_flush_work, ic->bitmap_flush_interval);
+@@ -3836,6 +3837,14 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		goto bad;
+ 	}
+ 
++	ic->offload_wq = alloc_workqueue("dm-integrity-offload", WQ_MEM_RECLAIM,
++					  METADATA_WORKQUEUE_MAX_ACTIVE);
++	if (!ic->offload_wq) {
++		ti->error = "Cannot allocate workqueue";
++		r = -ENOMEM;
++		goto bad;
++	}
++
+ 	ic->commit_wq = alloc_workqueue("dm-integrity-commit", WQ_MEM_RECLAIM, 1);
+ 	if (!ic->commit_wq) {
+ 		ti->error = "Cannot allocate workqueue";
+@@ -4140,6 +4149,8 @@ static void dm_integrity_dtr(struct dm_target *ti)
+ 		destroy_workqueue(ic->metadata_wq);
+ 	if (ic->wait_wq)
+ 		destroy_workqueue(ic->wait_wq);
++	if (ic->offload_wq)
++		destroy_workqueue(ic->offload_wq);
+ 	if (ic->commit_wq)
+ 		destroy_workqueue(ic->commit_wq);
+ 	if (ic->writer_wq)
 -- 
-2.20.1
+2.24.1
