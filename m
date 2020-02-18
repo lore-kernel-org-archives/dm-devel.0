@@ -1,132 +1,67 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH v5 8/8] dax,iomap: Add helper dax_iomap_zero() to zero a range
-Date: Tue, 18 Feb 2020 16:48:41 -0500
-Message-ID: <20200218214841.10076-9-vgoyal@redhat.com>
-References: <20200218214841.10076-1-vgoyal@redhat.com>
+Subject: [PATCH v5 0/8] dax/pmem: Provide a dax operation to zero range of memory
+Date: Tue, 18 Feb 2020 16:48:33 -0500
+Message-ID: <20200218214841.10076-1-vgoyal@redhat.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20200218214841.10076-1-vgoyal@redhat.com>
 Sender: linux-fsdevel-owner@vger.kernel.org
 To: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, hch@infradead.org, dan.j.williams@intel.com
-Cc: dm-devel@redhat.com, vishal.l.verma@intel.com, vgoyal@redhat.com, Christoph Hellwig <hch@lst.de>
+Cc: dm-devel@redhat.com, vishal.l.verma@intel.com, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-Add a helper dax_ioamp_zero() to zero a range. This patch basically
-merges __dax_zero_page_range() and iomap_dax_zero().
+Hi,=20
 
-Suggested-by: Christoph Hellwig <hch@infradead.org>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
-Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
----
- fs/dax.c               | 12 ++++++------
- fs/iomap/buffered-io.c |  9 +--------
- include/linux/dax.h    | 17 +++--------------
- 3 files changed, 10 insertions(+), 28 deletions(-)
+This is V5 of patches. These patches are also available at.
 
-diff --git a/fs/dax.c b/fs/dax.c
-index f8ae0a9984fa..4be581009db5 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -1038,23 +1038,23 @@ static vm_fault_t dax_load_hole(struct xa_state *=
-xas,
- 	return ret;
- }
-=20
--int __dax_zero_page_range(struct block_device *bdev,
--		struct dax_device *dax_dev, sector_t sector,
--		unsigned int offset, unsigned int size)
-+int dax_iomap_zero(loff_t pos, unsigned offset, unsigned size,
-+		   struct iomap *iomap)
- {
- 	pgoff_t pgoff;
- 	long rc, id;
-+	sector_t sector =3D iomap_sector(iomap, pos & PAGE_MASK);
-=20
--	rc =3D bdev_dax_pgoff(bdev, sector, PAGE_SIZE, &pgoff);
-+	rc =3D bdev_dax_pgoff(iomap->bdev, sector, PAGE_SIZE, &pgoff);
- 	if (rc)
- 		return rc;
-=20
- 	id =3D dax_read_lock();
--	rc =3D dax_zero_page_range(dax_dev, (pgoff << PAGE_SHIFT) + offset, siz=
-e);
-+	rc =3D dax_zero_page_range(iomap->dax_dev, (pgoff << PAGE_SHIFT) + offs=
-et,
-+				 size);
- 	dax_read_unlock(id);
- 	return rc;
- }
--EXPORT_SYMBOL_GPL(__dax_zero_page_range);
-=20
- static loff_t
- dax_iomap_actor(struct inode *inode, loff_t pos, loff_t length, void *da=
-ta,
-diff --git a/fs/iomap/buffered-io.c b/fs/iomap/buffered-io.c
-index 7c84c4c027c4..6f750da545e5 100644
---- a/fs/iomap/buffered-io.c
-+++ b/fs/iomap/buffered-io.c
-@@ -974,13 +974,6 @@ static int iomap_zero(struct inode *inode, loff_t po=
-s, unsigned offset,
- 	return iomap_write_end(inode, pos, bytes, bytes, page, iomap, srcmap);
- }
-=20
--static int iomap_dax_zero(loff_t pos, unsigned offset, unsigned bytes,
--		struct iomap *iomap)
--{
--	return __dax_zero_page_range(iomap->bdev, iomap->dax_dev,
--			iomap_sector(iomap, pos & PAGE_MASK), offset, bytes);
--}
--
- static loff_t
- iomap_zero_range_actor(struct inode *inode, loff_t pos, loff_t count,
- 		void *data, struct iomap *iomap, struct iomap *srcmap)
-@@ -1000,7 +993,7 @@ iomap_zero_range_actor(struct inode *inode, loff_t p=
-os, loff_t count,
- 		bytes =3D min_t(loff_t, PAGE_SIZE - offset, count);
-=20
- 		if (IS_DAX(inode))
--			status =3D iomap_dax_zero(pos, offset, bytes, iomap);
-+			status =3D dax_iomap_zero(pos, offset, bytes, iomap);
- 		else
- 			status =3D iomap_zero(inode, pos, offset, bytes, iomap,
- 					srcmap);
-diff --git a/include/linux/dax.h b/include/linux/dax.h
-index 93a663c26d6a..7b681acfc522 100644
---- a/include/linux/dax.h
-+++ b/include/linux/dax.h
-@@ -13,6 +13,7 @@
- typedef unsigned long dax_entry_t;
-=20
- struct iomap_ops;
-+struct iomap;
- struct dax_device;
- struct dax_operations {
- 	/*
-@@ -213,20 +214,8 @@ vm_fault_t dax_finish_sync_fault(struct vm_fault *vm=
-f,
- int dax_delete_mapping_entry(struct address_space *mapping, pgoff_t inde=
-x);
- int dax_invalidate_mapping_entry_sync(struct address_space *mapping,
- 				      pgoff_t index);
--
--#ifdef CONFIG_FS_DAX
--int __dax_zero_page_range(struct block_device *bdev,
--		struct dax_device *dax_dev, sector_t sector,
--		unsigned int offset, unsigned int length);
--#else
--static inline int __dax_zero_page_range(struct block_device *bdev,
--		struct dax_device *dax_dev, sector_t sector,
--		unsigned int offset, unsigned int length)
--{
--	return -ENXIO;
--}
--#endif
--
-+int dax_iomap_zero(loff_t pos, unsigned offset, unsigned size,
-+			struct iomap *iomap);
- static inline bool dax_mapping(struct address_space *mapping)
- {
- 	return mapping->host && IS_DAX(mapping->host);
+https://github.com/rhvgoyal/linux/commits/dax-zero-range-v5
+
+Changes since V4:
+
+- Rebased on top of 5.6-rc2
+- Added a separate patch so that pmem_clear_poison() accepts arbitrary
+  offset and len and aligns these as needed. This takes away the burden
+  of aligning from callers.
+
+Previous versions of patches are here.
+v4:
+https://lore.kernel.org/linux-fsdevel/20200217181653.4706-1-vgoyal@redhat=
+.com/
+v3:
+https://lore.kernel.org/linux-fsdevel/20200214125717.GA18654@redhat.com/T=
+/#t
+v2:
+https://lore.kernel.org/linux-fsdevel/20200203200029.4592-1-vgoyal@redhat=
+.com/
+v1:
+https://lore.kernel.org/linux-fsdevel/20200123165249.GA7664@redhat.com/
+
+Thanks
+Vivek
+
+Vivek Goyal (8):
+  pmem: Add functions for reading/writing page to/from pmem
+  drivers/pmem: Allow pmem_clear_poison() to accept arbitrary offset and
+    len
+  pmem: Enable pmem_do_write() to deal with arbitrary ranges
+  dax, pmem: Add a dax operation zero_page_range
+  s390,dcssblk,dax: Add dax zero_page_range operation to dcssblk driver
+  dm,dax: Add dax zero_page_range operation
+  dax,iomap: Start using dax native zero_page_range()
+  dax,iomap: Add helper dax_iomap_zero() to zero a range
+
+ drivers/dax/super.c           |  19 +++++
+ drivers/md/dm-linear.c        |  21 ++++++
+ drivers/md/dm-log-writes.c    |  19 +++++
+ drivers/md/dm-stripe.c        |  26 +++++++
+ drivers/md/dm.c               |  31 ++++++++
+ drivers/nvdimm/pmem.c         | 134 +++++++++++++++++++++++-----------
+ drivers/s390/block/dcssblk.c  |  17 +++++
+ fs/dax.c                      |  53 ++++----------
+ fs/iomap/buffered-io.c        |   9 +--
+ include/linux/dax.h           |  20 ++---
+ include/linux/device-mapper.h |   3 +
+ 11 files changed, 246 insertions(+), 106 deletions(-)
+
 --=20
 2.20.1
