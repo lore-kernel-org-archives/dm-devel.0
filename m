@@ -1,7 +1,7 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH v5 3/8] pmem: Enable pmem_do_write() to deal with arbitrary ranges
-Date: Tue, 18 Feb 2020 16:48:36 -0500
-Message-ID: <20200218214841.10076-4-vgoyal@redhat.com>
+Subject: [PATCH v5 2/8] drivers/pmem: Allow pmem_clear_poison() to accept arbitrary offset and len
+Date: Tue, 18 Feb 2020 16:48:35 -0500
+Message-ID: <20200218214841.10076-3-vgoyal@redhat.com>
 References: <20200218214841.10076-1-vgoyal@redhat.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -12,82 +12,67 @@ To: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, hch@infradead.org,
 Cc: dm-devel@redhat.com, vishal.l.verma@intel.com, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-Currently pmem_do_write() is written with assumption that all I/O is
-sector aligned. Soon I want to use this function in zero_page_range()
-where range passed in does not have to be sector aligned.
+Currently pmem_clear_poison() expects offset and len to be sector aligned=
+.
+Atleast that seems to be the assumption with which code has been written.
+It is called only from pmem_do_bvec() which is called only from pmem_rw_p=
+age()
+and pmem_make_request() which will only passe sector aligned offset and l=
+en.
 
-Modify this function to be able to deal with an arbitrary range. Which
-is specified by pmem_off and len.
+Soon we want use this function from dax_zero_page_range() code path which
+can try to zero arbitrary range of memory with-in a page. So update this
+function to assume that offset and length can be arbitrary and do the
+necessary alignments as needed.
+
+nvdimm_clear_poison() seems to assume offset and len to be aligned to
+clear_err_unit boundary. But this is currently internal detail and is
+not exported for others to use. So for now, continue to align offset and
+length to SECTOR_SIZE boundary. Improving it further and to align it
+to clear_err_unit boundary is a TODO item for future.
 
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- drivers/nvdimm/pmem.c | 26 +++++++++++++++++---------
- 1 file changed, 17 insertions(+), 9 deletions(-)
+ drivers/nvdimm/pmem.c | 22 ++++++++++++++++++----
+ 1 file changed, 18 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index e72959203253..3c46e9e6d04c 100644
+index 075b11682192..e72959203253 100644
 --- a/drivers/nvdimm/pmem.c
 +++ b/drivers/nvdimm/pmem.c
-@@ -168,15 +168,23 @@ static blk_status_t pmem_do_read(struct pmem_device=
- *pmem,
-=20
- static blk_status_t pmem_do_write(struct pmem_device *pmem,
- 			struct page *page, unsigned int page_off,
--			sector_t sector, unsigned int len)
-+			u64 pmem_off, unsigned int len)
- {
+@@ -74,14 +74,28 @@ static blk_status_t pmem_clear_poison(struct pmem_dev=
+ice *pmem,
+ 	sector_t sector;
+ 	long cleared;
  	blk_status_t rc =3D BLK_STS_OK;
- 	bool bad_pmem =3D false;
--	phys_addr_t pmem_off =3D sector * 512 + pmem->data_offset;
--	void *pmem_addr =3D pmem->virt_addr + pmem_off;
--
--	if (unlikely(is_bad_pmem(&pmem->bb, sector, len)))
--		bad_pmem =3D true;
-+	phys_addr_t pmem_real_off =3D pmem_off + pmem->data_offset;
-+	void *pmem_addr =3D pmem->virt_addr + pmem_real_off;
-+	sector_t sector_start, sector_end;
-+	unsigned nr_sectors;
++	phys_addr_t start_aligned, end_aligned;
++	unsigned int len_aligned;
+=20
+-	sector =3D (offset - pmem->data_offset) / 512;
++	/*
++	 * Callers can pass arbitrary offset and len. But nvdimm_clear_poison()
++	 * expects memory offset and length to meet certain alignment
++	 * restrction (clear_err_unit). Currently nvdimm does not export
++	 * required alignment. So align offset and length to sector boundary
++	 * before passing it to nvdimm_clear_poison().
++	 */
++	start_aligned =3D ALIGN(offset, SECTOR_SIZE);
++	end_aligned =3D ALIGN_DOWN((offset + len), SECTOR_SIZE) - 1;
++	len_aligned =3D end_aligned - start_aligned + 1;
 +
-+	sector_start =3D DIV_ROUND_UP(pmem_off, SECTOR_SIZE);
-+	sector_end =3D (pmem_off + len) >> SECTOR_SHIFT;
-+	if (sector_end > sector_start) {
-+		nr_sectors =3D sector_end - sector_start;
-+		if (is_bad_pmem(&pmem->bb, sector_start,
-+				nr_sectors << SECTOR_SHIFT))
-+			bad_pmem =3D true;
-+	}
++	sector =3D (start_aligned - pmem->data_offset) / 512;
 =20
- 	/*
- 	 * Note that we write the data both before and after
-@@ -195,7 +203,7 @@ static blk_status_t pmem_do_write(struct pmem_device =
-*pmem,
- 	flush_dcache_page(page);
- 	write_pmem(pmem_addr, page, page_off, len);
- 	if (unlikely(bad_pmem)) {
--		rc =3D pmem_clear_poison(pmem, pmem_off, len);
-+		rc =3D pmem_clear_poison(pmem, pmem_real_off, len);
- 		write_pmem(pmem_addr, page, page_off, len);
- 	}
-=20
-@@ -220,7 +228,7 @@ static blk_qc_t pmem_make_request(struct request_queu=
-e *q, struct bio *bio)
- 	bio_for_each_segment(bvec, bio, iter) {
- 		if (op_is_write(bio_op(bio)))
- 			rc =3D pmem_do_write(pmem, bvec.bv_page, bvec.bv_offset,
--				iter.bi_sector, bvec.bv_len);
-+				iter.bi_sector << SECTOR_SHIFT, bvec.bv_len);
- 		else
- 			rc =3D pmem_do_read(pmem, bvec.bv_page, bvec.bv_offset,
- 				iter.bi_sector, bvec.bv_len);
-@@ -249,7 +257,7 @@ static int pmem_rw_page(struct block_device *bdev, se=
-ctor_t sector,
- 	blk_status_t rc;
-=20
- 	if (op_is_write(op))
--		rc =3D pmem_do_write(pmem, page, 0, sector,
-+		rc =3D pmem_do_write(pmem, page, 0, sector << SECTOR_SHIFT,
- 				   hpage_nr_pages(page) * PAGE_SIZE);
- 	else
- 		rc =3D pmem_do_read(pmem, page, 0, sector,
+-	cleared =3D nvdimm_clear_poison(dev, pmem->phys_addr + offset, len);
+-	if (cleared < len)
++	cleared =3D nvdimm_clear_poison(dev, pmem->phys_addr + start_aligned,
++				      len_aligned);
++	if (cleared < len_aligned)
+ 		rc =3D BLK_STS_IOERR;
+ 	if (cleared > 0 && cleared / 512) {
+-		hwpoison_clear(pmem, pmem->phys_addr + offset, cleared);
++		hwpoison_clear(pmem, pmem->phys_addr + start_aligned, cleared);
+ 		cleared /=3D 512;
+ 		dev_dbg(dev, "%#llx clear %ld sector%s\n",
+ 				(unsigned long long) sector, cleared,
 --=20
 2.20.1
