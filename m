@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v3 18/18] tests: make directio tests able to work
-	on a real device
-Date: Wed, 19 Feb 2020 00:48:40 -0600
-Message-ID: <1582094920-9883-19-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 11/18] libmultipath: change failed path prio
+	timeout
+Date: Wed, 19 Feb 2020 00:48:33 -0600
+Message-ID: <1582094920-9883-12-git-send-email-bmarzins@redhat.com>
 References: <1582094920-9883-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,324 +22,89 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-There is now a file in tests called directio_test_dev. If the commented
-out test device line is uncommented and set to a device, it can be used
-to test the directio checker on that device, instead of faking the
-device.
+multipath will try to get the priority from a PATH_DOWN path, if the
+path doesn't currently have a valid priority. However, if the priority
+code needs to contact the device to get the priority, this is likely to
+fail for PATH_DOWN paths.  This code dates back to when multipathd could
+not easily reload device tables with failed paths, so getting the
+correct priority was important to have a correctly configured device.
+Now multipathd can simply reload the device to move the path to the
+correct pathgroup when the path comes back up.  Since there are a number
+of prioritizers that don't require talking to the device, multipath
+shouldn't completely skip attempting to get the priority of these paths,
+but it should set a small timeout, so that it isn't hanging in the
+case where it needs to contact a device through a failed path.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- tests/Makefile          |  16 +++++-
- tests/directio.c        | 114 ++++++++++++++++++++++++++++++++++++++--
- tests/directio_test_dev |   4 ++
- 3 files changed, 130 insertions(+), 4 deletions(-)
- create mode 100644 tests/directio_test_dev
+ libmultipath/discovery.c | 14 ++++++--------
+ libmultipath/prio.c      |  6 +++---
+ 2 files changed, 9 insertions(+), 11 deletions(-)
 
-diff --git a/tests/Makefile b/tests/Makefile
-index e9081e8f..6e3e9ca2 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -18,10 +18,18 @@ TESTS := uevent parser util dmevents hwtable blacklist unaligned vpd pgpolicy \
- .SILENT: $(TESTS:%=%.o)
- .PRECIOUS: $(TESTS:%=%-test)
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 7bbd9fbe..33a313a2 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1737,11 +1737,10 @@ get_state (struct path * pp, struct config *conf, int daemon, int oldstate)
+ }
  
-+DIO_TEST_DEV = $(shell sed -n -e 's/^[[:space:]]*DIO_TEST_DEV[[:space:]]*=[[:space:]]*\([^[:space:]\#]\+\).*/\1/p' < directio_test_dev)
-+
- all:	$(TESTS:%=%.out)
- 
-+# test-specific compiler flags
-+# XYZ-test_FLAGS: Additional compiler flags for this test
-+ifneq ($(DIO_TEST_DEV),)
-+directio-test_FLAGS := -DDIO_TEST_DEV=\"$(DIO_TEST_DEV)\"
-+endif
-+
- # test-specific linker flags
--# XYZ-test-TESTDEPS: test libraries containing __wrap_xyz functions
-+# XYZ-test_TESTDEPS: test libraries containing __wrap_xyz functions
- # XYZ-test_OBJDEPS: object files from libraries to link in explicitly
- #    That may be necessary if functions called from the object file are wrapped
- #    (wrapping works only for symbols which are undefined after processing a
-@@ -40,6 +48,12 @@ vpd-test_OBJDEPS :=  ../libmultipath/discovery.o
- vpd-test_LIBDEPS := -ludev -lpthread -ldl
- alias-test_TESTDEPS := test-log.o
- alias-test_LIBDEPS := -lpthread -ldl
-+ifneq ($(DIO_TEST_DEV),)
-+directio-test_LIBDEPS := -laio
-+endif
-+
-+%.o: %.c
-+	$(CC) $(CFLAGS) $($*-test_FLAGS) -c -o $@ $<
- 
- lib/libchecktur.so:
- 	mkdir lib
-diff --git a/tests/directio.c b/tests/directio.c
-index 5f067e24..236c514b 100644
---- a/tests/directio.c
-+++ b/tests/directio.c
-@@ -35,8 +35,14 @@ int ev_off = 0;
- struct timespec zero_timeout = {0};
- struct timespec full_timeout = { .tv_sec = -1 };
- 
-+int __real_ioctl(int fd, unsigned long request, void *argp);
-+
- int __wrap_ioctl(int fd, unsigned long request, void *argp)
+ static int
+-get_prio (struct path * pp)
++get_prio (struct path * pp, int timeout)
  {
-+#ifdef DIO_TEST_DEV
-+	mock_type(int);
-+	return __real_ioctl(fd, request, argp);
-+#else
- 	int *blocksize = (int *)argp;
+ 	struct prio * p;
+ 	struct config *conf;
+-	int checker_timeout;
+ 	int old_prio;
  
- 	assert_int_equal(fd, test_fd);
-@@ -44,57 +50,115 @@ int __wrap_ioctl(int fd, unsigned long request, void *argp)
- 	assert_non_null(blocksize);
- 	*blocksize = mock_type(int);
- 	return 0;
-+#endif
- }
+ 	if (!pp)
+@@ -1760,11 +1759,8 @@ get_prio (struct path * pp)
+ 			return 1;
+ 		}
+ 	}
+-	conf = get_multipath_config();
+-	checker_timeout = conf->checker_timeout;
+-	put_multipath_config(conf);
+ 	old_prio = pp->priority;
+-	pp->priority = prio_getprio(p, pp, checker_timeout);
++	pp->priority = prio_getprio(p, pp, timeout);
+ 	if (pp->priority < 0) {
+ 		/* this changes pp->offline, but why not */
+ 		int state = path_offline(pp);
+@@ -2171,11 +2167,13 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
  
-+int __real_fcntl(int fd, int cmd, long arg);
-+
- int __wrap_fcntl(int fd, int cmd, long arg)
+ 	 /*
+ 	  * Retrieve path priority, even for PATH_DOWN paths if it has never
+-	  * been successfully obtained before.
++	  * been successfully obtained before. If path is down don't try
++	  * for too long.
+ 	  */
+ 	if ((mask & DI_PRIO) && path_state == PATH_UP && strlen(pp->wwid)) {
+ 		if (pp->state != PATH_DOWN || pp->priority == PRIO_UNDEF) {
+-			get_prio(pp);
++			get_prio(pp, (pp->state != PATH_DOWN)?
++				     (conf->checker_timeout * 1000) : 10);
+ 		}
+ 	}
+ 
+diff --git a/libmultipath/prio.c b/libmultipath/prio.c
+index 87de1f97..194563c4 100644
+--- a/libmultipath/prio.c
++++ b/libmultipath/prio.c
+@@ -10,11 +10,11 @@
+ 
+ static LIST_HEAD(prioritizers);
+ 
+-unsigned int get_prio_timeout(unsigned int checker_timeout,
++unsigned int get_prio_timeout(unsigned int timeout_ms,
+ 			      unsigned int default_timeout)
  {
-+#ifdef DIO_TEST_DEV
-+	return __real_fcntl(fd, cmd, arg);
-+#else
- 	assert_int_equal(fd, test_fd);
- 	assert_int_equal(cmd, F_GETFL);
- 	return O_DIRECT;
-+#endif
+-	if (checker_timeout)
+-		return checker_timeout * 1000;
++	if (timeout_ms)
++		return timeout_ms;
+ 	return default_timeout;
  }
  
-+int __real___fxstat(int ver, int fd, struct stat *statbuf);
-+
- int __wrap___fxstat(int ver, int fd, struct stat *statbuf)
- {
-+#ifdef DIO_TEST_DEV
-+	return __real___fxstat(ver, fd, statbuf);
-+#else
- 	assert_int_equal(fd, test_fd);
- 	assert_non_null(statbuf);
- 	memset(statbuf, 0, sizeof(struct stat));
- 	return 0;
-+#endif
- }
- 
-+int __real_io_setup(int maxevents, io_context_t *ctxp);
-+
- int __wrap_io_setup(int maxevents, io_context_t *ctxp)
- {
- 	ioctx_count++;
-+#ifdef DIO_TEST_DEV
-+	int ret = mock_type(int);
-+	assert_int_equal(ret, __real_io_setup(maxevents, ctxp));
-+	return ret;
-+#else
- 	return mock_type(int);
-+#endif
- }
- 
-+int __real_io_destroy(io_context_t ctx);
-+
- int __wrap_io_destroy(io_context_t ctx)
- {
- 	ioctx_count--;
-+#ifdef DIO_TEST_DEV
-+	int ret = mock_type(int);
-+	assert_int_equal(ret, __real_io_destroy(ctx));
-+	return ret;
-+#else
- 	return mock_type(int);
-+#endif
- }
- 
-+int __real_io_submit(io_context_t ctx, long nr, struct iocb *ios[]);
-+
- int __wrap_io_submit(io_context_t ctx, long nr, struct iocb *ios[])
- {
-+#ifdef DIO_TEST_DEV
-+	struct timespec dev_delay = { .tv_nsec = 100000 };
-+	int ret = mock_type(int);
-+	assert_int_equal(ret, __real_io_submit(ctx, nr, ios));
-+	nanosleep(&dev_delay, NULL);
-+	return ret;
-+#else
- 	return mock_type(int);
-+#endif
- }
- 
-+int __real_io_cancel(io_context_t ctx, struct iocb *iocb, struct io_event *evt);
-+
- int __wrap_io_cancel(io_context_t ctx, struct iocb *iocb, struct io_event *evt)
- {
-+#ifdef DIO_TEST_DEV
-+	mock_type(int);
-+	return __real_io_cancel(ctx, iocb, evt);
-+#else
- 	return mock_type(int);
-+#endif
- }
- 
-+int __real_io_getevents(io_context_t ctx, long min_nr, long nr,
-+			struct io_event *events, struct timespec *timeout);
-+
- int __wrap_io_getevents(io_context_t ctx, long min_nr, long nr,
- 			struct io_event *events, struct timespec *timeout)
- {
--	int i, nr_evs;
-+	int nr_evs;
-+#ifndef DIO_TEST_DEV
- 	struct timespec *sleep_tmo;
-+	int i;
- 	struct io_event *evs;
-+#endif
- 
- 	assert_non_null(timeout);
- 	nr_evs = mock_type(int);
- 	assert_true(nr_evs <= nr);
- 	if (!nr_evs)
- 		return 0;
-+#ifdef DIO_TEST_DEV
-+	mock_ptr_type(struct timespec *);
-+	mock_ptr_type(struct io_event *);
-+	assert_int_equal(nr_evs, __real_io_getevents(ctx, min_nr, nr_evs,
-+						     events, timeout));
-+#else
- 	sleep_tmo = mock_ptr_type(struct timespec *);
- 	if (sleep_tmo) {
- 		if (sleep_tmo->tv_sec < 0)
-@@ -109,6 +173,7 @@ int __wrap_io_getevents(io_context_t ctx, long min_nr, long nr,
- 	evs = mock_ptr_type(struct io_event *);
- 	for (i = 0; i < nr_evs; i++)
- 		events[i] = evs[i];
-+#endif
- 	ev_off -= nr_evs;
- 	return nr_evs;
- }
-@@ -181,7 +246,10 @@ static void do_libcheck_init(struct checker *c, int blocksize,
- 	assert_non_null(ct->req);
- 	if (req)
- 		*req = ct->req;
-+#ifndef DIO_TEST_DEV
-+	/* don't check fake blocksize on real devices */
- 	assert_int_equal(ct->req->blksize, blocksize);
-+#endif
- }
- 
- static int is_checker_running(struct checker *c)
-@@ -359,6 +427,11 @@ static void test_check_state_timeout(void **state)
- 	will_return(__wrap_io_cancel, 0);
- 	do_check_state(&c, 1, 30, PATH_DOWN);
- 	check_aio_grp(aio_grp, 1, 0);
-+#ifdef DIO_TEST_DEV
-+	/* io_cancel will return negative value on timeout, so it happens again
-+	 * when freeing the checker */
-+	will_return(__wrap_io_cancel, 0);
-+#endif
- 	libcheck_free(&c);
- 	do_libcheck_unload(1);
- }
-@@ -382,6 +455,9 @@ static void test_check_state_async_timeout(void **state)
- 	will_return(__wrap_io_cancel, 0);
- 	do_check_state(&c, 0, 3, PATH_DOWN);
- 	check_aio_grp(aio_grp, 1, 0);
-+#ifdef DIO_TEST_DEV
-+	will_return(__wrap_io_cancel, 0);
-+#endif
- 	libcheck_free(&c);
- 	do_libcheck_unload(1);
- }
-@@ -410,7 +486,11 @@ static void test_free_with_pending(void **state)
- 	check_aio_grp(aio_grp, 1, 0);
-         will_return(__wrap_io_cancel, 0);
-         libcheck_free(&c[1]);
-+#ifdef DIO_TEST_DEV
-+	check_aio_grp(aio_grp, 1, 1); /* real cancel doesn't remove request */
-+#else
-         check_aio_grp(aio_grp, 0, 0);
-+#endif
-         do_libcheck_unload(1);
- }
- 
-@@ -475,7 +555,8 @@ static void test_timeout_cancel_failed(void **state)
- 	will_return(__wrap_io_cancel, -1);
- 	do_check_state(&c[0], 1, 30, PATH_DOWN);
- 	assert_true(is_checker_running(&c[0]));
--	return_io_getevents_nr(NULL, 2, reqs, res);
-+	return_io_getevents_nr(NULL, 1, &reqs[0], &res[0]);
-+	return_io_getevents_nr(NULL, 1, &reqs[1], &res[1]);
- 	do_check_state(&c[1], 1, 30, PATH_UP);
- 	do_check_state(&c[0], 1, 30, PATH_UP);
- 	for (i = 0; i < 2; i++) {
-@@ -508,8 +589,11 @@ static void test_async_timeout_cancel_failed(void **state)
- 	return_io_getevents_none();
- 	will_return(__wrap_io_cancel, -1);
- 	do_check_state(&c[0], 0, 2, PATH_DOWN);
-+#ifndef DIO_TEST_DEV
-+	/* can't pick which even gets returned on real devices */
- 	return_io_getevents_nr(NULL, 1, &reqs[1], &res[1]);
- 	do_check_state(&c[1], 0, 2, PATH_UP);
-+#endif
- 	return_io_getevents_none();
- 	will_return(__wrap_io_cancel, -1);
- 	do_check_state(&c[0], 0, 2, PATH_DOWN);
-@@ -625,7 +709,12 @@ static void test_check_state_blksize(void **state)
- 	int blksize[] = {4096, 1024, 512};
- 	struct async_req *reqs[3];
- 	int res[] = {0,1,0};
-+#ifdef DIO_TEST_DEV
-+	/* can't pick event return state on real devices */
-+	int chk_state[] = {PATH_UP, PATH_UP, PATH_UP};
-+#else
- 	int chk_state[] = {PATH_UP, PATH_DOWN, PATH_UP};
-+#endif
- 
- 	do_libcheck_load();
- 	for (i = 0; i < 3; i++)
-@@ -671,6 +760,25 @@ static void test_check_state_async(void **state)
- 	do_libcheck_unload(1);
- }
- 
-+static int setup(void **state)
-+{
-+#ifdef DIO_TEST_DEV
-+	test_fd = open(DIO_TEST_DEV, O_RDONLY);
-+	if (test_fd < 0)
-+		fail_msg("cannot open %s: %m", DIO_TEST_DEV);
-+#endif
-+	return 0;
-+}
-+
-+static int teardown(void **state)
-+{
-+#ifdef DIO_TEST_DEV
-+	assert_true(test_fd > 0);
-+	assert_int_equal(close(test_fd), 0);
-+#endif
-+	return 0;
-+}
-+
- int test_directio(void)
- {
- 	const struct CMUnitTest tests[] = {
-@@ -691,7 +799,7 @@ int test_directio(void)
- 		cmocka_unit_test(test_orphaned_aio_group),
- 	};
- 
--	return cmocka_run_group_tests(tests, NULL, NULL);
-+	return cmocka_run_group_tests(tests, setup, teardown);
- }
- 
- int main(void)
-diff --git a/tests/directio_test_dev b/tests/directio_test_dev
-new file mode 100644
-index 00000000..d64e6238
---- /dev/null
-+++ b/tests/directio_test_dev
-@@ -0,0 +1,4 @@
-+# To run the directio tests on an actual block device, uncomment the line
-+# starting with DIO_TES_DEV, and set it to the appropriate device
-+
-+# DIO_TEST_DEV=/dev/sdb
 -- 
 2.17.2
