@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 2/5] libmultipath: turn pp->vpd_data into a
-	pointer
-Date: Wed, 19 Feb 2020 00:54:30 -0600
-Message-ID: <1582095273-10279-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 4/5] libmultipath: change directio get_events()
+	timeout handling
+Date: Wed, 19 Feb 2020 00:54:32 -0600
+Message-ID: <1582095273-10279-5-git-send-email-bmarzins@redhat.com>
 References: <1582095273-10279-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,111 +22,59 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-Instead of always allocating space in the path structure for vpd_data,
-only allocte it when necessary.
-
-Also, fix comments on vpd tests
+get_events() used a NULL or a zeroed timeout to mean "don't wait".
+io_getevents() uses a NULL timeout to mean "wait forever" and a
+zeroed timeout to mean "don't wait". Make get_events() work like
+io_getevents().
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.c | 17 +++++++++++++++--
- libmultipath/print.c     |  4 ++--
- libmultipath/structs.c   |  3 +++
- libmultipath/structs.h   |  2 +-
- tests/vpd.c              |  3 ++-
- 5 files changed, 23 insertions(+), 6 deletions(-)
+ libmultipath/checkers/directio.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 23a7889c..ee3290cd 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1649,8 +1649,21 @@ scsi_ioctl_pathinfo (struct path * pp, int mask)
- 	select_vpd_vendor_id(pp);
- 	vpd_id = pp->vpd_vendor_id;
+diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
+index 6ad7c885..649961a4 100644
+--- a/libmultipath/checkers/directio.c
++++ b/libmultipath/checkers/directio.c
+@@ -262,7 +262,7 @@ get_events(struct aio_group *aio_grp, struct timespec *timeout)
+ 	struct io_event events[128];
+ 	int i, nr, got_events = 0;
+ 	struct timespec zero_timeout = {0};
+-	struct timespec *timep = (timeout)? timeout : &zero_timeout;
++	struct timespec *timep = timeout;
  
--	if (vpd_id != VPD_VP_UNDEF && get_vpd_sgio(pp->fd, vpd_vendor_pages[vpd_id].pg, vpd_id, pp->vpd_data, sizeof(pp->vpd_data)) < 0)
--		condlog(3, "%s: failed to get extra vpd data", pp->dev);
-+	if (vpd_id != VPD_VP_UNDEF) {
-+		char vpd_data[VPD_DATA_SIZE] = {0};
-+
-+		if (get_vpd_sgio(pp->fd, vpd_vendor_pages[vpd_id].pg, vpd_id,
-+		    vpd_data, sizeof(vpd_data)) < 0)
-+			condlog(3, "%s: failed to get extra vpd data", pp->dev);
-+		else {
-+			vpd_data[VPD_DATA_SIZE - 1] = '\0';
-+			if (pp->vpd_data)
-+				free(pp->vpd_data);
-+			pp->vpd_data = strdup(vpd_data);
-+			if (!pp->vpd_data)
-+				condlog(0, "%s: failed to allocate space for vpd data", pp->dev);
-+		}
-+	}
+ 	do {
+ 		errno = 0;
+@@ -303,7 +303,6 @@ check_state(int fd, struct directio_context *ct, int sync, int timeout_secs)
+ 	int		rc;
+ 	long		r;
+ 	struct timespec currtime, endtime;
+-	struct timespec *timep = &timeout;
  
- 	parent = pp->udev;
- 	while (parent) {
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 55b19195..feb3993e 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -371,7 +371,7 @@ snprint_multipath_vpd_data(char * buff, size_t len,
+ 	if (fstat(fd, &sb) == 0) {
+ 		LOG(4, "called for %x", (unsigned) sb.st_rdev);
+@@ -339,18 +338,19 @@ check_state(int fd, struct directio_context *ct, int sync, int timeout_secs)
+ 	endtime.tv_nsec += timeout.tv_nsec;
+ 	normalize_timespec(&endtime);
+ 	while(1) {
+-		r = get_events(ct->aio_grp, timep);
++		r = get_events(ct->aio_grp, &timeout);
  
- 	vector_foreach_slot(mpp->pg, pgp, i)
- 		vector_foreach_slot(pgp->paths, pp, j)
--			if (strlen(pp->vpd_data))
-+			if (pp->vpd_data)
- 				return snprintf(buff, len, "%s", pp->vpd_data);
- 	return snprintf(buff, len, "[undef]");
- }
-@@ -710,7 +710,7 @@ snprint_path_marginal(char * buff, size_t len, const struct path * pp)
- static int
- snprint_path_vpd_data(char * buff, size_t len, const struct path * pp)
- {
--	if (strlen(pp->vpd_data) > 0)
-+	if (pp->vpd_data)
- 		return snprintf(buff, len, "%s", pp->vpd_data);
- 	return snprintf(buff, len, "[undef]");
- }
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index cc931e4e..2dd378c4 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -131,6 +131,9 @@ free_path (struct path * pp)
- 		udev_device_unref(pp->udev);
- 		pp->udev = NULL;
+ 		if (ct->req->state != PATH_PENDING) {
+ 			ct->running = 0;
+ 			return ct->req->state;
+-		} else if (r == 0 || !timep)
++		} else if (r == 0 ||
++			   (timeout.tv_sec == 0 && timeout.tv_nsec == 0))
+ 			break;
+ 
+ 		get_monotonic_time(&currtime);
+ 		timespecsub(&endtime, &currtime, &timeout);
+ 		if (timeout.tv_sec < 0)
+-			timep = NULL;
++			timeout.tv_sec = timeout.tv_nsec = 0;
  	}
-+	if (pp->vpd_data)
-+		free(pp->vpd_data);
-+
- 	vector_free(pp->hwe);
- 
- 	FREE(pp);
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index b7a01220..9bd39eb1 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -269,7 +269,7 @@ struct path {
- 	char rev[PATH_REV_SIZE];
- 	char serial[SERIAL_SIZE];
- 	char tgt_node_name[NODE_NAME_SIZE];
--	char vpd_data[VPD_DATA_SIZE];
-+	char *vpd_data;
- 	unsigned long long size;
- 	unsigned int checkint;
- 	unsigned int tick;
-diff --git a/tests/vpd.c b/tests/vpd.c
-index 0331c487..3cbad811 100644
---- a/tests/vpd.c
-+++ b/tests/vpd.c
-@@ -520,8 +520,9 @@ static void test_vpd_eui_ ## len ## _ ## wlen ## _ ## sml(void **state)	\
- 	n = create_vpd83(vt->vpdbuf, sizeof(vt->vpdbuf), test_id,	\
- 			 2, 0, len);					\
- 	if (sml) {							\
--		/* overwrite the page side to DEFAULT_SGIO_LEN + 1 */	\
-+		/* overwrite the page size to DEFAULT_SGIO_LEN + 1 */	\
- 		put_unaligned_be16(255, vt->vpdbuf + 2);		\
-+		/* this causes get_vpd_sgio to do a second ioctl */	\
- 		will_return(__wrap_ioctl, n);				\
- 		will_return(__wrap_ioctl, vt->vpdbuf);			\
- 	}								\
+ 	if (ct->running > timeout_secs || sync) {
+ 		struct io_event event;
 -- 
 2.17.2
