@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 5/5] libmultipath: cleanup old issues with
-	directio checker
-Date: Wed, 19 Feb 2020 00:54:33 -0600
-Message-ID: <1582095273-10279-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 1/5] multipath: fix issues found by compiling
+	with gcc 10
+Date: Wed, 19 Feb 2020 00:54:29 -0600
+Message-ID: <1582095273-10279-2-git-send-email-bmarzins@redhat.com>
 References: <1582095273-10279-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,89 +22,77 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-The directio checker manually aligns its directio buffer, instead of
-using posix_memalign(). It also defaults the block size for the read to
-512, which may be too small for 4k devices, and it only waits for 5 ns
-for IO completion before giving up and setting the path to pending,
-which means that in will virtually always set the path to pending on the
-check when the IO is issued.
-
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/checkers/directio.c | 13 ++++---------
- tests/directio.c                 |  1 -
- 2 files changed, 4 insertions(+), 10 deletions(-)
+ kpartx/dasd.c        | 6 +++---
+ libmultipath/print.c | 3 ++-
+ multipath/main.c     | 2 +-
+ 3 files changed, 6 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
-index 649961a4..503519e2 100644
---- a/libmultipath/checkers/directio.c
-+++ b/libmultipath/checkers/directio.c
-@@ -38,7 +38,6 @@ struct async_req {
- 	struct iocb io;
- 	unsigned int blksize;
- 	unsigned char *	buf;
--	unsigned char * ptr;
- 	struct list_head node;
- 	int state; /* PATH_REMOVED means this is an orphan */
- };
-@@ -174,7 +173,7 @@ int libcheck_init (struct checker * c)
- 
- 	if (ioctl(c->fd, BLKBSZGET, &req->blksize) < 0) {
- 		c->msgid = MSG_DIRECTIO_BLOCKSIZE;
--		req->blksize = 512;
-+		req->blksize = 4096;
+diff --git a/kpartx/dasd.c b/kpartx/dasd.c
+index 1486ccaa..57305825 100644
+--- a/kpartx/dasd.c
++++ b/kpartx/dasd.c
+@@ -186,7 +186,7 @@ read_dasd_pt(int fd, __attribute__((unused)) struct slice all,
+ 		goto out;
  	}
- 	if (req->blksize > 4096) {
+ 
+-	if ((!info.FBA_layout) && (!strcmp(info.type, "ECKD")))
++	if ((!info.FBA_layout) && (!strncmp(info.type, "ECKD", 4)))
+ 		memcpy (&vlabel, data, sizeof(vlabel));
+ 	else {
+ 		bzero(&vlabel,4);
+@@ -216,7 +216,7 @@ read_dasd_pt(int fd, __attribute__((unused)) struct slice all,
+ 		sp[0].size  = size - sp[0].start;
+ 		retval = 1;
+ 	} else if ((strncmp(type, "VOL1", 4) == 0) &&
+-		(!info.FBA_layout) && (!strcmp(info.type, "ECKD"))) {
++		(!info.FBA_layout) && (!strncmp(info.type, "ECKD",4))) {
  		/*
-@@ -185,8 +184,7 @@ int libcheck_init (struct checker * c)
- 	if (!req->blksize)
- 		goto out;
+ 		 * New style VOL1 labeled disk
+ 		 */
+@@ -265,7 +265,7 @@ read_dasd_pt(int fd, __attribute__((unused)) struct slice all,
+ 			if (vlabel.ldl_version == 0xf2) {
+ 				fmt_size = sectors512(vlabel.formatted_blocks,
+ 						      blocksize);
+-			} else if (!strcmp(info.type, "ECKD")) {
++			} else if (!strncmp(info.type, "ECKD",4)) {
+ 				/* formatted w/o large volume support */
+ 				fmt_size = geo.cylinders * geo.heads
+ 					* geo.sectors * (blocksize >> 9);
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 1858d8ea..55b19195 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -29,6 +29,7 @@
+ #include "uevent.h"
+ #include "debug.h"
+ #include "discovery.h"
++#include "util.h"
  
--	req->buf = (unsigned char *)malloc(req->blksize + pgsize);
--	if (!req->buf)
-+	if (posix_memalign((void **)&req->buf, pgsize, req->blksize) != 0)
- 		goto out;
+ #define MAX(x,y) (((x) > (y)) ? (x) : (y))
+ #define MIN(x,y) (((x) > (y)) ? (y) : (x))
+@@ -2056,7 +2057,7 @@ int snprint_devices(struct config *conf, char * buff, int len,
  
- 	flags = fcntl(c->fd, F_GETFL);
-@@ -199,9 +197,6 @@ int libcheck_init (struct checker * c)
- 		ct->reset_flags = 1;
- 	}
+ 		devptr = devpath + 11;
+ 		*devptr = '\0';
+-		strncat(devptr, blkdev->d_name, PATH_MAX-12);
++		strlcpy(devptr, blkdev->d_name, PATH_MAX-11);
+ 		if (stat(devpath, &statbuf) < 0)
+ 			continue;
  
--	req->ptr = (unsigned char *) (((unsigned long)req->buf + pgsize - 1) &
--		  (~(pgsize - 1)));
--
- 	/* Successfully initialized, return the context. */
- 	ct->req = req;
- 	c->context = (void *) ct;
-@@ -298,7 +293,7 @@ get_events(struct aio_group *aio_grp, struct timespec *timeout)
- static int
- check_state(int fd, struct directio_context *ct, int sync, int timeout_secs)
- {
--	struct timespec	timeout = { .tv_nsec = 5 };
-+	struct timespec	timeout = { .tv_nsec = 1000 };
- 	struct stat	sb;
- 	int		rc;
- 	long		r;
-@@ -323,7 +318,7 @@ check_state(int fd, struct directio_context *ct, int sync, int timeout_secs)
+diff --git a/multipath/main.c b/multipath/main.c
+index 15007752..cf9d2a28 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -1025,7 +1025,7 @@ main (int argc, char *argv[])
+ 		if (!dev)
+ 			goto out;
  
- 		LOG(3, "starting new request");
- 		memset(&ct->req->io, 0, sizeof(struct iocb));
--		io_prep_pread(&ct->req->io, fd, ct->req->ptr,
-+		io_prep_pread(&ct->req->io, fd, ct->req->buf,
- 			      ct->req->blksize, 0);
- 		ct->req->state = PATH_PENDING;
- 		if (io_submit(ct->aio_grp->ioctx, 1, ios) != 1) {
-diff --git a/tests/directio.c b/tests/directio.c
-index 23fd2da9..3cd7a520 100644
---- a/tests/directio.c
-+++ b/tests/directio.c
-@@ -23,7 +23,6 @@
- #include <stddef.h>
- #include <setjmp.h>
- #include <stdlib.h>
--#define UNIT_TESTING /* enable memory testing in directio.c */
- #include <cmocka.h>
- #include "globals.c"
- #include "../libmultipath/checkers/directio.c"
+-		strncpy(dev, argv[optind], FILE_NAME_SIZE);
++		strlcpy(dev, argv[optind], FILE_NAME_SIZE);
+ 		if (dev_type != DEV_UEVENT)
+ 			dev_type = get_dev_type(dev);
+ 		if (dev_type == DEV_NONE) {
 -- 
 2.17.2
