@@ -1,12 +1,14 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: RFC: multipath-tools: NVMe native multipath and default
- setting for "enable_foreign"
-Date: Wed, 19 Feb 2020 17:17:48 +0100
-Message-ID: <8f4d39d663aad324017297db0d31a0a24369c9a4.camel@suse.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH v2 5/5] libmultipath: cleanup old issues with
+	directio checker
+Date: Wed, 19 Feb 2020 14:21:45 -0600
+Message-ID: <1582143705-20886-6-git-send-email-bmarzins@redhat.com>
+References: <1582143705-20886-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1582143705-20886-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,43 +18,94 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.com>, dm-devel mailing list <dm-devel@redhat.com>
-Cc: "George, Martin" <Martin.George@netapp.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, "Schremmer,
-	Steven" <Steve.Schremmer@netapp.com>, JulianAndresKlode <julian.klode@canonical.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-multipath-tools has support for "foreign" libraries in multipath-tools
-since 0.8.0, and support for enabling/disabling them at runtime since
-0.8.3.
+The directio checker manually aligns its directio buffer, instead of
+using posix_memalign(). It also defaults the block size for the read to
+512, which may be too small for 4k devices, and it only waits for 5 ns
+for IO completion before giving up and setting the path to pending,
+which means that in will virtually always set the path to pending on the
+check when the IO is issued.
 
-The only foreign library that exists is "nvme" (for native NVMe
-multipath), and it's likely to remain so for some time. Currently
-upstream multipath-tools ships with all foreign libraries enabled by
-default, and documentation about how to disable them.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/checkers/directio.c | 13 ++++---------
+ tests/directio.c                 |  1 -
+ 2 files changed, 4 insertions(+), 10 deletions(-)
 
-There's an ongoing discussion between myself and folks from Netapp
-about changing the code such that the nvme library is disabled by
-default. People at Netapp are worried that multipath's output for NVMe
-native multipath maps would confuse customers and break scripts.
-I've suggested that Netapp simply ship a drop-in configuration file
-to be put in /etc/multipath/conf.d to disable the nvme library, but I'm
-told that customers are wary about vendor-supplied configuration files.
-
-For SUSE's enterprise product, SLE, we have made this change and
-disabled the nvme library by default. Now Netapp is asking me to
-forward this change upstream. Personally, I'm not too fond of the
-proposal, because I think the original idea (enable people to use the
-tools they are used to) is still valid (*). OTOH, the "nvme" tool can
-provide similar information and is likely to be used by NVMe users
-anyway, so perhaps there's no urgent need for this functionality in
-multipath-tools any more.
-
-I really don't know if people out there find this feature rather
-helpful or rather confusing. Therefore I'd like to ask for opinions
-here on the list.
-
-Regards,
-Martin
-
-(*) Also because I, myself, have put quite some effort into the
-"foreign/nvme" feature and wouldn't be happy to see it go away. 
+diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
+index 649961a4..503519e2 100644
+--- a/libmultipath/checkers/directio.c
++++ b/libmultipath/checkers/directio.c
+@@ -38,7 +38,6 @@ struct async_req {
+ 	struct iocb io;
+ 	unsigned int blksize;
+ 	unsigned char *	buf;
+-	unsigned char * ptr;
+ 	struct list_head node;
+ 	int state; /* PATH_REMOVED means this is an orphan */
+ };
+@@ -174,7 +173,7 @@ int libcheck_init (struct checker * c)
+ 
+ 	if (ioctl(c->fd, BLKBSZGET, &req->blksize) < 0) {
+ 		c->msgid = MSG_DIRECTIO_BLOCKSIZE;
+-		req->blksize = 512;
++		req->blksize = 4096;
+ 	}
+ 	if (req->blksize > 4096) {
+ 		/*
+@@ -185,8 +184,7 @@ int libcheck_init (struct checker * c)
+ 	if (!req->blksize)
+ 		goto out;
+ 
+-	req->buf = (unsigned char *)malloc(req->blksize + pgsize);
+-	if (!req->buf)
++	if (posix_memalign((void **)&req->buf, pgsize, req->blksize) != 0)
+ 		goto out;
+ 
+ 	flags = fcntl(c->fd, F_GETFL);
+@@ -199,9 +197,6 @@ int libcheck_init (struct checker * c)
+ 		ct->reset_flags = 1;
+ 	}
+ 
+-	req->ptr = (unsigned char *) (((unsigned long)req->buf + pgsize - 1) &
+-		  (~(pgsize - 1)));
+-
+ 	/* Successfully initialized, return the context. */
+ 	ct->req = req;
+ 	c->context = (void *) ct;
+@@ -298,7 +293,7 @@ get_events(struct aio_group *aio_grp, struct timespec *timeout)
+ static int
+ check_state(int fd, struct directio_context *ct, int sync, int timeout_secs)
+ {
+-	struct timespec	timeout = { .tv_nsec = 5 };
++	struct timespec	timeout = { .tv_nsec = 1000 };
+ 	struct stat	sb;
+ 	int		rc;
+ 	long		r;
+@@ -323,7 +318,7 @@ check_state(int fd, struct directio_context *ct, int sync, int timeout_secs)
+ 
+ 		LOG(3, "starting new request");
+ 		memset(&ct->req->io, 0, sizeof(struct iocb));
+-		io_prep_pread(&ct->req->io, fd, ct->req->ptr,
++		io_prep_pread(&ct->req->io, fd, ct->req->buf,
+ 			      ct->req->blksize, 0);
+ 		ct->req->state = PATH_PENDING;
+ 		if (io_submit(ct->aio_grp->ioctx, 1, ios) != 1) {
+diff --git a/tests/directio.c b/tests/directio.c
+index 23fd2da9..3cd7a520 100644
+--- a/tests/directio.c
++++ b/tests/directio.c
+@@ -23,7 +23,6 @@
+ #include <stddef.h>
+ #include <setjmp.h>
+ #include <stdlib.h>
+-#define UNIT_TESTING /* enable memory testing in directio.c */
+ #include <cmocka.h>
+ #include "globals.c"
+ #include "../libmultipath/checkers/directio.c"
+-- 
+2.17.2
