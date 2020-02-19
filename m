@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v3 06/18] libmultipath: add missing hwe mpe
-	variable merges
-Date: Wed, 19 Feb 2020 00:48:28 -0600
-Message-ID: <1582094920-9883-7-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 02/18] multipathd: staticify uxlsnr
+	variables/functions
+Date: Wed, 19 Feb 2020 00:48:24 -0600
+Message-ID: <1582094920-9883-3-git-send-email-bmarzins@redhat.com>
 References: <1582094920-9883-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,47 +22,52 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-There were some variables in the hwe and mpe structs that weren't being
-merged by merge_hwe() and merge_mpe().
-
-Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/config.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ multipathd/uxlsnr.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index dc64ef59..366f4e30 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -372,6 +372,10 @@ merge_hwe (struct hwentry * dst, struct hwentry * src)
- 	merge_num(san_path_err_threshold);
- 	merge_num(san_path_err_forget_rate);
- 	merge_num(san_path_err_recovery_time);
-+	merge_num(marginal_path_err_sample_time);
-+	merge_num(marginal_path_err_rate_threshold);
-+	merge_num(marginal_path_err_recheck_gap_time);
-+	merge_num(marginal_path_double_failed_time);
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index 020d7a9b..1c5ce9d2 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -40,7 +40,7 @@
+ #include "cli.h"
+ #include "uxlsnr.h"
  
- 	snprintf(id, sizeof(id), "%s/%s", dst->vendor, dst->product);
- 	reconcile_features_with_options(id, &dst->features,
-@@ -397,6 +401,7 @@ merge_mpe(struct mpentry *dst, struct mpentry *src)
- 	if (dst->prkey_source == PRKEY_SOURCE_NONE &&
- 	    src->prkey_source != PRKEY_SOURCE_NONE) {
- 		dst->prkey_source = src->prkey_source;
-+		dst->sa_flags = src->sa_flags;
- 		memcpy(&dst->reservation_key, &src->reservation_key,
- 		       sizeof(dst->reservation_key));
- 	}
-@@ -413,6 +418,9 @@ merge_mpe(struct mpentry *dst, struct mpentry *src)
- 	merge_num(deferred_remove);
- 	merge_num(delay_watch_checks);
- 	merge_num(delay_wait_checks);
-+	merge_num(san_path_err_threshold);
-+	merge_num(san_path_err_forget_rate);
-+	merge_num(san_path_err_recovery_time);
- 	merge_num(marginal_path_err_sample_time);
- 	merge_num(marginal_path_err_rate_threshold);
- 	merge_num(marginal_path_err_recheck_gap_time);
+-struct timespec sleep_time = {5, 0};
++static struct timespec sleep_time = {5, 0};
+ 
+ struct client {
+ 	struct list_head node;
+@@ -49,9 +49,9 @@ struct client {
+ 
+ #define MIN_POLLS 1023
+ 
+-LIST_HEAD(clients);
+-pthread_mutex_t client_lock = PTHREAD_MUTEX_INITIALIZER;
+-struct pollfd *polls;
++static LIST_HEAD(clients);
++static pthread_mutex_t client_lock = PTHREAD_MUTEX_INITIALIZER;
++static struct pollfd *polls;
+ static int notify_fd = -1;
+ static char *watch_config_dir;
+ 
+@@ -122,13 +122,13 @@ static void dead_client(struct client *c)
+ 	pthread_cleanup_pop(1);
+ }
+ 
+-void free_polls (void)
++static void free_polls (void)
+ {
+ 	if (polls)
+ 		FREE(polls);
+ }
+ 
+-void check_timeout(struct timespec start_time, char *inbuf,
++static void check_timeout(struct timespec start_time, char *inbuf,
+ 		   unsigned int timeout)
+ {
+ 	struct timespec diff_time, end_time;
 -- 
 2.17.2
