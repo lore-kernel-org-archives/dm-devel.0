@@ -1,16 +1,12 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 1/5] multipath: fix issues found by compiling
-	with gcc 10
-Date: Wed, 19 Feb 2020 10:15:13 -0600
-Message-ID: <20200219161513.GM30153@octiron.msp.redhat.com>
-References: <1582095273-10279-1-git-send-email-bmarzins@redhat.com>
-	<1582095273-10279-2-git-send-email-bmarzins@redhat.com>
-	<d947b08c9f137b08f8f22fa0831cb77ccd9299c4.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: RFC: multipath-tools: NVMe native multipath and default
+ setting for "enable_foreign"
+Date: Wed, 19 Feb 2020 17:17:48 +0100
+Message-ID: <8f4d39d663aad324017297db0d31a0a24369c9a4.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d947b08c9f137b08f8f22fa0831cb77ccd9299c4.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,109 +16,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Martin Wilck <mwilck@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.com>, dm-devel mailing list <dm-devel@redhat.com>
+Cc: "George, Martin" <Martin.George@netapp.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, "Schremmer,
+	Steven" <Steve.Schremmer@netapp.com>, JulianAndresKlode <julian.klode@canonical.com>
 List-Id: dm-devel.ids
 
-On Wed, Feb 19, 2020 at 10:28:31AM +0100, Martin Wilck wrote:
-> On Wed, 2020-02-19 at 00:54 -0600, Benjamin Marzinski wrote:
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > ---
-> >  kpartx/dasd.c        | 6 +++---
-> >  libmultipath/print.c | 3 ++-
-> >  multipath/main.c     | 2 +-
-> >  3 files changed, 6 insertions(+), 5 deletions(-)
-> 
-> I don't recall having raised issues about this, actually I haven't
-> tested with gcc10 so far. But never mind :-)
+multipath-tools has support for "foreign" libraries in multipath-tools
+since 0.8.0, and support for enabling/disabling them at runtime since
+0.8.3.
 
-Actually, this is just because I happened to be working on these patches
-on a machine with gcc10 installed.
+The only foreign library that exists is "nvme" (for native NVMe
+multipath), and it's likely to remain so for some time. Currently
+upstream multipath-tools ships with all foreign libraries enabled by
+default, and documentation about how to disable them.
 
-I'll fix these issues and resent.
+There's an ongoing discussion between myself and folks from Netapp
+about changing the code such that the nvme library is disabled by
+default. People at Netapp are worried that multipath's output for NVMe
+native multipath maps would confuse customers and break scripts.
+I've suggested that Netapp simply ship a drop-in configuration file
+to be put in /etc/multipath/conf.d to disable the nvme library, but I'm
+told that customers are wary about vendor-supplied configuration files.
 
--Ben
+For SUSE's enterprise product, SLE, we have made this change and
+disabled the nvme library by default. Now Netapp is asking me to
+forward this change upstream. Personally, I'm not too fond of the
+proposal, because I think the original idea (enable people to use the
+tools they are used to) is still valid (*). OTOH, the "nvme" tool can
+provide similar information and is likely to be used by NVMe users
+anyway, so perhaps there's no urgent need for this functionality in
+multipath-tools any more.
 
-> 
-> > diff --git a/kpartx/dasd.c b/kpartx/dasd.c
-> > index 1486ccaa..57305825 100644
-> > --- a/kpartx/dasd.c
-> > +++ b/kpartx/dasd.c
-> > @@ -186,7 +186,7 @@ read_dasd_pt(int fd, __attribute__((unused))
-> > struct slice all,
-> >  		goto out;
-> >  	}
-> >  
-> > -	if ((!info.FBA_layout) && (!strcmp(info.type, "ECKD")))
-> > +	if ((!info.FBA_layout) && (!strncmp(info.type, "ECKD", 4)))
-> >  		memcpy (&vlabel, data, sizeof(vlabel));
-> 
-> It looks to me as if this should actually be memcmp(), as info.type is
-> not NUL-terminated.
-> 
-> >  	else {
-> >  		bzero(&vlabel,4);
-> > @@ -216,7 +216,7 @@ read_dasd_pt(int fd, __attribute__((unused))
-> > struct slice all,
-> >  		sp[0].size  = size - sp[0].start;
-> >  		retval = 1;
-> >  	} else if ((strncmp(type, "VOL1", 4) == 0) &&
-> > -		(!info.FBA_layout) && (!strcmp(info.type, "ECKD"))) {
-> > +		(!info.FBA_layout) && (!strncmp(info.type, "ECKD",4)))
-> > {
-> >  		/*
-> >  		 * New style VOL1 labeled disk
-> >  		 */
-> > @@ -265,7 +265,7 @@ read_dasd_pt(int fd, __attribute__((unused))
-> > struct slice all,
-> >  			if (vlabel.ldl_version == 0xf2) {
-> >  				fmt_size =
-> > sectors512(vlabel.formatted_blocks,
-> >  						      blocksize);
-> > -			} else if (!strcmp(info.type, "ECKD")) {
-> > +			} else if (!strncmp(info.type, "ECKD",4)) {
-> >  				/* formatted w/o large volume support
-> > */
-> >  				fmt_size = geo.cylinders * geo.heads
-> >  					* geo.sectors * (blocksize >>
-> > 9);
-> > diff --git a/libmultipath/print.c b/libmultipath/print.c
-> > index 1858d8ea..55b19195 100644
-> > --- a/libmultipath/print.c
-> > +++ b/libmultipath/print.c
-> > @@ -29,6 +29,7 @@
-> >  #include "uevent.h"
-> >  #include "debug.h"
-> >  #include "discovery.h"
-> > +#include "util.h"
-> >  
-> >  #define MAX(x,y) (((x) > (y)) ? (x) : (y))
-> >  #define MIN(x,y) (((x) > (y)) ? (y) : (x))
-> > @@ -2056,7 +2057,7 @@ int snprint_devices(struct config *conf, char *
-> > buff, int len,
-> >  
-> >  		devptr = devpath + 11;
-> >  		*devptr = '\0';
-> > -		strncat(devptr, blkdev->d_name, PATH_MAX-12);
-> > +		strlcpy(devptr, blkdev->d_name, PATH_MAX-11);
-> >  		if (stat(devpath, &statbuf) < 0)
-> >  			continue;
-> 
-> If you use strlcpy(), you can delete the "*devptr = '\0'" statement (we
-> can be certain that (PATH_MAX-11 > 0), thus strlcpy() is guaranteed to
-> write a NUL byte).
-> 
-> Moreover, while you're at that, copying "/sys/block/" to devpath before
-> the loop is an ugly pseudo-optimization (not your fault). Readability
-> would be improved by ditching that and simply writing
-> 
->      if (safe_snprintf(devpath, sizeof(devpath), 
->                        "/sys/block/%s", devptr))
->              continue;
-> 
-> inside the loop.
-> 
-> Martin
-> 
-> 
+I really don't know if people out there find this feature rather
+helpful or rather confusing. Therefore I'd like to ask for opinions
+here on the list.
+
+Regards,
+Martin
+
+(*) Also because I, myself, have put quite some effort into the
+"foreign/nvme" feature and wouldn't be happy to see it go away. 
