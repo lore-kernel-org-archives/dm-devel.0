@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v3 05/18] libmultipath: constify get_unaligned_be*
-Date: Wed, 19 Feb 2020 00:48:27 -0600
-Message-ID: <1582094920-9883-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 13/18] libmultipath: add new checker class
+	functions
+Date: Wed, 19 Feb 2020 00:48:35 -0600
+Message-ID: <1582094920-9883-14-git-send-email-bmarzins@redhat.com>
 References: <1582094920-9883-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,32 +22,113 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
+This commit adds the optional functions libcheck_load, libcheck_unload,
+and libcheck_reset. libcheck_load is called when a checker is first
+loaded, libcheck_unload is called when it is unloaded, and
+libcheck_reset is called during reconfigure, after all the current
+paths have been removed. They are designed to setup, reset, and destroy
+global state that all checkers of this class use. They will be used
+in future commits.
+
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/unaligned.h | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/checkers.c | 29 ++++++++++++++++++++++++++++-
+ libmultipath/checkers.h |  1 +
+ multipathd/main.c       |  1 +
+ 3 files changed, 30 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/unaligned.h b/libmultipath/unaligned.h
-index 68c07742..b9eaa7cb 100644
---- a/libmultipath/unaligned.h
-+++ b/libmultipath/unaligned.h
-@@ -10,14 +10,14 @@ static inline uint16_t get_unaligned_be16(const void *ptr)
- 	return p[0] << 8 | p[1];
+diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+index a08bf418..5c7d3004 100644
+--- a/libmultipath/checkers.c
++++ b/libmultipath/checkers.c
+@@ -18,6 +18,9 @@ struct checker_class {
+ 	int (*init)(struct checker *);       /* to allocate the context */
+ 	int (*mp_init)(struct checker *);    /* to allocate the mpcontext */
+ 	void (*free)(struct checker *);      /* to free the context */
++	int (*load)(void);                   /* to allocate global variables */
++	void (*unload)(void);                /* to free global variables */
++	int (*reset)(void);		     /* to reset the global variables */
+ 	const char **msgtable;
+ 	short msgtable_size;
+ };
+@@ -66,6 +69,8 @@ void free_checker_class(struct checker_class *c)
+ 	}
+ 	condlog(3, "unloading %s checker", c->name);
+ 	list_del(&c->node);
++	if (c->unload)
++		c->unload();
+ 	if (c->handle) {
+ 		if (dlclose(c->handle) != 0) {
+ 			condlog(0, "Cannot unload checker %s: %s",
+@@ -98,6 +103,18 @@ static struct checker_class *checker_class_lookup(const char *name)
+ 	return NULL;
  }
  
--static inline uint32_t get_unaligned_be32(void *ptr)
-+static inline uint32_t get_unaligned_be32(const void *ptr)
++int reset_checker_classes(void)
++{
++	int ret = 0;
++	struct checker_class *c;
++
++	list_for_each_entry(c, &checkers, node) {
++		if (c->reset)
++			ret = ret? ret : c->reset();
++	}
++	return ret;
++}
++
+ static struct checker_class *add_checker_class(const char *multipath_dir,
+ 					       const char *name)
  {
- 	const uint8_t *p = ptr;
+@@ -142,7 +159,11 @@ static struct checker_class *add_checker_class(const char *multipath_dir,
+ 		goto out;
  
- 	return p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
- }
+ 	c->mp_init = (int (*)(struct checker *)) dlsym(c->handle, "libcheck_mp_init");
+-	/* NULL mp_init is o.k. call dlerror() to clear out any error string */
++	c->load = (int (*)(void)) dlsym(c->handle, "libcheck_load");
++	c->unload = (void (*)(void)) dlsym(c->handle, "libcheck_unload");
++	c->reset = (int (*)(void)) dlsym(c->handle, "libcheck_reset");
++	/* These 4 functions can be NULL. call dlerror() to clear out any
++	 * error string */
+ 	dlerror();
  
--static inline uint64_t get_unaligned_be64(void *ptr)
-+static inline uint64_t get_unaligned_be64(const void *ptr)
- {
- 	uint32_t low = get_unaligned_be32(ptr + 4);
- 	uint64_t high = get_unaligned_be32(ptr);
+ 	c->free = (void (*)(struct checker *)) dlsym(c->handle, "libcheck_free");
+@@ -168,6 +189,12 @@ static struct checker_class *add_checker_class(const char *multipath_dir,
+ 	condlog(3, "checker %s: message table size = %d",
+ 		c->name, c->msgtable_size);
+ 
++	if (c->load && c->load() != 0) {
++		condlog(0, "%s: failed to load checker", c->name);
++		c->unload = NULL;
++		goto out;
++	}
++
+ done:
+ 	c->sync = 1;
+ 	list_add(&c->node, &checkers);
+diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
+index 5237e7ec..d9930467 100644
+--- a/libmultipath/checkers.h
++++ b/libmultipath/checkers.h
+@@ -150,6 +150,7 @@ void checker_disable (struct checker *);
+ int checker_check (struct checker *, int);
+ int checker_is_sync(const struct checker *);
+ const char *checker_name (const struct checker *);
++int reset_checker_classes(void);
+ /*
+  * This returns a string that's best prepended with "$NAME checker",
+  * where $NAME is the return value of checker_name().
+diff --git a/multipathd/main.c b/multipathd/main.c
+index e607acf3..8baf9abe 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2575,6 +2575,7 @@ reconfigure (struct vectors * vecs)
+ 	vecs->pathvec = NULL;
+ 	delete_all_foreign();
+ 
++	reset_checker_classes();
+ 	/* Re-read any timezone changes */
+ 	tzset();
+ 
 -- 
 2.17.2
