@@ -1,67 +1,139 @@
-From: "Theodore Ts'o" <tytso@mit.edu>
-Subject: [PATCH] dm thin metadata: fix lockdep complaint
-Date: Sun, 23 Feb 2020 14:54:58 -0500
-Message-ID: <20200223195458.1196339-1-tytso@mit.edu>
-References: <20200220234519.GA620489@mit.edu>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH v5 2/8] drivers/pmem: Allow pmem_clear_poison() to accept
+ arbitrary offset and len
+Date: Mon, 24 Feb 2020 10:03:30 +1100
+Message-ID: <20200223230330.GE10737@dread.disaster.area>
+References: <20200218214841.10076-1-vgoyal@redhat.com>
+ <20200218214841.10076-3-vgoyal@redhat.com>
+ <x49lfoxj622.fsf@segfault.boston.devel.redhat.com>
+ <20200220215707.GC10816@redhat.com>
+ <x498skv3i5r.fsf@segfault.boston.devel.redhat.com>
+ <20200221201759.GF25974@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200220234519.GA620489@mit.edu>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Theodore Ts'o <tytso@mit.edu>, snitzer@redhat.com, agk@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200221201759.GF25974@redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, hch@infradead.org, dan.j.williams@intel.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-[ 3934.173244] ======================================================
-[ 3934.179572] WARNING: possible circular locking dependency detected
-[ 3934.185884] 5.4.21-xfstests #1 Not tainted
-[ 3934.190151] ------------------------------------------------------
-[ 3934.196673] dmsetup/8897 is trying to acquire lock:
-[ 3934.201688] ffffffffbce82b18 (shrinker_rwsem){++++}, at: unregister_shrinker+0x22/0x80
-[ 3934.210268]
-               but task is already holding lock:
-[ 3934.216489] ffff92a10cc5e1d0 (&pmd->root_lock){++++}, at: dm_pool_metadata_close+0xba/0x120
-[ 3934.225083]
-               which lock already depends on the new lock.
+On Fri, Feb 21, 2020 at 03:17:59PM -0500, Vivek Goyal wrote:
+> On Fri, Feb 21, 2020 at 01:32:48PM -0500, Jeff Moyer wrote:
+> > Vivek Goyal <vgoyal@redhat.com> writes:
+> > 
+> > > On Thu, Feb 20, 2020 at 04:35:17PM -0500, Jeff Moyer wrote:
+> > >> Vivek Goyal <vgoyal@redhat.com> writes:
+> > >> 
+> > >> > Currently pmem_clear_poison() expects offset and len to be sector aligned.
+> > >> > Atleast that seems to be the assumption with which code has been written.
+> > >> > It is called only from pmem_do_bvec() which is called only from pmem_rw_page()
+> > >> > and pmem_make_request() which will only passe sector aligned offset and len.
+> > >> >
+> > >> > Soon we want use this function from dax_zero_page_range() code path which
+> > >> > can try to zero arbitrary range of memory with-in a page. So update this
+> > >> > function to assume that offset and length can be arbitrary and do the
+> > >> > necessary alignments as needed.
+> > >> 
+> > >> What caller will try to zero a range that is smaller than a sector?
+> > >
+> > > Hi Jeff,
+> > >
+> > > New dax zeroing interface (dax_zero_page_range()) can technically pass
+> > > a range which is less than a sector. Or which is bigger than a sector
+> > > but start and end are not aligned on sector boundaries.
+> > 
+> > Sure, but who will call it with misaligned ranges?
+> 
+> create a file foo.txt of size 4K and then truncate it.
+> 
+> "truncate -s 23 foo.txt". Filesystems try to zero the bytes from 24 to
+> 4095.
 
-[ 3934.564165] Chain exists of:
-                 shrinker_rwsem --> &journal->j_checkpoint_mutex --> &pmd->root_lock
+This should fail with EIO. Only full page writes should clear the
+bad page state, and partial writes should therefore fail because
+they do not guarantee the data in the filesystem block is all good.
 
-For a more detailed lockdep report, please see:
+If this zeroing was a buffered write to an address with a bad
+sector, then the writeback will fail and the user will (eventually)
+get an EIO on the file.
 
-	https://lore.kernel.org/r/20200220234519.GA620489@mit.edu
+DAX should do the same thing, except because the zeroing is
+synchronous (i.e. done directly by the truncate syscall) we can -
+and should - return EIO immediately.
 
-We shouldn't need to hold the lock while are just tearing down and
-freeing the whole metadata pool structure.
+Indeed, with your code, if we then extend the file by truncating up
+back to 4k, then the range between 23 and 512 is still bad, even
+though we've successfully zeroed it and the user knows it. An
+attempt to read anywhere in this range (e.g. 10 bytes at offset 100)
+will fail with EIO, but reading 10 bytes at offset 2000 will
+succeed.
 
-Signed-off-by: Theodore Ts'o <tytso@mit.edu>
----
- drivers/md/dm-thin-metadata.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+That's *awful* behaviour to expose to userspace, especially when
+they look at the fs config and see that it's using both 4kB block
+and sector sizes...
 
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index fc9947d6210c..76b6b323bf4b 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -960,9 +960,9 @@ int dm_pool_metadata_close(struct dm_pool_metadata *pmd)
- 			DMWARN("%s: __commit_transaction() failed, error = %d",
- 			       __func__, r);
- 	}
-+	pmd_write_unlock(pmd);
- 	if (!pmd->fail_io)
- 		__destroy_persistent_data_objects(pmd);
--	pmd_write_unlock(pmd);
- 
- 	kfree(pmd);
- 	return 0;
+The only thing that makes sense from a filesystem perspective is
+clearing bad page state when entire filesystem blocks are
+overwritten. The data in a filesystem block is either good or bad,
+and it doesn't matter how many internal (kernel or device) sectors
+it has.
+
+> > And what happens to the rest?  The caller is left to trip over the
+> > errors?  That sounds pretty terrible.  I really think there needs to be
+> > an explicit contract here.
+> 
+> Ok, I think is is the contentious bit. Current interface
+> (__dax_zero_page_range()) either clears the poison (if I/O is aligned to
+> sector) or expects page to be free of poison.
+> 
+> So in above example, of "truncate -s 23 foo.txt", currently I get an error
+> because range being zeroed is not sector aligned. So
+> __dax_zero_page_range() falls back to calling direct_access(). Which
+> fails because there are poisoned sectors in the page.
+> 
+> With my patches, dax_zero_page_range(), clears the poison from sector 1 to
+> 7 but leaves sector 0 untouched and just writes zeroes from byte 0 to 511
+> and returns success.
+
+Ok, kernel sectors are not the unit of granularity bad page state
+should be managed at. They don't match page state granularity, and
+they don't match filesystem block granularity, and the whacky
+"partial writes silently succeed, reads fail unpredictably"
+assymetry it leads to will just cause problems for users.
+
+> So question is, is this better behavior or worse behavior. If sector 0
+> was poisoned, it will continue to remain poisoned and caller will come
+> to know about it on next read and then it should try to truncate file
+> to length 0 or unlink file or restore that file to get rid of poison.
+
+Worse, because the filesystem can't track what sub-parts of the
+block are bad and that leads to inconsistent data integrity status
+being exposed to userspace.
+
+
+> IOW, if a partial block is being zeroed and if it is poisoned, caller
+> will not be return an error and poison will not be cleared and memory
+> will be zeroed. What do we expect in such cases.
+> 
+> Do we expect an interface where if there are any bad blocks in the range
+> being zeroed, then they all should be cleared (and hence all I/O should
+> be aligned) otherwise error is returned. If yes, I could make that
+> change.
+> 
+> Downside of current interface is that it will clear as many blocks as
+> possible in the given range and leave starting and end blocks poisoned
+> (if it is unaligned) and not return error. That means a reader will
+> get error on these blocks again and they will have to try to clear it
+> again.
+
+Which is solved by having partial page writes always EIO on poisoned
+memory.
+
+Cheers,
+
+Dave.
 -- 
-2.24.1
+Dave Chinner
+david@fromorbit.com
