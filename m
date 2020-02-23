@@ -1,32 +1,67 @@
-From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [PATCH v5 2/8] drivers/pmem: Allow pmem_clear_poison() to accept arbitrary offset and len
-Date: Fri, 21 Feb 2020 16:33:52 -0500
-Message-ID: <x49o8tr1v7j.fsf@segfault.boston.devel.redhat.com>
-References: <20200218214841.10076-1-vgoyal@redhat.com>
-        <20200218214841.10076-3-vgoyal@redhat.com>
-        <x49lfoxj622.fsf@segfault.boston.devel.redhat.com>
-        <20200220215707.GC10816@redhat.com>
-        <x498skv3i5r.fsf@segfault.boston.devel.redhat.com>
-        <20200221201759.GF25974@redhat.com>
-        <CAPcyv4j3BPGvrhuVaQZgvZ0i+M+i-Ab0BH+mAjR_aZzu4_kidQ@mail.gmail.com>
-        <20200221212449.GG25974@redhat.com>
-        <CAPcyv4gBHuTDW1M-3W=0nuH1v3whChb8TAK1aA0gosBSKpkqcg@mail.gmail.com>
+From: "Theodore Ts'o" <tytso@mit.edu>
+Subject: [PATCH] dm thin metadata: fix lockdep complaint
+Date: Sun, 23 Feb 2020 14:54:58 -0500
+Message-ID: <20200223195458.1196339-1-tytso@mit.edu>
+References: <20200220234519.GA620489@mit.edu>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <CAPcyv4gBHuTDW1M-3W=0nuH1v3whChb8TAK1aA0gosBSKpkqcg@mail.gmail.com>
-        (Dan Williams's message of "Fri, 21 Feb 2020 13:30:56 -0800")
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: Vivek Goyal <vgoyal@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-nvdimm <linux-nvdimm@lists.01.org>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200220234519.GA620489@mit.edu>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Theodore Ts'o <tytso@mit.edu>, snitzer@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Dan Williams <dan.j.williams@intel.com> writes:
+[ 3934.173244] ======================================================
+[ 3934.179572] WARNING: possible circular locking dependency detected
+[ 3934.185884] 5.4.21-xfstests #1 Not tainted
+[ 3934.190151] ------------------------------------------------------
+[ 3934.196673] dmsetup/8897 is trying to acquire lock:
+[ 3934.201688] ffffffffbce82b18 (shrinker_rwsem){++++}, at: unregister_shrinker+0x22/0x80
+[ 3934.210268]
+               but task is already holding lock:
+[ 3934.216489] ffff92a10cc5e1d0 (&pmd->root_lock){++++}, at: dm_pool_metadata_close+0xba/0x120
+[ 3934.225083]
+               which lock already depends on the new lock.
 
-> Oh you misunderstood my comment, the "move badblocks to filesystem"
-> proposal is long term / down the road thing to consider. In the near
-> term this unaligned block zeroing facility is an improvement.
+[ 3934.564165] Chain exists of:
+                 shrinker_rwsem --> &journal->j_checkpoint_mutex --> &pmd->root_lock
 
-I'm not sure I agree.  I'm going to think about it and get back to you.
+For a more detailed lockdep report, please see:
 
--Jeff
+	https://lore.kernel.org/r/20200220234519.GA620489@mit.edu
+
+We shouldn't need to hold the lock while are just tearing down and
+freeing the whole metadata pool structure.
+
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ drivers/md/dm-thin-metadata.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+index fc9947d6210c..76b6b323bf4b 100644
+--- a/drivers/md/dm-thin-metadata.c
++++ b/drivers/md/dm-thin-metadata.c
+@@ -960,9 +960,9 @@ int dm_pool_metadata_close(struct dm_pool_metadata *pmd)
+ 			DMWARN("%s: __commit_transaction() failed, error = %d",
+ 			       __func__, r);
+ 	}
++	pmd_write_unlock(pmd);
+ 	if (!pmd->fail_io)
+ 		__destroy_persistent_data_objects(pmd);
+-	pmd_write_unlock(pmd);
+ 
+ 	kfree(pmd);
+ 	return 0;
+-- 
+2.24.1
