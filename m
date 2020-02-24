@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 6/7] dm-writecache: implement gradual cleanup
-Date: Mon, 24 Feb 2020 10:20:33 +0100
-Message-ID: <20200224092053.135853080@debian-a64.vm>
+Subject: [PATCH 2/7] dm-writecache: fix a crash when unloading
+Date: Mon, 24 Feb 2020 10:20:29 +0100
+Message-ID: <20200224092048.192812200@debian-a64.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -15,146 +15,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline; filename=dm-writecache-gradual-cleanup.patch
+Content-Disposition: inline; filename=dm-writecache-drain-workqueue.patch
 To: Mike Snitzer <msnitzer@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, Nikhil Kshirsagar <nkshirsa@redhat.com>, Alasdair Kergon <agk@redhat.com>, David Teigland <teigland@redhat.com>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
+Cc: Corey Marthaler <cmarthal@redhat.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-This patch implements gradual cleanup for dm-writecache - if the block is
-stored in the cache for too long, it will be written to the underlying
-device and cleaned up.
+This patch fixes a crash in writecache_writeback when replacing the
+dm-writecache target:
 
-The patch adds a new option "max_age" that specified the maximum age of a
-block in milliseconds.
+ general protection fault: 0000 [#1] SMP PTI
+ CPU: 28 PID: 6388 Comm: kworker/28:2 Kdump: loaded Tainted: G        W        --------- -t - 4.18.0-173.el8.x86_64 #1
+ Hardware name: Dell Inc. PowerEdge R830/0VVT0H, BIOS 1.8.0 05/28/2018
+ Workqueue: writecache-writeback writecache_writeback [dm_writecache]
+ RIP: 0010:writecache_writeback+0x10c/0x820 [dm_writecache]
+ Code: d8 fe ff ff 0f 87 7e 02 00 00 48 83 44 24 28 01 48 8b 44 24 28 48
+ 83 f8 40 0f 87 47 02 00 00 48 8b 83 a0 fe ff ff 4c 8d 60 e8 <41> f6 44 24
+ 2a 01 0f 85 16 02 00 00 49 8b 44 24 38 48 39 43 d0 0f
+ RSP: 0018:ffffb0e4e323fdd0 EFLAGS: 00010283
+ RAX: dead000000000200 RBX: ffff8c410d89f188 RCX: ffff8c41387edf01
+ RDX: 0000000000000000 RSI: ffff8c41387edf00 RDI: 0000000000000000
+ RBP: ffffb0e4e323fe90 R08: ffff8c413f9aa238 R09: 0000000000000000
+ R10: 0000000000000000 R11: 00011f203dfb3b00 R12: dead0000000001e8
+ R13: 0000000000000000 R14: ffff8c408e9d2900 R15: ffff8c410d89f190
+ FS:  0000000000000000(0000) GS:ffff8c413f980000(0000) knlGS:0000000000000000
+ CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+ CR2: 00005608dcd82000 CR3: 0000001cba20a005 CR4: 00000000003606e0
+ DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+ DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+ Call Trace:
+  ? blk_finish_plug+0x21/0x2e
+  ? do_work+0xc4/0xf0 [dm_mod]
+  process_one_work+0x1a7/0x3b0
+  worker_thread+0x30/0x390
+  ? create_worker+0x1a0/0x1a0
+  kthread+0x112/0x130
+  ? kthread_flush_work_fn+0x10/0x10
+  ret_from_fork+0x35/0x40
+
+writecache_suspend calls flush_workqueue(wc->writeback_wq) - this function
+flushes the current work. However, the workqueue may re-queue itself and
+flush_workqueue doesn't wait for re-queued works to finish. Because of
+this - the function writecache_writeback continues execution after the
+device was suspended and then concurrently with writecache_dtr, causing
+the crash.
+
+We must use drain_workqueue - that waits until the work and all re-queued
+works finish.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org	# 4.18+
+Fixes: 48debafe4f2f ("dm: add writecache target")
+Reported-by: Corey Marthaler <cmarthal@redhat.com>
+Depends-on: ("dm: report suspended device during destroy")
 
 ---
- drivers/md/dm-writecache.c |   34 +++++++++++++++++++++++++++++++++-
- 1 file changed, 33 insertions(+), 1 deletion(-)
+ drivers/md/dm-writecache.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 Index: linux-2.6/drivers/md/dm-writecache.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-writecache.c	2020-02-23 18:16:22.000000000 +0100
-+++ linux-2.6/drivers/md/dm-writecache.c	2020-02-23 18:16:22.000000000 +0100
-@@ -26,6 +26,7 @@
- #define AUTOCOMMIT_BLOCKS_SSD		65536
- #define AUTOCOMMIT_BLOCKS_PMEM		64
- #define AUTOCOMMIT_MSEC			1000
-+#define MAX_AGE_DIV			16
+--- linux-2.6.orig/drivers/md/dm-writecache.c	2020-02-21 13:14:25.000000000 +0100
++++ linux-2.6/drivers/md/dm-writecache.c	2020-02-21 13:17:49.000000000 +0100
+@@ -842,7 +842,7 @@ static void writecache_suspend(struct dm
+ 	}
+ 	wc_unlock(wc);
  
- #define BITMAP_GRANULARITY	65536
- #if BITMAP_GRANULARITY < PAGE_SIZE
-@@ -88,6 +89,7 @@ struct wc_entry {
- 		:47
- #endif
- 	;
-+	unsigned long age;
- #ifdef DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
- 	uint64_t original_sector;
- 	uint64_t seq_count;
-@@ -119,6 +121,7 @@ struct dm_writecache {
- 	size_t writeback_size;
- 	size_t freelist_high_watermark;
- 	size_t freelist_low_watermark;
-+	unsigned long max_age;
- 
- 	unsigned uncommitted_blocks;
- 	unsigned autocommit_blocks;
-@@ -130,6 +133,8 @@ struct dm_writecache {
- 	struct timer_list autocommit_timer;
- 	struct wait_queue_head freelist_wait;
- 
-+	struct timer_list max_age_timer;
-+
- 	atomic_t bio_in_progress[2];
- 	struct wait_queue_head bio_in_progress_wait[2];
- 
-@@ -597,6 +602,7 @@ static void writecache_insert_entry(stru
- 	rb_link_node(&ins->rb_node, parent, node);
- 	rb_insert_color(&ins->rb_node, &wc->tree);
- 	list_add(&ins->lru, &wc->lru);
-+	ins->age = jiffies;
- }
- 
- static void writecache_unlink(struct dm_writecache *wc, struct wc_entry *e)
-@@ -632,6 +638,15 @@ static inline void writecache_verify_wat
- 		queue_work(wc->writeback_wq, &wc->writeback_work);
- }
- 
-+static void writecache_max_age_timer(struct timer_list *t)
-+{
-+	struct dm_writecache *wc = from_timer(wc, t, max_age_timer);
-+	if (!dm_suspended(wc->ti) && !writecache_has_error(wc)) {
-+		queue_work(wc->writeback_wq, &wc->writeback_work);
-+		mod_timer(&wc->max_age_timer, jiffies + wc->max_age / MAX_AGE_DIV);
-+	}
-+}
-+
- static struct wc_entry *writecache_pop_from_freelist(struct dm_writecache *wc, sector_t expected_sector)
- {
- 	struct wc_entry *e;
-@@ -838,6 +853,7 @@ static void writecache_suspend(struct dm
- 	bool flush_on_suspend;
- 
- 	del_timer_sync(&wc->autocommit_timer);
-+	del_timer_sync(&wc->max_age_timer);
+-	flush_workqueue(wc->writeback_wq);
++	drain_workqueue(wc->writeback_wq);
  
  	wc_lock(wc);
- 	writecache_flush(wc);
-@@ -974,6 +990,9 @@ erase_this:
- 
- 	writecache_verify_watermark(wc);
- 
-+	if (wc->max_age != -1UL)
-+		mod_timer(&wc->max_age_timer, jiffies + wc->max_age / MAX_AGE_DIV);
-+
- 	wc_unlock(wc);
- }
- 
-@@ -1661,7 +1680,8 @@ restart:
- 	wbl.size = 0;
- 	while (!list_empty(&wc->lru) &&
- 	       (wc->writeback_all ||
--		wc->freelist_size + wc->writeback_size <= wc->freelist_low_watermark)) {
-+		wc->freelist_size + wc->writeback_size <= wc->freelist_low_watermark ||
-+		jiffies - container_of(wc->lru.prev, struct wc_entry, lru)->age >= wc->max_age - wc->max_age / MAX_AGE_DIV)) {
- 
- 		n_walked++;
- 		if (unlikely(n_walked > WRITEBACK_LATENCY) &&
-@@ -1924,9 +1944,11 @@ static int writecache_ctr(struct dm_targ
- 	wc->ti = ti;
- 
- 	mutex_init(&wc->lock);
-+	wc->max_age = -1UL;
- 	writecache_poison_lists(wc);
- 	init_waitqueue_head(&wc->freelist_wait);
- 	timer_setup(&wc->autocommit_timer, writecache_autocommit_timer, 0);
-+	timer_setup(&wc->max_age_timer, writecache_max_age_timer, 0);
- 
- 	for (i = 0; i < 2; i++) {
- 		atomic_set(&wc->bio_in_progress[i], 0);
-@@ -2100,6 +2122,14 @@ static int writecache_ctr(struct dm_targ
- 				goto invalid_optional;
- 			wc->autocommit_jiffies = msecs_to_jiffies(autocommit_msecs);
- 			wc->autocommit_time_set = true;
-+		} else if (!strcasecmp(string, "max_age") && opt_params >= 1) {
-+			unsigned max_age_msecs;
-+			string = dm_shift_arg(&as), opt_params--;
-+			if (sscanf(string, "%u%c", &max_age_msecs, &dummy) != 1)
-+				goto invalid_optional;
-+			if (max_age_msecs > 86400000)
-+				goto invalid_optional;
-+			wc->max_age = msecs_to_jiffies(max_age_msecs);
- 		} else if (!strcasecmp(string, "cleaner")) {
- 			wc->cleaner = true;
- 		} else if (!strcasecmp(string, "fua")) {
-@@ -2361,6 +2391,8 @@ static void writecache_status(struct dm_
- 			DMEMIT(" autocommit_blocks %u", wc->autocommit_blocks);
- 		if (wc->autocommit_time_set)
- 			DMEMIT(" autocommit_time %u", jiffies_to_msecs(wc->autocommit_jiffies));
-+		if (wc->max_age != -1UL)
-+			DMEMIT(" max_age %u", jiffies_to_msecs(wc->max_age));
- 		if (wc->cleaner)
- 			DMEMIT(" cleaner");
- 		if (wc->writeback_fua_set)
+ 	if (flush_on_suspend)
