@@ -1,36 +1,77 @@
-From: Brassow Jonathan <jbrassow@redhat.com>
-Subject: [Job Posting] There is a position open in Red Hat for
- working on device-mapper
-Date: Mon, 24 Feb 2020 08:04:11 -0600
-Message-ID: <815B7F0F-574E-4DE2-BF28-7C5831BADAEE@redhat.com>
-Mime-Version: 1.0 (Mac OS X Mail 13.0 \(3608.40.2.2.4\))
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH v5 2/8] drivers/pmem: Allow pmem_clear_poison() to accept
+ arbitrary offset and len
+Date: Mon, 24 Feb 2020 10:38:44 -0500
+Message-ID: <20200224153844.GB14651@redhat.com>
+References: <20200218214841.10076-1-vgoyal@redhat.com>
+ <20200218214841.10076-3-vgoyal@redhat.com>
+ <x49lfoxj622.fsf@segfault.boston.devel.redhat.com>
+ <20200220215707.GC10816@redhat.com>
+ <x498skv3i5r.fsf@segfault.boston.devel.redhat.com>
+ <20200221201759.GF25974@redhat.com>
+ <20200223230330.GE10737@dread.disaster.area>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200223230330.GE10737@dread.disaster.area>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, hch@infradead.org, dan.j.williams@intel.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-SGksCgpBcG9sb2dpZXMgZm9yIGhpamFja2luZyB0aGUgbWFpbGluZyBsaXN0IHRvIHNvbGljaXQg
-am9iIHBvc3RpbmdzLCBidXQgdGhpcyBvbmUgc2VlbXMgZXNwZWNpYWxseSBvbi1wb2ludC4KCldl
-IGhhdmUgYSBqb2Igb3BlbmluZyBpbiBSZWQgSGF0IGZvciBkZXZpY2UtbWFwcGVyIGFuZCByZWxh
-dGVkIHByb2R1Y3RzIGRldmVsb3BtZW50LiAgVGhlIHBvc2l0aW9uIGFuZCBzYWxhcnkgYXJlIGJh
-c2VkIGluIEJybm8sIEN6ZWNoIFJlcHVibGljOyBidXQgd29ya2luZyByZW1vdGVseSBmcm9tIGp1
-c3QgYWJvdXQgYW55d2hlcmUgd291bGQgYmUgZmluZSBhcyB3ZWxsLiAgV2UgaGF2ZSBhIG5lZWQg
-Zm9yIGEgcmFuZ2Ugb2Ygc2tpbGxzIGZyb20gdGhlIG1vcmUganVuaW9yIHRvIG1vcmUgc2VuaW9y
-IGRldmVsb3Blci4gIElmIHlvdSBhcmUgZmx1ZW50IGluIOKAmEPigJksIGZhbWlsaWFyIHdpdGgg
-c3RvcmFnZSwgYW5kIGludGVyZXN0ZWQgaW4gd29ya2luZyBhdCBSZWQgSGF0OyBwbGVhc2UgcHV0
-IGluIGFuIGFwcGxpY2F0aW9uWzFdLgoKVGhhbmtzLApicmFzc293CgpbMV0gaHR0cHM6Ly9nbG9i
-YWwtcmVkaGF0LmljaW1zLmNvbS9qb2JzLzc0NDU5L3Nlbmlvci1zb2Z0d2FyZS1lbmdpbmVlci0t
-LXNvZnR3YXJlLWRlZmluZWQtc3RvcmFnZS9qb2I/aHViPTcmbW9iaWxlPWZhbHNlJndpZHRoPTEx
-NDAmaGVpZ2h0PTUwMCZiZ2E9dHJ1ZSZuZWVkc1JlZGlyZWN0PWZhbHNlJmphbjFvZmZzZXQ9LTM2
-MCZqdW4xb2Zmc2V0PS0zMDAKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
-YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Mon, Feb 24, 2020 at 10:03:30AM +1100, Dave Chinner wrote:
+
+[..]
+> > > > Hi Jeff,
+> > > >
+> > > > New dax zeroing interface (dax_zero_page_range()) can technically pass
+> > > > a range which is less than a sector. Or which is bigger than a sector
+> > > > but start and end are not aligned on sector boundaries.
+> > > 
+> > > Sure, but who will call it with misaligned ranges?
+> > 
+> > create a file foo.txt of size 4K and then truncate it.
+> > 
+> > "truncate -s 23 foo.txt". Filesystems try to zero the bytes from 24 to
+> > 4095.
+> 
+> This should fail with EIO. Only full page writes should clear the
+> bad page state, and partial writes should therefore fail because
+> they do not guarantee the data in the filesystem block is all good.
+> 
+> If this zeroing was a buffered write to an address with a bad
+> sector, then the writeback will fail and the user will (eventually)
+> get an EIO on the file.
+> 
+> DAX should do the same thing, except because the zeroing is
+> synchronous (i.e. done directly by the truncate syscall) we can -
+> and should - return EIO immediately.
+> 
+> Indeed, with your code, if we then extend the file by truncating up
+> back to 4k, then the range between 23 and 512 is still bad, even
+> though we've successfully zeroed it and the user knows it. An
+> attempt to read anywhere in this range (e.g. 10 bytes at offset 100)
+> will fail with EIO, but reading 10 bytes at offset 2000 will
+> succeed.
+
+Hi Dave,
+
+What is expected if I do "truncate -s 512 foo.txt". Say first sector (0 to
+511) is poisoned and rest don't have poison. Should this fail with -EIO.
+
+In current implementation it does not. Because all sector aligned I/O
+we redirect through blkdev_issue_zeroout() and that will happly zero
+out sector 2-8 without worrying about the state of sector 1. Hence user
+which tries to read 10 bytes at offset 100, will still fail. This probably
+should be fixed if we want to retain existing behavior.
+
+Anyway, partial page truncate can't ensure that data in rest of the page can
+be read back successfully. Memory can get poison after the write and
+hence read after truncate will still fail.
+
+Hence, all we are trying to ensure is that if a poison is known at the
+time of writing partial page, then we should return error to user space.
+
+Thanks
+Vivek
