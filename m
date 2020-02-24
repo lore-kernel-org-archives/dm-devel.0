@@ -1,8 +1,8 @@
 From: Vivek Goyal <vgoyal@redhat.com>
 Subject: Re: [PATCH v5 2/8] drivers/pmem: Allow pmem_clear_poison() to accept
  arbitrary offset and len
-Date: Mon, 24 Feb 2020 10:38:44 -0500
-Message-ID: <20200224153844.GB14651@redhat.com>
+Date: Mon, 24 Feb 2020 15:13:46 -0500
+Message-ID: <20200224201346.GC14651@redhat.com>
 References: <20200218214841.10076-1-vgoyal@redhat.com>
  <20200218214841.10076-3-vgoyal@redhat.com>
  <x49lfoxj622.fsf@segfault.boston.devel.redhat.com>
@@ -21,8 +21,25 @@ Cc: Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel@vger.kernel.org, linux-nvdimm@
 List-Id: dm-devel.ids
 
 On Mon, Feb 24, 2020 at 10:03:30AM +1100, Dave Chinner wrote:
-
-[..]
+> On Fri, Feb 21, 2020 at 03:17:59PM -0500, Vivek Goyal wrote:
+> > On Fri, Feb 21, 2020 at 01:32:48PM -0500, Jeff Moyer wrote:
+> > > Vivek Goyal <vgoyal@redhat.com> writes:
+> > > 
+> > > > On Thu, Feb 20, 2020 at 04:35:17PM -0500, Jeff Moyer wrote:
+> > > >> Vivek Goyal <vgoyal@redhat.com> writes:
+> > > >> 
+> > > >> > Currently pmem_clear_poison() expects offset and len to be sector aligned.
+> > > >> > Atleast that seems to be the assumption with which code has been written.
+> > > >> > It is called only from pmem_do_bvec() which is called only from pmem_rw_page()
+> > > >> > and pmem_make_request() which will only passe sector aligned offset and len.
+> > > >> >
+> > > >> > Soon we want use this function from dax_zero_page_range() code path which
+> > > >> > can try to zero arbitrary range of memory with-in a page. So update this
+> > > >> > function to assume that offset and length can be arbitrary and do the
+> > > >> > necessary alignments as needed.
+> > > >> 
+> > > >> What caller will try to zero a range that is smaller than a sector?
+> > > >
 > > > > Hi Jeff,
 > > > >
 > > > > New dax zeroing interface (dax_zero_page_range()) can technically pass
@@ -54,24 +71,110 @@ On Mon, Feb 24, 2020 at 10:03:30AM +1100, Dave Chinner wrote:
 > attempt to read anywhere in this range (e.g. 10 bytes at offset 100)
 > will fail with EIO, but reading 10 bytes at offset 2000 will
 > succeed.
+> 
+> That's *awful* behaviour to expose to userspace, especially when
+> they look at the fs config and see that it's using both 4kB block
+> and sector sizes...
+> 
+> The only thing that makes sense from a filesystem perspective is
+> clearing bad page state when entire filesystem blocks are
+> overwritten. The data in a filesystem block is either good or bad,
+> and it doesn't matter how many internal (kernel or device) sectors
+> it has.
+> 
+> > > And what happens to the rest?  The caller is left to trip over the
+> > > errors?  That sounds pretty terrible.  I really think there needs to be
+> > > an explicit contract here.
+> > 
+> > Ok, I think is is the contentious bit. Current interface
+> > (__dax_zero_page_range()) either clears the poison (if I/O is aligned to
+> > sector) or expects page to be free of poison.
+> > 
+> > So in above example, of "truncate -s 23 foo.txt", currently I get an error
+> > because range being zeroed is not sector aligned. So
+> > __dax_zero_page_range() falls back to calling direct_access(). Which
+> > fails because there are poisoned sectors in the page.
+> > 
+> > With my patches, dax_zero_page_range(), clears the poison from sector 1 to
+> > 7 but leaves sector 0 untouched and just writes zeroes from byte 0 to 511
+> > and returns success.
+> 
+> Ok, kernel sectors are not the unit of granularity bad page state
+> should be managed at. They don't match page state granularity, and
+> they don't match filesystem block granularity, and the whacky
+> "partial writes silently succeed, reads fail unpredictably"
+> assymetry it leads to will just cause problems for users.
+> 
+> > So question is, is this better behavior or worse behavior. If sector 0
+> > was poisoned, it will continue to remain poisoned and caller will come
+> > to know about it on next read and then it should try to truncate file
+> > to length 0 or unlink file or restore that file to get rid of poison.
+> 
+> Worse, because the filesystem can't track what sub-parts of the
+> block are bad and that leads to inconsistent data integrity status
+> being exposed to userspace.
+> 
+> 
+> > IOW, if a partial block is being zeroed and if it is poisoned, caller
+> > will not be return an error and poison will not be cleared and memory
+> > will be zeroed. What do we expect in such cases.
+> > 
+> > Do we expect an interface where if there are any bad blocks in the range
+> > being zeroed, then they all should be cleared (and hence all I/O should
+> > be aligned) otherwise error is returned. If yes, I could make that
+> > change.
+> > 
+> > Downside of current interface is that it will clear as many blocks as
+> > possible in the given range and leave starting and end blocks poisoned
+> > (if it is unaligned) and not return error. That means a reader will
+> > get error on these blocks again and they will have to try to clear it
+> > again.
+> 
+> Which is solved by having partial page writes always EIO on poisoned
+> memory.
 
-Hi Dave,
+Ok, how about if I add one more patch to the series which will check
+if unwritten portion of the page has known poison. If it has, then
+-EIO is returned. 
 
-What is expected if I do "truncate -s 512 foo.txt". Say first sector (0 to
-511) is poisoned and rest don't have poison. Should this fail with -EIO.
 
-In current implementation it does not. Because all sector aligned I/O
-we redirect through blkdev_issue_zeroout() and that will happly zero
-out sector 2-8 without worrying about the state of sector 1. Hence user
-which tries to read 10 bytes at offset 100, will still fail. This probably
-should be fixed if we want to retain existing behavior.
+Subject: pmem: zero page range return error if poisoned memory in unwritten area
 
-Anyway, partial page truncate can't ensure that data in rest of the page can
-be read back successfully. Memory can get poison after the write and
-hence read after truncate will still fail.
+Filesystems call into pmem_dax_zero_page_range() to zero partial page upon
+truncate. If partial page is being zeroed, then at the end of operation
+file systems expect that there is no poison in the whole page (atleast
+known poison).
 
-Hence, all we are trying to ensure is that if a poison is known at the
-time of writing partial page, then we should return error to user space.
+So make sure part of the partial page which is not being written, does not
+have poison. If it does, return error. If there is poison in area of page
+being written, it will be cleared.
 
-Thanks
-Vivek
+Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+---
+ drivers/nvdimm/pmem.c |   13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+Index: redhat-linux/drivers/nvdimm/pmem.c
+===================================================================
+--- redhat-linux.orig/drivers/nvdimm/pmem.c	2020-02-24 10:57:48.520451478 -0500
++++ redhat-linux/drivers/nvdimm/pmem.c	2020-02-24 15:01:58.119854835 -0500
+@@ -309,6 +309,19 @@ static int pmem_dax_zero_page_range(stru
+ {
+ 	struct pmem_device *pmem = dax_get_private(dax_dev);
+ 
++	if (offset_in_page(offset)) {
++		sector_t unwritten_start = (offset & PAGE_MASK) >> SECTOR_SHIFT;
++		unsigned int unwritten_len = ALIGN(offset_in_page(offset), SECTOR_SIZE);
++		/* If partial page is being zeroed, make sure there is no
++		 * known poison in the area of page which is not being zeroed.
++		 * Filesystems expect full page to be free of *known* poison
++		 * at the end of partial page zeroing.
++		 */
++		if (unlikely(is_bad_pmem(&pmem->bb, unwritten_start,
++					 unwritten_len)))
++			return -EIO;
++	}
++
+ 	return blk_status_to_errno(pmem_do_write(pmem, ZERO_PAGE(0), 0, offset,
+ 				   len));
+ }
