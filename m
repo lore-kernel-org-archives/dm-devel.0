@@ -1,12 +1,14 @@
-From: =?UTF-8?q?Daniel=20Gl=C3=B6ckner?= <dg@emlix.com>
-Subject: [PATCH] dm integrity: reinitialize __bi_remaining when
-	reusing bio
-Date: Tue, 25 Feb 2020 18:07:44 +0100
-Message-ID: <20200225170744.10485-1-dg@emlix.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: RFC: multipath-tools: NVMe native multipath and
+ default setting for "enable_foreign"
+Date: Tue, 25 Feb 2020 11:58:20 -0600
+Message-ID: <20200225175820.GO30153@octiron.msp.redhat.com>
+References: <8f4d39d663aad324017297db0d31a0a24369c9a4.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <8f4d39d663aad324017297db0d31a0a24369c9a4.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,31 +18,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, =?UTF-8?q?Daniel=20Gl=C3=B6ckner?= <dg@emlix.com>
+Content-Disposition: inline
+To: Martin Wilck <mwilck@suse.com>
+Cc: "George, Martin" <Martin.George@netapp.com>, Hannes Reinecke <hare@suse.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, "Schremmer,
+	Steven" <Steve.Schremmer@netapp.com>, dm-devel mailing list <dm-devel@redhat.com>, JulianAndresKlode <julian.klode@canonical.com>
 List-Id: dm-devel.ids
 
-SW4gY2FzZXMgd2hlcmUgZGVjX2luX2ZsaWdodCBoYXMgdG8gcmVxdWV1ZSB0aGUgaW50ZWdyaXR5
-X2Jpb193YWl0IHdvcmsKdG8gdHJhbnNmZXIgdGhlIHJlc3Qgb2YgdGhlIGRhdGEsIHRoZSBfX2Jp
-X3JlbWFpbmluZyBmaWVsZCBvZiB0aGUgYmlvCm1pZ2h0IGFscmVhZHkgaGF2ZSBiZWVuIGRlY3Jl
-bWVudGVkIHRvIHplcm8uIFJldXNpbmcgdGhlIGJpbyB3aXRob3V0CnJlaW5pdGlhbGl6aW5nIHRo
-YXQgY291bnRlciB0byAxIGNhbiB0aGVuIHJlc3VsdCBpbiBpbnRlZ3JpdHlfZW5kX2lvCmJlaW5n
-IGNhbGxlZCB0b28gZWFybHkgd2hlbiB0aGUgQklPX0NIQUlOIGZsYWcgaXMgc2V0LCBmLmV4LiBk
-dWUgdG8KYmxrX3F1ZXVlX3NwbGl0LiBJbiBvdXIgY2FzZSB0aGlzIHRyaWdnZXJlZCB0aGUgQlVH
-KCkgaW4KYmxrX21xX2VuZF9yZXF1ZXN0IHdoZW4gdGhlIGhhcmR3YXJlIHNpZ25hbGxlZCBjb21w
-bGV0aW9uIG9mIHRoZSBiaW8KYWZ0ZXIgaW50ZWdyaXR5X2VuZF9pbyBoYWQgbW9kaWZpZWQgaXQu
-CgpTaWduZWQtb2ZmLWJ5OiBEYW5pZWwgR2zDtmNrbmVyIDxkZ0BlbWxpeC5jb20+Ci0tLQogZHJp
-dmVycy9tZC9kbS1pbnRlZ3JpdHkuYyB8IDEgKwogMSBmaWxlIGNoYW5nZWQsIDEgaW5zZXJ0aW9u
-KCspCgpkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS1pbnRlZ3JpdHkuYyBiL2RyaXZlcnMvbWQv
-ZG0taW50ZWdyaXR5LmMKaW5kZXggYjIyNWIzZTQ0NWZhLi44Y2VhMjk3OGZjMjQgMTAwNjQ0Ci0t
-LSBhL2RyaXZlcnMvbWQvZG0taW50ZWdyaXR5LmMKKysrIGIvZHJpdmVycy9tZC9kbS1pbnRlZ3Jp
-dHkuYwpAQCAtMTQzOCw2ICsxNDM4LDcgQEAgc3RhdGljIHZvaWQgZGVjX2luX2ZsaWdodChzdHJ1
-Y3QgZG1faW50ZWdyaXR5X2lvICpkaW8pCiAJCWlmIChsaWtlbHkoIWJpby0+Ymlfc3RhdHVzKSAm
-JiB1bmxpa2VseShiaW9fc2VjdG9ycyhiaW8pICE9IGRpby0+cmFuZ2Uubl9zZWN0b3JzKSkgewog
-CQkJZGlvLT5yYW5nZS5sb2dpY2FsX3NlY3RvciArPSBkaW8tPnJhbmdlLm5fc2VjdG9yczsKIAkJ
-CWJpb19hZHZhbmNlKGJpbywgZGlvLT5yYW5nZS5uX3NlY3RvcnMgPDwgU0VDVE9SX1NISUZUKTsK
-KwkJCWF0b21pY19zZXQoJmJpby0+X19iaV9yZW1haW5pbmcsIDEpOwogCQkJSU5JVF9XT1JLKCZk
-aW8tPndvcmssIGludGVncml0eV9iaW9fd2FpdCk7CiAJCQlxdWV1ZV93b3JrKGljLT53YWl0X3dx
-LCAmZGlvLT53b3JrKTsKIAkJCXJldHVybjsKLS0gCjIuMTcuMQoKCi0tCmRtLWRldmVsIG1haWxp
-bmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1h
-bi9saXN0aW5mby9kbS1kZXZlbA==
+On Wed, Feb 19, 2020 at 05:17:48PM +0100, Martin Wilck wrote:
+> multipath-tools has support for "foreign" libraries in multipath-tools
+> since 0.8.0, and support for enabling/disabling them at runtime since
+> 0.8.3.
+> 
+> The only foreign library that exists is "nvme" (for native NVMe
+> multipath), and it's likely to remain so for some time. Currently
+> upstream multipath-tools ships with all foreign libraries enabled by
+> default, and documentation about how to disable them.
+> 
+> There's an ongoing discussion between myself and folks from Netapp
+> about changing the code such that the nvme library is disabled by
+> default. People at Netapp are worried that multipath's output for NVMe
+> native multipath maps would confuse customers and break scripts.
+> I've suggested that Netapp simply ship a drop-in configuration file
+> to be put in /etc/multipath/conf.d to disable the nvme library, but I'm
+> told that customers are wary about vendor-supplied configuration files.
+> 
+> For SUSE's enterprise product, SLE, we have made this change and
+> disabled the nvme library by default. Now Netapp is asking me to
+> forward this change upstream. Personally, I'm not too fond of the
+> proposal, because I think the original idea (enable people to use the
+> tools they are used to) is still valid (*). OTOH, the "nvme" tool can
+> provide similar information and is likely to be used by NVMe users
+> anyway, so perhaps there's no urgent need for this functionality in
+> multipath-tools any more.
+> 
+> I really don't know if people out there find this feature rather
+> helpful or rather confusing. Therefore I'd like to ask for opinions
+> here on the list.
+
+In RHEL we don't disable them in the builtin defaults, since we already
+had a release with them enabled. Instead we disable them in the default
+config file that we use (at Netapp's request).
+
+In the next major RHEL release, I have nothing really against disabling
+them by default. Unfortunately, since they are now disabled in for most
+users in SLE and RHEL, it's hard to guage how much interest people have
+in them. I do think that some people will find them useful, and not want
+to change their config file to use them (especially since they may not
+have any dm-multipathed devices at all, and not really need a config
+file).  Perhaps disabling them by default, but including command line
+option to enable all foreign libraries would be a reasonable compromise.
+Then people who wanted to use this for native NVMe would just add
+something like "-e" (for enable all foreign libraries) to their
+commands.
+
+-Ben
+ 
+> Regards,
+> Martin
+> 
+> (*) Also because I, myself, have put quite some effort into the
+> "foreign/nvme" feature and wouldn't be happy to see it go away. 
+> 
