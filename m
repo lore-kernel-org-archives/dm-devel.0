@@ -1,81 +1,31 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: RFC: multipath-tools: NVMe native multipath and
- default setting for "enable_foreign"
-Date: Tue, 25 Feb 2020 11:58:20 -0600
-Message-ID: <20200225175820.GO30153@octiron.msp.redhat.com>
-References: <8f4d39d663aad324017297db0d31a0a24369c9a4.camel@suse.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [dm-devel] [PATCH] dm integrity: reinitialize __bi_remaining
+ when reusing bio
+Date: Tue, 25 Feb 2020 11:12:22 -0800
+Message-ID: <20200225191222.GA3908@infradead.org>
+References: <20200225170744.10485-1-dg@emlix.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8f4d39d663aad324017297db0d31a0a24369c9a4.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-To: Martin Wilck <mwilck@suse.com>
-Cc: "George, Martin" <Martin.George@netapp.com>, Hannes Reinecke <hare@suse.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, "Schremmer,
-	Steven" <Steve.Schremmer@netapp.com>, dm-devel mailing list <dm-devel@redhat.com>, JulianAndresKlode <julian.klode@canonical.com>
+In-Reply-To: <20200225170744.10485-1-dg@emlix.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Daniel =?iso-8859-1?Q?Gl=F6ckner?= <dg@emlix.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Feb 19, 2020 at 05:17:48PM +0100, Martin Wilck wrote:
-> multipath-tools has support for "foreign" libraries in multipath-tools
-> since 0.8.0, and support for enabling/disabling them at runtime since
-> 0.8.3.
+On Tue, Feb 25, 2020 at 06:07:44PM +0100, Daniel Glöckner wrote:
+> In cases where dec_in_flight has to requeue the integrity_bio_wait work
+> to transfer the rest of the data, the __bi_remaining field of the bio
+> might already have been decremented to zero. Reusing the bio without
+> reinitializing that counter to 1 can then result in integrity_end_io
+> being called too early when the BIO_CHAIN flag is set, f.ex. due to
+> blk_queue_split. In our case this triggered the BUG() in
+> blk_mq_end_request when the hardware signalled completion of the bio
+> after integrity_end_io had modified it.
 > 
-> The only foreign library that exists is "nvme" (for native NVMe
-> multipath), and it's likely to remain so for some time. Currently
-> upstream multipath-tools ships with all foreign libraries enabled by
-> default, and documentation about how to disable them.
-> 
-> There's an ongoing discussion between myself and folks from Netapp
-> about changing the code such that the nvme library is disabled by
-> default. People at Netapp are worried that multipath's output for NVMe
-> native multipath maps would confuse customers and break scripts.
-> I've suggested that Netapp simply ship a drop-in configuration file
-> to be put in /etc/multipath/conf.d to disable the nvme library, but I'm
-> told that customers are wary about vendor-supplied configuration files.
-> 
-> For SUSE's enterprise product, SLE, we have made this change and
-> disabled the nvme library by default. Now Netapp is asking me to
-> forward this change upstream. Personally, I'm not too fond of the
-> proposal, because I think the original idea (enable people to use the
-> tools they are used to) is still valid (*). OTOH, the "nvme" tool can
-> provide similar information and is likely to be used by NVMe users
-> anyway, so perhaps there's no urgent need for this functionality in
-> multipath-tools any more.
-> 
-> I really don't know if people out there find this feature rather
-> helpful or rather confusing. Therefore I'd like to ask for opinions
-> here on the list.
+> Signed-off-by: Daniel Glöckner <dg@emlix.com>
 
-In RHEL we don't disable them in the builtin defaults, since we already
-had a release with them enabled. Instead we disable them in the default
-config file that we use (at Netapp's request).
-
-In the next major RHEL release, I have nothing really against disabling
-them by default. Unfortunately, since they are now disabled in for most
-users in SLE and RHEL, it's hard to guage how much interest people have
-in them. I do think that some people will find them useful, and not want
-to change their config file to use them (especially since they may not
-have any dm-multipathed devices at all, and not really need a config
-file).  Perhaps disabling them by default, but including command line
-option to enable all foreign libraries would be a reasonable compromise.
-Then people who wanted to use this for native NVMe would just add
-something like "-e" (for enable all foreign libraries) to their
-commands.
-
--Ben
- 
-> Regards,
-> Martin
-> 
-> (*) Also because I, myself, have put quite some effort into the
-> "foreign/nvme" feature and wouldn't be happy to see it go away. 
-> 
+Drivers have no business poking into these internals.  If a bio is
+reused the caller needs to use bio_reset instead.
