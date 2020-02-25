@@ -1,37 +1,193 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [dm-devel] [PATCH] dm integrity: reinitialize __bi_remaining
- when reusing bio
-Date: Tue, 25 Feb 2020 14:02:54 -0800
-Message-ID: <20200225220254.GA13356@infradead.org>
-References: <20200225170744.10485-1-dg@emlix.com>
- <20200225191222.GA3908@infradead.org>
- <a932a297-266e-4dee-f030-40ecbc9899ca@emlix.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH v5 2/8] drivers/pmem: Allow pmem_clear_poison() to accept
+ arbitrary offset and len
+Date: Tue, 25 Feb 2020 14:49:30 -0800
+Message-ID: <CAPcyv4jN7ntOO2hK4ByDcX4-Kob=aJNOr3fGR_k_8rxZ=3Sz7w@mail.gmail.com>
+References: <20200220215707.GC10816@redhat.com> <x498skv3i5r.fsf@segfault.boston.devel.redhat.com>
+ <20200221201759.GF25974@redhat.com> <20200223230330.GE10737@dread.disaster.area>
+ <20200224201346.GC14651@redhat.com> <CAPcyv4gGrimesjZ=OKRaYTDd5dUVz+U9aPeBMh_H3_YCz4FOEQ@mail.gmail.com>
+ <20200224211553.GD14651@redhat.com> <CAPcyv4gX8p0YuMg3=r9DtPAO3Lz-96nuNyXbK1X5-cyVzNrDTA@mail.gmail.com>
+ <20200225133653.GA7488@redhat.com> <CAPcyv4h2fdo=-jqLPTqnuxYVMbBgODWPqafH35yBMBaPa5Rxcw@mail.gmail.com>
+ <20200225200824.GB7488@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <a932a297-266e-4dee-f030-40ecbc9899ca@emlix.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Daniel =?iso-8859-1?Q?Gl=F6ckner?= <dg@emlix.com>
-Cc: Christoph Hellwig <hch@infradead.org>, linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20200225200824.GB7488@redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Dave Chinner <david@fromorbit.com>, Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-nvdimm <linux-nvdimm@lists.01.org>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Feb 25, 2020 at 08:54:07PM +0100, Daniel Glöckner wrote:
-> bio_reset will reset too many fields. As you can see in the context of
-> the diff, dm-integrity expects f.ex. the values modified by bio_advance
-> to stay intact and the transfer should of course use the same disk and
-> operation.
-> 
-> How about doing the atomic_set in bio_remaining_done (in block/bio.c)
-> where the BIO_CHAIN flag is cleared once __bi_remaining hits zero?
-> Or is requeuing a bio without bio_reset really a no-go? In that case a
-> one-liner won't do...
+On Tue, Feb 25, 2020 at 12:08 PM Vivek Goyal <vgoyal@redhat.com> wrote:
+>
+> On Tue, Feb 25, 2020 at 08:25:27AM -0800, Dan Williams wrote:
+> > On Tue, Feb 25, 2020 at 5:37 AM Vivek Goyal <vgoyal@redhat.com> wrote:
+> > >
+> > > On Mon, Feb 24, 2020 at 01:32:58PM -0800, Dan Williams wrote:
+> > >
+> > > [..]
+> > > > > > > Ok, how about if I add one more patch to the series which will check
+> > > > > > > if unwritten portion of the page has known poison. If it has, then
+> > > > > > > -EIO is returned.
+> > > > > > >
+> > > > > > >
+> > > > > > > Subject: pmem: zero page range return error if poisoned memory in unwritten area
+> > > > > > >
+> > > > > > > Filesystems call into pmem_dax_zero_page_range() to zero partial page upon
+> > > > > > > truncate. If partial page is being zeroed, then at the end of operation
+> > > > > > > file systems expect that there is no poison in the whole page (atleast
+> > > > > > > known poison).
+> > > > > > >
+> > > > > > > So make sure part of the partial page which is not being written, does not
+> > > > > > > have poison. If it does, return error. If there is poison in area of page
+> > > > > > > being written, it will be cleared.
+> > > > > >
+> > > > > > No, I don't like that the zero operation is special cased compared to
+> > > > > > the write case. I'd say let's make them identical for now. I.e. fail
+> > > > > > the I/O at dax_direct_access() time.
+> > > > >
+> > > > > So basically __dax_zero_page_range() will only write zeros (and not
+> > > > > try to clear any poison). Right?
+> > > >
+> > > > Yes, the zero operation would have already failed at the
+> > > > dax_direct_access() step if there was present poison.
+> > > >
+> > > > > > I think the error clearing
+> > > > > > interface should be an explicit / separate op rather than a
+> > > > > > side-effect. What about an explicit interface for initializing newly
+> > > > > > allocated blocks, and the only reliable way to destroy poison through
+> > > > > > the filesystem is to free the block?
+> > > > >
+> > > > > Effectively pmem_make_request() is already that interface filesystems
+> > > > > use to initialize blocks and clear poison. So we don't really have to
+> > > > > introduce a new interface?
+> > > >
+> > > > pmem_make_request() is shared with the I/O path and is too low in the
+> > > > stack to understand intent. DAX intercepts the I/O path closer to the
+> > > > filesystem and can understand zeroing vs writing today. I'm proposing
+> > > > we go a step further and make DAX understand free-to-allocated-block
+> > > > initialization instead of just zeroing. Inject the error clearing into
+> > > > that initialization interface.
+> > > >
+> > > > > Or you are suggesting separate dax_zero_page_range() interface which will
+> > > > > always call into firmware to clear poison. And that will make sure latent
+> > > > > poison is cleared as well and filesystem should use that for block
+> > > > > initialization instead?
+> > > >
+> > > > Yes, except latent poison would not be cleared until the zeroing is
+> > > > implemented with movdir64b instead of callouts to firmware. It's
+> > > > otherwise too slow to call out to firmware unconditionally.
+> > > >
+> > > > > I do like the idea of not having to differentiate
+> > > > > between known poison and latent poison. Once a block has been initialized
+> > > > > all poison should be cleared (known/latent). I am worried though that
+> > > > > on large devices this might slowdown filesystem initialization a lot
+> > > > > if they are zeroing large range of blocks.
+> > > > >
+> > > > > If yes, this sounds like two different patch series. First patch series
+> > > > > takes care of removing blkdev_issue_zeroout() from
+> > > > > __dax_zero_page_range() and couple of iomap related cleans christoph
+> > > > > wanted.
+> > > > >
+> > > > > And second patch series for adding new dax operation to zero a range
+> > > > > and always call info firmware to clear poison and modify filesystems
+> > > > > accordingly.
+> > > >
+> > > > Yes, but they may need to be merged together. I don't want to regress
+> > > > the ability of a block-aligned hole-punch to clear errors.
+> > >
+> > > Hi Dan,
+> > >
+> > > IIUC, block aligned hole punch don't go through __dax_zero_page_range()
+> > > path. Instead they call blkdev_issue_zeroout() at later point of time.
+> > >
+> > > Only partial block zeroing path is taking __dax_zero_page_range(). So
+> > > even if we remove poison clearing code from __dax_zero_page_range(),
+> > > there should not be a regression w.r.t full block zeroing. Only possible
+> > > regression will be if somebody was doing partial block zeroing on sector
+> > > boundary, then poison will not be cleared.
+> > >
+> > > We now seem to be discussing too many issues w.r.t poison clearing
+> > > and dax. Atleast 3 issues are mentioned in this thread.
+> > >
+> > > A. Get rid of dependency on block device in dax zeroing path.
+> > >    (__dax_zero_page_range)
+> > >
+> > > B. Provide a way to clear latent poison. And possibly use movdir64b to
+> > >    do that and make filesystems use that interface for initialization
+> > >    of blocks.
+> > >
+> > > C. Dax zero operation is clearing known poison while copy_from_iter() is
+> > >    not. I guess this ship has already sailed. If we change it now,
+> > >    somebody will complain of some regression.
+> > >
+> > > For issue A, there are two possible ways to deal with it.
+> > >
+> > > 1. Implement a dax method to zero page. And this method will also clear
+> > >    known poison. This is what my patch series is doing.
+> > >
+> > > 2. Just get rid of blkdev_issue_zeroout() from __dax_zero_page_range()
+> > >    so that no poison will be cleared in __dax_zero_page_range() path. This
+> > >    path is currently used in partial page zeroing path and full filesystem
+> > >    block zeroing happens with blkdev_issue_zeroout(). There is a small
+> > >    chance of regression here in case of sector aligned partial block
+> > >    zeroing.
+> > >
+> > > My patch series takes care of issue A without any regressions. In fact it
+> > > improves current interface. For example, currently "truncate -s 512
+> > > foo.txt" will succeed even if first sector in the block is poisoned. My
+> > > patch series fixes it. Current implementation will return error on if any
+> > > non sector aligned truncate is done and any of the sector is poisoned. My
+> > > implementation will not return error if poisoned can be cleared as part
+> > > of zeroing. It will return only if poison is present in non-zeoring part.
+> >
+> > That asymmetry makes the implementation too much of a special case. If
+> > the dax mapping path forces error boundaries on PAGE_SIZE blocks then
+> > so should zeroing.
+> >
+> > >
+> > > Why don't we solve one issue A now and deal with issue B and C later in
+> > > a sepaprate patch series. This patch series gets rid of dependency on
+> > > block device in dax path and also makes current zeroing interface better.
+> >
+> > I'm ok with replacing blkdev_issue_zeroout() with a dax operation
+> > callback that deals with page aligned entries. That change at least
+> > makes the error boundary symmetric across copy_from_iter() and the
+> > zeroing path.
+>
+> IIUC, you are suggesting that modify dax_zero_page_range() to take page
+> aligned start and size and call this interface from
+> __dax_zero_page_range() and get rid of blkdev_issue_zeroout() in that
+> path?
+>
+> Something like.
+>
+> __dax_zero_page_range() {
+>   if(page_aligned_io)
+>         call_dax_page_zero_range()
+>   else
+>         use_direct_access_and_memcpy;
+> }
+>
+> And other callers of blkdev_issue_zeroout() in filesystems can migrate
+> to calling dax_zero_page_range() instead.
+>
+> If yes, I am not seeing what advantage do we get by this change.
+>
+> - __dax_zero_page_range() seems to be called by only partial block
+>   zeroing code. So dax_zero_page_range() call will remain unused.
+>
+>
+> - dax_zero_page_range() will be exact replacement of
+>   blkdev_issue_zeroout() so filesystems will not gain anything. Just that
+>   it will create a dax specific hook.
+>
+> In that case it might be simpler to just get rid of blkdev_issue_zeroout()
+> call from __dax_zero_page_range() and make sure there are no callers of
+> full block zeroing from this path.
 
-That tends to add a overhead to the fast path for a rather exotic
-case.  I'm having a bit of a hard time understanding the dm-integrity
-code due to it's annoyingly obsfucated code, but it seems like it
-tries to submit a bio again after it came out of a ->end_io handler.
-That might have some other problems, but if we only want to paper
-over the remaining count a isngle call to bio_inc_remaining might be all
-you need.
+I think you're right. The path I'm concerned about not regressing is
+the error clearing on new block allocation and we get that already via
+xfs_zero_extent() and sb_issue_zeroout(). For your fs we'll want a
+dax-device equivalent  for that path, but that does mean that
+__dax_zero_page_range() stays out of the error clearing game.
