@@ -1,273 +1,141 @@
-From: Lukas Straub <lukasstraub2@web.de>
-Subject: Re: [dm-devel] [PATCH] dm-integrity: Prevent RMW for full tag area
- writes
-Date: Wed, 26 Feb 2020 09:27:05 +0100
-Message-ID: <20200226092705.61b7dcf4@luklap>
-References: <20200220190445.2222af54@luklap>
- <alpine.LRH.2.02.2002251127070.1014@file01.intranet.prod.int.rdu2.redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH v5 2/8] drivers/pmem: Allow pmem_clear_poison() to accept
+ arbitrary offset and len
+Date: Wed, 26 Feb 2020 08:51:50 -0500
+Message-ID: <20200226135150.GA30329@redhat.com>
+References: <20200221201759.GF25974@redhat.com>
+ <20200223230330.GE10737@dread.disaster.area>
+ <20200224201346.GC14651@redhat.com>
+ <CAPcyv4gGrimesjZ=OKRaYTDd5dUVz+U9aPeBMh_H3_YCz4FOEQ@mail.gmail.com>
+ <20200224211553.GD14651@redhat.com>
+ <CAPcyv4gX8p0YuMg3=r9DtPAO3Lz-96nuNyXbK1X5-cyVzNrDTA@mail.gmail.com>
+ <20200225133653.GA7488@redhat.com>
+ <CAPcyv4h2fdo=-jqLPTqnuxYVMbBgODWPqafH35yBMBaPa5Rxcw@mail.gmail.com>
+ <20200225200824.GB7488@redhat.com>
+ <CAPcyv4jN7ntOO2hK4ByDcX4-Kob=aJNOr3fGR_k_8rxZ=3Sz7w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.2002251127070.1014@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: linux-kernel <linux-kernel@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4jN7ntOO2hK4ByDcX4-Kob=aJNOr3fGR_k_8rxZ=3Sz7w@mail.gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: Dave Chinner <david@fromorbit.com>, Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-nvdimm <linux-nvdimm@lists.01.org>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 25 Feb 2020 11:41:45 -0500 (EST)
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On Tue, Feb 25, 2020 at 02:49:30PM -0800, Dan Williams wrote:
+[..]
+> > > > Hi Dan,
+> > > >
+> > > > IIUC, block aligned hole punch don't go through __dax_zero_page_range()
+> > > > path. Instead they call blkdev_issue_zeroout() at later point of time.
+> > > >
+> > > > Only partial block zeroing path is taking __dax_zero_page_range(). So
+> > > > even if we remove poison clearing code from __dax_zero_page_range(),
+> > > > there should not be a regression w.r.t full block zeroing. Only possible
+> > > > regression will be if somebody was doing partial block zeroing on sector
+> > > > boundary, then poison will not be cleared.
+> > > >
+> > > > We now seem to be discussing too many issues w.r.t poison clearing
+> > > > and dax. Atleast 3 issues are mentioned in this thread.
+> > > >
+> > > > A. Get rid of dependency on block device in dax zeroing path.
+> > > >    (__dax_zero_page_range)
+> > > >
+> > > > B. Provide a way to clear latent poison. And possibly use movdir64b to
+> > > >    do that and make filesystems use that interface for initialization
+> > > >    of blocks.
+> > > >
+> > > > C. Dax zero operation is clearing known poison while copy_from_iter() is
+> > > >    not. I guess this ship has already sailed. If we change it now,
+> > > >    somebody will complain of some regression.
+> > > >
+> > > > For issue A, there are two possible ways to deal with it.
+> > > >
+> > > > 1. Implement a dax method to zero page. And this method will also clear
+> > > >    known poison. This is what my patch series is doing.
+> > > >
+> > > > 2. Just get rid of blkdev_issue_zeroout() from __dax_zero_page_range()
+> > > >    so that no poison will be cleared in __dax_zero_page_range() path. This
+> > > >    path is currently used in partial page zeroing path and full filesystem
+> > > >    block zeroing happens with blkdev_issue_zeroout(). There is a small
+> > > >    chance of regression here in case of sector aligned partial block
+> > > >    zeroing.
+> > > >
+> > > > My patch series takes care of issue A without any regressions. In fact it
+> > > > improves current interface. For example, currently "truncate -s 512
+> > > > foo.txt" will succeed even if first sector in the block is poisoned. My
+> > > > patch series fixes it. Current implementation will return error on if any
+> > > > non sector aligned truncate is done and any of the sector is poisoned. My
+> > > > implementation will not return error if poisoned can be cleared as part
+> > > > of zeroing. It will return only if poison is present in non-zeoring part.
+> > >
+> > > That asymmetry makes the implementation too much of a special case. If
+> > > the dax mapping path forces error boundaries on PAGE_SIZE blocks then
+> > > so should zeroing.
+> > >
+> > > >
+> > > > Why don't we solve one issue A now and deal with issue B and C later in
+> > > > a sepaprate patch series. This patch series gets rid of dependency on
+> > > > block device in dax path and also makes current zeroing interface better.
+> > >
+> > > I'm ok with replacing blkdev_issue_zeroout() with a dax operation
+> > > callback that deals with page aligned entries. That change at least
+> > > makes the error boundary symmetric across copy_from_iter() and the
+> > > zeroing path.
+> >
+> > IIUC, you are suggesting that modify dax_zero_page_range() to take page
+> > aligned start and size and call this interface from
+> > __dax_zero_page_range() and get rid of blkdev_issue_zeroout() in that
+> > path?
+> >
+> > Something like.
+> >
+> > __dax_zero_page_range() {
+> >   if(page_aligned_io)
+> >         call_dax_page_zero_range()
+> >   else
+> >         use_direct_access_and_memcpy;
+> > }
+> >
+> > And other callers of blkdev_issue_zeroout() in filesystems can migrate
+> > to calling dax_zero_page_range() instead.
+> >
+> > If yes, I am not seeing what advantage do we get by this change.
+> >
+> > - __dax_zero_page_range() seems to be called by only partial block
+> >   zeroing code. So dax_zero_page_range() call will remain unused.
+> >
+> >
+> > - dax_zero_page_range() will be exact replacement of
+> >   blkdev_issue_zeroout() so filesystems will not gain anything. Just that
+> >   it will create a dax specific hook.
+> >
+> > In that case it might be simpler to just get rid of blkdev_issue_zeroout()
+> > call from __dax_zero_page_range() and make sure there are no callers of
+> > full block zeroing from this path.
+> 
+> I think you're right. The path I'm concerned about not regressing is
+> the error clearing on new block allocation and we get that already via
+> xfs_zero_extent() and sb_issue_zeroout(). For your fs we'll want a
+> dax-device equivalent  for that path, but that does mean that
+> __dax_zero_page_range() stays out of the error clearing game.
 
-> On Thu, 20 Feb 2020, Lukas Straub wrote:
->
-> > If a full tag area is being written, don't read it first. This prevent=
-s a
-> > read-modify-write cycle and increases performance on HDDs considerably=
-.
-> >
-> > To do this we now calculate the checksums for all sectors in the bio i=
-n one
-> > go in integrity_metadata and then pass the result to dm_integrity_rw_t=
-ag,
-> > which now checks if we overwrite the whole tag area.
-> >
-> > Benchmarking with a 5400RPM HDD with bitmap mode:
-> > integritysetup format --no-wipe --batch-mode --interleave-sectors $((6=
-4*1024)) -t 4 -s 512 -I crc32c -B /dev/sdc
-> > integritysetup open -I crc32c -B /dev/sdc hdda_integ
-> > dd if=3D/dev/zero of=3D/dev/mapper/hdda_integ bs=3D64K count=3D$((16*1=
-024*4)) conv=3Dfsync oflag=3Ddirect status=3Dprogress
-> >
-> > Without patch:
-> > 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 400.326 s, 10.7 MB/s
-> >
-> > With patch:
-> > 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 41.2057 s, 104 MB/s
-> >
-> > Signed-off-by: Lukas Straub <lukasstraub2@web.de>
-> > ---
-> >  drivers/md/dm-integrity.c | 80 ++++++++++++++++++++++----------------=
--
-> >  1 file changed, 46 insertions(+), 34 deletions(-)
-> >
-> > diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-> > index b225b3e445fa..0e5ddcf44935 100644
-> > --- a/drivers/md/dm-integrity.c
-> > +++ b/drivers/md/dm-integrity.c
-> > @@ -1309,9 +1309,16 @@ static int dm_integrity_rw_tag(struct dm_integr=
-ity_c *ic, unsigned char *tag, se
-> >  		if (unlikely(r))
-> >  			return r;
-> >
-> > -		data =3D dm_bufio_read(ic->bufio, *metadata_block, &b);
-> > -		if (IS_ERR(data))
-> > -			return PTR_ERR(data);
-> > +		/* Don't read tag area from disk if we're going to overwrite it com=
-pletely */
-> > +		if (op =3D=3D TAG_WRITE && *metadata_offset =3D=3D 0 && total_size =
->=3D ic->metadata_run) {
->
-> Hi
->
-> This is incorrect logic because ic->metadata_run is in the units of
-> 512-byte sectors and total_size is in bytes.
->
-> If I correct the bug and change it to "if (op =3D=3D TAG_WRITE &&
-> *metadata_offset =3D=3D 0 && total_size >=3D ic->metadata_run << SECTOR_=
-SHIFT)",
-> then the benchmark doesn't show any performance advantage at all.
+In virtiofs we do not manage our own blocks. We let host filesystem
+do that and we are just passthrough filesystem passing fuse messages
+around. So I have not seen need of block zeroing interface yet.
 
-Uh oh, looking at it again i have mixed up sectors/bytes elsewhere too.
-Actually, could we rewrite this check like
- total_size >=3D (1U << SECTOR_SHIFT << ic->log2_buffer_sectors)?
-this should work, right?
-So we only have to overwrite part of the tag area, as long as it's whole s=
-ectors.
+I just happened to carry a patch in my patch series in this area because
+we wanted to get rid of this assumption that dax always has a block
+device associated. Apart from that, I don't need __dax_zero_page_range()
+for virtiofs. 
 
-> You would need much bigger bios to take advantage for this - for example=
-,
-> if we have 4k block size and 64k metadata buffer size and 4-byte crc32,
-> there are 65536/4=3D16384 tags in one metadata buffer and we would need
-> 16384*4096=3D64MiB bio to completely overwrite the metadata buffer. Such=
- big
-> bios are not realistic.
+I am doing this cleanup so that we dont even try to use block device
+in this dax zeroing path.
 
-What prevents us from using a single sector as the tag area? (Which was my=
- assumption with this patch)
-Then we would have (with 512b sectors) 512/4 =3D 128 tags =3D 64k bio, whi=
-ch is still below the optimal write
-size of raid5/6.
-I just tried to accomplish this, but there seems to be minimum limit of in=
-terleave_sectors.
+Anyway, I will cleanup this patch series and get rid of
+blkdev_issue_zeroout() call from __dax_zero_page_range() and post again
+for review and where does it go from there.
 
-Regards,
-Lukas Straub
-
-> Mikulas
->
->
-> > +			data =3D dm_bufio_new(ic->bufio, *metadata_block, &b);
-> > +			if (IS_ERR(data))
-> > +				return PTR_ERR(data);
-> > +		} else {
-> > +			data =3D dm_bufio_read(ic->bufio, *metadata_block, &b);
-> > +			if (IS_ERR(data))
-> > +				return PTR_ERR(data);
-> > +		}
-> >
-> >  		to_copy =3D min((1U << SECTOR_SHIFT << ic->log2_buffer_sectors) - *=
-metadata_offset, total_size);
-> >  		dp =3D data + *metadata_offset;
-> > @@ -1514,6 +1521,8 @@ static void integrity_metadata(struct work_struc=
-t *w)
-> >  {
-> >  	struct dm_integrity_io *dio =3D container_of(w, struct dm_integrity_=
-io, work);
-> >  	struct dm_integrity_c *ic =3D dio->ic;
-> > +	unsigned sectors_to_process =3D dio->range.n_sectors;
-> > +	sector_t sector =3D dio->range.logical_sector;
-> >
-> >  	int r;
-> >
-> > @@ -1522,16 +1531,14 @@ static void integrity_metadata(struct work_str=
-uct *w)
-> >  		struct bio_vec bv;
-> >  		unsigned digest_size =3D crypto_shash_digestsize(ic->internal_hash)=
-;
-> >  		struct bio *bio =3D dm_bio_from_per_bio_data(dio, sizeof(struct dm_=
-integrity_io));
-> > -		char *checksums;
-> > +		char *checksums, *checksums_ptr;
-> >  		unsigned extra_space =3D unlikely(digest_size > ic->tag_size) ? dig=
-est_size - ic->tag_size : 0;
-> >  		char checksums_onstack[HASH_MAX_DIGESTSIZE];
-> > -		unsigned sectors_to_process =3D dio->range.n_sectors;
-> > -		sector_t sector =3D dio->range.logical_sector;
-> >
-> >  		if (unlikely(ic->mode =3D=3D 'R'))
-> >  			goto skip_io;
-> >
-> > -		checksums =3D kmalloc((PAGE_SIZE >> SECTOR_SHIFT >> ic->sb->log2_se=
-ctors_per_block) * ic->tag_size + extra_space,
-> > +		checksums =3D kmalloc((dio->range.n_sectors >> ic->sb->log2_sectors=
-_per_block) * ic->tag_size + extra_space,
-> >  				    GFP_NOIO | __GFP_NORETRY | __GFP_NOWARN);
-> >  		if (!checksums) {
-> >  			checksums =3D checksums_onstack;
-> > @@ -1542,49 +1549,45 @@ static void integrity_metadata(struct work_str=
-uct *w)
-> >  			}
-> >  		}
-> >
-> > +		checksums_ptr =3D checksums;
-> >  		__bio_for_each_segment(bv, bio, iter, dio->orig_bi_iter) {
-> >  			unsigned pos;
-> > -			char *mem, *checksums_ptr;
-> > -
-> > -again:
-> > +			char *mem;
-> >  			mem =3D (char *)kmap_atomic(bv.bv_page) + bv.bv_offset;
-> >  			pos =3D 0;
-> > -			checksums_ptr =3D checksums;
-> >  			do {
-> >  				integrity_sector_checksum(ic, sector, mem + pos, checksums_ptr);
-> > -				checksums_ptr +=3D ic->tag_size;
-> > -				sectors_to_process -=3D ic->sectors_per_block;
-> > +
-> > +				if (likely(checksums !=3D checksums_onstack)) {
-> > +					checksums_ptr +=3D ic->tag_size;
-> > +				} else {
-> > +					r =3D dm_integrity_rw_tag(ic, checksums, &dio->metadata_block, &=
-dio->metadata_offset,
-> > +								ic->tag_size, !dio->write ? TAG_CMP : TAG_WRITE);
-> > +					if (unlikely(r))
-> > +						goto internal_hash_error;
-> > +				}
-> > +
-> >  				pos +=3D ic->sectors_per_block << SECTOR_SHIFT;
-> >  				sector +=3D ic->sectors_per_block;
-> > -			} while (pos < bv.bv_len && sectors_to_process && checksums !=3D c=
-hecksums_onstack);
-> > +				sectors_to_process -=3D ic->sectors_per_block;
-> > +			} while (pos < bv.bv_len && sectors_to_process);
-> >  			kunmap_atomic(mem);
-> >
-> > -			r =3D dm_integrity_rw_tag(ic, checksums, &dio->metadata_block, &di=
-o->metadata_offset,
-> > -						checksums_ptr - checksums, !dio->write ? TAG_CMP : TAG_WRITE);
-> > -			if (unlikely(r)) {
-> > -				if (r > 0) {
-> > -					DMERR_LIMIT("Checksum failed at sector 0x%llx",
-> > -						    (unsigned long long)(sector - ((r + ic->tag_size - 1) / ic-=
->tag_size)));
-> > -					r =3D -EILSEQ;
-> > -					atomic64_inc(&ic->number_of_mismatches);
-> > -				}
-> > -				if (likely(checksums !=3D checksums_onstack))
-> > -					kfree(checksums);
-> > -				goto error;
-> > -			}
-> > -
-> >  			if (!sectors_to_process)
-> >  				break;
-> > +		}
-> >
-> > -			if (unlikely(pos < bv.bv_len)) {
-> > -				bv.bv_offset +=3D pos;
-> > -				bv.bv_len -=3D pos;
-> > -				goto again;
-> > +		if (likely(checksums !=3D checksums_onstack)) {
-> > +			r =3D dm_integrity_rw_tag(ic, checksums, &dio->metadata_block, &di=
-o->metadata_offset,
-> > +						(dio->range.n_sectors >> ic->sb->log2_sectors_per_block) * ic->=
-tag_size,
-> > +						!dio->write ? TAG_CMP : TAG_WRITE);
-> > +			if (unlikely(r)) {
-> > +				kfree(checksums);
-> > +				goto internal_hash_error;
-> >  			}
-> > +			kfree(checksums);
-> >  		}
-> >
-> > -		if (likely(checksums !=3D checksums_onstack))
-> > -			kfree(checksums);
-> >  	} else {
-> >  		struct bio_integrity_payload *bip =3D dio->orig_bi_integrity;
-> >
-> > @@ -1615,6 +1618,13 @@ static void integrity_metadata(struct work_stru=
-ct *w)
-> >  skip_io:
-> >  	dec_in_flight(dio);
-> >  	return;
-> > +internal_hash_error:
-> > +	if (r > 0) {
-> > +		DMERR_LIMIT("Checksum failed at sector 0x%llx",
-> > +				(unsigned long long)(sector - ((r + ic->tag_size - 1) / ic->tag_s=
-ize)));
-> > +		r =3D -EILSEQ;
-> > +		atomic64_inc(&ic->number_of_mismatches);
-> > +	}
-> >  error:
-> >  	dio->bi_status =3D errno_to_blk_status(r);
-> >  	dec_in_flight(dio);
-> > @@ -3019,6 +3029,8 @@ static void dm_integrity_io_hints(struct dm_targ=
-et *ti, struct queue_limits *lim
-> >  		limits->physical_block_size =3D ic->sectors_per_block << SECTOR_SHI=
-FT;
-> >  		blk_limits_io_min(limits, ic->sectors_per_block << SECTOR_SHIFT);
-> >  	}
-> > +
-> > +	blk_limits_io_opt(limits, (1U << ic->sb->log2_interleave_sectors));
-> >  }
-> >
-> >  static void calculate_journal_section_size(struct dm_integrity_c *ic)
-> > --
-> > 2.20.1
-> >
-> >
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> >
->
+Thanks
+Vivek
