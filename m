@@ -1,98 +1,229 @@
 From: Lukas Straub <lukasstraub2@web.de>
-Subject: Re: [dm-devel] [PATCH] dm-integrity: Prevent RMW for full tag area
+Subject: [PATCH v2] dm-integrity: Prevent RMW for full metadata buffer
  writes
-Date: Thu, 27 Feb 2020 13:08:37 +0100
-Message-ID: <20200227130837.2707a09e@luklap>
-References: <20200220190445.2222af54@luklap>
-        <alpine.LRH.2.02.2002251127070.1014@file01.intranet.prod.int.rdu2.redhat.com>
-        <20200226092705.61b7dcf4@luklap>
-        <alpine.LRH.2.02.2002260906280.17883@file01.intranet.prod.int.rdu2.redhat.com>
+Date: Thu, 27 Feb 2020 14:26:01 +0100
+Message-ID: <20200227142601.61f3cd54@luklap>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.2002260906280.17883@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: linux-kernel <linux-kernel@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: linux-kernel <linux-kernel@vger.kernel.org>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 26 Feb 2020 09:14:31 -0500 (EST)
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+If a full metadata buffer is being written, don't read it first. This
+prevents a read-modify-write cycle and increases performance on HDDs
+considerably.
 
-> On Wed, 26 Feb 2020, Lukas Straub wrote:
->
-> > > > -		data =3D dm_bufio_read(ic->bufio, *metadata_block, &b);
-> > > > -		if (IS_ERR(data))
-> > > > -			return PTR_ERR(data);
-> > > > +		/* Don't read tag area from disk if we're going to overwrite it=
- completely */
-> > > > +		if (op =3D=3D TAG_WRITE && *metadata_offset =3D=3D 0 && total_s=
-ize >=3D ic->metadata_run) {
-> > >
-> > > Hi
-> > >
-> > > This is incorrect logic because ic->metadata_run is in the units of
-> > > 512-byte sectors and total_size is in bytes.
-> > >
-> > > If I correct the bug and change it to "if (op =3D=3D TAG_WRITE &&
-> > > *metadata_offset =3D=3D 0 && total_size >=3D ic->metadata_run << SEC=
-TOR_SHIFT)",
-> > > then the benchmark doesn't show any performance advantage at all.
-> >
-> > Uh oh, looking at it again i have mixed up sectors/bytes elsewhere too=
-.
-> > Actually, could we rewrite this check like
-> >  total_size >=3D (1U << SECTOR_SHIFT << ic->log2_buffer_sectors)?
-> > this should work, right?
-> > So we only have to overwrite part of the tag area, as long as it's who=
-le sectors.
-> >
-> > > You would need much bigger bios to take advantage for this - for exa=
-mple,
-> > > if we have 4k block size and 64k metadata buffer size and 4-byte crc=
-32,
-> > > there are 65536/4=3D16384 tags in one metadata buffer and we would n=
-eed
-> > > 16384*4096=3D64MiB bio to completely overwrite the metadata buffer. =
-Such big
-> > > bios are not realistic.
-> >
-> > What prevents us from using a single sector as the tag area? (Which wa=
-s
->
-> Single sector writes perform badly on SSDs (and on disks with 4k physica=
-l
-> sector size). We would need at least 4k.
-People with SSDs can still use a large tag area.
+To do this we now calculate the checksums for all sectors in the bio in on=
+e
+go in integrity_metadata and then pass the result to dm_integrity_rw_tag,
+which now checks if we overwrite the whole buffer.
 
-> There's another problem - using smaller metadata blocks will degrade rea=
+Benchmarking with a 5400RPM HDD with bitmap mode:
+integritysetup format --no-wipe --batch-mode --interleave-sectors $((64*10=
+24)) -t 4 -s 512 -I crc32c -B /dev/sdc
+integritysetup open --buffer-sectors=3D1 -I crc32c -B /dev/sdc hdda_integ
+dd if=3D/dev/zero of=3D/dev/mapper/hdda_integ bs=3D64K count=3D$((16*1024*=
+4)) conv=3Dfsync oflag=3Ddirect status=3Dprogress
+
+Without patch:
+4294967296 bytes (4.3 GB, 4.0 GiB) copied, 400.326 s, 10.7 MB/s
+
+With patch:
+4294967296 bytes (4.3 GB, 4.0 GiB) copied, 41.2057 s, 104 MB/s
+
+Signed-off-by: Lukas Straub <lukasstraub2@web.de>
+=2D--
+Hello Everyone,
+So here is v2, now checking if we overwrite a whole metadata buffer instea=
 d
-> performance, because we would need to issue more requests to read the
-> metadata.
-We can use prefetching, dm-bufio supports that.
+of the (buggy) check if we overwrite a whole tag area before.
+Performance stayed the same (with --buffer-sectors=3D1).
 
-> > my assumption with this patch) Then we would have (with 512b sectors)
-> > 512/4 =3D 128 tags =3D 64k bio, which is still below the optimal write=
- size
->
-> 4096/4*4096 =3D 4MiB - it may be possible, but it's still large.
+The only quirk now is that it advertises a very big optimal io size in the
+standard configuration (where buffer_sectors=3D128). Is this a Problem?
 
-We don't have to fill whole sector with metadata, we can for example use j=
-ust the first
-512 bytes (giving 512/4*4096 =3D 512k writes).
-The space overhead is negligible:
-For 1T of data we have 1G of metadata if we fill the whole sector.
-If we use just the first 512 bytes, we get 8G of metadata.
+v2:
+ -fix dm_integrity_rw_tag to check if we overwrite a whole metadat buffer
+ -fix optimal io size to check if we overwrite a whole metadata buffer
 
 Regards,
 Lukas Straub
 
-> > of raid5/6. I just tried to accomplish this, but there seems to be
-> > minimum limit of interleave_sectors.
-> >
-> > Regards,
-> > Lukas Straub
->
-> Mikulas
->
+ drivers/md/dm-integrity.c | 81 +++++++++++++++++++++++----------------
+ 1 file changed, 47 insertions(+), 34 deletions(-)
+
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index b225b3e445fa..a6d3cf1406df 100644
+=2D-- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -1309,9 +1309,17 @@ static int dm_integrity_rw_tag(struct dm_integrity_=
+c *ic, unsigned char *tag, se
+ 		if (unlikely(r))
+ 			return r;
+
+-		data =3D dm_bufio_read(ic->bufio, *metadata_block, &b);
+-		if (IS_ERR(data))
+-			return PTR_ERR(data);
++		/* Don't read metadata sectors from disk if we're going to overwrite th=
+em completely */
++		if (op =3D=3D TAG_WRITE && *metadata_offset =3D=3D 0 \
++			&& total_size >=3D (1U << SECTOR_SHIFT << ic->log2_buffer_sectors)) {
++			data =3D dm_bufio_new(ic->bufio, *metadata_block, &b);
++			if (IS_ERR(data))
++				return PTR_ERR(data);
++		} else {
++			data =3D dm_bufio_read(ic->bufio, *metadata_block, &b);
++			if (IS_ERR(data))
++				return PTR_ERR(data);
++		}
+
+ 		to_copy =3D min((1U << SECTOR_SHIFT << ic->log2_buffer_sectors) - *meta=
+data_offset, total_size);
+ 		dp =3D data + *metadata_offset;
+@@ -1514,6 +1522,8 @@ static void integrity_metadata(struct work_struct *w=
+)
+ {
+ 	struct dm_integrity_io *dio =3D container_of(w, struct dm_integrity_io, =
+work);
+ 	struct dm_integrity_c *ic =3D dio->ic;
++	unsigned sectors_to_process =3D dio->range.n_sectors;
++	sector_t sector =3D dio->range.logical_sector;
+
+ 	int r;
+
+@@ -1522,16 +1532,14 @@ static void integrity_metadata(struct work_struct =
+*w)
+ 		struct bio_vec bv;
+ 		unsigned digest_size =3D crypto_shash_digestsize(ic->internal_hash);
+ 		struct bio *bio =3D dm_bio_from_per_bio_data(dio, sizeof(struct dm_inte=
+grity_io));
+-		char *checksums;
++		char *checksums, *checksums_ptr;
+ 		unsigned extra_space =3D unlikely(digest_size > ic->tag_size) ? digest_=
+size - ic->tag_size : 0;
+ 		char checksums_onstack[HASH_MAX_DIGESTSIZE];
+-		unsigned sectors_to_process =3D dio->range.n_sectors;
+-		sector_t sector =3D dio->range.logical_sector;
+
+ 		if (unlikely(ic->mode =3D=3D 'R'))
+ 			goto skip_io;
+
+-		checksums =3D kmalloc((PAGE_SIZE >> SECTOR_SHIFT >> ic->sb->log2_sector=
+s_per_block) * ic->tag_size + extra_space,
++		checksums =3D kmalloc((dio->range.n_sectors >> ic->sb->log2_sectors_per=
+_block) * ic->tag_size + extra_space,
+ 				    GFP_NOIO | __GFP_NORETRY | __GFP_NOWARN);
+ 		if (!checksums) {
+ 			checksums =3D checksums_onstack;
+@@ -1542,49 +1550,45 @@ static void integrity_metadata(struct work_struct =
+*w)
+ 			}
+ 		}
+
++		checksums_ptr =3D checksums;
+ 		__bio_for_each_segment(bv, bio, iter, dio->orig_bi_iter) {
+ 			unsigned pos;
+-			char *mem, *checksums_ptr;
+-
+-again:
++			char *mem;
+ 			mem =3D (char *)kmap_atomic(bv.bv_page) + bv.bv_offset;
+ 			pos =3D 0;
+-			checksums_ptr =3D checksums;
+ 			do {
+ 				integrity_sector_checksum(ic, sector, mem + pos, checksums_ptr);
+-				checksums_ptr +=3D ic->tag_size;
+-				sectors_to_process -=3D ic->sectors_per_block;
++
++				if (likely(checksums !=3D checksums_onstack)) {
++					checksums_ptr +=3D ic->tag_size;
++				} else {
++					r =3D dm_integrity_rw_tag(ic, checksums, &dio->metadata_block, &dio-=
+>metadata_offset,
++								ic->tag_size, !dio->write ? TAG_CMP : TAG_WRITE);
++					if (unlikely(r))
++						goto internal_hash_error;
++				}
++
+ 				pos +=3D ic->sectors_per_block << SECTOR_SHIFT;
+ 				sector +=3D ic->sectors_per_block;
+-			} while (pos < bv.bv_len && sectors_to_process && checksums !=3D check=
+sums_onstack);
++				sectors_to_process -=3D ic->sectors_per_block;
++			} while (pos < bv.bv_len && sectors_to_process);
+ 			kunmap_atomic(mem);
+
+-			r =3D dm_integrity_rw_tag(ic, checksums, &dio->metadata_block, &dio->m=
+etadata_offset,
+-						checksums_ptr - checksums, !dio->write ? TAG_CMP : TAG_WRITE);
+-			if (unlikely(r)) {
+-				if (r > 0) {
+-					DMERR_LIMIT("Checksum failed at sector 0x%llx",
+-						    (unsigned long long)(sector - ((r + ic->tag_size - 1) / ic->tag=
+_size)));
+-					r =3D -EILSEQ;
+-					atomic64_inc(&ic->number_of_mismatches);
+-				}
+-				if (likely(checksums !=3D checksums_onstack))
+-					kfree(checksums);
+-				goto error;
+-			}
+-
+ 			if (!sectors_to_process)
+ 				break;
++		}
+
+-			if (unlikely(pos < bv.bv_len)) {
+-				bv.bv_offset +=3D pos;
+-				bv.bv_len -=3D pos;
+-				goto again;
++		if (likely(checksums !=3D checksums_onstack)) {
++			r =3D dm_integrity_rw_tag(ic, checksums, &dio->metadata_block, &dio->m=
+etadata_offset,
++						(dio->range.n_sectors >> ic->sb->log2_sectors_per_block) * ic->tag_=
+size,
++						!dio->write ? TAG_CMP : TAG_WRITE);
++			if (unlikely(r)) {
++				kfree(checksums);
++				goto internal_hash_error;
+ 			}
++			kfree(checksums);
+ 		}
+
+-		if (likely(checksums !=3D checksums_onstack))
+-			kfree(checksums);
+ 	} else {
+ 		struct bio_integrity_payload *bip =3D dio->orig_bi_integrity;
+
+@@ -1615,6 +1619,13 @@ static void integrity_metadata(struct work_struct *=
+w)
+ skip_io:
+ 	dec_in_flight(dio);
+ 	return;
++internal_hash_error:
++	if (r > 0) {
++		DMERR_LIMIT("Checksum failed at sector 0x%llx",
++				(unsigned long long)(sector - ((r + ic->tag_size - 1) / ic->tag_size)=
+));
++		r =3D -EILSEQ;
++		atomic64_inc(&ic->number_of_mismatches);
++	}
+ error:
+ 	dio->bi_status =3D errno_to_blk_status(r);
+ 	dec_in_flight(dio);
+@@ -3019,6 +3030,8 @@ static void dm_integrity_io_hints(struct dm_target *=
+ti, struct queue_limits *lim
+ 		limits->physical_block_size =3D ic->sectors_per_block << SECTOR_SHIFT;
+ 		blk_limits_io_min(limits, ic->sectors_per_block << SECTOR_SHIFT);
+ 	}
++
++	blk_limits_io_opt(limits, 1U << SECTOR_SHIFT << ic->log2_buffer_sectors =
+>> ic->log2_tag_size << SECTOR_SHIFT );
+ }
+
+ static void calculate_journal_section_size(struct dm_integrity_c *ic)
+=2D-
+2.20.1
