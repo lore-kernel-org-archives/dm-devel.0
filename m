@@ -1,218 +1,98 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v5 2/8] drivers/pmem: Allow pmem_clear_poison() to accept
- arbitrary offset and len
-Date: Wed, 26 Feb 2020 20:19:37 -0800
-Message-ID: <CAPcyv4gTSb-xZ2k938HxQeAXATvGg1aSkEGPfrzeQAz9idkgzQ@mail.gmail.com>
-References: <20200218214841.10076-1-vgoyal@redhat.com> <20200218214841.10076-3-vgoyal@redhat.com>
- <x49lfoxj622.fsf@segfault.boston.devel.redhat.com> <20200220215707.GC10816@redhat.com>
- <x498skv3i5r.fsf@segfault.boston.devel.redhat.com> <20200221201759.GF25974@redhat.com>
- <20200223230330.GE10737@dread.disaster.area> <20200224153844.GB14651@redhat.com>
- <20200227030248.GG10737@dread.disaster.area>
+From: Lukas Straub <lukasstraub2@web.de>
+Subject: Re: [dm-devel] [PATCH] dm-integrity: Prevent RMW for full tag area
+ writes
+Date: Thu, 27 Feb 2020 13:08:37 +0100
+Message-ID: <20200227130837.2707a09e@luklap>
+References: <20200220190445.2222af54@luklap>
+        <alpine.LRH.2.02.2002251127070.1014@file01.intranet.prod.int.rdu2.redhat.com>
+        <20200226092705.61b7dcf4@luklap>
+        <alpine.LRH.2.02.2002260906280.17883@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20200227030248.GG10737@dread.disaster.area>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Vivek Goyal <vgoyal@redhat.com>, Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-nvdimm <linux-nvdimm@lists.01.org>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.02.2002260906280.17883@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: linux-kernel <linux-kernel@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Feb 26, 2020 at 7:03 PM Dave Chinner <david@fromorbit.com> wrote:
->
-> On Mon, Feb 24, 2020 at 10:38:44AM -0500, Vivek Goyal wrote:
-> > On Mon, Feb 24, 2020 at 10:03:30AM +1100, Dave Chinner wrote:
-> >
-> > [..]
-> > > > > > Hi Jeff,
-> > > > > >
-> > > > > > New dax zeroing interface (dax_zero_page_range()) can technically pass
-> > > > > > a range which is less than a sector. Or which is bigger than a sector
-> > > > > > but start and end are not aligned on sector boundaries.
-> > > > >
-> > > > > Sure, but who will call it with misaligned ranges?
-> > > >
-> > > > create a file foo.txt of size 4K and then truncate it.
-> > > >
-> > > > "truncate -s 23 foo.txt". Filesystems try to zero the bytes from 24 to
-> > > > 4095.
-> > >
-> > > This should fail with EIO. Only full page writes should clear the
-> > > bad page state, and partial writes should therefore fail because
-> > > they do not guarantee the data in the filesystem block is all good.
-> > >
-> > > If this zeroing was a buffered write to an address with a bad
-> > > sector, then the writeback will fail and the user will (eventually)
-> > > get an EIO on the file.
-> > >
-> > > DAX should do the same thing, except because the zeroing is
-> > > synchronous (i.e. done directly by the truncate syscall) we can -
-> > > and should - return EIO immediately.
-> > >
-> > > Indeed, with your code, if we then extend the file by truncating up
-> > > back to 4k, then the range between 23 and 512 is still bad, even
-> > > though we've successfully zeroed it and the user knows it. An
-> > > attempt to read anywhere in this range (e.g. 10 bytes at offset 100)
-> > > will fail with EIO, but reading 10 bytes at offset 2000 will
-> > > succeed.
-> >
-> > Hi Dave,
-> >
-> > What is expected if I do "truncate -s 512 foo.txt". Say first sector (0 to
-> > 511) is poisoned and rest don't have poison. Should this fail with -EIO.
->
-> Yes - the filesystem block still contains bad data.
->
-> > In current implementation it does not.
->
-> I'm not surprised - the whole hardware error handling architecture
-> for FS-DAX is fundamentally broken. It was designed for device-dax,
-> and it just doesn't work for FS-DAX.
->
-> For example, to get the hardware error handling to be able to kill
-> userspace applications, a 1:1 physical-to-logical association
-> constraint was added to fs/dax.c:
->
-> /*
->  * TODO: for reflink+dax we need a way to associate a single page with
->  * multiple address_space instances at different linear_page_index()
->  * offsets.
->  */
-> static void dax_associate_entry(void *entry, struct address_space *mapping,
->                 struct vm_area_struct *vma, unsigned long address)
->
-> because device-dax only has *linear mappings* and so has a fixed
-> reverse mapping architecture.
->
-> i.e. the whole hardware error handling infrastructure was designed
-> around the constraints of device-dax. device-dax does not having any
-> structure to serialise access to the physical storage, so locking
-> was added to the mapping tree. THe mapping tree locking is accessed
-> on hardware error via the reverse mappingi association in the struct
-> page and that's how device-dax serialises direct physical storage
-> access against hardware error processing.  And while the page index
-> is locked in the mapping tree, it can walk the process vmas that
-> have the page mapped to kill them so that they don't try to access
-> the bad page.
->
-> That bad physical storage state is carried in a volatile struct page
-> flag, hence requiring some mechanism to make it persistent (the
-> device bad blocks register) and some other mechanism to clear the
-> poison state (direct IO, IIRC).
->
-> It's also a big, nasty, solid roadblock to implementing shared
-> data extents in FS-DAX. We basically have to completely re-architect
-> the hardware error handling for FS-DAX so that such errors are
-> reported to the filesystem first and then the filesystem does what
-> is needed to handle the error.
->
-> None of this works for filesystems because they need to perform
-> different operations depending on what the page that went bad
-> contains. FS-DAX should never trip over an unexpected poisoned page;
-> we do so now because such physical storage errors are completely
-> hidden form the fielsystem.
->
-> What you are trying to do is slap a band-aid over what to do when we
-> hit an unexpected page containing bad data. Filesystems expect to
-> find out about bad data in storage when they marshall the data into
-> or out of memory. They make the assumption that once it is in memory
-> it remains valid on the physical storage. Hence if an in-memory
-> error occurs, we can just toss it away and re-read it from storage,
-> and all is good.
->
-> FS-DAX changes that - we are no longer marshalling data into and out
-> of memory so we don't have a mechanism to get EIO when reading the
-> page into the page cache or writing it back to disk. We also don't
-> have an in-memory copy of the data - the physical storage is the
-> in-memory copy, and so we can't just toss it away when an error
-> occurs.
->
-> What we actually require is instantaneous notification of physical
-> storage errors so we can handle the error immediately. And that, in
-> turn, means we should never poison or see poisoned pages during
-> direct access operations because the filesystem doesn't need to
-> poison pages to prevent user access - it controls how the storage is
-> accessed directly.
->
-> e.g. if this error is in filesystem metadata, we might be able to
-> recover from it as that metadata might have a full copy in memory
-> (metadata is buffered in both XFS and ext4) or we might be able to
-> reconstruct it from other sources. Worst case, we have shut the
-> filesystem down completely so the admin can repair the damage the
-> lost page has caused.
->
-> e.g. The physical page may be located in free space, in which case
-> we don't care and can just zero it so all the bad hardware state is
-> cleared. The page never goes bad or gets poisoned in that case.
->
-> e.g. The physical page may be user data, in which case it may be
-> buffered in the page cache (non-dax) and so can easily be recovered.
-> It may not be recoverable, in which case we need to issue log
-> messages indicating that data has been lost (path, offset, length),
-> and do the VMA walk and kill processes that map that page. Then we
-> can zero the page to clear the bad state.
->
-> If, at any point we can't clear the bad state (e.g. the zeroing or
-> the read-back verification fails), then we need to make sure that
-> filesystem block is marked as allocated in the free space map, then
-> tell the reverse map that it's owner is now "bad storage" so it
-> never gets used again. i.e. this is the persistent bad block
-> storage, but doing it this way results in the rest of the filesystem
-> code never, ever seeing a poisoned page. And users never see it
-> either, because it will never be returned to the free space pool.
->
-> Of course, this relies of the filesystem having reverse mapping
-> capability. XFS already has this funcitonality available as a mkfs
-> option (mkfs.xfs -m rmapbt=1 ...), and we really need this so we can
-> get rid of the association of a physical page with a mapping and
-> file offset that device-dax requires for hardware page error
-> handling.  This means we don't need the physical storage to try to
-> hold filesystem layer reverse mapping information for us, and this
-> also removes the roadblock that the hardware error handling has
-> placed on implementing reflink w/ FS-DAX.
->
-> IOWs, the problem you are trying to solve is a direct result of
-> filesysetms not being informed when a physical pmem page goes bad
-> and the current error handling being implemented at entirely the
-> wrong layer for FS-DAX. It may work for device-dax, but it's most
-> definitely insufficient for correct error handling for filesystems.
->
-> > Anyway, partial page truncate can't ensure that data in rest of the page can
-> > be read back successfully. Memory can get poison after the write and
-> > hence read after truncate will still fail.
->
-> Which is where the notification requirement comes in. Yes, we may
-> still get errors on read or write, but if memory at rest goes bad,
-> we want to handle that and correct it ASAP, not wait days or months
-> for something to trip over the poisoned page before we find out
-> about it.
->
-> > Hence, all we are trying to ensure is that if a poison is known at the
-> > time of writing partial page, then we should return error to user space.
->
-> I think within FS-DAX infrastructure, any access to the data (read
-> or write) within a poisoned page or a page marked with PageError()
-> should return EIO to the caller, unless it's the specific command to
-> clear the error/poison state on the page. What happens with that
-> error state is then up to the caller.
->
+On Wed, 26 Feb 2020 09:14:31 -0500 (EST)
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-I agree with most of the above if you replace "device-dax error
-handling" with "System RAM error handling". It's typical memory error
-handling that injects the page->index and page->mappping dependency.
-In fact it was difficult to map this to device-dax without the hack
-that device-dax does not need to take a page lock. I do think that the
-FS needs this error information, at the same time it's also true that
-historically no FS pushed for this information for page-cache and
-in-memory metadata prior to FS-DAX. So, the design was not "device-dax
-first" it was "existing memory error handling first" and all the warts
-that implied.
+> On Wed, 26 Feb 2020, Lukas Straub wrote:
+>
+> > > > -		data =3D dm_bufio_read(ic->bufio, *metadata_block, &b);
+> > > > -		if (IS_ERR(data))
+> > > > -			return PTR_ERR(data);
+> > > > +		/* Don't read tag area from disk if we're going to overwrite it=
+ completely */
+> > > > +		if (op =3D=3D TAG_WRITE && *metadata_offset =3D=3D 0 && total_s=
+ize >=3D ic->metadata_run) {
+> > >
+> > > Hi
+> > >
+> > > This is incorrect logic because ic->metadata_run is in the units of
+> > > 512-byte sectors and total_size is in bytes.
+> > >
+> > > If I correct the bug and change it to "if (op =3D=3D TAG_WRITE &&
+> > > *metadata_offset =3D=3D 0 && total_size >=3D ic->metadata_run << SEC=
+TOR_SHIFT)",
+> > > then the benchmark doesn't show any performance advantage at all.
+> >
+> > Uh oh, looking at it again i have mixed up sectors/bytes elsewhere too=
+.
+> > Actually, could we rewrite this check like
+> >  total_size >=3D (1U << SECTOR_SHIFT << ic->log2_buffer_sectors)?
+> > this should work, right?
+> > So we only have to overwrite part of the tag area, as long as it's who=
+le sectors.
+> >
+> > > You would need much bigger bios to take advantage for this - for exa=
+mple,
+> > > if we have 4k block size and 64k metadata buffer size and 4-byte crc=
+32,
+> > > there are 65536/4=3D16384 tags in one metadata buffer and we would n=
+eed
+> > > 16384*4096=3D64MiB bio to completely overwrite the metadata buffer. =
+Such big
+> > > bios are not realistic.
+> >
+> > What prevents us from using a single sector as the tag area? (Which wa=
+s
+>
+> Single sector writes perform badly on SSDs (and on disks with 4k physica=
+l
+> sector size). We would need at least 4k.
+People with SSDs can still use a large tag area.
 
-So you want the FS to have error handling for just pmem errors or all
-memory errors? And you want this to be done without the mm core using
-page->index to identify what to unmap when the error happens? Memory
-error scanning is not universally available on all pmem
-implementations, so FS will need to subscribe for memory-error
-handling events. The implementation is clearer for pmem, if the FS is
-only interested in memory error handling events for memory it
-ostensibly owns (mounted pmem) vs other pages that are only
-ephemerally related to the FS (typical RAM).
+> There's another problem - using smaller metadata blocks will degrade rea=
+d
+> performance, because we would need to issue more requests to read the
+> metadata.
+We can use prefetching, dm-bufio supports that.
+
+> > my assumption with this patch) Then we would have (with 512b sectors)
+> > 512/4 =3D 128 tags =3D 64k bio, which is still below the optimal write=
+ size
+>
+> 4096/4*4096 =3D 4MiB - it may be possible, but it's still large.
+
+We don't have to fill whole sector with metadata, we can for example use j=
+ust the first
+512 bytes (giving 512/4*4096 =3D 512k writes).
+The space overhead is negligible:
+For 1T of data we have 1G of metadata if we fill the whole sector.
+If we use just the first 512 bytes, we get 8G of metadata.
+
+Regards,
+Lukas Straub
+
+> > of raid5/6. I just tried to accomplish this, but there seems to be
+> > minimum limit of interleave_sectors.
+> >
+> > Regards,
+> > Lukas Straub
+>
+> Mikulas
+>
