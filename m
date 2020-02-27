@@ -1,88 +1,121 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH v5 2/8] drivers/pmem: Allow pmem_clear_poison() to accept
- arbitrary offset and len
-Date: Wed, 26 Feb 2020 11:57:56 -0500
-Message-ID: <20200226165756.GB30329@redhat.com>
-References: <20200221201759.GF25974@redhat.com>
- <20200223230330.GE10737@dread.disaster.area>
- <20200224201346.GC14651@redhat.com>
- <CAPcyv4gGrimesjZ=OKRaYTDd5dUVz+U9aPeBMh_H3_YCz4FOEQ@mail.gmail.com>
- <20200224211553.GD14651@redhat.com>
- <CAPcyv4gX8p0YuMg3=r9DtPAO3Lz-96nuNyXbK1X5-cyVzNrDTA@mail.gmail.com>
- <20200225133653.GA7488@redhat.com>
- <CAPcyv4h2fdo=-jqLPTqnuxYVMbBgODWPqafH35yBMBaPa5Rxcw@mail.gmail.com>
- <20200225200824.GB7488@redhat.com>
- <CAPcyv4jN7ntOO2hK4ByDcX4-Kob=aJNOr3fGR_k_8rxZ=3Sz7w@mail.gmail.com>
+From: "Shin'ichiro Kawasaki" <shinichiro.kawasaki@wdc.com>
+Subject: [PATCH] dm zoned: Fix reference counter initial value of
+	chunk works
+Date: Thu, 27 Feb 2020 09:18:52 +0900
+Message-ID: <20200227001852.287194-1-shinichiro.kawasaki@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAPcyv4jN7ntOO2hK4ByDcX4-Kob=aJNOr3fGR_k_8rxZ=3Sz7w@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: Dave Chinner <david@fromorbit.com>, Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-nvdimm <linux-nvdimm@lists.01.org>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>, Damien Le Moal <Damien.LeMoal@wdc.com>
 List-Id: dm-devel.ids
 
-On Tue, Feb 25, 2020 at 02:49:30PM -0800, Dan Williams wrote:
-[..]
-> > > I'm ok with replacing blkdev_issue_zeroout() with a dax operation
-> > > callback that deals with page aligned entries. That change at least
-> > > makes the error boundary symmetric across copy_from_iter() and the
-> > > zeroing path.
-> >
-> > IIUC, you are suggesting that modify dax_zero_page_range() to take page
-> > aligned start and size and call this interface from
-> > __dax_zero_page_range() and get rid of blkdev_issue_zeroout() in that
-> > path?
-> >
-> > Something like.
-> >
-> > __dax_zero_page_range() {
-> >   if(page_aligned_io)
-> >         call_dax_page_zero_range()
-> >   else
-> >         use_direct_access_and_memcpy;
-> > }
-> >
-> > And other callers of blkdev_issue_zeroout() in filesystems can migrate
-> > to calling dax_zero_page_range() instead.
-> >
-> > If yes, I am not seeing what advantage do we get by this change.
-> >
-> > - __dax_zero_page_range() seems to be called by only partial block
-> >   zeroing code. So dax_zero_page_range() call will remain unused.
-> >
-> >
-> > - dax_zero_page_range() will be exact replacement of
-> >   blkdev_issue_zeroout() so filesystems will not gain anything. Just that
-> >   it will create a dax specific hook.
-> >
-> > In that case it might be simpler to just get rid of blkdev_issue_zeroout()
-> > call from __dax_zero_page_range() and make sure there are no callers of
-> > full block zeroing from this path.
-> 
-> I think you're right. The path I'm concerned about not regressing is
-> the error clearing on new block allocation and we get that already via
-> xfs_zero_extent() and sb_issue_zeroout().
+Dm-zoned initializes reference counters of new chunk works with zero
+value and refcount_inc() is called to increment the counter. However, the
+refcount_inc() function handles the addition to zero value as an error
+and triggers the warning as follows:
 
-Well I was wrong. I found atleast one user which uses __dax_zero_page_range()
-to zero full PAGE_SIZE blocks.
+refcount_t: addition on 0; use-after-free.
+WARNING: CPU: 7 PID: 1506 at lib/refcount.c:25 refcount_warn_saturate+0x68/0xf0
+Modules linked in: dm_zoned bridge stp llc rpcsec_gss_krb5 auth_rpcgss nfsv4 dns_resolver nfs lockd grace fscache nf_conntrack_netbios_ns nf_o
+CPU: 7 PID: 1506 Comm: systemd-udevd Not tainted 5.4.0+ #134
+...
+Call Trace:
+ dmz_map+0x2d2/0x350 [dm_zoned]
+ __map_bio+0x42/0x1a0
+ __split_and_process_non_flush+0x14a/0x1b0
+ __split_and_process_bio+0x83/0x240
+ ? kmem_cache_alloc+0x165/0x220
+ dm_process_bio+0x90/0x230
+ ? generic_make_request_checks+0x2e7/0x680
+ dm_make_request+0x3e/0xb0
+ generic_make_request+0xcf/0x320
+ ? memcg_drain_all_list_lrus+0x1c0/0x1c0
+ submit_bio+0x3c/0x160
+ ? guard_bio_eod+0x2c/0x130
+ mpage_readpages+0x182/0x1d0
+ ? bdev_evict_inode+0xf0/0xf0
+ read_pages+0x6b/0x1b0
+ __do_page_cache_readahead+0x1ba/0x1d0
+ force_page_cache_readahead+0x93/0x100
+ generic_file_read_iter+0x83a/0xe40
+ ? __seccomp_filter+0x7b/0x670
+ new_sync_read+0x12a/0x1c0
+ vfs_read+0x9d/0x150
+ ksys_read+0x5f/0xe0
+ do_syscall_64+0x5b/0x180
+ entry_SYSCALL_64_after_hwframe+0x44/0xa9
+...
 
-xfs_io -c "allocsp 32K 0" foo.txt
+After this warning, following refcount API calls for the counter all fail
+to change the counter value.
 
-In that case, I will add a new dax method say dax_zero_page_range() which will
-only take PAGE_SIZE aligned range will clear known poison and call that
-from __dax_zero_page_range() if I/O is PAGE_SIZE aligned.
+Fix this by setting the initial reference counter value not zero but one
+for the new chunk works. Instead, do not call refcount_inc() via
+dmz_get_chunk_work() for the new chunks works.
 
-For now I will limit this interface to take only single page at a time
-because otherwise implementation becomes complex in dm/md stack where
-range has to be broken across multiple devices and there are no users
-because current iomap API passes one page at a time.
+The failure was observed with linux version 5.4 with CONFIG_REFCOUNT_FULL
+enabled. Refcount rework was merged to linux version 5.5 by the
+commit 168829ad09ca ("Merge branch 'locking-core-for-linus' of
+git://git.kernel.org/pub/scm/linux/kernel/git/tip/tip"). After this
+commit, CONFIG_REFCOUNT_FULL was removed and the failure was observed
+regardless of kernel configuration.
 
-So once we have grown users, then one can also tackle the complexity of
-modifying dm/md to break a page range across multiple devices.
+Linux version 4.20 merged the commit 092b5648760a ("dm zoned: target: use
+refcount_t for dm zoned reference counters"). Before this commit, dm
+zoned used atomic_t APIs which does not check addition to zero, then this
+fix is not necessary.
 
-Will post a patch series for this.
+Fixes: 092b5648760a ("dm zoned: target: use refcount_t for dm zoned reference counters")
+Cc: stable@vger.kernel.org # 5.5
+Cc: stable@vger.kernel.org # 5.4
+Signed-off-by: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+---
+ drivers/md/dm-zoned-target.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-Thanks
-Vivek
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index 70a1063161c0..b1e64cd31647 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -533,8 +533,9 @@ static int dmz_queue_chunk_work(struct dmz_target *dmz, struct bio *bio)
+ 
+ 	/* Get the BIO chunk work. If one is not active yet, create one */
+ 	cw = radix_tree_lookup(&dmz->chunk_rxtree, chunk);
+-	if (!cw) {
+-
++	if (cw) {
++		dmz_get_chunk_work(cw);
++	} else {
+ 		/* Create a new chunk work */
+ 		cw = kmalloc(sizeof(struct dm_chunk_work), GFP_NOIO);
+ 		if (unlikely(!cw)) {
+@@ -543,7 +544,7 @@ static int dmz_queue_chunk_work(struct dmz_target *dmz, struct bio *bio)
+ 		}
+ 
+ 		INIT_WORK(&cw->work, dmz_chunk_work);
+-		refcount_set(&cw->refcount, 0);
++		refcount_set(&cw->refcount, 1);
+ 		cw->target = dmz;
+ 		cw->chunk = chunk;
+ 		bio_list_init(&cw->bio_list);
+@@ -556,7 +557,6 @@ static int dmz_queue_chunk_work(struct dmz_target *dmz, struct bio *bio)
+ 	}
+ 
+ 	bio_list_add(&cw->bio_list, bio);
+-	dmz_get_chunk_work(cw);
+ 
+ 	dmz_reclaim_bio_acc(dmz->reclaim);
+ 	if (queue_work(dmz->chunk_wq, &cw->work))
+-- 
+2.24.1
