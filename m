@@ -1,60 +1,58 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH v6 0/6] dax/pmem: Provide a dax operation to zero page range
-Date: Fri, 28 Feb 2020 11:34:50 -0500
-Message-ID: <20200228163456.1587-1-vgoyal@redhat.com>
+Subject: [PATCH v6 3/6] s390,dcssblk,dax: Add dax zero_page_range operation to dcssblk driver
+Date: Fri, 28 Feb 2020 11:34:53 -0500
+Message-ID: <20200228163456.1587-4-vgoyal@redhat.com>
+References: <20200228163456.1587-1-vgoyal@redhat.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20200228163456.1587-1-vgoyal@redhat.com>
 Sender: linux-fsdevel-owner@vger.kernel.org
 To: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, hch@infradead.org, dan.j.williams@intel.com
-Cc: vgoyal@redhat.com, david@fromorbit.com, jmoyer@redhat.com, dm-devel@redhat.com
+Cc: vgoyal@redhat.com, david@fromorbit.com, jmoyer@redhat.com, dm-devel@redhat.com, linux-s390@vger.kernel.org, Gerald Schaefer <gerald.schaefer@de.ibm.com>
 List-Id: dm-devel.ids
 
-Hi,
+Add dax operation zero_page_range for dcssblk driver.
 
-This is V6 of patches. These patches are also available at.
+CC: linux-s390@vger.kernel.org
+Suggested-by: Christoph Hellwig <hch@infradead.org>
+Reviewed-by: Gerald Schaefer <gerald.schaefer@de.ibm.com>
+Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+---
+ drivers/s390/block/dcssblk.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
 
-Changes since V5:
-
-- Dan Williams preferred ->zero_page_range() to only accept PAGE_SIZE
-  aligned request and clear poison only on page size aligned zeroing. So
-  I changed it accordingly.=20
-
-- Dropped all the modifications which were required to support arbitrary
-  range zeroing with-in a page.
-
-- This patch series also fixes the issue where "truncate -s 512 foo.txt"
-  will fail if first sector of file is poisoned. Currently it succeeds
-  and filesystem expectes whole of the filesystem block to be free of
-  poison at the end of the operation.
-
-Christoph, I have dropped your Reviewed-by tag on 1-2 patches because
-these patches changed substantially. Especially signature of of
-dax zero_page_range() helper.
-
-Thanks
-Vivek
-
-Vivek Goyal (6):
-  pmem: Add functions for reading/writing page to/from pmem
-  dax, pmem: Add a dax operation zero_page_range
-  s390,dcssblk,dax: Add dax zero_page_range operation to dcssblk driver
-  dm,dax: Add dax zero_page_range operation
-  dax: Use new dax zero page method for zeroing a page
-  dax,iomap: Add helper dax_iomap_zero() to zero a range
-
- drivers/dax/super.c           | 20 ++++++++
- drivers/md/dm-linear.c        | 18 +++++++
- drivers/md/dm-log-writes.c    | 17 ++++++
- drivers/md/dm-stripe.c        | 23 +++++++++
- drivers/md/dm.c               | 30 +++++++++++
- drivers/nvdimm/pmem.c         | 97 ++++++++++++++++++++++-------------
- drivers/s390/block/dcssblk.c  | 15 ++++++
- fs/dax.c                      | 59 ++++++++++-----------
- fs/iomap/buffered-io.c        |  9 +---
- include/linux/dax.h           | 21 +++-----
- include/linux/device-mapper.h |  3 ++
- 11 files changed, 221 insertions(+), 91 deletions(-)
-
+diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
+index 63502ca537eb..ab3e2898816c 100644
+--- a/drivers/s390/block/dcssblk.c
++++ b/drivers/s390/block/dcssblk.c
+@@ -57,11 +57,26 @@ static size_t dcssblk_dax_copy_to_iter(struct dax_dev=
+ice *dax_dev,
+ 	return copy_to_iter(addr, bytes, i);
+ }
+=20
++static int dcssblk_dax_zero_page_range(struct dax_device *dax_dev,
++				       pgoff_t pgoff, size_t nr_pages)
++{
++	long rc;
++	void *kaddr;
++
++	rc =3D dax_direct_access(dax_dev, pgoff, nr_pages, &kaddr, NULL);
++	if (rc < 0)
++		return rc;
++	memset(kaddr, 0, nr_pages << PAGE_SHIFT);
++	dax_flush(dax_dev, kaddr, nr_pages << PAGE_SHIFT);
++	return 0;
++}
++
+ static const struct dax_operations dcssblk_dax_ops =3D {
+ 	.direct_access =3D dcssblk_dax_direct_access,
+ 	.dax_supported =3D generic_fsdax_supported,
+ 	.copy_from_iter =3D dcssblk_dax_copy_from_iter,
+ 	.copy_to_iter =3D dcssblk_dax_copy_to_iter,
++	.zero_page_range =3D dcssblk_dax_zero_page_range,
+ };
+=20
+ struct dcssblk_dev_info {
 --=20
 2.20.1
