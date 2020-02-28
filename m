@@ -1,43 +1,60 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v5 2/8] drivers/pmem: Allow pmem_clear_poison() to accept
- arbitrary offset and len
-Date: Fri, 28 Feb 2020 08:26:54 -0800
-Message-ID: <CAPcyv4ivX2cah1YLBZzWPdULOFX7Ds4nuboPh4mf94uN1YeMVg@mail.gmail.com>
-References: <x49lfoxj622.fsf@segfault.boston.devel.redhat.com>
- <20200220215707.GC10816@redhat.com> <x498skv3i5r.fsf@segfault.boston.devel.redhat.com>
- <20200221201759.GF25974@redhat.com> <20200223230330.GE10737@dread.disaster.area>
- <20200224153844.GB14651@redhat.com> <20200227030248.GG10737@dread.disaster.area>
- <CAPcyv4gTSb-xZ2k938HxQeAXATvGg1aSkEGPfrzeQAz9idkgzQ@mail.gmail.com>
- <20200228013054.GO10737@dread.disaster.area> <CAPcyv4i2vjUGrwaRsjp1-L0wFf0a00e46F-SUbocQBkiQ3M1kg@mail.gmail.com>
- <20200228140508.GA2987@infradead.org>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: [PATCH v6 0/6] dax/pmem: Provide a dax operation to zero page range
+Date: Fri, 28 Feb 2020 11:34:50 -0500
+Message-ID: <20200228163456.1587-1-vgoyal@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20200228140508.GA2987@infradead.org>
 Sender: linux-fsdevel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Dave Chinner <david@fromorbit.com>, Vivek Goyal <vgoyal@redhat.com>, Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-nvdimm <linux-nvdimm@lists.01.org>, device-mapper development <dm-devel@redhat.com>
+To: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, hch@infradead.org, dan.j.williams@intel.com
+Cc: vgoyal@redhat.com, david@fromorbit.com, jmoyer@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Feb 28, 2020 at 6:05 AM Christoph Hellwig <hch@infradead.org> wrote:
->
-> On Thu, Feb 27, 2020 at 07:28:41PM -0800, Dan Williams wrote:
-> > "don't perform generic memory-error-handling, there's an fs that owns
-> > this daxdev and wants to disposition errors". The fs/dax.c
-> > infrastructure that sets up ->index and ->mapping would still need to
-> > be there for ext4 until its ready to take on the same responsibility.
-> > Last I checked the ext4 reverse mapping implementation was not as
-> > capable as XFS. This goes back to why the initial design avoided
-> > relying on not universally available / stable reverse-mapping
-> > facilities and opted for extending the generic mm/memory-failure.c
-> > implementation.
->
-> The important but is that we stop using ->index and ->mapping when XFS
-> is used as that enables using DAX+reflinks, which actually is the most
-> requested DAX feature on XFS (way more than silly runtime flag switches
-> for example).
+Hi,
 
-Understood. To be clear the plan we are marching to is knock down all
-the known objections to the removal of the "experimental" designation.
-reflink is on that list and so is per-file dax. The thought was that
-pef-file dax was a nearer term goal than reflink.
+This is V6 of patches. These patches are also available at.
+
+Changes since V5:
+
+- Dan Williams preferred ->zero_page_range() to only accept PAGE_SIZE
+  aligned request and clear poison only on page size aligned zeroing. So
+  I changed it accordingly.=20
+
+- Dropped all the modifications which were required to support arbitrary
+  range zeroing with-in a page.
+
+- This patch series also fixes the issue where "truncate -s 512 foo.txt"
+  will fail if first sector of file is poisoned. Currently it succeeds
+  and filesystem expectes whole of the filesystem block to be free of
+  poison at the end of the operation.
+
+Christoph, I have dropped your Reviewed-by tag on 1-2 patches because
+these patches changed substantially. Especially signature of of
+dax zero_page_range() helper.
+
+Thanks
+Vivek
+
+Vivek Goyal (6):
+  pmem: Add functions for reading/writing page to/from pmem
+  dax, pmem: Add a dax operation zero_page_range
+  s390,dcssblk,dax: Add dax zero_page_range operation to dcssblk driver
+  dm,dax: Add dax zero_page_range operation
+  dax: Use new dax zero page method for zeroing a page
+  dax,iomap: Add helper dax_iomap_zero() to zero a range
+
+ drivers/dax/super.c           | 20 ++++++++
+ drivers/md/dm-linear.c        | 18 +++++++
+ drivers/md/dm-log-writes.c    | 17 ++++++
+ drivers/md/dm-stripe.c        | 23 +++++++++
+ drivers/md/dm.c               | 30 +++++++++++
+ drivers/nvdimm/pmem.c         | 97 ++++++++++++++++++++++-------------
+ drivers/s390/block/dcssblk.c  | 15 ++++++
+ fs/dax.c                      | 59 ++++++++++-----------
+ fs/iomap/buffered-io.c        |  9 +---
+ include/linux/dax.h           | 21 +++-----
+ include/linux/device-mapper.h |  3 ++
+ 11 files changed, 221 insertions(+), 91 deletions(-)
+
+--=20
+2.20.1
