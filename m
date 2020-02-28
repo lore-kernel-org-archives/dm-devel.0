@@ -1,7 +1,7 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH v6 5/6] dax: Use new dax zero page method for zeroing a page
-Date: Fri, 28 Feb 2020 11:34:55 -0500
-Message-ID: <20200228163456.1587-6-vgoyal@redhat.com>
+Subject: [PATCH v6 1/6] pmem: Add functions for reading/writing page to/from pmem
+Date: Fri, 28 Feb 2020 11:34:51 -0500
+Message-ID: <20200228163456.1587-2-vgoyal@redhat.com>
 References: <20200228163456.1587-1-vgoyal@redhat.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -9,94 +9,142 @@ Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <20200228163456.1587-1-vgoyal@redhat.com>
 Sender: linux-fsdevel-owner@vger.kernel.org
 To: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, hch@infradead.org, dan.j.williams@intel.com
-Cc: vgoyal@redhat.com, david@fromorbit.com, jmoyer@redhat.com, dm-devel@redhat.com
+Cc: vgoyal@redhat.com, david@fromorbit.com, jmoyer@redhat.com, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-Use new dax native zero page method for zeroing page if I/O is page
-aligned. Otherwise fall back to direct_access() + memcpy().
+This splits pmem_do_bvec() into pmem_do_read() and pmem_do_write().
+pmem_do_write() will be used by pmem zero_page_range() as well. Hence
+sharing the same code.
 
-This gets rid of one of the depenendency on block device in dax path.
-
+Suggested-by: Christoph Hellwig <hch@infradead.org>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- fs/dax.c | 53 +++++++++++++++++++++++------------------------------
- 1 file changed, 23 insertions(+), 30 deletions(-)
+ drivers/nvdimm/pmem.c | 86 +++++++++++++++++++++++++------------------
+ 1 file changed, 50 insertions(+), 36 deletions(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index 35da144375a0..98ba3756163a 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -1038,47 +1038,40 @@ static vm_fault_t dax_load_hole(struct xa_state *=
-xas,
- 	return ret;
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index 4eae441f86c9..075b11682192 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -136,9 +136,25 @@ static blk_status_t read_pmem(struct page *page, uns=
+igned int off,
+ 	return BLK_STS_OK;
  }
 =20
--static bool dax_range_is_aligned(struct block_device *bdev,
--				 unsigned int offset, unsigned int length)
--{
--	unsigned short sector_size =3D bdev_logical_block_size(bdev);
--
--	if (!IS_ALIGNED(offset, sector_size))
--		return false;
--	if (!IS_ALIGNED(length, sector_size))
--		return false;
--
--	return true;
--}
--
- int __dax_zero_page_range(struct block_device *bdev,
- 		struct dax_device *dax_dev, sector_t sector,
- 		unsigned int offset, unsigned int size)
+-static blk_status_t pmem_do_bvec(struct pmem_device *pmem, struct page *=
+page,
+-			unsigned int len, unsigned int off, unsigned int op,
+-			sector_t sector)
++static blk_status_t pmem_do_read(struct pmem_device *pmem,
++			struct page *page, unsigned int page_off,
++			sector_t sector, unsigned int len)
++{
++	blk_status_t rc;
++	phys_addr_t pmem_off =3D sector * 512 + pmem->data_offset;
++	void *pmem_addr =3D pmem->virt_addr + pmem_off;
++
++	if (unlikely(is_bad_pmem(&pmem->bb, sector, len)))
++		return BLK_STS_IOERR;
++
++	rc =3D read_pmem(page, page_off, pmem_addr, len);
++	flush_dcache_page(page);
++	return rc;
++}
++
++static blk_status_t pmem_do_write(struct pmem_device *pmem,
++			struct page *page, unsigned int page_off,
++			sector_t sector, unsigned int len)
  {
--	if (dax_range_is_aligned(bdev, offset, size)) {
--		sector_t start_sector =3D sector + (offset >> 9);
-+	pgoff_t pgoff;
-+	long rc, id;
-+	void *kaddr;
-+	bool page_aligned =3D false;
+ 	blk_status_t rc =3D BLK_STS_OK;
+ 	bool bad_pmem =3D false;
+@@ -148,34 +164,25 @@ static blk_status_t pmem_do_bvec(struct pmem_device=
+ *pmem, struct page *page,
+ 	if (unlikely(is_bad_pmem(&pmem->bb, sector, len)))
+ 		bad_pmem =3D true;
 =20
--		return blkdev_issue_zeroout(bdev, start_sector,
--				size >> 9, GFP_NOFS, 0);
--	} else {
--		pgoff_t pgoff;
--		long rc, id;
--		void *kaddr;
-=20
--		rc =3D bdev_dax_pgoff(bdev, sector, PAGE_SIZE, &pgoff);
--		if (rc)
--			return rc;
-+	if (IS_ALIGNED(sector << SECTOR_SHIFT, PAGE_SIZE) &&
-+	    IS_ALIGNED(size, PAGE_SIZE))
-+		page_aligned =3D true;
-+
-+	rc =3D bdev_dax_pgoff(bdev, sector, PAGE_SIZE, &pgoff);
-+	if (rc)
-+		return rc;
-=20
--		id =3D dax_read_lock();
-+	id =3D dax_read_lock();
-+
-+	if (page_aligned)
-+		rc =3D dax_zero_page_range(dax_dev, pgoff, size >> PAGE_SHIFT);
-+	else
- 		rc =3D dax_direct_access(dax_dev, pgoff, 1, &kaddr, NULL);
--		if (rc < 0) {
--			dax_read_unlock(id);
--			return rc;
+-	if (!op_is_write(op)) {
+-		if (unlikely(bad_pmem))
+-			rc =3D BLK_STS_IOERR;
+-		else {
+-			rc =3D read_pmem(page, off, pmem_addr, len);
+-			flush_dcache_page(page);
 -		}
-+	if (rc < 0) {
-+		dax_read_unlock(id);
-+		return rc;
-+	}
-+
-+	if (!page_aligned) {
- 		memset(kaddr + offset, 0, size);
- 		dax_flush(dax_dev, kaddr + offset, size);
--		dax_read_unlock(id);
+-	} else {
+-		/*
+-		 * Note that we write the data both before and after
+-		 * clearing poison.  The write before clear poison
+-		 * handles situations where the latest written data is
+-		 * preserved and the clear poison operation simply marks
+-		 * the address range as valid without changing the data.
+-		 * In this case application software can assume that an
+-		 * interrupted write will either return the new good
+-		 * data or an error.
+-		 *
+-		 * However, if pmem_clear_poison() leaves the data in an
+-		 * indeterminate state we need to perform the write
+-		 * after clear poison.
+-		 */
+-		flush_dcache_page(page);
+-		write_pmem(pmem_addr, page, off, len);
+-		if (unlikely(bad_pmem)) {
+-			rc =3D pmem_clear_poison(pmem, pmem_off, len);
+-			write_pmem(pmem_addr, page, off, len);
+-		}
++	/*
++	 * Note that we write the data both before and after
++	 * clearing poison.  The write before clear poison
++	 * handles situations where the latest written data is
++	 * preserved and the clear poison operation simply marks
++	 * the address range as valid without changing the data.
++	 * In this case application software can assume that an
++	 * interrupted write will either return the new good
++	 * data or an error.
++	 *
++	 * However, if pmem_clear_poison() leaves the data in an
++	 * indeterminate state we need to perform the write
++	 * after clear poison.
++	 */
++	flush_dcache_page(page);
++	write_pmem(pmem_addr, page, page_off, len);
++	if (unlikely(bad_pmem)) {
++		rc =3D pmem_clear_poison(pmem, pmem_off, len);
++		write_pmem(pmem_addr, page, page_off, len);
  	}
-+	dax_read_unlock(id);
- 	return 0;
- }
- EXPORT_SYMBOL_GPL(__dax_zero_page_range);
+=20
+ 	return rc;
+@@ -197,8 +204,12 @@ static blk_qc_t pmem_make_request(struct request_que=
+ue *q, struct bio *bio)
+=20
+ 	do_acct =3D nd_iostat_start(bio, &start);
+ 	bio_for_each_segment(bvec, bio, iter) {
+-		rc =3D pmem_do_bvec(pmem, bvec.bv_page, bvec.bv_len,
+-				bvec.bv_offset, bio_op(bio), iter.bi_sector);
++		if (op_is_write(bio_op(bio)))
++			rc =3D pmem_do_write(pmem, bvec.bv_page, bvec.bv_offset,
++				iter.bi_sector, bvec.bv_len);
++		else
++			rc =3D pmem_do_read(pmem, bvec.bv_page, bvec.bv_offset,
++				iter.bi_sector, bvec.bv_len);
+ 		if (rc) {
+ 			bio->bi_status =3D rc;
+ 			break;
+@@ -223,9 +234,12 @@ static int pmem_rw_page(struct block_device *bdev, s=
+ector_t sector,
+ 	struct pmem_device *pmem =3D bdev->bd_queue->queuedata;
+ 	blk_status_t rc;
+=20
+-	rc =3D pmem_do_bvec(pmem, page, hpage_nr_pages(page) * PAGE_SIZE,
+-			  0, op, sector);
+-
++	if (op_is_write(op))
++		rc =3D pmem_do_write(pmem, page, 0, sector,
++				   hpage_nr_pages(page) * PAGE_SIZE);
++	else
++		rc =3D pmem_do_read(pmem, page, 0, sector,
++				   hpage_nr_pages(page) * PAGE_SIZE);
+ 	/*
+ 	 * The ->rw_page interface is subtle and tricky.  The core
+ 	 * retries on any error, so we can only invoke page_endio() in
 --=20
 2.20.1
