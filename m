@@ -1,79 +1,40 @@
-From: qiwuchen55@gmail.com
-Subject: [PATCH] md/dm-stats.c: use list_for_each_entry*() APIs
-	to simplify code
-Date: Fri, 28 Feb 2020 11:38:29 +0800
-Message-ID: <1582861109-17266-1-git-send-email-qiwuchen55@gmail.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH v5 2/8] drivers/pmem: Allow pmem_clear_poison() to accept
+ arbitrary offset and len
+Date: Fri, 28 Feb 2020 06:05:08 -0800
+Message-ID: <20200228140508.GA2987@infradead.org>
+References: <x49lfoxj622.fsf@segfault.boston.devel.redhat.com>
+ <20200220215707.GC10816@redhat.com>
+ <x498skv3i5r.fsf@segfault.boston.devel.redhat.com>
+ <20200221201759.GF25974@redhat.com>
+ <20200223230330.GE10737@dread.disaster.area>
+ <20200224153844.GB14651@redhat.com>
+ <20200227030248.GG10737@dread.disaster.area>
+ <CAPcyv4gTSb-xZ2k938HxQeAXATvGg1aSkEGPfrzeQAz9idkgzQ@mail.gmail.com>
+ <20200228013054.GO10737@dread.disaster.area>
+ <CAPcyv4i2vjUGrwaRsjp1-L0wFf0a00e46F-SUbocQBkiQ3M1kg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com, snitzer@redhat.com
-Cc: dm-devel@redhat.com, chenqiwu <chenqiwu@xiaomi.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4i2vjUGrwaRsjp1-L0wFf0a00e46F-SUbocQBkiQ3M1kg@mail.gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: Dave Chinner <david@fromorbit.com>, Vivek Goyal <vgoyal@redhat.com>, Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-nvdimm <linux-nvdimm@lists.01.org>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: chenqiwu <chenqiwu@xiaomi.com>
+On Thu, Feb 27, 2020 at 07:28:41PM -0800, Dan Williams wrote:
+> "don't perform generic memory-error-handling, there's an fs that owns
+> this daxdev and wants to disposition errors". The fs/dax.c
+> infrastructure that sets up ->index and ->mapping would still need to
+> be there for ext4 until its ready to take on the same responsibility.
+> Last I checked the ext4 reverse mapping implementation was not as
+> capable as XFS. This goes back to why the initial design avoided
+> relying on not universally available / stable reverse-mapping
+> facilities and opted for extending the generic mm/memory-failure.c
+> implementation.
 
-Use list_for_each_entry*() APIs instead of open-coding to
-simplify code.
-
-Signed-off-by: chenqiwu <chenqiwu@xiaomi.com>
----
- drivers/md/dm-stats.c | 11 ++++-------
- 1 file changed, 4 insertions(+), 7 deletions(-)
-
-diff --git a/drivers/md/dm-stats.c b/drivers/md/dm-stats.c
-index 7141704..34637d1 100644
---- a/drivers/md/dm-stats.c
-+++ b/drivers/md/dm-stats.c
-@@ -206,11 +206,10 @@ void dm_stats_init(struct dm_stats *stats)
- void dm_stats_cleanup(struct dm_stats *stats)
- {
- 	size_t ni;
--	struct dm_stat *s;
-+	struct dm_stat *s, *tmp;
- 	struct dm_stat_shared *shared;
- 
--	while (!list_empty(&stats->list)) {
--		s = container_of(stats->list.next, struct dm_stat, list_entry);
-+	list_for_each_entry_safe(s, tmp, &stats->list, list_entry) {
- 		list_del(&s->list_entry);
- 		for (ni = 0; ni < s->n_entries; ni++) {
- 			shared = &s->stat_shared[ni];
-@@ -240,7 +239,6 @@ static int dm_stats_create(struct dm_stats *stats, sector_t start, sector_t end,
- 			   void (*resume_callback)(struct mapped_device *),
- 			   struct mapped_device *md)
- {
--	struct list_head *l;
- 	struct dm_stat *s, *tmp_s;
- 	sector_t n_entries;
- 	size_t ni;
-@@ -360,8 +358,7 @@ static int dm_stats_create(struct dm_stats *stats, sector_t start, sector_t end,
- 
- 	mutex_lock(&stats->mutex);
- 	s->id = 0;
--	list_for_each(l, &stats->list) {
--		tmp_s = container_of(l, struct dm_stat, list_entry);
-+	list_for_each_entry(tmp_s, &stats->list, list_entry) {
- 		if (WARN_ON(tmp_s->id < s->id)) {
- 			r = -EINVAL;
- 			goto out_unlock_resume;
-@@ -375,7 +372,7 @@ static int dm_stats_create(struct dm_stats *stats, sector_t start, sector_t end,
- 		s->id++;
- 	}
- 	ret_id = s->id;
--	list_add_tail_rcu(&s->list_entry, l);
-+	list_add_tail_rcu(&s->list_entry, &stats->list);
- 	mutex_unlock(&stats->mutex);
- 
- 	resume_callback(md);
--- 
-1.9.1
+The important but is that we stop using ->index and ->mapping when XFS
+is used as that enables using DAX+reflinks, which actually is the most
+requested DAX feature on XFS (way more than silly runtime flag switches
+for example).
