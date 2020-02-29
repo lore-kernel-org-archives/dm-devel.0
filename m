@@ -1,76 +1,124 @@
 From: Pankaj Gupta <pankaj.gupta.linux@gmail.com>
-Subject: Re: [PATCH v6 0/6] dax/pmem: Provide a dax operation to zero page range
-Date: Sat, 29 Feb 2020 10:16:53 +0100
-Message-ID: <CAM9Jb+j46n3Ykca3_F0zb-7U1M5C8KmmH+3uzB1z7MqH60mQBA@mail.gmail.com>
-References: <20200228163456.1587-1-vgoyal@redhat.com>
+Subject: Re: [PATCH v6 2/6] dax, pmem: Add a dax operation zero_page_range
+Date: Sat, 29 Feb 2020 10:21:37 +0100
+Message-ID: <CAM9Jb+gLczXgFmLJg8a=XThoJT1S8XajFkb8AkjDCV1XXyarqg@mail.gmail.com>
+References: <20200228163456.1587-1-vgoyal@redhat.com> <20200228163456.1587-3-vgoyal@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20200228163456.1587-1-vgoyal@redhat.com>
+In-Reply-To: <20200228163456.1587-3-vgoyal@redhat.com>
 Sender: linux-fsdevel-owner@vger.kernel.org
 To: Vivek Goyal <vgoyal@redhat.com>
 Cc: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, hch@infradead.org, dan.j.williams@intel.com, david@fromorbit.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Vivek,
-
 >
-> Hi,
+> Add a dax operation zero_page_range, to zero a page. This will also clear any
+> known poison in the page being zeroed.
 >
-> This is V6 of patches. These patches are also available at.
-
-Looks like cover letter is missing the motivation for the patchset.
-Though I found it in previous posting. Its good to add it in the series
-for anyone joining the discussion at later stages.
-
-Thanks,
-Pankaj
-
+> As of now, zeroing of one page is allowed in a single call. There
+> are no callers which are trying to zero more than a page in a single call.
+> Once we grow the callers which zero more than a page in single call, we
+> can add that support. Primary reason for not doing that yet is that this
+> will add little complexity in dm implementation where a range might be
+> spanning multiple underlying targets and one will have to split the range
+> into multiple sub ranges and call zero_page_range() on individual targets.
 >
-> Changes since V5:
+> Suggested-by: Christoph Hellwig <hch@infradead.org>
+> Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+> ---
+>  drivers/dax/super.c   | 20 ++++++++++++++++++++
+>  drivers/nvdimm/pmem.c | 11 +++++++++++
+>  include/linux/dax.h   |  4 ++++
+>  3 files changed, 35 insertions(+)
 >
-> - Dan Williams preferred ->zero_page_range() to only accept PAGE_SIZE
->   aligned request and clear poison only on page size aligned zeroing. So
->   I changed it accordingly.
+> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+> index 0aa4b6bc5101..e498daf3c0d7 100644
+> --- a/drivers/dax/super.c
+> +++ b/drivers/dax/super.c
+> @@ -344,6 +344,26 @@ size_t dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+>  }
+>  EXPORT_SYMBOL_GPL(dax_copy_to_iter);
 >
-> - Dropped all the modifications which were required to support arbitrary
->   range zeroing with-in a page.
+> +int dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
+> +                       size_t nr_pages)
+> +{
+> +       if (!dax_alive(dax_dev))
+> +               return -ENXIO;
+> +
+> +       if (!dax_dev->ops->zero_page_range)
+> +               return -EOPNOTSUPP;
+> +       /*
+> +        * There are no callers that want to zero more than one page as of now.
+> +        * Once users are there, this check can be removed after the
+> +        * device mapper code has been updated to split ranges across targets.
+> +        */
+> +       if (nr_pages != 1)
+> +               return -EIO;
+> +
+> +       return dax_dev->ops->zero_page_range(dax_dev, pgoff, nr_pages);
+> +}
+> +EXPORT_SYMBOL_GPL(dax_zero_page_range);
+> +
+>  #ifdef CONFIG_ARCH_HAS_PMEM_API
+>  void arch_wb_cache_pmem(void *addr, size_t size);
+>  void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
+> diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+> index 075b11682192..5b774ddd0efb 100644
+> --- a/drivers/nvdimm/pmem.c
+> +++ b/drivers/nvdimm/pmem.c
+> @@ -282,6 +282,16 @@ static const struct block_device_operations pmem_fops = {
+>         .revalidate_disk =      nvdimm_revalidate_disk,
+>  };
 >
-> - This patch series also fixes the issue where "truncate -s 512 foo.txt"
->   will fail if first sector of file is poisoned. Currently it succeeds
->   and filesystem expectes whole of the filesystem block to be free of
->   poison at the end of the operation.
+> +static int pmem_dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
+> +                                   size_t nr_pages)
+> +{
+> +       struct pmem_device *pmem = dax_get_private(dax_dev);
+> +
+> +       return blk_status_to_errno(pmem_do_write(pmem, ZERO_PAGE(0), 0,
+> +                                  PFN_PHYS(pgoff) >> SECTOR_SHIFT,
+> +                                  PAGE_SIZE));
+> +}
+> +
+>  static long pmem_dax_direct_access(struct dax_device *dax_dev,
+>                 pgoff_t pgoff, long nr_pages, void **kaddr, pfn_t *pfn)
+>  {
+> @@ -313,6 +323,7 @@ static const struct dax_operations pmem_dax_ops = {
+>         .dax_supported = generic_fsdax_supported,
+>         .copy_from_iter = pmem_copy_from_iter,
+>         .copy_to_iter = pmem_copy_to_iter,
+> +       .zero_page_range = pmem_dax_zero_page_range,
+>  };
 >
-> Christoph, I have dropped your Reviewed-by tag on 1-2 patches because
-> these patches changed substantially. Especially signature of of
-> dax zero_page_range() helper.
+>  static const struct attribute_group *pmem_attribute_groups[] = {
+> diff --git a/include/linux/dax.h b/include/linux/dax.h
+> index 328c2dbb4409..71735c430c05 100644
+> --- a/include/linux/dax.h
+> +++ b/include/linux/dax.h
+> @@ -34,6 +34,8 @@ struct dax_operations {
+>         /* copy_to_iter: required operation for fs-dax direct-i/o */
+>         size_t (*copy_to_iter)(struct dax_device *, pgoff_t, void *, size_t,
+>                         struct iov_iter *);
+> +       /* zero_page_range: required operation. Zero page range   */
+> +       int (*zero_page_range)(struct dax_device *, pgoff_t, size_t);
+>  };
 >
-> Thanks
-> Vivek
+>  extern struct attribute_group dax_attribute_group;
+> @@ -199,6 +201,8 @@ size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+>                 size_t bytes, struct iov_iter *i);
+>  size_t dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+>                 size_t bytes, struct iov_iter *i);
+> +int dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
+> +                       size_t nr_pages);
+>  void dax_flush(struct dax_device *dax_dev, void *addr, size_t size);
 >
-> Vivek Goyal (6):
->   pmem: Add functions for reading/writing page to/from pmem
->   dax, pmem: Add a dax operation zero_page_range
->   s390,dcssblk,dax: Add dax zero_page_range operation to dcssblk driver
->   dm,dax: Add dax zero_page_range operation
->   dax: Use new dax zero page method for zeroing a page
->   dax,iomap: Add helper dax_iomap_zero() to zero a range
->
->  drivers/dax/super.c           | 20 ++++++++
->  drivers/md/dm-linear.c        | 18 +++++++
->  drivers/md/dm-log-writes.c    | 17 ++++++
->  drivers/md/dm-stripe.c        | 23 +++++++++
->  drivers/md/dm.c               | 30 +++++++++++
->  drivers/nvdimm/pmem.c         | 97 ++++++++++++++++++++++-------------
->  drivers/s390/block/dcssblk.c  | 15 ++++++
->  fs/dax.c                      | 59 ++++++++++-----------
->  fs/iomap/buffered-io.c        |  9 +---
->  include/linux/dax.h           | 21 +++-----
->  include/linux/device-mapper.h |  3 ++
->  11 files changed, 221 insertions(+), 91 deletions(-)
->
+>  ssize_t dax_iomap_rw(struct kiocb *iocb, struct iov_iter *iter,
 > --
 > 2.20.1
+
+Zeroing single page seems right approach for now.
+Reviewed-by: Pankaj Gupta <pankaj.gupta.linux@gmail.com>
 > _______________________________________________
 > Linux-nvdimm mailing list -- linux-nvdimm@lists.01.org
 > To unsubscribe send an email to linux-nvdimm-leave@lists.01.org
