@@ -1,10 +1,14 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: multipath-tools merges
-Date: Mon, 2 Mar 2020 11:19:08 +0100
-Message-ID: <CABr-Gne_oOns4W0A4Ny4t4xRPbU3qdtS5Z6BSt7wQ0N7cRqDeQ@mail.gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH resend] ALUA support for PURE FlashArray
+Date: Mon, 2 Mar 2020 15:10:08 +0100
+Message-ID: <f4b9152e-bce3-5ad8-7f2d-8b0220c2b472@gmail.com>
+References: <20191228002451.9536-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2158512636044281849=="
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20191228002451.9536-1-xose.vazquez@gmail.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,42 +18,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Cc: DM-DEVEL ML <dm-devel@redhat.com>, Brian Bunker <brian@purestorage.com>
 List-Id: dm-devel.ids
 
---===============2158512636044281849==
-Content-Type: multipart/alternative; boundary="0000000000002e2050059fdc859d"
-
---0000000000002e2050059fdc859d
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-Hi ben, Martin,
-
-I finally catched up with your changes from october till now.
-Please review I did not mess up the merges, then i'll commit a version bump=
-.
-
-Thanks,
-Christophe.
-
---0000000000002e2050059fdc859d
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Hi ben, Martin,<div><br></div><div>I finally catched=C2=A0=
-up with your changes from october till now.</div><div>Please review I did n=
-ot mess up the merges, then i&#39;ll commit a version bump.</div><div><br><=
-/div><div>Thanks,</div><div>Christophe.</div></div>
-
---0000000000002e2050059fdc859d--
-
---===============2158512636044281849==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2158512636044281849==--
+T24gMTIvMjgvMTkgMToyNCBBTSwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgoKSGkgQ2hyaXN0
+b3BoZSwKClRoaXMgb25lIGlzIG1pc3NpbmcuCgpUaGFuayB5b3UuCgo+IEZyb206IEJyaWFuIEJ1
+bmtlciA8YnJpYW5AcHVyZXN0b3JhZ2UuY29tPgo+IAo+IEhlbGxvIGFsbCwKPiAKPiBJdCBoYXMg
+YmVlbiBzb21lIHRpbWUgc2luY2Ugd2UgdXBkYXRlZCBvdXIgUFVSRSBGbGFzaEFycmF5Cj4gY29u
+ZmlndXJhdGlvbi4gVGhlIExpbnV4IHZlbmRvcnMgdGhhdCB3ZSBoYWQgYmVlbiBzZWVpbmcgaW4g
+dGhlIGZpZWxkCj4gd2VyZSB1c2luZyB2ZXJ5IG9sZCB2ZXJzaW9ucyBvZiBtdWx0aXBhdGgtdG9v
+bHMsIHNvIHdlIGhhdmVu4oCZdCBuZWVkZWQgdG8KPiBjaGFuZ2UgYW55dGhpbmcgZm9yIHNvbWUg
+dGltZS4gV2l0aCB0aGUgcmVsZWFzZSBvZiBSSEVMOCwgc29tZSBvZiBvdXIKPiBlYXJsaWVyIHZh
+bHVlcyBoYXZlIGJlZW4gbG9zdCBieSB1cHN0cmVhbSBjaGFuZ2VzLgo+IAo+IEluIGFkZGl0aW9u
+IHdlIGhhdmUgb3VyIEFjdGl2ZSBDbHVzdGVyIGZlYXR1cmUgd2hpY2ggbGV2ZXJhZ2VzIEFMVUEK
+PiBzaW5jZSBvdXIgbGFzdCBwYXRjaC4gVGhlIEFMVUEgY29uZmd1cmF0aW9uIHdpbGwgd29yayBm
+b3IgYWxsCj4gRmxhc2hBcnJheXMgd2l0aCBvciB3aXRob3V0IEFjdGl2ZSBDbHVzdGVyLgo+IAo+
+IFdlIGFyZSBjaGFuZ2luZyAzIHRoaW5ncy4KPiAKPiAxLiBBTFVBIHN1cHBvcnQKPiAyLiBGYXN0
+IGZhaWwgdGltZW91dCBmcm9tIHRoZSBkZWZhdWx0IG9mIDUgc2Vjb25kcyB0byAxMCBzZWNvbmRz
+IChXZQo+ICAgICBuZWVkIHRoaXMgZm9yIG91ciBGQyBOUElWIHBvcnQgbWlncmF0aW9uKS4KPiAz
+LiBNYXhpbXVtIHNlY3RvciBzaXplIG9mIDRNQi4gU29tZSBMaW51eCB2ZW5kb3JzIGRvbuKAmXQg
+aG9ub3IgdGhlIGJsb2NrCj4gICAgIGxpbWl0cyBWUEQgcGFnZSBvZiBJTlFVSVJZKS4KPiAKPiBU
+aGFua3MsCj4gQnJpYW4KPiAKPiBDYzogQ2hyaXN0b3BoZSBWYXJvcXVpIDxjaHJpc3RvcGhlLnZh
+cm9xdWlAb3BlbnN2Yy5jb20+Cj4gQ2M6IERNLURFVkVMIE1MIDxkbS1kZXZlbEByZWRoYXQuY29t
+Pgo+IFNpZ25lZC1vZmYtYnk6IFhvc2UgVmF6cXVleiBQZXJleiA8eG9zZS52YXpxdWV6QGdtYWls
+LmNvbT4KPiBTaWduZWQtb2ZmLWJ5OiBCcmlhbiBCdW5rZXIgPGJyaWFuQHB1cmVzdG9yYWdlLmNv
+bT4KPiAtLS0KPiAgIGxpYm11bHRpcGF0aC9od3RhYmxlLmMgfCA3ICsrKysrKy0KPiAgIDEgZmls
+ZSBjaGFuZ2VkLCA2IGluc2VydGlvbnMoKyksIDEgZGVsZXRpb24oLSkKPiAKPiBkaWZmIC0tZ2l0
+IGEvbGlibXVsdGlwYXRoL2h3dGFibGUuYyBiL2xpYm11bHRpcGF0aC9od3RhYmxlLmMKPiBpbmRl
+eCAxNjYyN2VjLi45YmM1OWYxIDEwMDY0NAo+IC0tLSBhL2xpYm11bHRpcGF0aC9od3RhYmxlLmMK
+PiArKysgYi9saWJtdWx0aXBhdGgvaHd0YWJsZS5jCj4gQEAgLTEwMzksNyArMTAzOSwxMiBAQCBz
+dGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewo+ICAgCQkvKiBGbGFzaEFycmF5
+ICovCj4gICAJCS52ZW5kb3IgICAgICAgID0gIlBVUkUiLAo+ICAgCQkucHJvZHVjdCAgICAgICA9
+ICJGbGFzaEFycmF5IiwKPiAtCQkucGdwb2xpY3kgICAgICA9IE1VTFRJQlVTLAo+ICsJCS5wZ3Bv
+bGljeSAgICAgID0gR1JPVVBfQllfUFJJTywKPiArCQkucGdmYWlsYmFjayAgICA9IC1GQUlMQkFD
+S19JTU1FRElBVEUsCj4gKwkJLmh3aGFuZGxlciAgICAgPSAiMSBhbHVhIiwKPiArCQkucHJpb19u
+YW1lICAgICA9IFBSSU9fQUxVQSwKPiArCQkuZmFzdF9pb19mYWlsICA9IDEwLAo+ICsJCS5tYXhf
+c2VjdG9yc19rYiA9IDQwOTYsCj4gICAJfSwKPiAgIAkvKgo+ICAgCSAqIEh1YXdlaQo+IAoKCi0t
+CmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJl
+ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
