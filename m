@@ -1,7 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 1/4] Remove tests/directio_test_dev
-Date: Mon,  2 Mar 2020 23:20:22 +0100
-Message-ID: <20200302222025.21022-2-mwilck@suse.com>
+Subject: [PATCH 2/4] tests/Makefile: allow setting DIO_TEST_DEV
+	in the environment
+Date: Mon,  2 Mar 2020 23:20:23 +0100
+Message-ID: <20200302222025.21022-3-mwilck@suse.com>
 References: <20200302222025.21022-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,29 +24,37 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This file is designed to be customized and will therefore differ from
-the committed version in every serious development environment. I find
-that inconvenient, as the file needs to be stashed away before every
-serious git activity, and could easily be committed by mistake.
-
-Follow-up patches will enable various alternative ways to set the
-DIO_TEST_DEV during build.
+This change has two effects: 1. no error message is printed if
+the directio_test_dev file doesn't exist, and 2. DIO_TEST_DEV
+can be set in the environment, or on the "make" command line.
+It's still possible to set DIO_TEST_DEV via the directio_test_dev
+file if preferred.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/directio_test_dev | 4 ----
- 1 file changed, 4 deletions(-)
- delete mode 100644 tests/directio_test_dev
+ tests/Makefile | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/tests/directio_test_dev b/tests/directio_test_dev
-deleted file mode 100644
-index d64e6238..00000000
---- a/tests/directio_test_dev
-+++ /dev/null
-@@ -1,4 +0,0 @@
--# To run the directio tests on an actual block device, uncomment the line
--# starting with DIO_TES_DEV, and set it to the appropriate device
+diff --git a/tests/Makefile b/tests/Makefile
+index 6e3e9ca2..5f6583a0 100644
+--- a/tests/Makefile
++++ b/tests/Makefile
+@@ -18,12 +18,14 @@ TESTS := uevent parser util dmevents hwtable blacklist unaligned vpd pgpolicy \
+ .SILENT: $(TESTS:%=%.o)
+ .PRECIOUS: $(TESTS:%=%-test)
+ 
+-DIO_TEST_DEV = $(shell sed -n -e 's/^[[:space:]]*DIO_TEST_DEV[[:space:]]*=[[:space:]]*\([^[:space:]\#]\+\).*/\1/p' < directio_test_dev)
 -
--# DIO_TEST_DEV=/dev/sdb
+ all:	$(TESTS:%=%.out)
+ 
+ # test-specific compiler flags
+ # XYZ-test_FLAGS: Additional compiler flags for this test
++
++ifneq ($(wildcard directio_test_dev),)
++DIO_TEST_DEV = $(shell sed -n -e 's/^[[:space:]]*DIO_TEST_DEV[[:space:]]*=[[:space:]]*\([^[:space:]\#]\+\).*/\1/p' < directio_test_dev)
++endif
+ ifneq ($(DIO_TEST_DEV),)
+ directio-test_FLAGS := -DDIO_TEST_DEV=\"$(DIO_TEST_DEV)\"
+ endif
 -- 
 2.25.0
