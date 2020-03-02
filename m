@@ -1,124 +1,86 @@
-From: Pankaj Gupta <pankaj.gupta.linux@gmail.com>
-Subject: Re: [PATCH v6 2/6] dax, pmem: Add a dax operation zero_page_range
-Date: Sat, 29 Feb 2020 10:21:37 +0100
-Message-ID: <CAM9Jb+gLczXgFmLJg8a=XThoJT1S8XajFkb8AkjDCV1XXyarqg@mail.gmail.com>
-References: <20200228163456.1587-1-vgoyal@redhat.com> <20200228163456.1587-3-vgoyal@redhat.com>
+From: Horia Geanta <horia.geanta@nxp.com>
+Subject: Re: [PATCH] crypto: caam - update xts sector size for large input
+ length
+Date: Mon, 2 Mar 2020 09:36:32 +0000
+Message-ID: <VI1PR0402MB34851CC70E092F598E9BF32298E70@VI1PR0402MB3485.eurprd04.prod.outlook.com>
+References: <20200228104648.18898-1-andrei.botila@oss.nxp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20200228163456.1587-3-vgoyal@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, hch@infradead.org, dan.j.williams@intel.com, david@fromorbit.com, dm-devel@redhat.com
+Content-Type: text/plain; charset="iso-8859-2"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Andrei Botila (OSS)" <andrei.botila@oss.nxp.com>, Aymen Sghaier <aymen.sghaier@nxp.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>
+Cc: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrei Botila <andrei.botila@nxp.com>, "stable@vger.kernel.org" <stable@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
->
-> Add a dax operation zero_page_range, to zero a page. This will also clear any
-> known poison in the page being zeroed.
->
-> As of now, zeroing of one page is allowed in a single call. There
-> are no callers which are trying to zero more than a page in a single call.
-> Once we grow the callers which zero more than a page in single call, we
-> can add that support. Primary reason for not doing that yet is that this
-> will add little complexity in dm implementation where a range might be
-> spanning multiple underlying targets and one will have to split the range
-> into multiple sub ranges and call zero_page_range() on individual targets.
->
-> Suggested-by: Christoph Hellwig <hch@infradead.org>
-> Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
-> ---
->  drivers/dax/super.c   | 20 ++++++++++++++++++++
->  drivers/nvdimm/pmem.c | 11 +++++++++++
->  include/linux/dax.h   |  4 ++++
->  3 files changed, 35 insertions(+)
->
-> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-> index 0aa4b6bc5101..e498daf3c0d7 100644
-> --- a/drivers/dax/super.c
-> +++ b/drivers/dax/super.c
-> @@ -344,6 +344,26 @@ size_t dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
->  }
->  EXPORT_SYMBOL_GPL(dax_copy_to_iter);
->
-> +int dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
-> +                       size_t nr_pages)
-> +{
-> +       if (!dax_alive(dax_dev))
-> +               return -ENXIO;
-> +
-> +       if (!dax_dev->ops->zero_page_range)
-> +               return -EOPNOTSUPP;
-> +       /*
-> +        * There are no callers that want to zero more than one page as of now.
-> +        * Once users are there, this check can be removed after the
-> +        * device mapper code has been updated to split ranges across targets.
-> +        */
-> +       if (nr_pages != 1)
-> +               return -EIO;
-> +
-> +       return dax_dev->ops->zero_page_range(dax_dev, pgoff, nr_pages);
-> +}
-> +EXPORT_SYMBOL_GPL(dax_zero_page_range);
-> +
->  #ifdef CONFIG_ARCH_HAS_PMEM_API
->  void arch_wb_cache_pmem(void *addr, size_t size);
->  void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
-> diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-> index 075b11682192..5b774ddd0efb 100644
-> --- a/drivers/nvdimm/pmem.c
-> +++ b/drivers/nvdimm/pmem.c
-> @@ -282,6 +282,16 @@ static const struct block_device_operations pmem_fops = {
->         .revalidate_disk =      nvdimm_revalidate_disk,
->  };
->
-> +static int pmem_dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
-> +                                   size_t nr_pages)
-> +{
-> +       struct pmem_device *pmem = dax_get_private(dax_dev);
-> +
-> +       return blk_status_to_errno(pmem_do_write(pmem, ZERO_PAGE(0), 0,
-> +                                  PFN_PHYS(pgoff) >> SECTOR_SHIFT,
-> +                                  PAGE_SIZE));
-> +}
-> +
->  static long pmem_dax_direct_access(struct dax_device *dax_dev,
->                 pgoff_t pgoff, long nr_pages, void **kaddr, pfn_t *pfn)
->  {
-> @@ -313,6 +323,7 @@ static const struct dax_operations pmem_dax_ops = {
->         .dax_supported = generic_fsdax_supported,
->         .copy_from_iter = pmem_copy_from_iter,
->         .copy_to_iter = pmem_copy_to_iter,
-> +       .zero_page_range = pmem_dax_zero_page_range,
->  };
->
->  static const struct attribute_group *pmem_attribute_groups[] = {
-> diff --git a/include/linux/dax.h b/include/linux/dax.h
-> index 328c2dbb4409..71735c430c05 100644
-> --- a/include/linux/dax.h
-> +++ b/include/linux/dax.h
-> @@ -34,6 +34,8 @@ struct dax_operations {
->         /* copy_to_iter: required operation for fs-dax direct-i/o */
->         size_t (*copy_to_iter)(struct dax_device *, pgoff_t, void *, size_t,
->                         struct iov_iter *);
-> +       /* zero_page_range: required operation. Zero page range   */
-> +       int (*zero_page_range)(struct dax_device *, pgoff_t, size_t);
->  };
->
->  extern struct attribute_group dax_attribute_group;
-> @@ -199,6 +201,8 @@ size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
->                 size_t bytes, struct iov_iter *i);
->  size_t dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
->                 size_t bytes, struct iov_iter *i);
-> +int dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
-> +                       size_t nr_pages);
->  void dax_flush(struct dax_device *dax_dev, void *addr, size_t size);
->
->  ssize_t dax_iomap_rw(struct kiocb *iocb, struct iov_iter *iter,
-> --
-> 2.20.1
-
-Zeroing single page seems right approach for now.
-Reviewed-by: Pankaj Gupta <pankaj.gupta.linux@gmail.com>
-> _______________________________________________
-> Linux-nvdimm mailing list -- linux-nvdimm@lists.01.org
-> To unsubscribe send an email to linux-nvdimm-leave@lists.01.org
++ dm-devel=0A=
+=0A=
+On 2/28/2020 12:47 PM, Andrei Botila (OSS) wrote:=0A=
+> From: Andrei Botila <andrei.botila@nxp.com>=0A=
+> =0A=
+> Since in the software implementation of XTS-AES there is=0A=
+> no notion of sector every input length is processed the same way.=0A=
+> CAAM implementation has the notion of sector which causes different=0A=
+> results between the software implementation and the one in CAAM=0A=
+> for input lengths bigger than 512 bytes.=0A=
+> Increase sector size to maximum value on 16 bits.=0A=
+> =0A=
+> Fixes: c6415a6016bf ("crypto: caam - add support for acipher xts(aes)")=
+=0A=
+> Cc: <stable@vger.kernel.org> # v4.12+=0A=
+> Signed-off-by: Andrei Botila <andrei.botila@nxp.com>=0A=
+Reviewed-by: Horia Geant=E3 <horia.geanta@nxp.com>=0A=
+=0A=
+Thanks,=0A=
+Horia=0A=
+=0A=
+> ---=0A=
+> This patch needs to be applied from v4.12+ because dm-crypt has added sup=
+port=0A=
+> for 4K sector size at that version. The commit was=0A=
+> 8f0009a225171 ("dm-crypt: optionally support larger encryption sector siz=
+e").=0A=
+> =0A=
+>  drivers/crypto/caam/caamalg_desc.c | 16 ++++++++++++++--=0A=
+>  1 file changed, 14 insertions(+), 2 deletions(-)=0A=
+> =0A=
+> diff --git a/drivers/crypto/caam/caamalg_desc.c b/drivers/crypto/caam/caa=
+malg_desc.c=0A=
+> index aa9ccca67045..8ebbbd28b1f7 100644=0A=
+> --- a/drivers/crypto/caam/caamalg_desc.c=0A=
+> +++ b/drivers/crypto/caam/caamalg_desc.c=0A=
+> @@ -1518,7 +1518,13 @@ EXPORT_SYMBOL(cnstr_shdsc_skcipher_decap);=0A=
+>   */=0A=
+>  void cnstr_shdsc_xts_skcipher_encap(u32 * const desc, struct alginfo *cd=
+ata)=0A=
+>  {=0A=
+> -	__be64 sector_size =3D cpu_to_be64(512);=0A=
+> +	/*=0A=
+> +	 * Set sector size to a big value, practically disabling=0A=
+> +	 * sector size segmentation in xts implementation. We cannot=0A=
+> +	 * take full advantage of this HW feature with existing=0A=
+> +	 * crypto API / dm-crypt SW architecture.=0A=
+> +	 */=0A=
+> +	__be64 sector_size =3D cpu_to_be64(BIT(15));=0A=
+>  	u32 *key_jump_cmd;=0A=
+>  =0A=
+>  	init_sh_desc(desc, HDR_SHARE_SERIAL | HDR_SAVECTX);=0A=
+> @@ -1571,7 +1577,13 @@ EXPORT_SYMBOL(cnstr_shdsc_xts_skcipher_encap);=0A=
+>   */=0A=
+>  void cnstr_shdsc_xts_skcipher_decap(u32 * const desc, struct alginfo *cd=
+ata)=0A=
+>  {=0A=
+> -	__be64 sector_size =3D cpu_to_be64(512);=0A=
+> +	/*=0A=
+> +	 * Set sector size to a big value, practically disabling=0A=
+> +	 * sector size segmentation in xts implementation. We cannot=0A=
+> +	 * take full advantage of this HW feature with existing=0A=
+> +	 * crypto API / dm-crypt SW architecture.=0A=
+> +	 */=0A=
+> +	__be64 sector_size =3D cpu_to_be64(BIT(15));=0A=
+>  	u32 *key_jump_cmd;=0A=
+>  =0A=
+>  	init_sh_desc(desc, HDR_SHARE_SERIAL | HDR_SAVECTX);=0A=
+> =0A=
+=0A=
