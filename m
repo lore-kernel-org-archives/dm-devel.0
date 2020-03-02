@@ -1,7 +1,7 @@
 From: mwilck@suse.com
-Subject: [PATCH 3/4] tests/Makefile: add test_clean target
-Date: Mon,  2 Mar 2020 23:20:24 +0100
-Message-ID: <20200302222025.21022-4-mwilck@suse.com>
+Subject: [PATCH 1/4] Remove tests/directio_test_dev
+Date: Mon,  2 Mar 2020 23:20:22 +0100
+Message-ID: <20200302222025.21022-2-mwilck@suse.com>
 References: <20200302222025.21022-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,36 +23,29 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This is a convenience target to remove only the test output files.
-It's useful for those tests which require root permissions to run,
-as "make" doesn't delete the .out file if a test fails (we could
-force "make" to do so, but we don't want to do that, because usually
-we want to inspect the output file when a test has failed). With
-test_clean, we can run "make" as normal user, then "make test_clean"
-and finally run "make" as root again.
+This file is designed to be customized and will therefore differ from
+the committed version in every serious development environment. I find
+that inconvenient, as the file needs to be stashed away before every
+serious git activity, and could easily be committed by mistake.
+
+Follow-up patches will enable various alternative ways to set the
+DIO_TEST_DEV during build.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/Makefile | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ tests/directio_test_dev | 4 ----
+ 1 file changed, 4 deletions(-)
+ delete mode 100644 tests/directio_test_dev
 
-diff --git a/tests/Makefile b/tests/Makefile
-index 5f6583a0..77ff3249 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -67,8 +67,11 @@ lib/libchecktur.so:
- 
- OBJS = $(TESTS:%=%.o) test-lib.o
- 
--clean: dep_clean
--	$(RM) $(TESTS:%=%-test) $(TESTS:%=%.out) $(OBJS) *.o.wrap
-+test_clean:
-+	$(RM) $(TESTS:%=%.out)
-+
-+clean: test_clean dep_clean
-+	$(RM) $(TESTS:%=%-test) $(OBJS) *.o.wrap
- 	$(RM) -rf lib
- 
- .SECONDARY: $(OBJS)
+diff --git a/tests/directio_test_dev b/tests/directio_test_dev
+deleted file mode 100644
+index d64e6238..00000000
+--- a/tests/directio_test_dev
++++ /dev/null
+@@ -1,4 +0,0 @@
+-# To run the directio tests on an actual block device, uncomment the line
+-# starting with DIO_TES_DEV, and set it to the appropriate device
+-
+-# DIO_TEST_DEV=/dev/sdb
 -- 
 2.25.0
