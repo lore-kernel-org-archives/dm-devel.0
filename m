@@ -1,58 +1,30 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH v6 1/6] pmem: Add functions for reading/writing page
- to/from pmem
-Date: Wed, 4 Mar 2020 13:44:41 -0500
-Message-ID: <20200304184441.GE21542@redhat.com>
-References: <20200228163456.1587-1-vgoyal@redhat.com>
- <20200228163456.1587-2-vgoyal@redhat.com>
- <CAM9Jb+gJWH_bC-9fgGdeP5LaSVjJ3JgTnjBxpRJMfe6vbTPOTA@mail.gmail.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [git pull] device mapper fixes for 5.6-rc5
+Date: Wed, 4 Mar 2020 13:06:55 -0600
+Message-ID: <CAHk-=wgP=q648JXn8Hd9q7DuNaOEpLmxQp2W3RO3vkaD2CS_9g@mail.gmail.com>
+References: <20200304150257.GA19885@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAM9Jb+gJWH_bC-9fgGdeP5LaSVjJ3JgTnjBxpRJMfe6vbTPOTA@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Pankaj Gupta <pankaj.gupta.linux@gmail.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, hch@infradead.org, dan.j.williams@intel.com, david@fromorbit.com, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200304150257.GA19885@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, linux-block <linux-block@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>, Hou Tao <houtao1@huawei.com>, Mikulas Patocka <mpatocka@redhat.com>, Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>, Theodore Ts'o <tytso@mit.edu>
 List-Id: dm-devel.ids
 
-On Sat, Feb 29, 2020 at 09:04:00AM +0100, Pankaj Gupta wrote:
-> On Fri, 28 Feb 2020 at 17:35, Vivek Goyal <vgoyal@redhat.com> wrote:
-> >
-> > This splits pmem_do_bvec() into pmem_do_read() and pmem_do_write().
-> > pmem_do_write() will be used by pmem zero_page_range() as well. Hence
-> > sharing the same code.
-> >
-> > Suggested-by: Christoph Hellwig <hch@infradead.org>
-> > Reviewed-by: Christoph Hellwig <hch@lst.de>
-> > Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
-> > ---
-> >  drivers/nvdimm/pmem.c | 86 +++++++++++++++++++++++++------------------
-> >  1 file changed, 50 insertions(+), 36 deletions(-)
-> >
-> > diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-> > index 4eae441f86c9..075b11682192 100644
-> > --- a/drivers/nvdimm/pmem.c
-> > +++ b/drivers/nvdimm/pmem.c
-> > @@ -136,9 +136,25 @@ static blk_status_t read_pmem(struct page *page, unsigned int off,
-> >         return BLK_STS_OK;
-> >  }
-> >
-> > -static blk_status_t pmem_do_bvec(struct pmem_device *pmem, struct page *page,
-> > -                       unsigned int len, unsigned int off, unsigned int op,
-> > -                       sector_t sector)
-> > +static blk_status_t pmem_do_read(struct pmem_device *pmem,
-> > +                       struct page *page, unsigned int page_off,
-> > +                       sector_t sector, unsigned int len)
-> > +{
-> > +       blk_status_t rc;
-> > +       phys_addr_t pmem_off = sector * 512 + pmem->data_offset;
-> 
-> minor nit,  maybe 512 is replaced by macro? Looks like its used at multiple
-> places, maybe can keep at is for now.
+On Wed, Mar 4, 2020 at 9:03 AM Mike Snitzer <snitzer@redhat.com> wrote:
+>
+> - Bump the minor version for DM core and all target versions that have
+>   seen interface changes or important fixes during the 5.6 cycle.
 
-This came from existing code. If I end up spinning this patch series
-again, I will replace it with (sector << SECTOR_SHIFT).
+Can we please remove these pointless version markers entirely?
 
-Thanks
-Vivek
+They make no sense. The kernel doesn't allow backwards incompatible
+changes anyway, so the whole point of using some kind of interface
+versioning is entirely bogus.
+
+The way you test if a new feature exists or not is to just use it, and
+if you're running on an old kernel that doesn't support that
+operation, then it should return an error.
+
+             Linus
