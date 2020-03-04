@@ -1,88 +1,89 @@
-From: Hou Tao <houtao1@huawei.com>
-Subject: Re: dm: fix congested_fn for request-based device
-Date: Wed, 4 Mar 2020 08:54:50 +0800
-Message-ID: <291558e3-4f07-b9a8-f138-91b929fa40c9@huawei.com>
-References: <20200303084501.8912-1-houtao1@huawei.com>
-	<20200303161535.GA8578@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fixes for 5.6-rc5
+Date: Wed, 4 Mar 2020 10:02:57 -0500
+Message-ID: <20200304150257.GA19885@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200303161535.GA8578@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: tj@kernel.org, dm-devel@redhat.com, agk@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-block-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Hou Tao <houtao1@huawei.com>, Mikulas Patocka <mpatocka@redhat.com>, Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>, Theodore Ts'o <tytso@mit.edu>
 List-Id: dm-devel.ids
 
-Hi Mike,
+Hi Linus,
 
-On 2020/3/4 0:15, Mike Snitzer wrote:
-> On Tue, Mar 03 2020 at  3:45am -0500,
-> Hou Tao <houtao1@huawei.com> wrote:
-> 
->> We neither assign congested_fn for requested-based blk-mq device
->> nor implement it correctly. So fix both.
->>
->> Fixes: 4aa9c692e052 ("bdi: separate out congested state into a separate struct")
->> Signed-off-by: Hou Tao <houtao1@huawei.com>
->> ---
->>  drivers/md/dm.c | 5 ++++-
->>  1 file changed, 4 insertions(+), 1 deletion(-)
->>
->> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
->> index b89f07ee2eff..80b95e21db43 100644
->> --- a/drivers/md/dm.c
->> +++ b/drivers/md/dm.c
->> @@ -1784,11 +1784,13 @@ static int dm_any_congested(void *congested_data, int bdi_bits)
->>  
->>  	if (!test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags)) {
->>  		if (dm_request_based(md)) {
->> +			struct backing_dev_info *bdi =
->> +				md->queue->backing_dev_info;
->>  			/*
->>  			 * With request-based DM we only need to check the
->>  			 * top-level queue for congestion.
->>  			 */
->> -			r = md->queue->backing_dev_info->wb.state & bdi_bits;
->> +			r = bdi->wb.congested->state & bdi_bits;
->>  		} else {
->>  			map = dm_get_live_table_fast(md);
->>  			if (map)
-> 
-> The above change does indeed fix missing conversion that should've
-> occurred in commit 4aa9c692e052.
-> 
->> @@ -2265,6 +2267,7 @@ int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t)
->>  			DMERR("Cannot initialize queue for request-based dm-mq mapped device");
->>  			return r;
->>  		}
->> +		dm_init_normal_md_queue(md);
->>  		break;
->>  	case DM_TYPE_BIO_BASED:
->>  	case DM_TYPE_DAX_BIO_BASED:
-> 
-> I've renamed dm_init_normal_md_queue to dm_init_congested_fn and removed
-> it's incorrect comment.
-> 
-Thanks for that.
+The following changes since commit 47ace7e012b9f7ad71d43ac9063d335ea3d6820b:
 
-Regards,
-Tao
-> Here is the final fix I just staged:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.6&id=974f51e8633f0f3f33e8f86bbb5ae66758aa63c7
-> 
-> Thanks,
-> Mike
-> 
-> 
-> .
-> 
+  dm: fix potential for q->make_request_fn NULL pointer (2020-01-27 14:52:36 -0500)
+
+are available in the Git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.6/dm-fixes
+
+for you to fetch changes up to 636be4241bdd88fec273b38723e44bad4e1c4fae:
+
+  dm: bump version of core and various targets (2020-03-03 11:10:21 -0500)
+
+Please pull, thanks!
+Mike
+
+----------------------------------------------------------------
+- Fix request-based DM's congestion_fn and actually wire it up to the
+  bdi.
+
+- Extend dm-bio-record to track additional struct bio members needed
+  by DM integrity target.
+
+- Fix DM core to properly advertise that a device is suspended during
+  unload (between the presuspend and postsuspend hooks).  This change
+  is a prereq for related DM integrity and DM writecache fixes.  It
+  elevates DM integrity's 'suspending' state tracking to DM core.
+
+- Four stable fixes for DM integrity target.
+
+- Fix crash in DM cache target due to incorrect work item cancelling.
+
+- Fix DM thin metadata lockdep warning that was introduced during 5.6
+  merge window.
+
+- Fix DM zoned target's chunk work refcounting that regressed during
+  recent conversion to refcount_t.
+
+- Bump the minor version for DM core and all target versions that have
+  seen interface changes or important fixes during the 5.6 cycle.
+
+----------------------------------------------------------------
+Hou Tao (1):
+      dm: fix congested_fn for request-based device
+
+Mike Snitzer (3):
+      dm bio record: save/restore bi_end_io and bi_integrity
+      dm integrity: use dm_bio_record and dm_bio_restore
+      dm: bump version of core and various targets
+
+Mikulas Patocka (6):
+      dm integrity: fix recalculation when moving from journal mode to bitmap mode
+      dm integrity: fix a deadlock due to offloading to an incorrect workqueue
+      dm integrity: fix invalid table returned due to argument count mismatch
+      dm cache: fix a crash due to incorrect work item cancelling
+      dm: report suspended device during destroy
+      dm writecache: verify watermark during resume
+
+Shin'ichiro Kawasaki (1):
+      dm zoned: Fix reference counter initial value of chunk works
+
+Theodore Ts'o (1):
+      dm thin metadata: fix lockdep complaint
+
+ drivers/md/dm-bio-record.h    | 15 ++++++++
+ drivers/md/dm-cache-target.c  |  6 ++--
+ drivers/md/dm-integrity.c     | 84 ++++++++++++++++++++++---------------------
+ drivers/md/dm-mpath.c         |  2 +-
+ drivers/md/dm-thin-metadata.c |  2 +-
+ drivers/md/dm-verity-target.c |  2 +-
+ drivers/md/dm-writecache.c    | 16 ++++++---
+ drivers/md/dm-zoned-target.c  | 10 +++---
+ drivers/md/dm.c               | 22 ++++++------
+ include/uapi/linux/dm-ioctl.h |  4 +--
+ 10 files changed, 94 insertions(+), 69 deletions(-)
