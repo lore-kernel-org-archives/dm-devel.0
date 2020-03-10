@@ -1,107 +1,73 @@
-From: Drew Hastings <dhastings@crucialwebhost.com>
-Subject: Fix for dm-thin pool resizing
-Date: Mon, 9 Mar 2020 23:39:49 -0700
-Message-ID: <CAN-y+E+A+hNTF_v84N_gxM8MM1FiMZLbAQW4pZ=k-rHTAMZCnQ@mail.gmail.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH v6 0/6] dax/pmem: Provide a dax operation to zero page
+ range
+Date: Tue, 10 Mar 2020 08:18:32 -0400
+Message-ID: <20200310121832.GA38440@redhat.com>
+References: <20200228163456.1587-1-vgoyal@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0171832888234930347=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200228163456.1587-1-vgoyal@redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, hch@infradead.org, dan.j.williams@intel.com
+Cc: david@fromorbit.com, jmoyer@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============0171832888234930347==
-Content-Type: multipart/alternative; boundary="00000000000084563e05a07a6331"
+On Fri, Feb 28, 2020 at 11:34:50AM -0500, Vivek Goyal wrote:
+> Hi,
+> 
+> This is V6 of patches. These patches are also available at.
 
---00000000000084563e05a07a6331
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Hi Dan,
 
-Expanding the data device consumes metadata space. Right now the data
-device is currently resized *before* the metadata device is. This creates a
-situation where you can reload the pool with a much larger metadata device
-and a larger data device, but it will fail the pool by running out of
-metadata space trying to expand the data device.
+Ping. Does this patch series look fine to you?
 
-I've been able to fix this by simply changing around the order that things
-are checked. Rather than checking data device first, which might itself
-require too much metadata to expand, just check the metadata device first
-and expand that (allowing for the subsequent data device expansion).
+Vivek
 
-static int pool_preresume(struct dm_target *ti)
-{
-    int r;
-    bool need_commit;
-    struct pool_c *pt =3D ti->private;
-    struct pool *pool =3D pt->pool;
-
-    /*
-     * Take control of the pool object.
-     */
-    r =3D bind_control_target(pool, ti);
-    if (r)
-        return r;
-
-    r =3D maybe_resize_metadata_dev(ti, &need_commit);
-    if (r)
-        return r;
-
-    if(need_commit) (void) commit(pool);
-
-    r =3D maybe_resize_data_dev(ti, &need_commit);
-    if (r)
-        return r;
-
-    if(need_commit) (void) commit(pool);
-
-    return 0;
-}
-
-
-Thanks for your hard work!
-- Drew
-
---00000000000084563e05a07a6331
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><div>Expanding the data device consumes metadata space. Ri=
-ght now the data device is currently resized <i>before</i>=C2=A0the metadat=
-a device is. This creates a situation where you can reload the pool with a =
-much larger metadata device and a larger data device, but it will fail the =
-pool by running out of metadata space trying to expand the data device.<br>=
-<br></div><div>I&#39;ve been able to fix this by simply changing around the=
- order that things are checked. Rather than checking data device first, whi=
-ch might itself require too much metadata to expand, just check the metadat=
-a device first and expand that (allowing for the subsequent data device exp=
-ansion).<br><br>static int pool_preresume(struct dm_target *ti)<br>{<br>=C2=
-=A0 =C2=A0 int r;<br>=C2=A0 =C2=A0 bool need_commit;<br>=C2=A0 =C2=A0 struc=
-t pool_c *pt =3D ti-&gt;private;<br>=C2=A0 =C2=A0 struct pool *pool =3D pt-=
-&gt;pool;<br><br>=C2=A0 =C2=A0 /*<br>=C2=A0 =C2=A0 =C2=A0* Take control of =
-the pool object.<br>=C2=A0 =C2=A0 =C2=A0*/<br>=C2=A0 =C2=A0 r =3D bind_cont=
-rol_target(pool, ti);<br>=C2=A0 =C2=A0 if (r)<br>=C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 return r;<br><br>=C2=A0 =C2=A0 r =3D maybe_resize_metadata_dev(ti, &amp=
-;need_commit);<br>=C2=A0 =C2=A0 if (r)<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 retur=
-n r;<br><br>=C2=A0 =C2=A0 if(need_commit) (void) commit(pool);<br><br>=C2=
-=A0 =C2=A0 r =3D maybe_resize_data_dev(ti, &amp;need_commit);<br>=C2=A0 =C2=
-=A0 if (r)<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 return r;<br><br>=C2=A0 =C2=A0 if=
-(need_commit) (void) commit(pool);<br><br>=C2=A0 =C2=A0 return 0;<br>}<br><=
-br><br>Thanks for your hard work!</div><div>- Drew</div></div>
-
---00000000000084563e05a07a6331--
-
---===============0171832888234930347==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0171832888234930347==--
+> 
+> Changes since V5:
+> 
+> - Dan Williams preferred ->zero_page_range() to only accept PAGE_SIZE
+>   aligned request and clear poison only on page size aligned zeroing. So
+>   I changed it accordingly. 
+> 
+> - Dropped all the modifications which were required to support arbitrary
+>   range zeroing with-in a page.
+> 
+> - This patch series also fixes the issue where "truncate -s 512 foo.txt"
+>   will fail if first sector of file is poisoned. Currently it succeeds
+>   and filesystem expectes whole of the filesystem block to be free of
+>   poison at the end of the operation.
+> 
+> Christoph, I have dropped your Reviewed-by tag on 1-2 patches because
+> these patches changed substantially. Especially signature of of
+> dax zero_page_range() helper.
+> 
+> Thanks
+> Vivek
+> 
+> Vivek Goyal (6):
+>   pmem: Add functions for reading/writing page to/from pmem
+>   dax, pmem: Add a dax operation zero_page_range
+>   s390,dcssblk,dax: Add dax zero_page_range operation to dcssblk driver
+>   dm,dax: Add dax zero_page_range operation
+>   dax: Use new dax zero page method for zeroing a page
+>   dax,iomap: Add helper dax_iomap_zero() to zero a range
+> 
+>  drivers/dax/super.c           | 20 ++++++++
+>  drivers/md/dm-linear.c        | 18 +++++++
+>  drivers/md/dm-log-writes.c    | 17 ++++++
+>  drivers/md/dm-stripe.c        | 23 +++++++++
+>  drivers/md/dm.c               | 30 +++++++++++
+>  drivers/nvdimm/pmem.c         | 97 ++++++++++++++++++++++-------------
+>  drivers/s390/block/dcssblk.c  | 15 ++++++
+>  fs/dax.c                      | 59 ++++++++++-----------
+>  fs/iomap/buffered-io.c        |  9 +---
+>  include/linux/dax.h           | 21 +++-----
+>  include/linux/device-mapper.h |  3 ++
+>  11 files changed, 221 insertions(+), 91 deletions(-)
+> 
+> -- 
+> 2.20.1
+> 
