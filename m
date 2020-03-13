@@ -1,121 +1,66 @@
-From: Kirill Tkhai <ktkhai@virtuozzo.com>
-Subject: Re: [PATCH v7 0/6] block: Introduce REQ_ALLOCATE flag for
- REQ_OP_WRITE_ZEROES
-Date: Fri, 13 Mar 2020 16:08:58 +0300
-Message-ID: <67d63190-c16f-cd26-6b67-641c8943dc3d@virtuozzo.com>
-References: <158157930219.111879.12072477040351921368.stgit@localhost.localdomain>
- <e2b7cbab-d91f-fd7b-de6f-a671caa6f5eb@virtuozzo.com>
- <69c0b8a4-656f-98c4-eb55-2fd1184f5fc9@virtuozzo.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v4] dm ebs: new block size emulating target
+Date: Fri, 13 Mar 2020 11:14:00 -0400
+Message-ID: <20200313151400.GA20567@redhat.com>
+References: <5e49305bc15869c58edea0e6d815a546b9ee2c66.1583792345.git.heinzm@redhat.com>
+	<BYAPR04MB5816244DDF2E4EE2F1FAD3A0E7FE0@BYAPR04MB5816.namprd04.prod.outlook.com>
+	<f49d23b2-6b2b-1793-32e4-b3527a91922f@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <69c0b8a4-656f-98c4-eb55-2fd1184f5fc9@virtuozzo.com>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: axboe@kernel.dk
-Cc: martin.petersen@oracle.com, bob.liu@oracle.com, darrick.wong@oracle.com, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, song@kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, Chaitanya.Kulkarni@wdc.com, ming.lei@redhat.com, osandov@fb.com, jthumshirn@suse.de, minwoo.im.dev@gmail.com, damien.lemoal@wdc.com, andrea.parri@amarulasolutions.com, hare@suse.com, tj@kernel.org, ajay.joshi@wdc.com, sagi@grimberg.me, dsterba@suse.com, bvanassche@acm.org, dhowells@redhat.com, asml.silence@gmail.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <f49d23b2-6b2b-1793-32e4-b3527a91922f@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Heinz Mauelshagen <heinzm@redhat.com>
+Cc: dm-devel@redhat.com, Damien Le Moal <Damien.LeMoal@wdc.com>
 List-Id: dm-devel.ids
 
-I just don't understand the reason nothing happens :(
-I see newly-sent patches comes fast into block tree.
-But there is only silence... I grepped over Documentation,
-and there is no special rules about block tree. So,
-it looks like standard rules should be applyable.
-
-Some comments? Some requests for reworking? Some personal reasons to ignore my patches?
-
-On 06.03.2020 12:11, Kirill Tkhai wrote:
-> ping
-> 
-> On 13.02.2020 10:55, Kirill Tkhai wrote:
->> Hi, Jens,
->>
->> could you please provide some comments on this? I sent v1 two months ago,
->> and it would be great to know your vision of the functionality and
->> the approach and whether it is going to go to block tree.
->>
->> Thanks,
->> Kirill
->>
->> On 13.02.2020 10:39, Kirill Tkhai wrote:
->>> (was "[PATCH block v2 0/3] block: Introduce REQ_NOZERO flag
->>>       for REQ_OP_WRITE_ZEROES operation";
->>>  was "[PATCH RFC 0/3] block,ext4: Introduce REQ_OP_ASSIGN_RANGE
->>>       to reflect extents allocation in block device internals")
->>>
->>> v7: Two comments changed.
->>>
->>> v6: req_op() cosmetic change.
->>>
->>> v5: Kill dm|md patch, which disables REQ_ALLOCATE for these devices.
->>>     Disable REQ_ALLOCATE for all stacking devices instead of this.
->>>
->>> v4: Correct argument for mddev_check_write_zeroes().
->>>
->>> v3: Rename REQ_NOZERO to REQ_ALLOCATE.
->>>     Split helpers to separate patches.
->>>     Add a patch, disabling max_allocate_sectors inheritance for dm.
->>>
->>> v2: Introduce new flag for REQ_OP_WRITE_ZEROES instead of
->>>     introduction a new operation as suggested by Martin K. Petersen.
->>>     Removed ext4-related patch to focus on block changes
->>>     for now.
->>>
->>> Information about continuous extent placement may be useful
->>> for some block devices. Say, distributed network filesystems,
->>> which provide block device interface, may use this information
->>> for better blocks placement over the nodes in their cluster,
->>> and for better performance. Block devices, which map a file
->>> on another filesystem (loop), may request the same length extent
->>> on underlining filesystem for less fragmentation and for batching
->>> allocation requests. Also, hypervisors like QEMU may use this
->>> information for optimization of cluster allocations.
->>>
->>> This patchset introduces REQ_ALLOCATE flag for REQ_OP_WRITE_ZEROES,
->>> which makes a block device to allocate blocks instead of actual
->>> blocks zeroing. This may be used for forwarding user's fallocate(0)
->>> requests into block device internals. E.g., in loop driver this
->>> will result in allocation extents in backing-file, so subsequent
->>> write won't fail by the reason of no available space. Distributed
->>> network filesystems will be able to assign specific servers for
->>> specific extents, so subsequent write will be more efficient.
->>>
->>> Patches [1-3/6] are preparation on helper functions, patch [4/6]
->>> introduces REQ_ALLOCATE flag and implements all the logic,
->>> patch [5/6] adds one more helper, patch [6/6] adds loop
->>> as the first user of the flag.
->>>
->>> Note, that here is only block-related patches, example of usage
->>> for ext4 with a performance numbers may be seen in [1].
->>>
->>> [1] https://lore.kernel.org/linux-ext4/157599697369.12112.10138136904533871162.stgit@localhost.localdomain/T/#me5bdd5cc313e14de615d81bea214f355ae975db0
->>> ---
->>>
->>> Kirill Tkhai (6):
->>>       block: Add @flags argument to bdev_write_zeroes_sectors()
->>>       block: Pass op_flags into blk_queue_get_max_sectors()
->>>       block: Introduce blk_queue_get_max_write_zeroes_sectors()
->>>       block: Add support for REQ_ALLOCATE flag
->>>       block: Add blk_queue_max_allocate_sectors()
->>>       loop: Add support for REQ_ALLOCATE
->>>
->>>
->>>  block/blk-core.c                    |    6 +++---
->>>  block/blk-lib.c                     |   17 ++++++++++-------
->>>  block/blk-merge.c                   |    9 ++++++---
->>>  block/blk-settings.c                |   17 +++++++++++++++++
->>>  drivers/block/loop.c                |   20 +++++++++++++-------
->>>  drivers/md/dm-kcopyd.c              |    2 +-
->>>  drivers/target/target_core_iblock.c |    4 ++--
->>>  fs/block_dev.c                      |    4 ++++
->>>  include/linux/blk_types.h           |    6 ++++++
->>>  include/linux/blkdev.h              |   34 ++++++++++++++++++++++++++--------
->>>  10 files changed, 88 insertions(+), 31 deletions(-)
->>>
->>> --
->>> Signed-off-by: Kirill Tkhai <ktkhai@virtuozzo.com>
->>> Reviewed-by: Bob Liu <bob.liu@oracle.com>
->>>
->>
-> 
+T24gVHVlLCBNYXIgMTAgMjAyMCBhdCAgODozOWFtIC0wNDAwLApIZWlueiBNYXVlbHNoYWdlbiA8
+aGVpbnptQHJlZGhhdC5jb20+IHdyb3RlOgoKPiBPbiAzLzkvMjAgMTE6NDQgUE0sIERhbWllbiBM
+ZSBNb2FsIHdyb3RlOgo+ID5PbiAyMDIwLzAzLzEwIDc6MjYsIGhlaW56bUByZWRoYXQuY29tIHdy
+b3RlOgo+ID4+RnJvbTogSGVpbnogTWF1ZWxzaGFnZW4gPGhlaW56bUByZWRoYXQuY29tPgo+ID4+
+Cj4gPj5kbSBlYnM6IG5ldyBibG9jayBzaXplIGVtdWxhdGluZyB0YXJnZXQKPiA+Pgo+ID4+VGhp
+cyBuZXcgdGFyZ2V0IGlzIHNpbWlsYXIgdG8gdGhlIGxpbmVhciB0YXJnZXQgZXhjZXB0IHRoYXQg
+aXQgZW11bGF0ZXMKPiA+PmEgc21hbGxlciBsb2dpY2FsIGJsb2NrIHNpemUgb24gZGV2aWNlcyB3
+aXRoIGxhcmdlciBvbmVzLiAgSXQncyBtYWluCj4gPj5wdXJwb3NlIGlzIHRvIGVtdWxhdGUgNTEy
+IGJ5dGUgc2VjdG9ycyBvbiA0SyBuYXRpdmUgZGlza3MgKGkuZS4gNTEyZSkuCj4gPj4KPiA+PlNl
+ZSBEb2N1bWVudGF0aW9uL2FkbWluLWd1aWRlL2RldmljZS1tYXBwZXIvZG0tZWJzLnJzdCBmb3Ig
+ZGV0YWlscy4KPiA+Pgo+ID4+Q2hhbmdlcyB2ZXJzdXMgdmVyc2lvbiAzIHNlbnQgb24gMi8xOS8y
+MDIwOgo+ID4+Cj4gPj4tIGRvY3VtZW50ICdzdHJ1Y3QgZWJzX2MnIGFuZCByZW5hbWUgaXRzIGJs
+b2Nrc2l6ZSBhbmQgYmxvY2sgc2hpZnQgZmllbGRzCj4gPj4tIGlubGluZSBmdW5jdGlvbnMgKGUu
+Zy4gX19ucl9ibG9ja3MoKSkKPiA+Pi0gYWRqdXN0IF9fZWJzX3J3X2J2ZWMoKSBmdW5jdGlvbiBo
+ZWFkZXIgZm9ybWF0Cj4gPj4tIGFjY2VzcyBwYWdlX2FkZHJlc3MoKSBhZnRlciBidl9wYWdlIGNo
+ZWNrOyB0eXBvCj4gPj4tIGF2b2lkIHN1cGVyZmx1b3VzIGNoZWNrIGRlZmluaW5nIGJpX3N0YXR1
+cyBpbiBfX2Vic19wcm9jZXNzX2Jpb3MoKQo+ID4+LSBjb3JyZWN0IGluZGVudGF0aW9uCj4gPj4t
+IGF2b2lkIG9wX2lzX2ZsdXNoKCkgY2F1c2luZyBSRVFfRlVBIGJpb3MgdG8gYmUKPiA+PiAgIHJl
+bWFwcGVkIGhlbmNlIG5vdCBwcm9jZXNzZWQgYnkgdGhlIHRhcmdldAo+ID4+LSBjYWxsIGZsdXNo
+X2RjYWNoZV9wYWdlKCkgY29ycmVsYXRlZCB3aXRoIG1lbWNweSgpIHRvIGVuc3VyZQo+ID4+ICAg
+RC1jYWNoZSBhbGlhc2luZyBhcyBvZiBjYWNoZSBhbmQgVExCIGZsdXNoaW5nIGd1aWRlbGluZXMK
+PiA+Pi0gY29tbWVudHMKPiA+R2VuZXJhbGx5LCB0aGUgY2hhbmdlIGxvZyBpcyBub3QgYWRkZWQg
+YXMgcGFydCBvZiB0aGUgY29tbWl0IG1lc3NhZ2UgYW5kCj4gPm1lbnRpb25lZCBhZnRlciB0aGUg
+Ii0tLSIgYW5kIGFsbCBjaGFuZ2UgbG9ncyAiZnJvbSB2MSIsICJmcm9tIHYyIiBldGMga2VwdCBz
+bwo+ID50aGF0IGV2ZXJ5Ym9keSBjYW4gc2VlIHRoZSBwcm9ncmVzc2lvbi4KPiAKPiAKPiBBcyBv
+ZiB0aGUga2VybmVsIHBhdGNoIHN1Ym1pc3Npb24gZ3VpZGVsaW5lcyBpdCBzaG91bGQgYmUgcGFy
+dCBvZjoKPiAKPiAnRGVzY3JpYmUgeW91ciBjaGFuZ2VzIGluIGltcGVyYXRpdmUgbW9vZCwgZS5n
+LiDigJxtYWtlIHh5enp5IGRvCj4gZnJvdHrigJ0gaW5zdGVhZCBvZiDigJxbVGhpcyBwYXRjaF0g
+bWFrZXMgeHl6enkgZG8gZnJvdHrigJ0gb3Ig4oCcW0ldCj4gY2hhbmdlZCB4eXp6eSB0byBkbyBm
+cm90euKAnSwgYXMgaWYgeW91IGFyZSBnaXZpbmcgb3JkZXJzIHRvIHRoZQo+IGNvZGViYXNlIHRv
+IGNoYW5nZSBpdHMgYmVoYXZpb3VyLicKPiAKPiBUaGUgbGltaXRhdGlvbiB0byB0aGUgdjMgLT4g
+djQgY2hhbmdlcyB3YXMgbmVnb3RpYXRlZCB3aXRoIE1pa2UuCj4gSSdsbCBrZWVwIGl0IGFzIGlz
+IHVudGlsIGZ1cnRoZXIgZGVjaXNpb24uCgpSaWdodCBidXQgSSBzYWlkIEkgbmVlZCBhIHVzZWZ1
+bCBoZWFkZXIgdGhhdCB5b3UgcmVmaW5lIG92ZXIgdGltZTsgYW5kCnRoZW4gdGhlIGluY3JlbWVu
+dGFsIGNoYW5nZXMgYmV0d2VlbiB2ZXJzaW9ucyBpbiB0aGUgY3V0ICgtLSkgc2VjdGlvbgpsaWtl
+IERhbWllbiBwb2ludGVkIG91dC4KCklmIHlvdSBoYXZlIGEgbmV3IHJldmlzaW9uIGRlZmluaXRl
+bHkgZG8gc3RhY2sgdGhlIGluY3JlbWVudGFsIGNoYW5nZQppbmZvIG9uIHRoZSBpbmZvIGZvciBw
+cmV2aW91cyByZXZpc2lvbnMuCgpUaGFua3MsCk1pa2UKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlz
+dApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0
+aW5mby9kbS1kZXZlbA==
