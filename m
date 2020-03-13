@@ -1,13 +1,13 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: multipath-tools merges
-Date: Fri, 13 Mar 2020 12:52:18 -0500
-Message-ID: <20200313175218.GP30153@octiron.msp.redhat.com>
-References: <CABr-Gne_oOns4W0A4Ny4t4xRPbU3qdtS5Z6BSt7wQ0N7cRqDeQ@mail.gmail.com>
+Subject: Re: [PATCH 0/4] multipath-tools unit test fixups
+Date: Fri, 13 Mar 2020 12:52:43 -0500
+Message-ID: <20200313175243.GQ30153@octiron.msp.redhat.com>
+References: <20200302222025.21022-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-Gne_oOns4W0A4Ny4t4xRPbU3qdtS5Z6BSt7wQ0N7cRqDeQ@mail.gmail.com>
+In-Reply-To: <20200302222025.21022-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,20 +18,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
+To: mwilck@suse.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 02, 2020 at 11:19:08AM +0100, Christophe Varoqui wrote:
-> Hi ben, Martin,
+On Mon, Mar 02, 2020 at 11:20:21PM +0100, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
 > 
-> I finally catched up with your changes from october till now.
-> Please review I did not mess up the merges, then i'll commit a version bump.
+> Hi Christophe, hi Ben,
+> 
+> as announced in my previous post, here's a set of minor fixups for the
+> unit tests. The README.md should have been created long ago. My main
+> issue is that I'd prefer not to have a file under git control that is
+> likely to be customized in every developer's environment and needs
+> to be stashed away before every serious git work.
+> 
+> Martin Wilck (4):
+>   Remove tests/directio_test_dev
+>   tests/Makefile: allow setting DIO_TEST_DEV in the environment
+>   tests/Makefile: add test_clean target
+>   tests: add README.md
 
-Sorry for the delay. Everything looks fine on my end.
+Sorry for the delay. ACK for the set.
 
 -Ben
 
+
 > 
-> Thanks,
-> Christophe.
+>  tests/Makefile          | 13 +++++---
+>  tests/README.md         | 72 +++++++++++++++++++++++++++++++++++++++++
+>  tests/directio_test_dev |  4 ---
+>  3 files changed, 81 insertions(+), 8 deletions(-)
+>  create mode 100644 tests/README.md
+>  delete mode 100644 tests/directio_test_dev
+> 
+> -- 
+> 2.25.0
