@@ -1,13 +1,15 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 0/4] multipath-tools unit test fixups
-Date: Fri, 13 Mar 2020 12:52:43 -0500
-Message-ID: <20200313175243.GQ30153@octiron.msp.redhat.com>
-References: <20200302222025.21022-1-mwilck@suse.com>
+Subject: Re: [PATCH 1/4] libmpathpersist: limit PRIN allocation
+ length to 8192 bytes
+Date: Sat, 14 Mar 2020 18:14:15 -0500
+Message-ID: <20200314231415.GR30153@octiron.msp.redhat.com>
+References: <20200306230605.3473-1-mwilck@suse.com>
+	<20200306230605.3473-2-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200302222025.21022-1-mwilck@suse.com>
+In-Reply-To: <20200306230605.3473-2-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,38 +21,38 @@ Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
 To: mwilck@suse.com
-Cc: dm-devel@redhat.com
+Cc: dm-devel@redhat.com, David Bond <dbond@suse.com>
 List-Id: dm-devel.ids
 
-On Mon, Mar 02, 2020 at 11:20:21PM +0100, mwilck@suse.com wrote:
+On Sat, Mar 07, 2020 at 12:06:02AM +0100, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
 > 
-> Hi Christophe, hi Ben,
+> Some targets (notably the qemu-pr-helper) don't support PERSISTENT
+> RESERVE IN  commands with more than 8192 bytes allocation length.
+> While I have found no explicit requirement in the SCSI specs that
+> the allocation lengh may not exceed 8k, an 8k limit is also enforced
+> by sg_persist(8), and actually by mpathpersist itself for the
+> --allocation-length option, but not for the auto-determined length.
 > 
-> as announced in my previous post, here's a set of minor fixups for the
-> unit tests. The README.md should have been created long ago. My main
-> issue is that I'd prefer not to have a file under git control that is
-> likely to be customized in every developer's environment and needs
-> to be stashed away before every serious git work.
+> Fix that.
 > 
-> Martin Wilck (4):
->   Remove tests/directio_test_dev
->   tests/Makefile: allow setting DIO_TEST_DEV in the environment
->   tests/Makefile: add test_clean target
->   tests: add README.md
-
-Sorry for the delay. ACK for the set.
-
--Ben
-
-
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmpathpersist/mpath_pr_ioctl.c | 2 ++
+>  1 file changed, 2 insertions(+)
 > 
->  tests/Makefile          | 13 +++++---
->  tests/README.md         | 72 +++++++++++++++++++++++++++++++++++++++++
->  tests/directio_test_dev |  4 ---
->  3 files changed, 81 insertions(+), 8 deletions(-)
->  create mode 100644 tests/README.md
->  delete mode 100644 tests/directio_test_dev
-> 
+> diff --git a/libmpathpersist/mpath_pr_ioctl.c b/libmpathpersist/mpath_pr_ioctl.c
+> index 74b26b0c..1a28cba7 100644
+> --- a/libmpathpersist/mpath_pr_ioctl.c
+> +++ b/libmpathpersist/mpath_pr_ioctl.c
+> @@ -543,5 +543,7 @@ int get_prin_length(int rq_servact)
+>  			mx_resp_len = 0;
+>  			break;
+>  	}
+> +	if (mx_resp_len > MPATH_MAX_PARAM_LEN)
+> +		mx_resp_len = MPATH_MAX_PARAM_LEN;
+>  	return mx_resp_len;
+>  }
 > -- 
-> 2.25.0
+> 2.25.1
