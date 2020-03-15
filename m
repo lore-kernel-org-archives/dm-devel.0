@@ -1,16 +1,15 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 2/4] libmpathpersist: format_transportids():
- avoid PROUT overflow
-Date: Sun, 15 Mar 2020 01:14:12 +0100
-Message-ID: <dc0b5e29735f0a7f85f1360f9a0feedd35f3e077.camel@suse.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 4/4] libmpathpersist: ABI change: limit
+ data-in/out size to 8192 bytes
+Date: Sat, 14 Mar 2020 19:19:35 -0500
+Message-ID: <20200315001935.GU30153@octiron.msp.redhat.com>
 References: <20200306230605.3473-1-mwilck@suse.com>
-	<20200306230605.3473-3-mwilck@suse.com>
-	<20200314231539.GS30153@octiron.msp.redhat.com>
+	<20200306230605.3473-5-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200314231539.GS30153@octiron.msp.redhat.com>
+In-Reply-To: <20200306230605.3473-5-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,51 +19,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
+Content-Disposition: inline
+To: mwilck@suse.com
 Cc: dm-devel@redhat.com, David Bond <dbond@suse.com>
 List-Id: dm-devel.ids
 
-On Sat, 2020-03-14 at 18:15 -0500, Benjamin Marzinski wrote:
-> On Sat, Mar 07, 2020 at 12:06:03AM +0100, mwilck@suse.com wrote:
-> > From: Martin Wilck <mwilck@suse.com>
-> > 
-> > This limits the PERSISTENT RESERVE OUT data size to max. 8192
-> > bytes.
-> > 
-> > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > ---
-> >  libmpathpersist/mpath_pr_ioctl.c | 26 ++++++++++++++++++++++++--
-> >  1 file changed, 24 insertions(+), 2 deletions(-)
-> > 
-> > diff --git a/libmpathpersist/mpath_pr_ioctl.c
-> > b/libmpathpersist/mpath_pr_ioctl.c
-> > index 1a28cba7..8bf16c0d 100644
-> > --- a/libmpathpersist/mpath_pr_ioctl.c
-> > +++ b/libmpathpersist/mpath_pr_ioctl.c
-> > @@ -1,5 +1,6 @@
-> >  #include <stdio.h>
-> >  #include <stdlib.h>
-> > +#include <stddef.h>
-> >  
-> >  #include <sys/types.h>
-> >  #include <sys/stat.h>
-> > @@ -138,38 +139,59 @@ retry :
-> >  	return status;
-> >  }
-> >  
-> > +#define check_overflow(ofs, n, start, label)			
-> > 	\
-> > +	do {								
-> > \
-> > +		if ((ofs) + 4 + (n) +					
-> > \
+On Sat, Mar 07, 2020 at 12:06:05AM +0100, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
 > 
-> I don't get where the 4 comes from here, since buff_offset starts
-> at 4. Maybe I'm just missing something.
+> Make sure that data structures used for PERSISTENT RESERVE IN/OUT
+> fit into 8k buffers.
 > 
+> This patch breaks the libmpathpersist ABI.
+>
 
-No. It's wrong, buff_offset includes these 4 bytes inded. Thanks for
-spotting it. I'll resubmit the series.
+I'm not super worried about this.  I don't really see a way for users to
+hurt themselves because of this change, without making some pretty odd
+assumptions.  Am I missing something?
 
-Regards,
-Martin
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmpathpersist/mpath_persist.h | 15 +++++++++++----
+>  1 file changed, 11 insertions(+), 4 deletions(-)
+> 
+> diff --git a/libmpathpersist/mpath_persist.h b/libmpathpersist/mpath_persist.h
+> index 7cf4faf9..bdf4069d 100644
+> --- a/libmpathpersist/mpath_persist.h
+> +++ b/libmpathpersist/mpath_persist.h
+> @@ -92,7 +92,7 @@ struct prin_readdescr
+>  	uint32_t prgeneration;
+>  	uint32_t additional_length;	/* The value should be either 0 or divisible by 8.
+>  					   0 indicates no registered reservation key. */
+> -	uint8_t	 key_list[MPATH_MAX_PARAM_LEN];
+> +	uint8_t	 key_list[MPATH_MAX_PARAM_LEN - 2 * sizeof(uint32_t)];
+>  };
+>  
+>  struct prin_resvdescr
+> @@ -141,7 +141,9 @@ struct print_fulldescr_list
+>  {
+>  	uint32_t prgeneration;
+>  	uint32_t number_of_descriptor;
+> -	uint8_t private_buffer[MPATH_MAX_PARAM_LEN]; /*Private buffer for list storage*/
+> +	/* Data-in; Private buffer for list storage */
+> +	uint8_t private_buffer[MPATH_MAX_PARAM_LEN - 2 * sizeof(uint32_t)];
+> +	/* array of pointers into private_buffer */
+>  	struct prin_fulldescr *descriptors[];
+>  };
+>  
+> @@ -163,8 +165,13 @@ struct prout_param_descriptor {		/* PROUT parameter descriptor */
+>  	uint8_t	 sa_flags;
+>  	uint8_t _reserved;
+>  	uint16_t _obsolete1;
+> -	uint8_t  private_buffer[MPATH_MAX_PARAM_LEN]; /*private buffer for list storage*/
+> -	uint32_t num_transportid;	/* Number of Transport ID listed in trnptid_list[]*/
+> +	/*private buffer for list storage; data-out */
+> +	/* 24: offsetof (struct prout_param_descriptor, private_buffer) */
+> +	uint8_t  private_buffer[MPATH_MAX_PARAM_LEN - 24];
+> +	/* Internal use below here */
+> +	/* Number of Transport ID listed in trnptid_list[] */
+> +	uint32_t num_transportid;
+> +	/* pointers into private_buffer */
+>  	struct transportid *trnptid_list[];
+>  };
+>  
+> -- 
+> 2.25.1
