@@ -1,15 +1,16 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH 4/4] libmpathpersist: ABI change: limit
  data-in/out size to 8192 bytes
-Date: Sat, 14 Mar 2020 19:19:35 -0500
-Message-ID: <20200315001935.GU30153@octiron.msp.redhat.com>
+Date: Sun, 15 Mar 2020 01:27:49 +0100
+Message-ID: <78489690d69561da912f944ef072f18900e679f5.camel@suse.com>
 References: <20200306230605.3473-1-mwilck@suse.com>
 	<20200306230605.3473-5-mwilck@suse.com>
+	<20200315001935.GU30153@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200306230605.3473-5-mwilck@suse.com>
+In-Reply-To: <20200315001935.GU30153@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,69 +20,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: mwilck@suse.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@redhat.com, David Bond <dbond@suse.com>
 List-Id: dm-devel.ids
 
-On Sat, Mar 07, 2020 at 12:06:05AM +0100, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
+On Sat, 2020-03-14 at 19:19 -0500, Benjamin Marzinski wrote:
+> On Sat, Mar 07, 2020 at 12:06:05AM +0100, mwilck@suse.com wrote:
+> > From: Martin Wilck <mwilck@suse.com>
+> > 
+> > Make sure that data structures used for PERSISTENT RESERVE IN/OUT
+> > fit into 8k buffers.
+> > 
+> > This patch breaks the libmpathpersist ABI.
+> > 
 > 
-> Make sure that data structures used for PERSISTENT RESERVE IN/OUT
-> fit into 8k buffers.
-> 
-> This patch breaks the libmpathpersist ABI.
->
+> I'm not super worried about this.  I don't really see a way for users
+> to
+> hurt themselves because of this change, without making some pretty
+> odd
+> assumptions.  Am I missing something?
 
-I'm not super worried about this.  I don't really see a way for users to
-hurt themselves because of this change, without making some pretty odd
-assumptions.  Am I missing something?
+I found this:
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmpathpersist/mpath_persist.h | 15 +++++++++++----
->  1 file changed, 11 insertions(+), 4 deletions(-)
-> 
-> diff --git a/libmpathpersist/mpath_persist.h b/libmpathpersist/mpath_persist.h
-> index 7cf4faf9..bdf4069d 100644
-> --- a/libmpathpersist/mpath_persist.h
-> +++ b/libmpathpersist/mpath_persist.h
-> @@ -92,7 +92,7 @@ struct prin_readdescr
->  	uint32_t prgeneration;
->  	uint32_t additional_length;	/* The value should be either 0 or divisible by 8.
->  					   0 indicates no registered reservation key. */
-> -	uint8_t	 key_list[MPATH_MAX_PARAM_LEN];
-> +	uint8_t	 key_list[MPATH_MAX_PARAM_LEN - 2 * sizeof(uint32_t)];
->  };
->  
->  struct prin_resvdescr
-> @@ -141,7 +141,9 @@ struct print_fulldescr_list
->  {
->  	uint32_t prgeneration;
->  	uint32_t number_of_descriptor;
-> -	uint8_t private_buffer[MPATH_MAX_PARAM_LEN]; /*Private buffer for list storage*/
-> +	/* Data-in; Private buffer for list storage */
-> +	uint8_t private_buffer[MPATH_MAX_PARAM_LEN - 2 * sizeof(uint32_t)];
-> +	/* array of pointers into private_buffer */
->  	struct prin_fulldescr *descriptors[];
->  };
->  
-> @@ -163,8 +165,13 @@ struct prout_param_descriptor {		/* PROUT parameter descriptor */
->  	uint8_t	 sa_flags;
->  	uint8_t _reserved;
->  	uint16_t _obsolete1;
-> -	uint8_t  private_buffer[MPATH_MAX_PARAM_LEN]; /*private buffer for list storage*/
-> -	uint32_t num_transportid;	/* Number of Transport ID listed in trnptid_list[]*/
-> +	/*private buffer for list storage; data-out */
-> +	/* 24: offsetof (struct prout_param_descriptor, private_buffer) */
-> +	uint8_t  private_buffer[MPATH_MAX_PARAM_LEN - 24];
-> +	/* Internal use below here */
-> +	/* Number of Transport ID listed in trnptid_list[] */
-> +	uint32_t num_transportid;
-> +	/* pointers into private_buffer */
->  	struct transportid *trnptid_list[];
->  };
->  
-> -- 
-> 2.25.1
+struct prout_param_descriptor {	
+	uint8_t	 key[8];
+	uint8_t	 sa_key[8];
+[...]
+	uint8_t  private_buffer[MPATH_MAX_PARAM_LEN - 24];
+	uint32_t num_transportid;
+	struct transportid *trnptid_list[];
+};
+
+A program written against the old API might assume that the length of
+private_buffer was MPATH_MAX_PARAM_LEN, and call e.g.
+memset(private_buffer, 0, MPATH_MAX_PARAM_LEN), overwriting
+num_transportid.
+
+The same could happen if a program compiled against the new API was
+linked against the old. In that case, the overwrite would happen in 
+format_transportids().
+
+Martin
