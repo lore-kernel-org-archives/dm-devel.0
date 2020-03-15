@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 1/4] libmpathpersist: limit PRIN allocation
-	length to 8192 bytes
-Date: Sun, 15 Mar 2020 22:05:18 +0100
-Message-ID: <20200315210521.12109-2-mwilck@suse.com>
+Subject: [PATCH v2 3/4] libmpathpersist:
+	mpath_format_readfullstatus(): use real buffer size
+Date: Sun, 15 Mar 2020 22:05:20 +0100
+Message-ID: <20200315210521.12109-4-mwilck@suse.com>
 References: <20200315210521.12109-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,32 +24,50 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Some targets (notably the qemu-pr-helper) don't support PERSISTENT
-RESERVE IN  commands with more than 8192 bytes allocation length.
-While I have found no explicit requirement in the SCSI specs that
-the allocation lengh may not exceed 8k, an 8k limit is also enforced
-by sg_persist(8), and actually by mpathpersist itself for the
---allocation-length option, but not for the auto-determined length.
-
-Fix that.
+This changes no semantics, but it will allow changing the size of
+prin_readfd.private_buffer in a follow-up patch.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmpathpersist/mpath_pr_ioctl.c | 2 ++
- 1 file changed, 2 insertions(+)
+ libmpathpersist/mpath_pr_ioctl.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
 diff --git a/libmpathpersist/mpath_pr_ioctl.c b/libmpathpersist/mpath_pr_ioctl.c
-index 74b26b0c..1a28cba7 100644
+index c78e8000..fadc9e10 100644
 --- a/libmpathpersist/mpath_pr_ioctl.c
 +++ b/libmpathpersist/mpath_pr_ioctl.c
-@@ -543,5 +543,7 @@ int get_prin_length(int rq_servact)
- 			mx_resp_len = 0;
- 			break;
+@@ -238,6 +238,8 @@ static void mpath_format_readfullstatus(struct prin_resp *pr_buff)
+ 	uint32_t additional_length, k, tid_len_len = 0;
+ 	char tempbuff[MPATH_MAX_PARAM_LEN];
+ 	struct prin_fulldescr fdesc;
++	static const int pbuf_size =
++		sizeof(pr_buff->prin_descriptor.prin_readfd.private_buffer);
+ 
+ 	convert_be32_to_cpu(&pr_buff->prin_descriptor.prin_readfd.prgeneration);
+ 	convert_be32_to_cpu(&pr_buff->prin_descriptor.prin_readfd.number_of_descriptor);
+@@ -249,16 +251,18 @@ static void mpath_format_readfullstatus(struct prin_resp *pr_buff)
  	}
-+	if (mx_resp_len > MPATH_MAX_PARAM_LEN)
-+		mx_resp_len = MPATH_MAX_PARAM_LEN;
- 	return mx_resp_len;
- }
+ 
+ 	additional_length = pr_buff->prin_descriptor.prin_readfd.number_of_descriptor;
+-	if (additional_length > MPATH_MAX_PARAM_LEN) {
++	if (additional_length > pbuf_size) {
+ 		condlog(3, "PRIN length %u exceeds max length %d", additional_length,
+-			MPATH_MAX_PARAM_LEN);
++			pbuf_size);
+ 		return;
+ 	}
+ 
+ 	memset(&fdesc, 0, sizeof(struct prin_fulldescr));
+ 
+-	memcpy( tempbuff, pr_buff->prin_descriptor.prin_readfd.private_buffer,MPATH_MAX_PARAM_LEN );
+-	memset(&pr_buff->prin_descriptor.prin_readfd.private_buffer, 0, MPATH_MAX_PARAM_LEN);
++	memcpy( tempbuff, pr_buff->prin_descriptor.prin_readfd.private_buffer,
++		pbuf_size);
++	memset(&pr_buff->prin_descriptor.prin_readfd.private_buffer, 0,
++	       pbuf_size);
+ 
+ 	p =(unsigned char *)tempbuff;
+ 	ppbuff = (char *)pr_buff->prin_descriptor.prin_readfd.private_buffer;
 -- 
 2.25.1
