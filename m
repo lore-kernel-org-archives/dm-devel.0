@@ -1,13 +1,13 @@
 From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 5.4 23/35] dm integrity: use dm_bio_record and dm_bio_restore
-Date: Sun, 15 Mar 2020 22:33:59 -0400
-Message-ID: <20200316023411.1263-23-sashal@kernel.org>
-References: <20200316023411.1263-1-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 5.5 27/41] dm integrity: use dm_bio_record and dm_bio_restore
+Date: Sun, 15 Mar 2020 22:33:05 -0400
+Message-ID: <20200316023319.749-27-sashal@kernel.org>
+References: <20200316023319.749-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200316023411.1263-1-sashal@kernel.org>
+In-Reply-To: <20200316023319.749-1-sashal@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
 Cc: Mike Snitzer <snitzer@redhat.com>, =?UTF-8?q?Daniel=20Gl=C3=B6ckner?= <dg@emlix.com>, Mikulas Patocka <mpatocka@redhat.com>, Sasha Levin <sashal@kernel.org>, dm-devel@redhat.com
@@ -35,7 +35,7 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 9 insertions(+), 23 deletions(-)
 
 diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 57ac603f37410..145bc2e7eaf01 100644
+index e1ad0b53f681a..a82a9c2577443 100644
 --- a/drivers/md/dm-integrity.c
 +++ b/drivers/md/dm-integrity.c
 @@ -6,6 +6,8 @@
@@ -47,7 +47,7 @@ index 57ac603f37410..145bc2e7eaf01 100644
  #include <linux/compiler.h>
  #include <linux/module.h>
  #include <linux/device-mapper.h>
-@@ -292,11 +294,7 @@ struct dm_integrity_io {
+@@ -295,11 +297,7 @@ struct dm_integrity_io {
  
  	struct completion *completion;
  
@@ -60,7 +60,7 @@ index 57ac603f37410..145bc2e7eaf01 100644
  };
  
  struct journal_completion {
-@@ -1447,14 +1445,9 @@ static void integrity_end_io(struct bio *bio)
+@@ -1452,14 +1450,9 @@ static void integrity_end_io(struct bio *bio)
  {
  	struct dm_integrity_io *dio = dm_per_bio_data(bio, sizeof(struct dm_integrity_io));
  
@@ -77,7 +77,7 @@ index 57ac603f37410..145bc2e7eaf01 100644
  
  	if (dio->completion)
  		complete(dio->completion);
-@@ -1539,7 +1532,7 @@ static void integrity_metadata(struct work_struct *w)
+@@ -1544,7 +1537,7 @@ static void integrity_metadata(struct work_struct *w)
  			}
  		}
  
@@ -86,7 +86,7 @@ index 57ac603f37410..145bc2e7eaf01 100644
  			unsigned pos;
  			char *mem, *checksums_ptr;
  
-@@ -1583,7 +1576,7 @@ static void integrity_metadata(struct work_struct *w)
+@@ -1588,7 +1581,7 @@ static void integrity_metadata(struct work_struct *w)
  		if (likely(checksums != checksums_onstack))
  			kfree(checksums);
  	} else {
@@ -95,7 +95,7 @@ index 57ac603f37410..145bc2e7eaf01 100644
  
  		if (bip) {
  			struct bio_vec biv;
-@@ -2002,20 +1995,13 @@ static void dm_integrity_map_continue(struct dm_integrity_io *dio, bool from_map
+@@ -2007,20 +2000,13 @@ static void dm_integrity_map_continue(struct dm_integrity_io *dio, bool from_map
  	} else
  		dio->completion = NULL;
  
