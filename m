@@ -1,53 +1,72 @@
-From: mwilck@suse.com
-Subject: [PATCH v2 0/4] [PATCH 0/4] libmpathpersist allocation
-	size fixes
-Date: Sun, 15 Mar 2020 22:05:17 +0100
-Message-ID: <20200315210521.12109-1-mwilck@suse.com>
+From: Sasha Levin <sashal@kernel.org>
+Subject: [PATCH AUTOSEL 5.5 26/41] dm bio record: save/restore bi_end_io and bi_integrity
+Date: Sun, 15 Mar 2020 22:33:04 -0400
+Message-ID: <20200316023319.749-26-sashal@kernel.org>
+References: <20200316023319.749-1-sashal@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200316023319.749-1-sashal@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Cc: Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Sasha Levin <sashal@kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Martin Wilck <mwilck@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
 
-Hi Christophe,
+[ Upstream commit 1b17159e52bb31f982f82a6278acd7fab1d3f67b ]
 
-We recently found a problem with mpathpersist using an allocation length
-of > 8192 bytes for PERSISTENT RESERVE IN/OUT commands. This patch set
-tries to fix it. The last patch would change the ABI for external programs,
-it's optional.
+Also, save/restore __bi_remaining in case the bio was used in a
+BIO_CHAIN (e.g. due to blk_queue_split).
 
-(Christophe, to avoid misunderstanding:	This set is not meant to be included
-in the upcoming merge).
+Suggested-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
+---
+ drivers/md/dm-bio-record.h | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
 
-Reviews and comments welcome.
-
-Changes in v2:
- - 02/04: fix overflow calculation (Ben)
- - 04/04: improve commit description wrt ABI breakage
-
-Martin Wilck (4):
-  libmpathpersist: limit PRIN allocation length to 8192 bytes
-  libmpathpersist: format_transportids(): avoid PROUT overflow
-  libmpathpersist: mpath_format_readfullstatus(): use real buffer size
-  libmpathpersist: ABI change: limit data-in/out size to 8192 bytes
-
- libmpathpersist/mpath_persist.h  | 15 ++++++++---
- libmpathpersist/mpath_pr_ioctl.c | 45 +++++++++++++++++++++++++++-----
- 2 files changed, 50 insertions(+), 10 deletions(-)
-
---
-
-2.25.1
+diff --git a/drivers/md/dm-bio-record.h b/drivers/md/dm-bio-record.h
+index c82578af56a5b..2ea0360108e1d 100644
+--- a/drivers/md/dm-bio-record.h
++++ b/drivers/md/dm-bio-record.h
+@@ -20,8 +20,13 @@
+ struct dm_bio_details {
+ 	struct gendisk *bi_disk;
+ 	u8 bi_partno;
++	int __bi_remaining;
+ 	unsigned long bi_flags;
+ 	struct bvec_iter bi_iter;
++	bio_end_io_t *bi_end_io;
++#if defined(CONFIG_BLK_DEV_INTEGRITY)
++	struct bio_integrity_payload *bi_integrity;
++#endif
+ };
+ 
+ static inline void dm_bio_record(struct dm_bio_details *bd, struct bio *bio)
+@@ -30,6 +35,11 @@ static inline void dm_bio_record(struct dm_bio_details *bd, struct bio *bio)
+ 	bd->bi_partno = bio->bi_partno;
+ 	bd->bi_flags = bio->bi_flags;
+ 	bd->bi_iter = bio->bi_iter;
++	bd->__bi_remaining = atomic_read(&bio->__bi_remaining);
++	bd->bi_end_io = bio->bi_end_io;
++#if defined(CONFIG_BLK_DEV_INTEGRITY)
++	bd->bi_integrity = bio_integrity(bio);
++#endif
+ }
+ 
+ static inline void dm_bio_restore(struct dm_bio_details *bd, struct bio *bio)
+@@ -38,6 +48,11 @@ static inline void dm_bio_restore(struct dm_bio_details *bd, struct bio *bio)
+ 	bio->bi_partno = bd->bi_partno;
+ 	bio->bi_flags = bd->bi_flags;
+ 	bio->bi_iter = bd->bi_iter;
++	atomic_set(&bio->__bi_remaining, bd->__bi_remaining);
++	bio->bi_end_io = bd->bi_end_io;
++#if defined(CONFIG_BLK_DEV_INTEGRITY)
++	bio->bi_integrity = bd->bi_integrity;
++#endif
+ }
+ 
+ #endif
+-- 
+2.20.1
