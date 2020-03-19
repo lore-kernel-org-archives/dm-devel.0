@@ -1,114 +1,30 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm verity fec: Fix memory leak in verity_fec_ctr
-Date: Wed, 18 Mar 2020 12:41:57 -0400
-Message-ID: <20200318164157.GA29568@redhat.com>
-References: <20200317091212.GA18241@harshini.x.shetty@sony.com>
-	<a96e4bee-598f-a565-e9c6-10883d723c9d@redhat.com>
-	<20200318163419.GA29449@redhat.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH v7 0/6] block: Introduce REQ_ALLOCATE flag for
+ REQ_OP_WRITE_ZEROES
+Date: Thu, 19 Mar 2020 03:28:19 -0700
+Message-ID: <20200319102819.GA26418@infradead.org>
+References: <158157930219.111879.12072477040351921368.stgit@localhost.localdomain>
+ <e2b7cbab-d91f-fd7b-de6f-a671caa6f5eb@virtuozzo.com>
+ <69c0b8a4-656f-98c4-eb55-2fd1184f5fc9@virtuozzo.com>
+ <67d63190-c16f-cd26-6b67-641c8943dc3d@virtuozzo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200318163419.GA29449@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-To: Heinz Mauelshagen <heinzm@redhat.com>
-Cc: "Takeuchi, Shingo (SOMC)" <Shingo.Takeuchi@sony.com>, "Nagaraju,
-	Srinavasa (SOMC)" <Srinavasa.Nagaraju@sony.com>, "Khasnis,
-	Soumya X (EXT-Sony Mobile)" <Soumya.Khasnis@sony.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "Shetty,
-	Harshini X (EXT-Sony Mobile)" <Harshini.X.Shetty@sony.com>, "Takahashi, Masaya (SOMC)" <Masaya.Takahashi@sony.com>, "agk@redhat.com" <agk@redhat.com>
+In-Reply-To: <67d63190-c16f-cd26-6b67-641c8943dc3d@virtuozzo.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kirill Tkhai <ktkhai@virtuozzo.com>
+Cc: axboe@kernel.dk, martin.petersen@oracle.com, bob.liu@oracle.com, darrick.wong@oracle.com, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, song@kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, Chaitanya.Kulkarni@wdc.com, ming.lei@redhat.com, osandov@fb.com, jthumshirn@suse.de, minwoo.im.dev@gmail.com, damien.lemoal@wdc.com, andrea.parri@amarulasolutions.com, hare@suse.com, tj@kernel.org, ajay.joshi@wdc.com, sagi@grimberg.me, dsterba@suse.com, bvanassche@acm.org, dhowells@redhat.com, asml.silence@gmail.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, Mar 18 2020 at 12:34pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Fri, Mar 13, 2020 at 04:08:58PM +0300, Kirill Tkhai wrote:
+> I just don't understand the reason nothing happens :(
+> I see newly-sent patches comes fast into block tree.
+> But there is only silence... I grepped over Documentation,
+> and there is no special rules about block tree. So,
+> it looks like standard rules should be applyable.
+> 
+> Some comments? Some requests for reworking? Some personal reasons to ignore my patches?
 
-> On Wed, Mar 18 2020 at 11:44am -0400,
-> Heinz Mauelshagen <heinzm@redhat.com> wrote:
-> 
-> > Once we are on this, we should put conditionals on those
-> > mempool_exit and kmem_cache_destroy
-> > calls in the fec dtr, because the target calls that destructor at
-> > any time on its error path thus part
-> > of the pools or even the cache won't be defined.
-> 
-> Please don't top-post.
-> kmem_cache_destroy() has a negative check for NULL, so no worries there.
-> 
-> > On 3/17/20 10:15 AM, Shetty, Harshini X (EXT-Sony Mobile) wrote:
-> > >Fix below kmemleak detected in verity_fec_ctr.
-> > >output_pool is allocated for each dm-target device.
-> > >But it is not freed when dm-table for the target
-> > >is removed.Hence Free the output buffer in destructor
-> > >function verity_fec_dtr
-> > >
-> > >unreferenced object 0xffffffffa574d000 (size 4096):
-> > >   comm "init", pid 1667, jiffies 4294894890 (age 307.168s)
-> > >   hex dump (first 32 bytes):
-> > >     8e 36 00 98 66 a8 0b 9b 00 00 00 00 00 00 00 00  .6..f...........
-> > >     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-> > >   backtrace:
-> > >     [<0000000060e82407>] __kmalloc+0x2b4/0x340
-> > >     [<00000000dd99488f>] mempool_kmalloc+0x18/0x20
-> > >     [<000000002560172b>] mempool_init_node+0x98/0x118
-> > >     [<000000006c3574d2>] mempool_init+0x14/0x20
-> > >     [<0000000008cb266e>] verity_fec_ctr+0x388/0x3b0
-> > >     [<000000000887261b>] verity_ctr+0x87c/0x8d0
-> > >     [<000000002b1e1c62>] dm_table_add_target+0x174/0x348
-> > >     [<000000002ad89eda>] table_load+0xe4/0x328
-> > >     [<000000001f06f5e9>] dm_ctl_ioctl+0x3b4/0x5a0
-> > >     [<00000000bee5fbb7>] do_vfs_ioctl+0x5dc/0x928
-> > >     [<00000000b475b8f5>] __arm64_sys_ioctl+0x70/0x98
-> > >     [<000000005361e2e8>] el0_svc_common+0xa0/0x158
-> > >     [<000000001374818f>] el0_svc_handler+0x6c/0x88
-> > >     [<000000003364e9f4>] el0_svc+0x8/0xc
-> > >     [<000000009d84cec9>] 0xffffffffffffffff
-> > >
-> > >Signed-off-by: Harshini Shetty <harshini.x.shetty@sony.com>
-> > >---
-> > >  drivers/md/dm-verity-fec.c | 1 +
-> > >  1 file changed, 1 insertion(+)
-> > >
-> > >diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
-> > >index 3ceeb6b..49147e6 100644
-> > >--- a/drivers/md/dm-verity-fec.c
-> > >+++ b/drivers/md/dm-verity-fec.c
-> > >@@ -551,6 +551,7 @@ void verity_fec_dtr(struct dm_verity *v)
-> > >  	mempool_exit(&f->rs_pool);
-> > >  	mempool_exit(&f->prealloc_pool);
-> > >  	mempool_exit(&f->extra_pool);
-> > >+	mempool_exit(&f->output_pool);
-> > >  	kmem_cache_destroy(f->cache);
-> > >  	if (f->data_bufio)
-> > 
-> 
-> For the benefit of others who might be reviewing:
-> 
-> Seems mempool_destroy() isn't being used because the mempools are members
-> of struct dm_verity_fec -- so those mempools will never be NULL.
-
-Famous last words.. verity_fec_ctr_alloc() uses kzalloc() to allocated
-v->fec so those mempools can easily be NULL if verity_fec_ctr() fails
-early.
-
-> Order of allocation is:
-> verity_ctr() calls verity_fec_ctr_alloc() to allocate v->fec
-> verity_parse_opt_arg() calls verity_fec_parse_opt_args() to allocate v->fec->dev
-> (from that point on verity_fec_is_enabled returnss true)
-> verity_ctr() calls verity_fec_ctr() which inits all mempools, etc.
-> 
-> destruction is:
-> verity_dtr() unconditionally calls verity_fec_dtr()
-> verity_fec_dtr() verifies v->fec->dev exists with verity_fec_is_enabled()
-
-So it really does seems like extra negative checks (for NULL) are needed
-before calling mempool_exit().
-
-Mike
+I'm still completely opposed to the magic overloading using a flag.
+That is just a bad design waiting for trouble to happen.
