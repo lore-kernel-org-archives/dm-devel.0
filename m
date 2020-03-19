@@ -1,63 +1,66 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [PATCH v7 0/6] block: Introduce REQ_ALLOCATE flag for REQ_OP_WRITE_ZEROES
-Date: Thu, 19 Mar 2020 09:03:40 -0400
-Message-ID: <yq1tv2k8pjn.fsf@oracle.com>
-References: <158157930219.111879.12072477040351921368.stgit@localhost.localdomain>
-        <e2b7cbab-d91f-fd7b-de6f-a671caa6f5eb@virtuozzo.com>
-        <69c0b8a4-656f-98c4-eb55-2fd1184f5fc9@virtuozzo.com>
-        <67d63190-c16f-cd26-6b67-641c8943dc3d@virtuozzo.com>
-        <20200319102819.GA26418@infradead.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-integrity: fix a crash with unusually large
+Date: Thu, 19 Mar 2020 10:39:58 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2003191035170.1262@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200319102819.GA26418@infradead.org> (Christoph Hellwig's
-        message of "Thu, 19 Mar 2020 03:28:19 -0700")
-Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Kirill Tkhai <ktkhai@virtuozzo.com>, axboe@kernel.dk, martin.petersen@oracle.com, bob.liu@oracle.com, darrick.wong@oracle.com, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, song@kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, Chaitanya.Kulkarni@wdc.com, ming.lei@redhat.com, osandov@fb.com, jthumshirn@suse.de, minwoo.im.dev@gmail.com, damien.lemoal@wdc.com, andrea.parri@amarulasolutions.com, hare@suse.com, tj@kernel.org, ajay.joshi@wdc.com, sagi@grimberg.me, dsterba@suse.com, bvanassche@acm.org, dhowells@redhat.com, asml.silence@gmail.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>, David Teigland <teigland@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hi
 
-Christoph,
+I've found a bug in dm-integrity - if the user specified tag size greater 
+than HASH_MAX_DIGESTSIZE (and lower or equal than MAX_TAG_SIZE), it 
+crashes if the kmalloc call in integrity_metadata fails.
 
->> Some comments? Some requests for reworking? Some personal reasons to
->> ignore my patches?
->
-> I'm still completely opposed to the magic overloading using a flag.
-> That is just a bad design waiting for trouble to happen.
+I'm still not sure how to fix it: we can extend the size of the array 
+checksums_onstack (but the extended array takes 424 bytes - which may be 
+too large).
 
-The observation was that Kirill's original patch set was a line-for-line
-carbon copy of the write zeroes handling throughout the stack. The only
-difference between the two was at the bottom. Instead of duplicating all
-that code it seemed cleaner to use shared plumbing since these
-operations need to be split and merged exactly the same way in the block
-layer.
+Or, we can restrict ic->tag_size to HASH_MAX_DIGESTSIZE, but it may break 
+some existing volumes where the user is using larger tag_size.
 
-Also, we already have REQ_NOUNMAP, not sure why an additional handling
-flag would lead to trouble? Note that I suggested renaming
-REQ_OP_WRITE_ZEROES to something else to separate the semantics from the
-plumbing.
+What do you think would be better?
 
-We need to be able to express:
+Mikulas
 
- - zero & allocate block range (REQ_OP_WRITE_ZEROES, REQ_NOUNMAP)
- - zero & deallocate block range (REQ_OP_WRITE_ZEROES, !REQ_NOUNMAP)
- - allocate block range (?, don't care about zeroing)
- - deallocate block range (REQ_OP_DISCARD, don't care about zeroing)
 
-It just seems like a full-fledged REQ_OP_ALLOCATE is an overkill to fill
-that gap.
 
-That said, I do think that we have traditionally put emphasis on the
-wrong part of these operations. All we ever talk about wrt. discard and
-friends is the zeroing aspect. But I actually think that, semantically,
-the act of allocating and deallocating blocks is more important. And
-that zeroing is an optional second order effect of those operations. So
-if we could go back in time and nuke multi-range DSM TRIM/UNMAP, I would
-like to have REQ_OP_ALLOCATE/REQ_OP_DEALLOCATE with an optional REQ_ZERO
-flag. I think that would be cleaner. I have a much easier time wrapping
-my head around "allocate this block and zero it if you can" than "zero
-this block and do not deallocate it". But maybe that's just me.
 
--- 
-Martin K. Petersen	Oracle Linux Engineering
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+
+If the user specifies tag size larger than HASH_MAX_DIGESTSIZE, there's a
+crash in integrity_metadata.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-integrity.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2020-03-19 15:28:14.000000000 +0100
++++ linux-2.6/drivers/md/dm-integrity.c	2020-03-19 15:30:08.000000000 +0100
+@@ -1519,7 +1519,7 @@ static void integrity_metadata(struct wo
+ 		struct bio *bio = dm_bio_from_per_bio_data(dio, sizeof(struct dm_integrity_io));
+ 		char *checksums;
+ 		unsigned extra_space = unlikely(digest_size > ic->tag_size) ? digest_size - ic->tag_size : 0;
+-		char checksums_onstack[HASH_MAX_DIGESTSIZE];
++		char checksums_onstack[max(HASH_MAX_DIGESTSIZE, MAX_TAG_SIZE)];
+ 		unsigned sectors_to_process = dio->range.n_sectors;
+ 		sector_t sector = dio->range.logical_sector;
+ 
