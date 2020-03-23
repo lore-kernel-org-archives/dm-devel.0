@@ -1,13 +1,11 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 0/7] dm-integrity patches
-Date: Mon, 23 Mar 2020 10:28:17 -0400
-Message-ID: <20200323142817.GA27360@redhat.com>
-References: <20200322194220.074515600@debian-a64.vm>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH RFC 0/2] dm-zoned: add cache device
+Date: Mon, 23 Mar 2020 16:03:50 +0100
+Message-ID: <20200323150352.107826-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200322194220.074515600@debian-a64.vm>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,20 +15,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, David Teigland <teigland@redhat.com>
+To: Damien LeMoal <damien.lemoal@wdc.com>
+Cc: dm-devel@redhat.com, Johannes Thumshirn <jth@kernel.org>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Sun, Mar 22 2020 at  3:42pm -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+Hi Damien,
 
-> Hi
-> 
-> Here I'm sending dm-integrity patches for the upcoming merge window.
-> They supersede dm-integrity patches that I sent before.
+as my original plan to upgrade bcache to work for SMR devices
+turned out to be more complex than anticipated I went for the
+simpler approach and added a 'cache' device for dm-zoned.
+It is using a normal device (eg '/dev/pmem0' :-), split it
+into zones of the same size of the original SMR device, and
+makes those 'virtual' zones avialable to dm-zoned in a similar
+manner than the existing 'random write' zoned.
 
-So the dm-bufio discard support isn't needed with your latest
-dm-integrity patches right?
+The implementation is still a bit rough (one would need to add
+metadata to the cache device, too), but so far it seems to work
+quite well; still running after copying 300GB of data back and forth.
 
-https://patchwork.kernel.org/patch/11371287/
+As usual, comments and reviews are welcome.
+
+Hannes Reinecke (2):
+  dm-zoned: cache device for zones
+  dm-zoned: add 'status' and 'message' callbacks
+
+ drivers/md/dm-zoned-metadata.c | 189 +++++++++++++++++++++++++++++----
+ drivers/md/dm-zoned-reclaim.c  |  76 ++++++++++---
+ drivers/md/dm-zoned-target.c   | 159 ++++++++++++++++++++++++---
+ drivers/md/dm-zoned.h          |  34 +++++-
+ 4 files changed, 407 insertions(+), 51 deletions(-)
+
+-- 
+2.25.0
