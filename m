@@ -1,13 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: [PATCH RFC 0/2] dm-zoned: add cache device
-Date: Mon, 23 Mar 2020 11:15:38 -0400
-Message-ID: <20200323151538.GA27573@redhat.com>
+Date: Mon, 23 Mar 2020 16:26:32 +0100
+Message-ID: <69ce4dd2-81d3-0ac6-933b-a1f781836597@suse.de>
 References: <20200323150352.107826-1-hare@suse.de>
+	<20200323151538.GA27573@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200323150352.107826-1-hare@suse.de>
+In-Reply-To: <20200323151538.GA27573@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,31 +19,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Hannes Reinecke <hare@suse.de>
+To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien LeMoal <damien.lemoal@wdc.com>, Johannes Thumshirn <jth@kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 23 2020 at 11:03am -0400,
-Hannes Reinecke <hare@suse.de> wrote:
-
-> Hi Damien,
-> 
-> as my original plan to upgrade bcache to work for SMR devices
-> turned out to be more complex than anticipated I went for the
-> simpler approach and added a 'cache' device for dm-zoned.
-> It is using a normal device (eg '/dev/pmem0' :-), split it
-> into zones of the same size of the original SMR device, and
-> makes those 'virtual' zones avialable to dm-zoned in a similar
-> manner than the existing 'random write' zoned.
-> 
-> The implementation is still a bit rough (one would need to add
-> metadata to the cache device, too), but so far it seems to work
-> quite well; still running after copying 300GB of data back and forth.
-> 
-> As usual, comments and reviews are welcome.
-
-Not seeing why this needs to be so specialized (natively implemented in
-dm-zoned).  Did you try stacking dm-writecache on dm-zoned?
-
-Mike
+T24gMy8yMy8yMCA0OjE1IFBNLCBNaWtlIFNuaXR6ZXIgd3JvdGU6Cj4gT24gTW9uLCBNYXIgMjMg
+MjAyMCBhdCAxMTowM2FtIC0wNDAwLAo+IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNlLmRlPiB3
+cm90ZToKPiAKPj4gSGkgRGFtaWVuLAo+Pgo+PiBhcyBteSBvcmlnaW5hbCBwbGFuIHRvIHVwZ3Jh
+ZGUgYmNhY2hlIHRvIHdvcmsgZm9yIFNNUiBkZXZpY2VzCj4+IHR1cm5lZCBvdXQgdG8gYmUgbW9y
+ZSBjb21wbGV4IHRoYW4gYW50aWNpcGF0ZWQgSSB3ZW50IGZvciB0aGUKPj4gc2ltcGxlciBhcHBy
+b2FjaCBhbmQgYWRkZWQgYSAnY2FjaGUnIGRldmljZSBmb3IgZG0tem9uZWQuCj4+IEl0IGlzIHVz
+aW5nIGEgbm9ybWFsIGRldmljZSAoZWcgJy9kZXYvcG1lbTAnIDotKSwgc3BsaXQgaXQKPj4gaW50
+byB6b25lcyBvZiB0aGUgc2FtZSBzaXplIG9mIHRoZSBvcmlnaW5hbCBTTVIgZGV2aWNlLCBhbmQK
+Pj4gbWFrZXMgdGhvc2UgJ3ZpcnR1YWwnIHpvbmVzIGF2aWFsYWJsZSB0byBkbS16b25lZCBpbiBh
+IHNpbWlsYXIKPj4gbWFubmVyIHRoYW4gdGhlIGV4aXN0aW5nICdyYW5kb20gd3JpdGUnIHpvbmVk
+Lgo+Pgo+PiBUaGUgaW1wbGVtZW50YXRpb24gaXMgc3RpbGwgYSBiaXQgcm91Z2ggKG9uZSB3b3Vs
+ZCBuZWVkIHRvIGFkZAo+PiBtZXRhZGF0YSB0byB0aGUgY2FjaGUgZGV2aWNlLCB0b28pLCBidXQg
+c28gZmFyIGl0IHNlZW1zIHRvIHdvcmsKPj4gcXVpdGUgd2VsbDsgc3RpbGwgcnVubmluZyBhZnRl
+ciBjb3B5aW5nIDMwMEdCIG9mIGRhdGEgYmFjayBhbmQgZm9ydGguCj4+Cj4+IEFzIHVzdWFsLCBj
+b21tZW50cyBhbmQgcmV2aWV3cyBhcmUgd2VsY29tZS4KPiAKPiBOb3Qgc2VlaW5nIHdoeSB0aGlz
+IG5lZWRzIHRvIGJlIHNvIHNwZWNpYWxpemVkIChuYXRpdmVseSBpbXBsZW1lbnRlZCBpbgo+IGRt
+LXpvbmVkKS4gIERpZCB5b3UgdHJ5IHN0YWNraW5nIGRtLXdyaXRlY2FjaGUgb24gZG0tem9uZWQ/
+Cj4gCmRtLXpvbmVkIGlzIHVzaW5nIHRoZSByYW5kb20td3JpdGUgem9uZXMgaW50ZXJuYWxseSB0
+byBzdGFnZSB3cml0ZXMgdG8gCnRoZSBzZXF1ZW50aWFsIHpvbmVzLCBzbyBpbiBlZmZlY3QgaXQg
+YWxyZWFkeSBoYXMgYW4gaW50ZXJuYWwgY2FjaGluZy4KQWxsIHRoaXMgcGF0Y2ggZG9lcyBpcyB0
+byB1c2UgYSBkaWZmZXJlbnQgZGV2aWNlIGZvciB0aGUgYWxyZWFkeSBwcmVzZW50Cm1lY2hhbmlz
+bS4KVXNpbmcgZG0td3JpdGVjYWNoZSB3b3VsZCBiZSBpZ25vcmFudCBvZiB0aGF0IG1lY2hhbmlz
+bSwgbGVhZGluZyB0byAKZG91YmxlIGNhY2hpbmcgYW5kIGRldHJpbWVudGFsIHJlc3VsdHMuCgpD
+aGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UgICAgICAgICAgICBUZWFtbGVh
+ZCBTdG9yYWdlICYgTmV0d29ya2luZwpoYXJlQHN1c2UuZGUgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBTb2Z0d2FyZSBTb2x1dGlvbnMgR21iSCwg
+TWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkhSQiAzNjgwOSAoQUcgTsO8cm5iZXJnKSwg
+R2VzY2jDpGZ0c2bDvGhyZXI6IEZlbGl4IEltZW5kw7ZyZmZlcgoKCi0tCmRtLWRldmVsIG1haWxp
+bmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1h
+bi9saXN0aW5mby9kbS1kZXZlbA==
