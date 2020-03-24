@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 2/3] libmutipath: don't close fd on dm_lib_release
-Date: Tue, 24 Mar 2020 16:03:53 -0500
-Message-ID: <1585083834-14237-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 3/3] libmultipath: allow force reload with no
+	active paths
+Date: Tue, 24 Mar 2020 16:03:54 -0500
+Message-ID: <1585083834-14237-3-git-send-email-bmarzins@redhat.com>
 References: <1585083834-14237-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,30 +22,60 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-If dm_hold_control_open() isn't set, when dm_lib_release() is called, it
-will close the control fd. The control fd will get re-opened on the next
-dm_task_run() call, but if there is a dm_task_run() call already
-in progress in another thread, it can fail. Since many of the
-device-mapper callouts happen with the vecs lock held, this wasn't too
-noticeable, but there is code that calls dm_task_run() without the
-vecs lock held, notably the dmevent waiter code.
+If the partition information has changed on multipath devices (say,
+because it was updated on another node that has access to the same
+storage), users expect that running "multipathd reconfigure" will update
+that.  However, if the checkers for the multipath device are pending for
+too long when the the device is reconfigured, multipathd will give up
+waiting for them, and refuse to reload the device, since there are no
+active paths. This means that no kpartx update will be triggered.
+
+Multipath is fully capable of reloading a multipath device that has no
+active paths. This has been possible for years. If multipath is supposed
+to reload the device, it should do so, even if there are no active paths.
+
+Generally, when multipath is force reloaded, kpartx will be updated.
+However when a device is reloaded with no paths, the udev rules won't
+run kpartx.  But they also weren't running kpartx when the first valid
+path appeared, even though the dm activation rules get run in this case.
+This changes 11-dm-mpath.rules to run kpartx when a device goes from no
+usable paths to having usable paths.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/devmapper.c | 1 +
- 1 file changed, 1 insertion(+)
+ libmultipath/configure.c    | 6 ------
+ multipath/11-dm-mpath.rules | 2 +-
+ 2 files changed, 1 insertion(+), 7 deletions(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index bed8ddc6..d96472fe 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -254,6 +254,7 @@ void libmp_dm_init(void)
- 	memcpy(conf->version, version, sizeof(version));
- 	put_multipath_config(conf);
- 	dm_init(verbosity);
-+	dm_hold_control_dev(1);
- 	dm_udev_set_sync_support(libmp_dm_udev_sync);
- }
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index c95848a0..96c79610 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -710,12 +710,6 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
+ 		return;
+ 	}
  
+-	if (pathcount(mpp, PATH_UP) == 0) {
+-		mpp->action = ACT_IMPOSSIBLE;
+-		condlog(3, "%s: set ACT_IMPOSSIBLE (no usable path)",
+-			mpp->alias);
+-		return;
+-	}
+ 	if (force_reload) {
+ 		mpp->force_udev_reload = 1;
+ 		mpp->action = ACT_RELOAD;
+diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
+index 07320a14..cd522e8c 100644
+--- a/multipath/11-dm-mpath.rules
++++ b/multipath/11-dm-mpath.rules
+@@ -75,7 +75,7 @@ ENV{MPATH_DEVICE_READY}=="0", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
+ ENV{MPATH_DEVICE_READY}!="0", ENV{.MPATH_DEVICE_READY_OLD}=="0",\
+ 	ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="$env{DM_DISABLE_OTHER_RULES_FLAG_OLD}",\
+ 	ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}="",\
+-	ENV{DM_ACTIVATION}="1"
++	ENV{DM_ACTIVATION}="1", ENV{MPATH_UNCHANGED}="0"
+ 
+ # The code to check multipath state ends here. We need to set
+ # properties and symlinks regardless whether the map is usable or
 -- 
 2.17.2
