@@ -1,12 +1,13 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 1/3] libmultipath: assign variable to make gcc
-	happy
-Date: Tue, 24 Mar 2020 16:03:52 -0500
-Message-ID: <1585083834-14237-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 2/3] libmutipath: don't close fd on dm_lib_release
+Date: Tue, 24 Mar 2020 16:03:53 -0500
+Message-ID: <1585083834-14237-2-git-send-email-bmarzins@redhat.com>
+References: <1585083834-14237-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1585083834-14237-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,24 +21,30 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-VGhlcmUgaXMgbm90aGluZyB3cm9uZyB3aXRoIGlzX3F1ZXVlaW5nIG5vdCBiZWluZyBzZXQgYXQg
-dGhlIHN0YXJ0Cm9mIF9fc2V0X25vX3BhdGhfcmV0cnkoKSwgaXQgd2lsbCBhbHdheXMgZ2V0IHNl
-dCBiZWZvcmUgaXQgaXMgYWNjZXNzZWQsCmJ1dCBnY2MgOC4yLjEgaXMgZmFpbGluZyB3aXRoCgpz
-dHJ1Y3RzX3ZlYy5jOiBJbiBmdW5jdGlvbiDigJhfX3NldF9ub19wYXRoX3JldHJ54oCZOgpzdHJ1
-Y3RzX3ZlYy5jOjMzOTo3OiBlcnJvcjog4oCYaXNfcXVldWVpbmfigJkgbWF5IGJlIHVzZWQgdW5p
-bml0aWFsaXplZCBpbgp0aGlzIGZ1bmN0aW9uIFstV2Vycm9yPW1heWJlLXVuaW5pdGlhbGl6ZWRd
-CiAgYm9vbCBpc19xdWV1ZWluZzsKICAgICAgIF5+fn5+fn5+fn5+CgpzbywgYXNzaWduIGEgdmFs
-dWUgdG8gbWFrZSBpdCBoYXBweS4KClNpZ25lZC1vZmYtYnk6IEJlbmphbWluIE1hcnppbnNraSA8
-Ym1hcnppbnNAcmVkaGF0LmNvbT4KLS0tCiBsaWJtdWx0aXBhdGgvc3RydWN0c192ZWMuYyB8IDIg
-Ky0KIDEgZmlsZSBjaGFuZ2VkLCAxIGluc2VydGlvbigrKSwgMSBkZWxldGlvbigtKQoKZGlmZiAt
-LWdpdCBhL2xpYm11bHRpcGF0aC9zdHJ1Y3RzX3ZlYy5jIGIvbGlibXVsdGlwYXRoL3N0cnVjdHNf
-dmVjLmMKaW5kZXggM2RiYmFhMGYuLjA3N2YyZTQyIDEwMDY0NAotLS0gYS9saWJtdWx0aXBhdGgv
-c3RydWN0c192ZWMuYworKysgYi9saWJtdWx0aXBhdGgvc3RydWN0c192ZWMuYwpAQCAtMzM2LDcg
-KzMzNiw3IEBAIHN0YXRpYyB2b2lkIGxlYXZlX3JlY292ZXJ5X21vZGUoc3RydWN0IG11bHRpcGF0
-aCAqbXBwKQogCiB2b2lkIF9fc2V0X25vX3BhdGhfcmV0cnkoc3RydWN0IG11bHRpcGF0aCAqbXBw
-LCBib29sIGNoZWNrX2ZlYXR1cmVzKQogewotCWJvb2wgaXNfcXVldWVpbmc7CisJYm9vbCBpc19x
-dWV1ZWluZyA9IGZhbHNlOyAvKiBhc3NpZ24gYSB2YWx1ZSB0byBtYWtlIGdjYyBoYXBweSAqLwog
-CiAJY2hlY2tfZmVhdHVyZXMgPSBjaGVja19mZWF0dXJlcyAmJiBtcHAtPmZlYXR1cmVzICE9IE5V
-TEw7CiAJaWYgKGNoZWNrX2ZlYXR1cmVzKQotLSAKMi4xNy4yCgotLQpkbS1kZXZlbCBtYWlsaW5n
-IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
-bGlzdGluZm8vZG0tZGV2ZWw=
+If dm_hold_control_open() isn't set, when dm_lib_release() is called, it
+will close the control fd. The control fd will get re-opened on the next
+dm_task_run() call, but if there is a dm_task_run() call already
+in progress in another thread, it can fail. Since many of the
+device-mapper callouts happen with the vecs lock held, this wasn't too
+noticeable, but there is code that calls dm_task_run() without the
+vecs lock held, notably the dmevent waiter code.
+
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/devmapper.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index bed8ddc6..d96472fe 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -254,6 +254,7 @@ void libmp_dm_init(void)
+ 	memcpy(conf->version, version, sizeof(version));
+ 	put_multipath_config(conf);
+ 	dm_init(verbosity);
++	dm_hold_control_dev(1);
+ 	dm_udev_set_sync_support(libmp_dm_udev_sync);
+ }
+ 
+-- 
+2.17.2
