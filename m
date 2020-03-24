@@ -1,7 +1,7 @@
 From: Bob Liu <bob.liu@oracle.com>
-Subject: [RFC PATCH v2 2/3] dm zoned: introduce regular device to dm-zoned-target
-Date: Tue, 24 Mar 2020 19:02:54 +0800
-Message-ID: <20200324110255.8385-3-bob.liu@oracle.com>
+Subject: [RFC PATCH v2 3/3] dm zoned: add regular device info to metadata
+Date: Tue, 24 Mar 2020 19:02:55 +0800
+Message-ID: <20200324110255.8385-4-bob.liu@oracle.com>
 References: <20200324110255.8385-1-bob.liu@oracle.com>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20200324110255.8385-1-bob.liu@oracle.com>
@@ -10,313 +10,437 @@ To: dm-devel@redhat.com
 Cc: Damien.LeMoal@wdc.com, linux-block@vger.kernel.org, Dmitry.Fomichev@wdc.com, hare@suse.de, Bob Liu <bob.liu@oracle.com>
 List-Id: dm-devel.ids
 
-Introduce a regular device for storing metadata and buffer write, zoned
-device is used by default if no regular device was set by dmsetup.
+This patch implemented metadata support for regular device by:
+ - Emulated zone information for regular device.
+ - Store metadata at the beginning of regular device.
 
-The corresponding dmsetup cmd is:
-echo "0 $size zoned $regular_device $zoned_device" | dmsetup create $dm-zoned-name
+     | --- zoned device --- | -- regular device ||
+     ^                      ^
+     |                      |Metadata
+zone 0
 
 Signed-off-by: Bob Liu <bob.liu@oracle.com>
 ---
- drivers/md/dm-zoned-target.c | 141 +++++++++++++++++++++++++------------------
- drivers/md/dm-zoned.h        |  50 +++++++++++++--
- 2 files changed, 127 insertions(+), 64 deletions(-)
+ drivers/md/dm-zoned-metadata.c | 135 +++++++++++++++++++++++++++++++----------
+ drivers/md/dm-zoned-target.c   |   6 +-
+ drivers/md/dm-zoned.h          |   3 +-
+ 3 files changed, 108 insertions(+), 36 deletions(-)
 
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index 28f4d00..cae4bfe 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -35,38 +35,6 @@ struct dm_chunk_work {
- };
- 
- /*
-- * Target descriptor.
-- */
--struct dmz_target {
--	struct dm_dev		*ddev;
--
--	unsigned long		flags;
--
--	/* Zoned block device information */
--	struct dmz_dev		*zoned_dev;
--
--	/* For metadata handling */
--	struct dmz_metadata     *metadata;
--
--	/* For reclaim */
--	struct dmz_reclaim	*reclaim;
--
--	/* For chunk work */
--	struct radix_tree_root	chunk_rxtree;
--	struct workqueue_struct *chunk_wq;
--	struct mutex		chunk_lock;
--
--	/* For cloned BIOs to zones */
--	struct bio_set		bio_set;
--
--	/* For flush */
--	spinlock_t		flush_lock;
--	struct bio_list		flush_list;
--	struct delayed_work	flush_work;
--	struct workqueue_struct *flush_wq;
--};
--
--/*
-  * Flush intervals (seconds).
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index e0e8be0..a96158a 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -131,6 +131,7 @@ struct dmz_sb {
   */
- #define DMZ_FLUSH_PERIOD	(10 * HZ)
-@@ -679,7 +647,7 @@ static int dmz_map(struct dm_target *ti, struct bio *bio)
+ struct dmz_metadata {
+ 	struct dmz_dev		*zoned_dev;
++	struct dmz_dev		*regu_dmz_dev;
+ 
+ 	sector_t		zone_bitmap_size;
+ 	unsigned int		zone_nr_bitmap_blocks;
+@@ -187,6 +188,15 @@ struct dmz_metadata {
  /*
-  * Get zoned device information.
+  * Various accessors
   */
--static int dmz_get_zoned_device(struct dm_target *ti, char *path)
-+static int dmz_get_device(struct dm_target *ti, char *path, bool zoned)
- {
- 	struct dmz_target *dmz = ti->private;
- 	struct request_queue *q;
-@@ -688,11 +656,22 @@ static int dmz_get_zoned_device(struct dm_target *ti, char *path)
- 	int ret;
- 
- 	/* Get the target device */
--	ret = dm_get_device(ti, path, dm_table_get_mode(ti->table), &dmz->ddev);
--	if (ret) {
--		ti->error = "Get target device failed";
--		dmz->ddev = NULL;
--		return ret;
-+	if (zoned) {
-+		ret = dm_get_device(ti, path, dm_table_get_mode(ti->table),
-+				&dmz->ddev);
-+		if (ret) {
-+			ti->error = "Get target device failed";
-+			dmz->ddev = NULL;
-+			return ret;
-+		}
-+	} else {
-+		ret = dm_get_device(ti, path, dm_table_get_mode(ti->table),
-+				&dmz->regu_dm_dev);
-+		if (ret) {
-+			ti->error = "Get target device failed";
-+			dmz->regu_dm_dev = NULL;
-+			return ret;
-+		}
- 	}
- 
- 	dev = kzalloc(sizeof(struct dmz_dev), GFP_KERNEL);
-@@ -701,39 +680,61 @@ static int dmz_get_zoned_device(struct dm_target *ti, char *path)
- 		goto err;
- 	}
- 
--	dev->bdev = dmz->ddev->bdev;
--	(void)bdevname(dev->bdev, dev->name);
--
--	if (bdev_zoned_model(dev->bdev) == BLK_ZONED_NONE) {
--		ti->error = "Not a zoned block device";
--		ret = -EINVAL;
--		goto err;
-+	if (zoned) {
-+		dev->bdev = dmz->ddev->bdev;
-+		if (bdev_zoned_model(dev->bdev) == BLK_ZONED_NONE) {
-+			ti->error = "Not a zoned block device";
-+			ret = -EINVAL;
-+			goto err;
-+		}
- 	}
++static inline struct dmz_dev *zmd_mdev(struct dmz_metadata *zmd)
++{
++	/* Metadata always stores in regular device if there is. */
++	if (zmd->regu_dmz_dev)
++		return zmd->regu_dmz_dev;
 +	else
-+		dev->bdev = dmz->regu_dm_dev->bdev;
++		return zmd->zoned_dev;
++}
 +
-+	(void)bdevname(dev->bdev, dev->name);
-+	dev->target = dmz;
- 
- 	q = bdev_get_queue(dev->bdev);
- 	dev->capacity = i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT;
- 	aligned_capacity = dev->capacity &
- 				~((sector_t)blk_queue_zone_sectors(q) - 1);
--	if (ti->begin ||
--	    ((ti->len != dev->capacity) && (ti->len != aligned_capacity))) {
--		ti->error = "Partial mapping not supported";
--		ret = -EINVAL;
--		goto err;
--	}
- 
--	dev->zone_nr_sectors = blk_queue_zone_sectors(q);
--	dev->zone_nr_sectors_shift = ilog2(dev->zone_nr_sectors);
-+	if (zoned) {
-+		if (ti->begin || ((ti->len != dev->capacity) &&
-+					(ti->len != aligned_capacity))) {
-+			ti->error = "Partial mapping not supported";
-+			ret = -EINVAL;
-+			goto err;
-+		}
-+		dev->zone_nr_sectors = blk_queue_zone_sectors(q);
-+		dev->zone_nr_sectors_shift = ilog2(dev->zone_nr_sectors);
-+
-+		dev->zone_nr_blocks = dmz_sect2blk(dev->zone_nr_sectors);
-+		dev->zone_nr_blocks_shift = ilog2(dev->zone_nr_blocks);
- 
--	dev->zone_nr_blocks = dmz_sect2blk(dev->zone_nr_sectors);
--	dev->zone_nr_blocks_shift = ilog2(dev->zone_nr_blocks);
-+		dev->nr_zones = blkdev_nr_zones(dev->bdev->bd_disk);
- 
--	dev->nr_zones = blkdev_nr_zones(dev->bdev->bd_disk);
-+		dmz->zoned_dev = dev;
-+	} else {
-+		/* Emulate regular device zone info by using the same zone size.*/
-+		dev->zone_nr_sectors = dmz->zoned_dev->zone_nr_sectors;
-+		dev->zone_nr_sectors_shift = ilog2(dev->zone_nr_sectors);
- 
--	dmz->zoned_dev = dev;
-+		dev->zone_nr_blocks = dmz_sect2blk(dev->zone_nr_sectors);
-+		dev->zone_nr_blocks_shift = ilog2(dev->zone_nr_blocks);
-+
-+		dev->nr_zones = (get_capacity(dev->bdev->bd_disk) >>
-+				ilog2(dev->zone_nr_sectors));
-+
-+		dmz->regu_dmz_dev = dev;
-+	}
- 
- 	return 0;
- err:
--	dm_put_device(ti, dmz->ddev);
-+	if (zoned)
-+		dm_put_device(ti, dmz->ddev);
-+	else
-+		dm_put_device(ti, dmz->regu_dm_dev);
- 	kfree(dev);
- 
- 	return ret;
-@@ -746,6 +747,12 @@ static void dmz_put_zoned_device(struct dm_target *ti)
+ unsigned int dmz_id(struct dmz_metadata *zmd, struct dm_zone *zone)
  {
- 	struct dmz_target *dmz = ti->private;
+ 	return ((unsigned int)(zone - zmd->zones));
+@@ -194,12 +204,33 @@ unsigned int dmz_id(struct dmz_metadata *zmd, struct dm_zone *zone)
  
-+	if (dmz->regu_dm_dev)
-+		dm_put_device(ti, dmz->regu_dm_dev);
-+	if (dmz->regu_dmz_dev) {
-+		kfree(dmz->regu_dmz_dev);
-+		dmz->regu_dmz_dev = NULL;
-+	}
- 	dm_put_device(ti, dmz->ddev);
- 	kfree(dmz->zoned_dev);
- 	dmz->zoned_dev = NULL;
-@@ -761,7 +768,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	int ret;
- 
- 	/* Check arguments */
--	if (argc != 1) {
-+	if ((argc != 1) && (argc != 2)) {
- 		ti->error = "Invalid argument count";
- 		return -EINVAL;
- 	}
-@@ -775,12 +782,25 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	ti->private = dmz;
- 
- 	/* Get the target zoned block device */
--	ret = dmz_get_zoned_device(ti, argv[0]);
-+	ret = dmz_get_device(ti, argv[0], 1);
- 	if (ret) {
- 		dmz->ddev = NULL;
- 		goto err;
- 	}
- 
-+	snprintf(dmz->name, BDEVNAME_SIZE, "%s", dmz->zoned_dev->name);
-+	dmz->nr_zones = dmz->zoned_dev->nr_zones;
-+	if (argc == 2) {
-+		ret = dmz_get_device(ti, argv[1], 0);
-+		if (ret) {
-+			dmz->regu_dm_dev = NULL;
-+			goto err;
-+		}
-+		snprintf(dmz->name, BDEVNAME_SIZE * 2, "%s:%s",
-+				dmz->zoned_dev->name, dmz->regu_dmz_dev->name);
-+		dmz->nr_zones += dmz->regu_dmz_dev->nr_zones;
-+	}
+ sector_t dmz_start_sect(struct dmz_metadata *zmd, struct dm_zone *zone)
+ {
+-	return (sector_t)dmz_id(zmd, zone) << zmd->zoned_dev->zone_nr_sectors_shift;
++	int dmz_real_id;
 +
- 	/* Initialize metadata */
- 	dev = dmz->zoned_dev;
- 	ret = dmz_ctr_metadata(dev, &dmz->metadata);
-@@ -962,6 +982,7 @@ static int dmz_iterate_devices(struct dm_target *ti,
- 	struct dmz_dev *dev = dmz->zoned_dev;
- 	sector_t capacity = dev->capacity & ~(dev->zone_nr_sectors - 1);
- 
-+	/* Todo: fn(dmz->regu_dm_dev) */
- 	return fn(ti, dmz->ddev, 0, capacity, data);
++	dmz_real_id = dmz_id(zmd, zone);
++	if (dmz_real_id >= zmd->zoned_dev->nr_zones) {
++		/* Regular dev. */
++		dmz_real_id -= zmd->zoned_dev->nr_zones;
++		WARN_ON(!zmd->regu_dmz_dev);
++
++		return (sector_t)dmz_real_id << zmd->zoned_dev->zone_nr_sectors_shift;
++	}
++	return (sector_t)dmz_real_id << zmd->zoned_dev->zone_nr_sectors_shift;
  }
  
+ sector_t dmz_start_block(struct dmz_metadata *zmd, struct dm_zone *zone)
+ {
+-	return (sector_t)dmz_id(zmd, zone) << zmd->zoned_dev->zone_nr_blocks_shift;
++	int dmz_real_id;
++
++	dmz_real_id = dmz_id(zmd, zone);
++	if (dmz_real_id >= zmd->zoned_dev->nr_zones) {
++		/* Regular dev. */
++		dmz_real_id -= zmd->zoned_dev->nr_zones;
++		WARN_ON(!zmd->regu_dmz_dev);
++
++		return (sector_t)dmz_real_id << zmd->zoned_dev->zone_nr_blocks_shift;
++	}
++
++	return (sector_t)dmz_real_id << zmd->zoned_dev->zone_nr_blocks_shift;
+ }
+ 
+ unsigned int dmz_nr_chunks(struct dmz_metadata *zmd)
+@@ -403,8 +434,10 @@ static struct dmz_mblock *dmz_get_mblock_slow(struct dmz_metadata *zmd,
+ 	struct dmz_mblock *mblk, *m;
+ 	sector_t block = zmd->sb[zmd->mblk_primary].block + mblk_no;
+ 	struct bio *bio;
++	struct dmz_dev *mdev;
+ 
+-	if (dmz_bdev_is_dying(zmd->zoned_dev))
++	mdev = zmd_mdev(zmd);
++	if (dmz_bdev_is_dying(mdev))
+ 		return ERR_PTR(-EIO);
+ 
+ 	/* Get a new block and a BIO to read it */
+@@ -440,7 +473,7 @@ static struct dmz_mblock *dmz_get_mblock_slow(struct dmz_metadata *zmd,
+ 
+ 	/* Submit read BIO */
+ 	bio->bi_iter.bi_sector = dmz_blk2sect(block);
+-	bio_set_dev(bio, zmd->zoned_dev->bdev);
++	bio_set_dev(bio, mdev->bdev);
+ 	bio->bi_private = mblk;
+ 	bio->bi_end_io = dmz_mblock_bio_end_io;
+ 	bio_set_op_attrs(bio, REQ_OP_READ, REQ_META | REQ_PRIO);
+@@ -555,7 +588,7 @@ static struct dmz_mblock *dmz_get_mblock(struct dmz_metadata *zmd,
+ 		       TASK_UNINTERRUPTIBLE);
+ 	if (test_bit(DMZ_META_ERROR, &mblk->state)) {
+ 		dmz_release_mblock(zmd, mblk);
+-		dmz_check_bdev(zmd->zoned_dev);
++		dmz_check_bdev(zmd_mdev(zmd));
+ 		return ERR_PTR(-EIO);
+ 	}
+ 
+@@ -581,8 +614,10 @@ static int dmz_write_mblock(struct dmz_metadata *zmd, struct dmz_mblock *mblk,
+ {
+ 	sector_t block = zmd->sb[set].block + mblk->no;
+ 	struct bio *bio;
++	struct dmz_dev *mdev;
+ 
+-	if (dmz_bdev_is_dying(zmd->zoned_dev))
++	mdev = zmd_mdev(zmd);
++	if (dmz_bdev_is_dying(mdev))
+ 		return -EIO;
+ 
+ 	bio = bio_alloc(GFP_NOIO, 1);
+@@ -594,7 +629,7 @@ static int dmz_write_mblock(struct dmz_metadata *zmd, struct dmz_mblock *mblk,
+ 	set_bit(DMZ_META_WRITING, &mblk->state);
+ 
+ 	bio->bi_iter.bi_sector = dmz_blk2sect(block);
+-	bio_set_dev(bio, zmd->zoned_dev->bdev);
++	bio_set_dev(bio, mdev->bdev);
+ 	bio->bi_private = mblk;
+ 	bio->bi_end_io = dmz_mblock_bio_end_io;
+ 	bio_set_op_attrs(bio, REQ_OP_WRITE, REQ_META | REQ_PRIO);
+@@ -612,8 +647,10 @@ static int dmz_rdwr_block(struct dmz_metadata *zmd, int op, sector_t block,
+ {
+ 	struct bio *bio;
+ 	int ret;
++	struct dmz_dev *mdev;
+ 
+-	if (dmz_bdev_is_dying(zmd->zoned_dev))
++	mdev = zmd_mdev(zmd);
++	if (dmz_bdev_is_dying(mdev))
+ 		return -EIO;
+ 
+ 	bio = bio_alloc(GFP_NOIO, 1);
+@@ -621,14 +658,14 @@ static int dmz_rdwr_block(struct dmz_metadata *zmd, int op, sector_t block,
+ 		return -ENOMEM;
+ 
+ 	bio->bi_iter.bi_sector = dmz_blk2sect(block);
+-	bio_set_dev(bio, zmd->zoned_dev->bdev);
++	bio_set_dev(bio, mdev->bdev);
+ 	bio_set_op_attrs(bio, op, REQ_SYNC | REQ_META | REQ_PRIO);
+ 	bio_add_page(bio, page, DMZ_BLOCK_SIZE, 0);
+ 	ret = submit_bio_wait(bio);
+ 	bio_put(bio);
+ 
+ 	if (ret)
+-		dmz_check_bdev(zmd->zoned_dev);
++		dmz_check_bdev(mdev);
+ 	return ret;
+ }
+ 
+@@ -661,7 +698,7 @@ static int dmz_write_sb(struct dmz_metadata *zmd, unsigned int set)
+ 
+ 	ret = dmz_rdwr_block(zmd, REQ_OP_WRITE, block, mblk->page);
+ 	if (ret == 0)
+-		ret = blkdev_issue_flush(zmd->zoned_dev->bdev, GFP_NOIO, NULL);
++		ret = blkdev_issue_flush(zmd_mdev(zmd)->bdev, GFP_NOIO, NULL);
+ 
+ 	return ret;
+ }
+@@ -695,15 +732,20 @@ static int dmz_write_dirty_mblocks(struct dmz_metadata *zmd,
+ 			       TASK_UNINTERRUPTIBLE);
+ 		if (test_bit(DMZ_META_ERROR, &mblk->state)) {
+ 			clear_bit(DMZ_META_ERROR, &mblk->state);
+-			dmz_check_bdev(zmd->zoned_dev);
++			dmz_check_bdev(zmd_mdev(zmd));
+ 			ret = -EIO;
+ 		}
+ 		nr_mblks_submitted--;
+ 	}
+ 
+ 	/* Flush drive cache (this will also sync data) */
+-	if (ret == 0)
+-		ret = blkdev_issue_flush(zmd->zoned_dev->bdev, GFP_NOIO, NULL);
++	if (ret == 0) {
++		/* Flush metadata device */
++		ret = blkdev_issue_flush(zmd_mdev(zmd)->bdev, GFP_NOIO, NULL);
++		if ((ret == 0) && zmd->regu_dmz_dev)
++			/* Flush data device. */
++			ret = blkdev_issue_flush(zmd->zoned_dev->bdev, GFP_NOIO, NULL);
++	}
+ 
+ 	return ret;
+ }
+@@ -760,7 +802,7 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
+ 	 */
+ 	dmz_lock_flush(zmd);
+ 
+-	if (dmz_bdev_is_dying(zmd->zoned_dev)) {
++	if (dmz_bdev_is_dying(zmd_mdev(zmd))) {
+ 		ret = -EIO;
+ 		goto out;
+ 	}
+@@ -772,7 +814,7 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
+ 
+ 	/* If there are no dirty metadata blocks, just flush the device cache */
+ 	if (list_empty(&write_list)) {
+-		ret = blkdev_issue_flush(zmd->zoned_dev->bdev, GFP_NOIO, NULL);
++		ret = blkdev_issue_flush(zmd_mdev(zmd)->bdev, GFP_NOIO, NULL);
+ 		goto err;
+ 	}
+ 
+@@ -821,7 +863,7 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
+ 		list_splice(&write_list, &zmd->mblk_dirty_list);
+ 		spin_unlock(&zmd->mblk_lock);
+ 	}
+-	if (!dmz_check_bdev(zmd->zoned_dev))
++	if (!dmz_check_bdev(zmd_mdev(zmd)))
+ 		ret = -EIO;
+ 	goto out;
+ }
+@@ -832,10 +874,11 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
+ static int dmz_check_sb(struct dmz_metadata *zmd, struct dmz_super *sb)
+ {
+ 	unsigned int nr_meta_zones, nr_data_zones;
+-	struct dmz_dev *dev = zmd->zoned_dev;
++	struct dmz_dev *dev;
+ 	u32 crc, stored_crc;
+ 	u64 gen;
+ 
++	dev = zmd_mdev(zmd);
+ 	gen = le64_to_cpu(sb->gen);
+ 	stored_crc = le32_to_cpu(sb->crc);
+ 	sb->crc = 0;
+@@ -1131,8 +1174,11 @@ static int dmz_init_zone(struct blk_zone *blkz, unsigned int idx, void *data)
+ 		zmd->nr_useable_zones++;
+ 		if (dmz_is_rnd(zone)) {
+ 			zmd->nr_rnd_zones++;
+-			if (!zmd->sb_zone) {
+-				/* Super block zone */
++			if (!zmd->sb_zone && !zmd->regu_dmz_dev) {
++				/*
++				 * Super block zone goes to regular
++				 * device by default.
++				 */
+ 				zmd->sb_zone = zone;
+ 			}
+ 		}
+@@ -1157,7 +1203,8 @@ static void dmz_drop_zones(struct dmz_metadata *zmd)
+ static int dmz_init_zones(struct dmz_metadata *zmd)
+ {
+ 	struct dmz_dev *dev = zmd->zoned_dev;
+-	int ret;
++	int ret, i;
++	unsigned int total_nr_zones;
+ 
+ 	/* Init */
+ 	zmd->zone_bitmap_size = dev->zone_nr_blocks >> 3;
+@@ -1167,7 +1214,10 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
+ 					DMZ_BLOCK_SIZE_BITS);
+ 
+ 	/* Allocate zone array */
+-	zmd->zones = kcalloc(dev->nr_zones, sizeof(struct dm_zone), GFP_KERNEL);
++	total_nr_zones = dev->nr_zones;
++	if (zmd->regu_dmz_dev)
++		total_nr_zones += zmd->regu_dmz_dev->nr_zones;
++	zmd->zones = kcalloc(total_nr_zones, sizeof(struct dm_zone), GFP_KERNEL);
+ 	if (!zmd->zones)
+ 		return -ENOMEM;
+ 
+@@ -1186,6 +1236,25 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
+ 		return ret;
+ 	}
+ 
++	if (zmd->regu_dmz_dev) {
++		/* Emulate zone information for regular device zone. */
++		for (i = 0; i < zmd->regu_dmz_dev->nr_zones; i++) {
++			struct dm_zone *zone = &zmd->zones[i + dev->nr_zones];
++
++			INIT_LIST_HEAD(&zone->link);
++			atomic_set(&zone->refcount, 0);
++			zone->chunk = DMZ_MAP_UNMAPPED;
++
++			set_bit(DMZ_RND, &zone->flags);
++			zmd->nr_rnd_zones++;
++			zmd->nr_useable_zones++;
++			zone->wp_block = 0;
++			if (!zmd->sb_zone)
++				/* Super block zone */
++				zmd->sb_zone = zone;
++		}
++	}
++
+ 	return 0;
+ }
+ 
+@@ -1313,13 +1382,13 @@ static void dmz_get_zone_weight(struct dmz_metadata *zmd, struct dm_zone *zone);
+  */
+ static int dmz_load_mapping(struct dmz_metadata *zmd)
+ {
+-	struct dmz_dev *dev = zmd->zoned_dev;
+ 	struct dm_zone *dzone, *bzone;
+ 	struct dmz_mblock *dmap_mblk = NULL;
+ 	struct dmz_map *dmap;
+ 	unsigned int i = 0, e = 0, chunk = 0;
+ 	unsigned int dzone_id;
+ 	unsigned int bzone_id;
++	struct dmz_dev *dev = zmd_mdev(zmd);
+ 
+ 	/* Metadata block array for the chunk mapping table */
+ 	zmd->map_mblk = kcalloc(zmd->nr_map_blocks,
+@@ -1345,7 +1414,7 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
+ 		if (dzone_id == DMZ_MAP_UNMAPPED)
+ 			goto next;
+ 
+-		if (dzone_id >= dev->nr_zones) {
++		if (dzone_id >= dev->target->nr_zones) {
+ 			dmz_dev_err(dev, "Chunk %u mapping: invalid data zone ID %u",
+ 				    chunk, dzone_id);
+ 			return -EIO;
+@@ -1366,7 +1435,7 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
+ 		if (bzone_id == DMZ_MAP_UNMAPPED)
+ 			goto next;
+ 
+-		if (bzone_id >= dev->nr_zones) {
++		if (bzone_id >= dev->target->nr_zones) {
+ 			dmz_dev_err(dev, "Chunk %u mapping: invalid buffer zone ID %u",
+ 				    chunk, bzone_id);
+ 			return -EIO;
+@@ -1398,7 +1467,7 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
+ 	 * fully initialized. All remaining zones are unmapped data
+ 	 * zones. Finish initializing those here.
+ 	 */
+-	for (i = 0; i < dev->nr_zones; i++) {
++	for (i = 0; i < dev->target->nr_zones; i++) {
+ 		dzone = dmz_get(zmd, i);
+ 		if (dmz_is_meta(dzone))
+ 			continue;
+@@ -1632,7 +1701,7 @@ struct dm_zone *dmz_get_chunk_mapping(struct dmz_metadata *zmd, unsigned int chu
+ 		/* Allocate a random zone */
+ 		dzone = dmz_alloc_zone(zmd, DMZ_ALLOC_RND);
+ 		if (!dzone) {
+-			if (dmz_bdev_is_dying(zmd->zoned_dev)) {
++			if (dmz_bdev_is_dying(zmd_mdev(zmd))) {
+ 				dzone = ERR_PTR(-EIO);
+ 				goto out;
+ 			}
+@@ -1733,7 +1802,7 @@ struct dm_zone *dmz_get_chunk_buffer(struct dmz_metadata *zmd,
+ 	/* Allocate a random zone */
+ 	bzone = dmz_alloc_zone(zmd, DMZ_ALLOC_RND);
+ 	if (!bzone) {
+-		if (dmz_bdev_is_dying(zmd->zoned_dev)) {
++		if (dmz_bdev_is_dying(zmd_mdev(zmd))) {
+ 			bzone = ERR_PTR(-EIO);
+ 			goto out;
+ 		}
+@@ -2360,7 +2429,8 @@ static void dmz_cleanup_metadata(struct dmz_metadata *zmd)
+ /*
+  * Initialize the zoned metadata.
+  */
+-int dmz_ctr_metadata(struct dmz_dev *dev, struct dmz_metadata **metadata)
++int dmz_ctr_metadata(struct dmz_dev *dev, struct dmz_dev *regu_dmz_dev,
++		struct dmz_metadata **metadata)
+ {
+ 	struct dmz_metadata *zmd;
+ 	unsigned int i, zid;
+@@ -2372,6 +2442,7 @@ int dmz_ctr_metadata(struct dmz_dev *dev, struct dmz_metadata **metadata)
+ 		return -ENOMEM;
+ 
+ 	zmd->zoned_dev = dev;
++	zmd->regu_dmz_dev = regu_dmz_dev;
+ 	zmd->mblk_rbtree = RB_ROOT;
+ 	init_rwsem(&zmd->mblk_sem);
+ 	mutex_init(&zmd->mblk_flush_lock);
+@@ -2440,9 +2511,9 @@ int dmz_ctr_metadata(struct dmz_dev *dev, struct dmz_metadata **metadata)
+ 		     bdev_zoned_model(dev->bdev) == BLK_ZONED_HA ?
+ 		     "aware" : "managed");
+ 	dmz_dev_info(dev, "  %llu 512-byte logical sectors",
+-		     (u64)dev->capacity);
++		     (u64)dev->capacity  + (u64)regu_dmz_dev->capacity);
+ 	dmz_dev_info(dev, "  %u zones of %llu 512-byte logical sectors",
+-		     dev->nr_zones, (u64)dev->zone_nr_sectors);
++		     dev->nr_zones + regu_dmz_dev->nr_zones, (u64)dev->zone_nr_sectors);
+ 	dmz_dev_info(dev, "  %u metadata zones",
+ 		     zmd->nr_meta_zones * 2);
+ 	dmz_dev_info(dev, "  %u data zones for %u chunks",
+@@ -2488,7 +2559,7 @@ void dmz_dtr_metadata(struct dmz_metadata *zmd)
+  */
+ int dmz_resume_metadata(struct dmz_metadata *zmd)
+ {
+-	struct dmz_dev *dev = zmd->zoned_dev;
++	struct dmz_dev *dev = zmd_mdev(zmd);
+ 	struct dm_zone *zone;
+ 	sector_t wp_block;
+ 	unsigned int i;
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index cae4bfe..41dbb9d 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -803,7 +803,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ 	/* Initialize metadata */
+ 	dev = dmz->zoned_dev;
+-	ret = dmz_ctr_metadata(dev, &dmz->metadata);
++	ret = dmz_ctr_metadata(dev, dmz->regu_dmz_dev, &dmz->metadata);
+ 	if (ret) {
+ 		ti->error = "Metadata initialization failed";
+ 		goto err_dev;
+@@ -852,8 +852,8 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	}
+ 	mod_delayed_work(dmz->flush_wq, &dmz->flush_work, DMZ_FLUSH_PERIOD);
+ 
+-	/* Initialize reclaim */
+-	ret = dmz_ctr_reclaim(dev, dmz->metadata, &dmz->reclaim);
++	/* Initialize reclaim, only reclaim from regular device. */
++	ret = dmz_ctr_reclaim(dmz->regu_dmz_dev, dmz->metadata, &dmz->reclaim);
+ 	if (ret) {
+ 		ti->error = "Zone reclaim initialization failed";
+ 		goto err_fwq;
 diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
-index 5b5e493..a3535bc 100644
+index a3535bc..7aa1a30 100644
 --- a/drivers/md/dm-zoned.h
 +++ b/drivers/md/dm-zoned.h
-@@ -46,9 +46,51 @@
- #define dmz_bio_blocks(bio)	dmz_sect2blk(bio_sectors(bio))
- 
+@@ -206,7 +206,8 @@ struct dmz_reclaim;
  /*
-+ * Target descriptor.
-+ */
-+struct dmz_target {
-+	struct dm_dev		*ddev;
-+	/*
-+	 * Regular device for store metdata and buffer write, use zoned device
-+	 * by default if no regular device was set.
-+	 */
-+	struct dm_dev           *regu_dm_dev;
-+	struct dmz_dev          *regu_dmz_dev;
-+	/* Total nr_zones. */
-+	unsigned int            nr_zones;
-+	char                    name[BDEVNAME_SIZE * 2];
-+
-+	unsigned long		flags;
-+
-+	/* Zoned block device information */
-+	struct dmz_dev		*zoned_dev;
-+
-+	/* For metadata handling */
-+	struct dmz_metadata     *metadata;
-+
-+	/* For reclaim */
-+	struct dmz_reclaim	*reclaim;
-+
-+	/* For chunk work */
-+	struct radix_tree_root	chunk_rxtree;
-+	struct workqueue_struct *chunk_wq;
-+	struct mutex		chunk_lock;
-+
-+	/* For cloned BIOs to zones */
-+	struct bio_set		bio_set;
-+
-+	/* For flush */
-+	spinlock_t		flush_lock;
-+	struct bio_list		flush_list;
-+	struct delayed_work	flush_work;
-+	struct workqueue_struct *flush_wq;
-+};
-+
-+/*
-  * Zoned block device information.
+  * Functions defined in dm-zoned-metadata.c
   */
- struct dmz_dev {
-+	struct dmz_target       *target;
- 	struct block_device	*bdev;
+-int dmz_ctr_metadata(struct dmz_dev *dev, struct dmz_metadata **zmd);
++int dmz_ctr_metadata(struct dmz_dev *dev, struct dmz_dev *regu_dmz_dev,
++		struct dmz_metadata **zmd);
+ void dmz_dtr_metadata(struct dmz_metadata *zmd);
+ int dmz_resume_metadata(struct dmz_metadata *zmd);
  
- 	char			name[BDEVNAME_SIZE];
-@@ -147,16 +189,16 @@ enum {
-  * Message functions.
-  */
- #define dmz_dev_info(dev, format, args...)	\
--	DMINFO("(%s): " format, (dev)->name, ## args)
-+	DMINFO("(%s): " format, (dev)->target->name, ## args)
- 
- #define dmz_dev_err(dev, format, args...)	\
--	DMERR("(%s): " format, (dev)->name, ## args)
-+	DMERR("(%s): " format, (dev)->target->name, ## args)
- 
- #define dmz_dev_warn(dev, format, args...)	\
--	DMWARN("(%s): " format, (dev)->name, ## args)
-+	DMWARN("(%s): " format, (dev)->target->name, ## args)
- 
- #define dmz_dev_debug(dev, format, args...)	\
--	DMDEBUG("(%s): " format, (dev)->name, ## args)
-+	DMDEBUG("(%s): " format, (dev)->target->name, ## args)
- 
- struct dmz_metadata;
- struct dmz_reclaim;
 -- 
 2.9.5
