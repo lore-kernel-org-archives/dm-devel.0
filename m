@@ -1,113 +1,79 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [RFC PATCH v2 3/3] dm zoned: add regular device info to metadata
-Date: Wed, 25 Mar 2020 10:02:13 +0000
-Message-ID: <CO2PR04MB2343054E74EEDFC330FD98DAE7CE0@CO2PR04MB2343.namprd04.prod.outlook.com>
-References: <20200324110255.8385-1-bob.liu@oracle.com>
- <20200324110255.8385-4-bob.liu@oracle.com>
- <CO2PR04MB23438E0AB35CC46732F96085E7CE0@CO2PR04MB2343.namprd04.prod.outlook.com>
- <812da9e9-cfd2-ea24-60cb-4af48f476079@suse.de>
- <CO2PR04MB23439B5FA88275A80D3449DFE7CE0@CO2PR04MB2343.namprd04.prod.outlook.com>
- <0bd2daa1-abbf-681d-405c-f7e4aecd577c@suse.de>
- <CO2PR04MB23433CAD26D492654041FCDCE7CE0@CO2PR04MB2343.namprd04.prod.outlook.com>
- <cdf003a6-b0c8-30c0-edc3-049471a7a2b0@suse.de>
+From: Martin Wilck <Martin.Wilck@suse.com>
+Subject: Re: [PATCH 2/3] libmutipath: don't close fd on
+	dm_lib_release
+Date: Wed, 25 Mar 2020 15:16:50 +0000
+Message-ID: <ebfcb22b005314635b77e4820e205971d708d07d.camel@suse.com>
+References: <1585083834-14237-1-git-send-email-bmarzins@redhat.com>
+	<1585083834-14237-2-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="iso-8859-15"
 Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-block-owner@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1585083834-14237-2-git-send-email-bmarzins@redhat.com>
 Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>, Bob Liu <bob.liu@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Dmitry Fomichev <Dmitry.Fomichev@wdc.com>
+Content-ID: <80FDBD23751841418EAA875693D719CA@namprd18.prod.outlook.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2020/03/25 19:00, Hannes Reinecke wrote:=0A=
-> On 3/25/20 10:10 AM, Damien Le Moal wrote:=0A=
->> On 2020/03/25 17:52, Hannes Reinecke wrote:=0A=
->>> On 3/25/20 9:02 AM, Damien Le Moal wrote:=0A=
->>>> On 2020/03/25 15:47, Hannes Reinecke wrote:=0A=
->>>>> On 3/25/20 7:29 AM, Damien Le Moal wrote:=0A=
->>>>>> On 2020/03/24 20:04, Bob Liu wrote:=0A=
->>>>>>> This patch implemented metadata support for regular device by:=0A=
->>>>>>>     - Emulated zone information for regular device.=0A=
->>>>>>>     - Store metadata at the beginning of regular device.=0A=
->>>>>>>=0A=
->>>>>>>         | --- zoned device --- | -- regular device ||=0A=
->>>>>>>         ^                      ^=0A=
->>>>>>>         |                      |Metadata=0A=
->>>>>>> zone 0=0A=
->>>>>>>=0A=
->>>>>>> Signed-off-by: Bob Liu <bob.liu@oracle.com>=0A=
->>>>>>> ---=0A=
->>>>>>>     drivers/md/dm-zoned-metadata.c | 135 ++++++++++++++++++++++++++=
-+++++----------=0A=
->>>>>>>     drivers/md/dm-zoned-target.c   |   6 +-=0A=
->>>>>>>     drivers/md/dm-zoned.h          |   3 +-=0A=
->>>>>>>     3 files changed, 108 insertions(+), 36 deletions(-)=0A=
->>>>>>>=0A=
->>>>> Having thought about it some more, I think we cannot continue with th=
-is=0A=
->>>>> 'simple' approach.=0A=
->>>>> The immediate problem is that we lie about the disk size; clearly the=
-=0A=
->>>>> metadata cannot be used for regular data, yet we expose a target devi=
-ce=0A=
->>>>> with the full size of the underlying device.=0A=
->>>>> Making me wonder if anybody ever tested a disk-full scenario...=0A=
->>>>=0A=
->>>> Current dm-zoned does not do that... What is exposed as target capacit=
-y is=0A=
->>>> number of chunks * zone size, with the number of chunks being number o=
-f zones=0A=
->>>> minus metadata zones minus number of zones reserved for reclaim. And I=
- did test=0A=
->>>> disk full scenario (when performance goes to the trash bin because rec=
-laim=0A=
->>>> struggles...)=0A=
->>>>=0A=
->>> Thing is, the second number for the dmsetup target line is _supposed_ t=
-o=0A=
->>> be the target size.=0A=
->>> Which clearly is wrong here.=0A=
->>> I must admit I'm not sure what device-mapper will do with a target=0A=
->>> definition which is larger than the resulting target device ...=0A=
->>> Mike should know, but it's definitely awkward.=0A=
->>=0A=
->> AHh. OK. Never thought of it like this, especially considering the fact =
-that the=0A=
->> table entry is checked to see if the entire drive is given. So instead o=
-f the=0A=
->> target size, I was in fact using the size parameter of dmsetup as the si=
-ze to=0A=
->> use on the backend, which for dm-zoned must be the device capacity...=0A=
->>=0A=
->> Not sure if we can fix that now ? Especially considering that the number=
- of=0A=
->> reserved seq zones for reclaim is not constant but a dmzadm format optio=
-n. So=0A=
->> the average user would have to know exactly the useable size to dmsetup =
-the=0A=
->> target. Akward too, or rather, not super easy to use. I wonder how dm-th=
-in or=0A=
->> other targets with metadata handle this ? Do they format themselves=0A=
->> automatically on dmsetup using the size specified ?=0A=
->>=0A=
-> Which is _precisely_ why I want to have the 'start' option to dmzadm.=0A=
-> That can read the metadata, validate it, and then generate the correct =
-=0A=
-> invocation for device-mapper.=0A=
-> _And_ we get a device-uuid to boot, as this can only be set from the ioct=
-l.=0A=
-=0A=
-OK. Got it. Done like this, it will also be easy to support the v1 metadata=
-.=0A=
-=0A=
-> =0A=
-> Cheers,=0A=
-> =0A=
-> Hannes=0A=
-> =0A=
-=0A=
-=0A=
--- =0A=
-Damien Le Moal=0A=
-Western Digital Research=0A=
+On Tue, 2020-03-24 at 16:03 -0500, Benjamin Marzinski wrote:
+> If dm_hold_control_open() isn't set, when dm_lib_release() is called,
+> it
+> will close the control fd. The control fd will get re-opened on the
+> next
+> dm_task_run() call, but if there is a dm_task_run() call already
+> in progress in another thread, it can fail. Since many of the
+> device-mapper callouts happen with the vecs lock held, this wasn't
+> too
+> noticeable, but there is code that calls dm_task_run() without the
+> vecs lock held, notably the dmevent waiter code.
+>=20
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>  libmultipath/devmapper.c | 1 +
+>  1 file changed, 1 insertion(+)
+>=20
+> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+> index bed8ddc6..d96472fe 100644
+> --- a/libmultipath/devmapper.c
+> +++ b/libmultipath/devmapper.c
+> @@ -254,6 +254,7 @@ void libmp_dm_init(void)
+>  =09memcpy(conf->version, version, sizeof(version));
+>  =09put_multipath_config(conf);
+>  =09dm_init(verbosity);
+> +=09dm_hold_control_dev(1);
+>  =09dm_udev_set_sync_support(libmp_dm_udev_sync);
+>  }
+
+AFAICS, this function has been in libdm since 1.02.111. We support
+1.02.89 (if all features enabled, otherwise even older). Perhaps we
+should make this function call conditional on the libdm verson?
+
+But perhaps more importantly, why do we still need to call
+dm_lib_release()? AFAICS it's only needed for systems that have no udev
+support for creating device nodes (to call update_devs() via
+dm_lib_release()), and we don't support that anymore anyway, do we?=20
+
+Since 26c4bb0, we're always setting the
+DM_UDEV_DISABLE_LIBRARY_FALLBACK flag, and the cookie, too
+(we aren't setting it for DM_DEVICE_RELOAD, but it isn't needed for
+that, either, since no device nodes need to be created or removed); so
+dm_lib_release() should really have no effect.
+
+Regards
+Martin
+
+--=20
+Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+SUSE  Software Solutions Germany GmbH
+HRB 36809, AG N=FCrnberg GF: Felix
+Imend=F6rffer
