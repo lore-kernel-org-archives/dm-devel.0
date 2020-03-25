@@ -1,83 +1,95 @@
-From: Sasha Levin <sashal@kernel.org>
-Subject: Re: [PATCH resend] dm zoned: remove duplicated
-	nr_rnd_zones increasement
-Date: Wed, 25 Mar 2020 01:01:56 +0000
-Message-ID: <20200325010157.62A0220719__40035.0518220634$1585124014$gmane$org@mail.kernel.org>
-References: <20200324132245.27843-1-bob.liu@oracle.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [RFC PATCH v2 3/3] dm zoned: add regular device info to metadata
+Date: Wed, 25 Mar 2020 09:45:04 +0100
+Message-ID: <6db63d3a-99e7-98f6-4b74-4a649d90d363@suse.de>
+References: <20200324110255.8385-1-bob.liu@oracle.com>
+ <20200324110255.8385-4-bob.liu@oracle.com>
+ <CO2PR04MB23438E0AB35CC46732F96085E7CE0@CO2PR04MB2343.namprd04.prod.outlook.com>
+ <812da9e9-cfd2-ea24-60cb-4af48f476079@suse.de>
+ <0e7c5043-4345-b052-7cec-a53cfea340f7@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200324132245.27843-1-bob.liu@oracle.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Sasha Levin <sashal@kernel.org>, Bob Liu <bob.liu@oracle.com>, dm-devel@redhat.com
-Cc: linux-block@vger.kernel.org, Damien.LeMoal@wdc.com, stable@vger.kernel.org
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <0e7c5043-4345-b052-7cec-a53cfea340f7@oracle.com>
+Content-Language: en-US
+Sender: linux-block-owner@vger.kernel.org
+To: Bob Liu <bob.liu@oracle.com>, Damien Le Moal <Damien.LeMoal@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Dmitry Fomichev <Dmitry.Fomichev@wdc.com>
 List-Id: dm-devel.ids
 
-Hi
+On 3/25/20 8:29 AM, Bob Liu wrote:
+> On 3/25/20 2:47 PM, Hannes Reinecke wrote:
+>> On 3/25/20 7:29 AM, Damien Le Moal wrote:
+>>> On 2020/03/24 20:04, Bob Liu wrote:
+>>>> This patch implemented metadata support for regular device by:
+>>>>    - Emulated zone information for regular device.
+>>>>    - Store metadata at the beginning of regular device.
+>>>>
+>>>>        | --- zoned device --- | -- regular device ||
+>>>>        ^                      ^
+>>>>        |                      |Metadata
+>>>> zone 0
+>>>>
+>>>> Signed-off-by: Bob Liu <bob.liu@oracle.com>
+>>>> ---
+>>>>    drivers/md/dm-zoned-metadata.c | 135 +++++++++++++++++++++++++++++++----------
+>>>>    drivers/md/dm-zoned-target.c   |   6 +-
+>>>>    drivers/md/dm-zoned.h          |   3 +-
+>>>>    3 files changed, 108 insertions(+), 36 deletions(-)
+>>>>
+>> Having thought about it some more, I think we cannot continue with this 'simple' approach.
+>> The immediate problem is that we lie about the disk size; clearly the
+>> metadata cannot be used for regular data, yet we expose a target device with the full size of the underlying device.
+> 
+> The exposed size is "regular dev size + zoned dev size - metadata size - reserved seq zone size".
+> I didn't see why there is a lie?
+> 
+The lie is in generating the device-mapper line for setting up the 
+target device.
+Format is
 
-[This is an automated email]
+0 <size> zoned <zoned-dev> <cache-dev>
 
-This commit has been processed because it contains a "Fixes:" tag
-fixing commit: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target").
+and <size> is the capacity of the resulting device-mapper device.
+So we should have adapted this to exclude the metadata size and the 
+reserved seq zone size (even with the original implementation); 
+'blksize' is certainly wrong here.
 
-The bot has tested the following trees: v5.5.11, v5.4.27, v4.19.112, v4.14.174.
+>> Making me wonder if anybody ever tested a disk-full scenario...
+>> The other problem is that with two devices we need to be able to stitch them together
+>> in an automated fashion, eg via a systemd service or udev rule.
+>> But for this we need to be able to identify the devices, which means both need to carry
+>> metadata, and both need to have unique identifier within the metadata. Which the current
+>> metadata doesn't allow to.
+>>
+>> Hence my plan is to implement a v2 metadata, carrying UUIDs for the dmz set _and_ the
+>> component device. With that we can update blkid to create links etc so that the devices
+>> can be identified in the system.
+>> Additionally I would be updating dmzadm to write the new metadata.
+>>
+>> And I will add a new command 'start' to dmzadm which will then create the device-mapper
+>> device _with the correct size_. It also has the benefit that we can create the device-mapper
+>> target with the UUID specified in the metadata, so the persistent device links will be
+>> created automatically.
+>>
+>> Bob, can you send me your improvements to dmzadm so that I can include them in my changes?
+>>
+> 
+> Attached, but it's a big patch I haven't split them to smaller one.
+> The dmz_check/repair can't work neither in current stage.
+> 
+Yeah, of course. Plan is to start with V2 metadata handling first anyway 
+(it adding UUIDs), then add the 'start' functionality, and only then 
+implement cache device handling.
 
-v5.5.11: Build OK!
-v5.4.27: Failed to apply! Possible dependencies:
-    5eac3eb30c9a ("block: Remove partition support for zoned block devices")
-    6c1b1da58f8c ("block: add zone open, close and finish operations")
-    7fc8fb51a143 ("null_blk: clean up report zones")
-    ad512f2023b3 ("scsi: sd_zbc: add zone open, close, and finish support")
-    c7a1d926dc40 ("block: Simplify REQ_OP_ZONE_RESET_ALL handling")
-    c98c3d09fca4 ("block: cleanup the !zoned case in blk_revalidate_disk_zones")
-    ceeb373aa6b9 ("block: Simplify report zones execution")
-    d41003513e61 ("block: rework zone reporting")
-    d9dd73087a8b ("block: Enhance blk_revalidate_disk_zones()")
-    dd85b4922de1 ("null_blk: return fixed zoned reads > write pointer")
-    e3f89564c557 ("null_blk: clean up the block device operations")
+Thanks for the patch.
 
-v4.19.112: Failed to apply! Possible dependencies:
-    515ce6061312 ("scsi: sd_zbc: Fix sd_zbc_report_zones() buffer allocation")
-    5f832a395859 ("scsi: sd_zbc: Fix sd_zbc_check_zones() error checks")
-    a2d6b3a2d390 ("block: Improve zone reset execution")
-    a91e138022bc ("block: Introduce blkdev_nr_zones() helper")
-    bd976e527259 ("block: Kill gfp_t argument of blkdev_report_zones()")
-    bf5054569653 ("block: Introduce blk_revalidate_disk_zones()")
-    d2e428e49eec ("scsi: sd_zbc: Reduce boot device scan and revalidate time")
-    d41003513e61 ("block: rework zone reporting")
-    e76239a3748c ("block: add a report_zones method")
+Cheers,
 
-v4.14.174: Failed to apply! Possible dependencies:
-    08e18eab0c57 ("block: add bi_blkg to the bio for cgroups")
-    30e5e929c7bf ("nvme: don't pass struct nvme_ns to nvme_config_discard")
-    5238dcf4136f ("block: replace bio->bi_issue_stat with bio-specific type")
-    53cfdc10a95d ("blk-throttle: fix null pointer dereference while throttling writeback IOs")
-    5d47c89f29ea ("dm: clear all discard attributes in queue_limits when discards are disabled")
-    8b904b5b6b58 ("block: Use blk_queue_flag_*() in drivers instead of queue_flag_*()")
-    a2d6b3a2d390 ("block: Improve zone reset execution")
-    b889bf66d001 ("blk-throttle: track read and write request individually")
-    bd976e527259 ("block: Kill gfp_t argument of blkdev_report_zones()")
-    bf5054569653 ("block: Introduce blk_revalidate_disk_zones()")
-    c8b5fd031a30 ("mmc: block: Factor out mmc_setup_queue()")
-    d41003513e61 ("block: rework zone reporting")
-    d70675121546 ("block: introduce blk-iolatency io controller")
-    e447a0151f7c ("zram: set BDI_CAP_STABLE_WRITES once")
-    ed754e5deeb1 ("nvme: track shared namespaces")
-
-
-NOTE: The patch will not be queued to stable trees until it is upstream.
-
-How should we proceed with this patch?
-
+Hannes
 -- 
-Thanks
-Sasha
+Dr. Hannes Reinecke            Teamlead Storage & Networking
+hare@suse.de                               +49 911 74053 688
+SUSE Software Solutions GmbH, Maxfeldstr. 5, 90409 Nürnberg
+HRB 36809 (AG Nürnberg), Geschäftsführer: Felix Imendörffer
