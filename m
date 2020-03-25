@@ -1,81 +1,71 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 3/3] libmultipath: allow force reload with no
-	active paths
-Date: Tue, 24 Mar 2020 16:03:54 -0500
-Message-ID: <1585083834-14237-3-git-send-email-bmarzins@redhat.com>
-References: <1585083834-14237-1-git-send-email-bmarzins@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1585083834-14237-1-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
+From: Sasha Levin <sashal@kernel.org>
+Subject: Re: [PATCH resend] dm zoned: remove duplicated nr_rnd_zones increasement
+Date: Wed, 25 Mar 2020 01:01:56 +0000
+Message-ID: <20200325010157.62A0220719@mail.kernel.org>
+References: <20200324132245.27843-1-bob.liu@oracle.com>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200324132245.27843-1-bob.liu@oracle.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Sasha Levin <sashal@kernel.org>, Bob Liu <bob.liu@oracle.com>, dm-devel@redhat.com
+Cc: Damien.LeMoal@wdc.com, linux-block@vger.kernel.org, stable@vger.kernel.orgstable@vger.kernel.org
 List-Id: dm-devel.ids
 
-If the partition information has changed on multipath devices (say,
-because it was updated on another node that has access to the same
-storage), users expect that running "multipathd reconfigure" will update
-that.  However, if the checkers for the multipath device are pending for
-too long when the the device is reconfigured, multipathd will give up
-waiting for them, and refuse to reload the device, since there are no
-active paths. This means that no kpartx update will be triggered.
+Hi
 
-Multipath is fully capable of reloading a multipath device that has no
-active paths. This has been possible for years. If multipath is supposed
-to reload the device, it should do so, even if there are no active paths.
+[This is an automated email]
 
-Generally, when multipath is force reloaded, kpartx will be updated.
-However when a device is reloaded with no paths, the udev rules won't
-run kpartx.  But they also weren't running kpartx when the first valid
-path appeared, even though the dm activation rules get run in this case.
-This changes 11-dm-mpath.rules to run kpartx when a device goes from no
-usable paths to having usable paths.
+This commit has been processed because it contains a "Fixes:" tag
+fixing commit: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target").
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/configure.c    | 6 ------
- multipath/11-dm-mpath.rules | 2 +-
- 2 files changed, 1 insertion(+), 7 deletions(-)
+The bot has tested the following trees: v5.5.11, v5.4.27, v4.19.112, v4.14.174.
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index c95848a0..96c79610 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -710,12 +710,6 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
- 		return;
- 	}
- 
--	if (pathcount(mpp, PATH_UP) == 0) {
--		mpp->action = ACT_IMPOSSIBLE;
--		condlog(3, "%s: set ACT_IMPOSSIBLE (no usable path)",
--			mpp->alias);
--		return;
--	}
- 	if (force_reload) {
- 		mpp->force_udev_reload = 1;
- 		mpp->action = ACT_RELOAD;
-diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
-index 07320a14..cd522e8c 100644
---- a/multipath/11-dm-mpath.rules
-+++ b/multipath/11-dm-mpath.rules
-@@ -75,7 +75,7 @@ ENV{MPATH_DEVICE_READY}=="0", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
- ENV{MPATH_DEVICE_READY}!="0", ENV{.MPATH_DEVICE_READY_OLD}=="0",\
- 	ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="$env{DM_DISABLE_OTHER_RULES_FLAG_OLD}",\
- 	ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}="",\
--	ENV{DM_ACTIVATION}="1"
-+	ENV{DM_ACTIVATION}="1", ENV{MPATH_UNCHANGED}="0"
- 
- # The code to check multipath state ends here. We need to set
- # properties and symlinks regardless whether the map is usable or
+v5.5.11: Build OK!
+v5.4.27: Failed to apply! Possible dependencies:
+    5eac3eb30c9a ("block: Remove partition support for zoned block devices")
+    6c1b1da58f8c ("block: add zone open, close and finish operations")
+    7fc8fb51a143 ("null_blk: clean up report zones")
+    ad512f2023b3 ("scsi: sd_zbc: add zone open, close, and finish support")
+    c7a1d926dc40 ("block: Simplify REQ_OP_ZONE_RESET_ALL handling")
+    c98c3d09fca4 ("block: cleanup the !zoned case in blk_revalidate_disk_zones")
+    ceeb373aa6b9 ("block: Simplify report zones execution")
+    d41003513e61 ("block: rework zone reporting")
+    d9dd73087a8b ("block: Enhance blk_revalidate_disk_zones()")
+    dd85b4922de1 ("null_blk: return fixed zoned reads > write pointer")
+    e3f89564c557 ("null_blk: clean up the block device operations")
+
+v4.19.112: Failed to apply! Possible dependencies:
+    515ce6061312 ("scsi: sd_zbc: Fix sd_zbc_report_zones() buffer allocation")
+    5f832a395859 ("scsi: sd_zbc: Fix sd_zbc_check_zones() error checks")
+    a2d6b3a2d390 ("block: Improve zone reset execution")
+    a91e138022bc ("block: Introduce blkdev_nr_zones() helper")
+    bd976e527259 ("block: Kill gfp_t argument of blkdev_report_zones()")
+    bf5054569653 ("block: Introduce blk_revalidate_disk_zones()")
+    d2e428e49eec ("scsi: sd_zbc: Reduce boot device scan and revalidate time")
+    d41003513e61 ("block: rework zone reporting")
+    e76239a3748c ("block: add a report_zones method")
+
+v4.14.174: Failed to apply! Possible dependencies:
+    08e18eab0c57 ("block: add bi_blkg to the bio for cgroups")
+    30e5e929c7bf ("nvme: don't pass struct nvme_ns to nvme_config_discard")
+    5238dcf4136f ("block: replace bio->bi_issue_stat with bio-specific type")
+    53cfdc10a95d ("blk-throttle: fix null pointer dereference while throttling writeback IOs")
+    5d47c89f29ea ("dm: clear all discard attributes in queue_limits when discards are disabled")
+    8b904b5b6b58 ("block: Use blk_queue_flag_*() in drivers instead of queue_flag_*()")
+    a2d6b3a2d390 ("block: Improve zone reset execution")
+    b889bf66d001 ("blk-throttle: track read and write request individually")
+    bd976e527259 ("block: Kill gfp_t argument of blkdev_report_zones()")
+    bf5054569653 ("block: Introduce blk_revalidate_disk_zones()")
+    c8b5fd031a30 ("mmc: block: Factor out mmc_setup_queue()")
+    d41003513e61 ("block: rework zone reporting")
+    d70675121546 ("block: introduce blk-iolatency io controller")
+    e447a0151f7c ("zram: set BDI_CAP_STABLE_WRITES once")
+    ed754e5deeb1 ("nvme: track shared namespaces")
+
+
+NOTE: The patch will not be queued to stable trees until it is upstream.
+
+How should we proceed with this patch?
+
 -- 
-2.17.2
+Thanks
+Sasha
