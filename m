@@ -1,68 +1,73 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 3/3] libmultipath: allow force reload with no
-	active paths
-Date: Wed, 25 Mar 2020 15:27:47 +0000
-Message-ID: <8cf9474c678b92663c1b7a64a9018d4c75abddff.camel@suse.com>
-References: <1585083834-14237-1-git-send-email-bmarzins@redhat.com>
-	<1585083834-14237-3-git-send-email-bmarzins@redhat.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [PATCH v7 0/6] block: Introduce REQ_ALLOCATE flag for
+ REQ_OP_WRITE_ZEROES
+Date: Wed, 25 Mar 2020 09:26:56 -0700
+Message-ID: <20200325162656.GJ29351@magnolia>
+References: <158157930219.111879.12072477040351921368.stgit@localhost.localdomain>
+ <e2b7cbab-d91f-fd7b-de6f-a671caa6f5eb@virtuozzo.com>
+ <69c0b8a4-656f-98c4-eb55-2fd1184f5fc9@virtuozzo.com>
+ <67d63190-c16f-cd26-6b67-641c8943dc3d@virtuozzo.com>
+ <20200319102819.GA26418@infradead.org>
+ <yq1tv2k8pjn.fsf@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1585083834-14237-3-git-send-email-bmarzins@redhat.com>
-Content-Language: en-US
-Content-ID: <A0A96F79F607864BB015B38E51493E70@namprd18.prod.outlook.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <yq1tv2k8pjn.fsf@oracle.com>
+Sender: linux-block-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Kirill Tkhai <ktkhai@virtuozzo.com>, axboe@kernel.dk, bob.liu@oracle.com, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, song@kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, Chaitanya.Kulkarni@wdc.com, ming.lei@redhat.com, osandov@fb.com, jthumshirn@suse.de, minwoo.im.dev@gmail.com, damien.lemoal@wdc.com, andrea.parri@amarulasolutions.com, hare@suse.com, tj@kernel.org, ajay.joshi@wdc.com, sagi@grimberg.me, dsterba@suse.com, bvanassche@acm.org, dhowells@redhat.com, asml.silence@gmail.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, 2020-03-24 at 16:03 -0500, Benjamin Marzinski wrote:
-> If the partition information has changed on multipath devices (say,
-> because it was updated on another node that has access to the same
-> storage), users expect that running "multipathd reconfigure" will
-> update
-> that.  However, if the checkers for the multipath device are pending
-> for
-> too long when the the device is reconfigured, multipathd will give up
-> waiting for them, and refuse to reload the device, since there are no
-> active paths. This means that no kpartx update will be triggered.
->=20
-> Multipath is fully capable of reloading a multipath device that has
-> no
-> active paths. This has been possible for years. If multipath is
-> supposed
-> to reload the device, it should do so, even if there are no active
-> paths.
->=20
-> Generally, when multipath is force reloaded, kpartx will be updated.
-> However when a device is reloaded with no paths, the udev rules won't
-> run kpartx.  But they also weren't running kpartx when the first
-> valid
-> path appeared, even though the dm activation rules get run in this
-> case.
-> This changes 11-dm-mpath.rules to run kpartx when a device goes from
-> no
-> usable paths to having usable paths.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  libmultipath/configure.c    | 6 ------
->  multipath/11-dm-mpath.rules | 2 +-
->  2 files changed, 1 insertion(+), 7 deletions(-)
+On Thu, Mar 19, 2020 at 09:03:40AM -0400, Martin K. Petersen wrote:
+> 
+> Christoph,
+> 
+> >> Some comments? Some requests for reworking? Some personal reasons to
+> >> ignore my patches?
+> >
+> > I'm still completely opposed to the magic overloading using a flag.
+> > That is just a bad design waiting for trouble to happen.
+> 
+> The observation was that Kirill's original patch set was a line-for-line
+> carbon copy of the write zeroes handling throughout the stack. The only
+> difference between the two was at the bottom. Instead of duplicating all
+> that code it seemed cleaner to use shared plumbing since these
+> operations need to be split and merged exactly the same way in the block
+> layer.
+> 
+> Also, we already have REQ_NOUNMAP, not sure why an additional handling
+> flag would lead to trouble? Note that I suggested renaming
+> REQ_OP_WRITE_ZEROES to something else to separate the semantics from the
+> plumbing.
+> 
+> We need to be able to express:
+> 
+>  - zero & allocate block range (REQ_OP_WRITE_ZEROES, REQ_NOUNMAP)
+>  - zero & deallocate block range (REQ_OP_WRITE_ZEROES, !REQ_NOUNMAP)
+>  - allocate block range (?, don't care about zeroing)
+>  - deallocate block range (REQ_OP_DISCARD, don't care about zeroing)
+> 
+> It just seems like a full-fledged REQ_OP_ALLOCATE is an overkill to fill
+> that gap.
+> 
+> That said, I do think that we have traditionally put emphasis on the
+> wrong part of these operations. All we ever talk about wrt. discard and
+> friends is the zeroing aspect. But I actually think that, semantically,
+> the act of allocating and deallocating blocks is more important. And
+> that zeroing is an optional second order effect of those operations. So
+> if we could go back in time and nuke multi-range DSM TRIM/UNMAP, I would
+> like to have REQ_OP_ALLOCATE/REQ_OP_DEALLOCATE with an optional REQ_ZERO
+> flag. I think that would be cleaner. I have a much easier time wrapping
+> my head around "allocate this block and zero it if you can" than "zero
+> this block and do not deallocate it". But maybe that's just me.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+I'd love to transition to that.  My brain is not good at following all
+the inverse logic that NOUNMAP spread everywhere.  I have a difficult
+time following what the blockdev fallocate code does, which is sad since
+hch and I are the primary stuckees^Wmeddlers^Wauthors of that function. :/
 
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+--D
+
+> -- 
+> Martin K. Petersen	Oracle Linux Engineering
