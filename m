@@ -1,11 +1,11 @@
 From: Sasha Levin <sashal@kernel.org>
 Subject: Re: [PATCH resend] dm zoned: remove duplicated nr_rnd_zones increasement
 Date: Wed, 25 Mar 2020 01:01:56 +0000
-Message-ID: <20200325010157.62A0220719@mail.kernel.org>
+Message-ID: <20200325010157.62A0220719__22637.5745771051$1585098125$gmane$org@mail.kernel.org>
 References: <20200324132245.27843-1-bob.liu@oracle.com>
-Return-path: <linux-block-owner@vger.kernel.org>
+Return-path: <stable-owner@vger.kernel.org>
 In-Reply-To: <20200324132245.27843-1-bob.liu@oracle.com>
-Sender: linux-block-owner@vger.kernel.org
+Sender: stable-owner@vger.kernel.org
 To: Sasha Levin <sashal@kernel.org>, Bob Liu <bob.liu@oracle.com>, dm-devel@redhat.com
 Cc: Damien.LeMoal@wdc.com, linux-block@vger.kernel.org, stable@vger.kernel.orgstable@vger.kernel.org
 List-Id: dm-devel.ids
