@@ -1,40 +1,86 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [PATCH v7 0/6] block: Introduce REQ_ALLOCATE flag for REQ_OP_WRITE_ZEROES
-Date: Wed, 25 Mar 2020 13:23:33 -0400
-Message-ID: <yq1d090jqlm.fsf@oracle.com>
-References: <158157930219.111879.12072477040351921368.stgit@localhost.localdomain>
-        <e2b7cbab-d91f-fd7b-de6f-a671caa6f5eb@virtuozzo.com>
-        <69c0b8a4-656f-98c4-eb55-2fd1184f5fc9@virtuozzo.com>
-        <67d63190-c16f-cd26-6b67-641c8943dc3d@virtuozzo.com>
-        <20200319102819.GA26418@infradead.org> <yq1tv2k8pjn.fsf@oracle.com>
-        <20200325162656.GJ29351@magnolia>
-        <20200325163223.GA27156@infradead.org>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 2/3] libmutipath: don't close fd on
+	dm_lib_release
+Date: Wed, 25 Mar 2020 15:52:55 -0500
+Message-ID: <20200325205255.GB17313@octiron.msp.redhat.com>
+References: <1585083834-14237-1-git-send-email-bmarzins@redhat.com>
+	<1585083834-14237-2-git-send-email-bmarzins@redhat.com>
+	<ebfcb22b005314635b77e4820e205971d708d07d.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200325163223.GA27156@infradead.org> (Christoph Hellwig's
-        message of "Wed, 25 Mar 2020 09:32:23 -0700")
-Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Kirill Tkhai <ktkhai@virtuozzo.com>, axboe@kernel.dk, bob.liu@oracle.com, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, song@kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, Chaitanya.Kulkarni@wdc.com, ming.lei@redhat.com, osandov@fb.com, jthumshirn@suse.de, minwoo.im.dev@gmail.com, damien.lemoal@wdc.com, andrea.parri@amarulasolutions.com, hare@suse.com, tj@kernel.org, ajay.joshi@wdc.com, sagi@grimberg.me, dsterba@suse.com, bvanassche@acm.org, dhowells@redhat.com, asml.silence@gmail.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <ebfcb22b005314635b77e4820e205971d708d07d.camel@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Martin Wilck <Martin.Wilck@suse.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On Wed, Mar 25, 2020 at 03:16:50PM +0000, Martin Wilck wrote:
+> On Tue, 2020-03-24 at 16:03 -0500, Benjamin Marzinski wrote:
+> > If dm_hold_control_open() isn't set, when dm_lib_release() is called,
+> > it
+> > will close the control fd. The control fd will get re-opened on the
+> > next
+> > dm_task_run() call, but if there is a dm_task_run() call already
+> > in progress in another thread, it can fail. Since many of the
+> > device-mapper callouts happen with the vecs lock held, this wasn't
+> > too
+> > noticeable, but there is code that calls dm_task_run() without the
+> > vecs lock held, notably the dmevent waiter code.
+> >=20
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  libmultipath/devmapper.c | 1 +
+> >  1 file changed, 1 insertion(+)
+> >=20
+> > diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+> > index bed8ddc6..d96472fe 100644
+> > --- a/libmultipath/devmapper.c
+> > +++ b/libmultipath/devmapper.c
+> > @@ -254,6 +254,7 @@ void libmp_dm_init(void)
+> >  =09memcpy(conf->version, version, sizeof(version));
+> >  =09put_multipath_config(conf);
+> >  =09dm_init(verbosity);
+> > +=09dm_hold_control_dev(1);
+> >  =09dm_udev_set_sync_support(libmp_dm_udev_sync);
+> >  }
+>=20
+> AFAICS, this function has been in libdm since 1.02.111. We support
+> 1.02.89 (if all features enabled, otherwise even older). Perhaps we
+> should make this function call conditional on the libdm verson?
+>=20
+> But perhaps more importantly, why do we still need to call
+> dm_lib_release()? AFAICS it's only needed for systems that have no udev
+> support for creating device nodes (to call update_devs() via
+> dm_lib_release()), and we don't support that anymore anyway, do we?=20
+>=20
+> Since 26c4bb0, we're always setting the
+> DM_UDEV_DISABLE_LIBRARY_FALLBACK flag, and the cookie, too
+> (we aren't setting it for DM_DEVICE_RELOAD, but it isn't needed for
+> that, either, since no device nodes need to be created or removed); so
+> dm_lib_release() should really have no effect.
+>=20
+> Regards
+> Martin
 
-Christoph,
+Good call. I'll redo this patch.
 
-> I am very much against that for the following reason:
->
->  - the current REQ_OP_DISCARD is purely a hint, and implementations can
->    (and do) choose to ignore it
->
->  - REQ_OP_WRITE_ZEROES is an actual data integrity operation with
->    everything that entails
+-Ben
 
-If you want to keep emphasis on the "integrity operation" instead of the
-provisioning aspect, would you expect REQ_ALLOCATE (which may or may not
-zero blocks) to be considered a deterministic operation or a
-non-deterministic one? Should this depend on whether the device
-guarantees zeroing when provisioning blocks or not?
-
--- 
-Martin K. Petersen	Oracle Linux Engineering
+>=20
+> --=20
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE  Software Solutions Germany GmbH
+> HRB 36809, AG N=FCrnberg GF: Felix
+> Imend=F6rffer
+>=20
