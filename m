@@ -1,17 +1,16 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 2/3] libmutipath: don't close fd on
-	dm_lib_release
-Date: Wed, 25 Mar 2020 15:16:50 +0000
-Message-ID: <ebfcb22b005314635b77e4820e205971d708d07d.camel@suse.com>
+Subject: Re: [PATCH 1/3] libmultipath: assign variable to make
+	gcc happy
+Date: Wed, 25 Mar 2020 15:22:08 +0000
+Message-ID: <1c843854bf71e0ddbf8f4b81e33276c05504e0cc.camel@suse.com>
 References: <1585083834-14237-1-git-send-email-bmarzins@redhat.com>
-	<1585083834-14237-2-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1585083834-14237-2-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1585083834-14237-1-git-send-email-bmarzins@redhat.com>
 Content-Language: en-US
-Content-ID: <80FDBD23751841418EAA875693D719CA@namprd18.prod.outlook.com>
+Content-ID: <E91DB4E9132D324ABBFC1D6009367806@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,55 +24,21 @@ To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 2020-03-24 at 16:03 -0500, Benjamin Marzinski wrote:
-> If dm_hold_control_open() isn't set, when dm_lib_release() is called,
-> it
-> will close the control fd. The control fd will get re-opened on the
-> next
-> dm_task_run() call, but if there is a dm_task_run() call already
-> in progress in another thread, it can fail. Since many of the
-> device-mapper callouts happen with the vecs lock held, this wasn't
-> too
-> noticeable, but there is code that calls dm_task_run() without the
-> vecs lock held, notably the dmevent waiter code.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  libmultipath/devmapper.c | 1 +
->  1 file changed, 1 insertion(+)
->=20
-> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-> index bed8ddc6..d96472fe 100644
-> --- a/libmultipath/devmapper.c
-> +++ b/libmultipath/devmapper.c
-> @@ -254,6 +254,7 @@ void libmp_dm_init(void)
->  =09memcpy(conf->version, version, sizeof(version));
->  =09put_multipath_config(conf);
->  =09dm_init(verbosity);
-> +=09dm_hold_control_dev(1);
->  =09dm_udev_set_sync_support(libmp_dm_udev_sync);
->  }
-
-AFAICS, this function has been in libdm since 1.02.111. We support
-1.02.89 (if all features enabled, otherwise even older). Perhaps we
-should make this function call conditional on the libdm verson?
-
-But perhaps more importantly, why do we still need to call
-dm_lib_release()? AFAICS it's only needed for systems that have no udev
-support for creating device nodes (to call update_devs() via
-dm_lib_release()), and we don't support that anymore anyway, do we?=20
-
-Since 26c4bb0, we're always setting the
-DM_UDEV_DISABLE_LIBRARY_FALLBACK flag, and the cookie, too
-(we aren't setting it for DM_DEVICE_RELOAD, but it isn't needed for
-that, either, since no device nodes need to be created or removed); so
-dm_lib_release() should really have no effect.
-
-Regards
-Martin
-
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+T24gVHVlLCAyMDIwLTAzLTI0IGF0IDE2OjAzIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gVGhlcmUgaXMgbm90aGluZyB3cm9uZyB3aXRoIGlzX3F1ZXVlaW5nIG5vdCBiZWluZyBz
+ZXQgYXQgdGhlIHN0YXJ0Cj4gb2YgX19zZXRfbm9fcGF0aF9yZXRyeSgpLCBpdCB3aWxsIGFsd2F5
+cyBnZXQgc2V0IGJlZm9yZSBpdCBpcwo+IGFjY2Vzc2VkLAo+IGJ1dCBnY2MgOC4yLjEgaXMgZmFp
+bGluZyB3aXRoCj4gCj4gc3RydWN0c192ZWMuYzogSW4gZnVuY3Rpb24g4oCYX19zZXRfbm9fcGF0
+aF9yZXRyeeKAmToKPiBzdHJ1Y3RzX3ZlYy5jOjMzOTo3OiBlcnJvcjog4oCYaXNfcXVldWVpbmfi
+gJkgbWF5IGJlIHVzZWQgdW5pbml0aWFsaXplZAo+IGluCj4gdGhpcyBmdW5jdGlvbiBbLVdlcnJv
+cj1tYXliZS11bmluaXRpYWxpemVkXQo+ICAgYm9vbCBpc19xdWV1ZWluZzsKPiAgICAgICAgXn5+
+fn5+fn5+fn4KPiAKPiBzbywgYXNzaWduIGEgdmFsdWUgdG8gbWFrZSBpdCBoYXBweS4KPiAKPiBT
+aWduZWQtb2ZmLWJ5OiBCZW5qYW1pbiBNYXJ6aW5za2kgPGJtYXJ6aW5zQHJlZGhhdC5jb20+Cj4g
+LS0tCj4gIGxpYm11bHRpcGF0aC9zdHJ1Y3RzX3ZlYy5jIHwgMiArLQo+ICAxIGZpbGUgY2hhbmdl
+ZCwgMSBpbnNlcnRpb24oKyksIDEgZGVsZXRpb24oLSkKClRoYXQgYWN0dWFsbHkgbG9va3MgbGlr
+ZSBhIGdjYyBidWcgdG8gbWUuIEFueXdheToKClJldmlld2VkLWJ5OiBNYXJ0aW4gV2lsY2sgPG13
+aWxja0BzdXNlLmRlPgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRl
+bC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgIFNvZnR3YXJlIFNvbHV0aW9ucyBHZXJtYW55
+IEdtYkgKSFJCIDM2ODA5LCBBRyBOw7xybmJlcmcgR0Y6IEZlbGl4CkltZW5kw7ZyZmZlcgoKCgot
+LQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5y
+ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
