@@ -1,18 +1,14 @@
-From: Martin Wilck <martin.wilck@suse.com>
-Subject: Re: [PATCH 2/3] libmutipath: don't close fd on
- dm_lib_release
-Date: Wed, 25 Mar 2020 23:11:00 +0100
-Message-ID: <cc2a180a52602e90c94eff1f2c725fd4b93c3927.camel@suse.com>
-References: <1585083834-14237-1-git-send-email-bmarzins@redhat.com>
-	<1585083834-14237-2-git-send-email-bmarzins@redhat.com>
-	<ebfcb22b005314635b77e4820e205971d708d07d.camel@suse.com>
-	<20200325205255.GB17313@octiron.msp.redhat.com>
-	<20200325220045.GC17313@octiron.msp.redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH v2 2/3] libmutipath: don't close fd on
+	dm_lib_release
+Date: Wed, 25 Mar 2020 23:22:47 -0500
+Message-ID: <1585196568-23714-2-git-send-email-bmarzins@redhat.com>
+References: <1585196568-23714-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200325220045.GC17313@octiron.msp.redhat.com>
+In-Reply-To: <1585196568-23714-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,58 +18,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-On Wed, 2020-03-25 at 17:00 -0500, Benjamin Marzinski wrote:
-> On Wed, Mar 25, 2020 at 03:52:55PM -0500, Benjamin Marzinski wrote:
-> > On Wed, Mar 25, 2020 at 03:16:50PM +0000, Martin Wilck wrote:
-> > > On Tue, 2020-03-24 at 16:03 -0500, Benjamin Marzinski wrote:
-> > >=20
-> > > AFAICS, this function has been in libdm since 1.02.111. We
-> > > support
-> > > 1.02.89 (if all features enabled, otherwise even older). Perhaps
-> > > we
-> > > should make this function call conditional on the libdm verson?
-> > >=20
-> > > But perhaps more importantly, why do we still need to call
-> > > dm_lib_release()? AFAICS it's only needed for systems that have
-> > > no udev
-> > > support for creating device nodes (to call update_devs() via
-> > > dm_lib_release()), and we don't support that anymore anyway, do
-> > > we?=20
-> > >=20
-> > > Since 26c4bb0, we're always setting the
-> > > DM_UDEV_DISABLE_LIBRARY_FALLBACK flag, and the cookie, too
-> > > (we aren't setting it for DM_DEVICE_RELOAD, but it isn't needed
-> > > for
-> > > that, either, since no device nodes need to be created or
-> > > removed); so
-> > > dm_lib_release() should really have no effect.
-> > >=20
-> > > Regards
-> > > Martin
-> >=20
-> > Good call. I'll redo this patch.
->=20
-> Actually, I've changed my mind. Calling dm_lib_release() lets us
-> release
-> the memory that device-mapper uses to store all the node ops that it
-> was saving up.  Without calling dm_lib_release(), AFAICS, that memory
-> keeps growing until the daemon exits.
+If dm_hold_control_open() isn't set, when dm_lib_release() is called, it
+will close the control fd. The control fd will get re-opened on the next
+dm_task_run() call, but if there is a dm_task_run() call already
+in progress in another thread, it can fail. Since many of the
+device-mapper callouts happen with the vecs lock held, this wasn't too
+noticeable, but there is code that calls dm_task_run() without the
+vecs lock held, notably the dmevent waiter code.
 
-Ok, I see. libdm stacks the node ops, even if it's told to rely on
-udev. The question is, what for, as it will discard the stacked nodes
-later on anyway.=20
+Since, as Martin pointed out, dm_hold_control_open() hasn't always
+existed in libdevmapper, check if it's supported on compilation,
+and update the version requirements if so.
 
-Fine, then. But please add a check for the libdm version.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/Makefile    | 4 ++++
+ libmultipath/devmapper.c | 7 ++++++-
+ 2 files changed, 10 insertions(+), 1 deletion(-)
 
-Thanks,
-Martin
-
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+index e5651e49..ad690a49 100644
+--- a/libmultipath/Makefile
++++ b/libmultipath/Makefile
+@@ -36,6 +36,10 @@ ifneq ($(call check_func,dm_task_deferred_remove,/usr/include/libdevmapper.h),0)
+ 	CFLAGS += -DLIBDM_API_DEFERRED
+ endif
+ 
++ifneq ($(call check_func,dm_hold_control_dev,/usr/include/libdevmapper.h),0)
++	CFLAGS += -DLIBDM_API_HOLD_CONTROL
++endif
++
+ OBJS = memory.o parser.o vector.o devmapper.o callout.o \
+ 	hwtable.o blacklist.o util.o dmparser.o config.o \
+ 	structs.o discovery.o propsel.o dict.o \
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index bed8ddc6..13a1cf53 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -108,7 +108,9 @@ dm_lib_prereq (void)
+ {
+ 	char version[64];
+ 	int v[3];
+-#if defined(LIBDM_API_DEFERRED)
++#if defined(LIBDM_API_HOLD_CONTROL)
++	int minv[3] = {1, 2, 111};
++#elif defined(LIBDM_API_DEFERRED)
+ 	int minv[3] = {1, 2, 89};
+ #elif defined(DM_SUBSYSTEM_UDEV_FLAG0)
+ 	int minv[3] = {1, 2, 82};
+@@ -254,6 +256,9 @@ void libmp_dm_init(void)
+ 	memcpy(conf->version, version, sizeof(version));
+ 	put_multipath_config(conf);
+ 	dm_init(verbosity);
++#ifdef LIBDM_API_HOLD_CONTROL
++	dm_hold_control_dev(1);
++#endif
+ 	dm_udev_set_sync_support(libmp_dm_udev_sync);
+ }
+ 
+-- 
+2.17.2
