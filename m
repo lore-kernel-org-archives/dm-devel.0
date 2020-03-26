@@ -1,14 +1,12 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 2/3] libmutipath: don't close fd on
-	dm_lib_release
-Date: Wed, 25 Mar 2020 23:22:47 -0500
-Message-ID: <1585196568-23714-2-git-send-email-bmarzins@redhat.com>
-References: <1585196568-23714-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 1/3] libmultipath: assign variable to make gcc
+	happy
+Date: Wed, 25 Mar 2020 23:22:46 -0500
+Message-ID: <1585196568-23714-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1585196568-23714-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,63 +20,25 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-If dm_hold_control_open() isn't set, when dm_lib_release() is called, it
-will close the control fd. The control fd will get re-opened on the next
-dm_task_run() call, but if there is a dm_task_run() call already
-in progress in another thread, it can fail. Since many of the
-device-mapper callouts happen with the vecs lock held, this wasn't too
-noticeable, but there is code that calls dm_task_run() without the
-vecs lock held, notably the dmevent waiter code.
-
-Since, as Martin pointed out, dm_hold_control_open() hasn't always
-existed in libdevmapper, check if it's supported on compilation,
-and update the version requirements if so.
-
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/Makefile    | 4 ++++
- libmultipath/devmapper.c | 7 ++++++-
- 2 files changed, 10 insertions(+), 1 deletion(-)
-
-diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-index e5651e49..ad690a49 100644
---- a/libmultipath/Makefile
-+++ b/libmultipath/Makefile
-@@ -36,6 +36,10 @@ ifneq ($(call check_func,dm_task_deferred_remove,/usr/include/libdevmapper.h),0)
- 	CFLAGS += -DLIBDM_API_DEFERRED
- endif
- 
-+ifneq ($(call check_func,dm_hold_control_dev,/usr/include/libdevmapper.h),0)
-+	CFLAGS += -DLIBDM_API_HOLD_CONTROL
-+endif
-+
- OBJS = memory.o parser.o vector.o devmapper.o callout.o \
- 	hwtable.o blacklist.o util.o dmparser.o config.o \
- 	structs.o discovery.o propsel.o dict.o \
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index bed8ddc6..13a1cf53 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -108,7 +108,9 @@ dm_lib_prereq (void)
- {
- 	char version[64];
- 	int v[3];
--#if defined(LIBDM_API_DEFERRED)
-+#if defined(LIBDM_API_HOLD_CONTROL)
-+	int minv[3] = {1, 2, 111};
-+#elif defined(LIBDM_API_DEFERRED)
- 	int minv[3] = {1, 2, 89};
- #elif defined(DM_SUBSYSTEM_UDEV_FLAG0)
- 	int minv[3] = {1, 2, 82};
-@@ -254,6 +256,9 @@ void libmp_dm_init(void)
- 	memcpy(conf->version, version, sizeof(version));
- 	put_multipath_config(conf);
- 	dm_init(verbosity);
-+#ifdef LIBDM_API_HOLD_CONTROL
-+	dm_hold_control_dev(1);
-+#endif
- 	dm_udev_set_sync_support(libmp_dm_udev_sync);
- }
- 
--- 
-2.17.2
+VGhlcmUgaXMgbm90aGluZyB3cm9uZyB3aXRoIGlzX3F1ZXVlaW5nIG5vdCBiZWluZyBzZXQgYXQg
+dGhlIHN0YXJ0Cm9mIF9fc2V0X25vX3BhdGhfcmV0cnkoKSwgaXQgd2lsbCBhbHdheXMgZ2V0IHNl
+dCBiZWZvcmUgaXQgaXMgYWNjZXNzZWQsCmJ1dCBnY2MgOC4yLjEgaXMgZmFpbGluZyB3aXRoCgpz
+dHJ1Y3RzX3ZlYy5jOiBJbiBmdW5jdGlvbiDigJhfX3NldF9ub19wYXRoX3JldHJ54oCZOgpzdHJ1
+Y3RzX3ZlYy5jOjMzOTo3OiBlcnJvcjog4oCYaXNfcXVldWVpbmfigJkgbWF5IGJlIHVzZWQgdW5p
+bml0aWFsaXplZCBpbgp0aGlzIGZ1bmN0aW9uIFstV2Vycm9yPW1heWJlLXVuaW5pdGlhbGl6ZWRd
+CiAgYm9vbCBpc19xdWV1ZWluZzsKICAgICAgIF5+fn5+fn5+fn5+CgpzbywgYXNzaWduIGEgdmFs
+dWUgdG8gbWFrZSBpdCBoYXBweS4KClJldmlld2VkLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0Bz
+dXNlLmNvbT4KU2lnbmVkLW9mZi1ieTogQmVuamFtaW4gTWFyemluc2tpIDxibWFyemluc0ByZWRo
+YXQuY29tPgotLS0KIGxpYm11bHRpcGF0aC9zdHJ1Y3RzX3ZlYy5jIHwgMiArLQogMSBmaWxlIGNo
+YW5nZWQsIDEgaW5zZXJ0aW9uKCspLCAxIGRlbGV0aW9uKC0pCgpkaWZmIC0tZ2l0IGEvbGlibXVs
+dGlwYXRoL3N0cnVjdHNfdmVjLmMgYi9saWJtdWx0aXBhdGgvc3RydWN0c192ZWMuYwppbmRleCAz
+ZGJiYWEwZi4uMDc3ZjJlNDIgMTAwNjQ0Ci0tLSBhL2xpYm11bHRpcGF0aC9zdHJ1Y3RzX3ZlYy5j
+CisrKyBiL2xpYm11bHRpcGF0aC9zdHJ1Y3RzX3ZlYy5jCkBAIC0zMzYsNyArMzM2LDcgQEAgc3Rh
+dGljIHZvaWQgbGVhdmVfcmVjb3ZlcnlfbW9kZShzdHJ1Y3QgbXVsdGlwYXRoICptcHApCiAKIHZv
+aWQgX19zZXRfbm9fcGF0aF9yZXRyeShzdHJ1Y3QgbXVsdGlwYXRoICptcHAsIGJvb2wgY2hlY2tf
+ZmVhdHVyZXMpCiB7Ci0JYm9vbCBpc19xdWV1ZWluZzsKKwlib29sIGlzX3F1ZXVlaW5nID0gZmFs
+c2U7IC8qIGFzc2lnbiBhIHZhbHVlIHRvIG1ha2UgZ2NjIGhhcHB5ICovCiAKIAljaGVja19mZWF0
+dXJlcyA9IGNoZWNrX2ZlYXR1cmVzICYmIG1wcC0+ZmVhdHVyZXMgIT0gTlVMTDsKIAlpZiAoY2hl
+Y2tfZmVhdHVyZXMpCi0tIAoyLjE3LjIKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZl
+bEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
+ZXZlbA==
