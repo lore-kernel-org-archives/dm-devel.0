@@ -1,52 +1,46 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH v2 2/3] libmutipath: don't close fd on
-	dm_lib_release
-Date: Thu, 26 Mar 2020 08:41:05 +0000
-Message-ID: <6b99731ed6f7cc983e1f12a6b679bb4be1f1ea05.camel@suse.com>
-References: <1585196568-23714-1-git-send-email-bmarzins@redhat.com>
-	<1585196568-23714-2-git-send-email-bmarzins@redhat.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH v7 0/6] block: Introduce REQ_ALLOCATE flag for
+ REQ_OP_WRITE_ZEROES
+Date: Thu, 26 Mar 2020 02:29:35 -0700
+Message-ID: <20200326092935.GA6478@infradead.org>
+References: <158157930219.111879.12072477040351921368.stgit@localhost.localdomain>
+ <e2b7cbab-d91f-fd7b-de6f-a671caa6f5eb@virtuozzo.com>
+ <69c0b8a4-656f-98c4-eb55-2fd1184f5fc9@virtuozzo.com>
+ <67d63190-c16f-cd26-6b67-641c8943dc3d@virtuozzo.com>
+ <20200319102819.GA26418@infradead.org>
+ <yq1tv2k8pjn.fsf@oracle.com>
+ <20200325162656.GJ29351@magnolia>
+ <20200325163223.GA27156@infradead.org>
+ <yq1d090jqlm.fsf@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1585196568-23714-2-git-send-email-bmarzins@redhat.com>
-Content-Language: en-US
-Content-ID: <3954F07A9C65BC46A08A0A4034F74910@namprd18.prod.outlook.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <yq1d090jqlm.fsf@oracle.com>
+Sender: linux-block-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Christoph Hellwig <hch@infradead.org>, "Darrick J. Wong" <darrick.wong@oracle.com>, Kirill Tkhai <ktkhai@virtuozzo.com>, axboe@kernel.dk, bob.liu@oracle.com, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, song@kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, Chaitanya.Kulkarni@wdc.com, ming.lei@redhat.com, osandov@fb.com, jthumshirn@suse.de, minwoo.im.dev@gmail.com, damien.lemoal@wdc.com, andrea.parri@amarulasolutions.com, hare@suse.com, tj@kernel.org, ajay.joshi@wdc.com, sagi@grimberg.me, dsterba@suse.com, bvanassche@acm.org, dhowells@redhat.com, asml.silence@gmail.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, 2020-03-25 at 23:22 -0500, Benjamin Marzinski wrote:
-> If dm_hold_control_open() isn't set, when dm_lib_release() is called,
-> it
-> will close the control fd. The control fd will get re-opened on the
-> next
-> dm_task_run() call, but if there is a dm_task_run() call already
-> in progress in another thread, it can fail. Since many of the
-> device-mapper callouts happen with the vecs lock held, this wasn't
-> too
-> noticeable, but there is code that calls dm_task_run() without the
-> vecs lock held, notably the dmevent waiter code.
->=20
-> Since, as Martin pointed out, dm_hold_control_open() hasn't always
-> existed in libdevmapper, check if it's supported on compilation,
-> and update the version requirements if so.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+On Wed, Mar 25, 2020 at 01:23:33PM -0400, Martin K. Petersen wrote:
+> 
+> Christoph,
+> 
+> > I am very much against that for the following reason:
+> >
+> >  - the current REQ_OP_DISCARD is purely a hint, and implementations can
+> >    (and do) choose to ignore it
+> >
+> >  - REQ_OP_WRITE_ZEROES is an actual data integrity operation with
+> >    everything that entails
+> 
+> If you want to keep emphasis on the "integrity operation" instead of the
+> provisioning aspect, would you expect REQ_ALLOCATE (which may or may not
+> zero blocks) to be considered a deterministic operation or a
+> non-deterministic one? Should this depend on whether the device
+> guarantees zeroing when provisioning blocks or not?
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
-
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+That's why I don't like the whole flags game very much.  I'd rather
+have REQ_OP_WRITE_ZEROES as the integrity operation that gurantees
+zeroing, and a REQ_ALLOCATE that doesn't guarantee zeroing, just some
+deterministic state of the blocks.
