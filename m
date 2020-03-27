@@ -1,8 +1,8 @@
 From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: [PATCH 3/4] dm clone: Add missing casts to prevent
-	overflows and data corruption
-Date: Fri, 27 Mar 2020 16:01:10 +0200
-Message-ID: <20200327140111.7798-4-ntsironis@arrikto.com>
+Subject: [PATCH 2/4] dm clone: Add overflow check for number of
+	regions
+Date: Fri, 27 Mar 2020 16:01:09 +0200
+Message-ID: <20200327140111.7798-3-ntsironis@arrikto.com>
 References: <20200327140111.7798-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,58 +22,53 @@ To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
 Cc: ntsironis@arrikto.com
 List-Id: dm-devel.ids
 
-Add missing casts when converting from regions to sectors.
+Add overflow check for clone->nr_regions variable, which holds the
+number of regions of the target.
 
-In case BITS_PER_LONG == 32, the lack of the appropriate casts can lead
-to overflows and miscalculation of the device sector.
+The overflow can occur with sufficiently large devices, if BITS_PER_LONG
+== 32. E.g., if the region size is 8 sectors (4K), the overflow would
+occur for device sizes > 34359738360 sectors (~16TB).
 
-As a result, we could end up discarding and/or copying the wrong parts
-of the device, thus corrupting the device's data.
+This could result in multiple device sectors wrongly mapping to the same
+region number, due to the truncation from 64 bits to 32 bits, which
+would lead to data corruption.
 
 Fixes: 7431b7835f55 ("dm: add clone target")
 Cc: stable@vger.kernel.org # v5.4+
 Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
 ---
- drivers/md/dm-clone-target.c | 9 ++++++---
- 1 file changed, 6 insertions(+), 3 deletions(-)
+ drivers/md/dm-clone-target.c | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-clone-target.c b/drivers/md/dm-clone-target.c
-index 6ee85fb3388a..ca5020c58f7c 100644
+index 022dddcad647..6ee85fb3388a 100644
 --- a/drivers/md/dm-clone-target.c
 +++ b/drivers/md/dm-clone-target.c
-@@ -282,7 +282,7 @@ static bool bio_triggers_commit(struct clone *clone, struct bio *bio)
- /* Get the address of the region in sectors */
- static inline sector_t region_to_sector(struct clone *clone, unsigned long region_nr)
+@@ -1790,6 +1790,7 @@ static int copy_ctr_args(struct clone *clone, int argc, const char **argv, char
+ static int clone_ctr(struct dm_target *ti, unsigned int argc, char **argv)
  {
--	return (region_nr << clone->region_shift);
-+	return ((sector_t)region_nr << clone->region_shift);
- }
+ 	int r;
++	sector_t nr_regions;
+ 	struct clone *clone;
+ 	struct dm_arg_set as;
  
- /* Get the region number of the bio */
-@@ -471,7 +471,7 @@ static void complete_discard_bio(struct clone *clone, struct bio *bio, bool succ
- 	if (test_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags) && success) {
- 		remap_to_dest(clone, bio);
- 		bio_region_range(clone, bio, &rs, &nr_regions);
--		trim_bio(bio, rs << clone->region_shift,
-+		trim_bio(bio, region_to_sector(clone, rs),
- 			 nr_regions << clone->region_shift);
- 		generic_make_request(bio);
- 	} else
-@@ -804,11 +804,14 @@ static void hydration_copy(struct dm_clone_region_hydration *hd, unsigned int nr
- 	struct dm_io_region from, to;
- 	struct clone *clone = hd->clone;
+@@ -1831,7 +1832,16 @@ static int clone_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto out_with_source_dev;
  
-+	if (WARN_ON(!nr_regions))
-+		return;
+ 	clone->region_shift = __ffs(clone->region_size);
+-	clone->nr_regions = dm_sector_div_up(ti->len, clone->region_size);
++	nr_regions = dm_sector_div_up(ti->len, clone->region_size);
 +
- 	region_size = clone->region_size;
- 	region_start = hd->region_nr;
- 	region_end = region_start + nr_regions - 1;
++	/* Check for overflow */
++	if (nr_regions != (unsigned long)nr_regions) {
++		ti->error = "Too many regions. Consider increasing the region size";
++		r = -EOVERFLOW;
++		goto out_with_source_dev;
++	}
++
++	clone->nr_regions = nr_regions;
  
--	total_size = (nr_regions - 1) << clone->region_shift;
-+	total_size = region_to_sector(clone, nr_regions - 1);
- 
- 	if (region_end == clone->nr_regions - 1) {
- 		/*
+ 	r = validate_nr_regions(clone->nr_regions, &ti->error);
+ 	if (r)
 -- 
 2.11.0
