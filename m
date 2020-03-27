@@ -1,8 +1,8 @@
 From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: [PATCH 2/4] dm clone: Add overflow check for number of
-	regions
-Date: Fri, 27 Mar 2020 16:01:09 +0200
-Message-ID: <20200327140111.7798-3-ntsironis@arrikto.com>
+Subject: [PATCH 4/4] dm clone metadata: Fix return type of
+	dm_clone_nr_of_hydrated_regions()
+Date: Fri, 27 Mar 2020 16:01:11 +0200
+Message-ID: <20200327140111.7798-5-ntsironis@arrikto.com>
 References: <20200327140111.7798-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,53 +22,68 @@ To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
 Cc: ntsironis@arrikto.com
 List-Id: dm-devel.ids
 
-Add overflow check for clone->nr_regions variable, which holds the
-number of regions of the target.
+dm_clone_nr_of_hydrated_regions() returns the number of regions that
+have been hydrated so far. In order to do so it employs bitmap_weight().
 
-The overflow can occur with sufficiently large devices, if BITS_PER_LONG
-== 32. E.g., if the region size is 8 sectors (4K), the overflow would
-occur for device sizes > 34359738360 sectors (~16TB).
+Until now, the return type of dm_clone_nr_of_hydrated_regions() was
+unsigned long.
 
-This could result in multiple device sectors wrongly mapping to the same
-region number, due to the truncation from 64 bits to 32 bits, which
-would lead to data corruption.
+Because bitmap_weight() returns an int, in case BITS_PER_LONG == 64 and
+the return value of bitmap_weight() is 2^31 (the maximum allowed number
+of regions for a device), the result is sign extended from 32 bits to 64
+bits and an incorrect value is displayed, in the status output of
+dm-clone, as the number of hydrated regions.
+
+Fix this by having dm_clone_nr_of_hydrated_regions() return an unsigned
+int.
 
 Fixes: 7431b7835f55 ("dm: add clone target")
 Cc: stable@vger.kernel.org # v5.4+
 Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
 ---
- drivers/md/dm-clone-target.c | 12 +++++++++++-
- 1 file changed, 11 insertions(+), 1 deletion(-)
+ drivers/md/dm-clone-metadata.c | 2 +-
+ drivers/md/dm-clone-metadata.h | 2 +-
+ drivers/md/dm-clone-target.c   | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
 
+diff --git a/drivers/md/dm-clone-metadata.c b/drivers/md/dm-clone-metadata.c
+index 199e7af00858..17712456fa63 100644
+--- a/drivers/md/dm-clone-metadata.c
++++ b/drivers/md/dm-clone-metadata.c
+@@ -656,7 +656,7 @@ bool dm_clone_is_range_hydrated(struct dm_clone_metadata *cmd,
+ 	return (bit >= (start + nr_regions));
+ }
+ 
+-unsigned long dm_clone_nr_of_hydrated_regions(struct dm_clone_metadata *cmd)
++unsigned int dm_clone_nr_of_hydrated_regions(struct dm_clone_metadata *cmd)
+ {
+ 	return bitmap_weight(cmd->region_map, cmd->nr_regions);
+ }
+diff --git a/drivers/md/dm-clone-metadata.h b/drivers/md/dm-clone-metadata.h
+index 14af1ebd853f..d848b8799c07 100644
+--- a/drivers/md/dm-clone-metadata.h
++++ b/drivers/md/dm-clone-metadata.h
+@@ -156,7 +156,7 @@ bool dm_clone_is_range_hydrated(struct dm_clone_metadata *cmd,
+ /*
+  * Returns the number of hydrated regions.
+  */
+-unsigned long dm_clone_nr_of_hydrated_regions(struct dm_clone_metadata *cmd);
++unsigned int dm_clone_nr_of_hydrated_regions(struct dm_clone_metadata *cmd);
+ 
+ /*
+  * Returns the first unhydrated region with region_nr >= @start
 diff --git a/drivers/md/dm-clone-target.c b/drivers/md/dm-clone-target.c
-index 022dddcad647..6ee85fb3388a 100644
+index ca5020c58f7c..5ce96ddf1ce1 100644
 --- a/drivers/md/dm-clone-target.c
 +++ b/drivers/md/dm-clone-target.c
-@@ -1790,6 +1790,7 @@ static int copy_ctr_args(struct clone *clone, int argc, const char **argv, char
- static int clone_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- {
- 	int r;
-+	sector_t nr_regions;
- 	struct clone *clone;
- 	struct dm_arg_set as;
+@@ -1473,7 +1473,7 @@ static void clone_status(struct dm_target *ti, status_type_t type,
+ 			goto error;
+ 		}
  
-@@ -1831,7 +1832,16 @@ static int clone_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		goto out_with_source_dev;
- 
- 	clone->region_shift = __ffs(clone->region_size);
--	clone->nr_regions = dm_sector_div_up(ti->len, clone->region_size);
-+	nr_regions = dm_sector_div_up(ti->len, clone->region_size);
-+
-+	/* Check for overflow */
-+	if (nr_regions != (unsigned long)nr_regions) {
-+		ti->error = "Too many regions. Consider increasing the region size";
-+		r = -EOVERFLOW;
-+		goto out_with_source_dev;
-+	}
-+
-+	clone->nr_regions = nr_regions;
- 
- 	r = validate_nr_regions(clone->nr_regions, &ti->error);
- 	if (r)
+-		DMEMIT("%u %llu/%llu %llu %lu/%lu %u ",
++		DMEMIT("%u %llu/%llu %llu %u/%lu %u ",
+ 		       DM_CLONE_METADATA_BLOCK_SIZE,
+ 		       (unsigned long long)(nr_metadata_blocks - nr_free_metadata_blocks),
+ 		       (unsigned long long)nr_metadata_blocks,
 -- 
 2.11.0
