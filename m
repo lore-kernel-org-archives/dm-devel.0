@@ -1,12 +1,14 @@
 From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: [PATCH 0/4] dm clone: Fix discard handling and overflow
-	bugs which could cause data corruption
-Date: Fri, 27 Mar 2020 16:01:07 +0200
-Message-ID: <20200327140111.7798-1-ntsironis@arrikto.com>
+Subject: [PATCH 3/4] dm clone: Add missing casts to prevent
+	overflows and data corruption
+Date: Fri, 27 Mar 2020 16:01:10 +0200
+Message-ID: <20200327140111.7798-4-ntsironis@arrikto.com>
+References: <20200327140111.7798-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200327140111.7798-1-ntsironis@arrikto.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,45 +22,58 @@ To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
 Cc: ntsironis@arrikto.com
 List-Id: dm-devel.ids
 
-There is a bug in the way dm-clone handles partial region discards,
-which can lead to discarding the wrong blocks or trying to discard
-blocks beyond the end of the device.
+Add missing casts when converting from regions to sectors.
 
-This could lead to data corruption, if the destination device indeed
-discards the underlying blocks, i.e., if the discard operation results
-in the original contents of a block to be lost.
+In case BITS_PER_LONG == 32, the lack of the appropriate casts can lead
+to overflows and miscalculation of the device sector.
 
-The bug manifests when we try to discard part of a single region, i.e.,
-when we try to discard a block with size < region_size, and the discard
-request both starts at an offset with respect to the beginning of that
-region and ends before the end of the region.
+As a result, we could end up discarding and/or copying the wrong parts
+of the device, thus corrupting the device's data.
 
-The root of the bug is the code that calculates the range of regions
-covered by a discard request and decides which regions to discard.
+Fixes: 7431b7835f55 ("dm: add clone target")
+Cc: stable@vger.kernel.org # v5.4+
+Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
+---
+ drivers/md/dm-clone-target.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
 
-For more information, please see the relevant commit.
-
-As part of fixing this bug, I also audited dm-clone for other
-arithmetic/overflow related bugs and found the following:
-
-1. Missing overflow check for the total number of regions
-2. Missing casts when converting from regions to sectors
-3. Wrong return type of dm_clone_nr_of_hydrated_regions(), which caused
-   an unwanted sign extension to occur.
-
-Again, more information can be found in the relevant commits.
-
-Nikos Tsironis (4):
-  dm clone: Fix handling of partial region discards
-  dm clone: Add overflow check for number of regions
-  dm clone: Add missing casts to prevent overflows and data corruption
-  dm clone metadata: Fix return type of
-    dm_clone_nr_of_hydrated_regions()
-
- drivers/md/dm-clone-metadata.c | 15 +++++++++-
- drivers/md/dm-clone-metadata.h |  2 +-
- drivers/md/dm-clone-target.c   | 66 ++++++++++++++++++++++++++++++------------
- 3 files changed, 62 insertions(+), 21 deletions(-)
-
+diff --git a/drivers/md/dm-clone-target.c b/drivers/md/dm-clone-target.c
+index 6ee85fb3388a..ca5020c58f7c 100644
+--- a/drivers/md/dm-clone-target.c
++++ b/drivers/md/dm-clone-target.c
+@@ -282,7 +282,7 @@ static bool bio_triggers_commit(struct clone *clone, struct bio *bio)
+ /* Get the address of the region in sectors */
+ static inline sector_t region_to_sector(struct clone *clone, unsigned long region_nr)
+ {
+-	return (region_nr << clone->region_shift);
++	return ((sector_t)region_nr << clone->region_shift);
+ }
+ 
+ /* Get the region number of the bio */
+@@ -471,7 +471,7 @@ static void complete_discard_bio(struct clone *clone, struct bio *bio, bool succ
+ 	if (test_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags) && success) {
+ 		remap_to_dest(clone, bio);
+ 		bio_region_range(clone, bio, &rs, &nr_regions);
+-		trim_bio(bio, rs << clone->region_shift,
++		trim_bio(bio, region_to_sector(clone, rs),
+ 			 nr_regions << clone->region_shift);
+ 		generic_make_request(bio);
+ 	} else
+@@ -804,11 +804,14 @@ static void hydration_copy(struct dm_clone_region_hydration *hd, unsigned int nr
+ 	struct dm_io_region from, to;
+ 	struct clone *clone = hd->clone;
+ 
++	if (WARN_ON(!nr_regions))
++		return;
++
+ 	region_size = clone->region_size;
+ 	region_start = hd->region_nr;
+ 	region_end = region_start + nr_regions - 1;
+ 
+-	total_size = (nr_regions - 1) << clone->region_shift;
++	total_size = region_to_sector(clone, nr_regions - 1);
+ 
+ 	if (region_end == clone->nr_regions - 1) {
+ 		/*
 -- 
 2.11.0
