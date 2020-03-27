@@ -1,8 +1,8 @@
 From: Nikos Tsironis <ntsironis@arrikto.com>
-Subject: [PATCH 4/4] dm clone metadata: Fix return type of
-	dm_clone_nr_of_hydrated_regions()
-Date: Fri, 27 Mar 2020 16:01:11 +0200
-Message-ID: <20200327140111.7798-5-ntsironis@arrikto.com>
+Subject: [PATCH 1/4] dm clone: Fix handling of partial region
+	discards
+Date: Fri, 27 Mar 2020 16:01:08 +0200
+Message-ID: <20200327140111.7798-2-ntsironis@arrikto.com>
 References: <20200327140111.7798-1-ntsironis@arrikto.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,68 +22,197 @@ To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
 Cc: ntsironis@arrikto.com
 List-Id: dm-devel.ids
 
-dm_clone_nr_of_hydrated_regions() returns the number of regions that
-have been hydrated so far. In order to do so it employs bitmap_weight().
+There is a bug in the way dm-clone handles discards, which can lead to
+discarding the wrong blocks or trying to discard blocks beyond the end
+of the device.
 
-Until now, the return type of dm_clone_nr_of_hydrated_regions() was
-unsigned long.
+This could lead to data corruption, if the destination device indeed
+discards the underlying blocks, i.e., if the discard operation results
+in the original contents of a block to be lost.
 
-Because bitmap_weight() returns an int, in case BITS_PER_LONG == 64 and
-the return value of bitmap_weight() is 2^31 (the maximum allowed number
-of regions for a device), the result is sign extended from 32 bits to 64
-bits and an incorrect value is displayed, in the status output of
-dm-clone, as the number of hydrated regions.
+The root of the problem is the code that calculates the range of regions
+covered by a discard request and decides which regions to discard.
 
-Fix this by having dm_clone_nr_of_hydrated_regions() return an unsigned
-int.
+Since dm-clone handles the device in units of regions, we don't discard
+parts of a region, only whole regions.
+
+The range is calculated as:
+
+    rs = dm_sector_div_up(bio->bi_iter.bi_sector, clone->region_size);
+    re = bio_end_sector(bio) >> clone->region_shift;
+
+, where 'rs' is the first region to discard and (re - rs) is the number
+of regions to discard.
+
+The bug manifests when we try to discard part of a single region, i.e.,
+when we try to discard a block with size < region_size, and the discard
+request both starts at an offset with respect to the beginning of that
+region and ends before the end of the region.
+
+The root cause is the following comparison:
+
+  if (rs == re)
+    // skip discard and complete original bio immediately
+
+, which doesn't take into account that 'rs' might be greater than 're'.
+
+Thus, we then issue a discard request for the wrong blocks, instead of
+skipping the discard all together.
+
+Fix the check to also take into account the above case, so we don't end
+up discarding the wrong blocks.
+
+Also, add some range checks to dm_clone_set_region_hydrated() and
+dm_clone_cond_set_range(), which update dm-clone's region bitmap.
+
+Note that the aforementioned bug doesn't cause invalid memory accesses,
+because dm_clone_is_range_hydrated() returns True for this case, so the
+checks are just precautionary.
 
 Fixes: 7431b7835f55 ("dm: add clone target")
 Cc: stable@vger.kernel.org # v5.4+
 Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
 ---
- drivers/md/dm-clone-metadata.c | 2 +-
- drivers/md/dm-clone-metadata.h | 2 +-
- drivers/md/dm-clone-target.c   | 2 +-
- 3 files changed, 3 insertions(+), 3 deletions(-)
+ drivers/md/dm-clone-metadata.c | 13 +++++++++++++
+ drivers/md/dm-clone-target.c   | 43 ++++++++++++++++++++++++++++--------------
+ 2 files changed, 42 insertions(+), 14 deletions(-)
 
 diff --git a/drivers/md/dm-clone-metadata.c b/drivers/md/dm-clone-metadata.c
-index 199e7af00858..17712456fa63 100644
+index c05b12110456..199e7af00858 100644
 --- a/drivers/md/dm-clone-metadata.c
 +++ b/drivers/md/dm-clone-metadata.c
-@@ -656,7 +656,7 @@ bool dm_clone_is_range_hydrated(struct dm_clone_metadata *cmd,
- 	return (bit >= (start + nr_regions));
- }
+@@ -850,6 +850,12 @@ int dm_clone_set_region_hydrated(struct dm_clone_metadata *cmd, unsigned long re
+ 	struct dirty_map *dmap;
+ 	unsigned long word, flags;
  
--unsigned long dm_clone_nr_of_hydrated_regions(struct dm_clone_metadata *cmd)
-+unsigned int dm_clone_nr_of_hydrated_regions(struct dm_clone_metadata *cmd)
- {
- 	return bitmap_weight(cmd->region_map, cmd->nr_regions);
- }
-diff --git a/drivers/md/dm-clone-metadata.h b/drivers/md/dm-clone-metadata.h
-index 14af1ebd853f..d848b8799c07 100644
---- a/drivers/md/dm-clone-metadata.h
-+++ b/drivers/md/dm-clone-metadata.h
-@@ -156,7 +156,7 @@ bool dm_clone_is_range_hydrated(struct dm_clone_metadata *cmd,
- /*
-  * Returns the number of hydrated regions.
-  */
--unsigned long dm_clone_nr_of_hydrated_regions(struct dm_clone_metadata *cmd);
-+unsigned int dm_clone_nr_of_hydrated_regions(struct dm_clone_metadata *cmd);
++	if (unlikely(region_nr >= cmd->nr_regions)) {
++		DMERR("Region %lu out of range (total number of regions %lu)",
++		      region_nr, cmd->nr_regions);
++		return -ERANGE;
++	}
++
+ 	word = region_nr / BITS_PER_LONG;
  
- /*
-  * Returns the first unhydrated region with region_nr >= @start
+ 	spin_lock_irqsave(&cmd->bitmap_lock, flags);
+@@ -879,6 +885,13 @@ int dm_clone_cond_set_range(struct dm_clone_metadata *cmd, unsigned long start,
+ 	struct dirty_map *dmap;
+ 	unsigned long word, region_nr;
+ 
++	if (unlikely(start >= cmd->nr_regions || (start + nr_regions) < start ||
++		     (start + nr_regions) > cmd->nr_regions)) {
++		DMERR("Invalid region range: start %lu, nr_regions %lu (total number of regions %lu)",
++		      start, nr_regions, cmd->nr_regions);
++		return -ERANGE;
++	}
++
+ 	spin_lock_irq(&cmd->bitmap_lock);
+ 
+ 	if (cmd->read_only) {
 diff --git a/drivers/md/dm-clone-target.c b/drivers/md/dm-clone-target.c
-index ca5020c58f7c..5ce96ddf1ce1 100644
+index d1e1b5b56b1b..022dddcad647 100644
 --- a/drivers/md/dm-clone-target.c
 +++ b/drivers/md/dm-clone-target.c
-@@ -1473,7 +1473,7 @@ static void clone_status(struct dm_target *ti, status_type_t type,
- 			goto error;
- 		}
+@@ -293,10 +293,17 @@ static inline unsigned long bio_to_region(struct clone *clone, struct bio *bio)
  
--		DMEMIT("%u %llu/%llu %llu %lu/%lu %u ",
-+		DMEMIT("%u %llu/%llu %llu %u/%lu %u ",
- 		       DM_CLONE_METADATA_BLOCK_SIZE,
- 		       (unsigned long long)(nr_metadata_blocks - nr_free_metadata_blocks),
- 		       (unsigned long long)nr_metadata_blocks,
+ /* Get the region range covered by the bio */
+ static void bio_region_range(struct clone *clone, struct bio *bio,
+-			     unsigned long *rs, unsigned long *re)
++			     unsigned long *rs, unsigned long *nr_regions)
+ {
++	unsigned long end;
++
+ 	*rs = dm_sector_div_up(bio->bi_iter.bi_sector, clone->region_size);
+-	*re = bio_end_sector(bio) >> clone->region_shift;
++	end = bio_end_sector(bio) >> clone->region_shift;
++
++	if (*rs >= end)
++		*nr_regions = 0;
++	else
++		*nr_regions = end - *rs;
+ }
+ 
+ /* Check whether a bio overwrites a region */
+@@ -454,7 +461,7 @@ static void trim_bio(struct bio *bio, sector_t sector, unsigned int len)
+ 
+ static void complete_discard_bio(struct clone *clone, struct bio *bio, bool success)
+ {
+-	unsigned long rs, re;
++	unsigned long rs, nr_regions;
+ 
+ 	/*
+ 	 * If the destination device supports discards, remap and trim the
+@@ -463,9 +470,9 @@ static void complete_discard_bio(struct clone *clone, struct bio *bio, bool succ
+ 	 */
+ 	if (test_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags) && success) {
+ 		remap_to_dest(clone, bio);
+-		bio_region_range(clone, bio, &rs, &re);
++		bio_region_range(clone, bio, &rs, &nr_regions);
+ 		trim_bio(bio, rs << clone->region_shift,
+-			 (re - rs) << clone->region_shift);
++			 nr_regions << clone->region_shift);
+ 		generic_make_request(bio);
+ 	} else
+ 		bio_endio(bio);
+@@ -473,12 +480,21 @@ static void complete_discard_bio(struct clone *clone, struct bio *bio, bool succ
+ 
+ static void process_discard_bio(struct clone *clone, struct bio *bio)
+ {
+-	unsigned long rs, re;
++	unsigned long rs, nr_regions;
+ 
+-	bio_region_range(clone, bio, &rs, &re);
+-	BUG_ON(re > clone->nr_regions);
++	bio_region_range(clone, bio, &rs, &nr_regions);
++	if (!nr_regions) {
++		bio_endio(bio);
++		return;
++	}
+ 
+-	if (unlikely(rs == re)) {
++	if (WARN_ON(rs >= clone->nr_regions || (rs + nr_regions) < rs ||
++		    (rs + nr_regions) > clone->nr_regions)) {
++		DMERR("%s: Invalid range (%lu + %lu, total regions %lu) for discard (%llu + %u)",
++		      clone_device_name(clone), rs, nr_regions,
++		      clone->nr_regions,
++		      (unsigned long long)bio->bi_iter.bi_sector,
++		      bio_sectors(bio));
+ 		bio_endio(bio);
+ 		return;
+ 	}
+@@ -487,7 +503,7 @@ static void process_discard_bio(struct clone *clone, struct bio *bio)
+ 	 * The covered regions are already hydrated so we just need to pass
+ 	 * down the discard.
+ 	 */
+-	if (dm_clone_is_range_hydrated(clone->cmd, rs, re - rs)) {
++	if (dm_clone_is_range_hydrated(clone->cmd, rs, nr_regions)) {
+ 		complete_discard_bio(clone, bio, true);
+ 		return;
+ 	}
+@@ -1169,7 +1185,7 @@ static void process_deferred_discards(struct clone *clone)
+ 	int r = -EPERM;
+ 	struct bio *bio;
+ 	struct blk_plug plug;
+-	unsigned long rs, re;
++	unsigned long rs, nr_regions;
+ 	struct bio_list discards = BIO_EMPTY_LIST;
+ 
+ 	spin_lock_irq(&clone->lock);
+@@ -1185,14 +1201,13 @@ static void process_deferred_discards(struct clone *clone)
+ 
+ 	/* Update the metadata */
+ 	bio_list_for_each(bio, &discards) {
+-		bio_region_range(clone, bio, &rs, &re);
++		bio_region_range(clone, bio, &rs, &nr_regions);
+ 		/*
+ 		 * A discard request might cover regions that have been already
+ 		 * hydrated. There is no need to update the metadata for these
+ 		 * regions.
+ 		 */
+-		r = dm_clone_cond_set_range(clone->cmd, rs, re - rs);
+-
++		r = dm_clone_cond_set_range(clone->cmd, rs, nr_regions);
+ 		if (unlikely(r))
+ 			break;
+ 	}
 -- 
 2.11.0
