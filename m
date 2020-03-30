@@ -1,12 +1,14 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] memcpy_flushcache: use cache flusing for larger
-	lengths
-Date: Sun, 29 Mar 2020 16:28:36 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2003291625590.32108@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH v2] memcpy_flushcache: use cache flusing for
+	larger lengths
+Date: Mon, 30 Mar 2020 07:32:20 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2003300729320.9938@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2003291625590.32108@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.2003291625590.32108@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,6 +21,18 @@ Errors-To: dm-devel-bounces@redhat.com
 To: Dan Williams <dan.j.williams@intel.com>, Vishal Verma <vishal.l.verma@intel.com>, Dave Jiang <dave.jiang@intel.com>, Ira Weiny <ira.weiny@intel.com>, Mike Snitzer <msnitzer@redhat.com>
 Cc: dm-devel@redhat.com, linux-nvdimm@lists.01.org
 List-Id: dm-devel.ids
+
+This is the second version of the patch - it adds a test for 
+boot_cpu_data.x86_clflush_size. There may be CPUs with different cache 
+line size and we don't want to run the 64-byte aligned loop on them.
+
+Mikulas
+
+
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+
+memcpy_flushcache: use cache flusing for larger lengths
 
 I tested dm-writecache performance on a machine with Optane nvdimm and it
 turned out that for larger writes, cached stores + cache flushing perform
@@ -48,12 +62,12 @@ Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Index: linux-2.6/arch/x86/lib/usercopy_64.c
 ===================================================================
 --- linux-2.6.orig/arch/x86/lib/usercopy_64.c	2020-03-24 15:15:36.644945091 -0400
-+++ linux-2.6/arch/x86/lib/usercopy_64.c	2020-03-29 13:16:49.937011736 -0400
++++ linux-2.6/arch/x86/lib/usercopy_64.c	2020-03-30 07:17:51.450290007 -0400
 @@ -152,6 +152,42 @@ void __memcpy_flushcache(void *_dst, con
  			return;
  	}
  
-+	if (static_cpu_has(X86_FEATURE_CLFLUSHOPT) && size >= 768) {
++	if (static_cpu_has(X86_FEATURE_CLFLUSHOPT) && size >= 768 && likely(boot_cpu_data.x86_clflush_size == 64)) {
 +		while (!IS_ALIGNED(dest, 64)) {
 +			asm("movq    (%0), %%r8\n"
 +			    "movnti  %%r8,   (%1)\n"
