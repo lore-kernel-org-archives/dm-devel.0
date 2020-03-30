@@ -1,14 +1,13 @@
 From: "Bruggeman, Otto (external - Partner)" <otto.bruggeman@sap.com>
 Subject: Re: Optane nvdimm performance
-Date: Mon, 30 Mar 2020 15:42:52 +0000
-Message-ID: <AM0PR02MB38422D6FEBB0D5FB3D23167A9BCB0@AM0PR02MB3842.eurprd02.prod.outlook.com>
+Date: Mon, 30 Mar 2020 12:37:48 +0000
+Message-ID: <AM0PR02MB3842ACBE359003CFBF32B6C59BCB0@AM0PR02MB3842.eurprd02.prod.outlook.com>
 References: <alpine.LRH.2.02.2003291116490.9236@file01.intranet.prod.int.rdu2.redhat.com>
-	<AM0PR02MB3842ACBE359003CFBF32B6C59BCB0@AM0PR02MB3842.eurprd02.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <AM0PR02MB3842ACBE359003CFBF32B6C59BCB0@AM0PR02MB3842.eurprd02.prod.outlook.com>
+In-Reply-To: <alpine.LRH.2.02.2003291116490.9236@file01.intranet.prod.int.rdu2.redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,19 +18,10 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Bruggeman, Otto (external - Partner)" <otto.bruggeman@sap.com>, Mikulas
-	Patocka <mpatocka@redhat.com>, Dan Williams <dan.j.williams@intel.com>, Vishal Verma <vishal.l.verma@intel.com>, Dave Jiang <dave.jiang@intel.com>, Ira Weiny <ira.weiny@intel.com>, Mike Snitzer <msnitzer@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>, Dan Williams <dan.j.williams@intel.com>, Vishal Verma <vishal.l.verma@intel.com>, Dave
+	Jiang <dave.jiang@intel.com>, Ira Weiny <ira.weiny@intel.com>, Mike Snitzer <msnitzer@redhat.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>
 List-Id: dm-devel.ids
-
-My apologies, I meant to forward this mail and managed to press the wrong button...
-
------Original Message-----
-From: Bruggeman, Otto (external - Partner) <otto.bruggeman@sap.com> 
-Sent: Monday, March 30, 2020 2:38 PM
-To: Mikulas Patocka <mpatocka@redhat.com>; Dan Williams <dan.j.williams@intel.com>; Vishal Verma <vishal.l.verma@intel.com>; Dave Jiang <dave.jiang@intel.com>; Ira Weiny <ira.weiny@intel.com>; Mike Snitzer <msnitzer@redhat.com>
-Cc: linux-nvdimm@lists.01.org; dm-devel@redhat.com
-Subject: [CAUTION] RE: Optane nvdimm performance
 
 FYI Mal sehen was da an antworten kommen...
 
@@ -101,9 +91,6 @@ clflushopt for transfers larger than 768 bytes.
 
 
 Mikulas
-_______________________________________________
-Linux-nvdimm mailing list -- linux-nvdimm@lists.01.org
-To unsubscribe send an email to linux-nvdimm-leave@lists.01.org
 _______________________________________________
 Linux-nvdimm mailing list -- linux-nvdimm@lists.01.org
 To unsubscribe send an email to linux-nvdimm-leave@lists.01.org
