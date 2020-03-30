@@ -1,16 +1,14 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH 4/4] dm-zoned: allow for device size smaller
- than the capacity
-Date: Thu, 2 Apr 2020 02:45:00 +0000
-Message-ID: <CO2PR04MB2343CFAF3E68FC7D53CFFC00E7C60@CO2PR04MB2343.namprd04.prod.outlook.com>
-References: <20200327071459.67796-1-hare@suse.de>
-	<20200327071459.67796-5-hare@suse.de>
-	<CO2PR04MB2343240ACAC524067A074813E7C80@CO2PR04MB2343.namprd04.prod.outlook.com>
-	<3167d430-9987-150b-363d-dfce119a04b8@suse.de>
+From: "Bruggeman, Otto (external - Partner)" <otto.bruggeman@sap.com>
+Subject: Re: Optane nvdimm performance
+Date: Mon, 30 Mar 2020 15:42:52 +0000
+Message-ID: <AM0PR02MB38422D6FEBB0D5FB3D23167A9BCB0@AM0PR02MB3842.eurprd02.prod.outlook.com>
+References: <alpine.LRH.2.02.2003291116490.9236@file01.intranet.prod.int.rdu2.redhat.com>
+	<AM0PR02MB3842ACBE359003CFBF32B6C59BCB0@AM0PR02MB3842.eurprd02.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <AM0PR02MB3842ACBE359003CFBF32B6C59BCB0@AM0PR02MB3842.eurprd02.prod.outlook.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -21,111 +19,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
-Cc: Bob Liu <bob.liu@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: "Bruggeman, Otto (external - Partner)" <otto.bruggeman@sap.com>, Mikulas
+	Patocka <mpatocka@redhat.com>, Dan Williams <dan.j.williams@intel.com>, Vishal Verma <vishal.l.verma@intel.com>, Dave Jiang <dave.jiang@intel.com>, Ira Weiny <ira.weiny@intel.com>, Mike Snitzer <msnitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>
 List-Id: dm-devel.ids
 
-On 2020/03/31 17:53, Hannes Reinecke wrote:
-> On 3/31/20 2:49 AM, Damien Le Moal wrote:
->> On 2020/03/27 16:15, Hannes Reinecke wrote:
->>> dm-zoned requires several zones for metadata and chunk bitmaps,
->>> so it cannot expose the entire capacity as the device size.
->>> Originally the code would check for the capacity being equal to
->>> the device size, which is arguably wrong.
->>> So relax this check and increase the interface version number
->>> to signal to userspace that it can set a smaller device size.
->>>
->>> Signed-off-by: Hannes Reinecke <hare@suse.de>
->>> ---
->>>   drivers/md/dm-zoned-target.c | 4 ++--
->>>   1 file changed, 2 insertions(+), 2 deletions(-)
->>>
->>> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
->>> index 7ec9dde24516..89a825d1034e 100644
->>> --- a/drivers/md/dm-zoned-target.c
->>> +++ b/drivers/md/dm-zoned-target.c
->>> @@ -715,7 +715,7 @@ static int dmz_get_zoned_device(struct dm_target *ti, char *path)
->>>   	aligned_capacity = dev->capacity &
->>>   				~((sector_t)blk_queue_zone_sectors(q) - 1);
->>>   	if (ti->begin ||
->>> -	    ((ti->len != dev->capacity) && (ti->len != aligned_capacity))) {
->>> +	    ((ti->len > dev->capacity) && (ti->len > aligned_capacity))) {
->>>   		ti->error = "Partial mapping not supported";
->>
->> The message is now wrong. Also, the condition can now be simplified to:
->>
->> if ((ti->begin + ti->len) > aligned_capacity) {
->>
->> Since aligned capacity is equal or smaller than dev capacity. And we have to
->> account for the potential non-zero begin.
->>
-> _Actually_ I would forbid for 'ti->begin' to be anything other than 0.
-> For a zoned device there is no point in allowing for partial handling at 
-> all.
-> Problem is that 'dev->capacity' is the capacity of the zoned block 
-> device, whereas 'ti-len' is the exported capacity of the device-mapper 
-> device, which is smaller than the device capacity by the number of 
-> metadata blocks/zones.
+My apologies, I meant to forward this mail and managed to press the wrong button...
 
-OK. Got it. I misunderstood that. Sounds good to me.
+-----Original Message-----
+From: Bruggeman, Otto (external - Partner) <otto.bruggeman@sap.com> 
+Sent: Monday, March 30, 2020 2:38 PM
+To: Mikulas Patocka <mpatocka@redhat.com>; Dan Williams <dan.j.williams@intel.com>; Vishal Verma <vishal.l.verma@intel.com>; Dave Jiang <dave.jiang@intel.com>; Ira Weiny <ira.weiny@intel.com>; Mike Snitzer <msnitzer@redhat.com>
+Cc: linux-nvdimm@lists.01.org; dm-devel@redhat.com
+Subject: [CAUTION] RE: Optane nvdimm performance
 
-> 
->>>   		ret = -EINVAL;
->>>   		goto err;
->>> @@ -1008,7 +1008,7 @@ static int dmz_message(struct dm_target *ti, unsigned int argc, char **argv,
->>>   
->>>   static struct target_type dmz_type = {
->>>   	.name		 = "zoned",
->>> -	.version	 = {1, 2, 0},
->>> +	.version	 = {1, 3, 0},
->>>   	.features	 = DM_TARGET_SINGLETON | DM_TARGET_ZONED_HM,
->>>   	.module		 = THIS_MODULE,
->>>   	.ctr		 = dmz_ctr,
->>>
->>
->> I do not think this is nearly enough: dmz_init_zones() is still considering the
->> entire drive and does a zone report from 0 on the backend bdev. It should start
->> at ti->begin and up to ti->begin+ti->len, no ?
->>
-> Yes, and no. I want to disallow 'ti->begin' to be anything else than 0 
-> as ti->begin and ti->len are relative to exported device-mapper device, 
-> and we always want to have block 0 mapped :-)
-> 
-> And as such dmz_init_zones() needs to cover all zones, as this is 
-> relative to the zoned block device.
+FYI Mal sehen was da an antworten kommen...
 
-Yes. Which is already the case since we need to see the metatdata and reserved
-zones too. Makes sense.
+-----Original Message-----
+From: Mikulas Patocka <mpatocka@redhat.com> 
+Sent: Sunday, March 29, 2020 10:26 PM
+To: Dan Williams <dan.j.williams@intel.com>; Vishal Verma <vishal.l.verma@intel.com>; Dave Jiang <dave.jiang@intel.com>; Ira Weiny <ira.weiny@intel.com>; Mike Snitzer <msnitzer@redhat.com>
+Cc: linux-nvdimm@lists.01.org; dm-devel@redhat.com
+Subject: Optane nvdimm performance
 
-> 
->> Furthermore, this introduce a change in the meaning of the zone ID. Since this
->> is set to the index of the zone in the report (patch 1), if the mapping is
->> partial and the zone report does not start at 0, then zone ID is not zone number
->> on the device anymore. So dmz_start_block() needs to be offset by ti->begin
->> otherwise IOs will go to the wrong zones.
->>
-> As I said: We will never do a partial mapping.
-> What this patch does it to bring the device-mapper mapping in-line with 
-> the exported device size.
+Hi
 
-Got it !
+I performed some microbenchmarks on a system with real Optane-based nvdimm 
+and I found out that the fastest method how to write to persistent memory 
+is to fill a cacheline with 8 8-byte writes and then issue clwb or 
+clflushopt on the cacheline. With this method, we can achieve 1.6 GB/s 
+throughput for linear writes. On the other hand, non-temporal writes 
+achieve only 1.3 GB/s.
 
-> Originally we would export a device-mapper mapping for blocks up to the 
-> zone-device capacity. As the resulting device-mapper block device has a 
-> smaller capacity than the mapping would allow for those 'spare' blocks 
-> would never been used, thus the invalid mapping was never triggered.
-> 
-> What this patch does is to bring the device-mapper mapping in-line with 
-> the exported block device capacity, so that we don't have an invalid 
-> mapping. Nothing else has (and should) be changed.
-> 
-> Especially not the partial zoned device handling :-)
+The results are here:
+http://people.redhat.com/~mpatocka/testcases/pmem/microbenchmarks/pmem.txt
 
-OK. Thanks for doing that ! I  totally missed these points when I wrote the
-mapper :)
+The benchmarks here:
+http://people.redhat.com/~mpatocka/testcases/pmem/microbenchmarks/
 
-Cheers.
+The winning benchmark is this:
+http://people.redhat.com/~mpatocka/testcases/pmem/microbenchmarks/thrp-write-8-clwb.c
 
--- 
-Damien Le Moal
-Western Digital Research
+
+However, the kernel is not using this fastest method, it is using 
+non-temporal stores instead.
+
+
+I took the novafs filesystem (see git clone 
+https://github.com/NVSL/linux-nova), it uses 
+__copy_from_user_inatomic_nocache, which calls __copy_user_nocache which 
+performs non-temporal stores. I hacked __copy_user_nocache to use clwb 
+instead of non-temporal stores and it improved filesystem performance 
+significantly.
+
+This is the patch
+http://people.redhat.com/~mpatocka/testcases/pmem/benchmarks/copy-nocache.patch 
+(for the kernel 5.1 because novafs needs this version) and these are 
+benchmark results:
+http://people.redhat.com/~mpatocka/testcases/pmem/benchmarks/fs-bench.txt
+
+- you can see that "test2" has twice the write throughput of "test1"
+
+
+I took the dm-writecache driver, it uses memcpy_flushcache to write data 
+to persistent memory. I hacked memcpy_flushcache to use clwb instead of 
+non-temporal stores.
+
+The result is - for 512-byte writes, non-temporal stores perform better 
+than cache flushing. For 1024-byte and larger writes, cache flushing 
+performs better than non-temporal stores. (I also tried to use cached 
+writes + clwb for dm-writecache metadata updates, but it had bad 
+performance)
+
+
+Do you have some explanation why nontemporal stores are better for 
+512-byte copies and worse for 1024-byte copies? (like filling up some 
+buffers inside the CPU)?
+
+In the next email, I'm sending a patch that makes memcpy_flushcache use 
+clflushopt for transfers larger than 768 bytes.
+
+
+Mikulas
+_______________________________________________
+Linux-nvdimm mailing list -- linux-nvdimm@lists.01.org
+To unsubscribe send an email to linux-nvdimm-leave@lists.01.org
+_______________________________________________
+Linux-nvdimm mailing list -- linux-nvdimm@lists.01.org
+To unsubscribe send an email to linux-nvdimm-leave@lists.01.org
