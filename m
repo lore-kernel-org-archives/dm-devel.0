@@ -1,11 +1,14 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [RFC Patch 0/3] multipath: new path validation library
-Date: Mon, 30 Mar 2020 21:00:52 -0500
-Message-ID: <1585620055-27112-1-git-send-email-bmarzins@redhat.com>
+Subject: [RFC Patch 2/3] libmultipath: make sysfs_is_multipathed
+	able to return wwid
+Date: Mon, 30 Mar 2020 21:00:54 -0500
+Message-ID: <1585620055-27112-3-git-send-email-bmarzins@redhat.com>
+References: <1585620055-27112-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1585620055-27112-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,55 +22,93 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-This patchset is for a new library that programs can use to determine
-if a device belongs to multipath.  The primary user that this is
-intended for is SID, the Storage Instantiation Daemon
+sysfs_is_multipathed reads the wwid of the dm device holding a path to
+check if its a multipath device.  Add code to optinally set pp->wwid to
+that wwid.  This will be used by a future patch.
 
-https://github.com/sid-project
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/sysfs.c | 22 +++++++++++++++++++---
+ libmultipath/sysfs.h |  2 +-
+ multipath/main.c     |  7 ++++---
+ 3 files changed, 24 insertions(+), 7 deletions(-)
 
-Right now, this doesn't change our existing code to determine path
-ownership, and it doesn't do the exact same steps, although it is very
-close.  In the future, it would be possible to pull most of this code
-entirely into libmultipath, except for some wrappers, and use it for
-both methods.  Obviously, this still needs man pages, and there are some
-helper functions for things like controlling multipath's logging that
-are missing, but I want to see if anyone has strong feelings about what
-this looks like.
-
-I also have two more changes that I want to make to the multipath code,
-to make path validation do less unnecessary work, which aren't in this
-patchset.
-
-1. I want to remove the lock file from the failed wwids code. I don't
-see how it actually stops any races, and it means that simply reading
-a file, can trigger delays and writes (albeit to a memory base fs).
-
-2. I want to deprecate getuid_callout.  Once this is gone, you will be
-able to call pathinfo and get a path's WWID, without ever needing to
-open the path.
-
-Benjamin Marzinski (3):
-  libmultipath: make libmp_dm_init optional
-  libmultipath: make sysfs_is_multipathed able to return wwid
-  multipath: add libmpathvalid library
-
- Makefile                            |   1 +
- Makefile.inc                        |   1 +
- libmpathvalid/Makefile              |  38 +++++++
- libmpathvalid/libmpathvalid.version |   6 +
- libmpathvalid/mpath_valid.c         | 171 ++++++++++++++++++++++++++++
- libmpathvalid/mpath_valid.h         |  53 +++++++++
- libmultipath/Makefile               |   1 +
- libmultipath/devmapper.c            |  66 ++++++++++-
- libmultipath/devmapper.h            |   4 +-
- libmultipath/sysfs.c                |  22 +++-
- libmultipath/sysfs.h                |   2 +-
- multipath/main.c                    |   7 +-
- 12 files changed, 360 insertions(+), 12 deletions(-)
- create mode 100644 libmpathvalid/Makefile
- create mode 100644 libmpathvalid/libmpathvalid.version
- create mode 100644 libmpathvalid/mpath_valid.c
- create mode 100644 libmpathvalid/mpath_valid.h
-
+diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+index 62ec2ed7..034f082f 100644
+--- a/libmultipath/sysfs.c
++++ b/libmultipath/sysfs.c
+@@ -295,7 +295,7 @@ static int select_dm_devs(const struct dirent *di)
+ 	return fnmatch("dm-*", di->d_name, FNM_FILE_NAME) == 0;
+ }
+ 
+-bool sysfs_is_multipathed(const struct path *pp)
++bool sysfs_is_multipathed(struct path *pp, bool set_wwid)
+ {
+ 	char pathbuf[PATH_MAX];
+ 	struct scandir_result sr;
+@@ -342,9 +342,25 @@ bool sysfs_is_multipathed(const struct path *pp)
+ 		if (nr == sizeof(uuid) && !memcmp(uuid, "mpath-", sizeof(uuid)))
+ 			found = true;
+ 		else if (nr < 0) {
+-			condlog(1, "%s: error reading from %s: %s",
+-				__func__, pathbuf, strerror(errno));
++			condlog(1, "%s: error reading from %s: %m",
++				__func__, pathbuf);
+ 		}
++		if (found && set_wwid) {
++			nr = read(fd, pp->wwid, WWID_SIZE);
++			if (nr < 0) {
++				condlog(1, "%s: error reading from %s: %m",
++					__func__, pathbuf);
++				pp->wwid[0] = '\0';
++			} else if (nr == WWID_SIZE) {
++				condlog(4, "%s: overflow while reading from %s",
++					__func__, pathbuf);
++				pp->wwid[0] = '\0';
++			} else {
++				pp->wwid[nr] = '\0';
++				strchop(pp->wwid);
++			}
++                }
++
+ 		pthread_cleanup_pop(1);
+ 	}
+ 	pthread_cleanup_pop(1);
+diff --git a/libmultipath/sysfs.h b/libmultipath/sysfs.h
+index 9ae30b39..72b39ab2 100644
+--- a/libmultipath/sysfs.h
++++ b/libmultipath/sysfs.h
+@@ -14,5 +14,5 @@ ssize_t sysfs_bin_attr_get_value(struct udev_device *dev, const char *attr_name,
+ 				 unsigned char * value, size_t value_len);
+ int sysfs_get_size (struct path *pp, unsigned long long * size);
+ int sysfs_check_holders(char * check_devt, char * new_devt);
+-bool sysfs_is_multipathed(const struct path *pp);
++bool sysfs_is_multipathed(struct path *pp, bool set_wwid);
+ #endif
+diff --git a/multipath/main.c b/multipath/main.c
+index cf9d2a28..545ead87 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -638,7 +638,8 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 			 * Shortcut for find_multipaths smart:
+ 			 * Quick check if path is already multipathed.
+ 			 */
+-			if (sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0))) {
++			if (sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0),
++						 false)) {
+ 				r = RTVL_YES;
+ 				goto print_valid;
+ 			}
+@@ -747,8 +748,8 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 			/*
+ 			 * Check if we raced with multipathd
+ 			 */
+-			r = sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0)) ?
+-				RTVL_YES : RTVL_NO;
++			r = sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0),
++						 false) ? RTVL_YES : RTVL_NO;
+ 		}
+ 		goto print_valid;
+ 	}
 -- 
 2.17.2
