@@ -1,9 +1,10 @@
 From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH] dm-zoned: add 'status' and 'message'
-	callbacks
-Date: Tue, 31 Mar 2020 00:31:09 +0000
-Message-ID: <CO2PR04MB23437D3AB9358726A7E858E5E7C80@CO2PR04MB2343.namprd04.prod.outlook.com>
-References: <20200327070849.67694-1-hare@suse.de>
+Subject: Re: [PATCH 4/4] dm-zoned: allow for device size smaller
+ than the capacity
+Date: Tue, 31 Mar 2020 00:49:25 +0000
+Message-ID: <CO2PR04MB2343240ACAC524067A074813E7C80@CO2PR04MB2343.namprd04.prod.outlook.com>
+References: <20200327071459.67796-1-hare@suse.de>
+	<20200327071459.67796-5-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,137 +20,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Bob Liu <bob.liu@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2020/03/27 16:09, Hannes Reinecke wrote:
-> Add callbacks to supply information for 'dmsetup status'
-> and 'dmsetup info', and implement the message 'reclaim'
-> to start the reclaim worker.
+On 2020/03/27 16:15, Hannes Reinecke wrote:
+> dm-zoned requires several zones for metadata and chunk bitmaps,
+> so it cannot expose the entire capacity as the device size.
+> Originally the code would check for the capacity being equal to
+> the device size, which is arguably wrong.
+> So relax this check and increase the interface version number
+> to signal to userspace that it can set a smaller device size.
 > 
 > Signed-off-by: Hannes Reinecke <hare@suse.de>
-
-Looks good.
-
-Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
-
 > ---
->  drivers/md/dm-zoned-metadata.c | 15 +++++++++++++++
->  drivers/md/dm-zoned-target.c   | 43 ++++++++++++++++++++++++++++++++++++++++++
->  drivers/md/dm-zoned.h          |  3 +++
->  3 files changed, 61 insertions(+)
+>  drivers/md/dm-zoned-target.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
 > 
-> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-> index 516c7b671d25..6c456b9165db 100644
-> --- a/drivers/md/dm-zoned-metadata.c
-> +++ b/drivers/md/dm-zoned-metadata.c
-> @@ -202,6 +202,11 @@ sector_t dmz_start_block(struct dmz_metadata *zmd, struct dm_zone *zone)
->  	return (sector_t)dmz_id(zmd, zone) << zmd->dev->zone_nr_blocks_shift;
->  }
->  
-> +unsigned int dmz_nr_zones(struct dmz_metadata *zmd)
-> +{
-> +	return zmd->dev->nr_zones;
-> +}
-> +
->  unsigned int dmz_nr_chunks(struct dmz_metadata *zmd)
->  {
->  	return zmd->nr_chunks;
-> @@ -217,6 +222,16 @@ unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd)
->  	return atomic_read(&zmd->unmap_nr_rnd);
->  }
->  
-> +unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd)
-> +{
-> +	return zmd->nr_seq;
-> +}
-> +
-> +unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd)
-> +{
-> +	return atomic_read(&zmd->unmap_nr_seq);
-> +}
-> +
->  /*
->   * Lock/unlock mapping table.
->   * The map lock also protects all the zone lists.
 > diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-> index f4f83d39b3dc..44e30a7de8b9 100644
+> index 7ec9dde24516..89a825d1034e 100644
 > --- a/drivers/md/dm-zoned-target.c
 > +++ b/drivers/md/dm-zoned-target.c
-> @@ -965,6 +965,47 @@ static int dmz_iterate_devices(struct dm_target *ti,
->  	return fn(ti, dmz->ddev, 0, capacity, data);
->  }
+> @@ -715,7 +715,7 @@ static int dmz_get_zoned_device(struct dm_target *ti, char *path)
+>  	aligned_capacity = dev->capacity &
+>  				~((sector_t)blk_queue_zone_sectors(q) - 1);
+>  	if (ti->begin ||
+> -	    ((ti->len != dev->capacity) && (ti->len != aligned_capacity))) {
+> +	    ((ti->len > dev->capacity) && (ti->len > aligned_capacity))) {
+>  		ti->error = "Partial mapping not supported";
+
+The message is now wrong. Also, the condition can now be simplified to:
+
+if ((ti->begin + ti->len) > aligned_capacity) {
+
+Since aligned capacity is equal or smaller than dev capacity. And we have to
+account for the potential non-zero begin.
+
+>  		ret = -EINVAL;
+>  		goto err;
+> @@ -1008,7 +1008,7 @@ static int dmz_message(struct dm_target *ti, unsigned int argc, char **argv,
 >  
-> +static void dmz_status(struct dm_target *ti, status_type_t type,
-> +		       unsigned int status_flags, char *result,
-> +		       unsigned int maxlen)
-> +{
-> +	struct dmz_target *dmz = ti->private;
-> +	ssize_t sz = 0;
-> +	char buf[BDEVNAME_SIZE];
-> +
-> +	switch (type) {
-> +	case STATUSTYPE_INFO:
-> +		DMEMIT("%u zones "
-> +		       "%u/%u random "
-> +		       "%u/%u sequential",
-> +		       dmz_nr_zones(dmz->metadata),
-> +		       dmz_nr_unmap_rnd_zones(dmz->metadata),
-> +		       dmz_nr_rnd_zones(dmz->metadata),
-> +		       dmz_nr_unmap_seq_zones(dmz->metadata),
-> +		       dmz_nr_seq_zones(dmz->metadata));
-> +		break;
-> +	case STATUSTYPE_TABLE:
-> +		format_dev_t(buf, dmz->dev->bdev->bd_dev);
-> +		DMEMIT("%s ", buf);
-> +		break;
-> +	}
-> +	return;
-> +}
-> +
-> +static int dmz_message(struct dm_target *ti, unsigned int argc, char **argv,
-> +		       char *result, unsigned int maxlen)
-> +{
-> +	struct dmz_target *dmz = ti->private;
-> +	int r = -EINVAL;
-> +
-> +	if (!strcasecmp(argv[0], "reclaim")) {
-> +		dmz_schedule_reclaim(dmz->reclaim);
-> +		r = 0;
-> +	} else
-> +		DMERR("unrecognized message %s", argv[0]);
-> +	return r;
-> +}
-> +
 >  static struct target_type dmz_type = {
 >  	.name		 = "zoned",
->  	.version	 = {1, 1, 0},
-> @@ -978,6 +1019,8 @@ static struct target_type dmz_type = {
->  	.postsuspend	 = dmz_suspend,
->  	.resume		 = dmz_resume,
->  	.iterate_devices = dmz_iterate_devices,
-> +	.status		 = dmz_status,
-> +	.message	 = dmz_message,
->  };
->  
->  static int __init dmz_init(void)
-> diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
-> index 5b5e493d479c..884c0e586082 100644
-> --- a/drivers/md/dm-zoned.h
-> +++ b/drivers/md/dm-zoned.h
-> @@ -190,8 +190,11 @@ void dmz_free_zone(struct dmz_metadata *zmd, struct dm_zone *zone);
->  void dmz_map_zone(struct dmz_metadata *zmd, struct dm_zone *zone,
->  		  unsigned int chunk);
->  void dmz_unmap_zone(struct dmz_metadata *zmd, struct dm_zone *zone);
-> +unsigned int dmz_nr_zones(struct dmz_metadata *zmd);
->  unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd);
->  unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd);
-> +unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd);
-> +unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd);
->  
->  /*
->   * Activate a zone (increment its reference count).
+> -	.version	 = {1, 2, 0},
+> +	.version	 = {1, 3, 0},
+>  	.features	 = DM_TARGET_SINGLETON | DM_TARGET_ZONED_HM,
+>  	.module		 = THIS_MODULE,
+>  	.ctr		 = dmz_ctr,
 > 
+
+I do not think this is nearly enough: dmz_init_zones() is still considering the
+entire drive and does a zone report from 0 on the backend bdev. It should start
+at ti->begin and up to ti->begin+ti->len, no ?
+
+Furthermore, this introduce a change in the meaning of the zone ID. Since this
+is set to the index of the zone in the report (patch 1), if the mapping is
+partial and the zone report does not start at 0, then zone ID is not zone number
+on the device anymore. So dmz_start_block() needs to be offset by ti->begin
+otherwise IOs will go to the wrong zones.
 
 
 -- 
