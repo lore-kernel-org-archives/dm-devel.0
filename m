@@ -1,13 +1,17 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [RFC Patch 3/3] multipath: add libmpathvalid library
-Date: Mon, 30 Mar 2020 21:00:55 -0500
-Message-ID: <1585620055-27112-4-git-send-email-bmarzins@redhat.com>
-References: <1585620055-27112-1-git-send-email-bmarzins@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 4/4] dm-zoned: allow for device size smaller
+ than the capacity
+Date: Tue, 31 Mar 2020 10:53:09 +0200
+Message-ID: <3167d430-9987-150b-363d-dfce119a04b8@suse.de>
+References: <20200327071459.67796-1-hare@suse.de>
+	<20200327071459.67796-5-hare@suse.de>
+	<CO2PR04MB2343240ACAC524067A074813E7C80@CO2PR04MB2343.namprd04.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1585620055-27112-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <CO2PR04MB2343240ACAC524067A074813E7C80@CO2PR04MB2343.namprd04.prod.outlook.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,453 +21,81 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
+To: Damien Le Moal <Damien.LeMoal@wdc.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Bob Liu <bob.liu@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This library allows other programs to check if a path should be claimed
-by multipath.  Currently, it only includes one function,
-mpath_is_path(), which takes a device name, mode to for checking the
-path, and an optional info structure, to return the wwid. The modes work
-mostly like they do for "multipath -c/-u", with a few exceptions.
-
-1. If a device is currently multipathed, it is always VALID. This
-perhaps should be true for the existing path valid code.
-
-2. There is no seperate "on" mode. It is instead treated like "smart".
-This is because the library only looks at a single path, so it can only
-say that a device could be multpathed, if there was another path.  It is
-the caller's job to check if another path exists, or to wait for another
-path appear.
-
-3. The library does check if there already is an existing multipath
-device with the same wwid, and if so, will declare the path valid.
-
-In order to act more library-like, libmpathvalid doesn't set its own
-device-mapper log functions. It leaves this to the caller. It currently
-keeps condlog() from printing anything, but should eventually include a
-function to allow the caller set the logging. It also uses a statically
-compiled version of libmultipath, both to keep that library from
-polluting the namespace of the caller, and to avoid the caller needing
-to set up the variables and functions (like logsink, and
-get_multipath_config) that it expects.
-
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- Makefile                            |   1 +
- Makefile.inc                        |   1 +
- libmpathvalid/Makefile              |  38 +++++++
- libmpathvalid/libmpathvalid.version |   6 +
- libmpathvalid/mpath_valid.c         | 171 ++++++++++++++++++++++++++++
- libmpathvalid/mpath_valid.h         |  53 +++++++++
- libmultipath/Makefile               |   1 +
- libmultipath/devmapper.c            |  49 ++++++++
- libmultipath/devmapper.h            |   1 +
- 9 files changed, 321 insertions(+)
- create mode 100644 libmpathvalid/Makefile
- create mode 100644 libmpathvalid/libmpathvalid.version
- create mode 100644 libmpathvalid/mpath_valid.c
- create mode 100644 libmpathvalid/mpath_valid.h
-
-diff --git a/Makefile b/Makefile
-index 1dee3680..462d6655 100644
---- a/Makefile
-+++ b/Makefile
-@@ -9,6 +9,7 @@ BUILDDIRS := \
- 	libmultipath/checkers \
- 	libmultipath/foreign \
- 	libmpathpersist \
-+	libmpathvalid \
- 	multipath \
- 	multipathd \
- 	mpathpersist \
-diff --git a/Makefile.inc b/Makefile.inc
-index d4d1e0dd..7e0e8203 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -66,6 +66,7 @@ libdir		= $(prefix)/$(LIB)/multipath
- unitdir		= $(prefix)/$(SYSTEMDPATH)/systemd/system
- mpathpersistdir	= $(TOPDIR)/libmpathpersist
- mpathcmddir	= $(TOPDIR)/libmpathcmd
-+mpathvaliddir	= $(TOPDIR)/libmpathvalid
- thirdpartydir	= $(TOPDIR)/third-party
- libdmmpdir	= $(TOPDIR)/libdmmp
- nvmedir		= $(TOPDIR)/libmultipath/nvme
-diff --git a/libmpathvalid/Makefile b/libmpathvalid/Makefile
-new file mode 100644
-index 00000000..5fc97022
---- /dev/null
-+++ b/libmpathvalid/Makefile
-@@ -0,0 +1,38 @@
-+include ../Makefile.inc
-+
-+SONAME = 0
-+DEVLIB = libmpathvalid.so
-+LIBS = $(DEVLIB).$(SONAME)
-+
-+CFLAGS += $(LIB_CFLAGS) -I$(multipathdir) -I$(mpathcmddir)
-+
-+LIBDEPS += -lpthread -ldevmapper -ldl -L$(multipathdir) \
-+	   -lmultipath_nonshared -L$(mpathcmddir) -lmpathcmd -ludev
-+
-+OBJS = mpath_valid.o
-+
-+all: $(LIBS)
-+
-+$(LIBS): $(OBJS)
-+	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ -o $@ $(OBJS) $(LIBDEPS) -Wl,--version-script=libmpathvalid.version
-+	$(LN) $(LIBS) $(DEVLIB)
-+
-+install: $(LIBS)
-+	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(syslibdir)
-+	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(syslibdir)/$(LIBS)
-+	$(LN) $(LIBS) $(DESTDIR)$(syslibdir)/$(DEVLIB)
-+	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(includedir)
-+	$(INSTALL_PROGRAM) -m 644 mpath_valid.h $(DESTDIR)$(includedir)
-+
-+uninstall:
-+	$(RM) $(DESTDIR)$(syslibdir)/$(LIBS)
-+	$(RM) $(DESTDIR)$(syslibdir)/$(DEVLIB)
-+	$(RM) $(DESTDIR)$(includedir)/mpath_valid.h
-+
-+clean: dep_clean
-+	$(RM) core *.a *.o *.so *.so.* *.gz
-+
-+include $(wildcard $(OBJS:.o=.d))
-+
-+dep_clean:
-+	$(RM) $(OBJS:.o=.d)
-diff --git a/libmpathvalid/libmpathvalid.version b/libmpathvalid/libmpathvalid.version
-new file mode 100644
-index 00000000..e8967951
---- /dev/null
-+++ b/libmpathvalid/libmpathvalid.version
-@@ -0,0 +1,6 @@
-+MPATH_1.0 {
-+	global:
-+		mpath_is_path;
-+	local:
-+		*;
-+};
-diff --git a/libmpathvalid/mpath_valid.c b/libmpathvalid/mpath_valid.c
-new file mode 100644
-index 00000000..3d96c32f
---- /dev/null
-+++ b/libmpathvalid/mpath_valid.c
-@@ -0,0 +1,171 @@
-+#include <stdio.h>
-+#include <stdint.h>
-+#include <libdevmapper.h>
-+#include <libudev.h>
-+#include <errno.h>
-+
-+#include "devmapper.h"
-+#include "structs.h"
-+#include "util.h"
-+#include "config.h"
-+#include "discovery.h"
-+#include "wwids.h"
-+#include "sysfs.h"
-+#include "mpath_cmd.h"
-+#include "mpath_valid.h"
-+
-+struct udev *udev;
-+int logsink = -1;
-+static struct config default_config = { .verbosity = -1 };
-+static struct config *multipath_conf;
-+
-+struct config *get_multipath_config(void)
-+{
-+	return (multipath_conf)? multipath_conf : &default_config;
-+}
-+
-+void put_multipath_config(__attribute__((unused))void *conf)
-+{
-+	/* Noop */
-+}
-+
-+static int get_conf_mode(struct config *conf)
-+{
-+	if (conf->find_multipaths == FIND_MULTIPATHS_ON ||
-+	    conf->find_multipaths == FIND_MULTIPATHS_SMART)
-+		return MPATH_SMART;
-+	if (conf->find_multipaths == FIND_MULTIPATHS_GREEDY)
-+		return MPATH_GREEDY;
-+	return MPATH_STRICT;
-+}
-+
-+
-+/*
-+ * Return
-+ *  2: possible path (only in MPATH_GREEDY mode)
-+ *  1: mpath path
-+ *  0: not mpath path
-+ * -1: Failure
-+ */
-+int
-+mpath_is_path(const char *name, unsigned int mode, struct mpath_info *info)
-+{
-+	struct config *conf;
-+	struct path * pp;
-+	int r = MPATH_IS_ERROR;
-+	int fd = -1;
-+	unsigned int version[3];
-+	bool already_multipathed = false;
-+
-+	if (info)
-+		memset(info, 0, sizeof(struct mpath_info));
-+
-+	if (!name || mode >= MPATH_MAX_MODE)
-+		return r;
-+
-+	skip_libmp_dm_init();
-+	udev = udev_new();
-+	if (!udev)
-+		goto out;
-+	conf = load_config(DEFAULT_CONFIGFILE);
-+	if (!conf)
-+		goto out_udev;
-+	conf->verbosity = -1;
-+	if (mode == MPATH_DEFAULT)
-+		mode = get_conf_mode(conf);
-+
-+	if (dm_prereq(version))
-+		goto out_config;
-+	memcpy(conf->version, version, sizeof(version));
-+	multipath_conf = conf;
-+
-+	pp = alloc_path();
-+	if (!pp)
-+		goto out_config;
-+
-+	if (safe_sprintf(pp->dev, "%s", name))
-+		goto out_path;
-+
-+	if (sysfs_is_multipathed(pp, true)) {
-+		if (!info || pp->wwid[0] != '\0') {
-+			r = MPATH_IS_VALID;
-+			goto out_path;
-+		}
-+		already_multipathed = true;
-+	}
-+
-+	fd = __mpath_connect(1);
-+	if (fd < 0) {
-+		if (errno != EAGAIN && !systemd_service_enabled(name)) {
-+			r = MPATH_IS_NOT_VALID;
-+			goto out_path;
-+		}
-+	} else
-+		mpath_disconnect(fd);
-+
-+	pp->udev = udev_device_new_from_subsystem_sysname(udev, "block", name);
-+	if (!pp->udev)
-+		goto out_path;
-+
-+	r = pathinfo(pp, conf, DI_SYSFS | DI_WWID | DI_BLACKLIST);
-+	if (r) {
-+		if (r == PATHINFO_SKIPPED)
-+			r = MPATH_IS_NOT_VALID;
-+		else
-+			r = MPATH_IS_ERROR;
-+		goto out_path;
-+	}
-+
-+	if (pp->wwid[0] == '\0') {
-+		r = MPATH_IS_NOT_VALID;
-+		goto out_path;
-+	}
-+
-+	if (already_multipathed)
-+		goto out_path;
-+
-+	if (dm_is_mpath_uuid(pp->wwid) == 1) {
-+		r = MPATH_IS_VALID;
-+		goto out_path;
-+	}
-+
-+	r = is_failed_wwid(pp->wwid);
-+	if (r != WWID_IS_NOT_FAILED) {
-+		if (r == WWID_IS_FAILED)
-+			r = MPATH_IS_NOT_VALID;
-+		else
-+			r = MPATH_IS_ERROR;
-+		goto out_path;
-+	}
-+
-+	if (mode == MPATH_GREEDY) {
-+		r = MPATH_IS_VALID;
-+		goto out_path;
-+	}
-+
-+	if (check_wwids_file(pp->wwid, 0) == 0) {
-+		r = MPATH_IS_VALID;
-+		goto out_path;
-+	}
-+
-+	if (mode == MPATH_STRICT) {
-+		r = MPATH_IS_NOT_VALID;
-+		goto out_path;
-+	}
-+
-+	/* mode == SMART */
-+	r = MPATH_IS_MAYBE_VALID;
-+
-+out_path:
-+	if (already_multipathed)
-+		r = MPATH_IS_VALID;
-+	if (info && (r == MPATH_IS_VALID || r == MPATH_IS_MAYBE_VALID))
-+		strlcpy(info->wwid, pp->wwid, 128);
-+	free_path(pp);
-+out_config:
-+	free_config(conf);
-+out_udev:
-+	udev_unref(udev);
-+out:
-+	return r;
-+}
-diff --git a/libmpathvalid/mpath_valid.h b/libmpathvalid/mpath_valid.h
-new file mode 100644
-index 00000000..b9e420a8
---- /dev/null
-+++ b/libmpathvalid/mpath_valid.h
-@@ -0,0 +1,53 @@
-+/*
-+ * Copyright (C) 2015 Red Hat, Inc.
-+ *
-+ * This file is part of the device-mapper multipath userspace tools.
-+ *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Lesser General Public License
-+ * as published by the Free Software Foundation; either version 2
-+ * of the License, or (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU Lesser General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Lesser General Public License
-+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-+ */
-+
-+#ifndef LIB_MPATH_VALID_H
-+#define LIB_MPATH_VALID_H
-+
-+#ifdef __cpluscplus
-+extern "C" {
-+#endif
-+
-+enum mpath_valid_mode {
-+	MPATH_DEFAULT,
-+	MPATH_STRICT,
-+	MPATH_SMART,
-+	MPATH_GREEDY,
-+	MPATH_MAX_MODE,  /* used only for bounds checking */
-+};
-+
-+enum mpath_valid_result {
-+	MPATH_IS_ERROR = -1,
-+	MPATH_IS_NOT_VALID,
-+	MPATH_IS_VALID,
-+	MPATH_IS_MAYBE_VALID,
-+};
-+
-+struct mpath_info {
-+	char wwid[128];
-+};
-+
-+int mpath_is_path(const char *name, unsigned int mode, struct mpath_info *info);
-+
-+
-+#ifdef __cplusplus
-+}
-+#endif
-+#endif /* LIB_PATH_VALID_H */
-+
-diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-index ad690a49..7e2c00cf 100644
---- a/libmultipath/Makefile
-+++ b/libmultipath/Makefile
-@@ -69,6 +69,7 @@ nvme-ioctl.h: nvme/nvme-ioctl.h
- 
- $(LIBS): $(OBJS)
- 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ -o $@ $(OBJS) $(LIBDEPS)
-+	ar rcs libmultipath_nonshared.a $(OBJS)
- 	$(LN) $@ $(DEVLIB)
- 
- install:
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 7ed494a1..27d4f61f 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -770,6 +770,55 @@ out:
- 	return r;
- }
- 
-+/*
-+ * Return
-+ *   1 : map with uuid exists
-+ *   0 : map with uuid doesn't exist
-+ *  -1 : error
-+ */
-+int
-+dm_is_mpath_uuid(const char *uuid)
-+{
-+	struct dm_task *dmt;
-+	struct dm_info info;
-+	char prefixed_uuid[WWID_SIZE + UUID_PREFIX_LEN];
-+	int r = -1;
-+
-+	if (!uuid || uuid[0] == '\0')
-+		return 0;
-+
-+	if (safe_sprintf(prefixed_uuid, UUID_PREFIX "%s", uuid))
-+		goto out;
-+
-+	if (!(dmt = dm_task_create(DM_DEVICE_INFO)))
-+		goto out;
-+
-+	dm_task_no_open_count(dmt);
-+
-+	if (!dm_task_set_uuid(dmt, prefixed_uuid))
-+		goto out_task;
-+
-+	if (!dm_task_run(dmt))
-+		goto out_task;
-+
-+	if (!dm_task_get_info(dmt, &info))
-+		goto out_task;
-+
-+	r = 0;
-+
-+	if (!info.exists)
-+		goto out_task;
-+
-+	r = 1;
-+out_task:
-+	dm_task_destroy(dmt);
-+out:
-+	if (r < 0)
-+		condlog(3, "%s: dm command failed in %s: %s", uuid,
-+			__FUNCTION__, strerror(errno));
-+	return r;
-+}
-+
- static int
- dm_dev_t (const char * mapname, char * dev_t, int len)
- {
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index 17fc9faf..fa2513c2 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -43,6 +43,7 @@ int dm_get_map(const char *, unsigned long long *, char *);
- int dm_get_status(const char *, char *);
- int dm_type(const char *, char *);
- int dm_is_mpath(const char *);
-+int dm_is_mpath_uuid(const char *uuid);
- int _dm_flush_map (const char *, int, int, int, int);
- int dm_flush_map_nopaths(const char * mapname, int deferred_remove);
- #define dm_flush_map(mapname) _dm_flush_map(mapname, 1, 0, 0, 0)
--- 
-2.17.2
+T24gMy8zMS8yMCAyOjQ5IEFNLCBEYW1pZW4gTGUgTW9hbCB3cm90ZToKPiBPbiAyMDIwLzAzLzI3
+IDE2OjE1LCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6Cj4+IGRtLXpvbmVkIHJlcXVpcmVzIHNldmVy
+YWwgem9uZXMgZm9yIG1ldGFkYXRhIGFuZCBjaHVuayBiaXRtYXBzLAo+PiBzbyBpdCBjYW5ub3Qg
+ZXhwb3NlIHRoZSBlbnRpcmUgY2FwYWNpdHkgYXMgdGhlIGRldmljZSBzaXplLgo+PiBPcmlnaW5h
+bGx5IHRoZSBjb2RlIHdvdWxkIGNoZWNrIGZvciB0aGUgY2FwYWNpdHkgYmVpbmcgZXF1YWwgdG8K
+Pj4gdGhlIGRldmljZSBzaXplLCB3aGljaCBpcyBhcmd1YWJseSB3cm9uZy4KPj4gU28gcmVsYXgg
+dGhpcyBjaGVjayBhbmQgaW5jcmVhc2UgdGhlIGludGVyZmFjZSB2ZXJzaW9uIG51bWJlcgo+PiB0
+byBzaWduYWwgdG8gdXNlcnNwYWNlIHRoYXQgaXQgY2FuIHNldCBhIHNtYWxsZXIgZGV2aWNlIHNp
+emUuCj4+Cj4+IFNpZ25lZC1vZmYtYnk6IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNlLmRlPgo+
+PiAtLS0KPj4gICBkcml2ZXJzL21kL2RtLXpvbmVkLXRhcmdldC5jIHwgNCArKy0tCj4+ICAgMSBm
+aWxlIGNoYW5nZWQsIDIgaW5zZXJ0aW9ucygrKSwgMiBkZWxldGlvbnMoLSkKPj4KPj4gZGlmZiAt
+LWdpdCBhL2RyaXZlcnMvbWQvZG0tem9uZWQtdGFyZ2V0LmMgYi9kcml2ZXJzL21kL2RtLXpvbmVk
+LXRhcmdldC5jCj4+IGluZGV4IDdlYzlkZGUyNDUxNi4uODlhODI1ZDEwMzRlIDEwMDY0NAo+PiAt
+LS0gYS9kcml2ZXJzL21kL2RtLXpvbmVkLXRhcmdldC5jCj4+ICsrKyBiL2RyaXZlcnMvbWQvZG0t
+em9uZWQtdGFyZ2V0LmMKPj4gQEAgLTcxNSw3ICs3MTUsNyBAQCBzdGF0aWMgaW50IGRtel9nZXRf
+em9uZWRfZGV2aWNlKHN0cnVjdCBkbV90YXJnZXQgKnRpLCBjaGFyICpwYXRoKQo+PiAgIAlhbGln
+bmVkX2NhcGFjaXR5ID0gZGV2LT5jYXBhY2l0eSAmCj4+ICAgCQkJCX4oKHNlY3Rvcl90KWJsa19x
+dWV1ZV96b25lX3NlY3RvcnMocSkgLSAxKTsKPj4gICAJaWYgKHRpLT5iZWdpbiB8fAo+PiAtCSAg
+ICAoKHRpLT5sZW4gIT0gZGV2LT5jYXBhY2l0eSkgJiYgKHRpLT5sZW4gIT0gYWxpZ25lZF9jYXBh
+Y2l0eSkpKSB7Cj4+ICsJICAgICgodGktPmxlbiA+IGRldi0+Y2FwYWNpdHkpICYmICh0aS0+bGVu
+ID4gYWxpZ25lZF9jYXBhY2l0eSkpKSB7Cj4+ICAgCQl0aS0+ZXJyb3IgPSAiUGFydGlhbCBtYXBw
+aW5nIG5vdCBzdXBwb3J0ZWQiOwo+IAo+IFRoZSBtZXNzYWdlIGlzIG5vdyB3cm9uZy4gQWxzbywg
+dGhlIGNvbmRpdGlvbiBjYW4gbm93IGJlIHNpbXBsaWZpZWQgdG86Cj4gCj4gaWYgKCh0aS0+YmVn
+aW4gKyB0aS0+bGVuKSA+IGFsaWduZWRfY2FwYWNpdHkpIHsKPiAKPiBTaW5jZSBhbGlnbmVkIGNh
+cGFjaXR5IGlzIGVxdWFsIG9yIHNtYWxsZXIgdGhhbiBkZXYgY2FwYWNpdHkuIEFuZCB3ZSBoYXZl
+IHRvCj4gYWNjb3VudCBmb3IgdGhlIHBvdGVudGlhbCBub24temVybyBiZWdpbi4KPiAKX0FjdHVh
+bGx5XyBJIHdvdWxkIGZvcmJpZCBmb3IgJ3RpLT5iZWdpbicgdG8gYmUgYW55dGhpbmcgb3RoZXIg
+dGhhbiAwLgpGb3IgYSB6b25lZCBkZXZpY2UgdGhlcmUgaXMgbm8gcG9pbnQgaW4gYWxsb3dpbmcg
+Zm9yIHBhcnRpYWwgaGFuZGxpbmcgYXQgCmFsbC4KUHJvYmxlbSBpcyB0aGF0ICdkZXYtPmNhcGFj
+aXR5JyBpcyB0aGUgY2FwYWNpdHkgb2YgdGhlIHpvbmVkIGJsb2NrIApkZXZpY2UsIHdoZXJlYXMg
+J3RpLWxlbicgaXMgdGhlIGV4cG9ydGVkIGNhcGFjaXR5IG9mIHRoZSBkZXZpY2UtbWFwcGVyIApk
+ZXZpY2UsIHdoaWNoIGlzIHNtYWxsZXIgdGhhbiB0aGUgZGV2aWNlIGNhcGFjaXR5IGJ5IHRoZSBu
+dW1iZXIgb2YgCm1ldGFkYXRhIGJsb2Nrcy96b25lcy4KCj4+ICAgCQlyZXQgPSAtRUlOVkFMOwo+
+PiAgIAkJZ290byBlcnI7Cj4+IEBAIC0xMDA4LDcgKzEwMDgsNyBAQCBzdGF0aWMgaW50IGRtel9t
+ZXNzYWdlKHN0cnVjdCBkbV90YXJnZXQgKnRpLCB1bnNpZ25lZCBpbnQgYXJnYywgY2hhciAqKmFy
+Z3YsCj4+ICAgCj4+ICAgc3RhdGljIHN0cnVjdCB0YXJnZXRfdHlwZSBkbXpfdHlwZSA9IHsKPj4g
+ICAJLm5hbWUJCSA9ICJ6b25lZCIsCj4+IC0JLnZlcnNpb24JID0gezEsIDIsIDB9LAo+PiArCS52
+ZXJzaW9uCSA9IHsxLCAzLCAwfSwKPj4gICAJLmZlYXR1cmVzCSA9IERNX1RBUkdFVF9TSU5HTEVU
+T04gfCBETV9UQVJHRVRfWk9ORURfSE0sCj4+ICAgCS5tb2R1bGUJCSA9IFRISVNfTU9EVUxFLAo+
+PiAgIAkuY3RyCQkgPSBkbXpfY3RyLAo+Pgo+IAo+IEkgZG8gbm90IHRoaW5rIHRoaXMgaXMgbmVh
+cmx5IGVub3VnaDogZG16X2luaXRfem9uZXMoKSBpcyBzdGlsbCBjb25zaWRlcmluZyB0aGUKPiBl
+bnRpcmUgZHJpdmUgYW5kIGRvZXMgYSB6b25lIHJlcG9ydCBmcm9tIDAgb24gdGhlIGJhY2tlbmQg
+YmRldi4gSXQgc2hvdWxkIHN0YXJ0Cj4gYXQgdGktPmJlZ2luIGFuZCB1cCB0byB0aS0+YmVnaW4r
+dGktPmxlbiwgbm8gPwo+IApZZXMsIGFuZCBuby4gSSB3YW50IHRvIGRpc2FsbG93ICd0aS0+YmVn
+aW4nIHRvIGJlIGFueXRoaW5nIGVsc2UgdGhhbiAwIAphcyB0aS0+YmVnaW4gYW5kIHRpLT5sZW4g
+YXJlIHJlbGF0aXZlIHRvIGV4cG9ydGVkIGRldmljZS1tYXBwZXIgZGV2aWNlLCAKYW5kIHdlIGFs
+d2F5cyB3YW50IHRvIGhhdmUgYmxvY2sgMCBtYXBwZWQgOi0pCgpBbmQgYXMgc3VjaCBkbXpfaW5p
+dF96b25lcygpIG5lZWRzIHRvIGNvdmVyIGFsbCB6b25lcywgYXMgdGhpcyBpcyAKcmVsYXRpdmUg
+dG8gdGhlIHpvbmVkIGJsb2NrIGRldmljZS4KCj4gRnVydGhlcm1vcmUsIHRoaXMgaW50cm9kdWNl
+IGEgY2hhbmdlIGluIHRoZSBtZWFuaW5nIG9mIHRoZSB6b25lIElELiBTaW5jZSB0aGlzCj4gaXMg
+c2V0IHRvIHRoZSBpbmRleCBvZiB0aGUgem9uZSBpbiB0aGUgcmVwb3J0IChwYXRjaCAxKSwgaWYg
+dGhlIG1hcHBpbmcgaXMKPiBwYXJ0aWFsIGFuZCB0aGUgem9uZSByZXBvcnQgZG9lcyBub3Qgc3Rh
+cnQgYXQgMCwgdGhlbiB6b25lIElEIGlzIG5vdCB6b25lIG51bWJlcgo+IG9uIHRoZSBkZXZpY2Ug
+YW55bW9yZS4gU28gZG16X3N0YXJ0X2Jsb2NrKCkgbmVlZHMgdG8gYmUgb2Zmc2V0IGJ5IHRpLT5i
+ZWdpbgo+IG90aGVyd2lzZSBJT3Mgd2lsbCBnbyB0byB0aGUgd3Jvbmcgem9uZXMuCj4gCkFzIEkg
+c2FpZDogV2Ugd2lsbCBuZXZlciBkbyBhIHBhcnRpYWwgbWFwcGluZy4KV2hhdCB0aGlzIHBhdGNo
+IGRvZXMgaXQgdG8gYnJpbmcgdGhlIGRldmljZS1tYXBwZXIgbWFwcGluZyBpbi1saW5lIHdpdGgg
+CnRoZSBleHBvcnRlZCBkZXZpY2Ugc2l6ZS4KCk9yaWdpbmFsbHkgd2Ugd291bGQgZXhwb3J0IGEg
+ZGV2aWNlLW1hcHBlciBtYXBwaW5nIGZvciBibG9ja3MgdXAgdG8gdGhlIAp6b25lLWRldmljZSBj
+YXBhY2l0eS4gQXMgdGhlIHJlc3VsdGluZyBkZXZpY2UtbWFwcGVyIGJsb2NrIGRldmljZSBoYXMg
+YSAKc21hbGxlciBjYXBhY2l0eSB0aGFuIHRoZSBtYXBwaW5nIHdvdWxkIGFsbG93IGZvciB0aG9z
+ZSAnc3BhcmUnIGJsb2NrcyAKd291bGQgbmV2ZXIgYmVlbiB1c2VkLCB0aHVzIHRoZSBpbnZhbGlk
+IG1hcHBpbmcgd2FzIG5ldmVyIHRyaWdnZXJlZC4KCldoYXQgdGhpcyBwYXRjaCBkb2VzIGlzIHRv
+IGJyaW5nIHRoZSBkZXZpY2UtbWFwcGVyIG1hcHBpbmcgaW4tbGluZSB3aXRoIAp0aGUgZXhwb3J0
+ZWQgYmxvY2sgZGV2aWNlIGNhcGFjaXR5LCBzbyB0aGF0IHdlIGRvbid0IGhhdmUgYW4gaW52YWxp
+ZCAKbWFwcGluZy4gTm90aGluZyBlbHNlIGhhcyAoYW5kIHNob3VsZCkgYmUgY2hhbmdlZC4KCkVz
+cGVjaWFsbHkgbm90IHRoZSBwYXJ0aWFsIHpvbmVkIGRldmljZSBoYW5kbGluZyA6LSkKCkNoZWVy
+cywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZSAgICAgICAgICAgIFRlYW1sZWFkIFN0
+b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZSAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIFNvZnR3YXJlIFNvbHV0aW9ucyBHbWJILCBNYXhm
+ZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKSFJCIDM2ODA5IChBRyBOw7xybmJlcmcpLCBHZXNj
+aMOkZnRzZsO8aHJlcjogRmVsaXggSW1lbmTDtnJmZmVyCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBs
+aXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xp
+c3RpbmZvL2RtLWRldmVs
