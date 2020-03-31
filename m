@@ -1,60 +1,140 @@
 From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v5 4/8] dax, pmem: Add a dax operation zero_page_range
-Date: Tue, 31 Mar 2020 12:38:16 -0700
-Message-ID: <CAPcyv4jKHxy5c8BZodePeCu5+Z=cwhtEfw3RnOD1ZDNob382bQ@mail.gmail.com>
-References: <20200218214841.10076-1-vgoyal@redhat.com> <20200218214841.10076-5-vgoyal@redhat.com>
+Subject: Re: [PATCH v2] memcpy_flushcache: use cache flusing for larger lengths
+Date: Tue, 31 Mar 2020 14:19:32 -0700
+Message-ID: <CAPcyv4ijR185RLmtT+A+WZxJs309qPfdqj5eUDEkMgFbxsV+uw@mail.gmail.com>
+References: <alpine.LRH.2.02.2003291625590.32108@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.LRH.2.02.2003300729320.9938@file01.intranet.prod.int.rdu2.redhat.com>
+ <CS1PR8401MB12377197482867F688BF93F7ABC80@CS1PR8401MB1237.NAMPRD84.PROD.OUTLOOK.COM>
+ <alpine.LRH.2.02.2003310709090.2117@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20200218214841.10076-5-vgoyal@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-nvdimm <linux-nvdimm@lists.01.org>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Vishal L Verma <vishal.l.verma@intel.com>, Christoph Hellwig <hch@lst.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.02.2003310709090.2117@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: "Elliott, Robert (Servers)" <elliott@hpe.com>, Vishal Verma <vishal.l.verma@intel.com>, Dave Jiang <dave.jiang@intel.com>, Ira Weiny <ira.weiny@intel.com>, Mike Snitzer <msnitzer@redhat.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, X86 ML <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Tue, Feb 18, 2020 at 1:49 PM Vivek Goyal <vgoyal@redhat.com> wrote:
->
-> Add a dax operation zero_page_range, to zero a range of memory. This will
-> also clear any poison in the range being zeroed.
->
-> As of now, zeroing of up to one page is allowed in a single call. There
-> are no callers which are trying to zero more than a page in a single call.
-> Once we grow the callers which zero more than a page in single call, we
-> can add that support. Primary reason for not doing that yet is that this
-> will add little complexity in dm implementation where a range might be
-> spanning multiple underlying targets and one will have to split the range
-> into multiple sub ranges and call zero_page_range() on individual targets.
->
-> Suggested-by: Christoph Hellwig <hch@infradead.org>
-> Reviewed-by: Christoph Hellwig <hch@lst.de>
-> Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
-> ---
->  drivers/dax/super.c   | 19 +++++++++++++++++++
->  drivers/nvdimm/pmem.c | 10 ++++++++++
->  include/linux/dax.h   |  3 +++
->  3 files changed, 32 insertions(+)
->
-> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-> index 0aa4b6bc5101..c912808bc886 100644
-> --- a/drivers/dax/super.c
-> +++ b/drivers/dax/super.c
-> @@ -344,6 +344,25 @@ size_t dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
->  }
->  EXPORT_SYMBOL_GPL(dax_copy_to_iter);
->
-> +int dax_zero_page_range(struct dax_device *dax_dev, u64 offset, size_t len)
-> +{
-> +       if (!dax_alive(dax_dev))
-> +               return -ENXIO;
-> +
-> +       if (!dax_dev->ops->zero_page_range)
-> +               return -EOPNOTSUPP;
+[ add x86 and LKML ]
 
-This seems too late to be doing the validation. It would be odd for
-random filesystem operations to see this error. I would move the check
-to alloc_dax() and fail that if the caller fails to implement the
-operation.
+On Tue, Mar 31, 2020 at 5:27 AM Mikulas Patocka <mpatocka@redhat.com> wrote:
+>
+>
+>
+> On Tue, 31 Mar 2020, Elliott, Robert (Servers) wrote:
+>
+> >
+> >
+> > > -----Original Message-----
+> > > From: Mikulas Patocka <mpatocka@redhat.com>
+> > > Sent: Monday, March 30, 2020 6:32 AM
+> > > To: Dan Williams <dan.j.williams@intel.com>; Vishal Verma
+> > > <vishal.l.verma@intel.com>; Dave Jiang <dave.jiang@intel.com>; Ira
+> > > Weiny <ira.weiny@intel.com>; Mike Snitzer <msnitzer@redhat.com>
+> > > Cc: linux-nvdimm@lists.01.org; dm-devel@redhat.com
+> > > Subject: [PATCH v2] memcpy_flushcache: use cache flusing for larger
+> > > lengths
+> > >
+> > > I tested dm-writecache performance on a machine with Optane nvdimm
+> > > and it turned out that for larger writes, cached stores + cache
+> > > flushing perform better than non-temporal stores. This is the
+> > > throughput of dm- writecache measured with this command:
+> > > dd if=/dev/zero of=/dev/mapper/wc bs=64 oflag=direct
+> > >
+> > > block size  512             1024            2048            4096
+> > > movnti      496 MB/s        642 MB/s        725 MB/s        744 MB/s
+> > > clflushopt  373 MB/s        688 MB/s        1.1 GB/s        1.2 GB/s
+> > >
+> > > We can see that for smaller block, movnti performs better, but for
+> > > larger blocks, clflushopt has better performance.
+> >
+> > There are other interactions to consider... see threads from the last
+> > few years on the linux-nvdimm list.
+>
+> dm-writecache is the only linux driver that uses memcpy_flushcache on
+> persistent memory. There is also the btt driver, it uses the "do_io"
+> method to write to persistent memory and I don't know where this method
+> comes from.
+>
+> Anyway, if patching memcpy_flushcache conflicts with something else, we
+> should introduce memcpy_flushcache_to_pmem.
+>
+> > For example, software generally expects that read()s take a long time and
+> > avoids re-reading from disk; the normal pattern is to hold the data in
+> > memory and read it from there. By using normal stores, CPU caches end up
+> > holding a bunch of persistent memory data that is probably not going to
+> > be read again any time soon, bumping out more useful data. In contrast,
+> > movnti avoids filling the CPU caches.
+>
+> But if I write one cacheline and flush it immediatelly, it would consume
+> just one associative entry in the cache.
+>
+> > Another option is the AVX vmovntdq instruction (if available), the
+> > most recent of which does 64-byte (cache line) sized transfers to
+> > zmm registers. There's a hefty context switching overhead (e.g.,
+> > 304 clocks), and the CPU often runs AVX instructions at a slower
+> > clock frequency, so it's hard to judge when it's worthwhile.
+>
+> The benchmark shows that 64-byte non-temporal avx512 vmovntdq is as good
+> as 8, 16 or 32-bytes writes.
+>                                          ram            nvdimm
+> sequential write-nt 4 bytes              4.1 GB/s       1.3 GB/s
+> sequential write-nt 8 bytes              4.1 GB/s       1.3 GB/s
+> sequential write-nt 16 bytes (sse)       4.1 GB/s       1.3 GB/s
+> sequential write-nt 32 bytes (avx)       4.2 GB/s       1.3 GB/s
+> sequential write-nt 64 bytes (avx512)    4.1 GB/s       1.3 GB/s
+>
+> With cached writes (where each cache line is immediatelly followed by clwb
+> or clflushopt), 8, 16 or 32-byte write performs better than non-temporal
+> stores and avx512 performs worse.
+>
+> sequential write 8 + clwb                5.1 GB/s       1.6 GB/s
+> sequential write 16 (sse) + clwb         5.1 GB/s       1.6 GB/s
+> sequential write 32 (avx) + clwb         4.4 GB/s       1.5 GB/s
+> sequential write 64 (avx512) + clwb      1.7 GB/s       0.6 GB/s
 
-An incremental patch on top to fix this up would be ok. Something like
-"Now that all dax_operations providers implement zero_page_range()
-mandate it at alloc_dax time".
+This is indeed compelling straight-line data. My concern, similar to
+Robert's, is what it does to the rest of the system. In addition to
+increasing cache pollution, which I agree is difficult to quantify, it
+may also increase read-for-ownership traffic. Could you collect 'perf
+stat' for this clwb vs nt comparison to check if any of this
+incidental overhead effect shows up in the numbers? Here is a 'perf
+stat' line that might capture that.
+
+perf stat -e L1-dcache-loads,L1-dcache-load-misses,L1-dcache-stores,L1-dcache-store-misses,L1-dcache-prefetch-misses,LLC-loads,LLC-load-misses,LLC-stores,LLC-store-misses,LLC-prefetch-misses
+-r 5 $benchmark
+
+In both cases nt and explicit clwb there's nothing that prevents the
+dirty-cacheline, or the fill buffer from being written-back / flushed
+before the full line is populated and maybe you are hitting that
+scenario differently with the two approaches? I did not immediately
+see a perf counter for events like this. Going forward I think this
+gets better with the movdir64b instruction because that can guarantee
+full-line-sized store-buffer writes.
+
+Maybe the perf data can help make a decision about whether we go with
+your patch in the near term?
+
+>
+>
+> > In user space, glibc faces similar choices for its memcpy() functions;
+> > glibc memcpy() uses non-temporal stores for transfers > 75% of the
+> > L3 cache size divided by the number of cores. For example, with
+> > glibc-2.216-16.fc27 (August 2017), on a Broadwell system with
+> > E5-2699 36 cores 45 MiB L3 cache, non-temporal stores are used
+> > for memcpy()s over 36 MiB.
+>
+> BTW. what does glibc do with reads? Does it flush them from the cache
+> after they are consumed?
+>
+> AFAIK glibc doesn't support persistent memory - i.e. there is no function
+> that flushes data and the user has to use inline assembly for that.
+
+Yes, and I don't know of any copy routines that try to limit the cache
+pollution of pulling the source data for a copy, only the destination.
+
+> > It'd be nice if glibc, PMDK, and the kernel used the same algorithms.
+
+Yes, it would. Although I think PMDK would make a different decision
+than the kernel when optimizing for highest bandwidth for the local
+application vs bandwidth efficiency across all applications.
