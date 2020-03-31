@@ -1,15 +1,14 @@
-From: "Elliott, Robert (Servers)" <elliott@hpe.com>
-Subject: Re: [PATCH v2] memcpy_flushcache: use cache flusing for
- larger lengths
-Date: Tue, 31 Mar 2020 00:28:01 +0000
-Message-ID: <CS1PR8401MB12377197482867F688BF93F7ABC80@CS1PR8401MB1237.NAMPRD84.PROD.OUTLOOK.COM>
-References: <alpine.LRH.2.02.2003291625590.32108@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.2003300729320.9938@file01.intranet.prod.int.rdu2.redhat.com>
+From: Bob Liu <bob.liu@oracle.com>
+Subject: Re: [PATCH 2/4] dm-zoned: use array for superblock zones
+Date: Tue, 31 Mar 2020 17:10:58 +0800
+Message-ID: <bf9d0c94-9eee-4463-4fcd-a56cf97e8039@oracle.com>
+References: <20200327071459.67796-1-hare@suse.de>
+	<20200327071459.67796-3-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.2003300729320.9938@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <20200327071459.67796-3-hare@suse.de>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,57 +19,126 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>, Dan Williams <dan.j.williams@intel.com>, Vishal Verma <vishal.l.verma@intel.com>, Dave
-	Jiang <dave.jiang@intel.com>, Ira Weiny <ira.weiny@intel.com>, Mike Snitzer <msnitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>
+To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
+Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-
-
-> -----Original Message-----
-> From: Mikulas Patocka <mpatocka@redhat.com>
-> Sent: Monday, March 30, 2020 6:32 AM
-> To: Dan Williams <dan.j.williams@intel.com>; Vishal Verma
-> <vishal.l.verma@intel.com>; Dave Jiang <dave.jiang@intel.com>; Ira
-> Weiny <ira.weiny@intel.com>; Mike Snitzer <msnitzer@redhat.com>
-> Cc: linux-nvdimm@lists.01.org; dm-devel@redhat.com
-> Subject: [PATCH v2] memcpy_flushcache: use cache flusing for larger
-> lengths
+On 3/27/20 3:14 PM, Hannes Reinecke wrote:
+> Instead of storing just the first superblock zone and calculate
+> the secondary relative to that we should be using an array for
+> holding the superblock zones.
 > 
-> I tested dm-writecache performance on a machine with Optane nvdimm
-> and it turned out that for larger writes, cached stores + cache
-> flushing perform better than non-temporal stores. This is the
-> throughput of dm- writecache measured with this command:
-> dd if=/dev/zero of=/dev/mapper/wc bs=64 oflag=direct
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
+
+Reviewed-by: Bob Liu <bob.liu@oracle.com>
+
+> ---
+>  drivers/md/dm-zoned-metadata.c | 34 +++++++++++++++++++++-------------
+>  1 file changed, 21 insertions(+), 13 deletions(-)
 > 
-> block size	512		1024		2048		4096
-> movnti	496 MB/s	642 MB/s	725 MB/s	744 MB/s
-> clflushopt	373 MB/s	688 MB/s	1.1 GB/s	1.2 GB/s
+> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+> index afce594067fb..dc1d17bc3bbb 100644
+> --- a/drivers/md/dm-zoned-metadata.c
+> +++ b/drivers/md/dm-zoned-metadata.c
+> @@ -124,6 +124,7 @@ struct dmz_sb {
+>  	sector_t		block;
+>  	struct dmz_mblock	*mblk;
+>  	struct dmz_super	*sb;
+> +	struct dm_zone		*zone;
+>  };
+>  
+>  /*
+> @@ -150,7 +151,6 @@ struct dmz_metadata {
+>  	/* Zone information array */
+>  	struct dm_zone		*zones;
+>  
+> -	struct dm_zone		*sb_zone;
+>  	struct dmz_sb		sb[2];
+>  	unsigned int		mblk_primary;
+>  	u64			sb_gen;
+> @@ -937,16 +937,20 @@ static int dmz_lookup_secondary_sb(struct dmz_metadata *zmd)
+>  
+>  	/* Bad first super block: search for the second one */
+>  	zmd->sb[1].block = zmd->sb[0].block + zone_nr_blocks;
+> +	zmd->sb[1].zone = zmd->sb[0].zone + 1;
+>  	for (i = 0; i < zmd->nr_rnd_zones - 1; i++) {
+>  		if (dmz_read_sb(zmd, 1) != 0)
+>  			break;
+> -		if (le32_to_cpu(zmd->sb[1].sb->magic) == DMZ_MAGIC)
+> +		if (le32_to_cpu(zmd->sb[1].sb->magic) == DMZ_MAGIC) {
+> +			zmd->sb[1].zone += i;
+>  			return 0;
+> +		}
+>  		zmd->sb[1].block += zone_nr_blocks;
+>  	}
+>  
+>  	dmz_free_mblock(zmd, mblk);
+>  	zmd->sb[1].mblk = NULL;
+> +	zmd->sb[1].zone = NULL;
+>  
+>  	return -EIO;
+>  }
+> @@ -990,11 +994,9 @@ static int dmz_recover_mblocks(struct dmz_metadata *zmd, unsigned int dst_set)
+>  	dmz_dev_warn(zmd->dev, "Metadata set %u invalid: recovering", dst_set);
+>  
+>  	if (dst_set == 0)
+> -		zmd->sb[0].block = dmz_start_block(zmd, zmd->sb_zone);
+> -	else {
+> -		zmd->sb[1].block = zmd->sb[0].block +
+> -			(zmd->nr_meta_zones << zmd->dev->zone_nr_blocks_shift);
+> -	}
+> +		zmd->sb[0].block = dmz_start_block(zmd, zmd->sb[0].zone);
+> +	else
+> +		zmd->sb[1].block = dmz_start_block(zmd, zmd->sb[1].zone);
+>  
+>  	page = alloc_page(GFP_NOIO);
+>  	if (!page)
+> @@ -1038,8 +1040,13 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
+>  	u64 sb_gen[2] = {0, 0};
+>  	int ret;
+>  
+> +	if (!zmd->sb[0].zone) {
+> +		dmz_dev_err(zmd->dev, "Primary super block zone not set");
+> +		return -ENXIO;
+> +	}
+> +
+>  	/* Read and check the primary super block */
+> -	zmd->sb[0].block = dmz_start_block(zmd, zmd->sb_zone);
+> +	zmd->sb[0].block = dmz_start_block(zmd, zmd->sb[0].zone);
+>  	ret = dmz_get_sb(zmd, 0);
+>  	if (ret) {
+>  		dmz_dev_err(zmd->dev, "Read primary super block failed");
+> @@ -1051,8 +1058,9 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
+>  	/* Read and check secondary super block */
+>  	if (ret == 0) {
+>  		sb_good[0] = true;
+> -		zmd->sb[1].block = zmd->sb[0].block +
+> -			(zmd->nr_meta_zones << zmd->dev->zone_nr_blocks_shift);
+> +		if (!zmd->sb[1].zone)
+> +			zmd->sb[1].zone = zmd->sb[0].zone + zmd->nr_meta_zones;
+> +		zmd->sb[1].block = dmz_start_block(zmd, zmd->sb[1].zone);
+>  		ret = dmz_get_sb(zmd, 1);
+>  	} else
+>  		ret = dmz_lookup_secondary_sb(zmd);
+> @@ -1147,9 +1155,9 @@ static int dmz_init_zone(struct blk_zone *blkz, unsigned int idx, void *data)
+>  		zmd->nr_useable_zones++;
+>  		if (dmz_is_rnd(zone)) {
+>  			zmd->nr_rnd_zones++;
+> -			if (!zmd->sb_zone) {
+> +			if (!zmd->sb[0].zone) {
+>  				/* Super block zone */
+> -				zmd->sb_zone = zone;
+> +				zmd->sb[0].zone = zone;
+>  			}
+>  		}
+>  	}
+> @@ -2420,7 +2428,7 @@ int dmz_ctr_metadata(struct dmz_dev *dev, struct dmz_metadata **metadata)
+>  		goto err;
+>  
+>  	/* Set metadata zones starting from sb_zone */
+> -	zid = dmz_id(zmd, zmd->sb_zone);
+> +	zid = dmz_id(zmd, zmd->sb[0].zone);
+>  	for (i = 0; i < zmd->nr_meta_zones << 1; i++) {
+>  		zone = dmz_get(zmd, zid + i);
+>  		if (!dmz_is_rnd(zone))
 > 
-> We can see that for smaller block, movnti performs better, but for
-> larger blocks, clflushopt has better performance.
-
-There are other interactions to consider... see threads from the last
-few years on the linux-nvdimm list.
-
-For example, software generally expects that read()s take a long time and
-avoids re-reading from disk; the normal pattern is to hold the data in
-memory and read it from there. By using normal stores, CPU caches end up
-holding a bunch of persistent memory data that is probably not going to
-be read again any time soon, bumping out more useful data. In contrast,
-movnti avoids filling the CPU caches.
-
-Another option is the AVX vmovntdq instruction (if available), the
-most recent of which does 64-byte (cache line) sized transfers to
-zmm registers. There's a hefty context switching overhead (e.g.,
-304 clocks), and the CPU often runs AVX instructions at a slower
-clock frequency, so it's hard to judge when it's worthwhile.
-
-In user space, glibc faces similar choices for its memcpy() functions;
-glibc memcpy() uses non-temporal stores for transfers > 75% of the
-L3 cache size divided by the number of cores. For example, with
-glibc-2.216-16.fc27 (August 2017), on a Broadwell system with
-E5-2699 36 cores 45 MiB L3 cache, non-temporal stores are used
-for memcpy()s over 36 MiB.
-
-It'd be nice if glibc, PMDK, and the kernel used the same algorithms.
