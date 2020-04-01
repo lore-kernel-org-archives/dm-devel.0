@@ -1,268 +1,94 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH v2] memcpy_flushcache: use cache flusing for
- larger lengths
-Date: Wed, 1 Apr 2020 12:26:41 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2004010941310.23210@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.2003291625590.32108@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.2003300729320.9938@file01.intranet.prod.int.rdu2.redhat.com>
-	<CS1PR8401MB12377197482867F688BF93F7ABC80@CS1PR8401MB1237.NAMPRD84.PROD.OUTLOOK.COM>
-	<alpine.LRH.2.02.2003310709090.2117@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAPcyv4ijR185RLmtT+A+WZxJs309qPfdqj5eUDEkMgFbxsV+uw@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper changes for 5.7
+Date: Wed, 1 Apr 2020 12:57:54 -0400
+Message-ID: <20200401165628.GA22107@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAPcyv4ijR185RLmtT+A+WZxJs309qPfdqj5eUDEkMgFbxsV+uw@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Dave Jiang <dave.jiang@intel.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Vishal Verma <vishal.l.verma@intel.com>, X86 ML <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Ira Weiny <ira.weiny@intel.com>, "Elliott,
-	Robert (Servers)" <elliott@hpe.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-block-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Bob Liu <bob.liu@oracle.com>, Erich Eckner <git@eckner.net>, Mikulas Patocka <mpatocka@redhat.com>, Nikos Tsironis <ntsironis@arrikto.com>, Harshini X Shetty <Harshini.X.Shetty@sony.com>, Yang Yingliang <yangyingliang@huawei.com>
 List-Id: dm-devel.ids
 
+Hi Linus,
 
+The following changes since commit fb33c6510d5595144d585aa194d377cf74d31911:
 
-On Tue, 31 Mar 2020, Dan Williams wrote:
+  Linux 5.6-rc6 (2020-03-15 15:01:23 -0700)
 
-> > The benchmark shows that 64-byte non-temporal avx512 vmovntdq is as good
-> > as 8, 16 or 32-bytes writes.
-> >                                          ram            nvdimm
-> > sequential write-nt 4 bytes              4.1 GB/s       1.3 GB/s
-> > sequential write-nt 8 bytes              4.1 GB/s       1.3 GB/s
-> > sequential write-nt 16 bytes (sse)       4.1 GB/s       1.3 GB/s
-> > sequential write-nt 32 bytes (avx)       4.2 GB/s       1.3 GB/s
-> > sequential write-nt 64 bytes (avx512)    4.1 GB/s       1.3 GB/s
-> >
-> > With cached writes (where each cache line is immediatelly followed by clwb
-> > or clflushopt), 8, 16 or 32-byte write performs better than non-temporal
-> > stores and avx512 performs worse.
-> >
-> > sequential write 8 + clwb                5.1 GB/s       1.6 GB/s
-> > sequential write 16 (sse) + clwb         5.1 GB/s       1.6 GB/s
-> > sequential write 32 (avx) + clwb         4.4 GB/s       1.5 GB/s
-> > sequential write 64 (avx512) + clwb      1.7 GB/s       0.6 GB/s
-> 
-> This is indeed compelling straight-line data. My concern, similar to
-> Robert's, is what it does to the rest of the system. In addition to
-> increasing cache pollution, which I agree is difficult to quantify, it
+are available in the Git repository at:
 
-I've made this program that measures cache pollution:
-    http://people.redhat.com/~mpatocka/testcases/pmem/misc/l1-test.c
-- it fills the L1 cache with random pointers, so that memory prediction 
-won't help, and then walks these pointers before and after the task that 
-we want to measure.
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.7/dm-changes
 
-The results are:
+for you to fetch changes up to 81d5553d1288c2ec0390f02f84d71ca0f0f9f137:
 
-on RAM, there is not much difference - i.e. nt write is flushing cache as 
-much as clflushopt and clwb:
-nt write:	8514 - 21034
-clflushopt:	8516 - 21798
-clwb:		8516 - 22882
+  dm clone metadata: Fix return type of dm_clone_nr_of_hydrated_regions() (2020-03-27 14:42:51 -0400)
 
-But on PMEM, non-temporal stores perform much better and they perform 
-	even better than on RAM:
-nt write:	8514 - 11694
-clflushopt:	8514 - 20816
-clwb:		8514 - 21480
+Please pull, thanks!
+Mike
 
-However, both dm-writecache and the nova filesystem perform better if we 
-use cache flushing instead of nt writes:
-  http://people.redhat.com/~mpatocka/testcases/pmem/benchmarks/fs-bench.txt
+----------------------------------------------------------------
+- Add DM writecache "cleaner" policy feature that allows cache to be
+  flushed while userspace monitors for completion to then discommision
+  use of caching.
 
-> may also increase read-for-ownership traffic. Could you collect 'perf
-> stat' for this clwb vs nt comparison to check if any of this
-> incidental overhead effect shows up in the numbers? Here is a 'perf
-> stat' line that might capture that.
-> 
-> perf stat -e L1-dcache-loads,L1-dcache-load-misses,L1-dcache-stores,L1-dcache-store-misses,L1-dcache-prefetch-misses,LLC-loads,LLC-load-misses,LLC-stores,LLC-store-misses,LLC-prefetch-misses
-> -r 5 $benchmark
-> 
-> In both cases nt and explicit clwb there's nothing that prevents the
-> dirty-cacheline, or the fill buffer from being written-back / flushed
-> before the full line is populated and maybe you are hitting that
-> scenario differently with the two approaches? I did not immediately
-> see a perf counter for events like this. Going forward I think this
-> gets better with the movdir64b instruction because that can guarantee
-> full-line-sized store-buffer writes.
-> 
-> Maybe the perf data can help make a decision about whether we go with
-> your patch in the near term?
+- Optimize DM writecache superblock writing and also yield CPU while
+  initializing writecache on large PMEM devices to avoid CPU stalls.
 
-These are results for 6 tests:
-1. movntiq on pmem
-2. 8 writes + clflushopt on pmem
-3. 8 writes + clwb on pmem
-4. movntiq on ram
-5. 8 writes + clflushopt on ram
-6. 8 writes + clwb on ram
+- Various fixes to DM integrity target while preparing for the
+  ability to resize a DM integrity device.  In addition to resize
+  support, add optional discard support with the "allow_discards"
+  feature.
 
-perf stat -e L1-dcache-loads,L1-dcache-load-misses,L1-dcache-stores,L1-dcache-store-misses,L1-dcache-prefetch-misses,LLC-loads,LLC-load-misses,LLC-stores,LLC-store-misses,LLC-prefetch-misses -r 5 ./thrp-write-nt-8 /dev/dax3.0
-thr: 1.280840 GB/s, lat: 6.245904 nsec
-thr: 1.281988 GB/s, lat: 6.240310 nsec
-thr: 1.281000 GB/s, lat: 6.245120 nsec
-thr: 1.278589 GB/s, lat: 6.256896 nsec
-thr: 1.280094 GB/s, lat: 6.249541 nsec
+- Fix DM clone target's discard handling and overflow bugs which could
+  cause data corruption.
 
- Performance counter stats for './thrp-write-nt-8 /dev/dax3.0' (5 runs):
+- Fix memory leak in destructor for DM verity FEC support.
 
-         814899605      L1-dcache-loads                                               ( +-  0.04% )  (42.86%)
-           8924277      L1-dcache-load-misses     #    1.10% of all L1-dcache hits    ( +-  0.19% )  (57.15%)
-         810672184      L1-dcache-stores                                              ( +-  0.02% )  (57.15%)
-   <not supported>      L1-dcache-store-misses
-   <not supported>      L1-dcache-prefetch-misses
-            100254      LLC-loads                                                     ( +-  9.58% )  (57.15%)
-              6990      LLC-load-misses           #    6.97% of all LL-cache hits     ( +-  5.08% )  (57.14%)
-             16509      LLC-stores                                                    ( +-  1.38% )  (28.57%)
-              5070      LLC-store-misses                                              ( +-  3.28% )  (28.57%)
-   <not supported>      LLC-prefetch-misses
+- Fix DM zoned target's redundant increment of nr_rnd_zones.
 
-           5.62889 +- 0.00357 seconds time elapsed  ( +-  0.06% )
+- Small cleanup in DM crypt to use crypt_integrity_aead() helper.
 
+----------------------------------------------------------------
+Bob Liu (1):
+      dm zoned: remove duplicate nr_rnd_zones increase in dmz_init_zone()
 
-perf stat -e L1-dcache-loads,L1-dcache-load-misses,L1-dcache-stores,L1-dcache-store-misses,L1-dcache-prefetch-misses,LLC-loads,LLC-load-misses,LLC-stores,LLC-store-misses,LLC-prefetch-misses -r 5 ./thrp-write-8-clflushopt /dev/dax3.0
-thr: 1.611084 GB/s, lat: 4.965600 nsec
-thr: 1.598570 GB/s, lat: 5.004474 nsec
-thr: 1.600563 GB/s, lat: 4.998243 nsec
-thr: 1.596818 GB/s, lat: 5.009964 nsec
-thr: 1.593989 GB/s, lat: 5.018856 nsec
+Erich Eckner (1):
+      dm integrity: print device name in integrity_metadata() error message
 
- Performance counter stats for './thrp-write-8-clflushopt /dev/dax3.0' (5 runs):
+Mikulas Patocka (12):
+      dm writecache: do direct write if the cache is full
+      dm writecache: implement the "cleaner" policy
+      dm writecache: implement gradual cleanup
+      dm writecache: optimize superblock write
+      dm integrity: fix a crash with unusually large tag size
+      dm integrity: remove sector type casts
+      dm integrity: don't replay journal data past the end of the device
+      dm integrity: factor out get_provided_data_sectors()
+      dm integrity: allow resize of the integrity device
+      dm integrity: add optional discard support
+      dm integrity: improve discard in journal mode
+      dm writecache: add cond_resched to avoid CPU hangs
 
-         137415972      L1-dcache-loads                                               ( +-  1.28% )  (42.84%)
-         136513938      L1-dcache-load-misses     #   99.34% of all L1-dcache hits    ( +-  1.24% )  (57.13%)
-        1153397051      L1-dcache-stores                                              ( +-  1.29% )  (57.14%)
-   <not supported>      L1-dcache-store-misses
-   <not supported>      L1-dcache-prefetch-misses
-            168100      LLC-loads                                                     ( +-  0.84% )  (57.15%)
-              3975      LLC-load-misses           #    2.36% of all LL-cache hits     ( +-  2.41% )  (57.16%)
-          58441682      LLC-stores                                                    ( +-  1.38% )  (28.57%)
-              2493      LLC-store-misses                                              ( +-  6.80% )  (28.56%)
-   <not supported>      LLC-prefetch-misses
+Nikos Tsironis (4):
+      dm clone: Fix handling of partial region discards
+      dm clone: Add overflow check for number of regions
+      dm clone: Add missing casts to prevent overflows and data corruption
+      dm clone metadata: Fix return type of dm_clone_nr_of_hydrated_regions()
 
-            5.7029 +- 0.0582 seconds time elapsed  ( +-  1.02% )
+Shetty, Harshini X (EXT-Sony Mobile) (1):
+      dm verity fec: fix memory leak in verity_fec_dtr
 
+Yang Yingliang (1):
+      dm crypt: use crypt_integrity_aead() helper
 
-perf stat -e L1-dcache-loads,L1-dcache-load-misses,L1-dcache-stores,L1-dcache-store-misses,L1-dcache-prefetch-misses,LLC-loads,LLC-load-misses,LLC-stores,LLC-store-misses,LLC-prefetch-misses -r 5 ./thrp-write-8-clwb /dev/dax3.0
-thr: 1.595520 GB/s, lat: 5.014039 nsec
-thr: 1.598659 GB/s, lat: 5.004194 nsec
-thr: 1.599901 GB/s, lat: 5.000309 nsec
-thr: 1.603323 GB/s, lat: 4.989636 nsec
-thr: 1.608657 GB/s, lat: 4.973093 nsec
-
- Performance counter stats for './thrp-write-8-clwb /dev/dax3.0' (5 runs):
-
-         135421993      L1-dcache-loads                                               ( +-  0.06% )  (42.85%)
-         134869685      L1-dcache-load-misses     #   99.59% of all L1-dcache hits    ( +-  0.02% )  (57.14%)
-        1138042172      L1-dcache-stores                                              ( +-  0.02% )  (57.14%)
-   <not supported>      L1-dcache-store-misses
-   <not supported>      L1-dcache-prefetch-misses
-            184600      LLC-loads                                                     ( +-  0.79% )  (57.15%)
-              5756      LLC-load-misses           #    3.12% of all LL-cache hits     ( +-  5.23% )  (57.15%)
-          55755196      LLC-stores                                                    ( +-  0.04% )  (28.57%)
-              4928      LLC-store-misses                                              ( +-  4.19% )  (28.56%)
-   <not supported>      LLC-prefetch-misses
-
-           5.63954 +- 0.00987 seconds time elapsed  ( +-  0.18% )
-
-perf stat -e L1-dcache-loads,L1-dcache-load-misses,L1-dcache-stores,L1-dcache-store-misses,L1-dcache-prefetch-misses,LLC-loads,LLC-load-misses,LLC-stores,LLC-store-misses,LLC-prefetch-misses -r 5 ./thrp-write-nt-8 /dev/ram0
-thr: 4.156424 GB/s, lat: 1.924732 nsec
-thr: 4.156363 GB/s, lat: 1.924760 nsec
-thr: 4.159350 GB/s, lat: 1.923377 nsec
-thr: 4.162535 GB/s, lat: 1.921906 nsec
-thr: 4.158470 GB/s, lat: 1.923784 nsec
-
- Performance counter stats for './thrp-write-nt-8 /dev/ram0' (5 runs):
-
-        3077534777      L1-dcache-loads                                               ( +-  0.14% )  (42.85%)
-          49870893      L1-dcache-load-misses     #    1.62% of all L1-dcache hits    ( +-  0.82% )  (57.14%)
-        2854270644      L1-dcache-stores                                              ( +-  0.01% )  (57.14%)
-   <not supported>      L1-dcache-store-misses
-   <not supported>      L1-dcache-prefetch-misses
-           5391862      LLC-loads                                                     ( +-  0.29% )  (57.15%)
-           5190166      LLC-load-misses           #   96.26% of all LL-cache hits     ( +-  0.23% )  (57.15%)
-           5694448      LLC-stores                                                    ( +-  0.39% )  (28.57%)
-           5544968      LLC-store-misses                                              ( +-  0.37% )  (28.56%)
-   <not supported>      LLC-prefetch-misses
-
-           5.61044 +- 0.00145 seconds time elapsed  ( +-  0.03% )
-
-
-perf stat -e L1-dcache-loads,L1-dcache-load-misses,L1-dcache-stores,L1-dcache-store-misses,L1-dcache-prefetch-misses,LLC-loads,LLC-load-misses,LLC-stores,LLC-store-misses,LLC-prefetch-misses -r 5 ./thrp-write-8-clflushopt /dev/ram0
-thr: 5.923164 GB/s, lat: 1.350629 nsec
-thr: 5.922262 GB/s, lat: 1.350835 nsec
-thr: 5.921674 GB/s, lat: 1.350969 nsec
-thr: 5.922305 GB/s, lat: 1.350825 nsec
-thr: 5.921393 GB/s, lat: 1.351033 nsec
-
- Performance counter stats for './thrp-write-8-clflushopt /dev/ram0' (5 runs):
-
-         935965584      L1-dcache-loads                                               ( +-  0.34% )  (42.85%)
-         521443969      L1-dcache-load-misses     #   55.71% of all L1-dcache hits    ( +-  0.05% )  (57.15%)
-        4460590261      L1-dcache-stores                                              ( +-  0.01% )  (57.15%)
-   <not supported>      L1-dcache-store-misses
-   <not supported>      L1-dcache-prefetch-misses
-           6242393      LLC-loads                                                     ( +-  0.32% )  (57.15%)
-           5727982      LLC-load-misses           #   91.76% of all LL-cache hits     ( +-  0.27% )  (57.15%)
-          54576336      LLC-stores                                                    ( +-  0.05% )  (28.57%)
-          54056225      LLC-store-misses                                              ( +-  0.04% )  (28.57%)
-   <not supported>      LLC-prefetch-misses
-
-           5.79196 +- 0.00105 seconds time elapsed  ( +-  0.02% )
-
-
-perf stat -e L1-dcache-loads,L1-dcache-load-misses,L1-dcache-stores,L1-dcache-store-misses,L1-dcache-prefetch-misses,LLC-loads,LLC-load-misses,LLC-stores,LLC-store-misses,LLC-prefetch-misses -r 5 ./thrp-write-8-clwb /dev/ram0
-thr: 5.821923 GB/s, lat: 1.374116 nsec
-thr: 5.818980 GB/s, lat: 1.374811 nsec
-thr: 5.821207 GB/s, lat: 1.374285 nsec
-thr: 5.818583 GB/s, lat: 1.374905 nsec
-thr: 5.820813 GB/s, lat: 1.374379 nsec
-
- Performance counter stats for './thrp-write-8-clwb /dev/ram0' (5 runs):
-
-         951910720      L1-dcache-loads                                               ( +-  0.31% )  (42.84%)
-         512771268      L1-dcache-load-misses     #   53.87% of all L1-dcache hits    ( +-  0.03% )  (57.13%)
-        4390478387      L1-dcache-stores                                              ( +-  0.02% )  (57.15%)
-   <not supported>      L1-dcache-store-misses
-   <not supported>      L1-dcache-prefetch-misses
-           5614628      LLC-loads                                                     ( +-  0.24% )  (57.16%)
-           5200663      LLC-load-misses           #   92.63% of all LL-cache hits     ( +-  0.09% )  (57.16%)
-          52627554      LLC-stores                                                    ( +-  0.10% )  (28.56%)
-          52108200      LLC-store-misses                                              ( +-  0.16% )  (28.55%)
-   <not supported>      LLC-prefetch-misses
-
-          5.646728 +- 0.000438 seconds time elapsed  ( +-  0.01% )
-
-
-
-
-> > > In user space, glibc faces similar choices for its memcpy() functions;
-> > > glibc memcpy() uses non-temporal stores for transfers > 75% of the
-> > > L3 cache size divided by the number of cores. For example, with
-> > > glibc-2.216-16.fc27 (August 2017), on a Broadwell system with
-> > > E5-2699 36 cores 45 MiB L3 cache, non-temporal stores are used
-> > > for memcpy()s over 36 MiB.
-> >
-> > BTW. what does glibc do with reads? Does it flush them from the cache
-> > after they are consumed?
-> >
-> > AFAIK glibc doesn't support persistent memory - i.e. there is no function
-> > that flushes data and the user has to use inline assembly for that.
-> 
-> Yes, and I don't know of any copy routines that try to limit the cache
-> pollution of pulling the source data for a copy, only the destination.
-> 
-> > > It'd be nice if glibc, PMDK, and the kernel used the same algorithms.
-> 
-> Yes, it would. Although I think PMDK would make a different decision
-> than the kernel when optimizing for highest bandwidth for the local
-> application vs bandwidth efficiency across all applications.
-
-Mikulas
+ drivers/md/dm-clone-metadata.c |  15 +-
+ drivers/md/dm-clone-metadata.h |   2 +-
+ drivers/md/dm-clone-target.c   |  66 ++++++---
+ drivers/md/dm-crypt.c          |   6 +-
+ drivers/md/dm-integrity.c      | 304 +++++++++++++++++++++++++++++++----------
+ drivers/md/dm-verity-fec.c     |   1 +
+ drivers/md/dm-writecache.c     | 138 +++++++++++++++++--
+ drivers/md/dm-zoned-metadata.c |   1 -
+ 8 files changed, 431 insertions(+), 102 deletions(-)
