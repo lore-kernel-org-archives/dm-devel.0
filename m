@@ -1,17 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
+From: John Dorminy <jdorminy@redhat.com>
 Subject: Re: [PATCH 3/4] dm-zoned: V2 metadata handling
-Date: Thu, 2 Apr 2020 17:09:51 +0200
-Message-ID: <bbebc0d7-2d53-8412-81c2-d36842fc25e9@suse.de>
+Date: Thu, 2 Apr 2020 11:52:42 -0400
+Message-ID: <CAMeeMh9JBuOuOi2s0VB6K1KXExUv-kyP2OavRXE==tHJAXbMFg@mail.gmail.com>
 References: <20200327071459.67796-1-hare@suse.de>
 	<20200327071459.67796-4-hare@suse.de>
 	<93a26ed9-6f6e-2a4d-38d3-3fb76fa91e70@oracle.com>
 	<CAMeeMh82FSZm4+i2+1f89P542=3HZR6S8--yP88ZiEjYSxUveA@mail.gmail.com>
+	<bbebc0d7-2d53-8412-81c2-d36842fc25e9@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="===============3385845115185588383=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAMeeMh82FSZm4+i2+1f89P542=3HZR6S8--yP88ZiEjYSxUveA@mail.gmail.com>
-Content-Language: en-US
+In-Reply-To: <bbebc0d7-2d53-8412-81c2-d36842fc25e9@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,28 +20,109 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: John Dorminy <jdorminy@redhat.com>, Bob Liu <bob.liu@oracle.com>
-Cc: Damien LeMoal <damien.lemoal@wdc.com>, device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: Bob Liu <bob.liu@oracle.com>, device-mapper development <dm-devel@redhat.com>, Damien LeMoal <damien.lemoal@wdc.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-T24gNC8yLzIwIDQ6NTMgUE0sIEpvaG4gRG9ybWlueSB3cm90ZToKPiBJJ20gd29ycmllZCBhYm91
-dCBoYXJkY29kaW5nIHV1aWQgbWVtYmVycyBhcyB1OFsxNl0uCj4gCj4gTWF5IEkgYXNrIHdoeSB5
-b3UncmUgbm90IHVzaW5nIHV1aWRfdCB0byBkZWZpbmUgaXQgaW4gdGhlIG9uLWRpc2sgCj4gc3Ry
-dWN0dXJlPyBJdCB3b3VsZCBzYXZlIHRoZSBjYXN0aW5nIG9mIHRoZSB1dWlkIG1lbWJlcnMgdG8g
-KHV1aWRfdCAqKSAKPiBldmVyeSB0aW1lIHlvdSB1c2UgYSB1dWlkLmggZnVuY3Rpb24uCj4gCj4g
-UG9zc2libHkgaXQgaXMgY3VzdG9tYXJ5IHRvIHVzZSBvbmx5IHJhdyBkYXRhdHlwZXMgb24gZGlz
-ayByYXRoZXIgdGhhbiAKPiBvcGFxdWUgdHlwZXMgbGlrZSB1dWlkX3QsIEknbSBub3Qgc3VyZS4g
-QnV0IGluIHRoYXQgY2FzZSwgcGVyaGFwcyB1c2luZyAKPiB0aGUgbmFtZWQgY29uc3RhbnQgVVVJ
-RF9TSVpFIGluc3RlYWQgb2YgMTYgd291bGQgbWFrZSB0aGUgbWVhbmluZyBjbGVhcmVyPwo+IApJ
-IHByZWZlciB0byB1c2UgYWJzb2x1dGUgdHlwZXMgKGxpa2UgX191OCkgd2hlbiBkZXNjcmliaW5n
-IHRoZSBvbi1kaXNrIApmb3JtYXQuCldoZW4gdXNpbmcgb3BhcXVlIHR5cGVzIGxpa2UgdXVpZF90
-IHRoZXJlIGFsd2F5cyBpcyB0aGUgcmlzayB0aGF0IHRoZSAKaW50ZXJuYWwgcmVwcmVzZW50YXRp
-b24gd2lsbCBjaGFuZ2UsIGxlYWRpbmcgdG8gYW4gaW52b2x1bnRhcnkgY2hhbmdlIG9mIAp0aGUg
-b24tZGlzayBmb3JtYXQgc3RydWN0dXJlIGFuZCBzdWJzZXF1ZW50IGNvbXBhYmlsaXR5IGlzc3Vl
-cy4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZSAgICAgICAgICAgIFRl
-YW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZSAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIFNvZnR3YXJlIFNvbHV0aW9ucyBH
-bWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKSFJCIDM2ODA5IChBRyBOw7xybmJl
-cmcpLCBHZXNjaMOkZnRzZsO8aHJlcjogRmVsaXggSW1lbmTDtnJmZmVyCgoKLS0KZG0tZGV2ZWwg
-bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
-YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+--===============3385845115185588383==
+Content-Type: multipart/alternative; boundary="000000000000264df105a250cb46"
+
+--000000000000264df105a250cb46
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+That does make sense. May I request, then, using UUID_SIZE instead of 16?
+Perhaps with a compile-time assertion that UUID_SIZE has not change from 16=
+?
+
+On Thu, Apr 2, 2020 at 11:10 AM Hannes Reinecke <hare@suse.de> wrote:
+
+> On 4/2/20 4:53 PM, John Dorminy wrote:
+> > I'm worried about hardcoding uuid members as u8[16].
+> >
+> > May I ask why you're not using uuid_t to define it in the on-disk
+> > structure? It would save the casting of the uuid members to (uuid_t *)
+> > every time you use a uuid.h function.
+> >
+> > Possibly it is customary to use only raw datatypes on disk rather than
+> > opaque types like uuid_t, I'm not sure. But in that case, perhaps using
+> > the named constant UUID_SIZE instead of 16 would make the meaning
+> clearer?
+> >
+> I prefer to use absolute types (like __u8) when describing the on-disk
+> format.
+> When using opaque types like uuid_t there always is the risk that the
+> internal representation will change, leading to an involuntary change of
+> the on-disk format structure and subsequent compability issues.
+>
+> Cheers,
+>
+> Hannes
+> --
+> Dr. Hannes Reinecke            Teamlead Storage & Networking
+> hare@suse.de                               +49 911 74053 688
+> SUSE Software Solutions GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg
+> HRB 36809 (AG N=C3=BCrnberg), Gesch=C3=A4ftsf=C3=BChrer: Felix Imend=C3=
+=B6rffer
+>
+>
+
+--000000000000264df105a250cb46
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">That does make sense. May I request, then, using UUID_SIZE=
+ instead of 16? Perhaps with a compile-time assertion that UUID_SIZE has no=
+t change from 16?<br></div><br><div class=3D"gmail_quote"><div dir=3D"ltr" =
+class=3D"gmail_attr">On Thu, Apr 2, 2020 at 11:10 AM Hannes Reinecke &lt;<a=
+ href=3D"mailto:hare@suse.de">hare@suse.de</a>&gt; wrote:<br></div><blockqu=
+ote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px=
+ solid rgb(204,204,204);padding-left:1ex">On 4/2/20 4:53 PM, John Dorminy w=
+rote:<br>
+&gt; I&#39;m worried about hardcoding uuid members as u8[16].<br>
+&gt; <br>
+&gt; May I ask why you&#39;re not using uuid_t to define it in the on-disk =
+<br>
+&gt; structure? It would save the casting of the uuid members to (uuid_t *)=
+ <br>
+&gt; every time you use a uuid.h function.<br>
+&gt; <br>
+&gt; Possibly it is customary to use only raw datatypes on disk rather than=
+ <br>
+&gt; opaque types like uuid_t, I&#39;m not sure. But in that case, perhaps =
+using <br>
+&gt; the named constant UUID_SIZE instead of 16 would make the meaning clea=
+rer?<br>
+&gt; <br>
+I prefer to use absolute types (like __u8) when describing the on-disk <br>
+format.<br>
+When using opaque types like uuid_t there always is the risk that the <br>
+internal representation will change, leading to an involuntary change of <b=
+r>
+the on-disk format structure and subsequent compability issues.<br>
+<br>
+Cheers,<br>
+<br>
+Hannes<br>
+-- <br>
+Dr. Hannes Reinecke=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Teamlead Stora=
+ge &amp; Networking<br>
+<a href=3D"mailto:hare@suse.de" target=3D"_blank">hare@suse.de</a>=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0+49 911 74053 688<br>
+SUSE Software Solutions GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg<br>
+HRB 36809 (AG N=C3=BCrnberg), Gesch=C3=A4ftsf=C3=BChrer: Felix Imend=C3=B6r=
+ffer<br>
+<br>
+</blockquote></div>
+
+--000000000000264df105a250cb46--
+
+--===============3385845115185588383==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============3385845115185588383==--
