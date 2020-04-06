@@ -1,13 +1,11 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 09/11] dm-zoned: add metadata logging functions
-Date: Mon,  6 Apr 2020 16:35:03 +0200
-Message-ID: <20200406143505.133271-10-hare@suse.de>
-References: <20200406143505.133271-1-hare@suse.de>
+Subject: [PATCHv2 00/11] dm-zoned: metadata version 2
+Date: Mon,  6 Apr 2020 16:34:54 +0200
+Message-ID: <20200406143505.133271-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200406143505.133271-1-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,260 +19,64 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien LeMoal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Use the metadata label for logging and not the underlying
-device.
+Hi all,
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- drivers/md/dm-zoned-metadata.c | 89 +++++++++++++++++++++-------------
- drivers/md/dm-zoned-target.c   |  3 +-
- 2 files changed, 56 insertions(+), 36 deletions(-)
+this patchset adds a new metadata version 2, which brings the following
+improvements:
+- UUIDs and labels: Adding three more fields to the metadata containing
+  the dm-zoned device UUID and label, and the device UUID. This allows
+  for an unique identification of the devices, so that several dm-zoned
+  sets can coexist and have a persistent identification.
+- Extend random zones by an additional regular disk device: A regular
+  block device can be added together with the zoned block device, providing
+  additional (emulated) random write zones. With this it's possible to
+  handle sequential zones only devices; also there will be a speed-up if
+  the regular block device resides on a fast medium. The regular block device
+  is placed logically in front of the zoned block device, so that metadata
+  and mapping tables reside on the regular block device, not the zoned device.
+- Tertiary superblock support: In addition to the two existing sets of metadata
+  another, tertiary, superblock is written to the first block of the zoned
+  block device. This superblock is for identification only; the generation
+  number is set to '0' and the block itself it never updated. The additional
+  metadate like bitmap tables etc are not copied.
 
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index 08707c886ca2..6c52cbf290d5 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -194,6 +194,17 @@ struct dmz_metadata {
- 	wait_queue_head_t	free_wq;
- };
- 
-+#define dmz_zmd_info(zmd, format, args...)	\
-+	DMINFO("(%s): " format, (zmd)->devname, ## args)
-+
-+#define dmz_zmd_err(zmd, format, args...)	\
-+	DMERR("(%s): " format, (zmd)->devname, ## args)
-+
-+#define dmz_zmd_warn(zmd, format, args...)	\
-+	DMWARN("(%s): " format, (zmd)->devname, ## args)
-+
-+#define dmz_zmd_debug(zmd, format, args...)	\
-+	DMDEBUG("(%s): " format, (zmd)->devname, ## args)
- /*
-  * Various accessors
-  */
-@@ -1098,7 +1109,7 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
- 	int ret;
- 
- 	if (!zmd->sb[0].zone) {
--		dmz_dev_err(zmd->dev, "Primary super block zone not set");
-+		dmz_zmd_err(zmd, "Primary super block zone not set");
- 		return -ENXIO;
- 	}
- 
-@@ -1135,7 +1146,7 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
- 
- 	/* Use highest generation sb first */
- 	if (!sb_good[0] && !sb_good[1]) {
--		dmz_dev_err(zmd->dev, "No valid super block found");
-+		dmz_zmd_err(zmd, "No valid super block found");
- 		return -EIO;
- 	}
- 
-@@ -1248,7 +1259,7 @@ static void dmz_drop_zones(struct dmz_metadata *zmd)
-  */
- static int dmz_init_zones(struct dmz_metadata *zmd)
- {
--	struct dmz_dev *dev = zmd->dev;
-+	struct dmz_dev *dev = &zmd->dev[0];
- 	int ret;
- 
- 	/* Init */
-@@ -1268,8 +1279,8 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
- 	if (!zmd->zones)
- 		return -ENOMEM;
- 
--	dmz_dev_info(dev, "Using %zu B for zone information",
--		     sizeof(struct dm_zone) * zmd->nr_zones);
-+	DMINFO("(%s): Using %zu B for zone information",
-+	       zmd->devname, sizeof(struct dm_zone) * zmd->nr_zones);
- 
- 	/*
- 	 * Get zone information and initialize zone descriptors.  At the same
-@@ -1412,7 +1423,6 @@ static void dmz_get_zone_weight(struct dmz_metadata *zmd, struct dm_zone *zone);
-  */
- static int dmz_load_mapping(struct dmz_metadata *zmd)
- {
--	struct dmz_dev *dev = zmd->dev;
- 	struct dm_zone *dzone, *bzone;
- 	struct dmz_mblock *dmap_mblk = NULL;
- 	struct dmz_map *dmap;
-@@ -1445,7 +1455,7 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
- 			goto next;
- 
- 		if (dzone_id >= zmd->nr_zones) {
--			dmz_dev_err(dev, "Chunk %u mapping: invalid data zone ID %u",
-+			dmz_zmd_err(zmd, "Chunk %u mapping: invalid data zone ID %u",
- 				    chunk, dzone_id);
- 			return -EIO;
- 		}
-@@ -1466,14 +1476,14 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
- 			goto next;
- 
- 		if (bzone_id >= zmd->nr_zones) {
--			dmz_dev_err(dev, "Chunk %u mapping: invalid buffer zone ID %u",
-+			dmz_zmd_err(zmd, "Chunk %u mapping: invalid buffer zone ID %u",
- 				    chunk, bzone_id);
- 			return -EIO;
- 		}
- 
- 		bzone = dmz_get(zmd, bzone_id);
- 		if (!dmz_is_rnd(bzone)) {
--			dmz_dev_err(dev, "Chunk %u mapping: invalid buffer zone %u",
-+			dmz_zmd_err(zmd, "Chunk %u mapping: invalid buffer zone %u",
- 				    chunk, bzone_id);
- 			return -EIO;
- 		}
-@@ -1894,7 +1904,9 @@ struct dm_zone *dmz_alloc_zone(struct dmz_metadata *zmd, unsigned long flags)
- 		atomic_dec(&zmd->unmap_nr_seq);
- 
- 	if (dmz_is_offline(zone)) {
--		dmz_dev_warn(zmd->dev, "Zone %u is offline", dmz_id(zmd, zone));
-+		struct dmz_dev *dev = dmz_zone_to_dev(zmd, zone);
-+
-+		dmz_dev_warn(dev, "Zone %u is offline", dmz_id(zmd, zone));
- 		zone = NULL;
- 		goto again;
- 	}
-@@ -2427,7 +2439,7 @@ static void dmz_cleanup_metadata(struct dmz_metadata *zmd)
- 	while (!list_empty(&zmd->mblk_dirty_list)) {
- 		mblk = list_first_entry(&zmd->mblk_dirty_list,
- 					struct dmz_mblock, link);
--		dmz_dev_warn(zmd->dev, "mblock %llu still in dirty list (ref %u)",
-+		dmz_zmd_warn(zmd, "mblock %llu still in dirty list (ref %u)",
- 			     (u64)mblk->no, mblk->ref);
- 		list_del_init(&mblk->link);
- 		rb_erase(&mblk->node, &zmd->mblk_rbtree);
-@@ -2445,7 +2457,7 @@ static void dmz_cleanup_metadata(struct dmz_metadata *zmd)
- 	/* Sanity checks: the mblock rbtree should now be empty */
- 	root = &zmd->mblk_rbtree;
- 	rbtree_postorder_for_each_entry_safe(mblk, next, root, node) {
--		dmz_dev_warn(zmd->dev, "mblock %llu ref %u still in rbtree",
-+		dmz_zmd_warn(zmd, "mblock %llu ref %u still in rbtree",
- 			     (u64)mblk->no, mblk->ref);
- 		mblk->ref = 0;
- 		dmz_free_mblock(zmd, mblk);
-@@ -2458,6 +2470,18 @@ static void dmz_cleanup_metadata(struct dmz_metadata *zmd)
- 	mutex_destroy(&zmd->map_lock);
- }
- 
-+void dmz_print_dev(struct dmz_metadata *zmd, int num)
-+{
-+	struct dmz_dev *dev = &zmd->dev[num];
-+
-+	dmz_dev_info(dev, "Host-%s zoned block device",
-+		     bdev_zoned_model(dev->bdev) == BLK_ZONED_HA ?
-+		     "aware" : "managed");
-+	dmz_dev_info(dev, "  %llu 512-byte logical sectors",
-+		     (u64)dev->capacity);
-+	dmz_dev_info(dev, "  %u zones of %llu 512-byte logical sectors",
-+		     dev->nr_zones, (u64)zmd->zone_nr_sectors);
-+}
- /*
-  * Initialize the zoned metadata.
-  */
-@@ -2535,34 +2559,31 @@ int dmz_ctr_metadata(struct dmz_dev *dev, struct dmz_metadata **metadata,
- 	/* Metadata cache shrinker */
- 	ret = register_shrinker(&zmd->mblk_shrinker);
- 	if (ret) {
--		dmz_dev_err(dev, "Register metadata cache shrinker failed");
-+		dmz_zmd_err(zmd, "Register metadata cache shrinker failed");
- 		goto err;
- 	}
- 
--	dmz_dev_info(dev, "Host-%s zoned block device",
--		     bdev_zoned_model(dev->bdev) == BLK_ZONED_HA ?
--		     "aware" : "managed");
--	dmz_dev_info(dev, "  %llu 512-byte logical sectors",
--		     (u64)dev->capacity);
--	dmz_dev_info(dev, "  %u zones of %llu 512-byte logical sectors",
-+	dmz_zmd_info(zmd, "DM-Zoned metadata version %d", DMZ_META_VER);
-+	dmz_print_dev(zmd, 0);
-+
-+	dmz_zmd_info(zmd, "  %u zones of %llu 512-byte logical sectors",
- 		     zmd->nr_zones, (u64)zmd->zone_nr_sectors);
--	dmz_dev_info(dev, "  %u metadata zones",
-+	dmz_zmd_info(zmd, "  %u metadata zones",
- 		     zmd->nr_meta_zones * 2);
--	dmz_dev_info(dev, "  %u data zones for %u chunks",
-+	dmz_zmd_info(zmd, "  %u data zones for %u chunks",
- 		     zmd->nr_data_zones, zmd->nr_chunks);
--	dmz_dev_info(dev, "    %u random zones (%u unmapped)",
-+	dmz_zmd_info(zmd, "    %u random zones (%u unmapped)",
- 		     zmd->nr_rnd, atomic_read(&zmd->unmap_nr_rnd));
--	dmz_dev_info(dev, "    %u sequential zones (%u unmapped)",
-+	dmz_zmd_info(zmd, "    %u sequential zones (%u unmapped)",
- 		     zmd->nr_seq, atomic_read(&zmd->unmap_nr_seq));
--	dmz_dev_info(dev, "  %u reserved sequential data zones",
-+	dmz_zmd_info(zmd, "  %u reserved sequential data zones",
- 		     zmd->nr_reserved_seq);
--
--	dmz_dev_debug(dev, "Format:");
--	dmz_dev_debug(dev, "%u metadata blocks per set (%u max cache)",
-+	dmz_zmd_debug(zmd, "Format:");
-+	dmz_zmd_debug(zmd, "%u metadata blocks per set (%u max cache)",
- 		      zmd->nr_meta_blocks, zmd->max_nr_mblks);
--	dmz_dev_debug(dev, "  %u data zone mapping blocks",
-+	dmz_zmd_debug(zmd, "  %u data zone mapping blocks",
- 		      zmd->nr_map_blocks);
--	dmz_dev_debug(dev, "  %u bitmap blocks",
-+	dmz_zmd_debug(zmd, "  %u bitmap blocks",
- 		      zmd->nr_bitmap_blocks);
- 
- 	*metadata = zmd;
-@@ -2591,7 +2612,6 @@ void dmz_dtr_metadata(struct dmz_metadata *zmd)
-  */
- int dmz_resume_metadata(struct dmz_metadata *zmd)
- {
--	struct dmz_dev *dev = zmd->dev;
- 	struct dm_zone *zone;
- 	sector_t wp_block;
- 	unsigned int i;
-@@ -2601,20 +2621,19 @@ int dmz_resume_metadata(struct dmz_metadata *zmd)
- 	for (i = 0; i < zmd->nr_zones; i++) {
- 		zone = dmz_get(zmd, i);
- 		if (!zone) {
--			dmz_dev_err(dev, "Unable to get zone %u", i);
-+			dmz_zmd_err(zmd, "Unable to get zone %u", i);
- 			return -EIO;
- 		}
--
- 		wp_block = zone->wp_block;
- 
- 		ret = dmz_update_zone(zmd, zone);
- 		if (ret) {
--			dmz_dev_err(dev, "Broken zone %u", i);
-+			dmz_zmd_err(zmd, "Broken zone %u", i);
- 			return ret;
- 		}
- 
- 		if (dmz_is_offline(zone)) {
--			dmz_dev_warn(dev, "Zone %u is offline", i);
-+			dmz_zmd_warn(zmd, "Zone %u is offline", i);
- 			continue;
- 		}
- 
-@@ -2622,7 +2641,7 @@ int dmz_resume_metadata(struct dmz_metadata *zmd)
- 		if (!dmz_is_seq(zone))
- 			zone->wp_block = 0;
- 		else if (zone->wp_block != wp_block) {
--			dmz_dev_err(dev, "Zone %u: Invalid wp (%llu / %llu)",
-+			dmz_zmd_err(zmd, "Zone %u: Invalid wp (%llu / %llu)",
- 				    i, (u64)zone->wp_block, (u64)wp_block);
- 			zone->wp_block = wp_block;
- 			dmz_invalidate_blocks(zmd, zone, zone->wp_block,
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index 8ed6d9f2df25..ccf90608f434 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -519,7 +519,8 @@ static void dmz_flush_work(struct work_struct *work)
- 	/* Flush dirty metadata blocks */
- 	ret = dmz_flush_metadata(dmz->metadata);
- 	if (ret)
--		dmz_dev_debug(dmz->dev, "Metadata flush failed, rc=%d\n", ret);
-+		DMDEBUG("(%s): Metadata flush failed, rc=%d\n",
-+			dmz_metadata_label(dmz->metadata), ret);
- 
- 	/* Process queued flush requests */
- 	while (1) {
+To handle this, some changes to the original handling are introduced:
+- Zones are now equidistant. Originally, runt zones were ignored, and
+  not counted when sizing the mapping tables. With the dual device setup
+  runt zones might occur at the end of the regular block device, making
+  direct translation between zone number and sector/block number complex.
+  For metadata version 2 all zones are considered to be of the same size,
+  and runt zones are simply marked as 'offline' to have them ignored when
+  allocating a new zone.
+- The block number in the superblock is now the global number, and refers to
+  the location of the superblock relative to the resulting device-mapper
+  device. Which means that the tertiary superblock contains absolute block
+  addresses, which needs to be translated to the relative device addresses
+  to find the referenced block.
+
+There is an accompanying patchset for dm-zoned-tools for writing and checking
+this new metadata.
+
+As usual, comments and reviews are welcome.
+
+Hannes Reinecke (11):
+  dm-zoned: store zone id within the zone structure
+  dm-zoned: use array for superblock zones
+  dm-zoned: store device in struct dmz_sb
+  dm-zoned: move fields from struct dmz_dev to dmz_metadata
+  dm-zoned: introduce dmz_metadata_label() to format device name
+  dm-zoned: remove 'dev' argument from reclaim
+  dm-zoned: use device as argument for bio handler functions
+  dm-zoned: use dmz_zone_to_dev() when handling metadata I/O
+  dm-zoned: add metadata logging functions
+  dm-zoned: ignore metadata zone in dmz_alloc_zone()
+  dm-zoned: metadata version 2
+
+ drivers/md/dm-zoned-metadata.c | 580 ++++++++++++++++++++++++---------
+ drivers/md/dm-zoned-reclaim.c  |  67 ++--
+ drivers/md/dm-zoned-target.c   | 286 +++++++++-------
+ drivers/md/dm-zoned.h          |  28 +-
+ 4 files changed, 655 insertions(+), 306 deletions(-)
+
 -- 
 2.25.0
