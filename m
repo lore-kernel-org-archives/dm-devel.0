@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 03/11] dm-zoned: store device in struct dmz_sb
-Date: Mon,  6 Apr 2020 16:34:57 +0200
-Message-ID: <20200406143505.133271-4-hare@suse.de>
+Subject: [PATCH 09/11] dm-zoned: add metadata logging functions
+Date: Mon,  6 Apr 2020 16:35:03 +0200
+Message-ID: <20200406143505.133271-10-hare@suse.de>
 References: <20200406143505.133271-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,355 +21,260 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien LeMoal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Store the device together with the superblock so that
-we don't have to recur to the metadata to find it.
+Use the metadata label for logging and not the underlying
+device.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm-zoned-metadata.c | 90 ++++++++++++++++++++++------------
- 1 file changed, 59 insertions(+), 31 deletions(-)
+ drivers/md/dm-zoned-metadata.c | 89 +++++++++++++++++++++-------------
+ drivers/md/dm-zoned-target.c   |  3 +-
+ 2 files changed, 56 insertions(+), 36 deletions(-)
 
 diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index b37d3faec518..731aa4c99373 100644
+index 08707c886ca2..6c52cbf290d5 100644
 --- a/drivers/md/dm-zoned-metadata.c
 +++ b/drivers/md/dm-zoned-metadata.c
-@@ -122,6 +122,7 @@ enum {
-  */
- struct dmz_sb {
- 	sector_t		block;
-+	struct dmz_dev		*dev;
- 	struct dmz_mblock	*mblk;
- 	struct dmz_super	*sb;
- 	struct dm_zone		*zone;
-@@ -202,6 +203,11 @@ sector_t dmz_start_block(struct dmz_metadata *zmd, struct dm_zone *zone)
- 	return (sector_t)dmz_id(zmd, zone) << zmd->dev->zone_nr_blocks_shift;
- }
+@@ -194,6 +194,17 @@ struct dmz_metadata {
+ 	wait_queue_head_t	free_wq;
+ };
  
-+struct dmz_dev *dmz_zone_to_dev(struct dmz_metadata *zmd, struct dm_zone *zone)
-+{
-+	return &zmd->dev[0];
-+}
++#define dmz_zmd_info(zmd, format, args...)	\
++	DMINFO("(%s): " format, (zmd)->devname, ## args)
 +
- unsigned int dmz_nr_zones(struct dmz_metadata *zmd)
- {
- 	return zmd->dev->nr_zones;
-@@ -417,9 +423,10 @@ static struct dmz_mblock *dmz_get_mblock_slow(struct dmz_metadata *zmd,
- {
- 	struct dmz_mblock *mblk, *m;
- 	sector_t block = zmd->sb[zmd->mblk_primary].block + mblk_no;
-+	struct dmz_dev *dev = zmd->sb[zmd->mblk_primary].dev;
- 	struct bio *bio;
- 
--	if (dmz_bdev_is_dying(zmd->dev))
-+	if (dmz_bdev_is_dying(dev))
- 		return ERR_PTR(-EIO);
- 
- 	/* Get a new block and a BIO to read it */
-@@ -455,7 +462,7 @@ static struct dmz_mblock *dmz_get_mblock_slow(struct dmz_metadata *zmd,
- 
- 	/* Submit read BIO */
- 	bio->bi_iter.bi_sector = dmz_blk2sect(block);
--	bio_set_dev(bio, zmd->dev->bdev);
-+	bio_set_dev(bio, dev->bdev);
- 	bio->bi_private = mblk;
- 	bio->bi_end_io = dmz_mblock_bio_end_io;
- 	bio_set_op_attrs(bio, REQ_OP_READ, REQ_META | REQ_PRIO);
-@@ -552,6 +559,7 @@ static struct dmz_mblock *dmz_get_mblock(struct dmz_metadata *zmd,
- 					 sector_t mblk_no)
- {
- 	struct dmz_mblock *mblk;
-+	struct dmz_dev *dev = zmd->sb[zmd->mblk_primary].dev;
- 
- 	/* Check rbtree */
- 	spin_lock(&zmd->mblk_lock);
-@@ -570,7 +578,7 @@ static struct dmz_mblock *dmz_get_mblock(struct dmz_metadata *zmd,
- 		       TASK_UNINTERRUPTIBLE);
- 	if (test_bit(DMZ_META_ERROR, &mblk->state)) {
- 		dmz_release_mblock(zmd, mblk);
--		dmz_check_bdev(zmd->dev);
-+		dmz_check_bdev(dev);
- 		return ERR_PTR(-EIO);
- 	}
- 
-@@ -594,10 +602,11 @@ static void dmz_dirty_mblock(struct dmz_metadata *zmd, struct dmz_mblock *mblk)
- static int dmz_write_mblock(struct dmz_metadata *zmd, struct dmz_mblock *mblk,
- 			    unsigned int set)
- {
-+	struct dmz_dev *dev = zmd->sb[set].dev;
- 	sector_t block = zmd->sb[set].block + mblk->no;
- 	struct bio *bio;
- 
--	if (dmz_bdev_is_dying(zmd->dev))
-+	if (dmz_bdev_is_dying(dev))
- 		return -EIO;
- 
- 	bio = bio_alloc(GFP_NOIO, 1);
-@@ -609,7 +618,7 @@ static int dmz_write_mblock(struct dmz_metadata *zmd, struct dmz_mblock *mblk,
- 	set_bit(DMZ_META_WRITING, &mblk->state);
- 
- 	bio->bi_iter.bi_sector = dmz_blk2sect(block);
--	bio_set_dev(bio, zmd->dev->bdev);
-+	bio_set_dev(bio, dev->bdev);
- 	bio->bi_private = mblk;
- 	bio->bi_end_io = dmz_mblock_bio_end_io;
- 	bio_set_op_attrs(bio, REQ_OP_WRITE, REQ_META | REQ_PRIO);
-@@ -622,13 +631,13 @@ static int dmz_write_mblock(struct dmz_metadata *zmd, struct dmz_mblock *mblk,
++#define dmz_zmd_err(zmd, format, args...)	\
++	DMERR("(%s): " format, (zmd)->devname, ## args)
++
++#define dmz_zmd_warn(zmd, format, args...)	\
++	DMWARN("(%s): " format, (zmd)->devname, ## args)
++
++#define dmz_zmd_debug(zmd, format, args...)	\
++	DMDEBUG("(%s): " format, (zmd)->devname, ## args)
  /*
-  * Read/write a metadata block.
+  * Various accessors
   */
--static int dmz_rdwr_block(struct dmz_metadata *zmd, int op, sector_t block,
--			  struct page *page)
-+static int dmz_rdwr_block(struct dmz_dev *dev, int op,
-+			  sector_t block, struct page *page)
- {
- 	struct bio *bio;
+@@ -1098,7 +1109,7 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
  	int ret;
  
--	if (dmz_bdev_is_dying(zmd->dev))
-+	if (dmz_bdev_is_dying(dev))
- 		return -EIO;
+ 	if (!zmd->sb[0].zone) {
+-		dmz_dev_err(zmd->dev, "Primary super block zone not set");
++		dmz_zmd_err(zmd, "Primary super block zone not set");
+ 		return -ENXIO;
+ 	}
  
- 	bio = bio_alloc(GFP_NOIO, 1);
-@@ -636,14 +645,14 @@ static int dmz_rdwr_block(struct dmz_metadata *zmd, int op, sector_t block,
+@@ -1135,7 +1146,7 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
+ 
+ 	/* Use highest generation sb first */
+ 	if (!sb_good[0] && !sb_good[1]) {
+-		dmz_dev_err(zmd->dev, "No valid super block found");
++		dmz_zmd_err(zmd, "No valid super block found");
+ 		return -EIO;
+ 	}
+ 
+@@ -1248,7 +1259,7 @@ static void dmz_drop_zones(struct dmz_metadata *zmd)
+  */
+ static int dmz_init_zones(struct dmz_metadata *zmd)
+ {
+-	struct dmz_dev *dev = zmd->dev;
++	struct dmz_dev *dev = &zmd->dev[0];
+ 	int ret;
+ 
+ 	/* Init */
+@@ -1268,8 +1279,8 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
+ 	if (!zmd->zones)
  		return -ENOMEM;
  
- 	bio->bi_iter.bi_sector = dmz_blk2sect(block);
--	bio_set_dev(bio, zmd->dev->bdev);
-+	bio_set_dev(bio, dev->bdev);
- 	bio_set_op_attrs(bio, op, REQ_SYNC | REQ_META | REQ_PRIO);
- 	bio_add_page(bio, page, DMZ_BLOCK_SIZE, 0);
- 	ret = submit_bio_wait(bio);
- 	bio_put(bio);
- 
- 	if (ret)
--		dmz_check_bdev(zmd->dev);
-+		dmz_check_bdev(dev);
- 	return ret;
- }
- 
-@@ -655,6 +664,7 @@ static int dmz_write_sb(struct dmz_metadata *zmd, unsigned int set)
- 	sector_t block = zmd->sb[set].block;
- 	struct dmz_mblock *mblk = zmd->sb[set].mblk;
- 	struct dmz_super *sb = zmd->sb[set].sb;
-+	struct dmz_dev *dev = zmd->sb[set].dev;
- 	u64 sb_gen = zmd->sb_gen + 1;
- 	int ret;
- 
-@@ -674,9 +684,9 @@ static int dmz_write_sb(struct dmz_metadata *zmd, unsigned int set)
- 	sb->crc = 0;
- 	sb->crc = cpu_to_le32(crc32_le(sb_gen, (unsigned char *)sb, DMZ_BLOCK_SIZE));
- 
--	ret = dmz_rdwr_block(zmd, REQ_OP_WRITE, block, mblk->page);
-+	ret = dmz_rdwr_block(dev, REQ_OP_WRITE, block, mblk->page);
- 	if (ret == 0)
--		ret = blkdev_issue_flush(zmd->dev->bdev, GFP_NOIO, NULL);
-+		ret = blkdev_issue_flush(dev->bdev, GFP_NOIO, NULL);
- 
- 	return ret;
- }
-@@ -689,6 +699,7 @@ static int dmz_write_dirty_mblocks(struct dmz_metadata *zmd,
- 				   unsigned int set)
- {
- 	struct dmz_mblock *mblk;
-+	struct dmz_dev *dev = zmd->sb[set].dev;
- 	struct blk_plug plug;
- 	int ret = 0, nr_mblks_submitted = 0;
- 
-@@ -710,7 +721,7 @@ static int dmz_write_dirty_mblocks(struct dmz_metadata *zmd,
- 			       TASK_UNINTERRUPTIBLE);
- 		if (test_bit(DMZ_META_ERROR, &mblk->state)) {
- 			clear_bit(DMZ_META_ERROR, &mblk->state);
--			dmz_check_bdev(zmd->dev);
-+			dmz_check_bdev(dev);
- 			ret = -EIO;
- 		}
- 		nr_mblks_submitted--;
-@@ -718,7 +729,7 @@ static int dmz_write_dirty_mblocks(struct dmz_metadata *zmd,
- 
- 	/* Flush drive cache (this will also sync data) */
- 	if (ret == 0)
--		ret = blkdev_issue_flush(zmd->dev->bdev, GFP_NOIO, NULL);
-+		ret = blkdev_issue_flush(dev->bdev, GFP_NOIO, NULL);
- 
- 	return ret;
- }
-@@ -755,6 +766,7 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
- {
- 	struct dmz_mblock *mblk;
- 	struct list_head write_list;
-+	struct dmz_dev *dev;
- 	int ret;
- 
- 	if (WARN_ON(!zmd))
-@@ -768,6 +780,7 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
- 	 * from modifying metadata.
- 	 */
- 	down_write(&zmd->mblk_sem);
-+	dev = zmd->sb[zmd->mblk_primary].dev;
+-	dmz_dev_info(dev, "Using %zu B for zone information",
+-		     sizeof(struct dm_zone) * zmd->nr_zones);
++	DMINFO("(%s): Using %zu B for zone information",
++	       zmd->devname, sizeof(struct dm_zone) * zmd->nr_zones);
  
  	/*
- 	 * This is called from the target flush work and reclaim work.
-@@ -775,7 +788,7 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
- 	 */
- 	dmz_lock_flush(zmd);
+ 	 * Get zone information and initialize zone descriptors.  At the same
+@@ -1412,7 +1423,6 @@ static void dmz_get_zone_weight(struct dmz_metadata *zmd, struct dm_zone *zone);
+  */
+ static int dmz_load_mapping(struct dmz_metadata *zmd)
+ {
+-	struct dmz_dev *dev = zmd->dev;
+ 	struct dm_zone *dzone, *bzone;
+ 	struct dmz_mblock *dmap_mblk = NULL;
+ 	struct dmz_map *dmap;
+@@ -1445,7 +1455,7 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
+ 			goto next;
  
--	if (dmz_bdev_is_dying(zmd->dev)) {
-+	if (dmz_bdev_is_dying(dev)) {
- 		ret = -EIO;
- 		goto out;
+ 		if (dzone_id >= zmd->nr_zones) {
+-			dmz_dev_err(dev, "Chunk %u mapping: invalid data zone ID %u",
++			dmz_zmd_err(zmd, "Chunk %u mapping: invalid data zone ID %u",
+ 				    chunk, dzone_id);
+ 			return -EIO;
+ 		}
+@@ -1466,14 +1476,14 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
+ 			goto next;
+ 
+ 		if (bzone_id >= zmd->nr_zones) {
+-			dmz_dev_err(dev, "Chunk %u mapping: invalid buffer zone ID %u",
++			dmz_zmd_err(zmd, "Chunk %u mapping: invalid buffer zone ID %u",
+ 				    chunk, bzone_id);
+ 			return -EIO;
+ 		}
+ 
+ 		bzone = dmz_get(zmd, bzone_id);
+ 		if (!dmz_is_rnd(bzone)) {
+-			dmz_dev_err(dev, "Chunk %u mapping: invalid buffer zone %u",
++			dmz_zmd_err(zmd, "Chunk %u mapping: invalid buffer zone %u",
+ 				    chunk, bzone_id);
+ 			return -EIO;
+ 		}
+@@ -1894,7 +1904,9 @@ struct dm_zone *dmz_alloc_zone(struct dmz_metadata *zmd, unsigned long flags)
+ 		atomic_dec(&zmd->unmap_nr_seq);
+ 
+ 	if (dmz_is_offline(zone)) {
+-		dmz_dev_warn(zmd->dev, "Zone %u is offline", dmz_id(zmd, zone));
++		struct dmz_dev *dev = dmz_zone_to_dev(zmd, zone);
++
++		dmz_dev_warn(dev, "Zone %u is offline", dmz_id(zmd, zone));
+ 		zone = NULL;
+ 		goto again;
  	}
-@@ -787,7 +800,7 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
+@@ -2427,7 +2439,7 @@ static void dmz_cleanup_metadata(struct dmz_metadata *zmd)
+ 	while (!list_empty(&zmd->mblk_dirty_list)) {
+ 		mblk = list_first_entry(&zmd->mblk_dirty_list,
+ 					struct dmz_mblock, link);
+-		dmz_dev_warn(zmd->dev, "mblock %llu still in dirty list (ref %u)",
++		dmz_zmd_warn(zmd, "mblock %llu still in dirty list (ref %u)",
+ 			     (u64)mblk->no, mblk->ref);
+ 		list_del_init(&mblk->link);
+ 		rb_erase(&mblk->node, &zmd->mblk_rbtree);
+@@ -2445,7 +2457,7 @@ static void dmz_cleanup_metadata(struct dmz_metadata *zmd)
+ 	/* Sanity checks: the mblock rbtree should now be empty */
+ 	root = &zmd->mblk_rbtree;
+ 	rbtree_postorder_for_each_entry_safe(mblk, next, root, node) {
+-		dmz_dev_warn(zmd->dev, "mblock %llu ref %u still in rbtree",
++		dmz_zmd_warn(zmd, "mblock %llu ref %u still in rbtree",
+ 			     (u64)mblk->no, mblk->ref);
+ 		mblk->ref = 0;
+ 		dmz_free_mblock(zmd, mblk);
+@@ -2458,6 +2470,18 @@ static void dmz_cleanup_metadata(struct dmz_metadata *zmd)
+ 	mutex_destroy(&zmd->map_lock);
+ }
  
- 	/* If there are no dirty metadata blocks, just flush the device cache */
- 	if (list_empty(&write_list)) {
--		ret = blkdev_issue_flush(zmd->dev->bdev, GFP_NOIO, NULL);
-+		ret = blkdev_issue_flush(dev->bdev, GFP_NOIO, NULL);
++void dmz_print_dev(struct dmz_metadata *zmd, int num)
++{
++	struct dmz_dev *dev = &zmd->dev[num];
++
++	dmz_dev_info(dev, "Host-%s zoned block device",
++		     bdev_zoned_model(dev->bdev) == BLK_ZONED_HA ?
++		     "aware" : "managed");
++	dmz_dev_info(dev, "  %llu 512-byte logical sectors",
++		     (u64)dev->capacity);
++	dmz_dev_info(dev, "  %u zones of %llu 512-byte logical sectors",
++		     dev->nr_zones, (u64)zmd->zone_nr_sectors);
++}
+ /*
+  * Initialize the zoned metadata.
+  */
+@@ -2535,34 +2559,31 @@ int dmz_ctr_metadata(struct dmz_dev *dev, struct dmz_metadata **metadata,
+ 	/* Metadata cache shrinker */
+ 	ret = register_shrinker(&zmd->mblk_shrinker);
+ 	if (ret) {
+-		dmz_dev_err(dev, "Register metadata cache shrinker failed");
++		dmz_zmd_err(zmd, "Register metadata cache shrinker failed");
  		goto err;
  	}
  
-@@ -836,7 +849,7 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
- 		list_splice(&write_list, &zmd->mblk_dirty_list);
- 		spin_unlock(&zmd->mblk_lock);
- 	}
--	if (!dmz_check_bdev(zmd->dev))
-+	if (!dmz_check_bdev(dev))
- 		ret = -EIO;
- 	goto out;
- }
-@@ -847,8 +860,8 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
- static int dmz_check_sb(struct dmz_metadata *zmd, unsigned int set)
- {
- 	struct dmz_super *sb = zmd->sb[set].sb;
-+	struct dmz_dev *dev = zmd->sb[set].dev;
- 	unsigned int nr_meta_zones, nr_data_zones;
--	struct dmz_dev *dev = zmd->dev;
- 	u32 crc, stored_crc;
- 	u64 gen;
+-	dmz_dev_info(dev, "Host-%s zoned block device",
+-		     bdev_zoned_model(dev->bdev) == BLK_ZONED_HA ?
+-		     "aware" : "managed");
+-	dmz_dev_info(dev, "  %llu 512-byte logical sectors",
+-		     (u64)dev->capacity);
+-	dmz_dev_info(dev, "  %u zones of %llu 512-byte logical sectors",
++	dmz_zmd_info(zmd, "DM-Zoned metadata version %d", DMZ_META_VER);
++	dmz_print_dev(zmd, 0);
++
++	dmz_zmd_info(zmd, "  %u zones of %llu 512-byte logical sectors",
+ 		     zmd->nr_zones, (u64)zmd->zone_nr_sectors);
+-	dmz_dev_info(dev, "  %u metadata zones",
++	dmz_zmd_info(zmd, "  %u metadata zones",
+ 		     zmd->nr_meta_zones * 2);
+-	dmz_dev_info(dev, "  %u data zones for %u chunks",
++	dmz_zmd_info(zmd, "  %u data zones for %u chunks",
+ 		     zmd->nr_data_zones, zmd->nr_chunks);
+-	dmz_dev_info(dev, "    %u random zones (%u unmapped)",
++	dmz_zmd_info(zmd, "    %u random zones (%u unmapped)",
+ 		     zmd->nr_rnd, atomic_read(&zmd->unmap_nr_rnd));
+-	dmz_dev_info(dev, "    %u sequential zones (%u unmapped)",
++	dmz_zmd_info(zmd, "    %u sequential zones (%u unmapped)",
+ 		     zmd->nr_seq, atomic_read(&zmd->unmap_nr_seq));
+-	dmz_dev_info(dev, "  %u reserved sequential data zones",
++	dmz_zmd_info(zmd, "  %u reserved sequential data zones",
+ 		     zmd->nr_reserved_seq);
+-
+-	dmz_dev_debug(dev, "Format:");
+-	dmz_dev_debug(dev, "%u metadata blocks per set (%u max cache)",
++	dmz_zmd_debug(zmd, "Format:");
++	dmz_zmd_debug(zmd, "%u metadata blocks per set (%u max cache)",
+ 		      zmd->nr_meta_blocks, zmd->max_nr_mblks);
+-	dmz_dev_debug(dev, "  %u data zone mapping blocks",
++	dmz_zmd_debug(zmd, "  %u data zone mapping blocks",
+ 		      zmd->nr_map_blocks);
+-	dmz_dev_debug(dev, "  %u bitmap blocks",
++	dmz_zmd_debug(zmd, "  %u bitmap blocks",
+ 		      zmd->nr_bitmap_blocks);
  
-@@ -913,8 +926,8 @@ static int dmz_check_sb(struct dmz_metadata *zmd, unsigned int set)
+ 	*metadata = zmd;
+@@ -2591,7 +2612,6 @@ void dmz_dtr_metadata(struct dmz_metadata *zmd)
   */
- static int dmz_read_sb(struct dmz_metadata *zmd, unsigned int set)
+ int dmz_resume_metadata(struct dmz_metadata *zmd)
  {
--	return dmz_rdwr_block(zmd, REQ_OP_READ, zmd->sb[set].block,
--			      zmd->sb[set].mblk->page);
-+	return dmz_rdwr_block(zmd->sb[set].dev, REQ_OP_READ,
-+			      zmd->sb[set].block, zmd->sb[set].mblk->page);
- }
- 
- /*
-@@ -939,6 +952,7 @@ static int dmz_lookup_secondary_sb(struct dmz_metadata *zmd)
- 	/* Bad first super block: search for the second one */
- 	zmd->sb[1].block = zmd->sb[0].block + zone_nr_blocks;
- 	zmd->sb[1].zone = zmd->sb[0].zone + 1;
-+	zmd->sb[1].dev = dmz_zone_to_dev(zmd, zmd->sb[1].zone);
- 	for (i = 0; i < zmd->nr_rnd_zones - 1; i++) {
- 		if (dmz_read_sb(zmd, 1) != 0)
- 			break;
-@@ -947,11 +961,13 @@ static int dmz_lookup_secondary_sb(struct dmz_metadata *zmd)
- 			return 0;
+-	struct dmz_dev *dev = zmd->dev;
+ 	struct dm_zone *zone;
+ 	sector_t wp_block;
+ 	unsigned int i;
+@@ -2601,20 +2621,19 @@ int dmz_resume_metadata(struct dmz_metadata *zmd)
+ 	for (i = 0; i < zmd->nr_zones; i++) {
+ 		zone = dmz_get(zmd, i);
+ 		if (!zone) {
+-			dmz_dev_err(dev, "Unable to get zone %u", i);
++			dmz_zmd_err(zmd, "Unable to get zone %u", i);
+ 			return -EIO;
  		}
- 		zmd->sb[1].block += zone_nr_blocks;
-+		zmd->sb[1].dev = dmz_zone_to_dev(zmd, zmd->sb[1].zone + i);
- 	}
+-
+ 		wp_block = zone->wp_block;
  
- 	dmz_free_mblock(zmd, mblk);
- 	zmd->sb[1].mblk = NULL;
- 	zmd->sb[1].zone = NULL;
-+	zmd->sb[1].dev = NULL;
+ 		ret = dmz_update_zone(zmd, zone);
+ 		if (ret) {
+-			dmz_dev_err(dev, "Broken zone %u", i);
++			dmz_zmd_err(zmd, "Broken zone %u", i);
+ 			return ret;
+ 		}
  
- 	return -EIO;
- }
-@@ -992,7 +1008,8 @@ static int dmz_recover_mblocks(struct dmz_metadata *zmd, unsigned int dst_set)
- 	struct page *page;
- 	int i, ret;
+ 		if (dmz_is_offline(zone)) {
+-			dmz_dev_warn(dev, "Zone %u is offline", i);
++			dmz_zmd_warn(zmd, "Zone %u is offline", i);
+ 			continue;
+ 		}
  
--	dmz_dev_warn(zmd->dev, "Metadata set %u invalid: recovering", dst_set);
-+	dmz_dev_warn(zmd->sb[dst_set].dev,
-+		     "Metadata set %u invalid: recovering", dst_set);
+@@ -2622,7 +2641,7 @@ int dmz_resume_metadata(struct dmz_metadata *zmd)
+ 		if (!dmz_is_seq(zone))
+ 			zone->wp_block = 0;
+ 		else if (zone->wp_block != wp_block) {
+-			dmz_dev_err(dev, "Zone %u: Invalid wp (%llu / %llu)",
++			dmz_zmd_err(zmd, "Zone %u: Invalid wp (%llu / %llu)",
+ 				    i, (u64)zone->wp_block, (u64)wp_block);
+ 			zone->wp_block = wp_block;
+ 			dmz_invalidate_blocks(zmd, zone, zone->wp_block,
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index 8ed6d9f2df25..ccf90608f434 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -519,7 +519,8 @@ static void dmz_flush_work(struct work_struct *work)
+ 	/* Flush dirty metadata blocks */
+ 	ret = dmz_flush_metadata(dmz->metadata);
+ 	if (ret)
+-		dmz_dev_debug(dmz->dev, "Metadata flush failed, rc=%d\n", ret);
++		DMDEBUG("(%s): Metadata flush failed, rc=%d\n",
++			dmz_metadata_label(dmz->metadata), ret);
  
- 	if (dst_set == 0)
- 		zmd->sb[0].block = dmz_start_block(zmd, zmd->sb[0].zone);
-@@ -1005,11 +1022,11 @@ static int dmz_recover_mblocks(struct dmz_metadata *zmd, unsigned int dst_set)
- 
- 	/* Copy metadata blocks */
- 	for (i = 1; i < zmd->nr_meta_blocks; i++) {
--		ret = dmz_rdwr_block(zmd, REQ_OP_READ,
-+		ret = dmz_rdwr_block(zmd->sb[src_set].dev, REQ_OP_READ,
- 				     zmd->sb[src_set].block + i, page);
- 		if (ret)
- 			goto out;
--		ret = dmz_rdwr_block(zmd, REQ_OP_WRITE,
-+		ret = dmz_rdwr_block(zmd->sb[dst_set].dev, REQ_OP_WRITE,
- 				     zmd->sb[dst_set].block + i, page);
- 		if (ret)
- 			goto out;
-@@ -1048,9 +1065,10 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
- 
- 	/* Read and check the primary super block */
- 	zmd->sb[0].block = dmz_start_block(zmd, zmd->sb[0].zone);
-+	zmd->sb[0].dev = dmz_zone_to_dev(zmd, zmd->sb[0].zone);
- 	ret = dmz_get_sb(zmd, 0);
- 	if (ret) {
--		dmz_dev_err(zmd->dev, "Read primary super block failed");
-+		dmz_dev_err(zmd->sb[0].dev, "Read primary super block failed");
- 		return ret;
- 	}
- 
-@@ -1062,12 +1080,13 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
- 		if (!zmd->sb[1].zone)
- 			zmd->sb[1].zone = zmd->sb[0].zone + zmd->nr_meta_zones;
- 		zmd->sb[1].block = dmz_start_block(zmd, zmd->sb[1].zone);
-+		zmd->sb[1].dev = dmz_zone_to_dev(zmd, zmd->sb[1].zone);
- 		ret = dmz_get_sb(zmd, 1);
- 	} else
- 		ret = dmz_lookup_secondary_sb(zmd);
- 
- 	if (ret) {
--		dmz_dev_err(zmd->dev, "Read secondary super block failed");
-+		dmz_dev_err(zmd->sb[1].dev, "Read secondary super block failed");
- 		return ret;
- 	}
- 
-@@ -1083,17 +1102,25 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
- 
- 	if (sb_good[0])
- 		sb_gen[0] = le64_to_cpu(zmd->sb[0].sb->gen);
--	else
-+	else {
- 		ret = dmz_recover_mblocks(zmd, 0);
-+		if (ret) {
-+			dmz_dev_err(zmd->sb[0].dev,
-+				    "Recovery of superblock 0 failed");
-+			return -EIO;
-+		}
-+	}
- 
- 	if (sb_good[1])
- 		sb_gen[1] = le64_to_cpu(zmd->sb[1].sb->gen);
--	else
-+	else {
- 		ret = dmz_recover_mblocks(zmd, 1);
- 
--	if (ret) {
--		dmz_dev_err(zmd->dev, "Recovery failed");
--		return -EIO;
-+		if (ret) {
-+			dmz_dev_err(zmd->sb[1].dev,
-+				    "Recovery of superblock 1 failed");
-+			return -EIO;
-+		}
- 	}
- 
- 	if (sb_gen[0] >= sb_gen[1]) {
-@@ -1104,7 +1131,8 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
- 		zmd->mblk_primary = 1;
- 	}
- 
--	dmz_dev_debug(zmd->dev, "Using super block %u (gen %llu)",
-+	dmz_dev_debug(zmd->sb[zmd->mblk_primary].dev,
-+		      "Using super block %u (gen %llu)",
- 		      zmd->mblk_primary, zmd->sb_gen);
- 
- 	return 0;
+ 	/* Process queued flush requests */
+ 	while (1) {
 -- 
 2.25.0
