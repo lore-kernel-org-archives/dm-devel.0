@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 08/11] dm-zoned: use dmz_zone_to_dev() when
-	handling metadata I/O
-Date: Mon,  6 Apr 2020 16:35:02 +0200
-Message-ID: <20200406143505.133271-9-hare@suse.de>
+Subject: [PATCH 06/11] dm-zoned: remove 'dev' argument from
+	reclaim
+Date: Mon,  6 Apr 2020 16:35:00 +0200
+Message-ID: <20200406143505.133271-7-hare@suse.de>
 References: <20200406143505.133271-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,118 +22,263 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien LeMoal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Use accessors to retrieve the device pointer in preparation
-for adding an additional block device.
+Use the dmz_zone_to_dev() mapping function to remove the
+'dev' argument from reclaim.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm-zoned-metadata.c | 22 +++++++++++++---------
- 1 file changed, 13 insertions(+), 9 deletions(-)
+ drivers/md/dm-zoned-metadata.c |  5 ++++
+ drivers/md/dm-zoned-reclaim.c  | 44 ++++++++++++++++++----------------
+ drivers/md/dm-zoned-target.c   |  2 +-
+ drivers/md/dm-zoned.h          |  4 +++-
+ 4 files changed, 33 insertions(+), 22 deletions(-)
 
 diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index 9919aa6210c1..08707c886ca2 100644
+index f7ae57e78230..9919aa6210c1 100644
 --- a/drivers/md/dm-zoned-metadata.c
 +++ b/drivers/md/dm-zoned-metadata.c
-@@ -1310,6 +1310,7 @@ static int dmz_update_zone_cb(struct blk_zone *blkz, unsigned int idx,
-  */
- static int dmz_update_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
+@@ -272,6 +272,11 @@ const char *dmz_metadata_label(struct dmz_metadata *zmd)
+ 	return (const char *)zmd->devname;
+ }
+ 
++bool dmz_check_dev(struct dmz_metadata *zmd)
++{
++	return dmz_check_bdev(&zmd->dev[0]);
++}
++
+ /*
+  * Lock/unlock mapping table.
+  * The map lock also protects all the zone lists.
+diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+index c46159b6fc46..b41ef358210f 100644
+--- a/drivers/md/dm-zoned-reclaim.c
++++ b/drivers/md/dm-zoned-reclaim.c
+@@ -13,7 +13,6 @@
+ 
+ struct dmz_reclaim {
+ 	struct dmz_metadata     *metadata;
+-	struct dmz_dev		*dev;
+ 
+ 	struct delayed_work	work;
+ 	struct workqueue_struct *wq;
+@@ -59,6 +58,7 @@ static int dmz_reclaim_align_wp(struct dmz_reclaim *zrc, struct dm_zone *zone,
+ 				sector_t block)
  {
+ 	struct dmz_metadata *zmd = zrc->metadata;
 +	struct dmz_dev *dev = dmz_zone_to_dev(zmd, zone);
- 	unsigned int noio_flag;
+ 	sector_t wp_block = zone->wp_block;
+ 	unsigned int nr_blocks;
  	int ret;
- 
-@@ -1320,16 +1321,16 @@ static int dmz_update_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
- 	 * GFP_NOIO was specified.
+@@ -74,15 +74,15 @@ static int dmz_reclaim_align_wp(struct dmz_reclaim *zrc, struct dm_zone *zone,
+ 	 * pointer and the requested position.
  	 */
- 	noio_flag = memalloc_noio_save();
--	ret = blkdev_report_zones(zmd->dev->bdev, dmz_start_sect(zmd, zone), 1,
-+	ret = blkdev_report_zones(dev->bdev, dmz_start_sect(zmd, zone), 1,
- 				  dmz_update_zone_cb, zone);
- 	memalloc_noio_restore(noio_flag);
- 
- 	if (ret == 0)
- 		ret = -EIO;
- 	if (ret < 0) {
--		dmz_dev_err(zmd->dev, "Get zone %u report failed",
-+		dmz_dev_err(dev, "Get zone %u report failed",
- 			    dmz_id(zmd, zone));
--		dmz_check_bdev(zmd->dev);
+ 	nr_blocks = block - wp_block;
+-	ret = blkdev_issue_zeroout(zrc->dev->bdev,
++	ret = blkdev_issue_zeroout(dev->bdev,
+ 				   dmz_start_sect(zmd, zone) + dmz_blk2sect(wp_block),
+ 				   dmz_blk2sect(nr_blocks), GFP_NOIO, 0);
+ 	if (ret) {
+-		dmz_dev_err(zrc->dev,
++		dmz_dev_err(dev,
+ 			    "Align zone %u wp %llu to %llu (wp+%u) blocks failed %d",
+ 			    dmz_id(zmd, zone), (unsigned long long)wp_block,
+ 			    (unsigned long long)block, nr_blocks, ret);
+-		dmz_check_bdev(zrc->dev);
 +		dmz_check_bdev(dev);
  		return ret;
  	}
  
-@@ -1343,6 +1344,7 @@ static int dmz_update_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
- static int dmz_handle_seq_write_err(struct dmz_metadata *zmd,
- 				    struct dm_zone *zone)
+@@ -116,7 +116,7 @@ static int dmz_reclaim_copy(struct dmz_reclaim *zrc,
+ 			    struct dm_zone *src_zone, struct dm_zone *dst_zone)
  {
-+	struct dmz_dev *dev = dmz_zone_to_dev(zmd, zone);
- 	unsigned int wp = 0;
+ 	struct dmz_metadata *zmd = zrc->metadata;
+-	struct dmz_dev *dev = zrc->dev;
++	struct dmz_dev *src_dev, *dst_dev;
+ 	struct dm_io_region src, dst;
+ 	sector_t block = 0, end_block;
+ 	sector_t nr_blocks;
+@@ -130,13 +130,17 @@ static int dmz_reclaim_copy(struct dmz_reclaim *zrc,
+ 	else
+ 		end_block = dmz_zone_nr_blocks(zmd);
+ 	src_zone_block = dmz_start_block(zmd, src_zone);
++	src_dev = dmz_zone_to_dev(zmd, src_zone);
+ 	dst_zone_block = dmz_start_block(zmd, dst_zone);
++	dst_dev = dmz_zone_to_dev(zmd, dst_zone);
+ 
+ 	if (dmz_is_seq(dst_zone))
+ 		set_bit(DM_KCOPYD_WRITE_SEQ, &flags);
+ 
+ 	while (block < end_block) {
+-		if (dev->flags & DMZ_BDEV_DYING)
++		if (src_dev->flags & DMZ_BDEV_DYING)
++			return -EIO;
++		if (dst_dev->flags & DMZ_BDEV_DYING)
+ 			return -EIO;
+ 
+ 		/* Get a valid region from the source zone */
+@@ -156,11 +160,11 @@ static int dmz_reclaim_copy(struct dmz_reclaim *zrc,
+ 				return ret;
+ 		}
+ 
+-		src.bdev = dev->bdev;
++		src.bdev = src_dev->bdev;
+ 		src.sector = dmz_blk2sect(src_zone_block + block);
+ 		src.count = dmz_blk2sect(nr_blocks);
+ 
+-		dst.bdev = dev->bdev;
++		dst.bdev = dst_dev->bdev;
+ 		dst.sector = dmz_blk2sect(dst_zone_block + block);
+ 		dst.count = src.count;
+ 
+@@ -192,9 +196,10 @@ static int dmz_reclaim_buf(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+ 	struct dm_zone *bzone = dzone->bzone;
+ 	sector_t chunk_block = dzone->wp_block;
+ 	struct dmz_metadata *zmd = zrc->metadata;
++	struct dmz_dev *dev = dmz_zone_to_dev(zmd, dzone);
  	int ret;
  
-@@ -1351,7 +1353,7 @@ static int dmz_handle_seq_write_err(struct dmz_metadata *zmd,
- 	if (ret)
+-	dmz_dev_debug(zrc->dev,
++	dmz_dev_debug(dev,
+ 		      "Chunk %u, move buf zone %u (weight %u) to data zone %u (weight %u)",
+ 		      dzone->chunk, dmz_id(zmd, bzone), dmz_weight(bzone),
+ 		      dmz_id(zmd, dzone), dmz_weight(dzone));
+@@ -231,9 +236,10 @@ static int dmz_reclaim_seq_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+ 	unsigned int chunk = dzone->chunk;
+ 	struct dm_zone *bzone = dzone->bzone;
+ 	struct dmz_metadata *zmd = zrc->metadata;
++	struct dmz_dev *dev = dmz_zone_to_dev(zmd, dzone);
+ 	int ret = 0;
+ 
+-	dmz_dev_debug(zrc->dev,
++	dmz_dev_debug(dev,
+ 		      "Chunk %u, move data zone %u (weight %u) to buf zone %u (weight %u)",
+ 		      chunk, dmz_id(zmd, dzone), dmz_weight(dzone),
+ 		      dmz_id(zmd, bzone), dmz_weight(bzone));
+@@ -276,6 +282,7 @@ static int dmz_reclaim_rnd_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+ 	unsigned int chunk = dzone->chunk;
+ 	struct dm_zone *szone = NULL;
+ 	struct dmz_metadata *zmd = zrc->metadata;
++	struct dmz_dev *dev = dmz_zone_to_dev(zmd, dzone);
+ 	int ret;
+ 
+ 	/* Get a free sequential zone */
+@@ -285,7 +292,7 @@ static int dmz_reclaim_rnd_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+ 	if (!szone)
+ 		return -ENOSPC;
+ 
+-	dmz_dev_debug(zrc->dev,
++	dmz_dev_debug(dev,
+ 		      "Chunk %u, move rnd zone %u (weight %u) to seq zone %u",
+ 		      chunk, dmz_id(zmd, dzone), dmz_weight(dzone),
+ 		      dmz_id(zmd, szone));
+@@ -344,6 +351,7 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+ 	struct dmz_metadata *zmd = zrc->metadata;
+ 	struct dm_zone *dzone;
+ 	struct dm_zone *rzone;
++	struct dmz_dev *dev;
+ 	unsigned long start;
+ 	int ret;
+ 
+@@ -353,7 +361,7 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+ 		return PTR_ERR(dzone);
+ 
+ 	start = jiffies;
+-
++	dev = dmz_zone_to_dev(zmd, dzone);
+ 	if (dmz_is_rnd(dzone)) {
+ 		if (!dmz_weight(dzone)) {
+ 			/* Empty zone */
+@@ -401,13 +409,13 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+ 
+ 	ret = dmz_flush_metadata(zrc->metadata);
+ 	if (ret) {
+-		dmz_dev_debug(zrc->dev,
++		dmz_dev_debug(dev,
+ 			      "Metadata flush for zone %u failed, err %d\n",
+ 			      dmz_id(zmd, rzone), ret);
  		return ret;
- 
--	dmz_dev_warn(zmd->dev, "Processing zone %u write error (zone wp %u/%u)",
-+	dmz_dev_warn(dev, "Processing zone %u write error (zone wp %u/%u)",
- 		     dmz_id(zmd, zone), zone->wp_block, wp);
- 
- 	if (zone->wp_block < wp) {
-@@ -1384,7 +1386,7 @@ static int dmz_reset_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
- 		return 0;
- 
- 	if (!dmz_is_empty(zone) || dmz_seq_write_err(zone)) {
--		struct dmz_dev *dev = zmd->dev;
-+		struct dmz_dev *dev = dmz_zone_to_dev(zmd, zone);
- 
- 		ret = blkdev_zone_mgmt(dev->bdev, REQ_OP_ZONE_RESET,
- 				       dmz_start_sect(zmd, zone),
-@@ -2098,12 +2100,13 @@ int dmz_merge_valid_blocks(struct dmz_metadata *zmd, struct dm_zone *from_zone,
- int dmz_validate_blocks(struct dmz_metadata *zmd, struct dm_zone *zone,
- 			sector_t chunk_block, unsigned int nr_blocks)
- {
-+	struct dmz_dev *dev = dmz_zone_to_dev(zmd, zone);
- 	unsigned int count, bit, nr_bits;
- 	unsigned int zone_nr_blocks = zmd->zone_nr_blocks;
- 	struct dmz_mblock *mblk;
- 	unsigned int n = 0;
- 
--	dmz_dev_debug(zmd->dev, "=> VALIDATE zone %u, block %llu, %u blocks",
-+	dmz_dev_debug(dev, "=> VALIDATE zone %u, block %llu, %u blocks",
- 		      dmz_id(zmd, zone), (unsigned long long)chunk_block,
- 		      nr_blocks);
- 
-@@ -2133,7 +2136,7 @@ int dmz_validate_blocks(struct dmz_metadata *zmd, struct dm_zone *zone,
- 	if (likely(zone->weight + n <= zone_nr_blocks))
- 		zone->weight += n;
- 	else {
--		dmz_dev_warn(zmd->dev, "Zone %u: weight %u should be <= %u",
-+		dmz_dev_warn(dev, "Zone %u: weight %u should be <= %u",
- 			     dmz_id(zmd, zone), zone->weight,
- 			     zone_nr_blocks - n);
- 		zone->weight = zone_nr_blocks;
-@@ -2179,11 +2182,12 @@ static int dmz_clear_bits(unsigned long *bitmap, int bit, int nr_bits)
- int dmz_invalidate_blocks(struct dmz_metadata *zmd, struct dm_zone *zone,
- 			  sector_t chunk_block, unsigned int nr_blocks)
- {
-+	struct dmz_dev *dev = dmz_zone_to_dev(zmd, zone);
- 	unsigned int count, bit, nr_bits;
- 	struct dmz_mblock *mblk;
- 	unsigned int n = 0;
- 
--	dmz_dev_debug(zmd->dev, "=> INVALIDATE zone %u, block %llu, %u blocks",
-+	dmz_dev_debug(dev, "=> INVALIDATE zone %u, block %llu, %u blocks",
- 		      dmz_id(zmd, zone), (u64)chunk_block, nr_blocks);
- 
- 	WARN_ON(chunk_block + nr_blocks > zmd->zone_nr_blocks);
-@@ -2213,7 +2217,7 @@ int dmz_invalidate_blocks(struct dmz_metadata *zmd, struct dm_zone *zone,
- 	if (zone->weight >= n)
- 		zone->weight -= n;
- 	else {
--		dmz_dev_warn(zmd->dev, "Zone %u: weight %u should be >= %u",
-+		dmz_dev_warn(dev, "Zone %u: weight %u should be >= %u",
- 			     dmz_id(zmd, zone), zone->weight, n);
- 		zone->weight = 0;
  	}
+ 
+-	dmz_dev_debug(zrc->dev, "Reclaimed zone %u in %u ms",
++	dmz_dev_debug(dev, "Reclaimed zone %u in %u ms",
+ 		      dmz_id(zmd, rzone), jiffies_to_msecs(jiffies - start));
+ 	return 0;
+ }
+@@ -456,9 +464,6 @@ static void dmz_reclaim_work(struct work_struct *work)
+ 	unsigned int p_unmap_rnd;
+ 	int ret;
+ 
+-	if (dmz_bdev_is_dying(zrc->dev))
+-		return;
+-
+ 	if (!dmz_should_reclaim(zrc)) {
+ 		mod_delayed_work(zrc->wq, &zrc->work, DMZ_IDLE_PERIOD);
+ 		return;
+@@ -491,7 +496,7 @@ static void dmz_reclaim_work(struct work_struct *work)
+ 	if (ret) {
+ 		DMDEBUG("(%s): Reclaim error %d\n",
+ 			dmz_metadata_label(zmd), ret);
+-		if (!dmz_check_bdev(zrc->dev))
++		if (!dmz_check_dev(zmd))
+ 			return;
+ 	}
+ 
+@@ -501,7 +506,7 @@ static void dmz_reclaim_work(struct work_struct *work)
+ /*
+  * Initialize reclaim.
+  */
+-int dmz_ctr_reclaim(struct dmz_dev *dev, struct dmz_metadata *zmd,
++int dmz_ctr_reclaim(struct dmz_metadata *zmd,
+ 		    struct dmz_reclaim **reclaim)
+ {
+ 	struct dmz_reclaim *zrc;
+@@ -511,7 +516,6 @@ int dmz_ctr_reclaim(struct dmz_dev *dev, struct dmz_metadata *zmd,
+ 	if (!zrc)
+ 		return -ENOMEM;
+ 
+-	zrc->dev = dev;
+ 	zrc->metadata = zmd;
+ 	zrc->atime = jiffies;
+ 
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index c2c3aa090f97..02ee0ca1f0b0 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -835,7 +835,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	mod_delayed_work(dmz->flush_wq, &dmz->flush_work, DMZ_FLUSH_PERIOD);
+ 
+ 	/* Initialize reclaim */
+-	ret = dmz_ctr_reclaim(dev, dmz->metadata, &dmz->reclaim);
++	ret = dmz_ctr_reclaim(dmz->metadata, &dmz->reclaim);
+ 	if (ret) {
+ 		ti->error = "Zone reclaim initialization failed";
+ 		goto err_fwq;
+diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
+index f7df7f67e404..808ffbef0da3 100644
+--- a/drivers/md/dm-zoned.h
++++ b/drivers/md/dm-zoned.h
+@@ -176,11 +176,13 @@ void dmz_lock_flush(struct dmz_metadata *zmd);
+ void dmz_unlock_flush(struct dmz_metadata *zmd);
+ int dmz_flush_metadata(struct dmz_metadata *zmd);
+ const char *dmz_metadata_label(struct dmz_metadata *zmd);
++bool dmz_check_dev(struct dmz_metadata *zmd);
+ 
+ unsigned int dmz_id(struct dmz_metadata *zmd, struct dm_zone *zone);
+ sector_t dmz_start_sect(struct dmz_metadata *zmd, struct dm_zone *zone);
+ sector_t dmz_start_block(struct dmz_metadata *zmd, struct dm_zone *zone);
+ unsigned int dmz_nr_chunks(struct dmz_metadata *zmd);
++struct dmz_dev *dmz_zone_to_dev(struct dmz_metadata *zmd, struct dm_zone *zone);
+ 
+ #define DMZ_ALLOC_RND		0x01
+ #define DMZ_ALLOC_RECLAIM	0x02
+@@ -252,7 +254,7 @@ int dmz_merge_valid_blocks(struct dmz_metadata *zmd, struct dm_zone *from_zone,
+ /*
+  * Functions defined in dm-zoned-reclaim.c
+  */
+-int dmz_ctr_reclaim(struct dmz_dev *dev, struct dmz_metadata *zmd,
++int dmz_ctr_reclaim(struct dmz_metadata *zmd,
+ 		    struct dmz_reclaim **zrc);
+ void dmz_dtr_reclaim(struct dmz_reclaim *zrc);
+ void dmz_suspend_reclaim(struct dmz_reclaim *zrc);
 -- 
 2.25.0
