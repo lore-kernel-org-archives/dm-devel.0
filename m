@@ -1,8 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 01/11] dm-zoned: store zone id within the zone
-	structure
-Date: Mon,  6 Apr 2020 16:34:55 +0200
-Message-ID: <20200406143505.133271-2-hare@suse.de>
+Subject: [PATCH 02/11] dm-zoned: use array for superblock zones
+Date: Mon,  6 Apr 2020 16:34:56 +0200
+Message-ID: <20200406143505.133271-3-hare@suse.de>
 References: <20200406143505.133271-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,49 +21,144 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien LeMoal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Instead of calculating the zone index by the offset within the
-zone array store the index within the structure itself.
+Instead of storing just the first superblock zone and calculate
+the secondary relative to that we should be using an array for
+holding the superblock zones.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm-zoned-metadata.c | 3 ++-
- drivers/md/dm-zoned.h          | 3 +++
- 2 files changed, 5 insertions(+), 1 deletion(-)
+ drivers/md/dm-zoned-metadata.c | 41 +++++++++++++++++++++-------------
+ 1 file changed, 25 insertions(+), 16 deletions(-)
 
 diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index c8787560fa9f..afce594067fb 100644
+index afce594067fb..b37d3faec518 100644
 --- a/drivers/md/dm-zoned-metadata.c
 +++ b/drivers/md/dm-zoned-metadata.c
-@@ -189,7 +189,7 @@ struct dmz_metadata {
+@@ -124,6 +124,7 @@ struct dmz_sb {
+ 	sector_t		block;
+ 	struct dmz_mblock	*mblk;
+ 	struct dmz_super	*sb;
++	struct dm_zone		*zone;
+ };
+ 
+ /*
+@@ -150,7 +151,6 @@ struct dmz_metadata {
+ 	/* Zone information array */
+ 	struct dm_zone		*zones;
+ 
+-	struct dm_zone		*sb_zone;
+ 	struct dmz_sb		sb[2];
+ 	unsigned int		mblk_primary;
+ 	u64			sb_gen;
+@@ -844,8 +844,9 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
+ /*
+  * Check super block.
   */
- unsigned int dmz_id(struct dmz_metadata *zmd, struct dm_zone *zone)
+-static int dmz_check_sb(struct dmz_metadata *zmd, struct dmz_super *sb)
++static int dmz_check_sb(struct dmz_metadata *zmd, unsigned int set)
  {
--	return ((unsigned int)(zone - zmd->zones));
-+	return zone->id;
++	struct dmz_super *sb = zmd->sb[set].sb;
+ 	unsigned int nr_meta_zones, nr_data_zones;
+ 	struct dmz_dev *dev = zmd->dev;
+ 	u32 crc, stored_crc;
+@@ -937,16 +938,20 @@ static int dmz_lookup_secondary_sb(struct dmz_metadata *zmd)
+ 
+ 	/* Bad first super block: search for the second one */
+ 	zmd->sb[1].block = zmd->sb[0].block + zone_nr_blocks;
++	zmd->sb[1].zone = zmd->sb[0].zone + 1;
+ 	for (i = 0; i < zmd->nr_rnd_zones - 1; i++) {
+ 		if (dmz_read_sb(zmd, 1) != 0)
+ 			break;
+-		if (le32_to_cpu(zmd->sb[1].sb->magic) == DMZ_MAGIC)
++		if (le32_to_cpu(zmd->sb[1].sb->magic) == DMZ_MAGIC) {
++			zmd->sb[1].zone += i;
+ 			return 0;
++		}
+ 		zmd->sb[1].block += zone_nr_blocks;
+ 	}
+ 
+ 	dmz_free_mblock(zmd, mblk);
+ 	zmd->sb[1].mblk = NULL;
++	zmd->sb[1].zone = NULL;
+ 
+ 	return -EIO;
  }
+@@ -990,11 +995,9 @@ static int dmz_recover_mblocks(struct dmz_metadata *zmd, unsigned int dst_set)
+ 	dmz_dev_warn(zmd->dev, "Metadata set %u invalid: recovering", dst_set);
  
- sector_t dmz_start_sect(struct dmz_metadata *zmd, struct dm_zone *zone)
-@@ -1119,6 +1119,7 @@ static int dmz_init_zone(struct blk_zone *blkz, unsigned int idx, void *data)
+ 	if (dst_set == 0)
+-		zmd->sb[0].block = dmz_start_block(zmd, zmd->sb_zone);
+-	else {
+-		zmd->sb[1].block = zmd->sb[0].block +
+-			(zmd->nr_meta_zones << zmd->dev->zone_nr_blocks_shift);
+-	}
++		zmd->sb[0].block = dmz_start_block(zmd, zmd->sb[0].zone);
++	else
++		zmd->sb[1].block = dmz_start_block(zmd, zmd->sb[1].zone);
  
- 	INIT_LIST_HEAD(&zone->link);
- 	atomic_set(&zone->refcount, 0);
-+	zone->id = idx;
- 	zone->chunk = DMZ_MAP_UNMAPPED;
+ 	page = alloc_page(GFP_NOIO);
+ 	if (!page)
+@@ -1038,21 +1041,27 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
+ 	u64 sb_gen[2] = {0, 0};
+ 	int ret;
  
- 	switch (blkz->type) {
-diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
-index 884c0e586082..39d59898abbe 100644
---- a/drivers/md/dm-zoned.h
-+++ b/drivers/md/dm-zoned.h
-@@ -87,6 +87,9 @@ struct dm_zone {
- 	/* Zone activation reference count */
- 	atomic_t		refcount;
- 
-+	/* Zone id */
-+	unsigned int		id;
++	if (!zmd->sb[0].zone) {
++		dmz_dev_err(zmd->dev, "Primary super block zone not set");
++		return -ENXIO;
++	}
 +
- 	/* Zone write pointer block (relative to the zone start block) */
- 	unsigned int		wp_block;
+ 	/* Read and check the primary super block */
+-	zmd->sb[0].block = dmz_start_block(zmd, zmd->sb_zone);
++	zmd->sb[0].block = dmz_start_block(zmd, zmd->sb[0].zone);
+ 	ret = dmz_get_sb(zmd, 0);
+ 	if (ret) {
+ 		dmz_dev_err(zmd->dev, "Read primary super block failed");
+ 		return ret;
+ 	}
  
+-	ret = dmz_check_sb(zmd, zmd->sb[0].sb);
++	ret = dmz_check_sb(zmd, 0);
+ 
+ 	/* Read and check secondary super block */
+ 	if (ret == 0) {
+ 		sb_good[0] = true;
+-		zmd->sb[1].block = zmd->sb[0].block +
+-			(zmd->nr_meta_zones << zmd->dev->zone_nr_blocks_shift);
++		if (!zmd->sb[1].zone)
++			zmd->sb[1].zone = zmd->sb[0].zone + zmd->nr_meta_zones;
++		zmd->sb[1].block = dmz_start_block(zmd, zmd->sb[1].zone);
+ 		ret = dmz_get_sb(zmd, 1);
+ 	} else
+ 		ret = dmz_lookup_secondary_sb(zmd);
+@@ -1062,7 +1071,7 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
+ 		return ret;
+ 	}
+ 
+-	ret = dmz_check_sb(zmd, zmd->sb[1].sb);
++	ret = dmz_check_sb(zmd, 1);
+ 	if (ret == 0)
+ 		sb_good[1] = true;
+ 
+@@ -1147,9 +1156,9 @@ static int dmz_init_zone(struct blk_zone *blkz, unsigned int idx, void *data)
+ 		zmd->nr_useable_zones++;
+ 		if (dmz_is_rnd(zone)) {
+ 			zmd->nr_rnd_zones++;
+-			if (!zmd->sb_zone) {
++			if (!zmd->sb[0].zone) {
+ 				/* Super block zone */
+-				zmd->sb_zone = zone;
++				zmd->sb[0].zone = zone;
+ 			}
+ 		}
+ 	}
+@@ -2420,7 +2429,7 @@ int dmz_ctr_metadata(struct dmz_dev *dev, struct dmz_metadata **metadata)
+ 		goto err;
+ 
+ 	/* Set metadata zones starting from sb_zone */
+-	zid = dmz_id(zmd, zmd->sb_zone);
++	zid = dmz_id(zmd, zmd->sb[0].zone);
+ 	for (i = 0; i < zmd->nr_meta_zones << 1; i++) {
+ 		zone = dmz_get(zmd, zid + i);
+ 		if (!dmz_is_rnd(zone))
 -- 
 2.25.0
