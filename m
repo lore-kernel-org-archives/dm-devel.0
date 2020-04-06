@@ -1,24 +1,48 @@
-From: pr-tracker-bot@kernel.org
-Subject: Re: [git pull v2] device mapper fixes for 5.7
-Date: Fri, 03 Apr 2020 22:05:19 +0000
-Message-ID: <158595151917.22871.12219569331072002461.pr-tracker-bot@kernel.org>
-References: <20200403154213.GA18386@redhat.com> <20200403171543.GA92499@lobo>
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200403171543.GA92499@lobo>
-Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, linux-block@vger.kernel.org, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+From: Drew Hastings <dhastings@crucialwebhost.com>
+Subject: Unused functions in dm-thin-metadata
+Date: Sun, 5 Apr 2020 17:02:18 -0700
+Message-ID: <CAN-y+EKqXowOufjVs=BKwZQc+HFMk1_iQ-+H+oisK6D+eBGp3A@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============5862764533587911920=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The pull request you sent on Fri, 3 Apr 2020 13:15:43 -0400:
+--===============5862764533587911920==
+Content-Type: multipart/alternative; boundary="000000000000a525b705a293fb68"
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.7/dm-fixes
+--000000000000a525b705a293fb68
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/de3c913c6e9d8bbf8b2d3caaed55ff3e40a62e56
+Not super important, but both dm_thin_remove_block and __remove are unused.
+I'm assuming this is because at some point the remove_range logic was
+implemented.
 
-Thank you!
+--000000000000a525b705a293fb68
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
--- 
-Deet-doot-dot, I am a bot.
-https://korg.wiki.kernel.org/userdoc/prtracker
+<div dir=3D"ltr">Not super important, but both=C2=A0dm_thin_remove_block an=
+d=C2=A0__remove are unused. I&#39;m assuming this is because at some point =
+the remove_range logic was implemented.</div>
+
+--000000000000a525b705a293fb68--
+
+--===============5862764533587911920==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5862764533587911920==--
