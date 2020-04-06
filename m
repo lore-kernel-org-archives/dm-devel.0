@@ -1,10 +1,14 @@
-From: Drew Hastings <dhastings@crucialwebhost.com>
-Subject: Unused functions in dm-thin-metadata
-Date: Sun, 5 Apr 2020 17:02:18 -0700
-Message-ID: <CAN-y+EKqXowOufjVs=BKwZQc+HFMk1_iQ-+H+oisK6D+eBGp3A@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH 01/11] dm-zoned: store zone id within the zone
+	structure
+Date: Mon,  6 Apr 2020 16:34:55 +0200
+Message-ID: <20200406143505.133271-2-hare@suse.de>
+References: <20200406143505.133271-1-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5862764533587911920=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200406143505.133271-1-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,35 +18,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Damien LeMoal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============5862764533587911920==
-Content-Type: multipart/alternative; boundary="000000000000a525b705a293fb68"
+Instead of calculating the zone index by the offset within the
+zone array store the index within the structure itself.
 
---000000000000a525b705a293fb68
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ drivers/md/dm-zoned-metadata.c | 3 ++-
+ drivers/md/dm-zoned.h          | 3 +++
+ 2 files changed, 5 insertions(+), 1 deletion(-)
 
-Not super important, but both dm_thin_remove_block and __remove are unused.
-I'm assuming this is because at some point the remove_range logic was
-implemented.
-
---000000000000a525b705a293fb68
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Not super important, but both=C2=A0dm_thin_remove_block an=
-d=C2=A0__remove are unused. I&#39;m assuming this is because at some point =
-the remove_range logic was implemented.</div>
-
---000000000000a525b705a293fb68--
-
---===============5862764533587911920==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5862764533587911920==--
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index c8787560fa9f..afce594067fb 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -189,7 +189,7 @@ struct dmz_metadata {
+  */
+ unsigned int dmz_id(struct dmz_metadata *zmd, struct dm_zone *zone)
+ {
+-	return ((unsigned int)(zone - zmd->zones));
++	return zone->id;
+ }
+ 
+ sector_t dmz_start_sect(struct dmz_metadata *zmd, struct dm_zone *zone)
+@@ -1119,6 +1119,7 @@ static int dmz_init_zone(struct blk_zone *blkz, unsigned int idx, void *data)
+ 
+ 	INIT_LIST_HEAD(&zone->link);
+ 	atomic_set(&zone->refcount, 0);
++	zone->id = idx;
+ 	zone->chunk = DMZ_MAP_UNMAPPED;
+ 
+ 	switch (blkz->type) {
+diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
+index 884c0e586082..39d59898abbe 100644
+--- a/drivers/md/dm-zoned.h
++++ b/drivers/md/dm-zoned.h
+@@ -87,6 +87,9 @@ struct dm_zone {
+ 	/* Zone activation reference count */
+ 	atomic_t		refcount;
+ 
++	/* Zone id */
++	unsigned int		id;
++
+ 	/* Zone write pointer block (relative to the zone start block) */
+ 	unsigned int		wp_block;
+ 
+-- 
+2.25.0
