@@ -1,100 +1,67 @@
-From: Sunwook Eom <speed.eom@samsung.com>
-Subject: [PATCH] dm verity fec: Don't add data_blocks to block
-Date: Tue, 7 Apr 2020 15:53:35 +0900
-Message-ID: <317e0073-a6f7-4232-3b95-a4bc3ddbcdec@samsung.com>
-References: <CGME20200407065340epcas1p13e6e5ad6131f0a94d3ed1e8360353a82@epcas1p1.samsung.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 01/11] dm-zoned: store zone id within the
+	zone structure
+Date: Tue, 7 Apr 2020 09:52:55 +0200
+Message-ID: <b1954a00-74ca-1d1f-5a66-b7bbfaeff2fb@suse.de>
+References: <20200406143505.133271-1-hare@suse.de>
+	<20200406143505.133271-2-hare@suse.de>
+	<BY5PR04MB6900F60FCE7FB016A67370F8E7C30@BY5PR04MB6900.namprd04.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <BY5PR04MB6900F60FCE7FB016A67370F8E7C30@BY5PR04MB6900.namprd04.prod.outlook.com>
 Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: agk@redhat.com
-Cc: snitzer@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, sunwook5492@gmail.com
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Damien Le Moal <Damien.LeMoal@wdc.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Bob Liu <bob.liu@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Even if block type is metadata,
-block in verity_fec_decode() has already the right block number.
-So there is no need to add data_blocks to block.
-
-Signed-off-by: Sunwook Eom <speed.eom@samsung.com>
----
-  drivers/md/dm-verity-fec.c    | 6 +-----
-  drivers/md/dm-verity-fec.h    | 4 +---
-  drivers/md/dm-verity-target.c | 4 +---
-  3 files changed, 3 insertions(+), 11 deletions(-)
-
-diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
-index 49147e634046..55f353cae6ec 100644
---- a/drivers/md/dm-verity-fec.c
-+++ b/drivers/md/dm-verity-fec.c
-@@ -417,8 +417,7 @@ static int fec_bv_copy(struct dm_verity *v, struct 
-dm_verity_io *io, u8 *data,
-   * otherwise to a bio_vec starting from iter.
-   */
-  int verity_fec_decode(struct dm_verity *v, struct dm_verity_io *io,
--              enum verity_block_type type, sector_t block, u8 *dest,
--              struct bvec_iter *iter)
-+              sector_t block, u8 *dest, struct bvec_iter *iter)
-  {
-      int r;
-      struct dm_verity_fec_io *fio = fec_io(io);
-@@ -434,9 +433,6 @@ int verity_fec_decode(struct dm_verity *v, struct 
-dm_verity_io *io,
-
-      fio->level++;
-
--    if (type == DM_VERITY_BLOCK_TYPE_METADATA)
--        block += v->data_blocks;
--
-      /*
-       * For RS(M, N), the continuous FEC data is divided into blocks of N
-       * bytes. Since block size may not be divisible by N, the last block
-diff --git a/drivers/md/dm-verity-fec.h b/drivers/md/dm-verity-fec.h
-index 42fbd3a7fc9f..7e2fea0f8cbf 100644
---- a/drivers/md/dm-verity-fec.h
-+++ b/drivers/md/dm-verity-fec.h
-@@ -68,8 +68,7 @@ struct dm_verity_fec_io {
-  extern bool verity_fec_is_enabled(struct dm_verity *v);
-
-  extern int verity_fec_decode(struct dm_verity *v, struct dm_verity_io *io,
--                 enum verity_block_type type, sector_t block,
--                 u8 *dest, struct bvec_iter *iter);
-+                 sector_t block, u8 *dest, struct bvec_iter *iter);
-
-  extern unsigned verity_fec_status_table(struct dm_verity *v, unsigned sz,
-                      char *result, unsigned maxlen);
-@@ -98,7 +97,6 @@ static inline bool verity_fec_is_enabled(struct 
-dm_verity *v)
-
-  static inline int verity_fec_decode(struct dm_verity *v,
-                      struct dm_verity_io *io,
--                    enum verity_block_type type,
-                      sector_t block, u8 *dest,
-                      struct bvec_iter *iter)
-  {
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index eec9f252e935..a91b4cb2bf54 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -303,7 +303,6 @@ static int verity_verify_level(struct dm_verity *v, 
-struct dm_verity_io *io,
-                    v->digest_size) == 0))
-              aux->hash_verified = 1;
-          else if (verity_fec_decode(v, io,
--                       DM_VERITY_BLOCK_TYPE_METADATA,
-                         hash_block, data, NULL) == 0)
-              aux->hash_verified = 1;
-          else if (verity_handle_err(v,
-@@ -521,8 +520,7 @@ static int verity_verify_io(struct dm_verity_io *io)
-              if (v->validated_blocks)
-                  set_bit(cur_block, v->validated_blocks);
-              continue;
--        }
--        else if (verity_fec_decode(v, io, DM_VERITY_BLOCK_TYPE_DATA,
-+        } else if (verity_fec_decode(v, io,
-                         cur_block, NULL, &start) == 0)
-              continue;
-          else if (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_DATA,
--- 
-2.17.1
+T24gNC83LzIwIDM6NDcgQU0sIERhbWllbiBMZSBNb2FsIHdyb3RlOgo+IE9uIDIwMjAvMDQvMDcg
+MjoyNiwgSGFubmVzIFJlaW5lY2tlIHdyb3RlOgo+PiBJbnN0ZWFkIG9mIGNhbGN1bGF0aW5nIHRo
+ZSB6b25lIGluZGV4IGJ5IHRoZSBvZmZzZXQgd2l0aGluIHRoZQo+PiB6b25lIGFycmF5IHN0b3Jl
+IHRoZSBpbmRleCB3aXRoaW4gdGhlIHN0cnVjdHVyZSBpdHNlbGYuCj4+Cj4+IFNpZ25lZC1vZmYt
+Ynk6IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNlLmRlPgo+PiAtLS0KPj4gICBkcml2ZXJzL21k
+L2RtLXpvbmVkLW1ldGFkYXRhLmMgfCAzICsrLQo+PiAgIGRyaXZlcnMvbWQvZG0tem9uZWQuaCAg
+ICAgICAgICB8IDMgKysrCj4+ICAgMiBmaWxlcyBjaGFuZ2VkLCA1IGluc2VydGlvbnMoKyksIDEg
+ZGVsZXRpb24oLSkKPj4KPj4gZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0tem9uZWQtbWV0YWRh
+dGEuYyBiL2RyaXZlcnMvbWQvZG0tem9uZWQtbWV0YWRhdGEuYwo+PiBpbmRleCBjODc4NzU2MGZh
+OWYuLmFmY2U1OTQwNjdmYiAxMDA2NDQKPj4gLS0tIGEvZHJpdmVycy9tZC9kbS16b25lZC1tZXRh
+ZGF0YS5jCj4+ICsrKyBiL2RyaXZlcnMvbWQvZG0tem9uZWQtbWV0YWRhdGEuYwo+PiBAQCAtMTg5
+LDcgKzE4OSw3IEBAIHN0cnVjdCBkbXpfbWV0YWRhdGEgewo+PiAgICAqLwo+PiAgIHVuc2lnbmVk
+IGludCBkbXpfaWQoc3RydWN0IGRtel9tZXRhZGF0YSAqem1kLCBzdHJ1Y3QgZG1fem9uZSAqem9u
+ZSkKPj4gICB7Cj4+IC0JcmV0dXJuICgodW5zaWduZWQgaW50KSh6b25lIC0gem1kLT56b25lcykp
+Owo+PiArCXJldHVybiB6b25lLT5pZDsKPiAKPiBUaGUgem1kIGFyZ3VtZW50IGlzIG5vdyB1bnVz
+ZWQsIGFuZCB0aGUgaGVscGVyIGRvZXMgbm90IG1ha2UgbXVjaCBzZW5zZSBhbnltb3JlLgo+IFdo
+eSBub3QganVzdCBkcm9wIGl0IGVudGlyZWx5ID8gQ2FsbGVycyBkaXJlY3RseSByZWZlcmVuY2lu
+ZyB0aGUgLT5pZCBmaWVsZCBvZiBhCj4gem9uZSBpcyBzaW1wbGUgYW5kIGNsZWFyLgo+IAo+PiAg
+IH0KPj4gICAKPj4gICBzZWN0b3JfdCBkbXpfc3RhcnRfc2VjdChzdHJ1Y3QgZG16X21ldGFkYXRh
+ICp6bWQsIHN0cnVjdCBkbV96b25lICp6b25lKQo+PiBAQCAtMTExOSw2ICsxMTE5LDcgQEAgc3Rh
+dGljIGludCBkbXpfaW5pdF96b25lKHN0cnVjdCBibGtfem9uZSAqYmxreiwgdW5zaWduZWQgaW50
+IGlkeCwgdm9pZCAqZGF0YSkKPj4gICAKPj4gICAJSU5JVF9MSVNUX0hFQUQoJnpvbmUtPmxpbmsp
+Owo+PiAgIAlhdG9taWNfc2V0KCZ6b25lLT5yZWZjb3VudCwgMCk7Cj4+ICsJem9uZS0+aWQgPSBp
+ZHg7Cj4+ICAgCXpvbmUtPmNodW5rID0gRE1aX01BUF9VTk1BUFBFRDsKPj4gICAKPj4gICAJc3dp
+dGNoIChibGt6LT50eXBlKSB7Cj4+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLXpvbmVkLmgg
+Yi9kcml2ZXJzL21kL2RtLXpvbmVkLmgKPj4gaW5kZXggODg0YzBlNTg2MDgyLi4zOWQ1OTg5OGFi
+YmUgMTAwNjQ0Cj4+IC0tLSBhL2RyaXZlcnMvbWQvZG0tem9uZWQuaAo+PiArKysgYi9kcml2ZXJz
+L21kL2RtLXpvbmVkLmgKPj4gQEAgLTg3LDYgKzg3LDkgQEAgc3RydWN0IGRtX3pvbmUgewo+PiAg
+IAkvKiBab25lIGFjdGl2YXRpb24gcmVmZXJlbmNlIGNvdW50ICovCj4+ICAgCWF0b21pY190CQly
+ZWZjb3VudDsKPj4gICAKPj4gKwkvKiBab25lIGlkICovCj4+ICsJdW5zaWduZWQgaW50CQlpZDsK
+Pj4gKwo+PiAgIAkvKiBab25lIHdyaXRlIHBvaW50ZXIgYmxvY2sgKHJlbGF0aXZlIHRvIHRoZSB6
+b25lIHN0YXJ0IGJsb2NrKSAqLwo+PiAgIAl1bnNpZ25lZCBpbnQJCXdwX2Jsb2NrOwo+PiAgIAo+
+Pgo+IAo+IApJbmRlZWQsIHlvdSBhcmUgcmlnaHQuIFdpbGwgYmUgZG9pbmcgc28gZm9yIHRoZSBu
+ZXh0IHJvdW5kLgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlICAgICAg
+ICAgICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgU29mdHdhcmUgU29s
+dXRpb25zIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpIUkIgMzY4MDkgKEFH
+IE7DvHJuYmVyZyksIEdlc2Now6RmdHNmw7xocmVyOiBGZWxpeCBJbWVuZMO2cmZmZXIKCgotLQpk
+bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
+YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
