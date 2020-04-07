@@ -1,14 +1,15 @@
-From: deven.desai@linux.microsoft.com
-Subject: [RFC PATCH v2 07/12] dm-verity: add bdev_setsecurity
-	hook for dm-verity signature
-Date: Mon,  6 Apr 2020 15:14:34 -0700
-Message-ID: <20200406221439.1469862-8-deven.desai@linux.microsoft.com>
-References: <20200406221439.1469862-1-deven.desai@linux.microsoft.com>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [PATCH 01/11] dm-zoned: store zone id within the
+	zone structure
+Date: Tue, 7 Apr 2020 01:47:27 +0000
+Message-ID: <BY5PR04MB6900F60FCE7FB016A67370F8E7C30@BY5PR04MB6900.namprd04.prod.outlook.com>
+References: <20200406143505.133271-1-hare@suse.de>
+	<20200406143505.133271-2-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200406221439.1469862-1-deven.desai@linux.microsoft.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,57 +19,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serge@hallyn.com, zohar@linux.ibm.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org
-Cc: sashal@kernel.org, pasha.tatashin@soleen.com, mdsakib@linux.microsoft.com, linux-kernel@vger.kernel.org, nramas@linux.microsoft.com, tyhicks@linux.microsoft.com, jaskarankhurana@linux.microsoft.com
+To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
+Cc: Bob Liu <bob.liu@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: Deven Bowers <deven.desai@linux.microsoft.com>
+On 2020/04/07 2:26, Hannes Reinecke wrote:
+> Instead of calculating the zone index by the offset within the
+> zone array store the index within the structure itself.
+> 
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> ---
+>  drivers/md/dm-zoned-metadata.c | 3 ++-
+>  drivers/md/dm-zoned.h          | 3 +++
+>  2 files changed, 5 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+> index c8787560fa9f..afce594067fb 100644
+> --- a/drivers/md/dm-zoned-metadata.c
+> +++ b/drivers/md/dm-zoned-metadata.c
+> @@ -189,7 +189,7 @@ struct dmz_metadata {
+>   */
+>  unsigned int dmz_id(struct dmz_metadata *zmd, struct dm_zone *zone)
+>  {
+> -	return ((unsigned int)(zone - zmd->zones));
+> +	return zone->id;
 
-Add a security hook call to set a security property of a block_device
-in dm-verity with the results of a verified, signed root-hash.
+The zmd argument is now unused, and the helper does not make much sense anymore.
+Why not just drop it entirely ? Callers directly referencing the ->id field of a
+zone is simple and clear.
 
-Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
----
- drivers/md/dm-verity-verify-sig.c | 7 +++++++
- include/linux/device-mapper.h     | 2 ++
- 2 files changed, 9 insertions(+)
+>  }
+>  
+>  sector_t dmz_start_sect(struct dmz_metadata *zmd, struct dm_zone *zone)
+> @@ -1119,6 +1119,7 @@ static int dmz_init_zone(struct blk_zone *blkz, unsigned int idx, void *data)
+>  
+>  	INIT_LIST_HEAD(&zone->link);
+>  	atomic_set(&zone->refcount, 0);
+> +	zone->id = idx;
+>  	zone->chunk = DMZ_MAP_UNMAPPED;
+>  
+>  	switch (blkz->type) {
+> diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
+> index 884c0e586082..39d59898abbe 100644
+> --- a/drivers/md/dm-zoned.h
+> +++ b/drivers/md/dm-zoned.h
+> @@ -87,6 +87,9 @@ struct dm_zone {
+>  	/* Zone activation reference count */
+>  	atomic_t		refcount;
+>  
+> +	/* Zone id */
+> +	unsigned int		id;
+> +
+>  	/* Zone write pointer block (relative to the zone start block) */
+>  	unsigned int		wp_block;
+>  
+> 
 
-diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
-index 27dac8aa2e5a..242e2421d3c8 100644
---- a/drivers/md/dm-verity-verify-sig.c
-+++ b/drivers/md/dm-verity-verify-sig.c
-@@ -8,7 +8,10 @@
- #include <linux/device-mapper.h>
- #include <linux/verification.h>
- #include <keys/user-type.h>
-+#include <linux/security.h>
-+#include <linux/list.h>
- #include <linux/module.h>
-+#include "dm-core.h"
- #include "dm-verity.h"
- #include "dm-verity-verify-sig.h"
- 
-@@ -182,6 +185,10 @@ int verity_verify_root_hash(const struct dm_verity *v)
- 		goto cleanup;
- 
- 	sig_target->passed = true;
-+
-+	ret = security_bdev_setsecurity(dm_table_get_md(v->ti->table)->bdev,
-+					DM_VERITY_SIGNATURE_SEC_NAME,
-+					v->sig->sig, v->sig->sig_size);
- cleanup:
- 	kfree(root_hash);
- 	return ret;
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 475668c69dbc..6bd49aa48186 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -624,4 +624,6 @@ static inline unsigned long to_bytes(sector_t n)
- 	return (n << SECTOR_SHIFT);
- }
- 
-+#define DM_VERITY_SIGNATURE_SEC_NAME DM_NAME	".verity-sig"
-+
- #endif	/* _LINUX_DEVICE_MAPPER_H */
+
 -- 
-2.26.0
+Damien Le Moal
+Western Digital Research
