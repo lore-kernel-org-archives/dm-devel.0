@@ -1,146 +1,49 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH] memcpy_flushcache: use cache flusing for larger lengths
-Date: Tue, 7 Apr 2020 10:52:58 -0700
-Message-ID: <CAPcyv4goJ2jbXNVZbMUKtRUominhuMhuTKrMh=fnhrfvC4jyjw@mail.gmail.com>
-References: <alpine.LRH.2.02.2004071029270.8662@file01.intranet.prod.int.rdu2.redhat.com>
+From: Nayna <nayna@linux.vnet.ibm.com>
+Subject: Re: [RFC PATCH v2 00/12] Integrity Policy Enforcement LSM (IPE)
+Date: Tue, 7 Apr 2020 17:31:54 -0400
+Message-ID: <c1466cc8-8a08-708a-4629-234485bb833e@linux.vnet.ibm.com>
+References: <20200406221439.1469862-1-deven.desai@linux.microsoft.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.2004071029270.8662@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, X86 ML <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200406221439.1469862-1-deven.desai@linux.microsoft.com>
+Content-Language: en-US
+Sender: linux-block-owner@vger.kernel.org
+To: deven.desai@linux.microsoft.com
+Cc: agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serge@hallyn.com, zohar@linux.ibm.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, tyhicks@linux.microsoft.com, pasha.tatashin@soleen.com, sashal@kernel.org, jaskarankhurana@linux.microsoft.com, nramas@linux.microsoft.com, mdsakib@linux.microsoft.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Apr 7, 2020 at 8:02 AM Mikulas Patocka <mpatocka@redhat.com> wrote:
->
-> [ resending this to x86 maintainers ]
->
-> Hi
->
-> I tested performance of various methods how to write to optane-based
-> persistent memory, and found out that non-temporal stores achieve
-> throughput 1.3 GB/s. 8 cached stores immediatelly followed by clflushopt
-> or clwb achieve throughput 1.6 GB/s.
->
-> memcpy_flushcache uses non-temporal stores, I modified it to use cached
-> stores + clflushopt and it improved performance of the dm-writecache
-> target significantly:
->
-> dm-writecache throughput:
-> (dd if=/dev/zero of=/dev/mapper/wc bs=64k oflag=direct)
-> writecache block size   512             1024            2048            4096
-> movnti                  496 MB/s        642 MB/s        725 MB/s        744 MB/s
-> clflushopt              373 MB/s        688 MB/s        1.1 GB/s        1.2 GB/s
->
-> For block size 512, movnti works better, for larger block sizes,
-> clflushopt is better.
 
-This should use clwb instead of clflushopt, the clwb macri
-automatically converts back to clflushopt if clwb is not supported.
+On 4/6/20 6:14 PM, deven.desai@linux.microsoft.com wrote:
+> From: Deven Bowers <deven.desai@linux.microsoft.com>
+>
+> Changelog:
+> ------------------------------------
+>
+> v1: Introduced
+>
+> v2:
+>    Split the second patch of the previous series into two.
+>    Minor corrections in the cover-letter and documentation
+>    comments regarding CAP_MAC_ADMIN checks in IPE.
+>
+> Overview:
+> ------------------------------------
+> IPE is a Linux Security Module, which allows for a configurable
+> policy to enforce integrity requirements on the whole system. It
+> attempts to solve the issue of Code Integrity: that any code being
+> executed (or files being read), are identical to the version that
+> was built by a trusted source.
 
->
-> I was also testing the novafs filesystem, it is not upstream, but it
-> benefitted from similar change in __memcpy_flushcache and
-> __copy_user_nocache:
-> write throughput on big files - movnti: 662 MB/s, clwb: 1323 MB/s
-> write throughput on small files - movnti: 621 MB/s, clwb: 1013 MB/s
->
->
-> I submit this patch for __memcpy_flushcache that improves dm-writecache
-> performance.
->
-> Other ideas - should we introduce memcpy_to_pmem instead of modifying
-> memcpy_flushcache and move this logic there? Or should I modify the
-> dm-writecache target directly to use clflushopt with no change to the
-> architecture-specific code?
+Can you please clarify the "motivation" for this patch set more clearly? 
+It seems to define a policy layer on top of dm-verity, which may be 
+compiled into the kernel. In the motivation, can you please also make it 
+explicit why existing mechanisms cannot be extended to achieve your purpose?
 
-This also needs to mention your analysis that showed that this can
-have negative cache pollution effects [1], so I'm not sure how to
-decide when to make the tradeoff. Once we have movdir64b the tradeoff
-equation changes yet again:
+Also, AFIK, the changelog should be moved to the end of the patch 
+description.
 
-[1]: https://lore.kernel.org/linux-nvdimm/alpine.LRH.2.02.2004010941310.23210@file01.intranet.prod.int.rdu2.redhat.com/
+Thanks & Regards,
 
-
->
-> Mikulas
->
->
->
->
-> From: Mikulas Patocka <mpatocka@redhat.com>
->
-> I tested dm-writecache performance on a machine with Optane nvdimm and it
-> turned out that for larger writes, cached stores + cache flushing perform
-> better than non-temporal stores. This is the throughput of dm-writecache
-> measured with this command:
-> dd if=/dev/zero of=/dev/mapper/wc bs=64 oflag=direct
->
-> block size      512             1024            2048            4096
-> movnti          496 MB/s        642 MB/s        725 MB/s        744 MB/s
-> clflushopt      373 MB/s        688 MB/s        1.1 GB/s        1.2 GB/s
->
-> We can see that for smaller block, movnti performs better, but for larger
-> blocks, clflushopt has better performance.
->
-> This patch changes the function __memcpy_flushcache accordingly, so that
-> with size >= 768 it performs cached stores and cache flushing. Note that
-> we must not use the new branch if the CPU doesn't have clflushopt - in
-> that case, the kernel would use inefficient "clflush" instruction that has
-> very bad performance.
->
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
->
-> ---
->  arch/x86/lib/usercopy_64.c |   36 ++++++++++++++++++++++++++++++++++++
->  1 file changed, 36 insertions(+)
->
-> Index: linux-2.6/arch/x86/lib/usercopy_64.c
-> ===================================================================
-> --- linux-2.6.orig/arch/x86/lib/usercopy_64.c   2020-03-24 15:15:36.644945091 -0400
-> +++ linux-2.6/arch/x86/lib/usercopy_64.c        2020-03-30 07:17:51.450290007 -0400
-> @@ -152,6 +152,42 @@ void __memcpy_flushcache(void *_dst, con
->                         return;
->         }
->
-> +       if (static_cpu_has(X86_FEATURE_CLFLUSHOPT) && size >= 768 && likely(boot_cpu_data.x86_clflush_size == 64)) {
-> +               while (!IS_ALIGNED(dest, 64)) {
-> +                       asm("movq    (%0), %%r8\n"
-> +                           "movnti  %%r8,   (%1)\n"
-> +                           :: "r" (source), "r" (dest)
-> +                           : "memory", "r8");
-> +                       dest += 8;
-> +                       source += 8;
-> +                       size -= 8;
-> +               }
-> +               do {
-> +                       asm("movq    (%0), %%r8\n"
-> +                           "movq   8(%0), %%r9\n"
-> +                           "movq  16(%0), %%r10\n"
-> +                           "movq  24(%0), %%r11\n"
-> +                           "movq    %%r8,   (%1)\n"
-> +                           "movq    %%r9,  8(%1)\n"
-> +                           "movq   %%r10, 16(%1)\n"
-> +                           "movq   %%r11, 24(%1)\n"
-> +                           "movq  32(%0), %%r8\n"
-> +                           "movq  40(%0), %%r9\n"
-> +                           "movq  48(%0), %%r10\n"
-> +                           "movq  56(%0), %%r11\n"
-> +                           "movq    %%r8, 32(%1)\n"
-> +                           "movq    %%r9, 40(%1)\n"
-> +                           "movq   %%r10, 48(%1)\n"
-> +                           "movq   %%r11, 56(%1)\n"
-> +                           :: "r" (source), "r" (dest)
-> +                           : "memory", "r8", "r9", "r10", "r11");
-> +                       clflushopt((void *)dest);
-> +                       dest += 64;
-> +                       source += 64;
-> +                       size -= 64;
-> +               } while (size >= 64);
-> +       }
-> +
->         /* 4x8 movnti loop */
->         while (size >= 32) {
->                 asm("movq    (%0), %%r8\n"
->
+     - Nayna
