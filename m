@@ -1,49 +1,50 @@
-From: Nayna <nayna@linux.vnet.ibm.com>
-Subject: Re: [RFC PATCH v2 00/12] Integrity Policy Enforcement LSM (IPE)
-Date: Tue, 7 Apr 2020 17:31:54 -0400
-Message-ID: <c1466cc8-8a08-708a-4629-234485bb833e@linux.vnet.ibm.com>
-References: <20200406221439.1469862-1-deven.desai@linux.microsoft.com>
+From: YueHaibing <yuehaibing@huawei.com>
+Subject: [PATCH -next] dm integrity: remove set but not used variables
+Date: Wed, 8 Apr 2020 07:29:48 +0000
+Message-ID: <20200408072948.156175-1-yuehaibing@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200406221439.1469862-1-deven.desai@linux.microsoft.com>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: deven.desai@linux.microsoft.com
-Cc: agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serge@hallyn.com, zohar@linux.ibm.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, tyhicks@linux.microsoft.com, pasha.tatashin@soleen.com, sashal@kernel.org, jaskarankhurana@linux.microsoft.com, nramas@linux.microsoft.com, mdsakib@linux.microsoft.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: YueHaibing <yuehaibing@huawei.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org, Hulk Robot <hulkci@huawei.com>
 List-Id: dm-devel.ids
 
+Fixes gcc '-Wunused-but-set-variable' warning:
 
-On 4/6/20 6:14 PM, deven.desai@linux.microsoft.com wrote:
-> From: Deven Bowers <deven.desai@linux.microsoft.com>
->
-> Changelog:
-> ------------------------------------
->
-> v1: Introduced
->
-> v2:
->    Split the second patch of the previous series into two.
->    Minor corrections in the cover-letter and documentation
->    comments regarding CAP_MAC_ADMIN checks in IPE.
->
-> Overview:
-> ------------------------------------
-> IPE is a Linux Security Module, which allows for a configurable
-> policy to enforce integrity requirements on the whole system. It
-> attempts to solve the issue of Code Integrity: that any code being
-> executed (or files being read), are identical to the version that
-> was built by a trusted source.
+drivers/md/dm-integrity.c: In function 'integrity_metadata':
+drivers/md/dm-integrity.c:1557:12: warning:
+ variable 'save_metadata_offset' set but not used [-Wunused-but-set-variable]
+drivers/md/dm-integrity.c:1556:12: warning:
+ variable 'save_metadata_block' set but not used [-Wunused-but-set-variable]
 
-Can you please clarify the "motivation" for this patch set more clearly? 
-It seems to define a policy layer on top of dm-verity, which may be 
-compiled into the kernel. In the motivation, can you please also make it 
-explicit why existing mechanisms cannot be extended to achieve your purpose?
+They are never used, so remove it.
 
-Also, AFIK, the changelog should be moved to the end of the patch 
-description.
+Reported-by: Hulk Robot <hulkci@huawei.com>
+Signed-off-by: YueHaibing <yuehaibing@huawei.com>
+---
+ drivers/md/dm-integrity.c | 4 ----
+ 1 file changed, 4 deletions(-)
 
-Thanks & Regards,
-
-     - Nayna
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index b989d109d55d..94fb584854b8 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -1553,8 +1553,6 @@ static void integrity_metadata(struct work_struct *w)
+ 		char checksums_onstack[max((size_t)HASH_MAX_DIGESTSIZE, MAX_TAG_SIZE)];
+ 		sector_t sector;
+ 		unsigned sectors_to_process;
+-		sector_t save_metadata_block;
+-		unsigned save_metadata_offset;
+ 
+ 		if (unlikely(ic->mode == 'R'))
+ 			goto skip_io;
+@@ -1605,8 +1603,6 @@ static void integrity_metadata(struct work_struct *w)
+ 			goto skip_io;
+ 		}
+ 
+-		save_metadata_block = dio->metadata_block;
+-		save_metadata_offset = dio->metadata_offset;
+ 		sector = dio->range.logical_sector;
+ 		sectors_to_process = dio->range.n_sectors;
