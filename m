@@ -1,102 +1,99 @@
-From: Casey Schaufler <casey@schaufler-ca.com>
-Subject: Re: [RFC] IMA: New IMA measurements for dm-crypt and selinux
-Date: Wed, 8 Apr 2020 09:34:47 -0700
-Message-ID: <b8dcaa3d-5006-2730-aa57-fb99e13c4472@schaufler-ca.com>
-References: <f92bef0f-eb40-0e07-540c-321134e4b070@linux.microsoft.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] memcpy_flushcache: use cache flusing for larger
+ lengths
+Date: Wed, 8 Apr 2020 14:54:04 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2004081439080.13932@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2004071029270.8662@file01.intranet.prod.int.rdu2.redhat.com> <CAPcyv4goJ2jbXNVZbMUKtRUominhuMhuTKrMh=fnhrfvC4jyjw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: base64
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <f92bef0f-eb40-0e07-540c-321134e4b070@linux.microsoft.com>
-Content-Language: en-US
-Sender: owner-linux-security-module@vger.kernel.org
-To: Tushar Sugandhi <tusharsu@linux.microsoft.com>, linux-integrity@vger.kernel.org, zohar@linux.ibm.com, linux-security-module@vger.kernel.org, selinux@vger.kernel.org, dm-devel@redhat.com
-Cc: jmorris@namei.org, chpebeni@linux.microsoft.com, nramas@linux.microsoft.com, balajib@microsoft.com, sashal@kernel.org, suredd@microsoft.com, Casey Schaufler <casey@schaufler-ca.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAPcyv4goJ2jbXNVZbMUKtRUominhuMhuTKrMh=fnhrfvC4jyjw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, X86 ML <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gNC84LzIwMjAgMzoxOSBBTSwgVHVzaGFyIFN1Z2FuZGhpIHdyb3RlOg0KPiBUaGUgZ29h
-bHMgb2YgdGhlIGtlcm5lbCBpbnRlZ3JpdHkgc3Vic3lzdGVtIGFyZSB0byBkZXRlY3QgaWYg
-ZmlsZXMgaGF2ZQ0KPiBiZWVuIGFjY2lkZW50YWxseSBvciBtYWxpY2lvdXNseSBhbHRlcmVk
-LCBib3RoIHJlbW90ZWx5IGFuZCBsb2NhbGx5LA0KPiBhcHByYWlzZSBhIGZpbGUncyBtZWFz
-dXJlbWVudCBhZ2FpbnN0IGEgImdvb2QiIHZhbHVlIHN0b3JlZCBhcyBhbg0KPiBleHRlbmRl
-ZCBhdHRyaWJ1dGUsIGFuZCBlbmZvcmNlIGxvY2FsIGZpbGUgaW50ZWdyaXR5IFsxXS4NCj4N
-Cj4gVG8gYWNoaWV2ZSB0aGVzZSBnb2FscywgSU1BIHN1YnN5c3RlbSBtZWFzdXJlcyBzZXZl
-cmFsIGluLW1lbW9yeQ0KPiBjb25zdHJ1Y3RzIGFuZCBmaWxlcy4NCj4NCj4gV2UgcHJvcG9z
-ZSB0byBtZWFzdXJlIGNvbnN0cnVjdHMgaW4gZG0tY3J5cHQgYW5kIHNlbGludXggdG8gZnVy
-dGhlcg0KPiBlbmhhbmNlIG1lYXN1cmluZyBjYXBhYmlsaXRpZXMgb2YgSU1BLg0KPg0KPiBJ
-ZiB0aGVyZSBpcyBleGlzdGluZyBvciBwbGFubmVkIHdvcmsgdG8gbWVhc3VyZSBkbS1jcnlw
-dCBhbmQgc2VsaW51eA0KPiBjb25zdHJ1Y3RzLCB3ZSB3b3VsZCBsaWtlIHRvIGNvbnRyaWJ1
-dGUgdG8gdGhhdC4NCj4NCj4gZG0tY3J5cHQgaXMgYSBzdWJzeXN0ZW0gdXNlZCBmb3IgZW5j
-cnlwdGlvbiBvZiB0aGUgYmxvY2sgZGV2aWNlLCB3aGljaA0KPiBpcyBlc3NlbnRpYWwgZm9y
-IGVuc3VyaW5nIHByb3RlY3Rpb24gb2YgZGF0YSBhbmQgc2VjcmV0cyBhdCByZXN0Lg0KPg0K
-PiBNZWFzdXJpbmcgZW5jcnlwdGlvbiBzdGF0dXMgb2YgdGhlIGRldmljZSB3aWxsIGVuc3Vy
-ZSB0aGUgZGV2aWNlIGlzIG5vdA0KPiBtYWxpY2lvdXNseSByZXBvcnRpbmcgZmFsc2UgZW5j
-cnlwdGlvbiBzdGF0dXMgLSB0aHVzLCBpdCBjYW4gYmUNCj4gZW50cnVzdGVkIHdpdGggc2Vu
-c2l0aXZlIGRhdGEgdG8gYmUgcHJvdGVjdGVkIGF0IHJlc3QuDQo+DQo+IFNFTGludXggaXMg
-YW4gaW1wbGVtZW50YXRpb24gb2YgbWFuZGF0b3J5IGFjY2VzcyBjb250cm9scyAoTUFDKSBv
-bg0KPiBMaW51eC4gTWFuZGF0b3J5IGFjY2VzcyBjb250cm9scyBhbGxvdyBhbiBhZG1pbmlz
-dHJhdG9yIG9mIGEgc3lzdGVtIHRvDQo+IGRlZmluZSBob3cgYXBwbGljYXRpb25zIGFuZCB1
-c2VycyBjYW4gYWNjZXNzIGRpZmZlcmVudCByZXNvdXJjZXMgLSBzdWNoDQo+IGFzIGZpbGVz
-LCBkZXZpY2VzLCBuZXR3b3JrcyBhbmQgaW50ZXItcHJvY2VzcyBjb21tdW5pY2F0aW9uLiBX
-aXRoDQo+IFNFTGludXggYW4gYWRtaW5pc3RyYXRvciBjYW4gZGlmZmVyZW50aWF0ZSBhIHVz
-ZXIgZnJvbSB0aGUgYXBwbGljYXRpb25zDQo+IGEgdXNlciBydW5zIFsyXS4NCj4NCj4gTWVh
-c3VyaW5nIFNFTGludXggc3RhdHVzIGFuZCB2YXJpb3VzIFNFTGludXggcG9saWNpZXMgY2Fu
-IGhlbHAgZW5zdXJlDQo+IG1hbmRhdG9yeSBhY2Nlc3MgY29udHJvbCBvZiB0aGUgc3lzdGVt
-IGlzIG5vdCBjb21wcm9taXNlZC4NCj4NCj4gUHJvcG9zYWw6DQo+IC0tLS0tLS0tLQ0KPiBB
-LiBNZWFzdXJpbmcgZG1jcnlwdCBjb25zdHJ1Y3RzOg0KPiDCoMKgwqAgV2UgY2FuIGFkZCBh
-biBJTUEgaG9vayBpbiBjcnlwdF9jdHIoKSBwcmVzZW50IGluDQo+IMKgwqDCoCBkcml2ZXJz
-L21kL2RtLWNyeXB0LmMsIHNvIHRoYXQgSU1BIGNhbiBzdGFydCBtZWFzdXJpbmcgdGhlIHN0
-YXR1cyBvZg0KPiDCoMKgwqAgdmFyaW91cyBkbS1jcnlwdCB0YXJnZXRzIChyZXByZXNlbnRl
-ZCBieSBjcnlwdF90YXJnZXQgc3RydWN0IC0gYWxzbw0KPiDCoMKgwqAgZGVmaW5lZCBpbiBk
-bS1jcnlwdC5jKS4NCj4gwqDCoMKgIFRoZSBtYXBwaW5nIHRhYmxlWzNdIGhhcyBpbmZvcm1h
-dGlvbiBvZiBkZXZpY2VzIGJlaW5nIGVuY3J5cHRlZA0KPiDCoMKgwqAgKHN0YXJ0IHNlY3Rv
-ciwgc2l6ZSwgdGFyZ2V0IG5hbWUsIGN5cGhlciwga2V5LCBkZXZpY2UgcGF0aCwgYW5kDQo+
-IMKgwqDCoCBvdGhlciBvcHRpb25hbCBwYXJhbWV0ZXJzLikNCj4gwqDCoMKgIGUuZy4NCj4g
-wqDCoMKgIDAgNDE3NzkyIGNyeXB0IHNlcnBlbnQtY2JjLWVzc2l2OnNoYTI1Ng0KPiDCoMKg
-wqAgYTdmNjdhZDUyMGJkODNiOTcyNWRmNmViZDc2YzNlZWUgMCAvZGV2L3NkYiAwIDEgYWxs
-b3dfZGlzY2FyZHMNCj4NCj4gwqDCoMKgIFdlIGNhbiBwYXNzIHZhcmlvdXMgYXR0cmlidXRl
-cyBvZiBtYXBwaW5nIHRhYmxlIHRvIElNQSB0aHJvdWdoIGEga2V5DQo+IMKgwqDCoCB2YWx1
-ZSBwYWlyIG9mIHZhcmlvdXMgZG1jcnlwdCBjb25zdHJ1Y3RzLg0KPg0KPiDCoMKgwqAgUHJv
-cG9zZWQgRnVuY3Rpb24gU2lnbmF0dXJlIG9mIHRoZSBJTUEgaG9vazoNCj4gwqDCoMKgIHZv
-aWQgaW1hX2RtY3J5cHRfc3RhdHVzKHZvaWQgKmRtY3J5cHRfc3RhdHVzLCBpbnQgbGVuKTsN
-Cj4NCj4gQi4gTWVhc3VyaW5nIHNlbGludXggY29uc3RydWN0czoNCj4gwqDCoMKgIFdlIHBy
-b3Bvc2UgdG8gYWRkIGFuIElNQSBob29rIGluIGVuZm9yY2luZ19zZXQoKSBwcmVzZW50IHVu
-ZGVyDQo+IMKgwqDCoCBzZWN1cml0eS9zZWxpbnV4L2luY2x1ZGUvc2VjdXJpdHkuaC4NCj4g
-wqDCoMKgIGVuZm9yY2luZ19zZXQoKSBzZXRzIHRoZSBzZWxpbnV4IHN0YXRlIHRvIGVuZm9y
-Y2luZy9wZXJtaXNzaXZlIGV0Yy4NCj4gwqDCoMKgIGFuZCBpcyBjYWxsZWQgZnJvbSBrZXkg
-cGxhY2VzIGxpa2Ugc2VsaW51eF9pbml0KCksDQo+IMKgwqDCoCBzZWxfd3JpdGVfZW5mb3Jj
-ZSgpIGV0Yy4NCj4gwqDCoMKgIFRoZSBob29rIHdpbGwgbWVhc3VyZSB2YXJpb3VzIGF0dHJp
-YnV0ZXMgcmVsYXRlZCB0byBzZWxpbnV4IHN0YXR1cy4NCj4gwqDCoMKgIE1ham9yaXR5IG9m
-IHRoZSBhdHRyaWJ1dGVzIGFyZSBwcmVzZW50IGluIHRoZSBzdHJ1Y3Qgc2VsaW51eF9zdGF0
-ZQ0KPiDCoMKgwqAgcHJlc2VudCBpbiBzZWN1cml0eS9zZWxpbnV4L2luY2x1ZGUvc2VjdXJp
-dHkuaA0KPiDCoMKgwqAgZS5nLg0KPiDCoMKgwqAgJHNlc3RhdHVzDQo+IMKgwqDCoMKgwqDC
-oMKgwqDCoMKgIFNFTGludXggc3RhdHVzOsKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGVu
-YWJsZWQNCj4gwqDCoMKgwqDCoMKgwqDCoMKgwqAgU0VMaW51eGZzIG1vdW50OsKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoCAvc3lzL2ZzL3NlbGludXgNCj4gwqDCoMKgwqDCoMKgwqDCoMKg
-wqAgU0VMaW51eCByb290IGRpcmVjdG9yeTrCoMKgwqDCoMKgIC9ldGMvc2VsaW51eA0KPiDC
-oMKgwqDCoMKgwqDCoMKgwqDCoCBMb2FkZWQgcG9saWN5IG5hbWU6wqDCoMKgwqDCoMKgwqDC
-oMKgIGRlZmF1bHQNCj4gwqDCoMKgwqDCoMKgwqDCoMKgwqAgQ3VycmVudCBtb2RlOsKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBwZXJtaXNzaXZlDQo+IMKgwqDCoMKgwqDCoMKg
-wqDCoMKgIE1vZGUgZnJvbSBjb25maWcgZmlsZTrCoMKgwqDCoMKgwqAgcGVybWlzc2l2ZQ0K
-PiDCoMKgwqDCoMKgwqDCoMKgwqDCoCBQb2xpY3kgTUxTIHN0YXR1czrCoMKgwqDCoMKgwqDC
-oMKgwqDCoCBlbmFibGVkDQo+IMKgwqDCoMKgwqDCoMKgwqDCoMKgIFBvbGljeSBkZW55X3Vu
-a25vd24gc3RhdHVzOsKgIGFsbG93ZWQNCj4gwqDCoMKgwqDCoMKgwqDCoMKgwqAgTWVtb3J5
-IHByb3RlY3Rpb24gY2hlY2tpbmc6wqAgcmVxdWVzdGVkIChpbnNlY3VyZSkNCj4gwqDCoMKg
-wqDCoMKgwqDCoMKgwqAgTWF4IGtlcm5lbCBwb2xpY3kgdmVyc2lvbjrCoMKgIDMyDQo+DQo+
-IMKgwqDCoCBUaGUgYWJvdmUgYXR0cmlidXRlcyB3aWxsIGJlIHNlcmlhbGl6ZWQgaW50byBh
-IHNldCBvZiBrZXk9dmFsdWUNCj4gwqDCoMKgIHBhaXJzIHdoZW4gcGFzc2VkIHRvIElNQSBm
-b3IgbWVhc3VyZW1lbnQuDQo+DQo+IMKgwqDCoCBQcm9wb3NlZCBGdW5jdGlvbiBTaWduYXR1
-cmUgb2YgdGhlIElNQSBob29rOg0KPiDCoMKgwqAgdm9pZCBpbWFfc2VsaW51eF9zdGF0dXMo
-dm9pZCAqc2VsaW51eF9zdGF0dXMsIGludCBsZW4pOw0KPg0KPiBQbGVhc2UgcHJvdmlkZSBj
-b21tZW50c1xmZWVkYmFjayBvbiB0aGUgcHJvcG9zYWwuDQoNClRMO0RSIC0gV2h5IG1ha2Ug
-dGhpcyBTRUxpbnV4IHNwZWNpZmljPw0KDQpJbnRlZ3JhdGluZyBJTUEgYW5kIFNFTGludXgg
-aXMgYSBsYXllcmluZyB2aW9sYXRpb24gYXQgYmVzdC4NCldoeSBpc24ndCB0aGlzIGltYV9s
-c21fc3RhdHVzKHZvaWQgKmxzbV9zdGF0dXMsIGludCBsZW4pPw0KT3IsIGJldHRlciB5ZXQs
-IGhvdyBhYm91dCBpbWFfbHNtX3N0YXR1cyhjaGFyICpuYW1lLCB2b2lkICp2YWx1ZSwgaW50
-IGxlbiksDQphbmQgeW91IHBhc3MgZWFjaCBuYW1lL3ZhbHVlIHBhaXIgc2VwYXJhdGVseT8g
-VGhhdCBtYWtlcyB0aGUNCmludGVyZmFjZSBnZW5lcmFsbHkgdXNlZnVsLg0KDQpCZWxpZXZl
-IGl0IG9yIG5vdCwgdGhlcmUgKkFSRSogc2VjdXJpdHkgbW9kdWxlcyB0aGF0DQphcmUgbm90
-IFNFTGludXguIA0KDQo+DQo+IFRoYW5rcywNCj4gVHVzaGFyDQo+DQo+IFsxXSBodHRwczov
-L3NvdXJjZWZvcmdlLm5ldC9wL2xpbnV4LWltYS93aWtpL0hvbWUvDQo+IFsyXSBodHRwczov
-L3NlbGludXhwcm9qZWN0Lm9yZy9wYWdlL0ZBUQ0KPiBbM10gaHR0cHM6Ly9naXRsYWIuY29t
-L2NyeXB0c2V0dXAvY3J5cHRzZXR1cC93aWtpcy9ETUNyeXB0DQo=
+
+
+On Tue, 7 Apr 2020, Dan Williams wrote:
+
+> On Tue, Apr 7, 2020 at 8:02 AM Mikulas Patocka <mpatocka@redhat.com> wrote:
+> >
+> > [ resending this to x86 maintainers ]
+> >
+> > Hi
+> >
+> > I tested performance of various methods how to write to optane-based
+> > persistent memory, and found out that non-temporal stores achieve
+> > throughput 1.3 GB/s. 8 cached stores immediatelly followed by clflushopt
+> > or clwb achieve throughput 1.6 GB/s.
+> >
+> > memcpy_flushcache uses non-temporal stores, I modified it to use cached
+> > stores + clflushopt and it improved performance of the dm-writecache
+> > target significantly:
+> >
+> > dm-writecache throughput:
+> > (dd if=/dev/zero of=/dev/mapper/wc bs=64k oflag=direct)
+> > writecache block size   512             1024            2048            4096
+> > movnti                  496 MB/s        642 MB/s        725 MB/s        744 MB/s
+> > clflushopt              373 MB/s        688 MB/s        1.1 GB/s        1.2 GB/s
+> >
+> > For block size 512, movnti works better, for larger block sizes,
+> > clflushopt is better.
+> 
+> This should use clwb instead of clflushopt, the clwb macri
+> automatically converts back to clflushopt if clwb is not supported.
+
+But we want to invalidate cache, we do not expect CPU to access these data
+anymore (it will be accessed by a DMA engine during writeback).
+
+> > I was also testing the novafs filesystem, it is not upstream, but it
+> > benefitted from similar change in __memcpy_flushcache and
+> > __copy_user_nocache:
+> > write throughput on big files - movnti: 662 MB/s, clwb: 1323 MB/s
+> > write throughput on small files - movnti: 621 MB/s, clwb: 1013 MB/s
+> >
+> >
+> > I submit this patch for __memcpy_flushcache that improves dm-writecache
+> > performance.
+> >
+> > Other ideas - should we introduce memcpy_to_pmem instead of modifying
+> > memcpy_flushcache and move this logic there? Or should I modify the
+> > dm-writecache target directly to use clflushopt with no change to the
+> > architecture-specific code?
+> 
+> This also needs to mention your analysis that showed that this can
+> have negative cache pollution effects [1], so I'm not sure how to
+> decide when to make the tradeoff. Once we have movdir64b the tradeoff
+> equation changes yet again:
+> 
+> [1]: https://lore.kernel.org/linux-nvdimm/alpine.LRH.2.02.2004010941310.23210@file01.intranet.prod.int.rdu2.redhat.com/
+
+I analyzed it some more. I have created this program that tests writecache 
+w.r.t. cache pollution:
+
+http://people.redhat.com/~mpatocka/testcases/pmem/misc/l1-test-2.c
+
+It fills the cache with a chain of random pointers and then walks these 
+pointers to evaluate cache pollution. Between the walks, it writes data to 
+the dm-writecache target.
+
+With the original kernel, the result is:
+8503 - 11366
+real    0m7.985s
+user    0m0.585s
+sys     0m7.390s
+
+With dm-writecache hacked to use cached writes + clflushopt:
+8513 - 11379
+real    0m5.045s
+user    0m0.670s
+sys     0m4.365s
+
+So, the hacked dm-writecache is significantly faster, while the cache 
+micro-benchmark doesn't show any more cache pollution.
+
+That's for dm-writecache. Are there some other significant users of 
+memcpy_flushcache that need to be checked?
+
+Mikulas
