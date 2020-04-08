@@ -1,50 +1,101 @@
-From: YueHaibing <yuehaibing@huawei.com>
-Subject: [PATCH -next] dm integrity: remove set but not used variables
-Date: Wed, 8 Apr 2020 07:29:48 +0000
-Message-ID: <20200408072948.156175-1-yuehaibing@huawei.com>
+From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
+Subject: [RFC] IMA: New IMA measurements for dm-crypt and selinux
+Date: Wed, 8 Apr 2020 03:19:38 -0700
+Message-ID: <f92bef0f-eb40-0e07-540c-321134e4b070@linux.microsoft.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: YueHaibing <yuehaibing@huawei.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org, Hulk Robot <hulkci@huawei.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-security-module-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: owner-linux-security-module@vger.kernel.org
+To: linux-integrity@vger.kernel.org, zohar@linux.ibm.com, linux-security-module@vger.kernel.org, selinux@vger.kernel.org, dm-devel@redhat.com
+Cc: jmorris@namei.org, chpebeni@linux.microsoft.com, nramas@linux.microsoft.com, balajib@microsoft.com, sashal@kernel.org, suredd@microsoft.com
 List-Id: dm-devel.ids
 
-Fixes gcc '-Wunused-but-set-variable' warning:
+The goals of the kernel integrity subsystem are to detect if files have
+been accidentally or maliciously altered, both remotely and locally,
+appraise a file's measurement against a "good" value stored as an
+extended attribute, and enforce local file integrity [1].
 
-drivers/md/dm-integrity.c: In function 'integrity_metadata':
-drivers/md/dm-integrity.c:1557:12: warning:
- variable 'save_metadata_offset' set but not used [-Wunused-but-set-variable]
-drivers/md/dm-integrity.c:1556:12: warning:
- variable 'save_metadata_block' set but not used [-Wunused-but-set-variable]
+To achieve these goals, IMA subsystem measures several in-memory
+constructs and files.
 
-They are never used, so remove it.
+We propose to measure constructs in dm-crypt and selinux to further
+enhance measuring capabilities of IMA.
 
-Reported-by: Hulk Robot <hulkci@huawei.com>
-Signed-off-by: YueHaibing <yuehaibing@huawei.com>
----
- drivers/md/dm-integrity.c | 4 ----
- 1 file changed, 4 deletions(-)
+If there is existing or planned work to measure dm-crypt and selinux
+constructs, we would like to contribute to that.
 
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index b989d109d55d..94fb584854b8 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -1553,8 +1553,6 @@ static void integrity_metadata(struct work_struct *w)
- 		char checksums_onstack[max((size_t)HASH_MAX_DIGESTSIZE, MAX_TAG_SIZE)];
- 		sector_t sector;
- 		unsigned sectors_to_process;
--		sector_t save_metadata_block;
--		unsigned save_metadata_offset;
- 
- 		if (unlikely(ic->mode == 'R'))
- 			goto skip_io;
-@@ -1605,8 +1603,6 @@ static void integrity_metadata(struct work_struct *w)
- 			goto skip_io;
- 		}
- 
--		save_metadata_block = dio->metadata_block;
--		save_metadata_offset = dio->metadata_offset;
- 		sector = dio->range.logical_sector;
- 		sectors_to_process = dio->range.n_sectors;
+dm-crypt is a subsystem used for encryption of the block device, which
+is essential for ensuring protection of data and secrets at rest.
+
+Measuring encryption status of the device will ensure the device is not
+maliciously reporting false encryption status - thus, it can be
+entrusted with sensitive data to be protected at rest.
+
+SELinux is an implementation of mandatory access controls (MAC) on
+Linux. Mandatory access controls allow an administrator of a system to
+define how applications and users can access different resources - such
+as files, devices, networks and inter-process communication. With
+SELinux an administrator can differentiate a user from the applications
+a user runs [2].
+
+Measuring SELinux status and various SELinux policies can help ensure
+mandatory access control of the system is not compromised.
+
+Proposal:
+---------
+A. Measuring dmcrypt constructs:
+     We can add an IMA hook in crypt_ctr() present in
+     drivers/md/dm-crypt.c, so that IMA can start measuring the status of
+     various dm-crypt targets (represented by crypt_target struct - also
+     defined in dm-crypt.c).
+     The mapping table[3] has information of devices being encrypted
+     (start sector, size, target name, cypher, key, device path, and
+     other optional parameters.)
+     e.g.
+     0 417792 crypt serpent-cbc-essiv:sha256
+     a7f67ad520bd83b9725df6ebd76c3eee 0 /dev/sdb 0 1 allow_discards
+
+     We can pass various attributes of mapping table to IMA through a key
+     value pair of various dmcrypt constructs.
+
+     Proposed Function Signature of the IMA hook:
+     void ima_dmcrypt_status(void *dmcrypt_status, int len);
+
+B. Measuring selinux constructs:
+     We propose to add an IMA hook in enforcing_set() present under
+     security/selinux/include/security.h.
+     enforcing_set() sets the selinux state to enforcing/permissive etc.
+     and is called from key places like selinux_init(),
+     sel_write_enforce() etc.
+     The hook will measure various attributes related to selinux status.
+     Majority of the attributes are present in the struct selinux_state
+     present in security/selinux/include/security.h
+     e.g.
+     $sestatus
+            SELinux status:              enabled
+            SELinuxfs mount:             /sys/fs/selinux
+            SELinux root directory:      /etc/selinux
+            Loaded policy name:          default
+            Current mode:                permissive
+            Mode from config file:       permissive
+            Policy MLS status:           enabled
+            Policy deny_unknown status:  allowed
+            Memory protection checking:  requested (insecure)
+            Max kernel policy version:   32
+
+     The above attributes will be serialized into a set of key=value
+     pairs when passed to IMA for measurement.
+
+     Proposed Function Signature of the IMA hook:
+     void ima_selinux_status(void *selinux_status, int len);
+
+Please provide comments\feedback on the proposal.
+
+Thanks,
+Tushar
+
+[1] https://sourceforge.net/p/linux-ima/wiki/Home/
+[2] https://selinuxproject.org/page/FAQ
+[3] https://gitlab.com/cryptsetup/cryptsetup/wikis/DMCrypt
