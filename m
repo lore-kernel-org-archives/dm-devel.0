@@ -1,300 +1,159 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 09/11] dm-zoned: add metadata logging functions
-Date: Thu,  9 Apr 2020 08:45:25 +0200
-Message-ID: <20200409064527.82992-10-hare@suse.de>
-References: <20200409064527.82992-1-hare@suse.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] memcpy_flushcache: use cache flusing for larger
+ lengths
+Date: Thu, 9 Apr 2020 10:36:17 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2004090612320.27517@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2004071029270.8662@file01.intranet.prod.int.rdu2.redhat.com> <CAPcyv4goJ2jbXNVZbMUKtRUominhuMhuTKrMh=fnhrfvC4jyjw@mail.gmail.com> <alpine.LRH.2.02.2004081439080.13932@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAPcyv4grNHvyYEc4W6PkymhEJvLb17tXbC3JZdqvtFxmMZ8DCQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200409064527.82992-1-hare@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Damien LeMoal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAPcyv4grNHvyYEc4W6PkymhEJvLb17tXbC3JZdqvtFxmMZ8DCQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, X86 ML <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Use the metadata label for logging and not the underlying
-device.
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
-Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
----
- drivers/md/dm-zoned-metadata.c | 95 ++++++++++++++++++++--------------
- 1 file changed, 56 insertions(+), 39 deletions(-)
 
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index 34dc5f3abf09..211dee442a01 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -194,6 +194,17 @@ struct dmz_metadata {
- 	wait_queue_head_t	free_wq;
- };
- 
-+#define dmz_zmd_info(zmd, format, args...)	\
-+	DMINFO("(%s): " format, (zmd)->devname, ## args)
-+
-+#define dmz_zmd_err(zmd, format, args...)	\
-+	DMERR("(%s): " format, (zmd)->devname, ## args)
-+
-+#define dmz_zmd_warn(zmd, format, args...)	\
-+	DMWARN("(%s): " format, (zmd)->devname, ## args)
-+
-+#define dmz_zmd_debug(zmd, format, args...)	\
-+	DMDEBUG("(%s): " format, (zmd)->devname, ## args)
- /*
-  * Various accessors
-  */
-@@ -1093,7 +1104,7 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
- 	int ret;
- 
- 	if (!zmd->sb[0].zone) {
--		dmz_dev_err(zmd->dev, "Primary super block zone not set");
-+		dmz_zmd_err(zmd, "Primary super block zone not set");
- 		return -ENXIO;
- 	}
- 
-@@ -1130,7 +1141,7 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
- 
- 	/* Use highest generation sb first */
- 	if (!sb_good[0] && !sb_good[1]) {
--		dmz_dev_err(zmd->dev, "No valid super block found");
-+		dmz_zmd_err(zmd, "No valid super block found");
- 		return -EIO;
- 	}
- 
-@@ -1243,7 +1254,7 @@ static void dmz_drop_zones(struct dmz_metadata *zmd)
-  */
- static int dmz_init_zones(struct dmz_metadata *zmd)
- {
--	struct dmz_dev *dev = zmd->dev;
-+	struct dmz_dev *dev = &zmd->dev[0];
- 	int ret;
- 
- 	/* Init */
-@@ -1263,8 +1274,8 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
- 	if (!zmd->zones)
- 		return -ENOMEM;
- 
--	dmz_dev_info(dev, "Using %zu B for zone information",
--		     sizeof(struct dm_zone) * zmd->nr_zones);
-+	DMINFO("(%s): Using %zu B for zone information",
-+	       zmd->devname, sizeof(struct dm_zone) * zmd->nr_zones);
- 
- 	/*
- 	 * Get zone information and initialize zone descriptors.  At the same
-@@ -1407,7 +1418,6 @@ static void dmz_get_zone_weight(struct dmz_metadata *zmd, struct dm_zone *zone);
-  */
- static int dmz_load_mapping(struct dmz_metadata *zmd)
- {
--	struct dmz_dev *dev = zmd->dev;
- 	struct dm_zone *dzone, *bzone;
- 	struct dmz_mblock *dmap_mblk = NULL;
- 	struct dmz_map *dmap;
-@@ -1440,7 +1450,7 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
- 			goto next;
- 
- 		if (dzone_id >= zmd->nr_zones) {
--			dmz_dev_err(dev, "Chunk %u mapping: invalid data zone ID %u",
-+			dmz_zmd_err(zmd, "Chunk %u mapping: invalid data zone ID %u",
- 				    chunk, dzone_id);
- 			return -EIO;
- 		}
-@@ -1461,14 +1471,14 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
- 			goto next;
- 
- 		if (bzone_id >= zmd->nr_zones) {
--			dmz_dev_err(dev, "Chunk %u mapping: invalid buffer zone ID %u",
-+			dmz_zmd_err(zmd, "Chunk %u mapping: invalid buffer zone ID %u",
- 				    chunk, bzone_id);
- 			return -EIO;
- 		}
- 
- 		bzone = dmz_get(zmd, bzone_id);
- 		if (!dmz_is_rnd(bzone)) {
--			dmz_dev_err(dev, "Chunk %u mapping: invalid buffer zone %u",
-+			dmz_zmd_err(zmd, "Chunk %u mapping: invalid buffer zone %u",
- 				    chunk, bzone_id);
- 			return -EIO;
- 		}
-@@ -1888,7 +1898,7 @@ struct dm_zone *dmz_alloc_zone(struct dmz_metadata *zmd, unsigned long flags)
- 		atomic_dec(&zmd->unmap_nr_seq);
- 
- 	if (dmz_is_offline(zone)) {
--		dmz_dev_warn(zmd->dev, "Zone %u is offline", zone->id);
-+		dmz_zmd_warn(zmd, "Zone %u is offline", zone->id);
- 		zone = NULL;
- 		goto again;
- 	}
-@@ -2099,7 +2109,7 @@ int dmz_validate_blocks(struct dmz_metadata *zmd, struct dm_zone *zone,
- 	struct dmz_mblock *mblk;
- 	unsigned int n = 0;
- 
--	dmz_dev_debug(zmd->dev, "=> VALIDATE zone %u, block %llu, %u blocks",
-+	dmz_zmd_debug(zmd, "=> VALIDATE zone %u, block %llu, %u blocks",
- 		      zone->id, (unsigned long long)chunk_block,
- 		      nr_blocks);
- 
-@@ -2129,7 +2139,7 @@ int dmz_validate_blocks(struct dmz_metadata *zmd, struct dm_zone *zone,
- 	if (likely(zone->weight + n <= zone_nr_blocks))
- 		zone->weight += n;
- 	else {
--		dmz_dev_warn(zmd->dev, "Zone %u: weight %u should be <= %u",
-+		dmz_zmd_warn(zmd, "Zone %u: weight %u should be <= %u",
- 			     zone->id, zone->weight,
- 			     zone_nr_blocks - n);
- 		zone->weight = zone_nr_blocks;
-@@ -2179,7 +2189,7 @@ int dmz_invalidate_blocks(struct dmz_metadata *zmd, struct dm_zone *zone,
- 	struct dmz_mblock *mblk;
- 	unsigned int n = 0;
- 
--	dmz_dev_debug(zmd->dev, "=> INVALIDATE zone %u, block %llu, %u blocks",
-+	dmz_zmd_debug(zmd, "=> INVALIDATE zone %u, block %llu, %u blocks",
- 		      zone->id, (u64)chunk_block, nr_blocks);
- 
- 	WARN_ON(chunk_block + nr_blocks > zmd->zone_nr_blocks);
-@@ -2209,7 +2219,7 @@ int dmz_invalidate_blocks(struct dmz_metadata *zmd, struct dm_zone *zone,
- 	if (zone->weight >= n)
- 		zone->weight -= n;
- 	else {
--		dmz_dev_warn(zmd->dev, "Zone %u: weight %u should be >= %u",
-+		dmz_zmd_warn(zmd, "Zone %u: weight %u should be >= %u",
- 			     zone->id, zone->weight, n);
- 		zone->weight = 0;
- 	}
-@@ -2419,7 +2429,7 @@ static void dmz_cleanup_metadata(struct dmz_metadata *zmd)
- 	while (!list_empty(&zmd->mblk_dirty_list)) {
- 		mblk = list_first_entry(&zmd->mblk_dirty_list,
- 					struct dmz_mblock, link);
--		dmz_dev_warn(zmd->dev, "mblock %llu still in dirty list (ref %u)",
-+		dmz_zmd_warn(zmd, "mblock %llu still in dirty list (ref %u)",
- 			     (u64)mblk->no, mblk->ref);
- 		list_del_init(&mblk->link);
- 		rb_erase(&mblk->node, &zmd->mblk_rbtree);
-@@ -2437,7 +2447,7 @@ static void dmz_cleanup_metadata(struct dmz_metadata *zmd)
- 	/* Sanity checks: the mblock rbtree should now be empty */
- 	root = &zmd->mblk_rbtree;
- 	rbtree_postorder_for_each_entry_safe(mblk, next, root, node) {
--		dmz_dev_warn(zmd->dev, "mblock %llu ref %u still in rbtree",
-+		dmz_zmd_warn(zmd, "mblock %llu ref %u still in rbtree",
- 			     (u64)mblk->no, mblk->ref);
- 		mblk->ref = 0;
- 		dmz_free_mblock(zmd, mblk);
-@@ -2450,6 +2460,18 @@ static void dmz_cleanup_metadata(struct dmz_metadata *zmd)
- 	mutex_destroy(&zmd->map_lock);
- }
- 
-+void dmz_print_dev(struct dmz_metadata *zmd, int num)
-+{
-+	struct dmz_dev *dev = &zmd->dev[num];
-+
-+	dmz_dev_info(dev, "Host-%s zoned block device",
-+		     bdev_zoned_model(dev->bdev) == BLK_ZONED_HA ?
-+		     "aware" : "managed");
-+	dmz_dev_info(dev, "  %llu 512-byte logical sectors",
-+		     (u64)dev->capacity);
-+	dmz_dev_info(dev, "  %u zones of %llu 512-byte logical sectors",
-+		     dev->nr_zones, (u64)zmd->zone_nr_sectors);
-+}
- /*
-  * Initialize the zoned metadata.
-  */
-@@ -2526,34 +2548,31 @@ int dmz_ctr_metadata(struct dmz_dev *dev, struct dmz_metadata **metadata,
- 	/* Metadata cache shrinker */
- 	ret = register_shrinker(&zmd->mblk_shrinker);
- 	if (ret) {
--		dmz_dev_err(dev, "Register metadata cache shrinker failed");
-+		dmz_zmd_err(zmd, "Register metadata cache shrinker failed");
- 		goto err;
- 	}
- 
--	dmz_dev_info(dev, "Host-%s zoned block device",
--		     bdev_zoned_model(dev->bdev) == BLK_ZONED_HA ?
--		     "aware" : "managed");
--	dmz_dev_info(dev, "  %llu 512-byte logical sectors",
--		     (u64)dev->capacity);
--	dmz_dev_info(dev, "  %u zones of %llu 512-byte logical sectors",
-+	dmz_zmd_info(zmd, "DM-Zoned metadata version %d", DMZ_META_VER);
-+	dmz_print_dev(zmd, 0);
-+
-+	dmz_zmd_info(zmd, "  %u zones of %llu 512-byte logical sectors",
- 		     zmd->nr_zones, (u64)zmd->zone_nr_sectors);
--	dmz_dev_info(dev, "  %u metadata zones",
-+	dmz_zmd_info(zmd, "  %u metadata zones",
- 		     zmd->nr_meta_zones * 2);
--	dmz_dev_info(dev, "  %u data zones for %u chunks",
-+	dmz_zmd_info(zmd, "  %u data zones for %u chunks",
- 		     zmd->nr_data_zones, zmd->nr_chunks);
--	dmz_dev_info(dev, "    %u random zones (%u unmapped)",
-+	dmz_zmd_info(zmd, "    %u random zones (%u unmapped)",
- 		     zmd->nr_rnd, atomic_read(&zmd->unmap_nr_rnd));
--	dmz_dev_info(dev, "    %u sequential zones (%u unmapped)",
-+	dmz_zmd_info(zmd, "    %u sequential zones (%u unmapped)",
- 		     zmd->nr_seq, atomic_read(&zmd->unmap_nr_seq));
--	dmz_dev_info(dev, "  %u reserved sequential data zones",
-+	dmz_zmd_info(zmd, "  %u reserved sequential data zones",
- 		     zmd->nr_reserved_seq);
--
--	dmz_dev_debug(dev, "Format:");
--	dmz_dev_debug(dev, "%u metadata blocks per set (%u max cache)",
-+	dmz_zmd_debug(zmd, "Format:");
-+	dmz_zmd_debug(zmd, "%u metadata blocks per set (%u max cache)",
- 		      zmd->nr_meta_blocks, zmd->max_nr_mblks);
--	dmz_dev_debug(dev, "  %u data zone mapping blocks",
-+	dmz_zmd_debug(zmd, "  %u data zone mapping blocks",
- 		      zmd->nr_map_blocks);
--	dmz_dev_debug(dev, "  %u bitmap blocks",
-+	dmz_zmd_debug(zmd, "  %u bitmap blocks",
- 		      zmd->nr_bitmap_blocks);
- 
- 	*metadata = zmd;
-@@ -2582,7 +2601,6 @@ void dmz_dtr_metadata(struct dmz_metadata *zmd)
-  */
- int dmz_resume_metadata(struct dmz_metadata *zmd)
- {
--	struct dmz_dev *dev = zmd->dev;
- 	struct dm_zone *zone;
- 	sector_t wp_block;
- 	unsigned int i;
-@@ -2592,20 +2610,19 @@ int dmz_resume_metadata(struct dmz_metadata *zmd)
- 	for (i = 0; i < zmd->nr_zones; i++) {
- 		zone = dmz_get(zmd, i);
- 		if (!zone) {
--			dmz_dev_err(dev, "Unable to get zone %u", i);
-+			dmz_zmd_err(zmd, "Unable to get zone %u", i);
- 			return -EIO;
- 		}
--
- 		wp_block = zone->wp_block;
- 
- 		ret = dmz_update_zone(zmd, zone);
- 		if (ret) {
--			dmz_dev_err(dev, "Broken zone %u", i);
-+			dmz_zmd_err(zmd, "Broken zone %u", i);
- 			return ret;
- 		}
- 
- 		if (dmz_is_offline(zone)) {
--			dmz_dev_warn(dev, "Zone %u is offline", i);
-+			dmz_zmd_warn(zmd, "Zone %u is offline", i);
- 			continue;
- 		}
- 
-@@ -2613,7 +2630,7 @@ int dmz_resume_metadata(struct dmz_metadata *zmd)
- 		if (!dmz_is_seq(zone))
- 			zone->wp_block = 0;
- 		else if (zone->wp_block != wp_block) {
--			dmz_dev_err(dev, "Zone %u: Invalid wp (%llu / %llu)",
-+			dmz_zmd_err(zmd, "Zone %u: Invalid wp (%llu / %llu)",
- 				    i, (u64)zone->wp_block, (u64)wp_block);
- 			zone->wp_block = wp_block;
- 			dmz_invalidate_blocks(zmd, zone, zone->wp_block,
--- 
-2.25.0
+On Wed, 8 Apr 2020, Dan Williams wrote:
+
+> On Wed, Apr 8, 2020 at 11:54 AM Mikulas Patocka <mpatocka@redhat.com> wrote:
+> >
+> >
+> >
+> > On Tue, 7 Apr 2020, Dan Williams wrote:
+> >
+> > > On Tue, Apr 7, 2020 at 8:02 AM Mikulas Patocka <mpatocka@redhat.com> wrote:
+> > > >
+> > > This should use clwb instead of clflushopt, the clwb macri
+> > > automatically converts back to clflushopt if clwb is not supported.
+> >
+> > But we want to invalidate cache, we do not expect CPU to access these data
+> > anymore (it will be accessed by a DMA engine during writeback).
+> 
+> The cluflushopt and clwb instructions should have identical overhead,
+> but clwb wins on the rare chance the written data is needed again
+> soon. If it is never needed again then the cost of dropping a clean
+> cache line is the same as if the line was invalidated in the first
+> instance. In both cases (clflushopt and clwb) the snoop traffic
+> overhead is still paid whether the written-back line is still present
+> in the cache or not.
+
+But my concern is that clflushopt removes the line from the cache and 
+makes room for another line (this is desired behavior) - clwb keeps the 
+line cached and the line would have to compete with other cache lines in 
+the same associative set.
+
+Do you know how does the CPU select the cache line to be replaced?
+
+dm-writecache is intended to be used for workloads like database logs that 
+need extra-low commit latency. The committed data is not read back during 
+normal workload.
+
+> > > > Other ideas - should we introduce memcpy_to_pmem instead of modifying
+> > > > memcpy_flushcache and move this logic there? Or should I modify the
+> > > > dm-writecache target directly to use clflushopt with no change to the
+> > > > architecture-specific code?
+> > >
+> > > This also needs to mention your analysis that showed that this can
+> > > have negative cache pollution effects [1], so I'm not sure how to
+> > > decide when to make the tradeoff. Once we have movdir64b the tradeoff
+> > > equation changes yet again:
+> > >
+> > > [1]: https://lore.kernel.org/linux-nvdimm/alpine.LRH.2.02.2004010941310.23210@file01.intranet.prod.int.rdu2.redhat.com/
+> >
+> > I analyzed it some more. I have created this program that tests writecache
+> > w.r.t. cache pollution:
+> >
+> > http://people.redhat.com/~mpatocka/testcases/pmem/misc/l1-test-2.c
+> >
+> > It fills the cache with a chain of random pointers and then walks these
+> > pointers to evaluate cache pollution. Between the walks, it writes data to
+> > the dm-writecache target.
+> >
+> > With the original kernel, the result is:
+> > 8503 - 11366
+> > real    0m7.985s
+> > user    0m0.585s
+> > sys     0m7.390s
+> >
+> > With dm-writecache hacked to use cached writes + clflushopt:
+> > 8513 - 11379
+> > real    0m5.045s
+> > user    0m0.670s
+> > sys     0m4.365s
+> >
+> > So, the hacked dm-writecache is significantly faster, while the cache
+> > micro-benchmark doesn't show any more cache pollution.
+> 
+> Nice. These are now the pmem numbers, or dram?
+
+pmem
+
+
+With dm-writecache on emulated pmem (with the memmap argument), we get
+
+With the original kernel:
+8508 - 11378
+real    0m4.960s
+user    0m0.638s
+sys     0m4.312s
+
+With dm-writecache hacked to use cached writes + clflushopt:
+8505 - 11378
+real    0m4.151s
+user    0m0.560s
+sys     0m3.582s
+
+So - clflushopt is still slightly better.
+
+> Otherwise, what changed that was making nt-writes on pmem perform better 
+> compared to your previous test? I'm just trying to track the results.
+
+I re-ran the previous test 
+( http://people.redhat.com/~mpatocka/testcases/pmem/misc/l1-test.c )
+and the result is this:
+
+Write + clflushopt:
+./l1-test /dev/ram0 f
+8502 - 22616
+./l1-test /dev/dax3.0 f
+8502 - 22902
+./l1-test /dev/dax4.0 f
+8500 - 11970
+
+Write + clwb:
+./l1-test /dev/ram0 w
+8502 - 22602
+./l1-test /dev/dax3.0 w
+8502 - 22454
+./l1-test /dev/dax4.0 w
+8502 - 11566
+
+Non-temporal stores:
+./l1-test /dev/ram0 n
+8504 - 22162
+./l1-test /dev/dax3.0 n
+8502 - 12336
+./l1-test /dev/dax4.0 n
+8502 - 10662
+
+(/dev/dax3.0 is the real persistent memory, /dev/dax4.0 is pmem emulated 
+with the memmap parameter)
+
+"./l1-test /dev/ram0 n" is slower than "./l1-test /dev/dax4.0 n" while 
+both of these tests are on RAM. The pmem is mapped with large pages and 
+mem map for ramdisk is not - perhaps this is making the difference?
+
+"./l1-test /dev/dax3.0 n" is better than "./l1-test /dev/dax3.0 w" and 
+"./l1-test /dev/dax3.0 f" - although the benchmaks done on dm-writecache 
+show that cached writes + clflushopt perform better. I don't know why 
+there is this disparity.
+
+> > That's for dm-writecache. Are there some other significant users of
+> > memcpy_flushcache that need to be checked?
+> 
+> The only other user is direct and dax-I/O to the pmem driver.
+
+Mikulas
