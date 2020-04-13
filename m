@@ -1,68 +1,54 @@
-From: "Lev R. Oshvang ." <levonshe@gmail.com>
-Subject: Re: [RFC] IMA: New IMA measurements for dm-crypt and selinux
-Date: Sun, 12 Apr 2020 11:15:06 +0300
-Message-ID: <CAP22eLGJbSvUU=W0Jp=gvOFv-nxLC8YTnta3OU2PKbh746MCkQ@mail.gmail.com>
-References: <f92bef0f-eb40-0e07-540c-321134e4b070@linux.microsoft.com> <CAB9W1A1=JyOV3-+6jn3xX-M+GKWBB2cCNh-VWB_kzf+YiR_d2Q@mail.gmail.com>
+From: Sunwook Eom <speed.eom@samsung.com>
+Subject: Re: [PATCH] dm verity fec: fix hash block number in
+ verity_fec_decode
+Date: Mon, 13 Apr 2020 13:31:27 +0900
+Message-ID: <8a6d104e-4a2b-c393-567f-95bc06f6763a@samsung.com>
+References: <CGME20200410035424epcas1p2d47ca3a171af6a895af17d86e2838269@epcas1p2.samsung.com>
+        <b8de2c4b-d8cf-2bdb-f4cf-5b10faf48955@samsung.com>
+        <CABCJKueSJ4sXHL5xnB5LQVW_6od2+_TEp0y_vv1gdi=yBB1Zfg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <CAB9W1A1=JyOV3-+6jn3xX-M+GKWBB2cCNh-VWB_kzf+YiR_d2Q@mail.gmail.com>
-Sender: owner-linux-security-module@vger.kernel.org
-To: Stephen Smalley <stephen.smalley@gmail.com>
-Cc: Tushar Sugandhi <tusharsu@linux.microsoft.com>, linux-integrity@vger.kernel.org, Mimi Zohar <zohar@linux.ibm.com>, LSM List <linux-security-module@vger.kernel.org>, SELinux <selinux@vger.kernel.org>, dm-devel@redhat.com, James Morris <jmorris@namei.org>, chpebeni@linux.microsoft.com, nramas@linux.microsoft.com, balajib@microsoft.com, sashal@kernel.org, suredd@microsoft.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CABCJKueSJ4sXHL5xnB5LQVW_6od2+_TEp0y_vv1gdi=yBB1Zfg@mail.gmail.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Sami Tolvanen <samitolvanen@google.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, =?UTF-8?B?6rCV66y47LKg?= <mcneo.kang@samsung.com>, sunwook5492@gmail.com, LKML <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Sat, Apr 11, 2020 at 10:07 PM Stephen Smalley
-<stephen.smalley@gmail.com> wrote:
->
-> On Wed, Apr 8, 2020 at 6:28 AM Tushar Sugandhi
-> <tusharsu@linux.microsoft.com> wrote:
-> > Measuring SELinux status and various SELinux policies can help ensure
-> > mandatory access control of the system is not compromised.
-> <snip>
-> > B. Measuring selinux constructs:
-> >      We propose to add an IMA hook in enforcing_set() present under
-> >      security/selinux/include/security.h.
-> >      enforcing_set() sets the selinux state to enforcing/permissive etc.
-> >      and is called from key places like selinux_init(),
-> >      sel_write_enforce() etc.
-> >      The hook will measure various attributes related to selinux status.
-> >      Majority of the attributes are present in the struct selinux_state
-> >      present in security/selinux/include/security.h
-> >      e.g.
-> >      $sestatus
-> >             SELinux status:              enabled
-> >             SELinuxfs mount:             /sys/fs/selinux
-> >             SELinux root directory:      /etc/selinux
-> >             Loaded policy name:          default
-> >             Current mode:                permissive
-> >             Mode from config file:       permissive
-> >             Policy MLS status:           enabled
-> >             Policy deny_unknown status:  allowed
-> >             Memory protection checking:  requested (insecure)
-> >             Max kernel policy version:   32
-> >
-> >      The above attributes will be serialized into a set of key=value
-> >      pairs when passed to IMA for measurement.
-> >
-> >      Proposed Function Signature of the IMA hook:
-> >      void ima_selinux_status(void *selinux_status, int len);
->
-> This won't detect changes to any of these state variables via a kernel
-> write vulnerability,
-> so it would be good to provide a way to trigger measurement of the
-> current values on
-> demand.
-> You'll also likely want to measure parts of the child structures of
-> selinux_state, e.g. selinux_ss,
-> especially selinux_map and policydb.  You can simplify measurement of
-> the policydb by
-> serializing it first via policydb_write() and hashing the result. I
-> suppose one question is whether you can do all of this
-> already from userspace by just having userspace read
-> /sys/fs/selinux/enforce, /sys/fs/selinux/policy, etc.
 
-It sees to me that  LKRG (kernel run time guard)  takes the role of
-measuring kernel structures.  Perhaps you need to consult with LKRG
-guys.
-Lev.
+On 20. 4. 11. 오전 12:41, Sami Tolvanen wrote:
+> On Thu, Apr 9, 2020 at 8:54 PM Sunwook Eom <speed.eom@samsung.com> wrote:
+>> The error correction data is computed as if data and hash blocks
+>> were concatenated. But hash block number is start from v->hash_start.
+>> So, we have to calculate hash block number based on that.
+>>
+>> Fixes: a739ff3f543af ("dm verity: add support for forward error correction")
+>> Signed-off-by: Sunwook Eom <speed.eom@samsung.com>
+>> ---
+>>    drivers/md/dm-verity-fec.c | 2 +-
+>>    1 file changed, 1 insertion(+), 1 deletion(-)
+>>
+>> diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
+>> index 49147e634046..fb41b4f23c48 100644
+>> --- a/drivers/md/dm-verity-fec.c
+>> +++ b/drivers/md/dm-verity-fec.c
+>> @@ -435,7 +435,7 @@ int verity_fec_decode(struct dm_verity *v, struct
+>> dm_verity_io *io,
+>>        fio->level++;
+>>
+>>        if (type == DM_VERITY_BLOCK_TYPE_METADATA)
+>> -        block += v->data_blocks;
+>> +        block = block - v->hash_start + v->data_blocks;
+>>
+>>        /*
+>>         * For RS(M, N), the continuous FEC data is divided into blocks of N
+> Thank you for the patch!
+>
+> Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
+>
+> Sami
+>
+>
+Add CC : LKML <linux-kernel@vger.kernel.org>
