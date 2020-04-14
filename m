@@ -1,16 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 07/11] dm-zoned: replace 'target' pointer in
- the bio context
-Date: Tue, 14 Apr 2020 08:36:07 +0200
-Message-ID: <7642cdcf-3458-9a11-bdf0-8f978d463664@suse.de>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [PATCH 06/11] dm-zoned: remove 'dev' argument from
+	reclaim
+Date: Tue, 14 Apr 2020 06:37:33 +0000
+Message-ID: <BY5PR04MB6900FEA91E3FFC617A885F25E7DA0@BY5PR04MB6900.namprd04.prod.outlook.com>
 References: <20200409064527.82992-1-hare@suse.de>
-	<20200409064527.82992-8-hare@suse.de>
-	<BY5PR04MB6900300E586A0BD669A88305E7DE0@BY5PR04MB6900.namprd04.prod.outlook.com>
+	<20200409064527.82992-7-hare@suse.de>
+	<BY5PR04MB69009A34D81599FF8208A014E7DE0@BY5PR04MB6900.namprd04.prod.outlook.com>
+	<9a5ae1d5-4769-c1fa-2a52-f1f8fd6b25e0@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <BY5PR04MB6900300E586A0BD669A88305E7DE0@BY5PR04MB6900.namprd04.prod.outlook.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -21,99 +21,228 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <Damien.LeMoal@wdc.com>, Mike Snitzer <snitzer@redhat.com>
+To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
 Cc: Bob Liu <bob.liu@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gNC8xMC8yMCA4OjUyIEFNLCBEYW1pZW4gTGUgTW9hbCB3cm90ZToKPiBPbiAyMDIwLzA0LzA5
-IDE1OjQ1LCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6Cj4+IFJlcGxhY2UgdGhlICd0YXJnZXQnIHBv
-aW50ZXIgaW4gdGhlIGJpbyBjb250ZXh0IHdpdGggdGhlCj4+IGRldmljZSBwb2ludGVyIGFzIHRo
-aXMgaXMgd2hhdCdzIGFjdHVhbGx5IHVzZWQuCj4+Cj4+IFNpZ25lZC1vZmYtYnk6IEhhbm5lcyBS
-ZWluZWNrZSA8aGFyZUBzdXNlLmRlPgo+PiAtLS0KPj4gICBkcml2ZXJzL21kL2RtLXpvbmVkLXRh
-cmdldC5jIHwgNTQgKysrKysrKysrKysrKysrKysrKysrLS0tLS0tLS0tLS0tLS0tCj4+ICAgMSBm
-aWxlIGNoYW5nZWQsIDMxIGluc2VydGlvbnMoKyksIDIzIGRlbGV0aW9ucygtKQo+Pgo+PiBkaWZm
-IC0tZ2l0IGEvZHJpdmVycy9tZC9kbS16b25lZC10YXJnZXQuYyBiL2RyaXZlcnMvbWQvZG0tem9u
-ZWQtdGFyZ2V0LmMKPj4gaW5kZXggZmEyOTczNDhmMGJiLi4xZWUxMDc4OWYwNGQgMTAwNjQ0Cj4+
-IC0tLSBhL2RyaXZlcnMvbWQvZG0tem9uZWQtdGFyZ2V0LmMKPj4gKysrIGIvZHJpdmVycy9tZC9k
-bS16b25lZC10YXJnZXQuYwo+PiBAQCAtMTcsNyArMTcsNyBAQAo+PiAgICAqIFpvbmUgQklPIGNv
-bnRleHQuCj4+ICAgICovCj4+ICAgc3RydWN0IGRtel9iaW9jdHggewo+PiAtCXN0cnVjdCBkbXpf
-dGFyZ2V0CSp0YXJnZXQ7Cj4+ICsJc3RydWN0IGRtel9kZXYJCSpkZXY7Cj4+ICAgCXN0cnVjdCBk
-bV96b25lCQkqem9uZTsKPj4gICAJc3RydWN0IGJpbwkJKmJpbzsKPj4gICAJcmVmY291bnRfdAkJ
-cmVmOwo+PiBAQCAtNzEsNiArNzEsMTEgQEAgc3RydWN0IGRtel90YXJnZXQgewo+PiAgICAqLwo+
-PiAgICNkZWZpbmUgRE1aX0ZMVVNIX1BFUklPRAkoMTAgKiBIWikKPj4gICAKPj4gK3N0cnVjdCBk
-bXpfZGV2ICpkbXpfc2VjdF90b19kZXYoc3RydWN0IGRtel90YXJnZXQgKmRteiwgc2VjdG9yX3Qg
-c2VjdCkKPj4gK3sKPj4gKwlyZXR1cm4gJmRtei0+ZGV2WzBdOwo+PiArfQo+PiArCj4+ICAgLyoK
-Pj4gICAgKiBUYXJnZXQgQklPIGNvbXBsZXRpb24uCj4+ICAgICovCj4+IEBAIC04MSw3ICs4Niw3
-IEBAIHN0YXRpYyBpbmxpbmUgdm9pZCBkbXpfYmlvX2VuZGlvKHN0cnVjdCBiaW8gKmJpbywgYmxr
-X3N0YXR1c190IHN0YXR1cykKPj4gICAJaWYgKHN0YXR1cyAhPSBCTEtfU1RTX09LICYmIGJpby0+
-Ymlfc3RhdHVzID09IEJMS19TVFNfT0spCj4+ICAgCQliaW8tPmJpX3N0YXR1cyA9IHN0YXR1czsK
-Pj4gICAJaWYgKGJpby0+Ymlfc3RhdHVzICE9IEJMS19TVFNfT0spCj4+IC0JCWJpb2N0eC0+dGFy
-Z2V0LT5kZXYtPmZsYWdzIHw9IERNWl9DSEVDS19CREVWOwo+PiArCQliaW9jdHgtPmRldi0+Zmxh
-Z3MgfD0gRE1aX0NIRUNLX0JERVY7Cj4+ICAgCj4+ICAgCWlmIChyZWZjb3VudF9kZWNfYW5kX3Rl
-c3QoJmJpb2N0eC0+cmVmKSkgewo+PiAgIAkJc3RydWN0IGRtX3pvbmUgKnpvbmUgPSBiaW9jdHgt
-PnpvbmU7Cj4+IEBAIC0xMTgsMTQgKzEyMywyMCBAQCBzdGF0aWMgaW50IGRtel9zdWJtaXRfYmlv
-KHN0cnVjdCBkbXpfdGFyZ2V0ICpkbXosIHN0cnVjdCBkbV96b25lICp6b25lLAo+PiAgIAkJCSAg
-c3RydWN0IGJpbyAqYmlvLCBzZWN0b3JfdCBjaHVua19ibG9jaywKPj4gICAJCQkgIHVuc2lnbmVk
-IGludCBucl9ibG9ja3MpCj4+ICAgewo+PiAtCXN0cnVjdCBkbXpfYmlvY3R4ICpiaW9jdHggPSBk
-bV9wZXJfYmlvX2RhdGEoYmlvLCBzaXplb2Yoc3RydWN0IGRtel9iaW9jdHgpKTsKPj4gKwlzdHJ1
-Y3QgZG16X2RldiAqZGV2ID0gZG16X3pvbmVfdG9fZGV2KGRtei0+bWV0YWRhdGEsIHpvbmUpOwo+
-PiArCXN0cnVjdCBkbXpfYmlvY3R4ICpiaW9jdHggPQo+PiArCQlkbV9wZXJfYmlvX2RhdGEoYmlv
-LCBzaXplb2Yoc3RydWN0IGRtel9iaW9jdHgpKTsKPj4gICAJc3RydWN0IGJpbyAqY2xvbmU7Cj4+
-ICAgCj4+ICsJaWYgKGRldi0+ZmxhZ3MgJiBETVpfQkRFVl9EWUlORykKPj4gKwkJcmV0dXJuIC1F
-SU87Cj4+ICsKPj4gICAJY2xvbmUgPSBiaW9fY2xvbmVfZmFzdChiaW8sIEdGUF9OT0lPLCAmZG16
-LT5iaW9fc2V0KTsKPj4gICAJaWYgKCFjbG9uZSkKPj4gICAJCXJldHVybiAtRU5PTUVNOwo+PiAg
-IAo+PiAtCWJpb19zZXRfZGV2KGNsb25lLCBkbXotPmRldi0+YmRldik7Cj4+ICsJYmlvX3NldF9k
-ZXYoY2xvbmUsIGRldi0+YmRldik7Cj4+ICsJYmlvY3R4LT5kZXYgPSBkZXY7Cj4+ICAgCWNsb25l
-LT5iaV9pdGVyLmJpX3NlY3RvciA9Cj4+ICAgCQlkbXpfc3RhcnRfc2VjdChkbXotPm1ldGFkYXRh
-LCB6b25lKSArIGRtel9ibGsyc2VjdChjaHVua19ibG9jayk7Cj4+ICAgCWNsb25lLT5iaV9pdGVy
-LmJpX3NpemUgPSBkbXpfYmxrMnNlY3QobnJfYmxvY2tzKSA8PCBTRUNUT1JfU0hJRlQ7Cj4+IEBA
-IC0yMTgsOCArMjI5LDEwIEBAIHN0YXRpYyBpbnQgZG16X2hhbmRsZV9yZWFkKHN0cnVjdCBkbXpf
-dGFyZ2V0ICpkbXosIHN0cnVjdCBkbV96b25lICp6b25lLAo+PiAgIAo+PiAgIAkJaWYgKG5yX2Js
-b2Nrcykgewo+PiAgIAkJCS8qIFZhbGlkIGJsb2NrcyBmb3VuZDogcmVhZCB0aGVtICovCj4+IC0J
-CQlucl9ibG9ja3MgPSBtaW5fdCh1bnNpZ25lZCBpbnQsIG5yX2Jsb2NrcywgZW5kX2Jsb2NrIC0g
-Y2h1bmtfYmxvY2spOwo+PiAtCQkJcmV0ID0gZG16X3N1Ym1pdF9iaW8oZG16LCByem9uZSwgYmlv
-LCBjaHVua19ibG9jaywgbnJfYmxvY2tzKTsKPj4gKwkJCW5yX2Jsb2NrcyA9IG1pbl90KHVuc2ln
-bmVkIGludCwgbnJfYmxvY2tzLAo+PiArCQkJCQkgIGVuZF9ibG9jayAtIGNodW5rX2Jsb2NrKTsK
-Pj4gKwkJCXJldCA9IGRtel9zdWJtaXRfYmlvKGRteiwgcnpvbmUsIGJpbywKPj4gKwkJCQkJICAg
-ICBjaHVua19ibG9jaywgbnJfYmxvY2tzKTsKPj4gICAJCQlpZiAocmV0KQo+PiAgIAkJCQlyZXR1
-cm4gcmV0Owo+PiAgIAkJCWNodW5rX2Jsb2NrICs9IG5yX2Jsb2NrczsKPj4gQEAgLTMzMCwxNCAr
-MzQzLDE2IEBAIHN0YXRpYyBpbnQgZG16X2hhbmRsZV93cml0ZShzdHJ1Y3QgZG16X3RhcmdldCAq
-ZG16LCBzdHJ1Y3QgZG1fem9uZSAqem9uZSwKPj4gICAJCSAqIGFuZCB0aGUgQklPIGlzIGFsaWdu
-ZWQgdG8gdGhlIHpvbmUgd3JpdGUgcG9pbnRlcjoKPj4gICAJCSAqIGRpcmVjdCB3cml0ZSB0aGUg
-em9uZS4KPj4gICAJCSAqLwo+PiAtCQlyZXR1cm4gZG16X2hhbmRsZV9kaXJlY3Rfd3JpdGUoZG16
-LCB6b25lLCBiaW8sIGNodW5rX2Jsb2NrLCBucl9ibG9ja3MpOwo+PiArCQlyZXR1cm4gZG16X2hh
-bmRsZV9kaXJlY3Rfd3JpdGUoZG16LCB6b25lLCBiaW8sCj4+ICsJCQkJCSAgICAgICBjaHVua19i
-bG9jaywgbnJfYmxvY2tzKTsKPj4gICAJfQo+PiAgIAo+PiAgIAkvKgo+PiAgIAkgKiBUaGlzIGlz
-IGFuIHVuYWxpZ25lZCB3cml0ZSBpbiBhIHNlcXVlbnRpYWwgem9uZToKPj4gICAJICogdXNlIGJ1
-ZmZlcmVkIHdyaXRlLgo+PiAgIAkgKi8KPj4gLQlyZXR1cm4gZG16X2hhbmRsZV9idWZmZXJlZF93
-cml0ZShkbXosIHpvbmUsIGJpbywgY2h1bmtfYmxvY2ssIG5yX2Jsb2Nrcyk7Cj4+ICsJcmV0dXJu
-IGRtel9oYW5kbGVfYnVmZmVyZWRfd3JpdGUoZG16LCB6b25lLCBiaW8sCj4+ICsJCQkJCSBjaHVu
-a19ibG9jaywgbnJfYmxvY2tzKTsKPj4gICB9Cj4+ICAgCj4+ICAgLyoKPj4gQEAgLTM4Myw3ICsz
-OTgsNiBAQCBzdGF0aWMgaW50IGRtel9oYW5kbGVfZGlzY2FyZChzdHJ1Y3QgZG16X3RhcmdldCAq
-ZG16LCBzdHJ1Y3QgZG1fem9uZSAqem9uZSwKPj4gICBzdGF0aWMgdm9pZCBkbXpfaGFuZGxlX2Jp
-byhzdHJ1Y3QgZG16X3RhcmdldCAqZG16LCBzdHJ1Y3QgZG1fY2h1bmtfd29yayAqY3csCj4+ICAg
-CQkJICAgc3RydWN0IGJpbyAqYmlvKQo+PiAgIHsKPj4gLQlzdHJ1Y3QgZG16X2Jpb2N0eCAqYmlv
-Y3R4ID0gZG1fcGVyX2Jpb19kYXRhKGJpbywgc2l6ZW9mKHN0cnVjdCBkbXpfYmlvY3R4KSk7Cj4+
-ICAgCXN0cnVjdCBkbXpfbWV0YWRhdGEgKnptZCA9IGRtei0+bWV0YWRhdGE7Cj4+ICAgCXN0cnVj
-dCBkbV96b25lICp6b25lOwo+PiAgIAlpbnQgcmV0Owo+PiBAQCAtMzk3LDExICs0MTEsNiBAQCBz
-dGF0aWMgdm9pZCBkbXpfaGFuZGxlX2JpbyhzdHJ1Y3QgZG16X3RhcmdldCAqZG16LCBzdHJ1Y3Qg
-ZG1fY2h1bmtfd29yayAqY3csCj4+ICAgCj4+ICAgCWRtel9sb2NrX21ldGFkYXRhKHptZCk7Cj4+
-ICAgCj4+IC0JaWYgKGRtei0+ZGV2LT5mbGFncyAmIERNWl9CREVWX0RZSU5HKSB7Cj4+IC0JCXJl
-dCA9IC1FSU87Cj4+IC0JCWdvdG8gb3V0Owo+PiAtCX0KPiAKPiBBcmUgeW91IHJlbW92aW5nIHRo
-aXMgYmVjYXVzZSB5b3UgYWRkZWQgdGhlIGNoZWNrIHRvIGRtel9zdWJtaXRfYmlvKCkgPwo+IApZ
-ZXMuCgo+PiAtCj4+ICAgCS8qCj4+ICAgCSAqIEdldCB0aGUgZGF0YSB6b25lIG1hcHBpbmcgdGhl
-IGNodW5rLiBUaGVyZSBtYXkgYmUgbm8KPj4gICAJICogbWFwcGluZyBmb3IgcmVhZCBhbmQgZGlz
-Y2FyZC4gSWYgYSBtYXBwaW5nIGlzIG9idGFpbmVkLAo+PiBAQCAtNDE1LDEwICs0MjQsOCBAQCBz
-dGF0aWMgdm9pZCBkbXpfaGFuZGxlX2JpbyhzdHJ1Y3QgZG16X3RhcmdldCAqZG16LCBzdHJ1Y3Qg
-ZG1fY2h1bmtfd29yayAqY3csCj4+ICAgCX0KPj4gICAKPj4gICAJLyogUHJvY2VzcyB0aGUgQklP
-ICovCj4+IC0JaWYgKHpvbmUpIHsKPj4gKwlpZiAoem9uZSkKPj4gICAJCWRtel9hY3RpdmF0ZV96
-b25lKHpvbmUpOwo+PiAtCQliaW9jdHgtPnpvbmUgPSB6b25lOwo+IAo+IFdoeSBhcmUgeW91IHJl
-bW92aW5nIHRoaXMgPyBUaGlzIGlzIHVzZWQgaW4gZG16X2Jpb19lbmRpbygpLi4uCj4gCj4gCkJ6
-enQuIEluZGVlZCwgeW91IGFyZSBjb3JyZWN0LiBXaWxsIGJlIGZpeGluZyBpdCB1cCBmb3IgdGhl
-IG5leHQgcm91bmQuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UgICAg
-ICAgICAgICBUZWFtbGVhZCBTdG9yYWdlICYgTmV0d29ya2luZwpoYXJlQHN1c2UuZGUgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBTb2Z0d2FyZSBT
-b2x1dGlvbnMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkhSQiAzNjgwOSAo
-QUcgTsO8cm5iZXJnKSwgR2VzY2jDpGZ0c2bDvGhyZXI6IEZlbGl4IEltZW5kw7ZyZmZlcgoKCi0t
-CmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJl
-ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On 2020/04/14 15:34, Hannes Reinecke wrote:
+> On 4/10/20 8:43 AM, Damien Le Moal wrote:
+>> On 2020/04/09 15:45, Hannes Reinecke wrote:
+>>> Use the dmz_zone_to_dev() mapping function to remove the
+>>> 'dev' argument from reclaim.
+>>>
+>>> Signed-off-by: Hannes Reinecke <hare@suse.de>
+>>> ---
+>>>   drivers/md/dm-zoned-metadata.c |  5 +++
+>>>   drivers/md/dm-zoned-reclaim.c  | 63 +++++++++++++++++-----------------
+>>>   drivers/md/dm-zoned-target.c   |  2 +-
+>>>   drivers/md/dm-zoned.h          |  4 ++-
+>>>   4 files changed, 41 insertions(+), 33 deletions(-)
+>>>
+>>> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+>>> index 7cda48683c0b..cd4a8093da24 100644
+>>> --- a/drivers/md/dm-zoned-metadata.c
+>>> +++ b/drivers/md/dm-zoned-metadata.c
+>>> @@ -267,6 +267,11 @@ const char *dmz_metadata_label(struct dmz_metadata *zmd)
+>>>   	return (const char *)zmd->devname;
+>>>   }
+>>>   
+>>> +bool dmz_check_dev(struct dmz_metadata *zmd)
+>>> +{
+>>> +	return dmz_check_bdev(&zmd->dev[0]);
+>>> +}
+>>> +
+>>>   /*
+>>>    * Lock/unlock mapping table.
+>>>    * The map lock also protects all the zone lists.
+>>> diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+>>> index 699c4145306e..102e0686542a 100644
+>>> --- a/drivers/md/dm-zoned-reclaim.c
+>>> +++ b/drivers/md/dm-zoned-reclaim.c
+>>> @@ -13,7 +13,6 @@
+>>>   
+>>>   struct dmz_reclaim {
+>>>   	struct dmz_metadata     *metadata;
+>>> -	struct dmz_dev		*dev;
+>>>   
+>>>   	struct delayed_work	work;
+>>>   	struct workqueue_struct *wq;
+>>> @@ -59,6 +58,7 @@ static int dmz_reclaim_align_wp(struct dmz_reclaim *zrc, struct dm_zone *zone,
+>>>   				sector_t block)
+>>>   {
+>>>   	struct dmz_metadata *zmd = zrc->metadata;
+>>> +	struct dmz_dev *dev = dmz_zone_to_dev(zmd, zone);
+>>>   	sector_t wp_block = zone->wp_block;
+>>>   	unsigned int nr_blocks;
+>>>   	int ret;
+>>> @@ -74,15 +74,15 @@ static int dmz_reclaim_align_wp(struct dmz_reclaim *zrc, struct dm_zone *zone,
+>>>   	 * pointer and the requested position.
+>>>   	 */
+>>>   	nr_blocks = block - wp_block;
+>>> -	ret = blkdev_issue_zeroout(zrc->dev->bdev,
+>>> +	ret = blkdev_issue_zeroout(dev->bdev,
+>>>   				   dmz_start_sect(zmd, zone) + dmz_blk2sect(wp_block),
+>>>   				   dmz_blk2sect(nr_blocks), GFP_NOIO, 0);
+>>>   	if (ret) {
+>>> -		dmz_dev_err(zrc->dev,
+>>> +		dmz_dev_err(dev,
+>>>   			    "Align zone %u wp %llu to %llu (wp+%u) blocks failed %d",
+>>>   			    zone->id, (unsigned long long)wp_block,
+>>>   			    (unsigned long long)block, nr_blocks, ret);
+>>> -		dmz_check_bdev(zrc->dev);
+>>> +		dmz_check_bdev(dev);
+>>>   		return ret;
+>>>   	}
+>>>   
+>>> @@ -116,7 +116,7 @@ static int dmz_reclaim_copy(struct dmz_reclaim *zrc,
+>>>   			    struct dm_zone *src_zone, struct dm_zone *dst_zone)
+>>>   {
+>>>   	struct dmz_metadata *zmd = zrc->metadata;
+>>> -	struct dmz_dev *dev = zrc->dev;
+>>> +	struct dmz_dev *src_dev, *dst_dev;
+>>>   	struct dm_io_region src, dst;
+>>>   	sector_t block = 0, end_block;
+>>>   	sector_t nr_blocks;
+>>> @@ -130,13 +130,17 @@ static int dmz_reclaim_copy(struct dmz_reclaim *zrc,
+>>>   	else
+>>>   		end_block = dmz_zone_nr_blocks(zmd);
+>>>   	src_zone_block = dmz_start_block(zmd, src_zone);
+>>> +	src_dev = dmz_zone_to_dev(zmd, src_zone);
+>>>   	dst_zone_block = dmz_start_block(zmd, dst_zone);
+>>> +	dst_dev = dmz_zone_to_dev(zmd, dst_zone);
+>>>   
+>>>   	if (dmz_is_seq(dst_zone))
+>>>   		set_bit(DM_KCOPYD_WRITE_SEQ, &flags);
+>>>   
+>>>   	while (block < end_block) {
+>>> -		if (dev->flags & DMZ_BDEV_DYING)
+>>> +		if (src_dev->flags & DMZ_BDEV_DYING)
+>>> +			return -EIO;
+>>> +		if (dst_dev->flags & DMZ_BDEV_DYING)
+>>>   			return -EIO;
+>>>   
+>>>   		/* Get a valid region from the source zone */
+>>> @@ -156,11 +160,11 @@ static int dmz_reclaim_copy(struct dmz_reclaim *zrc,
+>>>   				return ret;
+>>>   		}
+>>>   
+>>> -		src.bdev = dev->bdev;
+>>> +		src.bdev = src_dev->bdev;
+>>>   		src.sector = dmz_blk2sect(src_zone_block + block);
+>>>   		src.count = dmz_blk2sect(nr_blocks);
+>>>   
+>>> -		dst.bdev = dev->bdev;
+>>> +		dst.bdev = dst_dev->bdev;
+>>>   		dst.sector = dmz_blk2sect(dst_zone_block + block);
+>>>   		dst.count = src.count;
+>>>   
+>>> @@ -194,10 +198,10 @@ static int dmz_reclaim_buf(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+>>>   	struct dmz_metadata *zmd = zrc->metadata;
+>>>   	int ret;
+>>>   
+>>> -	dmz_dev_debug(zrc->dev,
+>>> -		      "Chunk %u, move buf zone %u (weight %u) to data zone %u (weight %u)",
+>>> -		      dzone->chunk, bzone->id, dmz_weight(bzone),
+>>> -		      dzone->id, dmz_weight(dzone));
+>>> +	DMDEBUG("(%s): Chunk %u, move buf zone %u (weight %u) to data zone %u (weight %u)",
+>>> +		dmz_metadata_label(zmd),
+>>> +		dzone->chunk, bzone->id, dmz_weight(bzone),
+>>> +		dzone->id, dmz_weight(dzone));
+>>>   
+>>>   	/* Flush data zone into the buffer zone */
+>>>   	ret = dmz_reclaim_copy(zrc, bzone, dzone);
+>>> @@ -233,10 +237,10 @@ static int dmz_reclaim_seq_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+>>>   	struct dmz_metadata *zmd = zrc->metadata;
+>>>   	int ret = 0;
+>>>   
+>>> -	dmz_dev_debug(zrc->dev,
+>>> -		      "Chunk %u, move data zone %u (weight %u) to buf zone %u (weight %u)",
+>>> -		      chunk, dzone->id, dmz_weight(dzone),
+>>> -		      bzone->id, dmz_weight(bzone));
+>>> +	DMDEBUG("(%s): Chunk %u, move data zone %u (weight %u) to buf zone %u (weight %u)",
+>>> +		dmz_metadata_label(zmd),
+>>> +		chunk, dzone->id, dmz_weight(dzone),
+>>> +		bzone->id, dmz_weight(bzone));
+>>>   
+>>>   	/* Flush data zone into the buffer zone */
+>>>   	ret = dmz_reclaim_copy(zrc, dzone, bzone);
+>>> @@ -285,9 +289,9 @@ static int dmz_reclaim_rnd_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+>>>   	if (!szone)
+>>>   		return -ENOSPC;
+>>>   
+>>> -	dmz_dev_debug(zrc->dev,
+>>> -		      "Chunk %u, move rnd zone %u (weight %u) to seq zone %u",
+>>> -		      chunk, dzone->id, dmz_weight(dzone), szone->id);
+>>> +	DMDEBUG("(%s): Chunk %u, move rnd zone %u (weight %u) to seq zone %u",
+>>> +		dmz_metadata_label(zmd),
+>>> +		chunk, dzone->id, dmz_weight(dzone), szone->id);
+>>>   
+>>>   	/* Flush the random data zone into the sequential zone */
+>>>   	ret = dmz_reclaim_copy(zrc, dzone, szone);
+>>> @@ -343,6 +347,7 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+>>>   	struct dmz_metadata *zmd = zrc->metadata;
+>>>   	struct dm_zone *dzone;
+>>>   	struct dm_zone *rzone;
+>>> +	struct dmz_dev *dev;
+>>>   	unsigned long start;
+>>>   	int ret;
+>>>   
+>>> @@ -352,7 +357,7 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+>>>   		return PTR_ERR(dzone);
+>>>   
+>>>   	start = jiffies;
+>>> -
+>>> +	dev = dmz_zone_to_dev(zmd, dzone);
+>>>   	if (dmz_is_rnd(dzone)) {
+>>>   		if (!dmz_weight(dzone)) {
+>>>   			/* Empty zone */
+>>> @@ -400,14 +405,14 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+>>>   
+>>>   	ret = dmz_flush_metadata(zrc->metadata);
+>>>   	if (ret) {
+>>> -		dmz_dev_debug(zrc->dev,
+>>> -			      "Metadata flush for zone %u failed, err %d\n",
+>>> -			      rzone->id, ret);
+>>> +		DMDEBUG("(%s): Metadata flush for zone %u failed, err %d\n",
+>>> +			dmz_metadata_label(zmd), rzone->id, ret);
+>>>   		return ret;
+>>>   	}
+>>>   
+>>> -	dmz_dev_debug(zrc->dev, "Reclaimed zone %u in %u ms",
+>>> -		      rzone->id, jiffies_to_msecs(jiffies - start));
+>>> +	DMDEBUG("(%s): Reclaimed zone %u in %u ms",
+>>> +		dmz_metadata_label(zmd),
+>>> +		rzone->id, jiffies_to_msecs(jiffies - start));
+>>>   	return 0;
+>>>   }
+>>>   
+>>> @@ -455,9 +460,6 @@ static void dmz_reclaim_work(struct work_struct *work)
+>>>   	unsigned int p_unmap_rnd;
+>>>   	int ret;
+>>>   
+>>> -	if (dmz_bdev_is_dying(zrc->dev))
+>>> -		return;
+>>> -
+>>
+>> Why do you remove this ? We should not try to start reclaim if the device is
+>> alreaady marked as dying.
+
+Ah. Yes, of course. We could simplify though: any one of the 2 device marked as
+dying equal a dying dmzoned target. We do not need to know which drive.
+
+>>
+> Because when moving to several devices we wouldn't know which device to 
+> check at this point.
+> But we could replace it with dmz_check_dev() like I did below.
+> 
+> Will be updating it for the next round.
+> 
+> Cheers,
+> 
+> Hannes
+> 
+
+
+-- 
+Damien Le Moal
+Western Digital Research
