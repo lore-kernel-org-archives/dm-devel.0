@@ -1,17 +1,15 @@
-From: Bob Liu <bob.liu@oracle.com>
-Subject: Re: [PATCHv3 00/11] dm-zoned: metadata version 2
-Date: Wed, 15 Apr 2020 08:07:25 +0800
-Message-ID: <f0a51abf-0e14-e64b-e5c3-2b07cae7a662@oracle.com>
-References: <20200409064527.82992-1-hare@suse.de>
-	<4052464c-cf93-3e22-3050-58183b9ae564@oracle.com>
-	<72e25c3e-818b-93a3-1468-5a5fcd256469@suse.de>
-	<20200414151342.GA24238@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: dm writecache: fix data corruption when reloading
+	the target
+Date: Wed, 15 Apr 2020 04:14:20 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2004150405330.3968@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2004081459520.14853@file01.intranet.prod.int.rdu2.redhat.com>
+	<20200414190515.GA25340@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200414151342.GA24238@redhat.com>
-Content-Language: en-US
+In-Reply-To: <20200414190515.GA25340@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,77 +20,131 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
+Cc: dm-devel@redhat.com, David Teigland <teigland@redhat.com>
 List-Id: dm-devel.ids
 
-T24gNC8xNC8yMCAxMToxMyBQTSwgTWlrZSBTbml0emVyIHdyb3RlOgo+IE9uIFR1ZSwgQXByIDE0
-IDIwMjAgYXQgIDI6MzhhbSAtMDQwMCwKPiBIYW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5kZT4g
-d3JvdGU6Cj4gCj4+IE9uIDQvMTEvMjAgMjozMCBQTSwgQm9iIExpdSB3cm90ZToKPj4+IE9uIDQv
-OS8yMCAyOjQ1IFBNLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6Cj4+Pj4gSGkgYWxsLAo+Pj4+Cj4+
-Pj4gdGhpcyBwYXRjaHNldCBhZGRzIGEgbmV3IG1ldGFkYXRhIHZlcnNpb24gMiwgd2hpY2ggYnJp
-bmdzIHRoZSBmb2xsb3dpbmcKPj4+PiBpbXByb3ZlbWVudHM6Cj4+Pj4gLSBVVUlEcyBhbmQgbGFi
-ZWxzOiBBZGRpbmcgdGhyZWUgbW9yZSBmaWVsZHMgdG8gdGhlIG1ldGFkYXRhIGNvbnRhaW5pbmcK
-Pj4+PiAgIHRoZSBkbS16b25lZCBkZXZpY2UgVVVJRCBhbmQgbGFiZWwsIGFuZCB0aGUgZGV2aWNl
-IFVVSUQuIFRoaXMgYWxsb3dzCj4+Pj4gICBmb3IgYW4gdW5pcXVlIGlkZW50aWZpY2F0aW9uIG9m
-IHRoZSBkZXZpY2VzLCBzbyB0aGF0IHNldmVyYWwgZG0tem9uZWQKPj4+PiAgIHNldHMgY2FuIGNv
-ZXhpc3QgYW5kIGhhdmUgYSBwZXJzaXN0ZW50IGlkZW50aWZpY2F0aW9uLgo+Pj4+IC0gRXh0ZW5k
-IHJhbmRvbSB6b25lcyBieSBhbiBhZGRpdGlvbmFsIHJlZ3VsYXIgZGlzayBkZXZpY2U6IEEgcmVn
-dWxhcgo+Pj4+ICAgYmxvY2sgZGV2aWNlIGNhbiBiZSBhZGRlZCB0b2dldGhlciB3aXRoIHRoZSB6
-b25lZCBibG9jayBkZXZpY2UsIHByb3ZpZGluZwo+Pj4+ICAgYWRkaXRpb25hbCAoZW11bGF0ZWQp
-IHJhbmRvbSB3cml0ZSB6b25lcy4gV2l0aCB0aGlzIGl0J3MgcG9zc2libGUgdG8KPj4+PiAgIGhh
-bmRsZSBzZXF1ZW50aWFsIHpvbmVzIG9ubHkgZGV2aWNlczsgYWxzbyB0aGVyZSB3aWxsIGJlIGEg
-c3BlZWQtdXAgaWYKPj4+PiAgIHRoZSByZWd1bGFyIGJsb2NrIGRldmljZSByZXNpZGVzIG9uIGEg
-ZmFzdCBtZWRpdW0uIFRoZSByZWd1bGFyIGJsb2NrIGRldmljZQo+Pj4+ICAgaXMgcGxhY2VkIGxv
-Z2ljYWxseSBpbiBmcm9udCBvZiB0aGUgem9uZWQgYmxvY2sgZGV2aWNlLCBzbyB0aGF0IG1ldGFk
-YXRhCj4+Pj4gICBhbmQgbWFwcGluZyB0YWJsZXMgcmVzaWRlIG9uIHRoZSByZWd1bGFyIGJsb2Nr
-IGRldmljZSwgbm90IHRoZSB6b25lZCBkZXZpY2UuCj4+Pj4gLSBUZXJ0aWFyeSBzdXBlcmJsb2Nr
-IHN1cHBvcnQ6IEluIGFkZGl0aW9uIHRvIHRoZSB0d28gZXhpc3Rpbmcgc2V0cyBvZiBtZXRhZGF0
-YQo+Pj4+ICAgYW5vdGhlciwgdGVydGlhcnksIHN1cGVyYmxvY2sgaXMgd3JpdHRlbiB0byB0aGUg
-Zmlyc3QgYmxvY2sgb2YgdGhlIHpvbmVkCj4+Pj4gICBibG9jayBkZXZpY2UuIFRoaXMgc3VwZXJi
-bG9jayBpcyBmb3IgaWRlbnRpZmljYXRpb24gb25seTsgdGhlIGdlbmVyYXRpb24KPj4+PiAgIG51
-bWJlciBpcyBzZXQgdG8gJzAnIGFuZCB0aGUgYmxvY2sgaXRzZWxmIGl0IG5ldmVyIHVwZGF0ZWQu
-IFRoZSBhZGRpdGlvbmFsCj4+Pj4gICBtZXRhZGF0ZSBsaWtlIGJpdG1hcCB0YWJsZXMgZXRjIGFy
-ZSBub3QgY29waWVkLgo+Pj4+Cj4+Pj4gVG8gaGFuZGxlIHRoaXMsIHNvbWUgY2hhbmdlcyB0byB0
-aGUgb3JpZ2luYWwgaGFuZGxpbmcgYXJlIGludHJvZHVjZWQ6Cj4+Pj4gLSBab25lcyBhcmUgbm93
-IGVxdWlkaXN0YW50LiBPcmlnaW5hbGx5LCBydW50IHpvbmVzIHdlcmUgaWdub3JlZCwgYW5kCj4+
-Pj4gICBub3QgY291bnRlZCB3aGVuIHNpemluZyB0aGUgbWFwcGluZyB0YWJsZXMuIFdpdGggdGhl
-IGR1YWwgZGV2aWNlIHNldHVwCj4+Pj4gICBydW50IHpvbmVzIG1pZ2h0IG9jY3VyIGF0IHRoZSBl
-bmQgb2YgdGhlIHJlZ3VsYXIgYmxvY2sgZGV2aWNlLCBtYWtpbmcKPj4+PiAgIGRpcmVjdCB0cmFu
-c2xhdGlvbiBiZXR3ZWVuIHpvbmUgbnVtYmVyIGFuZCBzZWN0b3IvYmxvY2sgbnVtYmVyIGNvbXBs
-ZXguCj4+Pj4gICBGb3IgbWV0YWRhdGEgdmVyc2lvbiAyIGFsbCB6b25lcyBhcmUgY29uc2lkZXJl
-ZCB0byBiZSBvZiB0aGUgc2FtZSBzaXplLAo+Pj4+ICAgYW5kIHJ1bnQgem9uZXMgYXJlIHNpbXBs
-eSBtYXJrZWQgYXMgJ29mZmxpbmUnIHRvIGhhdmUgdGhlbSBpZ25vcmVkIHdoZW4KPj4+PiAgIGFs
-bG9jYXRpbmcgYSBuZXcgem9uZS4KPj4+PiAtIFRoZSBibG9jayBudW1iZXIgaW4gdGhlIHN1cGVy
-YmxvY2sgaXMgbm93IHRoZSBnbG9iYWwgbnVtYmVyLCBhbmQgcmVmZXJzIHRvCj4+Pj4gICB0aGUg
-bG9jYXRpb24gb2YgdGhlIHN1cGVyYmxvY2sgcmVsYXRpdmUgdG8gdGhlIHJlc3VsdGluZyBkZXZp
-Y2UtbWFwcGVyCj4+Pj4gICBkZXZpY2UuIFdoaWNoIG1lYW5zIHRoYXQgdGhlIHRlcnRpYXJ5IHN1
-cGVyYmxvY2sgY29udGFpbnMgYWJzb2x1dGUgYmxvY2sKPj4+PiAgIGFkZHJlc3Nlcywgd2hpY2gg
-bmVlZHMgdG8gYmUgdHJhbnNsYXRlZCB0byB0aGUgcmVsYXRpdmUgZGV2aWNlIGFkZHJlc3Nlcwo+
-Pj4+ICAgdG8gZmluZCB0aGUgcmVmZXJlbmNlZCBibG9jay4KPj4+Pgo+Pj4+IFRoZXJlIGlzIGFu
-IGFjY29tcGFueWluZyBwYXRjaHNldCBmb3IgZG0tem9uZWQtdG9vbHMgZm9yIHdyaXRpbmcgYW5k
-IGNoZWNraW5nCj4+Pj4gdGhpcyBuZXcgbWV0YWRhdGEuCj4+Pj4KPj4+PiBBcyB1c3VhbCwgY29t
-bWVudHMgYW5kIHJldmlld3MgYXJlIHdlbGNvbWUuCj4+Pj4KPj4+PiBDaGFuZ2VzIHRvIHYyOgo+
-Pj4+IC0gS2lsbCBkbXpfaWQoKQo+Pj4+IC0gSW5jbHVkZSByZXZpZXdzIGZyb20gRGFtaWVuCj4+
-Pj4gLSBTYW5pdGl6ZSB1dWlkIGhhbmRsaW5nIGFzIHN1Z2dlc3RlZCBieSBKb2huIERvcm1pbnkK
-Pj4+Pgo+Pj4KPj4+IFRoaXMgc2VyaWVzIGxvb2tzIGdvb2QgdG8gbWUsIGZlZWwgZnJlZSB0byBh
-ZGQgbXkKPj4+IFJldmlld2VkLWJ5OiBCb2IgTGl1IDxib2IubGl1QG9yYWNsZS5jb20+Cj4+Pgo+
-Pj4gQnkgdGhlIHdheSwgaGF2ZSB5b3UgY29tcGxldGVkIHRoZSBwYXRjaGVzIGZvciByZWd1bGFy
-IGRldmljZSBzdXBwb3J0Pwo+Pj4gSSB3YXMgY29uc2lkZXJpbmcgcmViYXNlIG15IHByZXZpb3Vz
-IHBhdGNoZXMgdG8gdGhpcyBzZXJpZXMgYnV0IG5vdCBzdXJlIGlzIGl0IHN0aWxsIG5lY2Vzc2Fy
-eS4KPiAKPiBCb2IsIG5vdCB0cnlpbmcgdG8gYmUgb3Zlcmx5IGNyaXRpY2FsIGJ1dCBpZiB5b3Ug
-Y291bGRuJ3QgYW5zd2VyIHlvdXIKClRoZXNlIHBhdGNoZXMgZGlkIGxvb2tzIGZpbmUgdG8gbWUs
-IG15IHF1ZXN0aW9uIHdhcyBhc2tpbmcgYWJvdXQgZm9sbG93aW5nIHJlZ3VsYXItZGV2aWNlIHN1
-cHBvcnQKcGF0Y2hlcyB3aGljaCBoYXZlbid0IGluY2x1ZGVkIGluIHRoaXMgc2VyaWVzLgpBbnl3
-YXksIEkgd2lsbCBwYXkgbW9yZSBhdHRlbnRpb24uClRoYW5rcyBmb3IgcmVtaW5kaW5nLgoKQm9i
-Cgo+IHF1ZXN0aW9uIGhvdyBkaWQgeW91IGZlZWwgY29tZm9ydGFibGUgcHJvdmlkaW5nIHlvdXIg
-UmV2aWV3ZWQtYnkgdG8gdGhpcwo+IHBhdGNoc2V0PyAgVGhhdCBSZXZpZXdlZC1ieSBfbXVzdF8g
-bWVhbiBzb21ldGhpbmcuCj4gCj4gTWlrZQo+IAo+IAo+PiBJIGhhdmUgY29tYmluZWQgYm90aCBw
-YXRjaHNldHMsIHRoaXMgb25lIG5vdyBhbHNvIGluY2x1ZGVkIHJlZ3VsYXIKPj4gZGV2aWNlIHN1
-cHBvcnQuIFNvIG5vIG5lZWQgdG8gcmVzZW5kIGZyb20geW91ciBzaWRlLgo+Pgo+PiBDaGVlcnMs
-Cj4+Cj4+IEhhbm5lcwo+PiAtLSAKPj4gRHIuIEhhbm5lcyBSZWluZWNrZSAgICAgICAgICAgIFRl
-YW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCj4+IGhhcmVAc3VzZS5kZSAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OAo+PiBTVVNFIFNvZnR3YXJlIFNvbHV0
-aW9ucyBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKPj4gSFJCIDM2ODA5IChB
-RyBOw7xybmJlcmcpLCBHZXNjaMOkZnRzZsO8aHJlcjogRmVsaXggSW1lbmTDtnJmZmVyCj4+Cj4g
-CgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93
-d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+
+
+On Tue, 14 Apr 2020, Mike Snitzer wrote:
+
+> On Wed, Apr 08 2020 at  3:02pm -0400,
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
+> 
+> > The dm-writecache reads metadata in the target constructor. However, when 
+> > we reload the target, there could be another active instance running on 
+> > the same device. This is the sequence of operations when doing a reload:
+> > 
+> > 1. construct new target
+> > 2. suspend old target
+> > 3. resume new target
+> > 4. destroy old target
+> > 
+> > Metadata that were written by the old target between steps 1 and 2 would
+> > not be visible by the new target.
+> > 
+> > This patch fixes the data corruption by loading the metadata in the resume
+> > handler.
+> > 
+> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > Cc: stable@vger.kernel.org	# v4.18+
+> > Fixes: 48debafe4f2f ("dm: add writecache target")
+> > 
+> > ---
+> >  drivers/md/dm-writecache.c |   44 ++++++++++++++++++++++++++++++--------------
+> >  1 file changed, 30 insertions(+), 14 deletions(-)
+> > 
+> > Index: linux-2.6/drivers/md/dm-writecache.c
+> > ===================================================================
+> > --- linux-2.6.orig/drivers/md/dm-writecache.c	2020-04-08 14:47:17.000000000 +0200
+> > +++ linux-2.6/drivers/md/dm-writecache.c	2020-04-08 20:59:15.000000000 +0200
+> > @@ -931,6 +931,24 @@ static int writecache_alloc_entries(stru
+> >  	return 0;
+> >  }
+> >  
+> > +static int writecache_read_metadata(struct dm_writecache *wc, sector_t n_sectors)
+> > +{
+> > +	struct dm_io_region region;
+> > +	struct dm_io_request req;
+> > +
+> > +	region.bdev = wc->ssd_dev->bdev;
+> > +	region.sector = wc->start_sector;
+> > +	region.count = wc->metadata_sectors;
+> > +	req.bi_op = REQ_OP_READ;
+> > +	req.bi_op_flags = REQ_SYNC;
+> > +	req.mem.type = DM_IO_VMA;
+> > +	req.mem.ptr.vma = (char *)wc->memory_map;
+> > +	req.client = wc->dm_io;
+> > +	req.notify.fn = NULL;
+> > +
+> > +	return dm_io(&req, 1, &region, NULL);
+> > +}
+> > +
+> 
+> You aren't using the passed n_sectors (for region.count?)
+> 
+> 
+> >  static void writecache_resume(struct dm_target *ti)
+> >  {
+> >  	struct dm_writecache *wc = ti->private;
+> > @@ -941,8 +959,16 @@ static void writecache_resume(struct dm_
+> >  
+> >  	wc_lock(wc);
+> >  
+> > -	if (WC_MODE_PMEM(wc))
+> > +	if (WC_MODE_PMEM(wc)) {
+> >  		persistent_memory_invalidate_cache(wc->memory_map, wc->memory_map_size);
+> > +	} else {
+> > +		r = writecache_read_metadata(wc, wc->metadata_sectors);
+> > +		if (r) {
+> > +			writecache_error(wc, r, "unable to read metadata: %d", r);
+> > +			memset((char *)wc->memory_map + offsetof(struct wc_memory_superblock, entries), -1,
+> > +			       (wc->metadata_sectors << SECTOR_SHIFT) - offsetof(struct wc_memory_superblock, entries));
+> > +		}
+> > +	}
+> >  
+> >  	wc->tree = RB_ROOT;
+> >  	INIT_LIST_HEAD(&wc->lru);
+> > @@ -2200,8 +2226,6 @@ invalid_optional:
+> >  			goto bad;
+> >  		}
+> >  	} else {
+> > -		struct dm_io_region region;
+> > -		struct dm_io_request req;
+> >  		size_t n_blocks, n_metadata_blocks;
+> >  		uint64_t n_bitmap_bits;
+> >  
+> > @@ -2258,17 +2282,9 @@ invalid_optional:
+> >  			goto bad;
+> >  		}
+> >  
+> > -		region.bdev = wc->ssd_dev->bdev;
+> > -		region.sector = wc->start_sector;
+> > -		region.count = wc->metadata_sectors;
+> > -		req.bi_op = REQ_OP_READ;
+> > -		req.bi_op_flags = REQ_SYNC;
+> > -		req.mem.type = DM_IO_VMA;
+> > -		req.mem.ptr.vma = (char *)wc->memory_map;
+> > -		req.client = wc->dm_io;
+> > -		req.notify.fn = NULL;
+> > -
+> > -		r = dm_io(&req, 1, &region, NULL);
+> > +		r = writecache_read_metadata(wc,
+> > +			min((sector_t)bdev_logical_block_size(wc->ssd_dev->bdev) >> SECTOR_SHIFT,
+> > +			    (sector_t)wc->metadata_sectors));
+> 
+> Can you explain why this is needed?  Why isn't wc->metadata_sectors
+> already compatible with wc->ssd_dev->bdev ?
+
+bdev_logical_block_size is the minimum size accepted by the device. If we 
+used just bdev_logical_block_size(wc->ssd_dev->bdev), someone could (by 
+using extremely small device with large logical_block_size) trigger 
+writing out of the allocated memory.
+
+> Yet you just use wc->metadata_sectors in the new call to
+> writecache_read_metadata() in writecache_resume()...
+
+This was my mistake. Change it to "region.count = n_sectors";
+
+> Mike
+
+Mikulas
