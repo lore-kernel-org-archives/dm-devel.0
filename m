@@ -1,7 +1,7 @@
 From: deven.desai@linux.microsoft.com
-Subject: [RFC PATCH v3 01/12] scripts: add ipe tooling to generate boot policy
-Date: Wed, 15 Apr 2020 09:25:39 -0700
-Message-ID: <20200415162550.2324-2-deven.desai@linux.microsoft.com>
+Subject: [RFC PATCH v3 12/12] cleanup: uapi/linux/audit.h
+Date: Wed, 15 Apr 2020 09:25:50 -0700
+Message-ID: <20200415162550.2324-13-deven.desai@linux.microsoft.com>
 References: <20200415162550.2324-1-deven.desai@linux.microsoft.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,222 +14,70 @@ List-Id: dm-devel.ids
 
 From: Deven Bowers <deven.desai@linux.microsoft.com>
 
-Add a tool for the generation of an IPE policy to be compiled into the
-kernel. This policy will be enforced until userland deploys and activates
-a new policy.
+Remove trailing whitespaces and align the integrity #defines in
+linux/uapi/audit.h
 
 Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 ---
- MAINTAINERS                   |   6 ++
- scripts/Makefile              |   1 +
- scripts/ipe/Makefile          |   2 +
- scripts/ipe/polgen/.gitignore |   1 +
- scripts/ipe/polgen/Makefile   |   7 ++
- scripts/ipe/polgen/polgen.c   | 136 ++++++++++++++++++++++++++++++++++
- 6 files changed, 153 insertions(+)
- create mode 100644 scripts/ipe/Makefile
- create mode 100644 scripts/ipe/polgen/.gitignore
- create mode 100644 scripts/ipe/polgen/Makefile
- create mode 100644 scripts/ipe/polgen/polgen.c
+ include/uapi/linux/audit.h | 32 ++++++++++++++++----------------
+ 1 file changed, 16 insertions(+), 16 deletions(-)
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index e64e5db31497..c9c630f539ef 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -8474,6 +8474,12 @@ S:	Supported
- T:	git git://git.kernel.org/pub/scm/linux/kernel/git/zohar/linux-integrity.git
- F:	security/integrity/ima/
+diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+index 4e0122a0ed0c..d642ade068b5 100644
+--- a/include/uapi/linux/audit.h
++++ b/include/uapi/linux/audit.h
+@@ -48,7 +48,7 @@
+  * 2500 - 2999 future user space (maybe integrity labels and related events)
+  *
+  * Messages from 1000-1199 are bi-directional. 1200-1299 & 2100 - 2999 are
+- * exclusively user space. 1300-2099 is kernel --> user space 
++ * exclusively user space. 1300-2099 is kernel --> user space
+  * communication.
+  */
+ #define AUDIT_GET		1000	/* Get status */
+@@ -78,7 +78,7 @@
+ #define AUDIT_LAST_USER_MSG	1199
+ #define AUDIT_FIRST_USER_MSG2	2100	/* More user space messages */
+ #define AUDIT_LAST_USER_MSG2	2999
+- 
++
+ #define AUDIT_DAEMON_START      1200    /* Daemon startup record */
+ #define AUDIT_DAEMON_END        1201    /* Daemon normal stop record */
+ #define AUDIT_DAEMON_ABORT      1202    /* Daemon error stop record */
+@@ -139,20 +139,20 @@
+ #define AUDIT_MAC_CALIPSO_ADD	1418	/* NetLabel: add CALIPSO DOI entry */
+ #define AUDIT_MAC_CALIPSO_DEL	1419	/* NetLabel: del CALIPSO DOI entry */
  
-+INTEGRITY POLICY ENFORCEMENT (IPE)
-+M:	Deven Bowers <deven.desai@linux.microsoft.com>
-+L:	linux-integrity@vger.kernel.org
-+S:	Supported
-+F:	scripts/ipe/
-+
- INTEL 810/815 FRAMEBUFFER DRIVER
- M:	Antonino Daplas <adaplas@gmail.com>
- L:	linux-fbdev@vger.kernel.org
-diff --git a/scripts/Makefile b/scripts/Makefile
-index 95ecf970c74c..b3c1882fd6dd 100644
---- a/scripts/Makefile
-+++ b/scripts/Makefile
-@@ -34,6 +34,7 @@ hostprogs += unifdef
- subdir-$(CONFIG_GCC_PLUGINS) += gcc-plugins
- subdir-$(CONFIG_MODVERSIONS) += genksyms
- subdir-$(CONFIG_SECURITY_SELINUX) += selinux
-+subdir-$(CONFIG_SECURITY_IPE) += ipe
- 
- # Let clean descend into subdirs
- subdir-	+= basic dtc gdb kconfig mod
-diff --git a/scripts/ipe/Makefile b/scripts/ipe/Makefile
-new file mode 100644
-index 000000000000..e87553fbb8d6
---- /dev/null
-+++ b/scripts/ipe/Makefile
-@@ -0,0 +1,2 @@
-+# SPDX-License-Identifier: GPL-2.0-only
-+subdir-y := polgen
-diff --git a/scripts/ipe/polgen/.gitignore b/scripts/ipe/polgen/.gitignore
-new file mode 100644
-index 000000000000..80f32f25d200
---- /dev/null
-+++ b/scripts/ipe/polgen/.gitignore
-@@ -0,0 +1 @@
-+polgen
-diff --git a/scripts/ipe/polgen/Makefile b/scripts/ipe/polgen/Makefile
-new file mode 100644
-index 000000000000..a519b594e13c
---- /dev/null
-+++ b/scripts/ipe/polgen/Makefile
-@@ -0,0 +1,7 @@
-+# SPDX-License-Identifier: GPL-2.0
-+hostprogs-y	:= polgen
-+HOST_EXTRACFLAGS += \
-+	-I$(srctree)/include \
-+	-I$(srctree)/include/uapi \
-+
-+always		:= $(hostprogs-y)
-diff --git a/scripts/ipe/polgen/polgen.c b/scripts/ipe/polgen/polgen.c
-new file mode 100644
-index 000000000000..a80fffe1b27c
---- /dev/null
-+++ b/scripts/ipe/polgen/polgen.c
-@@ -0,0 +1,136 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (C) Microsoft Corporation. All rights reserved.
-+ */
-+
-+#include <stdlib.h>
-+#include <stddef.h>
-+#include <stdio.h>
-+#include <unistd.h>
-+#include <errno.h>
-+
-+static void usage(const char *const name)
-+{
-+	printf("Usage: %s OutputFile (PolicyFile)\n", name);
-+	exit(EINVAL);
-+}
-+
-+static int policy_to_buffer(const char *pathname, char **buffer, size_t *size)
-+{
-+	int rc = 0;
-+	FILE *fd;
-+	char *lbuf;
-+	size_t fsize;
-+	size_t read;
-+
-+	fd = fopen(pathname, "r");
-+	if (!fd) {
-+		rc = errno;
-+		goto out;
-+	}
-+
-+	fseek(fd, 0, SEEK_END);
-+	fsize = ftell(fd);
-+	rewind(fd);
-+
-+	lbuf = malloc(fsize);
-+	if (!lbuf) {
-+		rc = ENOMEM;
-+		goto out_close;
-+	}
-+
-+	read = fread((void *)lbuf, sizeof(*lbuf), fsize, fd);
-+	if (read != fsize) {
-+		rc = -1;
-+		goto out_free;
-+	}
-+
-+	*buffer = lbuf;
-+	*size = fsize;
-+	fclose(fd);
-+
-+	return rc;
-+
-+out_free:
-+	free(lbuf);
-+out_close:
-+	fclose(fd);
-+out:
-+	return rc;
-+}
-+
-+static int write_boot_policy(const char *pathname, const char *buf, size_t size)
-+{
-+	FILE *fd;
-+	size_t i;
-+
-+	fd = fopen(pathname, "w");
-+	if (!fd)
-+		goto err;
-+
-+	fprintf(fd, "/* This file is automatically generated.");
-+	fprintf(fd, " Do not edit. */\n");
-+	fprintf(fd, "#include <stddef.h>\n");
-+	fprintf(fd, "const char *const ipe_boot_policy =\n");
-+
-+	if (!buf || size == 0) {
-+		fprintf(fd, "\tNULL;\n");
-+		fclose(fd);
-+		return 0;
-+	}
-+
-+	for (i = 0; i < size; ++i) {
-+		if (i == 0)
-+			fprintf(fd, "\t\"");
-+
-+		switch (buf[i]) {
-+		case '"':
-+			fprintf(fd, "\\\"");
-+			break;
-+		case '\'':
-+			fprintf(fd, "'");
-+			break;
-+		case '\n':
-+			fprintf(fd, "\\n\"\n\t\"");
-+			break;
-+		case '\\':
-+			fprintf(fd, "\\\\");
-+			break;
-+		default:
-+			fprintf(fd, "%c", buf[i]);
-+		}
-+	}
-+	fprintf(fd, "\";\n");
-+	fclose(fd);
-+
-+	return 0;
-+
-+err:
-+	if (fd)
-+		fclose(fd);
-+	return errno;
-+}
-+
-+int main(int argc, const char *argv[])
-+{
-+	int rc = 0;
-+	size_t len = 0;
-+	char *policy = NULL;
-+
-+	if (argc < 2)
-+		usage(argv[0]);
-+
-+	if (argc > 2) {
-+		rc = policy_to_buffer(argv[2], &policy, &len);
-+		if (rc != 0)
-+			goto cleanup;
-+	}
-+
-+	rc = write_boot_policy(argv[1], policy, len);
-+cleanup:
-+	if (policy)
-+		free(policy);
-+	if (rc != 0)
-+		perror("An error occurred during policy conversion: ");
-+	return rc;
-+}
+-#define AUDIT_FIRST_KERN_ANOM_MSG   1700
+-#define AUDIT_LAST_KERN_ANOM_MSG    1799
+-#define AUDIT_ANOM_PROMISCUOUS      1700 /* Device changed promiscuous mode */
+-#define AUDIT_ANOM_ABEND            1701 /* Process ended abnormally */
+-#define AUDIT_ANOM_LINK		    1702 /* Suspicious use of file links */
+-#define AUDIT_ANOM_CREAT	    1703 /* Suspicious file creation */
+-#define AUDIT_INTEGRITY_DATA	    1800 /* Data integrity verification */
+-#define AUDIT_INTEGRITY_METADATA    1801 /* Metadata integrity verification */
+-#define AUDIT_INTEGRITY_STATUS	    1802 /* Integrity enable status */
+-#define AUDIT_INTEGRITY_HASH	    1803 /* Integrity HASH type */
+-#define AUDIT_INTEGRITY_PCR	    1804 /* PCR invalidation msgs */
+-#define AUDIT_INTEGRITY_RULE	    1805 /* policy rule */
+-#define AUDIT_INTEGRITY_EVM_XATTR   1806 /* New EVM-covered xattr */
+-#define AUDIT_INTEGRITY_POLICY_RULE 1807 /* IMA policy rules */
++#define AUDIT_FIRST_KERN_ANOM_MSG	1700
++#define AUDIT_LAST_KERN_ANOM_MSG	1799
++#define AUDIT_ANOM_PROMISCUOUS		1700 /* Device changed promiscuous mode */
++#define AUDIT_ANOM_ABEND		1701 /* Process ended abnormally */
++#define AUDIT_ANOM_LINK			1702 /* Suspicious use of file links */
++#define AUDIT_ANOM_CREAT		1703 /* Suspicious file creation */
++#define AUDIT_INTEGRITY_DATA		1800 /* Data integrity verification */
++#define AUDIT_INTEGRITY_METADATA	1801 /* Metadata integrity verification */
++#define AUDIT_INTEGRITY_STATUS		1802 /* Integrity enable status */
++#define AUDIT_INTEGRITY_HASH		1803 /* Integrity HASH type */
++#define AUDIT_INTEGRITY_PCR		1804 /* PCR invalidation msgs */
++#define AUDIT_INTEGRITY_RULE		1805 /* policy rule */
++#define AUDIT_INTEGRITY_EVM_XATTR	1806 /* New EVM-covered xattr */
++#define AUDIT_INTEGRITY_POLICY_RULE	1807 /* IMA policy rules */
+ #define AUDIT_INTEGRITY_POLICY_LOAD	1808 /* IPE Policy Load */
+ #define AUDIT_INTEGRITY_POLICY_ACTIVATE	1809 /* IPE Policy Activation */
+ #define AUDIT_INTEGRITY_EVENT		1810 /* IPE Evaluation Event */
 -- 
 2.26.0
