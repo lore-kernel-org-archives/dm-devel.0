@@ -1,67 +1,98 @@
-From: Deven Bowers <deven.desai@linux.microsoft.com>
-Subject: Re: [RFC PATCH v2 11/12] documentation: Add IPE Documentation
-Date: Tue, 14 Apr 2020 14:18:45 -0700
-Message-ID: <9c55bbe9-2c6e-7a0d-cf90-5b2aee724f19@linux.microsoft.com>
-References: <20200406221439.1469862-1-deven.desai@linux.microsoft.com>
- <20200406221439.1469862-12-deven.desai@linux.microsoft.com>
- <20200414093809.2c6ef93b@lwn.net>
+From: Bob Liu <bob.liu@oracle.com>
+Subject: Re: [PATCHv3 00/11] dm-zoned: metadata version 2
+Date: Wed, 15 Apr 2020 08:07:25 +0800
+Message-ID: <f0a51abf-0e14-e64b-e5c3-2b07cae7a662@oracle.com>
+References: <20200409064527.82992-1-hare@suse.de>
+	<4052464c-cf93-3e22-3050-58183b9ae564@oracle.com>
+	<72e25c3e-818b-93a3-1468-5a5fcd256469@suse.de>
+	<20200414151342.GA24238@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <20200414093809.2c6ef93b@lwn.net>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200414151342.GA24238@redhat.com>
 Content-Language: en-US
-Sender: owner-linux-security-module@vger.kernel.org
-To: Jonathan Corbet <corbet@lwn.net>
-Cc: agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serge@hallyn.com, zohar@linux.ibm.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, tyhicks@linux.microsoft.com, pasha.tatashin@soleen.com, sashal@kernel.org, jaskarankhurana@linux.microsoft.com, nramas@linux.microsoft.com, mdsakib@linux.microsoft.com, linux-kernel@vger.kernel.org
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-
-On 4/14/2020 8:38 AM, Jonathan Corbet wrote:
-> On Mon,  6 Apr 2020 15:14:38 -0700
-> deven.desai@linux.microsoft.com wrote:
->
->> From: Deven Bowers <deven.desai@linux.microsoft.com>
->>
->> Add IPE's documentation to the kernel tree.
->>
->> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
-> Thanks for including this nice documentation from the outset!  I have a
-> couple of tiny nits to pick, but nothing really substantive to complain
-> about, so:
->
->    Acked-by: Jonathan Corbet <corbet@lwn.net>
-
-Thanks!
-
-> [...]
->
->> +IPE is a Linux Security Module, which allows for a configurable policy
-> I'd drop the comma (I told you these were nits!)
-
-Got it, thanks!
-
->
-> [...]
->
->> +IPE Policy
->> +~~~~~~~~~~
->> +
->> +IPE policy is designed to be both forward compatible and backwards
->> +compatible. There is one required line, at the top of the policy,
->> +indicating the policy name, and the policy version, for instance:
->> +
->> +::
->> +
->> +   policy_name="Ex Policy" policy_version=0.0.0
-> This pattern can be compressed a bit by just putting the "::" at the end of
-> the last line of text:
->
-> 	indicating the policy name, and the policy version, for instance::
->
-> 	   policy_name="Ex Policy" policy_version=0.0.0
->
-> The result is a bit more readable in the plain-text format, IMO, and
-> renders exactly the same in Sphinx.
-
-Awesome. I'll address this feedback in v3.
+T24gNC8xNC8yMCAxMToxMyBQTSwgTWlrZSBTbml0emVyIHdyb3RlOgo+IE9uIFR1ZSwgQXByIDE0
+IDIwMjAgYXQgIDI6MzhhbSAtMDQwMCwKPiBIYW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5kZT4g
+d3JvdGU6Cj4gCj4+IE9uIDQvMTEvMjAgMjozMCBQTSwgQm9iIExpdSB3cm90ZToKPj4+IE9uIDQv
+OS8yMCAyOjQ1IFBNLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6Cj4+Pj4gSGkgYWxsLAo+Pj4+Cj4+
+Pj4gdGhpcyBwYXRjaHNldCBhZGRzIGEgbmV3IG1ldGFkYXRhIHZlcnNpb24gMiwgd2hpY2ggYnJp
+bmdzIHRoZSBmb2xsb3dpbmcKPj4+PiBpbXByb3ZlbWVudHM6Cj4+Pj4gLSBVVUlEcyBhbmQgbGFi
+ZWxzOiBBZGRpbmcgdGhyZWUgbW9yZSBmaWVsZHMgdG8gdGhlIG1ldGFkYXRhIGNvbnRhaW5pbmcK
+Pj4+PiAgIHRoZSBkbS16b25lZCBkZXZpY2UgVVVJRCBhbmQgbGFiZWwsIGFuZCB0aGUgZGV2aWNl
+IFVVSUQuIFRoaXMgYWxsb3dzCj4+Pj4gICBmb3IgYW4gdW5pcXVlIGlkZW50aWZpY2F0aW9uIG9m
+IHRoZSBkZXZpY2VzLCBzbyB0aGF0IHNldmVyYWwgZG0tem9uZWQKPj4+PiAgIHNldHMgY2FuIGNv
+ZXhpc3QgYW5kIGhhdmUgYSBwZXJzaXN0ZW50IGlkZW50aWZpY2F0aW9uLgo+Pj4+IC0gRXh0ZW5k
+IHJhbmRvbSB6b25lcyBieSBhbiBhZGRpdGlvbmFsIHJlZ3VsYXIgZGlzayBkZXZpY2U6IEEgcmVn
+dWxhcgo+Pj4+ICAgYmxvY2sgZGV2aWNlIGNhbiBiZSBhZGRlZCB0b2dldGhlciB3aXRoIHRoZSB6
+b25lZCBibG9jayBkZXZpY2UsIHByb3ZpZGluZwo+Pj4+ICAgYWRkaXRpb25hbCAoZW11bGF0ZWQp
+IHJhbmRvbSB3cml0ZSB6b25lcy4gV2l0aCB0aGlzIGl0J3MgcG9zc2libGUgdG8KPj4+PiAgIGhh
+bmRsZSBzZXF1ZW50aWFsIHpvbmVzIG9ubHkgZGV2aWNlczsgYWxzbyB0aGVyZSB3aWxsIGJlIGEg
+c3BlZWQtdXAgaWYKPj4+PiAgIHRoZSByZWd1bGFyIGJsb2NrIGRldmljZSByZXNpZGVzIG9uIGEg
+ZmFzdCBtZWRpdW0uIFRoZSByZWd1bGFyIGJsb2NrIGRldmljZQo+Pj4+ICAgaXMgcGxhY2VkIGxv
+Z2ljYWxseSBpbiBmcm9udCBvZiB0aGUgem9uZWQgYmxvY2sgZGV2aWNlLCBzbyB0aGF0IG1ldGFk
+YXRhCj4+Pj4gICBhbmQgbWFwcGluZyB0YWJsZXMgcmVzaWRlIG9uIHRoZSByZWd1bGFyIGJsb2Nr
+IGRldmljZSwgbm90IHRoZSB6b25lZCBkZXZpY2UuCj4+Pj4gLSBUZXJ0aWFyeSBzdXBlcmJsb2Nr
+IHN1cHBvcnQ6IEluIGFkZGl0aW9uIHRvIHRoZSB0d28gZXhpc3Rpbmcgc2V0cyBvZiBtZXRhZGF0
+YQo+Pj4+ICAgYW5vdGhlciwgdGVydGlhcnksIHN1cGVyYmxvY2sgaXMgd3JpdHRlbiB0byB0aGUg
+Zmlyc3QgYmxvY2sgb2YgdGhlIHpvbmVkCj4+Pj4gICBibG9jayBkZXZpY2UuIFRoaXMgc3VwZXJi
+bG9jayBpcyBmb3IgaWRlbnRpZmljYXRpb24gb25seTsgdGhlIGdlbmVyYXRpb24KPj4+PiAgIG51
+bWJlciBpcyBzZXQgdG8gJzAnIGFuZCB0aGUgYmxvY2sgaXRzZWxmIGl0IG5ldmVyIHVwZGF0ZWQu
+IFRoZSBhZGRpdGlvbmFsCj4+Pj4gICBtZXRhZGF0ZSBsaWtlIGJpdG1hcCB0YWJsZXMgZXRjIGFy
+ZSBub3QgY29waWVkLgo+Pj4+Cj4+Pj4gVG8gaGFuZGxlIHRoaXMsIHNvbWUgY2hhbmdlcyB0byB0
+aGUgb3JpZ2luYWwgaGFuZGxpbmcgYXJlIGludHJvZHVjZWQ6Cj4+Pj4gLSBab25lcyBhcmUgbm93
+IGVxdWlkaXN0YW50LiBPcmlnaW5hbGx5LCBydW50IHpvbmVzIHdlcmUgaWdub3JlZCwgYW5kCj4+
+Pj4gICBub3QgY291bnRlZCB3aGVuIHNpemluZyB0aGUgbWFwcGluZyB0YWJsZXMuIFdpdGggdGhl
+IGR1YWwgZGV2aWNlIHNldHVwCj4+Pj4gICBydW50IHpvbmVzIG1pZ2h0IG9jY3VyIGF0IHRoZSBl
+bmQgb2YgdGhlIHJlZ3VsYXIgYmxvY2sgZGV2aWNlLCBtYWtpbmcKPj4+PiAgIGRpcmVjdCB0cmFu
+c2xhdGlvbiBiZXR3ZWVuIHpvbmUgbnVtYmVyIGFuZCBzZWN0b3IvYmxvY2sgbnVtYmVyIGNvbXBs
+ZXguCj4+Pj4gICBGb3IgbWV0YWRhdGEgdmVyc2lvbiAyIGFsbCB6b25lcyBhcmUgY29uc2lkZXJl
+ZCB0byBiZSBvZiB0aGUgc2FtZSBzaXplLAo+Pj4+ICAgYW5kIHJ1bnQgem9uZXMgYXJlIHNpbXBs
+eSBtYXJrZWQgYXMgJ29mZmxpbmUnIHRvIGhhdmUgdGhlbSBpZ25vcmVkIHdoZW4KPj4+PiAgIGFs
+bG9jYXRpbmcgYSBuZXcgem9uZS4KPj4+PiAtIFRoZSBibG9jayBudW1iZXIgaW4gdGhlIHN1cGVy
+YmxvY2sgaXMgbm93IHRoZSBnbG9iYWwgbnVtYmVyLCBhbmQgcmVmZXJzIHRvCj4+Pj4gICB0aGUg
+bG9jYXRpb24gb2YgdGhlIHN1cGVyYmxvY2sgcmVsYXRpdmUgdG8gdGhlIHJlc3VsdGluZyBkZXZp
+Y2UtbWFwcGVyCj4+Pj4gICBkZXZpY2UuIFdoaWNoIG1lYW5zIHRoYXQgdGhlIHRlcnRpYXJ5IHN1
+cGVyYmxvY2sgY29udGFpbnMgYWJzb2x1dGUgYmxvY2sKPj4+PiAgIGFkZHJlc3Nlcywgd2hpY2gg
+bmVlZHMgdG8gYmUgdHJhbnNsYXRlZCB0byB0aGUgcmVsYXRpdmUgZGV2aWNlIGFkZHJlc3Nlcwo+
+Pj4+ICAgdG8gZmluZCB0aGUgcmVmZXJlbmNlZCBibG9jay4KPj4+Pgo+Pj4+IFRoZXJlIGlzIGFu
+IGFjY29tcGFueWluZyBwYXRjaHNldCBmb3IgZG0tem9uZWQtdG9vbHMgZm9yIHdyaXRpbmcgYW5k
+IGNoZWNraW5nCj4+Pj4gdGhpcyBuZXcgbWV0YWRhdGEuCj4+Pj4KPj4+PiBBcyB1c3VhbCwgY29t
+bWVudHMgYW5kIHJldmlld3MgYXJlIHdlbGNvbWUuCj4+Pj4KPj4+PiBDaGFuZ2VzIHRvIHYyOgo+
+Pj4+IC0gS2lsbCBkbXpfaWQoKQo+Pj4+IC0gSW5jbHVkZSByZXZpZXdzIGZyb20gRGFtaWVuCj4+
+Pj4gLSBTYW5pdGl6ZSB1dWlkIGhhbmRsaW5nIGFzIHN1Z2dlc3RlZCBieSBKb2huIERvcm1pbnkK
+Pj4+Pgo+Pj4KPj4+IFRoaXMgc2VyaWVzIGxvb2tzIGdvb2QgdG8gbWUsIGZlZWwgZnJlZSB0byBh
+ZGQgbXkKPj4+IFJldmlld2VkLWJ5OiBCb2IgTGl1IDxib2IubGl1QG9yYWNsZS5jb20+Cj4+Pgo+
+Pj4gQnkgdGhlIHdheSwgaGF2ZSB5b3UgY29tcGxldGVkIHRoZSBwYXRjaGVzIGZvciByZWd1bGFy
+IGRldmljZSBzdXBwb3J0Pwo+Pj4gSSB3YXMgY29uc2lkZXJpbmcgcmViYXNlIG15IHByZXZpb3Vz
+IHBhdGNoZXMgdG8gdGhpcyBzZXJpZXMgYnV0IG5vdCBzdXJlIGlzIGl0IHN0aWxsIG5lY2Vzc2Fy
+eS4KPiAKPiBCb2IsIG5vdCB0cnlpbmcgdG8gYmUgb3Zlcmx5IGNyaXRpY2FsIGJ1dCBpZiB5b3Ug
+Y291bGRuJ3QgYW5zd2VyIHlvdXIKClRoZXNlIHBhdGNoZXMgZGlkIGxvb2tzIGZpbmUgdG8gbWUs
+IG15IHF1ZXN0aW9uIHdhcyBhc2tpbmcgYWJvdXQgZm9sbG93aW5nIHJlZ3VsYXItZGV2aWNlIHN1
+cHBvcnQKcGF0Y2hlcyB3aGljaCBoYXZlbid0IGluY2x1ZGVkIGluIHRoaXMgc2VyaWVzLgpBbnl3
+YXksIEkgd2lsbCBwYXkgbW9yZSBhdHRlbnRpb24uClRoYW5rcyBmb3IgcmVtaW5kaW5nLgoKQm9i
+Cgo+IHF1ZXN0aW9uIGhvdyBkaWQgeW91IGZlZWwgY29tZm9ydGFibGUgcHJvdmlkaW5nIHlvdXIg
+UmV2aWV3ZWQtYnkgdG8gdGhpcwo+IHBhdGNoc2V0PyAgVGhhdCBSZXZpZXdlZC1ieSBfbXVzdF8g
+bWVhbiBzb21ldGhpbmcuCj4gCj4gTWlrZQo+IAo+IAo+PiBJIGhhdmUgY29tYmluZWQgYm90aCBw
+YXRjaHNldHMsIHRoaXMgb25lIG5vdyBhbHNvIGluY2x1ZGVkIHJlZ3VsYXIKPj4gZGV2aWNlIHN1
+cHBvcnQuIFNvIG5vIG5lZWQgdG8gcmVzZW5kIGZyb20geW91ciBzaWRlLgo+Pgo+PiBDaGVlcnMs
+Cj4+Cj4+IEhhbm5lcwo+PiAtLSAKPj4gRHIuIEhhbm5lcyBSZWluZWNrZSAgICAgICAgICAgIFRl
+YW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCj4+IGhhcmVAc3VzZS5kZSAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OAo+PiBTVVNFIFNvZnR3YXJlIFNvbHV0
+aW9ucyBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKPj4gSFJCIDM2ODA5IChB
+RyBOw7xybmJlcmcpLCBHZXNjaMOkZnRzZsO8aHJlcjogRmVsaXggSW1lbmTDtnJmZmVyCj4+Cj4g
+CgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93
+d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
