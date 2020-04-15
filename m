@@ -1,8 +1,8 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: dm writecache: fix data corruption when reloading
 	the target
-Date: Wed, 15 Apr 2020 10:53:59 -0400
-Message-ID: <20200415145359.GA30397@redhat.com>
+Date: Wed, 15 Apr 2020 11:01:05 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2004151055550.25321@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.2004081459520.14853@file01.intranet.prod.int.rdu2.redhat.com>
 	<20200414190515.GA25340@redhat.com>
 	<alpine.LRH.2.02.2004150405330.3968@file01.intranet.prod.int.rdu2.redhat.com>
@@ -22,13 +22,13 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Mikulas Patocka <mpatocka@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
 Cc: dm-devel@redhat.com, David Teigland <teigland@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Apr 15 2020 at 10:49am -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+
+
+On Wed, 15 Apr 2020, Mikulas Patocka wrote:
 
 > 
 > 
@@ -75,12 +75,14 @@ Mikulas Patocka <mpatocka@redhat.com> wrote:
 > wc->metadata_sectors? Then, we would overread past the end of allocated 
 > memory. The device wouldn't work anyway in this case, so perhaps a better 
 > solution would be to reject this as an error in the constructor.
+> 
+> Mikulas
 
-Yes, please reject in ctr.  No point allowing writecache to limp along
-only to fail IO later.
+... or, we can use wc->block_size >> SECTOR_SHIFT. It is guaranteed that 
+n_metadata_blocks has at least one block, so it won't over-read pass the 
+end of the device.
 
-By failing accordingly in ctr that'll allow writecache_read_metadata()
-to not need an n_sectors override.
+The problem with bdev_logical_block_size is that it may change if the 
+device under us is reloaded, so it is not safe to rely on it being stable.
 
-Thanks,
-Mike
+Mikulas
