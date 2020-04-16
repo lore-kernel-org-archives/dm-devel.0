@@ -1,72 +1,59 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH] memcpy_flushcache: use cache flusing for larger lengths
-Date: Thu, 16 Apr 2020 11:28:08 -0700
-Message-ID: <CAPcyv4gpe8u=zNrRhvd9ioVNGbOJfRUXzFZuV--be6Hbj0xXtQ@mail.gmail.com>
-References: <alpine.LRH.2.02.2004071029270.8662@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4goJ2jbXNVZbMUKtRUominhuMhuTKrMh=fnhrfvC4jyjw@mail.gmail.com>
- <alpine.LRH.2.02.2004081439080.13932@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4grNHvyYEc4W6PkymhEJvLb17tXbC3JZdqvtFxmMZ8DCQ@mail.gmail.com>
- <alpine.LRH.2.02.2004090612320.27517@file01.intranet.prod.int.rdu2.redhat.com>
- <alpine.LRH.2.02.2004160411460.7833@file01.intranet.prod.int.rdu2.redhat.com>
+From: Gabriel Krisman Bertazi <krisman@collabora.com>
+Subject: [PATCH 0/2] Historical Service Time Path Selector
+Date: Thu, 16 Apr 2020 17:13:34 -0400
+Message-ID: <20200416211336.2423618-1-krisman@collabora.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.2004160411460.7833@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, X86 ML <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+To: agk@redhat.com, snitzer@redhat.com
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, song@kernel.org, khazhy@google.com, Gabriel Krisman Bertazi <krisman@collabora.com>, kernel@collabora.com
 List-Id: dm-devel.ids
 
-On Thu, Apr 16, 2020 at 1:24 AM Mikulas Patocka <mpatocka@redhat.com> wrote:
->
->
->
-> On Thu, 9 Apr 2020, Mikulas Patocka wrote:
->
-> > With dm-writecache on emulated pmem (with the memmap argument), we get
-> >
-> > With the original kernel:
-> > 8508 - 11378
-> > real    0m4.960s
-> > user    0m0.638s
-> > sys     0m4.312s
-> >
-> > With dm-writecache hacked to use cached writes + clflushopt:
-> > 8505 - 11378
-> > real    0m4.151s
-> > user    0m0.560s
-> > sys     0m3.582s
->
-> I did some multithreaded tests:
-> http://people.redhat.com/~mpatocka/testcases/pmem/microbenchmarks/pmem-multithreaded.txt
->
-> And it turns out that for singlethreaded access, write+clwb performs
-> better, while for multithreaded access, non-temporal stores perform
-> better.
->
-> 1       sequential write-nt 8 bytes             1.3 GB/s
-> 2       sequential write-nt 8 bytes             2.5 GB/s
-> 3       sequential write-nt 8 bytes             2.8 GB/s
-> 4       sequential write-nt 8 bytes             2.8 GB/s
-> 5       sequential write-nt 8 bytes             2.5 GB/s
->
-> 1       sequential write 8 bytes + clwb         1.6 GB/s
-> 2       sequential write 8 bytes + clwb         2.4 GB/s
-> 3       sequential write 8 bytes + clwb         1.7 GB/s
-> 4       sequential write 8 bytes + clwb         1.2 GB/s
-> 5       sequential write 8 bytes + clwb         0.8 GB/s
->
-> For one thread, we can see that write-nt 8 bytes has 1.3 GB/s and write
-> 8+clwb has 1.6 GB/s, but for multiple threads, write-nt has better
-> throughput.
->
-> The dm-writecache target is singlethreaded (all the copying is done while
-> holding the writecache lock), so it benefits from clwb.
->
-> Should memcpy_flushcache be changed to write+clwb? Or are there some
-> multithreaded users of memcpy_flushcache that would be hurt by this
-> change?
+Hello,
 
-Maybe this is asking for a specific memcpy_flushcache_inatomic()
-implementation for your use case, but leave nt-writes for the general
-case?
+This small series implements a new path selector that leverages
+historical path IO time in order to estimate future path performance.
+Implementation details can be found on Patch 2.
+
+This selector yields better path distribution, considering the mean
+deviation from the calculated optimal utilization, for small IO depths
+when compared to the Service Time selector with fio benchmarks.  For
+instance, on a multipath setup with 4 paths, where one path is 4 times
+slower than the rest, issuing 500MB of randwrites, we have the following
+path utilization rates:
+
+      |    depth=1    |    depth=64   |       |
+      |   ST  |   HST |   ST  |   HST |  Best |
+|-----+-------+-------+-------+-------+-------|
+| sda | 0.250 | 0.294 | 0.297 | 0.294 | 0.307 |
+| sdb | 0.250 | 0.297 | 0.296 | 0.297 | 0.307 |
+| sdc | 0.250 | 0.296 | 0.298 | 0.296 | 0.307 |
+| sdd | 0.250 | 0.112 | 0.106 | 0.112 | 0.076 |
+
+For small depths, HST is much quicker in detecting slow paths and has a
+better selection than ST.  As the iodepth increases, ST gets close to
+HST, which still behaves steadily.
+
+The raw performance data for different depths types of IO can be found
+at:
+
+  <https://people.collabora.com/~krisman/GOO0012/hst-vs-st-bench.html>
+
+This was tested primarily on a Google cloud SAN with real data and usage
+patterns and with artificial benchmarks using fio.
+
+Khazhismel Kumykov (2):
+  md: Expose struct request to path selector
+  md: Add Historical Service Time Path Selector
+
+ drivers/md/Kconfig                      |  11 +
+ drivers/md/Makefile                     |   1 +
+ drivers/md/dm-historical-service-time.c | 561 ++++++++++++++++++++++++
+ drivers/md/dm-mpath.c                   |  12 +-
+ drivers/md/dm-path-selector.h           |   6 +
+ 5 files changed, 589 insertions(+), 2 deletions(-)
+ create mode 100644 drivers/md/dm-historical-service-time.c
+
+-- 
+2.26.0
