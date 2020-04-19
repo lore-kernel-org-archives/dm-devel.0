@@ -1,107 +1,94 @@
-From: Paul Wise <pabs3@bonedaddy.net>
-Subject: Re: [PATCH 0/3] dm raid/raid1: enable discard support when any
- devices support discard
-Date: Sun, 19 Apr 2020 22:48:16 +0800
-Message-ID: <9cb6a39a43178be29af2f47a92c2e84754b62b69.camel@bonedaddy.net>
-References: <20200419073026.197967-1-pabs3@bonedaddy.net>
-         <20200419131908.GA22398@redhat.com>
+From: David Laight <David.Laight@ACULAB.COM>
+Subject: RE: [PATCH] x86: introduce memcpy_flushcache_clflushopt
+Date: Sun, 19 Apr 2020 17:48:59 +0000
+Message-ID: <8452b36a07b1440a8da6d4a1623858c1@AcuMS.aculab.com>
+References: <alpine.LRH.2.02.2004071029270.8662@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAPcyv4goJ2jbXNVZbMUKtRUominhuMhuTKrMh=fnhrfvC4jyjw@mail.gmail.com>
+ <alpine.LRH.2.02.2004081439080.13932@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAPcyv4grNHvyYEc4W6PkymhEJvLb17tXbC3JZdqvtFxmMZ8DCQ@mail.gmail.com>
+ <alpine.LRH.2.02.2004090612320.27517@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.LRH.2.02.2004160411460.7833@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAPcyv4gpe8u=zNrRhvd9ioVNGbOJfRUXzFZuV--be6Hbj0xXtQ@mail.gmail.com>
+ <alpine.LRH.2.02.2004170831530.16047@file01.intranet.prod.int.rdu2.redhat.com>
+ <69c2e011c5814255926f309dd50e6d67@AcuMS.aculab.com>
+ <alpine.LRH.2.02.2004181110160.30139@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha512";
-        protocol="application/pgp-signature"; boundary="=-Dc6DoNjKBj0aUd9iYgmL"
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200419131908.GA22398@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.2004181110160.30139@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: 'Mikulas Patocka' <mpatocka@redhat.com>
+Cc: Dan Williams <dan.j.williams@intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, X86 ML <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+From: Mikulas Patocka
+> Sent: 18 April 2020 16:21
+> 
+> On Sat, 18 Apr 2020, David Laight wrote:
+> 
+> > From: Mikulas Patocka
+> > > Sent: 17 April 2020 13:47
+> > ...
+> > > Index: linux-2.6/drivers/md/dm-writecache.c
+> > > ===================================================================
+> > > --- linux-2.6.orig/drivers/md/dm-writecache.c	2020-04-17 14:06:35.139999000 +0200
+> > > +++ linux-2.6/drivers/md/dm-writecache.c	2020-04-17 14:06:35.129999000 +0200
+> > > @@ -1166,7 +1166,10 @@ static void bio_copy_block(struct dm_wri
+> > >  			}
+> > >  		} else {
+> > >  			flush_dcache_page(bio_page(bio));
+> > > -			memcpy_flushcache(data, buf, size);
+> > > +			if (likely(size > 512))
+> > > +				memcpy_flushcache_clflushopt(data, buf, size);
+> > > +			else
+> > > +				memcpy_flushcache(data, buf, size);
+> >
+> > Hmmm... have you looked at how long clflush actually takes?
+> > It isn't too bad if you just do a small number, but using it
+> > to flush large buffers can be very slow.
+> 
+> Yes, I have. It's here:
+> http://people.redhat.com/~mpatocka/testcases/pmem/microbenchmarks/pmem.txt
+> 
+> sequential write 8 + clflush	- 0.3 GB/s on nvdimm
+> sequential write 8 + clflushopt - 1.6 GB/s on nvdimm
+> sequential write-nt 8 bytes	- 1.3 GB/s on nvdimm
 
---=-Dc6DoNjKBj0aUd9iYgmL
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+That table doesn't give enough information to be useful.
+The cpu speed, memory speed and transfer lengths are all relevant.
 
-On Sun, 2020-04-19 at 09:19 -0400, Mike Snitzer wrote:
+> > I've an Ivy bridge system where the X-server process requests the
+> > frame buffer be flushed out every 10 seconds (no idea why).
+> > With my 2560x1440 monitor this takes over 3ms.
+> >
+> > This really needs a cond_resched() every few clflush instructions.
+> >
+> > 	David
+> 
+> AFAIK Ivy Bridge doesn't have clflushopt, it only has clflush. clflush
+> only allows one outstanding cacle line flush, so it's very slow.
+> clflushopt and clwb relaxed this restriction and there can be multiple
+> cache-invalidation requests in flight until the user serializes it with
+> the sfence instruction.
 
-> You went overboard with implementation before checking to see if your
-> work would be well received.  Your 2/3 patch header shows you're
-> capable of analyzing past commits to explain the evolution of code,
-> etc.  But yet you make no mention of this commit header which explicitly
-> speaks to why what you're proposing is _not_ acceptable:
->=20
-> commit 8a74d29d541cd86569139c6f3f44b2d210458071
-> Author: Mike Snitzer <snitzer@redhat.com>
-> Date:   Tue Nov 14 15:40:52 2017 -0500
->=20
->     dm: discard support requires all targets in a table support discards
+It isn't that simple.
+While clflush on Ivybridge is slower than clflushopt on newer processors
+both instructions are (relatively) fast for something like 16 or 32
+iterations. After that they get much slower.
+I can't remember where I found the relevant figures, even the ones I
+found didn't show how large the transfers needed to be before the bytes/sec
+became constant.
 
-I do remember seeing this commit while working on this, I guess I
-ignored it in my attempts to get fstrim working on my rootfs, woops.
+> The patch checks for clflushopt with
+> "static_cpu_has(X86_FEATURE_CLFLUSHOPT)" and if it is not present, it
+> falls back to non-temporal stores.
 
-> I haven't looked closely at MD raid in this area but if you trully think
-> underlying MD raid can cope with issuing discards to devices that don't
-> support them (or that it avoids issuing them?) then please update
-> dm-raid.c to conditionally set ti->discard_supported (if not all devices
-> support discard).  That is how to inform DM core that the target knows
-> better and it will manage discards issued to it.  It keeps the change
-> local to dm-raid.c without the flag-day you're proposing.
+Ok, I was expecting you'd be falling back to clflush first.
 
-On my system I have a HDD and an SSD, with /boot on MD RAID and / on
-ext4 on DM RAID on 2 DM crypt volumes. In this setup fstrim works on
-/boot but does not work on / and with my patches it works on / again.
-In addition I don't see any messages in dmesg or other issues when
-doing fstrim / with my patches.
+	David
 
-I think I might have been worried that discards_supported has other
-side effects but grepping the code now I see that was unfounded.
-I'll switch the next version to just setting discards_supported.
-I still think that my proposed overboard design is clearer though :)
-
-You'll see from the following command that MD raid 0/1/10 arrays enable
-discards when any device supports discards:
-
-   git grep -wW discard_supported
-
-It appears that the block layer ignores discard requests when the queue
-for the block device indicates that discard is not supported on it:
-
-   git grep -wW __blkdev_issue_discard
-
-It seems to me that where possible DM/MD letting the block layer decide
-to pass on or ignore discard requests is the right design. I'm possibly
-incorrectly assuming that all block device drivers will correctly
-advertise support for discard without false positive/negatives.
-
-BTW, any idea where I should fix the `fstrim --fstab` issue? It is
-expecting the queue/discard_granularity sysfs entry to be non-zero.
-=46rom my initial debugging attempts it seems raid_io_hints is at fault.
-
-Thanks for your initial response and any further insight you can give.
-
---=20
-bye,
-pabs
-
-https://bonedaddy.net/pabs3/
-
---=-Dc6DoNjKBj0aUd9iYgmL
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCgAdFiEEYQsotVz8/kXqG1Y7MRa6Xp/6aaMFAl6cZLAACgkQMRa6Xp/6
-aaPZ+w/+NU6azXlrvR0spHz7eK7FaXlJcaVAVePc+ZeKnZzByER1yKehAzkvM+XP
-dJ5NsJO/S5IugiM2F7QVPAx2/eOcYOcchAnE0SBKOv/y4IK5RLa0z6d/+WzzSbFc
-JCcrvuTZBmTaVfkFpkCXbAjtpqAW1kasRFF8iz4R84TrszNfjVG3zhs50GQld3pU
-VIvTctdmLdY7hVbUBLSgOEoRqz5ikPq+h3YRo99uCXF3RrZ6mb9tS/Ngxn9+HNu6
-1hzsIyHIesXR9C2s3r7ZVEQ3Vbm4RIjpIBS1DC4R8koaFofRumo8VLZw+K6VEnfD
-ni7nktV62Hd9S+bepuYrk6Ca5N8SdbwBC8lJBIqoESRuM3uIxgxgoKxfsPhAYTOc
-7D9ksk4Uc7qZ+VdvFfAnbXaHl45PfLTNsg52ANfz4CCnJLGYhRKmjg9nXkqZKCcM
-uuvrCey4trHMpdE77KEuLRVWm+4RXEWpEmAQ4RIOgK+3Q4pzRWJM5tHAkcCJjTCc
-5LOIuT1oBKyx7y3XeLmPTfhliZFr3USjmDZtCorw5Z+tT4d4GEElfL4+x+3T9y6w
-MAaxMZ9qHQDnzvhhIZfqRne4OrmDJqaanqxI5PYwjtYBbDKNW3EnTZJUUB1h8Vph
-k8oMt5TBpBexc7TXuty8W9wiVgQzsgEcthDcNBBX8sPz5y/Gf/o=
-=enD1
------END PGP SIGNATURE-----
-
---=-Dc6DoNjKBj0aUd9iYgmL--
+-
+Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT, UK
+Registration No: 1397386 (Wales)
