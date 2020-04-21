@@ -1,15 +1,13 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] dm mpath: switch paths in dm_blk_ioctl()
-	code path
-Date: Tue, 21 Apr 2020 07:44:25 +0200
-Message-ID: <534a44cf-0291-7d25-cae1-5b2e4ce717be@suse.de>
-References: <20200420202909.9866-1-mwilck@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-crypt: support using encrypted keys
+Date: Tue, 21 Apr 2020 14:27:54 -0400
+Message-ID: <20200421182754.GA49104@lobo>
+References: <20200420134659.1640089-1-dbaryshkov@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200420202909.9866-1-mwilck@suse.com>
-Content-Language: en-US
+In-Reply-To: <20200420134659.1640089-1-dbaryshkov@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,40 +17,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: mwilck@suse.com, Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com, David Bond <dbond@suse.com>
+Content-Disposition: inline
+To: Dmitry Baryshkov <dbaryshkov@gmail.com>
+Cc: Dmitry Baryshkov <dmitry_baryshkov@mentor.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gNC8yMC8yMCAxMDoyOSBQTSwgbXdpbGNrQHN1c2UuY29tIHdyb3RlOgo+IEZyb206IE1hcnRp
-biBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgo+IAo+IFNDU0kgTFVOIHBhc3N0aHJvdWdoIGNvZGUg
-c3VjaCBhcyBxZW11J3MgInNjc2ktYmxvY2siIGRldmljZSBtb2RlbAo+IHBhc3MgZXZlcnkgSU8g
-dG8gdGhlIGhvc3QgdmlhIFNHX0lPIGlvY3Rscy4gQ3VycmVudGx5LCBkbS1tdWx0aXBhdGgKPiBj
-YWxscyBjaG9vc2VfcGdwYXRoKCkgb25seSBpbiB0aGUgYmxvY2sgSU8gY29kZSBwYXRoLCBub3Qg
-aW4gdGhlCj4gaW9jdGwgY29kZSBwYXRoICh1bmxlc3MgY3VycmVudF9wZ3BhdGggaXMgTlVMTCku
-IFRoaXMgaGFzIHRoZSBlZmZlY3QKPiB0aGF0IG5vIHBhdGggc3dpdGNoaW5nIGFuZCB0aHVzIG5v
-IGxvYWQgYmFsYW5jaW5nIGlzIGRvbmUgZm9yCj4gU0NTSS1wYXNzdGhyb3VnaCBJTywgdW5sZXNz
-IHRoZSBhY3RpdmUgcGF0aCBmYWlscy4KPiAKPiBGaXggdGhpcyBieSB1c2luZyB0aGUgc2FtZSBs
-b2dpYyBpbiBtdWx0aXBhdGhfcHJlcGFyZV9pb2N0bCgpIGFzIGluCj4gbXVsdGlwYXRoX2Nsb25l
-X2FuZF9tYXAoKS4KPiAKPiBOb3RlOiBUaGUgYWxsZWdlZGx5IGJlc3QgcGF0aCBzZWxlY3Rpb24g
-YWxnb3JpdGhtLCBzZXJ2aWNlLXRpbWUsCj4gc3RpbGwgd291bGRuJ3Qgd29yayBwZXJmZWN0bHks
-IGJlY2F1c2UgdGhlIGlvIHNpemUgb2YgdGhlIGN1cnJlbnQKPiByZXF1ZXN0IGlzIGFsd2F5cyBz
-ZXQgdG8gMC4gQ2hhbmdpbmcgdGhhdCBmb3IgdGhlIElPIHBhc3N0aHJvdWdoCj4gY2FzZSB3b3Vs
-ZCByZXF1aXJlIHRoZSBpb2N0bCBjbWQgYW5kIGFyZyB0byBiZSBwYXNzZWQgdG8gZG0ncwo+IHBy
-ZXBhcmVfaW9jdGwoKSBtZXRob2QuCj4gLS0tCj4gICBkcml2ZXJzL21kL2RtLW1wYXRoLmMgfCAy
-ICstCj4gICAxIGZpbGUgY2hhbmdlZCwgMSBpbnNlcnRpb24oKyksIDEgZGVsZXRpb24oLSkKPiAK
-PiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS1tcGF0aC5jIGIvZHJpdmVycy9tZC9kbS1tcGF0
-aC5jCj4gaW5kZXggNThmZDEzNy4uZjliNmE3YSAxMDA2NDQKPiAtLS0gYS9kcml2ZXJzL21kL2Rt
-LW1wYXRoLmMKPiArKysgYi9kcml2ZXJzL21kL2RtLW1wYXRoLmMKPiBAQCAtMTkxNiw3ICsxOTE2
-LDcgQEAgc3RhdGljIGludCBtdWx0aXBhdGhfcHJlcGFyZV9pb2N0bChzdHJ1Y3QgZG1fdGFyZ2V0
-ICp0aSwKPiAgIAlpbnQgcjsKPiAgIAo+ICAgCWN1cnJlbnRfcGdwYXRoID0gUkVBRF9PTkNFKG0t
-PmN1cnJlbnRfcGdwYXRoKTsKPiAtCWlmICghY3VycmVudF9wZ3BhdGgpCj4gKwlpZiAoIWN1cnJl
-bnRfcGdwYXRoIHx8ICF0ZXN0X2JpdChNUEFUSEZfUVVFVUVfSU8sICZtLT5mbGFncykpCj4gICAJ
-CWN1cnJlbnRfcGdwYXRoID0gY2hvb3NlX3BncGF0aChtLCAwKTsKPiAgIAo+ICAgCWlmIChjdXJy
-ZW50X3BncGF0aCkgewo+IApXZWxsIHNwb3R0ZWQuCgpSZXZpZXdlZC1ieTogSGFubmVzIFJlaW5l
-Y2tlIDxoYXJlQHN1c2UuZGU+CgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVj
-a2UgICAgICAgICAgICBUZWFtbGVhZCBTdG9yYWdlICYgTmV0d29ya2luZwpoYXJlQHN1c2UuZGUg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBTb2Z0
-d2FyZSBTb2x1dGlvbnMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkhSQiAz
-NjgwOSAoQUcgTsO8cm5iZXJnKSwgR2VzY2jDpGZ0c2bDvGhyZXI6IEZlbGl4IEltZW5kw7ZyZmZl
-cgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8v
-d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Mon, Apr 20 2020 at  9:46P -0400,
+Dmitry Baryshkov <dbaryshkov@gmail.com> wrote:
+
+> From: Dmitry Baryshkov <dmitry_baryshkov@mentor.com>
+> 
+> Allow one to use encrypted in addition to user and login key types for
+> device encryption.
+> 
+> Signed-off-by: Dmitry Baryshkov <dmitry_baryshkov@mentor.com>
+
+I fixed up some issues, please see the following incremental patch,
+I'll get this folded in and staged for 5.8.
+
+Mike
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 7056ab54d7dd..a0d9218d411b 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -2272,10 +2272,10 @@ static int crypt_set_keyring_key(struct crypt_config *cc, const char *key_string
+ 
+ 	if (!strncmp(key_string, "logon:", key_desc - key_string + 1)) {
+ 		type = &key_type_logon;
+-		set_key = &set_key_user;
++		set_key = set_key_user;
+ 	} else if (!strncmp(key_string, "user:", key_desc - key_string + 1)) {
+ 		type = &key_type_user;
+-		set_key = &set_key_user;
++		set_key = set_key_user;
+ 	} else if (!strncmp(key_string, "encrypted:", key_desc - key_string + 1)) {
+ 		type = &key_type_encrypted;
+ 		set_key = set_key_encrypted;
+@@ -2287,8 +2287,7 @@ static int crypt_set_keyring_key(struct crypt_config *cc, const char *key_string
+ 	if (!new_key_string)
+ 		return -ENOMEM;
+ 
+-	key = request_key(type,
+-			  key_desc + 1, NULL);
++	key = request_key(type, key_desc + 1, NULL);
+ 	if (IS_ERR(key)) {
+ 		kzfree(new_key_string);
+ 		return PTR_ERR(key);
