@@ -1,14 +1,14 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: 'multipath add path' returns ok but the path is
- missing in the topology
-Date: Wed, 22 Apr 2020 12:05:12 +0200
-Message-ID: <086d3e2baae71658539ac7caf634336ea0927c04.camel@suse.com>
-References: <CAJX1YtZiGXdZTrGtw8ksP3khRf26jQ7dhBWoEJcGfQQZMGb-gg@mail.gmail.com>
+From: Dmitry Baryshkov <dbaryshkov@gmail.com>
+Subject: Re: dm-crypt: support using encrypted keys
+Date: Tue, 21 Apr 2020 21:32:17 +0300
+Message-ID: <CALT56yMxxCFX_j=A9YKysPcuBWs2a0iJbCXuE2q1iqy3irOxdA@mail.gmail.com>
+References: <20200420134659.1640089-1-dbaryshkov@gmail.com>
+	<20200421182754.GA49104@lobo>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAJX1YtZiGXdZTrGtw8ksP3khRf26jQ7dhBWoEJcGfQQZMGb-gg@mail.gmail.com>
+In-Reply-To: <20200421182754.GA49104@lobo>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,83 +18,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Gioh Kim <gi-oh.kim@cloud.ionos.com>, dm-devel@redhat.com, christophe.varoqui@opensvc.com
-Cc: Jinpu Wang <jinpu.wang@cloud.ionos.com>, Guoqing Jiang <guoqing.jiang@cloud.ionos.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Dmitry Baryshkov <dmitry_baryshkov@mentor.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hello Gioh,
-
-On Wed, 2020-04-22 at 10:40 +0200, Gioh Kim wrote:
-> Hi,
-> 
-> I would like to report a bug.
-> I am using network storage via SRP/SRPT over Infiniband.
-> When a new sd device is created by SRP, I execute 'multipathd add
-> path
-> sdX' command and then a new map device is created automatically.
-> 
-> I used to use the kernel 4.14 version and had no problem.
-> But after upgrading to kernel 4.19, I have a problem that 'multipath
-> add path sdX' returns ok but sdX is not included in the topology.
-> 
-> For example, I ran 'multipath add path sdaj' and 'multipath add path
-> sdak' and they returned ok.
-> Then I check the topology with 'multipathd show topology' and sdak is
-> missing.
-> 
-> Following is the log message from multipathd daemon.
-> I found that
-> 1. adding sdaj was done correctly and map
-> 3600144f033337cfc3ca5222200196002 and dm-11 was created
-> 2. daemon started adding sdak (according to "sdak: add path
-> (operator)" message)
-> 3. suddenly map dm-11 was removed and created
-> 4. adding sdak returned ok but there was no "sdak: path added to
-> devmap .." message.  I waited some minutes but it did not show up.
-> I guess there would be some corner case for error handling.
-> The multipathd might have an error but not return an error.
-> 
-> 
-> <log message>
-> multipathd[1920]: sdaj: add path (operator)
-> multipathd[1920]: 3600144f033337cfc3ca5222200196002: load table [0
-> 2105344 multipath 1 retain_attached_hw_handler 0 1 1 service-time 0 1
-> 1 66:48 1]
-> multipathd[1920]: 3600144f033337cfc3ca5222200196002: event checker
-> started
-> multipathd[1920]: sdaj [66:48]: path added to devmap
-> 3600144f033337cfc3ca5222200196002
-> multipathd[1920]: sdak: add path (operator)
-> multipathd[1920]: dm-11: remove map (uevent)
-> multipathd[1920]: 3600144f033337cfc3ca5222200196002: stop event
-> checker thread (139976177456896)
-> multipathd[1920]: dm-11: remove map (uevent)
-> multipathd[1920]: 3600144f033337cfc3ca5222200196002: adding map
-> multipathd[1920]: 3600144f033337cfc3ca5222200196002: event checker
-> started
-> multipathd[1920]: 3600144f033337cfc3ca5222200196002: devmap dm-11
-> registered
-> 
-> <multipathd show topology>
-> 3600144f033337cfc3ca5222200196002 dm-11 SCST_BIO,e21f6f605c1dfff7
-> size=1.0G features='1 retain_attached_hw_handler' hwhandler='0' wp=ro
-> `-+- policy='service-time 0' prio=1 status=enabled
-> `- 7:0:0:489 sdaj 66:48  active ready running
-> 
-
-These logs indicate that multipathd actually successfully added sdak to
-the map, so the success return status was correct. The logs provide no
-clue why the map was removed and re-added. multipathd seems to have had
-just a passive role here. We would need the kernel and udev logs
-(udev.log-priority=debug) to see what's actually going on. Also, please
-provide your multipath configuration and the version of multipath-tools 
-you're using, and logs extending over a long period of time (at least
-covering the addition of the new paths).
-
-I'd expect new paths to be added to maps automatically, but that
-doesn't seem to happen in your configuration. Are you using
-"find_multipaths=strict"? In that case, you should rather use
-"multipathd add map "$wwid", or, even better "multipath -a $WWID".
-
-Regards
-Martin
+0LLRgiwgMjEg0LDQv9GALiAyMDIwINCzLiDQsiAyMToyNywgTWlrZSBTbml0emVyIDxzbml0emVy
+QHJlZGhhdC5jb20+Ogo+Cj4gT24gTW9uLCBBcHIgMjAgMjAyMCBhdCAgOTo0NlAgLTA0MDAsCj4g
+RG1pdHJ5IEJhcnlzaGtvdiA8ZGJhcnlzaGtvdkBnbWFpbC5jb20+IHdyb3RlOgo+Cj4gPiBGcm9t
+OiBEbWl0cnkgQmFyeXNoa292IDxkbWl0cnlfYmFyeXNoa292QG1lbnRvci5jb20+Cj4gPgo+ID4g
+QWxsb3cgb25lIHRvIHVzZSBlbmNyeXB0ZWQgaW4gYWRkaXRpb24gdG8gdXNlciBhbmQgbG9naW4g
+a2V5IHR5cGVzIGZvcgo+ID4gZGV2aWNlIGVuY3J5cHRpb24uCj4gPgo+ID4gU2lnbmVkLW9mZi1i
+eTogRG1pdHJ5IEJhcnlzaGtvdiA8ZG1pdHJ5X2JhcnlzaGtvdkBtZW50b3IuY29tPgo+Cj4gSSBm
+aXhlZCB1cCBzb21lIGlzc3VlcywgcGxlYXNlIHNlZSB0aGUgZm9sbG93aW5nIGluY3JlbWVudGFs
+IHBhdGNoLAo+IEknbGwgZ2V0IHRoaXMgZm9sZGVkIGluIGFuZCBzdGFnZWQgZm9yIDUuOC4KClRo
+YW5rIHlvdSEKCi0tIApXaXRoIGJlc3Qgd2lzaGVzCkRtaXRyeQoKCi0tCmRtLWRldmVsIG1haWxp
+bmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1h
+bi9saXN0aW5mby9kbS1kZXZlbA==
