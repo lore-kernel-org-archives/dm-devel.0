@@ -1,47 +1,39 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: 'multipath add path' returns ok but the path is
- missing in the topology
-Date: Wed, 22 Apr 2020 17:40:24 +0200
-Message-ID: <3dbafeb000d558af21db70816130573106b56a9c.camel@suse.com>
-References: <CAJX1YtZiGXdZTrGtw8ksP3khRf26jQ7dhBWoEJcGfQQZMGb-gg@mail.gmail.com>
-	<086d3e2baae71658539ac7caf634336ea0927c04.camel@suse.com>
-	<CAJX1YtaKhjLNN56rvwAXh7tOP1Egbo1izmFn3OUEhD4c489E1w@mail.gmail.com>
+From: James Morris <jmorris@namei.org>
+Subject: Re: [RFC PATCH v3 05/12] fs: add security blob and hooks for
+ block_device
+Date: Thu, 23 Apr 2020 02:42:49 +1000 (AEST)
+Message-ID: <alpine.LRH.2.21.2004230234420.12318@namei.org>
+References: <20200415162550.2324-1-deven.desai@linux.microsoft.com> <20200415162550.2324-6-deven.desai@linux.microsoft.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAJX1YtaKhjLNN56rvwAXh7tOP1Egbo1izmFn3OUEhD4c489E1w@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Gioh Kim <gi-oh.kim@cloud.ionos.com>
-Cc: Guoqing Jiang <guoqing.jiang@cloud.ionos.com>, Jinpu, dm-devel@redhat.com, Wang <jinpu.wang@cloud.ionos.com>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200415162550.2324-6-deven.desai@linux.microsoft.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: deven.desai@linux.microsoft.com
+Cc: agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, "Serge E. Hallyn" <serge@hallyn.com>, zohar@linux.ibm.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, jannh@google.com, tyhicks@linux.microsoft.com, pasha.tatashin@soleen.com, sashal@kernel.org, jaskarankhurana@linux.microsoft.com, nramas@linux.microsoft.com, mdsakib@linux.microsoft.com, linux-kernel@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>, Stephen Smalley <sds@tycho.nsa.gov>, Chad Sellers <csellers@tresys.com>, John Johansen <john.johansen@canonical.com>
 List-Id: dm-devel.ids
 
-On Wed, 2020-04-22 at 16:00 +0200, Gioh Kim wrote:
+On Wed, 15 Apr 2020, deven.desai@linux.microsoft.com wrote:
+
+> From: Deven Bowers <deven.desai@linux.microsoft.com>
 > 
-> One question.
-> Is it possible for multipathd to generate an event for removing a
-> map?
-> I am looking into the source code, ev_add_path and some functions
-> related to add a path,
-> but it looks like it does not generate any event.
+> Add a security blob and associated allocation, deallocation and set hooks
+> for a block_device structure.
+> 
+> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 
-I guess you mean an uevent. These events are created by the kernel when
-multipath creates or reloads maps. multipathd normally doesn't trigger
-the events directly.  But there are some cases where multipathd
-basically runs the equivalent of "udevadm trigger -c change" on either
-maps or paths. Search the code for "trigger" for details.
+Is there any feedback from block or LSM folk on the addition of a security 
+blob for block_device here?
 
-There are also device mapper events which are created by the kernel for
-certain state changes of dm devices. Again, multipathd only receives
-such events.
+IPE uses this is to track the status of integrity verification of e.g. 
+DM-Verity devices, per this code from a subsequent patch:
 
-Regards
-Martin
+
++       ret = security_bdev_setsecurity(dm_table_get_md(v->ti->table)->bdev,
++                                       DM_VERITY_SIGNATURE_SEC_NAME,
++                                       v->sig->sig, v->sig->sig_size);
+
+
+-- 
+James Morris
+<jmorris@namei.org>
