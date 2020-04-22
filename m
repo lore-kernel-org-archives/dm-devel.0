@@ -1,13 +1,14 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCHv4 00/13] dm-zoned: metadata version 2
-Date: Wed, 22 Apr 2020 00:42:14 +0000
-Message-ID: <BY5PR04MB6900F17110FEBC850C8E6806E7D20@BY5PR04MB6900.namprd04.prod.outlook.com>
-References: <20200420100824.124618-1-hare@suse.de>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: 'multipath add path' returns ok but the path is
+ missing in the topology
+Date: Wed, 22 Apr 2020 12:05:12 +0200
+Message-ID: <086d3e2baae71658539ac7caf634336ea0927c04.camel@suse.com>
+References: <CAJX1YtZiGXdZTrGtw8ksP3khRf26jQ7dhBWoEJcGfQQZMGb-gg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <CAJX1YtZiGXdZTrGtw8ksP3khRf26jQ7dhBWoEJcGfQQZMGb-gg@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,94 +18,83 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
-Cc: Bob Liu <bob.liu@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Gioh Kim <gi-oh.kim@cloud.ionos.com>, dm-devel@redhat.com, christophe.varoqui@opensvc.com
+Cc: Jinpu Wang <jinpu.wang@cloud.ionos.com>, Guoqing Jiang <guoqing.jiang@cloud.ionos.com>
 List-Id: dm-devel.ids
 
-On 2020/04/20 19:08, Hannes Reinecke wrote:
-> Hi all,
-> 
-> this patchset adds a new metadata version 2 for dm-zoned, which brings the
-> following improvements:
-> - UUIDs and labels: Adding three more fields to the metadata containing
->   the dm-zoned device UUID and label, and the device UUID. This allows
->   for an unique identification of the devices, so that several dm-zoned
->   sets can coexist and have a persistent identification.
-> - Extend random zones by an additional regular disk device: A regular
->   block device can be added together with the zoned block device, providing
->   additional (emulated) random write zones. With this it's possible to
->   handle sequential zones only devices; also there will be a speed-up if
->   the regular block device resides on a fast medium. The regular block device
->   is placed logically in front of the zoned block device, so that metadata
->   and mapping tables reside on the regular block device, not the zoned device.
-> - Tertiary superblock support: In addition to the two existing sets of metadata
->   another, tertiary, superblock is written to the first block of the zoned
->   block device. This superblock is for identification only; the generation
->   number is set to '0' and the block itself it never updated. The additional
->   metadate like bitmap tables etc are not copied.
-> 
-> To handle this, some changes to the original handling are introduced:
-> - Zones are now equidistant. Originally, runt zones were ignored, and
->   not counted when sizing the mapping tables. With the dual device setup
->   runt zones might occur at the end of the regular block device, making
->   direct translation between zone number and sector/block number complex.
->   For metadata version 2 all zones are considered to be of the same size,
->   and runt zones are simply marked as 'offline' to have them ignored when
->   allocating a new zone.
-> - The block number in the superblock is now the global number, and refers to
->   the location of the superblock relative to the resulting device-mapper
->   device. Which means that the tertiary superblock contains absolute block
->   addresses, which needs to be translated to the relative device addresses
->   to find the referenced block.
-> 
-> There is an accompanying patchset for dm-zoned-tools for writing and checking
-> this new metadata.
-> 
-> As usual, comments and reviews are welcome.
+Hello Gioh,
 
-Not forgetting this, just late reviewing. At a glance, I think this is all good,
-but I would like have another good round of review and to run it through our
-dm-zoned tests :) Will do that today or tomorrow.
-
-Thanks !
-
-
+On Wed, 2020-04-22 at 10:40 +0200, Gioh Kim wrote:
+> Hi,
 > 
-> Changes to v3:
-> - Reorder devices such that the regular device is always at position 0,
->   and the zoned device is always at position 1.
-> - Split off dmz_dev_is_dying() into a separate patch
-> - Include reviews from Damien
+> I would like to report a bug.
+> I am using network storage via SRP/SRPT over Infiniband.
+> When a new sd device is created by SRP, I execute 'multipathd add
+> path
+> sdX' command and then a new map device is created automatically.
 > 
-> Changes to v2:
-> - Kill dmz_id()
-> - Include reviews from Damien
-> - Sanitize uuid handling as suggested by John Dorminy
+> I used to use the kernel 4.14 version and had no problem.
+> But after upgrading to kernel 4.19, I have a problem that 'multipath
+> add path sdX' returns ok but sdX is not included in the topology.
+> 
+> For example, I ran 'multipath add path sdaj' and 'multipath add path
+> sdak' and they returned ok.
+> Then I check the topology with 'multipathd show topology' and sdak is
+> missing.
+> 
+> Following is the log message from multipathd daemon.
+> I found that
+> 1. adding sdaj was done correctly and map
+> 3600144f033337cfc3ca5222200196002 and dm-11 was created
+> 2. daemon started adding sdak (according to "sdak: add path
+> (operator)" message)
+> 3. suddenly map dm-11 was removed and created
+> 4. adding sdak returned ok but there was no "sdak: path added to
+> devmap .." message.  I waited some minutes but it did not show up.
+> I guess there would be some corner case for error handling.
+> The multipathd might have an error but not return an error.
 > 
 > 
-> Hannes Reinecke (13):
->   dm-zoned: add 'status' and 'message' callbacks
->   dm-zoned: store zone id within the zone structure and kill dmz_id()
->   dm-zoned: use array for superblock zones
->   dm-zoned: store device in struct dmz_sb
->   dm-zoned: move fields from struct dmz_dev to dmz_metadata
->   dm-zoned: introduce dmz_metadata_label() to format device name
->   dm-zoned: Introduce dmz_dev_is_dying() and dmz_check_dev()
->   dm-zoned: remove 'dev' argument from reclaim
->   dm-zoned: replace 'target' pointer in the bio context
->   dm-zoned: use dmz_zone_to_dev() when handling metadata I/O
->   dm-zoned: add metadata logging functions
->   dm-zoned: ignore metadata zone in dmz_alloc_zone()
->   dm-zoned: metadata version 2
+> <log message>
+> multipathd[1920]: sdaj: add path (operator)
+> multipathd[1920]: 3600144f033337cfc3ca5222200196002: load table [0
+> 2105344 multipath 1 retain_attached_hw_handler 0 1 1 service-time 0 1
+> 1 66:48 1]
+> multipathd[1920]: 3600144f033337cfc3ca5222200196002: event checker
+> started
+> multipathd[1920]: sdaj [66:48]: path added to devmap
+> 3600144f033337cfc3ca5222200196002
+> multipathd[1920]: sdak: add path (operator)
+> multipathd[1920]: dm-11: remove map (uevent)
+> multipathd[1920]: 3600144f033337cfc3ca5222200196002: stop event
+> checker thread (139976177456896)
+> multipathd[1920]: dm-11: remove map (uevent)
+> multipathd[1920]: 3600144f033337cfc3ca5222200196002: adding map
+> multipathd[1920]: 3600144f033337cfc3ca5222200196002: event checker
+> started
+> multipathd[1920]: 3600144f033337cfc3ca5222200196002: devmap dm-11
+> registered
 > 
->  drivers/md/dm-zoned-metadata.c | 658 +++++++++++++++++++++++++++++++----------
->  drivers/md/dm-zoned-reclaim.c  |  88 +++---
->  drivers/md/dm-zoned-target.c   | 331 +++++++++++++--------
->  drivers/md/dm-zoned.h          |  33 ++-
->  4 files changed, 780 insertions(+), 330 deletions(-)
+> <multipathd show topology>
+> 3600144f033337cfc3ca5222200196002 dm-11 SCST_BIO,e21f6f605c1dfff7
+> size=1.0G features='1 retain_attached_hw_handler' hwhandler='0' wp=ro
+> `-+- policy='service-time 0' prio=1 status=enabled
+> `- 7:0:0:489 sdaj 66:48  active ready running
 > 
 
+These logs indicate that multipathd actually successfully added sdak to
+the map, so the success return status was correct. The logs provide no
+clue why the map was removed and re-added. multipathd seems to have had
+just a passive role here. We would need the kernel and udev logs
+(udev.log-priority=debug) to see what's actually going on. Also, please
+provide your multipath configuration and the version of multipath-tools 
+you're using, and logs extending over a long period of time (at least
+covering the addition of the new paths).
 
--- 
-Damien Le Moal
-Western Digital Research
+I'd expect new paths to be added to maps automatically, but that
+doesn't seem to happen in your configuration. Are you using
+"find_multipaths=strict"? In that case, you should rather use
+"multipathd add map "$wwid", or, even better "multipath -a $WWID".
+
+Regards
+Martin
