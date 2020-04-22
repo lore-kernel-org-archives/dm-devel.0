@@ -1,15 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-crypt: support using encrypted keys
-Date: Tue, 21 Apr 2020 14:59:49 -0400
-Message-ID: <20200421185949.GA52939@lobo>
-References: <20200420134659.1640089-1-dbaryshkov@gmail.com>
-	<20200421182754.GA49104@lobo>
-	<CALT56yMxxCFX_j=A9YKysPcuBWs2a0iJbCXuE2q1iqy3irOxdA@mail.gmail.com>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [PATCHv4 00/13] dm-zoned: metadata version 2
+Date: Wed, 22 Apr 2020 00:42:14 +0000
+Message-ID: <BY5PR04MB6900F17110FEBC850C8E6806E7D20@BY5PR04MB6900.namprd04.prod.outlook.com>
+References: <20200420100824.124618-1-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CALT56yMxxCFX_j=A9YKysPcuBWs2a0iJbCXuE2q1iqy3irOxdA@mail.gmail.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,32 +17,94 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Dmitry Baryshkov <dbaryshkov@gmail.com>
-Cc: Dmitry Baryshkov <dmitry_baryshkov@mentor.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
+To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
+Cc: Bob Liu <bob.liu@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVHVlLCBBcHIgMjEgMjAyMCBhdCAgMjozMlAgLTA0MDAsCkRtaXRyeSBCYXJ5c2hrb3YgPGRi
-YXJ5c2hrb3ZAZ21haWwuY29tPiB3cm90ZToKCj4g0LLRgiwgMjEg0LDQv9GALiAyMDIwINCzLiDQ
-siAyMToyNywgTWlrZSBTbml0emVyIDxzbml0emVyQHJlZGhhdC5jb20+Ogo+ID4KPiA+IE9uIE1v
-biwgQXByIDIwIDIwMjAgYXQgIDk6NDZQIC0wNDAwLAo+ID4gRG1pdHJ5IEJhcnlzaGtvdiA8ZGJh
-cnlzaGtvdkBnbWFpbC5jb20+IHdyb3RlOgo+ID4KPiA+ID4gRnJvbTogRG1pdHJ5IEJhcnlzaGtv
-diA8ZG1pdHJ5X2JhcnlzaGtvdkBtZW50b3IuY29tPgo+ID4gPgo+ID4gPiBBbGxvdyBvbmUgdG8g
-dXNlIGVuY3J5cHRlZCBpbiBhZGRpdGlvbiB0byB1c2VyIGFuZCBsb2dpbiBrZXkgdHlwZXMgZm9y
-Cj4gPiA+IGRldmljZSBlbmNyeXB0aW9uLgo+ID4gPgo+ID4gPiBTaWduZWQtb2ZmLWJ5OiBEbWl0
-cnkgQmFyeXNoa292IDxkbWl0cnlfYmFyeXNoa292QG1lbnRvci5jb20+Cj4gPgo+ID4gSSBmaXhl
-ZCB1cCBzb21lIGlzc3VlcywgcGxlYXNlIHNlZSB0aGUgZm9sbG93aW5nIGluY3JlbWVudGFsIHBh
-dGNoLAo+ID4gSSdsbCBnZXQgdGhpcyBmb2xkZWQgaW4gYW5kIHN0YWdlZCBmb3IgNS44Lgo+IAo+
-IFRoYW5rIHlvdSEKCkFjdHVhbGx5LCBJIHRoaW5rIHRoaXMgaXMgbmVlZGVkIHRvbyAtLSBidXQg
-cGxlYXNlIGNvcnJlY3QgbWUgaWYgSSdtIHdyb25nOgoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQv
-ZG0tY3J5cHQuYyBiL2RyaXZlcnMvbWQvZG0tY3J5cHQuYwppbmRleCBhNGM0YWZjNjdhM2QuLmJh
-NGQxNTQ3Njg2MiAxMDA2NDQKLS0tIGEvZHJpdmVycy9tZC9kbS1jcnlwdC5jCisrKyBiL2RyaXZl
-cnMvbWQvZG0tY3J5cHQuYwpAQCAtMjIzNSw4ICsyMjM1LDkgQEAgc3RhdGljIGludCBzZXRfa2V5
-X3VzZXIoc3RydWN0IGNyeXB0X2NvbmZpZyAqY2MsIHN0cnVjdCBrZXkgKmtleSkKIAogc3RhdGlj
-IGludCBzZXRfa2V5X2VuY3J5cHRlZChzdHJ1Y3QgY3J5cHRfY29uZmlnICpjYywgc3RydWN0IGtl
-eSAqa2V5KQogewotCXN0cnVjdCBlbmNyeXB0ZWRfa2V5X3BheWxvYWQgKmVrcCA9IGtleS0+cGF5
-bG9hZC5kYXRhWzBdOworCWNvbnN0IHN0cnVjdCBlbmNyeXB0ZWRfa2V5X3BheWxvYWQgKmVrcDsK
-IAorCWVrcCA9IGRlcmVmZXJlbmNlX2tleV9sb2NrZWQoa2V5KTsKIAlpZiAoIWVrcCkKIAkJcmV0
-dXJuIC1FS0VZUkVWT0tFRDsKIAoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
-ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
-bA==
+On 2020/04/20 19:08, Hannes Reinecke wrote:
+> Hi all,
+> 
+> this patchset adds a new metadata version 2 for dm-zoned, which brings the
+> following improvements:
+> - UUIDs and labels: Adding three more fields to the metadata containing
+>   the dm-zoned device UUID and label, and the device UUID. This allows
+>   for an unique identification of the devices, so that several dm-zoned
+>   sets can coexist and have a persistent identification.
+> - Extend random zones by an additional regular disk device: A regular
+>   block device can be added together with the zoned block device, providing
+>   additional (emulated) random write zones. With this it's possible to
+>   handle sequential zones only devices; also there will be a speed-up if
+>   the regular block device resides on a fast medium. The regular block device
+>   is placed logically in front of the zoned block device, so that metadata
+>   and mapping tables reside on the regular block device, not the zoned device.
+> - Tertiary superblock support: In addition to the two existing sets of metadata
+>   another, tertiary, superblock is written to the first block of the zoned
+>   block device. This superblock is for identification only; the generation
+>   number is set to '0' and the block itself it never updated. The additional
+>   metadate like bitmap tables etc are not copied.
+> 
+> To handle this, some changes to the original handling are introduced:
+> - Zones are now equidistant. Originally, runt zones were ignored, and
+>   not counted when sizing the mapping tables. With the dual device setup
+>   runt zones might occur at the end of the regular block device, making
+>   direct translation between zone number and sector/block number complex.
+>   For metadata version 2 all zones are considered to be of the same size,
+>   and runt zones are simply marked as 'offline' to have them ignored when
+>   allocating a new zone.
+> - The block number in the superblock is now the global number, and refers to
+>   the location of the superblock relative to the resulting device-mapper
+>   device. Which means that the tertiary superblock contains absolute block
+>   addresses, which needs to be translated to the relative device addresses
+>   to find the referenced block.
+> 
+> There is an accompanying patchset for dm-zoned-tools for writing and checking
+> this new metadata.
+> 
+> As usual, comments and reviews are welcome.
+
+Not forgetting this, just late reviewing. At a glance, I think this is all good,
+but I would like have another good round of review and to run it through our
+dm-zoned tests :) Will do that today or tomorrow.
+
+Thanks !
+
+
+> 
+> Changes to v3:
+> - Reorder devices such that the regular device is always at position 0,
+>   and the zoned device is always at position 1.
+> - Split off dmz_dev_is_dying() into a separate patch
+> - Include reviews from Damien
+> 
+> Changes to v2:
+> - Kill dmz_id()
+> - Include reviews from Damien
+> - Sanitize uuid handling as suggested by John Dorminy
+> 
+> 
+> Hannes Reinecke (13):
+>   dm-zoned: add 'status' and 'message' callbacks
+>   dm-zoned: store zone id within the zone structure and kill dmz_id()
+>   dm-zoned: use array for superblock zones
+>   dm-zoned: store device in struct dmz_sb
+>   dm-zoned: move fields from struct dmz_dev to dmz_metadata
+>   dm-zoned: introduce dmz_metadata_label() to format device name
+>   dm-zoned: Introduce dmz_dev_is_dying() and dmz_check_dev()
+>   dm-zoned: remove 'dev' argument from reclaim
+>   dm-zoned: replace 'target' pointer in the bio context
+>   dm-zoned: use dmz_zone_to_dev() when handling metadata I/O
+>   dm-zoned: add metadata logging functions
+>   dm-zoned: ignore metadata zone in dmz_alloc_zone()
+>   dm-zoned: metadata version 2
+> 
+>  drivers/md/dm-zoned-metadata.c | 658 +++++++++++++++++++++++++++++++----------
+>  drivers/md/dm-zoned-reclaim.c  |  88 +++---
+>  drivers/md/dm-zoned-target.c   | 331 +++++++++++++--------
+>  drivers/md/dm-zoned.h          |  33 ++-
+>  4 files changed, 780 insertions(+), 330 deletions(-)
+> 
+
+
+-- 
+Damien Le Moal
+Western Digital Research
