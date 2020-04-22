@@ -1,102 +1,115 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 0/2] Historical Service Time Path Selector
-Date: Thu, 23 Apr 2020 16:59:47 -0400
-Message-ID: <20200423205947.GA13657@lobo>
-References: <20200416211336.2423618-1-krisman@collabora.com>
+From: Gioh Kim <gi-oh.kim@cloud.ionos.com>
+Subject: Re: 'multipath add path' returns ok but the path is
+	missing in the topology
+Date: Wed, 22 Apr 2020 16:00:20 +0200
+Message-ID: <CAJX1YtaKhjLNN56rvwAXh7tOP1Egbo1izmFn3OUEhD4c489E1w@mail.gmail.com>
+References: <CAJX1YtZiGXdZTrGtw8ksP3khRf26jQ7dhBWoEJcGfQQZMGb-gg@mail.gmail.com>
+	<086d3e2baae71658539ac7caf634336ea0927c04.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200416211336.2423618-1-krisman@collabora.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Gabriel Krisman Bertazi <krisman@collabora.com>
-Cc: agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, khazhy@google.com, kernel@collabora.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <086d3e2baae71658539ac7caf634336ea0927c04.camel@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Jinpu Wang <jinpu.wang@cloud.ionos.com>, Guoqing Jiang <guoqing.jiang@cloud.ionos.com>
 List-Id: dm-devel.ids
 
-On Thu, Apr 16 2020 at  5:13P -0400,
-Gabriel Krisman Bertazi <krisman@collabora.com> wrote:
-
-> Hello,
-> 
-> This small series implements a new path selector that leverages
-> historical path IO time in order to estimate future path performance.
-> Implementation details can be found on Patch 2.
-> 
-> This selector yields better path distribution, considering the mean
-> deviation from the calculated optimal utilization, for small IO depths
-> when compared to the Service Time selector with fio benchmarks.  For
-> instance, on a multipath setup with 4 paths, where one path is 4 times
-> slower than the rest, issuing 500MB of randwrites, we have the following
-> path utilization rates:
-> 
->       |    depth=1    |    depth=64   |       |
->       |   ST  |   HST |   ST  |   HST |  Best |
-> |-----+-------+-------+-------+-------+-------|
-> | sda | 0.250 | 0.294 | 0.297 | 0.294 | 0.307 |
-> | sdb | 0.250 | 0.297 | 0.296 | 0.297 | 0.307 |
-> | sdc | 0.250 | 0.296 | 0.298 | 0.296 | 0.307 |
-> | sdd | 0.250 | 0.112 | 0.106 | 0.112 | 0.076 |
-> 
-> For small depths, HST is much quicker in detecting slow paths and has a
-> better selection than ST.  As the iodepth increases, ST gets close to
-> HST, which still behaves steadily.
-> 
-> The raw performance data for different depths types of IO can be found
-> at:
-> 
->   <https://people.collabora.com/~krisman/GOO0012/hst-vs-st-bench.html>
-> 
-> This was tested primarily on a Google cloud SAN with real data and usage
-> patterns and with artificial benchmarks using fio.
-> 
-> Khazhismel Kumykov (2):
->   md: Expose struct request to path selector
->   md: Add Historical Service Time Path Selector
-
-Looks like you've put a lot of time to this and I'd be happy to help
-you get this to land upstream.
-
-But... (you knew there'd be at least one "but" right? ;) I'm not
-liking making this path selector request-based specific.  All other
-selectors up to this point are request-based vs bio-based agnostic.
-
-Would you be open to dropping patch 1/2 and replacing it with
-something like the following patch?
-
-Then you'd pass 'u64 start_time_ns' into the path_selector_type's
-.end_io (and possibly .start_io).
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index df13fdebe21f..50121513227b 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -674,6 +674,16 @@ static bool md_in_flight(struct mapped_device *md)
- 		return md_in_flight_bios(md);
- }
- 
-+u64 dm_start_time_ns_from_clone(struct bio *bio)
-+{
-+	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
-+	struct dm_io *io = tio->io;
-+
-+	/* FIXME: convert io->start_time from jiffies to nanoseconds */
-+	return (u64)jiffies_to_msec(io->start_time) * NSEC_PER_MSEC;
-+}
-+EXPORT_SYMBOL_GPL(dm_start_time_ns_from_clone);
-+
- static void start_io_acct(struct dm_io *io)
- {
- 	struct mapped_device *md = io->md;
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 475668c69dbc..e2d506dd805e 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -329,6 +329,8 @@ void *dm_per_bio_data(struct bio *bio, size_t data_size);
- struct bio *dm_bio_from_per_bio_data(void *data, size_t data_size);
- unsigned dm_bio_get_target_bio_nr(const struct bio *bio);
- 
-+u64 dm_start_time_ns_from_clone(struct bio *bio);
-+
- int dm_register_target(struct target_type *t);
- void dm_unregister_target(struct target_type *t);
- 
+SGkgTWFydGluLAoKT24gV2VkLCBBcHIgMjIsIDIwMjAgYXQgMTI6MDUgUE0gTWFydGluIFdpbGNr
+IDxtd2lsY2tAc3VzZS5jb20+IHdyb3RlOgo+Cj4gSGVsbG8gR2lvaCwKPgo+IE9uIFdlZCwgMjAy
+MC0wNC0yMiBhdCAxMDo0MCArMDIwMCwgR2lvaCBLaW0gd3JvdGU6Cj4gPiBIaSwKPiA+Cj4gPiBJ
+IHdvdWxkIGxpa2UgdG8gcmVwb3J0IGEgYnVnLgo+ID4gSSBhbSB1c2luZyBuZXR3b3JrIHN0b3Jh
+Z2UgdmlhIFNSUC9TUlBUIG92ZXIgSW5maW5pYmFuZC4KPiA+IFdoZW4gYSBuZXcgc2QgZGV2aWNl
+IGlzIGNyZWF0ZWQgYnkgU1JQLCBJIGV4ZWN1dGUgJ211bHRpcGF0aGQgYWRkCj4gPiBwYXRoCj4g
+PiBzZFgnIGNvbW1hbmQgYW5kIHRoZW4gYSBuZXcgbWFwIGRldmljZSBpcyBjcmVhdGVkIGF1dG9t
+YXRpY2FsbHkuCj4gPgo+ID4gSSB1c2VkIHRvIHVzZSB0aGUga2VybmVsIDQuMTQgdmVyc2lvbiBh
+bmQgaGFkIG5vIHByb2JsZW0uCj4gPiBCdXQgYWZ0ZXIgdXBncmFkaW5nIHRvIGtlcm5lbCA0LjE5
+LCBJIGhhdmUgYSBwcm9ibGVtIHRoYXQgJ211bHRpcGF0aAo+ID4gYWRkIHBhdGggc2RYJyByZXR1
+cm5zIG9rIGJ1dCBzZFggaXMgbm90IGluY2x1ZGVkIGluIHRoZSB0b3BvbG9neS4KPiA+Cj4gPiBG
+b3IgZXhhbXBsZSwgSSByYW4gJ211bHRpcGF0aCBhZGQgcGF0aCBzZGFqJyBhbmQgJ211bHRpcGF0
+aCBhZGQgcGF0aAo+ID4gc2RhaycgYW5kIHRoZXkgcmV0dXJuZWQgb2suCj4gPiBUaGVuIEkgY2hl
+Y2sgdGhlIHRvcG9sb2d5IHdpdGggJ211bHRpcGF0aGQgc2hvdyB0b3BvbG9neScgYW5kIHNkYWsg
+aXMKPiA+IG1pc3NpbmcuCj4gPgo+ID4gRm9sbG93aW5nIGlzIHRoZSBsb2cgbWVzc2FnZSBmcm9t
+IG11bHRpcGF0aGQgZGFlbW9uLgo+ID4gSSBmb3VuZCB0aGF0Cj4gPiAxLiBhZGRpbmcgc2RhaiB3
+YXMgZG9uZSBjb3JyZWN0bHkgYW5kIG1hcAo+ID4gMzYwMDE0NGYwMzMzMzdjZmMzY2E1MjIyMjAw
+MTk2MDAyIGFuZCBkbS0xMSB3YXMgY3JlYXRlZAo+ID4gMi4gZGFlbW9uIHN0YXJ0ZWQgYWRkaW5n
+IHNkYWsgKGFjY29yZGluZyB0byAic2RhazogYWRkIHBhdGgKPiA+IChvcGVyYXRvcikiIG1lc3Nh
+Z2UpCj4gPiAzLiBzdWRkZW5seSBtYXAgZG0tMTEgd2FzIHJlbW92ZWQgYW5kIGNyZWF0ZWQKPiA+
+IDQuIGFkZGluZyBzZGFrIHJldHVybmVkIG9rIGJ1dCB0aGVyZSB3YXMgbm8gInNkYWs6IHBhdGgg
+YWRkZWQgdG8KPiA+IGRldm1hcCAuLiIgbWVzc2FnZS4gIEkgd2FpdGVkIHNvbWUgbWludXRlcyBi
+dXQgaXQgZGlkIG5vdCBzaG93IHVwLgo+ID4gSSBndWVzcyB0aGVyZSB3b3VsZCBiZSBzb21lIGNv
+cm5lciBjYXNlIGZvciBlcnJvciBoYW5kbGluZy4KPiA+IFRoZSBtdWx0aXBhdGhkIG1pZ2h0IGhh
+dmUgYW4gZXJyb3IgYnV0IG5vdCByZXR1cm4gYW4gZXJyb3IuCj4gPgo+ID4KPiA+IDxsb2cgbWVz
+c2FnZT4KPiA+IG11bHRpcGF0aGRbMTkyMF06IHNkYWo6IGFkZCBwYXRoIChvcGVyYXRvcikKPiA+
+IG11bHRpcGF0aGRbMTkyMF06IDM2MDAxNDRmMDMzMzM3Y2ZjM2NhNTIyMjIwMDE5NjAwMjogbG9h
+ZCB0YWJsZSBbMAo+ID4gMjEwNTM0NCBtdWx0aXBhdGggMSByZXRhaW5fYXR0YWNoZWRfaHdfaGFu
+ZGxlciAwIDEgMSBzZXJ2aWNlLXRpbWUgMCAxCj4gPiAxIDY2OjQ4IDFdCj4gPiBtdWx0aXBhdGhk
+WzE5MjBdOiAzNjAwMTQ0ZjAzMzMzN2NmYzNjYTUyMjIyMDAxOTYwMDI6IGV2ZW50IGNoZWNrZXIK
+PiA+IHN0YXJ0ZWQKPiA+IG11bHRpcGF0aGRbMTkyMF06IHNkYWogWzY2OjQ4XTogcGF0aCBhZGRl
+ZCB0byBkZXZtYXAKPiA+IDM2MDAxNDRmMDMzMzM3Y2ZjM2NhNTIyMjIwMDE5NjAwMgo+ID4gbXVs
+dGlwYXRoZFsxOTIwXTogc2RhazogYWRkIHBhdGggKG9wZXJhdG9yKQo+ID4gbXVsdGlwYXRoZFsx
+OTIwXTogZG0tMTE6IHJlbW92ZSBtYXAgKHVldmVudCkKPiA+IG11bHRpcGF0aGRbMTkyMF06IDM2
+MDAxNDRmMDMzMzM3Y2ZjM2NhNTIyMjIwMDE5NjAwMjogc3RvcCBldmVudAo+ID4gY2hlY2tlciB0
+aHJlYWQgKDEzOTk3NjE3NzQ1Njg5NikKPiA+IG11bHRpcGF0aGRbMTkyMF06IGRtLTExOiByZW1v
+dmUgbWFwICh1ZXZlbnQpCj4gPiBtdWx0aXBhdGhkWzE5MjBdOiAzNjAwMTQ0ZjAzMzMzN2NmYzNj
+YTUyMjIyMDAxOTYwMDI6IGFkZGluZyBtYXAKPiA+IG11bHRpcGF0aGRbMTkyMF06IDM2MDAxNDRm
+MDMzMzM3Y2ZjM2NhNTIyMjIwMDE5NjAwMjogZXZlbnQgY2hlY2tlcgo+ID4gc3RhcnRlZAo+ID4g
+bXVsdGlwYXRoZFsxOTIwXTogMzYwMDE0NGYwMzMzMzdjZmMzY2E1MjIyMjAwMTk2MDAyOiBkZXZt
+YXAgZG0tMTEKPiA+IHJlZ2lzdGVyZWQKPiA+Cj4gPiA8bXVsdGlwYXRoZCBzaG93IHRvcG9sb2d5
+Pgo+ID4gMzYwMDE0NGYwMzMzMzdjZmMzY2E1MjIyMjAwMTk2MDAyIGRtLTExIFNDU1RfQklPLGUy
+MWY2ZjYwNWMxZGZmZjcKPiA+IHNpemU9MS4wRyBmZWF0dXJlcz0nMSByZXRhaW5fYXR0YWNoZWRf
+aHdfaGFuZGxlcicgaHdoYW5kbGVyPScwJyB3cD1ybwo+ID4gYC0rLSBwb2xpY3k9J3NlcnZpY2Ut
+dGltZSAwJyBwcmlvPTEgc3RhdHVzPWVuYWJsZWQKPiA+IGAtIDc6MDowOjQ4OSBzZGFqIDY2OjQ4
+ICBhY3RpdmUgcmVhZHkgcnVubmluZwo+ID4KPgo+IFRoZXNlIGxvZ3MgaW5kaWNhdGUgdGhhdCBt
+dWx0aXBhdGhkIGFjdHVhbGx5IHN1Y2Nlc3NmdWxseSBhZGRlZCBzZGFrIHRvCj4gdGhlIG1hcCwg
+c28gdGhlIHN1Y2Nlc3MgcmV0dXJuIHN0YXR1cyB3YXMgY29ycmVjdC4gVGhlIGxvZ3MgcHJvdmlk
+ZSBubwo+IGNsdWUgd2h5IHRoZSBtYXAgd2FzIHJlbW92ZWQgYW5kIHJlLWFkZGVkLiBtdWx0aXBh
+dGhkIHNlZW1zIHRvIGhhdmUgaGFkCj4ganVzdCBhIHBhc3NpdmUgcm9sZSBoZXJlLiBXZSB3b3Vs
+ZCBuZWVkIHRoZSBrZXJuZWwgYW5kIHVkZXYgbG9ncwo+ICh1ZGV2LmxvZy1wcmlvcml0eT1kZWJ1
+ZykgdG8gc2VlIHdoYXQncyBhY3R1YWxseSBnb2luZyBvbi4gQWxzbywgcGxlYXNlCj4gcHJvdmlk
+ZSB5b3VyIG11bHRpcGF0aCBjb25maWd1cmF0aW9uIGFuZCB0aGUgdmVyc2lvbiBvZiBtdWx0aXBh
+dGgtdG9vbHMKPiB5b3UncmUgdXNpbmcsIGFuZCBsb2dzIGV4dGVuZGluZyBvdmVyIGEgbG9uZyBw
+ZXJpb2Qgb2YgdGltZSAoYXQgbGVhc3QKPiBjb3ZlcmluZyB0aGUgYWRkaXRpb24gb2YgdGhlIG5l
+dyBwYXRocykuCk9rLCBJIHdpbGwgcnVuIHRlc3RzIGFnYWluIGFuZCBzZW5kIHlvdSBsb2dzIGxh
+dGVyLgpJIGFtIHVzaW5nIDAuNi40IGZvciBEZWJpYW4gc3RyZXRjaC4KCj4KPiBJJ2QgZXhwZWN0
+IG5ldyBwYXRocyB0byBiZSBhZGRlZCB0byBtYXBzIGF1dG9tYXRpY2FsbHksIGJ1dCB0aGF0Cj4g
+ZG9lc24ndCBzZWVtIHRvIGhhcHBlbiBpbiB5b3VyIGNvbmZpZ3VyYXRpb24uIEFyZSB5b3UgdXNp
+bmcKPiAiZmluZF9tdWx0aXBhdGhzPXN0cmljdCI/IEluIHRoYXQgY2FzZSwgeW91IHNob3VsZCBy
+YXRoZXIgdXNlCj4gIm11bHRpcGF0aGQgYWRkIG1hcCAiJHd3aWQiLCBvciwgZXZlbiBiZXR0ZXIg
+Im11bHRpcGF0aCAtYSAkV1dJRCIuCj4KPiBSZWdhcmRzCj4gTWFydGluCj4KPgoKT25lIHF1ZXN0
+aW9uLgpJcyBpdCBwb3NzaWJsZSBmb3IgbXVsdGlwYXRoZCB0byBnZW5lcmF0ZSBhbiBldmVudCBm
+b3IgcmVtb3ZpbmcgYSBtYXA/CkkgYW0gbG9va2luZyBpbnRvIHRoZSBzb3VyY2UgY29kZSwgZXZf
+YWRkX3BhdGggYW5kIHNvbWUgZnVuY3Rpb25zCnJlbGF0ZWQgdG8gYWRkIGEgcGF0aCwKYnV0IGl0
+IGxvb2tzIGxpa2UgaXQgZG9lcyBub3QgZ2VuZXJhdGUgYW55IGV2ZW50LgoKVGhhbmsgeW91IGFn
+YWluIGZvciB5b3VyIHJlcGx5LgoKLS0gCkdpb2ggS2ltCgpDbG91ZCBzZXJ2ZXIga2VybmVsIG1h
+aW50YWluZXIKUXVhbGl0eSBNYW5hZ2VtZW50IChJT05PUyBDbG91ZCkKCjEmMSBJT05PUyBTRSB8
+IEdyZWlmc3dhbGRlciBTdHIuIDIwNyB8IDEwNDA1IEJlcmxpbiB8IEdlcm1hbnkKUGhvbmU6ICs0
+OSAxNzYgMjY5Nzg5NjIKRS1tYWlsOiBnaS1vaC5raW1AY2xvdWQuaW9ub3MuY29tIHwgV2ViOiB3
+d3cuaW9ub3MuZGUKCkhhdXB0c2l0eiBNb250YWJhdXIsIEFtdHNnZXJpY2h0IE1vbnRhYmF1ciwg
+SFJCIDI0NDk4CgpWb3JzdGFuZDogRHIuIENocmlzdGlhbiBCw7ZpbmcsIEjDvHNleWluIERvZ2Fu
+LCBEci4gTWFydGluIEVuZHJlw58sCkhhbnMtSGVubmluZyBLZXR0bGVyLCBBcnRodXIgTWFpLCBN
+YXR0aGlhcyBTdGVpbmJlcmcsIEFjaGltIFdlacOfCkF1ZnNpY2h0c3JhdHN2b3JzaXR6ZW5kZXI6
+IE1hcmt1cyBLYWRlbGtlCgpNZW1iZXIgb2YgVW5pdGVkIEludGVybmV0CgpEaWVzZSBFLU1haWwg
+a2FubiB2ZXJ0cmF1bGljaGUgdW5kL29kZXIgZ2VzZXR6bGljaCBnZXNjaMO8dHp0ZQpJbmZvcm1h
+dGlvbmVuIGVudGhhbHRlbi4gV2VubiBTaWUgbmljaHQgZGVyIGJlc3RpbW11bmdzZ2Vtw6TDn2Ug
+QWRyZXNzYXQKc2luZCBvZGVyIGRpZXNlIEUtTWFpbCBpcnJ0w7xtbGljaCBlcmhhbHRlbiBoYWJl
+biwgdW50ZXJyaWNodGVuIFNpZQpiaXR0ZSBkZW4gQWJzZW5kZXIgdW5kIHZlcm5pY2h0ZW4gU2ll
+IGRpZXNlIEUtTWFpbC4gQW5kZXJlbiBhbHMgZGVtCmJlc3RpbW11bmdzZ2Vtw6TDn2VuIEFkcmVz
+c2F0ZW4gaXN0IHVudGVyc2FndCwgZGllc2UgRS1NYWlsIHp1CnNwZWljaGVybiwgd2VpdGVyenVs
+ZWl0ZW4gb2RlciBpaHJlbiBJbmhhbHQgYXVmIHdlbGNoZSBXZWlzZSBhdWNoCmltbWVyIHp1IHZl
+cndlbmRlbi4KClRoaXMgZS1tYWlsIG1heSBjb250YWluIGNvbmZpZGVudGlhbCBhbmQvb3IgcHJp
+dmlsZWdlZCBpbmZvcm1hdGlvbi4gSWYKeW91IGFyZSBub3QgdGhlIGludGVuZGVkIHJlY2lwaWVu
+dCBvZiB0aGlzIGUtbWFpbCwgeW91IGFyZSBoZXJlYnkKbm90aWZpZWQgdGhhdCBzYXZpbmcsIGRp
+c3RyaWJ1dGlvbiBvciB1c2Ugb2YgdGhlIGNvbnRlbnQgb2YgdGhpcwplLW1haWwgaW4gYW55IHdh
+eSBpcyBwcm9oaWJpdGVkLiBJZiB5b3UgaGF2ZSByZWNlaXZlZCB0aGlzIGUtbWFpbCBpbgplcnJv
+ciwgcGxlYXNlIG5vdGlmeSB0aGUgc2VuZGVyIGFuZCBkZWxldGUgdGhlIGUtbWFpbC4KCgotLQpk
+bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
+YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
