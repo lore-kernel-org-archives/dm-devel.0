@@ -1,44 +1,66 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH V8 02/11] block: add helper for copying request
-Date: Fri, 24 Apr 2020 14:43:43 +0200
-Message-ID: <2b2df3bc-edc2-7179-a57b-daad7d67cfac@suse.de>
-References: <20200424102351.475641-1-ming.lei@redhat.com>
- <20200424102351.475641-3-ming.lei@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: 'multipath add path' returns ok but the path is
+ missing in the topology
+Date: Fri, 24 Apr 2020 17:40:13 +0200
+Message-ID: <59c267942a058b9bb989abbf1dbcc99ee4ee9cc3.camel@suse.com>
+References: <CAJX1YtZiGXdZTrGtw8ksP3khRf26jQ7dhBWoEJcGfQQZMGb-gg@mail.gmail.com>
+	<086d3e2baae71658539ac7caf634336ea0927c04.camel@suse.com>
+	<CAJX1YtaKhjLNN56rvwAXh7tOP1Egbo1izmFn3OUEhD4c489E1w@mail.gmail.com>
+	<3dbafeb000d558af21db70816130573106b56a9c.camel@suse.com>
+	<CAJX1YtYw+aJ5xXjZKoksF9gh3aaJoQRiqAkjUigc5R0-bFPb1w@mail.gmail.com>
+	<afac68664b44a28203325fed2fee7d8c0d9ae750.camel@suse.com>
+	<CAJX1YtYV9j-jmW9W9FaFcndYM2CT9xLLXTs=RW-a4SB=h1N-KQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200424102351.475641-3-ming.lei@redhat.com>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Ming Lei <ming.lei@redhat.com>, Jens Axboe <axboe@kernel.dk>
-Cc: linux-block@vger.kernel.org, John Garry <john.garry@huawei.com>, Bart Van Assche <bvanassche@acm.org>, Hannes Reinecke <hare@suse.com>, Christoph Hellwig <hch@lst.de>, Thomas Gleixner <tglx@linutronix.de>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAJX1YtYV9j-jmW9W9FaFcndYM2CT9xLLXTs=RW-a4SB=h1N-KQ@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Gioh Kim <gi-oh.kim@cloud.ionos.com>
+Cc: Guoqing Jiang <guoqing.jiang@cloud.ionos.com>, Jinpu, dm-devel@redhat.com, Wang <jinpu.wang@cloud.ionos.com>
 List-Id: dm-devel.ids
 
-On 4/24/20 12:23 PM, Ming Lei wrote:
-> Add one new helper of blk_rq_copy_request() to copy request, and the helper
-> will be used in this patch for re-submitting request, so make it as a block
-> layer internal helper.
+On Fri, 2020-04-24 at 15:18 +0200, Gioh Kim wrote:
 > 
-> Cc: John Garry <john.garry@huawei.com>
-> Cc: Bart Van Assche <bvanassche@acm.org>
-> Cc: Hannes Reinecke <hare@suse.com>
-> Cc: Christoph Hellwig <hch@lst.de>
-> Cc: Thomas Gleixner <tglx@linutronix.de>
-> Cc: Mike Snitzer <snitzer@redhat.com>
-> Cc: dm-devel@redhat.com
-> Signed-off-by: Ming Lei <ming.lei@redhat.com>
-> ---
->   block/blk-core.c | 33 +++++++++++++++++++--------------
->   block/blk.h      |  2 ++
->   2 files changed, 21 insertions(+), 14 deletions(-)
-> Reviewed-by: Hannes Reinecke <hare@suse.de>
+> I would like to inform you of what I found out.
+> 1. 'multipathd add path sdx' is executed
+> 2. Adding thd sdx also creates a map.
+> 3. The multipathd daemon waits for the change uevent from kernel.
+> 4. Another sd device sdy is added with 'multipathd add path sdy'
+> command
+> 5. adding sdy is not done and multipathd prints a message "sdy:
+> orphan
+> path, waiting for create to complete"
+> 6. Something (I guess it is the checker thread) removes and adds the
+> dm device
+> 7. sdy is removed with a message "sdy: orphan path, path removed
+> externally". I guess the checker thread removes sdy as well.
+> 
+> I am not sure what removes the dm device and sdy device.
+> I guess it would be the check thread due to the "sdy: orphan path,
+> path removed externally" message.
+> 
+> Therefore I just added the 'udevadm settle' command after the
+> 'multipathd add path sdx' command.
+> So whenever my script executes 'multipathd add path', it also
+> executes
+> 'udevadm settle'.
+> Then my test is fine for a long time.
+> 
+> 
 
-Cheers,
+This really sounds like a bug in the wait_for_udev handling.
+Could you provide a full log of these events with "verbosity 3"?
+No need to post it to the ML, send it privately or put it on some paste
+service.
 
-Hannes
--- 
-Dr. Hannes Reinecke            Teamlead Storage & Networking
-hare@suse.de                               +49 911 74053 688
-SUSE Software Solutions GmbH, Maxfeldstr. 5, 90409 Nürnberg
-HRB 36809 (AG Nürnberg), Geschäftsführer: Felix Imendörffer
+Regards
+Martin
