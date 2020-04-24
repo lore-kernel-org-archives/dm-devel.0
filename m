@@ -1,118 +1,55 @@
-From: Gioh Kim <gi-oh.kim@cloud.ionos.com>
-Subject: Re: 'multipath add path' returns ok but the path is
-	missing in the topology
-Date: Thu, 23 Apr 2020 13:50:40 +0200
-Message-ID: <CAJX1YtYw+aJ5xXjZKoksF9gh3aaJoQRiqAkjUigc5R0-bFPb1w@mail.gmail.com>
-References: <CAJX1YtZiGXdZTrGtw8ksP3khRf26jQ7dhBWoEJcGfQQZMGb-gg@mail.gmail.com>
-	<086d3e2baae71658539ac7caf634336ea0927c04.camel@suse.com>
-	<CAJX1YtaKhjLNN56rvwAXh7tOP1Egbo1izmFn3OUEhD4c489E1w@mail.gmail.com>
-	<3dbafeb000d558af21db70816130573106b56a9c.camel@suse.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: [PATCH V8 01/11] block: clone nr_integrity_segments and write_hint in blk_rq_prep_clone
+Date: Fri, 24 Apr 2020 18:23:41 +0800
+Message-ID: <20200424102351.475641-2-ming.lei@redhat.com>
+References: <20200424102351.475641-1-ming.lei@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <3dbafeb000d558af21db70816130573106b56a9c.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com, Jinpu Wang <jinpu.wang@cloud.ionos.com>, Guoqing Jiang <guoqing.jiang@cloud.ionos.com>
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200424102351.475641-1-ming.lei@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-block@vger.kernel.org, Ming Lei <ming.lei@redhat.com>, John Garry <john.garry@huawei.com>, Bart Van Assche <bvanassche@acm.org>, Hannes Reinecke <hare@suse.com>, Christoph Hellwig <hch@lst.de>, Thomas Gleixner <tglx@linutronix.de>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-SGkgTWFydGluLAoKT24gV2VkLCBBcHIgMjIsIDIwMjAgYXQgNTo0MCBQTSBNYXJ0aW4gV2lsY2sg
-PG13aWxja0BzdXNlLmNvbT4gd3JvdGU6Cj4KPiBPbiBXZWQsIDIwMjAtMDQtMjIgYXQgMTY6MDAg
-KzAyMDAsIEdpb2ggS2ltIHdyb3RlOgo+ID4KPiA+IE9uZSBxdWVzdGlvbi4KPiA+IElzIGl0IHBv
-c3NpYmxlIGZvciBtdWx0aXBhdGhkIHRvIGdlbmVyYXRlIGFuIGV2ZW50IGZvciByZW1vdmluZyBh
-Cj4gPiBtYXA/Cj4gPiBJIGFtIGxvb2tpbmcgaW50byB0aGUgc291cmNlIGNvZGUsIGV2X2FkZF9w
-YXRoIGFuZCBzb21lIGZ1bmN0aW9ucwo+ID4gcmVsYXRlZCB0byBhZGQgYSBwYXRoLAo+ID4gYnV0
-IGl0IGxvb2tzIGxpa2UgaXQgZG9lcyBub3QgZ2VuZXJhdGUgYW55IGV2ZW50Lgo+Cj4gSSBndWVz
-cyB5b3UgbWVhbiBhbiB1ZXZlbnQuIFRoZXNlIGV2ZW50cyBhcmUgY3JlYXRlZCBieSB0aGUga2Vy
-bmVsIHdoZW4KPiBtdWx0aXBhdGggY3JlYXRlcyBvciByZWxvYWRzIG1hcHMuIG11bHRpcGF0aGQg
-bm9ybWFsbHkgZG9lc24ndCB0cmlnZ2VyCj4gdGhlIGV2ZW50cyBkaXJlY3RseS4gIEJ1dCB0aGVy
-ZSBhcmUgc29tZSBjYXNlcyB3aGVyZSBtdWx0aXBhdGhkCj4gYmFzaWNhbGx5IHJ1bnMgdGhlIGVx
-dWl2YWxlbnQgb2YgInVkZXZhZG0gdHJpZ2dlciAtYyBjaGFuZ2UiIG9uIGVpdGhlcgo+IG1hcHMg
-b3IgcGF0aHMuIFNlYXJjaCB0aGUgY29kZSBmb3IgInRyaWdnZXIiIGZvciBkZXRhaWxzLgo+Cj4g
-VGhlcmUgYXJlIGFsc28gZGV2aWNlIG1hcHBlciBldmVudHMgd2hpY2ggYXJlIGNyZWF0ZWQgYnkg
-dGhlIGtlcm5lbCBmb3IKPiBjZXJ0YWluIHN0YXRlIGNoYW5nZXMgb2YgZG0gZGV2aWNlcy4gQWdh
-aW4sIG11bHRpcGF0aGQgb25seSByZWNlaXZlcwo+IHN1Y2ggZXZlbnRzLgo+Cj4gUmVnYXJkcwo+
-IE1hcnRpbgo+Cj4KPgoKSSBhbSBtYWtpbmcgYW4gZW52aXJvbm1lbnQgdG8gY2FwdHVyZSBsb2cg
-Zm9yIHVldmVudCBhcyB5b3Ugc2FpZC4KCk1lYW53aGlsZSBJIGZvdW5kIHNvbWV0aGluZyB3ZWly
-ZDogIm9ycGhhbiBwYXRoLCB3YWl0aW5nIGZvciBjcmVhdGUgdG8KY29tcGxldGUiIHdoYXQgaXMg
-dGhpcyBtZXNzYWdlPwpJIGd1ZXNzIHRoZSBzZWNvbmQgYWRkZWQgcGF0aCB3YXMgbm90IHJlZ2lz
-dGVyZWQgd2hlbiBJIGV4ZWN1dGVkCiJtdWx0aXBhdGhkIGFkZCBwYXRoIiBhdCB0aGlzIG1vbWVu
-dC4KCkkgZ3Vlc3MgdGhlcmUgd291bGQgYmUgc29tZSB0aW1lIGRlbGF5IGZvciB0aGUgc2Vjb25k
-IHBhdGggdG8gYmUKaW5jbHVkZWQgaW4gdGhlIHRvcG9sb2d5LgpBbSBJIHJpZ2h0PwpJZiBJIGFt
-IHJpZ2h0LCBjb3VsZCBJIG1ha2UgIm11bHRpcGF0aGQgYWRkIHBhdGgiIHJldHVybiBvbmx5IGFm
-dGVyCmV2ZXJ5dGhpbmcgaXMgY29tcGxldGVseSBmaW5pc2hlZD8KCkJlbG93IGlzIGEgbG9nIG1l
-c3NhZ2UgZnJvbSBteSB0ZXN0LgoqIG11bHRpcGF0aGQgYWRkIHBhdGggc2RjCiogbXVsdGlwYXRo
-ZCBhZGQgcGF0aCBzZG0KKiBtdWx0aXBhdGhkIHNob3cgdG9wb2xvZ3kgIC0tPiBUaGVyZSBpcyBu
-byBzZG0hIE15IHRlc3QgZmFpbGVkLiBJCndvdWxkIGxpa2UgdG8gY2hlY2sgc2RtIGhlcmUuCiog
-bXVsdGlwYXRoZCBzaG93IHRvcG9sb2d5ICAtLT4gTm93IHNkbSBpcyBpbmNsdWRlZCBhZnRlciBz
-b21lIG1pbGktc2Vjb25kLgoKQXByIDIzIDExOjM4OjI1IGliMSBtdWx0aXBhdGhkWzIxMzJdOiBz
-ZGM6IGFkZCBwYXRoIChvcGVyYXRvcikKQXByIDIzIDExOjM4OjI1IGliMSBtdWx0aXBhdGhkWzIx
-MzJdOiBzZGM6IG9wZW4gbm9kZTogL2Rldi9zZGMKQXByIDIzIDExOjM4OjI1IGliMSBtdWx0aXBh
-dGhkWzIxMzJdOiBzZGM6IG1wcCBpcyBudWxsCkFwciAyMyAxMTozODoyNSBpYjEgbXVsdGlwYXRo
-ZFsyMTMyXTogc2RjOiBjcmVhdGluZyBuZXcgbWFwCkFwciAyMyAxMTozODoyNSBpYjEgbXVsdGlw
-YXRoZFsyMTMyXTogc2RjOiBvcGVuIG5vZGU6IC9kZXYvc2RjCkFwciAyMyAxMTozODoyNSBpYjEg
-bXVsdGlwYXRoZFsyMTMyXTogc2RjOiBkb21hcCB3aXRoIG1wcC0+YWN0aW9uPTYKQXByIDIzIDEx
-OjM4OjI1IGliMSBtdWx0aXBhdGhkWzIxMzJdOgozNjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw
-MDAwMDA6IGxvYWQgdGFibGUgWzAgMjA0ODAwIG11bHRpcGF0aCAxCnJldGFpbl9hdHRhY2hlZF9o
-d19oYW5kbGVyIDAgMSAxIHNlcnZpY2UtdGltZSAwIDEgMSA4OjMyIDFdCkFwciAyMyAxMTozODoy
-NSBpYjEgbXVsdGlwYXRoZFsyMTMyXToKMzYwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw
-OiBldmVudCBjaGVja2VyIHN0YXJ0ZWQKQXByIDIzIDExOjM4OjI1IGliMSBtdWx0aXBhdGhkWzIx
-MzJdOiBzZGMgWzg6MzJdOiBwYXRoIGFkZGVkIHRvIGRldm1hcAozNjAwMDAwMDAwMDAwMDAwMDAw
-MDAwMDAwMDAwMDAwMDAKQXByIDIzIDExOjM4OjI1IGliMSBtdWx0aXBhdGhkWzIxMzJdOiBzZG06
-IGFkZCBwYXRoIChvcGVyYXRvcikKQXByIDIzIDExOjM4OjI1IGliMSBtdWx0aXBhdGhkWzIxMzJd
-OiBzZG06IG9ycGhhbiBwYXRoLCB3YWl0aW5nIGZvcgpjcmVhdGUgdG8gY29tcGxldGUKQXByIDIz
-IDExOjM4OjI1IGliMSBtdWx0aXBhdGhkWzIxMzJdOiBjbGlbMV06IFJlcGx5IFsyMzggYnl0ZXNd
-CkFwciAyMyAxMTozODoyNSBpYjEgbXVsdGlwYXRoZFsyMTMyXTogcmVwbHk6IFtjcmVhdGU6CjM2
-MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCBkbS02IFNDU1RfQklPLGx0cC1wc2VydmVy
-MzUwMApBcHIgMjMgMTE6Mzg6MjUgaWIxIG11bHRpcGF0aGRbMjEzMl06IHNpemU9MTAwTSBmZWF0
-dXJlcz0nMQpyZXRhaW5fYXR0YWNoZWRfaHdfaGFuZGxlcicgaHdoYW5kbGVyPScwJyB3cD1ydwpB
-cHIgMjMgMTE6Mzg6MjUgaWIxIG11bHRpcGF0aGRbMjEzMl06IGAtKy0gcG9saWN5PSdzZXJ2aWNl
-LXRpbWUgMCcKcHJpbz0xIHN0YXR1cz1lbmFibGVkCkFwciAyMyAxMTozODoyNSBpYjEgbXVsdGlw
-YXRoZFsyMTMyXTogICBgLSA0OjA6MDowIHNkYyA4OjMyICBhY3RpdmUKcmVhZHkgcnVubmluZwpB
-cHIgMjMgMTE6Mzg6MjUgaWIxIG11bHRpcGF0aGRbMjEzMl06IF0KQXByIDIzIDExOjM4OjI1IGli
-MSBtdWx0aXBhdGhkWzIxMzJdOgozNjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA6IGxv
-YWQgdGFibGUgWzAgMjA0ODAwIG11bHRpcGF0aCAxCnJldGFpbl9hdHRhY2hlZF9od19oYW5kbGVy
-IDAgMSAxIHNlcnZpY2UtdGltZSAwIDIgMSA4OjMyIDEgODoxOTIgMV0KQXByIDIzIDExOjM4OjI1
-IGliMSBtdWx0aXBhdGhkWzIxMzJdOiBjbGlbMV06IFJlcGx5IFsyNzQgYnl0ZXNdCkFwciAyMyAx
-MTozODoyNSBpYjEgbXVsdGlwYXRoZFsyMTMyXTogcmVwbHk6ClszNjAwMDAwMDAwMDAwMDAwMDAw
-MDAwMDAwMDAwMDAwMDAgZG0tNiBTQ1NUX0JJTyxsdHAtcHNlcnZlcjM1MDAKQXByIDIzIDExOjM4
-OjI1IGliMSBtdWx0aXBhdGhkWzIxMzJdOiBzaXplPTEwME0gZmVhdHVyZXM9JzEKcmV0YWluX2F0
-dGFjaGVkX2h3X2hhbmRsZXInIGh3aGFuZGxlcj0nMCcgd3A9cncKQXByIDIzIDExOjM4OjI1IGli
-MSBtdWx0aXBhdGhkWzIxMzJdOiBgLSstIHBvbGljeT0nc2VydmljZS10aW1lIDAnCnByaW89MSBz
-dGF0dXM9ZW5hYmxlZApBcHIgMjMgMTE6Mzg6MjUgaWIxIG11bHRpcGF0aGRbMjEzMl06ICAgfC0g
-NDowOjA6MCBzZGMgODozMiAgYWN0aXZlCnJlYWR5IHJ1bm5pbmcKQXByIDIzIDExOjM4OjI1IGli
-MSBtdWx0aXBhdGhkWzIxMzJdOiAgIGAtIDU6MDowOjAgc2RtIDg6MTkyIGFjdGl2ZQpyZWFkeSBy
-dW5uaW5nCkFwciAyMyAxMTozODoyNSBpYjEgbXVsdGlwYXRoZFsyMTMyXTogXQoKCgotLSAKR2lv
-aCBLaW0KCkNsb3VkIHNlcnZlciBrZXJuZWwgbWFpbnRhaW5lcgpRdWFsaXR5IE1hbmFnZW1lbnQg
-KElPTk9TIENsb3VkKQoKMSYxIElPTk9TIFNFIHwgR3JlaWZzd2FsZGVyIFN0ci4gMjA3IHwgMTA0
-MDUgQmVybGluIHwgR2VybWFueQpQaG9uZTogKzQ5IDE3NiAyNjk3ODk2MgpFLW1haWw6IGdpLW9o
-LmtpbUBjbG91ZC5pb25vcy5jb20gfCBXZWI6IHd3dy5pb25vcy5kZQoKSGF1cHRzaXR6IE1vbnRh
-YmF1ciwgQW10c2dlcmljaHQgTW9udGFiYXVyLCBIUkIgMjQ0OTgKClZvcnN0YW5kOiBEci4gQ2hy
-aXN0aWFuIELDtmluZywgSMO8c2V5aW4gRG9nYW4sIERyLiBNYXJ0aW4gRW5kcmXDnywKSGFucy1I
-ZW5uaW5nIEtldHRsZXIsIEFydGh1ciBNYWksIE1hdHRoaWFzIFN0ZWluYmVyZywgQWNoaW0gV2Vp
-w58KQXVmc2ljaHRzcmF0c3ZvcnNpdHplbmRlcjogTWFya3VzIEthZGVsa2UKCk1lbWJlciBvZiBV
-bml0ZWQgSW50ZXJuZXQKCkRpZXNlIEUtTWFpbCBrYW5uIHZlcnRyYXVsaWNoZSB1bmQvb2RlciBn
-ZXNldHpsaWNoIGdlc2Now7x0enRlCkluZm9ybWF0aW9uZW4gZW50aGFsdGVuLiBXZW5uIFNpZSBu
-aWNodCBkZXIgYmVzdGltbXVuZ3NnZW3DpMOfZSBBZHJlc3NhdApzaW5kIG9kZXIgZGllc2UgRS1N
-YWlsIGlycnTDvG1saWNoIGVyaGFsdGVuIGhhYmVuLCB1bnRlcnJpY2h0ZW4gU2llCmJpdHRlIGRl
-biBBYnNlbmRlciB1bmQgdmVybmljaHRlbiBTaWUgZGllc2UgRS1NYWlsLiBBbmRlcmVuIGFscyBk
-ZW0KYmVzdGltbXVuZ3NnZW3DpMOfZW4gQWRyZXNzYXRlbiBpc3QgdW50ZXJzYWd0LCBkaWVzZSBF
-LU1haWwgenUKc3BlaWNoZXJuLCB3ZWl0ZXJ6dWxlaXRlbiBvZGVyIGlocmVuIEluaGFsdCBhdWYg
-d2VsY2hlIFdlaXNlIGF1Y2gKaW1tZXIgenUgdmVyd2VuZGVuLgoKVGhpcyBlLW1haWwgbWF5IGNv
-bnRhaW4gY29uZmlkZW50aWFsIGFuZC9vciBwcml2aWxlZ2VkIGluZm9ybWF0aW9uLiBJZgp5b3Ug
-YXJlIG5vdCB0aGUgaW50ZW5kZWQgcmVjaXBpZW50IG9mIHRoaXMgZS1tYWlsLCB5b3UgYXJlIGhl
-cmVieQpub3RpZmllZCB0aGF0IHNhdmluZywgZGlzdHJpYnV0aW9uIG9yIHVzZSBvZiB0aGUgY29u
-dGVudCBvZiB0aGlzCmUtbWFpbCBpbiBhbnkgd2F5IGlzIHByb2hpYml0ZWQuIElmIHlvdSBoYXZl
-IHJlY2VpdmVkIHRoaXMgZS1tYWlsIGluCmVycm9yLCBwbGVhc2Ugbm90aWZ5IHRoZSBzZW5kZXIg
-YW5kIGRlbGV0ZSB0aGUgZS1tYWlsLgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZl
-bEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
-ZXZlbA==
+So far blk_rq_prep_clone() is only used for setup one underlying cloned
+request from dm-rq request. block intetrity can be enabled for both dm-rq
+and the underlying queues, so it is reasonable to clone rq's
+nr_integrity_segments. Also write_hint is from bio, it should have been
+cloned too.
+
+So clone nr_integrity_segments and write_hint in blk_rq_prep_clone.
+
+Cc: John Garry <john.garry@huawei.com>
+Cc: Bart Van Assche <bvanassche@acm.org>
+Cc: Hannes Reinecke <hare@suse.com>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
+Signed-off-by: Ming Lei <ming.lei@redhat.com>
+---
+ block/blk-core.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 7e4a1da0715e..91537e526b45 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1636,9 +1636,13 @@ int blk_rq_prep_clone(struct request *rq, struct r=
+equest *rq_src,
+ 		rq->rq_flags |=3D RQF_SPECIAL_PAYLOAD;
+ 		rq->special_vec =3D rq_src->special_vec;
+ 	}
++#ifdef CONFIG_BLK_DEV_INTEGRITY
++	rq->nr_integrity_segments =3D rq_src->nr_integrity_segments;
++#endif
+ 	rq->nr_phys_segments =3D rq_src->nr_phys_segments;
+ 	rq->ioprio =3D rq_src->ioprio;
+ 	rq->extra_len =3D rq_src->extra_len;
++	rq->write_hint =3D rq_src->write_hint;
+=20
+ 	return 0;
+=20
+--=20
+2.25.2
