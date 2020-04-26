@@ -1,50 +1,53 @@
-From: Coly Li <colyli@suse.de>
-Subject: Re: [PATCH 1/3] bcache: remove a duplicate ->make_request_fn
- assignment
-Date: Sun, 26 Apr 2020 17:35:41 +0800
-Message-ID: <bbeb7895-78c3-da7b-78e8-e3a376146b2e@suse.de>
-References: <20200425075336.721021-1-hch@lst.de>
- <20200425075336.721021-2-hch@lst.de>
+From: Christian Hesse <list@eworm.de>
+Subject: [PATCH 1/1] fix boolean value with json-c 0.14
+Date: Sun, 26 Apr 2020 21:13:25 +0200
+Message-ID: <20200426191325.15388-1-list@eworm.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-bcache-owner@vger.kernel.org>
-In-Reply-To: <20200425075336.721021-2-hch@lst.de>
-Content-Language: en-US
-Sender: linux-bcache-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-Cc: dm-devel@redhat.com, linux-bcache@vger.kernel.org, linux-block@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Device-mapper development mailing list <dm-devel@redhat.com>
+Cc: "mail@eworm.de" <mail@eworm.de>
 List-Id: dm-devel.ids
 
-On 2020/4/25 15:53, Christoph Hellwig wrote:
-> The make_request_fn pointer should only be assigned by blk_alloc_queue.
-> Fix a left over manual initialization.
-> 
-> Fixes: ff27668ce809 ("bcache: pass the make_request methods to blk_queue_make_request")
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
+From: "mail@eworm.de" <mail@eworm.de>
 
-It looks good to me.
+Upstream removed the TRUE and FALSE defines in commit
+0992aac61f8b087efd7094e9ac2b84fa9c040fcd.
 
-Reviewed-by: Coly Li <colyli@suse.de>
+Signed-off-by: Christian Hesse <mail@eworm.de>
+---
+ libdmmp/libdmmp_private.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-Thanks.
-
-Coly Li
-
-> ---
->  drivers/md/bcache/request.c | 1 -
->  1 file changed, 1 deletion(-)
-> 
-> diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
-> index 71a90fbec314b..77d1a26975174 100644
-> --- a/drivers/md/bcache/request.c
-> +++ b/drivers/md/bcache/request.c
-> @@ -1372,7 +1372,6 @@ void bch_flash_dev_request_init(struct bcache_device *d)
->  {
->  	struct gendisk *g = d->disk;
->  
-> -	g->queue->make_request_fn		= flash_dev_make_request;
->  	g->queue->backing_dev_info->congested_fn = flash_dev_congested;
->  	d->cache_miss				= flash_dev_cache_miss;
->  	d->ioctl				= flash_dev_ioctl;
-> 
+diff --git a/libdmmp/libdmmp_private.h b/libdmmp/libdmmp_private.h
+index ac85b63f..29400826 100644
+--- a/libdmmp/libdmmp_private.h
++++ b/libdmmp/libdmmp_private.h
+@@ -82,7 +82,7 @@ static out_type func_name(struct dmmp_context *ctx, const char *var_name) { \
+ do { \
+ 	json_type j_type = json_type_null; \
+ 	json_object *j_obj_tmp = NULL; \
+-	if (json_object_object_get_ex(j_obj, key, &j_obj_tmp) != TRUE) { \
++	if (json_object_object_get_ex(j_obj, key, &j_obj_tmp) != 1) { \
+ 		_error(ctx, "Invalid JSON output from multipathd IPC: " \
+ 		       "key '%s' not found", key); \
+ 		rc = DMMP_ERR_IPC_ERROR; \
+@@ -90,7 +90,7 @@ do { \
+ 	} \
+ 	if (j_obj_tmp == NULL) { \
+ 		_error(ctx, "BUG: Got NULL j_obj_tmp from " \
+-		       "json_object_object_get_ex() while it return TRUE"); \
++		       "json_object_object_get_ex() while it return 1"); \
+ 		rc = DMMP_ERR_BUG; \
+ 		goto out; \
+ 	} \
