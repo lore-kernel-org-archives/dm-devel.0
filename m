@@ -1,73 +1,49 @@
-From: Randy Dunlap <rdunlap@infradead.org>
-Subject: [PATCH -next] md: dm-ebs-target: fix build errors & Kconfig entry
-Date: Tue, 28 Apr 2020 08:03:53 -0700
-Message-ID: <d33b3bfb-c38d-9770-e6a6-929519dc21d4@infradead.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2 1/3] md: multipath: Encapsulate parameters
+ passed to selectors
+Date: Tue, 28 Apr 2020 13:20:29 -0400
+Message-ID: <20200428172028.GA17285@redhat.com>
+References: <20200428005146.242231-1-krisman@collabora.com>
+	<20200428005146.242231-2-krisman@collabora.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: LKML <linux-kernel@vger.kernel.org>
-Cc: Heinz Mauelshagen <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200428005146.242231-2-krisman@collabora.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Gabriel Krisman Bertazi <krisman@collabora.com>
+Cc: dm-devel@redhat.com, kernel@collabora.com, khazhy@google.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-From: Randy Dunlap <rdunlap@infradead.org>
+On Mon, Apr 27 2020 at  8:51pm -0400,
+Gabriel Krisman Bertazi <krisman@collabora.com> wrote:
 
-Fix build errors by selecting DM_BUFIO.
+> Different selector will use different parameters, which means .io_start
+> and .io_end will get their signatures modified to include more and more
+> parameters.  This encapsulates the data in a structure so we can
+> simplify the interface for future users.  For now it only passes
+> nr_bytes, but HST will require start_time already.
+> 
+> Cc: Khazhismel Kumykov <khazhy@google.com>
+> Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
 
-Fix Kconfig entry formatting by using tabs instead of spaces,
-using "help" instead of "---help---", and
-indenting help text with one additional space.
+I really don't see HST's need for start_time_ns in the path selector's
+end_io hook as a solid justification for this encapsulation.
 
-Fixes these build errors:
+Especially in that the parameters needed for ps's start_io and end_io
+really aren't symmetric.  Imposing that they are just causes needless
+code (an example of that is in patch 2/3).
 
-ld: drivers/md/dm-ebs-target.o: in function `__ebs_forget_bio':
-dm-ebs-target.c:(.text+0x1bc): undefined reference to `dm_bufio_forget'
-ld: drivers/md/dm-ebs-target.o: in function `ebs_dtr':
-dm-ebs-target.c:(.text+0x2fe): undefined reference to `dm_bufio_client_destroy'
-ld: drivers/md/dm-ebs-target.o: in function `__ebs_rw_bio':
-dm-ebs-target.c:(.text+0x4c4): undefined reference to `dm_bufio_get_block_size'
-ld: dm-ebs-target.c:(.text+0x4f1): undefined reference to `dm_bufio_read'
-ld: dm-ebs-target.c:(.text+0x504): undefined reference to `dm_bufio_get_block_size'
-ld: dm-ebs-target.c:(.text+0x519): undefined reference to `dm_bufio_new'
-ld: dm-ebs-target.c:(.text+0x567): undefined reference to `dm_bufio_mark_partial_buffer_dirty'
-ld: dm-ebs-target.c:(.text+0x56f): undefined reference to `dm_bufio_release'
-ld: drivers/md/dm-ebs-target.o: in function `__ebs_process_bios':
-dm-ebs-target.c:(.text+0x6bf): undefined reference to `dm_bufio_prefetch'
-ld: dm-ebs-target.c:(.text+0x72d): undefined reference to `dm_bufio_prefetch'
-ld: dm-ebs-target.c:(.text+0x783): undefined reference to `dm_bufio_prefetch'
-ld: dm-ebs-target.c:(.text+0x7fe): undefined reference to `dm_bufio_write_dirty_buffers'
-ld: drivers/md/dm-ebs-target.o: in function `ebs_ctr':
-dm-ebs-target.c:(.text+0xa82): undefined reference to `dm_bufio_client_create'
+So please drop this encapsulation.
 
-Signed-off-by: Randy Dunlap <rdunlap@infradead.org>
-Cc: Heinz Mauelshagen <dm-devel@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
----
- drivers/md/Kconfig |   12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
-
---- linux-next-20200428.orig/drivers/md/Kconfig
-+++ linux-next-20200428/drivers/md/Kconfig
-@@ -338,12 +338,12 @@ config DM_WRITECACHE
- 	   to be cached in standard RAM.
- 
- config DM_EBS
--       tristate "Emulated block size target (EXPERIMENTAL)"
--       depends on BLK_DEV_DM
--       default n
--       ---help---
--	 dm-ebs emulates smaller logical block size on backing devices
--	 with larger ones (e.g. 512 byte sectors on 4K native disks).
-+	tristate "Emulated block size target (EXPERIMENTAL)"
-+	depends on BLK_DEV_DM
-+	select DM_BUFIO
-+	help
-+	  dm-ebs emulates smaller logical block size on backing devices
-+	  with larger ones (e.g. 512 byte sectors on 4K native disks).
- 
- config DM_ERA
-        tristate "Era target (EXPERIMENTAL)"
+Thanks,
+Mike
