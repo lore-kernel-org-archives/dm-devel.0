@@ -1,12 +1,14 @@
 From: Gabriel Krisman Bertazi <krisman@collabora.com>
-Subject: [PATCH] dm: multipath: Use updated MPATHF_QUEUE_IO on
-	mapping for BIO-based mpath
-Date: Mon, 27 Apr 2020 20:39:11 -0400
-Message-ID: <20200428003911.222717-1-krisman@collabora.com>
+Subject: [PATCH v2 2/3] md: multipath: Pass io_start_time to the
+	path selector
+Date: Mon, 27 Apr 2020 20:51:45 -0400
+Message-ID: <20200428005146.242231-3-krisman@collabora.com>
+References: <20200428005146.242231-1-krisman@collabora.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200428005146.242231-1-krisman@collabora.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,93 +19,157 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: agk@redhat.com, snitzer@redhat.com
-Cc: dm-devel@redhat.com, kernel@collabora.com, Gabriel Krisman Bertazi <krisman@collabora.com>
+Cc: dm-devel@redhat.com, kernel@collabora.com, Gabriel Krisman Bertazi <krisman@collabora.com>, khazhy@google.com
 List-Id: dm-devel.ids
 
-When adding devices that don't have a scsi_dh on a BIO based multipath,
-I was able to consistently hit the warning below and lock-up the system.
+HST need to know the IO start time in order to predict path
+performance. For request-based multipath use the block layer
+io_start_time, while for BIO use the dm_io start_time.
 
-The problem is that __map_bio reads the flag before it potentially being
-modified by choose_pgpath, and ends up using the older value.
+The dm_start_time_ns_from_clone function was suggested and implemented
+by Mike Snitzer <snitzer@redhat.com>.
 
-The WARN_ON below is not trivially linked to the issue. It goes like
-this: The activate_path delayed_work is not initialized for non-scsi_dh
-devices, but we always set MPATHF_QUEUE_IO, asking for initialization.
-That is fine, since MPATHF_QUEUE_IO would be cleared in choose_pgpath.
-Nevertheless, only for BIO-based mpath, we cache the flag before calling
-choose_pgpath, and use the older version when deciding if we should
-initialize the path.  Therefore, we end up trying to initialize the
-paths, and calling the non-initialized activate_path work.
-
-[   82.437100] ------------[ cut here ]------------
-[   82.437659] WARNING: CPU: 3 PID: 602 at kernel/workqueue.c:1624
-  __queue_delayed_work+0x71/0x90
-[   82.438436] Modules linked in:
-[   82.438911] CPU: 3 PID: 602 Comm: systemd-udevd Not tainted 5.6.0-rc6+ #339
-[   82.439680] RIP: 0010:__queue_delayed_work+0x71/0x90
-[   82.440287] Code: c1 48 89 4a 50 81 ff 00 02 00 00 75 2a 4c 89 cf e9
-94 d6 07 00 e9 7f e9 ff ff 0f 0b eb c7 0f 0b 48 81 7a 58 40 74 a8 94 74
-a7 <0f> 0b 48 83 7a 48 00 74 a5 0f 0b eb a1 89 fe 4c 89 cf e9 c8 c4 07
-[   82.441719] RSP: 0018:ffffb738803977c0 EFLAGS: 00010007
-[   82.442121] RAX: ffffa086389f9740 RBX: 0000000000000002 RCX: 0000000000000000
-[   82.442718] RDX: ffffa086350dd930 RSI: ffffa0863d76f600 RDI: 0000000000000200
-[   82.443484] RBP: 0000000000000200 R08: 0000000000000000 R09: ffffa086350dd970
-[   82.444128] R10: 0000000000000000 R11: 0000000000000000 R12: ffffa086350dd930
-[   82.444773] R13: ffffa0863d76f600 R14: 0000000000000000 R15: ffffa08636738008
-[   82.445427] FS:  00007f6abfe9dd40(0000) GS:ffffa0863dd80000(0000) knlGS:00000
-[   82.446040] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[   82.446478] CR2: 0000557d288db4e8 CR3: 0000000078b36000 CR4: 00000000000006e0
-[   82.447104] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-[   82.447561] DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-[   82.448012] Call Trace:
-[   82.448164]  queue_delayed_work_on+0x6d/0x80
-[   82.448472]  __pg_init_all_paths+0x7b/0xf0
-[   82.448714]  pg_init_all_paths+0x26/0x40
-[   82.448980]  __multipath_map_bio.isra.0+0x84/0x210
-[   82.449267]  __map_bio+0x3c/0x1f0
-[   82.449468]  __split_and_process_non_flush+0x14a/0x1b0
-[   82.449775]  __split_and_process_bio+0xde/0x340
-[   82.450045]  ? dm_get_live_table+0x5/0xb0
-[   82.450278]  dm_process_bio+0x98/0x290
-[   82.450518]  dm_make_request+0x54/0x120
-[   82.450778]  generic_make_request+0xd2/0x3e0
-[   82.451038]  ? submit_bio+0x3c/0x150
-[   82.451278]  submit_bio+0x3c/0x150
-[   82.451492]  mpage_readpages+0x129/0x160
-[   82.451756]  ? bdev_evict_inode+0x1d0/0x1d0
-[   82.452033]  read_pages+0x72/0x170
-[   82.452260]  __do_page_cache_readahead+0x1ba/0x1d0
-[   82.452624]  force_page_cache_readahead+0x96/0x110
-[   82.452903]  generic_file_read_iter+0x84f/0xae0
-[   82.453192]  ? __seccomp_filter+0x7c/0x670
-[   82.453547]  new_sync_read+0x10e/0x190
-[   82.453883]  vfs_read+0x9d/0x150
-[   82.454172]  ksys_read+0x65/0xe0
-[   82.454466]  do_syscall_64+0x4e/0x210
-[   82.454828]  entry_SYSCALL_64_after_hwframe+0x49/0xbe
-[...]
-[   82.462501] ---[ end trace bb39975e9cf45daa ]---
-
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: Khazhismel Kumykov <khazhy@google.com>
 Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
 ---
- drivers/md/dm-mpath.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ drivers/md/dm-mpath.c         | 25 +++++++++++++++----------
+ drivers/md/dm-path-selector.h |  1 +
+ drivers/md/dm.c               | 10 ++++++++++
+ include/linux/device-mapper.h |  2 ++
+ 4 files changed, 28 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index f9b6a7a68bec..f5e7f8e88767 100644
+index 1ef4fc2e745b..7af3249948be 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -589,6 +589,11 @@ static struct pgpath *__map_bio(struct multipath *m, struct bio *bio)
- 	if (!pgpath || !queue_io)
- 		pgpath = choose_pgpath(m, bio->bi_iter.bi_size);
+@@ -500,8 +500,9 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
+ 	struct dm_mpath_io *mpio = get_mpio(map_context);
+ 	struct request_queue *q;
+ 	struct request *clone;
+-	struct path_selector_io_data io_data = {
++	struct path_selector_io_data ps_io_data = {
+ 		.nr_bytes = nr_bytes,
++		.io_start_time = rq->io_start_time_ns
+ 	};
  
-+	/*
-+	 * MPATHF_QUEUE_IO might have been cleared by choose_pgpath.
-+	 */
-+	queue_io = test_bit(MPATHF_QUEUE_IO, &m->flags);
+ 	/* Do we need to select a new pgpath? */
+@@ -552,7 +553,7 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
+ 	if (pgpath->pg->ps.type->start_io)
+ 		pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
+ 					      &pgpath->path,
+-					      &io_data);
++					      &ps_io_data);
+ 	return DM_MAPIO_REMAPPED;
+ }
+ 
+@@ -568,6 +569,7 @@ static void multipath_release_clone(struct request *clone,
+ 		struct pgpath *pgpath = mpio->pgpath;
+ 		struct path_selector_io_data ps_io_data = {
+ 			.nr_bytes = mpio->nr_bytes,
++			.io_start_time = clone->io_start_time_ns,
+ 		};
+ 
+ 		if (pgpath && pgpath->pg->ps.type->end_io)
+@@ -623,8 +625,9 @@ static int __multipath_map_bio(struct multipath *m, struct bio *bio,
+ 			       struct dm_mpath_io *mpio)
+ {
+ 	struct pgpath *pgpath = __map_bio(m, bio);
+-	struct path_selector_io_data io_data = {
++	struct path_selector_io_data ps_io_data = {
+ 		.nr_bytes = mpio->nr_bytes,
++		.io_start_time = dm_start_time_ns_from_clone(bio)
+ 	};
+ 
+ 	if (IS_ERR(pgpath))
+@@ -646,7 +649,7 @@ static int __multipath_map_bio(struct multipath *m, struct bio *bio,
+ 	if (pgpath->pg->ps.type->start_io)
+ 		pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
+ 					      &pgpath->path,
+-					      &io_data);
++					      &ps_io_data);
+ 	return DM_MAPIO_REMAPPED;
+ }
+ 
+@@ -1627,12 +1630,13 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
+ 
+ 	if (pgpath) {
+ 		struct path_selector *ps = &pgpath->pg->ps;
+-		struct path_selector_io_data io_data = {
+-			.nr_bytes = mpio->nr_bytes
++		struct path_selector_io_data ps_io_data = {
++			.nr_bytes = mpio->nr_bytes,
++			.io_start_time = clone->io_start_time_ns
+ 		};
+ 
+ 		if (ps->type->end_io)
+-			ps->type->end_io(ps, &pgpath->path, &io_data);
++			ps->type->end_io(ps, &pgpath->path, &ps_io_data);
+ 	}
+ 
+ 	return r;
+@@ -1674,12 +1678,13 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
+ done:
+ 	if (pgpath) {
+ 		struct path_selector *ps = &pgpath->pg->ps;
+-		struct path_selector_io_data io_data = {
+-			.nr_bytes = mpio->nr_bytes
++		struct path_selector_io_data ps_io_data = {
++			.nr_bytes = mpio->nr_bytes,
++			.io_start_time = dm_start_time_ns_from_clone(clone)
+ 		};
+ 
+ 		if (ps->type->end_io)
+-			ps->type->end_io(ps, &pgpath->path, &io_data);
++			ps->type->end_io(ps, &pgpath->path, &ps_io_data);
+ 	}
+ 
+ 	return r;
+diff --git a/drivers/md/dm-path-selector.h b/drivers/md/dm-path-selector.h
+index fb582a943234..4c5fa6a2efe3 100644
+--- a/drivers/md/dm-path-selector.h
++++ b/drivers/md/dm-path-selector.h
+@@ -28,6 +28,7 @@ struct path_selector {
+ 
+ struct path_selector_io_data {
+ 	size_t nr_bytes;
++	u64 io_start_time;
+ };
+ 
+ /* Information about a path selector type */
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index df13fdebe21f..2e0637a6de9d 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -674,6 +674,16 @@ static bool md_in_flight(struct mapped_device *md)
+ 		return md_in_flight_bios(md);
+ }
+ 
++u64 dm_start_time_ns_from_clone(struct bio *bio)
++{
++	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
++	struct dm_io *io = tio->io;
 +
- 	if ((pgpath && queue_io) ||
- 	    (!pgpath && test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))) {
- 		/* Queue for the daemon to resubmit */
++	/* FIXME: convert io->start_time from jiffies to nanoseconds */
++	return (u64)jiffies_to_msecs(io->start_time) * NSEC_PER_MSEC;
++}
++EXPORT_SYMBOL_GPL(dm_start_time_ns_from_clone);
++
+ static void start_io_acct(struct dm_io *io)
+ {
+ 	struct mapped_device *md = io->md;
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 475668c69dbc..e2d506dd805e 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -329,6 +329,8 @@ void *dm_per_bio_data(struct bio *bio, size_t data_size);
+ struct bio *dm_bio_from_per_bio_data(void *data, size_t data_size);
+ unsigned dm_bio_get_target_bio_nr(const struct bio *bio);
+ 
++u64 dm_start_time_ns_from_clone(struct bio *bio);
++
+ int dm_register_target(struct target_type *t);
+ void dm_unregister_target(struct target_type *t);
+ 
 -- 
 2.26.2
