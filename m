@@ -1,111 +1,90 @@
-From: heinzm@redhat.com
-Subject: [PATCH] dm ebs: use new dm-bufo dm_bufio_issue_discard()
-	API
-Date: Wed, 29 Apr 2020 16:47:03 +0200
-Message-ID: <976f321e48432fbb7ae4e3776a9eef1f1906fb79.1588171508.git.heinzm@redhat.com>
+From: Randy Dunlap <rdunlap@infradead.org>
+Subject: Re: [dm-devel] [PATCH -next] md: dm-ebs-target: fix build errors &
+ Kconfig entry
+Date: Wed, 29 Apr 2020 07:52:00 -0700
+Message-ID: <f78d654d-3f98-151d-bc16-bf31a6547a66@infradead.org>
+References: <d33b3bfb-c38d-9770-e6a6-929519dc21d4@infradead.org>
+ <980b6b95-6e18-40ff-f71c-058917c5b6ee@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, snitzer@redhat.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <980b6b95-6e18-40ff-f71c-058917c5b6ee@redhat.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Heinz Mauelshagen <heinzm@redhat.com>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
+Cc: Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-From: Heinz Mauelshagen <heinzm@redhat.com>
+On 4/29/20 5:23 AM, Heinz Mauelshagen wrote:
+> On 4/28/20 5:03 PM, Randy Dunlap wrote:
+>> From: Randy Dunlap <rdunlap@infradead.org>
+>>
+>> Fix build errors by selecting DM_BUFIO.
+>>
+>> Fix Kconfig entry formatting by using tabs instead of spaces,
+>> using "help" instead of "---help---", and
+>> indenting help text with one additional space.
+>>
+>> Fixes these build errors:
+>>
+>> ld: drivers/md/dm-ebs-target.o: in function `__ebs_forget_bio':
+>> dm-ebs-target.c:(.text+0x1bc): undefined reference to `dm_bufio_forget'
+>> ld: drivers/md/dm-ebs-target.o: in function `ebs_dtr':
+>> dm-ebs-target.c:(.text+0x2fe): undefined reference to `dm_bufio_client_destroy'
+>> ld: drivers/md/dm-ebs-target.o: in function `__ebs_rw_bio':
+>> dm-ebs-target.c:(.text+0x4c4): undefined reference to `dm_bufio_get_block_size'
+>> ld: dm-ebs-target.c:(.text+0x4f1): undefined reference to `dm_bufio_read'
+>> ld: dm-ebs-target.c:(.text+0x504): undefined reference to `dm_bufio_get_block_size'
+>> ld: dm-ebs-target.c:(.text+0x519): undefined reference to `dm_bufio_new'
+>> ld: dm-ebs-target.c:(.text+0x567): undefined reference to `dm_bufio_mark_partial_buffer_dirty'
+>> ld: dm-ebs-target.c:(.text+0x56f): undefined reference to `dm_bufio_release'
+>> ld: drivers/md/dm-ebs-target.o: in function `__ebs_process_bios':
+>> dm-ebs-target.c:(.text+0x6bf): undefined reference to `dm_bufio_prefetch'
+>> ld: dm-ebs-target.c:(.text+0x72d): undefined reference to `dm_bufio_prefetch'
+>> ld: dm-ebs-target.c:(.text+0x783): undefined reference to `dm_bufio_prefetch'
+>> ld: dm-ebs-target.c:(.text+0x7fe): undefined reference to `dm_bufio_write_dirty_buffers'
+>> ld: drivers/md/dm-ebs-target.o: in function `ebs_ctr':
+>> dm-ebs-target.c:(.text+0xa82): undefined reference to `dm_bufio_client_create'
+>>
+>> Signed-off-by: Randy Dunlap <rdunlap@infradead.org>
+>> Cc: Heinz Mauelshagen <dm-devel@redhat.com>
+>> Cc: Alasdair Kergon <agk@redhat.com>
+>> Cc: Mike Snitzer <snitzer@redhat.com>
+>> Cc: dm-devel@redhat.com
+>> ---
+>>   drivers/md/Kconfig |   12 ++++++------
+>>   1 file changed, 6 insertions(+), 6 deletions(-)
+>>
+>> --- linux-next-20200428.orig/drivers/md/Kconfig
+>> +++ linux-next-20200428/drivers/md/Kconfig
+>> @@ -338,12 +338,12 @@ config DM_WRITECACHE
+>>          to be cached in standard RAM.
+>>     config DM_EBS
+>> -       tristate "Emulated block size target (EXPERIMENTAL)"
+>> -       depends on BLK_DEV_DM
+>> -       default n
+>> -       ---help---
+>> -     dm-ebs emulates smaller logical block size on backing devices
+>> -     with larger ones (e.g. 512 byte sectors on 4K native disks).
+>> +    tristate "Emulated block size target (EXPERIMENTAL)"
+>> +    depends on BLK_DEV_DM
+>> +    select DM_BUFIO
+>> +    help
+>> +      dm-ebs emulates smaller logical block size on backing devices
+>> +      with larger ones (e.g. 512 byte sectors on 4K native disks).
+>>     config DM_ERA
+>>          tristate "Era target (EXPERIMENTAL)"
+> 
+> 
+> Thanks, fine with me for the most part.
+> 
+> We mainly use '---help---' for dm/md though, so lets's keep it. Mike?
+> 
+> Heinz
 
-Enhance new dm-ebs target as of v4 submitted on 3/9/2020
-to actually pass discarding blocks down to the underlying
-device now that the new dm-bufio API is available.
+Sure, you can keep it for now, but it is being phased out.
 
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
----
- .../admin-guide/device-mapper/dm-ebs.rst      |  6 +++
- drivers/md/dm-ebs-target.c                    | 37 ++++++++++++++++---
- 2 files changed, 38 insertions(+), 5 deletions(-)
-
-diff --git a/Documentation/admin-guide/device-mapper/dm-ebs.rst b/Documentation/admin-guide/device-mapper/dm-ebs.rst
-index 9e7abd3e0ae1..d42627e06924 100644
---- a/Documentation/admin-guide/device-mapper/dm-ebs.rst
-+++ b/Documentation/admin-guide/device-mapper/dm-ebs.rst
-@@ -49,3 +49,9 @@ offset 128 sectors, enforce 2KiB underlying device block size.
- This presumes 2KiB logical blocksize on /dev/sda or less to work:
- 
- ebs /dev/sda 128 2 4
-+
-+Version History
-+---------------
-+
-+V1.0.0 - initial version
-+V1.0.1 - pass down discard requests
-diff --git a/drivers/md/dm-ebs-target.c b/drivers/md/dm-ebs-target.c
-index 1ba45946d4a6..97703c31771f 100644
---- a/drivers/md/dm-ebs-target.c
-+++ b/drivers/md/dm-ebs-target.c
-@@ -128,7 +128,33 @@ static int __ebs_rw_bio(struct ebs_c *ec, int rw, struct bio *bio)
- 	return r;
- }
- 
--/* 'Discard' blocks, i.e. release them from the bufio cache. */
-+/*
-+ * Discard bio's blocks, i.e. pass discards down.
-+ *
-+ * Avoid discarding partial blocks at beginning and end;
-+ * return 0 in case no blocks can be discarded as a result.
-+ */
-+static int __ebs_discard_bio(struct ebs_c *ec, struct bio *bio)
-+{
-+	sector_t block, blocks, sector = bio->bi_iter.bi_sector;;
-+
-+	block = __sector_to_block(ec, sector);
-+	blocks = __nr_blocks(ec, bio);
-+
-+	/* Partial first underlying block (__nr_blocks() may have resulted in one block). */
-+	if (__block_mod(sector, ec->u_bs)) {
-+		block++;
-+		blocks--;
-+	}
-+
-+	/* Partial last underlying block if any. */
-+	if (blocks && __block_mod(bio_end_sector(bio), ec->u_bs))
-+		blocks--;
-+
-+	return blocks ? dm_bufio_issue_discard(ec->bufio, block, blocks) : 0;
-+}
-+
-+/* Release blocks them from the bufio cache. */
- static int __ebs_forget_bio(struct ebs_c *ec, struct bio *bio)
- {
- 	sector_t blocks, sector = bio->bi_iter.bi_sector;;
-@@ -179,9 +205,10 @@ static void __ebs_process_bios(struct work_struct *ws)
- 		else if (bio_op(bio) == REQ_OP_WRITE) {
- 			write = true;
- 			r = __ebs_rw_bio(ec, WRITE, bio);
--		} else if (bio_op(bio) == REQ_OP_DISCARD)
--			/* FIXME: (optionally) call dm_bufio_discard_buffers() once upstream. */
--			r = __ebs_forget_bio(ec, bio);
-+		} else if (bio_op(bio) == REQ_OP_DISCARD) {
-+			__ebs_forget_bio(ec, bio);
-+			r = __ebs_discard_bio(ec, bio);
-+		}
- 
- 		bio->bi_status = r;
- 	}
-@@ -404,7 +431,7 @@ static int ebs_iterate_devices(struct dm_target *ti,
- 
- static struct target_type ebs_target = {
- 	.name		 = "ebs",
--	.version	 = {1, 0, 0},
-+	.version	 = {1, 0, 1},
- 	.features	 = DM_TARGET_PASSES_INTEGRITY,
- 	.module		 = THIS_MODULE,
- 	.ctr		 = ebs_ctr,
+thanks.
 -- 
-2.25.4
+~Randy
