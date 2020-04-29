@@ -1,7 +1,8 @@
-From: Dan Carpenter <dan.carpenter@oracle.com>
-Subject: [bug report] dm: add emulated block size target
-Date: Wed, 29 Apr 2020 16:21:40 +0300
-Message-ID: <20200429132140.GA815210@mwanda>
+From: heinzm@redhat.com
+Subject: [PATCH] dm ebs: use new dm-bufo dm_bufio_issue_discard()
+	API
+Date: Wed, 29 Apr 2020 16:47:03 +0200
+Message-ID: <976f321e48432fbb7ae4e3776a9eef1f1906fb79.1588171508.git.heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -15,48 +16,96 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: heinzm@redhat.com
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-Hello Heinz Mauelshagen,
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-The patch d3d11ad3d087: "dm: add emulated block size target" from Mar
-9, 2020, leads to the following static checker warning:
+Enhance new dm-ebs target as of v4 submitted on 3/9/2020
+to actually pass discarding blocks down to the underlying
+device now that the new dm-bufio API is available.
 
-	drivers/md/dm-ebs-target.c:190 __ebs_process_bios()
-	warn: assigning signed to unsigned: 'bio->bi_status = r' '(-4095)-0'
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+---
+ .../admin-guide/device-mapper/dm-ebs.rst      |  6 +++
+ drivers/md/dm-ebs-target.c                    | 37 ++++++++++++++++---
+ 2 files changed, 38 insertions(+), 5 deletions(-)
 
-drivers/md/dm-ebs-target.c
-   173                          if (__block_mod(bio_end_sector(bio), ec->u_bs) && block2 != block1)
-   174                                  dm_bufio_prefetch(ec->bufio, block2, 1);
-   175                  }
-   176          }
-   177  
-   178          bio_list_for_each(bio, &bios) {
-   179                  r = -EIO;
-   180                  if (bio_op(bio) == REQ_OP_READ)
-   181                          r = __ebs_rw_bio(ec, READ, bio);
-   182                  else if (bio_op(bio) == REQ_OP_WRITE) {
-   183                          write = true;
-   184                          r = __ebs_rw_bio(ec, WRITE, bio);
-   185                  } else if (bio_op(bio) == REQ_OP_DISCARD) {
-   186                          /* FIXME: (optionally) call dm_bufio_discard_buffers() once upstream. */
-   187                          r = __ebs_forget_bio(ec, bio);
-   188                  }
-   189  
-   190                  bio->bi_status = r;
-                        ^^^^^^^^^^^^^^^^^^
-"r" is a negative error code and ->bi_status is a u8 so this won't work.
-
-   191          }
-   192  
-   193          /*
-   194           * We write dirty buffers after processing I/O on them
-   195           * but before we endio thus addressing REQ_FUA/REQ_SYNC.
-   196           */
-   197          r = write ? dm_bufio_write_dirty_buffers(ec->bufio) : 0;
-
-regards,
-dan carpenter
+diff --git a/Documentation/admin-guide/device-mapper/dm-ebs.rst b/Documentation/admin-guide/device-mapper/dm-ebs.rst
+index 9e7abd3e0ae1..d42627e06924 100644
+--- a/Documentation/admin-guide/device-mapper/dm-ebs.rst
++++ b/Documentation/admin-guide/device-mapper/dm-ebs.rst
+@@ -49,3 +49,9 @@ offset 128 sectors, enforce 2KiB underlying device block size.
+ This presumes 2KiB logical blocksize on /dev/sda or less to work:
+ 
+ ebs /dev/sda 128 2 4
++
++Version History
++---------------
++
++V1.0.0 - initial version
++V1.0.1 - pass down discard requests
+diff --git a/drivers/md/dm-ebs-target.c b/drivers/md/dm-ebs-target.c
+index 1ba45946d4a6..97703c31771f 100644
+--- a/drivers/md/dm-ebs-target.c
++++ b/drivers/md/dm-ebs-target.c
+@@ -128,7 +128,33 @@ static int __ebs_rw_bio(struct ebs_c *ec, int rw, struct bio *bio)
+ 	return r;
+ }
+ 
+-/* 'Discard' blocks, i.e. release them from the bufio cache. */
++/*
++ * Discard bio's blocks, i.e. pass discards down.
++ *
++ * Avoid discarding partial blocks at beginning and end;
++ * return 0 in case no blocks can be discarded as a result.
++ */
++static int __ebs_discard_bio(struct ebs_c *ec, struct bio *bio)
++{
++	sector_t block, blocks, sector = bio->bi_iter.bi_sector;;
++
++	block = __sector_to_block(ec, sector);
++	blocks = __nr_blocks(ec, bio);
++
++	/* Partial first underlying block (__nr_blocks() may have resulted in one block). */
++	if (__block_mod(sector, ec->u_bs)) {
++		block++;
++		blocks--;
++	}
++
++	/* Partial last underlying block if any. */
++	if (blocks && __block_mod(bio_end_sector(bio), ec->u_bs))
++		blocks--;
++
++	return blocks ? dm_bufio_issue_discard(ec->bufio, block, blocks) : 0;
++}
++
++/* Release blocks them from the bufio cache. */
+ static int __ebs_forget_bio(struct ebs_c *ec, struct bio *bio)
+ {
+ 	sector_t blocks, sector = bio->bi_iter.bi_sector;;
+@@ -179,9 +205,10 @@ static void __ebs_process_bios(struct work_struct *ws)
+ 		else if (bio_op(bio) == REQ_OP_WRITE) {
+ 			write = true;
+ 			r = __ebs_rw_bio(ec, WRITE, bio);
+-		} else if (bio_op(bio) == REQ_OP_DISCARD)
+-			/* FIXME: (optionally) call dm_bufio_discard_buffers() once upstream. */
+-			r = __ebs_forget_bio(ec, bio);
++		} else if (bio_op(bio) == REQ_OP_DISCARD) {
++			__ebs_forget_bio(ec, bio);
++			r = __ebs_discard_bio(ec, bio);
++		}
+ 
+ 		bio->bi_status = r;
+ 	}
+@@ -404,7 +431,7 @@ static int ebs_iterate_devices(struct dm_target *ti,
+ 
+ static struct target_type ebs_target = {
+ 	.name		 = "ebs",
+-	.version	 = {1, 0, 0},
++	.version	 = {1, 0, 1},
+ 	.features	 = DM_TARGET_PASSES_INTEGRITY,
+ 	.module		 = THIS_MODULE,
+ 	.ctr		 = ebs_ctr,
+-- 
+2.25.4
