@@ -1,14 +1,14 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: dm ebs: fix bio->bi_status assignment
-Date: Wed, 29 Apr 2020 21:40:48 +0200
-Message-ID: <cf22a122-13cf-2692-0e35-cce2fac007fa@redhat.com>
-References: <dff475cd16489080bb229af9bb45c0d67480b8be.1588172814.git.heinzm@redhat.com>
-	<20200429152253.GA22958@redhat.com>
+Subject: Re: [PATCH] dm-writecache: improve performance on
+ Optane-based persistent memory
+Date: Wed, 29 Apr 2020 21:47:14 +0200
+Message-ID: <36ff2aa8-6357-45cd-a507-27392e5de724@redhat.com>
+References: <alpine.LRH.2.02.2004291225140.3914@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200429152253.GA22958@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.2004291225140.3914@file01.intranet.prod.int.rdu2.redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,56 +19,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 4/29/20 5:22 PM, Mike Snitzer wrote:
-> On Wed, Apr 29 2020 at 11:07am -0400,
-> heinzm@redhat.com <heinzm@redhat.com> wrote:
->
->> From: Heinz Mauelshagen <heinzm@redhat.com>
->>
->> Assign blk_status_t to bi_status properly in __ebs_process_bios()
->> on error (flaw found by static checker).
->>
->> Reported-by: Dan Carpenter <dan.carpenter@oracle.com>
->> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
->> ---
->>   drivers/md/dm-ebs-target.c | 3 ++-
->>   1 file changed, 2 insertions(+), 1 deletion(-)
->>
->> diff --git a/drivers/md/dm-ebs-target.c b/drivers/md/dm-ebs-target.c
->> index 97703c31771f..c9c66d6b1e56 100644
->> --- a/drivers/md/dm-ebs-target.c
->> +++ b/drivers/md/dm-ebs-target.c
->> @@ -210,7 +210,8 @@ static void __ebs_process_bios(struct work_struct *ws)
->>   			r = __ebs_discard_bio(ec, bio);
->>   		}
->>   
->> -		bio->bi_status = r;
->> +		if (r < 0)
->> +			bio->bi_status = BLK_STS_IOERR;
->>   	}
->>   
->>   	/*
->> -- 
->> 2.25.4
->>
-> Proper way is to use errno_to_blk_status().  I've folded in:
->
-> -		bio->bi_status = r;
-> +		if (r < 0)
-> +			bio->bi_status = errno_to_blk_status(r);
-
-
-Also, using errno_to_blk_status() doesn't need the conditional so you 
-may mind to remove it.
-
-Heinz
-
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+T24gNC8yOS8yMCA2OjMwIFBNLCBNaWt1bGFzIFBhdG9ja2Egd3JvdGU6Cj4gSGkKPgo+IFRoaXMg
+aXMgdGhlIGNsZmx1c2hvcHQgcGF0Y2ggZm9yIHRoZSBuZXh0IG1lcmdlIHdpbmRvdy4KPgo+IE1p
+a3VsYXMKPgo+Cj4gRnJvbTogTWlrdWxhcyBQYXRvY2thIDxtcGF0b2NrYUByZWRoYXQuY29tPgo+
+Cj4gV2hlbiB0ZXN0aW5nIHRoZSBkbS13cml0ZWNhY2hlIHRhcmdldCBvbiBhIHJlYWwgT3B0YW5l
+LWJhc2VkIHBlcnNpc3RlbnQKPiBtZW1vcnksIGl0IHR1cm5lZCBvdXQgdGhhdCBleHBsaWNpdCBj
+YWNoZSBmbHVzaGluZyB1c2luZyB0aGUgY2xmbHVzaG9wdAo+IGluc3RydWN0aW9uIHBlcmZvcm1z
+IGJldHRlciB0aGFuIG5vbi10ZW1wb3JhbCBzdG9yZXMgZm9yIGJsb2NrIHNpemVzIDFrLAo+IDJr
+IGFuZCA0ay4KPgo+IFRoaXMgcGF0Y2ggYWRkcyBhIG5ldyBmdW5jdGlvbiBtZW1jcHlfZmx1c2hj
+YWNoZV9vcHRpbWl6ZWQgdGhhdCB0ZXN0cyBpZgo+IGNsZmx1c2hvcHQgaXMgcHJlc2VudCAtIGFu
+ZCBpZiBpdCBpcywgd2UgdXNlIGl0IGluc3RlYWQgb2YKPiBtZW1jcHlfZmx1c2hjYWNoZS4KPgo+
+IFNpZ25lZC1vZmYtYnk6IE1pa3VsYXMgUGF0b2NrYSA8bXBhdG9ja2FAcmVkaGF0LmNvbT4KPgo+
+IC0tLQo+ICAgZHJpdmVycy9tZC9kbS13cml0ZWNhY2hlLmMgfCAgIDI5ICsrKysrKysrKysrKysr
+KysrKysrKysrKysrKystCj4gICAxIGZpbGUgY2hhbmdlZCwgMjggaW5zZXJ0aW9ucygrKSwgMSBk
+ZWxldGlvbigtKQo+Cj4gSW5kZXg6IGxpbnV4LTIuNi9kcml2ZXJzL21kL2RtLXdyaXRlY2FjaGUu
+Ywo+ID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT0KPiAtLS0gbGludXgtMi42Lm9yaWcvZHJpdmVycy9tZC9kbS13cml0ZWNh
+Y2hlLmMJMjAyMC0wNC0yOSAxODowOTo1My41OTk5OTkwMDAgKzAyMDAKPiArKysgbGludXgtMi42
+L2RyaXZlcnMvbWQvZG0td3JpdGVjYWNoZS5jCTIwMjAtMDQtMjkgMTg6MjI6MzYuMTM5OTk5MDAw
+ICswMjAwCj4gQEAgLTExMzcsNiArMTEzNywzMyBAQCBzdGF0aWMgaW50IHdyaXRlY2FjaGVfbWVz
+c2FnZShzdHJ1Y3QgZG1fCj4gICAJcmV0dXJuIHI7Cj4gICB9Cj4gICAKPiArc3RhdGljIHZvaWQg
+bWVtY3B5X2ZsdXNoY2FjaGVfb3B0aW1pemVkKHZvaWQgKmRlc3QsIHZvaWQgKnNvdXJjZSwgc2l6
+ZV90IHNpemUpCj4gK3sKPiArCS8qCj4gKwkgKiBjbHVmaHNvcHQgcGVyZm9ybXMgYmV0dGVyIHdp
+dGggYmxvY2sgc2l6ZSAxMDI0LCAyMDQ4LCA0MDk2CgoKVHlwbzrCoMKgwqDCoMKgwqAgXmNsZmx1
+c2hvcHQKCkhlaW56CgoKPiArCSAqIG5vbi10ZW1wb3JhbCBzdG9yZXMgcGVyZm9ybSBiZXR0ZXIg
+d2l0aCBibG9jayBzaXplIDUxMgo+ICsJICoKPiArCSAqIGJsb2NrIHNpemUgICA1MTIgICAgICAg
+ICAgICAgMTAyNCAgICAgICAgICAgIDIwNDggICAgICAgICAgICA0MDk2Cj4gKwkgKiBtb3ZudGkg
+ICAgICAgNDk2IE1CL3MgICAgICAgIDY0MiBNQi9zICAgICAgICA3MjUgTUIvcyAgICAgICAgNzQ0
+IE1CL3MKPiArCSAqIGNsZmx1c2hvcHQgICAzNzMgTUIvcyAgICAgICAgNjg4IE1CL3MgICAgICAg
+IDEuMSBHQi9zICAgICAgICAxLjIgR0Ivcwo+ICsJICovCj4gKyNpZmRlZiBDT05GSUdfWDg2Cj4g
+KwlpZiAoc3RhdGljX2NwdV9oYXMoWDg2X0ZFQVRVUkVfQ0xGTFVTSE9QVCkgJiYKPiArCSAgICBs
+aWtlbHkoYm9vdF9jcHVfZGF0YS54ODZfY2xmbHVzaF9zaXplID09IDY0KSAmJgo+ICsJICAgIGxp
+a2VseShzaXplID49IDc2OCkpIHsKPiArCQlkbyB7Cj4gKwkJCW1lbWNweSgodm9pZCAqKWRlc3Qs
+ICh2b2lkICopc291cmNlLCA2NCk7Cj4gKwkJCWNsZmx1c2hvcHQoKHZvaWQgKilkZXN0KTsKPiAr
+CQkJZGVzdCArPSA2NDsKPiArCQkJc291cmNlICs9IDY0Owo+ICsJCQlzaXplIC09IDY0Owo+ICsJ
+CX0gd2hpbGUgKHNpemUgPj0gNjQpOwo+ICsJCXJldHVybjsKPiArCX0KPiArI2VuZGlmCj4gKwlt
+ZW1jcHlfZmx1c2hjYWNoZShkZXN0LCBzb3VyY2UsIHNpemUpOwo+ICt9Cj4gKwo+ICAgc3RhdGlj
+IHZvaWQgYmlvX2NvcHlfYmxvY2soc3RydWN0IGRtX3dyaXRlY2FjaGUgKndjLCBzdHJ1Y3QgYmlv
+ICpiaW8sIHZvaWQgKmRhdGEpCj4gICB7Cj4gICAJdm9pZCAqYnVmOwo+IEBAIC0xMTYyLDcgKzEx
+ODksNyBAQCBzdGF0aWMgdm9pZCBiaW9fY29weV9ibG9jayhzdHJ1Y3QgZG1fd3JpCj4gICAJCQl9
+Cj4gICAJCX0gZWxzZSB7Cj4gICAJCQlmbHVzaF9kY2FjaGVfcGFnZShiaW9fcGFnZShiaW8pKTsK
+PiAtCQkJbWVtY3B5X2ZsdXNoY2FjaGUoZGF0YSwgYnVmLCBzaXplKTsKPiArCQkJbWVtY3B5X2Zs
+dXNoY2FjaGVfb3B0aW1pemVkKGRhdGEsIGJ1Ziwgc2l6ZSk7Cj4gICAJCX0KPiAgIAo+ICAgCQli
+dmVjX2t1bm1hcF9pcnEoYnVmLCAmZmxhZ3MpOwo+Cj4gLS0KPiBkbS1kZXZlbCBtYWlsaW5nIGxp
+c3QKPiBkbS1kZXZlbEByZWRoYXQuY29tCj4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
+L2xpc3RpbmZvL2RtLWRldmVsCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
+aGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
