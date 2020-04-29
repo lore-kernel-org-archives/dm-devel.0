@@ -1,7 +1,7 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
 Subject: Re: dm ebs: fix bio->bi_status assignment
-Date: Wed, 29 Apr 2020 21:39:10 +0200
-Message-ID: <a44a2e8c-983b-06ae-be36-aa007d0d2704@redhat.com>
+Date: Wed, 29 Apr 2020 21:40:48 +0200
+Message-ID: <cf22a122-13cf-2692-0e35-cce2fac007fa@redhat.com>
 References: <dff475cd16489080bb229af9bb45c0d67480b8be.1588172814.git.heinzm@redhat.com>
 	<20200429152253.GA22958@redhat.com>
 Mime-Version: 1.0
@@ -61,7 +61,14 @@ On 4/29/20 5:22 PM, Mike Snitzer wrote:
 > +		if (r < 0)
 > +			bio->bi_status = errno_to_blk_status(r);
 
-Thanks, that'll map to both possible values (BLK_STS_IOERR and BLK_STS_RESOURCE here),
-though I/O error would've been sufficient here.
+
+Also, using errno_to_blk_status() doesn't need the conditional so you 
+may mind to remove it.
 
 Heinz
+
+
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
