@@ -1,12 +1,12 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
 Subject: Re: [PATCH] dm-writecache: improve performance on
  Optane-based persistent memory
-Date: Wed, 29 Apr 2020 21:47:14 +0200
-Message-ID: <36ff2aa8-6357-45cd-a507-27392e5de724@redhat.com>
+Date: Wed, 29 Apr 2020 21:49:59 +0200
+Message-ID: <3af73377-592b-ba25-c562-636f20125d62@redhat.com>
 References: <alpine.LRH.2.02.2004291225140.3914@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <alpine.LRH.2.02.2004291225140.3914@file01.intranet.prod.int.rdu2.redhat.com>
 Content-Language: en-US
@@ -23,49 +23,87 @@ To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gNC8yOS8yMCA2OjMwIFBNLCBNaWt1bGFzIFBhdG9ja2Egd3JvdGU6Cj4gSGkKPgo+IFRoaXMg
-aXMgdGhlIGNsZmx1c2hvcHQgcGF0Y2ggZm9yIHRoZSBuZXh0IG1lcmdlIHdpbmRvdy4KPgo+IE1p
-a3VsYXMKPgo+Cj4gRnJvbTogTWlrdWxhcyBQYXRvY2thIDxtcGF0b2NrYUByZWRoYXQuY29tPgo+
-Cj4gV2hlbiB0ZXN0aW5nIHRoZSBkbS13cml0ZWNhY2hlIHRhcmdldCBvbiBhIHJlYWwgT3B0YW5l
-LWJhc2VkIHBlcnNpc3RlbnQKPiBtZW1vcnksIGl0IHR1cm5lZCBvdXQgdGhhdCBleHBsaWNpdCBj
-YWNoZSBmbHVzaGluZyB1c2luZyB0aGUgY2xmbHVzaG9wdAo+IGluc3RydWN0aW9uIHBlcmZvcm1z
-IGJldHRlciB0aGFuIG5vbi10ZW1wb3JhbCBzdG9yZXMgZm9yIGJsb2NrIHNpemVzIDFrLAo+IDJr
-IGFuZCA0ay4KPgo+IFRoaXMgcGF0Y2ggYWRkcyBhIG5ldyBmdW5jdGlvbiBtZW1jcHlfZmx1c2hj
-YWNoZV9vcHRpbWl6ZWQgdGhhdCB0ZXN0cyBpZgo+IGNsZmx1c2hvcHQgaXMgcHJlc2VudCAtIGFu
-ZCBpZiBpdCBpcywgd2UgdXNlIGl0IGluc3RlYWQgb2YKPiBtZW1jcHlfZmx1c2hjYWNoZS4KPgo+
-IFNpZ25lZC1vZmYtYnk6IE1pa3VsYXMgUGF0b2NrYSA8bXBhdG9ja2FAcmVkaGF0LmNvbT4KPgo+
-IC0tLQo+ICAgZHJpdmVycy9tZC9kbS13cml0ZWNhY2hlLmMgfCAgIDI5ICsrKysrKysrKysrKysr
-KysrKysrKysrKysrKystCj4gICAxIGZpbGUgY2hhbmdlZCwgMjggaW5zZXJ0aW9ucygrKSwgMSBk
-ZWxldGlvbigtKQo+Cj4gSW5kZXg6IGxpbnV4LTIuNi9kcml2ZXJzL21kL2RtLXdyaXRlY2FjaGUu
-Ywo+ID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT0KPiAtLS0gbGludXgtMi42Lm9yaWcvZHJpdmVycy9tZC9kbS13cml0ZWNh
-Y2hlLmMJMjAyMC0wNC0yOSAxODowOTo1My41OTk5OTkwMDAgKzAyMDAKPiArKysgbGludXgtMi42
-L2RyaXZlcnMvbWQvZG0td3JpdGVjYWNoZS5jCTIwMjAtMDQtMjkgMTg6MjI6MzYuMTM5OTk5MDAw
-ICswMjAwCj4gQEAgLTExMzcsNiArMTEzNywzMyBAQCBzdGF0aWMgaW50IHdyaXRlY2FjaGVfbWVz
-c2FnZShzdHJ1Y3QgZG1fCj4gICAJcmV0dXJuIHI7Cj4gICB9Cj4gICAKPiArc3RhdGljIHZvaWQg
-bWVtY3B5X2ZsdXNoY2FjaGVfb3B0aW1pemVkKHZvaWQgKmRlc3QsIHZvaWQgKnNvdXJjZSwgc2l6
-ZV90IHNpemUpCj4gK3sKPiArCS8qCj4gKwkgKiBjbHVmaHNvcHQgcGVyZm9ybXMgYmV0dGVyIHdp
-dGggYmxvY2sgc2l6ZSAxMDI0LCAyMDQ4LCA0MDk2CgoKVHlwbzrCoMKgwqDCoMKgwqAgXmNsZmx1
-c2hvcHQKCkhlaW56CgoKPiArCSAqIG5vbi10ZW1wb3JhbCBzdG9yZXMgcGVyZm9ybSBiZXR0ZXIg
-d2l0aCBibG9jayBzaXplIDUxMgo+ICsJICoKPiArCSAqIGJsb2NrIHNpemUgICA1MTIgICAgICAg
-ICAgICAgMTAyNCAgICAgICAgICAgIDIwNDggICAgICAgICAgICA0MDk2Cj4gKwkgKiBtb3ZudGkg
-ICAgICAgNDk2IE1CL3MgICAgICAgIDY0MiBNQi9zICAgICAgICA3MjUgTUIvcyAgICAgICAgNzQ0
-IE1CL3MKPiArCSAqIGNsZmx1c2hvcHQgICAzNzMgTUIvcyAgICAgICAgNjg4IE1CL3MgICAgICAg
-IDEuMSBHQi9zICAgICAgICAxLjIgR0Ivcwo+ICsJICovCj4gKyNpZmRlZiBDT05GSUdfWDg2Cj4g
-KwlpZiAoc3RhdGljX2NwdV9oYXMoWDg2X0ZFQVRVUkVfQ0xGTFVTSE9QVCkgJiYKPiArCSAgICBs
-aWtlbHkoYm9vdF9jcHVfZGF0YS54ODZfY2xmbHVzaF9zaXplID09IDY0KSAmJgo+ICsJICAgIGxp
-a2VseShzaXplID49IDc2OCkpIHsKPiArCQlkbyB7Cj4gKwkJCW1lbWNweSgodm9pZCAqKWRlc3Qs
-ICh2b2lkICopc291cmNlLCA2NCk7Cj4gKwkJCWNsZmx1c2hvcHQoKHZvaWQgKilkZXN0KTsKPiAr
-CQkJZGVzdCArPSA2NDsKPiArCQkJc291cmNlICs9IDY0Owo+ICsJCQlzaXplIC09IDY0Owo+ICsJ
-CX0gd2hpbGUgKHNpemUgPj0gNjQpOwo+ICsJCXJldHVybjsKPiArCX0KPiArI2VuZGlmCj4gKwlt
-ZW1jcHlfZmx1c2hjYWNoZShkZXN0LCBzb3VyY2UsIHNpemUpOwo+ICt9Cj4gKwo+ICAgc3RhdGlj
-IHZvaWQgYmlvX2NvcHlfYmxvY2soc3RydWN0IGRtX3dyaXRlY2FjaGUgKndjLCBzdHJ1Y3QgYmlv
-ICpiaW8sIHZvaWQgKmRhdGEpCj4gICB7Cj4gICAJdm9pZCAqYnVmOwo+IEBAIC0xMTYyLDcgKzEx
-ODksNyBAQCBzdGF0aWMgdm9pZCBiaW9fY29weV9ibG9jayhzdHJ1Y3QgZG1fd3JpCj4gICAJCQl9
-Cj4gICAJCX0gZWxzZSB7Cj4gICAJCQlmbHVzaF9kY2FjaGVfcGFnZShiaW9fcGFnZShiaW8pKTsK
-PiAtCQkJbWVtY3B5X2ZsdXNoY2FjaGUoZGF0YSwgYnVmLCBzaXplKTsKPiArCQkJbWVtY3B5X2Zs
-dXNoY2FjaGVfb3B0aW1pemVkKGRhdGEsIGJ1Ziwgc2l6ZSk7Cj4gICAJCX0KPiAgIAo+ICAgCQli
-dmVjX2t1bm1hcF9pcnEoYnVmLCAmZmxhZ3MpOwo+Cj4gLS0KPiBkbS1kZXZlbCBtYWlsaW5nIGxp
-c3QKPiBkbS1kZXZlbEByZWRoYXQuY29tCj4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
-L2xpc3RpbmZvL2RtLWRldmVsCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
-aGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On 4/29/20 6:30 PM, Mikulas Patocka wrote:
+> Hi
+>
+> This is the clflushopt patch for the next merge window.
+>
+> Mikulas
+>
+>
+> From: Mikulas Patocka <mpatocka@redhat.com>
+>
+> When testing the dm-writecache target on a real Optane-based persistent
+> memory, it turned out that explicit cache flushing using the clflushopt
+> instruction performs better than non-temporal stores for block sizes 1k,
+> 2k and 4k.
+>
+> This patch adds a new function memcpy_flushcache_optimized that tests if
+> clflushopt is present - and if it is, we use it instead of
+> memcpy_flushcache.
+>
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+>
+> ---
+>   drivers/md/dm-writecache.c |   29 ++++++++++++++++++++++++++++-
+>   1 file changed, 28 insertions(+), 1 deletion(-)
+>
+> Index: linux-2.6/drivers/md/dm-writecache.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-writecache.c	2020-04-29 18:09:53.599999000 +0200
+> +++ linux-2.6/drivers/md/dm-writecache.c	2020-04-29 18:22:36.139999000 +0200
+> @@ -1137,6 +1137,33 @@ static int writecache_message(struct dm_
+>   	return r;
+>   }
+>   
+> +static void memcpy_flushcache_optimized(void *dest, void *source, size_t size)
+> +{
+> +	/*
+> +	 * clufhsopt performs better with block size 1024, 2048, 4096
+> +	 * non-temporal stores perform better with block size 512
+> +	 *
+> +	 * block size   512             1024            2048            4096
+> +	 * movnti       496 MB/s        642 MB/s        725 MB/s        744 MB/s
+> +	 * clflushopt   373 MB/s        688 MB/s        1.1 GB/s        1.2 GB/s
+> +	 */
+> +#ifdef CONFIG_X86
+> +	if (static_cpu_has(X86_FEATURE_CLFLUSHOPT) &&
+> +	    likely(boot_cpu_data.x86_clflush_size == 64) &&
+> +	    likely(size >= 768)) {
+> +		do {
+> +			memcpy((void *)dest, (void *)source, 64);
+> +			clflushopt((void *)dest);
+> +			dest += 64;
+> +			source += 64;
+> +			size -= 64;
+> +		} while (size >= 64);
+> +		return;
+
+
+Aren't memory barriers needed for ordering before and after the loop?
+
+Heinz
+
+
+> +	}
+> +#endif
+> +	memcpy_flushcache(dest, source, size);
+> +}
+> +
+>   static void bio_copy_block(struct dm_writecache *wc, struct bio *bio, void *data)
+>   {
+>   	void *buf;
+> @@ -1162,7 +1189,7 @@ static void bio_copy_block(struct dm_wri
+>   			}
+>   		} else {
+>   			flush_dcache_page(bio_page(bio));
+> -			memcpy_flushcache(data, buf, size);
+> +			memcpy_flushcache_optimized(data, buf, size);
+>   		}
+>   
+>   		bvec_kunmap_irq(buf, &flags);
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
