@@ -1,41 +1,45 @@
-From: "Leizhen (ThunderTown)" <thunder.leizhen@huawei.com>
-Subject: Re: [PATCH 1/4] block: Move SECTORS_PER_PAGE and
- SECTORS_PER_PAGE_SHIFT definitions into <linux/blkdev.h>
-Date: Wed, 6 May 2020 12:06:12 +0800
-Message-ID: <8ec2a734-d23a-83ef-fe06-6b2895a2d392@huawei.com>
-References: <20200505115543.1660-1-thunder.leizhen@huawei.com>
- <20200505115543.1660-2-thunder.leizhen@huawei.com>
- <20200505121043.GG16070@bombadil.infradead.org>
+From: Christian Hesse <list@eworm.de>
+Subject: [PATCH 1/2] libmpathpersist: depend on libmultipath
+Date: Wed,  6 May 2020 09:35:47 +0200
+Message-ID: <20200506073548.41756-1-list@eworm.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200505121043.GG16070@bombadil.infradead.org>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Jens Axboe <axboe@kernel.dk>, linux-block <linux-block@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel <dm-devel@redhat.com>, Song Liu <song@kernel.org>, linux-raid <linux-raid@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Christian Hesse <mail@eworm.de>
 List-Id: dm-devel.ids
 
+From: Christian Hesse <mail@eworm.de>
 
+Without this the build fails with:
 
-On 2020/5/5 20:10, Matthew Wilcox wrote:
-> On Tue, May 05, 2020 at 07:55:40PM +0800, Zhen Lei wrote:
->> +#ifndef SECTORS_PER_PAGE_SHIFT
->> +#define SECTORS_PER_PAGE_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
->> +#endif
->> +#ifndef SECTORS_PER_PAGE
->> +#define SECTORS_PER_PAGE	(1 << SECTORS_PER_PAGE_SHIFT)
->>  #endif
-> 
-> I find SECTORS_PER_PAGE_SHIFT quite hard to read.  I had a quick skim
-> of your other patches, and it seems to me that we could replace
-> '<< SECTORS_PER_PAGE_SHIFT' with '* SECTORS_PER_PAGE' and it would be
-> more readable in every case.
+/usr/bin/ld: cannot find -lmultipath
 
-OK, I will delete SECTORS_PER_PAGE_SHIFT, and replace the shift with {*|/} SECTORS_PER_PAGE if it's
-not suitable to be replaced by sectors_to_page()/page_to_sectors().
+Signed-off-by: Christian Hesse <mail@eworm.de>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-> 
-> .
-> 
+diff --git a/Makefile b/Makefile
+index 1dee3680..ba1d73ba 100644
+--- a/Makefile
++++ b/Makefile
+@@ -28,7 +28,7 @@ all:	$(BUILDDIRS)
+ $(BUILDDIRS):
+ 	$(MAKE) -C $@
+ 
+-multipath multipathd mpathpersist: libmultipath
++libmpathpersist multipath multipathd mpathpersist: libmultipath
+ mpathpersist:  libmpathpersist
+ 
+ $(BUILDDIRS.clean):
