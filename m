@@ -1,15 +1,16 @@
 From: "Leizhen (ThunderTown)" <thunder.leizhen@huawei.com>
 Subject: Re: [PATCH 2/4] mm/swap: use SECTORS_PER_PAGE_SHIFT to clean up code
-Date: Wed, 6 May 2020 09:33:50 +0800
-Message-ID: <32ba9907-60ad-27c0-c565-e7b5c80ab03c@huawei.com>
+Date: Wed, 6 May 2020 11:47:40 +0800
+Message-ID: <bddd596b-2e8e-42aa-70cc-41583b15c548@huawei.com>
 References: <20200505115543.1660-1-thunder.leizhen@huawei.com>
  <20200505115543.1660-3-thunder.leizhen@huawei.com>
  <20200505172520.GI16070@bombadil.infradead.org>
+ <32ba9907-60ad-27c0-c565-e7b5c80ab03c@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200505172520.GI16070@bombadil.infradead.org>
+In-Reply-To: <32ba9907-60ad-27c0-c565-e7b5c80ab03c@huawei.com>
 Content-Language: en-US
 Sender: linux-block-owner@vger.kernel.org
 To: Matthew Wilcox <willy@infradead.org>
@@ -18,26 +19,33 @@ List-Id: dm-devel.ids
 
 
 
-On 2020/5/6 1:25, Matthew Wilcox wrote:
-> On Tue, May 05, 2020 at 07:55:41PM +0800, Zhen Lei wrote:
->> +++ b/mm/swapfile.c
->> @@ -177,8 +177,8 @@ static int discard_swap(struct swap_info_struct *si)
->>  
->>  	/* Do not discard the swap header page! */
->>  	se = first_se(si);
->> -	start_block = (se->start_block + 1) << (PAGE_SHIFT - 9);
->> -	nr_blocks = ((sector_t)se->nr_pages - 1) << (PAGE_SHIFT - 9);
->> +	start_block = (se->start_block + 1) << SECTORS_PER_PAGE_SHIFT;
->> +	nr_blocks = ((sector_t)se->nr_pages - 1) << SECTORS_PER_PAGE_SHIFT;
+On 2020/5/6 9:33, Leizhen (ThunderTown) wrote:
 > 
-> Thinking about this some more, wouldn't this look better?
 > 
-> 	start_block = page_sectors(se->start_block + 1);
-> 	nr_block = page_sectors(se->nr_pages - 1);
+> On 2020/5/6 1:25, Matthew Wilcox wrote:
+>> On Tue, May 05, 2020 at 07:55:41PM +0800, Zhen Lei wrote:
+>>> +++ b/mm/swapfile.c
+>>> @@ -177,8 +177,8 @@ static int discard_swap(struct swap_info_struct *si)
+>>>  
+>>>  	/* Do not discard the swap header page! */
+>>>  	se = first_se(si);
+>>> -	start_block = (se->start_block + 1) << (PAGE_SHIFT - 9);
+>>> -	nr_blocks = ((sector_t)se->nr_pages - 1) << (PAGE_SHIFT - 9);
+>>> +	start_block = (se->start_block + 1) << SECTORS_PER_PAGE_SHIFT;
+>>> +	nr_blocks = ((sector_t)se->nr_pages - 1) << SECTORS_PER_PAGE_SHIFT;
+>>
+>> Thinking about this some more, wouldn't this look better?
+>>
+>> 	start_block = page_sectors(se->start_block + 1);
+>> 	nr_block = page_sectors(se->nr_pages - 1);
+>>
 > 
+> OK，That's fine, it's clearer. And in this way, there won't be more than 80 columns.
 
-OK，That's fine, it's clearer. And in this way, there won't be more than 80 columns.
+Should we rename "page_sectors" to "page_to_sectors"? Because we may need to define
+"sectors_to_page" also.
 
 > 
-> .
-> 
+>>
+>> .
+>>
