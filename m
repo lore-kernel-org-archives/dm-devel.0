@@ -1,94 +1,60 @@
-From: Christian Hesse <list@eworm.de>
-Subject: Re: [PATCH 2/2] libmultipath: create libdir on install
-Date: Wed, 6 May 2020 09:48:28 +0200
-Message-ID: <20200506094828.727f1d3a@leda>
-References: <20200506073548.41756-1-list@eworm.de>
-	<20200506073548.41756-2-list@eworm.de>
+From: "Leizhen (ThunderTown)" <thunder.leizhen@huawei.com>
+Subject: Re: [PATCH 2/4] mm/swap: use SECTORS_PER_PAGE_SHIFT to clean up code
+Date: Wed, 6 May 2020 17:16:04 +0800
+Message-ID: <8fefbfb2-1100-fab2-0383-e57343dc44f5@huawei.com>
+References: <20200505115543.1660-1-thunder.leizhen@huawei.com>
+ <20200505115543.1660-3-thunder.leizhen@huawei.com>
+ <20200505172520.GI16070@bombadil.infradead.org>
+ <32ba9907-60ad-27c0-c565-e7b5c80ab03c@huawei.com>
+ <bddd596b-2e8e-42aa-70cc-41583b15c548@huawei.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0267465331608610918=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200506073548.41756-2-list@eworm.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Christian Hesse <mail@eworm.de>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <bddd596b-2e8e-42aa-70cc-41583b15c548@huawei.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Matthew Wilcox <willy@infradead.org>
+Cc: Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Jens Axboe <axboe@kernel.dk>, linux-block <linux-block@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel <dm-devel@redhat.com>, Song Liu <song@kernel.org>, linux-raid <linux-raid@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
---===============0267465331608610918==
-Content-Type: multipart/signed; boundary="Sig_//x5vMvyuv7RPR7A7604/axm";
-	protocol="application/pgp-signature"; micalg=pgp-sha256
-
---Sig_//x5vMvyuv7RPR7A7604/axm
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
-
-Christian Hesse <list@eworm.de> on Wed, 2020/05/06 09:35:
-> From: Christian Hesse <mail@eworm.de>
->=20
-> Without this installation fails with:
->=20
-> install: target '$DESTDIR/usr/lib/multipath' is not a directory
-> Signed-off-by: Christian Hesse <mail@eworm.de>
-> ---
->  libmultipath/prioritizers/Makefile | 1 +
->  1 file changed, 1 insertion(+)
->=20
-> diff --git a/libmultipath/prioritizers/Makefile
-> b/libmultipath/prioritizers/Makefile index 9d0fe03c..11da5be2 100644
-> --- a/libmultipath/prioritizers/Makefile
-> +++ b/libmultipath/prioritizers/Makefile
-> @@ -35,6 +35,7 @@ libprio%.so: %.o
->  =09$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
-> =20
->  install: $(LIBS)
-> +=09$(INSTALL_PROGRAM) -d $(DESTDIR)$(libdir)
->  =09$(INSTALL_PROGRAM) -m 755 libprio*.so $(DESTDIR)$(libdir)
-> =20
->  uninstall:
-
-Ignore this one... It does not fix the issue. The build system has to be
-fixed for simultaneous jobs when installing.
-
-For now installing with just one job (`make -j1`).
---=20
-main(a){char*c=3D/*    Schoene Gruesse                         */"B?IJj;MEH=
-"
-"CX:;",b;for(a/*    Best regards             my address:    */=3D0;b=3Dc[a+=
-+];)
-putchar(b-1/(/*    Chris            cc -ox -xc - && ./x    */b/42*2-3)*42);=
-}
-
---Sig_//x5vMvyuv7RPR7A7604/axm
-Content-Type: application/pgp-signature
-Content-Description: OpenPGP digital signature
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAEBCAAdFiEEXHmveYAHrRp+prOviUUh18yA9HYFAl6ya8wACgkQiUUh18yA
-9HZeWQgAqwLNSSgPImSXy/RuW8w50X+Wlr1+7dor3DTKIuZB3R0s0oiXZfk+sNeU
-Mmuy2pO6GrXVtiP2VK0kg8JnCK37VTkdpWmrfdV5PtmYdnsaCtqELVIk01alGW/N
-Pyx0N9e+Tj13NG+sWqo1yiOJF9y9/ruQCcTd0yfo8fe46bOTqBL+fWJa05gjBnDj
-V7Gcn+N5pJdlQBXK36G/seetFhuWWJVhZTLz/Q5qxTHUe33SMQNfm9yaqNwhoHeP
-Vn38D+Nude87D/vPxtpWeMReAagB6B27FgGj3IsGH33o/YTVeY859Ev2bw5nVeXr
-nvJzUJ8S0NjxF2yako11aSOilyE4WA==
-=PBUr
------END PGP SIGNATURE-----
-
---Sig_//x5vMvyuv7RPR7A7604/axm--
 
 
---===============0267465331608610918==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+On 2020/5/6 11:47, Leizhen (ThunderTown) wrote:
+> 
+> 
+> On 2020/5/6 9:33, Leizhen (ThunderTown) wrote:
+>>
+>>
+>> On 2020/5/6 1:25, Matthew Wilcox wrote:
+>>> On Tue, May 05, 2020 at 07:55:41PM +0800, Zhen Lei wrote:
+>>>> +++ b/mm/swapfile.c
+>>>> @@ -177,8 +177,8 @@ static int discard_swap(struct swap_info_struct *si)
+>>>>  
+>>>>  	/* Do not discard the swap header page! */
+>>>>  	se = first_se(si);
+>>>> -	start_block = (se->start_block + 1) << (PAGE_SHIFT - 9);
+>>>> -	nr_blocks = ((sector_t)se->nr_pages - 1) << (PAGE_SHIFT - 9);
+>>>> +	start_block = (se->start_block + 1) << SECTORS_PER_PAGE_SHIFT;
+>>>> +	nr_blocks = ((sector_t)se->nr_pages - 1) << SECTORS_PER_PAGE_SHIFT;
+>>>
+>>> Thinking about this some more, wouldn't this look better?
+>>>
+>>> 	start_block = page_sectors(se->start_block + 1);
+>>> 	nr_block = page_sectors(se->nr_pages - 1);
+>>>
+>>
+>> OK，That's fine, it's clearer. And in this way, there won't be more than 80 columns.
+> 
+> Should we rename "page_sectors" to "page_to_sectors"? Because we may need to define
+> "sectors_to_page" also.
 
+Change the "sectors_to_page" to "sectors_to_npage", npage means "number of pages"
+or "page number". To distinguish the use case of "pfn_to_page()" etc. The latter
+returns the pointer of "struct page".
 
---===============0267465331608610918==--
+> 
+>>
+>>>
+>>> .
+>>>
