@@ -1,60 +1,69 @@
-From: "Leizhen (ThunderTown)" <thunder.leizhen@huawei.com>
-Subject: Re: [PATCH 2/4] mm/swap: use SECTORS_PER_PAGE_SHIFT to clean up code
-Date: Wed, 6 May 2020 17:16:04 +0800
-Message-ID: <8fefbfb2-1100-fab2-0383-e57343dc44f5@huawei.com>
-References: <20200505115543.1660-1-thunder.leizhen@huawei.com>
- <20200505115543.1660-3-thunder.leizhen@huawei.com>
- <20200505172520.GI16070@bombadil.infradead.org>
- <32ba9907-60ad-27c0-c565-e7b5c80ab03c@huawei.com>
- <bddd596b-2e8e-42aa-70cc-41583b15c548@huawei.com>
+From: Zhen Lei <thunder.leizhen@huawei.com>
+Subject: [PATCH v2 00/10] clean up SECTOR related macros and sectors/pages conversions
+Date: Thu, 7 May 2020 15:50:50 +0800
+Message-ID: <20200507075100.1779-1-thunder.leizhen@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <bddd596b-2e8e-42aa-70cc-41583b15c548@huawei.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Jens Axboe <axboe@kernel.dk>, linux-block <linux-block@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel <dm-devel@redhat.com>, Song Liu <song@kernel.org>, linux-raid <linux-raid@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Matthew Wilcox <willy@infradead.org>, Jens Axboe <axboe@kernel.dk>, Coly Li <colyli@suse.de>, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-block <linux-block@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, dm-devel <dm-devel@redhat.com>, Song Liu <song@kernel.org>, linux-raid <linux-raid@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>
+Cc: Zhen Lei <thunder.leizhen@huawei.com>
 List-Id: dm-devel.ids
 
+v1 --> v2:
+As Matthew Wilcox's suggestion, add sectors_to_npage()/npage_to_sectors()
+helpers to eliminate SECTORS_PER_PAGE_SHIFT, because it's quite hard to read.
+In further, I also eliminated PAGE_SECTORS_SHIFT.
 
+I tried to eliminate all magic number "9" and "512", but it's too many, maybe
+no one want to review it, so I gave up. In the process of searching, I found
+the existing macro PAGE_SECTORS, it's equivalent to SECTORS_PER_PAGE. Because
+PAGE_SECTORS was defined in include/linux/device-mapper.h, and SECTORS_PER_PAGE
+was defined in drivers/block/zram/zram_drv.h, so I discarded SECTORS_PER_PAGE,
+althrough I prefer it so much.
 
-On 2020/5/6 11:47, Leizhen (ThunderTown) wrote:
-> 
-> 
-> On 2020/5/6 9:33, Leizhen (ThunderTown) wrote:
->>
->>
->> On 2020/5/6 1:25, Matthew Wilcox wrote:
->>> On Tue, May 05, 2020 at 07:55:41PM +0800, Zhen Lei wrote:
->>>> +++ b/mm/swapfile.c
->>>> @@ -177,8 +177,8 @@ static int discard_swap(struct swap_info_struct *si)
->>>>  
->>>>  	/* Do not discard the swap header page! */
->>>>  	se = first_se(si);
->>>> -	start_block = (se->start_block + 1) << (PAGE_SHIFT - 9);
->>>> -	nr_blocks = ((sector_t)se->nr_pages - 1) << (PAGE_SHIFT - 9);
->>>> +	start_block = (se->start_block + 1) << SECTORS_PER_PAGE_SHIFT;
->>>> +	nr_blocks = ((sector_t)se->nr_pages - 1) << SECTORS_PER_PAGE_SHIFT;
->>>
->>> Thinking about this some more, wouldn't this look better?
->>>
->>> 	start_block = page_sectors(se->start_block + 1);
->>> 	nr_block = page_sectors(se->nr_pages - 1);
->>>
->>
->> OK，That's fine, it's clearer. And in this way, there won't be more than 80 columns.
-> 
-> Should we rename "page_sectors" to "page_to_sectors"? Because we may need to define
-> "sectors_to_page" also.
+v1:
+When I studied the code of mm/swap, I found "1 << (PAGE_SHIFT - 9)" appears
+many times. So I try to clean up it.
 
-Change the "sectors_to_page" to "sectors_to_npage", npage means "number of pages"
-or "page number". To distinguish the use case of "pfn_to_page()" etc. The latter
-returns the pointer of "struct page".
+1. Replace "1 << (PAGE_SHIFT - 9)" or similar with SECTORS_PER_PAGE
+2. Replace "PAGE_SHIFT - 9" with SECTORS_PER_PAGE_SHIFT
+3. Replace "9" with SECTOR_SHIFT
+4. Replace "512" with SECTOR_SIZE
 
-> 
->>
->>>
->>> .
->>>
+Zhen Lei (10):
+  block: move PAGE_SECTORS definition into <linux/blkdev.h>
+  zram: abolish macro SECTORS_PER_PAGE
+  block: add sectors_to_npage()/npage_to_sectors() helpers
+  zram: abolish macro SECTORS_PER_PAGE_SHIFT
+  block: abolish macro PAGE_SECTORS_SHIFT
+  mm/swap: use npage_to_sectors() and PAGE_SECTORS to clean up code
+  block: use sectors_to_npage() and PAGE_SECTORS to clean up code
+  md: use sectors_to_npage() and npage_to_sectors() to clean up code
+  md: use existing definition RESYNC_SECTORS
+  md: use PAGE_SECTORS to clean up code
+
+ block/blk-settings.c          |  6 +++---
+ block/partitions/core.c       |  5 ++---
+ drivers/block/brd.c           |  7 ++-----
+ drivers/block/null_blk_main.c | 10 ++++------
+ drivers/block/zram/zram_drv.c |  8 ++++----
+ drivers/block/zram/zram_drv.h |  2 --
+ drivers/md/bcache/util.h      |  2 --
+ drivers/md/dm-kcopyd.c        |  2 +-
+ drivers/md/dm-table.c         |  2 +-
+ drivers/md/md-bitmap.c        | 16 ++++++++--------
+ drivers/md/md.c               |  6 +++---
+ drivers/md/raid1.c            | 10 +++++-----
+ drivers/md/raid10.c           | 28 ++++++++++++++--------------
+ drivers/md/raid5-cache.c      | 11 +++++------
+ drivers/md/raid5.c            |  4 ++--
+ include/linux/blkdev.h        |  7 +++++--
+ include/linux/device-mapper.h |  1 -
+ mm/page_io.c                  |  4 ++--
+ mm/swapfile.c                 | 12 ++++++------
+ 19 files changed, 67 insertions(+), 76 deletions(-)
+
+-- 
+2.26.0.106.g9fadedd
