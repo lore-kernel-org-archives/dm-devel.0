@@ -1,69 +1,96 @@
 From: Zhen Lei <thunder.leizhen@huawei.com>
-Subject: [PATCH v2 00/10] clean up SECTOR related macros and sectors/pages conversions
-Date: Thu, 7 May 2020 15:50:50 +0800
-Message-ID: <20200507075100.1779-1-thunder.leizhen@huawei.com>
+Subject: [PATCH v2 01/10] block: move PAGE_SECTORS definition into <linux/blkdev.h>
+Date: Thu, 7 May 2020 15:50:51 +0800
+Message-ID: <20200507075100.1779-2-thunder.leizhen@huawei.com>
+References: <20200507075100.1779-1-thunder.leizhen@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7BIT
-Return-path: <linux-raid-owner@vger.kernel.org>
-Sender: linux-raid-owner@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200507075100.1779-1-thunder.leizhen@huawei.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Matthew Wilcox <willy@infradead.org>, Jens Axboe <axboe@kernel.dk>, Coly Li <colyli@suse.de>, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-block <linux-block@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, dm-devel <dm-devel@redhat.com>, Song Liu <song@kernel.org>, linux-raid <linux-raid@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>
 Cc: Zhen Lei <thunder.leizhen@huawei.com>
 List-Id: dm-devel.ids
 
-v1 --> v2:
-As Matthew Wilcox's suggestion, add sectors_to_npage()/npage_to_sectors()
-helpers to eliminate SECTORS_PER_PAGE_SHIFT, because it's quite hard to read.
-In further, I also eliminated PAGE_SECTORS_SHIFT.
+Too many duplicated PAGE_SECTORS definitions, eliminate it.
 
-I tried to eliminate all magic number "9" and "512", but it's too many, maybe
-no one want to review it, so I gave up. In the process of searching, I found
-the existing macro PAGE_SECTORS, it's equivalent to SECTORS_PER_PAGE. Because
-PAGE_SECTORS was defined in include/linux/device-mapper.h, and SECTORS_PER_PAGE
-was defined in drivers/block/zram/zram_drv.h, so I discarded SECTORS_PER_PAGE,
-althrough I prefer it so much.
+Signed-off-by: Zhen Lei <thunder.leizhen@huawei.com>
+---
+ drivers/block/brd.c           | 1 -
+ drivers/block/null_blk_main.c | 1 -
+ drivers/md/bcache/util.h      | 2 --
+ include/linux/blkdev.h        | 5 +++--
+ include/linux/device-mapper.h | 1 -
+ 5 files changed, 3 insertions(+), 7 deletions(-)
 
-v1:
-When I studied the code of mm/swap, I found "1 << (PAGE_SHIFT - 9)" appears
-many times. So I try to clean up it.
-
-1. Replace "1 << (PAGE_SHIFT - 9)" or similar with SECTORS_PER_PAGE
-2. Replace "PAGE_SHIFT - 9" with SECTORS_PER_PAGE_SHIFT
-3. Replace "9" with SECTOR_SHIFT
-4. Replace "512" with SECTOR_SIZE
-
-Zhen Lei (10):
-  block: move PAGE_SECTORS definition into <linux/blkdev.h>
-  zram: abolish macro SECTORS_PER_PAGE
-  block: add sectors_to_npage()/npage_to_sectors() helpers
-  zram: abolish macro SECTORS_PER_PAGE_SHIFT
-  block: abolish macro PAGE_SECTORS_SHIFT
-  mm/swap: use npage_to_sectors() and PAGE_SECTORS to clean up code
-  block: use sectors_to_npage() and PAGE_SECTORS to clean up code
-  md: use sectors_to_npage() and npage_to_sectors() to clean up code
-  md: use existing definition RESYNC_SECTORS
-  md: use PAGE_SECTORS to clean up code
-
- block/blk-settings.c          |  6 +++---
- block/partitions/core.c       |  5 ++---
- drivers/block/brd.c           |  7 ++-----
- drivers/block/null_blk_main.c | 10 ++++------
- drivers/block/zram/zram_drv.c |  8 ++++----
- drivers/block/zram/zram_drv.h |  2 --
- drivers/md/bcache/util.h      |  2 --
- drivers/md/dm-kcopyd.c        |  2 +-
- drivers/md/dm-table.c         |  2 +-
- drivers/md/md-bitmap.c        | 16 ++++++++--------
- drivers/md/md.c               |  6 +++---
- drivers/md/raid1.c            | 10 +++++-----
- drivers/md/raid10.c           | 28 ++++++++++++++--------------
- drivers/md/raid5-cache.c      | 11 +++++------
- drivers/md/raid5.c            |  4 ++--
- include/linux/blkdev.h        |  7 +++++--
- include/linux/device-mapper.h |  1 -
- mm/page_io.c                  |  4 ++--
- mm/swapfile.c                 | 12 ++++++------
- 19 files changed, 67 insertions(+), 76 deletions(-)
-
+diff --git a/drivers/block/brd.c b/drivers/block/brd.c
+index 2fb25c348d53..30df6daa9dbc 100644
+--- a/drivers/block/brd.c
++++ b/drivers/block/brd.c
+@@ -26,7 +26,6 @@
+ #include <linux/uaccess.h>
+ 
+ #define PAGE_SECTORS_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
+-#define PAGE_SECTORS		(1 << PAGE_SECTORS_SHIFT)
+ 
+ /*
+  * Each block ramdisk device has a radix_tree brd_pages of pages that stores
+diff --git a/drivers/block/null_blk_main.c b/drivers/block/null_blk_main.c
+index 8efd8778e209..25048ff15858 100644
+--- a/drivers/block/null_blk_main.c
++++ b/drivers/block/null_blk_main.c
+@@ -12,7 +12,6 @@
+ #include "null_blk.h"
+ 
+ #define PAGE_SECTORS_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
+-#define PAGE_SECTORS		(1 << PAGE_SECTORS_SHIFT)
+ #define SECTOR_MASK		(PAGE_SECTORS - 1)
+ 
+ #define FREE_BATCH		16
+diff --git a/drivers/md/bcache/util.h b/drivers/md/bcache/util.h
+index c029f7443190..55196e0f37c3 100644
+--- a/drivers/md/bcache/util.h
++++ b/drivers/md/bcache/util.h
+@@ -15,8 +15,6 @@
+ 
+ #include "closure.h"
+ 
+-#define PAGE_SECTORS		(PAGE_SIZE / 512)
+-
+ struct closure;
+ 
+ #ifdef CONFIG_BCACHE_DEBUG
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 32868fbedc9e..934f31fc15cd 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -904,11 +904,12 @@ static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
+  * multiple of 512 bytes. Hence these two constants.
+  */
+ #ifndef SECTOR_SHIFT
+-#define SECTOR_SHIFT 9
++#define SECTOR_SHIFT		9
+ #endif
+ #ifndef SECTOR_SIZE
+-#define SECTOR_SIZE (1 << SECTOR_SHIFT)
++#define SECTOR_SIZE		(1 << SECTOR_SHIFT)
+ #endif
++#define PAGE_SECTORS		(PAGE_SIZE / SECTOR_SIZE)
+ 
+ /*
+  * blk_rq_pos()			: the current sector
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index af48d9da3916..83e018ed8c21 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -143,7 +143,6 @@ typedef size_t (*dm_dax_copy_iter_fn)(struct dm_target *ti, pgoff_t pgoff,
+ 		void *addr, size_t bytes, struct iov_iter *i);
+ typedef int (*dm_dax_zero_page_range_fn)(struct dm_target *ti, pgoff_t pgoff,
+ 		size_t nr_pages);
+-#define PAGE_SECTORS (PAGE_SIZE / 512)
+ 
+ void dm_error(const char *message);
+ 
 -- 
 2.26.0.106.g9fadedd
