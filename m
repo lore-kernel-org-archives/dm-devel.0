@@ -1,7 +1,7 @@
 From: Zhen Lei <thunder.leizhen@huawei.com>
-Subject: [PATCH v2 04/10] zram: abolish macro SECTORS_PER_PAGE_SHIFT
-Date: Thu, 7 May 2020 15:50:54 +0800
-Message-ID: <20200507075100.1779-5-thunder.leizhen@huawei.com>
+Subject: [PATCH v2 05/10] block: abolish macro PAGE_SECTORS_SHIFT
+Date: Thu, 7 May 2020 15:50:55 +0800
+Message-ID: <20200507075100.1779-6-thunder.leizhen@huawei.com>
 References: <20200507075100.1779-1-thunder.leizhen@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
@@ -13,49 +13,95 @@ To: Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Sergey Se
 Cc: Zhen Lei <thunder.leizhen@huawei.com>
 List-Id: dm-devel.ids
 
-The name of SECTORS_PER_PAGE_SHIFT is quite hard to read. So use
-sectors_to_npage() to replace ">> SECTORS_PER_PAGE_SHIFT"
+The name of PAGE_SECTORS_SHIFT is quite hard to read.
+1. use sectors_to_npage() to replace ">> PAGE_SECTORS_SHIFT"
+2. use npage_to_sectors() to replace "<< PAGE_SECTORS_SHIFT"
 
 Suggested-by: Matthew Wilcox <willy@infradead.org>
 Signed-off-by: Zhen Lei <thunder.leizhen@huawei.com>
 ---
- drivers/block/zram/zram_drv.c | 4 ++--
- drivers/block/zram/zram_drv.h | 1 -
- 2 files changed, 2 insertions(+), 3 deletions(-)
+ drivers/block/brd.c           | 6 ++----
+ drivers/block/null_blk_main.c | 9 ++++-----
+ 2 files changed, 6 insertions(+), 9 deletions(-)
 
-diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
-index e2fbf7a847e7..918b77f9bce4 100644
---- a/drivers/block/zram/zram_drv.c
-+++ b/drivers/block/zram/zram_drv.c
-@@ -1549,7 +1549,7 @@ static void __zram_make_request(struct zram *zram, struct bio *bio)
- 	struct bio_vec bvec;
- 	struct bvec_iter iter;
+diff --git a/drivers/block/brd.c b/drivers/block/brd.c
+index 30df6daa9dbc..051c5a50497f 100644
+--- a/drivers/block/brd.c
++++ b/drivers/block/brd.c
+@@ -25,8 +25,6 @@
  
--	index = bio->bi_iter.bi_sector >> SECTORS_PER_PAGE_SHIFT;
-+	index = sectors_to_npage(bio->bi_iter.bi_sector);
- 	offset = (bio->bi_iter.bi_sector &
- 		  (PAGE_SECTORS - 1)) << SECTOR_SHIFT;
+ #include <linux/uaccess.h>
  
-@@ -1644,7 +1644,7 @@ static int zram_rw_page(struct block_device *bdev, sector_t sector,
- 		goto out;
+-#define PAGE_SECTORS_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
+-
+ /*
+  * Each block ramdisk device has a radix_tree brd_pages of pages that stores
+  * the pages containing the block device's contents. A brd page's ->index is
+@@ -69,7 +67,7 @@ static struct page *brd_lookup_page(struct brd_device *brd, sector_t sector)
+ 	 * here, only deletes).
+ 	 */
+ 	rcu_read_lock();
+-	idx = sector >> PAGE_SECTORS_SHIFT; /* sector to page index */
++	idx = sectors_to_npage(sector);
+ 	page = radix_tree_lookup(&brd->brd_pages, idx);
+ 	rcu_read_unlock();
+ 
+@@ -108,7 +106,7 @@ static struct page *brd_insert_page(struct brd_device *brd, sector_t sector)
  	}
  
--	index = sector >> SECTORS_PER_PAGE_SHIFT;
-+	index = sectors_to_npage(sector);
- 	offset = (sector & (PAGE_SECTORS - 1)) << SECTOR_SHIFT;
+ 	spin_lock(&brd->brd_lock);
+-	idx = sector >> PAGE_SECTORS_SHIFT;
++	idx = sectors_to_npage(sector);
+ 	page->index = idx;
+ 	if (radix_tree_insert(&brd->brd_pages, idx, page)) {
+ 		__free_page(page);
+diff --git a/drivers/block/null_blk_main.c b/drivers/block/null_blk_main.c
+index 25048ff15858..81485f47dcf0 100644
+--- a/drivers/block/null_blk_main.c
++++ b/drivers/block/null_blk_main.c
+@@ -11,7 +11,6 @@
+ #include <linux/init.h>
+ #include "null_blk.h"
  
- 	bv.bv_page = page;
-diff --git a/drivers/block/zram/zram_drv.h b/drivers/block/zram/zram_drv.h
-index 10fdf413dd6e..12309175d55e 100644
---- a/drivers/block/zram/zram_drv.h
-+++ b/drivers/block/zram/zram_drv.h
-@@ -21,7 +21,6 @@
+-#define PAGE_SECTORS_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
+ #define SECTOR_MASK		(PAGE_SECTORS - 1)
  
- #include "zcomp.h"
+ #define FREE_BATCH		16
+@@ -737,7 +736,7 @@ static void null_free_sector(struct nullb *nullb, sector_t sector,
+ 	struct radix_tree_root *root;
  
--#define SECTORS_PER_PAGE_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
- #define ZRAM_LOGICAL_BLOCK_SHIFT 12
- #define ZRAM_LOGICAL_BLOCK_SIZE	(1 << ZRAM_LOGICAL_BLOCK_SHIFT)
- #define ZRAM_SECTOR_PER_LOGICAL_BLOCK	\
+ 	root = is_cache ? &nullb->dev->cache : &nullb->dev->data;
+-	idx = sector >> PAGE_SECTORS_SHIFT;
++	idx = sectors_to_npage(sector);
+ 	sector_bit = (sector & SECTOR_MASK);
+ 
+ 	t_page = radix_tree_lookup(root, idx);
+@@ -808,7 +807,7 @@ static struct nullb_page *__null_lookup_page(struct nullb *nullb,
+ 	struct nullb_page *t_page;
+ 	struct radix_tree_root *root;
+ 
+-	idx = sector >> PAGE_SECTORS_SHIFT;
++	idx = sectors_to_npage(sector);
+ 	sector_bit = (sector & SECTOR_MASK);
+ 
+ 	root = is_cache ? &nullb->dev->cache : &nullb->dev->data;
+@@ -855,7 +854,7 @@ static struct nullb_page *null_insert_page(struct nullb *nullb,
+ 		goto out_freepage;
+ 
+ 	spin_lock_irq(&nullb->lock);
+-	idx = sector >> PAGE_SECTORS_SHIFT;
++	idx = sectors_to_npage(sector);
+ 	t_page->page->index = idx;
+ 	t_page = null_radix_tree_insert(nullb, idx, t_page, !ignore_cache);
+ 	radix_tree_preload_end();
+@@ -878,7 +877,7 @@ static int null_flush_cache_page(struct nullb *nullb, struct nullb_page *c_page)
+ 
+ 	idx = c_page->page->index;
+ 
+-	t_page = null_insert_page(nullb, idx << PAGE_SECTORS_SHIFT, true);
++	t_page = null_insert_page(nullb, npage_to_sectors(idx), true);
+ 
+ 	__clear_bit(NULLB_PAGE_LOCK, c_page->bitmap);
+ 	if (test_bit(NULLB_PAGE_FREE, c_page->bitmap)) {
 -- 
 2.26.0.106.g9fadedd
