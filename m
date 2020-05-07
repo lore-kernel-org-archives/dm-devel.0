@@ -1,45 +1,37 @@
-From: Samuel Zou <zou_wei@huawei.com>
-Subject: [PATCH -next] dm mpath: Remove unused variable ret
-Date: Thu, 7 May 2020 20:26:52 +0800
-Message-ID: <1588854412-19301-1-git-send-email-zou_wei@huawei.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH -next] dm mpath: Remove unused variable ret
+Date: Thu, 7 May 2020 10:29:58 -0400
+Message-ID: <20200507142958.GA12032@redhat.com>
+References: <1588854412-19301-1-git-send-email-zou_wei@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
-Cc: linux-kernel@vger.kernel.org, Samuel Zou <zou_wei@huawei.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1588854412-19301-1-git-send-email-zou_wei@huawei.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Samuel Zou <zou_wei@huawei.com>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-This patch fixes below warning reported by coccicheck:
+On Thu, May 07 2020 at  8:26am -0400,
+Samuel Zou <zou_wei@huawei.com> wrote:
 
-drivers/md/dm-historical-service-time.c:240:14-16: Unneeded variable: "sz". Return "0" on line 261
+> This patch fixes below warning reported by coccicheck:
+> 
+> drivers/md/dm-historical-service-time.c:240:14-16: Unneeded variable: "sz". Return "0" on line 261
+> 
+> Reported-by: Hulk Robot <hulkci@huawei.com>
+> Signed-off-by: Samuel Zou <zou_wei@huawei.com>
 
-Reported-by: Hulk Robot <hulkci@huawei.com>
-Signed-off-by: Samuel Zou <zou_wei@huawei.com>
----
- drivers/md/dm-historical-service-time.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+Nack.
 
-diff --git a/drivers/md/dm-historical-service-time.c b/drivers/md/dm-historical-service-time.c
-index 186f91e..3c8acb9 100644
---- a/drivers/md/dm-historical-service-time.c
-+++ b/drivers/md/dm-historical-service-time.c
-@@ -237,7 +237,6 @@ static void hst_destroy(struct path_selector *ps)
- static int hst_status(struct path_selector *ps, struct dm_path *path,
- 		     status_type_t type, char *result, unsigned int maxlen)
- {
--	unsigned int sz = 0;
- 	struct path_info *pi;
- 
- 	if (!path) {
-@@ -258,7 +257,7 @@ static int hst_status(struct path_selector *ps, struct dm_path *path,
- 		}
- 	}
- 
--	return sz;
-+	return 0;
- }
- 
- static int hst_add_path(struct path_selector *ps, struct dm_path *path,
--- 
-2.6.2
+DMEMIT() uses the local sz variable.
