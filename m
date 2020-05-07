@@ -1,178 +1,60 @@
-From: "Gustavo A. R. Silva" <gustavoars@kernel.org>
-Subject: [PATCH] dm integrity: Replace zero-length array with flexible-array
-Date: Thu, 7 May 2020 13:51:58 -0500
-Message-ID: <20200507185158.GA14116@embeddedor>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 2/2] libmultipath: create libdir on install
+Date: Thu, 07 May 2020 23:13:12 +0200
+Message-ID: <858eb4ffcd9405ba7c10ed11f1d4c720a8ed496f.camel@suse.com>
+References: <20200506073548.41756-1-list@eworm.de>
+	<20200506073548.41756-2-list@eworm.de> <20200506094828.727f1d3a@leda>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200506094828.727f1d3a@leda>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christian Hesse <list@eworm.de>, dm-devel@redhat.com
+Cc: Christian Hesse <mail@eworm.de>
 List-Id: dm-devel.ids
 
-The current codebase makes use of the zero-length array language
-extension to the C90 standard, but the preferred mechanism to declare
-variable-length types such as these ones is a flexible array member[1][2],
-introduced in C99:
+On Wed, 2020-05-06 at 09:48 +0200, Christian Hesse wrote:
+> Christian Hesse <list@eworm.de> on Wed, 2020/05/06 09:35:
+> > From: Christian Hesse <mail@eworm.de>
+> > 
+> > Without this installation fails with:
+> > 
+> > install: target '$DESTDIR/usr/lib/multipath' is not a directory
+> > Signed-off-by: Christian Hesse <mail@eworm.de>
+> > ---
+> >  libmultipath/prioritizers/Makefile | 1 +
+> >  1 file changed, 1 insertion(+)
+> > 
+> > diff --git a/libmultipath/prioritizers/Makefile
+> > b/libmultipath/prioritizers/Makefile index 9d0fe03c..11da5be2
+> > 100644
+> > --- a/libmultipath/prioritizers/Makefile
+> > +++ b/libmultipath/prioritizers/Makefile
+> > @@ -35,6 +35,7 @@ libprio%.so: %.o
+> >  	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
+> >  
+> >  install: $(LIBS)
+> > +	$(INSTALL_PROGRAM) -d $(DESTDIR)$(libdir)
+> >  	$(INSTALL_PROGRAM) -m 755 libprio*.so $(DESTDIR)$(libdir)
+> >  
+> >  uninstall:
+> 
+> Ignore this one... It does not fix the issue. The build system has to
+> be
+> fixed for simultaneous jobs when installing.
+> 
+> For now installing with just one job (`make -j1`).
 
-struct foo {
-        int stuff;
-        struct boo array[];
-};
+Right. Feel free to send patches for this. I've never felt the urge to
+run "make install" parallelized; it takes less then 1s on my laptop.
 
-By making use of the mechanism above, we will get a compiler warning
-in case the flexible array does not occur last in the structure, which
-will help us prevent some kind of undefined behavior bugs from being
-inadvertently introduced[3] to the codebase from now on.
-
-Also, notice that, dynamic memory allocations won't be affected by
-this change:
-
-"Flexible array members have incomplete type, and so the sizeof operator
-may not be applied. As a quirk of the original implementation of
-zero-length arrays, sizeof evaluates to zero."[1]
-
-sizeof(flexible-array-member) triggers a warning because flexible array
-members have incomplete type[1]. There are some instances of code in
-which the sizeof operator is being incorrectly/erroneously applied to
-zero-length arrays and the result is zero. Such instances may be hiding
-some bugs. So, this work (flexible-array member conversions) will also
-help to get completely rid of those sorts of issues.
-
-This issue was found with the help of Coccinelle.
-
-[1] https://gcc.gnu.org/onlinedocs/gcc/Zero-Length.html
-[2] https://github.com/KSPP/linux/issues/21
-[3] commit 76497732932f ("cxgb3/l2t: Fix undefined behaviour")
-
-Signed-off-by: Gustavo A. R. Silva <gustavoars@kernel.org>
----
- drivers/md/dm-crypt.c                          |    2 +-
- drivers/md/dm-integrity.c                      |    2 +-
- drivers/md/dm-log-writes.c                     |    2 +-
- drivers/md/dm-raid.c                           |    2 +-
- drivers/md/dm-raid1.c                          |    2 +-
- drivers/md/dm-stats.c                          |    2 +-
- drivers/md/dm-stripe.c                         |    2 +-
- drivers/md/dm-switch.c                         |    2 +-
- drivers/md/persistent-data/dm-btree-internal.h |    2 +-
- 9 files changed, 9 insertions(+), 9 deletions(-)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 3df90daba89e..bac110987a65 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -212,7 +212,7 @@ struct crypt_config {
- 	struct mutex bio_alloc_lock;
- 
- 	u8 *authenc_key; /* space for keys in authenc() format (if used) */
--	u8 key[0];
-+	u8 key[];
- };
- 
- #define MIN_IOS		64
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 4094c47eca7f..fe39ed31b20d 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -92,7 +92,7 @@ struct journal_entry {
- 		} s;
- 		__u64 sector;
- 	} u;
--	commit_id_t last_bytes[0];
-+	commit_id_t last_bytes[];
- 	/* __u8 tag[0]; */
- };
- 
-diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-index 8ea20b56b4d6..e3d35c6c9f71 100644
---- a/drivers/md/dm-log-writes.c
-+++ b/drivers/md/dm-log-writes.c
-@@ -127,7 +127,7 @@ struct pending_block {
- 	char *data;
- 	u32 datalen;
- 	struct list_head list;
--	struct bio_vec vecs[0];
-+	struct bio_vec vecs[];
- };
- 
- struct per_bio_data {
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 9a18bef0a5ff..10e8b2fe787b 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -254,7 +254,7 @@ struct raid_set {
- 		int mode;
- 	} journal_dev;
- 
--	struct raid_dev dev[0];
-+	struct raid_dev dev[];
- };
- 
- static void rs_config_backup(struct raid_set *rs, struct rs_layout *l)
-diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index 089aed57e083..2f655d9f4200 100644
---- a/drivers/md/dm-raid1.c
-+++ b/drivers/md/dm-raid1.c
-@@ -83,7 +83,7 @@ struct mirror_set {
- 	struct work_struct trigger_event;
- 
- 	unsigned nr_mirrors;
--	struct mirror mirror[0];
-+	struct mirror mirror[];
- };
- 
- DECLARE_DM_KCOPYD_THROTTLE_WITH_MODULE_PARM(raid1_resync_throttle,
-diff --git a/drivers/md/dm-stats.c b/drivers/md/dm-stats.c
-index 71417048256a..35d368c418d0 100644
---- a/drivers/md/dm-stats.c
-+++ b/drivers/md/dm-stats.c
-@@ -56,7 +56,7 @@ struct dm_stat {
- 	size_t percpu_alloc_size;
- 	size_t histogram_alloc_size;
- 	struct dm_stat_percpu *stat_percpu[NR_CPUS];
--	struct dm_stat_shared stat_shared[0];
-+	struct dm_stat_shared stat_shared[];
- };
- 
- #define STAT_PRECISE_TIMESTAMPS		1
-diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-index fa813c0f993d..151d022b032d 100644
---- a/drivers/md/dm-stripe.c
-+++ b/drivers/md/dm-stripe.c
-@@ -41,7 +41,7 @@ struct stripe_c {
- 	/* Work struct used for triggering events*/
- 	struct work_struct trigger_event;
- 
--	struct stripe stripe[0];
-+	struct stripe stripe[];
- };
- 
- /*
-diff --git a/drivers/md/dm-switch.c b/drivers/md/dm-switch.c
-index 8a0f057b8122..bff4c7fa1cd2 100644
---- a/drivers/md/dm-switch.c
-+++ b/drivers/md/dm-switch.c
-@@ -53,7 +53,7 @@ struct switch_ctx {
- 	/*
- 	 * Array of dm devices to switch between.
- 	 */
--	struct switch_path path_list[0];
-+	struct switch_path path_list[];
- };
- 
- static struct switch_ctx *alloc_switch_ctx(struct dm_target *ti, unsigned nr_paths,
-diff --git a/drivers/md/persistent-data/dm-btree-internal.h b/drivers/md/persistent-data/dm-btree-internal.h
-index a240990a7f33..f4e644dd8101 100644
---- a/drivers/md/persistent-data/dm-btree-internal.h
-+++ b/drivers/md/persistent-data/dm-btree-internal.h
-@@ -38,7 +38,7 @@ struct node_header {
- 
- struct btree_node {
- 	struct node_header header;
--	__le64 keys[0];
-+	__le64 keys[];
- } __packed;
- 
- 
+Martin
