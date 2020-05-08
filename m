@@ -1,11 +1,14 @@
-From: Paul Richards <paul.richards@gmail.com>
-Subject: lvmcache comes back dirty after unclean shutdown
-Date: Fri, 8 May 2020 09:26:23 +0100
-Message-ID: <CAMoswehmi-hhp2M0w_8nEwX5CwPKKR7YW9jw1QrNzE=PFqKcRw@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH 01/14] dm-zoned: add 'status' and 'message'
+	callbacks
+Date: Fri,  8 May 2020 11:03:19 +0200
+Message-ID: <20200508090332.40716-2-hare@suse.de>
+References: <20200508090332.40716-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200508090332.40716-1-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,37 +18,130 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, linux-lvm@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Damien LeMoal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello,
-I would like to add a warning to the lvmcache man page about its
-suitability in environments that expect unclean shutdowns.
+Add callbacks to supply information for 'dmsetup status'
+and 'dmsetup info', and implement the message 'reclaim'
+to start the reclaim worker.
 
-I've been using lvmcache on my laptop which has a small nvme drive and
-a much larger hdd.  I am using approx 60GiB of the nvme drive as a
-cache for the 1TiB HDD.
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+Reviewed-by: Bob Liu <bob.liu@oracle.com>
+Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
+---
+ drivers/md/dm-zoned-metadata.c | 15 +++++++++++++++
+ drivers/md/dm-zoned-target.c   | 41 +++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-zoned.h          |  3 +++
+ 3 files changed, 59 insertions(+)
 
-With both "writethrough" and "writeback" modes an unclean shutdown
-results in the entire cache being marked as dirty.  On next boot the
-system then spends a long time (4+ hours) writing the cache out to
-disk.  From what I can see this is known behavior of lvmcache ([1] and
-[2]).  It's even documented in the kernel device mapper docs [3].
-
-It seems to me that dm-cache and lvmcache are not appropriate for
-environments that expect unclean shutdowns.  In those environments I
-have found bcache to be a bit more robust.
-
-This is not a criticism of lvmcache and dm-cache.  I am sure they
-perform well in more robust environments.  But I wonder if it would be
-appropriate to add a warning note to the lvmcache man page about this
-issue?
-
-
-I am using Ubuntu 20.04 currently, if that's relevant, and I saw the
-same issue with 18.04.
-
-
-1: https://www.redhat.com/archives/dm-devel/2019-July/msg00114.html
-2: https://www.redhat.com/archives/dm-devel/2014-December/msg00143.html
-3: https://github.com/torvalds/linux/blame/79dede78c0573618e3137d3d8cbf78c84e25fabd/Documentation/admin-guide/device-mapper/cache.rst#L140-L143
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index 369de15c4e80..c8787560fa9f 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -202,6 +202,11 @@ sector_t dmz_start_block(struct dmz_metadata *zmd, struct dm_zone *zone)
+ 	return (sector_t)dmz_id(zmd, zone) << zmd->dev->zone_nr_blocks_shift;
+ }
+ 
++unsigned int dmz_nr_zones(struct dmz_metadata *zmd)
++{
++	return zmd->dev->nr_zones;
++}
++
+ unsigned int dmz_nr_chunks(struct dmz_metadata *zmd)
+ {
+ 	return zmd->nr_chunks;
+@@ -217,6 +222,16 @@ unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd)
+ 	return atomic_read(&zmd->unmap_nr_rnd);
+ }
+ 
++unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd)
++{
++	return zmd->nr_seq;
++}
++
++unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd)
++{
++	return atomic_read(&zmd->unmap_nr_seq);
++}
++
+ /*
+  * Lock/unlock mapping table.
+  * The map lock also protects all the zone lists.
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index f4f83d39b3dc..0bfe34162dbb 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -965,6 +965,45 @@ static int dmz_iterate_devices(struct dm_target *ti,
+ 	return fn(ti, dmz->ddev, 0, capacity, data);
+ }
+ 
++static void dmz_status(struct dm_target *ti, status_type_t type,
++		       unsigned int status_flags, char *result,
++		       unsigned int maxlen)
++{
++	struct dmz_target *dmz = ti->private;
++	ssize_t sz = 0;
++	char buf[BDEVNAME_SIZE];
++
++	switch (type) {
++	case STATUSTYPE_INFO:
++		DMEMIT("%u zones %u/%u random %u/%u sequential",
++		       dmz_nr_zones(dmz->metadata),
++		       dmz_nr_unmap_rnd_zones(dmz->metadata),
++		       dmz_nr_rnd_zones(dmz->metadata),
++		       dmz_nr_unmap_seq_zones(dmz->metadata),
++		       dmz_nr_seq_zones(dmz->metadata));
++		break;
++	case STATUSTYPE_TABLE:
++		format_dev_t(buf, dmz->dev->bdev->bd_dev);
++		DMEMIT("%s", buf);
++		break;
++	}
++	return;
++}
++
++static int dmz_message(struct dm_target *ti, unsigned int argc, char **argv,
++		       char *result, unsigned int maxlen)
++{
++	struct dmz_target *dmz = ti->private;
++	int r = -EINVAL;
++
++	if (!strcasecmp(argv[0], "reclaim")) {
++		dmz_schedule_reclaim(dmz->reclaim);
++		r = 0;
++	} else
++		DMERR("unrecognized message %s", argv[0]);
++	return r;
++}
++
+ static struct target_type dmz_type = {
+ 	.name		 = "zoned",
+ 	.version	 = {1, 1, 0},
+@@ -978,6 +1017,8 @@ static struct target_type dmz_type = {
+ 	.postsuspend	 = dmz_suspend,
+ 	.resume		 = dmz_resume,
+ 	.iterate_devices = dmz_iterate_devices,
++	.status		 = dmz_status,
++	.message	 = dmz_message,
+ };
+ 
+ static int __init dmz_init(void)
+diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
+index 5b5e493d479c..884c0e586082 100644
+--- a/drivers/md/dm-zoned.h
++++ b/drivers/md/dm-zoned.h
+@@ -190,8 +190,11 @@ void dmz_free_zone(struct dmz_metadata *zmd, struct dm_zone *zone);
+ void dmz_map_zone(struct dmz_metadata *zmd, struct dm_zone *zone,
+ 		  unsigned int chunk);
+ void dmz_unmap_zone(struct dmz_metadata *zmd, struct dm_zone *zone);
++unsigned int dmz_nr_zones(struct dmz_metadata *zmd);
+ unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd);
+ unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd);
++unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd);
++unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd);
+ 
+ /*
+  * Activate a zone (increment its reference count).
+-- 
+2.16.4
