@@ -1,14 +1,17 @@
-From: mwilck@suse.com
-Subject: [PATCH 1/2] libmultipath: set "enable_foreign" to NONE
-	by default
-Date: Fri,  8 May 2020 21:33:01 +0200
-Message-ID: <20200508193302.11401-2-mwilck@suse.com>
-References: <20200508193302.11401-1-mwilck@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 01/14] dm-zoned: add 'status' and 'message'
+	callbacks
+Date: Fri, 8 May 2020 17:00:29 -0400
+Message-ID: <20200508210029.GA19773@redhat.com>
+References: <20200508090332.40716-1-hare@suse.de>
+	<20200508090332.40716-2-hare@suse.de>
+	<20200508162955.GA18662@redhat.com>
+	<9dee23c7-76ed-d80b-bfe2-9d2930488316@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200508193302.11401-1-mwilck@suse.com>
+In-Reply-To: <9dee23c7-76ed-d80b-bfe2-9d2930488316@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,52 +21,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: "George, Martin" <Martin.George@netapp.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Content-Disposition: inline
+To: Hannes Reinecke <hare@suse.de>
+Cc: Damien LeMoal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Martin Wilck <mwilck@suse.com>
+On Fri, May 08 2020 at  2:25pm -0400,
+Hannes Reinecke <hare@suse.de> wrote:
 
-This has been requested by NetApp.
+> On 5/8/20 6:29 PM, Mike Snitzer wrote:
+> >On Fri, May 08 2020 at  5:03am -0400,
+> >Hannes Reinecke <hare@suse.de> wrote:
+> >
+> >>Add callbacks to supply information for 'dmsetup status'
+> >>and 'dmsetup info', and implement the message 'reclaim'
+> >>to start the reclaim worker.
+> >
+> >Same feedback from before:
+> >https://www.redhat.com/archives/dm-devel/2020-March/msg00189.html
+> >
+> >Who/What will use the 'reclaim' message?  Shouldn't it be documented?
+> >Think the dmz_status changes should be split out from this reclaim
+> >message?
+> >
+> 'reclaim' means that dm-zoned should start moving zones from the
+> random zones to the sequential zones to free up more random zones.
+> There's a threshold after which it'll start automatically, but this
+> allows you to start reclaim even if the threshold isn't reached.
+> You might be right, it should be documented.
+> (Where? In the code?)
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/defaults.h    | 4 ++--
- multipath/multipath.conf.5 | 5 +++--
- 2 files changed, 5 insertions(+), 4 deletions(-)
+Documentation/admin-guide/device-mapper/dm-zoned.rst
 
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index e5ee6afe..01a501bd 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -50,8 +50,8 @@
- #define DEFAULT_FIND_MULTIPATHS_TIMEOUT -10
- #define DEFAULT_UNKNOWN_FIND_MULTIPATHS_TIMEOUT 1
- #define DEFAULT_ALL_TG_PT ALL_TG_PT_OFF
--/* Enable all foreign libraries by default */
--#define DEFAULT_ENABLE_FOREIGN ""
-+/* Enable no foreign libraries by default */
-+#define DEFAULT_ENABLE_FOREIGN "NONE"
- 
- #define CHECKINT_UNDEF		UINT_MAX
- #define DEFAULT_CHECKINT	5
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 05a5e8ff..28cea88c 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -1228,10 +1228,11 @@ Enables or disables foreign libraries (see section
- .I FOREIGN MULTIPATH SUPPORT
- below). The value is a regular expression; foreign libraries are loaded
- if their name (e.g. \(dqnvme\(dq) matches the expression. By default,
--all foreign libraries are enabled.
-+no foreign libraries are enabled. Set this to \(dqnvme\(dq to enable NVMe native
-+multipath support, or \(dq.*\(dq to enable all foreign libraries.
- .RS
- .TP
--The default is: \fB\(dq\(dq\fR (the empty regular expression)
-+The default is: \fB\(dqNONE\(dq\fR
- .RE
- .
- .
--- 
-2.26.2
+Anything else worthy of sharing with others about v2 metadata format
+would also be wise to document as part of those changes,
+
+> As for splitting things off; yeah, I could; maybe I should if the
+> 'reclaim' message turns out to be controversial...
+
+Not controversial per se, but its disjoint from the rest of this series.
+So best to split it out I think.
+
+Thanks,
+Mike
