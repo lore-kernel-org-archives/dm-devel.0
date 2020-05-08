@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 09/14] dm-zoned: replace 'target' pointer in the
-	bio context
-Date: Fri,  8 May 2020 11:03:27 +0200
-Message-ID: <20200508090332.40716-10-hare@suse.de>
+Subject: [PATCH 07/14] dm-zoned: Introduce dmz_dev_is_dying() and
+	dmz_check_dev()
+Date: Fri,  8 May 2020 11:03:25 +0200
+Message-ID: <20200508090332.40716-8-hare@suse.de>
 References: <20200508090332.40716-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,153 +22,106 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien LeMoal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Replace the 'target' pointer in the bio context with the
-device pointer as this is what's actually used.
+Introduce accessors dmz_dev_is_dying() and dmz_check_dev() to
+avoid having to reference the devices directly.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 Reviewed-by: Bob Liu <bob.liu@oracle.com>
 Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
 ---
- drivers/md/dm-zoned-target.c | 44 ++++++++++++++++++++++++--------------------
- 1 file changed, 24 insertions(+), 20 deletions(-)
+ drivers/md/dm-zoned-metadata.c | 14 ++++++++++++--
+ drivers/md/dm-zoned-reclaim.c  |  4 ++--
+ drivers/md/dm-zoned-target.c   |  2 +-
+ drivers/md/dm-zoned.h          |  3 +++
+ 4 files changed, 18 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index 520e55df627b..a09fb78ffe88 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -17,7 +17,7 @@
-  * Zone BIO context.
-  */
- struct dmz_bioctx {
--	struct dmz_target	*target;
-+	struct dmz_dev		*dev;
- 	struct dm_zone		*zone;
- 	struct bio		*bio;
- 	refcount_t		ref;
-@@ -76,12 +76,13 @@ struct dmz_target {
-  */
- static inline void dmz_bio_endio(struct bio *bio, blk_status_t status)
- {
--	struct dmz_bioctx *bioctx = dm_per_bio_data(bio, sizeof(struct dmz_bioctx));
-+	struct dmz_bioctx *bioctx =
-+		dm_per_bio_data(bio, sizeof(struct dmz_bioctx));
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index 7cda48683c0b..426af738f1ca 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -267,6 +267,16 @@ const char *dmz_metadata_label(struct dmz_metadata *zmd)
+ 	return (const char *)zmd->devname;
+ }
  
- 	if (status != BLK_STS_OK && bio->bi_status == BLK_STS_OK)
- 		bio->bi_status = status;
- 	if (bio->bi_status != BLK_STS_OK)
--		bioctx->target->dev->flags |= DMZ_CHECK_BDEV;
-+		bioctx->dev->flags |= DMZ_CHECK_BDEV;
- 
- 	if (refcount_dec_and_test(&bioctx->ref)) {
- 		struct dm_zone *zone = bioctx->zone;
-@@ -118,14 +119,20 @@ static int dmz_submit_bio(struct dmz_target *dmz, struct dm_zone *zone,
- 			  struct bio *bio, sector_t chunk_block,
- 			  unsigned int nr_blocks)
- {
--	struct dmz_bioctx *bioctx = dm_per_bio_data(bio, sizeof(struct dmz_bioctx));
-+	struct dmz_bioctx *bioctx =
-+		dm_per_bio_data(bio, sizeof(struct dmz_bioctx));
-+	struct dmz_dev *dev = dmz_zone_to_dev(dmz->metadata, zone);
- 	struct bio *clone;
- 
-+	if (dev->flags & DMZ_BDEV_DYING)
-+		return -EIO;
++bool dmz_check_dev(struct dmz_metadata *zmd)
++{
++	return dmz_check_bdev(&zmd->dev[0]);
++}
 +
- 	clone = bio_clone_fast(bio, GFP_NOIO, &dmz->bio_set);
- 	if (!clone)
- 		return -ENOMEM;
++bool dmz_dev_is_dying(struct dmz_metadata *zmd)
++{
++	return dmz_bdev_is_dying(&zmd->dev[0]);
++}
++
+ /*
+  * Lock/unlock mapping table.
+  * The map lock also protects all the zone lists.
+@@ -1719,7 +1729,7 @@ struct dm_zone *dmz_get_chunk_mapping(struct dmz_metadata *zmd, unsigned int chu
+ 		/* Allocate a random zone */
+ 		dzone = dmz_alloc_zone(zmd, DMZ_ALLOC_RND);
+ 		if (!dzone) {
+-			if (dmz_bdev_is_dying(zmd->dev)) {
++			if (dmz_dev_is_dying(zmd)) {
+ 				dzone = ERR_PTR(-EIO);
+ 				goto out;
+ 			}
+@@ -1820,7 +1830,7 @@ struct dm_zone *dmz_get_chunk_buffer(struct dmz_metadata *zmd,
+ 	/* Allocate a random zone */
+ 	bzone = dmz_alloc_zone(zmd, DMZ_ALLOC_RND);
+ 	if (!bzone) {
+-		if (dmz_bdev_is_dying(zmd->dev)) {
++		if (dmz_dev_is_dying(zmd)) {
+ 			bzone = ERR_PTR(-EIO);
+ 			goto out;
+ 		}
+diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+index 699c4145306e..5daede0daf92 100644
+--- a/drivers/md/dm-zoned-reclaim.c
++++ b/drivers/md/dm-zoned-reclaim.c
+@@ -455,7 +455,7 @@ static void dmz_reclaim_work(struct work_struct *work)
+ 	unsigned int p_unmap_rnd;
+ 	int ret;
  
--	bio_set_dev(clone, dmz->dev->bdev);
-+	bio_set_dev(clone, dev->bdev);
-+	bioctx->dev = dev;
- 	clone->bi_iter.bi_sector =
- 		dmz_start_sect(dmz->metadata, zone) + dmz_blk2sect(chunk_block);
- 	clone->bi_iter.bi_size = dmz_blk2sect(nr_blocks) << SECTOR_SHIFT;
-@@ -218,8 +225,10 @@ static int dmz_handle_read(struct dmz_target *dmz, struct dm_zone *zone,
+-	if (dmz_bdev_is_dying(zrc->dev))
++	if (dmz_dev_is_dying(zmd))
+ 		return;
  
- 		if (nr_blocks) {
- 			/* Valid blocks found: read them */
--			nr_blocks = min_t(unsigned int, nr_blocks, end_block - chunk_block);
--			ret = dmz_submit_bio(dmz, rzone, bio, chunk_block, nr_blocks);
-+			nr_blocks = min_t(unsigned int, nr_blocks,
-+					  end_block - chunk_block);
-+			ret = dmz_submit_bio(dmz, rzone, bio,
-+					     chunk_block, nr_blocks);
- 			if (ret)
- 				return ret;
- 			chunk_block += nr_blocks;
-@@ -330,7 +339,8 @@ static int dmz_handle_write(struct dmz_target *dmz, struct dm_zone *zone,
- 		 * and the BIO is aligned to the zone write pointer:
- 		 * direct write the zone.
- 		 */
--		return dmz_handle_direct_write(dmz, zone, bio, chunk_block, nr_blocks);
-+		return dmz_handle_direct_write(dmz, zone, bio,
-+					       chunk_block, nr_blocks);
+ 	if (!dmz_should_reclaim(zrc)) {
+@@ -490,7 +490,7 @@ static void dmz_reclaim_work(struct work_struct *work)
+ 	if (ret) {
+ 		DMDEBUG("(%s): Reclaim error %d\n",
+ 			dmz_metadata_label(zmd), ret);
+-		if (!dmz_check_bdev(zrc->dev))
++		if (!dmz_check_dev(zmd))
+ 			return;
  	}
  
- 	/*
-@@ -383,7 +393,8 @@ static int dmz_handle_discard(struct dmz_target *dmz, struct dm_zone *zone,
- static void dmz_handle_bio(struct dmz_target *dmz, struct dm_chunk_work *cw,
- 			   struct bio *bio)
- {
--	struct dmz_bioctx *bioctx = dm_per_bio_data(bio, sizeof(struct dmz_bioctx));
-+	struct dmz_bioctx *bioctx =
-+		dm_per_bio_data(bio, sizeof(struct dmz_bioctx));
- 	struct dmz_metadata *zmd = dmz->metadata;
- 	struct dm_zone *zone;
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index ba5b8c507c98..b32e791b8a5c 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -632,7 +632,7 @@ static int dmz_map(struct dm_target *ti, struct bio *bio)
+ 	sector_t chunk_sector;
  	int ret;
-@@ -397,11 +408,6 @@ static void dmz_handle_bio(struct dmz_target *dmz, struct dm_chunk_work *cw,
  
- 	dmz_lock_metadata(zmd);
- 
--	if (dmz->dev->flags & DMZ_BDEV_DYING) {
--		ret = -EIO;
--		goto out;
--	}
--
- 	/*
- 	 * Get the data zone mapping the chunk. There may be no
- 	 * mapping for read and discard. If a mapping is obtained,
-@@ -625,7 +631,6 @@ static int dmz_map(struct dm_target *ti, struct bio *bio)
- {
- 	struct dmz_target *dmz = ti->private;
- 	struct dmz_metadata *zmd = dmz->metadata;
--	struct dmz_dev *dev = dmz->dev;
- 	struct dmz_bioctx *bioctx = dm_per_bio_data(bio, sizeof(struct dmz_bioctx));
- 	sector_t sector = bio->bi_iter.bi_sector;
- 	unsigned int nr_sectors = bio_sectors(bio);
-@@ -642,8 +647,6 @@ static int dmz_map(struct dm_target *ti, struct bio *bio)
- 		(unsigned long long)dmz_chunk_block(zmd, dmz_bio_block(bio)),
- 		(unsigned int)dmz_bio_blocks(bio));
- 
--	bio_set_dev(bio, dev->bdev);
--
- 	if (!nr_sectors && bio_op(bio) != REQ_OP_WRITE)
- 		return DM_MAPIO_REMAPPED;
- 
-@@ -652,7 +655,7 @@ static int dmz_map(struct dm_target *ti, struct bio *bio)
+-	if (dmz_bdev_is_dying(dmz->dev))
++	if (dmz_dev_is_dying(zmd))
  		return DM_MAPIO_KILL;
  
- 	/* Initialize the BIO context */
--	bioctx->target = dmz;
-+	bioctx->dev = NULL;
- 	bioctx->zone = NULL;
- 	bioctx->bio = bio;
- 	refcount_set(&bioctx->ref, 1);
-@@ -931,11 +934,12 @@ static void dmz_io_hints(struct dm_target *ti, struct queue_limits *limits)
- static int dmz_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
- {
- 	struct dmz_target *dmz = ti->private;
-+	struct dmz_dev *dev = &dmz->dev[0];
+ 	DMDEBUG("(%s): BIO op %d sector %llu + %u => chunk %llu, block %llu, %u blocks",
+diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
+index dd768dc60341..e0883df8a903 100644
+--- a/drivers/md/dm-zoned.h
++++ b/drivers/md/dm-zoned.h
+@@ -181,6 +181,9 @@ sector_t dmz_start_sect(struct dmz_metadata *zmd, struct dm_zone *zone);
+ sector_t dmz_start_block(struct dmz_metadata *zmd, struct dm_zone *zone);
+ unsigned int dmz_nr_chunks(struct dmz_metadata *zmd);
  
--	if (!dmz_check_bdev(dmz->dev))
-+	if (!dmz_check_bdev(dev))
- 		return -EIO;
++bool dmz_check_dev(struct dmz_metadata *zmd);
++bool dmz_dev_is_dying(struct dmz_metadata *zmd);
++
+ #define DMZ_ALLOC_RND		0x01
+ #define DMZ_ALLOC_RECLAIM	0x02
  
--	*bdev = dmz->dev->bdev;
-+	*bdev = dev->bdev;
- 
- 	return 0;
- }
 -- 
 2.16.4
