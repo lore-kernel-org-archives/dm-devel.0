@@ -1,14 +1,11 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 01/14] dm-zoned: add 'status' and 'message'
-	callbacks
-Date: Fri,  8 May 2020 11:03:19 +0200
-Message-ID: <20200508090332.40716-2-hare@suse.de>
-References: <20200508090332.40716-1-hare@suse.de>
+Subject: [PATCHv5 00/14] dm-zoned: metadata version 2
+Date: Fri,  8 May 2020 11:03:18 +0200
+Message-ID: <20200508090332.40716-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200508090332.40716-1-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,126 +19,85 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien LeMoal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Add callbacks to supply information for 'dmsetup status'
-and 'dmsetup info', and implement the message 'reclaim'
-to start the reclaim worker.
+Hi all,
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
-Reviewed-by: Bob Liu <bob.liu@oracle.com>
-Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
----
- drivers/md/dm-zoned-metadata.c | 15 +++++++++++++++
- drivers/md/dm-zoned-target.c   | 41 +++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-zoned.h          |  3 +++
- 3 files changed, 59 insertions(+)
+this patchset adds a new metadata version 2 for dm-zoned, which brings the
+following improvements:
 
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index 369de15c4e80..c8787560fa9f 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -202,6 +202,11 @@ sector_t dmz_start_block(struct dmz_metadata *zmd, struct dm_zone *zone)
- 	return (sector_t)dmz_id(zmd, zone) << zmd->dev->zone_nr_blocks_shift;
- }
- 
-+unsigned int dmz_nr_zones(struct dmz_metadata *zmd)
-+{
-+	return zmd->dev->nr_zones;
-+}
-+
- unsigned int dmz_nr_chunks(struct dmz_metadata *zmd)
- {
- 	return zmd->nr_chunks;
-@@ -217,6 +222,16 @@ unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd)
- 	return atomic_read(&zmd->unmap_nr_rnd);
- }
- 
-+unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd)
-+{
-+	return zmd->nr_seq;
-+}
-+
-+unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd)
-+{
-+	return atomic_read(&zmd->unmap_nr_seq);
-+}
-+
- /*
-  * Lock/unlock mapping table.
-  * The map lock also protects all the zone lists.
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index f4f83d39b3dc..0bfe34162dbb 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -965,6 +965,45 @@ static int dmz_iterate_devices(struct dm_target *ti,
- 	return fn(ti, dmz->ddev, 0, capacity, data);
- }
- 
-+static void dmz_status(struct dm_target *ti, status_type_t type,
-+		       unsigned int status_flags, char *result,
-+		       unsigned int maxlen)
-+{
-+	struct dmz_target *dmz = ti->private;
-+	ssize_t sz = 0;
-+	char buf[BDEVNAME_SIZE];
-+
-+	switch (type) {
-+	case STATUSTYPE_INFO:
-+		DMEMIT("%u zones %u/%u random %u/%u sequential",
-+		       dmz_nr_zones(dmz->metadata),
-+		       dmz_nr_unmap_rnd_zones(dmz->metadata),
-+		       dmz_nr_rnd_zones(dmz->metadata),
-+		       dmz_nr_unmap_seq_zones(dmz->metadata),
-+		       dmz_nr_seq_zones(dmz->metadata));
-+		break;
-+	case STATUSTYPE_TABLE:
-+		format_dev_t(buf, dmz->dev->bdev->bd_dev);
-+		DMEMIT("%s", buf);
-+		break;
-+	}
-+	return;
-+}
-+
-+static int dmz_message(struct dm_target *ti, unsigned int argc, char **argv,
-+		       char *result, unsigned int maxlen)
-+{
-+	struct dmz_target *dmz = ti->private;
-+	int r = -EINVAL;
-+
-+	if (!strcasecmp(argv[0], "reclaim")) {
-+		dmz_schedule_reclaim(dmz->reclaim);
-+		r = 0;
-+	} else
-+		DMERR("unrecognized message %s", argv[0]);
-+	return r;
-+}
-+
- static struct target_type dmz_type = {
- 	.name		 = "zoned",
- 	.version	 = {1, 1, 0},
-@@ -978,6 +1017,8 @@ static struct target_type dmz_type = {
- 	.postsuspend	 = dmz_suspend,
- 	.resume		 = dmz_resume,
- 	.iterate_devices = dmz_iterate_devices,
-+	.status		 = dmz_status,
-+	.message	 = dmz_message,
- };
- 
- static int __init dmz_init(void)
-diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
-index 5b5e493d479c..884c0e586082 100644
---- a/drivers/md/dm-zoned.h
-+++ b/drivers/md/dm-zoned.h
-@@ -190,8 +190,11 @@ void dmz_free_zone(struct dmz_metadata *zmd, struct dm_zone *zone);
- void dmz_map_zone(struct dmz_metadata *zmd, struct dm_zone *zone,
- 		  unsigned int chunk);
- void dmz_unmap_zone(struct dmz_metadata *zmd, struct dm_zone *zone);
-+unsigned int dmz_nr_zones(struct dmz_metadata *zmd);
- unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd);
- unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd);
-+unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd);
-+unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd);
- 
- /*
-  * Activate a zone (increment its reference count).
+- UUIDs and labels: Adding three more fields to the metadata containing
+  the dm-zoned device UUID and label, and the device UUID. This allows
+  for an unique identification of the devices, so that several dm-zoned
+  sets can coexist and have a persistent identification.
+- Extend random zones by an additional regular disk device: A regular
+  block device can be added together with the zoned block device, providing
+  additional (emulated) random write zones. With this it's possible to
+  handle sequential zones only devices; also there will be a speed-up if
+  the regular block device resides on a fast medium. The regular block device
+  is placed logically in front of the zoned block device, so that metadata
+  and mapping tables reside on the regular block device, not the zoned device.
+- Tertiary superblock support: In addition to the two existing sets of metadata
+  another, tertiary, superblock is written to the first block of the zoned
+  block device. This superblock is for identification only; the generation
+  number is set to '0' and the block itself it never updated. The addition
+  metadate like bitmap tables etc are not copied.
+
+To handle this, some changes to the original handling are introduced:
+- Zones are now equidistant. Originally, runt zones were ignored, and
+  not counted when sizing the mapping tables. With the dual device setup
+  runt zones might occur at the end of the regular block device, making
+  direct translation between zone number and sector/block number complex.
+  For metadata version 2 all zones are considered to be of the same size,
+  and runt zones are simply marked as 'offline' to have them ignored when
+  allocating a new zone.
+- The block number in the superblock is now the global number, and refers to
+  the location of the superblock relative to the resulting device-mapper
+  device. Which means that the tertiary superblock contains absolute block
+  addresses, which needs to be translated to the relative device addresses
+  to find the referenced block.
+
+There is an accompanying patchset for dm-zoned-tools for writing and checking
+this new metadata.
+
+As usual, comments and reviews are welcome.
+
+Changes to v4:
+- Add reviews from Damien
+- Silence logging output as suggested by Mike Snitzer
+- Fixup compilation on 32bit archs
+
+Changes to v3:
+- Reorder devices such that the regular device is always at position 0,
+  and the zoned device is always at position 1.
+- Split off dmz_dev_is_dying() into a separate patch
+- Include reviews from Damien
+
+Changes to v2:
+- Kill dmz_id()
+- Include reviews from Damien
+- Sanitize uuid handling as suggested by John Dorminy
+
+
+Hannes Reinecke (14):
+  dm-zoned: add 'status' and 'message' callbacks
+  dm-zoned: store zone id within the zone structure and kill dmz_id()
+  dm-zoned: use array for superblock zones
+  dm-zoned: store device in struct dmz_sb
+  dm-zoned: move fields from struct dmz_dev to dmz_metadata
+  dm-zoned: introduce dmz_metadata_label() to format device name
+  dm-zoned: Introduce dmz_dev_is_dying() and dmz_check_dev()
+  dm-zoned: remove 'dev' argument from reclaim
+  dm-zoned: replace 'target' pointer in the bio context
+  dm-zoned: use dmz_zone_to_dev() when handling metadata I/O
+  dm-zoned: add metadata logging functions
+  dm-zoned: Reduce logging output on startup
+  dm-zoned: ignore metadata zone in dmz_alloc_zone()
+  dm-zoned: metadata version 2
+
+ drivers/md/dm-zoned-metadata.c | 664 +++++++++++++++++++++++++++++++----------
+ drivers/md/dm-zoned-reclaim.c  |  88 +++---
+ drivers/md/dm-zoned-target.c   | 376 +++++++++++++++--------
+ drivers/md/dm-zoned.h          |  35 ++-
+ 4 files changed, 825 insertions(+), 338 deletions(-)
+
 -- 
 2.16.4
