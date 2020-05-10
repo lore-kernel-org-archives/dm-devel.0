@@ -1,51 +1,123 @@
-From: kj@orbekk.com
-Subject: Re: dm: track io errors per mapped device
-Date: Sat, 09 May 2020 12:01:10 -0400
-Message-ID: <bc077a4c-26ce-4fd1-b55c-48bded3c834b@www.fastmail.com>
-References: <20200507230532.5733-1-kj@orbekk.com>
- <DM6PR04MB49726E28257263F5A1C643B386A20@DM6PR04MB4972.namprd04.prod.outlook.com>
- <dd7b8b91-776b-4458-a83a-18ab4953d2f4@www.fastmail.com>
- <20200508210926.GB19773@redhat.com>
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+Subject: Re: [RFC PATCH v3 00/12] Integrity Policy Enforcement LSM (IPE)
+Date: Sun, 10 May 2020 11:28:16 +0200
+Message-ID: <b07ac7e1-7cf5-92c9-81d0-64174c3d5024@digikod.net>
+References: <20200415162550.2324-1-deven.desai@linux.microsoft.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200508210926.GB19773@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>, Alasdair G Kergon <agk@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "harshads@google.com" <harshads@google.com>, Khazhismel Kumykov <khazhy@google.com>
+Content-Type: text/plain; charset=iso-8859-15
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <20200415162550.2324-1-deven.desai@linux.microsoft.com>
+Content-Language: en-US
+Sender: owner-linux-security-module@vger.kernel.org
+To: deven.desai@linux.microsoft.com, agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serge@hallyn.com, zohar@linux.ibm.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, jannh@google.com
+Cc: tyhicks@linux.microsoft.com, pasha.tatashin@soleen.com, sashal@kernel.org, jaskarankhurana@linux.microsoft.com, nramas@linux.microsoft.com, mdsakib@linux.microsoft.com, linux-kernel@vger.kernel.org, corbet@lwn.net
 List-Id: dm-devel.ids
 
-On Fri, May 8, 2020, at 17:09, Mike Snitzer wrote:
-> On Fri, May 08 2020 at  3:22pm -0400,
-> kj@orbekk.com <kj@orbekk.com> wrote:
-> 
-> > On Thu, May 7, 2020, at 21:12, Chaitanya Kulkarni wrote:
-> > > On 05/07/2020 04:06 PM, Kjetil Orbekk wrote:
-> > > > +		if (tio->error)
-> > > > +			atomic_inc(&md->ioerr_cnt);
-> > > 
-> > > Given that there are so many errors how would user know what
-> > > kind of error is generated and how many times?
-> > 
-> > The intended use case is to provide an easy way to check if errors
-> > have occurred at all, and then the user needs to investigate using
-> > other means. I replied with more detail to Alasdair's email.
-> 
-> But most operations initiated by the user that fail will be felt by the
-> upper layer that the user is interfacing with.
-> 
-> Only exception that springs to mind is dm-writecache's writeback that
-> occurs after writes have already been acknowledged back to the upper
-> layers -- in that case dm-writecache provides an error flag that is
-> exposed via writecache_status.
-> 
-> Anyway, just not seeing why you need a upper-layer use-case agnostic
-> flag to know an error occurred in DM.  That layers that interface with
-> the DM device will have been notified of all errors.
 
-It's used as a signal by a probing process which is not in the IO path itself.
+On 15/04/2020 18:25, deven.desai@linux.microsoft.com wrote:
+> From: Deven Bowers <deven.desai@linux.microsoft.com>
+> 
+> Overview:
+> ------------------------------------
+> 
+> IPE is a Linux Security Module which allows for a configurable
+> policy to enforce integrity requirements on the whole system. It
+> attempts to solve the issue of Code Integrity: that any code being
+> executed (or files being read), are identical to the version that
+> was built by a trusted source.
+> 
+> The type of system for which IPE is designed for use is an embedded device
+> with a specific purpose (e.g. network firewall device in a data center),
+> where all software and configuration is built and provisioned by the owner.
+> 
+> Specifically, a system which leverages IPE is not intended for general
+> purpose computing and does not utilize any software or configuration
+> built by a third party. An ideal system to leverage IPE has both mutable
+> and immutable components, however, all binary executable code is immutable.
+> 
+> The scope of IPE is constrained to the OS. It is assumed that platform
+> firmware verifies the the kernel and optionally the root filesystem (e.g.
+> via U-Boot verified boot). IPE then utilizes LSM hooks to enforce a
+> flexible, kernel-resident integrity verification policy.
+> 
+> IPE differs from other LSMs which provide integrity checking (for instance,
+> IMA), as it has no dependency on the filesystem metadata itself. The
+> attributes that IPE checks are deterministic properties that exist solely
+> in the kernel. Additionally, IPE provides no additional mechanisms of
+> verifying these files (e.g. IMA Signatures) - all of the attributes of
+> verifying files are existing features within the kernel, such as dm-verity
+> or fsverity.
+> 
+> IPE provides a policy that allows owners of the system to easily specify
+> integrity requirements and uses dm-verity signatures to simplify the
+> authentication of allowed objects like authorized code and data.
+> 
+> IPE supports two modes, permissive (similar to SELinux's permissive mode)
+> and enforce. Permissive mode performs the same checks, and logs policy
+> violations as enforce mode, but will not enforce the policy. This allows
+> users to test policies before enforcing them.
+> 
+> The default mode is enforce, and can be changed via the kernel commandline
+> parameter `ipe.enforce=(0|1)`, or the sysctl `ipe.enforce=(0|1)`. The
+> ability to switch modes can be compiled out of the LSM via setting the
+> config CONFIG_SECURITY_IPE_PERMISSIVE_SWITCH to N.
+> 
+> IPE additionally supports success auditing. When enabled, all events
+> that pass IPE policy and are not blocked will emit an audit event. This
+> is disabled by default, and can be enabled via the kernel commandline
+> `ipe.success_audit=(0|1)` or the sysctl `ipe.success_audit=(0|1)`.
+> 
+> Policies can be staged at runtime through securityfs and activated through
+> sysfs. Please see the Deploying Policies section of this cover letter for
+> more information.
+> 
+> The IPE LSM is compiled under CONFIG_SECURITY_IPE.
+> 
+> Policy:
+> ------------------------------------
+> 
+> IPE policy is designed to be both forward compatible and backwards
+> compatible. There is one required line, at the top of the policy,
+> indicating the policy name, and the policy version, for instance:
+> 
+>   policy_name="Ex Policy" policy_version=0.0.0
+> 
+> The policy version indicates the current version of the policy (NOT the
+> policy syntax version). This is used to prevent roll-back of policy to
+> potentially insecure previous versions of the policy.
+> 
+> The next portion of IPE policy, are rules. Rules are formed by key=value
+> pairs, known as properties. IPE rules require two properties: "action",
+> which determines what IPE does when it encounters a match against the
+> policy, and "op", which determines when that rule should be evaluated.
+> Thus, a minimal rule is:
+> 
+>   op=EXECUTE action=ALLOW
+> 
+> This example will allow any execution. Additional properties are used to
+> restrict attributes about the files being evaluated. These properties are
+> intended to be deterministic attributes that are resident in the kernel.
+> Available properties for IPE described in the properties section of this
+> cover-letter, the repository available in Appendix A, and the kernel
+> documentation page.
+> 
+> Order does not matter for the rule's properties - they can be listed in
+> any order, however it is encouraged to have the "op" property be first,
+> and the "action" property be last, for readability.
+> 
+> Additionally, rules are evaluated top-to-bottom. As a result, any
+> revocation rules, or denies should be placed early in the file to ensure
+> that these rules are evaluated before a rule with "action=ALLOW" is hit.
+> 
+> IPE policy is designed to be forward compatible and backwards compatible,
+> thus any failure to parse a rule will result in the line being ignored,
+> and a warning being emitted. If backwards compatibility is not required,
+> the kernel commandline parameter and sysctl, ipe.strict_parse can be
+> enabled, which will cause these warnings to be fatal.
 
-> And why just for DM devices?  Why not all block devices (in which case
-> DM would get this feature "for free")?
-
-This sounds like a good idea to me. Looks like I could add this to disk_stats and expose it through the block/<device>/stats file. I'll try to see if this is feasible.
+Ignoring unknown command may lead to inconsistent beaviors. To achieve
+forward compatibility, I think it would be better to never ignore
+unknown rule but to give a way to userspace to known what is the current
+kernel ABI. This could be done with a securityfs file listing the
+current policy grammar.
