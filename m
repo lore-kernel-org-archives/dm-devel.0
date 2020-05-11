@@ -1,7 +1,7 @@
 From: Damien Le Moal <Damien.LeMoal@wdc.com>
 Subject: Re: [PATCHv5 00/14] dm-zoned: metadata version 2
-Date: Mon, 11 May 2020 06:41:12 +0000
-Message-ID: <BY5PR04MB6900CDF593D730AFA8C9D31CE7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
+Date: Mon, 11 May 2020 06:55:04 +0000
+Message-ID: <BY5PR04MB69009A2DBA8782E65AF7B6D8E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
 References: <20200508090332.40716-1-hare@suse.de>
 	<BY5PR04MB6900138C0F78196D0F81BF07E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
 	<1e68571f-0205-93c8-e535-a472c1a7b5d8@suse.de>
@@ -111,25 +111,25 @@ On 2020/05/11 15:31, Hannes Reinecke wrote:
 > So guess I'll be resurrecting the idea from my very first patch and 
 > implement 'cache' zones in addition to the existing 'random' and 
 > 'sequential' zones.
+
+Yes, exactly. With that, reclaim can be modified simply to work only on cache
+zones and do not touch random zones. That will also work nicely for both single
+and dual drive setups, with the difference that single drive will have no random
+zones (all conventional zones will be cache zones).
+
+With that, we could also play with intelligent zone allocation on the SMR drive
+to try to put data that is most susceptible to change in random zones. Doing so,
+we can do update in-place after the first reclaim of a cache zone into a random
+zone and reduce overall reclaim overhead.
+
 > But, as you said, that'll be a next series of patches.
 > 
 > What program did you use as a load generator?
-
-My own "filebench" program :)
-It it just a simple tool that write files using some thread, IO size, IO type,
-sync or not, fsync or not, etc. Various parameters possible. The same can be
-done with fio.
-
-The parameters I used are:
-- random (uniform distribution) file size between 1MiB and 4 MiB
-- Files written using buffered IOs with 4K writes (I know ! just trying to be
-nasty to dm-zoned)
-- 20 writer threads each writing 10 files: each data point is the bandwidth of
-those 20 threads/200 files being written (above I said 100 files... My bad. It
-is 200).
-- For each data point, create a new directory to not end up with super large
-directories slowing down the FS
-
+> 
+> Cheers,
+> 
+> Hannes
+> 
 
 
 -- 
