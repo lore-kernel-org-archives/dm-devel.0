@@ -1,14 +1,11 @@
 From: mwilck@suse.com
-Subject: [PATCH 02/11] multipath-tools: Makefile.inc: separate
-	out OPTFLAGS
-Date: Tue, 12 May 2020 00:39:22 +0200
-Message-ID: <20200511223931.18261-3-mwilck@suse.com>
-References: <20200511223931.18261-1-mwilck@suse.com>
+Subject: [PATCH 00/11] Minor fixes for multipath-tools
+Date: Tue, 12 May 2020 00:39:20 +0200
+Message-ID: <20200511223931.18261-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200511223931.18261-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,41 +21,41 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-OPTFLAGS is what distribution builds would typically override. That
-should not include the warning flags we use.
+Hi Christophe, hi Ben,
 
-Moreover, in the definition of CFLAGS, put $(CFLAGS) first to make it
-easier for the user to spot her input in the build logs.
+This series fixes a couple of issues I recently found with the 32bit build
+of multipath-tools, and after integrating our CI into the automated builds
+on our build server.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- Makefile.inc | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
+Regards
+Martin
 
-diff --git a/Makefile.inc b/Makefile.inc
-index d4d1e0dd..7a59db85 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -93,14 +93,14 @@ STACKPROT := $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)
- ERROR_DISCARDED_QUALIFIERS := $(call TEST_CC_OPTION,-Werror=discarded-qualifiers,)
- WNOCLOBBERED := $(call TEST_CC_OPTION,-Wno-clobbered,)
- 
--OPTFLAGS	= -O2 -g -pipe -Werror -Wall -Wextra -Wformat=2 -Werror=implicit-int \
-+OPTFLAGS	:= -O2 -g $(STACKPROT) --param=ssp-buffer-size=4
-+WARNFLAGS	:= -Werror -Wall -Wextra -Wformat=2 -Werror=implicit-int \
- 		  -Werror=implicit-function-declaration -Werror=format-security \
--		  $(WNOCLOBBERED) \
--		  -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS) \
--		  $(STACKPROT) --param=ssp-buffer-size=4
-+		  $(WNOCLOBBERED) -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS)
- CPPFLAGS	:= -Wp,-D_FORTIFY_SOURCE=2 
--CFLAGS		:= $(OPTFLAGS) -DBIN_DIR=\"$(bindir)\" -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\" \
--		   -MMD -MP $(CFLAGS)
-+CFLAGS		:= $(CFLAGS) $(OPTFLAGS) $(WARNFLAGS) -pipe \
-+		   -DBIN_DIR=\"$(bindir)\" -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\" \
-+		   -MMD -MP
- BIN_CFLAGS	= -fPIE -DPIE
- LIB_CFLAGS	= -fPIC
- SHARED_FLAGS	= -shared
+Martin Wilck (11):
+  multipath-tools: Makefile: more dependency fixes for parallel build
+  multipath-tools: Makefile.inc: separate out OPTFLAGS
+  multipath-tools: Makefile.inc: allow user settings for LDFLAGS
+  multipath-tools: Makefile.inc: set -Wno-error=clobbered
+  libmultipath: discovery.c: use %z qualifier for size_t
+  libmultipath: eliminate more signed/unsigned comparisons
+  libmultipath: set_uint: fix parsing for 32bit
+  multipath-tools tests/Makefile: add -lmpathcmd to LIBDEPS
+  multipath tools tests/Makefile: Fix OBJDEPS for hwtable-test
+  multipath-tools tests/test-lib.c: drop __wrap_is_claimed_by_foreign
+  multipath-tools tests/directio: fix -Wmaybe-uninitalized warning
+
+ Makefile                              |  5 +++--
+ Makefile.inc                          | 16 ++++++++--------
+ libmpathpersist/mpath_pr_ioctl.c      |  2 +-
+ libmultipath/dict.c                   | 11 +++++++----
+ libmultipath/discovery.c              | 16 ++++++++--------
+ libmultipath/print.c                  | 12 ++++++------
+ libmultipath/prioritizers/alua_spc3.h |  2 +-
+ multipathd/cli_handlers.c             | 20 ++++++++++----------
+ multipathd/main.c                     |  2 +-
+ tests/Makefile                        |  4 ++--
+ tests/directio.c                      |  2 +-
+ tests/test-lib.c                      |  6 ------
+ 12 files changed, 48 insertions(+), 50 deletions(-)
+
 -- 
 2.26.2
