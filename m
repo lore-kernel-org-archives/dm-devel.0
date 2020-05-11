@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 09/11] multipath tools tests/Makefile: Fix
-	OBJDEPS for hwtable-test
-Date: Tue, 12 May 2020 00:39:29 +0200
-Message-ID: <20200511223931.18261-10-mwilck@suse.com>
+Subject: [PATCH 11/11] multipath-tools tests/directio: fix
+	-Wmaybe-uninitalized warning
+Date: Tue, 12 May 2020 00:39:31 +0200
+Message-ID: <20200511223931.18261-12-mwilck@suse.com>
 References: <20200511223931.18261-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,31 +24,25 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-OBJDEPS needs to list object files that _call_ functions we want
-to wrap, but it should _not_ list the object files where these
-functions are defined; otherwise the linker might resolve these
-symbols before they can be wrapped.
-
-(Observed on i586 with gcc 9.3.1, ld 2.34.0, where wrapping
-prio_getprio() doesn't work with prio.o in OBJDEPS).
+Initialize aio_grp to satisfy gcc.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/Makefile | 2 +-
+ tests/directio.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/tests/Makefile b/tests/Makefile
-index 028c9ea7..1b8706a7 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -41,7 +41,7 @@ endif
- dmevents-test_LIBDEPS = -lpthread -ldevmapper -lurcu
- hwtable-test_TESTDEPS := test-lib.o
- hwtable-test_OBJDEPS := ../libmultipath/discovery.o ../libmultipath/blacklist.o \
--	../libmultipath/prio.o ../libmultipath/callout.o ../libmultipath/structs.o
-+	../libmultipath/structs.o
- hwtable-test_LIBDEPS := -ludev -lpthread -ldl
- blacklist-test_TESTDEPS := test-log.o
- blacklist-test_OBJDEPS := ../libmultipath/blacklist.o
+diff --git a/tests/directio.c b/tests/directio.c
+index 3cd7a520..66aaf0eb 100644
+--- a/tests/directio.c
++++ b/tests/directio.c
+@@ -316,7 +316,7 @@ static void test_init_free(void **state)
+ {
+ 	int i, count = 0;
+ 	struct checker c[4096] = {0};
+-	struct aio_group *aio_grp;
++	struct aio_group *aio_grp = NULL;
+ 
+ 	assert_true(list_empty(&aio_grp_list));
+ 	will_return(__wrap_io_setup, 0);
 -- 
 2.26.2
