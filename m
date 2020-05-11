@@ -1,14 +1,14 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
 Subject: Re: [PATCHv5 00/14] dm-zoned: metadata version 2
-Date: Mon, 11 May 2020 08:31:12 +0200
-Message-ID: <1e68571f-0205-93c8-e535-a472c1a7b5d8@suse.de>
+Date: Mon, 11 May 2020 06:41:12 +0000
+Message-ID: <BY5PR04MB6900CDF593D730AFA8C9D31CE7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
 References: <20200508090332.40716-1-hare@suse.de>
 	<BY5PR04MB6900138C0F78196D0F81BF07E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
+	<1e68571f-0205-93c8-e535-a472c1a7b5d8@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <BY5PR04MB6900138C0F78196D0F81BF07E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,144 +19,119 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <Damien.LeMoal@wdc.com>, Mike Snitzer <snitzer@redhat.com>
+To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
 Cc: Bob Liu <bob.liu@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 5/11/20 4:46 AM, Damien Le Moal wrote:
-> On 2020/05/08 18:03, Hannes Reinecke wrote:
->> Hi all,
+On 2020/05/11 15:31, Hannes Reinecke wrote:
+> On 5/11/20 4:46 AM, Damien Le Moal wrote:
+>> On 2020/05/08 18:03, Hannes Reinecke wrote:
+>>> Hi all,
+>>>
+>>> this patchset adds a new metadata version 2 for dm-zoned, which brings the
+>>> following improvements:
+>>>
+>>> - UUIDs and labels: Adding three more fields to the metadata containing
+>>>    the dm-zoned device UUID and label, and the device UUID. This allows
+>>>    for an unique identification of the devices, so that several dm-zoned
+>>>    sets can coexist and have a persistent identification.
+>>> - Extend random zones by an additional regular disk device: A regular
+>>>    block device can be added together with the zoned block device, providing
+>>>    additional (emulated) random write zones. With this it's possible to
+>>>    handle sequential zones only devices; also there will be a speed-up if
+>>>    the regular block device resides on a fast medium. The regular block device
+>>>    is placed logically in front of the zoned block device, so that metadata
+>>>    and mapping tables reside on the regular block device, not the zoned device.
+>>> - Tertiary superblock support: In addition to the two existing sets of metadata
+>>>    another, tertiary, superblock is written to the first block of the zoned
+>>>    block device. This superblock is for identification only; the generation
+>>>    number is set to '0' and the block itself it never updated. The addition
+>>>    metadate like bitmap tables etc are not copied.
+>>>
+>>> To handle this, some changes to the original handling are introduced:
+>>> - Zones are now equidistant. Originally, runt zones were ignored, and
+>>>    not counted when sizing the mapping tables. With the dual device setup
+>>>    runt zones might occur at the end of the regular block device, making
+>>>    direct translation between zone number and sector/block number complex.
+>>>    For metadata version 2 all zones are considered to be of the same size,
+>>>    and runt zones are simply marked as 'offline' to have them ignored when
+>>>    allocating a new zone.
+>>> - The block number in the superblock is now the global number, and refers to
+>>>    the location of the superblock relative to the resulting device-mapper
+>>>    device. Which means that the tertiary superblock contains absolute block
+>>>    addresses, which needs to be translated to the relative device addresses
+>>>    to find the referenced block.
+>>>
+>>> There is an accompanying patchset for dm-zoned-tools for writing and checking
+>>> this new metadata.
+>>>
+>>> As usual, comments and reviews are welcome.
 >>
->> this patchset adds a new metadata version 2 for dm-zoned, which brings t=
-he
->> following improvements:
+>> I gave this series a good round of testing. See the attached picture for the
+>> results. The test is this:
+>> 1) Setup dm-zoned
+>> 2) Format and mount with mkfs.ext4 -E packed_meta_blocks=1 /dev/mapper/xxx
+>> 3) Create file random in size between 1 and 4MB and measure user seen throughput
+>> over 100 files.
+>> 3) Run that for 2 hours
 >>
->> - UUIDs and labels: Adding three more fields to the metadata containing
->>    the dm-zoned device UUID and label, and the device UUID. This allows
->>    for an unique identification of the devices, so that several dm-zoned
->>    sets can coexist and have a persistent identification.
->> - Extend random zones by an additional regular disk device: A regular
->>    block device can be added together with the zoned block device, provi=
-ding
->>    additional (emulated) random write zones. With this it's possible to
->>    handle sequential zones only devices; also there will be a speed-up i=
-f
->>    the regular block device resides on a fast medium. The regular block =
-device
->>    is placed logically in front of the zoned block device, so that metad=
-ata
->>    and mapping tables reside on the regular block device, not the zoned =
-device.
->> - Tertiary superblock support: In addition to the two existing sets of m=
-etadata
->>    another, tertiary, superblock is written to the first block of the zo=
-ned
->>    block device. This superblock is for identification only; the generat=
-ion
->>    number is set to '0' and the block itself it never updated. The addit=
-ion
->>    metadate like bitmap tables etc are not copied.
+>> I ran this over a 15TB SMR drive single drive setup, and on the same drive + a
+>> 500GB m.2 ssd added.
 >>
->> To handle this, some changes to the original handling are introduced:
->> - Zones are now equidistant. Originally, runt zones were ignored, and
->>    not counted when sizing the mapping tables. With the dual device setu=
-p
->>    runt zones might occur at the end of the regular block device, making
->>    direct translation between zone number and sector/block number comple=
-x.
->>    For metadata version 2 all zones are considered to be of the same siz=
-e,
->>    and runt zones are simply marked as 'offline' to have them ignored wh=
-en
->>    allocating a new zone.
->> - The block number in the superblock is now the global number, and refer=
-s to
->>    the location of the superblock relative to the resulting device-mappe=
-r
->>    device. Which means that the tertiary superblock contains absolute bl=
-ock
->>    addresses, which needs to be translated to the relative device addres=
-ses
->>    to find the referenced block.
+>> For the single drive case, the usual 3 phases can be seen: start writing at
+>> about 110MB/s, everything going to conventional zones (note conv zones are in
+>> the middle of the disk, hence the low-ish throughput). Then after about 400s,
+>> reclaim kicks in and the throughput drops to 60-70 MB/s. As reclaim cannot keep
+>> up under this heavy write workload, performance drops to 20-30MB/s after 800s.
+>> All good, without any idle time for reclaim to do its job, this is all expected.
 >>
->> There is an accompanying patchset for dm-zoned-tools for writing and che=
-cking
->> this new metadata.
+>> For the dual drive case, things are more interesting:
+>> 1) The first phase is longer as overall, there is more conventional space (500G
+>> ssd + 400G on SMR drive). So we see the SSD speed first (~425MB/s), then the
+>> drive speed (100 MB/s), slightly lower than the single drive case toward the end
+>> as reclaim triggers.
+>> 2) Some recovery back to ssd speed, then a long phase at half the speed of the
+>> ssd as writes go to ssd and reclaim is running moving data out of the ssd onto
+>> the disk.
+>> 3) Then a long phase at 25MB/s due to SMR disk reclaim.
+>> 4) back up to half the ssd speed.
 >>
->> As usual, comments and reviews are welcome.
->=20
-> I gave this series a good round of testing. See the attached picture for =
-the
-> results. The test is this:
-> 1) Setup dm-zoned
-> 2) Format and mount with mkfs.ext4 -E packed_meta_blocks=3D1 /dev/mapper/=
-xxx
-> 3) Create file random in size between 1 and 4MB and measure user seen thr=
-oughput
-> over 100 files.
-> 3) Run that for 2 hours
->=20
-> I ran this over a 15TB SMR drive single drive setup, and on the same driv=
-e + a
-> 500GB m.2 ssd added.
->=20
-> For the single drive case, the usual 3 phases can be seen: start writing =
-at
-> about 110MB/s, everything going to conventional zones (note conv zones ar=
-e in
-> the middle of the disk, hence the low-ish throughput). Then after about 4=
-00s,
-> reclaim kicks in and the throughput drops to 60-70 MB/s. As reclaim canno=
-t keep
-> up under this heavy write workload, performance drops to 20-30MB/s after =
-800s.
-> All good, without any idle time for reclaim to do its job, this is all ex=
-pected.
->=20
-> For the dual drive case, things are more interesting:
-> 1) The first phase is longer as overall, there is more conventional space=
- (500G
-> ssd + 400G on SMR drive). So we see the SSD speed first (~425MB/s), then =
-the
-> drive speed (100 MB/s), slightly lower than the single drive case toward =
-the end
-> as reclaim triggers.
-> 2) Some recovery back to ssd speed, then a long phase at half the speed o=
-f the
-> ssd as writes go to ssd and reclaim is running moving data out of the ssd=
- onto
-> the disk.
-> 3) Then a long phase at 25MB/s due to SMR disk reclaim.
-> 4) back up to half the ssd speed.
->=20
-> No crashes, no data corruption, all good. But is does look like we can im=
-prove
-> on performance further by preventing using the drive conventional zones a=
-s
-> "buffer" zones. If we let those be the final resting place of data, the S=
-MR disk
-> only reclaim would not kick in and hurt performance as seen here. That I =
-think
-> can all be done on top of this series though. Let's get this in first.
->=20
-Thanks for the data! That indeed is very interesting; guess I'll do some=20
-tests here on my setup, too.
-(And hope it doesn't burn my NVDIMM ...)
+>> No crashes, no data corruption, all good. But is does look like we can improve
+>> on performance further by preventing using the drive conventional zones as
+>> "buffer" zones. If we let those be the final resting place of data, the SMR disk
+>> only reclaim would not kick in and hurt performance as seen here. That I think
+>> can all be done on top of this series though. Let's get this in first.
+>>
+> Thanks for the data! That indeed is very interesting; guess I'll do some 
+> tests here on my setup, too.
+> (And hope it doesn't burn my NVDIMM ...)
+> 
+> But, guess what, I had the some thoughts; we should be treating the 
+> random zones more like sequential zones in a two-disk setup.
+> So guess I'll be resurrecting the idea from my very first patch and 
+> implement 'cache' zones in addition to the existing 'random' and 
+> 'sequential' zones.
+> But, as you said, that'll be a next series of patches.
+> 
+> What program did you use as a load generator?
 
-But, guess what, I had the some thoughts; we should be treating the=20
-random zones more like sequential zones in a two-disk setup.
-So guess I'll be resurrecting the idea from my very first patch and=20
-implement 'cache' zones in addition to the existing 'random' and=20
-'sequential' zones.
-But, as you said, that'll be a next series of patches.
+My own "filebench" program :)
+It it just a simple tool that write files using some thread, IO size, IO type,
+sync or not, fsync or not, etc. Various parameters possible. The same can be
+done with fio.
 
-What program did you use as a load generator?
+The parameters I used are:
+- random (uniform distribution) file size between 1MiB and 4 MiB
+- Files written using buffered IOs with 4K writes (I know ! just trying to be
+nasty to dm-zoned)
+- 20 writer threads each writing 10 files: each data point is the bandwidth of
+those 20 threads/200 files being written (above I said 100 files... My bad. It
+is 200).
+- For each data point, create a new directory to not end up with super large
+directories slowing down the FS
 
-Cheers,
 
-Hannes
---=20
-Dr. Hannes Reinecke            Teamlead Storage & Networking
-hare@suse.de                               +49 911 74053 688
-SUSE Software Solutions GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-HRB 36809 (AG N=FCrnberg), Gesch=E4ftsf=FChrer: Felix Imend=F6rffer
+
+-- 
+Damien Le Moal
+Western Digital Research
