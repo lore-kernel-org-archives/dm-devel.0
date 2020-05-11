@@ -1,15 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
 Subject: Re: [PATCH 15/15] dm-zoned: metadata version 2
-Date: Mon, 11 May 2020 10:46:33 +0200
-Message-ID: <0601428c-8c71-06a9-07b9-d7b1b6331c70@suse.de>
+Date: Mon, 11 May 2020 08:51:49 +0000
+Message-ID: <BY5PR04MB6900D34837D615DB2C1EB80FE7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
 References: <20200511082430.39455-1-hare@suse.de>
 	<20200511082430.39455-16-hare@suse.de>
 	<BY5PR04MB69008424543BE9E497BBEE9DE7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
+	<0601428c-8c71-06a9-07b9-d7b1b6331c70@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <BY5PR04MB69008424543BE9E497BBEE9DE7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,96 +20,129 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <Damien.LeMoal@wdc.com>, Mike Snitzer <snitzer@redhat.com>
+To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
 Cc: Bob Liu <bob.liu@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gNS8xMS8yMCAxMDozNiBBTSwgRGFtaWVuIExlIE1vYWwgd3JvdGU6Cj4gT24gMjAyMC8wNS8x
-MSAxNzoyNCwgSGFubmVzIFJlaW5lY2tlIHdyb3RlOgo+PiBJbXBsZW1lbnQgaGFuZGxpbmcgZm9y
-IG1ldGFkYXRhIHZlcnNpb24gMi4gVGhlIG5ldyBtZXRhZGF0YSBhZGRzCj4+IGEgbGFiZWwgYW5k
-IFVVSUQgZm9yIHRoZSBkZXZpY2UgbWFwcGVyIGRldmljZSwgYW5kIGFkZGl0aW9uYWwgVVVJRAo+
-PiBmb3IgdGhlIHVuZGVybHlpbmcgYmxvY2sgZGV2aWNlcy4KPj4gSXQgYWxzbyBhbGxvd3MgZm9y
-IGFuIGFkZGl0aW9uYWwgcmVndWxhciBkcml2ZSB0byBiZSB1c2VkIGZvcgo+PiBlbXVsYXRpbmcg
-cmFuZG9tIGFjY2VzcyB6b25lcy4gVGhlIGVtdWxhdGVkIHpvbmVzIHdpbGwgYmUgcGxhY2VkCj4+
-IGxvZ2ljYWxseSBpbiBmcm9udCBvZiB0aGUgem9uZXMgZnJvbSB0aGUgem9uZWQgYmxvY2sgZGV2
-aWNlLCBjYXVzaW5nCj4+IHRoZSBzdXBlcmJsb2NrcyBhbmQgbWV0YWRhdGEgdG8gYmUgc3RvcmVk
-IG9uIHRoYXQgZGV2aWNlLgo+PiBUaGUgZmlyc3Qgem9uZSBvZiB0aGUgb3JpZ2luYWwgem9uZWQg
-ZGV2aWNlIHdpbGwgYmUgdXNlZCB0byBob2xkCj4+IGFub3RoZXIsIHRlcnRpYXJ5IGNvcHkgb2Yg
-dGhlIG1ldGFkYXRhOyB0aGlzIGNvcHkgY2FycmllcyBhCj4+IGdlbmVyYXRpb24gbnVtYmVyIG9m
-IDAgYW5kIGlzIG5ldmVyIHVwZGF0ZWQ7IGl0J3MganVzdCB1c2VkCj4+IGZvciBpZGVudGlmaWNh
-dGlvbi4KPj4KPj4gU2lnbmVkLW9mZi1ieTogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2UuZGU+
-Cj4+IFJldmlld2VkLWJ5OiBCb2IgTGl1IDxib2IubGl1QG9yYWNsZS5jb20+Cj4+IFJldmlld2Vk
-LWJ5OiBEYW1pZW4gTGUgTW9hbCA8ZGFtaWVuLmxlbW9hbEB3ZGMuY29tPgo+IAo+IEZvcmdvdCB0
-byByZWFkIHRocm91Z2ggdGhlIGRvY3VtZW50YXRpb24gdXBkYXRlLiBBIGNvdXBsZSBvZiBjb21t
-ZW50cyBhZGRlZCBiZWxvdy4KPiAKPj4gLS0tCj4+ICAgLi4uL2FkbWluLWd1aWRlL2RldmljZS1t
-YXBwZXIvZG0tem9uZWQucnN0ICAgICAgICAgfCAgMzQgKystCj4+ICAgZHJpdmVycy9tZC9kbS16
-b25lZC1tZXRhZGF0YS5jICAgICAgICAgICAgICAgICAgICAgfCAzMTAgKysrKysrKysrKysrKysr
-KystLS0tCj4+ICAgZHJpdmVycy9tZC9kbS16b25lZC10YXJnZXQuYyAgICAgICAgICAgICAgICAg
-ICAgICAgfCAxODUgKysrKysrKystLS0tCj4+ICAgZHJpdmVycy9tZC9kbS16b25lZC5oICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgfCAgIDcgKy0KPj4gICA0IGZpbGVzIGNoYW5nZWQsIDQy
-NyBpbnNlcnRpb25zKCspLCAxMDkgZGVsZXRpb25zKC0pCj4+Cj4+IGRpZmYgLS1naXQgYS9Eb2N1
-bWVudGF0aW9uL2FkbWluLWd1aWRlL2RldmljZS1tYXBwZXIvZG0tem9uZWQucnN0IGIvRG9jdW1l
-bnRhdGlvbi9hZG1pbi1ndWlkZS9kZXZpY2UtbWFwcGVyL2RtLXpvbmVkLnJzdAo+PiBpbmRleCA3
-NTQ3Y2U2MzUxNjEuLjU1Mzc1MmVhMjUyMSAxMDA2NDQKPj4gLS0tIGEvRG9jdW1lbnRhdGlvbi9h
-ZG1pbi1ndWlkZS9kZXZpY2UtbWFwcGVyL2RtLXpvbmVkLnJzdAo+PiArKysgYi9Eb2N1bWVudGF0
-aW9uL2FkbWluLWd1aWRlL2RldmljZS1tYXBwZXIvZG0tem9uZWQucnN0Cj4+IEBAIC0zNyw5ICsz
-NywxMyBAQCBBbGdvcml0aG0KPj4gICBkbS16b25lZCBpbXBsZW1lbnRzIGFuIG9uLWRpc2sgYnVm
-ZmVyaW5nIHNjaGVtZSB0byBoYW5kbGUgbm9uLXNlcXVlbnRpYWwKPj4gICB3cml0ZSBhY2Nlc3Nl
-cyB0byB0aGUgc2VxdWVudGlhbCB6b25lcyBvZiBhIHpvbmVkIGJsb2NrIGRldmljZS4KPj4gICBD
-b252ZW50aW9uYWwgem9uZXMgYXJlIHVzZWQgZm9yIGNhY2hpbmcgYXMgd2VsbCBhcyBmb3Igc3Rv
-cmluZyBpbnRlcm5hbAo+PiAtbWV0YWRhdGEuCj4+ICttZXRhZGF0YS4gSXQgY2FuIGFsc28gdXNl
-IGEgcmVndWxhciBibG9jayBkZXZpY2UgdG9nZXRoZXIgd2l0aCB0aGUgem9uZWQKPj4gK2Jsb2Nr
-IGRldmljZTsgaW4gdGhhdCBjYXNlIHRoZSByZWd1bGFyIGJsb2NrIGRldmljZSB3aWxsIGJlIHNw
-bGl0IGxvZ2ljYWxseQo+PiAraW4gem9uZXMgd2l0aCB0aGUgc2FtZSBzaXplIGFzIHRoZSB6b25l
-ZCBibG9jayBkZXZpY2UuIFRoZXNlIHpvbmVzIHdpbGwgYmUKPj4gK3BsYWNlZCBpbiBmcm9udCBv
-ZiB0aGUgem9uZXMgZnJvbSB0aGUgem9uZWQgYmxvY2sgZGV2aWNlIGFuZCB3aWxsIGJlIGhhbmRs
-ZWQKPj4gK2p1c3QgbGlrZSBjb252ZW50aW9uYWwgem9uZXMuCj4+ICAgCj4+IC1UaGUgem9uZXMg
-b2YgdGhlIGRldmljZSBhcmUgc2VwYXJhdGVkIGludG8gMiB0eXBlczoKPj4gK1RoZSB6b25lcyBv
-ZiB0aGUgZGV2aWNlKHMpIGFyZSBzZXBhcmF0ZWQgaW50byAyIHR5cGVzOgo+PiAgIAo+PiAgIDEp
-IE1ldGFkYXRhIHpvbmVzOiB0aGVzZSBhcmUgY29udmVudGlvbmFsIHpvbmVzIHVzZWQgdG8gc3Rv
-cmUgbWV0YWRhdGEuCj4+ICAgTWV0YWRhdGEgem9uZXMgYXJlIG5vdCByZXBvcnRlZCBhcyB1c2Vh
-YmxlIGNhcGFjaXR5IHRvIHRoZSB1c2VyLgo+PiBAQCAtMTI3LDYgKzEzMSwxMyBAQCByZXN1bWVk
-LiBGbHVzaGluZyBtZXRhZGF0YSB0aHVzIG9ubHkgdGVtcG9yYXJpbHkgZGVsYXlzIHdyaXRlIGFu
-ZAo+PiAgIGRpc2NhcmQgcmVxdWVzdHMuIFJlYWQgcmVxdWVzdHMgY2FuIGJlIHByb2Nlc3NlZCBj
-b25jdXJyZW50bHkgd2hpbGUKPj4gICBtZXRhZGF0YSBmbHVzaCBpcyBiZWluZyBleGVjdXRlZC4K
-Pj4gICAKPj4gK0lmIGEgcmVndWxhciBkZXZpY2UgaXMgdXNlZCBpbiBjb25qdW5jdGlvbiB3aXRo
-IHRoZSB6b25lZCBibG9jayBkZXZpY2UsCj4+ICthIHRoaXJkIHNldCBvZiBtZXRhZGF0YSAod2l0
-aG91dCB0aGUgem9uZSBiaXRtYXBzKSBpcyB3cml0dGVuIHRvIHRoZQo+PiArc3RhcnQgb2YgdGhl
-IHpvbmVkIGJsb2NrIGRldmljZS4gVGhpcyBtZXRhZGF0YSBoYXMgYSBnZW5lcmF0aW9uIGNvdW50
-ZXIgb2YKPj4gKycwJyBhbmQgd2lsbCBuZXZlciBiZSB1cGRhdGVkIGR1cmluZyBub3JtYWwgb3Bl
-cmF0aW9uOyBpdCBqdXN0IHNlcnZlcyBmb3IKPj4gK2lkZW50aWZpY2F0aW9uIHB1cnBvc2VzLiBU
-aGUgZmlyc3QgYW5kIHNlY29uZCBjb3B5IG9mIHRoZSBtZXRhZGF0YQo+PiArYXJlIGxvY2F0ZWQg
-YXQgdGhlIHN0YXJ0IG9mIHRoZSByZWd1bGFyIGJsb2NrIGRldmljZS4KPj4gKwo+PiAgIFVzYWdl
-Cj4+ICAgPT09PT0KPj4gICAKPj4gQEAgLTEzOCwxMiArMTQ5LDIxIEBAIEV4OjoKPj4gICAKPj4g
-ICAJZG16YWRtIC0tZm9ybWF0IC9kZXYvc2R4eAo+PiAgIAo+PiAtRm9yIGEgZm9ybWF0dGVkIGRl
-dmljZSwgdGhlIHRhcmdldCBjYW4gYmUgY3JlYXRlZCBub3JtYWxseSB3aXRoIHRoZQo+PiAtZG1z
-ZXR1cCB1dGlsaXR5LiBUaGUgb25seSBwYXJhbWV0ZXIgdGhhdCBkbS16b25lZCByZXF1aXJlcyBp
-cyB0aGUKPj4gLXVuZGVybHlpbmcgem9uZWQgYmxvY2sgZGV2aWNlIG5hbWUuIEV4OjoKPj4gICAK
-Pj4gLQllY2hvICIwIGBibG9ja2RldiAtLWdldHNpemUgJHtkZXZ9YCB6b25lZCAke2Rldn0iIHwg
-XAo+PiAtCWRtc2V0dXAgY3JlYXRlIGRtei1gYmFzZW5hbWUgJHtkZXZ9YAo+PiArSWYgdHdvIGRy
-aXZlcyBhcmUgdG8gYmUgdXNlZCwgYm90aCBkZXZpY2VzIG11c3QgYmUgc3BlY2lmaWVkLCB3aXRo
-IHRoZQo+PiArcmVndWxhciBibG9jayBkZXZpY2UgYXMgdGhlIGZpcnN0IGRldmljZS4KPiAKPiBB
-Y3R1YWxseSwgdGhlIHpvbmVkIGJsb2NrIGRldmljZSBtdXN0IGJlIGZpcnN0LiBPdGhlcndpc2Ug
-ZG16YWRtIGNvbXBsYWlucy4gV2UKPiBjYW4gY2hhbmdlIHRoYXQsIG9yIGNoYW5nZSB0aGUgZG9j
-LiBXaGljaCBkbyB5b3UgcHJlZmVyID8gTm8gc3Ryb25nIG9waW5pb24gaGVyZS4KPiAKTm9wZSwg
-bm90IGFueSBtb3JlLiBGaXhlZCBpdCBpbiBteSBsb2NhbCByZXBvICh3aGljaCBJIGhhdmVuJ3Qg
-cHVzaGVkLCAKc29ycnkpLgoKQnV0IGFmdGVyIHRoZSBsYXN0IGRpc2N1c3Npb24gd2UgaGFkIEkg
-dGhvdWdodCBpdCBiZXR0ZXIgYW5kIG1vcmUgCmNvbnNpc3RlbnQgdG8gaGF2ZSB0aGUgcmVndWxh
-ciBkZXZpY2UgZmlyc3QsIGp1c3QgbGlrZSB0aGUgZGV2aWNlLW1hcHBlciAKaW50ZXJmYWNlLgoK
-Pj4gKwo+PiArRXg6Ogo+PiArCj4+ICsJZG16YWRtIC0tZm9ybWF0IC9kZXYvc2R4eCAvZGV2L3Nk
-eXkKPj4gKwo+PiArCj4+ICtGb21hdHRlZCBkZXZpY2UocykgY2FuIGJlIHN0YXJ0ZWQgd2l0aCB0
-aGUgZG16YWRtIHV0aWxpdHksIHRvby46Cj4+ICsKPj4gK0V4OjoKPj4gKwo+PiArCWRtemFkbSAt
-LXN0YXJ0IC9kZXYvc2R4eCAvZGV2L3NkeXkKPiAKPiBBbmQgc2FtZSBoZXJlLCB0aGUgem9uZWQg
-ZGV2aWNlIG11c3QgY29tZSBmaXJzdC4gSSBhZGRlZCBhIHBhdGNoIHRoYXQgaW50ZXJuYWxseQo+
-IHJldmVyc2UgdGhhdCBvcmRlciBmb3IgdGhlIGRtIHN0YXJ0IG9wZXJhdGlvbiBzbyB0aGF0IHRo
-ZSByZWd1bGFyIGRldmljZSBpcwo+IHNwZWNpZmllZCBmaXJzdC4KPiAKU2VlIGFib3ZlLiBJJ3Zl
-IGZpeGVkIHVwIGRtemFkbSBmb3IgdGhpcy4KCkkganVzdCBoYWRuJ3QgcHVzaGVkIHRoZSBwYXRj
-aCBhcyBJIHdhbnRlZCB0byBnZXQgdGhlIGtlcm5lbCBiaXRzIApzZXR0bGVkLiBCdXQgbm93IHRo
-YXQgd2UgaGF2ZSBJJ2xsIGJlIHB1c2hpbmcgdGhlIGRtLXpvbmVkLXRvb2xzIHVwZGF0ZXMuCgpD
-aGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UgICAgICAgICAgICBUZWFtbGVh
-ZCBTdG9yYWdlICYgTmV0d29ya2luZwpoYXJlQHN1c2UuZGUgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBTb2Z0d2FyZSBTb2x1dGlvbnMgR21iSCwg
-TWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkhSQiAzNjgwOSAoQUcgTsO8cm5iZXJnKSwg
-R2VzY2jDpGZ0c2bDvGhyZXI6IEZlbGl4IEltZW5kw7ZyZmZlcgoKCi0tCmRtLWRldmVsIG1haWxp
-bmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1h
-bi9saXN0aW5mby9kbS1kZXZlbA==
+On 2020/05/11 17:46, Hannes Reinecke wrote:
+> On 5/11/20 10:36 AM, Damien Le Moal wrote:
+>> On 2020/05/11 17:24, Hannes Reinecke wrote:
+>>> Implement handling for metadata version 2. The new metadata adds
+>>> a label and UUID for the device mapper device, and additional UUID
+>>> for the underlying block devices.
+>>> It also allows for an additional regular drive to be used for
+>>> emulating random access zones. The emulated zones will be placed
+>>> logically in front of the zones from the zoned block device, causing
+>>> the superblocks and metadata to be stored on that device.
+>>> The first zone of the original zoned device will be used to hold
+>>> another, tertiary copy of the metadata; this copy carries a
+>>> generation number of 0 and is never updated; it's just used
+>>> for identification.
+>>>
+>>> Signed-off-by: Hannes Reinecke <hare@suse.de>
+>>> Reviewed-by: Bob Liu <bob.liu@oracle.com>
+>>> Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
+>>
+>> Forgot to read through the documentation update. A couple of comments added below.
+>>
+>>> ---
+>>>   .../admin-guide/device-mapper/dm-zoned.rst         |  34 ++-
+>>>   drivers/md/dm-zoned-metadata.c                     | 310 +++++++++++++++++----
+>>>   drivers/md/dm-zoned-target.c                       | 185 ++++++++----
+>>>   drivers/md/dm-zoned.h                              |   7 +-
+>>>   4 files changed, 427 insertions(+), 109 deletions(-)
+>>>
+>>> diff --git a/Documentation/admin-guide/device-mapper/dm-zoned.rst b/Documentation/admin-guide/device-mapper/dm-zoned.rst
+>>> index 7547ce635161..553752ea2521 100644
+>>> --- a/Documentation/admin-guide/device-mapper/dm-zoned.rst
+>>> +++ b/Documentation/admin-guide/device-mapper/dm-zoned.rst
+>>> @@ -37,9 +37,13 @@ Algorithm
+>>>   dm-zoned implements an on-disk buffering scheme to handle non-sequential
+>>>   write accesses to the sequential zones of a zoned block device.
+>>>   Conventional zones are used for caching as well as for storing internal
+>>> -metadata.
+>>> +metadata. It can also use a regular block device together with the zoned
+>>> +block device; in that case the regular block device will be split logically
+>>> +in zones with the same size as the zoned block device. These zones will be
+>>> +placed in front of the zones from the zoned block device and will be handled
+>>> +just like conventional zones.
+>>>   
+>>> -The zones of the device are separated into 2 types:
+>>> +The zones of the device(s) are separated into 2 types:
+>>>   
+>>>   1) Metadata zones: these are conventional zones used to store metadata.
+>>>   Metadata zones are not reported as useable capacity to the user.
+>>> @@ -127,6 +131,13 @@ resumed. Flushing metadata thus only temporarily delays write and
+>>>   discard requests. Read requests can be processed concurrently while
+>>>   metadata flush is being executed.
+>>>   
+>>> +If a regular device is used in conjunction with the zoned block device,
+>>> +a third set of metadata (without the zone bitmaps) is written to the
+>>> +start of the zoned block device. This metadata has a generation counter of
+>>> +'0' and will never be updated during normal operation; it just serves for
+>>> +identification purposes. The first and second copy of the metadata
+>>> +are located at the start of the regular block device.
+>>> +
+>>>   Usage
+>>>   =====
+>>>   
+>>> @@ -138,12 +149,21 @@ Ex::
+>>>   
+>>>   	dmzadm --format /dev/sdxx
+>>>   
+>>> -For a formatted device, the target can be created normally with the
+>>> -dmsetup utility. The only parameter that dm-zoned requires is the
+>>> -underlying zoned block device name. Ex::
+>>>   
+>>> -	echo "0 `blockdev --getsize ${dev}` zoned ${dev}" | \
+>>> -	dmsetup create dmz-`basename ${dev}`
+>>> +If two drives are to be used, both devices must be specified, with the
+>>> +regular block device as the first device.
+>>
+>> Actually, the zoned block device must be first. Otherwise dmzadm complains. We
+>> can change that, or change the doc. Which do you prefer ? No strong opinion here.
+>>
+> Nope, not any more. Fixed it in my local repo (which I haven't pushed, 
+> sorry).
+> 
+> But after the last discussion we had I thought it better and more 
+> consistent to have the regular device first, just like the device-mapper 
+> interface.
+
+Works for me !
+
+> 
+>>> +
+>>> +Ex::
+>>> +
+>>> +	dmzadm --format /dev/sdxx /dev/sdyy
+>>> +
+>>> +
+>>> +Fomatted device(s) can be started with the dmzadm utility, too.:
+>>> +
+>>> +Ex::
+>>> +
+>>> +	dmzadm --start /dev/sdxx /dev/sdyy
+>>
+>> And same here, the zoned device must come first. I added a patch that internally
+>> reverse that order for the dm start operation so that the regular device is
+>> specified first.
+>>
+> See above. I've fixed up dmzadm for this.
+> 
+> I just hadn't pushed the patch as I wanted to get the kernel bits 
+> settled. But now that we have I'll be pushing the dm-zoned-tools updates.
+
+Please send changes on top of the "staging" branch. Your first batch of changes
+is already merged in that branch.
+
+> 
+> Cheers,
+> 
+> Hannes
+> 
+
+
+-- 
+Damien Le Moal
+Western Digital Research
