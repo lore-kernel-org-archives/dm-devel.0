@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 04/11] multipath-tools: Makefile.inc: set
-	-Wno-error=clobbered
-Date: Tue, 12 May 2020 00:39:24 +0200
-Message-ID: <20200511223931.18261-5-mwilck@suse.com>
+Subject: [PATCH 02/11] multipath-tools: Makefile.inc: separate
+	out OPTFLAGS
+Date: Tue, 12 May 2020 00:39:22 +0200
+Message-ID: <20200511223931.18261-3-mwilck@suse.com>
 References: <20200511223931.18261-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,29 +24,41 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-We need to ignore -Wclobbered because gcc has trouble dealing with glibc's
-implementation of pthread_cleanup_push().
+OPTFLAGS is what distribution builds would typically override. That
+should not include the warning flags we use.
 
-For some variants of gcc, -Wno-clobbered alone isn't enough if -Werror is also
-set. Compilation with -Wno-error=clobbered works, though.
+Moreover, in the definition of CFLAGS, put $(CFLAGS) first to make it
+easier for the user to spot her input in the build logs.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- Makefile.inc | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ Makefile.inc | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/Makefile.inc b/Makefile.inc
-index 671dd1ca..e7256e3a 100644
+index d4d1e0dd..7a59db85 100644
 --- a/Makefile.inc
 +++ b/Makefile.inc
-@@ -91,7 +91,7 @@ TEST_CC_OPTION = $(shell \
- 
- STACKPROT := $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)
+@@ -93,14 +93,14 @@ STACKPROT := $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)
  ERROR_DISCARDED_QUALIFIERS := $(call TEST_CC_OPTION,-Werror=discarded-qualifiers,)
--WNOCLOBBERED := $(call TEST_CC_OPTION,-Wno-clobbered,)
-+WNOCLOBBERED := $(call TEST_CC_OPTION,-Wno-clobbered -Wno-error=clobbered,)
+ WNOCLOBBERED := $(call TEST_CC_OPTION,-Wno-clobbered,)
  
- OPTFLAGS	:= -O2 -g $(STACKPROT) --param=ssp-buffer-size=4
- WARNFLAGS	:= -Werror -Wall -Wextra -Wformat=2 -Werror=implicit-int \
+-OPTFLAGS	= -O2 -g -pipe -Werror -Wall -Wextra -Wformat=2 -Werror=implicit-int \
++OPTFLAGS	:= -O2 -g $(STACKPROT) --param=ssp-buffer-size=4
++WARNFLAGS	:= -Werror -Wall -Wextra -Wformat=2 -Werror=implicit-int \
+ 		  -Werror=implicit-function-declaration -Werror=format-security \
+-		  $(WNOCLOBBERED) \
+-		  -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS) \
+-		  $(STACKPROT) --param=ssp-buffer-size=4
++		  $(WNOCLOBBERED) -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS)
+ CPPFLAGS	:= -Wp,-D_FORTIFY_SOURCE=2 
+-CFLAGS		:= $(OPTFLAGS) -DBIN_DIR=\"$(bindir)\" -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\" \
+-		   -MMD -MP $(CFLAGS)
++CFLAGS		:= $(CFLAGS) $(OPTFLAGS) $(WARNFLAGS) -pipe \
++		   -DBIN_DIR=\"$(bindir)\" -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\" \
++		   -MMD -MP
+ BIN_CFLAGS	= -fPIE -DPIE
+ LIB_CFLAGS	= -fPIC
+ SHARED_FLAGS	= -shared
 -- 
 2.26.2
