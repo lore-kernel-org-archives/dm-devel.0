@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 08/11] multipath-tools tests/Makefile: add
-	-lmpathcmd to LIBDEPS
-Date: Tue, 12 May 2020 00:39:28 +0200
-Message-ID: <20200511223931.18261-9-mwilck@suse.com>
+Subject: [PATCH 03/11] multipath-tools: Makefile.inc: allow user
+	settings for LDFLAGS
+Date: Tue, 12 May 2020 00:39:23 +0200
+Message-ID: <20200511223931.18261-4-mwilck@suse.com>
 References: <20200511223931.18261-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,25 +24,29 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Make sure the linker finds libmpathcmd.
+This allows e.g. setting LDFLAGS="-m32 -Wl,-b,elf32-i386" to compile
+for a 32bit target on a 64bit system.
+
+Note that, like CFLAGS, the variable needs to be set in the environment,
+not on the "make" command line.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/Makefile | 2 +-
+ Makefile.inc | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/tests/Makefile b/tests/Makefile
-index 77ff3249..028c9ea7 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -10,7 +10,7 @@ W_MISSING_INITIALIZERS := $(call TEST_MISSING_INITIALIZERS)
+diff --git a/Makefile.inc b/Makefile.inc
+index 7a59db85..671dd1ca 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -104,7 +104,7 @@ CFLAGS		:= $(CFLAGS) $(OPTFLAGS) $(WARNFLAGS) -pipe \
+ BIN_CFLAGS	= -fPIE -DPIE
+ LIB_CFLAGS	= -fPIC
+ SHARED_FLAGS	= -shared
+-LDFLAGS		= -Wl,-z,relro -Wl,-z,now
++LDFLAGS		:= $(LDFLAGS) -Wl,-z,relro -Wl,-z,now
+ BIN_LDFLAGS	= -pie
  
- CFLAGS += $(BIN_CFLAGS) -I$(multipathdir) -I$(mpathcmddir) \
- 	-Wno-unused-parameter $(W_MISSING_INITIALIZERS)
--LIBDEPS += -L$(multipathdir) -lmultipath -lcmocka
-+LIBDEPS += -L$(multipathdir) -L$(mpathcmddir) -lmultipath -lmpathcmd -lcmocka
- 
- TESTS := uevent parser util dmevents hwtable blacklist unaligned vpd pgpolicy \
- 	 alias directio
+ # Check whether a function with name $1 has been declared in header file $2.
 -- 
 2.26.2
