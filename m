@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 01/15] dm-zoned: add 'status' callback
-Date: Mon, 11 May 2020 10:24:16 +0200
-Message-ID: <20200511082430.39455-2-hare@suse.de>
+Subject: [PATCH 04/15] dm-zoned: use array for superblock zones
+Date: Mon, 11 May 2020 10:24:19 +0200
+Message-ID: <20200511082430.39455-5-hare@suse.de>
 References: <20200511082430.39455-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,142 +21,146 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien LeMoal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Add callback to supply information for 'dmsetup status'
-and 'dmsetup table'. The output for 'dmsetup status' is
-
-0 <size> zoned <nr_zones> zones <nr_unmap_rnd>/<nr_rnd> random <nr_unmap_seq>/<nr_seq> sequential
-
-where <nr_unmap_rnd> is the number of unmapped (ie free) random zones,
-<nr_rnd> the total number of random zones, <nr_unmap_seq> the number
-of unmapped sequential zones, and <nr_seq> the total number of
-sequential zones.
+Instead of storing just the first superblock zone and calculate
+the secondary relative to that we should be using an array for
+holding the superblock zones.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
-Reviewed-by: Bob Liu <bob.liu@oracle.com>
 Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
+Reviewed-by: Bob Liu <bob.liu@oracle.com>
 ---
- .../admin-guide/device-mapper/dm-zoned.rst         | 16 +++++++++++++
- drivers/md/dm-zoned-metadata.c                     | 15 +++++++++++++
- drivers/md/dm-zoned-target.c                       | 26 ++++++++++++++++++++++
- drivers/md/dm-zoned.h                              |  3 +++
- 4 files changed, 60 insertions(+)
+ drivers/md/dm-zoned-metadata.c | 41 +++++++++++++++++++++++++----------------
+ 1 file changed, 25 insertions(+), 16 deletions(-)
 
-diff --git a/Documentation/admin-guide/device-mapper/dm-zoned.rst b/Documentation/admin-guide/device-mapper/dm-zoned.rst
-index 07f56ebc1730..4165fbf1aeb6 100644
---- a/Documentation/admin-guide/device-mapper/dm-zoned.rst
-+++ b/Documentation/admin-guide/device-mapper/dm-zoned.rst
-@@ -144,3 +144,19 @@ underlying zoned block device name. Ex::
- 
- 	echo "0 `blockdev --getsize ${dev}` zoned ${dev}" | \
- 	dmsetup create dmz-`basename ${dev}`
-+
-+Information about the internal layout and current usage of the zones can
-+be obtained with the 'status' callback from dmsetup:
-+
-+Ex::
-+
-+	dmsetup status /dev/dm-X
-+
-+will return a line
-+
-+	0 <size> zoned <nr_zones> zones <nr_unmap_rnd>/<nr_rnd> random <nr_unmap_seq>/<nr_seq> sequential
-+
-+where <nr_zones> is the total number of zones, <nr_unmap_rnd> is the number
-+of unmapped (ie free) random zones, <nr_rnd> the total number of zones,
-+<nr_unmap_seq> the number of unmapped sequential zones, and <nr_seq> the
-+total number of sequential zones.
 diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index 369de15c4e80..c8787560fa9f 100644
+index 1993eeb26bc1..900b1c1224f5 100644
 --- a/drivers/md/dm-zoned-metadata.c
 +++ b/drivers/md/dm-zoned-metadata.c
-@@ -202,6 +202,11 @@ sector_t dmz_start_block(struct dmz_metadata *zmd, struct dm_zone *zone)
- 	return (sector_t)dmz_id(zmd, zone) << zmd->dev->zone_nr_blocks_shift;
- }
- 
-+unsigned int dmz_nr_zones(struct dmz_metadata *zmd)
-+{
-+	return zmd->dev->nr_zones;
-+}
-+
- unsigned int dmz_nr_chunks(struct dmz_metadata *zmd)
- {
- 	return zmd->nr_chunks;
-@@ -217,6 +222,16 @@ unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd)
- 	return atomic_read(&zmd->unmap_nr_rnd);
- }
- 
-+unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd)
-+{
-+	return zmd->nr_seq;
-+}
-+
-+unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd)
-+{
-+	return atomic_read(&zmd->unmap_nr_seq);
-+}
-+
- /*
-  * Lock/unlock mapping table.
-  * The map lock also protects all the zone lists.
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index f4f83d39b3dc..0b4b27d280fb 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -965,6 +965,31 @@ static int dmz_iterate_devices(struct dm_target *ti,
- 	return fn(ti, dmz->ddev, 0, capacity, data);
- }
- 
-+static void dmz_status(struct dm_target *ti, status_type_t type,
-+		       unsigned int status_flags, char *result,
-+		       unsigned int maxlen)
-+{
-+	struct dmz_target *dmz = ti->private;
-+	ssize_t sz = 0;
-+	char buf[BDEVNAME_SIZE];
-+
-+	switch (type) {
-+	case STATUSTYPE_INFO:
-+		DMEMIT("%u zones %u/%u random %u/%u sequential",
-+		       dmz_nr_zones(dmz->metadata),
-+		       dmz_nr_unmap_rnd_zones(dmz->metadata),
-+		       dmz_nr_rnd_zones(dmz->metadata),
-+		       dmz_nr_unmap_seq_zones(dmz->metadata),
-+		       dmz_nr_seq_zones(dmz->metadata));
-+		break;
-+	case STATUSTYPE_TABLE:
-+		format_dev_t(buf, dmz->dev->bdev->bd_dev);
-+		DMEMIT("%s", buf);
-+		break;
-+	}
-+	return;
-+}
-+
- static struct target_type dmz_type = {
- 	.name		 = "zoned",
- 	.version	 = {1, 1, 0},
-@@ -978,6 +1003,7 @@ static struct target_type dmz_type = {
- 	.postsuspend	 = dmz_suspend,
- 	.resume		 = dmz_resume,
- 	.iterate_devices = dmz_iterate_devices,
-+	.status		 = dmz_status,
+@@ -124,6 +124,7 @@ struct dmz_sb {
+ 	sector_t		block;
+ 	struct dmz_mblock	*mblk;
+ 	struct dmz_super	*sb;
++	struct dm_zone		*zone;
  };
  
- static int __init dmz_init(void)
-diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
-index 5b5e493d479c..884c0e586082 100644
---- a/drivers/md/dm-zoned.h
-+++ b/drivers/md/dm-zoned.h
-@@ -190,8 +190,11 @@ void dmz_free_zone(struct dmz_metadata *zmd, struct dm_zone *zone);
- void dmz_map_zone(struct dmz_metadata *zmd, struct dm_zone *zone,
- 		  unsigned int chunk);
- void dmz_unmap_zone(struct dmz_metadata *zmd, struct dm_zone *zone);
-+unsigned int dmz_nr_zones(struct dmz_metadata *zmd);
- unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd);
- unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd);
-+unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd);
-+unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd);
- 
  /*
-  * Activate a zone (increment its reference count).
+@@ -150,7 +151,6 @@ struct dmz_metadata {
+ 	/* Zone information array */
+ 	struct dm_zone		*zones;
+ 
+-	struct dm_zone		*sb_zone;
+ 	struct dmz_sb		sb[2];
+ 	unsigned int		mblk_primary;
+ 	u64			sb_gen;
+@@ -839,8 +839,9 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
+ /*
+  * Check super block.
+  */
+-static int dmz_check_sb(struct dmz_metadata *zmd, struct dmz_super *sb)
++static int dmz_check_sb(struct dmz_metadata *zmd, unsigned int set)
+ {
++	struct dmz_super *sb = zmd->sb[set].sb;
+ 	unsigned int nr_meta_zones, nr_data_zones;
+ 	struct dmz_dev *dev = zmd->dev;
+ 	u32 crc, stored_crc;
+@@ -932,16 +933,20 @@ static int dmz_lookup_secondary_sb(struct dmz_metadata *zmd)
+ 
+ 	/* Bad first super block: search for the second one */
+ 	zmd->sb[1].block = zmd->sb[0].block + zone_nr_blocks;
++	zmd->sb[1].zone = zmd->sb[0].zone + 1;
+ 	for (i = 0; i < zmd->nr_rnd_zones - 1; i++) {
+ 		if (dmz_read_sb(zmd, 1) != 0)
+ 			break;
+-		if (le32_to_cpu(zmd->sb[1].sb->magic) == DMZ_MAGIC)
++		if (le32_to_cpu(zmd->sb[1].sb->magic) == DMZ_MAGIC) {
++			zmd->sb[1].zone += i;
+ 			return 0;
++		}
+ 		zmd->sb[1].block += zone_nr_blocks;
+ 	}
+ 
+ 	dmz_free_mblock(zmd, mblk);
+ 	zmd->sb[1].mblk = NULL;
++	zmd->sb[1].zone = NULL;
+ 
+ 	return -EIO;
+ }
+@@ -985,11 +990,9 @@ static int dmz_recover_mblocks(struct dmz_metadata *zmd, unsigned int dst_set)
+ 	dmz_dev_warn(zmd->dev, "Metadata set %u invalid: recovering", dst_set);
+ 
+ 	if (dst_set == 0)
+-		zmd->sb[0].block = dmz_start_block(zmd, zmd->sb_zone);
+-	else {
+-		zmd->sb[1].block = zmd->sb[0].block +
+-			(zmd->nr_meta_zones << zmd->dev->zone_nr_blocks_shift);
+-	}
++		zmd->sb[0].block = dmz_start_block(zmd, zmd->sb[0].zone);
++	else
++		zmd->sb[1].block = dmz_start_block(zmd, zmd->sb[1].zone);
+ 
+ 	page = alloc_page(GFP_NOIO);
+ 	if (!page)
+@@ -1033,21 +1036,27 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
+ 	u64 sb_gen[2] = {0, 0};
+ 	int ret;
+ 
++	if (!zmd->sb[0].zone) {
++		dmz_dev_err(zmd->dev, "Primary super block zone not set");
++		return -ENXIO;
++	}
++
+ 	/* Read and check the primary super block */
+-	zmd->sb[0].block = dmz_start_block(zmd, zmd->sb_zone);
++	zmd->sb[0].block = dmz_start_block(zmd, zmd->sb[0].zone);
+ 	ret = dmz_get_sb(zmd, 0);
+ 	if (ret) {
+ 		dmz_dev_err(zmd->dev, "Read primary super block failed");
+ 		return ret;
+ 	}
+ 
+-	ret = dmz_check_sb(zmd, zmd->sb[0].sb);
++	ret = dmz_check_sb(zmd, 0);
+ 
+ 	/* Read and check secondary super block */
+ 	if (ret == 0) {
+ 		sb_good[0] = true;
+-		zmd->sb[1].block = zmd->sb[0].block +
+-			(zmd->nr_meta_zones << zmd->dev->zone_nr_blocks_shift);
++		if (!zmd->sb[1].zone)
++			zmd->sb[1].zone = zmd->sb[0].zone + zmd->nr_meta_zones;
++		zmd->sb[1].block = dmz_start_block(zmd, zmd->sb[1].zone);
+ 		ret = dmz_get_sb(zmd, 1);
+ 	} else
+ 		ret = dmz_lookup_secondary_sb(zmd);
+@@ -1057,7 +1066,7 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
+ 		return ret;
+ 	}
+ 
+-	ret = dmz_check_sb(zmd, zmd->sb[1].sb);
++	ret = dmz_check_sb(zmd, 1);
+ 	if (ret == 0)
+ 		sb_good[1] = true;
+ 
+@@ -1142,9 +1151,9 @@ static int dmz_init_zone(struct blk_zone *blkz, unsigned int idx, void *data)
+ 		zmd->nr_useable_zones++;
+ 		if (dmz_is_rnd(zone)) {
+ 			zmd->nr_rnd_zones++;
+-			if (!zmd->sb_zone) {
++			if (!zmd->sb[0].zone) {
+ 				/* Super block zone */
+-				zmd->sb_zone = zone;
++				zmd->sb[0].zone = zone;
+ 			}
+ 		}
+ 	}
+@@ -2415,7 +2424,7 @@ int dmz_ctr_metadata(struct dmz_dev *dev, struct dmz_metadata **metadata)
+ 
+ 	/* Set metadata zones starting from sb_zone */
+ 	for (i = 0; i < zmd->nr_meta_zones << 1; i++) {
+-		zone = dmz_get(zmd, zmd->sb_zone->id + i);
++		zone = dmz_get(zmd, zmd->sb[0].zone->id + i);
+ 		if (!dmz_is_rnd(zone))
+ 			goto err;
+ 		set_bit(DMZ_META, &zone->flags);
 -- 
 2.16.4
