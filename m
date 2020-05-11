@@ -1,11 +1,11 @@
 From: Damien Le Moal <Damien.LeMoal@wdc.com>
 Subject: Re: [PATCHv5 00/14] dm-zoned: metadata version 2
-Date: Mon, 11 May 2020 11:25:02 +0000
-Message-ID: <BY5PR04MB69008CD2C559E69DC17158C8E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
+Date: Mon, 11 May 2020 11:46:43 +0000
+Message-ID: <BY5PR04MB6900C84D00585D3560D4C51AE7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
 References: <20200508090332.40716-1-hare@suse.de>
 	<BY5PR04MB6900138C0F78196D0F81BF07E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
 	<BY5PR04MB6900C76141ABD428F42C1840E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
-	<f3b1182e-45fb-4b8b-71ca-a1b340403260@suse.de>
+	<2553e593-795d-6aed-f983-e990a283e2ff@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -24,7 +24,7 @@ To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
 Cc: Bob Liu <bob.liu@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2020/05/11 20:19, Hannes Reinecke wrote:
+On 2020/05/11 20:25, Hannes Reinecke wrote:
 > On 5/11/20 12:55 PM, Damien Le Moal wrote:
 >> On 2020/05/11 11:46, Damien Le Moal wrote:
 >>> Mike,
@@ -62,22 +62,47 @@ On 2020/05/11 20:19, Hannes Reinecke wrote:
 >> fixed ?
 >>
 >>
-> I _thought_ I had this fixed; the idea was to manipulate the 'runt' zone 
-> such that the zone would always displayed as a zone with same size as 
-> all the other zones, but marked as offline. IE the (logical) zone layout 
-> would always be equidistant, with no runt zones in between.
->  From that perspective the actual size of the runt zone wouldn't matter 
-> at all.
+>>
+>>
+> Does this one help?
+
+Nope. Same warning.
+
 > 
-> Lemme check.
+> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+> index ea43f6892ced..5daca82b5ec7 100644
+> --- a/drivers/md/dm-zoned-target.c
+> +++ b/drivers/md/dm-zoned-target.c
+> @@ -1041,13 +1041,17 @@ static int dmz_iterate_devices(struct dm_target *ti,
+>   {
+>          struct dmz_target *dmz = ti->private;
+>          unsigned int zone_nr_sectors = dmz_zone_nr_sectors(dmz->metadata);
+> +       unsigned int nr_zones;
+>          sector_t capacity;
+>          int r;
+> 
+> -       capacity = dmz->dev[0].capacity & ~(zone_nr_sectors - 1);
+> +       nr_zones = DIV_ROUND_DOWN(dmz->dev[0].capacity, zone_nr_sectors);
+> +       capacity = nr_zones * zone_nr_sectors;
 
-Was just playing with dmzadm right now, and I did notice that the second device
-start offset is indeed a round number of zones, larger than the actual regular
-device capacity in my test case. So indeed, that code is in place there.
+	capacity = round_down(dmz->dev[0].capacity, zone_nr_sectors);
 
-So the problem may be on the kernel side, something using the first dev capacity
-as is instead of the rounded-up value to the zone size... Digging too.
+is simpler :)
 
+In any case, your change does seem to do anything here. Before and after, the
+capacity is rounded down to full zones, excluding the last runt zone. I think it
+is to do with the table entry start offset given on DM start by dmzadm...
+
+
+>          r = fn(ti, dmz->ddev[0], 0, capacity, data);
+>          if (!r && dmz->ddev[1]) {
+> -               capacity = dmz->dev[1].capacity & ~(zone_nr_sectors - 1);
+> +               nr_zones = DIV_ROUND_DOWN(dmz->dev[1.capacity,
+> +                                                  zone_nr_sectors));
+> +               capacity = nr_zones * zone_nr_sectors;
+>                  r = fn(ti, dmz->ddev[1], 0, capacity, data);
+>          }
+>          return r;
 > 
 > Cheers,
 > 
