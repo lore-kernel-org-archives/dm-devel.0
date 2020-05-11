@@ -1,8 +1,7 @@
 From: Lars Wendler <polynomial-c@gentoo.org>
-Subject: [PATCH] (resent) multipath-tools: Fix parallel make
-	issues
-Date: Mon, 11 May 2020 12:09:12 +0200
-Message-ID: <20200511100911.3561-1-polynomial-c@gentoo.org>
+Subject: [PATCH] multipath-tools: Fix parallel make issues
+Date: Mon, 11 May 2020 12:02:02 +0200
+Message-ID: <20200511100202.16448-1-polynomial-c@gentoo.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -41,11 +40,10 @@ install is broken like this:
   make[1]: *** [Makefile:28: install] Error 1
   make[1]: *** [Makefile:38: install] Error 1
 ---
- Makefile                           | 3 ++-
- libmultipath/checkers/Makefile     | 1 +
- libmultipath/foreign/Makefile      | 1 +
- libmultipath/prioritizers/Makefile | 1 +
- 4 files changed, 5 insertions(+), 1 deletion(-)
+ Makefile                       | 3 ++-
+ libmultipath/checkers/Makefile | 1 +
+ libmultipath/foreign/Makefile  | 1 +
+ 3 files changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/Makefile b/Makefile
 index 1dee3680..a9ade94f 100644
@@ -83,18 +81,6 @@ index fae58a0d..567deebd 100644
  install:
 +	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(libdir)
  	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(libdir)
- 
- uninstall:
-diff --git a/libmultipath/prioritizers/Makefile b/libmultipath/prioritizers/Makefile
-index 9d0fe03c..b0b0b522 100644
---- a/libmultipath/prioritizers/Makefile
-+++ b/libmultipath/prioritizers/Makefile
-@@ -35,6 +35,7 @@ libprio%.so: %.o
- 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
- 
- install: $(LIBS)
-+	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(libdir)
- 	$(INSTALL_PROGRAM) -m 755 libprio*.so $(DESTDIR)$(libdir)
  
  uninstall:
 -- 
