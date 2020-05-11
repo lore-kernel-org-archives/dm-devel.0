@@ -1,13 +1,15 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: [PATCHv5 00/14] dm-zoned: metadata version 2
-Date: Mon, 11 May 2020 10:55:41 +0000
-Message-ID: <BY5PR04MB6900C76141ABD428F42C1840E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
+Date: Mon, 11 May 2020 13:19:37 +0200
+Message-ID: <f3b1182e-45fb-4b8b-71ca-a1b340403260@suse.de>
 References: <20200508090332.40716-1-hare@suse.de>
 	<BY5PR04MB6900138C0F78196D0F81BF07E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
+	<BY5PR04MB6900C76141ABD428F42C1840E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <BY5PR04MB6900C76141ABD428F42C1840E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,48 +20,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
+To: Damien Le Moal <Damien.LeMoal@wdc.com>, Mike Snitzer <snitzer@redhat.com>
 Cc: Bob Liu <bob.liu@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2020/05/11 11:46, Damien Le Moal wrote:
-> Mike,
-> 
-> I am still seeing the warning:
-> 
-> [ 1827.839756] device-mapper: table: 253:1: adding target device sdj caused an
-> alignment inconsistency: physical_block_size=4096, logical_block_size=4096,
-> alignment_offset=0, start=0
-> [ 1827.856738] device-mapper: table: 253:1: adding target device sdj caused an
-> alignment inconsistency: physical_block_size=4096, logical_block_size=4096,
-> alignment_offset=0, start=0
-> [ 1827.874031] device-mapper: table: 253:1: adding target device sdj caused an
-> alignment inconsistency: physical_block_size=4096, logical_block_size=4096,
-> alignment_offset=0, start=0
-> [ 1827.891086] device-mapper: table: 253:1: adding target device sdj caused an
-> alignment inconsistency: physical_block_size=4096, logical_block_size=4096,
-> alignment_offset=0, start=0
-> 
-> when mixing 512B sector and 4KB sector devices. Investigating now.
-
-
-OK. Figured that one out: the 500GB SSD I am using for the regular device is
-976773168 512B sectors capacity, that is, not a multiple of the 256MB zone size,
-and not even a multiple of 4K. This causes the creation of a 12MB runt zone of
-24624 sectors, which is ignored. But the start sector of the second device in
-the dm-table remains 976773168, so not aligned on 4K. This causes
-bdev_stack_limits to return an error and the above messages to be printed.
-
-So I think we need to completely ignore the eventual "runt" zone of the regular
-device so that everything aligns correctly. This will need changes in both
-dmzadm and dm-zoned.
-
-Hannes, I can hack something on top of your series. Or can you resend with that
-fixed ?
-
-
-
-
--- 
-Damien Le Moal
-Western Digital Research
+T24gNS8xMS8yMCAxMjo1NSBQTSwgRGFtaWVuIExlIE1vYWwgd3JvdGU6Cj4gT24gMjAyMC8wNS8x
+MSAxMTo0NiwgRGFtaWVuIExlIE1vYWwgd3JvdGU6Cj4+IE1pa2UsCj4+Cj4+IEkgYW0gc3RpbGwg
+c2VlaW5nIHRoZSB3YXJuaW5nOgo+Pgo+PiBbIDE4MjcuODM5NzU2XSBkZXZpY2UtbWFwcGVyOiB0
+YWJsZTogMjUzOjE6IGFkZGluZyB0YXJnZXQgZGV2aWNlIHNkaiBjYXVzZWQgYW4KPj4gYWxpZ25t
+ZW50IGluY29uc2lzdGVuY3k6IHBoeXNpY2FsX2Jsb2NrX3NpemU9NDA5NiwgbG9naWNhbF9ibG9j
+a19zaXplPTQwOTYsCj4+IGFsaWdubWVudF9vZmZzZXQ9MCwgc3RhcnQ9MAo+PiBbIDE4MjcuODU2
+NzM4XSBkZXZpY2UtbWFwcGVyOiB0YWJsZTogMjUzOjE6IGFkZGluZyB0YXJnZXQgZGV2aWNlIHNk
+aiBjYXVzZWQgYW4KPj4gYWxpZ25tZW50IGluY29uc2lzdGVuY3k6IHBoeXNpY2FsX2Jsb2NrX3Np
+emU9NDA5NiwgbG9naWNhbF9ibG9ja19zaXplPTQwOTYsCj4+IGFsaWdubWVudF9vZmZzZXQ9MCwg
+c3RhcnQ9MAo+PiBbIDE4MjcuODc0MDMxXSBkZXZpY2UtbWFwcGVyOiB0YWJsZTogMjUzOjE6IGFk
+ZGluZyB0YXJnZXQgZGV2aWNlIHNkaiBjYXVzZWQgYW4KPj4gYWxpZ25tZW50IGluY29uc2lzdGVu
+Y3k6IHBoeXNpY2FsX2Jsb2NrX3NpemU9NDA5NiwgbG9naWNhbF9ibG9ja19zaXplPTQwOTYsCj4+
+IGFsaWdubWVudF9vZmZzZXQ9MCwgc3RhcnQ9MAo+PiBbIDE4MjcuODkxMDg2XSBkZXZpY2UtbWFw
+cGVyOiB0YWJsZTogMjUzOjE6IGFkZGluZyB0YXJnZXQgZGV2aWNlIHNkaiBjYXVzZWQgYW4KPj4g
+YWxpZ25tZW50IGluY29uc2lzdGVuY3k6IHBoeXNpY2FsX2Jsb2NrX3NpemU9NDA5NiwgbG9naWNh
+bF9ibG9ja19zaXplPTQwOTYsCj4+IGFsaWdubWVudF9vZmZzZXQ9MCwgc3RhcnQ9MAo+Pgo+PiB3
+aGVuIG1peGluZyA1MTJCIHNlY3RvciBhbmQgNEtCIHNlY3RvciBkZXZpY2VzLiBJbnZlc3RpZ2F0
+aW5nIG5vdy4KPiAKPiAKPiBPSy4gRmlndXJlZCB0aGF0IG9uZSBvdXQ6IHRoZSA1MDBHQiBTU0Qg
+SSBhbSB1c2luZyBmb3IgdGhlIHJlZ3VsYXIgZGV2aWNlIGlzCj4gOTc2NzczMTY4IDUxMkIgc2Vj
+dG9ycyBjYXBhY2l0eSwgdGhhdCBpcywgbm90IGEgbXVsdGlwbGUgb2YgdGhlIDI1Nk1CIHpvbmUg
+c2l6ZSwKPiBhbmQgbm90IGV2ZW4gYSBtdWx0aXBsZSBvZiA0Sy4gVGhpcyBjYXVzZXMgdGhlIGNy
+ZWF0aW9uIG9mIGEgMTJNQiBydW50IHpvbmUgb2YKPiAyNDYyNCBzZWN0b3JzLCB3aGljaCBpcyBp
+Z25vcmVkLiBCdXQgdGhlIHN0YXJ0IHNlY3RvciBvZiB0aGUgc2Vjb25kIGRldmljZSBpbgo+IHRo
+ZSBkbS10YWJsZSByZW1haW5zIDk3Njc3MzE2OCwgc28gbm90IGFsaWduZWQgb24gNEsuIFRoaXMg
+Y2F1c2VzCj4gYmRldl9zdGFja19saW1pdHMgdG8gcmV0dXJuIGFuIGVycm9yIGFuZCB0aGUgYWJv
+dmUgbWVzc2FnZXMgdG8gYmUgcHJpbnRlZC4KPiAKPiBTbyBJIHRoaW5rIHdlIG5lZWQgdG8gY29t
+cGxldGVseSBpZ25vcmUgdGhlIGV2ZW50dWFsICJydW50IiB6b25lIG9mIHRoZSByZWd1bGFyCj4g
+ZGV2aWNlIHNvIHRoYXQgZXZlcnl0aGluZyBhbGlnbnMgY29ycmVjdGx5LiBUaGlzIHdpbGwgbmVl
+ZCBjaGFuZ2VzIGluIGJvdGgKPiBkbXphZG0gYW5kIGRtLXpvbmVkLgo+IAo+IEhhbm5lcywgSSBj
+YW4gaGFjayBzb21ldGhpbmcgb24gdG9wIG9mIHlvdXIgc2VyaWVzLiBPciBjYW4geW91IHJlc2Vu
+ZCB3aXRoIHRoYXQKPiBmaXhlZCA/Cj4gCj4gCkkgX3Rob3VnaHRfIEkgaGFkIHRoaXMgZml4ZWQ7
+IHRoZSBpZGVhIHdhcyB0byBtYW5pcHVsYXRlIHRoZSAncnVudCcgem9uZSAKc3VjaCB0aGF0IHRo
+ZSB6b25lIHdvdWxkIGFsd2F5cyBkaXNwbGF5ZWQgYXMgYSB6b25lIHdpdGggc2FtZSBzaXplIGFz
+IAphbGwgdGhlIG90aGVyIHpvbmVzLCBidXQgbWFya2VkIGFzIG9mZmxpbmUuIElFIHRoZSAobG9n
+aWNhbCkgem9uZSBsYXlvdXQgCndvdWxkIGFsd2F5cyBiZSBlcXVpZGlzdGFudCwgd2l0aCBubyBy
+dW50IHpvbmVzIGluIGJldHdlZW4uCiBGcm9tIHRoYXQgcGVyc3BlY3RpdmUgdGhlIGFjdHVhbCBz
+aXplIG9mIHRoZSBydW50IHpvbmUgd291bGRuJ3QgbWF0dGVyIAphdCBhbGwuCgpMZW1tZSBjaGVj
+ay4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZSAgICAgICAgICAgIFRl
+YW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZSAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIFNvZnR3YXJlIFNvbHV0aW9ucyBH
+bWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKSFJCIDM2ODA5IChBRyBOw7xybmJl
+cmcpLCBHZXNjaMOkZnRzZsO8aHJlcjogRmVsaXggSW1lbmTDtnJmZmVyCgoKLS0KZG0tZGV2ZWwg
+bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
+YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
