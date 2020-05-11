@@ -1,15 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
 Subject: Re: [PATCHv5 00/14] dm-zoned: metadata version 2
-Date: Mon, 11 May 2020 13:24:55 +0200
-Message-ID: <2553e593-795d-6aed-f983-e990a283e2ff@suse.de>
+Date: Mon, 11 May 2020 11:25:02 +0000
+Message-ID: <BY5PR04MB69008CD2C559E69DC17158C8E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
 References: <20200508090332.40716-1-hare@suse.de>
 	<BY5PR04MB6900138C0F78196D0F81BF07E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
 	<BY5PR04MB6900C76141ABD428F42C1840E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
+	<f3b1182e-45fb-4b8b-71ca-a1b340403260@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <BY5PR04MB6900C76141ABD428F42C1840E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,64 +20,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <Damien.LeMoal@wdc.com>, Mike Snitzer <snitzer@redhat.com>
+To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
 Cc: Bob Liu <bob.liu@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gNS8xMS8yMCAxMjo1NSBQTSwgRGFtaWVuIExlIE1vYWwgd3JvdGU6Cj4gT24gMjAyMC8wNS8x
-MSAxMTo0NiwgRGFtaWVuIExlIE1vYWwgd3JvdGU6Cj4+IE1pa2UsCj4+Cj4+IEkgYW0gc3RpbGwg
-c2VlaW5nIHRoZSB3YXJuaW5nOgo+Pgo+PiBbIDE4MjcuODM5NzU2XSBkZXZpY2UtbWFwcGVyOiB0
-YWJsZTogMjUzOjE6IGFkZGluZyB0YXJnZXQgZGV2aWNlIHNkaiBjYXVzZWQgYW4KPj4gYWxpZ25t
-ZW50IGluY29uc2lzdGVuY3k6IHBoeXNpY2FsX2Jsb2NrX3NpemU9NDA5NiwgbG9naWNhbF9ibG9j
-a19zaXplPTQwOTYsCj4+IGFsaWdubWVudF9vZmZzZXQ9MCwgc3RhcnQ9MAo+PiBbIDE4MjcuODU2
-NzM4XSBkZXZpY2UtbWFwcGVyOiB0YWJsZTogMjUzOjE6IGFkZGluZyB0YXJnZXQgZGV2aWNlIHNk
-aiBjYXVzZWQgYW4KPj4gYWxpZ25tZW50IGluY29uc2lzdGVuY3k6IHBoeXNpY2FsX2Jsb2NrX3Np
-emU9NDA5NiwgbG9naWNhbF9ibG9ja19zaXplPTQwOTYsCj4+IGFsaWdubWVudF9vZmZzZXQ9MCwg
-c3RhcnQ9MAo+PiBbIDE4MjcuODc0MDMxXSBkZXZpY2UtbWFwcGVyOiB0YWJsZTogMjUzOjE6IGFk
-ZGluZyB0YXJnZXQgZGV2aWNlIHNkaiBjYXVzZWQgYW4KPj4gYWxpZ25tZW50IGluY29uc2lzdGVu
-Y3k6IHBoeXNpY2FsX2Jsb2NrX3NpemU9NDA5NiwgbG9naWNhbF9ibG9ja19zaXplPTQwOTYsCj4+
-IGFsaWdubWVudF9vZmZzZXQ9MCwgc3RhcnQ9MAo+PiBbIDE4MjcuODkxMDg2XSBkZXZpY2UtbWFw
-cGVyOiB0YWJsZTogMjUzOjE6IGFkZGluZyB0YXJnZXQgZGV2aWNlIHNkaiBjYXVzZWQgYW4KPj4g
-YWxpZ25tZW50IGluY29uc2lzdGVuY3k6IHBoeXNpY2FsX2Jsb2NrX3NpemU9NDA5NiwgbG9naWNh
-bF9ibG9ja19zaXplPTQwOTYsCj4+IGFsaWdubWVudF9vZmZzZXQ9MCwgc3RhcnQ9MAo+Pgo+PiB3
-aGVuIG1peGluZyA1MTJCIHNlY3RvciBhbmQgNEtCIHNlY3RvciBkZXZpY2VzLiBJbnZlc3RpZ2F0
-aW5nIG5vdy4KPiAKPiAKPiBPSy4gRmlndXJlZCB0aGF0IG9uZSBvdXQ6IHRoZSA1MDBHQiBTU0Qg
-SSBhbSB1c2luZyBmb3IgdGhlIHJlZ3VsYXIgZGV2aWNlIGlzCj4gOTc2NzczMTY4IDUxMkIgc2Vj
-dG9ycyBjYXBhY2l0eSwgdGhhdCBpcywgbm90IGEgbXVsdGlwbGUgb2YgdGhlIDI1Nk1CIHpvbmUg
-c2l6ZSwKPiBhbmQgbm90IGV2ZW4gYSBtdWx0aXBsZSBvZiA0Sy4gVGhpcyBjYXVzZXMgdGhlIGNy
-ZWF0aW9uIG9mIGEgMTJNQiBydW50IHpvbmUgb2YKPiAyNDYyNCBzZWN0b3JzLCB3aGljaCBpcyBp
-Z25vcmVkLiBCdXQgdGhlIHN0YXJ0IHNlY3RvciBvZiB0aGUgc2Vjb25kIGRldmljZSBpbgo+IHRo
-ZSBkbS10YWJsZSByZW1haW5zIDk3Njc3MzE2OCwgc28gbm90IGFsaWduZWQgb24gNEsuIFRoaXMg
-Y2F1c2VzCj4gYmRldl9zdGFja19saW1pdHMgdG8gcmV0dXJuIGFuIGVycm9yIGFuZCB0aGUgYWJv
-dmUgbWVzc2FnZXMgdG8gYmUgcHJpbnRlZC4KPiAKPiBTbyBJIHRoaW5rIHdlIG5lZWQgdG8gY29t
-cGxldGVseSBpZ25vcmUgdGhlIGV2ZW50dWFsICJydW50IiB6b25lIG9mIHRoZSByZWd1bGFyCj4g
-ZGV2aWNlIHNvIHRoYXQgZXZlcnl0aGluZyBhbGlnbnMgY29ycmVjdGx5LiBUaGlzIHdpbGwgbmVl
-ZCBjaGFuZ2VzIGluIGJvdGgKPiBkbXphZG0gYW5kIGRtLXpvbmVkLgo+IAo+IEhhbm5lcywgSSBj
-YW4gaGFjayBzb21ldGhpbmcgb24gdG9wIG9mIHlvdXIgc2VyaWVzLiBPciBjYW4geW91IHJlc2Vu
-ZCB3aXRoIHRoYXQKPiBmaXhlZCA/Cj4gCj4gCj4gCj4gCkRvZXMgdGhpcyBvbmUgaGVscD8KCmRp
-ZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLXpvbmVkLXRhcmdldC5jIGIvZHJpdmVycy9tZC9kbS16
-b25lZC10YXJnZXQuYwppbmRleCBlYTQzZjY4OTJjZWQuLjVkYWNhODJiNWVjNyAxMDA2NDQKLS0t
-IGEvZHJpdmVycy9tZC9kbS16b25lZC10YXJnZXQuYworKysgYi9kcml2ZXJzL21kL2RtLXpvbmVk
-LXRhcmdldC5jCkBAIC0xMDQxLDEzICsxMDQxLDE3IEBAIHN0YXRpYyBpbnQgZG16X2l0ZXJhdGVf
-ZGV2aWNlcyhzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSwKICB7CiAgICAgICAgIHN0cnVjdCBkbXpfdGFy
-Z2V0ICpkbXogPSB0aS0+cHJpdmF0ZTsKICAgICAgICAgdW5zaWduZWQgaW50IHpvbmVfbnJfc2Vj
-dG9ycyA9IGRtel96b25lX25yX3NlY3RvcnMoZG16LT5tZXRhZGF0YSk7CisgICAgICAgdW5zaWdu
-ZWQgaW50IG5yX3pvbmVzOwogICAgICAgICBzZWN0b3JfdCBjYXBhY2l0eTsKICAgICAgICAgaW50
-IHI7CgotICAgICAgIGNhcGFjaXR5ID0gZG16LT5kZXZbMF0uY2FwYWNpdHkgJiB+KHpvbmVfbnJf
-c2VjdG9ycyAtIDEpOworICAgICAgIG5yX3pvbmVzID0gRElWX1JPVU5EX0RPV04oZG16LT5kZXZb
-MF0uY2FwYWNpdHksIHpvbmVfbnJfc2VjdG9ycyk7CisgICAgICAgY2FwYWNpdHkgPSBucl96b25l
-cyAqIHpvbmVfbnJfc2VjdG9yczsKICAgICAgICAgciA9IGZuKHRpLCBkbXotPmRkZXZbMF0sIDAs
-IGNhcGFjaXR5LCBkYXRhKTsKICAgICAgICAgaWYgKCFyICYmIGRtei0+ZGRldlsxXSkgewotICAg
-ICAgICAgICAgICAgY2FwYWNpdHkgPSBkbXotPmRldlsxXS5jYXBhY2l0eSAmIH4oem9uZV9ucl9z
-ZWN0b3JzIC0gMSk7CisgICAgICAgICAgICAgICBucl96b25lcyA9IERJVl9ST1VORF9ET1dOKGRt
-ei0+ZGV2WzEuY2FwYWNpdHksCisgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgIHpvbmVfbnJfc2VjdG9ycykpOworICAgICAgICAgICAgICAgY2FwYWNpdHkg
-PSBucl96b25lcyAqIHpvbmVfbnJfc2VjdG9yczsKICAgICAgICAgICAgICAgICByID0gZm4odGks
-IGRtei0+ZGRldlsxXSwgMCwgY2FwYWNpdHksIGRhdGEpOwogICAgICAgICB9CiAgICAgICAgIHJl
-dHVybiByOwoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlICAgICAgICAg
-ICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgU29mdHdhcmUgU29sdXRp
-b25zIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpIUkIgMzY4MDkgKEFHIE7D
-vHJuYmVyZyksIEdlc2Now6RmdHNmw7xocmVyOiBGZWxpeCBJbWVuZMO2cmZmZXIKCgotLQpkbS1k
-ZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQu
-Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On 2020/05/11 20:19, Hannes Reinecke wrote:
+> On 5/11/20 12:55 PM, Damien Le Moal wrote:
+>> On 2020/05/11 11:46, Damien Le Moal wrote:
+>>> Mike,
+>>>
+>>> I am still seeing the warning:
+>>>
+>>> [ 1827.839756] device-mapper: table: 253:1: adding target device sdj caused an
+>>> alignment inconsistency: physical_block_size=4096, logical_block_size=4096,
+>>> alignment_offset=0, start=0
+>>> [ 1827.856738] device-mapper: table: 253:1: adding target device sdj caused an
+>>> alignment inconsistency: physical_block_size=4096, logical_block_size=4096,
+>>> alignment_offset=0, start=0
+>>> [ 1827.874031] device-mapper: table: 253:1: adding target device sdj caused an
+>>> alignment inconsistency: physical_block_size=4096, logical_block_size=4096,
+>>> alignment_offset=0, start=0
+>>> [ 1827.891086] device-mapper: table: 253:1: adding target device sdj caused an
+>>> alignment inconsistency: physical_block_size=4096, logical_block_size=4096,
+>>> alignment_offset=0, start=0
+>>>
+>>> when mixing 512B sector and 4KB sector devices. Investigating now.
+>>
+>>
+>> OK. Figured that one out: the 500GB SSD I am using for the regular device is
+>> 976773168 512B sectors capacity, that is, not a multiple of the 256MB zone size,
+>> and not even a multiple of 4K. This causes the creation of a 12MB runt zone of
+>> 24624 sectors, which is ignored. But the start sector of the second device in
+>> the dm-table remains 976773168, so not aligned on 4K. This causes
+>> bdev_stack_limits to return an error and the above messages to be printed.
+>>
+>> So I think we need to completely ignore the eventual "runt" zone of the regular
+>> device so that everything aligns correctly. This will need changes in both
+>> dmzadm and dm-zoned.
+>>
+>> Hannes, I can hack something on top of your series. Or can you resend with that
+>> fixed ?
+>>
+>>
+> I _thought_ I had this fixed; the idea was to manipulate the 'runt' zone 
+> such that the zone would always displayed as a zone with same size as 
+> all the other zones, but marked as offline. IE the (logical) zone layout 
+> would always be equidistant, with no runt zones in between.
+>  From that perspective the actual size of the runt zone wouldn't matter 
+> at all.
+> 
+> Lemme check.
+
+Was just playing with dmzadm right now, and I did notice that the second device
+start offset is indeed a round number of zones, larger than the actual regular
+device capacity in my test case. So indeed, that code is in place there.
+
+So the problem may be on the kernel side, something using the first dev capacity
+as is instead of the rounded-up value to the zone size... Digging too.
+
+> 
+> Cheers,
+> 
+> Hannes
+> 
+
+
+-- 
+Damien Le Moal
+Western Digital Research
