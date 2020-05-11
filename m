@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 07/11] libmultipath: set_uint: fix parsing for
-	32bit
-Date: Tue, 12 May 2020 00:39:27 +0200
-Message-ID: <20200511223931.18261-8-mwilck@suse.com>
+Subject: [PATCH 04/11] multipath-tools: Makefile.inc: set
+	-Wno-error=clobbered
+Date: Tue, 12 May 2020 00:39:24 +0200
+Message-ID: <20200511223931.18261-5-mwilck@suse.com>
 References: <20200511223931.18261-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,45 +24,29 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-On architectures where sizeof(long) == sizeof(int), the code wouldn't
-work as intended. Use strtoul instead. As strtoul happily parses
-negative numbers as input, require the number to begin with a digit.
+We need to ignore -Wclobbered because gcc has trouble dealing with glibc's
+implementation of pthread_cleanup_push().
+
+For some variants of gcc, -Wno-clobbered alone isn't enough if -Werror is also
+set. Compilation with -Wno-error=clobbered works, though.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/dict.c | 11 +++++++----
- 1 file changed, 7 insertions(+), 4 deletions(-)
+ Makefile.inc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 3e25e74f..0e9ea387 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -60,19 +60,22 @@ static int
- set_uint(vector strvec, void *ptr)
- {
- 	unsigned int *uint_ptr = (unsigned int *)ptr;
--	char *buff, *eptr;
--	long res;
-+	char *buff, *eptr, *p;
-+	unsigned long res;
- 	int rc;
+diff --git a/Makefile.inc b/Makefile.inc
+index 671dd1ca..e7256e3a 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -91,7 +91,7 @@ TEST_CC_OPTION = $(shell \
  
- 	buff = set_value(strvec);
- 	if (!buff)
- 		return 1;
+ STACKPROT := $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)
+ ERROR_DISCARDED_QUALIFIERS := $(call TEST_CC_OPTION,-Werror=discarded-qualifiers,)
+-WNOCLOBBERED := $(call TEST_CC_OPTION,-Wno-clobbered,)
++WNOCLOBBERED := $(call TEST_CC_OPTION,-Wno-clobbered -Wno-error=clobbered,)
  
--	res = strtol(buff, &eptr, 10);
-+	p = buff;
-+	while (isspace(*p))
-+		p++;
-+	res = strtoul(p, &eptr, 10);
- 	if (eptr > buff)
- 		while (isspace(*eptr))
- 			eptr++;
--	if (*buff == '\0' || *eptr != '\0' || res < 0 || res > UINT_MAX) {
-+	if (*buff == '\0' || *eptr != '\0' || !isdigit(*p) || res > UINT_MAX) {
- 		condlog(1, "%s: invalid value for %s: \"%s\"",
- 			__func__, (char*)VECTOR_SLOT(strvec, 0), buff);
- 		rc = 1;
+ OPTFLAGS	:= -O2 -g $(STACKPROT) --param=ssp-buffer-size=4
+ WARNFLAGS	:= -Werror -Wall -Wextra -Wformat=2 -Werror=implicit-int \
 -- 
 2.26.2
