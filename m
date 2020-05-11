@@ -1,14 +1,11 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 14/15] dm-zoned: ignore metadata zone in
-	dmz_alloc_zone()
-Date: Mon, 11 May 2020 10:24:29 +0200
-Message-ID: <20200511082430.39455-15-hare@suse.de>
-References: <20200511082430.39455-1-hare@suse.de>
+Subject: [PATCHv6 00/14] dm-zoned: metadata version 2
+Date: Mon, 11 May 2020 10:24:15 +0200
+Message-ID: <20200511082430.39455-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200511082430.39455-1-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,33 +19,93 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien LeMoal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When looking up zones in dmz_alloc_zone() we need to ignore
-metadata zones so as not to accidentally overwrite metadata.
+Hi all,
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
-Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
-Reviewed-by: Bob Liu <bob.liu@oracle.com>
----
- drivers/md/dm-zoned-metadata.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+this patchset adds a new metadata version 2 for dm-zoned, which brings the
+following improvements:
 
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index 80c0fe4c3546..067ce010f457 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -1907,7 +1907,13 @@ struct dm_zone *dmz_alloc_zone(struct dmz_metadata *zmd, unsigned long flags)
- 		zone = NULL;
- 		goto again;
- 	}
-+	if (dmz_is_meta(zone)) {
-+		struct dmz_dev *dev = dmz_zone_to_dev(zmd, zone);
- 
-+		dmz_dev_warn(dev, "Zone %u has metadata", zone->id);
-+		zone = NULL;
-+		goto again;
-+	}
- 	return zone;
- }
- 
+- UUIDs and labels: Adding three more fields to the metadata containing
+  the dm-zoned device UUID and label, and the device UUID. This allows
+  for an unique identification of the devices, so that several dm-zoned
+  sets can coexist and have a persistent identification.
+- Extend random zones by an additional regular disk device: A regular
+  block device can be added together with the zoned block device, providing
+  additional (emulated) random write zones. With this it's possible to
+  handle sequential zones only devices; also there will be a speed-up if
+  the regular block device resides on a fast medium. The regular block device
+  is placed logically in front of the zoned block device, so that metadata
+  and mapping tables reside on the regular block device, not the zoned device.
+- Tertiary superblock support: In addition to the two existing sets of metadata
+  another, tertiary, superblock is written to the first block of the zoned
+  block device. This superblock is for identification only; the generation
+  number is set to '0' and the block itself it never updated. The addition
+  metadate like bitmap tables etc are not copied.
+
+To handle this, some changes to the original handling are introduced:
+- Zones are now equidistant. Originally, runt zones were ignored, and
+  not counted when sizing the mapping tables. With the dual device setup
+  runt zones might occur at the end of the regular block device, making
+  direct translation between zone number and sector/block number complex.
+  For metadata version 2 all zones are considered to be of the same size,
+  and runt zones are simply marked as 'offline' to have them ignored when
+  allocating a new zone.
+- The block number in the superblock is now the global number, and refers to
+  the location of the superblock relative to the resulting device-mapper
+  device. Which means that the tertiary superblock contains absolute block
+  addresses, which needs to be translated to the relative device addresses
+  to find the referenced block.
+
+There is an accompanying patchset for dm-zoned-tools for writing and checking
+this new metadata.
+
+As usual, comments and reviews are welcome.
+
+Changes to v5:
+- Separate 'message' and 'status' into separate patches
+  as suggested by Mike Snitzer
+- Update documentation to reflect the new functionality
+  as suggested by Mike Snitzer
+- Add review tags from Damien
+
+Changes to v4:
+- Add reviews from Damien
+- Silence logging output as suggested by Mike Snitzer
+- Fixup compilation on 32bit archs
+
+Changes to v3:
+- Reorder devices such that the regular device is always at position 0,
+  and the zoned device is always at position 1.
+- Split off dmz_dev_is_dying() into a separate patch
+- Include reviews from Damien
+
+Changes to v2:
+- Kill dmz_id()
+- Include reviews from Damien
+- Sanitize uuid handling as suggested by John Dorminy
+
+Hannes Reinecke (15):
+  dm-zoned: add 'status' callback
+  dm-zoned: add 'message' callback
+  dm-zoned: store zone id within the zone structure and kill dmz_id()
+  dm-zoned: use array for superblock zones
+  dm-zoned: store device in struct dmz_sb
+  dm-zoned: move fields from struct dmz_dev to dmz_metadata
+  dm-zoned: introduce dmz_metadata_label() to format device name
+  dm-zoned: Introduce dmz_dev_is_dying() and dmz_check_dev()
+  dm-zoned: remove 'dev' argument from reclaim
+  dm-zoned: replace 'target' pointer in the bio context
+  dm-zoned: use dmz_zone_to_dev() when handling metadata I/O
+  dm-zoned: add metadata logging functions
+  dm-zoned: Reduce logging output on startup
+  dm-zoned: ignore metadata zone in dmz_alloc_zone()
+  dm-zoned: metadata version 2
+
+ .../admin-guide/device-mapper/dm-zoned.rst         |  62 +-
+ drivers/md/dm-zoned-metadata.c                     | 664 ++++++++++++++++-----
+ drivers/md/dm-zoned-reclaim.c                      |  88 +--
+ drivers/md/dm-zoned-target.c                       | 376 ++++++++----
+ drivers/md/dm-zoned.h                              |  35 +-
+ 5 files changed, 880 insertions(+), 345 deletions(-)
+
 -- 
 2.16.4
