@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 11/11] multipath-tools tests/directio: fix
-	-Wmaybe-uninitalized warning
-Date: Tue, 12 May 2020 00:39:31 +0200
-Message-ID: <20200511223931.18261-12-mwilck@suse.com>
+Subject: [PATCH 05/11] libmultipath: discovery.c: use %z
+	qualifier for size_t
+Date: Tue, 12 May 2020 00:39:25 +0200
+Message-ID: <20200511223931.18261-6-mwilck@suse.com>
 References: <20200511223931.18261-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,25 +24,87 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Initialize aio_grp to satisfy gcc.
+Otherwise compilation for 32bit targets spits out warnings.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/directio.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/discovery.c | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
 
-diff --git a/tests/directio.c b/tests/directio.c
-index 3cd7a520..66aaf0eb 100644
---- a/tests/directio.c
-+++ b/tests/directio.c
-@@ -316,7 +316,7 @@ static void test_init_free(void **state)
- {
- 	int i, count = 0;
- 	struct checker c[4096] = {0};
--	struct aio_group *aio_grp;
-+	struct aio_group *aio_grp = NULL;
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index ee3290cd..ffec5162 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -986,7 +986,7 @@ parse_vpd_pg80(const unsigned char *in, char *out, size_t out_len)
+ 	}
  
- 	assert_true(list_empty(&aio_grp_list));
- 	will_return(__wrap_io_setup, 0);
+ 	if (len >= out_len) {
+-		condlog(2, "vpd pg80 overflow, %lu/%lu bytes required",
++		condlog(2, "vpd pg80 overflow, %zu/%zu bytes required",
+ 			len + 1, out_len);
+ 		len = out_len - 1;
+ 	}
+@@ -1087,7 +1087,7 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ 
+ 		len = sprintf(out, "%d", vpd_type);
+ 		if (2 * vpd_len >= out_len - len) {
+-			condlog(1, "%s: WWID overflow, type %d, %lu/%lu bytes required",
++			condlog(1, "%s: WWID overflow, type %d, %zu/%zu bytes required",
+ 				__func__, vpd_type,
+ 				2 * vpd_len + len + 1, out_len);
+ 			vpd_len = (out_len - len - 1) / 2;
+@@ -1096,7 +1096,7 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ 			len += sprintf(out + len,
+ 				       "%02x", vpd[i]);
+ 	} else if (vpd_type == 0x8 && vpd_len < 4) {
+-		condlog(1, "%s: VPD length %lu too small for designator type 8",
++		condlog(1, "%s: VPD length %zu too small for designator type 8",
+ 			__func__, vpd_len);
+ 		return -EINVAL;
+ 	} else if (vpd_type == 0x8) {
+@@ -1112,7 +1112,7 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ 		while (len > 2 && vpd[len - 2] == '\0')
+ 			--len;
+ 		if (len > out_len - 1) {
+-			condlog(1, "%s: WWID overflow, type 8/%c, %lu/%lu bytes required",
++			condlog(1, "%s: WWID overflow, type 8/%c, %zu/%zu bytes required",
+ 				__func__, out[0], len + 1, out_len);
+ 			len = out_len - 1;
+ 		}
+@@ -1136,7 +1136,7 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ 		while ((p = memchr(vpd, ' ', vpd_len))) {
+ 			p_len = p - vpd;
+ 			if (len + p_len > out_len - 1) {
+-				condlog(1, "%s: WWID overflow, type 1, %lu/%lu bytes required",
++				condlog(1, "%s: WWID overflow, type 1, %zu/%zu bytes required",
+ 					__func__, len + p_len, out_len);
+ 				p_len = out_len - len - 1;
+ 			}
+@@ -1162,7 +1162,7 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+ 		p_len = vpd_len;
+ 		if (p_len > 0 && len < out_len - 1) {
+ 			if (len + p_len > out_len - 1) {
+-				condlog(1, "%s: WWID overflow, type 1, %lu/%lu bytes required",
++				condlog(1, "%s: WWID overflow, type 1, %zu/%zu bytes required",
+ 					__func__, len + p_len + 1, out_len);
+ 				p_len = out_len - len - 1;
+ 			}
+@@ -1186,14 +1186,14 @@ parse_vpd_c0_hp3par(const unsigned char *in, size_t in_len,
+ 
+ 	memset(out, 0x0, out_len);
+ 	if (in_len <= 4 || (in[4] > 3 && in_len < 44)) {
+-		condlog(3, "HP/3PAR vendor specific VPD page length too short: %lu", in_len);
++		condlog(3, "HP/3PAR vendor specific VPD page length too short: %zu", in_len);
+ 		return -EINVAL;
+ 	}
+ 	if (in[4] <= 3) /* revision must be > 3 to have Vomlume Name */
+ 		return -ENODATA;
+ 	len = get_unaligned_be32(&in[40]);
+ 	if (len > out_len || len + 44 > in_len) {
+-		condlog(3, "HP/3PAR vendor specific Volume name too long: %lu",
++		condlog(3, "HP/3PAR vendor specific Volume name too long: %zu",
+ 			len);
+ 		return -EINVAL;
+ 	}
 -- 
 2.26.2
