@@ -1,15 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCHv5 00/14] dm-zoned: metadata version 2
-Date: Tue, 12 May 2020 12:49:01 -0400
-Message-ID: <20200512164900.GA13898@redhat.com>
-References: <20200508090332.40716-1-hare@suse.de>
-	<BY5PR04MB6900138C0F78196D0F81BF07E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
-	<1e68571f-0205-93c8-e535-a472c1a7b5d8@suse.de>
+From: mwilck@suse.com
+Subject: [PATCH 1/2] libmultipath: move libsg into libmultipath
+Date: Tue, 12 May 2020 22:38:21 +0200
+Message-ID: <20200512203822.18910-2-mwilck@suse.com>
+References: <20200512203822.18910-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1e68571f-0205-93c8-e535-a472c1a7b5d8@suse.de>
+In-Reply-To: <20200512203822.18910-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,107 +17,86 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Hannes Reinecke <hare@suse.de>
-Cc: Damien Le Moal <Damien.LeMoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Mon, May 11 2020 at  2:31am -0400,
-Hannes Reinecke <hare@suse.de> wrote:
+From: Martin Wilck <mwilck@suse.com>
 
-> On 5/11/20 4:46 AM, Damien Le Moal wrote:
-> >On 2020/05/08 18:03, Hannes Reinecke wrote:
-> >>Hi all,
-> >>
-> >>this patchset adds a new metadata version 2 for dm-zoned, which brings the
-> >>following improvements:
-> >>
-> >>- UUIDs and labels: Adding three more fields to the metadata containing
-> >>   the dm-zoned device UUID and label, and the device UUID. This allows
-> >>   for an unique identification of the devices, so that several dm-zoned
-> >>   sets can coexist and have a persistent identification.
-> >>- Extend random zones by an additional regular disk device: A regular
-> >>   block device can be added together with the zoned block device, providing
-> >>   additional (emulated) random write zones. With this it's possible to
-> >>   handle sequential zones only devices; also there will be a speed-up if
-> >>   the regular block device resides on a fast medium. The regular block device
-> >>   is placed logically in front of the zoned block device, so that metadata
-> >>   and mapping tables reside on the regular block device, not the zoned device.
-> >>- Tertiary superblock support: In addition to the two existing sets of metadata
-> >>   another, tertiary, superblock is written to the first block of the zoned
-> >>   block device. This superblock is for identification only; the generation
-> >>   number is set to '0' and the block itself it never updated. The addition
-> >>   metadate like bitmap tables etc are not copied.
-> >>
-> >>To handle this, some changes to the original handling are introduced:
-> >>- Zones are now equidistant. Originally, runt zones were ignored, and
-> >>   not counted when sizing the mapping tables. With the dual device setup
-> >>   runt zones might occur at the end of the regular block device, making
-> >>   direct translation between zone number and sector/block number complex.
-> >>   For metadata version 2 all zones are considered to be of the same size,
-> >>   and runt zones are simply marked as 'offline' to have them ignored when
-> >>   allocating a new zone.
-> >>- The block number in the superblock is now the global number, and refers to
-> >>   the location of the superblock relative to the resulting device-mapper
-> >>   device. Which means that the tertiary superblock contains absolute block
-> >>   addresses, which needs to be translated to the relative device addresses
-> >>   to find the referenced block.
-> >>
-> >>There is an accompanying patchset for dm-zoned-tools for writing and checking
-> >>this new metadata.
-> >>
-> >>As usual, comments and reviews are welcome.
-> >
-> >I gave this series a good round of testing. See the attached picture for the
-> >results. The test is this:
-> >1) Setup dm-zoned
-> >2) Format and mount with mkfs.ext4 -E packed_meta_blocks=1 /dev/mapper/xxx
-> >3) Create file random in size between 1 and 4MB and measure user seen throughput
-> >over 100 files.
-> >3) Run that for 2 hours
-> >
-> >I ran this over a 15TB SMR drive single drive setup, and on the same drive + a
-> >500GB m.2 ssd added.
-> >
-> >For the single drive case, the usual 3 phases can be seen: start writing at
-> >about 110MB/s, everything going to conventional zones (note conv zones are in
-> >the middle of the disk, hence the low-ish throughput). Then after about 400s,
-> >reclaim kicks in and the throughput drops to 60-70 MB/s. As reclaim cannot keep
-> >up under this heavy write workload, performance drops to 20-30MB/s after 800s.
-> >All good, without any idle time for reclaim to do its job, this is all expected.
-> >
-> >For the dual drive case, things are more interesting:
-> >1) The first phase is longer as overall, there is more conventional space (500G
-> >ssd + 400G on SMR drive). So we see the SSD speed first (~425MB/s), then the
-> >drive speed (100 MB/s), slightly lower than the single drive case toward the end
-> >as reclaim triggers.
-> >2) Some recovery back to ssd speed, then a long phase at half the speed of the
-> >ssd as writes go to ssd and reclaim is running moving data out of the ssd onto
-> >the disk.
-> >3) Then a long phase at 25MB/s due to SMR disk reclaim.
-> >4) back up to half the ssd speed.
-> >
-> >No crashes, no data corruption, all good. But is does look like we can improve
-> >on performance further by preventing using the drive conventional zones as
-> >"buffer" zones. If we let those be the final resting place of data, the SMR disk
-> >only reclaim would not kick in and hurt performance as seen here. That I think
-> >can all be done on top of this series though. Let's get this in first.
-> >
-> Thanks for the data! That indeed is very interesting; guess I'll do
-> some tests here on my setup, too.
-> (And hope it doesn't burn my NVDIMM ...)
-> 
-> But, guess what, I had the some thoughts; we should be treating the
-> random zones more like sequential zones in a two-disk setup.
-> So guess I'll be resurrecting the idea from my very first patch and
-> implement 'cache' zones in addition to the existing 'random' and
-> 'sequential' zones.
-> But, as you said, that'll be a next series of patches.
+sg_read() is called from readsector0 and emc_clariion. Move it
+to libmultipath/, where all common code resides.
 
-FYI, I staged the series in linux-next (for 5.8) yesterday, see:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-5.8
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/Makefile               | 3 ++-
+ libmultipath/checkers/Makefile      | 6 +++---
+ libmultipath/{checkers => }/libsg.c | 0
+ libmultipath/{checkers => }/libsg.h | 0
+ libmultipath/prioritizers/Makefile  | 2 +-
+ 5 files changed, 6 insertions(+), 5 deletions(-)
+ rename libmultipath/{checkers => }/libsg.c (100%)
+ rename libmultipath/{checkers => }/libsg.h (100%)
 
-So please base any follow-on fixes or advances on this baseline.
-
-Thanks!
-Mike
+diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+index ad690a49..f19b7ad2 100644
+--- a/libmultipath/Makefile
++++ b/libmultipath/Makefile
+@@ -47,7 +47,8 @@ OBJS = memory.o parser.o vector.o devmapper.o callout.o \
+ 	switchgroup.o uxsock.o print.o alias.o log_pthread.o \
+ 	log.o configure.o structs_vec.o sysfs.o prio.o checkers.o \
+ 	lock.o file.o wwids.o prioritizers/alua_rtpg.o prkey.o \
+-	io_err_stat.o dm-generic.o generic.o foreign.o nvme-lib.o
++	io_err_stat.o dm-generic.o generic.o foreign.o nvme-lib.o \
++	libsg.o
+ 
+ all: $(LIBS)
+ 
+diff --git a/libmultipath/checkers/Makefile b/libmultipath/checkers/Makefile
+index 02caea64..01c04510 100644
+--- a/libmultipath/checkers/Makefile
++++ b/libmultipath/checkers/Makefile
+@@ -17,10 +17,10 @@ LIBS= \
+ 
+ all: $(LIBS)
+ 
+-libcheckdirectio.so: libsg.o directio.o
++libcheckdirectio.so: directio.o
+ 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^ -laio
+ 
+-libcheck%.so: libsg.o %.o
++libcheck%.so: %.o
+ 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
+ 
+ install:
+@@ -32,7 +32,7 @@ uninstall:
+ clean: dep_clean
+ 	$(RM) core *.a *.o *.gz *.so
+ 
+-OBJS := $(LIBS:libcheck%.so=%.o) libsg.o directio.o
++OBJS := $(LIBS:libcheck%.so=%.o)
+ .SECONDARY: $(OBJS)
+ 
+ include $(wildcard $(OBJS:.o=.d))
+diff --git a/libmultipath/checkers/libsg.c b/libmultipath/libsg.c
+similarity index 100%
+rename from libmultipath/checkers/libsg.c
+rename to libmultipath/libsg.c
+diff --git a/libmultipath/checkers/libsg.h b/libmultipath/libsg.h
+similarity index 100%
+rename from libmultipath/checkers/libsg.h
+rename to libmultipath/libsg.h
+diff --git a/libmultipath/prioritizers/Makefile b/libmultipath/prioritizers/Makefile
+index 9d0fe03c..fc6e0e0c 100644
+--- a/libmultipath/prioritizers/Makefile
++++ b/libmultipath/prioritizers/Makefile
+@@ -28,7 +28,7 @@ endif
+ 
+ all: $(LIBS)
+ 
+-libpriopath_latency.so: path_latency.o  ../checkers/libsg.o
++libpriopath_latency.so: path_latency.o
+ 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^ -lm
+ 
+ libprio%.so: %.o
+-- 
+2.26.2
