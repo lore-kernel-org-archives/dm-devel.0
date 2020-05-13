@@ -1,18 +1,20 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: device-mapper: use dynamic debug instead of
  compile-time config option
-Date: Wed, 13 May 2020 13:10:43 -0400
-Message-ID: <20200513171042.GA20324@redhat.com>
+Date: Wed, 13 May 2020 19:13:33 +0200
+Message-ID: <2540705f-9935-863b-f0e4-4cf29b60a367@suse.de>
 References: <20200513070843.71528-1-hare@suse.de>
 	<BY5PR04MB6900AD28F5B6B6C3A8AEAA5EE7BF0@BY5PR04MB6900.namprd04.prod.outlook.com>
 	<5357d0d6-12cb-9585-36ae-9aec206eebb4@suse.de>
 	<20200513162502.GA20131@redhat.com>
 	<ce79fe87-3d2c-794b-75d6-7e59fd0b447c@suse.de>
+	<20200513171042.GA20324@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <ce79fe87-3d2c-794b-75d6-7e59fd0b447c@suse.de>
+In-Reply-To: <20200513171042.GA20324@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,58 +24,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Hannes Reinecke <hare@suse.de>
+To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien Le Moal <Damien.LeMoal@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, May 13 2020 at  1:01pm -0400,
-Hannes Reinecke <hare@suse.de> wrote:
-
-> On 5/13/20 6:25 PM, Mike Snitzer wrote:
-> >On Wed, May 13 2020 at  7:10am -0400,
-> >Hannes Reinecke <hare@suse.de> wrote:
-> >
-> >>On 5/13/20 11:41 AM, Damien Le Moal wrote:
-> >>>On 2020/05/13 16:10, Hannes Reinecke wrote:
-> >>>>Switch to use dynamic debug to avoid having recompile the kernel
-> >>>>just to enable debugging messages.
-> >>>>
-> >>>>Signed-off-by: Hannes Reinecke <hare@suse.de>
-> >>>>---
-> >>>>  include/linux/device-mapper.h | 7 +------
-> >>>>  1 file changed, 1 insertion(+), 6 deletions(-)
-> >>>>
-> >>>>diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-> >>>>index e2d506dd805e..3d4365fd3001 100644
-> >>>>--- a/include/linux/device-mapper.h
-> >>>>+++ b/include/linux/device-mapper.h
-> >>>>@@ -556,13 +556,8 @@ void *dm_vcalloc(unsigned long nmemb, unsigned long elem_size);
-> >>>>  #define DMINFO(fmt, ...) pr_info(DM_FMT(fmt), ##__VA_ARGS__)
-> >>>>  #define DMINFO_LIMIT(fmt, ...) pr_info_ratelimited(DM_FMT(fmt), ##__VA_ARGS__)
-> >>>>-#ifdef CONFIG_DM_DEBUG
-> >>>
-> >>>Can we remove this from Kconfig as a config option ?
-> >>>
-> >>No, we can't, it's being used by dm-snap and dm-integrity.
-> >
-> >Yeah, they provide additional debugging if its set.
-> >
-> >But shouldn't we preserve old-style DMDEBUG if CONFIG_DM_DEBUG is set
-> >(compile time printing of debugging) but if not set, use dynamic
-> >debugging?
-> >
-> >Think I'd prefer that as the incremental improvement... thoughts?
-> >
-> Works for me; I just don't want to recompile the kernel anytime I
-> need to debug device-mapper stuff.
-> 
-> Will be resending.
-
-Does the use of pr_debug() cause missing newlines (with your patch)?
-
-Only thought to ask this because I'm chasing another DM issue at the
-moment and happened to see __dm_suspend()'s use of pr_debug() includes
-an explicit extra \n.
-
-Mike
+T24gNS8xMy8yMCA3OjEwIFBNLCBNaWtlIFNuaXR6ZXIgd3JvdGU6Cj4gT24gV2VkLCBNYXkgMTMg
+MjAyMCBhdCAgMTowMXBtIC0wNDAwLAo+IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNlLmRlPiB3
+cm90ZToKPiAKPj4gT24gNS8xMy8yMCA2OjI1IFBNLCBNaWtlIFNuaXR6ZXIgd3JvdGU6Cj4+PiBP
+biBXZWQsIE1heSAxMyAyMDIwIGF0ICA3OjEwYW0gLTA0MDAsCj4+PiBIYW5uZXMgUmVpbmVja2Ug
+PGhhcmVAc3VzZS5kZT4gd3JvdGU6Cj4+Pgo+Pj4+IE9uIDUvMTMvMjAgMTE6NDEgQU0sIERhbWll
+biBMZSBNb2FsIHdyb3RlOgo+Pj4+PiBPbiAyMDIwLzA1LzEzIDE2OjEwLCBIYW5uZXMgUmVpbmVj
+a2Ugd3JvdGU6Cj4+Pj4+PiBTd2l0Y2ggdG8gdXNlIGR5bmFtaWMgZGVidWcgdG8gYXZvaWQgaGF2
+aW5nIHJlY29tcGlsZSB0aGUga2VybmVsCj4+Pj4+PiBqdXN0IHRvIGVuYWJsZSBkZWJ1Z2dpbmcg
+bWVzc2FnZXMuCj4+Pj4+Pgo+Pj4+Pj4gU2lnbmVkLW9mZi1ieTogSGFubmVzIFJlaW5lY2tlIDxo
+YXJlQHN1c2UuZGU+Cj4+Pj4+PiAtLS0KPj4+Pj4+ICAgaW5jbHVkZS9saW51eC9kZXZpY2UtbWFw
+cGVyLmggfCA3ICstLS0tLS0KPj4+Pj4+ICAgMSBmaWxlIGNoYW5nZWQsIDEgaW5zZXJ0aW9uKCsp
+LCA2IGRlbGV0aW9ucygtKQo+Pj4+Pj4KPj4+Pj4+IGRpZmYgLS1naXQgYS9pbmNsdWRlL2xpbnV4
+L2RldmljZS1tYXBwZXIuaCBiL2luY2x1ZGUvbGludXgvZGV2aWNlLW1hcHBlci5oCj4+Pj4+PiBp
+bmRleCBlMmQ1MDZkZDgwNWUuLjNkNDM2NWZkMzAwMSAxMDA2NDQKPj4+Pj4+IC0tLSBhL2luY2x1
+ZGUvbGludXgvZGV2aWNlLW1hcHBlci5oCj4+Pj4+PiArKysgYi9pbmNsdWRlL2xpbnV4L2Rldmlj
+ZS1tYXBwZXIuaAo+Pj4+Pj4gQEAgLTU1NiwxMyArNTU2LDggQEAgdm9pZCAqZG1fdmNhbGxvYyh1
+bnNpZ25lZCBsb25nIG5tZW1iLCB1bnNpZ25lZCBsb25nIGVsZW1fc2l6ZSk7Cj4+Pj4+PiAgICNk
+ZWZpbmUgRE1JTkZPKGZtdCwgLi4uKSBwcl9pbmZvKERNX0ZNVChmbXQpLCAjI19fVkFfQVJHU19f
+KQo+Pj4+Pj4gICAjZGVmaW5lIERNSU5GT19MSU1JVChmbXQsIC4uLikgcHJfaW5mb19yYXRlbGlt
+aXRlZChETV9GTVQoZm10KSwgIyNfX1ZBX0FSR1NfXykKPj4+Pj4+IC0jaWZkZWYgQ09ORklHX0RN
+X0RFQlVHCj4+Pj4+Cj4+Pj4+IENhbiB3ZSByZW1vdmUgdGhpcyBmcm9tIEtjb25maWcgYXMgYSBj
+b25maWcgb3B0aW9uID8KPj4+Pj4KPj4+PiBObywgd2UgY2FuJ3QsIGl0J3MgYmVpbmcgdXNlZCBi
+eSBkbS1zbmFwIGFuZCBkbS1pbnRlZ3JpdHkuCj4+Pgo+Pj4gWWVhaCwgdGhleSBwcm92aWRlIGFk
+ZGl0aW9uYWwgZGVidWdnaW5nIGlmIGl0cyBzZXQuCj4+Pgo+Pj4gQnV0IHNob3VsZG4ndCB3ZSBw
+cmVzZXJ2ZSBvbGQtc3R5bGUgRE1ERUJVRyBpZiBDT05GSUdfRE1fREVCVUcgaXMgc2V0Cj4+PiAo
+Y29tcGlsZSB0aW1lIHByaW50aW5nIG9mIGRlYnVnZ2luZykgYnV0IGlmIG5vdCBzZXQsIHVzZSBk
+eW5hbWljCj4+PiBkZWJ1Z2dpbmc/Cj4+Pgo+Pj4gVGhpbmsgSSdkIHByZWZlciB0aGF0IGFzIHRo
+ZSBpbmNyZW1lbnRhbCBpbXByb3ZlbWVudC4uLiB0aG91Z2h0cz8KPj4+Cj4+IFdvcmtzIGZvciBt
+ZTsgSSBqdXN0IGRvbid0IHdhbnQgdG8gcmVjb21waWxlIHRoZSBrZXJuZWwgYW55dGltZSBJCj4+
+IG5lZWQgdG8gZGVidWcgZGV2aWNlLW1hcHBlciBzdHVmZi4KPj4KPj4gV2lsbCBiZSByZXNlbmRp
+bmcuCj4gCj4gRG9lcyB0aGUgdXNlIG9mIHByX2RlYnVnKCkgY2F1c2UgbWlzc2luZyBuZXdsaW5l
+cyAod2l0aCB5b3VyIHBhdGNoKT8KPiAKPiBPbmx5IHRob3VnaHQgdG8gYXNrIHRoaXMgYmVjYXVz
+ZSBJJ20gY2hhc2luZyBhbm90aGVyIERNIGlzc3VlIGF0IHRoZQo+IG1vbWVudCBhbmQgaGFwcGVu
+ZWQgdG8gc2VlIF9fZG1fc3VzcGVuZCgpJ3MgdXNlIG9mIHByX2RlYnVnKCkgaW5jbHVkZXMKPiBh
+biBleHBsaWNpdCBleHRyYSBcbi4KPiAKSG1tLiBOb3QgdGhhdCBJJ3ZlIG5vdGljZWQ7IGJ1dCB5
+ZWFoLCB0eXBpY2FsbHkgb25lIHdvdWxkIGhhdmUgdG8gYWRkIAonXG4nIHRvIGFueSBvZiB0aGUg
+cHJfWFhYIGNhbGxzLiBCdXQgdGhlbiBpdCBkZXBlbmRzIG9uIHRoZSB3cmFwcGVyIApiZWluZyB1
+c2VkLiBJJ2xsIGNoZWNrLgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tl
+ICAgICAgICAgICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgU29mdHdh
+cmUgU29sdXRpb25zIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpIUkIgMzY4
+MDkgKEFHIE7DvHJuYmVyZyksIEdlc2Now6RmdHNmw7xocmVyOiBGZWxpeCBJbWVuZMO2cmZmZXIK
+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
+dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
