@@ -1,96 +1,56 @@
-From: Deven Bowers <deven.desai@linux.microsoft.com>
-Subject: Re: [RFC PATCH v3 00/12] Integrity Policy Enforcement LSM (IPE)
-Date: Tue, 12 May 2020 13:46:00 -0700
-Message-ID: <8ba7b15f-de91-40f7-fc95-115228345fce@linux.microsoft.com>
-References: <20200415162550.2324-1-deven.desai@linux.microsoft.com>
- <b07ac7e1-7cf5-92c9-81d0-64174c3d5024@digikod.net>
- <0001755a-6b2a-b13b-960c-eb0b065c8e3c@linux.microsoft.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: [PATCH V11 01/12] block: clone nr_integrity_segments and write_hint in blk_rq_prep_clone
+Date: Wed, 13 May 2020 11:47:52 +0800
+Message-ID: <20200513034803.1844579-2-ming.lei@redhat.com>
+References: <20200513034803.1844579-1-ming.lei@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15; format=flowed
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <0001755a-6b2a-b13b-960c-eb0b065c8e3c@linux.microsoft.com>
-Content-Language: en-US
-Sender: owner-linux-security-module@vger.kernel.org
-To: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>, agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serge@hallyn.com, zohar@linux.ibm.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, jannh@google.com
-Cc: tyhicks@linux.microsoft.com, pasha.tatashin@soleen.com, sashal@kernel.org, jaskarankhurana@linux.microsoft.com, nramas@linux.microsoft.com, mdsakib@linux.microsoft.com, linux-kernel@vger.kernel.org, corbet@lwn.net
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200513034803.1844579-1-ming.lei@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-block@vger.kernel.org, Ming Lei <ming.lei@redhat.com>, John Garry <john.garry@huawei.com>, Bart Van Assche <bvanassche@acm.org>, Hannes Reinecke <hare@suse.com>, Christoph Hellwig <hch@lst.de>, Thomas Gleixner <tglx@linutronix.de>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Hannes Reinecke <hare@suse.de>, "Martin K . Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
+So far blk_rq_prep_clone() is only used for setup one underlying cloned
+request from dm-rq request. block intetrity can be enabled for both dm-rq
+and the underlying queues, so it is reasonable to clone rq's
+nr_integrity_segments. Also write_hint is from bio, it should have been
+cloned too.
 
+So clone nr_integrity_segments and write_hint in blk_rq_prep_clone.
 
-On 5/11/2020 11:03 AM, Deven Bowers wrote:
-> 
-> 
-> On 5/10/2020 2:28 AM, Mickaël Salaün wrote:
-> 
-> [...snip]
-> 
->>>
->>> Additionally, rules are evaluated top-to-bottom. As a result, any
->>> revocation rules, or denies should be placed early in the file to ensure
->>> that these rules are evaluated before a rule with "action=ALLOW" is hit.
->>>
->>> IPE policy is designed to be forward compatible and backwards 
->>> compatible,
->>> thus any failure to parse a rule will result in the line being ignored,
->>> and a warning being emitted. If backwards compatibility is not required,
->>> the kernel commandline parameter and sysctl, ipe.strict_parse can be
->>> enabled, which will cause these warnings to be fatal.
->>
->> Ignoring unknown command may lead to inconsistent beaviors. To achieve
->> forward compatibility, I think it would be better to never ignore
->> unknown rule but to give a way to userspace to known what is the current
->> kernel ABI. This could be done with a securityfs file listing the
->> current policy grammar.
->>
-> 
-> That's a fair point. From a manual perspective, I think this is fine.
-> A human-user can interpret a grammar successfully on their own when new
-> syntax is introduced.
-> 
->  From a producing API perspective, I'd have to think about it a bit 
-> more. Ideally, the grammar would be structured in such a way that the 
-> userland
-> interpreter of this grammar would not have to be updated once new syntax
-> is introduced, avoiding the need to update the userland binary. To do so
-> generically ("op=%s") is easy, but doesn't necessarily convey sufficient
-> information (what happens when a new "op" token is introduced?). I think
-> this may come down to regular expression representations of valid values
-> for these tokens, which worries me as regular expressions are incredibly
-> error-prone[1].
-> 
-> I'll see what I can come up with regarding this.
+Cc: John Garry <john.garry@huawei.com>
+Cc: Bart Van Assche <bvanassche@acm.org>
+Cc: Hannes Reinecke <hare@suse.com>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
+Reviewed-by: Hannes Reinecke <hare@suse.de>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
+Signed-off-by: Ming Lei <ming.lei@redhat.com>
+---
+ block/blk-core.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-I have not found a way that I like to expose some kind of grammar
-through securityfs that can be understood by usermode to parse the
-policy. Here's what I propose as a compromise:
-
-	1. I remove the unknown command behavior. This address your
-first point about inconsistent behaviors, and effectively removes the
-strict_parse sysctl (as it is always enabled).
-
-	2. I introduce a versioning system for the properties
-themselves. The valid set of properties and their versions
-can be found in securityfs, under say, ipe/config in a key=value
-format where `key` indicates the understood token, and `value`
-indicates their current version. For example:
-
-	$ cat $SECURITYFS/ipe/config
-	op=1
-	action=1
-	policy_name=1
-	policy_version=1
-	dmverity_signature=1
-	dmverity_roothash=1
-	boot_verified=1
-
-if new syntax is introduced, the version number is increased.
-
-	3. The format of those versions are documented as part of
-the admin-guide around IPE. If user-mode at that point wants to rip
-the documentation formats and correlate with the versioning, then
-it fulfills the same functionality as above, with out the complexity
-around exposing a parsing grammar and interpreting it on-the-fly.
-Many of these are unlikely to move past version 1, however.
-
-Thoughts?
+diff --git a/block/blk-core.c b/block/blk-core.c
+index cf5b2163edfe..08ee92baa451 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1669,8 +1669,12 @@ int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
+ 		rq->rq_flags |= RQF_SPECIAL_PAYLOAD;
+ 		rq->special_vec = rq_src->special_vec;
+ 	}
++#ifdef CONFIG_BLK_DEV_INTEGRITY
++	rq->nr_integrity_segments = rq_src->nr_integrity_segments;
++#endif
+ 	rq->nr_phys_segments = rq_src->nr_phys_segments;
+ 	rq->ioprio = rq_src->ioprio;
++	rq->write_hint = rq_src->write_hint;
+ 
+ 	return 0;
+ 
+-- 
+2.25.2
