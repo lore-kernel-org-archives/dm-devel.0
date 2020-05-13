@@ -1,9 +1,8 @@
 From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH] device-mapper: use dynamic debug instead of
- compile-time config option
-Date: Wed, 13 May 2020 09:41:33 +0000
-Message-ID: <BY5PR04MB6900AD28F5B6B6C3A8AEAA5EE7BF0@BY5PR04MB6900.namprd04.prod.outlook.com>
-References: <20200513070843.71528-1-hare@suse.de>
+Subject: Re: [PATCH 0/2] dm-zoned: improve cache performance
+Date: Wed, 13 May 2020 09:44:10 +0000
+Message-ID: <BY5PR04MB6900A74251B571E454252F66E7BF0@BY5PR04MB6900.namprd04.prod.outlook.com>
+References: <20200513070729.71461-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -22,42 +21,43 @@ To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2020/05/13 16:10, Hannes Reinecke wrote:
-> Switch to use dynamic debug to avoid having recompile the kernel
-> just to enable debugging messages.
+On 2020/05/13 16:07, Hannes Reinecke wrote:
+> Hi all,
 > 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> ---
->  include/linux/device-mapper.h | 7 +------
->  1 file changed, 1 insertion(+), 6 deletions(-)
+> here are two patches to improve performance when a regular device
+> is specified for dm-zoned.
+> Damien noted that we have a performance drop after the zones on the
+> regular device are used up, as then the random zones on the zoned
+> device are being used, _and_ reclaim is running on the same disk.
+> This slows down I/O whle using random zones, increasing again after
+> the random zones are used up.
+> This patchset fixes this by not allowing random zones for caching
+> if a regular device is present.
+
+Awesome ! I will run this overnight to see how it compares with the previous
+results I sent.
+
+And I need to send something to fix the setup warning I am seeing, but that is a
+block or scsi patch I think. Had no time to dig.
+
 > 
-> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-> index e2d506dd805e..3d4365fd3001 100644
-> --- a/include/linux/device-mapper.h
-> +++ b/include/linux/device-mapper.h
-> @@ -556,13 +556,8 @@ void *dm_vcalloc(unsigned long nmemb, unsigned long elem_size);
->  #define DMINFO(fmt, ...) pr_info(DM_FMT(fmt), ##__VA_ARGS__)
->  #define DMINFO_LIMIT(fmt, ...) pr_info_ratelimited(DM_FMT(fmt), ##__VA_ARGS__)
->  
-> -#ifdef CONFIG_DM_DEBUG
-
-Can we remove this from Kconfig as a config option ?
-
-> -#define DMDEBUG(fmt, ...) printk(KERN_DEBUG DM_FMT(fmt), ##__VA_ARGS__)
-> +#define DMDEBUG(fmt, ...) pr_debug(DM_FMT(fmt), ##__VA_ARGS__)
->  #define DMDEBUG_LIMIT(fmt, ...) pr_debug_ratelimited(DM_FMT(fmt), ##__VA_ARGS__)
-> -#else
-> -#define DMDEBUG(fmt, ...) no_printk(fmt, ##__VA_ARGS__)
-> -#define DMDEBUG_LIMIT(fmt, ...) no_printk(fmt, ##__VA_ARGS__)
-> -#endif
->  
->  #define DMEMIT(x...) sz += ((sz >= maxlen) ? \
->  			  0 : scnprintf(result + sz, maxlen - sz, x))
+> Patch is relative to the dm-5.8 branch from
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git
 > 
-
-Otherwise, looks good to me.
-
-Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
+> As usual, comments and reviews are welcome.
+> 
+> 
+> Hannes Reinecke (2):
+>   dm-zoned: invert zone check in dmz_reset_zone()
+>   dm-zoned: split off random and cache zones
+> 
+>  .../admin-guide/device-mapper/dm-zoned.rst    |  17 +-
+>  drivers/md/dm-zoned-metadata.c                | 157 +++++++++++++-----
+>  drivers/md/dm-zoned-reclaim.c                 |  70 ++++----
+>  drivers/md/dm-zoned-target.c                  |  19 ++-
+>  drivers/md/dm-zoned.h                         |   7 +-
+>  5 files changed, 189 insertions(+), 81 deletions(-)
+> 
 
 
 -- 
