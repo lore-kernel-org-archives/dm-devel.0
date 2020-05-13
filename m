@@ -1,11 +1,14 @@
-From: Dan Carpenter <dan.carpenter@oracle.com>
-Subject: [bug report] dm zoned: metadata version 2
-Date: Wed, 13 May 2020 12:36:41 +0300
-Message-ID: <20200513093616.GA347693@mwanda>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [PATCH] device-mapper: use dynamic debug instead of
+ compile-time config option
+Date: Wed, 13 May 2020 09:41:33 +0000
+Message-ID: <BY5PR04MB6900AD28F5B6B6C3A8AEAA5EE7BF0@BY5PR04MB6900.namprd04.prod.outlook.com>
+References: <20200513070843.71528-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,41 +18,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: hare@suse.de
-Cc: dm-devel@redhat.com
+To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello Hannes Reinecke,
+On 2020/05/13 16:10, Hannes Reinecke wrote:
+> Switch to use dynamic debug to avoid having recompile the kernel
+> just to enable debugging messages.
+> 
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> ---
+>  include/linux/device-mapper.h | 7 +------
+>  1 file changed, 1 insertion(+), 6 deletions(-)
+> 
+> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+> index e2d506dd805e..3d4365fd3001 100644
+> --- a/include/linux/device-mapper.h
+> +++ b/include/linux/device-mapper.h
+> @@ -556,13 +556,8 @@ void *dm_vcalloc(unsigned long nmemb, unsigned long elem_size);
+>  #define DMINFO(fmt, ...) pr_info(DM_FMT(fmt), ##__VA_ARGS__)
+>  #define DMINFO_LIMIT(fmt, ...) pr_info_ratelimited(DM_FMT(fmt), ##__VA_ARGS__)
+>  
+> -#ifdef CONFIG_DM_DEBUG
 
-The patch 70978208ec91: "dm zoned: metadata version 2" from May 11,
-2020, leads to the following static checker warning:
+Can we remove this from Kconfig as a config option ?
 
-	drivers/md/dm-zoned-target.c:1047 dmz_iterate_devices()
-	warn: was expecting a 64 bit value instead of '~(zone_nr_sectors - 1)'
+> -#define DMDEBUG(fmt, ...) printk(KERN_DEBUG DM_FMT(fmt), ##__VA_ARGS__)
+> +#define DMDEBUG(fmt, ...) pr_debug(DM_FMT(fmt), ##__VA_ARGS__)
+>  #define DMDEBUG_LIMIT(fmt, ...) pr_debug_ratelimited(DM_FMT(fmt), ##__VA_ARGS__)
+> -#else
+> -#define DMDEBUG(fmt, ...) no_printk(fmt, ##__VA_ARGS__)
+> -#define DMDEBUG_LIMIT(fmt, ...) no_printk(fmt, ##__VA_ARGS__)
+> -#endif
+>  
+>  #define DMEMIT(x...) sz += ((sz >= maxlen) ? \
+>  			  0 : scnprintf(result + sz, maxlen - sz, x))
+> 
 
-drivers/md/dm-zoned-target.c
-  1039  static int dmz_iterate_devices(struct dm_target *ti,
-  1040                                 iterate_devices_callout_fn fn, void *data)
-  1041  {
-  1042          struct dmz_target *dmz = ti->private;
-  1043          unsigned int zone_nr_sectors = dmz_zone_nr_sectors(dmz->metadata);
-  1044          sector_t capacity;
-  1045          int r;
-  1046  
-  1047          capacity = dmz->dev[0].capacity & ~(zone_nr_sectors - 1);
+Otherwise, looks good to me.
 
-sector_t is a u64 and zone_nr_sectors is a u32.  It means that the high
-32 bits are always cleared.  Making zone_nr_sectors a sector_t, u64 or
-even an int would fix this problem.
+Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
 
-  1048          r = fn(ti, dmz->ddev[0], 0, capacity, data);
-  1049          if (!r && dmz->ddev[1]) {
-  1050                  capacity = dmz->dev[1].capacity & ~(zone_nr_sectors - 1);
-  1051                  r = fn(ti, dmz->ddev[1], 0, capacity, data);
-  1052          }
-  1053          return r;
-  1054  }
 
-regards,
-dan carpenter
+-- 
+Damien Le Moal
+Western Digital Research
