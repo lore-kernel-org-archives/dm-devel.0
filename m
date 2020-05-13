@@ -1,19 +1,17 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: device-mapper: use dynamic debug instead of
- compile-time config option
-Date: Wed, 13 May 2020 19:13:33 +0200
-Message-ID: <2540705f-9935-863b-f0e4-4cf29b60a367@suse.de>
-References: <20200513070843.71528-1-hare@suse.de>
-	<BY5PR04MB6900AD28F5B6B6C3A8AEAA5EE7BF0@BY5PR04MB6900.namprd04.prod.outlook.com>
-	<5357d0d6-12cb-9585-36ae-9aec206eebb4@suse.de>
-	<20200513162502.GA20131@redhat.com>
-	<ce79fe87-3d2c-794b-75d6-7e59fd0b447c@suse.de>
-	<20200513171042.GA20324@redhat.com>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [PATCHv5 00/14] dm-zoned: metadata version 2
+Date: Wed, 13 May 2020 23:56:23 +0000
+Message-ID: <BY5PR04MB690002ABF208B084607B6971E7BF0@BY5PR04MB6900.namprd04.prod.outlook.com>
+References: <20200508090332.40716-1-hare@suse.de>
+	<BY5PR04MB6900138C0F78196D0F81BF07E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
+	<BY5PR04MB6900C76141ABD428F42C1840E7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
+	<2553e593-795d-6aed-f983-e990a283e2ff@suse.de>
+	<BY5PR04MB6900C84D00585D3560D4C51AE7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
+	<BY5PR04MB690020AE68E7A20EA8BFED0DE7A10@BY5PR04MB6900.namprd04.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200513171042.GA20324@redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -24,51 +22,154 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Damien Le Moal <Damien.LeMoal@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>, "Martin
+	K . Petersen" <martin.petersen@oracle.com>
+Cc: Bob Liu <bob.liu@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gNS8xMy8yMCA3OjEwIFBNLCBNaWtlIFNuaXR6ZXIgd3JvdGU6Cj4gT24gV2VkLCBNYXkgMTMg
-MjAyMCBhdCAgMTowMXBtIC0wNDAwLAo+IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNlLmRlPiB3
-cm90ZToKPiAKPj4gT24gNS8xMy8yMCA2OjI1IFBNLCBNaWtlIFNuaXR6ZXIgd3JvdGU6Cj4+PiBP
-biBXZWQsIE1heSAxMyAyMDIwIGF0ICA3OjEwYW0gLTA0MDAsCj4+PiBIYW5uZXMgUmVpbmVja2Ug
-PGhhcmVAc3VzZS5kZT4gd3JvdGU6Cj4+Pgo+Pj4+IE9uIDUvMTMvMjAgMTE6NDEgQU0sIERhbWll
-biBMZSBNb2FsIHdyb3RlOgo+Pj4+PiBPbiAyMDIwLzA1LzEzIDE2OjEwLCBIYW5uZXMgUmVpbmVj
-a2Ugd3JvdGU6Cj4+Pj4+PiBTd2l0Y2ggdG8gdXNlIGR5bmFtaWMgZGVidWcgdG8gYXZvaWQgaGF2
-aW5nIHJlY29tcGlsZSB0aGUga2VybmVsCj4+Pj4+PiBqdXN0IHRvIGVuYWJsZSBkZWJ1Z2dpbmcg
-bWVzc2FnZXMuCj4+Pj4+Pgo+Pj4+Pj4gU2lnbmVkLW9mZi1ieTogSGFubmVzIFJlaW5lY2tlIDxo
-YXJlQHN1c2UuZGU+Cj4+Pj4+PiAtLS0KPj4+Pj4+ICAgaW5jbHVkZS9saW51eC9kZXZpY2UtbWFw
-cGVyLmggfCA3ICstLS0tLS0KPj4+Pj4+ICAgMSBmaWxlIGNoYW5nZWQsIDEgaW5zZXJ0aW9uKCsp
-LCA2IGRlbGV0aW9ucygtKQo+Pj4+Pj4KPj4+Pj4+IGRpZmYgLS1naXQgYS9pbmNsdWRlL2xpbnV4
-L2RldmljZS1tYXBwZXIuaCBiL2luY2x1ZGUvbGludXgvZGV2aWNlLW1hcHBlci5oCj4+Pj4+PiBp
-bmRleCBlMmQ1MDZkZDgwNWUuLjNkNDM2NWZkMzAwMSAxMDA2NDQKPj4+Pj4+IC0tLSBhL2luY2x1
-ZGUvbGludXgvZGV2aWNlLW1hcHBlci5oCj4+Pj4+PiArKysgYi9pbmNsdWRlL2xpbnV4L2Rldmlj
-ZS1tYXBwZXIuaAo+Pj4+Pj4gQEAgLTU1NiwxMyArNTU2LDggQEAgdm9pZCAqZG1fdmNhbGxvYyh1
-bnNpZ25lZCBsb25nIG5tZW1iLCB1bnNpZ25lZCBsb25nIGVsZW1fc2l6ZSk7Cj4+Pj4+PiAgICNk
-ZWZpbmUgRE1JTkZPKGZtdCwgLi4uKSBwcl9pbmZvKERNX0ZNVChmbXQpLCAjI19fVkFfQVJHU19f
-KQo+Pj4+Pj4gICAjZGVmaW5lIERNSU5GT19MSU1JVChmbXQsIC4uLikgcHJfaW5mb19yYXRlbGlt
-aXRlZChETV9GTVQoZm10KSwgIyNfX1ZBX0FSR1NfXykKPj4+Pj4+IC0jaWZkZWYgQ09ORklHX0RN
-X0RFQlVHCj4+Pj4+Cj4+Pj4+IENhbiB3ZSByZW1vdmUgdGhpcyBmcm9tIEtjb25maWcgYXMgYSBj
-b25maWcgb3B0aW9uID8KPj4+Pj4KPj4+PiBObywgd2UgY2FuJ3QsIGl0J3MgYmVpbmcgdXNlZCBi
-eSBkbS1zbmFwIGFuZCBkbS1pbnRlZ3JpdHkuCj4+Pgo+Pj4gWWVhaCwgdGhleSBwcm92aWRlIGFk
-ZGl0aW9uYWwgZGVidWdnaW5nIGlmIGl0cyBzZXQuCj4+Pgo+Pj4gQnV0IHNob3VsZG4ndCB3ZSBw
-cmVzZXJ2ZSBvbGQtc3R5bGUgRE1ERUJVRyBpZiBDT05GSUdfRE1fREVCVUcgaXMgc2V0Cj4+PiAo
-Y29tcGlsZSB0aW1lIHByaW50aW5nIG9mIGRlYnVnZ2luZykgYnV0IGlmIG5vdCBzZXQsIHVzZSBk
-eW5hbWljCj4+PiBkZWJ1Z2dpbmc/Cj4+Pgo+Pj4gVGhpbmsgSSdkIHByZWZlciB0aGF0IGFzIHRo
-ZSBpbmNyZW1lbnRhbCBpbXByb3ZlbWVudC4uLiB0aG91Z2h0cz8KPj4+Cj4+IFdvcmtzIGZvciBt
-ZTsgSSBqdXN0IGRvbid0IHdhbnQgdG8gcmVjb21waWxlIHRoZSBrZXJuZWwgYW55dGltZSBJCj4+
-IG5lZWQgdG8gZGVidWcgZGV2aWNlLW1hcHBlciBzdHVmZi4KPj4KPj4gV2lsbCBiZSByZXNlbmRp
-bmcuCj4gCj4gRG9lcyB0aGUgdXNlIG9mIHByX2RlYnVnKCkgY2F1c2UgbWlzc2luZyBuZXdsaW5l
-cyAod2l0aCB5b3VyIHBhdGNoKT8KPiAKPiBPbmx5IHRob3VnaHQgdG8gYXNrIHRoaXMgYmVjYXVz
-ZSBJJ20gY2hhc2luZyBhbm90aGVyIERNIGlzc3VlIGF0IHRoZQo+IG1vbWVudCBhbmQgaGFwcGVu
-ZWQgdG8gc2VlIF9fZG1fc3VzcGVuZCgpJ3MgdXNlIG9mIHByX2RlYnVnKCkgaW5jbHVkZXMKPiBh
-biBleHBsaWNpdCBleHRyYSBcbi4KPiAKSG1tLiBOb3QgdGhhdCBJJ3ZlIG5vdGljZWQ7IGJ1dCB5
-ZWFoLCB0eXBpY2FsbHkgb25lIHdvdWxkIGhhdmUgdG8gYWRkIAonXG4nIHRvIGFueSBvZiB0aGUg
-cHJfWFhYIGNhbGxzLiBCdXQgdGhlbiBpdCBkZXBlbmRzIG9uIHRoZSB3cmFwcGVyIApiZWluZyB1
-c2VkLiBJJ2xsIGNoZWNrLgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tl
-ICAgICAgICAgICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgU29mdHdh
-cmUgU29sdXRpb25zIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpIUkIgMzY4
-MDkgKEFHIE7DvHJuYmVyZyksIEdlc2Now6RmdHNmw7xocmVyOiBGZWxpeCBJbWVuZMO2cmZmZXIK
-CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
-dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+Adding Martin.
+
+On 2020/05/11 22:23, Damien Le Moal wrote:
+> On 2020/05/11 20:46, Damien Le Moal wrote:
+>> On 2020/05/11 20:25, Hannes Reinecke wrote:
+>>> On 5/11/20 12:55 PM, Damien Le Moal wrote:
+>>>> On 2020/05/11 11:46, Damien Le Moal wrote:
+>>>>> Mike,
+>>>>>
+>>>>> I am still seeing the warning:
+>>>>>
+>>>>> [ 1827.839756] device-mapper: table: 253:1: adding target device sdj caused an
+>>>>> alignment inconsistency: physical_block_size=4096, logical_block_size=4096,
+>>>>> alignment_offset=0, start=0
+>>>>> [ 1827.856738] device-mapper: table: 253:1: adding target device sdj caused an
+>>>>> alignment inconsistency: physical_block_size=4096, logical_block_size=4096,
+>>>>> alignment_offset=0, start=0
+>>>>> [ 1827.874031] device-mapper: table: 253:1: adding target device sdj caused an
+>>>>> alignment inconsistency: physical_block_size=4096, logical_block_size=4096,
+>>>>> alignment_offset=0, start=0
+>>>>> [ 1827.891086] device-mapper: table: 253:1: adding target device sdj caused an
+>>>>> alignment inconsistency: physical_block_size=4096, logical_block_size=4096,
+>>>>> alignment_offset=0, start=0
+>>>>>
+>>>>> when mixing 512B sector and 4KB sector devices. Investigating now.
+>>>>
+>>>>
+>>>> OK. Figured that one out: the 500GB SSD I am using for the regular device is
+>>>> 976773168 512B sectors capacity, that is, not a multiple of the 256MB zone size,
+>>>> and not even a multiple of 4K. This causes the creation of a 12MB runt zone of
+>>>> 24624 sectors, which is ignored. But the start sector of the second device in
+>>>> the dm-table remains 976773168, so not aligned on 4K. This causes
+>>>> bdev_stack_limits to return an error and the above messages to be printed.
+>>>>
+>>>> So I think we need to completely ignore the eventual "runt" zone of the regular
+>>>> device so that everything aligns correctly. This will need changes in both
+>>>> dmzadm and dm-zoned.
+>>>>
+>>>> Hannes, I can hack something on top of your series. Or can you resend with that
+>>>> fixed ?
+>>>>
+>>>>
+>>>>
+>>>>
+>>> Does this one help?
+>>
+>> Nope. Same warning.
+>>
+>>>
+>>> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+>>> index ea43f6892ced..5daca82b5ec7 100644
+>>> --- a/drivers/md/dm-zoned-target.c
+>>> +++ b/drivers/md/dm-zoned-target.c
+>>> @@ -1041,13 +1041,17 @@ static int dmz_iterate_devices(struct dm_target *ti,
+>>>   {
+>>>          struct dmz_target *dmz = ti->private;
+>>>          unsigned int zone_nr_sectors = dmz_zone_nr_sectors(dmz->metadata);
+>>> +       unsigned int nr_zones;
+>>>          sector_t capacity;
+>>>          int r;
+>>>
+>>> -       capacity = dmz->dev[0].capacity & ~(zone_nr_sectors - 1);
+>>> +       nr_zones = DIV_ROUND_DOWN(dmz->dev[0].capacity, zone_nr_sectors);
+>>> +       capacity = nr_zones * zone_nr_sectors;
+>>
+>> 	capacity = round_down(dmz->dev[0].capacity, zone_nr_sectors);
+>>
+>> is simpler :)
+>>
+>> In any case, your change does seem to do anything here. Before and after, the
+>> capacity is rounded down to full zones, excluding the last runt zone. I think it
+>> is to do with the table entry start offset given on DM start by dmzadm...
+>>
+>>
+>>>          r = fn(ti, dmz->ddev[0], 0, capacity, data);
+>>>          if (!r && dmz->ddev[1]) {
+>>> -               capacity = dmz->dev[1].capacity & ~(zone_nr_sectors - 1);
+>>> +               nr_zones = DIV_ROUND_DOWN(dmz->dev[1.capacity,
+>>> +                                                  zone_nr_sectors));
+>>> +               capacity = nr_zones * zone_nr_sectors;
+>>>                  r = fn(ti, dmz->ddev[1], 0, capacity, data);
+>>>          }
+>>>          return r;
+>>>
+>>> Cheers,
+> 
+> The failure of bdev_stack_limits() generating the warning is due to the io_opt
+> limit not being compatible with the physical blocks size... Nothing to do with
+> zone start/runt zones.
+> 
+> The problem is here:
+> 
+> 	/* Optimal I/O a multiple of the physical block size? */
+>         if (t->io_opt & (t->physical_block_size - 1)) {
+>                 t->io_opt = 0;
+>                 t->misaligned = 1;
+>                 ret = -1;
+>         }
+> 
+> For the ssd (t), I have io_opt at 512 and the physical block size at 4096,
+> changed due to the satcking from the device real 512 phys block to the smr disk
+> phys block. The SMR disk io_opt is 0, so the ssd io_opt remains unchaged at 512.
+> And we end up with the misaligned trigger since 512 & 4095 = 512...
+> 
+> I do not understand clearly yet... I wonder why the io_opt for the SMR drive is
+> not 4096, same as the physical sector size.
+
+I investigated this and here is what I found out:
+
+When the dual drive setup is started, dm_calculate_queue_limits() is called and
+ti->type->iterate_devices(ti, dm_set_device_limits, &ti_limits) executed.
+
+In dm-zoned, the iterate device method executes dm_set_device_limits() twice,
+once for each drive of the setup.
+
+The drives I am using are an M.2 SSD with a phys sector size of 512B and an
+optimal IO size set to 512. The SMR drive has a phys sector size of 4K and the
+optimal IO size set to 0, the drive does not report any value, not uncommon for
+HDDs.
+
+The result of bdev_stack_limits() execution from dm_set_device_limits() gives a
+DM device phys sector of 4K, no surprise. The io_opt limit though end up being
+512 = lcm(0, 512). That results in this condition to trigger:
+
+	/* Optimal I/O a multiple of the physical block size? */
+        if (t->io_opt & (t->physical_block_size - 1)) {
+                t->io_opt = 0;
+                t->misaligned = 1;
+                ret = -1;
+        }
+
+since 512 & (4096 - 1) is not 0...
+
+It looks to me like we should either have io_opt always be at least the phys
+sector size, or change the limit stacking io_opt handling. I am not sure which
+approach is best... Thoughts ?
+
+Martin,
+
+Any idea why the io_opt limit is not set to the physical block size when the
+drive does not report an optimal transfer length ? Would it be bad to set that
+value instead of leaving it to 0 ?
+
+-- 
+Damien Le Moal
+Western Digital Research
