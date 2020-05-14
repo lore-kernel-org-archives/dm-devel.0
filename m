@@ -1,79 +1,63 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 2/2] dm-zoned: remove spurious newlines from
-	debugging messages
-Date: Thu, 14 May 2020 08:09:29 +0200
-Message-ID: <20200514060929.85469-3-hare@suse.de>
-References: <20200514060929.85469-1-hare@suse.de>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [dm-devel] [PATCH] dm zoned: Avoid 64-bit division error in
+ dmz_fixup_devices
+Date: Thu, 14 May 2020 06:25:02 +0000
+Message-ID: <BY5PR04MB690080527BC91E2DC9EDF0BBE7BC0@BY5PR04MB6900.namprd04.prod.outlook.com>
+References: <20200513084521.461116-1-natechancellor@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200514060929.85469-1-hare@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Nathan Chancellor <natechancellor@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-DMDEBUG will already add a newline to the logging messages, so we
-shouldn't be adding it to the message itself.
-
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- drivers/md/dm-zoned-reclaim.c | 4 ++--
- drivers/md/dm-zoned-target.c  | 4 ++--
- 2 files changed, 4 insertions(+), 4 deletions(-)
-
-diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
-index 39ea0d5d4706..4bfa61540b9c 100644
---- a/drivers/md/dm-zoned-reclaim.c
-+++ b/drivers/md/dm-zoned-reclaim.c
-@@ -405,7 +405,7 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
- 
- 	ret = dmz_flush_metadata(zrc->metadata);
- 	if (ret) {
--		DMDEBUG("(%s): Metadata flush for zone %u failed, err %d\n",
-+		DMDEBUG("(%s): Metadata flush for zone %u failed, err %d",
- 			dmz_metadata_label(zmd), rzone->id, ret);
- 		return ret;
- 	}
-@@ -493,7 +493,7 @@ static void dmz_reclaim_work(struct work_struct *work)
- 
- 	ret = dmz_do_reclaim(zrc);
- 	if (ret) {
--		DMDEBUG("(%s): Reclaim error %d\n",
-+		DMDEBUG("(%s): Reclaim error %d",
- 			dmz_metadata_label(zmd), ret);
- 		if (!dmz_check_dev(zmd))
- 			return;
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index ea43f6892ced..a3d572da70ad 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -515,7 +515,7 @@ static void dmz_flush_work(struct work_struct *work)
- 	/* Flush dirty metadata blocks */
- 	ret = dmz_flush_metadata(dmz->metadata);
- 	if (ret)
--		DMDEBUG("(%s): Metadata flush failed, rc=%d\n",
-+		DMDEBUG("(%s): Metadata flush failed, rc=%d",
- 			dmz_metadata_label(dmz->metadata), ret);
- 
- 	/* Process queued flush requests */
-@@ -679,7 +679,7 @@ static int dmz_map(struct dm_target *ti, struct bio *bio)
- 	/* Now ready to handle this BIO */
- 	ret = dmz_queue_chunk_work(dmz, bio);
- 	if (ret) {
--		DMDEBUG("(%s): BIO op %d, can't process chunk %llu, err %i\n",
-+		DMDEBUG("(%s): BIO op %d, can't process chunk %llu, err %i",
- 			dmz_metadata_label(zmd),
- 			bio_op(bio), (u64)dmz_bio_chunk(zmd, bio),
- 			ret);
--- 
-2.16.4
+On 2020/05/14 14:07, Nathan Chancellor wrote:=0A=
+> When building arm32 allyesconfig:=0A=
+> =0A=
+> ld.lld: error: undefined symbol: __aeabi_uldivmod=0A=
+>>>> referenced by dm-zoned-target.c=0A=
+>>>>               md/dm-zoned-target.o:(dmz_ctr) in archive drivers/built-=
+in.a=0A=
+> =0A=
+> dmz_fixup_devices uses DIV_ROUND_UP with variables of type sector_t. As=
+=0A=
+> such, it should be using DIV_ROUND_UP_SECTOR_T, which handles this=0A=
+> automatically.=0A=
+> =0A=
+> Fixes: 70978208ec91 ("dm zoned: metadata version 2")=0A=
+> Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>=0A=
+> ---=0A=
+>  drivers/md/dm-zoned-target.c | 5 +++--=0A=
+>  1 file changed, 3 insertions(+), 2 deletions(-)=0A=
+> =0A=
+> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c=
+=0A=
+> index ea43f6892ced..9c4fd4b04878 100644=0A=
+> --- a/drivers/md/dm-zoned-target.c=0A=
+> +++ b/drivers/md/dm-zoned-target.c=0A=
+> @@ -803,8 +803,9 @@ static int dmz_fixup_devices(struct dm_target *ti)=0A=
+>  =0A=
+>  	if (reg_dev) {=0A=
+>  		reg_dev->zone_nr_sectors =3D zoned_dev->zone_nr_sectors;=0A=
+> -		reg_dev->nr_zones =3D DIV_ROUND_UP(reg_dev->capacity,=0A=
+> -						 reg_dev->zone_nr_sectors);=0A=
+> +		reg_dev->nr_zones =3D=0A=
+> +			DIV_ROUND_UP_SECTOR_T(reg_dev->capacity,=0A=
+> +					      reg_dev->zone_nr_sectors);>  		zoned_dev->zone_offset =3D reg=
+_dev->nr_zones;=0A=
+>  	}=0A=
+>  	return 0;=0A=
+> =0A=
+> base-commit: e098d7762d602be640c53565ceca342f81e55ad2=0A=
+> =0A=
+=0A=
+Looks good.=0A=
+=0A=
+Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>=0A=
+=0A=
+-- =0A=
+Damien Le Moal=0A=
+Western Digital Research=0A=
