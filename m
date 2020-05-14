@@ -1,11 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCHv2 0/2] device-mapper: use dynamic debug
-Date: Thu, 14 May 2020 08:09:27 +0200
-Message-ID: <20200514060929.85469-1-hare@suse.de>
+Subject: [PATCH 2/2] dm-zoned: remove spurious newlines from
+	debugging messages
+Date: Thu, 14 May 2020 08:09:29 +0200
+Message-ID: <20200514060929.85469-3-hare@suse.de>
+References: <20200514060929.85469-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200514060929.85469-1-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,22 +22,58 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi all,
+DMDEBUG will already add a newline to the logging messages, so we
+shouldn't be adding it to the message itself.
 
-here's an updated version of my earlier patch to switch to dynamic
-debug instead of using a compile-time option.
-I've modified the initial patch as suggested by Mike, and also fixed
-up stray newlines which had crept in with some debugging messages
-in dm-zoned.
-
-Hannes Reinecke (2):
-  device-mapper: use dynamic debug instead of compile-time config option
-  dm-zoned: remove spurious newlines from debugging messages
-
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
  drivers/md/dm-zoned-reclaim.c | 4 ++--
  drivers/md/dm-zoned-target.c  | 4 ++--
- include/linux/device-mapper.h | 5 ++---
- 3 files changed, 6 insertions(+), 7 deletions(-)
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
+diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+index 39ea0d5d4706..4bfa61540b9c 100644
+--- a/drivers/md/dm-zoned-reclaim.c
++++ b/drivers/md/dm-zoned-reclaim.c
+@@ -405,7 +405,7 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+ 
+ 	ret = dmz_flush_metadata(zrc->metadata);
+ 	if (ret) {
+-		DMDEBUG("(%s): Metadata flush for zone %u failed, err %d\n",
++		DMDEBUG("(%s): Metadata flush for zone %u failed, err %d",
+ 			dmz_metadata_label(zmd), rzone->id, ret);
+ 		return ret;
+ 	}
+@@ -493,7 +493,7 @@ static void dmz_reclaim_work(struct work_struct *work)
+ 
+ 	ret = dmz_do_reclaim(zrc);
+ 	if (ret) {
+-		DMDEBUG("(%s): Reclaim error %d\n",
++		DMDEBUG("(%s): Reclaim error %d",
+ 			dmz_metadata_label(zmd), ret);
+ 		if (!dmz_check_dev(zmd))
+ 			return;
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index ea43f6892ced..a3d572da70ad 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -515,7 +515,7 @@ static void dmz_flush_work(struct work_struct *work)
+ 	/* Flush dirty metadata blocks */
+ 	ret = dmz_flush_metadata(dmz->metadata);
+ 	if (ret)
+-		DMDEBUG("(%s): Metadata flush failed, rc=%d\n",
++		DMDEBUG("(%s): Metadata flush failed, rc=%d",
+ 			dmz_metadata_label(dmz->metadata), ret);
+ 
+ 	/* Process queued flush requests */
+@@ -679,7 +679,7 @@ static int dmz_map(struct dm_target *ti, struct bio *bio)
+ 	/* Now ready to handle this BIO */
+ 	ret = dmz_queue_chunk_work(dmz, bio);
+ 	if (ret) {
+-		DMDEBUG("(%s): BIO op %d, can't process chunk %llu, err %i\n",
++		DMDEBUG("(%s): BIO op %d, can't process chunk %llu, err %i",
+ 			dmz_metadata_label(zmd),
+ 			bio_op(bio), (u64)dmz_bio_chunk(zmd, bio),
+ 			ret);
 -- 
 2.16.4
