@@ -1,47 +1,109 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 1/2] device-mapper: use dynamic debug instead
- of compile-time config option
-Date: Thu, 14 May 2020 13:15:33 -0400
-Message-ID: <20200514171533.GD31400@redhat.com>
-References: <20200514060929.85469-1-hare@suse.de>
-	<20200514060929.85469-2-hare@suse.de>
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+Subject: Re: [RFC PATCH v3 00/12] Integrity Policy Enforcement LSM (IPE)
+Date: Thu, 14 May 2020 21:28:15 +0200
+Message-ID: <44fb36ae-959d-4ff7-ed1f-ccfc2e292232@digikod.net>
+References: <20200415162550.2324-1-deven.desai@linux.microsoft.com>
+ <b07ac7e1-7cf5-92c9-81d0-64174c3d5024@digikod.net>
+ <0001755a-6b2a-b13b-960c-eb0b065c8e3c@linux.microsoft.com>
+ <8ba7b15f-de91-40f7-fc95-115228345fce@linux.microsoft.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200514060929.85469-2-hare@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Hannes Reinecke <hare@suse.de>
-Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset=iso-8859-15
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <8ba7b15f-de91-40f7-fc95-115228345fce@linux.microsoft.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Deven Bowers <deven.desai@linux.microsoft.com>, agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serge@hallyn.com, zohar@linux.ibm.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, jannh@google.com
+Cc: tyhicks@linux.microsoft.com, pasha.tatashin@soleen.com, sashal@kernel.org, jaskarankhurana@linux.microsoft.com, nramas@linux.microsoft.com, mdsakib@linux.microsoft.com, linux-kernel@vger.kernel.org, corbet@lwn.net
 List-Id: dm-devel.ids
 
-On Thu, May 14 2020 at  2:09am -0400,
-Hannes Reinecke <hare@suse.de> wrote:
 
-> Switch to use dynamic debug to avoid having recompile the kernel
-> just to enable debugging messages.
+On 12/05/2020 22:46, Deven Bowers wrote:
 > 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> 
+> On 5/11/2020 11:03 AM, Deven Bowers wrote:
+>>
+>>
+>> On 5/10/2020 2:28 AM, Mickaël Salaün wrote:
+>>
+>> [...snip]
+>>
+>>>>
+>>>> Additionally, rules are evaluated top-to-bottom. As a result, any
+>>>> revocation rules, or denies should be placed early in the file to
+>>>> ensure
+>>>> that these rules are evaluated before a rule with "action=ALLOW" is
+>>>> hit.
+>>>>
+>>>> IPE policy is designed to be forward compatible and backwards
+>>>> compatible,
+>>>> thus any failure to parse a rule will result in the line being ignored,
+>>>> and a warning being emitted. If backwards compatibility is not
+>>>> required,
+>>>> the kernel commandline parameter and sysctl, ipe.strict_parse can be
+>>>> enabled, which will cause these warnings to be fatal.
+>>>
+>>> Ignoring unknown command may lead to inconsistent beaviors. To achieve
+>>> forward compatibility, I think it would be better to never ignore
+>>> unknown rule but to give a way to userspace to known what is the current
+>>> kernel ABI. This could be done with a securityfs file listing the
+>>> current policy grammar.
+>>>
+>>
+>> That's a fair point. From a manual perspective, I think this is fine.
+>> A human-user can interpret a grammar successfully on their own when new
+>> syntax is introduced.
+>>
+>>  From a producing API perspective, I'd have to think about it a bit
+>> more. Ideally, the grammar would be structured in such a way that the
+>> userland
+>> interpreter of this grammar would not have to be updated once new syntax
+>> is introduced, avoiding the need to update the userland binary. To do so
+>> generically ("op=%s") is easy, but doesn't necessarily convey sufficient
+>> information (what happens when a new "op" token is introduced?). I think
+>> this may come down to regular expression representations of valid values
+>> for these tokens, which worries me as regular expressions are incredibly
+>> error-prone[1].
+>>
+>> I'll see what I can come up with regarding this.
+> 
+> I have not found a way that I like to expose some kind of grammar
+> through securityfs that can be understood by usermode to parse the
+> policy. Here's what I propose as a compromise:
+> 
+>     1. I remove the unknown command behavior. This address your
+> first point about inconsistent behaviors, and effectively removes the
+> strict_parse sysctl (as it is always enabled).
+> 
+>     2. I introduce a versioning system for the properties
+> themselves. The valid set of properties and their versions
+> can be found in securityfs, under say, ipe/config in a key=value
+> format where `key` indicates the understood token, and `value`
+> indicates their current version. For example:
+> 
+>     $ cat $SECURITYFS/ipe/config
+>     op=1
+>     action=1
+>     policy_name=1
+>     policy_version=1
+>     dmverity_signature=1
+>     dmverity_roothash=1
+>     boot_verified=1
 
-FYI, I decided to always use pr_debug* rather than preserve using printk
-if CONFIG_DM_DEBUG is enabled.  More consistent and less surprising for
-a developer (to have to reason through how to enable debugging).
+The name ipe/config sounds like a file to configure IPE. Maybe something
+like ipe/config_abi or ipe/config_grammar?
 
-May cause initial surprise if debugging messages disappear despite
-CONFIG_DM_DEBUG being enabled... but pretty sure DM developers can cope
-(and/or help non-developers) as needed.
+> 
+> if new syntax is introduced, the version number is increased.
+> 
+>     3. The format of those versions are documented as part of
+> the admin-guide around IPE. If user-mode at that point wants to rip
+> the documentation formats and correlate with the versioning, then
+> it fulfills the same functionality as above, with out the complexity
+> around exposing a parsing grammar and interpreting it on-the-fly.
+> Many of these are unlikely to move past version 1, however.
+> 
+> Thoughts?
+> 
 
-Patches were staged for 5.8, I also added an additional related cleanup:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-5.8
-
-Thanks,
-Mike
+That seems reasonable.
