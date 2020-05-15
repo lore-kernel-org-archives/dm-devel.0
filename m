@@ -1,13 +1,13 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 00/11] Minor fixes for multipath-tools
-Date: Thu, 14 May 2020 20:30:58 -0500
-Message-ID: <20200515013058.GT5907@octiron.msp.redhat.com>
-References: <20200511223931.18261-1-mwilck@suse.com>
+Subject: Re: [PATCH 0/2] More minor libmultipath fixes
+Date: Thu, 14 May 2020 20:33:04 -0500
+Message-ID: <20200515013304.GU5907@octiron.msp.redhat.com>
+References: <20200512203822.18910-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200511223931.18261-1-mwilck@suse.com>
+In-Reply-To: <20200512203822.18910-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,49 +22,36 @@ To: mwilck@suse.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, May 12, 2020 at 12:39:20AM +0200, mwilck@suse.com wrote:
+On Tue, May 12, 2020 at 10:38:20PM +0200, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
 > 
 > Hi Christophe, hi Ben,
 > 
-> This series fixes a couple of issues I recently found with the 32bit build
-> of multipath-tools, and after integrating our CI into the automated builds
-> on our build server.
+> this is a follow-up on yesterday's "Minor fixes for multipath-tools"
+> series. It adds fixes for sporadic build failures I observed.
+> The libsg move is a long-overdue cleanup.
 > 
-> Regards
-> Martin
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-For the set.
+For the set
 
+> Regards
+> Martin
 > 
-> Martin Wilck (11):
->   multipath-tools: Makefile: more dependency fixes for parallel build
->   multipath-tools: Makefile.inc: separate out OPTFLAGS
->   multipath-tools: Makefile.inc: allow user settings for LDFLAGS
->   multipath-tools: Makefile.inc: set -Wno-error=clobbered
->   libmultipath: discovery.c: use %z qualifier for size_t
->   libmultipath: eliminate more signed/unsigned comparisons
->   libmultipath: set_uint: fix parsing for 32bit
->   multipath-tools tests/Makefile: add -lmpathcmd to LIBDEPS
->   multipath tools tests/Makefile: Fix OBJDEPS for hwtable-test
->   multipath-tools tests/test-lib.c: drop __wrap_is_claimed_by_foreign
->   multipath-tools tests/directio: fix -Wmaybe-uninitalized warning
+> Martin Wilck (2):
+>   libmultipath: move libsg into libmultipath
+>   multipath-tools Makefile: add install dependency
 > 
->  Makefile                              |  5 +++--
->  Makefile.inc                          | 16 ++++++++--------
->  libmpathpersist/mpath_pr_ioctl.c      |  2 +-
->  libmultipath/dict.c                   | 11 +++++++----
->  libmultipath/discovery.c              | 16 ++++++++--------
->  libmultipath/print.c                  | 12 ++++++------
->  libmultipath/prioritizers/alua_spc3.h |  2 +-
->  multipathd/cli_handlers.c             | 20 ++++++++++----------
->  multipathd/main.c                     |  2 +-
->  tests/Makefile                        |  4 ++--
->  tests/directio.c                      |  2 +-
->  tests/test-lib.c                      |  6 ------
->  12 files changed, 48 insertions(+), 50 deletions(-)
+>  Makefile                            | 4 ++++
+>  libmultipath/Makefile               | 3 ++-
+>  libmultipath/checkers/Makefile      | 6 +++---
+>  libmultipath/{checkers => }/libsg.c | 0
+>  libmultipath/{checkers => }/libsg.h | 0
+>  libmultipath/prioritizers/Makefile  | 2 +-
+>  6 files changed, 10 insertions(+), 5 deletions(-)
+>  rename libmultipath/{checkers => }/libsg.c (100%)
+>  rename libmultipath/{checkers => }/libsg.h (100%)
 > 
 > -- 
 > 2.26.2
