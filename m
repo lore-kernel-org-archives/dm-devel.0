@@ -1,27 +1,37 @@
-From: Miles Chen <miles.chen@mediatek.com>
-Subject: [PATCH] dm: replace strncpy() with strscpy()
-Date: Fri, 15 May 2020 18:05:28 +0800
-Message-ID: <20200515100528.14341-1-miles.chen@mediatek.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [dm:for-next 53/58]
+ drivers/md/dm-zoned-metadata.c:779:3: error: implicit declaration of
+ function 'export_uuid'
+Date: Fri, 15 May 2020 10:32:55 -0400
+Message-ID: <20200515143254.GA5098@redhat.com>
+References: <202005151432.U61i8wOc%lkp@intel.com>
+	<a1e65e5a-4b23-6c6e-d52f-7bf6eb69e7c8@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: linux-kernel@vger.kernel.org, linux-mediatek@lists.infradead.org, wsd_upstream@mediatek.com, Miles Chen <miles.chen@mediatek.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <a1e65e5a-4b23-6c6e-d52f-7bf6eb69e7c8@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Hannes Reinecke <hare@suse.de>
+Cc: Damien Le Moal <damien.lemoal@wdc.com>, dm-devel@redhat.com, kbuild-all@lists.01.org, kbuild test robot <lkp@intel.com>, Bob Liu <bob.liu@oracle.com>
 List-Id: dm-devel.ids
 
-UmVwbGFjZSBzdHJuY3B5KCkgd2l0aCBzdHJzY3B5KCkgdG8gZ3VhcmFudGVlIGEgTlVMTC10ZXJt
-aW5hdGVkDQpzdHJpbmcuDQoNCkRldGVjdGVkIGJ5IENvdmVyaXR5Lg0KDQpTaWduZWQtb2ZmLWJ5
-OiBNaWxlcyBDaGVuIDxtaWxlcy5jaGVuQG1lZGlhdGVrLmNvbT4NCi0tLQ0KIGRyaXZlcnMvbWQv
-ZG0taW9jdGwuYyB8IDIgKy0NCiAxIGZpbGUgY2hhbmdlZCwgMSBpbnNlcnRpb24oKyksIDEgZGVs
-ZXRpb24oLSkNCg0KZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0taW9jdGwuYyBiL2RyaXZlcnMv
-bWQvZG0taW9jdGwuYw0KaW5kZXggYWM4M2Y1MDAyY2U1Li40ZGMzNjU4ZTMzNTEgMTAwNjQ0DQot
-LS0gYS9kcml2ZXJzL21kL2RtLWlvY3RsLmMNCisrKyBiL2RyaXZlcnMvbWQvZG0taW9jdGwuYw0K
-QEAgLTExNjcsNyArMTE2Nyw3IEBAIHN0YXRpYyB2b2lkIHJldHJpZXZlX3N0YXR1cyhzdHJ1Y3Qg
-ZG1fdGFibGUgKnRhYmxlLA0KIAkJc3BlYy0+c3RhdHVzID0gMDsNCiAJCXNwZWMtPnNlY3Rvcl9z
-dGFydCA9IHRpLT5iZWdpbjsNCiAJCXNwZWMtPmxlbmd0aCA9IHRpLT5sZW47DQotCQlzdHJuY3B5
-KHNwZWMtPnRhcmdldF90eXBlLCB0aS0+dHlwZS0+bmFtZSwNCisJCXN0cnNjcHkoc3BlYy0+dGFy
-Z2V0X3R5cGUsIHRpLT50eXBlLT5uYW1lLA0KIAkJCXNpemVvZihzcGVjLT50YXJnZXRfdHlwZSkp
-Ow0KIA0KIAkJb3V0cHRyICs9IHNpemVvZihzdHJ1Y3QgZG1fdGFyZ2V0X3NwZWMpOw0KLS0gDQoy
-LjE4LjANCg==
+On Fri, May 15 2020 at  3:25am -0400,
+Hannes Reinecke <hare@suse.de> wrote:
+
+> Hi Mike,
+> 
+> This is cause by missing commit d01cd62400b3 ("uuid: Add inline
+> helpers to import / export UUIDs"), which went into 5.7.
+> Mind to update your tree?
+
+Rebased on v5.7-rc5, thanks
