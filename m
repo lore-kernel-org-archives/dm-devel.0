@@ -1,16 +1,14 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [dm:for-next 53/58]
- drivers/md/dm-zoned-metadata.c:779:3: error: implicit declaration of
- function 'export_uuid'
-Date: Fri, 15 May 2020 10:32:55 -0400
-Message-ID: <20200515143254.GA5098@redhat.com>
-References: <202005151432.U61i8wOc%lkp@intel.com>
-	<a1e65e5a-4b23-6c6e-d52f-7bf6eb69e7c8@suse.de>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 0/6] multipath: path validation library prep
+ work
+Date: Fri, 15 May 2020 11:17:06 -0500
+Message-ID: <20200515161706.GV5907@octiron.msp.redhat.com>
+References: <1589507962-6895-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <a1e65e5a-4b23-6c6e-d52f-7bf6eb69e7c8@suse.de>
+In-Reply-To: <1589507962-6895-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,17 +19,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
-To: Hannes Reinecke <hare@suse.de>
-Cc: Damien Le Moal <damien.lemoal@wdc.com>, dm-devel@redhat.com, kbuild-all@lists.01.org, kbuild test robot <lkp@intel.com>, Bob Liu <bob.liu@oracle.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-On Fri, May 15 2020 at  3:25am -0400,
-Hannes Reinecke <hare@suse.de> wrote:
-
-> Hi Mike,
+On Thu, May 14, 2020 at 08:59:16PM -0500, Benjamin Marzinski wrote:
+> I've been playing around with the SID code more and I've decided to hold
+> off on submitting the library until I have it working with the SID
+> multipath module better. Instead, I've pulled out the common code that
+> multipath -u/-c and the library can use, and put it into libmultipath.
 > 
-> This is cause by missing commit d01cd62400b3 ("uuid: Add inline
-> helpers to import / export UUIDs"), which went into 5.7.
-> Mind to update your tree?
+> I've also removed some of the ordering differences between the existing
+> code and my new code.  Right now, the only difference is that if a path
+> is currently multipathed, it will always be claimed as a valid path.
+> 
+> Patches 0001 & 0002 are the same as in my "RFC PATCH v2" set, and patch
+> 0005 is the same as my "libmultipath: simplify failed wwid code" patch.
+> 
+> Only patches 0003 and 0004 haven't been posted before.
+> 
 
-Rebased on v5.7-rc5, thanks
+Just a note on applying this. This patch set is meant to be applied on
+top of Martin's recent patchsets.
+
+-Ben
+
+> Benjamin Marzinski (5):
+>   libmultipath: make libmp_dm_init optional
+>   libmultipath: make sysfs_is_multipathed able to return wwid
+>   multipath: centralize validation code
+>   Unit tests for is_path_valid()
+>   libmultipath: simplify failed wwid code
+> 
+> Martin Wilck (1):
+>   libmultipath: use atomic linkat() in mark_failed_wwid()
+> 
+>  libmultipath/Makefile    |   2 +-
+>  libmultipath/devmapper.c |  66 +++++-
+>  libmultipath/devmapper.h |   4 +-
+>  libmultipath/structs.h   |  24 +--
+>  libmultipath/sysfs.c     |  24 ++-
+>  libmultipath/sysfs.h     |   2 +-
+>  libmultipath/valid.c     | 118 +++++++++++
+>  libmultipath/valid.h     |  32 +++
+>  libmultipath/wwids.c     | 165 ++++++++-------
+>  multipath/main.c         | 295 ++++++++++++---------------
+>  tests/Makefile           |   4 +-
+>  tests/valid.c            | 424 +++++++++++++++++++++++++++++++++++++++
+>  12 files changed, 875 insertions(+), 285 deletions(-)
+>  create mode 100644 libmultipath/valid.c
+>  create mode 100644 libmultipath/valid.h
+>  create mode 100644 tests/valid.c
+> 
+> -- 
+> 2.17.2
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
