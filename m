@@ -1,7 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 1/6] libmultipath: make libmp_dm_init optional
-Date: Thu, 14 May 2020 20:59:17 -0500
-Message-ID: <1589507962-6895-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 4/6] Unit tests for is_path_valid()
+Date: Thu, 14 May 2020 20:59:20 -0500
+Message-ID: <1589507962-6895-5-git-send-email-bmarzins@redhat.com>
 References: <1589507962-6895-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,86 +21,464 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-Move dm_initialized out of libmp_dm_task_create(), and add
-a function skip_libmp_dm_init() so that users of libmultipath can skip
-initializing device-mapper. This is needed for other programs that
-use libmultipath (or a library that depends on it) but want to control
-how device-mapper is set up.
-
-Also make dm_prereq a global function.
-
-Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/devmapper.c | 17 +++++++++++++----
- libmultipath/devmapper.h |  3 ++-
- 2 files changed, 15 insertions(+), 5 deletions(-)
+ tests/Makefile |   4 +-
+ tests/valid.c  | 424 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 427 insertions(+), 1 deletion(-)
+ create mode 100644 tests/valid.c
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 13a1cf53..7ed494a1 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -33,6 +33,8 @@
- #define MAX_WAIT 5
- #define LOOPS_PER_SEC 5
+diff --git a/tests/Makefile b/tests/Makefile
+index 1b8706a7..125553b8 100644
+--- a/tests/Makefile
++++ b/tests/Makefile
+@@ -13,7 +13,7 @@ CFLAGS += $(BIN_CFLAGS) -I$(multipathdir) -I$(mpathcmddir) \
+ LIBDEPS += -L$(multipathdir) -L$(mpathcmddir) -lmultipath -lmpathcmd -lcmocka
  
-+static pthread_once_t dm_initialized = PTHREAD_ONCE_INIT;
+ TESTS := uevent parser util dmevents hwtable blacklist unaligned vpd pgpolicy \
+-	 alias directio
++	 alias directio valid
+ 
+ .SILENT: $(TESTS:%=%.o)
+ .PRECIOUS: $(TESTS:%=%-test)
+@@ -50,6 +50,8 @@ vpd-test_OBJDEPS :=  ../libmultipath/discovery.o
+ vpd-test_LIBDEPS := -ludev -lpthread -ldl
+ alias-test_TESTDEPS := test-log.o
+ alias-test_LIBDEPS := -lpthread -ldl
++valid-test_OBJDEPS := ../libmultipath/valid.o
++valid-test_LIBDEPS := -ludev -lpthread -ldl
+ ifneq ($(DIO_TEST_DEV),)
+ directio-test_LIBDEPS := -laio
+ endif
+diff --git a/tests/valid.c b/tests/valid.c
+new file mode 100644
+index 00000000..b128b029
+--- /dev/null
++++ b/tests/valid.c
+@@ -0,0 +1,424 @@
++/*
++ * Copyright (c) 2020 Benjamin Marzinski, Redhat
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
++ *
++ */
 +
- static int dm_conf_verbosity;
- 
- #ifdef LIBDM_API_DEFERRED
-@@ -229,7 +231,7 @@ dm_tgt_prereq (unsigned int *ver)
- 	return 1;
- }
- 
--static int dm_prereq(unsigned int *v)
-+int dm_prereq(unsigned int *v)
- {
- 	if (dm_lib_prereq())
- 		return 1;
-@@ -243,7 +245,7 @@ void libmp_udev_set_sync_support(int on)
- 	libmp_dm_udev_sync = !!on;
- }
- 
--void libmp_dm_init(void)
-+static void libmp_dm_init(void)
- {
- 	struct config *conf;
- 	int verbosity;
-@@ -262,11 +264,18 @@ void libmp_dm_init(void)
- 	dm_udev_set_sync_support(libmp_dm_udev_sync);
- }
- 
-+static void _do_skip_libmp_dm_init(void)
++#define _GNU_SOURCE
++#include <stdint.h>
++#include <stdbool.h>
++#include <stdarg.h>
++#include <stddef.h>
++#include <setjmp.h>
++#include <stdlib.h>
++#include <errno.h>
++#include <cmocka.h>
++#include "globals.c"
++#include "util.h"
++#include "discovery.h"
++#include "wwids.h"
++#include "valid.h"
++
++int test_fd;
++struct udev_device {
++	int unused;
++} test_udev;
++
++bool __wrap_sysfs_is_multipathed(struct path *pp, bool set_wwid)
 +{
++	bool is_multipathed = mock_type(bool);
++	assert_non_null(pp);
++	assert_int_not_equal(strlen(pp->dev), 0);
++	if (is_multipathed && set_wwid)
++		strlcpy(pp->wwid, mock_ptr_type(char *), WWID_SIZE);
++	return is_multipathed;
 +}
 +
-+void skip_libmp_dm_init(void)
++int __wrap___mpath_connect(int nonblocking)
 +{
-+	pthread_once(&dm_initialized, _do_skip_libmp_dm_init);
++	bool connected = mock_type(bool);
++	assert_int_equal(nonblocking, 1);
++	if (connected)
++		return test_fd;
++	errno = mock_type(int);
++	return -1;
 +}
 +
- struct dm_task*
- libmp_dm_task_create(int task)
- {
--	static pthread_once_t dm_initialized = PTHREAD_ONCE_INIT;
--
- 	pthread_once(&dm_initialized, libmp_dm_init);
- 	return dm_task_create(task);
- }
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index 7557a86b..17fc9faf 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -28,7 +28,8 @@
- #define UUID_PREFIX_LEN (sizeof(UUID_PREFIX) - 1)
- 
- void dm_init(int verbosity);
--void libmp_dm_init(void);
-+int dm_prereq(unsigned int *v);
-+void skip_libmp_dm_init(void);
- void libmp_udev_set_sync_support(int on);
- struct dm_task *libmp_dm_task_create(int task);
- int dm_drv_version (unsigned int * version);
++int __wrap_systemd_service_enabled(const char *dev)
++{
++	return (int)mock_type(bool);
++}
++
++/* There's no point in checking the return value here */
++int __wrap_mpath_disconnect(int fd)
++{
++	assert_int_equal(fd, test_fd);
++	return 0;
++}
++
++struct udev_device *__wrap_udev_device_new_from_subsystem_sysname(struct udev *udev, const char *subsystem, const char *sysname)
++{
++	bool passed = mock_type(bool);
++	assert_string_equal(sysname, mock_ptr_type(char *));
++	if (passed)
++		return &test_udev;
++	return NULL;
++}
++
++int __wrap_pathinfo(struct path *pp, struct config *conf, int mask)
++{
++	int ret = mock_type(int);
++	assert_string_equal(pp->dev, mock_ptr_type(char *));
++	assert_int_equal(mask, DI_SYSFS | DI_WWID | DI_BLACKLIST);
++	if (ret == PATHINFO_OK)
++		strlcpy(pp->wwid, mock_ptr_type(char *), WWID_SIZE);
++	else
++		memset(pp->wwid, 0, WWID_SIZE);
++	return ret;
++}
++
++int __wrap_is_failed_wwid(const char *wwid)
++{
++	int ret = mock_type(int);
++	assert_string_equal(wwid, mock_ptr_type(char *));
++	return ret;
++}
++
++int __wrap_check_wwids_file(char *wwid, int write_wwid)
++{
++	bool passed = mock_type(bool);
++	assert_int_equal(write_wwid, 0);
++	assert_string_equal(wwid, mock_ptr_type(char *));
++	if (passed)
++		return 0;
++	else
++		return -1;
++}
++
++int __wrap_dm_map_present_by_uuid(const char *uuid)
++{
++	int ret = mock_type(int);
++	assert_string_equal(uuid, mock_ptr_type(char *));
++	return ret;
++}
++
++enum {
++	STAGE_IS_MULTIPATHED,
++	STAGE_CHECK_MULTIPATHD,
++	STAGE_GET_UDEV_DEVICE,
++	STAGE_PATHINFO,
++	STAGE_IS_FAILED,
++	STAGE_CHECK_WWIDS,
++	STAGE_UUID_PRESENT,
++};
++
++/* setup the test to continue past the given stage in is_path_valid() */
++static void setup_passing(char *name, char *wwid, bool check_multipathd,
++			  unsigned int stage)
++{
++	will_return(__wrap_sysfs_is_multipathed, false);
++	if (stage == STAGE_IS_MULTIPATHED)
++		return;
++	if (check_multipathd)
++		will_return(__wrap___mpath_connect, true);
++	if (stage == STAGE_CHECK_MULTIPATHD)
++		return;
++	will_return(__wrap_udev_device_new_from_subsystem_sysname, true);
++	will_return(__wrap_udev_device_new_from_subsystem_sysname,
++		    name);
++	if (stage == STAGE_GET_UDEV_DEVICE)
++		return;
++	will_return(__wrap_pathinfo, PATHINFO_OK);
++	will_return(__wrap_pathinfo, name);
++	will_return(__wrap_pathinfo, wwid);
++	if (stage == STAGE_PATHINFO)
++		return;
++	will_return(__wrap_is_failed_wwid, WWID_IS_NOT_FAILED);
++	will_return(__wrap_is_failed_wwid, wwid);
++	if (stage == STAGE_IS_FAILED)
++		return;
++	will_return(__wrap_check_wwids_file, false);
++	will_return(__wrap_check_wwids_file, wwid);
++	if (stage == STAGE_CHECK_WWIDS)
++		return;
++	will_return(__wrap_dm_map_present_by_uuid, 0);
++	will_return(__wrap_dm_map_present_by_uuid, wwid);
++}
++
++static void test_bad_arguments(void **state)
++{
++	struct path pp;
++	char too_long[FILE_NAME_SIZE + 1];
++
++	memset(&pp, 0, sizeof(pp));
++	/* test NULL pointers */
++	assert_int_equal(is_path_valid("test", &conf, NULL, true),
++			 PATH_IS_ERROR);
++	assert_int_equal(is_path_valid("test", NULL, &pp, true),
++			 PATH_IS_ERROR);
++	assert_int_equal(is_path_valid(NULL, &conf, &pp, true),
++			 PATH_IS_ERROR);
++	/* test undefined find_mutlipaths */
++	conf.find_multipaths = FIND_MULTIPATHS_UNDEF;
++	assert_int_equal(is_path_valid("test", &conf, &pp, true),
++			 PATH_IS_ERROR);
++	/* test name too long */
++	memset(too_long, 'x', sizeof(too_long));
++	too_long[sizeof(too_long) - 1] = '\0';
++	conf.find_multipaths = FIND_MULTIPATHS_STRICT;
++	assert_int_equal(is_path_valid(too_long, &conf, &pp, true),
++			 PATH_IS_ERROR);
++}
++
++static void test_sysfs_is_multipathed(void **state)
++{
++	struct path pp;
++	char *name = "test";
++	char *wwid = "test_wwid";
++
++	memset(&pp, 0, sizeof(pp));
++	conf.find_multipaths = FIND_MULTIPATHS_STRICT;
++	/* test for already existing multiapthed device */
++	will_return(__wrap_sysfs_is_multipathed, true);
++	will_return(__wrap_sysfs_is_multipathed, wwid);
++	assert_int_equal(is_path_valid(name, &conf, &pp, true),
++			 PATH_IS_VALID_NO_CHECK);
++	assert_string_equal(pp.dev, name);
++	assert_string_equal(pp.wwid, wwid);
++	/* test for wwid device with empty wwid */
++	will_return(__wrap_sysfs_is_multipathed, true);
++	will_return(__wrap_sysfs_is_multipathed, "");
++	assert_int_equal(is_path_valid(name, &conf, &pp, true),
++			 PATH_IS_ERROR);
++}
++
++static void test_check_multipathd(void **state)
++{
++	struct path pp;
++	char *name = "test";
++
++	memset(&pp, 0, sizeof(pp));
++	conf.find_multipaths = FIND_MULTIPATHS_STRICT;
++	/* test failed check to see if multipathd is active */
++	will_return(__wrap_sysfs_is_multipathed, false);
++	will_return(__wrap___mpath_connect, false);
++	will_return(__wrap___mpath_connect, ECONNREFUSED);
++	will_return(__wrap_systemd_service_enabled, false);
++	assert_int_equal(is_path_valid(name, &conf, &pp, true),
++			 PATH_IS_NOT_VALID);
++	assert_string_equal(pp.dev, name);
++	/* test pass because service is enabled. fail getting udev */
++	memset(&pp, 0, sizeof(pp));
++	will_return(__wrap_sysfs_is_multipathed, false);
++	will_return(__wrap___mpath_connect, false);
++	will_return(__wrap___mpath_connect, ECONNREFUSED);
++	will_return(__wrap_systemd_service_enabled, true);
++	will_return(__wrap_udev_device_new_from_subsystem_sysname, false);
++	will_return(__wrap_udev_device_new_from_subsystem_sysname,
++		    name);
++	assert_int_equal(is_path_valid(name, &conf, &pp, true),
++			 PATH_IS_ERROR);
++	assert_string_equal(pp.dev, name);
++	/* test pass because connect returned EAGAIN. fail getting udev */
++	will_return(__wrap_sysfs_is_multipathed, false);
++	will_return(__wrap___mpath_connect, false);
++	will_return(__wrap___mpath_connect, EAGAIN);
++	will_return(__wrap_udev_device_new_from_subsystem_sysname, false);
++	will_return(__wrap_udev_device_new_from_subsystem_sysname,
++		    name);
++	assert_int_equal(is_path_valid(name, &conf, &pp, true),
++			 PATH_IS_ERROR);
++	/* test pass because connect succeeded. fail getting udev */
++	memset(&pp, 0, sizeof(pp));
++	will_return(__wrap_sysfs_is_multipathed, false);
++	will_return(__wrap___mpath_connect, true);
++	will_return(__wrap_udev_device_new_from_subsystem_sysname, false);
++	will_return(__wrap_udev_device_new_from_subsystem_sysname,
++		    name);
++	assert_int_equal(is_path_valid(name, &conf, &pp, true),
++			 PATH_IS_ERROR);
++	assert_string_equal(pp.dev, name);
++}
++
++static void test_pathinfo(void **state)
++{
++	struct path pp;
++	char *name = "test";
++
++	memset(&pp, 0, sizeof(pp));
++	conf.find_multipaths = FIND_MULTIPATHS_STRICT;
++	/* Test pathinfo blacklisting device */
++	setup_passing(name, NULL, false, STAGE_GET_UDEV_DEVICE);
++	will_return(__wrap_pathinfo, PATHINFO_SKIPPED);
++	will_return(__wrap_pathinfo, name);
++	assert_int_equal(is_path_valid(name, &conf, &pp, false),
++			 PATH_IS_NOT_VALID);
++	assert_string_equal(pp.dev, name);
++	assert_ptr_equal(pp.udev, &test_udev);
++	/* Test pathinfo failing */
++	memset(&pp, 0, sizeof(pp));
++	setup_passing(name, NULL, false, STAGE_GET_UDEV_DEVICE);
++	will_return(__wrap_pathinfo, PATHINFO_FAILED);
++	will_return(__wrap_pathinfo, name);
++	assert_int_equal(is_path_valid(name, &conf, &pp, false),
++			 PATH_IS_ERROR);
++	/* Test blank wwid */
++	memset(&pp, 0, sizeof(pp));
++	setup_passing(name, NULL, false, STAGE_GET_UDEV_DEVICE);
++	will_return(__wrap_pathinfo, PATHINFO_OK);
++	will_return(__wrap_pathinfo, name);
++	will_return(__wrap_pathinfo, "");
++	assert_int_equal(is_path_valid(name, &conf, &pp, false),
++			 PATH_IS_NOT_VALID);
++}
++
++static void test_is_failed_wwid(void **state)
++{
++	struct path pp;
++	char *name = "test";
++	char *wwid = "test-wwid";
++
++	memset(&pp, 0, sizeof(pp));
++	conf.find_multipaths = FIND_MULTIPATHS_STRICT;
++	/* Test wwid failed */
++	setup_passing(name, wwid, false, STAGE_PATHINFO);
++	will_return(__wrap_is_failed_wwid, WWID_IS_FAILED);
++	will_return(__wrap_is_failed_wwid, wwid);
++	assert_int_equal(is_path_valid(name, &conf, &pp, false),
++			 PATH_IS_NOT_VALID);
++	assert_string_equal(pp.dev, name);
++	assert_ptr_equal(pp.udev, &test_udev);
++	assert_string_equal(pp.wwid, wwid);
++	/* test is_failed_wwid error */
++	setup_passing(name, wwid, false, STAGE_PATHINFO);
++	will_return(__wrap_is_failed_wwid, WWID_FAILED_ERROR);
++	will_return(__wrap_is_failed_wwid, wwid);
++	assert_int_equal(is_path_valid(name, &conf, &pp, false),
++			 PATH_IS_ERROR);
++}
++
++static void test_greedy(void **state)
++{
++	struct path pp;
++	char *name = "test";
++	char *wwid = "test-wwid";
++
++	memset(&pp, 0, sizeof(pp));
++	conf.find_multipaths = FIND_MULTIPATHS_GREEDY;
++	setup_passing(name, wwid, false, STAGE_IS_FAILED);
++	assert_int_equal(is_path_valid(name, &conf, &pp, false),
++			 PATH_IS_VALID);
++	assert_string_equal(pp.dev, name);
++	assert_ptr_equal(pp.udev, &test_udev);
++	assert_string_equal(pp.wwid, wwid);
++}
++
++static void test_check_wwids(void **state)
++{
++	struct path pp;
++	char *name = "test";
++	char *wwid = "test-wwid";
++
++	memset(&pp, 0, sizeof(pp));
++	conf.find_multipaths = FIND_MULTIPATHS_STRICT;
++	setup_passing(name, wwid, false, STAGE_IS_FAILED);
++	will_return(__wrap_check_wwids_file, true);
++	will_return(__wrap_check_wwids_file, wwid);
++	assert_int_equal(is_path_valid(name, &conf, &pp, false),
++			 PATH_IS_VALID_NO_CHECK);
++	assert_string_equal(pp.dev, name);
++	assert_ptr_equal(pp.udev, &test_udev);
++	assert_string_equal(pp.wwid, wwid);
++}
++
++static void test_check_uuid_present(void **state)
++{
++	struct path pp;
++	char *name = "test";
++	char *wwid = "test-wwid";
++
++	memset(&pp, 0, sizeof(pp));
++	conf.find_multipaths = FIND_MULTIPATHS_STRICT;
++	setup_passing(name, wwid, false, STAGE_CHECK_WWIDS);
++	will_return(__wrap_dm_map_present_by_uuid, 1);
++	will_return(__wrap_dm_map_present_by_uuid, wwid);
++	assert_int_equal(is_path_valid(name, &conf, &pp, false),
++			 PATH_IS_VALID);
++	assert_string_equal(pp.dev, name);
++	assert_ptr_equal(pp.udev, &test_udev);
++	assert_string_equal(pp.wwid, wwid);
++}
++
++
++static void test_find_multipaths(void **state)
++{
++	struct path pp;
++	char *name = "test";
++	char *wwid = "test-wwid";
++
++	/* test find_multipaths = FIND_MULTIPATHS_STRICT */
++	memset(&pp, 0, sizeof(pp));
++	conf.find_multipaths = FIND_MULTIPATHS_STRICT;
++	setup_passing(name, wwid, false, STAGE_UUID_PRESENT);
++	assert_int_equal(is_path_valid(name, &conf, &pp, false),
++			 PATH_IS_NOT_VALID);
++	assert_string_equal(pp.dev, name);
++	assert_ptr_equal(pp.udev, &test_udev);
++	assert_string_equal(pp.wwid, wwid);
++	/* test find_multipaths = FIND_MULTIPATHS_OFF */
++	memset(&pp, 0, sizeof(pp));
++	conf.find_multipaths = FIND_MULTIPATHS_OFF;
++	setup_passing(name, wwid, false, STAGE_UUID_PRESENT);
++	assert_int_equal(is_path_valid(name, &conf, &pp, false),
++			 PATH_IS_NOT_VALID);
++	/* test find_multipaths = FIND_MULTIPATHS_ON */
++	memset(&pp, 0, sizeof(pp));
++	conf.find_multipaths = FIND_MULTIPATHS_ON;
++	setup_passing(name, wwid, false, STAGE_UUID_PRESENT);
++	assert_int_equal(is_path_valid(name, &conf, &pp, false),
++			 PATH_IS_NOT_VALID);
++	/* test find_multipaths = FIND_MULTIPATHS_SMART */
++	memset(&pp, 0, sizeof(pp));
++	conf.find_multipaths = FIND_MULTIPATHS_SMART;
++	setup_passing(name, wwid, false, STAGE_UUID_PRESENT);
++	assert_int_equal(is_path_valid(name, &conf, &pp, false),
++			 PATH_IS_MAYBE_VALID);
++	assert_string_equal(pp.dev, name);
++	assert_ptr_equal(pp.udev, &test_udev);
++	assert_string_equal(pp.wwid, wwid);
++}
++
++int test_valid(void)
++{
++	const struct CMUnitTest tests[] = {
++		cmocka_unit_test(test_bad_arguments),
++		cmocka_unit_test(test_sysfs_is_multipathed),
++		cmocka_unit_test(test_check_multipathd),
++		cmocka_unit_test(test_pathinfo),
++		cmocka_unit_test(test_is_failed_wwid),
++		cmocka_unit_test(test_greedy),
++		cmocka_unit_test(test_check_wwids),
++		cmocka_unit_test(test_check_uuid_present),
++		cmocka_unit_test(test_find_multipaths),
++	};
++	return cmocka_run_group_tests(tests, NULL, NULL);
++}
++
++int main(void)
++{
++	int ret = 0;
++	ret += test_valid();
++	return ret;
++}
 -- 
 2.17.2
