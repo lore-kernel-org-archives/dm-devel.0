@@ -1,14 +1,15 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 0/6] multipath: path validation library prep
- work
-Date: Fri, 15 May 2020 11:17:06 -0500
-Message-ID: <20200515161706.GV5907@octiron.msp.redhat.com>
+From: Martin Wilck <martin.wilck@suse.com>
+Subject: Re: [PATCH 2/6] libmultipath: make sysfs_is_multipathed
+ able to return wwid
+Date: Fri, 15 May 2020 22:36:57 +0200
+Message-ID: <126a59ed3668d8992ea8a2565de212c13edfcde2.camel@suse.com>
 References: <1589507962-6895-1-git-send-email-bmarzins@redhat.com>
+	<1589507962-6895-3-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1589507962-6895-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1589507962-6895-3-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,63 +19,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, May 14, 2020 at 08:59:16PM -0500, Benjamin Marzinski wrote:
-> I've been playing around with the SID code more and I've decided to hold
-> off on submitting the library until I have it working with the SID
-> multipath module better. Instead, I've pulled out the common code that
-> multipath -u/-c and the library can use, and put it into libmultipath.
-> 
-> I've also removed some of the ordering differences between the existing
-> code and my new code.  Right now, the only difference is that if a path
-> is currently multipathed, it will always be claimed as a valid path.
-> 
-> Patches 0001 & 0002 are the same as in my "RFC PATCH v2" set, and patch
-> 0005 is the same as my "libmultipath: simplify failed wwid code" patch.
-> 
-> Only patches 0003 and 0004 haven't been posted before.
-> 
+On Thu, 2020-05-14 at 20:59 -0500, Benjamin Marzinski wrote:
+> sysfs_is_multipathed reads the wwid of the dm device holding a path
+> to
+> check if its a multipath device.  Add code to optinally set pp->wwid
+> to
+> that wwid.  This will be used by a future patch.
+>=20
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Just a note on applying this. This patch set is meant to be applied on
-top of Martin's recent patchsets.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
--Ben
-
-> Benjamin Marzinski (5):
->   libmultipath: make libmp_dm_init optional
->   libmultipath: make sysfs_is_multipathed able to return wwid
->   multipath: centralize validation code
->   Unit tests for is_path_valid()
->   libmultipath: simplify failed wwid code
-> 
-> Martin Wilck (1):
->   libmultipath: use atomic linkat() in mark_failed_wwid()
-> 
->  libmultipath/Makefile    |   2 +-
->  libmultipath/devmapper.c |  66 +++++-
->  libmultipath/devmapper.h |   4 +-
->  libmultipath/structs.h   |  24 +--
->  libmultipath/sysfs.c     |  24 ++-
->  libmultipath/sysfs.h     |   2 +-
->  libmultipath/valid.c     | 118 +++++++++++
->  libmultipath/valid.h     |  32 +++
->  libmultipath/wwids.c     | 165 ++++++++-------
->  multipath/main.c         | 295 ++++++++++++---------------
->  tests/Makefile           |   4 +-
->  tests/valid.c            | 424 +++++++++++++++++++++++++++++++++++++++
->  12 files changed, 875 insertions(+), 285 deletions(-)
->  create mode 100644 libmultipath/valid.c
->  create mode 100644 libmultipath/valid.h
->  create mode 100644 tests/valid.c
-> 
-> -- 
-> 2.17.2
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+--=20
+Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+SUSE  Software Solutions Germany GmbH
+HRB 36809, AG N=FCrnberg GF: Felix
+Imend=F6rffer
