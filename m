@@ -1,8 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
 Subject: Re: [PATCH v2 06/10] mm/swap: use npage_to_sectors() and
  PAGE_SECTORS to clean up code
-Date: Thu, 14 May 2020 21:06:47 -0700
-Message-ID: <20200515040647.GC16070@bombadil.infradead.org>
+Date: Thu, 14 May 2020 21:14:56 -0700
+Message-ID: <20200515041456.GD16070@bombadil.infradead.org>
 References: <20200507075100.1779-1-thunder.leizhen@huawei.com>
  <20200507075100.1779-7-thunder.leizhen@huawei.com>
 Mime-Version: 1.0
@@ -16,17 +16,14 @@ Cc: Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, Sergey Se
 List-Id: dm-devel.ids
 
 On Thu, May 07, 2020 at 03:50:56PM +0800, Zhen Lei wrote:
-> @@ -266,7 +266,7 @@ int swap_writepage(struct page *page, struct writeback_control *wbc)
+> +++ b/mm/page_io.c
+> @@ -38,7 +38,7 @@ static struct bio *get_swap_bio(gfp_t gfp_flags,
 >  
->  static sector_t swap_page_sector(struct page *page)
->  {
-> -	return (sector_t)__page_file_index(page) << (PAGE_SHIFT - 9);
-> +	return npage_to_sectors((sector_t)__page_file_index(page));
+>  		bio->bi_iter.bi_sector = map_swap_page(page, &bdev);
+>  		bio_set_dev(bio, bdev);
+> -		bio->bi_iter.bi_sector <<= PAGE_SHIFT - 9;
+> +		bio->bi_iter.bi_sector *= PAGE_SECTORS;
+>  		bio->bi_end_io = end_io;
 
-If you make npage_to_sectors() a proper function instead of a macro,
-you can do the casting inside the function instead of in the callers
-(which is prone to bugs).
-
-Also, this is a great example of why page_to_sector() was a better name
-than npage_to_sectors().  This function doesn't return a count of sectors,
-it returns a sector number within the swap device.
+This just doesn't look right.  Why is map_swap_page() returning a sector_t
+which isn't actually a sector_t?
