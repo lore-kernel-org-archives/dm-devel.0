@@ -1,11 +1,13 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 0/6] multipath: path validation library prep work
-Date: Thu, 14 May 2020 20:59:16 -0500
-Message-ID: <1589507962-6895-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 1/6] libmultipath: make libmp_dm_init optional
+Date: Thu, 14 May 2020 20:59:17 -0500
+Message-ID: <1589507962-6895-2-git-send-email-bmarzins@redhat.com>
+References: <1589507962-6895-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1589507962-6895-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,46 +21,86 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-I've been playing around with the SID code more and I've decided to hold
-off on submitting the library until I have it working with the SID
-multipath module better. Instead, I've pulled out the common code that
-multipath -u/-c and the library can use, and put it into libmultipath.
+Move dm_initialized out of libmp_dm_task_create(), and add
+a function skip_libmp_dm_init() so that users of libmultipath can skip
+initializing device-mapper. This is needed for other programs that
+use libmultipath (or a library that depends on it) but want to control
+how device-mapper is set up.
 
-I've also removed some of the ordering differences between the existing
-code and my new code.  Right now, the only difference is that if a path
-is currently multipathed, it will always be claimed as a valid path.
+Also make dm_prereq a global function.
 
-Patches 0001 & 0002 are the same as in my "RFC PATCH v2" set, and patch
-0005 is the same as my "libmultipath: simplify failed wwid code" patch.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/devmapper.c | 17 +++++++++++++----
+ libmultipath/devmapper.h |  3 ++-
+ 2 files changed, 15 insertions(+), 5 deletions(-)
 
-Only patches 0003 and 0004 haven't been posted before.
-
-Benjamin Marzinski (5):
-  libmultipath: make libmp_dm_init optional
-  libmultipath: make sysfs_is_multipathed able to return wwid
-  multipath: centralize validation code
-  Unit tests for is_path_valid()
-  libmultipath: simplify failed wwid code
-
-Martin Wilck (1):
-  libmultipath: use atomic linkat() in mark_failed_wwid()
-
- libmultipath/Makefile    |   2 +-
- libmultipath/devmapper.c |  66 +++++-
- libmultipath/devmapper.h |   4 +-
- libmultipath/structs.h   |  24 +--
- libmultipath/sysfs.c     |  24 ++-
- libmultipath/sysfs.h     |   2 +-
- libmultipath/valid.c     | 118 +++++++++++
- libmultipath/valid.h     |  32 +++
- libmultipath/wwids.c     | 165 ++++++++-------
- multipath/main.c         | 295 ++++++++++++---------------
- tests/Makefile           |   4 +-
- tests/valid.c            | 424 +++++++++++++++++++++++++++++++++++++++
- 12 files changed, 875 insertions(+), 285 deletions(-)
- create mode 100644 libmultipath/valid.c
- create mode 100644 libmultipath/valid.h
- create mode 100644 tests/valid.c
-
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 13a1cf53..7ed494a1 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -33,6 +33,8 @@
+ #define MAX_WAIT 5
+ #define LOOPS_PER_SEC 5
+ 
++static pthread_once_t dm_initialized = PTHREAD_ONCE_INIT;
++
+ static int dm_conf_verbosity;
+ 
+ #ifdef LIBDM_API_DEFERRED
+@@ -229,7 +231,7 @@ dm_tgt_prereq (unsigned int *ver)
+ 	return 1;
+ }
+ 
+-static int dm_prereq(unsigned int *v)
++int dm_prereq(unsigned int *v)
+ {
+ 	if (dm_lib_prereq())
+ 		return 1;
+@@ -243,7 +245,7 @@ void libmp_udev_set_sync_support(int on)
+ 	libmp_dm_udev_sync = !!on;
+ }
+ 
+-void libmp_dm_init(void)
++static void libmp_dm_init(void)
+ {
+ 	struct config *conf;
+ 	int verbosity;
+@@ -262,11 +264,18 @@ void libmp_dm_init(void)
+ 	dm_udev_set_sync_support(libmp_dm_udev_sync);
+ }
+ 
++static void _do_skip_libmp_dm_init(void)
++{
++}
++
++void skip_libmp_dm_init(void)
++{
++	pthread_once(&dm_initialized, _do_skip_libmp_dm_init);
++}
++
+ struct dm_task*
+ libmp_dm_task_create(int task)
+ {
+-	static pthread_once_t dm_initialized = PTHREAD_ONCE_INIT;
+-
+ 	pthread_once(&dm_initialized, libmp_dm_init);
+ 	return dm_task_create(task);
+ }
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index 7557a86b..17fc9faf 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -28,7 +28,8 @@
+ #define UUID_PREFIX_LEN (sizeof(UUID_PREFIX) - 1)
+ 
+ void dm_init(int verbosity);
+-void libmp_dm_init(void);
++int dm_prereq(unsigned int *v);
++void skip_libmp_dm_init(void);
+ void libmp_udev_set_sync_support(int on);
+ struct dm_task *libmp_dm_task_create(int task);
+ int dm_drv_version (unsigned int * version);
 -- 
 2.17.2
