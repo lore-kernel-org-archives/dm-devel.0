@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 6/6] libmultipath: use atomic linkat() in
-	mark_failed_wwid()
-Date: Thu, 14 May 2020 20:59:22 -0500
-Message-ID: <1589507962-6895-7-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 2/6] libmultipath: make sysfs_is_multipathed able
+	to return wwid
+Date: Thu, 14 May 2020 20:59:18 -0500
+Message-ID: <1589507962-6895-3-git-send-email-bmarzins@redhat.com>
 References: <1589507962-6895-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,98 +19,107 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>, Martin Wilck <Martin.Wilck@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-From: Martin Wilck <mwilck@suse.com>
+sysfs_is_multipathed reads the wwid of the dm device holding a path to
+check if its a multipath device.  Add code to optinally set pp->wwid to
+that wwid.  This will be used by a future patch.
 
-This keeps (almost) the simplicity of the previous patch, while
-making sure that the return value of mark_failed_wwid()
-(WWID_FAILED_CHANGED vs. WWID_FAILED_UNCHANGED) is correct, even
-if several processes access this WWID at the same time.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/wwids.c | 42 +++++++++++++++++++++++++++++-------------
- 1 file changed, 29 insertions(+), 13 deletions(-)
+ libmultipath/sysfs.c | 24 +++++++++++++++++++-----
+ libmultipath/sysfs.h |  2 +-
+ multipath/main.c     |  7 ++++---
+ 3 files changed, 24 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-index aab5da8a..61d9c39e 100644
---- a/libmultipath/wwids.c
-+++ b/libmultipath/wwids.c
-@@ -374,7 +374,7 @@ int is_failed_wwid(const char *wwid)
- 
- 	if (safe_sprintf(path, "%s/%s", shm_dir, wwid)) {
- 		condlog(1, "%s: path name overflow", __func__);
--		return -1;
-+		return WWID_FAILED_ERROR;
- 	}
- 
- 	if (lstat(path, &st) == 0)
-@@ -390,27 +390,43 @@ int is_failed_wwid(const char *wwid)
- 
- int mark_failed_wwid(const char *wwid)
- {
--	char path[PATH_MAX];
--	int r, fd;
-+	char tmpfile[WWID_SIZE + 2 * sizeof(long) + 1];
-+	int r = WWID_FAILED_ERROR, fd, dfd;
- 
--	if (safe_sprintf(path, "%s/%s", shm_dir, wwid)) {
--		condlog(1, "%s: path name overflow", __func__);
--		return -1;
-+	dfd = open(shm_dir, O_RDONLY|O_DIRECTORY);
-+	if (dfd == -1 && errno == ENOENT) {
-+		char path[sizeof(shm_dir) + 2];
-+
-+		/* arg for ensure_directories_exist() must not end with "/" */
-+		safe_sprintf(path, "%s/_", shm_dir);
-+		ensure_directories_exist(path, 0700);
-+		dfd = open(shm_dir, O_RDONLY|O_DIRECTORY);
- 	}
--	if (ensure_directories_exist(path, 0700) < 0) {
--		condlog(1, "%s: can't setup directories", __func__);
--		return -1;
-+	if (dfd == -1) {
-+		condlog(1, "%s: can't setup %s: %m", __func__, shm_dir);
-+		return WWID_FAILED_ERROR;
- 	}
- 
--	fd = open(path, O_RDONLY | O_CREAT | O_EXCL, S_IRUSR);
--	if (fd >= 0) {
-+	safe_sprintf(tmpfile, "%s.%lx", wwid, (long)getpid());
-+	fd = openat(dfd, tmpfile, O_RDONLY | O_CREAT | O_EXCL, S_IRUSR);
-+	if (fd >= 0)
- 		close(fd);
-+	else
-+		goto out_closedir;
-+
-+	if (linkat(dfd, tmpfile, dfd, wwid, 0) == 0)
- 		r = WWID_FAILED_CHANGED;
--	} else if (errno == EEXIST)
-+	else if (errno == EEXIST)
- 		r = WWID_FAILED_UNCHANGED;
- 	else
- 		r = WWID_FAILED_ERROR;
- 
-+	if (unlinkat(dfd, tmpfile, 0) == -1)
-+		condlog(2, "%s: failed to unlink %s/%s: %m",
-+			__func__, shm_dir, tmpfile);
-+
-+out_closedir:
-+	close(dfd);
- 	print_failed_wwid_result("mark_failed", wwid, r);
- 	return r;
+diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+index 62ec2ed7..12a82d95 100644
+--- a/libmultipath/sysfs.c
++++ b/libmultipath/sysfs.c
+@@ -295,7 +295,7 @@ static int select_dm_devs(const struct dirent *di)
+ 	return fnmatch("dm-*", di->d_name, FNM_FILE_NAME) == 0;
  }
-@@ -422,7 +438,7 @@ int unmark_failed_wwid(const char *wwid)
  
- 	if (safe_sprintf(path, "%s/%s", shm_dir, wwid)) {
- 		condlog(1, "%s: path name overflow", __func__);
--		return -1;
-+		return WWID_FAILED_ERROR;
+-bool sysfs_is_multipathed(const struct path *pp)
++bool sysfs_is_multipathed(struct path *pp, bool set_wwid)
+ {
+ 	char pathbuf[PATH_MAX];
+ 	struct scandir_result sr;
+@@ -325,7 +325,7 @@ bool sysfs_is_multipathed(const struct path *pp)
+ 	for (i = 0; i < r && !found; i++) {
+ 		long fd;
+ 		int nr;
+-		char uuid[6];
++		char uuid[WWID_SIZE + UUID_PREFIX_LEN];
+ 
+ 		if (safe_snprintf(pathbuf + n, sizeof(pathbuf) - n,
+ 				  "/%s/dm/uuid", di[i]->d_name))
+@@ -339,12 +339,26 @@ bool sysfs_is_multipathed(const struct path *pp)
+ 
+ 		pthread_cleanup_push(close_fd, (void *)fd);
+ 		nr = read(fd, uuid, sizeof(uuid));
+-		if (nr == sizeof(uuid) && !memcmp(uuid, "mpath-", sizeof(uuid)))
++		if (nr > (int)UUID_PREFIX_LEN &&
++		    !memcmp(uuid, UUID_PREFIX, UUID_PREFIX_LEN))
+ 			found = true;
+ 		else if (nr < 0) {
+-			condlog(1, "%s: error reading from %s: %s",
+-				__func__, pathbuf, strerror(errno));
++			condlog(1, "%s: error reading from %s: %m",
++				__func__, pathbuf);
+ 		}
++		if (found && set_wwid) {
++			nr -= UUID_PREFIX_LEN;
++			memcpy(pp->wwid, uuid + UUID_PREFIX_LEN, nr);
++			if (nr == WWID_SIZE) {
++				condlog(4, "%s: overflow while reading from %s",
++					__func__, pathbuf);
++				pp->wwid[0] = '\0';
++			} else {
++				pp->wwid[nr] = '\0';
++				strchop(pp->wwid);
++			}
++                }
++
+ 		pthread_cleanup_pop(1);
  	}
- 
- 	if (unlink(path) == 0)
+ 	pthread_cleanup_pop(1);
+diff --git a/libmultipath/sysfs.h b/libmultipath/sysfs.h
+index 9ae30b39..72b39ab2 100644
+--- a/libmultipath/sysfs.h
++++ b/libmultipath/sysfs.h
+@@ -14,5 +14,5 @@ ssize_t sysfs_bin_attr_get_value(struct udev_device *dev, const char *attr_name,
+ 				 unsigned char * value, size_t value_len);
+ int sysfs_get_size (struct path *pp, unsigned long long * size);
+ int sysfs_check_holders(char * check_devt, char * new_devt);
+-bool sysfs_is_multipathed(const struct path *pp);
++bool sysfs_is_multipathed(struct path *pp, bool set_wwid);
+ #endif
+diff --git a/multipath/main.c b/multipath/main.c
+index cf9d2a28..545ead87 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -638,7 +638,8 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 			 * Shortcut for find_multipaths smart:
+ 			 * Quick check if path is already multipathed.
+ 			 */
+-			if (sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0))) {
++			if (sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0),
++						 false)) {
+ 				r = RTVL_YES;
+ 				goto print_valid;
+ 			}
+@@ -747,8 +748,8 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 			/*
+ 			 * Check if we raced with multipathd
+ 			 */
+-			r = sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0)) ?
+-				RTVL_YES : RTVL_NO;
++			r = sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0),
++						 false) ? RTVL_YES : RTVL_NO;
+ 		}
+ 		goto print_valid;
+ 	}
 -- 
 2.17.2
