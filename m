@@ -1,109 +1,62 @@
-From: Marius Bakke <marius@devup.no>
-Subject: [PATCH] multipath-tools: Fix compiler warnings when
-	built without systemd.
-Date: Sat, 16 May 2020 19:55:08 +0200
-Message-ID: <20200516175508.12412-1-marius@devup.no>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: next-20200514 - build issue in drivers/md/dm-zoned-target.c
+Date: Mon, 18 May 2020 12:44:49 -0400
+Message-ID: <20200518164449.GA24518@redhat.com>
+References: <367320.1589627953@turing-police>
+ <7bb0d1c8-b164-d5f3-0218-5c71047c3a8c@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <7bb0d1c8-b164-d5f3-0218-5c71047c3a8c@suse.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Hannes Reinecke <hare@suse.de>
+Cc: Valdis =?utf-8?Q?Kl=C4=93tnieks?= <valdis.kletnieks@vt.edu>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
----
- libmultipath/config.c |  2 +-
- multipathd/main.c     | 19 +++++++++++++------
- 2 files changed, 14 insertions(+), 7 deletions(-)
+On Mon, May 18 2020 at  2:25am -0400,
+Hannes Reinecke <hare@suse.de> wrote:
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index b4d87689..a28dc4f2 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -696,7 +696,7 @@ process_config_dir(struct config *conf, char *dir)
- 	pthread_cleanup_pop(1);
- }
- 
--static void set_max_checkint_from_watchdog(struct config *conf)
-+static void set_max_checkint_from_watchdog(__attribute__((unused)) struct config *conf)
- {
- #ifdef USE_SYSTEMD
- 	char *envp = getenv("WATCHDOG_USEC");
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 8baf9abe..8d3eace6 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -176,6 +176,7 @@ daemon_status(void)
- /*
-  * I love you too, systemd ...
-  */
-+#ifdef USE_SYSTEMD
- static const char *
- sd_notify_status(enum daemon_status state)
- {
-@@ -195,7 +196,6 @@ sd_notify_status(enum daemon_status state)
- 	return NULL;
- }
- 
--#ifdef USE_SYSTEMD
- static void do_sd_notify(enum daemon_status old_state,
- 			 enum daemon_status new_state)
- {
-@@ -247,7 +247,9 @@ enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
- static void __post_config_state(enum daemon_status state)
- {
- 	if (state != running_state && running_state != DAEMON_SHUTDOWN) {
--		enum daemon_status old_state = running_state;
-+		/* save state for sd_notify */
-+		enum daemon_status
-+			__attribute__((unused)) old_state = running_state;
- 
- 		running_state = state;
- 		pthread_cond_broadcast(&config_cond);
-@@ -272,7 +274,9 @@ int set_config_state(enum daemon_status state)
- 	pthread_cleanup_push(config_cleanup, NULL);
- 	pthread_mutex_lock(&config_lock);
- 	if (running_state != state) {
--		enum daemon_status old_state = running_state;
-+		/* save state for sd_notify */
-+		enum daemon_status
-+			__attribute__((unused)) old_state = running_state;
- 
- 		if (running_state == DAEMON_SHUTDOWN)
- 			rc = EINVAL;
-@@ -2280,7 +2284,6 @@ checkerloop (void *ap)
- 	struct timespec last_time;
- 	struct config *conf;
- 	int foreign_tick = 0;
--	bool use_watchdog;
- 
- 	pthread_cleanup_push(rcu_unregister, NULL);
- 	rcu_register_thread();
-@@ -2292,11 +2295,15 @@ checkerloop (void *ap)
- 	get_monotonic_time(&last_time);
- 	last_time.tv_sec -= 1;
- 
--	/* use_watchdog is set from process environment and never changes */
- 	conf = get_multipath_config();
--	use_watchdog = conf->use_watchdog;
- 	put_multipath_config(conf);
- 
-+#ifdef USE_SYSTEMD
-+	/* use_watchdog is set from process environment and never changes */
-+	bool use_watchdog;
-+	use_watchdog = conf->use_watchdog;
-+#endif
-+
- 	while (1) {
- 		struct timespec diff_time, start_time, end_time;
- 		int num_paths = 0, strict_timing, rc = 0;
--- 
-2.26.2
+> On 5/16/20 1:19 PM, Valdis Klētnieks wrote:
+> >Am seeing a build error in next-0514.  -0420 built OK.
+> >building a 'make allmodconfig' on a RPi4 in 32-bit mode.
+> >
+> >   MODPOST 7575 modules
+> >ERROR: modpost: "__aeabi_uldivmod" [drivers/md/dm-zoned.ko] undefined!
+> >
+> >objdump and 'make drivers/md/dm-zoned-target.s' tells
+> >me that the problem is in function dmz_fixup_devices(), near here:
+> >
+> >@ drivers/md/dm-zoned-target.c:806:             reg_dev->nr_zones = DIV_ROUND_UP(reg_dev->capacity,
+> >         ldr     r0, [r6, #56]   @ reg_dev_166->capacity, reg_dev_166->capacity
+> >         adds    r1, r3, r1      @ tmp316, _227, reg_dev_166->capacity
+> >         adc     r0, r2, r0      @ tmp315, _227, reg_dev_166->capacity
+> >         subs    r1, r1, #1      @, tmp316,
+> >@ drivers/md/dm-zoned-target.c:805:             reg_dev->zone_nr_sectors = zoned_dev->zone_nr_sectors;
+> >         strd    r2, [r6, #80]   @, reg_dev,
+> >@ drivers/md/dm-zoned-target.c:806:             reg_dev->nr_zones = DIV_ROUND_UP(reg_dev->capacity,
+> >         sbc     r0, r0, #0      @, tmp315,
+> >         bl      __aeabi_uldivmod                @
+> >@ drivers/md/dm-zoned-target.c:806:             reg_dev->nr_zones = DIV_ROUND_UP(reg_dev->capacity,
+> >         str     r1, [r6, #64]   @ tmp306, reg_dev_166->nr_zones
+> >
+> >git blame points at this commit:
+> >
+> >commit 70978208ec91d798066f4c291bc98ff914bea222
+> >Author: Hannes Reinecke <hare@suse.de>
+> >Date:   Mon May 11 10:24:30 2020 +0200
+> >
+> >     dm zoned: metadata version 2
+> >
+> >Reverting that commit lets the build complete.
+> >
+> >
+> I thought I've send a patch to fix that up; DIV_ROUND_UP() needs to
+> be changed to DIV_ROUND_UP_ULL().
+> I'll be checking and will be sending a patch if necessary.
+
+Unless I'm missing something it was fixed up with this commit last
+wednesday (13th):
+
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.8&id=81a3a1453ec4e5da081e1395732801a600feb352
