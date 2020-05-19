@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 6/6] libmultipath: use atomic linkat() in
-	mark_failed_wwid()
-Date: Mon, 18 May 2020 23:57:08 -0500
-Message-ID: <1589864228-1363-7-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 1/6] libmultipath: make libmp_dm_init optional
+Date: Mon, 18 May 2020 23:57:03 -0500
+Message-ID: <1589864228-1363-2-git-send-email-bmarzins@redhat.com>
 References: <1589864228-1363-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,98 +18,89 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>, Martin Wilck <Martin.Wilck@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-From: Martin Wilck <mwilck@suse.com>
+Move dm_initialized out of libmp_dm_task_create(), and add
+a function skip_libmp_dm_init() so that users of libmultipath can skip
+initializing device-mapper. This is needed for other programs that
+use libmultipath (or a library that depends on it) but want to control
+how device-mapper is set up.
 
-This keeps (almost) the simplicity of the previous patch, while
-making sure that the return value of mark_failed_wwid()
-(WWID_FAILED_CHANGED vs. WWID_FAILED_UNCHANGED) is correct, even
-if several processes access this WWID at the same time.
+Also make dm_prereq a global function.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/wwids.c | 42 +++++++++++++++++++++++++++++-------------
- 1 file changed, 29 insertions(+), 13 deletions(-)
+ libmultipath/devmapper.c | 17 +++++++++++++----
+ libmultipath/devmapper.h |  3 ++-
+ 2 files changed, 15 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-index da55924b..c7a16636 100644
---- a/libmultipath/wwids.c
-+++ b/libmultipath/wwids.c
-@@ -374,7 +374,7 @@ int is_failed_wwid(const char *wwid)
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 13a1cf53..7ed494a1 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -33,6 +33,8 @@
+ #define MAX_WAIT 5
+ #define LOOPS_PER_SEC 5
  
- 	if (safe_sprintf(path, "%s/%s", shm_dir, wwid)) {
- 		condlog(1, "%s: path name overflow", __func__);
--		return -1;
-+		return WWID_FAILED_ERROR;
- 	}
- 
- 	if (lstat(path, &st) == 0)
-@@ -390,27 +390,43 @@ int is_failed_wwid(const char *wwid)
- 
- int mark_failed_wwid(const char *wwid)
- {
--	char path[PATH_MAX];
--	int r, fd;
-+	char tmpfile[WWID_SIZE + 2 * sizeof(long) + 1];
-+	int r = WWID_FAILED_ERROR, fd, dfd;
- 
--	if (safe_sprintf(path, "%s/%s", shm_dir, wwid)) {
--		condlog(1, "%s: path name overflow", __func__);
--		return -1;
-+	dfd = open(shm_dir, O_RDONLY|O_DIRECTORY);
-+	if (dfd == -1 && errno == ENOENT) {
-+		char path[sizeof(shm_dir) + 2];
++static pthread_once_t dm_initialized = PTHREAD_ONCE_INIT;
 +
-+		/* arg for ensure_directories_exist() must not end with "/" */
-+		safe_sprintf(path, "%s/_", shm_dir);
-+		ensure_directories_exist(path, 0700);
-+		dfd = open(shm_dir, O_RDONLY|O_DIRECTORY);
- 	}
--	if (ensure_directories_exist(path, 0700) < 0) {
--		condlog(1, "%s: can't setup directories", __func__);
--		return -1;
-+	if (dfd == -1) {
-+		condlog(1, "%s: can't setup %s: %m", __func__, shm_dir);
-+		return WWID_FAILED_ERROR;
- 	}
+ static int dm_conf_verbosity;
  
--	fd = open(path, O_RDONLY | O_CREAT | O_EXCL, S_IRUSR);
--	if (fd >= 0) {
-+	safe_sprintf(tmpfile, "%s.%lx", wwid, (long)getpid());
-+	fd = openat(dfd, tmpfile, O_RDONLY | O_CREAT | O_EXCL, S_IRUSR);
-+	if (fd >= 0)
- 		close(fd);
-+	else
-+		goto out_closedir;
-+
-+	if (linkat(dfd, tmpfile, dfd, wwid, 0) == 0)
- 		r = WWID_FAILED_CHANGED;
--	} else if (errno == EEXIST)
-+	else if (errno == EEXIST)
- 		r = WWID_FAILED_UNCHANGED;
- 	else
- 		r = WWID_FAILED_ERROR;
- 
-+	if (unlinkat(dfd, tmpfile, 0) == -1)
-+		condlog(2, "%s: failed to unlink %s/%s: %m",
-+			__func__, shm_dir, tmpfile);
-+
-+out_closedir:
-+	close(dfd);
- 	print_failed_wwid_result("mark_failed", wwid, r);
- 	return r;
+ #ifdef LIBDM_API_DEFERRED
+@@ -229,7 +231,7 @@ dm_tgt_prereq (unsigned int *ver)
+ 	return 1;
  }
-@@ -422,7 +438,7 @@ int unmark_failed_wwid(const char *wwid)
  
- 	if (safe_sprintf(path, "%s/%s", shm_dir, wwid)) {
- 		condlog(1, "%s: path name overflow", __func__);
--		return -1;
-+		return WWID_FAILED_ERROR;
- 	}
+-static int dm_prereq(unsigned int *v)
++int dm_prereq(unsigned int *v)
+ {
+ 	if (dm_lib_prereq())
+ 		return 1;
+@@ -243,7 +245,7 @@ void libmp_udev_set_sync_support(int on)
+ 	libmp_dm_udev_sync = !!on;
+ }
  
- 	if (unlink(path) == 0)
+-void libmp_dm_init(void)
++static void libmp_dm_init(void)
+ {
+ 	struct config *conf;
+ 	int verbosity;
+@@ -262,11 +264,18 @@ void libmp_dm_init(void)
+ 	dm_udev_set_sync_support(libmp_dm_udev_sync);
+ }
+ 
++static void _do_skip_libmp_dm_init(void)
++{
++}
++
++void skip_libmp_dm_init(void)
++{
++	pthread_once(&dm_initialized, _do_skip_libmp_dm_init);
++}
++
+ struct dm_task*
+ libmp_dm_task_create(int task)
+ {
+-	static pthread_once_t dm_initialized = PTHREAD_ONCE_INIT;
+-
+ 	pthread_once(&dm_initialized, libmp_dm_init);
+ 	return dm_task_create(task);
+ }
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index 7557a86b..17fc9faf 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -28,7 +28,8 @@
+ #define UUID_PREFIX_LEN (sizeof(UUID_PREFIX) - 1)
+ 
+ void dm_init(int verbosity);
+-void libmp_dm_init(void);
++int dm_prereq(unsigned int *v);
++void skip_libmp_dm_init(void);
+ void libmp_udev_set_sync_support(int on);
+ struct dm_task *libmp_dm_task_create(int task);
+ int dm_drv_version (unsigned int * version);
 -- 
 2.17.2
