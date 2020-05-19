@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 5/6] dm-zoned: terminate reclaim on congestion
-Date: Tue, 19 May 2020 10:14:23 +0200
-Message-ID: <20200519081424.103318-6-hare@suse.de>
+Subject: [PATCH 4/6] dm-zoned: start reclaim with sequential zones
+Date: Tue, 19 May 2020 10:14:22 +0200
+Message-ID: <20200519081424.103318-5-hare@suse.de>
 References: <20200519081424.103318-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,79 +21,40 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When dmz_get_chunk_mapping() selects a zone which is under reclaim
-we should terminating the reclaim copy process; as we're changing
-the zone itself reclaim needs to run afterwards again anyway.
+Sequential zones perform better for reclaim, so start off using
+them and only use random zones as a fallback when cache zones are
+present.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm-zoned-metadata.c | 2 ++
- drivers/md/dm-zoned-reclaim.c  | 6 ++++--
- drivers/md/dm-zoned.h          | 3 +++
- 3 files changed, 9 insertions(+), 2 deletions(-)
+ drivers/md/dm-zoned-reclaim.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index ee613ba2e8aa..857390030cac 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -1851,7 +1851,9 @@ static void dmz_wait_for_reclaim(struct dmz_metadata *zmd, struct dm_zone *zone)
- {
- 	dmz_unlock_map(zmd);
- 	dmz_unlock_metadata(zmd);
-+	set_bit(DMZ_RECLAIM_TERMINATE, &zone->flags);
- 	wait_on_bit_timeout(&zone->flags, DMZ_RECLAIM, TASK_UNINTERRUPTIBLE, HZ);
-+	clear_bit(DMZ_RECLAIM_TERMINATE, &zone->flags);
- 	dmz_lock_metadata(zmd);
- 	dmz_lock_map(zmd);
- }
 diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
-index 1283405bec29..3ed88581dc48 100644
+index 1855c056d6a4..1283405bec29 100644
 --- a/drivers/md/dm-zoned-reclaim.c
 +++ b/drivers/md/dm-zoned-reclaim.c
-@@ -143,6 +143,9 @@ static int dmz_reclaim_copy(struct dmz_reclaim *zrc,
- 		if (dst_dev->flags & DMZ_BDEV_DYING)
- 			return -EIO;
+@@ -281,15 +281,16 @@ static int dmz_reclaim_rnd_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+ 	struct dm_zone *szone = NULL;
+ 	struct dmz_metadata *zmd = zrc->metadata;
+ 	int ret;
+-	int alloc_flags = dmz_nr_cache_zones(zmd) ?
+-		DMZ_ALLOC_RND : DMZ_ALLOC_SEQ;
++	int alloc_flags = DMZ_ALLOC_SEQ;
  
-+		if (dmz_reclaim_should_terminate(src_zone))
-+			return -EINTR;
-+
- 		/* Get a valid region from the source zone */
- 		ret = dmz_first_valid_block(zmd, src_zone, &block);
- 		if (ret <= 0)
-@@ -517,7 +520,7 @@ static void dmz_reclaim_work(struct work_struct *work)
- 		dmz_nr_rnd_zones(zmd));
- 
- 	ret = dmz_do_reclaim(zrc);
--	if (ret) {
-+	if (ret && ret != -EINTR) {
- 		DMDEBUG("(%s): Reclaim error %d",
- 			dmz_metadata_label(zmd), ret);
- 		if (!dmz_check_dev(zmd))
-@@ -617,4 +620,3 @@ void dmz_schedule_reclaim(struct dmz_reclaim *zrc)
- 	if (dmz_should_reclaim(zrc, p_unmap))
- 		mod_delayed_work(zrc->wq, &zrc->work, 0);
- }
--
-diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
-index 288054dd7cf4..8083607b9535 100644
---- a/drivers/md/dm-zoned.h
-+++ b/drivers/md/dm-zoned.h
-@@ -127,6 +127,7 @@ enum {
- 	/* Zone internal state */
- 	DMZ_RECLAIM,
- 	DMZ_SEQ_WRITE_ERR,
-+	DMZ_RECLAIM_TERMINATE,
- };
- 
- /*
-@@ -140,6 +141,8 @@ enum {
- #define dmz_is_readonly(z)	test_bit(DMZ_READ_ONLY, &(z)->flags)
- #define dmz_in_reclaim(z)	test_bit(DMZ_RECLAIM, &(z)->flags)
- #define dmz_seq_write_err(z)	test_bit(DMZ_SEQ_WRITE_ERR, &(z)->flags)
-+#define dmz_reclaim_should_terminate(z) \
-+				test_bit(DMZ_RECLAIM_TERMINATE, &(z)->flags)
- 
- #define dmz_is_meta(z)		test_bit(DMZ_META, &(z)->flags)
- #define dmz_is_buf(z)		test_bit(DMZ_BUF, &(z)->flags)
+-	/* Always use sequential zones to reclaim random zones */
+-	if (dmz_is_rnd(dzone))
+-		alloc_flags = DMZ_ALLOC_SEQ;
+ 	/* Get a free random or sequential zone */
+ 	dmz_lock_map(zmd);
++again:
+ 	szone = dmz_alloc_zone(zmd, alloc_flags | DMZ_ALLOC_RECLAIM);
++	if (!szone && alloc_flags == DMZ_ALLOC_SEQ && dmz_nr_cache_zones(zmd)) {
++		alloc_flags = DMZ_ALLOC_RND;
++		goto again;
++	}
+ 	dmz_unlock_map(zmd);
+ 	if (!szone)
+ 		return -ENOSPC;
 -- 
 2.16.4
