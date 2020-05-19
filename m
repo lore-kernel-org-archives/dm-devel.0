@@ -1,11 +1,13 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCHv2 0/6] dm-zoned: improve cache performance
-Date: Tue, 19 May 2020 10:14:18 +0200
-Message-ID: <20200519081424.103318-1-hare@suse.de>
+Subject: [PATCH 5/6] dm-zoned: terminate reclaim on congestion
+Date: Tue, 19 May 2020 10:14:23 +0200
+Message-ID: <20200519081424.103318-6-hare@suse.de>
+References: <20200519081424.103318-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200519081424.103318-1-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,54 +21,79 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi all,
+When dmz_get_chunk_mapping() selects a zone which is under reclaim
+we should terminating the reclaim copy process; as we're changing
+the zone itself reclaim needs to run afterwards again anyway.
 
-here's an update to dm-zoned to separate out cache zones.
-In the update to metadata version 2 the regular drive was split
-in emulated zones, which were handled just like 'normal' random
-write zones.
-This causes a performance drop once these emulated zones have
-been mapped, as typicall the random zones from the zoned drive
-will perform noticeably slower than those from the regular drive.
-(After all, that was kinda the idea of using a regular disk in
-the first place ...)
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ drivers/md/dm-zoned-metadata.c | 2 ++
+ drivers/md/dm-zoned-reclaim.c  | 6 ++++--
+ drivers/md/dm-zoned.h          | 3 +++
+ 3 files changed, 9 insertions(+), 2 deletions(-)
 
-So in this patchset I've introduced a separate 'cache' zone type,
-allowing us to differentiate between emulated and real zones.
-With that we can switch the allocation mode to use only cache
-zones, and use random zones similar to sequential write zones.
-That avoids the performance issue noted above.
-
-I've also found that the sequential write zones perform noticeably
-better on writes (which is all we're caching anyway), so I've
-added another patch switching the allocation routine from preferring
-sequential write zones for reclaim.
-
-This patchset also contains some minor fixes like remving an unused
-variable etc.
-
-As usual, comments and reviews are welcome.
-
-Changes to v1:
-- Include reviews from Damien
-- Introduce allocation flags
-- Terminate reclaim on contention
-- Rework original patch series
-
-Hannes Reinecke (6):
-  dm-zoned: return NULL if dmz_get_zone_for_reclaim() fails to find a
-    zone
-  dm-zoned: separate random and cache zones
-  dm-zoned: reclaim random zones when idle
-  dm-zoned: start reclaim with sequential zones
-  dm-zoned: terminate reclaim on congestion
-  dm-zoned: remove unused variable in dmz_do_reclaim()
-
- drivers/md/dm-zoned-metadata.c | 140 ++++++++++++++++++++++++++++++-----------
- drivers/md/dm-zoned-reclaim.c  | 109 ++++++++++++++++++++------------
- drivers/md/dm-zoned-target.c   |  19 ++++--
- drivers/md/dm-zoned.h          |  13 +++-
- 4 files changed, 196 insertions(+), 85 deletions(-)
-
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index ee613ba2e8aa..857390030cac 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -1851,7 +1851,9 @@ static void dmz_wait_for_reclaim(struct dmz_metadata *zmd, struct dm_zone *zone)
+ {
+ 	dmz_unlock_map(zmd);
+ 	dmz_unlock_metadata(zmd);
++	set_bit(DMZ_RECLAIM_TERMINATE, &zone->flags);
+ 	wait_on_bit_timeout(&zone->flags, DMZ_RECLAIM, TASK_UNINTERRUPTIBLE, HZ);
++	clear_bit(DMZ_RECLAIM_TERMINATE, &zone->flags);
+ 	dmz_lock_metadata(zmd);
+ 	dmz_lock_map(zmd);
+ }
+diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+index 1283405bec29..3ed88581dc48 100644
+--- a/drivers/md/dm-zoned-reclaim.c
++++ b/drivers/md/dm-zoned-reclaim.c
+@@ -143,6 +143,9 @@ static int dmz_reclaim_copy(struct dmz_reclaim *zrc,
+ 		if (dst_dev->flags & DMZ_BDEV_DYING)
+ 			return -EIO;
+ 
++		if (dmz_reclaim_should_terminate(src_zone))
++			return -EINTR;
++
+ 		/* Get a valid region from the source zone */
+ 		ret = dmz_first_valid_block(zmd, src_zone, &block);
+ 		if (ret <= 0)
+@@ -517,7 +520,7 @@ static void dmz_reclaim_work(struct work_struct *work)
+ 		dmz_nr_rnd_zones(zmd));
+ 
+ 	ret = dmz_do_reclaim(zrc);
+-	if (ret) {
++	if (ret && ret != -EINTR) {
+ 		DMDEBUG("(%s): Reclaim error %d",
+ 			dmz_metadata_label(zmd), ret);
+ 		if (!dmz_check_dev(zmd))
+@@ -617,4 +620,3 @@ void dmz_schedule_reclaim(struct dmz_reclaim *zrc)
+ 	if (dmz_should_reclaim(zrc, p_unmap))
+ 		mod_delayed_work(zrc->wq, &zrc->work, 0);
+ }
+-
+diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
+index 288054dd7cf4..8083607b9535 100644
+--- a/drivers/md/dm-zoned.h
++++ b/drivers/md/dm-zoned.h
+@@ -127,6 +127,7 @@ enum {
+ 	/* Zone internal state */
+ 	DMZ_RECLAIM,
+ 	DMZ_SEQ_WRITE_ERR,
++	DMZ_RECLAIM_TERMINATE,
+ };
+ 
+ /*
+@@ -140,6 +141,8 @@ enum {
+ #define dmz_is_readonly(z)	test_bit(DMZ_READ_ONLY, &(z)->flags)
+ #define dmz_in_reclaim(z)	test_bit(DMZ_RECLAIM, &(z)->flags)
+ #define dmz_seq_write_err(z)	test_bit(DMZ_SEQ_WRITE_ERR, &(z)->flags)
++#define dmz_reclaim_should_terminate(z) \
++				test_bit(DMZ_RECLAIM_TERMINATE, &(z)->flags)
+ 
+ #define dmz_is_meta(z)		test_bit(DMZ_META, &(z)->flags)
+ #define dmz_is_buf(z)		test_bit(DMZ_BUF, &(z)->flags)
 -- 
 2.16.4
