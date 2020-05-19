@@ -1,13 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCHv2 0/6] dm-zoned: improve cache performance
-Date: Tue, 19 May 2020 13:36:56 -0400
-Message-ID: <20200519173655.GA30916@redhat.com>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [PATCH 1/6] dm-zoned: return NULL if
+ dmz_get_zone_for_reclaim() fails to find a zone
+Date: Tue, 19 May 2020 22:15:32 +0000
+Message-ID: <BY5PR04MB6900DA6F738C755CA51BA5B1E7B90@BY5PR04MB6900.namprd04.prod.outlook.com>
 References: <20200519081424.103318-1-hare@suse.de>
+	<20200519081424.103318-2-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200519081424.103318-1-hare@suse.de>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,63 +19,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Hannes Reinecke <hare@suse.de>
-Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
+To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, May 19 2020 at  4:14am -0400,
-Hannes Reinecke <hare@suse.de> wrote:
+On 2020/05/19 17:14, Hannes Reinecke wrote:
+> The only case where dmz_get_zone_for_reclaim() cannot return a zone is
+> if the respective lists are empty. So we should better return a simple
+> NULL value here as we really don't have an error code which would make
+> sense.
+> 
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> ---
+>  drivers/md/dm-zoned-metadata.c | 4 ++--
+>  drivers/md/dm-zoned-reclaim.c  | 4 ++--
+>  2 files changed, 4 insertions(+), 4 deletions(-)
+> 
+> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+> index d9e256762eff..65e196cfb443 100644
+> --- a/drivers/md/dm-zoned-metadata.c
+> +++ b/drivers/md/dm-zoned-metadata.c
+> @@ -1845,7 +1845,7 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd)
+>  			return dzone;
+>  	}
+>  
+> -	return ERR_PTR(-EBUSY);
+> +	return NULL;
+>  }
+>  
+>  /*
+> @@ -1865,7 +1865,7 @@ static struct dm_zone *dmz_get_seq_zone_for_reclaim(struct dmz_metadata *zmd)
+>  			return zone;
+>  	}
+>  
+> -	return ERR_PTR(-EBUSY);
+> +	return NULL;
+>  }
+>  
+>  /*
+> diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+> index 4bfa61540b9c..77f02170cdd3 100644
+> --- a/drivers/md/dm-zoned-reclaim.c
+> +++ b/drivers/md/dm-zoned-reclaim.c
+> @@ -353,8 +353,8 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+>  
+>  	/* Get a data zone */
+>  	dzone = dmz_get_zone_for_reclaim(zmd);
+> -	if (IS_ERR(dzone))
+> -		return PTR_ERR(dzone);
+> +	if (!dzone)
+> +		return -EBUSY;
+>  
+>  	start = jiffies;
+>  	dev = dmz_zone_to_dev(zmd, dzone);
+> 
 
-> Hi all,
-> 
-> here's an update to dm-zoned to separate out cache zones.
-> In the update to metadata version 2 the regular drive was split
-> in emulated zones, which were handled just like 'normal' random
-> write zones.
-> This causes a performance drop once these emulated zones have
-> been mapped, as typicall the random zones from the zoned drive
-> will perform noticeably slower than those from the regular drive.
-> (After all, that was kinda the idea of using a regular disk in
-> the first place ...)
-> 
-> So in this patchset I've introduced a separate 'cache' zone type,
-> allowing us to differentiate between emulated and real zones.
-> With that we can switch the allocation mode to use only cache
-> zones, and use random zones similar to sequential write zones.
-> That avoids the performance issue noted above.
-> 
-> I've also found that the sequential write zones perform noticeably
-> better on writes (which is all we're caching anyway), so I've
-> added another patch switching the allocation routine from preferring
-> sequential write zones for reclaim.
-> 
-> This patchset also contains some minor fixes like remving an unused
-> variable etc.
-> 
-> As usual, comments and reviews are welcome.
-> 
-> Changes to v1:
-> - Include reviews from Damien
+Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
 
-I'll take a look at this series now, but I'm still waiting for formal
-Reviewed-by: or Acked-by: from Damien before I'll stage for 5.8 --
-current development window is coming to a close though.
-
-> - Introduce allocation flags
-> - Terminate reclaim on contention
-> - Rework original patch series
-> 
-> Hannes Reinecke (6):
->   dm-zoned: return NULL if dmz_get_zone_for_reclaim() fails to find a zone
->   dm-zoned: separate random and cache zones
->   dm-zoned: reclaim random zones when idle
->   dm-zoned: start reclaim with sequential zones
->   dm-zoned: terminate reclaim on congestion
->   dm-zoned: remove unused variable in dmz_do_reclaim()
-
-FYI I folded the last 6/6 patch back into the original commit that
-introduced the unused variable (via rebase).
-
-Thanks,
-Mike
+-- 
+Damien Le Moal
+Western Digital Research
