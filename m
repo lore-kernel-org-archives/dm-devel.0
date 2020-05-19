@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v3 2/6] libmultipath: make sysfs_is_multipathed
-	able to return wwid
-Date: Tue, 19 May 2020 12:08:41 -0500
-Message-ID: <1589908125-7456-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 1/6] libmultipath: make libmp_dm_init optional
+Date: Tue, 19 May 2020 12:08:40 -0500
+Message-ID: <1589908125-7456-2-git-send-email-bmarzins@redhat.com>
 References: <1589908125-7456-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,105 +21,86 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-sysfs_is_multipathed reads the wwid of the dm device holding a path to
-check if its a multipath device.  Add code to optinally set pp->wwid to
-that wwid.  This will be used by a future patch.
+Move dm_initialized out of libmp_dm_task_create(), and add
+a function skip_libmp_dm_init() so that users of libmultipath can skip
+initializing device-mapper. This is needed for other programs that
+use libmultipath (or a library that depends on it) but want to control
+how device-mapper is set up.
+
+Also make dm_prereq a global function.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/sysfs.c | 24 +++++++++++++++++++-----
- libmultipath/sysfs.h |  2 +-
- multipath/main.c     |  7 ++++---
- 3 files changed, 24 insertions(+), 9 deletions(-)
+ libmultipath/devmapper.c | 17 +++++++++++++----
+ libmultipath/devmapper.h |  3 ++-
+ 2 files changed, 15 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index 62ec2ed7..12a82d95 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -295,7 +295,7 @@ static int select_dm_devs(const struct dirent *di)
- 	return fnmatch("dm-*", di->d_name, FNM_FILE_NAME) == 0;
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 13a1cf53..7ed494a1 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -33,6 +33,8 @@
+ #define MAX_WAIT 5
+ #define LOOPS_PER_SEC 5
+ 
++static pthread_once_t dm_initialized = PTHREAD_ONCE_INIT;
++
+ static int dm_conf_verbosity;
+ 
+ #ifdef LIBDM_API_DEFERRED
+@@ -229,7 +231,7 @@ dm_tgt_prereq (unsigned int *ver)
+ 	return 1;
  }
  
--bool sysfs_is_multipathed(const struct path *pp)
-+bool sysfs_is_multipathed(struct path *pp, bool set_wwid)
+-static int dm_prereq(unsigned int *v)
++int dm_prereq(unsigned int *v)
  {
- 	char pathbuf[PATH_MAX];
- 	struct scandir_result sr;
-@@ -325,7 +325,7 @@ bool sysfs_is_multipathed(const struct path *pp)
- 	for (i = 0; i < r && !found; i++) {
- 		long fd;
- 		int nr;
--		char uuid[6];
-+		char uuid[WWID_SIZE + UUID_PREFIX_LEN];
+ 	if (dm_lib_prereq())
+ 		return 1;
+@@ -243,7 +245,7 @@ void libmp_udev_set_sync_support(int on)
+ 	libmp_dm_udev_sync = !!on;
+ }
  
- 		if (safe_snprintf(pathbuf + n, sizeof(pathbuf) - n,
- 				  "/%s/dm/uuid", di[i]->d_name))
-@@ -339,12 +339,26 @@ bool sysfs_is_multipathed(const struct path *pp)
+-void libmp_dm_init(void)
++static void libmp_dm_init(void)
+ {
+ 	struct config *conf;
+ 	int verbosity;
+@@ -262,11 +264,18 @@ void libmp_dm_init(void)
+ 	dm_udev_set_sync_support(libmp_dm_udev_sync);
+ }
  
- 		pthread_cleanup_push(close_fd, (void *)fd);
- 		nr = read(fd, uuid, sizeof(uuid));
--		if (nr == sizeof(uuid) && !memcmp(uuid, "mpath-", sizeof(uuid)))
-+		if (nr > (int)UUID_PREFIX_LEN &&
-+		    !memcmp(uuid, UUID_PREFIX, UUID_PREFIX_LEN))
- 			found = true;
- 		else if (nr < 0) {
--			condlog(1, "%s: error reading from %s: %s",
--				__func__, pathbuf, strerror(errno));
-+			condlog(1, "%s: error reading from %s: %m",
-+				__func__, pathbuf);
- 		}
-+		if (found && set_wwid) {
-+			nr -= UUID_PREFIX_LEN;
-+			memcpy(pp->wwid, uuid + UUID_PREFIX_LEN, nr);
-+			if (nr == WWID_SIZE) {
-+				condlog(4, "%s: overflow while reading from %s",
-+					__func__, pathbuf);
-+				pp->wwid[0] = '\0';
-+			} else {
-+				pp->wwid[nr] = '\0';
-+				strchop(pp->wwid);
-+			}
-+                }
++static void _do_skip_libmp_dm_init(void)
++{
++}
 +
- 		pthread_cleanup_pop(1);
- 	}
- 	pthread_cleanup_pop(1);
-diff --git a/libmultipath/sysfs.h b/libmultipath/sysfs.h
-index 9ae30b39..72b39ab2 100644
---- a/libmultipath/sysfs.h
-+++ b/libmultipath/sysfs.h
-@@ -14,5 +14,5 @@ ssize_t sysfs_bin_attr_get_value(struct udev_device *dev, const char *attr_name,
- 				 unsigned char * value, size_t value_len);
- int sysfs_get_size (struct path *pp, unsigned long long * size);
- int sysfs_check_holders(char * check_devt, char * new_devt);
--bool sysfs_is_multipathed(const struct path *pp);
-+bool sysfs_is_multipathed(struct path *pp, bool set_wwid);
- #endif
-diff --git a/multipath/main.c b/multipath/main.c
-index cf9d2a28..545ead87 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -638,7 +638,8 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 			 * Shortcut for find_multipaths smart:
- 			 * Quick check if path is already multipathed.
- 			 */
--			if (sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0))) {
-+			if (sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0),
-+						 false)) {
- 				r = RTVL_YES;
- 				goto print_valid;
- 			}
-@@ -747,8 +748,8 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 			/*
- 			 * Check if we raced with multipathd
- 			 */
--			r = sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0)) ?
--				RTVL_YES : RTVL_NO;
-+			r = sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0),
-+						 false) ? RTVL_YES : RTVL_NO;
- 		}
- 		goto print_valid;
- 	}
++void skip_libmp_dm_init(void)
++{
++	pthread_once(&dm_initialized, _do_skip_libmp_dm_init);
++}
++
+ struct dm_task*
+ libmp_dm_task_create(int task)
+ {
+-	static pthread_once_t dm_initialized = PTHREAD_ONCE_INIT;
+-
+ 	pthread_once(&dm_initialized, libmp_dm_init);
+ 	return dm_task_create(task);
+ }
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index 7557a86b..17fc9faf 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -28,7 +28,8 @@
+ #define UUID_PREFIX_LEN (sizeof(UUID_PREFIX) - 1)
+ 
+ void dm_init(int verbosity);
+-void libmp_dm_init(void);
++int dm_prereq(unsigned int *v);
++void skip_libmp_dm_init(void);
+ void libmp_udev_set_sync_support(int on);
+ struct dm_task *libmp_dm_task_create(int task);
+ int dm_drv_version (unsigned int * version);
 -- 
 2.17.2
