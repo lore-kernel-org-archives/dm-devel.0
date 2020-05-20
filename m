@@ -1,13 +1,11 @@
-From: Martin Wilck <martin.wilck@suse.com>
-Subject: Re: multipath-tools: -1patch in upstream-queue
-Date: Wed, 20 May 2020 22:36:59 +0200
-Message-ID: <97355996ab3dfeda13cee42a93f92f3ab54d289a.camel@suse.com>
-References: <fbbd16f6-3564-288e-4180-6322a2b478da@gmail.com>
+From: mwilck@suse.com
+Subject: [PATCH] fix boolean value with json-c 0.14
+Date: Wed, 20 May 2020 22:43:13 +0200
+Message-ID: <20200520204313.29708-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <fbbd16f6-3564-288e-4180-6322a2b478da@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,38 +15,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Christian Hesse <mail@eworm.de>, dm-devel mailing list <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Gris Ge <fge@redhat.com>, dm-devel@redhat.com, "mail@eworm.de" <mail@eworm.de>
 List-Id: dm-devel.ids
 
-Hello Xose,
+From: "mail@eworm.de" <mail@eworm.de>
 
-On Wed, 2020-05-20 at 18:56 +0200, Xose Vazquez Perez wrote:
-> Hi Martin,
->=20
-> The JSON patch send by Christian Hesse(twice) is missed, in your
-> upstream-queue:
-> https://marc.info/?l=3Ddm-devel&m=3D158792878717348 or
-> https://marc.info/?l=3Ddm-devel&m=3D158797224229431
->=20
-> Thank you.
+Upstream json-c removed the TRUE and FALSE defines in commit
+0992aac61f8b087efd7094e9ac2b84fa9c040fcd.
 
-Right, I missed that one. Thanks for pointing it out.
 
-However, it has no "Reviewed-by:" tag from anyone, including yourself,
-so it couldn't be pushed to upstream-queue yet.
+Signed-off-by: Christian Hesse <mail@eworm.de>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libdmmp/libdmmp_private.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-Actually, I don't like fixing this this way. I have no idea why the
-json-c people did this, but I'd rather fall back to stdbool.h than to 0
-and 1.
+---
+mwilck: Resent from Christian's patch from 2020-04-25.
+Changes wrt original patch:
+ - Use stdbool.h, and keep the error message unchanged.
 
-I'm going to send a modified verson.
+(Resent, as I forgot to cc dm-devel. Sorry!)
 
-Regards
-Martin
-
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+diff --git a/libdmmp/libdmmp_private.h b/libdmmp/libdmmp_private.h
+index ac85b63f..b1a6ddea 100644
+--- a/libdmmp/libdmmp_private.h
++++ b/libdmmp/libdmmp_private.h
+@@ -30,6 +30,7 @@
+ #include <stdint.h>
+ #include <string.h>
+ #include <assert.h>
++#include <stdbool.h>
+ #include <json.h>
+ 
+ #include "libdmmp/libdmmp.h"
+@@ -82,7 +83,7 @@ static out_type func_name(struct dmmp_context *ctx, const char *var_name) { \
+ do { \
+ 	json_type j_type = json_type_null; \
+ 	json_object *j_obj_tmp = NULL; \
+-	if (json_object_object_get_ex(j_obj, key, &j_obj_tmp) != TRUE) { \
++	if (json_object_object_get_ex(j_obj, key, &j_obj_tmp) != true) { \
+ 		_error(ctx, "Invalid JSON output from multipathd IPC: " \
+ 		       "key '%s' not found", key); \
+ 		rc = DMMP_ERR_IPC_ERROR; \
+-- 
+2.26.2
