@@ -1,14 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCHv2 0/6] dm-zoned: improve cache performance
-Date: Wed, 20 May 2020 14:53:34 -0400
-Message-ID: <20200520185334.GA4926@redhat.com>
-References: <20200519081424.103318-1-hare@suse.de>
-	<BY5PR04MB6900CC6DA3FECFAC70AFDC26E7B90@BY5PR04MB6900.namprd04.prod.outlook.com>
+From: Martin Wilck <martin.wilck@suse.com>
+Subject: Re: multipath-tools: -1patch in upstream-queue
+Date: Wed, 20 May 2020 22:36:59 +0200
+Message-ID: <97355996ab3dfeda13cee42a93f92f3ab54d289a.camel@suse.com>
+References: <fbbd16f6-3564-288e-4180-6322a2b478da@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <BY5PR04MB6900CC6DA3FECFAC70AFDC26E7B90@BY5PR04MB6900.namprd04.prod.outlook.com>
+In-Reply-To: <fbbd16f6-3564-288e-4180-6322a2b478da@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,62 +17,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Damien Le Moal <Damien.LeMoal@wdc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Christian Hesse <mail@eworm.de>, dm-devel mailing list <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, May 19 2020 at  6:36pm -0400,
-Damien Le Moal <Damien.LeMoal@wdc.com> wrote:
+Hello Xose,
 
-> On 2020/05/19 17:14, Hannes Reinecke wrote:
-> > Hi all,
-> > 
-> > here's an update to dm-zoned to separate out cache zones.
-> > In the update to metadata version 2 the regular drive was split
-> > in emulated zones, which were handled just like 'normal' random
-> > write zones.
-> > This causes a performance drop once these emulated zones have
-> > been mapped, as typicall the random zones from the zoned drive
-> > will perform noticeably slower than those from the regular drive.
-> > (After all, that was kinda the idea of using a regular disk in
-> > the first place ...)
-> > 
-> > So in this patchset I've introduced a separate 'cache' zone type,
-> > allowing us to differentiate between emulated and real zones.
-> > With that we can switch the allocation mode to use only cache
-> > zones, and use random zones similar to sequential write zones.
-> > That avoids the performance issue noted above.
-> > 
-> > I've also found that the sequential write zones perform noticeably
-> > better on writes (which is all we're caching anyway), so I've
-> > added another patch switching the allocation routine from preferring
-> > sequential write zones for reclaim.
-> > 
-> > This patchset also contains some minor fixes like remving an unused
-> > variable etc.
-> > 
-> > As usual, comments and reviews are welcome.
-> 
-> I ran this overnight with no problems. Throughput results attached.
-> Reclaim seems to be a little too aggressive as it triggers very early. But we
-> can tune that later if really needed: the combination of ext4 writing all over
-> the place and the faster cache zones on SSD may simply result in a percentage of
-> free cache zones becoming low very quickly, in which case, reclaim is working
-> exactly as expected :)
+On Wed, 2020-05-20 at 18:56 +0200, Xose Vazquez Perez wrote:
+> Hi Martin,
+>=20
+> The JSON patch send by Christian Hesse(twice) is missed, in your
+> upstream-queue:
+> https://marc.info/?l=3Ddm-devel&m=3D158792878717348 or
+> https://marc.info/?l=3Ddm-devel&m=3D158797224229431
+>=20
+> Thank you.
 
-I've staged this series for 5.8 in linux-next
+Right, I missed that one. Thanks for pointing it out.
 
-Just to make sure no regressions due to all the metadata2 changes: Did
-you happen to verify all worked as expected without using an extra
-drive?
+However, it has no "Reviewed-by:" tag from anyone, including yourself,
+so it couldn't be pushed to upstream-queue yet.
 
-> Mike,
-> 
-> With the NVMe io_opt fix patch applied, the alignment warning for the target
-> limits is gone.
+Actually, I don't like fixing this this way. I have no idea why the
+json-c people did this, but I'd rather fall back to stdbool.h than to 0
+and 1.
 
-OK
+I'm going to send a modified verson.
 
-Thanks,
-Mike
+Regards
+Martin
+
+--=20
+Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+SUSE  Software Solutions Germany GmbH
+HRB 36809, AG N=FCrnberg GF: Felix
+Imend=F6rffer
