@@ -1,31 +1,30 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: multipath-tools: -1patch in upstream-queue
-Date: Wed, 20 May 2020 22:53:23 +0200
-Message-ID: <3fe397f0-b9d9-bc8a-93ce-b8cd593729df@gmail.com>
-References: <fbbd16f6-3564-288e-4180-6322a2b478da@gmail.com>
-	<97355996ab3dfeda13cee42a93f92f3ab54d289a.camel@suse.com>
+Subject: Re: [dm-devel] [PATCH v4 0/2] Historical Service Time Path Selector
+Date: Thu, 21 May 2020 01:26:27 +0200
+Message-ID: <ee987451-6d17-b978-809e-e0fe56dc13ce@gmail.com>
+References: <20200511163910.3778467-1-krisman@collabora.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <97355996ab3dfeda13cee42a93f92f3ab54d289a.camel@suse.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200511163910.3778467-1-krisman@collabora.com>
 Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christian Hesse <mail@eworm.de>, dm-devel mailing list <dm-devel@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Gabriel Krisman Bertazi <krisman@collabora.com>, agk@redhat.com, snitzer@redhat.com
+Cc: breeves@redhat.com, linux-kernel@vger.kernel.org, khazhy@google.com, song@kernel.org, dm-devel@redhat.com, mpatocka@redhat.com, kernel@collabora.com
 List-Id: dm-devel.ids
 
-On 5/20/20 10:36 PM, Martin Wilck wrote:
+On 5/11/20 6:39 PM, Gabriel Krisman Bertazi wrote:
 
-> However, it has no "Reviewed-by:" tag from anyone, including yourself,
-> so it couldn't be pushed to upstream-queue yet.
+> This fourth version of HST applies the suggestion from Mikulas Patocka
+> to do the ktime_get_ns inside the mpath map_bio instead of generic
+> device-mapper code. This means that struct dm_mpath_io gained another
+> 64bit field.  For the request-based case, we continue to use the block
+> layer start time information.
 
-Trivial enough. And a similar one was included, at least, in Fedora, Alpine and Gentoo.
+You should add some info to the multipath.conf.5 man page ( 
+https://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=multipath/multipath.conf.5;h=05a5e8ffeb110d969f3b2381eb3b88d7f28380f6;hb=HEAD#l189 ),
+or none one is going to use it.
+
+
+Thanks.
