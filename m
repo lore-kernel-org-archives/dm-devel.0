@@ -1,16 +1,14 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH v3 0/6] multipath: path validation library
-	prep work
-Date: Wed, 20 May 2020 15:52:48 +0000
-Message-ID: <50bb1bddca8bf7291bdc571ab1f408bac919ab15.camel@suse.com>
-References: <1589908125-7456-1-git-send-email-bmarzins@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCHv2 0/6] dm-zoned: improve cache performance
+Date: Wed, 20 May 2020 14:53:34 -0400
+Message-ID: <20200520185334.GA4926@redhat.com>
+References: <20200519081424.103318-1-hare@suse.de>
+	<BY5PR04MB6900CC6DA3FECFAC70AFDC26E7B90@BY5PR04MB6900.namprd04.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1589908125-7456-1-git-send-email-bmarzins@redhat.com>
-Content-Language: en-US
-Content-ID: <7384220E39C90D44BDEA9F7B9F301699@namprd18.prod.outlook.com>
+In-Reply-To: <BY5PR04MB6900CC6DA3FECFAC70AFDC26E7B90@BY5PR04MB6900.namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,79 +18,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Content-Disposition: inline
+To: Damien Le Moal <Damien.LeMoal@wdc.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 2020-05-19 at 12:08 -0500, Benjamin Marzinski wrote:
-> I've been playing around with the SID code more and I've decided to
-> hold
-> off on submitting the library until I have it working with the SID
-> multipath module better. Instead, I've pulled out the common code
-> that
-> multipath -u/-c and the library can use, and put it into
-> libmultipath.
->=20
-> I've also removed some of the ordering differences between the
-> existing
-> code and my new code.  Right now, the only difference is that if a
-> path
-> is currently multipathed, it will always be claimed as a valid path.
->=20
-> Patches 0001 & 0002 are the same as in my "RFC PATCH v2" set, and
-> patch
-> 0005 is the same as my "libmultipath: simplify failed wwid code"
-> patch.
->=20
-> Only patches 0003 and 0004 haven't been posted before.
->=20
-> Changes from v1:
-> 0003: Minor fixes suggested by Martin Wilck
-> 0004: Fixed typo, added tests for filter_property() and switched some
->       tests to pass the check_multipathd code in various ways,
-> instead
->       of skipping it, as suggested by Martin Wilck
->=20
-> Changes from v2:
-> rebased patches on top of Martin's previous patch sets
->=20
-> Benjamin Marzinski (5):
->   libmultipath: make libmp_dm_init optional
->   libmultipath: make sysfs_is_multipathed able to return wwid
->   multipath: centralize validation code
->   Unit tests for is_path_valid()
->   libmultipath: simplify failed wwid code
->=20
-> Martin Wilck (1):
->   libmultipath: use atomic linkat() in mark_failed_wwid()
->=20
->  libmultipath/Makefile    |   2 +-
->  libmultipath/devmapper.c |  62 ++++-
->  libmultipath/devmapper.h |   4 +-
->  libmultipath/structs.h   |  24 +-
->  libmultipath/sysfs.c     |  24 +-
->  libmultipath/sysfs.h     |   2 +-
->  libmultipath/valid.c     | 118 ++++++++++
->  libmultipath/valid.h     |  42 ++++
->  libmultipath/wwids.c     | 165 +++++++------
->  multipath/main.c         | 295 ++++++++++--------------
->  tests/Makefile           |   4 +-
->  tests/valid.c            | 486
-> +++++++++++++++++++++++++++++++++++++++
->  12 files changed, 943 insertions(+), 285 deletions(-)
->  create mode 100644 libmultipath/valid.c
->  create mode 100644 libmultipath/valid.h
->  create mode 100644 tests/valid.c
->=20
+On Tue, May 19 2020 at  6:36pm -0400,
+Damien Le Moal <Damien.LeMoal@wdc.com> wrote:
 
-You included all the reviewed-by tags from me already, but for the sake
-of clarity: ACK for this v3 series.
+> On 2020/05/19 17:14, Hannes Reinecke wrote:
+> > Hi all,
+> > 
+> > here's an update to dm-zoned to separate out cache zones.
+> > In the update to metadata version 2 the regular drive was split
+> > in emulated zones, which were handled just like 'normal' random
+> > write zones.
+> > This causes a performance drop once these emulated zones have
+> > been mapped, as typicall the random zones from the zoned drive
+> > will perform noticeably slower than those from the regular drive.
+> > (After all, that was kinda the idea of using a regular disk in
+> > the first place ...)
+> > 
+> > So in this patchset I've introduced a separate 'cache' zone type,
+> > allowing us to differentiate between emulated and real zones.
+> > With that we can switch the allocation mode to use only cache
+> > zones, and use random zones similar to sequential write zones.
+> > That avoids the performance issue noted above.
+> > 
+> > I've also found that the sequential write zones perform noticeably
+> > better on writes (which is all we're caching anyway), so I've
+> > added another patch switching the allocation routine from preferring
+> > sequential write zones for reclaim.
+> > 
+> > This patchset also contains some minor fixes like remving an unused
+> > variable etc.
+> > 
+> > As usual, comments and reviews are welcome.
+> 
+> I ran this overnight with no problems. Throughput results attached.
+> Reclaim seems to be a little too aggressive as it triggers very early. But we
+> can tune that later if really needed: the combination of ext4 writing all over
+> the place and the faster cache zones on SSD may simply result in a percentage of
+> free cache zones becoming low very quickly, in which case, reclaim is working
+> exactly as expected :)
+
+I've staged this series for 5.8 in linux-next
+
+Just to make sure no regressions due to all the metadata2 changes: Did
+you happen to verify all worked as expected without using an extra
+drive?
+
+> Mike,
+> 
+> With the NVMe io_opt fix patch applied, the alignment warning for the target
+> limits is gone.
+
+OK
 
 Thanks,
-Martin
-
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+Mike
