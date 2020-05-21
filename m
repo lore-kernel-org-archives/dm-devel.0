@@ -1,91 +1,35 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCHv2 0/6] dm-zoned: improve cache performance
-Date: Wed, 20 May 2020 23:59:22 +0000
-Message-ID: <BY5PR04MB69005CEAD9EC02ABFE2943C2E7B60@BY5PR04MB6900.namprd04.prod.outlook.com>
-References: <20200519081424.103318-1-hare@suse.de>
-	<BY5PR04MB6900CC6DA3FECFAC70AFDC26E7B90@BY5PR04MB6900.namprd04.prod.outlook.com>
-	<20200520185334.GA4926@redhat.com>
+From: Gabriel Krisman Bertazi <krisman@collabora.com>
+Subject: Re: [dm-devel] [PATCH v4 0/2] Historical Service Time Path Selector
+Date: Wed, 20 May 2020 20:15:09 -0400
+Message-ID: <85tv0am9de.fsf@collabora.com>
+References: <20200511163910.3778467-1-krisman@collabora.com>
+        <ee987451-6d17-b978-809e-e0fe56dc13ce@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <ee987451-6d17-b978-809e-e0fe56dc13ce@gmail.com> (Xose Vazquez
+        Perez's message of "Thu, 21 May 2020 01:26:27 +0200")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: agk@redhat.com, snitzer@redhat.com, breeves@redhat.com, linux-kernel@vger.kernel.org, khazhy@google.com, song@kernel.org, dm-devel@redhat.com, mpatocka@redhat.com, kernel@collabora.com
 List-Id: dm-devel.ids
 
-On 2020/05/21 3:53, Mike Snitzer wrote:
-> On Tue, May 19 2020 at  6:36pm -0400,
-> Damien Le Moal <Damien.LeMoal@wdc.com> wrote:
-> 
->> On 2020/05/19 17:14, Hannes Reinecke wrote:
->>> Hi all,
->>>
->>> here's an update to dm-zoned to separate out cache zones.
->>> In the update to metadata version 2 the regular drive was split
->>> in emulated zones, which were handled just like 'normal' random
->>> write zones.
->>> This causes a performance drop once these emulated zones have
->>> been mapped, as typicall the random zones from the zoned drive
->>> will perform noticeably slower than those from the regular drive.
->>> (After all, that was kinda the idea of using a regular disk in
->>> the first place ...)
->>>
->>> So in this patchset I've introduced a separate 'cache' zone type,
->>> allowing us to differentiate between emulated and real zones.
->>> With that we can switch the allocation mode to use only cache
->>> zones, and use random zones similar to sequential write zones.
->>> That avoids the performance issue noted above.
->>>
->>> I've also found that the sequential write zones perform noticeably
->>> better on writes (which is all we're caching anyway), so I've
->>> added another patch switching the allocation routine from preferring
->>> sequential write zones for reclaim.
->>>
->>> This patchset also contains some minor fixes like remving an unused
->>> variable etc.
->>>
->>> As usual, comments and reviews are welcome.
->>
->> I ran this overnight with no problems. Throughput results attached.
->> Reclaim seems to be a little too aggressive as it triggers very early. But we
->> can tune that later if really needed: the combination of ext4 writing all over
->> the place and the faster cache zones on SSD may simply result in a percentage of
->> free cache zones becoming low very quickly, in which case, reclaim is working
->> exactly as expected :)
-> 
-> I've staged this series for 5.8 in linux-next
-> 
-> Just to make sure no regressions due to all the metadata2 changes: Did
-> you happen to verify all worked as expected without using an extra
-> drive?
+Xose Vazquez Perez <xose.vazquez@gmail.com> writes:
 
-Yes, I did.  Single and dual drive both work fine with v2 metadata.
-I will retest the case of a V1 format using V2 code to be extra sure.
+> On 5/11/20 6:39 PM, Gabriel Krisman Bertazi wrote:
+>
+>> This fourth version of HST applies the suggestion from Mikulas Patocka
+>> to do the ktime_get_ns inside the mpath map_bio instead of generic
+>> device-mapper code. This means that struct dm_mpath_io gained another
+>> 64bit field.  For the request-based case, we continue to use the block
+>> layer start time information.
+>
+> You should add some info to the multipath.conf.5 man page (
+> https://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=multipath/multipath.conf.5;h=05a5e8ffeb110d969f3b2381eb3b88d7f28380f6;hb=HEAD#l189
+> ),
+> or none one is going to use it.
 
-> 
->> Mike,
->>
->> With the NVMe io_opt fix patch applied, the alignment warning for the target
->> limits is gone.
-> 
-> OK
-> 
-> Thanks,
-> Mike
-> 
-> 
-
+Sure, will do.
 
 -- 
-Damien Le Moal
-Western Digital Research
+Gabriel Krisman Bertazi
