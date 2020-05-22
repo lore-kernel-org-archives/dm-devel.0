@@ -1,11 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH RFC 00/12] dm-zoned: multi-device support
-Date: Fri, 22 May 2020 17:38:49 +0200
-Message-ID: <20200522153901.133375-1-hare@suse.de>
+Subject: [PATCH 11/12] dm-zoned: round-robin load balancer for
+	reclaiming zones
+Date: Fri, 22 May 2020 17:39:00 +0200
+Message-ID: <20200522153901.133375-12-hare@suse.de>
+References: <20200522153901.133375-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200522153901.133375-1-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,43 +22,54 @@ To: Damien LeMoal <damien.lemoal@wdc.com>
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Hi all,
+When reclaiming zones we should arbitrate between the zoned
+devices to get a better throughput. So implement a simple
+round-robin load balancer between the zoned devices.
 
-on the risk of boring you to death, here's yet another RFC to update
-dm-zoned. As it has seen only light testing and has some areas which
-need to be improved I'd consider it RFC material.
-I'm just putting it out now to get some feedback and get it ready for
-the next merge window.
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ drivers/md/dm-zoned-metadata.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
 
-So, this patchset:
-- Converts the zone array to using xarray for better scalability
-- Separate out shared structures into per-device structure
-- Lift the restriction of 2 devices to handle an arbitrary number
-  of drives.
-
-With this patchset I'm seeing a performance increase for writes from
-an average of 150MB/s (with 2 drives) to 200MB/s (with 3 drives).
-
-Hannes Reinecke (12):
-  dm-zoned: add debugging message for reading superblocks
-  dm-zoned: convert to xarray
-  dm-zoned: use on-stack superblock for tertiary devices
-  dm-zoned: secondary superblock must reside on the same devices than
-    primary superblock
-  dm-zoned: add device pointer to struct dm_zone
-  dm-zoned: add metadata pointer to struct dmz_dev
-  dm-zoned: add a 'reserved' zone flag
-  dm-zoned: move random and sequential zones into struct dmz_dev
-  dm-zoned: improve logging messages for reclaim
-  dm-zoned: support arbitrary number of devices
-  dm-zoned: round-robin load balancer for reclaiming zones
-  dm-zoned: per-device reclaim
-
- drivers/md/dm-zoned-metadata.c | 430 ++++++++++++++++++++++++-----------------
- drivers/md/dm-zoned-reclaim.c  |  85 ++++----
- drivers/md/dm-zoned-target.c   | 172 ++++++++++-------
- drivers/md/dm-zoned.h          |  70 ++++---
- 4 files changed, 454 insertions(+), 303 deletions(-)
-
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index 87784e7785bc..25dcad2a565f 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -171,6 +171,8 @@ struct dmz_metadata {
+ 	unsigned int		nr_reserved_seq;
+ 	unsigned int		nr_chunks;
+ 
++	unsigned int		last_alloc_idx;
++
+ 	/* Zone information array */
+ 	struct xarray		zones;
+ 
+@@ -2178,7 +2180,7 @@ struct dm_zone *dmz_alloc_zone(struct dmz_metadata *zmd, unsigned long flags)
+ {
+ 	struct list_head *list;
+ 	struct dm_zone *zone;
+-	unsigned int dev_idx = 0;
++	unsigned int dev_idx = zmd->last_alloc_idx;
+ 
+ again:
+ 	if (flags & DMZ_ALLOC_CACHE)
+@@ -2214,6 +2216,9 @@ struct dm_zone *dmz_alloc_zone(struct dmz_metadata *zmd, unsigned long flags)
+ 	zone = list_first_entry(list, struct dm_zone, link);
+ 	list_del_init(&zone->link);
+ 
++	if (!(flags & DMZ_ALLOC_CACHE))
++		zmd->last_alloc_idx = (dev_idx + 1) % zmd->nr_devs;
++
+ 	if (dmz_is_cache(zone))
+ 		atomic_dec(&zmd->unmap_nr_cache);
+ 	else if (dmz_is_rnd(zone))
+@@ -2839,6 +2844,7 @@ int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
+ 	zmd->dev = dev;
+ 	zmd->nr_devs = num_dev;
+ 	zmd->mblk_rbtree = RB_ROOT;
++	zmd->last_alloc_idx = 0;
+ 	init_rwsem(&zmd->mblk_sem);
+ 	mutex_init(&zmd->mblk_flush_lock);
+ 	spin_lock_init(&zmd->mblk_lock);
 -- 
 2.16.4
