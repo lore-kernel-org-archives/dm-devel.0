@@ -1,54 +1,29 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCHv2] dm-zoned: remove leftover hunk for switching
-	to sequential zones
-Date: Fri, 22 May 2020 10:58:53 +0200
-Message-ID: <20200522085853.123291-1-hare@suse.de>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [PATCH] block: Improve io_opt limit stacking
+Date: Fri, 22 May 2020 09:28:36 -0400
+Message-ID: <yq1lflkp0b9.fsf@ca-mkp.ca.oracle.com>
+References: <20200514065819.1113949-1-damien.lemoal@wdc.com>
+        <BY5PR04MB6900144BD2729172EBF5DF2EE7B40@BY5PR04MB6900.namprd04.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
+Content-Type: text/plain
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <BY5PR04MB6900144BD2729172EBF5DF2EE7B40@BY5PR04MB6900.namprd04.prod.outlook.com>
+        (Damien Le Moal's message of "Fri, 22 May 2020 07:27:11 +0000")
+Sender: linux-block-owner@vger.kernel.org
+To: Damien Le Moal <Damien.LeMoal@wdc.com>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Keith Busch <kbusch@kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Remove a leftover hunk to switch from random zones to sequential
-zones when selecting a reclaim zone; the logic has moved into the
-caller and this hunk is now pointless.
 
-Fixes: 34f5affd04c4 ("dm zoned: separate random and cache zones")
-Signed-off-by: Hannes Reinecke <hare@suse.de>
-Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
----
- drivers/md/dm-zoned-metadata.c | 8 --------
- 1 file changed, 8 deletions(-)
+Damien,
 
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index db0dc2b5d44d..4a2e351365c5 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -2111,14 +2111,6 @@ struct dm_zone *dmz_alloc_zone(struct dmz_metadata *zmd, unsigned long flags)
- 		 */
- 		if (!(flags & DMZ_ALLOC_RECLAIM))
- 			return NULL;
--		/*
--		 * Use sequential write zones if we started off with random
--		 * zones and the list is empty
--		 */
--		if (list == &zmd->unmap_rnd_list) {
--			list = &zmd->unmap_seq_list;
--			goto again;
--		}
- 		/*
- 		 * Fallback to the reserved sequential zones
- 		 */
+>> +	if (t->io_opt & (t->physical_block_size - 1))
+>> +		t->io_opt = lcm(t->io_opt, t->physical_block_size);
+
+> Any comment on this patch ?  Note: the patch the patch "nvme: Fix
+> io_opt limit setting" is already queued for 5.8.
+
+Setting io_opt to the physical block size is not correct.
+
 -- 
-2.25.0
+Martin K. Petersen	Oracle Linux Engineering
