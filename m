@@ -1,112 +1,123 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 08/16] zram: nvdimm: use bio_{start,end}_io_acct and disk_{start,end}_io_acct
-Date: Mon, 25 May 2020 13:30:06 +0200
-Message-ID: <20200525113014.345997-9-hch@lst.de>
+From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+Subject: Re: [PATCH 01/16] block: add disk/bio-based accounting helpers
+Date: Mon, 25 May 2020 15:28:07 +0300
+Message-ID: <fafb94a9-cdce-5ea0-e73f-9463766a9f19@yandex-team.ru>
 References: <20200525113014.345997-1-hch@lst.de>
+ <20200525113014.345997-2-hch@lst.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-bcache-owner@vger.kernel.org>
-In-Reply-To: <20200525113014.345997-1-hch@lst.de>
+In-Reply-To: <20200525113014.345997-2-hch@lst.de>
+Content-Language: en-CA
 Sender: linux-bcache-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
+Cc: Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Switch zram to use the nicer bio accounting helpers, and as part of that
-ensure each bio is counted as a single I/O request.
+On 25/05/2020 14.29, Christoph Hellwig wrote:
+> Add two new helpers to simplify I/O accounting for bio based drivers.
+> Currently these drivers use the generic_start_io_acct and
+> generic_end_io_acct helpers which have very cumbersome calling
+> conventions, don't actually return the time they started accounting,
+> and try to deal with accounting for partitions, which can't happen
+> for bio based drivers.  The new helpers will be used to subsequently
+> replace uses of the old helpers.
+> 
+> The main function is the bio based wrappes in blkdev.h, but for zram
+> which wants to account rw_page based I/O lower level routines are
+> provided as well.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> ---
+>   block/blk-core.c       | 34 ++++++++++++++++++++++++++++++++++
+>   include/linux/blkdev.h | 26 ++++++++++++++++++++++++++
+>   2 files changed, 60 insertions(+)
+> 
+> diff --git a/block/blk-core.c b/block/blk-core.c
+> index 77e57c2e8d602..8973104f88d90 100644
+> --- a/block/blk-core.c
+> +++ b/block/blk-core.c
+> @@ -1432,6 +1432,40 @@ void blk_account_io_start(struct request *rq, bool new_io)
+>   	part_stat_unlock();
+>   }
+>   
+> +unsigned long disk_start_io_acct(struct gendisk *disk, unsigned int sectors,
+> +		unsigned int op)
+> +{
+> +	struct hd_struct *part = &disk->part0;
+> +	const int sgrp = op_stat_group(op);
+> +	unsigned long now = READ_ONCE(jiffies);
+> +
+> +	part_stat_lock();
+> +	update_io_ticks(part, now, false);
+> +	part_stat_inc(part, ios[sgrp]);
+> +	part_stat_add(part, sectors[sgrp], sectors);
+> +	part_stat_local_inc(part, in_flight[op_is_write(op)]);
+> +	part_stat_unlock();
+> +
+> +	return now;
+> +}
+> +EXPORT_SYMBOL(disk_start_io_acct);
+> +
+> +void disk_end_io_acct(struct gendisk *disk, unsigned int op,
+> +		unsigned long start_time)
+> +{
+> +	struct hd_struct *part = &disk->part0;
+> +	const int sgrp = op_stat_group(op);
+> +	unsigned long now = READ_ONCE(jiffies);
+> +	unsigned long duration = now - start_time;
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- drivers/block/zram/zram_drv.c | 24 ++++++++++--------------
- 1 file changed, 10 insertions(+), 14 deletions(-)
+I think it would be better to leave this jiffies legacy nonsense in
+callers and pass here request duration in nanoseconds.
 
-diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
-index ebb234f36909c..6e2ad90b17a37 100644
---- a/drivers/block/zram/zram_drv.c
-+++ b/drivers/block/zram/zram_drv.c
-@@ -1510,13 +1510,8 @@ static void zram_bio_discard(struct zram *zram, u32 index,
- static int zram_bvec_rw(struct zram *zram, struct bio_vec *bvec, u32 index,
- 			int offset, unsigned int op, struct bio *bio)
- {
--	unsigned long start_time = jiffies;
--	struct request_queue *q = zram->disk->queue;
- 	int ret;
- 
--	generic_start_io_acct(q, op, bvec->bv_len >> SECTOR_SHIFT,
--			&zram->disk->part0);
--
- 	if (!op_is_write(op)) {
- 		atomic64_inc(&zram->stats.num_reads);
- 		ret = zram_bvec_read(zram, bvec, index, offset, bio);
-@@ -1526,8 +1521,6 @@ static int zram_bvec_rw(struct zram *zram, struct bio_vec *bvec, u32 index,
- 		ret = zram_bvec_write(zram, bvec, index, offset, bio);
- 	}
- 
--	generic_end_io_acct(q, op, &zram->disk->part0, start_time);
--
- 	zram_slot_lock(zram, index);
- 	zram_accessed(zram, index);
- 	zram_slot_unlock(zram, index);
-@@ -1548,6 +1541,7 @@ static void __zram_make_request(struct zram *zram, struct bio *bio)
- 	u32 index;
- 	struct bio_vec bvec;
- 	struct bvec_iter iter;
-+	unsigned long start_time;
- 
- 	index = bio->bi_iter.bi_sector >> SECTORS_PER_PAGE_SHIFT;
- 	offset = (bio->bi_iter.bi_sector &
-@@ -1563,6 +1557,7 @@ static void __zram_make_request(struct zram *zram, struct bio *bio)
- 		break;
- 	}
- 
-+	start_time = bio_start_io_acct(bio);
- 	bio_for_each_segment(bvec, bio, iter) {
- 		struct bio_vec bv = bvec;
- 		unsigned int unwritten = bvec.bv_len;
-@@ -1571,8 +1566,10 @@ static void __zram_make_request(struct zram *zram, struct bio *bio)
- 			bv.bv_len = min_t(unsigned int, PAGE_SIZE - offset,
- 							unwritten);
- 			if (zram_bvec_rw(zram, &bv, index, offset,
--					 bio_op(bio), bio) < 0)
--				goto out;
-+					 bio_op(bio), bio) < 0) {
-+				bio->bi_status = BLK_STS_IOERR;
-+				break;
-+			}
- 
- 			bv.bv_offset += bv.bv_len;
- 			unwritten -= bv.bv_len;
-@@ -1580,12 +1577,8 @@ static void __zram_make_request(struct zram *zram, struct bio *bio)
- 			update_position(&index, &offset, &bv);
- 		} while (unwritten);
- 	}
--
-+	bio_end_io_acct(bio, start_time);
- 	bio_endio(bio);
--	return;
--
--out:
--	bio_io_error(bio);
- }
- 
- /*
-@@ -1633,6 +1626,7 @@ static int zram_rw_page(struct block_device *bdev, sector_t sector,
- 	u32 index;
- 	struct zram *zram;
- 	struct bio_vec bv;
-+	unsigned long start_time;
- 
- 	if (PageTransHuge(page))
- 		return -ENOTSUPP;
-@@ -1651,7 +1645,9 @@ static int zram_rw_page(struct block_device *bdev, sector_t sector,
- 	bv.bv_len = PAGE_SIZE;
- 	bv.bv_offset = 0;
- 
-+	start_time = disk_start_io_acct(bdev->bd_disk, SECTORS_PER_PAGE, op);
- 	ret = zram_bvec_rw(zram, &bv, index, offset, op, NULL);
-+	disk_end_io_acct(bdev->bd_disk, op, start_time);
- out:
- 	/*
- 	 * If I/O fails, just return error(ie, non-zero) without
--- 
-2.26.2
+So rewriting them to nanoseconds later wouldn't touch generic code.
+
+> +
+> +	part_stat_lock();
+> +	update_io_ticks(part, now, true);
+> +	part_stat_add(part, nsecs[sgrp], jiffies_to_nsecs(duration));
+> +	part_stat_local_dec(part, in_flight[op_is_write(op)]);
+> +	part_stat_unlock();
+> +}
+> +EXPORT_SYMBOL(disk_end_io_acct);
+> +
+>   /*
+>    * Steal bios from a request and add them to a bio list.
+>    * The request must not have been partially completed before.
+> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> index 7d10f4e632325..76d01a8a13b80 100644
+> --- a/include/linux/blkdev.h
+> +++ b/include/linux/blkdev.h
+> @@ -1892,4 +1892,30 @@ static inline void blk_wake_io_task(struct task_struct *waiter)
+>   		wake_up_process(waiter);
+>   }
+>   
+> +unsigned long disk_start_io_acct(struct gendisk *disk, unsigned int sectors,
+> +		unsigned int op);
+> +void disk_end_io_acct(struct gendisk *disk, unsigned int op,
+> +		unsigned long start_time);
+> +
+> +/**
+> + * bio_start_io_acct - start I/O accounting for bio based drivers
+> + * @bio:	bio to start account for
+> + *
+> + * Returns the start time that should be passed back to bio_end_io_acct().
+> + */
+> +static inline unsigned long bio_start_io_acct(struct bio *bio)
+> +{
+> +	return disk_start_io_acct(bio->bi_disk, bio_sectors(bio), bio_op(bio));
+> +}
+> +
+> +/**
+> + * bio_end_io_acct - end I/O accounting for bio based drivers
+> + * @bio:	bio to end account for
+> + * @start:	start time returned by bio_start_io_acct()
+> + */
+> +static inline void bio_end_io_acct(struct bio *bio, unsigned long start_time)
+> +{
+> +	return disk_end_io_acct(bio->bi_disk, bio_op(bio), start_time);
+> +}
+> +
+>   #endif
+> 
