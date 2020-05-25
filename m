@@ -1,16 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 11/12] dm-zoned: round-robin load balancer
- for reclaiming zones
-Date: Mon, 25 May 2020 09:53:32 +0200
-Message-ID: <d597df35-f014-ec87-16b7-38bfa77f9241@suse.de>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [PATCH 10/12] dm-zoned: support arbitrary number of
+	devices
+Date: Mon, 25 May 2020 08:22:55 +0000
+Message-ID: <CY4PR04MB3751A01110515AE5F82E4D96E7B30@CY4PR04MB3751.namprd04.prod.outlook.com>
 References: <20200522153901.133375-1-hare@suse.de>
-	<20200522153901.133375-12-hare@suse.de>
-	<CY4PR04MB375158B6B94B1452DFDFCF98E7B30@CY4PR04MB3751.namprd04.prod.outlook.com>
+	<20200522153901.133375-11-hare@suse.de>
+	<CY4PR04MB3751A184940AC59203AC4D33E7B30@CY4PR04MB3751.namprd04.prod.outlook.com>
+	<c1e5003c-05ca-e441-b368-8e2707da438f@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CY4PR04MB375158B6B94B1452DFDFCF98E7B30@CY4PR04MB3751.namprd04.prod.outlook.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -21,53 +21,321 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <Damien.LeMoal@wdc.com>
+To: Hannes Reinecke <hare@suse.de>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-T24gNS8yNS8yMCA0OjQyIEFNLCBEYW1pZW4gTGUgTW9hbCB3cm90ZToKPiBPbiAyMDIwLzA1LzIz
-IDA6MzksIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gV2hlbiByZWNsYWltaW5nIHpvbmVzIHdl
-IHNob3VsZCBhcmJpdHJhdGUgYmV0d2VlbiB0aGUgem9uZWQKPj4gZGV2aWNlcyB0byBnZXQgYSBi
-ZXR0ZXIgdGhyb3VnaHB1dC4gU28gaW1wbGVtZW50IGEgc2ltcGxlCj4+IHJvdW5kLXJvYmluIGxv
-YWQgYmFsYW5jZXIgYmV0d2VlbiB0aGUgem9uZWQgZGV2aWNlcy4KPj4KPj4gU2lnbmVkLW9mZi1i
-eTogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2UuZGU+Cj4+IC0tLQo+PiAgIGRyaXZlcnMvbWQv
-ZG0tem9uZWQtbWV0YWRhdGEuYyB8IDggKysrKysrKy0KPj4gICAxIGZpbGUgY2hhbmdlZCwgNyBp
-bnNlcnRpb25zKCspLCAxIGRlbGV0aW9uKC0pCj4+Cj4+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21k
-L2RtLXpvbmVkLW1ldGFkYXRhLmMgYi9kcml2ZXJzL21kL2RtLXpvbmVkLW1ldGFkYXRhLmMKPj4g
-aW5kZXggODc3ODRlNzc4NWJjLi4yNWRjYWQyYTU2NWYgMTAwNjQ0Cj4+IC0tLSBhL2RyaXZlcnMv
-bWQvZG0tem9uZWQtbWV0YWRhdGEuYwo+PiArKysgYi9kcml2ZXJzL21kL2RtLXpvbmVkLW1ldGFk
-YXRhLmMKPj4gQEAgLTE3MSw2ICsxNzEsOCBAQCBzdHJ1Y3QgZG16X21ldGFkYXRhIHsKPj4gICAJ
-dW5zaWduZWQgaW50CQlucl9yZXNlcnZlZF9zZXE7Cj4+ICAgCXVuc2lnbmVkIGludAkJbnJfY2h1
-bmtzOwo+PiAgIAo+PiArCXVuc2lnbmVkIGludAkJbGFzdF9hbGxvY19pZHg7Cj4+ICsKPj4gICAJ
-LyogWm9uZSBpbmZvcm1hdGlvbiBhcnJheSAqLwo+PiAgIAlzdHJ1Y3QgeGFycmF5CQl6b25lczsK
-Pj4gICAKPj4gQEAgLTIxNzgsNyArMjE4MCw3IEBAIHN0cnVjdCBkbV96b25lICpkbXpfYWxsb2Nf
-em9uZShzdHJ1Y3QgZG16X21ldGFkYXRhICp6bWQsIHVuc2lnbmVkIGxvbmcgZmxhZ3MpCj4+ICAg
-ewo+PiAgIAlzdHJ1Y3QgbGlzdF9oZWFkICpsaXN0Owo+PiAgIAlzdHJ1Y3QgZG1fem9uZSAqem9u
-ZTsKPj4gLQl1bnNpZ25lZCBpbnQgZGV2X2lkeCA9IDA7Cj4+ICsJdW5zaWduZWQgaW50IGRldl9p
-ZHggPSB6bWQtPmxhc3RfYWxsb2NfaWR4Owo+PiAgIAo+PiAgIGFnYWluOgo+PiAgIAlpZiAoZmxh
-Z3MgJiBETVpfQUxMT0NfQ0FDSEUpCj4+IEBAIC0yMjE0LDYgKzIyMTYsOSBAQCBzdHJ1Y3QgZG1f
-em9uZSAqZG16X2FsbG9jX3pvbmUoc3RydWN0IGRtel9tZXRhZGF0YSAqem1kLCB1bnNpZ25lZCBs
-b25nIGZsYWdzKQo+PiAgIAl6b25lID0gbGlzdF9maXJzdF9lbnRyeShsaXN0LCBzdHJ1Y3QgZG1f
-em9uZSwgbGluayk7Cj4+ICAgCWxpc3RfZGVsX2luaXQoJnpvbmUtPmxpbmspOwo+PiAgIAo+PiAr
-CWlmICghKGZsYWdzICYgRE1aX0FMTE9DX0NBQ0hFKSkKPj4gKwkJem1kLT5sYXN0X2FsbG9jX2lk
-eCA9IChkZXZfaWR4ICsgMSkgJSB6bWQtPm5yX2RldnM7Cj4+ICsKPj4gICAJaWYgKGRtel9pc19j
-YWNoZSh6b25lKSkKPj4gICAJCWF0b21pY19kZWMoJnptZC0+dW5tYXBfbnJfY2FjaGUpOwo+PiAg
-IAllbHNlIGlmIChkbXpfaXNfcm5kKHpvbmUpKQo+PiBAQCAtMjgzOSw2ICsyODQ0LDcgQEAgaW50
-IGRtel9jdHJfbWV0YWRhdGEoc3RydWN0IGRtel9kZXYgKmRldiwgaW50IG51bV9kZXYsCj4+ICAg
-CXptZC0+ZGV2ID0gZGV2Owo+PiAgIAl6bWQtPm5yX2RldnMgPSBudW1fZGV2Owo+PiAgIAl6bWQt
-Pm1ibGtfcmJ0cmVlID0gUkJfUk9PVDsKPj4gKwl6bWQtPmxhc3RfYWxsb2NfaWR4ID0gMDsKPj4g
-ICAJaW5pdF9yd3NlbSgmem1kLT5tYmxrX3NlbSk7Cj4+ICAgCW11dGV4X2luaXQoJnptZC0+bWJs
-a19mbHVzaF9sb2NrKTsKPj4gICAJc3Bpbl9sb2NrX2luaXQoJnptZC0+bWJsa19sb2NrKTsKPj4K
-PiAKPiAKPiBPSy4gU28gbXkgY29tbWVudCBvbiBwYXRjaCA4IGlzIGFscmVhZHkgYWRkcmVzc2Vk
-LiBPciBhdCBsZWFzdCBwYXJ0bHkuLi4gV2hlcmUKPiBpcyBsYXN0X2FsbG9jX2lkeCBhY3R1YWxs
-eSB1c2VkID8gSXQgbG9va3MgbGlrZSB0aGlzIG9ubHkgc2V0cyBsYXN0X2FsbG9jX2lkeAo+IGJ1
-dCBkbyBub3QgdXNlIHRoYXQgdmFsdWUgb24gZW50cnkgdG8gZG16X2FsbG9jX3pvbmUoKSB0byBh
-bGxvY2F0ZSB0aGUgem9uZS4KPiAKQXcsIGZzY2suIFNvbWV0aGluZyB3ZW50IGFzdHJheSB3aGVu
-IGdlbmVyYXRpbmcgdGhlIHBhdGNoZXMuCldpbGwgYmUgZml4aW5nIGl0IHVwIGZvciB0aGUgbmV4
-dCByb3VuZC4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZSAgICAgICAg
-ICAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZSAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIFNvZnR3YXJlIFNvbHV0
-aW9ucyBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKSFJCIDM2ODA5IChBRyBO
-w7xybmJlcmcpLCBHZXNjaMOkZnRzZsO8aHJlcjogRmVsaXggSW1lbmTDtnJmZmVyCgoKLS0KZG0t
-ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0
-LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On 2020/05/25 16:52, Hannes Reinecke wrote:
+> On 5/25/20 4:36 AM, Damien Le Moal wrote:
+>> On 2020/05/23 0:39, Hannes Reinecke wrote:
+>>> Remove the hard-coded limit of two devices and support an unlimited
+>>> number of additional zoned devices.
+>>> With that we need to increase the device-mapper version number to
+>>> 3.0.0 as we've modified the interface.
+>>>
+>>> Signed-off-by: Hannes Reinecke <hare@suse.de>
+>>> ---
+>>>   drivers/md/dm-zoned-metadata.c |  68 +++++++++++-----------
+>>>   drivers/md/dm-zoned-reclaim.c  |  28 ++++++---
+>>>   drivers/md/dm-zoned-target.c   | 129 +++++++++++++++++++++++++----------------
+>>>   drivers/md/dm-zoned.h          |   9 +--
+>>>   4 files changed, 139 insertions(+), 95 deletions(-)
+>>>
+>>> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+>>> index 5f44970a6187..87784e7785bc 100644
+>>> --- a/drivers/md/dm-zoned-metadata.c
+>>> +++ b/drivers/md/dm-zoned-metadata.c
+>>> @@ -260,6 +260,11 @@ unsigned int dmz_zone_nr_sectors_shift(struct dmz_metadata *zmd)
+>>>   	return zmd->zone_nr_sectors_shift;
+>>>   }
+>>>   
+>>> +unsigned int dmz_nr_devs(struct dmz_metadata *zmd)
+>>> +{
+>>> +	return zmd->nr_devs;
+>>> +}
+>>
+>> Is this helper really needed ?
+>>
+> 
+> Yes, in dm-zoned-reclaim.c
+
+I meant to say: whoever needs to know the number of devices can just use
+"zmd->nr_devs". No need for a helper for that was my point.
+
+
+> 
+>>> +
+>>>   unsigned int dmz_nr_zones(struct dmz_metadata *zmd)
+>>>   {
+>>>   	return zmd->nr_zones;
+>>> @@ -270,24 +275,14 @@ unsigned int dmz_nr_chunks(struct dmz_metadata *zmd)
+>>>   	return zmd->nr_chunks;
+>>>   }
+>>>   
+>>> -unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd)
+>>> +unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd, int idx)
+>>>   {
+>>> -	unsigned int nr_rnd_zones = 0;
+>>> -	int i;
+>>> -
+>>> -	for (i = 0; i < zmd->nr_devs; i++)
+>>> -		nr_rnd_zones += zmd->dev[i].nr_rnd;
+>>> -	return nr_rnd_zones;
+>>> +	return zmd->dev[idx].nr_rnd;
+>>
+>> AH. OK. So my comment on patch 8 is voided :)
+>>
+> Yeah, the patch arrangement could be improved; I'll see to roll both 
+> changes into one patch.
+> 
+>>>   }
+>>>   
+>>> -unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd)
+>>> +unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd, int idx)
+>>>   {
+>>> -	unsigned int nr_unmap_rnd_zones = 0;
+>>> -	int i;
+>>> -
+>>> -	for (i = 0; i < zmd->nr_devs; i++)
+>>> -		nr_unmap_rnd_zones += atomic_read(&zmd->dev[i].unmap_nr_rnd);
+>>> -	return nr_unmap_rnd_zones;
+>>> +	return atomic_read(&zmd->dev[idx].unmap_nr_rnd);
+>>>   }
+>>>   
+>>>   unsigned int dmz_nr_cache_zones(struct dmz_metadata *zmd)
+>>> @@ -300,24 +295,14 @@ unsigned int dmz_nr_unmap_cache_zones(struct dmz_metadata *zmd)
+>>>   	return atomic_read(&zmd->unmap_nr_cache);
+>>>   }
+>>>   
+>>> -unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd)
+>>> +unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd, int idx)
+>>>   {
+>>> -	unsigned int nr_seq_zones = 0;
+>>> -	int i;
+>>> -
+>>> -	for (i = 0; i < zmd->nr_devs; i++)
+>>> -		nr_seq_zones += zmd->dev[i].nr_seq;
+>>> -	return nr_seq_zones;
+>>> +	return zmd->dev[idx].nr_seq;
+>>>   }
+>>>   
+>>> -unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd)
+>>> +unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd, int idx)
+>>>   {
+>>> -	unsigned int nr_unmap_seq_zones = 0;
+>>> -	int i;
+>>> -
+>>> -	for (i = 0; i < zmd->nr_devs; i++)
+>>> -		nr_unmap_seq_zones += atomic_read(&zmd->dev[i].unmap_nr_seq);
+>>> -	return nr_unmap_seq_zones;
+>>> +	return atomic_read(&zmd->dev[idx].unmap_nr_seq);
+>>>   }
+>>>   
+>>>   static struct dm_zone *dmz_get(struct dmz_metadata *zmd, unsigned int zone_id)
+>>> @@ -1530,7 +1515,20 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
+>>>   		 */
+>>>   		zmd->sb[0].zone = dmz_get(zmd, 0);
+>>>   
+>>> -		zoned_dev = &zmd->dev[1];
+>>> +		for (i = 1; i < zmd->nr_devs; i++) {
+>>> +			zoned_dev = &zmd->dev[i];
+>>> +
+>>> +			ret = blkdev_report_zones(zoned_dev->bdev, 0,
+>>> +						  BLK_ALL_ZONES,
+>>> +						  dmz_init_zone, zoned_dev);
+>>> +			if (ret < 0) {
+>>> +				DMDEBUG("(%s): Failed to report zones, error %d",
+>>> +					zmd->devname, ret);
+>>> +				dmz_drop_zones(zmd);
+>>> +				return ret;
+>>> +			}
+>>> +		}
+>>> +		return 0;
+>>>   	}
+>>>   
+>>>   	/*
+>>> @@ -2921,10 +2919,14 @@ int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
+>>>   		      zmd->nr_data_zones, zmd->nr_chunks);
+>>>   	dmz_zmd_debug(zmd, "    %u cache zones (%u unmapped)",
+>>>   		      zmd->nr_cache, atomic_read(&zmd->unmap_nr_cache));
+>>> -	dmz_zmd_debug(zmd, "    %u random zones (%u unmapped)",
+>>> -		      dmz_nr_rnd_zones(zmd), dmz_nr_unmap_rnd_zones(zmd));
+>>> -	dmz_zmd_debug(zmd, "    %u sequential zones (%u unmapped)",
+>>> -		      dmz_nr_seq_zones(zmd), dmz_nr_unmap_seq_zones(zmd));
+>>> +	for (i = 0; i < zmd->nr_devs; i++) {
+>>> +		dmz_zmd_debug(zmd, "    %u random zones (%u unmapped)",
+>>> +			      dmz_nr_rnd_zones(zmd, i),
+>>> +			      dmz_nr_unmap_rnd_zones(zmd, i));
+>>> +		dmz_zmd_debug(zmd, "    %u sequential zones (%u unmapped)",
+>>> +			      dmz_nr_seq_zones(zmd, i),
+>>> +			      dmz_nr_unmap_seq_zones(zmd, i));
+>>> +	}
+>>>   	dmz_zmd_debug(zmd, "  %u reserved sequential data zones",
+>>>   		      zmd->nr_reserved_seq);
+>>>   	dmz_zmd_debug(zmd, "Format:");
+>>> diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+>>> index fba0d48e38a7..f2e053b5f2db 100644
+>>> --- a/drivers/md/dm-zoned-reclaim.c
+>>> +++ b/drivers/md/dm-zoned-reclaim.c
+>>> @@ -442,15 +442,18 @@ static unsigned int dmz_reclaim_percentage(struct dmz_reclaim *zrc)
+>>>   {
+>>>   	struct dmz_metadata *zmd = zrc->metadata;
+>>>   	unsigned int nr_cache = dmz_nr_cache_zones(zmd);
+>>> -	unsigned int nr_rnd = dmz_nr_rnd_zones(zmd);
+>>> -	unsigned int nr_unmap, nr_zones;
+>>> +	unsigned int nr_unmap = 0, nr_zones = 0;
+>>>   
+>>>   	if (nr_cache) {
+>>>   		nr_zones = nr_cache;
+>>>   		nr_unmap = dmz_nr_unmap_cache_zones(zmd);
+>>>   	} else {
+>>> -		nr_zones = nr_rnd;
+>>> -		nr_unmap = dmz_nr_unmap_rnd_zones(zmd);
+>>> +		int i;
+>>> +
+>>> +		for (i = 0; i < dmz_nr_devs(zmd); i++) {
+>>> +			nr_zones += dmz_nr_rnd_zones(zmd, i);
+>>
+>> May be not... We could keep constant totals in zmd to avoid this.
+>>
+>>> +			nr_unmap += dmz_nr_unmap_rnd_zones(zmd, i);
+>>> +		}
+>>>   	}
+>>>   	return nr_unmap * 100 / nr_zones;
+>>>   }
+>>> @@ -460,7 +463,11 @@ static unsigned int dmz_reclaim_percentage(struct dmz_reclaim *zrc)
+>>>    */
+>>>   static bool dmz_should_reclaim(struct dmz_reclaim *zrc, unsigned int p_unmap)
+>>>   {
+>>> -	unsigned int nr_reclaim = dmz_nr_rnd_zones(zrc->metadata);
+>>> +	int i;
+>>> +	unsigned int nr_reclaim = 0;
+>>> +
+>>> +	for (i = 0; i < dmz_nr_devs(zrc->metadata); i++)
+>>> +		nr_reclaim += dmz_nr_rnd_zones(zrc->metadata, i);
+>>>   
+>>>   	if (dmz_nr_cache_zones(zrc->metadata))
+>>>   		nr_reclaim += dmz_nr_cache_zones(zrc->metadata);
+>>> @@ -487,8 +494,8 @@ static void dmz_reclaim_work(struct work_struct *work)
+>>>   {
+>>>   	struct dmz_reclaim *zrc = container_of(work, struct dmz_reclaim, work.work);
+>>>   	struct dmz_metadata *zmd = zrc->metadata;
+>>> -	unsigned int p_unmap;
+>>> -	int ret;
+>>> +	unsigned int p_unmap, nr_unmap_rnd = 0, nr_rnd = 0;
+>>> +	int ret, i;
+>>>   
+>>>   	if (dmz_dev_is_dying(zmd))
+>>>   		return;
+>>> @@ -513,14 +520,17 @@ static void dmz_reclaim_work(struct work_struct *work)
+>>>   		zrc->kc_throttle.throttle = min(75U, 100U - p_unmap / 2);
+>>>   	}
+>>>   
+>>> +	for (i = 0; i < dmz_nr_devs(zmd); i++) {
+>>> +		nr_unmap_rnd += dmz_nr_unmap_rnd_zones(zmd, i);
+>>> +		nr_rnd += dmz_nr_rnd_zones(zmd, i);
+>>> +	}
+>>>   	DMDEBUG("(%s): Reclaim (%u): %s, %u%% free zones (%u/%u cache %u/%u random)",
+>>>   		dmz_metadata_label(zmd),
+>>>   		zrc->kc_throttle.throttle,
+>>>   		(dmz_target_idle(zrc) ? "Idle" : "Busy"),
+>>>   		p_unmap, dmz_nr_unmap_cache_zones(zmd),
+>>>   		dmz_nr_cache_zones(zmd),
+>>> -		dmz_nr_unmap_rnd_zones(zmd),
+>>> -		dmz_nr_rnd_zones(zmd));
+>>> +		nr_unmap_rnd, nr_rnd);
+>>>   
+>>>   	ret = dmz_do_reclaim(zrc);
+>>>   	if (ret && ret != -EINTR) {
+> 
+> In the light of this I guess there is a benefit from having the counters
+> in the metadata; that indeed would save us to having to export the 
+> number of devices.
+> I'll give it a go with the next round.
+> 
+>>> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+>>> index bca9a611b8dd..f34fcc3f7cc6 100644
+>>> --- a/drivers/md/dm-zoned-target.c
+>>> +++ b/drivers/md/dm-zoned-target.c
+>>> @@ -13,8 +13,6 @@
+>>>   
+>>>   #define DMZ_MIN_BIOS		8192
+>>>   
+>>> -#define DMZ_MAX_DEVS		2
+>>> -
+>>>   /*
+>>>    * Zone BIO context.
+>>>    */
+>>> @@ -40,9 +38,10 @@ struct dm_chunk_work {
+>>>    * Target descriptor.
+>>>    */
+>>>   struct dmz_target {
+>>> -	struct dm_dev		*ddev[DMZ_MAX_DEVS];
+>>> +	struct dm_dev		**ddev;
+>>> +	unsigned int		nr_ddevs;
+>>>   
+>>> -	unsigned long		flags;
+>>> +	unsigned int		flags;
+>>>   
+>>>   	/* Zoned block device information */
+>>>   	struct dmz_dev		*dev;
+>>> @@ -764,7 +763,7 @@ static void dmz_put_zoned_device(struct dm_target *ti)
+>>>   	struct dmz_target *dmz = ti->private;
+>>>   	int i;
+>>>   
+>>> -	for (i = 0; i < DMZ_MAX_DEVS; i++) {
+>>> +	for (i = 0; i < dmz->nr_ddevs; i++) {
+>>>   		if (dmz->ddev[i]) {
+>>>   			dm_put_device(ti, dmz->ddev[i]);
+>>>   			dmz->ddev[i] = NULL;
+>>> @@ -777,21 +776,35 @@ static int dmz_fixup_devices(struct dm_target *ti)
+>>>   	struct dmz_target *dmz = ti->private;
+>>>   	struct dmz_dev *reg_dev, *zoned_dev;
+>>>   	struct request_queue *q;
+>>> +	sector_t zone_nr_sectors = 0;
+>>> +	int i;
+>>>   
+>>>   	/*
+>>> -	 * When we have two devices, the first one must be a regular block
+>>> -	 * device and the second a zoned block device.
+>>> +	 * When we have more than on devices, the first one must be a
+>>> +	 * regular block device and the others zoned block devices.
+>>>   	 */
+>>> -	if (dmz->ddev[0] && dmz->ddev[1]) {
+>>> +	if (dmz->nr_ddevs > 1) {
+>>>   		reg_dev = &dmz->dev[0];
+>>>   		if (!(reg_dev->flags & DMZ_BDEV_REGULAR)) {
+>>>   			ti->error = "Primary disk is not a regular device";
+>>>   			return -EINVAL;
+>>>   		}
+>>> -		zoned_dev = &dmz->dev[1];
+>>> -		if (zoned_dev->flags & DMZ_BDEV_REGULAR) {
+>>> -			ti->error = "Secondary disk is not a zoned device";
+>>> -			return -EINVAL;
+>>> +		for (i = 1; i < dmz->nr_ddevs; i++) {
+>>> +			zoned_dev = &dmz->dev[i];
+>>> +			if (zoned_dev->flags & DMZ_BDEV_REGULAR) {
+>>> +				ti->error = "Secondary disk is not a zoned device";
+>>> +				return -EINVAL;
+>>> +			}
+>>> +			q = bdev_get_queue(zoned_dev->bdev);
+>>
+>> May be add a comment here that we must check that all zoned devices have the
+>> same zone size ?
+>>
+> 
+> I thought it was self-explanatory; but maybe not.
+> Will be adding it.
+
+It is indeed not too hard to figure out. But a plain english sentence is nice too :)
+
+> 
+> Cheers,
+> 
+> Hannes
+> 
+
+
+-- 
+Damien Le Moal
+Western Digital Research
