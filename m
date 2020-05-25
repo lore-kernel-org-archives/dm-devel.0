@@ -1,114 +1,69 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 01/16] block: add disk/bio-based accounting helpers
-Date: Mon, 25 May 2020 13:29:59 +0200
-Message-ID: <20200525113014.345997-2-hch@lst.de>
+Subject: [PATCH 03/16] rsxx: use bio_{start,end}_io_acct
+Date: Mon, 25 May 2020 13:30:01 +0200
+Message-ID: <20200525113014.345997-4-hch@lst.de>
 References: <20200525113014.345997-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-bcache-owner@vger.kernel.org>
+Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20200525113014.345997-1-hch@lst.de>
-Sender: linux-bcache-owner@vger.kernel.org
+Sender: linux-block-owner@vger.kernel.org
 To: Jens Axboe <axboe@kernel.dk>
 Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Add two new helpers to simplify I/O accounting for bio based drivers.
-Currently these drivers use the generic_start_io_acct and
-generic_end_io_acct helpers which have very cumbersome calling
-conventions, don't actually return the time they started accounting,
-and try to deal with accounting for partitions, which can't happen
-for bio based drivers.  The new helpers will be used to subsequently
-replace uses of the old helpers.
-
-The main function is the bio based wrappes in blkdev.h, but for zram
-which wants to account rw_page based I/O lower level routines are
-provided as well.
+Switch rsxx to use the nicer bio accounting helpers.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/blk-core.c       | 34 ++++++++++++++++++++++++++++++++++
- include/linux/blkdev.h | 26 ++++++++++++++++++++++++++
- 2 files changed, 60 insertions(+)
+ drivers/block/rsxx/dev.c | 19 ++-----------------
+ 1 file changed, 2 insertions(+), 17 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 77e57c2e8d602..8973104f88d90 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -1432,6 +1432,40 @@ void blk_account_io_start(struct request *rq, bool new_io)
- 	part_stat_unlock();
- }
+diff --git a/drivers/block/rsxx/dev.c b/drivers/block/rsxx/dev.c
+index 8ffa8260dcafe..3ba07ab30c84f 100644
+--- a/drivers/block/rsxx/dev.c
++++ b/drivers/block/rsxx/dev.c
+@@ -96,20 +96,6 @@ static const struct block_device_operations rsxx_fops = {
+ 	.ioctl		= rsxx_blkdev_ioctl,
+ };
  
-+unsigned long disk_start_io_acct(struct gendisk *disk, unsigned int sectors,
-+		unsigned int op)
-+{
-+	struct hd_struct *part = &disk->part0;
-+	const int sgrp = op_stat_group(op);
-+	unsigned long now = READ_ONCE(jiffies);
-+
-+	part_stat_lock();
-+	update_io_ticks(part, now, false);
-+	part_stat_inc(part, ios[sgrp]);
-+	part_stat_add(part, sectors[sgrp], sectors);
-+	part_stat_local_inc(part, in_flight[op_is_write(op)]);
-+	part_stat_unlock();
-+
-+	return now;
-+}
-+EXPORT_SYMBOL(disk_start_io_acct);
-+
-+void disk_end_io_acct(struct gendisk *disk, unsigned int op,
-+		unsigned long start_time)
-+{
-+	struct hd_struct *part = &disk->part0;
-+	const int sgrp = op_stat_group(op);
-+	unsigned long now = READ_ONCE(jiffies);
-+	unsigned long duration = now - start_time;
-+
-+	part_stat_lock();
-+	update_io_ticks(part, now, true);
-+	part_stat_add(part, nsecs[sgrp], jiffies_to_nsecs(duration));
-+	part_stat_local_dec(part, in_flight[op_is_write(op)]);
-+	part_stat_unlock();
-+}
-+EXPORT_SYMBOL(disk_end_io_acct);
-+
- /*
-  * Steal bios from a request and add them to a bio list.
-  * The request must not have been partially completed before.
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 7d10f4e632325..76d01a8a13b80 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1892,4 +1892,30 @@ static inline void blk_wake_io_task(struct task_struct *waiter)
- 		wake_up_process(waiter);
- }
+-static void disk_stats_start(struct rsxx_cardinfo *card, struct bio *bio)
+-{
+-	generic_start_io_acct(card->queue, bio_op(bio), bio_sectors(bio),
+-			     &card->gendisk->part0);
+-}
+-
+-static void disk_stats_complete(struct rsxx_cardinfo *card,
+-				struct bio *bio,
+-				unsigned long start_time)
+-{
+-	generic_end_io_acct(card->queue, bio_op(bio),
+-			    &card->gendisk->part0, start_time);
+-}
+-
+ static void bio_dma_done_cb(struct rsxx_cardinfo *card,
+ 			    void *cb_data,
+ 			    unsigned int error)
+@@ -121,7 +107,7 @@ static void bio_dma_done_cb(struct rsxx_cardinfo *card,
  
-+unsigned long disk_start_io_acct(struct gendisk *disk, unsigned int sectors,
-+		unsigned int op);
-+void disk_end_io_acct(struct gendisk *disk, unsigned int op,
-+		unsigned long start_time);
-+
-+/**
-+ * bio_start_io_acct - start I/O accounting for bio based drivers
-+ * @bio:	bio to start account for
-+ *
-+ * Returns the start time that should be passed back to bio_end_io_acct().
-+ */
-+static inline unsigned long bio_start_io_acct(struct bio *bio)
-+{
-+	return disk_start_io_acct(bio->bi_disk, bio_sectors(bio), bio_op(bio));
-+}
-+
-+/**
-+ * bio_end_io_acct - end I/O accounting for bio based drivers
-+ * @bio:	bio to end account for
-+ * @start:	start time returned by bio_start_io_acct()
-+ */
-+static inline void bio_end_io_acct(struct bio *bio, unsigned long start_time)
-+{
-+	return disk_end_io_acct(bio->bi_disk, bio_op(bio), start_time);
-+}
-+
- #endif
+ 	if (atomic_dec_and_test(&meta->pending_dmas)) {
+ 		if (!card->eeh_state && card->gendisk)
+-			disk_stats_complete(card, meta->bio, meta->start_time);
++			bio_end_io_acct(meta->bio, meta->start_time);
+ 
+ 		if (atomic_read(&meta->error))
+ 			bio_io_error(meta->bio);
+@@ -167,10 +153,9 @@ static blk_qc_t rsxx_make_request(struct request_queue *q, struct bio *bio)
+ 	bio_meta->bio = bio;
+ 	atomic_set(&bio_meta->error, 0);
+ 	atomic_set(&bio_meta->pending_dmas, 0);
+-	bio_meta->start_time = jiffies;
+ 
+ 	if (!unlikely(card->halt))
+-		disk_stats_start(card, bio);
++		bio_meta->start_time = bio_start_io_acct(bio);
+ 
+ 	dev_dbg(CARD_TO_DEV(card), "BIO[%c]: meta: %p addr8: x%llx size: %d\n",
+ 		 bio_data_dir(bio) ? 'W' : 'R', bio_meta,
 -- 
 2.26.2
