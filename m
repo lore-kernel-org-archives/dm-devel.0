@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 03/16] rsxx: use bio_{start,end}_io_acct
-Date: Mon, 25 May 2020 13:30:01 +0200
-Message-ID: <20200525113014.345997-4-hch@lst.de>
+Subject: [PATCH 05/16] bcache: use bio_{start,end}_io_acct
+Date: Mon, 25 May 2020 13:30:03 +0200
+Message-ID: <20200525113014.345997-6-hch@lst.de>
 References: <20200525113014.345997-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,58 +12,78 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Switch rsxx to use the nicer bio accounting helpers.
+Switch bcache to use the nicer bio accounting helpers, and call the
+routines where we also sample the start time to give coherent accounting
+results.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/block/rsxx/dev.c | 19 ++-----------------
- 1 file changed, 2 insertions(+), 17 deletions(-)
+ drivers/md/bcache/request.c | 18 ++++--------------
+ 1 file changed, 4 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/block/rsxx/dev.c b/drivers/block/rsxx/dev.c
-index 8ffa8260dcafe..3ba07ab30c84f 100644
---- a/drivers/block/rsxx/dev.c
-+++ b/drivers/block/rsxx/dev.c
-@@ -96,20 +96,6 @@ static const struct block_device_operations rsxx_fops = {
- 	.ioctl		= rsxx_blkdev_ioctl,
- };
- 
--static void disk_stats_start(struct rsxx_cardinfo *card, struct bio *bio)
--{
--	generic_start_io_acct(card->queue, bio_op(bio), bio_sectors(bio),
--			     &card->gendisk->part0);
--}
+diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
+index 77d1a26975174..22b483527176b 100644
+--- a/drivers/md/bcache/request.c
++++ b/drivers/md/bcache/request.c
+@@ -668,9 +668,7 @@ static void backing_request_endio(struct bio *bio)
+ static void bio_complete(struct search *s)
+ {
+ 	if (s->orig_bio) {
+-		generic_end_io_acct(s->d->disk->queue, bio_op(s->orig_bio),
+-				    &s->d->disk->part0, s->start_time);
 -
--static void disk_stats_complete(struct rsxx_cardinfo *card,
--				struct bio *bio,
--				unsigned long start_time)
--{
--	generic_end_io_acct(card->queue, bio_op(bio),
--			    &card->gendisk->part0, start_time);
--}
++		bio_end_io_acct(s->orig_bio, s->start_time);
+ 		trace_bcache_request_end(s->d, s->orig_bio);
+ 		s->orig_bio->bi_status = s->iop.status;
+ 		bio_endio(s->orig_bio);
+@@ -730,7 +728,7 @@ static inline struct search *search_alloc(struct bio *bio,
+ 	s->recoverable		= 1;
+ 	s->write		= op_is_write(bio_op(bio));
+ 	s->read_dirty_data	= 0;
+-	s->start_time		= jiffies;
++	s->start_time		= bio_start_io_acct(bio);
+ 
+ 	s->iop.c		= d->c;
+ 	s->iop.bio		= NULL;
+@@ -1082,8 +1080,7 @@ static void detached_dev_end_io(struct bio *bio)
+ 	bio->bi_end_io = ddip->bi_end_io;
+ 	bio->bi_private = ddip->bi_private;
+ 
+-	generic_end_io_acct(ddip->d->disk->queue, bio_op(bio),
+-			    &ddip->d->disk->part0, ddip->start_time);
++	bio_end_io_acct(bio, ddip->start_time);
+ 
+ 	if (bio->bi_status) {
+ 		struct cached_dev *dc = container_of(ddip->d,
+@@ -1108,7 +1105,7 @@ static void detached_dev_do_request(struct bcache_device *d, struct bio *bio)
+ 	 */
+ 	ddip = kzalloc(sizeof(struct detached_dev_io_private), GFP_NOIO);
+ 	ddip->d = d;
+-	ddip->start_time = jiffies;
++	ddip->start_time = bio_start_io_acct(bio);
+ 	ddip->bi_end_io = bio->bi_end_io;
+ 	ddip->bi_private = bio->bi_private;
+ 	bio->bi_end_io = detached_dev_end_io;
+@@ -1190,11 +1187,6 @@ blk_qc_t cached_dev_make_request(struct request_queue *q, struct bio *bio)
+ 		}
+ 	}
+ 
+-	generic_start_io_acct(q,
+-			      bio_op(bio),
+-			      bio_sectors(bio),
+-			      &d->disk->part0);
 -
- static void bio_dma_done_cb(struct rsxx_cardinfo *card,
- 			    void *cb_data,
- 			    unsigned int error)
-@@ -121,7 +107,7 @@ static void bio_dma_done_cb(struct rsxx_cardinfo *card,
+ 	bio_set_dev(bio, dc->bdev);
+ 	bio->bi_iter.bi_sector += dc->sb.data_offset;
  
- 	if (atomic_dec_and_test(&meta->pending_dmas)) {
- 		if (!card->eeh_state && card->gendisk)
--			disk_stats_complete(card, meta->bio, meta->start_time);
-+			bio_end_io_acct(meta->bio, meta->start_time);
+@@ -1311,8 +1303,6 @@ blk_qc_t flash_dev_make_request(struct request_queue *q, struct bio *bio)
+ 		return BLK_QC_T_NONE;
+ 	}
  
- 		if (atomic_read(&meta->error))
- 			bio_io_error(meta->bio);
-@@ -167,10 +153,9 @@ static blk_qc_t rsxx_make_request(struct request_queue *q, struct bio *bio)
- 	bio_meta->bio = bio;
- 	atomic_set(&bio_meta->error, 0);
- 	atomic_set(&bio_meta->pending_dmas, 0);
--	bio_meta->start_time = jiffies;
- 
- 	if (!unlikely(card->halt))
--		disk_stats_start(card, bio);
-+		bio_meta->start_time = bio_start_io_acct(bio);
- 
- 	dev_dbg(CARD_TO_DEV(card), "BIO[%c]: meta: %p addr8: x%llx size: %d\n",
- 		 bio_data_dir(bio) ? 'W' : 'R', bio_meta,
+-	generic_start_io_acct(q, bio_op(bio), bio_sectors(bio), &d->disk->part0);
+-
+ 	s = search_alloc(bio, d);
+ 	cl = &s->cl;
+ 	bio = &s->bio.bio;
 -- 
 2.26.2
