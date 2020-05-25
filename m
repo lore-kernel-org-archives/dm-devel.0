@@ -1,10 +1,9 @@
 From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH 06/12] dm-zoned: add metadata pointer to
-	struct dmz_dev
-Date: Mon, 25 May 2020 02:17:40 +0000
-Message-ID: <CY4PR04MB375138D29825827BA4DFEDD9E7B30@CY4PR04MB3751.namprd04.prod.outlook.com>
+Subject: Re: [PATCH 07/12] dm-zoned: add a 'reserved' zone flag
+Date: Mon, 25 May 2020 02:18:45 +0000
+Message-ID: <CY4PR04MB37515F9D681D8473A968CC4FE7B30@CY4PR04MB3751.namprd04.prod.outlook.com>
 References: <20200522153901.133375-1-hare@suse.de>
-	<20200522153901.133375-7-hare@suse.de>
+	<20200522153901.133375-8-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -24,84 +23,58 @@ Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.co
 List-Id: dm-devel.ids
 
 On 2020/05/23 0:39, Hannes Reinecke wrote:
-> Add a metadata pointer to struct dmz_dev and use it as argument
-> for blkdev_report_zones() instead of the metadata itself.
+> Instead of counting the number of reserved zones in dmz_free_zone()
+> we should mark the zone as 'reserved' during allocation and simplify
+> dmz_free_zone().
 > 
 > Signed-off-by: Hannes Reinecke <hare@suse.de>
 > ---
->  drivers/md/dm-zoned-metadata.c | 14 +++++++++-----
->  drivers/md/dm-zoned.h          |  7 ++++---
->  2 files changed, 13 insertions(+), 8 deletions(-)
+>  drivers/md/dm-zoned-metadata.c | 4 ++--
+>  drivers/md/dm-zoned.h          | 2 ++
+>  2 files changed, 4 insertions(+), 2 deletions(-)
 > 
 > diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-> index 7b6e7404f1e8..73479b4c8bca 100644
+> index 73479b4c8bca..1b9da698a812 100644
 > --- a/drivers/md/dm-zoned-metadata.c
 > +++ b/drivers/md/dm-zoned-metadata.c
-> @@ -1343,8 +1343,8 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
->   */
->  static int dmz_init_zone(struct blk_zone *blkz, unsigned int num, void *data)
->  {
-> -	struct dmz_metadata *zmd = data;
-> -	struct dmz_dev *dev = zmd->nr_devs > 1 ? &zmd->dev[1] : &zmd->dev[0];
-> +	struct dmz_dev *dev = data;
-> +	struct dmz_metadata *zmd = dev->metadata;
->  	int idx = num + dev->zone_offset;
->  	struct dm_zone *zone = kzalloc(sizeof(struct dm_zone), GFP_KERNEL);
->  
-> @@ -1480,8 +1480,12 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
->  
->  	/* Allocate zone array */
->  	zmd->nr_zones = 0;
-> -	for (i = 0; i < zmd->nr_devs; i++)
-> -		zmd->nr_zones += zmd->dev[i].nr_zones;
-> +	for (i = 0; i < zmd->nr_devs; i++) {
-> +		struct dmz_dev *dev = &zmd->dev[i];
-> +
-> +		dev->metadata = zmd;
-> +		zmd->nr_zones += dev->nr_zones;
-> +	}
->  
->  	if (!zmd->nr_zones) {
->  		DMERR("(%s): No zones found", zmd->devname);
-> @@ -1516,7 +1520,7 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
->  	 * first randomly writable zone.
->  	 */
->  	ret = blkdev_report_zones(zoned_dev->bdev, 0, BLK_ALL_ZONES,
-> -				  dmz_init_zone, zmd);
-> +				  dmz_init_zone, zoned_dev);
->  	if (ret < 0) {
->  		DMDEBUG("(%s): Failed to report zones, error %d",
->  			zmd->devname, ret);
+> @@ -1783,6 +1783,7 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
+>  			atomic_inc(&zmd->unmap_nr_rnd);
+>  		} else if (atomic_read(&zmd->nr_reserved_seq_zones) < zmd->nr_reserved_seq) {
+>  			list_add_tail(&dzone->link, &zmd->reserved_seq_zones_list);
+> +			set_bit(DMZ_RESERVED, &dzone->flags);
+>  			atomic_inc(&zmd->nr_reserved_seq_zones);
+>  			zmd->nr_seq--;
+>  		} else {
+> @@ -2210,8 +2211,7 @@ void dmz_free_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
+>  	} else if (dmz_is_rnd(zone)) {
+>  		list_add_tail(&zone->link, &zmd->unmap_rnd_list);
+>  		atomic_inc(&zmd->unmap_nr_rnd);
+> -	} else if (atomic_read(&zmd->nr_reserved_seq_zones) <
+> -		   zmd->nr_reserved_seq) {
+> +	} else if (dmz_is_reserved(zone)) {
+>  		list_add_tail(&zone->link, &zmd->reserved_seq_zones_list);
+>  		atomic_inc(&zmd->nr_reserved_seq_zones);
+>  	} else {
 > diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
-> index 356b436425e4..dab701893b67 100644
+> index dab701893b67..983f5b5e9fa0 100644
 > --- a/drivers/md/dm-zoned.h
 > +++ b/drivers/md/dm-zoned.h
-> @@ -45,11 +45,15 @@
->  #define dmz_bio_block(bio)	dmz_sect2blk((bio)->bi_iter.bi_sector)
->  #define dmz_bio_blocks(bio)	dmz_sect2blk(bio_sectors(bio))
+> @@ -130,6 +130,7 @@ enum {
+>  	DMZ_META,
+>  	DMZ_DATA,
+>  	DMZ_BUF,
+> +	DMZ_RESERVED,
 >  
-> +struct dmz_metadata;
-> +struct dmz_reclaim;
-> +
->  /*
->   * Zoned block device information.
->   */
->  struct dmz_dev {
->  	struct block_device	*bdev;
-> +	struct dmz_metadata	*metadata;
->  
->  	char			name[BDEVNAME_SIZE];
->  	uuid_t			uuid;
-> @@ -168,9 +172,6 @@ enum {
->  #define dmz_dev_debug(dev, format, args...)	\
->  	DMDEBUG("(%s): " format, (dev)->name, ## args)
->  
-> -struct dmz_metadata;
-> -struct dmz_reclaim;
-> -
->  /*
->   * Functions defined in dm-zoned-metadata.c
->   */
+>  	/* Zone internal state */
+>  	DMZ_RECLAIM,
+> @@ -147,6 +148,7 @@ enum {
+>  #define dmz_is_offline(z)	test_bit(DMZ_OFFLINE, &(z)->flags)
+>  #define dmz_is_readonly(z)	test_bit(DMZ_READ_ONLY, &(z)->flags)
+>  #define dmz_in_reclaim(z)	test_bit(DMZ_RECLAIM, &(z)->flags)
+> +#define dmz_is_reserved(z)	test_bit(DMZ_RESERVED, &(z)->flags)
+>  #define dmz_seq_write_err(z)	test_bit(DMZ_SEQ_WRITE_ERR, &(z)->flags)
+>  #define dmz_reclaim_should_terminate(z) \
+>  				test_bit(DMZ_RECLAIM_TERMINATE, &(z)->flags)
 > 
 
 Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
