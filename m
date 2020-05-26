@@ -1,16 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
 Subject: Re: [PATCH 03/12] dm-zoned: use on-stack superblock for
  tertiary devices
-Date: Tue, 26 May 2020 10:25:08 +0200
-Message-ID: <66f5340e-b069-8c1a-3c61-5f4bb9f469af@suse.de>
+Date: Tue, 26 May 2020 08:48:47 +0000
+Message-ID: <CY4PR04MB3751038F62CCE4431153C4DFE7B00@CY4PR04MB3751.namprd04.prod.outlook.com>
 References: <20200522153901.133375-1-hare@suse.de>
 	<20200522153901.133375-4-hare@suse.de>
 	<CY4PR04MB3751FB76DF953D2E84BFC419E7B30@CY4PR04MB3751.namprd04.prod.outlook.com>
+	<66f5340e-b069-8c1a-3c61-5f4bb9f469af@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CY4PR04MB3751FB76DF953D2E84BFC419E7B30@CY4PR04MB3751.namprd04.prod.outlook.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -21,55 +21,78 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <Damien.LeMoal@wdc.com>
+To: Hannes Reinecke <hare@suse.de>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-T24gNS8yNS8yMCA0OjA5IEFNLCBEYW1pZW4gTGUgTW9hbCB3cm90ZToKPiBPbiAyMDIwLzA1LzIz
-IDA6MzksIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gQ2hlY2tpbmcgdGhlIHRlcmlhcnkgc3Vw
-ZXJibG9jayBqdXN0IGNvbnNpc3RzIG9mIHZhbGlkYXRpbmcgVVVJRHMsCj4gCj4gcy90ZXJpYXJ5
-L3RlcnRpYXJ5Cj4gCj4+IGNyY3MsIGFuZCB0aGUgZ2VuZXJhdGlvbiBudW1iZXI7IGl0IGRvZXNu
-J3QgaGF2ZSBjb250ZW50cyB3aGljaAo+PiB3b3VsZCBiZSByZXF1aXJlZCBkdXJpbmcgdGhlIGFj
-dHVhbCBvcGVyYXRpb24uCj4+IFNvIHdlIHNob3VsZCB1c2UgYW4gb24tc3RhY2sgc3VwZXJibG9j
-ayBhbmQgYXZvaWQgaGF2aW5nIHRvIHN0b3JlCj4+IGl0IHRvZ2V0aGVyIHdpdGggdGhlICdyZWFs
-JyBzdXBlcmJsb2Nrcy4KPiAKPiAuLi5hIHRlbW9wcmFyeSBpbi1tZW1vcnkgc3VwZXJibG9jayBh
-bGxvY2F0aW9uLi4uCj4gCj4gVGhlIGVudGlyZSBzdHJ1Y3R1cmUgc2hvdWxkIG5vdCBiZSBvbiBz
-dGFjay4uLiBzZWUgYmVsb3cuCj4gCj4+Cj4+IFNpZ25lZC1vZmYtYnk6IEhhbm5lcyBSZWluZWNr
-ZSA8aGFyZUBzdXNlLmRlPgo+PiAtLS0KPj4gICBkcml2ZXJzL21kL2RtLXpvbmVkLW1ldGFkYXRh
-LmMgfCA5OCArKysrKysrKysrKysrKysrKysrKysrKy0tLS0tLS0tLS0tLS0tLS0tLS0KPj4gICAx
-IGZpbGUgY2hhbmdlZCwgNTMgaW5zZXJ0aW9ucygrKSwgNDUgZGVsZXRpb25zKC0pCj4+Cj4+IGRp
-ZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLXpvbmVkLW1ldGFkYXRhLmMgYi9kcml2ZXJzL21kL2Rt
-LXpvbmVkLW1ldGFkYXRhLmMKPj4gaW5kZXggM2RhNjcwMmJiMWFlLi5iNzBhOTg4ZmE3NzEgMTAw
-NjQ0Cj4+IC0tLSBhL2RyaXZlcnMvbWQvZG0tem9uZWQtbWV0YWRhdGEuYwo+PiArKysgYi9kcml2
-ZXJzL21kL2RtLXpvbmVkLW1ldGFkYXRhLmMKWyAuLiBdCj4+IEBAIC0xMzI2LDE4ICsxMzI3LDMy
-IEBAIHN0YXRpYyBpbnQgZG16X2xvYWRfc2Ioc3RydWN0IGRtel9tZXRhZGF0YSAqem1kKQo+PiAg
-IAkJICAgICAgIlVzaW5nIHN1cGVyIGJsb2NrICV1IChnZW4gJWxsdSkiLAo+PiAgIAkJICAgICAg
-em1kLT5tYmxrX3ByaW1hcnksIHptZC0+c2JfZ2VuKTsKPj4gICAKPj4gLQlpZiAoKHptZC0+c2Jf
-dmVyc2lvbiA+IDEpICYmIHptZC0+c2JbMl0uem9uZSkgewo+PiAtCQl6bWQtPnNiWzJdLmJsb2Nr
-ID0gZG16X3N0YXJ0X2Jsb2NrKHptZCwgem1kLT5zYlsyXS56b25lKTsKPj4gLQkJem1kLT5zYlsy
-XS5kZXYgPSBkbXpfem9uZV90b19kZXYoem1kLCB6bWQtPnNiWzJdLnpvbmUpOwo+PiAtCQlyZXQg
-PSBkbXpfZ2V0X3NiKHptZCwgMik7Cj4+IC0JCWlmIChyZXQpIHsKPj4gLQkJCWRtel9kZXZfZXJy
-KHptZC0+c2JbMl0uZGV2LAo+PiAtCQkJCSAgICAiUmVhZCB0ZXJ0aWFyeSBzdXBlciBibG9jayBm
-YWlsZWQiKTsKPj4gLQkJCXJldHVybiByZXQ7Cj4+ICsJaWYgKHptZC0+c2JfdmVyc2lvbiA+IDEp
-IHsKPj4gKwkJaW50IGk7Cj4+ICsKPj4gKwkJZm9yIChpID0gMTsgaSA8IHptZC0+bnJfZGV2czsg
-aSsrKSB7Cj4+ICsJCQlzdHJ1Y3QgZG16X3NiIHNiOwo+IAo+IEkgd291bGQgcmF0aGVyIGhhdmUg
-ZG16X2dldF9zYigpIGFsbG9jYXRlIHRoaXMgc3RydWN0IHRoYW4gaGF2ZSBpdCBvbiBzdGFjay4u
-Lgo+IEl0IGlzIG5vdCBiaWcsIGJ1dCBzdGlsbC4gVG8gYmUgc3ltZXRyaWMsIHdlIGNhbiBhZGQg
-ZG16X3B1dF9zYigpIGZvciBmcmVlaW5nIGl0Lgo+IApXaGlsZSBJIGRvIGFncmVlIHRvIG5vdCBo
-YXZpbmcgaXQgb24gdGhlIHN0YWNrLCBoYXZpbmcgZG16X2dldF9zYigpIApyZXR1cm5pbmcgdGhl
-IHN0cnVjdHVyZSB3b3VsZCByZXF1aXJlICh5ZXQgYW5vdGhlcikgb3ZlcmhhdWwgb2YgdGhlCm1h
-aW4gbWV0YWRhdGEgc3RydWN0dXJlIHdoaWNoIGN1cnJlbnRseSBoYXMgdGhlIHByaW1hcnkgYW5k
-IHNlY29uZGFyeQpzdXBlcmJsb2NrcyBlbWJlZGRlZC4KQW5kIEkgd291bGQgYXJndWUgdG8ga2Vl
-cCBpdCB0aGF0IHdheSwgYXMgdGhlIHByaW1hcnkgYW5kIHNlY29uZGFyeSAKc3VwZXJibG9ja3Mg
-YXJlIGVzc2VudGlhbCB0byB0aGUgYWN0dWFsIG9wZXJhdGlvbi4gU28gYWxsb2NhdGluZyB0aGVt
-IApzZXBhcmF0ZWx5IHdvdWxkIG1lYW4geWV0IGFub3RoZXIgaW5kaXJlY3Rpb24gdG8gZ2V0IHRv
-IHRoZW0uCkF0IHRoZSBzYW1lIHRpbWUsIGFueSB0ZXJ0aWFyeSBzdXBlcmJsb2NrIGlzIGp1c3Qg
-dXNlZCBmb3IgdmFsaWRhdGlvbgpkdXJpbmcgc3RhcnR1cCwgYW5kIG5vdCByZWZlcmVuY2VkIGFu
-eXdoZXJlIGFmdGVyd2FyZHMuClNvIHVzaW5nIGt6YWxsb2MoKSBoZXJlIGFuZCBmcmVlaW5nIHRo
-ZW0gYWZ0ZXIgY2hlY2tpbmcgaXMgZmluZS4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5l
-cyBSZWluZWNrZSAgICAgICAgICAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVA
-c3VzZS5kZSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApT
-VVNFIFNvZnR3YXJlIFNvbHV0aW9ucyBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJl
-cmcKSFJCIDM2ODA5IChBRyBOw7xybmJlcmcpLCBHZXNjaMOkZnRzZsO8aHJlcjogRmVsaXggSW1l
-bmTDtnJmZmVyCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20K
-aHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On 2020/05/26 17:25, Hannes Reinecke wrote:
+> On 5/25/20 4:09 AM, Damien Le Moal wrote:
+>> On 2020/05/23 0:39, Hannes Reinecke wrote:
+>>> Checking the teriary superblock just consists of validating UUIDs,
+>>
+>> s/teriary/tertiary
+>>
+>>> crcs, and the generation number; it doesn't have contents which
+>>> would be required during the actual operation.
+>>> So we should use an on-stack superblock and avoid having to store
+>>> it together with the 'real' superblocks.
+>>
+>> ...a temoprary in-memory superblock allocation...
+>>
+>> The entire structure should not be on stack... see below.
+>>
+>>>
+>>> Signed-off-by: Hannes Reinecke <hare@suse.de>
+>>> ---
+>>>   drivers/md/dm-zoned-metadata.c | 98 +++++++++++++++++++++++-------------------
+>>>   1 file changed, 53 insertions(+), 45 deletions(-)
+>>>
+>>> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+>>> index 3da6702bb1ae..b70a988fa771 100644
+>>> --- a/drivers/md/dm-zoned-metadata.c
+>>> +++ b/drivers/md/dm-zoned-metadata.c
+> [ .. ]
+>>> @@ -1326,18 +1327,32 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
+>>>   		      "Using super block %u (gen %llu)",
+>>>   		      zmd->mblk_primary, zmd->sb_gen);
+>>>   
+>>> -	if ((zmd->sb_version > 1) && zmd->sb[2].zone) {
+>>> -		zmd->sb[2].block = dmz_start_block(zmd, zmd->sb[2].zone);
+>>> -		zmd->sb[2].dev = dmz_zone_to_dev(zmd, zmd->sb[2].zone);
+>>> -		ret = dmz_get_sb(zmd, 2);
+>>> -		if (ret) {
+>>> -			dmz_dev_err(zmd->sb[2].dev,
+>>> -				    "Read tertiary super block failed");
+>>> -			return ret;
+>>> +	if (zmd->sb_version > 1) {
+>>> +		int i;
+>>> +
+>>> +		for (i = 1; i < zmd->nr_devs; i++) {
+>>> +			struct dmz_sb sb;
+>>
+>> I would rather have dmz_get_sb() allocate this struct than have it on stack...
+>> It is not big, but still. To be symetric, we can add dmz_put_sb() for freeing it.
+>>
+> While I do agree to not having it on the stack, having dmz_get_sb() 
+> returning the structure would require (yet another) overhaul of the
+> main metadata structure which currently has the primary and secondary
+> superblocks embedded.
+> And I would argue to keep it that way, as the primary and secondary 
+> superblocks are essential to the actual operation. So allocating them 
+> separately would mean yet another indirection to get to them.
+> At the same time, any tertiary superblock is just used for validation
+> during startup, and not referenced anywhere afterwards.
+> So using kzalloc() here and freeing them after checking is fine.
+
+OK. Works for me.
+
+> 
+> Cheers,
+> 
+> Hannes
+> 
+
+
+-- 
+Damien Le Moal
+Western Digital Research
