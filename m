@@ -1,98 +1,75 @@
-From: Coly Li <colyli@suse.de>
-Subject: Re: [PATCH 05/16] bcache: use bio_{start,end}_io_acct
-Date: Mon, 25 May 2020 21:03:39 +0800
-Message-ID: <85828157-ac53-57e8-1a27-068478ab5f5c@suse.de>
-References: <20200525113014.345997-1-hch@lst.de>
- <20200525113014.345997-6-hch@lst.de>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 03/12] dm-zoned: use on-stack superblock for
+ tertiary devices
+Date: Tue, 26 May 2020 10:25:08 +0200
+Message-ID: <66f5340e-b069-8c1a-3c61-5f4bb9f469af@suse.de>
+References: <20200522153901.133375-1-hare@suse.de>
+	<20200522153901.133375-4-hare@suse.de>
+	<CY4PR04MB3751FB76DF953D2E84BFC419E7B30@CY4PR04MB3751.namprd04.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200525113014.345997-6-hch@lst.de>
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CY4PR04MB3751FB76DF953D2E84BFC419E7B30@CY4PR04MB3751.namprd04.prod.outlook.com>
 Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Damien Le Moal <Damien.LeMoal@wdc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 2020/5/25 19:30, Christoph Hellwig wrote:
-> Switch bcache to use the nicer bio accounting helpers, and call the
-> routines where we also sample the start time to give coherent accounting
-> results.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-
-Acked-by: Coly Li <colyli@suse.de>
-
-
-Coly Li
-
-> ---
->  drivers/md/bcache/request.c | 18 ++++--------------
->  1 file changed, 4 insertions(+), 14 deletions(-)
-> 
-> diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
-> index 77d1a26975174..22b483527176b 100644
-> --- a/drivers/md/bcache/request.c
-> +++ b/drivers/md/bcache/request.c
-> @@ -668,9 +668,7 @@ static void backing_request_endio(struct bio *bio)
->  static void bio_complete(struct search *s)
->  {
->  	if (s->orig_bio) {
-> -		generic_end_io_acct(s->d->disk->queue, bio_op(s->orig_bio),
-> -				    &s->d->disk->part0, s->start_time);
-> -
-> +		bio_end_io_acct(s->orig_bio, s->start_time);
->  		trace_bcache_request_end(s->d, s->orig_bio);
->  		s->orig_bio->bi_status = s->iop.status;
->  		bio_endio(s->orig_bio);
-> @@ -730,7 +728,7 @@ static inline struct search *search_alloc(struct bio *bio,
->  	s->recoverable		= 1;
->  	s->write		= op_is_write(bio_op(bio));
->  	s->read_dirty_data	= 0;
-> -	s->start_time		= jiffies;
-> +	s->start_time		= bio_start_io_acct(bio);
->  
->  	s->iop.c		= d->c;
->  	s->iop.bio		= NULL;
-> @@ -1082,8 +1080,7 @@ static void detached_dev_end_io(struct bio *bio)
->  	bio->bi_end_io = ddip->bi_end_io;
->  	bio->bi_private = ddip->bi_private;
->  
-> -	generic_end_io_acct(ddip->d->disk->queue, bio_op(bio),
-> -			    &ddip->d->disk->part0, ddip->start_time);
-> +	bio_end_io_acct(bio, ddip->start_time);
->  
->  	if (bio->bi_status) {
->  		struct cached_dev *dc = container_of(ddip->d,
-> @@ -1108,7 +1105,7 @@ static void detached_dev_do_request(struct bcache_device *d, struct bio *bio)
->  	 */
->  	ddip = kzalloc(sizeof(struct detached_dev_io_private), GFP_NOIO);
->  	ddip->d = d;
-> -	ddip->start_time = jiffies;
-> +	ddip->start_time = bio_start_io_acct(bio);
->  	ddip->bi_end_io = bio->bi_end_io;
->  	ddip->bi_private = bio->bi_private;
->  	bio->bi_end_io = detached_dev_end_io;
-> @@ -1190,11 +1187,6 @@ blk_qc_t cached_dev_make_request(struct request_queue *q, struct bio *bio)
->  		}
->  	}
->  
-> -	generic_start_io_acct(q,
-> -			      bio_op(bio),
-> -			      bio_sectors(bio),
-> -			      &d->disk->part0);
-> -
->  	bio_set_dev(bio, dc->bdev);
->  	bio->bi_iter.bi_sector += dc->sb.data_offset;
->  
-> @@ -1311,8 +1303,6 @@ blk_qc_t flash_dev_make_request(struct request_queue *q, struct bio *bio)
->  		return BLK_QC_T_NONE;
->  	}
->  
-> -	generic_start_io_acct(q, bio_op(bio), bio_sectors(bio), &d->disk->part0);
-> -
->  	s = search_alloc(bio, d);
->  	cl = &s->cl;
->  	bio = &s->bio.bio;
-> 
+T24gNS8yNS8yMCA0OjA5IEFNLCBEYW1pZW4gTGUgTW9hbCB3cm90ZToKPiBPbiAyMDIwLzA1LzIz
+IDA6MzksIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gQ2hlY2tpbmcgdGhlIHRlcmlhcnkgc3Vw
+ZXJibG9jayBqdXN0IGNvbnNpc3RzIG9mIHZhbGlkYXRpbmcgVVVJRHMsCj4gCj4gcy90ZXJpYXJ5
+L3RlcnRpYXJ5Cj4gCj4+IGNyY3MsIGFuZCB0aGUgZ2VuZXJhdGlvbiBudW1iZXI7IGl0IGRvZXNu
+J3QgaGF2ZSBjb250ZW50cyB3aGljaAo+PiB3b3VsZCBiZSByZXF1aXJlZCBkdXJpbmcgdGhlIGFj
+dHVhbCBvcGVyYXRpb24uCj4+IFNvIHdlIHNob3VsZCB1c2UgYW4gb24tc3RhY2sgc3VwZXJibG9j
+ayBhbmQgYXZvaWQgaGF2aW5nIHRvIHN0b3JlCj4+IGl0IHRvZ2V0aGVyIHdpdGggdGhlICdyZWFs
+JyBzdXBlcmJsb2Nrcy4KPiAKPiAuLi5hIHRlbW9wcmFyeSBpbi1tZW1vcnkgc3VwZXJibG9jayBh
+bGxvY2F0aW9uLi4uCj4gCj4gVGhlIGVudGlyZSBzdHJ1Y3R1cmUgc2hvdWxkIG5vdCBiZSBvbiBz
+dGFjay4uLiBzZWUgYmVsb3cuCj4gCj4+Cj4+IFNpZ25lZC1vZmYtYnk6IEhhbm5lcyBSZWluZWNr
+ZSA8aGFyZUBzdXNlLmRlPgo+PiAtLS0KPj4gICBkcml2ZXJzL21kL2RtLXpvbmVkLW1ldGFkYXRh
+LmMgfCA5OCArKysrKysrKysrKysrKysrKysrKysrKy0tLS0tLS0tLS0tLS0tLS0tLS0KPj4gICAx
+IGZpbGUgY2hhbmdlZCwgNTMgaW5zZXJ0aW9ucygrKSwgNDUgZGVsZXRpb25zKC0pCj4+Cj4+IGRp
+ZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLXpvbmVkLW1ldGFkYXRhLmMgYi9kcml2ZXJzL21kL2Rt
+LXpvbmVkLW1ldGFkYXRhLmMKPj4gaW5kZXggM2RhNjcwMmJiMWFlLi5iNzBhOTg4ZmE3NzEgMTAw
+NjQ0Cj4+IC0tLSBhL2RyaXZlcnMvbWQvZG0tem9uZWQtbWV0YWRhdGEuYwo+PiArKysgYi9kcml2
+ZXJzL21kL2RtLXpvbmVkLW1ldGFkYXRhLmMKWyAuLiBdCj4+IEBAIC0xMzI2LDE4ICsxMzI3LDMy
+IEBAIHN0YXRpYyBpbnQgZG16X2xvYWRfc2Ioc3RydWN0IGRtel9tZXRhZGF0YSAqem1kKQo+PiAg
+IAkJICAgICAgIlVzaW5nIHN1cGVyIGJsb2NrICV1IChnZW4gJWxsdSkiLAo+PiAgIAkJICAgICAg
+em1kLT5tYmxrX3ByaW1hcnksIHptZC0+c2JfZ2VuKTsKPj4gICAKPj4gLQlpZiAoKHptZC0+c2Jf
+dmVyc2lvbiA+IDEpICYmIHptZC0+c2JbMl0uem9uZSkgewo+PiAtCQl6bWQtPnNiWzJdLmJsb2Nr
+ID0gZG16X3N0YXJ0X2Jsb2NrKHptZCwgem1kLT5zYlsyXS56b25lKTsKPj4gLQkJem1kLT5zYlsy
+XS5kZXYgPSBkbXpfem9uZV90b19kZXYoem1kLCB6bWQtPnNiWzJdLnpvbmUpOwo+PiAtCQlyZXQg
+PSBkbXpfZ2V0X3NiKHptZCwgMik7Cj4+IC0JCWlmIChyZXQpIHsKPj4gLQkJCWRtel9kZXZfZXJy
+KHptZC0+c2JbMl0uZGV2LAo+PiAtCQkJCSAgICAiUmVhZCB0ZXJ0aWFyeSBzdXBlciBibG9jayBm
+YWlsZWQiKTsKPj4gLQkJCXJldHVybiByZXQ7Cj4+ICsJaWYgKHptZC0+c2JfdmVyc2lvbiA+IDEp
+IHsKPj4gKwkJaW50IGk7Cj4+ICsKPj4gKwkJZm9yIChpID0gMTsgaSA8IHptZC0+bnJfZGV2czsg
+aSsrKSB7Cj4+ICsJCQlzdHJ1Y3QgZG16X3NiIHNiOwo+IAo+IEkgd291bGQgcmF0aGVyIGhhdmUg
+ZG16X2dldF9zYigpIGFsbG9jYXRlIHRoaXMgc3RydWN0IHRoYW4gaGF2ZSBpdCBvbiBzdGFjay4u
+Lgo+IEl0IGlzIG5vdCBiaWcsIGJ1dCBzdGlsbC4gVG8gYmUgc3ltZXRyaWMsIHdlIGNhbiBhZGQg
+ZG16X3B1dF9zYigpIGZvciBmcmVlaW5nIGl0Lgo+IApXaGlsZSBJIGRvIGFncmVlIHRvIG5vdCBo
+YXZpbmcgaXQgb24gdGhlIHN0YWNrLCBoYXZpbmcgZG16X2dldF9zYigpIApyZXR1cm5pbmcgdGhl
+IHN0cnVjdHVyZSB3b3VsZCByZXF1aXJlICh5ZXQgYW5vdGhlcikgb3ZlcmhhdWwgb2YgdGhlCm1h
+aW4gbWV0YWRhdGEgc3RydWN0dXJlIHdoaWNoIGN1cnJlbnRseSBoYXMgdGhlIHByaW1hcnkgYW5k
+IHNlY29uZGFyeQpzdXBlcmJsb2NrcyBlbWJlZGRlZC4KQW5kIEkgd291bGQgYXJndWUgdG8ga2Vl
+cCBpdCB0aGF0IHdheSwgYXMgdGhlIHByaW1hcnkgYW5kIHNlY29uZGFyeSAKc3VwZXJibG9ja3Mg
+YXJlIGVzc2VudGlhbCB0byB0aGUgYWN0dWFsIG9wZXJhdGlvbi4gU28gYWxsb2NhdGluZyB0aGVt
+IApzZXBhcmF0ZWx5IHdvdWxkIG1lYW4geWV0IGFub3RoZXIgaW5kaXJlY3Rpb24gdG8gZ2V0IHRv
+IHRoZW0uCkF0IHRoZSBzYW1lIHRpbWUsIGFueSB0ZXJ0aWFyeSBzdXBlcmJsb2NrIGlzIGp1c3Qg
+dXNlZCBmb3IgdmFsaWRhdGlvbgpkdXJpbmcgc3RhcnR1cCwgYW5kIG5vdCByZWZlcmVuY2VkIGFu
+eXdoZXJlIGFmdGVyd2FyZHMuClNvIHVzaW5nIGt6YWxsb2MoKSBoZXJlIGFuZCBmcmVlaW5nIHRo
+ZW0gYWZ0ZXIgY2hlY2tpbmcgaXMgZmluZS4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5l
+cyBSZWluZWNrZSAgICAgICAgICAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVA
+c3VzZS5kZSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApT
+VVNFIFNvZnR3YXJlIFNvbHV0aW9ucyBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJl
+cmcKSFJCIDM2ODA5IChBRyBOw7xybmJlcmcpLCBHZXNjaMOkZnRzZsO8aHJlcjogRmVsaXggSW1l
+bmTDtnJmZmVyCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20K
+aHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
