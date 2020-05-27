@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 10/15] dm-zoned: per-device reclaim
-Date: Wed, 27 May 2020 08:22:20 +0200
-Message-ID: <20200527062225.72849-11-hare@suse.de>
+Subject: [PATCH 12/15] dm-zoned: support arbitrary number of
+	devices
+Date: Wed, 27 May 2020 08:22:22 +0200
+Message-ID: <20200527062225.72849-13-hare@suse.de>
 References: <20200527062225.72849-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,377 +22,206 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Instead of having one reclaim workqueue for the entire set we should
-be allocating a reclaim workqueue per device; that will reduce
-contention and should boost performance for a multi-device setup.
+Remove the hard-coded limit of two devices and support an unlimited
+number of additional zoned devices.
+With that we need to increase the device-mapper version number to
+3.0.0 as we've modified the interface.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm-zoned-reclaim.c | 66 +++++++++++++++++++++++++++----------------
- drivers/md/dm-zoned-target.c  | 39 +++++++++++++++----------
- drivers/md/dm-zoned.h         | 38 +++++++++++++------------
- 3 files changed, 86 insertions(+), 57 deletions(-)
+ drivers/md/dm-zoned-metadata.c | 15 +++++++-
+ drivers/md/dm-zoned-target.c   | 81 +++++++++++++++++++++++-------------------
+ 2 files changed, 59 insertions(+), 37 deletions(-)
 
-diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
-index e9e3b730e258..09843645248a 100644
---- a/drivers/md/dm-zoned-reclaim.c
-+++ b/drivers/md/dm-zoned-reclaim.c
-@@ -21,6 +21,8 @@ struct dmz_reclaim {
- 	struct dm_kcopyd_throttle kc_throttle;
- 	int			kc_err;
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index f309219a5457..689c1dd7ab20 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -1520,7 +1520,20 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
+ 		 */
+ 		zmd->sb[0].zone = dmz_get(zmd, 0);
  
-+	int			dev_idx;
+-		zoned_dev = &zmd->dev[1];
++		for (i = 1; i < zmd->nr_devs; i++) {
++			zoned_dev = &zmd->dev[i];
 +
- 	unsigned long		flags;
- 
- 	/* Last target access time */
-@@ -198,8 +200,8 @@ static int dmz_reclaim_buf(struct dmz_reclaim *zrc, struct dm_zone *dzone)
- 	struct dmz_metadata *zmd = zrc->metadata;
- 	int ret;
- 
--	DMDEBUG("(%s): Chunk %u, move buf zone %u (weight %u) to data zone %u (weight %u)",
--		dmz_metadata_label(zmd),
-+	DMDEBUG("(%s/%u): Chunk %u, move buf zone %u (weight %u) to data zone %u (weight %u)",
-+		dmz_metadata_label(zmd), zrc->dev_idx,
- 		dzone->chunk, bzone->id, dmz_weight(bzone),
- 		dzone->id, dmz_weight(dzone));
- 
-@@ -237,8 +239,8 @@ static int dmz_reclaim_seq_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
- 	struct dmz_metadata *zmd = zrc->metadata;
- 	int ret = 0;
- 
--	DMDEBUG("(%s): Chunk %u, move data zone %u (weight %u) to buf zone %u (weight %u)",
--		dmz_metadata_label(zmd),
-+	DMDEBUG("(%s/%u): Chunk %u, move data zone %u (weight %u) to buf zone %u (weight %u)",
-+		dmz_metadata_label(zmd), zrc->dev_idx,
- 		chunk, dzone->id, dmz_weight(dzone),
- 		bzone->id, dmz_weight(bzone));
- 
-@@ -295,8 +297,8 @@ static int dmz_reclaim_rnd_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
- 	if (!szone)
- 		return -ENOSPC;
- 
--	DMDEBUG("(%s): Chunk %u, move %s zone %u (weight %u) to %s zone %u",
--		dmz_metadata_label(zmd), chunk,
-+	DMDEBUG("(%s/%u): Chunk %u, move %s zone %u (weight %u) to %s zone %u",
-+		dmz_metadata_label(zmd), zrc->dev_idx, chunk,
- 		dmz_is_cache(dzone) ? "cache" : "rnd",
- 		dzone->id, dmz_weight(dzone),
- 		dmz_is_rnd(szone) ? "rnd" : "seq", szone->id);
-@@ -369,8 +371,8 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
- 	/* Get a data zone */
- 	dzone = dmz_get_zone_for_reclaim(zmd, dmz_target_idle(zrc));
- 	if (!dzone) {
--		DMDEBUG("(%s): No zone found to reclaim",
--			dmz_metadata_label(zmd));
-+		DMDEBUG("(%s/%u): No zone found to reclaim",
-+			dmz_metadata_label(zmd), zrc->dev_idx);
- 		return -EBUSY;
++			ret = blkdev_report_zones(zoned_dev->bdev, 0,
++						  BLK_ALL_ZONES,
++						  dmz_init_zone, zoned_dev);
++			if (ret < 0) {
++				DMDEBUG("(%s): Failed to report zones, error %d",
++					zmd->devname, ret);
++				dmz_drop_zones(zmd);
++				return ret;
++			}
++		}
++		return 0;
  	}
- 
-@@ -417,24 +419,26 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
- out:
- 	if (ret) {
- 		if (ret == -EINTR)
--			DMDEBUG("(%s): reclaim zone %u interrupted",
--				dmz_metadata_label(zmd), rzone->id);
-+			DMDEBUG("(%s/%u): reclaim zone %u interrupted",
-+				dmz_metadata_label(zmd), zrc->dev_idx,
-+				rzone->id);
- 		else
--			DMDEBUG("(%s): Failed to reclaim zone %u, err %d",
--				dmz_metadata_label(zmd), rzone->id, ret);
-+			DMDEBUG("(%s/%u): Failed to reclaim zone %u, err %d",
-+				dmz_metadata_label(zmd), zrc->dev_idx,
-+				rzone->id, ret);
- 		dmz_unlock_zone_reclaim(dzone);
- 		return ret;
- 	}
- 
- 	ret = dmz_flush_metadata(zrc->metadata);
- 	if (ret) {
--		DMDEBUG("(%s): Metadata flush for zone %u failed, err %d",
--			dmz_metadata_label(zmd), rzone->id, ret);
-+		DMDEBUG("(%s/%u): Metadata flush for zone %u failed, err %d",
-+			dmz_metadata_label(zmd), zrc->dev_idx, rzone->id, ret);
- 		return ret;
- 	}
- 
--	DMDEBUG("(%s): Reclaimed zone %u in %u ms",
--		dmz_metadata_label(zmd),
-+	DMDEBUG("(%s/%u): Reclaimed zone %u in %u ms",
-+		dmz_metadata_label(zmd), zrc->dev_idx,
- 		rzone->id, jiffies_to_msecs(jiffies - start));
- 	return 0;
- }
-@@ -461,10 +465,20 @@ static unsigned int dmz_reclaim_percentage(struct dmz_reclaim *zrc)
-  */
- static bool dmz_should_reclaim(struct dmz_reclaim *zrc, unsigned int p_unmap)
- {
--	unsigned int nr_reclaim = dmz_nr_rnd_zones(zrc->metadata);
-+	unsigned int nr_reclaim;
-+
-+	nr_reclaim = dmz_nr_rnd_zones(zrc->metadata);
- 
--	if (dmz_nr_cache_zones(zrc->metadata))
-+	if (dmz_nr_cache_zones(zrc->metadata)) {
-+		/*
-+		 * The first device in a multi-device
-+		 * setup only contains cache zones, so
-+		 * never start reclaim there.
-+		 */
-+		if (zrc->dev_idx == 0)
-+			return false;
- 		nr_reclaim += dmz_nr_cache_zones(zrc->metadata);
-+	}
- 
- 	/* Reclaim when idle */
- 	if (dmz_target_idle(zrc) && nr_reclaim)
-@@ -488,7 +502,7 @@ static void dmz_reclaim_work(struct work_struct *work)
- {
- 	struct dmz_reclaim *zrc = container_of(work, struct dmz_reclaim, work.work);
- 	struct dmz_metadata *zmd = zrc->metadata;
--	unsigned int p_unmap;
-+	unsigned int p_unmap, nr_unmap_rnd = 0, nr_rnd = 0;
- 	int ret;
- 
- 	if (dmz_dev_is_dying(zmd))
-@@ -514,8 +528,11 @@ static void dmz_reclaim_work(struct work_struct *work)
- 		zrc->kc_throttle.throttle = min(75U, 100U - p_unmap / 2);
- 	}
- 
--	DMDEBUG("(%s): Reclaim (%u): %s, %u%% free zones (%u/%u cache %u/%u random)",
--		dmz_metadata_label(zmd),
-+	nr_unmap_rnd = dmz_nr_unmap_rnd_zones(zmd);
-+	nr_rnd = dmz_nr_rnd_zones(zmd);
-+
-+	DMDEBUG("(%s/%u): Reclaim (%u): %s, %u%% free zones (%u/%u cache %u/%u random)",
-+		dmz_metadata_label(zmd), zrc->dev_idx,
- 		zrc->kc_throttle.throttle,
- 		(dmz_target_idle(zrc) ? "Idle" : "Busy"),
- 		p_unmap, dmz_nr_unmap_cache_zones(zmd),
-@@ -536,7 +553,7 @@ static void dmz_reclaim_work(struct work_struct *work)
-  * Initialize reclaim.
-  */
- int dmz_ctr_reclaim(struct dmz_metadata *zmd,
--		    struct dmz_reclaim **reclaim)
-+		    struct dmz_reclaim **reclaim, int idx)
- {
- 	struct dmz_reclaim *zrc;
- 	int ret;
-@@ -547,6 +564,7 @@ int dmz_ctr_reclaim(struct dmz_metadata *zmd,
- 
- 	zrc->metadata = zmd;
- 	zrc->atime = jiffies;
-+	zrc->dev_idx = idx;
- 
- 	/* Reclaim kcopyd client */
- 	zrc->kc = dm_kcopyd_client_create(&zrc->kc_throttle);
-@@ -558,8 +576,8 @@ int dmz_ctr_reclaim(struct dmz_metadata *zmd,
- 
- 	/* Reclaim work */
- 	INIT_DELAYED_WORK(&zrc->work, dmz_reclaim_work);
--	zrc->wq = alloc_ordered_workqueue("dmz_rwq_%s", WQ_MEM_RECLAIM,
--					  dmz_metadata_label(zmd));
-+	zrc->wq = alloc_ordered_workqueue("dmz_rwq_%s_%d", WQ_MEM_RECLAIM,
-+					  dmz_metadata_label(zmd), idx);
- 	if (!zrc->wq) {
- 		ret = -ENOMEM;
- 		goto err;
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index fec1b6a9c6f1..fc1df9714f63 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -51,9 +51,6 @@ struct dmz_target {
- 	/* For metadata handling */
- 	struct dmz_metadata     *metadata;
- 
--	/* For reclaim */
--	struct dmz_reclaim	*reclaim;
--
- 	/* For chunk work */
- 	struct radix_tree_root	chunk_rxtree;
- 	struct workqueue_struct *chunk_wq;
-@@ -405,14 +402,15 @@ static void dmz_handle_bio(struct dmz_target *dmz, struct dm_chunk_work *cw,
- 		dm_per_bio_data(bio, sizeof(struct dmz_bioctx));
- 	struct dmz_metadata *zmd = dmz->metadata;
- 	struct dm_zone *zone;
--	int ret;
-+	int i, ret;
  
  	/*
- 	 * Write may trigger a zone allocation. So make sure the
- 	 * allocation can succeed.
- 	 */
- 	if (bio_op(bio) == REQ_OP_WRITE)
--		dmz_schedule_reclaim(dmz->reclaim);
-+		for (i = 0; i < dmz->nr_ddevs; i++)
-+			dmz_schedule_reclaim(dmz->dev[i].reclaim);
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index f6f00a363903..4a51738d4b0d 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -13,8 +13,6 @@
  
- 	dmz_lock_metadata(zmd);
+ #define DMZ_MIN_BIOS		8192
  
-@@ -432,6 +430,7 @@ static void dmz_handle_bio(struct dmz_target *dmz, struct dm_chunk_work *cw,
- 	if (zone) {
- 		dmz_activate_zone(zone);
- 		bioctx->zone = zone;
-+		dmz_reclaim_bio_acc(zone->dev->reclaim);
- 	}
+-#define DMZ_MAX_DEVS		2
+-
+ /*
+  * Zone BIO context.
+  */
+@@ -764,7 +762,7 @@ static void dmz_put_zoned_device(struct dm_target *ti)
+ 	struct dmz_target *dmz = ti->private;
+ 	int i;
  
- 	switch (bio_op(bio)) {
-@@ -578,7 +577,6 @@ static int dmz_queue_chunk_work(struct dmz_target *dmz, struct bio *bio)
- 
- 	bio_list_add(&cw->bio_list, bio);
- 
--	dmz_reclaim_bio_acc(dmz->reclaim);
- 	if (queue_work(dmz->chunk_wq, &cw->work))
- 		dmz_get_chunk_work(cw);
- out:
-@@ -823,7 +821,7 @@ static int dmz_fixup_devices(struct dm_target *ti)
- static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- {
- 	struct dmz_target *dmz;
--	int ret;
-+	int ret, i;
- 
- 	/* Check arguments */
- 	if (argc < 1 || argc > 2) {
-@@ -925,10 +923,12 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	mod_delayed_work(dmz->flush_wq, &dmz->flush_work, DMZ_FLUSH_PERIOD);
- 
- 	/* Initialize reclaim */
--	ret = dmz_ctr_reclaim(dmz->metadata, &dmz->reclaim);
--	if (ret) {
--		ti->error = "Zone reclaim initialization failed";
--		goto err_fwq;
+-	for (i = 0; i < DMZ_MAX_DEVS; i++) {
 +	for (i = 0; i < dmz->nr_ddevs; i++) {
-+		ret = dmz_ctr_reclaim(dmz->metadata, &dmz->dev[i].reclaim, i);
-+		if (ret) {
-+			ti->error = "Zone reclaim initialization failed";
-+			goto err_fwq;
+ 		if (dmz->ddev[i]) {
+ 			dm_put_device(ti, dmz->ddev[i]);
+ 			dmz->ddev[i] = NULL;
+@@ -777,21 +775,35 @@ static int dmz_fixup_devices(struct dm_target *ti)
+ 	struct dmz_target *dmz = ti->private;
+ 	struct dmz_dev *reg_dev, *zoned_dev;
+ 	struct request_queue *q;
++	sector_t zone_nr_sectors = 0;
++	int i;
+ 
+ 	/*
+-	 * When we have two devices, the first one must be a regular block
+-	 * device and the second a zoned block device.
++	 * When we have more than on devices, the first one must be a
++	 * regular block device and the others zoned block devices.
+ 	 */
+-	if (dmz->ddev[0] && dmz->ddev[1]) {
++	if (dmz->nr_ddevs > 1) {
+ 		reg_dev = &dmz->dev[0];
+ 		if (!(reg_dev->flags & DMZ_BDEV_REGULAR)) {
+ 			ti->error = "Primary disk is not a regular device";
+ 			return -EINVAL;
+ 		}
+-		zoned_dev = &dmz->dev[1];
+-		if (zoned_dev->flags & DMZ_BDEV_REGULAR) {
+-			ti->error = "Secondary disk is not a zoned device";
+-			return -EINVAL;
++		for (i = 1; i < dmz->nr_ddevs; i++) {
++			zoned_dev = &dmz->dev[i];
++			if (zoned_dev->flags & DMZ_BDEV_REGULAR) {
++				ti->error = "Secondary disk is not a zoned device";
++				return -EINVAL;
++			}
++			q = bdev_get_queue(zoned_dev->bdev);
++			if (zone_nr_sectors &&
++			    zone_nr_sectors != blk_queue_zone_sectors(q)) {
++				ti->error = "Zone nr sectors mismatch";
++				return -EINVAL;
++			}
++			zone_nr_sectors = blk_queue_zone_sectors(q);
++			zoned_dev->zone_nr_sectors = zone_nr_sectors;
++			zoned_dev->nr_zones =
++				blkdev_nr_zones(zoned_dev->bdev->bd_disk);
+ 		}
+ 	} else {
+ 		reg_dev = NULL;
+@@ -800,17 +812,24 @@ static int dmz_fixup_devices(struct dm_target *ti)
+ 			ti->error = "Disk is not a zoned device";
+ 			return -EINVAL;
+ 		}
++		q = bdev_get_queue(zoned_dev->bdev);
++		zoned_dev->zone_nr_sectors = blk_queue_zone_sectors(q);
++		zoned_dev->nr_zones = blkdev_nr_zones(zoned_dev->bdev->bd_disk);
+ 	}
+-	q = bdev_get_queue(zoned_dev->bdev);
+-	zoned_dev->zone_nr_sectors = blk_queue_zone_sectors(q);
+-	zoned_dev->nr_zones = blkdev_nr_zones(zoned_dev->bdev->bd_disk);
+ 
+ 	if (reg_dev) {
+-		reg_dev->zone_nr_sectors = zoned_dev->zone_nr_sectors;
++		sector_t zone_offset;
++
++		reg_dev->zone_nr_sectors = zone_nr_sectors;
+ 		reg_dev->nr_zones =
+ 			DIV_ROUND_UP_SECTOR_T(reg_dev->capacity,
+ 					      reg_dev->zone_nr_sectors);
+-		zoned_dev->zone_offset = reg_dev->nr_zones;
++		reg_dev->zone_offset = 0;
++		zone_offset = reg_dev->nr_zones;
++		for (i = 1; i < dmz->nr_ddevs; i++) {
++			dmz->dev[i].zone_offset = zone_offset;
++			zone_offset += dmz->dev[i].nr_zones;
 +		}
  	}
- 
- 	DMINFO("(%s): Target device: %llu 512-byte logical sectors (%llu blocks)",
-@@ -961,11 +961,13 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- static void dmz_dtr(struct dm_target *ti)
- {
- 	struct dmz_target *dmz = ti->private;
-+	int i;
- 
- 	flush_workqueue(dmz->chunk_wq);
- 	destroy_workqueue(dmz->chunk_wq);
- 
--	dmz_dtr_reclaim(dmz->reclaim);
-+	for (i = 0; i < dmz->nr_ddevs; i++)
-+		dmz_dtr_reclaim(dmz->dev[i].reclaim);
- 
- 	cancel_delayed_work_sync(&dmz->flush_work);
- 	destroy_workqueue(dmz->flush_wq);
-@@ -1034,9 +1036,11 @@ static int dmz_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
- static void dmz_suspend(struct dm_target *ti)
- {
- 	struct dmz_target *dmz = ti->private;
-+	int i;
- 
- 	flush_workqueue(dmz->chunk_wq);
--	dmz_suspend_reclaim(dmz->reclaim);
-+	for (i = 0; i < dmz->nr_ddevs; i++)
-+		dmz_suspend_reclaim(dmz->dev[i].reclaim);
- 	cancel_delayed_work_sync(&dmz->flush_work);
+ 	return 0;
  }
+@@ -824,7 +843,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	int ret, i;
  
-@@ -1046,9 +1050,11 @@ static void dmz_suspend(struct dm_target *ti)
- static void dmz_resume(struct dm_target *ti)
- {
- 	struct dmz_target *dmz = ti->private;
-+	int i;
+ 	/* Check arguments */
+-	if (argc < 1 || argc > 2) {
++	if (argc < 1) {
+ 		ti->error = "Invalid argument count";
+ 		return -EINVAL;
+ 	}
+@@ -852,22 +871,14 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	ti->private = dmz;
  
- 	queue_delayed_work(dmz->flush_wq, &dmz->flush_work, DMZ_FLUSH_PERIOD);
--	dmz_resume_reclaim(dmz->reclaim);
-+	for (i = 0; i < dmz->nr_ddevs; i++)
-+		dmz_resume_reclaim(dmz->dev[i].reclaim);
- }
- 
- static int dmz_iterate_devices(struct dm_target *ti,
-@@ -1109,7 +1115,10 @@ static int dmz_message(struct dm_target *ti, unsigned int argc, char **argv,
- 	int r = -EINVAL;
- 
- 	if (!strcasecmp(argv[0], "reclaim")) {
--		dmz_schedule_reclaim(dmz->reclaim);
-+		int i;
-+
-+		for (i = 0; i < dmz->nr_ddevs; i++)
-+			dmz_schedule_reclaim(dmz->dev[i].reclaim);
- 		r = 0;
- 	} else
- 		DMERR("unrecognized message %s", argv[0]);
-diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
-index 983f5b5e9fa0..0cc3459f78ce 100644
---- a/drivers/md/dm-zoned.h
-+++ b/drivers/md/dm-zoned.h
-@@ -54,6 +54,7 @@ struct dmz_reclaim;
- struct dmz_dev {
- 	struct block_device	*bdev;
- 	struct dmz_metadata	*metadata;
-+	struct dmz_reclaim	*reclaim;
- 
- 	char			name[BDEVNAME_SIZE];
- 	uuid_t			uuid;
-@@ -229,23 +230,6 @@ static inline void dmz_activate_zone(struct dm_zone *zone)
- 	atomic_inc(&zone->refcount);
- }
- 
--/*
-- * Deactivate a zone. This decrement the zone reference counter
-- * indicating that all BIOs to the zone have completed when the count is 0.
-- */
--static inline void dmz_deactivate_zone(struct dm_zone *zone)
--{
--	atomic_dec(&zone->refcount);
--}
+ 	/* Get the target zoned block device */
+-	ret = dmz_get_zoned_device(ti, argv[0], 0, argc);
+-	if (ret)
+-		goto err;
 -
--/*
-- * Test if a zone is active, that is, has a refcount > 0.
-- */
--static inline bool dmz_is_active(struct dm_zone *zone)
--{
--	return atomic_read(&zone->refcount);
--}
--
- int dmz_lock_zone_reclaim(struct dm_zone *zone);
- void dmz_unlock_zone_reclaim(struct dm_zone *zone);
- struct dm_zone *dmz_get_zone_for_reclaim(struct dmz_metadata *zmd, bool idle);
-@@ -272,7 +256,7 @@ int dmz_merge_valid_blocks(struct dmz_metadata *zmd, struct dm_zone *from_zone,
- /*
-  * Functions defined in dm-zoned-reclaim.c
-  */
--int dmz_ctr_reclaim(struct dmz_metadata *zmd, struct dmz_reclaim **zrc);
-+int dmz_ctr_reclaim(struct dmz_metadata *zmd, struct dmz_reclaim **zrc, int idx);
- void dmz_dtr_reclaim(struct dmz_reclaim *zrc);
- void dmz_suspend_reclaim(struct dmz_reclaim *zrc);
- void dmz_resume_reclaim(struct dmz_reclaim *zrc);
-@@ -285,4 +269,22 @@ void dmz_schedule_reclaim(struct dmz_reclaim *zrc);
- bool dmz_bdev_is_dying(struct dmz_dev *dmz_dev);
- bool dmz_check_bdev(struct dmz_dev *dmz_dev);
+-	if (argc == 2) {
+-		ret = dmz_get_zoned_device(ti, argv[1], 1, argc);
+-		if (ret) {
+-			dmz_put_zoned_device(ti);
+-			goto err;
+-		}
++	for (i = 0; i < argc; i++) {
++		ret = dmz_get_zoned_device(ti, argv[i], i, argc);
++		if (ret)
++			goto err_dev;
+ 	}
+ 	ret = dmz_fixup_devices(ti);
+-	if (ret) {
+-		dmz_put_zoned_device(ti);
+-		goto err;
+-	}
++	if (ret)
++		goto err_dev;
  
-+/*
-+ * Deactivate a zone. This decrement the zone reference counter
-+ * indicating that all BIOs to the zone have completed when the count is 0.
-+ */
-+static inline void dmz_deactivate_zone(struct dm_zone *zone)
-+{
-+	dmz_reclaim_bio_acc(zone->dev->reclaim);
-+	atomic_dec(&zone->refcount);
-+}
-+
-+/*
-+ * Test if a zone is active, that is, has a refcount > 0.
-+ */
-+static inline bool dmz_is_active(struct dm_zone *zone)
-+{
-+	return atomic_read(&zone->refcount);
-+}
-+
- #endif /* DM_ZONED_H */
+ 	/* Initialize metadata */
+ 	ret = dmz_ctr_metadata(dmz->dev, argc, &dmz->metadata,
+@@ -1090,9 +1101,7 @@ static void dmz_status(struct dm_target *ti, status_type_t type,
+ 		       dmz_nr_zones(dmz->metadata),
+ 		       dmz_nr_unmap_cache_zones(dmz->metadata),
+ 		       dmz_nr_cache_zones(dmz->metadata));
+-		for (i = 0; i < DMZ_MAX_DEVS; i++) {
+-			if (!dmz->ddev[i])
+-				continue;
++		for (i = 0; i < dmz->nr_ddevs; i++) {
+ 			/*
+ 			 * For a multi-device setup the first device
+ 			 * contains only cache zones.
+@@ -1111,8 +1120,8 @@ static void dmz_status(struct dm_target *ti, status_type_t type,
+ 		dev = &dmz->dev[0];
+ 		format_dev_t(buf, dev->bdev->bd_dev);
+ 		DMEMIT("%s", buf);
+-		if (dmz->nr_ddevs > 1) {
+-			dev = &dmz->dev[1];
++		for (i = 1; i < dmz->nr_ddevs; i++) {
++			dev = &dmz->dev[i];
+ 			format_dev_t(buf, dev->bdev->bd_dev);
+ 			DMEMIT(" %s", buf);
+ 		}
+@@ -1140,7 +1149,7 @@ static int dmz_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 
+ static struct target_type dmz_type = {
+ 	.name		 = "zoned",
+-	.version	 = {2, 0, 0},
++	.version	 = {3, 0, 0},
+ 	.features	 = DM_TARGET_SINGLETON | DM_TARGET_ZONED_HM,
+ 	.module		 = THIS_MODULE,
+ 	.ctr		 = dmz_ctr,
 -- 
 2.16.4
