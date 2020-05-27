@@ -1,151 +1,34 @@
-From: Jaskaran Singh Khurana <jaskarankhurana@linux.microsoft.com>
-Subject: Re: [RFC PATCH v3 00/12] Integrity Policy Enforcement LSM (IPE)
-Date: Tue, 26 May 2020 13:44:45 -0700 (PDT)
-Message-ID: <alpine.LRH.2.21.2005261343540.83057@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
-References: <20200415162550.2324-1-deven.desai@linux.microsoft.com> <b07ac7e1-7cf5-92c9-81d0-64174c3d5024@digikod.net> <0001755a-6b2a-b13b-960c-eb0b065c8e3c@linux.microsoft.com> <8ba7b15f-de91-40f7-fc95-115228345fce@linux.microsoft.com>
- <44fb36ae-959d-4ff7-ed1f-ccfc2e292232@digikod.net> <alpine.LRH.2.21.2005161420490.8455@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: Re: [PATCH 01/16] block: add disk/bio-based accounting
+	helpers
+Date: Wed, 27 May 2020 07:23:41 +0200
+Message-ID: <20200527052341.GA17530@lst.de>
+References: <20200525113014.345997-1-hch@lst.de>
+	<20200525113014.345997-2-hch@lst.de>
+	<fafb94a9-cdce-5ea0-e73f-9463766a9f19@yandex-team.ru>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="656392-1229694672-1590525885=:83057"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.21.2005161420490.8455@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.inter>
-Sender: linux-kernel-owner@vger.kernel.org
-To: =?ISO-8859-15?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
-Cc: Deven Bowers <deven.desai@linux.microsoft.com>, agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serge@hallyn.com, zohar@linux.ibm.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, jannh@google.com, tyhicks@linux.microsoft.com, pasha.tatashin@soleen.com, sashal@kernel.org, nramas@linux.microsoft.com, mdsakib@linux.microsoft.com, linux-kernel@vger.kernel.org, corbet@lwn.net
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <fafb94a9-cdce-5ea0-e73f-9463766a9f19-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Nitin Gupta <ngupta-KNmc09w0p+Ednm+yROfE0A@public.gmane.org>, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On Mon, May 25, 2020 at 03:28:07PM +0300, Konstantin Khlebnikov wrote:
+> I think it would be better to leave this jiffies legacy nonsense in
+> callers and pass here request duration in nanoseconds.
 
---656392-1229694672-1590525885=:83057
-Content-Type: text/plain; charset=iso-8859-15; format=flowed
-Content-Transfer-Encoding: 8BIT
-
-Hello Mickael,
-
-Could you please share your thoughts for the below proposal.
-
-Regards,
-JK
-
-On Sat, 16 May 2020, Jaskaran Singh Khurana wrote:
-
->
-> Hello Mickael,
->
-> On Thu, 14 May 2020, Mickaël Salaün wrote:
->
->>
->>  On 12/05/2020 22:46, Deven Bowers wrote:
->>> 
->>>
->>>  On 5/11/2020 11:03 AM, Deven Bowers wrote:
->>>> 
->>>>
->>>>  On 5/10/2020 2:28 AM, Mickaël Salaün wrote:
->>>>
->>>>  [...snip]
->>>> 
->>>>>>
->>>>>>  Additionally, rules are evaluated top-to-bottom. As a result, any
->>>>>>  revocation rules, or denies should be placed early in the file to
->>>>>>  ensure
->>>>>>  that these rules are evaluated before a rule with "action=ALLOW" is
->>>>>>  hit.
->>>>>>
->>>>>>  IPE policy is designed to be forward compatible and backwards
->>>>>>  compatible,
->>>>>>  thus any failure to parse a rule will result in the line being
->>>>>>  ignored,
->>>>>>  and a warning being emitted. If backwards compatibility is not
->>>>>>  required,
->>>>>>  the kernel commandline parameter and sysctl, ipe.strict_parse can be
->>>>>>  enabled, which will cause these warnings to be fatal.
->>>>>
->>>>>  Ignoring unknown command may lead to inconsistent beaviors. To achieve
->>>>>  forward compatibility, I think it would be better to never ignore
->>>>>  unknown rule but to give a way to userspace to known what is the
->>>>>  current
->>>>>  kernel ABI. This could be done with a securityfs file listing the
->>>>>  current policy grammar.
->>>>> 
->>>>
->>>>  That's a fair point. From a manual perspective, I think this is fine.
->>>>  A human-user can interpret a grammar successfully on their own when new
->>>>  syntax is introduced.
->>>>
->>>>   From a producing API perspective, I'd have to think about it a bit
->>>>  more. Ideally, the grammar would be structured in such a way that the
->>>>  userland
->>>>  interpreter of this grammar would not have to be updated once new syntax
->>>>  is introduced, avoiding the need to update the userland binary. To do so
->>>>  generically ("op=%s") is easy, but doesn't necessarily convey sufficient
->>>>  information (what happens when a new "op" token is introduced?). I think
->>>>  this may come down to regular expression representations of valid values
->>>>  for these tokens, which worries me as regular expressions are incredibly
->>>>  error-prone[1].
->>>>
->>>>  I'll see what I can come up with regarding this.
->>>
->>>  I have not found a way that I like to expose some kind of grammar
->>>  through securityfs that can be understood by usermode to parse the
->>>  policy. Here's what I propose as a compromise:
->>>
->>>      1. I remove the unknown command behavior. This address your
->>>  first point about inconsistent behaviors, and effectively removes the
->>>  strict_parse sysctl (as it is always enabled).
->>>
->>>      2. I introduce a versioning system for the properties
->>>  themselves. The valid set of properties and their versions
->>>  can be found in securityfs, under say, ipe/config in a key=value
->>>  format where `key` indicates the understood token, and `value`
->>>  indicates their current version. For example:
->>>
->>>      $ cat $SECURITYFS/ipe/config
->>>      op=1
->>>      action=1
->>>      policy_name=1
->>>      policy_version=1
->>>      dmverity_signature=1
->>>      dmverity_roothash=1
->>>      boot_verified=1
->>
->>  The name ipe/config sounds like a file to configure IPE. Maybe something
->>  like ipe/config_abi or ipe/config_grammar?
->> 
->>>
->>>  if new syntax is introduced, the version number is increased.
->>>
->>>      3. The format of those versions are documented as part of
->>>  the admin-guide around IPE. If user-mode at that point wants to rip
->>>  the documentation formats and correlate with the versioning, then
->>>  it fulfills the same functionality as above, with out the complexity
->>>  around exposing a parsing grammar and interpreting it on-the-fly.
->>>  Many of these are unlikely to move past version 1, however.
->>>
->>>  Thoughts?
->>> 
->>
->>  That seems reasonable.
->> 
->
-> There is a use case for not having strict parsing in the cloud world where 
-> there are multiple versions of OS deployed across a large number of systems 
-> say 100,000 nodes. An OS update can take weeks to complete across all the 
-> nodes, and we end up having a heterogeneous mix of OS versions.
->
-> Without non-strict parsing, to fix an issue in a policy we will need to 
-> update the various versions of the policy (one each for all OS versions
-> which have different IPE policy schema). We will lose the agility we need to 
-> fix and deploy something urgently in the policy, the nodes might be failing 
-> some critical workloads meanwhile. All the various versions of the policy 
-> will need to be changed and production signed then deployed etc. Further some 
-> versions might introduce newer issues and we will need to see what all 
-> versions of the policy have that bug.
->
-> I propose keeping the non-strict option as well to cater to this use case. 
-> Let me know your thoughts on this.
->
-> Regards,
-> JK
->
---656392-1229694672-1590525885=:83057--
+jiffies is what the existing interfaces uses.  But now that they come
+from the start helper fixing this will become easier.  I'll do that
+as a follow on, as I'd rather not bloat this series even more.
