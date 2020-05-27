@@ -1,13 +1,13 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: delete dm_bufio_discard_buffers
-Date: Wed, 27 May 2020 09:11:07 -0400
-Message-ID: <20200527131107.GA19310@redhat.com>
-References: <alpine.LRH.2.02.2005270702460.6054@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: Re: [PATCHv2 00/15] dm-zoned: multi-device support
+Date: Wed, 27 May 2020 09:41:11 -0400
+Message-ID: <20200527134110.GB19310@redhat.com>
+References: <20200527062225.72849-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.2005270702460.6054@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <20200527062225.72849-1-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,27 +18,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, May 27 2020 at  7:04am -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On Wed, May 27 2020 at  2:22am -0400,
+Hannes Reinecke <hare@suse.de> wrote:
 
-> Hi
+> Hi all,
 > 
-> I suggest to delete dm_bufio_discard_buffers because no one is using it.
+> here's the second version of my patchset to support multiple zoned
+> drives with dm-zoned.
+> This patchset:
+> - Converts the zone array to using xarray for better scalability
+> - Separates out shared structures into per-device structure
+> - Enforce drive-locality for allocating and reclaiming zones
+> - Lifts the restriction of 2 devices to handle an arbitrary number
+>   of drives.
 > 
-> If you need it in the future, tell me - and I will optimize it, so that it 
-> walks the rb-tree of buffers instead of doing block-by-block lookups.
+> This gives me a near-perfect scalability by increasing the write
+> speed from 150MB/s (for a cache and one zoned drive) to 300MB/s
+> (for a cache and two zoned drives).
 > 
+> Changes to v1:
+> - Include reviews from Damien
+> - Reshuffle patches
+> 
+> Hannes Reinecke (15):
+>   dm-zoned: add debugging message for reading superblocks
+>   dm-zoned: secondary superblock must reside on the same devices than
+>     primary superblock
+>   dm-zoned: improve logging messages for reclaim
+>   dm-zoned: add a 'reserved' zone flag
+>   dm-zoned: convert to xarray
+>   dm-zoned: temporary superblock for tertiary devices
+>   dm-zoned: add device pointer to struct dm_zone
+>   dm-zoned: add metadata pointer to struct dmz_dev
+>   dm-zoned: allocate dm devices dynamically
+>   dm-zoned: per-device reclaim
+>   dm-zoned: move random and sequential zones into struct dmz_dev
+>   dm-zoned: support arbitrary number of devices
+>   dm-zoned: allocate zone by device index
+>   dm-zoned: select reclaim zone based on device index
+>   dm-zoned: prefer full zones for reclaim
+> 
+>  drivers/md/dm-zoned-metadata.c | 448 ++++++++++++++++++++++++-----------------
+>  drivers/md/dm-zoned-reclaim.c  |  95 +++++----
+>  drivers/md/dm-zoned-target.c   | 169 ++++++++++------
+>  drivers/md/dm-zoned.h          |  77 ++++---
+>  4 files changed, 481 insertions(+), 308 deletions(-)
 
-OK, my only concern is: Heinz, should you have used
-dm_bufio_discard_buffers() in dm-ebs commit a5089a95d84c ("dm ebs: pass
-discards down to underlying device")?  Or are you certain all ebs'
-bufio buffers have made it to disk?
+Would you still like to wait until the 5.9 merge window?
 
-Also now seeing that the FIXME commit a5089a95d84c removed referred to
-making use of dm_bufio_discard_buffers()...
+Or would you prefer to see these changes land for 5.8 so as to limit the
+variants of related code that needs to be supported?
 
+If you and Damien are OK with 5.8 (and testing backs that up) then I
+should be able to get it to land.
+
+Let me know, thanks.
 Mike
