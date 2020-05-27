@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 07/16] nvdimm: use bio_{start,end}_io_acct
-Date: Wed, 27 May 2020 07:24:10 +0200
-Message-ID: <20200527052419.403583-8-hch@lst.de>
+Subject: [PATCH 05/16] bcache: use bio_{start,end}_io_acct
+Date: Wed, 27 May 2020 07:24:08 +0200
+Message-ID: <20200527052419.403583-6-hch@lst.de>
 References: <20200527052419.403583-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,121 +9,83 @@ Return-path: <linux-bcache-owner@vger.kernel.org>
 In-Reply-To: <20200527052419.403583-1-hch@lst.de>
 Sender: linux-bcache-owner@vger.kernel.org
 To: Jens Axboe <axboe@kernel.dk>
-Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org
+Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org, Coly Li <colyli@suse.de>
 List-Id: dm-devel.ids
 
-Switch dm to use the nicer bio accounting helpers.
+Switch bcache to use the nicer bio accounting helpers, and call the
+routines where we also sample the start time to give coherent accounting
+results.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+Acked-by: Coly Li <colyli@suse.de>
 ---
- drivers/nvdimm/blk.c  |  6 ++++--
- drivers/nvdimm/btt.c  |  6 ++++--
- drivers/nvdimm/nd.h   | 19 -------------------
- drivers/nvdimm/pmem.c |  6 ++++--
- 4 files changed, 12 insertions(+), 25 deletions(-)
+ drivers/md/bcache/request.c | 18 ++++--------------
+ 1 file changed, 4 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/nvdimm/blk.c b/drivers/nvdimm/blk.c
-index 43751fab9d36a..036e23aef9b04 100644
---- a/drivers/nvdimm/blk.c
-+++ b/drivers/nvdimm/blk.c
-@@ -178,7 +178,9 @@ static blk_qc_t nd_blk_make_request(struct request_queue *q, struct bio *bio)
- 	bip = bio_integrity(bio);
- 	nsblk = q->queuedata;
- 	rw = bio_data_dir(bio);
--	do_acct = nd_iostat_start(bio, &start);
-+	do_acct = blk_queue_io_stat(bio->bi_disk->queue);
-+	if (do_acct)
-+		start = bio_start_io_acct(bio);
- 	bio_for_each_segment(bvec, bio, iter) {
- 		unsigned int len = bvec.bv_len;
- 
-@@ -195,7 +197,7 @@ static blk_qc_t nd_blk_make_request(struct request_queue *q, struct bio *bio)
- 		}
- 	}
- 	if (do_acct)
--		nd_iostat_end(bio, start);
-+		bio_end_io_acct(bio, start);
- 
- 	bio_endio(bio);
- 	return BLK_QC_T_NONE;
-diff --git a/drivers/nvdimm/btt.c b/drivers/nvdimm/btt.c
-index 3b09419218d6f..90c0c4bbe77b9 100644
---- a/drivers/nvdimm/btt.c
-+++ b/drivers/nvdimm/btt.c
-@@ -1452,7 +1452,9 @@ static blk_qc_t btt_make_request(struct request_queue *q, struct bio *bio)
- 	if (!bio_integrity_prep(bio))
- 		return BLK_QC_T_NONE;
- 
--	do_acct = nd_iostat_start(bio, &start);
-+	do_acct = blk_queue_io_stat(bio->bi_disk->queue);
-+	if (do_acct)
-+		start = bio_start_io_acct(bio);
- 	bio_for_each_segment(bvec, bio, iter) {
- 		unsigned int len = bvec.bv_len;
- 
-@@ -1477,7 +1479,7 @@ static blk_qc_t btt_make_request(struct request_queue *q, struct bio *bio)
- 		}
- 	}
- 	if (do_acct)
--		nd_iostat_end(bio, start);
-+		bio_end_io_acct(bio, start);
- 
- 	bio_endio(bio);
- 	return BLK_QC_T_NONE;
-diff --git a/drivers/nvdimm/nd.h b/drivers/nvdimm/nd.h
-index 85dbb2a322b9b..85c1ae813ea31 100644
---- a/drivers/nvdimm/nd.h
-+++ b/drivers/nvdimm/nd.h
-@@ -396,25 +396,6 @@ static inline int nvdimm_setup_pfn(struct nd_pfn *nd_pfn,
- #endif
- int nd_blk_region_init(struct nd_region *nd_region);
- int nd_region_activate(struct nd_region *nd_region);
--void __nd_iostat_start(struct bio *bio, unsigned long *start);
--static inline bool nd_iostat_start(struct bio *bio, unsigned long *start)
--{
--	struct gendisk *disk = bio->bi_disk;
--
--	if (!blk_queue_io_stat(disk->queue))
--		return false;
--
--	*start = jiffies;
--	generic_start_io_acct(disk->queue, bio_op(bio), bio_sectors(bio),
--			      &disk->part0);
--	return true;
--}
--static inline void nd_iostat_end(struct bio *bio, unsigned long start)
--{
--	struct gendisk *disk = bio->bi_disk;
--
--	generic_end_io_acct(disk->queue, bio_op(bio), &disk->part0, start);
--}
- static inline bool is_bad_pmem(struct badblocks *bb, sector_t sector,
- 		unsigned int len)
+diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
+index 77d1a26975174..22b483527176b 100644
+--- a/drivers/md/bcache/request.c
++++ b/drivers/md/bcache/request.c
+@@ -668,9 +668,7 @@ static void backing_request_endio(struct bio *bio)
+ static void bio_complete(struct search *s)
  {
-diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index 2df6994acf836..97f948f8f4e62 100644
---- a/drivers/nvdimm/pmem.c
-+++ b/drivers/nvdimm/pmem.c
-@@ -202,7 +202,9 @@ static blk_qc_t pmem_make_request(struct request_queue *q, struct bio *bio)
- 	if (bio->bi_opf & REQ_PREFLUSH)
- 		ret = nvdimm_flush(nd_region, bio);
+ 	if (s->orig_bio) {
+-		generic_end_io_acct(s->d->disk->queue, bio_op(s->orig_bio),
+-				    &s->d->disk->part0, s->start_time);
+-
++		bio_end_io_acct(s->orig_bio, s->start_time);
+ 		trace_bcache_request_end(s->d, s->orig_bio);
+ 		s->orig_bio->bi_status = s->iop.status;
+ 		bio_endio(s->orig_bio);
+@@ -730,7 +728,7 @@ static inline struct search *search_alloc(struct bio *bio,
+ 	s->recoverable		= 1;
+ 	s->write		= op_is_write(bio_op(bio));
+ 	s->read_dirty_data	= 0;
+-	s->start_time		= jiffies;
++	s->start_time		= bio_start_io_acct(bio);
  
--	do_acct = nd_iostat_start(bio, &start);
-+	do_acct = blk_queue_io_stat(bio->bi_disk->queue);
-+	if (do_acct)
-+		start = bio_start_io_acct(bio);
- 	bio_for_each_segment(bvec, bio, iter) {
- 		if (op_is_write(bio_op(bio)))
- 			rc = pmem_do_write(pmem, bvec.bv_page, bvec.bv_offset,
-@@ -216,7 +218,7 @@ static blk_qc_t pmem_make_request(struct request_queue *q, struct bio *bio)
+ 	s->iop.c		= d->c;
+ 	s->iop.bio		= NULL;
+@@ -1082,8 +1080,7 @@ static void detached_dev_end_io(struct bio *bio)
+ 	bio->bi_end_io = ddip->bi_end_io;
+ 	bio->bi_private = ddip->bi_private;
+ 
+-	generic_end_io_acct(ddip->d->disk->queue, bio_op(bio),
+-			    &ddip->d->disk->part0, ddip->start_time);
++	bio_end_io_acct(bio, ddip->start_time);
+ 
+ 	if (bio->bi_status) {
+ 		struct cached_dev *dc = container_of(ddip->d,
+@@ -1108,7 +1105,7 @@ static void detached_dev_do_request(struct bcache_device *d, struct bio *bio)
+ 	 */
+ 	ddip = kzalloc(sizeof(struct detached_dev_io_private), GFP_NOIO);
+ 	ddip->d = d;
+-	ddip->start_time = jiffies;
++	ddip->start_time = bio_start_io_acct(bio);
+ 	ddip->bi_end_io = bio->bi_end_io;
+ 	ddip->bi_private = bio->bi_private;
+ 	bio->bi_end_io = detached_dev_end_io;
+@@ -1190,11 +1187,6 @@ blk_qc_t cached_dev_make_request(struct request_queue *q, struct bio *bio)
  		}
  	}
- 	if (do_acct)
--		nd_iostat_end(bio, start);
-+		bio_end_io_acct(bio, start);
  
- 	if (bio->bi_opf & REQ_FUA)
- 		ret = nvdimm_flush(nd_region, bio);
+-	generic_start_io_acct(q,
+-			      bio_op(bio),
+-			      bio_sectors(bio),
+-			      &d->disk->part0);
+-
+ 	bio_set_dev(bio, dc->bdev);
+ 	bio->bi_iter.bi_sector += dc->sb.data_offset;
+ 
+@@ -1311,8 +1303,6 @@ blk_qc_t flash_dev_make_request(struct request_queue *q, struct bio *bio)
+ 		return BLK_QC_T_NONE;
+ 	}
+ 
+-	generic_start_io_acct(q, bio_op(bio), bio_sectors(bio), &d->disk->part0);
+-
+ 	s = search_alloc(bio, d);
+ 	cl = &s->cl;
+ 	bio = &s->bio.bio;
 -- 
 2.26.2
