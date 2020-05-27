@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 09/15] dm-zoned: allocate dm devices dynamically
-Date: Wed, 27 May 2020 08:22:19 +0200
-Message-ID: <20200527062225.72849-10-hare@suse.de>
+Subject: [PATCH 06/15] dm-zoned: temporary superblock for
+	tertiary devices
+Date: Wed, 27 May 2020 08:22:16 +0200
+Message-ID: <20200527062225.72849-7-hare@suse.de>
 References: <20200527062225.72849-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,81 +22,240 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Allocate dm devices dynamically to allow for expansion to
-several devices.
+Checking the tertiary superblock just consists of validating UUIDs,
+crcs, and the generation number; it doesn't have contents which
+would be required during the actual operation.
+So we should be allocating a temporary superblock when checking
+tertiary devices and avoid having to store it together with the
+'real' superblocks.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm-zoned-target.c | 29 +++++++++++++++++++----------
- 1 file changed, 19 insertions(+), 10 deletions(-)
+ drivers/md/dm-zoned-metadata.c | 104 ++++++++++++++++++++++-------------------
+ 1 file changed, 57 insertions(+), 47 deletions(-)
 
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index 087dd4801663..fec1b6a9c6f1 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -40,9 +40,10 @@ struct dm_chunk_work {
-  * Target descriptor.
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index 839f9078806d..bb9ce72bf18c 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -174,7 +174,7 @@ struct dmz_metadata {
+ 	/* Zone information array */
+ 	struct xarray		zones;
+ 
+-	struct dmz_sb		sb[3];
++	struct dmz_sb		sb[2];
+ 	unsigned int		mblk_primary;
+ 	unsigned int		sb_version;
+ 	u64			sb_gen;
+@@ -1014,10 +1014,11 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
+ /*
+  * Check super block.
   */
- struct dmz_target {
--	struct dm_dev		*ddev[DMZ_MAX_DEVS];
-+	struct dm_dev		**ddev;
-+	unsigned int		nr_ddevs;
- 
--	unsigned long		flags;
-+	unsigned int		flags;
- 
- 	/* Zoned block device information */
- 	struct dmz_dev		*dev;
-@@ -836,12 +837,20 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		ti->error = "Unable to allocate the zoned target descriptor";
- 		return -ENOMEM;
+-static int dmz_check_sb(struct dmz_metadata *zmd, unsigned int set)
++static int dmz_check_sb(struct dmz_metadata *zmd, struct dmz_sb *dsb,
++			bool tertiary)
+ {
+-	struct dmz_super *sb = zmd->sb[set].sb;
+-	struct dmz_dev *dev = zmd->sb[set].dev;
++	struct dmz_super *sb = dsb->sb;
++	struct dmz_dev *dev = dsb->dev;
+ 	unsigned int nr_meta_zones, nr_data_zones;
+ 	u32 crc, stored_crc;
+ 	u64 gen;
+@@ -1034,7 +1035,7 @@ static int dmz_check_sb(struct dmz_metadata *zmd, unsigned int set)
+ 			    DMZ_META_VER, zmd->sb_version);
+ 		return -EINVAL;
  	}
--	dmz->dev = kcalloc(2, sizeof(struct dmz_dev), GFP_KERNEL);
-+	dmz->dev = kcalloc(argc, sizeof(struct dmz_dev), GFP_KERNEL);
- 	if (!dmz->dev) {
- 		ti->error = "Unable to allocate the zoned device descriptors";
- 		kfree(dmz);
- 		return -ENOMEM;
+-	if ((zmd->sb_version < 1) && (set == 2)) {
++	if ((zmd->sb_version < 1) && tertiary) {
+ 		dmz_dev_err(dev, "Tertiary superblocks are not supported");
+ 		return -EINVAL;
  	}
-+	dmz->ddev = kcalloc(argc, sizeof(struct dm_dev *), GFP_KERNEL);
-+	if (!dmz->ddev) {
-+		ti->error = "Unable to allocate the dm device descriptors";
-+		ret = -ENOMEM;
-+		goto err;
-+	}
-+	dmz->nr_ddevs = argc;
-+
- 	ti->private = dmz;
+@@ -1078,7 +1079,7 @@ static int dmz_check_sb(struct dmz_metadata *zmd, unsigned int set)
+ 			return -ENXIO;
+ 		}
  
- 	/* Get the target zoned block device */
-@@ -1048,13 +1057,13 @@ static int dmz_iterate_devices(struct dm_target *ti,
- 	struct dmz_target *dmz = ti->private;
- 	unsigned int zone_nr_sectors = dmz_zone_nr_sectors(dmz->metadata);
- 	sector_t capacity;
--	int r;
-+	int i, r;
+-		if (set == 2) {
++		if (tertiary) {
+ 			/*
+ 			 * Generation number should be 0, but it doesn't
+ 			 * really matter if it isn't.
+@@ -1127,14 +1128,13 @@ static int dmz_check_sb(struct dmz_metadata *zmd, unsigned int set)
+ /*
+  * Read the first or second super block from disk.
+  */
+-static int dmz_read_sb(struct dmz_metadata *zmd, unsigned int set)
++static int dmz_read_sb(struct dmz_metadata *zmd, struct dmz_sb *sb, int set)
+ {
+ 	dmz_zmd_debug(zmd, "read superblock set %d dev %s block %llu",
+-		      set, zmd->sb[set].dev->name,
+-		      zmd->sb[set].block);
++		      set, sb->dev->name, sb->block);
  
--	capacity = dmz->dev[0].capacity & ~(zone_nr_sectors - 1);
--	r = fn(ti, dmz->ddev[0], 0, capacity, data);
--	if (!r && dmz->ddev[1]) {
--		capacity = dmz->dev[1].capacity & ~(zone_nr_sectors - 1);
--		r = fn(ti, dmz->ddev[1], 0, capacity, data);
-+	for (i = 0; i < dmz->nr_ddevs; i++) {
-+		capacity = dmz->dev[i].capacity & ~(zone_nr_sectors - 1);
-+		r = fn(ti, dmz->ddev[i], 0, capacity, data);
-+		if (r)
-+			break;
- 	}
- 	return r;
+-	return dmz_rdwr_block(zmd->sb[set].dev, REQ_OP_READ,
+-			      zmd->sb[set].block, zmd->sb[set].mblk->page);
++	return dmz_rdwr_block(sb->dev, REQ_OP_READ,
++			      sb->block, sb->mblk->page);
  }
-@@ -1083,7 +1092,7 @@ static void dmz_status(struct dm_target *ti, status_type_t type,
- 		dev = &dmz->dev[0];
- 		format_dev_t(buf, dev->bdev->bd_dev);
- 		DMEMIT("%s", buf);
--		if (dmz->dev[1].bdev) {
-+		if (dmz->nr_ddevs > 1) {
- 			dev = &dmz->dev[1];
- 			format_dev_t(buf, dev->bdev->bd_dev);
- 			DMEMIT(" %s", buf);
+ 
+ /*
+@@ -1162,7 +1162,7 @@ static int dmz_lookup_secondary_sb(struct dmz_metadata *zmd)
+ 	zmd->sb[1].zone = dmz_get(zmd, zone_id + 1);
+ 	zmd->sb[1].dev = zmd->sb[0].dev;
+ 	for (i = 1; i < zmd->nr_rnd_zones; i++) {
+-		if (dmz_read_sb(zmd, 1) != 0)
++		if (dmz_read_sb(zmd, &zmd->sb[1], 1) != 0)
+ 			break;
+ 		if (le32_to_cpu(zmd->sb[1].sb->magic) == DMZ_MAGIC)
+ 			return 0;
+@@ -1179,9 +1179,9 @@ static int dmz_lookup_secondary_sb(struct dmz_metadata *zmd)
+ }
+ 
+ /*
+- * Read the first or second super block from disk.
++ * Read a super block from disk.
+  */
+-static int dmz_get_sb(struct dmz_metadata *zmd, unsigned int set)
++static int dmz_get_sb(struct dmz_metadata *zmd, struct dmz_sb *sb, int set)
+ {
+ 	struct dmz_mblock *mblk;
+ 	int ret;
+@@ -1191,14 +1191,14 @@ static int dmz_get_sb(struct dmz_metadata *zmd, unsigned int set)
+ 	if (!mblk)
+ 		return -ENOMEM;
+ 
+-	zmd->sb[set].mblk = mblk;
+-	zmd->sb[set].sb = mblk->data;
++	sb->mblk = mblk;
++	sb->sb = mblk->data;
+ 
+ 	/* Read super block */
+-	ret = dmz_read_sb(zmd, set);
++	ret = dmz_read_sb(zmd, sb, set);
+ 	if (ret) {
+ 		dmz_free_mblock(zmd, mblk);
+-		zmd->sb[set].mblk = NULL;
++		sb->mblk = NULL;
+ 		return ret;
+ 	}
+ 
+@@ -1272,13 +1272,13 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
+ 	/* Read and check the primary super block */
+ 	zmd->sb[0].block = dmz_start_block(zmd, zmd->sb[0].zone);
+ 	zmd->sb[0].dev = dmz_zone_to_dev(zmd, zmd->sb[0].zone);
+-	ret = dmz_get_sb(zmd, 0);
++	ret = dmz_get_sb(zmd, &zmd->sb[0], 0);
+ 	if (ret) {
+ 		dmz_dev_err(zmd->sb[0].dev, "Read primary super block failed");
+ 		return ret;
+ 	}
+ 
+-	ret = dmz_check_sb(zmd, 0);
++	ret = dmz_check_sb(zmd, &zmd->sb[0], false);
+ 
+ 	/* Read and check secondary super block */
+ 	if (ret == 0) {
+@@ -1291,7 +1291,7 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
+ 		}
+ 		zmd->sb[1].block = dmz_start_block(zmd, zmd->sb[1].zone);
+ 		zmd->sb[1].dev = zmd->sb[0].dev;
+-		ret = dmz_get_sb(zmd, 1);
++		ret = dmz_get_sb(zmd, &zmd->sb[1], 1);
+ 	} else
+ 		ret = dmz_lookup_secondary_sb(zmd);
+ 
+@@ -1300,7 +1300,7 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
+ 		return ret;
+ 	}
+ 
+-	ret = dmz_check_sb(zmd, 1);
++	ret = dmz_check_sb(zmd, &zmd->sb[1], false);
+ 	if (ret == 0)
+ 		sb_good[1] = true;
+ 
+@@ -1345,18 +1345,35 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
+ 		      "Using super block %u (gen %llu)",
+ 		      zmd->mblk_primary, zmd->sb_gen);
+ 
+-	if ((zmd->sb_version > 1) && zmd->sb[2].zone) {
+-		zmd->sb[2].block = dmz_start_block(zmd, zmd->sb[2].zone);
+-		zmd->sb[2].dev = dmz_zone_to_dev(zmd, zmd->sb[2].zone);
+-		ret = dmz_get_sb(zmd, 2);
+-		if (ret) {
+-			dmz_dev_err(zmd->sb[2].dev,
+-				    "Read tertiary super block failed");
+-			return ret;
++	if (zmd->sb_version > 1) {
++		int i;
++		struct dmz_sb *sb;
++
++		sb = kzalloc(sizeof(struct dmz_sb), GFP_KERNEL);
++		if (!sb)
++			return -ENOMEM;
++		for (i = 1; i < zmd->nr_devs; i++) {
++			sb->block = 0;
++			sb->zone = dmz_get(zmd, zmd->dev[i].zone_offset);
++			sb->dev = &zmd->dev[i];
++			if (!dmz_is_meta(sb->zone)) {
++				dmz_dev_err(sb->dev,
++					    "Tertiary super block zone %u not marked as metadata zone",
++					    sb->zone->id);
++				return -EINVAL;
++			}
++			ret = dmz_get_sb(zmd, sb, i + 1);
++			if (ret) {
++				dmz_dev_err(sb->dev,
++					    "Read tertiary super block failed");
++				return ret;
++			}
++			ret = dmz_check_sb(zmd, sb, true);
++			dmz_free_mblock(zmd, sb->mblk);
++			if (ret == -EINVAL)
++				return ret;
+ 		}
+-		ret = dmz_check_sb(zmd, 2);
+-		if (ret == -EINVAL)
+-			return ret;
++		kfree(sb);
+ 	}
+ 	return 0;
+ }
+@@ -1415,12 +1432,15 @@ static int dmz_init_zone(struct blk_zone *blkz, unsigned int num, void *data)
+ 				zmd->sb[0].zone = zone;
+ 			}
+ 		}
+-		if (zmd->nr_devs > 1 && !zmd->sb[2].zone) {
+-			/* Tertiary superblock zone */
+-			zmd->sb[2].zone = zone;
++		if (zmd->nr_devs > 1 && num == 0) {
++			/*
++			 * Tertiary superblock zones are always at the
++			 * start of the zoned devices, so mark them
++			 * as metadata zone.
++			 */
++			set_bit(DMZ_META, &zone->flags);
+ 		}
+ 	}
+-
+ 	return 0;
+ }
+ 
+@@ -2858,16 +2878,6 @@ int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
+ 		}
+ 		set_bit(DMZ_META, &zone->flags);
+ 	}
+-	if (zmd->sb[2].zone) {
+-		zone = dmz_get(zmd, zmd->sb[2].zone->id);
+-		if (!zone) {
+-			dmz_zmd_err(zmd,
+-				    "Tertiary metadata zone not present");
+-			ret = -ENXIO;
+-			goto err;
+-		}
+-		set_bit(DMZ_META, &zone->flags);
+-	}
+ 	/* Load mapping table */
+ 	ret = dmz_load_mapping(zmd);
+ 	if (ret)
 -- 
 2.16.4
