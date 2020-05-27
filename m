@@ -1,91 +1,47 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 05/16] bcache: use bio_{start,end}_io_acct
-Date: Wed, 27 May 2020 07:24:08 +0200
-Message-ID: <20200527052419.403583-6-hch@lst.de>
-References: <20200527052419.403583-1-hch@lst.de>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH 01/15] dm-zoned: add debugging message for
+	reading superblocks
+Date: Wed, 27 May 2020 08:22:11 +0200
+Message-ID: <20200527062225.72849-2-hare@suse.de>
+References: <20200527062225.72849-1-hare@suse.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-bcache-owner@vger.kernel.org>
-In-Reply-To: <20200527052419.403583-1-hch@lst.de>
-Sender: linux-bcache-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org, Coly Li <colyli@suse.de>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200527062225.72849-1-hare@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Switch bcache to use the nicer bio accounting helpers, and call the
-routines where we also sample the start time to give coherent accounting
-results.
-
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Acked-by: Coly Li <colyli@suse.de>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
 ---
- drivers/md/bcache/request.c | 18 ++++--------------
- 1 file changed, 4 insertions(+), 14 deletions(-)
+ drivers/md/dm-zoned-metadata.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
-index 77d1a26975174..22b483527176b 100644
---- a/drivers/md/bcache/request.c
-+++ b/drivers/md/bcache/request.c
-@@ -668,9 +668,7 @@ static void backing_request_endio(struct bio *bio)
- static void bio_complete(struct search *s)
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index 4a2e351365c5..ef1524d5928a 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -1105,6 +1105,10 @@ static int dmz_check_sb(struct dmz_metadata *zmd, unsigned int set)
+  */
+ static int dmz_read_sb(struct dmz_metadata *zmd, unsigned int set)
  {
- 	if (s->orig_bio) {
--		generic_end_io_acct(s->d->disk->queue, bio_op(s->orig_bio),
--				    &s->d->disk->part0, s->start_time);
--
-+		bio_end_io_acct(s->orig_bio, s->start_time);
- 		trace_bcache_request_end(s->d, s->orig_bio);
- 		s->orig_bio->bi_status = s->iop.status;
- 		bio_endio(s->orig_bio);
-@@ -730,7 +728,7 @@ static inline struct search *search_alloc(struct bio *bio,
- 	s->recoverable		= 1;
- 	s->write		= op_is_write(bio_op(bio));
- 	s->read_dirty_data	= 0;
--	s->start_time		= jiffies;
-+	s->start_time		= bio_start_io_acct(bio);
- 
- 	s->iop.c		= d->c;
- 	s->iop.bio		= NULL;
-@@ -1082,8 +1080,7 @@ static void detached_dev_end_io(struct bio *bio)
- 	bio->bi_end_io = ddip->bi_end_io;
- 	bio->bi_private = ddip->bi_private;
- 
--	generic_end_io_acct(ddip->d->disk->queue, bio_op(bio),
--			    &ddip->d->disk->part0, ddip->start_time);
-+	bio_end_io_acct(bio, ddip->start_time);
- 
- 	if (bio->bi_status) {
- 		struct cached_dev *dc = container_of(ddip->d,
-@@ -1108,7 +1105,7 @@ static void detached_dev_do_request(struct bcache_device *d, struct bio *bio)
- 	 */
- 	ddip = kzalloc(sizeof(struct detached_dev_io_private), GFP_NOIO);
- 	ddip->d = d;
--	ddip->start_time = jiffies;
-+	ddip->start_time = bio_start_io_acct(bio);
- 	ddip->bi_end_io = bio->bi_end_io;
- 	ddip->bi_private = bio->bi_private;
- 	bio->bi_end_io = detached_dev_end_io;
-@@ -1190,11 +1187,6 @@ blk_qc_t cached_dev_make_request(struct request_queue *q, struct bio *bio)
- 		}
- 	}
- 
--	generic_start_io_acct(q,
--			      bio_op(bio),
--			      bio_sectors(bio),
--			      &d->disk->part0);
--
- 	bio_set_dev(bio, dc->bdev);
- 	bio->bi_iter.bi_sector += dc->sb.data_offset;
- 
-@@ -1311,8 +1303,6 @@ blk_qc_t flash_dev_make_request(struct request_queue *q, struct bio *bio)
- 		return BLK_QC_T_NONE;
- 	}
- 
--	generic_start_io_acct(q, bio_op(bio), bio_sectors(bio), &d->disk->part0);
--
- 	s = search_alloc(bio, d);
- 	cl = &s->cl;
- 	bio = &s->bio.bio;
++	dmz_zmd_debug(zmd, "read superblock set %d dev %s block %llu",
++		      set, zmd->sb[set].dev->name,
++		      zmd->sb[set].block);
++
+ 	return dmz_rdwr_block(zmd->sb[set].dev, REQ_OP_READ,
+ 			      zmd->sb[set].block, zmd->sb[set].mblk->page);
+ }
 -- 
-2.26.2
+2.16.4
