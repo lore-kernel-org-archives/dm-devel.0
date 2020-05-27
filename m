@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 02/16] drbd: use bio_{start,end}_io_acct
-Date: Wed, 27 May 2020 07:24:05 +0200
-Message-ID: <20200527052419.403583-3-hch@lst.de>
+Subject: [PATCH 03/16] rsxx: use bio_{start,end}_io_acct
+Date: Wed, 27 May 2020 07:24:06 +0200
+Message-ID: <20200527052419.403583-4-hch@lst.de>
 References: <20200527052419.403583-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,71 +12,59 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Switch drbd to use the nicer bio accounting helpers.
+Switch rsxx to use the nicer bio accounting helpers.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
 ---
- drivers/block/drbd/drbd_req.c | 27 ++++-----------------------
- 1 file changed, 4 insertions(+), 23 deletions(-)
+ drivers/block/rsxx/dev.c | 19 ++-----------------
+ 1 file changed, 2 insertions(+), 17 deletions(-)
 
-diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
-index 840c3aef3c5c9..c80a2f1c3c2a7 100644
---- a/drivers/block/drbd/drbd_req.c
-+++ b/drivers/block/drbd/drbd_req.c
-@@ -21,24 +21,6 @@
+diff --git a/drivers/block/rsxx/dev.c b/drivers/block/rsxx/dev.c
+index 8ffa8260dcafe..3ba07ab30c84f 100644
+--- a/drivers/block/rsxx/dev.c
++++ b/drivers/block/rsxx/dev.c
+@@ -96,20 +96,6 @@ static const struct block_device_operations rsxx_fops = {
+ 	.ioctl		= rsxx_blkdev_ioctl,
+ };
  
- static bool drbd_may_do_local_read(struct drbd_device *device, sector_t sector, int size);
- 
--/* Update disk stats at start of I/O request */
--static void _drbd_start_io_acct(struct drbd_device *device, struct drbd_request *req)
+-static void disk_stats_start(struct rsxx_cardinfo *card, struct bio *bio)
 -{
--	struct request_queue *q = device->rq_queue;
--
--	generic_start_io_acct(q, bio_op(req->master_bio),
--				req->i.size >> 9, &device->vdisk->part0);
+-	generic_start_io_acct(card->queue, bio_op(bio), bio_sectors(bio),
+-			     &card->gendisk->part0);
 -}
 -
--/* Update disk stats when completing request upwards */
--static void _drbd_end_io_acct(struct drbd_device *device, struct drbd_request *req)
+-static void disk_stats_complete(struct rsxx_cardinfo *card,
+-				struct bio *bio,
+-				unsigned long start_time)
 -{
--	struct request_queue *q = device->rq_queue;
--
--	generic_end_io_acct(q, bio_op(req->master_bio),
--			    &device->vdisk->part0, req->start_jif);
+-	generic_end_io_acct(card->queue, bio_op(bio),
+-			    &card->gendisk->part0, start_time);
 -}
 -
- static struct drbd_request *drbd_req_new(struct drbd_device *device, struct bio *bio_src)
- {
- 	struct drbd_request *req;
-@@ -263,7 +245,7 @@ void drbd_req_complete(struct drbd_request *req, struct bio_and_error *m)
- 		start_new_tl_epoch(first_peer_device(device)->connection);
+ static void bio_dma_done_cb(struct rsxx_cardinfo *card,
+ 			    void *cb_data,
+ 			    unsigned int error)
+@@ -121,7 +107,7 @@ static void bio_dma_done_cb(struct rsxx_cardinfo *card,
  
- 	/* Update disk stats */
--	_drbd_end_io_acct(device, req);
-+	bio_end_io_acct(req->master_bio, req->start_jif);
+ 	if (atomic_dec_and_test(&meta->pending_dmas)) {
+ 		if (!card->eeh_state && card->gendisk)
+-			disk_stats_complete(card, meta->bio, meta->start_time);
++			bio_end_io_acct(meta->bio, meta->start_time);
  
- 	/* If READ failed,
- 	 * have it be pushed back to the retry work queue,
-@@ -1222,16 +1204,15 @@ drbd_request_prepare(struct drbd_device *device, struct bio *bio, unsigned long
- 		bio_endio(bio);
- 		return ERR_PTR(-ENOMEM);
- 	}
--	req->start_jif = start_jif;
-+
-+	/* Update disk stats */
-+	req->start_jif = bio_start_io_acct(req->master_bio);
+ 		if (atomic_read(&meta->error))
+ 			bio_io_error(meta->bio);
+@@ -167,10 +153,9 @@ static blk_qc_t rsxx_make_request(struct request_queue *q, struct bio *bio)
+ 	bio_meta->bio = bio;
+ 	atomic_set(&bio_meta->error, 0);
+ 	atomic_set(&bio_meta->pending_dmas, 0);
+-	bio_meta->start_time = jiffies;
  
- 	if (!get_ldev(device)) {
- 		bio_put(req->private_bio);
- 		req->private_bio = NULL;
- 	}
+ 	if (!unlikely(card->halt))
+-		disk_stats_start(card, bio);
++		bio_meta->start_time = bio_start_io_acct(bio);
  
--	/* Update disk stats */
--	_drbd_start_io_acct(device, req);
--
- 	/* process discards always from our submitter thread */
- 	if (bio_op(bio) == REQ_OP_WRITE_ZEROES ||
- 	    bio_op(bio) == REQ_OP_DISCARD)
+ 	dev_dbg(CARD_TO_DEV(card), "BIO[%c]: meta: %p addr8: x%llx size: %d\n",
+ 		 bio_data_dir(bio) ? 'W' : 'R', bio_meta,
 -- 
 2.26.2
