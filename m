@@ -1,13 +1,14 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCHv2 00/15] dm-zoned: multi-device support
-Date: Wed, 27 May 2020 09:41:11 -0400
-Message-ID: <20200527134110.GB19310@redhat.com>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [PATCH 05/15] dm-zoned: convert to xarray
+Date: Thu, 28 May 2020 02:46:27 +0000
+Message-ID: <CY4PR04MB37518D9EF4D14BDB255D3635E78E0@CY4PR04MB3751.namprd04.prod.outlook.com>
 References: <20200527062225.72849-1-hare@suse.de>
+	<20200527062225.72849-6-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200527062225.72849-1-hare@suse.de>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,64 +18,289 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Hannes Reinecke <hare@suse.de>
-Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
+To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, May 27 2020 at  2:22am -0400,
-Hannes Reinecke <hare@suse.de> wrote:
-
-> Hi all,
+On 2020/05/27 15:23, Hannes Reinecke wrote:
+> The zones array is getting really large, and large arrays
+> tend to wreak havoc with the CPU caches.
+> So convert it to xarray to become more cache friendly.
 > 
-> here's the second version of my patchset to support multiple zoned
-> drives with dm-zoned.
-> This patchset:
-> - Converts the zone array to using xarray for better scalability
-> - Separates out shared structures into per-device structure
-> - Enforce drive-locality for allocating and reclaiming zones
-> - Lifts the restriction of 2 devices to handle an arbitrary number
->   of drives.
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> ---
+>  drivers/md/dm-zoned-metadata.c | 120 ++++++++++++++++++++++++++++++-----------
+>  1 file changed, 88 insertions(+), 32 deletions(-)
 > 
-> This gives me a near-perfect scalability by increasing the write
-> speed from 150MB/s (for a cache and one zoned drive) to 300MB/s
-> (for a cache and two zoned drives).
+> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+> index 0982ab1758a6..839f9078806d 100644
+> --- a/drivers/md/dm-zoned-metadata.c
+> +++ b/drivers/md/dm-zoned-metadata.c
+> @@ -172,7 +172,7 @@ struct dmz_metadata {
+>  	unsigned int		nr_chunks;
+>  
+>  	/* Zone information array */
+> -	struct dm_zone		*zones;
+> +	struct xarray		zones;
+>  
+>  	struct dmz_sb		sb[3];
+>  	unsigned int		mblk_primary;
+> @@ -327,6 +327,30 @@ unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd)
+>  	return atomic_read(&zmd->unmap_nr_seq);
+>  }
+>  
+> +static struct dm_zone *dmz_get(struct dmz_metadata *zmd, unsigned int zone_id)
+> +{
+> +	return xa_load(&zmd->zones, zone_id);
+> +}
+> +
+> +static struct dm_zone *dmz_insert(struct dmz_metadata *zmd,
+> +				  unsigned int zone_id)
+> +{
+> +	struct dm_zone *zone = kzalloc(sizeof(struct dm_zone), GFP_KERNEL);
+> +
+> +	if (!zone)
+> +		return ERR_PTR(-ENOMEM);
+> +
+> +	if (xa_insert(&zmd->zones, zone_id, zone, GFP_KERNEL))
+> +		return ERR_PTR(-EBUSY);
+> +
+> +	INIT_LIST_HEAD(&zone->link);
+> +	atomic_set(&zone->refcount, 0);
+> +	zone->id = zone_id;
+> +	zone->chunk = DMZ_MAP_UNMAPPED;
+> +
+> +	return zone;
+> +}
+> +
+>  const char *dmz_metadata_label(struct dmz_metadata *zmd)
+>  {
+>  	return (const char *)zmd->label;
+> @@ -1122,6 +1146,7 @@ static int dmz_lookup_secondary_sb(struct dmz_metadata *zmd)
+>  {
+>  	unsigned int zone_nr_blocks = zmd->zone_nr_blocks;
+>  	struct dmz_mblock *mblk;
+> +	unsigned int zone_id = zmd->sb[0].zone->id;
+>  	int i;
+>  
+>  	/* Allocate a block */
+> @@ -1134,16 +1159,15 @@ static int dmz_lookup_secondary_sb(struct dmz_metadata *zmd)
+>  
+>  	/* Bad first super block: search for the second one */
+>  	zmd->sb[1].block = zmd->sb[0].block + zone_nr_blocks;
+> -	zmd->sb[1].zone = zmd->sb[0].zone + 1;
+> +	zmd->sb[1].zone = dmz_get(zmd, zone_id + 1);
+>  	zmd->sb[1].dev = zmd->sb[0].dev;
+> -	for (i = 0; i < zmd->nr_rnd_zones - 1; i++) {
+> +	for (i = 1; i < zmd->nr_rnd_zones; i++) {
+>  		if (dmz_read_sb(zmd, 1) != 0)
+>  			break;
+> -		if (le32_to_cpu(zmd->sb[1].sb->magic) == DMZ_MAGIC) {
+> -			zmd->sb[1].zone += i;
+> +		if (le32_to_cpu(zmd->sb[1].sb->magic) == DMZ_MAGIC)
+>  			return 0;
+> -		}
+>  		zmd->sb[1].block += zone_nr_blocks;
+> +		zmd->sb[1].zone = dmz_get(zmd, zone_id + i);
+>  	}
+>  
+>  	dmz_free_mblock(zmd, mblk);
+> @@ -1259,8 +1283,12 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
+>  	/* Read and check secondary super block */
+>  	if (ret == 0) {
+>  		sb_good[0] = true;
+> -		if (!zmd->sb[1].zone)
+> -			zmd->sb[1].zone = zmd->sb[0].zone + zmd->nr_meta_zones;
+> +		if (!zmd->sb[1].zone) {
+> +			unsigned int zone_id =
+> +				zmd->sb[0].zone->id + zmd->nr_meta_zones;
+> +
+> +			zmd->sb[1].zone = dmz_get(zmd, zone_id);
+> +		}
+>  		zmd->sb[1].block = dmz_start_block(zmd, zmd->sb[1].zone);
+>  		zmd->sb[1].dev = zmd->sb[0].dev;
+>  		ret = dmz_get_sb(zmd, 1);
+> @@ -1341,7 +1369,11 @@ static int dmz_init_zone(struct blk_zone *blkz, unsigned int num, void *data)
+>  	struct dmz_metadata *zmd = data;
+>  	struct dmz_dev *dev = zmd->nr_devs > 1 ? &zmd->dev[1] : &zmd->dev[0];
+>  	int idx = num + dev->zone_offset;
+> -	struct dm_zone *zone = &zmd->zones[idx];
+> +	struct dm_zone *zone;
+> +
+> +	zone = dmz_insert(zmd, idx);
+> +	if (IS_ERR(zone))
+> +		return PTR_ERR(zone);
+>  
+>  	if (blkz->len != zmd->zone_nr_sectors) {
+>  		if (zmd->sb_version > 1) {
+> @@ -1353,11 +1385,6 @@ static int dmz_init_zone(struct blk_zone *blkz, unsigned int num, void *data)
+>  		return -ENXIO;
+>  	}
+>  
+> -	INIT_LIST_HEAD(&zone->link);
+> -	atomic_set(&zone->refcount, 0);
+> -	zone->id = idx;
+> -	zone->chunk = DMZ_MAP_UNMAPPED;
+> -
+>  	switch (blkz->type) {
+>  	case BLK_ZONE_TYPE_CONVENTIONAL:
+>  		set_bit(DMZ_RND, &zone->flags);
+> @@ -1397,18 +1424,17 @@ static int dmz_init_zone(struct blk_zone *blkz, unsigned int num, void *data)
+>  	return 0;
+>  }
+>  
+> -static void dmz_emulate_zones(struct dmz_metadata *zmd, struct dmz_dev *dev)
+> +static int dmz_emulate_zones(struct dmz_metadata *zmd, struct dmz_dev *dev)
+>  {
+>  	int idx;
+>  	sector_t zone_offset = 0;
+>  
+>  	for(idx = 0; idx < dev->nr_zones; idx++) {
+> -		struct dm_zone *zone = &zmd->zones[idx];
+> +		struct dm_zone *zone;
+>  
+> -		INIT_LIST_HEAD(&zone->link);
+> -		atomic_set(&zone->refcount, 0);
+> -		zone->id = idx;
+> -		zone->chunk = DMZ_MAP_UNMAPPED;
+> +		zone = dmz_insert(zmd, idx);
+> +		if (IS_ERR(zone))
+> +			return PTR_ERR(zone);
+>  		set_bit(DMZ_CACHE, &zone->flags);
+>  		zone->wp_block = 0;
+>  		zmd->nr_cache_zones++;
+> @@ -1420,6 +1446,7 @@ static void dmz_emulate_zones(struct dmz_metadata *zmd, struct dmz_dev *dev)
+>  		}
+>  		zone_offset += zmd->zone_nr_sectors;
+>  	}
+> +	return 0;
+>  }
+>  
+>  /*
+> @@ -1427,8 +1454,15 @@ static void dmz_emulate_zones(struct dmz_metadata *zmd, struct dmz_dev *dev)
+>   */
+>  static void dmz_drop_zones(struct dmz_metadata *zmd)
+>  {
+> -	kfree(zmd->zones);
+> -	zmd->zones = NULL;
+> +	int idx;
+> +
+> +	for(idx = 0; idx < zmd->nr_zones; idx++) {
+> +		struct dm_zone *zone = xa_load(&zmd->zones, idx);
+> +
+> +		kfree(zone);
+> +		xa_erase(&zmd->zones, idx);
+> +	}
+> +	xa_destroy(&zmd->zones);
+>  }
+>  
+>  /*
+> @@ -1460,20 +1494,25 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
+>  		DMERR("(%s): No zones found", zmd->devname);
+>  		return -ENXIO;
+>  	}
+> -	zmd->zones = kcalloc(zmd->nr_zones, sizeof(struct dm_zone), GFP_KERNEL);
+> -	if (!zmd->zones)
+> -		return -ENOMEM;
+> +	xa_init(&zmd->zones);
+>  
+>  	DMDEBUG("(%s): Using %zu B for zone information",
+>  		zmd->devname, sizeof(struct dm_zone) * zmd->nr_zones);
+>  
+>  	if (zmd->nr_devs > 1) {
+> -		dmz_emulate_zones(zmd, &zmd->dev[0]);
+> +		ret = dmz_emulate_zones(zmd, &zmd->dev[0]);
+> +		if (ret < 0) {
+> +			DMDEBUG("(%s): Failed to emulate zones, error %d",
+> +				zmd->devname, ret);
+> +			dmz_drop_zones(zmd);
+> +			return ret;
+> +		}
+> +
+>  		/*
+>  		 * Primary superblock zone is always at zone 0 when multiple
+>  		 * drives are present.
+>  		 */
+> -		zmd->sb[0].zone = &zmd->zones[0];
+> +		zmd->sb[0].zone = dmz_get(zmd, 0);
+>  
+>  		zoned_dev = &zmd->dev[1];
+>  	}
+> @@ -1576,11 +1615,6 @@ static int dmz_handle_seq_write_err(struct dmz_metadata *zmd,
+>  	return 0;
+>  }
+>  
+> -static struct dm_zone *dmz_get(struct dmz_metadata *zmd, unsigned int zone_id)
+> -{
+> -	return &zmd->zones[zone_id];
+> -}
+> -
+>  /*
+>   * Reset a zone write pointer.
+>   */
+> @@ -1662,6 +1696,11 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
+>  		}
+>  
+>  		dzone = dmz_get(zmd, dzone_id);
+> +		if (!dzone) {
+> +			dmz_zmd_err(zmd, "Chunk %u mapping: data zone %u not present",
+> +				    chunk, dzone_id);
+> +			return -EIO;
+> +		}
+>  		set_bit(DMZ_DATA, &dzone->flags);
+>  		dzone->chunk = chunk;
+>  		dmz_get_zone_weight(zmd, dzone);
+> @@ -1685,6 +1724,11 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
+>  		}
+>  
+>  		bzone = dmz_get(zmd, bzone_id);
+> +		if (!bzone) {
+> +			dmz_zmd_err(zmd, "Chunk %u mapping: buffer zone %u not present",
+> +				    chunk, bzone_id);
+> +			return -EIO;
+> +		}
+>  		if (!dmz_is_rnd(bzone) && !dmz_is_cache(bzone)) {
+>  			dmz_zmd_err(zmd, "Chunk %u mapping: invalid buffer zone %u",
+>  				    chunk, bzone_id);
+> @@ -1715,6 +1759,8 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
+>  	 */
+>  	for (i = 0; i < zmd->nr_zones; i++) {
+>  		dzone = dmz_get(zmd, i);
+> +		if (!dzone)
+> +			continue;
+>  		if (dmz_is_meta(dzone))
+>  			continue;
+>  		if (dmz_is_offline(dzone))
+> @@ -1978,6 +2024,10 @@ struct dm_zone *dmz_get_chunk_mapping(struct dmz_metadata *zmd, unsigned int chu
+>  	} else {
+>  		/* The chunk is already mapped: get the mapping zone */
+>  		dzone = dmz_get(zmd, dzone_id);
+> +		if (!dzone) {
+> +			dzone = ERR_PTR(-EIO);
+> +			goto out;
+> +		}
+>  		if (dzone->chunk != chunk) {
+>  			dzone = ERR_PTR(-EIO);
+>  			goto out;
+> @@ -2794,6 +2844,12 @@ int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
+>  	/* Set metadata zones starting from sb_zone */
+>  	for (i = 0; i < zmd->nr_meta_zones << 1; i++) {
+>  		zone = dmz_get(zmd, zmd->sb[0].zone->id + i);
+> +		if (!zone) {
+> +			dmz_zmd_err(zmd,
+> +				    "metadata zone %u not present", i);
+> +			ret = -ENXIO;
+> +			goto err;
+> +		}
+>  		if (!dmz_is_rnd(zone) && !dmz_is_cache(zone)) {
+>  			dmz_zmd_err(zmd,
+>  				    "metadata zone %d is not random", i);
 > 
-> Changes to v1:
-> - Include reviews from Damien
-> - Reshuffle patches
-> 
-> Hannes Reinecke (15):
->   dm-zoned: add debugging message for reading superblocks
->   dm-zoned: secondary superblock must reside on the same devices than
->     primary superblock
->   dm-zoned: improve logging messages for reclaim
->   dm-zoned: add a 'reserved' zone flag
->   dm-zoned: convert to xarray
->   dm-zoned: temporary superblock for tertiary devices
->   dm-zoned: add device pointer to struct dm_zone
->   dm-zoned: add metadata pointer to struct dmz_dev
->   dm-zoned: allocate dm devices dynamically
->   dm-zoned: per-device reclaim
->   dm-zoned: move random and sequential zones into struct dmz_dev
->   dm-zoned: support arbitrary number of devices
->   dm-zoned: allocate zone by device index
->   dm-zoned: select reclaim zone based on device index
->   dm-zoned: prefer full zones for reclaim
-> 
->  drivers/md/dm-zoned-metadata.c | 448 ++++++++++++++++++++++++-----------------
->  drivers/md/dm-zoned-reclaim.c  |  95 +++++----
->  drivers/md/dm-zoned-target.c   | 169 ++++++++++------
->  drivers/md/dm-zoned.h          |  77 ++++---
->  4 files changed, 481 insertions(+), 308 deletions(-)
 
-Would you still like to wait until the 5.9 merge window?
+Looks good.
 
-Or would you prefer to see these changes land for 5.8 so as to limit the
-variants of related code that needs to be supported?
+Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
 
-If you and Damien are OK with 5.8 (and testing backs that up) then I
-should be able to get it to land.
-
-Let me know, thanks.
-Mike
+-- 
+Damien Le Moal
+Western Digital Research
