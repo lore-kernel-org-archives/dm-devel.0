@@ -1,17 +1,17 @@
 From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH 11/15] dm-zoned: move random and sequential
- zones into struct dmz_dev
-Date: Thu, 28 May 2020 03:25:58 +0000
-Message-ID: <4dc7bbec312087c34e9153646f705d7e5a62266e.camel@wdc.com>
+Subject: Re: [PATCH 12/15] dm-zoned: support arbitrary number of
+	devices
+Date: Thu, 28 May 2020 04:04:38 +0000
+Message-ID: <b328b8fe29721ffbe6ddcd2315adb18fcc659e84.camel@wdc.com>
 References: <20200527062225.72849-1-hare@suse.de>
-	<20200527062225.72849-12-hare@suse.de>
+	<20200527062225.72849-13-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200527062225.72849-12-hare@suse.de>
+In-Reply-To: <20200527062225.72849-13-hare@suse.de>
 Content-Language: en-US
-Content-ID: <908091F06FAC5F4E928330E8EDB62617@namprd04.prod.outlook.com>
+Content-ID: <39D30E1CFD0B15479E2CCAB9D665B681@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,474 +26,217 @@ Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 On Wed, 2020-05-27 at 08:22 +0200, Hannes Reinecke wrote:
-> Random and sequential zones should be part of the respective
-> device structure to make arbitration between devices possible.
+> Remove the hard-coded limit of two devices and support an unlimited
+> number of additional zoned devices.
+> With that we need to increase the device-mapper version number to
+> 3.0.0 as we've modified the interface.
 > 
 > Signed-off-by: Hannes Reinecke <hare@suse.de>
 > ---
->  drivers/md/dm-zoned-metadata.c | 139 +++++++++++++++++++++++------------------
->  drivers/md/dm-zoned-reclaim.c  |  15 +++--
->  drivers/md/dm-zoned-target.c   |  25 ++++++--
->  drivers/md/dm-zoned.h          |  18 ++++--
->  4 files changed, 119 insertions(+), 78 deletions(-)
+>  drivers/md/dm-zoned-metadata.c | 15 +++++++-
+>  drivers/md/dm-zoned-target.c   | 81 +++++++++++++++++++++++-------------------
+>  2 files changed, 59 insertions(+), 37 deletions(-)
 > 
 > diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-> index 445760730d10..f309219a5457 100644
+> index f309219a5457..689c1dd7ab20 100644
 > --- a/drivers/md/dm-zoned-metadata.c
 > +++ b/drivers/md/dm-zoned-metadata.c
-> @@ -192,21 +192,12 @@ struct dmz_metadata {
->  	/* Zone allocation management */
->  	struct mutex		map_lock;
->  	struct dmz_mblock	**map_mblk;
-> -	unsigned int		nr_rnd;
-> -	atomic_t		unmap_nr_rnd;
-> -	struct list_head	unmap_rnd_list;
-> -	struct list_head	map_rnd_list;
+> @@ -1520,7 +1520,20 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
+>  		 */
+>  		zmd->sb[0].zone = dmz_get(zmd, 0);
 >  
->  	unsigned int		nr_cache;
->  	atomic_t		unmap_nr_cache;
->  	struct list_head	unmap_cache_list;
->  	struct list_head	map_cache_list;
->  
-> -	unsigned int		nr_seq;
-> -	atomic_t		unmap_nr_seq;
-> -	struct list_head	unmap_seq_list;
-> -	struct list_head	map_seq_list;
-> -
->  	atomic_t		nr_reserved_seq_zones;
->  	struct list_head	reserved_seq_zones_list;
->  
-> @@ -279,14 +270,14 @@ unsigned int dmz_nr_chunks(struct dmz_metadata *zmd)
->  	return zmd->nr_chunks;
->  }
->  
-> -unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd)
-> +unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd, int idx)
->  {
-> -	return zmd->nr_rnd;
-> +	return zmd->dev[idx].nr_rnd;
->  }
->  
-> -unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd)
-> +unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd, int idx)
->  {
-> -	return atomic_read(&zmd->unmap_nr_rnd);
-> +	return atomic_read(&zmd->dev[idx].unmap_nr_rnd);
->  }
->  
->  unsigned int dmz_nr_cache_zones(struct dmz_metadata *zmd)
-> @@ -299,14 +290,14 @@ unsigned int dmz_nr_unmap_cache_zones(struct dmz_metadata *zmd)
->  	return atomic_read(&zmd->unmap_nr_cache);
->  }
->  
-> -unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd)
-> +unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd, int idx)
->  {
-> -	return zmd->nr_seq;
-> +	return zmd->dev[idx].nr_seq;
->  }
->  
-> -unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd)
-> +unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd, int idx)
->  {
-> -	return atomic_read(&zmd->unmap_nr_seq);
-> +	return atomic_read(&zmd->dev[idx].unmap_nr_seq);
->  }
->  
->  static struct dm_zone *dmz_get(struct dmz_metadata *zmd, unsigned int zone_id)
-> @@ -1495,6 +1486,14 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
->  
->  		dev->metadata = zmd;
->  		zmd->nr_zones += dev->nr_zones;
+> -		zoned_dev = &zmd->dev[1];
+> +		for (i = 1; i < zmd->nr_devs; i++) {
+> +			zoned_dev = &zmd->dev[i];
 > +
-> +		atomic_set(&dev->unmap_nr_rnd, 0);
-> +		INIT_LIST_HEAD(&dev->unmap_rnd_list);
-> +		INIT_LIST_HEAD(&dev->map_rnd_list);
-> +
-> +		atomic_set(&dev->unmap_nr_seq, 0);
-> +		INIT_LIST_HEAD(&dev->unmap_seq_list);
-> +		INIT_LIST_HEAD(&dev->map_seq_list);
->  	}
->  
->  	if (!zmd->nr_zones) {
-> @@ -1715,9 +1714,9 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
->  		if (dmz_is_cache(dzone))
->  			list_add_tail(&dzone->link, &zmd->map_cache_list);
->  		else if (dmz_is_rnd(dzone))
-> -			list_add_tail(&dzone->link, &zmd->map_rnd_list);
-> +			list_add_tail(&dzone->link, &dzone->dev->map_rnd_list);
->  		else
-> -			list_add_tail(&dzone->link, &zmd->map_seq_list);
-> +			list_add_tail(&dzone->link, &dzone->dev->map_seq_list);
->  
->  		/* Check buffer zone */
->  		bzone_id = le32_to_cpu(dmap[e].bzone_id);
-> @@ -1751,7 +1750,7 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
->  		if (dmz_is_cache(bzone))
->  			list_add_tail(&bzone->link, &zmd->map_cache_list);
->  		else
-> -			list_add_tail(&bzone->link, &zmd->map_rnd_list);
-> +			list_add_tail(&bzone->link, &bzone->dev->map_rnd_list);
->  next:
->  		chunk++;
->  		e++;
-> @@ -1776,9 +1775,9 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
->  		if (dmz_is_cache(dzone))
->  			zmd->nr_cache++;
->  		else if (dmz_is_rnd(dzone))
-> -			zmd->nr_rnd++;
-> +			dzone->dev->nr_rnd++;
->  		else
-> -			zmd->nr_seq++;
-> +			dzone->dev->nr_seq++;
->  
->  		if (dmz_is_data(dzone)) {
->  			/* Already initialized */
-> @@ -1792,16 +1791,18 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
->  			list_add_tail(&dzone->link, &zmd->unmap_cache_list);
->  			atomic_inc(&zmd->unmap_nr_cache);
->  		} else if (dmz_is_rnd(dzone)) {
-> -			list_add_tail(&dzone->link, &zmd->unmap_rnd_list);
-> -			atomic_inc(&zmd->unmap_nr_rnd);
-> +			list_add_tail(&dzone->link,
-> +				      &dzone->dev->unmap_rnd_list);
-> +			atomic_inc(&dzone->dev->unmap_nr_rnd);
->  		} else if (atomic_read(&zmd->nr_reserved_seq_zones) < zmd->nr_reserved_seq) {
->  			list_add_tail(&dzone->link, &zmd->reserved_seq_zones_list);
->  			set_bit(DMZ_RESERVED, &dzone->flags);
->  			atomic_inc(&zmd->nr_reserved_seq_zones);
-> -			zmd->nr_seq--;
-> +			dzone->dev->nr_seq--;
->  		} else {
-> -			list_add_tail(&dzone->link, &zmd->unmap_seq_list);
-> -			atomic_inc(&zmd->unmap_nr_seq);
-> +			list_add_tail(&dzone->link,
-> +				      &dzone->dev->unmap_seq_list);
-> +			atomic_inc(&dzone->dev->unmap_nr_seq);
->  		}
->  	}
->  
-> @@ -1835,13 +1836,13 @@ static void __dmz_lru_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
->  	list_del_init(&zone->link);
->  	if (dmz_is_seq(zone)) {
->  		/* LRU rotate sequential zone */
-> -		list_add_tail(&zone->link, &zmd->map_seq_list);
-> +		list_add_tail(&zone->link, &zone->dev->map_seq_list);
->  	} else if (dmz_is_cache(zone)) {
->  		/* LRU rotate cache zone */
->  		list_add_tail(&zone->link, &zmd->map_cache_list);
->  	} else {
->  		/* LRU rotate random zone */
-> -		list_add_tail(&zone->link, &zmd->map_rnd_list);
-> +		list_add_tail(&zone->link, &zone->dev->map_rnd_list);
->  	}
->  }
->  
-> @@ -1923,14 +1924,24 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd,
->  {
->  	struct dm_zone *dzone = NULL;
->  	struct dm_zone *zone;
-> -	struct list_head *zone_list = &zmd->map_rnd_list;
-> +	struct list_head *zone_list;
->  
->  	/* If we have cache zones select from the cache zone list */
->  	if (zmd->nr_cache) {
->  		zone_list = &zmd->map_cache_list;
->  		/* Try to relaim random zones, too, when idle */
-> -		if (idle && list_empty(zone_list))
-> -			zone_list = &zmd->map_rnd_list;
-> +		if (idle && list_empty(zone_list)) {
-> +			int i;
-> +
-> +			for (i = 1; i < zmd->nr_devs; i++) {
-> +				zone_list = &zmd->dev[i].map_rnd_list;
-> +				if (!list_empty(zone_list))
-> +					break;
+> +			ret = blkdev_report_zones(zoned_dev->bdev, 0,
+> +						  BLK_ALL_ZONES,
+> +						  dmz_init_zone, zoned_dev);
+> +			if (ret < 0) {
+> +				DMDEBUG("(%s): Failed to report zones, error %d",
+> +					zmd->devname, ret);
+> +				dmz_drop_zones(zmd);
+> +				return ret;
 > +			}
 > +		}
-> +	} else {
-> +		/* Otherwise the random zones are on the first disk */
-> +		zone_list = &zmd->dev[0].map_rnd_list;
+> +		return 0;
 >  	}
 >  
->  	list_for_each_entry(zone, zone_list, link) {
-> @@ -1951,12 +1962,17 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd,
->  static struct dm_zone *dmz_get_seq_zone_for_reclaim(struct dmz_metadata *zmd)
->  {
->  	struct dm_zone *zone;
-> +	int i;
->  
-> -	list_for_each_entry(zone, &zmd->map_seq_list, link) {
-> -		if (!zone->bzone)
-> -			continue;
-> -		if (dmz_lock_zone_reclaim(zone))
-> -			return zone;
-> +	for (i = 0; i < zmd->nr_devs; i++) {
-> +		struct dmz_dev *dev = &zmd->dev[i];
-> +
-> +		list_for_each_entry(zone, &dev->map_seq_list, link) {
-> +			if (!zone->bzone)
-> +				continue;
-> +			if (dmz_lock_zone_reclaim(zone))
-> +				return zone;
-> +		}
->  	}
->  
->  	return NULL;
-> @@ -2142,7 +2158,7 @@ struct dm_zone *dmz_get_chunk_buffer(struct dmz_metadata *zmd,
->  	if (dmz_is_cache(bzone))
->  		list_add_tail(&bzone->link, &zmd->map_cache_list);
->  	else
-> -		list_add_tail(&bzone->link, &zmd->map_rnd_list);
-> +		list_add_tail(&bzone->link, &bzone->dev->map_rnd_list);
->  out:
->  	dmz_unlock_map(zmd);
->  
-> @@ -2157,21 +2173,27 @@ struct dm_zone *dmz_alloc_zone(struct dmz_metadata *zmd, unsigned long flags)
->  {
->  	struct list_head *list;
->  	struct dm_zone *zone;
-> +	unsigned int dev_idx = 0;
->  
-> +again:
->  	if (flags & DMZ_ALLOC_CACHE)
->  		list = &zmd->unmap_cache_list;
->  	else if (flags & DMZ_ALLOC_RND)
-> -		list = &zmd->unmap_rnd_list;
-> +		list = &zmd->dev[dev_idx].unmap_rnd_list;
->  	else
-> -		list = &zmd->unmap_seq_list;
-> +		list = &zmd->dev[dev_idx].unmap_seq_list;
->  
-> -again:
->  	if (list_empty(list)) {
->  		/*
->  		 * No free zone: return NULL if this is for not reclaim.
->  		 */
->  		if (!(flags & DMZ_ALLOC_RECLAIM))
->  			return NULL;
-> +		if (dev_idx < zmd->nr_devs) {
-> +			dev_idx++;
-> +			goto again;
-> +		}
-> +
->  		/*
->  		 * Fallback to the reserved sequential zones
->  		 */
-> @@ -2190,9 +2212,9 @@ struct dm_zone *dmz_alloc_zone(struct dmz_metadata *zmd, unsigned long flags)
->  	if (dmz_is_cache(zone))
->  		atomic_dec(&zmd->unmap_nr_cache);
->  	else if (dmz_is_rnd(zone))
-> -		atomic_dec(&zmd->unmap_nr_rnd);
-> +		atomic_dec(&zone->dev->unmap_nr_rnd);
->  	else
-> -		atomic_dec(&zmd->unmap_nr_seq);
-> +		atomic_dec(&zone->dev->unmap_nr_seq);
->  
->  	if (dmz_is_offline(zone)) {
->  		dmz_zmd_warn(zmd, "Zone %u is offline", zone->id);
-> @@ -2222,14 +2244,14 @@ void dmz_free_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
->  		list_add_tail(&zone->link, &zmd->unmap_cache_list);
->  		atomic_inc(&zmd->unmap_nr_cache);
->  	} else if (dmz_is_rnd(zone)) {
-> -		list_add_tail(&zone->link, &zmd->unmap_rnd_list);
-> -		atomic_inc(&zmd->unmap_nr_rnd);
-> +		list_add_tail(&zone->link, &zone->dev->unmap_rnd_list);
-> +		atomic_inc(&zone->dev->unmap_nr_rnd);
->  	} else if (dmz_is_reserved(zone)) {
->  		list_add_tail(&zone->link, &zmd->reserved_seq_zones_list);
->  		atomic_inc(&zmd->nr_reserved_seq_zones);
->  	} else {
-> -		list_add_tail(&zone->link, &zmd->unmap_seq_list);
-> -		atomic_inc(&zmd->unmap_nr_seq);
-> +		list_add_tail(&zone->link, &zone->dev->unmap_seq_list);
-> +		atomic_inc(&zone->dev->unmap_nr_seq);
->  	}
->  
->  	wake_up_all(&zmd->free_wq);
-> @@ -2249,9 +2271,9 @@ void dmz_map_zone(struct dmz_metadata *zmd, struct dm_zone *dzone,
->  	if (dmz_is_cache(dzone))
->  		list_add_tail(&dzone->link, &zmd->map_cache_list);
->  	else if (dmz_is_rnd(dzone))
-> -		list_add_tail(&dzone->link, &zmd->map_rnd_list);
-> +		list_add_tail(&dzone->link, &dzone->dev->map_rnd_list);
->  	else
-> -		list_add_tail(&dzone->link, &zmd->map_seq_list);
-> +		list_add_tail(&dzone->link, &dzone->dev->map_seq_list);
->  }
->  
->  /*
-> @@ -2819,18 +2841,11 @@ int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
->  	INIT_LIST_HEAD(&zmd->mblk_dirty_list);
->  
->  	mutex_init(&zmd->map_lock);
-> -	atomic_set(&zmd->unmap_nr_rnd, 0);
-> -	INIT_LIST_HEAD(&zmd->unmap_rnd_list);
-> -	INIT_LIST_HEAD(&zmd->map_rnd_list);
->  
->  	atomic_set(&zmd->unmap_nr_cache, 0);
->  	INIT_LIST_HEAD(&zmd->unmap_cache_list);
->  	INIT_LIST_HEAD(&zmd->map_cache_list);
->  
-> -	atomic_set(&zmd->unmap_nr_seq, 0);
-> -	INIT_LIST_HEAD(&zmd->unmap_seq_list);
-> -	INIT_LIST_HEAD(&zmd->map_seq_list);
-> -
->  	atomic_set(&zmd->nr_reserved_seq_zones, 0);
->  	INIT_LIST_HEAD(&zmd->reserved_seq_zones_list);
->  
-> @@ -2899,10 +2914,14 @@ int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
->  		      zmd->nr_data_zones, zmd->nr_chunks);
->  	dmz_zmd_debug(zmd, "    %u cache zones (%u unmapped)",
->  		      zmd->nr_cache, atomic_read(&zmd->unmap_nr_cache));
-> -	dmz_zmd_debug(zmd, "    %u random zones (%u unmapped)",
-> -		      zmd->nr_rnd, atomic_read(&zmd->unmap_nr_rnd));
-> -	dmz_zmd_debug(zmd, "    %u sequential zones (%u unmapped)",
-> -		      zmd->nr_seq, atomic_read(&zmd->unmap_nr_seq));
-> +	for (i = 0; i < zmd->nr_devs; i++) {
-> +		dmz_zmd_debug(zmd, "    %u random zones (%u unmapped)",
-> +			      dmz_nr_rnd_zones(zmd, i),
-> +			      dmz_nr_unmap_rnd_zones(zmd, i));
-> +		dmz_zmd_debug(zmd, "    %u sequential zones (%u unmapped)",
-> +			      dmz_nr_seq_zones(zmd, i),
-> +			      dmz_nr_unmap_seq_zones(zmd, i));
-> +	}
->  	dmz_zmd_debug(zmd, "  %u reserved sequential data zones",
->  		      zmd->nr_reserved_seq);
->  	dmz_zmd_debug(zmd, "Format:");
-> diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
-> index 09843645248a..18edf1b9bf52 100644
-> --- a/drivers/md/dm-zoned-reclaim.c
-> +++ b/drivers/md/dm-zoned-reclaim.c
-> @@ -447,15 +447,14 @@ static unsigned int dmz_reclaim_percentage(struct dmz_reclaim *zrc)
->  {
->  	struct dmz_metadata *zmd = zrc->metadata;
->  	unsigned int nr_cache = dmz_nr_cache_zones(zmd);
-> -	unsigned int nr_rnd = dmz_nr_rnd_zones(zmd);
->  	unsigned int nr_unmap, nr_zones;
->  
->  	if (nr_cache) {
->  		nr_zones = nr_cache;
->  		nr_unmap = dmz_nr_unmap_cache_zones(zmd);
->  	} else {
-> -		nr_zones = nr_rnd;
-> -		nr_unmap = dmz_nr_unmap_rnd_zones(zmd);
-> +		nr_zones = dmz_nr_rnd_zones(zmd, zrc->dev_idx);
-> +		nr_unmap = dmz_nr_unmap_rnd_zones(zmd, zrc->dev_idx);
->  	}
->  	return nr_unmap * 100 / nr_zones;
->  }
-> @@ -467,7 +466,7 @@ static bool dmz_should_reclaim(struct dmz_reclaim *zrc, unsigned int p_unmap)
->  {
->  	unsigned int nr_reclaim;
->  
-> -	nr_reclaim = dmz_nr_rnd_zones(zrc->metadata);
-> +	nr_reclaim = dmz_nr_rnd_zones(zrc->metadata, zrc->dev_idx);
->  
->  	if (dmz_nr_cache_zones(zrc->metadata)) {
->  		/*
-> @@ -528,8 +527,8 @@ static void dmz_reclaim_work(struct work_struct *work)
->  		zrc->kc_throttle.throttle = min(75U, 100U - p_unmap / 2);
->  	}
->  
-> -	nr_unmap_rnd = dmz_nr_unmap_rnd_zones(zmd);
-> -	nr_rnd = dmz_nr_rnd_zones(zmd);
-> +	nr_unmap_rnd = dmz_nr_unmap_rnd_zones(zmd, zrc->dev_idx);
-> +	nr_rnd = dmz_nr_rnd_zones(zmd, zrc->dev_idx);
->  
->  	DMDEBUG("(%s/%u): Reclaim (%u): %s, %u%% free zones (%u/%u cache %u/%u random)",
->  		dmz_metadata_label(zmd), zrc->dev_idx,
-> @@ -537,8 +536,8 @@ static void dmz_reclaim_work(struct work_struct *work)
->  		(dmz_target_idle(zrc) ? "Idle" : "Busy"),
->  		p_unmap, dmz_nr_unmap_cache_zones(zmd),
->  		dmz_nr_cache_zones(zmd),
-> -		dmz_nr_unmap_rnd_zones(zmd),
-> -		dmz_nr_rnd_zones(zmd));
-> +		dmz_nr_unmap_rnd_zones(zmd, zrc->dev_idx),
-> +		dmz_nr_rnd_zones(zmd, zrc->dev_idx));
->  
->  	ret = dmz_do_reclaim(zrc);
->  	if (ret && ret != -EINTR) {
+>  	/*
 > diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-> index fc1df9714f63..f6f00a363903 100644
+> index f6f00a363903..4a51738d4b0d 100644
 > --- a/drivers/md/dm-zoned-target.c
 > +++ b/drivers/md/dm-zoned-target.c
-> @@ -1082,17 +1082,30 @@ static void dmz_status(struct dm_target *ti, status_type_t type,
->  	ssize_t sz = 0;
->  	char buf[BDEVNAME_SIZE];
->  	struct dmz_dev *dev;
+> @@ -13,8 +13,6 @@
+>  
+>  #define DMZ_MIN_BIOS		8192
+>  
+> -#define DMZ_MAX_DEVS		2
+
+This should probably be done in patch 9, and that will naturally fix
+the forgotten out-of-bound loop access in patch 11.
+
+Or just merge this patch with patch 9 ?
+
+> -
+>  /*
+>   * Zone BIO context.
+>   */
+> @@ -764,7 +762,7 @@ static void dmz_put_zoned_device(struct dm_target *ti)
+>  	struct dmz_target *dmz = ti->private;
+>  	int i;
+>  
+> -	for (i = 0; i < DMZ_MAX_DEVS; i++) {
+> +	for (i = 0; i < dmz->nr_ddevs; i++) {
+>  		if (dmz->ddev[i]) {
+>  			dm_put_device(ti, dmz->ddev[i]);
+>  			dmz->ddev[i] = NULL;
+> @@ -777,21 +775,35 @@ static int dmz_fixup_devices(struct dm_target *ti)
+>  	struct dmz_target *dmz = ti->private;
+>  	struct dmz_dev *reg_dev, *zoned_dev;
+>  	struct request_queue *q;
+> +	sector_t zone_nr_sectors = 0;
 > +	int i;
 >  
->  	switch (type) {
->  	case STATUSTYPE_INFO:
-> -		DMEMIT("%u zones %u/%u cache %u/%u random %u/%u sequential",
-> +		DMEMIT("%u zones %u/%u cache",
+>  	/*
+> -	 * When we have two devices, the first one must be a regular block
+> -	 * device and the second a zoned block device.
+> +	 * When we have more than on devices, the first one must be a
+> +	 * regular block device and the others zoned block devices.
+>  	 */
+> -	if (dmz->ddev[0] && dmz->ddev[1]) {
+> +	if (dmz->nr_ddevs > 1) {
+>  		reg_dev = &dmz->dev[0];
+>  		if (!(reg_dev->flags & DMZ_BDEV_REGULAR)) {
+>  			ti->error = "Primary disk is not a regular device";
+>  			return -EINVAL;
+>  		}
+> -		zoned_dev = &dmz->dev[1];
+> -		if (zoned_dev->flags & DMZ_BDEV_REGULAR) {
+> -			ti->error = "Secondary disk is not a zoned device";
+> -			return -EINVAL;
+> +		for (i = 1; i < dmz->nr_ddevs; i++) {
+> +			zoned_dev = &dmz->dev[i];
+> +			if (zoned_dev->flags & DMZ_BDEV_REGULAR) {
+> +				ti->error = "Secondary disk is not a zoned device";
+> +				return -EINVAL;
+> +			}
+> +			q = bdev_get_queue(zoned_dev->bdev);
+> +			if (zone_nr_sectors &&
+> +			    zone_nr_sectors != blk_queue_zone_sectors(q)) {
+> +				ti->error = "Zone nr sectors mismatch";
+> +				return -EINVAL;
+> +			}
+> +			zone_nr_sectors = blk_queue_zone_sectors(q);
+> +			zoned_dev->zone_nr_sectors = zone_nr_sectors;
+> +			zoned_dev->nr_zones =
+> +				blkdev_nr_zones(zoned_dev->bdev->bd_disk);
+>  		}
+>  	} else {
+>  		reg_dev = NULL;
+> @@ -800,17 +812,24 @@ static int dmz_fixup_devices(struct dm_target *ti)
+>  			ti->error = "Disk is not a zoned device";
+>  			return -EINVAL;
+>  		}
+> +		q = bdev_get_queue(zoned_dev->bdev);
+> +		zoned_dev->zone_nr_sectors = blk_queue_zone_sectors(q);
+> +		zoned_dev->nr_zones = blkdev_nr_zones(zoned_dev->bdev->bd_disk);
+>  	}
+> -	q = bdev_get_queue(zoned_dev->bdev);
+> -	zoned_dev->zone_nr_sectors = blk_queue_zone_sectors(q);
+> -	zoned_dev->nr_zones = blkdev_nr_zones(zoned_dev->bdev->bd_disk);
+>  
+>  	if (reg_dev) {
+> -		reg_dev->zone_nr_sectors = zoned_dev->zone_nr_sectors;
+> +		sector_t zone_offset;
+> +
+> +		reg_dev->zone_nr_sectors = zone_nr_sectors;
+>  		reg_dev->nr_zones =
+>  			DIV_ROUND_UP_SECTOR_T(reg_dev->capacity,
+>  					      reg_dev->zone_nr_sectors);
+> -		zoned_dev->zone_offset = reg_dev->nr_zones;
+> +		reg_dev->zone_offset = 0;
+> +		zone_offset = reg_dev->nr_zones;
+> +		for (i = 1; i < dmz->nr_ddevs; i++) {
+> +			dmz->dev[i].zone_offset = zone_offset;
+> +			zone_offset += dmz->dev[i].nr_zones;
+> +		}
+>  	}
+>  	return 0;
+>  }
+> @@ -824,7 +843,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>  	int ret, i;
+>  
+>  	/* Check arguments */
+> -	if (argc < 1 || argc > 2) {
+> +	if (argc < 1) {
+>  		ti->error = "Invalid argument count";
+>  		return -EINVAL;
+>  	}
+> @@ -852,22 +871,14 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>  	ti->private = dmz;
+>  
+>  	/* Get the target zoned block device */
+> -	ret = dmz_get_zoned_device(ti, argv[0], 0, argc);
+> -	if (ret)
+> -		goto err;
+> -
+> -	if (argc == 2) {
+> -		ret = dmz_get_zoned_device(ti, argv[1], 1, argc);
+> -		if (ret) {
+> -			dmz_put_zoned_device(ti);
+> -			goto err;
+> -		}
+> +	for (i = 0; i < argc; i++) {
+> +		ret = dmz_get_zoned_device(ti, argv[i], i, argc);
+> +		if (ret)
+> +			goto err_dev;
+>  	}
+>  	ret = dmz_fixup_devices(ti);
+> -	if (ret) {
+> -		dmz_put_zoned_device(ti);
+> -		goto err;
+> -	}
+> +	if (ret)
+> +		goto err_dev;
+>  
+>  	/* Initialize metadata */
+>  	ret = dmz_ctr_metadata(dmz->dev, argc, &dmz->metadata,
+> @@ -1090,9 +1101,7 @@ static void dmz_status(struct dm_target *ti, status_type_t type,
 >  		       dmz_nr_zones(dmz->metadata),
 >  		       dmz_nr_unmap_cache_zones(dmz->metadata),
-> -		       dmz_nr_cache_zones(dmz->metadata),
-> -		       dmz_nr_unmap_rnd_zones(dmz->metadata),
-> -		       dmz_nr_rnd_zones(dmz->metadata),
-> -		       dmz_nr_unmap_seq_zones(dmz->metadata),
-> -		       dmz_nr_seq_zones(dmz->metadata));
-> +		       dmz_nr_cache_zones(dmz->metadata));
-> +		for (i = 0; i < DMZ_MAX_DEVS; i++) {
-
-i < zmd->nr_devs ? Since now only what is needed is allocated.
-
-> +			if (!dmz->ddev[i])
-> +				continue;
-> +			/*
-> +			 * For a multi-device setup the first device
-> +			 * contains only cache zones.
-> +			 */
-> +			if ((i == 0) &&
-> +			    (dmz_nr_cache_zones(dmz->metadata) > 0))
-> +				continue;
-> +			DMEMIT(" %u/%u random %u/%u sequential",
-> +			       dmz_nr_unmap_rnd_zones(dmz->metadata, i),
-> +			       dmz_nr_rnd_zones(dmz->metadata, i),
-> +			       dmz_nr_unmap_seq_zones(dmz->metadata, i),
-> +			       dmz_nr_seq_zones(dmz->metadata, i));
-> +		}
->  		break;
->  	case STATUSTYPE_TABLE:
+>  		       dmz_nr_cache_zones(dmz->metadata));
+> -		for (i = 0; i < DMZ_MAX_DEVS; i++) {
+> -			if (!dmz->ddev[i])
+> -				continue;
+> +		for (i = 0; i < dmz->nr_ddevs; i++) {
+>  			/*
+>  			 * For a multi-device setup the first device
+>  			 * contains only cache zones.
+> @@ -1111,8 +1120,8 @@ static void dmz_status(struct dm_target *ti, status_type_t type,
 >  		dev = &dmz->dev[0];
-> diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
-> index 0cc3459f78ce..f2a760f62db5 100644
-> --- a/drivers/md/dm-zoned.h
-> +++ b/drivers/md/dm-zoned.h
-> @@ -67,6 +67,16 @@ struct dmz_dev {
->  	unsigned int		flags;
+>  		format_dev_t(buf, dev->bdev->bd_dev);
+>  		DMEMIT("%s", buf);
+> -		if (dmz->nr_ddevs > 1) {
+> -			dev = &dmz->dev[1];
+> +		for (i = 1; i < dmz->nr_ddevs; i++) {
+> +			dev = &dmz->dev[i];
+>  			format_dev_t(buf, dev->bdev->bd_dev);
+>  			DMEMIT(" %s", buf);
+>  		}
+> @@ -1140,7 +1149,7 @@ static int dmz_message(struct dm_target *ti, unsigned int argc, char **argv,
 >  
->  	sector_t		zone_nr_sectors;
-> +
-> +	unsigned int		nr_rnd;
-> +	atomic_t		unmap_nr_rnd;
-> +	struct list_head	unmap_rnd_list;
-> +	struct list_head	map_rnd_list;
-> +
-> +	unsigned int		nr_seq;
-> +	atomic_t		unmap_nr_seq;
-> +	struct list_head	unmap_seq_list;
-> +	struct list_head	map_seq_list;
->  };
->  
->  #define dmz_bio_chunk(zmd, bio)	((bio)->bi_iter.bi_sector >> \
-> @@ -213,10 +223,10 @@ void dmz_unmap_zone(struct dmz_metadata *zmd, struct dm_zone *zone);
->  unsigned int dmz_nr_zones(struct dmz_metadata *zmd);
->  unsigned int dmz_nr_cache_zones(struct dmz_metadata *zmd);
->  unsigned int dmz_nr_unmap_cache_zones(struct dmz_metadata *zmd);
-> -unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd);
-> -unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd);
-> -unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd);
-> -unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd);
-> +unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd, int idx);
-> +unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd, int idx);
-> +unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd, int idx);
-> +unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd, int idx);
->  unsigned int dmz_zone_nr_blocks(struct dmz_metadata *zmd);
->  unsigned int dmz_zone_nr_blocks_shift(struct dmz_metadata *zmd);
->  unsigned int dmz_zone_nr_sectors(struct dmz_metadata *zmd);
+>  static struct target_type dmz_type = {
+>  	.name		 = "zoned",
+> -	.version	 = {2, 0, 0},
+> +	.version	 = {3, 0, 0},
+>  	.features	 = DM_TARGET_SINGLETON | DM_TARGET_ZONED_HM,
+>  	.module		 = THIS_MODULE,
+>  	.ctr		 = dmz_ctr,
+
+Apart from the nit above, looks good.
+
+Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
 
 -- 
 Damien Le Moal
