@@ -1,16 +1,17 @@
 From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCHv2 00/15] dm-zoned: multi-device support
-Date: Thu, 28 May 2020 04:20:05 +0000
-Message-ID: <7b6bfa146c5ea2684d20dda7b0920d21fd0a1820.camel@wdc.com>
+Subject: Re: [PATCH 15/15] dm-zoned: prefer full zones for reclaim
+Date: Thu, 28 May 2020 05:15:10 +0000
+Message-ID: <83398d08cdc4f9d1bf16fa4dde3fab5ecb8d58d3.camel@wdc.com>
 References: <20200527062225.72849-1-hare@suse.de>
-	<20200527134110.GB19310@redhat.com>
+	<20200527062225.72849-16-hare@suse.de>
+	<ba3ed1771f0034a99d9d40bf9197b8ac969c0c5a.camel@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200527134110.GB19310@redhat.com>
+In-Reply-To: <ba3ed1771f0034a99d9d40bf9197b8ac969c0c5a.camel@wdc.com>
 Content-Language: en-US
-Content-ID: <4A262ECE94DC6846909F5A033B05032F@namprd04.prod.outlook.com>
+Content-ID: <1C3EF7088AABC144A8644FCD98156D2A@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,75 +25,58 @@ To: "snitzer@redhat.com" <snitzer@redhat.com>, "hare@suse.de" <hare@suse.de>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 2020-05-27 at 09:41 -0400, Mike Snitzer wrote:
-> On Wed, May 27 2020 at  2:22am -0400,
-> Hannes Reinecke <hare@suse.de> wrote:
+On Thu, 2020-05-28 at 13:16 +0900, Damien Le Moal wrote:
+> On Wed, 2020-05-27 at 08:22 +0200, Hannes Reinecke wrote:
+> > Prefer full zones when selecting the next zone for reclaim.
+> > 
+> > Signed-off-by: Hannes Reinecke <hare@suse.de>
+> > ---
+> >  drivers/md/dm-zoned-metadata.c | 9 ++++++++-
+> >  1 file changed, 8 insertions(+), 1 deletion(-)
+> > 
+> > diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+> > index b89b3d3b9ec9..f161ef4e3d3d 100644
+> > --- a/drivers/md/dm-zoned-metadata.c
+> > +++ b/drivers/md/dm-zoned-metadata.c
+> > @@ -1936,7 +1936,7 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd,
+> >  						    unsigned int idx, bool idle)
+> >  {
+> >  	struct dm_zone *dzone = NULL;
+> > -	struct dm_zone *zone;
+> > +	struct dm_zone *zone, *last = NULL;
+> >  	struct list_head *zone_list;
+> >  
+> >  	/* If we have cache zones select from the cache zone list */
+> > @@ -1953,6 +1953,13 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd,
+> >  			dzone = zone->bzone;
+> >  			if (dzone->dev->dev_idx != idx)
+> >  				continue;
+> > +			if (!last) {
+> > +				last = dzone;
+> > +				continue;
+> > +			}
+> > +			if (last->weight < dzone->weight)
+> > +				continue;
+> > +			dzone = last;
+> >  		} else
+> >  			dzone = zone;
+> >  		if (dmz_lock_zone_reclaim(dzone))
 > 
-> > Hi all,
-> > 
-> > here's the second version of my patchset to support multiple zoned
-> > drives with dm-zoned.
-> > This patchset:
-> > - Converts the zone array to using xarray for better scalability
-> > - Separates out shared structures into per-device structure
-> > - Enforce drive-locality for allocating and reclaiming zones
-> > - Lifts the restriction of 2 devices to handle an arbitrary number
-> >   of drives.
-> > 
-> > This gives me a near-perfect scalability by increasing the write
-> > speed from 150MB/s (for a cache and one zoned drive) to 300MB/s
-> > (for a cache and two zoned drives).
-> > 
-> > Changes to v1:
-> > - Include reviews from Damien
-> > - Reshuffle patches
-> > 
-> > Hannes Reinecke (15):
-> >   dm-zoned: add debugging message for reading superblocks
-> >   dm-zoned: secondary superblock must reside on the same devices than
-> >     primary superblock
-> >   dm-zoned: improve logging messages for reclaim
-> >   dm-zoned: add a 'reserved' zone flag
-> >   dm-zoned: convert to xarray
-> >   dm-zoned: temporary superblock for tertiary devices
-> >   dm-zoned: add device pointer to struct dm_zone
-> >   dm-zoned: add metadata pointer to struct dmz_dev
-> >   dm-zoned: allocate dm devices dynamically
-> >   dm-zoned: per-device reclaim
-> >   dm-zoned: move random and sequential zones into struct dmz_dev
-> >   dm-zoned: support arbitrary number of devices
-> >   dm-zoned: allocate zone by device index
-> >   dm-zoned: select reclaim zone based on device index
-> >   dm-zoned: prefer full zones for reclaim
-> > 
-> >  drivers/md/dm-zoned-metadata.c | 448 ++++++++++++++++++++++++-----------------
-> >  drivers/md/dm-zoned-reclaim.c  |  95 +++++----
-> >  drivers/md/dm-zoned-target.c   | 169 ++++++++++------
-> >  drivers/md/dm-zoned.h          |  77 ++++---
-> >  4 files changed, 481 insertions(+), 308 deletions(-)
-> 
-> Would you still like to wait until the 5.9 merge window?
-> 
-> Or would you prefer to see these changes land for 5.8 so as to limit the
-> variants of related code that needs to be supported?
-> 
-> If you and Damien are OK with 5.8 (and testing backs that up) then I
-> should be able to get it to land.
+> If all random/cache zones are used but none of them satisfy the
+> condition last->weight < dzone->weight, we may end up starving reclaim
+> and having user IOs accessing a new chunk wait a loooong time, if not
+> forever, No ? I agree that aiming at reclaim of full zones first is
+> more efficient, but we need a fallback to ensure forward progress.
 
-Yes, it would be nice to have all the recent changes under dm-zoned V2.
-I just reviewed Hannes V2 series and I am running tests right now. So
-far so good. Will send results by the end of my day.
+Ignore... You are simply trying to select the zone with the largest
+weight, which makes perfect sense. The commit message mentioning "full"
+zones tricked me... Arg. I need more coffee. Slow afternoon :)
 
-What is your deadline for a final series to make it to 5.8 ? This end
-of week ? If Hannes has time to rework another round, we should be good
-then.
+Renaming "last" to "max" would make the intent clearer I think.
 
-Thanks.
+Anyway, please feel free to add:
 
-> 
-> Let me know, thanks.
-> Mike
-> 
+Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
 
 -- 
 Damien Le Moal
