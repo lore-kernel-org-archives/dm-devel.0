@@ -1,16 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 13/15] dm-zoned: allocate zone by device index
-Date: Fri, 29 May 2020 17:48:40 +0200
-Message-ID: <2966c1c2-86e9-2be3-09b8-3ab7cdb29d6a@suse.de>
-References: <20200527062225.72849-1-hare@suse.de>
-	<20200527062225.72849-14-hare@suse.de>
-	<f38d9c9802239e3021b602af8c178428d72e791b.camel@wdc.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 1/1] libdmmp: Add support for upcoming json-c
+	0.14.0.
+Date: Fri, 29 May 2020 11:19:59 -0500
+Message-ID: <20200529161959.GF5907@octiron.msp.redhat.com>
+References: <1590725443-3519-1-git-send-email-bmarzins@redhat.com>
+	<1590725443-3519-2-git-send-email-bmarzins@redhat.com>
+	<d092428a245e0b5d88b70f03a473d7df7b95cd27.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <f38d9c9802239e3021b602af8c178428d72e791b.camel@wdc.com>
-Content-Language: en-US
+In-Reply-To: <d092428a245e0b5d88b70f03a473d7df7b95cd27.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,58 +20,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <Damien.LeMoal@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Disposition: inline
+To: Martin Wilck <Martin.Wilck@suse.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>, "besser82@fedoraproject.org" <besser82@fedoraproject.org>, "mail@eworm.de" <mail@eworm.de>
 List-Id: dm-devel.ids
 
-T24gNS8yOC8yMCA2OjA4IEFNLCBEYW1pZW4gTGUgTW9hbCB3cm90ZToKPiBPbiBXZWQsIDIwMjAt
-MDUtMjcgYXQgMDg6MjIgKzAyMDAsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gV2hlbiBhbGxv
-Y2F0aW5nIGEgem9uZSB3ZSBzaG91bGQgcGFzcyBpbiBhbiBpbmRpY2F0b3Igb24gd2hpY2gKPj4g
-ZGV2aWNlIHRoZSB6b25lIHNob3VsZCBiZSBhbGxvY2F0ZWQ7IHRoaXMgaW5jcmVhc2VzIHBlcmZv
-cm1hbmNlCj4+IGZvciBhIG11bHRpLWRldmljZSBzZXR1cCBhcyB0aGVuIHJlY2xhaW0gY2FuIGFs
-bG9jYXRlIHpvbmVzIG9uCj4+IHRoZSBkZXZpY2UgZm9yIHdoaWNoIHJlY2xhaW0gaXMgcnVubmlu
-Zy4KPj4KPj4gU2lnbmVkLW9mZi1ieTogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2UuZGU+Cj4+
-IC0tLQo+PiAgIGRyaXZlcnMvbWQvZG0tem9uZWQtbWV0YWRhdGEuYyB8IDE3ICsrKysrKysrKysr
-LS0tLS0tCj4+ICAgZHJpdmVycy9tZC9kbS16b25lZC1yZWNsYWltLmMgIHwgIDMgKystCj4+ICAg
-ZHJpdmVycy9tZC9kbS16b25lZC5oICAgICAgICAgIHwgIDMgKystCj4+ICAgMyBmaWxlcyBjaGFu
-Z2VkLCAxNSBpbnNlcnRpb25zKCspLCA4IGRlbGV0aW9ucygtKQo+Pgo+PiBkaWZmIC0tZ2l0IGEv
-ZHJpdmVycy9tZC9kbS16b25lZC1tZXRhZGF0YS5jIGIvZHJpdmVycy9tZC9kbS16b25lZC1tZXRh
-ZGF0YS5jCj4+IGluZGV4IDY4OWMxZGQ3YWIyMC4uMGQ2NWFmOTQzMDlhIDEwMDY0NAo+PiAtLS0g
-YS9kcml2ZXJzL21kL2RtLXpvbmVkLW1ldGFkYXRhLmMKPj4gKysrIGIvZHJpdmVycy9tZC9kbS16
-b25lZC1tZXRhZGF0YS5jCj4+IEBAIC0yMDQ1LDcgKzIwNDUsNyBAQCBzdHJ1Y3QgZG1fem9uZSAq
-ZG16X2dldF9jaHVua19tYXBwaW5nKHN0cnVjdCBkbXpfbWV0YWRhdGEgKnptZCwgdW5zaWduZWQg
-aW50IGNodQo+PiAgIAkJCWdvdG8gb3V0Owo+PiAgIAo+PiAgIAkJLyogQWxsb2NhdGUgYSByYW5k
-b20gem9uZSAqLwo+PiAtCQlkem9uZSA9IGRtel9hbGxvY196b25lKHptZCwgYWxsb2NfZmxhZ3Mp
-Owo+PiArCQlkem9uZSA9IGRtel9hbGxvY196b25lKHptZCwgMCwgYWxsb2NfZmxhZ3MpOwo+PiAg
-IAkJaWYgKCFkem9uZSkgewo+PiAgIAkJCWlmIChkbXpfZGV2X2lzX2R5aW5nKHptZCkpIHsKPj4g
-ICAJCQkJZHpvbmUgPSBFUlJfUFRSKC1FSU8pOwo+PiBAQCAtMjE1MSw3ICsyMTUxLDcgQEAgc3Ry
-dWN0IGRtX3pvbmUgKmRtel9nZXRfY2h1bmtfYnVmZmVyKHN0cnVjdCBkbXpfbWV0YWRhdGEgKnpt
-ZCwKPj4gICAJCWdvdG8gb3V0Owo+PiAgIAo+PiAgIAkvKiBBbGxvY2F0ZSBhIHJhbmRvbSB6b25l
-ICovCj4+IC0JYnpvbmUgPSBkbXpfYWxsb2Nfem9uZSh6bWQsIGFsbG9jX2ZsYWdzKTsKPj4gKwli
-em9uZSA9IGRtel9hbGxvY196b25lKHptZCwgMCwgYWxsb2NfZmxhZ3MpOwo+PiAgIAlpZiAoIWJ6
-b25lKSB7Cj4+ICAgCQlpZiAoZG16X2Rldl9pc19keWluZyh6bWQpKSB7Cj4+ICAgCQkJYnpvbmUg
-PSBFUlJfUFRSKC1FSU8pOwo+PiBAQCAtMjE4MiwxMSArMjE4MiwxMiBAQCBzdHJ1Y3QgZG1fem9u
-ZSAqZG16X2dldF9jaHVua19idWZmZXIoc3RydWN0IGRtel9tZXRhZGF0YSAqem1kLAo+PiAgICAq
-IEdldCBhbiB1bm1hcHBlZCAoZnJlZSkgem9uZS4KPj4gICAgKiBUaGlzIG11c3QgYmUgY2FsbGVk
-IHdpdGggdGhlIG1hcHBpbmcgbG9jayBoZWxkLgo+PiAgICAqLwo+PiAtc3RydWN0IGRtX3pvbmUg
-KmRtel9hbGxvY196b25lKHN0cnVjdCBkbXpfbWV0YWRhdGEgKnptZCwgdW5zaWduZWQgbG9uZyBm
-bGFncykKPj4gK3N0cnVjdCBkbV96b25lICpkbXpfYWxsb2Nfem9uZShzdHJ1Y3QgZG16X21ldGFk
-YXRhICp6bWQsIHVuc2lnbmVkIGludCBkZXZfaWR4LAo+PiArCQkJICAgICAgIHVuc2lnbmVkIGxv
-bmcgZmxhZ3MpCj4+ICAgewo+PiAgIAlzdHJ1Y3QgbGlzdF9oZWFkICpsaXN0Owo+PiAgIAlzdHJ1
-Y3QgZG1fem9uZSAqem9uZTsKPj4gLQl1bnNpZ25lZCBpbnQgZGV2X2lkeCA9IDA7Cj4+ICsJaW50
-IGkgPSAwOwo+PiAgIAo+PiAgIGFnYWluOgo+PiAgIAlpZiAoZmxhZ3MgJiBETVpfQUxMT0NfQ0FD
-SEUpCj4+IEBAIC0yMjAyLDggKzIyMDMsMTIgQEAgc3RydWN0IGRtX3pvbmUgKmRtel9hbGxvY196
-b25lKHN0cnVjdCBkbXpfbWV0YWRhdGEgKnptZCwgdW5zaWduZWQgbG9uZyBmbGFncykKPj4gICAJ
-CSAqLwo+PiAgIAkJaWYgKCEoZmxhZ3MgJiBETVpfQUxMT0NfUkVDTEFJTSkpCj4+ICAgCQkJcmV0
-dXJuIE5VTEw7Cj4+IC0JCWlmIChkZXZfaWR4IDwgem1kLT5ucl9kZXZzKSB7Cj4+IC0JCQlkZXZf
-aWR4Kys7Cj4+ICsJCS8qCj4+ICsJCSAqIFRyeSB0byBhbGxvY2F0ZSBmcm9tIG90aGVyIGRldmlj
-ZXMKPj4gKwkJICovCj4+ICsJCWlmIChpIDwgem1kLT5ucl9kZXZzKSB7Cj4+ICsJCQlkZXZfaWR4
-ID0gKGRldl9pZHggKyAxKSAlIHptZC0+bnJfZGV2czsKPiAKPiBIdSA/IFlvdSBkZWxldGVkIGRl
-dl9pZHggZGVjbGFyYXRpb24gYWJvdmUuLi4KPiAKSXQncyBub3cgdGhlIGZ1bmN0aW9uIGFyZ3Vt
-ZW50IC4uLgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlICAgICAgICAg
-ICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgU29mdHdhcmUgU29sdXRp
-b25zIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpIUkIgMzY4MDkgKEFHIE7D
-vHJuYmVyZyksIEdlc2Now6RmdHNmw7xocmVyOiBGZWxpeCBJbWVuZMO2cmZmZXIKCgotLQpkbS1k
-ZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQu
-Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Fri, May 29, 2020 at 09:12:30AM +0000, Martin Wilck wrote:
+> Hi Ben,
+>=20
+> On Thu, 2020-05-28 at 23:10 -0500, Benjamin Marzinski wrote:
+> > From: Bj=F6rn Esser <besser82@fedoraproject.org>
+> >=20
+> > TRUE/FALSE are not defined anymore.  1 and 0 are used instead.
+> > This is backwards compatible, as earlier versions of json-c are
+> > using the same integer values in their present definitions.
+> >=20
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  libdmmp/libdmmp_private.h | 2 +-
+> >  1 file changed, 1 insertion(+), 1 deletion(-)
+> >=20
+> > diff --git a/libdmmp/libdmmp_private.h b/libdmmp/libdmmp_private.h
+> > index ac85b63f..4378962b 100644
+> > --- a/libdmmp/libdmmp_private.h
+> > +++ b/libdmmp/libdmmp_private.h
+> > @@ -82,7 +82,7 @@ static out_type func_name(struct dmmp_context *ctx,
+> > const char *var_name) { \
+> >  do { \
+> >  =09json_type j_type =3D json_type_null; \
+> >  =09json_object *j_obj_tmp =3D NULL; \
+> > -=09if (json_object_object_get_ex(j_obj, key, &j_obj_tmp) !=3D TRUE)
+> > { \
+> > +=09if (json_object_object_get_ex(j_obj, key, &j_obj_tmp) !=3D 1) { \
+> >  =09=09_error(ctx, "Invalid JSON output from multipathd IPC: "
+> > \
+> >  =09=09       "key '%s' not found", key); \
+> >  =09=09rc =3D DMMP_ERR_IPC_ERROR; \
+>=20
+> Did you see=20
+> https://www.redhat.com/archives/dm-devel/2020-May/msg00261.html ?
+
+Nope. Overlooked it. My bad. I'm fine with any version that compiles.
+Either stdbool or int is fine.
+
+-Ben
+
+>=20
+> This has first been reported to the list by Christian (
+> https://www.redhat.com/archives/dm-devel/2020-April/msg00261.html), and
+> brought to my attention later by Xose. I personally thought the change
+> from boolean to int is a step in the wrong direction, therefore I
+> submitted my modified version using stdboolh. If everyone else is fine
+> with the int, it's not worth arguing about it.
+>=20
+> Regards,
+> Martin
+>=20
+> PS: Can anyone explain why json-c did this? Looks like a "cause hassle
+> for downstream devs and users for no good reason" kind of thing to
+> me...
+>=20
+> --=20
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE  Software Solutions Germany GmbH
+> HRB 36809, AG N=FCrnberg GF: Felix
+> Imend=F6rffer
+>=20
