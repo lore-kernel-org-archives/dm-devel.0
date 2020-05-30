@@ -1,70 +1,83 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCHv3 00/14] dm-zoned: multiple drive support
-Date: Fri, 29 May 2020 19:38:53 +0200
-Message-ID: <20200529173907.40529-1-hare@suse.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
+From: Huaisheng Ye <yehs2007@zoho.com>
+Subject: [PATCH] dm writecache: reinitialize lru in writeback instead of endio
+Date: Sat, 30 May 2020 17:12:50 +0800
+Message-ID: <20200530091250.58420-1-yehs2007@zoho.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: mpatocka@redhat.com, snitzer@redhat.com, agk@redhat.com
+Cc: prarit@redhat.com, tyu1@lenovo.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Huaisheng Ye <yehs1@lenovo.com>
 List-Id: dm-devel.ids
 
-Hi all,
+From: Huaisheng Ye <yehs1@lenovo.com>
 
-here's the second version of my patchset to support multiple zoned
-drives with dm-zoned.
-This patchset:
-- Converts the zone array to using xarray for better scalability
-- Separates out shared structures into per-device structure
-- Enforce drive-locality for allocating and reclaiming zones
-- Lifts the restriction of 2 devices to handle an arbitrary number
-  of drives.
+When wc_entry has been removed from wbl->list in writeback, it will
+be not used again except waiting to be set free in writecache_free_entry.
 
-This gives me a near-perfect scalability by increasing the write
-speed from 150MB/s (for a cache and one zoned drive) to 300MB/s
-(for a cache and two zoned drives).
+That is a little of annoying, it has to reinitialize lru of wc_entry
+in endio before calling writecache_free_entry.
 
-Changes to v1:
-- Include reviews from Damien
-- Reshuffle patches
-Changes to v2:
-- Add reviews from Damien
-- Merge patches 'dynamic device allocation' and
-  'support arbitrary number of devices'
-- Fix memory leak when reading tertiary superblocks
+Using list_del_init instead of list_del in writeback for simpler code.
 
-Hannes Reinecke (14):
-  dm-zoned: add debugging message for reading superblocks
-  dm-zoned: secondary superblock must reside on the same devices than
-    primary superblock
-  dm-zoned: improve logging messages for reclaim
-  dm-zoned: add a 'reserved' zone flag
-  dm-zoned: convert to xarray
-  dm-zoned: temporary superblock for tertiary devices
-  dm-zoned: add device pointer to struct dm_zone
-  dm-zoned: add metadata pointer to struct dmz_dev
-  dm-zoned: per-device reclaim
-  dm-zoned: move random and sequential zones into struct dmz_dev
-  dm-zoned: support arbitrary number of devices
-  dm-zoned: allocate zone by device index
-  dm-zoned: select reclaim zone based on device index
-  dm-zoned: prefer full zones for reclaim
+Signed-off-by: Huaisheng Ye <yehs1@lenovo.com>
+---
+ drivers/md/dm-writecache.c | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
 
- drivers/md/dm-zoned-metadata.c | 453 +++++++++++++++++++++++++----------------
- drivers/md/dm-zoned-reclaim.c  |  95 +++++----
- drivers/md/dm-zoned-target.c   | 169 +++++++++------
- drivers/md/dm-zoned.h          |  77 ++++---
- 4 files changed, 485 insertions(+), 309 deletions(-)
-
+diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+index 7bbc21b..66f3a3b 100644
+--- a/drivers/md/dm-writecache.c
++++ b/drivers/md/dm-writecache.c
+@@ -1519,7 +1519,6 @@ static void __writecache_endio_pmem(struct dm_writecache *wc, struct list_head *
+ 			e = wb->wc_list[i];
+ 			BUG_ON(!e->write_in_progress);
+ 			e->write_in_progress = false;
+-			INIT_LIST_HEAD(&e->lru);
+ 			if (!writecache_has_error(wc))
+ 				writecache_free_entry(wc, e);
+ 			BUG_ON(!wc->writeback_size);
+@@ -1555,7 +1554,6 @@ static void __writecache_endio_ssd(struct dm_writecache *wc, struct list_head *l
+ 		do {
+ 			BUG_ON(!e->write_in_progress);
+ 			e->write_in_progress = false;
+-			INIT_LIST_HEAD(&e->lru);
+ 			if (!writecache_has_error(wc))
+ 				writecache_free_entry(wc, e);
+ 
+@@ -1654,7 +1652,7 @@ static void __writecache_writeback_pmem(struct dm_writecache *wc, struct writeba
+ 	while (wbl->size) {
+ 		wbl->size--;
+ 		e = container_of(wbl->list.prev, struct wc_entry, lru);
+-		list_del(&e->lru);
++		list_del_init(&e->lru);
+ 
+ 		max_pages = e->wc_list_contiguous;
+ 
+@@ -1685,7 +1683,7 @@ static void __writecache_writeback_pmem(struct dm_writecache *wc, struct writeba
+ 			if (!wc_add_block(wb, f, GFP_NOWAIT | __GFP_NOWARN))
+ 				break;
+ 			wbl->size--;
+-			list_del(&f->lru);
++			list_del_init(&f->lru);
+ 			wb->wc_list[wb->wc_list_n++] = f;
+ 			e = f;
+ 		}
+@@ -1712,7 +1710,7 @@ static void __writecache_writeback_ssd(struct dm_writecache *wc, struct writebac
+ 
+ 		wbl->size--;
+ 		e = container_of(wbl->list.prev, struct wc_entry, lru);
+-		list_del(&e->lru);
++		list_del_init(&e->lru);
+ 
+ 		n_sectors = e->wc_list_contiguous << (wc->block_size_bits - SECTOR_SHIFT);
+ 
+@@ -1732,7 +1730,7 @@ static void __writecache_writeback_ssd(struct dm_writecache *wc, struct writebac
+ 			wbl->size--;
+ 			f = container_of(wbl->list.prev, struct wc_entry, lru);
+ 			BUG_ON(f != e + 1);
+-			list_del(&f->lru);
++			list_del_init(&f->lru);
+ 			e = f;
+ 		}
+ 
 -- 
-2.16.4
+1.8.3.1
