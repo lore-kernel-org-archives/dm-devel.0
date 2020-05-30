@@ -1,16 +1,17 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH 11/14] dm-zoned: support arbitrary number of
-	devices
-Date: Sun, 31 May 2020 23:54:56 +0000
-Message-ID: <CY4PR04MB3751E9482466C8485BE7DF6CE78D0@CY4PR04MB3751.namprd04.prod.outlook.com>
-References: <20200529173907.40529-1-hare@suse.de>
-	<20200529173907.40529-12-hare@suse.de>
-	<36914d620ecccdf0397a47703a69b926afd3d283.camel@wdc.com>
-	<2d8e74ee-6f33-e832-f081-694d051343ce@suse.de>
+From: Eric Hawicz <erh@nimenees.com>
+Subject: Re: [PATCH 1/1] libdmmp: Add support for upcoming json-c
+	0.14.0.
+Date: Sat, 30 May 2020 10:25:36 -0400
+Message-ID: <cd7e550b-cc5e-ca1a-e092-f5ffcbb16d70@nimenees.com>
+References: <1590725443-3519-1-git-send-email-bmarzins@redhat.com>
+	<1590725443-3519-2-git-send-email-bmarzins@redhat.com>
+	<d092428a245e0b5d88b70f03a473d7df7b95cd27.camel@suse.com>
+	<42eef647-d9ef-7956-5852-27188bc4665f@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-15"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <42eef647-d9ef-7956-5852-27188bc4665f@gmail.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -21,313 +22,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <Martin.Wilck@suse.com>, "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "mail@eworm.de" <mail@eworm.de>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "besser82@fedoraproject.org" <besser82@fedoraproject.org>, Eric Haszlakiewicz <erh+git@nimenees.com>
 List-Id: dm-devel.ids
 
-On 2020/05/31 22:06, Hannes Reinecke wrote:
-> On 5/31/20 11:10 AM, Damien Le Moal wrote:
->> On Fri, 2020-05-29 at 19:39 +0200, Hannes Reinecke wrote:
->>> Remove the hard-coded limit of two devices and support an unlimited
->>> number of additional zoned devices.
->>> With that we need to increase the device-mapper version number to
->>> 3.0.0 as we've modified the interface.
->>>
->>> Signed-off-by: Hannes Reinecke <hare@suse.de>
->>> ---
->>>   drivers/md/dm-zoned-metadata.c |  15 +++++-
->>>   drivers/md/dm-zoned-target.c   | 106 ++++++++++++++++++++++++-----------------
->>>   2 files changed, 75 insertions(+), 46 deletions(-)
->>>
->>> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
->>> index 044c152eb756..221163ae5f68 100644
->>> --- a/drivers/md/dm-zoned-metadata.c
->>> +++ b/drivers/md/dm-zoned-metadata.c
->>> @@ -1523,7 +1523,20 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
->>>   		 */
->>>   		zmd->sb[0].zone = dmz_get(zmd, 0);
->>>   
->>> -		zoned_dev = &zmd->dev[1];
->>> +		for (i = 1; i < zmd->nr_devs; i++) {
->>> +			zoned_dev = &zmd->dev[i];
->>> +
->>> +			ret = blkdev_report_zones(zoned_dev->bdev, 0,
->>> +						  BLK_ALL_ZONES,
->>> +						  dmz_init_zone, zoned_dev);
->>> +			if (ret < 0) {
->>> +				DMDEBUG("(%s): Failed to report zones, error %d",
->>> +					zmd->devname, ret);
->>> +				dmz_drop_zones(zmd);
->>> +				return ret;
->>> +			}
->>> +		}
->>> +		return 0;
->>>   	}
->>>   
->>>   	/*
->>> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
->>> index aa3d26d16441..4a51738d4b0d 100644
->>> --- a/drivers/md/dm-zoned-target.c
->>> +++ b/drivers/md/dm-zoned-target.c
->>> @@ -13,8 +13,6 @@
->>>   
->>>   #define DMZ_MIN_BIOS		8192
->>>   
->>> -#define DMZ_MAX_DEVS		2
->>> -
->>>   /*
->>>    * Zone BIO context.
->>>    */
->>> @@ -40,10 +38,10 @@ struct dm_chunk_work {
->>>    * Target descriptor.
->>>    */
->>>   struct dmz_target {
->>> -	struct dm_dev		*ddev[DMZ_MAX_DEVS];
->>> +	struct dm_dev		**ddev;
->>>   	unsigned int		nr_ddevs;
->>>   
->>> -	unsigned long		flags;
->>> +	unsigned int		flags;
->>>   
->>>   	/* Zoned block device information */
->>>   	struct dmz_dev		*dev;
->>> @@ -764,7 +762,7 @@ static void dmz_put_zoned_device(struct dm_target *ti)
->>>   	struct dmz_target *dmz = ti->private;
->>>   	int i;
->>>   
->>> -	for (i = 0; i < DMZ_MAX_DEVS; i++) {
->>> +	for (i = 0; i < dmz->nr_ddevs; i++) {
->>>   		if (dmz->ddev[i]) {
->>>   			dm_put_device(ti, dmz->ddev[i]);
->>>   			dmz->ddev[i] = NULL;
->>> @@ -777,21 +775,35 @@ static int dmz_fixup_devices(struct dm_target *ti)
->>>   	struct dmz_target *dmz = ti->private;
->>>   	struct dmz_dev *reg_dev, *zoned_dev;
->>>   	struct request_queue *q;
->>> +	sector_t zone_nr_sectors = 0;
->>> +	int i;
->>>   
->>>   	/*
->>> -	 * When we have two devices, the first one must be a regular block
->>> -	 * device and the second a zoned block device.
->>> +	 * When we have more than on devices, the first one must be a
->>> +	 * regular block device and the others zoned block devices.
->>>   	 */
->>> -	if (dmz->ddev[0] && dmz->ddev[1]) {
->>> +	if (dmz->nr_ddevs > 1) {
->>>   		reg_dev = &dmz->dev[0];
->>>   		if (!(reg_dev->flags & DMZ_BDEV_REGULAR)) {
->>>   			ti->error = "Primary disk is not a regular device";
->>>   			return -EINVAL;
->>>   		}
->>> -		zoned_dev = &dmz->dev[1];
->>> -		if (zoned_dev->flags & DMZ_BDEV_REGULAR) {
->>> -			ti->error = "Secondary disk is not a zoned device";
->>> -			return -EINVAL;
->>> +		for (i = 1; i < dmz->nr_ddevs; i++) {
->>> +			zoned_dev = &dmz->dev[i];
->>> +			if (zoned_dev->flags & DMZ_BDEV_REGULAR) {
->>> +				ti->error = "Secondary disk is not a zoned device";
->>> +				return -EINVAL;
->>> +			}
->>> +			q = bdev_get_queue(zoned_dev->bdev);
->>> +			if (zone_nr_sectors &&
->>> +			    zone_nr_sectors != blk_queue_zone_sectors(q)) {
->>> +				ti->error = "Zone nr sectors mismatch";
->>> +				return -EINVAL;
->>> +			}
->>> +			zone_nr_sectors = blk_queue_zone_sectors(q);
->>> +			zoned_dev->zone_nr_sectors = zone_nr_sectors;
->>> +			zoned_dev->nr_zones =
->>> +				blkdev_nr_zones(zoned_dev->bdev->bd_disk);
->>>   		}
->>>   	} else {
->>>   		reg_dev = NULL;
->>> @@ -800,17 +812,24 @@ static int dmz_fixup_devices(struct dm_target *ti)
->>>   			ti->error = "Disk is not a zoned device";
->>>   			return -EINVAL;
->>>   		}
->>> +		q = bdev_get_queue(zoned_dev->bdev);
->>> +		zoned_dev->zone_nr_sectors = blk_queue_zone_sectors(q);
->>> +		zoned_dev->nr_zones = blkdev_nr_zones(zoned_dev->bdev->bd_disk);
->>>   	}
->>> -	q = bdev_get_queue(zoned_dev->bdev);
->>> -	zoned_dev->zone_nr_sectors = blk_queue_zone_sectors(q);
->>> -	zoned_dev->nr_zones = blkdev_nr_zones(zoned_dev->bdev->bd_disk);
->>>   
->>>   	if (reg_dev) {
->>> -		reg_dev->zone_nr_sectors = zoned_dev->zone_nr_sectors;
->>> +		sector_t zone_offset;
->>> +
->>> +		reg_dev->zone_nr_sectors = zone_nr_sectors;
->>>   		reg_dev->nr_zones =
->>>   			DIV_ROUND_UP_SECTOR_T(reg_dev->capacity,
->>>   					      reg_dev->zone_nr_sectors);
->>> -		zoned_dev->zone_offset = reg_dev->nr_zones;
->>> +		reg_dev->zone_offset = 0;
->>> +		zone_offset = reg_dev->nr_zones;
->>> +		for (i = 1; i < dmz->nr_ddevs; i++) {
->>> +			dmz->dev[i].zone_offset = zone_offset;
->>> +			zone_offset += dmz->dev[i].nr_zones;
->>> +		}
->>>   	}
->>>   	return 0;
->>>   }
->>> @@ -824,7 +843,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->>>   	int ret, i;
->>>   
->>>   	/* Check arguments */
->>> -	if (argc < 1 || argc > 2) {
->>> +	if (argc < 1) {
->>>   		ti->error = "Invalid argument count";
->>>   		return -EINVAL;
->>>   	}
->>> @@ -835,32 +854,31 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->>>   		ti->error = "Unable to allocate the zoned target descriptor";
->>>   		return -ENOMEM;
->>>   	}
->>> -	dmz->dev = kcalloc(2, sizeof(struct dmz_dev), GFP_KERNEL);
->>> +	dmz->dev = kcalloc(argc, sizeof(struct dmz_dev), GFP_KERNEL);
->>>   	if (!dmz->dev) {
->>>   		ti->error = "Unable to allocate the zoned device descriptors";
->>>   		kfree(dmz);
->>>   		return -ENOMEM;
->>>   	}
->>> +	dmz->ddev = kcalloc(argc, sizeof(struct dm_dev *), GFP_KERNEL);
->>> +	if (!dmz->ddev) {
->>> +		ti->error = "Unable to allocate the dm device descriptors";
->>> +		ret = -ENOMEM;
->>> +		goto err;
->>> +	}
->>>   	dmz->nr_ddevs = argc;
->>> +
->>>   	ti->private = dmz;
->>>   
->>>   	/* Get the target zoned block device */
->>> -	ret = dmz_get_zoned_device(ti, argv[0], 0, argc);
->>> -	if (ret)
->>> -		goto err;
->>> -
->>> -	if (argc == 2) {
->>> -		ret = dmz_get_zoned_device(ti, argv[1], 1, argc);
->>> -		if (ret) {
->>> -			dmz_put_zoned_device(ti);
->>> -			goto err;
->>> -		}
->>> +	for (i = 0; i < argc; i++) {
->>> +		ret = dmz_get_zoned_device(ti, argv[i], i, argc);
->>> +		if (ret)
->>> +			goto err_dev;
->>>   	}
->>>   	ret = dmz_fixup_devices(ti);
->>> -	if (ret) {
->>> -		dmz_put_zoned_device(ti);
->>> -		goto err;
->>> -	}
->>> +	if (ret)
->>> +		goto err_dev;
->>>   
->>>   	/* Initialize metadata */
->>>   	ret = dmz_ctr_metadata(dmz->dev, argc, &dmz->metadata,
->>> @@ -1056,13 +1074,13 @@ static int dmz_iterate_devices(struct dm_target *ti,
->>>   	struct dmz_target *dmz = ti->private;
->>>   	unsigned int zone_nr_sectors = dmz_zone_nr_sectors(dmz->metadata);
->>>   	sector_t capacity;
->>> -	int r;
->>> +	int i, r;
->>>   
->>> -	capacity = dmz->dev[0].capacity & ~(zone_nr_sectors - 1);
->>> -	r = fn(ti, dmz->ddev[0], 0, capacity, data);
->>> -	if (!r && dmz->ddev[1]) {
->>> -		capacity = dmz->dev[1].capacity & ~(zone_nr_sectors - 1);
->>> -		r = fn(ti, dmz->ddev[1], 0, capacity, data);
->>> +	for (i = 0; i < dmz->nr_ddevs; i++) {
->>> +		capacity = dmz->dev[i].capacity & ~(zone_nr_sectors - 1);
->>> +		r = fn(ti, dmz->ddev[i], 0, capacity, data);
->>> +		if (r)
->>> +			break;
->>>   	}
->>>   	return r;
->>>   }
->>> @@ -1083,9 +1101,7 @@ static void dmz_status(struct dm_target *ti, status_type_t type,
->>>   		       dmz_nr_zones(dmz->metadata),
->>>   		       dmz_nr_unmap_cache_zones(dmz->metadata),
->>>   		       dmz_nr_cache_zones(dmz->metadata));
->>> -		for (i = 0; i < DMZ_MAX_DEVS; i++) {
->>> -			if (!dmz->ddev[i])
->>> -				continue;
->>> +		for (i = 0; i < dmz->nr_ddevs; i++) {
->>>   			/*
->>>   			 * For a multi-device setup the first device
->>>   			 * contains only cache zones.
->>> @@ -1104,8 +1120,8 @@ static void dmz_status(struct dm_target *ti, status_type_t type,
->>>   		dev = &dmz->dev[0];
->>>   		format_dev_t(buf, dev->bdev->bd_dev);
->>>   		DMEMIT("%s", buf);
->>> -		if (dmz->dev[1].bdev) {
->>> -			dev = &dmz->dev[1];
->>> +		for (i = 1; i < dmz->nr_ddevs; i++) {
->>> +			dev = &dmz->dev[i];
->>>   			format_dev_t(buf, dev->bdev->bd_dev);
->>>   			DMEMIT(" %s", buf);
->>>   		}
->>> @@ -1133,7 +1149,7 @@ static int dmz_message(struct dm_target *ti, unsigned int argc, char **argv,
->>>   
->>>   static struct target_type dmz_type = {
->>>   	.name		 = "zoned",
->>> -	.version	 = {2, 0, 0},
->>> +	.version	 = {3, 0, 0},
->>>   	.features	 = DM_TARGET_SINGLETON | DM_TARGET_ZONED_HM,
->>>   	.module		 = THIS_MODULE,
->>>   	.ctr		 = dmz_ctr,
+On 5/29/2020 7:45 AM, Xose Vazquez Perez wrote:
+> On 5/29/20 11:12 AM, Martin Wilck wrote:
+>
+>> Did you see
+>> https://www.redhat.com/archives/dm-devel/2020-May/msg00261.html ?
 >>
->> Looks all good to me, but thinking more about it, don't we need to add
->> a device index in the super blocks ? The reason is that if the drive
->> configuration changes between stopt/start (drives removed, added or
->> changed slots), the drive names will change and while the userspace
->> will still be able to find the group of drives constituting the target
->> (using UUID9, there is no obvious way to find out what the original
->> drive order was. Since the kernel side relies on the drive being passed
->> to the ctr function in the order of the mapping, we need to preserve
->> that. Or change also the kernel side to use the index in the super
->> block to put each drive in its correct dmz->dev[] slot.
+>> This has first been reported to the list by Christian (
+>> https://www.redhat.com/archives/dm-devel/2020-April/msg00261.html), and
+>> brought to my attention later by Xose. I personally thought the change
+>> from boolean to int is a step in the wrong direction, therefore I
+>> submitted my modified version using stdboolh. If everyone else is fine
+>> with the int, it's not worth arguing about it.
 >>
-> Already taken care of; here's where the tertiary superblocks come in.
-> Each superblock carries its own position (in the 'sb_block' field).
-> This is the _absolute_ position within the entire setup, not the
-> relative per-device block number.
-> And it also has the absolute number of blocks in the 'nr_chunks' field.
-> 
-> Hence we know exactly where this superblock (and, by implication, the 
-> zones following this superblock) should end up. And we know how large
-> the entire setup will be. So can insert the superblock at the right
-> position and then can check if we have enough zones for the entire
-> device.
-
-I do not get it though. Where is that checked ? At least in this patch, drives
-are initialized in the order of the ctr arguments, and this loop:
-
-+		for (i = 1; i < dmz->nr_ddevs; i++) {
-+			dmz->dev[i].zone_offset = zone_offset;
-+			zone_offset += dmz->dev[i].nr_zones;
-+		}
-
-in dmz_fixup_devices() sets the zone offset for each device in the same order.
-So for a given chunk mapped to a zone identified by its ID, if the device order
-changes, zone ID will change and the chunk will not be mapped to the correct
-zone. What am I missing here ?
+>> Regards,
+>> Martin
+>>
+>> PS: Can anyone explain why json-c did this? Looks like a "cause hassle
+>> for downstream devs and users for no good reason" kind of thing to
+>> me...
+>>
+>
+> Add Eric Haszlakiewicz to CC.
+>
+> Done at:=20
+> https://github.com/json-c/json-c/commit/0992aac61f8b087efd7094e9ac2b84fa9=
+c040fcd
 
 
-> 
-> Not sure if the dmzadm does it, though; but should be easy enough to 
-> implement.
-> 
-> Cheers,
-> 
-> Hannes
-> 
+TRUE and FALSE are rather generic defines that json-c had no business=20
+ever setting, especially to json-c specific values, and the fact that we=20
+were doing so was conflicting with other cases that already defined it.=A0=
+=20
+Sorry about the hassle, but I consider that a very good reason to remove=20
+them.
 
 
--- 
-Damien Le Moal
-Western Digital Research
+Eric
