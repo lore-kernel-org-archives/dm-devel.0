@@ -1,16 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
 Subject: Re: [PATCH 11/14] dm-zoned: support arbitrary number of
 	devices
-Date: Sun, 31 May 2020 15:06:09 +0200
-Message-ID: <2d8e74ee-6f33-e832-f081-694d051343ce@suse.de>
+Date: Sun, 31 May 2020 23:54:56 +0000
+Message-ID: <CY4PR04MB3751E9482466C8485BE7DF6CE78D0@CY4PR04MB3751.namprd04.prod.outlook.com>
 References: <20200529173907.40529-1-hare@suse.de>
 	<20200529173907.40529-12-hare@suse.de>
 	<36914d620ecccdf0397a47703a69b926afd3d283.camel@wdc.com>
+	<2d8e74ee-6f33-e832-f081-694d051343ce@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <36914d620ecccdf0397a47703a69b926afd3d283.camel@wdc.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -21,190 +21,313 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <Damien.LeMoal@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>
+To: Hannes Reinecke <hare@suse.de>, "snitzer@redhat.com" <snitzer@redhat.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gNS8zMS8yMCAxMToxMCBBTSwgRGFtaWVuIExlIE1vYWwgd3JvdGU6Cj4gT24gRnJpLCAyMDIw
-LTA1LTI5IGF0IDE5OjM5ICswMjAwLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6Cj4+IFJlbW92ZSB0
-aGUgaGFyZC1jb2RlZCBsaW1pdCBvZiB0d28gZGV2aWNlcyBhbmQgc3VwcG9ydCBhbiB1bmxpbWl0
-ZWQKPj4gbnVtYmVyIG9mIGFkZGl0aW9uYWwgem9uZWQgZGV2aWNlcy4KPj4gV2l0aCB0aGF0IHdl
-IG5lZWQgdG8gaW5jcmVhc2UgdGhlIGRldmljZS1tYXBwZXIgdmVyc2lvbiBudW1iZXIgdG8KPj4g
-My4wLjAgYXMgd2UndmUgbW9kaWZpZWQgdGhlIGludGVyZmFjZS4KPj4KPj4gU2lnbmVkLW9mZi1i
-eTogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2UuZGU+Cj4+IC0tLQo+PiAgIGRyaXZlcnMvbWQv
-ZG0tem9uZWQtbWV0YWRhdGEuYyB8ICAxNSArKysrKy0KPj4gICBkcml2ZXJzL21kL2RtLXpvbmVk
-LXRhcmdldC5jICAgfCAxMDYgKysrKysrKysrKysrKysrKysrKysrKysrLS0tLS0tLS0tLS0tLS0t
-LS0KPj4gICAyIGZpbGVzIGNoYW5nZWQsIDc1IGluc2VydGlvbnMoKyksIDQ2IGRlbGV0aW9ucygt
-KQo+Pgo+PiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS16b25lZC1tZXRhZGF0YS5jIGIvZHJp
-dmVycy9tZC9kbS16b25lZC1tZXRhZGF0YS5jCj4+IGluZGV4IDA0NGMxNTJlYjc1Ni4uMjIxMTYz
-YWU1ZjY4IDEwMDY0NAo+PiAtLS0gYS9kcml2ZXJzL21kL2RtLXpvbmVkLW1ldGFkYXRhLmMKPj4g
-KysrIGIvZHJpdmVycy9tZC9kbS16b25lZC1tZXRhZGF0YS5jCj4+IEBAIC0xNTIzLDcgKzE1MjMs
-MjAgQEAgc3RhdGljIGludCBkbXpfaW5pdF96b25lcyhzdHJ1Y3QgZG16X21ldGFkYXRhICp6bWQp
-Cj4+ICAgCQkgKi8KPj4gICAJCXptZC0+c2JbMF0uem9uZSA9IGRtel9nZXQoem1kLCAwKTsKPj4g
-ICAKPj4gLQkJem9uZWRfZGV2ID0gJnptZC0+ZGV2WzFdOwo+PiArCQlmb3IgKGkgPSAxOyBpIDwg
-em1kLT5ucl9kZXZzOyBpKyspIHsKPj4gKwkJCXpvbmVkX2RldiA9ICZ6bWQtPmRldltpXTsKPj4g
-Kwo+PiArCQkJcmV0ID0gYmxrZGV2X3JlcG9ydF96b25lcyh6b25lZF9kZXYtPmJkZXYsIDAsCj4+
-ICsJCQkJCQkgIEJMS19BTExfWk9ORVMsCj4+ICsJCQkJCQkgIGRtel9pbml0X3pvbmUsIHpvbmVk
-X2Rldik7Cj4+ICsJCQlpZiAocmV0IDwgMCkgewo+PiArCQkJCURNREVCVUcoIiglcyk6IEZhaWxl
-ZCB0byByZXBvcnQgem9uZXMsIGVycm9yICVkIiwKPj4gKwkJCQkJem1kLT5kZXZuYW1lLCByZXQp
-Owo+PiArCQkJCWRtel9kcm9wX3pvbmVzKHptZCk7Cj4+ICsJCQkJcmV0dXJuIHJldDsKPj4gKwkJ
-CX0KPj4gKwkJfQo+PiArCQlyZXR1cm4gMDsKPj4gICAJfQo+PiAgIAo+PiAgIAkvKgo+PiBkaWZm
-IC0tZ2l0IGEvZHJpdmVycy9tZC9kbS16b25lZC10YXJnZXQuYyBiL2RyaXZlcnMvbWQvZG0tem9u
-ZWQtdGFyZ2V0LmMKPj4gaW5kZXggYWEzZDI2ZDE2NDQxLi40YTUxNzM4ZDRiMGQgMTAwNjQ0Cj4+
-IC0tLSBhL2RyaXZlcnMvbWQvZG0tem9uZWQtdGFyZ2V0LmMKPj4gKysrIGIvZHJpdmVycy9tZC9k
-bS16b25lZC10YXJnZXQuYwo+PiBAQCAtMTMsOCArMTMsNiBAQAo+PiAgIAo+PiAgICNkZWZpbmUg
-RE1aX01JTl9CSU9TCQk4MTkyCj4+ICAgCj4+IC0jZGVmaW5lIERNWl9NQVhfREVWUwkJMgo+PiAt
-Cj4+ICAgLyoKPj4gICAgKiBab25lIEJJTyBjb250ZXh0Lgo+PiAgICAqLwo+PiBAQCAtNDAsMTAg
-KzM4LDEwIEBAIHN0cnVjdCBkbV9jaHVua193b3JrIHsKPj4gICAgKiBUYXJnZXQgZGVzY3JpcHRv
-ci4KPj4gICAgKi8KPj4gICBzdHJ1Y3QgZG16X3RhcmdldCB7Cj4+IC0Jc3RydWN0IGRtX2RldgkJ
-KmRkZXZbRE1aX01BWF9ERVZTXTsKPj4gKwlzdHJ1Y3QgZG1fZGV2CQkqKmRkZXY7Cj4+ICAgCXVu
-c2lnbmVkIGludAkJbnJfZGRldnM7Cj4+ICAgCj4+IC0JdW5zaWduZWQgbG9uZwkJZmxhZ3M7Cj4+
-ICsJdW5zaWduZWQgaW50CQlmbGFnczsKPj4gICAKPj4gICAJLyogWm9uZWQgYmxvY2sgZGV2aWNl
-IGluZm9ybWF0aW9uICovCj4+ICAgCXN0cnVjdCBkbXpfZGV2CQkqZGV2Owo+PiBAQCAtNzY0LDcg
-Kzc2Miw3IEBAIHN0YXRpYyB2b2lkIGRtel9wdXRfem9uZWRfZGV2aWNlKHN0cnVjdCBkbV90YXJn
-ZXQgKnRpKQo+PiAgIAlzdHJ1Y3QgZG16X3RhcmdldCAqZG16ID0gdGktPnByaXZhdGU7Cj4+ICAg
-CWludCBpOwo+PiAgIAo+PiAtCWZvciAoaSA9IDA7IGkgPCBETVpfTUFYX0RFVlM7IGkrKykgewo+
-PiArCWZvciAoaSA9IDA7IGkgPCBkbXotPm5yX2RkZXZzOyBpKyspIHsKPj4gICAJCWlmIChkbXot
-PmRkZXZbaV0pIHsKPj4gICAJCQlkbV9wdXRfZGV2aWNlKHRpLCBkbXotPmRkZXZbaV0pOwo+PiAg
-IAkJCWRtei0+ZGRldltpXSA9IE5VTEw7Cj4+IEBAIC03NzcsMjEgKzc3NSwzNSBAQCBzdGF0aWMg
-aW50IGRtel9maXh1cF9kZXZpY2VzKHN0cnVjdCBkbV90YXJnZXQgKnRpKQo+PiAgIAlzdHJ1Y3Qg
-ZG16X3RhcmdldCAqZG16ID0gdGktPnByaXZhdGU7Cj4+ICAgCXN0cnVjdCBkbXpfZGV2ICpyZWdf
-ZGV2LCAqem9uZWRfZGV2Owo+PiAgIAlzdHJ1Y3QgcmVxdWVzdF9xdWV1ZSAqcTsKPj4gKwlzZWN0
-b3JfdCB6b25lX25yX3NlY3RvcnMgPSAwOwo+PiArCWludCBpOwo+PiAgIAo+PiAgIAkvKgo+PiAt
-CSAqIFdoZW4gd2UgaGF2ZSB0d28gZGV2aWNlcywgdGhlIGZpcnN0IG9uZSBtdXN0IGJlIGEgcmVn
-dWxhciBibG9jawo+PiAtCSAqIGRldmljZSBhbmQgdGhlIHNlY29uZCBhIHpvbmVkIGJsb2NrIGRl
-dmljZS4KPj4gKwkgKiBXaGVuIHdlIGhhdmUgbW9yZSB0aGFuIG9uIGRldmljZXMsIHRoZSBmaXJz
-dCBvbmUgbXVzdCBiZSBhCj4+ICsJICogcmVndWxhciBibG9jayBkZXZpY2UgYW5kIHRoZSBvdGhl
-cnMgem9uZWQgYmxvY2sgZGV2aWNlcy4KPj4gICAJICovCj4+IC0JaWYgKGRtei0+ZGRldlswXSAm
-JiBkbXotPmRkZXZbMV0pIHsKPj4gKwlpZiAoZG16LT5ucl9kZGV2cyA+IDEpIHsKPj4gICAJCXJl
-Z19kZXYgPSAmZG16LT5kZXZbMF07Cj4+ICAgCQlpZiAoIShyZWdfZGV2LT5mbGFncyAmIERNWl9C
-REVWX1JFR1VMQVIpKSB7Cj4+ICAgCQkJdGktPmVycm9yID0gIlByaW1hcnkgZGlzayBpcyBub3Qg
-YSByZWd1bGFyIGRldmljZSI7Cj4+ICAgCQkJcmV0dXJuIC1FSU5WQUw7Cj4+ICAgCQl9Cj4+IC0J
-CXpvbmVkX2RldiA9ICZkbXotPmRldlsxXTsKPj4gLQkJaWYgKHpvbmVkX2Rldi0+ZmxhZ3MgJiBE
-TVpfQkRFVl9SRUdVTEFSKSB7Cj4+IC0JCQl0aS0+ZXJyb3IgPSAiU2Vjb25kYXJ5IGRpc2sgaXMg
-bm90IGEgem9uZWQgZGV2aWNlIjsKPj4gLQkJCXJldHVybiAtRUlOVkFMOwo+PiArCQlmb3IgKGkg
-PSAxOyBpIDwgZG16LT5ucl9kZGV2czsgaSsrKSB7Cj4+ICsJCQl6b25lZF9kZXYgPSAmZG16LT5k
-ZXZbaV07Cj4+ICsJCQlpZiAoem9uZWRfZGV2LT5mbGFncyAmIERNWl9CREVWX1JFR1VMQVIpIHsK
-Pj4gKwkJCQl0aS0+ZXJyb3IgPSAiU2Vjb25kYXJ5IGRpc2sgaXMgbm90IGEgem9uZWQgZGV2aWNl
-IjsKPj4gKwkJCQlyZXR1cm4gLUVJTlZBTDsKPj4gKwkJCX0KPj4gKwkJCXEgPSBiZGV2X2dldF9x
-dWV1ZSh6b25lZF9kZXYtPmJkZXYpOwo+PiArCQkJaWYgKHpvbmVfbnJfc2VjdG9ycyAmJgo+PiAr
-CQkJICAgIHpvbmVfbnJfc2VjdG9ycyAhPSBibGtfcXVldWVfem9uZV9zZWN0b3JzKHEpKSB7Cj4+
-ICsJCQkJdGktPmVycm9yID0gIlpvbmUgbnIgc2VjdG9ycyBtaXNtYXRjaCI7Cj4+ICsJCQkJcmV0
-dXJuIC1FSU5WQUw7Cj4+ICsJCQl9Cj4+ICsJCQl6b25lX25yX3NlY3RvcnMgPSBibGtfcXVldWVf
-em9uZV9zZWN0b3JzKHEpOwo+PiArCQkJem9uZWRfZGV2LT56b25lX25yX3NlY3RvcnMgPSB6b25l
-X25yX3NlY3RvcnM7Cj4+ICsJCQl6b25lZF9kZXYtPm5yX3pvbmVzID0KPj4gKwkJCQlibGtkZXZf
-bnJfem9uZXMoem9uZWRfZGV2LT5iZGV2LT5iZF9kaXNrKTsKPj4gICAJCX0KPj4gICAJfSBlbHNl
-IHsKPj4gICAJCXJlZ19kZXYgPSBOVUxMOwo+PiBAQCAtODAwLDE3ICs4MTIsMjQgQEAgc3RhdGlj
-IGludCBkbXpfZml4dXBfZGV2aWNlcyhzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSkKPj4gICAJCQl0aS0+
-ZXJyb3IgPSAiRGlzayBpcyBub3QgYSB6b25lZCBkZXZpY2UiOwo+PiAgIAkJCXJldHVybiAtRUlO
-VkFMOwo+PiAgIAkJfQo+PiArCQlxID0gYmRldl9nZXRfcXVldWUoem9uZWRfZGV2LT5iZGV2KTsK
-Pj4gKwkJem9uZWRfZGV2LT56b25lX25yX3NlY3RvcnMgPSBibGtfcXVldWVfem9uZV9zZWN0b3Jz
-KHEpOwo+PiArCQl6b25lZF9kZXYtPm5yX3pvbmVzID0gYmxrZGV2X25yX3pvbmVzKHpvbmVkX2Rl
-di0+YmRldi0+YmRfZGlzayk7Cj4+ICAgCX0KPj4gLQlxID0gYmRldl9nZXRfcXVldWUoem9uZWRf
-ZGV2LT5iZGV2KTsKPj4gLQl6b25lZF9kZXYtPnpvbmVfbnJfc2VjdG9ycyA9IGJsa19xdWV1ZV96
-b25lX3NlY3RvcnMocSk7Cj4+IC0Jem9uZWRfZGV2LT5ucl96b25lcyA9IGJsa2Rldl9ucl96b25l
-cyh6b25lZF9kZXYtPmJkZXYtPmJkX2Rpc2spOwo+PiAgIAo+PiAgIAlpZiAocmVnX2Rldikgewo+
-PiAtCQlyZWdfZGV2LT56b25lX25yX3NlY3RvcnMgPSB6b25lZF9kZXYtPnpvbmVfbnJfc2VjdG9y
-czsKPj4gKwkJc2VjdG9yX3Qgem9uZV9vZmZzZXQ7Cj4+ICsKPj4gKwkJcmVnX2Rldi0+em9uZV9u
-cl9zZWN0b3JzID0gem9uZV9ucl9zZWN0b3JzOwo+PiAgIAkJcmVnX2Rldi0+bnJfem9uZXMgPQo+
-PiAgIAkJCURJVl9ST1VORF9VUF9TRUNUT1JfVChyZWdfZGV2LT5jYXBhY2l0eSwKPj4gICAJCQkJ
-CSAgICAgIHJlZ19kZXYtPnpvbmVfbnJfc2VjdG9ycyk7Cj4+IC0JCXpvbmVkX2Rldi0+em9uZV9v
-ZmZzZXQgPSByZWdfZGV2LT5ucl96b25lczsKPj4gKwkJcmVnX2Rldi0+em9uZV9vZmZzZXQgPSAw
-Owo+PiArCQl6b25lX29mZnNldCA9IHJlZ19kZXYtPm5yX3pvbmVzOwo+PiArCQlmb3IgKGkgPSAx
-OyBpIDwgZG16LT5ucl9kZGV2czsgaSsrKSB7Cj4+ICsJCQlkbXotPmRldltpXS56b25lX29mZnNl
-dCA9IHpvbmVfb2Zmc2V0Owo+PiArCQkJem9uZV9vZmZzZXQgKz0gZG16LT5kZXZbaV0ubnJfem9u
-ZXM7Cj4+ICsJCX0KPj4gICAJfQo+PiAgIAlyZXR1cm4gMDsKPj4gICB9Cj4+IEBAIC04MjQsNyAr
-ODQzLDcgQEAgc3RhdGljIGludCBkbXpfY3RyKHN0cnVjdCBkbV90YXJnZXQgKnRpLCB1bnNpZ25l
-ZCBpbnQgYXJnYywgY2hhciAqKmFyZ3YpCj4+ICAgCWludCByZXQsIGk7Cj4+ICAgCj4+ICAgCS8q
-IENoZWNrIGFyZ3VtZW50cyAqLwo+PiAtCWlmIChhcmdjIDwgMSB8fCBhcmdjID4gMikgewo+PiAr
-CWlmIChhcmdjIDwgMSkgewo+PiAgIAkJdGktPmVycm9yID0gIkludmFsaWQgYXJndW1lbnQgY291
-bnQiOwo+PiAgIAkJcmV0dXJuIC1FSU5WQUw7Cj4+ICAgCX0KPj4gQEAgLTgzNSwzMiArODU0LDMx
-IEBAIHN0YXRpYyBpbnQgZG16X2N0cihzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSwgdW5zaWduZWQgaW50
-IGFyZ2MsIGNoYXIgKiphcmd2KQo+PiAgIAkJdGktPmVycm9yID0gIlVuYWJsZSB0byBhbGxvY2F0
-ZSB0aGUgem9uZWQgdGFyZ2V0IGRlc2NyaXB0b3IiOwo+PiAgIAkJcmV0dXJuIC1FTk9NRU07Cj4+
-ICAgCX0KPj4gLQlkbXotPmRldiA9IGtjYWxsb2MoMiwgc2l6ZW9mKHN0cnVjdCBkbXpfZGV2KSwg
-R0ZQX0tFUk5FTCk7Cj4+ICsJZG16LT5kZXYgPSBrY2FsbG9jKGFyZ2MsIHNpemVvZihzdHJ1Y3Qg
-ZG16X2RldiksIEdGUF9LRVJORUwpOwo+PiAgIAlpZiAoIWRtei0+ZGV2KSB7Cj4+ICAgCQl0aS0+
-ZXJyb3IgPSAiVW5hYmxlIHRvIGFsbG9jYXRlIHRoZSB6b25lZCBkZXZpY2UgZGVzY3JpcHRvcnMi
-Owo+PiAgIAkJa2ZyZWUoZG16KTsKPj4gICAJCXJldHVybiAtRU5PTUVNOwo+PiAgIAl9Cj4+ICsJ
-ZG16LT5kZGV2ID0ga2NhbGxvYyhhcmdjLCBzaXplb2Yoc3RydWN0IGRtX2RldiAqKSwgR0ZQX0tF
-Uk5FTCk7Cj4+ICsJaWYgKCFkbXotPmRkZXYpIHsKPj4gKwkJdGktPmVycm9yID0gIlVuYWJsZSB0
-byBhbGxvY2F0ZSB0aGUgZG0gZGV2aWNlIGRlc2NyaXB0b3JzIjsKPj4gKwkJcmV0ID0gLUVOT01F
-TTsKPj4gKwkJZ290byBlcnI7Cj4+ICsJfQo+PiAgIAlkbXotPm5yX2RkZXZzID0gYXJnYzsKPj4g
-Kwo+PiAgIAl0aS0+cHJpdmF0ZSA9IGRtejsKPj4gICAKPj4gICAJLyogR2V0IHRoZSB0YXJnZXQg
-em9uZWQgYmxvY2sgZGV2aWNlICovCj4+IC0JcmV0ID0gZG16X2dldF96b25lZF9kZXZpY2UodGks
-IGFyZ3ZbMF0sIDAsIGFyZ2MpOwo+PiAtCWlmIChyZXQpCj4+IC0JCWdvdG8gZXJyOwo+PiAtCj4+
-IC0JaWYgKGFyZ2MgPT0gMikgewo+PiAtCQlyZXQgPSBkbXpfZ2V0X3pvbmVkX2RldmljZSh0aSwg
-YXJndlsxXSwgMSwgYXJnYyk7Cj4+IC0JCWlmIChyZXQpIHsKPj4gLQkJCWRtel9wdXRfem9uZWRf
-ZGV2aWNlKHRpKTsKPj4gLQkJCWdvdG8gZXJyOwo+PiAtCQl9Cj4+ICsJZm9yIChpID0gMDsgaSA8
-IGFyZ2M7IGkrKykgewo+PiArCQlyZXQgPSBkbXpfZ2V0X3pvbmVkX2RldmljZSh0aSwgYXJndltp
-XSwgaSwgYXJnYyk7Cj4+ICsJCWlmIChyZXQpCj4+ICsJCQlnb3RvIGVycl9kZXY7Cj4+ICAgCX0K
-Pj4gICAJcmV0ID0gZG16X2ZpeHVwX2RldmljZXModGkpOwo+PiAtCWlmIChyZXQpIHsKPj4gLQkJ
-ZG16X3B1dF96b25lZF9kZXZpY2UodGkpOwo+PiAtCQlnb3RvIGVycjsKPj4gLQl9Cj4+ICsJaWYg
-KHJldCkKPj4gKwkJZ290byBlcnJfZGV2Owo+PiAgIAo+PiAgIAkvKiBJbml0aWFsaXplIG1ldGFk
-YXRhICovCj4+ICAgCXJldCA9IGRtel9jdHJfbWV0YWRhdGEoZG16LT5kZXYsIGFyZ2MsICZkbXot
-Pm1ldGFkYXRhLAo+PiBAQCAtMTA1NiwxMyArMTA3NCwxMyBAQCBzdGF0aWMgaW50IGRtel9pdGVy
-YXRlX2RldmljZXMoc3RydWN0IGRtX3RhcmdldCAqdGksCj4+ICAgCXN0cnVjdCBkbXpfdGFyZ2V0
-ICpkbXogPSB0aS0+cHJpdmF0ZTsKPj4gICAJdW5zaWduZWQgaW50IHpvbmVfbnJfc2VjdG9ycyA9
-IGRtel96b25lX25yX3NlY3RvcnMoZG16LT5tZXRhZGF0YSk7Cj4+ICAgCXNlY3Rvcl90IGNhcGFj
-aXR5Owo+PiAtCWludCByOwo+PiArCWludCBpLCByOwo+PiAgIAo+PiAtCWNhcGFjaXR5ID0gZG16
-LT5kZXZbMF0uY2FwYWNpdHkgJiB+KHpvbmVfbnJfc2VjdG9ycyAtIDEpOwo+PiAtCXIgPSBmbih0
-aSwgZG16LT5kZGV2WzBdLCAwLCBjYXBhY2l0eSwgZGF0YSk7Cj4+IC0JaWYgKCFyICYmIGRtei0+
-ZGRldlsxXSkgewo+PiAtCQljYXBhY2l0eSA9IGRtei0+ZGV2WzFdLmNhcGFjaXR5ICYgfih6b25l
-X25yX3NlY3RvcnMgLSAxKTsKPj4gLQkJciA9IGZuKHRpLCBkbXotPmRkZXZbMV0sIDAsIGNhcGFj
-aXR5LCBkYXRhKTsKPj4gKwlmb3IgKGkgPSAwOyBpIDwgZG16LT5ucl9kZGV2czsgaSsrKSB7Cj4+
-ICsJCWNhcGFjaXR5ID0gZG16LT5kZXZbaV0uY2FwYWNpdHkgJiB+KHpvbmVfbnJfc2VjdG9ycyAt
-IDEpOwo+PiArCQlyID0gZm4odGksIGRtei0+ZGRldltpXSwgMCwgY2FwYWNpdHksIGRhdGEpOwo+
-PiArCQlpZiAocikKPj4gKwkJCWJyZWFrOwo+PiAgIAl9Cj4+ICAgCXJldHVybiByOwo+PiAgIH0K
-Pj4gQEAgLTEwODMsOSArMTEwMSw3IEBAIHN0YXRpYyB2b2lkIGRtel9zdGF0dXMoc3RydWN0IGRt
-X3RhcmdldCAqdGksIHN0YXR1c190eXBlX3QgdHlwZSwKPj4gICAJCSAgICAgICBkbXpfbnJfem9u
-ZXMoZG16LT5tZXRhZGF0YSksCj4+ICAgCQkgICAgICAgZG16X25yX3VubWFwX2NhY2hlX3pvbmVz
-KGRtei0+bWV0YWRhdGEpLAo+PiAgIAkJICAgICAgIGRtel9ucl9jYWNoZV96b25lcyhkbXotPm1l
-dGFkYXRhKSk7Cj4+IC0JCWZvciAoaSA9IDA7IGkgPCBETVpfTUFYX0RFVlM7IGkrKykgewo+PiAt
-CQkJaWYgKCFkbXotPmRkZXZbaV0pCj4+IC0JCQkJY29udGludWU7Cj4+ICsJCWZvciAoaSA9IDA7
-IGkgPCBkbXotPm5yX2RkZXZzOyBpKyspIHsKPj4gICAJCQkvKgo+PiAgIAkJCSAqIEZvciBhIG11
-bHRpLWRldmljZSBzZXR1cCB0aGUgZmlyc3QgZGV2aWNlCj4+ICAgCQkJICogY29udGFpbnMgb25s
-eSBjYWNoZSB6b25lcy4KPj4gQEAgLTExMDQsOCArMTEyMCw4IEBAIHN0YXRpYyB2b2lkIGRtel9z
-dGF0dXMoc3RydWN0IGRtX3RhcmdldCAqdGksIHN0YXR1c190eXBlX3QgdHlwZSwKPj4gICAJCWRl
-diA9ICZkbXotPmRldlswXTsKPj4gICAJCWZvcm1hdF9kZXZfdChidWYsIGRldi0+YmRldi0+YmRf
-ZGV2KTsKPj4gICAJCURNRU1JVCgiJXMiLCBidWYpOwo+PiAtCQlpZiAoZG16LT5kZXZbMV0uYmRl
-dikgewo+PiAtCQkJZGV2ID0gJmRtei0+ZGV2WzFdOwo+PiArCQlmb3IgKGkgPSAxOyBpIDwgZG16
-LT5ucl9kZGV2czsgaSsrKSB7Cj4+ICsJCQlkZXYgPSAmZG16LT5kZXZbaV07Cj4+ICAgCQkJZm9y
-bWF0X2Rldl90KGJ1ZiwgZGV2LT5iZGV2LT5iZF9kZXYpOwo+PiAgIAkJCURNRU1JVCgiICVzIiwg
-YnVmKTsKPj4gICAJCX0KPj4gQEAgLTExMzMsNyArMTE0OSw3IEBAIHN0YXRpYyBpbnQgZG16X21l
-c3NhZ2Uoc3RydWN0IGRtX3RhcmdldCAqdGksIHVuc2lnbmVkIGludCBhcmdjLCBjaGFyICoqYXJn
-diwKPj4gICAKPj4gICBzdGF0aWMgc3RydWN0IHRhcmdldF90eXBlIGRtel90eXBlID0gewo+PiAg
-IAkubmFtZQkJID0gInpvbmVkIiwKPj4gLQkudmVyc2lvbgkgPSB7MiwgMCwgMH0sCj4+ICsJLnZl
-cnNpb24JID0gezMsIDAsIDB9LAo+PiAgIAkuZmVhdHVyZXMJID0gRE1fVEFSR0VUX1NJTkdMRVRP
-TiB8IERNX1RBUkdFVF9aT05FRF9ITSwKPj4gICAJLm1vZHVsZQkJID0gVEhJU19NT0RVTEUsCj4+
-ICAgCS5jdHIJCSA9IGRtel9jdHIsCj4gCj4gTG9va3MgYWxsIGdvb2QgdG8gbWUsIGJ1dCB0aGlu
-a2luZyBtb3JlIGFib3V0IGl0LCBkb24ndCB3ZSBuZWVkIHRvIGFkZAo+IGEgZGV2aWNlIGluZGV4
-IGluIHRoZSBzdXBlciBibG9ja3MgPyBUaGUgcmVhc29uIGlzIHRoYXQgaWYgdGhlIGRyaXZlCj4g
-Y29uZmlndXJhdGlvbiBjaGFuZ2VzIGJldHdlZW4gc3RvcHQvc3RhcnQgKGRyaXZlcyByZW1vdmVk
-LCBhZGRlZCBvcgo+IGNoYW5nZWQgc2xvdHMpLCB0aGUgZHJpdmUgbmFtZXMgd2lsbCBjaGFuZ2Ug
-YW5kIHdoaWxlIHRoZSB1c2Vyc3BhY2UKPiB3aWxsIHN0aWxsIGJlIGFibGUgdG8gZmluZCB0aGUg
-Z3JvdXAgb2YgZHJpdmVzIGNvbnN0aXR1dGluZyB0aGUgdGFyZ2V0Cj4gKHVzaW5nIFVVSUQ5LCB0
-aGVyZSBpcyBubyBvYnZpb3VzIHdheSB0byBmaW5kIG91dCB3aGF0IHRoZSBvcmlnaW5hbAo+IGRy
-aXZlIG9yZGVyIHdhcy4gU2luY2UgdGhlIGtlcm5lbCBzaWRlIHJlbGllcyBvbiB0aGUgZHJpdmUg
-YmVpbmcgcGFzc2VkCj4gdG8gdGhlIGN0ciBmdW5jdGlvbiBpbiB0aGUgb3JkZXIgb2YgdGhlIG1h
-cHBpbmcsIHdlIG5lZWQgdG8gcHJlc2VydmUKPiB0aGF0LiBPciBjaGFuZ2UgYWxzbyB0aGUga2Vy
-bmVsIHNpZGUgdG8gdXNlIHRoZSBpbmRleCBpbiB0aGUgc3VwZXIKPiBibG9jayB0byBwdXQgZWFj
-aCBkcml2ZSBpbiBpdHMgY29ycmVjdCBkbXotPmRldltdIHNsb3QuCj4gCkFscmVhZHkgdGFrZW4g
-Y2FyZSBvZjsgaGVyZSdzIHdoZXJlIHRoZSB0ZXJ0aWFyeSBzdXBlcmJsb2NrcyBjb21lIGluLgpF
-YWNoIHN1cGVyYmxvY2sgY2FycmllcyBpdHMgb3duIHBvc2l0aW9uIChpbiB0aGUgJ3NiX2Jsb2Nr
-JyBmaWVsZCkuClRoaXMgaXMgdGhlIF9hYnNvbHV0ZV8gcG9zaXRpb24gd2l0aGluIHRoZSBlbnRp
-cmUgc2V0dXAsIG5vdCB0aGUKcmVsYXRpdmUgcGVyLWRldmljZSBibG9jayBudW1iZXIuCkFuZCBp
-dCBhbHNvIGhhcyB0aGUgYWJzb2x1dGUgbnVtYmVyIG9mIGJsb2NrcyBpbiB0aGUgJ25yX2NodW5r
-cycgZmllbGQuCgpIZW5jZSB3ZSBrbm93IGV4YWN0bHkgd2hlcmUgdGhpcyBzdXBlcmJsb2NrIChh
-bmQsIGJ5IGltcGxpY2F0aW9uLCB0aGUgCnpvbmVzIGZvbGxvd2luZyB0aGlzIHN1cGVyYmxvY2sp
-IHNob3VsZCBlbmQgdXAuIEFuZCB3ZSBrbm93IGhvdyBsYXJnZQp0aGUgZW50aXJlIHNldHVwIHdp
-bGwgYmUuIFNvIGNhbiBpbnNlcnQgdGhlIHN1cGVyYmxvY2sgYXQgdGhlIHJpZ2h0CnBvc2l0aW9u
-IGFuZCB0aGVuIGNhbiBjaGVjayBpZiB3ZSBoYXZlIGVub3VnaCB6b25lcyBmb3IgdGhlIGVudGly
-ZQpkZXZpY2UuCgpOb3Qgc3VyZSBpZiB0aGUgZG16YWRtIGRvZXMgaXQsIHRob3VnaDsgYnV0IHNo
-b3VsZCBiZSBlYXN5IGVub3VnaCB0byAKaW1wbGVtZW50LgoKQ2hlZXJzLAoKSGFubmVzCi0tIApE
-ci4gSGFubmVzIFJlaW5lY2tlICAgICAgICAgICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtp
-bmcKaGFyZUBzdXNlLmRlICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICs0OSA5MTEgNzQw
-NTMgNjg4ClNVU0UgU29mdHdhcmUgU29sdXRpb25zIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5
-IE7DvHJuYmVyZwpIUkIgMzY4MDkgKEFHIE7DvHJuYmVyZyksIEdlc2Now6RmdHNmw7xocmVyOiBG
-ZWxpeCBJbWVuZMO2cmZmZXIKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
-aGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On 2020/05/31 22:06, Hannes Reinecke wrote:
+> On 5/31/20 11:10 AM, Damien Le Moal wrote:
+>> On Fri, 2020-05-29 at 19:39 +0200, Hannes Reinecke wrote:
+>>> Remove the hard-coded limit of two devices and support an unlimited
+>>> number of additional zoned devices.
+>>> With that we need to increase the device-mapper version number to
+>>> 3.0.0 as we've modified the interface.
+>>>
+>>> Signed-off-by: Hannes Reinecke <hare@suse.de>
+>>> ---
+>>>   drivers/md/dm-zoned-metadata.c |  15 +++++-
+>>>   drivers/md/dm-zoned-target.c   | 106 ++++++++++++++++++++++++-----------------
+>>>   2 files changed, 75 insertions(+), 46 deletions(-)
+>>>
+>>> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+>>> index 044c152eb756..221163ae5f68 100644
+>>> --- a/drivers/md/dm-zoned-metadata.c
+>>> +++ b/drivers/md/dm-zoned-metadata.c
+>>> @@ -1523,7 +1523,20 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
+>>>   		 */
+>>>   		zmd->sb[0].zone = dmz_get(zmd, 0);
+>>>   
+>>> -		zoned_dev = &zmd->dev[1];
+>>> +		for (i = 1; i < zmd->nr_devs; i++) {
+>>> +			zoned_dev = &zmd->dev[i];
+>>> +
+>>> +			ret = blkdev_report_zones(zoned_dev->bdev, 0,
+>>> +						  BLK_ALL_ZONES,
+>>> +						  dmz_init_zone, zoned_dev);
+>>> +			if (ret < 0) {
+>>> +				DMDEBUG("(%s): Failed to report zones, error %d",
+>>> +					zmd->devname, ret);
+>>> +				dmz_drop_zones(zmd);
+>>> +				return ret;
+>>> +			}
+>>> +		}
+>>> +		return 0;
+>>>   	}
+>>>   
+>>>   	/*
+>>> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+>>> index aa3d26d16441..4a51738d4b0d 100644
+>>> --- a/drivers/md/dm-zoned-target.c
+>>> +++ b/drivers/md/dm-zoned-target.c
+>>> @@ -13,8 +13,6 @@
+>>>   
+>>>   #define DMZ_MIN_BIOS		8192
+>>>   
+>>> -#define DMZ_MAX_DEVS		2
+>>> -
+>>>   /*
+>>>    * Zone BIO context.
+>>>    */
+>>> @@ -40,10 +38,10 @@ struct dm_chunk_work {
+>>>    * Target descriptor.
+>>>    */
+>>>   struct dmz_target {
+>>> -	struct dm_dev		*ddev[DMZ_MAX_DEVS];
+>>> +	struct dm_dev		**ddev;
+>>>   	unsigned int		nr_ddevs;
+>>>   
+>>> -	unsigned long		flags;
+>>> +	unsigned int		flags;
+>>>   
+>>>   	/* Zoned block device information */
+>>>   	struct dmz_dev		*dev;
+>>> @@ -764,7 +762,7 @@ static void dmz_put_zoned_device(struct dm_target *ti)
+>>>   	struct dmz_target *dmz = ti->private;
+>>>   	int i;
+>>>   
+>>> -	for (i = 0; i < DMZ_MAX_DEVS; i++) {
+>>> +	for (i = 0; i < dmz->nr_ddevs; i++) {
+>>>   		if (dmz->ddev[i]) {
+>>>   			dm_put_device(ti, dmz->ddev[i]);
+>>>   			dmz->ddev[i] = NULL;
+>>> @@ -777,21 +775,35 @@ static int dmz_fixup_devices(struct dm_target *ti)
+>>>   	struct dmz_target *dmz = ti->private;
+>>>   	struct dmz_dev *reg_dev, *zoned_dev;
+>>>   	struct request_queue *q;
+>>> +	sector_t zone_nr_sectors = 0;
+>>> +	int i;
+>>>   
+>>>   	/*
+>>> -	 * When we have two devices, the first one must be a regular block
+>>> -	 * device and the second a zoned block device.
+>>> +	 * When we have more than on devices, the first one must be a
+>>> +	 * regular block device and the others zoned block devices.
+>>>   	 */
+>>> -	if (dmz->ddev[0] && dmz->ddev[1]) {
+>>> +	if (dmz->nr_ddevs > 1) {
+>>>   		reg_dev = &dmz->dev[0];
+>>>   		if (!(reg_dev->flags & DMZ_BDEV_REGULAR)) {
+>>>   			ti->error = "Primary disk is not a regular device";
+>>>   			return -EINVAL;
+>>>   		}
+>>> -		zoned_dev = &dmz->dev[1];
+>>> -		if (zoned_dev->flags & DMZ_BDEV_REGULAR) {
+>>> -			ti->error = "Secondary disk is not a zoned device";
+>>> -			return -EINVAL;
+>>> +		for (i = 1; i < dmz->nr_ddevs; i++) {
+>>> +			zoned_dev = &dmz->dev[i];
+>>> +			if (zoned_dev->flags & DMZ_BDEV_REGULAR) {
+>>> +				ti->error = "Secondary disk is not a zoned device";
+>>> +				return -EINVAL;
+>>> +			}
+>>> +			q = bdev_get_queue(zoned_dev->bdev);
+>>> +			if (zone_nr_sectors &&
+>>> +			    zone_nr_sectors != blk_queue_zone_sectors(q)) {
+>>> +				ti->error = "Zone nr sectors mismatch";
+>>> +				return -EINVAL;
+>>> +			}
+>>> +			zone_nr_sectors = blk_queue_zone_sectors(q);
+>>> +			zoned_dev->zone_nr_sectors = zone_nr_sectors;
+>>> +			zoned_dev->nr_zones =
+>>> +				blkdev_nr_zones(zoned_dev->bdev->bd_disk);
+>>>   		}
+>>>   	} else {
+>>>   		reg_dev = NULL;
+>>> @@ -800,17 +812,24 @@ static int dmz_fixup_devices(struct dm_target *ti)
+>>>   			ti->error = "Disk is not a zoned device";
+>>>   			return -EINVAL;
+>>>   		}
+>>> +		q = bdev_get_queue(zoned_dev->bdev);
+>>> +		zoned_dev->zone_nr_sectors = blk_queue_zone_sectors(q);
+>>> +		zoned_dev->nr_zones = blkdev_nr_zones(zoned_dev->bdev->bd_disk);
+>>>   	}
+>>> -	q = bdev_get_queue(zoned_dev->bdev);
+>>> -	zoned_dev->zone_nr_sectors = blk_queue_zone_sectors(q);
+>>> -	zoned_dev->nr_zones = blkdev_nr_zones(zoned_dev->bdev->bd_disk);
+>>>   
+>>>   	if (reg_dev) {
+>>> -		reg_dev->zone_nr_sectors = zoned_dev->zone_nr_sectors;
+>>> +		sector_t zone_offset;
+>>> +
+>>> +		reg_dev->zone_nr_sectors = zone_nr_sectors;
+>>>   		reg_dev->nr_zones =
+>>>   			DIV_ROUND_UP_SECTOR_T(reg_dev->capacity,
+>>>   					      reg_dev->zone_nr_sectors);
+>>> -		zoned_dev->zone_offset = reg_dev->nr_zones;
+>>> +		reg_dev->zone_offset = 0;
+>>> +		zone_offset = reg_dev->nr_zones;
+>>> +		for (i = 1; i < dmz->nr_ddevs; i++) {
+>>> +			dmz->dev[i].zone_offset = zone_offset;
+>>> +			zone_offset += dmz->dev[i].nr_zones;
+>>> +		}
+>>>   	}
+>>>   	return 0;
+>>>   }
+>>> @@ -824,7 +843,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>>>   	int ret, i;
+>>>   
+>>>   	/* Check arguments */
+>>> -	if (argc < 1 || argc > 2) {
+>>> +	if (argc < 1) {
+>>>   		ti->error = "Invalid argument count";
+>>>   		return -EINVAL;
+>>>   	}
+>>> @@ -835,32 +854,31 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>>>   		ti->error = "Unable to allocate the zoned target descriptor";
+>>>   		return -ENOMEM;
+>>>   	}
+>>> -	dmz->dev = kcalloc(2, sizeof(struct dmz_dev), GFP_KERNEL);
+>>> +	dmz->dev = kcalloc(argc, sizeof(struct dmz_dev), GFP_KERNEL);
+>>>   	if (!dmz->dev) {
+>>>   		ti->error = "Unable to allocate the zoned device descriptors";
+>>>   		kfree(dmz);
+>>>   		return -ENOMEM;
+>>>   	}
+>>> +	dmz->ddev = kcalloc(argc, sizeof(struct dm_dev *), GFP_KERNEL);
+>>> +	if (!dmz->ddev) {
+>>> +		ti->error = "Unable to allocate the dm device descriptors";
+>>> +		ret = -ENOMEM;
+>>> +		goto err;
+>>> +	}
+>>>   	dmz->nr_ddevs = argc;
+>>> +
+>>>   	ti->private = dmz;
+>>>   
+>>>   	/* Get the target zoned block device */
+>>> -	ret = dmz_get_zoned_device(ti, argv[0], 0, argc);
+>>> -	if (ret)
+>>> -		goto err;
+>>> -
+>>> -	if (argc == 2) {
+>>> -		ret = dmz_get_zoned_device(ti, argv[1], 1, argc);
+>>> -		if (ret) {
+>>> -			dmz_put_zoned_device(ti);
+>>> -			goto err;
+>>> -		}
+>>> +	for (i = 0; i < argc; i++) {
+>>> +		ret = dmz_get_zoned_device(ti, argv[i], i, argc);
+>>> +		if (ret)
+>>> +			goto err_dev;
+>>>   	}
+>>>   	ret = dmz_fixup_devices(ti);
+>>> -	if (ret) {
+>>> -		dmz_put_zoned_device(ti);
+>>> -		goto err;
+>>> -	}
+>>> +	if (ret)
+>>> +		goto err_dev;
+>>>   
+>>>   	/* Initialize metadata */
+>>>   	ret = dmz_ctr_metadata(dmz->dev, argc, &dmz->metadata,
+>>> @@ -1056,13 +1074,13 @@ static int dmz_iterate_devices(struct dm_target *ti,
+>>>   	struct dmz_target *dmz = ti->private;
+>>>   	unsigned int zone_nr_sectors = dmz_zone_nr_sectors(dmz->metadata);
+>>>   	sector_t capacity;
+>>> -	int r;
+>>> +	int i, r;
+>>>   
+>>> -	capacity = dmz->dev[0].capacity & ~(zone_nr_sectors - 1);
+>>> -	r = fn(ti, dmz->ddev[0], 0, capacity, data);
+>>> -	if (!r && dmz->ddev[1]) {
+>>> -		capacity = dmz->dev[1].capacity & ~(zone_nr_sectors - 1);
+>>> -		r = fn(ti, dmz->ddev[1], 0, capacity, data);
+>>> +	for (i = 0; i < dmz->nr_ddevs; i++) {
+>>> +		capacity = dmz->dev[i].capacity & ~(zone_nr_sectors - 1);
+>>> +		r = fn(ti, dmz->ddev[i], 0, capacity, data);
+>>> +		if (r)
+>>> +			break;
+>>>   	}
+>>>   	return r;
+>>>   }
+>>> @@ -1083,9 +1101,7 @@ static void dmz_status(struct dm_target *ti, status_type_t type,
+>>>   		       dmz_nr_zones(dmz->metadata),
+>>>   		       dmz_nr_unmap_cache_zones(dmz->metadata),
+>>>   		       dmz_nr_cache_zones(dmz->metadata));
+>>> -		for (i = 0; i < DMZ_MAX_DEVS; i++) {
+>>> -			if (!dmz->ddev[i])
+>>> -				continue;
+>>> +		for (i = 0; i < dmz->nr_ddevs; i++) {
+>>>   			/*
+>>>   			 * For a multi-device setup the first device
+>>>   			 * contains only cache zones.
+>>> @@ -1104,8 +1120,8 @@ static void dmz_status(struct dm_target *ti, status_type_t type,
+>>>   		dev = &dmz->dev[0];
+>>>   		format_dev_t(buf, dev->bdev->bd_dev);
+>>>   		DMEMIT("%s", buf);
+>>> -		if (dmz->dev[1].bdev) {
+>>> -			dev = &dmz->dev[1];
+>>> +		for (i = 1; i < dmz->nr_ddevs; i++) {
+>>> +			dev = &dmz->dev[i];
+>>>   			format_dev_t(buf, dev->bdev->bd_dev);
+>>>   			DMEMIT(" %s", buf);
+>>>   		}
+>>> @@ -1133,7 +1149,7 @@ static int dmz_message(struct dm_target *ti, unsigned int argc, char **argv,
+>>>   
+>>>   static struct target_type dmz_type = {
+>>>   	.name		 = "zoned",
+>>> -	.version	 = {2, 0, 0},
+>>> +	.version	 = {3, 0, 0},
+>>>   	.features	 = DM_TARGET_SINGLETON | DM_TARGET_ZONED_HM,
+>>>   	.module		 = THIS_MODULE,
+>>>   	.ctr		 = dmz_ctr,
+>>
+>> Looks all good to me, but thinking more about it, don't we need to add
+>> a device index in the super blocks ? The reason is that if the drive
+>> configuration changes between stopt/start (drives removed, added or
+>> changed slots), the drive names will change and while the userspace
+>> will still be able to find the group of drives constituting the target
+>> (using UUID9, there is no obvious way to find out what the original
+>> drive order was. Since the kernel side relies on the drive being passed
+>> to the ctr function in the order of the mapping, we need to preserve
+>> that. Or change also the kernel side to use the index in the super
+>> block to put each drive in its correct dmz->dev[] slot.
+>>
+> Already taken care of; here's where the tertiary superblocks come in.
+> Each superblock carries its own position (in the 'sb_block' field).
+> This is the _absolute_ position within the entire setup, not the
+> relative per-device block number.
+> And it also has the absolute number of blocks in the 'nr_chunks' field.
+> 
+> Hence we know exactly where this superblock (and, by implication, the 
+> zones following this superblock) should end up. And we know how large
+> the entire setup will be. So can insert the superblock at the right
+> position and then can check if we have enough zones for the entire
+> device.
+
+I do not get it though. Where is that checked ? At least in this patch, drives
+are initialized in the order of the ctr arguments, and this loop:
+
++		for (i = 1; i < dmz->nr_ddevs; i++) {
++			dmz->dev[i].zone_offset = zone_offset;
++			zone_offset += dmz->dev[i].nr_zones;
++		}
+
+in dmz_fixup_devices() sets the zone offset for each device in the same order.
+So for a given chunk mapped to a zone identified by its ID, if the device order
+changes, zone ID will change and the chunk will not be mapped to the correct
+zone. What am I missing here ?
+
+
+> 
+> Not sure if the dmzadm does it, though; but should be easy enough to 
+> implement.
+> 
+> Cheers,
+> 
+> Hannes
+> 
+
+
+-- 
+Damien Le Moal
+Western Digital Research
