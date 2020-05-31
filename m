@@ -1,16 +1,17 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH 09/14] dm-zoned: per-device reclaim
-Date: Sun, 31 May 2020 09:19:08 +0000
-Message-ID: <162caf3ed21241302ed57014f33a772ecaf8420e.camel@wdc.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 11/14] dm-zoned: support arbitrary number of
+	devices
+Date: Sun, 31 May 2020 15:06:09 +0200
+Message-ID: <2d8e74ee-6f33-e832-f081-694d051343ce@suse.de>
 References: <20200529173907.40529-1-hare@suse.de>
-	<20200529173907.40529-10-hare@suse.de>
+	<20200529173907.40529-12-hare@suse.de>
+	<36914d620ecccdf0397a47703a69b926afd3d283.camel@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200529173907.40529-10-hare@suse.de>
+In-Reply-To: <36914d620ecccdf0397a47703a69b926afd3d283.camel@wdc.com>
 Content-Language: en-US
-Content-ID: <2E3279058D24B0468125BBF25E9C9F7A@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,407 +21,190 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "snitzer@redhat.com" <snitzer@redhat.com>, "hare@suse.de" <hare@suse.de>
+To: Damien Le Moal <Damien.LeMoal@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 2020-05-29 at 19:39 +0200, Hannes Reinecke wrote:
-> Instead of having one reclaim workqueue for the entire set we should
-> be allocating a reclaim workqueue per device; that will reduce
-> contention and should boost performance for a multi-device setup.
-> 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> ---
->  drivers/md/dm-zoned-reclaim.c | 66 +++++++++++++++++++++++++++----------------
->  drivers/md/dm-zoned-target.c  | 41 +++++++++++++++++----------
->  drivers/md/dm-zoned.h         | 38 +++++++++++++------------
->  3 files changed, 88 insertions(+), 57 deletions(-)
-> 
-> diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
-> index e9e3b730e258..09843645248a 100644
-> --- a/drivers/md/dm-zoned-reclaim.c
-> +++ b/drivers/md/dm-zoned-reclaim.c
-> @@ -21,6 +21,8 @@ struct dmz_reclaim {
->  	struct dm_kcopyd_throttle kc_throttle;
->  	int			kc_err;
->  
-> +	int			dev_idx;
-> +
->  	unsigned long		flags;
->  
->  	/* Last target access time */
-> @@ -198,8 +200,8 @@ static int dmz_reclaim_buf(struct dmz_reclaim *zrc, struct dm_zone *dzone)
->  	struct dmz_metadata *zmd = zrc->metadata;
->  	int ret;
->  
-> -	DMDEBUG("(%s): Chunk %u, move buf zone %u (weight %u) to data zone %u (weight %u)",
-> -		dmz_metadata_label(zmd),
-> +	DMDEBUG("(%s/%u): Chunk %u, move buf zone %u (weight %u) to data zone %u (weight %u)",
-> +		dmz_metadata_label(zmd), zrc->dev_idx,
->  		dzone->chunk, bzone->id, dmz_weight(bzone),
->  		dzone->id, dmz_weight(dzone));
->  
-> @@ -237,8 +239,8 @@ static int dmz_reclaim_seq_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
->  	struct dmz_metadata *zmd = zrc->metadata;
->  	int ret = 0;
->  
-> -	DMDEBUG("(%s): Chunk %u, move data zone %u (weight %u) to buf zone %u (weight %u)",
-> -		dmz_metadata_label(zmd),
-> +	DMDEBUG("(%s/%u): Chunk %u, move data zone %u (weight %u) to buf zone %u (weight %u)",
-> +		dmz_metadata_label(zmd), zrc->dev_idx,
->  		chunk, dzone->id, dmz_weight(dzone),
->  		bzone->id, dmz_weight(bzone));
->  
-> @@ -295,8 +297,8 @@ static int dmz_reclaim_rnd_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
->  	if (!szone)
->  		return -ENOSPC;
->  
-> -	DMDEBUG("(%s): Chunk %u, move %s zone %u (weight %u) to %s zone %u",
-> -		dmz_metadata_label(zmd), chunk,
-> +	DMDEBUG("(%s/%u): Chunk %u, move %s zone %u (weight %u) to %s zone %u",
-> +		dmz_metadata_label(zmd), zrc->dev_idx, chunk,
->  		dmz_is_cache(dzone) ? "cache" : "rnd",
->  		dzone->id, dmz_weight(dzone),
->  		dmz_is_rnd(szone) ? "rnd" : "seq", szone->id);
-> @@ -369,8 +371,8 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
->  	/* Get a data zone */
->  	dzone = dmz_get_zone_for_reclaim(zmd, dmz_target_idle(zrc));
->  	if (!dzone) {
-> -		DMDEBUG("(%s): No zone found to reclaim",
-> -			dmz_metadata_label(zmd));
-> +		DMDEBUG("(%s/%u): No zone found to reclaim",
-> +			dmz_metadata_label(zmd), zrc->dev_idx);
->  		return -EBUSY;
->  	}
->  
-> @@ -417,24 +419,26 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
->  out:
->  	if (ret) {
->  		if (ret == -EINTR)
-> -			DMDEBUG("(%s): reclaim zone %u interrupted",
-> -				dmz_metadata_label(zmd), rzone->id);
-> +			DMDEBUG("(%s/%u): reclaim zone %u interrupted",
-> +				dmz_metadata_label(zmd), zrc->dev_idx,
-> +				rzone->id);
->  		else
-> -			DMDEBUG("(%s): Failed to reclaim zone %u, err %d",
-> -				dmz_metadata_label(zmd), rzone->id, ret);
-> +			DMDEBUG("(%s/%u): Failed to reclaim zone %u, err %d",
-> +				dmz_metadata_label(zmd), zrc->dev_idx,
-> +				rzone->id, ret);
->  		dmz_unlock_zone_reclaim(dzone);
->  		return ret;
->  	}
->  
->  	ret = dmz_flush_metadata(zrc->metadata);
->  	if (ret) {
-> -		DMDEBUG("(%s): Metadata flush for zone %u failed, err %d",
-> -			dmz_metadata_label(zmd), rzone->id, ret);
-> +		DMDEBUG("(%s/%u): Metadata flush for zone %u failed, err %d",
-> +			dmz_metadata_label(zmd), zrc->dev_idx, rzone->id, ret);
->  		return ret;
->  	}
->  
-> -	DMDEBUG("(%s): Reclaimed zone %u in %u ms",
-> -		dmz_metadata_label(zmd),
-> +	DMDEBUG("(%s/%u): Reclaimed zone %u in %u ms",
-> +		dmz_metadata_label(zmd), zrc->dev_idx,
->  		rzone->id, jiffies_to_msecs(jiffies - start));
->  	return 0;
->  }
-> @@ -461,10 +465,20 @@ static unsigned int dmz_reclaim_percentage(struct dmz_reclaim *zrc)
->   */
->  static bool dmz_should_reclaim(struct dmz_reclaim *zrc, unsigned int p_unmap)
->  {
-> -	unsigned int nr_reclaim = dmz_nr_rnd_zones(zrc->metadata);
-> +	unsigned int nr_reclaim;
-> +
-> +	nr_reclaim = dmz_nr_rnd_zones(zrc->metadata);
-
-This change is not really necessary: same code in the end.
-
->  
-> -	if (dmz_nr_cache_zones(zrc->metadata))
-> +	if (dmz_nr_cache_zones(zrc->metadata)) {
-> +		/*
-> +		 * The first device in a multi-device
-> +		 * setup only contains cache zones, so
-> +		 * never start reclaim there.
-> +		 */
-> +		if (zrc->dev_idx == 0)
-> +			return false;
->  		nr_reclaim += dmz_nr_cache_zones(zrc->metadata);
-> +	}
->  
->  	/* Reclaim when idle */
->  	if (dmz_target_idle(zrc) && nr_reclaim)
-> @@ -488,7 +502,7 @@ static void dmz_reclaim_work(struct work_struct *work)
->  {
->  	struct dmz_reclaim *zrc = container_of(work, struct dmz_reclaim, work.work);
->  	struct dmz_metadata *zmd = zrc->metadata;
-> -	unsigned int p_unmap;
-> +	unsigned int p_unmap, nr_unmap_rnd = 0, nr_rnd = 0;
->  	int ret;
->  
->  	if (dmz_dev_is_dying(zmd))
-> @@ -514,8 +528,11 @@ static void dmz_reclaim_work(struct work_struct *work)
->  		zrc->kc_throttle.throttle = min(75U, 100U - p_unmap / 2);
->  	}
->  
-> -	DMDEBUG("(%s): Reclaim (%u): %s, %u%% free zones (%u/%u cache %u/%u random)",
-> -		dmz_metadata_label(zmd),
-> +	nr_unmap_rnd = dmz_nr_unmap_rnd_zones(zmd);
-> +	nr_rnd = dmz_nr_rnd_zones(zmd);
-> +
-> +	DMDEBUG("(%s/%u): Reclaim (%u): %s, %u%% free zones (%u/%u cache %u/%u random)",
-> +		dmz_metadata_label(zmd), zrc->dev_idx,
->  		zrc->kc_throttle.throttle,
->  		(dmz_target_idle(zrc) ? "Idle" : "Busy"),
->  		p_unmap, dmz_nr_unmap_cache_zones(zmd),
-> @@ -536,7 +553,7 @@ static void dmz_reclaim_work(struct work_struct *work)
->   * Initialize reclaim.
->   */
->  int dmz_ctr_reclaim(struct dmz_metadata *zmd,
-> -		    struct dmz_reclaim **reclaim)
-> +		    struct dmz_reclaim **reclaim, int idx)
->  {
->  	struct dmz_reclaim *zrc;
->  	int ret;
-> @@ -547,6 +564,7 @@ int dmz_ctr_reclaim(struct dmz_metadata *zmd,
->  
->  	zrc->metadata = zmd;
->  	zrc->atime = jiffies;
-> +	zrc->dev_idx = idx;
->  
->  	/* Reclaim kcopyd client */
->  	zrc->kc = dm_kcopyd_client_create(&zrc->kc_throttle);
-> @@ -558,8 +576,8 @@ int dmz_ctr_reclaim(struct dmz_metadata *zmd,
->  
->  	/* Reclaim work */
->  	INIT_DELAYED_WORK(&zrc->work, dmz_reclaim_work);
-> -	zrc->wq = alloc_ordered_workqueue("dmz_rwq_%s", WQ_MEM_RECLAIM,
-> -					  dmz_metadata_label(zmd));
-> +	zrc->wq = alloc_ordered_workqueue("dmz_rwq_%s_%d", WQ_MEM_RECLAIM,
-> +					  dmz_metadata_label(zmd), idx);
->  	if (!zrc->wq) {
->  		ret = -ENOMEM;
->  		goto err;
-> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-> index 087dd4801663..97d63d8e6c19 100644
-> --- a/drivers/md/dm-zoned-target.c
-> +++ b/drivers/md/dm-zoned-target.c
-> @@ -41,6 +41,7 @@ struct dm_chunk_work {
->   */
->  struct dmz_target {
->  	struct dm_dev		*ddev[DMZ_MAX_DEVS];
-> +	unsigned int		nr_ddevs;
->  
->  	unsigned long		flags;
->  
-> @@ -50,9 +51,6 @@ struct dmz_target {
->  	/* For metadata handling */
->  	struct dmz_metadata     *metadata;
->  
-> -	/* For reclaim */
-> -	struct dmz_reclaim	*reclaim;
-> -
->  	/* For chunk work */
->  	struct radix_tree_root	chunk_rxtree;
->  	struct workqueue_struct *chunk_wq;
-> @@ -404,14 +402,15 @@ static void dmz_handle_bio(struct dmz_target *dmz, struct dm_chunk_work *cw,
->  		dm_per_bio_data(bio, sizeof(struct dmz_bioctx));
->  	struct dmz_metadata *zmd = dmz->metadata;
->  	struct dm_zone *zone;
-> -	int ret;
-> +	int i, ret;
->  
->  	/*
->  	 * Write may trigger a zone allocation. So make sure the
->  	 * allocation can succeed.
->  	 */
->  	if (bio_op(bio) == REQ_OP_WRITE)
-> -		dmz_schedule_reclaim(dmz->reclaim);
-> +		for (i = 0; i < dmz->nr_ddevs; i++)
-> +			dmz_schedule_reclaim(dmz->dev[i].reclaim);
->  
->  	dmz_lock_metadata(zmd);
->  
-> @@ -431,6 +430,7 @@ static void dmz_handle_bio(struct dmz_target *dmz, struct dm_chunk_work *cw,
->  	if (zone) {
->  		dmz_activate_zone(zone);
->  		bioctx->zone = zone;
-> +		dmz_reclaim_bio_acc(zone->dev->reclaim);
->  	}
->  
->  	switch (bio_op(bio)) {
-> @@ -577,7 +577,6 @@ static int dmz_queue_chunk_work(struct dmz_target *dmz, struct bio *bio)
->  
->  	bio_list_add(&cw->bio_list, bio);
->  
-> -	dmz_reclaim_bio_acc(dmz->reclaim);
->  	if (queue_work(dmz->chunk_wq, &cw->work))
->  		dmz_get_chunk_work(cw);
->  out:
-> @@ -822,7 +821,7 @@ static int dmz_fixup_devices(struct dm_target *ti)
->  static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  {
->  	struct dmz_target *dmz;
-> -	int ret;
-> +	int ret, i;
->  
->  	/* Check arguments */
->  	if (argc < 1 || argc > 2) {
-> @@ -842,6 +841,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  		kfree(dmz);
->  		return -ENOMEM;
->  	}
-> +	dmz->nr_ddevs = argc;
->  	ti->private = dmz;
->  
->  	/* Get the target zoned block device */
-> @@ -916,10 +916,12 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  	mod_delayed_work(dmz->flush_wq, &dmz->flush_work, DMZ_FLUSH_PERIOD);
->  
->  	/* Initialize reclaim */
-> -	ret = dmz_ctr_reclaim(dmz->metadata, &dmz->reclaim);
-> -	if (ret) {
-> -		ti->error = "Zone reclaim initialization failed";
-> -		goto err_fwq;
-> +	for (i = 0; i < dmz->nr_ddevs; i++) {
-> +		ret = dmz_ctr_reclaim(dmz->metadata, &dmz->dev[i].reclaim, i);
-> +		if (ret) {
-> +			ti->error = "Zone reclaim initialization failed";
-> +			goto err_fwq;
-> +		}
->  	}
->  
->  	DMINFO("(%s): Target device: %llu 512-byte logical sectors (%llu blocks)",
-> @@ -952,11 +954,13 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  static void dmz_dtr(struct dm_target *ti)
->  {
->  	struct dmz_target *dmz = ti->private;
-> +	int i;
->  
->  	flush_workqueue(dmz->chunk_wq);
->  	destroy_workqueue(dmz->chunk_wq);
->  
-> -	dmz_dtr_reclaim(dmz->reclaim);
-> +	for (i = 0; i < dmz->nr_ddevs; i++)
-> +		dmz_dtr_reclaim(dmz->dev[i].reclaim);
->  
->  	cancel_delayed_work_sync(&dmz->flush_work);
->  	destroy_workqueue(dmz->flush_wq);
-> @@ -1025,9 +1029,11 @@ static int dmz_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
->  static void dmz_suspend(struct dm_target *ti)
->  {
->  	struct dmz_target *dmz = ti->private;
-> +	int i;
->  
->  	flush_workqueue(dmz->chunk_wq);
-> -	dmz_suspend_reclaim(dmz->reclaim);
-> +	for (i = 0; i < dmz->nr_ddevs; i++)
-> +		dmz_suspend_reclaim(dmz->dev[i].reclaim);
->  	cancel_delayed_work_sync(&dmz->flush_work);
->  }
->  
-> @@ -1037,9 +1043,11 @@ static void dmz_suspend(struct dm_target *ti)
->  static void dmz_resume(struct dm_target *ti)
->  {
->  	struct dmz_target *dmz = ti->private;
-> +	int i;
->  
->  	queue_delayed_work(dmz->flush_wq, &dmz->flush_work, DMZ_FLUSH_PERIOD);
-> -	dmz_resume_reclaim(dmz->reclaim);
-> +	for (i = 0; i < dmz->nr_ddevs; i++)
-> +		dmz_resume_reclaim(dmz->dev[i].reclaim);
->  }
->  
->  static int dmz_iterate_devices(struct dm_target *ti,
-> @@ -1100,7 +1108,10 @@ static int dmz_message(struct dm_target *ti, unsigned int argc, char **argv,
->  	int r = -EINVAL;
->  
->  	if (!strcasecmp(argv[0], "reclaim")) {
-> -		dmz_schedule_reclaim(dmz->reclaim);
-> +		int i;
-> +
-> +		for (i = 0; i < dmz->nr_ddevs; i++)
-> +			dmz_schedule_reclaim(dmz->dev[i].reclaim);
->  		r = 0;
->  	} else
->  		DMERR("unrecognized message %s", argv[0]);
-> diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
-> index 983f5b5e9fa0..0cc3459f78ce 100644
-> --- a/drivers/md/dm-zoned.h
-> +++ b/drivers/md/dm-zoned.h
-> @@ -54,6 +54,7 @@ struct dmz_reclaim;
->  struct dmz_dev {
->  	struct block_device	*bdev;
->  	struct dmz_metadata	*metadata;
-> +	struct dmz_reclaim	*reclaim;
->  
->  	char			name[BDEVNAME_SIZE];
->  	uuid_t			uuid;
-> @@ -229,23 +230,6 @@ static inline void dmz_activate_zone(struct dm_zone *zone)
->  	atomic_inc(&zone->refcount);
->  }
->  
-> -/*
-> - * Deactivate a zone. This decrement the zone reference counter
-> - * indicating that all BIOs to the zone have completed when the count is 0.
-> - */
-> -static inline void dmz_deactivate_zone(struct dm_zone *zone)
-> -{
-> -	atomic_dec(&zone->refcount);
-> -}
-> -
-> -/*
-> - * Test if a zone is active, that is, has a refcount > 0.
-> - */
-> -static inline bool dmz_is_active(struct dm_zone *zone)
-> -{
-> -	return atomic_read(&zone->refcount);
-> -}
-> -
->  int dmz_lock_zone_reclaim(struct dm_zone *zone);
->  void dmz_unlock_zone_reclaim(struct dm_zone *zone);
->  struct dm_zone *dmz_get_zone_for_reclaim(struct dmz_metadata *zmd, bool idle);
-> @@ -272,7 +256,7 @@ int dmz_merge_valid_blocks(struct dmz_metadata *zmd, struct dm_zone *from_zone,
->  /*
->   * Functions defined in dm-zoned-reclaim.c
->   */
-> -int dmz_ctr_reclaim(struct dmz_metadata *zmd, struct dmz_reclaim **zrc);
-> +int dmz_ctr_reclaim(struct dmz_metadata *zmd, struct dmz_reclaim **zrc, int idx);
->  void dmz_dtr_reclaim(struct dmz_reclaim *zrc);
->  void dmz_suspend_reclaim(struct dmz_reclaim *zrc);
->  void dmz_resume_reclaim(struct dmz_reclaim *zrc);
-> @@ -285,4 +269,22 @@ void dmz_schedule_reclaim(struct dmz_reclaim *zrc);
->  bool dmz_bdev_is_dying(struct dmz_dev *dmz_dev);
->  bool dmz_check_bdev(struct dmz_dev *dmz_dev);
->  
-> +/*
-> + * Deactivate a zone. This decrement the zone reference counter
-> + * indicating that all BIOs to the zone have completed when the count is 0.
-> + */
-> +static inline void dmz_deactivate_zone(struct dm_zone *zone)
-> +{
-> +	dmz_reclaim_bio_acc(zone->dev->reclaim);
-> +	atomic_dec(&zone->refcount);
-> +}
-> +
-> +/*
-> + * Test if a zone is active, that is, has a refcount > 0.
-> + */
-> +static inline bool dmz_is_active(struct dm_zone *zone)
-> +{
-> +	return atomic_read(&zone->refcount);
-> +}
-> +
->  #endif /* DM_ZONED_H */
-
-Apart from the nit above, looks good.
-
-Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
-
--- 
-Damien Le Moal
-Western Digital Research
+T24gNS8zMS8yMCAxMToxMCBBTSwgRGFtaWVuIExlIE1vYWwgd3JvdGU6Cj4gT24gRnJpLCAyMDIw
+LTA1LTI5IGF0IDE5OjM5ICswMjAwLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6Cj4+IFJlbW92ZSB0
+aGUgaGFyZC1jb2RlZCBsaW1pdCBvZiB0d28gZGV2aWNlcyBhbmQgc3VwcG9ydCBhbiB1bmxpbWl0
+ZWQKPj4gbnVtYmVyIG9mIGFkZGl0aW9uYWwgem9uZWQgZGV2aWNlcy4KPj4gV2l0aCB0aGF0IHdl
+IG5lZWQgdG8gaW5jcmVhc2UgdGhlIGRldmljZS1tYXBwZXIgdmVyc2lvbiBudW1iZXIgdG8KPj4g
+My4wLjAgYXMgd2UndmUgbW9kaWZpZWQgdGhlIGludGVyZmFjZS4KPj4KPj4gU2lnbmVkLW9mZi1i
+eTogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2UuZGU+Cj4+IC0tLQo+PiAgIGRyaXZlcnMvbWQv
+ZG0tem9uZWQtbWV0YWRhdGEuYyB8ICAxNSArKysrKy0KPj4gICBkcml2ZXJzL21kL2RtLXpvbmVk
+LXRhcmdldC5jICAgfCAxMDYgKysrKysrKysrKysrKysrKysrKysrKysrLS0tLS0tLS0tLS0tLS0t
+LS0KPj4gICAyIGZpbGVzIGNoYW5nZWQsIDc1IGluc2VydGlvbnMoKyksIDQ2IGRlbGV0aW9ucygt
+KQo+Pgo+PiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS16b25lZC1tZXRhZGF0YS5jIGIvZHJp
+dmVycy9tZC9kbS16b25lZC1tZXRhZGF0YS5jCj4+IGluZGV4IDA0NGMxNTJlYjc1Ni4uMjIxMTYz
+YWU1ZjY4IDEwMDY0NAo+PiAtLS0gYS9kcml2ZXJzL21kL2RtLXpvbmVkLW1ldGFkYXRhLmMKPj4g
+KysrIGIvZHJpdmVycy9tZC9kbS16b25lZC1tZXRhZGF0YS5jCj4+IEBAIC0xNTIzLDcgKzE1MjMs
+MjAgQEAgc3RhdGljIGludCBkbXpfaW5pdF96b25lcyhzdHJ1Y3QgZG16X21ldGFkYXRhICp6bWQp
+Cj4+ICAgCQkgKi8KPj4gICAJCXptZC0+c2JbMF0uem9uZSA9IGRtel9nZXQoem1kLCAwKTsKPj4g
+ICAKPj4gLQkJem9uZWRfZGV2ID0gJnptZC0+ZGV2WzFdOwo+PiArCQlmb3IgKGkgPSAxOyBpIDwg
+em1kLT5ucl9kZXZzOyBpKyspIHsKPj4gKwkJCXpvbmVkX2RldiA9ICZ6bWQtPmRldltpXTsKPj4g
+Kwo+PiArCQkJcmV0ID0gYmxrZGV2X3JlcG9ydF96b25lcyh6b25lZF9kZXYtPmJkZXYsIDAsCj4+
+ICsJCQkJCQkgIEJMS19BTExfWk9ORVMsCj4+ICsJCQkJCQkgIGRtel9pbml0X3pvbmUsIHpvbmVk
+X2Rldik7Cj4+ICsJCQlpZiAocmV0IDwgMCkgewo+PiArCQkJCURNREVCVUcoIiglcyk6IEZhaWxl
+ZCB0byByZXBvcnQgem9uZXMsIGVycm9yICVkIiwKPj4gKwkJCQkJem1kLT5kZXZuYW1lLCByZXQp
+Owo+PiArCQkJCWRtel9kcm9wX3pvbmVzKHptZCk7Cj4+ICsJCQkJcmV0dXJuIHJldDsKPj4gKwkJ
+CX0KPj4gKwkJfQo+PiArCQlyZXR1cm4gMDsKPj4gICAJfQo+PiAgIAo+PiAgIAkvKgo+PiBkaWZm
+IC0tZ2l0IGEvZHJpdmVycy9tZC9kbS16b25lZC10YXJnZXQuYyBiL2RyaXZlcnMvbWQvZG0tem9u
+ZWQtdGFyZ2V0LmMKPj4gaW5kZXggYWEzZDI2ZDE2NDQxLi40YTUxNzM4ZDRiMGQgMTAwNjQ0Cj4+
+IC0tLSBhL2RyaXZlcnMvbWQvZG0tem9uZWQtdGFyZ2V0LmMKPj4gKysrIGIvZHJpdmVycy9tZC9k
+bS16b25lZC10YXJnZXQuYwo+PiBAQCAtMTMsOCArMTMsNiBAQAo+PiAgIAo+PiAgICNkZWZpbmUg
+RE1aX01JTl9CSU9TCQk4MTkyCj4+ICAgCj4+IC0jZGVmaW5lIERNWl9NQVhfREVWUwkJMgo+PiAt
+Cj4+ICAgLyoKPj4gICAgKiBab25lIEJJTyBjb250ZXh0Lgo+PiAgICAqLwo+PiBAQCAtNDAsMTAg
+KzM4LDEwIEBAIHN0cnVjdCBkbV9jaHVua193b3JrIHsKPj4gICAgKiBUYXJnZXQgZGVzY3JpcHRv
+ci4KPj4gICAgKi8KPj4gICBzdHJ1Y3QgZG16X3RhcmdldCB7Cj4+IC0Jc3RydWN0IGRtX2RldgkJ
+KmRkZXZbRE1aX01BWF9ERVZTXTsKPj4gKwlzdHJ1Y3QgZG1fZGV2CQkqKmRkZXY7Cj4+ICAgCXVu
+c2lnbmVkIGludAkJbnJfZGRldnM7Cj4+ICAgCj4+IC0JdW5zaWduZWQgbG9uZwkJZmxhZ3M7Cj4+
+ICsJdW5zaWduZWQgaW50CQlmbGFnczsKPj4gICAKPj4gICAJLyogWm9uZWQgYmxvY2sgZGV2aWNl
+IGluZm9ybWF0aW9uICovCj4+ICAgCXN0cnVjdCBkbXpfZGV2CQkqZGV2Owo+PiBAQCAtNzY0LDcg
+Kzc2Miw3IEBAIHN0YXRpYyB2b2lkIGRtel9wdXRfem9uZWRfZGV2aWNlKHN0cnVjdCBkbV90YXJn
+ZXQgKnRpKQo+PiAgIAlzdHJ1Y3QgZG16X3RhcmdldCAqZG16ID0gdGktPnByaXZhdGU7Cj4+ICAg
+CWludCBpOwo+PiAgIAo+PiAtCWZvciAoaSA9IDA7IGkgPCBETVpfTUFYX0RFVlM7IGkrKykgewo+
+PiArCWZvciAoaSA9IDA7IGkgPCBkbXotPm5yX2RkZXZzOyBpKyspIHsKPj4gICAJCWlmIChkbXot
+PmRkZXZbaV0pIHsKPj4gICAJCQlkbV9wdXRfZGV2aWNlKHRpLCBkbXotPmRkZXZbaV0pOwo+PiAg
+IAkJCWRtei0+ZGRldltpXSA9IE5VTEw7Cj4+IEBAIC03NzcsMjEgKzc3NSwzNSBAQCBzdGF0aWMg
+aW50IGRtel9maXh1cF9kZXZpY2VzKHN0cnVjdCBkbV90YXJnZXQgKnRpKQo+PiAgIAlzdHJ1Y3Qg
+ZG16X3RhcmdldCAqZG16ID0gdGktPnByaXZhdGU7Cj4+ICAgCXN0cnVjdCBkbXpfZGV2ICpyZWdf
+ZGV2LCAqem9uZWRfZGV2Owo+PiAgIAlzdHJ1Y3QgcmVxdWVzdF9xdWV1ZSAqcTsKPj4gKwlzZWN0
+b3JfdCB6b25lX25yX3NlY3RvcnMgPSAwOwo+PiArCWludCBpOwo+PiAgIAo+PiAgIAkvKgo+PiAt
+CSAqIFdoZW4gd2UgaGF2ZSB0d28gZGV2aWNlcywgdGhlIGZpcnN0IG9uZSBtdXN0IGJlIGEgcmVn
+dWxhciBibG9jawo+PiAtCSAqIGRldmljZSBhbmQgdGhlIHNlY29uZCBhIHpvbmVkIGJsb2NrIGRl
+dmljZS4KPj4gKwkgKiBXaGVuIHdlIGhhdmUgbW9yZSB0aGFuIG9uIGRldmljZXMsIHRoZSBmaXJz
+dCBvbmUgbXVzdCBiZSBhCj4+ICsJICogcmVndWxhciBibG9jayBkZXZpY2UgYW5kIHRoZSBvdGhl
+cnMgem9uZWQgYmxvY2sgZGV2aWNlcy4KPj4gICAJICovCj4+IC0JaWYgKGRtei0+ZGRldlswXSAm
+JiBkbXotPmRkZXZbMV0pIHsKPj4gKwlpZiAoZG16LT5ucl9kZGV2cyA+IDEpIHsKPj4gICAJCXJl
+Z19kZXYgPSAmZG16LT5kZXZbMF07Cj4+ICAgCQlpZiAoIShyZWdfZGV2LT5mbGFncyAmIERNWl9C
+REVWX1JFR1VMQVIpKSB7Cj4+ICAgCQkJdGktPmVycm9yID0gIlByaW1hcnkgZGlzayBpcyBub3Qg
+YSByZWd1bGFyIGRldmljZSI7Cj4+ICAgCQkJcmV0dXJuIC1FSU5WQUw7Cj4+ICAgCQl9Cj4+IC0J
+CXpvbmVkX2RldiA9ICZkbXotPmRldlsxXTsKPj4gLQkJaWYgKHpvbmVkX2Rldi0+ZmxhZ3MgJiBE
+TVpfQkRFVl9SRUdVTEFSKSB7Cj4+IC0JCQl0aS0+ZXJyb3IgPSAiU2Vjb25kYXJ5IGRpc2sgaXMg
+bm90IGEgem9uZWQgZGV2aWNlIjsKPj4gLQkJCXJldHVybiAtRUlOVkFMOwo+PiArCQlmb3IgKGkg
+PSAxOyBpIDwgZG16LT5ucl9kZGV2czsgaSsrKSB7Cj4+ICsJCQl6b25lZF9kZXYgPSAmZG16LT5k
+ZXZbaV07Cj4+ICsJCQlpZiAoem9uZWRfZGV2LT5mbGFncyAmIERNWl9CREVWX1JFR1VMQVIpIHsK
+Pj4gKwkJCQl0aS0+ZXJyb3IgPSAiU2Vjb25kYXJ5IGRpc2sgaXMgbm90IGEgem9uZWQgZGV2aWNl
+IjsKPj4gKwkJCQlyZXR1cm4gLUVJTlZBTDsKPj4gKwkJCX0KPj4gKwkJCXEgPSBiZGV2X2dldF9x
+dWV1ZSh6b25lZF9kZXYtPmJkZXYpOwo+PiArCQkJaWYgKHpvbmVfbnJfc2VjdG9ycyAmJgo+PiAr
+CQkJICAgIHpvbmVfbnJfc2VjdG9ycyAhPSBibGtfcXVldWVfem9uZV9zZWN0b3JzKHEpKSB7Cj4+
+ICsJCQkJdGktPmVycm9yID0gIlpvbmUgbnIgc2VjdG9ycyBtaXNtYXRjaCI7Cj4+ICsJCQkJcmV0
+dXJuIC1FSU5WQUw7Cj4+ICsJCQl9Cj4+ICsJCQl6b25lX25yX3NlY3RvcnMgPSBibGtfcXVldWVf
+em9uZV9zZWN0b3JzKHEpOwo+PiArCQkJem9uZWRfZGV2LT56b25lX25yX3NlY3RvcnMgPSB6b25l
+X25yX3NlY3RvcnM7Cj4+ICsJCQl6b25lZF9kZXYtPm5yX3pvbmVzID0KPj4gKwkJCQlibGtkZXZf
+bnJfem9uZXMoem9uZWRfZGV2LT5iZGV2LT5iZF9kaXNrKTsKPj4gICAJCX0KPj4gICAJfSBlbHNl
+IHsKPj4gICAJCXJlZ19kZXYgPSBOVUxMOwo+PiBAQCAtODAwLDE3ICs4MTIsMjQgQEAgc3RhdGlj
+IGludCBkbXpfZml4dXBfZGV2aWNlcyhzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSkKPj4gICAJCQl0aS0+
+ZXJyb3IgPSAiRGlzayBpcyBub3QgYSB6b25lZCBkZXZpY2UiOwo+PiAgIAkJCXJldHVybiAtRUlO
+VkFMOwo+PiAgIAkJfQo+PiArCQlxID0gYmRldl9nZXRfcXVldWUoem9uZWRfZGV2LT5iZGV2KTsK
+Pj4gKwkJem9uZWRfZGV2LT56b25lX25yX3NlY3RvcnMgPSBibGtfcXVldWVfem9uZV9zZWN0b3Jz
+KHEpOwo+PiArCQl6b25lZF9kZXYtPm5yX3pvbmVzID0gYmxrZGV2X25yX3pvbmVzKHpvbmVkX2Rl
+di0+YmRldi0+YmRfZGlzayk7Cj4+ICAgCX0KPj4gLQlxID0gYmRldl9nZXRfcXVldWUoem9uZWRf
+ZGV2LT5iZGV2KTsKPj4gLQl6b25lZF9kZXYtPnpvbmVfbnJfc2VjdG9ycyA9IGJsa19xdWV1ZV96
+b25lX3NlY3RvcnMocSk7Cj4+IC0Jem9uZWRfZGV2LT5ucl96b25lcyA9IGJsa2Rldl9ucl96b25l
+cyh6b25lZF9kZXYtPmJkZXYtPmJkX2Rpc2spOwo+PiAgIAo+PiAgIAlpZiAocmVnX2Rldikgewo+
+PiAtCQlyZWdfZGV2LT56b25lX25yX3NlY3RvcnMgPSB6b25lZF9kZXYtPnpvbmVfbnJfc2VjdG9y
+czsKPj4gKwkJc2VjdG9yX3Qgem9uZV9vZmZzZXQ7Cj4+ICsKPj4gKwkJcmVnX2Rldi0+em9uZV9u
+cl9zZWN0b3JzID0gem9uZV9ucl9zZWN0b3JzOwo+PiAgIAkJcmVnX2Rldi0+bnJfem9uZXMgPQo+
+PiAgIAkJCURJVl9ST1VORF9VUF9TRUNUT1JfVChyZWdfZGV2LT5jYXBhY2l0eSwKPj4gICAJCQkJ
+CSAgICAgIHJlZ19kZXYtPnpvbmVfbnJfc2VjdG9ycyk7Cj4+IC0JCXpvbmVkX2Rldi0+em9uZV9v
+ZmZzZXQgPSByZWdfZGV2LT5ucl96b25lczsKPj4gKwkJcmVnX2Rldi0+em9uZV9vZmZzZXQgPSAw
+Owo+PiArCQl6b25lX29mZnNldCA9IHJlZ19kZXYtPm5yX3pvbmVzOwo+PiArCQlmb3IgKGkgPSAx
+OyBpIDwgZG16LT5ucl9kZGV2czsgaSsrKSB7Cj4+ICsJCQlkbXotPmRldltpXS56b25lX29mZnNl
+dCA9IHpvbmVfb2Zmc2V0Owo+PiArCQkJem9uZV9vZmZzZXQgKz0gZG16LT5kZXZbaV0ubnJfem9u
+ZXM7Cj4+ICsJCX0KPj4gICAJfQo+PiAgIAlyZXR1cm4gMDsKPj4gICB9Cj4+IEBAIC04MjQsNyAr
+ODQzLDcgQEAgc3RhdGljIGludCBkbXpfY3RyKHN0cnVjdCBkbV90YXJnZXQgKnRpLCB1bnNpZ25l
+ZCBpbnQgYXJnYywgY2hhciAqKmFyZ3YpCj4+ICAgCWludCByZXQsIGk7Cj4+ICAgCj4+ICAgCS8q
+IENoZWNrIGFyZ3VtZW50cyAqLwo+PiAtCWlmIChhcmdjIDwgMSB8fCBhcmdjID4gMikgewo+PiAr
+CWlmIChhcmdjIDwgMSkgewo+PiAgIAkJdGktPmVycm9yID0gIkludmFsaWQgYXJndW1lbnQgY291
+bnQiOwo+PiAgIAkJcmV0dXJuIC1FSU5WQUw7Cj4+ICAgCX0KPj4gQEAgLTgzNSwzMiArODU0LDMx
+IEBAIHN0YXRpYyBpbnQgZG16X2N0cihzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSwgdW5zaWduZWQgaW50
+IGFyZ2MsIGNoYXIgKiphcmd2KQo+PiAgIAkJdGktPmVycm9yID0gIlVuYWJsZSB0byBhbGxvY2F0
+ZSB0aGUgem9uZWQgdGFyZ2V0IGRlc2NyaXB0b3IiOwo+PiAgIAkJcmV0dXJuIC1FTk9NRU07Cj4+
+ICAgCX0KPj4gLQlkbXotPmRldiA9IGtjYWxsb2MoMiwgc2l6ZW9mKHN0cnVjdCBkbXpfZGV2KSwg
+R0ZQX0tFUk5FTCk7Cj4+ICsJZG16LT5kZXYgPSBrY2FsbG9jKGFyZ2MsIHNpemVvZihzdHJ1Y3Qg
+ZG16X2RldiksIEdGUF9LRVJORUwpOwo+PiAgIAlpZiAoIWRtei0+ZGV2KSB7Cj4+ICAgCQl0aS0+
+ZXJyb3IgPSAiVW5hYmxlIHRvIGFsbG9jYXRlIHRoZSB6b25lZCBkZXZpY2UgZGVzY3JpcHRvcnMi
+Owo+PiAgIAkJa2ZyZWUoZG16KTsKPj4gICAJCXJldHVybiAtRU5PTUVNOwo+PiAgIAl9Cj4+ICsJ
+ZG16LT5kZGV2ID0ga2NhbGxvYyhhcmdjLCBzaXplb2Yoc3RydWN0IGRtX2RldiAqKSwgR0ZQX0tF
+Uk5FTCk7Cj4+ICsJaWYgKCFkbXotPmRkZXYpIHsKPj4gKwkJdGktPmVycm9yID0gIlVuYWJsZSB0
+byBhbGxvY2F0ZSB0aGUgZG0gZGV2aWNlIGRlc2NyaXB0b3JzIjsKPj4gKwkJcmV0ID0gLUVOT01F
+TTsKPj4gKwkJZ290byBlcnI7Cj4+ICsJfQo+PiAgIAlkbXotPm5yX2RkZXZzID0gYXJnYzsKPj4g
+Kwo+PiAgIAl0aS0+cHJpdmF0ZSA9IGRtejsKPj4gICAKPj4gICAJLyogR2V0IHRoZSB0YXJnZXQg
+em9uZWQgYmxvY2sgZGV2aWNlICovCj4+IC0JcmV0ID0gZG16X2dldF96b25lZF9kZXZpY2UodGks
+IGFyZ3ZbMF0sIDAsIGFyZ2MpOwo+PiAtCWlmIChyZXQpCj4+IC0JCWdvdG8gZXJyOwo+PiAtCj4+
+IC0JaWYgKGFyZ2MgPT0gMikgewo+PiAtCQlyZXQgPSBkbXpfZ2V0X3pvbmVkX2RldmljZSh0aSwg
+YXJndlsxXSwgMSwgYXJnYyk7Cj4+IC0JCWlmIChyZXQpIHsKPj4gLQkJCWRtel9wdXRfem9uZWRf
+ZGV2aWNlKHRpKTsKPj4gLQkJCWdvdG8gZXJyOwo+PiAtCQl9Cj4+ICsJZm9yIChpID0gMDsgaSA8
+IGFyZ2M7IGkrKykgewo+PiArCQlyZXQgPSBkbXpfZ2V0X3pvbmVkX2RldmljZSh0aSwgYXJndltp
+XSwgaSwgYXJnYyk7Cj4+ICsJCWlmIChyZXQpCj4+ICsJCQlnb3RvIGVycl9kZXY7Cj4+ICAgCX0K
+Pj4gICAJcmV0ID0gZG16X2ZpeHVwX2RldmljZXModGkpOwo+PiAtCWlmIChyZXQpIHsKPj4gLQkJ
+ZG16X3B1dF96b25lZF9kZXZpY2UodGkpOwo+PiAtCQlnb3RvIGVycjsKPj4gLQl9Cj4+ICsJaWYg
+KHJldCkKPj4gKwkJZ290byBlcnJfZGV2Owo+PiAgIAo+PiAgIAkvKiBJbml0aWFsaXplIG1ldGFk
+YXRhICovCj4+ICAgCXJldCA9IGRtel9jdHJfbWV0YWRhdGEoZG16LT5kZXYsIGFyZ2MsICZkbXot
+Pm1ldGFkYXRhLAo+PiBAQCAtMTA1NiwxMyArMTA3NCwxMyBAQCBzdGF0aWMgaW50IGRtel9pdGVy
+YXRlX2RldmljZXMoc3RydWN0IGRtX3RhcmdldCAqdGksCj4+ICAgCXN0cnVjdCBkbXpfdGFyZ2V0
+ICpkbXogPSB0aS0+cHJpdmF0ZTsKPj4gICAJdW5zaWduZWQgaW50IHpvbmVfbnJfc2VjdG9ycyA9
+IGRtel96b25lX25yX3NlY3RvcnMoZG16LT5tZXRhZGF0YSk7Cj4+ICAgCXNlY3Rvcl90IGNhcGFj
+aXR5Owo+PiAtCWludCByOwo+PiArCWludCBpLCByOwo+PiAgIAo+PiAtCWNhcGFjaXR5ID0gZG16
+LT5kZXZbMF0uY2FwYWNpdHkgJiB+KHpvbmVfbnJfc2VjdG9ycyAtIDEpOwo+PiAtCXIgPSBmbih0
+aSwgZG16LT5kZGV2WzBdLCAwLCBjYXBhY2l0eSwgZGF0YSk7Cj4+IC0JaWYgKCFyICYmIGRtei0+
+ZGRldlsxXSkgewo+PiAtCQljYXBhY2l0eSA9IGRtei0+ZGV2WzFdLmNhcGFjaXR5ICYgfih6b25l
+X25yX3NlY3RvcnMgLSAxKTsKPj4gLQkJciA9IGZuKHRpLCBkbXotPmRkZXZbMV0sIDAsIGNhcGFj
+aXR5LCBkYXRhKTsKPj4gKwlmb3IgKGkgPSAwOyBpIDwgZG16LT5ucl9kZGV2czsgaSsrKSB7Cj4+
+ICsJCWNhcGFjaXR5ID0gZG16LT5kZXZbaV0uY2FwYWNpdHkgJiB+KHpvbmVfbnJfc2VjdG9ycyAt
+IDEpOwo+PiArCQlyID0gZm4odGksIGRtei0+ZGRldltpXSwgMCwgY2FwYWNpdHksIGRhdGEpOwo+
+PiArCQlpZiAocikKPj4gKwkJCWJyZWFrOwo+PiAgIAl9Cj4+ICAgCXJldHVybiByOwo+PiAgIH0K
+Pj4gQEAgLTEwODMsOSArMTEwMSw3IEBAIHN0YXRpYyB2b2lkIGRtel9zdGF0dXMoc3RydWN0IGRt
+X3RhcmdldCAqdGksIHN0YXR1c190eXBlX3QgdHlwZSwKPj4gICAJCSAgICAgICBkbXpfbnJfem9u
+ZXMoZG16LT5tZXRhZGF0YSksCj4+ICAgCQkgICAgICAgZG16X25yX3VubWFwX2NhY2hlX3pvbmVz
+KGRtei0+bWV0YWRhdGEpLAo+PiAgIAkJICAgICAgIGRtel9ucl9jYWNoZV96b25lcyhkbXotPm1l
+dGFkYXRhKSk7Cj4+IC0JCWZvciAoaSA9IDA7IGkgPCBETVpfTUFYX0RFVlM7IGkrKykgewo+PiAt
+CQkJaWYgKCFkbXotPmRkZXZbaV0pCj4+IC0JCQkJY29udGludWU7Cj4+ICsJCWZvciAoaSA9IDA7
+IGkgPCBkbXotPm5yX2RkZXZzOyBpKyspIHsKPj4gICAJCQkvKgo+PiAgIAkJCSAqIEZvciBhIG11
+bHRpLWRldmljZSBzZXR1cCB0aGUgZmlyc3QgZGV2aWNlCj4+ICAgCQkJICogY29udGFpbnMgb25s
+eSBjYWNoZSB6b25lcy4KPj4gQEAgLTExMDQsOCArMTEyMCw4IEBAIHN0YXRpYyB2b2lkIGRtel9z
+dGF0dXMoc3RydWN0IGRtX3RhcmdldCAqdGksIHN0YXR1c190eXBlX3QgdHlwZSwKPj4gICAJCWRl
+diA9ICZkbXotPmRldlswXTsKPj4gICAJCWZvcm1hdF9kZXZfdChidWYsIGRldi0+YmRldi0+YmRf
+ZGV2KTsKPj4gICAJCURNRU1JVCgiJXMiLCBidWYpOwo+PiAtCQlpZiAoZG16LT5kZXZbMV0uYmRl
+dikgewo+PiAtCQkJZGV2ID0gJmRtei0+ZGV2WzFdOwo+PiArCQlmb3IgKGkgPSAxOyBpIDwgZG16
+LT5ucl9kZGV2czsgaSsrKSB7Cj4+ICsJCQlkZXYgPSAmZG16LT5kZXZbaV07Cj4+ICAgCQkJZm9y
+bWF0X2Rldl90KGJ1ZiwgZGV2LT5iZGV2LT5iZF9kZXYpOwo+PiAgIAkJCURNRU1JVCgiICVzIiwg
+YnVmKTsKPj4gICAJCX0KPj4gQEAgLTExMzMsNyArMTE0OSw3IEBAIHN0YXRpYyBpbnQgZG16X21l
+c3NhZ2Uoc3RydWN0IGRtX3RhcmdldCAqdGksIHVuc2lnbmVkIGludCBhcmdjLCBjaGFyICoqYXJn
+diwKPj4gICAKPj4gICBzdGF0aWMgc3RydWN0IHRhcmdldF90eXBlIGRtel90eXBlID0gewo+PiAg
+IAkubmFtZQkJID0gInpvbmVkIiwKPj4gLQkudmVyc2lvbgkgPSB7MiwgMCwgMH0sCj4+ICsJLnZl
+cnNpb24JID0gezMsIDAsIDB9LAo+PiAgIAkuZmVhdHVyZXMJID0gRE1fVEFSR0VUX1NJTkdMRVRP
+TiB8IERNX1RBUkdFVF9aT05FRF9ITSwKPj4gICAJLm1vZHVsZQkJID0gVEhJU19NT0RVTEUsCj4+
+ICAgCS5jdHIJCSA9IGRtel9jdHIsCj4gCj4gTG9va3MgYWxsIGdvb2QgdG8gbWUsIGJ1dCB0aGlu
+a2luZyBtb3JlIGFib3V0IGl0LCBkb24ndCB3ZSBuZWVkIHRvIGFkZAo+IGEgZGV2aWNlIGluZGV4
+IGluIHRoZSBzdXBlciBibG9ja3MgPyBUaGUgcmVhc29uIGlzIHRoYXQgaWYgdGhlIGRyaXZlCj4g
+Y29uZmlndXJhdGlvbiBjaGFuZ2VzIGJldHdlZW4gc3RvcHQvc3RhcnQgKGRyaXZlcyByZW1vdmVk
+LCBhZGRlZCBvcgo+IGNoYW5nZWQgc2xvdHMpLCB0aGUgZHJpdmUgbmFtZXMgd2lsbCBjaGFuZ2Ug
+YW5kIHdoaWxlIHRoZSB1c2Vyc3BhY2UKPiB3aWxsIHN0aWxsIGJlIGFibGUgdG8gZmluZCB0aGUg
+Z3JvdXAgb2YgZHJpdmVzIGNvbnN0aXR1dGluZyB0aGUgdGFyZ2V0Cj4gKHVzaW5nIFVVSUQ5LCB0
+aGVyZSBpcyBubyBvYnZpb3VzIHdheSB0byBmaW5kIG91dCB3aGF0IHRoZSBvcmlnaW5hbAo+IGRy
+aXZlIG9yZGVyIHdhcy4gU2luY2UgdGhlIGtlcm5lbCBzaWRlIHJlbGllcyBvbiB0aGUgZHJpdmUg
+YmVpbmcgcGFzc2VkCj4gdG8gdGhlIGN0ciBmdW5jdGlvbiBpbiB0aGUgb3JkZXIgb2YgdGhlIG1h
+cHBpbmcsIHdlIG5lZWQgdG8gcHJlc2VydmUKPiB0aGF0LiBPciBjaGFuZ2UgYWxzbyB0aGUga2Vy
+bmVsIHNpZGUgdG8gdXNlIHRoZSBpbmRleCBpbiB0aGUgc3VwZXIKPiBibG9jayB0byBwdXQgZWFj
+aCBkcml2ZSBpbiBpdHMgY29ycmVjdCBkbXotPmRldltdIHNsb3QuCj4gCkFscmVhZHkgdGFrZW4g
+Y2FyZSBvZjsgaGVyZSdzIHdoZXJlIHRoZSB0ZXJ0aWFyeSBzdXBlcmJsb2NrcyBjb21lIGluLgpF
+YWNoIHN1cGVyYmxvY2sgY2FycmllcyBpdHMgb3duIHBvc2l0aW9uIChpbiB0aGUgJ3NiX2Jsb2Nr
+JyBmaWVsZCkuClRoaXMgaXMgdGhlIF9hYnNvbHV0ZV8gcG9zaXRpb24gd2l0aGluIHRoZSBlbnRp
+cmUgc2V0dXAsIG5vdCB0aGUKcmVsYXRpdmUgcGVyLWRldmljZSBibG9jayBudW1iZXIuCkFuZCBp
+dCBhbHNvIGhhcyB0aGUgYWJzb2x1dGUgbnVtYmVyIG9mIGJsb2NrcyBpbiB0aGUgJ25yX2NodW5r
+cycgZmllbGQuCgpIZW5jZSB3ZSBrbm93IGV4YWN0bHkgd2hlcmUgdGhpcyBzdXBlcmJsb2NrIChh
+bmQsIGJ5IGltcGxpY2F0aW9uLCB0aGUgCnpvbmVzIGZvbGxvd2luZyB0aGlzIHN1cGVyYmxvY2sp
+IHNob3VsZCBlbmQgdXAuIEFuZCB3ZSBrbm93IGhvdyBsYXJnZQp0aGUgZW50aXJlIHNldHVwIHdp
+bGwgYmUuIFNvIGNhbiBpbnNlcnQgdGhlIHN1cGVyYmxvY2sgYXQgdGhlIHJpZ2h0CnBvc2l0aW9u
+IGFuZCB0aGVuIGNhbiBjaGVjayBpZiB3ZSBoYXZlIGVub3VnaCB6b25lcyBmb3IgdGhlIGVudGly
+ZQpkZXZpY2UuCgpOb3Qgc3VyZSBpZiB0aGUgZG16YWRtIGRvZXMgaXQsIHRob3VnaDsgYnV0IHNo
+b3VsZCBiZSBlYXN5IGVub3VnaCB0byAKaW1wbGVtZW50LgoKQ2hlZXJzLAoKSGFubmVzCi0tIApE
+ci4gSGFubmVzIFJlaW5lY2tlICAgICAgICAgICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtp
+bmcKaGFyZUBzdXNlLmRlICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICs0OSA5MTEgNzQw
+NTMgNjg4ClNVU0UgU29mdHdhcmUgU29sdXRpb25zIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5
+IE7DvHJuYmVyZwpIUkIgMzY4MDkgKEFHIE7DvHJuYmVyZyksIEdlc2Now6RmdHNmw7xocmVyOiBG
+ZWxpeCBJbWVuZMO2cmZmZXIKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
+aGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
