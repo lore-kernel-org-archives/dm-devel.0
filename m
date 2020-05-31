@@ -1,17 +1,17 @@
 From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH 06/14] dm-zoned: temporary superblock for
-	tertiary devices
-Date: Sun, 31 May 2020 08:58:04 +0000
-Message-ID: <736581c9a278556850b70a078980361212f155ca.camel@wdc.com>
+Subject: Re: [PATCH 10/14] dm-zoned: move random and sequential
+ zones into struct dmz_dev
+Date: Sun, 31 May 2020 09:06:05 +0000
+Message-ID: <9a7060bee62b5b773bc19a552fe27e79dc5de02b.camel@wdc.com>
 References: <20200529173907.40529-1-hare@suse.de>
-	<20200529173907.40529-7-hare@suse.de>
+	<20200529173907.40529-11-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200529173907.40529-7-hare@suse.de>
+In-Reply-To: <20200529173907.40529-11-hare@suse.de>
 Content-Language: en-US
-Content-ID: <5CB640D3D23644448945C395EB7DBB08@namprd04.prod.outlook.com>
+Content-ID: <12A4F4D071EC324DAC26EDFB416E2A37@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,253 +25,476 @@ To: "snitzer@redhat.com" <snitzer@redhat.com>, "hare@suse.de" <hare@suse.de>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 2020-05-29 at 19:38 +0200, Hannes Reinecke wrote:
-> Checking the tertiary superblock just consists of validating UUIDs,
-> crcs, and the generation number; it doesn't have contents which
-> would be required during the actual operation.
-> So we should be allocating a temporary superblock when checking
-> tertiary devices and avoid having to store it together with the
-> 'real' superblocks.
+On Fri, 2020-05-29 at 19:39 +0200, Hannes Reinecke wrote:
+> Random and sequential zones should be part of the respective
+> device structure to make arbitration between devices possible.
 > 
 > Signed-off-by: Hannes Reinecke <hare@suse.de>
 > ---
->  drivers/md/dm-zoned-metadata.c | 109 +++++++++++++++++++++++------------------
->  1 file changed, 61 insertions(+), 48 deletions(-)
+>  drivers/md/dm-zoned-metadata.c | 139 +++++++++++++++++++++++------------------
+>  drivers/md/dm-zoned-reclaim.c  |  15 +++--
+>  drivers/md/dm-zoned-target.c   |  25 ++++++--
+>  drivers/md/dm-zoned.h          |  18 ++++--
+>  4 files changed, 119 insertions(+), 78 deletions(-)
 > 
 > diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-> index 839f9078806d..d9f3ecc76eff 100644
+> index e22db3f19422..044c152eb756 100644
 > --- a/drivers/md/dm-zoned-metadata.c
 > +++ b/drivers/md/dm-zoned-metadata.c
-> @@ -174,7 +174,7 @@ struct dmz_metadata {
->  	/* Zone information array */
->  	struct xarray		zones;
+> @@ -192,21 +192,12 @@ struct dmz_metadata {
+>  	/* Zone allocation management */
+>  	struct mutex		map_lock;
+>  	struct dmz_mblock	**map_mblk;
+> -	unsigned int		nr_rnd;
+> -	atomic_t		unmap_nr_rnd;
+> -	struct list_head	unmap_rnd_list;
+> -	struct list_head	map_rnd_list;
 >  
-> -	struct dmz_sb		sb[3];
-> +	struct dmz_sb		sb[2];
->  	unsigned int		mblk_primary;
->  	unsigned int		sb_version;
->  	u64			sb_gen;
-> @@ -1014,10 +1014,11 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
->  /*
->   * Check super block.
->   */
-> -static int dmz_check_sb(struct dmz_metadata *zmd, unsigned int set)
-> +static int dmz_check_sb(struct dmz_metadata *zmd, struct dmz_sb *dsb,
-> +			bool tertiary)
->  {
-> -	struct dmz_super *sb = zmd->sb[set].sb;
-> -	struct dmz_dev *dev = zmd->sb[set].dev;
-> +	struct dmz_super *sb = dsb->sb;
-> +	struct dmz_dev *dev = dsb->dev;
->  	unsigned int nr_meta_zones, nr_data_zones;
->  	u32 crc, stored_crc;
->  	u64 gen;
-> @@ -1034,7 +1035,7 @@ static int dmz_check_sb(struct dmz_metadata *zmd, unsigned int set)
->  			    DMZ_META_VER, zmd->sb_version);
->  		return -EINVAL;
->  	}
-> -	if ((zmd->sb_version < 1) && (set == 2)) {
-> +	if (zmd->sb_version < 2 && tertiary) {
->  		dmz_dev_err(dev, "Tertiary superblocks are not supported");
->  		return -EINVAL;
->  	}
-> @@ -1078,7 +1079,7 @@ static int dmz_check_sb(struct dmz_metadata *zmd, unsigned int set)
->  			return -ENXIO;
->  		}
+>  	unsigned int		nr_cache;
+>  	atomic_t		unmap_nr_cache;
+>  	struct list_head	unmap_cache_list;
+>  	struct list_head	map_cache_list;
 >  
-> -		if (set == 2) {
-> +		if (tertiary) {
->  			/*
->  			 * Generation number should be 0, but it doesn't
->  			 * really matter if it isn't.
-> @@ -1127,14 +1128,13 @@ static int dmz_check_sb(struct dmz_metadata *zmd, unsigned int set)
->  /*
->   * Read the first or second super block from disk.
->   */
-> -static int dmz_read_sb(struct dmz_metadata *zmd, unsigned int set)
-> +static int dmz_read_sb(struct dmz_metadata *zmd, struct dmz_sb *sb, int set)
->  {
->  	dmz_zmd_debug(zmd, "read superblock set %d dev %s block %llu",
-> -		      set, zmd->sb[set].dev->name,
-> -		      zmd->sb[set].block);
-> +		      set, sb->dev->name, sb->block);
->  
-> -	return dmz_rdwr_block(zmd->sb[set].dev, REQ_OP_READ,
-> -			      zmd->sb[set].block, zmd->sb[set].mblk->page);
-> +	return dmz_rdwr_block(sb->dev, REQ_OP_READ,
-> +			      sb->block, sb->mblk->page);
->  }
->  
->  /*
-> @@ -1162,7 +1162,7 @@ static int dmz_lookup_secondary_sb(struct dmz_metadata *zmd)
->  	zmd->sb[1].zone = dmz_get(zmd, zone_id + 1);
->  	zmd->sb[1].dev = zmd->sb[0].dev;
->  	for (i = 1; i < zmd->nr_rnd_zones; i++) {
-> -		if (dmz_read_sb(zmd, 1) != 0)
-> +		if (dmz_read_sb(zmd, &zmd->sb[1], 1) != 0)
->  			break;
->  		if (le32_to_cpu(zmd->sb[1].sb->magic) == DMZ_MAGIC)
->  			return 0;
-> @@ -1179,9 +1179,9 @@ static int dmz_lookup_secondary_sb(struct dmz_metadata *zmd)
->  }
->  
->  /*
-> - * Read the first or second super block from disk.
-> + * Read a super block from disk.
->   */
-> -static int dmz_get_sb(struct dmz_metadata *zmd, unsigned int set)
-> +static int dmz_get_sb(struct dmz_metadata *zmd, struct dmz_sb *sb, int set)
->  {
->  	struct dmz_mblock *mblk;
->  	int ret;
-> @@ -1191,14 +1191,14 @@ static int dmz_get_sb(struct dmz_metadata *zmd, unsigned int set)
->  	if (!mblk)
->  		return -ENOMEM;
->  
-> -	zmd->sb[set].mblk = mblk;
-> -	zmd->sb[set].sb = mblk->data;
-> +	sb->mblk = mblk;
-> +	sb->sb = mblk->data;
->  
->  	/* Read super block */
-> -	ret = dmz_read_sb(zmd, set);
-> +	ret = dmz_read_sb(zmd, sb, set);
->  	if (ret) {
->  		dmz_free_mblock(zmd, mblk);
-> -		zmd->sb[set].mblk = NULL;
-> +		sb->mblk = NULL;
->  		return ret;
->  	}
->  
-> @@ -1272,13 +1272,13 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
->  	/* Read and check the primary super block */
->  	zmd->sb[0].block = dmz_start_block(zmd, zmd->sb[0].zone);
->  	zmd->sb[0].dev = dmz_zone_to_dev(zmd, zmd->sb[0].zone);
-> -	ret = dmz_get_sb(zmd, 0);
-> +	ret = dmz_get_sb(zmd, &zmd->sb[0], 0);
->  	if (ret) {
->  		dmz_dev_err(zmd->sb[0].dev, "Read primary super block failed");
->  		return ret;
->  	}
->  
-> -	ret = dmz_check_sb(zmd, 0);
-> +	ret = dmz_check_sb(zmd, &zmd->sb[0], false);
->  
->  	/* Read and check secondary super block */
->  	if (ret == 0) {
-> @@ -1291,7 +1291,7 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
->  		}
->  		zmd->sb[1].block = dmz_start_block(zmd, zmd->sb[1].zone);
->  		zmd->sb[1].dev = zmd->sb[0].dev;
-> -		ret = dmz_get_sb(zmd, 1);
-> +		ret = dmz_get_sb(zmd, &zmd->sb[1], 1);
->  	} else
->  		ret = dmz_lookup_secondary_sb(zmd);
->  
-> @@ -1300,7 +1300,7 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
->  		return ret;
->  	}
->  
-> -	ret = dmz_check_sb(zmd, 1);
-> +	ret = dmz_check_sb(zmd, &zmd->sb[1], false);
->  	if (ret == 0)
->  		sb_good[1] = true;
->  
-> @@ -1345,20 +1345,40 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
->  		      "Using super block %u (gen %llu)",
->  		      zmd->mblk_primary, zmd->sb_gen);
->  
-> -	if ((zmd->sb_version > 1) && zmd->sb[2].zone) {
-> -		zmd->sb[2].block = dmz_start_block(zmd, zmd->sb[2].zone);
-> -		zmd->sb[2].dev = dmz_zone_to_dev(zmd, zmd->sb[2].zone);
-> -		ret = dmz_get_sb(zmd, 2);
-> -		if (ret) {
-> -			dmz_dev_err(zmd->sb[2].dev,
-> -				    "Read tertiary super block failed");
-> -			return ret;
-> +	if (zmd->sb_version > 1) {
-> +		int i;
-> +		struct dmz_sb *sb;
-> +
-> +		sb = kzalloc(sizeof(struct dmz_sb), GFP_KERNEL);
-> +		if (!sb)
-> +			return -ENOMEM;
-> +		for (i = 1; i < zmd->nr_devs; i++) {
-> +			sb->block = 0;
-> +			sb->zone = dmz_get(zmd, zmd->dev[i].zone_offset);
-> +			sb->dev = &zmd->dev[i];
-> +			if (!dmz_is_meta(sb->zone)) {
-> +				dmz_dev_err(sb->dev,
-> +					    "Tertiary super block zone %u not marked as metadata zone",
-> +					    sb->zone->id);
-> +				ret = -EINVAL;
-> +				goto out_kfree;
-> +			}
-> +			ret = dmz_get_sb(zmd, sb, i + 1);
-> +			if (ret) {
-> +				dmz_dev_err(sb->dev,
-> +					    "Read tertiary super block failed");
-> +				dmz_free_mblock(zmd, sb->mblk);
-> +				goto out_kfree;
-> +			}
-> +			ret = dmz_check_sb(zmd, sb, true);
-> +			dmz_free_mblock(zmd, sb->mblk);
-> +			if (ret == -EINVAL)
-> +				goto out_kfree;
->  		}
-> -		ret = dmz_check_sb(zmd, 2);
-> -		if (ret == -EINVAL)
-> -			return ret;
-> +	out_kfree:
-> +		kfree(sb);
->  	}
-> -	return 0;
-> +	return ret;
->  }
->  
->  /*
-> @@ -1415,12 +1435,15 @@ static int dmz_init_zone(struct blk_zone *blkz, unsigned int num, void *data)
->  				zmd->sb[0].zone = zone;
->  			}
->  		}
-> -		if (zmd->nr_devs > 1 && !zmd->sb[2].zone) {
-> -			/* Tertiary superblock zone */
-> -			zmd->sb[2].zone = zone;
-> +		if (zmd->nr_devs > 1 && num == 0) {
-> +			/*
-> +			 * Tertiary superblock zones are always at the
-> +			 * start of the zoned devices, so mark them
-> +			 * as metadata zone.
-> +			 */
-> +			set_bit(DMZ_META, &zone->flags);
->  		}
->  	}
+> -	unsigned int		nr_seq;
+> -	atomic_t		unmap_nr_seq;
+> -	struct list_head	unmap_seq_list;
+> -	struct list_head	map_seq_list;
 > -
->  	return 0;
+>  	atomic_t		nr_reserved_seq_zones;
+>  	struct list_head	reserved_seq_zones_list;
+>  
+> @@ -279,14 +270,14 @@ unsigned int dmz_nr_chunks(struct dmz_metadata *zmd)
+>  	return zmd->nr_chunks;
 >  }
 >  
-> @@ -2858,16 +2881,6 @@ int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
->  		}
->  		set_bit(DMZ_META, &zone->flags);
+> -unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd)
+> +unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd, int idx)
+>  {
+> -	return zmd->nr_rnd;
+> +	return zmd->dev[idx].nr_rnd;
+>  }
+>  
+> -unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd)
+> +unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd, int idx)
+>  {
+> -	return atomic_read(&zmd->unmap_nr_rnd);
+> +	return atomic_read(&zmd->dev[idx].unmap_nr_rnd);
+>  }
+>  
+>  unsigned int dmz_nr_cache_zones(struct dmz_metadata *zmd)
+> @@ -299,14 +290,14 @@ unsigned int dmz_nr_unmap_cache_zones(struct dmz_metadata *zmd)
+>  	return atomic_read(&zmd->unmap_nr_cache);
+>  }
+>  
+> -unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd)
+> +unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd, int idx)
+>  {
+> -	return zmd->nr_seq;
+> +	return zmd->dev[idx].nr_seq;
+>  }
+>  
+> -unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd)
+> +unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd, int idx)
+>  {
+> -	return atomic_read(&zmd->unmap_nr_seq);
+> +	return atomic_read(&zmd->dev[idx].unmap_nr_seq);
+>  }
+>  
+>  static struct dm_zone *dmz_get(struct dmz_metadata *zmd, unsigned int zone_id)
+> @@ -1498,6 +1489,14 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
+>  
+>  		dev->metadata = zmd;
+>  		zmd->nr_zones += dev->nr_zones;
+> +
+> +		atomic_set(&dev->unmap_nr_rnd, 0);
+> +		INIT_LIST_HEAD(&dev->unmap_rnd_list);
+> +		INIT_LIST_HEAD(&dev->map_rnd_list);
+> +
+> +		atomic_set(&dev->unmap_nr_seq, 0);
+> +		INIT_LIST_HEAD(&dev->unmap_seq_list);
+> +		INIT_LIST_HEAD(&dev->map_seq_list);
 >  	}
-> -	if (zmd->sb[2].zone) {
-> -		zone = dmz_get(zmd, zmd->sb[2].zone->id);
-> -		if (!zone) {
-> -			dmz_zmd_err(zmd,
-> -				    "Tertiary metadata zone not present");
-> -			ret = -ENXIO;
-> -			goto err;
-> -		}
-> -		set_bit(DMZ_META, &zone->flags);
-> -	}
->  	/* Load mapping table */
->  	ret = dmz_load_mapping(zmd);
->  	if (ret)
+>  
+>  	if (!zmd->nr_zones) {
+> @@ -1718,9 +1717,9 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
+>  		if (dmz_is_cache(dzone))
+>  			list_add_tail(&dzone->link, &zmd->map_cache_list);
+>  		else if (dmz_is_rnd(dzone))
+> -			list_add_tail(&dzone->link, &zmd->map_rnd_list);
+> +			list_add_tail(&dzone->link, &dzone->dev->map_rnd_list);
+>  		else
+> -			list_add_tail(&dzone->link, &zmd->map_seq_list);
+> +			list_add_tail(&dzone->link, &dzone->dev->map_seq_list);
+>  
+>  		/* Check buffer zone */
+>  		bzone_id = le32_to_cpu(dmap[e].bzone_id);
+> @@ -1754,7 +1753,7 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
+>  		if (dmz_is_cache(bzone))
+>  			list_add_tail(&bzone->link, &zmd->map_cache_list);
+>  		else
+> -			list_add_tail(&bzone->link, &zmd->map_rnd_list);
+> +			list_add_tail(&bzone->link, &bzone->dev->map_rnd_list);
+>  next:
+>  		chunk++;
+>  		e++;
+> @@ -1779,9 +1778,9 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
+>  		if (dmz_is_cache(dzone))
+>  			zmd->nr_cache++;
+>  		else if (dmz_is_rnd(dzone))
+> -			zmd->nr_rnd++;
+> +			dzone->dev->nr_rnd++;
+>  		else
+> -			zmd->nr_seq++;
+> +			dzone->dev->nr_seq++;
+>  
+>  		if (dmz_is_data(dzone)) {
+>  			/* Already initialized */
+> @@ -1795,16 +1794,18 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
+>  			list_add_tail(&dzone->link, &zmd->unmap_cache_list);
+>  			atomic_inc(&zmd->unmap_nr_cache);
+>  		} else if (dmz_is_rnd(dzone)) {
+> -			list_add_tail(&dzone->link, &zmd->unmap_rnd_list);
+> -			atomic_inc(&zmd->unmap_nr_rnd);
+> +			list_add_tail(&dzone->link,
+> +				      &dzone->dev->unmap_rnd_list);
+> +			atomic_inc(&dzone->dev->unmap_nr_rnd);
+>  		} else if (atomic_read(&zmd->nr_reserved_seq_zones) < zmd->nr_reserved_seq) {
+>  			list_add_tail(&dzone->link, &zmd->reserved_seq_zones_list);
+>  			set_bit(DMZ_RESERVED, &dzone->flags);
+>  			atomic_inc(&zmd->nr_reserved_seq_zones);
+> -			zmd->nr_seq--;
+> +			dzone->dev->nr_seq--;
+>  		} else {
+> -			list_add_tail(&dzone->link, &zmd->unmap_seq_list);
+> -			atomic_inc(&zmd->unmap_nr_seq);
+> +			list_add_tail(&dzone->link,
+> +				      &dzone->dev->unmap_seq_list);
+> +			atomic_inc(&dzone->dev->unmap_nr_seq);
+>  		}
+>  	}
+>  
+> @@ -1838,13 +1839,13 @@ static void __dmz_lru_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
+>  	list_del_init(&zone->link);
+>  	if (dmz_is_seq(zone)) {
+>  		/* LRU rotate sequential zone */
+> -		list_add_tail(&zone->link, &zmd->map_seq_list);
+> +		list_add_tail(&zone->link, &zone->dev->map_seq_list);
+>  	} else if (dmz_is_cache(zone)) {
+>  		/* LRU rotate cache zone */
+>  		list_add_tail(&zone->link, &zmd->map_cache_list);
+>  	} else {
+>  		/* LRU rotate random zone */
+> -		list_add_tail(&zone->link, &zmd->map_rnd_list);
+> +		list_add_tail(&zone->link, &zone->dev->map_rnd_list);
+>  	}
+>  }
+>  
+> @@ -1926,14 +1927,24 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd,
+>  {
+>  	struct dm_zone *dzone = NULL;
+>  	struct dm_zone *zone;
+> -	struct list_head *zone_list = &zmd->map_rnd_list;
+> +	struct list_head *zone_list;
+>  
+>  	/* If we have cache zones select from the cache zone list */
+>  	if (zmd->nr_cache) {
+>  		zone_list = &zmd->map_cache_list;
+>  		/* Try to relaim random zones, too, when idle */
+> -		if (idle && list_empty(zone_list))
+> -			zone_list = &zmd->map_rnd_list;
+> +		if (idle && list_empty(zone_list)) {
+> +			int i;
+> +
+> +			for (i = 1; i < zmd->nr_devs; i++) {
+> +				zone_list = &zmd->dev[i].map_rnd_list;
+> +				if (!list_empty(zone_list))
+> +					break;
+> +			}
+> +		}
+> +	} else {
+> +		/* Otherwise the random zones are on the first disk */
+> +		zone_list = &zmd->dev[0].map_rnd_list;
+>  	}
+>  
+>  	list_for_each_entry(zone, zone_list, link) {
+> @@ -1954,12 +1965,17 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd,
+>  static struct dm_zone *dmz_get_seq_zone_for_reclaim(struct dmz_metadata *zmd)
+>  {
+>  	struct dm_zone *zone;
+> +	int i;
+>  
+> -	list_for_each_entry(zone, &zmd->map_seq_list, link) {
+> -		if (!zone->bzone)
+> -			continue;
+> -		if (dmz_lock_zone_reclaim(zone))
+> -			return zone;
+> +	for (i = 0; i < zmd->nr_devs; i++) {
+> +		struct dmz_dev *dev = &zmd->dev[i];
+> +
+> +		list_for_each_entry(zone, &dev->map_seq_list, link) {
+> +			if (!zone->bzone)
+> +				continue;
+> +			if (dmz_lock_zone_reclaim(zone))
+> +				return zone;
+> +		}
+>  	}
+>  
+>  	return NULL;
+> @@ -2145,7 +2161,7 @@ struct dm_zone *dmz_get_chunk_buffer(struct dmz_metadata *zmd,
+>  	if (dmz_is_cache(bzone))
+>  		list_add_tail(&bzone->link, &zmd->map_cache_list);
+>  	else
+> -		list_add_tail(&bzone->link, &zmd->map_rnd_list);
+> +		list_add_tail(&bzone->link, &bzone->dev->map_rnd_list);
+>  out:
+>  	dmz_unlock_map(zmd);
+>  
+> @@ -2160,21 +2176,27 @@ struct dm_zone *dmz_alloc_zone(struct dmz_metadata *zmd, unsigned long flags)
+>  {
+>  	struct list_head *list;
+>  	struct dm_zone *zone;
+> +	unsigned int dev_idx = 0;
+>  
+> +again:
+>  	if (flags & DMZ_ALLOC_CACHE)
+>  		list = &zmd->unmap_cache_list;
+>  	else if (flags & DMZ_ALLOC_RND)
+> -		list = &zmd->unmap_rnd_list;
+> +		list = &zmd->dev[dev_idx].unmap_rnd_list;
+>  	else
+> -		list = &zmd->unmap_seq_list;
+> +		list = &zmd->dev[dev_idx].unmap_seq_list;
+>  
+> -again:
+>  	if (list_empty(list)) {
+>  		/*
+>  		 * No free zone: return NULL if this is for not reclaim.
+>  		 */
+>  		if (!(flags & DMZ_ALLOC_RECLAIM))
+>  			return NULL;
+> +		if (dev_idx < zmd->nr_devs) {
+> +			dev_idx++;
+> +			goto again;
+> +		}
+> +
+>  		/*
+>  		 * Fallback to the reserved sequential zones
+>  		 */
+> @@ -2193,9 +2215,9 @@ struct dm_zone *dmz_alloc_zone(struct dmz_metadata *zmd, unsigned long flags)
+>  	if (dmz_is_cache(zone))
+>  		atomic_dec(&zmd->unmap_nr_cache);
+>  	else if (dmz_is_rnd(zone))
+> -		atomic_dec(&zmd->unmap_nr_rnd);
+> +		atomic_dec(&zone->dev->unmap_nr_rnd);
+>  	else
+> -		atomic_dec(&zmd->unmap_nr_seq);
+> +		atomic_dec(&zone->dev->unmap_nr_seq);
+>  
+>  	if (dmz_is_offline(zone)) {
+>  		dmz_zmd_warn(zmd, "Zone %u is offline", zone->id);
+> @@ -2225,14 +2247,14 @@ void dmz_free_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
+>  		list_add_tail(&zone->link, &zmd->unmap_cache_list);
+>  		atomic_inc(&zmd->unmap_nr_cache);
+>  	} else if (dmz_is_rnd(zone)) {
+> -		list_add_tail(&zone->link, &zmd->unmap_rnd_list);
+> -		atomic_inc(&zmd->unmap_nr_rnd);
+> +		list_add_tail(&zone->link, &zone->dev->unmap_rnd_list);
+> +		atomic_inc(&zone->dev->unmap_nr_rnd);
+>  	} else if (dmz_is_reserved(zone)) {
+>  		list_add_tail(&zone->link, &zmd->reserved_seq_zones_list);
+>  		atomic_inc(&zmd->nr_reserved_seq_zones);
+>  	} else {
+> -		list_add_tail(&zone->link, &zmd->unmap_seq_list);
+> -		atomic_inc(&zmd->unmap_nr_seq);
+> +		list_add_tail(&zone->link, &zone->dev->unmap_seq_list);
+> +		atomic_inc(&zone->dev->unmap_nr_seq);
+>  	}
+>  
+>  	wake_up_all(&zmd->free_wq);
+> @@ -2252,9 +2274,9 @@ void dmz_map_zone(struct dmz_metadata *zmd, struct dm_zone *dzone,
+>  	if (dmz_is_cache(dzone))
+>  		list_add_tail(&dzone->link, &zmd->map_cache_list);
+>  	else if (dmz_is_rnd(dzone))
+> -		list_add_tail(&dzone->link, &zmd->map_rnd_list);
+> +		list_add_tail(&dzone->link, &dzone->dev->map_rnd_list);
+>  	else
+> -		list_add_tail(&dzone->link, &zmd->map_seq_list);
+> +		list_add_tail(&dzone->link, &dzone->dev->map_seq_list);
+>  }
+>  
+>  /*
+> @@ -2822,18 +2844,11 @@ int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
+>  	INIT_LIST_HEAD(&zmd->mblk_dirty_list);
+>  
+>  	mutex_init(&zmd->map_lock);
+> -	atomic_set(&zmd->unmap_nr_rnd, 0);
+> -	INIT_LIST_HEAD(&zmd->unmap_rnd_list);
+> -	INIT_LIST_HEAD(&zmd->map_rnd_list);
+>  
+>  	atomic_set(&zmd->unmap_nr_cache, 0);
+>  	INIT_LIST_HEAD(&zmd->unmap_cache_list);
+>  	INIT_LIST_HEAD(&zmd->map_cache_list);
+>  
+> -	atomic_set(&zmd->unmap_nr_seq, 0);
+> -	INIT_LIST_HEAD(&zmd->unmap_seq_list);
+> -	INIT_LIST_HEAD(&zmd->map_seq_list);
+> -
+>  	atomic_set(&zmd->nr_reserved_seq_zones, 0);
+>  	INIT_LIST_HEAD(&zmd->reserved_seq_zones_list);
+>  
+> @@ -2902,10 +2917,14 @@ int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
+>  		      zmd->nr_data_zones, zmd->nr_chunks);
+>  	dmz_zmd_debug(zmd, "    %u cache zones (%u unmapped)",
+>  		      zmd->nr_cache, atomic_read(&zmd->unmap_nr_cache));
+> -	dmz_zmd_debug(zmd, "    %u random zones (%u unmapped)",
+> -		      zmd->nr_rnd, atomic_read(&zmd->unmap_nr_rnd));
+> -	dmz_zmd_debug(zmd, "    %u sequential zones (%u unmapped)",
+> -		      zmd->nr_seq, atomic_read(&zmd->unmap_nr_seq));
+> +	for (i = 0; i < zmd->nr_devs; i++) {
+> +		dmz_zmd_debug(zmd, "    %u random zones (%u unmapped)",
+> +			      dmz_nr_rnd_zones(zmd, i),
+> +			      dmz_nr_unmap_rnd_zones(zmd, i));
+> +		dmz_zmd_debug(zmd, "    %u sequential zones (%u unmapped)",
+> +			      dmz_nr_seq_zones(zmd, i),
+> +			      dmz_nr_unmap_seq_zones(zmd, i));
+> +	}
+>  	dmz_zmd_debug(zmd, "  %u reserved sequential data zones",
+>  		      zmd->nr_reserved_seq);
+>  	dmz_zmd_debug(zmd, "Format:");
+> diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+> index 09843645248a..18edf1b9bf52 100644
+> --- a/drivers/md/dm-zoned-reclaim.c
+> +++ b/drivers/md/dm-zoned-reclaim.c
+> @@ -447,15 +447,14 @@ static unsigned int dmz_reclaim_percentage(struct dmz_reclaim *zrc)
+>  {
+>  	struct dmz_metadata *zmd = zrc->metadata;
+>  	unsigned int nr_cache = dmz_nr_cache_zones(zmd);
+> -	unsigned int nr_rnd = dmz_nr_rnd_zones(zmd);
+>  	unsigned int nr_unmap, nr_zones;
+>  
+>  	if (nr_cache) {
+>  		nr_zones = nr_cache;
+>  		nr_unmap = dmz_nr_unmap_cache_zones(zmd);
+>  	} else {
+> -		nr_zones = nr_rnd;
+> -		nr_unmap = dmz_nr_unmap_rnd_zones(zmd);
+> +		nr_zones = dmz_nr_rnd_zones(zmd, zrc->dev_idx);
+> +		nr_unmap = dmz_nr_unmap_rnd_zones(zmd, zrc->dev_idx);
+>  	}
+>  	return nr_unmap * 100 / nr_zones;
+>  }
+> @@ -467,7 +466,7 @@ static bool dmz_should_reclaim(struct dmz_reclaim *zrc, unsigned int p_unmap)
+>  {
+>  	unsigned int nr_reclaim;
+>  
+> -	nr_reclaim = dmz_nr_rnd_zones(zrc->metadata);
+> +	nr_reclaim = dmz_nr_rnd_zones(zrc->metadata, zrc->dev_idx);
+>  
+>  	if (dmz_nr_cache_zones(zrc->metadata)) {
+>  		/*
+> @@ -528,8 +527,8 @@ static void dmz_reclaim_work(struct work_struct *work)
+>  		zrc->kc_throttle.throttle = min(75U, 100U - p_unmap / 2);
+>  	}
+>  
+> -	nr_unmap_rnd = dmz_nr_unmap_rnd_zones(zmd);
+> -	nr_rnd = dmz_nr_rnd_zones(zmd);
+> +	nr_unmap_rnd = dmz_nr_unmap_rnd_zones(zmd, zrc->dev_idx);
+> +	nr_rnd = dmz_nr_rnd_zones(zmd, zrc->dev_idx);
+>  
+>  	DMDEBUG("(%s/%u): Reclaim (%u): %s, %u%% free zones (%u/%u cache %u/%u random)",
+>  		dmz_metadata_label(zmd), zrc->dev_idx,
+> @@ -537,8 +536,8 @@ static void dmz_reclaim_work(struct work_struct *work)
+>  		(dmz_target_idle(zrc) ? "Idle" : "Busy"),
+>  		p_unmap, dmz_nr_unmap_cache_zones(zmd),
+>  		dmz_nr_cache_zones(zmd),
+> -		dmz_nr_unmap_rnd_zones(zmd),
+> -		dmz_nr_rnd_zones(zmd));
+> +		dmz_nr_unmap_rnd_zones(zmd, zrc->dev_idx),
+> +		dmz_nr_rnd_zones(zmd, zrc->dev_idx));
+>  
+>  	ret = dmz_do_reclaim(zrc);
+>  	if (ret && ret != -EINTR) {
+> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+> index 97d63d8e6c19..aa3d26d16441 100644
+> --- a/drivers/md/dm-zoned-target.c
+> +++ b/drivers/md/dm-zoned-target.c
+> @@ -1075,17 +1075,30 @@ static void dmz_status(struct dm_target *ti, status_type_t type,
+>  	ssize_t sz = 0;
+>  	char buf[BDEVNAME_SIZE];
+>  	struct dmz_dev *dev;
+> +	int i;
+>  
+>  	switch (type) {
+>  	case STATUSTYPE_INFO:
+> -		DMEMIT("%u zones %u/%u cache %u/%u random %u/%u sequential",
+> +		DMEMIT("%u zones %u/%u cache",
+>  		       dmz_nr_zones(dmz->metadata),
+>  		       dmz_nr_unmap_cache_zones(dmz->metadata),
+> -		       dmz_nr_cache_zones(dmz->metadata),
+> -		       dmz_nr_unmap_rnd_zones(dmz->metadata),
+> -		       dmz_nr_rnd_zones(dmz->metadata),
+> -		       dmz_nr_unmap_seq_zones(dmz->metadata),
+> -		       dmz_nr_seq_zones(dmz->metadata));
+> +		       dmz_nr_cache_zones(dmz->metadata));
+> +		for (i = 0; i < DMZ_MAX_DEVS; i++) {
+> +			if (!dmz->ddev[i])
+> +				continue;
+> +			/*
+> +			 * For a multi-device setup the first device
+> +			 * contains only cache zones.
+> +			 */
+> +			if ((i == 0) &&
+> +			    (dmz_nr_cache_zones(dmz->metadata) > 0))
+> +				continue;
+> +			DMEMIT(" %u/%u random %u/%u sequential",
+> +			       dmz_nr_unmap_rnd_zones(dmz->metadata, i),
+> +			       dmz_nr_rnd_zones(dmz->metadata, i),
+> +			       dmz_nr_unmap_seq_zones(dmz->metadata, i),
+> +			       dmz_nr_seq_zones(dmz->metadata, i));
+> +		}
+>  		break;
+>  	case STATUSTYPE_TABLE:
+>  		dev = &dmz->dev[0];
+> diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
+> index 0cc3459f78ce..f2a760f62db5 100644
+> --- a/drivers/md/dm-zoned.h
+> +++ b/drivers/md/dm-zoned.h
+> @@ -67,6 +67,16 @@ struct dmz_dev {
+>  	unsigned int		flags;
+>  
+>  	sector_t		zone_nr_sectors;
+> +
+> +	unsigned int		nr_rnd;
+> +	atomic_t		unmap_nr_rnd;
+> +	struct list_head	unmap_rnd_list;
+> +	struct list_head	map_rnd_list;
+> +
+> +	unsigned int		nr_seq;
+> +	atomic_t		unmap_nr_seq;
+> +	struct list_head	unmap_seq_list;
+> +	struct list_head	map_seq_list;
+>  };
+>  
+>  #define dmz_bio_chunk(zmd, bio)	((bio)->bi_iter.bi_sector >> \
+> @@ -213,10 +223,10 @@ void dmz_unmap_zone(struct dmz_metadata *zmd, struct dm_zone *zone);
+>  unsigned int dmz_nr_zones(struct dmz_metadata *zmd);
+>  unsigned int dmz_nr_cache_zones(struct dmz_metadata *zmd);
+>  unsigned int dmz_nr_unmap_cache_zones(struct dmz_metadata *zmd);
+> -unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd);
+> -unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd);
+> -unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd);
+> -unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd);
+> +unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd, int idx);
+> +unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd, int idx);
+> +unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd, int idx);
+> +unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd, int idx);
+>  unsigned int dmz_zone_nr_blocks(struct dmz_metadata *zmd);
+>  unsigned int dmz_zone_nr_blocks_shift(struct dmz_metadata *zmd);
+>  unsigned int dmz_zone_nr_sectors(struct dmz_metadata *zmd);
 
 Looks good.
 
 Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
-
 
 -- 
 Damien Le Moal
