@@ -1,78 +1,53 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 04/15] dm-zoned: add a 'reserved' zone flag
-Date: Tue,  2 Jun 2020 13:09:45 +0200
-Message-ID: <20200602110956.121170-5-hare@suse.de>
-References: <20200602110956.121170-1-hare@suse.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 5/4] dm-integrity: sleep and retry on allocation errors
+Date: Tue, 2 Jun 2020 07:53:05 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2006020752170.25489@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20200601160421.912555280@debian-a64.vm>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200602110956.121170-1-hare@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20200601160421.912555280@debian-a64.vm>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Mike Snitzer <msnitzer@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>, djeffery@redhat.com
+Cc: dm-devel@redhat.com, qat-linux@intel.com, linux-crypto@vger.kernel.org, guazhang@redhat.com, jpittman@redhat.com
 List-Id: dm-devel.ids
 
-Instead of counting the number of reserved zones in dmz_free_zone()
-we should mark the zone as 'reserved' during allocation and simplify
-dmz_free_zone().
+dm-integrity: sleep and retry on allocation errors
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
-Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
+Some hardware crypto drivers use GFP_ATOMIC allocations in the request
+routine. These allocations can randomly fail - for example, they fail if
+too many network packets are received.
+
+If we propagated the failure up to the I/O stack, it would cause I/O
+errors. So, we sleep and retry.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
+
 ---
- drivers/md/dm-zoned-metadata.c | 4 ++--
- drivers/md/dm-zoned.h          | 2 ++
- 2 files changed, 4 insertions(+), 2 deletions(-)
+ drivers/md/dm-integrity.c |    5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index 043ed882970a..0982ab1758a6 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -1743,6 +1743,7 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
- 			atomic_inc(&zmd->unmap_nr_rnd);
- 		} else if (atomic_read(&zmd->nr_reserved_seq_zones) < zmd->nr_reserved_seq) {
- 			list_add_tail(&dzone->link, &zmd->reserved_seq_zones_list);
-+			set_bit(DMZ_RESERVED, &dzone->flags);
- 			atomic_inc(&zmd->nr_reserved_seq_zones);
- 			zmd->nr_seq--;
- 		} else {
-@@ -2168,8 +2169,7 @@ void dmz_free_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
- 	} else if (dmz_is_rnd(zone)) {
- 		list_add_tail(&zone->link, &zmd->unmap_rnd_list);
- 		atomic_inc(&zmd->unmap_nr_rnd);
--	} else if (atomic_read(&zmd->nr_reserved_seq_zones) <
--		   zmd->nr_reserved_seq) {
-+	} else if (dmz_is_reserved(zone)) {
- 		list_add_tail(&zone->link, &zmd->reserved_seq_zones_list);
- 		atomic_inc(&zmd->nr_reserved_seq_zones);
- 	} else {
-diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
-index 8083607b9535..3451b5a768b4 100644
---- a/drivers/md/dm-zoned.h
-+++ b/drivers/md/dm-zoned.h
-@@ -123,6 +123,7 @@ enum {
- 	DMZ_META,
- 	DMZ_DATA,
- 	DMZ_BUF,
-+	DMZ_RESERVED,
- 
- 	/* Zone internal state */
- 	DMZ_RECLAIM,
-@@ -140,6 +141,7 @@ enum {
- #define dmz_is_offline(z)	test_bit(DMZ_OFFLINE, &(z)->flags)
- #define dmz_is_readonly(z)	test_bit(DMZ_READ_ONLY, &(z)->flags)
- #define dmz_in_reclaim(z)	test_bit(DMZ_RECLAIM, &(z)->flags)
-+#define dmz_is_reserved(z)	test_bit(DMZ_RESERVED, &(z)->flags)
- #define dmz_seq_write_err(z)	test_bit(DMZ_SEQ_WRITE_ERR, &(z)->flags)
- #define dmz_reclaim_should_terminate(z) \
- 				test_bit(DMZ_RECLAIM_TERMINATE, &(z)->flags)
--- 
-2.16.4
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2020-04-05 21:11:02.000000000 +0200
++++ linux-2.6/drivers/md/dm-integrity.c	2020-06-02 13:49:36.000000000 +0200
+@@ -859,6 +859,7 @@ static void complete_journal_encrypt(str
+ static bool do_crypt(bool encrypt, struct skcipher_request *req, struct journal_completion *comp)
+ {
+ 	int r;
++retry:
+ 	skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
+ 				      complete_journal_encrypt, comp);
+ 	if (likely(encrypt))
+@@ -874,6 +875,10 @@ static bool do_crypt(bool encrypt, struc
+ 		reinit_completion(&comp->ic->crypto_backoff);
+ 		return true;
+ 	}
++	if (r == -ENOMEM) {
++		msleep(1);
++		goto retry;
++	}
+ 	dm_integrity_io_error(comp->ic, "encrypt", r);
+ 	return false;
+ }
