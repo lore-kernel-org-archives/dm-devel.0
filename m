@@ -1,12 +1,19 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 2/4] qat: fix misunderstood -EBUSY return code in
-	asym algorithms
-Date: Mon, 01 Jun 2020 18:03:34 +0200
-Message-ID: <20200601160419.414457600@debian-a64.vm>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 11/14] dm-zoned: support arbitrary number of
+	devices
+Date: Tue, 2 Jun 2020 08:42:33 +0200
+Message-ID: <f275321c-ff8f-753f-b61c-62335100f243@suse.de>
+References: <20200529173907.40529-1-hare@suse.de>
+	<20200529173907.40529-12-hare@suse.de>
+	<36914d620ecccdf0397a47703a69b926afd3d283.camel@wdc.com>
+	<2d8e74ee-6f33-e832-f081-694d051343ce@suse.de>
+	<CY4PR04MB3751E9482466C8485BE7DF6CE78D0@CY4PR04MB3751.namprd04.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CY4PR04MB3751E9482466C8485BE7DF6CE78D0@CY4PR04MB3751.namprd04.prod.outlook.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,167 +23,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline; filename=qat-fix-asym.patch
-To: Mike Snitzer <msnitzer@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>, djeffery@redhat.com
-Cc: guazhang@redhat.com, qat-linux@intel.com, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-crypto@vger.kernel.org, jpittman@redhat.com
+To: Damien Le Moal <Damien.LeMoal@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This patch fixes a bug in QAT in async asymetric algorithm.
-
-adf_send_message returns -EAGAIN when the queue is full. The caller
-misunderstands it as -EBUSY - so the retry loop will never happen.
-
-Furthermore, when the crypto driver return -EBUSY, it is expected that it
-has queued the request and the caller should stop sending more requests.
-When the request is returned with -EINPROGRESS, the caller can send more
-requests.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
-
-Index: linux-2.6/drivers/crypto/qat/qat_common/qat_asym_algs.c
-===================================================================
---- linux-2.6.orig/drivers/crypto/qat/qat_common/qat_asym_algs.c
-+++ linux-2.6/drivers/crypto/qat/qat_common/qat_asym_algs.c
-@@ -179,6 +179,7 @@ struct qat_asym_request {
- 		struct kpp_request *dh;
- 	} areq;
- 	int err;
-+	int backed_off;
- 	void (*cb)(struct icp_qat_fw_pke_resp *resp);
- } __aligned(64);
- 
-@@ -219,6 +220,8 @@ static void qat_dh_cb(struct icp_qat_fw_
- 			 sizeof(struct qat_dh_output_params),
- 			 DMA_TO_DEVICE);
- 
-+	if (req->backed_off)
-+		kpp_request_complete(areq, -EINPROGRESS);
- 	kpp_request_complete(areq, err);
- }
- 
-@@ -263,7 +266,7 @@ static int qat_dh_compute_value(struct k
- 	struct qat_asym_request *qat_req =
- 			PTR_ALIGN(kpp_request_ctx(req), 64);
- 	struct icp_qat_fw_pke_request *msg = &qat_req->req;
--	int ret, ctr = 0;
-+	int ret, backed_off;
- 	int n_input_params = 0;
- 
- 	if (unlikely(!ctx->xa))
-@@ -388,17 +391,17 @@ static int qat_dh_compute_value(struct k
- 	msg->input_param_count = n_input_params;
- 	msg->output_param_count = 1;
- 
--	do {
--		ret = adf_send_message(ctx->inst->pke_tx, (uint32_t *)msg);
--	} while (ret == -EBUSY && ctr++ < 100);
--
--	if (!ret)
--		return -EINPROGRESS;
--
--	if (!dma_mapping_error(dev, qat_req->phy_out))
--		dma_unmap_single(dev, qat_req->phy_out,
--				 sizeof(struct qat_dh_output_params),
--				 DMA_TO_DEVICE);
-+	qat_req->backed_off = backed_off = adf_should_back_off(ctx->inst->pke_tx);
-+again:
-+	ret = adf_send_message(ctx->inst->pke_tx, (uint32_t *)msg);
-+	if (ret == -EAGAIN) {
-+		qat_req->backed_off = backed_off = 1;
-+		cpu_relax();
-+		goto again;
-+	}
-+
-+	return backed_off ? -EBUSY : -EINPROGRESS;
-+
- unmap_in_params:
- 	if (!dma_mapping_error(dev, qat_req->phy_in))
- 		dma_unmap_single(dev, qat_req->phy_in,
-@@ -585,6 +588,8 @@ static void qat_rsa_cb(struct icp_qat_fw
- 			 sizeof(struct qat_rsa_output_params),
- 			 DMA_TO_DEVICE);
- 
-+	if (req->backed_off)
-+		akcipher_request_complete(areq, -EINPROGRESS);
- 	akcipher_request_complete(areq, err);
- }
- 
-@@ -692,7 +697,7 @@ static int qat_rsa_enc(struct akcipher_r
- 	struct qat_asym_request *qat_req =
- 			PTR_ALIGN(akcipher_request_ctx(req), 64);
- 	struct icp_qat_fw_pke_request *msg = &qat_req->req;
--	int ret, ctr = 0;
-+	int ret, backed_off;
- 
- 	if (unlikely(!ctx->n || !ctx->e))
- 		return -EINVAL;
-@@ -782,17 +787,18 @@ static int qat_rsa_enc(struct akcipher_r
- 	msg->pke_mid.opaque = (uint64_t)(__force long)qat_req;
- 	msg->input_param_count = 3;
- 	msg->output_param_count = 1;
--	do {
--		ret = adf_send_message(ctx->inst->pke_tx, (uint32_t *)msg);
--	} while (ret == -EBUSY && ctr++ < 100);
--
--	if (!ret)
--		return -EINPROGRESS;
--
--	if (!dma_mapping_error(dev, qat_req->phy_out))
--		dma_unmap_single(dev, qat_req->phy_out,
--				 sizeof(struct qat_rsa_output_params),
--				 DMA_TO_DEVICE);
-+
-+	qat_req->backed_off = backed_off = adf_should_back_off(ctx->inst->pke_tx);
-+again:
-+	ret = adf_send_message(ctx->inst->pke_tx, (uint32_t *)msg);
-+	if (ret == -EAGAIN) {
-+		qat_req->backed_off = backed_off = 1;
-+		cpu_relax();
-+		goto again;
-+	}
-+
-+	return backed_off ? -EBUSY : -EINPROGRESS;
-+
- unmap_in_params:
- 	if (!dma_mapping_error(dev, qat_req->phy_in))
- 		dma_unmap_single(dev, qat_req->phy_in,
-@@ -826,7 +832,7 @@ static int qat_rsa_dec(struct akcipher_r
- 	struct qat_asym_request *qat_req =
- 			PTR_ALIGN(akcipher_request_ctx(req), 64);
- 	struct icp_qat_fw_pke_request *msg = &qat_req->req;
--	int ret, ctr = 0;
-+	int ret, backed_off;
- 
- 	if (unlikely(!ctx->n || !ctx->d))
- 		return -EINVAL;
-@@ -934,17 +940,18 @@ static int qat_rsa_dec(struct akcipher_r
- 		msg->input_param_count = 3;
- 
- 	msg->output_param_count = 1;
--	do {
--		ret = adf_send_message(ctx->inst->pke_tx, (uint32_t *)msg);
--	} while (ret == -EBUSY && ctr++ < 100);
--
--	if (!ret)
--		return -EINPROGRESS;
--
--	if (!dma_mapping_error(dev, qat_req->phy_out))
--		dma_unmap_single(dev, qat_req->phy_out,
--				 sizeof(struct qat_rsa_output_params),
--				 DMA_TO_DEVICE);
-+
-+	qat_req->backed_off = backed_off = adf_should_back_off(ctx->inst->pke_tx);
-+again:
-+	ret = adf_send_message(ctx->inst->pke_tx, (uint32_t *)msg);
-+	if (ret == -EAGAIN) {
-+		qat_req->backed_off = backed_off = 1;
-+		cpu_relax();
-+		goto again;
-+	}
-+
-+	return backed_off ? -EBUSY : -EINPROGRESS;
-+
- unmap_in_params:
- 	if (!dma_mapping_error(dev, qat_req->phy_in))
- 		dma_unmap_single(dev, qat_req->phy_in,
+T24gNi8xLzIwIDE6NTQgQU0sIERhbWllbiBMZSBNb2FsIHdyb3RlOgo+IE9uIDIwMjAvMDUvMzEg
+MjI6MDYsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gT24gNS8zMS8yMCAxMToxMCBBTSwgRGFt
+aWVuIExlIE1vYWwgd3JvdGU6ClsgLi4gXQo+Pj4KPj4+IExvb2tzIGFsbCBnb29kIHRvIG1lLCBi
+dXQgdGhpbmtpbmcgbW9yZSBhYm91dCBpdCwgZG9uJ3Qgd2UgbmVlZCB0byBhZGQKPj4+IGEgZGV2
+aWNlIGluZGV4IGluIHRoZSBzdXBlciBibG9ja3MgPyBUaGUgcmVhc29uIGlzIHRoYXQgaWYgdGhl
+IGRyaXZlCj4+PiBjb25maWd1cmF0aW9uIGNoYW5nZXMgYmV0d2VlbiBzdG9wdC9zdGFydCAoZHJp
+dmVzIHJlbW92ZWQsIGFkZGVkIG9yCj4+PiBjaGFuZ2VkIHNsb3RzKSwgdGhlIGRyaXZlIG5hbWVz
+IHdpbGwgY2hhbmdlIGFuZCB3aGlsZSB0aGUgdXNlcnNwYWNlCj4+PiB3aWxsIHN0aWxsIGJlIGFi
+bGUgdG8gZmluZCB0aGUgZ3JvdXAgb2YgZHJpdmVzIGNvbnN0aXR1dGluZyB0aGUgdGFyZ2V0Cj4+
+PiAodXNpbmcgVVVJRDksIHRoZXJlIGlzIG5vIG9idmlvdXMgd2F5IHRvIGZpbmQgb3V0IHdoYXQg
+dGhlIG9yaWdpbmFsCj4+PiBkcml2ZSBvcmRlciB3YXMuIFNpbmNlIHRoZSBrZXJuZWwgc2lkZSBy
+ZWxpZXMgb24gdGhlIGRyaXZlIGJlaW5nIHBhc3NlZAo+Pj4gdG8gdGhlIGN0ciBmdW5jdGlvbiBp
+biB0aGUgb3JkZXIgb2YgdGhlIG1hcHBpbmcsIHdlIG5lZWQgdG8gcHJlc2VydmUKPj4+IHRoYXQu
+IE9yIGNoYW5nZSBhbHNvIHRoZSBrZXJuZWwgc2lkZSB0byB1c2UgdGhlIGluZGV4IGluIHRoZSBz
+dXBlcgo+Pj4gYmxvY2sgdG8gcHV0IGVhY2ggZHJpdmUgaW4gaXRzIGNvcnJlY3QgZG16LT5kZXZb
+XSBzbG90Lgo+Pj4KPj4gQWxyZWFkeSB0YWtlbiBjYXJlIG9mOyBoZXJlJ3Mgd2hlcmUgdGhlIHRl
+cnRpYXJ5IHN1cGVyYmxvY2tzIGNvbWUgaW4uCj4+IEVhY2ggc3VwZXJibG9jayBjYXJyaWVzIGl0
+cyBvd24gcG9zaXRpb24gKGluIHRoZSAnc2JfYmxvY2snIGZpZWxkKS4KPj4gVGhpcyBpcyB0aGUg
+X2Fic29sdXRlXyBwb3NpdGlvbiB3aXRoaW4gdGhlIGVudGlyZSBzZXR1cCwgbm90IHRoZQo+PiBy
+ZWxhdGl2ZSBwZXItZGV2aWNlIGJsb2NrIG51bWJlci4KPj4gQW5kIGl0IGFsc28gaGFzIHRoZSBh
+YnNvbHV0ZSBudW1iZXIgb2YgYmxvY2tzIGluIHRoZSAnbnJfY2h1bmtzJyBmaWVsZC4KPj4KPj4g
+SGVuY2Ugd2Uga25vdyBleGFjdGx5IHdoZXJlIHRoaXMgc3VwZXJibG9jayAoYW5kLCBieSBpbXBs
+aWNhdGlvbiwgdGhlCj4+IHpvbmVzIGZvbGxvd2luZyB0aGlzIHN1cGVyYmxvY2spIHNob3VsZCBl
+bmQgdXAuIEFuZCB3ZSBrbm93IGhvdyBsYXJnZQo+PiB0aGUgZW50aXJlIHNldHVwIHdpbGwgYmUu
+IFNvIGNhbiBpbnNlcnQgdGhlIHN1cGVyYmxvY2sgYXQgdGhlIHJpZ2h0Cj4+IHBvc2l0aW9uIGFu
+ZCB0aGVuIGNhbiBjaGVjayBpZiB3ZSBoYXZlIGVub3VnaCB6b25lcyBmb3IgdGhlIGVudGlyZQo+
+PiBkZXZpY2UuCj4gCj4gSSBkbyBub3QgZ2V0IGl0IHRob3VnaC4gV2hlcmUgaXMgdGhhdCBjaGVj
+a2VkID8gQXQgbGVhc3QgaW4gdGhpcyBwYXRjaCwgZHJpdmVzCj4gYXJlIGluaXRpYWxpemVkIGlu
+IHRoZSBvcmRlciBvZiB0aGUgY3RyIGFyZ3VtZW50cywgYW5kIHRoaXMgbG9vcDoKPiAKPiArCQlm
+b3IgKGkgPSAxOyBpIDwgZG16LT5ucl9kZGV2czsgaSsrKSB7Cj4gKwkJCWRtei0+ZGV2W2ldLnpv
+bmVfb2Zmc2V0ID0gem9uZV9vZmZzZXQ7Cj4gKwkJCXpvbmVfb2Zmc2V0ICs9IGRtei0+ZGV2W2ld
+Lm5yX3pvbmVzOwo+ICsJCX0KPiAKPiBpbiBkbXpfZml4dXBfZGV2aWNlcygpIHNldHMgdGhlIHpv
+bmUgb2Zmc2V0IGZvciBlYWNoIGRldmljZSBpbiB0aGUgc2FtZSBvcmRlci4KPiBTbyBmb3IgYSBn
+aXZlbiBjaHVuayBtYXBwZWQgdG8gYSB6b25lIGlkZW50aWZpZWQgYnkgaXRzIElELCBpZiB0aGUg
+ZGV2aWNlIG9yZGVyCj4gY2hhbmdlcywgem9uZSBJRCB3aWxsIGNoYW5nZSBhbmQgdGhlIGNodW5r
+IHdpbGwgbm90IGJlIG1hcHBlZCB0byB0aGUgY29ycmVjdAo+IHpvbmUuIFdoYXQgYW0gSSBtaXNz
+aW5nIGhlcmUgPwo+IApXZWxsLCBJIF9kaWRfIHN0YXRlIHRoYXQgd2UncmUgbWlzc2luZyBzdXBw
+b3J0IGZvciBpdDsgYWxsIEkgZGlkIHdhcyAKcG9pbnRpbmcgb3V0IHRoYXQgdGhlIG1ldGFkYXRh
+IGFscmVhZHkgaGFzIHRoZSBjYXBhYmlsaXR5IGZvciBkZXRlY3RpbmcgCmEgbWlzbWF0Y2guIEFu
+ZCBJIGRvIHRoaW5rIHdlJ3JlIGdldHRpbmcgYSB3YXJuaW5nIHdoZW4gbG9hZGluZyAKc3VwZXJi
+bG9ja3MsIGFuZCB0aGUgc2V0dXAgd291bGQgYmUgcmVqZWN0ZWQuCgpCdXQgdGhlbiBJIGp1c3Qg
+Y2hlY2tlZCwgYW5kIHdlJ3JlIGluZGVlZCBtaXNzaW5nIHRoZSBzYl9ibG9jayAKdmFsaWRhdGlv
+bi4gV2lsbCBiZSBhZGRpbmcgaXQgc3VjaCB0aGF0IHdlJ3JlIHJlamVjdGluZyBvdXQtb2Ytb3Jk
+ZXIgCmRldmljZXMuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UgICAg
+ICAgICAgICBUZWFtbGVhZCBTdG9yYWdlICYgTmV0d29ya2luZwpoYXJlQHN1c2UuZGUgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBTb2Z0d2FyZSBT
+b2x1dGlvbnMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkhSQiAzNjgwOSAo
+QUcgTsO8cm5iZXJnKSwgR2VzY2jDpGZ0c2bDvGhyZXI6IEZlbGl4IEltZW5kw7ZyZmZlcgoKCi0t
+CmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJl
+ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
