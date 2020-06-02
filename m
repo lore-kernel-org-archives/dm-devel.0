@@ -1,19 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 11/14] dm-zoned: support arbitrary number of
-	devices
-Date: Tue, 2 Jun 2020 08:42:33 +0200
-Message-ID: <f275321c-ff8f-753f-b61c-62335100f243@suse.de>
-References: <20200529173907.40529-1-hare@suse.de>
-	<20200529173907.40529-12-hare@suse.de>
-	<36914d620ecccdf0397a47703a69b926afd3d283.camel@wdc.com>
-	<2d8e74ee-6f33-e832-f081-694d051343ce@suse.de>
-	<CY4PR04MB3751E9482466C8485BE7DF6CE78D0@CY4PR04MB3751.namprd04.prod.outlook.com>
+Subject: [PATCH 03/15] dm-zoned: improve logging messages for
+	reclaim
+Date: Tue,  2 Jun 2020 13:09:44 +0200
+Message-ID: <20200602110956.121170-4-hare@suse.de>
+References: <20200602110956.121170-1-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CY4PR04MB3751E9482466C8485BE7DF6CE78D0@CY4PR04MB3751.namprd04.prod.outlook.com>
-Content-Language: en-US
+In-Reply-To: <20200602110956.121170-1-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,57 +18,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <Damien.LeMoal@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gNi8xLzIwIDE6NTQgQU0sIERhbWllbiBMZSBNb2FsIHdyb3RlOgo+IE9uIDIwMjAvMDUvMzEg
-MjI6MDYsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gT24gNS8zMS8yMCAxMToxMCBBTSwgRGFt
-aWVuIExlIE1vYWwgd3JvdGU6ClsgLi4gXQo+Pj4KPj4+IExvb2tzIGFsbCBnb29kIHRvIG1lLCBi
-dXQgdGhpbmtpbmcgbW9yZSBhYm91dCBpdCwgZG9uJ3Qgd2UgbmVlZCB0byBhZGQKPj4+IGEgZGV2
-aWNlIGluZGV4IGluIHRoZSBzdXBlciBibG9ja3MgPyBUaGUgcmVhc29uIGlzIHRoYXQgaWYgdGhl
-IGRyaXZlCj4+PiBjb25maWd1cmF0aW9uIGNoYW5nZXMgYmV0d2VlbiBzdG9wdC9zdGFydCAoZHJp
-dmVzIHJlbW92ZWQsIGFkZGVkIG9yCj4+PiBjaGFuZ2VkIHNsb3RzKSwgdGhlIGRyaXZlIG5hbWVz
-IHdpbGwgY2hhbmdlIGFuZCB3aGlsZSB0aGUgdXNlcnNwYWNlCj4+PiB3aWxsIHN0aWxsIGJlIGFi
-bGUgdG8gZmluZCB0aGUgZ3JvdXAgb2YgZHJpdmVzIGNvbnN0aXR1dGluZyB0aGUgdGFyZ2V0Cj4+
-PiAodXNpbmcgVVVJRDksIHRoZXJlIGlzIG5vIG9idmlvdXMgd2F5IHRvIGZpbmQgb3V0IHdoYXQg
-dGhlIG9yaWdpbmFsCj4+PiBkcml2ZSBvcmRlciB3YXMuIFNpbmNlIHRoZSBrZXJuZWwgc2lkZSBy
-ZWxpZXMgb24gdGhlIGRyaXZlIGJlaW5nIHBhc3NlZAo+Pj4gdG8gdGhlIGN0ciBmdW5jdGlvbiBp
-biB0aGUgb3JkZXIgb2YgdGhlIG1hcHBpbmcsIHdlIG5lZWQgdG8gcHJlc2VydmUKPj4+IHRoYXQu
-IE9yIGNoYW5nZSBhbHNvIHRoZSBrZXJuZWwgc2lkZSB0byB1c2UgdGhlIGluZGV4IGluIHRoZSBz
-dXBlcgo+Pj4gYmxvY2sgdG8gcHV0IGVhY2ggZHJpdmUgaW4gaXRzIGNvcnJlY3QgZG16LT5kZXZb
-XSBzbG90Lgo+Pj4KPj4gQWxyZWFkeSB0YWtlbiBjYXJlIG9mOyBoZXJlJ3Mgd2hlcmUgdGhlIHRl
-cnRpYXJ5IHN1cGVyYmxvY2tzIGNvbWUgaW4uCj4+IEVhY2ggc3VwZXJibG9jayBjYXJyaWVzIGl0
-cyBvd24gcG9zaXRpb24gKGluIHRoZSAnc2JfYmxvY2snIGZpZWxkKS4KPj4gVGhpcyBpcyB0aGUg
-X2Fic29sdXRlXyBwb3NpdGlvbiB3aXRoaW4gdGhlIGVudGlyZSBzZXR1cCwgbm90IHRoZQo+PiBy
-ZWxhdGl2ZSBwZXItZGV2aWNlIGJsb2NrIG51bWJlci4KPj4gQW5kIGl0IGFsc28gaGFzIHRoZSBh
-YnNvbHV0ZSBudW1iZXIgb2YgYmxvY2tzIGluIHRoZSAnbnJfY2h1bmtzJyBmaWVsZC4KPj4KPj4g
-SGVuY2Ugd2Uga25vdyBleGFjdGx5IHdoZXJlIHRoaXMgc3VwZXJibG9jayAoYW5kLCBieSBpbXBs
-aWNhdGlvbiwgdGhlCj4+IHpvbmVzIGZvbGxvd2luZyB0aGlzIHN1cGVyYmxvY2spIHNob3VsZCBl
-bmQgdXAuIEFuZCB3ZSBrbm93IGhvdyBsYXJnZQo+PiB0aGUgZW50aXJlIHNldHVwIHdpbGwgYmUu
-IFNvIGNhbiBpbnNlcnQgdGhlIHN1cGVyYmxvY2sgYXQgdGhlIHJpZ2h0Cj4+IHBvc2l0aW9uIGFu
-ZCB0aGVuIGNhbiBjaGVjayBpZiB3ZSBoYXZlIGVub3VnaCB6b25lcyBmb3IgdGhlIGVudGlyZQo+
-PiBkZXZpY2UuCj4gCj4gSSBkbyBub3QgZ2V0IGl0IHRob3VnaC4gV2hlcmUgaXMgdGhhdCBjaGVj
-a2VkID8gQXQgbGVhc3QgaW4gdGhpcyBwYXRjaCwgZHJpdmVzCj4gYXJlIGluaXRpYWxpemVkIGlu
-IHRoZSBvcmRlciBvZiB0aGUgY3RyIGFyZ3VtZW50cywgYW5kIHRoaXMgbG9vcDoKPiAKPiArCQlm
-b3IgKGkgPSAxOyBpIDwgZG16LT5ucl9kZGV2czsgaSsrKSB7Cj4gKwkJCWRtei0+ZGV2W2ldLnpv
-bmVfb2Zmc2V0ID0gem9uZV9vZmZzZXQ7Cj4gKwkJCXpvbmVfb2Zmc2V0ICs9IGRtei0+ZGV2W2ld
-Lm5yX3pvbmVzOwo+ICsJCX0KPiAKPiBpbiBkbXpfZml4dXBfZGV2aWNlcygpIHNldHMgdGhlIHpv
-bmUgb2Zmc2V0IGZvciBlYWNoIGRldmljZSBpbiB0aGUgc2FtZSBvcmRlci4KPiBTbyBmb3IgYSBn
-aXZlbiBjaHVuayBtYXBwZWQgdG8gYSB6b25lIGlkZW50aWZpZWQgYnkgaXRzIElELCBpZiB0aGUg
-ZGV2aWNlIG9yZGVyCj4gY2hhbmdlcywgem9uZSBJRCB3aWxsIGNoYW5nZSBhbmQgdGhlIGNodW5r
-IHdpbGwgbm90IGJlIG1hcHBlZCB0byB0aGUgY29ycmVjdAo+IHpvbmUuIFdoYXQgYW0gSSBtaXNz
-aW5nIGhlcmUgPwo+IApXZWxsLCBJIF9kaWRfIHN0YXRlIHRoYXQgd2UncmUgbWlzc2luZyBzdXBw
-b3J0IGZvciBpdDsgYWxsIEkgZGlkIHdhcyAKcG9pbnRpbmcgb3V0IHRoYXQgdGhlIG1ldGFkYXRh
-IGFscmVhZHkgaGFzIHRoZSBjYXBhYmlsaXR5IGZvciBkZXRlY3RpbmcgCmEgbWlzbWF0Y2guIEFu
-ZCBJIGRvIHRoaW5rIHdlJ3JlIGdldHRpbmcgYSB3YXJuaW5nIHdoZW4gbG9hZGluZyAKc3VwZXJi
-bG9ja3MsIGFuZCB0aGUgc2V0dXAgd291bGQgYmUgcmVqZWN0ZWQuCgpCdXQgdGhlbiBJIGp1c3Qg
-Y2hlY2tlZCwgYW5kIHdlJ3JlIGluZGVlZCBtaXNzaW5nIHRoZSBzYl9ibG9jayAKdmFsaWRhdGlv
-bi4gV2lsbCBiZSBhZGRpbmcgaXQgc3VjaCB0aGF0IHdlJ3JlIHJlamVjdGluZyBvdXQtb2Ytb3Jk
-ZXIgCmRldmljZXMuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UgICAg
-ICAgICAgICBUZWFtbGVhZCBTdG9yYWdlICYgTmV0d29ya2luZwpoYXJlQHN1c2UuZGUgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBTb2Z0d2FyZSBT
-b2x1dGlvbnMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkhSQiAzNjgwOSAo
-QUcgTsO8cm5iZXJnKSwgR2VzY2jDpGZ0c2bDvGhyZXI6IEZlbGl4IEltZW5kw7ZyZmZlcgoKCi0t
-CmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJl
-ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Instead of just reporting the errno this patch adds some more
+verbose debugging message in the reclaim path.
+
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
+---
+ drivers/md/dm-zoned-reclaim.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+index 571bc1d41bab..fd4d47dfcea1 100644
+--- a/drivers/md/dm-zoned-reclaim.c
++++ b/drivers/md/dm-zoned-reclaim.c
+@@ -371,8 +371,11 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+ 
+ 	/* Get a data zone */
+ 	dzone = dmz_get_zone_for_reclaim(zmd, dmz_target_idle(zrc));
+-	if (!dzone)
++	if (!dzone) {
++		DMDEBUG("(%s): No zone found to reclaim",
++			dmz_metadata_label(zmd));
+ 		return -EBUSY;
++	}
+ 
+ 	start = jiffies;
+ 	if (dmz_is_cache(dzone) || dmz_is_rnd(dzone)) {
+@@ -416,6 +419,12 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+ 	}
+ out:
+ 	if (ret) {
++		if (ret == -EINTR)
++			DMDEBUG("(%s): reclaim zone %u interrupted",
++				dmz_metadata_label(zmd), rzone->id);
++		else
++			DMDEBUG("(%s): Failed to reclaim zone %u, err %d",
++				dmz_metadata_label(zmd), rzone->id, ret);
+ 		dmz_unlock_zone_reclaim(dzone);
+ 		return ret;
+ 	}
+@@ -519,8 +528,6 @@ static void dmz_reclaim_work(struct work_struct *work)
+ 
+ 	ret = dmz_do_reclaim(zrc);
+ 	if (ret && ret != -EINTR) {
+-		DMDEBUG("(%s): Reclaim error %d",
+-			dmz_metadata_label(zmd), ret);
+ 		if (!dmz_check_dev(zmd))
+ 			return;
+ 	}
+-- 
+2.16.4
