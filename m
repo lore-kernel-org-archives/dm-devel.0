@@ -1,267 +1,73 @@
-From: Giovanni Cabiddu <giovanni.cabiddu@intel.com>
-Subject: Re: [PATCH 1/4] qat: fix misunderstood -EBUSY return code
-Date: Tue, 2 Jun 2020 23:05:16 +0100
-Message-ID: <20200602220516.GA20880@silpixa00400314>
-References: <20200601160418.171851200@debian-a64.vm>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCHv4 00/15] dm-zoned: multiple drive support
+Date: Tue, 2 Jun 2020 18:27:19 -0400
+Message-ID: <20200602222719.GA14318@redhat.com>
+References: <20200602110956.121170-1-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200602110956.121170-1-hare@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
-In-Reply-To: <20200601160418.171851200@debian-a64.vm>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>, djeffery@redhat.com, dm-devel@redhat.com, qat-linux@intel.com, linux-crypto@vger.kernel.org, guazhang@redhat.com, jpittman@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Mikulas,
+On Tue, Jun 02 2020 at  7:09am -0400,
+Hannes Reinecke <hare@suse.de> wrote:
 
-thanks for your patch. See below.
+> Hi all,
+> 
+> here's the second version of my patchset to support multiple zoned
+> drives with dm-zoned.
+> This patchset:
+> - Converts the zone array to using xarray for better scalability
+> - Separates out shared structures into per-device structure
+> - Enforce drive-locality for allocating and reclaiming zones
+> - Lifts the restriction of 2 devices to handle an arbitrary number
+>   of drives.
+> 
+> This gives me a near-perfect scalability by increasing the write
+> speed from 150MB/s (for a cache and one zoned drive) to 300MB/s
+> (for a cache and two zoned drives).
+> 
+> Changes to v1:
+> - Include reviews from Damien
+> - Reshuffle patches
+> Changes to v2:
+> - Add reviews from Damien
+> - Merge patches 'dynamic device allocation' and
+>   'support arbitrary number of devices'
+> - Fix memory leak when reading tertiary superblocks
+> Changes to v3:
+> - Add reviews from Damien
+> - Add patch to ensure correct device ordering
 
-On Mon, Jun 01, 2020 at 06:03:33PM +0200, Mikulas Patocka wrote:
-> Using dm-crypt with QAT result in deadlocks.
-> 
-> If a crypto routine returns -EBUSY, it is expected that the crypto driver
-> have already queued the request and the crypto API user should assume that
-> this request was processed, but it should stop sending more requests. When
-> an -EBUSY request is processed, the crypto driver calls the callback with
-> the error code -EINPROGRESS - this means that the request is still being
-> processed (i.e. the user should wait for another callback), but the user
-> can start sending more requests now.
-> 
-> The QAT driver misunderstood this logic, it return -EBUSY when the queue
-> was full and didn't queue the request - the request was lost and it
-> resulted in a deadlock.
-> 
-> This patch fixes busy state handling - if the queue is at least 15/16
-> full, we return -EBUSY to signal to the user that no more requests should
-> be sent. We remember that we returned -EBUSY (the variable backed_off) and
-> if we finish the request, we return -EINPROGRESS to indicate that the user
-> can send more requests.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: stable@vger.kernel.org
-> 
-> Index: linux-2.6/drivers/crypto/qat/qat_common/qat_algs.c
-> ===================================================================
-> --- linux-2.6.orig/drivers/crypto/qat/qat_common/qat_algs.c
-> +++ linux-2.6/drivers/crypto/qat/qat_common/qat_algs.c
-> @@ -826,6 +826,9 @@ static void qat_aead_alg_callback(struct
->  	qat_alg_free_bufl(inst, qat_req);
->  	if (unlikely(qat_res != ICP_QAT_FW_COMN_STATUS_FLAG_OK))
->  		res = -EBADMSG;
-> +
-> +	if (qat_req->backed_off)
-> +		areq->base.complete(&areq->base, -EINPROGRESS);
->  	areq->base.complete(&areq->base, res);
->  }
->  
-> @@ -847,6 +850,8 @@ static void qat_skcipher_alg_callback(st
->  	dma_free_coherent(dev, AES_BLOCK_SIZE, qat_req->iv,
->  			  qat_req->iv_paddr);
->  
-> +	if (qat_req->backed_off)
-> +		sreq->base.complete(&sreq->base, -EINPROGRESS);
->  	sreq->base.complete(&sreq->base, res);
->  }
->  
-> @@ -869,7 +874,7 @@ static int qat_alg_aead_dec(struct aead_
->  	struct icp_qat_fw_la_auth_req_params *auth_param;
->  	struct icp_qat_fw_la_bulk_req *msg;
->  	int digst_size = crypto_aead_authsize(aead_tfm);
-> -	int ret, ctr = 0;
-> +	int ret, backed_off;
->  
->  	ret = qat_alg_sgl_to_bufl(ctx->inst, areq->src, areq->dst, qat_req);
->  	if (unlikely(ret))
-> @@ -890,15 +895,16 @@ static int qat_alg_aead_dec(struct aead_
->  	auth_param = (void *)((uint8_t *)cipher_param + sizeof(*cipher_param));
->  	auth_param->auth_off = 0;
->  	auth_param->auth_len = areq->assoclen + cipher_param->cipher_length;
-> -	do {
-> -		ret = adf_send_message(ctx->inst->sym_tx, (uint32_t *)msg);
-> -	} while (ret == -EAGAIN && ctr++ < 10);
->  
-> +	qat_req->backed_off = backed_off = adf_should_back_off(ctx->inst->sym_tx);
-> +again:
-> +	ret = adf_send_message(ctx->inst->sym_tx, (uint32_t *)msg);
->  	if (ret == -EAGAIN) {
-> -		qat_alg_free_bufl(ctx->inst, qat_req);
-> -		return -EBUSY;
-> +		qat_req->backed_off = backed_off = 1;
-> +		cpu_relax();
-> +		goto again;
->  	}
-I am a bit concerned about this potential infinite loop.
-If an error occurred on the device and the queue is full, we will be
-stuck here forever.
-Should we just retry a number of times and then fail?
-Or, should we just move to the crypto-engine?
+I've picked this series up for 5.8 (yes, I know it is last minute).  But
+I saw no benefit to merging the initial 2 device step in 5.8 only to
+then churn the code and interface to support an arbitrary number of
+devices in 5.9.  Easier to support one major update to the code now.
 
-> -	return -EINPROGRESS;
-> +	return backed_off ? -EBUSY : -EINPROGRESS;
->  }
->  
->  static int qat_alg_aead_enc(struct aead_request *areq)
-> @@ -911,7 +917,7 @@ static int qat_alg_aead_enc(struct aead_
->  	struct icp_qat_fw_la_auth_req_params *auth_param;
->  	struct icp_qat_fw_la_bulk_req *msg;
->  	uint8_t *iv = areq->iv;
-> -	int ret, ctr = 0;
-> +	int ret, backed_off;
->  
->  	ret = qat_alg_sgl_to_bufl(ctx->inst, areq->src, areq->dst, qat_req);
->  	if (unlikely(ret))
-> @@ -935,15 +941,15 @@ static int qat_alg_aead_enc(struct aead_
->  	auth_param->auth_off = 0;
->  	auth_param->auth_len = areq->assoclen + areq->cryptlen;
->  
-> -	do {
-> -		ret = adf_send_message(ctx->inst->sym_tx, (uint32_t *)msg);
-> -	} while (ret == -EAGAIN && ctr++ < 10);
-> -
-> +	qat_req->backed_off = backed_off = adf_should_back_off(ctx->inst->sym_tx);
-checkpatch: line over 80 characters - same in every place
-adf_should_back_off is used.
+As such the target's version number was _not_ bumped from 2.0.0 to
+3.0.0.
 
-> +again:
-> +	ret = adf_send_message(ctx->inst->sym_tx, (uint32_t *)msg);
->  	if (ret == -EAGAIN) {
-> -		qat_alg_free_bufl(ctx->inst, qat_req);
-> -		return -EBUSY;
-> +		qat_req->backed_off = backed_off = 1;
-> +		cpu_relax();
-> +		goto again;
->  	}
-> -	return -EINPROGRESS;
-> +	return backed_off ? -EBUSY : -EINPROGRESS;
->  }
->  
->  static int qat_alg_skcipher_rekey(struct qat_alg_skcipher_ctx *ctx,
-> @@ -1051,7 +1057,7 @@ static int qat_alg_skcipher_encrypt(stru
->  	struct icp_qat_fw_la_cipher_req_params *cipher_param;
->  	struct icp_qat_fw_la_bulk_req *msg;
->  	struct device *dev = &GET_DEV(ctx->inst->accel_dev);
-> -	int ret, ctr = 0;
-> +	int ret, backed_off;
->  
->  	if (req->cryptlen == 0)
->  		return 0;
-> @@ -1081,17 +1087,16 @@ static int qat_alg_skcipher_encrypt(stru
->  	cipher_param->cipher_offset = 0;
->  	cipher_param->u.s.cipher_IV_ptr = qat_req->iv_paddr;
->  	memcpy(qat_req->iv, req->iv, AES_BLOCK_SIZE);
-> -	do {
-> -		ret = adf_send_message(ctx->inst->sym_tx, (uint32_t *)msg);
-> -	} while (ret == -EAGAIN && ctr++ < 10);
->  
-> +	qat_req->backed_off = backed_off = adf_should_back_off(ctx->inst->sym_tx);
-> +again:
-> +	ret = adf_send_message(ctx->inst->sym_tx, (uint32_t *)msg);
->  	if (ret == -EAGAIN) {
-> -		qat_alg_free_bufl(ctx->inst, qat_req);
-> -		dma_free_coherent(dev, AES_BLOCK_SIZE, qat_req->iv,
-> -				  qat_req->iv_paddr);
-> -		return -EBUSY;
-> +		qat_req->backed_off = backed_off = 1;
-> +		cpu_relax();
-> +		goto again;
->  	}
-> -	return -EINPROGRESS;
-> +	return backed_off ? -EBUSY : -EINPROGRESS;
->  }
->  
->  static int qat_alg_skcipher_blk_encrypt(struct skcipher_request *req)
-> @@ -1111,7 +1116,7 @@ static int qat_alg_skcipher_decrypt(stru
->  	struct icp_qat_fw_la_cipher_req_params *cipher_param;
->  	struct icp_qat_fw_la_bulk_req *msg;
->  	struct device *dev = &GET_DEV(ctx->inst->accel_dev);
-> -	int ret, ctr = 0;
-> +	int ret, backed_off;
->  
->  	if (req->cryptlen == 0)
->  		return 0;
-> @@ -1141,17 +1146,16 @@ static int qat_alg_skcipher_decrypt(stru
->  	cipher_param->cipher_offset = 0;
->  	cipher_param->u.s.cipher_IV_ptr = qat_req->iv_paddr;
->  	memcpy(qat_req->iv, req->iv, AES_BLOCK_SIZE);
-> -	do {
-> -		ret = adf_send_message(ctx->inst->sym_tx, (uint32_t *)msg);
-> -	} while (ret == -EAGAIN && ctr++ < 10);
->  
-> +	qat_req->backed_off = backed_off = adf_should_back_off(ctx->inst->sym_tx);
-> +again:
-> +	ret = adf_send_message(ctx->inst->sym_tx, (uint32_t *)msg);
->  	if (ret == -EAGAIN) {
-> -		qat_alg_free_bufl(ctx->inst, qat_req);
-> -		dma_free_coherent(dev, AES_BLOCK_SIZE, qat_req->iv,
-> -				  qat_req->iv_paddr);
-> -		return -EBUSY;
-> +		qat_req->backed_off = backed_off = 1;
-> +		cpu_relax();
-> +		goto again;
->  	}
-> -	return -EINPROGRESS;
-> +	return backed_off ? -EBUSY : -EINPROGRESS;
->  }
->  
->  static int qat_alg_skcipher_blk_decrypt(struct skcipher_request *req)
-> Index: linux-2.6/drivers/crypto/qat/qat_common/adf_transport.c
-> ===================================================================
-> --- linux-2.6.orig/drivers/crypto/qat/qat_common/adf_transport.c
-> +++ linux-2.6/drivers/crypto/qat/qat_common/adf_transport.c
-> @@ -114,10 +114,19 @@ static void adf_disable_ring_irq(struct
->  	WRITE_CSR_INT_COL_EN(bank->csr_addr, bank->bank_number, bank->irq_mask);
->  }
->  
-> +bool adf_should_back_off(struct adf_etr_ring_data *ring)
-> +{
-> +	return atomic_read(ring->inflights) > ADF_MAX_INFLIGHTS(ring->ring_size, ring->msg_size) * 15 / 16;
-How did you came up with 15/16?
-checkpatch: WARNING: line over 80 characters
+I tweaked various patch headers (_please_ "dm zoned" instead of
+"dm-zoned" in commit subjects, also don't ever say "we" or "this patch"
+in a commit header... if you do, I am forced to rewrite the header).
 
-> +}
-> +
->  int adf_send_message(struct adf_etr_ring_data *ring, uint32_t *msg)
->  {
-> -	if (atomic_add_return(1, ring->inflights) >
-> -	    ADF_MAX_INFLIGHTS(ring->ring_size, ring->msg_size)) {
-> +	int limit = ADF_MAX_INFLIGHTS(ring->ring_size, ring->msg_size);
-> +
-> +	if (atomic_read(ring->inflights) >= limit)
-> +		return -EAGAIN;
-Can this be removed and leave only the condition below?
-Am I missing something here?
-> +
-> +	if (atomic_add_return(1, ring->inflights) > limit) {
->  		atomic_dec(ring->inflights);
->  		return -EAGAIN;
->  	}
-> Index: linux-2.6/drivers/crypto/qat/qat_common/adf_transport.h
-> ===================================================================
-> --- linux-2.6.orig/drivers/crypto/qat/qat_common/adf_transport.h
-> +++ linux-2.6/drivers/crypto/qat/qat_common/adf_transport.h
-> @@ -58,6 +58,7 @@ int adf_create_ring(struct adf_accel_dev
->  		    const char *ring_name, adf_callback_fn callback,
->  		    int poll_mode, struct adf_etr_ring_data **ring_ptr);
->  
-> +bool adf_should_back_off(struct adf_etr_ring_data *ring);
->  int adf_send_message(struct adf_etr_ring_data *ring, uint32_t *msg);
->  void adf_remove_ring(struct adf_etr_ring_data *ring);
->  #endif
-> Index: linux-2.6/drivers/crypto/qat/qat_common/qat_crypto.h
-> ===================================================================
-> --- linux-2.6.orig/drivers/crypto/qat/qat_common/qat_crypto.h
-> +++ linux-2.6/drivers/crypto/qat/qat_common/qat_crypto.h
-> @@ -90,6 +90,7 @@ struct qat_crypto_request {
->  		   struct qat_crypto_request *req);
->  	void *iv;
->  	dma_addr_t iv_paddr;
-> +	int backed_off;
->  };
->  
->  #endif
-> 
-Regards,
+BTW, just so I feel like I said it: all these changes to use additional
+device(s) really seems like a tradeoff between performance and reduced
+MTBF -- there is increased potential for failure with each additional
+device that is added to the dm-zoned device... there I've said it ;)
 
--- 
-Giovanni
+Thanks,
+Mike
