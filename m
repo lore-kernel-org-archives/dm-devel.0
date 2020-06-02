@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 14/15] dm-zoned: prefer full zones for reclaim
-Date: Tue,  2 Jun 2020 13:09:55 +0200
-Message-ID: <20200602110956.121170-15-hare@suse.de>
+Subject: [PATCH 02/15] dm-zoned: secondary superblock must reside
+	on the same devices than primary superblock
+Date: Tue,  2 Jun 2020 13:09:43 +0200
+Message-ID: <20200602110956.121170-3-hare@suse.de>
 References: <20200602110956.121170-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,40 +22,44 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Prefer full zones when selecting the next zone for reclaim.
+The secondary superblock must reside on the same device than the
+primary superblock, so there's no need to re-calculate the device.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
 ---
- drivers/md/dm-zoned-metadata.c | 9 ++++++++-
- 1 file changed, 8 insertions(+), 1 deletion(-)
+ drivers/md/dm-zoned-metadata.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index 6c8d4ddd8b27..e01ca1c57ff2 100644
+index ef1524d5928a..043ed882970a 100644
 --- a/drivers/md/dm-zoned-metadata.c
 +++ b/drivers/md/dm-zoned-metadata.c
-@@ -1939,7 +1939,7 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd,
- 						    unsigned int idx, bool idle)
- {
- 	struct dm_zone *dzone = NULL;
--	struct dm_zone *zone;
-+	struct dm_zone *zone, *last = NULL;
- 	struct list_head *zone_list;
+@@ -1135,7 +1135,7 @@ static int dmz_lookup_secondary_sb(struct dmz_metadata *zmd)
+ 	/* Bad first super block: search for the second one */
+ 	zmd->sb[1].block = zmd->sb[0].block + zone_nr_blocks;
+ 	zmd->sb[1].zone = zmd->sb[0].zone + 1;
+-	zmd->sb[1].dev = dmz_zone_to_dev(zmd, zmd->sb[1].zone);
++	zmd->sb[1].dev = zmd->sb[0].dev;
+ 	for (i = 0; i < zmd->nr_rnd_zones - 1; i++) {
+ 		if (dmz_read_sb(zmd, 1) != 0)
+ 			break;
+@@ -1144,7 +1144,6 @@ static int dmz_lookup_secondary_sb(struct dmz_metadata *zmd)
+ 			return 0;
+ 		}
+ 		zmd->sb[1].block += zone_nr_blocks;
+-		zmd->sb[1].dev = dmz_zone_to_dev(zmd, zmd->sb[1].zone + i);
+ 	}
  
- 	/* If we have cache zones select from the cache zone list */
-@@ -1956,6 +1956,13 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd,
- 			dzone = zone->bzone;
- 			if (dzone->dev->dev_idx != idx)
- 				continue;
-+			if (!last) {
-+				last = dzone;
-+				continue;
-+			}
-+			if (last->weight < dzone->weight)
-+				continue;
-+			dzone = last;
- 		} else
- 			dzone = zone;
- 		if (dmz_lock_zone_reclaim(dzone))
+ 	dmz_free_mblock(zmd, mblk);
+@@ -1263,7 +1262,7 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
+ 		if (!zmd->sb[1].zone)
+ 			zmd->sb[1].zone = zmd->sb[0].zone + zmd->nr_meta_zones;
+ 		zmd->sb[1].block = dmz_start_block(zmd, zmd->sb[1].zone);
+-		zmd->sb[1].dev = dmz_zone_to_dev(zmd, zmd->sb[1].zone);
++		zmd->sb[1].dev = zmd->sb[0].dev;
+ 		ret = dmz_get_sb(zmd, 1);
+ 	} else
+ 		ret = dmz_lookup_secondary_sb(zmd);
 -- 
 2.16.4
