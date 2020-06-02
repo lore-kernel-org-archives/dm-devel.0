@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 05/15] dm-zoned: convert to xarray
-Date: Tue,  2 Jun 2020 13:09:46 +0200
-Message-ID: <20200602110956.121170-6-hare@suse.de>
+Subject: [PATCH 11/15] dm-zoned: support arbitrary number of
+	devices
+Date: Tue,  2 Jun 2020 13:09:52 +0200
+Message-ID: <20200602110956.121170-12-hare@suse.de>
 References: <20200602110956.121170-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,278 +22,257 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The zones array is getting really large, and large arrays
-tend to wreak havoc with the CPU caches.
-So convert it to xarray to become more cache friendly.
+Remove the hard-coded limit of two devices and support an unlimited
+number of additional zoned devices.
+With that we need to increase the device-mapper version number to
+3.0.0 as we've modified the interface.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
-Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
 ---
- drivers/md/dm-zoned-metadata.c | 120 ++++++++++++++++++++++++++++++-----------
- 1 file changed, 88 insertions(+), 32 deletions(-)
+ drivers/md/dm-zoned-metadata.c |  15 +++++-
+ drivers/md/dm-zoned-target.c   | 106 ++++++++++++++++++++++++-----------------
+ 2 files changed, 75 insertions(+), 46 deletions(-)
 
 diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index 0982ab1758a6..839f9078806d 100644
+index 044c152eb756..221163ae5f68 100644
 --- a/drivers/md/dm-zoned-metadata.c
 +++ b/drivers/md/dm-zoned-metadata.c
-@@ -172,7 +172,7 @@ struct dmz_metadata {
- 	unsigned int		nr_chunks;
+@@ -1523,7 +1523,20 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
+ 		 */
+ 		zmd->sb[0].zone = dmz_get(zmd, 0);
  
- 	/* Zone information array */
--	struct dm_zone		*zones;
-+	struct xarray		zones;
+-		zoned_dev = &zmd->dev[1];
++		for (i = 1; i < zmd->nr_devs; i++) {
++			zoned_dev = &zmd->dev[i];
++
++			ret = blkdev_report_zones(zoned_dev->bdev, 0,
++						  BLK_ALL_ZONES,
++						  dmz_init_zone, zoned_dev);
++			if (ret < 0) {
++				DMDEBUG("(%s): Failed to report zones, error %d",
++					zmd->devname, ret);
++				dmz_drop_zones(zmd);
++				return ret;
++			}
++		}
++		return 0;
+ 	}
  
- 	struct dmz_sb		sb[3];
- 	unsigned int		mblk_primary;
-@@ -327,6 +327,30 @@ unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd)
- 	return atomic_read(&zmd->unmap_nr_seq);
- }
+ 	/*
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index aa3d26d16441..4a51738d4b0d 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -13,8 +13,6 @@
  
-+static struct dm_zone *dmz_get(struct dmz_metadata *zmd, unsigned int zone_id)
-+{
-+	return xa_load(&zmd->zones, zone_id);
-+}
-+
-+static struct dm_zone *dmz_insert(struct dmz_metadata *zmd,
-+				  unsigned int zone_id)
-+{
-+	struct dm_zone *zone = kzalloc(sizeof(struct dm_zone), GFP_KERNEL);
-+
-+	if (!zone)
-+		return ERR_PTR(-ENOMEM);
-+
-+	if (xa_insert(&zmd->zones, zone_id, zone, GFP_KERNEL))
-+		return ERR_PTR(-EBUSY);
-+
-+	INIT_LIST_HEAD(&zone->link);
-+	atomic_set(&zone->refcount, 0);
-+	zone->id = zone_id;
-+	zone->chunk = DMZ_MAP_UNMAPPED;
-+
-+	return zone;
-+}
-+
- const char *dmz_metadata_label(struct dmz_metadata *zmd)
- {
- 	return (const char *)zmd->label;
-@@ -1122,6 +1146,7 @@ static int dmz_lookup_secondary_sb(struct dmz_metadata *zmd)
- {
- 	unsigned int zone_nr_blocks = zmd->zone_nr_blocks;
- 	struct dmz_mblock *mblk;
-+	unsigned int zone_id = zmd->sb[0].zone->id;
+ #define DMZ_MIN_BIOS		8192
+ 
+-#define DMZ_MAX_DEVS		2
+-
+ /*
+  * Zone BIO context.
+  */
+@@ -40,10 +38,10 @@ struct dm_chunk_work {
+  * Target descriptor.
+  */
+ struct dmz_target {
+-	struct dm_dev		*ddev[DMZ_MAX_DEVS];
++	struct dm_dev		**ddev;
+ 	unsigned int		nr_ddevs;
+ 
+-	unsigned long		flags;
++	unsigned int		flags;
+ 
+ 	/* Zoned block device information */
+ 	struct dmz_dev		*dev;
+@@ -764,7 +762,7 @@ static void dmz_put_zoned_device(struct dm_target *ti)
+ 	struct dmz_target *dmz = ti->private;
  	int i;
  
- 	/* Allocate a block */
-@@ -1134,16 +1159,15 @@ static int dmz_lookup_secondary_sb(struct dmz_metadata *zmd)
+-	for (i = 0; i < DMZ_MAX_DEVS; i++) {
++	for (i = 0; i < dmz->nr_ddevs; i++) {
+ 		if (dmz->ddev[i]) {
+ 			dm_put_device(ti, dmz->ddev[i]);
+ 			dmz->ddev[i] = NULL;
+@@ -777,21 +775,35 @@ static int dmz_fixup_devices(struct dm_target *ti)
+ 	struct dmz_target *dmz = ti->private;
+ 	struct dmz_dev *reg_dev, *zoned_dev;
+ 	struct request_queue *q;
++	sector_t zone_nr_sectors = 0;
++	int i;
  
- 	/* Bad first super block: search for the second one */
- 	zmd->sb[1].block = zmd->sb[0].block + zone_nr_blocks;
--	zmd->sb[1].zone = zmd->sb[0].zone + 1;
-+	zmd->sb[1].zone = dmz_get(zmd, zone_id + 1);
- 	zmd->sb[1].dev = zmd->sb[0].dev;
--	for (i = 0; i < zmd->nr_rnd_zones - 1; i++) {
-+	for (i = 1; i < zmd->nr_rnd_zones; i++) {
- 		if (dmz_read_sb(zmd, 1) != 0)
- 			break;
--		if (le32_to_cpu(zmd->sb[1].sb->magic) == DMZ_MAGIC) {
--			zmd->sb[1].zone += i;
-+		if (le32_to_cpu(zmd->sb[1].sb->magic) == DMZ_MAGIC)
- 			return 0;
--		}
- 		zmd->sb[1].block += zone_nr_blocks;
-+		zmd->sb[1].zone = dmz_get(zmd, zone_id + i);
- 	}
- 
- 	dmz_free_mblock(zmd, mblk);
-@@ -1259,8 +1283,12 @@ static int dmz_load_sb(struct dmz_metadata *zmd)
- 	/* Read and check secondary super block */
- 	if (ret == 0) {
- 		sb_good[0] = true;
--		if (!zmd->sb[1].zone)
--			zmd->sb[1].zone = zmd->sb[0].zone + zmd->nr_meta_zones;
-+		if (!zmd->sb[1].zone) {
-+			unsigned int zone_id =
-+				zmd->sb[0].zone->id + zmd->nr_meta_zones;
-+
-+			zmd->sb[1].zone = dmz_get(zmd, zone_id);
-+		}
- 		zmd->sb[1].block = dmz_start_block(zmd, zmd->sb[1].zone);
- 		zmd->sb[1].dev = zmd->sb[0].dev;
- 		ret = dmz_get_sb(zmd, 1);
-@@ -1341,7 +1369,11 @@ static int dmz_init_zone(struct blk_zone *blkz, unsigned int num, void *data)
- 	struct dmz_metadata *zmd = data;
- 	struct dmz_dev *dev = zmd->nr_devs > 1 ? &zmd->dev[1] : &zmd->dev[0];
- 	int idx = num + dev->zone_offset;
--	struct dm_zone *zone = &zmd->zones[idx];
-+	struct dm_zone *zone;
-+
-+	zone = dmz_insert(zmd, idx);
-+	if (IS_ERR(zone))
-+		return PTR_ERR(zone);
- 
- 	if (blkz->len != zmd->zone_nr_sectors) {
- 		if (zmd->sb_version > 1) {
-@@ -1353,11 +1385,6 @@ static int dmz_init_zone(struct blk_zone *blkz, unsigned int num, void *data)
- 		return -ENXIO;
- 	}
- 
--	INIT_LIST_HEAD(&zone->link);
--	atomic_set(&zone->refcount, 0);
--	zone->id = idx;
--	zone->chunk = DMZ_MAP_UNMAPPED;
--
- 	switch (blkz->type) {
- 	case BLK_ZONE_TYPE_CONVENTIONAL:
- 		set_bit(DMZ_RND, &zone->flags);
-@@ -1397,18 +1424,17 @@ static int dmz_init_zone(struct blk_zone *blkz, unsigned int num, void *data)
- 	return 0;
- }
- 
--static void dmz_emulate_zones(struct dmz_metadata *zmd, struct dmz_dev *dev)
-+static int dmz_emulate_zones(struct dmz_metadata *zmd, struct dmz_dev *dev)
- {
- 	int idx;
- 	sector_t zone_offset = 0;
- 
- 	for(idx = 0; idx < dev->nr_zones; idx++) {
--		struct dm_zone *zone = &zmd->zones[idx];
-+		struct dm_zone *zone;
- 
--		INIT_LIST_HEAD(&zone->link);
--		atomic_set(&zone->refcount, 0);
--		zone->id = idx;
--		zone->chunk = DMZ_MAP_UNMAPPED;
-+		zone = dmz_insert(zmd, idx);
-+		if (IS_ERR(zone))
-+			return PTR_ERR(zone);
- 		set_bit(DMZ_CACHE, &zone->flags);
- 		zone->wp_block = 0;
- 		zmd->nr_cache_zones++;
-@@ -1420,6 +1446,7 @@ static void dmz_emulate_zones(struct dmz_metadata *zmd, struct dmz_dev *dev)
- 		}
- 		zone_offset += zmd->zone_nr_sectors;
- 	}
-+	return 0;
- }
- 
- /*
-@@ -1427,8 +1454,15 @@ static void dmz_emulate_zones(struct dmz_metadata *zmd, struct dmz_dev *dev)
-  */
- static void dmz_drop_zones(struct dmz_metadata *zmd)
- {
--	kfree(zmd->zones);
--	zmd->zones = NULL;
-+	int idx;
-+
-+	for(idx = 0; idx < zmd->nr_zones; idx++) {
-+		struct dm_zone *zone = xa_load(&zmd->zones, idx);
-+
-+		kfree(zone);
-+		xa_erase(&zmd->zones, idx);
-+	}
-+	xa_destroy(&zmd->zones);
- }
- 
- /*
-@@ -1460,20 +1494,25 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
- 		DMERR("(%s): No zones found", zmd->devname);
- 		return -ENXIO;
- 	}
--	zmd->zones = kcalloc(zmd->nr_zones, sizeof(struct dm_zone), GFP_KERNEL);
--	if (!zmd->zones)
--		return -ENOMEM;
-+	xa_init(&zmd->zones);
- 
- 	DMDEBUG("(%s): Using %zu B for zone information",
- 		zmd->devname, sizeof(struct dm_zone) * zmd->nr_zones);
- 
- 	if (zmd->nr_devs > 1) {
--		dmz_emulate_zones(zmd, &zmd->dev[0]);
-+		ret = dmz_emulate_zones(zmd, &zmd->dev[0]);
-+		if (ret < 0) {
-+			DMDEBUG("(%s): Failed to emulate zones, error %d",
-+				zmd->devname, ret);
-+			dmz_drop_zones(zmd);
-+			return ret;
-+		}
-+
- 		/*
- 		 * Primary superblock zone is always at zone 0 when multiple
- 		 * drives are present.
- 		 */
--		zmd->sb[0].zone = &zmd->zones[0];
-+		zmd->sb[0].zone = dmz_get(zmd, 0);
- 
- 		zoned_dev = &zmd->dev[1];
- 	}
-@@ -1576,11 +1615,6 @@ static int dmz_handle_seq_write_err(struct dmz_metadata *zmd,
- 	return 0;
- }
- 
--static struct dm_zone *dmz_get(struct dmz_metadata *zmd, unsigned int zone_id)
--{
--	return &zmd->zones[zone_id];
--}
--
- /*
-  * Reset a zone write pointer.
-  */
-@@ -1662,6 +1696,11 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
- 		}
- 
- 		dzone = dmz_get(zmd, dzone_id);
-+		if (!dzone) {
-+			dmz_zmd_err(zmd, "Chunk %u mapping: data zone %u not present",
-+				    chunk, dzone_id);
-+			return -EIO;
-+		}
- 		set_bit(DMZ_DATA, &dzone->flags);
- 		dzone->chunk = chunk;
- 		dmz_get_zone_weight(zmd, dzone);
-@@ -1685,6 +1724,11 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
- 		}
- 
- 		bzone = dmz_get(zmd, bzone_id);
-+		if (!bzone) {
-+			dmz_zmd_err(zmd, "Chunk %u mapping: buffer zone %u not present",
-+				    chunk, bzone_id);
-+			return -EIO;
-+		}
- 		if (!dmz_is_rnd(bzone) && !dmz_is_cache(bzone)) {
- 			dmz_zmd_err(zmd, "Chunk %u mapping: invalid buffer zone %u",
- 				    chunk, bzone_id);
-@@ -1715,6 +1759,8 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
+ 	/*
+-	 * When we have two devices, the first one must be a regular block
+-	 * device and the second a zoned block device.
++	 * When we have more than on devices, the first one must be a
++	 * regular block device and the others zoned block devices.
  	 */
- 	for (i = 0; i < zmd->nr_zones; i++) {
- 		dzone = dmz_get(zmd, i);
-+		if (!dzone)
-+			continue;
- 		if (dmz_is_meta(dzone))
- 			continue;
- 		if (dmz_is_offline(dzone))
-@@ -1978,6 +2024,10 @@ struct dm_zone *dmz_get_chunk_mapping(struct dmz_metadata *zmd, unsigned int chu
+-	if (dmz->ddev[0] && dmz->ddev[1]) {
++	if (dmz->nr_ddevs > 1) {
+ 		reg_dev = &dmz->dev[0];
+ 		if (!(reg_dev->flags & DMZ_BDEV_REGULAR)) {
+ 			ti->error = "Primary disk is not a regular device";
+ 			return -EINVAL;
+ 		}
+-		zoned_dev = &dmz->dev[1];
+-		if (zoned_dev->flags & DMZ_BDEV_REGULAR) {
+-			ti->error = "Secondary disk is not a zoned device";
+-			return -EINVAL;
++		for (i = 1; i < dmz->nr_ddevs; i++) {
++			zoned_dev = &dmz->dev[i];
++			if (zoned_dev->flags & DMZ_BDEV_REGULAR) {
++				ti->error = "Secondary disk is not a zoned device";
++				return -EINVAL;
++			}
++			q = bdev_get_queue(zoned_dev->bdev);
++			if (zone_nr_sectors &&
++			    zone_nr_sectors != blk_queue_zone_sectors(q)) {
++				ti->error = "Zone nr sectors mismatch";
++				return -EINVAL;
++			}
++			zone_nr_sectors = blk_queue_zone_sectors(q);
++			zoned_dev->zone_nr_sectors = zone_nr_sectors;
++			zoned_dev->nr_zones =
++				blkdev_nr_zones(zoned_dev->bdev->bd_disk);
+ 		}
  	} else {
- 		/* The chunk is already mapped: get the mapping zone */
- 		dzone = dmz_get(zmd, dzone_id);
-+		if (!dzone) {
-+			dzone = ERR_PTR(-EIO);
-+			goto out;
+ 		reg_dev = NULL;
+@@ -800,17 +812,24 @@ static int dmz_fixup_devices(struct dm_target *ti)
+ 			ti->error = "Disk is not a zoned device";
+ 			return -EINVAL;
+ 		}
++		q = bdev_get_queue(zoned_dev->bdev);
++		zoned_dev->zone_nr_sectors = blk_queue_zone_sectors(q);
++		zoned_dev->nr_zones = blkdev_nr_zones(zoned_dev->bdev->bd_disk);
+ 	}
+-	q = bdev_get_queue(zoned_dev->bdev);
+-	zoned_dev->zone_nr_sectors = blk_queue_zone_sectors(q);
+-	zoned_dev->nr_zones = blkdev_nr_zones(zoned_dev->bdev->bd_disk);
+ 
+ 	if (reg_dev) {
+-		reg_dev->zone_nr_sectors = zoned_dev->zone_nr_sectors;
++		sector_t zone_offset;
++
++		reg_dev->zone_nr_sectors = zone_nr_sectors;
+ 		reg_dev->nr_zones =
+ 			DIV_ROUND_UP_SECTOR_T(reg_dev->capacity,
+ 					      reg_dev->zone_nr_sectors);
+-		zoned_dev->zone_offset = reg_dev->nr_zones;
++		reg_dev->zone_offset = 0;
++		zone_offset = reg_dev->nr_zones;
++		for (i = 1; i < dmz->nr_ddevs; i++) {
++			dmz->dev[i].zone_offset = zone_offset;
++			zone_offset += dmz->dev[i].nr_zones;
 +		}
- 		if (dzone->chunk != chunk) {
- 			dzone = ERR_PTR(-EIO);
- 			goto out;
-@@ -2794,6 +2844,12 @@ int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
- 	/* Set metadata zones starting from sb_zone */
- 	for (i = 0; i < zmd->nr_meta_zones << 1; i++) {
- 		zone = dmz_get(zmd, zmd->sb[0].zone->id + i);
-+		if (!zone) {
-+			dmz_zmd_err(zmd,
-+				    "metadata zone %u not present", i);
-+			ret = -ENXIO;
-+			goto err;
-+		}
- 		if (!dmz_is_rnd(zone) && !dmz_is_cache(zone)) {
- 			dmz_zmd_err(zmd,
- 				    "metadata zone %d is not random", i);
+ 	}
+ 	return 0;
+ }
+@@ -824,7 +843,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	int ret, i;
+ 
+ 	/* Check arguments */
+-	if (argc < 1 || argc > 2) {
++	if (argc < 1) {
+ 		ti->error = "Invalid argument count";
+ 		return -EINVAL;
+ 	}
+@@ -835,32 +854,31 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		ti->error = "Unable to allocate the zoned target descriptor";
+ 		return -ENOMEM;
+ 	}
+-	dmz->dev = kcalloc(2, sizeof(struct dmz_dev), GFP_KERNEL);
++	dmz->dev = kcalloc(argc, sizeof(struct dmz_dev), GFP_KERNEL);
+ 	if (!dmz->dev) {
+ 		ti->error = "Unable to allocate the zoned device descriptors";
+ 		kfree(dmz);
+ 		return -ENOMEM;
+ 	}
++	dmz->ddev = kcalloc(argc, sizeof(struct dm_dev *), GFP_KERNEL);
++	if (!dmz->ddev) {
++		ti->error = "Unable to allocate the dm device descriptors";
++		ret = -ENOMEM;
++		goto err;
++	}
+ 	dmz->nr_ddevs = argc;
++
+ 	ti->private = dmz;
+ 
+ 	/* Get the target zoned block device */
+-	ret = dmz_get_zoned_device(ti, argv[0], 0, argc);
+-	if (ret)
+-		goto err;
+-
+-	if (argc == 2) {
+-		ret = dmz_get_zoned_device(ti, argv[1], 1, argc);
+-		if (ret) {
+-			dmz_put_zoned_device(ti);
+-			goto err;
+-		}
++	for (i = 0; i < argc; i++) {
++		ret = dmz_get_zoned_device(ti, argv[i], i, argc);
++		if (ret)
++			goto err_dev;
+ 	}
+ 	ret = dmz_fixup_devices(ti);
+-	if (ret) {
+-		dmz_put_zoned_device(ti);
+-		goto err;
+-	}
++	if (ret)
++		goto err_dev;
+ 
+ 	/* Initialize metadata */
+ 	ret = dmz_ctr_metadata(dmz->dev, argc, &dmz->metadata,
+@@ -1056,13 +1074,13 @@ static int dmz_iterate_devices(struct dm_target *ti,
+ 	struct dmz_target *dmz = ti->private;
+ 	unsigned int zone_nr_sectors = dmz_zone_nr_sectors(dmz->metadata);
+ 	sector_t capacity;
+-	int r;
++	int i, r;
+ 
+-	capacity = dmz->dev[0].capacity & ~(zone_nr_sectors - 1);
+-	r = fn(ti, dmz->ddev[0], 0, capacity, data);
+-	if (!r && dmz->ddev[1]) {
+-		capacity = dmz->dev[1].capacity & ~(zone_nr_sectors - 1);
+-		r = fn(ti, dmz->ddev[1], 0, capacity, data);
++	for (i = 0; i < dmz->nr_ddevs; i++) {
++		capacity = dmz->dev[i].capacity & ~(zone_nr_sectors - 1);
++		r = fn(ti, dmz->ddev[i], 0, capacity, data);
++		if (r)
++			break;
+ 	}
+ 	return r;
+ }
+@@ -1083,9 +1101,7 @@ static void dmz_status(struct dm_target *ti, status_type_t type,
+ 		       dmz_nr_zones(dmz->metadata),
+ 		       dmz_nr_unmap_cache_zones(dmz->metadata),
+ 		       dmz_nr_cache_zones(dmz->metadata));
+-		for (i = 0; i < DMZ_MAX_DEVS; i++) {
+-			if (!dmz->ddev[i])
+-				continue;
++		for (i = 0; i < dmz->nr_ddevs; i++) {
+ 			/*
+ 			 * For a multi-device setup the first device
+ 			 * contains only cache zones.
+@@ -1104,8 +1120,8 @@ static void dmz_status(struct dm_target *ti, status_type_t type,
+ 		dev = &dmz->dev[0];
+ 		format_dev_t(buf, dev->bdev->bd_dev);
+ 		DMEMIT("%s", buf);
+-		if (dmz->dev[1].bdev) {
+-			dev = &dmz->dev[1];
++		for (i = 1; i < dmz->nr_ddevs; i++) {
++			dev = &dmz->dev[i];
+ 			format_dev_t(buf, dev->bdev->bd_dev);
+ 			DMEMIT(" %s", buf);
+ 		}
+@@ -1133,7 +1149,7 @@ static int dmz_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 
+ static struct target_type dmz_type = {
+ 	.name		 = "zoned",
+-	.version	 = {2, 0, 0},
++	.version	 = {3, 0, 0},
+ 	.features	 = DM_TARGET_SINGLETON | DM_TARGET_ZONED_HM,
+ 	.module		 = THIS_MODULE,
+ 	.ctr		 = dmz_ctr,
 -- 
 2.16.4
