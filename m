@@ -1,46 +1,107 @@
-From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Subject: Re: [PATCH RFC 1/3] block: add flag 'nowait_requests' into queue
- limits
-Date: Wed, 3 Jun 2020 11:24:53 +0300
-Message-ID: <2a58bc7a-0aad-3f40-cb8e-db9cb88f9df4@yandex-team.ru>
-References: <159101473169.180989.12175693728191972447.stgit@buzz>
- <159101502963.180989.6228080995222059011.stgit@buzz>
- <20200603045822.GA17137@infradead.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 1/4] qat: fix misunderstood -EBUSY return code
+Date: Wed, 3 Jun 2020 04:31:54 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2006030409520.15292@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20200601160418.171851200@debian-a64.vm> <20200602220516.GA20880@silpixa00400314>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200603045822.GA17137@infradead.org>
-Content-Language: en-CA
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Jens Axboe <axboe@kernel.dk>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20200602220516.GA20880@silpixa00400314>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Giovanni Cabiddu <giovanni.cabiddu@intel.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>, djeffery@redhat.com, dm-devel@redhat.com, qat-linux@intel.com, linux-crypto@vger.kernel.org, guazhang@redhat.com, jpittman@redhat.com
 List-Id: dm-devel.ids
 
-On 03/06/2020 07.58, Christoph Hellwig wrote:
-> On Mon, Jun 01, 2020 at 03:37:09PM +0300, Konstantin Khlebnikov wrote:
->> Add flag for marking bio-based queues which support REQ_NOWAIT.
->> Set for all request based (mq) devices.
->>
->> Stacking device should set it after blk_set_stacking_limits() if method
->> make_request() itself doesn't delay requests or handles REQ_NOWAIT.
+
+
+On Tue, 2 Jun 2020, Giovanni Cabiddu wrote:
+
+> Hi Mikulas,
 > 
-> I don't think this belongs into the queue limits.  For example a
-> stacking driver that always defers requests to a workqueue can support
-> REQ_NOWAIT entirely independent of the underlying devices.  I think
-> this just needs to be a simple queue flag.
+> thanks for your patch. See below.
 > 
+> > +	qat_req->backed_off = backed_off = adf_should_back_off(ctx->inst->sym_tx);
+> > +again:
+> > +	ret = adf_send_message(ctx->inst->sym_tx, (uint32_t *)msg);
+> >  	if (ret == -EAGAIN) {
+> > -		qat_alg_free_bufl(ctx->inst, qat_req);
+> > -		return -EBUSY;
+> > +		qat_req->backed_off = backed_off = 1;
+> > +		cpu_relax();
+> > +		goto again;
+> >  	}
+> I am a bit concerned about this potential infinite loop.
+> If an error occurred on the device and the queue is full, we will be
+> stuck here forever.
+> Should we just retry a number of times and then fail?
 
-For O_DIRECT I/O REQ_NOWAIT not just about non-blocking submition.
-It also provides instant feedback about contention. Like ECN from network.
-This feedback is useful for rate-control and balancing load between replicas.
+It's better to get stuck in an infinite loop than to cause random I/O 
+errors. The infinite loop requires reboot, but it doesn't damage data on 
+disks.
 
-If upper layer simply remaps and forwards requests below then to forward
-contention all layers of stacked device should support this feature.
-That's why I've put it as flag into limits - to reuse limits stacking.
+The proper solution would be to add the request to a queue and process the 
+queue when some other request ended - but it would need substantial 
+rewrite of the driver. Do you want to rewrite it using a queue?
 
-If any layer defers request, then it should somehow limit size of backlog
-at the same time to provide sane behaviour for REQ_NOWAIT regardless of
-behaviour lower devices. So, then it could simply set that flag in limits.
+> Or, should we just move to the crypto-engine?
 
-Also I want to add handing into blk-qos/throttler - never delay REQ_NOWAIT.
+What do you mean by the crypto-engine?
+
+> > -	do {
+> > -		ret = adf_send_message(ctx->inst->sym_tx, (uint32_t *)msg);
+> > -	} while (ret == -EAGAIN && ctr++ < 10);
+> > -
+> > +	qat_req->backed_off = backed_off = adf_should_back_off(ctx->inst->sym_tx);
+> checkpatch: line over 80 characters - same in every place
+> adf_should_back_off is used.
+
+Recently, Linus announced that we can have larger lines than 80 bytes.
+See bdc48fa11e46f867ea4d75fa59ee87a7f48be144
+
+> >  static int qat_alg_skcipher_blk_decrypt(struct skcipher_request *req)
+> > Index: linux-2.6/drivers/crypto/qat/qat_common/adf_transport.c
+> > ===================================================================
+> > --- linux-2.6.orig/drivers/crypto/qat/qat_common/adf_transport.c
+> > +++ linux-2.6/drivers/crypto/qat/qat_common/adf_transport.c
+> > @@ -114,10 +114,19 @@ static void adf_disable_ring_irq(struct
+> >  	WRITE_CSR_INT_COL_EN(bank->csr_addr, bank->bank_number, bank->irq_mask);
+> >  }
+> >  
+> > +bool adf_should_back_off(struct adf_etr_ring_data *ring)
+> > +{
+> > +	return atomic_read(ring->inflights) > ADF_MAX_INFLIGHTS(ring->ring_size, ring->msg_size) * 15 / 16;
+> How did you came up with 15/16?
+
+I want the sender to back off before the queue is full, to avoid 
+busy-waiting. There may be more concurrent senders, so we want to back off 
+at some point before the queue is full.
+
+> checkpatch: WARNING: line over 80 characters
+> 
+> > +}
+> > +
+> >  int adf_send_message(struct adf_etr_ring_data *ring, uint32_t *msg)
+> >  {
+> > -	if (atomic_add_return(1, ring->inflights) >
+> > -	    ADF_MAX_INFLIGHTS(ring->ring_size, ring->msg_size)) {
+> > +	int limit = ADF_MAX_INFLIGHTS(ring->ring_size, ring->msg_size);
+> > +
+> > +	if (atomic_read(ring->inflights) >= limit)
+> > +		return -EAGAIN;
+
+> Can this be removed and leave only the condition below?
+> Am I missing something here?
+
+atomic_read is light, atomic_add_return is heavy. We may be busy-waiting 
+here, so I want to use the light instruction. Spinlocks do the same - when 
+they are spinning, they use just a light "read" instruction and when the 
+"read" instruction indicates that the spinlock is free, they execute the 
+read-modify-write instruction to actually acquire the lock.
+
+> > +
+> > +	if (atomic_add_return(1, ring->inflights) > limit) {
+> >  		atomic_dec(ring->inflights);
+> >  		return -EAGAIN;
+> >  	}
+
+Mikulas
