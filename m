@@ -1,28 +1,68 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH RFC 1/3] block: add flag 'nowait_requests' into queue
- limits
-Date: Tue, 2 Jun 2020 21:58:22 -0700
-Message-ID: <20200603045822.GA17137@infradead.org>
-References: <159101473169.180989.12175693728191972447.stgit@buzz>
- <159101502963.180989.6228080995222059011.stgit@buzz>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCHv4 00/15] dm-zoned: multiple drive support
+Date: Wed, 3 Jun 2020 09:09:15 +0200
+Message-ID: <ff341711-ef31-d7e4-f45d-e788e25e7dad@suse.de>
+References: <20200602110956.121170-1-hare@suse.de>
+	<20200602222719.GA14318@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <159101502963.180989.6228080995222059011.stgit@buzz>
-Sender: linux-block-owner@vger.kernel.org
-To: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Cc: linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200602222719.GA14318@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jun 01, 2020 at 03:37:09PM +0300, Konstantin Khlebnikov wrote:
-> Add flag for marking bio-based queues which support REQ_NOWAIT.
-> Set for all request based (mq) devices.
-> 
-> Stacking device should set it after blk_set_stacking_limits() if method
-> make_request() itself doesn't delay requests or handles REQ_NOWAIT.
-
-I don't think this belongs into the queue limits.  For example a
-stacking driver that always defers requests to a workqueue can support
-REQ_NOWAIT entirely independent of the underlying devices.  I think
-this just needs to be a simple queue flag.
+T24gNi8zLzIwIDEyOjI3IEFNLCBNaWtlIFNuaXR6ZXIgd3JvdGU6Cj4gT24gVHVlLCBKdW4gMDIg
+MjAyMCBhdCAgNzowOWFtIC0wNDAwLAo+IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNlLmRlPiB3
+cm90ZToKPiAKPj4gSGkgYWxsLAo+Pgo+PiBoZXJlJ3MgdGhlIHNlY29uZCB2ZXJzaW9uIG9mIG15
+IHBhdGNoc2V0IHRvIHN1cHBvcnQgbXVsdGlwbGUgem9uZWQKPj4gZHJpdmVzIHdpdGggZG0tem9u
+ZWQuCj4+IFRoaXMgcGF0Y2hzZXQ6Cj4+IC0gQ29udmVydHMgdGhlIHpvbmUgYXJyYXkgdG8gdXNp
+bmcgeGFycmF5IGZvciBiZXR0ZXIgc2NhbGFiaWxpdHkKPj4gLSBTZXBhcmF0ZXMgb3V0IHNoYXJl
+ZCBzdHJ1Y3R1cmVzIGludG8gcGVyLWRldmljZSBzdHJ1Y3R1cmUKPj4gLSBFbmZvcmNlIGRyaXZl
+LWxvY2FsaXR5IGZvciBhbGxvY2F0aW5nIGFuZCByZWNsYWltaW5nIHpvbmVzCj4+IC0gTGlmdHMg
+dGhlIHJlc3RyaWN0aW9uIG9mIDIgZGV2aWNlcyB0byBoYW5kbGUgYW4gYXJiaXRyYXJ5IG51bWJl
+cgo+PiAgICBvZiBkcml2ZXMuCj4+Cj4+IFRoaXMgZ2l2ZXMgbWUgYSBuZWFyLXBlcmZlY3Qgc2Nh
+bGFiaWxpdHkgYnkgaW5jcmVhc2luZyB0aGUgd3JpdGUKPj4gc3BlZWQgZnJvbSAxNTBNQi9zIChm
+b3IgYSBjYWNoZSBhbmQgb25lIHpvbmVkIGRyaXZlKSB0byAzMDBNQi9zCj4+IChmb3IgYSBjYWNo
+ZSBhbmQgdHdvIHpvbmVkIGRyaXZlcykuCj4+Cj4+IENoYW5nZXMgdG8gdjE6Cj4+IC0gSW5jbHVk
+ZSByZXZpZXdzIGZyb20gRGFtaWVuCj4+IC0gUmVzaHVmZmxlIHBhdGNoZXMKPj4gQ2hhbmdlcyB0
+byB2MjoKPj4gLSBBZGQgcmV2aWV3cyBmcm9tIERhbWllbgo+PiAtIE1lcmdlIHBhdGNoZXMgJ2R5
+bmFtaWMgZGV2aWNlIGFsbG9jYXRpb24nIGFuZAo+PiAgICAnc3VwcG9ydCBhcmJpdHJhcnkgbnVt
+YmVyIG9mIGRldmljZXMnCj4+IC0gRml4IG1lbW9yeSBsZWFrIHdoZW4gcmVhZGluZyB0ZXJ0aWFy
+eSBzdXBlcmJsb2Nrcwo+PiBDaGFuZ2VzIHRvIHYzOgo+PiAtIEFkZCByZXZpZXdzIGZyb20gRGFt
+aWVuCj4+IC0gQWRkIHBhdGNoIHRvIGVuc3VyZSBjb3JyZWN0IGRldmljZSBvcmRlcmluZwo+IAo+
+IEkndmUgcGlja2VkIHRoaXMgc2VyaWVzIHVwIGZvciA1LjggKHllcywgSSBrbm93IGl0IGlzIGxh
+c3QgbWludXRlKS4gIEJ1dAo+IEkgc2F3IG5vIGJlbmVmaXQgdG8gbWVyZ2luZyB0aGUgaW5pdGlh
+bCAyIGRldmljZSBzdGVwIGluIDUuOCBvbmx5IHRvCj4gdGhlbiBjaHVybiB0aGUgY29kZSBhbmQg
+aW50ZXJmYWNlIHRvIHN1cHBvcnQgYW4gYXJiaXRyYXJ5IG51bWJlciBvZgo+IGRldmljZXMgaW4g
+NS45LiAgRWFzaWVyIHRvIHN1cHBvcnQgb25lIG1ham9yIHVwZGF0ZSB0byB0aGUgY29kZSBub3cu
+Cj4gCj4gQXMgc3VjaCB0aGUgdGFyZ2V0J3MgdmVyc2lvbiBudW1iZXIgd2FzIF9ub3RfIGJ1bXBl
+ZCBmcm9tIDIuMC4wIHRvCj4gMy4wLjAuCj4gCj4gSSB0d2Vha2VkIHZhcmlvdXMgcGF0Y2ggaGVh
+ZGVycyAoX3BsZWFzZV8gImRtIHpvbmVkIiBpbnN0ZWFkIG9mCj4gImRtLXpvbmVkIiBpbiBjb21t
+aXQgc3ViamVjdHMsIGFsc28gZG9uJ3QgZXZlciBzYXkgIndlIiBvciAidGhpcyBwYXRjaCIKPiBp
+biBhIGNvbW1pdCBoZWFkZXIuLi4gaWYgeW91IGRvLCBJIGFtIGZvcmNlZCB0byByZXdyaXRlIHRo
+ZSBoZWFkZXIpLgo+IAo+IEJUVywganVzdCBzbyBJIGZlZWwgbGlrZSBJIHNhaWQgaXQ6IGFsbCB0
+aGVzZSBjaGFuZ2VzIHRvIHVzZSBhZGRpdGlvbmFsCj4gZGV2aWNlKHMpIHJlYWxseSBzZWVtcyBs
+aWtlIGEgdHJhZGVvZmYgYmV0d2VlbiBwZXJmb3JtYW5jZSBhbmQgcmVkdWNlZAo+IE1UQkYgLS0g
+dGhlcmUgaXMgaW5jcmVhc2VkIHBvdGVudGlhbCBmb3IgZmFpbHVyZSB3aXRoIGVhY2ggYWRkaXRp
+b25hbAo+IGRldmljZSB0aGF0IGlzIGFkZGVkIHRvIHRoZSBkbS16b25lZCBkZXZpY2UuLi4gdGhl
+cmUgSSd2ZSBzYWlkIGl0IDspCj4gCiJXZSIgKHNpYykgYXJlIGZ1bGx5IGF3YXJlLiBBbmQgSSdt
+IGxvb2tpbmcgaW50byBpdC4KClRoYW5rcyBmb3IgbWVyZ2luZyBpdC4gTW9zdCBhcHByZWNpYXRl
+ZC4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZSAgICAgICAgICAgIFRl
+YW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZSAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIFNvZnR3YXJlIFNvbHV0aW9ucyBH
+bWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKSFJCIDM2ODA5IChBRyBOw7xybmJl
+cmcpLCBHZXNjaMOkZnRzZsO8aHJlcjogRmVsaXggSW1lbmTDtnJmZmVyCgoKLS0KZG0tZGV2ZWwg
+bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
+YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
