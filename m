@@ -1,33 +1,40 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 1/4] qat: fix misunderstood -EBUSY return code
-Date: Wed, 3 Jun 2020 15:54:09 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2006031553170.9890@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20200601160418.171851200@debian-a64.vm> <20200602220516.GA20880@silpixa00400314> <alpine.LRH.2.02.2006030409520.15292@file01.intranet.prod.int.rdu2.redhat.com> <20200603165526.GA94360@silpixa00400314>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: [PATCH] dm crypt: avoid truncating the logical block size
+Date: Thu,  4 Jun 2020 12:01:26 -0700
+Message-ID: <20200604190126.15735-1-ebiggers@kernel.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <20200603165526.GA94360@silpixa00400314>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Giovanni Cabiddu <giovanni.cabiddu@intel.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>, djeffery@redhat.com, dm-devel@redhat.com, qat-linux@intel.com, linux-crypto@vger.kernel.org, guazhang@redhat.com, jpittman@redhat.com, ahsan.atta@intel.com
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+Sender: linux-block-owner@vger.kernel.org
+To: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: linux-block@vger.kernel.org, Mikulas Patocka <mpatocka@redhat.com>, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
+From: Eric Biggers <ebiggers@google.com>
 
+queue_limits::logical_block_size got changed from unsigned short to
+unsigned int, but it was forgotten to update crypt_io_hints() to use the
+new type.  Fix it.
 
-On Wed, 3 Jun 2020, Giovanni Cabiddu wrote:
+Fixes: ad6bf88a6c19 ("block: fix an integer overflow in logical block size")
+Cc: stable@vger.kernel.org
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+---
+ drivers/md/dm-crypt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-> > > > +bool adf_should_back_off(struct adf_etr_ring_data *ring)
-> > > > +{
-> > > > +	return atomic_read(ring->inflights) > ADF_MAX_INFLIGHTS(ring->ring_size, ring->msg_size) * 15 / 16;
-> > > How did you came up with 15/16?
-> > 
-> > I want the sender to back off before the queue is full, to avoid 
-> > busy-waiting. There may be more concurrent senders, so we want to back off 
-> > at some point before the queue is full.
-> Yes, I understood this. My question was about the actual number.
-> 93% of the depth of the queue.
-
-I just guessed the value. If you have some benchmark, you can try 
-different values, to test if they perform better.
-
-Mikulas
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 3df90daba89e..a1dcb8675484 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -3274,7 +3274,7 @@ static void crypt_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ 	limits->max_segment_size = PAGE_SIZE;
+ 
+ 	limits->logical_block_size =
+-		max_t(unsigned short, limits->logical_block_size, cc->sector_size);
++		max_t(unsigned, limits->logical_block_size, cc->sector_size);
+ 	limits->physical_block_size =
+ 		max_t(unsigned, limits->physical_block_size, cc->sector_size);
+ 	limits->io_min = max_t(unsigned, limits->io_min, cc->sector_size);
+-- 
+2.27.0.278.ge193c7cf3a9-goog
