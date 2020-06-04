@@ -1,13 +1,12 @@
-From: yangerkun <yangerkun@huawei.com>
-Subject: [RFC 2/2] dm dust: introduce listbadblocks in the rst
-Date: Fri, 5 Jun 2020 15:32:01 +0800
-Message-ID: <20200605073201.1742675-3-yangerkun@huawei.com>
-References: <20200605073201.1742675-1-yangerkun@huawei.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] libmultipath: fix condlog NULL argument in
+	uevent_get_env_var
+Date: Thu,  4 Jun 2020 18:20:06 -0500
+Message-ID: <1591312806-25110-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200605073201.1742675-1-yangerkun@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,51 +16,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: bgurney@redhat.com, agk@redhat.com, snitzer@redhat.com
-Cc: dm-devel@redhat.com, yangerkun@huawei.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-Since we support the listbadblocks command, introduce the detail in the
-doc.
+uevent_get_env_var() could call condlog with p == NULL. On gcc 10,
+this triggers warnings like:
 
-Signed-off-by: yangerkun <yangerkun@huawei.com>
+In file included from uevent.c:47:
+In function 'uevent_get_env_var',
+    inlined from 'uevent_get_wwid' at uevent.c:170:8:
+debug.h:13:2: error: '%s' directive argument is null
+[-Werror=format-overflow=]
+   13 |  dlog(logsink, prio, fmt "\n", ##args)
+      |  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+uevent.c:132:2: note: in expansion of macro 'condlog'
+  132 |  condlog(4, "%s: %s -> '%s'", __func__, attr, p);
+      |  ^~~~~~~
+uevent.c: In function 'uevent_get_wwid':
+uevent.c:132:25: note: format string is defined here
+  132 |  condlog(4, "%s: %s -> '%s'", __func__, attr, p);
+      |                         ^~
+
+If p is NULL, use "(null)" instead.
+
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- .../admin-guide/device-mapper/dm-dust.rst        | 16 ++++++++++++++++
- 1 file changed, 16 insertions(+)
+ libmultipath/uevent.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/Documentation/admin-guide/device-mapper/dm-dust.rst b/Documentation/admin-guide/device-mapper/dm-dust.rst
-index b6e7e7ead831..185b3ce6298b 100644
---- a/Documentation/admin-guide/device-mapper/dm-dust.rst
-+++ b/Documentation/admin-guide/device-mapper/dm-dust.rst
-@@ -205,6 +205,21 @@ appear::
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index d38e8a7f..e0d13b11 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -129,7 +129,7 @@ static const char* uevent_get_env_var(const struct uevent *uev,
+ 		}
+ 	}
  
-         kernel: device-mapper: dust: clearbadblocks: no badblocks found
+-	condlog(4, "%s: %s -> '%s'", __func__, attr, p);
++	condlog(4, "%s: %s -> '%s'", __func__, attr, p ?: "(null)");
+ 	return p;
  
-+Listling the bad block list
-+---------------------------
-+
-+To list all bad block list, run the following message command::
-+
-+        $ sudo dmsetup message dust1 0 listbadblocks
-+
-+We will get following message(image that we have insert block 1/2, and
-+we will list the block index in order)::
-+
-+        device-mapper: dust: dust_list_badblocks: badblocks list as below:
-+        device-mapper: dust: bad block: 1
-+        device-mapper: dust: bad block: 2
-+        device-mapper: dust: dust_list_badblocks: badblocks list end.
-+
- Message commands list
- ---------------------
- 
-@@ -223,6 +238,7 @@ Single argument message commands::
- 
-         countbadblocks
-         clearbadblocks
-+        listbadblocks
-         disable
-         enable
-         quiet
+ invalid:
 -- 
-2.25.4
+2.17.2
