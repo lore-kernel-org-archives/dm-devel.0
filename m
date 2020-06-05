@@ -1,50 +1,212 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm crypt: avoid truncating the logical block size
-Date: Thu, 4 Jun 2020 15:14:02 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2006041512500.3360@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20200604190126.15735-1-ebiggers@kernel.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper changes for 5.8
+Date: Fri, 5 Jun 2020 10:51:25 -0400
+Message-ID: <20200605145124.GA31972@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20200604190126.15735-1-ebiggers@kernel.org>
-Sender: stable-owner@vger.kernel.org
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, stable@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-block-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Dmitry Baryshkov <dmitry_baryshkov@mentor.com>, Eric Biggers <ebiggers@google.com>, Gabriel Krisman Bertazi <krisman@collabora.com>, "Gustavo A. R. Silva" <gustavoars@kernel.org>, Hannes Reinecke <hare@suse.de>, Heinz Mauelshagen <heinzm@redhat.com>, Khazhismel Kumykov <khazhy@google.com>, Martin Wilck <mwilck@suse.com>, Mikulas Patocka <mpatocka@redhat.com>, Nathan Chancellor <natechancellor@gmail.com>, YueHaibing <yuehaibing@huawei.com>, Zhiqiang Liu <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
+Hi Linus,
 
+For the following changes there is one dm-zoned-metadata.c conflict that
+linux-next has been carrying for a while.  See commit d77e96f277 ("Merge
+remote-tracking branch 'device-mapper/for-next'") from next-20200605.
+It resolves conflict from linux-block's commit 9398554fb3 ("block:
+remove the error_sector argument to blkdev_issue_flush").
 
-On Thu, 4 Jun 2020, Eric Biggers wrote:
+The following changes since commit 2ef96a5bb12be62ef75b5828c0aab838ebb29cb8:
 
-> From: Eric Biggers <ebiggers@google.com>
-> 
-> queue_limits::logical_block_size got changed from unsigned short to
-> unsigned int, but it was forgotten to update crypt_io_hints() to use the
-> new type.  Fix it.
-> 
-> Fixes: ad6bf88a6c19 ("block: fix an integer overflow in logical block size")
-> Cc: stable@vger.kernel.org
-> Signed-off-by: Eric Biggers <ebiggers@google.com>
+  Linux 5.7-rc5 (2020-05-10 15:16:58 -0700)
 
-Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
+are available in the Git repository at:
 
-> ---
->  drivers/md/dm-crypt.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> index 3df90daba89e..a1dcb8675484 100644
-> --- a/drivers/md/dm-crypt.c
-> +++ b/drivers/md/dm-crypt.c
-> @@ -3274,7 +3274,7 @@ static void crypt_io_hints(struct dm_target *ti, struct queue_limits *limits)
->  	limits->max_segment_size = PAGE_SIZE;
->  
->  	limits->logical_block_size =
-> -		max_t(unsigned short, limits->logical_block_size, cc->sector_size);
-> +		max_t(unsigned, limits->logical_block_size, cc->sector_size);
->  	limits->physical_block_size =
->  		max_t(unsigned, limits->physical_block_size, cc->sector_size);
->  	limits->io_min = max_t(unsigned, limits->io_min, cc->sector_size);
-> -- 
-> 2.27.0.278.ge193c7cf3a9-goog
-> 
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.8/dm-changes
+
+for you to fetch changes up to d776dc57aea4f0dfae2173c52538becfca54ab9f:
+
+  dm crypt: avoid truncating the logical block size (2020-06-04 20:57:59 -0400)
+
+Please pull, thanks!
+Mike
+
+----------------------------------------------------------------
+- Largest change for this cycle is the DM zoned target's metadata
+  version 2 feature that adds support for pairing regular block
+  devices with a zoned device to ease performance impact associated
+  with finite random zones of zoned device.  Changes came in 3
+  batches: first prepared for and then added the ability to pair a
+  single regular block device, second was a batch of fixes to improve
+  zoned's reclaim heuristic, third removed the limitation of only
+  adding a single additional regular block device to allow many
+  devices.  Testing has shown linear scaling as more devices are
+  added.
+
+- Add new emulated block size (ebs) target that emulates a smaller
+  logical_block_size than a block device supports.  Primary use-case
+  is to emulate "512e" devices that have 512 byte logical_block_size
+  and 4KB physical_block_size.  This is useful to some legacy
+  applications otherwise wouldn't be ablee to be used on 4K devices
+  because they depend on issuing IO in 512 byte granularity.
+
+- Add discard interfaces to DM bufio.  First consumer of the interface
+  is the dm-ebs target that makes heavy use of dm-bufio.
+
+- Add DM crypt support for using encryopted keys, fix crypt to sleep
+  and retry if crypto layer returns -ENOMEM, and fix crypt's block
+  queue_limits stacking to not truncate logic_block_size.
+
+- Fix DM integrity to also sleep and retry in response to -ENOMEM from
+  the crypto layer.  Also add status line info to Documentation.
+
+- Switch DMDEBUG from a compile time config option to instead use
+  dynamic debug via pr_debug.
+
+- Fix DM multipath target's hueristic for how it manages
+  "queue_if_no_path" state internally.  DM multipath now avoids
+  disabling "queue_if_no_path" unless it is actually needed (e.g. in
+  response to configure timeout or explicit "fail_if_no_path"
+  message).  This fixes reports of spurious -EIO being reported back
+  to userspace application during fault tolerance testing with an NVMe
+  backend.  Added various dynamic DMDEBUG messages to assist with
+  debugging queue_if_no_path in the future.
+
+- Add a new DM multipath "Historical Service Time" Path Selector.
+
+- Fix DM multipath's dm_blk_ioctl() to switch paths on IO error.
+
+- Improve DM writecache target performance by using explicit
+  cache flushing for target's single-threaded usecase and a small
+  cleanup to remove unnecessary test in persistent_memory_claim.
+
+- Other small cleanups in DM core, dm-persistent-data, and DM integrity.
+
+----------------------------------------------------------------
+Dmitry Baryshkov (1):
+      dm crypt: support using encrypted keys
+
+Eric Biggers (1):
+      dm crypt: avoid truncating the logical block size
+
+Gabriel Krisman Bertazi (1):
+      dm mpath: pass IO start time to path selector
+
+Gustavo A. R. Silva (1):
+      dm: replace zero-length array with flexible-array
+
+Hannes Reinecke (38):
+      dm zoned: add 'status' callback
+      dm zoned: add 'message' callback
+      dm zoned: store zone id within the zone structure and kill dmz_id()
+      dm zoned: use array for superblock zones
+      dm zoned: store device in struct dmz_sb
+      dm zoned: move fields from struct dmz_dev to dmz_metadata
+      dm zoned: introduce dmz_metadata_label() to format device name
+      dm zoned: Introduce dmz_dev_is_dying() and dmz_check_dev()
+      dm zoned: remove 'dev' argument from reclaim
+      dm zoned: replace 'target' pointer in the bio context
+      dm zoned: use dmz_zone_to_dev() when handling metadata I/O
+      dm zoned: add metadata logging functions
+      dm zoned: Reduce logging output on startup
+      dm zoned: ignore metadata zone in dmz_alloc_zone()
+      dm zoned: metadata version 2
+      dm: use dynamic debug instead of compile-time config option
+      dm zoned: remove spurious newlines from debugging messages
+      dm zoned: return NULL if dmz_get_zone_for_reclaim() fails to find a zone
+      dm zoned: separate random and cache zones
+      dm zoned: reclaim random zones when idle
+      dm zoned: start reclaim with sequential zones
+      dm zoned: terminate reclaim on congestion
+      dm zoned: remove leftover hunk for switching to sequential zones
+      dm zoned: add debugging message for reading superblocks
+      dm zoned: avoid unnecessary device recalulation for secondary superblock
+      dm zoned: improve logging messages for reclaim
+      dm zoned: add a 'reserved' zone flag
+      dm zoned: convert to xarray
+      dm zoned: allocate temporary superblock for tertiary devices
+      dm zoned: add device pointer to struct dm_zone
+      dm zoned: add metadata pointer to struct dmz_dev
+      dm zoned: per-device reclaim
+      dm zoned: move random and sequential zones into struct dmz_dev
+      dm zoned: support arbitrary number of devices
+      dm zoned: allocate zone by device index
+      dm zoned: select reclaim zone based on device index
+      dm zoned: prefer full zones for reclaim
+      dm zoned: check superblock location
+
+Heinz Mauelshagen (2):
+      dm: add emulated block size target
+      dm ebs: pass discards down to underlying device
+
+Khazhismel Kumykov (1):
+      dm mpath: add Historical Service Time Path Selector
+
+Martin Wilck (1):
+      dm mpath: switch paths in dm_blk_ioctl() code path
+
+Mike Snitzer (5):
+      dm: use DMDEBUG macros now that they use pr_debug variants
+      dm mpath: simplify __must_push_back
+      dm mpath: restrict queue_if_no_path state machine
+      dm mpath: enhance queue_if_no_path debugging
+      dm mpath: add DM device name to Failing/Reinstating path log messages
+
+Mikulas Patocka (10):
+      dm bufio: implement discard
+      dm writecache: remove superfluous test in persistent_memory_claim
+      dm writecache: improve performance on DDR persistent memory (Optane)
+      dm bufio: delete unused and inefficient dm_bufio_discard_buffers
+      dm crypt: sleep and retry on allocation errors
+      dm integrity: sleep and retry on allocation errors
+      dm integrity: add status line documentation
+      dm bufio: clean up rbtree block ordering
+      dm bufio: introduce forget_buffer_locked
+      dm ebs: use dm_bufio_forget_buffers
+
+Nathan Chancellor (1):
+      dm zoned: Avoid 64-bit division error in dmz_fixup_devices
+
+YueHaibing (1):
+      dm integrity: remove set but not used variables
+
+Zhiqiang Liu (1):
+      dm persistent data: switch exit_ro_spine to return void
+
+ Documentation/admin-guide/device-mapper/dm-ebs.rst |   51 +
+ .../admin-guide/device-mapper/dm-integrity.rst     |    8 +
+ .../admin-guide/device-mapper/dm-zoned.rst         |   62 +-
+ drivers/md/Kconfig                                 |   20 +
+ drivers/md/Makefile                                |    3 +
+ drivers/md/dm-bufio.c                              |  109 +-
+ drivers/md/dm-crypt.c                              |   91 +-
+ drivers/md/dm-ebs-target.c                         |  471 +++++++++
+ drivers/md/dm-historical-service-time.c            |  561 +++++++++++
+ drivers/md/dm-integrity.c                          |   11 +-
+ drivers/md/dm-log-writes.c                         |    2 +-
+ drivers/md/dm-mpath.c                              |  123 ++-
+ drivers/md/dm-path-selector.h                      |    2 +-
+ drivers/md/dm-queue-length.c                       |    2 +-
+ drivers/md/dm-raid.c                               |    2 +-
+ drivers/md/dm-raid1.c                              |    2 +-
+ drivers/md/dm-service-time.c                       |    2 +-
+ drivers/md/dm-stats.c                              |    2 +-
+ drivers/md/dm-stripe.c                             |    2 +-
+ drivers/md/dm-switch.c                             |    2 +-
+ drivers/md/dm-writecache.c                         |   42 +-
+ drivers/md/dm-zoned-metadata.c                     | 1046 +++++++++++++++-----
+ drivers/md/dm-zoned-reclaim.c                      |  210 ++--
+ drivers/md/dm-zoned-target.c                       |  463 ++++++---
+ drivers/md/dm-zoned.h                              |  113 ++-
+ drivers/md/dm.c                                    |   11 +-
+ drivers/md/persistent-data/dm-btree-internal.h     |    4 +-
+ drivers/md/persistent-data/dm-btree-spine.c        |    6 +-
+ include/linux/device-mapper.h                      |    9 +-
+ include/linux/dm-bufio.h                           |   12 +
+ 30 files changed, 2794 insertions(+), 650 deletions(-)
+ create mode 100644 Documentation/admin-guide/device-mapper/dm-ebs.rst
+ create mode 100644 drivers/md/dm-ebs-target.c
+ create mode 100644 drivers/md/dm-historical-service-time.c
