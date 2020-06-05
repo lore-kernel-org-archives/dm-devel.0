@@ -1,23 +1,33 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper changes for 5.8
-Date: Fri, 5 Jun 2020 10:51:25 -0400
-Message-ID: <20200605145124.GA31972@redhat.com>
+From: Mike Snitzer <gustavoars@kernel.org>
+Subject: [git pull v2] device mapper changes for 5.8
+Date: Fri, 5 Jun 2020 15:16:13 -0400
+Message-ID: <20200605191613.GA621@redhat.com>
+References: <20200605145124.GA31972@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <20200605145124.GA31972@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
 To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Dmitry Baryshkov <dmitry_baryshkov@mentor.com>, Eric Biggers <ebiggers@google.com>, Gabriel Krisman Bertazi <krisman@collabora.com>, "Gustavo A. R. Silva" <gustavoars@kernel.org>, Hannes Reinecke <hare@suse.de>, Heinz Mauelshagen <heinzm@redhat.com>, Khazhismel Kumykov <khazhy@google.com>, Martin Wilck <mwilck@suse.com>, Mikulas Patocka <mpatocka@redhat.com>, Nathan Chancellor <natechancellor@gmail.com>, YueHaibing <yuehaibing@huawei.com>, Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Dmitry Baryshkov <dmitry_baryshkov@mentor.com>, Eric Biggers <ebiggers@google.com>, Gabriel Krisman Bertazi <krisman@collabora.com>, Hannes Reinecke <hare@suse.de>, Heinz Mauelshagen <heinzm@redhat.com>, Khazhismel Kumykov <khazhy@google.com>, Martin Wilck <mwilck@suse.com>, Mikulas Patocka <mpatocka@redhat.com>, Nathan Chancellor <natechancellor@gmail.com>, YueHaibing <yuehaibing@huawei.com>, Zhiqiang Liu <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
 Hi Linus,
 
+I had some miscommunication with Mikulas on his -ENOMEM sleep and retry
+changes for dm-crypt and dm-integrity, he no longer thinks them
+appropriate: https://www.redhat.com/archives/dm-devel/2020-June/msg00061.html
+So I dropped them via rebase and updated the tag (to avoid any
+potential for linux-stable churn due to them having cc'd
+linux-stable).  Hope that was the correct way forward...
+
 For the following changes there is one dm-zoned-metadata.c conflict that
-linux-next has been carrying for a while.  See commit d77e96f277 ("Merge
+linux-next has been carrying for a while.  See commit d77e96f277 ("Merge
 remote-tracking branch 'device-mapper/for-next'") from next-20200605.
-It resolves conflict from linux-block's commit 9398554fb3 ("block:
-remove the error_sector argument to blkdev_issue_flush").
+It resolves conflict from linux-block's commit 9398554fb3 ("block:
+remove the_error_sector argument to blkdev_issue_flush").
 
 The following changes since commit 2ef96a5bb12be62ef75b5828c0aab838ebb29cb8:
 
@@ -27,9 +37,9 @@ are available in the Git repository at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.8/dm-changes
 
-for you to fetch changes up to d776dc57aea4f0dfae2173c52538becfca54ab9f:
+for you to fetch changes up to 64611a15ca9da91ff532982429c44686f4593b5f:
 
-  dm crypt: avoid truncating the logical block size (2020-06-04 20:57:59 -0400)
+  dm crypt: avoid truncating the logical block size (2020-06-05 14:59:59 -0400)
 
 Please pull, thanks!
 Mike
@@ -56,12 +66,10 @@ Mike
 - Add discard interfaces to DM bufio.  First consumer of the interface
   is the dm-ebs target that makes heavy use of dm-bufio.
 
-- Add DM crypt support for using encryopted keys, fix crypt to sleep
-  and retry if crypto layer returns -ENOMEM, and fix crypt's block
-  queue_limits stacking to not truncate logic_block_size.
+- Fix DM crypt's block queue_limits stacking to not truncate
+  logic_block_size.
 
-- Fix DM integrity to also sleep and retry in response to -ENOMEM from
-  the crypto layer.  Also add status line info to Documentation.
+- Add Documentation for DM integrity's status line.
 
 - Switch DMDEBUG from a compile time config option to instead use
   dynamic debug via pr_debug.
@@ -155,13 +163,11 @@ Mike Snitzer (5):
       dm mpath: enhance queue_if_no_path debugging
       dm mpath: add DM device name to Failing/Reinstating path log messages
 
-Mikulas Patocka (10):
+Mikulas Patocka (8):
       dm bufio: implement discard
       dm writecache: remove superfluous test in persistent_memory_claim
       dm writecache: improve performance on DDR persistent memory (Optane)
       dm bufio: delete unused and inefficient dm_bufio_discard_buffers
-      dm crypt: sleep and retry on allocation errors
-      dm integrity: sleep and retry on allocation errors
       dm integrity: add status line documentation
       dm bufio: clean up rbtree block ordering
       dm bufio: introduce forget_buffer_locked
@@ -182,10 +188,10 @@ Zhiqiang Liu (1):
  drivers/md/Kconfig                                 |   20 +
  drivers/md/Makefile                                |    3 +
  drivers/md/dm-bufio.c                              |  109 +-
- drivers/md/dm-crypt.c                              |   91 +-
+ drivers/md/dm-crypt.c                              |   80 +-
  drivers/md/dm-ebs-target.c                         |  471 +++++++++
  drivers/md/dm-historical-service-time.c            |  561 +++++++++++
- drivers/md/dm-integrity.c                          |   11 +-
+ drivers/md/dm-integrity.c                          |    6 +-
  drivers/md/dm-log-writes.c                         |    2 +-
  drivers/md/dm-mpath.c                              |  123 ++-
  drivers/md/dm-path-selector.h                      |    2 +-
@@ -206,7 +212,7 @@ Zhiqiang Liu (1):
  drivers/md/persistent-data/dm-btree-spine.c        |    6 +-
  include/linux/device-mapper.h                      |    9 +-
  include/linux/dm-bufio.h                           |   12 +
- 30 files changed, 2794 insertions(+), 650 deletions(-)
+ 30 files changed, 2779 insertions(+), 649 deletions(-)
  create mode 100644 Documentation/admin-guide/device-mapper/dm-ebs.rst
  create mode 100644 drivers/md/dm-ebs-target.c
  create mode 100644 drivers/md/dm-historical-service-time.c
