@@ -1,15 +1,15 @@
-From: Bryan Gurney <bgurney@redhat.com>
-Subject: Re: [RFC 1/2] dm dust: add interface to list all
-	badblocks
-Date: Fri, 5 Jun 2020 15:47:29 -0400
-Message-ID: <CAHhmqcRgu9NsVeHzwJP4kGpFuimw7_RdevY6OC2T9UoZ=LBg=w@mail.gmail.com>
-References: <20200605073201.1742675-1-yangerkun@huawei.com>
-	<20200605073201.1742675-2-yangerkun@huawei.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [RFC PATCH 0/2] multipath: change default devnode
+	blacklist
+Date: Fri, 5 Jun 2020 17:27:30 -0500
+Message-ID: <20200605222730.GB5894@octiron.msp.redhat.com>
+References: <1591317060-25484-1-git-send-email-bmarzins@redhat.com>
+	<9db7560136de15dad358e2832f236ae131e145ef.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200605073201.1742675-2-yangerkun@huawei.com>
+In-Reply-To: <9db7560136de15dad358e2832f236ae131e145ef.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,74 +19,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: yangerkun <yangerkun@huawei.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Disposition: inline
+To: Martin Wilck <Martin.Wilck@suse.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "nkshirsa@redhat.com" <nkshirsa@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 5, 2020 at 3:48 AM yangerkun <yangerkun@huawei.com> wrote:
->
-> This interface may help anyone want to know all badblocks without query
-> block one by one.
->
-> Signed-off-by: yangerkun <yangerkun@huawei.com>
-> ---
->  drivers/md/dm-dust.c | 21 +++++++++++++++++++++
->  1 file changed, 21 insertions(+)
->
-> diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
-> index ff03b90072c5..903c0d158c6e 100644
-> --- a/drivers/md/dm-dust.c
-> +++ b/drivers/md/dm-dust.c
-> @@ -280,6 +280,24 @@ static int dust_clear_badblocks(struct dust_device *dd)
->         return 0;
->  }
->
-> +static void dust_list_badblocks(struct dust_device *dd)
-> +{
-> +       unsigned long flags;
-> +       struct rb_root badblocklist;
-> +       struct rb_node *node;
-> +       struct badblock *bblk;
-> +
-> +       DMINFO("%s: badblocks list as below:", __func__);
-> +       spin_lock_irqsave(&dd->dust_lock, flags);
-> +       badblocklist = dd->badblocklist;
-> +       for (node = rb_first(&badblocklist); node; node = rb_next(node)) {
-> +               bblk = rb_entry(node, struct badblock, node);
-> +               DMINFO("bad block: %llu", bblk->bb);
-> +       }
-> +       spin_unlock_irqrestore(&dd->dust_lock, flags);
-> +       DMINFO("%s: badblocks list end.", __func__);
-> +}
-> +
->  /*
->   * Target parameters:
->   *
-> @@ -422,6 +440,9 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
->                         else
->                                 dd->quiet_mode = false;
->                         r = 0;
-> +               } else if (!strcasecmp(argv[0], "listbadblocks")) {
-> +                       dust_list_badblocks(dd);
-> +                       r = 0;
->                 } else {
->                         invalid_msg = true;
->                 }
-> --
-> 2.25.4
->
+On Fri, Jun 05, 2020 at 07:20:26PM +0000, Martin Wilck wrote:
+> Hi Ben,
+>=20
+> On Thu, 2020-06-04 at 19:30 -0500, Benjamin Marzinski wrote:
+> > I recently got a request to add the Oracle ASM filer driver devices
+> > to
+> > multipath's builtin devnode blacklist.  However, instead of having to
+> > do
+> > always this for each device type individually, I decided to make
+> > multipath blacklist all non scsi, nvme, and dasd devnodes by default.
+> > This is what the multipath udev rules already do. If people don't
+> > like
+> > this solution, the alternative is to add another line to the default
+> > devnode blacklist like "^(asm/|oracleafd/|ofsctl)".
+>=20
+> Thanks, this looks ok. But I'd like to propose an alternative idea:
+> Extend the RE syntax in our config file to allow negated regular=20
+> expressions. Like this:
+>=20
+> blacklist {
+>     devnode "!(^(sd[a-z]|dasd[a-z]|nvme[0-9]))"
+> }
+>=20
+> The "!(${RE})" construct would mean "everything that does not match ${RE}=
+".
+> This logic would only be applied to an entire regex.
+> If a user needs a RE matching with "!(" and ending with ")", she can esca=
+pe=20
+> the exclamation mark "\!(like this)".
+>=20
+> AFAICS this could be implemented quite easily (by adding a "bool negate" =
+field
+> in struct blentry and some simple parser logic), and could be applied to =
+other=20
+> REs in the config file as well. We could print this with "multipath -t", =
+and=20
+> we wouldn't need to document an exception.
+>=20
+> It's also pretty much backwards-compatible, I don't think many people use
+> regexes starting with "!(" for multipath these days.
 
-I tested this, and it looks good.
+Sure, but since we can only really support negating the whole regular
+expression, and c regular expressions don't treat '!' as a special
+character, why do we need the prentheses around the regular expression?
+It seems like we can just treat regular expressions starting with '!' as
+negated, and ones starting with "\!" as starting with a literal '!'.
 
-I see that the message says "badblocks list as below"; I'm wondering
-if that was meant to say "badblocks list is below".  Or perhaps it
-might be better to say "badblocks list below".
+Do you think that there is much chance that users have blacklist strings
+that start with '!'? There are no devnodes, udev properties, or
+protocols that start with that.  I don't know of a UUID format that has
+an exclamation point, and while it's possible that a product string
+starts with one, it seems really unlikely.
 
-Aside from that potential correction,
+-Ben
 
-Reviewed-by: Bryan Gurney <bgurney@redhat.com>
-
-
-Thanks,
-
-Bryan
+>=20
+> Regards,
+> Martin
+>=20
+> --=20
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE  Software Solutions Germany GmbH
+> HRB 36809, AG N=FCrnberg GF: Felix
+> Imend=F6rffer
+>=20
