@@ -1,11 +1,14 @@
-From: Dan Carpenter <dan.carpenter@oracle.com>
-Subject: [bug report] dm zoned: per-device reclaim
-Date: Fri, 5 Jun 2020 15:37:10 +0300
-Message-ID: <20200605123710.GA988175@mwanda>
+From: Bryan Gurney <bgurney@redhat.com>
+Subject: Re: [RFC 2/2] dm dust: introduce listbadblocks in the rst
+Date: Fri, 5 Jun 2020 15:47:40 -0400
+Message-ID: <CAHhmqcRaSBW0q1=Zj-eeTCH2mFxc5L5ec_x8ccQVHxSSN6VB7w@mail.gmail.com>
+References: <20200605073201.1742675-1-yangerkun@huawei.com>
+	<20200605073201.1742675-3-yangerkun@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200605073201.1742675-3-yangerkun@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,111 +18,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: hare@suse.de
-Cc: dm-devel@redhat.com
+To: yangerkun <yangerkun@huawei.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hello Hannes Reinecke,
+On Fri, Jun 5, 2020 at 3:48 AM yangerkun <yangerkun@huawei.com> wrote:
+>
+> Since we support the listbadblocks command, introduce the detail in the
+> doc.
+>
+> Signed-off-by: yangerkun <yangerkun@huawei.com>
 
-The patch a99e0ceaa832: "dm zoned: per-device reclaim" from Jun 2,
-2020, leads to the following static checker warning:
+Thank you for the documentation.  I have a few corrections listed below:
 
-	drivers/md/dm-zoned-reclaim.c:428 dmz_do_reclaim()
-	error: potentially dereferencing uninitialized 'rzone'.
+> ---
+>  .../admin-guide/device-mapper/dm-dust.rst        | 16 ++++++++++++++++
+>  1 file changed, 16 insertions(+)
+>
+> diff --git a/Documentation/admin-guide/device-mapper/dm-dust.rst b/Documentation/admin-guide/device-mapper/dm-dust.rst
+> index b6e7e7ead831..185b3ce6298b 100644
+> --- a/Documentation/admin-guide/device-mapper/dm-dust.rst
+> +++ b/Documentation/admin-guide/device-mapper/dm-dust.rst
+> @@ -205,6 +205,21 @@ appear::
+>
+>          kernel: device-mapper: dust: clearbadblocks: no badblocks found
+>
+> +Listling the bad block list
 
-drivers/md/dm-zoned-reclaim.c
-   364  static int dmz_do_reclaim(struct dmz_reclaim *zrc)
-   365  {
-   366          struct dmz_metadata *zmd = zrc->metadata;
-   367          struct dm_zone *dzone;
-   368          struct dm_zone *rzone;
-                                ^^^^^
+"Listing the bad block list"
 
-   369          unsigned long start;
-   370          int ret;
-   371  
-   372          /* Get a data zone */
-   373          dzone = dmz_get_zone_for_reclaim(zmd, zrc->dev_idx,
-   374                                           dmz_target_idle(zrc));
-   375          if (!dzone) {
-   376                  DMDEBUG("(%s/%u): No zone found to reclaim",
-   377                          dmz_metadata_label(zmd), zrc->dev_idx);
-   378                  return -EBUSY;
-   379          }
-   380  
-   381          start = jiffies;
-   382          if (dmz_is_cache(dzone) || dmz_is_rnd(dzone)) {
-   383                  if (!dmz_weight(dzone)) {
-   384                          /* Empty zone */
-   385                          dmz_reclaim_empty(zrc, dzone);
-   386                          ret = 0;
-   387                  } else {
-   388                          /*
-   389                           * Reclaim the random data zone by moving its
-   390                           * valid data blocks to a free sequential zone.
-   391                           */
-   392                          ret = dmz_reclaim_rnd_data(zrc, dzone);
-   393                  }
-   394                  rzone = dzone;
-   395  
-   396          } else {
-   397                  struct dm_zone *bzone = dzone->bzone;
-   398                  sector_t chunk_block = 0;
-   399  
-   400                  ret = dmz_first_valid_block(zmd, bzone, &chunk_block);
-   401                  if (ret < 0)
-   402                          goto out;
+> +---------------------------
+> +
+> +To list all bad block list, run the following message command::
 
-"rzone" is uninitialized if "ret < 0".
+"To list all bad blocks in the bad block list"
 
-   403  
-   404                  if (ret == 0 || chunk_block >= dzone->wp_block) {
-   405                          /*
-   406                           * The buffer zone is empty or its valid blocks are
-   407                           * after the data zone write pointer.
-   408                           */
-   409                          ret = dmz_reclaim_buf(zrc, dzone);
-   410                          rzone = bzone;
-   411                  } else {
-   412                          /*
-   413                           * Reclaim the data zone by merging it into the
-   414                           * buffer zone so that the buffer zone itself can
-   415                           * be later reclaimed.
-   416                           */
-   417                          ret = dmz_reclaim_seq_data(zrc, dzone);
-   418                          rzone = dzone;
-   419                  }
-   420          }
-   421  out:
-   422          if (ret) {
-   423                  if (ret == -EINTR)
-   424                          DMDEBUG("(%s/%u): reclaim zone %u interrupted",
-   425                                  dmz_metadata_label(zmd), zrc->dev_idx,
-   426                                  rzone->id);
-   427                  else
-   428                          DMDEBUG("(%s/%u): Failed to reclaim zone %u, err %d",
-   429                                  dmz_metadata_label(zmd), zrc->dev_idx,
-   430                                  rzone->id, ret);
-                                        ^^^^^^^^^
-Dereference.
+> +
+> +        $ sudo dmsetup message dust1 0 listbadblocks
+> +
+> +We will get following message(image that we have insert block 1/2, and
+> +we will list the block index in order)::
 
-   431                  dmz_unlock_zone_reclaim(dzone);
-   432                  return ret;
-   433          }
-   434  
-   435          ret = dmz_flush_metadata(zrc->metadata);
-   436          if (ret) {
-   437                  DMDEBUG("(%s/%u): Metadata flush for zone %u failed, err %d",
-   438                          dmz_metadata_label(zmd), zrc->dev_idx, rzone->id, ret);
-   439                  return ret;
-   440          }
-   441  
-   442          DMDEBUG("(%s/%u): Reclaimed zone %u in %u ms",
-   443                  dmz_metadata_label(zmd), zrc->dev_idx,
-   444                  rzone->id, jiffies_to_msecs(jiffies - start));
-   445          return 0;
-   446  }
+"The following message will appear, listing one bad block number per
+line (using an example device with blocks 1 and 2 in the bad block
+list)"
 
-regards,
-dan carpenter
+After those corrections are made,
+
+Reviewed-by: Bryan Gurney <bgurney@redhat.com>
+
+
+Thanks,
+
+Bryan
+
+
+
+> +
+> +        device-mapper: dust: dust_list_badblocks: badblocks list as below:
+> +        device-mapper: dust: bad block: 1
+> +        device-mapper: dust: bad block: 2
+> +        device-mapper: dust: dust_list_badblocks: badblocks list end.
+> +
+>  Message commands list
+>  ---------------------
+>
+> @@ -223,6 +238,7 @@ Single argument message commands::
+>
+>          countbadblocks
+>          clearbadblocks
+> +        listbadblocks
+>          disable
+>          enable
+>          quiet
+> --
+> 2.25.4
+>
