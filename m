@@ -1,15 +1,11 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [RFC PATCH 0/2] multipath: change default devnode
-	blacklist
-Date: Fri, 5 Jun 2020 17:27:30 -0500
-Message-ID: <20200605222730.GB5894@octiron.msp.redhat.com>
-References: <1591317060-25484-1-git-send-email-bmarzins@redhat.com>
-	<9db7560136de15dad358e2832f236ae131e145ef.camel@suse.com>
+From: Dan Carpenter <dan.carpenter@oracle.com>
+Subject: [bug report] dm zoned: per-device reclaim
+Date: Fri, 5 Jun 2020 15:37:10 +0300
+Message-ID: <20200605123710.GA988175@mwanda>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <9db7560136de15dad358e2832f236ae131e145ef.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,72 +16,110 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
-To: Martin Wilck <Martin.Wilck@suse.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "nkshirsa@redhat.com" <nkshirsa@redhat.com>
+To: hare@suse.de
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Jun 05, 2020 at 07:20:26PM +0000, Martin Wilck wrote:
-> Hi Ben,
->=20
-> On Thu, 2020-06-04 at 19:30 -0500, Benjamin Marzinski wrote:
-> > I recently got a request to add the Oracle ASM filer driver devices
-> > to
-> > multipath's builtin devnode blacklist.  However, instead of having to
-> > do
-> > always this for each device type individually, I decided to make
-> > multipath blacklist all non scsi, nvme, and dasd devnodes by default.
-> > This is what the multipath udev rules already do. If people don't
-> > like
-> > this solution, the alternative is to add another line to the default
-> > devnode blacklist like "^(asm/|oracleafd/|ofsctl)".
->=20
-> Thanks, this looks ok. But I'd like to propose an alternative idea:
-> Extend the RE syntax in our config file to allow negated regular=20
-> expressions. Like this:
->=20
-> blacklist {
->     devnode "!(^(sd[a-z]|dasd[a-z]|nvme[0-9]))"
-> }
->=20
-> The "!(${RE})" construct would mean "everything that does not match ${RE}=
-".
-> This logic would only be applied to an entire regex.
-> If a user needs a RE matching with "!(" and ending with ")", she can esca=
-pe=20
-> the exclamation mark "\!(like this)".
->=20
-> AFAICS this could be implemented quite easily (by adding a "bool negate" =
-field
-> in struct blentry and some simple parser logic), and could be applied to =
-other=20
-> REs in the config file as well. We could print this with "multipath -t", =
-and=20
-> we wouldn't need to document an exception.
->=20
-> It's also pretty much backwards-compatible, I don't think many people use
-> regexes starting with "!(" for multipath these days.
+Hello Hannes Reinecke,
 
-Sure, but since we can only really support negating the whole regular
-expression, and c regular expressions don't treat '!' as a special
-character, why do we need the prentheses around the regular expression?
-It seems like we can just treat regular expressions starting with '!' as
-negated, and ones starting with "\!" as starting with a literal '!'.
+The patch a99e0ceaa832: "dm zoned: per-device reclaim" from Jun 2,
+2020, leads to the following static checker warning:
 
-Do you think that there is much chance that users have blacklist strings
-that start with '!'? There are no devnodes, udev properties, or
-protocols that start with that.  I don't know of a UUID format that has
-an exclamation point, and while it's possible that a product string
-starts with one, it seems really unlikely.
+	drivers/md/dm-zoned-reclaim.c:428 dmz_do_reclaim()
+	error: potentially dereferencing uninitialized 'rzone'.
 
--Ben
+drivers/md/dm-zoned-reclaim.c
+   364  static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+   365  {
+   366          struct dmz_metadata *zmd = zrc->metadata;
+   367          struct dm_zone *dzone;
+   368          struct dm_zone *rzone;
+                                ^^^^^
 
->=20
-> Regards,
-> Martin
->=20
-> --=20
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE  Software Solutions Germany GmbH
-> HRB 36809, AG N=FCrnberg GF: Felix
-> Imend=F6rffer
->=20
+   369          unsigned long start;
+   370          int ret;
+   371  
+   372          /* Get a data zone */
+   373          dzone = dmz_get_zone_for_reclaim(zmd, zrc->dev_idx,
+   374                                           dmz_target_idle(zrc));
+   375          if (!dzone) {
+   376                  DMDEBUG("(%s/%u): No zone found to reclaim",
+   377                          dmz_metadata_label(zmd), zrc->dev_idx);
+   378                  return -EBUSY;
+   379          }
+   380  
+   381          start = jiffies;
+   382          if (dmz_is_cache(dzone) || dmz_is_rnd(dzone)) {
+   383                  if (!dmz_weight(dzone)) {
+   384                          /* Empty zone */
+   385                          dmz_reclaim_empty(zrc, dzone);
+   386                          ret = 0;
+   387                  } else {
+   388                          /*
+   389                           * Reclaim the random data zone by moving its
+   390                           * valid data blocks to a free sequential zone.
+   391                           */
+   392                          ret = dmz_reclaim_rnd_data(zrc, dzone);
+   393                  }
+   394                  rzone = dzone;
+   395  
+   396          } else {
+   397                  struct dm_zone *bzone = dzone->bzone;
+   398                  sector_t chunk_block = 0;
+   399  
+   400                  ret = dmz_first_valid_block(zmd, bzone, &chunk_block);
+   401                  if (ret < 0)
+   402                          goto out;
+
+"rzone" is uninitialized if "ret < 0".
+
+   403  
+   404                  if (ret == 0 || chunk_block >= dzone->wp_block) {
+   405                          /*
+   406                           * The buffer zone is empty or its valid blocks are
+   407                           * after the data zone write pointer.
+   408                           */
+   409                          ret = dmz_reclaim_buf(zrc, dzone);
+   410                          rzone = bzone;
+   411                  } else {
+   412                          /*
+   413                           * Reclaim the data zone by merging it into the
+   414                           * buffer zone so that the buffer zone itself can
+   415                           * be later reclaimed.
+   416                           */
+   417                          ret = dmz_reclaim_seq_data(zrc, dzone);
+   418                          rzone = dzone;
+   419                  }
+   420          }
+   421  out:
+   422          if (ret) {
+   423                  if (ret == -EINTR)
+   424                          DMDEBUG("(%s/%u): reclaim zone %u interrupted",
+   425                                  dmz_metadata_label(zmd), zrc->dev_idx,
+   426                                  rzone->id);
+   427                  else
+   428                          DMDEBUG("(%s/%u): Failed to reclaim zone %u, err %d",
+   429                                  dmz_metadata_label(zmd), zrc->dev_idx,
+   430                                  rzone->id, ret);
+                                        ^^^^^^^^^
+Dereference.
+
+   431                  dmz_unlock_zone_reclaim(dzone);
+   432                  return ret;
+   433          }
+   434  
+   435          ret = dmz_flush_metadata(zrc->metadata);
+   436          if (ret) {
+   437                  DMDEBUG("(%s/%u): Metadata flush for zone %u failed, err %d",
+   438                          dmz_metadata_label(zmd), zrc->dev_idx, rzone->id, ret);
+   439                  return ret;
+   440          }
+   441  
+   442          DMDEBUG("(%s/%u): Reclaimed zone %u in %u ms",
+   443                  dmz_metadata_label(zmd), zrc->dev_idx,
+   444                  rzone->id, jiffies_to_msecs(jiffies - start));
+   445          return 0;
+   446  }
+
+regards,
+dan carpenter
