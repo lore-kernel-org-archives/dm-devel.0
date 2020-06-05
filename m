@@ -1,12 +1,16 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] libmultipath: fix condlog NULL argument in
-	uevent_get_env_var
-Date: Thu,  4 Jun 2020 18:20:06 -0500
-Message-ID: <1591312806-25110-1-git-send-email-bmarzins@redhat.com>
+From: Martin Wilck <Martin.Wilck@suse.com>
+Subject: Re: [RFC PATCH 0/2] multipath: change default devnode
+	blacklist
+Date: Fri, 5 Jun 2020 19:20:26 +0000
+Message-ID: <9db7560136de15dad358e2832f236ae131e145ef.camel@suse.com>
+References: <1591317060-25484-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1591317060-25484-1-git-send-email-bmarzins@redhat.com>
+Content-Language: en-US
+Content-ID: <22578AD5240ED44795EBC3D6AB806D47@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,47 +20,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "nkshirsa@redhat.com" <nkshirsa@redhat.com>
 List-Id: dm-devel.ids
 
-uevent_get_env_var() could call condlog with p == NULL. On gcc 10,
-this triggers warnings like:
+Hi Ben,
 
-In file included from uevent.c:47:
-In function 'uevent_get_env_var',
-    inlined from 'uevent_get_wwid' at uevent.c:170:8:
-debug.h:13:2: error: '%s' directive argument is null
-[-Werror=format-overflow=]
-   13 |  dlog(logsink, prio, fmt "\n", ##args)
-      |  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-uevent.c:132:2: note: in expansion of macro 'condlog'
-  132 |  condlog(4, "%s: %s -> '%s'", __func__, attr, p);
-      |  ^~~~~~~
-uevent.c: In function 'uevent_get_wwid':
-uevent.c:132:25: note: format string is defined here
-  132 |  condlog(4, "%s: %s -> '%s'", __func__, attr, p);
-      |                         ^~
+On Thu, 2020-06-04 at 19:30 -0500, Benjamin Marzinski wrote:
+> I recently got a request to add the Oracle ASM filer driver devices
+> to
+> multipath's builtin devnode blacklist.  However, instead of having to
+> do
+> always this for each device type individually, I decided to make
+> multipath blacklist all non scsi, nvme, and dasd devnodes by default.
+> This is what the multipath udev rules already do. If people don't
+> like
+> this solution, the alternative is to add another line to the default
+> devnode blacklist like "^(asm/|oracleafd/|ofsctl)".
 
-If p is NULL, use "(null)" instead.
+Thanks, this looks ok. But I'd like to propose an alternative idea:
+Extend the RE syntax in our config file to allow negated regular=20
+expressions. Like this:
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/uevent.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+blacklist {
+    devnode "!(^(sd[a-z]|dasd[a-z]|nvme[0-9]))"
+}
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index d38e8a7f..e0d13b11 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -129,7 +129,7 @@ static const char* uevent_get_env_var(const struct uevent *uev,
- 		}
- 	}
- 
--	condlog(4, "%s: %s -> '%s'", __func__, attr, p);
-+	condlog(4, "%s: %s -> '%s'", __func__, attr, p ?: "(null)");
- 	return p;
- 
- invalid:
--- 
-2.17.2
+The "!(${RE})" construct would mean "everything that does not match ${RE}".
+This logic would only be applied to an entire regex.
+If a user needs a RE matching with "!(" and ending with ")", she can escape=
+=20
+the exclamation mark "\!(like this)".
+
+AFAICS this could be implemented quite easily (by adding a "bool negate" fi=
+eld
+in struct blentry and some simple parser logic), and could be applied to ot=
+her=20
+REs in the config file as well. We could print this with "multipath -t", an=
+d=20
+we wouldn't need to document an exception.
+
+It's also pretty much backwards-compatible, I don't think many people use
+regexes starting with "!(" for multipath these days.
+
+Regards,
+Martin
+
+--=20
+Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+SUSE  Software Solutions Germany GmbH
+HRB 36809, AG N=FCrnberg GF: Felix
+Imend=F6rffer
