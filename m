@@ -1,14 +1,14 @@
-From: Bryan Gurney <bgurney@redhat.com>
-Subject: Re: [RFC 2/2] dm dust: introduce listbadblocks in the rst
-Date: Fri, 5 Jun 2020 15:47:40 -0400
-Message-ID: <CAHhmqcRaSBW0q1=Zj-eeTCH2mFxc5L5ec_x8ccQVHxSSN6VB7w@mail.gmail.com>
-References: <20200605073201.1742675-1-yangerkun@huawei.com>
-	<20200605073201.1742675-3-yangerkun@huawei.com>
+From: Martin Wilck <martin.wilck@suse.com>
+Subject: Re: [PATCH] libmultipath: fix condlog NULL argument in
+ uevent_get_env_var
+Date: Fri, 05 Jun 2020 21:30:59 +0200
+Message-ID: <ee3a2cc648cf1f52aefbe61c6ea27bf618973f99.camel@suse.com>
+References: <1591312806-25110-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200605073201.1742675-3-yangerkun@huawei.com>
+In-Reply-To: <1591312806-25110-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,79 +18,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: yangerkun <yangerkun@huawei.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 5, 2020 at 3:48 AM yangerkun <yangerkun@huawei.com> wrote:
->
-> Since we support the listbadblocks command, introduce the detail in the
-> doc.
->
-> Signed-off-by: yangerkun <yangerkun@huawei.com>
-
-Thank you for the documentation.  I have a few corrections listed below:
-
+On Thu, 2020-06-04 at 18:20 -0500, Benjamin Marzinski wrote:
+> uevent_get_env_var() could call condlog with p == NULL. On gcc 10,
+> this triggers warnings like:
+> 
+> In file included from uevent.c:47:
+> In function 'uevent_get_env_var',
+>     inlined from 'uevent_get_wwid' at uevent.c:170:8:
+> debug.h:13:2: error: '%s' directive argument is null
+> [-Werror=format-overflow=]
+>    13 |  dlog(logsink, prio, fmt "\n", ##args)
+>       |  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+> uevent.c:132:2: note: in expansion of macro 'condlog'
+>   132 |  condlog(4, "%s: %s -> '%s'", __func__, attr, p);
+>       |  ^~~~~~~
+> uevent.c: In function 'uevent_get_wwid':
+> uevent.c:132:25: note: format string is defined here
+>   132 |  condlog(4, "%s: %s -> '%s'", __func__, attr, p);
+>       |                         ^~
+> 
+> If p is NULL, use "(null)" instead.
+> 
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  .../admin-guide/device-mapper/dm-dust.rst        | 16 ++++++++++++++++
->  1 file changed, 16 insertions(+)
->
-> diff --git a/Documentation/admin-guide/device-mapper/dm-dust.rst b/Documentation/admin-guide/device-mapper/dm-dust.rst
-> index b6e7e7ead831..185b3ce6298b 100644
-> --- a/Documentation/admin-guide/device-mapper/dm-dust.rst
-> +++ b/Documentation/admin-guide/device-mapper/dm-dust.rst
-> @@ -205,6 +205,21 @@ appear::
->
->          kernel: device-mapper: dust: clearbadblocks: no badblocks found
->
-> +Listling the bad block list
+>  libmultipath/uevent.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 
-"Listing the bad block list"
-
-> +---------------------------
-> +
-> +To list all bad block list, run the following message command::
-
-"To list all bad blocks in the bad block list"
-
-> +
-> +        $ sudo dmsetup message dust1 0 listbadblocks
-> +
-> +We will get following message(image that we have insert block 1/2, and
-> +we will list the block index in order)::
-
-"The following message will appear, listing one bad block number per
-line (using an example device with blocks 1 and 2 in the bad block
-list)"
-
-After those corrections are made,
-
-Reviewed-by: Bryan Gurney <bgurney@redhat.com>
-
-
-Thanks,
-
-Bryan
-
-
-
-> +
-> +        device-mapper: dust: dust_list_badblocks: badblocks list as below:
-> +        device-mapper: dust: bad block: 1
-> +        device-mapper: dust: bad block: 2
-> +        device-mapper: dust: dust_list_badblocks: badblocks list end.
-> +
->  Message commands list
->  ---------------------
->
-> @@ -223,6 +238,7 @@ Single argument message commands::
->
->          countbadblocks
->          clearbadblocks
-> +        listbadblocks
->          disable
->          enable
->          quiet
-> --
-> 2.25.4
->
+Reviewed-by: Martin Wilck <mwilck@suse.com>
