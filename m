@@ -1,25 +1,49 @@
-From: pr-tracker-bot@kernel.org
-Subject: Re: [git pull v2] device mapper changes for 5.8
-Date: Fri, 05 Jun 2020 23:15:19 +0000
-Message-ID: <159139891929.4436.16769068315334032119.pr-tracker-bot@kernel.org>
-References: <20200605145124.GA31972@redhat.com>
- <20200605191613.GA621@redhat.com>
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200605191613.GA621@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <gustavoars@kernel.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Dmitry Baryshkov <dmitry_baryshkov@mentor.com>, Eric Biggers <ebiggers@google.com>, Gabriel Krisman Bertazi <krisman@collabora.com>, Hannes Reinecke <hare@suse.de>, Heinz Mauelshagen <heinzm@redhat.com>, Khazhismel Kumykov <khazhy@google.com>, Martin Wilck <mwilck@suse.com>, Mikulas Patocka <mpatocka@redhat.com>, Nathan Chancellor <natechancellor@gmail.com>, YueHaibing <yuehaibing@huawei.com>, Zhiqiang Liu <liuzhiqiang26@huawei.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [RFC PATCH 0/2] multipath: change default devnode
+	blacklist
+Date: Thu,  4 Jun 2020 19:30:58 -0500
+Message-ID: <1591317060-25484-1-git-send-email-bmarzins@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Nikhil Kshirsagar <nkshirsa@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-The pull request you sent on Fri, 5 Jun 2020 15:16:13 -0400:
+I recently got a request to add the Oracle ASM filer driver devices to
+multipath's builtin devnode blacklist.  However, instead of having to do
+always this for each device type individually, I decided to make
+multipath blacklist all non scsi, nvme, and dasd devnodes by default.
+This is what the multipath udev rules already do. If people don't like
+this solution, the alternative is to add another line to the default
+devnode blacklist like "^(asm/|oracleafd/|ofsctl)".
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.8/dm-changes
+Benjamin Marzinski (2):
+  libmultipath: change filter_devnode arguments
+  libmultipath: change how default devnode blacklist works
 
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/b25c6644bfd3affd7d0127ce95c5c96c155a7515
-
-Thank you!
+ libmultipath/blacklist.c   | 21 +++++++---------
+ libmultipath/blacklist.h   |  2 +-
+ libmultipath/config.c      |  5 ++++
+ libmultipath/config.h      |  1 +
+ libmultipath/discovery.c   |  4 +--
+ libmultipath/print.c       | 12 ++++++---
+ libmultipath/uevent.c      |  3 +--
+ multipath/main.c           |  3 +--
+ multipath/multipath.conf.5 | 11 +++++---
+ multipathd/cli_handlers.c  |  3 +--
+ tests/blacklist.c          | 51 ++++++++++++++++++++++++++++++++------
+ 11 files changed, 80 insertions(+), 36 deletions(-)
 
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.wiki.kernel.org/userdoc/prtracker
+2.17.2
