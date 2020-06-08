@@ -1,11 +1,15 @@
-From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH] dm zoned: Fix uninitialized pointer dereference
-Date: Mon,  8 Jun 2020 13:20:59 +0900
-Message-ID: <20200608042059.1256086-1-damien.lemoal@wdc.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH] dm zoned: Fix uninitialized pointer
+	dereference
+Date: Mon, 8 Jun 2020 08:22:53 +0200
+Message-ID: <7a8f66c6-3ecd-a255-d1d3-82c5a3f8147b@suse.de>
+References: <20200608042059.1256086-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200608042059.1256086-1-damien.lemoal@wdc.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,47 +19,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: Damien Le Moal <damien.lemoal@wdc.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Make sure that the local variable rzone in dmz_do_reclaim() is always
-initialized before being used for printing debug messages.
-
-Fixes: f97809aec589 ("dm zoned: per-device reclaim")
-Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
-Cc: Hannes Reinecke <hare@suse.de>
----
- drivers/md/dm-zoned-reclaim.c | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
-
-diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
-index 2261b4dd60b7..dd1eebf6e50f 100644
---- a/drivers/md/dm-zoned-reclaim.c
-+++ b/drivers/md/dm-zoned-reclaim.c
-@@ -377,6 +377,7 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
- 			dmz_metadata_label(zmd), zrc->dev_idx);
- 		return -EBUSY;
- 	}
-+	rzone = dzone;
- 
- 	start = jiffies;
- 	if (dmz_is_cache(dzone) || dmz_is_rnd(dzone)) {
-@@ -391,8 +392,6 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
- 			 */
- 			ret = dmz_reclaim_rnd_data(zrc, dzone);
- 		}
--		rzone = dzone;
--
- 	} else {
- 		struct dm_zone *bzone = dzone->bzone;
- 		sector_t chunk_block = 0;
-@@ -415,7 +414,6 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
- 			 * be later reclaimed.
- 			 */
- 			ret = dmz_reclaim_seq_data(zrc, dzone);
--			rzone = dzone;
- 		}
- 	}
- out:
--- 
-2.26.2
+T24gNi84LzIwIDY6MjAgQU0sIERhbWllbiBMZSBNb2FsIHdyb3RlOgo+IE1ha2Ugc3VyZSB0aGF0
+IHRoZSBsb2NhbCB2YXJpYWJsZSByem9uZSBpbiBkbXpfZG9fcmVjbGFpbSgpIGlzIGFsd2F5cwo+
+IGluaXRpYWxpemVkIGJlZm9yZSBiZWluZyB1c2VkIGZvciBwcmludGluZyBkZWJ1ZyBtZXNzYWdl
+cy4KPiAKPiBGaXhlczogZjk3ODA5YWVjNTg5ICgiZG0gem9uZWQ6IHBlci1kZXZpY2UgcmVjbGFp
+bSIpCj4gU2lnbmVkLW9mZi1ieTogRGFtaWVuIExlIE1vYWwgPGRhbWllbi5sZW1vYWxAd2RjLmNv
+bT4KPiBDYzogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2UuZGU+Cj4gLS0tCj4gICBkcml2ZXJz
+L21kL2RtLXpvbmVkLXJlY2xhaW0uYyB8IDQgKy0tLQo+ICAgMSBmaWxlIGNoYW5nZWQsIDEgaW5z
+ZXJ0aW9uKCspLCAzIGRlbGV0aW9ucygtKQo+IAo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2Rt
+LXpvbmVkLXJlY2xhaW0uYyBiL2RyaXZlcnMvbWQvZG0tem9uZWQtcmVjbGFpbS5jCj4gaW5kZXgg
+MjI2MWI0ZGQ2MGI3Li5kZDFlZWJmNmU1MGYgMTAwNjQ0Cj4gLS0tIGEvZHJpdmVycy9tZC9kbS16
+b25lZC1yZWNsYWltLmMKPiArKysgYi9kcml2ZXJzL21kL2RtLXpvbmVkLXJlY2xhaW0uYwo+IEBA
+IC0zNzcsNiArMzc3LDcgQEAgc3RhdGljIGludCBkbXpfZG9fcmVjbGFpbShzdHJ1Y3QgZG16X3Jl
+Y2xhaW0gKnpyYykKPiAgIAkJCWRtel9tZXRhZGF0YV9sYWJlbCh6bWQpLCB6cmMtPmRldl9pZHgp
+Owo+ICAgCQlyZXR1cm4gLUVCVVNZOwo+ICAgCX0KPiArCXJ6b25lID0gZHpvbmU7Cj4gICAKPiAg
+IAlzdGFydCA9IGppZmZpZXM7Cj4gICAJaWYgKGRtel9pc19jYWNoZShkem9uZSkgfHwgZG16X2lz
+X3JuZChkem9uZSkpIHsKPiBAQCAtMzkxLDggKzM5Miw2IEBAIHN0YXRpYyBpbnQgZG16X2RvX3Jl
+Y2xhaW0oc3RydWN0IGRtel9yZWNsYWltICp6cmMpCj4gICAJCQkgKi8KPiAgIAkJCXJldCA9IGRt
+el9yZWNsYWltX3JuZF9kYXRhKHpyYywgZHpvbmUpOwo+ICAgCQl9Cj4gLQkJcnpvbmUgPSBkem9u
+ZTsKPiAtCj4gICAJfSBlbHNlIHsKPiAgIAkJc3RydWN0IGRtX3pvbmUgKmJ6b25lID0gZHpvbmUt
+PmJ6b25lOwo+ICAgCQlzZWN0b3JfdCBjaHVua19ibG9jayA9IDA7Cj4gQEAgLTQxNSw3ICs0MTQs
+NiBAQCBzdGF0aWMgaW50IGRtel9kb19yZWNsYWltKHN0cnVjdCBkbXpfcmVjbGFpbSAqenJjKQo+
+ICAgCQkJICogYmUgbGF0ZXIgcmVjbGFpbWVkLgo+ICAgCQkJICovCj4gICAJCQlyZXQgPSBkbXpf
+cmVjbGFpbV9zZXFfZGF0YSh6cmMsIGR6b25lKTsKPiAtCQkJcnpvbmUgPSBkem9uZTsKPiAgIAkJ
+fQo+ICAgCX0KPiAgIG91dDoKPiAKUmV2aWV3ZWQtYnk6IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBz
+dXNlLmRlPgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlICAgICAgICAg
+ICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgU29mdHdhcmUgU29sdXRp
+b25zIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpIUkIgMzY4MDkgKEFHIE7D
+vHJuYmVyZyksIEdlc2Now6RmdHNmw7xocmVyOiBGZWxpeCBJbWVuZMO2cmZmZXIKCgotLQpkbS1k
+ZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQu
+Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
