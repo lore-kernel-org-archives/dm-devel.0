@@ -1,15 +1,13 @@
 From: yangerkun <yangerkun@huawei.com>
-Subject: Re: [RFC 2/2] dm dust: introduce listbadblocks in the rst
-Date: Mon, 8 Jun 2020 09:45:02 +0800
-Message-ID: <506e58ae-082e-c37f-b401-13dfb8002870@huawei.com>
-References: <20200605073201.1742675-1-yangerkun@huawei.com>
-	<20200605073201.1742675-3-yangerkun@huawei.com>
-	<CAHhmqcRaSBW0q1=Zj-eeTCH2mFxc5L5ec_x8ccQVHxSSN6VB7w@mail.gmail.com>
+Subject: [PATCH 1/2] dm dust: add interface to list all badblocks
+Date: Mon, 8 Jun 2020 16:45:12 +0800
+Message-ID: <20200608084513.115671-2-yangerkun@huawei.com>
+References: <20200608084513.115671-1-yangerkun@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAHhmqcRaSBW0q1=Zj-eeTCH2mFxc5L5ec_x8ccQVHxSSN6VB7w@mail.gmail.com>
+In-Reply-To: <20200608084513.115671-1-yangerkun@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,48 +17,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bryan Gurney <bgurney@redhat.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: bgurney@redhat.com, agk@redhat.com, snitzer@redhat.com
+Cc: dm-devel@redhat.com, yangerkun@huawei.com
 List-Id: dm-devel.ids
 
-CgrlnKggMjAyMC82LzYgMzo0NywgQnJ5YW4gR3VybmV5IOWGmemBkzoKPiBPbiBGcmksIEp1biA1
-LCAyMDIwIGF0IDM6NDggQU0geWFuZ2Vya3VuIDx5YW5nZXJrdW5AaHVhd2VpLmNvbT4gd3JvdGU6
-Cj4+Cj4+IFNpbmNlIHdlIHN1cHBvcnQgdGhlIGxpc3RiYWRibG9ja3MgY29tbWFuZCwgaW50cm9k
-dWNlIHRoZSBkZXRhaWwgaW4gdGhlCj4+IGRvYy4KPj4KPj4gU2lnbmVkLW9mZi1ieTogeWFuZ2Vy
-a3VuIDx5YW5nZXJrdW5AaHVhd2VpLmNvbT4KPiAKPiBUaGFuayB5b3UgZm9yIHRoZSBkb2N1bWVu
-dGF0aW9uLiAgSSBoYXZlIGEgZmV3IGNvcnJlY3Rpb25zIGxpc3RlZCBiZWxvdzoKPiAKPj4gLS0t
-Cj4+ICAgLi4uL2FkbWluLWd1aWRlL2RldmljZS1tYXBwZXIvZG0tZHVzdC5yc3QgICAgICAgIHwg
-MTYgKysrKysrKysrKysrKysrKwo+PiAgIDEgZmlsZSBjaGFuZ2VkLCAxNiBpbnNlcnRpb25zKCsp
-Cj4+Cj4+IGRpZmYgLS1naXQgYS9Eb2N1bWVudGF0aW9uL2FkbWluLWd1aWRlL2RldmljZS1tYXBw
-ZXIvZG0tZHVzdC5yc3QgYi9Eb2N1bWVudGF0aW9uL2FkbWluLWd1aWRlL2RldmljZS1tYXBwZXIv
-ZG0tZHVzdC5yc3QKPj4gaW5kZXggYjZlN2U3ZWFkODMxLi4xODViM2NlNjI5OGIgMTAwNjQ0Cj4+
-IC0tLSBhL0RvY3VtZW50YXRpb24vYWRtaW4tZ3VpZGUvZGV2aWNlLW1hcHBlci9kbS1kdXN0LnJz
-dAo+PiArKysgYi9Eb2N1bWVudGF0aW9uL2FkbWluLWd1aWRlL2RldmljZS1tYXBwZXIvZG0tZHVz
-dC5yc3QKPj4gQEAgLTIwNSw2ICsyMDUsMjEgQEAgYXBwZWFyOjoKPj4KPj4gICAgICAgICAgIGtl
-cm5lbDogZGV2aWNlLW1hcHBlcjogZHVzdDogY2xlYXJiYWRibG9ja3M6IG5vIGJhZGJsb2NrcyBm
-b3VuZAo+Pgo+PiArTGlzdGxpbmcgdGhlIGJhZCBibG9jayBsaXN0Cj4gCj4gIkxpc3RpbmcgdGhl
-IGJhZCBibG9jayBsaXN0Igo+IAo+PiArLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCj4+ICsK
-Pj4gK1RvIGxpc3QgYWxsIGJhZCBibG9jayBsaXN0LCBydW4gdGhlIGZvbGxvd2luZyBtZXNzYWdl
-IGNvbW1hbmQ6Ogo+IAo+ICJUbyBsaXN0IGFsbCBiYWQgYmxvY2tzIGluIHRoZSBiYWQgYmxvY2sg
-bGlzdCIKPiAKPj4gKwo+PiArICAgICAgICAkIHN1ZG8gZG1zZXR1cCBtZXNzYWdlIGR1c3QxIDAg
-bGlzdGJhZGJsb2Nrcwo+PiArCj4+ICtXZSB3aWxsIGdldCBmb2xsb3dpbmcgbWVzc2FnZShpbWFn
-ZSB0aGF0IHdlIGhhdmUgaW5zZXJ0IGJsb2NrIDEvMiwgYW5kCj4+ICt3ZSB3aWxsIGxpc3QgdGhl
-IGJsb2NrIGluZGV4IGluIG9yZGVyKTo6Cj4gCj4gIlRoZSBmb2xsb3dpbmcgbWVzc2FnZSB3aWxs
-IGFwcGVhciwgbGlzdGluZyBvbmUgYmFkIGJsb2NrIG51bWJlciBwZXIKPiBsaW5lICh1c2luZyBh
-biBleGFtcGxlIGRldmljZSB3aXRoIGJsb2NrcyAxIGFuZCAyIGluIHRoZSBiYWQgYmxvY2sKPiBs
-aXN0KSIKPiAKPiBBZnRlciB0aG9zZSBjb3JyZWN0aW9ucyBhcmUgbWFkZSwKPiAKPiBSZXZpZXdl
-ZC1ieTogQnJ5YW4gR3VybmV5IDxiZ3VybmV5QHJlZGhhdC5jb20+CgoKVGhhbmtzIGZvciB5b3Vy
-IGFkdmlzZSBmb3IgdGhpcyBzZXJpZXMsIEkgd2lsbCBmaXggaXQgYW5kIHNlbmQgdjIgd2l0aAp5
-b3VyIHJldmlldyB0YWchCgpUaGFua3MsCkt1bi4KCj4gCj4gCj4gVGhhbmtzLAo+IAo+IEJyeWFu
-Cj4gCj4gCj4gCj4+ICsKPj4gKyAgICAgICAgZGV2aWNlLW1hcHBlcjogZHVzdDogZHVzdF9saXN0
-X2JhZGJsb2NrczogYmFkYmxvY2tzIGxpc3QgYXMgYmVsb3c6Cj4+ICsgICAgICAgIGRldmljZS1t
-YXBwZXI6IGR1c3Q6IGJhZCBibG9jazogMQo+PiArICAgICAgICBkZXZpY2UtbWFwcGVyOiBkdXN0
-OiBiYWQgYmxvY2s6IDIKPj4gKyAgICAgICAgZGV2aWNlLW1hcHBlcjogZHVzdDogZHVzdF9saXN0
-X2JhZGJsb2NrczogYmFkYmxvY2tzIGxpc3QgZW5kLgo+PiArCj4+ICAgTWVzc2FnZSBjb21tYW5k
-cyBsaXN0Cj4+ICAgLS0tLS0tLS0tLS0tLS0tLS0tLS0tCj4+Cj4+IEBAIC0yMjMsNiArMjM4LDcg
-QEAgU2luZ2xlIGFyZ3VtZW50IG1lc3NhZ2UgY29tbWFuZHM6Ogo+Pgo+PiAgICAgICAgICAgY291
-bnRiYWRibG9ja3MKPj4gICAgICAgICAgIGNsZWFyYmFkYmxvY2tzCj4+ICsgICAgICAgIGxpc3Ri
-YWRibG9ja3MKPj4gICAgICAgICAgIGRpc2FibGUKPj4gICAgICAgICAgIGVuYWJsZQo+PiAgICAg
-ICAgICAgcXVpZXQKPj4gLS0KPj4gMi4yNS40Cj4+Cj4gCj4gCgoKLS0KZG0tZGV2ZWwgbWFpbGlu
-ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
-L2xpc3RpbmZvL2RtLWRldmVs
+This interface may help anyone want to know all badblocks without query
+block one by one.
+
+Signed-off-by: yangerkun <yangerkun@huawei.com>
+Reviewed-by: Bryan Gurney <bgurney@redhat.com>
+---
+ drivers/md/dm-dust.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
+index ff03b90072c5..da5c10605c59 100644
+--- a/drivers/md/dm-dust.c
++++ b/drivers/md/dm-dust.c
+@@ -280,6 +280,24 @@ static int dust_clear_badblocks(struct dust_device *dd)
+ 	return 0;
+ }
+ 
++static void dust_list_badblocks(struct dust_device *dd)
++{
++	unsigned long flags;
++	struct rb_root badblocklist;
++	struct rb_node *node;
++	struct badblock *bblk;
++
++	DMINFO("%s: badblocks list below:", __func__);
++	spin_lock_irqsave(&dd->dust_lock, flags);
++	badblocklist = dd->badblocklist;
++	for (node = rb_first(&badblocklist); node; node = rb_next(node)) {
++		bblk = rb_entry(node, struct badblock, node);
++		DMINFO("bad block: %llu", bblk->bb);
++	}
++	spin_unlock_irqrestore(&dd->dust_lock, flags);
++	DMINFO("%s: badblocks list end.", __func__);
++}
++
+ /*
+  * Target parameters:
+  *
+@@ -422,6 +440,9 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 			else
+ 				dd->quiet_mode = false;
+ 			r = 0;
++		} else if (!strcasecmp(argv[0], "listbadblocks")) {
++			dust_list_badblocks(dd);
++			r = 0;
+ 		} else {
+ 			invalid_msg = true;
+ 		}
+-- 
+2.23.0.rc2.8.gff66981f45
