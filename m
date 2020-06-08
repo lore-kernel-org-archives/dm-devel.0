@@ -1,18 +1,11 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [RFC PATCH 0/2] multipath: change default devnode
-	blacklist
-Date: Sat, 6 Jun 2020 19:23:28 +0000
-Message-ID: <3442de794faf5c0d1efc7fd95e4fc0e968bbc5e1.camel@suse.com>
-References: <1591317060-25484-1-git-send-email-bmarzins@redhat.com>
-	<9db7560136de15dad358e2832f236ae131e145ef.camel@suse.com>
-	<20200605222730.GB5894@octiron.msp.redhat.com>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: [PATCH] dm zoned: Fix uninitialized pointer dereference
+Date: Mon,  8 Jun 2020 13:20:59 +0900
+Message-ID: <20200608042059.1256086-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200605222730.GB5894@octiron.msp.redhat.com>
-Content-Language: en-US
-Content-ID: <258A5EA35B075349956CE678021D688C@namprd18.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,81 +15,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "nkshirsa@redhat.com" <nkshirsa@redhat.com>
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 2020-06-05 at 17:27 -0500, Benjamin Marzinski wrote:
-> On Fri, Jun 05, 2020 at 07:20:26PM +0000, Martin Wilck wrote:
-> > Hi Ben,
-> >=20
-> > On Thu, 2020-06-04 at 19:30 -0500, Benjamin Marzinski wrote:
-> > > I recently got a request to add the Oracle ASM filer driver
-> > > devices
-> > > to
-> > > multipath's builtin devnode blacklist.  However, instead of
-> > > having to
-> > > do
-> > > always this for each device type individually, I decided to make
-> > > multipath blacklist all non scsi, nvme, and dasd devnodes by
-> > > default.
-> > > This is what the multipath udev rules already do. If people don't
-> > > like
-> > > this solution, the alternative is to add another line to the
-> > > default
-> > > devnode blacklist like "^(asm/|oracleafd/|ofsctl)".
-> >=20
-> > Thanks, this looks ok. But I'd like to propose an alternative idea:
-> > Extend the RE syntax in our config file to allow negated regular=20
-> > expressions. Like this:
-> >=20
-> > blacklist {
-> >     devnode "!(^(sd[a-z]|dasd[a-z]|nvme[0-9]))"
-> > }
-> >=20
-> > The "!(${RE})" construct would mean "everything that does not match
-> > ${RE}".
-> > This logic would only be applied to an entire regex.
-> > If a user needs a RE matching with "!(" and ending with ")", she
-> > can escape=20
-> > the exclamation mark "\!(like this)".
-> >=20
-> > AFAICS this could be implemented quite easily (by adding a "bool
-> > negate" field
-> > in struct blentry and some simple parser logic), and could be
-> > applied to other=20
-> > REs in the config file as well. We could print this with "multipath
-> > -t", and=20
-> > we wouldn't need to document an exception.
-> >=20
-> > It's also pretty much backwards-compatible, I don't think many
-> > people use
-> > regexes starting with "!(" for multipath these days.
->=20
-> Sure, but since we can only really support negating the whole regular
-> expression, and c regular expressions don't treat '!' as a special
-> character, why do we need the prentheses around the regular
-> expression?
-> It seems like we can just treat regular expressions starting with '!'
-> as
-> negated, and ones starting with "\!" as starting with a literal '!'.
->=20
-> Do you think that there is much chance that users have blacklist
-> strings
-> that start with '!'? There are no devnodes, udev properties, or
-> protocols that start with that.  I don't know of a UUID format that
-> has
-> an exclamation point, and while it's possible that a product string
-> starts with one, it seems really unlikely.
->=20
+Make sure that the local variable rzone in dmz_do_reclaim() is always
+initialized before being used for printing debug messages.
 
-Sure, just using "!" would be fine, too, and simpler. Does this mean
-you agree with my proposal in general?
+Fixes: f97809aec589 ("dm zoned: per-device reclaim")
+Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+Cc: Hannes Reinecke <hare@suse.de>
+---
+ drivers/md/dm-zoned-reclaim.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-Martin
-
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+index 2261b4dd60b7..dd1eebf6e50f 100644
+--- a/drivers/md/dm-zoned-reclaim.c
++++ b/drivers/md/dm-zoned-reclaim.c
+@@ -377,6 +377,7 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+ 			dmz_metadata_label(zmd), zrc->dev_idx);
+ 		return -EBUSY;
+ 	}
++	rzone = dzone;
+ 
+ 	start = jiffies;
+ 	if (dmz_is_cache(dzone) || dmz_is_rnd(dzone)) {
+@@ -391,8 +392,6 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+ 			 */
+ 			ret = dmz_reclaim_rnd_data(zrc, dzone);
+ 		}
+-		rzone = dzone;
+-
+ 	} else {
+ 		struct dm_zone *bzone = dzone->bzone;
+ 		sector_t chunk_block = 0;
+@@ -415,7 +414,6 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+ 			 * be later reclaimed.
+ 			 */
+ 			ret = dmz_reclaim_seq_data(zrc, dzone);
+-			rzone = dzone;
+ 		}
+ 	}
+ out:
+-- 
+2.26.2
