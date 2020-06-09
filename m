@@ -1,14 +1,12 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 0/2] multipath-tools: disable foreign
-	libraries by default
-Date: Tue, 9 Jun 2020 15:00:42 -0500
-Message-ID: <20200609200042.GD5894@octiron.msp.redhat.com>
-References: <20200508193302.11401-1-mwilck@suse.com>
+Subject: [PATCH v2 0/3] multipath: change default devnode
+	blacklist
+Date: Tue,  9 Jun 2020 16:35:26 -0500
+Message-ID: <1591738529-26810-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200508193302.11401-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,45 +16,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: mwilck@suse.com
-Cc: dm-devel@redhat.com, "George, Martin" <Martin.George@netapp.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Nikhil Kshirsagar <nkshirsa@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-On Fri, May 08, 2020 at 09:33:00PM +0200, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
-> 
-> Hi Christophe,
-> 
-> This is a follow-up to the previous discussion with topic 'RFC:
-> multipath-tools: NVMe native multipath and default setting for
-> "enable_foreign"'. Upon Netapp's initiative, I'd asked for foreign
-> libraries to be disabled by default. Ben had replied he'd agree,
-> and suggested implementing a "-e" option for multipath to enable
-> all foreign libraries:
-> 
-> https://www.redhat.com/archives/dm-devel/2020-February/msg00271.html
-> 
-> This patch set implements this idea.
-> 
+I recently got a request to add the Oracle ASM filer driver devices to
+multipath's builtin devnode blacklist.  However, instead of having to do
+always this for each device type individually, I decided to make
+multipath blacklist all non scsi, nvme, and dasd devnodes by default.
+This is what the multipath udev rules already do.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+Changes from v1:
+Everything. Martin suggested an alternative method for doing this, which
+is to treat an exclamation mark at the start of the blacklist/exceptions
+regexes as inverting the matching on the rest of the regex.
 
-For the set.
+Benjamin Marzinski (3):
+  libmultipath: remove _blacklist_exceptions functions
+  libmultipath: fix parser issue with comments in strings
+  libmultipath: invert regexes that start with exclamation point
 
-> Regards,
-> Martin
-> 
-> 
-> Martin Wilck (2):
->   libmultipath: set "enable_foreign" to NONE by default
->   multipath: add "-e" option to enable foreign libraries
-> 
->  libmultipath/defaults.h    |  4 ++--
->  multipath/main.c           | 11 ++++++++++-
->  multipath/multipath.8      |  6 ++++++
->  multipath/multipath.conf.5 |  5 +++--
->  4 files changed, 21 insertions(+), 5 deletions(-)
-> 
-> -- 
-> 2.26.2
+ libmultipath/blacklist.c   | 103 +++++++++++++++-------------------
+ libmultipath/blacklist.h   |   3 +
+ libmultipath/parser.c      |   4 +-
+ multipath/multipath.conf.5 |  17 ++++--
+ tests/blacklist.c          | 110 +++++++++++++++++++++++++++++++++++++
+ tests/parser.c             |  42 ++++++++++++++
+ tests/test-lib.c           |   2 +-
+ 7 files changed, 215 insertions(+), 66 deletions(-)
+
+-- 
+2.17.2
