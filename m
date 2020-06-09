@@ -1,39 +1,62 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: crypto API and GFP_ATOMIC
-Date: Tue, 9 Jun 2020 13:11:05 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2006091259250.30590@file01.intranet.prod.int.rdu2.redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 0/2] multipath-tools: disable foreign
+	libraries by default
+Date: Tue, 9 Jun 2020 15:00:42 -0500
+Message-ID: <20200609200042.GD5894@octiron.msp.redhat.com>
+References: <20200508193302.11401-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>
-Cc: linux-crypto@vger.kernel.org, Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200508193302.11401-1-mwilck@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: mwilck@suse.com
+Cc: dm-devel@redhat.com, "George, Martin" <Martin.George@netapp.com>
 List-Id: dm-devel.ids
 
-Hi
+On Fri, May 08, 2020 at 09:33:00PM +0200, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
+> 
+> Hi Christophe,
+> 
+> This is a follow-up to the previous discussion with topic 'RFC:
+> multipath-tools: NVMe native multipath and default setting for
+> "enable_foreign"'. Upon Netapp's initiative, I'd asked for foreign
+> libraries to be disabled by default. Ben had replied he'd agree,
+> and suggested implementing a "-e" option for multipath to enable
+> all foreign libraries:
+> 
+> https://www.redhat.com/archives/dm-devel/2020-February/msg00271.html
+> 
+> This patch set implements this idea.
+> 
 
-I've found out that a lot of hardware crypto drivers use GFP_ATOMIC. Some 
-of them switch between GFP_ATOMIC and GFP_KERNEL based on the flag 
-CRYPTO_TFM_REQ_MAY_SLEEP.
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-dm-crypt and dm-integrity don't use CRYPTO_TFM_REQ_MAY_SLEEP (because 
-GFP_KERNEL allocation requests can recurse back to the block device 
-drivers and cause deadlocks).
+For the set.
 
-So, basically, the crypto requests submitted by dm-crypt and dm-integrity 
-can fail anytime. I'd like to ask, how to handle these random -ENOMEM 
-return codes. If we pass -ENOMEM back to the block device stack, it could 
-cause random I/O errors and data corruption.
-
-The question is - if the crypto request returns -ENOMEM, could we sleep 
-and retry it? I thought about it - the problem could be, if the crypto 
-requests proceeds hafway through and then returns -ENOMEM, and if we 
-retried it, it would cause data corruption, because part of the data would 
-be decrypted twice.
-
-Is it safe to assume that when we get -ENOMEM, the crypto driver didn't 
-modify anything?
-
-Do you have another idea how to solve this problem?
-
-Mikulas
+> Regards,
+> Martin
+> 
+> 
+> Martin Wilck (2):
+>   libmultipath: set "enable_foreign" to NONE by default
+>   multipath: add "-e" option to enable foreign libraries
+> 
+>  libmultipath/defaults.h    |  4 ++--
+>  multipath/main.c           | 11 ++++++++++-
+>  multipath/multipath.8      |  6 ++++++
+>  multipath/multipath.conf.5 |  5 +++--
+>  4 files changed, 21 insertions(+), 5 deletions(-)
+> 
+> -- 
+> 2.26.2
