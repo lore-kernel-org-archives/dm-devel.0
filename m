@@ -1,67 +1,30 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH v2 0/3] multipath: change default devnode
-	blacklist
-Date: Tue, 9 Jun 2020 22:20:42 +0000
-Message-ID: <7592ecbee0d4e8b3d06e39992d62256efaf5d109.camel@suse.com>
-References: <1591738529-26810-1-git-send-email-bmarzins@redhat.com>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: crypto API and GFP_ATOMIC
+Date: Wed, 10 Jun 2020 11:04:50 +1000
+Message-ID: <20200610010450.GA6449@gondor.apana.org.au>
+References: <alpine.LRH.2.02.2006091259250.30590@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1591738529-26810-1-git-send-email-bmarzins@redhat.com>
-Content-Language: en-US
-Content-ID: <B463664BB9638D4F9A50EBA461BFBB99@namprd18.prod.outlook.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "nkshirsa@redhat.com" <nkshirsa@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.2006091259250.30590@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, 2020-06-09 at 16:35 -0500, Benjamin Marzinski wrote:
-> I recently got a request to add the Oracle ASM filer driver devices
-> to
-> multipath's builtin devnode blacklist.  However, instead of having to
-> do
-> always this for each device type individually, I decided to make
-> multipath blacklist all non scsi, nvme, and dasd devnodes by default.
-> This is what the multipath udev rules already do.
->=20
-> Changes from v1:
-> Everything. Martin suggested an alternative method for doing this,
-> which
-> is to treat an exclamation mark at the start of the
-> blacklist/exceptions
-> regexes as inverting the matching on the rest of the regex.
->=20
-> Benjamin Marzinski (3):
->   libmultipath: remove _blacklist_exceptions functions
->   libmultipath: fix parser issue with comments in strings
->   libmultipath: invert regexes that start with exclamation point
->=20
->  libmultipath/blacklist.c   | 103 +++++++++++++++-------------------
->  libmultipath/blacklist.h   |   3 +
->  libmultipath/parser.c      |   4 +-
->  multipath/multipath.conf.5 |  17 ++++--
->  tests/blacklist.c          | 110
-> +++++++++++++++++++++++++++++++++++++
->  tests/parser.c             |  42 ++++++++++++++
->  tests/test-lib.c           |   2 +-
->  7 files changed, 215 insertions(+), 66 deletions(-)
->=20
+On Tue, Jun 09, 2020 at 01:11:05PM -0400, Mikulas Patocka wrote:
+>
+> Do you have another idea how to solve this problem?
 
-Very nice work, thank you!
+I think the better approach would be to modify the drivers to not
+allocate any memory.  In general, any memory needed by the driver
+to fulfil a request *should* be allocated within the crypto request
+object.  That's why we have the reqsize field to indicate how much
+memory could be needed per request.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
-
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+Thanks,
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
