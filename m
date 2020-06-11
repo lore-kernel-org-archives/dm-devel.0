@@ -1,235 +1,223 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [git pull v3] device mapper changes for 5.8
-Date: Wed, 10 Jun 2020 08:44:44 -0400
-Message-ID: <20200610124444.GA356@redhat.com>
-References: <20200605145124.GA31972@redhat.com>
- <20200605191613.GA621@redhat.com>
- <20200609135919.GA26994@redhat.com>
+From: Ivan Babrou <ivan@cloudflare.com>
+Subject: BUG: KASAN: use-after-free in tasklet_action_common on boot
+Date: Thu, 11 Jun 2020 10:47:12 -0700
+Message-ID: <CABWYdi0FgAGcc2pprF2EYB=-ctw5UZQLbtfQqnKqd0GoiMNFuw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200609135919.GA26994@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Dmitry Baryshkov <dmitry_baryshkov@mentor.com>, Eric Biggers <ebiggers@google.com>, Gabriel Krisman Bertazi <krisman@collabora.com>, "Gustavo A. R. Silva" <gustavoars@kernel.org>, Hannes Reinecke <hare@suse.de>, Heinz Mauelshagen <heinzm@redhat.com>, Khazhismel Kumykov <khazhy@google.com>, Martin Wilck <mwilck@suse.com>, Mikulas Patocka <mpatocka@redhat.com>, Nathan Chancellor <natechancellor@gmail.com>, YueHaibing <yuehaibing@huawei.com>, Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: kernel-team <kernel-team@cloudflare.com>, agk@redhat.com, snitzer@redhat.com, linux-kernel <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Tue, Jun 09 2020 at  9:59am -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+Hello,
 
-> [resending as v3 due to my From: email addr in v2 being inexplicably wrong]
+We're seeing the following KASAN complaint on some nodes. These use
+AMD CPUs and NVMe storage, and we don't see the same issue on older
+Intel machines with SATA drives.
 
-The pr-tracker-bot responded to that email address and I missed it:
-https://www.redhat.com/archives/dm-devel/2020-June/msg00067.html
+[Thu Jun 11 14:14:44 2020] systemd[1]: Detected architecture x86-64.
+[Thu Jun 11 14:15:12 2020] device-mapper: uevent: version 1.0.3
+[Thu Jun 11 14:15:12 2020] device-mapper: ioctl: 4.41.0-ioctl
+(2019-09-16) initialised: dm-devel@redhat.com
+[Thu Jun 11 14:15:14 2020] NET: Registered protocol family 38
+[Thu Jun 11 14:15:16 2020]
+==================================================================
+[Thu Jun 11 14:15:16 2020] BUG: KASAN: use-after-free in
+tasklet_action_common.constprop.0
+(/cfsetup_build/build/linux-5.4.46/arch/x86/include/asm/bitops.h:75
+/cfsetup_build/build/linux-5.4.46/include/asm-generic/bitops-instrumented.h:57
+/cfsetup_build/build/linux-5.4.46/include/linux/interrupt.h:623
+/cfsetup_build/build/linux-5.4.46/kernel/softirq.c:524)
+[Thu Jun 11 14:15:16 2020] Write of size 8 at addr ffff88bdd8725f48 by
+task swapper/92/0
 
-I should've just looked at your tree.  Thanks for your quick pull.
+[Thu Jun 11 14:15:16 2020] CPU: 92 PID: 0 Comm: swapper/92 Not tainted
+5.4.46-cloudflare-kasan-2020.6.10 #1
+[Thu Jun 11 14:15:16 2020] Hardware name: GIGABYTE
+R162-Z12-CD/MZ12-HD4-CD, BIOS R08a 01/21/2020
+[Thu Jun 11 14:15:16 2020] Call Trace:
+[Thu Jun 11 14:15:16 2020]  <IRQ>
+[Thu Jun 11 14:15:16 2020] dump_stack
+(/cfsetup_build/build/linux-5.4.46/lib/dump_stack.c:120)
+[Thu Jun 11 14:15:16 2020] print_address_description.constprop.0
+(/cfsetup_build/build/linux-5.4.46/mm/kasan/report.c:375)
+[Thu Jun 11 14:15:16 2020] __kasan_report.cold
+(/cfsetup_build/build/linux-5.4.46/mm/kasan/report.c:514)
+[Thu Jun 11 14:15:16 2020] ? clone_endio+0xd1/0x710 dm_mod
+[Thu Jun 11 14:15:16 2020] ? tasklet_action_common.constprop.0
+(/cfsetup_build/build/linux-5.4.46/arch/x86/include/asm/bitops.h:75
+/cfsetup_build/build/linux-5.4.46/include/asm-generic/bitops-instrumented.h:57
+/cfsetup_build/build/linux-5.4.46/include/linux/interrupt.h:623
+/cfsetup_build/build/linux-5.4.46/kernel/softirq.c:524)
+[Thu Jun 11 14:15:16 2020] ? tasklet_action_common.constprop.0
+(/cfsetup_build/build/linux-5.4.46/arch/x86/include/asm/bitops.h:75
+/cfsetup_build/build/linux-5.4.46/include/asm-generic/bitops-instrumented.h:57
+/cfsetup_build/build/linux-5.4.46/include/linux/interrupt.h:623
+/cfsetup_build/build/linux-5.4.46/kernel/softirq.c:524)
+[Thu Jun 11 14:15:16 2020] kasan_report
+(/cfsetup_build/build/linux-5.4.46/arch/x86/include/asm/smap.h:69
+/cfsetup_build/build/linux-5.4.46/mm/kasan/common.c:635)
+[Thu Jun 11 14:15:16 2020] ? tasklet_action_common.constprop.0
+(/cfsetup_build/build/linux-5.4.46/arch/x86/include/asm/bitops.h:75
+/cfsetup_build/build/linux-5.4.46/include/asm-generic/bitops-instrumented.h:57
+/cfsetup_build/build/linux-5.4.46/include/linux/interrupt.h:623
+/cfsetup_build/build/linux-5.4.46/kernel/softirq.c:524)
+[Thu Jun 11 14:15:16 2020] check_memory_region
+(/cfsetup_build/build/linux-5.4.46/mm/kasan/generic.c:185
+/cfsetup_build/build/linux-5.4.46/mm/kasan/generic.c:191)
+[Thu Jun 11 14:15:16 2020] tasklet_action_common.constprop.0
+(/cfsetup_build/build/linux-5.4.46/arch/x86/include/asm/bitops.h:75
+/cfsetup_build/build/linux-5.4.46/include/asm-generic/bitops-instrumented.h:57
+/cfsetup_build/build/linux-5.4.46/include/linux/interrupt.h:623
+/cfsetup_build/build/linux-5.4.46/kernel/softirq.c:524)
+[Thu Jun 11 14:15:16 2020] __do_softirq
+(/cfsetup_build/build/linux-5.4.46/arch/x86/include/asm/jump_label.h:25
+/cfsetup_build/build/linux-5.4.46/include/linux/jump_label.h:200
+/cfsetup_build/build/linux-5.4.46/include/trace/events/irq.h:142
+/cfsetup_build/build/linux-5.4.46/kernel/softirq.c:293)
+[Thu Jun 11 14:15:16 2020] irq_exit
+(/cfsetup_build/build/linux-5.4.46/kernel/softirq.c:373
+/cfsetup_build/build/linux-5.4.46/kernel/softirq.c:413)
+[Thu Jun 11 14:15:16 2020] do_IRQ
+(/cfsetup_build/build/linux-5.4.46/arch/x86/kernel/irq.c:267
+(discriminator 42))
+[Thu Jun 11 14:15:16 2020] common_interrupt
+(/cfsetup_build/build/linux-5.4.46/arch/x86/entry/entry_64.S:610)
+[Thu Jun 11 14:15:16 2020]  </IRQ>
+[Thu Jun 11 14:15:16 2020] RIP: 0010:cpuidle_enter_state
+(/cfsetup_build/build/linux-5.4.46/drivers/cpuidle/cpuidle.c:249)
+[Thu Jun 11 14:15:16 2020] Code: 24 0f 1f 44 00 00 31 ff e8 34 cf ab
+fe 80 7c 24 08 00 74 12 9c 58 f6 c4 02 0f 85 b7 07 00 00 31 ff e8 fb
+78 bc fe fb 45 85 e4 <0f> 89 ef 02 00 00 48 8d 7b 14 48 b8 00 00 00 00
+00 fc ff df 48 89
+All code
+========
+   0: 24 0f                and    $0xf,%al
+   2: 1f                    (bad)
+   3: 44 00 00              add    %r8b,(%rax)
+   6: 31 ff                xor    %edi,%edi
+   8: e8 34 cf ab fe        callq  0xfffffffffeabcf41
+   d: 80 7c 24 08 00        cmpb   $0x0,0x8(%rsp)
+  12: 74 12                je     0x26
+  14: 9c                    pushfq
+  15: 58                    pop    %rax
+  16: f6 c4 02              test   $0x2,%ah
+  19: 0f 85 b7 07 00 00    jne    0x7d6
+  1f: 31 ff                xor    %edi,%edi
+  21: e8 fb 78 bc fe        callq  0xfffffffffebc7921
+  26: fb                    sti
+  27: 45 85 e4              test   %r12d,%r12d
+  2a:* 0f 89 ef 02 00 00    jns    0x31f <-- trapping instruction
+  30: 48 8d 7b 14          lea    0x14(%rbx),%rdi
+  34: 48 b8 00 00 00 00 00 movabs $0xdffffc0000000000,%rax
+  3b: fc ff df
+  3e: 48                    rex.W
+  3f: 89                    .byte 0x89
 
-Sorry for the noise.
+Code starting with the faulting instruction
+===========================================
+   0: 0f 89 ef 02 00 00    jns    0x2f5
+   6: 48 8d 7b 14          lea    0x14(%rbx),%rdi
+   a: 48 b8 00 00 00 00 00 movabs $0xdffffc0000000000,%rax
+  11: fc ff df
+  14: 48                    rex.W
+  15: 89                    .byte 0x89
+[Thu Jun 11 14:15:16 2020] RSP: 0018:ffff88bfeaeafd80 EFLAGS: 00000202
+ORIG_RAX: ffffffffffffffde
+[Thu Jun 11 14:15:16 2020] RAX: dffffc0000000000 RBX: ffff889fdcfc0800
+RCX: 000000000000001f
+[Thu Jun 11 14:15:16 2020] RDX: 1ffff117fdce6555 RSI: 0000000037a6f9a0
+RDI: ffff88bfee732aa8
+[Thu Jun 11 14:15:16 2020] RBP: ffffffff9288d660 R08: 00000128214f54ce
+R09: ffff889fe9e23000
+[Thu Jun 11 14:15:16 2020] R10: ffff889fe9e23099 R11: 00000058eb5113bb
+R12: 0000000000000002
+[Thu Jun 11 14:15:16 2020] R13: 0000000000000002 R14: ffffffff9288d738
+R15: 00000000000000c0
+[Thu Jun 11 14:15:16 2020] ? menu_enable_device
+(/cfsetup_build/build/linux-5.4.46/drivers/cpuidle/governors/menu.c:558)
+[Thu Jun 11 14:15:16 2020] cpuidle_enter
+(/cfsetup_build/build/linux-5.4.46/include/linux/compiler.h:226
+/cfsetup_build/build/linux-5.4.46/drivers/cpuidle/cpuidle.c:346)
+[Thu Jun 11 14:15:16 2020] ? call_cpuidle
+(/cfsetup_build/build/linux-5.4.46/arch/x86/include/asm/bitops.h:207
+/cfsetup_build/build/linux-5.4.46/include/asm-generic/bitops-instrumented.h:238
+/cfsetup_build/build/linux-5.4.46/include/linux/thread_info.h:84
+/cfsetup_build/build/linux-5.4.46/include/linux/sched/idle.h:55
+/cfsetup_build/build/linux-5.4.46/kernel/sched/idle.c:106)
+[Thu Jun 11 14:15:16 2020] do_idle
+(/cfsetup_build/build/linux-5.4.46/kernel/sched/idle.c:205
+/cfsetup_build/build/linux-5.4.46/kernel/sched/idle.c:263)
+[Thu Jun 11 14:15:16 2020] ? arch_cpu_idle_exit (??:?)
+[Thu Jun 11 14:15:16 2020] ? __kthread_bind_mask
+(/cfsetup_build/build/linux-5.4.46/kernel/kthread.c:407
+/cfsetup_build/build/linux-5.4.46/kernel/kthread.c:395)
+[Thu Jun 11 14:15:16 2020] cpu_startup_entry
+(/cfsetup_build/build/linux-5.4.46/kernel/sched/idle.c:354
+(discriminator 1))
+[Thu Jun 11 14:15:16 2020] start_secondary
+(/cfsetup_build/build/linux-5.4.46/arch/x86/kernel/smpboot.c:272)
+[Thu Jun 11 14:15:16 2020] ? set_cpu_sibling_map
+(/cfsetup_build/build/linux-5.4.46/arch/x86/kernel/smpboot.c:212)
+[Thu Jun 11 14:15:16 2020] secondary_startup_64
+(/cfsetup_build/build/linux-5.4.46/arch/x86/kernel/head_64.S:241)
 
-Mike
+[Thu Jun 11 14:15:16 2020] Allocated by task 0:
+[Thu Jun 11 14:15:16 2020] (stack is not available)
 
+[Thu Jun 11 14:15:16 2020] Freed by task 0:
+[Thu Jun 11 14:15:16 2020] save_stack
+(/cfsetup_build/build/linux-5.4.46/mm/kasan/common.c:55
+/cfsetup_build/build/linux-5.4.46/mm/kasan/common.c:70)
+[Thu Jun 11 14:15:16 2020] __kasan_slab_free
+(/cfsetup_build/build/linux-5.4.46/mm/kasan/common.c:473)
+[Thu Jun 11 14:15:16 2020] slab_free_freelist_hook
+(/cfsetup_build/build/linux-5.4.46/mm/slub.c:1457)
+[Thu Jun 11 14:15:16 2020] kmem_cache_free
+(/cfsetup_build/build/linux-5.4.46/mm/slub.c:3014
+/cfsetup_build/build/linux-5.4.46/mm/slub.c:3030)
+[Thu Jun 11 14:15:16 2020] dec_pending+0x21f/0x930 dm_mod
+[Thu Jun 11 14:15:16 2020] clone_endio+0x1bd/0x710 dm_mod
+[Thu Jun 11 14:15:16 2020] tasklet_action_common.constprop.0
+(/cfsetup_build/build/linux-5.4.46/include/asm-generic/bitops-instrumented.h:56
+/cfsetup_build/build/linux-5.4.46/include/linux/interrupt.h:623
+/cfsetup_build/build/linux-5.4.46/kernel/softirq.c:524)
+[Thu Jun 11 14:15:16 2020] __do_softirq
+(/cfsetup_build/build/linux-5.4.46/arch/x86/include/asm/jump_label.h:25
+/cfsetup_build/build/linux-5.4.46/include/linux/jump_label.h:200
+/cfsetup_build/build/linux-5.4.46/include/trace/events/irq.h:142
+/cfsetup_build/build/linux-5.4.46/kernel/softirq.c:293)
 
-> 
-> Hi Linus,
-> 
-> I had some miscommunication with Mikulas on his -ENOMEM sleep and retry
-> changes for dm-crypt and dm-integrity, he no longer thinks them
-> appropriate: https://www.redhat.com/archives/dm-devel/2020-June/msg00061.html
-> So I dropped them via rebase and updated the tag (to avoid any
-> potential for linux-stable churn due to Mikulas' commits having
-> cc'd linux-stable).  Hope that was the correct way forward...
-> 
-> For the following changes there is one dm-zoned-metadata.c conflict that
-> linux-next has been carrying for a while.  See commit d77e96f277 ("Merge
-> remote-tracking branch 'device-mapper/for-next'") from next-20200605.
-> It resolves conflict from linux-block's commit 9398554fb3 ("block:
-> remove the_error_sector argument to blkdev_issue_flush").
-> 
-> The following changes since commit 2ef96a5bb12be62ef75b5828c0aab838ebb29cb8:
-> 
->   Linux 5.7-rc5 (2020-05-10 15:16:58 -0700)
-> 
-> are available in the Git repository at:
-> 
->   git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.8/dm-changes
-> 
-> for you to fetch changes up to 64611a15ca9da91ff532982429c44686f4593b5f:
-> 
->   dm crypt: avoid truncating the logical block size (2020-06-05 14:59:59 -0400)
-> 
-> Please pull, thanks!
-> Mike
-> 
-> ----------------------------------------------------------------
-> - Largest change for this cycle is the DM zoned target's metadata
->   version 2 feature that adds support for pairing regular block
->   devices with a zoned device to ease performance impact associated
->   with finite random zones of zoned device.  Changes came in 3
->   batches: first prepared for and then added the ability to pair a
->   single regular block device, second was a batch of fixes to improve
->   zoned's reclaim heuristic, third removed the limitation of only
->   adding a single additional regular block device to allow many
->   devices.  Testing has shown linear scaling as more devices are
->   added.
-> 
-> - Add new emulated block size (ebs) target that emulates a smaller
->   logical_block_size than a block device supports.  Primary use-case
->   is to emulate "512e" devices that have 512 byte logical_block_size
->   and 4KB physical_block_size.  This is useful to some legacy
->   applications otherwise wouldn't be ablee to be used on 4K devices
->   because they depend on issuing IO in 512 byte granularity.
-> 
-> - Add discard interfaces to DM bufio.  First consumer of the interface
->   is the dm-ebs target that makes heavy use of dm-bufio.
-> 
-> - Fix DM crypt's block queue_limits stacking to not truncate
->   logic_block_size.
-> 
-> - Add Documentation for DM integrity's status line.
-> 
-> - Switch DMDEBUG from a compile time config option to instead use
->   dynamic debug via pr_debug.
-> 
-> - Fix DM multipath target's hueristic for how it manages
->   "queue_if_no_path" state internally.  DM multipath now avoids
->   disabling "queue_if_no_path" unless it is actually needed (e.g. in
->   response to configure timeout or explicit "fail_if_no_path"
->   message).  This fixes reports of spurious -EIO being reported back
->   to userspace application during fault tolerance testing with an NVMe
->   backend.  Added various dynamic DMDEBUG messages to assist with
->   debugging queue_if_no_path in the future.
-> 
-> - Add a new DM multipath "Historical Service Time" Path Selector.
-> 
-> - Fix DM multipath's dm_blk_ioctl() to switch paths on IO error.
-> 
-> - Improve DM writecache target performance by using explicit
->   cache flushing for target's single-threaded usecase and a small
->   cleanup to remove unnecessary test in persistent_memory_claim.
-> 
-> - Other small cleanups in DM core, dm-persistent-data, and DM integrity.
-> 
-> ----------------------------------------------------------------
-> Dmitry Baryshkov (1):
->       dm crypt: support using encrypted keys
-> 
-> Eric Biggers (1):
->       dm crypt: avoid truncating the logical block size
-> 
-> Gabriel Krisman Bertazi (1):
->       dm mpath: pass IO start time to path selector
-> 
-> Gustavo A. R. Silva (1):
->       dm: replace zero-length array with flexible-array
-> 
-> Hannes Reinecke (38):
->       dm zoned: add 'status' callback
->       dm zoned: add 'message' callback
->       dm zoned: store zone id within the zone structure and kill dmz_id()
->       dm zoned: use array for superblock zones
->       dm zoned: store device in struct dmz_sb
->       dm zoned: move fields from struct dmz_dev to dmz_metadata
->       dm zoned: introduce dmz_metadata_label() to format device name
->       dm zoned: Introduce dmz_dev_is_dying() and dmz_check_dev()
->       dm zoned: remove 'dev' argument from reclaim
->       dm zoned: replace 'target' pointer in the bio context
->       dm zoned: use dmz_zone_to_dev() when handling metadata I/O
->       dm zoned: add metadata logging functions
->       dm zoned: Reduce logging output on startup
->       dm zoned: ignore metadata zone in dmz_alloc_zone()
->       dm zoned: metadata version 2
->       dm: use dynamic debug instead of compile-time config option
->       dm zoned: remove spurious newlines from debugging messages
->       dm zoned: return NULL if dmz_get_zone_for_reclaim() fails to find a zone
->       dm zoned: separate random and cache zones
->       dm zoned: reclaim random zones when idle
->       dm zoned: start reclaim with sequential zones
->       dm zoned: terminate reclaim on congestion
->       dm zoned: remove leftover hunk for switching to sequential zones
->       dm zoned: add debugging message for reading superblocks
->       dm zoned: avoid unnecessary device recalulation for secondary superblock
->       dm zoned: improve logging messages for reclaim
->       dm zoned: add a 'reserved' zone flag
->       dm zoned: convert to xarray
->       dm zoned: allocate temporary superblock for tertiary devices
->       dm zoned: add device pointer to struct dm_zone
->       dm zoned: add metadata pointer to struct dmz_dev
->       dm zoned: per-device reclaim
->       dm zoned: move random and sequential zones into struct dmz_dev
->       dm zoned: support arbitrary number of devices
->       dm zoned: allocate zone by device index
->       dm zoned: select reclaim zone based on device index
->       dm zoned: prefer full zones for reclaim
->       dm zoned: check superblock location
-> 
-> Heinz Mauelshagen (2):
->       dm: add emulated block size target
->       dm ebs: pass discards down to underlying device
-> 
-> Khazhismel Kumykov (1):
->       dm mpath: add Historical Service Time Path Selector
-> 
-> Martin Wilck (1):
->       dm mpath: switch paths in dm_blk_ioctl() code path
-> 
-> Mike Snitzer (5):
->       dm: use DMDEBUG macros now that they use pr_debug variants
->       dm mpath: simplify __must_push_back
->       dm mpath: restrict queue_if_no_path state machine
->       dm mpath: enhance queue_if_no_path debugging
->       dm mpath: add DM device name to Failing/Reinstating path log messages
-> 
-> Mikulas Patocka (8):
->       dm bufio: implement discard
->       dm writecache: remove superfluous test in persistent_memory_claim
->       dm writecache: improve performance on DDR persistent memory (Optane)
->       dm bufio: delete unused and inefficient dm_bufio_discard_buffers
->       dm integrity: add status line documentation
->       dm bufio: clean up rbtree block ordering
->       dm bufio: introduce forget_buffer_locked
->       dm ebs: use dm_bufio_forget_buffers
-> 
-> Nathan Chancellor (1):
->       dm zoned: Avoid 64-bit division error in dmz_fixup_devices
-> 
-> YueHaibing (1):
->       dm integrity: remove set but not used variables
-> 
-> Zhiqiang Liu (1):
->       dm persistent data: switch exit_ro_spine to return void
-> 
->  Documentation/admin-guide/device-mapper/dm-ebs.rst |   51 +
->  .../admin-guide/device-mapper/dm-integrity.rst     |    8 +
->  .../admin-guide/device-mapper/dm-zoned.rst         |   62 +-
->  drivers/md/Kconfig                                 |   20 +
->  drivers/md/Makefile                                |    3 +
->  drivers/md/dm-bufio.c                              |  109 +-
->  drivers/md/dm-crypt.c                              |   80 +-
->  drivers/md/dm-ebs-target.c                         |  471 +++++++++
->  drivers/md/dm-historical-service-time.c            |  561 +++++++++++
->  drivers/md/dm-integrity.c                          |    6 +-
->  drivers/md/dm-log-writes.c                         |    2 +-
->  drivers/md/dm-mpath.c                              |  123 ++-
->  drivers/md/dm-path-selector.h                      |    2 +-
->  drivers/md/dm-queue-length.c                       |    2 +-
->  drivers/md/dm-raid.c                               |    2 +-
->  drivers/md/dm-raid1.c                              |    2 +-
->  drivers/md/dm-service-time.c                       |    2 +-
->  drivers/md/dm-stats.c                              |    2 +-
->  drivers/md/dm-stripe.c                             |    2 +-
->  drivers/md/dm-switch.c                             |    2 +-
->  drivers/md/dm-writecache.c                         |   42 +-
->  drivers/md/dm-zoned-metadata.c                     | 1046 +++++++++++++++-----
->  drivers/md/dm-zoned-reclaim.c                      |  210 ++--
->  drivers/md/dm-zoned-target.c                       |  463 ++++++---
->  drivers/md/dm-zoned.h                              |  113 ++-
->  drivers/md/dm.c                                    |   11 +-
->  drivers/md/persistent-data/dm-btree-internal.h     |    4 +-
->  drivers/md/persistent-data/dm-btree-spine.c        |    6 +-
->  include/linux/device-mapper.h                      |    9 +-
->  include/linux/dm-bufio.h                           |   12 +
->  30 files changed, 2779 insertions(+), 649 deletions(-)
->  create mode 100644 Documentation/admin-guide/device-mapper/dm-ebs.rst
->  create mode 100644 drivers/md/dm-ebs-target.c
->  create mode 100644 drivers/md/dm-historical-service-time.c
+[Thu Jun 11 14:15:16 2020] The buggy address belongs to the object at
+ffff88bdd8725f00
+which belongs to the cache bio-5 of size 1144
+[Thu Jun 11 14:15:16 2020] The buggy address is located 72 bytes inside of
+1144-byte region [ffff88bdd8725f00, ffff88bdd8726378)
+[Thu Jun 11 14:15:16 2020] The buggy address belongs to the page:
+[Thu Jun 11 14:15:16 2020] page:ffffea00f761c800 refcount:1 mapcount:0
+mapping:ffff889dce1d2000 index:0x0 compound_mapcount: 0
+[Thu Jun 11 14:15:16 2020] flags: 0xeffff800010200(slab|head)
+[Thu Jun 11 14:15:16 2020] raw: 00effff800010200 dead000000000100
+dead000000000122 ffff889dce1d2000
+[Thu Jun 11 14:15:16 2020] raw: 0000000000000000 0000000080190019
+00000001ffffffff 0000000000000000
+[Thu Jun 11 14:15:16 2020] page dumped because: kasan: bad access detected
+
+[Thu Jun 11 14:15:16 2020] Memory state around the buggy address:
+[Thu Jun 11 14:15:16 2020]  ffff88bdd8725e00: fc fc fc fc fc fc fc fc
+fc fc fc fc fc fc fc fc
+[Thu Jun 11 14:15:16 2020]  ffff88bdd8725e80: fc fc fc fc fc fc fc fc
+fc fc fc fc fc fc fc fc
+[Thu Jun 11 14:15:16 2020] >ffff88bdd8725f00: fb fb fb fb fb fb fb fb
+fb fb fb fb fb fb fb fb
+[Thu Jun 11 14:15:16 2020]                                               ^
+[Thu Jun 11 14:15:16 2020]  ffff88bdd8725f80: fb fb fb fb fb fb fb fb
+fb fb fb fb fb fb fb fb
+[Thu Jun 11 14:15:16 2020]  ffff88bdd8726000: fb fb fb fb fb fb fb fb
+fb fb fb fb fb fb fb fb
+[Thu Jun 11 14:15:16 2020]
+==================================================================
+[Thu Jun 11 14:15:16 2020] Disabling lock debugging due to kernel taint
+[Thu Jun 11 14:15:25 2020] XFS (dm-0): Mounting V5 Filesystem
+[Thu Jun 11 14:15:25 2020] XFS (dm-0): Ending clean mount
