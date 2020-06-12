@@ -1,115 +1,39 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: Fix compiler warnings when
- built without systemd.
-Date: Fri, 12 Jun 2020 04:25:18 +0200
-Message-ID: <5310fd01-faa3-bf2c-5c49-b412d7e28e12@gmail.com>
-References: <20200516175508.12412-1-marius@devup.no>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200516175508.12412-1-marius@devup.no>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Marius Bakke <marius@devup.no>, DM-DEVEL ML <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+From: Huaisheng Ye <yehs2007@zoho.com>
+Subject: [PATCH] dm writecache: skip writecache_wait when using pmem mode
+Date: Fri, 12 Jun 2020 23:55:44 +0800
+Message-ID: <20200612155544.90348-1-yehs2007@zoho.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: mpatocka@redhat.com, snitzer@redhat.com, agk@redhat.com
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Huaisheng Ye <yehs1@lenovo.com>
 List-Id: dm-devel.ids
 
-On 5/16/20 7:55 PM, Marius Bakke wrote:
+From: Huaisheng Ye <yehs1@lenovo.com>
 
-You should send it, at least, to the project maintainer.
+The array bio_in_progress is only used with ssd mode. So skip
+writecache_wait_for_ios in writecache_discard when pmem mode.
 
-> ---
->   libmultipath/config.c |  2 +-
->   multipathd/main.c     | 19 +++++++++++++------
->   2 files changed, 14 insertions(+), 7 deletions(-)
-> 
-> diff --git a/libmultipath/config.c b/libmultipath/config.c
-> index b4d87689..a28dc4f2 100644
-> --- a/libmultipath/config.c
-> +++ b/libmultipath/config.c
-> @@ -696,7 +696,7 @@ process_config_dir(struct config *conf, char *dir)
->   	pthread_cleanup_pop(1);
->   }
->   
-> -static void set_max_checkint_from_watchdog(struct config *conf)
-> +static void set_max_checkint_from_watchdog(__attribute__((unused)) struct config *conf)
->   {
->   #ifdef USE_SYSTEMD
->   	char *envp = getenv("WATCHDOG_USEC");
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 8baf9abe..8d3eace6 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -176,6 +176,7 @@ daemon_status(void)
->   /*
->    * I love you too, systemd ...
->    */
-> +#ifdef USE_SYSTEMD
->   static const char *
->   sd_notify_status(enum daemon_status state)
->   {
-> @@ -195,7 +196,6 @@ sd_notify_status(enum daemon_status state)
->   	return NULL;
->   }
->   
-> -#ifdef USE_SYSTEMD
->   static void do_sd_notify(enum daemon_status old_state,
->   			 enum daemon_status new_state)
->   {
-> @@ -247,7 +247,9 @@ enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
->   static void __post_config_state(enum daemon_status state)
->   {
->   	if (state != running_state && running_state != DAEMON_SHUTDOWN) {
-> -		enum daemon_status old_state = running_state;
-> +		/* save state for sd_notify */
-> +		enum daemon_status
-> +			__attribute__((unused)) old_state = running_state;
->   
->   		running_state = state;
->   		pthread_cond_broadcast(&config_cond);
-> @@ -272,7 +274,9 @@ int set_config_state(enum daemon_status state)
->   	pthread_cleanup_push(config_cleanup, NULL);
->   	pthread_mutex_lock(&config_lock);
->   	if (running_state != state) {
-> -		enum daemon_status old_state = running_state;
-> +		/* save state for sd_notify */
-> +		enum daemon_status
-> +			__attribute__((unused)) old_state = running_state;
->   
->   		if (running_state == DAEMON_SHUTDOWN)
->   			rc = EINVAL;
-> @@ -2280,7 +2284,6 @@ checkerloop (void *ap)
->   	struct timespec last_time;
->   	struct config *conf;
->   	int foreign_tick = 0;
-> -	bool use_watchdog;
->   
->   	pthread_cleanup_push(rcu_unregister, NULL);
->   	rcu_register_thread();
-> @@ -2292,11 +2295,15 @@ checkerloop (void *ap)
->   	get_monotonic_time(&last_time);
->   	last_time.tv_sec -= 1;
->   
-> -	/* use_watchdog is set from process environment and never changes */
->   	conf = get_multipath_config();
-> -	use_watchdog = conf->use_watchdog;
->   	put_multipath_config(conf);
->   
-> +#ifdef USE_SYSTEMD
-> +	/* use_watchdog is set from process environment and never changes */
-> +	bool use_watchdog;
-> +	use_watchdog = conf->use_watchdog;
-> +#endif
-> +
->   	while (1) {
->   		struct timespec diff_time, start_time, end_time;
->   		int num_paths = 0, strict_timing, rc = 0;
-> 
+Signed-off-by: Huaisheng Ye <yehs1@lenovo.com>
+---
+ drivers/md/dm-writecache.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+index 66f3a3b..4367cc7 100644
+--- a/drivers/md/dm-writecache.c
++++ b/drivers/md/dm-writecache.c
+@@ -849,8 +849,10 @@ static void writecache_discard(struct dm_writecache *wc, sector_t start, sector_
+ 
+ 		if (likely(!e->write_in_progress)) {
+ 			if (!discarded_something) {
+-				writecache_wait_for_ios(wc, READ);
+-				writecache_wait_for_ios(wc, WRITE);
++				if (!WC_MODE_PMEM(wc)) {
++					writecache_wait_for_ios(wc, READ);
++					writecache_wait_for_ios(wc, WRITE);
++				}
+ 				discarded_something = true;
+ 			}
+ 			writecache_free_entry(wc, e);
+-- 
+1.8.3.1
