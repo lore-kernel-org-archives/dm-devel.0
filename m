@@ -1,14 +1,11 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm writecache: skip writecache_wait when
- using pmem mode
-Date: Sat, 13 Jun 2020 08:46:13 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2006130845530.27500@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20200612155544.90348-1-yehs2007@zoho.com>
+From: Hou Tao <houtao1@huawei.com>
+Subject: [PATCH] dm zoned: assign max_io_len correctly
+Date: Mon, 15 Jun 2020 11:33:23 +0800
+Message-ID: <20200615033323.146312-1-houtao1@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200612155544.90348-1-yehs2007@zoho.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,44 +15,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Huaisheng Ye <yehs2007@zoho.com>
-Cc: dm-devel@redhat.com, Huaisheng Ye <yehs1@lenovo.com>, agk@redhat.com, snitzer@redhat.com, linux-kernel@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: Bart Van Assche <bvanassche@acm.org>, Damien Le Moal <damien.lemoal@wdc.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
+The unit of max_io_len is sector instead of byte (spotted through
+code review), so fix it.
 
+Fixes: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target")
+Signed-off-by: Hou Tao <houtao1@huawei.com>
+---
+ drivers/md/dm-zoned-target.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-On Fri, 12 Jun 2020, Huaisheng Ye wrote:
-
-> From: Huaisheng Ye <yehs1@lenovo.com>
-> 
-> The array bio_in_progress is only used with ssd mode. So skip
-> writecache_wait_for_ios in writecache_discard when pmem mode.
-> 
-> Signed-off-by: Huaisheng Ye <yehs1@lenovo.com>
-
-Acked-by: Mikulas Patocka <mpatocka@redhat.com>
-
-> ---
->  drivers/md/dm-writecache.c | 6 ++++--
->  1 file changed, 4 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-> index 66f3a3b..4367cc7 100644
-> --- a/drivers/md/dm-writecache.c
-> +++ b/drivers/md/dm-writecache.c
-> @@ -849,8 +849,10 @@ static void writecache_discard(struct dm_writecache *wc, sector_t start, sector_
->  
->  		if (likely(!e->write_in_progress)) {
->  			if (!discarded_something) {
-> -				writecache_wait_for_ios(wc, READ);
-> -				writecache_wait_for_ios(wc, WRITE);
-> +				if (!WC_MODE_PMEM(wc)) {
-> +					writecache_wait_for_ios(wc, READ);
-> +					writecache_wait_for_ios(wc, WRITE);
-> +				}
->  				discarded_something = true;
->  			}
->  			writecache_free_entry(wc, e);
-> -- 
-> 1.8.3.1
-> 
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index a907a9446c0b..cf915009c306 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -890,7 +890,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	}
+ 
+ 	/* Set target (no write same support) */
+-	ti->max_io_len = dmz_zone_nr_sectors(dmz->metadata) << 9;
++	ti->max_io_len = dmz_zone_nr_sectors(dmz->metadata);
+ 	ti->num_flush_bios = 1;
+ 	ti->num_discard_bios = 1;
+ 	ti->num_write_zeroes_bios = 1;
+-- 
+2.25.0.4.g0ad7144999
