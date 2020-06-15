@@ -1,45 +1,36 @@
-From: Hou Tao <houtao1@huawei.com>
-Subject: [PATCH] dm zoned: assign max_io_len correctly
-Date: Mon, 15 Jun 2020 11:33:23 +0800
-Message-ID: <20200615033323.146312-1-houtao1@huawei.com>
+From: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+Subject: [PATCH 21/29] docs: device-mapper: add dm-ebs.rst to an index file
+Date: Mon, 15 Jun 2020 08:47:00 +0200
+Message-ID: <e6195a56b6e7924ccbb7fd07837453530f02e9dc.1592203542.git.mchehab+huawei@kernel.org>
+References: <cover.1592203542.git.mchehab+huawei@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Bart Van Assche <bvanassche@acm.org>, Damien Le Moal <damien.lemoal@wdc.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Hannes Reinecke <hare@suse.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1592203542.git.mchehab+huawei@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linux Doc Mailing List <linux-doc@vger.kernel.org>
+Cc: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>, linux-kernel@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The unit of max_io_len is sector instead of byte (spotted through
-code review), so fix it.
+Solves this Sphinx warning:
+	Documentation/admin-guide/device-mapper/dm-ebs.rst: WARNING: document isn't included in any toctree
 
-Fixes: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target")
-Signed-off-by: Hou Tao <houtao1@huawei.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
 ---
- drivers/md/dm-zoned-target.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ Documentation/admin-guide/device-mapper/index.rst | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index a907a9446c0b..cf915009c306 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -890,7 +890,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	}
- 
- 	/* Set target (no write same support) */
--	ti->max_io_len = dmz_zone_nr_sectors(dmz->metadata) << 9;
-+	ti->max_io_len = dmz_zone_nr_sectors(dmz->metadata);
- 	ti->num_flush_bios = 1;
- 	ti->num_discard_bios = 1;
- 	ti->num_write_zeroes_bios = 1;
+diff --git a/Documentation/admin-guide/device-mapper/index.rst b/Documentation/admin-guide/device-mapper/index.rst
+index ec62fcc8eece..6cf8adc86fa8 100644
+--- a/Documentation/admin-guide/device-mapper/index.rst
++++ b/Documentation/admin-guide/device-mapper/index.rst
+@@ -11,6 +11,7 @@ Device Mapper
+     dm-clone
+     dm-crypt
+     dm-dust
++    dm-ebs
+     dm-flakey
+     dm-init
+     dm-integrity
 -- 
-2.25.0.4.g0ad7144999
+2.26.2
