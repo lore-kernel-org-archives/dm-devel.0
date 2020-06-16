@@ -1,15 +1,15 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v2] multipath: Fix compiler warnings when
- built without systemd.
-Date: Wed, 17 Jun 2020 09:28:36 +0200
-Message-ID: <5fd1cca644c31d1ac4c6eaa951e53eeeb733413f.camel@suse.com>
-References: <d909fc0a2383f028ae7c3ad00c142193ca8d9ae7.camel@suse.com>
-	<20200616231126.18538-1-marius@devup.no>
+From: yangerkun <yangerkun@huawei.com>
+Subject: Re: [PATCH 0/2] introduce interface to list all badblocks
+Date: Tue, 16 Jun 2020 21:02:39 +0800
+Message-ID: <464fba5f-fc92-5f5d-29dc-deae19997ad8@huawei.com>
+References: <20200608084513.115671-1-yangerkun@huawei.com>
+	<20200615170331.GA12312@agk-dp.fab.redhat.com>
+	<20200616122803.GA24935@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="gbk"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200616231126.18538-1-marius@devup.no>
+In-Reply-To: <20200616122803.GA24935@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,20 +19,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Marius Bakke <marius@devup.no>, dm-devel@redhat.com
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: "Bryn M. Reeves" <bmr@redhat.com>, bgurney@redhat.com, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 2020-06-17 at 01:11 +0200, Marius Bakke wrote:
-> Add ifdef guards for code that is unused when systemd is not
-> available.
-> ---
->  libmultipath/config.c |  6 ++++--
->  multipathd/main.c     | 10 +++++++++-
->  2 files changed, 13 insertions(+), 3 deletions(-)
-> 
-
-Reviewed-by: Martin Wilck <mwilck@suse.com>
-
-Thanks!
-Martin
+CgrU2iAyMDIwLzYvMTYgMjA6MjgsIEJyeW4gTS4gUmVldmVzINC0tcA6Cj4gT24gTW9uLCBKdW4g
+MTUsIDIwMjAgYXQgMDY6MDM6MzFQTSArMDEwMCwgQWxhc2RhaXIgRyBLZXJnb24gd3JvdGU6Cj4+
+IE9uIE1vbiwgSnVuIDA4LCAyMDIwIGF0IDA0OjQ1OjExUE0gKzA4MDAsIHlhbmdlcmt1biB3cm90
+ZToKPj4+ICAgICAgJCBzdWRvIGRtc2V0dXAgbWVzc2FnZSBkdXN0MSAwIGxpc3RiYWRibG9ja3MK
+Pj4+IFRoZSBmb2xsb3dpbmcgbWVzc2FnZSB3aWxsIGFwcGVhciwgbGlzdGluZyBvbmUgYmFkIGJs
+b2NrIG51bWJlciBwZXIKPj4KPj4gRGlkIHlvdSBjb25zaWRlciByZXR1cm5pbmcgdGhlIGRhdGEg
+ZGlyZWN0bHkgdG8gdGhlIGNhbGxlciBzbyBpdAo+PiBjYW4gYmUgYWNjZXNzZWQgZGlyZWN0bHk/
+Cj4+Cj4+IChlLmcuIGxpa2UgQHN0YXRzX2xpc3QgaGFuZGxlZCBpbiBkbS1zdGF0cy5jKQo+IAo+
+IEhhdmluZyB0aGlzIHJldHVybmVkIGluIHRoZSBtZXNzYWdlIHJlc3BvbnNlIHdvdWxkIGNlcnRh
+aW5seSBiZSBtb3JlCj4gbmF0dXJhbCBhbmQgd291bGQgc2ltcGxpZnkgcGFyc2luZyB0aGUgZGF0
+YTogc2VuZGluZyBpdCB0byB0aGUgbG9nIHNlZW1zCj4gbGlrZSBpdCB3b3VsZCBhbGxvdyBsb2cg
+bGluZXMgZnJvbSBkaXN0aW5jdCBkZXZpY2VzIHRvIGJlY29tZQo+IGludGVybGVhdmVkIHdoZW4g
+dGhlIGxpc3RzIGFyZSBsb25nIGFuZCB0aGUgbWVzc2FnZSBpcyBzZW50IHRvIHR3byBvcgo+IG1v
+cmUgZGV2aWNlcyBuZWFyIHNpbXVsdGFuZW91c2x5LiBXaXRob3V0IHNvbWV0aGluZyB0byBpZGVu
+dGlmeSB0aGUKPiBkZXZpY2VzIGluIGVhY2ggbWVzc2FnZSB5b3UgY2FuJ3QgZGlzdGluZ3Vpc2gg
+dGhlbS4KPiAKPiBFdmVuIHdpdGggbGFyZ2UgbnVtYmVycyBvZiBiYWQgYmxvY2tzIHVzZXJzcGFj
+ZSBsaWJkZXZtYXBwZXIgd2lsbAo+IGF1dG9tYXRpY2FsbHkgaGFuZGxlIHJlLXRyeWluZyB3aXRo
+IGEgbGFyZ2VyIGJ1ZmZlciBpZiB0aGUgbGlzdCBpcyB0b28KPiBiaWcgZm9yIHRoZSBkZWZhdWx0
+Lgo+IAo+IFdlIHVzZSAoc29tZXRpbWVzIHZlcnkgbGFyZ2UpIG1lc3NhZ2UgcmVwbGllcyBoZWF2
+aWx5IGluIGxpYmRtLXN0YXRzLgo+IAo+IGRldmljZS1tYXBwZXIuaCBwcm92aWRlcyB0aGUgRE1F
+TUlUIG1hY3JvIHRvIG91dHB1dCBtZXNzYWdlIHJlcGxpZXMuCj4gU2VlIGRtX3N0YXRzX3ByaW50
+KCkgb3IgdmFyaW91cyB0YXJnZXQgc3RhdHVzKCkgZnVuY3Rpb25zIGZvcgo+IGV4YW1wbGVzLgo+
+IAo+IFJlZ2FyZHMsCj4gQnJ5bi4KPiAKSGksCgpUaGFua3MgZm9yIHlvdXIgcmVwbHkhIEkgd2ls
+bCByZWFkIHRoaXMgY29kZSBhbmQgY29uc2lkZXIgdG8gcmVhbGl6ZSBpdCEKClRoYW5rcywKS3Vu
+LgoKPiAKPiAuCj4gCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
+b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
