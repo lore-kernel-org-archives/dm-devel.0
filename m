@@ -1,15 +1,14 @@
-From: yangerkun <yangerkun@huawei.com>
-Subject: Re: [PATCH 0/2] introduce interface to list all badblocks
-Date: Tue, 16 Jun 2020 21:02:39 +0800
-Message-ID: <464fba5f-fc92-5f5d-29dc-deae19997ad8@huawei.com>
-References: <20200608084513.115671-1-yangerkun@huawei.com>
-	<20200615170331.GA12312@agk-dp.fab.redhat.com>
-	<20200616122803.GA24935@localhost.localdomain>
+From: Marius Bakke <marius@devup.no>
+Subject: [PATCH v2] multipath: Fix compiler warnings when built
+	without systemd.
+Date: Wed, 17 Jun 2020 01:11:26 +0200
+Message-ID: <20200616231126.18538-1-marius@devup.no>
+References: <d909fc0a2383f028ae7c3ad00c142193ca8d9ae7.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="gbk"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200616122803.GA24935@localhost.localdomain>
+In-Reply-To: <d909fc0a2383f028ae7c3ad00c142193ca8d9ae7.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,32 +18,110 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Bryn M. Reeves" <bmr@redhat.com>, bgurney@redhat.com, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
+To: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-CgrU2iAyMDIwLzYvMTYgMjA6MjgsIEJyeW4gTS4gUmVldmVzINC0tcA6Cj4gT24gTW9uLCBKdW4g
-MTUsIDIwMjAgYXQgMDY6MDM6MzFQTSArMDEwMCwgQWxhc2RhaXIgRyBLZXJnb24gd3JvdGU6Cj4+
-IE9uIE1vbiwgSnVuIDA4LCAyMDIwIGF0IDA0OjQ1OjExUE0gKzA4MDAsIHlhbmdlcmt1biB3cm90
-ZToKPj4+ICAgICAgJCBzdWRvIGRtc2V0dXAgbWVzc2FnZSBkdXN0MSAwIGxpc3RiYWRibG9ja3MK
-Pj4+IFRoZSBmb2xsb3dpbmcgbWVzc2FnZSB3aWxsIGFwcGVhciwgbGlzdGluZyBvbmUgYmFkIGJs
-b2NrIG51bWJlciBwZXIKPj4KPj4gRGlkIHlvdSBjb25zaWRlciByZXR1cm5pbmcgdGhlIGRhdGEg
-ZGlyZWN0bHkgdG8gdGhlIGNhbGxlciBzbyBpdAo+PiBjYW4gYmUgYWNjZXNzZWQgZGlyZWN0bHk/
-Cj4+Cj4+IChlLmcuIGxpa2UgQHN0YXRzX2xpc3QgaGFuZGxlZCBpbiBkbS1zdGF0cy5jKQo+IAo+
-IEhhdmluZyB0aGlzIHJldHVybmVkIGluIHRoZSBtZXNzYWdlIHJlc3BvbnNlIHdvdWxkIGNlcnRh
-aW5seSBiZSBtb3JlCj4gbmF0dXJhbCBhbmQgd291bGQgc2ltcGxpZnkgcGFyc2luZyB0aGUgZGF0
-YTogc2VuZGluZyBpdCB0byB0aGUgbG9nIHNlZW1zCj4gbGlrZSBpdCB3b3VsZCBhbGxvdyBsb2cg
-bGluZXMgZnJvbSBkaXN0aW5jdCBkZXZpY2VzIHRvIGJlY29tZQo+IGludGVybGVhdmVkIHdoZW4g
-dGhlIGxpc3RzIGFyZSBsb25nIGFuZCB0aGUgbWVzc2FnZSBpcyBzZW50IHRvIHR3byBvcgo+IG1v
-cmUgZGV2aWNlcyBuZWFyIHNpbXVsdGFuZW91c2x5LiBXaXRob3V0IHNvbWV0aGluZyB0byBpZGVu
-dGlmeSB0aGUKPiBkZXZpY2VzIGluIGVhY2ggbWVzc2FnZSB5b3UgY2FuJ3QgZGlzdGluZ3Vpc2gg
-dGhlbS4KPiAKPiBFdmVuIHdpdGggbGFyZ2UgbnVtYmVycyBvZiBiYWQgYmxvY2tzIHVzZXJzcGFj
-ZSBsaWJkZXZtYXBwZXIgd2lsbAo+IGF1dG9tYXRpY2FsbHkgaGFuZGxlIHJlLXRyeWluZyB3aXRo
-IGEgbGFyZ2VyIGJ1ZmZlciBpZiB0aGUgbGlzdCBpcyB0b28KPiBiaWcgZm9yIHRoZSBkZWZhdWx0
-Lgo+IAo+IFdlIHVzZSAoc29tZXRpbWVzIHZlcnkgbGFyZ2UpIG1lc3NhZ2UgcmVwbGllcyBoZWF2
-aWx5IGluIGxpYmRtLXN0YXRzLgo+IAo+IGRldmljZS1tYXBwZXIuaCBwcm92aWRlcyB0aGUgRE1F
-TUlUIG1hY3JvIHRvIG91dHB1dCBtZXNzYWdlIHJlcGxpZXMuCj4gU2VlIGRtX3N0YXRzX3ByaW50
-KCkgb3IgdmFyaW91cyB0YXJnZXQgc3RhdHVzKCkgZnVuY3Rpb25zIGZvcgo+IGV4YW1wbGVzLgo+
-IAo+IFJlZ2FyZHMsCj4gQnJ5bi4KPiAKSGksCgpUaGFua3MgZm9yIHlvdXIgcmVwbHkhIEkgd2ls
-bCByZWFkIHRoaXMgY29kZSBhbmQgY29uc2lkZXIgdG8gcmVhbGl6ZSBpdCEKClRoYW5rcywKS3Vu
-LgoKPiAKPiAuCj4gCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
-b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Add ifdef guards for code that is unused when systemd is not available.
+---
+ libmultipath/config.c |  6 ++++--
+ multipathd/main.c     | 10 +++++++++-
+ 2 files changed, 13 insertions(+), 3 deletions(-)
+
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index b4d87689..658bec8b 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -696,9 +696,9 @@ process_config_dir(struct config *conf, char *dir)
+ 	pthread_cleanup_pop(1);
+ }
+ 
++#ifdef USE_SYSTEMD
+ static void set_max_checkint_from_watchdog(struct config *conf)
+ {
+-#ifdef USE_SYSTEMD
+ 	char *envp = getenv("WATCHDOG_USEC");
+ 	unsigned long checkint;
+ 
+@@ -714,8 +714,8 @@ static void set_max_checkint_from_watchdog(struct config *conf)
+ 		condlog(3, "enabling watchdog, interval %ld", checkint);
+ 		conf->use_watchdog = true;
+ 	}
+-#endif
+ }
++#endif
+ 
+ struct config *
+ load_config (char * file)
+@@ -789,7 +789,9 @@ load_config (char * file)
+ 	/*
+ 	 * fill the voids left in the config file
+ 	 */
++#ifdef USE_SYSTEMD
+ 	set_max_checkint_from_watchdog(conf);
++#endif
+ 	if (conf->max_checkint == 0) {
+ 		if (conf->checkint == CHECKINT_UNDEF)
+ 			conf->checkint = DEFAULT_CHECKINT;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 8baf9abe..ac8ae4c2 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -176,6 +176,7 @@ daemon_status(void)
+ /*
+  * I love you too, systemd ...
+  */
++#ifdef USE_SYSTEMD
+ static const char *
+ sd_notify_status(enum daemon_status state)
+ {
+@@ -195,7 +196,6 @@ sd_notify_status(enum daemon_status state)
+ 	return NULL;
+ }
+ 
+-#ifdef USE_SYSTEMD
+ static void do_sd_notify(enum daemon_status old_state,
+ 			 enum daemon_status new_state)
+ {
+@@ -247,7 +247,9 @@ enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
+ static void __post_config_state(enum daemon_status state)
+ {
+ 	if (state != running_state && running_state != DAEMON_SHUTDOWN) {
++#ifdef USE_SYSTEMD
+ 		enum daemon_status old_state = running_state;
++#endif
+ 
+ 		running_state = state;
+ 		pthread_cond_broadcast(&config_cond);
+@@ -272,7 +274,9 @@ int set_config_state(enum daemon_status state)
+ 	pthread_cleanup_push(config_cleanup, NULL);
+ 	pthread_mutex_lock(&config_lock);
+ 	if (running_state != state) {
++#ifdef USE_SYSTEMD
+ 		enum daemon_status old_state = running_state;
++#endif
+ 
+ 		if (running_state == DAEMON_SHUTDOWN)
+ 			rc = EINVAL;
+@@ -2280,7 +2284,9 @@ checkerloop (void *ap)
+ 	struct timespec last_time;
+ 	struct config *conf;
+ 	int foreign_tick = 0;
++#ifdef USE_SYSTEMD
+ 	bool use_watchdog;
++#endif
+ 
+ 	pthread_cleanup_push(rcu_unregister, NULL);
+ 	rcu_register_thread();
+@@ -2294,7 +2300,9 @@ checkerloop (void *ap)
+ 
+ 	/* use_watchdog is set from process environment and never changes */
+ 	conf = get_multipath_config();
++#ifdef USE_SYSTEMD
+ 	use_watchdog = conf->use_watchdog;
++#endif
+ 	put_multipath_config(conf);
+ 
+ 	while (1) {
+-- 
+2.26.2
