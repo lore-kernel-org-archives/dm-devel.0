@@ -1,118 +1,75 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [dm-devel] [PATCH 1/4] crypto: introduce
+Subject: Re: [dm-devel] [PATCH 2/4] crypto: pass the flag
  CRYPTO_ALG_ALLOCATES_MEMORY
-Date: Tue, 16 Jun 2020 10:36:20 -0700
-Message-ID: <20200616173620.GA207319@gmail.com>
+Date: Tue, 16 Jun 2020 10:42:40 -0700
+Message-ID: <20200616174240.GB207319@gmail.com>
 References: <alpine.LRH.2.02.2006091259250.30590@file01.intranet.prod.int.rdu2.redhat.com>
  <20200610010450.GA6449@gondor.apana.org.au>
  <alpine.LRH.2.02.2006100756270.27811@file01.intranet.prod.int.rdu2.redhat.com>
  <20200610121106.GA23137@gondor.apana.org.au>
  <alpine.LRH.2.02.2006161052540.28052@file01.intranet.prod.int.rdu2.redhat.com>
- <alpine.LRH.2.02.2006161101080.28052@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.LRH.2.02.2006161101380.28052@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-crypto-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.2006161101080.28052@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.2006161101380.28052@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-crypto-owner@vger.kernel.org
 To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: Herbert Xu <herbert@gondor.apana.org.au>, Mike Snitzer <msnitzer@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-crypto@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Jun 16, 2020 at 11:01:31AM -0400, Mikulas Patocka wrote:
-> Introduce a new flag CRYPTO_ALG_ALLOCATES_MEMORY and modify dm-crypt, so
-> that it uses only drivers without this flag.
-> 
-> If the flag is set, then the crypto driver allocates memory in its request
-> routine. Such drivers are not suitable for disk encryption because
-> GFP_ATOMIC allocation can fail anytime (causing random I/O errors) and
-> GFP_KERNEL allocation can recurse into the block layer, causing a
-> deadlock.
+On Tue, Jun 16, 2020 at 11:01:58AM -0400, Mikulas Patocka wrote:
+> Pass the flag CRYPTO_ALG_ALLOCATES_MEMORY down through the crypto API.
 > 
 > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 > 
-> Index: linux-2.6/include/linux/crypto.h
+> ---
+>  crypto/adiantum.c         |    3 ++-
+>  crypto/authenc.c          |    5 +++--
+>  crypto/authencesn.c       |    5 +++--
+>  crypto/ccm.c              |    7 ++++---
+>  crypto/chacha20poly1305.c |    5 +++--
+>  crypto/cryptd.c           |    7 +++++--
+>  crypto/ctr.c              |    3 ++-
+>  crypto/cts.c              |    5 +++--
+>  crypto/essiv.c            |    5 +++--
+>  crypto/gcm.c              |   15 +++++++++------
+>  crypto/geniv.c            |    3 ++-
+>  crypto/lrw.c              |    5 +++--
+>  crypto/rsa-pkcs1pad.c     |    5 +++--
+>  crypto/xts.c              |    2 +-
+>  include/crypto/algapi.h   |    9 +++++++++
+>  15 files changed, 55 insertions(+), 29 deletions(-)
+> 
+> Index: linux-2.6/crypto/authenc.c
 > ===================================================================
-> --- linux-2.6.orig/include/linux/crypto.h
-> +++ linux-2.6/include/linux/crypto.h
-> @@ -97,9 +97,15 @@
->  #define CRYPTO_ALG_OPTIONAL_KEY		0x00004000
->  
->  /*
-> + * The driver is allocating emmory in its encrypt or decrypt callback,
-> + * so it should not be used to encrypt block devices.
-> + */
-
-"is allocating emmory" => "may allocate memory"
-
-"so it should not be used to encrypt block devices" =>
-"so it shouldn't be used in cases where memory allocation failures aren't
- acceptable, such as during block device encryption".
-
-Also, which types of algorithms does this flag apply to?  E.g. if it applies to
-hash algorithms too, it's not sufficient to say "encrypt or decrypt callback".
-
-How about:
-
- /*
-  * The driver may allocate memory during request processing, so it shouldn't be
-  * used in cases where memory allocation failures aren't acceptable, such as
-  * during block device encryption.
-  */
-
-> +#define CRYPTO_ALG_ALLOCATES_MEMORY	0x00008000
-> +
-> +/*
->   * Don't trigger module loading
->   */
-> -#define CRYPTO_NOLOAD			0x00008000
-> +#define CRYPTO_NOLOAD			0x00010000
->  
->  /*
->   * Transform masks and values (for crt_flags).
-> Index: linux-2.6/drivers/md/dm-crypt.c
-> ===================================================================
-
-This would better belong as two separate patches: one to introduce
-CRYPTO_ALG_ALLOCATES_MEMORY, and one to make dm-crypt use it.
-
-> --- linux-2.6.orig/drivers/md/dm-crypt.c
-> +++ linux-2.6/drivers/md/dm-crypt.c
-> @@ -419,7 +419,7 @@ static int crypt_iv_lmk_ctr(struct crypt
+> --- linux-2.6.orig/crypto/authenc.c
+> +++ linux-2.6/crypto/authenc.c
+> @@ -388,7 +388,8 @@ static int crypto_authenc_create(struct
+>  	if ((algt->type ^ CRYPTO_ALG_TYPE_AEAD) & algt->mask)
 >  		return -EINVAL;
->  	}
 >  
-> -	lmk->hash_tfm = crypto_alloc_shash("md5", 0, 0);
-> +	lmk->hash_tfm = crypto_alloc_shash("md5", 0, CRYPTO_ALG_ALLOCATES_MEMORY);
->  	if (IS_ERR(lmk->hash_tfm)) {
->  		ti->error = "Error initializing LMK hash";
->  		return PTR_ERR(lmk->hash_tfm);
-> @@ -581,7 +581,7 @@ static int crypt_iv_tcw_ctr(struct crypt
->  		return -EINVAL;
->  	}
+> -	mask = crypto_requires_sync(algt->type, algt->mask);
+> +	mask = crypto_requires_sync(algt->type, algt->mask) |
+> +	       crypto_requires_nomem(algt->type, algt->mask);
 >  
-> -	tcw->crc32_tfm = crypto_alloc_shash("crc32", 0, 0);
-> +	tcw->crc32_tfm = crypto_alloc_shash("crc32", 0, CRYPTO_ALG_ALLOCATES_MEMORY);
->  	if (IS_ERR(tcw->crc32_tfm)) {
->  		ti->error = "Error initializing CRC32 in TCW";
->  		return PTR_ERR(tcw->crc32_tfm);
-> @@ -768,7 +768,7 @@ static int crypt_iv_elephant_ctr(struct
->  	struct iv_elephant_private *elephant = &cc->iv_gen_private.elephant;
->  	int r;
+>  	inst = kzalloc(sizeof(*inst) + sizeof(*ctx), GFP_KERNEL);
+>  	if (!inst)
+> @@ -424,7 +425,7 @@ static int crypto_authenc_create(struct
+>  		goto err_free_inst;
 >  
-> -	elephant->tfm = crypto_alloc_skcipher("ecb(aes)", 0, 0);
-> +	elephant->tfm = crypto_alloc_skcipher("ecb(aes)", 0, CRYPTO_ALG_ALLOCATES_MEMORY);
->  	if (IS_ERR(elephant->tfm)) {
->  		r = PTR_ERR(elephant->tfm);
->  		elephant->tfm = NULL;
-> @@ -2088,7 +2088,7 @@ static int crypt_alloc_tfms_skcipher(str
->  		return -ENOMEM;
->  
->  	for (i = 0; i < cc->tfms_count; i++) {
-> -		cc->cipher_tfm.tfms[i] = crypto_alloc_skcipher(ciphermode, 0, 0);
-> +		cc->cipher_tfm.tfms[i] = crypto_alloc_skcipher(ciphermode, 0, CRYPTO_ALG_ALLOCATES_MEMORY);
+>  	inst->alg.base.cra_flags = (auth_base->cra_flags |
+> -				    enc->base.cra_flags) & CRYPTO_ALG_ASYNC;
+> +				    enc->base.cra_flags) & (CRYPTO_ALG_ASYNC | CRYPTO_ALG_ALLOCATES_MEMORY);
 
-Despite the recent relaxation in rules, the preferred length of a line is still
-80 columns.
+ASYNC and ALLOCATES_MEMORY are both handled the same way.  They're both
+"inherited" from inner algorithms to the template instance.  And if someone
+requests that one of these flags be clear when instantiating a template, then we
+have to honor the same for the inner algorithms too.
+
+So, shouldn't we define something like crypto_algt_mask() and
+CRYPTO_ALG_INHERITED_FLAGS and make them handle both ASYNC and ALLOCATES_MEMORY,
+rather than explicitly handling each of these flags everywhere again?
 
 - Eric
