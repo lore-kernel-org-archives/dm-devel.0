@@ -1,14 +1,16 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: [PATCH 0/2] introduce interface to list all	badblocks
-Date: Tue, 16 Jun 2020 13:28:03 +0100
-Message-ID: <20200616122803.GA24935@localhost.localdomain>
-References: <20200608084513.115671-1-yangerkun@huawei.com>
-	<20200615170331.GA12312@agk-dp.fab.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: crypto API and GFP_ATOMIC
+Date: Tue, 16 Jun 2020 11:01:00 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2006161052540.28052@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2006091259250.30590@file01.intranet.prod.int.rdu2.redhat.com>
+	<20200610010450.GA6449@gondor.apana.org.au>
+	<alpine.LRH.2.02.2006100756270.27811@file01.intranet.prod.int.rdu2.redhat.com>
+	<20200610121106.GA23137@gondor.apana.org.au>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200615170331.GA12312@agk-dp.fab.redhat.com>
+In-Reply-To: <20200610121106.GA23137@gondor.apana.org.au>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,36 +20,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: yangerkun <yangerkun@huawei.com>, bgurney@redhat.com, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Mike Snitzer <msnitzer@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-crypto@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jun 15, 2020 at 06:03:31PM +0100, Alasdair G Kergon wrote:
-> On Mon, Jun 08, 2020 at 04:45:11PM +0800, yangerkun wrote:
-> >     $ sudo dmsetup message dust1 0 listbadblocks
-> > The following message will appear, listing one bad block number per
+
+
+On Wed, 10 Jun 2020, Herbert Xu wrote:
+
+> On Wed, Jun 10, 2020 at 08:02:23AM -0400, Mikulas Patocka wrote:
+> >
+> > Yes, fixing the drivers would be the best - but you can hardly find any 
+> > person who has all the crypto hardware and who is willing to rewrite all 
+> > the drivers for it.
 > 
-> Did you consider returning the data directly to the caller so it
-> can be accessed directly?
+> We don't have to rewrite them straight away.  We could mark the
+> known broken ones (or the known working ones) and then dm-crypt
+> can allocate only those using the types/mask to crypto_alloc.
 > 
-> (e.g. like @stats_list handled in dm-stats.c)
+> Cheers,
 
-Having this returned in the message response would certainly be more
-natural and would simplify parsing the data: sending it to the log seems
-like it would allow log lines from distinct devices to become
-interleaved when the lists are long and the message is sent to two or
-more devices near simultaneously. Without something to identify the
-devices in each message you can't distinguish them.
+I triaged the drivers in drivers/crypto and unfortunatelly, most of them 
+do memory allocation in the encryption routine. Some of the do GFP_KERNEL 
+allocation even in the absence of CRYPTO_TFM_REQ_MAY_SLEEP.
 
-Even with large numbers of bad blocks userspace libdevmapper will
-automatically handle re-trying with a larger buffer if the list is too
-big for the default.
+I'm sending the patches:
 
-We use (sometimes very large) message replies heavily in libdm-stats.
+The first patch adds a new flag CRYPTO_ALG_ALLOCATES_MEMORY.
 
-device-mapper.h provides the DMEMIT macro to output message replies.
-See dm_stats_print() or various target status() functions for
-examples.
+The second patch passes CRYPTO_ALG_ALLOCATES_MEMORY through the crypto API 
+stack (please check it - I am not an expert in this area).
 
-Regards,
-Bryn.
+The third patch sets CRYPTO_ALG_ALLOCATES_MEMORY on drivers that allocate 
+memory in the encrypt/decrypt routine.
+
+The fourth patch fixes the drivers that use GFP_KERNEL in non-blocking 
+context.
+
+Mikulas
