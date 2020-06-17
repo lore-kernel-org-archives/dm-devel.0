@@ -1,59 +1,71 @@
-From: Marius Bakke <marius@devup.no>
-Subject: Re: [PATCH] multipath-tools: Fix compiler warnings when
-	built without systemd.
-Date: Wed, 17 Jun 2020 01:17:57 +0200
-Message-ID: <87d05yeh22.fsf@gnu.org>
-References: <20200516175508.12412-1-marius@devup.no>
-	<d909fc0a2383f028ae7c3ad00c142193ca8d9ae7.camel@suse.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [PATCH 4/4] crypto: fix the drivers that don't respect
+ CRYPTO_TFM_REQ_MAY_SLEEP
+Date: Wed, 17 Jun 2020 09:46:34 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2006170940510.18714@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2006091259250.30590@file01.intranet.prod.int.rdu2.redhat.com> <20200610010450.GA6449@gondor.apana.org.au> <alpine.LRH.2.02.2006100756270.27811@file01.intranet.prod.int.rdu2.redhat.com> <20200610121106.GA23137@gondor.apana.org.au>
+ <alpine.LRH.2.02.2006161052540.28052@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.2006161102250.28052@file01.intranet.prod.int.rdu2.redhat.com> <20200616175022.GD207319@gmail.com> <alpine.LRH.2.02.2006161416510.12390@file01.intranet.prod.int.rdu2.redhat.com>
+ <20200616182327.GE207319@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d909fc0a2383f028ae7c3ad00c142193ca8d9ae7.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200616182327.GE207319@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Eric Biggers <ebiggers@kernel.org>, George Cherian <gcherian@marvell.com>, Wei Xu <xuwei5@hisilicon.com>, Zaibo Xu <xuzaibo@huawei.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, Mike Snitzer <msnitzer@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-crypto@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Martin Wilck <mwilck@suse.com> writes:
 
-> Hello Marius,
->
-> On Sat, 2020-05-16 at 19:55 +0200, Marius Bakke wrote:
->> ---
->>  libmultipath/config.c |  2 +-
->>  multipathd/main.c     | 19 +++++++++++++------
->>  2 files changed, 14 insertions(+), 7 deletions(-)
->> 
->
-> thank you for the patch, and sorry for the late reply.
-> Thanks to Xose, too, for making me aware of it.
->
-> This patch needs some improvements, see remarks below.
->
-> In general, please note that the development and in particular the
-> testing of multipath-tools has been done almost exclusively on systems
-> using systemd for several years now. The compilation issues you
-> encountered may only be the tip of the iceberg. In particular, the udev
-> rules shipped with multipath-tools rely on systemd for proper device
-> setup.
 
-Thanks for reviewing.  I'm mainly here for 'kpartx' anyway, but "good"
-to know that multipath-tools may need extra care outside of systemd.
+On Tue, 16 Jun 2020, Eric Biggers wrote:
 
-I'm hardly a C programmer, so thanks for bearing with me.  Adding just
-plain old ifdef guards is much clearer than sprinkling __attribute__
-around.
+> On Tue, Jun 16, 2020 at 02:18:17PM -0400, Mikulas Patocka wrote:
+> > 
+> > 
+> > On Tue, 16 Jun 2020, Eric Biggers wrote:
+> > 
+> > > On Tue, Jun 16, 2020 at 11:02:50AM -0400, Mikulas Patocka wrote:
+> > > > Fix the crypto drivers that don't respect CRYPTO_TFM_REQ_MAY_SLEEP. If
+> > > > CRYPTO_TFM_REQ_MAY_SLEEP is not set, the driver must not do allocation
+> > > > that sleeps.
+> > > > 
+> > > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > > 
+> > > I think you need to split this up per driver with a proper explanation and a
+> > > "Fixes:" tag for each driver.
+> > > 
+> > > Also, these bugs should have been detected by the crypto self-tests already,
+> > > since they test having preemption disabled and CRYPTO_TFM_REQ_MAY_SLEEP cleared.
+> > > Can you double check whether these are all valid fixes?  One thing to watch out
+> > > 
+> > > for is that CRYPTO_TFM_REQ_MAY_SLEEP only applies to the function call like
+> > > crypto_skcipher_encrypt() itself.  If the implementation is asynchronous and the
+> > > request gets processed in the background (i.e. if crypto_skcipher_encrypt()
+> > > returns -EINPROGRESS), the background work doesn't have to honor
+> > > CRYPTO_TFM_REQ_MAY_SLEEP.
+> > > 
+> > > - Eric
+> > 
+> > I can only compile-test this patch. I don't have the hardware.
+> > 
+> 
+> I'm just asking for you to check the code extra carefully.  The fact that the
+> self-tests should have been detecting this type of bug implies that these might
+> not actually be valid fixes.
 
-V2 sent in a separate message.
+I've checked it more thoroughly and found out that 3 out of 5 drivers do
+the GFP_KERNEL allocation from crypto-engine callback. So, it is
+supposedly OK.
 
-Thanks,
-Marius
+> However, we do know that not all crypto drivers are being actively tested with
+> the latest self-tests and with kernel debugging options enabled.  So it's
+> expected that some are indeed broken.
+> 
+> - Eric
+
+The broken ones are drivers/crypto/cavium/cpt/ and 
+drivers/crypto/hisilicon/sec/
+
+I'm sending patches for them.
+
+Mikulas
