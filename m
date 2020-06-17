@@ -1,90 +1,79 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 3/3] dm-crypt: don't use drivers that have
- CRYPTO_ALG_ALLOCATES_MEMORY
-Date: Wed, 17 Jun 2020 11:11:07 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2006171110270.18714@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.2006091259250.30590@file01.intranet.prod.int.rdu2.redhat.com> <20200610010450.GA6449@gondor.apana.org.au> <alpine.LRH.2.02.2006100756270.27811@file01.intranet.prod.int.rdu2.redhat.com> <20200610121106.GA23137@gondor.apana.org.au>
- <alpine.LRH.2.02.2006161052540.28052@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.2006161101080.28052@file01.intranet.prod.int.rdu2.redhat.com> <20200616173620.GA207319@gmail.com>
- <alpine.LRH.2.02.2006171107220.18714@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm ioctl: Use struct_size() helper
+Date: Wed, 17 Jun 2020 12:30:08 -0400
+Message-ID: <20200617163008.GA12083@redhat.com>
+References: <20190828183825.GA4216@embeddedor>
+ <885e7ea3-b29a-eba0-569e-64760102016e@embeddedor.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.2006171107220.18714@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <885e7ea3-b29a-eba0-569e-64760102016e@embeddedor.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Mike Snitzer <msnitzer@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-crypto@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>, Jonathan Cameron <Jonathan.Cameron@Huawei.com>, George Cherian <gcherian@marvell.com>, Wei Xu <xuwei5@hisilicon.com>, Zaibo Xu <xuzaibo@Huawei.com>
+To: "Gustavo A. R. Silva" <gustavo@embeddedor.com>
+Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Kees Cook <keescook@chromium.org>
 List-Id: dm-devel.ids
 
-Don't use crypto drivers that have the flag CRYPTO_ALG_ALLOCATES_MEMORY
-set. These drivers allocate memory and thus they are unsuitable for block
-I/O processing.
+On Tue, Jun 16 2020 at  6:06pm -0400,
+Gustavo A. R. Silva <gustavo@embeddedor.com> wrote:
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Hi all,
+> 
+> Friendly ping: who can take this?
+> 
+> It's been almost a year... and I just noticed there was a problem
+> with the email addresses back then...
+> 
+> I just fixed the issue and this patch should now appear on
+> dm-devel@redhat.com and LKML.
 
----
- drivers/md/dm-crypt.c |   17 +++++++++++------
- 1 file changed, 11 insertions(+), 6 deletions(-)
+I don't see any resubmit from you on either list.  But I've applied the
+fix by hand and attributed it to you.
 
-Index: linux-2.6/drivers/md/dm-crypt.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-crypt.c
-+++ linux-2.6/drivers/md/dm-crypt.c
-@@ -419,7 +419,8 @@ static int crypt_iv_lmk_ctr(struct crypt
- 		return -EINVAL;
- 	}
- 
--	lmk->hash_tfm = crypto_alloc_shash("md5", 0, 0);
-+	lmk->hash_tfm = crypto_alloc_shash("md5", 0,
-+					   CRYPTO_ALG_ALLOCATES_MEMORY);
- 	if (IS_ERR(lmk->hash_tfm)) {
- 		ti->error = "Error initializing LMK hash";
- 		return PTR_ERR(lmk->hash_tfm);
-@@ -581,7 +582,8 @@ static int crypt_iv_tcw_ctr(struct crypt
- 		return -EINVAL;
- 	}
- 
--	tcw->crc32_tfm = crypto_alloc_shash("crc32", 0, 0);
-+	tcw->crc32_tfm = crypto_alloc_shash("crc32", 0,
-+					    CRYPTO_ALG_ALLOCATES_MEMORY);
- 	if (IS_ERR(tcw->crc32_tfm)) {
- 		ti->error = "Error initializing CRC32 in TCW";
- 		return PTR_ERR(tcw->crc32_tfm);
-@@ -768,7 +770,8 @@ static int crypt_iv_elephant_ctr(struct
- 	struct iv_elephant_private *elephant = &cc->iv_gen_private.elephant;
- 	int r;
- 
--	elephant->tfm = crypto_alloc_skcipher("ecb(aes)", 0, 0);
-+	elephant->tfm = crypto_alloc_skcipher("ecb(aes)", 0,
-+					      CRYPTO_ALG_ALLOCATES_MEMORY);
- 	if (IS_ERR(elephant->tfm)) {
- 		r = PTR_ERR(elephant->tfm);
- 		elephant->tfm = NULL;
-@@ -2088,7 +2091,8 @@ static int crypt_alloc_tfms_skcipher(str
- 		return -ENOMEM;
- 
- 	for (i = 0; i < cc->tfms_count; i++) {
--		cc->cipher_tfm.tfms[i] = crypto_alloc_skcipher(ciphermode, 0, 0);
-+		cc->cipher_tfm.tfms[i] = crypto_alloc_skcipher(ciphermode, 0,
-+						CRYPTO_ALG_ALLOCATES_MEMORY);
- 		if (IS_ERR(cc->cipher_tfm.tfms[i])) {
- 			err = PTR_ERR(cc->cipher_tfm.tfms[i]);
- 			crypt_free_tfms(cc);
-@@ -2114,7 +2118,8 @@ static int crypt_alloc_tfms_aead(struct
- 	if (!cc->cipher_tfm.tfms)
- 		return -ENOMEM;
- 
--	cc->cipher_tfm.tfms_aead[0] = crypto_alloc_aead(ciphermode, 0, 0);
-+	cc->cipher_tfm.tfms_aead[0] = crypto_alloc_aead(ciphermode, 0,
-+						CRYPTO_ALG_ALLOCATES_MEMORY);
- 	if (IS_ERR(cc->cipher_tfm.tfms_aead[0])) {
- 		err = PTR_ERR(cc->cipher_tfm.tfms_aead[0]);
- 		crypt_free_tfms(cc);
-@@ -2565,7 +2570,7 @@ static int crypt_ctr_auth_cipher(struct
- 		return -ENOMEM;
- 	strncpy(mac_alg, start, end - start);
- 
--	mac = crypto_alloc_ahash(mac_alg, 0, 0);
-+	mac = crypto_alloc_ahash(mac_alg, 0, CRYPTO_ALG_ALLOCATES_MEMORY);
- 	kfree(mac_alg);
- 
- 	if (IS_ERR(mac))
+Thanks,
+Mike
+
+
+> On 8/28/19 13:38, Gustavo A. R. Silva wrote:
+> > One of the more common cases of allocation size calculations is finding
+> > the size of a structure that has a zero-sized array at the end, along
+> > with memory for some number of elements for that array. For example:
+> > 
+> > struct dm_target_deps {
+> > 	...
+> >         __u64 dev[0];   /* out */
+> > };
+> > 
+> > Make use of the struct_size() helper instead of an open-coded version
+> > in order to avoid any potential type mistakes.
+> > 
+> > So, replace the following form:
+> > 
+> > sizeof(*deps) + (sizeof(*deps->dev) * count)
+> > 
+> > with:
+> > 
+> > struct_size(deps, dev, count)
+> > 
+> > This code was detected with the help of Coccinelle.
+> > 
+> > Signed-off-by: Gustavo A. R. Silva <gustavo@embeddedor.com>
+> > ---
+> >  drivers/md/dm-ioctl.c | 2 +-
+> >  1 file changed, 1 insertion(+), 1 deletion(-)
+> > 
+> > diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+> > index fb6f8fb1f13d..b2d52cec70d4 100644
+> > --- a/drivers/md/dm-ioctl.c
+> > +++ b/drivers/md/dm-ioctl.c
+> > @@ -1446,7 +1446,7 @@ static void retrieve_deps(struct dm_table *table,
+> >  	/*
+> >  	 * Check we have enough space.
+> >  	 */
+> > -	needed = sizeof(*deps) + (sizeof(*deps->dev) * count);
+> > +	needed = struct_size(deps, dev, count);
+> >  	if (len < needed) {
+> >  		param->flags |= DM_BUFFER_FULL_FLAG;
+> >  		return;
+> > 
+> 
