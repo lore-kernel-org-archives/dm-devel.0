@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 1/7] libmultipath: change do_get_info returns
-Date: Wed, 17 Jun 2020 19:24:21 -0500
-Message-ID: <1592439867-18427-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 2/7] multipathd: fix check_path errors with
+	removed map
+Date: Wed, 17 Jun 2020 19:24:22 -0500
+Message-ID: <1592439867-18427-3-git-send-email-bmarzins@redhat.com>
 References: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,124 +22,107 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-Make do_get_info() differentiate between dm failures and missing
-devices, and update callers to retain their current behavior. Also,
-rename it and make it external. These changes will be used by future
-commits.
+If a multipath device is removed during, or immediately before the call
+to check_path(), multipathd can behave incorrectly. A missing multpath
+device will cause update_multipath_strings() to fail, setting
+pp->dmstate to PSTATE_UNDEF.  If the path is up, this state will cause
+reinstate_path() to be called, which will also fail.  This will trigger
+a reload, restoring the recently removed device.
+
+If update_multipath_strings() fails because there is no multipath
+device, check_path should just quit, since the remove dmevent and uevent
+are likely already queued up. Also, I don't see any reason to reload the
+multipath device if reinstate fails. This code was added by
+fac68d7a99ef17d496079538a5c6836acd7911ab, which clamined that reinstate
+could fail if the path was disabled.  Looking through the current kernel
+code, I can't see any reason why a reinstate would fail, where a reload
+would help. If the path was missing from the multipath device,
+update_multipath_strings() would already catch that, and quit
+check_path() early, which make more sense to me than reloading does.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/devmapper.c | 29 ++++++++++++++++-------------
- libmultipath/devmapper.h |  1 +
- 2 files changed, 17 insertions(+), 13 deletions(-)
+ multipathd/main.c | 36 ++++++++++++++----------------------
+ 1 file changed, 14 insertions(+), 22 deletions(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 27d52398..b44f7545 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -496,8 +496,14 @@ int dm_addmap_reload(struct multipath *mpp, char *params, int flush)
- 	return 0;
- }
- 
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 6b7db2c0..8fb73922 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1611,22 +1611,18 @@ fail_path (struct path * pp, int del_active)
+ /*
+  * caller must have locked the path list before calling that function
+  */
 -static int
--do_get_info(const char *name, struct dm_info *info)
-+/*
-+ * Returns:
-+ * -1: Error
-+ *  0: device does not exist
-+ *  1: device exists
-+ */
-+int
-+do_dm_get_info(const char *name, struct dm_info *info)
++static void
+ reinstate_path (struct path * pp)
  {
- 	int r = -1;
- 	struct dm_task *dmt;
-@@ -516,10 +522,7 @@ do_get_info(const char *name, struct dm_info *info)
- 	if (!dm_task_get_info(dmt, info))
- 		goto out;
- 
--	if (!info->exists)
--		goto out;
+-	int ret = 0;
 -
--	r = 0;
-+	r = !!info->exists;
- out:
- 	dm_task_destroy(dmt);
- 	return r;
-@@ -529,7 +532,7 @@ int dm_map_present(const char * str)
- {
- 	struct dm_info info;
+ 	if (!pp->mpp)
+-		return 0;
++		return;
  
--	return (do_get_info(str, &info) == 0);
-+	return (do_dm_get_info(str, &info) == 1);
+-	if (dm_reinstate_path(pp->mpp->alias, pp->dev_t)) {
++	if (dm_reinstate_path(pp->mpp->alias, pp->dev_t))
+ 		condlog(0, "%s: reinstate failed", pp->dev_t);
+-		ret = 1;
+-	} else {
++	else {
+ 		condlog(2, "%s: reinstated", pp->dev_t);
+ 		update_queue_mode_add_path(pp->mpp);
+ 	}
+-	return ret;
  }
  
- int dm_get_map(const char *name, unsigned long long *size, char *outparams)
-@@ -820,7 +823,7 @@ dm_dev_t (const char * mapname, char * dev_t, int len)
- {
- 	struct dm_info info;
+ static void
+@@ -2088,8 +2084,13 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 	 * Synchronize with kernel state
+ 	 */
+ 	if (update_multipath_strings(pp->mpp, vecs->pathvec, 1)) {
++		struct dm_info info;
+ 		condlog(1, "%s: Could not synchronize with kernel state",
+ 			pp->dev);
++		if (pp->mpp && pp->mpp->alias &&
++		    do_dm_get_info(pp->mpp->alias, &info) == 0)
++			/* multipath device missing. Likely removed */
++			return 0;
+ 		pp->dmstate = PSTATE_UNDEF;
+ 	}
+ 	/* if update_multipath_strings orphaned the path, quit early */
+@@ -2179,12 +2180,8 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 		/*
+ 		 * reinstate this path
+ 		 */
+-		if (!disable_reinstate && reinstate_path(pp)) {
+-			condlog(3, "%s: reload map", pp->dev);
+-			ev_add_path(pp, vecs, 1);
+-			pp->tick = 1;
+-			return 0;
+-		}
++		if (!disable_reinstate)
++			reinstate_path(pp);
+ 		new_path_up = 1;
  
--	if (do_get_info(mapname, &info) != 0)
-+	if (do_dm_get_info(mapname, &info) != 1)
- 		return 1;
- 
- 	if (snprintf(dev_t, len, "%i:%i", info.major, info.minor) > len)
-@@ -862,7 +865,7 @@ dm_get_major_minor(const char *name, int *major, int *minor)
- {
- 	struct dm_info info;
- 
--	if (do_get_info(name, &info) != 0)
-+	if (do_dm_get_info(name, &info) != 1)
- 		return -1;
- 
- 	*major = info.major;
-@@ -1199,7 +1202,7 @@ dm_geteventnr (const char *name)
- {
- 	struct dm_info info;
- 
--	if (do_get_info(name, &info) != 0)
-+	if (do_dm_get_info(name, &info) != 1)
- 		return -1;
- 
- 	return info.event_nr;
-@@ -1210,7 +1213,7 @@ dm_is_suspended(const char *name)
- {
- 	struct dm_info info;
- 
--	if (do_get_info(name, &info) != 0)
-+	if (do_dm_get_info(name, &info) != 1)
- 		return -1;
- 
- 	return info.suspended;
-@@ -1383,7 +1386,7 @@ dm_get_deferred_remove (const char * mapname)
- {
- 	struct dm_info info;
- 
--	if (do_get_info(mapname, &info) != 0)
-+	if (do_dm_get_info(mapname, &info) != 1)
- 		return -1;
- 
- 	return info.deferred_remove;
-@@ -1442,7 +1445,7 @@ dm_get_info (const char * mapname, struct dm_info ** dmi)
- 	if (!*dmi)
- 		return 1;
- 
--	if (do_get_info(mapname, *dmi) != 0) {
-+	if (do_dm_get_info(mapname, *dmi) != 1) {
- 		memset(*dmi, 0, sizeof(struct dm_info));
- 		FREE(*dmi);
- 		*dmi = NULL;
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index 5ed7edc5..79c9afb2 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -66,6 +66,7 @@ char * dm_mapname(int major, int minor);
- int dm_remove_partmaps (const char * mapname, int need_sync,
- 			int deferred_remove);
- int dm_get_uuid(const char *name, char *uuid, int uuid_len);
-+int do_dm_get_info(const char *, struct dm_info *);
- int dm_get_info (const char * mapname, struct dm_info ** dmi);
- int dm_rename (const char * old, char * new, char * delim, int skip_kpartx);
- int dm_reassign(const char * mapname);
+ 		if (oldchkrstate != PATH_UP && oldchkrstate != PATH_GHOST)
+@@ -2200,15 +2197,10 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 	else if (newstate == PATH_UP || newstate == PATH_GHOST) {
+ 		if ((pp->dmstate == PSTATE_FAILED ||
+ 		    pp->dmstate == PSTATE_UNDEF) &&
+-		    !disable_reinstate) {
++		    !disable_reinstate)
+ 			/* Clear IO errors */
+-			if (reinstate_path(pp)) {
+-				condlog(3, "%s: reload map", pp->dev);
+-				ev_add_path(pp, vecs, 1);
+-				pp->tick = 1;
+-				return 0;
+-			}
+-		} else {
++			reinstate_path(pp);
++		else {
+ 			LOG_MSG(4, verbosity, pp);
+ 			if (pp->checkint != max_checkint) {
+ 				/*
 -- 
 2.17.2
