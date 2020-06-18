@@ -1,14 +1,14 @@
 From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 5.7 047/388] dm mpath: switch paths in
+Subject: [PATCH AUTOSEL 5.4 035/266] dm mpath: switch paths in
 	dm_blk_ioctl() code path
-Date: Wed, 17 Jun 2020 21:02:24 -0400
-Message-ID: <20200618010805.600873-47-sashal@kernel.org>
-References: <20200618010805.600873-1-sashal@kernel.org>
+Date: Wed, 17 Jun 2020 21:12:40 -0400
+Message-ID: <20200618011631.604574-35-sashal@kernel.org>
+References: <20200618011631.604574-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200618010805.600873-1-sashal@kernel.org>
+In-Reply-To: <20200618011631.604574-1-sashal@kernel.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -51,10 +51,10 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 3e500098132f..e0c800cf87a9 100644
+index 456d790c918c..f2de4c73cc8f 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -1918,7 +1918,7 @@ static int multipath_prepare_ioctl(struct dm_target *ti,
+@@ -1856,7 +1856,7 @@ static int multipath_prepare_ioctl(struct dm_target *ti,
  	int r;
  
  	current_pgpath = READ_ONCE(m->current_pgpath);
