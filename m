@@ -1,44 +1,63 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm writecache: correct uncommitted_block when discarding
- uncommitted entry
-Date: Wed, 17 Jun 2020 12:41:09 -0400
-Message-ID: <20200617164108.GA12131@redhat.com>
-References: <20200612155911.96528-1-yehs2007@zoho.com>
- <alpine.LRH.2.02.2006130839480.27500@file01.intranet.prod.int.rdu2.redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH 3/7] libmultipath: make dm_flush_maps only return
+	0 on success
+Date: Wed, 17 Jun 2020 19:24:23 -0500
+Message-ID: <1592439867-18427-4-git-send-email-bmarzins@redhat.com>
+References: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.2006130839480.27500@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Huaisheng Ye <yehs2007@zoho.com>, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Huaisheng Ye <yehs1@lenovo.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-On Sat, Jun 13 2020 at  8:40am -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+dm_flush_maps() returned both 0 and 1 on error, depending on which part
+of the function it was in, but the caller was always treating 0 as a
+success. Make dm_flush_maps() always return 1 on error and 0 on success.
 
-> 
-> 
-> On Fri, 12 Jun 2020, Huaisheng Ye wrote:
-> 
-> > From: Huaisheng Ye <yehs1@lenovo.com>
-> > 
-> > When uncommitted entry has been discarded, correct wc->uncommitted_block
-> > for getting the exact number.
-> > 
-> > Signed-off-by: Huaisheng Ye <yehs1@lenovo.com>
-> 
-> Acked-by: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> Also, add:
-> Cc: stable@vger.kernel.org
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/devmapper.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-I picked this up for 5.8 but I inverted the patch order because this
-stable@ fix was dependent on the prior patch to skip waiting if in pmem
-mode (due to locality of changes within same function).
-
-See:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.8&id=39495b12ef1cf602e6abd350dce2ef4199906531
-
-Mike
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index b44f7545..682c0038 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -993,13 +993,13 @@ dm_flush_map_nopaths(const char * mapname, int deferred_remove)
+ 
+ int dm_flush_maps (int retries)
+ {
+-	int r = 0;
++	int r = 1;
+ 	struct dm_task *dmt;
+ 	struct dm_names *names;
+ 	unsigned next = 0;
+ 
+ 	if (!(dmt = libmp_dm_task_create (DM_DEVICE_LIST)))
+-		return 0;
++		return r;
+ 
+ 	dm_task_no_open_count(dmt);
+ 
+@@ -1012,6 +1012,7 @@ int dm_flush_maps (int retries)
+ 	if (!names->dev)
+ 		goto out;
+ 
++	r = 0;
+ 	do {
+ 		r |= dm_suspend_and_flush_map(names->name, retries);
+ 		next = names->next;
+-- 
+2.17.2
