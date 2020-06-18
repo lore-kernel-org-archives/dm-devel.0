@@ -1,49 +1,51 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2 0/2] introduce interface to list all
-	badblocks
-Date: Thu, 18 Jun 2020 11:40:50 -0400
-Message-ID: <20200618154050.GA18007@redhat.com>
-References: <20200618090620.3517530-1-yangerkun@huawei.com>
+Subject: Re: New mode DM-Verity error handling
+Date: Thu, 18 Jun 2020 11:44:45 -0400
+Message-ID: <20200618154444.GB18007@redhat.com>
+References: <CGME20200618070250epcas1p409eb2ddd19ecc5d55c219ac3dc884f25@epcas1p4.samsung.com>
+ <98eac3fc-c399-625d-5730-29853b3a0771@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200618090620.3517530-1-yangerkun@huawei.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-doc-owner@vger.kernel.org>
 Content-Disposition: inline
-To: yangerkun <yangerkun@huawei.com>
-Cc: bmr@redhat.com, dm-devel@redhat.com, agk@redhat.com, bgurney@redhat.com
+In-Reply-To: <98eac3fc-c399-625d-5730-29853b3a0771@samsung.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: JeongHyeon Lee <jhs2.lee@samsung.com>
+Cc: agk@redhat.com, dm-devel@redhat.com, corbet@lwn.net, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Jun 18 2020 at  5:06am -0400,
-yangerkun <yangerkun@huawei.com> wrote:
+On Thu, Jun 18 2020 at  2:56am -0400,
+JeongHyeon Lee <jhs2.lee@samsung.com> wrote:
 
+> Hello, Dear devcice-mapper maintainers.
 > 
-> This patchset will list badblocks while we do 'dmsetup status'.
+> I'm JeongHyeon Lee, work in Samsung. I'm chage of DM-Verity feature with 
+> Mr. sunwook eom.
+> I have a patch or suggestion about DM-Verity error handling.
 > 
-> Image that we have mark block 1 and 2 as bad block, run following
-> command will list all bad blocks:
+> Our device (smart phone) need DM-Verity feature. So I hope there is new 
+> mode DM-Verity error handling.
+> This new mode concept is When detect corrupted block, will be go to panic.
 > 
->     $ sudo dmsetup status dust1
->     0 33552384 dust 252:17 bypass verbose badblocks list: 1 2
+> Because our team policy is found device DM-Verity error, device will go 
+> panic.
+> And then analyze what kind of device fault (crash UFS, IO error, DRAM 
+> bit flip etc)
 > 
-> v1->v2:
-> Realize this logical in dust_status instead dust_message since the
-> result can return to user directly.
+> In addition to the smart phone, I would like to have an option that 
+> users or administrators can use accordingly.
+> There are patch contents in the attachment. I would really appreciate it 
+> if you could check it.
+> 
+> I will look forward to hearing from yours.
+> Thank you :)
+> 
 
-Seems you've misundeerstood.  Please don't augment status to include the
-listing of badblocks.  The list _could_ be extremely long.
+I do not accept that panicing the system because of verity failure is
+reasonable.
 
-The feedback you got earlier was to use DMEMIT() from the .message
-hook.  And the listing would be provided as output from the 'dmsetup
-message ...' command.
+In fact, even rebooting (via DM_VERITY_MODE_RESTART) looks very wrong.
+
+The device should be put in a failed state and left for admin recovery.
 
 Mike
