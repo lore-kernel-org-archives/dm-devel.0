@@ -1,62 +1,71 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 6/7] multipath: delegate flushing maps to
-	multipathd
-Date: Wed, 17 Jun 2020 19:24:26 -0500
-Message-ID: <1592439867-18427-7-git-send-email-bmarzins@redhat.com>
-References: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
+From: Sasha Levin <sashal@kernel.org>
+Subject: [PATCH AUTOSEL 5.7 252/388] dm zoned: return NULL if dmz_get_zone_for_reclaim() fails to find a zone
+Date: Wed, 17 Jun 2020 21:05:49 -0400
+Message-ID: <20200618010805.600873-252-sashal@kernel.org>
+References: <20200618010805.600873-1-sashal@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20200618010805.600873-1-sashal@kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Cc: Hannes Reinecke <hare@suse.de>, Damien Le Moal <damien.lemoal@wdc.com>, Mike Snitzer <snitzer@redhat.com>, Sasha Levin <sashal@kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Since there can be problems with removing maps outside of multipathd,
-multipath should attempt to delegate this command to multipathd.
-However, multipathd doesn't attempt to suspend the device, in order
-to avoid potential hangs. If delegating to multipathd fails, multipath
-should try the remove itself.
+From: Hannes Reinecke <hare@suse.de>
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+[ Upstream commit 489dc0f06a5837f87482c0ce61d830d24e17082e ]
+
+The only case where dmz_get_zone_for_reclaim() cannot return a zone is
+if the respective lists are empty. So we should just return a simple
+NULL value here as we really don't have an error code which would make
+sense.
+
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- multipath/main.c | 14 ++++++++++++++
- 1 file changed, 14 insertions(+)
+ drivers/md/dm-zoned-metadata.c | 4 ++--
+ drivers/md/dm-zoned-reclaim.c  | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index 101fd656..6a24e483 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -820,6 +820,20 @@ int delegate_to_multipathd(enum mpath_cmds cmd,
- 	if (cmd == CMD_CREATE && conf->force_reload == FORCE_RELOAD_YES) {
- 		p += snprintf(p, n, "reconfigure");
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index 369de15c4e80..61b7d7b7e5a6 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -1554,7 +1554,7 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd)
+ 			return dzone;
  	}
-+	else if (cmd == CMD_FLUSH_ONE && dev && dev_type == DEV_DEVMAP) {
-+		p += snprintf(p, n, "del map %s", dev);
-+		/* multipathd doesn't try as hard, to avoid potentially
-+		 * hanging. If it fails, retry with the regular multipath
-+		 * command */
-+		r = NOT_DELEGATED;
-+	}
-+	else if (cmd == CMD_FLUSH_ALL) {
-+		p += snprintf(p, n, "del maps");
-+		/* multipathd doesn't try as hard, to avoid potentially
-+		 * hanging. If it fails, retry with the regular multipath
-+		 * command */
-+		r = NOT_DELEGATED;
-+	}
- 	/* Add other translations here */
  
- 	if (strlen(command) == 0)
+-	return ERR_PTR(-EBUSY);
++	return NULL;
+ }
+ 
+ /*
+@@ -1574,7 +1574,7 @@ static struct dm_zone *dmz_get_seq_zone_for_reclaim(struct dmz_metadata *zmd)
+ 			return zone;
+ 	}
+ 
+-	return ERR_PTR(-EBUSY);
++	return NULL;
+ }
+ 
+ /*
+diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+index e7ace908a9b7..d50817320e8e 100644
+--- a/drivers/md/dm-zoned-reclaim.c
++++ b/drivers/md/dm-zoned-reclaim.c
+@@ -349,8 +349,8 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
+ 
+ 	/* Get a data zone */
+ 	dzone = dmz_get_zone_for_reclaim(zmd);
+-	if (IS_ERR(dzone))
+-		return PTR_ERR(dzone);
++	if (!dzone)
++		return -EBUSY;
+ 
+ 	start = jiffies;
+ 
 -- 
-2.17.2
+2.25.1
