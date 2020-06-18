@@ -1,56 +1,113 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH] dm zoned: Fix metadata zone size check
-Date: Thu, 18 Jun 2020 02:53:17 +0000
-Message-ID: <CY4PR04MB375151DFB6741AD3515486ADE79B0@CY4PR04MB3751.namprd04.prod.outlook.com>
-References: <20200618024810.443981-1-shinichiro.kawasaki@wdc.com>
+From: JeongHyeon Lee <jhs2.lee@samsung.com>
+Subject: [patch] New mode DM-Verity error handling
+Date: Thu, 18 Jun 2020 15:56:50 +0900
+Message-ID: <98eac3fc-c399-625d-5730-29853b3a0771@samsung.com>
+References: <CGME20200618070250epcas1p409eb2ddd19ecc5d55c219ac3dc884f25@epcas1p4.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: multipart/mixed;
+        boundary="------------9C73C137154A1ECE1862557A"
+Return-path: <linux-doc-owner@vger.kernel.org>
 Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: snitzer@redhat.com
+Cc: agk@redhat.com, dm-devel@redhat.com, corbet@lwn.net, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 2020/06/18 11:48, Shin'ichiro Kawasaki wrote:
-> When dm zoned has multiple devices, metadata is on the cache device, not
-> in random zones of the zoned devices. Then the number of metadata zones
-> shall be checked with the number of cache zones, not random zones.
-> 
-> Fixes: 34f5affd04c4 ("dm zoned: separate random and cache zones")
-> Signed-off-by: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
-> ---
->  drivers/md/dm-zoned-metadata.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-> index 130b5a6d9f12..fc1329ca3e70 100644
-> --- a/drivers/md/dm-zoned-metadata.c
-> +++ b/drivers/md/dm-zoned-metadata.c
-> @@ -1078,7 +1078,8 @@ static int dmz_check_sb(struct dmz_metadata *zmd, struct dmz_sb *dsb,
->  	nr_meta_zones = (le32_to_cpu(sb->nr_meta_blocks) + zmd->zone_nr_blocks - 1)
->  		>> zmd->zone_nr_blocks_shift;
->  	if (!nr_meta_zones ||
-> -	    nr_meta_zones >= zmd->nr_rnd_zones) {
-> +	    (zmd->nr_devs <= 1 && nr_meta_zones >= zmd->nr_rnd_zones) ||
-> +	    (zmd->nr_devs > 1 && nr_meta_zones >= zmd->nr_cache_zones)) {
->  		dmz_dev_err(dev, "Invalid number of metadata blocks");
->  		return -ENXIO;
->  	}
-> 
+This is a multi-part message in MIME format.
+--------------9C73C137154A1ECE1862557A
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
 
-Looks good to me.
+Hello, Dear devcice-mapper maintainers.
 
-Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
+I'm JeongHyeon Lee, work in Samsung. I'm chage of DM-Verity feature with 
+Mr. sunwook eom.
+I have a patch or suggestion about DM-Verity error handling.
 
--- 
-Damien Le Moal
-Western Digital Research
+Our device (smart phone) need DM-Verity feature. So I hope there is new 
+mode DM-Verity error handling.
+This new mode concept is When detect corrupted block, will be go to panic.
+
+Because our team policy is found device DM-Verity error, device will go 
+panic.
+And then analyze what kind of device fault (crash UFS, IO error, DRAM 
+bit flip etc)
+
+In addition to the smart phone, I would like to have an option that 
+users or administrators can use accordingly.
+There are patch contents in the attachment. I would really appreciate it 
+if you could check it.
+
+I will look forward to hearing from yours.
+Thank you :)
+
+
+--------------9C73C137154A1ECE1862557A
+Content-Type: text/x-patch;
+	name="0001-dm-verity-new-error-handling-mode-for-corrupted-bloc.patch"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+	filename*0="0001-dm-verity-new-error-handling-mode-for-corrupted-bloc.pa";
+	filename*1="tch"
+
+RnJvbSA2ZDNlNTA4ZWQ2ODcyYmZkYzg4ZDZhZDk3OWFjNWMwMzQ3MTQ0ZmJiIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQ0KRnJvbTogImpoczIubGVlIiA8amhzMi5sZWVAc2Ftc3VuZy5jb20+DQpE
+YXRlOiBUaHUsIDE4IEp1biAyMDIwIDE1OjMyOjIwICswOTAwDQpTdWJqZWN0OiBbUEFUQ0hdIGRt
+IHZlcml0eTogbmV3IGVycm9yIGhhbmRsaW5nIG1vZGUgZm9yIGNvcnJ1cHRlZCBibG9ja3MNCg0K
+VGhlcmUgaXMgbm8gcGFuaWMgZXJyb3IgaGFuZGxpbmcgbW9kZSB3aGVuIGEgcHJvYmxlbSBvY2N1
+cnMuDQpTbyBXZSBhZGQgbmV3IGVycm9yIGhhbmRsaW5nIG1vZGUuIHVzZXJzIGFuZCBhZG1pbmlz
+dHJhdG9ycw0Kc2V0dXAgdG8gZml0IHlvdXIgbmVlZC4NCg0KU2lnbmVkLW9mZi1ieTogamhzMi5s
+ZWUgPGpoczIubGVlQHNhbXN1bmcuY29tPg0KLS0tDQogRG9jdW1lbnRhdGlvbi9hZG1pbi1ndWlk
+ZS9kZXZpY2UtbWFwcGVyL3Zlcml0eS5yc3QgfCAgNCArKysrDQogZHJpdmVycy9tZC9kbS12ZXJp
+dHktdGFyZ2V0LmMgICAgICAgICAgICAgICAgICAgICAgfCAxMSArKysrKysrKysrKw0KIGRyaXZl
+cnMvbWQvZG0tdmVyaXR5LmggICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDMgKystDQog
+MyBmaWxlcyBjaGFuZ2VkLCAxNyBpbnNlcnRpb25zKCspLCAxIGRlbGV0aW9uKC0pDQoNCmRpZmYg
+LS1naXQgYS9Eb2N1bWVudGF0aW9uL2FkbWluLWd1aWRlL2RldmljZS1tYXBwZXIvdmVyaXR5LnJz
+dCBiL0RvY3VtZW50YXRpb24vYWRtaW4tZ3VpZGUvZGV2aWNlLW1hcHBlci92ZXJpdHkucnN0DQpp
+bmRleCBiYjAyY2FhNDUyODkuLjY2ZjcxZjBkYWIxYiAxMDA2NDQNCi0tLSBhL0RvY3VtZW50YXRp
+b24vYWRtaW4tZ3VpZGUvZGV2aWNlLW1hcHBlci92ZXJpdHkucnN0DQorKysgYi9Eb2N1bWVudGF0
+aW9uL2FkbWluLWd1aWRlL2RldmljZS1tYXBwZXIvdmVyaXR5LnJzdA0KQEAgLTgzLDYgKzgzLDEw
+IEBAIHJlc3RhcnRfb25fY29ycnVwdGlvbg0KICAgICBub3QgY29tcGF0aWJsZSB3aXRoIGlnbm9y
+ZV9jb3JydXB0aW9uIGFuZCByZXF1aXJlcyB1c2VyIHNwYWNlIHN1cHBvcnQgdG8NCiAgICAgYXZv
+aWQgcmVzdGFydCBsb29wcy4NCiANCitwYW5pY19vbl9jb3JydXB0aW9uDQorICAgIFBhbmljIHRo
+ZSBkZXZpY2Ugd2hlbiBhIGNvcnJ1cHRlZCBibG9jayBpcyBkaXNjb3ZlcmVkLiBUaGlzIG9wdGlv
+biBpcw0KKyAgICBub3QgY29tcGF0aWJsZSB3aXRoIGlnbm9yZV9jb3JydXB0aW9uIGFuZCByZXN0
+YXJ0X29uX2NvcnJ1cHRpb24uDQorDQogaWdub3JlX3plcm9fYmxvY2tzDQogICAgIERvIG5vdCB2
+ZXJpZnkgYmxvY2tzIHRoYXQgYXJlIGV4cGVjdGVkIHRvIGNvbnRhaW4gemVyb2VzIGFuZCBhbHdh
+eXMgcmV0dXJuDQogICAgIHplcm9lcyBpbnN0ZWFkLiBUaGlzIG1heSBiZSB1c2VmdWwgaWYgdGhl
+IHBhcnRpdGlvbiBjb250YWlucyB1bnVzZWQgYmxvY2tzDQpkaWZmIC0tZ2l0IGEvZHJpdmVycy9t
+ZC9kbS12ZXJpdHktdGFyZ2V0LmMgYi9kcml2ZXJzL21kL2RtLXZlcml0eS10YXJnZXQuYw0KaW5k
+ZXggZWVjOWYyNTJlOTM1Li5jODkxMTRlNzg4NmMgMTAwNjQ0DQotLS0gYS9kcml2ZXJzL21kL2Rt
+LXZlcml0eS10YXJnZXQuYw0KKysrIGIvZHJpdmVycy9tZC9kbS12ZXJpdHktdGFyZ2V0LmMNCkBA
+IC0zMCw2ICszMCw3IEBADQogDQogI2RlZmluZSBETV9WRVJJVFlfT1BUX0xPR0dJTkcJCSJpZ25v
+cmVfY29ycnVwdGlvbiINCiAjZGVmaW5lIERNX1ZFUklUWV9PUFRfUkVTVEFSVAkJInJlc3RhcnRf
+b25fY29ycnVwdGlvbiINCisjZGVmaW5lIERNX1ZFUklUWV9PUFRfUEFOSUMJCSJwYW5pY19vbl9j
+b3JydXB0aW9uIg0KICNkZWZpbmUgRE1fVkVSSVRZX09QVF9JR05fWkVST0VTCSJpZ25vcmVfemVy
+b19ibG9ja3MiDQogI2RlZmluZSBETV9WRVJJVFlfT1BUX0FUX01PU1RfT05DRQkiY2hlY2tfYXRf
+bW9zdF9vbmNlIg0KIA0KQEAgLTI1NCw2ICsyNTUsOSBAQCBzdGF0aWMgaW50IHZlcml0eV9oYW5k
+bGVfZXJyKHN0cnVjdCBkbV92ZXJpdHkgKnYsIGVudW0gdmVyaXR5X2Jsb2NrX3R5cGUgdHlwZSwN
+CiAJaWYgKHYtPm1vZGUgPT0gRE1fVkVSSVRZX01PREVfUkVTVEFSVCkNCiAJCWtlcm5lbF9yZXN0
+YXJ0KCJkbS12ZXJpdHkgZGV2aWNlIGNvcnJ1cHRlZCIpOw0KIA0KKwlpZiAodi0+bW9kZSA9PSBE
+TV9WRVJJVFlfTU9ERV9QQU5JQykNCisJCXBhbmljKCJkbS12ZXJpdHkgZGV2aWNlIGNvcnJ1cHRl
+ZCIpOw0KKw0KIAlyZXR1cm4gMTsNCiB9DQogDQpAQCAtNzQyLDYgKzc0Niw5IEBAIHN0YXRpYyB2
+b2lkIHZlcml0eV9zdGF0dXMoc3RydWN0IGRtX3RhcmdldCAqdGksIHN0YXR1c190eXBlX3QgdHlw
+ZSwNCiAJCQljYXNlIERNX1ZFUklUWV9NT0RFX1JFU1RBUlQ6DQogCQkJCURNRU1JVChETV9WRVJJ
+VFlfT1BUX1JFU1RBUlQpOw0KIAkJCQlicmVhazsNCisJCQljYXNlIERNX1ZFUklUWV9NT0RFX1BB
+TklDOg0KKwkJCQlETUVNSVQoRE1fVkVSSVRZX09QVF9QQU5JQyk7DQorCQkJCWJyZWFrOw0KIAkJ
+CWRlZmF1bHQ6DQogCQkJCUJVRygpOw0KIAkJCX0NCkBAIC05MDcsNiArOTE0LDEwIEBAIHN0YXRp
+YyBpbnQgdmVyaXR5X3BhcnNlX29wdF9hcmdzKHN0cnVjdCBkbV9hcmdfc2V0ICphcywgc3RydWN0
+IGRtX3Zlcml0eSAqdiwNCiAJCQl2LT5tb2RlID0gRE1fVkVSSVRZX01PREVfUkVTVEFSVDsNCiAJ
+CQljb250aW51ZTsNCiANCisJCX0gZWxzZSBpZiAoIXN0cmNhc2VjbXAoYXJnX25hbWUsIERNX1ZF
+UklUWV9PUFRfUEFOSUMpKSB7DQorCQkJdi0+bW9kZSA9IERNX1ZFUklUWV9NT0RFX1BBTklDOw0K
+KwkJCWNvbnRpbnVlOw0KKw0KIAkJfSBlbHNlIGlmICghc3RyY2FzZWNtcChhcmdfbmFtZSwgRE1f
+VkVSSVRZX09QVF9JR05fWkVST0VTKSkgew0KIAkJCXIgPSB2ZXJpdHlfYWxsb2NfemVyb19kaWdl
+c3Qodik7DQogCQkJaWYgKHIpIHsNCmRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLXZlcml0eS5o
+IGIvZHJpdmVycy9tZC9kbS12ZXJpdHkuaA0KaW5kZXggNjQxYjllM2EzOTliLi40ZTc2OWQxMzQ3
+M2EgMTAwNjQ0DQotLS0gYS9kcml2ZXJzL21kL2RtLXZlcml0eS5oDQorKysgYi9kcml2ZXJzL21k
+L2RtLXZlcml0eS5oDQpAQCAtMjAsNyArMjAsOCBAQA0KIGVudW0gdmVyaXR5X21vZGUgew0KIAlE
+TV9WRVJJVFlfTU9ERV9FSU8sDQogCURNX1ZFUklUWV9NT0RFX0xPR0dJTkcsDQotCURNX1ZFUklU
+WV9NT0RFX1JFU1RBUlQNCisJRE1fVkVSSVRZX01PREVfUkVTVEFSVCwNCisJRE1fVkVSSVRZX01P
+REVfUEFOSUMNCiB9Ow0KIA0KIGVudW0gdmVyaXR5X2Jsb2NrX3R5cGUgew0KLS0gDQoyLjE3LjEN
+Cg0K
+
+--------------9C73C137154A1ECE1862557A--
