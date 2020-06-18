@@ -1,16 +1,14 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 1/7] libmultipath: change do_get_info returns
-Date: Thu, 18 Jun 2020 15:27:22 +0000
-Message-ID: <a0ac8df28c485019977a5baa3d1c4620604952db.camel@suse.com>
-References: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
-	<1592439867-18427-2-git-send-email-bmarzins@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2 0/2] introduce interface to list all
+	badblocks
+Date: Thu, 18 Jun 2020 11:40:50 -0400
+Message-ID: <20200618154050.GA18007@redhat.com>
+References: <20200618090620.3517530-1-yangerkun@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1592439867-18427-2-git-send-email-bmarzins@redhat.com>
-Content-Language: en-US
-Content-ID: <FB37BA5D656FC442863BE95B829AB205@eurprd04.prod.outlook.com>
+In-Reply-To: <20200618090620.3517530-1-yangerkun@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,54 +18,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Disposition: inline
+To: yangerkun <yangerkun@huawei.com>
+Cc: bmr@redhat.com, dm-devel@redhat.com, agk@redhat.com, bgurney@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 2020-06-17 at 19:24 -0500, Benjamin Marzinski wrote:
-> Make do_get_info() differentiate between dm failures and missing
-> devices, and update callers to retain their current behavior. Also,
-> rename it and make it external. These changes will be used by future
-> commits.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  libmultipath/devmapper.c | 29 ++++++++++++++++-------------
->  libmultipath/devmapper.h |  1 +
->  2 files changed, 17 insertions(+), 13 deletions(-)
->=20
-> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-> index 27d52398..b44f7545 100644
-> --- a/libmultipath/devmapper.c
-> +++ b/libmultipath/devmapper.c
-> @@ -496,8 +496,14 @@ int dm_addmap_reload(struct multipath *mpp, char
-> *params, int flush)
->  =09return 0;
->  }
-> =20
-> -static int
-> -do_get_info(const char *name, struct dm_info *info)
-> +/*
-> + * Returns:
-> + * -1: Error
-> + *  0: device does not exist
-> + *  1: device exists
-> + */
+On Thu, Jun 18 2020 at  5:06am -0400,
+yangerkun <yangerkun@huawei.com> wrote:
 
-Can we use symbolic values here please? In particular as you have
-changed the "success" return value from 0 to 1...
+> 
+> This patchset will list badblocks while we do 'dmsetup status'.
+> 
+> Image that we have mark block 1 and 2 as bad block, run following
+> command will list all bad blocks:
+> 
+>     $ sudo dmsetup status dust1
+>     0 33552384 dust 252:17 bypass verbose badblocks list: 1 2
+> 
+> v1->v2:
+> Realize this logical in dust_status instead dust_message since the
+> result can return to user directly.
 
-One day we should come up with a proper return value scheme
-for libmultipath, defining specific enums for every function
-doesn't scale. But do it here for now nonetheless, please.
+Seems you've misundeerstood.  Please don't augment status to include the
+listing of badblocks.  The list _could_ be extremely long.
 
-Apart from that, ok.
+The feedback you got earlier was to use DMEMIT() from the .message
+hook.  And the listing would be provided as output from the 'dmsetup
+message ...' command.
 
-Regards
-Martin
-
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+Mike
