@@ -1,8 +1,8 @@
 From: Bryan Gurney <bgurney@redhat.com>
-Subject: [PATCH v4 2/4] dm dust: update doc after message results
-	report to user directly
-Date: Fri, 19 Jun 2020 17:11:44 -0400
-Message-ID: <1592601104-3978-1-git-send-email-bgurney@redhat.com>
+Subject: [PATCH v4 3/4] dm dust: add interface to list all
+	badblocks
+Date: Fri, 19 Jun 2020 17:12:42 -0400
+Message-ID: <1592601162-4107-1-git-send-email-bgurney@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -24,72 +24,61 @@ From: yangerkun <yangerkun@huawei.com>
 
 From: yangerkun <yangerkun@huawei.com>
 
-Since some type of message will report the results to user directly,
-we should update the doc too.
+This interface may help anyone who want to know all badblocks without
+query block for each.
 
-[Bryan: update output examples to include function name printing]
+[Bryan: DMEMIT an empty list if no blocks are in the bad block list.]
 
 Signed-off-by: yangerkun <yangerkun@huawei.com>
 Signed-off-by: Bryan Gurney <bgurney@redhat.com>
 ---
- .../admin-guide/device-mapper/dm-dust.rst         | 15 ++++++++-------
- 1 file changed, 8 insertions(+), 7 deletions(-)
+ drivers/md/dm-dust.c | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
 
-diff --git a/Documentation/admin-guide/device-mapper/dm-dust.rst b/Documentation/admin-guide/device-mapper/dm-dust.rst
-index b6e7e7ead831..cf8079e368de 100644
---- a/Documentation/admin-guide/device-mapper/dm-dust.rst
-+++ b/Documentation/admin-guide/device-mapper/dm-dust.rst
-@@ -69,10 +69,11 @@ Create the dm-dust device:
-         $ sudo dmsetup create dust1 --table '0 33552384 dust /dev/vdb1 0 4096'
+diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
+index f1f2dd6a4e84..f7be00a54268 100644
+--- a/drivers/md/dm-dust.c
++++ b/drivers/md/dm-dust.c
+@@ -284,6 +284,31 @@ static int dust_clear_badblocks(struct dust_device *dd, char *result, unsigned i
+ 	return 1;
+ }
  
- Check the status of the read behavior ("bypass" indicates that all I/O
--will be passed through to the underlying device)::
-+will be passed through to the underlying device; "verbose" indicates that
-+bad block additions, removals, and remaps will be verbosely logged)::
- 
-         $ sudo dmsetup status dust1
--        0 33552384 dust 252:17 bypass
-+        0 33552384 dust 252:17 bypass verbose
- 
-         $ sudo dd if=/dev/mapper/dust1 of=/dev/null bs=512 count=128 iflag=direct
-         128+0 records in
-@@ -164,7 +165,7 @@ following message command::
- A message will print with the number of bad blocks currently
- configured on the device::
- 
--        kernel: device-mapper: dust: countbadblocks: 895 badblock(s) found
-+        countbadblocks: 895 badblock(s) found
- 
- Querying for specific bad blocks
- --------------------------------
-@@ -176,11 +177,11 @@ following message command::
- 
- The following message will print if the block is in the list::
- 
--        device-mapper: dust: queryblock: block 72 found in badblocklist
-+        dust_query_block: block 72 found in badblocklist
- 
- The following message will print if the block is not in the list::
- 
--        device-mapper: dust: queryblock: block 72 not found in badblocklist
-+        dust_query_block: block 72 not found in badblocklist
- 
- The "queryblock" message command will work in both the "enabled"
- and "disabled" modes, allowing the verification of whether a block
-@@ -198,12 +199,12 @@ following message command::
- 
- After clearing the bad block list, the following message will appear::
- 
--        kernel: device-mapper: dust: clearbadblocks: badblocks cleared
-+        dust_clear_badblocks: badblocks cleared
- 
- If there were no bad blocks to clear, the following message will
- appear::
- 
--        kernel: device-mapper: dust: clearbadblocks: no badblocks found
-+        dust_clear_badblocks: no badblocks found
- 
- Message commands list
- ---------------------
++static int dust_list_badblocks(struct dust_device *dd, char *result, unsigned int maxlen,
++				unsigned int *sz_ptr)
++{
++	unsigned long flags;
++	struct rb_root badblocklist;
++	struct rb_node *node;
++	struct badblock *bblk;
++	unsigned int sz = *sz_ptr;
++	unsigned long long num = 0;
++
++	spin_lock_irqsave(&dd->dust_lock, flags);
++	badblocklist = dd->badblocklist;
++	for (node = rb_first(&badblocklist); node; node = rb_next(node)) {
++		bblk = rb_entry(node, struct badblock, node);
++		DMEMIT("%llu\n", bblk->bb);
++		num++;
++	}
++
++	spin_unlock_irqrestore(&dd->dust_lock, flags);
++	if (!num)
++		DMEMIT("");
++
++	return 1;
++}
++
+ /*
+  * Target parameters:
+  *
+@@ -427,6 +452,8 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 			else
+ 				dd->quiet_mode = false;
+ 			r = 0;
++		} else if (!strcasecmp(argv[0], "listbadblocks")) {
++			r = dust_list_badblocks(dd, result, maxlen, &sz);
+ 		} else {
+ 			invalid_msg = true;
+ 		}
 -- 
 2.25.4
