@@ -1,21 +1,12 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 2/7] multipathd: fix check_path errors with
- removed map
-Date: Fri, 19 Jun 2020 20:09:27 +0000
-Message-ID: <bfb3d1b613a5346fe57bfedac6b2b631f791c854.camel@suse.com>
-References: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
-	<1592439867-18427-3-git-send-email-bmarzins@redhat.com>
-	<f09ec3b6537a7b7ac1ae26433e43846176f1dd48.camel@suse.com>
-	<20200618231711.GM5894@octiron.msp.redhat.com>
-	<6f9284eeec0dda69e8e4dd4b2858f02d3c31fb8b.camel@suse.com>
-	<20200619165236.GP5894@octiron.msp.redhat.com>
+From: Bryan Gurney <bgurney@redhat.com>
+Subject: [PATCH v4 1/4] dm dust: report some message results back
+	to user directly
+Date: Fri, 19 Jun 2020 17:10:39 -0400
+Message-ID: <1592601039-3868-1-git-send-email-bgurney@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200619165236.GP5894@octiron.msp.redhat.com>
-Content-Language: en-US
-Content-ID: <1D6385902A382E4B8B7EC24BC88DB210@eurprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,61 +16,127 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com
+Cc: yangerkun <yangerkun@huawei.com>, Bryan Gurney <bgurney@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 2020-06-19 at 11:52 -0500, Benjamin Marzinski wrote:
-> On Fri, Jun 19, 2020 at 01:42:47PM +0000, Martin Wilck wrote:
-> > On Thu, 2020-06-18 at 18:17 -0500, Benjamin Marzinski wrote:
-> > > On Thu, Jun 18, 2020 at 07:34:38PM +0000, Martin Wilck wrote:
-> > > >=20
-> > > > It would be more elegant if we could distinguish different
-> > > > failure
-> > > > modes from update_multipath_strings() directly, without having
-> > > > to
-> > > > call
-> > > > do_dm_get_info() again.
-> > >=20
-> > > Seems reasonable. I'll take a look at that.
-> >=20
-> > Yet another idea: I just discussed this with Hannes, and he pointed
-> > out
-> > that right below this code, we have
-> >=20
-> > =09/* if update_multipath_strings orphaned the path, quit early */
-> > =09if (!pp->mpp)
-> > =09=09return 0;
-> >=20
-> > ... which could have the same effect, if pp->mpp was reloaded.
-> > Probably
-> > that doesn't happen because the pp->mpp dereference is cached in a
-> > register, but we could simply add a READ_ONCE there.
->=20
-> When update_multipath_strings() calls update_multipath_table() it
-> will
-> fail because the table no longer exists.  If we differentiate between
-> a dm error and not finding the map, we can exit early without having
-> to
-> call do_dm_get_info() again. But right now, if the map is gone, but
-> we
-> haven't got the uevent removing it, then nothing will clear pp->mpp.=20
+From: yangerkun <yangerkun@huawei.com>
 
-You're right. Let's "differentiate", then :-)
+From: yangerkun <yangerkun@huawei.com>
 
-> If
-> we did get the uevent, then it must have grabbed the vecs lock. That
-> better have caused a memory barrier, which will guarantee that
-> check_path() sees the updated value.
+Some type of message(queryblock/countbadblocks/removebadblock) may better
+report results to user directly. Do it with DMEMIT.
 
-It could hardly have grabbed the lock while check_path() was running.
-Anyway, this wasn't the right suggestion then, and "differentiating" is
-better anyway. Sorry for the confusion.
+[Bryan: maintain __func__ output in DMEMIT messages]
 
-Martin
+Signed-off-by: yangerkun <yangerkun@huawei.com>
+Signed-off-by: Bryan Gurney <bgurney@redhat.com>
+---
+ drivers/md/dm-dust.c | 31 ++++++++++++++++++-------------
+ 1 file changed, 18 insertions(+), 13 deletions(-)
 
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
+index ff03b90072c5..f1f2dd6a4e84 100644
+--- a/drivers/md/dm-dust.c
++++ b/drivers/md/dm-dust.c
+@@ -138,20 +138,22 @@ static int dust_add_block(struct dust_device *dd, unsigned long long block,
+ 	return 0;
+ }
+ 
+-static int dust_query_block(struct dust_device *dd, unsigned long long block)
++static int dust_query_block(struct dust_device *dd, unsigned long long block, char *result,
++			    unsigned int maxlen, unsigned int *sz_ptr)
+ {
+ 	struct badblock *bblock;
+ 	unsigned long flags;
++	unsigned int sz = *sz_ptr;
+ 
+ 	spin_lock_irqsave(&dd->dust_lock, flags);
+ 	bblock = dust_rb_search(&dd->badblocklist, block);
+ 	if (bblock != NULL)
+-		DMINFO("%s: block %llu found in badblocklist", __func__, block);
++		DMEMIT("%s: block %llu found in badblocklist", __func__, block);
+ 	else
+-		DMINFO("%s: block %llu not found in badblocklist", __func__, block);
++		DMEMIT("%s: block %llu not found in badblocklist", __func__, block);
+ 	spin_unlock_irqrestore(&dd->dust_lock, flags);
+ 
+-	return 0;
++	return 1;
+ }
+ 
+ static int __dust_map_read(struct dust_device *dd, sector_t thisblock)
+@@ -259,11 +261,13 @@ static bool __dust_clear_badblocks(struct rb_root *tree,
+ 	return true;
+ }
+ 
+-static int dust_clear_badblocks(struct dust_device *dd)
++static int dust_clear_badblocks(struct dust_device *dd, char *result, unsigned int maxlen,
++				unsigned int *sz_ptr)
+ {
+ 	unsigned long flags;
+ 	struct rb_root badblocklist;
+ 	unsigned long long badblock_count;
++	unsigned int sz = *sz_ptr;
+ 
+ 	spin_lock_irqsave(&dd->dust_lock, flags);
+ 	badblocklist = dd->badblocklist;
+@@ -273,11 +277,11 @@ static int dust_clear_badblocks(struct dust_device *dd)
+ 	spin_unlock_irqrestore(&dd->dust_lock, flags);
+ 
+ 	if (!__dust_clear_badblocks(&badblocklist, badblock_count))
+-		DMINFO("%s: no badblocks found", __func__);
++		DMEMIT("%s: no badblocks found", __func__);
+ 	else
+-		DMINFO("%s: badblocks cleared", __func__);
++		DMEMIT("%s: badblocks cleared", __func__);
+ 
+-	return 0;
++	return 1;
+ }
+ 
+ /*
+@@ -383,7 +387,7 @@ static void dust_dtr(struct dm_target *ti)
+ }
+ 
+ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
+-			char *result_buf, unsigned int maxlen)
++			char *result, unsigned int maxlen)
+ {
+ 	struct dust_device *dd = ti->private;
+ 	sector_t size = i_size_read(dd->dev->bdev->bd_inode) >> SECTOR_SHIFT;
+@@ -393,6 +397,7 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 	unsigned char wr_fail_cnt;
+ 	unsigned int tmp_ui;
+ 	unsigned long flags;
++	unsigned int sz = 0;
+ 	char dummy;
+ 
+ 	if (argc == 1) {
+@@ -410,12 +415,12 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 			r = 0;
+ 		} else if (!strcasecmp(argv[0], "countbadblocks")) {
+ 			spin_lock_irqsave(&dd->dust_lock, flags);
+-			DMINFO("countbadblocks: %llu badblock(s) found",
++			DMEMIT("countbadblocks: %llu badblock(s) found",
+ 			       dd->badblock_count);
+ 			spin_unlock_irqrestore(&dd->dust_lock, flags);
+-			r = 0;
++			r = 1;
+ 		} else if (!strcasecmp(argv[0], "clearbadblocks")) {
+-			r = dust_clear_badblocks(dd);
++			r = dust_clear_badblocks(dd, result, maxlen, &sz);
+ 		} else if (!strcasecmp(argv[0], "quiet")) {
+ 			if (!dd->quiet_mode)
+ 				dd->quiet_mode = true;
+@@ -441,7 +446,7 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 		else if (!strcasecmp(argv[0], "removebadblock"))
+ 			r = dust_remove_block(dd, block);
+ 		else if (!strcasecmp(argv[0], "queryblock"))
+-			r = dust_query_block(dd, block);
++			r = dust_query_block(dd, block, result, maxlen, &sz);
+ 		else
+ 			invalid_msg = true;
+ 
+-- 
+2.25.4
