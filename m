@@ -1,101 +1,107 @@
-From: Bryan Gurney <bgurney@redhat.com>
-Subject: Re: [PATCH v3 3/4] dm dust: add interface to list all
-	badblocks
-Date: Fri, 19 Jun 2020 11:56:45 -0400
-Message-ID: <CAHhmqcS5wJbJdgZ+EucVuP8T_9DhUP-un0=s6CRZKfHdLb7wcQ@mail.gmail.com>
-References: <20200619123803.1441373-1-yangerkun@huawei.com>
-	<20200619123803.1441373-4-yangerkun@huawei.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-rq: don't call blk_mq_queue_stopped in dm_stop_queue()
+Date: Fri, 19 Jun 2020 12:06:57 -0400
+Message-ID: <20200619160657.GA24520@redhat.com>
+References: <20200619084214.337449-1-ming.lei@redhat.com>
+ <20200619094250.GA18410@redhat.com>
+ <20200619101142.GA339442@T590>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200619123803.1441373-4-yangerkun@huawei.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: yangerkun <yangerkun@huawei.com>
-Cc: bmr@redhat.com, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200619101142.GA339442@T590>
+Sender: linux-block-owner@vger.kernel.org
+To: Ming Lei <ming.lei@redhat.com>
+Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, axboe@kernel.dk
 List-Id: dm-devel.ids
 
-On Fri, Jun 19, 2020 at 8:37 AM yangerkun <yangerkun@huawei.com> wrote:
->
-> This interface may help anyone who want to know all badblocks without
-> query block for each.
->
-> Signed-off-by: yangerkun <yangerkun@huawei.com>
-> ---
->  drivers/md/dm-dust.c | 27 +++++++++++++++++++++++++++
->  1 file changed, 27 insertions(+)
->
-> diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
-> index a0c75c104de0..2ad8fc9293e0 100644
-> --- a/drivers/md/dm-dust.c
-> +++ b/drivers/md/dm-dust.c
-> @@ -284,6 +284,31 @@ static int dust_clear_badblocks(struct dust_device *dd, char *result, unsigned i
->         return 1;
->  }
->
-> +static int dust_list_badblocks(struct dust_device *dd, char *result, unsigned int maxlen,
-> +                               unsigned int *sz_ptr)
-> +{
-> +       unsigned long flags;
-> +       struct rb_root badblocklist;
-> +       struct rb_node *node;
-> +       struct badblock *bblk;
-> +       unsigned int sz = *sz_ptr;
-> +       unsigned long long num = 0;
-> +
-> +       spin_lock_irqsave(&dd->dust_lock, flags);
-> +       badblocklist = dd->badblocklist;
-> +       for (node = rb_first(&badblocklist); node; node = rb_next(node)) {
-> +               bblk = rb_entry(node, struct badblock, node);
-> +               DMEMIT("%llu\n", bblk->bb);
-> +               num++;
-> +       }
-> +
-> +       spin_unlock_irqrestore(&dd->dust_lock, flags);
-> +       if (!num)
-> +               DMEMIT("null");
+On Fri, Jun 19 2020 at  6:11am -0400,
+Ming Lei <ming.lei@redhat.com> wrote:
 
-Simply printing "null" may confuse the user into thinking that
-something is wrong, when in fact everything is running normally, and
-the bad block list is empty.
+> Hi Mike,
+> 
+> On Fri, Jun 19, 2020 at 05:42:50AM -0400, Mike Snitzer wrote:
+> > Hi Ming,
+> > 
+> > Thanks for the patch!  But I'm having a hard time understanding what
+> > you've written in the patch header,
+> > 
+> > On Fri, Jun 19 2020 at  4:42am -0400,
+> > Ming Lei <ming.lei@redhat.com> wrote:
+> > 
+> > > dm-rq won't stop queue, meantime blk-mq won't stop one queue too, so
+> > > remove the check.
+> > 
+> > It'd be helpful if you could unpack this with more detail before going on
+> > to explain why using blk_queue_quiesced, despite dm-rq using
+> > blk_mq_queue_stopped, would also be ineffective.
+> > 
+> > SO:
+> > 
+> > > dm-rq won't stop queue
+> > 
+> > 1) why won't dm-rq stop the queue?  Do you mean it won't reliably
+> >    _always_ stop the queue because of the blk_mq_queue_stopped() check?
+> 
+> device mapper doesn't call blk_mq_stop_hw_queue or blk_mq_stop_hw_queues.
+> 
+> > 
+> > > meantime blk-mq won't stop one queue too, so remove the check.
+> > 
+> > 2) Meaning?: blk_mq_queue_stopped() will return true even if only one hw
+> > queue is stopped, given blk-mq must stop all hw queues a positive return
+> > from this blk_mq_queue_stopped() check is incorrectly assuming it meanss
+> > all hw queues are stopped.
+> 
+> blk-mq won't call blk_mq_stop_hw_queue or blk_mq_stop_hw_queues for
+> dm-rq's queue too, so dm-rq's hw queue won't be stopped.
+> 
+> BTW blk_mq_stop_hw_queue or blk_mq_stop_hw_queues are supposed to be
+> used for throttling queue.
 
-Heinz recommended returning an empty report, and I agree with that.
-To the user, it would look something like this:
+I'm going to look at actually stopping the queue (using one of these
+interfaces).  I didn't realize I wasn't actually stopping the queue.
+The intent was to do so.
 
-$ sudo dmsetup message dust1 0 listbadblocks
+In speaking with Jens yesterday about freeze vs stop: it is clear that
+dm-rq needs to still be able to allocate new requests, but _not_ call
+the queue_rq to issue the requests, while "stopped" (due to dm-mpath
+potentially deferring retries of failed requests because of path failure
+while quiescing the queue during DM device suspend).  But that freezing
+the queue goes too far because it won't allow such request allocation.
 
-$ sudo dmsetup message dust1 0 countbadblocks
-countbadblocks: 0 badblock(s) found
+> > > dm_stop_queue() actually tries to quiesce hw queues via blk_mq_quiesce_queue(),
+> > > we can't check via blk_queue_quiesced for avoiding unnecessary queue
+> > > quiesce because the flag is set before synchronize_rcu() and dm_stop_queue
+> > > may be called when synchronize_rcu from another blk_mq_quiesce_queue is
+> > > in-progress.
+> > 
+> > But I'm left with questions/confusion on this too:
+> > 
+> > 1) you mention blk_queue_quiesced instead of blk_mq_queue_stopped, so I
+> >    assume you mean that: not only is blk_mq_queue_stopped()
+> >    ineffective, blk_queue_quiesced() would be too?
+> 
+> blk_mq_queue_stopped isn't necessary because dm-rq's hw queue won't be
+> stopped by anyone, meantime replacing it with blk_queue_quiesced() is wrong.
+> 
+> > 
+> > 2) the race you detail (with competing blk_mq_quiesce_queue) relative to
+> >    synchronize_rcu() and testing "the flag" is very detailed yet vague.
+> 
+> If two code paths are calling dm_stop_queue() at the same time, one path may
+> return immediately and it is wrong, sine synchronize_rcu() from another path
+> may not be done.
+> 
+> > 
+> > Anyway, once we get this heaader cleaned up a bit more I'll be happy to
+> > get this staged as a stable@ fix for 5.8 inclusion ASAP.
+> 
+> This patch isn't a fix, and it shouldn't be related with rhel8's issue.
 
+I realize that now.  I've changed the patch header to be a bit clearer
+and staged it for 5.9, see:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.9&id=06e788ed59e0095b679bdce9e39c1a251032ae62
 
 Thanks,
-
-Bryan
-
-> +
-> +       return 1;
-> +}
-> +
->  /*
->   * Target parameters:
->   *
-> @@ -427,6 +452,8 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
->                         else
->                                 dd->quiet_mode = false;
->                         r = 0;
-> +               } else if (!strcasecmp(argv[0], "listbadblocks")) {
-> +                       r = dust_list_badblocks(dd, result, maxlen, &sz);
->                 } else {
->                         invalid_msg = true;
->                 }
-> --
-> 2.25.4
->
+Mike
