@@ -1,140 +1,124 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [dm-devel] [dm-crypt] [RFC PATCH 1/1] Add DM_CRYPT_FORCE_INLINE
- flag to dm-crypt target
-Date: Wed, 24 Jun 2020 07:49:38 +0000
-Message-ID: <CY4PR04MB375123D338D4CB4FD586FE61E7950@CY4PR04MB3751.namprd04.prod.outlook.com>
-References: <20200619164132.1648-1-ignat@cloudflare.com>
- <20200619164132.1648-2-ignat@cloudflare.com>
- <20200624050452.GB844@sol.localdomain>
+From: Martin Wilck <martin.wilck@suse.com>
+Subject: Re: [PATCH 2/7] multipathd: fix check_path errors with
+	removed map
+Date: Fri, 19 Jun 2020 22:03:57 +0200
+Message-ID: <ddd54050b083d930cac6c779a4d049060116d937.camel@suse.com>
+References: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
+	<1592439867-18427-3-git-send-email-bmarzins@redhat.com>
+	<f09ec3b6537a7b7ac1ae26433e43846176f1dd48.camel@suse.com>
+	<20200618231711.GM5894@octiron.msp.redhat.com>
+	<a1df6c71-1427-9649-3e81-138ffcd04370@suse.de>
+	<20200619163003.GO5894@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="iso-8859-15"
 Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Eric Biggers <ebiggers@kernel.org>, Ignat Korchagin <ignat@cloudflare.com>
-Cc: "snitzer@redhat.com" <snitzer@redhat.com>, "kernel-team@cloudflare.com" <kernel-team@cloudflare.com>, "dm-crypt@saout.de" <dm-crypt@saout.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "agk@redhat.com" <agk@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200619163003.GO5894@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.de>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2020/06/24 14:05, Eric Biggers wrote:=0A=
-> On Fri, Jun 19, 2020 at 05:41:32PM +0100, Ignat Korchagin wrote:=0A=
->> Sometimes extra thread offloading imposed by dm-crypt hurts IO latency. =
-This is=0A=
->> especially visible on busy systems with many processes/threads. Moreover=
-, most=0A=
->> Crypto API implementaions are async, that is they offload crypto operati=
-ons on=0A=
->> their own, so this dm-crypt offloading is excessive.=0A=
-> =0A=
-> This really should say "some Crypto API implementations are async" instea=
-d of=0A=
-> "most Crypto API implementations are async".=0A=
-> =0A=
-> Notably, the AES-NI implementation of AES-XTS is synchronous if you call =
-it in a=0A=
-> context where SIMD instructions are usable.  It's only asynchronous when =
-SIMD is=0A=
-> not usable.  (This seems to have been missed in your blog post.)=0A=
-> =0A=
->> This adds a new flag, which directs dm-crypt not to offload crypto opera=
-tions=0A=
->> and process everything inline. For cases, where crypto operations cannot=
- happen=0A=
->> inline (hard interrupt context, for example the read path of the NVME dr=
-iver),=0A=
->> we offload the work to a tasklet rather than a workqueue.=0A=
-> =0A=
-> This patch both removes some dm-crypt specific queueing, and changes decr=
-yption=0A=
-> to use softIRQ context instead of a workqueue.  It would be useful to kno=
-w how=0A=
-> much of a difference the workqueue =3D> softIRQ change makes by itself.  =
-Such a=0A=
-> change could be useful for fscrypt as well.  (fscrypt uses a workqueue fo=
-r=0A=
-> decryption, but besides that doesn't use any other queueing.)=0A=
-> =0A=
->> @@ -127,7 +128,7 @@ struct iv_elephant_private {=0A=
->>   * and encrypts / decrypts at the same time.=0A=
->>   */=0A=
->>  enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID,=0A=
->> -	     DM_CRYPT_SAME_CPU, DM_CRYPT_NO_OFFLOAD };=0A=
->> +	     DM_CRYPT_SAME_CPU, DM_CRYPT_NO_OFFLOAD, DM_CRYPT_FORCE_INLINE =3D=
- (sizeof(unsigned long) * 8 - 1) };=0A=
-> =0A=
-> Assigning a specific enum value isn't necessary.=0A=
-> =0A=
->> @@ -1458,13 +1459,18 @@ static void crypt_alloc_req_skcipher(struct cryp=
-t_config *cc,=0A=
->>  =0A=
->>  	skcipher_request_set_tfm(ctx->r.req, cc->cipher_tfm.tfms[key_index]);=
-=0A=
->>  =0A=
->> -	/*=0A=
->> -	 * Use REQ_MAY_BACKLOG so a cipher driver internally backlogs=0A=
->> -	 * requests if driver request queue is full.=0A=
->> -	 */=0A=
->> -	skcipher_request_set_callback(ctx->r.req,=0A=
->> -	    CRYPTO_TFM_REQ_MAY_BACKLOG,=0A=
->> -	    kcryptd_async_done, dmreq_of_req(cc, ctx->r.req));=0A=
->> +	if (test_bit(DM_CRYPT_FORCE_INLINE, &cc->flags))=0A=
->> +		/* make sure we zero important fields of the request */=0A=
->> +		skcipher_request_set_callback(ctx->r.req,=0A=
->> +	        0, NULL, NULL);=0A=
->> +	else=0A=
->> +		/*=0A=
->> +		 * Use REQ_MAY_BACKLOG so a cipher driver internally backlogs=0A=
->> +		 * requests if driver request queue is full.=0A=
->> +		 */=0A=
->> +		skcipher_request_set_callback(ctx->r.req,=0A=
->> +	        CRYPTO_TFM_REQ_MAY_BACKLOG,=0A=
->> +	        kcryptd_async_done, dmreq_of_req(cc, ctx->r.req));=0A=
->>  }=0A=
-> =0A=
-> This looks wrong.  Unless type=3D0 and mask=3DCRYPTO_ALG_ASYNC are passed=
- to=0A=
-> crypto_alloc_skcipher(), the skcipher implementation can still be asynchr=
-onous,=0A=
-> in which case providing a callback is required.=0A=
-=0A=
-Another point: for a skcipher implementation that is asynchronous, for the=
-=0A=
-regular case/not-inline, can't we just issue the request directly without u=
-sing=0A=
-the workqueue ? If yes, that would save one context switch, since queueing =
-of=0A=
-the request can be handled by the crypto API when the request callback is s=
-et=0A=
-with CRYPTO_TFM_REQ_MAY_BACKLOG. At least that is how I understood the=0A=
-documentation & comments. I may be wrong here...=0A=
-=0A=
-> =0A=
-> Do you intend that the "force_inline" option forces the use of a synchron=
-ous=0A=
-> skcipher (alongside the other things it does)?  Or should it still allow=
-=0A=
-> asynchronous ones?=0A=
-> =0A=
-> We may not actually have a choice in that matter, since xts-aes-aesni has=
- the=0A=
-> CRYPTO_ALG_ASYNC bit set (as I mentioned) despite being synchronous in mo=
-st=0A=
-> cases; thus, the crypto API won't give you it if you ask for a synchronou=
-s=0A=
-> cipher.  So I think you still need to allow async skciphers?  That means =
-a=0A=
-> callback is still always required.=0A=
-> =0A=
-> - Eric=0A=
-> =0A=
-> --=0A=
-> dm-devel mailing list=0A=
-> dm-devel@redhat.com=0A=
-> https://www.redhat.com/mailman/listinfo/dm-devel=0A=
-> =0A=
-> =0A=
-=0A=
-=0A=
--- =0A=
-Damien Le Moal=0A=
-Western Digital Research=0A=
+On Fri, 2020-06-19 at 11:30 -0500, Benjamin Marzinski wrote:
+> On Fri, Jun 19, 2020 at 08:32:34AM +0200, Hannes Reinecke wrote:
+> > > > fac68d7 is related to the famous "dm-multipath: Accept failed
+> > > > paths for
+> > > > multipath maps" patch (e.g.
+> > > > https://patchwork.kernel.org/patch/3368381/#7193001), which
+> > > > never made
+> > > > it upstream. SUSE kernels have shipped this patch for a long
+> > > > time, but
+> > > > we don't apply it any more in recent kernels.
+> > > >=20
+> > > > With this patch, The reinstate_path() failure would occur if
+> > > > multipathd
+> > > > had created a table with a "disabled" device (one which would
+> > > > be
+> > > > present in a dm map even though the actual block device didn't
+> > > > exist),
+> > > > and then tried to reinstate such a path. It sounds unlikely,
+> > > > but it
+> > > > might be possible if devices are coming and going in quick
+> > > > succession.
+> > > > In that situation, and with the "accept failed path" patch
+> > > > applied, a
+> > > > reload makes some sense, because reload (unlike reinstate)
+> > > > would not
+> > > > fail (at least not for this reason) and would actually add that
+> > > > just-
+> > > > reinstated path. OTOH, it's not likely that the reload would
+> > > > improve
+> > > > matters, either. After all, multipathd is just trying to
+> > > > reinstate a
+> > > > non-existing path. So, I'm fine with skipping the reload.
+> > > >=20
+> > It's actually _not_ unlikely, but a direct result of multipathd
+> > listening to
+> > uevents.
+> >=20
+> > If you have a map with four paths, and all four of them are going
+> > down, you
+> > end up getting four events.
+> > And multipath will be processing each event _individually_, causing
+> > it to
+> > generate a reload sequence like:
+> >=20
+> > [a b c d]
+> > [b c d]
+> > [c d]
+> > [d]
+> > []
+> >=20
+> > Of which only the last is valid, as all the intermediate ones
+> > contain
+> > invalid paths.
+> >=20
+> > And _that_ is the scenario I was referring to when creating the
+> > patch.
+>=20
+> But even still, I'm not in favor of calling ev_add_path() with the
+> code
+> as it currently is. In the case you point out, it will presumably
+> fail
+> when adopt_paths() calls pathinfo(). That will orphan the path, which
+> is
+> good. But if the map got removed (intentionally) instead of the path,
+> ev_add_path() will recreate the map, which is bad. Also, it seems
+> more
+> likely for a path to still exist and be usable while the multipath
+> device is gone (the bad case), than for the path to pass the checker
+> function and then disappear before mutipathd tries to reinstate it
+> immediately afterwards (the good case).  Further, the bad result,
+> where
+> a deleted multipath device reappears, is actually a problem for
+> users.
+> Having multipathd take a bit of time and pointless effort to catch up
+> after multiple changes happen at once doesn't effect users
+> noticeably.
+>=20
+> Since the checkerloop thread spends the vast majority of it's not not
+> checking any specific path, if a path goes away, it is most likely to
+> be
+> caught by the path_offline() function. I we want to do something to
+> proactively deal with a path that has been removed, we should do it
+
+Hannes and I discussed about this, and he agreed that calling
+ev_add_path() in the situation at hand wasn't helpful. Hence his
+suggestion with pp->mpp that we discussed in the other sub-thread.
+
+Regards,
+Martin
+
+--=20
+Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+SUSE  Software Solutions Germany GmbH
+HRB 36809, AG N=FCrnberg GF: Felix
+Imend=F6rffer
