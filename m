@@ -1,55 +1,94 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [RFC PATCH 2/2] dm: don't try to split REQ_OP_ZONE_APPEND bios
-Date: Fri, 19 Jun 2020 07:54:27 +0000
-Message-ID: <CY4PR04MB37514CDC42E7F545244D66C6E7980@CY4PR04MB3751.namprd04.prod.outlook.com>
-References: <20200619065905.22228-1-johannes.thumshirn@wdc.com>
- <20200619065905.22228-3-johannes.thumshirn@wdc.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 1/2] dm zoned: Fix random zone reclaim
+	selection
+Date: Fri, 19 Jun 2020 10:07:24 +0200
+Message-ID: <57fa0c31-0c73-9142-b116-25d637d32485@suse.de>
+References: <20200619074956.352647-1-damien.lemoal@wdc.com>
+	<20200619074956.352647-2-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-block-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200619074956.352647-2-damien.lemoal@wdc.com>
 Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Naohiro Aota <Naohiro.Aota@wdc.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Damien Le Moal <damien.lemoal@wdc.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
 List-Id: dm-devel.ids
 
-On 2020/06/19 15:59, Johannes Thumshirn wrote:=0A=
-> REQ_OP_ZONE_APPEND bios cannot be split so return EIO if we can't fit it=
-=0A=
-> into one IO.=0A=
-> =0A=
-> Signed-off-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>=0A=
-> ---=0A=
->  drivers/md/dm.c | 3 +++=0A=
->  1 file changed, 3 insertions(+)=0A=
-> =0A=
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c=0A=
-> index 058c34abe9d1..c720a7e3269a 100644=0A=
-> --- a/drivers/md/dm.c=0A=
-> +++ b/drivers/md/dm.c=0A=
-> @@ -1609,6 +1609,9 @@ static int __split_and_process_non_flush(struct clo=
-ne_info *ci)=0A=
->  =0A=
->  	len =3D min_t(sector_t, max_io_len(ci->sector, ti), ci->sector_count);=
-=0A=
->  =0A=
-> +	if (bio_op(ci->bio) =3D=3D REQ_OP_ZONE_APPEND && len < ci->sector_count=
-)=0A=
-> +		return -EIO;=0A=
-> +=0A=
->  	r =3D __clone_and_map_data_bio(ci, ti, ci->sector, &len);=0A=
->  	if (r < 0)=0A=
->  		return r;=0A=
-> =0A=
-=0A=
-I think this is OK. The stacked max_zone_append_sectors limit should have=
-=0A=
-prevented that to happen  in the first place I think, but better safe than =
-sorry.=0A=
-=0A=
-Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>=0A=
-=0A=
--- =0A=
-Damien Le Moal=0A=
-Western Digital Research=0A=
+T24gNi8xOS8yMCA5OjQ5IEFNLCBEYW1pZW4gTGUgTW9hbCB3cm90ZToKPiBDb21taXQgMjA5NDA0
+NWZlNWI1ICgiZG0gem9uZWQ6IHByZWZlciBmdWxsIHpvbmVzIGZvciByZWNsYWltIikKPiBtb2Rp
+ZmllZCBkbXpfZ2V0X3JuZF96b25lX2Zvcl9yZWNsYWltKCkgdG8gYWRkIGEgc2VhcmNoIGZvciB0
+aGUgYnVmZmVyCj4gem9uZSB3aXRoIHRoZSBoZWF2aWVzdCB3ZWlnaHQgYXMgYW4gb3B0aW1hbCBj
+YW5kaWRhdGUgZm9yIHJlY2xhaW0uIFRoaXMKPiBtb2RpZmljYXRpb24gdXNlcyB0aGUgem9uZSBw
+b2ludGVyIHZhcmlhYmwgImxhc3QiIHdoaWNoIGlzIHNldCBvbmx5IG9uY2UKPiBhbmQgbmV2ZXIg
+bW9kaWZpZWQgYXMgem9uZXMgYXJlIHNjYW5uZWQsIHJlc3VsdGluZyBpbiB0aGUgc2VhcmNoIGJl
+aW5nCj4gaW5lZmVjdGl2ZS4gRnVydGhlcm1vcmUsIGlmIHRoZSBzZWxlY3RlZCBidWZmZXIgem9u
+ZSBhdCB0aGUgZW5kIG9mIHRoZQo+IHNlYXJjaCBsb29wIGlzIGFjdGl2ZSBvciBhbHJlYWR5IGxv
+Y2tlZCBmb3IgcmVjbGFpbSwKPiBkbXpfZ2V0X3JuZF96b25lX2Zvcl9yZWNsYWltKCkgcmV0dXJu
+cyBOVUxMIGV2ZW4gaWYgb3RoZXIgcmFuZG9tIHpvbmVzCj4gd2l0aCBhIGxlc3NlciB3ZWlnaHQg
+Y2FuIGJlIHJlY2xhaW1lZC4KPiAKPiBUbyBmaXggdGhlIHNlYXJjaCBhbmQgdG8gZ3VhcmFudGVl
+IHRoYXQgcmVjbGFpbSBjYW4gbWFrZSBmb3J3YXJkCj4gcHJvZ3Jlc3MsIGZpeCBkbXpfZ2V0X3Ju
+ZF96b25lX2Zvcl9yZWNsYWltKCkgbG9vcCB0byBjb3JyZWN0bHkgZmluZAo+IHRoZSBidWZmZXIg
+em9uZSB3aXRoIHRoZSBoZWF2aWVzdCB3ZWlnaHQgdXNpbmcgdGhlIHZhcmlhYmxlIG1heHdfei4K
+PiBBbHNvIG1ha2Ugc3VyZSB0byBmYWxsYmFjayB0byBmaW5kaW5nIHRoZSBmaXJzdCByYW5kb20g
+em9uZSB0aGF0IGNhbgo+IGJlIHJlY2xhaW1lZCBpZiB0aGlzIGJlc3QgY2FuZGlkYXRlIHpvbmUg
+Y2Fubm90IGJlIHJlY2xhaW1lZC4KPiAKPiBXaGlsZSBhdCBpdCwgYWxzbyBmaXggdGhlIGRldmlj
+ZSBpbmRleCBjaGVjayB0byBjb25zaWRlciBvbmx5IHJhbmRvbQo+IHpvbmVzLCBpZ25vcmluZyBj
+YWNoZSB6b25lcyBiZWxvbmdpbmcgdG8gdGhlIGNhY2hlIGRldmljZSBpZiBvbmUgaXMKPiB1c2Vk
+IGFzIHRoYXQgZGV2aWNlIGRvZXMgbm90IGhhdmUgYSByZWNsYWltIHByb2Nlc3MuCj4gCj4gRml4
+ZXM6IDIwOTQwNDVmZTViNSAoImRtIHpvbmVkOiBwcmVmZXIgZnVsbCB6b25lcyBmb3IgcmVjbGFp
+bSIpCj4gU2lnbmVkLW9mZi1ieTogRGFtaWVuIExlIE1vYWwgPGRhbWllbi5sZW1vYWxAd2RjLmNv
+bT4KPiAtLS0KPiAgIGRyaXZlcnMvbWQvZG0tem9uZWQtbWV0YWRhdGEuYyB8IDM1ICsrKysrKysr
+KysrKysrKysrKysrKysrKysrLS0tLS0tLS0KPiAgIDEgZmlsZSBjaGFuZ2VkLCAyNyBpbnNlcnRp
+b25zKCspLCA4IGRlbGV0aW9ucygtKQo+IAo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLXpv
+bmVkLW1ldGFkYXRhLmMgYi9kcml2ZXJzL21kL2RtLXpvbmVkLW1ldGFkYXRhLmMKPiBpbmRleCAx
+MzBiNWE2ZDlmMTIuLjhiZGY3MWRjZTdmYiAxMDA2NDQKPiAtLS0gYS9kcml2ZXJzL21kL2RtLXpv
+bmVkLW1ldGFkYXRhLmMKPiArKysgYi9kcml2ZXJzL21kL2RtLXpvbmVkLW1ldGFkYXRhLmMKPiBA
+QCAtMTk0OSw3ICsxOTQ5LDcgQEAgc3RhdGljIHN0cnVjdCBkbV96b25lICpkbXpfZ2V0X3JuZF96
+b25lX2Zvcl9yZWNsYWltKHN0cnVjdCBkbXpfbWV0YWRhdGEgKnptZCwKPiAgIAkJCQkJCSAgICB1
+bnNpZ25lZCBpbnQgaWR4LCBib29sIGlkbGUpCj4gICB7Cj4gICAJc3RydWN0IGRtX3pvbmUgKmR6
+b25lID0gTlVMTDsKPiAtCXN0cnVjdCBkbV96b25lICp6b25lLCAqbGFzdCA9IE5VTEw7Cj4gKwlz
+dHJ1Y3QgZG1fem9uZSAqem9uZSwgKm1heHdfeiA9IE5VTEw7Cj4gICAJc3RydWN0IGxpc3RfaGVh
+ZCAqem9uZV9saXN0Owo+ICAgCj4gICAJLyogSWYgd2UgaGF2ZSBjYWNoZSB6b25lcyBzZWxlY3Qg
+ZnJvbSB0aGUgY2FjaGUgem9uZSBsaXN0ICovCj4gQEAgLTE5NjEsMTggKzE5NjEsMzcgQEAgc3Rh
+dGljIHN0cnVjdCBkbV96b25lICpkbXpfZ2V0X3JuZF96b25lX2Zvcl9yZWNsYWltKHN0cnVjdCBk
+bXpfbWV0YWRhdGEgKnptZCwKPiAgIAl9IGVsc2UKPiAgIAkJem9uZV9saXN0ID0gJnptZC0+ZGV2
+W2lkeF0ubWFwX3JuZF9saXN0Owo+ICAgCj4gKwkvKgo+ICsJICogRmluZCB0aGUgYnVmZmVyIHpv
+bmUgd2l0aCB0aGUgaGVhdmllc3Qgd2VpZ2h0IG9yIHRoZSBmaXJzdCAob2xkZXN0KQo+ICsJICog
+ZGF0YSB6b25lIHRoYXQgY2FuIGJlIHJlY2xhaW1lZC4KPiArCSAqLwo+ICAgCWxpc3RfZm9yX2Vh
+Y2hfZW50cnkoem9uZSwgem9uZV9saXN0LCBsaW5rKSB7Cj4gICAJCWlmIChkbXpfaXNfYnVmKHpv
+bmUpKSB7Cj4gICAJCQlkem9uZSA9IHpvbmUtPmJ6b25lOwo+IC0JCQlpZiAoZHpvbmUtPmRldi0+
+ZGV2X2lkeCAhPSBpZHgpCj4gKwkJCWlmIChkbXpfaXNfcm5kKGR6b25lKSAmJiBkem9uZS0+ZGV2
+LT5kZXZfaWR4ICE9IGlkeCkKPiAgIAkJCQljb250aW51ZTsKPiAtCQkJaWYgKCFsYXN0KSB7Cj4g
+LQkJCQlsYXN0ID0gZHpvbmU7Cj4gLQkJCQljb250aW51ZTsKPiAtCQkJfQo+IC0JCQlpZiAobGFz
+dC0+d2VpZ2h0IDwgZHpvbmUtPndlaWdodCkKPiArCQkJaWYgKCFtYXh3X3ogfHwgbWF4d196LT53
+ZWlnaHQgPCBkem9uZS0+d2VpZ2h0KQo+ICsJCQkJbWF4d196ID0gZHpvbmU7Cj4gKwkJfSBlbHNl
+IHsKPiArCQkJZHpvbmUgPSB6b25lOwo+ICsJCQlpZiAoZG16X2xvY2tfem9uZV9yZWNsYWltKGR6
+b25lKSkKPiArCQkJCXJldHVybiBkem9uZTsKPiArCQl9Cj4gKwl9Cj4gKwo+ICsJaWYgKG1heHdf
+eiAmJiBkbXpfbG9ja196b25lX3JlY2xhaW0obWF4d196KSkKPiArCQlyZXR1cm4gbWF4d196Owo+
+ICsKPiArCS8qCj4gKwkgKiBJZiB3ZSBjb21lIGhlcmUsIG5vbmUgb2YgdGhlIHpvbmVzIGluc3Bl
+Y3RlZCBjb3VsZCBiZSBsb2NrZWQgZm9yCj4gKwkgKiByZWNsYWltLiBUcnkgYWdhaW4sIGJlaW5n
+IG1vcmUgYWdncmVzc2l2ZSwgdGhhdCBpcywgZmluZCB0aGUKPiArCSAqIGZpcnN0IHpvbmUgdGhh
+dCBjYW4gYmUgcmVjbGFpbWVkIHJlZ2FyZGxlc3Mgb2YgaXRzIHdlaXRnaHQuCj4gKwkgKi8KPiAr
+CWxpc3RfZm9yX2VhY2hfZW50cnkoem9uZSwgem9uZV9saXN0LCBsaW5rKSB7Cj4gKwkJaWYgKGRt
+el9pc19idWYoem9uZSkpIHsKPiArCQkJZHpvbmUgPSB6b25lLT5iem9uZTsKPiArCQkJaWYgKGRt
+el9pc19ybmQoZHpvbmUpICYmIGR6b25lLT5kZXYtPmRldl9pZHggIT0gaWR4KQo+ICAgCQkJCWNv
+bnRpbnVlOwo+IC0JCQlkem9uZSA9IGxhc3Q7Cj4gICAJCX0gZWxzZQo+ICAgCQkJZHpvbmUgPSB6
+b25lOwo+ICAgCQlpZiAoZG16X2xvY2tfem9uZV9yZWNsYWltKGR6b25lKSkKPiAKSSBrbm93IGl0
+IHdhc24ndCB0aGF0IGVhc3kuIFRoYW5rcyBmb3IgdGhlIGZpeC4KClJldmlld2VkLWJ5OiBIYW5u
+ZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5kZT4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5l
+cyBSZWluZWNrZSAgICAgICAgICAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVA
+c3VzZS5kZSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApT
+VVNFIFNvZnR3YXJlIFNvbHV0aW9ucyBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJl
+cmcKSFJCIDM2ODA5IChBRyBOw7xybmJlcmcpLCBHZXNjaMOkZnRzZsO8aHJlcjogRmVsaXggSW1l
+bmTDtnJmZmVyCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20K
+aHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
