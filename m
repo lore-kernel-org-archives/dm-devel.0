@@ -1,8 +1,8 @@
 From: Bryan Gurney <bgurney@redhat.com>
-Subject: [PATCH v4 1/4] dm dust: report some message results back
-	to user directly
-Date: Fri, 19 Jun 2020 17:10:39 -0400
-Message-ID: <1592601039-3868-1-git-send-email-bgurney@redhat.com>
+Subject: [PATCH v4 2/4] dm dust: update doc after message results
+	report to user directly
+Date: Fri, 19 Jun 2020 17:11:44 -0400
+Message-ID: <1592601104-3978-1-git-send-email-bgurney@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -24,119 +24,72 @@ From: yangerkun <yangerkun@huawei.com>
 
 From: yangerkun <yangerkun@huawei.com>
 
-Some type of message(queryblock/countbadblocks/removebadblock) may better
-report results to user directly. Do it with DMEMIT.
+Since some type of message will report the results to user directly,
+we should update the doc too.
 
-[Bryan: maintain __func__ output in DMEMIT messages]
+[Bryan: update output examples to include function name printing]
 
 Signed-off-by: yangerkun <yangerkun@huawei.com>
 Signed-off-by: Bryan Gurney <bgurney@redhat.com>
 ---
- drivers/md/dm-dust.c | 31 ++++++++++++++++++-------------
- 1 file changed, 18 insertions(+), 13 deletions(-)
+ .../admin-guide/device-mapper/dm-dust.rst         | 15 ++++++++-------
+ 1 file changed, 8 insertions(+), 7 deletions(-)
 
-diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
-index ff03b90072c5..f1f2dd6a4e84 100644
---- a/drivers/md/dm-dust.c
-+++ b/drivers/md/dm-dust.c
-@@ -138,20 +138,22 @@ static int dust_add_block(struct dust_device *dd, unsigned long long block,
- 	return 0;
- }
+diff --git a/Documentation/admin-guide/device-mapper/dm-dust.rst b/Documentation/admin-guide/device-mapper/dm-dust.rst
+index b6e7e7ead831..cf8079e368de 100644
+--- a/Documentation/admin-guide/device-mapper/dm-dust.rst
++++ b/Documentation/admin-guide/device-mapper/dm-dust.rst
+@@ -69,10 +69,11 @@ Create the dm-dust device:
+         $ sudo dmsetup create dust1 --table '0 33552384 dust /dev/vdb1 0 4096'
  
--static int dust_query_block(struct dust_device *dd, unsigned long long block)
-+static int dust_query_block(struct dust_device *dd, unsigned long long block, char *result,
-+			    unsigned int maxlen, unsigned int *sz_ptr)
- {
- 	struct badblock *bblock;
- 	unsigned long flags;
-+	unsigned int sz = *sz_ptr;
+ Check the status of the read behavior ("bypass" indicates that all I/O
+-will be passed through to the underlying device)::
++will be passed through to the underlying device; "verbose" indicates that
++bad block additions, removals, and remaps will be verbosely logged)::
  
- 	spin_lock_irqsave(&dd->dust_lock, flags);
- 	bblock = dust_rb_search(&dd->badblocklist, block);
- 	if (bblock != NULL)
--		DMINFO("%s: block %llu found in badblocklist", __func__, block);
-+		DMEMIT("%s: block %llu found in badblocklist", __func__, block);
- 	else
--		DMINFO("%s: block %llu not found in badblocklist", __func__, block);
-+		DMEMIT("%s: block %llu not found in badblocklist", __func__, block);
- 	spin_unlock_irqrestore(&dd->dust_lock, flags);
+         $ sudo dmsetup status dust1
+-        0 33552384 dust 252:17 bypass
++        0 33552384 dust 252:17 bypass verbose
  
--	return 0;
-+	return 1;
- }
+         $ sudo dd if=/dev/mapper/dust1 of=/dev/null bs=512 count=128 iflag=direct
+         128+0 records in
+@@ -164,7 +165,7 @@ following message command::
+ A message will print with the number of bad blocks currently
+ configured on the device::
  
- static int __dust_map_read(struct dust_device *dd, sector_t thisblock)
-@@ -259,11 +261,13 @@ static bool __dust_clear_badblocks(struct rb_root *tree,
- 	return true;
- }
+-        kernel: device-mapper: dust: countbadblocks: 895 badblock(s) found
++        countbadblocks: 895 badblock(s) found
  
--static int dust_clear_badblocks(struct dust_device *dd)
-+static int dust_clear_badblocks(struct dust_device *dd, char *result, unsigned int maxlen,
-+				unsigned int *sz_ptr)
- {
- 	unsigned long flags;
- 	struct rb_root badblocklist;
- 	unsigned long long badblock_count;
-+	unsigned int sz = *sz_ptr;
+ Querying for specific bad blocks
+ --------------------------------
+@@ -176,11 +177,11 @@ following message command::
  
- 	spin_lock_irqsave(&dd->dust_lock, flags);
- 	badblocklist = dd->badblocklist;
-@@ -273,11 +277,11 @@ static int dust_clear_badblocks(struct dust_device *dd)
- 	spin_unlock_irqrestore(&dd->dust_lock, flags);
+ The following message will print if the block is in the list::
  
- 	if (!__dust_clear_badblocks(&badblocklist, badblock_count))
--		DMINFO("%s: no badblocks found", __func__);
-+		DMEMIT("%s: no badblocks found", __func__);
- 	else
--		DMINFO("%s: badblocks cleared", __func__);
-+		DMEMIT("%s: badblocks cleared", __func__);
+-        device-mapper: dust: queryblock: block 72 found in badblocklist
++        dust_query_block: block 72 found in badblocklist
  
--	return 0;
-+	return 1;
- }
+ The following message will print if the block is not in the list::
  
- /*
-@@ -383,7 +387,7 @@ static void dust_dtr(struct dm_target *ti)
- }
+-        device-mapper: dust: queryblock: block 72 not found in badblocklist
++        dust_query_block: block 72 not found in badblocklist
  
- static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
--			char *result_buf, unsigned int maxlen)
-+			char *result, unsigned int maxlen)
- {
- 	struct dust_device *dd = ti->private;
- 	sector_t size = i_size_read(dd->dev->bdev->bd_inode) >> SECTOR_SHIFT;
-@@ -393,6 +397,7 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
- 	unsigned char wr_fail_cnt;
- 	unsigned int tmp_ui;
- 	unsigned long flags;
-+	unsigned int sz = 0;
- 	char dummy;
+ The "queryblock" message command will work in both the "enabled"
+ and "disabled" modes, allowing the verification of whether a block
+@@ -198,12 +199,12 @@ following message command::
  
- 	if (argc == 1) {
-@@ -410,12 +415,12 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
- 			r = 0;
- 		} else if (!strcasecmp(argv[0], "countbadblocks")) {
- 			spin_lock_irqsave(&dd->dust_lock, flags);
--			DMINFO("countbadblocks: %llu badblock(s) found",
-+			DMEMIT("countbadblocks: %llu badblock(s) found",
- 			       dd->badblock_count);
- 			spin_unlock_irqrestore(&dd->dust_lock, flags);
--			r = 0;
-+			r = 1;
- 		} else if (!strcasecmp(argv[0], "clearbadblocks")) {
--			r = dust_clear_badblocks(dd);
-+			r = dust_clear_badblocks(dd, result, maxlen, &sz);
- 		} else if (!strcasecmp(argv[0], "quiet")) {
- 			if (!dd->quiet_mode)
- 				dd->quiet_mode = true;
-@@ -441,7 +446,7 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
- 		else if (!strcasecmp(argv[0], "removebadblock"))
- 			r = dust_remove_block(dd, block);
- 		else if (!strcasecmp(argv[0], "queryblock"))
--			r = dust_query_block(dd, block);
-+			r = dust_query_block(dd, block, result, maxlen, &sz);
- 		else
- 			invalid_msg = true;
+ After clearing the bad block list, the following message will appear::
  
+-        kernel: device-mapper: dust: clearbadblocks: badblocks cleared
++        dust_clear_badblocks: badblocks cleared
+ 
+ If there were no bad blocks to clear, the following message will
+ appear::
+ 
+-        kernel: device-mapper: dust: clearbadblocks: no badblocks found
++        dust_clear_badblocks: no badblocks found
+ 
+ Message commands list
+ ---------------------
 -- 
 2.25.4
