@@ -1,87 +1,25 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 2/7] multipathd: fix check_path errors with
-	removed map
-Date: Fri, 19 Jun 2020 08:32:34 +0200
-Message-ID: <a1df6c71-1427-9649-3e81-138ffcd04370@suse.de>
-References: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
-	<1592439867-18427-3-git-send-email-bmarzins@redhat.com>
-	<f09ec3b6537a7b7ac1ae26433e43846176f1dd48.camel@suse.com>
-	<20200618231711.GM5894@octiron.msp.redhat.com>
+From: Johannes Thumshirn <johannes.thumshirn@wdc.com>
+Subject: [PATCH 0/2] Two fixes for device-mapper with REQ_OP_ZONE_APPEND
+Date: Fri, 19 Jun 2020 15:59:03 +0900
+Message-ID: <20200619065905.22228-1-johannes.thumshirn@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200618231711.GM5894@octiron.msp.redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, Damien Le Moal <Damien.LeMoal@wdc.com>, Naohiro Aota <Naohiro.Aota@wdc.com>, Johannes Thumshirn <johannes.thumshirn@wdc.com>
 List-Id: dm-devel.ids
 
-T24gNi8xOS8yMCAxOjE3IEFNLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3JvdGU6Cj4gT24gVGh1LCBK
-dW4gMTgsIDIwMjAgYXQgMDc6MzQ6MzhQTSArMDAwMCwgTWFydGluIFdpbGNrIHdyb3RlOgo+PiBP
-biBXZWQsIDIwMjAtMDYtMTcgYXQgMTk6MjQgLTA1MDAsIEJlbmphbWluIE1hcnppbnNraSB3cm90
-ZToKPj4+IElmIGEgbXVsdGlwYXRoIGRldmljZSBpcyByZW1vdmVkIGR1cmluZywgb3IgaW1tZWRp
-YXRlbHkgYmVmb3JlIHRoZQo+Pj4gY2FsbAo+Pj4gdG8gY2hlY2tfcGF0aCgpLCBtdWx0aXBhdGhk
-IGNhbiBiZWhhdmUgaW5jb3JyZWN0bHkuIEEgbWlzc2luZwo+Pj4gbXVsdHBhdGgKPj4+IGRldmlj
-ZSB3aWxsIGNhdXNlIHVwZGF0ZV9tdWx0aXBhdGhfc3RyaW5ncygpIHRvIGZhaWwsIHNldHRpbmcK
-Pj4+IHBwLT5kbXN0YXRlIHRvIFBTVEFURV9VTkRFRi4gIElmIHRoZSBwYXRoIGlzIHVwLCB0aGlz
-IHN0YXRlIHdpbGwKPj4+IGNhdXNlCj4+PiByZWluc3RhdGVfcGF0aCgpIHRvIGJlIGNhbGxlZCwg
-d2hpY2ggd2lsbCBhbHNvIGZhaWwuICBUaGlzIHdpbGwKPj4+IHRyaWdnZXIKPj4+IGEgcmVsb2Fk
-LCByZXN0b3JpbmcgdGhlIHJlY2VudGx5IHJlbW92ZWQgZGV2aWNlLgo+Pj4KPj4+IElmIHVwZGF0
-ZV9tdWx0aXBhdGhfc3RyaW5ncygpIGZhaWxzIGJlY2F1c2UgdGhlcmUgaXMgbm8gbXVsdGlwYXRo
-Cj4+PiBkZXZpY2UsIGNoZWNrX3BhdGggc2hvdWxkIGp1c3QgcXVpdCwgc2luY2UgdGhlIHJlbW92
-ZSBkbWV2ZW50IGFuZAo+Pj4gdWV2ZW50Cj4+PiBhcmUgbGlrZWx5IGFscmVhZHkgcXVldWVkIHVw
-LiBBbHNvLCBJIGRvbid0IHNlZSBhbnkgcmVhc29uIHRvIHJlbG9hZAo+Pj4gdGhlCj4+PiBtdWx0
-aXBhdGggZGV2aWNlIGlmIHJlaW5zdGF0ZSBmYWlscy4gVGhpcyBjb2RlIHdhcyBhZGRlZCBieQo+
-Pj4gZmFjNjhkN2E5OWVmMTdkNDk2MDc5NTM4YTVjNjgzNmFjZDc5MTFhYiwgd2hpY2ggY2xhbWlu
-ZWQgdGhhdAo+Pj4gcmVpbnN0YXRlCj4+PiBjb3VsZCBmYWlsIGlmIHRoZSBwYXRoIHdhcyBkaXNh
-YmxlZC4gIExvb2tpbmcgdGhyb3VnaCB0aGUgY3VycmVudAo+Pj4ga2VybmVsCj4+PiBjb2RlLCBJ
-IGNhbid0IHNlZSBhbnkgcmVhc29uIHdoeSBhIHJlaW5zdGF0ZSB3b3VsZCBmYWlsLCB3aGVyZSBh
-Cj4+PiByZWxvYWQKPj4+IHdvdWxkIGhlbHAuIElmIHRoZSBwYXRoIHdhcyBtaXNzaW5nIGZyb20g
-dGhlIG11bHRpcGF0aCBkZXZpY2UsCj4+PiB1cGRhdGVfbXVsdGlwYXRoX3N0cmluZ3MoKSB3b3Vs
-ZCBhbHJlYWR5IGNhdGNoIHRoYXQsIGFuZCBxdWl0Cj4+PiBjaGVja19wYXRoKCkgZWFybHksIHdo
-aWNoIG1ha2UgbW9yZSBzZW5zZSB0byBtZSB0aGFuIHJlbG9hZGluZyBkb2VzLgo+Pgo+PiBmYWM2
-OGQ3IGlzIHJlbGF0ZWQgdG8gdGhlIGZhbW91cyAiZG0tbXVsdGlwYXRoOiBBY2NlcHQgZmFpbGVk
-IHBhdGhzIGZvcgo+PiBtdWx0aXBhdGggbWFwcyIgcGF0Y2ggKGUuZy4KPj4gaHR0cHM6Ly9wYXRj
-aHdvcmsua2VybmVsLm9yZy9wYXRjaC8zMzY4MzgxLyM3MTkzMDAxKSwgd2hpY2ggbmV2ZXIgbWFk
-ZQo+PiBpdCB1cHN0cmVhbS4gU1VTRSBrZXJuZWxzIGhhdmUgc2hpcHBlZCB0aGlzIHBhdGNoIGZv
-ciBhIGxvbmcgdGltZSwgYnV0Cj4+IHdlIGRvbid0IGFwcGx5IGl0IGFueSBtb3JlIGluIHJlY2Vu
-dCBrZXJuZWxzLgo+Pgo+PiBXaXRoIHRoaXMgcGF0Y2gsIFRoZSByZWluc3RhdGVfcGF0aCgpIGZh
-aWx1cmUgd291bGQgb2NjdXIgaWYgbXVsdGlwYXRoZAo+PiBoYWQgY3JlYXRlZCBhIHRhYmxlIHdp
-dGggYSAiZGlzYWJsZWQiIGRldmljZSAob25lIHdoaWNoIHdvdWxkIGJlCj4+IHByZXNlbnQgaW4g
-YSBkbSBtYXAgZXZlbiB0aG91Z2ggdGhlIGFjdHVhbCBibG9jayBkZXZpY2UgZGlkbid0IGV4aXN0
-KSwKPj4gYW5kIHRoZW4gdHJpZWQgdG8gcmVpbnN0YXRlIHN1Y2ggYSBwYXRoLiBJdCBzb3VuZHMg
-dW5saWtlbHksIGJ1dCBpdAo+PiBtaWdodCBiZSBwb3NzaWJsZSBpZiBkZXZpY2VzIGFyZSBjb21p
-bmcgYW5kIGdvaW5nIGluIHF1aWNrIHN1Y2Nlc3Npb24uCj4+IEluIHRoYXQgc2l0dWF0aW9uLCBh
-bmQgd2l0aCB0aGUgImFjY2VwdCBmYWlsZWQgcGF0aCIgcGF0Y2ggYXBwbGllZCwgYQo+PiByZWxv
-YWQgbWFrZXMgc29tZSBzZW5zZSwgYmVjYXVzZSByZWxvYWQgKHVubGlrZSByZWluc3RhdGUpIHdv
-dWxkIG5vdAo+PiBmYWlsIChhdCBsZWFzdCBub3QgZm9yIHRoaXMgcmVhc29uKSBhbmQgd291bGQg
-YWN0dWFsbHkgYWRkIHRoYXQganVzdC0KPj4gcmVpbnN0YXRlZCBwYXRoLiBPVE9ILCBpdCdzIG5v
-dCBsaWtlbHkgdGhhdCB0aGUgcmVsb2FkIHdvdWxkIGltcHJvdmUKPj4gbWF0dGVycywgZWl0aGVy
-LiBBZnRlciBhbGwsIG11bHRpcGF0aGQgaXMganVzdCB0cnlpbmcgdG8gcmVpbnN0YXRlIGEKPj4g
-bm9uLWV4aXN0aW5nIHBhdGguIFNvLCBJJ20gZmluZSB3aXRoIHNraXBwaW5nIHRoZSByZWxvYWQu
-Cj4+Ckl0J3MgYWN0dWFsbHkgX25vdF8gdW5saWtlbHksIGJ1dCBhIGRpcmVjdCByZXN1bHQgb2Yg
-bXVsdGlwYXRoZCAKbGlzdGVuaW5nIHRvIHVldmVudHMuCgpJZiB5b3UgaGF2ZSBhIG1hcCB3aXRo
-IGZvdXIgcGF0aHMsIGFuZCBhbGwgZm91ciBvZiB0aGVtIGFyZSBnb2luZyBkb3duLCAKeW91IGVu
-ZCB1cCBnZXR0aW5nIGZvdXIgZXZlbnRzLgpBbmQgbXVsdGlwYXRoIHdpbGwgYmUgcHJvY2Vzc2lu
-ZyBlYWNoIGV2ZW50IF9pbmRpdmlkdWFsbHlfLCBjYXVzaW5nIGl0IAp0byBnZW5lcmF0ZSBhIHJl
-bG9hZCBzZXF1ZW5jZSBsaWtlOgoKW2EgYiBjIGRdCltiIGMgZF0KW2MgZF0KW2RdCltdCgpPZiB3
-aGljaCBvbmx5IHRoZSBsYXN0IGlzIHZhbGlkLCBhcyBhbGwgdGhlIGludGVybWVkaWF0ZSBvbmVz
-IGNvbnRhaW4gCmludmFsaWQgcGF0aHMuCgpBbmQgX3RoYXRfIGlzIHRoZSBzY2VuYXJpbyBJIHdh
-cyByZWZlcnJpbmcgdG8gd2hlbiBjcmVhdGluZyB0aGUgcGF0Y2guCgpDaGVlcnMsCgpIYW5uZXMK
-LS0gCkRyLiBIYW5uZXMgUmVpbmVja2UgICAgICAgICAgICBUZWFtbGVhZCBTdG9yYWdlICYgTmV0
-d29ya2luZwpoYXJlQHN1c2UuZGUgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKzQ5IDkx
-MSA3NDA1MyA2ODgKU1VTRSBTb2Z0d2FyZSBTb2x1dGlvbnMgR21iSCwgTWF4ZmVsZHN0ci4gNSwg
-OTA0MDkgTsO8cm5iZXJnCkhSQiAzNjgwOSAoQUcgTsO8cm5iZXJnKSwgR2VzY2jDpGZ0c2bDvGhy
-ZXI6IEZlbGl4IEltZW5kw7ZyZmZlcgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZl
-bEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
-ZXZlbA==
+Two small fixes for issuing REQ_OP_ZONE_APPEND writes to device-mapper. The
+first one is an issue reported by Naohiro and fixes a write failure. For
+number two I'm not certain if it's the correct fix, hence the RFC tag.
+
+Johannes Thumshirn (2):
+  dm: update original bio sector on Zone Append
+  dm: don't try to split REQ_OP_ZONE_APPEND bios
+
+ drivers/md/dm.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+-- 
+2.26.2
