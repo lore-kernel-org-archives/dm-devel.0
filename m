@@ -1,107 +1,120 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RFC PATCH 0/1] dm-crypt excessive overhead
-Date: Fri, 19 Jun 2020 12:55:49 -0400
-Message-ID: <20200619165548.GA24779@redhat.com>
-References: <20200619164132.1648-1-ignat@cloudflare.com>
+From: Bryan Gurney <bgurney@redhat.com>
+Subject: Re: [PATCH v3 1/4] dm dust: report some message results
+	back to user directly
+Date: Fri, 19 Jun 2020 13:23:17 -0400
+Message-ID: <CAHhmqcSB_bd8dO75pQny=MxNxd1=3mpHDCtX_faiO2VUFx616w@mail.gmail.com>
+References: <20200619123803.1441373-1-yangerkun@huawei.com>
+	<20200619123803.1441373-2-yangerkun@huawei.com>
+	<CAHhmqcTdxeTrpBuJBLqch9FzYuv=k+73fOjStsd-NmoDRyFffQ@mail.gmail.com>
+	<20200619154445.GA24500@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200619164132.1648-1-ignat@cloudflare.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ignat Korchagin <ignat@cloudflare.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: agk@redhat.com, dm-devel@redhat.com, dm-crypt@saout.de, linux-kernel@vger.kernel.org, kernel-team@cloudflare.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200619154445.GA24500@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: yangerkun <yangerkun@huawei.com>, dm-devel@redhat.com, bmr@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 19 2020 at 12:41pm -0400,
-Ignat Korchagin <ignat@cloudflare.com> wrote:
+On Fri, Jun 19, 2020 at 11:45 AM Mike Snitzer <snitzer@redhat.com> wrote:
+>
+> On Fri, Jun 19 2020 at 11:40am -0400,
+> Bryan Gurney <bgurney@redhat.com> wrote:
+>
+> > On Fri, Jun 19, 2020 at 8:37 AM yangerkun <yangerkun@huawei.com> wrote:
+> > >
+> > > Some type of message(queryblock/countbadblocks/removebadblock) may better
+> > > report results to user directly. Do it with DMEMIT.
+> > >
+> > > Signed-off-by: yangerkun <yangerkun@huawei.com>
+> > > ---
+> > >  drivers/md/dm-dust.c | 31 ++++++++++++++++++-------------
+> > >  1 file changed, 18 insertions(+), 13 deletions(-)
+> > >
+> > > diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
+> > > index ff03b90072c5..a0c75c104de0 100644
+> > > --- a/drivers/md/dm-dust.c
+> > > +++ b/drivers/md/dm-dust.c
+> > > @@ -138,20 +138,22 @@ static int dust_add_block(struct dust_device *dd, unsigned long long block,
+> > >         return 0;
+> > >  }
+> > >
+> > > -static int dust_query_block(struct dust_device *dd, unsigned long long block)
+> > > +static int dust_query_block(struct dust_device *dd, unsigned long long block, char *result,
+> > > +                           unsigned int maxlen, unsigned int *sz_ptr)
+> > >  {
+> > >         struct badblock *bblock;
+> > >         unsigned long flags;
+> > > +       unsigned int sz = *sz_ptr;
+> > >
+> > >         spin_lock_irqsave(&dd->dust_lock, flags);
+> > >         bblock = dust_rb_search(&dd->badblocklist, block);
+> > >         if (bblock != NULL)
+> > > -               DMINFO("%s: block %llu found in badblocklist", __func__, block);
+> > > +               DMEMIT("block %llu found in badblocklist", block);
+> > >         else
+> > > -               DMINFO("%s: block %llu not found in badblocklist", __func__, block);
+> > > +               DMEMIT("block %llu not found in badblocklist", block);
+> > >         spin_unlock_irqrestore(&dd->dust_lock, flags);
+> > >
+> > > -       return 0;
+> > > +       return 1;
+> >
+> > First, thank you very much for this patch.  After the concerns to
+> > convert some functions to use DMEMIT were brought up, I was trying to
+> > start the conversion, when this patch arrived, so I installed it, and
+> > tested it.
+> >
+> > I do have a question, though:
+> >
+> > First, I see that in dust_query_block() (above) and
+> > dust_clear_badblocks(), the "return 0" statement is changed to "return
+> > 1".
+> >
+> > (Additionally, there is a change from "r = 0" to  "r = 1", in the
+> > "countbadblocks" message handler)
+> >
+> > On testing the functions, they still work, but why was this change
+> > made?  Is it related to the use of DMEMIT?
+>
+> It is, but we need to review the returns closer.  Looked to me that 1
+> was being returned even if nothing was DMEMIT()'d.. but I could be wrong
+> (only looked quickly).
+>
+> I also noticed that some output was changed to not include __func__.
+> Please review that the output reflects what you'd like displayed.
+>
+> Mike
+>
 
-> This is a follow up from the long-forgotten [1], but with some more convincing
-> evidence. Consider the following script:
-> 
-> #!/bin/bash -e
-> 
-> # create 4G ramdisk
-> sudo modprobe brd rd_nr=1 rd_size=4194304
-> 
-> # create a dm-crypt device with NULL cipher on top of /dev/ram0
-> echo '0 8388608 crypt capi:ecb(cipher_null) - 0 /dev/ram0 0' | sudo dmsetup create eram0
-> 
-> # create a dm-crypt device with NULL cipher and custom force_inline flag
-> echo '0 8388608 crypt capi:ecb(cipher_null) - 0 /dev/ram0 0 1 force_inline' | sudo dmsetup create inline-eram0
-> 
-> # read all data from /dev/ram0
-> sudo dd if=/dev/ram0 bs=4k iflag=direct | sha256sum
-> 
-> # read the same data from /dev/mapper/eram0
-> sudo dd if=/dev/mapper/eram0 bs=4k iflag=direct | sha256sum
-> 
-> # read the same data from /dev/mapper/inline-eram0
-> sudo dd if=/dev/mapper/inline-eram0 bs=4k iflag=direct | sha256sum
-> 
-> This script creates a ramdisk (to eliminate hardware bias in the benchmark) and
-> two dm-crypt instances on top. Both dm-crypt instances use the NULL cipher
-> to eliminate potentially expensive crypto bias (the NULL cipher just uses memcpy
-> for "encyption"). The first instance is the current dm-crypt implementation from
-> 5.8-rc1, the second is the dm-crypt instance with a custom new flag enabled from
-> the patch attached to this thread. On my VM (Debian in VirtualBox with 4 cores
-> on 2.8 GHz Quad-Core Intel Core i7) I get the following output (formatted for
-> better readability):
-> 
-> # plain ram0
-> 1048576+0 records in
-> 1048576+0 records out
-> 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 21.2305 s, 202 MB/s
-> 8479e43911dc45e89f934fe48d01297e16f51d17aa561d4d1c216b1ae0fcddca  -
-> 
-> # eram0 (current dm-crypt)
-> 1048576+0 records in
-> 1048576+0 records out
-> 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 53.2212 s, 80.7 MB/s
-> 8479e43911dc45e89f934fe48d01297e16f51d17aa561d4d1c216b1ae0fcddca  -
-> 
-> # inline-eram0 (patched dm-crypt)
-> 1048576+0 records in
-> 1048576+0 records out
-> 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 21.3472 s, 201 MB/s
-> 8479e43911dc45e89f934fe48d01297e16f51d17aa561d4d1c216b1ae0fcddca  -
-> 
-> As we can see, current dm-crypt implementation creates a significant IO
-> performance overhead (at least on small IO block sizes) for both latency and
-> throughput. We suspect offloading IO request processing into workqueues and
-> async threads is more harmful these days with the modern fast storage. I also
-> did some digging into the dm-crypt git history and much of this async processing
-> is not needed anymore, because the reasons it was added are mostly gone from the
-> kernel. More details can be found in [2] (see "Git archeology" section).
-> 
-> We have been running the attached patch on different hardware generations in
-> more than 200 datacentres on both SATA SSDs and NVME SSDs and so far were very
-> happy with the performance benefits.
-> 
-> [1]: https://www.spinics.net/lists/dm-crypt/msg07516.html
-> [2]: https://blog.cloudflare.com/speeding-up-linux-disk-encryption/
-> 
-> Ignat Korchagin (1):
->   Add DM_CRYPT_FORCE_INLINE flag to dm-crypt target
-> 
->  drivers/md/dm-crypt.c | 55 +++++++++++++++++++++++++++++++++----------
->  1 file changed, 43 insertions(+), 12 deletions(-)
-> 
-> -- 
-> 2.20.1
-> 
+After adding __func__ back into the string, here's what it looks like:
 
-Hi,
+$ sudo dmsetup message dust1 0 addbadblock 60
+$ sudo dmsetup message dust1 0 queryblock 60
+dust_query_block: block 60 found in badblocklist
+$ sudo dmsetup message dust1 0 queryblock 61
+dust_query_block: block 61 not found in badblocklist
 
-I saw [2] and have been expecting something from cloudflare ever since.
-Nice to see this submission.
+I feel that the output's origin is more clear, so I'd like to leave
+__func__ in the output.
 
-There is useful context in your 0th patch header.  I'll likely merge
-parts of this patch header with the more terse 1/1 header (reality is
-there only needed to be a single patch submission).
+I took a look at the DMEMIT calls, and in all three cases, it looks
+like there's something DMEMIT()'d:
 
-Will review and stage accordingly if all looks fine to me.  Mikulas,
-please have a look too.
+dust_query_block: either "block found", or "block not found".
+dust_clear_badblocks: either "no badblocks found", or "badblocks cleared".
+result of "message ... countbadblocks": always prints "%llu badblocks found".
+
 
 Thanks,
-Mike
+
+Bryan
