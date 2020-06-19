@@ -1,55 +1,99 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RFC PATCH 2/2] dm: don't try to split REQ_OP_ZONE_APPEND bios
-Date: Fri, 19 Jun 2020 12:26:59 -0400
-Message-ID: <20200619162658.GB24642@redhat.com>
-References: <20200619065905.22228-1-johannes.thumshirn@wdc.com>
- <20200619065905.22228-3-johannes.thumshirn@wdc.com>
- <CY4PR04MB37514CDC42E7F545244D66C6E7980@CY4PR04MB3751.namprd04.prod.outlook.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 2/7] multipathd: fix check_path errors with
+	removed map
+Date: Fri, 19 Jun 2020 11:30:03 -0500
+Message-ID: <20200619163003.GO5894@octiron.msp.redhat.com>
+References: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
+	<1592439867-18427-3-git-send-email-bmarzins@redhat.com>
+	<f09ec3b6537a7b7ac1ae26433e43846176f1dd48.camel@suse.com>
+	<20200618231711.GM5894@octiron.msp.redhat.com>
+	<a1df6c71-1427-9649-3e81-138ffcd04370@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <a1df6c71-1427-9649-3e81-138ffcd04370@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
-In-Reply-To: <CY4PR04MB37514CDC42E7F545244D66C6E7980@CY4PR04MB3751.namprd04.prod.outlook.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Damien Le Moal <Damien.LeMoal@wdc.com>
-Cc: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Naohiro Aota <Naohiro.Aota@wdc.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 19 2020 at  3:54am -0400,
-Damien Le Moal <Damien.LeMoal@wdc.com> wrote:
+On Fri, Jun 19, 2020 at 08:32:34AM +0200, Hannes Reinecke wrote:
+> >>
+> >>fac68d7 is related to the famous "dm-multipath: Accept failed paths for
+> >>multipath maps" patch (e.g.
+> >>https://patchwork.kernel.org/patch/3368381/#7193001), which never made
+> >>it upstream. SUSE kernels have shipped this patch for a long time, but
+> >>we don't apply it any more in recent kernels.
+> >>
+> >>With this patch, The reinstate_path() failure would occur if multipathd
+> >>had created a table with a "disabled" device (one which would be
+> >>present in a dm map even though the actual block device didn't exist),
+> >>and then tried to reinstate such a path. It sounds unlikely, but it
+> >>might be possible if devices are coming and going in quick succession.
+> >>In that situation, and with the "accept failed path" patch applied, a
+> >>reload makes some sense, because reload (unlike reinstate) would not
+> >>fail (at least not for this reason) and would actually add that just-
+> >>reinstated path. OTOH, it's not likely that the reload would improve
+> >>matters, either. After all, multipathd is just trying to reinstate a
+> >>non-existing path. So, I'm fine with skipping the reload.
+> >>
+> It's actually _not_ unlikely, but a direct result of multipathd listening=
+ to
+> uevents.
+>=20
+> If you have a map with four paths, and all four of them are going down, y=
+ou
+> end up getting four events.
+> And multipath will be processing each event _individually_, causing it to
+> generate a reload sequence like:
+>=20
+> [a b c d]
+> [b c d]
+> [c d]
+> [d]
+> []
+>=20
+> Of which only the last is valid, as all the intermediate ones contain
+> invalid paths.
+>=20
+> And _that_ is the scenario I was referring to when creating the patch.
 
-> On 2020/06/19 15:59, Johannes Thumshirn wrote:
-> > REQ_OP_ZONE_APPEND bios cannot be split so return EIO if we can't fit it
-> > into one IO.
-> > 
-> > Signed-off-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
-> > ---
-> >  drivers/md/dm.c | 3 +++
-> >  1 file changed, 3 insertions(+)
-> > 
-> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> > index 058c34abe9d1..c720a7e3269a 100644
-> > --- a/drivers/md/dm.c
-> > +++ b/drivers/md/dm.c
-> > @@ -1609,6 +1609,9 @@ static int __split_and_process_non_flush(struct clone_info *ci)
-> >  
-> >  	len = min_t(sector_t, max_io_len(ci->sector, ti), ci->sector_count);
-> >  
-> > +	if (bio_op(ci->bio) == REQ_OP_ZONE_APPEND && len < ci->sector_count)
-> > +		return -EIO;
-> > +
-> >  	r = __clone_and_map_data_bio(ci, ti, ci->sector, &len);
-> >  	if (r < 0)
-> >  		return r;
-> > 
-> 
-> I think this is OK. The stacked max_zone_append_sectors limit should have
-> prevented that to happen  in the first place I think, but better safe than sorry.
-> 
-> Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
+But even still, I'm not in favor of calling ev_add_path() with the code
+as it currently is. In the case you point out, it will presumably fail
+when adopt_paths() calls pathinfo(). That will orphan the path, which is
+good. But if the map got removed (intentionally) instead of the path,
+ev_add_path() will recreate the map, which is bad. Also, it seems more
+likely for a path to still exist and be usable while the multipath
+device is gone (the bad case), than for the path to pass the checker
+function and then disappear before mutipathd tries to reinstate it
+immediately afterwards (the good case).  Further, the bad result, where
+a deleted multipath device reappears, is actually a problem for users.
+Having multipathd take a bit of time and pointless effort to catch up
+after multiple changes happen at once doesn't effect users noticeably.
 
-If stacked max_zone_append_sectors limit should prevent it then I'd
-rather not sprinkle more zoned specific checks in DM core.
+Since the checkerloop thread spends the vast majority of it's not not
+checking any specific path, if a path goes away, it is most likely to be
+caught by the path_offline() function. I we want to do something to
+proactively deal with a path that has been removed, we should do it
+there.
 
-Thanks,
-Mike
+-Ben
+=20
+> Cheers,
+>=20
+> Hannes
+> --=20
+> Dr. Hannes Reinecke            Teamlead Storage & Networking
+> hare@suse.de                               +49 911 74053 688
+> SUSE Software Solutions GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+> HRB 36809 (AG N=FCrnberg), Gesch=E4ftsf=FChrer: Felix Imend=F6rffer
