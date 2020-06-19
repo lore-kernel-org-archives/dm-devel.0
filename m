@@ -1,63 +1,43 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 2/2] dm zoned: Fix reclaim zone selection
-Date: Fri, 19 Jun 2020 10:08:13 +0200
-Message-ID: <171fcafa-4a37-16e5-fab6-879cf8f32e4d@suse.de>
-References: <20200619074956.352647-1-damien.lemoal@wdc.com>
-	<20200619074956.352647-3-damien.lemoal@wdc.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: [PATCH] dm-rq: don't call blk_mq_queue_stopped in dm_stop_queue()
+Date: Fri, 19 Jun 2020 16:42:14 +0800
+Message-ID: <20200619084214.337449-1-ming.lei@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200619074956.352647-3-damien.lemoal@wdc.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <damien.lemoal@wdc.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Cc: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: Ming Lei <ming.lei@redhat.com>, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gNi8xOS8yMCA5OjQ5IEFNLCBEYW1pZW4gTGUgTW9hbCB3cm90ZToKPiBGcm9tOiBTaGluJ2lj
-aGlybyBLYXdhc2FraSA8c2hpbmljaGlyby5rYXdhc2FraUB3ZGMuY29tPgo+IAo+IFdoZW4gZG0g
-em9uZWQgaGFzIG11bHRpcGxlIGRldmljZXMsIHJhbmRvbSB6b25lcyBhcmUgbmV2ZXIgc2VsZWN0
-ZWQgZm9yCj4gcmVjbGFpbSBpZiBhbGwgcmVzZXJ2ZWQgc2VxdWVudGlhbCB3cml0ZSB6b25lcyBh
-cmUgaW4gdXNlIGFuZCBubwo+IHNlcXVlbnRpYWwgd3JpdGUgcmVxdWlyZWQgem9uZXMgY2FuIGJl
-IHNlbGVjdGVkIGZvciByZWNsYWltLiBUaGlzIGNhbgo+IGxlYWQgdG8gZGVhZGxvY2tzIGFzIHNl
-bGVjdGluZyBhIGNhY2hlIHpvbmUgYWxsb3dzIHJlY2xhaW1pbmcgYQo+IHNlcXVlbnRpYWwgem9u
-ZSwgZW5zdXJpbmcgZm9yd2FyZCBwcm9ncmVzcy4KPiAKPiBGaXggdGhpcyBieSBhbHdheXMgZGVm
-YXVsdGluZyB0byBzZWxlY3RpbmcgYSByYW5kb20gem9uZSB3aGVuIG5vCj4gc2VxdWVudGlhbCB3
-cml0ZSByZXF1aXJlZCB6b25lIGNhbiBiZSBzZWxlY3RlZC4KPiAKPiBbRGFtaWVuOiBmaXggY29t
-bWl0IG1lc3NhZ2VdCj4gCj4gU2lnbmVkLW9mZi1ieTogU2hpbidpY2hpcm8gS2F3YXNha2kgPHNo
-aW5pY2hpcm8ua2F3YXNha2lAd2RjLmNvbT4KPiBTaWduZWQtb2ZmLWJ5OiBEYW1pZW4gTGUgTW9h
-bCA8ZGFtaWVuLmxlbW9hbEB3ZGMuY29tPgo+IC0tLQo+ICAgZHJpdmVycy9tZC9kbS16b25lZC1t
-ZXRhZGF0YS5jIHwgNCArKy0tCj4gICAxIGZpbGUgY2hhbmdlZCwgMiBpbnNlcnRpb25zKCspLCAy
-IGRlbGV0aW9ucygtKQo+IAo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLXpvbmVkLW1ldGFk
-YXRhLmMgYi9kcml2ZXJzL21kL2RtLXpvbmVkLW1ldGFkYXRhLmMKPiBpbmRleCA4YmRmNzFkY2U3
-ZmIuLmMzMzJlMmMxMjFiOCAxMDA2NDQKPiAtLS0gYS9kcml2ZXJzL21kL2RtLXpvbmVkLW1ldGFk
-YXRhLmMKPiArKysgYi9kcml2ZXJzL21kL2RtLXpvbmVkLW1ldGFkYXRhLmMKPiBAQCAtMjAyNSw3
-ICsyMDI1LDcgQEAgc3RhdGljIHN0cnVjdCBkbV96b25lICpkbXpfZ2V0X3NlcV96b25lX2Zvcl9y
-ZWNsYWltKHN0cnVjdCBkbXpfbWV0YWRhdGEgKnptZCwKPiAgIHN0cnVjdCBkbV96b25lICpkbXpf
-Z2V0X3pvbmVfZm9yX3JlY2xhaW0oc3RydWN0IGRtel9tZXRhZGF0YSAqem1kLAo+ICAgCQkJCQkg
-dW5zaWduZWQgaW50IGRldl9pZHgsIGJvb2wgaWRsZSkKPiAgIHsKPiAtCXN0cnVjdCBkbV96b25l
-ICp6b25lOwo+ICsJc3RydWN0IGRtX3pvbmUgKnpvbmUgPSBOVUxMOwo+ICAgCj4gICAJLyoKPiAg
-IAkgKiBTZWFyY2ggZm9yIGEgem9uZSBjYW5kaWRhdGUgdG8gcmVjbGFpbTogMiBjYXNlcyBhcmUg
-cG9zc2libGUuCj4gQEAgLTIwMzgsNyArMjAzOCw3IEBAIHN0cnVjdCBkbV96b25lICpkbXpfZ2V0
-X3pvbmVfZm9yX3JlY2xhaW0oc3RydWN0IGRtel9tZXRhZGF0YSAqem1kLAo+ICAgCWRtel9sb2Nr
-X21hcCh6bWQpOwo+ICAgCWlmIChsaXN0X2VtcHR5KCZ6bWQtPnJlc2VydmVkX3NlcV96b25lc19s
-aXN0KSkKPiAgIAkJem9uZSA9IGRtel9nZXRfc2VxX3pvbmVfZm9yX3JlY2xhaW0oem1kLCBkZXZf
-aWR4KTsKPiAtCWVsc2UKPiArCWlmICghem9uZSkKPiAgIAkJem9uZSA9IGRtel9nZXRfcm5kX3pv
-bmVfZm9yX3JlY2xhaW0oem1kLCBkZXZfaWR4LCBpZGxlKTsKPiAgIAlkbXpfdW5sb2NrX21hcCh6
-bWQpOwo+ICAgCj4gCkluZGVlZC4KClJldmlld2VkLWJ5OiBIYW5uZXMgUmVpbmVja2UgPGhhcmVA
-c3VzZS5kZT4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZSAgICAgICAg
-ICAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZSAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIFNvZnR3YXJlIFNvbHV0
-aW9ucyBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKSFJCIDM2ODA5IChBRyBO
-w7xybmJlcmcpLCBHZXNjaMOkZnRzZsO8aHJlcjogRmVsaXggSW1lbmTDtnJmZmVyCgoKLS0KZG0t
-ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0
-LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+dm-rq won't stop queue, meantime blk-mq won't stop one queue too, so
+remove the check.
+
+dm_stop_queue() actually tries to quiesce hw queues via blk_mq_quiesce_queue(),
+we can't check via blk_queue_quiesced for avoiding unnecessary queue
+quiesce because the flag is set before synchronize_rcu() and dm_stop_queue
+may be called when synchronize_rcu from another blk_mq_quiesce_queue is
+in-progress.
+
+Cc: linux-block@vger.kernel.org
+Signed-off-by: Ming Lei <ming.lei@redhat.com>
+---
+ drivers/md/dm-rq.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index f60c02512121..ed4d5ea66ccc 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -70,9 +70,6 @@ void dm_start_queue(struct request_queue *q)
+ 
+ void dm_stop_queue(struct request_queue *q)
+ {
+-	if (blk_mq_queue_stopped(q))
+-		return;
+-
+ 	blk_mq_quiesce_queue(q);
+ }
+ 
+-- 
+2.25.2
