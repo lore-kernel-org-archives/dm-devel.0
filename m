@@ -1,99 +1,85 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 2/7] multipathd: fix check_path errors with
-	removed map
-Date: Fri, 19 Jun 2020 11:30:03 -0500
-Message-ID: <20200619163003.GO5894@octiron.msp.redhat.com>
-References: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
-	<1592439867-18427-3-git-send-email-bmarzins@redhat.com>
-	<f09ec3b6537a7b7ac1ae26433e43846176f1dd48.camel@suse.com>
-	<20200618231711.GM5894@octiron.msp.redhat.com>
-	<a1df6c71-1427-9649-3e81-138ffcd04370@suse.de>
+From: Ignat Korchagin <ignat@cloudflare.com>
+Subject: [RFC PATCH 0/1] dm-crypt excessive overhead
+Date: Fri, 19 Jun 2020 17:41:31 +0100
+Message-ID: <20200619164132.1648-1-ignat@cloudflare.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <a1df6c71-1427-9649-3e81-138ffcd04370@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Hannes Reinecke <hare@suse.de>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, dm-crypt@saout.de, linux-kernel@vger.kernel.org
+Cc: Ignat Korchagin <ignat@cloudflare.com>, kernel-team@cloudflare.com
 List-Id: dm-devel.ids
 
-On Fri, Jun 19, 2020 at 08:32:34AM +0200, Hannes Reinecke wrote:
-> >>
-> >>fac68d7 is related to the famous "dm-multipath: Accept failed paths for
-> >>multipath maps" patch (e.g.
-> >>https://patchwork.kernel.org/patch/3368381/#7193001), which never made
-> >>it upstream. SUSE kernels have shipped this patch for a long time, but
-> >>we don't apply it any more in recent kernels.
-> >>
-> >>With this patch, The reinstate_path() failure would occur if multipathd
-> >>had created a table with a "disabled" device (one which would be
-> >>present in a dm map even though the actual block device didn't exist),
-> >>and then tried to reinstate such a path. It sounds unlikely, but it
-> >>might be possible if devices are coming and going in quick succession.
-> >>In that situation, and with the "accept failed path" patch applied, a
-> >>reload makes some sense, because reload (unlike reinstate) would not
-> >>fail (at least not for this reason) and would actually add that just-
-> >>reinstated path. OTOH, it's not likely that the reload would improve
-> >>matters, either. After all, multipathd is just trying to reinstate a
-> >>non-existing path. So, I'm fine with skipping the reload.
-> >>
-> It's actually _not_ unlikely, but a direct result of multipathd listening=
- to
-> uevents.
->=20
-> If you have a map with four paths, and all four of them are going down, y=
-ou
-> end up getting four events.
-> And multipath will be processing each event _individually_, causing it to
-> generate a reload sequence like:
->=20
-> [a b c d]
-> [b c d]
-> [c d]
-> [d]
-> []
->=20
-> Of which only the last is valid, as all the intermediate ones contain
-> invalid paths.
->=20
-> And _that_ is the scenario I was referring to when creating the patch.
+This is a follow up from the long-forgotten [1], but with some more convincing
+evidence. Consider the following script:
 
-But even still, I'm not in favor of calling ev_add_path() with the code
-as it currently is. In the case you point out, it will presumably fail
-when adopt_paths() calls pathinfo(). That will orphan the path, which is
-good. But if the map got removed (intentionally) instead of the path,
-ev_add_path() will recreate the map, which is bad. Also, it seems more
-likely for a path to still exist and be usable while the multipath
-device is gone (the bad case), than for the path to pass the checker
-function and then disappear before mutipathd tries to reinstate it
-immediately afterwards (the good case).  Further, the bad result, where
-a deleted multipath device reappears, is actually a problem for users.
-Having multipathd take a bit of time and pointless effort to catch up
-after multiple changes happen at once doesn't effect users noticeably.
+#!/bin/bash -e
 
-Since the checkerloop thread spends the vast majority of it's not not
-checking any specific path, if a path goes away, it is most likely to be
-caught by the path_offline() function. I we want to do something to
-proactively deal with a path that has been removed, we should do it
-there.
+# create 4G ramdisk
+sudo modprobe brd rd_nr=1 rd_size=4194304
 
--Ben
-=20
-> Cheers,
->=20
-> Hannes
-> --=20
-> Dr. Hannes Reinecke            Teamlead Storage & Networking
-> hare@suse.de                               +49 911 74053 688
-> SUSE Software Solutions GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> HRB 36809 (AG N=FCrnberg), Gesch=E4ftsf=FChrer: Felix Imend=F6rffer
+# create a dm-crypt device with NULL cipher on top of /dev/ram0
+echo '0 8388608 crypt capi:ecb(cipher_null) - 0 /dev/ram0 0' | sudo dmsetup create eram0
+
+# create a dm-crypt device with NULL cipher and custom force_inline flag
+echo '0 8388608 crypt capi:ecb(cipher_null) - 0 /dev/ram0 0 1 force_inline' | sudo dmsetup create inline-eram0
+
+# read all data from /dev/ram0
+sudo dd if=/dev/ram0 bs=4k iflag=direct | sha256sum
+
+# read the same data from /dev/mapper/eram0
+sudo dd if=/dev/mapper/eram0 bs=4k iflag=direct | sha256sum
+
+# read the same data from /dev/mapper/inline-eram0
+sudo dd if=/dev/mapper/inline-eram0 bs=4k iflag=direct | sha256sum
+
+This script creates a ramdisk (to eliminate hardware bias in the benchmark) and
+two dm-crypt instances on top. Both dm-crypt instances use the NULL cipher
+to eliminate potentially expensive crypto bias (the NULL cipher just uses memcpy
+for "encyption"). The first instance is the current dm-crypt implementation from
+5.8-rc1, the second is the dm-crypt instance with a custom new flag enabled from
+the patch attached to this thread. On my VM (Debian in VirtualBox with 4 cores
+on 2.8 GHz Quad-Core Intel Core i7) I get the following output (formatted for
+better readability):
+
+# plain ram0
+1048576+0 records in
+1048576+0 records out
+4294967296 bytes (4.3 GB, 4.0 GiB) copied, 21.2305 s, 202 MB/s
+8479e43911dc45e89f934fe48d01297e16f51d17aa561d4d1c216b1ae0fcddca  -
+
+# eram0 (current dm-crypt)
+1048576+0 records in
+1048576+0 records out
+4294967296 bytes (4.3 GB, 4.0 GiB) copied, 53.2212 s, 80.7 MB/s
+8479e43911dc45e89f934fe48d01297e16f51d17aa561d4d1c216b1ae0fcddca  -
+
+# inline-eram0 (patched dm-crypt)
+1048576+0 records in
+1048576+0 records out
+4294967296 bytes (4.3 GB, 4.0 GiB) copied, 21.3472 s, 201 MB/s
+8479e43911dc45e89f934fe48d01297e16f51d17aa561d4d1c216b1ae0fcddca  -
+
+As we can see, current dm-crypt implementation creates a significant IO
+performance overhead (at least on small IO block sizes) for both latency and
+throughput. We suspect offloading IO request processing into workqueues and
+async threads is more harmful these days with the modern fast storage. I also
+did some digging into the dm-crypt git history and much of this async processing
+is not needed anymore, because the reasons it was added are mostly gone from the
+kernel. More details can be found in [2] (see "Git archeology" section).
+
+We have been running the attached patch on different hardware generations in
+more than 200 datacentres on both SATA SSDs and NVME SSDs and so far were very
+happy with the performance benefits.
+
+[1]: https://www.spinics.net/lists/dm-crypt/msg07516.html
+[2]: https://blog.cloudflare.com/speeding-up-linux-disk-encryption/
+
+Ignat Korchagin (1):
+  Add DM_CRYPT_FORCE_INLINE flag to dm-crypt target
+
+ drivers/md/dm-crypt.c | 55 +++++++++++++++++++++++++++++++++----------
+ 1 file changed, 43 insertions(+), 12 deletions(-)
+
+-- 
+2.20.1
