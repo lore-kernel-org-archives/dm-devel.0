@@ -1,145 +1,69 @@
-From: Bryan Gurney <bgurney@redhat.com>
-Subject: Re: [PATCH v3 1/4] dm dust: report some message results
-	back to user directly
-Date: Fri, 19 Jun 2020 14:21:26 -0400
-Message-ID: <CAHhmqcQt9OEcvHKmBygRcTq_FRZ2RC5rGFqXqARnz0y623xfWA@mail.gmail.com>
-References: <20200619123803.1441373-1-yangerkun@huawei.com>
-	<20200619123803.1441373-2-yangerkun@huawei.com>
-	<CAHhmqcTdxeTrpBuJBLqch9FzYuv=k+73fOjStsd-NmoDRyFffQ@mail.gmail.com>
-	<20200619154445.GA24500@redhat.com>
-	<CAHhmqcSB_bd8dO75pQny=MxNxd1=3mpHDCtX_faiO2VUFx616w@mail.gmail.com>
-	<20200619172947.GA24951@redhat.com>
-	<CAHhmqcTJgDPBg8YOtrxtJW1ONkz8pz=nqZa-EXM84=dcQ165Fg@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [RFC PATCH 0/1] dm-crypt excessive overhead
+Date: Fri, 19 Jun 2020 14:39:39 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2006191429060.23991@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20200619164132.1648-1-ignat@cloudflare.com> <20200619165548.GA24779@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAHhmqcTJgDPBg8YOtrxtJW1ONkz8pz=nqZa-EXM84=dcQ165Fg@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: yangerkun <yangerkun@huawei.com>, dm-devel@redhat.com, bmr@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200619165548.GA24779@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ignat Korchagin <ignat@cloudflare.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>
+Cc: Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, dm-devel@redhat.com, dm-crypt@saout.de, linux-kernel@vger.kernel.org, kernel-team@cloudflare.com
 List-Id: dm-devel.ids
 
-On Fri, Jun 19, 2020 at 1:43 PM Bryan Gurney <bgurney@redhat.com> wrote:
->
-> On Fri, Jun 19, 2020 at 1:29 PM Mike Snitzer <snitzer@redhat.com> wrote:
-> >
-> > On Fri, Jun 19 2020 at  1:23pm -0400,
-> > Bryan Gurney <bgurney@redhat.com> wrote:
-> >
-> > > On Fri, Jun 19, 2020 at 11:45 AM Mike Snitzer <snitzer@redhat.com> wrote:
-> > > >
-> > > > On Fri, Jun 19 2020 at 11:40am -0400,
-> > > > Bryan Gurney <bgurney@redhat.com> wrote:
-> > > >
-> > > > > On Fri, Jun 19, 2020 at 8:37 AM yangerkun <yangerkun@huawei.com> wrote:
-> > > > > >
-> > > > > > Some type of message(queryblock/countbadblocks/removebadblock) may better
-> > > > > > report results to user directly. Do it with DMEMIT.
-> > > > > >
-> > > > > > Signed-off-by: yangerkun <yangerkun@huawei.com>
-> > > > > > ---
-> > > > > >  drivers/md/dm-dust.c | 31 ++++++++++++++++++-------------
-> > > > > >  1 file changed, 18 insertions(+), 13 deletions(-)
-> > > > > >
-> > > > > > diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
-> > > > > > index ff03b90072c5..a0c75c104de0 100644
-> > > > > > --- a/drivers/md/dm-dust.c
-> > > > > > +++ b/drivers/md/dm-dust.c
-> > > > > > @@ -138,20 +138,22 @@ static int dust_add_block(struct dust_device *dd, unsigned long long block,
-> > > > > >         return 0;
-> > > > > >  }
-> > > > > >
-> > > > > > -static int dust_query_block(struct dust_device *dd, unsigned long long block)
-> > > > > > +static int dust_query_block(struct dust_device *dd, unsigned long long block, char *result,
-> > > > > > +                           unsigned int maxlen, unsigned int *sz_ptr)
-> > > > > >  {
-> > > > > >         struct badblock *bblock;
-> > > > > >         unsigned long flags;
-> > > > > > +       unsigned int sz = *sz_ptr;
-> > > > > >
-> > > > > >         spin_lock_irqsave(&dd->dust_lock, flags);
-> > > > > >         bblock = dust_rb_search(&dd->badblocklist, block);
-> > > > > >         if (bblock != NULL)
-> > > > > > -               DMINFO("%s: block %llu found in badblocklist", __func__, block);
-> > > > > > +               DMEMIT("block %llu found in badblocklist", block);
-> > > > > >         else
-> > > > > > -               DMINFO("%s: block %llu not found in badblocklist", __func__, block);
-> > > > > > +               DMEMIT("block %llu not found in badblocklist", block);
-> > > > > >         spin_unlock_irqrestore(&dd->dust_lock, flags);
-> > > > > >
-> > > > > > -       return 0;
-> > > > > > +       return 1;
-> > > > >
-> > > > > First, thank you very much for this patch.  After the concerns to
-> > > > > convert some functions to use DMEMIT were brought up, I was trying to
-> > > > > start the conversion, when this patch arrived, so I installed it, and
-> > > > > tested it.
-> > > > >
-> > > > > I do have a question, though:
-> > > > >
-> > > > > First, I see that in dust_query_block() (above) and
-> > > > > dust_clear_badblocks(), the "return 0" statement is changed to "return
-> > > > > 1".
-> > > > >
-> > > > > (Additionally, there is a change from "r = 0" to  "r = 1", in the
-> > > > > "countbadblocks" message handler)
-> > > > >
-> > > > > On testing the functions, they still work, but why was this change
-> > > > > made?  Is it related to the use of DMEMIT?
-> > > >
-> > > > It is, but we need to review the returns closer.  Looked to me that 1
-> > > > was being returned even if nothing was DMEMIT()'d.. but I could be wrong
-> > > > (only looked quickly).
-> > > >
-> > > > I also noticed that some output was changed to not include __func__.
-> > > > Please review that the output reflects what you'd like displayed.
-> > > >
-> > > > Mike
-> > > >
-> > >
-> > > After adding __func__ back into the string, here's what it looks like:
-> > >
-> > > $ sudo dmsetup message dust1 0 addbadblock 60
-> > > $ sudo dmsetup message dust1 0 queryblock 60
-> > > dust_query_block: block 60 found in badblocklist
-> > > $ sudo dmsetup message dust1 0 queryblock 61
-> > > dust_query_block: block 61 not found in badblocklist
-> > >
-> > > I feel that the output's origin is more clear, so I'd like to leave
-> > > __func__ in the output.
-> > >
-> > > I took a look at the DMEMIT calls, and in all three cases, it looks
-> > > like there's something DMEMIT()'d:
-> > >
-> > > dust_query_block: either "block found", or "block not found".
-> > > dust_clear_badblocks: either "no badblocks found", or "badblocks cleared".
-> > > result of "message ... countbadblocks": always prints "%llu badblocks found".
-> >
-> > OK, can you provide an incremental patch that restores the __func__
-> > where you'd like?  I can deal with it, but I'll be slower to do so.
-> >
-> > Mike
-> >
->
-> Yes, I just sent the patch to dm-devel.
->
->
+
+
+On Fri, 19 Jun 2020, Mike Snitzer wrote:
+
+> On Fri, Jun 19 2020 at 12:41pm -0400,
+> Ignat Korchagin <ignat@cloudflare.com> wrote:
+> 
+> > This is a follow up from the long-forgotten [1], but with some more convincing
+> > evidence. Consider the following script:
+> > 
+> > [1]: https://www.spinics.net/lists/dm-crypt/msg07516.html
+> > [2]: https://blog.cloudflare.com/speeding-up-linux-disk-encryption/
+> > 
+> > Ignat Korchagin (1):
+> >   Add DM_CRYPT_FORCE_INLINE flag to dm-crypt target
+> > 
+> >  drivers/md/dm-crypt.c | 55 +++++++++++++++++++++++++++++++++----------
+> >  1 file changed, 43 insertions(+), 12 deletions(-)
+> > 
+> > -- 
+> > 2.20.1
+> > 
+> 
+> Hi,
+> 
+> I saw [2] and have been expecting something from cloudflare ever since.
+> Nice to see this submission.
+> 
+> There is useful context in your 0th patch header.  I'll likely merge
+> parts of this patch header with the more terse 1/1 header (reality is
+> there only needed to be a single patch submission).
+> 
+> Will review and stage accordingly if all looks fine to me.  Mikulas,
+> please have a look too.
+> 
 > Thanks,
->
-> Bryan
+> Mike
 
-I'm going to work on folding the review changes above into a v4 series.
++       if (test_bit(DM_CRYPT_FORCE_INLINE, &cc->flags)) {
++               if (in_irq()) {
++                       /* Crypto API will fail hard in hard IRQ context */
++                       tasklet_init(&io->tasklet, kcryptd_crypt_tasklet, (unsigned long)&io->work);
++                       tasklet_schedule(&io->tasklet);
++               } else
++                       kcryptd_crypt(&io->work);
++       } else {
++               INIT_WORK(&io->work, kcryptd_crypt);
++               queue_work(cc->crypt_queue, &io->work);
++       }
 
+I'm looking at this and I'd like to know why does the crypto API fail in 
+hard-irq context and why does it work in tasklet context. What's the exact 
+reason behind this?
 
-Thanks,
-
-Bryan
+Mikulas
