@@ -1,91 +1,107 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 2/7] multipathd: fix check_path errors with
- removed map
-Date: Fri, 19 Jun 2020 11:52:36 -0500
-Message-ID: <20200619165236.GP5894@octiron.msp.redhat.com>
-References: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
-	<1592439867-18427-3-git-send-email-bmarzins@redhat.com>
-	<f09ec3b6537a7b7ac1ae26433e43846176f1dd48.camel@suse.com>
-	<20200618231711.GM5894@octiron.msp.redhat.com>
-	<6f9284eeec0dda69e8e4dd4b2858f02d3c31fb8b.camel@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [RFC PATCH 0/1] dm-crypt excessive overhead
+Date: Fri, 19 Jun 2020 12:55:49 -0400
+Message-ID: <20200619165548.GA24779@redhat.com>
+References: <20200619164132.1648-1-ignat@cloudflare.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <6f9284eeec0dda69e8e4dd4b2858f02d3c31fb8b.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-To: Martin Wilck <Martin.Wilck@suse.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+In-Reply-To: <20200619164132.1648-1-ignat@cloudflare.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ignat Korchagin <ignat@cloudflare.com>, Mikulas Patocka <mpatocka@redhat.com>
+Cc: agk@redhat.com, dm-devel@redhat.com, dm-crypt@saout.de, linux-kernel@vger.kernel.org, kernel-team@cloudflare.com
 List-Id: dm-devel.ids
 
-On Fri, Jun 19, 2020 at 01:42:47PM +0000, Martin Wilck wrote:
-> On Thu, 2020-06-18 at 18:17 -0500, Benjamin Marzinski wrote:
-> > On Thu, Jun 18, 2020 at 07:34:38PM +0000, Martin Wilck wrote:
-> > > On Wed, 2020-06-17 at 19:24 -0500, Benjamin Marzinski wrote:
-> > > >=20
-> > > >  static void
-> > > > @@ -2088,8 +2084,13 @@ check_path (struct vectors * vecs, struct
-> > > > path
-> > > > * pp, unsigned int ticks)
-> > > >  =09 * Synchronize with kernel state
-> > > >  =09 */
-> > > >  =09if (update_multipath_strings(pp->mpp, vecs->pathvec, 1)) {
-> > > > +=09=09struct dm_info info;
-> > > >  =09=09condlog(1, "%s: Could not synchronize with kernel
-> > > > state",
-> > > >  =09=09=09pp->dev);
-> > > > +=09=09if (pp->mpp && pp->mpp->alias &&
-> > > > +=09=09    do_dm_get_info(pp->mpp->alias, &info) =3D=3D 0)
-> > > > +=09=09=09/* multipath device missing. Likely removed */
-> > > > +=09=09=09return 0;
-> > > >  =09=09pp->dmstate =3D PSTATE_UNDEF;
-> > >=20
-> > > It would be more elegant if we could distinguish different failure
-> > > modes from update_multipath_strings() directly, without having to
-> > > call
-> > > do_dm_get_info() again.
-> >=20
-> > Seems reasonable. I'll take a look at that.
->=20
-> Yet another idea: I just discussed this with Hannes, and he pointed out
-> that right below this code, we have
->=20
-> =09/* if update_multipath_strings orphaned the path, quit early */
-> =09if (!pp->mpp)
-> =09=09return 0;
->=20
-> ... which could have the same effect, if pp->mpp was reloaded. Probably
-> that doesn't happen because the pp->mpp dereference is cached in a
-> register, but we could simply add a READ_ONCE there.
+On Fri, Jun 19 2020 at 12:41pm -0400,
+Ignat Korchagin <ignat@cloudflare.com> wrote:
 
-When update_multipath_strings() calls update_multipath_table() it will
-fail because the table no longer exists.  If we differentiate between
-a dm error and not finding the map, we can exit early without having to
-call do_dm_get_info() again. But right now, if the map is gone, but we
-haven't got the uevent removing it, then nothing will clear pp->mpp. If
-we did get the uevent, then it must have grabbed the vecs lock. That
-better have caused a memory barrier, which will guarantee that
-check_path() sees the updated value.
+> This is a follow up from the long-forgotten [1], but with some more convincing
+> evidence. Consider the following script:
+> 
+> #!/bin/bash -e
+> 
+> # create 4G ramdisk
+> sudo modprobe brd rd_nr=1 rd_size=4194304
+> 
+> # create a dm-crypt device with NULL cipher on top of /dev/ram0
+> echo '0 8388608 crypt capi:ecb(cipher_null) - 0 /dev/ram0 0' | sudo dmsetup create eram0
+> 
+> # create a dm-crypt device with NULL cipher and custom force_inline flag
+> echo '0 8388608 crypt capi:ecb(cipher_null) - 0 /dev/ram0 0 1 force_inline' | sudo dmsetup create inline-eram0
+> 
+> # read all data from /dev/ram0
+> sudo dd if=/dev/ram0 bs=4k iflag=direct | sha256sum
+> 
+> # read the same data from /dev/mapper/eram0
+> sudo dd if=/dev/mapper/eram0 bs=4k iflag=direct | sha256sum
+> 
+> # read the same data from /dev/mapper/inline-eram0
+> sudo dd if=/dev/mapper/inline-eram0 bs=4k iflag=direct | sha256sum
+> 
+> This script creates a ramdisk (to eliminate hardware bias in the benchmark) and
+> two dm-crypt instances on top. Both dm-crypt instances use the NULL cipher
+> to eliminate potentially expensive crypto bias (the NULL cipher just uses memcpy
+> for "encyption"). The first instance is the current dm-crypt implementation from
+> 5.8-rc1, the second is the dm-crypt instance with a custom new flag enabled from
+> the patch attached to this thread. On my VM (Debian in VirtualBox with 4 cores
+> on 2.8 GHz Quad-Core Intel Core i7) I get the following output (formatted for
+> better readability):
+> 
+> # plain ram0
+> 1048576+0 records in
+> 1048576+0 records out
+> 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 21.2305 s, 202 MB/s
+> 8479e43911dc45e89f934fe48d01297e16f51d17aa561d4d1c216b1ae0fcddca  -
+> 
+> # eram0 (current dm-crypt)
+> 1048576+0 records in
+> 1048576+0 records out
+> 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 53.2212 s, 80.7 MB/s
+> 8479e43911dc45e89f934fe48d01297e16f51d17aa561d4d1c216b1ae0fcddca  -
+> 
+> # inline-eram0 (patched dm-crypt)
+> 1048576+0 records in
+> 1048576+0 records out
+> 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 21.3472 s, 201 MB/s
+> 8479e43911dc45e89f934fe48d01297e16f51d17aa561d4d1c216b1ae0fcddca  -
+> 
+> As we can see, current dm-crypt implementation creates a significant IO
+> performance overhead (at least on small IO block sizes) for both latency and
+> throughput. We suspect offloading IO request processing into workqueues and
+> async threads is more harmful these days with the modern fast storage. I also
+> did some digging into the dm-crypt git history and much of this async processing
+> is not needed anymore, because the reasons it was added are mostly gone from the
+> kernel. More details can be found in [2] (see "Git archeology" section).
+> 
+> We have been running the attached patch on different hardware generations in
+> more than 200 datacentres on both SATA SSDs and NVME SSDs and so far were very
+> happy with the performance benefits.
+> 
+> [1]: https://www.spinics.net/lists/dm-crypt/msg07516.html
+> [2]: https://blog.cloudflare.com/speeding-up-linux-disk-encryption/
+> 
+> Ignat Korchagin (1):
+>   Add DM_CRYPT_FORCE_INLINE flag to dm-crypt target
+> 
+>  drivers/md/dm-crypt.c | 55 +++++++++++++++++++++++++++++++++----------
+>  1 file changed, 43 insertions(+), 12 deletions(-)
+> 
+> -- 
+> 2.20.1
+> 
 
--Ben
-=20
-> Choose what you prefer.
->=20
-> Regards,
-> Martin
->=20
-> --=20
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE  Software Solutions Germany GmbH
-> HRB 36809, AG N=FCrnberg GF: Felix
-> Imend=F6rffer
->=20
+Hi,
+
+I saw [2] and have been expecting something from cloudflare ever since.
+Nice to see this submission.
+
+There is useful context in your 0th patch header.  I'll likely merge
+parts of this patch header with the more terse 1/1 header (reality is
+there only needed to be a single patch submission).
+
+Will review and stage accordingly if all looks fine to me.  Mikulas,
+please have a look too.
+
+Thanks,
+Mike
