@@ -1,19 +1,15 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 2/7] multipathd: fix check_path errors with
- removed map
-Date: Fri, 19 Jun 2020 13:42:47 +0000
-Message-ID: <6f9284eeec0dda69e8e4dd4b2858f02d3c31fb8b.camel@suse.com>
-References: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
-	<1592439867-18427-3-git-send-email-bmarzins@redhat.com>
-	<f09ec3b6537a7b7ac1ae26433e43846176f1dd48.camel@suse.com>
-	<20200618231711.GM5894@octiron.msp.redhat.com>
+From: Bryan Gurney <bgurney@redhat.com>
+Subject: Re: [PATCH v3 1/4] dm dust: report some message results
+	back to user directly
+Date: Fri, 19 Jun 2020 11:40:04 -0400
+Message-ID: <CAHhmqcTdxeTrpBuJBLqch9FzYuv=k+73fOjStsd-NmoDRyFffQ@mail.gmail.com>
+References: <20200619123803.1441373-1-yangerkun@huawei.com>
+	<20200619123803.1441373-2-yangerkun@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200618231711.GM5894@octiron.msp.redhat.com>
-Content-Language: en-US
-Content-ID: <5932E0CA4CFE054893B045384C65A060@eurprd04.prod.outlook.com>
+In-Reply-To: <20200619123803.1441373-2-yangerkun@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,56 +19,146 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: yangerkun <yangerkun@huawei.com>
+Cc: bmr@redhat.com, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 2020-06-18 at 18:17 -0500, Benjamin Marzinski wrote:
-> On Thu, Jun 18, 2020 at 07:34:38PM +0000, Martin Wilck wrote:
-> > On Wed, 2020-06-17 at 19:24 -0500, Benjamin Marzinski wrote:
-> > >=20
-> > >  static void
-> > > @@ -2088,8 +2084,13 @@ check_path (struct vectors * vecs, struct
-> > > path
-> > > * pp, unsigned int ticks)
-> > >  =09 * Synchronize with kernel state
-> > >  =09 */
-> > >  =09if (update_multipath_strings(pp->mpp, vecs->pathvec, 1)) {
-> > > +=09=09struct dm_info info;
-> > >  =09=09condlog(1, "%s: Could not synchronize with kernel
-> > > state",
-> > >  =09=09=09pp->dev);
-> > > +=09=09if (pp->mpp && pp->mpp->alias &&
-> > > +=09=09    do_dm_get_info(pp->mpp->alias, &info) =3D=3D 0)
-> > > +=09=09=09/* multipath device missing. Likely removed */
-> > > +=09=09=09return 0;
-> > >  =09=09pp->dmstate =3D PSTATE_UNDEF;
-> >=20
-> > It would be more elegant if we could distinguish different failure
-> > modes from update_multipath_strings() directly, without having to
-> > call
-> > do_dm_get_info() again.
->=20
-> Seems reasonable. I'll take a look at that.
+On Fri, Jun 19, 2020 at 8:37 AM yangerkun <yangerkun@huawei.com> wrote:
+>
+> Some type of message(queryblock/countbadblocks/removebadblock) may better
+> report results to user directly. Do it with DMEMIT.
+>
+> Signed-off-by: yangerkun <yangerkun@huawei.com>
+> ---
+>  drivers/md/dm-dust.c | 31 ++++++++++++++++++-------------
+>  1 file changed, 18 insertions(+), 13 deletions(-)
+>
+> diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
+> index ff03b90072c5..a0c75c104de0 100644
+> --- a/drivers/md/dm-dust.c
+> +++ b/drivers/md/dm-dust.c
+> @@ -138,20 +138,22 @@ static int dust_add_block(struct dust_device *dd, unsigned long long block,
+>         return 0;
+>  }
+>
+> -static int dust_query_block(struct dust_device *dd, unsigned long long block)
+> +static int dust_query_block(struct dust_device *dd, unsigned long long block, char *result,
+> +                           unsigned int maxlen, unsigned int *sz_ptr)
+>  {
+>         struct badblock *bblock;
+>         unsigned long flags;
+> +       unsigned int sz = *sz_ptr;
+>
+>         spin_lock_irqsave(&dd->dust_lock, flags);
+>         bblock = dust_rb_search(&dd->badblocklist, block);
+>         if (bblock != NULL)
+> -               DMINFO("%s: block %llu found in badblocklist", __func__, block);
+> +               DMEMIT("block %llu found in badblocklist", block);
+>         else
+> -               DMINFO("%s: block %llu not found in badblocklist", __func__, block);
+> +               DMEMIT("block %llu not found in badblocklist", block);
+>         spin_unlock_irqrestore(&dd->dust_lock, flags);
+>
+> -       return 0;
+> +       return 1;
 
-Yet another idea: I just discussed this with Hannes, and he pointed out
-that right below this code, we have
+First, thank you very much for this patch.  After the concerns to
+convert some functions to use DMEMIT were brought up, I was trying to
+start the conversion, when this patch arrived, so I installed it, and
+tested it.
 
-=09/* if update_multipath_strings orphaned the path, quit early */
-=09if (!pp->mpp)
-=09=09return 0;
+I do have a question, though:
 
-... which could have the same effect, if pp->mpp was reloaded. Probably
-that doesn't happen because the pp->mpp dereference is cached in a
-register, but we could simply add a READ_ONCE there.
+First, I see that in dust_query_block() (above) and
+dust_clear_badblocks(), the "return 0" statement is changed to "return
+1".
 
-Choose what you prefer.
+(Additionally, there is a change from "r = 0" to  "r = 1", in the
+"countbadblocks" message handler)
 
-Regards,
-Martin
+On testing the functions, they still work, but why was this change
+made?  Is it related to the use of DMEMIT?
 
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+
+Thanks,
+
+Bryan
+
+>  }
+>
+>  static int __dust_map_read(struct dust_device *dd, sector_t thisblock)
+> @@ -259,11 +261,13 @@ static bool __dust_clear_badblocks(struct rb_root *tree,
+>         return true;
+>  }
+>
+> -static int dust_clear_badblocks(struct dust_device *dd)
+> +static int dust_clear_badblocks(struct dust_device *dd, char *result, unsigned int maxlen,
+> +                               unsigned int *sz_ptr)
+>  {
+>         unsigned long flags;
+>         struct rb_root badblocklist;
+>         unsigned long long badblock_count;
+> +       unsigned int sz = *sz_ptr;
+>
+>         spin_lock_irqsave(&dd->dust_lock, flags);
+>         badblocklist = dd->badblocklist;
+> @@ -273,11 +277,11 @@ static int dust_clear_badblocks(struct dust_device *dd)
+>         spin_unlock_irqrestore(&dd->dust_lock, flags);
+>
+>         if (!__dust_clear_badblocks(&badblocklist, badblock_count))
+> -               DMINFO("%s: no badblocks found", __func__);
+> +               DMEMIT("no badblocks found");
+>         else
+> -               DMINFO("%s: badblocks cleared", __func__);
+> +               DMEMIT("badblocks cleared");
+>
+> -       return 0;
+> +       return 1;
+>  }
+>
+>  /*
+> @@ -383,7 +387,7 @@ static void dust_dtr(struct dm_target *ti)
+>  }
+>
+>  static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
+> -                       char *result_buf, unsigned int maxlen)
+> +                       char *result, unsigned int maxlen)
+>  {
+>         struct dust_device *dd = ti->private;
+>         sector_t size = i_size_read(dd->dev->bdev->bd_inode) >> SECTOR_SHIFT;
+> @@ -393,6 +397,7 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
+>         unsigned char wr_fail_cnt;
+>         unsigned int tmp_ui;
+>         unsigned long flags;
+> +       unsigned int sz = 0;
+>         char dummy;
+>
+>         if (argc == 1) {
+> @@ -410,12 +415,12 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
+>                         r = 0;
+>                 } else if (!strcasecmp(argv[0], "countbadblocks")) {
+>                         spin_lock_irqsave(&dd->dust_lock, flags);
+> -                       DMINFO("countbadblocks: %llu badblock(s) found",
+> +                       DMEMIT("countbadblocks: %llu badblock(s) found",
+>                                dd->badblock_count);
+>                         spin_unlock_irqrestore(&dd->dust_lock, flags);
+> -                       r = 0;
+> +                       r = 1;
+>                 } else if (!strcasecmp(argv[0], "clearbadblocks")) {
+> -                       r = dust_clear_badblocks(dd);
+> +                       r = dust_clear_badblocks(dd, result, maxlen, &sz);
+>                 } else if (!strcasecmp(argv[0], "quiet")) {
+>                         if (!dd->quiet_mode)
+>                                 dd->quiet_mode = true;
+> @@ -441,7 +446,7 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
+>                 else if (!strcasecmp(argv[0], "removebadblock"))
+>                         r = dust_remove_block(dd, block);
+>                 else if (!strcasecmp(argv[0], "queryblock"))
+> -                       r = dust_query_block(dd, block);
+> +                       r = dust_query_block(dd, block, result, maxlen, &sz);
+>                 else
+>                         invalid_msg = true;
+>
+> --
+> 2.25.4
+>
