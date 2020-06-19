@@ -1,164 +1,91 @@
-From: Ignat Korchagin <ignat@cloudflare.com>
-Subject: [RFC PATCH 1/1] Add DM_CRYPT_FORCE_INLINE flag to dm-crypt target
-Date: Fri, 19 Jun 2020 17:41:32 +0100
-Message-ID: <20200619164132.1648-2-ignat@cloudflare.com>
-References: <20200619164132.1648-1-ignat@cloudflare.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 2/7] multipathd: fix check_path errors with
+ removed map
+Date: Fri, 19 Jun 2020 11:52:36 -0500
+Message-ID: <20200619165236.GP5894@octiron.msp.redhat.com>
+References: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
+	<1592439867-18427-3-git-send-email-bmarzins@redhat.com>
+	<f09ec3b6537a7b7ac1ae26433e43846176f1dd48.camel@suse.com>
+	<20200618231711.GM5894@octiron.msp.redhat.com>
+	<6f9284eeec0dda69e8e4dd4b2858f02d3c31fb8b.camel@suse.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200619164132.1648-1-ignat@cloudflare.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, dm-crypt@saout.de, linux-kernel@vger.kernel.org
-Cc: Ignat Korchagin <ignat@cloudflare.com>, kernel-team@cloudflare.com
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <6f9284eeec0dda69e8e4dd4b2858f02d3c31fb8b.camel@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Martin Wilck <Martin.Wilck@suse.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Sometimes extra thread offloading imposed by dm-crypt hurts IO latency. This is
-especially visible on busy systems with many processes/threads. Moreover, most
-Crypto API implementaions are async, that is they offload crypto operations on
-their own, so this dm-crypt offloading is excessive.
+On Fri, Jun 19, 2020 at 01:42:47PM +0000, Martin Wilck wrote:
+> On Thu, 2020-06-18 at 18:17 -0500, Benjamin Marzinski wrote:
+> > On Thu, Jun 18, 2020 at 07:34:38PM +0000, Martin Wilck wrote:
+> > > On Wed, 2020-06-17 at 19:24 -0500, Benjamin Marzinski wrote:
+> > > >=20
+> > > >  static void
+> > > > @@ -2088,8 +2084,13 @@ check_path (struct vectors * vecs, struct
+> > > > path
+> > > > * pp, unsigned int ticks)
+> > > >  =09 * Synchronize with kernel state
+> > > >  =09 */
+> > > >  =09if (update_multipath_strings(pp->mpp, vecs->pathvec, 1)) {
+> > > > +=09=09struct dm_info info;
+> > > >  =09=09condlog(1, "%s: Could not synchronize with kernel
+> > > > state",
+> > > >  =09=09=09pp->dev);
+> > > > +=09=09if (pp->mpp && pp->mpp->alias &&
+> > > > +=09=09    do_dm_get_info(pp->mpp->alias, &info) =3D=3D 0)
+> > > > +=09=09=09/* multipath device missing. Likely removed */
+> > > > +=09=09=09return 0;
+> > > >  =09=09pp->dmstate =3D PSTATE_UNDEF;
+> > >=20
+> > > It would be more elegant if we could distinguish different failure
+> > > modes from update_multipath_strings() directly, without having to
+> > > call
+> > > do_dm_get_info() again.
+> >=20
+> > Seems reasonable. I'll take a look at that.
+>=20
+> Yet another idea: I just discussed this with Hannes, and he pointed out
+> that right below this code, we have
+>=20
+> =09/* if update_multipath_strings orphaned the path, quit early */
+> =09if (!pp->mpp)
+> =09=09return 0;
+>=20
+> ... which could have the same effect, if pp->mpp was reloaded. Probably
+> that doesn't happen because the pp->mpp dereference is cached in a
+> register, but we could simply add a READ_ONCE there.
 
-This adds a new flag, which directs dm-crypt not to offload crypto operations
-and process everything inline. For cases, where crypto operations cannot happen
-inline (hard interrupt context, for example the read path of the NVME driver),
-we offload the work to a tasklet rather than a workqueue.
+When update_multipath_strings() calls update_multipath_table() it will
+fail because the table no longer exists.  If we differentiate between
+a dm error and not finding the map, we can exit early without having to
+call do_dm_get_info() again. But right now, if the map is gone, but we
+haven't got the uevent removing it, then nothing will clear pp->mpp. If
+we did get the uevent, then it must have grabbed the vecs lock. That
+better have caused a memory barrier, which will guarantee that
+check_path() sees the updated value.
 
-Signed-off-by: Ignat Korchagin <ignat@cloudflare.com>
----
- drivers/md/dm-crypt.c | 55 +++++++++++++++++++++++++++++++++----------
- 1 file changed, 43 insertions(+), 12 deletions(-)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 000ddfab5ba0..5a9bac4fdffb 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -69,6 +69,7 @@ struct dm_crypt_io {
- 	u8 *integrity_metadata;
- 	bool integrity_metadata_from_pool;
- 	struct work_struct work;
-+	struct tasklet_struct tasklet;
- 
- 	struct convert_context ctx;
- 
-@@ -127,7 +128,7 @@ struct iv_elephant_private {
-  * and encrypts / decrypts at the same time.
-  */
- enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID,
--	     DM_CRYPT_SAME_CPU, DM_CRYPT_NO_OFFLOAD };
-+	     DM_CRYPT_SAME_CPU, DM_CRYPT_NO_OFFLOAD, DM_CRYPT_FORCE_INLINE = (sizeof(unsigned long) * 8 - 1) };
- 
- enum cipher_flags {
- 	CRYPT_MODE_INTEGRITY_AEAD,	/* Use authenticated mode for cihper */
-@@ -1458,13 +1459,18 @@ static void crypt_alloc_req_skcipher(struct crypt_config *cc,
- 
- 	skcipher_request_set_tfm(ctx->r.req, cc->cipher_tfm.tfms[key_index]);
- 
--	/*
--	 * Use REQ_MAY_BACKLOG so a cipher driver internally backlogs
--	 * requests if driver request queue is full.
--	 */
--	skcipher_request_set_callback(ctx->r.req,
--	    CRYPTO_TFM_REQ_MAY_BACKLOG,
--	    kcryptd_async_done, dmreq_of_req(cc, ctx->r.req));
-+	if (test_bit(DM_CRYPT_FORCE_INLINE, &cc->flags))
-+		/* make sure we zero important fields of the request */
-+		skcipher_request_set_callback(ctx->r.req,
-+	        0, NULL, NULL);
-+	else
-+		/*
-+		 * Use REQ_MAY_BACKLOG so a cipher driver internally backlogs
-+		 * requests if driver request queue is full.
-+		 */
-+		skcipher_request_set_callback(ctx->r.req,
-+	        CRYPTO_TFM_REQ_MAY_BACKLOG,
-+	        kcryptd_async_done, dmreq_of_req(cc, ctx->r.req));
- }
- 
- static void crypt_alloc_req_aead(struct crypt_config *cc,
-@@ -1566,7 +1572,8 @@ static blk_status_t crypt_convert(struct crypt_config *cc,
- 			atomic_dec(&ctx->cc_pending);
- 			ctx->cc_sector += sector_step;
- 			tag_offset++;
--			cond_resched();
-+			if (!test_bit(DM_CRYPT_FORCE_INLINE, &cc->flags))
-+				cond_resched();
- 			continue;
- 		/*
- 		 * There was a data integrity error.
-@@ -1892,6 +1899,11 @@ static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io, int async)
- 
- 	clone->bi_iter.bi_sector = cc->start + io->sector;
- 
-+	if (test_bit(DM_CRYPT_FORCE_INLINE, &cc->flags)) {
-+		generic_make_request(clone);
-+		return;
-+	}
-+
- 	if (likely(!async) && test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags)) {
- 		generic_make_request(clone);
- 		return;
-@@ -2031,12 +2043,26 @@ static void kcryptd_crypt(struct work_struct *work)
- 		kcryptd_crypt_write_convert(io);
- }
- 
-+static void kcryptd_crypt_tasklet(unsigned long work)
-+{
-+	kcryptd_crypt((struct work_struct *)work);
-+}
-+
- static void kcryptd_queue_crypt(struct dm_crypt_io *io)
- {
- 	struct crypt_config *cc = io->cc;
- 
--	INIT_WORK(&io->work, kcryptd_crypt);
--	queue_work(cc->crypt_queue, &io->work);
-+	if (test_bit(DM_CRYPT_FORCE_INLINE, &cc->flags)) {
-+		if (in_irq()) {
-+			/* Crypto API will fail hard in hard IRQ context */
-+			tasklet_init(&io->tasklet, kcryptd_crypt_tasklet, (unsigned long)&io->work);
-+			tasklet_schedule(&io->tasklet);
-+		} else
-+			kcryptd_crypt(&io->work);
-+	} else {
-+		INIT_WORK(&io->work, kcryptd_crypt);
-+		queue_work(cc->crypt_queue, &io->work);
-+	}
- }
- 
- static void crypt_free_tfms_aead(struct crypt_config *cc)
-@@ -2838,7 +2864,7 @@ static int crypt_ctr_optional(struct dm_target *ti, unsigned int argc, char **ar
- 	struct crypt_config *cc = ti->private;
- 	struct dm_arg_set as;
- 	static const struct dm_arg _args[] = {
--		{0, 6, "Invalid number of feature args"},
-+		{0, 7, "Invalid number of feature args"},
- 	};
- 	unsigned int opt_params, val;
- 	const char *opt_string, *sval;
-@@ -2868,6 +2894,8 @@ static int crypt_ctr_optional(struct dm_target *ti, unsigned int argc, char **ar
- 
- 		else if (!strcasecmp(opt_string, "submit_from_crypt_cpus"))
- 			set_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags);
-+		else if (!strcasecmp(opt_string, "force_inline"))
-+			set_bit(DM_CRYPT_FORCE_INLINE, &cc->flags);
- 		else if (sscanf(opt_string, "integrity:%u:", &val) == 1) {
- 			if (val == 0 || val > MAX_TAG_SIZE) {
- 				ti->error = "Invalid integrity arguments";
-@@ -3196,6 +3224,7 @@ static void crypt_status(struct dm_target *ti, status_type_t type,
- 		num_feature_args += !!ti->num_discard_bios;
- 		num_feature_args += test_bit(DM_CRYPT_SAME_CPU, &cc->flags);
- 		num_feature_args += test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags);
-+		num_feature_args += test_bit(DM_CRYPT_FORCE_INLINE, &cc->flags);
- 		num_feature_args += cc->sector_size != (1 << SECTOR_SHIFT);
- 		num_feature_args += test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags);
- 		if (cc->on_disk_tag_size)
-@@ -3208,6 +3237,8 @@ static void crypt_status(struct dm_target *ti, status_type_t type,
- 				DMEMIT(" same_cpu_crypt");
- 			if (test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags))
- 				DMEMIT(" submit_from_crypt_cpus");
-+			if (test_bit(DM_CRYPT_FORCE_INLINE, &cc->flags))
-+				DMEMIT(" force_inline");
- 			if (cc->on_disk_tag_size)
- 				DMEMIT(" integrity:%u:%s", cc->on_disk_tag_size, cc->cipher_auth);
- 			if (cc->sector_size != (1 << SECTOR_SHIFT))
--- 
-2.20.1
+-Ben
+=20
+> Choose what you prefer.
+>=20
+> Regards,
+> Martin
+>=20
+> --=20
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE  Software Solutions Germany GmbH
+> HRB 36809, AG N=FCrnberg GF: Felix
+> Imend=F6rffer
+>=20
