@@ -1,15 +1,12 @@
 From: Bryan Gurney <bgurney@redhat.com>
-Subject: Re: [PATCH v3 4/4] dm dust: introduce listbadblocks in
-	the rst
-Date: Fri, 19 Jun 2020 13:50:19 -0400
-Message-ID: <CAHhmqcTDzJ4aMD5q-s5GfHVg8iNhYmunVUSsba2nPCRdD-G4WA@mail.gmail.com>
-References: <20200619123803.1441373-1-yangerkun@huawei.com>
-	<20200619123803.1441373-5-yangerkun@huawei.com>
+Subject: [PATCH] dm dust: update documentation to reflect
+	__func__ output
+Date: Fri, 19 Jun 2020 13:59:53 -0400
+Message-ID: <1592589593-26739-1-git-send-email-bgurney@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200619123803.1441373-5-yangerkun@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,82 +16,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: yangerkun <yangerkun@huawei.com>
-Cc: bmr@redhat.com, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com
+Cc: Bryan Gurney <bgurney@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 19, 2020 at 8:37 AM yangerkun <yangerkun@huawei.com> wrote:
->
-> Since we support the listbadblocks command, introduce the detail in the
-> doc.
->
-> Signed-off-by: yangerkun <yangerkun@huawei.com>
-> ---
->  .../admin-guide/device-mapper/dm-dust.rst        | 16 ++++++++++++++++
->  1 file changed, 16 insertions(+)
->
-> diff --git a/Documentation/admin-guide/device-mapper/dm-dust.rst b/Documentation/admin-guide/device-mapper/dm-dust.rst
-> index 84149c08b68f..5c66a71e3442 100644
-> --- a/Documentation/admin-guide/device-mapper/dm-dust.rst
-> +++ b/Documentation/admin-guide/device-mapper/dm-dust.rst
-> @@ -205,6 +205,21 @@ If there were no bad blocks to clear, the following message will
->  appear::
->
->          no badblocks found
-> +Listing the bad block list
-> +--------------------------
-> +
-> +To list all bad blocks in the bad block list(using an example device
-> +with blocks 1 and 2 in the bad block list),run the following message
-> +command::
+The dm-dust messages "queryblock" and "clearbadblocks" now print
+the function name in the DMEMIT output.  Update the documentation
+to match the appearance of the actual output.
 
-There are a couple of missing spaces here, at these two locations:
+Signed-off-by: Bryan Gurney <bgurney@redhat.com>
+---
+ Documentation/admin-guide/device-mapper/dm-dust.rst | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-"...bad block list(using..."
-change to
-"...bad block list (using..."
-
-and
-
-"...in the bad block list),run the..."
-change to
-"...in the bad block list), run the..."
-
-> +
-> +        $ sudo dmsetup message dust1 0 listbadblocks
-> +        1
-> +        2
-> +
-> +No bad block exists, same message will get following report::
-
-This would be better as the following:
-
-"If there are no bad blocks in the bad block list, the following
-message will appear"
-
-However, note that we discussed changing this to an empty line,
-instead of "null", so we would need to update the documentation to
-reflect that the output will be an empty line.
-
-
-Thanks,
-
-Bryan
-
-> +
-> +        $ sudo dmsetup message dust1 0 listbadblocks
-> +        null
->
->  Message commands list
->  ---------------------
-> @@ -224,6 +239,7 @@ Single argument message commands::
->
->          countbadblocks
->          clearbadblocks
-> +        listbadblocks
->          disable
->          enable
->          quiet
-> --
-> 2.25.4
->
+diff --git a/Documentation/admin-guide/device-mapper/dm-dust.rst b/Documentation/admin-guide/device-mapper/dm-dust.rst
+index 5c66a71e3442..75bc396ebeb1 100644
+--- a/Documentation/admin-guide/device-mapper/dm-dust.rst
++++ b/Documentation/admin-guide/device-mapper/dm-dust.rst
+@@ -177,11 +177,11 @@ following message command::
+ 
+ The following message will print if the block is in the list::
+ 
+-        block 72 found in badblocklist
++        dust_query_block: block 72 found in badblocklist
+ 
+ The following message will print if the block is not in the list::
+ 
+-        block 72 not found in badblocklist
++        dust_query_block: block 72 not found in badblocklist
+ 
+ The "queryblock" message command will work in both the "enabled"
+ and "disabled" modes, allowing the verification of whether a block
+@@ -199,12 +199,12 @@ following message command::
+ 
+ After clearing the bad block list, the following message will appear::
+ 
+-        badblocks cleared
++        dust_clear_badblocks: badblocks cleared
+ 
+ If there were no bad blocks to clear, the following message will
+ appear::
+ 
+-        no badblocks found
++        dust_clear_badblocks: no badblocks found
+ Listing the bad block list
+ --------------------------
+ 
+-- 
+2.25.4
