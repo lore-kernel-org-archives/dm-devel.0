@@ -1,16 +1,14 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [RFC PATCH 0/1] dm-crypt excessive overhead
-Date: Mon, 22 Jun 2020 08:08:47 +0000
-Message-ID: <CY4PR04MB3751563A036A92AD2837E0A8E7970@CY4PR04MB3751.namprd04.prod.outlook.com>
-References: <20200619164132.1648-1-ignat@cloudflare.com>
-	<20200619165548.GA24779@redhat.com>
-	<CY4PR04MB3751F148CCFAAC99A7F05CF7E7970@CY4PR04MB3751.namprd04.prod.outlook.com>
-	<CALrw=nFe2q5wn2LTA99yrFhZqGR9ehiqhEQqKFh44KmvTVF5gg@mail.gmail.com>
+From: yangerkun <yangerkun@huawei.com>
+Subject: Re: [PATCH v4 1/4] dm dust: report some message results
+ back to user directly
+Date: Sat, 20 Jun 2020 08:55:48 +0800
+Message-ID: <180daafd-7719-87e4-353b-31eb047179ac@huawei.com>
+References: <1592601039-3868-1-git-send-email-bgurney@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="gbk"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <1592601039-3868-1-git-send-email-bgurney@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,158 +18,88 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ignat Korchagin <ignat@cloudflare.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, "kernel-team@cloudflare.com" <kernel-team@cloudflare.com>, "dm-crypt@saout.de" <dm-crypt@saout.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, "agk@redhat.com" <agk@redhat.com>
+To: Bryan Gurney <bgurney@redhat.com>, dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On 2020/06/22 16:55, Ignat Korchagin wrote:
-> On Mon, Jun 22, 2020 at 1:45 AM Damien Le Moal <Damien.LeMoal@wdc.com> wrote:
->>
->> On 2020/06/20 1:56, Mike Snitzer wrote:
->>> On Fri, Jun 19 2020 at 12:41pm -0400,
->>> Ignat Korchagin <ignat@cloudflare.com> wrote:
->>>
->>>> This is a follow up from the long-forgotten [1], but with some more convincing
->>>> evidence. Consider the following script:
->>>>
->>>> #!/bin/bash -e
->>>>
->>>> # create 4G ramdisk
->>>> sudo modprobe brd rd_nr=1 rd_size=4194304
->>>>
->>>> # create a dm-crypt device with NULL cipher on top of /dev/ram0
->>>> echo '0 8388608 crypt capi:ecb(cipher_null) - 0 /dev/ram0 0' | sudo dmsetup create eram0
->>>>
->>>> # create a dm-crypt device with NULL cipher and custom force_inline flag
->>>> echo '0 8388608 crypt capi:ecb(cipher_null) - 0 /dev/ram0 0 1 force_inline' | sudo dmsetup create inline-eram0
->>>>
->>>> # read all data from /dev/ram0
->>>> sudo dd if=/dev/ram0 bs=4k iflag=direct | sha256sum
->>>>
->>>> # read the same data from /dev/mapper/eram0
->>>> sudo dd if=/dev/mapper/eram0 bs=4k iflag=direct | sha256sum
->>>>
->>>> # read the same data from /dev/mapper/inline-eram0
->>>> sudo dd if=/dev/mapper/inline-eram0 bs=4k iflag=direct | sha256sum
->>>>
->>>> This script creates a ramdisk (to eliminate hardware bias in the benchmark) and
->>>> two dm-crypt instances on top. Both dm-crypt instances use the NULL cipher
->>>> to eliminate potentially expensive crypto bias (the NULL cipher just uses memcpy
->>>> for "encyption"). The first instance is the current dm-crypt implementation from
->>>> 5.8-rc1, the second is the dm-crypt instance with a custom new flag enabled from
->>>> the patch attached to this thread. On my VM (Debian in VirtualBox with 4 cores
->>>> on 2.8 GHz Quad-Core Intel Core i7) I get the following output (formatted for
->>>> better readability):
->>>>
->>>> # plain ram0
->>>> 1048576+0 records in
->>>> 1048576+0 records out
->>>> 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 21.2305 s, 202 MB/s
->>>> 8479e43911dc45e89f934fe48d01297e16f51d17aa561d4d1c216b1ae0fcddca  -
->>>>
->>>> # eram0 (current dm-crypt)
->>>> 1048576+0 records in
->>>> 1048576+0 records out
->>>> 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 53.2212 s, 80.7 MB/s
->>>> 8479e43911dc45e89f934fe48d01297e16f51d17aa561d4d1c216b1ae0fcddca  -
->>>>
->>>> # inline-eram0 (patched dm-crypt)
->>>> 1048576+0 records in
->>>> 1048576+0 records out
->>>> 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 21.3472 s, 201 MB/s
->>>> 8479e43911dc45e89f934fe48d01297e16f51d17aa561d4d1c216b1ae0fcddca  -
->>>>
->>>> As we can see, current dm-crypt implementation creates a significant IO
->>>> performance overhead (at least on small IO block sizes) for both latency and
->>>> throughput. We suspect offloading IO request processing into workqueues and
->>>> async threads is more harmful these days with the modern fast storage. I also
->>>> did some digging into the dm-crypt git history and much of this async processing
->>>> is not needed anymore, because the reasons it was added are mostly gone from the
->>>> kernel. More details can be found in [2] (see "Git archeology" section).
->>>>
->>>> We have been running the attached patch on different hardware generations in
->>>> more than 200 datacentres on both SATA SSDs and NVME SSDs and so far were very
->>>> happy with the performance benefits.
->>>>
->>>> [1]: https://www.spinics.net/lists/dm-crypt/msg07516.html
->>>> [2]: https://blog.cloudflare.com/speeding-up-linux-disk-encryption/
->>>>
->>>> Ignat Korchagin (1):
->>>>   Add DM_CRYPT_FORCE_INLINE flag to dm-crypt target
->>>>
->>>>  drivers/md/dm-crypt.c | 55 +++++++++++++++++++++++++++++++++----------
->>>>  1 file changed, 43 insertions(+), 12 deletions(-)
->>>>
->>>> --
->>>> 2.20.1
->>>>
->>>
->>> Hi,
->>>
->>> I saw [2] and have been expecting something from cloudflare ever since.
->>> Nice to see this submission.
->>>
->>> There is useful context in your 0th patch header.  I'll likely merge
->>> parts of this patch header with the more terse 1/1 header (reality is
->>> there only needed to be a single patch submission).
->>>
->>> Will review and stage accordingly if all looks fine to me.  Mikulas,
->>> please have a look too.
->>
->> Very timely: I was about to send a couple of patches to add zoned block device
->> support to dm-crypt :)
->>
->> I used [1] work as a base to have all _write_ requests be processed inline in
->> the submitter context so that the submission order is preserved, avoiding the
->> potential reordering of sequential writes that the normal workqueue based
->> processing can generate. This inline processing is done only for writes. Reads
->> are unaffected.
->>
->> To do this, I added a "inline_io" flag to struct convert_context which is
->> initialized in crypt_io_init() based on the BIO op.
->> kcryptd_crypt_write_io_submit() then uses this flag to call directly
->> generic_make_request() if inline_io is true.
->>
->> This simplifies things compared to [1] since reads can still be processed as is,
->> so there are no issued with irq context and no need for a tasklet.
-> 
-> In one of our major IO workflows (CDN cache) using dm-crypt created
-> high and spiky p99 response times, which actually prompted this
-> investigation. So, of all the things we do prefer the read path to be
-> inlined even more than the write path.
-
-Yes, I understand. Zoned block device support requires at the very least that
-writes be inline to preserve order. For reads, inline or not are both fine. The
-choice can be made by the user here using or not using the force inline flag you
-are proposing. These works are definitely not incompatible. Doing everything
-inline with a zoned block device backend is perfectly fine.
-
-I mentioned my work because half of it is very similar to your patches. So we
-could combine the patches, or as mentioned, one will have to rebase on top of
-the other as clearly we will have conflicts :)
-
-> 
->> Should I send these patches as RFC to see what can be merged ? Or I can wait for
->> these patches and rebase on top.
->>
->>>
->>> Thanks,
->>> Mike
->>>
->>> --
->>> dm-devel mailing list
->>> dm-devel@redhat.com
->>> https://www.redhat.com/mailman/listinfo/dm-devel
->>>
->>>
->>
->>
->> --
->> Damien Le Moal
->> Western Digital Research
-> 
-
-
--- 
-Damien Le Moal
-Western Digital Research
+SGksCgpUaGFua3MgYSBsb3QgZm9yIHlvdXIgZml4IGFuZCB0aGlzIHBhdGNoc2V0ISBJdCBsb29r
+cyBiZXR0ZXIgdGhhbgpiZWZvcmUhCgpUaGFua3MsCkt1bi4KCtTaIDIwMjAvNi8yMCA1OjEwLCBC
+cnlhbiBHdXJuZXkg0LS1wDoKPiBGcm9tOiB5YW5nZXJrdW4gPHlhbmdlcmt1bkBodWF3ZWkuY29t
+Pgo+IAo+IEZyb206IHlhbmdlcmt1biA8eWFuZ2Vya3VuQGh1YXdlaS5jb20+Cj4gCj4gU29tZSB0
+eXBlIG9mIG1lc3NhZ2UocXVlcnlibG9jay9jb3VudGJhZGJsb2Nrcy9yZW1vdmViYWRibG9jaykg
+bWF5IGJldHRlcgo+IHJlcG9ydCByZXN1bHRzIHRvIHVzZXIgZGlyZWN0bHkuIERvIGl0IHdpdGgg
+RE1FTUlULgo+IAo+IFtCcnlhbjogbWFpbnRhaW4gX19mdW5jX18gb3V0cHV0IGluIERNRU1JVCBt
+ZXNzYWdlc10KPiAKPiBTaWduZWQtb2ZmLWJ5OiB5YW5nZXJrdW4gPHlhbmdlcmt1bkBodWF3ZWku
+Y29tPgo+IFNpZ25lZC1vZmYtYnk6IEJyeWFuIEd1cm5leSA8Ymd1cm5leUByZWRoYXQuY29tPgo+
+IC0tLQo+ICAgZHJpdmVycy9tZC9kbS1kdXN0LmMgfCAzMSArKysrKysrKysrKysrKysrKystLS0t
+LS0tLS0tLS0tCj4gICAxIGZpbGUgY2hhbmdlZCwgMTggaW5zZXJ0aW9ucygrKSwgMTMgZGVsZXRp
+b25zKC0pCj4gCj4gZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0tZHVzdC5jIGIvZHJpdmVycy9t
+ZC9kbS1kdXN0LmMKPiBpbmRleCBmZjAzYjkwMDcyYzUuLmYxZjJkZDZhNGU4NCAxMDA2NDQKPiAt
+LS0gYS9kcml2ZXJzL21kL2RtLWR1c3QuYwo+ICsrKyBiL2RyaXZlcnMvbWQvZG0tZHVzdC5jCj4g
+QEAgLTEzOCwyMCArMTM4LDIyIEBAIHN0YXRpYyBpbnQgZHVzdF9hZGRfYmxvY2soc3RydWN0IGR1
+c3RfZGV2aWNlICpkZCwgdW5zaWduZWQgbG9uZyBsb25nIGJsb2NrLAo+ICAgCXJldHVybiAwOwo+
+ICAgfQo+ICAgCj4gLXN0YXRpYyBpbnQgZHVzdF9xdWVyeV9ibG9jayhzdHJ1Y3QgZHVzdF9kZXZp
+Y2UgKmRkLCB1bnNpZ25lZCBsb25nIGxvbmcgYmxvY2spCj4gK3N0YXRpYyBpbnQgZHVzdF9xdWVy
+eV9ibG9jayhzdHJ1Y3QgZHVzdF9kZXZpY2UgKmRkLCB1bnNpZ25lZCBsb25nIGxvbmcgYmxvY2ss
+IGNoYXIgKnJlc3VsdCwKPiArCQkJICAgIHVuc2lnbmVkIGludCBtYXhsZW4sIHVuc2lnbmVkIGlu
+dCAqc3pfcHRyKQo+ICAgewo+ICAgCXN0cnVjdCBiYWRibG9jayAqYmJsb2NrOwo+ICAgCXVuc2ln
+bmVkIGxvbmcgZmxhZ3M7Cj4gKwl1bnNpZ25lZCBpbnQgc3ogPSAqc3pfcHRyOwo+ICAgCj4gICAJ
+c3Bpbl9sb2NrX2lycXNhdmUoJmRkLT5kdXN0X2xvY2ssIGZsYWdzKTsKPiAgIAliYmxvY2sgPSBk
+dXN0X3JiX3NlYXJjaCgmZGQtPmJhZGJsb2NrbGlzdCwgYmxvY2spOwo+ICAgCWlmIChiYmxvY2sg
+IT0gTlVMTCkKPiAtCQlETUlORk8oIiVzOiBibG9jayAlbGx1IGZvdW5kIGluIGJhZGJsb2NrbGlz
+dCIsIF9fZnVuY19fLCBibG9jayk7Cj4gKwkJRE1FTUlUKCIlczogYmxvY2sgJWxsdSBmb3VuZCBp
+biBiYWRibG9ja2xpc3QiLCBfX2Z1bmNfXywgYmxvY2spOwo+ICAgCWVsc2UKPiAtCQlETUlORk8o
+IiVzOiBibG9jayAlbGx1IG5vdCBmb3VuZCBpbiBiYWRibG9ja2xpc3QiLCBfX2Z1bmNfXywgYmxv
+Y2spOwo+ICsJCURNRU1JVCgiJXM6IGJsb2NrICVsbHUgbm90IGZvdW5kIGluIGJhZGJsb2NrbGlz
+dCIsIF9fZnVuY19fLCBibG9jayk7Cj4gICAJc3Bpbl91bmxvY2tfaXJxcmVzdG9yZSgmZGQtPmR1
+c3RfbG9jaywgZmxhZ3MpOwo+ICAgCj4gLQlyZXR1cm4gMDsKPiArCXJldHVybiAxOwo+ICAgfQo+
+ICAgCj4gICBzdGF0aWMgaW50IF9fZHVzdF9tYXBfcmVhZChzdHJ1Y3QgZHVzdF9kZXZpY2UgKmRk
+LCBzZWN0b3JfdCB0aGlzYmxvY2spCj4gQEAgLTI1OSwxMSArMjYxLDEzIEBAIHN0YXRpYyBib29s
+IF9fZHVzdF9jbGVhcl9iYWRibG9ja3Moc3RydWN0IHJiX3Jvb3QgKnRyZWUsCj4gICAJcmV0dXJu
+IHRydWU7Cj4gICB9Cj4gICAKPiAtc3RhdGljIGludCBkdXN0X2NsZWFyX2JhZGJsb2NrcyhzdHJ1
+Y3QgZHVzdF9kZXZpY2UgKmRkKQo+ICtzdGF0aWMgaW50IGR1c3RfY2xlYXJfYmFkYmxvY2tzKHN0
+cnVjdCBkdXN0X2RldmljZSAqZGQsIGNoYXIgKnJlc3VsdCwgdW5zaWduZWQgaW50IG1heGxlbiwK
+PiArCQkJCXVuc2lnbmVkIGludCAqc3pfcHRyKQo+ICAgewo+ICAgCXVuc2lnbmVkIGxvbmcgZmxh
+Z3M7Cj4gICAJc3RydWN0IHJiX3Jvb3QgYmFkYmxvY2tsaXN0Owo+ICAgCXVuc2lnbmVkIGxvbmcg
+bG9uZyBiYWRibG9ja19jb3VudDsKPiArCXVuc2lnbmVkIGludCBzeiA9ICpzel9wdHI7Cj4gICAK
+PiAgIAlzcGluX2xvY2tfaXJxc2F2ZSgmZGQtPmR1c3RfbG9jaywgZmxhZ3MpOwo+ICAgCWJhZGJs
+b2NrbGlzdCA9IGRkLT5iYWRibG9ja2xpc3Q7Cj4gQEAgLTI3MywxMSArMjc3LDExIEBAIHN0YXRp
+YyBpbnQgZHVzdF9jbGVhcl9iYWRibG9ja3Moc3RydWN0IGR1c3RfZGV2aWNlICpkZCkKPiAgIAlz
+cGluX3VubG9ja19pcnFyZXN0b3JlKCZkZC0+ZHVzdF9sb2NrLCBmbGFncyk7Cj4gICAKPiAgIAlp
+ZiAoIV9fZHVzdF9jbGVhcl9iYWRibG9ja3MoJmJhZGJsb2NrbGlzdCwgYmFkYmxvY2tfY291bnQp
+KQo+IC0JCURNSU5GTygiJXM6IG5vIGJhZGJsb2NrcyBmb3VuZCIsIF9fZnVuY19fKTsKPiArCQlE
+TUVNSVQoIiVzOiBubyBiYWRibG9ja3MgZm91bmQiLCBfX2Z1bmNfXyk7Cj4gICAJZWxzZQo+IC0J
+CURNSU5GTygiJXM6IGJhZGJsb2NrcyBjbGVhcmVkIiwgX19mdW5jX18pOwo+ICsJCURNRU1JVCgi
+JXM6IGJhZGJsb2NrcyBjbGVhcmVkIiwgX19mdW5jX18pOwo+ICAgCj4gLQlyZXR1cm4gMDsKPiAr
+CXJldHVybiAxOwo+ICAgfQo+ICAgCj4gICAvKgo+IEBAIC0zODMsNyArMzg3LDcgQEAgc3RhdGlj
+IHZvaWQgZHVzdF9kdHIoc3RydWN0IGRtX3RhcmdldCAqdGkpCj4gICB9Cj4gICAKPiAgIHN0YXRp
+YyBpbnQgZHVzdF9tZXNzYWdlKHN0cnVjdCBkbV90YXJnZXQgKnRpLCB1bnNpZ25lZCBpbnQgYXJn
+YywgY2hhciAqKmFyZ3YsCj4gLQkJCWNoYXIgKnJlc3VsdF9idWYsIHVuc2lnbmVkIGludCBtYXhs
+ZW4pCj4gKwkJCWNoYXIgKnJlc3VsdCwgdW5zaWduZWQgaW50IG1heGxlbikKPiAgIHsKPiAgIAlz
+dHJ1Y3QgZHVzdF9kZXZpY2UgKmRkID0gdGktPnByaXZhdGU7Cj4gICAJc2VjdG9yX3Qgc2l6ZSA9
+IGlfc2l6ZV9yZWFkKGRkLT5kZXYtPmJkZXYtPmJkX2lub2RlKSA+PiBTRUNUT1JfU0hJRlQ7Cj4g
+QEAgLTM5Myw2ICszOTcsNyBAQCBzdGF0aWMgaW50IGR1c3RfbWVzc2FnZShzdHJ1Y3QgZG1fdGFy
+Z2V0ICp0aSwgdW5zaWduZWQgaW50IGFyZ2MsIGNoYXIgKiphcmd2LAo+ICAgCXVuc2lnbmVkIGNo
+YXIgd3JfZmFpbF9jbnQ7Cj4gICAJdW5zaWduZWQgaW50IHRtcF91aTsKPiAgIAl1bnNpZ25lZCBs
+b25nIGZsYWdzOwo+ICsJdW5zaWduZWQgaW50IHN6ID0gMDsKPiAgIAljaGFyIGR1bW15Owo+ICAg
+Cj4gICAJaWYgKGFyZ2MgPT0gMSkgewo+IEBAIC00MTAsMTIgKzQxNSwxMiBAQCBzdGF0aWMgaW50
+IGR1c3RfbWVzc2FnZShzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSwgdW5zaWduZWQgaW50IGFyZ2MsIGNo
+YXIgKiphcmd2LAo+ICAgCQkJciA9IDA7Cj4gICAJCX0gZWxzZSBpZiAoIXN0cmNhc2VjbXAoYXJn
+dlswXSwgImNvdW50YmFkYmxvY2tzIikpIHsKPiAgIAkJCXNwaW5fbG9ja19pcnFzYXZlKCZkZC0+
+ZHVzdF9sb2NrLCBmbGFncyk7Cj4gLQkJCURNSU5GTygiY291bnRiYWRibG9ja3M6ICVsbHUgYmFk
+YmxvY2socykgZm91bmQiLAo+ICsJCQlETUVNSVQoImNvdW50YmFkYmxvY2tzOiAlbGx1IGJhZGJs
+b2NrKHMpIGZvdW5kIiwKPiAgIAkJCSAgICAgICBkZC0+YmFkYmxvY2tfY291bnQpOwo+ICAgCQkJ
+c3Bpbl91bmxvY2tfaXJxcmVzdG9yZSgmZGQtPmR1c3RfbG9jaywgZmxhZ3MpOwo+IC0JCQlyID0g
+MDsKPiArCQkJciA9IDE7Cj4gICAJCX0gZWxzZSBpZiAoIXN0cmNhc2VjbXAoYXJndlswXSwgImNs
+ZWFyYmFkYmxvY2tzIikpIHsKPiAtCQkJciA9IGR1c3RfY2xlYXJfYmFkYmxvY2tzKGRkKTsKPiAr
+CQkJciA9IGR1c3RfY2xlYXJfYmFkYmxvY2tzKGRkLCByZXN1bHQsIG1heGxlbiwgJnN6KTsKPiAg
+IAkJfSBlbHNlIGlmICghc3RyY2FzZWNtcChhcmd2WzBdLCAicXVpZXQiKSkgewo+ICAgCQkJaWYg
+KCFkZC0+cXVpZXRfbW9kZSkKPiAgIAkJCQlkZC0+cXVpZXRfbW9kZSA9IHRydWU7Cj4gQEAgLTQ0
+MSw3ICs0NDYsNyBAQCBzdGF0aWMgaW50IGR1c3RfbWVzc2FnZShzdHJ1Y3QgZG1fdGFyZ2V0ICp0
+aSwgdW5zaWduZWQgaW50IGFyZ2MsIGNoYXIgKiphcmd2LAo+ICAgCQllbHNlIGlmICghc3RyY2Fz
+ZWNtcChhcmd2WzBdLCAicmVtb3ZlYmFkYmxvY2siKSkKPiAgIAkJCXIgPSBkdXN0X3JlbW92ZV9i
+bG9jayhkZCwgYmxvY2spOwo+ICAgCQllbHNlIGlmICghc3RyY2FzZWNtcChhcmd2WzBdLCAicXVl
+cnlibG9jayIpKQo+IC0JCQlyID0gZHVzdF9xdWVyeV9ibG9jayhkZCwgYmxvY2spOwo+ICsJCQly
+ID0gZHVzdF9xdWVyeV9ibG9jayhkZCwgYmxvY2ssIHJlc3VsdCwgbWF4bGVuLCAmc3opOwo+ICAg
+CQllbHNlCj4gICAJCQlpbnZhbGlkX21zZyA9IHRydWU7Cj4gICAKPiAKCgotLQpkbS1kZXZlbCBt
+YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21h
+aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
