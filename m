@@ -1,110 +1,150 @@
-From: JeongHyeon Lee <jhs2.lee@samsung.com>
-Subject: Re: New mode DM-Verity error handling
-Date: Mon, 22 Jun 2020 09:27:27 +0900
-Message-ID: <3df0c938-6b7d-4c02-e243-22e0d95e3de0@samsung.com>
-References: <CGME20200618070250epcas1p409eb2ddd19ecc5d55c219ac3dc884f25@epcas1p4.samsung.com>
-        <98eac3fc-c399-625d-5730-29853b3a0771@samsung.com>
-        <20200618154444.GB18007@redhat.com> <20200618165006.GA103290@google.com>
-        <20200618170952.GA18057@redhat.com>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [RFC PATCH 0/1] dm-crypt excessive overhead
+Date: Mon, 22 Jun 2020 00:45:19 +0000
+Message-ID: <CY4PR04MB3751F148CCFAAC99A7F05CF7E7970@CY4PR04MB3751.namprd04.prod.outlook.com>
+References: <20200619164132.1648-1-ignat@cloudflare.com>
+	<20200619165548.GA24779@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20200618170952.GA18057@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Language: en-US
-Sender: linux-doc-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>, Sami Tolvanen <samitolvanen@google.com>
-Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, agk@redhat.com, corbet@lwn.net
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>, Ignat Korchagin <ignat@cloudflare.com>, Mikulas Patocka <mpatocka@redhat.com>
+Cc: "dm-crypt@saout.de" <dm-crypt@saout.de>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "agk@redhat.com" <agk@redhat.com>, "kernel-team@cloudflare.com" <kernel-team@cloudflare.com>
 List-Id: dm-devel.ids
 
-Hello Dear DM-Verity maintainers.
-Thank you for your reply.
+On 2020/06/20 1:56, Mike Snitzer wrote:
+> On Fri, Jun 19 2020 at 12:41pm -0400,
+> Ignat Korchagin <ignat@cloudflare.com> wrote:
+> 
+>> This is a follow up from the long-forgotten [1], but with some more convincing
+>> evidence. Consider the following script:
+>>
+>> #!/bin/bash -e
+>>
+>> # create 4G ramdisk
+>> sudo modprobe brd rd_nr=1 rd_size=4194304
+>>
+>> # create a dm-crypt device with NULL cipher on top of /dev/ram0
+>> echo '0 8388608 crypt capi:ecb(cipher_null) - 0 /dev/ram0 0' | sudo dmsetup create eram0
+>>
+>> # create a dm-crypt device with NULL cipher and custom force_inline flag
+>> echo '0 8388608 crypt capi:ecb(cipher_null) - 0 /dev/ram0 0 1 force_inline' | sudo dmsetup create inline-eram0
+>>
+>> # read all data from /dev/ram0
+>> sudo dd if=/dev/ram0 bs=4k iflag=direct | sha256sum
+>>
+>> # read the same data from /dev/mapper/eram0
+>> sudo dd if=/dev/mapper/eram0 bs=4k iflag=direct | sha256sum
+>>
+>> # read the same data from /dev/mapper/inline-eram0
+>> sudo dd if=/dev/mapper/inline-eram0 bs=4k iflag=direct | sha256sum
+>>
+>> This script creates a ramdisk (to eliminate hardware bias in the benchmark) and
+>> two dm-crypt instances on top. Both dm-crypt instances use the NULL cipher
+>> to eliminate potentially expensive crypto bias (the NULL cipher just uses memcpy
+>> for "encyption"). The first instance is the current dm-crypt implementation from
+>> 5.8-rc1, the second is the dm-crypt instance with a custom new flag enabled from
+>> the patch attached to this thread. On my VM (Debian in VirtualBox with 4 cores
+>> on 2.8 GHz Quad-Core Intel Core i7) I get the following output (formatted for
+>> better readability):
+>>
+>> # plain ram0
+>> 1048576+0 records in
+>> 1048576+0 records out
+>> 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 21.2305 s, 202 MB/s
+>> 8479e43911dc45e89f934fe48d01297e16f51d17aa561d4d1c216b1ae0fcddca  -
+>>
+>> # eram0 (current dm-crypt)
+>> 1048576+0 records in
+>> 1048576+0 records out
+>> 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 53.2212 s, 80.7 MB/s
+>> 8479e43911dc45e89f934fe48d01297e16f51d17aa561d4d1c216b1ae0fcddca  -
+>>
+>> # inline-eram0 (patched dm-crypt)
+>> 1048576+0 records in
+>> 1048576+0 records out
+>> 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 21.3472 s, 201 MB/s
+>> 8479e43911dc45e89f934fe48d01297e16f51d17aa561d4d1c216b1ae0fcddca  -
+>>
+>> As we can see, current dm-crypt implementation creates a significant IO
+>> performance overhead (at least on small IO block sizes) for both latency and
+>> throughput. We suspect offloading IO request processing into workqueues and
+>> async threads is more harmful these days with the modern fast storage. I also
+>> did some digging into the dm-crypt git history and much of this async processing
+>> is not needed anymore, because the reasons it was added are mostly gone from the
+>> kernel. More details can be found in [2] (see "Git archeology" section).
+>>
+>> We have been running the attached patch on different hardware generations in
+>> more than 200 datacentres on both SATA SSDs and NVME SSDs and so far were very
+>> happy with the performance benefits.
+>>
+>> [1]: https://www.spinics.net/lists/dm-crypt/msg07516.html
+>> [2]: https://blog.cloudflare.com/speeding-up-linux-disk-encryption/
+>>
+>> Ignat Korchagin (1):
+>>   Add DM_CRYPT_FORCE_INLINE flag to dm-crypt target
+>>
+>>  drivers/md/dm-crypt.c | 55 +++++++++++++++++++++++++++++++++----------
+>>  1 file changed, 43 insertions(+), 12 deletions(-)
+>>
+>> -- 
+>> 2.20.1
+>>
+> 
+> Hi,
+> 
+> I saw [2] and have been expecting something from cloudflare ever since.
+> Nice to see this submission.
+> 
+> There is useful context in your 0th patch header.  I'll likely merge
+> parts of this patch header with the more terse 1/1 header (reality is
+> there only needed to be a single patch submission).
+> 
+> Will review and stage accordingly if all looks fine to me.  Mikulas,
+> please have a look too.
 
-I agreed with you that "the device should be put in a failed state and 
-left for admin recovery"
-As dear Sami told us, When Android device occurred panic, restarting and 
-to save the logs to bootloader also recovery log.
-Of course Using the restart mode on systems without firmware support 
-won't make sense.
-However, on Android devices, restart or panic mode makes sense.
+Very timely: I was about to send a couple of patches to add zoned block device
+support to dm-crypt :)
 
-In android, the behavior is different depend on the binary type.
-here are 3 type like user / userdebug / eng (engineering).
+I used [1] work as a base to have all _write_ requests be processed inline in
+the submitter context so that the submission order is preserved, avoiding the
+potential reordering of sequential writes that the normal workqueue based
+processing can generate. This inline processing is done only for writes. Reads
+are unaffected.
 
-When kernel panic occurs, it operates as follows
-  * kernel panic in user binary(low)-> restart mode
-  * kernel panic in eng binary(mid) -> upload mode
+To do this, I added a "inline_io" flag to struct convert_context which is
+initialized in crypt_io_init() based on the BIO op.
+kcryptd_crypt_write_io_submit() then uses this flag to call directly
+generic_make_request() if inline_io is true.
 
-It's actually at the debug level.
-All users are set to low, but change it build option or others.
-but Most users do not know.
+This simplifies things compared to [1] since reads can still be processed as is,
+so there are no issued with irq context and no need for a tasklet.
 
-You might think, "Why do you need a panic instead of reboot?"
+Should I send these patches as RFC to see what can be merged ? Or I can wait for
+these patches and rebase on top.
 
-To start with, It's easy to analyze what the device has problem.
-If we use restart mode, it's difficult to analyze because device is 
-rebooted without logging.(not remain log)
-And If use panic mode, samsung takes snapshots(save log etc) when 
-occurred panic.(Maybe other company or Android are same).
-So We look for a debugging log and the analyze kind of problem in device 
-as well as dm-verity.
-In the development stage, most of them are use in eng mode.
-when panic occurs, it goes to upload mode, so it is convenient to 
-analyze whether it is HW problem / SW problem.
-In most cases it was a hardware issue. Since we are a manufacturer, the 
-HW problem is also important.
-
-Also, users using Android devices can recognize that there is a problem 
-with my device through a reboot.
-Users don't know the exact reason, but they think that rebooting is wrong.
-As mentioned above, in user mode, panic operates in reboot mode.
-The user sees that device is rebooting and thinks there is a problem.
-They uploads QnA to Samsung members App or visit service center for repair.
-Then, developers need to get the log the device used by users to check 
-what the problem is. So We are using panic to get the log.
-
-What's more, reboot/panic may seem wrong, but from a security 
-perspective, I think it's really important when looking at dm-verity.
-Of course, I think the maintainers already know it.
-To the important partition or Android devices system, will be protected 
-using dm-verity.
-We can make the partition(want to protect) into a read-only partition, 
-compare the digest, and check whether there are any problems.
-If a malicious user or hacker can damage the system or important 
-partition may change something.
-At this time, we can defend against further hacking by generating a 
-panic or restart.
-This will make the security feel strong. So reboot mode and panic mode 
-will be required.
-
-We have long explained why we need it.
-Through this, Samsung needs a panic mode, so please read it carefully 
-and give feedback.
-
-Thank you :D
-Jeonghyeon Lee
-
-
-On 19/06/2020 02:09, Mike Snitzer wrote:
-> On Thu, Jun 18 2020 at 12:50pm -0400,
-> Sami Tolvanen <samitolvanen@google.com> wrote:
->
->> On Thu, Jun 18, 2020 at 11:44:45AM -0400, Mike Snitzer wrote:
->>> I do not accept that panicing the system because of verity failure is
->>> reasonable.
->>>
->>> In fact, even rebooting (via DM_VERITY_MODE_RESTART) looks very wrong.
->>>
->>> The device should be put in a failed state and left for admin recovery.
->> That's exactly how the restart mode works on some Android devices. The
->> bootloader sees the verification error and puts the device in recovery
->> mode. Using the restart mode on systems without firmware support won't
->> make sense, obviously.
-> OK, so I need further justification from Samsung why they are asking for
-> this panic mode.
->
+> 
 > Thanks,
 > Mike
->
->
->
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> 
+
+
+-- 
+Damien Le Moal
+Western Digital Research
