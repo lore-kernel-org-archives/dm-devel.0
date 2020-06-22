@@ -1,91 +1,110 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [RFC PATCH 2/2] dm: don't try to split REQ_OP_ZONE_APPEND bios
-Date: Mon, 22 Jun 2020 00:27:34 +0000
-Message-ID: <CY4PR04MB37514F8CCE7918A7C13FCA82E7970@CY4PR04MB3751.namprd04.prod.outlook.com>
-References: <20200619065905.22228-1-johannes.thumshirn@wdc.com>
- <20200619065905.22228-3-johannes.thumshirn@wdc.com>
- <CY4PR04MB37514CDC42E7F545244D66C6E7980@CY4PR04MB3751.namprd04.prod.outlook.com>
- <20200619162658.GB24642@redhat.com>
+From: JeongHyeon Lee <jhs2.lee@samsung.com>
+Subject: Re: New mode DM-Verity error handling
+Date: Mon, 22 Jun 2020 09:27:27 +0900
+Message-ID: <3df0c938-6b7d-4c02-e243-22e0d95e3de0@samsung.com>
+References: <CGME20200618070250epcas1p409eb2ddd19ecc5d55c219ac3dc884f25@epcas1p4.samsung.com>
+        <98eac3fc-c399-625d-5730-29853b3a0771@samsung.com>
+        <20200618154444.GB18007@redhat.com> <20200618165006.GA103290@google.com>
+        <20200618170952.GA18057@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-block-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20200618170952.GA18057@redhat.com>
 Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Naohiro Aota <Naohiro.Aota@wdc.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, Sami Tolvanen <samitolvanen@google.com>
+Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, agk@redhat.com, corbet@lwn.net
 List-Id: dm-devel.ids
 
-On 2020/06/20 1:27, Mike Snitzer wrote:=0A=
-> On Fri, Jun 19 2020 at  3:54am -0400,=0A=
-> Damien Le Moal <Damien.LeMoal@wdc.com> wrote:=0A=
-> =0A=
->> On 2020/06/19 15:59, Johannes Thumshirn wrote:=0A=
->>> REQ_OP_ZONE_APPEND bios cannot be split so return EIO if we can't fit i=
-t=0A=
->>> into one IO.=0A=
->>>=0A=
->>> Signed-off-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>=0A=
->>> ---=0A=
->>>  drivers/md/dm.c | 3 +++=0A=
->>>  1 file changed, 3 insertions(+)=0A=
->>>=0A=
->>> diff --git a/drivers/md/dm.c b/drivers/md/dm.c=0A=
->>> index 058c34abe9d1..c720a7e3269a 100644=0A=
->>> --- a/drivers/md/dm.c=0A=
->>> +++ b/drivers/md/dm.c=0A=
->>> @@ -1609,6 +1609,9 @@ static int __split_and_process_non_flush(struct c=
-lone_info *ci)=0A=
->>>  =0A=
->>>  	len =3D min_t(sector_t, max_io_len(ci->sector, ti), ci->sector_count)=
-;=0A=
->>>  =0A=
->>> +	if (bio_op(ci->bio) =3D=3D REQ_OP_ZONE_APPEND && len < ci->sector_cou=
-nt)=0A=
->>> +		return -EIO;=0A=
->>> +=0A=
->>>  	r =3D __clone_and_map_data_bio(ci, ti, ci->sector, &len);=0A=
->>>  	if (r < 0)=0A=
->>>  		return r;=0A=
->>>=0A=
->>=0A=
->> I think this is OK. The stacked max_zone_append_sectors limit should hav=
-e=0A=
->> prevented that to happen  in the first place I think, but better safe th=
-an sorry.=0A=
->>=0A=
->> Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>=0A=
-> =0A=
-> If stacked max_zone_append_sectors limit should prevent it then I'd=0A=
-> rather not sprinkle more zoned specific checks in DM core.=0A=
-=0A=
-Mike,=0A=
-=0A=
-Just to be extra sure, I checked this again. Since for zoned block devices =
-the=0A=
-mapping of a target must be zoned aligned and a zone append command is alwa=
-ys=0A=
-fully contained within a zone, we do not need this check. The stacked limit=
-s and=0A=
-submit_bio() code will fail a zone append command that is too large or that=
-=0A=
-spans zones before we get here.=0A=
-=0A=
-That is of course assuming that the target does not expose zones that are m=
-apped=0A=
-using multiple chunks from different devices. There is currently no target =
-doing=0A=
-that, so this is OK. We can safely drop this patch.=0A=
-=0A=
-Thanks.=0A=
-=0A=
-> =0A=
-> Thanks,=0A=
-> Mike=0A=
-> =0A=
-> =0A=
-=0A=
-=0A=
--- =0A=
-Damien Le Moal=0A=
-Western Digital Research=0A=
+Hello Dear DM-Verity maintainers.
+Thank you for your reply.
+
+I agreed with you that "the device should be put in a failed state and 
+left for admin recovery"
+As dear Sami told us, When Android device occurred panic, restarting and 
+to save the logs to bootloader also recovery log.
+Of course Using the restart mode on systems without firmware support 
+won't make sense.
+However, on Android devices, restart or panic mode makes sense.
+
+In android, the behavior is different depend on the binary type.
+here are 3 type like user / userdebug / eng (engineering).
+
+When kernel panic occurs, it operates as follows
+  * kernel panic in user binary(low)-> restart mode
+  * kernel panic in eng binary(mid) -> upload mode
+
+It's actually at the debug level.
+All users are set to low, but change it build option or others.
+but Most users do not know.
+
+You might think, "Why do you need a panic instead of reboot?"
+
+To start with, It's easy to analyze what the device has problem.
+If we use restart mode, it's difficult to analyze because device is 
+rebooted without logging.(not remain log)
+And If use panic mode, samsung takes snapshots(save log etc) when 
+occurred panic.(Maybe other company or Android are same).
+So We look for a debugging log and the analyze kind of problem in device 
+as well as dm-verity.
+In the development stage, most of them are use in eng mode.
+when panic occurs, it goes to upload mode, so it is convenient to 
+analyze whether it is HW problem / SW problem.
+In most cases it was a hardware issue. Since we are a manufacturer, the 
+HW problem is also important.
+
+Also, users using Android devices can recognize that there is a problem 
+with my device through a reboot.
+Users don't know the exact reason, but they think that rebooting is wrong.
+As mentioned above, in user mode, panic operates in reboot mode.
+The user sees that device is rebooting and thinks there is a problem.
+They uploads QnA to Samsung members App or visit service center for repair.
+Then, developers need to get the log the device used by users to check 
+what the problem is. So We are using panic to get the log.
+
+What's more, reboot/panic may seem wrong, but from a security 
+perspective, I think it's really important when looking at dm-verity.
+Of course, I think the maintainers already know it.
+To the important partition or Android devices system, will be protected 
+using dm-verity.
+We can make the partition(want to protect) into a read-only partition, 
+compare the digest, and check whether there are any problems.
+If a malicious user or hacker can damage the system or important 
+partition may change something.
+At this time, we can defend against further hacking by generating a 
+panic or restart.
+This will make the security feel strong. So reboot mode and panic mode 
+will be required.
+
+We have long explained why we need it.
+Through this, Samsung needs a panic mode, so please read it carefully 
+and give feedback.
+
+Thank you :D
+Jeonghyeon Lee
+
+
+On 19/06/2020 02:09, Mike Snitzer wrote:
+> On Thu, Jun 18 2020 at 12:50pm -0400,
+> Sami Tolvanen <samitolvanen@google.com> wrote:
+>
+>> On Thu, Jun 18, 2020 at 11:44:45AM -0400, Mike Snitzer wrote:
+>>> I do not accept that panicing the system because of verity failure is
+>>> reasonable.
+>>>
+>>> In fact, even rebooting (via DM_VERITY_MODE_RESTART) looks very wrong.
+>>>
+>>> The device should be put in a failed state and left for admin recovery.
+>> That's exactly how the restart mode works on some Android devices. The
+>> bootloader sees the verification error and puts the device in recovery
+>> mode. Using the restart mode on systems without firmware support won't
+>> make sense, obviously.
+> OK, so I need further justification from Samsung why they are asking for
+> this panic mode.
+>
+> Thanks,
+> Mike
+>
+>
+>
