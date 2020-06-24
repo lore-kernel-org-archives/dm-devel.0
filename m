@@ -1,64 +1,145 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH RFC] block: blktrace framework cleanup
-Date: Wed, 24 Jun 2020 08:48:20 +0200
-Message-ID: <20200624064820.GA17964@lst.de>
-References: <20200624032752.4177-1-chaitanya.kulkarni@wdc.com>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [dm-devel] [dm-crypt] [RFC PATCH 1/1] Add DM_CRYPT_FORCE_INLINE
+ flag to dm-crypt target
+Date: Wed, 24 Jun 2020 07:24:46 +0000
+Message-ID: <CY4PR04MB37510A3565060D9243607A80E7950@CY4PR04MB3751.namprd04.prod.outlook.com>
+References: <20200619164132.1648-1-ignat@cloudflare.com>
+ <20200619164132.1648-2-ignat@cloudflare.com>
+ <20200624050452.GB844@sol.localdomain>
+ <CY4PR04MB37515EB3C74CCAE2A006202FE7950@CY4PR04MB3751.namprd04.prod.outlook.com>
+ <20200624052739.GC844@sol.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200624032752.4177-1-chaitanya.kulkarni@wdc.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, linux-nvme@lists.infradead.org, axboe@kernel.dk, agk@redhat.com, snitzer@redhat.com, kbusch@kernel.org, hch@lst.de, rostedt@goodmis.org, mingo@redhat.com, rdunlap@infradead.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: Ignat Korchagin <ignat@cloudflare.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "kernel-team@cloudflare.com" <kernel-team@cloudflare.com>, "dm-crypt@saout.de" <dm-crypt@saout.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "agk@redhat.com" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-
-
-On Tue, Jun 23, 2020 at 08:27:52PM -0700, Chaitanya Kulkarni wrote:
-> There are many places where trace API accepts the struct request_queue*
-> parameter which can be derived from other function parameters.
-> 
-> This patch removes the struct request queue parameter from the
-> blktrace framework and adjusts the tracepoints definition and usage
-> along with the tracing API itself.
-
-Good idea, and I had a half-ready patch for this already as well.
-
-One issue, and two extra requests below:
-
-
->  	if (bio->bi_disk && bio_flagged(bio, BIO_TRACE_COMPLETION)) {
-> -		trace_block_bio_complete(bio->bi_disk->queue, bio);
-> +		trace_block_bio_complete(bio);
-
-This one can also be called for a different queue than
-bio->bi_disk->queue, so for this one particular tracepoint we'll need
-to keep the request_queue argument.
-
-> diff --git a/block/blk-mq-sched.c b/block/blk-mq-sched.c
-> index fdcc2c1dd178..a3cade16ef80 100644
-> --- a/block/blk-mq-sched.c
-> +++ b/block/blk-mq-sched.c
-> @@ -409,7 +409,7 @@ EXPORT_SYMBOL_GPL(blk_mq_sched_try_insert_merge);
->  
->  void blk_mq_sched_request_inserted(struct request *rq)
->  {
-> -	trace_block_rq_insert(rq->q, rq);
-> +	trace_block_rq_insert(rq);
->  }
->  EXPORT_SYMBOL_GPL(blk_mq_sched_request_inserted);
-
-As a follow on patch we should also remove this function.
-
->  	}
->  
->  	spin_lock(&ctx->lock);
-> @@ -2111,7 +2111,7 @@ blk_qc_t blk_mq_make_request(struct request_queue *q, struct bio *bio)
->  		goto queue_exit;
->  	}
->  
-> -	trace_block_getrq(q, bio, bio->bi_opf);
-> +	trace_block_getrq(bio, bio->bi_opf);
-
-The second argument can be removed as well.  Maybe as another patch.
+On 2020/06/24 14:27, Eric Biggers wrote:=0A=
+> On Wed, Jun 24, 2020 at 05:21:24AM +0000, Damien Le Moal wrote:=0A=
+>>>> @@ -1458,13 +1459,18 @@ static void crypt_alloc_req_skcipher(struct cr=
+ypt_config *cc,=0A=
+>>>>  =0A=
+>>>>  	skcipher_request_set_tfm(ctx->r.req, cc->cipher_tfm.tfms[key_index])=
+;=0A=
+>>>>  =0A=
+>>>> -	/*=0A=
+>>>> -	 * Use REQ_MAY_BACKLOG so a cipher driver internally backlogs=0A=
+>>>> -	 * requests if driver request queue is full.=0A=
+>>>> -	 */=0A=
+>>>> -	skcipher_request_set_callback(ctx->r.req,=0A=
+>>>> -	    CRYPTO_TFM_REQ_MAY_BACKLOG,=0A=
+>>>> -	    kcryptd_async_done, dmreq_of_req(cc, ctx->r.req));=0A=
+>>>> +	if (test_bit(DM_CRYPT_FORCE_INLINE, &cc->flags))=0A=
+>>>> +		/* make sure we zero important fields of the request */=0A=
+>>>> +		skcipher_request_set_callback(ctx->r.req,=0A=
+>>>> +	        0, NULL, NULL);=0A=
+>>>> +	else=0A=
+>>>> +		/*=0A=
+>>>> +		 * Use REQ_MAY_BACKLOG so a cipher driver internally backlogs=0A=
+>>>> +		 * requests if driver request queue is full.=0A=
+>>>> +		 */=0A=
+>>>> +		skcipher_request_set_callback(ctx->r.req,=0A=
+>>>> +	        CRYPTO_TFM_REQ_MAY_BACKLOG,=0A=
+>>>> +	        kcryptd_async_done, dmreq_of_req(cc, ctx->r.req));=0A=
+>>>>  }=0A=
+>>>=0A=
+>>> This looks wrong.  Unless type=3D0 and mask=3DCRYPTO_ALG_ASYNC are pass=
+ed to=0A=
+>>> crypto_alloc_skcipher(), the skcipher implementation can still be async=
+hronous,=0A=
+>>> in which case providing a callback is required.=0A=
+=0A=
+Digging the code further, in light of your hints, it looks like to fix this=
+, all=0A=
+that needs to be done is to change crypt_convert_block_skcipher() from doin=
+g:=0A=
+=0A=
+	if (bio_data_dir(ctx->bio_in) =3D=3D WRITE)=0A=
+		r =3D crypto_skcipher_encrypt(req);=0A=
+	else=0A=
+		r =3D crypto_skcipher_decrypt(req);=0A=
+=0A=
+to do something like:=0A=
+=0A=
+	struct crypto_wait wait;=0A=
+=0A=
+	...=0A=
+=0A=
+	if (bio_data_dir(ctx->bio_in) =3D=3D WRITE) {=0A=
+		if (test_bit(DM_CRYPT_FORCE_INLINE_WRITE, &cc->flags))=0A=
+			r =3D crypto_wait_req(crypto_skcipher_encrypt(req),=0A=
+					    &wait);=0A=
+		else=0A=
+			r =3D crypto_skcipher_encrypt(req);=0A=
+	} else {=0A=
+		if (test_bit(DM_CRYPT_FORCE_INLINE_READ, &cc->flags))=0A=
+=0A=
+=0A=
+			r =3D crypto_wait_req(crypto_skcipher_decrypt(req),=0A=
+					    &wait);=0A=
+		else=0A=
+			r =3D crypto_skcipher_decrypt(req);=0A=
+	}=0A=
+=0A=
+Doing so, crypt_convert_block_skcipher() cannot return -EBUSY nor -EINPROGR=
+ESS=0A=
+for inline IOs, leading to crypt_convert() to see synchronous completions, =
+as=0A=
+expected for inline case. The above likely does not add much overhead at al=
+l for=0A=
+synchronous skcipher/accelerators, and handles asynchronous ones as if they=
+ were=0A=
+synchronous. Would this be correct ?=0A=
+=0A=
+=0A=
+=0A=
+>>>=0A=
+>>> Do you intend that the "force_inline" option forces the use of a synchr=
+onous=0A=
+>>> skcipher (alongside the other things it does)?  Or should it still allo=
+w=0A=
+>>> asynchronous ones?=0A=
+>>>=0A=
+>>> We may not actually have a choice in that matter, since xts-aes-aesni h=
+as the=0A=
+>>> CRYPTO_ALG_ASYNC bit set (as I mentioned) despite being synchronous in =
+most=0A=
+>>> cases; thus, the crypto API won't give you it if you ask for a synchron=
+ous=0A=
+>>> cipher.  So I think you still need to allow async skciphers?  That mean=
+s a=0A=
+>>> callback is still always required.=0A=
+>>=0A=
+>> Arg... So it means that some skciphers will not be OK at all for SMR wri=
+tes. I=0A=
+>> was not aware of these differences (tested with aes-xts-plain64 only). T=
+he ugly=0A=
+>> way to support async ciphers would be to just wait inline for the crypto=
+ API to=0A=
+>> complete using a completion for instance. But that is very ugly. Back to=
+=0A=
+>> brainstorming, and need to learn more about the crypto API...=0A=
+>>=0A=
+> =0A=
+> It's easy to wait for crypto API requests to complete if you need to --=
+=0A=
+> just use crypto_wait_req().=0A=
+> =0A=
+> We do this in fs/crypto/, for example.  (Not many people are using fscryp=
+t with=0A=
+> crypto API based accelerators, so there hasn't yet been much need to supp=
+ort the=0A=
+> complexity of issuing multiple async crypto requests like dm-crypt suppor=
+ts.)=0A=
+> =0A=
+> - Eric=0A=
+> =0A=
+=0A=
+=0A=
+-- =0A=
+Damien Le Moal=0A=
+Western Digital Research=0A=
