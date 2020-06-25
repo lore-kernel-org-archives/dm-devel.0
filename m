@@ -1,202 +1,107 @@
 From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH 1/6] mm: Replace PF_MEMALLOC_NOIO with memalloc_noio
-Date: Thu, 25 Jun 2020 14:22:39 +0200
-Message-ID: <20200625122239.GJ1320@dhcp22.suse.cz>
+Subject: Re: [PATCH 2/6] mm: Add become_kswapd and restore_kswapd
+Date: Thu, 25 Jun 2020 14:31:43 +0200
+Message-ID: <20200625123143.GK1320@dhcp22.suse.cz>
 References: <20200625113122.7540-1-willy@infradead.org>
- <20200625113122.7540-2-willy@infradead.org>
+ <20200625113122.7540-3-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20200625113122.7540-2-willy@infradead.org>
+In-Reply-To: <20200625113122.7540-3-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
 Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-xfs@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.de>
 List-Id: dm-devel.ids
 
-On Thu 25-06-20 12:31:17, Matthew Wilcox wrote:
-> We're short on PF_* flags, so make memalloc_noio its own bit where we
-> have plenty of space.
-
-I do not mind moving that outside of the PF_* space. Unless I
-misremember all flags in this space were intented to be set only on the
-current which rules out any RMW races and therefore they can be
-lockless. I am not sure this holds for the bitfield you are adding this
-to. At least in_memstall seem to be set on external task as well. But
-this would require double checking. Maybe that is not really intended or
-just a bug.
-
-> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
-> ---
->  drivers/block/loop.c           |  3 ++-
->  drivers/md/dm-zoned-metadata.c |  5 ++---
->  include/linux/sched.h          |  2 +-
->  include/linux/sched/mm.h       | 30 +++++++++++++++++++++++-------
->  kernel/sys.c                   |  8 +++-----
->  5 files changed, 31 insertions(+), 17 deletions(-)
+On Thu 25-06-20 12:31:18, Matthew Wilcox wrote:
+> Since XFS needs to pretend to be kswapd in some of its worker threads,
+> create methods to save & restore kswapd state.  Don't bother restoring
+> kswapd state in kswapd -- the only time we reach this code is when we're
+> exiting and the task_struct is about to be destroyed anyway.
 > 
-> diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-> index 475e1a738560..c8742e25e58a 100644
-> --- a/drivers/block/loop.c
-> +++ b/drivers/block/loop.c
-> @@ -52,6 +52,7 @@
->  #include <linux/module.h>
->  #include <linux/moduleparam.h>
->  #include <linux/sched.h>
-> +#include <linux/sched/mm.h>
->  #include <linux/fs.h>
->  #include <linux/file.h>
->  #include <linux/stat.h>
-> @@ -929,7 +930,7 @@ static void loop_unprepare_queue(struct loop_device *lo)
->  
->  static int loop_kthread_worker_fn(void *worker_ptr)
->  {
-> -	current->flags |= PF_LOCAL_THROTTLE | PF_MEMALLOC_NOIO;
-> +	set_current_io_flusher();
->  	return kthread_worker_fn(worker_ptr);
->  }
->  
-> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-> index 130b5a6d9f12..1c5ae674ba20 100644
-> --- a/drivers/md/dm-zoned-metadata.c
-> +++ b/drivers/md/dm-zoned-metadata.c
-> @@ -1599,9 +1599,8 @@ static int dmz_update_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
->  
->  	/*
->  	 * Get zone information from disk. Since blkdev_report_zones() uses
-> -	 * GFP_KERNEL by default for memory allocations, set the per-task
-> -	 * PF_MEMALLOC_NOIO flag so that all allocations are done as if
-> -	 * GFP_NOIO was specified.
-> +	 * GFP_KERNEL by default for memory allocations, use
-> +	 * memalloc_noio_save() to prevent recursion into the driver.
->  	 */
->  	noio_flag = memalloc_noio_save();
->  	ret = blkdev_report_zones(dev->bdev, dmz_start_sect(zmd, zone), 1,
-> diff --git a/include/linux/sched.h b/include/linux/sched.h
-> index b62e6aaf28f0..cf18a3d2bc4c 100644
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -801,6 +801,7 @@ struct task_struct {
->  	/* Stalled due to lack of memory */
->  	unsigned			in_memstall:1;
->  #endif
-> +	unsigned			memalloc_noio:1;
->  
->  	unsigned long			atomic_flags; /* Flags requiring atomic access. */
->  
-> @@ -1505,7 +1506,6 @@ extern struct pid *cad_pid;
->  #define PF_FROZEN		0x00010000	/* Frozen for system suspend */
->  #define PF_KSWAPD		0x00020000	/* I am kswapd */
->  #define PF_MEMALLOC_NOFS	0x00040000	/* All allocation requests will inherit GFP_NOFS */
-> -#define PF_MEMALLOC_NOIO	0x00080000	/* All allocation requests will inherit GFP_NOIO */
->  #define PF_LOCAL_THROTTLE	0x00100000	/* Throttle writes only against the bdi I write to,
->  						 * I am cleaning dirty pages from some other bdi. */
->  #define PF_KTHREAD		0x00200000	/* I am a kernel thread */
-> diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-> index 480a4d1b7dd8..1a7e1ab1be85 100644
-> --- a/include/linux/sched/mm.h
-> +++ b/include/linux/sched/mm.h
-> @@ -175,19 +175,18 @@ static inline bool in_vfork(struct task_struct *tsk)
->  
->  /*
->   * Applies per-task gfp context to the given allocation flags.
-> - * PF_MEMALLOC_NOIO implies GFP_NOIO
->   * PF_MEMALLOC_NOFS implies GFP_NOFS
->   * PF_MEMALLOC_NOCMA implies no allocation from CMA region.
->   */
->  static inline gfp_t current_gfp_context(gfp_t flags)
->  {
-> -	if (unlikely(current->flags &
-> -		     (PF_MEMALLOC_NOIO | PF_MEMALLOC_NOFS | PF_MEMALLOC_NOCMA))) {
-> +	if (unlikely(current->flags & (PF_MEMALLOC_NOFS | PF_MEMALLOC_NOCMA) ||
-> +		     current->memalloc_noio)) {
->  		/*
->  		 * NOIO implies both NOIO and NOFS and it is a weaker context
->  		 * so always make sure it makes precedence
->  		 */
-> -		if (current->flags & PF_MEMALLOC_NOIO)
-> +		if (current->memalloc_noio)
->  			flags &= ~(__GFP_IO | __GFP_FS);
->  		else if (current->flags & PF_MEMALLOC_NOFS)
->  			flags &= ~__GFP_FS;
-> @@ -224,8 +223,8 @@ static inline void fs_reclaim_release(gfp_t gfp_mask) { }
->   */
->  static inline unsigned int memalloc_noio_save(void)
->  {
-> -	unsigned int flags = current->flags & PF_MEMALLOC_NOIO;
-> -	current->flags |= PF_MEMALLOC_NOIO;
-> +	unsigned int flags = current->memalloc_noio;
-> +	current->memalloc_noio = 1;
->  	return flags;
->  }
->  
-> @@ -239,7 +238,7 @@ static inline unsigned int memalloc_noio_save(void)
->   */
->  static inline void memalloc_noio_restore(unsigned int flags)
->  {
-> -	current->flags = (current->flags & ~PF_MEMALLOC_NOIO) | flags;
-> +	current->memalloc_noio = flags ? 1 : 0;
->  }
->  
->  /**
-> @@ -309,6 +308,23 @@ static inline void memalloc_nocma_restore(unsigned int flags)
->  }
->  #endif
->  
-> +static inline void set_current_io_flusher(void)
+> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+
+Certainly better than an opencoded PF_$FOO manipulation
+Acked-by: Michal Hocko <mhocko@suse.com>
+
+I would just ask for a clarification because this is rellying to have a
+good MM knowledge to follow
+
+> +/*
+> + * Tell the memory management that we're a "memory allocator",
+
+I would go with.
+Tell the memory management that the caller is working on behalf of the
+background memory reclaim (aka kswapd) and help it to make a forward
+progress. That means that it will get an access to memory reserves
+should there be a need to allocate memory in order to make a forward
+progress. Note that the caller has to be extremely careful when doing
+that.
+
+Or something like that.
+
+> + * and that if we need more memory we should get access to it
+> + * regardless (see "__alloc_pages()"). "kswapd" should
+> + * never get caught in the normal page freeing logic.
+> + *
+> + * (Kswapd normally doesn't need memory anyway, but sometimes
+> + * you need a small amount of memory in order to be able to
+> + * page out something else, and this flag essentially protects
+> + * us from recursively trying to free more memory as we're
+> + * trying to free the first piece of memory in the first place).
+> + */
+> +#define KSWAPD_PF_FLAGS		(PF_MEMALLOC | PF_SWAPWRITE | PF_KSWAPD)
+> +
+> +static inline unsigned long become_kswapd(void)
 > +{
-> +	current->flags |= PF_LOCAL_THROTTLE;
-> +	current->memalloc_noio = 1;
+> +	unsigned long flags = current->flags & KSWAPD_PF_FLAGS;
+> +	current->flags |= KSWAPD_PF_FLAGS;
+> +	return flags;
 > +}
 > +
-> +static inline void clear_current_io_flusher(void)
+> +static inline void restore_kswapd(unsigned long flags)
 > +{
-> +	current->flags &= ~PF_LOCAL_THROTTLE;
-> +	current->memalloc_noio = 0;
+> +	current->flags &= ~(flags ^ KSWAPD_PF_FLAGS);
 > +}
 > +
-> +static inline bool get_current_io_flusher(void)
-> +{
-> +	return current->flags & PF_LOCAL_THROTTLE;
-> +}
-> +
->  #ifdef CONFIG_MEMCG
->  /**
->   * memalloc_use_memcg - Starts the remote memcg charging scope.
-> diff --git a/kernel/sys.c b/kernel/sys.c
-> index 00a96746e28a..78c90d1e92f4 100644
-> --- a/kernel/sys.c
-> +++ b/kernel/sys.c
-> @@ -2275,8 +2275,6 @@ int __weak arch_prctl_spec_ctrl_set(struct task_struct *t, unsigned long which,
->  	return -EINVAL;
->  }
+>  static inline void set_current_io_flusher(void)
+>  {
+>  	current->flags |= PF_LOCAL_THROTTLE;
+> diff --git a/mm/vmscan.c b/mm/vmscan.c
+> index b6d84326bdf2..27ae76699899 100644
+> --- a/mm/vmscan.c
+> +++ b/mm/vmscan.c
+> @@ -3870,19 +3870,7 @@ static int kswapd(void *p)
+>  	if (!cpumask_empty(cpumask))
+>  		set_cpus_allowed_ptr(tsk, cpumask);
 >  
-> -#define PR_IO_FLUSHER (PF_MEMALLOC_NOIO | PF_LOCAL_THROTTLE)
+> -	/*
+> -	 * Tell the memory management that we're a "memory allocator",
+> -	 * and that if we need more memory we should get access to it
+> -	 * regardless (see "__alloc_pages()"). "kswapd" should
+> -	 * never get caught in the normal page freeing logic.
+> -	 *
+> -	 * (Kswapd normally doesn't need memory anyway, but sometimes
+> -	 * you need a small amount of memory in order to be able to
+> -	 * page out something else, and this flag essentially protects
+> -	 * us from recursively trying to free more memory as we're
+> -	 * trying to free the first piece of memory in the first place).
+> -	 */
+> -	tsk->flags |= PF_MEMALLOC | PF_SWAPWRITE | PF_KSWAPD;
+> +	become_kswapd();
+>  	set_freezable();
+>  
+>  	WRITE_ONCE(pgdat->kswapd_order, 0);
+> @@ -3932,8 +3920,6 @@ static int kswapd(void *p)
+>  			goto kswapd_try_sleep;
+>  	}
+>  
+> -	tsk->flags &= ~(PF_MEMALLOC | PF_SWAPWRITE | PF_KSWAPD);
 > -
->  SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
->  		unsigned long, arg4, unsigned long, arg5)
->  {
-> @@ -2512,9 +2510,9 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
->  			return -EINVAL;
+>  	return 0;
+>  }
 >  
->  		if (arg2 == 1)
-> -			current->flags |= PR_IO_FLUSHER;
-> +			set_current_io_flusher();
->  		else if (!arg2)
-> -			current->flags &= ~PR_IO_FLUSHER;
-> +			clear_current_io_flusher();
->  		else
->  			return -EINVAL;
->  		break;
-> @@ -2525,7 +2523,7 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
->  		if (arg2 || arg3 || arg4 || arg5)
->  			return -EINVAL;
->  
-> -		error = (current->flags & PR_IO_FLUSHER) == PR_IO_FLUSHER;
-> +		error = get_current_io_flusher();
->  		break;
->  	default:
->  		error = -EINVAL;
 > -- 
 > 2.27.0
 > 
