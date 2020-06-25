@@ -1,181 +1,206 @@
-From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Subject: [PATCH 3/6] xfs: Convert to memalloc_nofs_save
-Date: Thu, 25 Jun 2020 12:31:19 +0100
-Message-ID: <20200625113122.7540-4-willy@infradead.org>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH 1/6] mm: Replace PF_MEMALLOC_NOIO with memalloc_noio
+Date: Thu, 25 Jun 2020 14:22:39 +0200
+Message-ID: <20200625122239.GJ1320@dhcp22.suse.cz>
 References: <20200625113122.7540-1-willy@infradead.org>
+ <20200625113122.7540-2-willy@infradead.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200625113122.7540-1-willy@infradead.org>
+Content-Disposition: inline
+In-Reply-To: <20200625113122.7540-2-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-mm@kvack.org
-Cc: "Matthew Wilcox (Oracle)" <willy@infradead.org>, linux-xfs@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.de>
+To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-xfs@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.de>
 List-Id: dm-devel.ids
 
-Instead of using custom macros to set/restore PF_MEMALLOC_NOFS, use
-memalloc_nofs_save() like the rest of the kernel.
+On Thu 25-06-20 12:31:17, Matthew Wilcox wrote:
+> We're short on PF_* flags, so make memalloc_noio its own bit where we
+> have plenty of space.
 
-Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
----
- fs/xfs/kmem.c      |  2 +-
- fs/xfs/xfs_aops.c  |  4 ++--
- fs/xfs/xfs_buf.c   |  2 +-
- fs/xfs/xfs_linux.h |  6 ------
- fs/xfs/xfs_trans.c | 14 +++++++-------
- fs/xfs/xfs_trans.h |  2 +-
- 6 files changed, 12 insertions(+), 18 deletions(-)
+I do not mind moving that outside of the PF_* space. Unless I
+misremember all flags in this space were intented to be set only on the
+current which rules out any RMW races and therefore they can be
+lockless. I am not sure this holds for the bitfield you are adding this
+to. At least in_memstall seem to be set on external task as well. But
+this would require double checking. Maybe that is not really intended or
+just a bug.
 
-diff --git a/fs/xfs/kmem.c b/fs/xfs/kmem.c
-index f1366475c389..c2d237159bfc 100644
---- a/fs/xfs/kmem.c
-+++ b/fs/xfs/kmem.c
-@@ -35,7 +35,7 @@ kmem_alloc(size_t size, xfs_km_flags_t flags)
-  * __vmalloc() will allocate data pages and auxiliary structures (e.g.
-  * pagetables) with GFP_KERNEL, yet we may be under GFP_NOFS context here. Hence
-  * we need to tell memory reclaim that we are in such a context via
-- * PF_MEMALLOC_NOFS to prevent memory reclaim re-entering the filesystem here
-+ * memalloc_nofs to prevent memory reclaim re-entering the filesystem here
-  * and potentially deadlocking.
-  */
- static void *
-diff --git a/fs/xfs/xfs_aops.c b/fs/xfs/xfs_aops.c
-index b35611882ff9..e3a4806e519d 100644
---- a/fs/xfs/xfs_aops.c
-+++ b/fs/xfs/xfs_aops.c
-@@ -62,7 +62,7 @@ xfs_setfilesize_trans_alloc(
- 	 * We hand off the transaction to the completion thread now, so
- 	 * clear the flag here.
- 	 */
--	current_restore_flags_nested(&tp->t_pflags, PF_MEMALLOC_NOFS);
-+	memalloc_nofs_restore(tp->t_memalloc);
- 	return 0;
- }
- 
-@@ -125,7 +125,7 @@ xfs_setfilesize_ioend(
- 	 * thus we need to mark ourselves as being in a transaction manually.
- 	 * Similarly for freeze protection.
- 	 */
--	current_set_flags_nested(&tp->t_pflags, PF_MEMALLOC_NOFS);
-+	tp->t_memalloc = memalloc_nofs_save();
- 	__sb_writers_acquired(VFS_I(ip)->i_sb, SB_FREEZE_FS);
- 
- 	/* we abort the update if there was an IO error */
-diff --git a/fs/xfs/xfs_buf.c b/fs/xfs/xfs_buf.c
-index 20b748f7e186..b2c3d01c690b 100644
---- a/fs/xfs/xfs_buf.c
-+++ b/fs/xfs/xfs_buf.c
-@@ -470,7 +470,7 @@ _xfs_buf_map_pages(
- 		 * vm_map_ram() will allocate auxiliary structures (e.g.
- 		 * pagetables) with GFP_KERNEL, yet we are likely to be under
- 		 * GFP_NOFS context here. Hence we need to tell memory reclaim
--		 * that we are in such a context via PF_MEMALLOC_NOFS to prevent
-+		 * that we are in such a context via memalloc_nofs to prevent
- 		 * memory reclaim re-entering the filesystem here and
- 		 * potentially deadlocking.
- 		 */
-diff --git a/fs/xfs/xfs_linux.h b/fs/xfs/xfs_linux.h
-index 9f70d2f68e05..e1daf242a53b 100644
---- a/fs/xfs/xfs_linux.h
-+++ b/fs/xfs/xfs_linux.h
-@@ -104,12 +104,6 @@ typedef __u32			xfs_nlink_t;
- #define current_cpu()		(raw_smp_processor_id())
- #define current_pid()		(current->pid)
- #define current_test_flags(f)	(current->flags & (f))
--#define current_set_flags_nested(sp, f)		\
--		(*(sp) = current->flags, current->flags |= (f))
--#define current_clear_flags_nested(sp, f)	\
--		(*(sp) = current->flags, current->flags &= ~(f))
--#define current_restore_flags_nested(sp, f)	\
--		(current->flags = ((current->flags & ~(f)) | (*(sp) & (f))))
- 
- #define NBBY		8		/* number of bits per byte */
- 
-diff --git a/fs/xfs/xfs_trans.c b/fs/xfs/xfs_trans.c
-index 3c94e5ff4316..4ef1a0ff0a11 100644
---- a/fs/xfs/xfs_trans.c
-+++ b/fs/xfs/xfs_trans.c
-@@ -118,7 +118,7 @@ xfs_trans_dup(
- 
- 	ntp->t_rtx_res = tp->t_rtx_res - tp->t_rtx_res_used;
- 	tp->t_rtx_res = tp->t_rtx_res_used;
--	ntp->t_pflags = tp->t_pflags;
-+	ntp->t_memalloc = tp->t_memalloc;
- 
- 	/* move deferred ops over to the new tp */
- 	xfs_defer_move(ntp, tp);
-@@ -153,7 +153,7 @@ xfs_trans_reserve(
- 	bool			rsvd = (tp->t_flags & XFS_TRANS_RESERVE) != 0;
- 
- 	/* Mark this thread as being in a transaction */
--	current_set_flags_nested(&tp->t_pflags, PF_MEMALLOC_NOFS);
-+	tp->t_memalloc = memalloc_nofs_save();
- 
- 	/*
- 	 * Attempt to reserve the needed disk blocks by decrementing
-@@ -163,7 +163,7 @@ xfs_trans_reserve(
- 	if (blocks > 0) {
- 		error = xfs_mod_fdblocks(mp, -((int64_t)blocks), rsvd);
- 		if (error != 0) {
--			current_restore_flags_nested(&tp->t_pflags, PF_MEMALLOC_NOFS);
-+			memalloc_nofs_restore(tp->t_memalloc);
- 			return -ENOSPC;
- 		}
- 		tp->t_blk_res += blocks;
-@@ -240,7 +240,7 @@ xfs_trans_reserve(
- 		tp->t_blk_res = 0;
- 	}
- 
--	current_restore_flags_nested(&tp->t_pflags, PF_MEMALLOC_NOFS);
-+	memalloc_nofs_restore(tp->t_memalloc);
- 
- 	return error;
- }
-@@ -861,7 +861,7 @@ __xfs_trans_commit(
- 
- 	xfs_log_commit_cil(mp, tp, &commit_lsn, regrant);
- 
--	current_restore_flags_nested(&tp->t_pflags, PF_MEMALLOC_NOFS);
-+	memalloc_nofs_restore(tp->t_memalloc);
- 	xfs_trans_free(tp);
- 
- 	/*
-@@ -893,7 +893,7 @@ __xfs_trans_commit(
- 			xfs_log_ticket_ungrant(mp->m_log, tp->t_ticket);
- 		tp->t_ticket = NULL;
- 	}
--	current_restore_flags_nested(&tp->t_pflags, PF_MEMALLOC_NOFS);
-+	memalloc_nofs_restore(tp->t_memalloc);
- 	xfs_trans_free_items(tp, !!error);
- 	xfs_trans_free(tp);
- 
-@@ -954,7 +954,7 @@ xfs_trans_cancel(
- 	}
- 
- 	/* mark this thread as no longer being in a transaction */
--	current_restore_flags_nested(&tp->t_pflags, PF_MEMALLOC_NOFS);
-+	memalloc_nofs_restore(tp->t_memalloc);
- 
- 	xfs_trans_free_items(tp, dirty);
- 	xfs_trans_free(tp);
-diff --git a/fs/xfs/xfs_trans.h b/fs/xfs/xfs_trans.h
-index 8308bf6d7e40..7aa2d5ff9245 100644
---- a/fs/xfs/xfs_trans.h
-+++ b/fs/xfs/xfs_trans.h
-@@ -118,6 +118,7 @@ typedef struct xfs_trans {
- 	unsigned int		t_rtx_res;	/* # of rt extents resvd */
- 	unsigned int		t_rtx_res_used;	/* # of resvd rt extents used */
- 	unsigned int		t_flags;	/* misc flags */
-+	unsigned int		t_memalloc;	/* saved memalloc state */
- 	xfs_fsblock_t		t_firstblock;	/* first block allocated */
- 	struct xlog_ticket	*t_ticket;	/* log mgr ticket */
- 	struct xfs_mount	*t_mountp;	/* ptr to fs mount struct */
-@@ -144,7 +145,6 @@ typedef struct xfs_trans {
- 	struct list_head	t_items;	/* log item descriptors */
- 	struct list_head	t_busy;		/* list of busy extents */
- 	struct list_head	t_dfops;	/* deferred operations */
--	unsigned long		t_pflags;	/* saved process flags state */
- } xfs_trans_t;
- 
- /*
+> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+> ---
+>  drivers/block/loop.c           |  3 ++-
+>  drivers/md/dm-zoned-metadata.c |  5 ++---
+>  include/linux/sched.h          |  2 +-
+>  include/linux/sched/mm.h       | 30 +++++++++++++++++++++++-------
+>  kernel/sys.c                   |  8 +++-----
+>  5 files changed, 31 insertions(+), 17 deletions(-)
+> 
+> diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+> index 475e1a738560..c8742e25e58a 100644
+> --- a/drivers/block/loop.c
+> +++ b/drivers/block/loop.c
+> @@ -52,6 +52,7 @@
+>  #include <linux/module.h>
+>  #include <linux/moduleparam.h>
+>  #include <linux/sched.h>
+> +#include <linux/sched/mm.h>
+>  #include <linux/fs.h>
+>  #include <linux/file.h>
+>  #include <linux/stat.h>
+> @@ -929,7 +930,7 @@ static void loop_unprepare_queue(struct loop_device *lo)
+>  
+>  static int loop_kthread_worker_fn(void *worker_ptr)
+>  {
+> -	current->flags |= PF_LOCAL_THROTTLE | PF_MEMALLOC_NOIO;
+> +	set_current_io_flusher();
+>  	return kthread_worker_fn(worker_ptr);
+>  }
+>  
+> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+> index 130b5a6d9f12..1c5ae674ba20 100644
+> --- a/drivers/md/dm-zoned-metadata.c
+> +++ b/drivers/md/dm-zoned-metadata.c
+> @@ -1599,9 +1599,8 @@ static int dmz_update_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
+>  
+>  	/*
+>  	 * Get zone information from disk. Since blkdev_report_zones() uses
+> -	 * GFP_KERNEL by default for memory allocations, set the per-task
+> -	 * PF_MEMALLOC_NOIO flag so that all allocations are done as if
+> -	 * GFP_NOIO was specified.
+> +	 * GFP_KERNEL by default for memory allocations, use
+> +	 * memalloc_noio_save() to prevent recursion into the driver.
+>  	 */
+>  	noio_flag = memalloc_noio_save();
+>  	ret = blkdev_report_zones(dev->bdev, dmz_start_sect(zmd, zone), 1,
+> diff --git a/include/linux/sched.h b/include/linux/sched.h
+> index b62e6aaf28f0..cf18a3d2bc4c 100644
+> --- a/include/linux/sched.h
+> +++ b/include/linux/sched.h
+> @@ -801,6 +801,7 @@ struct task_struct {
+>  	/* Stalled due to lack of memory */
+>  	unsigned			in_memstall:1;
+>  #endif
+> +	unsigned			memalloc_noio:1;
+>  
+>  	unsigned long			atomic_flags; /* Flags requiring atomic access. */
+>  
+> @@ -1505,7 +1506,6 @@ extern struct pid *cad_pid;
+>  #define PF_FROZEN		0x00010000	/* Frozen for system suspend */
+>  #define PF_KSWAPD		0x00020000	/* I am kswapd */
+>  #define PF_MEMALLOC_NOFS	0x00040000	/* All allocation requests will inherit GFP_NOFS */
+> -#define PF_MEMALLOC_NOIO	0x00080000	/* All allocation requests will inherit GFP_NOIO */
+>  #define PF_LOCAL_THROTTLE	0x00100000	/* Throttle writes only against the bdi I write to,
+>  						 * I am cleaning dirty pages from some other bdi. */
+>  #define PF_KTHREAD		0x00200000	/* I am a kernel thread */
+> diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
+> index 480a4d1b7dd8..1a7e1ab1be85 100644
+> --- a/include/linux/sched/mm.h
+> +++ b/include/linux/sched/mm.h
+> @@ -175,19 +175,18 @@ static inline bool in_vfork(struct task_struct *tsk)
+>  
+>  /*
+>   * Applies per-task gfp context to the given allocation flags.
+> - * PF_MEMALLOC_NOIO implies GFP_NOIO
+>   * PF_MEMALLOC_NOFS implies GFP_NOFS
+>   * PF_MEMALLOC_NOCMA implies no allocation from CMA region.
+>   */
+>  static inline gfp_t current_gfp_context(gfp_t flags)
+>  {
+> -	if (unlikely(current->flags &
+> -		     (PF_MEMALLOC_NOIO | PF_MEMALLOC_NOFS | PF_MEMALLOC_NOCMA))) {
+> +	if (unlikely(current->flags & (PF_MEMALLOC_NOFS | PF_MEMALLOC_NOCMA) ||
+> +		     current->memalloc_noio)) {
+>  		/*
+>  		 * NOIO implies both NOIO and NOFS and it is a weaker context
+>  		 * so always make sure it makes precedence
+>  		 */
+> -		if (current->flags & PF_MEMALLOC_NOIO)
+> +		if (current->memalloc_noio)
+>  			flags &= ~(__GFP_IO | __GFP_FS);
+>  		else if (current->flags & PF_MEMALLOC_NOFS)
+>  			flags &= ~__GFP_FS;
+> @@ -224,8 +223,8 @@ static inline void fs_reclaim_release(gfp_t gfp_mask) { }
+>   */
+>  static inline unsigned int memalloc_noio_save(void)
+>  {
+> -	unsigned int flags = current->flags & PF_MEMALLOC_NOIO;
+> -	current->flags |= PF_MEMALLOC_NOIO;
+> +	unsigned int flags = current->memalloc_noio;
+> +	current->memalloc_noio = 1;
+>  	return flags;
+>  }
+>  
+> @@ -239,7 +238,7 @@ static inline unsigned int memalloc_noio_save(void)
+>   */
+>  static inline void memalloc_noio_restore(unsigned int flags)
+>  {
+> -	current->flags = (current->flags & ~PF_MEMALLOC_NOIO) | flags;
+> +	current->memalloc_noio = flags ? 1 : 0;
+>  }
+>  
+>  /**
+> @@ -309,6 +308,23 @@ static inline void memalloc_nocma_restore(unsigned int flags)
+>  }
+>  #endif
+>  
+> +static inline void set_current_io_flusher(void)
+> +{
+> +	current->flags |= PF_LOCAL_THROTTLE;
+> +	current->memalloc_noio = 1;
+> +}
+> +
+> +static inline void clear_current_io_flusher(void)
+> +{
+> +	current->flags &= ~PF_LOCAL_THROTTLE;
+> +	current->memalloc_noio = 0;
+> +}
+> +
+> +static inline bool get_current_io_flusher(void)
+> +{
+> +	return current->flags & PF_LOCAL_THROTTLE;
+> +}
+> +
+>  #ifdef CONFIG_MEMCG
+>  /**
+>   * memalloc_use_memcg - Starts the remote memcg charging scope.
+> diff --git a/kernel/sys.c b/kernel/sys.c
+> index 00a96746e28a..78c90d1e92f4 100644
+> --- a/kernel/sys.c
+> +++ b/kernel/sys.c
+> @@ -2275,8 +2275,6 @@ int __weak arch_prctl_spec_ctrl_set(struct task_struct *t, unsigned long which,
+>  	return -EINVAL;
+>  }
+>  
+> -#define PR_IO_FLUSHER (PF_MEMALLOC_NOIO | PF_LOCAL_THROTTLE)
+> -
+>  SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+>  		unsigned long, arg4, unsigned long, arg5)
+>  {
+> @@ -2512,9 +2510,9 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+>  			return -EINVAL;
+>  
+>  		if (arg2 == 1)
+> -			current->flags |= PR_IO_FLUSHER;
+> +			set_current_io_flusher();
+>  		else if (!arg2)
+> -			current->flags &= ~PR_IO_FLUSHER;
+> +			clear_current_io_flusher();
+>  		else
+>  			return -EINVAL;
+>  		break;
+> @@ -2525,7 +2523,7 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+>  		if (arg2 || arg3 || arg4 || arg5)
+>  			return -EINVAL;
+>  
+> -		error = (current->flags & PR_IO_FLUSHER) == PR_IO_FLUSHER;
+> +		error = get_current_io_flusher();
+>  		break;
+>  	default:
+>  		error = -EINVAL;
+> -- 
+> 2.27.0
+> 
+
 -- 
-2.27.0
+Michal Hocko
+SUSE Labs
