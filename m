@@ -1,111 +1,71 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH 2/6] mm: Add become_kswapd and restore_kswapd
-Date: Thu, 25 Jun 2020 14:31:43 +0200
-Message-ID: <20200625123143.GK1320@dhcp22.suse.cz>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: Re: [PATCH 1/6] mm: Replace PF_MEMALLOC_NOIO with memalloc_noio
+Date: Thu, 25 Jun 2020 13:34:18 +0100
+Message-ID: <20200625123418.GB7703@casper.infradead.org>
 References: <20200625113122.7540-1-willy@infradead.org>
- <20200625113122.7540-3-willy@infradead.org>
+ <20200625113122.7540-2-willy@infradead.org>
+ <20200625122239.GJ1320@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20200625113122.7540-3-willy@infradead.org>
+In-Reply-To: <20200625122239.GJ1320@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+To: Michal Hocko <mhocko@kernel.org>
 Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-xfs@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.de>
 List-Id: dm-devel.ids
 
-On Thu 25-06-20 12:31:18, Matthew Wilcox wrote:
-> Since XFS needs to pretend to be kswapd in some of its worker threads,
-> create methods to save & restore kswapd state.  Don't bother restoring
-> kswapd state in kswapd -- the only time we reach this code is when we're
-> exiting and the task_struct is about to be destroyed anyway.
+On Thu, Jun 25, 2020 at 02:22:39PM +0200, Michal Hocko wrote:
+> On Thu 25-06-20 12:31:17, Matthew Wilcox wrote:
+> > We're short on PF_* flags, so make memalloc_noio its own bit where we
+> > have plenty of space.
 > 
-> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+> I do not mind moving that outside of the PF_* space. Unless I
+> misremember all flags in this space were intented to be set only on the
+> current which rules out any RMW races and therefore they can be
+> lockless. I am not sure this holds for the bitfield you are adding this
+> to. At least in_memstall seem to be set on external task as well. But
+> this would require double checking. Maybe that is not really intended or
+> just a bug.
 
-Certainly better than an opencoded PF_$FOO manipulation
-Acked-by: Michal Hocko <mhocko@suse.com>
+I was going from the comment:
 
-I would just ask for a clarification because this is rellying to have a
-good MM knowledge to follow
+        /* Unserialized, strictly 'current' */
+(which you can't see from the context of the diff, but is above the block)
 
-> +/*
-> + * Tell the memory management that we're a "memory allocator",
+The situation with ->flags is a little more ambiguous:
 
-I would go with.
-Tell the memory management that the caller is working on behalf of the
-background memory reclaim (aka kswapd) and help it to make a forward
-progress. That means that it will get an access to memory reserves
-should there be a need to allocate memory in order to make a forward
-progress. Note that the caller has to be extremely careful when doing
-that.
+/*
+ * Only the _current_ task can read/write to tsk->flags, but other
+ * tasks can access tsk->flags in readonly mode for example
+ * with tsk_used_math (like during threaded core dumping).
+ * There is however an exception to this rule during ptrace
+ * or during fork: the ptracer task is allowed to write to the
+ * child->flags of its traced child (same goes for fork, the parent
+ * can write to the child->flags), because we're guaranteed the
+ * child is not running and in turn not changing child->flags
+ * at the same time the parent does it.
+ */
 
-Or something like that.
+but it wasn't unsafe to use the PF_ flags in the way that you were.
+It's just crowded.
 
-> + * and that if we need more memory we should get access to it
-> + * regardless (see "__alloc_pages()"). "kswapd" should
-> + * never get caught in the normal page freeing logic.
-> + *
-> + * (Kswapd normally doesn't need memory anyway, but sometimes
-> + * you need a small amount of memory in order to be able to
-> + * page out something else, and this flag essentially protects
-> + * us from recursively trying to free more memory as we're
-> + * trying to free the first piece of memory in the first place).
-> + */
-> +#define KSWAPD_PF_FLAGS		(PF_MEMALLOC | PF_SWAPWRITE | PF_KSWAPD)
-> +
-> +static inline unsigned long become_kswapd(void)
-> +{
-> +	unsigned long flags = current->flags & KSWAPD_PF_FLAGS;
-> +	current->flags |= KSWAPD_PF_FLAGS;
-> +	return flags;
-> +}
-> +
-> +static inline void restore_kswapd(unsigned long flags)
-> +{
-> +	current->flags &= ~(flags ^ KSWAPD_PF_FLAGS);
-> +}
-> +
->  static inline void set_current_io_flusher(void)
->  {
->  	current->flags |= PF_LOCAL_THROTTLE;
-> diff --git a/mm/vmscan.c b/mm/vmscan.c
-> index b6d84326bdf2..27ae76699899 100644
-> --- a/mm/vmscan.c
-> +++ b/mm/vmscan.c
-> @@ -3870,19 +3870,7 @@ static int kswapd(void *p)
->  	if (!cpumask_empty(cpumask))
->  		set_cpus_allowed_ptr(tsk, cpumask);
->  
-> -	/*
-> -	 * Tell the memory management that we're a "memory allocator",
-> -	 * and that if we need more memory we should get access to it
-> -	 * regardless (see "__alloc_pages()"). "kswapd" should
-> -	 * never get caught in the normal page freeing logic.
-> -	 *
-> -	 * (Kswapd normally doesn't need memory anyway, but sometimes
-> -	 * you need a small amount of memory in order to be able to
-> -	 * page out something else, and this flag essentially protects
-> -	 * us from recursively trying to free more memory as we're
-> -	 * trying to free the first piece of memory in the first place).
-> -	 */
-> -	tsk->flags |= PF_MEMALLOC | PF_SWAPWRITE | PF_KSWAPD;
-> +	become_kswapd();
->  	set_freezable();
->  
->  	WRITE_ONCE(pgdat->kswapd_order, 0);
-> @@ -3932,8 +3920,6 @@ static int kswapd(void *p)
->  			goto kswapd_try_sleep;
->  	}
->  
-> -	tsk->flags &= ~(PF_MEMALLOC | PF_SWAPWRITE | PF_KSWAPD);
-> -
->  	return 0;
->  }
->  
-> -- 
-> 2.27.0
-> 
+If in_memstall is set on other tasks, then it should be moved to the
+PFA flags, which there are plenty of.
 
--- 
-Michal Hocko
-SUSE Labs
+But a quick grep shows it only being read on other tasks and always
+set on current:
+
+kernel/sched/psi.c:     *flags = current->in_memstall;
+kernel/sched/psi.c:      * in_memstall setting & accounting needs to be atomic wrt
+kernel/sched/psi.c:     current->in_memstall = 1;
+kernel/sched/psi.c:      * in_memstall clearing & accounting needs to be atomic wrt
+kernel/sched/psi.c:     current->in_memstall = 0;
+kernel/sched/psi.c:     if (task->in_memstall)
+kernel/sched/stats.h:           if (p->in_memstall)
+kernel/sched/stats.h:           if (p->in_memstall)
+kernel/sched/stats.h:   if (unlikely(p->in_iowait || p->in_memstall)) {
+kernel/sched/stats.h:           if (p->in_memstall)
+kernel/sched/stats.h:   if (unlikely(rq->curr->in_memstall))
+
+so I think everything is fine.
