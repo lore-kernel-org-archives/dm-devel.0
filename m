@@ -1,85 +1,118 @@
 From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH 6/6] mm: Add memalloc_nowait
-Date: Thu, 25 Jun 2020 15:34:20 +0200
-Message-ID: <20200625133420.GN1320@dhcp22.suse.cz>
+Subject: Re: [PATCH 4/6] mm: Replace PF_MEMALLOC_NOFS with memalloc_nofs
+Date: Thu, 25 Jun 2020 15:35:03 +0200
+Message-ID: <20200625133503.GO1320@dhcp22.suse.cz>
 References: <20200625113122.7540-1-willy@infradead.org>
- <20200625113122.7540-7-willy@infradead.org>
- <20200625124017.GL1320@dhcp22.suse.cz>
- <20200625131055.GC7703@casper.infradead.org>
+ <20200625113122.7540-5-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20200625131055.GC7703@casper.infradead.org>
+In-Reply-To: <20200625113122.7540-5-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Wilcox <willy@infradead.org>
+To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
 Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-xfs@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.de>
 List-Id: dm-devel.ids
 
-On Thu 25-06-20 14:10:55, Matthew Wilcox wrote:
-> On Thu, Jun 25, 2020 at 02:40:17PM +0200, Michal Hocko wrote:
-> > On Thu 25-06-20 12:31:22, Matthew Wilcox wrote:
-> > > Similar to memalloc_noio() and memalloc_nofs(), memalloc_nowait()
-> > > guarantees we will not sleep to reclaim memory.  Use it to simplify
-> > > dm-bufio's allocations.
-> > 
-> > memalloc_nowait is a good idea! I suspect the primary usecase would be
-> > vmalloc.
+On Thu 25-06-20 12:31:20, Matthew Wilcox wrote:
+> We're short on PF_* flags, so make memalloc_nofs its own bit where we
+> have plenty of space.
 > 
-> That's funny.  My use case is allocating page tables in an RCU protected
-> page fault handler.  Jens' use case is allocating page cache.  This one
-> is a vmalloc consumer (which is also indirectly page table allocation).
+> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+
+forgot to add
+Acked-by: Michal Hocko <mhocko@suse.com>
+
+> ---
+>  fs/iomap/buffered-io.c   |  2 +-
+>  include/linux/sched.h    |  2 +-
+>  include/linux/sched/mm.h | 13 ++++++-------
+>  3 files changed, 8 insertions(+), 9 deletions(-)
 > 
-> > > @@ -877,7 +857,9 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
-> > >  	 */
-> > >  	while (1) {
-> > >  		if (dm_bufio_cache_size_latch != 1) {
-> > > -			b = alloc_buffer(c, GFP_NOWAIT | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
-> > > +			unsigned nowait_flag = memalloc_nowait_save();
-> > > +			b = alloc_buffer(c, GFP_KERNEL | __GFP_NOMEMALLOC | __GFP_NOWARN);
-> > > +			memalloc_nowait_restore(nowait_flag);
-> > 
-> > This looks confusing though. I am not familiar with alloc_buffer and
-> > there is quite some tweaking around __GFP_NORETRY in alloc_buffer_data
-> > which I do not follow but GFP_KERNEL just struck my eyes. So why cannot
-> > we have 
-> > 		alloc_buffer(GFP_NOWAIT | __GFP_NOMEMALLOC | __GFP_NOWARN);
-> 
-> Actually, I wanted to ask about the proliferation of __GFP_NOMEMALLOC
-> in the block layer.  Am I right in thinking it really has no effect
-> unless GFP_ATOMIC is set?
+> diff --git a/fs/iomap/buffered-io.c b/fs/iomap/buffered-io.c
+> index bcfc288dba3f..87d66c13bf5c 100644
+> --- a/fs/iomap/buffered-io.c
+> +++ b/fs/iomap/buffered-io.c
+> @@ -1502,7 +1502,7 @@ iomap_do_writepage(struct page *page, struct writeback_control *wbc, void *data)
+>  	 * Given that we do not allow direct reclaim to call us, we should
+>  	 * never be called in a recursive filesystem reclaim context.
+>  	 */
+> -	if (WARN_ON_ONCE(current->flags & PF_MEMALLOC_NOFS))
+> +	if (WARN_ON_ONCE(current->memalloc_nofs))
+>  		goto redirty;
+>  
+>  	/*
+> diff --git a/include/linux/sched.h b/include/linux/sched.h
+> index cf18a3d2bc4c..eaf36ae1fde2 100644
+> --- a/include/linux/sched.h
+> +++ b/include/linux/sched.h
+> @@ -802,6 +802,7 @@ struct task_struct {
+>  	unsigned			in_memstall:1;
+>  #endif
+>  	unsigned			memalloc_noio:1;
+> +	unsigned			memalloc_nofs:1;
+>  
+>  	unsigned long			atomic_flags; /* Flags requiring atomic access. */
+>  
+> @@ -1505,7 +1506,6 @@ extern struct pid *cad_pid;
+>  #define PF_NOFREEZE		0x00008000	/* This thread should not be frozen */
+>  #define PF_FROZEN		0x00010000	/* Frozen for system suspend */
+>  #define PF_KSWAPD		0x00020000	/* I am kswapd */
+> -#define PF_MEMALLOC_NOFS	0x00040000	/* All allocation requests will inherit GFP_NOFS */
+>  #define PF_LOCAL_THROTTLE	0x00100000	/* Throttle writes only against the bdi I write to,
+>  						 * I am cleaning dirty pages from some other bdi. */
+>  #define PF_KTHREAD		0x00200000	/* I am a kernel thread */
+> diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
+> index b0089eadc367..08bc9d0606a8 100644
+> --- a/include/linux/sched/mm.h
+> +++ b/include/linux/sched/mm.h
+> @@ -175,20 +175,19 @@ static inline bool in_vfork(struct task_struct *tsk)
+>  
+>  /*
+>   * Applies per-task gfp context to the given allocation flags.
+> - * PF_MEMALLOC_NOFS implies GFP_NOFS
+>   * PF_MEMALLOC_NOCMA implies no allocation from CMA region.
+>   */
+>  static inline gfp_t current_gfp_context(gfp_t flags)
+>  {
+> -	if (unlikely(current->flags & (PF_MEMALLOC_NOFS | PF_MEMALLOC_NOCMA) ||
+> -		     current->memalloc_noio)) {
+> +	if (unlikely((current->flags & PF_MEMALLOC_NOCMA) ||
+> +		     current->memalloc_noio || current->memalloc_nofs)) {
+>  		/*
+>  		 * NOIO implies both NOIO and NOFS and it is a weaker context
+>  		 * so always make sure it makes precedence
+>  		 */
+>  		if (current->memalloc_noio)
+>  			flags &= ~(__GFP_IO | __GFP_FS);
+> -		else if (current->flags & PF_MEMALLOC_NOFS)
+> +		else if (current->memalloc_nofs)
+>  			flags &= ~__GFP_FS;
+>  #ifdef CONFIG_CMA
+>  		if (current->flags & PF_MEMALLOC_NOCMA)
+> @@ -254,8 +253,8 @@ static inline void memalloc_noio_restore(unsigned int flags)
+>   */
+>  static inline unsigned int memalloc_nofs_save(void)
+>  {
+> -	unsigned int flags = current->flags & PF_MEMALLOC_NOFS;
+> -	current->flags |= PF_MEMALLOC_NOFS;
+> +	unsigned int flags = current->memalloc_nofs;
+> +	current->memalloc_nofs = 1;
+>  	return flags;
+>  }
+>  
+> @@ -269,7 +268,7 @@ static inline unsigned int memalloc_nofs_save(void)
+>   */
+>  static inline void memalloc_nofs_restore(unsigned int flags)
+>  {
+> -	current->flags = (current->flags & ~PF_MEMALLOC_NOFS) | flags;
+> +	current->memalloc_nofs = flags ? 1 : 0;
+>  }
+>  
+>  static inline unsigned int memalloc_noreclaim_save(void)
+> -- 
+> 2.27.0
 
-It does have an effect as an __GFP_MEMALLOC resp PF_MEMALLOC inhibitor.
-
-> It seems like a magic flag that some driver
-> developers are sprinkling around randomly, so we probably need to clarify
-> the documentation on it.
-
-Would the following make more sense?
-diff --git a/include/linux/gfp.h b/include/linux/gfp.h
-index 67a0774e080b..014aa7a6d36a 100644
---- a/include/linux/gfp.h
-+++ b/include/linux/gfp.h
-@@ -116,8 +116,9 @@ struct vm_area_struct;
-  * Usage of a pre-allocated pool (e.g. mempool) should be always considered
-  * before using this flag.
-  *
-- * %__GFP_NOMEMALLOC is used to explicitly forbid access to emergency reserves.
-- * This takes precedence over the %__GFP_MEMALLOC flag if both are set.
-+ * %__GFP_NOMEMALLOC is used to inhibit __GFP_MEMALLOC resp. process scope
-+ * variant of it PF_MEMALLOC. So use this flag if the caller of the allocation
-+ * context might contain one or the other.
-  */
- #define __GFP_ATOMIC	((__force gfp_t)___GFP_ATOMIC)
- #define __GFP_HIGH	((__force gfp_t)___GFP_HIGH)
-
-> What I was trying to do was just use the memalloc_nofoo API to control
-> what was going on and then the driver can just use GFP_KERNEL.  I should
-> probably have completed that thought before sending the patches out.
-
-Yes the effect will be the same but it just really hit my eyes as this
-was in the same diff. IMHO GFP_NOWAIT would be easier to grasp but
-nothing I would dare to insist on.
 -- 
 Michal Hocko
 SUSE Labs
