@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 7/7] multipath: add option to skip multipathd
-	delegation
-Date: Thu, 25 Jun 2020 15:42:21 -0500
-Message-ID: <1593117741-28750-8-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 5/7] multipath: make flushing maps work like
+	other commands
+Date: Thu, 25 Jun 2020 15:42:19 -0500
+Message-ID: <1593117741-28750-6-git-send-email-bmarzins@redhat.com>
 References: <1593117741-28750-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,59 +22,101 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-Add the -D option to allow users to skip delegating commands to
-multipathd.
+The config structure doesn't need a special variable just for removes.
+Multipath can just use the cmd variable, like it does for the other
+commands.
 
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/config.h | 1 +
- multipath/main.c      | 8 +++++++-
- 2 files changed, 8 insertions(+), 1 deletion(-)
+ libmultipath/config.h    |  3 ++-
+ libmultipath/configure.h |  3 ---
+ multipath/main.c         | 20 ++++++++++----------
+ 3 files changed, 12 insertions(+), 14 deletions(-)
 
 diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 55569360..92c61a0d 100644
+index ceecff2d..55569360 100644
 --- a/libmultipath/config.h
 +++ b/libmultipath/config.h
-@@ -190,6 +190,7 @@ struct config {
- 	int ghost_delay;
- 	int find_multipaths_timeout;
- 	int marginal_pathgroups;
-+	int skip_delegate;
- 	unsigned int version[3];
- 	unsigned int sequence_nr;
+@@ -38,6 +38,8 @@ enum mpath_cmds {
+ 	CMD_ADD_WWID,
+ 	CMD_USABLE_PATHS,
+ 	CMD_DUMP_CONFIG,
++	CMD_FLUSH_ONE,
++	CMD_FLUSH_ALL,
+ };
  
+ enum force_reload_types {
+@@ -142,7 +144,6 @@ struct config {
+ 	unsigned int max_checkint;
+ 	bool use_watchdog;
+ 	int pgfailback;
+-	int remove;
+ 	int rr_weight;
+ 	int no_path_retry;
+ 	int user_friendly_names;
+diff --git a/libmultipath/configure.h b/libmultipath/configure.h
+index d7509000..0e33bf40 100644
+--- a/libmultipath/configure.h
++++ b/libmultipath/configure.h
+@@ -45,9 +45,6 @@ enum {
+ 	CP_RETRY,
+ };
+ 
+-#define FLUSH_ONE 1
+-#define FLUSH_ALL 2
+-
+ struct vectors;
+ 
+ int setup_map (struct multipath * mpp, char * params, int params_size,
 diff --git a/multipath/main.c b/multipath/main.c
-index 6a24e483..4c43314e 100644
+index d89f0a91..101fd656 100644
 --- a/multipath/main.c
 +++ b/multipath/main.c
-@@ -817,6 +817,9 @@ int delegate_to_multipathd(enum mpath_cmds cmd,
- 	*p = '\0';
- 	n = sizeof(command);
- 
-+	if (conf->skip_delegate)
-+		return NOT_DELEGATED;
-+
- 	if (cmd == CMD_CREATE && conf->force_reload == FORCE_RELOAD_YES) {
- 		p += snprintf(p, n, "reconfigure");
- 	}
-@@ -890,7 +893,7 @@ main (int argc, char *argv[])
- 	multipath_conf = conf;
- 	conf->retrigger_tries = 0;
- 	conf->force_sync = 1;
--	while ((arg = getopt(argc, argv, ":adcChl::eFfM:v:p:b:BrR:itTquUwW")) != EOF ) {
-+	while ((arg = getopt(argc, argv, ":adDcChl::eFfM:v:p:b:BrR:itTquUwW")) != EOF ) {
- 		switch(arg) {
- 		case 1: printf("optarg : %s\n",optarg);
- 			break;
-@@ -922,6 +925,9 @@ main (int argc, char *argv[])
- 			if (cmd == CMD_CREATE)
+@@ -909,10 +909,10 @@ main (int argc, char *argv[])
  				cmd = CMD_DRY_RUN;
  			break;
-+		case 'D':
-+			conf->skip_delegate = 1;
-+			break;
  		case 'f':
- 			cmd = CMD_FLUSH_ONE;
+-			conf->remove = FLUSH_ONE;
++			cmd = CMD_FLUSH_ONE;
  			break;
+ 		case 'F':
+-			conf->remove = FLUSH_ALL;
++			cmd = CMD_FLUSH_ALL;
+ 			break;
+ 		case 'l':
+ 			if (optarg && !strncmp(optarg, "l", 1))
+@@ -1053,6 +1053,10 @@ main (int argc, char *argv[])
+ 		condlog(0, "the -w option requires a device");
+ 		goto out;
+ 	}
++	if (cmd == CMD_FLUSH_ONE && dev_type != DEV_DEVMAP) {
++		condlog(0, "the -f option requires a map name to remove");
++		goto out;
++	}
+ 
+ 	switch(delegate_to_multipathd(cmd, dev, dev_type, conf)) {
+ 	case DELEGATE_OK:
+@@ -1086,16 +1090,12 @@ main (int argc, char *argv[])
+ 	}
+ 	if (retries < 0)
+ 		retries = conf->remove_retries;
+-	if (conf->remove == FLUSH_ONE) {
+-		if (dev_type == DEV_DEVMAP) {
+-			r = dm_suspend_and_flush_map(dev, retries) ?
+-				RTVL_FAIL : RTVL_OK;
+-		} else
+-			condlog(0, "must provide a map name to remove");
+-
++	if (cmd == CMD_FLUSH_ONE) {
++		r = dm_suspend_and_flush_map(dev, retries) ?
++		    RTVL_FAIL : RTVL_OK;
+ 		goto out;
+ 	}
+-	else if (conf->remove == FLUSH_ALL) {
++	else if (cmd == CMD_FLUSH_ALL) {
+ 		r = dm_flush_maps(1, retries) ? RTVL_FAIL : RTVL_OK;
+ 		goto out;
+ 	}
 -- 
 2.17.2
