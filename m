@@ -1,7 +1,7 @@
 From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Subject: [PATCH 6/6] mm: Add memalloc_nowait
-Date: Thu, 25 Jun 2020 12:31:22 +0100
-Message-ID: <20200625113122.7540-7-willy@infradead.org>
+Subject: [PATCH 1/6] mm: Replace PF_MEMALLOC_NOIO with memalloc_noio
+Date: Thu, 25 Jun 2020 12:31:17 +0100
+Message-ID: <20200625113122.7540-2-willy@infradead.org>
 References: <20200625113122.7540-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,116 +12,179 @@ To: linux-kernel@vger.kernel.org, linux-mm@kvack.org
 Cc: "Matthew Wilcox (Oracle)" <willy@infradead.org>, linux-xfs@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.de>
 List-Id: dm-devel.ids
 
-Similar to memalloc_noio() and memalloc_nofs(), memalloc_nowait()
-guarantees we will not sleep to reclaim memory.  Use it to simplify
-dm-bufio's allocations.
+We're short on PF_* flags, so make memalloc_noio its own bit where we
+have plenty of space.
 
 Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
 ---
- drivers/md/dm-bufio.c    | 30 ++++++++----------------------
- include/linux/sched.h    |  1 +
- include/linux/sched/mm.h | 12 ++++++++----
- 3 files changed, 17 insertions(+), 26 deletions(-)
+ drivers/block/loop.c           |  3 ++-
+ drivers/md/dm-zoned-metadata.c |  5 ++---
+ include/linux/sched.h          |  2 +-
+ include/linux/sched/mm.h       | 30 +++++++++++++++++++++++-------
+ kernel/sys.c                   |  8 +++-----
+ 5 files changed, 31 insertions(+), 17 deletions(-)
 
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index 6d1565021d74..140ada9a2c8f 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -412,23 +412,6 @@ static void *alloc_buffer_data(struct dm_bufio_client *c, gfp_t gfp_mask,
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index 475e1a738560..c8742e25e58a 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -52,6 +52,7 @@
+ #include <linux/module.h>
+ #include <linux/moduleparam.h>
+ #include <linux/sched.h>
++#include <linux/sched/mm.h>
+ #include <linux/fs.h>
+ #include <linux/file.h>
+ #include <linux/stat.h>
+@@ -929,7 +930,7 @@ static void loop_unprepare_queue(struct loop_device *lo)
  
- 	*data_mode = DATA_MODE_VMALLOC;
- 
--	/*
--	 * __vmalloc allocates the data pages and auxiliary structures with
--	 * gfp_flags that were specified, but pagetables are always allocated
--	 * with GFP_KERNEL, no matter what was specified as gfp_mask.
--	 *
--	 * Consequently, we must set per-process flag PF_MEMALLOC_NOIO so that
--	 * all allocations done by this process (including pagetables) are done
--	 * as if GFP_NOIO was specified.
--	 */
--	if (gfp_mask & __GFP_NORETRY) {
--		unsigned noio_flag = memalloc_noio_save();
--		void *ptr = __vmalloc(c->block_size, gfp_mask);
--
--		memalloc_noio_restore(noio_flag);
--		return ptr;
--	}
--
- 	return __vmalloc(c->block_size, gfp_mask);
+ static int loop_kthread_worker_fn(void *worker_ptr)
+ {
+-	current->flags |= PF_LOCAL_THROTTLE | PF_MEMALLOC_NOIO;
++	set_current_io_flusher();
+ 	return kthread_worker_fn(worker_ptr);
  }
  
-@@ -866,9 +849,6 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
- 	 * dm-bufio is resistant to allocation failures (it just keeps
- 	 * one buffer reserved in cases all the allocations fail).
- 	 * So set flags to not try too hard:
--	 *	GFP_NOWAIT: don't wait; if we need to sleep we'll release our
--	 *		    mutex and wait ourselves.
--	 *	__GFP_NORETRY: don't retry and rather return failure
- 	 *	__GFP_NOMEMALLOC: don't use emergency reserves
- 	 *	__GFP_NOWARN: don't print a warning in case of failure
- 	 *
-@@ -877,7 +857,9 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
- 	 */
- 	while (1) {
- 		if (dm_bufio_cache_size_latch != 1) {
--			b = alloc_buffer(c, GFP_NOWAIT | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
-+			unsigned nowait_flag = memalloc_nowait_save();
-+			b = alloc_buffer(c, GFP_KERNEL | __GFP_NOMEMALLOC | __GFP_NOWARN);
-+			memalloc_nowait_restore(nowait_flag);
- 			if (b)
- 				return b;
- 		}
-@@ -886,8 +868,12 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
- 			return NULL;
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index 130b5a6d9f12..1c5ae674ba20 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -1599,9 +1599,8 @@ static int dmz_update_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
  
- 		if (dm_bufio_cache_size_latch != 1 && !tried_noio_alloc) {
-+			unsigned noio_flag;
-+
- 			dm_bufio_unlock(c);
--			b = alloc_buffer(c, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
-+			noio_flag = memalloc_noio_save();
-+			b = alloc_buffer(c, GFP_KERNEL | __GFP_NOMEMALLOC | __GFP_NOWARN);
-+			memalloc_noio_restore(noio_flag);
- 			dm_bufio_lock(c);
- 			if (b)
- 				return b;
+ 	/*
+ 	 * Get zone information from disk. Since blkdev_report_zones() uses
+-	 * GFP_KERNEL by default for memory allocations, set the per-task
+-	 * PF_MEMALLOC_NOIO flag so that all allocations are done as if
+-	 * GFP_NOIO was specified.
++	 * GFP_KERNEL by default for memory allocations, use
++	 * memalloc_noio_save() to prevent recursion into the driver.
+ 	 */
+ 	noio_flag = memalloc_noio_save();
+ 	ret = blkdev_report_zones(dev->bdev, dmz_start_sect(zmd, zone), 1,
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 90336850e940..b1c2cddd366c 100644
+index b62e6aaf28f0..cf18a3d2bc4c 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -803,6 +803,7 @@ struct task_struct {
+@@ -801,6 +801,7 @@ struct task_struct {
+ 	/* Stalled due to lack of memory */
+ 	unsigned			in_memstall:1;
  #endif
- 	unsigned			memalloc_noio:1;
- 	unsigned			memalloc_nofs:1;
-+	unsigned			memalloc_nowait:1;
- 	unsigned			memalloc_nocma:1;
++	unsigned			memalloc_noio:1;
  
  	unsigned long			atomic_flags; /* Flags requiring atomic access. */
+ 
+@@ -1505,7 +1506,6 @@ extern struct pid *cad_pid;
+ #define PF_FROZEN		0x00010000	/* Frozen for system suspend */
+ #define PF_KSWAPD		0x00020000	/* I am kswapd */
+ #define PF_MEMALLOC_NOFS	0x00040000	/* All allocation requests will inherit GFP_NOFS */
+-#define PF_MEMALLOC_NOIO	0x00080000	/* All allocation requests will inherit GFP_NOIO */
+ #define PF_LOCAL_THROTTLE	0x00100000	/* Throttle writes only against the bdi I write to,
+ 						 * I am cleaning dirty pages from some other bdi. */
+ #define PF_KTHREAD		0x00200000	/* I am a kernel thread */
 diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index 6f7b59a848a6..6484569f50df 100644
+index 480a4d1b7dd8..1a7e1ab1be85 100644
 --- a/include/linux/sched/mm.h
 +++ b/include/linux/sched/mm.h
-@@ -179,12 +179,16 @@ static inline bool in_vfork(struct task_struct *tsk)
+@@ -175,19 +175,18 @@ static inline bool in_vfork(struct task_struct *tsk)
+ 
+ /*
+  * Applies per-task gfp context to the given allocation flags.
+- * PF_MEMALLOC_NOIO implies GFP_NOIO
+  * PF_MEMALLOC_NOFS implies GFP_NOFS
+  * PF_MEMALLOC_NOCMA implies no allocation from CMA region.
+  */
  static inline gfp_t current_gfp_context(gfp_t flags)
  {
- 	if (unlikely(current->memalloc_noio || current->memalloc_nofs ||
--		     current->memalloc_nocma)) {
-+		     current->memalloc_nocma) || current->memalloc_nowait) {
+-	if (unlikely(current->flags &
+-		     (PF_MEMALLOC_NOIO | PF_MEMALLOC_NOFS | PF_MEMALLOC_NOCMA))) {
++	if (unlikely(current->flags & (PF_MEMALLOC_NOFS | PF_MEMALLOC_NOCMA) ||
++		     current->memalloc_noio)) {
  		/*
--		 * NOIO implies both NOIO and NOFS and it is a weaker context
--		 * so always make sure it makes precedence
-+		 * Clearing DIRECT_RECLAIM means we won't get to the point
-+		 * of testing IO or FS, so we don't need to bother clearing
-+		 * them.  noio implies neither IO nor FS and it is a weaker
-+		 * context so always make sure it takes precedence.
+ 		 * NOIO implies both NOIO and NOFS and it is a weaker context
+ 		 * so always make sure it makes precedence
  		 */
--		if (current->memalloc_noio)
-+		if (current->memalloc_nowait)
-+			flags &= ~__GFP_DIRECT_RECLAIM;
-+		else if (current->memalloc_noio)
+-		if (current->flags & PF_MEMALLOC_NOIO)
++		if (current->memalloc_noio)
  			flags &= ~(__GFP_IO | __GFP_FS);
- 		else if (current->memalloc_nofs)
+ 		else if (current->flags & PF_MEMALLOC_NOFS)
  			flags &= ~__GFP_FS;
+@@ -224,8 +223,8 @@ static inline void fs_reclaim_release(gfp_t gfp_mask) { }
+  */
+ static inline unsigned int memalloc_noio_save(void)
+ {
+-	unsigned int flags = current->flags & PF_MEMALLOC_NOIO;
+-	current->flags |= PF_MEMALLOC_NOIO;
++	unsigned int flags = current->memalloc_noio;
++	current->memalloc_noio = 1;
+ 	return flags;
+ }
+ 
+@@ -239,7 +238,7 @@ static inline unsigned int memalloc_noio_save(void)
+  */
+ static inline void memalloc_noio_restore(unsigned int flags)
+ {
+-	current->flags = (current->flags & ~PF_MEMALLOC_NOIO) | flags;
++	current->memalloc_noio = flags ? 1 : 0;
+ }
+ 
+ /**
+@@ -309,6 +308,23 @@ static inline void memalloc_nocma_restore(unsigned int flags)
+ }
+ #endif
+ 
++static inline void set_current_io_flusher(void)
++{
++	current->flags |= PF_LOCAL_THROTTLE;
++	current->memalloc_noio = 1;
++}
++
++static inline void clear_current_io_flusher(void)
++{
++	current->flags &= ~PF_LOCAL_THROTTLE;
++	current->memalloc_noio = 0;
++}
++
++static inline bool get_current_io_flusher(void)
++{
++	return current->flags & PF_LOCAL_THROTTLE;
++}
++
+ #ifdef CONFIG_MEMCG
+ /**
+  * memalloc_use_memcg - Starts the remote memcg charging scope.
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 00a96746e28a..78c90d1e92f4 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2275,8 +2275,6 @@ int __weak arch_prctl_spec_ctrl_set(struct task_struct *t, unsigned long which,
+ 	return -EINVAL;
+ }
+ 
+-#define PR_IO_FLUSHER (PF_MEMALLOC_NOIO | PF_LOCAL_THROTTLE)
+-
+ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 		unsigned long, arg4, unsigned long, arg5)
+ {
+@@ -2512,9 +2510,9 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 			return -EINVAL;
+ 
+ 		if (arg2 == 1)
+-			current->flags |= PR_IO_FLUSHER;
++			set_current_io_flusher();
+ 		else if (!arg2)
+-			current->flags &= ~PR_IO_FLUSHER;
++			clear_current_io_flusher();
+ 		else
+ 			return -EINVAL;
+ 		break;
+@@ -2525,7 +2523,7 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 		if (arg2 || arg3 || arg4 || arg5)
+ 			return -EINVAL;
+ 
+-		error = (current->flags & PR_IO_FLUSHER) == PR_IO_FLUSHER;
++		error = get_current_io_flusher();
+ 		break;
+ 	default:
+ 		error = -EINVAL;
 -- 
 2.27.0
