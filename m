@@ -1,118 +1,74 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH 4/6] mm: Replace PF_MEMALLOC_NOFS with memalloc_nofs
-Date: Thu, 25 Jun 2020 15:35:03 +0200
-Message-ID: <20200625133503.GO1320@dhcp22.suse.cz>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [PATCH 0/6] Overhaul memalloc_no*
+Date: Thu, 25 Jun 2020 11:48:32 -0700
+Message-ID: <20200625184832.GP7606@magnolia>
 References: <20200625113122.7540-1-willy@infradead.org>
- <20200625113122.7540-5-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20200625113122.7540-5-willy@infradead.org>
+In-Reply-To: <20200625113122.7540-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-xfs@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.de>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-xfs@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.de>, Yafang Shao <laoar.shao@gmail.com>
 List-Id: dm-devel.ids
 
-On Thu 25-06-20 12:31:20, Matthew Wilcox wrote:
-> We're short on PF_* flags, so make memalloc_nofs its own bit where we
-> have plenty of space.
+On Thu, Jun 25, 2020 at 12:31:16PM +0100, Matthew Wilcox (Oracle) wrote:
+> I want a memalloc_nowait like we have memalloc_noio and memalloc_nofs
+> for an upcoming patch series, and Jens also wants it for non-blocking
+> io_uring.  It turns out we already have dm-bufio which could benefit
+> from memalloc_nowait, so it may as well go into the tree now.
 > 
-> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+> The biggest problem is that we're basically out of PF_ flags, so we need
+> to find somewhere else to store the PF_MEMALLOC_NOWAIT flag.  It turns
+> out the PF_ flags are really supposed to be used for flags which are
+> accessed from other tasks, and the MEMALLOC flags are only going to
+> be used by this task.  So shuffling everything around frees up some PF
+> flags and generally makes the world a better place.
 
-forgot to add
-Acked-by: Michal Hocko <mhocko@suse.com>
+So, uh, how does this intersect with the patch "xfs: reintroduce
+PF_FSTRANS for transaction reservation recursion protection" that
+re-adds PF_TRANS because uh I guess we lost some subtlety or another at
+some point?
 
-> ---
->  fs/iomap/buffered-io.c   |  2 +-
->  include/linux/sched.h    |  2 +-
->  include/linux/sched/mm.h | 13 ++++++-------
->  3 files changed, 8 insertions(+), 9 deletions(-)
+I don't have any strong opinion on this series one way or another, but
+seeing as that patch was generating discussion about how PF_MEMALLOC_NO*
+is not quite the same as PF_TRANS, I kinda want all these competing PF
+tweaks and reworks to come together into a single series to review,
+rather than the four(?) different people submitting conflicting changes.
+
+[adding Yafang Shao to cc]
+
+--D
+
+> Patch series also available from
+> http://git.infradead.org/users/willy/linux.git/shortlog/refs/heads/memalloc
 > 
-> diff --git a/fs/iomap/buffered-io.c b/fs/iomap/buffered-io.c
-> index bcfc288dba3f..87d66c13bf5c 100644
-> --- a/fs/iomap/buffered-io.c
-> +++ b/fs/iomap/buffered-io.c
-> @@ -1502,7 +1502,7 @@ iomap_do_writepage(struct page *page, struct writeback_control *wbc, void *data)
->  	 * Given that we do not allow direct reclaim to call us, we should
->  	 * never be called in a recursive filesystem reclaim context.
->  	 */
-> -	if (WARN_ON_ONCE(current->flags & PF_MEMALLOC_NOFS))
-> +	if (WARN_ON_ONCE(current->memalloc_nofs))
->  		goto redirty;
->  
->  	/*
-> diff --git a/include/linux/sched.h b/include/linux/sched.h
-> index cf18a3d2bc4c..eaf36ae1fde2 100644
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -802,6 +802,7 @@ struct task_struct {
->  	unsigned			in_memstall:1;
->  #endif
->  	unsigned			memalloc_noio:1;
-> +	unsigned			memalloc_nofs:1;
->  
->  	unsigned long			atomic_flags; /* Flags requiring atomic access. */
->  
-> @@ -1505,7 +1506,6 @@ extern struct pid *cad_pid;
->  #define PF_NOFREEZE		0x00008000	/* This thread should not be frozen */
->  #define PF_FROZEN		0x00010000	/* Frozen for system suspend */
->  #define PF_KSWAPD		0x00020000	/* I am kswapd */
-> -#define PF_MEMALLOC_NOFS	0x00040000	/* All allocation requests will inherit GFP_NOFS */
->  #define PF_LOCAL_THROTTLE	0x00100000	/* Throttle writes only against the bdi I write to,
->  						 * I am cleaning dirty pages from some other bdi. */
->  #define PF_KTHREAD		0x00200000	/* I am a kernel thread */
-> diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-> index b0089eadc367..08bc9d0606a8 100644
-> --- a/include/linux/sched/mm.h
-> +++ b/include/linux/sched/mm.h
-> @@ -175,20 +175,19 @@ static inline bool in_vfork(struct task_struct *tsk)
->  
->  /*
->   * Applies per-task gfp context to the given allocation flags.
-> - * PF_MEMALLOC_NOFS implies GFP_NOFS
->   * PF_MEMALLOC_NOCMA implies no allocation from CMA region.
->   */
->  static inline gfp_t current_gfp_context(gfp_t flags)
->  {
-> -	if (unlikely(current->flags & (PF_MEMALLOC_NOFS | PF_MEMALLOC_NOCMA) ||
-> -		     current->memalloc_noio)) {
-> +	if (unlikely((current->flags & PF_MEMALLOC_NOCMA) ||
-> +		     current->memalloc_noio || current->memalloc_nofs)) {
->  		/*
->  		 * NOIO implies both NOIO and NOFS and it is a weaker context
->  		 * so always make sure it makes precedence
->  		 */
->  		if (current->memalloc_noio)
->  			flags &= ~(__GFP_IO | __GFP_FS);
-> -		else if (current->flags & PF_MEMALLOC_NOFS)
-> +		else if (current->memalloc_nofs)
->  			flags &= ~__GFP_FS;
->  #ifdef CONFIG_CMA
->  		if (current->flags & PF_MEMALLOC_NOCMA)
-> @@ -254,8 +253,8 @@ static inline void memalloc_noio_restore(unsigned int flags)
->   */
->  static inline unsigned int memalloc_nofs_save(void)
->  {
-> -	unsigned int flags = current->flags & PF_MEMALLOC_NOFS;
-> -	current->flags |= PF_MEMALLOC_NOFS;
-> +	unsigned int flags = current->memalloc_nofs;
-> +	current->memalloc_nofs = 1;
->  	return flags;
->  }
->  
-> @@ -269,7 +268,7 @@ static inline unsigned int memalloc_nofs_save(void)
->   */
->  static inline void memalloc_nofs_restore(unsigned int flags)
->  {
-> -	current->flags = (current->flags & ~PF_MEMALLOC_NOFS) | flags;
-> +	current->memalloc_nofs = flags ? 1 : 0;
->  }
->  
->  static inline unsigned int memalloc_noreclaim_save(void)
+> Matthew Wilcox (Oracle) (6):
+>   mm: Replace PF_MEMALLOC_NOIO with memalloc_noio
+>   mm: Add become_kswapd and restore_kswapd
+>   xfs: Convert to memalloc_nofs_save
+>   mm: Replace PF_MEMALLOC_NOFS with memalloc_nofs
+>   mm: Replace PF_MEMALLOC_NOIO with memalloc_nocma
+>   mm: Add memalloc_nowait
+> 
+>  drivers/block/loop.c           |  3 +-
+>  drivers/md/dm-bufio.c          | 30 ++++--------
+>  drivers/md/dm-zoned-metadata.c |  5 +-
+>  fs/iomap/buffered-io.c         |  2 +-
+>  fs/xfs/kmem.c                  |  2 +-
+>  fs/xfs/libxfs/xfs_btree.c      | 14 +++---
+>  fs/xfs/xfs_aops.c              |  4 +-
+>  fs/xfs/xfs_buf.c               |  2 +-
+>  fs/xfs/xfs_linux.h             |  6 ---
+>  fs/xfs/xfs_trans.c             | 14 +++---
+>  fs/xfs/xfs_trans.h             |  2 +-
+>  include/linux/sched.h          |  7 +--
+>  include/linux/sched/mm.h       | 84 ++++++++++++++++++++++++++--------
+>  kernel/sys.c                   |  8 ++--
+>  mm/vmscan.c                    | 16 +------
+>  15 files changed, 105 insertions(+), 94 deletions(-)
+> 
 > -- 
 > 2.27.0
-
--- 
-Michal Hocko
-SUSE Labs
+> 
