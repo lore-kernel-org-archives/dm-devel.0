@@ -1,86 +1,118 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH 1/6] mm: Replace PF_MEMALLOC_NOIO with memalloc_noio
-Date: Thu, 25 Jun 2020 14:42:34 +0200
-Message-ID: <20200625124234.GM1320@dhcp22.suse.cz>
-References: <20200625113122.7540-1-willy@infradead.org>
- <20200625113122.7540-2-willy@infradead.org>
- <20200625122239.GJ1320@dhcp22.suse.cz>
- <20200625123418.GB7703@casper.infradead.org>
+From: Ferdinand Blomqvist <ferdinand.blomqvist@gmail.com>
+Subject: Re: [RFC v2] Reed-Solomon Code: Update no_eras to the actual number
+ of errors
+Date: Thu, 25 Jun 2020 16:06:24 +0300
+Message-ID: <20200625130624.GC1036@mail-personal>
+References: <20200625073621.4919-1-aiden.leong@aibsd.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20200625123418.GB7703@casper.infradead.org>
+In-Reply-To: <20200625073621.4919-1-aiden.leong@aibsd.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Wilcox <willy@infradead.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-xfs@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.de>
+To: Aiden Leong <aiden.leong@aibsd.com>
+Cc: "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Thomas Gleixner <tglx@linutronix.de>, YueHaibing <yuehaibing@huawei.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu 25-06-20 13:34:18, Matthew Wilcox wrote:
-> On Thu, Jun 25, 2020 at 02:22:39PM +0200, Michal Hocko wrote:
-> > On Thu 25-06-20 12:31:17, Matthew Wilcox wrote:
-> > > We're short on PF_* flags, so make memalloc_noio its own bit where we
-> > > have plenty of space.
-> > 
-> > I do not mind moving that outside of the PF_* space. Unless I
-> > misremember all flags in this space were intented to be set only on the
-> > current which rules out any RMW races and therefore they can be
-> > lockless. I am not sure this holds for the bitfield you are adding this
-> > to. At least in_memstall seem to be set on external task as well. But
-> > this would require double checking. Maybe that is not really intended or
-> > just a bug.
-> 
-> I was going from the comment:
-> 
->         /* Unserialized, strictly 'current' */
-> (which you can't see from the context of the diff, but is above the block)
-> 
-> The situation with ->flags is a little more ambiguous:
-> 
-> /*
->  * Only the _current_ task can read/write to tsk->flags, but other
->  * tasks can access tsk->flags in readonly mode for example
->  * with tsk_used_math (like during threaded core dumping).
->  * There is however an exception to this rule during ptrace
->  * or during fork: the ptracer task is allowed to write to the
->  * child->flags of its traced child (same goes for fork, the parent
->  * can write to the child->flags), because we're guaranteed the
->  * child is not running and in turn not changing child->flags
->  * at the same time the parent does it.
->  */
+Hi!
 
-OK, I have obviously missed that.
+On 2020-06-25 00:36:01, Aiden Leong wrote:
+>Corr and eras_pos are updated to actual correction pattern and erasure
+>positions, but no_eras is not.
+>
+>When this library is used to recover lost bytes, we normally memset the
+>lost trunk of bytes to zero as a placeholder. Unfortunately, if the lost
+>byte is zero, b[i] is zero too. Without correct no_eras, users won't be
+>able to determine the valid length of corr and eras_pos.
+>
+>Signed-off-by: Aiden Leong <aiden.leong@aibsd.com>
 
-> but it wasn't unsafe to use the PF_ flags in the way that you were.
-> It's just crowded.
-> 
-> If in_memstall is set on other tasks, then it should be moved to the
-> PFA flags, which there are plenty of.
-> 
-> But a quick grep shows it only being read on other tasks and always
-> set on current:
-> 
-> kernel/sched/psi.c:     *flags = current->in_memstall;
-> kernel/sched/psi.c:      * in_memstall setting & accounting needs to be atomic wrt
-> kernel/sched/psi.c:     current->in_memstall = 1;
-> kernel/sched/psi.c:      * in_memstall clearing & accounting needs to be atomic wrt
-> kernel/sched/psi.c:     current->in_memstall = 0;
-> kernel/sched/psi.c:     if (task->in_memstall)
+I'm not sure I understand what you try to do. decode_rs* already returns
+the number of errors correted (or something negative upon failure). So
+your last statment is false. The lengt of corr and eras_pos is returned
+by the function. So this change is unnecessary. More comments inline.
 
-Have a look at cgroup_move_task. So I believe this is something to be
-fixed but independent on your change.
+>
+>diff --git a/lib/reed_solomon/decode_rs.c b/lib/reed_solomon/decode_rs.c
+>index 805de84ae83d..44136ea33d16 100644
+>--- a/lib/reed_solomon/decode_rs.c
+>+++ b/lib/reed_solomon/decode_rs.c
+>@@ -24,6 +24,7 @@
+> 	int count = 0;
+> 	int num_corrected;
+> 	uint16_t msk = (uint16_t) rs->nn;
+>+	int no_eras_local = no_eras ? *no_eras : 0;
+>
+> 	/*
+> 	 * The decoder buffers are in the rs control struct. They are
+>@@ -106,11 +107,11 @@
+> 	memset(&lambda[1], 0, nroots * sizeof(lambda[0]));
+> 	lambda[0] = 1;
+>
+>-	if (no_eras > 0) {
+>+	if (no_eras_local > 0) {
+> 		/* Init lambda to be the erasure locator polynomial */
+> 		lambda[1] = alpha_to[rs_modnn(rs,
+> 					prim * (nn - 1 - (eras_pos[0] + pad)))];
+>-		for (i = 1; i < no_eras; i++) {
+>+		for (i = 1; i < no_eras_local; i++) {
+> 			u = rs_modnn(rs, prim * (nn - 1 - (eras_pos[i] + pad)));
+> 			for (j = i + 1; j > 0; j--) {
+> 				tmp = index_of[lambda[j - 1]];
+>@@ -129,8 +130,8 @@
+> 	 * Begin Berlekamp-Massey algorithm to determine error+erasure
+> 	 * locator polynomial
+> 	 */
+>-	r = no_eras;
+>-	el = no_eras;
+>+	r = no_eras_local;
+>+	el = no_eras_local;
+> 	while (++r <= nroots) {	/* r is the step number */
+> 		/* Compute discrepancy at the r-th step in poly-form */
+> 		discr_r = 0;
+>@@ -158,8 +159,8 @@
+> 				} else
+> 					t[i + 1] = lambda[i + 1];
+> 			}
+>-			if (2 * el <= r + no_eras - 1) {
+>-				el = r + no_eras - el;
+>+			if (2 * el <= r + no_eras_local - 1) {
+>+				el = r + no_eras_local - el;
+> 				/*
+> 				 * 2 lines below: B(x) <-- inv(discr_r) *
+> 				 * lambda(x)
+>@@ -312,14 +313,21 @@
+> 				eras_pos[j++] = loc[i] - pad;
+> 			}
+> 		}
+>+		if (no_eras)
+>+			*no_eras = j;
+At this point j will be equal to num_corrected. So why return this
+information in no_eras, when it is already returned by the function?
 
-Feel free to add
-Acked-by: Michal Hocko <mhocko@suse.com>
+> 	} else if (data && par) {
+> 		/* Apply error to data and parity */
+>+		j = 0;
+> 		for (i = 0; i < count; i++) {
+> 			if (loc[i] < (nn - nroots))
+> 				data[loc[i] - pad] ^= b[i];
+> 			else
+> 				par[loc[i] - pad - len] ^= b[i];
+>+			if (b[i])
+>+				j++;
+> 		}
+>+		if (no_eras)
+>+			*no_eras = j;
 
-> kernel/sched/stats.h:           if (p->in_memstall)
-> kernel/sched/stats.h:           if (p->in_memstall)
-> kernel/sched/stats.h:   if (unlikely(p->in_iowait || p->in_memstall)) {
-> kernel/sched/stats.h:           if (p->in_memstall)
-> kernel/sched/stats.h:   if (unlikely(rq->curr->in_memstall))
-> 
-> so I think everything is fine.
+Same as above.
+
+>2.25.1
+>
+
+Best,
+Ferdinand
 
 -- 
-Michal Hocko
-SUSE Labs
+Ferdinand Blomqvist
+ferdinand.blomqvist[at]gmail.com
+GPG key: 9EFB 7A2C 0432 4EC5 32BA FA61 CFE9 4164 93E8 B9E4
