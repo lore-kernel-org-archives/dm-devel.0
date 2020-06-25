@@ -1,124 +1,85 @@
-From: Aiden Leong <aiden.leong@aibsd.com>
-Subject: Re: [RFC v2] Reed-Solomon Code: Update no_eras to the actual number
- of errors
-Date: Thu, 25 Jun 2020 06:20:49 -0700
-Message-ID: <8809849e-832c-d268-bda1-807157e92e5b@aibsd.com>
-References: <20200625073621.4919-1-aiden.leong@aibsd.com>
- <20200625130624.GC1036@mail-personal>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH 6/6] mm: Add memalloc_nowait
+Date: Thu, 25 Jun 2020 15:34:20 +0200
+Message-ID: <20200625133420.GN1320@dhcp22.suse.cz>
+References: <20200625113122.7540-1-willy@infradead.org>
+ <20200625113122.7540-7-willy@infradead.org>
+ <20200625124017.GL1320@dhcp22.suse.cz>
+ <20200625131055.GC7703@casper.infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200625130624.GC1036@mail-personal>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20200625131055.GC7703@casper.infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Ferdinand Blomqvist <ferdinand.blomqvist@gmail.com>
-Cc: "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Thomas Gleixner <tglx@linutronix.de>, YueHaibing <yuehaibing@huawei.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: Matthew Wilcox <willy@infradead.org>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-xfs@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.de>
 List-Id: dm-devel.ids
 
-Hi,
+On Thu 25-06-20 14:10:55, Matthew Wilcox wrote:
+> On Thu, Jun 25, 2020 at 02:40:17PM +0200, Michal Hocko wrote:
+> > On Thu 25-06-20 12:31:22, Matthew Wilcox wrote:
+> > > Similar to memalloc_noio() and memalloc_nofs(), memalloc_nowait()
+> > > guarantees we will not sleep to reclaim memory.  Use it to simplify
+> > > dm-bufio's allocations.
+> > 
+> > memalloc_nowait is a good idea! I suspect the primary usecase would be
+> > vmalloc.
+> 
+> That's funny.  My use case is allocating page tables in an RCU protected
+> page fault handler.  Jens' use case is allocating page cache.  This one
+> is a vmalloc consumer (which is also indirectly page table allocation).
+> 
+> > > @@ -877,7 +857,9 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
+> > >  	 */
+> > >  	while (1) {
+> > >  		if (dm_bufio_cache_size_latch != 1) {
+> > > -			b = alloc_buffer(c, GFP_NOWAIT | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
+> > > +			unsigned nowait_flag = memalloc_nowait_save();
+> > > +			b = alloc_buffer(c, GFP_KERNEL | __GFP_NOMEMALLOC | __GFP_NOWARN);
+> > > +			memalloc_nowait_restore(nowait_flag);
+> > 
+> > This looks confusing though. I am not familiar with alloc_buffer and
+> > there is quite some tweaking around __GFP_NORETRY in alloc_buffer_data
+> > which I do not follow but GFP_KERNEL just struck my eyes. So why cannot
+> > we have 
+> > 		alloc_buffer(GFP_NOWAIT | __GFP_NOMEMALLOC | __GFP_NOWARN);
+> 
+> Actually, I wanted to ask about the proliferation of __GFP_NOMEMALLOC
+> in the block layer.  Am I right in thinking it really has no effect
+> unless GFP_ATOMIC is set?
 
-You are right. I forgot the return value is number of errors rather than 
-status code.
+It does have an effect as an __GFP_MEMALLOC resp PF_MEMALLOC inhibitor.
 
-Sorry to bother you.
+> It seems like a magic flag that some driver
+> developers are sprinkling around randomly, so we probably need to clarify
+> the documentation on it.
 
-On 6/25/20 6:06 AM, Ferdinand Blomqvist wrote:
-> Hi!
->
-> On 2020-06-25 00:36:01, Aiden Leong wrote:
->> Corr and eras_pos are updated to actual correction pattern and erasure
->> positions, but no_eras is not.
->>
->> When this library is used to recover lost bytes, we normally memset the
->> lost trunk of bytes to zero as a placeholder. Unfortunately, if the lost
->> byte is zero, b[i] is zero too. Without correct no_eras, users won't be
->> able to determine the valid length of corr and eras_pos.
->>
->> Signed-off-by: Aiden Leong <aiden.leong@aibsd.com>
->
-> I'm not sure I understand what you try to do. decode_rs* already returns
-> the number of errors correted (or something negative upon failure). So
-> your last statment is false. The lengt of corr and eras_pos is returned
-> by the function. So this change is unnecessary. More comments inline.
->
->>
->> diff --git a/lib/reed_solomon/decode_rs.c b/lib/reed_solomon/decode_rs.c
->> index 805de84ae83d..44136ea33d16 100644
->> --- a/lib/reed_solomon/decode_rs.c
->> +++ b/lib/reed_solomon/decode_rs.c
->> @@ -24,6 +24,7 @@
->>     int count = 0;
->>     int num_corrected;
->>     uint16_t msk = (uint16_t) rs->nn;
->> +    int no_eras_local = no_eras ? *no_eras : 0;
->>
->>     /*
->>      * The decoder buffers are in the rs control struct. They are
->> @@ -106,11 +107,11 @@
->>     memset(&lambda[1], 0, nroots * sizeof(lambda[0]));
->>     lambda[0] = 1;
->>
->> -    if (no_eras > 0) {
->> +    if (no_eras_local > 0) {
->>         /* Init lambda to be the erasure locator polynomial */
->>         lambda[1] = alpha_to[rs_modnn(rs,
->>                     prim * (nn - 1 - (eras_pos[0] + pad)))];
->> -        for (i = 1; i < no_eras; i++) {
->> +        for (i = 1; i < no_eras_local; i++) {
->>             u = rs_modnn(rs, prim * (nn - 1 - (eras_pos[i] + pad)));
->>             for (j = i + 1; j > 0; j--) {
->>                 tmp = index_of[lambda[j - 1]];
->> @@ -129,8 +130,8 @@
->>      * Begin Berlekamp-Massey algorithm to determine error+erasure
->>      * locator polynomial
->>      */
->> -    r = no_eras;
->> -    el = no_eras;
->> +    r = no_eras_local;
->> +    el = no_eras_local;
->>     while (++r <= nroots) {    /* r is the step number */
->>         /* Compute discrepancy at the r-th step in poly-form */
->>         discr_r = 0;
->> @@ -158,8 +159,8 @@
->>                 } else
->>                     t[i + 1] = lambda[i + 1];
->>             }
->> -            if (2 * el <= r + no_eras - 1) {
->> -                el = r + no_eras - el;
->> +            if (2 * el <= r + no_eras_local - 1) {
->> +                el = r + no_eras_local - el;
->>                 /*
->>                  * 2 lines below: B(x) <-- inv(discr_r) *
->>                  * lambda(x)
->> @@ -312,14 +313,21 @@
->>                 eras_pos[j++] = loc[i] - pad;
->>             }
->>         }
->> +        if (no_eras)
->> +            *no_eras = j;
-> At this point j will be equal to num_corrected. So why return this
-> information in no_eras, when it is already returned by the function?
->
->>     } else if (data && par) {
->>         /* Apply error to data and parity */
->> +        j = 0;
->>         for (i = 0; i < count; i++) {
->>             if (loc[i] < (nn - nroots))
->>                 data[loc[i] - pad] ^= b[i];
->>             else
->>                 par[loc[i] - pad - len] ^= b[i];
->> +            if (b[i])
->> +                j++;
->>         }
->> +        if (no_eras)
->> +            *no_eras = j;
->
-> Same as above.
->
->> 2.25.1
->>
->
-> Best,
-> Ferdinand
->
+Would the following make more sense?
+diff --git a/include/linux/gfp.h b/include/linux/gfp.h
+index 67a0774e080b..014aa7a6d36a 100644
+--- a/include/linux/gfp.h
++++ b/include/linux/gfp.h
+@@ -116,8 +116,9 @@ struct vm_area_struct;
+  * Usage of a pre-allocated pool (e.g. mempool) should be always considered
+  * before using this flag.
+  *
+- * %__GFP_NOMEMALLOC is used to explicitly forbid access to emergency reserves.
+- * This takes precedence over the %__GFP_MEMALLOC flag if both are set.
++ * %__GFP_NOMEMALLOC is used to inhibit __GFP_MEMALLOC resp. process scope
++ * variant of it PF_MEMALLOC. So use this flag if the caller of the allocation
++ * context might contain one or the other.
+  */
+ #define __GFP_ATOMIC	((__force gfp_t)___GFP_ATOMIC)
+ #define __GFP_HIGH	((__force gfp_t)___GFP_HIGH)
+
+> What I was trying to do was just use the memalloc_nofoo API to control
+> what was going on and then the driver can just use GFP_KERNEL.  I should
+> probably have completed that thought before sending the patches out.
+
+Yes the effect will be the same but it just really hit my eyes as this
+was in the same diff. IMHO GFP_NOWAIT would be easier to grasp but
+nothing I would dare to insist on.
+-- 
+Michal Hocko
+SUSE Labs
