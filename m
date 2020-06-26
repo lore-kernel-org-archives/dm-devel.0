@@ -1,79 +1,60 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 0/6] Overhaul memalloc_no*
-Date: Fri, 26 Jun 2020 11:02:19 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2006261058250.11899@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20200625113122.7540-1-willy@infradead.org>
+Subject: Re: [PATCH 1/3] crypto: pass the flag CRYPTO_ALG_ALLOCATES_MEMORY
+Date: Fri, 26 Jun 2020 11:17:56 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2006261109520.11899@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2006091259250.30590@file01.intranet.prod.int.rdu2.redhat.com> <20200610010450.GA6449@gondor.apana.org.au> <alpine.LRH.2.02.2006100756270.27811@file01.intranet.prod.int.rdu2.redhat.com> <20200610121106.GA23137@gondor.apana.org.au>
+ <alpine.LRH.2.02.2006161052540.28052@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.2006161101080.28052@file01.intranet.prod.int.rdu2.redhat.com> <20200616173620.GA207319@gmail.com> <alpine.LRH.2.02.2006171107220.18714@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.LRH.2.02.2006171108440.18714@file01.intranet.prod.int.rdu2.redhat.com> <20200626044534.GA2870@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200625113122.7540-1-willy@infradead.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20200626044534.GA2870@gondor.apana.org.au>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Eric Biggers <ebiggers@kernel.org>, Mike Snitzer <msnitzer@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-crypto@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>, Jonathan Cameron <Jonathan.Cameron@Huawei.com>, George Cherian <gcherian@marvell.com>, Wei Xu <xuwei5@hisilicon.com>, Zaibo Xu <xuzaibo@Huawei.com>
 List-Id: dm-devel.ids
 
-Hi
 
-I suggest to join memalloc_noio and memalloc_nofs into just one flag that 
-prevents both filesystem recursion and i/o recursion.
 
-Note that any I/O can recurse into a filesystem via the loop device, thus 
-it doesn't make much sense to have a context where PF_MEMALLOC_NOFS is set 
-and PF_MEMALLOC_NOIO is not set.
+On Fri, 26 Jun 2020, Herbert Xu wrote:
+
+> On Wed, Jun 17, 2020 at 11:09:28AM -0400, Mikulas Patocka wrote:
+> >
+> > Index: linux-2.6/include/linux/crypto.h
+> > ===================================================================
+> > --- linux-2.6.orig/include/linux/crypto.h
+> > +++ linux-2.6/include/linux/crypto.h
+> > @@ -97,9 +97,18 @@
+> >  #define CRYPTO_ALG_OPTIONAL_KEY		0x00004000
+> >  
+> >  /*
+> > + * The driver may allocate memory during request processing, so it shouldn't be
+> > + * used in cases where memory allocation failures aren't acceptable, such as
+> > + * during block device encryption.
+> > + */
+> > +#define CRYPTO_ALG_ALLOCATES_MEMORY	0x00008000
+> > +
+> > +/*
+> >   * Don't trigger module loading
+> >   */
+> > -#define CRYPTO_NOLOAD			0x00008000
+> > +#define CRYPTO_NOLOAD			0x00010000
+> > +
+> > +#define CRYPTO_ALG_INHERITED_FLAGS	(CRYPTO_ALG_ASYNC | CRYPTO_ALG_ALLOCATES_MEMORY)
+> 
+> Any reason why you need to renumber NOLOAD? If not please keep
+> the existing values.
+
+There is no hard reason for that. CRYPTO_NOLOAD is a "virtual" flag that 
+could be only present in crypto algorithm requests and I thought that the 
+intention was that the virtual flags go after real flags. If you don't 
+want to change existing flags, there is no problem with that.
 
 Mikulas
 
-On Thu, 25 Jun 2020, Matthew Wilcox (Oracle) wrote:
-
-> I want a memalloc_nowait like we have memalloc_noio and memalloc_nofs
-> for an upcoming patch series, and Jens also wants it for non-blocking
-> io_uring.  It turns out we already have dm-bufio which could benefit
-> from memalloc_nowait, so it may as well go into the tree now.
-> 
-> The biggest problem is that we're basically out of PF_ flags, so we need
-> to find somewhere else to store the PF_MEMALLOC_NOWAIT flag.  It turns
-> out the PF_ flags are really supposed to be used for flags which are
-> accessed from other tasks, and the MEMALLOC flags are only going to
-> be used by this task.  So shuffling everything around frees up some PF
-> flags and generally makes the world a better place.
-> 
-> Patch series also available from
-> http://git.infradead.org/users/willy/linux.git/shortlog/refs/heads/memalloc
-> 
-> Matthew Wilcox (Oracle) (6):
->   mm: Replace PF_MEMALLOC_NOIO with memalloc_noio
->   mm: Add become_kswapd and restore_kswapd
->   xfs: Convert to memalloc_nofs_save
->   mm: Replace PF_MEMALLOC_NOFS with memalloc_nofs
->   mm: Replace PF_MEMALLOC_NOIO with memalloc_nocma
->   mm: Add memalloc_nowait
-> 
->  drivers/block/loop.c           |  3 +-
->  drivers/md/dm-bufio.c          | 30 ++++--------
->  drivers/md/dm-zoned-metadata.c |  5 +-
->  fs/iomap/buffered-io.c         |  2 +-
->  fs/xfs/kmem.c                  |  2 +-
->  fs/xfs/libxfs/xfs_btree.c      | 14 +++---
->  fs/xfs/xfs_aops.c              |  4 +-
->  fs/xfs/xfs_buf.c               |  2 +-
->  fs/xfs/xfs_linux.h             |  6 ---
->  fs/xfs/xfs_trans.c             | 14 +++---
->  fs/xfs/xfs_trans.h             |  2 +-
->  include/linux/sched.h          |  7 +--
->  include/linux/sched/mm.h       | 84 ++++++++++++++++++++++++++--------
->  kernel/sys.c                   |  8 ++--
->  mm/vmscan.c                    | 16 +------
->  15 files changed, 105 insertions(+), 94 deletions(-)
-> 
+> Thanks,
 > -- 
-> 2.27.0
+> Email: Herbert Xu <herbert@gondor.apana.org.au>
+> Home Page: http://gondor.apana.org.au/~herbert/
+> PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
 > 
