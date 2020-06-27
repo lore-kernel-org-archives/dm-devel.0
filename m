@@ -1,217 +1,122 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 13/14] blk-cgroup: remove blkcg_bio_issue_check
-Date: Sat, 27 Jun 2020 09:31:58 +0200
-Message-ID: <20200627073159.2447325-14-hch@lst.de>
-References: <20200627073159.2447325-1-hch@lst.de>
+From: "Alexander A. Klimov" <grandmaster@al2klimov.de>
+Subject: [PATCH] Replace HTTP links with HTTPS ones: LVM
+Date: Sat, 27 Jun 2020 12:31:38 +0200
+Message-ID: <20200627103138.71885-1-grandmaster@al2klimov.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200627073159.2447325-1-hch@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>, Tejun Heo <tj@kernel.org>
-Cc: Dennis Zhou <dennis@kernel.org>, Li Zefan <lizefan@huawei.com>, Johannes Weiner <hannes@cmpxchg.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, linux-mm@kvack.org
+Return-path: <linux-doc-owner@vger.kernel.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, corbet@lwn.net, song@kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org
+Cc: "Alexander A. Klimov" <grandmaster@al2klimov.de>
 List-Id: dm-devel.ids
 
-blkcg_bio_issue_check is a giant inline function that does three entirely
-different things.  Factor out the blk-cgroup related bio initalization
-into a new helper, and the open code the sequence in the only caller,
-relying on the fact that all the actual functionality is stubbed out for
-non-cgroup builds.
+Rationale:
+Reduces attack surface on kernel devs opening the links for MITM
+as HTTPS traffic is much harder to manipulate.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
+Deterministic algorithm:
+For each file:
+  If not .svg:
+    For each line:
+      If doesn't contain `\bxmlns\b`:
+        For each link, `\bhttp://[^# \t\r\n]*(?:\w|/)`:
+          If both the HTTP and HTTPS versions
+          return 200 OK and serve the same content:
+            Replace HTTP with HTTPS.
+
+Signed-off-by: Alexander A. Klimov <grandmaster@al2klimov.de>
 ---
- block/blk-cgroup.c         | 34 +++++++++++++++++++++++
- block/blk-core.c           |  7 ++++-
- block/blk-throttle.c       |  5 ++--
- block/blk.h                |  2 ++
- include/linux/blk-cgroup.h | 56 ++------------------------------------
- 5 files changed, 47 insertions(+), 57 deletions(-)
+ If there are any URLs to be removed completely or at least not HTTPSified:
+ Just clearly say so and I'll *undo my change*.
+ See also https://lkml.org/lkml/2020/6/27/64
 
-diff --git a/block/blk-cgroup.c b/block/blk-cgroup.c
-index d21ec2acd716e7..1ce94afc03bcfd 100644
---- a/block/blk-cgroup.c
-+++ b/block/blk-cgroup.c
-@@ -1813,6 +1813,40 @@ void bio_clone_blkg_association(struct bio *dst, struct bio *src)
- }
- EXPORT_SYMBOL_GPL(bio_clone_blkg_association);
+ If there are any valid, but yet not changed URLs:
+ See https://lkml.org/lkml/2020/6/26/837
+
+ Documentation/admin-guide/device-mapper/dm-raid.rst  | 2 +-
+ Documentation/admin-guide/device-mapper/dm-zoned.rst | 2 +-
+ drivers/md/Kconfig                                   | 8 ++++----
+ drivers/md/dm-crypt.c                                | 2 +-
+ 4 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/Documentation/admin-guide/device-mapper/dm-raid.rst b/Documentation/admin-guide/device-mapper/dm-raid.rst
+index 695a2ea1d1ae..7ef9fe63b3d4 100644
+--- a/Documentation/admin-guide/device-mapper/dm-raid.rst
++++ b/Documentation/admin-guide/device-mapper/dm-raid.rst
+@@ -71,7 +71,7 @@ The target is named "raid" and it accepts the following parameters::
+   ============= ===============================================================
  
-+static int blk_cgroup_io_type(struct bio *bio)
-+{
-+	if (op_is_discard(bio->bi_opf))
-+		return BLKG_IOSTAT_DISCARD;
-+	if (op_is_write(bio->bi_opf))
-+		return BLKG_IOSTAT_WRITE;
-+	return BLKG_IOSTAT_READ;
-+}
-+
-+void blk_cgroup_bio_start(struct bio *bio)
-+{
-+	int rwd = blk_cgroup_io_type(bio), cpu;
-+	struct blkg_iostat_set *bis;
-+
-+	cpu = get_cpu();
-+	bis = per_cpu_ptr(bio->bi_blkg->iostat_cpu, cpu);
-+	u64_stats_update_begin(&bis->sync);
-+
-+	/*
-+	 * If the bio is flagged with BIO_CGROUP_ACCT it means this is a split
-+	 * bio and we would have already accounted for the size of the bio.
-+	 */
-+	if (!bio_flagged(bio, BIO_CGROUP_ACCT)) {
-+		bio_set_flag(bio, BIO_CGROUP_ACCT);
-+			bis->cur.bytes[rwd] += bio->bi_iter.bi_size;
-+	}
-+	bis->cur.ios[rwd]++;
-+
-+	u64_stats_update_end(&bis->sync);
-+	if (cgroup_subsys_on_dfl(io_cgrp_subsys))
-+		cgroup_rstat_updated(bio->bi_blkg->blkcg->css.cgroup, cpu);
-+	put_cpu();
-+}
-+
- static int __init blkcg_init(void)
- {
- 	blkcg_punt_bio_wq = alloc_workqueue("blkcg_punt_bio",
-diff --git a/block/blk-core.c b/block/blk-core.c
-index a9769c1a287546..76cfd5709f66cd 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -1073,8 +1073,13 @@ generic_make_request_checks(struct bio *bio)
- 	if (unlikely(!current->io_context))
- 		create_task_io_context(current, GFP_ATOMIC, q->node);
+   Reference: Chapter 4 of
+-  http://www.snia.org/sites/default/files/SNIA_DDF_Technical_Position_v2.0.pdf
++  https://www.snia.org/sites/default/files/SNIA_DDF_Technical_Position_v2.0.pdf
  
--	if (!blkcg_bio_issue_check(q, bio))
-+	if (blk_throtl_bio(bio)) {
-+		blkcg_bio_issue_init(bio);
- 		return false;
-+	}
-+
-+	blk_cgroup_bio_start(bio);
-+	blkcg_bio_issue_init(bio);
+ <#raid_params>: The number of parameters that follow.
  
- 	if (!bio_flagged(bio, BIO_TRACE_COMPLETION)) {
- 		trace_block_bio_queue(q, bio);
-diff --git a/block/blk-throttle.c b/block/blk-throttle.c
-index ac008345050010..9d00f62c05ecdf 100644
---- a/block/blk-throttle.c
-+++ b/block/blk-throttle.c
-@@ -2158,9 +2158,10 @@ static inline void throtl_update_latency_buckets(struct throtl_data *td)
- }
- #endif
+diff --git a/Documentation/admin-guide/device-mapper/dm-zoned.rst b/Documentation/admin-guide/device-mapper/dm-zoned.rst
+index 553752ea2521..e635041351bc 100644
+--- a/Documentation/admin-guide/device-mapper/dm-zoned.rst
++++ b/Documentation/admin-guide/device-mapper/dm-zoned.rst
+@@ -14,7 +14,7 @@ host-aware zoned block devices.
+ For a more detailed description of the zoned block device models and
+ their constraints see (for SCSI devices):
  
--bool blk_throtl_bio(struct request_queue *q, struct blkcg_gq *blkg,
--		    struct bio *bio)
-+bool blk_throtl_bio(struct bio *bio)
- {
-+	struct request_queue *q = bio->bi_disk->queue;
-+	struct blkcg_gq *blkg = bio->bi_blkg;
- 	struct throtl_qnode *qn = NULL;
- 	struct throtl_grp *tg = blkg_to_tg(blkg ?: q->root_blkg);
- 	struct throtl_service_queue *sq;
-diff --git a/block/blk.h b/block/blk.h
-index 3a120a070dac82..41a50880c94e98 100644
---- a/block/blk.h
-+++ b/block/blk.h
-@@ -288,10 +288,12 @@ int create_task_io_context(struct task_struct *task, gfp_t gfp_mask, int node);
- extern int blk_throtl_init(struct request_queue *q);
- extern void blk_throtl_exit(struct request_queue *q);
- extern void blk_throtl_register_queue(struct request_queue *q);
-+bool blk_throtl_bio(struct bio *bio);
- #else /* CONFIG_BLK_DEV_THROTTLING */
- static inline int blk_throtl_init(struct request_queue *q) { return 0; }
- static inline void blk_throtl_exit(struct request_queue *q) { }
- static inline void blk_throtl_register_queue(struct request_queue *q) { }
-+static inline bool blk_throtl_bio(struct bio *bio) { return false; }
- #endif /* CONFIG_BLK_DEV_THROTTLING */
- #ifdef CONFIG_BLK_DEV_THROTTLING_LOW
- extern ssize_t blk_throtl_sample_time_show(struct request_queue *q, char *page);
-diff --git a/include/linux/blk-cgroup.h b/include/linux/blk-cgroup.h
-index 8ab043c911f233..431b2d18bf4074 100644
---- a/include/linux/blk-cgroup.h
-+++ b/include/linux/blk-cgroup.h
-@@ -517,14 +517,6 @@ static inline void blkg_put(struct blkcg_gq *blkg)
- 		if (((d_blkg) = __blkg_lookup(css_to_blkcg(pos_css),	\
- 					      (p_blkg)->q, false)))
+-http://www.t10.org/drafts.htm#ZBC_Family
++https://www.t10.org/drafts.htm#ZBC_Family
  
--#ifdef CONFIG_BLK_DEV_THROTTLING
--extern bool blk_throtl_bio(struct request_queue *q, struct blkcg_gq *blkg,
--			   struct bio *bio);
--#else
--static inline bool blk_throtl_bio(struct request_queue *q, struct blkcg_gq *blkg,
--				  struct bio *bio) { return false; }
--#endif
--
- bool __blkcg_punt_bio_submit(struct bio *bio);
+ and (for ATA devices):
  
- static inline bool blkcg_punt_bio_submit(struct bio *bio)
-@@ -540,50 +532,6 @@ static inline void blkcg_bio_issue_init(struct bio *bio)
- 	bio_issue_init(&bio->bi_issue, bio_sectors(bio));
- }
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index 921888df6764..30ba3573626c 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -27,7 +27,7 @@ config BLK_DEV_MD
  
--static inline bool blkcg_bio_issue_check(struct request_queue *q,
--					 struct bio *bio)
--{
--	struct blkcg_gq *blkg = bio->bi_blkg;
--	bool throtl = false;
--
--	throtl = blk_throtl_bio(q, blkg, bio);
--	if (!throtl) {
--		struct blkg_iostat_set *bis;
--		int rwd, cpu;
--
--		if (op_is_discard(bio->bi_opf))
--			rwd = BLKG_IOSTAT_DISCARD;
--		else if (op_is_write(bio->bi_opf))
--			rwd = BLKG_IOSTAT_WRITE;
--		else
--			rwd = BLKG_IOSTAT_READ;
--
--		cpu = get_cpu();
--		bis = per_cpu_ptr(blkg->iostat_cpu, cpu);
--		u64_stats_update_begin(&bis->sync);
--
--		/*
--		 * If the bio is flagged with BIO_CGROUP_ACCT it means this is a
--		 * split bio and we would have already accounted for the size of
--		 * the bio.
--		 */
--		if (!bio_flagged(bio, BIO_CGROUP_ACCT)) {
--			bio_set_flag(bio, BIO_CGROUP_ACCT);
--			bis->cur.bytes[rwd] += bio->bi_iter.bi_size;
--		}
--		bis->cur.ios[rwd]++;
--
--		u64_stats_update_end(&bis->sync);
--		if (cgroup_subsys_on_dfl(io_cgrp_subsys))
--			cgroup_rstat_updated(blkg->blkcg->css.cgroup, cpu);
--		put_cpu();
--	}
--
--	blkcg_bio_issue_init(bio);
--
--	return !throtl;
--}
--
- static inline void blkcg_use_delay(struct blkcg_gq *blkg)
- {
- 	if (WARN_ON_ONCE(atomic_read(&blkg->use_delay) < 0))
-@@ -657,6 +605,7 @@ static inline void blkcg_clear_delay(struct blkcg_gq *blkg)
- 		atomic_dec(&blkg->blkcg->css.cgroup->congestion_count);
- }
+ 	  More information about Software RAID on Linux is contained in the
+ 	  Software RAID mini-HOWTO, available from
+-	  <http://www.tldp.org/docs.html#howto>. There you will also learn
++	  <https://www.tldp.org/docs.html#howto>. There you will also learn
+ 	  where to get the supporting user space utilities raidtools.
  
-+void blk_cgroup_bio_start(struct bio *bio);
- void blkcg_add_delay(struct blkcg_gq *blkg, u64 now, u64 delta);
- void blkcg_schedule_throttle(struct request_queue *q, bool use_memdelay);
- void blkcg_maybe_throttle_current(void);
-@@ -710,8 +659,7 @@ static inline void blkg_put(struct blkcg_gq *blkg) { }
+ 	  If unsure, say N.
+@@ -71,7 +71,7 @@ config MD_RAID0
  
- static inline bool blkcg_punt_bio_submit(struct bio *bio) { return false; }
- static inline void blkcg_bio_issue_init(struct bio *bio) { }
--static inline bool blkcg_bio_issue_check(struct request_queue *q,
--					 struct bio *bio) { return true; }
-+static inline void blk_cgroup_bio_start(struct bio *bio) { }
+ 	  Information about Software RAID on Linux is contained in the
+ 	  Software-RAID mini-HOWTO, available from
+-	  <http://www.tldp.org/docs.html#howto>. There you will also
++	  <https://www.tldp.org/docs.html#howto>. There you will also
+ 	  learn where to get the supporting user space utilities raidtools.
  
- #define blk_queue_for_each_rl(rl, q)	\
- 	for ((rl) = &(q)->root_rl; (rl); (rl) = NULL)
+ 	  To compile this as a module, choose M here: the module
+@@ -93,7 +93,7 @@ config MD_RAID1
+ 
+ 	  Information about Software RAID on Linux is contained in the
+ 	  Software-RAID mini-HOWTO, available from
+-	  <http://www.tldp.org/docs.html#howto>.  There you will also
++	  <https://www.tldp.org/docs.html#howto>.  There you will also
+ 	  learn where to get the supporting user space utilities raidtools.
+ 
+ 	  If you want to use such a RAID-1 set, say Y.  To compile this code
+@@ -148,7 +148,7 @@ config MD_RAID456
+ 
+ 	  Information about Software RAID on Linux is contained in the
+ 	  Software-RAID mini-HOWTO, available from
+-	  <http://www.tldp.org/docs.html#howto>. There you will also
++	  <https://www.tldp.org/docs.html#howto>. There you will also
+ 	  learn where to get the supporting user space utilities raidtools.
+ 
+ 	  If you want to use such a RAID-4/RAID-5/RAID-6 set, say Y.  To
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 000ddfab5ba0..4704a16e637c 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -300,7 +300,7 @@ static struct crypto_aead *any_tfm_aead(struct crypt_config *cc)
+  * elephant: The extended version of eboiv with additional Elephant diffuser
+  *           used with Bitlocker CBC mode.
+  *           This mode was used in older Windows systems
+- *           http://download.microsoft.com/download/0/2/3/0238acaf-d3bf-4a6d-b3d6-0a0be4bbb36e/bitlockercipher200608.pdf
++ *           https://download.microsoft.com/download/0/2/3/0238acaf-d3bf-4a6d-b3d6-0a0be4bbb36e/bitlockercipher200608.pdf
+  */
+ 
+ static int crypt_iv_plain_gen(struct crypt_config *cc, u8 *iv,
 -- 
-2.26.2
+2.27.0
