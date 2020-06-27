@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 03/14] block: really clone the block cgroup in bio_clone_blkg_association
-Date: Sat, 27 Jun 2020 09:31:48 +0200
-Message-ID: <20200627073159.2447325-4-hch@lst.de>
+Subject: [PATCH 01/14] dm: use bio_uninit instead of bio_disassociate_blkg
+Date: Sat, 27 Jun 2020 09:31:46 +0200
+Message-ID: <20200627073159.2447325-2-hch@lst.de>
 References: <20200627073159.2447325-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,39 +12,47 @@ To: Jens Axboe <axboe@kernel.dk>, Tejun Heo <tj@kernel.org>
 Cc: Dennis Zhou <dennis@kernel.org>, Li Zefan <lizefan@huawei.com>, Johannes Weiner <hannes@cmpxchg.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, linux-mm@kvack.org
 List-Id: dm-devel.ids
 
-bio_clone_blkg_association is supposed to clone the associatation, but
-actually ends up doing a search with a tryget.  As we know we have a
-reference on the source cgroup just get an unconditional additional
-reference to it and call it a day.  That also removes the need for
-a RCU critical section.
+bio_uninit is the proper API to clean up a BIO that has been allocated
+on stack or inside a structure that doesn't come from the BIO allocator.
+Switch dm to use that instead of bio_disassociate_blkg, which really is
+an implementation detail.  Note that the bio_uninit calls are also moved
+to the two callers of __send_empty_flush, so that they better pair with
+the bio_init calls used to initialize them.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/bio.c | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
+ drivers/md/dm.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/block/bio.c b/block/bio.c
-index 8aef4460b32e0e..e1d01acce8070c 100644
---- a/block/bio.c
-+++ b/block/bio.c
-@@ -1737,12 +1737,12 @@ EXPORT_SYMBOL_GPL(bio_associate_blkg);
-  */
- void bio_clone_blkg_association(struct bio *dst, struct bio *src)
- {
--	rcu_read_lock();
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 109e81f33edb2d..e44473fe0f4873 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1452,9 +1452,6 @@ static int __send_empty_flush(struct clone_info *ci)
+ 	BUG_ON(bio_has_data(ci->bio));
+ 	while ((ti = dm_table_get_target(ci->map, target_nr++)))
+ 		__send_duplicate_bios(ci, ti, ti->num_flush_bios, NULL);
 -
--	if (src->bi_blkg)
--		__bio_associate_blkg(dst, src->bi_blkg);
+-	bio_disassociate_blkg(ci->bio);
 -
--	rcu_read_unlock();
-+	if (src->bi_blkg) {
-+		if (dst->bi_blkg)
-+			blkg_put(dst->bi_blkg);
-+		blkg_get(src->bi_blkg);
-+		dst->bi_blkg = src->bi_blkg;
-+	}
+ 	return 0;
  }
- EXPORT_SYMBOL_GPL(bio_clone_blkg_association);
- #endif /* CONFIG_BLK_CGROUP */
+ 
+@@ -1642,6 +1639,7 @@ static blk_qc_t __split_and_process_bio(struct mapped_device *md,
+ 		ci.bio = &flush_bio;
+ 		ci.sector_count = 0;
+ 		error = __send_empty_flush(&ci);
++		bio_uninit(ci.bio);
+ 		/* dec_pending submits any data associated with flush */
+ 	} else if (op_is_zone_mgmt(bio_op(bio))) {
+ 		ci.bio = bio;
+@@ -1716,6 +1714,7 @@ static blk_qc_t __process_bio(struct mapped_device *md, struct dm_table *map,
+ 		ci.bio = &flush_bio;
+ 		ci.sector_count = 0;
+ 		error = __send_empty_flush(&ci);
++		bio_uninit(ci.bio);
+ 		/* dec_pending submits any data associated with flush */
+ 	} else {
+ 		struct dm_target_io *tio;
 -- 
 2.26.2
