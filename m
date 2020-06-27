@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 10/14] blk-cgroup: remove the !bio->bi_blkg check in blkcg_bio_issue_check
-Date: Sat, 27 Jun 2020 09:31:55 +0200
-Message-ID: <20200627073159.2447325-11-hch@lst.de>
+Subject: [PATCH 11/14] cgroup: unexport cgroup_rstat_updated
+Date: Sat, 27 Jun 2020 09:31:56 +0200
+Message-ID: <20200627073159.2447325-12-hch@lst.de>
 References: <20200627073159.2447325-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,43 +12,25 @@ To: Jens Axboe <axboe@kernel.dk>, Tejun Heo <tj@kernel.org>
 Cc: Dennis Zhou <dennis@kernel.org>, Li Zefan <lizefan@huawei.com>, Johannes Weiner <hannes@cmpxchg.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, linux-mm@kvack.org
 List-Id: dm-devel.ids
 
-This is purely a sanity check for grave programming errors.  Remove it
-to simplify further work in this area.
+cgroup_rstat_updated is only used by core block code, no need to
+export it.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/linux/blk-cgroup.h | 15 +--------------
- 1 file changed, 1 insertion(+), 14 deletions(-)
+ kernel/cgroup/rstat.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/include/linux/blk-cgroup.h b/include/linux/blk-cgroup.h
-index 60df97202314c7..8e86b598316c10 100644
---- a/include/linux/blk-cgroup.h
-+++ b/include/linux/blk-cgroup.h
-@@ -543,24 +543,11 @@ static inline void blkcg_bio_issue_init(struct bio *bio)
- static inline bool blkcg_bio_issue_check(struct request_queue *q,
- 					 struct bio *bio)
- {
--	struct blkcg_gq *blkg;
-+	struct blkcg_gq *blkg = bio->bi_blkg;
- 	bool throtl = false;
+diff --git a/kernel/cgroup/rstat.c b/kernel/cgroup/rstat.c
+index b6397a186ce9c8..d51175cedfca4f 100644
+--- a/kernel/cgroup/rstat.c
++++ b/kernel/cgroup/rstat.c
+@@ -64,7 +64,6 @@ void cgroup_rstat_updated(struct cgroup *cgrp, int cpu)
  
- 	rcu_read_lock();
--
--	if (!bio->bi_blkg) {
--		char b[BDEVNAME_SIZE];
--
--		WARN_ONCE(1,
--			  "no blkg associated for bio on block-device: %s\n",
--			  bio_devname(bio, b));
--		bio_associate_blkg(bio);
--	}
--
--	blkg = bio->bi_blkg;
--
- 	throtl = blk_throtl_bio(q, blkg, bio);
--
- 	if (!throtl) {
- 		struct blkg_iostat_set *bis;
- 		int rwd, cpu;
+ 	raw_spin_unlock_irqrestore(cpu_lock, flags);
+ }
+-EXPORT_SYMBOL_GPL(cgroup_rstat_updated);
+ 
+ /**
+  * cgroup_rstat_cpu_pop_updated - iterate and dismantle rstat_cpu updated tree
 -- 
 2.26.2
