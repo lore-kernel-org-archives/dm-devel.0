@@ -1,8 +1,8 @@
 From: Eric Biggers <ebiggers@kernel.org>
 Subject: Re: [dm-devel] [PATCH 1/3 v2] crypto: introduce the flag
  CRYPTO_ALG_ALLOCATES_MEMORY
-Date: Sun, 28 Jun 2020 12:50:35 -0700
-Message-ID: <20200628195035.GD11197@sol.localdomain>
+Date: Sun, 28 Jun 2020 13:00:22 -0700
+Message-ID: <20200628200022.GE11197@sol.localdomain>
 References: <alpine.LRH.2.02.2006161101080.28052@file01.intranet.prod.int.rdu2.redhat.com>
  <20200616173620.GA207319@gmail.com>
  <alpine.LRH.2.02.2006171107220.18714@file01.intranet.prod.int.rdu2.redhat.com>
@@ -24,11 +24,23 @@ Cc: Mike Snitzer <msnitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>
 List-Id: dm-devel.ids
 
 On Sun, Jun 28, 2020 at 03:07:49PM -0400, Mikulas Patocka wrote:
-> 
-> > Also, "seqiv" instances can be created without CRYPTO_ALG_ALLOCATES_MEMORY set,
-> > despite seqiv_aead_encrypt() allocating memory.
 > > 
+> > cryptd_create_skcipher(), cryptd_create_hash(), cryptd_create_aead(), and
+> > crypto_rfc4309_create() are also missing setting the mask.
+> > 
+> > pcrypt_create_aead() is missing both setting the mask and inheriting the flags.
+> 
+> I added CRYPTO_ALG_ALLOCATES_MEMORY there.
 
-This comment wasn't addressed.
+I don't see where the cryptd request processing functions allocate memory.
+
+It seems that cryptd should just inherit the flag, like most other templates.
+
+Likewise for pcrypt.
+
+And also likewise for rfc4309.
+
+Where are you seeing the memory allocations that would require
+CRYPTO_ALG_ALLOCATES_MEMORY to always be enabled for these?
 
 - Eric
