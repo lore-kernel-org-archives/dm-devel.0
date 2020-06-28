@@ -1,8 +1,8 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 1/3 v2] crypto: introduce the flag
+Subject: [PATCH 1/3 v3] crypto: introduce the flag
  CRYPTO_ALG_ALLOCATES_MEMORY
-Date: Sun, 28 Jun 2020 15:04:22 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2006281501230.347@file01.intranet.prod.int.rdu2.redhat.com>
+Date: Sun, 28 Jun 2020 15:05:50 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2006281505250.347@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.2006100756270.27811@file01.intranet.prod.int.rdu2.redhat.com> <20200610121106.GA23137@gondor.apana.org.au> <alpine.LRH.2.02.2006161052540.28052@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.2006161101080.28052@file01.intranet.prod.int.rdu2.redhat.com>
  <20200616173620.GA207319@gmail.com> <alpine.LRH.2.02.2006171107220.18714@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.2006171108440.18714@file01.intranet.prod.int.rdu2.redhat.com> <20200626044534.GA2870@gondor.apana.org.au>
  <alpine.LRH.2.02.2006261109520.11899@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.2006261215480.13882@file01.intranet.prod.int.rdu2.redhat.com> <20200626164617.GA211634@gmail.com>
@@ -15,106 +15,461 @@ To: Eric Biggers <ebiggers@kernel.org>
 Cc: Herbert Xu <herbert@gondor.apana.org.au>, Mike Snitzer <msnitzer@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-crypto@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>, Jonathan Cameron <Jonathan.Cameron@Huawei.com>, George Cherian <gcherian@marvell.com>, Wei Xu <xuwei5@hisilicon.com>, Zaibo Xu <xuzaibo@Huawei.com>
 List-Id: dm-devel.ids
 
+Introduce a new flag CRYPTO_ALG_ALLOCATES_MEMORY and pass it down the
+crypto stack.
 
+If the flag is set, then the crypto driver allocates memory in its request
+routine. Such drivers are not suitable for disk encryption because
+GFP_ATOMIC allocation can fail anytime (causing random I/O errors) and
+GFP_KERNEL allocation can recurse into the block layer, causing a
+deadlock.
 
-On Fri, 26 Jun 2020, Eric Biggers wrote:
+Pass the flag CRYPTO_ALG_ALLOCATES_MEMORY down through the crypto API.
 
-> On Fri, Jun 26, 2020 at 12:16:33PM -0400, Mikulas Patocka wrote:
-> > +/*
-> > + * Pass these flags down through the crypto API.
-> > + */
-> > +#define CRYPTO_ALG_INHERITED_FLAGS	(CRYPTO_ALG_ASYNC | CRYPTO_ALG_ALLOCATES_MEMORY)
-> 
-> This comment is useless.  How about:
-> 
-> /*
->  * When an algorithm uses another algorithm (e.g., if it's an instance of a
->  * template), these are the flags that always get set on the "outer" algorithm
->  * if any "inner" algorithm has them set.  In some cases other flags are
->  * inherited too; these are just the flags that are *always* inherited.
->  */
-> #define CRYPTO_ALG_INHERITED_FLAGS	(CRYPTO_ALG_ASYNC | CRYPTO_ALG_ALLOCATES_MEMORY)
-> 
-> Also I wonder about the case where the inner algorithm is a fallback rather than
-> part of a template instance.  This patch only handles templates, not fallbacks.
-> Is that intentional?  Isn't that technically a bug?
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-I'm not an expert in crypto internals, so I don't know. I'll send version 
-3 of this patch and I'd like to ask you or Herbert to fix it.
+---
+ crypto/adiantum.c         |    2 +-
+ crypto/authenc.c          |    4 ++--
+ crypto/authencesn.c       |    4 ++--
+ crypto/ccm.c              |    9 +++++----
+ crypto/chacha20poly1305.c |    4 ++--
+ crypto/cryptd.c           |   12 +++++++++---
+ crypto/ctr.c              |    4 ++--
+ crypto/cts.c              |    4 ++--
+ crypto/essiv.c            |    4 ++--
+ crypto/gcm.c              |   12 ++++++------
+ crypto/geniv.c            |    4 ++--
+ crypto/lrw.c              |    4 ++--
+ crypto/pcrypt.c           |    4 +++-
+ crypto/rsa-pkcs1pad.c     |    4 ++--
+ crypto/xts.c              |    2 +-
+ include/crypto/algapi.h   |   10 ++++++----
+ include/linux/crypto.h    |   15 +++++++++++++++
+ 17 files changed, 64 insertions(+), 38 deletions(-)
 
-> > +
-> > +/*
-> >   * Transform masks and values (for crt_flags).
-> >   */
-> >  #define CRYPTO_TFM_NEED_KEY		0x00000001
-> > Index: linux-2.6/crypto/authenc.c
-> > ===================================================================
-> > --- linux-2.6.orig/crypto/authenc.c	2020-06-26 17:24:03.566417000 +0200
-> > +++ linux-2.6/crypto/authenc.c	2020-06-26 17:24:03.566417000 +0200
-> > @@ -388,7 +388,8 @@ static int crypto_authenc_create(struct
-> >  	if ((algt->type ^ CRYPTO_ALG_TYPE_AEAD) & algt->mask)
-> >  		return -EINVAL;
-> >  
-> > -	mask = crypto_requires_sync(algt->type, algt->mask);
-> > +	mask = crypto_requires_sync(algt->type, algt->mask) |
-> > +	       crypto_requires_nomem(algt->type, algt->mask);
-> 
-> As I suggested earlier, shouldn't there be a function that returns the mask for
-> all inherited flags, rather than handling each flag individually?
-
-Yes - I've created crypto_requires_inherited for this purpose.
-
-> >  
-> >  	inst = kzalloc(sizeof(*inst) + sizeof(*ctx), GFP_KERNEL);
-> >  	if (!inst)
-> > @@ -424,7 +425,7 @@ static int crypto_authenc_create(struct
-> >  		goto err_free_inst;
-> >  
-> >  	inst->alg.base.cra_flags = (auth_base->cra_flags |
-> > -				    enc->base.cra_flags) & CRYPTO_ALG_ASYNC;
-> > +			enc->base.cra_flags) & CRYPTO_ALG_INHERITED_FLAGS;
-> 
-> Strange indentation here.  Likewise in most of the other files.
-
-I was told that the code should be 80-characters wide.
-
-> > Index: linux-2.6/crypto/xts.c
-> > ===================================================================
-> > --- linux-2.6.orig/crypto/xts.c	2020-06-26 17:24:03.566417000 +0200
-> > +++ linux-2.6/crypto/xts.c	2020-06-26 17:24:03.566417000 +0200
-> > @@ -415,7 +415,7 @@ static int create(struct crypto_template
-> >  	} else
-> >  		goto err_free_inst;
-> >  
-> > -	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_ASYNC;
-> > +	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_INHERITED_FLAGS;
-> >  	inst->alg.base.cra_priority = alg->base.cra_priority;
-> >  	inst->alg.base.cra_blocksize = XTS_BLOCK_SIZE;
-> >  	inst->alg.base.cra_alignmask = alg->base.cra_alignmask |
-> 
-> Need to set the mask correctly in this file.
-
-I don't know what do you mean.
-
-> > Index: linux-2.6/crypto/adiantum.c
-> > ===================================================================
-> > --- linux-2.6.orig/crypto/adiantum.c	2020-06-26 17:24:03.566417000 +0200
-> > +++ linux-2.6/crypto/adiantum.c	2020-06-26 17:24:03.566417000 +0200
-> > @@ -507,7 +507,8 @@ static int adiantum_create(struct crypto
-> >  	if ((algt->type ^ CRYPTO_ALG_TYPE_SKCIPHER) & algt->mask)
-> >  		return -EINVAL;
-> >  
-> > -	mask = crypto_requires_sync(algt->type, algt->mask);
-> > +	mask = crypto_requires_sync(algt->type, algt->mask) |
-> > +	       crypto_requires_nomem(algt->type, algt->mask);
-> >  
-> >  	inst = kzalloc(sizeof(*inst) + sizeof(*ictx), GFP_KERNEL);
-> >  	if (!inst)
-> 
-> Need to use CRYPTO_ALG_INHERITED_FLAGS in this file.
-
-OK.
-
-> - Eric
-
-Mikulas
+Index: linux-2.6/include/linux/crypto.h
+===================================================================
+--- linux-2.6.orig/include/linux/crypto.h	2020-06-26 17:24:03.566417000 +0200
++++ linux-2.6/include/linux/crypto.h	2020-06-28 17:55:21.976417000 +0200
+@@ -102,6 +102,21 @@
+ #define CRYPTO_NOLOAD			0x00008000
+ 
+ /*
++ * The driver may allocate memory during request processing, so it shouldn't be
++ * used in cases where memory allocation failures aren't acceptable, such as
++ * during block device encryption.
++ */
++#define CRYPTO_ALG_ALLOCATES_MEMORY	0x00010000
++
++/*
++ * When an algorithm uses another algorithm (e.g., if it's an instance of a
++ * template), these are the flags that always get set on the "outer" algorithm
++ * if any "inner" algorithm has them set.  In some cases other flags are
++ * inherited too; these are just the flags that are *always* inherited.
++ */
++#define CRYPTO_ALG_INHERITED_FLAGS	(CRYPTO_ALG_ASYNC | CRYPTO_ALG_ALLOCATES_MEMORY)
++
++/*
+  * Transform masks and values (for crt_flags).
+  */
+ #define CRYPTO_TFM_NEED_KEY		0x00000001
+Index: linux-2.6/crypto/authenc.c
+===================================================================
+--- linux-2.6.orig/crypto/authenc.c	2020-06-26 17:24:03.566417000 +0200
++++ linux-2.6/crypto/authenc.c	2020-06-28 20:33:29.136417000 +0200
+@@ -388,7 +388,7 @@ static int crypto_authenc_create(struct
+ 	if ((algt->type ^ CRYPTO_ALG_TYPE_AEAD) & algt->mask)
+ 		return -EINVAL;
+ 
+-	mask = crypto_requires_sync(algt->type, algt->mask);
++	mask = crypto_requires_inherited(algt->type, algt->mask);
+ 
+ 	inst = kzalloc(sizeof(*inst) + sizeof(*ctx), GFP_KERNEL);
+ 	if (!inst)
+@@ -424,7 +424,7 @@ static int crypto_authenc_create(struct
+ 		goto err_free_inst;
+ 
+ 	inst->alg.base.cra_flags = (auth_base->cra_flags |
+-				    enc->base.cra_flags) & CRYPTO_ALG_ASYNC;
++			enc->base.cra_flags) & CRYPTO_ALG_INHERITED_FLAGS;
+ 	inst->alg.base.cra_priority = enc->base.cra_priority * 10 +
+ 				      auth_base->cra_priority;
+ 	inst->alg.base.cra_blocksize = enc->base.cra_blocksize;
+Index: linux-2.6/crypto/authencesn.c
+===================================================================
+--- linux-2.6.orig/crypto/authencesn.c	2020-06-26 17:24:03.566417000 +0200
++++ linux-2.6/crypto/authencesn.c	2020-06-28 20:33:32.556417000 +0200
+@@ -406,7 +406,7 @@ static int crypto_authenc_esn_create(str
+ 	if ((algt->type ^ CRYPTO_ALG_TYPE_AEAD) & algt->mask)
+ 		return -EINVAL;
+ 
+-	mask = crypto_requires_sync(algt->type, algt->mask);
++	mask = crypto_requires_inherited(algt->type, algt->mask);
+ 
+ 	inst = kzalloc(sizeof(*inst) + sizeof(*ctx), GFP_KERNEL);
+ 	if (!inst)
+@@ -438,7 +438,7 @@ static int crypto_authenc_esn_create(str
+ 		goto err_free_inst;
+ 
+ 	inst->alg.base.cra_flags = (auth_base->cra_flags |
+-				    enc->base.cra_flags) & CRYPTO_ALG_ASYNC;
++			enc->base.cra_flags) & CRYPTO_ALG_INHERITED_FLAGS;
+ 	inst->alg.base.cra_priority = enc->base.cra_priority * 10 +
+ 				      auth_base->cra_priority;
+ 	inst->alg.base.cra_blocksize = enc->base.cra_blocksize;
+Index: linux-2.6/crypto/ccm.c
+===================================================================
+--- linux-2.6.orig/crypto/ccm.c	2020-06-26 17:24:03.566417000 +0200
++++ linux-2.6/crypto/ccm.c	2020-06-28 20:43:42.456417000 +0200
+@@ -462,7 +462,7 @@ static int crypto_ccm_create_common(stru
+ 	if ((algt->type ^ CRYPTO_ALG_TYPE_AEAD) & algt->mask)
+ 		return -EINVAL;
+ 
+-	mask = crypto_requires_sync(algt->type, algt->mask);
++	mask = crypto_requires_inherited(algt->type, algt->mask);
+ 
+ 	inst = kzalloc(sizeof(*inst) + sizeof(*ictx), GFP_KERNEL);
+ 	if (!inst)
+@@ -507,7 +507,7 @@ static int crypto_ccm_create_common(stru
+ 		     mac->base.cra_driver_name) >= CRYPTO_MAX_ALG_NAME)
+ 		goto err_free_inst;
+ 
+-	inst->alg.base.cra_flags = ctr->base.cra_flags & CRYPTO_ALG_ASYNC;
++	inst->alg.base.cra_flags = ctr->base.cra_flags & CRYPTO_ALG_INHERITED_FLAGS;
+ 	inst->alg.base.cra_priority = (mac->base.cra_priority +
+ 				       ctr->base.cra_priority) / 2;
+ 	inst->alg.base.cra_blocksize = 1;
+@@ -726,7 +726,7 @@ static int crypto_rfc4309_create(struct
+ 	if ((algt->type ^ CRYPTO_ALG_TYPE_AEAD) & algt->mask)
+ 		return -EINVAL;
+ 
+-	mask = crypto_requires_sync(algt->type, algt->mask);
++	mask = crypto_requires_inherited(algt->type, algt->mask);
+ 
+ 	inst = kzalloc(sizeof(*inst) + sizeof(*spawn), GFP_KERNEL);
+ 	if (!inst)
+@@ -759,7 +759,8 @@ static int crypto_rfc4309_create(struct
+ 	    CRYPTO_MAX_ALG_NAME)
+ 		goto err_free_inst;
+ 
+-	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_ASYNC;
++	inst->alg.base.cra_flags = CRYPTO_ALG_ALLOCATES_MEMORY |
++			(alg->base.cra_flags & CRYPTO_ALG_INHERITED_FLAGS);
+ 	inst->alg.base.cra_priority = alg->base.cra_priority;
+ 	inst->alg.base.cra_blocksize = 1;
+ 	inst->alg.base.cra_alignmask = alg->base.cra_alignmask;
+Index: linux-2.6/crypto/chacha20poly1305.c
+===================================================================
+--- linux-2.6.orig/crypto/chacha20poly1305.c	2020-06-26 17:24:03.566417000 +0200
++++ linux-2.6/crypto/chacha20poly1305.c	2020-06-28 20:31:34.036417000 +0200
+@@ -573,7 +573,7 @@ static int chachapoly_create(struct cryp
+ 	if ((algt->type ^ CRYPTO_ALG_TYPE_AEAD) & algt->mask)
+ 		return -EINVAL;
+ 
+-	mask = crypto_requires_sync(algt->type, algt->mask);
++	mask = crypto_requires_inherited(algt->type, algt->mask);
+ 
+ 	inst = kzalloc(sizeof(*inst) + sizeof(*ctx), GFP_KERNEL);
+ 	if (!inst)
+@@ -614,7 +614,7 @@ static int chachapoly_create(struct cryp
+ 		goto err_free_inst;
+ 
+ 	inst->alg.base.cra_flags = (chacha->base.cra_flags |
+-				    poly->base.cra_flags) & CRYPTO_ALG_ASYNC;
++			poly->base.cra_flags) & CRYPTO_ALG_INHERITED_FLAGS;
+ 	inst->alg.base.cra_priority = (chacha->base.cra_priority +
+ 				       poly->base.cra_priority) / 2;
+ 	inst->alg.base.cra_blocksize = 1;
+Index: linux-2.6/crypto/cryptd.c
+===================================================================
+--- linux-2.6.orig/crypto/cryptd.c	2020-06-26 17:24:03.566417000 +0200
++++ linux-2.6/crypto/cryptd.c	2020-06-28 20:42:42.246417000 +0200
+@@ -396,7 +396,9 @@ static int cryptd_create_skcipher(struct
+ 		goto err_free_inst;
+ 
+ 	inst->alg.base.cra_flags = CRYPTO_ALG_ASYNC |
+-				   (alg->base.cra_flags & CRYPTO_ALG_INTERNAL);
++			CRYPTO_ALG_ALLOCATES_MEMORY |
++			(alg->base.cra_flags & CRYPTO_ALG_INHERITED_FLAGS) |
++			(alg->base.cra_flags & CRYPTO_ALG_INTERNAL);
+ 
+ 	inst->alg.ivsize = crypto_skcipher_alg_ivsize(alg);
+ 	inst->alg.chunksize = crypto_skcipher_alg_chunksize(alg);
+@@ -662,8 +664,10 @@ static int cryptd_create_hash(struct cry
+ 		goto err_free_inst;
+ 
+ 	inst->alg.halg.base.cra_flags = CRYPTO_ALG_ASYNC |
++					CRYPTO_ALG_ALLOCATES_MEMORY |
+ 		(alg->base.cra_flags & (CRYPTO_ALG_INTERNAL |
+-					CRYPTO_ALG_OPTIONAL_KEY));
++					CRYPTO_ALG_OPTIONAL_KEY |
++					CRYPTO_ALG_INHERITED_FLAGS));
+ 
+ 	inst->alg.halg.digestsize = alg->digestsize;
+ 	inst->alg.halg.statesize = alg->statesize;
+@@ -849,7 +853,9 @@ static int cryptd_create_aead(struct cry
+ 		goto err_free_inst;
+ 
+ 	inst->alg.base.cra_flags = CRYPTO_ALG_ASYNC |
+-				   (alg->base.cra_flags & CRYPTO_ALG_INTERNAL);
++			CRYPTO_ALG_ALLOCATES_MEMORY |
++			(alg->base.cra_flags & CRYPTO_ALG_INTERNAL) |
++			(alg->base.cra_flags & CRYPTO_ALG_INHERITED_FLAGS);
+ 	inst->alg.base.cra_ctxsize = sizeof(struct cryptd_aead_ctx);
+ 
+ 	inst->alg.ivsize = crypto_aead_alg_ivsize(alg);
+Index: linux-2.6/crypto/ctr.c
+===================================================================
+--- linux-2.6.orig/crypto/ctr.c	2020-06-26 17:24:03.566417000 +0200
++++ linux-2.6/crypto/ctr.c	2020-06-28 20:32:19.326417000 +0200
+@@ -275,7 +275,7 @@ static int crypto_rfc3686_create(struct
+ 	if (!inst)
+ 		return -ENOMEM;
+ 
+-	mask = crypto_requires_sync(algt->type, algt->mask) |
++	mask = crypto_requires_inherited(algt->type, algt->mask) |
+ 		crypto_requires_off(algt->type, algt->mask,
+ 				    CRYPTO_ALG_NEED_FALLBACK);
+ 
+@@ -310,7 +310,7 @@ static int crypto_rfc3686_create(struct
+ 	inst->alg.base.cra_blocksize = 1;
+ 	inst->alg.base.cra_alignmask = alg->base.cra_alignmask;
+ 
+-	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_ASYNC;
++	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_INHERITED_FLAGS;
+ 
+ 	inst->alg.ivsize = CTR_RFC3686_IV_SIZE;
+ 	inst->alg.chunksize = crypto_skcipher_alg_chunksize(alg);
+Index: linux-2.6/crypto/cts.c
+===================================================================
+--- linux-2.6.orig/crypto/cts.c	2020-06-26 17:24:03.566417000 +0200
++++ linux-2.6/crypto/cts.c	2020-06-28 20:33:16.076417000 +0200
+@@ -337,7 +337,7 @@ static int crypto_cts_create(struct cryp
+ 	if ((algt->type ^ CRYPTO_ALG_TYPE_SKCIPHER) & algt->mask)
+ 		return -EINVAL;
+ 
+-	mask = crypto_requires_sync(algt->type, algt->mask);
++	mask = crypto_requires_inherited(algt->type, algt->mask);
+ 
+ 	inst = kzalloc(sizeof(*inst) + sizeof(*spawn), GFP_KERNEL);
+ 	if (!inst)
+@@ -364,7 +364,7 @@ static int crypto_cts_create(struct cryp
+ 	if (err)
+ 		goto err_free_inst;
+ 
+-	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_ASYNC;
++	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_INHERITED_FLAGS;
+ 	inst->alg.base.cra_priority = alg->base.cra_priority;
+ 	inst->alg.base.cra_blocksize = alg->base.cra_blocksize;
+ 	inst->alg.base.cra_alignmask = alg->base.cra_alignmask;
+Index: linux-2.6/crypto/essiv.c
+===================================================================
+--- linux-2.6.orig/crypto/essiv.c	2020-06-26 17:24:03.566417000 +0200
++++ linux-2.6/crypto/essiv.c	2020-06-28 20:32:36.206417000 +0200
+@@ -466,7 +466,7 @@ static int essiv_create(struct crypto_te
+ 		return PTR_ERR(shash_name);
+ 
+ 	type = algt->type & algt->mask;
+-	mask = crypto_requires_sync(algt->type, algt->mask);
++	mask = crypto_requires_inherited(algt->type, algt->mask);
+ 
+ 	switch (type) {
+ 	case CRYPTO_ALG_TYPE_SKCIPHER:
+@@ -557,7 +557,7 @@ static int essiv_create(struct crypto_te
+ 		     hash_alg->base.cra_driver_name) >= CRYPTO_MAX_ALG_NAME)
+ 		goto out_free_hash;
+ 
+-	base->cra_flags		= block_base->cra_flags & CRYPTO_ALG_ASYNC;
++	base->cra_flags		= block_base->cra_flags & CRYPTO_ALG_INHERITED_FLAGS;
+ 	base->cra_blocksize	= block_base->cra_blocksize;
+ 	base->cra_ctxsize	= sizeof(struct essiv_tfm_ctx);
+ 	base->cra_alignmask	= block_base->cra_alignmask;
+Index: linux-2.6/crypto/gcm.c
+===================================================================
+--- linux-2.6.orig/crypto/gcm.c	2020-06-26 17:24:03.566417000 +0200
++++ linux-2.6/crypto/gcm.c	2020-06-28 20:34:48.526417000 +0200
+@@ -593,7 +593,7 @@ static int crypto_gcm_create_common(stru
+ 	if ((algt->type ^ CRYPTO_ALG_TYPE_AEAD) & algt->mask)
+ 		return -EINVAL;
+ 
+-	mask = crypto_requires_sync(algt->type, algt->mask);
++	mask = crypto_requires_inherited(algt->type, algt->mask);
+ 
+ 	inst = kzalloc(sizeof(*inst) + sizeof(*ctx), GFP_KERNEL);
+ 	if (!inst)
+@@ -636,7 +636,7 @@ static int crypto_gcm_create_common(stru
+ 		goto err_free_inst;
+ 
+ 	inst->alg.base.cra_flags = (ghash->base.cra_flags |
+-				    ctr->base.cra_flags) & CRYPTO_ALG_ASYNC;
++			ctr->base.cra_flags) & CRYPTO_ALG_INHERITED_FLAGS;
+ 	inst->alg.base.cra_priority = (ghash->base.cra_priority +
+ 				       ctr->base.cra_priority) / 2;
+ 	inst->alg.base.cra_blocksize = 1;
+@@ -849,7 +849,7 @@ static int crypto_rfc4106_create(struct
+ 	if ((algt->type ^ CRYPTO_ALG_TYPE_AEAD) & algt->mask)
+ 		return -EINVAL;
+ 
+-	mask = crypto_requires_sync(algt->type, algt->mask);
++	mask = crypto_requires_inherited(algt->type, algt->mask);
+ 
+ 	inst = kzalloc(sizeof(*inst) + sizeof(*spawn), GFP_KERNEL);
+ 	if (!inst)
+@@ -882,7 +882,7 @@ static int crypto_rfc4106_create(struct
+ 	    CRYPTO_MAX_ALG_NAME)
+ 		goto err_free_inst;
+ 
+-	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_ASYNC;
++	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_INHERITED_FLAGS;
+ 	inst->alg.base.cra_priority = alg->base.cra_priority;
+ 	inst->alg.base.cra_blocksize = 1;
+ 	inst->alg.base.cra_alignmask = alg->base.cra_alignmask;
+@@ -1071,7 +1071,7 @@ static int crypto_rfc4543_create(struct
+ 	if ((algt->type ^ CRYPTO_ALG_TYPE_AEAD) & algt->mask)
+ 		return -EINVAL;
+ 
+-	mask = crypto_requires_sync(algt->type, algt->mask);
++	mask = crypto_requires_inherited(algt->type, algt->mask);
+ 
+ 	inst = kzalloc(sizeof(*inst) + sizeof(*ctx), GFP_KERNEL);
+ 	if (!inst)
+@@ -1104,7 +1104,7 @@ static int crypto_rfc4543_create(struct
+ 	    CRYPTO_MAX_ALG_NAME)
+ 		goto err_free_inst;
+ 
+-	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_ASYNC;
++	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_INHERITED_FLAGS;
+ 	inst->alg.base.cra_priority = alg->base.cra_priority;
+ 	inst->alg.base.cra_blocksize = 1;
+ 	inst->alg.base.cra_alignmask = alg->base.cra_alignmask;
+Index: linux-2.6/crypto/geniv.c
+===================================================================
+--- linux-2.6.orig/crypto/geniv.c	2020-06-26 17:24:03.566417000 +0200
++++ linux-2.6/crypto/geniv.c	2020-06-28 20:33:05.206417000 +0200
+@@ -63,7 +63,7 @@ struct aead_instance *aead_geniv_alloc(s
+ 	spawn = aead_instance_ctx(inst);
+ 
+ 	/* Ignore async algorithms if necessary. */
+-	mask |= crypto_requires_sync(algt->type, algt->mask);
++	mask |= crypto_requires_inherited(algt->type, algt->mask);
+ 
+ 	err = crypto_grab_aead(spawn, aead_crypto_instance(inst),
+ 			       crypto_attr_alg_name(tb[1]), type, mask);
+@@ -89,7 +89,7 @@ struct aead_instance *aead_geniv_alloc(s
+ 	    CRYPTO_MAX_ALG_NAME)
+ 		goto err_free_inst;
+ 
+-	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_ASYNC;
++	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_INHERITED_FLAGS;
+ 	inst->alg.base.cra_priority = alg->base.cra_priority;
+ 	inst->alg.base.cra_blocksize = alg->base.cra_blocksize;
+ 	inst->alg.base.cra_alignmask = alg->base.cra_alignmask;
+Index: linux-2.6/crypto/lrw.c
+===================================================================
+--- linux-2.6.orig/crypto/lrw.c	2020-06-26 17:24:03.566417000 +0200
++++ linux-2.6/crypto/lrw.c	2020-06-28 20:31:40.686417000 +0200
+@@ -311,7 +311,7 @@ static int create(struct crypto_template
+ 	if ((algt->type ^ CRYPTO_ALG_TYPE_SKCIPHER) & algt->mask)
+ 		return -EINVAL;
+ 
+-	mask = crypto_requires_sync(algt->type, algt->mask);
++	mask = crypto_requires_inherited(algt->type, algt->mask);
+ 
+ 	cipher_name = crypto_attr_alg_name(tb[1]);
+ 	if (IS_ERR(cipher_name))
+@@ -379,7 +379,7 @@ static int create(struct crypto_template
+ 	} else
+ 		goto err_free_inst;
+ 
+-	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_ASYNC;
++	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_INHERITED_FLAGS;
+ 	inst->alg.base.cra_priority = alg->base.cra_priority;
+ 	inst->alg.base.cra_blocksize = LRW_BLOCK_SIZE;
+ 	inst->alg.base.cra_alignmask = alg->base.cra_alignmask |
+Index: linux-2.6/crypto/rsa-pkcs1pad.c
+===================================================================
+--- linux-2.6.orig/crypto/rsa-pkcs1pad.c	2020-06-26 17:24:03.566417000 +0200
++++ linux-2.6/crypto/rsa-pkcs1pad.c	2020-06-28 20:33:47.686417000 +0200
+@@ -611,7 +611,7 @@ static int pkcs1pad_create(struct crypto
+ 	if ((algt->type ^ CRYPTO_ALG_TYPE_AKCIPHER) & algt->mask)
+ 		return -EINVAL;
+ 
+-	mask = crypto_requires_sync(algt->type, algt->mask);
++	mask = crypto_requires_inherited(algt->type, algt->mask);
+ 
+ 	inst = kzalloc(sizeof(*inst) + sizeof(*ctx), GFP_KERNEL);
+ 	if (!inst)
+@@ -658,7 +658,7 @@ static int pkcs1pad_create(struct crypto
+ 			goto err_free_inst;
+ 	}
+ 
+-	inst->alg.base.cra_flags = rsa_alg->base.cra_flags & CRYPTO_ALG_ASYNC;
++	inst->alg.base.cra_flags = rsa_alg->base.cra_flags & CRYPTO_ALG_INHERITED_FLAGS;
+ 	inst->alg.base.cra_priority = rsa_alg->base.cra_priority;
+ 	inst->alg.base.cra_ctxsize = sizeof(struct pkcs1pad_ctx);
+ 
+Index: linux-2.6/crypto/xts.c
+===================================================================
+--- linux-2.6.orig/crypto/xts.c	2020-06-26 17:24:03.566417000 +0200
++++ linux-2.6/crypto/xts.c	2020-06-26 17:24:03.566417000 +0200
+@@ -415,7 +415,7 @@ static int create(struct crypto_template
+ 	} else
+ 		goto err_free_inst;
+ 
+-	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_ASYNC;
++	inst->alg.base.cra_flags = alg->base.cra_flags & CRYPTO_ALG_INHERITED_FLAGS;
+ 	inst->alg.base.cra_priority = alg->base.cra_priority;
+ 	inst->alg.base.cra_blocksize = XTS_BLOCK_SIZE;
+ 	inst->alg.base.cra_alignmask = alg->base.cra_alignmask |
+Index: linux-2.6/include/crypto/algapi.h
+===================================================================
+--- linux-2.6.orig/include/crypto/algapi.h	2020-06-26 17:24:03.566417000 +0200
++++ linux-2.6/include/crypto/algapi.h	2020-06-28 20:37:40.956417000 +0200
+@@ -241,12 +241,14 @@ static inline int crypto_requires_off(u3
+ }
+ 
+ /*
+- * Returns CRYPTO_ALG_ASYNC if type/mask requires the use of sync algorithms.
+- * Otherwise returns zero.
++ * Returns the flag CRYPTO_ALG_ASYNC if type/mask requires the use of sync
++ * algorithms.
++ * Returns the flag CRYPTO_ALG_ALLOCATES_MEMORY if type/mask requires the use
++ * of drivers that don't allocate memory. Otherwise returns zero.
+  */
+-static inline int crypto_requires_sync(u32 type, u32 mask)
++static inline int crypto_requires_inherited(u32 type, u32 mask)
+ {
+-	return crypto_requires_off(type, mask, CRYPTO_ALG_ASYNC);
++	return crypto_requires_off(type, mask, CRYPTO_ALG_INHERITED_FLAGS);
+ }
+ 
+ noinline unsigned long __crypto_memneq(const void *a, const void *b, size_t size);
+Index: linux-2.6/crypto/adiantum.c
+===================================================================
+--- linux-2.6.orig/crypto/adiantum.c	2020-06-26 17:24:03.566417000 +0200
++++ linux-2.6/crypto/adiantum.c	2020-06-28 20:31:46.616417000 +0200
+@@ -507,7 +507,7 @@ static int adiantum_create(struct crypto
+ 	if ((algt->type ^ CRYPTO_ALG_TYPE_SKCIPHER) & algt->mask)
+ 		return -EINVAL;
+ 
+-	mask = crypto_requires_sync(algt->type, algt->mask);
++	mask = crypto_requires_inherited(algt->type, algt->mask);
+ 
+ 	inst = kzalloc(sizeof(*inst) + sizeof(*ictx), GFP_KERNEL);
+ 	if (!inst)
+Index: linux-2.6/crypto/pcrypt.c
+===================================================================
+--- linux-2.6.orig/crypto/pcrypt.c	2020-04-06 19:39:51.559996000 +0200
++++ linux-2.6/crypto/pcrypt.c	2020-06-28 20:44:39.066417000 +0200
+@@ -263,7 +263,9 @@ static int pcrypt_create_aead(struct cry
+ 	if (err)
+ 		goto err_free_inst;
+ 
+-	inst->alg.base.cra_flags = CRYPTO_ALG_ASYNC;
++	inst->alg.base.cra_flags = CRYPTO_ALG_ASYNC |
++				CRYPTO_ALG_ALLOCATES_MEMORY |
++				(alg->base.cra_flags & CRYPTO_ALG_INHERITED_FLAGS);
+ 
+ 	inst->alg.ivsize = crypto_aead_alg_ivsize(alg);
+ 	inst->alg.maxauthsize = crypto_aead_alg_maxauthsize(alg);
