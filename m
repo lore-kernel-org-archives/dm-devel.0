@@ -1,72 +1,74 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Eric Biggers <ebiggers@kernel.org>
 Subject: Re: [PATCH 1/3 v2] crypto: introduce the flag
  CRYPTO_ALG_ALLOCATES_MEMORY
-Date: Sun, 28 Jun 2020 15:07:49 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2006281505530.347@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20200610121106.GA23137@gondor.apana.org.au>
-	<alpine.LRH.2.02.2006161052540.28052@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.2006161101080.28052@file01.intranet.prod.int.rdu2.redhat.com>
-	<20200616173620.GA207319@gmail.com>
-	<alpine.LRH.2.02.2006171107220.18714@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.2006171108440.18714@file01.intranet.prod.int.rdu2.redhat.com>
-	<20200626044534.GA2870@gondor.apana.org.au>
-	<alpine.LRH.2.02.2006261109520.11899@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.2006261215480.13882@file01.intranet.prod.int.rdu2.redhat.com>
-	<20200626164617.GA211634@gmail.com>
-	<20200626170039.GB211634@gmail.com>
+Date: Sun, 28 Jun 2020 12:46:39 -0700
+Message-ID: <20200628194639.GC11197@sol.localdomain>
+References: <alpine.LRH.2.02.2006161052540.28052@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.LRH.2.02.2006161101080.28052@file01.intranet.prod.int.rdu2.redhat.com>
+ <20200616173620.GA207319@gmail.com>
+ <alpine.LRH.2.02.2006171107220.18714@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.LRH.2.02.2006171108440.18714@file01.intranet.prod.int.rdu2.redhat.com>
+ <20200626044534.GA2870@gondor.apana.org.au>
+ <alpine.LRH.2.02.2006261109520.11899@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.LRH.2.02.2006261215480.13882@file01.intranet.prod.int.rdu2.redhat.com>
+ <20200626164617.GA211634@gmail.com>
+ <alpine.LRH.2.02.2006281501230.347@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200626170039.GB211634@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, Zaibo Xu <xuzaibo@Huawei.com>, linux-kernel@vger.kernel.org, Wei Xu <xuwei5@hisilicon.com>, dm-devel@redhat.com, George Cherian <gcherian@marvell.com>, linux-crypto@vger.kernel.org, Jonathan Cameron <Jonathan.Cameron@Huawei.com>, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.2006281501230.347@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, Mike Snitzer <msnitzer@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-crypto@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>, Jonathan Cameron <Jonathan.Cameron@huawei.com>, George Cherian <gcherian@marvell.com>, Wei Xu <xuwei5@hisilicon.com>, Zaibo Xu <xuzaibo@huawei.com>
 List-Id: dm-devel.ids
 
-
-
-On Fri, 26 Jun 2020, Eric Biggers wrote:
-
-> On Fri, Jun 26, 2020 at 09:46:17AM -0700, Eric Biggers wrote:
-> > On Fri, Jun 26, 2020 at 12:16:33PM -0400, Mikulas Patocka wrote:
-> > > +/*
-> > > + * Pass these flags down through the crypto API.
-> > > + */
-> > > +#define CRYPTO_ALG_INHERITED_FLAGS	(CRYPTO_ALG_ASYNC | CRYPTO_ALG_ALLOCATES_MEMORY)
-> > 
-> > This comment is useless.  How about:
-> > 
-> > /*
-> >  * When an algorithm uses another algorithm (e.g., if it's an instance of a
-> >  * template), these are the flags that always get set on the "outer" algorithm
-> >  * if any "inner" algorithm has them set.  In some cases other flags are
-> >  * inherited too; these are just the flags that are *always* inherited.
-> >  */
-> > #define CRYPTO_ALG_INHERITED_FLAGS	(CRYPTO_ALG_ASYNC | CRYPTO_ALG_ALLOCATES_MEMORY)
-> > 
-> > Also I wonder about the case where the inner algorithm is a fallback rather than
-> > part of a template instance.  This patch only handles templates, not fallbacks.
-> > Is that intentional?  Isn't that technically a bug?
-> 
-> Also is CRYPTO_ALG_ALLOCATES_MEMORY meant to apply for algorithms of type
-> "cipher" and "shash"?  The code doesn't handle those, so presumably not?
-> 
-> What about "akcipher"?
-
-Yes - the patch should apply for these cases, but I don't know how to do 
-it. Please, do it.
-
-> > > Index: linux-2.6/crypto/xts.c
+On Sun, Jun 28, 2020 at 03:04:22PM -0400, Mikulas Patocka wrote:
+> > > Index: linux-2.6/crypto/authenc.c
 > > > ===================================================================
+> > > --- linux-2.6.orig/crypto/authenc.c	2020-06-26 17:24:03.566417000 +0200
+> > > +++ linux-2.6/crypto/authenc.c	2020-06-26 17:24:03.566417000 +0200
+> > > @@ -388,7 +388,8 @@ static int crypto_authenc_create(struct
+> > >  	if ((algt->type ^ CRYPTO_ALG_TYPE_AEAD) & algt->mask)
+> > >  		return -EINVAL;
+> > >  
+> > > -	mask = crypto_requires_sync(algt->type, algt->mask);
+> > > +	mask = crypto_requires_sync(algt->type, algt->mask) |
+> > > +	       crypto_requires_nomem(algt->type, algt->mask);
+> > 
+> > As I suggested earlier, shouldn't there be a function that returns the mask for
+> > all inherited flags, rather than handling each flag individually?
+> 
+> Yes - I've created crypto_requires_inherited for this purpose.
+
+Since all callers pass in 'struct crypto_attr_type', a better helper might be:
+
+static inline int crypto_algt_inherited_mask(struct crypto_attr_type *algt)
+{
+	return crypto_requires_off(algt->type, algt->mask,
+				   CRYPTO_ALG_INHERITED_FLAGS);
+}
+
+> > > @@ -424,7 +425,7 @@ static int crypto_authenc_create(struct
+> > >  		goto err_free_inst;
+> > >  
+> > >  	inst->alg.base.cra_flags = (auth_base->cra_flags |
+> > > -				    enc->base.cra_flags) & CRYPTO_ALG_ASYNC;
+> > > +			enc->base.cra_flags) & CRYPTO_ALG_INHERITED_FLAGS;
+> > 
+> > Strange indentation here.  Likewise in most of the other files.
+> 
+> I was told that the code should be 80-characters wide.
+
+You could use:
+
+	inst->alg.base.cra_flags =
+		(auth_base->cra_flags | enc->base.cra_flags) &
+		CRYPTO_ALG_INHERITED_FLAGS;
+
+Just a suggestion, it's not a big deal...  Your indentation of the continuation
+line just seems weird.
+
 > > > --- linux-2.6.orig/crypto/xts.c	2020-06-26 17:24:03.566417000 +0200
 > > > +++ linux-2.6/crypto/xts.c	2020-06-26 17:24:03.566417000 +0200
 > > > @@ -415,7 +415,7 @@ static int create(struct crypto_template
@@ -81,16 +83,11 @@ it. Please, do it.
 > > 
 > > Need to set the mask correctly in this file.
 > 
-> cryptd_create_skcipher(), cryptd_create_hash(), cryptd_create_aead(), and
-> crypto_rfc4309_create() are also missing setting the mask.
-> 
-> pcrypt_create_aead() is missing both setting the mask and inheriting the flags.
+> I don't know what do you mean.
 
-I added CRYPTO_ALG_ALLOCATES_MEMORY there.
+I mean that the CRYPTO_ALG_ALLOCATES_MEMORY flag is not handled when the 'mask'
+variable is assigned to earlier in this function.
 
-> Also, "seqiv" instances can be created without CRYPTO_ALG_ALLOCATES_MEMORY set,
-> despite seqiv_aead_encrypt() allocating memory.
-> 
-> - Eric
+It should use your new helper function, like all the other places in this patch.
 
-Mikulas
+- Eric
