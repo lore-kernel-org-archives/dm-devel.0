@@ -1,14 +1,14 @@
-From: yangerkun <yangerkun@huawei.com>
-Subject: Re: [PATCH v4 1/4] dm dust: report some message results
- back to user directly
-Date: Sun, 28 Jun 2020 09:08:35 +0800
-Message-ID: <ab1e38c7-0394-a685-a406-2ead0291f4d5@huawei.com>
-References: <1592601039-3868-1-git-send-email-bgurney@redhat.com>
+From: Mike Rapoport <rppt@kernel.org>
+Subject: Re: [PATCH 6/6] mm: Add memalloc_nowait
+Date: Mon, 29 Jun 2020 08:08:51 +0300
+Message-ID: <20200629050851.GC1492837@kernel.org>
+References: <20200625113122.7540-1-willy@infradead.org>
+	<20200625113122.7540-7-willy@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="gbk"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1592601039-3868-1-git-send-email-bgurney@redhat.com>
+In-Reply-To: <20200625113122.7540-7-willy@infradead.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,87 +18,134 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bryan Gurney <bgurney@redhat.com>, dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com
+Content-Disposition: inline
+To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-SGkgTWlrZSwgZG9lcyB0aGVyZSBhbnkgYWR2aWNlIGZvciB0aGlzIHBhdGNoc2V0PwoKVGhhbmtz
-LApLdW4uCgrU2iAyMDIwLzYvMjAgNToxMCwgQnJ5YW4gR3VybmV5INC0tcA6Cj4gRnJvbTogeWFu
-Z2Vya3VuIDx5YW5nZXJrdW5AaHVhd2VpLmNvbT4KPiAKPiBGcm9tOiB5YW5nZXJrdW4gPHlhbmdl
-cmt1bkBodWF3ZWkuY29tPgo+IAo+IFNvbWUgdHlwZSBvZiBtZXNzYWdlKHF1ZXJ5YmxvY2svY291
-bnRiYWRibG9ja3MvcmVtb3ZlYmFkYmxvY2spIG1heSBiZXR0ZXIKPiByZXBvcnQgcmVzdWx0cyB0
-byB1c2VyIGRpcmVjdGx5LiBEbyBpdCB3aXRoIERNRU1JVC4KPiAKPiBbQnJ5YW46IG1haW50YWlu
-IF9fZnVuY19fIG91dHB1dCBpbiBETUVNSVQgbWVzc2FnZXNdCj4gCj4gU2lnbmVkLW9mZi1ieTog
-eWFuZ2Vya3VuIDx5YW5nZXJrdW5AaHVhd2VpLmNvbT4KPiBTaWduZWQtb2ZmLWJ5OiBCcnlhbiBH
-dXJuZXkgPGJndXJuZXlAcmVkaGF0LmNvbT4KPiAtLS0KPiAgIGRyaXZlcnMvbWQvZG0tZHVzdC5j
-IHwgMzEgKysrKysrKysrKysrKysrKysrLS0tLS0tLS0tLS0tLQo+ICAgMSBmaWxlIGNoYW5nZWQs
-IDE4IGluc2VydGlvbnMoKyksIDEzIGRlbGV0aW9ucygtKQo+IAo+IGRpZmYgLS1naXQgYS9kcml2
-ZXJzL21kL2RtLWR1c3QuYyBiL2RyaXZlcnMvbWQvZG0tZHVzdC5jCj4gaW5kZXggZmYwM2I5MDA3
-MmM1Li5mMWYyZGQ2YTRlODQgMTAwNjQ0Cj4gLS0tIGEvZHJpdmVycy9tZC9kbS1kdXN0LmMKPiAr
-KysgYi9kcml2ZXJzL21kL2RtLWR1c3QuYwo+IEBAIC0xMzgsMjAgKzEzOCwyMiBAQCBzdGF0aWMg
-aW50IGR1c3RfYWRkX2Jsb2NrKHN0cnVjdCBkdXN0X2RldmljZSAqZGQsIHVuc2lnbmVkIGxvbmcg
-bG9uZyBibG9jaywKPiAgIAlyZXR1cm4gMDsKPiAgIH0KPiAgIAo+IC1zdGF0aWMgaW50IGR1c3Rf
-cXVlcnlfYmxvY2soc3RydWN0IGR1c3RfZGV2aWNlICpkZCwgdW5zaWduZWQgbG9uZyBsb25nIGJs
-b2NrKQo+ICtzdGF0aWMgaW50IGR1c3RfcXVlcnlfYmxvY2soc3RydWN0IGR1c3RfZGV2aWNlICpk
-ZCwgdW5zaWduZWQgbG9uZyBsb25nIGJsb2NrLCBjaGFyICpyZXN1bHQsCj4gKwkJCSAgICB1bnNp
-Z25lZCBpbnQgbWF4bGVuLCB1bnNpZ25lZCBpbnQgKnN6X3B0cikKPiAgIHsKPiAgIAlzdHJ1Y3Qg
-YmFkYmxvY2sgKmJibG9jazsKPiAgIAl1bnNpZ25lZCBsb25nIGZsYWdzOwo+ICsJdW5zaWduZWQg
-aW50IHN6ID0gKnN6X3B0cjsKPiAgIAo+ICAgCXNwaW5fbG9ja19pcnFzYXZlKCZkZC0+ZHVzdF9s
-b2NrLCBmbGFncyk7Cj4gICAJYmJsb2NrID0gZHVzdF9yYl9zZWFyY2goJmRkLT5iYWRibG9ja2xp
-c3QsIGJsb2NrKTsKPiAgIAlpZiAoYmJsb2NrICE9IE5VTEwpCj4gLQkJRE1JTkZPKCIlczogYmxv
-Y2sgJWxsdSBmb3VuZCBpbiBiYWRibG9ja2xpc3QiLCBfX2Z1bmNfXywgYmxvY2spOwo+ICsJCURN
-RU1JVCgiJXM6IGJsb2NrICVsbHUgZm91bmQgaW4gYmFkYmxvY2tsaXN0IiwgX19mdW5jX18sIGJs
-b2NrKTsKPiAgIAllbHNlCj4gLQkJRE1JTkZPKCIlczogYmxvY2sgJWxsdSBub3QgZm91bmQgaW4g
-YmFkYmxvY2tsaXN0IiwgX19mdW5jX18sIGJsb2NrKTsKPiArCQlETUVNSVQoIiVzOiBibG9jayAl
-bGx1IG5vdCBmb3VuZCBpbiBiYWRibG9ja2xpc3QiLCBfX2Z1bmNfXywgYmxvY2spOwo+ICAgCXNw
-aW5fdW5sb2NrX2lycXJlc3RvcmUoJmRkLT5kdXN0X2xvY2ssIGZsYWdzKTsKPiAgIAo+IC0JcmV0
-dXJuIDA7Cj4gKwlyZXR1cm4gMTsKPiAgIH0KPiAgIAo+ICAgc3RhdGljIGludCBfX2R1c3RfbWFw
-X3JlYWQoc3RydWN0IGR1c3RfZGV2aWNlICpkZCwgc2VjdG9yX3QgdGhpc2Jsb2NrKQo+IEBAIC0y
-NTksMTEgKzI2MSwxMyBAQCBzdGF0aWMgYm9vbCBfX2R1c3RfY2xlYXJfYmFkYmxvY2tzKHN0cnVj
-dCByYl9yb290ICp0cmVlLAo+ICAgCXJldHVybiB0cnVlOwo+ICAgfQo+ICAgCj4gLXN0YXRpYyBp
-bnQgZHVzdF9jbGVhcl9iYWRibG9ja3Moc3RydWN0IGR1c3RfZGV2aWNlICpkZCkKPiArc3RhdGlj
-IGludCBkdXN0X2NsZWFyX2JhZGJsb2NrcyhzdHJ1Y3QgZHVzdF9kZXZpY2UgKmRkLCBjaGFyICpy
-ZXN1bHQsIHVuc2lnbmVkIGludCBtYXhsZW4sCj4gKwkJCQl1bnNpZ25lZCBpbnQgKnN6X3B0cikK
-PiAgIHsKPiAgIAl1bnNpZ25lZCBsb25nIGZsYWdzOwo+ICAgCXN0cnVjdCByYl9yb290IGJhZGJs
-b2NrbGlzdDsKPiAgIAl1bnNpZ25lZCBsb25nIGxvbmcgYmFkYmxvY2tfY291bnQ7Cj4gKwl1bnNp
-Z25lZCBpbnQgc3ogPSAqc3pfcHRyOwo+ICAgCj4gICAJc3Bpbl9sb2NrX2lycXNhdmUoJmRkLT5k
-dXN0X2xvY2ssIGZsYWdzKTsKPiAgIAliYWRibG9ja2xpc3QgPSBkZC0+YmFkYmxvY2tsaXN0Owo+
-IEBAIC0yNzMsMTEgKzI3NywxMSBAQCBzdGF0aWMgaW50IGR1c3RfY2xlYXJfYmFkYmxvY2tzKHN0
-cnVjdCBkdXN0X2RldmljZSAqZGQpCj4gICAJc3Bpbl91bmxvY2tfaXJxcmVzdG9yZSgmZGQtPmR1
-c3RfbG9jaywgZmxhZ3MpOwo+ICAgCj4gICAJaWYgKCFfX2R1c3RfY2xlYXJfYmFkYmxvY2tzKCZi
-YWRibG9ja2xpc3QsIGJhZGJsb2NrX2NvdW50KSkKPiAtCQlETUlORk8oIiVzOiBubyBiYWRibG9j
-a3MgZm91bmQiLCBfX2Z1bmNfXyk7Cj4gKwkJRE1FTUlUKCIlczogbm8gYmFkYmxvY2tzIGZvdW5k
-IiwgX19mdW5jX18pOwo+ICAgCWVsc2UKPiAtCQlETUlORk8oIiVzOiBiYWRibG9ja3MgY2xlYXJl
-ZCIsIF9fZnVuY19fKTsKPiArCQlETUVNSVQoIiVzOiBiYWRibG9ja3MgY2xlYXJlZCIsIF9fZnVu
-Y19fKTsKPiAgIAo+IC0JcmV0dXJuIDA7Cj4gKwlyZXR1cm4gMTsKPiAgIH0KPiAgIAo+ICAgLyoK
-PiBAQCAtMzgzLDcgKzM4Nyw3IEBAIHN0YXRpYyB2b2lkIGR1c3RfZHRyKHN0cnVjdCBkbV90YXJn
-ZXQgKnRpKQo+ICAgfQo+ICAgCj4gICBzdGF0aWMgaW50IGR1c3RfbWVzc2FnZShzdHJ1Y3QgZG1f
-dGFyZ2V0ICp0aSwgdW5zaWduZWQgaW50IGFyZ2MsIGNoYXIgKiphcmd2LAo+IC0JCQljaGFyICpy
-ZXN1bHRfYnVmLCB1bnNpZ25lZCBpbnQgbWF4bGVuKQo+ICsJCQljaGFyICpyZXN1bHQsIHVuc2ln
-bmVkIGludCBtYXhsZW4pCj4gICB7Cj4gICAJc3RydWN0IGR1c3RfZGV2aWNlICpkZCA9IHRpLT5w
-cml2YXRlOwo+ICAgCXNlY3Rvcl90IHNpemUgPSBpX3NpemVfcmVhZChkZC0+ZGV2LT5iZGV2LT5i
-ZF9pbm9kZSkgPj4gU0VDVE9SX1NISUZUOwo+IEBAIC0zOTMsNiArMzk3LDcgQEAgc3RhdGljIGlu
-dCBkdXN0X21lc3NhZ2Uoc3RydWN0IGRtX3RhcmdldCAqdGksIHVuc2lnbmVkIGludCBhcmdjLCBj
-aGFyICoqYXJndiwKPiAgIAl1bnNpZ25lZCBjaGFyIHdyX2ZhaWxfY250Owo+ICAgCXVuc2lnbmVk
-IGludCB0bXBfdWk7Cj4gICAJdW5zaWduZWQgbG9uZyBmbGFnczsKPiArCXVuc2lnbmVkIGludCBz
-eiA9IDA7Cj4gICAJY2hhciBkdW1teTsKPiAgIAo+ICAgCWlmIChhcmdjID09IDEpIHsKPiBAQCAt
-NDEwLDEyICs0MTUsMTIgQEAgc3RhdGljIGludCBkdXN0X21lc3NhZ2Uoc3RydWN0IGRtX3Rhcmdl
-dCAqdGksIHVuc2lnbmVkIGludCBhcmdjLCBjaGFyICoqYXJndiwKPiAgIAkJCXIgPSAwOwo+ICAg
-CQl9IGVsc2UgaWYgKCFzdHJjYXNlY21wKGFyZ3ZbMF0sICJjb3VudGJhZGJsb2NrcyIpKSB7Cj4g
-ICAJCQlzcGluX2xvY2tfaXJxc2F2ZSgmZGQtPmR1c3RfbG9jaywgZmxhZ3MpOwo+IC0JCQlETUlO
-Rk8oImNvdW50YmFkYmxvY2tzOiAlbGx1IGJhZGJsb2NrKHMpIGZvdW5kIiwKPiArCQkJRE1FTUlU
-KCJjb3VudGJhZGJsb2NrczogJWxsdSBiYWRibG9jayhzKSBmb3VuZCIsCj4gICAJCQkgICAgICAg
-ZGQtPmJhZGJsb2NrX2NvdW50KTsKPiAgIAkJCXNwaW5fdW5sb2NrX2lycXJlc3RvcmUoJmRkLT5k
-dXN0X2xvY2ssIGZsYWdzKTsKPiAtCQkJciA9IDA7Cj4gKwkJCXIgPSAxOwo+ICAgCQl9IGVsc2Ug
-aWYgKCFzdHJjYXNlY21wKGFyZ3ZbMF0sICJjbGVhcmJhZGJsb2NrcyIpKSB7Cj4gLQkJCXIgPSBk
-dXN0X2NsZWFyX2JhZGJsb2NrcyhkZCk7Cj4gKwkJCXIgPSBkdXN0X2NsZWFyX2JhZGJsb2Nrcyhk
-ZCwgcmVzdWx0LCBtYXhsZW4sICZzeik7Cj4gICAJCX0gZWxzZSBpZiAoIXN0cmNhc2VjbXAoYXJn
-dlswXSwgInF1aWV0IikpIHsKPiAgIAkJCWlmICghZGQtPnF1aWV0X21vZGUpCj4gICAJCQkJZGQt
-PnF1aWV0X21vZGUgPSB0cnVlOwo+IEBAIC00NDEsNyArNDQ2LDcgQEAgc3RhdGljIGludCBkdXN0
-X21lc3NhZ2Uoc3RydWN0IGRtX3RhcmdldCAqdGksIHVuc2lnbmVkIGludCBhcmdjLCBjaGFyICoq
-YXJndiwKPiAgIAkJZWxzZSBpZiAoIXN0cmNhc2VjbXAoYXJndlswXSwgInJlbW92ZWJhZGJsb2Nr
-IikpCj4gICAJCQlyID0gZHVzdF9yZW1vdmVfYmxvY2soZGQsIGJsb2NrKTsKPiAgIAkJZWxzZSBp
-ZiAoIXN0cmNhc2VjbXAoYXJndlswXSwgInF1ZXJ5YmxvY2siKSkKPiAtCQkJciA9IGR1c3RfcXVl
-cnlfYmxvY2soZGQsIGJsb2NrKTsKPiArCQkJciA9IGR1c3RfcXVlcnlfYmxvY2soZGQsIGJsb2Nr
-LCByZXN1bHQsIG1heGxlbiwgJnN6KTsKPiAgIAkJZWxzZQo+ICAgCQkJaW52YWxpZF9tc2cgPSB0
-cnVlOwo+ICAgCj4gCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
-b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Thu, Jun 25, 2020 at 12:31:22PM +0100, Matthew Wilcox (Oracle) wrote:
+> Similar to memalloc_noio() and memalloc_nofs(), memalloc_nowait()
+> guarantees we will not sleep to reclaim memory.  Use it to simplify
+> dm-bufio's allocations.
+> 
+> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+> ---
+>  drivers/md/dm-bufio.c    | 30 ++++++++----------------------
+>  include/linux/sched.h    |  1 +
+>  include/linux/sched/mm.h | 12 ++++++++----
+>  3 files changed, 17 insertions(+), 26 deletions(-)
+> 
+> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+> index 6d1565021d74..140ada9a2c8f 100644
+> --- a/drivers/md/dm-bufio.c
+> +++ b/drivers/md/dm-bufio.c
+> @@ -412,23 +412,6 @@ static void *alloc_buffer_data(struct dm_bufio_client *c, gfp_t gfp_mask,
+>  
+>  	*data_mode = DATA_MODE_VMALLOC;
+>  
+> -	/*
+> -	 * __vmalloc allocates the data pages and auxiliary structures with
+> -	 * gfp_flags that were specified, but pagetables are always allocated
+> -	 * with GFP_KERNEL, no matter what was specified as gfp_mask.
+> -	 *
+> -	 * Consequently, we must set per-process flag PF_MEMALLOC_NOIO so that
+> -	 * all allocations done by this process (including pagetables) are done
+> -	 * as if GFP_NOIO was specified.
+> -	 */
+> -	if (gfp_mask & __GFP_NORETRY) {
+> -		unsigned noio_flag = memalloc_noio_save();
+> -		void *ptr = __vmalloc(c->block_size, gfp_mask);
+> -
+> -		memalloc_noio_restore(noio_flag);
+> -		return ptr;
+> -	}
+> -
+>  	return __vmalloc(c->block_size, gfp_mask);
+>  }
+>  
+> @@ -866,9 +849,6 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
+>  	 * dm-bufio is resistant to allocation failures (it just keeps
+>  	 * one buffer reserved in cases all the allocations fail).
+>  	 * So set flags to not try too hard:
+> -	 *	GFP_NOWAIT: don't wait; if we need to sleep we'll release our
+> -	 *		    mutex and wait ourselves.
+> -	 *	__GFP_NORETRY: don't retry and rather return failure
+>  	 *	__GFP_NOMEMALLOC: don't use emergency reserves
+>  	 *	__GFP_NOWARN: don't print a warning in case of failure
+>  	 *
+> @@ -877,7 +857,9 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
+>  	 */
+>  	while (1) {
+>  		if (dm_bufio_cache_size_latch != 1) {
+> -			b = alloc_buffer(c, GFP_NOWAIT | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
+> +			unsigned nowait_flag = memalloc_nowait_save();
+> +			b = alloc_buffer(c, GFP_KERNEL | __GFP_NOMEMALLOC | __GFP_NOWARN);
+> +			memalloc_nowait_restore(nowait_flag);
+>  			if (b)
+>  				return b;
+>  		}
+> @@ -886,8 +868,12 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
+>  			return NULL;
+>  
+>  		if (dm_bufio_cache_size_latch != 1 && !tried_noio_alloc) {
+> +			unsigned noio_flag;
+> +
+>  			dm_bufio_unlock(c);
+> -			b = alloc_buffer(c, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
+> +			noio_flag = memalloc_noio_save();
+
+I've read the series twice and I'm still missing the definition of
+memalloc_noio_save().
+
+And also it would be nice to have a paragraph about it in
+Documentation/core-api/memory-allocation.rst
+
+> +			b = alloc_buffer(c, GFP_KERNEL |
+> __GFP_NOMEMALLOC | __GFP_NOWARN); +
+> memalloc_noio_restore(noio_flag); dm_bufio_lock(c); if (b)
+>  				return b;
+> diff --git a/include/linux/sched.h b/include/linux/sched.h
+> index 90336850e940..b1c2cddd366c 100644
+> --- a/include/linux/sched.h
+> +++ b/include/linux/sched.h
+> @@ -803,6 +803,7 @@ struct task_struct {
+>  #endif
+>  	unsigned			memalloc_noio:1;
+>  	unsigned			memalloc_nofs:1;
+> +	unsigned			memalloc_nowait:1;
+>  	unsigned			memalloc_nocma:1;
+>  
+>  	unsigned long			atomic_flags; /* Flags requiring atomic access. */
+> diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
+> index 6f7b59a848a6..6484569f50df 100644
+> --- a/include/linux/sched/mm.h
+> +++ b/include/linux/sched/mm.h
+> @@ -179,12 +179,16 @@ static inline bool in_vfork(struct task_struct *tsk)
+>  static inline gfp_t current_gfp_context(gfp_t flags)
+>  {
+>  	if (unlikely(current->memalloc_noio || current->memalloc_nofs ||
+> -		     current->memalloc_nocma)) {
+> +		     current->memalloc_nocma) || current->memalloc_nowait) {
+>  		/*
+> -		 * NOIO implies both NOIO and NOFS and it is a weaker context
+> -		 * so always make sure it makes precedence
+> +		 * Clearing DIRECT_RECLAIM means we won't get to the point
+> +		 * of testing IO or FS, so we don't need to bother clearing
+> +		 * them.  noio implies neither IO nor FS and it is a weaker
+> +		 * context so always make sure it takes precedence.
+>  		 */
+> -		if (current->memalloc_noio)
+> +		if (current->memalloc_nowait)
+> +			flags &= ~__GFP_DIRECT_RECLAIM;
+> +		else if (current->memalloc_noio)
+>  			flags &= ~(__GFP_IO | __GFP_FS);
+>  		else if (current->memalloc_nofs)
+>  			flags &= ~__GFP_FS;
+> -- 
+> 2.27.0
+> 
+> 
+
+-- 
+Sincerely yours,
+Mike.
