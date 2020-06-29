@@ -1,7 +1,7 @@
 From: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Subject: [PATCH 05/11] block: get rid of the trace rq insert wrapper
-Date: Mon, 29 Jun 2020 16:43:08 -0700
-Message-ID: <20200629234314.10509-6-chaitanya.kulkarni@wdc.com>
+Subject: [PATCH 06/11] block: remove extra param for trace_block_getrq()
+Date: Mon, 29 Jun 2020 16:43:09 -0700
+Message-ID: <20200629234314.10509-7-chaitanya.kulkarni@wdc.com>
 References: <20200629234314.10509-1-chaitanya.kulkarni@wdc.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,112 +12,124 @@ To: linux-block@vger.kernel.org, dm-devel@redhat.com
 Cc: jack@suse.czi, rdunlap@infradead.org, sagi@grimberg.me, mingo@redhat.com, rostedt@goodmis.org, snitzer@redhat.com, agk@redhat.com, axboe@kernel.dk, paolo.valente@linaro.org, ming.lei@redhat.com, bvanassche@acm.org, fangguoju@gmail.com, colyli@suse.de, hch@lst.de, Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 List-Id: dm-devel.ids
 
-Get rid of the wrapper for trace_block_rq_insert() and call the function
-directly.
+Remove the extra parameter for trace_block_getrq() since we can derive
+I/O direction from bio->bi_opf.
 
 Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 ---
- block/bfq-iosched.c   | 4 +++-
- block/blk-mq-sched.c  | 6 ------
- block/blk-mq-sched.h  | 1 -
- block/kyber-iosched.c | 4 +++-
- block/mq-deadline.c   | 4 +++-
- 5 files changed, 9 insertions(+), 10 deletions(-)
+ block/blk-mq.c               |  2 +-
+ include/trace/events/block.h | 14 ++++++--------
+ kernel/trace/blktrace.c      | 13 ++++++-------
+ 3 files changed, 13 insertions(+), 16 deletions(-)
 
-diff --git a/block/bfq-iosched.c b/block/bfq-iosched.c
-index 50c8f034c01c..e2b9b700ed34 100644
---- a/block/bfq-iosched.c
-+++ b/block/bfq-iosched.c
-@@ -125,6 +125,8 @@
- #include <linux/delay.h>
- #include <linux/backing-dev.h>
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index dbb98b2bc868..d66bb299d4ae 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -2111,7 +2111,7 @@ blk_qc_t blk_mq_make_request(struct request_queue *q, struct bio *bio)
+ 		goto queue_exit;
+ 	}
  
-+#include <trace/events/block.h>
-+
- #include "blk.h"
- #include "blk-mq.h"
- #include "blk-mq-tag.h"
-@@ -5507,7 +5509,7 @@ static void bfq_insert_request(struct blk_mq_hw_ctx *hctx, struct request *rq,
+-	trace_block_getrq(bio, bio->bi_opf);
++	trace_block_getrq(bio);
  
- 	spin_unlock_irq(&bfqd->lock);
+ 	rq_qos_track(q, rq, bio);
  
--	blk_mq_sched_request_inserted(rq);
-+	trace_block_rq_insert(rq);
+diff --git a/include/trace/events/block.h b/include/trace/events/block.h
+index d7289576f1fd..3d8923062fc4 100644
+--- a/include/trace/events/block.h
++++ b/include/trace/events/block.h
+@@ -347,9 +347,9 @@ DEFINE_EVENT(block_bio, block_bio_queue,
  
- 	spin_lock_irq(&bfqd->lock);
- 	bfqq = bfq_init_rq(rq);
-diff --git a/block/blk-mq-sched.c b/block/blk-mq-sched.c
-index a3cade16ef80..20b6a59fbd5a 100644
---- a/block/blk-mq-sched.c
-+++ b/block/blk-mq-sched.c
-@@ -407,12 +407,6 @@ bool blk_mq_sched_try_insert_merge(struct request_queue *q, struct request *rq)
+ DECLARE_EVENT_CLASS(block_get_rq,
+ 
+-	TP_PROTO(struct bio *bio, int rw),
++	TP_PROTO(struct bio *bio),
+ 
+-	TP_ARGS(bio, rw),
++	TP_ARGS(bio),
+ 
+ 	TP_STRUCT__entry(
+ 		__field( dev_t,		dev			)
+@@ -377,22 +377,20 @@ DECLARE_EVENT_CLASS(block_get_rq,
+ /**
+  * block_getrq - get a free request entry in queue for block IO operations
+  * @bio: pending block IO operation (can be %NULL)
+- * @rw: low bit indicates a read (%0) or a write (%1)
+  *
+  * A request struct for queue has been allocated to handle the
+  * block IO operation @bio.
+  */
+ DEFINE_EVENT(block_get_rq, block_getrq,
+ 
+-	TP_PROTO(struct bio *bio, int rw),
++	TP_PROTO(struct bio *bio),
+ 
+-	TP_ARGS(bio, rw)
++	TP_ARGS(bio)
+ );
+ 
+ /**
+  * block_sleeprq - waiting to get a free request entry in queue for block IO operation
+  * @bio: pending block IO operation (can be %NULL)
+- * @rw: low bit indicates a read (%0) or a write (%1)
+  *
+  * In the case where a request struct cannot be provided for queue
+  * the process needs to wait for an request struct to become
+@@ -401,9 +399,9 @@ DEFINE_EVENT(block_get_rq, block_getrq,
+  */
+ DEFINE_EVENT(block_get_rq, block_sleeprq,
+ 
+-	TP_PROTO(struct bio *bio, int rw),
++	TP_PROTO(struct bio *bio),
+ 
+-	TP_ARGS(bio, rw)
++	TP_ARGS(bio)
+ );
+ 
+ /**
+diff --git a/kernel/trace/blktrace.c b/kernel/trace/blktrace.c
+index 7b72781a591d..1d36e6153ab8 100644
+--- a/kernel/trace/blktrace.c
++++ b/kernel/trace/blktrace.c
+@@ -949,8 +949,7 @@ static void blk_add_trace_bio_queue(void *ignore, struct bio *bio)
+ 	blk_add_trace_bio(bio, BLK_TA_QUEUE, 0);
  }
- EXPORT_SYMBOL_GPL(blk_mq_sched_try_insert_merge);
  
--void blk_mq_sched_request_inserted(struct request *rq)
--{
--	trace_block_rq_insert(rq);
--}
--EXPORT_SYMBOL_GPL(blk_mq_sched_request_inserted);
--
- static bool blk_mq_sched_bypass_insert(struct blk_mq_hw_ctx *hctx,
- 				       bool has_sched,
- 				       struct request *rq)
-diff --git a/block/blk-mq-sched.h b/block/blk-mq-sched.h
-index 126021fc3a11..04c40c695bf0 100644
---- a/block/blk-mq-sched.h
-+++ b/block/blk-mq-sched.h
-@@ -10,7 +10,6 @@ void blk_mq_sched_free_hctx_data(struct request_queue *q,
- 
- void blk_mq_sched_assign_ioc(struct request *rq);
- 
--void blk_mq_sched_request_inserted(struct request *rq);
- bool blk_mq_sched_try_merge(struct request_queue *q, struct bio *bio,
- 		unsigned int nr_segs, struct request **merged_request);
- bool __blk_mq_sched_bio_merge(struct request_queue *q, struct bio *bio,
-diff --git a/block/kyber-iosched.c b/block/kyber-iosched.c
-index a38c5ab103d1..e42d78deee90 100644
---- a/block/kyber-iosched.c
-+++ b/block/kyber-iosched.c
-@@ -13,6 +13,8 @@
- #include <linux/module.h>
- #include <linux/sbitmap.h>
- 
-+#include <trace/events/block.h>
-+
- #include "blk.h"
- #include "blk-mq.h"
- #include "blk-mq-debugfs.h"
-@@ -602,7 +604,7 @@ static void kyber_insert_requests(struct blk_mq_hw_ctx *hctx,
- 			list_move_tail(&rq->queuelist, head);
- 		sbitmap_set_bit(&khd->kcq_map[sched_domain],
- 				rq->mq_ctx->index_hw[hctx->type]);
--		blk_mq_sched_request_inserted(rq);
-+		trace_block_rq_insert(rq);
- 		spin_unlock(&kcq->lock);
+-static void blk_add_trace_getrq(void *ignore,
+-				struct bio *bio, int rw)
++static void blk_add_trace_getrq(void *ignore, struct bio *bio)
+ {
+ 	if (bio)
+ 		blk_add_trace_bio(bio, BLK_TA_GETRQ, 0);
+@@ -960,14 +959,14 @@ static void blk_add_trace_getrq(void *ignore,
+ 		rcu_read_lock();
+ 		bt = rcu_dereference(bio_q(bio)->blk_trace);
+ 		if (bt)
+-			__blk_add_trace(bt, 0, 0, rw, 0, BLK_TA_GETRQ, 0, 0,
+-					NULL, 0);
++			__blk_add_trace(bt, 0, 0, bio->bi_opf, 0,
++					BLK_TA_GETRQ, 0, 0, NULL, 0);
+ 		rcu_read_unlock();
  	}
  }
-diff --git a/block/mq-deadline.c b/block/mq-deadline.c
-index b57470e154c8..f3631a287466 100644
---- a/block/mq-deadline.c
-+++ b/block/mq-deadline.c
-@@ -18,6 +18,8 @@
- #include <linux/rbtree.h>
- #include <linux/sbitmap.h>
  
-+#include <trace/events/block.h>
-+
- #include "blk.h"
- #include "blk-mq.h"
- #include "blk-mq-debugfs.h"
-@@ -496,7 +498,7 @@ static void dd_insert_request(struct blk_mq_hw_ctx *hctx, struct request *rq,
- 	if (blk_mq_sched_try_insert_merge(q, rq))
- 		return;
  
--	blk_mq_sched_request_inserted(rq);
-+	trace_block_rq_insert(rq);
- 
- 	if (at_head || blk_rq_is_passthrough(rq)) {
- 		if (at_head)
+-static void blk_add_trace_sleeprq(void *ignore, struct bio *bio, int rw)
++static void blk_add_trace_sleeprq(void *ignore, struct bio *bio)
+ {
+ 	if (bio)
+ 		blk_add_trace_bio(bio, BLK_TA_SLEEPRQ, 0);
+@@ -977,8 +976,8 @@ static void blk_add_trace_sleeprq(void *ignore, struct bio *bio, int rw)
+ 		rcu_read_lock();
+ 		bt = rcu_dereference(bio_q(bio)->blk_trace);
+ 		if (bt)
+-			__blk_add_trace(bt, 0, 0, rw, 0, BLK_TA_SLEEPRQ,
+-					0, 0, NULL, 0);
++			__blk_add_trace(bt, 0, 0, bio->bi_opf, 0,
++					BLK_TA_SLEEPRQ, 0, 0, NULL, 0);
+ 		rcu_read_unlock();
+ 	}
+ }
 -- 
 2.26.0
