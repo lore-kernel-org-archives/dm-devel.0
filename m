@@ -1,7 +1,8 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 09/20] bcache: stop setting ->queuedata
-Date: Mon, 29 Jun 2020 21:39:36 +0200
-Message-ID: <20200629193947.2705954-10-hch@lst.de>
+Subject: [PATCH 14/20] block: remove the NULL queue check in
+	generic_make_request_checks
+Date: Mon, 29 Jun 2020 21:39:41 +0200
+Message-ID: <20200629193947.2705954-15-hch@lst.de>
 References: <20200629193947.2705954-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,24 +22,41 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: linux-bcache@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-m68k@vger.kernel.org, linux-nvdimm@lists.01.org, linux-s390@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, drbd-dev@tron.linbit.com, linuxppc-dev@lists.ozlabs.org
 List-Id: dm-devel.ids
 
-Nothing in bcache actually uses the ->queuedata field.
+All registers disks must have a valid queue pointer, so don't bother to
+log a warning for that case.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/bcache/super.c | 1 -
- 1 file changed, 1 deletion(-)
+ block/blk-core.c | 12 +-----------
+ 1 file changed, 1 insertion(+), 11 deletions(-)
 
-diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
-index 2014016f9a60d3..21aa168113d30b 100644
---- a/drivers/md/bcache/super.c
-+++ b/drivers/md/bcache/super.c
-@@ -876,7 +876,6 @@ static int bcache_device_init(struct bcache_device *d, unsigned int block_size,
- 		return -ENOMEM;
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 95dca74534ff73..37435d0d433564 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -973,22 +973,12 @@ static inline blk_status_t blk_check_zone_append(struct request_queue *q,
+ static noinline_for_stack bool
+ generic_make_request_checks(struct bio *bio)
+ {
+-	struct request_queue *q;
++	struct request_queue *q = bio->bi_disk->queue;
+ 	int nr_sectors = bio_sectors(bio);
+ 	blk_status_t status = BLK_STS_IOERR;
+-	char b[BDEVNAME_SIZE];
  
- 	d->disk->queue			= q;
--	q->queuedata			= d;
- 	q->backing_dev_info->congested_data = d;
- 	q->limits.max_hw_sectors	= UINT_MAX;
- 	q->limits.max_sectors		= UINT_MAX;
+ 	might_sleep();
+ 
+-	q = bio->bi_disk->queue;
+-	if (unlikely(!q)) {
+-		printk(KERN_ERR
+-		       "generic_make_request: Trying to access "
+-			"nonexistent block-device %s (%Lu)\n",
+-			bio_devname(bio, b), (long long)bio->bi_iter.bi_sector);
+-		goto end_io;
+-	}
+-
+ 	/*
+ 	 * For a REQ_NOWAIT based request, return -EOPNOTSUPP
+ 	 * if queue is not a request based queue.
 -- 
 2.26.2
