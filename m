@@ -1,7 +1,7 @@
 From: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Subject: [PATCH 06/11] block: remove extra param for trace_block_getrq()
-Date: Mon, 29 Jun 2020 16:43:09 -0700
-Message-ID: <20200629234314.10509-7-chaitanya.kulkarni@wdc.com>
+Subject: [PATCH 07/11] block: get rid of blk_trace_request_get_cgid()
+Date: Mon, 29 Jun 2020 16:43:10 -0700
+Message-ID: <20200629234314.10509-8-chaitanya.kulkarni@wdc.com>
 References: <20200629234314.10509-1-chaitanya.kulkarni@wdc.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,124 +12,93 @@ To: linux-block@vger.kernel.org, dm-devel@redhat.com
 Cc: jack@suse.czi, rdunlap@infradead.org, sagi@grimberg.me, mingo@redhat.com, rostedt@goodmis.org, snitzer@redhat.com, agk@redhat.com, axboe@kernel.dk, paolo.valente@linaro.org, ming.lei@redhat.com, bvanassche@acm.org, fangguoju@gmail.com, colyli@suse.de, hch@lst.de, Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 List-Id: dm-devel.ids
 
-Remove the extra parameter for trace_block_getrq() since we can derive
-I/O direction from bio->bi_opf.
+Now that we have done cleanup we can safely get rid of the
+blk_trace_request_get_cgid() and replace it with
+blk_trace_bio_get_cgid().
 
 Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 ---
- block/blk-mq.c               |  2 +-
- include/trace/events/block.h | 14 ++++++--------
- kernel/trace/blktrace.c      | 13 ++++++-------
- 3 files changed, 13 insertions(+), 16 deletions(-)
+ kernel/trace/blktrace.c | 26 +++++++++-----------------
+ 1 file changed, 9 insertions(+), 17 deletions(-)
 
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index dbb98b2bc868..d66bb299d4ae 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -2111,7 +2111,7 @@ blk_qc_t blk_mq_make_request(struct request_queue *q, struct bio *bio)
- 		goto queue_exit;
- 	}
- 
--	trace_block_getrq(bio, bio->bi_opf);
-+	trace_block_getrq(bio);
- 
- 	rq_qos_track(q, rq, bio);
- 
-diff --git a/include/trace/events/block.h b/include/trace/events/block.h
-index d7289576f1fd..3d8923062fc4 100644
---- a/include/trace/events/block.h
-+++ b/include/trace/events/block.h
-@@ -347,9 +347,9 @@ DEFINE_EVENT(block_bio, block_bio_queue,
- 
- DECLARE_EVENT_CLASS(block_get_rq,
- 
--	TP_PROTO(struct bio *bio, int rw),
-+	TP_PROTO(struct bio *bio),
- 
--	TP_ARGS(bio, rw),
-+	TP_ARGS(bio),
- 
- 	TP_STRUCT__entry(
- 		__field( dev_t,		dev			)
-@@ -377,22 +377,20 @@ DECLARE_EVENT_CLASS(block_get_rq,
- /**
-  * block_getrq - get a free request entry in queue for block IO operations
-  * @bio: pending block IO operation (can be %NULL)
-- * @rw: low bit indicates a read (%0) or a write (%1)
-  *
-  * A request struct for queue has been allocated to handle the
-  * block IO operation @bio.
-  */
- DEFINE_EVENT(block_get_rq, block_getrq,
- 
--	TP_PROTO(struct bio *bio, int rw),
-+	TP_PROTO(struct bio *bio),
- 
--	TP_ARGS(bio, rw)
-+	TP_ARGS(bio)
- );
- 
- /**
-  * block_sleeprq - waiting to get a free request entry in queue for block IO operation
-  * @bio: pending block IO operation (can be %NULL)
-- * @rw: low bit indicates a read (%0) or a write (%1)
-  *
-  * In the case where a request struct cannot be provided for queue
-  * the process needs to wait for an request struct to become
-@@ -401,9 +399,9 @@ DEFINE_EVENT(block_get_rq, block_getrq,
-  */
- DEFINE_EVENT(block_get_rq, block_sleeprq,
- 
--	TP_PROTO(struct bio *bio, int rw),
-+	TP_PROTO(struct bio *bio),
- 
--	TP_ARGS(bio, rw)
-+	TP_ARGS(bio)
- );
- 
- /**
 diff --git a/kernel/trace/blktrace.c b/kernel/trace/blktrace.c
-index 7b72781a591d..1d36e6153ab8 100644
+index 1d36e6153ab8..bb864a50307f 100644
 --- a/kernel/trace/blktrace.c
 +++ b/kernel/trace/blktrace.c
-@@ -949,8 +949,7 @@ static void blk_add_trace_bio_queue(void *ignore, struct bio *bio)
- 	blk_add_trace_bio(bio, BLK_TA_QUEUE, 0);
+@@ -804,15 +804,6 @@ u64 blk_trace_bio_get_cgid(struct request_queue *q, struct bio *bio)
  }
+ #endif
  
--static void blk_add_trace_getrq(void *ignore,
--				struct bio *bio, int rw)
-+static void blk_add_trace_getrq(void *ignore, struct bio *bio)
+-static u64
+-blk_trace_request_get_cgid(struct request_queue *q, struct request *rq)
+-{
+-	if (!rq->bio)
+-		return 0;
+-	/* Use the first bio */
+-	return blk_trace_bio_get_cgid(q, rq->bio);
+-}
+-
+ /*
+  * blktrace probes
+  */
+@@ -854,32 +845,32 @@ static void blk_add_trace_rq(struct request *rq, int error,
+ static void blk_add_trace_rq_insert(void *ignore, struct request *rq)
  {
- 	if (bio)
- 		blk_add_trace_bio(bio, BLK_TA_GETRQ, 0);
-@@ -960,14 +959,14 @@ static void blk_add_trace_getrq(void *ignore,
- 		rcu_read_lock();
- 		bt = rcu_dereference(bio_q(bio)->blk_trace);
- 		if (bt)
--			__blk_add_trace(bt, 0, 0, rw, 0, BLK_TA_GETRQ, 0, 0,
--					NULL, 0);
-+			__blk_add_trace(bt, 0, 0, bio->bi_opf, 0,
-+					BLK_TA_GETRQ, 0, 0, NULL, 0);
- 		rcu_read_unlock();
- 	}
+ 	blk_add_trace_rq(rq, 0, blk_rq_bytes(rq), BLK_TA_INSERT,
+-			 blk_trace_request_get_cgid(rq->q, rq));
++			 rq->bio ? blk_trace_bio_get_cgid(rq->q, rq->bio) : 0);
  }
  
- 
--static void blk_add_trace_sleeprq(void *ignore, struct bio *bio, int rw)
-+static void blk_add_trace_sleeprq(void *ignore, struct bio *bio)
+ static void blk_add_trace_rq_issue(void *ignore, struct request *rq)
  {
- 	if (bio)
- 		blk_add_trace_bio(bio, BLK_TA_SLEEPRQ, 0);
-@@ -977,8 +976,8 @@ static void blk_add_trace_sleeprq(void *ignore, struct bio *bio, int rw)
- 		rcu_read_lock();
- 		bt = rcu_dereference(bio_q(bio)->blk_trace);
- 		if (bt)
--			__blk_add_trace(bt, 0, 0, rw, 0, BLK_TA_SLEEPRQ,
--					0, 0, NULL, 0);
-+			__blk_add_trace(bt, 0, 0, bio->bi_opf, 0,
-+					BLK_TA_SLEEPRQ, 0, 0, NULL, 0);
- 		rcu_read_unlock();
- 	}
+ 	blk_add_trace_rq(rq, 0, blk_rq_bytes(rq), BLK_TA_ISSUE,
+-			 blk_trace_request_get_cgid(rq->q, rq));
++			 rq->bio ? blk_trace_bio_get_cgid(rq->q, rq->bio) : 0);
  }
+ 
+ static void blk_add_trace_rq_merge(void *ignore, struct request *rq)
+ {
+ 	blk_add_trace_rq(rq, 0, blk_rq_bytes(rq), BLK_TA_BACKMERGE,
+-			 blk_trace_request_get_cgid(rq->q, rq));
++			 rq->bio ? blk_trace_bio_get_cgid(rq->q, rq->bio) : 0);
+ }
+ 
+ static void blk_add_trace_rq_requeue(void *ignore, struct request *rq)
+ {
+ 	blk_add_trace_rq(rq, 0, blk_rq_bytes(rq), BLK_TA_REQUEUE,
+-			 blk_trace_request_get_cgid(rq->q, rq));
++			 rq->bio ? blk_trace_bio_get_cgid(rq->q, rq->bio) : 0);
+ }
+ 
+ static void blk_add_trace_rq_complete(void *ignore, struct request *rq,
+ 			int error, unsigned int nr_bytes)
+ {
+ 	blk_add_trace_rq(rq, error, nr_bytes, BLK_TA_COMPLETE,
+-			 blk_trace_request_get_cgid(rq->q, rq));
++			 rq->bio ? blk_trace_bio_get_cgid(rq->q, rq->bio) : 0);
+ }
+ 
+ /**
+@@ -1105,7 +1096,8 @@ static void blk_add_trace_rq_remap(void *ignore,
+ 
+ 	__blk_add_trace(bt, blk_rq_pos(rq), blk_rq_bytes(rq),
+ 			rq_data_dir(rq), 0, BLK_TA_REMAP, 0,
+-			sizeof(r), &r, blk_trace_request_get_cgid(q, rq));
++			sizeof(r), &r,
++			rq->bio ? blk_trace_bio_get_cgid(q, rq->bio) : 0);
+ 	rcu_read_unlock();
+ }
+ 
+@@ -1134,8 +1126,8 @@ void blk_add_driver_data(struct request_queue *q,
+ 	}
+ 
+ 	__blk_add_trace(bt, blk_rq_trace_sector(rq), blk_rq_bytes(rq), 0, 0,
+-				BLK_TA_DRV_DATA, 0, len, data,
+-				blk_trace_request_get_cgid(q, rq));
++			BLK_TA_DRV_DATA, 0, len, data,
++			rq->bio ? blk_trace_bio_get_cgid(q, rq->bio) : 0);
+ 	rcu_read_unlock();
+ }
+ EXPORT_SYMBOL_GPL(blk_add_driver_data);
 -- 
 2.26.0
