@@ -1,7 +1,8 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 05/20] ps3vram: stop using ->queuedata
-Date: Mon, 29 Jun 2020 21:39:32 +0200
-Message-ID: <20200629193947.2705954-6-hch@lst.de>
+Subject: [PATCH 15/20] block: remove the nr_sectors variable in
+	generic_make_request_checks
+Date: Mon, 29 Jun 2020 21:39:42 +0200
+Message-ID: <20200629193947.2705954-16-hch@lst.de>
 References: <20200629193947.2705954-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,34 +22,34 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: linux-bcache@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-m68k@vger.kernel.org, linux-nvdimm@lists.01.org, linux-s390@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, drbd-dev@tron.linbit.com, linuxppc-dev@lists.ozlabs.org
 List-Id: dm-devel.ids
 
-Instead of setting up the queuedata as well just use one private data
-field.
+The variable is only used once, so just open code the bio_sector()
+there.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/block/ps3vram.c | 3 +--
+ block/blk-core.c | 3 +--
  1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/drivers/block/ps3vram.c b/drivers/block/ps3vram.c
-index 821d4d8b1d763e..5a1d1d137c7248 100644
---- a/drivers/block/ps3vram.c
-+++ b/drivers/block/ps3vram.c
-@@ -587,7 +587,7 @@ static struct bio *ps3vram_do_bio(struct ps3_system_bus_device *dev,
- 
- static blk_qc_t ps3vram_make_request(struct request_queue *q, struct bio *bio)
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 37435d0d433564..28f60985dc75cc 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -974,7 +974,6 @@ static noinline_for_stack bool
+ generic_make_request_checks(struct bio *bio)
  {
--	struct ps3_system_bus_device *dev = q->queuedata;
-+	struct ps3_system_bus_device *dev = bio->bi_disk->private_data;
- 	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
- 	int busy;
+ 	struct request_queue *q = bio->bi_disk->queue;
+-	int nr_sectors = bio_sectors(bio);
+ 	blk_status_t status = BLK_STS_IOERR;
  
-@@ -745,7 +745,6 @@ static int ps3vram_probe(struct ps3_system_bus_device *dev)
- 	}
- 
- 	priv->queue = queue;
--	queue->queuedata = dev;
- 	blk_queue_max_segments(queue, BLK_MAX_SEGMENTS);
- 	blk_queue_max_segment_size(queue, BLK_MAX_SEGMENT_SIZE);
- 	blk_queue_max_hw_sectors(queue, BLK_SAFE_MAX_SECTORS);
+ 	might_sleep();
+@@ -1007,7 +1006,7 @@ generic_make_request_checks(struct bio *bio)
+ 	if (op_is_flush(bio->bi_opf) &&
+ 	    !test_bit(QUEUE_FLAG_WC, &q->queue_flags)) {
+ 		bio->bi_opf &= ~(REQ_PREFLUSH | REQ_FUA);
+-		if (!nr_sectors) {
++		if (!bio_sectors(bio)) {
+ 			status = BLK_STS_OK;
+ 			goto end_io;
+ 		}
 -- 
 2.26.2
