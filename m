@@ -1,100 +1,66 @@
-From: laurent cop <laurent.cop-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Need some advices on LUKS2 cryptsetup (performance issue
- with integrity)
-Date: Mon, 29 Jun 2020 15:09:23 +0200
-Message-ID: <CAHzw6onkk9TcHE6m_MwO7WRTSE5ehh1bg3YG9HeT_7p6oOZM8g@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 1/3 v2] crypto: introduce the flag
+ CRYPTO_ALG_ALLOCATES_MEMORY
+Date: Mon, 29 Jun 2020 09:17:08 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2006290905340.11293@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2006161101080.28052@file01.intranet.prod.int.rdu2.redhat.com>
+	<20200616173620.GA207319@gmail.com>
+	<alpine.LRH.2.02.2006171107220.18714@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.2006171108440.18714@file01.intranet.prod.int.rdu2.redhat.com>
+	<20200626044534.GA2870@gondor.apana.org.au>
+	<alpine.LRH.2.02.2006261109520.11899@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.2006261215480.13882@file01.intranet.prod.int.rdu2.redhat.com>
+	<20200626164617.GA211634@gmail.com>
+	<20200626170039.GB211634@gmail.com>
+	<alpine.LRH.2.02.2006281505530.347@file01.intranet.prod.int.rdu2.redhat.com>
+	<20200628200022.GE11197@sol.localdomain>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0688954293507297082=="
-Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
-List-Unsubscribe: <https://www.saout.de/mailman/options/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://www.saout.de/pipermail/dm-crypt/>
-List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
-List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
-List-Subscribe: <https://www.saout.de/mailman/listinfo/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
-Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
-Sender: "dm-crypt" <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
-To: dm-crypt-4q3lyFh4P1g@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200628200022.GE11197@sol.localdomain>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, Zaibo Xu <xuzaibo@huawei.com>, linux-kernel@vger.kernel.org, Wei Xu <xuwei5@hisilicon.com>, dm-devel@redhat.com, George Cherian <gcherian@marvell.com>, linux-crypto@vger.kernel.org, Jonathan Cameron <Jonathan.Cameron@huawei.com>, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
---===============0688954293507297082==
-Content-Type: multipart/alternative; boundary="0000000000009ec80705a938c677"
 
---0000000000009ec80705a938c677
-Content-Type: text/plain; charset="UTF-8"
 
- Hello,
+On Sun, 28 Jun 2020, Eric Biggers wrote:
 
-I would need some advice on LUKS2 cryptsetup (confidentiality + integrity).
+> On Sun, Jun 28, 2020 at 03:07:49PM -0400, Mikulas Patocka wrote:
+> > > 
+> > > cryptd_create_skcipher(), cryptd_create_hash(), cryptd_create_aead(), and
+> > > crypto_rfc4309_create() are also missing setting the mask.
+> > > 
+> > > pcrypt_create_aead() is missing both setting the mask and inheriting the flags.
+> > 
+> > I added CRYPTO_ALG_ALLOCATES_MEMORY there.
+> 
+> I don't see where the cryptd request processing functions allocate memory.
+> 
+> It seems that cryptd should just inherit the flag, like most other templates.
+> 
+> Likewise for pcrypt.
+> 
+> And also likewise for rfc4309.
+> 
+> Where are you seeing the memory allocations that would require
+> CRYPTO_ALG_ALLOCATES_MEMORY to always be enabled for these?
+> 
+> - Eric
 
-My context was :
-*encryption (cryptsetu*p aes_xts_plain64) on xfs formatted Raid5 (4+1 for
-parity) soft raid (mdadm) on SSD nvme disks
+This was some misunderstanding. You said "cryptd_create_skcipher ... is 
+missing both setting the mask and inheriting the flags.", so I understood 
+it so that it should inherit CRYPTO_ALG_INHERITED_FLAGS and set 
+CRYPTO_ALG_ALLOCATES_MEMORY unconditionally.
 
-I would like to include crypsetup integrity feature with
---cipher aes-gcm-random --integrity aead
-on the same stack ( on xfs formatted Raid5 (4+1 for parity) soft raid
-(mdadm) on SSD nvme disks)
-
-Few tests with fio (I am testing *sequential write performances*)
---ioengine=libaio --bs=4K --size=30G --end_fsync=1 --numjobs=4
-
-Provide me* a ratio of 3 between the two use cases.*
-
-A study *"Practical Cryptographic Data Integrity Protection with Full Disk
-Encryption Extended Version" from 1 Jul 2018*
-seems to show this kind of ratio and illustrates the difference between
-(JOURNAL and NO JOURNAL). In the case of NO JOURNAL, integrity seems to
-have very low effects on performances.
-
-1)How can I improve my performances with --cipher aes-gcm-random
---integrity aead ?  (this ratio of 3 with aes_xts_plain64 is huge)
-2) What are the impacts of NO JOURNAL, I understand the goal of
-journalisation in fs in case of a crash. Is it the same goal?
-
-Thank you.
-
---0000000000009ec80705a938c677
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><div><div>
-Hello,</div><div><br></div><div>I would need some advice on LUKS2 cryptsetu=
-p (confidentiality + integrity). <br></div><div><br></div><div>My context w=
-as :</div><div><b>encryption (cryptsetu</b>p aes_xts_plain64) on xfs format=
-ted Raid5 (4+1 for parity) soft raid (mdadm) on SSD nvme disks<br></div><br=
-></div><div>I would like to include crypsetup integrity feature with</div><=
-div>--cipher aes-gcm-random --integrity aead</div><div>on the same stack (
-on xfs formatted Raid5 (4+1 for parity) soft raid (mdadm) on SSD nvme disks=
-)</div><div><br></div><div>Few tests with fio (I am testing <b>sequential w=
-rite performances</b>)<br></div><div>--ioengine=3Dlibaio --bs=3D4K --size=
-=3D30G --end_fsync=3D1 --numjobs=3D4</div><div><br></div><div>Provide me<b>=
- a ratio of 3 between the two use cases.</b></div><div><br></div><div>A stu=
-dy <b>&quot;Practical Cryptographic Data Integrity Protection with Full Dis=
-k Encryption Extended Version&quot; from 1 Jul 2018</b> <br></div><div>seem=
-s to show this kind of ratio and illustrates the difference between=C2=A0 (=
-JOURNAL and NO JOURNAL). In the case of NO JOURNAL, integrity=C2=A0seems to=
- have very low effects on performances.</div><div><br></div><div>1)How can =
-I improve my performances with=20
---cipher aes-gcm-random --integrity aead ?=C2=A0 (this ratio of 3 with aes_=
-xts_plain64 is huge)</div><div>2) What are the impacts of NO JOURNAL, I und=
-erstand the goal of journalisation in fs in case of a crash. Is it the same=
- goal?</div><div><br></div><div>Thank you.<br></div><div><br></div><div><di=
-v><br>
-<br></div></div></div>
-
---0000000000009ec80705a938c677--
-
---===============0688954293507297082==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-dm-crypt mailing list
-dm-crypt-4q3lyFh4P1g@public.gmane.org
-https://www.saout.de/mailman/listinfo/dm-crypt
-
---===============0688954293507297082==--
+Mikulas
