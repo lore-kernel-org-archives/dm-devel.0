@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 07/20] umem: stop using ->queuedata
-Date: Mon, 29 Jun 2020 21:39:34 +0200
-Message-ID: <20200629193947.2705954-8-hch@lst.de>
+Subject: [PATCH 10/20] dm: stop using ->queuedata
+Date: Mon, 29 Jun 2020 21:39:37 +0200
+Message-ID: <20200629193947.2705954-11-hch@lst.de>
 References: <20200629193947.2705954-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -26,30 +26,29 @@ field.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/block/umem.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ drivers/md/dm.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/drivers/block/umem.c b/drivers/block/umem.c
-index 1e2aa5ae27963c..5498f1cf36b3fe 100644
---- a/drivers/block/umem.c
-+++ b/drivers/block/umem.c
-@@ -521,7 +521,8 @@ static int mm_check_plugged(struct cardinfo *card)
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index e44473fe0f4873..c8d91f271c272e 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1789,7 +1789,7 @@ static blk_qc_t dm_process_bio(struct mapped_device *md,
  
- static blk_qc_t mm_make_request(struct request_queue *q, struct bio *bio)
+ static blk_qc_t dm_make_request(struct request_queue *q, struct bio *bio)
  {
--	struct cardinfo *card = q->queuedata;
-+	struct cardinfo *card = bio->bi_disk->private_data;
-+
- 	pr_debug("mm_make_request %llu %u\n",
- 		 (unsigned long long)bio->bi_iter.bi_sector,
- 		 bio->bi_iter.bi_size);
-@@ -888,7 +889,6 @@ static int mm_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
- 	card->queue = blk_alloc_queue(mm_make_request, NUMA_NO_NODE);
- 	if (!card->queue)
- 		goto failed_alloc;
--	card->queue->queuedata = card;
+-	struct mapped_device *md = q->queuedata;
++	struct mapped_device *md = bio->bi_disk->private_data;
+ 	blk_qc_t ret = BLK_QC_T_NONE;
+ 	int srcu_idx;
+ 	struct dm_table *map;
+@@ -1995,7 +1995,6 @@ static struct mapped_device *alloc_dev(int minor)
+ 	md->queue = blk_alloc_queue(dm_make_request, numa_node_id);
+ 	if (!md->queue)
+ 		goto bad;
+-	md->queue->queuedata = md;
  
- 	tasklet_init(&card->tasklet, process_page, (unsigned long)card);
- 
+ 	md->disk = alloc_disk_node(1, md->numa_node_id);
+ 	if (!md->disk)
 -- 
 2.26.2
