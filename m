@@ -1,7 +1,7 @@
 From: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Subject: [PATCH 10/11] block: use block_bio class for getrq and sleeprq
-Date: Mon, 29 Jun 2020 16:43:13 -0700
-Message-ID: <20200629234314.10509-11-chaitanya.kulkarni@wdc.com>
+Subject: [PATCH 11/11] block: remove block_get_rq event class
+Date: Mon, 29 Jun 2020 16:43:14 -0700
+Message-ID: <20200629234314.10509-12-chaitanya.kulkarni@wdc.com>
 References: <20200629234314.10509-1-chaitanya.kulkarni@wdc.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,63 +12,52 @@ To: linux-block@vger.kernel.org, dm-devel@redhat.com
 Cc: jack@suse.czi, rdunlap@infradead.org, sagi@grimberg.me, mingo@redhat.com, rostedt@goodmis.org, snitzer@redhat.com, agk@redhat.com, axboe@kernel.dk, paolo.valente@linaro.org, ming.lei@redhat.com, bvanassche@acm.org, fangguoju@gmail.com, colyli@suse.de, hch@lst.de, Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 List-Id: dm-devel.ids
 
-The only difference in block_get_rq and block_bio was the last param
-passed  __entry->nr_sector & bio->bi_iter.bi_size respectively. Since
-that is not the case anymore replace block_get_rq class with block_bio
-for block_getrq and block_sleeprq events, also adjust the code to handle
-null bio case in block_bio.
+Now that there are no users for the block_get_rq event class remove the
+event class.
 
 Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 ---
- include/trace/events/block.h | 22 +++++++++++++++-------
- 1 file changed, 15 insertions(+), 7 deletions(-)
+ include/trace/events/block.h | 28 ----------------------------
+ 1 file changed, 28 deletions(-)
 
 diff --git a/include/trace/events/block.h b/include/trace/events/block.h
-index d191d2cd1070..21f1daaf012b 100644
+index 21f1daaf012b..dc1834250baa 100644
 --- a/include/trace/events/block.h
 +++ b/include/trace/events/block.h
-@@ -272,11 +272,19 @@ DECLARE_EVENT_CLASS(block_bio,
- 	),
+@@ -353,34 +353,6 @@ DEFINE_EVENT(block_bio, block_bio_queue,
+ 	TP_ARGS(bio)
+ );
  
- 	TP_fast_assign(
--		__entry->dev		= bio_dev(bio);
--		__entry->sector		= bio->bi_iter.bi_sector;
--		__entry->nr_sector	= bio_sectors(bio);
--		blk_fill_rwbs(__entry->rwbs, bio->bi_opf);
+-DECLARE_EVENT_CLASS(block_get_rq,
+-
+-	TP_PROTO(struct bio *bio),
+-
+-	TP_ARGS(bio),
+-
+-	TP_STRUCT__entry(
+-		__field( dev_t,		dev			)
+-		__field( sector_t,	sector			)
+-		__field( unsigned int,	nr_sector		)
+-		__array( char,		rwbs,	RWBS_LEN	)
+-		__array( char,		comm,	TASK_COMM_LEN	)
+-        ),
+-
+-	TP_fast_assign(
+-		__entry->dev		= bio ? bio_dev(bio) : 0;
+-		__entry->sector		= bio ? bio->bi_iter.bi_sector : 0;
+-		__entry->nr_sector	= bio ? bio_sectors(bio) : 0;
+-		blk_fill_rwbs(__entry->rwbs, bio ? bio->bi_opf : 0);
 -		memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
-+		if (bio) {
-+			__entry->dev		= bio_dev(bio);
-+			__entry->sector		= bio->bi_iter.bi_sector;
-+			__entry->nr_sector	= bio_sectors(bio);
-+			blk_fill_rwbs(__entry->rwbs, bio->bi_opf);
-+			memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
-+		} else {
-+			__entry->dev		= 0;
-+			__entry->sector		= 0;
-+			__entry->nr_sector	= 0;
-+			blk_fill_rwbs(__entry->rwbs, 0);
-+			memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
-+		}
- 	),
- 
- 	TP_printk("%d,%d %s %llu + %u [%s]",
-@@ -380,7 +388,7 @@ DECLARE_EVENT_CLASS(block_get_rq,
-  * A request struct for queue has been allocated to handle the
-  * block IO operation @bio.
-  */
--DEFINE_EVENT(block_get_rq, block_getrq,
-+DEFINE_EVENT(block_bio, block_getrq,
- 
- 	TP_PROTO(struct bio *bio),
- 
-@@ -396,7 +404,7 @@ DEFINE_EVENT(block_get_rq, block_getrq,
-  * available.  This tracepoint event is generated each time the
-  * process goes to sleep waiting for request struct become available.
-  */
--DEFINE_EVENT(block_get_rq, block_sleeprq,
-+DEFINE_EVENT(block_bio, block_sleeprq,
- 
- 	TP_PROTO(struct bio *bio),
- 
+-        ),
+-
+-	TP_printk("%d,%d %s %llu + %u [%s]",
+-		  MAJOR(__entry->dev), MINOR(__entry->dev), __entry->rwbs,
+-		  (unsigned long long)__entry->sector,
+-		  __entry->nr_sector, __entry->comm)
+-);
+-
+ /**
+  * block_getrq - get a free request entry in queue for block IO operations
+  * @bio: pending block IO operation (can be %NULL)
 -- 
 2.26.0
