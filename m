@@ -1,69 +1,45 @@
-From: Mike Rapoport <rppt@kernel.org>
-Subject: Re: [PATCH 6/6] mm: Add memalloc_nowait
-Date: Mon, 29 Jun 2020 16:45:14 +0300
-Message-ID: <6421BC93-CF2F-4697-B5CB-5ECDAA9FCB37@kernel.org>
-References: <20200625113122.7540-1-willy@infradead.org>
-	<20200625113122.7540-7-willy@infradead.org>
-	<20200629050851.GC1492837@kernel.org>
-	<20200629121816.GC25523@casper.infradead.org>
-	<20200629125231.GJ32461@dhcp22.suse.cz>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 01/20] nfblock: stop using ->queuedata
+Date: Mon, 29 Jun 2020 21:39:28 +0200
+Message-ID: <20200629193947.2705954-2-hch@lst.de>
+References: <20200629193947.2705954-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200629125231.GJ32461@dhcp22.suse.cz>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Michal Hocko <mhocko@kernel.org>, Matthew Wilcox <willy@infradead.org>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-m68k-owner@vger.kernel.org>
+In-Reply-To: <20200629193947.2705954-1-hch@lst.de>
+Sender: linux-m68k-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-xtensa@linux-xtensa.org, drbd-dev@lists.linbit.com, linuxppc-dev@lists.ozlabs.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvdimm@lists.01.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org
 List-Id: dm-devel.ids
 
+Instead of setting up the queuedata as well just use one private data
+field.
 
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ arch/m68k/emu/nfblock.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-On June 29, 2020 3:52:31 PM GMT+03:00, Michal Hocko <mhocko@kernel.org> wrote:
->On Mon 29-06-20 13:18:16, Matthew Wilcox wrote:
->> On Mon, Jun 29, 2020 at 08:08:51AM +0300, Mike Rapoport wrote:
->> > > @@ -886,8 +868,12 @@ static struct dm_buffer
->*__alloc_buffer_wait_no_callback(struct dm_bufio_client
->> > >  			return NULL;
->> > >  
->> > >  		if (dm_bufio_cache_size_latch != 1 && !tried_noio_alloc) {
->> > > +			unsigned noio_flag;
->> > > +
->> > >  			dm_bufio_unlock(c);
->> > > -			b = alloc_buffer(c, GFP_NOIO | __GFP_NORETRY |
->__GFP_NOMEMALLOC | __GFP_NOWARN);
->> > > +			noio_flag = memalloc_noio_save();
->> > 
->> > I've read the series twice and I'm still missing the definition of
->> > memalloc_noio_save().
->> > 
->> > And also it would be nice to have a paragraph about it in
->> > Documentation/core-api/memory-allocation.rst
->> 
->>
->Documentation/core-api/gfp_mask-from-fs-io.rst:``memalloc_nofs_save``,
->``memalloc_nofs_restore`` respectively ``memalloc_noio_save``,
->> Documentation/core-api/gfp_mask-from-fs-io.rst:   :functions:
->memalloc_noio_save memalloc_noio_restore
->> Documentation/core-api/gfp_mask-from-fs-io.rst:allows nesting so it
->is safe to call ``memalloc_noio_save`` or
-> 
->The patch is adding memalloc_nowait* and I suspect Mike had that in
->mind, which would be a fair request. 
-
-Right, sorry misprinted that.
-
-> Btw. we are missing
->memalloc_nocma*
->documentation either - I was just reminded of its existence today..
+diff --git a/arch/m68k/emu/nfblock.c b/arch/m68k/emu/nfblock.c
+index c3a630440512e9..87e8b1700acd28 100644
+--- a/arch/m68k/emu/nfblock.c
++++ b/arch/m68k/emu/nfblock.c
+@@ -61,7 +61,7 @@ struct nfhd_device {
+ 
+ static blk_qc_t nfhd_make_request(struct request_queue *queue, struct bio *bio)
+ {
+-	struct nfhd_device *dev = queue->queuedata;
++	struct nfhd_device *dev = bio->bi_disk->private_data;
+ 	struct bio_vec bvec;
+ 	struct bvec_iter iter;
+ 	int dir, len, shift;
+@@ -122,7 +122,6 @@ static int __init nfhd_init_one(int id, u32 blocks, u32 bsize)
+ 	if (dev->queue == NULL)
+ 		goto free_dev;
+ 
+-	dev->queue->queuedata = dev;
+ 	blk_queue_logical_block_size(dev->queue, bsize);
+ 
+ 	dev->disk = alloc_disk(16);
 -- 
-Sincerely yours,
-Mike
+2.26.2
