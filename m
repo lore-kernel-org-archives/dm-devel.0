@@ -1,13 +1,13 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 06/20] rsxx: stop using ->queuedata
-Date: Mon, 29 Jun 2020 21:39:33 +0200
-Message-ID: <20200629193947.2705954-7-hch@lst.de>
+Subject: [PATCH 03/20] drbd: stop using ->queuedata
+Date: Mon, 29 Jun 2020 21:39:30 +0200
+Message-ID: <20200629193947.2705954-4-hch@lst.de>
 References: <20200629193947.2705954-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-bcache-owner@vger.kernel.org>
+Return-path: <linux-raid-owner@vger.kernel.org>
 In-Reply-To: <20200629193947.2705954-1-hch@lst.de>
-Sender: linux-bcache-owner@vger.kernel.org
+Sender: linux-raid-owner@vger.kernel.org
 To: Jens Axboe <axboe@kernel.dk>
 Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-xtensa@linux-xtensa.org, drbd-dev@lists.linbit.com, linuxppc-dev@lists.ozlabs.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvdimm@lists.01.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org
 List-Id: dm-devel.ids
@@ -17,38 +17,34 @@ field.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/block/rsxx/dev.c | 5 +----
- 1 file changed, 1 insertion(+), 4 deletions(-)
+ drivers/block/drbd/drbd_main.c | 1 -
+ drivers/block/drbd/drbd_req.c  | 2 +-
+ 2 files changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/drivers/block/rsxx/dev.c b/drivers/block/rsxx/dev.c
-index 3ba07ab30c84f5..6a4d8d26e32cbd 100644
---- a/drivers/block/rsxx/dev.c
-+++ b/drivers/block/rsxx/dev.c
-@@ -119,7 +119,7 @@ static void bio_dma_done_cb(struct rsxx_cardinfo *card,
+diff --git a/drivers/block/drbd/drbd_main.c b/drivers/block/drbd/drbd_main.c
+index 45fbd526c453bc..26f4e0aa7393b4 100644
+--- a/drivers/block/drbd/drbd_main.c
++++ b/drivers/block/drbd/drbd_main.c
+@@ -2805,7 +2805,6 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	if (!q)
+ 		goto out_no_q;
+ 	device->rq_queue = q;
+-	q->queuedata   = device;
  
- static blk_qc_t rsxx_make_request(struct request_queue *q, struct bio *bio)
+ 	disk = alloc_disk(1);
+ 	if (!disk)
+diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
+index c80a2f1c3c2a73..3f09b2ab977822 100644
+--- a/drivers/block/drbd/drbd_req.c
++++ b/drivers/block/drbd/drbd_req.c
+@@ -1595,7 +1595,7 @@ void do_submit(struct work_struct *ws)
+ 
+ blk_qc_t drbd_make_request(struct request_queue *q, struct bio *bio)
  {
--	struct rsxx_cardinfo *card = q->queuedata;
-+	struct rsxx_cardinfo *card = bio->bi_disk->private_data;
- 	struct rsxx_bio_meta *bio_meta;
- 	blk_status_t st = BLK_STS_IOERR;
+-	struct drbd_device *device = (struct drbd_device *) q->queuedata;
++	struct drbd_device *device = bio->bi_disk->private_data;
+ 	unsigned long start_jif;
  
-@@ -267,8 +267,6 @@ int rsxx_setup_dev(struct rsxx_cardinfo *card)
- 		card->queue->limits.discard_alignment   = RSXX_HW_BLK_SIZE;
- 	}
- 
--	card->queue->queuedata = card;
--
- 	snprintf(card->gendisk->disk_name, sizeof(card->gendisk->disk_name),
- 		 "rsxx%d", card->disk_id);
- 	card->gendisk->major = card->major;
-@@ -289,7 +287,6 @@ void rsxx_destroy_dev(struct rsxx_cardinfo *card)
- 	card->gendisk = NULL;
- 
- 	blk_cleanup_queue(card->queue);
--	card->queue->queuedata = NULL;
- 	unregister_blkdev(card->major, DRIVER_NAME);
- }
- 
+ 	blk_queue_split(q, &bio);
 -- 
 2.26.2
