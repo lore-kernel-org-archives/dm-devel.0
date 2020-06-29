@@ -1,8 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 14/20] block: remove the NULL queue check in
-	generic_make_request_checks
-Date: Mon, 29 Jun 2020 21:39:41 +0200
-Message-ID: <20200629193947.2705954-15-hch@lst.de>
+Subject: [PATCH 07/20] umem: stop using ->queuedata
+Date: Mon, 29 Jun 2020 21:39:34 +0200
+Message-ID: <20200629193947.2705954-8-hch@lst.de>
 References: <20200629193947.2705954-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,41 +21,35 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: linux-bcache@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-m68k@vger.kernel.org, linux-nvdimm@lists.01.org, linux-s390@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, drbd-dev@tron.linbit.com, linuxppc-dev@lists.ozlabs.org
 List-Id: dm-devel.ids
 
-All registers disks must have a valid queue pointer, so don't bother to
-log a warning for that case.
+Instead of setting up the queuedata as well just use one private data
+field.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/blk-core.c | 12 +-----------
- 1 file changed, 1 insertion(+), 11 deletions(-)
+ drivers/block/umem.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 95dca74534ff73..37435d0d433564 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -973,22 +973,12 @@ static inline blk_status_t blk_check_zone_append(struct request_queue *q,
- static noinline_for_stack bool
- generic_make_request_checks(struct bio *bio)
+diff --git a/drivers/block/umem.c b/drivers/block/umem.c
+index 1e2aa5ae27963c..5498f1cf36b3fe 100644
+--- a/drivers/block/umem.c
++++ b/drivers/block/umem.c
+@@ -521,7 +521,8 @@ static int mm_check_plugged(struct cardinfo *card)
+ 
+ static blk_qc_t mm_make_request(struct request_queue *q, struct bio *bio)
  {
--	struct request_queue *q;
-+	struct request_queue *q = bio->bi_disk->queue;
- 	int nr_sectors = bio_sectors(bio);
- 	blk_status_t status = BLK_STS_IOERR;
--	char b[BDEVNAME_SIZE];
+-	struct cardinfo *card = q->queuedata;
++	struct cardinfo *card = bio->bi_disk->private_data;
++
+ 	pr_debug("mm_make_request %llu %u\n",
+ 		 (unsigned long long)bio->bi_iter.bi_sector,
+ 		 bio->bi_iter.bi_size);
+@@ -888,7 +889,6 @@ static int mm_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
+ 	card->queue = blk_alloc_queue(mm_make_request, NUMA_NO_NODE);
+ 	if (!card->queue)
+ 		goto failed_alloc;
+-	card->queue->queuedata = card;
  
- 	might_sleep();
+ 	tasklet_init(&card->tasklet, process_page, (unsigned long)card);
  
--	q = bio->bi_disk->queue;
--	if (unlikely(!q)) {
--		printk(KERN_ERR
--		       "generic_make_request: Trying to access "
--			"nonexistent block-device %s (%Lu)\n",
--			bio_devname(bio, b), (long long)bio->bi_iter.bi_sector);
--		goto end_io;
--	}
--
- 	/*
- 	 * For a REQ_NOWAIT based request, return -EOPNOTSUPP
- 	 * if queue is not a request based queue.
 -- 
 2.26.2
