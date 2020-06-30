@@ -1,73 +1,33 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm writecache: reject asynchronous pmem.
-Date: Tue, 30 Jun 2020 09:36:33 -0400
-Message-ID: <20200630133546.GA20439@redhat.com>
-References: <20200630123528.29660-1-msuchanek@suse.de>
- <alpine.LRH.2.02.2006300929580.4801@file01.intranet.prod.int.rdu2.redhat.com>
- <20200630141022.GZ21462@kitsune.suse.cz>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [PATCH 1/3 v2] crypto: introduce the flag
+ CRYPTO_ALG_ALLOCATES_MEMORY
+Date: Tue, 30 Jun 2020 09:45:37 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2006300944210.15237@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2006161101080.28052@file01.intranet.prod.int.rdu2.redhat.com> <20200616173620.GA207319@gmail.com> <alpine.LRH.2.02.2006171107220.18714@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.2006171108440.18714@file01.intranet.prod.int.rdu2.redhat.com>
+ <20200626044534.GA2870@gondor.apana.org.au> <alpine.LRH.2.02.2006261109520.11899@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.2006261215480.13882@file01.intranet.prod.int.rdu2.redhat.com> <20200626164617.GA211634@gmail.com>
+ <20200626170039.GB211634@gmail.com> <alpine.LRH.2.02.2006281505530.347@file01.intranet.prod.int.rdu2.redhat.com> <20200628200022.GE11197@sol.localdomain> <alpine.LRH.2.02.2006290905340.11293@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200630141022.GZ21462@kitsune.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michal =?iso-8859-1?Q?Such=E1nek?= <msuchanek@suse.de>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, linux-nvdimm@lists.01.org, "Aneesh Kumar K.V" <aneesh.kumar@linux.ibm.com>, Jan Kara <jack@suse.cz>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, "Michael S. Tsirkin" <mst@redhat.com>, Yuval Shaia <yuval.shaia@oracle.com>, Cornelia Huck <cohuck@redhat.com>, Jakub Staron <jstaron@google.com>, linux-kernel@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.02.2006290905340.11293@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, Zaibo Xu <xuzaibo@huawei.com>, linux-kernel@vger.kernel.org, Wei Xu <xuwei5@hisilicon.com>, dm-devel@redhat.com, George Cherian <gcherian@marvell.com>, linux-crypto@vger.kernel.org, Jonathan Cameron <Jonathan.Cameron@huawei.com>, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Jun 30 2020 at 10:10am -0400,
-Michal Suchánek <msuchanek@suse.de> wrote:
 
-> On Tue, Jun 30, 2020 at 09:32:01AM -0400, Mikulas Patocka wrote:
-> > 
-> > 
-> > On Tue, 30 Jun 2020, Michal Suchanek wrote:
-> > 
-> > > The writecache driver does not handle asynchronous pmem. Reject it when
-> > > supplied as cache.
-> > > 
-> > > Link: https://lore.kernel.org/linux-nvdimm/87lfk5hahc.fsf@linux.ibm.com/
-> > > Fixes: 6e84200c0a29 ("virtio-pmem: Add virtio pmem driver")
-> > > 
-> > > Signed-off-by: Michal Suchanek <msuchanek@suse.de>
-> > > ---
-> > >  drivers/md/dm-writecache.c | 6 ++++++
-> > >  1 file changed, 6 insertions(+)
-> > > 
-> > > diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-> > > index 30505d70f423..57b0a972f6fd 100644
-> > > --- a/drivers/md/dm-writecache.c
-> > > +++ b/drivers/md/dm-writecache.c
-> > > @@ -2277,6 +2277,12 @@ static int writecache_ctr(struct dm_target *ti, unsigned argc, char **argv)
-> > >  
-> > >  		wc->memory_map_size -= (uint64_t)wc->start_sector << SECTOR_SHIFT;
-> > >  
-> > > +		if (!dax_synchronous(wc->ssd_dev->dax_dev)) {
-> > > +			r = -EOPNOTSUPP;
-> > > +			ti->error = "Asynchronous persistent memory not supported as pmem cache";
-> > > +			goto bad;
-> > > +		}
-> > > +
-> > >  		bio_list_init(&wc->flush_list);
-> > >  		wc->flush_thread = kthread_create(writecache_flush_thread, wc, "dm_writecache_flush");
-> > >  		if (IS_ERR(wc->flush_thread)) {
-> > > -- 
-> > 
-> > Hi
-> > 
-> > Shouldn't this be in the "if (WC_MODE_PMEM(wc))" block?
-> That should be always the case at this point.
-> > 
-> > WC_MODE_PMEM(wc) retrurns true if we are using persistent memory as a 
-> > cache device, otherwise we are using generic block device as a cache 
-> > device.
->
-> This is to prevent the situation where we have WC_MODE_PMEM(wc) but
-> cannot guarantee consistency because the async flush is not handled.
 
-The writecache operates in 2 modes.  SSD or PMEM.  Mikulas is saying
-your dax_synchronous() check should go within a WC_MODE_PMEM(wc) block
-because it doesn't make sense to do the check when in SSD mode.
+On Mon, 29 Jun 2020, Mikulas Patocka wrote:
 
-Mike
+> On Sun, 28 Jun 2020, Eric Biggers wrote:
+> 
+> > On Sun, Jun 28, 2020 at 03:07:49PM -0400, Mikulas Patocka wrote:
+> > > > 
+> > > > cryptd_create_skcipher(), cryptd_create_hash(), cryptd_create_aead(), and
+> > > > crypto_rfc4309_create() are also missing setting the mask.
+> > > > 
+> > > > pcrypt_create_aead() is missing both setting the mask and inheriting the flags.
+
+pcrypt_create_aead doesn't use "mask" and "type" arguments at all.
+
+Mikulas
