@@ -1,63 +1,82 @@
-From: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Subject: [PATCH 11/11] block: remove block_get_rq event class
-Date: Mon, 29 Jun 2020 16:43:14 -0700
-Message-ID: <20200629234314.10509-12-chaitanya.kulkarni@wdc.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 00/10] block: blktrace framework cleanup
+Date: Mon, 29 Jun 2020 20:58:53 -0400
+Message-ID: <20200629205853.38628a63@oasis.local.home>
 References: <20200629234314.10509-1-chaitanya.kulkarni@wdc.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20200629234314.10509-1-chaitanya.kulkarni@wdc.com>
 Sender: linux-block-owner@vger.kernel.org
-To: linux-block@vger.kernel.org, dm-devel@redhat.com
-Cc: jack@suse.czi, rdunlap@infradead.org, sagi@grimberg.me, mingo@redhat.com, rostedt@goodmis.org, snitzer@redhat.com, agk@redhat.com, axboe@kernel.dk, paolo.valente@linaro.org, ming.lei@redhat.com, bvanassche@acm.org, fangguoju@gmail.com, colyli@suse.de, hch@lst.de, Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
+To: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, jack@suse.czi, rdunlap@infradead.org, sagi@grimberg.me, mingo@redhat.com, snitzer@redhat.com, agk@redhat.com, axboe@kernel.dk, paolo.valente@linaro.org, ming.lei@redhat.com, bvanassche@acm.org, fangguoju@gmail.com, colyli@suse.de, hch@lst.de
 List-Id: dm-devel.ids
 
-Now that there are no users for the block_get_rq event class remove the
-event class.
+On Mon, 29 Jun 2020 16:43:03 -0700
+Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com> wrote:
 
-Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
----
- include/trace/events/block.h | 28 ----------------------------
- 1 file changed, 28 deletions(-)
+> Hi,
+> 
+> There are many places where trace API accepts the struct request_queue*
+> parameter which can be derived from other function parameters.
+> 
+> This patch-series removes the struct request queue parameter from the
+> blktrace framework and adjusts the tracepoints definition and usage
+> along with the tracing API itself.
+> 
+> Also with the queue parameter removed now we can merge some of the trace
+> events with creating generic event class for bio based tarce events.
+> 
+> Finally few of more cleanups to remove the trace_block_rq_insert()
+> wrapper blk_mq_sched_request_inserted(), get rid of the extra parameter
+> for trace_block_getrq, remove the blk_trace_request_get_cgid(),
+> fix tracepoint comment header,  and blk_fill_rwbs() related triggred
+> cleanup.
+> 
+> I've added patches after first cleanup as I scan the code for more
+> cleanup. I think patch distribution can be better but it will be great
+> to have some feedback as the amount of clenaup has grown bigger.
+> 
+> Any comments are welcome.
+> 
+> Regards,
+> Chaitanya
+> 
+> Chaitanya Kulkarni (11):
+>   block: blktrace framework cleanup
+>   block: rename block_bio_merge class to block_bio
+>   block: use block_bio event class for bio_queue
+>   block: use block_bio event class for bio_bounce
+>   block: get rid of the trace rq insert wrapper
+>   block: remove extra param for trace_block_getrq()
+>   block: get rid of blk_trace_request_get_cgid()
+>   block: fix the comments in the trace event block.h
+>   block: remove unsed param in blk_fill_rwbs()
+>   block: use block_bio class for getrq and sleeprq
+>   block: remove block_get_rq event class
 
-diff --git a/include/trace/events/block.h b/include/trace/events/block.h
-index 21f1daaf012b..dc1834250baa 100644
---- a/include/trace/events/block.h
-+++ b/include/trace/events/block.h
-@@ -353,34 +353,6 @@ DEFINE_EVENT(block_bio, block_bio_queue,
- 	TP_ARGS(bio)
- );
- 
--DECLARE_EVENT_CLASS(block_get_rq,
--
--	TP_PROTO(struct bio *bio),
--
--	TP_ARGS(bio),
--
--	TP_STRUCT__entry(
--		__field( dev_t,		dev			)
--		__field( sector_t,	sector			)
--		__field( unsigned int,	nr_sector		)
--		__array( char,		rwbs,	RWBS_LEN	)
--		__array( char,		comm,	TASK_COMM_LEN	)
--        ),
--
--	TP_fast_assign(
--		__entry->dev		= bio ? bio_dev(bio) : 0;
--		__entry->sector		= bio ? bio->bi_iter.bi_sector : 0;
--		__entry->nr_sector	= bio ? bio_sectors(bio) : 0;
--		blk_fill_rwbs(__entry->rwbs, bio ? bio->bi_opf : 0);
--		memcpy(__entry->comm, current->comm, TASK_COMM_LEN);
--        ),
--
--	TP_printk("%d,%d %s %llu + %u [%s]",
--		  MAJOR(__entry->dev), MINOR(__entry->dev), __entry->rwbs,
--		  (unsigned long long)__entry->sector,
--		  __entry->nr_sector, __entry->comm)
--);
--
- /**
-  * block_getrq - get a free request entry in queue for block IO operations
-  * @bio: pending block IO operation (can be %NULL)
--- 
-2.26.0
+From a tracing perspective:
+
+Acked-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+
+-- Steve
+
+
+> 
+>  block/bfq-iosched.c           |   4 +-
+>  block/blk-core.c              |   6 +-
+>  block/blk-merge.c             |   4 +-
+>  block/blk-mq-sched.c          |   6 -
+>  block/blk-mq-sched.h          |   1 -
+>  block/blk-mq.c                |  10 +-
+>  block/bounce.c                |   2 +-
+>  block/kyber-iosched.c         |   4 +-
+>  block/mq-deadline.c           |   4 +-
+>  drivers/md/dm.c               |   4 +-
+>  include/linux/blktrace_api.h  |   2 +-
+>  include/trace/events/bcache.h |  10 +-
+>  include/trace/events/block.h  | 226 +++++++++++-----------------------
+>  kernel/trace/blktrace.c       | 129 +++++++++----------
+>  14 files changed, 161 insertions(+), 251 deletions(-)
+> 
