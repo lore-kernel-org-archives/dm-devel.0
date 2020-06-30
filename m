@@ -1,35 +1,30 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [PATCH 1/3 v2] crypto: introduce the flag
- CRYPTO_ALG_ALLOCATES_MEMORY
-Date: Tue, 30 Jun 2020 09:57:34 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2006300957020.15237@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.2006161101080.28052@file01.intranet.prod.int.rdu2.redhat.com> <20200616173620.GA207319@gmail.com> <alpine.LRH.2.02.2006171107220.18714@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.2006171108440.18714@file01.intranet.prod.int.rdu2.redhat.com>
- <20200626044534.GA2870@gondor.apana.org.au> <alpine.LRH.2.02.2006261109520.11899@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.2006261215480.13882@file01.intranet.prod.int.rdu2.redhat.com> <20200626164617.GA211634@gmail.com>
- <20200626170039.GB211634@gmail.com> <alpine.LRH.2.02.2006281505530.347@file01.intranet.prod.int.rdu2.redhat.com> <20200628195035.GD11197@sol.localdomain>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: rename ->make_request_fn and move it to the
+ block_device_operations
+Date: Tue, 30 Jun 2020 07:57:29 -0600
+Message-ID: <bd1443c0-be37-115b-1110-df6f0e661a50@kernel.dk>
+References: <20200629193947.2705954-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200628195035.GD11197@sol.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, Zaibo Xu <xuzaibo@huawei.com>, linux-kernel@vger.kernel.org, Wei Xu <xuwei5@hisilicon.com>, dm-devel@redhat.com, George Cherian <gcherian@marvell.com>, linux-crypto@vger.kernel.org, Jonathan Cameron <Jonathan.Cameron@huawei.com>, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-m68k-owner@vger.kernel.org>
+In-Reply-To: <20200629193947.2705954-1-hch@lst.de>
+Content-Language: en-US
+Sender: linux-m68k-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-xtensa@linux-xtensa.org, drbd-dev@lists.linbit.com, linuxppc-dev@lists.ozlabs.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvdimm@lists.01.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org
 List-Id: dm-devel.ids
 
-
-
-On Sun, 28 Jun 2020, Eric Biggers wrote:
-
-> On Sun, Jun 28, 2020 at 03:07:49PM -0400, Mikulas Patocka wrote:
-> > 
-> > > Also, "seqiv" instances can be created without CRYPTO_ALG_ALLOCATES_MEMORY set,
-> > > despite seqiv_aead_encrypt() allocating memory.
-> > > 
+On 6/29/20 1:39 PM, Christoph Hellwig wrote:
+> Hi Jens,
 > 
-> This comment wasn't addressed.
-> 
-> - Eric
+> this series moves the make_request_fn method into block_device_operations
+> with the much more descriptive ->submit_bio name.  It then also gives
+> generic_make_request a more descriptive name, and further optimize the
+> path to issue to blk-mq, removing the need for the direct_make_request
+> bypass.
 
-I've sent version 4 of the patch that adds CRYPTO_ALG_ALLOCATES_MEMORY to 
-seqiv.
+Looks good to me, and it's a nice cleanup as well. Applied.
 
-Mikulas
+-- 
+Jens Axboe
