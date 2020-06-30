@@ -1,29 +1,43 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 11/20] fs: remove a weird comment in submit_bh_wbc
-Date: Tue, 30 Jun 2020 07:54:46 -0600
-Message-ID: <70e8de25-4e26-9c00-1492-e433ebfdbc90@kernel.dk>
-References: <20200629193947.2705954-1-hch@lst.de>
- <20200629193947.2705954-12-hch@lst.de>
+From: Michal Suchanek <msuchanek@suse.de>
+Subject: [PATCH v2] dm writecache: reject asynchronous pmem.
+Date: Tue, 30 Jun 2020 16:53:35 +0200
+Message-ID: <20200630145335.1185-1-msuchanek@suse.de>
+References: <20200630133546.GA20439@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200629193947.2705954-12-hch@lst.de>
-Content-Language: en-US
+In-Reply-To: <20200630133546.GA20439@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-xtensa@linux-xtensa.org, drbd-dev@lists.linbit.com, linuxppc-dev@lists.ozlabs.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvdimm@lists.01.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org
+Cc: Michal Suchanek <msuchanek@suse.de>, Mikulas Patocka <mpatocka@redhat.com>, linux-nvdimm@lists.01.org, "Aneesh Kumar K.V" <aneesh.kumar@linux.ibm.com>, Jan Kara <jack@suse.cz>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Yuval Shaia <yuval.shaia@oracle.com>, Dan Williams <dan.j.williams@intel.com>, Cornelia Huck <cohuck@redhat.com>, Pankaj Gupta <pagupta@redhat.com>, Jakub Staron <jstaron@google.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 6/29/20 1:39 PM, Christoph Hellwig wrote:
-> All bios can get remapped if submitted to partitions.  No need to
-> comment on that.
+The writecache driver does not handle asynchronous pmem. Reject it when
+supplied as cache.
 
-I'm pretty sure that comment is from me, dating back to when the bio
-code was introduced in 2001. The point wasn't the remapping, just
-that from here on down the IO was purely bio based, not buffer_heads.
-Anyway, totally agree that it should just die, it's not that
-interesting or useful anymore.
+Link: https://lore.kernel.org/linux-nvdimm/87lfk5hahc.fsf@linux.ibm.com/
+Fixes: 6e84200c0a29 ("virtio-pmem: Add virtio pmem driver")
 
+Signed-off-by: Michal Suchanek <msuchanek@suse.de>
+---
+ drivers/md/dm-writecache.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+index 30505d70f423..1e4f37249e28 100644
+--- a/drivers/md/dm-writecache.c
++++ b/drivers/md/dm-writecache.c
+@@ -2271,6 +2271,12 @@ static int writecache_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 			ti->error = "Unable to map persistent memory for cache";
+ 			goto bad;
+ 		}
++
++		if (!dax_synchronous(wc->ssd_dev->dax_dev)) {
++			r = -EOPNOTSUPP;
++			ti->error = "Asynchronous persistent memory not supported as pmem cache";
++			goto bad;
++		}
+ 	} else {
+ 		size_t n_blocks, n_metadata_blocks;
+ 		uint64_t n_bitmap_bits;
 -- 
-Jens Axboe
+2.26.2
