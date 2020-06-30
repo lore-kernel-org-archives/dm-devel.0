@@ -1,62 +1,35 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH v3] dm writecache: reject asynchronous pmem.
-Date: Tue, 30 Jun 2020 12:11:43 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2006301210270.24082@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.2006301101210.24028@file01.intranet.prod.int.rdu2.redhat.com>
-	<20200630154924.3283-1-msuchanek@suse.de>
+Subject: Re: [dm-devel] [PATCH 1/3 v2] crypto: introduce the flag
+ CRYPTO_ALG_ALLOCATES_MEMORY
+Date: Tue, 30 Jun 2020 09:57:34 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2006300957020.15237@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2006161101080.28052@file01.intranet.prod.int.rdu2.redhat.com> <20200616173620.GA207319@gmail.com> <alpine.LRH.2.02.2006171107220.18714@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.2006171108440.18714@file01.intranet.prod.int.rdu2.redhat.com>
+ <20200626044534.GA2870@gondor.apana.org.au> <alpine.LRH.2.02.2006261109520.11899@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.2006261215480.13882@file01.intranet.prod.int.rdu2.redhat.com> <20200626164617.GA211634@gmail.com>
+ <20200626170039.GB211634@gmail.com> <alpine.LRH.2.02.2006281505530.347@file01.intranet.prod.int.rdu2.redhat.com> <20200628195035.GD11197@sol.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200630154924.3283-1-msuchanek@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Michal Suchanek <msuchanek@suse.de>
-Cc: Cornelia Huck <cohuck@redhat.com>, Jan Kara <jack@suse.cz>, Jakub Staron <jstaron@google.com>, Mike Snitzer <snitzer@redhat.com>, linux-nvdimm@lists.01.org, "Aneesh Kumar K.V" <aneesh.kumar@linux.ibm.com>, "Michael S. Tsirkin" <mst@redhat.com>, linux-kernel@vger.kernel.org, Yuval Shaia <yuval.shaia@oracle.com>, dm-devel@redhat.com, Dan Williams <dan.j.williams@intel.com>, Alasdair Kergon <agk@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200628195035.GD11197@sol.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, Zaibo Xu <xuzaibo@huawei.com>, linux-kernel@vger.kernel.org, Wei Xu <xuwei5@hisilicon.com>, dm-devel@redhat.com, George Cherian <gcherian@marvell.com>, linux-crypto@vger.kernel.org, Jonathan Cameron <Jonathan.Cameron@huawei.com>, "David S. Miller" <davem@davemloft.net>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
 
 
-On Tue, 30 Jun 2020, Michal Suchanek wrote:
+On Sun, 28 Jun 2020, Eric Biggers wrote:
 
-> The writecache driver does not handle asynchronous pmem. Reject it when
-> supplied as cache.
+> On Sun, Jun 28, 2020 at 03:07:49PM -0400, Mikulas Patocka wrote:
+> > 
+> > > Also, "seqiv" instances can be created without CRYPTO_ALG_ALLOCATES_MEMORY set,
+> > > despite seqiv_aead_encrypt() allocating memory.
+> > > 
 > 
-> Link: https://lore.kernel.org/linux-nvdimm/87lfk5hahc.fsf@linux.ibm.com/
-> Fixes: 6e84200c0a29 ("virtio-pmem: Add virtio pmem driver")
+> This comment wasn't addressed.
 > 
-> Signed-off-by: Michal Suchanek <msuchanek@suse.de>
+> - Eric
 
-Acked-by: Mikulas Patocka <mpatocka@redhat.com>
+I've sent version 4 of the patch that adds CRYPTO_ALG_ALLOCATES_MEMORY to 
+seqiv.
 
-> ---
->  drivers/md/dm-writecache.c | 6 ++++++
->  1 file changed, 6 insertions(+)
-> 
-> diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-> index 30505d70f423..5358894bb9fd 100644
-> --- a/drivers/md/dm-writecache.c
-> +++ b/drivers/md/dm-writecache.c
-> @@ -2266,6 +2266,12 @@ static int writecache_ctr(struct dm_target *ti, unsigned argc, char **argv)
->  	}
->  
->  	if (WC_MODE_PMEM(wc)) {
-> +		if (!dax_synchronous(wc->ssd_dev->dax_dev)) {
-> +			r = -EOPNOTSUPP;
-> +			ti->error = "Asynchronous persistent memory not supported as pmem cache";
-> +			goto bad;
-> +		}
-> +
->  		r = persistent_memory_claim(wc);
->  		if (r) {
->  			ti->error = "Unable to map persistent memory for cache";
-> -- 
-> 2.26.2
-> 
+Mikulas
