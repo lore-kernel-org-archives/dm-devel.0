@@ -1,45 +1,30 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 1/4] drbd: remove a bogus bdi_rw_congested call
-Date: Wed,  1 Jul 2020 11:06:19 +0200
-Message-ID: <20200701090622.3354860-2-hch@lst.de>
-References: <20200701090622.3354860-1-hch@lst.de>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: rename ->make_request_fn and move it to the
+ block_device_operations v2
+Date: Wed, 1 Jul 2020 07:43:29 -0600
+Message-ID: <bffb89d5-b51a-5f5a-15f4-b891f1f053ef@kernel.dk>
+References: <20200701085947.3354405-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200701090622.3354860-1-hch@lst.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-raid@vger.kernel.org, linux-mm@kvack.org, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, drbd-dev@tron.linbit.com, dm-devel@redhat.com, Tejun Heo <tj@kernel.org>, cgroups@vger.kernel.org, linux-btrfs@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200701085947.3354405-1-hch@lst.de>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-xtensa@linux-xtensa.org, drbd-dev@lists.linbit.com, linuxppc-dev@lists.ozlabs.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvdimm@lists.01.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org
 List-Id: dm-devel.ids
 
-bdi_rw_congested returns congestion state, so calling it without
-looking at the return value doesn't make much sense.
+On 7/1/20 2:59 AM, Christoph Hellwig wrote:
+> Hi Jens,
+> 
+> this series moves the make_request_fn method into block_device_operations
+> with the much more descriptive ->submit_bio name.  It then also gives
+> generic_make_request a more descriptive name, and further optimize the
+> path to issue to blk-mq, removing the need for the direct_make_request
+> bypass.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- drivers/block/drbd/drbd_proc.c | 1 -
- 1 file changed, 1 deletion(-)
+Thanks, I'll try this again.
 
-diff --git a/drivers/block/drbd/drbd_proc.c b/drivers/block/drbd/drbd_proc.c
-index 1c41cd9982a257..3c0193de249830 100644
---- a/drivers/block/drbd/drbd_proc.c
-+++ b/drivers/block/drbd/drbd_proc.c
-@@ -265,7 +265,6 @@ int drbd_seq_show(struct seq_file *seq, void *v)
- 			seq_printf(seq, "%2d: cs:Unconfigured\n", i);
- 		} else {
- 			/* reset device->congestion_reason */
--			bdi_rw_congested(device->rq_queue->backing_dev_info);
- 
- 			nc = rcu_dereference(first_peer_device(device)->connection->net_conf);
- 			wp = nc ? nc->wire_protocol - DRBD_PROT_A + 'A' : ' ';
 -- 
-2.26.2
+Jens Axboe
