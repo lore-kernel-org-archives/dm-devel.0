@@ -1,28 +1,35 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: remove dead bdi congestion leftovers
-Date: Wed, 1 Jul 2020 12:38:13 -0400
-Message-ID: <20200701163813.GA5046@mtj.thefacebook.com>
-References: <20200701090622.3354860-1-hch@lst.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: NVMe regression, NVMe no longer uses blk_path_error()
+Date: Wed, 1 Jul 2020 12:39:42 -0400
+Message-ID: <20200701163942.GB27063@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20200701090622.3354860-1-hch-jcswGhMUV9g@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-block-owner@vger.kernel.org
+To: Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>
+Cc: Ewan Milne <emilne@redhat.com>, Hannes Reinecke <hare@suse.de>, John Meneghini <johnm@netapp.com>, linux-block@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jul 01, 2020 at 11:06:18AM +0200, Christoph Hellwig wrote:
-> Hi Jens,
-> 
-> we have a lot of bdi congestion related code that is left around without
-> any use.  This series removes it in preparation of sorting out the bdi
-> lifetime rules properly.
+IF NVMe's isn't a primary user of blk_path_error() it largely kills
+the entire point of blk_path_error(). (And no the response to this must
+not be: "that's fine")
 
-Acked-by: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+This commit shows NVMe's previous continued use of blk_path_error():
 
-Thanks a lot for killing the dead code.
+  8decf5d5b9f3f7 ("nvme: remove nvme_req_needs_failover")
 
--- 
-tejun
+but then nvme_failover_req() was relatively recently refactored with:
+
+  764e9332098c0 ("nvme-multipath: do not reset on unknown status")
+
+NVMe should've continued to use blk_path_error().  If there was some gap
+in error classification that should've been fixed in NVMe.
+
+Instead, with commit 764e9332098c0 NVMe is no longer using retryable
+error classifications commonly maintained within block core.  As such it
+introduces serious potential for regression with DM multipath no longer
+having a shared understanding for what _really_ constitutes a retryable
+blk_status_t from NVMe.
+
+Mike
