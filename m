@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 09/20] bcache: stop setting ->queuedata
-Date: Wed,  1 Jul 2020 10:59:36 +0200
-Message-ID: <20200701085947.3354405-10-hch@lst.de>
+Subject: [PATCH 11/20] fs: remove a weird comment in submit_bh_wbc
+Date: Wed,  1 Jul 2020 10:59:38 +0200
+Message-ID: <20200701085947.3354405-12-hch@lst.de>
 References: <20200701085947.3354405-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,24 +12,30 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-xtensa@linux-xtensa.org, drbd-dev@lists.linbit.com, linuxppc-dev@lists.ozlabs.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvdimm@lists.01.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org
 List-Id: dm-devel.ids
 
-Nothing in bcache actually uses the ->queuedata field.
+All bios can get remapped if submitted to partitions.  No need to
+comment on that.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/bcache/super.c | 1 -
- 1 file changed, 1 deletion(-)
+ fs/buffer.c | 5 -----
+ 1 file changed, 5 deletions(-)
 
-diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
-index 2014016f9a60d3..21aa168113d30b 100644
---- a/drivers/md/bcache/super.c
-+++ b/drivers/md/bcache/super.c
-@@ -876,7 +876,6 @@ static int bcache_device_init(struct bcache_device *d, unsigned int block_size,
- 		return -ENOMEM;
+diff --git a/fs/buffer.c b/fs/buffer.c
+index 64fe82ec65ff1f..2725ebbcfdc246 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -3040,12 +3040,7 @@ static int submit_bh_wbc(int op, int op_flags, struct buffer_head *bh,
+ 	if (test_set_buffer_req(bh) && (op == REQ_OP_WRITE))
+ 		clear_buffer_write_io_error(bh);
  
- 	d->disk->queue			= q;
--	q->queuedata			= d;
- 	q->backing_dev_info->congested_data = d;
- 	q->limits.max_hw_sectors	= UINT_MAX;
- 	q->limits.max_sectors		= UINT_MAX;
+-	/*
+-	 * from here on down, it's all bio -- do the initial mapping,
+-	 * submit_bio -> generic_make_request may further map this bio around
+-	 */
+ 	bio = bio_alloc(GFP_NOIO, 1);
+-
+ 	bio->bi_iter.bi_sector = bh->b_blocknr * (bh->b_size >> 9);
+ 	bio_set_dev(bio, bh->b_bdev);
+ 	bio->bi_write_hint = write_hint;
 -- 
 2.26.2
