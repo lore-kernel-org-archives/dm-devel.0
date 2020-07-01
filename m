@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 02/20] simdisk: stop using ->queuedata
-Date: Wed,  1 Jul 2020 10:59:29 +0200
-Message-ID: <20200701085947.3354405-3-hch@lst.de>
+Subject: [PATCH 07/20] umem: stop using ->queuedata
+Date: Wed,  1 Jul 2020 10:59:34 +0200
+Message-ID: <20200701085947.3354405-8-hch@lst.de>
 References: <20200701085947.3354405-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -17,30 +17,30 @@ field.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- arch/xtensa/platforms/iss/simdisk.c | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
+ drivers/block/umem.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/arch/xtensa/platforms/iss/simdisk.c b/arch/xtensa/platforms/iss/simdisk.c
-index 49322b66cda931..31b5020077a059 100644
---- a/arch/xtensa/platforms/iss/simdisk.c
-+++ b/arch/xtensa/platforms/iss/simdisk.c
-@@ -103,7 +103,7 @@ static void simdisk_transfer(struct simdisk *dev, unsigned long sector,
+diff --git a/drivers/block/umem.c b/drivers/block/umem.c
+index 1e2aa5ae27963c..5498f1cf36b3fe 100644
+--- a/drivers/block/umem.c
++++ b/drivers/block/umem.c
+@@ -521,7 +521,8 @@ static int mm_check_plugged(struct cardinfo *card)
  
- static blk_qc_t simdisk_make_request(struct request_queue *q, struct bio *bio)
+ static blk_qc_t mm_make_request(struct request_queue *q, struct bio *bio)
  {
--	struct simdisk *dev = q->queuedata;
-+	struct simdisk *dev = bio->bi_disk->private_data;
- 	struct bio_vec bvec;
- 	struct bvec_iter iter;
- 	sector_t sector = bio->bi_iter.bi_sector;
-@@ -273,8 +273,6 @@ static int __init simdisk_setup(struct simdisk *dev, int which,
- 		goto out_alloc_queue;
- 	}
+-	struct cardinfo *card = q->queuedata;
++	struct cardinfo *card = bio->bi_disk->private_data;
++
+ 	pr_debug("mm_make_request %llu %u\n",
+ 		 (unsigned long long)bio->bi_iter.bi_sector,
+ 		 bio->bi_iter.bi_size);
+@@ -888,7 +889,6 @@ static int mm_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
+ 	card->queue = blk_alloc_queue(mm_make_request, NUMA_NO_NODE);
+ 	if (!card->queue)
+ 		goto failed_alloc;
+-	card->queue->queuedata = card;
  
--	dev->queue->queuedata = dev;
--
- 	dev->gd = alloc_disk(SIMDISK_MINORS);
- 	if (dev->gd == NULL) {
- 		pr_err("alloc_disk failed\n");
+ 	tasklet_init(&card->tasklet, process_page, (unsigned long)card);
+ 
 -- 
 2.26.2
