@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 3/4] kpartx: handle alternate bsd disklabel
-	location
-Date: Wed,  1 Jul 2020 17:39:35 -0500
-Message-ID: <1593643176-6206-4-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 4/4] libmultipath: fix checker detection for nvme
+	devices
+Date: Wed,  1 Jul 2020 17:39:36 -0500
+Message-ID: <1593643176-6206-5-git-send-email-bmarzins@redhat.com>
 References: <1593643176-6206-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,49 +22,58 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-bsd disk labels can either be at the start of the second sector, or 64
-bytes into the first sector, but kpartx only handled the first case.
-However the second case is what parted creates, and what the linux
-kernel partition code expects.  kpartx should handle both cases.
+In order to fix hwhandler autodetection, commit 8794a776 made
+detect_alua() differentiate between failures to detect whether alua was
+supported, and successfully detecting that it was not supported.
+However, this causes nvme devices to get the TUR checker assigned to
+them. This is because there is nothing in detect_alua() to make it only
+work on scsi devices, and select_checker wasn't updated to handle
+detect_alua() failing without setting pp->tpgs to TPGS_NONE.
 
+detect_alua() should automatically set pp->tpgs to TPGS_NONE and exit on
+non-scsi devices. Also, select_checker() should not assume that a
+devices is ALUA, simply because if failed to detect if alua was
+supported.
+
+Fixes: 8794a776 "libmultipath: fix ALUA autodetection when paths are
+                 down"
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- kpartx/bsd.c | 16 ++++++++++++++--
- 1 file changed, 14 insertions(+), 2 deletions(-)
+ libmultipath/discovery.c | 6 ++++++
+ libmultipath/propsel.c   | 4 +++-
+ 2 files changed, 9 insertions(+), 1 deletion(-)
 
-diff --git a/kpartx/bsd.c b/kpartx/bsd.c
-index 0e661fbc..950b0f92 100644
---- a/kpartx/bsd.c
-+++ b/kpartx/bsd.c
-@@ -1,6 +1,7 @@
- #include "kpartx.h"
- #include <stdio.h>
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 6a45979a..bfdc8b31 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -888,6 +888,12 @@ detect_alua(struct path * pp)
+ 	int tpgs;
+ 	unsigned int timeout;
  
-+#define BSD_LABEL_OFFSET	64
- #define BSD_DISKMAGIC	(0x82564557UL)	/* The disk magic number */
- #define XBSD_MAXPARTITIONS	16
- #define BSD_FS_UNUSED		0
-@@ -60,8 +61,19 @@ read_bsd_pt(int fd, struct slice all, struct slice *sp, unsigned int ns) {
- 		return -1;
- 
- 	l = (struct bsd_disklabel *) bp;
--	if (l->d_magic != BSD_DISKMAGIC)
--		return -1;
-+	if (l->d_magic != BSD_DISKMAGIC) {
-+		/*
-+		 * BSD disklabels can also start 64 bytes offset from the
-+		 * start of the first sector
-+		 */
-+		bp = getblock(fd, offset);
-+		if (bp == NULL)
-+			return -1;
 +
-+		l = (struct bsd_disklabel *)(bp + 64);
-+		if (l->d_magic != BSD_DISKMAGIC)
-+			return -1;
++	if (pp->bus != SYSFS_BUS_SCSI) {
++		pp->tpgs = TPGS_NONE;
++		return;
 +	}
++
+ 	if (sysfs_get_timeout(pp, &timeout) <= 0)
+ 		timeout = DEF_TIMEOUT;
  
- 	max_partitions = 16;
- 	if (l->d_npartitions < max_partitions)
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 897e48ca..d362beb4 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -521,7 +521,9 @@ int select_checker(struct config *conf, struct path *pp)
+ 		if (check_rdac(pp)) {
+ 			ckr_name = RDAC;
+ 			goto out;
+-		} else if (path_get_tpgs(pp) != TPGS_NONE) {
++		}
++		path_get_tpgs(pp);
++		if (pp->tpgs != TPGS_NONE && pp->tpgs != TPGS_UNDEF) {
+ 			ckr_name = TUR;
+ 			goto out;
+ 		}
 -- 
 2.17.2
