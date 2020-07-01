@@ -1,208 +1,126 @@
-From: Mike Rapoport <rppt@kernel.org>
-Subject: Re: [PATCH 6/6] mm: Add memalloc_nowait
-Date: Wed, 1 Jul 2020 10:04:22 +0300
-Message-ID: <20200701070422.GH1492837@kernel.org>
-References: <20200625113122.7540-1-willy@infradead.org>
- <20200625113122.7540-7-willy@infradead.org>
- <20200629050851.GC1492837@kernel.org>
- <20200629121816.GC25523@casper.infradead.org>
- <20200629125231.GJ32461@dhcp22.suse.cz>
- <6421BC93-CF2F-4697-B5CB-5ECDAA9FCB37@kernel.org>
- <20200629212830.GJ25523@casper.infradead.org>
- <20200630063436.GA2369@dhcp22.suse.cz>
- <20200701041203.GQ25523@casper.infradead.org>
- <20200701055346.GH2369@dhcp22.suse.cz>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 0/6] crypto: add CRYPTO_ALG_ALLOCATES_MEMORY
+Date: Wed, 1 Jul 2020 03:59:10 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2007010358390.6597@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20200701045217.121126-1-ebiggers@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200701055346.GH2369@dhcp22.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Matthew Wilcox <willy@infradead.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-xfs@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20200701045217.121126-1-ebiggers@kernel.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: linux-crypto@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jul 01, 2020 at 07:53:46AM +0200, Michal Hocko wrote:
-> On Wed 01-07-20 05:12:03, Matthew Wilcox wrote:
-> > On Tue, Jun 30, 2020 at 08:34:36AM +0200, Michal Hocko wrote:
-> > > On Mon 29-06-20 22:28:30, Matthew Wilcox wrote:
-> > > [...]
-> > > > The documentation is hard to add a new case to, so I rewrote it.  What
-> > > > do you think?  (Obviously I'll split this out differently for submission;
-> > > > this is just what I have in my tree right now).
-> > > 
-> > > I am fine with your changes. Few notes below.
-> > 
-> > Thanks!
-> > 
-> > > > -It turned out though that above approach has led to
-> > > > -abuses when the restricted gfp mask is used "just in case" without a
-> > > > -deeper consideration which leads to problems because an excessive use
-> > > > -of GFP_NOFS/GFP_NOIO can lead to memory over-reclaim or other memory
-> > > > -reclaim issues.
-> > > 
-> > > I believe this is an important part because it shows that new people
-> > > coming to the existing code shouldn't take it as correct and rather
-> > > question it. Also having a clear indication that overuse is causing real
-> > > problems that might be not immediately visible to subsystems outside of
-> > > MM.
-> > 
-> > It seemed to say a lot of the same things as this paragraph:
-> > 
-> > +You may notice that quite a few allocations in the existing code specify
-> > +``GFP_NOIO`` or ``GFP_NOFS``. Historically, they were used to prevent
-> > +recursion deadlocks caused by direct memory reclaim calling back into
-> > +the FS or IO paths and blocking on already held resources. Since 4.12
-> > +the preferred way to address this issue is to use the new scope APIs
-> > +described below.
-> > 
-> > Since this is in core-api/ rather than vm/, I felt that discussion of
-> > the problems that it causes to the mm was a bit too much detail for the
-> > people who would be reading this document.  Maybe I could move that
-> > information into a new Documentation/vm/reclaim.rst file?
+Thanks for cleaning this up.
 
-It would be nice to have Documentation/vm/reclaim.rst regardless ;-)
+Mikulas
 
-> Hmm, my experience is that at least some users of NOFS/NOIO use this
-> flag just to be sure they do not do something wrong without realizing
-> that this might have a very negative effect on the whole system
-> operation. That was the main motivation to have an explicit note there.
-> I am not sure having that in MM internal documentation will make it
-> stand out for a general reader.
 
-I'd add an explict note in the "Memory Scoping API" section. Please see
-below.
+On Tue, 30 Jun 2020, Eric Biggers wrote:
 
-> But I will not insist of course.
+> This series introduces a flag that algorithms can set to indicate that
+> they allocate memory during processing of typical inputs, and thus
+> shouldn't be used in cases like dm-crypt where memory allocation
+> failures aren't acceptable.
 > 
-> > Let's see if Our Grumpy Editor has time to give us his advice on this.
-> > 
-> > > > -FS/IO code then simply calls the appropriate save function before
-> > > > -any critical section with respect to the reclaim is started - e.g.
-> > > > -lock shared with the reclaim context or when a transaction context
-> > > > -nesting would be possible via reclaim.  
-> > > 
-> > > [...]
-> > > 
-> > > > +These functions should be called at the point where any memory allocation
-> > > > +would start to cause problems.  That is, do not simply wrap individual
-> > > > +memory allocation calls which currently use ``GFP_NOFS`` with a pair
-> > > > +of calls to memalloc_nofs_save() and memalloc_nofs_restore().  Instead,
-> > > > +find the lock which is taken that would cause problems if memory reclaim
-> > > > +reentered the filesystem, place a call to memalloc_nofs_save() before it
-> > > > +is acquired and a call to memalloc_nofs_restore() after it is released.
-> > > > +Ideally also add a comment explaining why this lock will be problematic.
-> > > 
-> > > The above text has mentioned the transaction context nesting as well and
-> > > that was a hint by Dave IIRC. It is imho good to have an example of
-> > > other reentrant points than just locks. I believe another useful example
-> > > would be something like loop device which is mixing IO and FS
-> > > layers but I am not familiar with all the details to give you an
-> > > useful text.
-> > 
-> > I'll let Mikulas & Dave finish fighting about that before I write
-> > any text mentioning the loop driver.  How about this for mentioning
-> > the filesystem transaction possibility?
-> > 
-> > @@ -103,12 +103,16 @@ flags specified by any particular call to allocate memory.
-> >  
-> >  These functions should be called at the point where any memory allocation
-> >  would start to cause problems.  That is, do not simply wrap individual
-> > -memory allocation calls which currently use ``GFP_NOFS`` with a pair
-> > -of calls to memalloc_nofs_save() and memalloc_nofs_restore().  Instead,
-> > -find the lock which is taken that would cause problems if memory reclaim
-> > +memory allocation calls which currently use ``GFP_NOFS`` with a pair of
-> > +calls to memalloc_nofs_save() and memalloc_nofs_restore().  Instead, find
-> > +the resource which is acquired that would cause problems if memory reclaim
-> >  reentered the filesystem, place a call to memalloc_nofs_save() before it
-> >  is acquired and a call to memalloc_nofs_restore() after it is released.
-> >  Ideally also add a comment explaining why this lock will be problematic.
-> > +A resource might be a lock which would need to be acquired by an attempt
-> > +to reclaim memory, or it might be starting a transaction that should not
-> > +nest over a memory reclaim transaction.  Deep knowledge of the filesystem
-> > +or driver is often needed to place memory scoping calls correctly.
-
-I'd s/often/always/ :)
-
-> Ack
-
-And
-
-+ Using memory scoping APIs "just in case" may lead to problematic
-reclaim behaviour and have a very negative effect on the whole system
-operation.
-
-> >  Please note that the proper pairing of save/restore functions
-> >  allows nesting so it is safe to call memalloc_noio_save() and
-> > 
-> > > > @@ -104,16 +134,19 @@ ARCH_KMALLOC_MINALIGN bytes.  For sizes which are a power of two, the
-> > > >  alignment is also guaranteed to be at least the respective size.
-> > > >  
-> > > >  For large allocations you can use vmalloc() and vzalloc(), or directly
-> > > > -request pages from the page allocator. The memory allocated by `vmalloc`
-> > > > -and related functions is not physically contiguous.
-> > > > +request pages from the page allocator.  The memory allocated by `vmalloc`
-> > > > +and related functions is not physically contiguous.  The `vmalloc`
-> > > > +family of functions don't support the old ``GFP_NOFS`` or ``GFP_NOIO``
-> > > > +flags because there are hardcoded ``GFP_KERNEL`` allocations deep inside
-> > > > +the allocator which are hard to remove.  However, the scope APIs described
-> > > > +above can be used to limit the `vmalloc` functions.
-> > > 
-> > > I would reiterate "Do not just wrap vmalloc by the scope api but rather
-> > > rely on the real scope for the NOFS/NOIO context". Maybe we want to
-> > > stress out that once a scope is defined it is sticky to _all_
-> > > allocations and all allocators within that scope. The text is already
-> > > saying that but maybe we want to make it explicit and make it stand out.
-> > 
-> > yes.  I went with:
-> > 
-> > @@ -139,7 +143,10 @@ and related functions is not physically contiguous.  The `vmalloc`
-> >  family of functions don't support the old ``GFP_NOFS`` or ``GFP_NOIO``
-> >  flags because there are hardcoded ``GFP_KERNEL`` allocations deep inside
-> >  the allocator which are hard to remove.  However, the scope APIs described
-> > -above can be used to limit the `vmalloc` functions.
-> > +above can be used to limit the `vmalloc` functions.  As described above,
-> > +do not simply wrap individual calls in the scope APIs, but look for the
-> > +underlying reason why the memory allocation may not call into filesystems
-> > +or block devices.
+> Compared to Mikulas's patches, I've made the following improvements:
 > 
-> ack
+> - Tried to clearly document the semantics of
+>   CRYPTO_ALG_ALLOCATES_MEMORY.  This includes documenting the usage
+>   constraints, since there are actually lots of cases that were
+>   overlooked where algorithms can still allocate memory in some edge
+>   cases where inputs are misaligned, fragemented, etc.  E.g. see
+>   crypto/skcipher.c and crypto/ahash.c.  Mikulas, please let me know if
+>   there are any concerns for dm-crypt.
 > 
-> >  
-> >  If you are not sure whether the allocation size is too large for
-> >  `kmalloc`, it is possible to use kvmalloc() and its derivatives. It will
-> > 
-> > 
-> > > [...]
-> > > > diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-> > > > index 6484569f50df..9fc091274d1d 100644
-> > > > --- a/include/linux/sched/mm.h
-> > > > +++ b/include/linux/sched/mm.h
-> > > > @@ -186,9 +186,10 @@ static inline gfp_t current_gfp_context(gfp_t flags)
-> > > >  		 * them.  noio implies neither IO nor FS and it is a weaker
-> > > >  		 * context so always make sure it takes precedence.
-> > > >  		 */
-> > > > -		if (current->memalloc_nowait)
-> > > > +		if (current->memalloc_nowait) {
-> > > >  			flags &= ~__GFP_DIRECT_RECLAIM;
-> > > > -		else if (current->memalloc_noio)
-> > > > +			flags |= __GFP_NOWARN;
-> > > 
-> > > I dunno. I wouldn't make nowait implicitly NOWARN as well. At least not
-> > > with the initial implementation. Maybe we will learn later that there is
-> > > just too much unhelpful noise in the kernel log and will reconsider but
-> > > I wouldn't just start with that. Also we might learn that there will be
-> > > other modifiers for atomic (or should I say non-sleeping) scopes to be
-> > > defined. E.g. access to memory reserves but let's just wait for real
-> > > usecases.
-> > 
-> > Fair enough.  I'll drop that part.  Thanks!
+> - Moved the common mechanism for inheriting flags to its own patch.
 > 
-> thanks!
+> - crypto_grab_spawn() now handles propagating CRYPTO_ALG_INHERITED_FLAGS
+>   to the new template instance.
+> 
+> - Inherit the flags in various places that were missed.
+> 
+> - Other cleanups.
+> 
+> Note: Mikulas's patch "crypto: set the flag CRYPTO_ALG_ALLOCATES_MEMORY"
+> still needs to be checked for cases where the flag no longer needs to be
+> set due to the usage constraints I documented.
+> 
+> Eric Biggers (4):
+>   crypto: geniv - remove unneeded arguments from aead_geniv_alloc()
+>   crypto: algapi - use common mechanism for inheriting flags
+>   crypto: algapi - introduce the flag CRYPTO_ALG_ALLOCATES_MEMORY
+>   crypto: algapi - remove crypto_check_attr_type()
+> 
+> Mikulas Patocka (2):
+>   crypto: set the flag CRYPTO_ALG_ALLOCATES_MEMORY
+>   dm-crypt: don't use drivers that have CRYPTO_ALG_ALLOCATES_MEMORY
+> 
+>  crypto/adiantum.c                             |   4 +-
+>  crypto/algapi.c                               |  17 +--
+>  crypto/authenc.c                              |   4 +-
+>  crypto/authencesn.c                           |   4 +-
+>  crypto/ccm.c                                  |  23 ++--
+>  crypto/chacha20poly1305.c                     |   4 +-
+>  crypto/cmac.c                                 |  15 ++-
+>  crypto/cryptd.c                               |  59 ++++-----
+>  crypto/ctr.c                                  |   8 +-
+>  crypto/cts.c                                  |   3 +-
+>  crypto/echainiv.c                             |   2 +-
+>  crypto/essiv.c                                |  11 +-
+>  crypto/gcm.c                                  |  10 +-
+>  crypto/geniv.c                                |   9 +-
+>  crypto/hmac.c                                 |  15 ++-
+>  crypto/lrw.c                                  |   3 +-
+>  crypto/pcrypt.c                               |  14 +--
+>  crypto/rsa-pkcs1pad.c                         |   3 +-
+>  crypto/seqiv.c                                |   2 +-
+>  crypto/simd.c                                 |   6 +-
+>  crypto/skcipher.c                             |   3 +-
+>  crypto/vmac.c                                 |  15 ++-
+>  crypto/xcbc.c                                 |  15 ++-
+>  crypto/xts.c                                  |   3 +-
+>  .../crypto/allwinner/sun8i-ce/sun8i-ce-core.c |  12 +-
+>  .../crypto/allwinner/sun8i-ss/sun8i-ss-core.c |  12 +-
+>  drivers/crypto/amlogic/amlogic-gxl-core.c     |   6 +-
+>  drivers/crypto/axis/artpec6_crypto.c          |  20 ++-
+>  drivers/crypto/bcm/cipher.c                   |  72 ++++++++---
+>  drivers/crypto/caam/caamalg.c                 |   6 +-
+>  drivers/crypto/caam/caamalg_qi.c              |   6 +-
+>  drivers/crypto/caam/caamalg_qi2.c             |   8 +-
+>  drivers/crypto/caam/caamhash.c                |   2 +-
+>  drivers/crypto/cavium/cpt/cptvf_algs.c        |  18 ++-
+>  drivers/crypto/cavium/nitrox/nitrox_aead.c    |   4 +-
+>  .../crypto/cavium/nitrox/nitrox_skcipher.c    |  16 +--
+>  drivers/crypto/ccp/ccp-crypto-aes-cmac.c      |   1 +
+>  drivers/crypto/ccp/ccp-crypto-aes-galois.c    |   1 +
+>  drivers/crypto/ccp/ccp-crypto-aes-xts.c       |   1 +
+>  drivers/crypto/ccp/ccp-crypto-aes.c           |   2 +
+>  drivers/crypto/ccp/ccp-crypto-des3.c          |   1 +
+>  drivers/crypto/ccp/ccp-crypto-sha.c           |   1 +
+>  drivers/crypto/chelsio/chcr_algo.c            |   7 +-
+>  drivers/crypto/hisilicon/sec/sec_algs.c       |  24 ++--
+>  drivers/crypto/hisilicon/sec2/sec_crypto.c    |   4 +-
+>  .../crypto/inside-secure/safexcel_cipher.c    |  47 +++++++
+>  drivers/crypto/inside-secure/safexcel_hash.c  |  18 +++
+>  drivers/crypto/ixp4xx_crypto.c                |   6 +-
+>  drivers/crypto/marvell/cesa/cipher.c          |  18 ++-
+>  drivers/crypto/marvell/cesa/hash.c            |   6 +
+>  .../crypto/marvell/octeontx/otx_cptvf_algs.c  |  30 ++---
+>  drivers/crypto/n2_core.c                      |   3 +-
+>  drivers/crypto/picoxcell_crypto.c             |  17 ++-
+>  drivers/crypto/qat/qat_common/qat_algs.c      |  12 +-
+>  drivers/crypto/qce/skcipher.c                 |   1 +
+>  drivers/crypto/talitos.c                      | 117 ++++++++++++------
+>  drivers/crypto/virtio/virtio_crypto_algs.c    |   3 +-
+>  drivers/crypto/xilinx/zynqmp-aes-gcm.c        |   1 +
+>  drivers/md/dm-crypt.c                         |  17 ++-
+>  include/crypto/algapi.h                       |  23 +++-
+>  include/crypto/internal/geniv.h               |   2 +-
+>  include/linux/crypto.h                        |  32 +++++
+>  62 files changed, 550 insertions(+), 279 deletions(-)
+> 
 > -- 
-> Michal Hocko
-> SUSE Labs
-
--- 
-Sincerely yours,
-Mike.
+> 2.27.0
+> 
