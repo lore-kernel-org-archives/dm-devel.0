@@ -1,36 +1,43 @@
 From: Matthew Wilcox <willy@infradead.org>
 Subject: Re: remove dead bdi congestion leftovers
-Date: Wed, 1 Jul 2020 18:57:47 +0100
-Message-ID: <20200701175747.GT25523@casper.infradead.org>
+Date: Wed, 1 Jul 2020 19:25:38 +0100
+Message-ID: <20200701182538.GU25523@casper.infradead.org>
 References: <20200701090622.3354860-1-hch@lst.de>
  <20200701164103.GC27063@redhat.com>
+ <20200701175747.GT25523@casper.infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20200701164103.GC27063@redhat.com>
-Sender: linux-raid-owner@vger.kernel.org
+In-Reply-To: <20200701175747.GT25523@casper.infradead.org>
+Sender: linux-bcache-owner@vger.kernel.org
 To: Mike Snitzer <snitzer@redhat.com>
 Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, linux-mm@kvack.org, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, drbd-dev@tron.linbit.com, dm-devel@redhat.com, Tejun Heo <tj@kernel.org>, cgroups@vger.kernel.org, linux-btrfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, Jul 01, 2020 at 12:41:03PM -0400, Mike Snitzer wrote:
-> On Wed, Jul 01 2020 at  5:06am -0400,
-> Christoph Hellwig <hch@lst.de> wrote:
-> 
-> > Hi Jens,
+On Wed, Jul 01, 2020 at 06:57:47PM +0100, Matthew Wilcox wrote:
+> On Wed, Jul 01, 2020 at 12:41:03PM -0400, Mike Snitzer wrote:
+> > On Wed, Jul 01 2020 at  5:06am -0400,
+> > Christoph Hellwig <hch@lst.de> wrote:
 > > 
-> > we have a lot of bdi congestion related code that is left around without
-> > any use.  This series removes it in preparation of sorting out the bdi
-> > lifetime rules properly.
+> > > Hi Jens,
+> > > 
+> > > we have a lot of bdi congestion related code that is left around without
+> > > any use.  This series removes it in preparation of sorting out the bdi
+> > > lifetime rules properly.
+> > 
+> > I could do some git archeology to see what the fs, mm and block core
+> > changes were to stop using bdi congested but a pointer to associated
+> > changes (or quick recap) would save me some time.
+> > 
+> > Also, curious to know how back-pressure should be felt back up the IO
+> > stack now? (apologies if these are well worn topics, I haven't been
+> > tracking this area of development).
 > 
-> I could do some git archeology to see what the fs, mm and block core
-> changes were to stop using bdi congested but a pointer to associated
-> changes (or quick recap) would save me some time.
-> 
-> Also, curious to know how back-pressure should be felt back up the IO
-> stack now? (apologies if these are well worn topics, I haven't been
-> tracking this area of development).
+> It isn't.  Jens declared the implementation was broken, and broke it
+> more.  So we're just living with stupid broken timeouts.
 
-It isn't.  Jens declared the implementation was broken, and broke it
-more.  So we're just living with stupid broken timeouts.
+Here's a thread about it.  This would have been a discussion topic at
+LSFMM2020, but COVID.
+
+https://lore.kernel.org/linux-mm/20190917115824.16990-1-linf@wangsu.com/T/#u
