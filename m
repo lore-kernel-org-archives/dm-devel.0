@@ -1,126 +1,98 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 0/6] crypto: add CRYPTO_ALG_ALLOCATES_MEMORY
-Date: Wed, 1 Jul 2020 03:59:10 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2007010358390.6597@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20200701045217.121126-1-ebiggers@kernel.org>
+From: Christoph Hellwig <hch@lst.de>
+Subject: rename ->make_request_fn and move it to the block_device_operations v2
+Date: Wed,  1 Jul 2020 10:59:27 +0200
+Message-ID: <20200701085947.3354405-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <20200701045217.121126-1-ebiggers@kernel.org>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: linux-crypto@vger.kernel.org, dm-devel@redhat.com
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-bcache-owner@vger.kernel.org>
+Sender: linux-bcache-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-xtensa@linux-xtensa.org, drbd-dev@lists.linbit.com, linuxppc-dev@lists.ozlabs.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvdimm@lists.01.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org
 List-Id: dm-devel.ids
 
-Thanks for cleaning this up.
+Hi Jens,
 
-Mikulas
+this series moves the make_request_fn method into block_device_operations
+with the much more descriptive ->submit_bio name.  It then also gives
+generic_make_request a more descriptive name, and further optimize the
+path to issue to blk-mq, removing the need for the direct_make_request
+bypass.
 
+Changes since v1:
+ - fix a null pointer dereference when dispatching from bio to request
+   based drivers
+ - clean up a few more comments
 
-On Tue, 30 Jun 2020, Eric Biggers wrote:
-
-> This series introduces a flag that algorithms can set to indicate that
-> they allocate memory during processing of typical inputs, and thus
-> shouldn't be used in cases like dm-crypt where memory allocation
-> failures aren't acceptable.
-> 
-> Compared to Mikulas's patches, I've made the following improvements:
-> 
-> - Tried to clearly document the semantics of
->   CRYPTO_ALG_ALLOCATES_MEMORY.  This includes documenting the usage
->   constraints, since there are actually lots of cases that were
->   overlooked where algorithms can still allocate memory in some edge
->   cases where inputs are misaligned, fragemented, etc.  E.g. see
->   crypto/skcipher.c and crypto/ahash.c.  Mikulas, please let me know if
->   there are any concerns for dm-crypt.
-> 
-> - Moved the common mechanism for inheriting flags to its own patch.
-> 
-> - crypto_grab_spawn() now handles propagating CRYPTO_ALG_INHERITED_FLAGS
->   to the new template instance.
-> 
-> - Inherit the flags in various places that were missed.
-> 
-> - Other cleanups.
-> 
-> Note: Mikulas's patch "crypto: set the flag CRYPTO_ALG_ALLOCATES_MEMORY"
-> still needs to be checked for cases where the flag no longer needs to be
-> set due to the usage constraints I documented.
-> 
-> Eric Biggers (4):
->   crypto: geniv - remove unneeded arguments from aead_geniv_alloc()
->   crypto: algapi - use common mechanism for inheriting flags
->   crypto: algapi - introduce the flag CRYPTO_ALG_ALLOCATES_MEMORY
->   crypto: algapi - remove crypto_check_attr_type()
-> 
-> Mikulas Patocka (2):
->   crypto: set the flag CRYPTO_ALG_ALLOCATES_MEMORY
->   dm-crypt: don't use drivers that have CRYPTO_ALG_ALLOCATES_MEMORY
-> 
->  crypto/adiantum.c                             |   4 +-
->  crypto/algapi.c                               |  17 +--
->  crypto/authenc.c                              |   4 +-
->  crypto/authencesn.c                           |   4 +-
->  crypto/ccm.c                                  |  23 ++--
->  crypto/chacha20poly1305.c                     |   4 +-
->  crypto/cmac.c                                 |  15 ++-
->  crypto/cryptd.c                               |  59 ++++-----
->  crypto/ctr.c                                  |   8 +-
->  crypto/cts.c                                  |   3 +-
->  crypto/echainiv.c                             |   2 +-
->  crypto/essiv.c                                |  11 +-
->  crypto/gcm.c                                  |  10 +-
->  crypto/geniv.c                                |   9 +-
->  crypto/hmac.c                                 |  15 ++-
->  crypto/lrw.c                                  |   3 +-
->  crypto/pcrypt.c                               |  14 +--
->  crypto/rsa-pkcs1pad.c                         |   3 +-
->  crypto/seqiv.c                                |   2 +-
->  crypto/simd.c                                 |   6 +-
->  crypto/skcipher.c                             |   3 +-
->  crypto/vmac.c                                 |  15 ++-
->  crypto/xcbc.c                                 |  15 ++-
->  crypto/xts.c                                  |   3 +-
->  .../crypto/allwinner/sun8i-ce/sun8i-ce-core.c |  12 +-
->  .../crypto/allwinner/sun8i-ss/sun8i-ss-core.c |  12 +-
->  drivers/crypto/amlogic/amlogic-gxl-core.c     |   6 +-
->  drivers/crypto/axis/artpec6_crypto.c          |  20 ++-
->  drivers/crypto/bcm/cipher.c                   |  72 ++++++++---
->  drivers/crypto/caam/caamalg.c                 |   6 +-
->  drivers/crypto/caam/caamalg_qi.c              |   6 +-
->  drivers/crypto/caam/caamalg_qi2.c             |   8 +-
->  drivers/crypto/caam/caamhash.c                |   2 +-
->  drivers/crypto/cavium/cpt/cptvf_algs.c        |  18 ++-
->  drivers/crypto/cavium/nitrox/nitrox_aead.c    |   4 +-
->  .../crypto/cavium/nitrox/nitrox_skcipher.c    |  16 +--
->  drivers/crypto/ccp/ccp-crypto-aes-cmac.c      |   1 +
->  drivers/crypto/ccp/ccp-crypto-aes-galois.c    |   1 +
->  drivers/crypto/ccp/ccp-crypto-aes-xts.c       |   1 +
->  drivers/crypto/ccp/ccp-crypto-aes.c           |   2 +
->  drivers/crypto/ccp/ccp-crypto-des3.c          |   1 +
->  drivers/crypto/ccp/ccp-crypto-sha.c           |   1 +
->  drivers/crypto/chelsio/chcr_algo.c            |   7 +-
->  drivers/crypto/hisilicon/sec/sec_algs.c       |  24 ++--
->  drivers/crypto/hisilicon/sec2/sec_crypto.c    |   4 +-
->  .../crypto/inside-secure/safexcel_cipher.c    |  47 +++++++
->  drivers/crypto/inside-secure/safexcel_hash.c  |  18 +++
->  drivers/crypto/ixp4xx_crypto.c                |   6 +-
->  drivers/crypto/marvell/cesa/cipher.c          |  18 ++-
->  drivers/crypto/marvell/cesa/hash.c            |   6 +
->  .../crypto/marvell/octeontx/otx_cptvf_algs.c  |  30 ++---
->  drivers/crypto/n2_core.c                      |   3 +-
->  drivers/crypto/picoxcell_crypto.c             |  17 ++-
->  drivers/crypto/qat/qat_common/qat_algs.c      |  12 +-
->  drivers/crypto/qce/skcipher.c                 |   1 +
->  drivers/crypto/talitos.c                      | 117 ++++++++++++------
->  drivers/crypto/virtio/virtio_crypto_algs.c    |   3 +-
->  drivers/crypto/xilinx/zynqmp-aes-gcm.c        |   1 +
->  drivers/md/dm-crypt.c                         |  17 ++-
->  include/crypto/algapi.h                       |  23 +++-
->  include/crypto/internal/geniv.h               |   2 +-
->  include/linux/crypto.h                        |  32 +++++
->  62 files changed, 550 insertions(+), 279 deletions(-)
-> 
-> -- 
-> 2.27.0
-> 
+Diffstat:
+ Documentation/block/biodoc.rst                    |    2 
+ Documentation/block/writeback_cache_control.rst   |    2 
+ Documentation/fault-injection/fault-injection.rst |    2 
+ Documentation/trace/ftrace.rst                    |    4 
+ arch/m68k/emu/nfblock.c                           |    8 
+ arch/xtensa/platforms/iss/simdisk.c               |    9 
+ block/bio.c                                       |   14 -
+ block/blk-cgroup.c                                |    2 
+ block/blk-core.c                                  |  255 +++++++++-------------
+ block/blk-crypto-fallback.c                       |    2 
+ block/blk-crypto.c                                |    2 
+ block/blk-merge.c                                 |   23 -
+ block/blk-mq.c                                    |   12 -
+ block/blk-throttle.c                              |    4 
+ block/blk.h                                       |    5 
+ block/bounce.c                                    |    2 
+ drivers/block/brd.c                               |    5 
+ drivers/block/drbd/drbd_int.h                     |    8 
+ drivers/block/drbd/drbd_main.c                    |   12 -
+ drivers/block/drbd/drbd_receiver.c                |    2 
+ drivers/block/drbd/drbd_req.c                     |    8 
+ drivers/block/drbd/drbd_worker.c                  |    2 
+ drivers/block/null_blk_main.c                     |   19 +
+ drivers/block/pktcdvd.c                           |   15 -
+ drivers/block/ps3vram.c                           |   20 -
+ drivers/block/rsxx/dev.c                          |   14 -
+ drivers/block/umem.c                              |   11 
+ drivers/block/zram/zram_drv.c                     |   14 -
+ drivers/lightnvm/core.c                           |    8 
+ drivers/lightnvm/pblk-init.c                      |   16 -
+ drivers/lightnvm/pblk-read.c                      |    2 
+ drivers/md/bcache/bcache.h                        |    2 
+ drivers/md/bcache/btree.c                         |    2 
+ drivers/md/bcache/request.c                       |   11 
+ drivers/md/bcache/request.h                       |    4 
+ drivers/md/bcache/super.c                         |   24 +-
+ drivers/md/dm-cache-target.c                      |    6 
+ drivers/md/dm-clone-target.c                      |   10 
+ drivers/md/dm-crypt.c                             |    6 
+ drivers/md/dm-delay.c                             |    2 
+ drivers/md/dm-era-target.c                        |    2 
+ drivers/md/dm-integrity.c                         |    4 
+ drivers/md/dm-mpath.c                             |    2 
+ drivers/md/dm-raid1.c                             |    2 
+ drivers/md/dm-snap-persistent.c                   |    2 
+ drivers/md/dm-snap.c                              |    6 
+ drivers/md/dm-thin.c                              |    4 
+ drivers/md/dm-verity-target.c                     |    2 
+ drivers/md/dm-writecache.c                        |    2 
+ drivers/md/dm-zoned-target.c                      |    2 
+ drivers/md/dm.c                                   |   41 +--
+ drivers/md/md-faulty.c                            |    4 
+ drivers/md/md-linear.c                            |    4 
+ drivers/md/md-multipath.c                         |    4 
+ drivers/md/md.c                                   |    7 
+ drivers/md/raid0.c                                |    8 
+ drivers/md/raid1.c                                |   14 -
+ drivers/md/raid10.c                               |   28 +-
+ drivers/md/raid5.c                                |   10 
+ drivers/nvdimm/blk.c                              |    5 
+ drivers/nvdimm/btt.c                              |    5 
+ drivers/nvdimm/pmem.c                             |    5 
+ drivers/nvme/host/core.c                          |    1 
+ drivers/nvme/host/multipath.c                     |   18 -
+ drivers/nvme/host/nvme.h                          |    1 
+ drivers/s390/block/dcssblk.c                      |   11 
+ drivers/s390/block/xpram.c                        |    8 
+ fs/buffer.c                                       |    5 
+ include/linux/blk-mq.h                            |    2 
+ include/linux/blkdev.h                            |   12 -
+ include/linux/lightnvm.h                          |    3 
+ 71 files changed, 387 insertions(+), 408 deletions(-)
