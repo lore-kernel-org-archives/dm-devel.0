@@ -1,47 +1,89 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: remove dead bdi congestion leftovers
-Date: Wed,  1 Jul 2020 11:06:18 +0200
-Message-ID: <20200701090622.3354860-1-hch@lst.de>
+Subject: [PATCH 2/4] writeback: remove {set,clear}_wb_congested
+Date: Wed,  1 Jul 2020 11:06:20 +0200
+Message-ID: <20200701090622.3354860-3-hch@lst.de>
+References: <20200701090622.3354860-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200701090622.3354860-1-hch@lst.de>
+Sender: linux-block-owner@vger.kernel.org
 To: Jens Axboe <axboe@kernel.dk>
 Cc: Tejun Heo <tj@kernel.org>, dm-devel@redhat.com, cgroups@vger.kernel.org, linux-block@vger.kernel.org, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Jens,
+Just merge them into their only callers.
 
-we have a lot of bdi congestion related code that is left around without
-any use.  This series removes it in preparation of sorting out the bdi
-lifetime rules properly.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ include/linux/backing-dev-defs.h | 14 ++------------
+ mm/backing-dev.c                 | 12 ++++++------
+ 2 files changed, 8 insertions(+), 18 deletions(-)
 
-Diffstat:
- block/blk-cgroup.c               |   19 ----
- drivers/block/drbd/drbd_main.c   |   59 --------------
- drivers/block/drbd/drbd_proc.c   |    1 
- drivers/md/bcache/request.c      |   43 ----------
- drivers/md/bcache/super.c        |    1 
- drivers/md/dm-cache-target.c     |   19 ----
- drivers/md/dm-clone-target.c     |   15 ---
- drivers/md/dm-era-target.c       |   15 ---
- drivers/md/dm-raid.c             |   12 --
- drivers/md/dm-table.c            |   37 ---------
- drivers/md/dm-thin.c             |   16 ---
- drivers/md/dm.c                  |   33 --------
- drivers/md/dm.h                  |    1 
- drivers/md/md-linear.c           |   24 -----
- drivers/md/md-multipath.c        |   23 -----
- drivers/md/md.c                  |   23 -----
- drivers/md/md.h                  |    4 
- drivers/md/raid0.c               |   16 ---
- drivers/md/raid1.c               |   31 -------
- drivers/md/raid10.c              |   26 ------
- drivers/md/raid5.c               |   25 ------
- fs/btrfs/disk-io.c               |   23 -----
- include/linux/backing-dev-defs.h |   43 ----------
- include/linux/backing-dev.h      |   22 -----
- include/linux/blk-cgroup.h       |    6 -
- include/linux/device-mapper.h    |   11 --
- mm/backing-dev.c                 |  157 +++------------------------------------
- 27 files changed, 20 insertions(+), 685 deletions(-)
+diff --git a/include/linux/backing-dev-defs.h b/include/linux/backing-dev-defs.h
+index 90a7e844a098f3..cc5aa1f32b91f0 100644
+--- a/include/linux/backing-dev-defs.h
++++ b/include/linux/backing-dev-defs.h
+@@ -232,18 +232,8 @@ enum {
+ 	BLK_RW_SYNC	= 1,
+ };
+ 
+-void clear_wb_congested(struct bdi_writeback_congested *congested, int sync);
+-void set_wb_congested(struct bdi_writeback_congested *congested, int sync);
+-
+-static inline void clear_bdi_congested(struct backing_dev_info *bdi, int sync)
+-{
+-	clear_wb_congested(bdi->wb.congested, sync);
+-}
+-
+-static inline void set_bdi_congested(struct backing_dev_info *bdi, int sync)
+-{
+-	set_wb_congested(bdi->wb.congested, sync);
+-}
++void clear_bdi_congested(struct backing_dev_info *bdi, int sync);
++void set_bdi_congested(struct backing_dev_info *bdi, int sync);
+ 
+ struct wb_lock_cookie {
+ 	bool locked;
+diff --git a/mm/backing-dev.c b/mm/backing-dev.c
+index d382272bcc3100..3ebe5144a102f2 100644
+--- a/mm/backing-dev.c
++++ b/mm/backing-dev.c
+@@ -1047,29 +1047,29 @@ static wait_queue_head_t congestion_wqh[2] = {
+ 	};
+ static atomic_t nr_wb_congested[2];
+ 
+-void clear_wb_congested(struct bdi_writeback_congested *congested, int sync)
++void clear_bdi_congested(struct backing_dev_info *bdi, int sync)
+ {
+ 	wait_queue_head_t *wqh = &congestion_wqh[sync];
+ 	enum wb_congested_state bit;
+ 
+ 	bit = sync ? WB_sync_congested : WB_async_congested;
+-	if (test_and_clear_bit(bit, &congested->state))
++	if (test_and_clear_bit(bit, &bdi->wb.congested->state))
+ 		atomic_dec(&nr_wb_congested[sync]);
+ 	smp_mb__after_atomic();
+ 	if (waitqueue_active(wqh))
+ 		wake_up(wqh);
+ }
+-EXPORT_SYMBOL(clear_wb_congested);
++EXPORT_SYMBOL(clear_bdi_congested);
+ 
+-void set_wb_congested(struct bdi_writeback_congested *congested, int sync)
++void set_bdi_congested(struct backing_dev_info *bdi, int sync)
+ {
+ 	enum wb_congested_state bit;
+ 
+ 	bit = sync ? WB_sync_congested : WB_async_congested;
+-	if (!test_and_set_bit(bit, &congested->state))
++	if (!test_and_set_bit(bit, &bdi->wb.congested->state))
+ 		atomic_inc(&nr_wb_congested[sync]);
+ }
+-EXPORT_SYMBOL(set_wb_congested);
++EXPORT_SYMBOL(set_bdi_congested);
+ 
+ /**
+  * congestion_wait - wait for a backing_dev to become uncongested
+-- 
+2.26.2
