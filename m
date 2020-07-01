@@ -1,10 +1,10 @@
 From: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
-Subject: Re: [PATCH 07/11] block: get rid of blk_trace_request_get_cgid()
-Date: Wed, 1 Jul 2020 04:38:06 +0000
-Message-ID: <BYAPR04MB49653ABB3E50A7D034BE8C68866C0@BYAPR04MB4965.namprd04.prod.outlook.com>
+Subject: Re: [PATCH 09/11] block: remove unsed param in blk_fill_rwbs()
+Date: Wed, 1 Jul 2020 04:38:31 +0000
+Message-ID: <BYAPR04MB49651D1104ED9F0BA2F3F912866C0@BYAPR04MB4965.namprd04.prod.outlook.com>
 References: <20200629234314.10509-1-chaitanya.kulkarni@wdc.com>
- <20200629234314.10509-8-chaitanya.kulkarni@wdc.com>
- <20200630051202.GD27033@lst.de>
+ <20200629234314.10509-10-chaitanya.kulkarni@wdc.com>
+ <20200630051247.GF27033@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
@@ -16,17 +16,8 @@ Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redha
 List-Id: dm-devel.ids
 
 On 6/29/20 10:12 PM, Christoph Hellwig wrote:=0A=
-> On Mon, Jun 29, 2020 at 04:43:10PM -0700, Chaitanya Kulkarni wrote:=0A=
->> Now that we have done cleanup we can safely get rid of the=0A=
->> blk_trace_request_get_cgid() and replace it with=0A=
->> blk_trace_bio_get_cgid().=0A=
-> To me the helper actually looks useful compared to open coding the=0A=
-> check in a bunch of callers.=0A=
+>> +extern void blk_fill_rwbs(char *rwbs, unsigned int op);=0A=
+> You might want to drop the extern while you're at it.=0A=
 > =0A=
 =0A=
-The helper adds an additional function call which can be avoided easily=0A=
-since blk_trace_bio_get_cgid() is written nicely, that also maintains=0A=
-the readability of the code.=0A=
-=0A=
-Unless the cost of the function call doesn't matter and readability is=0A=
-not lost can we please not use helper ?=0A=
+Good point.=0A=
