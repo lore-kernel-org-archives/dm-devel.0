@@ -1,7 +1,7 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH 1/6] crypto: geniv - remove unneeded arguments from aead_geniv_alloc()
-Date: Tue, 30 Jun 2020 21:52:12 -0700
-Message-ID: <20200701045217.121126-2-ebiggers@kernel.org>
+Subject: [PATCH 4/6] crypto: algapi - remove crypto_check_attr_type()
+Date: Tue, 30 Jun 2020 21:52:15 -0700
+Message-ID: <20200701045217.121126-5-ebiggers@kernel.org>
 References: <20200701045217.121126-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,89 +14,51 @@ List-Id: dm-devel.ids
 
 From: Eric Biggers <ebiggers@google.com>
 
-The type and mask arguments to aead_geniv_alloc() are always 0, so
-remove them.
+Remove crypto_check_attr_type(), since it's no longer used.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- crypto/echainiv.c               | 2 +-
- crypto/geniv.c                  | 7 ++++---
- crypto/seqiv.c                  | 2 +-
- include/crypto/internal/geniv.h | 2 +-
- 4 files changed, 7 insertions(+), 6 deletions(-)
+ crypto/algapi.c         | 15 ---------------
+ include/crypto/algapi.h |  1 -
+ 2 files changed, 16 deletions(-)
 
-diff --git a/crypto/echainiv.c b/crypto/echainiv.c
-index 4a2f02baba14..69686668625e 100644
---- a/crypto/echainiv.c
-+++ b/crypto/echainiv.c
-@@ -115,7 +115,7 @@ static int echainiv_aead_create(struct crypto_template *tmpl,
- 	struct aead_instance *inst;
- 	int err;
- 
--	inst = aead_geniv_alloc(tmpl, tb, 0, 0);
-+	inst = aead_geniv_alloc(tmpl, tb);
- 
- 	if (IS_ERR(inst))
- 		return PTR_ERR(inst);
-diff --git a/crypto/geniv.c b/crypto/geniv.c
-index 6a90c52d49ad..07496c8af0ab 100644
---- a/crypto/geniv.c
-+++ b/crypto/geniv.c
-@@ -39,7 +39,7 @@ static void aead_geniv_free(struct aead_instance *inst)
+diff --git a/crypto/algapi.c b/crypto/algapi.c
+index 24a56279ca80..58558fae12bd 100644
+--- a/crypto/algapi.c
++++ b/crypto/algapi.c
+@@ -818,21 +818,6 @@ struct crypto_attr_type *crypto_get_attr_type(struct rtattr **tb)
  }
+ EXPORT_SYMBOL_GPL(crypto_get_attr_type);
  
- struct aead_instance *aead_geniv_alloc(struct crypto_template *tmpl,
--				       struct rtattr **tb, u32 type, u32 mask)
-+				       struct rtattr **tb)
+-int crypto_check_attr_type(struct rtattr **tb, u32 type)
+-{
+-	struct crypto_attr_type *algt;
+-
+-	algt = crypto_get_attr_type(tb);
+-	if (IS_ERR(algt))
+-		return PTR_ERR(algt);
+-
+-	if ((algt->type ^ type) & algt->mask)
+-		return -EINVAL;
+-
+-	return 0;
+-}
+-EXPORT_SYMBOL_GPL(crypto_check_attr_type);
+-
+ const char *crypto_attr_alg_name(struct rtattr *rta)
  {
- 	struct crypto_aead_spawn *spawn;
- 	struct crypto_attr_type *algt;
-@@ -47,6 +47,7 @@ struct aead_instance *aead_geniv_alloc(struct crypto_template *tmpl,
- 	struct aead_alg *alg;
- 	unsigned int ivsize;
- 	unsigned int maxauthsize;
-+	u32 mask;
- 	int err;
+ 	struct crypto_attr_alg *alga;
+diff --git a/include/crypto/algapi.h b/include/crypto/algapi.h
+index dce57c89cf98..78902563512b 100644
+--- a/include/crypto/algapi.h
++++ b/include/crypto/algapi.h
+@@ -116,7 +116,6 @@ struct crypto_tfm *crypto_spawn_tfm(struct crypto_spawn *spawn, u32 type,
+ void *crypto_spawn_tfm2(struct crypto_spawn *spawn);
  
- 	algt = crypto_get_attr_type(tb);
-@@ -63,10 +64,10 @@ struct aead_instance *aead_geniv_alloc(struct crypto_template *tmpl,
- 	spawn = aead_instance_ctx(inst);
- 
- 	/* Ignore async algorithms if necessary. */
--	mask |= crypto_requires_sync(algt->type, algt->mask);
-+	mask = crypto_requires_sync(algt->type, algt->mask);
- 
- 	err = crypto_grab_aead(spawn, aead_crypto_instance(inst),
--			       crypto_attr_alg_name(tb[1]), type, mask);
-+			       crypto_attr_alg_name(tb[1]), 0, mask);
- 	if (err)
- 		goto err_free_inst;
- 
-diff --git a/crypto/seqiv.c b/crypto/seqiv.c
-index f124b9b54e15..e48f875a7aac 100644
---- a/crypto/seqiv.c
-+++ b/crypto/seqiv.c
-@@ -138,7 +138,7 @@ static int seqiv_aead_create(struct crypto_template *tmpl, struct rtattr **tb)
- 	struct aead_instance *inst;
- 	int err;
- 
--	inst = aead_geniv_alloc(tmpl, tb, 0, 0);
-+	inst = aead_geniv_alloc(tmpl, tb);
- 
- 	if (IS_ERR(inst))
- 		return PTR_ERR(inst);
-diff --git a/include/crypto/internal/geniv.h b/include/crypto/internal/geniv.h
-index 229d37681a9d..7fd7126f593a 100644
---- a/include/crypto/internal/geniv.h
-+++ b/include/crypto/internal/geniv.h
-@@ -20,7 +20,7 @@ struct aead_geniv_ctx {
- };
- 
- struct aead_instance *aead_geniv_alloc(struct crypto_template *tmpl,
--				       struct rtattr **tb, u32 type, u32 mask);
-+				       struct rtattr **tb);
- int aead_init_geniv(struct crypto_aead *tfm);
- void aead_exit_geniv(struct crypto_aead *tfm);
- 
+ struct crypto_attr_type *crypto_get_attr_type(struct rtattr **tb);
+-int crypto_check_attr_type(struct rtattr **tb, u32 type);
+ const char *crypto_attr_alg_name(struct rtattr *rta);
+ int crypto_attr_u32(struct rtattr *rta, u32 *num);
+ int crypto_inst_setname(struct crypto_instance *inst, const char *name,
 -- 
 2.27.0
