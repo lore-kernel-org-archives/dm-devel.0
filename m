@@ -1,51 +1,57 @@
-From: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
-Subject: Re: [PATCH 10/11] block: use block_bio class for getrq and sleeprq
-Date: Wed, 1 Jul 2020 21:06:43 +0000
-Message-ID: <BYAPR04MB496556D7288B9EE3180DA3B6866C0@BYAPR04MB4965.namprd04.prod.outlook.com>
-References: <20200629234314.10509-1-chaitanya.kulkarni@wdc.com>
- <20200629234314.10509-11-chaitanya.kulkarni@wdc.com>
- <20200630051332.GG27033@lst.de>
- <BYAPR04MB4965E849D99120B59011CEF5866C0@BYAPR04MB4965.namprd04.prod.outlook.com>
- <20200701061858.GB28483@lst.de>
+From: Jonathan Corbet <corbet@lwn.net>
+Subject: Re: [willy@infradead.org: Re: [PATCH 6/6] mm: Add memalloc_nowait]
+Date: Wed, 1 Jul 2020 15:35:32 -0600
+Message-ID: <20200701153532.63d49389@lwn.net>
+References: <20200701041316.GA7193@casper.infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "jack@suse.czi" <jack@suse.czi>, "rdunlap@infradead.org" <rdunlap@infradead.org>, "sagi@grimberg.me" <sagi@grimberg.me>, "mingo@redhat.com" <mingo@redhat.com>, "rostedt@goodmis.org" <rostedt@goodmis.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "agk@redhat.com" <agk@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "paolo.valente@linaro.org" <paolo.valente@linaro.org>, "ming.lei@redhat.com" <ming.lei@redhat.com>, "bvanassche@acm.org" <bvanassche@acm.org>, "fangguoju@gmail.com" <fangguoju@gmail.com>, "colyli@suse.de" <colyli@suse.de>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20200701041316.GA7193@casper.infradead.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: Matthew Wilcox <willy@infradead.org>
+Cc: linux-doc@vger.kernel.org, Michal Hocko <mhocko@kernel.org>, Mike Rapoport <rppt@kernel.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-xfs@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.de>
 List-Id: dm-devel.ids
 
-On 6/30/20 11:19 PM, Christoph Hellwig wrote:=0A=
-> On Wed, Jul 01, 2020 at 04:45:03AM +0000, Chaitanya Kulkarni wrote:=0A=
->> On 6/29/20 10:13 PM, Christoph Hellwig wrote:=0A=
->>> On Mon, Jun 29, 2020 at 04:43:13PM -0700, Chaitanya Kulkarni wrote:=0A=
->>>> The only difference in block_get_rq and block_bio was the last param=
-=0A=
->>>> passed  __entry->nr_sector & bio->bi_iter.bi_size respectively. Since=
-=0A=
->>>> that is not the case anymore replace block_get_rq class with block_bio=
-=0A=
->>>> for block_getrq and block_sleeprq events, also adjust the code to hand=
-le=0A=
->>>> null bio case in block_bio.=0A=
->>> To me it seems like keeping the NULL bio case separate actually is a=0A=
->>> little simpler..=0A=
->>>=0A=
->>>=0A=
->> Keeping it separate will have an extra event class and related=0A=
->> event(s) for only handling null bio case.=0A=
->>=0A=
->> Also the block_get_rq class uses 4 comparisons with ?:.=0A=
->> This patch reduces it to only one comparison in fast path.=0A=
->>=0A=
->> With above explanation does it make sense to get rid of the=0A=
->> blk_get_rq ?=0A=
-> Without this we don't need the request_queue argument to the bio=0A=
-> class, as we can derive it from the bio, and don't have any=0A=
-> conditionals at all.  I'd rather keep the special case with a=0A=
-> queue and an optional bio separate.=0A=
-> =0A=
-=0A=
-Okay.=0A=
+On Wed, 1 Jul 2020 05:13:16 +0100
+Matthew Wilcox <willy@infradead.org> wrote:
+
+> > > -It turned out though that above approach has led to
+> > > -abuses when the restricted gfp mask is used "just in case" without a
+> > > -deeper consideration which leads to problems because an excessive use
+> > > -of GFP_NOFS/GFP_NOIO can lead to memory over-reclaim or other memory
+> > > -reclaim issues.  
+> > 
+> > I believe this is an important part because it shows that new people
+> > coming to the existing code shouldn't take it as correct and rather
+> > question it. Also having a clear indication that overuse is causing real
+> > problems that might be not immediately visible to subsystems outside of
+> > MM.  
+> 
+> It seemed to say a lot of the same things as this paragraph:
+> 
+> +You may notice that quite a few allocations in the existing code specify
+> +``GFP_NOIO`` or ``GFP_NOFS``. Historically, they were used to prevent
+> +recursion deadlocks caused by direct memory reclaim calling back into
+> +the FS or IO paths and blocking on already held resources. Since 4.12
+> +the preferred way to address this issue is to use the new scope APIs
+> +described below.
+> 
+> Since this is in core-api/ rather than vm/, I felt that discussion of
+> the problems that it causes to the mm was a bit too much detail for the
+> people who would be reading this document.  Maybe I could move that
+> information into a new Documentation/vm/reclaim.rst file?
+> 
+> Let's see if Our Grumpy Editor has time to give us his advice on this.
+
+So I don't have time to really dig into the context here...but I can try.
+
+Certainly there needs to be enough information to get people to think
+about using those flags, even if they are copypasting other code that
+does.  I'd be inclined to err on the side of including too much
+information rather than too little.  Of course, you could make the
+reclaim.rst file, then cross-link it if the result seems better.
+
+In other words, do all of the above :)
+
+jon
