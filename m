@@ -1,30 +1,50 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: rename ->make_request_fn and move it to the
- block_device_operations v2
-Date: Wed, 1 Jul 2020 07:43:29 -0600
-Message-ID: <bffb89d5-b51a-5f5a-15f4-b891f1f053ef@kernel.dk>
-References: <20200701085947.3354405-1-hch@lst.de>
+From: David Sterba <dsterba@suse.cz>
+Subject: Re: [PATCH 4/4] writeback: remove bdi->congested_fn
+Date: Wed, 1 Jul 2020 16:48:06 +0200
+Message-ID: <20200701144805.GC27795@twin.jikos.cz>
+References: <20200701090622.3354860-1-hch@lst.de>
+ <20200701090622.3354860-5-hch@lst.de>
+Reply-To: dsterba@suse.cz
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200701085947.3354405-1-hch@lst.de>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200701090622.3354860-5-hch@lst.de>
+Sender: linux-bcache-owner@vger.kernel.org
 To: Christoph Hellwig <hch@lst.de>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-xtensa@linux-xtensa.org, drbd-dev@lists.linbit.com, linuxppc-dev@lists.ozlabs.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvdimm@lists.01.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org
+Cc: Jens Axboe <axboe@kernel.dk>, Tejun Heo <tj@kernel.org>, dm-devel@redhat.com, cgroups@vger.kernel.org, linux-block@vger.kernel.org, drbd-dev@tron.linbit.com, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 7/1/20 2:59 AM, Christoph Hellwig wrote:
-> Hi Jens,
+On Wed, Jul 01, 2020 at 11:06:22AM +0200, Christoph Hellwig wrote:
+> Except for pktdvd, the only places setting congested bits are file
+> systems that allocate their own backing_dev_info structures.  And
+> pktdvd is a deprecated driver that isn't useful in stack setup
+> either.  So remove the dead congested_fn stacking infrastructure.
 > 
-> this series moves the make_request_fn method into block_device_operations
-> with the much more descriptive ->submit_bio name.  It then also gives
-> generic_make_request a more descriptive name, and further optimize the
-> path to issue to blk-mq, removing the need for the direct_make_request
-> bypass.
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> ---
+>  drivers/block/drbd/drbd_main.c   | 59 --------------------------------
+>  drivers/md/bcache/request.c      | 43 -----------------------
+>  drivers/md/bcache/super.c        |  1 -
+>  drivers/md/dm-cache-target.c     | 19 ----------
+>  drivers/md/dm-clone-target.c     | 15 --------
+>  drivers/md/dm-era-target.c       | 15 --------
+>  drivers/md/dm-raid.c             | 12 -------
+>  drivers/md/dm-table.c            | 37 +-------------------
+>  drivers/md/dm-thin.c             | 16 ---------
+>  drivers/md/dm.c                  | 33 ------------------
+>  drivers/md/dm.h                  |  1 -
+>  drivers/md/md-linear.c           | 24 -------------
+>  drivers/md/md-multipath.c        | 23 -------------
+>  drivers/md/md.c                  | 23 -------------
+>  drivers/md/md.h                  |  4 ---
+>  drivers/md/raid0.c               | 16 ---------
+>  drivers/md/raid1.c               | 31 -----------------
+>  drivers/md/raid10.c              | 26 --------------
+>  drivers/md/raid5.c               | 25 --------------
 
-Thanks, I'll try this again.
+For the btrfs bits
 
--- 
-Jens Axboe
+>  fs/btrfs/disk-io.c               | 23 -------------
+
+Acked-by: David Sterba <dsterba@suse.com>
