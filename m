@@ -1,188 +1,85 @@
-From: Coly Li <colyli@suse.de>
-Subject: Re: [PATCH 4/4] writeback: remove bdi->congested_fn
-Date: Thu, 2 Jul 2020 08:38:29 +0800
-Message-ID: <69234075-06c9-fcca-0c59-2452aa4e2714@suse.de>
-References: <20200701090622.3354860-1-hch@lst.de>
- <20200701090622.3354860-5-hch@lst.de>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 0/7] Fix muitpath/multipathd flush issue
+Date: Wed, 1 Jul 2020 22:14:49 -0500
+Message-ID: <20200702031449.GB29962@octiron.msp.redhat.com>
+References: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
+	<f60b8ea30ee0ce68a46ce8f5c9ebaee6314d57e4.camel@suse.com>
+	<20200618180458.GI5894@octiron.msp.redhat.com>
+	<c5e95e7bc75b11e811854ff0b0988ff19ef45e13.camel@suse.com>
+	<20200618230625.GJ5894@octiron.msp.redhat.com>
+	<5357998bd17e1147fd3a6615e03251d1aa4900d8.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200701090622.3354860-5-hch@lst.de>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-Cc: Tejun Heo <tj@kernel.org>, dm-devel@redhat.com, cgroups@vger.kernel.org, linux-block@vger.kernel.org, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <5357998bd17e1147fd3a6615e03251d1aa4900d8.camel@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2020/7/1 17:06, Christoph Hellwig wrote:
-> Except for pktdvd, the only places setting congested bits are file
-> systems that allocate their own backing_dev_info structures.  And
-> pktdvd is a deprecated driver that isn't useful in stack setup
-> either.  So remove the dead congested_fn stacking infrastructure.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
+On Wed, Jul 01, 2020 at 10:54:34PM +0200, Martin Wilck wrote:
+> On Thu, 2020-06-18 at 18:06 -0500, Benjamin Marzinski wrote:
+> >=20
+> > I uploaded the test program, aio_test:
+> >=20
+> > https://github.com/bmarzins/test_programs.git
+> >=20
+> > You just need to run in on a queueing multipath device with no active
+> > paths and an open count of 0. It will hang with the device open.
+> > Restore
+> > a path, and it will exit, and the open count will go to 0.
+>=20
+> Tried it now, it behaves as you say. I admit I can't imagine how the
+> suspend/resume would improve anything here. Indeed, as you say, it opens=
+=20
+> up a race window. Another process might open the device while
+> it's suspended. Worse perhaps, once the device is resumed, an uevent will=
+ be=20
+> generated, and stacked devices might (in principle at least) be recreated
+> before we get down to flush the map.
+>=20
+> MAYBE the suspend/resume was necessary in the past because some earlier=
+=20
+> kernels wouldn't immediately fail all outstanding commands when=20
+> queue_if_no_path was deactivated? (just speculating, I don't know if this
+> is the case).
 
-For the bcache part, Acked-by: Coly Li <colyli@suse.de>
+If you disable queue_if_no_path and then do a suspend with flushing, you
+are guaranteed that the supend won't return until all the IO has
+completed or failed.  This would allow anything that was waiting on
+queued IO to have the IO failback, which could allow it to close the
+device in time for multipath to be able to remove it (obviously this is
+racey).  However, this assumes that you do your open checks after the
+suspend, which multipath no longer does. I realize that multipath can't
+suspend until after it tries to remove the partition devices, otherwise
+those can get stuck. But there probably is some order that gets this all
+right-ish.
 
-Thanks.
+So, for a while now, the suspending has been doing nothing for us.  We
+could either try to reorder things so that we actually try to flush the
+queued IOs back first (with or without suspending), or we could just
+remove suspending and say that things are working fine the way they
+currently are.
 
-Coly Li
-
-
-> ---
->  drivers/block/drbd/drbd_main.c   | 59 --------------------------------
->  drivers/md/bcache/request.c      | 43 -----------------------
->  drivers/md/bcache/super.c        |  1 -
->  drivers/md/dm-cache-target.c     | 19 ----------
->  drivers/md/dm-clone-target.c     | 15 --------
->  drivers/md/dm-era-target.c       | 15 --------
->  drivers/md/dm-raid.c             | 12 -------
->  drivers/md/dm-table.c            | 37 +-------------------
->  drivers/md/dm-thin.c             | 16 ---------
->  drivers/md/dm.c                  | 33 ------------------
->  drivers/md/dm.h                  |  1 -
->  drivers/md/md-linear.c           | 24 -------------
->  drivers/md/md-multipath.c        | 23 -------------
->  drivers/md/md.c                  | 23 -------------
->  drivers/md/md.h                  |  4 ---
->  drivers/md/raid0.c               | 16 ---------
->  drivers/md/raid1.c               | 31 -----------------
->  drivers/md/raid10.c              | 26 --------------
->  drivers/md/raid5.c               | 25 --------------
->  fs/btrfs/disk-io.c               | 23 -------------
->  include/linux/backing-dev-defs.h |  4 ---
->  include/linux/backing-dev.h      |  4 ---
->  include/linux/device-mapper.h    | 11 ------
->  23 files changed, 1 insertion(+), 464 deletions(-)
-> 
-
-[snipped]
-
-> diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
-> index 7acf024e99f351..cda05fc61c3afa 100644
-> --- a/drivers/md/bcache/request.c
-> +++ b/drivers/md/bcache/request.c
-> @@ -1228,36 +1228,10 @@ static int cached_dev_ioctl(struct bcache_device *d, fmode_t mode,
->  	return __blkdev_driver_ioctl(dc->bdev, mode, cmd, arg);
->  }
->  
-> -static int cached_dev_congested(void *data, int bits)
-> -{
-> -	struct bcache_device *d = data;
-> -	struct cached_dev *dc = container_of(d, struct cached_dev, disk);
-> -	struct request_queue *q = bdev_get_queue(dc->bdev);
-> -	int ret = 0;
-> -
-> -	if (bdi_congested(q->backing_dev_info, bits))
-> -		return 1;
-> -
-> -	if (cached_dev_get(dc)) {
-> -		unsigned int i;
-> -		struct cache *ca;
-> -
-> -		for_each_cache(ca, d->c, i) {
-> -			q = bdev_get_queue(ca->bdev);
-> -			ret |= bdi_congested(q->backing_dev_info, bits);
-> -		}
-> -
-> -		cached_dev_put(dc);
-> -	}
-> -
-> -	return ret;
-> -}
-> -
->  void bch_cached_dev_request_init(struct cached_dev *dc)
->  {
->  	struct gendisk *g = dc->disk.disk;
->  
-> -	g->queue->backing_dev_info->congested_fn = cached_dev_congested;
->  	dc->disk.cache_miss			= cached_dev_cache_miss;
->  	dc->disk.ioctl				= cached_dev_ioctl;
->  }
-> @@ -1342,27 +1316,10 @@ static int flash_dev_ioctl(struct bcache_device *d, fmode_t mode,
->  	return -ENOTTY;
->  }
->  
-> -static int flash_dev_congested(void *data, int bits)
-> -{
-> -	struct bcache_device *d = data;
-> -	struct request_queue *q;
-> -	struct cache *ca;
-> -	unsigned int i;
-> -	int ret = 0;
-> -
-> -	for_each_cache(ca, d->c, i) {
-> -		q = bdev_get_queue(ca->bdev);
-> -		ret |= bdi_congested(q->backing_dev_info, bits);
-> -	}
-> -
-> -	return ret;
-> -}
-> -
->  void bch_flash_dev_request_init(struct bcache_device *d)
->  {
->  	struct gendisk *g = d->disk;
->  
-> -	g->queue->backing_dev_info->congested_fn = flash_dev_congested;
->  	d->cache_miss				= flash_dev_cache_miss;
->  	d->ioctl				= flash_dev_ioctl;
->  }
-> diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
-> index 2014016f9a60d3..1810d7ca2f6653 100644
-> --- a/drivers/md/bcache/super.c
-> +++ b/drivers/md/bcache/super.c
-> @@ -877,7 +877,6 @@ static int bcache_device_init(struct bcache_device *d, unsigned int block_size,
->  
->  	d->disk->queue			= q;
->  	q->queuedata			= d;
-> -	q->backing_dev_info->congested_data = d;
->  	q->limits.max_hw_sectors	= UINT_MAX;
->  	q->limits.max_sectors		= UINT_MAX;
->  	q->limits.max_segment_size	= UINT_MAX;
-> diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-> index d3bb355819a421..24549dc92eeec5 100644
-> --- a/drivers/md/dm-cache-target.c
-> +++ b/drivers/md/dm-cache-target.c
-> @@ -421,8 +421,6 @@ struct cache {
->  
->  	struct rw_semaphore quiesce_lock;
->  
-> -	struct dm_target_callbacks callbacks;
-> -
->  	/*
->  	 * origin_blocks entries, discarded if set.
->  	 */
-> @@ -2423,20 +2421,6 @@ static void set_cache_size(struct cache *cache, dm_cblock_t size)
->  	cache->cache_size = size;
->  }
->  
-> -static int is_congested(struct dm_dev *dev, int bdi_bits)
-> -{
-> -	struct request_queue *q = bdev_get_queue(dev->bdev);
-> -	return bdi_congested(q->backing_dev_info, bdi_bits);
-> -}
-> -
-> -static int cache_is_congested(struct dm_target_callbacks *cb, int bdi_bits)
-> -{
-> -	struct cache *cache = container_of(cb, struct cache, callbacks);
-> -
-> -	return is_congested(cache->origin_dev, bdi_bits) ||
-> -		is_congested(cache->cache_dev, bdi_bits);
-> -}
-> -
->  #define DEFAULT_MIGRATION_THRESHOLD 2048
->  
->  static int cache_create(struct cache_args *ca, struct cache **result)
-> @@ -2471,9 +2455,6 @@ static int cache_create(struct cache_args *ca, struct cache **result)
->  			goto bad;
->  	}
->  
-> -	cache->callbacks.congested_fn = cache_is_congested;
-> -	dm_table_add_target_callbacks(ti->table, &cache->callbacks);
-> -
->  	cache->metadata_dev = ca->metadata_dev;
->  	cache->origin_dev = ca->origin_dev;
->  	cache->cache_dev = ca->cache_dev;
-
-[snipped]
+-Ben
+=20
+> Regards,
+> Martin
+>=20
+> --=20
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE  Software Solutions Germany GmbH
+> HRB 36809, AG N=FCrnberg GF: Felix
+> Imend=F6rffer
+>=20
+>=20
