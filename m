@@ -1,79 +1,188 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 4/4] libmultipath: fix checker detection for nvme
-	devices
-Date: Wed,  1 Jul 2020 17:39:36 -0500
-Message-ID: <1593643176-6206-5-git-send-email-bmarzins@redhat.com>
-References: <1593643176-6206-1-git-send-email-bmarzins@redhat.com>
+From: Coly Li <colyli@suse.de>
+Subject: Re: [PATCH 4/4] writeback: remove bdi->congested_fn
+Date: Thu, 2 Jul 2020 08:38:29 +0800
+Message-ID: <69234075-06c9-fcca-0c59-2452aa4e2714@suse.de>
+References: <20200701090622.3354860-1-hch@lst.de>
+ <20200701090622.3354860-5-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1593643176-6206-1-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200701090622.3354860-5-hch@lst.de>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
+Cc: Tejun Heo <tj@kernel.org>, dm-devel@redhat.com, cgroups@vger.kernel.org, linux-block@vger.kernel.org, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-In order to fix hwhandler autodetection, commit 8794a776 made
-detect_alua() differentiate between failures to detect whether alua was
-supported, and successfully detecting that it was not supported.
-However, this causes nvme devices to get the TUR checker assigned to
-them. This is because there is nothing in detect_alua() to make it only
-work on scsi devices, and select_checker wasn't updated to handle
-detect_alua() failing without setting pp->tpgs to TPGS_NONE.
+On 2020/7/1 17:06, Christoph Hellwig wrote:
+> Except for pktdvd, the only places setting congested bits are file
+> systems that allocate their own backing_dev_info structures.  And
+> pktdvd is a deprecated driver that isn't useful in stack setup
+> either.  So remove the dead congested_fn stacking infrastructure.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-detect_alua() should automatically set pp->tpgs to TPGS_NONE and exit on
-non-scsi devices. Also, select_checker() should not assume that a
-devices is ALUA, simply because if failed to detect if alua was
-supported.
+For the bcache part, Acked-by: Coly Li <colyli@suse.de>
 
-Fixes: 8794a776 "libmultipath: fix ALUA autodetection when paths are
-                 down"
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/discovery.c | 6 ++++++
- libmultipath/propsel.c   | 4 +++-
- 2 files changed, 9 insertions(+), 1 deletion(-)
+Thanks.
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 6a45979a..bfdc8b31 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -888,6 +888,12 @@ detect_alua(struct path * pp)
- 	int tpgs;
- 	unsigned int timeout;
- 
-+
-+	if (pp->bus != SYSFS_BUS_SCSI) {
-+		pp->tpgs = TPGS_NONE;
-+		return;
-+	}
-+
- 	if (sysfs_get_timeout(pp, &timeout) <= 0)
- 		timeout = DEF_TIMEOUT;
- 
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 897e48ca..d362beb4 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -521,7 +521,9 @@ int select_checker(struct config *conf, struct path *pp)
- 		if (check_rdac(pp)) {
- 			ckr_name = RDAC;
- 			goto out;
--		} else if (path_get_tpgs(pp) != TPGS_NONE) {
-+		}
-+		path_get_tpgs(pp);
-+		if (pp->tpgs != TPGS_NONE && pp->tpgs != TPGS_UNDEF) {
- 			ckr_name = TUR;
- 			goto out;
- 		}
--- 
-2.17.2
+Coly Li
+
+
+> ---
+>  drivers/block/drbd/drbd_main.c   | 59 --------------------------------
+>  drivers/md/bcache/request.c      | 43 -----------------------
+>  drivers/md/bcache/super.c        |  1 -
+>  drivers/md/dm-cache-target.c     | 19 ----------
+>  drivers/md/dm-clone-target.c     | 15 --------
+>  drivers/md/dm-era-target.c       | 15 --------
+>  drivers/md/dm-raid.c             | 12 -------
+>  drivers/md/dm-table.c            | 37 +-------------------
+>  drivers/md/dm-thin.c             | 16 ---------
+>  drivers/md/dm.c                  | 33 ------------------
+>  drivers/md/dm.h                  |  1 -
+>  drivers/md/md-linear.c           | 24 -------------
+>  drivers/md/md-multipath.c        | 23 -------------
+>  drivers/md/md.c                  | 23 -------------
+>  drivers/md/md.h                  |  4 ---
+>  drivers/md/raid0.c               | 16 ---------
+>  drivers/md/raid1.c               | 31 -----------------
+>  drivers/md/raid10.c              | 26 --------------
+>  drivers/md/raid5.c               | 25 --------------
+>  fs/btrfs/disk-io.c               | 23 -------------
+>  include/linux/backing-dev-defs.h |  4 ---
+>  include/linux/backing-dev.h      |  4 ---
+>  include/linux/device-mapper.h    | 11 ------
+>  23 files changed, 1 insertion(+), 464 deletions(-)
+> 
+
+[snipped]
+
+> diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
+> index 7acf024e99f351..cda05fc61c3afa 100644
+> --- a/drivers/md/bcache/request.c
+> +++ b/drivers/md/bcache/request.c
+> @@ -1228,36 +1228,10 @@ static int cached_dev_ioctl(struct bcache_device *d, fmode_t mode,
+>  	return __blkdev_driver_ioctl(dc->bdev, mode, cmd, arg);
+>  }
+>  
+> -static int cached_dev_congested(void *data, int bits)
+> -{
+> -	struct bcache_device *d = data;
+> -	struct cached_dev *dc = container_of(d, struct cached_dev, disk);
+> -	struct request_queue *q = bdev_get_queue(dc->bdev);
+> -	int ret = 0;
+> -
+> -	if (bdi_congested(q->backing_dev_info, bits))
+> -		return 1;
+> -
+> -	if (cached_dev_get(dc)) {
+> -		unsigned int i;
+> -		struct cache *ca;
+> -
+> -		for_each_cache(ca, d->c, i) {
+> -			q = bdev_get_queue(ca->bdev);
+> -			ret |= bdi_congested(q->backing_dev_info, bits);
+> -		}
+> -
+> -		cached_dev_put(dc);
+> -	}
+> -
+> -	return ret;
+> -}
+> -
+>  void bch_cached_dev_request_init(struct cached_dev *dc)
+>  {
+>  	struct gendisk *g = dc->disk.disk;
+>  
+> -	g->queue->backing_dev_info->congested_fn = cached_dev_congested;
+>  	dc->disk.cache_miss			= cached_dev_cache_miss;
+>  	dc->disk.ioctl				= cached_dev_ioctl;
+>  }
+> @@ -1342,27 +1316,10 @@ static int flash_dev_ioctl(struct bcache_device *d, fmode_t mode,
+>  	return -ENOTTY;
+>  }
+>  
+> -static int flash_dev_congested(void *data, int bits)
+> -{
+> -	struct bcache_device *d = data;
+> -	struct request_queue *q;
+> -	struct cache *ca;
+> -	unsigned int i;
+> -	int ret = 0;
+> -
+> -	for_each_cache(ca, d->c, i) {
+> -		q = bdev_get_queue(ca->bdev);
+> -		ret |= bdi_congested(q->backing_dev_info, bits);
+> -	}
+> -
+> -	return ret;
+> -}
+> -
+>  void bch_flash_dev_request_init(struct bcache_device *d)
+>  {
+>  	struct gendisk *g = d->disk;
+>  
+> -	g->queue->backing_dev_info->congested_fn = flash_dev_congested;
+>  	d->cache_miss				= flash_dev_cache_miss;
+>  	d->ioctl				= flash_dev_ioctl;
+>  }
+> diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+> index 2014016f9a60d3..1810d7ca2f6653 100644
+> --- a/drivers/md/bcache/super.c
+> +++ b/drivers/md/bcache/super.c
+> @@ -877,7 +877,6 @@ static int bcache_device_init(struct bcache_device *d, unsigned int block_size,
+>  
+>  	d->disk->queue			= q;
+>  	q->queuedata			= d;
+> -	q->backing_dev_info->congested_data = d;
+>  	q->limits.max_hw_sectors	= UINT_MAX;
+>  	q->limits.max_sectors		= UINT_MAX;
+>  	q->limits.max_segment_size	= UINT_MAX;
+> diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+> index d3bb355819a421..24549dc92eeec5 100644
+> --- a/drivers/md/dm-cache-target.c
+> +++ b/drivers/md/dm-cache-target.c
+> @@ -421,8 +421,6 @@ struct cache {
+>  
+>  	struct rw_semaphore quiesce_lock;
+>  
+> -	struct dm_target_callbacks callbacks;
+> -
+>  	/*
+>  	 * origin_blocks entries, discarded if set.
+>  	 */
+> @@ -2423,20 +2421,6 @@ static void set_cache_size(struct cache *cache, dm_cblock_t size)
+>  	cache->cache_size = size;
+>  }
+>  
+> -static int is_congested(struct dm_dev *dev, int bdi_bits)
+> -{
+> -	struct request_queue *q = bdev_get_queue(dev->bdev);
+> -	return bdi_congested(q->backing_dev_info, bdi_bits);
+> -}
+> -
+> -static int cache_is_congested(struct dm_target_callbacks *cb, int bdi_bits)
+> -{
+> -	struct cache *cache = container_of(cb, struct cache, callbacks);
+> -
+> -	return is_congested(cache->origin_dev, bdi_bits) ||
+> -		is_congested(cache->cache_dev, bdi_bits);
+> -}
+> -
+>  #define DEFAULT_MIGRATION_THRESHOLD 2048
+>  
+>  static int cache_create(struct cache_args *ca, struct cache **result)
+> @@ -2471,9 +2455,6 @@ static int cache_create(struct cache_args *ca, struct cache **result)
+>  			goto bad;
+>  	}
+>  
+> -	cache->callbacks.congested_fn = cache_is_congested;
+> -	dm_table_add_target_callbacks(ti->table, &cache->callbacks);
+> -
+>  	cache->metadata_dev = ca->metadata_dev;
+>  	cache->origin_dev = ca->origin_dev;
+>  	cache->cache_dev = ca->cache_dev;
+
+[snipped]
