@@ -1,40 +1,91 @@
-From: Wei Yongjun <weiyongjun1@huawei.com>
-Subject: [PATCH -next] dm: remove unused variable 'md'
-Date: Thu, 2 Jul 2020 18:39:28 +0800
-Message-ID: <20200702103928.67693-1-weiyongjun1@huawei.com>
+From: Martin Wilck <Martin.Wilck@suse.com>
+Subject: Re: [PATCH 2/3] libmutipath: don't close fd on
+ dm_lib_release
+Date: Thu, 2 Jul 2020 11:52:21 +0000
+Message-ID: <4eaae3bfe0c383d23a839483e88ec093883f4e5a.camel@suse.com>
+References: <1585083834-14237-1-git-send-email-bmarzins@redhat.com>
+	<1585083834-14237-2-git-send-email-bmarzins@redhat.com>
+	<ebfcb22b005314635b77e4820e205971d708d07d.camel@suse.com>
+	<20200325205255.GB17313@octiron.msp.redhat.com>
+	<20200325220045.GC17313@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Hulk Robot <hulkci@huawei.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>
-Cc: Wei Yongjun <weiyongjun1@huawei.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200325220045.GC17313@octiron.msp.redhat.com>
+Content-Language: en-US
+Content-ID: <F5CB63BF0157EC43A8B4E9F7ED9226D7@eurprd04.prod.outlook.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-After commit 5a6c35f9af41 ("block: remove direct_make_request"),
-'md' is never used and gcc report build warning:
+On Wed, 2020-03-25 at 17:00 -0500, Benjamin Marzinski wrote:
+> On Wed, Mar 25, 2020 at 03:52:55PM -0500, Benjamin Marzinski wrote:
+> > On Wed, Mar 25, 2020 at 03:16:50PM +0000, Martin Wilck wrote:
+> > > On Tue, 2020-03-24 at 16:03 -0500, Benjamin Marzinski wrote:
+> > >=20
+> > > AFAICS, this function has been in libdm since 1.02.111. We
+> > > support
+> > > 1.02.89 (if all features enabled, otherwise even older). Perhaps
+> > > we
+> > > should make this function call conditional on the libdm verson?
+> > >=20
+> > > But perhaps more importantly, why do we still need to call
+> > > dm_lib_release()? AFAICS it's only needed for systems that have
+> > > no udev
+> > > support for creating device nodes (to call update_devs() via
+> > > dm_lib_release()), and we don't support that anymore anyway, do
+> > > we?=20
+> > >=20
+> > > Since 26c4bb0, we're always setting the
+> > > DM_UDEV_DISABLE_LIBRARY_FALLBACK flag, and the cookie, too
+> > > (we aren't setting it for DM_DEVICE_RELOAD, but it isn't needed
+> > > for
+> > > that, either, since no device nodes need to be created or
+> > > removed); so
+> > > dm_lib_release() should really have no effect.
+> > >=20
+> > > Regards
+> > > Martin
+> >=20
+> > Good call. I'll redo this patch.
+>=20
+> Actually, I've changed my mind. Calling dm_lib_release() lets us
+> release
+> the memory that device-mapper uses to store all the node ops that it
+> was saving up.  Without calling dm_lib_release(), AFAICS, that memory
+> keeps growing until the daemon exits.
 
-drivers/md/dm.c:1296:24: warning: unused variable 'md' [-Wunused-variable]
- 1296 |  struct mapped_device *md = io->md;
-      |                        ^~
+Sorry for coming back to this so late. I've just stared at the libdm
+code again.=20
 
-Removing it to avoid build warning.
+We always set DM_UDEV_DISABLE_LIBRARY_FALLBACK. In the standard CREATE
+and REMOVE cases, libdm doesn't stack any operations if this flag is
+set. The only exceptions are=20
 
-Reported-by: Hulk Robot <hulkci@huawei.com>
-Signed-off-by: Wei Yongjun <weiyongjun1@huawei.com>
----
- drivers/md/dm.c | 1 -
- 1 file changed, 1 deletion(-)
+ a) RESUME operations with DM_ADD_NODE_ON_RESUME set. This happens
+implicity when we create new maps
+ b) RENAME operations
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index a8d83d76fa9f..a02842afe358 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1293,7 +1293,6 @@ static blk_qc_t __map_bio(struct dm_target_io *tio)
- 	sector_t sector;
- 	struct bio *clone = &tio->clone;
- 	struct dm_io *io = tio->io;
--	struct mapped_device *md = io->md;
- 	struct dm_target *ti = tio->ti;
- 	blk_qc_t ret = BLK_QC_T_NONE;
- 
+In both cases, we call dm_udev_wait() after the libdm operation, which
+calls update_devs() and should thus have the same effect as
+dm_lib_release(). IOW, I still believe we don't need to call
+dm_lib_release() any more.
+
+Regards,
+Martin
+
+--=20
+Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+SUSE  Software Solutions Germany GmbH
+HRB 36809, AG N=FCrnberg GF: Felix
+Imend=F6rffer
