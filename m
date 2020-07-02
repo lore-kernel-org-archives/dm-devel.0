@@ -1,85 +1,41 @@
-From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 1/4] libmultipath: fix sysfs dev_loss_tmo
-	parsing
-Date: Thu, 2 Jul 2020 14:31:17 +0000
-Message-ID: <808a0a681be20a1d1cfe616bc5a370db7fda2ce9.camel@suse.com>
-References: <1593643176-6206-1-git-send-email-bmarzins@redhat.com>
-	<1593643176-6206-2-git-send-email-bmarzins@redhat.com>
+From: Coly Li <colyli@suse.de>
+Subject: Re: [PATCH 09/20] bcache: stop setting ->queuedata
+Date: Thu, 2 Jul 2020 22:47:08 +0800
+Message-ID: <67f92716-202d-5436-4a79-32f0942dc680@suse.de>
+References: <20200701085947.3354405-1-hch@lst.de>
+ <20200701085947.3354405-10-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1593643176-6206-2-git-send-email-bmarzins@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200701085947.3354405-10-hch@lst.de>
 Content-Language: en-US
-Content-ID: <F7CF0B1F88E84649B36891F792332436@eurprd04.prod.outlook.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-xtensa@linux-xtensa.org, drbd-dev@lists.linbit.com, linuxppc-dev@lists.ozlabs.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvdimm@lists.01.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, 2020-07-01 at 17:39 -0500, Benjamin Marzinski wrote:
-> dev_loss_tmo is a u32 value. However the kernel sysfs code prints it
-> as
-> a signed integer. This means that if dev_loss_tmo is above INT_MAX,
-> the
-> sysfs value will be a negative number. Parsing this was causing
-> sysfs_set_rport_tmo() to fail.
+On 2020/7/1 16:59, Christoph Hellwig wrote:
+> Nothing in bcache actually uses the ->queuedata field.
 > 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-Thanks for catching this. I think it can be fixed simpler, because 
-strtoul() parses negative values just fine. See below.
+Acked-by: Coly Li <colyli@suse.de>
 
-Regards,
-Martin
-
-From 16eca9b0f340a13fee0c28ae52dffa578193f015 Mon Sep 17 00:00:00 2001
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Date: Wed, 1 Jul 2020 17:39:33 -0500
-Subject: [PATCH] libmultipath: fix sysfs dev_loss_tmo parsing
-
-dev_loss_tmo is a u32 value. However the kernel sysfs code prints it as
-a signed integer. This means that if dev_loss_tmo is above INT_MAX, the
-sysfs value will be a negative number. Parsing this was causing
-sysfs_set_rport_tmo() to fail.
-
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/discovery.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
-
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 1d542ea..3c9803a 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -581,7 +581,7 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 	struct udev_device *rport_dev = NULL;
- 	char value[16], *eptr;
- 	char rport_id[32];
--	unsigned long long tmo = 0;
-+	unsigned int tmo;
- 	int ret;
- 
- 	sprintf(rport_id, "rport-%d:%d-%d",
-@@ -605,8 +605,8 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 			"error %d", rport_id, -ret);
- 		goto out;
- 	}
--	tmo = strtoull(value, &eptr, 0);
--	if (value == eptr || tmo == ULLONG_MAX) {
-+	tmo = strtoul(value, &eptr, 0);
-+	if (value == eptr) {
- 		condlog(0, "%s: Cannot parse dev_loss_tmo "
- 			"attribute '%s'", rport_id, value);
- 		goto out;
--- 
-2.26.2
+> ---
+>  drivers/md/bcache/super.c | 1 -
+>  1 file changed, 1 deletion(-)
+> 
+> diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+> index 2014016f9a60d3..21aa168113d30b 100644
+> --- a/drivers/md/bcache/super.c
+> +++ b/drivers/md/bcache/super.c
+> @@ -876,7 +876,6 @@ static int bcache_device_init(struct bcache_device *d, unsigned int block_size,
+>  		return -ENOMEM;
+>  
+>  	d->disk->queue			= q;
+> -	q->queuedata			= d;
+>  	q->backing_dev_info->congested_data = d;
+>  	q->limits.max_hw_sectors	= UINT_MAX;
+>  	q->limits.max_sectors		= UINT_MAX;
+> 
