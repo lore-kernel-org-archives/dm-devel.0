@@ -1,85 +1,26 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 0/7] Fix muitpath/multipathd flush issue
-Date: Wed, 1 Jul 2020 22:14:49 -0500
-Message-ID: <20200702031449.GB29962@octiron.msp.redhat.com>
-References: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
-	<f60b8ea30ee0ce68a46ce8f5c9ebaee6314d57e4.camel@suse.com>
-	<20200618180458.GI5894@octiron.msp.redhat.com>
-	<c5e95e7bc75b11e811854ff0b0988ff19ef45e13.camel@suse.com>
-	<20200618230625.GJ5894@octiron.msp.redhat.com>
-	<5357998bd17e1147fd3a6615e03251d1aa4900d8.camel@suse.com>
+From: Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 4/4] writeback: remove bdi->congested_fn
+Date: Wed, 1 Jul 2020 22:36:13 -0700
+Message-ID: <CAPhsuW7QShNMnbCK-OrKkE8F5XyH45-ML-w5qKLVrO=VTt6npw@mail.gmail.com>
+References: <20200701090622.3354860-1-hch@lst.de> <20200701090622.3354860-5-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5357998bd17e1147fd3a6615e03251d1aa4900d8.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20200701090622.3354860-5-hch-jcswGhMUV9g@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux-MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Wed, Jul 01, 2020 at 10:54:34PM +0200, Martin Wilck wrote:
-> On Thu, 2020-06-18 at 18:06 -0500, Benjamin Marzinski wrote:
-> >=20
-> > I uploaded the test program, aio_test:
-> >=20
-> > https://github.com/bmarzins/test_programs.git
-> >=20
-> > You just need to run in on a queueing multipath device with no active
-> > paths and an open count of 0. It will hang with the device open.
-> > Restore
-> > a path, and it will exit, and the open count will go to 0.
->=20
-> Tried it now, it behaves as you say. I admit I can't imagine how the
-> suspend/resume would improve anything here. Indeed, as you say, it opens=
-=20
-> up a race window. Another process might open the device while
-> it's suspended. Worse perhaps, once the device is resumed, an uevent will=
- be=20
-> generated, and stacked devices might (in principle at least) be recreated
-> before we get down to flush the map.
->=20
-> MAYBE the suspend/resume was necessary in the past because some earlier=
-=20
-> kernels wouldn't immediately fail all outstanding commands when=20
-> queue_if_no_path was deactivated? (just speculating, I don't know if this
-> is the case).
+On Wed, Jul 1, 2020 at 2:06 AM Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
+>
+> Except for pktdvd, the only places setting congested bits are file
+> systems that allocate their own backing_dev_info structures.  And
+> pktdvd is a deprecated driver that isn't useful in stack setup
+> either.  So remove the dead congested_fn stacking infrastructure.
+>
+> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 
-If you disable queue_if_no_path and then do a suspend with flushing, you
-are guaranteed that the supend won't return until all the IO has
-completed or failed.  This would allow anything that was waiting on
-queued IO to have the IO failback, which could allow it to close the
-device in time for multipath to be able to remove it (obviously this is
-racey).  However, this assumes that you do your open checks after the
-suspend, which multipath no longer does. I realize that multipath can't
-suspend until after it tries to remove the partition devices, otherwise
-those can get stuck. But there probably is some order that gets this all
-right-ish.
+For md bits:
 
-So, for a while now, the suspending has been doing nothing for us.  We
-could either try to reorder things so that we actually try to flush the
-queued IOs back first (with or without suspending), or we could just
-remove suspending and say that things are working fine the way they
-currently are.
-
--Ben
-=20
-> Regards,
-> Martin
->=20
-> --=20
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE  Software Solutions Germany GmbH
-> HRB 36809, AG N=FCrnberg GF: Felix
-> Imend=F6rffer
->=20
->=20
+Acked-by: Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
