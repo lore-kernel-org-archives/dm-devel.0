@@ -1,14 +1,11 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v3 7/7] multipath: add option to skip multipathd
-	delegation
-Date: Thu,  2 Jul 2020 19:07:06 -0500
-Message-ID: <1593734826-14059-8-git-send-email-bmarzins@redhat.com>
-References: <1593734826-14059-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 0/4] misc patches
+Date: Thu,  2 Jul 2020 19:38:23 -0500
+Message-ID: <1593736707-14216-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1593734826-14059-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,60 +19,31 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-Add the -D option to allow users to skip delegating commands to
-multipathd.
+This is a small collection of individual bug fix patches that apply on
+top of my previous patch set.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/config.h | 1 +
- multipath/main.c      | 8 +++++++-
- 2 files changed, 8 insertions(+), 1 deletion(-)
+Changes from v1:
 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 55569360..92c61a0d 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -190,6 +190,7 @@ struct config {
- 	int ghost_delay;
- 	int find_multipaths_timeout;
- 	int marginal_pathgroups;
-+	int skip_delegate;
- 	unsigned int version[3];
- 	unsigned int sequence_nr;
- 
-diff --git a/multipath/main.c b/multipath/main.c
-index 6a24e483..4c43314e 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -817,6 +817,9 @@ int delegate_to_multipathd(enum mpath_cmds cmd,
- 	*p = '\0';
- 	n = sizeof(command);
- 
-+	if (conf->skip_delegate)
-+		return NOT_DELEGATED;
-+
- 	if (cmd == CMD_CREATE && conf->force_reload == FORCE_RELOAD_YES) {
- 		p += snprintf(p, n, "reconfigure");
- 	}
-@@ -890,7 +893,7 @@ main (int argc, char *argv[])
- 	multipath_conf = conf;
- 	conf->retrigger_tries = 0;
- 	conf->force_sync = 1;
--	while ((arg = getopt(argc, argv, ":adcChl::eFfM:v:p:b:BrR:itTquUwW")) != EOF ) {
-+	while ((arg = getopt(argc, argv, ":adDcChl::eFfM:v:p:b:BrR:itTquUwW")) != EOF ) {
- 		switch(arg) {
- 		case 1: printf("optarg : %s\n",optarg);
- 			break;
-@@ -922,6 +925,9 @@ main (int argc, char *argv[])
- 			if (cmd == CMD_CREATE)
- 				cmd = CMD_DRY_RUN;
- 			break;
-+		case 'D':
-+			conf->skip_delegate = 1;
-+			break;
- 		case 'f':
- 			cmd = CMD_FLUSH_ONE;
- 			break;
+0001:	Going with Martin's strtoul() method instead
+
+0002:	Now getpagesize() is only called once, and size_p is only set if
+	posix_memalign is successful, as suggested by Martin.
+	
+
+Benjamin Marzinski (4):
+  libmultipath: fix sysfs dev_loss_tmo parsing
+  kpartx: read devices with direct IO
+  kpartx: handle alternate bsd disklabel location
+  libmultipath: fix checker detection for nvme devices
+
+ kpartx/bsd.c             | 16 ++++++++++--
+ kpartx/dasd.c            |  7 ++---
+ kpartx/gpt.c             | 22 +++++++---------
+ kpartx/kpartx.c          | 56 ++++++++++++++++++++++++++++++++--------
+ kpartx/kpartx.h          |  2 ++
+ libmultipath/discovery.c | 12 ++++++---
+ libmultipath/propsel.c   |  4 ++-
+ 7 files changed, 87 insertions(+), 32 deletions(-)
+
 -- 
 2.17.2
