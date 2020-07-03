@@ -1,14 +1,11 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v3 6/7] multipath: delegate flushing maps to
-	multipathd
-Date: Thu,  2 Jul 2020 19:07:05 -0500
-Message-ID: <1593734826-14059-7-git-send-email-bmarzins@redhat.com>
-References: <1593734826-14059-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 0/7] Fix muitpath/multipathd flush issue
+Date: Thu,  2 Jul 2020 19:06:59 -0500
+Message-ID: <1593734826-14059-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1593734826-14059-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,61 +19,72 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-Since there can be problems with removing maps outside of multipathd,
-multipath should attempt to delegate this command to multipathd.
-However, multipathd doesn't attempt to suspend the device, in order
-to avoid potential hangs. If delegating to multipathd fails, multipath
-should try the remove itself.
+If a multipath device is removed, and check_path() checks one of its
+paths before multipathd processes either the uevent or the dm event from
+removing it, multipathd will recreate the removed device. This happens
+because check_path() will continute to check the removed device's former
+paths until an event arrives removing the device.  A missing multpath
+device will cause the update_multipath_strings() call to fail, setting
+pp->dmstate to PSTATE_UNDEF.  If the path is up, this dmstate will cause
+reinstate_path() to be called, which will also fail, because the
+multipath device doesn't exist.  This will trigger a reload, restoring
+the recently removed device.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipath/main.c      | 14 ++++++++++++++
- multipath/multipath.8 |  4 ++--
- 2 files changed, 16 insertions(+), 2 deletions(-)
+This patchset handles this is two ways. The first two patches directly
+fix these issues in check_path(), so that a missing multipath device
+will no longer get recreated when checking one of its former paths.
 
-diff --git a/multipath/main.c b/multipath/main.c
-index 101fd656..6a24e483 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -820,6 +820,20 @@ int delegate_to_multipathd(enum mpath_cmds cmd,
- 	if (cmd == CMD_CREATE && conf->force_reload == FORCE_RELOAD_YES) {
- 		p += snprintf(p, n, "reconfigure");
- 	}
-+	else if (cmd == CMD_FLUSH_ONE && dev && dev_type == DEV_DEVMAP) {
-+		p += snprintf(p, n, "del map %s", dev);
-+		/* multipathd doesn't try as hard, to avoid potentially
-+		 * hanging. If it fails, retry with the regular multipath
-+		 * command */
-+		r = NOT_DELEGATED;
-+	}
-+	else if (cmd == CMD_FLUSH_ALL) {
-+		p += snprintf(p, n, "del maps");
-+		/* multipathd doesn't try as hard, to avoid potentially
-+		 * hanging. If it fails, retry with the regular multipath
-+		 * command */
-+		r = NOT_DELEGATED;
-+	}
- 	/* Add other translations here */
- 
- 	if (strlen(command) == 0)
-diff --git a/multipath/multipath.8 b/multipath/multipath.8
-index 6fb8645a..5b29a5d9 100644
---- a/multipath/multipath.8
-+++ b/multipath/multipath.8
-@@ -125,11 +125,11 @@ the system.
- Other operation modes are chosen by using one of the following command line switches:
- .TP
- .B \-f
--Flush (remove) a multipath device map specified as parameter, if unused.
-+Flush (remove) a multipath device map specified as parameter, if unused. This operation is delegated to the multipathd daemon if it's running.
- .
- .TP
- .B \-F
--Flush (remove) all unused multipath device maps.
-+Flush (remove) all unused multipath device maps. This operation is delegated to the multipathd daemon if it's running.
- .
- .TP
- .B \-l
+The other 5 patches add a "multipathd del maps" command, and make the
+mutipath command delegate flush operations to multipathd so multipathd's
+state remains in sync with the kernel's, while doing removes.
+
+Changes from v1:
+0001:	This is completely different. I've change how patch 0002 detects
+	when a multipath device has disappeared. Instead of do_get_info,
+	I need more return values on dm_get_map/status, and the
+	update_multipath_* functions. I have used symbolic return
+	values, which was the objection to the previous patch. I tried
+	to picked generic enough names that they could be used for other
+	devmapper.c functions as well.
+
+0002:	At Martin's suggestion, multipath now differentiates between dm
+	failures and a missing multipath device in
+	update_multipath_strings(). So there is no need to recheck if
+	the device is missing.
+
+0006:	Added some man page info that was previously in patch 0007
+
+0007:	Removed mentions of the -D option in the man page and usage
+	output.
+
+Changes from v2 (all are Martin's suggestions):
+0001:	Using dm_task_get_errno() and changed the names and values of
+	the symbolic returns.
+
+0002:	Changed symbolic return names, and improved some logging.
+
+Benjamin Marzinski (7):
+  libmultipath: make dm_get_map/status return codes symbolic
+  multipathd: fix check_path errors with removed map
+  libmultipath: make dm_flush_maps only return 0 on success
+  multipathd: add "del maps" multipathd command
+  multipath: make flushing maps work like other commands
+  multipath: delegate flushing maps to multipathd
+  multipath: add option to skip multipathd delegation
+
+ libmultipath/config.h      |  4 ++-
+ libmultipath/configure.h   |  3 --
+ libmultipath/devmapper.c   | 63 +++++++++++++++++++++++++-------------
+ libmultipath/devmapper.h   |  8 ++++-
+ libmultipath/structs_vec.c | 45 +++++++++++++++------------
+ multipath/main.c           | 44 ++++++++++++++++++--------
+ multipath/multipath.8      |  4 +--
+ multipathd/cli.c           |  1 +
+ multipathd/cli_handlers.c  | 19 ++++++++++++
+ multipathd/cli_handlers.h  |  1 +
+ multipathd/main.c          | 57 ++++++++++++++++------------------
+ multipathd/main.h          |  1 +
+ 12 files changed, 160 insertions(+), 90 deletions(-)
+
 -- 
 2.17.2
