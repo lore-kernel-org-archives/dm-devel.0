@@ -1,11 +1,14 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v3 0/7] Fix muitpath/multipathd flush issue
-Date: Thu,  2 Jul 2020 19:06:59 -0500
-Message-ID: <1593734826-14059-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 4/7] multipathd: add "del maps" multipathd
+	command
+Date: Thu,  2 Jul 2020 19:07:03 -0500
+Message-ID: <1593734826-14059-5-git-send-email-bmarzins@redhat.com>
+References: <1593734826-14059-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1593734826-14059-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,72 +22,158 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-If a multipath device is removed, and check_path() checks one of its
-paths before multipathd processes either the uevent or the dm event from
-removing it, multipathd will recreate the removed device. This happens
-because check_path() will continute to check the removed device's former
-paths until an event arrives removing the device.  A missing multpath
-device will cause the update_multipath_strings() call to fail, setting
-pp->dmstate to PSTATE_UNDEF.  If the path is up, this dmstate will cause
-reinstate_path() to be called, which will also fail, because the
-multipath device doesn't exist.  This will trigger a reload, restoring
-the recently removed device.
+This will flush all multipath devices.
 
-This patchset handles this is two ways. The first two patches directly
-fix these issues in check_path(), so that a missing multipath device
-will no longer get recreated when checking one of its former paths.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/devmapper.c  |  7 +++++--
+ libmultipath/devmapper.h  |  2 +-
+ multipath/main.c          |  2 +-
+ multipathd/cli.c          |  1 +
+ multipathd/cli_handlers.c | 19 +++++++++++++++++++
+ multipathd/cli_handlers.h |  1 +
+ multipathd/main.c         |  3 ++-
+ multipathd/main.h         |  1 +
+ 8 files changed, 31 insertions(+), 5 deletions(-)
 
-The other 5 patches add a "multipathd del maps" command, and make the
-mutipath command delegate flush operations to multipathd so multipathd's
-state remains in sync with the kernel's, while doing removes.
-
-Changes from v1:
-0001:	This is completely different. I've change how patch 0002 detects
-	when a multipath device has disappeared. Instead of do_get_info,
-	I need more return values on dm_get_map/status, and the
-	update_multipath_* functions. I have used symbolic return
-	values, which was the objection to the previous patch. I tried
-	to picked generic enough names that they could be used for other
-	devmapper.c functions as well.
-
-0002:	At Martin's suggestion, multipath now differentiates between dm
-	failures and a missing multipath device in
-	update_multipath_strings(). So there is no need to recheck if
-	the device is missing.
-
-0006:	Added some man page info that was previously in patch 0007
-
-0007:	Removed mentions of the -D option in the man page and usage
-	output.
-
-Changes from v2 (all are Martin's suggestions):
-0001:	Using dm_task_get_errno() and changed the names and values of
-	the symbolic returns.
-
-0002:	Changed symbolic return names, and improved some logging.
-
-Benjamin Marzinski (7):
-  libmultipath: make dm_get_map/status return codes symbolic
-  multipathd: fix check_path errors with removed map
-  libmultipath: make dm_flush_maps only return 0 on success
-  multipathd: add "del maps" multipathd command
-  multipath: make flushing maps work like other commands
-  multipath: delegate flushing maps to multipathd
-  multipath: add option to skip multipathd delegation
-
- libmultipath/config.h      |  4 ++-
- libmultipath/configure.h   |  3 --
- libmultipath/devmapper.c   | 63 +++++++++++++++++++++++++-------------
- libmultipath/devmapper.h   |  8 ++++-
- libmultipath/structs_vec.c | 45 +++++++++++++++------------
- multipath/main.c           | 44 ++++++++++++++++++--------
- multipath/multipath.8      |  4 +--
- multipathd/cli.c           |  1 +
- multipathd/cli_handlers.c  | 19 ++++++++++++
- multipathd/cli_handlers.h  |  1 +
- multipathd/main.c          | 57 ++++++++++++++++------------------
- multipathd/main.h          |  1 +
- 12 files changed, 160 insertions(+), 90 deletions(-)
-
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 4c86b6d4..f597ff8b 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -1005,7 +1005,7 @@ dm_flush_map_nopaths(const char * mapname, int deferred_remove)
+ 
+ #endif
+ 
+-int dm_flush_maps (int retries)
++int dm_flush_maps (int need_suspend, int retries)
+ {
+ 	int r = 1;
+ 	struct dm_task *dmt;
+@@ -1028,7 +1028,10 @@ int dm_flush_maps (int retries)
+ 
+ 	r = 0;
+ 	do {
+-		r |= dm_suspend_and_flush_map(names->name, retries);
++		if (need_suspend)
++			r |= dm_suspend_and_flush_map(names->name, retries);
++		else
++			r |= dm_flush_map(names->name);
+ 		next = names->next;
+ 		names = (void *) names + next;
+ 	} while (next);
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index b2108638..6dd178c8 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -57,7 +57,7 @@ int dm_flush_map_nopaths(const char * mapname, int deferred_remove);
+ #define dm_suspend_and_flush_map(mapname, retries) \
+ 	_dm_flush_map(mapname, 1, 0, 1, retries)
+ int dm_cancel_deferred_remove(struct multipath *mpp);
+-int dm_flush_maps (int retries);
++int dm_flush_maps (int need_suspend, int retries);
+ int dm_fail_path(const char * mapname, char * path);
+ int dm_reinstate_path(const char * mapname, char * path);
+ int dm_queue_if_no_path(const char *mapname, int enable);
+diff --git a/multipath/main.c b/multipath/main.c
+index c4740fab..d89f0a91 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -1096,7 +1096,7 @@ main (int argc, char *argv[])
+ 		goto out;
+ 	}
+ 	else if (conf->remove == FLUSH_ALL) {
+-		r = dm_flush_maps(retries) ? RTVL_FAIL : RTVL_OK;
++		r = dm_flush_maps(1, retries) ? RTVL_FAIL : RTVL_OK;
+ 		goto out;
+ 	}
+ 	while ((r = configure(conf, cmd, dev_type, dev)) == RTVL_RETRY)
+diff --git a/multipathd/cli.c b/multipathd/cli.c
+index 800c0fbe..bdc9fb10 100644
+--- a/multipathd/cli.c
++++ b/multipathd/cli.c
+@@ -568,6 +568,7 @@ cli_init (void) {
+ 	add_handler(DEL+PATH, NULL);
+ 	add_handler(ADD+MAP, NULL);
+ 	add_handler(DEL+MAP, NULL);
++	add_handler(DEL+MAPS, NULL);
+ 	add_handler(SWITCH+MAP+GROUP, NULL);
+ 	add_handler(RECONFIGURE, NULL);
+ 	add_handler(SUSPEND+MAP, NULL);
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 31c3d9fd..782bb003 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -852,6 +852,25 @@ cli_del_map (void * v, char ** reply, int * len, void * data)
+ 	return rc;
+ }
+ 
++int
++cli_del_maps (void *v, char **reply, int *len, void *data)
++{
++	struct vectors * vecs = (struct vectors *)data;
++	struct multipath *mpp;
++	int i, ret = 0;
++
++	condlog(2, "remove maps (operator)");
++	vector_foreach_slot(vecs->mpvec, mpp, i) {
++		if (flush_map(mpp, vecs, 0))
++			ret++;
++		else
++			i--;
++	}
++	/* flush any multipath maps that aren't currently known by multipathd */
++	ret |= dm_flush_maps(0, 0);
++	return ret;
++}
++
+ int
+ cli_reload(void *v, char **reply, int *len, void *data)
+ {
+diff --git a/multipathd/cli_handlers.h b/multipathd/cli_handlers.h
+index 0f451064..6f57b429 100644
+--- a/multipathd/cli_handlers.h
++++ b/multipathd/cli_handlers.h
+@@ -26,6 +26,7 @@ int cli_add_path (void * v, char ** reply, int * len, void * data);
+ int cli_del_path (void * v, char ** reply, int * len, void * data);
+ int cli_add_map (void * v, char ** reply, int * len, void * data);
+ int cli_del_map (void * v, char ** reply, int * len, void * data);
++int cli_del_maps (void * v, char ** reply, int * len, void * data);
+ int cli_switch_group(void * v, char ** reply, int * len, void * data);
+ int cli_reconfigure(void * v, char ** reply, int * len, void * data);
+ int cli_resize(void * v, char ** reply, int * len, void * data);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index daf19a4e..f014d2a1 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -635,7 +635,7 @@ sync_maps_state(vector mpvec)
+ 		sync_map_state(mpp);
+ }
+ 
+-static int
++int
+ flush_map(struct multipath * mpp, struct vectors * vecs, int nopaths)
+ {
+ 	int r;
+@@ -1555,6 +1555,7 @@ uxlsnrloop (void * ap)
+ 	set_handler_callback(DEL+PATH, cli_del_path);
+ 	set_handler_callback(ADD+MAP, cli_add_map);
+ 	set_handler_callback(DEL+MAP, cli_del_map);
++	set_handler_callback(DEL+MAPS, cli_del_maps);
+ 	set_handler_callback(SWITCH+MAP+GROUP, cli_switch_group);
+ 	set_unlocked_handler_callback(RECONFIGURE, cli_reconfigure);
+ 	set_handler_callback(SUSPEND+MAP, cli_suspend);
+diff --git a/multipathd/main.h b/multipathd/main.h
+index 7bb8463f..5dff17e5 100644
+--- a/multipathd/main.h
++++ b/multipathd/main.h
+@@ -28,6 +28,7 @@ int ev_add_path (struct path *, struct vectors *, int);
+ int ev_remove_path (struct path *, struct vectors *, int);
+ int ev_add_map (char *, const char *, struct vectors *);
+ int ev_remove_map (char *, char *, int, struct vectors *);
++int flush_map(struct multipath *, struct vectors *, int);
+ int set_config_state(enum daemon_status);
+ void * mpath_alloc_prin_response(int prin_sa);
+ int prin_do_scsi_ioctl(char *, int rq_servact, struct prin_resp * resp,
 -- 
 2.17.2
