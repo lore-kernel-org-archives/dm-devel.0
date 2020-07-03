@@ -1,11 +1,14 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 0/4] misc patches
-Date: Thu,  2 Jul 2020 19:38:23 -0500
-Message-ID: <1593736707-14216-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 3/4] kpartx: handle alternate bsd disklabel
+	location
+Date: Thu,  2 Jul 2020 19:38:26 -0500
+Message-ID: <1593736707-14216-4-git-send-email-bmarzins@redhat.com>
+References: <1593736707-14216-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1593736707-14216-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,31 +22,50 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-This is a small collection of individual bug fix patches that apply on
-top of my previous patch set.
+bsd disk labels can either be at the start of the second sector, or 64
+bytes into the first sector, but kpartx only handled the first case.
+However the second case is what parted creates, and what the linux
+kernel partition code expects.  kpartx should handle both cases.
 
-Changes from v1:
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ kpartx/bsd.c | 16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
 
-0001:	Going with Martin's strtoul() method instead
-
-0002:	Now getpagesize() is only called once, and size_p is only set if
-	posix_memalign is successful, as suggested by Martin.
-	
-
-Benjamin Marzinski (4):
-  libmultipath: fix sysfs dev_loss_tmo parsing
-  kpartx: read devices with direct IO
-  kpartx: handle alternate bsd disklabel location
-  libmultipath: fix checker detection for nvme devices
-
- kpartx/bsd.c             | 16 ++++++++++--
- kpartx/dasd.c            |  7 ++---
- kpartx/gpt.c             | 22 +++++++---------
- kpartx/kpartx.c          | 56 ++++++++++++++++++++++++++++++++--------
- kpartx/kpartx.h          |  2 ++
- libmultipath/discovery.c | 12 ++++++---
- libmultipath/propsel.c   |  4 ++-
- 7 files changed, 87 insertions(+), 32 deletions(-)
-
+diff --git a/kpartx/bsd.c b/kpartx/bsd.c
+index 0e661fbc..950b0f92 100644
+--- a/kpartx/bsd.c
++++ b/kpartx/bsd.c
+@@ -1,6 +1,7 @@
+ #include "kpartx.h"
+ #include <stdio.h>
+ 
++#define BSD_LABEL_OFFSET	64
+ #define BSD_DISKMAGIC	(0x82564557UL)	/* The disk magic number */
+ #define XBSD_MAXPARTITIONS	16
+ #define BSD_FS_UNUSED		0
+@@ -60,8 +61,19 @@ read_bsd_pt(int fd, struct slice all, struct slice *sp, unsigned int ns) {
+ 		return -1;
+ 
+ 	l = (struct bsd_disklabel *) bp;
+-	if (l->d_magic != BSD_DISKMAGIC)
+-		return -1;
++	if (l->d_magic != BSD_DISKMAGIC) {
++		/*
++		 * BSD disklabels can also start 64 bytes offset from the
++		 * start of the first sector
++		 */
++		bp = getblock(fd, offset);
++		if (bp == NULL)
++			return -1;
++
++		l = (struct bsd_disklabel *)(bp + 64);
++		if (l->d_magic != BSD_DISKMAGIC)
++			return -1;
++	}
+ 
+ 	max_partitions = 16;
+ 	if (l->d_npartitions < max_partitions)
 -- 
 2.17.2
