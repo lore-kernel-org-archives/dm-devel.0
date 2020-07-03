@@ -1,19 +1,14 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 2/3] libmutipath: don't close fd on
- dm_lib_release
-Date: Thu, 2 Jul 2020 15:06:32 -0500
-Message-ID: <20200702200632.GH11089@octiron.msp.redhat.com>
-References: <1585083834-14237-1-git-send-email-bmarzins@redhat.com>
-	<1585083834-14237-2-git-send-email-bmarzins@redhat.com>
-	<ebfcb22b005314635b77e4820e205971d708d07d.camel@suse.com>
-	<20200325205255.GB17313@octiron.msp.redhat.com>
-	<20200325220045.GC17313@octiron.msp.redhat.com>
-	<4eaae3bfe0c383d23a839483e88ec093883f4e5a.camel@suse.com>
+Subject: [PATCH v3 2/7] multipathd: fix check_path errors with
+	removed map
+Date: Thu,  2 Jul 2020 19:07:01 -0500
+Message-ID: <1593734826-14059-3-git-send-email-bmarzins@redhat.com>
+References: <1593734826-14059-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4eaae3bfe0c383d23a839483e88ec093883f4e5a.camel@suse.com>
+In-Reply-To: <1593734826-14059-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,76 +18,117 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Martin Wilck <Martin.Wilck@suse.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-On Thu, Jul 02, 2020 at 11:52:21AM +0000, Martin Wilck wrote:
-> On Wed, 2020-03-25 at 17:00 -0500, Benjamin Marzinski wrote:
-> > On Wed, Mar 25, 2020 at 03:52:55PM -0500, Benjamin Marzinski wrote:
-> > > On Wed, Mar 25, 2020 at 03:16:50PM +0000, Martin Wilck wrote:
-> > > > On Tue, 2020-03-24 at 16:03 -0500, Benjamin Marzinski wrote:
-> > > >=20
-> > > > AFAICS, this function has been in libdm since 1.02.111. We
-> > > > support
-> > > > 1.02.89 (if all features enabled, otherwise even older). Perhaps
-> > > > we
-> > > > should make this function call conditional on the libdm verson?
-> > > >=20
-> > > > But perhaps more importantly, why do we still need to call
-> > > > dm_lib_release()? AFAICS it's only needed for systems that have
-> > > > no udev
-> > > > support for creating device nodes (to call update_devs() via
-> > > > dm_lib_release()), and we don't support that anymore anyway, do
-> > > > we?=20
-> > > >=20
-> > > > Since 26c4bb0, we're always setting the
-> > > > DM_UDEV_DISABLE_LIBRARY_FALLBACK flag, and the cookie, too
-> > > > (we aren't setting it for DM_DEVICE_RELOAD, but it isn't needed
-> > > > for
-> > > > that, either, since no device nodes need to be created or
-> > > > removed); so
-> > > > dm_lib_release() should really have no effect.
-> > > >=20
-> > > > Regards
-> > > > Martin
-> > >=20
-> > > Good call. I'll redo this patch.
-> >=20
-> > Actually, I've changed my mind. Calling dm_lib_release() lets us
-> > release
-> > the memory that device-mapper uses to store all the node ops that it
-> > was saving up.  Without calling dm_lib_release(), AFAICS, that memory
-> > keeps growing until the daemon exits.
->=20
-> Sorry for coming back to this so late. I've just stared at the libdm
-> code again.=20
->=20
-> We always set DM_UDEV_DISABLE_LIBRARY_FALLBACK. In the standard CREATE
-> and REMOVE cases, libdm doesn't stack any operations if this flag is
-> set. The only exceptions are=20
->=20
->  a) RESUME operations with DM_ADD_NODE_ON_RESUME set. This happens
-> implicity when we create new maps
->  b) RENAME operations
->=20
-> In both cases, we call dm_udev_wait() after the libdm operation, which
-> calls update_devs() and should thus have the same effect as
-> dm_lib_release(). IOW, I still believe we don't need to call
-> dm_lib_release() any more.
+If a multipath device is removed during, or immediately before the call
+to check_path(), multipathd can behave incorrectly. A missing multpath
+device will cause update_multipath_strings() to fail, setting
+pp->dmstate to PSTATE_UNDEF.  If the path is up, this state will cause
+reinstate_path() to be called, which will also fail.  This will trigger
+a reload, restoring the recently removed device.
 
-Sure. But can we leave this patch as is, and remove those calls in a
-different patch?
+If update_multipath_strings() fails because there is no multipath
+device, check_path should just quit, since the remove dmevent and uevent
+are likely already queued up. Also, I don't see any reason to reload the
+multipath device if reinstate fails. This code was added by
+fac68d7a99ef17d496079538a5c6836acd7911ab, which clamined that reinstate
+could fail if the path was disabled.  Looking through the current kernel
+code, I can't see any reason why a reinstate would fail, where a reload
+would help. If the path was missing from the multipath device,
+update_multipath_strings() would already catch that, and quit
+check_path() early, which make more sense to me than reloading does.
 
--Ben
-=20
-> Regards,
-> Martin
->=20
-> --=20
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE  Software Solutions Germany GmbH
-> HRB 36809, AG N=FCrnberg GF: Felix
-> Imend=F6rffer
->=20
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ multipathd/main.c | 44 +++++++++++++++++++-------------------------
+ 1 file changed, 19 insertions(+), 25 deletions(-)
+
+diff --git a/multipathd/main.c b/multipathd/main.c
+index ab141fed..daf19a4e 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1615,22 +1615,18 @@ fail_path (struct path * pp, int del_active)
+ /*
+  * caller must have locked the path list before calling that function
+  */
+-static int
++static void
+ reinstate_path (struct path * pp)
+ {
+-	int ret = 0;
+-
+ 	if (!pp->mpp)
+-		return 0;
++		return;
+ 
+-	if (dm_reinstate_path(pp->mpp->alias, pp->dev_t)) {
++	if (dm_reinstate_path(pp->mpp->alias, pp->dev_t))
+ 		condlog(0, "%s: reinstate failed", pp->dev_t);
+-		ret = 1;
+-	} else {
++	else {
+ 		condlog(2, "%s: reinstated", pp->dev_t);
+ 		update_queue_mode_add_path(pp->mpp);
+ 	}
+-	return ret;
+ }
+ 
+ static void
+@@ -2091,9 +2087,16 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 	/*
+ 	 * Synchronize with kernel state
+ 	 */
+-	if (update_multipath_strings(pp->mpp, vecs->pathvec, 1) != DMP_OK) {
+-		condlog(1, "%s: Could not synchronize with kernel state",
+-			pp->dev);
++	ret = update_multipath_strings(pp->mpp, vecs->pathvec, 1);
++	if (ret != DMP_OK) {
++		if (ret == DMP_NOT_FOUND) {
++			/* multipath device missing. Likely removed */
++			condlog(1, "%s: multipath device '%s' not found",
++				pp->dev, pp->mpp->alias);
++			return 0;
++		} else
++			condlog(1, "%s: Couldn't synchronize with kernel state",
++				pp->dev);
+ 		pp->dmstate = PSTATE_UNDEF;
+ 	}
+ 	/* if update_multipath_strings orphaned the path, quit early */
+@@ -2183,12 +2186,8 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 		/*
+ 		 * reinstate this path
+ 		 */
+-		if (!disable_reinstate && reinstate_path(pp)) {
+-			condlog(3, "%s: reload map", pp->dev);
+-			ev_add_path(pp, vecs, 1);
+-			pp->tick = 1;
+-			return 0;
+-		}
++		if (!disable_reinstate)
++			reinstate_path(pp);
+ 		new_path_up = 1;
+ 
+ 		if (oldchkrstate != PATH_UP && oldchkrstate != PATH_GHOST)
+@@ -2204,15 +2203,10 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 	else if (newstate == PATH_UP || newstate == PATH_GHOST) {
+ 		if ((pp->dmstate == PSTATE_FAILED ||
+ 		    pp->dmstate == PSTATE_UNDEF) &&
+-		    !disable_reinstate) {
++		    !disable_reinstate)
+ 			/* Clear IO errors */
+-			if (reinstate_path(pp)) {
+-				condlog(3, "%s: reload map", pp->dev);
+-				ev_add_path(pp, vecs, 1);
+-				pp->tick = 1;
+-				return 0;
+-			}
+-		} else {
++			reinstate_path(pp);
++		else {
+ 			LOG_MSG(4, verbosity, pp);
+ 			if (pp->checkint != max_checkint) {
+ 				/*
+-- 
+2.17.2
