@@ -1,85 +1,113 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: a crash in md-raid
-Date: Fri, 3 Jul 2020 08:18:28 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2007030812320.13686@file01.intranet.prod.int.rdu2.redhat.com>
+From: Martin Wilck <Martin.Wilck@suse.com>
+Subject: Re: [PATCH 2/3] libmutipath: don't close fd on
+ dm_lib_release
+Date: Fri, 3 Jul 2020 14:05:57 +0000
+Message-ID: <69ee475e7cc3cfdacca20701ac0b44000ed33443.camel@suse.com>
+References: <1585083834-14237-1-git-send-email-bmarzins@redhat.com>
+	<1585083834-14237-2-git-send-email-bmarzins@redhat.com>
+	<ebfcb22b005314635b77e4820e205971d708d07d.camel@suse.com>
+	<20200325205255.GB17313@octiron.msp.redhat.com>
+	<20200325220045.GC17313@octiron.msp.redhat.com>
+	<4eaae3bfe0c383d23a839483e88ec093883f4e5a.camel@suse.com>
+	<20200702200632.GH11089@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-raid-owner@vger.kernel.org>
-Sender: linux-raid-owner@vger.kernel.org
-To: linux-raid@vger.kernel.org, Song Liu <song@kernel.org>
-Cc: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200702200632.GH11089@octiron.msp.redhat.com>
+Content-Language: en-US
+Content-ID: <BAD31EFE809A6447886A7865E1369B73@eurprd04.prod.outlook.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+On Thu, 2020-07-02 at 15:06 -0500, Benjamin Marzinski wrote:
+> On Thu, Jul 02, 2020 at 11:52:21AM +0000, Martin Wilck wrote:
+> > On Wed, 2020-03-25 at 17:00 -0500, Benjamin Marzinski wrote:
+> > > On Wed, Mar 25, 2020 at 03:52:55PM -0500, Benjamin Marzinski
+> > > wrote:
+> > > > On Wed, Mar 25, 2020 at 03:16:50PM +0000, Martin Wilck wrote:
+> > > > > On Tue, 2020-03-24 at 16:03 -0500, Benjamin Marzinski wrote:
+> > > > >=20
+> > > > > AFAICS, this function has been in libdm since 1.02.111. We
+> > > > > support
+> > > > > 1.02.89 (if all features enabled, otherwise even older).
+> > > > > Perhaps
+> > > > > we
+> > > > > should make this function call conditional on the libdm
+> > > > > verson?
+> > > > >=20
+> > > > > But perhaps more importantly, why do we still need to call
+> > > > > dm_lib_release()? AFAICS it's only needed for systems that
+> > > > > have
+> > > > > no udev
+> > > > > support for creating device nodes (to call update_devs() via
+> > > > > dm_lib_release()), and we don't support that anymore anyway,
+> > > > > do
+> > > > > we?=20
+> > > > >=20
+> > > > > Since 26c4bb0, we're always setting the
+> > > > > DM_UDEV_DISABLE_LIBRARY_FALLBACK flag, and the cookie, too
+> > > > > (we aren't setting it for DM_DEVICE_RELOAD, but it isn't
+> > > > > needed
+> > > > > for
+> > > > > that, either, since no device nodes need to be created or
+> > > > > removed); so
+> > > > > dm_lib_release() should really have no effect.
+> > > > >=20
+> > > > > Regards
+> > > > > Martin
+> > > >=20
+> > > > Good call. I'll redo this patch.
+> > >=20
+> > > Actually, I've changed my mind. Calling dm_lib_release() lets us
+> > > release
+> > > the memory that device-mapper uses to store all the node ops that
+> > > it
+> > > was saving up.  Without calling dm_lib_release(), AFAICS, that
+> > > memory
+> > > keeps growing until the daemon exits.
+> >=20
+> > Sorry for coming back to this so late. I've just stared at the
+> > libdm
+> > code again.=20
+> >=20
+> > We always set DM_UDEV_DISABLE_LIBRARY_FALLBACK. In the standard
+> > CREATE
+> > and REMOVE cases, libdm doesn't stack any operations if this flag
+> > is
+> > set. The only exceptions are=20
+> >=20
+> >  a) RESUME operations with DM_ADD_NODE_ON_RESUME set. This happens
+> > implicity when we create new maps
+> >  b) RENAME operations
+> >=20
+> > In both cases, we call dm_udev_wait() after the libdm operation,
+> > which
+> > calls update_devs() and should thus have the same effect as
+> > dm_lib_release(). IOW, I still believe we don't need to call
+> > dm_lib_release() any more.
+>=20
+> Sure. But can we leave this patch as is, and remove those calls in a
+> different patch?
 
-I report a crash in md-raid. I have 5.8-rc3 kernel with debugging enabled. 
-The crash happened when running the "shell/integrity-blocksize.sh" lvm 
-test.
+Of course. It's not important, either. I just wanted to make sure
+we agree on the technical side.
 
-The crash is not reproducible.
+Regards
+Martin
 
-Mikulas
-
-
-[ 1188.640677] device-mapper: raid: Superblocks created for new raid set
-[ 1188.679378] md/raid1:mdX: not clean -- starting background reconstruction
-[ 1188.681072] md/raid1:mdX: active with 2 out of 2 mirrors
-[ 1189.093707] mdX: bitmap file is out of date, doing full recovery
-[ 1189.108688] md: resync of RAID array mdX
-[ 1189.341925] Unable to handle kernel paging request at virtual address 006b6b6b6b6b6b73
-[ 1189.343183] Mem abort info:
-[ 1189.343632]   ESR = 0x96000004
-[ 1189.344219]   EC = 0x25: DABT (current EL), IL = 32 bits
-[ 1189.345012]   SET = 0, FnV = 0
-[ 1189.345483]   EA = 0, S1PTW = 0
-[ 1189.345998] Data abort info:
-[ 1189.346483]   ISV = 0, ISS = 0x00000004
-[ 1189.347109]   CM = 0, WnR = 0
-[ 1189.347589] [006b6b6b6b6b6b73] address between user and kernel address ranges
-[ 1189.348761] Internal error: Oops: 96000004 [#1] PREEMPT SMP
-[ 1189.349802] Modules linked in: brd reiserfs hmac crc32_generic dm_zero dm_integrity dm_crypt dm_writecache dm_raid xfs dm_thin_pool dm_cache_smq dm_cache dm_persistent_data dm_bio_prison dm_mirror dm_region_hash dm_log dm_snapshot dm_bufio loop ipv6 autofs4 binfmt_misc nls_utf8 nls_cp852 vfat fat dm_mod af_packet aes_ce_blk crypto_simd cryptd aes_ce_cipher crct10dif_ce ghash_ce gf128mul sha2_ce sha256_arm64 sha1_ce sha1_generic efivars sg virtio_rng virtio_net rng_core net_failover failover virtio_console ext4 crc16 mbcache jbd2 raid10 raid456 libcrc32c crc32c_generic async_raid6_recov async_memcpy async_pq raid6_pq async_xor xor xor_neon async_tx raid1 raid0 linear md_mod sd_mod t10_pi virtio_scsi scsi_mod virtio_blk virtio_mmio virtio_pci virtio_ring virtio [last unloaded: scsi_debug]
- 
-[ 1189.370709] CPU: 2 PID: 20 Comm: ksoftirqd/2 Not tainted 5.8.0-rc3-debug #1
-[ 1189.372088] Hardware name: QEMU KVM Virtual Machine, BIOS 0.0.0 02/06/2015
-[ 1189.373400] pstate: 60000005 (nZCv daif -PAN -UAO BTYPE=--)
-[ 1189.374492] pc : end_sync_write+0x38/0xf8 [raid1]
-[ 1189.375408] lr : bio_endio+0x234/0x238
-[ 1189.376134] sp : ffffff80fee87af0
-[ 1189.376788] x29: ffffff80fee87af0 x28: 0000000000000004
-[ 1189.377817] x27: 0000000000000100 x26: ffffffc010532916
-[ 1189.378832] x25: 0000000100015b61 x24: 0000000100015b61
-[ 1189.379860] x23: 0000000000000001 x22: ffffffc01062f8e8
-[ 1189.380921] x21: 6b6b6b6b6b6b6b6b x20: ffffff80eaaa2058
-[ 1189.381967] x19: ffffff80d2e01c00 x18: 0000000000000000
-[ 1189.382970] x17: 0000000000000000 x16: 0000000000000000
-[ 1189.383994] x15: 0000000000000000 x14: 0000000000000000
-[ 1189.385003] x13: 0000000000000000 x12: 0000000000000001
-[ 1189.386010] x11: 0000000000000000 x10: 00000000000010f0
-[ 1189.387032] x9 : ffffff80f932cf98 x8 : 0000000000000000
-[ 1189.388044] x7 : 0000000000000000 x6 : 0000000000000000
-[ 1189.389050] x5 : 0000000000000001 x4 : ffffff80fee87aa0
-[ 1189.390062] x3 : ffffff8000000000 x2 : 0000000000000001
-[ 1189.391088] x1 : ffffff80fa22ca00 x0 : ffffff80d2e01c00
-[ 1189.392230] Call trace:
-[ 1189.392719]  end_sync_write+0x38/0xf8 [raid1]
-[ 1189.393553]  bio_endio+0x234/0x238
-[ 1189.394440]  dec_pending+0x1b8/0x1bc [dm_mod]
-[ 1189.395307]  clone_endio+0x14c/0x160 [dm_mod]
-[ 1189.396155]  bio_endio+0x234/0x238
-[ 1189.397602]  blk_update_request+0x2f8/0x418
-[ 1189.398473]  blk_mq_end_request+0x20/0x44
-[ 1189.400709]  lo_complete_rq+0x5c/0xbc [loop]
-[ 1189.401771]  blk_done_softirq+0xbc/0xc0
-[ 1189.402564]  efi_header_end+0x368/0x4b8
-[ 1189.403559]  run_ksoftirqd+0x34/0x64
-[ 1189.404303]  smpboot_thread_fn+0x228/0x22c
-[ 1189.405132]  kthread+0x114/0x124
-[ 1189.405807]  ret_from_fork+0x10/0x18
-[ 1189.406537] Code: f9400013 aa1303e0 f9401274 f9400295 (f94006a8)
-[ 1189.414734] ---[ end trace 4538a7676b244523 ]---
-[ 1189.415635] Kernel panic - not syncing: Fatal exception in interrupt
-[ 1189.416874] SMP: stopping secondary CPUs
-[ 1189.417691] Kernel Offset: disabled
-[ 1189.418380] CPU features: 0x000022,00002000
-[ 1189.419185] Memory Limit: none
-[ 1189.419743] ---[ end Kernel panic - not syncing: Fatal exception in interrupt ]---
+--=20
+Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+SUSE  Software Solutions Germany GmbH
+HRB 36809, AG N=FCrnberg GF: Felix
+Imend=F6rffer
