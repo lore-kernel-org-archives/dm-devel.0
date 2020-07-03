@@ -1,177 +1,108 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-bufio: do cleanup from a workqueue
-Date: Fri, 3 Jul 2020 10:26:46 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2007031020150.23220@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20200625113122.7540-1-willy@infradead.org> <alpine.LRH.2.02.2006261058250.11899@file01.intranet.prod.int.rdu2.redhat.com> <20200626230847.GI2005@dread.disaster.area> <alpine.LRH.2.02.2006270848540.14350@file01.intranet.prod.int.rdu2.redhat.com>
- <20200629003550.GJ2005@dread.disaster.area> <alpine.LRH.2.02.2006290918030.11293@file01.intranet.prod.int.rdu2.redhat.com> <20200629223410.GK2005@dread.disaster.area>
+From: Martin Wilck <Martin.Wilck@suse.com>
+Subject: Re: [PATCH 0/7] Fix muitpath/multipathd flush issue
+Date: Fri, 3 Jul 2020 15:12:54 +0000
+Message-ID: <be1e8d96543bc86a6a194bb9c708fba91878d9c9.camel@suse.com>
+References: <1592439867-18427-1-git-send-email-bmarzins@redhat.com>
+	<f60b8ea30ee0ce68a46ce8f5c9ebaee6314d57e4.camel@suse.com>
+	<20200618180458.GI5894@octiron.msp.redhat.com>
+	<c5e95e7bc75b11e811854ff0b0988ff19ef45e13.camel@suse.com>
+	<20200618230625.GJ5894@octiron.msp.redhat.com>
+	<5357998bd17e1147fd3a6615e03251d1aa4900d8.camel@suse.com>
+	<20200702031449.GB29962@octiron.msp.redhat.com>
+	<8158d509bca2cae483d553defdd1eb378c16d813.camel@suse.com>
+	<20200702151829.GA11089@octiron.msp.redhat.com>
+	<cd568c7aabaa102db8ef6ba8ceb87b96d62f632c.camel@suse.com>
+	<20200702194128.GG11089@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200629223410.GK2005@dread.disaster.area>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>, Mike Snitzer <msnitzer@redhat.com>
-Cc: "Matthew Wilcox (Oracle)" <willy@infradead.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-xfs@vger.kernel.org, dm-devel@redhat.com, Jens Axboe <axboe@kernel.dk>, NeilBrown <neilb@suse.de>
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200702194128.GG11089@octiron.msp.redhat.com>
+Content-Language: en-US
+Content-ID: <F721C18136F61A4398649A7210E2932C@eurprd04.prod.outlook.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "zkabelac@redhat.com" <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
+On Thu, 2020-07-02 at 14:41 -0500, Benjamin Marzinski wrote:
+> On Thu, Jul 02, 2020 at 04:45:21PM +0000, Martin Wilck wrote:
+> >=20
+> > What's wrong with deferred remove? After all, the user explicitly
+> > asked
+> > for a flush. As long as some other process has the device open, it
+> > won't be removed. That's why I like the O_EXCL idea, which will
+> > allow
+> > small programs like blkid to access the device, but will cause all
+> > attempts to mount or add stacked devices to fail until the device
+> > is
+> > actually removed. I see no reason no to do this, as it's a race
+> > anyway
+> > if some other process opens the device when we're supposed to flush
+> > it
+> > and the opencount already dropped to 0. By using O_EXCL, we just
+> > increase multipathd's chances to win the race and do what the user
+> > asked for.
+>=20
+> I'm not actually a fan of deferred remove in general. It leaves the
+> device in this weird state were it is there but no longer openable.=20
 
+Ok, I didn't expect that ;-)
 
-On Tue, 30 Jun 2020, Dave Chinner wrote:
+AFAICS, devices in DEFERRED REMOVE state are actually still openable. I
+just tested this once more on a 5.3 kernel.
 
-> https://lore.kernel.org/linux-fsdevel/20190809215733.GZ7777@dread.disaster.area/
-> 
-> If you did that when I suggested it, this problem would be solved.
-> i.e. The only way to fix this problem once adn for all is to stop
-> using the shrinker as a mechanism to issue and wait on IO. If you
-> need background writeback of dirty buffers, do it from a
-> WQ_MEM_RECLAIM workqueue that isn't directly in the memory reclaim
-> path and so can issue writeback and block safely from a GFP_KERNEL
-> context. Kick the workqueue from the shrinker context, but get rid
-> of the IO submission and waiting from the shrinker and all the
-> GFP_NOFS memory reclaim recursion problems go away.
-> 
-> Cheers,
-> 
-> Dave.
-> -- 
-> Dave Chinner
-> david@fromorbit.com
+As long as the device is opened by some process and thus not removed,
+it can be opened by other processes, and is not deleted until the last
+opener closes it. It's even possible to create new device mapper layers
+like kpartx partitions on top of a DM device in DEFERRED REMOVE state.
 
-Hi
+> I
+> wish I had originally dealt with deferred removes by having
+> multipathd
+> occasionally try to flush devices with no paths, or possibly listen
+> for
+> notifications that the device has been closed, and flush then.
+>=20
+> My specific objections here are that not all things that open a
+> device
+> for longer than an instant do so with O_EXCL.  So it's very possible
+> that you run "multipath -F", it returns having removed a number of
+> unused devices.  But some of the devices it didn't remove were opened
+> without O_EXCL, and they will stick around for a while, and then
+> suddenly disappear.  Even if they don't say around for that long,
+> this
+> is a can still effect scripts or other programs that are expecting to
+> check the device state immediately after calling multipath -F, and
+> having it not change a second or so later. So far multipath -f/-F
+> will
+> not return until it has removed all the removeable devices (and
+> waited
+> for them to be removed from udev). I think it should stay this way.
 
-This is a patch that moves buffer cleanup to a workqueue. Please review 
-it.
+I see. That's a valid point. IMHO it'd be better if the kernel didn't
+allow any new access to devices in "deferred remove" state, and
+possibly sent a REMOVE uevent and hide the device immediately after the
+deferred remove ioctl.=20
 
-Mikulas
+That would also be closer to how "lazy umount" (umount -l) behaves.
+But I'm certainly overlooking some subtle semantic issues.=20
 
+@Mike, Zdenek: perhaps you can explain why "deferred remove" behaves
+like this?
 
+Martin
 
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-kswapd should not block because it degrades system performance.
-So, move reclaim of buffers to a workqueue.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-bufio.c |   60 ++++++++++++++++++++++++++++++++++----------------
- 1 file changed, 41 insertions(+), 19 deletions(-)
-
-Index: linux-2.6/drivers/md/dm-bufio.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-bufio.c	2020-07-03 14:07:43.000000000 +0200
-+++ linux-2.6/drivers/md/dm-bufio.c	2020-07-03 15:35:23.000000000 +0200
-@@ -108,7 +108,10 @@ struct dm_bufio_client {
- 	int async_write_error;
- 
- 	struct list_head client_list;
-+
- 	struct shrinker shrinker;
-+	struct work_struct shrink_work;
-+	atomic_long_t need_shrink;
- };
- 
- /*
-@@ -1634,8 +1637,7 @@ static unsigned long get_retain_buffers(
- 	return retain_bytes;
- }
- 
--static unsigned long __scan(struct dm_bufio_client *c, unsigned long nr_to_scan,
--			    gfp_t gfp_mask)
-+static void __scan(struct dm_bufio_client *c)
- {
- 	int l;
- 	struct dm_buffer *b, *tmp;
-@@ -1646,42 +1648,58 @@ static unsigned long __scan(struct dm_bu
- 
- 	for (l = 0; l < LIST_SIZE; l++) {
- 		list_for_each_entry_safe_reverse(b, tmp, &c->lru[l], lru_list) {
--			if (__try_evict_buffer(b, gfp_mask))
-+			if (count - freed <= retain_target)
-+				atomic_long_set(&c->need_shrink, 0);
-+			if (!atomic_long_read(&c->need_shrink))
-+				return;
-+			if (__try_evict_buffer(b, GFP_KERNEL)) {
-+				atomic_long_dec(&c->need_shrink);
- 				freed++;
--			if (!--nr_to_scan || ((count - freed) <= retain_target))
--				return freed;
-+			}
- 			cond_resched();
- 		}
- 	}
--	return freed;
- }
- 
--static unsigned long
--dm_bufio_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
-+static void shrink_work(struct work_struct *w)
-+{
-+	struct dm_bufio_client *c = container_of(w, struct dm_bufio_client, shrink_work);
-+
-+	dm_bufio_lock(c);
-+	__scan(c);
-+	dm_bufio_unlock(c);
-+}
-+
-+static unsigned long dm_bufio_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
- {
- 	struct dm_bufio_client *c;
--	unsigned long freed;
- 
- 	c = container_of(shrink, struct dm_bufio_client, shrinker);
--	if (sc->gfp_mask & __GFP_FS)
--		dm_bufio_lock(c);
--	else if (!dm_bufio_trylock(c))
--		return SHRINK_STOP;
-+	atomic_long_add(sc->nr_to_scan, &c->need_shrink);
-+	queue_work(dm_bufio_wq, &c->shrink_work);
- 
--	freed  = __scan(c, sc->nr_to_scan, sc->gfp_mask);
--	dm_bufio_unlock(c);
--	return freed;
-+	return sc->nr_to_scan;
- }
- 
--static unsigned long
--dm_bufio_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
-+static unsigned long dm_bufio_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
- {
- 	struct dm_bufio_client *c = container_of(shrink, struct dm_bufio_client, shrinker);
- 	unsigned long count = READ_ONCE(c->n_buffers[LIST_CLEAN]) +
- 			      READ_ONCE(c->n_buffers[LIST_DIRTY]);
- 	unsigned long retain_target = get_retain_buffers(c);
-+	unsigned long queued_for_cleanup = atomic_long_read(&c->need_shrink);
-+
-+	if (unlikely(count < retain_target))
-+		count = 0;
-+	else
-+		count -= retain_target;
- 
--	return (count < retain_target) ? 0 : (count - retain_target);
-+	if (unlikely(count < queued_for_cleanup))
-+		count = 0;
-+	else
-+		count -= queued_for_cleanup;
-+
-+	return count;
- }
- 
- /*
-@@ -1772,6 +1790,9 @@ struct dm_bufio_client *dm_bufio_client_
- 		__free_buffer_wake(b);
- 	}
- 
-+	INIT_WORK(&c->shrink_work, shrink_work);
-+	atomic_long_set(&c->need_shrink, 0);
-+
- 	c->shrinker.count_objects = dm_bufio_shrink_count;
- 	c->shrinker.scan_objects = dm_bufio_shrink_scan;
- 	c->shrinker.seeks = 1;
-@@ -1817,6 +1838,7 @@ void dm_bufio_client_destroy(struct dm_b
- 	drop_buffers(c);
- 
- 	unregister_shrinker(&c->shrinker);
-+	flush_work(&c->shrink_work);
- 
- 	mutex_lock(&dm_bufio_clients_lock);
- 
+--=20
+Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+SUSE  Software Solutions Germany GmbH
+HRB 36809, AG N=FCrnberg GF: Felix
+Imend=F6rffer
