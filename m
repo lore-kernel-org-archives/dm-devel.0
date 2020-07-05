@@ -1,59 +1,55 @@
 From: Jonathan Corbet <corbet@lwn.net>
-Subject: Re: [PATCH 00/13] Documentation/admin-guide: eliminate duplicated
- words
-Date: Sun, 5 Jul 2020 14:02:16 -0600
-Message-ID: <20200705140216.33a0d8f5@lwn.net>
-References: <20200704032020.21923-1-rdunlap@infradead.org>
+Subject: Re: [PATCH] Replace HTTP links with HTTPS ones: LVM
+Date: Sun, 5 Jul 2020 14:30:00 -0600
+Message-ID: <20200705143000.51c350b7@lwn.net>
+References: <20200627103138.71885-1-grandmaster@al2klimov.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20200704032020.21923-1-rdunlap@infradead.org>
-Sender: linux-doc-owner@vger.kernel.org
-To: Randy Dunlap <rdunlap@infradead.org>
-Cc: linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, cgroups@vger.kernel.org, dm-devel@redhat.com, Mauro Carvalho Chehab <mchehab@kernel.org>, linux-media@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, Trond Myklebust <trond.myklebust@hammerspace.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-nfs@vger.kernel.org, Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>, Len Brown <lenb@kernel.org>, linux-pm@vger.kernel.org, platform-driver-x86@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200627103138.71885-1-grandmaster@al2klimov.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Alexander A. Klimov" <grandmaster@al2klimov.de>
+Cc: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, song@kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri,  3 Jul 2020 20:20:07 -0700
-Randy Dunlap <rdunlap@infradead.org> wrote:
+On Sat, 27 Jun 2020 12:31:38 +0200
+"Alexander A. Klimov" <grandmaster@al2klimov.de> wrote:
 
-> Remove duplicated words from Documentation/admin-guide/ files.
+> Rationale:
+> Reduces attack surface on kernel devs opening the links for MITM
+> as HTTPS traffic is much harder to manipulate.
 > 
+> Deterministic algorithm:
+> For each file:
+>   If not .svg:
+>     For each line:
+>       If doesn't contain `\bxmlns\b`:
+>         For each link, `\bhttp://[^# \t\r\n]*(?:\w|/)`:
+>           If both the HTTP and HTTPS versions
+>           return 200 OK and serve the same content:
+>             Replace HTTP with HTTPS.
 > 
-> Cc: Jonathan Corbet <corbet@lwn.net>
-> Cc: linux-doc@vger.kernel.org
-> Cc: cgroups@vger.kernel.org
-> Cc: dm-devel@redhat.com
-> Cc: Mauro Carvalho Chehab <mchehab@kernel.org>
-> Cc: linux-media@vger.kernel.org
-> Cc: Andrew Morton <akpm@linux-foundation.org>
-> Cc: linux-mm@kvack.org
-> Cc: Trond Myklebust <trond.myklebust@hammerspace.com>
-> Cc: Anna Schumaker <anna.schumaker@netapp.com>
-> Cc: linux-nfs@vger.kernel.org
-> Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
-> Cc: Len Brown <lenb@kernel.org>
-> Cc: linux-pm@vger.kernel.org
-> Cc: platform-driver-x86@vger.kernel.org
-> Cc: Darrick J. Wong <darrick.wong@oracle.com>
-> Cc: linux-xfs@vger.kernel.org
-> 
-> 
->  Documentation/admin-guide/cgroup-v1/rdma.rst             |    2 +-
->  Documentation/admin-guide/cgroup-v2.rst                  |    2 +-
->  Documentation/admin-guide/device-mapper/dm-integrity.rst |    4 ++--
->  Documentation/admin-guide/media/building.rst             |    4 ++--
->  Documentation/admin-guide/mm/ksm.rst                     |    2 +-
->  Documentation/admin-guide/nfs/pnfs-block-server.rst      |    2 +-
->  Documentation/admin-guide/nfs/pnfs-scsi-server.rst       |    2 +-
->  Documentation/admin-guide/perf/arm-ccn.rst               |    2 +-
->  Documentation/admin-guide/pm/intel-speed-select.rst      |    4 ++--
->  Documentation/admin-guide/pm/intel_pstate.rst            |    2 +-
->  Documentation/admin-guide/sysctl/kernel.rst              |    2 +-
->  Documentation/admin-guide/tainted-kernels.rst            |    2 +-
->  Documentation/admin-guide/xfs.rst                        |    2 +-
->  13 files changed, 16 insertions(+), 16 deletions(-)
-> 
-I've applied this set, thanks.
+> Signed-off-by: Alexander A. Klimov <grandmaster@al2klimov.de>
+
+Applied but...
+
+> diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+> index 921888df6764..30ba3573626c 100644
+> --- a/drivers/md/Kconfig
+> +++ b/drivers/md/Kconfig
+> @@ -27,7 +27,7 @@ config BLK_DEV_MD
+>  
+>  	  More information about Software RAID on Linux is contained in the
+>  	  Software RAID mini-HOWTO, available from
+> -	  <http://www.tldp.org/docs.html#howto>. There you will also learn
+> +	  <https://www.tldp.org/docs.html#howto>. There you will also learn
+
+This HOWTO, once one finds it beyond that link, starts by saying:
+
+	This HOWTO is deprecated; the Linux RAID HOWTO is maintained as a
+	wiki by the linux-raid community at http://raid.wiki.kernel.org/
+
+So clearly adding HTTPS isn't really the optimal fix here...
 
 jon
