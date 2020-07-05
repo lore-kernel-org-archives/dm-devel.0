@@ -1,45 +1,59 @@
-From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 13/13] Documentation/admin-guide: xfs: drop doubled word
-Date: Fri, 3 Jul 2020 20:28:46 -0700
-Message-ID: <20200704032846.GU7625@magnolia>
+From: Jonathan Corbet <corbet@lwn.net>
+Subject: Re: [PATCH 00/13] Documentation/admin-guide: eliminate duplicated
+ words
+Date: Sun, 5 Jul 2020 14:02:16 -0600
+Message-ID: <20200705140216.33a0d8f5@lwn.net>
 References: <20200704032020.21923-1-rdunlap@infradead.org>
- <20200704032020.21923-14-rdunlap@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20200704032020.21923-14-rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Mauro Carvalho Chehab <mchehab-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Trond Myklebust <trond.myklebust-F/q8l9xzQnoyLce1RVWEUA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Srinivas Pandruvada <srinivas.pandruvada-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Len Brown <lenb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, platform-driver-x86-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20200704032020.21923-1-rdunlap@infradead.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: Randy Dunlap <rdunlap@infradead.org>
+Cc: linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, cgroups@vger.kernel.org, dm-devel@redhat.com, Mauro Carvalho Chehab <mchehab@kernel.org>, linux-media@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, Trond Myklebust <trond.myklebust@hammerspace.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-nfs@vger.kernel.org, Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>, Len Brown <lenb@kernel.org>, linux-pm@vger.kernel.org, platform-driver-x86@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Jul 03, 2020 at 08:20:20PM -0700, Randy Dunlap wrote:
-> Drop the doubled word "for".
+On Fri,  3 Jul 2020 20:20:07 -0700
+Randy Dunlap <rdunlap@infradead.org> wrote:
+
+> Remove duplicated words from Documentation/admin-guide/ files.
 > 
-> Signed-off-by: Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-> Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
-> Cc: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> Cc: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-> Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-
-Looks good to me,
-Reviewed-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-
---D
-
-> ---
->  Documentation/admin-guide/xfs.rst |    2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> --- linux-next-20200701.orig/Documentation/admin-guide/xfs.rst
-> +++ linux-next-20200701/Documentation/admin-guide/xfs.rst
-> @@ -133,7 +133,7 @@ When mounting an XFS filesystem, the fol
->  	logbsize must be an integer multiple of the log
->  	stripe unit configured at **mkfs(8)** time.
->  
-> -	The default value for for version 1 logs is 32768, while the
-> +	The default value for version 1 logs is 32768, while the
->  	default value for version 2 logs is MAX(32768, log_sunit).
->  
->    logdev=device and rtdev=device
+> Cc: Jonathan Corbet <corbet@lwn.net>
+> Cc: linux-doc@vger.kernel.org
+> Cc: cgroups@vger.kernel.org
+> Cc: dm-devel@redhat.com
+> Cc: Mauro Carvalho Chehab <mchehab@kernel.org>
+> Cc: linux-media@vger.kernel.org
+> Cc: Andrew Morton <akpm@linux-foundation.org>
+> Cc: linux-mm@kvack.org
+> Cc: Trond Myklebust <trond.myklebust@hammerspace.com>
+> Cc: Anna Schumaker <anna.schumaker@netapp.com>
+> Cc: linux-nfs@vger.kernel.org
+> Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+> Cc: Len Brown <lenb@kernel.org>
+> Cc: linux-pm@vger.kernel.org
+> Cc: platform-driver-x86@vger.kernel.org
+> Cc: Darrick J. Wong <darrick.wong@oracle.com>
+> Cc: linux-xfs@vger.kernel.org
+> 
+> 
+>  Documentation/admin-guide/cgroup-v1/rdma.rst             |    2 +-
+>  Documentation/admin-guide/cgroup-v2.rst                  |    2 +-
+>  Documentation/admin-guide/device-mapper/dm-integrity.rst |    4 ++--
+>  Documentation/admin-guide/media/building.rst             |    4 ++--
+>  Documentation/admin-guide/mm/ksm.rst                     |    2 +-
+>  Documentation/admin-guide/nfs/pnfs-block-server.rst      |    2 +-
+>  Documentation/admin-guide/nfs/pnfs-scsi-server.rst       |    2 +-
+>  Documentation/admin-guide/perf/arm-ccn.rst               |    2 +-
+>  Documentation/admin-guide/pm/intel-speed-select.rst      |    4 ++--
+>  Documentation/admin-guide/pm/intel_pstate.rst            |    2 +-
+>  Documentation/admin-guide/sysctl/kernel.rst              |    2 +-
+>  Documentation/admin-guide/tainted-kernels.rst            |    2 +-
+>  Documentation/admin-guide/xfs.rst                        |    2 +-
+>  13 files changed, 16 insertions(+), 16 deletions(-)
+> 
+I've applied this set, thanks.
+
+jon
