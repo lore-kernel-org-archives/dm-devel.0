@@ -1,26 +1,35 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [PATCH 0/6] crypto: add CRYPTO_ALG_ALLOCATES_MEMORY
-Date: Mon, 6 Jul 2020 11:54:03 -0700
-Message-ID: <20200706185403.GA736284@gmail.com>
-References: <20200701045217.121126-1-ebiggers@kernel.org>
- <alpine.LRH.2.02.2007010358390.6597@file01.intranet.prod.int.rdu2.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] libmultipath: add device to hwtable.c
+Date: Tue, 07 Jul 2020 00:59:47 +0200
+Message-ID: <a16b331fa9944bae21806091307265f8d77a0780.camel@suse.com>
+References: <DM6PR06MB52761D5DAA5DFA8B9AB23C268C690@DM6PR06MB5276.namprd06.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.2007010358390.6597@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: linux-crypto@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <DM6PR06MB52761D5DAA5DFA8B9AB23C268C690@DM6PR06MB5276.namprd06.prod.outlook.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Schremmer, Steven" <Steve.Schremmer@netapp.com>, device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Jul 01, 2020 at 03:59:10AM -0400, Mikulas Patocka wrote:
-> Thanks for cleaning this up.
+On Mon, 2020-07-06 at 20:22 +0000, Schremmer, Steven wrote:
+> From: Steve Schremmer <steve.schremmer@netapp.com>
 > 
-> Mikulas
+> Add FUJITSU ETERNUS_AHB defaults.
+> 
+> Signed-off-by: Steve Schremmer <steve.schremmer@netapp.com>
+> ---
+>  libmultipath/hwtable.c | 16 ++++++++++++++++
+>  1 file changed, 16 insertions(+)
 
-Do you have any real comments on this?
+Thanks! 
 
-Are the usage restrictions okay for dm-crypt?
-
-- Eric
+Reviewed-by: Martin Wilck <mwilck@suse.com>
