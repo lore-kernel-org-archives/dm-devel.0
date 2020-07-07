@@ -1,85 +1,44 @@
-From: Chongyun Wu <wu.chongyun@h3c.com>
-Subject: [PATCH]libmultipath/dmparser: add missing path with good
- status when sync state with dm kernel
-Date: Tue, 7 Jul 2020 03:08:16 +0000
-Message-ID: <bf821e180f4345aa9d5920bf50e28700@h3c.com>
+From: "hch@lst.de" <hch@lst.de>
+Subject: Re: [PATCH 05/11] block: get rid of the trace rq insert wrapper
+Date: Tue, 7 Jul 2020 08:57:07 +0200
+Message-ID: <20200707065707.GA23805@lst.de>
+References: <20200629234314.10509-1-chaitanya.kulkarni@wdc.com> <20200629234314.10509-6-chaitanya.kulkarni@wdc.com> <BYAPR04MB4965DFE805071F971DC8C71C866A0@BYAPR04MB4965.namprd04.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="gb2312"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: zh-CN
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Martin Wilck (mwilck@suse.com)" <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: Guozhonghua <guozhonghua@h3c.com>, Wangyong <wang.yongD@h3c.com>, Changlimin <changlimin@h3c.com>, Zhangguanghui <zhang.guanghui@h3c.com>, Chengchiwen <chengchiwen@h3c.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <BYAPR04MB4965DFE805071F971DC8C71C866A0@BYAPR04MB4965.namprd04.prod.outlook.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
+Cc: "hch@lst.de" <hch@lst.de>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "jack@suse.czi" <jack@suse.czi>, "rdunlap@infradead.org" <rdunlap@infradead.org>, "sagi@grimberg.me" <sagi@grimberg.me>, "mingo@redhat.com" <mingo@redhat.com>, "rostedt@goodmis.org" <rostedt@goodmis.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "agk@redhat.com" <agk@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "paolo.valente@linaro.org" <paolo.valente@linaro.org>, "ming.lei@redhat.com" <ming.lei@redhat.com>, "bvanassche@acm.org" <bvanassche@acm.org>, "fangguoju@gmail.com" <fangguoju@gmail.com>, "colyli@suse.de" <colyli@suse.de>
 List-Id: dm-devel.ids
 
-SGkgTWFydGluIGFuZCBCZW4sCgpDbG91ZCB5b3UgaGVscCB0byB2aWV3IGJlbG93IHBhdGNoLCB0
-aGFua3MuCgo+RnJvbSBiMjc4NmM4MWE3OGJmMzg2OGYzMDBmZDMxNzdlODUyZTcxOGU3NzkwIE1v
-biBTZXAgMTcgMDA6MDA6MDAgMjAwMQpGcm9tOiBDaG9uZ3l1biBXdSA8d3UuY2hvbmd5dW5AaDNj
-LmNvbT4KRGF0ZTogTW9uLCA2IEp1bCAyMDIwIDExOjIyOjIxICswODAwClN1YmplY3Q6IFtQQVRD
-SF0gbGlibXVsdGlwYXRoL2RtcGFyc2VyOiBhZGQgbWlzc2luZyBwYXRoIHdpdGggZ29vZCBzdGF0
-dXMKIHdoZW4gc3luYyBzdGF0ZSB3aXRoIGRtIGtlcm5lbAoKQWRkIHBhdGggYmFjayBpbnRvIGRl
-YW1vbiB2ZWNzLT5wYXRodmVjcyB3aGVuIGZvdW5kIHBhdGggbWlzc2luZyBpbgptdWx0aXBhdGhk
-IHdoaWNoIGNhbiBmaXggZG0gaW8gYmxvY2tlZCBpc3N1ZS4KClRlc3QgZW52aXJvbm1lbnQ6CnNl
-dmVyYWwgaG9zdHM7CmVhY2ggaG9zdCBoYXZlIDEwMCsgbXVsdGlwYXRoLCBlYWNoIG11bHRpcGF0
-aCBoYXZlIDEgdG8gNCBwYXRocy4KcnVuIHVwL2Rvd24gc3RvcmFnZSBuZXR3b3JrIGxvb3Agc2Ny
-aXB0IGZvciBkYXlzLgoKSXNzdWU6CkFmdGVyIHNldmVyYWwgaG91cnMgc3RvcCBzY3JpcHQsIGZv
-dW5kIHNvbWUgaG9zdHMgaGF2ZSBkbSBpbyBibG9ja2VkIGlzc3VlOgpzbGF2ZSBibG9jayBkZXZp
-Y2UgYWNjZXNzIHdlbGwsIGJ1dCBpdHMgZG0gZGV2aWNlIGJsb2NrZWQuCjM2YzBiZmMwMTAwYThk
-NGEyMjgyMTRkYTUwMDAwMDAzYyBkbS0yMCBIVUFXRUksWFNHMQpzaXplPTM1MEcgZmVhdHVyZXM9
-JzEgcXVldWVfaWZfbm9fcGF0aCcgaHdoYW5kbGVyPScwJyB3cD1ydwpgLSstIHBvbGljeT0ncm91
-bmQtcm9iaW4gMCcgcHJpbz0xIHN0YXR1cz1lbmFibGVkCiAgfC0gMTowOjA6MjAgIHNkYmsgNjc6
-MjI0ICBmYWlsZWQgcmVhZHkgcnVubmluZwptdWx0aXBhdGhkIHNob3cgcGF0aHMgY2Fubm90IGZv
-dW5kIHNkYmshCgpUZXN0IHJlc3VsdDoKV2l0aCB0aGlzIHBhdGNoLCBydW4gc2NyaXB0IHNldmVy
-YWwgZGF5cywgaW8gYmxvY2tlZCBpc3N1ZQpub3QgZm91bmQgYWdhaW4uCgpUaGlzIHBhdGNoIGNh
-biBmaXggdGhpcyBpc3N1ZTogd2hlbiBmb3VuZCBwYXRoIG9ubHkgbWlzc2luZyBpbgptdWx0aXBh
-dGhkIGJ1dCBzdGlsbCBpbiBkbSwgY2hlY2sgdGhlIG1pc3NpbmcgcGF0aCBzdGF0dXMgaWYgb2sK
-dHJ5IHRvIGFkZCBpdCBiYWNrLCBhbmQgY2hlY2tlciBoYXZlIGNoYW5jZSB0byByZWluc3RhdGUg
-dGhpcwpwYXRoIGFuZCB0aGUgZG0gaW8gYmxvY2tlZCBpc3N1ZSB3aWxsIGRpc2FwcGVhci4KClNp
-Z25lZC1vZmYtYnk6IENob25neXVuIFd1IDx3dS5jaG9uZ3l1bkBoM2MuY29tPgotLS0KIGxpYm11
-bHRpcGF0aC9kbXBhcnNlci5jIHwgMzEgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKwog
-bGlibXVsdGlwYXRoL2RtcGFyc2VyLmggfCAgMSArCiAyIGZpbGVzIGNoYW5nZWQsIDMyIGluc2Vy
-dGlvbnMoKykKCmRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvZG1wYXJzZXIuYyBiL2xpYm11bHRp
-cGF0aC9kbXBhcnNlci5jCmluZGV4IGI4NTZhMDdmLi4yZjkwYjE3YyAxMDA2NDQKLS0tIGEvbGli
-bXVsdGlwYXRoL2RtcGFyc2VyLmMKKysrIGIvbGlibXVsdGlwYXRoL2RtcGFyc2VyLmMKQEAgLTMx
-Nyw2ICszMTcsMTIgQEAgaW50IGRpc2Fzc2VtYmxlX21hcCh2ZWN0b3IgcGF0aHZlYywgY2hhciAq
-cGFyYW1zLCBzdHJ1Y3QgbXVsdGlwYXRoICptcHAsCiAJCQkJLyogT25seSBjYWxsIHRoaXMgaW4g
-bXVsdGlwYXRoIGNsaWVudCBtb2RlICovCiAJCQkJaWYgKCFpc19kYWVtb24gJiYgc3RvcmVfcGF0
-aChwYXRodmVjLCBwcCkpCiAJCQkJCWdvdG8gb3V0MTsKKworCQkJCS8qIFRyeSB0byBhZGQgZ29v
-ZCBzdGF0dXMgcGF0aCBiYWNrIHRvIGF2b2lkCisJCQkJICogZG0gaW8gYmxvY2tlZCBpc3N1ZSBp
-biBzcGVjaWFsIGNvbmRpdGlvbi4KKwkJCQkgKi8KKwkJCQlpZihhZGRfbWlzc2luZ19wYXRoKHBh
-dGh2ZWMsIGRldm5hbWUpKQorCQkJCQljb25kbG9nKDIsICJUcnkgdG8gYWRkIG1pc3NpbmcgcGF0
-aCAlcyBmYWlsZWQiLCBkZXZuYW1lKTsKIAkJCX0gZWxzZSB7CiAJCQkJaWYgKCFzdHJsZW4ocHAt
-Pnd3aWQpICYmCiAJCQkJICAgIHN0cmxlbihtcHAtPnd3aWQpKQpAQCAtNTY5LDMgKzU3NSwyOCBA
-QCBpbnQgZGlzYXNzZW1ibGVfc3RhdHVzKGNoYXIgKnBhcmFtcywgc3RydWN0IG11bHRpcGF0aCAq
-bXBwKQogCX0KIAlyZXR1cm4gMDsKIH0KKworLyogQWRkIG1pc3NpbmcgZ29vZCBzdGF0dXMgcGF0
-aCBiYWNrIHRvIG11bHRpcGF0aGQgKi8KK2ludCBhZGRfbWlzc2luZ19wYXRoKHZlY3RvciBwYXRo
-dmVjLCBjaGFyICptaXNzaW5nX2RldikKK3sKKwlzdHJ1Y3QgdWRldl9kZXZpY2UgKnVkZXZpY2U7
-CisJc3RydWN0IGNvbmZpZyAqY29uZjsKKwlpbnQgcmV0ID0gMDsKKwkJCQkKKwljb25kbG9nKDIs
-ICJDYW50J3QgZm91bmQgcGF0aCAlcyB0cnkgdG8gYWRkIGl0IGJhY2sgaWYgaXRzIHN0YXRlIGlz
-IHVwLiIsIAorCQkJbWlzc2luZ19kZXYpOworCisJdWRldmljZSA9IHVkZXZfZGV2aWNlX25ld19m
-cm9tX3N1YnN5c3RlbV9zeXNuYW1lKHVkZXYsICJibG9jayIsIG1pc3NpbmdfZGV2KTsKKwlpZiAo
-IXVkZXZpY2UpIHsKKwkJY29uZGxvZygwLCAiJXM6IGNhbid0IGZpbmQgcGF0aCBmb3JtIHVkZXYi
-LCBtaXNzaW5nX2Rldik7CisJCXJldHVybiAxOworCX0KKwljb25mID0gZ2V0X211bHRpcGF0aF9j
-b25maWcoKTsKKwlwdGhyZWFkX2NsZWFudXBfcHVzaChwdXRfbXVsdGlwYXRoX2NvbmZpZywgY29u
-Zik7CisJcmV0ID0gc3RvcmVfcGF0aGluZm8ocGF0aHZlYywgY29uZiwKKwkJCQkJCSB1ZGV2aWNl
-LCBESV9BTEwgfCBESV9CTEFDS0xJU1QsIE5VTEwpOworCXB0aHJlYWRfY2xlYW51cF9wb3AoMSk7
-CisJdWRldl9kZXZpY2VfdW5yZWYodWRldmljZSk7CisKKwlyZXR1cm4gcmV0OworfQpkaWZmIC0t
-Z2l0IGEvbGlibXVsdGlwYXRoL2RtcGFyc2VyLmggYi9saWJtdWx0aXBhdGgvZG1wYXJzZXIuaApp
-bmRleCBlMWJhZGIwYi4uNTE1Y2E5MDAgMTAwNjQ0Ci0tLSBhL2xpYm11bHRpcGF0aC9kbXBhcnNl
-ci5oCisrKyBiL2xpYm11bHRpcGF0aC9kbXBhcnNlci5oCkBAIC0xLDMgKzEsNCBAQAogaW50IGFz
-c2VtYmxlX21hcCAoc3RydWN0IG11bHRpcGF0aCAqLCBjaGFyICosIGludCk7CiBpbnQgZGlzYXNz
-ZW1ibGVfbWFwICh2ZWN0b3IsIGNoYXIgKiwgc3RydWN0IG11bHRpcGF0aCAqLCBpbnQpOwogaW50
-IGRpc2Fzc2VtYmxlX3N0YXR1cyAoY2hhciAqLCBzdHJ1Y3QgbXVsdGlwYXRoICopOworaW50IGFk
-ZF9taXNzaW5nX3BhdGgodmVjdG9yIHBhdGh2ZWMsIGNoYXIgKm1pc3NpbmdfZGV2KTsKLS0gCjIu
-MTIuMS53aW5kb3dzLjEKCgpCZXN0IFJlZ2FyZHOjrApDaG9uZ3l1biBXdQoKCi0tCmRtLWRldmVs
-IG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20v
-bWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Fri, Jul 03, 2020 at 11:29:25PM +0000, Chaitanya Kulkarni wrote:
+> Christoph,
+> 
+> On 6/29/20 4:44 PM, Chaitanya Kulkarni wrote:
+> > Get rid of the wrapper for trace_block_rq_insert() and call the function
+> > directly.
+> > 
+> > Signed-off-by: Chaitanya Kulkarni<chaitanya.kulkarni@wdc.com>
+> > ---
+> 
+> Can we re-consider adding this patch ? here are couple of reasons:-
+> 
+> 1. Increase in the size of the text region of the object file:-
+> 
+>     By adding the trace header #include <trace/events/block.h>
+>     in io-scheduler where it is calling trace_block_rq_insert()
+>     increases the size of the text region of the object file
+>     kyber(+215) & bfq (+317) [1].
+
+You really shouldn't have both loaded, never mind used at the same
+time.  It also avoid a function call for the scheduler fast path.
+
+> 2. Mandatory io-sched built-in kernel compilation:-
+> 
+>     When testing with a different io-sched KConfig options ("*" vs "M"),
+>     when kyber and bfq compilation option set to "M" having this patch
+>     reports error[2].
+
+See EXPORT_TRACEPOINT_SYMBOL_GPL.
