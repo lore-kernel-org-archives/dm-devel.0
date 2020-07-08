@@ -1,329 +1,159 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH v3] dm crypt: add flags to optionally bypass dm-crypt
- workqueues
-Date: Wed, 8 Jul 2020 00:27:18 +0000
-Message-ID: <CY4PR04MB375107B8F7E8EE29854408E1E7670@CY4PR04MB3751.namprd04.prod.outlook.com>
-References: <20200706173731.3734-1-ignat@cloudflare.com>
+From: Chongyun Wu <wu.chongyun@h3c.com>
+Subject: Re: [PATCH]libmultipath/dmparser: add missing path with
+ good status when sync state with dm kernel
+Date: Wed, 8 Jul 2020 01:47:18 +0000
+Message-ID: <27245ecfc8be4229b52f736062585230@h3c.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ignat Korchagin <ignat@cloudflare.com>, "agk@redhat.com" <agk@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "dm-crypt@saout.de" <dm-crypt@saout.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-Cc: "ebiggers@kernel.org" <ebiggers@kernel.org>, "mpatocka@redhat.com" <mpatocka@redhat.com>, "herbert@gondor.apana.org.au" <herbert@gondor.apana.org.au>, "kernel-team@cloudflare.com" <kernel-team@cloudflare.com>, "nobuto.murata@canonical.com" <nobuto.murata@canonical.com>, "bob.liu@oracle.com" <bob.liu@oracle.com>
+Content-Type: text/plain; charset="gb2312"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: zh-CN
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Chengchiwen <chengchiwen@h3c.com>, Guozhonghua <guozhonghua@h3c.com>, Changlimin <changlimin@h3c.com>, Wangyong <wang.yongD@h3c.com>, Zhangguanghui <zhang.guanghui@h3c.com>
 List-Id: dm-devel.ids
 
-On 2020/07/07 2:37, Ignat Korchagin wrote:=0A=
-> Changes from v2:=0A=
->   * dropped nobacklog boolean - ciphers are OK to backlog requests=0A=
->   * moved some conditionals inline dropping the extra local variables=0A=
->   * renamed "noresched" -> "atomic"=0A=
-> =0A=
-> This is a follow up from [1]. Consider the following script:=0A=
-> =0A=
-> sudo modprobe brd rd_nr=3D1 rd_size=3D4194304=0A=
-> =0A=
-> echo '0 8388608 crypt capi:ecb(cipher_null) - 0 /dev/ram0 0' | \=0A=
-> sudo dmsetup create eram0=0A=
-> =0A=
-> echo '0 8388608 crypt capi:ecb(cipher_null) - 0 /dev/ram0 0 1 no_write_wo=
-rkqueue' | \=0A=
-> sudo dmsetup create eram0-inline-write=0A=
-> =0A=
-> echo '0 8388608 crypt capi:ecb(cipher_null) - 0 /dev/ram0 0 1 no_read_wor=
-kqueue' | \=0A=
-> sudo dmsetup create eram0-inline-read=0A=
-> =0A=
-> devices=3D"/dev/ram0 /dev/mapper/eram0 /dev/mapper/eram0-inline-read "=0A=
-> devices+=3D"/dev/mapper/eram0-inline-write"=0A=
-> =0A=
-> for dev in $devices; do=0A=
->   echo "reading from $dev"=0A=
->   sudo fio --filename=3D$dev --readwrite=3Dread --bs=3D4k --direct=3D1 \=
-=0A=
->   --loops=3D1000000 --runtime=3D3m --name=3Dplain | grep READ=0A=
-> done=0A=
-> =0A=
-> for dev in $devices; do=0A=
->   echo "writing to $dev"=0A=
->   sudo fio --filename=3D$dev --readwrite=3Dwrite --bs=3D4k --direct=3D1 \=
-=0A=
->   --loops=3D1000000 --runtime=3D3m --name=3Dplain | grep WRITE=0A=
-> done=0A=
-> =0A=
-> This script creates a ramdisk (to eliminate hardware bias in the benchmar=
-k) and=0A=
-> three dm-crypt instances on top. All dm-crypt instances use the NULL ciph=
-er=0A=
-> to eliminate potentially expensive crypto bias (the NULL cipher just uses=
- memcpy=0A=
-> for "encyption"). The first instance is the current dm-crypt implementati=
-on from=0A=
-> 5.8-rc2, the two others have new optional flags enabled, which bypass kcr=
-yptd=0A=
-> workqueues for reads and writes respectively and write sorting for writes=
-. On=0A=
-> my VM (Debian in VirtualBox with 4 cores on 2.8 GHz Quad-Core Intel Core =
-i7) I=0A=
-> get the following output (formatted for better readability):=0A=
-> =0A=
-> reading from /dev/ram0=0A=
->    READ: bw=3D508MiB/s (533MB/s), 508MiB/s-508MiB/s (533MB/s-533MB/s), io=
-=3D89.3GiB (95.9GB), run=3D180000-180000msec=0A=
-> =0A=
-> reading from /dev/mapper/eram0=0A=
->    READ: bw=3D80.6MiB/s (84.5MB/s), 80.6MiB/s-80.6MiB/s (84.5MB/s-84.5MB/=
-s), io=3D14.2GiB (15.2GB), run=3D180000-180000msec=0A=
-> =0A=
-> reading from /dev/mapper/eram0-inline-read=0A=
->    READ: bw=3D295MiB/s (309MB/s), 295MiB/s-295MiB/s (309MB/s-309MB/s), io=
-=3D51.8GiB (55.6GB), run=3D180000-180000msec=0A=
-> =0A=
-> reading from /dev/mapper/eram0-inline-write=0A=
->    READ: bw=3D114MiB/s (120MB/s), 114MiB/s-114MiB/s (120MB/s-120MB/s), io=
-=3D20.1GiB (21.5GB), run=3D180000-180000msec=0A=
-> =0A=
-> writing to /dev/ram0=0A=
->   WRITE: bw=3D516MiB/s (541MB/s), 516MiB/s-516MiB/s (541MB/s-541MB/s), io=
-=3D90.7GiB (97.4GB), run=3D180001-180001msec=0A=
-> =0A=
-> writing to /dev/mapper/eram0=0A=
->   WRITE: bw=3D40.4MiB/s (42.4MB/s), 40.4MiB/s-40.4MiB/s (42.4MB/s-42.4MB/=
-s), io=3D7271MiB (7624MB), run=3D180001-180001msec=0A=
-> =0A=
-> writing to /dev/mapper/eram0-inline-read=0A=
->   WRITE: bw=3D38.9MiB/s (40.8MB/s), 38.9MiB/s-38.9MiB/s (40.8MB/s-40.8MB/=
-s), io=3D7000MiB (7340MB), run=3D180001-180001msec=0A=
-> =0A=
-> writing to /dev/mapper/eram0-inline-write=0A=
->   WRITE: bw=3D277MiB/s (290MB/s), 277MiB/s-277MiB/s (290MB/s-290MB/s), io=
-=3D48.6GiB (52.2GB), run=3D180000-180000msec=0A=
-> =0A=
-> Current dm-crypt implementation creates a significant IO performance over=
-head=0A=
-> (at least on small IO block sizes) for both latency and throughput. We su=
-spect=0A=
-> offloading IO request processing into workqueues and async threads is mor=
-e=0A=
-> harmful these days with the modern fast storage. I also did some digging =
-into=0A=
-> the dm-crypt git history and much of this async processing is not needed=
-=0A=
-> anymore, because the reasons it was added are mostly gone from the kernel=
-. More=0A=
-> details can be found in [2] (see "Git archeology" section).=0A=
-> =0A=
-> This change adds no_(read|write)_workqueue flags separately for read and =
-write=0A=
-> BIOs, which direct dm-crypt not to offload crypto operations into kcryptd=
-=0A=
-> workqueues and process everything inline. In addition, writes are not buf=
-fered=0A=
-> to be sorted in the dm-crypt red-black tree, but dispatched immediately. =
-For=0A=
-> cases, where crypto operations cannot happen inline (hard interrupt conte=
-xt,=0A=
-> for example the read path of some NVME drivers), we offload the work to a=
-=0A=
-> tasklet rather than a workqueue.=0A=
-> =0A=
-> These flags ensure inline BIO processing in the dm-crypt module only. It =
-is=0A=
-> worth noting that some Crypto API implementations may offload encryption =
-into=0A=
-> their own workqueues, which are independent of the dm-crypt and its=0A=
-> configuration. However upon enabling no_(read|write)_workqueue flags dm-c=
-rypt=0A=
-> will instruct Crypto API not to backlog crypto requests.=0A=
-> =0A=
-> [1]: https://www.spinics.net/lists/dm-crypt/msg07516.html=0A=
-> [2]: https://blog.cloudflare.com/speeding-up-linux-disk-encryption/=0A=
-> =0A=
-> Signed-off-by: Ignat Korchagin <ignat@cloudflare.com>=0A=
-> ---=0A=
->  drivers/md/dm-crypt.c | 50 ++++++++++++++++++++++++++++++++++++-------=
-=0A=
->  1 file changed, 42 insertions(+), 8 deletions(-)=0A=
-> =0A=
-> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c=0A=
-> index 000ddfab5ba0..7536ecb2c95d 100644=0A=
-> --- a/drivers/md/dm-crypt.c=0A=
-> +++ b/drivers/md/dm-crypt.c=0A=
-> @@ -69,6 +69,7 @@ struct dm_crypt_io {=0A=
->  	u8 *integrity_metadata;=0A=
->  	bool integrity_metadata_from_pool;=0A=
->  	struct work_struct work;=0A=
-> +	struct tasklet_struct tasklet;=0A=
->  =0A=
->  	struct convert_context ctx;=0A=
->  =0A=
-> @@ -127,7 +128,8 @@ struct iv_elephant_private {=0A=
->   * and encrypts / decrypts at the same time.=0A=
->   */=0A=
->  enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID,=0A=
-> -	     DM_CRYPT_SAME_CPU, DM_CRYPT_NO_OFFLOAD };=0A=
-> +	     DM_CRYPT_SAME_CPU, DM_CRYPT_NO_OFFLOAD,=0A=
-> +	     DM_CRYPT_NO_READ_WORKQUEUE, DM_CRYPT_NO_WRITE_WORKQUEUE };=0A=
->  =0A=
->  enum cipher_flags {=0A=
->  	CRYPT_MODE_INTEGRITY_AEAD,	/* Use authenticated mode for cihper */=0A=
-> @@ -1523,7 +1525,7 @@ static void crypt_free_req(struct crypt_config *cc,=
- void *req, struct bio *base_=0A=
->   * Encrypt / decrypt data from one bio to another one (can be the same o=
-ne)=0A=
->   */=0A=
->  static blk_status_t crypt_convert(struct crypt_config *cc,=0A=
-> -			 struct convert_context *ctx)=0A=
-> +			 struct convert_context *ctx, bool atomic)=0A=
->  {=0A=
->  	unsigned int tag_offset =3D 0;=0A=
->  	unsigned int sector_step =3D cc->sector_size >> SECTOR_SHIFT;=0A=
-> @@ -1566,7 +1568,8 @@ static blk_status_t crypt_convert(struct crypt_conf=
-ig *cc,=0A=
->  			atomic_dec(&ctx->cc_pending);=0A=
->  			ctx->cc_sector +=3D sector_step;=0A=
->  			tag_offset++;=0A=
-> -			cond_resched();=0A=
-> +			if (!atomic)=0A=
-> +				cond_resched();=0A=
->  			continue;=0A=
->  		/*=0A=
->  		 * There was a data integrity error.=0A=
-> @@ -1892,7 +1895,8 @@ static void kcryptd_crypt_write_io_submit(struct dm=
-_crypt_io *io, int async)=0A=
->  =0A=
->  	clone->bi_iter.bi_sector =3D cc->start + io->sector;=0A=
->  =0A=
-> -	if (likely(!async) && test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags)) {=0A=
-> +	if ((likely(!async) && test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags)) ||=0A=
-> +	    test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags)) {=0A=
->  		generic_make_request(clone);=0A=
->  		return;=0A=
->  	}=0A=
-> @@ -1941,7 +1945,8 @@ static void kcryptd_crypt_write_convert(struct dm_c=
-rypt_io *io)=0A=
->  	sector +=3D bio_sectors(clone);=0A=
->  =0A=
->  	crypt_inc_pending(io);=0A=
-> -	r =3D crypt_convert(cc, &io->ctx);=0A=
-> +	r =3D crypt_convert(cc, &io->ctx,=0A=
-> +			  test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags));=0A=
->  	if (r)=0A=
->  		io->error =3D r;=0A=
->  	crypt_finished =3D atomic_dec_and_test(&io->ctx.cc_pending);=0A=
-> @@ -1971,7 +1976,8 @@ static void kcryptd_crypt_read_convert(struct dm_cr=
-ypt_io *io)=0A=
->  	crypt_convert_init(cc, &io->ctx, io->base_bio, io->base_bio,=0A=
->  			   io->sector);=0A=
->  =0A=
-> -	r =3D crypt_convert(cc, &io->ctx);=0A=
-> +	r =3D crypt_convert(cc, &io->ctx,=0A=
-> +			  test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags));=0A=
->  	if (r)=0A=
->  		io->error =3D r;=0A=
->  =0A=
-> @@ -2031,10 +2037,28 @@ static void kcryptd_crypt(struct work_struct *wor=
-k)=0A=
->  		kcryptd_crypt_write_convert(io);=0A=
->  }=0A=
->  =0A=
-> +static void kcryptd_crypt_tasklet(unsigned long work)=0A=
-> +{=0A=
-> +	kcryptd_crypt((struct work_struct *)work);=0A=
-> +}=0A=
-> +=0A=
->  static void kcryptd_queue_crypt(struct dm_crypt_io *io)=0A=
->  {=0A=
->  	struct crypt_config *cc =3D io->cc;=0A=
->  =0A=
-> +	if ((bio_data_dir(io->base_bio) =3D=3D READ && test_bit(DM_CRYPT_NO_REA=
-D_WORKQUEUE, &cc->flags)) ||=0A=
-> +	    (bio_data_dir(io->base_bio) =3D=3D WRITE && test_bit(DM_CRYPT_NO_WR=
-ITE_WORKQUEUE, &cc->flags))) {=0A=
-> +		if (in_irq()) {=0A=
-> +			/* Crypto API's "skcipher_walk_first() refuses to work in hard IRQ co=
-ntext */=0A=
-> +			tasklet_init(&io->tasklet, kcryptd_crypt_tasklet, (unsigned long)&io-=
->work);=0A=
-> +			tasklet_schedule(&io->tasklet);=0A=
-> +			return;=0A=
-> +		}=0A=
-> +=0A=
-> +		kcryptd_crypt(&io->work);=0A=
-> +		return;=0A=
-> +	}=0A=
-> +=0A=
->  	INIT_WORK(&io->work, kcryptd_crypt);=0A=
->  	queue_work(cc->crypt_queue, &io->work);=0A=
->  }=0A=
-> @@ -2838,7 +2862,7 @@ static int crypt_ctr_optional(struct dm_target *ti,=
- unsigned int argc, char **ar=0A=
->  	struct crypt_config *cc =3D ti->private;=0A=
->  	struct dm_arg_set as;=0A=
->  	static const struct dm_arg _args[] =3D {=0A=
-> -		{0, 6, "Invalid number of feature args"},=0A=
-> +		{0, 8, "Invalid number of feature args"},=0A=
->  	};=0A=
->  	unsigned int opt_params, val;=0A=
->  	const char *opt_string, *sval;=0A=
-> @@ -2868,6 +2892,10 @@ static int crypt_ctr_optional(struct dm_target *ti=
-, unsigned int argc, char **ar=0A=
->  =0A=
->  		else if (!strcasecmp(opt_string, "submit_from_crypt_cpus"))=0A=
->  			set_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags);=0A=
-> +		else if (!strcasecmp(opt_string, "no_read_workqueue"))=0A=
-> +			set_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags);=0A=
-> +		else if (!strcasecmp(opt_string, "no_write_workqueue"))=0A=
-> +			set_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags);=0A=
->  		else if (sscanf(opt_string, "integrity:%u:", &val) =3D=3D 1) {=0A=
->  			if (val =3D=3D 0 || val > MAX_TAG_SIZE) {=0A=
->  				ti->error =3D "Invalid integrity arguments";=0A=
-> @@ -3196,6 +3224,8 @@ static void crypt_status(struct dm_target *ti, stat=
-us_type_t type,=0A=
->  		num_feature_args +=3D !!ti->num_discard_bios;=0A=
->  		num_feature_args +=3D test_bit(DM_CRYPT_SAME_CPU, &cc->flags);=0A=
->  		num_feature_args +=3D test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags);=0A=
-> +		num_feature_args +=3D test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags)=
-;=0A=
-> +		num_feature_args +=3D test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags=
-);=0A=
->  		num_feature_args +=3D cc->sector_size !=3D (1 << SECTOR_SHIFT);=0A=
->  		num_feature_args +=3D test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_fla=
-gs);=0A=
->  		if (cc->on_disk_tag_size)=0A=
-> @@ -3208,6 +3238,10 @@ static void crypt_status(struct dm_target *ti, sta=
-tus_type_t type,=0A=
->  				DMEMIT(" same_cpu_crypt");=0A=
->  			if (test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags))=0A=
->  				DMEMIT(" submit_from_crypt_cpus");=0A=
-> +			if (test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags))=0A=
-> +				DMEMIT(" no_read_workqueue");=0A=
-> +			if (test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags))=0A=
-> +				DMEMIT(" no_write_workqueue");=0A=
->  			if (cc->on_disk_tag_size)=0A=
->  				DMEMIT(" integrity:%u:%s", cc->on_disk_tag_size, cc->cipher_auth);=
-=0A=
->  			if (cc->sector_size !=3D (1 << SECTOR_SHIFT))=0A=
-> @@ -3320,7 +3354,7 @@ static void crypt_io_hints(struct dm_target *ti, st=
-ruct queue_limits *limits)=0A=
->  =0A=
->  static struct target_type crypt_target =3D {=0A=
->  	.name   =3D "crypt",=0A=
-> -	.version =3D {1, 21, 0},=0A=
-> +	.version =3D {1, 22, 0},=0A=
->  	.module =3D THIS_MODULE,=0A=
->  	.ctr    =3D crypt_ctr,=0A=
->  	.dtr    =3D crypt_dtr,=0A=
-> =0A=
-=0A=
-Looks good to me. I am using this patch to rebase the SMR disk support. The=
-=0A=
-separation of the read and write flags simplifies that support.=0A=
-=0A=
-Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>=0A=
-=0A=
-=0A=
--- =0A=
-Damien Le Moal=0A=
-Western Digital Research=0A=
+SGVsbG8gTWFydGluLApUaGFua3MgZm9yIHlvdXIgcmVwbHkuIApXYWl0aW5nIGZvciB5b3VyIHBh
+dGNoZXMgSSdkIGxpa2UgdG8gdGVzdCBpdC4gIEFuZCBhbHNvLCBJJ2QgbGlrZSB0byB0ZWxsIG1v
+cmUgZGV0YWlsIGFib3V0IHRoaXMgaXNzdWUuCgo+IElzIC9kZXYvc2RiayBpbmRlZWQgYSBoZWFs
+dGh5IHBhdGggaW4gdGhpcyBzaXR1YXRpb24sIG9yIG5vdD8KPiBQbGVhc2UgcnVuICJtdWx0aXBh
+dGhkIHNob3cgZGV2aWNlcyIsIHRvby4KWWVzLCAvZGV2L3NkYmsgY2FuIHJlYWQgYW5kIHdyaXRl
+LCB0aGUgY29uZGl0aW9uIGlzIHdlbGwsIGl0IGZ1bGx5IHJlY292ZXJlZC4gCkp1c3QgYmVjYXVz
+ZSBpdCBub3QgaW4gcGF0aHZlYyBhbmQgY2hlY2tfcGF0aCBoYXZlIG5vIGNoYW5jZSB0byBmb3Vu
+ZCBpdCB1cCBhbmQgcmVpbnN0YXRlIGl0IGluCmRtLCBhbmQgZG0gbWFwIGhhdmUgdGhpcyBwYXRo
+IGJ1dCBxdWV1ZV9pZl9ub19wYXRoIHN0aWxsIGhhdmUsIGRtIHN0YXRlIGlzIGRvd24sIGRtIGlv
+IGJsb2NrZWQuCgo+SSB3b25kZXIgaWYgeW91ciBsb2dzIHByb3ZpZGUgc29tZSBtb3JlIGV2aWRl
+bmNlIGhvdyB0aGlzIHNpdHVhdGlvbgo+Y2FtZSB0byBwYXNzLiBJIHN1c3BlY3QgdGhhdCBlaXRo
+ZXIgYSkgdWV2ZW50cyBnb3QgbG9zdCwgb3IgdGhhdCBiKQo+bXVsdGlwYXRoZCBmYWlsZWQgdG8g
+KHJlLSlhZGQgdGhlIHBhdGggd2hpbGUgaGFuZGxpbmcgYW4gdWV2ZW50LiBJdCdkCj5iZSBpbnRl
+cmVzdGluZyB0byBmaW5kIG91dCB3aGF0IGl0IGFjdHVhbGx5IHdhcy4KRmlyc3RseSBJIGFsc28g
+c3VzcGVjdCBsaWtlIHlvdSwgYnV0IGFjdHVhbGx5IHRoZXJlIGlzIG5vdCBhbnkgdWV2ZW50IHRv
+IHJlbW92ZSB0aGUgcGF0aCBpbiBteSBkZWJ1Z2dpbmcgdmVyc2lvbiB3aXRoIG1vcmUgbG9nLgpC
+dXQgSSBmb3VuZCB0aGF0IGFmdGVyIHJlY29uZmlnIHByb2Nlc3NlZCBpc3N1ZSBtaWdodCBhcHBl
+YXJzLCBkZXRlY3QgbW9yZSwgZm91bmQgdGhhdCB3aGVuIHN0b3JhZ2UgbmV0d29yayBkb3duIGJs
+b2NrCmRldmljZSBub3QgYWNjZXNzZWQgcmVjb25maWcgd2lsbCBtYWtlIHBhdGhzIGRpc2FwcGVh
+ciBmb3JtIG11bHRpcGF0aGQgYmVjYXVzZSBpdHMgc3RhdHVzIGlzIGJhZC4gCkkgdGhpbmsgdGhp
+cyBtaWdodCBiZSBhIHJlYXNvbi4gQWRkIG1vcmUgbG9nIGZvciBwYXRodmVjIHJlbW92aW5nIHBh
+dGgsIGJ1dCBub3QgZm91bmQgb3RoZXIgZ2x1ZS4KCgo+SSBiZWxpZXZlIHRoYXQgeW91ciBwcm9i
+bGVtIHdvdWxkIGhhdmUgYmVlbiBzb2x2ZWQgc2ltcGx5IGJ5IHJlbW92aW5nCj50aGUgIiFpc19k
+YWVtb24iIGNvbmRpdGlvbiBhYm92ZS4gSSdkIGxpa2UgdG8ga25vdyBpZiB0aGF0J3MgYWN0dWFs
+bHkKPnRoZSBjYXNlLCBiZWNhdXNlIHlvdXIgYWRkX21pc3NpbmdfcGF0aCgpIGZ1bmN0aW9uIGRv
+ZXMgYmFzaWNhbGx5IHRoZQo+c2FtZSB0aGluZyAocGx1cyBjYWxsaW5nIHBhdGhpbmZvKCkpLgpJ
+IGhhdmUgdHJpZWQgdGhpcyBidXQgbm90IHdvcmsuIE9ubHkgbmVlZCBwYXRoaW5mbyBhbmQgc3Rv
+cmUgcGF0aGluZm8gaW50byBwYXRodmVjIGNhbiB3b3JrLCBiZWNhdXNlIGNoZWNrX3BhdGggbmVl
+ZApmdWxsIHBhdGggaW5mbyB0byBmaW5pc2ggY2hlY2sgb2xkIGNvZGUgcGF0aCBvbmx5IGhhdmUg
+cHAtPmRldiBhbmQgcHAtPmRldl90LCBjaGVja19wYXRoIGNhbm5vdCB1c2UgdGhpcyB0byBjaGVj
+ayBwYXRoIHN0YXR1cy4KRG0gaW8gYmxvY2tlZCBpc3N1ZSBub3QgaGFwcGVuIGFnYWluLCBiZWNh
+dXNlIHRoaXMgcGF0Y2ggY2FuIHJlcGFpciB0aGlzIGJsb2NrZWQgdmVyeSBmYXN0LgpBbHNvIGRt
+IGlvIGJsb2NrZWQgaXNzdWUgYWN0dWFsbHkgaXMgYSBsb3cgcHJvYmFiaWxpdHkgZXZlbnQuCgoK
+Pkhvd2V2ZXIsIHRoZSAiIWlzX2RhZW1vbiIgdGVzdCBpcyB0aGVyZSBmb3IgYSByZWFzb24gKHNl
+ZSBiOTZkZWFkIAo+ICgiW211bHRpcGF0aGRdIHJlbW92ZSB0aGUgcmV0cnkgbG9naW4gaW4gdWV2
+X3JlbW92ZV9wYXRoKCkiKSwgYW5kCj50aGF0J3Mgd2h5IHlvdXIgcGF0Y2ggaXNuJ3QgY29ycmVj
+dCBhcy1pcy4KCi0tLS0tb3JpZ2luYWwtLS0tLQq3orz+yMs6IE1hcnRpbiBXaWxjayBbbWFpbHRv
+Om13aWxja0BzdXNlLmNvbV0gCreiy83KsbzkOiAyMDIwxOo31MI3yNUgMTc6NDMKytW8/sjLOiB3
+dWNob25neXVuIChDbG91ZCkgPHd1LmNob25neXVuQGgzYy5jb20+OyBCZW5qYW1pbiBNYXJ6aW5z
+a2kgPGJtYXJ6aW5zQHJlZGhhdC5jb20+OyBkbS1kZXZlbEByZWRoYXQuY29tCrOty806IGd1b3po
+b25naHVhIChDbG91ZCkgPGd1b3pob25naHVhQGgzYy5jb20+OyB3YW5neW9uZyAoQ2xvdWQpIDx3
+YW5nLnlvbmdEQGgzYy5jb20+OyBjaGFuZ2xpbWluIChDbG91ZCkgPGNoYW5nbGltaW5AaDNjLmNv
+bT47IHpoYW5nZ3VhbmdodWkgKENsb3VkKSA8emhhbmcuZ3VhbmdodWlAaDNjLmNvbT47IGNoZW5n
+Y2hpd2VuIChDbG91ZCkgPGNoZW5nY2hpd2VuQGgzYy5jb20+Ctb3zOI6IFJlOiBbZG0tZGV2ZWxd
+IFtQQVRDSF1saWJtdWx0aXBhdGgvZG1wYXJzZXI6IGFkZCBtaXNzaW5nIHBhdGggd2l0aCBnb29k
+IHN0YXR1cyB3aGVuIHN5bmMgc3RhdGUgd2l0aCBkbSBrZXJuZWwKCkhlbGxvIENob25neXVuLAoK
+T24gVHVlLCAyMDIwLTA3LTA3IGF0IDAzOjA4ICswMDAwLCBDaG9uZ3l1biBXdSB3cm90ZToKPiBI
+aSBNYXJ0aW4gYW5kIEJlbiwKPiAKPiBDbG91ZCB5b3UgaGVscCB0byB2aWV3IGJlbG93IHBhdGNo
+LCB0aGFua3MuCj4gCj4gPiBGcm9tIGIyNzg2YzgxYTc4YmYzODY4ZjMwMGZkMzE3N2U4NTJlNzE4
+ZTc3OTAgTW9uIFNlcCAxNyAwMDowMDowMAo+ID4gMjAwMQo+IEZyb206IENob25neXVuIFd1IDx3
+dS5jaG9uZ3l1bkBoM2MuY29tPgo+IERhdGU6IE1vbiwgNiBKdWwgMjAyMCAxMToyMjoyMSArMDgw
+MAo+IFN1YmplY3Q6IFtQQVRDSF0gbGlibXVsdGlwYXRoL2RtcGFyc2VyOiBhZGQgbWlzc2luZyBw
+YXRoIHdpdGggZ29vZCAKPiBzdGF0dXMgIHdoZW4gc3luYyBzdGF0ZSB3aXRoIGRtIGtlcm5lbAo+
+IAoKTmFjaywgc29ycnkuIEkga25vdyB3ZSBoYXZlIGFuIGlzc3VlIGluIHRoaXMgYXJlYSwgYnV0
+IEkgd291bGQgbGlrZSB0bwpoYW5kbGUgaXQgZGlmZmVyZW50bHkuCgpGaXJzdCBvZiBhbGwsIEkg
+d2FudCB0byBnZXQgcmlkIG9mIGRpc2Fzc2VtYmxlX21hcCgpIG1ha2luZwptb2RpZmljYXRpb25z
+IHRvIHRoZSBwYXRodmVjLiBUaGUgZmFjdCB0aGF0IGRpc2Fzc2VtYmxlX21hcCgpIGN1cnJlbnRs
+eQpkb2VzIHRoaXMgaXMgYW4gdWdseSBsYXllciB2aW9sYXRpb24gSU1PLCBhbmQgSSBkb24ndCBs
+aWtlIHRoZSBpZGVhIG9mCmFkZGluZyBtb3JlIG9mIHRoaXMgb24gdG9wLiBJJ20gY3VycmVudGx5
+IHByZXBhcmluZyBhIHBhdGNoIHNldCB0aGF0CmFkZHJlc3NlcyB0aGlzIChhbW9uZyBvdGhlciB0
+aGluZ3MpLiBJdCB3aWxsIGFsc28gYWRkcmVzcyB0aGUgaXNzdWUgb2YKbWlzc2luZyBwYXRocyBp
+biBwYXRodmVjLCBhbmQgSSdkIGJlIHZlcnkgZ2xhZCBpZiB5b3UgY291bGQgZ2l2ZSBpdCBhCnRy
+eSBpbiB5b3VyIHRlc3QgZW52aXJvbm1lbnQuCgoKPiBBZGQgcGF0aCBiYWNrIGludG8gZGVhbW9u
+IHZlY3MtPnBhdGh2ZWNzIHdoZW4gZm91bmQgcGF0aCBtaXNzaW5nIGluCj4gbXVsdGlwYXRoZCB3
+aGljaCBjYW4gZml4IGRtIGlvIGJsb2NrZWQgaXNzdWUuCj4gCj4gVGVzdCBlbnZpcm9ubWVudDoK
+PiBzZXZlcmFsIGhvc3RzOwo+IGVhY2ggaG9zdCBoYXZlIDEwMCsgbXVsdGlwYXRoLCBlYWNoIG11
+bHRpcGF0aCBoYXZlIDEgdG8gNCBwYXRocy4KPiBydW4gdXAvZG93biBzdG9yYWdlIG5ldHdvcmsg
+bG9vcCBzY3JpcHQgZm9yIGRheXMuCj4gCj4gSXNzdWU6Cj4gQWZ0ZXIgc2V2ZXJhbCBob3VycyBz
+dG9wIHNjcmlwdCwgZm91bmQgc29tZSBob3N0cyBoYXZlIGRtIGlvIGJsb2NrZWQKPiBpc3N1ZToK
+PiBzbGF2ZSBibG9jayBkZXZpY2UgYWNjZXNzIHdlbGwsIGJ1dCBpdHMgZG0gZGV2aWNlIGJsb2Nr
+ZWQuCj4gMzZjMGJmYzAxMDBhOGQ0YTIyODIxNGRhNTAwMDAwMDNjIGRtLTIwIEhVQVdFSSxYU0cx
+Cj4gc2l6ZT0zNTBHIGZlYXR1cmVzPScxIHF1ZXVlX2lmX25vX3BhdGgnIGh3aGFuZGxlcj0nMCcg
+d3A9cncKPiBgLSstIHBvbGljeT0ncm91bmQtcm9iaW4gMCcgcHJpbz0xIHN0YXR1cz1lbmFibGVk
+Cj4gICB8LSAxOjA6MDoyMCAgc2RiayA2NzoyMjQgIGZhaWxlZCByZWFkeSBydW5uaW5nCj4gbXVs
+dGlwYXRoZCBzaG93IHBhdGhzIGNhbm5vdCBmb3VuZCBzZGJrIQoKSXMgL2Rldi9zZGJrIGluZGVl
+ZCBhIGhlYWx0aHkgcGF0aCBpbiB0aGlzIHNpdHVhdGlvbiwgb3Igbm90PwpQbGVhc2UgcnVuICJt
+dWx0aXBhdGhkIHNob3cgZGV2aWNlcyIsIHRvby4KCkkgd29uZGVyIGlmIHlvdXIgbG9ncyBwcm92
+aWRlIHNvbWUgbW9yZSBldmlkZW5jZSBob3cgdGhpcyBzaXR1YXRpb24KY2FtZSB0byBwYXNzLiBJ
+IHN1c3BlY3QgdGhhdCBlaXRoZXIgYSkgdWV2ZW50cyBnb3QgbG9zdCwgb3IgdGhhdCBiKQptdWx0
+aXBhdGhkIGZhaWxlZCB0byAocmUtKWFkZCB0aGUgcGF0aCB3aGlsZSBoYW5kbGluZyBhbiB1ZXZl
+bnQuIEl0J2QKYmUgaW50ZXJlc3RpbmcgdG8gZmluZCBvdXQgd2hhdCBpdCBhY3R1YWxseSB3YXMu
+CgpNb3JlIG5vdGVzIGJlbG93LgoKPiBUZXN0IHJlc3VsdDoKPiBXaXRoIHRoaXMgcGF0Y2gsIHJ1
+biBzY3JpcHQgc2V2ZXJhbCBkYXlzLCBpbyBibG9ja2VkIGlzc3VlCj4gbm90IGZvdW5kIGFnYWlu
+Lgo+IAo+IFRoaXMgcGF0Y2ggY2FuIGZpeCB0aGlzIGlzc3VlOiB3aGVuIGZvdW5kIHBhdGggb25s
+eSBtaXNzaW5nIGluCj4gbXVsdGlwYXRoZCBidXQgc3RpbGwgaW4gZG0sIGNoZWNrIHRoZSBtaXNz
+aW5nIHBhdGggc3RhdHVzIGlmIG9rCj4gdHJ5IHRvIGFkZCBpdCBiYWNrLCBhbmQgY2hlY2tlciBo
+YXZlIGNoYW5jZSB0byByZWluc3RhdGUgdGhpcwo+IHBhdGggYW5kIHRoZSBkbSBpbyBibG9ja2Vk
+IGlzc3VlIHdpbGwgZGlzYXBwZWFyLgo+IAo+IFNpZ25lZC1vZmYtYnk6IENob25neXVuIFd1IDx3
+dS5jaG9uZ3l1bkBoM2MuY29tPgo+IC0tLQo+ICBsaWJtdWx0aXBhdGgvZG1wYXJzZXIuYyB8IDMx
+ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysKPiAgbGlibXVsdGlwYXRoL2RtcGFyc2Vy
+LmggfCAgMSArCj4gIDIgZmlsZXMgY2hhbmdlZCwgMzIgaW5zZXJ0aW9ucygrKQo+IAo+IGRpZmYg
+LS1naXQgYS9saWJtdWx0aXBhdGgvZG1wYXJzZXIuYyBiL2xpYm11bHRpcGF0aC9kbXBhcnNlci5j
+Cj4gaW5kZXggYjg1NmEwN2YuLjJmOTBiMTdjIDEwMDY0NAo+IC0tLSBhL2xpYm11bHRpcGF0aC9k
+bXBhcnNlci5jCj4gKysrIGIvbGlibXVsdGlwYXRoL2RtcGFyc2VyLmMKPiBAQCAtMzE3LDYgKzMx
+NywxMiBAQCBpbnQgZGlzYXNzZW1ibGVfbWFwKHZlY3RvciBwYXRodmVjLCBjaGFyCj4gKnBhcmFt
+cywgc3RydWN0IG11bHRpcGF0aCAqbXBwLAo+ICAJCQkJLyogT25seSBjYWxsIHRoaXMgaW4gbXVs
+dGlwYXRoIGNsaWVudAo+IG1vZGUgKi8KPiAgCQkJCWlmICghaXNfZGFlbW9uICYmIHN0b3JlX3Bh
+dGgocGF0aHZlYywKPiBwcCkpCj4gIAkJCQkJZ290byBvdXQxOwoKSSBiZWxpZXZlIHRoYXQgeW91
+ciBwcm9ibGVtIHdvdWxkIGhhdmUgYmVlbiBzb2x2ZWQgc2ltcGx5IGJ5IHJlbW92aW5nCnRoZSAi
+IWlzX2RhZW1vbiIgY29uZGl0aW9uIGFib3ZlLiBJJ2QgbGlrZSB0byBrbm93IGlmIHRoYXQncyBh
+Y3R1YWxseQp0aGUgY2FzZSwgYmVjYXVzZSB5b3VyIGFkZF9taXNzaW5nX3BhdGgoKSBmdW5jdGlv
+biBkb2VzIGJhc2ljYWxseSB0aGUKc2FtZSB0aGluZyAocGx1cyBjYWxsaW5nIHBhdGhpbmZvKCkp
+LgoKSG93ZXZlciwgdGhlICIhaXNfZGFlbW9uIiB0ZXN0IGlzIHRoZXJlIGZvciBhIHJlYXNvbiAo
+c2VlIGI5NmRlYWQgCigiW211bHRpcGF0aGRdIHJlbW92ZSB0aGUgcmV0cnkgbG9naW4gaW4gdWV2
+X3JlbW92ZV9wYXRoKCkiKSwgYW5kCnRoYXQncyB3aHkgeW91ciBwYXRjaCBpc24ndCBjb3JyZWN0
+IGFzLWlzLiAKClJlZ2FyZHMsCk1hcnRpbgoKPiArCj4gKwkJCQkvKiBUcnkgdG8gYWRkIGdvb2Qg
+c3RhdHVzIHBhdGggYmFjayB0bwo+IGF2b2lkCj4gKwkJCQkgKiBkbSBpbyBibG9ja2VkIGlzc3Vl
+IGluIHNwZWNpYWwKPiBjb25kaXRpb24uCj4gKwkJCQkgKi8KPiArCQkJCWlmKGFkZF9taXNzaW5n
+X3BhdGgocGF0aHZlYywgZGV2bmFtZSkpCj4gKwkJCQkJY29uZGxvZygyLCAiVHJ5IHRvIGFkZCBt
+aXNzaW5nCj4gcGF0aCAlcyBmYWlsZWQiLCBkZXZuYW1lKTsKPiAgCQkJfSBlbHNlIHsKPiAgCQkJ
+CWlmICghc3RybGVuKHBwLT53d2lkKSAmJgo+ICAJCQkJICAgIHN0cmxlbihtcHAtPnd3aWQpKQo+
+IEBAIC01NjksMyArNTc1LDI4IEBAIGludCBkaXNhc3NlbWJsZV9zdGF0dXMoY2hhciAqcGFyYW1z
+LCBzdHJ1Y3QKPiBtdWx0aXBhdGggKm1wcCkKPiAgCX0KPiAgCXJldHVybiAwOwo+ICB9Cj4gKwo+
+ICsvKiBBZGQgbWlzc2luZyBnb29kIHN0YXR1cyBwYXRoIGJhY2sgdG8gbXVsdGlwYXRoZCAqLwo+
+ICtpbnQgYWRkX21pc3NpbmdfcGF0aCh2ZWN0b3IgcGF0aHZlYywgY2hhciAqbWlzc2luZ19kZXYp
+Cj4gK3sKPiArCXN0cnVjdCB1ZGV2X2RldmljZSAqdWRldmljZTsKPiArCXN0cnVjdCBjb25maWcg
+KmNvbmY7Cj4gKwlpbnQgcmV0ID0gMDsKPiArCQkJCQo+ICsJY29uZGxvZygyLCAiQ2FudCd0IGZv
+dW5kIHBhdGggJXMgdHJ5IHRvIGFkZCBpdCBiYWNrIGlmIGl0cwo+IHN0YXRlIGlzIHVwLiIsIAo+
+ICsJCQltaXNzaW5nX2Rldik7Cj4gKwo+ICsJdWRldmljZSA9IHVkZXZfZGV2aWNlX25ld19mcm9t
+X3N1YnN5c3RlbV9zeXNuYW1lKHVkZXYsICJibG9jayIsCj4gbWlzc2luZ19kZXYpOwo+ICsJaWYg
+KCF1ZGV2aWNlKSB7Cj4gKwkJY29uZGxvZygwLCAiJXM6IGNhbid0IGZpbmQgcGF0aCBmb3JtIHVk
+ZXYiLAo+IG1pc3NpbmdfZGV2KTsKPiArCQlyZXR1cm4gMTsKPiArCX0KPiArCWNvbmYgPSBnZXRf
+bXVsdGlwYXRoX2NvbmZpZygpOwo+ICsJcHRocmVhZF9jbGVhbnVwX3B1c2gocHV0X211bHRpcGF0
+aF9jb25maWcsIGNvbmYpOwo+ICsJcmV0ID0gc3RvcmVfcGF0aGluZm8ocGF0aHZlYywgY29uZiwK
+PiArCQkJCQkJIHVkZXZpY2UsIERJX0FMTCB8Cj4gRElfQkxBQ0tMSVNULCBOVUxMKTsKPiArCXB0
+aHJlYWRfY2xlYW51cF9wb3AoMSk7Cj4gKwl1ZGV2X2RldmljZV91bnJlZih1ZGV2aWNlKTsKPiAr
+Cj4gKwlyZXR1cm4gcmV0Owo+ICt9Cj4gZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9kbXBhcnNl
+ci5oIGIvbGlibXVsdGlwYXRoL2RtcGFyc2VyLmgKPiBpbmRleCBlMWJhZGIwYi4uNTE1Y2E5MDAg
+MTAwNjQ0Cj4gLS0tIGEvbGlibXVsdGlwYXRoL2RtcGFyc2VyLmgKPiArKysgYi9saWJtdWx0aXBh
+dGgvZG1wYXJzZXIuaAo+IEBAIC0xLDMgKzEsNCBAQAo+ICBpbnQgYXNzZW1ibGVfbWFwIChzdHJ1
+Y3QgbXVsdGlwYXRoICosIGNoYXIgKiwgaW50KTsKPiAgaW50IGRpc2Fzc2VtYmxlX21hcCAodmVj
+dG9yLCBjaGFyICosIHN0cnVjdCBtdWx0aXBhdGggKiwgaW50KTsKPiAgaW50IGRpc2Fzc2VtYmxl
+X3N0YXR1cyAoY2hhciAqLCBzdHJ1Y3QgbXVsdGlwYXRoICopOwo+ICtpbnQgYWRkX21pc3Npbmdf
+cGF0aCh2ZWN0b3IgcGF0aHZlYywgY2hhciAqbWlzc2luZ19kZXYpOwoKCgotLQpkbS1kZXZlbCBt
+YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21h
+aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
