@@ -1,32 +1,66 @@
-From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 01/14] dm: use bio_uninit instead of bio_disassociate_blkg
-Date: Wed, 8 Jul 2020 10:02:54 -0400
-Message-ID: <20200708140254.GA7539@redhat.com>
-References: <20200627073159.2447325-1-hch@lst.de>
- <20200627073159.2447325-2-hch@lst.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 2/2] dm zoned: Remove set but unused variables
+Date: Wed, 8 Jul 2020 10:12:24 -0400
+Message-ID: <20200708141223.GA7582@redhat.com>
+References: <20200708002023.738147-1-damien.lemoal@wdc.com>
+	<20200708002023.738147-3-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200708002023.738147-3-damien.lemoal@wdc.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
-In-Reply-To: <20200627073159.2447325-2-hch-jcswGhMUV9g@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Dennis Zhou <dennis-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+To: Damien Le Moal <damien.lemoal@wdc.com>
+Cc: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, Jun 27 2020 at  3:31am -0400,
-Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
+On Tue, Jul 07 2020 at  8:20pm -0400,
+Damien Le Moal <damien.lemoal@wdc.com> wrote:
 
-> bio_uninit is the proper API to clean up a BIO that has been allocated
-> on stack or inside a structure that doesn't come from the BIO allocator.
-> Switch dm to use that instead of bio_disassociate_blkg, which really is
-> an implementation detail.  Note that the bio_uninit calls are also moved
-> to the two callers of __send_empty_flush, so that they better pair with
-> the bio_init calls used to initialize them.
+> In dmz_reclaim_work(), the variables nr_unmap_rnd and nr_rnd are set but
+> unused. Remove them.
 > 
-> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+> Fixes: f97809aec589 ("dm zoned: per-device reclaim")
+> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+> ---
+>  drivers/md/dm-zoned-reclaim.c | 5 +----
+>  1 file changed, 1 insertion(+), 4 deletions(-)
+> 
+> diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+> index 9c6e264465bc..9c0ecc9568a4 100644
+> --- a/drivers/md/dm-zoned-reclaim.c
+> +++ b/drivers/md/dm-zoned-reclaim.c
+> @@ -503,7 +503,7 @@ static void dmz_reclaim_work(struct work_struct *work)
+>  {
+>  	struct dmz_reclaim *zrc = container_of(work, struct dmz_reclaim, work.work);
+>  	struct dmz_metadata *zmd = zrc->metadata;
+> -	unsigned int p_unmap, nr_unmap_rnd = 0, nr_rnd = 0;
+> +	unsigned int p_unmap;
+>  	int ret;
+>  
+>  	if (dmz_dev_is_dying(zmd))
+> @@ -529,9 +529,6 @@ static void dmz_reclaim_work(struct work_struct *work)
+>  		zrc->kc_throttle.throttle = min(75U, 100U - p_unmap / 2);
+>  	}
+>  
+> -	nr_unmap_rnd = dmz_nr_unmap_rnd_zones(zmd, zrc->dev_idx);
+> -	nr_rnd = dmz_nr_rnd_zones(zmd, zrc->dev_idx);
+> -
+>  	DMDEBUG("(%s/%u): Reclaim (%u): %s, %u%% free zones (%u/%u cache %u/%u random)",
+>  		dmz_metadata_label(zmd), zrc->dev_idx,
+>  		zrc->kc_throttle.throttle,
+> -- 
+> 2.26.2
+> 
 
-I've picked this up as a fix for 5.8
-
-Thanks,
-Mike
+I picked up the same change, that was submitted earlier, for 5.8:
+https://patchwork.kernel.org/patch/11641031/
