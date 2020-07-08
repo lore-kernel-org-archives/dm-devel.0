@@ -1,15 +1,11 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 2/2] dm zoned: Remove set but unused variables
-Date: Wed, 8 Jul 2020 09:06:43 +0200
-Message-ID: <999404f4-ad95-1cf0-d739-e0e892dd96da@suse.de>
-References: <20200708002023.738147-1-damien.lemoal@wdc.com>
-	<20200708002023.738147-3-damien.lemoal@wdc.com>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: [PATCH] dm crypt: Enable zoned block device support
+Date: Wed,  8 Jul 2020 18:28:08 +0900
+Message-ID: <20200708092808.57041-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200708002023.738147-3-damien.lemoal@wdc.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,38 +15,180 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <damien.lemoal@wdc.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Cc: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Damien Le Moal <damien.lemoal@wdc.com>
 List-Id: dm-devel.ids
 
-T24gNy84LzIwIDI6MjAgQU0sIERhbWllbiBMZSBNb2FsIHdyb3RlOgo+IEluIGRtel9yZWNsYWlt
-X3dvcmsoKSwgdGhlIHZhcmlhYmxlcyBucl91bm1hcF9ybmQgYW5kIG5yX3JuZCBhcmUgc2V0IGJ1
-dAo+IHVudXNlZC4gUmVtb3ZlIHRoZW0uCj4gCj4gRml4ZXM6IGY5NzgwOWFlYzU4OSAoImRtIHpv
-bmVkOiBwZXItZGV2aWNlIHJlY2xhaW0iKQo+IFNpZ25lZC1vZmYtYnk6IERhbWllbiBMZSBNb2Fs
-IDxkYW1pZW4ubGVtb2FsQHdkYy5jb20+Cj4gLS0tCj4gICBkcml2ZXJzL21kL2RtLXpvbmVkLXJl
-Y2xhaW0uYyB8IDUgKy0tLS0KPiAgIDEgZmlsZSBjaGFuZ2VkLCAxIGluc2VydGlvbigrKSwgNCBk
-ZWxldGlvbnMoLSkKPiAKPiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS16b25lZC1yZWNsYWlt
-LmMgYi9kcml2ZXJzL21kL2RtLXpvbmVkLXJlY2xhaW0uYwo+IGluZGV4IDljNmUyNjQ0NjViYy4u
-OWMwZWNjOTU2OGE0IDEwMDY0NAo+IC0tLSBhL2RyaXZlcnMvbWQvZG0tem9uZWQtcmVjbGFpbS5j
-Cj4gKysrIGIvZHJpdmVycy9tZC9kbS16b25lZC1yZWNsYWltLmMKPiBAQCAtNTAzLDcgKzUwMyw3
-IEBAIHN0YXRpYyB2b2lkIGRtel9yZWNsYWltX3dvcmsoc3RydWN0IHdvcmtfc3RydWN0ICp3b3Jr
-KQo+ICAgewo+ICAgCXN0cnVjdCBkbXpfcmVjbGFpbSAqenJjID0gY29udGFpbmVyX29mKHdvcmss
-IHN0cnVjdCBkbXpfcmVjbGFpbSwgd29yay53b3JrKTsKPiAgIAlzdHJ1Y3QgZG16X21ldGFkYXRh
-ICp6bWQgPSB6cmMtPm1ldGFkYXRhOwo+IC0JdW5zaWduZWQgaW50IHBfdW5tYXAsIG5yX3VubWFw
-X3JuZCA9IDAsIG5yX3JuZCA9IDA7Cj4gKwl1bnNpZ25lZCBpbnQgcF91bm1hcDsKPiAgIAlpbnQg
-cmV0Owo+ICAgCj4gICAJaWYgKGRtel9kZXZfaXNfZHlpbmcoem1kKSkKPiBAQCAtNTI5LDkgKzUy
-OSw2IEBAIHN0YXRpYyB2b2lkIGRtel9yZWNsYWltX3dvcmsoc3RydWN0IHdvcmtfc3RydWN0ICp3
-b3JrKQo+ICAgCQl6cmMtPmtjX3Rocm90dGxlLnRocm90dGxlID0gbWluKDc1VSwgMTAwVSAtIHBf
-dW5tYXAgLyAyKTsKPiAgIAl9Cj4gICAKPiAtCW5yX3VubWFwX3JuZCA9IGRtel9ucl91bm1hcF9y
-bmRfem9uZXMoem1kLCB6cmMtPmRldl9pZHgpOwo+IC0JbnJfcm5kID0gZG16X25yX3JuZF96b25l
-cyh6bWQsIHpyYy0+ZGV2X2lkeCk7Cj4gLQo+ICAgCURNREVCVUcoIiglcy8ldSk6IFJlY2xhaW0g
-KCV1KTogJXMsICV1JSUgZnJlZSB6b25lcyAoJXUvJXUgY2FjaGUgJXUvJXUgcmFuZG9tKSIsCj4g
-ICAJCWRtel9tZXRhZGF0YV9sYWJlbCh6bWQpLCB6cmMtPmRldl9pZHgsCj4gICAJCXpyYy0+a2Nf
-dGhyb3R0bGUudGhyb3R0bGUsCj4gClJldmlld2VkLWJ5OiBIYW5uZXMgUmVpbmVja2UgPGhhcmVA
-c3VzZS5kZT4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZSAgICAgICAg
-ICAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZSAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIFNvZnR3YXJlIFNvbHV0
-aW9ucyBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKSFJCIDM2ODA5IChBRyBO
-w7xybmJlcmcpLCBHZXNjaMOkZnRzZsO8aHJlcjogRmVsaXggSW1lbmTDtnJmZmVyCgoKLS0KZG0t
-ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0
-LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Enable support for zoned block devices. This is done by:
+1) implementing the target report_zones method
+2) adding the DM_TARGET_ZONED_HM flag to the target features
+3) Introducing inline write encryption completion to preserve write
+   ordering
+
+The last point is implemented by introducing the internal flag
+DM_CRYPT_WRITE_INLINE. When this flag is set for a zoned block device,
+kcryptd_crypt_write_convert() always waits inline for the completion of
+a write request encryption if the request is not already completed once
+crypt_convert() returns. Completions of write requests encryption is
+signaled using the restart completion by kcryptd_async_done(). This
+mechanism allows using cyphers that have an asynchronous
+implementation, isolating dm-crypt from any potential request
+completion reordering for these cyphers.
+
+Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+---
+ drivers/md/dm-crypt.c | 83 +++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 76 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 7536ecb2c95d..bad05c5ed3b5 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -129,7 +129,8 @@ struct iv_elephant_private {
+  */
+ enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID,
+ 	     DM_CRYPT_SAME_CPU, DM_CRYPT_NO_OFFLOAD,
+-	     DM_CRYPT_NO_READ_WORKQUEUE, DM_CRYPT_NO_WRITE_WORKQUEUE };
++	     DM_CRYPT_NO_READ_WORKQUEUE, DM_CRYPT_NO_WRITE_WORKQUEUE,
++	     DM_CRYPT_WRITE_INLINE };
+ 
+ enum cipher_flags {
+ 	CRYPT_MODE_INTEGRITY_AEAD,	/* Use authenticated mode for cihper */
+@@ -1919,9 +1920,32 @@ static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io, int async)
+ 	spin_unlock_irqrestore(&cc->write_thread_lock, flags);
+ }
+ 
++static bool kcryptd_crypt_write_inline(struct crypt_config *cc,
++				       struct convert_context *ctx)
++
++{
++	if (!test_bit(DM_CRYPT_WRITE_INLINE, &cc->flags))
++		return false;
++
++	/*
++	 * Note: zone append writes (REQ_OP_ZONE_APPEND) do not have ordering
++	 * constraints so they do not need to be issued inline by
++	 * kcryptd_crypt_write_convert().
++	 */
++	switch (bio_op(ctx->bio_in)) {
++	case REQ_OP_WRITE:
++	case REQ_OP_WRITE_SAME:
++	case REQ_OP_WRITE_ZEROES:
++		return true;
++	default:
++		return false;
++	}
++}
++
+ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
+ {
+ 	struct crypt_config *cc = io->cc;
++	struct convert_context *ctx = &io->ctx;
+ 	struct bio *clone;
+ 	int crypt_finished;
+ 	sector_t sector = io->sector;
+@@ -1931,7 +1955,7 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
+ 	 * Prevent io from disappearing until this function completes.
+ 	 */
+ 	crypt_inc_pending(io);
+-	crypt_convert_init(cc, &io->ctx, NULL, io->base_bio, sector);
++	crypt_convert_init(cc, ctx, NULL, io->base_bio, sector);
+ 
+ 	clone = crypt_alloc_buffer(io, io->base_bio->bi_iter.bi_size);
+ 	if (unlikely(!clone)) {
+@@ -1945,11 +1969,16 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
+ 	sector += bio_sectors(clone);
+ 
+ 	crypt_inc_pending(io);
+-	r = crypt_convert(cc, &io->ctx,
++	r = crypt_convert(cc, ctx,
+ 			  test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags));
+ 	if (r)
+ 		io->error = r;
+-	crypt_finished = atomic_dec_and_test(&io->ctx.cc_pending);
++	crypt_finished = atomic_dec_and_test(&ctx->cc_pending);
++	if (!crypt_finished && kcryptd_crypt_write_inline(cc, ctx)) {
++		/* Wait for completion signaled by kcryptd_async_done() */
++		wait_for_completion(&ctx->restart);
++		crypt_finished = 1;
++	}
+ 
+ 	/* Encryption was already finished, submit io now */
+ 	if (crypt_finished) {
+@@ -2021,10 +2050,21 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
+ 	if (!atomic_dec_and_test(&ctx->cc_pending))
+ 		return;
+ 
+-	if (bio_data_dir(io->base_bio) == READ)
++	/*
++	 * The request is fully completed: for inline writes, let
++	 * kcryptd_crypt_write_convert() do the IO submission.
++	 */
++	if (bio_data_dir(io->base_bio) == READ) {
+ 		kcryptd_crypt_read_done(io);
+-	else
+-		kcryptd_crypt_write_io_submit(io, 1);
++		return;
++	}
++
++	if (kcryptd_crypt_write_inline(cc, ctx)) {
++		complete(&ctx->restart);
++		return;
++	}
++
++	kcryptd_crypt_write_io_submit(io, 1);
+ }
+ 
+ static void kcryptd_crypt(struct work_struct *work)
+@@ -2936,6 +2976,21 @@ static int crypt_ctr_optional(struct dm_target *ti, unsigned int argc, char **ar
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_BLK_DEV_ZONED
++
++static int crypt_report_zones(struct dm_target *ti,
++		struct dm_report_zones_args *args, unsigned int nr_zones)
++{
++	struct crypt_config *cc = ti->private;
++	sector_t sector = cc->start + dm_target_offset(ti, args->next_sector);
++
++	args->start = cc->start;
++	return blkdev_report_zones(cc->dev->bdev, sector, nr_zones,
++				   dm_report_zones_cb, args);
++}
++
++#endif
++
+ /*
+  * Construct an encryption mapping:
+  * <cipher> [<key>|:<key_size>:<user|logon>:<key_description>] <iv_offset> <dev_path> <start>
+@@ -3069,6 +3124,16 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	}
+ 	cc->start = tmpll;
+ 
++	/*
++	 * For zoned block devices, we need to preserve the issuer write
++	 * ordering. To do so, disable write workqueues and force inline
++	 * encryption completion.
++	 */
++	if (bdev_is_zoned(cc->dev->bdev)) {
++		set_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags);
++		set_bit(DM_CRYPT_WRITE_INLINE, &cc->flags);
++	}
++
+ 	if (crypt_integrity_aead(cc) || cc->integrity_iv_size) {
+ 		ret = crypt_integrity_ctr(cc, ti);
+ 		if (ret)
+@@ -3358,6 +3423,10 @@ static struct target_type crypt_target = {
+ 	.module = THIS_MODULE,
+ 	.ctr    = crypt_ctr,
+ 	.dtr    = crypt_dtr,
++#ifdef CONFIG_BLK_DEV_ZONED
++	.features = DM_TARGET_ZONED_HM,
++	.report_zones = crypt_report_zones,
++#endif
+ 	.map    = crypt_map,
+ 	.status = crypt_status,
+ 	.postsuspend = crypt_postsuspend,
+-- 
+2.26.2
