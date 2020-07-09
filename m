@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 18/35] libmultipath: uevent: use static linkage
-	where possible
-Date: Thu,  9 Jul 2020 12:16:03 +0200
-Message-ID: <20200709101620.6786-19-mwilck@suse.com>
+Subject: [PATCH 23/35] libmultipath: make sysfs_pathinfo() static
+	and use const
+Date: Thu,  9 Jul 2020 12:16:08 +0200
+Message-ID: <20200709101620.6786-24-mwilck@suse.com>
 References: <20200709101620.6786-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,197 +24,63 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Most of the symbols in uevent.c can be converted to static linkage.
-alloc_uevent() and uevent_get_wwid() are called in the unit test
-and added to the header file.
+... for the hwtable argument.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/uevent.c | 45 ++++++++++++++++++++-----------------------
- libmultipath/uevent.h |  2 ++
- tests/uevent.c        |  4 ----
- 3 files changed, 23 insertions(+), 28 deletions(-)
+ libmultipath/discovery.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index 6a3f8bd..d74389e 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -60,14 +60,14 @@
- 
- typedef int (uev_trigger)(struct uevent *, void * trigger_data);
- 
--LIST_HEAD(uevq);
--pthread_mutex_t uevq_lock = PTHREAD_MUTEX_INITIALIZER;
--pthread_mutex_t *uevq_lockp = &uevq_lock;
--pthread_cond_t uev_cond = PTHREAD_COND_INITIALIZER;
--pthread_cond_t *uev_condp = &uev_cond;
--uev_trigger *my_uev_trigger;
--void * my_trigger_data;
--int servicing_uev;
-+static LIST_HEAD(uevq);
-+static pthread_mutex_t uevq_lock = PTHREAD_MUTEX_INITIALIZER;
-+static pthread_mutex_t *uevq_lockp = &uevq_lock;
-+static pthread_cond_t uev_cond = PTHREAD_COND_INITIALIZER;
-+static pthread_cond_t *uev_condp = &uev_cond;
-+static uev_trigger *my_uev_trigger;
-+static void *my_trigger_data;
-+static int servicing_uev;
- 
- int is_uevent_busy(void)
- {
-@@ -91,8 +91,7 @@ struct uevent * alloc_uevent (void)
- 	return uev;
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 5d4bf7d..c692026 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1284,7 +1284,7 @@ get_vpd_sgio (int fd, int pg, int vend_id, char * str, int maxlen)
  }
  
--void
--uevq_cleanup(struct list_head *tmpq)
-+static void uevq_cleanup(struct list_head *tmpq)
+ static int
+-scsi_sysfs_pathinfo (struct path * pp, vector hwtable)
++scsi_sysfs_pathinfo (struct path *pp, const struct _vector *hwtable)
  {
- 	struct uevent *uev, *tmp;
- 
-@@ -172,8 +171,7 @@ uevent_get_wwid(struct uevent *uev)
- 		uev->wwid = val;
+ 	struct udev_device *parent;
+ 	const char *attr_path = NULL;
+@@ -1351,7 +1351,7 @@ scsi_sysfs_pathinfo (struct path * pp, vector hwtable)
  }
  
--bool
--uevent_need_merge(void)
-+static bool uevent_need_merge(void)
+ static int
+-nvme_sysfs_pathinfo (struct path * pp, vector hwtable)
++nvme_sysfs_pathinfo (struct path *pp, const struct _vector *hwtable)
  {
- 	struct config * conf;
- 	bool need_merge = false;
-@@ -186,8 +184,7 @@ uevent_need_merge(void)
- 	return need_merge;
+ 	struct udev_device *parent;
+ 	const char *attr_path = NULL;
+@@ -1396,7 +1396,7 @@ nvme_sysfs_pathinfo (struct path * pp, vector hwtable)
  }
  
--bool
--uevent_can_discard(struct uevent *uev)
-+static bool uevent_can_discard(struct uevent *uev)
+ static int
+-ccw_sysfs_pathinfo (struct path * pp, vector hwtable)
++ccw_sysfs_pathinfo (struct path *pp, const struct _vector *hwtable)
  {
- 	int invalid = 0;
- 	struct config * conf;
-@@ -212,7 +209,7 @@ uevent_can_discard(struct uevent *uev)
- 	return false;
+ 	struct udev_device *parent;
+ 	char attr_buff[NAME_SIZE];
+@@ -1455,7 +1455,7 @@ ccw_sysfs_pathinfo (struct path * pp, vector hwtable)
  }
  
--bool
-+static bool
- uevent_can_filter(struct uevent *earlier, struct uevent *later)
+ static int
+-cciss_sysfs_pathinfo (struct path * pp, vector hwtable)
++cciss_sysfs_pathinfo (struct path *pp, const struct _vector *hwtable)
  {
- 
-@@ -246,7 +243,7 @@ uevent_can_filter(struct uevent *earlier, struct uevent *later)
- 	return false;
+ 	const char * attr_path = NULL;
+ 	struct udev_device *parent;
+@@ -1609,8 +1609,8 @@ path_offline (struct path * pp)
+ 	return PATH_DOWN;
  }
  
--bool
-+static bool
- merge_need_stop(struct uevent *earlier, struct uevent *later)
+-int
+-sysfs_pathinfo(struct path * pp, vector hwtable)
++static int
++sysfs_pathinfo(struct path *pp, const struct _vector *hwtable)
  {
- 	/*
-@@ -283,7 +280,7 @@ merge_need_stop(struct uevent *earlier, struct uevent *later)
- 	return false;
- }
+ 	int r = common_sysfs_pathinfo(pp);
  
--bool
-+static bool
- uevent_can_merge(struct uevent *earlier, struct uevent *later)
- {
- 	/* merge paths uevents
-@@ -302,7 +299,7 @@ uevent_can_merge(struct uevent *earlier, struct uevent *later)
- 	return false;
- }
- 
--void
-+static void
- uevent_prepare(struct list_head *tmpq)
- {
- 	struct uevent *uev, *tmp;
-@@ -322,7 +319,7 @@ uevent_prepare(struct list_head *tmpq)
- 	}
- }
- 
--void
-+static void
- uevent_filter(struct uevent *later, struct list_head *tmpq)
- {
- 	struct uevent *earlier, *tmp;
-@@ -345,7 +342,7 @@ uevent_filter(struct uevent *later, struct list_head *tmpq)
- 	}
- }
- 
--void
-+static void
- uevent_merge(struct uevent *later, struct list_head *tmpq)
- {
- 	struct uevent *earlier, *tmp;
-@@ -366,7 +363,7 @@ uevent_merge(struct uevent *later, struct list_head *tmpq)
- 	}
- }
- 
--void
-+static void
- merge_uevq(struct list_head *tmpq)
- {
- 	struct uevent *later;
-@@ -379,7 +376,7 @@ merge_uevq(struct list_head *tmpq)
- 	}
- }
- 
--void
-+static void
- service_uevq(struct list_head *tmpq)
- {
- 	struct uevent *uev, *tmp;
-@@ -450,7 +447,7 @@ int uevent_dispatch(int (*uev_trigger)(struct uevent *, void * trigger_data),
- 	return 0;
- }
- 
--struct uevent *uevent_from_udev_device(struct udev_device *dev)
-+static struct uevent *uevent_from_udev_device(struct udev_device *dev)
- {
- 	struct uevent *uev;
- 	int i = 0;
-@@ -512,7 +509,7 @@ struct uevent *uevent_from_udev_device(struct udev_device *dev)
- 	return uev;
- }
- 
--bool uevent_burst(struct timeval *start_time, int events)
-+static bool uevent_burst(struct timeval *start_time, int events)
- {
- 	struct timeval diff_time, end_time;
- 	unsigned long speed;
-diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
-index 4956bfc..9a5b213 100644
---- a/libmultipath/uevent.h
-+++ b/libmultipath/uevent.h
-@@ -24,6 +24,7 @@ struct uevent {
- 	char *envp[HOTPLUG_NUM_ENVP];
- };
- 
-+struct uevent *alloc_uevent(void);
- int is_uevent_busy(void);
- 
- int uevent_listen(struct udev *udev);
-@@ -36,5 +37,6 @@ char *uevent_get_dm_name(const struct uevent *uev);
- char *uevent_get_dm_path(const struct uevent *uev);
- char *uevent_get_dm_action(const struct uevent *uev);
- bool uevent_is_mpath(const struct uevent *uev);
-+void uevent_get_wwid(struct uevent *uev);
- 
- #endif /* _UEVENT_H */
-diff --git a/tests/uevent.c b/tests/uevent.c
-index f4afd9b..9ffcd2d 100644
---- a/tests/uevent.c
-+++ b/tests/uevent.c
-@@ -27,10 +27,6 @@
- 
- #include "globals.c"
- 
--/* Private prototypes missing in uevent.h */
--struct uevent * alloc_uevent(void);
--void uevent_get_wwid(struct uevent *uev);
--
- /* Stringify helpers */
- #define _str_(x) #x
- #define str(x) _str_(x)
 -- 
 2.26.2
