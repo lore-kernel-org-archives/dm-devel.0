@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 12/35] libmultipath: strlcpy()/strlcat(): use
-	restrict qualifier
-Date: Thu,  9 Jul 2020 12:15:57 +0200
-Message-ID: <20200709101620.6786-13-mwilck@suse.com>
+Subject: [PATCH 20/35] libmultipath: decrease log level of "SCSI
+	target" log message
+Date: Thu,  9 Jul 2020 12:16:05 +0200
+Message-ID: <20200709101620.6786-21-mwilck@suse.com>
 References: <20200709101620.6786-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,92 +24,25 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Also remove the redundant local variables. It's not necessary to
-make "restrict" work, but it makes the intention more clear.
+... in sysfs_get_tgt_nodename().
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/util.c | 28 ++++++++++++----------------
- libmultipath/util.h |  4 ++--
- 2 files changed, 14 insertions(+), 18 deletions(-)
+ libmultipath/discovery.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index 957fb97..f965094 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -113,46 +113,42 @@ get_word (const char *sentence, char **word)
- 	return skip + len;
- }
- 
--size_t strlcpy(char *dst, const char *src, size_t size)
-+size_t strlcpy(char * restrict dst, const char * restrict src, size_t size)
- {
- 	size_t bytes = 0;
--	char *q = dst;
--	const char *p = src;
- 	char ch;
- 
--	while ((ch = *p++)) {
--		if (bytes+1 < size)
--			*q++ = ch;
-+	while ((ch = *src++)) {
-+		if (bytes + 1 < size)
-+			*dst++ = ch;
- 		bytes++;
- 	}
- 
- 	/* If size == 0 there is no space for a final null... */
- 	if (size)
--		*q = '\0';
-+		*dst = '\0';
- 	return bytes;
- }
- 
--size_t strlcat(char *dst, const char *src, size_t size)
-+size_t strlcat(char * restrict dst, const char * restrict src, size_t size)
- {
- 	size_t bytes = 0;
--	char *q = dst;
--	const char *p = src;
- 	char ch;
- 
--	while (bytes < size && *q) {
--		q++;
-+	while (bytes < size && *dst) {
-+		dst++;
- 		bytes++;
- 	}
- 	if (bytes == size)
- 		return (bytes + strlen(src));
- 
--	while ((ch = *p++)) {
--		if (bytes+1 < size)
--		*q++ = ch;
-+	while ((ch = *src++)) {
-+		if (bytes + 1 < size)
-+			*dst++ = ch;
- 		bytes++;
- 	}
- 
--	*q = '\0';
-+	*dst = '\0';
- 	return bytes;
- }
- 
-diff --git a/libmultipath/util.h b/libmultipath/util.h
-index ae18d8b..7e29b26 100644
---- a/libmultipath/util.h
-+++ b/libmultipath/util.h
-@@ -15,8 +15,8 @@ int basenamecpy (const char *src, char *dst, size_t size);
- int filepresent (const char *run);
- char *get_next_string(char **temp, const char *split_char);
- int get_word (const char * sentence, char ** word);
--size_t strlcpy(char *dst, const char *src, size_t size);
--size_t strlcat(char *dst, const char *src, size_t size);
-+size_t strlcpy(char * restrict dst, const char * restrict src, size_t size);
-+size_t strlcat(char * restrict dst, const char * restrict src, size_t size);
- int devt2devname (char *, int, const char *);
- dev_t parse_devt(const char *dev_t);
- char *convert_dev(char *dev, int is_path_device);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index aa5942c..1039fc4 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -391,7 +391,7 @@ sysfs_get_tgt_nodename(struct path *pp, char *node)
+ 		tgtdev = udev_device_new_from_subsystem_sysname(udev,
+ 				"fc_remote_ports", value);
+ 		if (tgtdev) {
+-			condlog(3, "SCSI target %d:%d:%d -> "
++			condlog(4, "SCSI target %d:%d:%d -> "
+ 				"FC rport %d:%d-%d",
+ 				pp->sg_id.host_no, pp->sg_id.channel,
+ 				pp->sg_id.scsi_id, host, channel,
 -- 
 2.26.2
