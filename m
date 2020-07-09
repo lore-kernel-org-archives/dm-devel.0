@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 46/54] libmultipath: path_discover(): always set
-	DI_BLACKLIST
-Date: Thu,  9 Jul 2020 12:36:15 +0200
-Message-ID: <20200709103623.8302-5-mwilck@suse.com>
+Subject: [PATCH 45/54] libmultipath: path_discover(): use
+	find_path_by_devt()
+Date: Thu,  9 Jul 2020 12:36:14 +0200
+Message-ID: <20200709103623.8302-4-mwilck@suse.com>
 References: <20200709103623.8302-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,27 +24,56 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Since 65e1845 ("multipath: call store_pathinfo with DI_BLACKLIST"), we
-use DI_BLACKLIST for new paths. There's no reason why we shouldn't do the
-same with paths which are (unexpectedly) already in pathvec. As argued
-for 65e1845, this might save some unnecessary work for paths which are
-blacklisted anyway.
+In path_discover(), it's actually expected that a the path to be discovered is
+not already in pathvec. So, do search by devt in the first place rather than
+searching twice.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/discovery.c | 32 ++++++++++++--------------------
+ 1 file changed, 12 insertions(+), 20 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 5f4ebf0..caabfef 100644
+index e26aae2..5f4ebf0 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -137,7 +137,7 @@ path_discover (vector pathvec, struct config * conf,
- 				      udevice, flag | DI_BLACKLIST,
- 				      NULL);
- 	else
--		return pathinfo(pp, conf, flag);
-+		return pathinfo(pp, conf, flag | DI_BLACKLIST);
+@@ -125,27 +125,19 @@ static int
+ path_discover (vector pathvec, struct config * conf,
+ 	       struct udev_device *udevice, int flag)
+ {
+-	struct path * pp;
+-	const char * devname;
+-
+-	devname = udev_device_get_sysname(udevice);
+-	if (!devname)
+-		return PATHINFO_FAILED;
+-
+-	pp = find_path_by_dev(pathvec, devname);
+-	if (!pp) {
+-		char devt[BLK_DEV_SIZE];
+-		dev_t devnum = udev_device_get_devnum(udevice);
++	struct path *pp;
++	char devt[BLK_DEV_SIZE];
++	dev_t devnum = udev_device_get_devnum(udevice);
+ 
+-		snprintf(devt, BLK_DEV_SIZE, "%d:%d",
+-			 major(devnum), minor(devnum));
+-		pp = find_path_by_devt(pathvec, devt);
+-		if (!pp)
+-			return store_pathinfo(pathvec, conf,
+-					      udevice, flag | DI_BLACKLIST,
+-					      NULL);
+-	}
+-	return pathinfo(pp, conf, flag);
++	snprintf(devt, BLK_DEV_SIZE, "%d:%d",
++		 major(devnum), minor(devnum));
++	pp = find_path_by_devt(pathvec, devt);
++	if (!pp)
++		return store_pathinfo(pathvec, conf,
++				      udevice, flag | DI_BLACKLIST,
++				      NULL);
++	else
++		return pathinfo(pp, conf, flag);
  }
  
  static void cleanup_udev_enumerate_ptr(void *arg)
