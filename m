@@ -1,7 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 13/35] libmultipath: constify blacklist code
-Date: Thu,  9 Jul 2020 12:15:58 +0200
-Message-ID: <20200709101620.6786-14-mwilck@suse.com>
+Subject: [PATCH 28/35] libmultipath: snprint_devices(): use
+	udev_enumerate
+Date: Thu,  9 Jul 2020 12:16:13 +0200
+Message-ID: <20200709101620.6786-29-mwilck@suse.com>
 References: <20200709101620.6786-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,149 +24,131 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Add "const" qualifiers where appropriate.
+Rather than hand-coding the device enumeration, use udev as we do elsewhere,
+too. While at it, improve the overflow detection.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/blacklist.c | 34 +++++++++++++++++++---------------
- libmultipath/blacklist.h | 17 +++++++++++------
- 2 files changed, 30 insertions(+), 21 deletions(-)
+ libmultipath/print.c | 75 ++++++++++++++++++++------------------------
+ libmultipath/print.h |  2 +-
+ 2 files changed, 35 insertions(+), 42 deletions(-)
 
-diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
-index db58ccc..4964e70 100644
---- a/libmultipath/blacklist.c
-+++ b/libmultipath/blacklist.c
-@@ -121,7 +121,7 @@ int set_ble_device(vector blist, char * vendor, char * product, int origin)
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 298b376..fb94f86 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -2026,65 +2026,58 @@ int snprint_status(char *buff, int len, const struct vectors *vecs)
+ 	return fwd;
  }
  
- static int
--match_reglist (vector blist, const char * str)
-+match_reglist (const struct _vector *blist, const char *str)
+-int snprint_devices(struct config *conf, char * buff, int len,
++int snprint_devices(struct config *conf, char *buff, size_t len,
+ 		    const struct vectors *vecs)
  {
- 	int i;
- 	struct blentry * ble;
-@@ -134,8 +134,8 @@ match_reglist (vector blist, const char * str)
- }
- 
- static int
--match_reglist_device (const struct _vector *blist, const char * vendor,
--		    const char * product)
-+match_reglist_device (const struct _vector *blist, const char *vendor,
-+		      const char * product)
- {
- 	int i;
- 	struct blentry_device * ble;
-@@ -155,8 +155,8 @@ match_reglist_device (const struct _vector *blist, const char * vendor,
- }
- 
- static int
--find_blacklist_device (const struct _vector *blist, const char * vendor,
--		       const char * product)
-+find_blacklist_device (const struct _vector *blist, const char *vendor,
-+		       const char *product)
- {
- 	int i;
- 	struct blentry_device * ble;
-@@ -231,8 +231,9 @@ setup_default_blist (struct config * conf)
- 		condlog(lvl, "%s: %s %s", dev, (M), (S))
- 
- static void
--log_filter (const char *dev, char *vendor, char *product, char *wwid,
--	    const char *env, const char *protocol, int r, int lvl)
-+log_filter (const char *dev, const char *vendor, const char *product,
-+	    const char *wwid, const char *env, const char *protocol,
-+	    int r, int lvl)
- {
- 	/*
- 	 * Try to sort from most likely to least.
-@@ -277,8 +278,8 @@ log_filter (const char *dev, char *vendor, char *product, char *wwid,
- }
- 
- int
--filter_device (vector blist, vector elist, char * vendor, char * product,
--	       char * dev)
-+filter_device (const struct _vector *blist, const struct _vector *elist,
-+	       const char *vendor, const char * product, const char *dev)
- {
- 	int r = MATCH_NOTHING;
- 
-@@ -294,7 +295,8 @@ filter_device (vector blist, vector elist, char * vendor, char * product,
- }
- 
- int
--filter_devnode (vector blist, vector elist, char * dev)
-+filter_devnode (const struct _vector *blist, const struct _vector *elist,
-+		const char *dev)
- {
- 	int r = MATCH_NOTHING;
- 
-@@ -310,7 +312,8 @@ filter_devnode (vector blist, vector elist, char * dev)
- }
- 
- int
--filter_wwid (vector blist, vector elist, char * wwid, char * dev)
-+filter_wwid (const struct _vector *blist, const struct _vector *elist,
-+	     const char *wwid, const char *dev)
- {
- 	int r = MATCH_NOTHING;
- 
-@@ -326,7 +329,8 @@ filter_wwid (vector blist, vector elist, char * wwid, char * dev)
- }
- 
- int
--filter_protocol(vector blist, vector elist, struct path * pp)
-+filter_protocol(const struct _vector *blist, const struct _vector *elist,
-+		const struct path *pp)
- {
- 	char buf[PROTOCOL_BUF_SIZE];
- 	int r = MATCH_NOTHING;
-@@ -345,7 +349,7 @@ filter_protocol(vector blist, vector elist, struct path * pp)
- }
- 
- int
--filter_path (struct config * conf, struct path * pp)
-+filter_path (const struct config *conf, const struct path *pp)
- {
+-	DIR *blkdir;
+-	struct dirent *blkdev;
+-	struct stat statbuf;
+-	char devpath[PATH_MAX];
+-	int threshold = MAX_LINE_LEN;
+-	int fwd = 0;
++	size_t fwd = 0;
  	int r;
++	struct udev_enumerate *enm;
++	struct udev_list_entry *item, *first;
  
-@@ -367,8 +371,8 @@ filter_path (struct config * conf, struct path * pp)
- }
+ 	struct path * pp;
  
- int
--filter_property(struct config *conf, struct udev_device *udev, int lvl,
--		const char *uid_attribute)
-+filter_property(const struct config *conf, struct udev_device *udev,
-+		int lvl, const char *uid_attribute)
- {
- 	const char *devname = udev_device_get_sysname(udev);
- 	struct udev_list_entry *list_entry;
-diff --git a/libmultipath/blacklist.h b/libmultipath/blacklist.h
-index 4305857..ed079f3 100644
---- a/libmultipath/blacklist.h
-+++ b/libmultipath/blacklist.h
-@@ -36,12 +36,17 @@ struct blentry_device {
+-	if (!(blkdir = opendir("/sys/block")))
++	enm = udev_enumerate_new(udev);
++	if (!enm)
+ 		return 1;
++	udev_enumerate_add_match_subsystem(enm, "block");
  
- int setup_default_blist (struct config *);
- int alloc_ble_device (vector);
--int filter_devnode (vector, vector, char *);
--int filter_wwid (vector, vector, char *, char *);
--int filter_device (vector, vector, char *, char *, char *);
--int filter_path (struct config *, struct path *);
--int filter_property(struct config *, struct udev_device *, int, const char*);
--int filter_protocol(vector, vector, struct path *);
-+int filter_devnode (const struct _vector *, const struct _vector *,
-+		    const char *);
-+int filter_wwid (const struct _vector *, const struct _vector *,
-+		 const char *, const char *);
-+int filter_device (const struct _vector *, const struct _vector *,
-+		   const char *, const char *, const char *);
-+int filter_path (const struct config *, const struct path *);
-+int filter_property(const struct config *, struct udev_device *,
-+		    int, const char*);
-+int filter_protocol(const struct _vector *, const struct _vector *,
-+		    const struct path *);
- int store_ble (vector, char *, int);
- int set_ble_device (vector, char *, char *, int);
- void free_blacklist (vector);
+-	if ((len - fwd - threshold) <= 0) {
+-		closedir(blkdir);
+-		return len;
+-	}
+ 	fwd += snprintf(buff + fwd, len - fwd, "available block devices:\n");
++	r = udev_enumerate_scan_devices(enm);
++	if (r < 0)
++		goto out;
+ 
+-	while ((blkdev = readdir(blkdir)) != NULL) {
+-		if ((strcmp(blkdev->d_name,".") == 0) ||
+-		    (strcmp(blkdev->d_name,"..") == 0))
+-			continue;
+-
+-		if (safe_sprintf(devpath, "/sys/block/%s", blkdev->d_name))
+-			continue;
+-
+-		if (stat(devpath, &statbuf) < 0)
+-			continue;
++	first = udev_enumerate_get_list_entry(enm);
++	udev_list_entry_foreach(item, first) {
++		const char *path, *devname, *status;
++		struct udev_device *u_dev;
+ 
+-		if (S_ISDIR(statbuf.st_mode) == 0)
+-			continue;
++		path = udev_list_entry_get_name(item);
++		u_dev = udev_device_new_from_syspath(udev, path);
++		devname = udev_device_get_sysname(u_dev);
+ 
+-		if ((len - fwd - threshold)  <= 0) {
+-			closedir(blkdir);
+-			return len;
+-		}
++		fwd += snprintf(buff + fwd, len - fwd, "    %s", devname);
++		if (fwd >= len)
++			break;
+ 
+-		fwd += snprintf(buff + fwd, len - fwd, "    %s",
+-				blkdev->d_name);
+-		pp = find_path_by_dev(vecs->pathvec, blkdev->d_name);
++		pp = find_path_by_dev(vecs->pathvec, devname);
+ 		if (!pp) {
+ 			r = filter_devnode(conf->blist_devnode,
+-					   conf->elist_devnode, blkdev->d_name);
++					   conf->elist_devnode,
++					   devname);
+ 			if (r > 0)
+-				fwd += snprintf(buff + fwd, len - fwd,
+-						" devnode blacklisted, unmonitored");
+-			else if (r <= 0)
+-				fwd += snprintf(buff + fwd, len - fwd,
+-						" devnode whitelisted, unmonitored");
++				status = "devnode blacklisted, unmonitored";
++			else
++				status = "devnode whitelisted, unmonitored";
+ 		} else
+-			fwd += snprintf(buff + fwd, len - fwd,
+-					" devnode whitelisted, monitored");
+-		fwd += snprintf(buff + fwd, len - fwd, "\n");
++			status = " devnode whitelisted, monitored";
++
++		fwd += snprintf(buff + fwd, len - fwd, " %s\n", status);
++		udev_device_unref(u_dev);
++		if (fwd >= len)
++			break;
+ 	}
+-	closedir(blkdir);
++out:
++	udev_enumerate_unref(enm);
+ 
+ 	if (fwd >= len)
+ 		return len;
+diff --git a/libmultipath/print.h b/libmultipath/print.h
+index e8260d0..0042cef 100644
+--- a/libmultipath/print.h
++++ b/libmultipath/print.h
+@@ -129,7 +129,7 @@ int snprint_multipath_map_json (char * buff, int len,
+ int snprint_blacklist_report (struct config *, char *, int);
+ int snprint_wildcards (char *, int);
+ int snprint_status (char *, int, const struct vectors *);
+-int snprint_devices (struct config *, char *, int, const struct vectors *);
++int snprint_devices (struct config *, char *, size_t, const struct vectors *);
+ int snprint_path_serial (char *, size_t, const struct path *);
+ int snprint_host_wwnn (char *, size_t, const struct path *);
+ int snprint_host_wwpn (char *, size_t, const struct path *);
 -- 
 2.26.2
