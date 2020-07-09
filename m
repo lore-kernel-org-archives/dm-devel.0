@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 72/74] libmpathpersist: use
-	update_pathvec_from_dm()
-Date: Thu,  9 Jul 2020 12:51:43 +0200
-Message-ID: <20200709105145.9211-20-mwilck@suse.com>
+Subject: [PATCH 56/74] multipath-tools: introduce INIT_REMOVED
+	state
+Date: Thu,  9 Jul 2020 12:51:27 +0200
+Message-ID: <20200709105145.9211-4-mwilck@suse.com>
 References: <20200709105145.9211-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,85 +24,111 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-The libmpathpersist-specific function updatepaths() can be replaced
-with the generic function.
+Introduce a new state for pp->initialized, INIT_REMOVED. This state
+means that the path is about to be removed, either by a remove uevent
+or by the operator. It will normally be a very short-lived state, because
+the path will be deleted from pathvec quickly after setting this state.
+Only if the path is member of a multipath map, and reloading the map
+fails, this state will persist until a later map reload or flush eventually
+cancels the membership in the map.
+
+Paths in INIT_REMOVED state are treated as if they didn't exist.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmpathpersist/mpath_persist.c | 54 +--------------------------------
- 1 file changed, 1 insertion(+), 53 deletions(-)
+ libmultipath/discovery.c   |  4 ++++
+ libmultipath/structs.h     |  5 +++++
+ libmultipath/structs_vec.c | 17 +++++++++++++++++
+ libmultipath/structs_vec.h |  1 +
+ multipathd/main.c          |  5 +++--
+ 5 files changed, 30 insertions(+), 2 deletions(-)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index cb3182f..0c66ff3 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -65,52 +65,6 @@ mpath_lib_exit (struct config *conf)
- 	return 0;
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index c202d58..efcef67 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -2078,6 +2078,10 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 	if (!pp || !conf)
+ 		return PATHINFO_FAILED;
+ 
++	/* Treat removed paths as if they didn't exist */
++	if (pp->initialized == INIT_REMOVED)
++		return PATHINFO_FAILED;
++
+ 	/*
+ 	 * For behavior backward-compatibility with multipathd,
+ 	 * the blacklisting by filter_property|devnode() is not
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 894099d..1f0a78a 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -193,6 +193,11 @@ enum initialized_states {
+ 	INIT_MISSING_UDEV,
+ 	INIT_REQUESTED_UDEV,
+ 	INIT_OK,
++	/*
++	 * INIT_REMOVED: supposed to be removed from pathvec, but still
++	 * mapped by some multipath map because of map reload failure.
++	 */
++	INIT_REMOVED,
+ };
+ 
+ enum prkey_sources {
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 05c8626..27d6547 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -113,6 +113,23 @@ void orphan_paths(vector pathvec, struct multipath *mpp, const char *reason)
+ 	}
  }
  
--static int
--updatepaths (struct multipath * mpp)
--{
--	int i, j;
--	struct pathgroup * pgp;
--	struct path * pp;
--	struct config *conf;
--
--	if (!mpp->pg)
--		return 0;
--
--	vector_foreach_slot (mpp->pg, pgp, i){
--		if (!pgp->paths)
--			continue;
--
--		vector_foreach_slot (pgp->paths, pp, j){
--			if (!strlen(pp->dev)){
--				/*
--				 * path is not in sysfs anymore
--				 */
--				pp->state = PATH_DOWN;
--				continue;
--			}
--			pp->mpp = mpp;
--			if (pp->udev == NULL) {
--				pp->udev = get_udev_device(pp->dev_t, DEV_DEVT);
--				if (pp->udev == NULL) {
--					pp->state = PATH_DOWN;
--					continue;
--				}
--				conf = get_multipath_config();
--				pathinfo(pp, conf, DI_SYSFS|DI_CHECKER);
--				put_multipath_config(conf);
--				continue;
--			}
--			if (pp->state == PATH_UNCHECKED ||
--					pp->state == PATH_WILD) {
--				conf = get_multipath_config();
--				pathinfo(pp, conf, DI_CHECKER);
--				put_multipath_config(conf);
--			}
--		}
--	}
--	return 0;
--}
--
- int
- mpath_prin_activepath (struct multipath *mpp, int rq_servact,
- 	struct prin_resp * resp, int noisy)
-@@ -392,13 +346,7 @@ get_mpvec (vector curmp, vector pathvec, char * refwwid)
- 		dm_get_status(mpp->alias, status);
- 		condlog(3, "status = %s", status);
- 		disassemble_map (pathvec, params, mpp);
--
--		/*
--		 * disassemble_map() can add new paths to pathvec.
--		 * If not in "fast list mode", we need to fetch information
--		 * about them
--		 */
--		updatepaths(mpp);
-+		update_pathvec_from_dm(pathvec, mpp, DI_CHECKER);
- 		disassemble_status (status, mpp);
++void set_path_removed(struct path *pp)
++{
++	struct multipath *mpp = pp->mpp;
++
++	orphan_path(pp, "removed");
++	/*
++	 * Keep link to mpp. It will be removed when the path
++	 * is successfully removed from the map.
++	 */
++	if (!mpp) {
++		condlog(0, "%s: internal error: mpp == NULL", pp->dev);
++		return;
++	}
++	pp->mpp = mpp;
++	pp->initialized = INIT_REMOVED;
++}
++
+ void
+ remove_map(struct multipath * mpp, struct vectors * vecs, int purge_vec)
+ {
+diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
+index 4b3b8b7..cf7d569 100644
+--- a/libmultipath/structs_vec.h
++++ b/libmultipath/structs_vec.h
+@@ -18,6 +18,7 @@ int adopt_paths (vector pathvec, struct multipath * mpp);
+ void orphan_paths(vector pathvec, struct multipath *mpp,
+ 		  const char *reason);
+ void orphan_path (struct path * pp, const char *reason);
++void set_path_removed(struct path *pp);
  
- 	}
+ int verify_paths(struct multipath * mpp, struct vectors * vecs);
+ int update_mpp_paths(struct multipath * mpp, vector pathvec);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index cd0e29b..4a5aa17 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1962,8 +1962,9 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 	int marginal_pathgroups, marginal_changed = 0;
+ 	int ret;
+ 
+-	if ((pp->initialized == INIT_OK ||
+-	     pp->initialized == INIT_REQUESTED_UDEV) && !pp->mpp)
++	if (((pp->initialized == INIT_OK ||
++	      pp->initialized == INIT_REQUESTED_UDEV) && !pp->mpp) ||
++	    pp->initialized == INIT_REMOVED)
+ 		return 0;
+ 
+ 	if (pp->tick)
 -- 
 2.26.2
