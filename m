@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 73/74] libmultipath: decrease loglevel in
-	store_path()
-Date: Thu,  9 Jul 2020 12:51:44 +0200
-Message-ID: <20200709105145.9211-21-mwilck@suse.com>
+Subject: [PATCH 68/74] libmultipath: disassemble_map(): require
+	non-NULL pathvec
+Date: Thu,  9 Jul 2020 12:51:39 +0200
+Message-ID: <20200709105145.9211-16-mwilck@suse.com>
 References: <20200709105145.9211-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,26 +24,43 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-"Empty device name" in store_path() can happen regularly and
-shouldn't be logged at -v2.
+We would fail in store_path() at the latest if pathvec was NULL.
+And all callers set pathvec anyway.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/dmparser.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 056a205..f4de542 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -322,7 +322,7 @@ store_path (vector pathvec, struct path * pp)
- 		err++;
- 	}
- 	if (!strlen(pp->dev)) {
--		condlog(2, "%s: Empty device name", pp->dev_t);
-+		condlog(3, "%s: Empty device name", pp->dev_t);
- 		err++;
- 	}
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index 7fcd76e..e6f2cbe 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -6,6 +6,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <assert.h>
  
+ #include "checkers.h"
+ #include "vector.h"
+@@ -137,6 +138,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+ 	struct path * pp;
+ 	struct pathgroup * pgp;
+ 
++	assert(pathvec != NULL);
+ 	p = params;
+ 
+ 	condlog(4, "%s: disassemble map [%s]", mpp->alias, params);
+@@ -295,8 +297,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+ 				devname[0] = '\0';
+ 			}
+ 
+-			if (pathvec)
+-				pp = find_path_by_devt(pathvec, word);
++			pp = find_path_by_devt(pathvec, word);
+ 
+ 			if (!pp) {
+ 				pp = alloc_path();
 -- 
 2.26.2
