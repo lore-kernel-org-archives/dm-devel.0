@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 54/54] libmultipath: get_refwwid(): skip
-	strchop(), and constify dev parameter
-Date: Thu,  9 Jul 2020 12:36:23 +0200
-Message-ID: <20200709103623.8302-13-mwilck@suse.com>
+Subject: [PATCH 51/54] libmultipath: get_refwwid(): use switch
+	statement
+Date: Thu,  9 Jul 2020 12:36:20 +0200
+Message-ID: <20200709103623.8302-10-mwilck@suse.com>
 References: <20200709103623.8302-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,59 +24,148 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-With the previous change, we can safely assume that strchop() has been
-called already where appropriate (the only caller is multipath's
-configure()). We can now use const char* for the "dev" parameter.
+This code calls for a switch. Some additional compaction is possible by
+observing that the code for DEV_DEVNODE, DEV_DEVT, and DEV_UEVENT is almost
+the same, and factoring it out into a "common" section. Doing this with
+a goto inside the switch statement is a bit unusual, but shows the intention
+of the code more clearly than other variants I tried.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 6 +++---
- libmultipath/configure.h | 2 +-
- 2 files changed, 4 insertions(+), 4 deletions(-)
+ libmultipath/configure.c | 81 ++++++++++++----------------------------
+ 1 file changed, 24 insertions(+), 57 deletions(-)
 
 diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 7461e99..48426cd 100644
+index e68494b..db9a255 100644
 --- a/libmultipath/configure.c
 +++ b/libmultipath/configure.c
-@@ -1344,7 +1344,8 @@ struct udev_device *get_udev_device(const char *dev, enum devtypes dev_type)
- 	return ud;
- }
+@@ -1351,6 +1351,7 @@ static int _get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
+ 	struct path * pp;
+ 	char buff[FILE_NAME_SIZE];
+ 	char * refwwid = NULL, tmpwwid[WWID_SIZE];
++	struct udev_device *udevice;
+ 	int flags = DI_SYSFS | DI_WWID;
  
--static int _get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
-+static int _get_refwwid(enum mpath_cmds cmd, const char *dev,
-+			enum devtypes dev_type,
- 			vector pathvec, struct config *conf, char **wwid)
- {
- 	int ret = 1;
-@@ -1379,7 +1380,6 @@ static int _get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
- 		goto common;
+ 	if (!wwid)
+@@ -1363,45 +1364,31 @@ static int _get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
+ 	if (cmd != CMD_REMOVE_WWID)
+ 		flags |= DI_BLACKLIST;
  
- 	case DEV_DEVT:
--		strchop(dev);
+-	if (dev_type == DEV_DEVNODE) {
++	switch (dev_type) {
++	case DEV_DEVNODE:
+ 		if (basenamecpy(dev, buff, FILE_NAME_SIZE) == 0) {
+ 			condlog(1, "basename failed for '%s' (%s)",
+ 				dev, buff);
+ 			return PATHINFO_FAILED;
+ 		}
+ 
+-		pp = find_path_by_dev(pathvec, buff);
+-		if (!pp) {
+-			struct udev_device *udevice =
+-				get_udev_device(buff, dev_type);
++		/* dev is used in common code below */
++		dev = buff;
++		pp = find_path_by_dev(pathvec, dev);
++		goto common;
+ 
+-			if (!udevice)
+-				return PATHINFO_FAILED;
+-
+-			ret = store_pathinfo(pathvec, conf, udevice,
+-					     flags, &pp);
+-			udev_device_unref(udevice);
+-			if (!pp) {
+-				if (ret == PATHINFO_FAILED)
+-					condlog(0, "%s: can't store path info",
+-						dev);
+-				return ret;
+-			}
+-		}
+-		if (pp->udev && pp->uid_attribute &&
+-		    filter_property(conf, pp->udev, 3, pp->uid_attribute) > 0)
+-			return PATHINFO_SKIPPED;
+-
+-		refwwid = pp->wwid;
+-		goto out;
+-	}
+-
+-	if (dev_type == DEV_DEVT) {
++	case DEV_DEVT:
+ 		strchop(dev);
  		pp = find_path_by_devt(pathvec, dev);
- 		goto common;
++		goto common;
++
++	case DEV_UEVENT:
++		pp = NULL;
++		/* For condlog below, dev is unused in get_udev_device() */
++		dev = "environment";
++	common:
+ 		if (!pp) {
+-			struct udev_device *udevice =
+-				get_udev_device(dev, dev_type);
++			udevice = get_udev_device(dev, dev_type);
  
-@@ -1451,7 +1451,7 @@ static int _get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
- /*
-  * Returns: PATHINFO_OK, PATHINFO_FAILED, or PATHINFO_SKIPPED (see pathinfo())
-  */
--int get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
-+int get_refwwid(enum mpath_cmds cmd, const char *dev, enum devtypes dev_type,
- 		vector pathvec, char **wwid)
+ 			if (!udevice) {
+ 				condlog(0, "%s: cannot find block device", dev);
+@@ -1413,8 +1400,8 @@ static int _get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
+ 			udev_device_unref(udevice);
+ 			if (!pp) {
+ 				if (ret == PATHINFO_FAILED)
+-					condlog(0, "%s can't store path info",
+-						buff);
++					condlog(0, "%s: can't store path info",
++						dev);
+ 				return ret;
+ 			}
+ 		}
+@@ -1422,32 +1409,9 @@ static int _get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
+ 		    filter_property(conf, pp->udev, 3, pp->uid_attribute) > 0)
+ 			return PATHINFO_SKIPPED;
+ 		refwwid = pp->wwid;
+-		goto out;
+-	}
+-
+-	if (dev_type == DEV_UEVENT) {
+-		struct udev_device *udevice = get_udev_device(dev, dev_type);
+-
+-		if (!udevice)
+-			return PATHINFO_FAILED;
+-
+-		ret = store_pathinfo(pathvec, conf, udevice,
+-				     flags, &pp);
+-		udev_device_unref(udevice);
+-		if (!pp) {
+-			if (ret == PATHINFO_FAILED)
+-				condlog(0, "%s: can't store path info", dev);
+-			return ret;
+-		}
+-		if (pp->udev && pp->uid_attribute &&
+-		    filter_property(conf, pp->udev, 3, pp->uid_attribute) > 0)
+-			return PATHINFO_SKIPPED;
+-		refwwid = pp->wwid;
+-		goto out;
+-	}
+-
+-	if (dev_type == DEV_DEVMAP) {
++		break;
  
- {
-diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-index 0e33bf4..d9a7de6 100644
---- a/libmultipath/configure.h
-+++ b/libmultipath/configure.h
-@@ -52,7 +52,7 @@ int setup_map (struct multipath * mpp, char * params, int params_size,
- int domap (struct multipath * mpp, char * params, int is_daemon);
- int reinstate_paths (struct multipath *mpp);
- int coalesce_paths (struct vectors *vecs, vector curmp, char * refwwid, int force_reload, enum mpath_cmds cmd);
--int get_refwwid (enum mpath_cmds cmd, char * dev, enum devtypes dev_type,
-+int get_refwwid (enum mpath_cmds cmd, const char *dev, enum devtypes dev_type,
- 		 vector pathvec, char **wwid);
- int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh, int is_daemon);
- struct udev_device *get_udev_device(const char *dev, enum devtypes dev_type);
++	case DEV_DEVMAP:
+ 		if (((dm_get_uuid(dev, tmpwwid, WWID_SIZE)) == 0)
+ 		    && (strlen(tmpwwid)))
+ 			refwwid = tmpwwid;
+@@ -1470,8 +1434,11 @@ static int _get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
+ 		    filter_wwid(conf->blist_wwid, conf->elist_wwid, refwwid,
+ 				NULL) > 0)
+ 			return PATHINFO_SKIPPED;
++		break;
++	default:
++		break;
+ 	}
+-out:
++
+ 	if (refwwid && strlen(refwwid)) {
+ 		*wwid = STRDUP(refwwid);
+ 		return PATHINFO_OK;
 -- 
 2.26.2
