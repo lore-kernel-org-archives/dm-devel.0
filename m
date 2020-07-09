@@ -1,14 +1,14 @@
 From: mwilck@suse.com
-Subject: [PATCH 40/42] libmultipath: refuse creating map with
-	duplicate alias
-Date: Thu,  9 Jul 2020 12:35:11 +0200
-Message-ID: <20200709103513.8142-2-mwilck@suse.com>
-References: <20200709103513.8142-1-mwilck@suse.com>
+Subject: [PATCH 49/54] libmultipath: get_refwwid(): get rid of
+	"check" label
+Date: Thu,  9 Jul 2020 12:36:18 +0200
+Message-ID: <20200709103623.8302-8-mwilck@suse.com>
+References: <20200709103623.8302-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200709103513.8142-1-mwilck@suse.com>
+In-Reply-To: <20200709103623.8302-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,91 +24,61 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-If for some reason (e.g. user configuration error) the same alias
-is used for different WWIDs, multipathd starts behaving very weirdly.
-Sooner or later it "fixes" pp->wwid of some paths to match those of
-the other WWID, and may eventually coalesce paths with different WWIDs
-into one map, causing data corruption.
-
-Fix this by refusing to add a map with an already existing alias.
+This was necessary with with the interspersed pthread_cleanup_push()/pop()
+statements, now we can write the code more cleanly.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c   |  5 +++++
- libmultipath/structs_vec.c | 13 +++++++++++++
- libmultipath/structs_vec.h |  1 +
- multipathd/main.c          |  6 +++++-
- 4 files changed, 24 insertions(+), 1 deletion(-)
+ libmultipath/configure.c | 31 +++++++++++--------------------
+ 1 file changed, 11 insertions(+), 20 deletions(-)
 
 diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 315eb6a..c62807e 100644
+index c4712d7..defc54b 100644
 --- a/libmultipath/configure.c
 +++ b/libmultipath/configure.c
-@@ -1187,6 +1187,11 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
- 		}
- 		verify_paths(mpp, vecs);
+@@ -1449,32 +1449,23 @@ static int _get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
+ 	if (dev_type == DEV_DEVMAP) {
  
-+		if (does_alias_exist(newmp, mpp)) {
-+			remove_map(mpp, vecs, PURGE_VEC);
-+			continue;
+ 		if (((dm_get_uuid(dev, tmpwwid, WWID_SIZE)) == 0)
+-		    && (strlen(tmpwwid))) {
++		    && (strlen(tmpwwid)))
+ 			refwwid = tmpwwid;
+-			goto check;
+-		}
+ 
+-		/*
+-		 * may be a binding
+-		 */
+-		if (get_user_friendly_wwid(dev, tmpwwid,
+-					   conf->bindings_file) == 0) {
++		/* or may be a binding */
++		else if (get_user_friendly_wwid(dev, tmpwwid,
++						conf->bindings_file) == 0)
+ 			refwwid = tmpwwid;
+-			goto check;
+-		}
+ 
+-		/*
+-		 * or may be an alias
+-		 */
+-		refwwid = get_mpe_wwid(conf->mptable, dev);
++		/* or may be an alias */
++		else {
++			refwwid = get_mpe_wwid(conf->mptable, dev);
+ 
+-		/*
+-		 * or directly a wwid
+-		 */
+-		if (!refwwid)
+-			refwwid = dev;
++			/* or directly a wwid */
++			if (!refwwid)
++				refwwid = dev;
 +		}
-+
- 		params[0] = '\0';
- 		if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
- 			remove_map(mpp, vecs, 0);
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 8137ea2..c7dffb7 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -424,6 +424,19 @@ find_existing_alias (struct multipath * mpp,
- 		}
- }
  
-+bool does_alias_exist(const struct _vector *mpvec, const struct multipath *mpp)
-+{
-+	const struct multipath *other;
-+
-+	other = find_mp_by_alias(mpvec, mpp->alias);
-+	if (other == NULL || !strcmp(other->wwid, mpp->wwid))
-+		return false;
-+	condlog(0, "%s: alias \"%s\" already present with WWID %s, skipping",
-+		mpp->wwid, mpp->alias, other->wwid);
-+	condlog(0, "please check alias settings in config and bindings file");
-+	return true;
-+}
-+
- struct multipath *add_map_with_path(struct vectors *vecs, struct path *pp,
- 				    int add_vec)
- {
-diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
-index 2a5e3d6..4b3b8b7 100644
---- a/libmultipath/structs_vec.h
-+++ b/libmultipath/structs_vec.h
-@@ -33,6 +33,7 @@ void remove_map_by_alias(const char *alias, struct vectors * vecs,
- void remove_maps (struct vectors * vecs);
- 
- void sync_map_state (struct multipath *);
-+bool does_alias_exist(const struct _vector *mpvec, const struct multipath *mpp);
- struct multipath * add_map_with_path (struct vectors * vecs,
- 				struct path * pp, int add_vec);
- void update_queue_mode_del_path(struct multipath *mpp);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 40c050b..cd0e29b 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -966,8 +966,12 @@ rescan:
- 			orphan_path(pp, "only one path");
- 			return 0;
- 		}
--		condlog(4,"%s: creating new map", pp->dev);
- 		if ((mpp = add_map_with_path(vecs, pp, 1))) {
-+			if (does_alias_exist(vecs->mpvec, mpp)) {
-+				remove_map(mpp, vecs, PURGE_VEC);
-+				return 0;
-+			}
-+			condlog(4,"%s: creating new map", pp->dev);
- 			mpp->action = ACT_CREATE;
- 			/*
- 			 * We don't depend on ACT_CREATE, as domap will
+-check:
+ 		if (refwwid && strlen(refwwid) &&
+ 		    filter_wwid(conf->blist_wwid, conf->elist_wwid, refwwid,
+ 				NULL) > 0)
 -- 
 2.26.2
