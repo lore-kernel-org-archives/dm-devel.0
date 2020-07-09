@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 42/42] libmultipath: dm_addmap(): refuse creating
-	map with empty WWID
-Date: Thu,  9 Jul 2020 12:35:13 +0200
-Message-ID: <20200709103513.8142-4-mwilck@suse.com>
+Subject: [PATCH 41/42] libmultipath: refuse reloading an existing
+	map with different WWID
+Date: Thu,  9 Jul 2020 12:35:12 +0200
+Message-ID: <20200709103513.8142-3-mwilck@suse.com>
 References: <20200709103513.8142-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,63 +24,50 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-We already avoid creating maps with empty WWID in coalesce_paths()
-as well as in ev_add_path(). The only code path where it's difficult
-to prove (although extremely unlikely) that we can't call
-dm_addmap(ACT_CREATE) with an empty WWID is update_path_groups()->
-reload_map(). To make the code easier to review and avoid ugly
-corner cases, simply refuse to create maps with a zero-length
-WWID.
+If a map with given name (alias) already exists with a different WWID,
+reloading it with a new WWID will be harmful. The existing paths would
+be replaced by other, unrelated ones. The WWIDs of the new paths would
+not match the map WWID, and thus sooner or later overwritten by
+disassemble_map with the map's wwid.
+
+Refuse reloading a map under such circumstances. This makes it impossible
+to "swap" multipath names in a single reconfigure run, but avoiding
+data corruption should be worth it.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/devmapper.c | 26 +++++++++++++++-----------
- 1 file changed, 15 insertions(+), 11 deletions(-)
+ libmultipath/configure.c | 19 +++++++++++++++----
+ 1 file changed, 15 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index a177a54..fb7675c 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -352,6 +352,12 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
- 	char *prefixed_uuid = NULL;
- 	uint32_t cookie = 0;
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index c62807e..75e11fd 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -897,10 +897,21 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
+ 		return DOMAP_DRY;
+ 	}
  
-+	if (task == DM_DEVICE_CREATE && strlen(mpp->wwid) == 0) {
-+		condlog(1, "%s: refusing to create map with empty WWID",
-+			mpp->alias);
-+		return 0;
-+	}
+-	if (mpp->action == ACT_CREATE &&
+-	    dm_map_present(mpp->alias)) {
+-		condlog(3, "%s: map already present", mpp->alias);
+-		mpp->action = ACT_RELOAD;
++	if (mpp->action == ACT_CREATE && dm_map_present(mpp->alias)) {
++		char wwid[WWID_SIZE];
 +
- 	/* Need to add this here to allow 0 to be passed in udev_flags */
- 	udev_flags |= DM_UDEV_DISABLE_LIBRARY_FALLBACK;
++		if (dm_get_uuid(mpp->alias, wwid, sizeof(wwid)) == 0) {
++			if (!strncmp(mpp->wwid, wwid, sizeof(wwid))) {
++				condlog(3, "%s: map already present",
++					mpp->alias);
++				mpp->action = ACT_RELOAD;
++			} else {
++				condlog(0, "%s: map \"%s\" already present with WWID %s, skipping",
++					mpp->wwid, mpp->alias, wwid);
++				condlog(0, "please check alias settings in config and bindings file");
++				mpp->action = ACT_REJECT;
++			}
++		}
+ 	}
  
-@@ -368,18 +374,16 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
- 		dm_task_set_ro(dmt);
- 
- 	if (task == DM_DEVICE_CREATE) {
--		if (strlen(mpp->wwid) > 0) {
--			prefixed_uuid = MALLOC(UUID_PREFIX_LEN +
--					       strlen(mpp->wwid) + 1);
--			if (!prefixed_uuid) {
--				condlog(0, "cannot create prefixed uuid : %s",
--					strerror(errno));
--				goto addout;
--			}
--			sprintf(prefixed_uuid, UUID_PREFIX "%s", mpp->wwid);
--			if (!dm_task_set_uuid(dmt, prefixed_uuid))
--				goto freeout;
-+		prefixed_uuid = MALLOC(UUID_PREFIX_LEN +
-+				       strlen(mpp->wwid) + 1);
-+		if (!prefixed_uuid) {
-+			condlog(0, "cannot create prefixed uuid : %s",
-+				strerror(errno));
-+			goto addout;
- 		}
-+		sprintf(prefixed_uuid, UUID_PREFIX "%s", mpp->wwid);
-+		if (!dm_task_set_uuid(dmt, prefixed_uuid))
-+			goto freeout;
- 		dm_task_skip_lockfs(dmt);
- #ifdef LIBDM_API_FLUSH
- 		dm_task_no_flush(dmt);
+ 	switch (mpp->action) {
 -- 
 2.26.2
