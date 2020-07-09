@@ -1,7 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 55/74] libmultipath: add uninitialize_path()
-Date: Thu,  9 Jul 2020 12:51:26 +0200
-Message-ID: <20200709105145.9211-3-mwilck@suse.com>
+Subject: [PATCH 57/74] libmultipath: update_mpp_paths(): handle
+	INIT_REMOVED
+Date: Thu,  9 Jul 2020 12:51:28 +0200
+Message-ID: <20200709105145.9211-5-mwilck@suse.com>
 References: <20200709105145.9211-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,88 +24,62 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This helper clears all fields of struct path (except pp->udev) that must be
-re-ininitialized if the path ever is to be used again.
+Since the ancient commit b96dead ("[multipathd] remove the retry login in
+uev_remove_path()"), update_mpp_paths() was used to check whether devices
+found in disassembled maps were still in the pathvec, and to skip them
+while re-assembling the new params string on reload. The reason was to
+deal with failed reloads. With the introduction of INIT_REMOVED, we
+need to skip paths in that state, too. Moreover, past reloads may have
+succeeded in removing REMOVED paths from the map, so check if any
+INIT_REMOVED paths can now be deleted for good. This is the right
+place to do this check, because update_mpp_paths() is called after
+obtaining the current kernel state, and before reloading.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs.c     | 19 +++++++++++++++++--
- libmultipath/structs.h     |  1 +
- libmultipath/structs_vec.c |  9 +--------
- 3 files changed, 19 insertions(+), 10 deletions(-)
+ libmultipath/structs_vec.c | 21 ++++++++++++++++-----
+ 1 file changed, 16 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 9407462..056a205 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -114,19 +114,34 @@ alloc_path (void)
- }
- 
- void
--free_path (struct path * pp)
-+uninitialize_path(struct path *pp)
- {
- 	if (!pp)
- 		return;
- 
-+	pp->dmstate = PSTATE_UNDEF;
-+	pp->uid_attribute = NULL;
-+	pp->getuid = NULL;
-+
- 	if (checker_selected(&pp->checker))
- 		checker_put(&pp->checker);
- 
- 	if (prio_selected(&pp->prio))
- 		prio_put(&pp->prio);
- 
--	if (pp->fd >= 0)
-+	if (pp->fd >= 0) {
- 		close(pp->fd);
-+		pp->fd = -1;
-+	}
-+}
-+
-+void
-+free_path (struct path * pp)
-+{
-+	if (!pp)
-+		return;
-+
-+	uninitialize_path(pp);
- 
- 	if (pp->udev) {
- 		udev_device_unref(pp->udev);
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index d69bc2e..894099d 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -416,6 +416,7 @@ struct host_group {
- struct path * alloc_path (void);
- struct pathgroup * alloc_pathgroup (void);
- struct multipath * alloc_multipath (void);
-+void uninitialize_path(struct path *pp);
- void free_path (struct path *);
- void free_pathvec (vector vec, enum free_path_mode free_paths);
- void free_pathgroup (struct pathgroup * pgp, enum free_path_mode free_paths);
 diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 0b8c548..05c8626 100644
+index 27d6547..8999552 100644
 --- a/libmultipath/structs_vec.c
 +++ b/libmultipath/structs_vec.c
-@@ -98,14 +98,7 @@ void orphan_path(struct path *pp, const char *reason)
- {
- 	condlog(3, "%s: orphan path, %s", pp->dev, reason);
- 	pp->mpp = NULL;
--	pp->dmstate = PSTATE_UNDEF;
--	pp->uid_attribute = NULL;
--	pp->getuid = NULL;
--	prio_put(&pp->prio);
--	checker_put(&pp->checker);
--	if (pp->fd >= 0)
--		close(pp->fd);
--	pp->fd = -1;
-+	uninitialize_path(pp);
+@@ -29,6 +29,7 @@ int update_mpp_paths(struct multipath *mpp, vector pathvec)
+ 	struct pathgroup * pgp;
+ 	struct path * pp;
+ 	int i,j;
++	bool store_failure = false;
+ 
+ 	if (!mpp || !mpp->pg)
+ 		return 0;
+@@ -39,13 +40,23 @@ int update_mpp_paths(struct multipath *mpp, vector pathvec)
+ 
+ 	vector_foreach_slot (mpp->pg, pgp, i) {
+ 		vector_foreach_slot (pgp->paths, pp, j) {
+-			if (!find_path_by_devt(mpp->paths, pp->dev_t) &&
+-			    (find_path_by_devt(pathvec, pp->dev_t)) &&
+-			    store_path(mpp->paths, pp))
+-				return 1;
++			if (!find_path_by_devt(mpp->paths, pp->dev_t)) {
++				struct path *pp1;
++
++				/*
++				 * Avoid adding removed paths to the map again
++				 * when we reload it. Such paths may exist if
++				 * domap fails in ev_remove_path().
++				 */
++				pp1 = find_path_by_devt(pathvec, pp->dev_t);
++				if (pp1 && pp->initialized != INIT_REMOVED &&
++				    store_path(mpp->paths, pp))
++					store_failure = true;
++			}
+ 		}
+ 	}
+-	return 0;
++
++	return store_failure;
  }
  
- void orphan_paths(vector pathvec, struct multipath *mpp, const char *reason)
+ int adopt_paths(vector pathvec, struct multipath *mpp)
 -- 
 2.26.2
