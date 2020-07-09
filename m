@@ -1,14 +1,12 @@
 From: mwilck@suse.com
-Subject: [PATCH 75/80] multipathd: uev_trigger(): handle
-	incomplete ADD events
-Date: Thu,  9 Jul 2020 13:03:25 +0200
-Message-ID: <20200709110330.9917-2-mwilck@suse.com>
-References: <20200709110330.9917-1-mwilck@suse.com>
+Subject: [PATCH 00/80] multipath-tools series part VI: incomplete
+	udev initialization
+Date: Thu,  9 Jul 2020 13:03:24 +0200
+Message-ID: <20200709110330.9917-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200709110330.9917-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,53 +22,57 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Udev may be killed after handling the ADD event for a multipath map,
-but before handling the subsequent CHANGE event that populates the
-udev data base with the device properties (e.g. during initrd processing).
-If this happens, the ADD uevent sent during coldplug will only provide a
-subset of the device properties. We need another CHANGE event to make the map
-available to the system.
+Hi Christophe, hi Ben,
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipathd/main.c | 25 +++++++++++++++++++++++++
- 1 file changed, 25 insertions(+)
+This is part VI of a larger patch series for multipath-tools I've been preparing.
+It's based on the previously submitted part V.
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 66ca4e3..29227cd 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1508,6 +1508,31 @@ uev_trigger (struct uevent * uev, void * trigger_data)
- 			uev_pathfail_check(uev, vecs);
- 		} else if (!strncmp(uev->action, "remove", 6)) {
- 			r = uev_remove_map(uev, vecs);
-+		} else if (!strncmp(uev->action, "add", 3)) {
-+			const char *ev_name;
-+			char *dm_name;
-+			int major = -1, minor = -1;
-+
-+			/*
-+			 * If DM_NAME is not set for a valid map, trigger a
-+			 * change event. This can happen during coldplug
-+			 * if udev was killed between handling the 'add' and
-+			 * 'change' events before.
-+			 */
-+			ev_name = uevent_get_dm_name(uev);
-+			if (!ev_name) {
-+				major = uevent_get_major(uev);
-+				minor = uevent_get_minor(uev);
-+				dm_name = dm_mapname(major, minor);
-+				if (dm_name && *dm_name) {
-+					condlog(2, "%s: received incomplete 'add' uevent, triggering change",
-+						dm_name);
-+					udev_device_set_sysattr_value(uev->udev,
-+								      "uevent",
-+								      "change");
-+					free(dm_name);
-+				}
-+			}
- 		}
- 		goto out;
- 	}
+The full series will also be available here:
+https://github.com/mwilck/multipath-tools/tree/ups/submit-2007
+
+There are tags in that repo for each part of the series.
+This part is tagged "submit-200709-6".
+
+The series handles an issue observed in certain partner installations, where
+DM devices were incompletely initialized by udev - during initrd procesing,
+the "add" event had been processed, but the subsequent "change" event had not,
+because udevd had been killed before getting around to handle them.
+
+My first attempt to fix this was based on udev rules ("11-dm-mpath.rules: Fix
+udev rule processing during coldplug"), but this patch was wrong. We have to
+add logic in multipathd itself. The most important patch in the series that
+fixed the actual customer problem is patch 76. Patch 75 was supposed to handle
+a slightly different incarnation of the same problem, which so far hasn't been
+actually observed. But I think having this patch "just in case" doesn't hurt,
+either.
+
+Patch 78 and 79 rename "update_path_groups()", which over time has grown
+to be the main entry point for reloading maps.
+
+Patch 80 fixes an issue which I observed while testing the first 3 patches.
+
+Regards,
+Martin
+
+Martin Wilck (6):
+  multipathd: uev_trigger(): handle incomplete ADD events
+  libmultipath: select_action(): force udev reload for uninitialized
+    maps
+  libmultipath: log dm_task_run() errors
+  libmultipath: move reload_map() to multipathd
+  multipathd: rename update_path_groups() -> reload_and_sync_map()
+  libmultipath: select_action(): don't drop map if alias clashes
+
+ libmultipath/configure.c  | 112 +++++++++++++++-----------------------
+ libmultipath/configure.h  |   3 +-
+ libmultipath/devmapper.c  |  61 +++++++++++++++++----
+ libmultipath/devmapper.h  |   4 ++
+ multipathd/cli_handlers.c |   8 +--
+ multipathd/dmevents.c     |   4 +-
+ multipathd/main.c         |  71 ++++++++++++++++++++++--
+ multipathd/main.h         |   4 +-
+ multipathd/waiter.c       |   2 +
+ 9 files changed, 178 insertions(+), 91 deletions(-)
+
 -- 
 2.26.2
