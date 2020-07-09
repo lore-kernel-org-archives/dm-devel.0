@@ -1,14 +1,14 @@
 From: mwilck@suse.com
-Subject: [PATCH 19/35] libmultipath: uevent: inline trivial
-	functions
-Date: Thu,  9 Jul 2020 12:16:04 +0200
-Message-ID: <20200709101620.6786-20-mwilck@suse.com>
-References: <20200709101620.6786-1-mwilck@suse.com>
+Subject: [PATCH 39/39] libmultipath: increase log level of
+	limiting dev_loss_tmo
+Date: Thu,  9 Jul 2020 12:19:52 +0200
+Message-ID: <20200709101952.7285-5-mwilck@suse.com>
+References: <20200709101952.7285-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200709101620.6786-1-mwilck@suse.com>
+In-Reply-To: <20200709101952.7285-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,126 +24,28 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Export rather the not-quite-as-trivial getter functions, and
-convert the accessors to inline wrappers.
+Users who aren't familar with the complex dependencies between
+dev_loss_tmo, no_path_retry, and fast_io_fail may be confused
+if their settings aren't applied. Print this log message at the
+default level.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/uevent.c | 34 ++--------------------------------
- libmultipath/uevent.h | 41 +++++++++++++++++++++++++++++++++++------
- 2 files changed, 37 insertions(+), 38 deletions(-)
+ libmultipath/discovery.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index d74389e..d3061bf 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -136,7 +136,7 @@ invalid:
- 	return NULL;
- }
- 
--static int uevent_get_env_positive_int(const struct uevent *uev,
-+int uevent_get_env_positive_int(const struct uevent *uev,
- 				       const char *attr)
- {
- 	const char *p = uevent_get_env_var(uev, attr);
-@@ -657,22 +657,7 @@ out_udev:
- 	return err;
- }
- 
--int uevent_get_major(const struct uevent *uev)
--{
--	return uevent_get_env_positive_int(uev, "MAJOR");
--}
--
--int uevent_get_minor(const struct uevent *uev)
--{
--	return uevent_get_env_positive_int(uev, "MINOR");
--}
--
--int uevent_get_disk_ro(const struct uevent *uev)
--{
--	return uevent_get_env_positive_int(uev, "DISK_RO");
--}
--
--static char *uevent_get_dm_str(const struct uevent *uev, char *attr)
-+char *uevent_get_dm_str(const struct uevent *uev, char *attr)
- {
- 	const char *tmp = uevent_get_env_var(uev, attr);
- 
-@@ -681,21 +666,6 @@ static char *uevent_get_dm_str(const struct uevent *uev, char *attr)
- 	return strdup(tmp);
- }
- 
--char *uevent_get_dm_name(const struct uevent *uev)
--{
--	return uevent_get_dm_str(uev, "DM_NAME");
--}
--
--char *uevent_get_dm_path(const struct uevent *uev)
--{
--	return uevent_get_dm_str(uev, "DM_PATH");
--}
--
--char *uevent_get_dm_action(const struct uevent *uev)
--{
--	return uevent_get_dm_str(uev, "DM_ACTION");
--}
--
- bool uevent_is_mpath(const struct uevent *uev)
- {
- 	const char *uuid = uevent_get_env_var(uev, "DM_UUID");
-diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
-index 9a5b213..61ca1b5 100644
---- a/libmultipath/uevent.h
-+++ b/libmultipath/uevent.h
-@@ -30,13 +30,42 @@ int is_uevent_busy(void);
- int uevent_listen(struct udev *udev);
- int uevent_dispatch(int (*store_uev)(struct uevent *, void * trigger_data),
- 		    void * trigger_data);
--int uevent_get_major(const struct uevent *uev);
--int uevent_get_minor(const struct uevent *uev);
--int uevent_get_disk_ro(const struct uevent *uev);
--char *uevent_get_dm_name(const struct uevent *uev);
--char *uevent_get_dm_path(const struct uevent *uev);
--char *uevent_get_dm_action(const struct uevent *uev);
- bool uevent_is_mpath(const struct uevent *uev);
- void uevent_get_wwid(struct uevent *uev);
- 
-+int uevent_get_env_positive_int(const struct uevent *uev,
-+				const char *attr);
-+
-+static inline int uevent_get_major(const struct uevent *uev)
-+{
-+	return uevent_get_env_positive_int(uev, "MAJOR");
-+}
-+
-+static inline int uevent_get_minor(const struct uevent *uev)
-+{
-+	return uevent_get_env_positive_int(uev, "MINOR");
-+}
-+
-+static inline int uevent_get_disk_ro(const struct uevent *uev)
-+{
-+	return uevent_get_env_positive_int(uev, "DISK_RO");
-+}
-+
-+char *uevent_get_dm_str(const struct uevent *uev, char *attr);
-+
-+static inline char *uevent_get_dm_name(const struct uevent *uev)
-+{
-+	return uevent_get_dm_str(uev, "DM_NAME");
-+}
-+
-+static inline char *uevent_get_dm_path(const struct uevent *uev)
-+{
-+	return uevent_get_dm_str(uev, "DM_PATH");
-+}
-+
-+static inline char *uevent_get_dm_action(const struct uevent *uev)
-+{
-+	return uevent_get_dm_str(uev, "DM_ACTION");
-+}
-+
- #endif /* _UEVENT_H */
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index c00af7e..e26aae2 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -651,7 +651,7 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
+ 		}
+ 	} else if (mpp->dev_loss > DEFAULT_DEV_LOSS_TMO &&
+ 		mpp->no_path_retry != NO_PATH_RETRY_QUEUE) {
+-		condlog(3, "%s: limiting dev_loss_tmo to %d, since "
++		condlog(2, "%s: limiting dev_loss_tmo to %d, since "
+ 			"fast_io_fail is not set",
+ 			rport_id, DEFAULT_DEV_LOSS_TMO);
+ 		mpp->dev_loss = DEFAULT_DEV_LOSS_TMO;
 -- 
 2.26.2
