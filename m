@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 68/74] libmultipath: disassemble_map(): require
-	non-NULL pathvec
-Date: Thu,  9 Jul 2020 12:51:39 +0200
-Message-ID: <20200709105145.9211-16-mwilck@suse.com>
+Subject: [PATCH 74/74] libmultipath: dmparser: constify function
+	arguments
+Date: Thu,  9 Jul 2020 12:51:45 +0200
+Message-ID: <20200709105145.9211-22-mwilck@suse.com>
 References: <20200709105145.9211-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,43 +24,57 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-We would fail in store_path() at the latest if pathvec was NULL.
-And all callers set pathvec anyway.
+With the previous change that avoids additions to pathvec,
+the pathvec argument to disassemble_map() is const now.
+Also use const for the string arguments where possible.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/dmparser.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ libmultipath/dmparser.c | 11 ++++++-----
+ libmultipath/dmparser.h |  4 ++--
+ 2 files changed, 8 insertions(+), 7 deletions(-)
 
 diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index 7fcd76e..e6f2cbe 100644
+index e629a89..6d9488f 100644
 --- a/libmultipath/dmparser.c
 +++ b/libmultipath/dmparser.c
-@@ -6,6 +6,7 @@
- #include <stdio.h>
- #include <stdlib.h>
- #include <string.h>
-+#include <assert.h>
+@@ -128,10 +128,11 @@ err:
+  * Call update_pathvec_from_dm() after this function to make sure
+  * all data structures are in a sane state.
+  */
+-int disassemble_map(vector pathvec, char *params, struct multipath *mpp)
++int disassemble_map(const struct _vector *pathvec,
++		    const char *params, struct multipath *mpp)
+ {
+ 	char * word;
+-	char * p;
++	const char *p;
+ 	int i, j, k;
+ 	int num_features = 0;
+ 	int num_hwhandler = 0;
+@@ -344,10 +345,10 @@ out:
+ 	return 1;
+ }
  
- #include "checkers.h"
- #include "vector.h"
-@@ -137,6 +138,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
- 	struct path * pp;
- 	struct pathgroup * pgp;
- 
-+	assert(pathvec != NULL);
- 	p = params;
- 
- 	condlog(4, "%s: disassemble map [%s]", mpp->alias, params);
-@@ -295,8 +297,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
- 				devname[0] = '\0';
- 			}
- 
--			if (pathvec)
--				pp = find_path_by_devt(pathvec, word);
-+			pp = find_path_by_devt(pathvec, word);
- 
- 			if (!pp) {
- 				pp = alloc_path();
+-int disassemble_status(char *params, struct multipath *mpp)
++int disassemble_status(const char *params, struct multipath *mpp)
+ {
+-	char * word;
+-	char * p;
++	char *word;
++	const char *p;
+ 	int i, j, k;
+ 	int num_feature_args;
+ 	int num_hwhandler_args;
+diff --git a/libmultipath/dmparser.h b/libmultipath/dmparser.h
+index 1b45df0..212fee5 100644
+--- a/libmultipath/dmparser.h
++++ b/libmultipath/dmparser.h
+@@ -1,3 +1,3 @@
+ int assemble_map (struct multipath *, char *, int);
+-int disassemble_map (vector, char *, struct multipath *);
+-int disassemble_status (char *, struct multipath *);
++int disassemble_map (const struct _vector *, const char *, struct multipath *);
++int disassemble_status (const char *, struct multipath *);
 -- 
 2.26.2
