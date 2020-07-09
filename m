@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 28/35] libmultipath: snprint_devices(): use
-	udev_enumerate
-Date: Thu,  9 Jul 2020 12:16:13 +0200
-Message-ID: <20200709101620.6786-29-mwilck@suse.com>
+Subject: [PATCH 22/35] libmultipath: get_uid(): improve log
+	message on udev failure
+Date: Thu,  9 Jul 2020 12:16:07 +0200
+Message-ID: <20200709101620.6786-23-mwilck@suse.com>
 References: <20200709101620.6786-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,131 +24,40 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Rather than hand-coding the device enumeration, use udev as we do elsewhere,
-too. While at it, improve the overflow detection.
+If WWID determination by uid_attribute fails, and no fallback
+is available, multipath(d) print two error messages:
+"failed to get udev uid" and "failed to get unknown uid".
+That's confusing and unnecessary. Print only the udev message.
+If the fallback is available, this will result in only the
+error message from the fallback being printed. But that's not
+a big issue, because the udev error message will have been printed
+before, and because failure of the fallback implies previous failure
+of the udev method.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/print.c | 75 ++++++++++++++++++++------------------------
- libmultipath/print.h |  2 +-
- 2 files changed, 35 insertions(+), 42 deletions(-)
+ libmultipath/discovery.c | 9 +++------
+ 1 file changed, 3 insertions(+), 6 deletions(-)
 
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 298b376..fb94f86 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -2026,65 +2026,58 @@ int snprint_status(char *buff, int len, const struct vectors *vecs)
- 	return fwd;
- }
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 81c78d3..5d4bf7d 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -2014,12 +2014,9 @@ get_uid (struct path * pp, int path_state, struct udev_device *udev,
  
--int snprint_devices(struct config *conf, char * buff, int len,
-+int snprint_devices(struct config *conf, char *buff, size_t len,
- 		    const struct vectors *vecs)
- {
--	DIR *blkdir;
--	struct dirent *blkdev;
--	struct stat statbuf;
--	char devpath[PATH_MAX];
--	int threshold = MAX_LINE_LEN;
--	int fwd = 0;
-+	size_t fwd = 0;
- 	int r;
-+	struct udev_enumerate *enm;
-+	struct udev_list_entry *item, *first;
- 
- 	struct path * pp;
- 
--	if (!(blkdir = opendir("/sys/block")))
-+	enm = udev_enumerate_new(udev);
-+	if (!enm)
- 		return 1;
-+	udev_enumerate_add_match_subsystem(enm, "block");
- 
--	if ((len - fwd - threshold) <= 0) {
--		closedir(blkdir);
--		return len;
--	}
- 	fwd += snprintf(buff + fwd, len - fwd, "available block devices:\n");
-+	r = udev_enumerate_scan_devices(enm);
-+	if (r < 0)
-+		goto out;
- 
--	while ((blkdev = readdir(blkdir)) != NULL) {
--		if ((strcmp(blkdev->d_name,".") == 0) ||
--		    (strcmp(blkdev->d_name,"..") == 0))
--			continue;
--
--		if (safe_sprintf(devpath, "/sys/block/%s", blkdev->d_name))
--			continue;
--
--		if (stat(devpath, &statbuf) < 0)
--			continue;
-+	first = udev_enumerate_get_list_entry(enm);
-+	udev_list_entry_foreach(item, first) {
-+		const char *path, *devname, *status;
-+		struct udev_device *u_dev;
- 
--		if (S_ISDIR(statbuf.st_mode) == 0)
--			continue;
-+		path = udev_list_entry_get_name(item);
-+		u_dev = udev_device_new_from_syspath(udev, path);
-+		devname = udev_device_get_sysname(u_dev);
- 
--		if ((len - fwd - threshold)  <= 0) {
--			closedir(blkdir);
--			return len;
--		}
-+		fwd += snprintf(buff + fwd, len - fwd, "    %s", devname);
-+		if (fwd >= len)
-+			break;
- 
--		fwd += snprintf(buff + fwd, len - fwd, "    %s",
--				blkdev->d_name);
--		pp = find_path_by_dev(vecs->pathvec, blkdev->d_name);
-+		pp = find_path_by_dev(vecs->pathvec, devname);
- 		if (!pp) {
- 			r = filter_devnode(conf->blist_devnode,
--					   conf->elist_devnode, blkdev->d_name);
-+					   conf->elist_devnode,
-+					   devname);
- 			if (r > 0)
--				fwd += snprintf(buff + fwd, len - fwd,
--						" devnode blacklisted, unmonitored");
--			else if (r <= 0)
--				fwd += snprintf(buff + fwd, len - fwd,
--						" devnode whitelisted, unmonitored");
-+				status = "devnode blacklisted, unmonitored";
-+			else
-+				status = "devnode whitelisted, unmonitored";
- 		} else
--			fwd += snprintf(buff + fwd, len - fwd,
--					" devnode whitelisted, monitored");
--		fwd += snprintf(buff + fwd, len - fwd, "\n");
-+			status = " devnode whitelisted, monitored";
-+
-+		fwd += snprintf(buff + fwd, len - fwd, " %s\n", status);
-+		udev_device_unref(u_dev);
-+		if (fwd >= len)
-+			break;
- 	}
--	closedir(blkdir);
-+out:
-+	udev_enumerate_unref(enm);
- 
- 	if (fwd >= len)
- 		return len;
-diff --git a/libmultipath/print.h b/libmultipath/print.h
-index e8260d0..0042cef 100644
---- a/libmultipath/print.h
-+++ b/libmultipath/print.h
-@@ -129,7 +129,7 @@ int snprint_multipath_map_json (char * buff, int len,
- int snprint_blacklist_report (struct config *, char *, int);
- int snprint_wildcards (char *, int);
- int snprint_status (char *, int, const struct vectors *);
--int snprint_devices (struct config *, char *, int, const struct vectors *);
-+int snprint_devices (struct config *, char *, size_t, const struct vectors *);
- int snprint_path_serial (char *, size_t, const struct path *);
- int snprint_host_wwnn (char *, size_t, const struct path *);
- int snprint_host_wwpn (char *, size_t, const struct path *);
+ 		if (udev_available) {
+ 			len = get_udev_uid(pp, pp->uid_attribute, udev);
+-			if (len <= 0)
+-				condlog(1,
+-					"%s: failed to get udev uid: %s",
+-					pp->dev, strerror(-len));
+-			else
+-				origin = "udev";
++			origin = "udev";
++			if (len == 0)
++				condlog(1, "%s: empty udev uid", pp->dev);
+ 		}
+ 		if ((!udev_available || (len <= 0 && allow_fallback))
+ 		    && has_uid_fallback(pp)) {
 -- 
 2.26.2
