@@ -1,8 +1,7 @@
 From: mwilck@suse.com
-Subject: [PATCH 09/35] libmultipath: use bitfields in
-	group_by_match()
-Date: Thu,  9 Jul 2020 12:15:54 +0200
-Message-ID: <20200709101620.6786-10-mwilck@suse.com>
+Subject: [PATCH 04/35] multipath tools tests: add strchop() test
+Date: Thu,  9 Jul 2020 12:15:49 +0200
+Message-ID: <20200709101620.6786-5-mwilck@suse.com>
 References: <20200709101620.6786-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,64 +23,90 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This makes "bitmap" a proper bitmap, and decreases memory consumption.
-Unit tests for pgpolicy.c still pass.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/pgpolicies.c | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
+ tests/util.c | 63 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 63 insertions(+)
 
-diff --git a/libmultipath/pgpolicies.c b/libmultipath/pgpolicies.c
-index 02cafdc..0e55109 100644
---- a/libmultipath/pgpolicies.c
-+++ b/libmultipath/pgpolicies.c
-@@ -196,20 +196,20 @@ int group_by_match(struct multipath * mp, vector paths,
- 		   bool (*path_match_fn)(struct path *, struct path *))
+diff --git a/tests/util.c b/tests/util.c
+index 48de384..6d12fda 100644
+--- a/tests/util.c
++++ b/tests/util.c
+@@ -408,6 +408,68 @@ static int test_strlcpy(void)
+ 	return cmocka_run_group_tests(tests, NULL, NULL);
+ }
+ 
++static void test_strchop_nochop(void **state)
++{
++	char hello[] = "hello";
++
++	assert_int_equal(strchop(hello), 5);
++	assert_string_equal(hello, "hello");
++}
++
++static void test_strchop_newline(void **state)
++{
++	char hello[] = "hello\n";
++
++	assert_int_equal(strchop(hello), 5);
++	assert_string_equal(hello, "hello");
++}
++
++static void test_strchop_space(void **state)
++{
++	char hello[] = " ello      ";
++
++	assert_int_equal(strchop(hello), 5);
++	assert_string_equal(hello, " ello");
++}
++
++static void test_strchop_mix(void **state)
++{
++	char hello[] = " el\no \t  \n\n \t    \n";
++
++	assert_int_equal(strchop(hello), 5);
++	assert_string_equal(hello, " el\no");
++}
++
++static void test_strchop_blank(void **state)
++{
++	char hello[] = "  \t  \n\n \t    \n";
++
++	assert_int_equal(strchop(hello), 0);
++	assert_string_equal(hello, "");
++}
++
++static void test_strchop_empty(void **state)
++{
++	char hello[] = "";
++
++	assert_int_equal(strchop(hello), 0);
++	assert_string_equal(hello, "");
++}
++
++static int test_strchop(void)
++{
++	const struct CMUnitTest tests[] = {
++		cmocka_unit_test(test_strchop_nochop),
++		cmocka_unit_test(test_strchop_newline),
++		cmocka_unit_test(test_strchop_space),
++		cmocka_unit_test(test_strchop_mix),
++		cmocka_unit_test(test_strchop_blank),
++		cmocka_unit_test(test_strchop_empty),
++	};
++
++	return cmocka_run_group_tests(tests, NULL, NULL);
++}
++
+ int main(void)
  {
- 	int i, j;
--	int * bitmap;
-+	struct bitfield *bitmap;
- 	struct path * pp;
- 	struct pathgroup * pgp;
- 	struct path * pp2;
- 
- 	/* init the bitmap */
--	bitmap = (int *)MALLOC(VECTOR_SIZE(paths) * sizeof (int));
-+	bitmap = alloc_bitfield(VECTOR_SIZE(paths));
- 
- 	if (!bitmap)
- 		goto out;
- 
- 	for (i = 0; i < VECTOR_SIZE(paths); i++) {
- 
--		if (bitmap[i])
-+		if (is_bit_set_in_bitfield(i, bitmap))
- 			continue;
- 
- 		pp = VECTOR_SLOT(paths, i);
-@@ -227,11 +227,11 @@ int group_by_match(struct multipath * mp, vector paths,
- 		if (store_path(pgp->paths, pp))
- 			goto out1;
- 
--		bitmap[i] = 1;
-+		set_bit_in_bitfield(i, bitmap);
- 
- 		for (j = i + 1; j < VECTOR_SIZE(paths); j++) {
- 
--			if (bitmap[j])
-+			if (is_bit_set_in_bitfield(j, bitmap))
- 				continue;
- 
- 			pp2 = VECTOR_SLOT(paths, j);
-@@ -240,7 +240,7 @@ int group_by_match(struct multipath * mp, vector paths,
- 				if (store_path(pgp->paths, pp2))
- 					goto out1;
- 
--				bitmap[j] = 1;
-+				set_bit_in_bitfield(j, bitmap);
- 			}
- 		}
- 	}
+ 	int ret = 0;
+@@ -415,5 +477,6 @@ int main(void)
+ 	ret += test_basenamecpy();
+ 	ret += test_bitmasks();
+ 	ret += test_strlcpy();
++	ret += test_strchop();
+ 	return ret;
+ }
 -- 
 2.26.2
