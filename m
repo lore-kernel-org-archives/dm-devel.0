@@ -1,7 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 32/35] libmultipath: log table params in addmap()
-Date: Thu,  9 Jul 2020 12:16:17 +0200
-Message-ID: <20200709101620.6786-33-mwilck@suse.com>
+Subject: [PATCH 30/35] libmultipath: alloc_path(): initialize
+	pp->initialized
+Date: Thu,  9 Jul 2020 12:16:15 +0200
+Message-ID: <20200709101620.6786-31-mwilck@suse.com>
 References: <20200709101620.6786-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,41 +24,24 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-We currently log the table parameters with "load table" in domap()
-in the success case. But it's at least as interesting to get this
-information when domap() fails. Log in addmap() instead at v2 level.
+INIT_NEW is 0, but being explicit is better here.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 2 +-
- libmultipath/devmapper.c | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/structs.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index fe590f4..315eb6a 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -992,7 +992,7 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
- 		} else  {
- 			/* multipath daemon mode */
- 			mpp->stat_map_loads++;
--			condlog(2, "%s: load table [0 %llu %s %s]", mpp->alias,
-+			condlog(4, "%s: load table [0 %llu %s %s]", mpp->alias,
- 				mpp->size, TGT_MPATH, params);
- 			/*
- 			 * Required action is over, reset for the stateful daemon.
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 4096e9d..a177a54 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -395,7 +395,7 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
- 	if (mpp->attribute_flags & (1 << ATTR_GID) &&
- 	    !dm_task_set_gid(dmt, mpp->gid))
- 		goto freeout;
--	condlog(4, "%s: %s [0 %llu %s %s]", mpp->alias,
-+	condlog(2, "%s: %s [0 %llu %s %s]", mpp->alias,
- 		task == DM_DEVICE_RELOAD ? "reload" : "addmap", mpp->size,
- 		target, params);
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index 2dd378c..9407462 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -92,6 +92,7 @@ alloc_path (void)
+ 	pp = (struct path *)MALLOC(sizeof(struct path));
  
+ 	if (pp) {
++		pp->initialized = INIT_NEW;
+ 		pp->sg_id.host_no = -1;
+ 		pp->sg_id.channel = -1;
+ 		pp->sg_id.scsi_id = -1;
 -- 
 2.26.2
