@@ -1,7 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 33/35] multipathd: remove set_multipath_wwid()
-Date: Thu,  9 Jul 2020 12:16:18 +0200
-Message-ID: <20200709101620.6786-34-mwilck@suse.com>
+Subject: [PATCH 21/35] libmultipath: get_udev_uid(): more
+	appropriate error code
+Date: Thu,  9 Jul 2020 12:16:06 +0200
+Message-ID: <20200709101620.6786-22-mwilck@suse.com>
 References: <20200709101620.6786-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,45 +24,26 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This function was only called from one place. Making the dm_get_uuid
-call explicit there makes the code more obvious.
+An uid_attribute that is not found is not necessarily invalid
+input. "No data available" seems more appropriate.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 14 ++++----------
- 1 file changed, 4 insertions(+), 10 deletions(-)
+ libmultipath/discovery.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index f014d2a..40c050b 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -400,15 +400,6 @@ remove_maps_and_stop_waiters(struct vectors *vecs)
- 	remove_maps(vecs);
- }
- 
--static void
--set_multipath_wwid (struct multipath * mpp)
--{
--	if (strlen(mpp->wwid))
--		return;
--
--	dm_get_uuid(mpp->alias, mpp->wwid, WWID_SIZE);
--}
--
- int __setup_multipath(struct vectors *vecs, struct multipath *mpp,
- 		      int reset)
- {
-@@ -552,7 +543,10 @@ add_map_without_path (struct vectors *vecs, const char *alias)
- 		condlog(3, "%s: cannot access table", mpp->alias);
- 		goto out;
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 1039fc4..81c78d3 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1897,7 +1897,7 @@ get_udev_uid(struct path * pp, char *uid_attribute, struct udev_device *udev)
+ 	} else {
+ 		condlog(3, "%s: no %s attribute", pp->dev,
+ 			uid_attribute);
+-		len = -EINVAL;
++		len = -ENODATA;
  	}
--	set_multipath_wwid(mpp);
-+	if (!strlen(mpp->wwid))
-+		dm_get_uuid(mpp->alias, mpp->wwid, WWID_SIZE);
-+	if (!strlen(mpp->wwid))
-+		condlog(1, "%s: adding map with empty WWID", mpp->alias);
- 	conf = get_multipath_config();
- 	mpp->mpe = find_mpe(conf->mptable, mpp->wwid);
- 	put_multipath_config(conf);
+ 	return len;
+ }
 -- 
 2.26.2
