@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 24/35] libmultipath: pathinfo(): improve a log
-	message
-Date: Thu,  9 Jul 2020 12:16:09 +0200
-Message-ID: <20200709101620.6786-25-mwilck@suse.com>
+Subject: [PATCH 31/35] libmultipath: alloc_path_with_pathinfo():
+	treat devname overflow as error
+Date: Thu,  9 Jul 2020 12:16:16 +0200
+Message-ID: <20200709101620.6786-32-mwilck@suse.com>
 References: <20200709101620.6786-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,25 +24,28 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-"node" is too generic to be understood without checking the code.
+This is to be consistent with store_path_with_pathinfo(). It's not strictly
+necessary; we _could_ proceed in both functions even in the unlikely case
+that the device name overflows, because we use pp->dev mainly for log
+messages. However, a device node name that causes an overflow for
+FILE_NAME_SIZE = 256 should be considered pathologic anyway.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/discovery.c | 1 +
+ 1 file changed, 1 insertion(+)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index c692026..2e559d8 100644
+index 10b5a28..81a3fad 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -2124,7 +2124,7 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 		pp->fd = open(udev_device_get_devnode(pp->udev), O_RDONLY);
+@@ -64,6 +64,7 @@ alloc_path_with_pathinfo (struct config *conf, struct udev_device *udevice,
  
- 	if (pp->fd < 0) {
--		condlog(4, "Couldn't open node for %s: %s",
-+		condlog(4, "Couldn't open device node for %s: %s",
- 			pp->dev, strerror(errno));
- 		goto blank;
- 	}
+ 	if (safe_sprintf(pp->dev, "%s", devname)) {
+ 		condlog(0, "pp->dev too small");
++		err = 1;
+ 	} else {
+ 		pp->udev = udev_device_ref(udevice);
+ 		err = pathinfo(pp, conf, flag | DI_BLACKLIST);
 -- 
 2.26.2
