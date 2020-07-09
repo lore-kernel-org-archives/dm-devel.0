@@ -1,7 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 35/35] kpartx: add missing newline
-Date: Thu,  9 Jul 2020 12:16:20 +0200
-Message-ID: <20200709101620.6786-36-mwilck@suse.com>
+Subject: [PATCH 29/35] libmultipath: snprint_devices(): print
+	hidden/foreign status
+Date: Thu,  9 Jul 2020 12:16:14 +0200
+Message-ID: <20200709101620.6786-30-mwilck@suse.com>
 References: <20200709101620.6786-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,23 +24,57 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+The "hidden" and "claimed by foreign" properties take precedence
+over blacklisting/whitelisting in pathinfo(). We should take
+this into account when printing the device list.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/devmapper.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/print.c | 25 ++++++++++++++++++-------
+ 1 file changed, 18 insertions(+), 7 deletions(-)
 
-diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
-index 86731ea..3efd6df 100644
---- a/kpartx/devmapper.c
-+++ b/kpartx/devmapper.c
-@@ -618,7 +618,7 @@ remove_partmap(const char *name, void *data)
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index fb94f86..ea95d69 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -30,6 +30,7 @@
+ #include "debug.h"
+ #include "discovery.h"
+ #include "util.h"
++#include "foreign.h"
  
- 	if (dm_get_opencount(name)) {
- 		if (rd->verbose)
--			printf("%s is in use. Not removing", name);
-+			printf("%s is in use. Not removing\n", name);
- 		return 1;
- 	}
- 	if (!dm_simplecmd(DM_DEVICE_REMOVE, name, 0, 0)) {
+ #define MAX(x,y) (((x) > (y)) ? (x) : (y))
+ #define MIN(x,y) (((x) > (y)) ? (y) : (x))
+@@ -2061,13 +2062,23 @@ int snprint_devices(struct config *conf, char *buff, size_t len,
+ 
+ 		pp = find_path_by_dev(vecs->pathvec, devname);
+ 		if (!pp) {
+-			r = filter_devnode(conf->blist_devnode,
+-					   conf->elist_devnode,
+-					   devname);
+-			if (r > 0)
+-				status = "devnode blacklisted, unmonitored";
+-			else
+-				status = "devnode whitelisted, unmonitored";
++			const char *hidden;
++
++			hidden = udev_device_get_sysattr_value(u_dev,
++							       "hidden");
++			if (hidden && !strcmp(hidden, "1"))
++				status = "hidden, unmonitored";
++			else if (is_claimed_by_foreign(u_dev))
++				status = "foreign, monitored";
++			else {
++				r = filter_devnode(conf->blist_devnode,
++						   conf->elist_devnode,
++						   devname);
++				if (r > 0)
++					status = "devnode blacklisted, unmonitored";
++				else
++					status = "devnode whitelisted, unmonitored";
++			}
+ 		} else
+ 			status = " devnode whitelisted, monitored";
+ 
 -- 
 2.26.2
