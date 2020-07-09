@@ -1,48 +1,99 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: Re: remove dead bdi congestion leftovers
-Date: Thu, 9 Jul 2020 07:32:33 +0200
-Message-ID: <20200709053233.GA3243@lst.de>
-References: <20200701090622.3354860-1-hch@lst.de>
-	<b5d6df17-68af-d535-79e4-f95e16dd5632@kernel.dk>
+From: lixiaokeng <lixiaokeng@huawei.com>
+Subject: [dm-level] master - libmultipath: fix use after free
+ when iscsi logs in
+Date: Thu, 9 Jul 2020 15:08:48 +0800
+Message-ID: <d1e9b61a-ab10-5ecf-8fd1-c13155d2ed45@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <b5d6df17-68af-d535-79e4-f95e16dd5632-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-Cc: linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-GB
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: linfeilong@huawei.com, liuzhiqiang26@huawei.com, lutianxiong@huawei.com
 List-Id: dm-devel.ids
 
-T24gV2VkLCBKdWwgMDgsIDIwMjAgYXQgMDU6MTQ6MjlQTSAtMDYwMCwgSmVucyBBeGJvZSB3cm90
-ZToKPiBPbiA3LzEvMjAgMzowNiBBTSwgQ2hyaXN0b3BoIEhlbGx3aWcgd3JvdGU6Cj4gPiBIaSBK
-ZW5zLAo+ID4gCj4gPiB3ZSBoYXZlIGEgbG90IG9mIGJkaSBjb25nZXN0aW9uIHJlbGF0ZWQgY29k
-ZSB0aGF0IGlzIGxlZnQgYXJvdW5kIHdpdGhvdXQKPiA+IGFueSB1c2UuICBUaGlzIHNlcmllcyBy
-ZW1vdmVzIGl0IGluIHByZXBhcmF0aW9uIG9mIHNvcnRpbmcgb3V0IHRoZSBiZGkKPiA+IGxpZmV0
-aW1lIHJ1bGVzIHByb3Blcmx5Lgo+IAo+IFBsZWFzZSBydW4gc2VyaWVzIGxpa2UgdGhpcyB0aHJv
-dWdoIGEgZnVsbCBjb21waWxhdGlvbiwgZm9yIGJvdGggdGhpcyBvbmUKPiBhbmQgdGhlIHByZXZp
-b3VzIHNlcmllcyBJIGhhZCB0byBmaXggdXAgaXNzdWVzIGxpa2UgdGhpczoKPiAKPiBkcml2ZXJz
-L21kL2JjYWNoZS9yZXF1ZXN0LmM6IEluIGZ1bmN0aW9uIOKAmGJjaF9jYWNoZWRfZGV2X3JlcXVl
-c3RfaW5pdOKAmToKPiBkcml2ZXJzL21kL2JjYWNoZS9yZXF1ZXN0LmM6MTIzMzoxODogd2Fybmlu
-ZzogdW51c2VkIHZhcmlhYmxlIOKAmGfigJkgWy1XdW51c2VkLXZhcmlhYmxlXQo+ICAxMjMzIHwg
-IHN0cnVjdCBnZW5kaXNrICpnID0gZGMtPmRpc2suZGlzazsKPiAgICAgICB8ICAgICAgICAgICAg
-ICAgICAgXgo+IGRyaXZlcnMvbWQvYmNhY2hlL3JlcXVlc3QuYzogSW4gZnVuY3Rpb24g4oCYYmNo
-X2ZsYXNoX2Rldl9yZXF1ZXN0X2luaXTigJk6Cj4gZHJpdmVycy9tZC9iY2FjaGUvcmVxdWVzdC5j
-OjEzMjA6MTg6IHdhcm5pbmc6IHVudXNlZCB2YXJpYWJsZSDigJhn4oCZIFstV3VudXNlZC12YXJp
-YWJsZV0KPiAgMTMyMCB8ICBzdHJ1Y3QgZ2VuZGlzayAqZyA9IGQtPmRpc2s7Cj4gICAgICAgfCAg
-ICAgICAgICAgICAgICAgIF4KPiAKPiBEaWQgdGhlIHNhbWUgaGVyZSwgYXBwbGllZCBpdC4KCkFu
-ZCBqdXN0IGxpa2UgdGhlIHByZXZpb3VzIG9uZSBJIGRpZCwgYW5kIHRoZSBjb21waWxlciBkaWQg
-bm90IGNvbXBsYWluLgpUaGVyZSBtdXN0IGJlIHNvbWV0aGluZyBhYm91dCBjZXJ0YWluIGdjYyB2
-ZXJzaW9ucyBub3Qgd2FybmluZyBhYm91dAp2YXJpYWJsZXMgdGhhdCBhcmUgaW5pdGlhbGl6ZWQg
-YnV0IG5vdCBvdGhlcndpc2UgdXNlZC4KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX18KZHJiZC1kZXYgbWFpbGluZyBsaXN0CmRyYmQtZGV2QGxpc3RzLmxpbmJp
-dC5jb20KaHR0cHM6Ly9saXN0cy5saW5iaXQuY29tL21haWxtYW4vbGlzdGluZm8vZHJiZC1kZXYK
+When two iscsi ips log in and out alternately and  the following scripts run
+at the same time,
+
+#!/bin/bash
+interval=5
+while true
+do
+        iscsiadm -m node -p 9.41.147.171 &> /dev/null
+        iscsiadm -m node -p 9.41.148.172 &> /dev/null
+        iscsiadm -m session &> /dev/null
+        rescan-scsi-bus.sh &> /dev/null
+        multipath -v2 &> /dev/null
+        multipath -ll &> /dev/null
+        sleep $interval
+done
+
+multipathd will have a segfault after about 30 mins.
+
+The reason is that mpp->hwe is accessed after hwe is already freed. In
+extract_hwe_from_path func, mpp->hwe is set to pp->hwe, so they points to the
+same hwe. For some reasons, pp->mpp will be set to NULL in orphan_path func.
+Then, pp and hwe will be freed with (pp->mpp == NULL) in free_path func
+called by ev_remove_path func. However, mpp->hwe is not set to NULL while hwe
+is already freed. So, when iscsi device logs in and new path is added to mpp,
+mpp->hwe will be accessed in select_pgfailback func. Finally, use-after-free
+problem occurs.
+
+The procedure details given as follows,
+1.wait_dmevents thread
+wait_dmevents
+	->dmevent_loop
+		->update_multipath
+			->__setup_multipath
+				->update_multipath_strings
+					 -> sync_paths
+						->orphan_path
+2.uevqloop thread  (iscsi log out, remove path)
+uevqloop
+->uevent_dispatch
+	->service_uevq
+		->uev_remove_path
+			->ev_remove_path  //pp->mpp is NULL
+				->free_path(pp)
+			//pp->hew are freed but mpp->hwe is not set to NULL
+3.ev_remove_path  (iscsi log in, add path)
+uevqloop
+->uevent_dispatch
+	->service_uevq
+		->ev_add_path
+			->select_pgfailback //mpp->hwe is accessed
+
+Here, we will set mpp->hwe to NULL before setting pp->map to NULL in orphan_path
+func.
+
+Signed-off-by: Tianxiong Lu <lutianxiong@huawei.com>
+Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+---
+ libmultipath/structs_vec.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 3dbbaa0..9bbe5d1 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -93,6 +93,8 @@ int adopt_paths(vector pathvec, struct multipath *mpp)
+ void orphan_path(struct path *pp, const char *reason)
+ {
+ 	condlog(3, "%s: orphan path, %s", pp->dev, reason);
++	if (pp->mpp && pp->mpp->hwe == pp->hwe)
++		pp->mpp->hwe = NULL;
+ 	pp->mpp = NULL;
+ 	pp->dmstate = PSTATE_UNDEF;
+ 	pp->uid_attribute = NULL;
+--
+2.26.1
