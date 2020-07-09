@@ -1,8 +1,7 @@
 From: mwilck@suse.com
-Subject: [PATCH 70/74] libmultipath: disassemble_map(): do not
-	change pathvec and WWIDs
-Date: Thu,  9 Jul 2020 12:51:41 +0200
-Message-ID: <20200709105145.9211-18-mwilck@suse.com>
+Subject: [PATCH 71/74] multipath: use update_pathvec_from_dm()
+Date: Thu,  9 Jul 2020 12:51:42 +0200
+Message-ID: <20200709105145.9211-19-mwilck@suse.com>
 References: <20200709105145.9211-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,116 +23,105 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-After introducing update_pathvec_from_dm() in a predecessor patch,
-the "layer violations" in disassemble_map() can now be removed.
-I hope this clarifies program logic a little bit.
-
-Callers need to call update_pathvec_from_dm() after disassemble_map().
+The multipath-specific function update_paths() can now be replaced with
+a call to update_pathvec_from_dm().
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/dmparser.c    | 48 +++++---------------------------------
- libmultipath/structs_vec.c |  3 +++
- 2 files changed, 9 insertions(+), 42 deletions(-)
+ multipath/main.c | 67 +++---------------------------------------------
+ 1 file changed, 3 insertions(+), 64 deletions(-)
 
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index 233a1b8..e629a89 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -122,6 +122,12 @@ err:
+diff --git a/multipath/main.c b/multipath/main.c
+index 8a2a6f7..435c5d5 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -187,63 +187,6 @@ usage (char * progname)
  
- #undef APPEND
- 
-+/*
-+ * Caution callers: If this function encounters yet unkown path devices, it
-+ * adds them uninitialized to the mpp.
-+ * Call update_pathvec_from_dm() after this function to make sure
-+ * all data structures are in a sane state.
-+ */
- int disassemble_map(vector pathvec, char *params, struct multipath *mpp)
- {
- 	char * word;
-@@ -282,20 +288,12 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp)
- 		FREE(word);
- 
- 		for (j = 0; j < num_paths; j++) {
--			char devname[FILE_NAME_SIZE];
--
- 			pp = NULL;
- 			p += get_word(p, &word);
- 
- 			if (!word)
- 				goto out;
- 
--			if (devt2devname(devname, FILE_NAME_SIZE, word)) {
--				condlog(2, "%s: cannot find block device",
--					word);
--				devname[0] = '\0';
--			}
--
- 			pp = find_path_by_devt(pathvec, word);
- 
- 			if (!pp) {
-@@ -305,46 +303,12 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp)
- 					goto out1;
- 
- 				strlcpy(pp->dev_t, word, BLK_DEV_SIZE);
--				strlcpy(pp->dev, devname, FILE_NAME_SIZE);
--				if (strlen(mpp->wwid)) {
--					strlcpy(pp->wwid, mpp->wwid,
--						WWID_SIZE);
--				}
--				if (store_path(pathvec, pp))
--					goto out1;
--			} else {
--				if (!strlen(pp->wwid) &&
--				    strlen(mpp->wwid))
--					strlcpy(pp->wwid, mpp->wwid,
--						WWID_SIZE);
- 			}
- 			FREE(word);
- 
- 			if (store_path(pgp->paths, pp))
- 				goto out;
- 
--			/*
--			 * Update wwid for multipaths which are not setup
--			 * in the get_dm_mpvec() code path
--			 */
--			if (!strlen(mpp->wwid))
--				strlcpy(mpp->wwid, pp->wwid, WWID_SIZE);
--
--			/*
--			 * Update wwid for paths which may not have been
--			 * active at the time the getuid callout was run
--			 */
--			else if (!strlen(pp->wwid))
--				strlcpy(pp->wwid, mpp->wwid, WWID_SIZE);
--
--			/*
--			 * Do not allow in-use patch to change wwid
--			 */
--			else if (strcmp(pp->wwid, mpp->wwid) != 0) {
--				condlog(0, "%s: path wwid appears to have changed. Using map wwid.\n", pp->dev_t);
--				strlcpy(pp->wwid, mpp->wwid, WWID_SIZE);
--			}
--
- 			pgp->id ^= (long)pp;
- 			pp->pgindex = i + 1;
- 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 73a7221..2ddb8cd 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -389,6 +389,9 @@ update_multipath_table (struct multipath *mpp, vector pathvec)
- 		return DMP_ERR;
- 	}
- 
-+	/* FIXME: we should deal with the return value here */
-+	update_pathvec_from_dm(pathvec, mpp, 0);
-+
- 	return DMP_OK;
  }
  
+-static int
+-update_paths (struct multipath * mpp, int quick)
+-{
+-	int i, j;
+-	struct pathgroup * pgp;
+-	struct path * pp;
+-	struct config *conf;
+-
+-	if (!mpp->pg)
+-		return 0;
+-
+-	vector_foreach_slot (mpp->pg, pgp, i) {
+-		if (!pgp->paths)
+-			continue;
+-
+-		vector_foreach_slot (pgp->paths, pp, j) {
+-			if (!strlen(pp->dev)) {
+-				if (devt2devname(pp->dev, FILE_NAME_SIZE,
+-						 pp->dev_t)) {
+-					/*
+-					 * path is not in sysfs anymore
+-					 */
+-					pp->chkrstate = pp->state = PATH_DOWN;
+-					pp->offline = 1;
+-					continue;
+-				}
+-				pp->mpp = mpp;
+-				if (quick)
+-					continue;
+-				conf = get_multipath_config();
+-				if (pathinfo(pp, conf, DI_ALL))
+-					pp->state = PATH_UNCHECKED;
+-				put_multipath_config(conf);
+-				continue;
+-			}
+-			pp->mpp = mpp;
+-			if (quick)
+-				continue;
+-			if (pp->state == PATH_UNCHECKED ||
+-			    pp->state == PATH_WILD) {
+-				conf = get_multipath_config();
+-				if (pathinfo(pp, conf, DI_CHECKER))
+-					pp->state = PATH_UNCHECKED;
+-				put_multipath_config(conf);
+-			}
+-
+-			if (pp->priority == PRIO_UNDEF) {
+-				conf = get_multipath_config();
+-				if (pathinfo(pp, conf, DI_PRIO))
+-					pp->priority = PRIO_UNDEF;
+-				put_multipath_config(conf);
+-			}
+-		}
+-	}
+-	return 0;
+-}
+-
+ static int
+ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+ {
+@@ -273,13 +216,8 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+ 		condlog(3, "status = %s", status);
+ 
+ 		disassemble_map(pathvec, params, mpp);
+-
+-		/*
+-		 * disassemble_map() can add new paths to pathvec.
+-		 * If not in "fast list mode", we need to fetch information
+-		 * about them
+-		 */
+-		update_paths(mpp, (cmd == CMD_LIST_SHORT));
++		update_pathvec_from_dm(pathvec, mpp,
++				       (cmd == CMD_LIST_SHORT ? 0 : DI_ALL));
+ 
+ 		if (cmd == CMD_LIST_LONG)
+ 			mpp->bestpg = select_path_group(mpp);
+@@ -353,6 +291,7 @@ static int check_usable_paths(struct config *conf,
+ 	dm_get_map(mpp->alias, &mpp->size, params);
+ 	dm_get_status(mpp->alias, status);
+ 	disassemble_map(pathvec, params, mpp);
++	update_pathvec_from_dm(pathvec, mpp, 0);
+ 	disassemble_status(status, mpp);
+ 
+ 	vector_foreach_slot (mpp->pg, pg, i) {
 -- 
 2.26.2
