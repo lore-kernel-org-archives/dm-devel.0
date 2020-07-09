@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 74/74] libmultipath: dmparser: constify function
-	arguments
-Date: Thu,  9 Jul 2020 12:51:45 +0200
-Message-ID: <20200709105145.9211-22-mwilck@suse.com>
+Subject: [PATCH 66/74] libmultipath: update_pathvec_from_dm:
+	handle pp->mpp mismatch
+Date: Thu,  9 Jul 2020 12:51:37 +0200
+Message-ID: <20200709105145.9211-14-mwilck@suse.com>
 References: <20200709105145.9211-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,57 +24,72 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-With the previous change that avoids additions to pathvec,
-the pathvec argument to disassemble_map() is const now.
-Also use const for the string arguments where possible.
+Treat this like a WWID mismatch.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/dmparser.c | 11 ++++++-----
- libmultipath/dmparser.h |  4 ++--
- 2 files changed, 8 insertions(+), 7 deletions(-)
+ libmultipath/structs_vec.c | 37 +++++++++++++++++++++++--------------
+ 1 file changed, 23 insertions(+), 14 deletions(-)
 
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index e629a89..6d9488f 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -128,10 +128,11 @@ err:
-  * Call update_pathvec_from_dm() after this function to make sure
-  * all data structures are in a sane state.
-  */
--int disassemble_map(vector pathvec, char *params, struct multipath *mpp)
-+int disassemble_map(const struct _vector *pathvec,
-+		    const char *params, struct multipath *mpp)
- {
- 	char * word;
--	char * p;
-+	const char *p;
- 	int i, j, k;
- 	int num_features = 0;
- 	int num_hwhandler = 0;
-@@ -344,10 +345,10 @@ out:
- 	return 1;
- }
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 5dd37d5..8651b98 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -118,6 +118,12 @@ bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
+ 			goto delete_pg;
  
--int disassemble_status(char *params, struct multipath *mpp)
-+int disassemble_status(const char *params, struct multipath *mpp)
- {
--	char * word;
--	char * p;
-+	char *word;
-+	const char *p;
- 	int i, j, k;
- 	int num_feature_args;
- 	int num_hwhandler_args;
-diff --git a/libmultipath/dmparser.h b/libmultipath/dmparser.h
-index 1b45df0..212fee5 100644
---- a/libmultipath/dmparser.h
-+++ b/libmultipath/dmparser.h
-@@ -1,3 +1,3 @@
- int assemble_map (struct multipath *, char *, int);
--int disassemble_map (vector, char *, struct multipath *);
--int disassemble_status (char *, struct multipath *);
-+int disassemble_map (const struct _vector *, const char *, struct multipath *);
-+int disassemble_status (const char *, struct multipath *);
+ 		vector_foreach_slot(pgp->paths, pp, j) {
++
++			if (pp->mpp && pp->mpp != mpp) {
++				condlog(0, "BUG: %s: found path %s which is already in %s",
++					mpp->alias, pp->dev, pp->mpp->alias);
++				goto bad_path;
++			}
+ 			pp->mpp = mpp;
+ 
+ 			if (pp->udev) {
+@@ -163,25 +169,28 @@ bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
+ 
+ 					condlog(0, "%s: path %s WWID %s doesn't match, removing from map",
+ 						mpp->wwid, pp->dev_t, pp->wwid);
+-					/*
+-					 * This path exists, but in the wong map.
+-					 * We can't reload the map from here.
+-					 * Instead, treat this path like "missing udev",
+-					 * which it probably is.
+-					 * check_path() will trigger an uevent
+-					 * and reset pp->tick.
+-					 */
+-					must_reload = true;
+-					pp->mpp = NULL;
+-					dm_fail_path(mpp->alias, pp->dev_t);
+-					vector_del_slot(pgp->paths, j--);
+-					pp->initialized = INIT_MISSING_UDEV;
+-					pp->tick = 1;
++					goto bad_path;
+ 				}
+ 				condlog(2, "%s: adding new path %s",
+ 					mpp->alias, pp->dev);
+ 				store_path(pathvec, pp);
++
+ 			}
++			continue;
++
++		bad_path:
++			/*
++			 * This path exists, but in the wrong map.
++			 * We can't reload the map from here.
++			 * Instead, treat this path like "missing udev".
++			 * check_path() will trigger an uevent and reset pp->tick.
++			 */
++			must_reload = true;
++			pp->mpp = NULL;
++			dm_fail_path(mpp->alias, pp->dev_t);
++			vector_del_slot(pgp->paths, j--);
++			pp->initialized = INIT_MISSING_UDEV;
++			pp->tick = 1;
+ 		}
+ 		if (VECTOR_SIZE(pgp->paths) != 0)
+ 			continue;
 -- 
 2.26.2
