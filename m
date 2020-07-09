@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 44/54] libmultipath: adopt_paths(): don't bail
-	out on single path failure
-Date: Thu,  9 Jul 2020 12:36:13 +0200
-Message-ID: <20200709103623.8302-3-mwilck@suse.com>
+Subject: [PATCH 47/54] libmultipath: get_refwwid(): use
+	find_path_by_devt()
+Date: Thu,  9 Jul 2020 12:36:16 +0200
+Message-ID: <20200709103623.8302-6-mwilck@suse.com>
 References: <20200709103623.8302-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,45 +24,39 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-If pathinfo fails for one path to be adopted, we currently
-fail the entire function. This may cause ev_add_path() for a valid
-path to fail because some other path is broken. Fix it by just
-skipping paths that don't look healthy.
+If get_refwwid is called with a dev_t argument, there's no point in converting
+it into a devname first. If the device doesn't exist, get_udev_device() will fail.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs_vec.c | 14 +++++++++-----
- 1 file changed, 9 insertions(+), 5 deletions(-)
+ libmultipath/configure.c | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 55fca9b..bc47d1e 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -75,16 +75,20 @@ int adopt_paths(vector pathvec, struct multipath *mpp)
- 			if (!mpp->paths && !(mpp->paths = vector_alloc()))
- 				return 1;
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 75e11fd..e8d6db8 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -1414,17 +1414,15 @@ int get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
  
--			if (!find_path_by_devt(mpp->paths, pp->dev_t) &&
--			    store_path(mpp->paths, pp))
--					return 1;
+ 	if (dev_type == DEV_DEVT) {
+ 		strchop(dev);
+-		if (devt2devname(buff, FILE_NAME_SIZE, dev)) {
+-			condlog(0, "%s: cannot find block device\n", dev);
+-			return 1;
+-		}
+-		pp = find_path_by_dev(pathvec, buff);
++		pp = find_path_by_devt(pathvec, dev);
+ 		if (!pp) {
+ 			struct udev_device *udevice =
+ 				get_udev_device(dev, dev_type);
+ 
+-			if (!udevice)
++			if (!udevice) {
++				condlog(0, "%s: cannot find block device", dev);
+ 				return 1;
++			}
+ 
  			conf = get_multipath_config();
  			pthread_cleanup_push(put_multipath_config, conf);
- 			ret = pathinfo(pp, conf,
- 				       DI_PRIO | DI_CHECKER);
- 			pthread_cleanup_pop(1);
--			if (ret)
--				return 1;
-+			if (ret) {
-+				condlog(3, "%s: pathinfo failed for %s",
-+					__func__, pp->dev);
-+				continue;
-+			}
-+
-+			if (!find_path_by_devt(mpp->paths, pp->dev_t) &&
-+			    store_path(mpp->paths, pp))
-+					return 1;
- 		}
- 	}
- 	return 0;
 -- 
 2.26.2
