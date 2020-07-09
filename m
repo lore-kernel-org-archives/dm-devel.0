@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 30/35] libmultipath: alloc_path(): initialize
-	pp->initialized
-Date: Thu,  9 Jul 2020 12:16:15 +0200
-Message-ID: <20200709101620.6786-31-mwilck@suse.com>
+Subject: [PATCH 15/35] libmultipath: fix missing initializer
+	warning from clang 3.9
+Date: Thu,  9 Jul 2020 12:16:00 +0200
+Message-ID: <20200709101620.6786-16-mwilck@suse.com>
 References: <20200709101620.6786-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,24 +24,25 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-INIT_NEW is 0, but being explicit is better here.
+clang 3.9 needs designators to accept implicit struct initialization.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs.c | 1 +
- 1 file changed, 1 insertion(+)
+ libmultipath/checkers/directio.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 2dd378c..9407462 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -92,6 +92,7 @@ alloc_path (void)
- 	pp = (struct path *)MALLOC(sizeof(struct path));
+diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
+index 503519e..f73cbe3 100644
+--- a/libmultipath/checkers/directio.c
++++ b/libmultipath/checkers/directio.c
+@@ -256,7 +256,7 @@ get_events(struct aio_group *aio_grp, struct timespec *timeout)
+ {
+ 	struct io_event events[128];
+ 	int i, nr, got_events = 0;
+-	struct timespec zero_timeout = {0};
++	struct timespec zero_timeout = { .tv_sec = 0, };
+ 	struct timespec *timep = timeout;
  
- 	if (pp) {
-+		pp->initialized = INIT_NEW;
- 		pp->sg_id.host_no = -1;
- 		pp->sg_id.channel = -1;
- 		pp->sg_id.scsi_id = -1;
+ 	do {
 -- 
 2.26.2
