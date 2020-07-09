@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 21/35] libmultipath: get_udev_uid(): more
-	appropriate error code
-Date: Thu,  9 Jul 2020 12:16:06 +0200
-Message-ID: <20200709101620.6786-22-mwilck@suse.com>
+Subject: [PATCH 34/35] kpartx: print an error message if removing
+	a partition fails
+Date: Thu,  9 Jul 2020 12:16:19 +0200
+Message-ID: <20200709101620.6786-35-mwilck@suse.com>
 References: <20200709101620.6786-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,26 +24,23 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-An uid_attribute that is not found is not necessarily invalid
-input. "No data available" seems more appropriate.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kpartx/kpartx.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 1039fc4..81c78d3 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1897,7 +1897,7 @@ get_udev_uid(struct path * pp, char *uid_attribute, struct udev_device *udev)
- 	} else {
- 		condlog(3, "%s: no %s attribute", pp->dev,
- 			uid_attribute);
--		len = -EINVAL;
-+		len = -ENODATA;
- 	}
- 	return len;
- }
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index c24ad6d..5f59e15 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -635,6 +635,8 @@ main(int argc, char **argv){
+ 
+ 				if (!dm_simplecmd(DM_DEVICE_REMOVE,
+ 						  partname, 1, 0)) {
++					fprintf(stderr, "failed to remove %s",
++						partname);
+ 					r++;
+ 					continue;
+ 				}
 -- 
 2.26.2
