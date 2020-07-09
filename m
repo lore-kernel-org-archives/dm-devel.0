@@ -1,14 +1,12 @@
 From: mwilck@suse.com
-Subject: [PATCH 51/54] libmultipath: get_refwwid(): use switch
-	statement
-Date: Thu,  9 Jul 2020 12:36:20 +0200
-Message-ID: <20200709103623.8302-10-mwilck@suse.com>
-References: <20200709103623.8302-1-mwilck@suse.com>
+Subject: [PATCH 00/54] multipath-tools series part IV: identify
+	paths by dev_t
+Date: Thu,  9 Jul 2020 12:36:11 +0200
+Message-ID: <20200709103623.8302-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200709103623.8302-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,148 +22,58 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This code calls for a switch. Some additional compaction is possible by
-observing that the code for DEV_DEVNODE, DEV_DEVT, and DEV_UEVENT is almost
-the same, and factoring it out into a "common" section. Doing this with
-a goto inside the switch statement is a bit unusual, but shows the intention
-of the code more clearly than other variants I tried.
+Hi Christophe, hi Ben,
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/configure.c | 81 ++++++++++++----------------------------
- 1 file changed, 24 insertions(+), 57 deletions(-)
+This is part IV of a larger patch series for multipath-tools I've been preparing.
+It's based on the previously submitted part III.
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index e68494b..db9a255 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -1351,6 +1351,7 @@ static int _get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
- 	struct path * pp;
- 	char buff[FILE_NAME_SIZE];
- 	char * refwwid = NULL, tmpwwid[WWID_SIZE];
-+	struct udev_device *udevice;
- 	int flags = DI_SYSFS | DI_WWID;
- 
- 	if (!wwid)
-@@ -1363,45 +1364,31 @@ static int _get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
- 	if (cmd != CMD_REMOVE_WWID)
- 		flags |= DI_BLACKLIST;
- 
--	if (dev_type == DEV_DEVNODE) {
-+	switch (dev_type) {
-+	case DEV_DEVNODE:
- 		if (basenamecpy(dev, buff, FILE_NAME_SIZE) == 0) {
- 			condlog(1, "basename failed for '%s' (%s)",
- 				dev, buff);
- 			return PATHINFO_FAILED;
- 		}
- 
--		pp = find_path_by_dev(pathvec, buff);
--		if (!pp) {
--			struct udev_device *udevice =
--				get_udev_device(buff, dev_type);
-+		/* dev is used in common code below */
-+		dev = buff;
-+		pp = find_path_by_dev(pathvec, dev);
-+		goto common;
- 
--			if (!udevice)
--				return PATHINFO_FAILED;
--
--			ret = store_pathinfo(pathvec, conf, udevice,
--					     flags, &pp);
--			udev_device_unref(udevice);
--			if (!pp) {
--				if (ret == PATHINFO_FAILED)
--					condlog(0, "%s: can't store path info",
--						dev);
--				return ret;
--			}
--		}
--		if (pp->udev && pp->uid_attribute &&
--		    filter_property(conf, pp->udev, 3, pp->uid_attribute) > 0)
--			return PATHINFO_SKIPPED;
--
--		refwwid = pp->wwid;
--		goto out;
--	}
--
--	if (dev_type == DEV_DEVT) {
-+	case DEV_DEVT:
- 		strchop(dev);
- 		pp = find_path_by_devt(pathvec, dev);
-+		goto common;
-+
-+	case DEV_UEVENT:
-+		pp = NULL;
-+		/* For condlog below, dev is unused in get_udev_device() */
-+		dev = "environment";
-+	common:
- 		if (!pp) {
--			struct udev_device *udevice =
--				get_udev_device(dev, dev_type);
-+			udevice = get_udev_device(dev, dev_type);
- 
- 			if (!udevice) {
- 				condlog(0, "%s: cannot find block device", dev);
-@@ -1413,8 +1400,8 @@ static int _get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
- 			udev_device_unref(udevice);
- 			if (!pp) {
- 				if (ret == PATHINFO_FAILED)
--					condlog(0, "%s can't store path info",
--						buff);
-+					condlog(0, "%s: can't store path info",
-+						dev);
- 				return ret;
- 			}
- 		}
-@@ -1422,32 +1409,9 @@ static int _get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
- 		    filter_property(conf, pp->udev, 3, pp->uid_attribute) > 0)
- 			return PATHINFO_SKIPPED;
- 		refwwid = pp->wwid;
--		goto out;
--	}
--
--	if (dev_type == DEV_UEVENT) {
--		struct udev_device *udevice = get_udev_device(dev, dev_type);
--
--		if (!udevice)
--			return PATHINFO_FAILED;
--
--		ret = store_pathinfo(pathvec, conf, udevice,
--				     flags, &pp);
--		udev_device_unref(udevice);
--		if (!pp) {
--			if (ret == PATHINFO_FAILED)
--				condlog(0, "%s: can't store path info", dev);
--			return ret;
--		}
--		if (pp->udev && pp->uid_attribute &&
--		    filter_property(conf, pp->udev, 3, pp->uid_attribute) > 0)
--			return PATHINFO_SKIPPED;
--		refwwid = pp->wwid;
--		goto out;
--	}
--
--	if (dev_type == DEV_DEVMAP) {
-+		break;
- 
-+	case DEV_DEVMAP:
- 		if (((dm_get_uuid(dev, tmpwwid, WWID_SIZE)) == 0)
- 		    && (strlen(tmpwwid)))
- 			refwwid = tmpwwid;
-@@ -1470,8 +1434,11 @@ static int _get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
- 		    filter_wwid(conf->blist_wwid, conf->elist_wwid, refwwid,
- 				NULL) > 0)
- 			return PATHINFO_SKIPPED;
-+		break;
-+	default:
-+		break;
- 	}
--out:
-+
- 	if (refwwid && strlen(refwwid)) {
- 		*wwid = STRDUP(refwwid);
- 		return PATHINFO_OK;
+The full series will also be available here:
+https://github.com/mwilck/multipath-tools/tree/ups/submit-2007
+
+There are tags in that repo for each part of the series.
+This part is tagged "submit-200709-4".
+
+The dominant idea of the patches in this subseries is to move away from
+the device node name as the main path identifier towards the dev_t aka
+major/minor number. This is motivated by the fact that dev_t is used by the
+kernel device mapper for referring to devices, both maps and paths.
+If searching a device by dev_t fails, it's basically certain not to exist.
+DM calls with major/minor number may even succeed if the respective devnode
+has not been created yet. dev_t also works better for devices that aren't
+fully initialized yet. Of course we still track the device name, but mostly
+for log messages and user-directed output.
+
+In short, using dev_t as primary identifier makes our code more robust.
+
+The subseries also contains some unrelated fixes for functions I worked on
+while making these changes.
+
+Regards,
+Martin
+
+Martin Wilck (12):
+  libmultipath: adopt_paths(): use find_path_by_devt()
+  libmultipath: adopt_paths(): don't bail out on single path failure
+  libmultipath: path_discover(): use find_path_by_devt()
+  libmultipath: path_discover(): always set DI_BLACKLIST
+  libmultipath: get_refwwid(): use find_path_by_devt()
+  libmultipath: get_refwwid(): call get_multipath_config() only once
+  libmultipath: get_refwwid(): get rid of "check" label
+  libmultipath: get_refwwid(): use symbolic return values
+  libmultipath: get_refwwid(): use switch statement
+  libmultipath: constify get_mpe_wwid()
+  multipath: call strchop() on command line argument
+  libmultipath: get_refwwid(): skip strchop(), and constify dev
+    parameter
+
+ libmultipath/config.c      |   2 +-
+ libmultipath/config.h      |   2 +-
+ libmultipath/configure.c   | 200 +++++++++++++------------------------
+ libmultipath/configure.h   |   2 +-
+ libmultipath/discovery.c   |  32 +++---
+ libmultipath/structs_vec.c |  14 ++-
+ multipath/main.c           |   2 +
+ 7 files changed, 94 insertions(+), 160 deletions(-)
+
 -- 
 2.26.2
