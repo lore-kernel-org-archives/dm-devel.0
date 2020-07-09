@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 57/74] libmultipath: update_mpp_paths(): handle
-	INIT_REMOVED
-Date: Thu,  9 Jul 2020 12:51:28 +0200
-Message-ID: <20200709105145.9211-5-mwilck@suse.com>
+Subject: [PATCH 72/74] libmpathpersist: use
+	update_pathvec_from_dm()
+Date: Thu,  9 Jul 2020 12:51:43 +0200
+Message-ID: <20200709105145.9211-20-mwilck@suse.com>
 References: <20200709105145.9211-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,62 +24,85 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Since the ancient commit b96dead ("[multipathd] remove the retry login in
-uev_remove_path()"), update_mpp_paths() was used to check whether devices
-found in disassembled maps were still in the pathvec, and to skip them
-while re-assembling the new params string on reload. The reason was to
-deal with failed reloads. With the introduction of INIT_REMOVED, we
-need to skip paths in that state, too. Moreover, past reloads may have
-succeeded in removing REMOVED paths from the map, so check if any
-INIT_REMOVED paths can now be deleted for good. This is the right
-place to do this check, because update_mpp_paths() is called after
-obtaining the current kernel state, and before reloading.
+The libmpathpersist-specific function updatepaths() can be replaced
+with the generic function.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs_vec.c | 21 ++++++++++++++++-----
- 1 file changed, 16 insertions(+), 5 deletions(-)
+ libmpathpersist/mpath_persist.c | 54 +--------------------------------
+ 1 file changed, 1 insertion(+), 53 deletions(-)
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 27d6547..8999552 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -29,6 +29,7 @@ int update_mpp_paths(struct multipath *mpp, vector pathvec)
- 	struct pathgroup * pgp;
- 	struct path * pp;
- 	int i,j;
-+	bool store_failure = false;
- 
- 	if (!mpp || !mpp->pg)
- 		return 0;
-@@ -39,13 +40,23 @@ int update_mpp_paths(struct multipath *mpp, vector pathvec)
- 
- 	vector_foreach_slot (mpp->pg, pgp, i) {
- 		vector_foreach_slot (pgp->paths, pp, j) {
--			if (!find_path_by_devt(mpp->paths, pp->dev_t) &&
--			    (find_path_by_devt(pathvec, pp->dev_t)) &&
--			    store_path(mpp->paths, pp))
--				return 1;
-+			if (!find_path_by_devt(mpp->paths, pp->dev_t)) {
-+				struct path *pp1;
-+
-+				/*
-+				 * Avoid adding removed paths to the map again
-+				 * when we reload it. Such paths may exist if
-+				 * domap fails in ev_remove_path().
-+				 */
-+				pp1 = find_path_by_devt(pathvec, pp->dev_t);
-+				if (pp1 && pp->initialized != INIT_REMOVED &&
-+				    store_path(mpp->paths, pp))
-+					store_failure = true;
-+			}
- 		}
- 	}
--	return 0;
-+
-+	return store_failure;
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index cb3182f..0c66ff3 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -65,52 +65,6 @@ mpath_lib_exit (struct config *conf)
+ 	return 0;
  }
  
- int adopt_paths(vector pathvec, struct multipath *mpp)
+-static int
+-updatepaths (struct multipath * mpp)
+-{
+-	int i, j;
+-	struct pathgroup * pgp;
+-	struct path * pp;
+-	struct config *conf;
+-
+-	if (!mpp->pg)
+-		return 0;
+-
+-	vector_foreach_slot (mpp->pg, pgp, i){
+-		if (!pgp->paths)
+-			continue;
+-
+-		vector_foreach_slot (pgp->paths, pp, j){
+-			if (!strlen(pp->dev)){
+-				/*
+-				 * path is not in sysfs anymore
+-				 */
+-				pp->state = PATH_DOWN;
+-				continue;
+-			}
+-			pp->mpp = mpp;
+-			if (pp->udev == NULL) {
+-				pp->udev = get_udev_device(pp->dev_t, DEV_DEVT);
+-				if (pp->udev == NULL) {
+-					pp->state = PATH_DOWN;
+-					continue;
+-				}
+-				conf = get_multipath_config();
+-				pathinfo(pp, conf, DI_SYSFS|DI_CHECKER);
+-				put_multipath_config(conf);
+-				continue;
+-			}
+-			if (pp->state == PATH_UNCHECKED ||
+-					pp->state == PATH_WILD) {
+-				conf = get_multipath_config();
+-				pathinfo(pp, conf, DI_CHECKER);
+-				put_multipath_config(conf);
+-			}
+-		}
+-	}
+-	return 0;
+-}
+-
+ int
+ mpath_prin_activepath (struct multipath *mpp, int rq_servact,
+ 	struct prin_resp * resp, int noisy)
+@@ -392,13 +346,7 @@ get_mpvec (vector curmp, vector pathvec, char * refwwid)
+ 		dm_get_status(mpp->alias, status);
+ 		condlog(3, "status = %s", status);
+ 		disassemble_map (pathvec, params, mpp);
+-
+-		/*
+-		 * disassemble_map() can add new paths to pathvec.
+-		 * If not in "fast list mode", we need to fetch information
+-		 * about them
+-		 */
+-		updatepaths(mpp);
++		update_pathvec_from_dm(pathvec, mpp, DI_CHECKER);
+ 		disassemble_status (status, mpp);
+ 
+ 	}
 -- 
 2.26.2
