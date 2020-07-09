@@ -1,12 +1,12 @@
 From: mwilck@suse.com
-Subject: [PATCH 15/35] libmultipath: fix missing initializer
-	warning from clang 3.9
-Date: Thu,  9 Jul 2020 12:16:00 +0200
-Message-ID: <20200709101620.6786-16-mwilck@suse.com>
+Subject: [PATCH 16/35] libmultipath: fix gcc -Wstringop-overflow
+	warning
+Date: Thu,  9 Jul 2020 12:16:01 +0200
+Message-ID: <20200709101620.6786-17-mwilck@suse.com>
 References: <20200709101620.6786-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20200709101620.6786-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -22,27 +22,17 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-From: Martin Wilck <mwilck@suse.com>
-
-clang 3.9 needs designators to accept implicit struct initialization.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/checkers/directio.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
-index 503519e..f73cbe3 100644
---- a/libmultipath/checkers/directio.c
-+++ b/libmultipath/checkers/directio.c
-@@ -256,7 +256,7 @@ get_events(struct aio_group *aio_grp, struct timespec *timeout)
- {
- 	struct io_event events[128];
- 	int i, nr, got_events = 0;
--	struct timespec zero_timeout = {0};
-+	struct timespec zero_timeout = { .tv_sec = 0, };
- 	struct timespec *timep = timeout;
- 
- 	do {
--- 
-2.26.2
+RnJvbTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+CgpUaGlzIGZpeGVzIHRoaXMgZ2Nj
+IGVycm9yIG1lc3NhZ2U6CgplcnJvcjog4oCYc3RybmNhdOKAmSBzcGVjaWZpZWQgYm91bmQgMSBl
+cXVhbHMgc291cmNlIGxlbmd0aAogICBbLVdlcnJvcj1zdHJpbmdvcC1vdmVyZmxvdz1dClNpZ25l
+ZC1vZmYtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgotLS0KIGxpYm11bHRpcGF0
+aC9wYXJzZXIuYyB8IDIgKy0KIDEgZmlsZSBjaGFuZ2VkLCAxIGluc2VydGlvbigrKSwgMSBkZWxl
+dGlvbigtKQoKZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9wYXJzZXIuYyBiL2xpYm11bHRpcGF0
+aC9wYXJzZXIuYwppbmRleCAxMWE2MTY4Li40ZjY1YmExIDEwMDY0NAotLS0gYS9saWJtdWx0aXBh
+dGgvcGFyc2VyLmMKKysrIGIvbGlibXVsdGlwYXRoL3BhcnNlci5jCkBAIC0zNzQsNyArMzc0LDcg
+QEAgc2V0X3ZhbHVlKHZlY3RvciBzdHJ2ZWMpCiAJCQlnb3RvIG9vbTsKIAkJfQogCQlpZiAoKmFs
+bG9jICE9ICdcMCcpCi0JCQlzdHJuY2F0KGFsbG9jLCAiICIsIDEpOworCQkJc3RybmNhdChhbGxv
+YywgIiAiLCBsZW4gLSBzdHJsZW4oYWxsb2MpKTsKIAkJc3RybmNhdChhbGxvYywgc3RyLCBsZW4g
+LSBzdHJsZW4oYWxsb2MpIC0gMSk7CiAJfQogCXJldHVybiBhbGxvYzsKLS0gCjIuMjYuMgoKCi0t
+CmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJl
+ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
