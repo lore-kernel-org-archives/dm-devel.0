@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 06/35] multipath-tools tests: add test for
-	devt2devname
-Date: Thu,  9 Jul 2020 12:15:51 +0200
-Message-ID: <20200709101620.6786-7-mwilck@suse.com>
+Subject: [PATCH 12/35] libmultipath: strlcpy()/strlcat(): use
+	restrict qualifier
+Date: Thu,  9 Jul 2020 12:15:57 +0200
+Message-ID: <20200709101620.6786-13-mwilck@suse.com>
 References: <20200709101620.6786-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,236 +24,92 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Two tests skipped because they fail, will be fixed with the following
-patch.
+Also remove the redundant local variables. It's not necessary to
+make "restrict" work, but it makes the intention more clear.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/Makefile |   3 +-
- tests/devt.c   | 194 +++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 196 insertions(+), 1 deletion(-)
- create mode 100644 tests/devt.c
+ libmultipath/util.c | 28 ++++++++++++----------------
+ libmultipath/util.h |  4 ++--
+ 2 files changed, 14 insertions(+), 18 deletions(-)
 
-diff --git a/tests/Makefile b/tests/Makefile
-index 125553b..5f00a3a 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -13,7 +13,7 @@ CFLAGS += $(BIN_CFLAGS) -I$(multipathdir) -I$(mpathcmddir) \
- LIBDEPS += -L$(multipathdir) -L$(mpathcmddir) -lmultipath -lmpathcmd -lcmocka
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index 957fb97..f965094 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -113,46 +113,42 @@ get_word (const char *sentence, char **word)
+ 	return skip + len;
+ }
  
- TESTS := uevent parser util dmevents hwtable blacklist unaligned vpd pgpolicy \
--	 alias directio valid
-+	 alias directio valid devt
+-size_t strlcpy(char *dst, const char *src, size_t size)
++size_t strlcpy(char * restrict dst, const char * restrict src, size_t size)
+ {
+ 	size_t bytes = 0;
+-	char *q = dst;
+-	const char *p = src;
+ 	char ch;
  
- .SILENT: $(TESTS:%=%.o)
- .PRECIOUS: $(TESTS:%=%-test)
-@@ -52,6 +52,7 @@ alias-test_TESTDEPS := test-log.o
- alias-test_LIBDEPS := -lpthread -ldl
- valid-test_OBJDEPS := ../libmultipath/valid.o
- valid-test_LIBDEPS := -ludev -lpthread -ldl
-+devt-test_LIBDEPS := -ludev
- ifneq ($(DIO_TEST_DEV),)
- directio-test_LIBDEPS := -laio
- endif
-diff --git a/tests/devt.c b/tests/devt.c
-new file mode 100644
-index 0000000..4be6d75
---- /dev/null
-+++ b/tests/devt.c
-@@ -0,0 +1,194 @@
-+/*
-+ * Copyright (c) 2020 Martin Wilck, SUSE
-+ *
-+ * SPDX-License-Identifier: GPL-2.0-or-later
-+ */
-+#include <stdbool.h>
-+#include <stdarg.h>
-+#include <stddef.h>
-+#include <setjmp.h>
-+#include <stdlib.h>
-+#include <cmocka.h>
-+#include <libudev.h>
-+#include <sys/sysmacros.h>
-+#include "util.h"
-+#include "debug.h"
-+
-+#include "globals.c"
-+
-+static int get_one_devt(char *devt, size_t len)
-+{
-+	struct udev_enumerate *enm;
-+	int r, ret = -1;
-+	struct udev_list_entry *first;
-+	struct udev_device *u_dev;
-+	const char *path;
-+	dev_t devnum;
-+
-+	enm = udev_enumerate_new(udev);
-+	if (!enm)
-+		return -1;
-+	r = udev_enumerate_add_match_subsystem(enm, "block");
-+	r = udev_enumerate_scan_devices(enm);
-+	if (r < 0)
-+		goto out;
-+	first = udev_enumerate_get_list_entry(enm);
-+	if (!first)
-+		goto out;
-+	path = udev_list_entry_get_name(first);
-+	u_dev = udev_device_new_from_syspath(udev, path);
-+	if (!u_dev)
-+		goto out;
-+	devnum = udev_device_get_devnum(u_dev);
-+	snprintf(devt, len, "%d:%d",
-+		 major(devnum), minor(devnum));
-+	udev_device_unref(u_dev);
-+	condlog(3, "found block device: %s", devt);
-+	ret = 0;
-+out:
-+	udev_enumerate_unref(enm);
-+	return ret;
-+}
-+
-+int setup(void **state)
-+{
-+	static char dev_t[BLK_DEV_SIZE];
-+
-+	udev = udev_new();
-+	if (udev == NULL)
-+		return -1;
-+	*state = dev_t;
-+	return get_one_devt(dev_t, sizeof(dev_t));
-+}
-+
-+int teardown(void **state)
-+{
-+	udev_unref(udev);
-+	return 0;
-+}
-+
-+static void test_devt2devname_devt_good(void **state)
-+{
-+	char dummy[BLK_DEV_SIZE];
-+
-+	assert_int_equal(devt2devname(dummy, sizeof(dummy), *state), 0);
-+}
-+
-+static void test_devt2devname_devname_null(void **state)
-+{
-+	assert_int_equal(devt2devname(NULL, 0, ""), 1);
-+}
-+
-+/* buffer length 0 */
-+static void test_devt2devname_length_0(void **state)
-+{
-+	char dummy[] = "";
-+
-+	assert_int_equal(devt2devname(dummy, 0, ""), 1);
-+}
-+
-+/* buffer too small */
-+static void test_devt2devname_length_1(void **state)
-+{
-+	char dummy[] = "";
-+
-+	skip();
-+	assert_int_equal(devt2devname(dummy, sizeof(dummy), *state), 1);
-+}
-+
-+static void test_devt2devname_devt_null(void **state)
-+{
-+	char dummy[32];
-+
-+	skip();
-+	assert_int_equal(devt2devname(dummy, sizeof(dummy), NULL), 1);
-+}
-+
-+static void test_devt2devname_devt_empty(void **state)
-+{
-+	char dummy[32];
-+
-+	assert_int_equal(devt2devname(dummy, sizeof(dummy), ""), 1);
-+}
-+
-+static void test_devt2devname_devt_invalid_1(void **state)
-+{
-+	char dummy[32];
-+
-+	assert_int_equal(devt2devname(dummy, sizeof(dummy), "foo"), 1);
-+}
-+
-+static void test_devt2devname_devt_invalid_2(void **state)
-+{
-+	char dummy[32];
-+
-+	assert_int_equal(devt2devname(dummy, sizeof(dummy), "1234"), 1);
-+}
-+
-+static void test_devt2devname_devt_invalid_3(void **state)
-+{
-+	char dummy[32];
-+
-+	assert_int_equal(devt2devname(dummy, sizeof(dummy), "0:0"), 1);
-+}
-+
-+static void test_devt2devname_real(void **state)
-+{
-+	struct udev_enumerate *enm;
-+	int r;
-+	struct udev_list_entry *first, *item;
-+	unsigned int i = 0;
-+
-+	enm = udev_enumerate_new(udev);
-+	assert_non_null(enm);
-+	r = udev_enumerate_add_match_subsystem(enm, "block");
-+	assert_in_range(r, 0, INT_MAX);
-+	r = udev_enumerate_scan_devices(enm);
-+	first = udev_enumerate_get_list_entry(enm);
-+	udev_list_entry_foreach(item, first) {
-+		const char *path = udev_list_entry_get_name(item);
-+		struct udev_device *u_dev;
-+		dev_t devnum;
-+		char devt[BLK_DEV_SIZE];
-+		char devname[FILE_NAME_SIZE];
-+
-+		u_dev = udev_device_new_from_syspath(udev, path);
-+		assert_non_null(u_dev);
-+		devnum = udev_device_get_devnum(u_dev);
-+		snprintf(devt, sizeof(devt), "%d:%d",
-+			 major(devnum), minor(devnum));
-+		r = devt2devname(devname, sizeof(devname), devt);
-+		assert_int_equal(r, 0);
-+		assert_string_equal(devname, udev_device_get_sysname(u_dev));
-+		i++;
-+		udev_device_unref(u_dev);
-+	}
-+	udev_enumerate_unref(enm);
-+	condlog(2, "devt2devname test passed for %u block devices", i);
-+}
-+
-+static int devt2devname_tests(void)
-+{
-+	const struct CMUnitTest tests[] = {
-+		cmocka_unit_test(test_devt2devname_devt_good),
-+		cmocka_unit_test(test_devt2devname_devname_null),
-+		cmocka_unit_test(test_devt2devname_length_0),
-+		cmocka_unit_test(test_devt2devname_length_1),
-+		cmocka_unit_test(test_devt2devname_devt_null),
-+		cmocka_unit_test(test_devt2devname_devt_empty),
-+		cmocka_unit_test(test_devt2devname_devt_invalid_1),
-+		cmocka_unit_test(test_devt2devname_devt_invalid_2),
-+		cmocka_unit_test(test_devt2devname_devt_invalid_3),
-+		cmocka_unit_test(test_devt2devname_real),
-+	};
-+
-+	return cmocka_run_group_tests(tests, setup, teardown);
-+}
-+
-+int main(void)
-+{
-+	int ret = 0;
-+
-+	ret += devt2devname_tests();
-+	return ret;
-+}
+-	while ((ch = *p++)) {
+-		if (bytes+1 < size)
+-			*q++ = ch;
++	while ((ch = *src++)) {
++		if (bytes + 1 < size)
++			*dst++ = ch;
+ 		bytes++;
+ 	}
+ 
+ 	/* If size == 0 there is no space for a final null... */
+ 	if (size)
+-		*q = '\0';
++		*dst = '\0';
+ 	return bytes;
+ }
+ 
+-size_t strlcat(char *dst, const char *src, size_t size)
++size_t strlcat(char * restrict dst, const char * restrict src, size_t size)
+ {
+ 	size_t bytes = 0;
+-	char *q = dst;
+-	const char *p = src;
+ 	char ch;
+ 
+-	while (bytes < size && *q) {
+-		q++;
++	while (bytes < size && *dst) {
++		dst++;
+ 		bytes++;
+ 	}
+ 	if (bytes == size)
+ 		return (bytes + strlen(src));
+ 
+-	while ((ch = *p++)) {
+-		if (bytes+1 < size)
+-		*q++ = ch;
++	while ((ch = *src++)) {
++		if (bytes + 1 < size)
++			*dst++ = ch;
+ 		bytes++;
+ 	}
+ 
+-	*q = '\0';
++	*dst = '\0';
+ 	return bytes;
+ }
+ 
+diff --git a/libmultipath/util.h b/libmultipath/util.h
+index ae18d8b..7e29b26 100644
+--- a/libmultipath/util.h
++++ b/libmultipath/util.h
+@@ -15,8 +15,8 @@ int basenamecpy (const char *src, char *dst, size_t size);
+ int filepresent (const char *run);
+ char *get_next_string(char **temp, const char *split_char);
+ int get_word (const char * sentence, char ** word);
+-size_t strlcpy(char *dst, const char *src, size_t size);
+-size_t strlcat(char *dst, const char *src, size_t size);
++size_t strlcpy(char * restrict dst, const char * restrict src, size_t size);
++size_t strlcat(char * restrict dst, const char * restrict src, size_t size);
+ int devt2devname (char *, int, const char *);
+ dev_t parse_devt(const char *dev_t);
+ char *convert_dev(char *dev, int is_path_device);
 -- 
 2.26.2
