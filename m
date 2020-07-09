@@ -1,14 +1,12 @@
 From: mwilck@suse.com
-Subject: [PATCH 02/35] multipath-tools tests/directio: fix
-	missing initializers
-Date: Thu,  9 Jul 2020 12:15:47 +0200
-Message-ID: <20200709101620.6786-3-mwilck@suse.com>
-References: <20200709101620.6786-1-mwilck@suse.com>
+Subject: [PATCH 00/35] multipath-tools series part I: minor
+	changes
+Date: Thu,  9 Jul 2020 12:15:45 +0200
+Message-ID: <20200709101620.6786-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200709101620.6786-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,142 +22,118 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-clang-3.9 doesn't like the {0} initializers for complex data structures.
+Hi Christophe, hi Ben,
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- tests/directio.c | 28 ++++++++++++++--------------
- 1 file changed, 14 insertions(+), 14 deletions(-)
+This is part I of a larger patch series for multpath-tools I've been preparing.
+It contains self-contained fixes and cleanups, and unit test additions.
 
-diff --git a/tests/directio.c b/tests/directio.c
-index 66aaf0e..9895409 100644
---- a/tests/directio.c
-+++ b/tests/directio.c
-@@ -31,7 +31,7 @@ int test_fd = 111;
- int ioctx_count = 0;
- struct io_event mock_events[AIO_GROUP_SIZE]; /* same as the checker max */
- int ev_off = 0;
--struct timespec zero_timeout = {0};
-+struct timespec zero_timeout = { .tv_sec = 0 };
- struct timespec full_timeout = { .tv_sec = -1 };
- 
- int __real_ioctl(int fd, unsigned long request, void *argp);
-@@ -287,7 +287,7 @@ static void test_reset(void **state)
- /* tests initializing, then resetting, and then initializing again */
- static void test_init_reset_init(void **state)
- {
--	struct checker c = {0};
-+	struct checker c = {.cls = NULL};
- 	struct aio_group *aio_grp, *tmp_grp;
- 
- 	assert_true(list_empty(&aio_grp_list));
-@@ -315,7 +315,7 @@ static void test_init_reset_init(void **state)
- static void test_init_free(void **state)
- {
- 	int i, count = 0;
--	struct checker c[4096] = {0};
-+	struct checker c[4096] = {{.cls = NULL}};
- 	struct aio_group *aio_grp = NULL;
- 
- 	assert_true(list_empty(&aio_grp_list));
-@@ -361,7 +361,7 @@ static void test_init_free(void **state)
- static void test_multi_init_free(void **state)
- {
- 	int i, count;
--	struct checker c[4096] = {0};
-+	struct checker c[4096] = {{.cls = NULL}};
- 	struct aio_group *aio_grp;
- 
- 	assert_true(list_empty(&aio_grp_list));
-@@ -401,7 +401,7 @@ static void test_multi_init_free(void **state)
- /* simple single checker sync test */
- static void test_check_state_simple(void **state)
- {
--	struct checker c = {0};
-+	struct checker c = {.cls = NULL};
- 	struct async_req *req;
- 	int res = 0;
- 
-@@ -417,7 +417,7 @@ static void test_check_state_simple(void **state)
- /* test sync timeout */
- static void test_check_state_timeout(void **state)
- {
--	struct checker c = {0};
-+	struct checker c = {.cls = NULL};
- 	struct aio_group *aio_grp;
- 
- 	assert_true(list_empty(&aio_grp_list));
-@@ -440,7 +440,7 @@ static void test_check_state_timeout(void **state)
- /* test async timeout */
- static void test_check_state_async_timeout(void **state)
- {
--	struct checker c = {0};
-+	struct checker c = {.cls = NULL};
- 	struct aio_group *aio_grp;
- 
- 	assert_true(list_empty(&aio_grp_list));
-@@ -467,7 +467,7 @@ static void test_check_state_async_timeout(void **state)
- /* test freeing checkers with outstanding requests */
- static void test_free_with_pending(void **state)
- {
--        struct checker c[2] = {0};
-+        struct checker c[2] = {{.cls = NULL}};
-         struct aio_group *aio_grp;
- 	struct async_req *req;
- 	int res = 0;
-@@ -500,7 +500,7 @@ static void test_free_with_pending(void **state)
- /* test removing orpahed aio_group on free */
- static void test_orphaned_aio_group(void **state)
- {
--	struct checker c[AIO_GROUP_SIZE] = {0};
-+	struct checker c[AIO_GROUP_SIZE] = {{.cls = NULL}};
- 	struct aio_group *aio_grp, *tmp_grp;
- 	int i;
- 
-@@ -533,7 +533,7 @@ static void test_orphaned_aio_group(void **state)
-  * checker */
- static void test_timeout_cancel_failed(void **state)
- {
--	struct checker c[2] = {0};
-+	struct checker c[2] = {{.cls = NULL}};
- 	struct aio_group *aio_grp;
- 	struct async_req *reqs[2];
- 	int res[] = {0,0};
-@@ -568,7 +568,7 @@ static void test_timeout_cancel_failed(void **state)
-  * checker */
- static void test_async_timeout_cancel_failed(void **state)
- {
--	struct checker c[2] = {0};
-+	struct checker c[2] = {{.cls = NULL}};
- 	struct async_req *reqs[2];
- 	int res[] = {0,0};
- 	int i;
-@@ -610,7 +610,7 @@ static void test_async_timeout_cancel_failed(void **state)
- /* test orphaning a request, and having another checker clean it up */
- static void test_orphan_checker_cleanup(void **state)
- {
--	struct checker c[2] = {0};
-+	struct checker c[2] = {{.cls = NULL}};
- 	struct async_req *reqs[2];
- 	int res[] = {0,0};
- 	struct aio_group *aio_grp;
-@@ -667,7 +667,7 @@ static void test_orphan_reset_cleanup(void **state)
- static void test_check_state_blksize(void **state)
- {
- 	int i;
--	struct checker c[3] = {0};
-+	struct checker c[3] = {{.cls = NULL}};
- 	int blksize[] = {4096, 1024, 512};
- 	struct async_req *reqs[3];
- 	int res[] = {0,1,0};
-@@ -698,7 +698,7 @@ static void test_check_state_blksize(void **state)
- static void test_check_state_async(void **state)
- {
- 	int i;
--	struct checker c[257] = {0};
-+	struct checker c[257] = {{.cls = NULL}};
- 	struct async_req *reqs[257];
- 	int res[257] = {0};
- 
+The full series will also be available here:
+https://github.com/mwilck/multipath-tools/tree/ups/submit-2007
+
+There are tags in that repo for each part of the series.
+This part is tagged "submit-200709-1".
+
+It's based on 0.8.4, plus the following set of previously
+submitted and reviewed patches:
+
+ - libmultipath: add device to hwtable.c (Steve Schremmer)
+ - [PATCH v3 0/7] Fix muitpath/multipathd flush issue (v3 7-part series, Ben)
+ - [PATCH v2 0/4] misc patches (v2 4-part series, Ben)
+ - multipath: Fix compiler warnings when built without systemd. (Marius Bakke)
+ - [PATCH v2 0/3] multipath: change default devnode blacklist
+   (v2 3-part series, Ben)
+ - multipath: add "-e" option to enable foreign libraries (me)
+ - libmultipath: set "enable_foreign" to NONE by default (me)
+ - libmultipath: fix condlog NULL argument in uevent_get_env_var (Ben)
+ - fix boolean value with json-c 0.14 (Christian Hesse) 
+ - [PATCH v3 0/6] multipath: path validation library prep work
+   (v3 6-part series, me)
+ - [PATCH 0/2] More minor libmultipath fixes (2-part series, me)
+ - [PATCH 00/11] Minor fixes for multipath-tools (11-part series, me)
+ - libmpathpersist: depend on libmultipath (Christian Hesse)
+ - [PATCH v2 0/2] multipath-tools: fixes for kpartx.rules and skip_kpartx
+   (v2 2-part series, me)
+ - libmultipath: allow force reload with no active paths (Ben)
+ - libmutipath: don't close fd on dm_lib_release (Ben)
+ - libmultipath: assign variable to make gcc happy (Ben)
+ - [PATCH v2 0/4] libmpathpersist allocation size fixes (v2 4-part series, me)
+
+You can find a full tree of the code this is based on here:
+https://github.com/openSUSE/multipath-tools/tree/upstream-queue
+
+Regards, Martin
+
+
+Martin Wilck (35):
+  multipath-tools tests/util: separate group for bitmask tests
+  multipath-tools tests/directio: fix missing initializers
+  tests: __wrap_dlog: use check_expected()
+  multipath tools tests: add strchop() test
+  libmultipath: improve strchop()
+  multipath-tools tests: add test for devt2devname
+  libmultipath: devt2devname(): simplify using libudev
+  libmultipath: create bitfield abstraction
+  libmultipath: use bitfields in group_by_match()
+  libmultipath: util: constify function arguments
+  multipath-tools tests: add unit tests for strlcat
+  libmultipath: strlcpy()/strlcat(): use restrict qualifier
+  libmultipath: constify blacklist code
+  libmultipath: rlookup_binding(): remove newline in log message
+  libmultipath: fix missing initializer warning from clang 3.9
+  libmultipath: fix gcc -Wstringop-overflow warning
+  libmultipath: remove uevent listener failback
+  libmultipath: uevent: use static linkage where possible
+  libmultipath: uevent: inline trivial functions
+  libmultipath: decrease log level of "SCSI target" log message
+  libmultipath: get_udev_uid(): more appropriate error code
+  libmultipath: get_uid(): improve log message on udev failure
+  libmultipath: make sysfs_pathinfo() static and use const
+  libmultipath: pathinfo(): improve a log message
+  libmultipath: pathinfo(): don't filter emtpy devnode names
+  libmultipath: io_err_stat_handle_pathfail(): less error conditions
+  libmultipath: improve libdm logging
+  libmultipath: snprint_devices(): use udev_enumerate
+  libmultipath: snprint_devices(): print hidden/foreign status
+  libmultipath: alloc_path(): initialize pp->initialized
+  libmultipath: alloc_path_with_pathinfo(): treat devname overflow as
+    error
+  libmultipath: log table params in addmap()
+  multipathd: remove set_multipath_wwid()
+  kpartx: print an error message if removing a partition fails
+  kpartx: add missing newline
+
+ kpartx/devmapper.c               |   2 +-
+ kpartx/kpartx.c                  |   2 +
+ libmultipath/alias.c             |   2 +-
+ libmultipath/blacklist.c         |  34 +-
+ libmultipath/blacklist.h         |  17 +-
+ libmultipath/checkers/directio.c |   2 +-
+ libmultipath/configure.c         |  11 +-
+ libmultipath/defaults.h          |   2 +
+ libmultipath/devmapper.c         |  27 +-
+ libmultipath/discovery.c         |  30 +-
+ libmultipath/dmparser.c          |   2 +-
+ libmultipath/io_err_stat.c       |  25 +-
+ libmultipath/parser.c            |   2 +-
+ libmultipath/pgpolicies.c        |  12 +-
+ libmultipath/print.c             |  90 ++---
+ libmultipath/print.h             |   2 +-
+ libmultipath/propsel.c           |   6 +
+ libmultipath/structs.c           |   1 +
+ libmultipath/uevent.c            | 324 ++---------------
+ libmultipath/uevent.h            |  47 ++-
+ libmultipath/util.c              | 168 ++++-----
+ libmultipath/util.h              |  73 +++-
+ multipathd/main.c                |  14 +-
+ tests/Makefile                   |   3 +-
+ tests/alias.c                    |   4 +-
+ tests/devt.c                     | 192 ++++++++++
+ tests/directio.c                 |  28 +-
+ tests/test-log.c                 |   5 +-
+ tests/uevent.c                   |   4 -
+ tests/util.c                     | 586 ++++++++++++++++++++++++++++---
+ 30 files changed, 1081 insertions(+), 636 deletions(-)
+ create mode 100644 tests/devt.c
+
 -- 
 2.26.2
