@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 49/54] libmultipath: get_refwwid(): get rid of
-	"check" label
-Date: Thu,  9 Jul 2020 12:36:18 +0200
-Message-ID: <20200709103623.8302-8-mwilck@suse.com>
+Subject: [PATCH 44/54] libmultipath: adopt_paths(): don't bail
+	out on single path failure
+Date: Thu,  9 Jul 2020 12:36:13 +0200
+Message-ID: <20200709103623.8302-3-mwilck@suse.com>
 References: <20200709103623.8302-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,61 +24,45 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This was necessary with with the interspersed pthread_cleanup_push()/pop()
-statements, now we can write the code more cleanly.
+If pathinfo fails for one path to be adopted, we currently
+fail the entire function. This may cause ev_add_path() for a valid
+path to fail because some other path is broken. Fix it by just
+skipping paths that don't look healthy.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 31 +++++++++++--------------------
- 1 file changed, 11 insertions(+), 20 deletions(-)
+ libmultipath/structs_vec.c | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index c4712d7..defc54b 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -1449,32 +1449,23 @@ static int _get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
- 	if (dev_type == DEV_DEVMAP) {
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 55fca9b..bc47d1e 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -75,16 +75,20 @@ int adopt_paths(vector pathvec, struct multipath *mpp)
+ 			if (!mpp->paths && !(mpp->paths = vector_alloc()))
+ 				return 1;
  
- 		if (((dm_get_uuid(dev, tmpwwid, WWID_SIZE)) == 0)
--		    && (strlen(tmpwwid))) {
-+		    && (strlen(tmpwwid)))
- 			refwwid = tmpwwid;
--			goto check;
--		}
- 
--		/*
--		 * may be a binding
--		 */
--		if (get_user_friendly_wwid(dev, tmpwwid,
--					   conf->bindings_file) == 0) {
-+		/* or may be a binding */
-+		else if (get_user_friendly_wwid(dev, tmpwwid,
-+						conf->bindings_file) == 0)
- 			refwwid = tmpwwid;
--			goto check;
--		}
- 
--		/*
--		 * or may be an alias
--		 */
--		refwwid = get_mpe_wwid(conf->mptable, dev);
-+		/* or may be an alias */
-+		else {
-+			refwwid = get_mpe_wwid(conf->mptable, dev);
- 
--		/*
--		 * or directly a wwid
--		 */
--		if (!refwwid)
--			refwwid = dev;
-+			/* or directly a wwid */
-+			if (!refwwid)
-+				refwwid = dev;
-+		}
- 
--check:
- 		if (refwwid && strlen(refwwid) &&
- 		    filter_wwid(conf->blist_wwid, conf->elist_wwid, refwwid,
- 				NULL) > 0)
+-			if (!find_path_by_devt(mpp->paths, pp->dev_t) &&
+-			    store_path(mpp->paths, pp))
+-					return 1;
+ 			conf = get_multipath_config();
+ 			pthread_cleanup_push(put_multipath_config, conf);
+ 			ret = pathinfo(pp, conf,
+ 				       DI_PRIO | DI_CHECKER);
+ 			pthread_cleanup_pop(1);
+-			if (ret)
+-				return 1;
++			if (ret) {
++				condlog(3, "%s: pathinfo failed for %s",
++					__func__, pp->dev);
++				continue;
++			}
++
++			if (!find_path_by_devt(mpp->paths, pp->dev_t) &&
++			    store_path(mpp->paths, pp))
++					return 1;
+ 		}
+ 	}
+ 	return 0;
 -- 
 2.26.2
