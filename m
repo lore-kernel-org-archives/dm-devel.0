@@ -1,8 +1,7 @@
 From: mwilck@suse.com
-Subject: [PATCH 25/35] libmultipath: pathinfo(): don't filter
-	emtpy devnode names
-Date: Thu,  9 Jul 2020 12:16:10 +0200
-Message-ID: <20200709101620.6786-26-mwilck@suse.com>
+Subject: [PATCH 32/35] libmultipath: log table params in addmap()
+Date: Thu,  9 Jul 2020 12:16:17 +0200
+Message-ID: <20200709101620.6786-33-mwilck@suse.com>
 References: <20200709101620.6786-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,30 +23,41 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-In the update_multipath_strings() code path (disassemble_map()),
-we set an empty devname if we find devices in maps that are not
-in pathvec and not in sysfs. We shouldn't filter these devices
-by devnode, because failure in pathinfo() causes e.g. adopt_paths()
-to bail out, and this may cause a map removal even if the map
-contains other, perfectly valid paths.
+We currently log the table parameters with "load table" in domap()
+in the success case. But it's at least as interesting to get this
+information when domap() fails. Log in addmap() instead at v2 level.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/configure.c | 2 +-
+ libmultipath/devmapper.c | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 2e559d8..10b5a28 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -2069,7 +2069,7 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 			return PATHINFO_SKIPPED;
- 	}
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index fe590f4..315eb6a 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -992,7 +992,7 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
+ 		} else  {
+ 			/* multipath daemon mode */
+ 			mpp->stat_map_loads++;
+-			condlog(2, "%s: load table [0 %llu %s %s]", mpp->alias,
++			condlog(4, "%s: load table [0 %llu %s %s]", mpp->alias,
+ 				mpp->size, TGT_MPATH, params);
+ 			/*
+ 			 * Required action is over, reset for the stateful daemon.
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 4096e9d..a177a54 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -395,7 +395,7 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
+ 	if (mpp->attribute_flags & (1 << ATTR_GID) &&
+ 	    !dm_task_set_gid(dmt, mpp->gid))
+ 		goto freeout;
+-	condlog(4, "%s: %s [0 %llu %s %s]", mpp->alias,
++	condlog(2, "%s: %s [0 %llu %s %s]", mpp->alias,
+ 		task == DM_DEVICE_RELOAD ? "reload" : "addmap", mpp->size,
+ 		target, params);
  
--	if (filter_devnode(conf->blist_devnode,
-+	if (strlen(pp->dev) != 0 && filter_devnode(conf->blist_devnode,
- 			   conf->elist_devnode,
- 			   pp->dev) > 0)
- 		return PATHINFO_SKIPPED;
 -- 
 2.26.2
