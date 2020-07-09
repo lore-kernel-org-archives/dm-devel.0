@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 80/80] libmultipath: select_action(): don't drop
-	map if alias clashes
-Date: Thu,  9 Jul 2020 13:03:30 +0200
-Message-ID: <20200709110330.9917-7-mwilck@suse.com>
+Subject: [PATCH 78/80] libmultipath: move reload_map() to
+	multipathd
+Date: Thu,  9 Jul 2020 13:03:28 +0200
+Message-ID: <20200709110330.9917-5-mwilck@suse.com>
 References: <20200709110330.9917-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,65 +24,135 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-If for a given map, if we find that the requested alias is already
-used by a map with different WWID, while the map's own WWID is
-not used yet, give up the alias and use the WWID instead. This
-is safer than trying to destroy the existing map, which is likely
-to fail.
-
-This allows us to make use const for the "curmp" parameter.
+reload_map() is only used by multipathd. We don't have less exported
+symbols though, because select_action() now needs to be exported.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 13 +++++++------
- libmultipath/configure.h |  3 ++-
- 2 files changed, 9 insertions(+), 7 deletions(-)
+ libmultipath/configure.c | 40 +---------------------------------------
+ libmultipath/configure.h |  2 +-
+ multipathd/main.c        | 37 +++++++++++++++++++++++++++++++++++++
+ 3 files changed, 39 insertions(+), 40 deletions(-)
 
 diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index b77c2a8..7931045 100644
+index faead8c..b77c2a8 100644
 --- a/libmultipath/configure.c
 +++ b/libmultipath/configure.c
-@@ -688,7 +688,8 @@ select_reload_action(struct multipath *mpp, const struct multipath *cmpp,
+@@ -688,8 +688,7 @@ select_reload_action(struct multipath *mpp, const struct multipath *cmpp,
  		reason);
  }
  
--void select_action (struct multipath *mpp, vector curmp, int force_reload)
-+void select_action (struct multipath *mpp, const struct _vector *curmp,
-+		    int force_reload)
+-static void
+-select_action (struct multipath * mpp, vector curmp, int force_reload)
++void select_action (struct multipath *mpp, vector curmp, int force_reload)
  {
  	struct multipath * cmpp;
  	struct multipath * cmpp_by_name;
-@@ -716,12 +717,12 @@ void select_action (struct multipath *mpp, vector curmp, int force_reload)
- 	}
- 
- 	if (!cmpp) {
--		condlog(2, "%s: remove (wwid changed)", mpp->alias);
--		dm_flush_map(mpp->alias);
--		strlcpy(cmpp_by_name->wwid, mpp->wwid, WWID_SIZE);
--		drop_multipath(curmp, cmpp_by_name->wwid, KEEP_PATHS);
-+		condlog(1, "%s: can't use alias \"%s\" used by %s, falling back to WWID",
-+			mpp->wwid, mpp->alias, cmpp_by_name->wwid);
-+		/* We can do this because wwid wasn't found */
-+		strlcpy(mpp->alias, mpp->wwid, sizeof(mpp->alias));
- 		mpp->action = ACT_CREATE;
--		condlog(3, "%s: set ACT_CREATE (map wwid change)",
-+		condlog(3, "%s: set ACT_CREATE (map does not exist, name changed)",
- 			mpp->alias);
- 		return;
- 	}
+@@ -1478,40 +1477,3 @@ int get_refwwid(enum mpath_cmds cmd, const char *dev, enum devtypes dev_type,
+ 	pthread_cleanup_pop(1);
+ 	return ret;
+ }
+-
+-int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh,
+-	       int is_daemon)
+-{
+-	char params[PARAMS_SIZE] = {0};
+-	struct path *pp;
+-	int i, r;
+-
+-	update_mpp_paths(mpp, vecs->pathvec);
+-	if (refresh) {
+-		vector_foreach_slot (mpp->paths, pp, i) {
+-			struct config *conf = get_multipath_config();
+-			pthread_cleanup_push(put_multipath_config, conf);
+-			r = pathinfo(pp, conf, DI_PRIO);
+-			pthread_cleanup_pop(1);
+-			if (r) {
+-				condlog(2, "%s: failed to refresh pathinfo",
+-					mpp->alias);
+-				return 1;
+-			}
+-		}
+-	}
+-	if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
+-		condlog(0, "%s: failed to setup map", mpp->alias);
+-		return 1;
+-	}
+-	select_action(mpp, vecs->mpvec, 1);
+-
+-	r = domap(mpp, params, is_daemon);
+-	if (r == DOMAP_FAIL || r == DOMAP_RETRY) {
+-		condlog(3, "%s: domap (%u) failure "
+-			"for reload map", mpp->alias, r);
+-		return 1;
+-	}
+-
+-	return 0;
+-}
 diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-index 9907775..6b23ccb 100644
+index d9a7de6..9907775 100644
 --- a/libmultipath/configure.h
 +++ b/libmultipath/configure.h
-@@ -49,7 +49,8 @@ struct vectors;
+@@ -49,11 +49,11 @@ struct vectors;
  
  int setup_map (struct multipath * mpp, char * params, int params_size,
  	       struct vectors *vecs );
--void select_action (struct multipath *mpp, vector curmp, int force_reload);
-+void select_action (struct multipath *mpp, const struct _vector *curmp,
-+		    int force_reload);
++void select_action (struct multipath *mpp, vector curmp, int force_reload);
  int domap (struct multipath * mpp, char * params, int is_daemon);
  int reinstate_paths (struct multipath *mpp);
  int coalesce_paths (struct vectors *vecs, vector curmp, char * refwwid, int force_reload, enum mpath_cmds cmd);
+ int get_refwwid (enum mpath_cmds cmd, const char *dev, enum devtypes dev_type,
+ 		 vector pathvec, char **wwid);
+-int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh, int is_daemon);
+ struct udev_device *get_udev_device(const char *dev, enum devtypes dev_type);
+ void trigger_paths_udev_change(struct multipath *mpp, bool is_mpath);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 29227cd..aa08807 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1909,6 +1909,43 @@ int update_prio(struct path *pp, int refresh_all)
+ 	return 1;
+ }
+ 
++static int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh,
++		      int is_daemon)
++{
++	char params[PARAMS_SIZE] = {0};
++	struct path *pp;
++	int i, r;
++
++	update_mpp_paths(mpp, vecs->pathvec);
++	if (refresh) {
++		vector_foreach_slot (mpp->paths, pp, i) {
++			struct config *conf = get_multipath_config();
++			pthread_cleanup_push(put_multipath_config, conf);
++			r = pathinfo(pp, conf, DI_PRIO);
++			pthread_cleanup_pop(1);
++			if (r) {
++				condlog(2, "%s: failed to refresh pathinfo",
++					mpp->alias);
++				return 1;
++			}
++		}
++	}
++	if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
++		condlog(0, "%s: failed to setup map", mpp->alias);
++		return 1;
++	}
++	select_action(mpp, vecs->mpvec, 1);
++
++	r = domap(mpp, params, is_daemon);
++	if (r == DOMAP_FAIL || r == DOMAP_RETRY) {
++		condlog(3, "%s: domap (%u) failure "
++			"for reload map", mpp->alias, r);
++		return 1;
++	}
++
++	return 0;
++}
++
+ int update_path_groups(struct multipath *mpp, struct vectors *vecs, int refresh)
+ {
+ 	if (reload_map(vecs, mpp, refresh, 1))
 -- 
 2.26.2
