@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 38/39] libmultipath: print message if setting
-	dev_loss_tmo is unsupported
-Date: Thu,  9 Jul 2020 12:19:51 +0200
-Message-ID: <20200709101952.7285-4-mwilck@suse.com>
+Subject: [PATCH 37/39] libmultipath: improve logging for
+	dev_loss_tmo override
+Date: Thu,  9 Jul 2020 12:19:50 +0200
+Message-ID: <20200709101952.7285-3-mwilck@suse.com>
 References: <20200709101952.7285-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,73 +24,39 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-If dev_loss_tmo can't be set because it's not supported for the
-protocol at hand, let the user know.
+Print a more meaningful warning message, and at higher level, if
+the configured dev_loss_tmo can't be applied because it conflicts
+with no_path_retry.
 
-Fixme: we could implement this for other protocols such as NVMe.
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 31 ++++++++++++++++++++++++++++---
- 1 file changed, 28 insertions(+), 3 deletions(-)
+ libmultipath/discovery.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index e2aea81..c00af7e 100644
+index f7d6672..e2aea81 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -33,6 +33,8 @@
- #include "unaligned.h"
- #include "prioritizers/alua_rtpg.h"
- #include "foreign.h"
-+#include "configure.h"
-+#include "print.h"
- 
- struct vpd_vendor_page vpd_vendor_pages[VPD_VP_ARRAY_SIZE] = {
- 	[VPD_VP_UNDEF]	= { 0x00, "undef" },
-@@ -765,6 +767,7 @@ sysfs_set_scsi_tmo (struct multipath *mpp, unsigned int checkint)
- 	struct path *pp;
- 	int i;
- 	unsigned int dev_loss_tmo = mpp->dev_loss;
-+	struct path *err_path = NULL;
- 
- 	if (mpp->no_path_retry > 0) {
- 		uint64_t no_path_retry_tmo =
-@@ -795,12 +798,34 @@ sysfs_set_scsi_tmo (struct multipath *mpp, unsigned int checkint)
- 		return 0;
- 
- 	vector_foreach_slot(mpp->paths, pp, i) {
--		if (pp->sg_id.proto_id == SCSI_PROTOCOL_FCP)
-+		if (pp->bus != SYSFS_BUS_SCSI) {
-+			if (!err_path)
-+				err_path = pp;
-+			continue;
-+		}
-+
-+		switch (pp->sg_id.proto_id) {
-+		case SCSI_PROTOCOL_FCP:
- 			sysfs_set_rport_tmo(mpp, pp);
--		if (pp->sg_id.proto_id == SCSI_PROTOCOL_ISCSI)
-+			continue;
-+		case SCSI_PROTOCOL_ISCSI:
- 			sysfs_set_session_tmo(mpp, pp);
--		if (pp->sg_id.proto_id == SCSI_PROTOCOL_SAS)
-+			continue;
-+		case SCSI_PROTOCOL_SAS:
- 			sysfs_set_nexus_loss_tmo(mpp, pp);
-+			continue;
-+		default:
-+			if (!err_path)
-+				err_path = pp;
-+		}
-+	}
-+
-+	if (err_path) {
-+		char proto_buf[32];
-+
-+		snprint_path_protocol(proto_buf, sizeof(proto_buf), err_path);
-+		condlog(2, "%s: setting dev_loss_tmo is unsupported for protocol %s",
-+			mpp->alias, proto_buf);
+@@ -774,14 +774,15 @@ sysfs_set_scsi_tmo (struct multipath *mpp, unsigned int checkint)
+ 			no_path_retry_tmo = MAX_DEV_LOSS_TMO;
+ 		if (no_path_retry_tmo > dev_loss_tmo)
+ 			dev_loss_tmo = no_path_retry_tmo;
+-		condlog(3, "%s: update dev_loss_tmo to %u",
+-			mpp->alias, dev_loss_tmo);
+ 	} else if (mpp->no_path_retry == NO_PATH_RETRY_QUEUE) {
+ 		dev_loss_tmo = MAX_DEV_LOSS_TMO;
+-		condlog(3, "%s: update dev_loss_tmo to %u",
+-			mpp->alias, dev_loss_tmo);
  	}
- 	return 0;
- }
+-	mpp->dev_loss = dev_loss_tmo;
++	if (mpp->dev_loss != DEV_LOSS_TMO_UNSET &&
++	    mpp->dev_loss != dev_loss_tmo) {
++		condlog(2, "%s: Using dev_loss_tmo=%u instead of %u because of no_path_retry setting",
++			mpp->alias, dev_loss_tmo, mpp->dev_loss);
++		mpp->dev_loss = dev_loss_tmo;
++	}
+ 	if (mpp->dev_loss != DEV_LOSS_TMO_UNSET &&
+ 	    mpp->fast_io_fail != MP_FAST_IO_FAIL_UNSET &&
+ 	    (unsigned int)mpp->fast_io_fail >= mpp->dev_loss) {
 -- 
 2.26.2
