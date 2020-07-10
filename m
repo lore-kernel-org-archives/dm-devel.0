@@ -1,7 +1,7 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH v2 1/7] crypto: geniv - remove unneeded arguments from aead_geniv_alloc()
-Date: Thu,  9 Jul 2020 23:20:36 -0700
-Message-ID: <20200710062042.113842-2-ebiggers@kernel.org>
+Subject: [PATCH v2 2/7] crypto: seqiv - remove seqiv_create()
+Date: Thu,  9 Jul 2020 23:20:37 -0700
+Message-ID: <20200710062042.113842-3-ebiggers@kernel.org>
 References: <20200710062042.113842-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,89 +14,45 @@ List-Id: dm-devel.ids
 
 From: Eric Biggers <ebiggers@google.com>
 
-The type and mask arguments to aead_geniv_alloc() are always 0, so
-remove them.
+seqiv_create() is pointless because it just checks that the template is
+being instantiated as an AEAD, then calls seqiv_aead_create().  But
+seqiv_aead_create() does the exact same check, via aead_geniv_alloc().
+
+Just remove seqiv_create() and use seqiv_aead_create() directly.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- crypto/echainiv.c               | 2 +-
- crypto/geniv.c                  | 7 ++++---
- crypto/seqiv.c                  | 2 +-
- include/crypto/internal/geniv.h | 2 +-
- 4 files changed, 7 insertions(+), 6 deletions(-)
+ crypto/seqiv.c | 16 +---------------
+ 1 file changed, 1 insertion(+), 15 deletions(-)
 
-diff --git a/crypto/echainiv.c b/crypto/echainiv.c
-index 4a2f02baba14..69686668625e 100644
---- a/crypto/echainiv.c
-+++ b/crypto/echainiv.c
-@@ -115,7 +115,7 @@ static int echainiv_aead_create(struct crypto_template *tmpl,
- 	struct aead_instance *inst;
- 	int err;
- 
--	inst = aead_geniv_alloc(tmpl, tb, 0, 0);
-+	inst = aead_geniv_alloc(tmpl, tb);
- 
- 	if (IS_ERR(inst))
- 		return PTR_ERR(inst);
-diff --git a/crypto/geniv.c b/crypto/geniv.c
-index 6a90c52d49ad..07496c8af0ab 100644
---- a/crypto/geniv.c
-+++ b/crypto/geniv.c
-@@ -39,7 +39,7 @@ static void aead_geniv_free(struct aead_instance *inst)
- }
- 
- struct aead_instance *aead_geniv_alloc(struct crypto_template *tmpl,
--				       struct rtattr **tb, u32 type, u32 mask)
-+				       struct rtattr **tb)
- {
- 	struct crypto_aead_spawn *spawn;
- 	struct crypto_attr_type *algt;
-@@ -47,6 +47,7 @@ struct aead_instance *aead_geniv_alloc(struct crypto_template *tmpl,
- 	struct aead_alg *alg;
- 	unsigned int ivsize;
- 	unsigned int maxauthsize;
-+	u32 mask;
- 	int err;
- 
- 	algt = crypto_get_attr_type(tb);
-@@ -63,10 +64,10 @@ struct aead_instance *aead_geniv_alloc(struct crypto_template *tmpl,
- 	spawn = aead_instance_ctx(inst);
- 
- 	/* Ignore async algorithms if necessary. */
--	mask |= crypto_requires_sync(algt->type, algt->mask);
-+	mask = crypto_requires_sync(algt->type, algt->mask);
- 
- 	err = crypto_grab_aead(spawn, aead_crypto_instance(inst),
--			       crypto_attr_alg_name(tb[1]), type, mask);
-+			       crypto_attr_alg_name(tb[1]), 0, mask);
- 	if (err)
- 		goto err_free_inst;
- 
 diff --git a/crypto/seqiv.c b/crypto/seqiv.c
-index f124b9b54e15..e48f875a7aac 100644
+index e48f875a7aac..23e22d8b63e6 100644
 --- a/crypto/seqiv.c
 +++ b/crypto/seqiv.c
-@@ -138,7 +138,7 @@ static int seqiv_aead_create(struct crypto_template *tmpl, struct rtattr **tb)
- 	struct aead_instance *inst;
- 	int err;
+@@ -164,23 +164,9 @@ static int seqiv_aead_create(struct crypto_template *tmpl, struct rtattr **tb)
+ 	return err;
+ }
  
--	inst = aead_geniv_alloc(tmpl, tb, 0, 0);
-+	inst = aead_geniv_alloc(tmpl, tb);
- 
- 	if (IS_ERR(inst))
- 		return PTR_ERR(inst);
-diff --git a/include/crypto/internal/geniv.h b/include/crypto/internal/geniv.h
-index 229d37681a9d..7fd7126f593a 100644
---- a/include/crypto/internal/geniv.h
-+++ b/include/crypto/internal/geniv.h
-@@ -20,7 +20,7 @@ struct aead_geniv_ctx {
+-static int seqiv_create(struct crypto_template *tmpl, struct rtattr **tb)
+-{
+-	struct crypto_attr_type *algt;
+-
+-	algt = crypto_get_attr_type(tb);
+-	if (IS_ERR(algt))
+-		return PTR_ERR(algt);
+-
+-	if ((algt->type ^ CRYPTO_ALG_TYPE_AEAD) & CRYPTO_ALG_TYPE_MASK)
+-		return -EINVAL;
+-
+-	return seqiv_aead_create(tmpl, tb);
+-}
+-
+ static struct crypto_template seqiv_tmpl = {
+ 	.name = "seqiv",
+-	.create = seqiv_create,
++	.create = seqiv_aead_create,
+ 	.module = THIS_MODULE,
  };
- 
- struct aead_instance *aead_geniv_alloc(struct crypto_template *tmpl,
--				       struct rtattr **tb, u32 type, u32 mask);
-+				       struct rtattr **tb);
- int aead_init_geniv(struct crypto_aead *tfm);
- void aead_exit_geniv(struct crypto_aead *tfm);
  
 -- 
 2.27.0
