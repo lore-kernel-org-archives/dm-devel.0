@@ -1,123 +1,90 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH v2 0/7] crypto: add CRYPTO_ALG_ALLOCATES_MEMORY
-Date: Thu,  9 Jul 2020 23:20:35 -0700
-Message-ID: <20200710062042.113842-1-ebiggers@kernel.org>
+Subject: [PATCH v2 7/7] dm-crypt: don't use drivers that have CRYPTO_ALG_ALLOCATES_MEMORY
+Date: Thu,  9 Jul 2020 23:20:42 -0700
+Message-ID: <20200710062042.113842-8-ebiggers@kernel.org>
+References: <20200710062042.113842-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20200710062042.113842-1-ebiggers@kernel.org>
 Sender: linux-crypto-owner@vger.kernel.org
 To: Mikulas Patocka <mpatocka@redhat.com>, linux-crypto@vger.kernel.org
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This series introduces a flag that algorithms can set to indicate that
-they allocate memory during processing of typical inputs, and thus
-shouldn't be used in cases like dm-crypt where memory allocation
-failures aren't acceptable.
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-Compared to Mikulas's patches, I've made the following improvements:
+Don't use crypto drivers that have the flag CRYPTO_ALG_ALLOCATES_MEMORY
+set. These drivers allocate memory and thus they are unsuitable for block
+I/O processing.
 
-- Tried to clearly document the semantics of
-  CRYPTO_ALG_ALLOCATES_MEMORY.  This includes documenting the usage
-  constraints, since there are actually lots of cases that were
-  overlooked where algorithms can still allocate memory in some edge
-  cases where inputs are misaligned, fragemented, etc.  E.g. see
-  crypto/skcipher.c and crypto/ahash.c.  Mikulas, please let me know if
-  there are any concerns for dm-crypt.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+---
+ drivers/md/dm-crypt.c | 17 +++++++++++------
+ 1 file changed, 11 insertions(+), 6 deletions(-)
 
-- Moved the common mechanism for inheriting flags to its own patch.
-
-- crypto_grab_spawn() now handles propagating CRYPTO_ALG_INHERITED_FLAGS
-  to the new template instance.
-
-- Inherit the flags in various places that were missed.
-
-- Other cleanups.
-
-Additional changes v1 => v2:
-
-- Made crypto_check_attr_type() return the mask.
-
-- Added patch that adds NEED_FALLBACK to INHERITED_FLAGS.
-
-- Added patch that removes seqiv_create().
-
-Eric Biggers (5):
-  crypto: geniv - remove unneeded arguments from aead_geniv_alloc()
-  crypto: seqiv - remove seqiv_create()
-  crypto: algapi - use common mechanism for inheriting flags
-  crypto: algapi - add NEED_FALLBACK to INHERITED_FLAGS
-  crypto: algapi - introduce the flag CRYPTO_ALG_ALLOCATES_MEMORY
-
-Mikulas Patocka (2):
-  crypto: drivers - set the flag CRYPTO_ALG_ALLOCATES_MEMORY
-  dm-crypt: don't use drivers that have CRYPTO_ALG_ALLOCATES_MEMORY
-
- crypto/adiantum.c                             |  14 +--
- crypto/algapi.c                               |  21 +++-
- crypto/authenc.c                              |  14 +--
- crypto/authencesn.c                           |  14 +--
- crypto/ccm.c                                  |  33 ++---
- crypto/chacha20poly1305.c                     |  14 +--
- crypto/cmac.c                                 |   5 +-
- crypto/cryptd.c                               |  59 ++++-----
- crypto/ctr.c                                  |  17 +--
- crypto/cts.c                                  |  13 +-
- crypto/echainiv.c                             |   2 +-
- crypto/essiv.c                                |  11 +-
- crypto/gcm.c                                  |  40 ++----
- crypto/geniv.c                                |  19 +--
- crypto/hmac.c                                 |   5 +-
- crypto/lrw.c                                  |  13 +-
- crypto/pcrypt.c                               |  14 +--
- crypto/rsa-pkcs1pad.c                         |  13 +-
- crypto/seqiv.c                                |  18 +--
- crypto/simd.c                                 |   6 +-
- crypto/skcipher.c                             |  13 +-
- crypto/vmac.c                                 |   5 +-
- crypto/xcbc.c                                 |   5 +-
- crypto/xts.c                                  |  15 +--
- .../crypto/allwinner/sun8i-ce/sun8i-ce-core.c |  12 +-
- .../crypto/allwinner/sun8i-ss/sun8i-ss-core.c |  12 +-
- drivers/crypto/amlogic/amlogic-gxl-core.c     |   6 +-
- drivers/crypto/axis/artpec6_crypto.c          |  20 ++-
- drivers/crypto/bcm/cipher.c                   |  72 ++++++++---
- drivers/crypto/caam/caamalg.c                 |   6 +-
- drivers/crypto/caam/caamalg_qi.c              |   6 +-
- drivers/crypto/caam/caamalg_qi2.c             |   8 +-
- drivers/crypto/caam/caamhash.c                |   2 +-
- drivers/crypto/cavium/cpt/cptvf_algs.c        |  18 ++-
- drivers/crypto/cavium/nitrox/nitrox_aead.c    |   4 +-
- .../crypto/cavium/nitrox/nitrox_skcipher.c    |  16 +--
- drivers/crypto/ccp/ccp-crypto-aes-cmac.c      |   1 +
- drivers/crypto/ccp/ccp-crypto-aes-galois.c    |   1 +
- drivers/crypto/ccp/ccp-crypto-aes-xts.c       |   1 +
- drivers/crypto/ccp/ccp-crypto-aes.c           |   2 +
- drivers/crypto/ccp/ccp-crypto-des3.c          |   1 +
- drivers/crypto/ccp/ccp-crypto-sha.c           |   1 +
- drivers/crypto/chelsio/chcr_algo.c            |   7 +-
- drivers/crypto/hisilicon/sec/sec_algs.c       |  24 ++--
- drivers/crypto/hisilicon/sec2/sec_crypto.c    |   4 +-
- .../crypto/inside-secure/safexcel_cipher.c    |  47 +++++++
- drivers/crypto/inside-secure/safexcel_hash.c  |  18 +++
- drivers/crypto/ixp4xx_crypto.c                |   6 +-
- drivers/crypto/marvell/cesa/cipher.c          |  18 ++-
- drivers/crypto/marvell/cesa/hash.c            |   6 +
- .../crypto/marvell/octeontx/otx_cptvf_algs.c  |  30 ++---
- drivers/crypto/n2_core.c                      |   3 +-
- drivers/crypto/picoxcell_crypto.c             |  17 ++-
- drivers/crypto/qat/qat_common/qat_algs.c      |  13 +-
- drivers/crypto/qce/skcipher.c                 |   1 +
- drivers/crypto/talitos.c                      | 117 ++++++++++++------
- drivers/crypto/virtio/virtio_crypto_algs.c    |   3 +-
- drivers/crypto/xilinx/zynqmp-aes-gcm.c        |   1 +
- drivers/md/dm-crypt.c                         |  17 ++-
- include/crypto/algapi.h                       |  25 ++--
- include/crypto/internal/geniv.h               |   2 +-
- include/linux/crypto.h                        |  36 +++++-
- 62 files changed, 562 insertions(+), 405 deletions(-)
-
-
-base-commit: 3d2df84548ed88dc3344392d4e5afb8884d05360
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 000ddfab5ba0..7268faacbdf3 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -421,7 +421,8 @@ static int crypt_iv_lmk_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 		return -EINVAL;
+ 	}
+ 
+-	lmk->hash_tfm = crypto_alloc_shash("md5", 0, 0);
++	lmk->hash_tfm = crypto_alloc_shash("md5", 0,
++					   CRYPTO_ALG_ALLOCATES_MEMORY);
+ 	if (IS_ERR(lmk->hash_tfm)) {
+ 		ti->error = "Error initializing LMK hash";
+ 		return PTR_ERR(lmk->hash_tfm);
+@@ -583,7 +584,8 @@ static int crypt_iv_tcw_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 		return -EINVAL;
+ 	}
+ 
+-	tcw->crc32_tfm = crypto_alloc_shash("crc32", 0, 0);
++	tcw->crc32_tfm = crypto_alloc_shash("crc32", 0,
++					    CRYPTO_ALG_ALLOCATES_MEMORY);
+ 	if (IS_ERR(tcw->crc32_tfm)) {
+ 		ti->error = "Error initializing CRC32 in TCW";
+ 		return PTR_ERR(tcw->crc32_tfm);
+@@ -770,7 +772,8 @@ static int crypt_iv_elephant_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 	struct iv_elephant_private *elephant = &cc->iv_gen_private.elephant;
+ 	int r;
+ 
+-	elephant->tfm = crypto_alloc_skcipher("ecb(aes)", 0, 0);
++	elephant->tfm = crypto_alloc_skcipher("ecb(aes)", 0,
++					      CRYPTO_ALG_ALLOCATES_MEMORY);
+ 	if (IS_ERR(elephant->tfm)) {
+ 		r = PTR_ERR(elephant->tfm);
+ 		elephant->tfm = NULL;
+@@ -2090,7 +2093,8 @@ static int crypt_alloc_tfms_skcipher(struct crypt_config *cc, char *ciphermode)
+ 		return -ENOMEM;
+ 
+ 	for (i = 0; i < cc->tfms_count; i++) {
+-		cc->cipher_tfm.tfms[i] = crypto_alloc_skcipher(ciphermode, 0, 0);
++		cc->cipher_tfm.tfms[i] = crypto_alloc_skcipher(ciphermode, 0,
++						CRYPTO_ALG_ALLOCATES_MEMORY);
+ 		if (IS_ERR(cc->cipher_tfm.tfms[i])) {
+ 			err = PTR_ERR(cc->cipher_tfm.tfms[i]);
+ 			crypt_free_tfms(cc);
+@@ -2116,7 +2120,8 @@ static int crypt_alloc_tfms_aead(struct crypt_config *cc, char *ciphermode)
+ 	if (!cc->cipher_tfm.tfms)
+ 		return -ENOMEM;
+ 
+-	cc->cipher_tfm.tfms_aead[0] = crypto_alloc_aead(ciphermode, 0, 0);
++	cc->cipher_tfm.tfms_aead[0] = crypto_alloc_aead(ciphermode, 0,
++						CRYPTO_ALG_ALLOCATES_MEMORY);
+ 	if (IS_ERR(cc->cipher_tfm.tfms_aead[0])) {
+ 		err = PTR_ERR(cc->cipher_tfm.tfms_aead[0]);
+ 		crypt_free_tfms(cc);
+@@ -2603,7 +2608,7 @@ static int crypt_ctr_auth_cipher(struct crypt_config *cc, char *cipher_api)
+ 		return -ENOMEM;
+ 	strncpy(mac_alg, start, end - start);
+ 
+-	mac = crypto_alloc_ahash(mac_alg, 0, 0);
++	mac = crypto_alloc_ahash(mac_alg, 0, CRYPTO_ALG_ALLOCATES_MEMORY);
+ 	kfree(mac_alg);
+ 
+ 	if (IS_ERR(mac))
 -- 
 2.27.0
