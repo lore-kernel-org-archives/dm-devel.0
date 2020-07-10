@@ -1,24 +1,102 @@
-From: pr-tracker-bot@kernel.org
-Subject: Re: [git pull] device mapper fixes for 5.8-rc5
-Date: Thu, 09 Jul 2020 20:20:04 +0000
-Message-ID: <159432600493.22213.7905594715678061789.pr-tracker-bot@kernel.org>
-References: <20200709194329.GA14653@redhat.com>
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200709194329.GA14653@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Christoph Hellwig <hch@lst.de>, Damien Le Moal <damien.lemoal@wdc.com>, Michal Suchanek <msuchanek@suse.de>, Mikulas Patocka <mpatocka@redhat.com>, Ming Lei <ming.lei@redhat.com>, Wei Yongjun <weiyongjun1@huawei.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: [PATCH v2 1/7] crypto: geniv - remove unneeded arguments from aead_geniv_alloc()
+Date: Thu,  9 Jul 2020 23:20:36 -0700
+Message-ID: <20200710062042.113842-2-ebiggers@kernel.org>
+References: <20200710062042.113842-1-ebiggers@kernel.org>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20200710062042.113842-1-ebiggers@kernel.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>, linux-crypto@vger.kernel.org
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The pull request you sent on Thu, 9 Jul 2020 15:43:30 -0400:
+From: Eric Biggers <ebiggers@google.com>
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.8/dm-fixes-2
+The type and mask arguments to aead_geniv_alloc() are always 0, so
+remove them.
 
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/2a89b99f580371b86ae9bafd6cbeccd3bfab524a
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+---
+ crypto/echainiv.c               | 2 +-
+ crypto/geniv.c                  | 7 ++++---
+ crypto/seqiv.c                  | 2 +-
+ include/crypto/internal/geniv.h | 2 +-
+ 4 files changed, 7 insertions(+), 6 deletions(-)
 
-Thank you!
-
+diff --git a/crypto/echainiv.c b/crypto/echainiv.c
+index 4a2f02baba14..69686668625e 100644
+--- a/crypto/echainiv.c
++++ b/crypto/echainiv.c
+@@ -115,7 +115,7 @@ static int echainiv_aead_create(struct crypto_template *tmpl,
+ 	struct aead_instance *inst;
+ 	int err;
+ 
+-	inst = aead_geniv_alloc(tmpl, tb, 0, 0);
++	inst = aead_geniv_alloc(tmpl, tb);
+ 
+ 	if (IS_ERR(inst))
+ 		return PTR_ERR(inst);
+diff --git a/crypto/geniv.c b/crypto/geniv.c
+index 6a90c52d49ad..07496c8af0ab 100644
+--- a/crypto/geniv.c
++++ b/crypto/geniv.c
+@@ -39,7 +39,7 @@ static void aead_geniv_free(struct aead_instance *inst)
+ }
+ 
+ struct aead_instance *aead_geniv_alloc(struct crypto_template *tmpl,
+-				       struct rtattr **tb, u32 type, u32 mask)
++				       struct rtattr **tb)
+ {
+ 	struct crypto_aead_spawn *spawn;
+ 	struct crypto_attr_type *algt;
+@@ -47,6 +47,7 @@ struct aead_instance *aead_geniv_alloc(struct crypto_template *tmpl,
+ 	struct aead_alg *alg;
+ 	unsigned int ivsize;
+ 	unsigned int maxauthsize;
++	u32 mask;
+ 	int err;
+ 
+ 	algt = crypto_get_attr_type(tb);
+@@ -63,10 +64,10 @@ struct aead_instance *aead_geniv_alloc(struct crypto_template *tmpl,
+ 	spawn = aead_instance_ctx(inst);
+ 
+ 	/* Ignore async algorithms if necessary. */
+-	mask |= crypto_requires_sync(algt->type, algt->mask);
++	mask = crypto_requires_sync(algt->type, algt->mask);
+ 
+ 	err = crypto_grab_aead(spawn, aead_crypto_instance(inst),
+-			       crypto_attr_alg_name(tb[1]), type, mask);
++			       crypto_attr_alg_name(tb[1]), 0, mask);
+ 	if (err)
+ 		goto err_free_inst;
+ 
+diff --git a/crypto/seqiv.c b/crypto/seqiv.c
+index f124b9b54e15..e48f875a7aac 100644
+--- a/crypto/seqiv.c
++++ b/crypto/seqiv.c
+@@ -138,7 +138,7 @@ static int seqiv_aead_create(struct crypto_template *tmpl, struct rtattr **tb)
+ 	struct aead_instance *inst;
+ 	int err;
+ 
+-	inst = aead_geniv_alloc(tmpl, tb, 0, 0);
++	inst = aead_geniv_alloc(tmpl, tb);
+ 
+ 	if (IS_ERR(inst))
+ 		return PTR_ERR(inst);
+diff --git a/include/crypto/internal/geniv.h b/include/crypto/internal/geniv.h
+index 229d37681a9d..7fd7126f593a 100644
+--- a/include/crypto/internal/geniv.h
++++ b/include/crypto/internal/geniv.h
+@@ -20,7 +20,7 @@ struct aead_geniv_ctx {
+ };
+ 
+ struct aead_instance *aead_geniv_alloc(struct crypto_template *tmpl,
+-				       struct rtattr **tb, u32 type, u32 mask);
++				       struct rtattr **tb);
+ int aead_init_geniv(struct crypto_aead *tfm);
+ void aead_exit_geniv(struct crypto_aead *tfm);
+ 
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.wiki.kernel.org/userdoc/prtracker
+2.27.0
