@@ -1,20 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [lvm-devel] master - multipathd: fix fd leak when
- iscsi device logs in
-Date: Mon, 13 Jul 2020 12:27:43 +0200
-Message-ID: <b572a8bbf63b1bde9a2ec53cb909468cfc61cbaf.camel@suse.com>
-References: <6eb10725-456f-de68-e927-1f5a9771c16c@huawei.com>
-	<86d8307c-1747-2254-4f87-fac36f0d51ca@redhat.com>
-	<0d26c9f6-4379-f201-a9a5-839bddef3f25@huawei.com>
-	<92db2c49d0ddbbc385c6a14ef3d99a54457b908e.camel@suse.com>
-	<b482dfdb-a40b-e523-1dcc-d37ddc4fc399@redhat.com>
-	<fa7df2b4c81f9420f12c1e8a5d74b8c42cf45543.camel@suse.com>
-	<f1284ab7-8897-805c-d62e-f6cadb6158ca@redhat.com>
+Subject: Re: [dm-level] master - libmultipath: fix use after free
+ when iscsi logs in
+Date: Mon, 13 Jul 2020 12:49:36 +0200
+Message-ID: <84c1ae97f0eea8920b08cd2acbfb7092ed1465df.camel@suse.com>
+References: <b2037975-dc52-7841-fa61-a38ec94f93a7@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <f1284ab7-8897-805c-d62e-f6cadb6158ca@redhat.com>
+In-Reply-To: <b2037975-dc52-7841-fa61-a38ec94f93a7@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,42 +18,102 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, lixiaokeng <lixiaokeng@huawei.com>
-Cc: dm-devel@redhat.com
+To: lixiaokeng <lixiaokeng@huawei.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: linfeilong@huawei.com, dm-devel@redhat.com, liuzhiqiang26@huawei.com, lutianxiong@huawei.com
 List-Id: dm-devel.ids
 
-On Mon, 2020-07-13 at 12:13 +0200, Zdenek Kabelac wrote:
-> Dne 13. 07. 20 v 12:08 Martin Wilck napsal(a):
-> > 
-> > Ben has already added support for dm_hold_control_dev() in
-> > libmultipath
-> > (e24d8b1 ("libmutipath: don't close fd on dm_lib_release")). But
-> > this
-> > doesn't protect us from calling _open_control() simultaneously in
-> > separate code paths, as Lixiaokeng has pointed out.
-> > 
-> > I don't see how it would, as dm_hold_control_dev() also just
-> > changes
-> > a static variable.
+Hello Lixiaokeng,
+
+Thanks for the report and the analysis.
+
+On Mon, 2020-07-13 at 10:22 +0800, lixiaokeng wrote:
+> When two iscsi ips log in and out alternately and  the following
+> scripts run
+> at the same time,
 > 
-> Here I'm not familiar with  multipath codebase (more a question for
-> Ben 
-> likely), but is 'dm_hold...()' being used in non-threaded way - i.e.
-> in 
-> dmeventd these functions are called  before/after threads are
-> finished - so 
-> there would be no way 2 threads may call this function in parallel ?
+> #!/bin/bash
+> interval=5
+> while true
+> do
+>         iscsiadm -m node -p 9.41.147.171 &> /dev/null
+>         iscsiadm -m node -p 9.41.148.172 &> /dev/null
+>         iscsiadm -m session &> /dev/null
+>         rescan-scsi-bus.sh &> /dev/null
+>         multipath -v2 &> /dev/null
+>         multipath -ll &> /dev/null
+>         sleep $interval
+> done
+> 
+> multipathd will have a segfault after about 30 mins.
+> 
+> The reason is that mpp->hwe is accessed after hwe is already freed.
+> In
+> extract_hwe_from_path func, mpp->hwe is set to pp->hwe, so they
+> points to the
+> same hwe. For some reasons, pp->mpp will be set to NULL in
+> orphan_path func.
+> Then, pp and hwe will be freed with (pp->mpp == NULL) in free_path
+> func
+> called by ev_remove_path func. However, mpp->hwe is not set to NULL
+> while hwe
+> is already freed. So, when iscsi device logs in and new path is added
+> to mpp,
+> mpp->hwe will be accessed in select_pgfailback func. Finally, use-
+> after-free
+> problem occurs.
+> 
+> The procedure details given as follows,
+> 1.wait_dmevents thread
+> wait_dmevents
+> 	->dmevent_loop
+> 		->update_multipath
+> 			->__setup_multipath
+> 				->update_multipath_strings
+> 					 -> sync_paths
+> 						->orphan_path
+> 2.uevqloop thread  (iscsi log out, remove path)
+> uevqloop
+> ->uevent_dispatch
+> 	->service_uevq
+> 		->uev_remove_path
+> 			->ev_remove_path  //pp->mpp is NULL
+> 				->free_path(pp)
+> 			//pp->hew are freed but mpp->hwe is not set to
+> NULL
+> 3.ev_remove_path  (iscsi log in, add path)
+> uevqloop
+> ->uevent_dispatch
+> 	->service_uevq
+> 		->ev_add_path
+> 			->select_pgfailback //mpp->hwe is accessed
+> 
+> Here, we will set mpp->hwe to NULL before setting pp->map to NULL in
+> orphan_path
+> func.
+> 
+> Signed-off-by: Tianxiong Lu <lutianxiong@huawei.com>
+> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+> ---
+>  libmultipath/structs_vec.c | 2 ++
+>  1 file changed, 2 insertions(+)
+> 
+> diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+> index 3dbbaa0..9bbe5d1 100644
+> --- a/libmultipath/structs_vec.c
+> +++ b/libmultipath/structs_vec.c
+> @@ -93,6 +93,8 @@ int adopt_paths(vector pathvec, struct multipath
+> *mpp)
+>  void orphan_path(struct path *pp, const char *reason)
+>  {
+>  	condlog(3, "%s: orphan path, %s", pp->dev, reason);
+> +	if (pp->mpp && pp->mpp->hwe == pp->hwe)
+> +		pp->mpp->hwe = NULL;
+>  	pp->mpp = NULL;
+>  	pp->dmstate = PSTATE_UNDEF;
+>  	pp->uid_attribute = NULL;
 
-Yes, it's called via pthread_once().
-
-@Lixiaokeng, that would suggest a simpler solution to your fd leak
-problem than what I posted before. You'd just need to apply Ben's patch
-"libmutipath: don't close fd on dm_lib_release" submitted March
-24th.
-
-Contrary to what I said before, this patch is NOT merged yet. The commit id e24d8b1 was from my "upstream-queue" branch only 
-(https://github.com/openSUSE/multipath-tools/tree/upstream-queue)
-
-Could you try with that patch (and without mine sent previously)?
+This isn't wrong, but I think sync_paths() has to be fixed as well.
+I'll send a small series soon, based on your patch.
 
 Martin
