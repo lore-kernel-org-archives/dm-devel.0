@@ -1,12 +1,15 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [dm-level] master - libmultipath: fix use after free
- when iscsi logs in
-Date: Mon, 13 Jul 2020 10:22:11 +0800
-Message-ID: <b2037975-dc52-7841-fa61-a38ec94f93a7@huawei.com>
+Subject: Re: [lvm-devel] master - multipathd: fix fd leak when
+ iscsi device logs in
+Date: Mon, 13 Jul 2020 10:15:08 +0800
+Message-ID: <0d26c9f6-4379-f201-a9a5-839bddef3f25@huawei.com>
+References: <6eb10725-456f-de68-e927-1f5a9771c16c@huawei.com>
+	<86d8307c-1747-2254-4f87-fac36f0d51ca@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <86d8307c-1747-2254-4f87-fac36f0d51ca@redhat.com>
 Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,83 +20,60 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@suse.com>
+To: Zdenek Kabelac <zkabelac@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@suse.com>, Benjamin
+	Marzinski <bmarzins@redhat.com>
 Cc: linfeilong@huawei.com, dm-devel@redhat.com, liuzhiqiang26@huawei.com, lutianxiong@huawei.com
 List-Id: dm-devel.ids
 
-When two iscsi ips log in and out alternately and  the following scripts run
-at the same time,
-
-#!/bin/bash
-interval=5
-while true
-do
-        iscsiadm -m node -p 9.41.147.171 &> /dev/null
-        iscsiadm -m node -p 9.41.148.172 &> /dev/null
-        iscsiadm -m session &> /dev/null
-        rescan-scsi-bus.sh &> /dev/null
-        multipath -v2 &> /dev/null
-        multipath -ll &> /dev/null
-        sleep $interval
-done
-
-multipathd will have a segfault after about 30 mins.
-
-The reason is that mpp->hwe is accessed after hwe is already freed. In
-extract_hwe_from_path func, mpp->hwe is set to pp->hwe, so they points to the
-same hwe. For some reasons, pp->mpp will be set to NULL in orphan_path func.
-Then, pp and hwe will be freed with (pp->mpp == NULL) in free_path func
-called by ev_remove_path func. However, mpp->hwe is not set to NULL while hwe
-is already freed. So, when iscsi device logs in and new path is added to mpp,
-mpp->hwe will be accessed in select_pgfailback func. Finally, use-after-free
-problem occurs.
-
-The procedure details given as follows,
-1.wait_dmevents thread
-wait_dmevents
-	->dmevent_loop
-		->update_multipath
-			->__setup_multipath
-				->update_multipath_strings
-					 -> sync_paths
-						->orphan_path
-2.uevqloop thread  (iscsi log out, remove path)
-uevqloop
-->uevent_dispatch
-	->service_uevq
-		->uev_remove_path
-			->ev_remove_path  //pp->mpp is NULL
-				->free_path(pp)
-			//pp->hew are freed but mpp->hwe is not set to NULL
-3.ev_remove_path  (iscsi log in, add path)
-uevqloop
-->uevent_dispatch
-	->service_uevq
-		->ev_add_path
-			->select_pgfailback //mpp->hwe is accessed
-
-Here, we will set mpp->hwe to NULL before setting pp->map to NULL in orphan_path
-func.
-
-Signed-off-by: Tianxiong Lu <lutianxiong@huawei.com>
-Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
-Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
----
- libmultipath/structs_vec.c | 2 ++
- 1 file changed, 2 insertions(+)
-
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 3dbbaa0..9bbe5d1 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -93,6 +93,8 @@ int adopt_paths(vector pathvec, struct multipath *mpp)
- void orphan_path(struct path *pp, const char *reason)
- {
- 	condlog(3, "%s: orphan path, %s", pp->dev, reason);
-+	if (pp->mpp && pp->mpp->hwe == pp->hwe)
-+		pp->mpp->hwe = NULL;
- 	pp->mpp = NULL;
- 	pp->dmstate = PSTATE_UNDEF;
- 	pp->uid_attribute = NULL;
---
-2.26.1
+SGkKCk5vdyB0aGUgbnVtYmVyIG9mIGZkIHBvaW50aW5nIC9kZXYvbWFwcGVyL2NvbnRyb2wgaW4g
+bXVsdGlwYXRoZCBwcm9jZXNzCmluY3JlYXNlcyB3aGVuIGlzY3NpIGRldmljZSBsb2dzIGluLiBU
+aGUgcmVhc29uIGlzIHRoYXQgd2FpdF9kbWV2ZW50cwp0aHJlYWQgYW5kIHVldnFsb29wIHRocmVh
+ZCBjYWxsIF9vcGVuX2FuZF9hc3NpZ25fY29udHJvbF9mZCBjb25jdXJyZW50bHkuCklmIGxvY2sg
+YWRkIHRvIF9vcGVuX2FuZF9hc3NpZ25fY29udHJvbF9mZCBmdW4gaW4gbHZtMi9saWJkbS9saWJk
+bS1pZmFjZS5jLAp0aGUgdHJvdWJsZSBpcyBzb2x2ZWQgZWFzaWx5IGJ1dCBaZGVuZWsgS2FiZWxh
+YyBzYWlkIHRoYXQgbGliZG0gaXMgbm90CnB0aHJlYWQgYXdhcmUvc2FmZSBsaWJyYXJ5LlNvIHRo
+ZSBsb2NrIGNvdWxkIG5vdCBiZSBhZGRlZCB0byBsaWJkbS4gSWYKdGhlIGxvY2sgYWRkIHRvIG11
+bHRpcGF0aC10b29scywgdGhlcmUgd2lsbCBiZSBhIGxvdCBvZiBwb3NpdGlvbnMgd2hlcmUKZG1f
+dGFza19ydW4gaXMgY2FsbGVkIGFuZCB0aGUgbG9jayBzaHVvbGQgYmUgYWRkZWQuIEl0IG1heSBk
+ZWdyYWRlCm11bHRpcGF0aC10b29scycgcGVyZm9ybWFuY2UuIEkgZG9uJ3QgaGF2ZSBhbnkgb3Ro
+ZXIgZ29vZCBpZGVhIGFib3V0CnRoaXMgdHJvdWJsZS4gRG8geW91IGhhdmUgc29tZSBnb29kIGlk
+ZWEgYWJvdXQgaXQ/IFRoZXJlIGlzIGFuIGFub3RoZXIKcHJvYmxlbSB0byBtZS4gTXVsdGlwYXRo
+ZCBpcyBhIHByb2Nlc3Mgd2l0aCBtdWx0aS10aHJlYWQgYW5kIGxpYmRtIGlzCm5vdCBwdGhyZWFk
+IGF3YXJlL3NhZmUgbGlicmFyeSwgd2h5IG11bHRpcGF0aGQgdXNlIGxpYmRtIHdpdGggbm8KcHJv
+dGVjdO+8nyBUaGFua3MuCgpUaGUgcHJvY2VkdXJlIGRldGFpbHMgd2hlbiBmZCBsZWFrIG9jY3Vy
+cyBnaXZlbiBhcyBmb2xsb3dzOgoxLiB3YWl0X2RtZXZlbnRzIHRocmVhZAp3YWl0X2RtZXZlbnRz
+Ci0+ZG1ldmVudF9sb29wCiAgICAtPmRtX2dldF9ldmVudHMgKC0+ZG1faXNfbXBhdGgpCiAgICAg
+ICAgLT5kbV90YXNrX3J1bgogICAgICAgICAgICAtPl9vcGVuX2NvbnRyb2wKICAgICAgICAgICAg
+ICAgIC0+X29wZW5fYW5kX2Fzc2lnbl9jb250cm9sX2ZkCgoyLiB1ZXZxbG9vcCB0aHJlYWQKdWV2
+cWxvb3AKLT51ZXZlbnRfZGlzcGF0Y2gKICAgIC0+c2VydmljZV91ZXZxCiAgICAgICAgLT5ldl9h
+ZGRfcGF0aAogICAgICAgICAgICAtPl9fc2V0dXBfbXVsdGlwYXRoCiAgICAgICAgICAgICAgICAt
+PmRtX2dldF9pbmZvCiAgICAgICAgICAgICAgICAgICAgLT5kbV90YXNrX3J1bgogICAgICAgICAg
+ICAgICAgICAgICAgICAtPl9vcGVuX2NvbnRyb2wKICAgICAgICAgICAgICAgICAgICAgICAgICAg
+IC0+X29wZW5fYW5kX2Fzc2lnbl9jb250cm9sX2ZkCgpMaXhpYW9rZW5nCgpPbiAyMDIwLzcvOSAx
+Njo1NCwgWmRlbmVrIEthYmVsYWMgd3JvdGU6Cj4gRG5lIDA5LiAwNy4gMjAgdiA5OjAyIGxpeGlh
+b2tlbmcgbmFwc2FsKGEpOgo+PiBXaGVuIG9uZSBpc2NzaSBkZXZpY2UgbG9ncyBpbiBhbmQgbG9n
+cyBvdXQgc2V2ZXJhbCB0aW1lcywgdGhlCj4+IG51bWJlciBvZiBmZCwgd2hpY2ggcG9pbnRzIHRv
+ICcvZGV2L21hcHBlci9jb250cm9sJywgaW5jcmVhc2VzIGluCj4+IC9wcm9jLzxtdWx0aXBhdGhk
+LXBpZD4vZmQgYXMgZm9sbG93cywKPj4gW3Jvb3RAbG9jYWxob3N0IGZkXSMgbGwgfCBncmVwIGNv
+bnRyb2wKPiAKPj4gZGlmZiAtLWdpdCBhL2xpYmRtL2lvY3RsL2xpYmRtLWlmYWNlLmMgYi9saWJk
+bS9pb2N0bC9saWJkbS1pZmFjZS5jCj4+IGluZGV4IDdhZDU0OWMuLjcxNjgzNjkgMTAwNjQ0Cj4+
+IC0tLSBhL2xpYmRtL2lvY3RsL2xpYmRtLWlmYWNlLmMKPj4gKysrIGIvbGliZG0vaW9jdGwvbGli
+ZG0taWZhY2UuYwo+PiBAQCAtMjMsNiArMjMsNyBAQAo+PiDCoCAjaW5jbHVkZSA8c3lzL2lvY3Rs
+Lmg+Cj4+IMKgICNpbmNsdWRlIDxzeXMvdXRzbmFtZS5oPgo+PiDCoCAjaW5jbHVkZSA8bGltaXRz
+Lmg+Cj4+ICsjaW5jbHVkZSA8cHRocmVhZC5oPgo+Pgo+PiDCoCAjaWZkZWYgX19saW51eF9fCj4+
+IMKgICPCoCBpbmNsdWRlICJsaWJkbS9taXNjL2tkZXZfdC5oIgo+PiBAQCAtODEsNiArODIsNyBA
+QCBzdGF0aWMgZG1fYml0c2V0X3QgX2RtX2JpdHNldCA9IE5VTEw7Cj4+IMKgIHN0YXRpYyB1aW50
+MzJfdCBfZG1fZGV2aWNlX21ham9yID0gMDsKPj4KPj4gwqAgc3RhdGljIGludCBfY29udHJvbF9m
+ZCA9IC0xOwo+PiArc3RhdGljIHB0aHJlYWRfbXV0ZXhfdCBfY29udHJvbF9mZF9tdXRleCA9IFBU
+SFJFQURfTVVURVhfSU5JVElBTElaRVI7Cj4+IMKgIHN0YXRpYyBpbnQgX2hvbGRfY29udHJvbF9m
+ZF9vcGVuID0gMDsKPj4gwqAgc3RhdGljIGludCBfdmVyc2lvbl9jaGVja2VkID0gMDsKPj4gwqAg
+c3RhdGljIGludCBfdmVyc2lvbl9vayA9IDE7Cj4+IEBAIC00MDQsMTAgKzQwNiwxOSBAQCBzdGF0
+aWMgdm9pZCBfY2xvc2VfY29udHJvbF9mZCh2b2lkKQo+PiDCoCAjaWZkZWYgRE1fSU9DVExTCj4+
+IMKgIHN0YXRpYyBpbnQgX29wZW5fYW5kX2Fzc2lnbl9jb250cm9sX2ZkKGNvbnN0IGNoYXIgKmNv
+bnRyb2wpCj4+IMKgIHsKPj4gK8KgwqDCoCBwdGhyZWFkX211dGV4X2xvY2soJl9jb250cm9sX2Zk
+X211dGV4KTsKPj4gKwo+PiArwqDCoMKgIGlmIChfY29udHJvbF9mZCAhPSAtMSkgewo+IAo+IAo+
+IAo+IEhpCj4gCj4gbGliZG0gaXMgbm90IHB0aHJlYWQgYXdhcmUvc2FmZSBsaWJyYXJ5Lgo+IAo+
+IFNvIHRoZSBmaXggbmVlZHMgdG8gaGFwcGVuIG9uIGxpYmRtIHVzZXItc2lkZSB0byBwcmV2ZW50
+IHJhY2UgY2FsbCBvZiB0aGlzIGZ1bmN0aW9uLgo+IAo+IAo+IFpkZW5lawo+IAo+IAo+IC4KCgot
+LQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5y
+ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
