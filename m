@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 3/4] libmultipath: warn about NULL value of
-	mpp->hwe
-Date: Mon, 13 Jul 2020 13:07:42 +0200
-Message-ID: <20200713110743.26329-4-mwilck@suse.com>
+Subject: [PATCH 4/4] libmultipath: fix mpp->hwe handling in
+	sync_paths()
+Date: Mon, 13 Jul 2020 13:07:43 +0200
+Message-ID: <20200713110743.26329-5-mwilck@suse.com>
 References: <20200713110743.26329-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,29 +24,41 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-mpp->hwe is only accessed in propsel.c. It may become unset if
-all paths of the mpp have been deleted. Access to mpp->hwe in this
-case should be avoided.
+This is anologous to
 
+1f96269 ("multipathd: fix mpp->hwe handling on path removal")
+f6839eb ("multipathd: fix mpp->hwe handling when paths are freed")
+
+When paths are removed from a map, we need to make sure that
+mpp->hwe doesn't become stale.
+
+Reported-by: Lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/propsel.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ libmultipath/structs_vec.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 897e48c..92b0595 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -65,7 +65,9 @@ do {									\
- 	__do_set_from_vec(struct hwentry, var, (src)->hwe, dest)
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 0a73d2a..0519996 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -256,6 +256,8 @@ void sync_paths(struct multipath *mpp, vector pathvec)
+ 		}
+ 		if (!found) {
+ 			condlog(3, "%s dropped path %s", mpp->alias, pp->dev);
++			if (mpp->hwe == pp->hwe)
++				mpp->hwe = NULL;
+ 			vector_del_slot(mpp->paths, i--);
+ 			orphan_path(pp, "path removed externally");
+ 		}
+@@ -263,6 +265,8 @@ void sync_paths(struct multipath *mpp, vector pathvec)
+ 	update_mpp_paths(mpp, pathvec);
+ 	vector_foreach_slot (mpp->paths, pp, i)
+ 		pp->mpp = mpp;
++	if (mpp->hwe == NULL)
++		extract_hwe_from_path(mpp);
+ }
  
- #define do_set_from_hwe(var, src, dest, msg)				\
--	if (__do_set_from_hwe(var, src, dest)) {			\
-+	if (!src->hwe) {						\
-+		condlog(0, "BUG: do_set_from_hwe called with hwe == NULL"); \
-+	} else if (__do_set_from_hwe(var, src, dest)) {			\
- 		origin = msg;						\
- 		goto out;						\
- 	}
+ int
 -- 
 2.26.2
