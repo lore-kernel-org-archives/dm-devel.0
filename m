@@ -1,14 +1,11 @@
 From: mwilck@suse.com
-Subject: [PATCH 4/4] libmultipath: fix mpp->hwe handling in
-	sync_paths()
-Date: Mon, 13 Jul 2020 13:07:43 +0200
-Message-ID: <20200713110743.26329-5-mwilck@suse.com>
-References: <20200713110743.26329-1-mwilck@suse.com>
+Subject: [PATCH 0/4]  Fix segfault on access to mpp->hwe
+Date: Mon, 13 Jul 2020 13:07:39 +0200
+Message-ID: <20200713110743.26329-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200713110743.26329-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,41 +21,43 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This is anologous to
+This is in response to Lixiaokeng's post
+"master - libmultipath: fix use after free when iscsi logs in".
 
-1f96269 ("multipathd: fix mpp->hwe handling on path removal")
-f6839eb ("multipathd: fix mpp->hwe handling when paths are freed")
+On top of Lixiaokeng's patch, I've added some log messages and
+a fix for mpp->hwe handling in sync_paths().
 
-When paths are removed from a map, we need to make sure that
-mpp->hwe doesn't become stale.
+The question remains how we handle maps without paths. I believe we're good
+here, please review my assessment.
 
-Reported-by: Lixiaokeng <lixiaokeng@huawei.com>
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/structs_vec.c | 4 ++++
- 1 file changed, 4 insertions(+)
+mpp->hwe is only accessed in propsel.c, via the mp_set_hwe() macro. Patch 3 of
+my series adds an error message if this happens while mpp->hwe is NULL. IMO it
+shouldn't happen because we don't check map properties for empty
+maps. Normally this is done when a map is created, and we don't create maps
+without paths.
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 0a73d2a..0519996 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -256,6 +256,8 @@ void sync_paths(struct multipath *mpp, vector pathvec)
- 		}
- 		if (!found) {
- 			condlog(3, "%s dropped path %s", mpp->alias, pp->dev);
-+			if (mpp->hwe == pp->hwe)
-+				mpp->hwe = NULL;
- 			vector_del_slot(mpp->paths, i--);
- 			orphan_path(pp, "path removed externally");
- 		}
-@@ -263,6 +265,8 @@ void sync_paths(struct multipath *mpp, vector pathvec)
- 	update_mpp_paths(mpp, pathvec);
- 	vector_foreach_slot (mpp->paths, pp, i)
- 		pp->mpp = mpp;
-+	if (mpp->hwe == NULL)
-+		extract_hwe_from_path(mpp);
- }
- 
- int
+The case where a map looses all paths during its normal lifetime and
+can't be removed (e.g. because it's busy) is already covered by the
+current code AFAICT. When a new path is re-added, we'll call adopt_paths
+and verify_paths(), which will make sure that mpp->hwe is set again
+to the pp->hwe member of the newly added path.
+
+Reviews and comments welcome.
+
+Regards
+Martin
+
+Martin Wilck (3):
+  libmultipath: warn if freeing path that holds mpp->hwe
+  libmultipath: warn about NULL value of mpp->hwe
+  libmultipath: fix mpp->hwe handling in sync_paths()
+
+lixiaokeng (1):
+  master - libmultipath: fix use after free when iscsi logs in
+
+ libmultipath/propsel.c     | 4 +++-
+ libmultipath/structs_vec.c | 9 +++++++++
+ 2 files changed, 12 insertions(+), 1 deletion(-)
+
 -- 
 2.26.2
