@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 1/4] master - libmultipath: fix use after free
-	when iscsi logs in
-Date: Mon, 13 Jul 2020 13:07:40 +0200
-Message-ID: <20200713110743.26329-2-mwilck@suse.com>
+Subject: [PATCH 3/4] libmultipath: warn about NULL value of
+	mpp->hwe
+Date: Mon, 13 Jul 2020 13:07:42 +0200
+Message-ID: <20200713110743.26329-4-mwilck@suse.com>
 References: <20200713110743.26329-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,82 +22,31 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-From: lixiaokeng <lixiaokeng@huawei.com>
+From: Martin Wilck <mwilck@suse.com>
 
-When two iscsi ips log in and out alternately and  the following scripts run
-at the same time,
+mpp->hwe is only accessed in propsel.c. It may become unset if
+all paths of the mpp have been deleted. Access to mpp->hwe in this
+case should be avoided.
 
-#!/bin/bash
-interval=5
-while true
-do
-        iscsiadm -m node -p 9.41.147.171 &> /dev/null
-        iscsiadm -m node -p 9.41.148.172 &> /dev/null
-        iscsiadm -m session &> /dev/null
-        rescan-scsi-bus.sh &> /dev/null
-        multipath -v2 &> /dev/null
-        multipath -ll &> /dev/null
-        sleep $interval
-done
-
-multipathd will have a segfault after about 30 mins.
-
-The reason is that mpp->hwe is accessed after hwe is already freed. In
-extract_hwe_from_path func, mpp->hwe is set to pp->hwe, so they points to the
-same hwe. For some reasons, pp->mpp will be set to NULL in orphan_path func.
-Then, pp and hwe will be freed with (pp->mpp == NULL) in free_path func
-called by ev_remove_path func. However, mpp->hwe is not set to NULL while hwe
-is already freed. So, when iscsi device logs in and new path is added to mpp,
-mpp->hwe will be accessed in select_pgfailback func. Finally, use-after-free
-problem occurs.
-
-The procedure details given as follows,
-1.wait_dmevents thread
-wait_dmevents
-	->dmevent_loop
-		->update_multipath
-			->__setup_multipath
-				->update_multipath_strings
-					 -> sync_paths
-						->orphan_path
-2.uevqloop thread  (iscsi log out, remove path)
-uevqloop
-->uevent_dispatch
-	->service_uevq
-		->uev_remove_path
-			->ev_remove_path  //pp->mpp is NULL
-				->free_path(pp)
-			//pp->hew are freed but mpp->hwe is not set to NULL
-3.ev_remove_path  (iscsi log in, add path)
-uevqloop
-->uevent_dispatch
-	->service_uevq
-		->ev_add_path
-			->select_pgfailback //mpp->hwe is accessed
-
-Here, we will set mpp->hwe to NULL before setting pp->map to NULL in orphan_path
-func.
-
-Signed-off-by: Tianxiong Lu <lutianxiong@huawei.com>
-Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
-Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs_vec.c | 2 ++
- 1 file changed, 2 insertions(+)
+ libmultipath/propsel.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 3dbbaa0..9bbe5d1 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -93,6 +93,8 @@ int adopt_paths(vector pathvec, struct multipath *mpp)
- void orphan_path(struct path *pp, const char *reason)
- {
- 	condlog(3, "%s: orphan path, %s", pp->dev, reason);
-+	if (pp->mpp && pp->mpp->hwe == pp->hwe)
-+		pp->mpp->hwe = NULL;
- 	pp->mpp = NULL;
- 	pp->dmstate = PSTATE_UNDEF;
- 	pp->uid_attribute = NULL;
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 897e48c..92b0595 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -65,7 +65,9 @@ do {									\
+ 	__do_set_from_vec(struct hwentry, var, (src)->hwe, dest)
+ 
+ #define do_set_from_hwe(var, src, dest, msg)				\
+-	if (__do_set_from_hwe(var, src, dest)) {			\
++	if (!src->hwe) {						\
++		condlog(0, "BUG: do_set_from_hwe called with hwe == NULL"); \
++	} else if (__do_set_from_hwe(var, src, dest)) {			\
+ 		origin = msg;						\
+ 		goto out;						\
+ 	}
 -- 
 2.26.2
