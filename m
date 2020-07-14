@@ -1,19 +1,13 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [lvm-devel] master - multipathd: fix fd leak when
- iscsi device logs in
-Date: Tue, 14 Jul 2020 17:22:41 -0500
-Message-ID: <20200714222241.GK11089@octiron.msp.redhat.com>
-References: <6eb10725-456f-de68-e927-1f5a9771c16c@huawei.com>
-	<86d8307c-1747-2254-4f87-fac36f0d51ca@redhat.com>
-	<0d26c9f6-4379-f201-a9a5-839bddef3f25@huawei.com>
-	<92db2c49d0ddbbc385c6a14ef3d99a54457b908e.camel@suse.com>
-	<b482dfdb-a40b-e523-1dcc-d37ddc4fc399@redhat.com>
-	<f818352533682ae13fee17eb945fc2c9f62d15cd.camel@suse.com>
+Subject: Re: [PATCH 0/4]  Fix segfault on access to mpp->hwe
+Date: Tue, 14 Jul 2020 18:54:21 -0500
+Message-ID: <20200714235421.GL11089@octiron.msp.redhat.com>
+References: <20200713110743.26329-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <f818352533682ae13fee17eb945fc2c9f62d15cd.camel@suse.com>
+In-Reply-To: <20200713110743.26329-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,94 +18,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
-To: Martin Wilck <mwilck@suse.com>
-Cc: lixiaokeng <lixiaokeng@huawei.com>, linfeilong@huawei.com, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, liuzhiqiang26@huawei.com, lutianxiong@huawei.com
+To: mwilck@suse.com
+Cc: lixiaokeng@huawei.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jul 13, 2020 at 09:59:43PM +0200, Martin Wilck wrote:
-> On Mon, 2020-07-13 at 11:56 +0200, Zdenek Kabelac wrote:
-> > 
-> > > @Zdenek, do we have to protect every libdm call, or is it
-> > > sufficient
-> > > to protect only dm_task_run(), as lixiaokeng suggested?
-> > > 
-> > 
-> > Hi
-> > 
-> > It's actually hard to answer it in a simple way.
-> > Several properties are held in library static variables.
-> >
-> > ...
-> >
-> > As for the issue of keeping control_fd open - there should be a
-> > synchronized 
-> > call of dm_hold_control_dev(0/1) -  see the codebase of  dmeventd.c
-> > in lvm2 
-> > code base - how we solve the control_fd handling.
+On Mon, Jul 13, 2020 at 01:07:39PM +0200, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
 > 
-> I've made an assessment of the libdm calls that multipath-tools use.
+> This is in response to Lixiaokeng's post
+> "master - libmultipath: fix use after free when iscsi logs in".
 > 
-> Most of them are trivial getters and setters and need no locking,
-> because they don't operate on any static or global data structures.
+> On top of Lixiaokeng's patch, I've added some log messages and
+> a fix for mpp->hwe handling in sync_paths().
 > 
-> The exceptions I found are are listed here:
+> The question remains how we handle maps without paths. I believe we're good
+> here, please review my assessment.
 > 
-> dm_driver_version
-> dm_hold_control_dev
-> dm_is_dm_major
-> dm_lib_exit
-> dm_lib_release
-> dm_log_init
-> dm_log_init_verbose
-> dm_task_create
-> dm_task_run
-> dm_task_set_cookie
-> dm_udev_set_sync_support
-> dm_udev_wait
+> mpp->hwe is only accessed in propsel.c, via the mp_set_hwe() macro. Patch 3 of
+> my series adds an error message if this happens while mpp->hwe is NULL. IMO it
+> shouldn't happen because we don't check map properties for empty
+> maps. Normally this is done when a map is created, and we don't create maps
+> without paths.
 > 
-> The reported race around _control_fd could probably be fixed simply
-> by calling dm_hold_control_dev() and dm_driver_version() early on e.g.
-> via pthread_once(), because dm_driver_version() calls dm_task_create()
-> and dm_task_run(), and thus implicitly initializes the _control_fd.
-> (libmultipath currently doesn't do these calls in the right order).
-> This should also avoid the need for locking dm_is_dm_major() (access to
-> _bitset) and dm_task_create (check_version()). The early init function
-> could also call dm_log_init(), dm_log_init_verbose(), and
-> dm_udev_set_sync_support(), setting up the libdm parameters once and
-> for all.
+> The case where a map looses all paths during its normal lifetime and
+> can't be removed (e.g. because it's busy) is already covered by the
+> current code AFAICT. When a new path is re-added, we'll call adopt_paths
+> and verify_paths(), which will make sure that mpp->hwe is set again
+> to the pp->hwe member of the newly added path.
 > 
-> However, there are other possible races, as you noted. Mainly related
-> to manipulating the node_ops stack - this concerns dm_task_run(),
-> dm_udev_wait(), dm_lib_release(), dm_lib_exit(). I'm uncertain about 
-> dm_task_set_cookie(). I suppose it doesn't need protecting, but I tend
-> to be on the safe side.
-> 
-> Anyway, that's my summary: the 4 or 5 functions mentioned in the
-> previous paragraph would need wrapping under a lock. The rest can be
-> handled by making sure the initialization is made early on, and only
-> once.
-> 
-> Comments welcome.
+> Reviews and comments welcome.
 
-We've agreed that dm_lib_release() is unnecessary, since we always call
-dm_udev_wait() when update_devs() is needed. dm_lib_exit() should
-already be safe, since we only call it after cleaning up the other
-threads. dm_task_set_cookie() looks safe to me as well, assuming that we
-have early initialization. So we are really talking about dm_task_run()
-and dm_udev_wait(). Clearly dm_udev_wait() always needs to run under a
-lock. Two threads trying to remove items from a list at the same time
-isn't safe, and there's no way to know if there will be items on the
-_node_ops list. The one thing I'm not sure of, is whether every call to
-dm_task_run() always needs to be locked. clearly we could, and it would
-be safer. Also, clearly for calls that add elements to _node_ops it
-must. But for calls like DM_DEVICE_TABLE or DM_DEVICE_LIST, the only
-issue that I can see with concurrent calls is the possibility that
-_ioctl_buffer_double_factor gets increased too much. Perhaps that's
-enough of a problem that we should just lock all dm_task_run() calls as
-well.
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
--Ben
- 
+> 
 > Regards
 > Martin
 > 
+> Martin Wilck (3):
+>   libmultipath: warn if freeing path that holds mpp->hwe
+>   libmultipath: warn about NULL value of mpp->hwe
+>   libmultipath: fix mpp->hwe handling in sync_paths()
+> 
+> lixiaokeng (1):
+>   master - libmultipath: fix use after free when iscsi logs in
+> 
+>  libmultipath/propsel.c     | 4 +++-
+>  libmultipath/structs_vec.c | 9 +++++++++
+>  2 files changed, 12 insertions(+), 1 deletion(-)
+> 
+> -- 
+> 2.26.2
