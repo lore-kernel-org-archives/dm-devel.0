@@ -1,11 +1,11 @@
-From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH 3/8] md: Fix compilation warning
-Date: Wed, 15 Jul 2020 18:52:12 +0900
-Message-ID: <20200715095217.441885-4-damien.lemoal@wdc.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 0/8] Various cleanups
+Date: Wed, 15 Jul 2020 09:42:58 -0400
+Message-ID: <20200715134258.GB9501@redhat.com>
 References: <20200715095217.441885-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20200715095217.441885-1-damien.lemoal@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -17,43 +17,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Cc: Damien Le Moal <damien.lemoal@wdc.com>
+Content-Disposition: inline
+To: Damien Le Moal <damien.lemoal@wdc.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-UmVtb3ZlIHRoZSBpZiBzdGF0ZW1lbnQgYXJvdW5kIHRoZSBjYWxscyB0byBzeXNmc19saW5rX3Jk
-ZXYoKSB0byBhdm9pZAp0aGUgY29tcGlsYXRpb24gd2FybmluZ3M6Cgp3YXJuaW5nOiBzdWdnZXN0
-IGJyYWNlcyBhcm91bmQgZW1wdHkgYm9keSBpbiBhbiDigJhpZuKAmSBzdGF0ZW1lbnQKCndoZW4g
-Y29tcGlsaW5nIHdpdGggVz0xLiBGb3IgdGhlIGNhbGwgdG8gc3lzZnNfY3JlYXRlX2xpbmsoKSBn
-ZW5lcmF0aW5nCnRoZSBzYW1lIHdhcm5pbmcsIHVzZSB0aGUgZXJyIHZhcmlhYmxlIHRvIHN0b3Jl
-IHRoZSBmdW5jdGlvbiByZXN1bHQsCmF2b2lkaW5nIHRyaWdnZXJpbmcgYW5vdGhlciB3YXJuaW5n
-IGFzIHRoZSBmdW5jdGlvbiBpcyBkZWNsYXJlZAphcyAnd2Fybl91bnVzZWRfcmVzdWx0Jy4KClNp
-Z25lZC1vZmYtYnk6IERhbWllbiBMZSBNb2FsIDxkYW1pZW4ubGVtb2FsQHdkYy5jb20+Ci0tLQog
-ZHJpdmVycy9tZC9tZC5jIHwgMTIgKysrKysrLS0tLS0tCiAxIGZpbGUgY2hhbmdlZCwgNiBpbnNl
-cnRpb25zKCspLCA2IGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQvbWQuYyBi
-L2RyaXZlcnMvbWQvbWQuYwppbmRleCBmNTY3ZjUzNmI1MjkuLmY2YzgzNDgzYTVhMiAxMDA2NDQK
-LS0tIGEvZHJpdmVycy9tZC9tZC5jCisrKyBiL2RyaXZlcnMvbWQvbWQuYwpAQCAtMjQ0MSw4ICsy
-NDQxLDggQEAgc3RhdGljIGludCBiaW5kX3JkZXZfdG9fYXJyYXkoc3RydWN0IG1kX3JkZXYgKnJk
-ZXYsIHN0cnVjdCBtZGRldiAqbWRkZXYpCiAJCWdvdG8gZmFpbDsKIAogCWtvID0gJnBhcnRfdG9f
-ZGV2KHJkZXYtPmJkZXYtPmJkX3BhcnQpLT5rb2JqOwotCWlmIChzeXNmc19jcmVhdGVfbGluaygm
-cmRldi0+a29iaiwga28sICJibG9jayIpKQotCQkvKiBmYWlsdXJlIGhlcmUgaXMgT0sgKi87CisJ
-LyogZmFpbHVyZSBoZXJlIGlzIE9LICovCisJZXJyID0gc3lzZnNfY3JlYXRlX2xpbmsoJnJkZXYt
-PmtvYmosIGtvLCAiYmxvY2siKTsKIAlyZGV2LT5zeXNmc19zdGF0ZSA9IHN5c2ZzX2dldF9kaXJl
-bnRfc2FmZShyZGV2LT5rb2JqLnNkLCAic3RhdGUiKTsKIAogCWxpc3RfYWRkX3JjdSgmcmRldi0+
-c2FtZV9zZXQsICZtZGRldi0+ZGlza3MpOwpAQCAtMzIwMiw4ICszMjAyLDggQEAgc2xvdF9zdG9y
-ZShzdHJ1Y3QgbWRfcmRldiAqcmRldiwgY29uc3QgY2hhciAqYnVmLCBzaXplX3QgbGVuKQogCQkJ
-cmV0dXJuIGVycjsKIAkJfSBlbHNlCiAJCQlzeXNmc19ub3RpZnlfZGlyZW50X3NhZmUocmRldi0+
-c3lzZnNfc3RhdGUpOwotCQlpZiAoc3lzZnNfbGlua19yZGV2KHJkZXYtPm1kZGV2LCByZGV2KSkK
-LQkJCS8qIGZhaWx1cmUgaGVyZSBpcyBPSyAqLzsKKwkJLyogZmFpbHVyZSBoZXJlIGlzIE9LICov
-OworCQlzeXNmc19saW5rX3JkZXYocmRldi0+bWRkZXYsIHJkZXYpOwogCQkvKiBkb24ndCB3YWtl
-dXAgYW55b25lLCBsZWF2ZSB0aGF0IHRvIHVzZXJzcGFjZS4gKi8KIAl9IGVsc2UgewogCQlpZiAo
-c2xvdCA+PSByZGV2LT5tZGRldi0+cmFpZF9kaXNrcyAmJgpAQCAtOTA2MCw4ICs5MDYwLDggQEAg
-c3RhdGljIGludCByZW1vdmVfYW5kX2FkZF9zcGFyZXMoc3RydWN0IG1kZGV2ICptZGRldiwKIAkJ
-CXJkZXYtPnJlY292ZXJ5X29mZnNldCA9IDA7CiAJCX0KIAkJaWYgKG1kZGV2LT5wZXJzLT5ob3Rf
-YWRkX2Rpc2sobWRkZXYsIHJkZXYpID09IDApIHsKLQkJCWlmIChzeXNmc19saW5rX3JkZXYobWRk
-ZXYsIHJkZXYpKQotCQkJCS8qIGZhaWx1cmUgaGVyZSBpcyBPSyAqLzsKKwkJCS8qIGZhaWx1cmUg
-aGVyZSBpcyBPSyAqLworCQkJc3lzZnNfbGlua19yZGV2KG1kZGV2LCByZGV2KTsKIAkJCWlmICgh
-dGVzdF9iaXQoSm91cm5hbCwgJnJkZXYtPmZsYWdzKSkKIAkJCQlzcGFyZXMrKzsKIAkJCW1kX25l
-d19ldmVudChtZGRldik7Ci0tIAoyLjI2LjIKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1k
-ZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9k
-bS1kZXZlbA==
+On Wed, Jul 15 2020 at  5:52am -0400,
+Damien Le Moal <damien.lemoal@wdc.com> wrote:
+
+> Mike,
+> 
+> These patches fix various compilation warnings showing up when compiling
+> with W=1. The last patch addresses a static checker warning (C=1
+> compilation). There are a lot more of these code checker warnings
+> remaining that probably could be addressed, some seem to be false
+> positive though.
+> 
+> Damien Le Moal (8):
+>   dm raid5: Remove set but unused variable
+>   dm raid5: Fix compilation warning
+>   md: Fix compilation warning
+>   dm raid10: Fix compilation warning
+>   dm verity: Fix compilation warning
+>   dm raid: Remove empty if statement
+>   dm ioctl: Fix compilation warning
+>   dm init: Set file local variable static
+> 
+>  drivers/md/dm-init.c              |  2 +-
+>  drivers/md/dm-ioctl.c             |  2 +-
+>  drivers/md/dm-raid.c              |  2 --
+>  drivers/md/dm-verity-verify-sig.h | 14 +++++++-------
+
+OK, thanks.
+
+>  drivers/md/md.c                   | 12 ++++++------
+>  drivers/md/raid10.c               |  4 ++--
+>  drivers/md/raid5-cache.c          |  4 +---
+>  drivers/md/raid5.c                | 12 ++++++------
+
+But these need to be routed through the MD.
+
+Mike
