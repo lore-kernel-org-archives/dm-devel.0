@@ -1,190 +1,71 @@
-From: Tyler Hicks <tyhicks@linux.microsoft.com>
-Subject: Re: [RFC PATCH v3 03/12] security: add ipe lsm policy parser and
- policy loading
-Date: Wed, 15 Jul 2020 14:16:17 -0500
-Message-ID: <20200715191617.GD3673@sequoia>
-References: <20200415162550.2324-1-deven.desai@linux.microsoft.com>
- <20200415162550.2324-4-deven.desai@linux.microsoft.com>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [PATCH 0/8] Various cleanups
+Date: Wed, 15 Jul 2020 23:03:45 +0000
+Message-ID: <CY4PR04MB3751202E2351F979BA07899EE77E0@CY4PR04MB3751.namprd04.prod.outlook.com>
+References: <20200715095217.441885-1-damien.lemoal@wdc.com>
+	<20200715134258.GB9501@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200415162550.2324-4-deven.desai@linux.microsoft.com>
-Sender: linux-block-owner@vger.kernel.org
-To: deven.desai@linux.microsoft.com
-Cc: agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serge@hallyn.com, zohar@linux.ibm.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, jannh@google.com, pasha.tatashin@soleen.com, sashal@kernel.org, jaskarankhurana@linux.microsoft.com, nramas@linux.microsoft.com, mdsakib@linux.microsoft.com, linux-kernel@vger.kernel.org, corbet@lwn.net
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2020-04-15 09:25:41, deven.desai@linux.microsoft.com wrote:
-> From: Deven Bowers <deven.desai@linux.microsoft.com>
+On 2020/07/15 22:43, Mike Snitzer wrote:
+> On Wed, Jul 15 2020 at  5:52am -0400,
+> Damien Le Moal <damien.lemoal@wdc.com> wrote:
 > 
-> Adds the policy parser and the policy loading to IPE, along with the
-> related sysfs, securityfs entries, and audit events.
+>> Mike,
+>>
+>> These patches fix various compilation warnings showing up when compiling
+>> with W=1. The last patch addresses a static checker warning (C=1
+>> compilation). There are a lot more of these code checker warnings
+>> remaining that probably could be addressed, some seem to be false
+>> positive though.
+>>
+>> Damien Le Moal (8):
+>>   dm raid5: Remove set but unused variable
+>>   dm raid5: Fix compilation warning
+>>   md: Fix compilation warning
+>>   dm raid10: Fix compilation warning
+>>   dm verity: Fix compilation warning
+>>   dm raid: Remove empty if statement
+>>   dm ioctl: Fix compilation warning
+>>   dm init: Set file local variable static
+>>
+>>  drivers/md/dm-init.c              |  2 +-
+>>  drivers/md/dm-ioctl.c             |  2 +-
+>>  drivers/md/dm-raid.c              |  2 --
+>>  drivers/md/dm-verity-verify-sig.h | 14 +++++++-------
 > 
-> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
-> ---
+> OK, thanks.
+> 
+>>  drivers/md/md.c                   | 12 ++++++------
+>>  drivers/md/raid10.c               |  4 ++--
+>>  drivers/md/raid5-cache.c          |  4 +---
+>>  drivers/md/raid5.c                | 12 ++++++------
+> 
+> But these need to be routed through the MD.
 
-...
+Oops. Yes ! Will do. Thanks !
 
-> diff --git a/security/ipe/ipe-sysfs.c b/security/ipe/ipe-sysfs.c
-> index 1c65185c531d..a250da29c3b5 100644
-> --- a/security/ipe/ipe-sysfs.c
-> +++ b/security/ipe/ipe-sysfs.c
-> @@ -5,6 +5,7 @@
->  
->  #include "ipe.h"
->  #include "ipe-audit.h"
-> +#include "ipe-secfs.h"
->  
->  #include <linux/sysctl.h>
->  #include <linux/fs.h>
-> @@ -45,6 +46,79 @@ static int ipe_switch_mode(struct ctl_table *table, int write,
->  
->  #endif /* CONFIG_SECURITY_IPE_PERMISSIVE_SWITCH */
->  
-> +#ifdef CONFIG_SECURITYFS
-> +
-> +/**
-> + * ipe_switch_active_policy: Handler to switch the policy IPE is enforcing.
-> + * @table: Sysctl table entry from the variable, sysctl_table.
-> + * @write: Integer indicating whether this is a write or a read.
-> + * @buffer: Data passed to sysctl. This is the policy id to activate,
-> + *	    for this function.
-> + * @lenp: Pointer to the size of @buffer.
-> + * @ppos: Offset into @buffer.
-> + *
-> + * This wraps proc_dointvec_minmax, and if there's a change, emits an
-> + * audit event.
-> + *
-> + * Return:
-> + * 0 - OK
-> + * -ENOMEM - Out of memory
-> + * -ENOENT - Policy identified by @id does not exist
-> + * Other - See proc_dostring and retrieve_backed_dentry
-> + */
-> +static int ipe_switch_active_policy(struct ctl_table *table, int write,
-> +				    void __user *buffer, size_t *lenp,
-> +				    loff_t *ppos)
-> +{
-> +	int rc = 0;
-> +	char *id = NULL;
-> +	size_t size = 0;
-> +
-> +	if (write) {
+> 
+> Mike
+> 
+> 
 
-I see that the policy files in securityfs, such as new_policy, are
-checking for CAP_MAC_ADMIN but there's no check here for CAP_MAC_ADMIN
-when switching the active policy. I think we should enforce that cap
-here, too.
 
-Thinking about it some more, I find it a little odd that we're spreading
-the files necessary to update a policy across both procfs (sysctl) and
-securityfs. It looks like procfs will have different semantics than
-securityfs after looking at proc_sys_permission(). I suggest moving
-strict_parse and active_policy under securityfs for a unified experience
-and common location when updating policy.
-
-Tyler
-
-> +		id = kzalloc((*lenp) + 1, GFP_KERNEL);
-> +		if (!id)
-> +			return -ENOMEM;
-> +
-> +		table->data = id;
-> +		table->maxlen = (*lenp) + 1;
-> +
-> +		rc = proc_dostring(table, write, buffer, lenp, ppos);
-> +		if (rc != 0)
-> +			goto out;
-> +
-> +		rc = ipe_set_active_policy(id, strlen(id));
-> +	} else {
-> +		if (!rcu_access_pointer(ipe_active_policy)) {
-> +			table->data = "";
-> +			table->maxlen = 1;
-> +			return proc_dostring(table, write, buffer, lenp, ppos);
-> +		}
-> +
-> +		rcu_read_lock();
-> +		size = strlen(rcu_dereference(ipe_active_policy)->policy_name);
-> +		rcu_read_unlock();
-> +
-> +		id = kzalloc(size + 1, GFP_KERNEL);
-> +		if (!id)
-> +			return -ENOMEM;
-> +
-> +		rcu_read_lock();
-> +		strncpy(id, rcu_dereference(ipe_active_policy)->policy_name,
-> +			size);
-> +		rcu_read_unlock();
-> +
-> +		table->data = id;
-> +		table->maxlen = size;
-> +
-> +		rc = proc_dostring(table, write, buffer, lenp, ppos);
-> +	}
-> +out:
-> +	kfree(id);
-> +	return rc;
-> +}
-> +
-> +#endif /* CONFIG_SECURITYFS */
-> +
->  static struct ctl_table_header *sysctl_header;
->  
->  static const struct ctl_path sysctl_path[] = {
-> @@ -75,6 +149,24 @@ static struct ctl_table sysctl_table[] = {
->  		.extra1 = SYSCTL_ZERO,
->  		.extra2 = SYSCTL_ONE,
->  	},
-> +#ifdef CONFIG_SECURITYFS
-> +	{
-> +		.procname = "strict_parse",
-> +		.data = &ipe_strict_parse,
-> +		.maxlen = sizeof(int),
-> +		.mode = 0644,
-> +		.proc_handler = proc_dointvec_minmax,
-> +		.extra1 = SYSCTL_ZERO,
-> +		.extra2 = SYSCTL_ONE,
-> +	},
-> +	{
-> +		.procname = "active_policy",
-> +		.data = NULL,
-> +		.maxlen = 0,
-> +		.mode = 0644,
-> +		.proc_handler = ipe_switch_active_policy,
-> +	},
-> +#endif /* CONFIG_SECURITYFS */
->  	{}
->  };
->  
-> diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
-> index b6553e370f98..07f855ffb79a 100644
-> --- a/security/ipe/ipe.c
-> +++ b/security/ipe/ipe.c
-> @@ -6,6 +6,7 @@
->  #include "ipe.h"
->  #include "ipe-policy.h"
->  #include "ipe-hooks.h"
-> +#include "ipe-secfs.h"
->  #include "ipe-sysfs.h"
->  
->  #include <linux/module.h>
-> @@ -60,3 +61,4 @@ DEFINE_LSM(ipe) = {
->  
->  int ipe_enforce = 1;
->  int ipe_success_audit;
-> +int ipe_strict_parse;
-> diff --git a/security/ipe/ipe.h b/security/ipe/ipe.h
-> index 6a47f55b05d9..bf6cf7744b0e 100644
-> --- a/security/ipe/ipe.h
-> +++ b/security/ipe/ipe.h
-> @@ -16,5 +16,6 @@
->  
->  extern int ipe_enforce;
->  extern int ipe_success_audit;
-> +extern int ipe_strict_parse;
->  
->  #endif /* IPE_H */
-> -- 
-> 2.26.0
+-- 
+Damien Le Moal
+Western Digital Research
