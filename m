@@ -1,11 +1,11 @@
 From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH 4/8] dm raid10: Fix compilation warning
-Date: Wed, 15 Jul 2020 18:52:13 +0900
-Message-ID: <20200715095217.441885-5-damien.lemoal@wdc.com>
+Subject: [PATCH 6/8] dm raid: Remove empty if statement
+Date: Wed, 15 Jul 2020 18:52:15 +0900
+Message-ID: <20200715095217.441885-7-damien.lemoal@wdc.com>
 References: <20200715095217.441885-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20200715095217.441885-1-damien.lemoal@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -21,21 +21,26 @@ To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 Cc: Damien Le Moal <damien.lemoal@wdc.com>
 List-Id: dm-devel.ids
 
-UmVtb3ZlIHRoZSBpZiBzdGF0ZW1lbnQgYXJvdW5kIHRoZSBjYWxsIHRvIHN5c2ZzX2xpbmtfcmRl
-digpIGluCnJhaWQxMF9zdGFydF9yZXNoYXBlKCkgdG8gYXZvaWQgdGhlIGNvbXBpbGF0aW9uIHdh
-cm5pbmc6Cgp3YXJuaW5nOiBzdWdnZXN0IGJyYWNlcyBhcm91bmQgZW1wdHkgYm9keSBpbiBhbiDi
-gJhpZuKAmSBzdGF0ZW1lbnQKCndoZW4gY29tcGlsaW5nIHdpdGggVz0xLgoKU2lnbmVkLW9mZi1i
-eTogRGFtaWVuIExlIE1vYWwgPGRhbWllbi5sZW1vYWxAd2RjLmNvbT4KLS0tCiBkcml2ZXJzL21k
-L3JhaWQxMC5jIHwgNCArKy0tCiAxIGZpbGUgY2hhbmdlZCwgMiBpbnNlcnRpb25zKCspLCAyIGRl
-bGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQvcmFpZDEwLmMgYi9kcml2ZXJzL21k
-L3JhaWQxMC5jCmluZGV4IGVjMTM2ZTQ0YWVmNy4uMDhmNjk3ZjNkZGM4IDEwMDY0NAotLS0gYS9k
-cml2ZXJzL21kL3JhaWQxMC5jCisrKyBiL2RyaXZlcnMvbWQvcmFpZDEwLmMKQEAgLTQzMDcsOCAr
-NDMwNyw4IEBAIHN0YXRpYyBpbnQgcmFpZDEwX3N0YXJ0X3Jlc2hhcGUoc3RydWN0IG1kZGV2ICpt
-ZGRldikKIAkJCQkJZWxzZQogCQkJCQkJcmRldi0+cmVjb3Zlcnlfb2Zmc2V0ID0gMDsKIAotCQkJ
-CQlpZiAoc3lzZnNfbGlua19yZGV2KG1kZGV2LCByZGV2KSkKLQkJCQkJCS8qIEZhaWx1cmUgaGVy
-ZSAgaXMgT0sgKi87CisJCQkJCS8qIEZhaWx1cmUgaGVyZSBpcyBPSyAqLworCQkJCQlzeXNmc19s
-aW5rX3JkZXYobWRkZXYsIHJkZXYpOwogCQkJCX0KIAkJCX0gZWxzZSBpZiAocmRldi0+cmFpZF9k
-aXNrID49IGNvbmYtPnByZXYucmFpZF9kaXNrcwogCQkJCSAgICYmICF0ZXN0X2JpdChGYXVsdHks
-ICZyZGV2LT5mbGFncykpIHsKLS0gCjIuMjYuMgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRt
-LWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZv
-L2RtLWRldmVs
+In super_init_validation(), remove a body-less if statement testing only
+variables to avoid a compilation warning when compiling with W=1.
+
+Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+---
+ drivers/md/dm-raid.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 10e8b2fe787b..08023c50aaa0 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -2345,8 +2345,6 @@ static int super_init_validation(struct raid_set *rs, struct md_rdev *rdev)
+ 
+ 	if (new_devs == rs->raid_disks || !rebuilds) {
+ 		/* Replace a broken device */
+-		if (new_devs == 1 && !rs->delta_disks)
+-			;
+ 		if (new_devs == rs->raid_disks) {
+ 			DMINFO("Superblocks created for new raid set");
+ 			set_bit(MD_ARRAY_FIRST_USE, &mddev->flags);
+-- 
+2.26.2
