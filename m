@@ -1,72 +1,190 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: master - multipathd: fix fd leak when iscsi device
-	logs in
-Date: Wed, 15 Jul 2020 19:41:24 +0200
-Message-ID: <1943423d8efe0deac64595f71bb56e06b52cdd7c.camel@suse.com>
-References: <6eb10725-456f-de68-e927-1f5a9771c16c@huawei.com>
-	<86d8307c-1747-2254-4f87-fac36f0d51ca@redhat.com>
-	<0d26c9f6-4379-f201-a9a5-839bddef3f25@huawei.com>
-	<92db2c49d0ddbbc385c6a14ef3d99a54457b908e.camel@suse.com>
-	<b482dfdb-a40b-e523-1dcc-d37ddc4fc399@redhat.com>
-	<f818352533682ae13fee17eb945fc2c9f62d15cd.camel@suse.com>
-	<20200714222241.GK11089@octiron.msp.redhat.com>
+From: Tyler Hicks <tyhicks@linux.microsoft.com>
+Subject: Re: [RFC PATCH v3 03/12] security: add ipe lsm policy parser and
+ policy loading
+Date: Wed, 15 Jul 2020 14:16:17 -0500
+Message-ID: <20200715191617.GD3673@sequoia>
+References: <20200415162550.2324-1-deven.desai@linux.microsoft.com>
+ <20200415162550.2324-4-deven.desai@linux.microsoft.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200714222241.GK11089@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: lixiaokeng <lixiaokeng@huawei.com>, linfeilong@huawei.com, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, liuzhiqiang26@huawei.com, lutianxiong@huawei.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200415162550.2324-4-deven.desai@linux.microsoft.com>
+Sender: linux-block-owner@vger.kernel.org
+To: deven.desai@linux.microsoft.com
+Cc: agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serge@hallyn.com, zohar@linux.ibm.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, jannh@google.com, pasha.tatashin@soleen.com, sashal@kernel.org, jaskarankhurana@linux.microsoft.com, nramas@linux.microsoft.com, mdsakib@linux.microsoft.com, linux-kernel@vger.kernel.org, corbet@lwn.net
 List-Id: dm-devel.ids
 
-On Tue, 2020-07-14 at 17:22 -0500, Benjamin Marzinski wrote:
-> On Mon, Jul 13, 2020 at 09:59:43PM +0200, Martin Wilck wrote:
-> > Comments welcome.
+On 2020-04-15 09:25:41, deven.desai@linux.microsoft.com wrote:
+> From: Deven Bowers <deven.desai@linux.microsoft.com>
 > 
-> We've agreed that dm_lib_release() is unnecessary, since we always
-> call
-> dm_udev_wait() when update_devs() is needed. dm_lib_exit() should
-> already be safe, since we only call it after cleaning up the other
-> threads. dm_task_set_cookie() looks safe to me as well, assuming that
-> we
-> have early initialization. So we are really talking about
-> dm_task_run()
-> and dm_udev_wait(). Clearly dm_udev_wait() always needs to run under
-> a
-> lock. Two threads trying to remove items from a list at the same time
-> isn't safe, and there's no way to know if there will be items on the
-> _node_ops list. The one thing I'm not sure of, is whether every call
-> to
-> dm_task_run() always needs to be locked. clearly we could, and it
-> would
-> be safer. Also, clearly for calls that add elements to _node_ops it
-> must. But for calls like DM_DEVICE_TABLE or DM_DEVICE_LIST, the only
-> issue that I can see with concurrent calls is the possibility that
-> _ioctl_buffer_double_factor gets increased too much. Perhaps that's
-> enough of a problem that we should just lock all dm_task_run() calls
-> as
-> well.
+> Adds the policy parser and the policy loading to IPE, along with the
+> related sysfs, securityfs entries, and audit events.
+> 
+> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
+> ---
 
-Yes. We shouldn't try to be too smart. It's easier to verify that every
-call is wrapped under a lock than to figure out later whether we made
-the case distinction right.
+...
 
-So, action plan:
+> diff --git a/security/ipe/ipe-sysfs.c b/security/ipe/ipe-sysfs.c
+> index 1c65185c531d..a250da29c3b5 100644
+> --- a/security/ipe/ipe-sysfs.c
+> +++ b/security/ipe/ipe-sysfs.c
+> @@ -5,6 +5,7 @@
+>  
+>  #include "ipe.h"
+>  #include "ipe-audit.h"
+> +#include "ipe-secfs.h"
+>  
+>  #include <linux/sysctl.h>
+>  #include <linux/fs.h>
+> @@ -45,6 +46,79 @@ static int ipe_switch_mode(struct ctl_table *table, int write,
+>  
+>  #endif /* CONFIG_SECURITY_IPE_PERMISSIVE_SWITCH */
+>  
+> +#ifdef CONFIG_SECURITYFS
+> +
+> +/**
+> + * ipe_switch_active_policy: Handler to switch the policy IPE is enforcing.
+> + * @table: Sysctl table entry from the variable, sysctl_table.
+> + * @write: Integer indicating whether this is a write or a read.
+> + * @buffer: Data passed to sysctl. This is the policy id to activate,
+> + *	    for this function.
+> + * @lenp: Pointer to the size of @buffer.
+> + * @ppos: Offset into @buffer.
+> + *
+> + * This wraps proc_dointvec_minmax, and if there's a change, emits an
+> + * audit event.
+> + *
+> + * Return:
+> + * 0 - OK
+> + * -ENOMEM - Out of memory
+> + * -ENOENT - Policy identified by @id does not exist
+> + * Other - See proc_dostring and retrieve_backed_dentry
+> + */
+> +static int ipe_switch_active_policy(struct ctl_table *table, int write,
+> +				    void __user *buffer, size_t *lenp,
+> +				    loff_t *ppos)
+> +{
+> +	int rc = 0;
+> +	char *id = NULL;
+> +	size_t size = 0;
+> +
+> +	if (write) {
 
- - remove dm_lib_release() calls
- - Combine all possibly racy calls related to libdm initialization in
-   some early init call, protected by pthread_once()
- - make sure dm_lib_exit() is handled correctly
- - add locking around dm_task_run() and dm_udev_wait()
+I see that the policy files in securityfs, such as new_policy, are
+checking for CAP_MAC_ADMIN but there's no check here for CAP_MAC_ADMIN
+when switching the active policy. I think we should enforce that cap
+here, too.
 
-Regards
-Martin
+Thinking about it some more, I find it a little odd that we're spreading
+the files necessary to update a policy across both procfs (sysctl) and
+securityfs. It looks like procfs will have different semantics than
+securityfs after looking at proc_sys_permission(). I suggest moving
+strict_parse and active_policy under securityfs for a unified experience
+and common location when updating policy.
+
+Tyler
+
+> +		id = kzalloc((*lenp) + 1, GFP_KERNEL);
+> +		if (!id)
+> +			return -ENOMEM;
+> +
+> +		table->data = id;
+> +		table->maxlen = (*lenp) + 1;
+> +
+> +		rc = proc_dostring(table, write, buffer, lenp, ppos);
+> +		if (rc != 0)
+> +			goto out;
+> +
+> +		rc = ipe_set_active_policy(id, strlen(id));
+> +	} else {
+> +		if (!rcu_access_pointer(ipe_active_policy)) {
+> +			table->data = "";
+> +			table->maxlen = 1;
+> +			return proc_dostring(table, write, buffer, lenp, ppos);
+> +		}
+> +
+> +		rcu_read_lock();
+> +		size = strlen(rcu_dereference(ipe_active_policy)->policy_name);
+> +		rcu_read_unlock();
+> +
+> +		id = kzalloc(size + 1, GFP_KERNEL);
+> +		if (!id)
+> +			return -ENOMEM;
+> +
+> +		rcu_read_lock();
+> +		strncpy(id, rcu_dereference(ipe_active_policy)->policy_name,
+> +			size);
+> +		rcu_read_unlock();
+> +
+> +		table->data = id;
+> +		table->maxlen = size;
+> +
+> +		rc = proc_dostring(table, write, buffer, lenp, ppos);
+> +	}
+> +out:
+> +	kfree(id);
+> +	return rc;
+> +}
+> +
+> +#endif /* CONFIG_SECURITYFS */
+> +
+>  static struct ctl_table_header *sysctl_header;
+>  
+>  static const struct ctl_path sysctl_path[] = {
+> @@ -75,6 +149,24 @@ static struct ctl_table sysctl_table[] = {
+>  		.extra1 = SYSCTL_ZERO,
+>  		.extra2 = SYSCTL_ONE,
+>  	},
+> +#ifdef CONFIG_SECURITYFS
+> +	{
+> +		.procname = "strict_parse",
+> +		.data = &ipe_strict_parse,
+> +		.maxlen = sizeof(int),
+> +		.mode = 0644,
+> +		.proc_handler = proc_dointvec_minmax,
+> +		.extra1 = SYSCTL_ZERO,
+> +		.extra2 = SYSCTL_ONE,
+> +	},
+> +	{
+> +		.procname = "active_policy",
+> +		.data = NULL,
+> +		.maxlen = 0,
+> +		.mode = 0644,
+> +		.proc_handler = ipe_switch_active_policy,
+> +	},
+> +#endif /* CONFIG_SECURITYFS */
+>  	{}
+>  };
+>  
+> diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
+> index b6553e370f98..07f855ffb79a 100644
+> --- a/security/ipe/ipe.c
+> +++ b/security/ipe/ipe.c
+> @@ -6,6 +6,7 @@
+>  #include "ipe.h"
+>  #include "ipe-policy.h"
+>  #include "ipe-hooks.h"
+> +#include "ipe-secfs.h"
+>  #include "ipe-sysfs.h"
+>  
+>  #include <linux/module.h>
+> @@ -60,3 +61,4 @@ DEFINE_LSM(ipe) = {
+>  
+>  int ipe_enforce = 1;
+>  int ipe_success_audit;
+> +int ipe_strict_parse;
+> diff --git a/security/ipe/ipe.h b/security/ipe/ipe.h
+> index 6a47f55b05d9..bf6cf7744b0e 100644
+> --- a/security/ipe/ipe.h
+> +++ b/security/ipe/ipe.h
+> @@ -16,5 +16,6 @@
+>  
+>  extern int ipe_enforce;
+>  extern int ipe_success_audit;
+> +extern int ipe_strict_parse;
+>  
+>  #endif /* IPE_H */
+> -- 
+> 2.26.0
