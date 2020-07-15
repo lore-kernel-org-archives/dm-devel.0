@@ -1,11 +1,11 @@
 From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH 7/8] dm ioctl: Fix compilation warning
-Date: Wed, 15 Jul 2020 18:52:16 +0900
-Message-ID: <20200715095217.441885-8-damien.lemoal@wdc.com>
+Subject: [PATCH 1/8] dm raid5: Remove set but unused variable
+Date: Wed, 15 Jul 2020 18:52:10 +0900
+Message-ID: <20200715095217.441885-2-damien.lemoal@wdc.com>
 References: <20200715095217.441885-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20200715095217.441885-1-damien.lemoal@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -21,22 +21,28 @@ To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 Cc: Damien Le Moal <damien.lemoal@wdc.com>
 List-Id: dm-devel.ids
 
-SW4gcmV0cmlldmVfc3RhdHVzKCksIHdoZW4gY29weWluZyB0aGUgdGFyZ2V0IHR5cGUgbmFtZSBp
-biB0aGUKdGFyZ2V0X3R5cGUgc3RyaW5nIGZpZWxkIG9mIHN0cnVjdCBkbV90YXJnZXRfc3BlYywg
-Y29weSBhdCBtb3N0CkRNX01BWF9UWVBFX05BTUUgLSAxIGNoYXJhY3RlciB0byBhdm9pZCB0aGUg
-Y29tcGlsYXRpb24gd2FybmluZzoKCndhcm5pbmc6IOKAmF9fYnVpbHRpbl9zdHJuY3B54oCZIHNw
-ZWNpZmllZCBib3VuZCAxNiBlcXVhbHMgZGVzdGluYXRpb24Kc2l6ZSBbLVdzdHJpbmdvcC10cnVu
-Y2F0aW9uXQoKd2hlbiBjb21waWxpbmcgd2l0aCBXLTEuCgpTaWduZWQtb2ZmLWJ5OiBEYW1pZW4g
-TGUgTW9hbCA8ZGFtaWVuLmxlbW9hbEB3ZGMuY29tPgotLS0KIGRyaXZlcnMvbWQvZG0taW9jdGwu
-YyB8IDIgKy0KIDEgZmlsZSBjaGFuZ2VkLCAxIGluc2VydGlvbigrKSwgMSBkZWxldGlvbigtKQoK
-ZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0taW9jdGwuYyBiL2RyaXZlcnMvbWQvZG0taW9jdGwu
-YwppbmRleCA0ODk5MzVkNWYyMmQuLjU3OTI4NzhkYmZmNiAxMDA2NDQKLS0tIGEvZHJpdmVycy9t
-ZC9kbS1pb2N0bC5jCisrKyBiL2RyaXZlcnMvbWQvZG0taW9jdGwuYwpAQCAtMTE2OCw3ICsxMTY4
-LDcgQEAgc3RhdGljIHZvaWQgcmV0cmlldmVfc3RhdHVzKHN0cnVjdCBkbV90YWJsZSAqdGFibGUs
-CiAJCXNwZWMtPnNlY3Rvcl9zdGFydCA9IHRpLT5iZWdpbjsKIAkJc3BlYy0+bGVuZ3RoID0gdGkt
-PmxlbjsKIAkJc3RybmNweShzcGVjLT50YXJnZXRfdHlwZSwgdGktPnR5cGUtPm5hbWUsCi0JCQlz
-aXplb2Yoc3BlYy0+dGFyZ2V0X3R5cGUpKTsKKwkJCXNpemVvZihzcGVjLT50YXJnZXRfdHlwZSkg
-LSAxKTsKIAogCQlvdXRwdHIgKz0gc2l6ZW9mKHN0cnVjdCBkbV90YXJnZXRfc3BlYyk7CiAJCXJl
-bWFpbmluZyA9IGxlbiAtIChvdXRwdHIgLSBvdXRidWYpOwotLSAKMi4yNi4yCgotLQpkbS1kZXZl
-bCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29t
-L21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+Remove the variable offset in r5c_tree_index() to avoid a "set but not
+used" compilation warning when compiling with W=1.
+
+Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+---
+ drivers/md/raid5-cache.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/drivers/md/raid5-cache.c b/drivers/md/raid5-cache.c
+index 9b6da759dca2..eea14fa9e59b 100644
+--- a/drivers/md/raid5-cache.c
++++ b/drivers/md/raid5-cache.c
+@@ -195,9 +195,7 @@ struct r5l_log {
+ static inline sector_t r5c_tree_index(struct r5conf *conf,
+ 				      sector_t sect)
+ {
+-	sector_t offset;
+-
+-	offset = sector_div(sect, conf->chunk_sectors);
++	sector_div(sect, conf->chunk_sectors);
+ 	return sect;
+ }
+ 
+-- 
+2.26.2
