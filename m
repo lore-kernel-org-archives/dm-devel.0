@@ -1,12 +1,14 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: [PATCH] dm zoned: update atime for new buffer zones
-Date: Wed, 15 Jul 2020 08:49:50 +0000
-Message-ID: <CY4PR04MB37511C00F22BDC73456FC252E77E0@CY4PR04MB3751.namprd04.prod.outlook.com>
+Date: Wed, 15 Jul 2020 11:09:24 +0200
+Message-ID: <a2aac870-d8a1-ab95-0c6e-b4e474f62ae9@suse.de>
 References: <20200715081752.28130-1-hare@suse.de>
+	<CY4PR04MB37511C00F22BDC73456FC252E77E0@CY4PR04MB3751.namprd04.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CY4PR04MB37511C00F22BDC73456FC252E77E0@CY4PR04MB3751.namprd04.prod.outlook.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,56 +19,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Mike Snitzer <snitzer@redhat.com>
+To: Damien Le Moal <Damien.LeMoal@wdc.com>, Mike Snitzer <snitzer@redhat.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2020/07/15 17:18, Hannes Reinecke wrote:
-> When a new buffer zone is allocated in dmz_handle_buffered_write()
-> we should update the 'atime' to inform reclaim that this zone has
-> been accessed.
-> Otherwise we end up with the pathological case where the first write
-> allocates a new buffer zone, but the next write will start reclaim
-> before processing the bio. As the atime is not set reclaim declares
-> the system idle and reclaims the zone. Then the write will be processed
-> and re-allocate the very same zone again; this repeats for every
-> consecutive write, making for a _very_ slow mkfs.
-> 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> ---
->  drivers/md/dm-zoned-target.c | 3 +++
->  1 file changed, 3 insertions(+)
-> 
-> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-> index cf915009c306..b32d37bef14f 100644
-> --- a/drivers/md/dm-zoned-target.c
-> +++ b/drivers/md/dm-zoned-target.c
-> @@ -297,6 +297,9 @@ static int dmz_handle_buffered_write(struct dmz_target *dmz,
->  	if (dmz_is_readonly(bzone))
->  		return -EROFS;
->  
-> +	/* Tell reclaim we're doing some work here */
-> +	dmz_reclaim_bio_acc(bzone->dev->reclaim);
-> +
->  	/* Submit write */
->  	ret = dmz_submit_bio(dmz, bzone, bio, chunk_block, nr_blocks);
->  	if (ret)
-
-This is without a cache device, right ? Otherwise, since the cache device has no
-reclaim, it would not make much sense.
-
-In fact, I think that the atime timestamp being attached to each device reclaim
-structure is a problem. We do not need that since we always trigger reclaim for
-all drives. We only want to see if the target is busy or not, so atime should be
-attached to struct dmz_metadata.
-
-That will simplify things since we will not need to care about which zone/which
-device is being accessed to track activity. We can just have:
-
-	dmz_reclaim_bio_acc(dmz->metadata);
-
-Thoughts ?
-
--- 
-Damien Le Moal
-Western Digital Research
+T24gNy8xNS8yMCAxMDo0OSBBTSwgRGFtaWVuIExlIE1vYWwgd3JvdGU6Cj4gT24gMjAyMC8wNy8x
+NSAxNzoxOCwgSGFubmVzIFJlaW5lY2tlIHdyb3RlOgo+PiBXaGVuIGEgbmV3IGJ1ZmZlciB6b25l
+IGlzIGFsbG9jYXRlZCBpbiBkbXpfaGFuZGxlX2J1ZmZlcmVkX3dyaXRlKCkKPj4gd2Ugc2hvdWxk
+IHVwZGF0ZSB0aGUgJ2F0aW1lJyB0byBpbmZvcm0gcmVjbGFpbSB0aGF0IHRoaXMgem9uZSBoYXMK
+Pj4gYmVlbiBhY2Nlc3NlZC4KPj4gT3RoZXJ3aXNlIHdlIGVuZCB1cCB3aXRoIHRoZSBwYXRob2xv
+Z2ljYWwgY2FzZSB3aGVyZSB0aGUgZmlyc3Qgd3JpdGUKPj4gYWxsb2NhdGVzIGEgbmV3IGJ1ZmZl
+ciB6b25lLCBidXQgdGhlIG5leHQgd3JpdGUgd2lsbCBzdGFydCByZWNsYWltCj4+IGJlZm9yZSBw
+cm9jZXNzaW5nIHRoZSBiaW8uIEFzIHRoZSBhdGltZSBpcyBub3Qgc2V0IHJlY2xhaW0gZGVjbGFy
+ZXMKPj4gdGhlIHN5c3RlbSBpZGxlIGFuZCByZWNsYWltcyB0aGUgem9uZS4gVGhlbiB0aGUgd3Jp
+dGUgd2lsbCBiZSBwcm9jZXNzZWQKPj4gYW5kIHJlLWFsbG9jYXRlIHRoZSB2ZXJ5IHNhbWUgem9u
+ZSBhZ2FpbjsgdGhpcyByZXBlYXRzIGZvciBldmVyeQo+PiBjb25zZWN1dGl2ZSB3cml0ZSwgbWFr
+aW5nIGZvciBhIF92ZXJ5XyBzbG93IG1rZnMuCj4+Cj4+IFNpZ25lZC1vZmYtYnk6IEhhbm5lcyBS
+ZWluZWNrZSA8aGFyZUBzdXNlLmRlPgo+PiAtLS0KPj4gIGRyaXZlcnMvbWQvZG0tem9uZWQtdGFy
+Z2V0LmMgfCAzICsrKwo+PiAgMSBmaWxlIGNoYW5nZWQsIDMgaW5zZXJ0aW9ucygrKQo+Pgo+PiBk
+aWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS16b25lZC10YXJnZXQuYyBiL2RyaXZlcnMvbWQvZG0t
+em9uZWQtdGFyZ2V0LmMKPj4gaW5kZXggY2Y5MTUwMDljMzA2Li5iMzJkMzdiZWYxNGYgMTAwNjQ0
+Cj4+IC0tLSBhL2RyaXZlcnMvbWQvZG0tem9uZWQtdGFyZ2V0LmMKPj4gKysrIGIvZHJpdmVycy9t
+ZC9kbS16b25lZC10YXJnZXQuYwo+PiBAQCAtMjk3LDYgKzI5Nyw5IEBAIHN0YXRpYyBpbnQgZG16
+X2hhbmRsZV9idWZmZXJlZF93cml0ZShzdHJ1Y3QgZG16X3RhcmdldCAqZG16LAo+PiAgCWlmIChk
+bXpfaXNfcmVhZG9ubHkoYnpvbmUpKQo+PiAgCQlyZXR1cm4gLUVST0ZTOwo+PiAgCj4+ICsJLyog
+VGVsbCByZWNsYWltIHdlJ3JlIGRvaW5nIHNvbWUgd29yayBoZXJlICovCj4+ICsJZG16X3JlY2xh
+aW1fYmlvX2FjYyhiem9uZS0+ZGV2LT5yZWNsYWltKTsKPj4gKwo+PiAgCS8qIFN1Ym1pdCB3cml0
+ZSAqLwo+PiAgCXJldCA9IGRtel9zdWJtaXRfYmlvKGRteiwgYnpvbmUsIGJpbywgY2h1bmtfYmxv
+Y2ssIG5yX2Jsb2Nrcyk7Cj4+ICAJaWYgKHJldCkKPiAKPiBUaGlzIGlzIHdpdGhvdXQgYSBjYWNo
+ZSBkZXZpY2UsIHJpZ2h0ID8gT3RoZXJ3aXNlLCBzaW5jZSB0aGUgY2FjaGUgZGV2aWNlIGhhcyBu
+bwo+IHJlY2xhaW0sIGl0IHdvdWxkIG5vdCBtYWtlIG11Y2ggc2Vuc2UuCj4gCj4gSW4gZmFjdCwg
+SSB0aGluayB0aGF0IHRoZSBhdGltZSB0aW1lc3RhbXAgYmVpbmcgYXR0YWNoZWQgdG8gZWFjaCBk
+ZXZpY2UgcmVjbGFpbQo+IHN0cnVjdHVyZSBpcyBhIHByb2JsZW0uIFdlIGRvIG5vdCBuZWVkIHRo
+YXQgc2luY2Ugd2UgYWx3YXlzIHRyaWdnZXIgcmVjbGFpbSBmb3IKPiBhbGwgZHJpdmVzLiBXZSBv
+bmx5IHdhbnQgdG8gc2VlIGlmIHRoZSB0YXJnZXQgaXMgYnVzeSBvciBub3QsIHNvIGF0aW1lIHNo
+b3VsZCBiZQo+IGF0dGFjaGVkIHRvIHN0cnVjdCBkbXpfbWV0YWRhdGEuCj4gCj4gVGhhdCB3aWxs
+IHNpbXBsaWZ5IHRoaW5ncyBzaW5jZSB3ZSB3aWxsIG5vdCBuZWVkIHRvIGNhcmUgYWJvdXQgd2hp
+Y2ggem9uZS93aGljaAo+IGRldmljZSBpcyBiZWluZyBhY2Nlc3NlZCB0byB0cmFjayBhY3Rpdml0
+eS4gV2UgY2FuIGp1c3QgaGF2ZToKPiAKPiAJZG16X3JlY2xhaW1fYmlvX2FjYyhkbXotPm1ldGFk
+YXRhKTsKPiAKPiBUaG91Z2h0cyA/Cj4gCldlbGwsIEkgbWlnaHQgYmUgb2ZmIHRoZSBtYXJrIHdp
+dGggdGhpcyBwYXRjaCwgYnV0IEkgZGlkIHJ1biBpbnRvIHRoZQp0aGUgbWVudGlvbmVkIHBhdGhv
+bG9naWNhbCBiZWhhdmlvdXI7IHRoZXJlIHdhcyBleGFjdGx5IF9vbmVfIHpvbmUKY2FjaGVkLCBh
+bGwgSS9PIHdhcyBnb2luZyBpbnRvIHRoYXQgem9uZSwgYW5kIHJlY2xhaW0gKHNlZW1lZCkgdG8g
+YmUKYnVzeSB3aXRoIHRoYXQgdmVyeSB6b25lLgpUaGUgbGF0dGVyIGlzIGFjdHVhbGx5IGNvbmpl
+Y3R1cmUsIGFzIEkgZGlkIF9ub3RfIGdldCBhbnkgbWVzc2FnZXMgZnJvbQp0aGUgcmVjbGFpbSBv
+biB0aGF0IGRldmljZS4KSSd2ZSBzZWVuIGlkbGUgbWVzc2FnZXMgZnJvbSByZWNsYWltIG9uIHRo
+ZSBvdGhlciBkZXZpY2VzLCBidXQgcmVjbGFpbQpmcm9tIG9uZSBkZXZpY2Ugd2FzIHN1c3BpY2lv
+dXNseSBzaWxlbnQuCkFuZCBJL08gd2VudCB0aHJvdWdoLCBidXQgX2RlYWRfIHNsb3cuIEFsbCB3
+cml0ZXMsIG1pbmQgKHRoYXQgd2FzIGR1cmluZwpta2ZzIHRpbWUpLCBzbyBJIGdhdGhlcmVkIGl0
+IG1pZ2h0IGJlIGR1ZSB0byB0aGUgYXRpbWUgYWNjb3VudGluZyBub3QKYmVpbmcgZG9uZSBjb3Jy
+ZWN0bHkuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgICAgICAg
+ICAgS2VybmVsIFN0b3JhZ2UgQXJjaGl0ZWN0CmhhcmVAc3VzZS5kZQkJCSAgICAgICAgICAgICAg
+ICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgU29mdHdhcmUgU29sdXRpb25zIEdlcm1hbnkgR21i
+SCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkhSQiAzNjgwOSAoQUcgTsO8cm5iZXJn
+KSwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlcgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1k
+ZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9k
+bS1kZXZlbA==
