@@ -1,11 +1,11 @@
 From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH 1/8] dm raid5: Remove set but unused variable
-Date: Wed, 15 Jul 2020 18:52:10 +0900
-Message-ID: <20200715095217.441885-2-damien.lemoal@wdc.com>
+Subject: [PATCH 2/8] dm raid5: Fix compilation warning
+Date: Wed, 15 Jul 2020 18:52:11 +0900
+Message-ID: <20200715095217.441885-3-damien.lemoal@wdc.com>
 References: <20200715095217.441885-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20200715095217.441885-1-damien.lemoal@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -21,28 +21,37 @@ To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 Cc: Damien Le Moal <damien.lemoal@wdc.com>
 List-Id: dm-devel.ids
 
-Remove the variable offset in r5c_tree_index() to avoid a "set but not
-used" compilation warning when compiling with W=1.
-
-Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
----
- drivers/md/raid5-cache.c | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
-
-diff --git a/drivers/md/raid5-cache.c b/drivers/md/raid5-cache.c
-index 9b6da759dca2..eea14fa9e59b 100644
---- a/drivers/md/raid5-cache.c
-+++ b/drivers/md/raid5-cache.c
-@@ -195,9 +195,7 @@ struct r5l_log {
- static inline sector_t r5c_tree_index(struct r5conf *conf,
- 				      sector_t sect)
- {
--	sector_t offset;
--
--	offset = sector_div(sect, conf->chunk_sectors);
-+	sector_div(sect, conf->chunk_sectors);
- 	return sect;
- }
- 
--- 
-2.26.2
+UmVtb3ZlIHRoZSBpZiBzdGF0ZW1lbnQgYXJvdW5kIHRoZSBjYWxscyB0byBzeXNmc19saW5rX3Jk
+ZXYoKSB0byBhdm9pZAp0aGUgY29tcGlsYXRpb24gd2FybmluZyAic3VnZ2VzdCBicmFjZXMgYXJv
+dW5kIGVtcHR5IGJvZHkgaW4gYW4g4oCYaWbigJkKc3RhdGVtZW50IiB3aGVuIGNvbXBpbGluZyB3
+aXRoIFc9MS4KCkFsc28gZml4IGZ1bmN0aW9uIGRlc2NyaXB0aW9uIGNvbW1lbnRzIHRvIGF2b2lk
+IGtkb2MgZm9ybWF0IHdhcm5pbmdzLgoKU2lnbmVkLW9mZi1ieTogRGFtaWVuIExlIE1vYWwgPGRh
+bWllbi5sZW1vYWxAd2RjLmNvbT4KLS0tCiBkcml2ZXJzL21kL3JhaWQ1LmMgfCAxMiArKysrKyst
+LS0tLS0KIDEgZmlsZSBjaGFuZ2VkLCA2IGluc2VydGlvbnMoKyksIDYgZGVsZXRpb25zKC0pCgpk
+aWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9yYWlkNS5jIGIvZHJpdmVycy9tZC9yYWlkNS5jCmluZGV4
+IGFiODA2N2Y5Y2U4Yy4uNWNkMWRkNDQ4ODFjIDEwMDY0NAotLS0gYS9kcml2ZXJzL21kL3JhaWQ1
+LmMKKysrIGIvZHJpdmVycy9tZC9yYWlkNS5jCkBAIC0yMjE3LDkgKzIyMTcsOSBAQCBzdGF0aWMg
+aW50IGdyb3dfc3RyaXBlcyhzdHJ1Y3QgcjVjb25mICpjb25mLCBpbnQgbnVtKQogLyoqCiAgKiBz
+Y3JpYmJsZV9hbGxvYyAtIGFsbG9jYXRlIHBlcmNwdSBzY3JpYmJsZSBidWZmZXIgZm9yIHJlcXVp
+cmVkIHNpemUKICAqCQkgICAgb2YgdGhlIHNjcmliYmxlIHJlZ2lvbgotICogQHBlcmNwdSAtIGZy
+b20gZm9yX2VhY2hfcHJlc2VudF9jcHUoKSBvZiB0aGUgY2FsbGVyCi0gKiBAbnVtIC0gdG90YWwg
+bnVtYmVyIG9mIGRpc2tzIGluIHRoZSBhcnJheQotICogQGNudCAtIHNjcmliYmxlIG9ianMgY291
+bnQgZm9yIHJlcXVpcmVkIHNpemUgb2YgdGhlIHNjcmliYmxlIHJlZ2lvbgorICogQHBlcmNwdTog
+ZnJvbSBmb3JfZWFjaF9wcmVzZW50X2NwdSgpIG9mIHRoZSBjYWxsZXIKKyAqIEBudW06IHRvdGFs
+IG51bWJlciBvZiBkaXNrcyBpbiB0aGUgYXJyYXkKKyAqIEBjbnQ6IHNjcmliYmxlIG9ianMgY291
+bnQgZm9yIHJlcXVpcmVkIHNpemUgb2YgdGhlIHNjcmliYmxlIHJlZ2lvbgogICoKICAqIFRoZSBz
+Y3JpYmJsZSBidWZmZXIgc2l6ZSBtdXN0IGJlIGVub3VnaCB0byBjb250YWluOgogICogMS8gYSBz
+dHJ1Y3QgcGFnZSBwb2ludGVyIGZvciBlYWNoIGRldmljZSBpbiB0aGUgYXJyYXkgKzIKQEAgLTM3
+MTAsNyArMzcxMCw3IEBAIHN0YXRpYyBpbnQgZmV0Y2hfYmxvY2soc3RydWN0IHN0cmlwZV9oZWFk
+ICpzaCwgc3RydWN0IHN0cmlwZV9oZWFkX3N0YXRlICpzLAogCXJldHVybiAwOwogfQogCi0vKioK
+Ky8qCiAgKiBoYW5kbGVfc3RyaXBlX2ZpbGwgLSByZWFkIG9yIGNvbXB1dGUgZGF0YSB0byBzYXRp
+c2Z5IHBlbmRpbmcgcmVxdWVzdHMuCiAgKi8KIHN0YXRpYyB2b2lkIGhhbmRsZV9zdHJpcGVfZmls
+bChzdHJ1Y3Qgc3RyaXBlX2hlYWQgKnNoLApAQCAtNzk0NCw4ICs3OTQ0LDggQEAgc3RhdGljIGlu
+dCByYWlkNV9zdGFydF9yZXNoYXBlKHN0cnVjdCBtZGRldiAqbWRkZXYpCiAJCQkJCWVsc2UKIAkJ
+CQkJCXJkZXYtPnJlY292ZXJ5X29mZnNldCA9IDA7CiAKLQkJCQkJaWYgKHN5c2ZzX2xpbmtfcmRl
+dihtZGRldiwgcmRldikpCi0JCQkJCQkvKiBGYWlsdXJlIGhlcmUgaXMgT0sgKi87CisJCQkJCS8q
+IEZhaWx1cmUgaGVyZSBpcyBPSyAqLworCQkJCQlzeXNmc19saW5rX3JkZXYobWRkZXYsIHJkZXYp
+OwogCQkJCX0KIAkJCX0gZWxzZSBpZiAocmRldi0+cmFpZF9kaXNrID49IGNvbmYtPnByZXZpb3Vz
+X3JhaWRfZGlza3MKIAkJCQkgICAmJiAhdGVzdF9iaXQoRmF1bHR5LCAmcmRldi0+ZmxhZ3MpKSB7
+Ci0tIAoyLjI2LjIKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29t
+Cmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
