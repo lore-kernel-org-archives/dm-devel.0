@@ -1,13 +1,11 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 0/4]  Fix segfault on access to mpp->hwe
-Date: Tue, 14 Jul 2020 18:54:21 -0500
-Message-ID: <20200714235421.GL11089@octiron.msp.redhat.com>
-References: <20200713110743.26329-1-mwilck@suse.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH] dm zoned: update atime for new buffer zones
+Date: Wed, 15 Jul 2020 10:17:52 +0200
+Message-ID: <20200715081752.28130-1-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200713110743.26329-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,54 +15,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: mwilck@suse.com
-Cc: lixiaokeng@huawei.com, dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Damien LeMoal <damien.lemoal@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jul 13, 2020 at 01:07:39PM +0200, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
-> 
-> This is in response to Lixiaokeng's post
-> "master - libmultipath: fix use after free when iscsi logs in".
-> 
-> On top of Lixiaokeng's patch, I've added some log messages and
-> a fix for mpp->hwe handling in sync_paths().
-> 
-> The question remains how we handle maps without paths. I believe we're good
-> here, please review my assessment.
-> 
-> mpp->hwe is only accessed in propsel.c, via the mp_set_hwe() macro. Patch 3 of
-> my series adds an error message if this happens while mpp->hwe is NULL. IMO it
-> shouldn't happen because we don't check map properties for empty
-> maps. Normally this is done when a map is created, and we don't create maps
-> without paths.
-> 
-> The case where a map looses all paths during its normal lifetime and
-> can't be removed (e.g. because it's busy) is already covered by the
-> current code AFAICT. When a new path is re-added, we'll call adopt_paths
-> and verify_paths(), which will make sure that mpp->hwe is set again
-> to the pp->hwe member of the newly added path.
-> 
-> Reviews and comments welcome.
+When a new buffer zone is allocated in dmz_handle_buffered_write()
+we should update the 'atime' to inform reclaim that this zone has
+been accessed.
+Otherwise we end up with the pathological case where the first write
+allocates a new buffer zone, but the next write will start reclaim
+before processing the bio. As the atime is not set reclaim declares
+the system idle and reclaims the zone. Then the write will be processed
+and re-allocate the very same zone again; this repeats for every
+consecutive write, making for a _very_ slow mkfs.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ drivers/md/dm-zoned-target.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-> 
-> Regards
-> Martin
-> 
-> Martin Wilck (3):
->   libmultipath: warn if freeing path that holds mpp->hwe
->   libmultipath: warn about NULL value of mpp->hwe
->   libmultipath: fix mpp->hwe handling in sync_paths()
-> 
-> lixiaokeng (1):
->   master - libmultipath: fix use after free when iscsi logs in
-> 
->  libmultipath/propsel.c     | 4 +++-
->  libmultipath/structs_vec.c | 9 +++++++++
->  2 files changed, 12 insertions(+), 1 deletion(-)
-> 
-> -- 
-> 2.26.2
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index cf915009c306..b32d37bef14f 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -297,6 +297,9 @@ static int dmz_handle_buffered_write(struct dmz_target *dmz,
+ 	if (dmz_is_readonly(bzone))
+ 		return -EROFS;
+ 
++	/* Tell reclaim we're doing some work here */
++	dmz_reclaim_bio_acc(bzone->dev->reclaim);
++
+ 	/* Submit write */
+ 	ret = dmz_submit_bio(dmz, bzone, bio, chunk_block, nr_blocks);
+ 	if (ret)
+-- 
+2.16.4
