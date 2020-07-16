@@ -1,73 +1,128 @@
-From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH 1/4] dm verity: Fix compilation warning
-Date: Thu, 16 Jul 2020 13:38:12 +0900
-Message-ID: <20200716043815.605448-2-damien.lemoal@wdc.com>
-References: <20200716043815.605448-1-damien.lemoal@wdc.com>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH v2 0/7] crypto: add CRYPTO_ALG_ALLOCATES_MEMORY
+Date: Thu, 16 Jul 2020 21:55:38 +1000
+Message-ID: <20200716115538.GA31461@gondor.apana.org.au>
+References: <20200710062042.113842-1-ebiggers@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200716043815.605448-1-damien.lemoal@wdc.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Cc: Damien Le Moal <damien.lemoal@wdc.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200710062042.113842-1-ebiggers@kernel.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: mpatocka@redhat.com, linux-crypto@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-For the case !CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG, declare the
-functions verity_verify_root_hash(), verity_verify_is_sig_opt_arg(),
-verity_verify_sig_parse_opt_args() and verity_verify_sig_opts_cleanup()
-as inline to avoid a "no previous prototype for xxx" compilation
-warning when compiling with W=1.
+Eric Biggers <ebiggers@kernel.org> wrote:
+> This series introduces a flag that algorithms can set to indicate that
+> they allocate memory during processing of typical inputs, and thus
+> shouldn't be used in cases like dm-crypt where memory allocation
+> failures aren't acceptable.
+> 
+> Compared to Mikulas's patches, I've made the following improvements:
+> 
+> - Tried to clearly document the semantics of
+>  CRYPTO_ALG_ALLOCATES_MEMORY.  This includes documenting the usage
+>  constraints, since there are actually lots of cases that were
+>  overlooked where algorithms can still allocate memory in some edge
+>  cases where inputs are misaligned, fragemented, etc.  E.g. see
+>  crypto/skcipher.c and crypto/ahash.c.  Mikulas, please let me know if
+>  there are any concerns for dm-crypt.
+> 
+> - Moved the common mechanism for inheriting flags to its own patch.
+> 
+> - crypto_grab_spawn() now handles propagating CRYPTO_ALG_INHERITED_FLAGS
+>  to the new template instance.
+> 
+> - Inherit the flags in various places that were missed.
+> 
+> - Other cleanups.
+> 
+> Additional changes v1 => v2:
+> 
+> - Made crypto_check_attr_type() return the mask.
+> 
+> - Added patch that adds NEED_FALLBACK to INHERITED_FLAGS.
+> 
+> - Added patch that removes seqiv_create().
+> 
+> Eric Biggers (5):
+>  crypto: geniv - remove unneeded arguments from aead_geniv_alloc()
+>  crypto: seqiv - remove seqiv_create()
+>  crypto: algapi - use common mechanism for inheriting flags
+>  crypto: algapi - add NEED_FALLBACK to INHERITED_FLAGS
+>  crypto: algapi - introduce the flag CRYPTO_ALG_ALLOCATES_MEMORY
+> 
+> Mikulas Patocka (2):
+>  crypto: drivers - set the flag CRYPTO_ALG_ALLOCATES_MEMORY
+>  dm-crypt: don't use drivers that have CRYPTO_ALG_ALLOCATES_MEMORY
+> 
+> crypto/adiantum.c                             |  14 +--
+> crypto/algapi.c                               |  21 +++-
+> crypto/authenc.c                              |  14 +--
+> crypto/authencesn.c                           |  14 +--
+> crypto/ccm.c                                  |  33 ++---
+> crypto/chacha20poly1305.c                     |  14 +--
+> crypto/cmac.c                                 |   5 +-
+> crypto/cryptd.c                               |  59 ++++-----
+> crypto/ctr.c                                  |  17 +--
+> crypto/cts.c                                  |  13 +-
+> crypto/echainiv.c                             |   2 +-
+> crypto/essiv.c                                |  11 +-
+> crypto/gcm.c                                  |  40 ++----
+> crypto/geniv.c                                |  19 +--
+> crypto/hmac.c                                 |   5 +-
+> crypto/lrw.c                                  |  13 +-
+> crypto/pcrypt.c                               |  14 +--
+> crypto/rsa-pkcs1pad.c                         |  13 +-
+> crypto/seqiv.c                                |  18 +--
+> crypto/simd.c                                 |   6 +-
+> crypto/skcipher.c                             |  13 +-
+> crypto/vmac.c                                 |   5 +-
+> crypto/xcbc.c                                 |   5 +-
+> crypto/xts.c                                  |  15 +--
+> .../crypto/allwinner/sun8i-ce/sun8i-ce-core.c |  12 +-
+> .../crypto/allwinner/sun8i-ss/sun8i-ss-core.c |  12 +-
+> drivers/crypto/amlogic/amlogic-gxl-core.c     |   6 +-
+> drivers/crypto/axis/artpec6_crypto.c          |  20 ++-
+> drivers/crypto/bcm/cipher.c                   |  72 ++++++++---
+> drivers/crypto/caam/caamalg.c                 |   6 +-
+> drivers/crypto/caam/caamalg_qi.c              |   6 +-
+> drivers/crypto/caam/caamalg_qi2.c             |   8 +-
+> drivers/crypto/caam/caamhash.c                |   2 +-
+> drivers/crypto/cavium/cpt/cptvf_algs.c        |  18 ++-
+> drivers/crypto/cavium/nitrox/nitrox_aead.c    |   4 +-
+> .../crypto/cavium/nitrox/nitrox_skcipher.c    |  16 +--
+> drivers/crypto/ccp/ccp-crypto-aes-cmac.c      |   1 +
+> drivers/crypto/ccp/ccp-crypto-aes-galois.c    |   1 +
+> drivers/crypto/ccp/ccp-crypto-aes-xts.c       |   1 +
+> drivers/crypto/ccp/ccp-crypto-aes.c           |   2 +
+> drivers/crypto/ccp/ccp-crypto-des3.c          |   1 +
+> drivers/crypto/ccp/ccp-crypto-sha.c           |   1 +
+> drivers/crypto/chelsio/chcr_algo.c            |   7 +-
+> drivers/crypto/hisilicon/sec/sec_algs.c       |  24 ++--
+> drivers/crypto/hisilicon/sec2/sec_crypto.c    |   4 +-
+> .../crypto/inside-secure/safexcel_cipher.c    |  47 +++++++
+> drivers/crypto/inside-secure/safexcel_hash.c  |  18 +++
+> drivers/crypto/ixp4xx_crypto.c                |   6 +-
+> drivers/crypto/marvell/cesa/cipher.c          |  18 ++-
+> drivers/crypto/marvell/cesa/hash.c            |   6 +
+> .../crypto/marvell/octeontx/otx_cptvf_algs.c  |  30 ++---
+> drivers/crypto/n2_core.c                      |   3 +-
+> drivers/crypto/picoxcell_crypto.c             |  17 ++-
+> drivers/crypto/qat/qat_common/qat_algs.c      |  13 +-
+> drivers/crypto/qce/skcipher.c                 |   1 +
+> drivers/crypto/talitos.c                      | 117 ++++++++++++------
+> drivers/crypto/virtio/virtio_crypto_algs.c    |   3 +-
+> drivers/crypto/xilinx/zynqmp-aes-gcm.c        |   1 +
+> drivers/md/dm-crypt.c                         |  17 ++-
+> include/crypto/algapi.h                       |  25 ++--
+> include/crypto/internal/geniv.h               |   2 +-
+> include/linux/crypto.h                        |  36 +++++-
+> 62 files changed, 562 insertions(+), 405 deletions(-)
 
-Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
----
- drivers/md/dm-verity-verify-sig.h | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
-
-diff --git a/drivers/md/dm-verity-verify-sig.h b/drivers/md/dm-verity-verify-sig.h
-index 19b1547aa741..3987c7141f79 100644
---- a/drivers/md/dm-verity-verify-sig.h
-+++ b/drivers/md/dm-verity-verify-sig.h
-@@ -34,25 +34,25 @@ void verity_verify_sig_opts_cleanup(struct dm_verity_sig_opts *sig_opts);
- 
- #define DM_VERITY_ROOT_HASH_VERIFICATION_OPTS 0
- 
--int verity_verify_root_hash(const void *data, size_t data_len,
--			    const void *sig_data, size_t sig_len)
-+static inline int verity_verify_root_hash(const void *data, size_t data_len,
-+					  const void *sig_data, size_t sig_len)
- {
- 	return 0;
- }
- 
--bool verity_verify_is_sig_opt_arg(const char *arg_name)
-+static inline bool verity_verify_is_sig_opt_arg(const char *arg_name)
- {
- 	return false;
- }
- 
--int verity_verify_sig_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v,
--				    struct dm_verity_sig_opts *sig_opts,
--				    unsigned int *argc, const char *arg_name)
-+static inline int verity_verify_sig_parse_opt_args(struct dm_arg_set *as,
-+			struct dm_verity *v, struct dm_verity_sig_opts *sig_opts,
-+			unsigned int *argc, const char *arg_name)
- {
- 	return -EINVAL;
- }
- 
--void verity_verify_sig_opts_cleanup(struct dm_verity_sig_opts *sig_opts)
-+static inline void verity_verify_sig_opts_cleanup(struct dm_verity_sig_opts *sig_opts)
- {
- }
- 
+Patches 1-6 applied.  Thanks.
 -- 
-2.26.2
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
