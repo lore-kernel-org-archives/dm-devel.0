@@ -1,14 +1,13 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH 0/8] Various cleanups
-Date: Wed, 15 Jul 2020 23:03:45 +0000
-Message-ID: <CY4PR04MB3751202E2351F979BA07899EE77E0@CY4PR04MB3751.namprd04.prod.outlook.com>
-References: <20200715095217.441885-1-damien.lemoal@wdc.com>
-	<20200715134258.GB9501@redhat.com>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: [PATCH 4/4] dm init: Set file local variable static
+Date: Thu, 16 Jul 2020 13:38:15 +0900
+Message-ID: <20200716043815.605448-5-damien.lemoal@wdc.com>
+References: <20200716043815.605448-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <20200716043815.605448-1-damien.lemoal@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,54 +17,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Damien Le Moal <damien.lemoal@wdc.com>
 List-Id: dm-devel.ids
 
-On 2020/07/15 22:43, Mike Snitzer wrote:
-> On Wed, Jul 15 2020 at  5:52am -0400,
-> Damien Le Moal <damien.lemoal@wdc.com> wrote:
-> 
->> Mike,
->>
->> These patches fix various compilation warnings showing up when compiling
->> with W=1. The last patch addresses a static checker warning (C=1
->> compilation). There are a lot more of these code checker warnings
->> remaining that probably could be addressed, some seem to be false
->> positive though.
->>
->> Damien Le Moal (8):
->>   dm raid5: Remove set but unused variable
->>   dm raid5: Fix compilation warning
->>   md: Fix compilation warning
->>   dm raid10: Fix compilation warning
->>   dm verity: Fix compilation warning
->>   dm raid: Remove empty if statement
->>   dm ioctl: Fix compilation warning
->>   dm init: Set file local variable static
->>
->>  drivers/md/dm-init.c              |  2 +-
->>  drivers/md/dm-ioctl.c             |  2 +-
->>  drivers/md/dm-raid.c              |  2 --
->>  drivers/md/dm-verity-verify-sig.h | 14 +++++++-------
-> 
-> OK, thanks.
-> 
->>  drivers/md/md.c                   | 12 ++++++------
->>  drivers/md/raid10.c               |  4 ++--
->>  drivers/md/raid5-cache.c          |  4 +---
->>  drivers/md/raid5.c                | 12 ++++++------
-> 
-> But these need to be routed through the MD.
+Declare dm_allowed_targets as static to avoid the warning:
 
-Oops. Yes ! Will do. Thanks !
+drivers/md/dm-init.c:39:12: warning: symbol 'dm_allowed_targets' was
+not declared. Should it be static?
 
-> 
-> Mike
-> 
-> 
+when compiling with C=1.
 
+Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+---
+ drivers/md/dm-init.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
+diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
+index b869316d3722..b0c45c6ebe0b 100644
+--- a/drivers/md/dm-init.c
++++ b/drivers/md/dm-init.c
+@@ -36,7 +36,7 @@ struct dm_device {
+ 	struct list_head list;
+ };
+ 
+-const char * const dm_allowed_targets[] __initconst = {
++static const char * const dm_allowed_targets[] __initconst = {
+ 	"crypt",
+ 	"delay",
+ 	"linear",
 -- 
-Damien Le Moal
-Western Digital Research
+2.26.2
