@@ -1,15 +1,14 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 12/35] libmultipath: strlcpy()/strlcat(): use
- restrict qualifier
-Date: Thu, 16 Jul 2020 17:18:48 -0500
-Message-ID: <20200716221848.GN11089@octiron.msp.redhat.com>
-References: <20200709101620.6786-1-mwilck@suse.com>
-	<20200709101620.6786-13-mwilck@suse.com>
+Subject: Re: [PATCH 00/39] multipath-tools series part II:
+	dev_loss_tmo fixes
+Date: Thu, 16 Jul 2020 20:05:52 -0500
+Message-ID: <20200717010552.GO11089@octiron.msp.redhat.com>
+References: <20200709101952.7285-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200709101620.6786-13-mwilck@suse.com>
+In-Reply-To: <20200709101952.7285-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,99 +23,40 @@ To: mwilck@suse.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Jul 09, 2020 at 12:15:57PM +0200, mwilck@suse.com wrote:
+On Thu, Jul 09, 2020 at 12:19:48PM +0200, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
 > 
-> Also remove the redundant local variables. It's not necessary to
-> make "restrict" work, but it makes the intention more clear.
+> Hi Christophe, hi Ben,
 > 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/util.c | 28 ++++++++++++----------------
->  libmultipath/util.h |  4 ++--
->  2 files changed, 14 insertions(+), 18 deletions(-)
+> This is part II of a larger patch series for multpath-tools I've been preparing.
+> It contains some minor fixes for dev_loss_tmo handling, mostly logging.
+> It's based on the previously submitted part I.
 > 
-> diff --git a/libmultipath/util.c b/libmultipath/util.c
-> index 957fb97..f965094 100644
-> --- a/libmultipath/util.c
-> +++ b/libmultipath/util.c
-> @@ -113,46 +113,42 @@ get_word (const char *sentence, char **word)
->  	return skip + len;
->  }
->  
-> -size_t strlcpy(char *dst, const char *src, size_t size)
-> +size_t strlcpy(char * restrict dst, const char * restrict src, size_t size)
->  {
->  	size_t bytes = 0;
-> -	char *q = dst;
-> -	const char *p = src;
->  	char ch;
->  
-> -	while ((ch = *p++)) {
-> -		if (bytes+1 < size)
-> -			*q++ = ch;
-> +	while ((ch = *src++)) {
-> +		if (bytes + 1 < size)
-> +			*dst++ = ch;
->  		bytes++;
->  	}
->  
->  	/* If size == 0 there is no space for a final null... */
->  	if (size)
-> -		*q = '\0';
-> +		*dst = '\0';
->  	return bytes;
->  }
->  
-> -size_t strlcat(char *dst, const char *src, size_t size)
-> +size_t strlcat(char * restrict dst, const char * restrict src, size_t size)
->  {
->  	size_t bytes = 0;
-> -	char *q = dst;
-> -	const char *p = src;
->  	char ch;
->  
-> -	while (bytes < size && *q) {
-> -		q++;
-> +	while (bytes < size && *dst) {
-> +		dst++;
->  		bytes++;
->  	}
->  	if (bytes == size)
+> The full series will also be available here:
+> https://github.com/mwilck/multipath-tools/tree/ups/submit-2007
+> 
+> There are tags in that repo for each part of the series.
+> This part is tagged "submit-200709-2".
+> 
+> Regards,
+> Martin
+> 
 
-this should return the strlen(dst) + strlen(src). It wouldn't in the
-admittedly weird case where size isn't large enough to fit dst.
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+for the part.
 
->  		return (bytes + strlen(src));
->  
-> -	while ((ch = *p++)) {
-> -		if (bytes+1 < size)
-> -		*q++ = ch;
-> +	while ((ch = *src++)) {
-> +		if (bytes + 1 < size)
-> +			*dst++ = ch;
->  		bytes++;
->  	}
->  
-> -	*q = '\0';
-> +	*dst = '\0';
->  	return bytes;
->  }
->  
-> diff --git a/libmultipath/util.h b/libmultipath/util.h
-> index ae18d8b..7e29b26 100644
-> --- a/libmultipath/util.h
-> +++ b/libmultipath/util.h
-> @@ -15,8 +15,8 @@ int basenamecpy (const char *src, char *dst, size_t size);
->  int filepresent (const char *run);
->  char *get_next_string(char **temp, const char *split_char);
->  int get_word (const char * sentence, char ** word);
-> -size_t strlcpy(char *dst, const char *src, size_t size);
-> -size_t strlcat(char *dst, const char *src, size_t size);
-> +size_t strlcpy(char * restrict dst, const char * restrict src, size_t size);
-> +size_t strlcat(char * restrict dst, const char * restrict src, size_t size);
->  int devt2devname (char *, int, const char *);
->  dev_t parse_devt(const char *dev_t);
->  char *convert_dev(char *dev, int is_path_device);
+> 
+> Martin Wilck (4):
+>   libmultipath: add macro DEV_LOSS_TMO_UNSET
+>   libmultipath: improve logging for dev_loss_tmo override
+>   libmultipath: print message if setting dev_loss_tmo is unsupported
+>   libmultipath: increase log level of limiting dev_loss_tmo
+> 
+>  libmultipath/defaults.h  |  1 +
+>  libmultipath/dict.c      |  4 +--
+>  libmultipath/discovery.c | 56 ++++++++++++++++++++++++++++++----------
+>  libmultipath/propsel.c   |  2 +-
+>  4 files changed, 46 insertions(+), 17 deletions(-)
+> 
 > -- 
 > 2.26.2
