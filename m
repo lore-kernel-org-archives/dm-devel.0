@@ -1,7 +1,7 @@
 From: Deven Bowers <deven.desai@linux.microsoft.com>
-Subject: [RFC PATCH v4 12/12] cleanup: uapi/linux/audit.h
-Date: Fri, 17 Jul 2020 16:09:41 -0700
-Message-ID: <20200717230941.1190744-13-deven.desai@linux.microsoft.com>
+Subject: [RFC PATCH v4 09/12] dm-verity: add bdev_setsecurity hook for root-hash
+Date: Fri, 17 Jul 2020 16:09:38 -0700
+Message-ID: <20200717230941.1190744-10-deven.desai@linux.microsoft.com>
 References: <20200717230941.1190744-1-deven.desai@linux.microsoft.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,70 +12,53 @@ To: agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serg
 Cc: tyhicks@linux.microsoft.com, linux-kernel@vger.kernel.org, corbet@lwn.net, sashal@kernel.org, jaskarankhurana@linux.microsoft.com, mdsakib@microsoft.com, nramas@linux.microsoft.com, pasha.tatshin@soleen.com
 List-Id: dm-devel.ids
 
-Remove trailing whitespaces and align the integrity #defines in
-linux/uapi/audit.h
+Add a security hook call to set a security property of a block_device
+in dm-verity with the root-hash that was verified to match the merkel-tree.
 
 Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 ---
- include/uapi/linux/audit.h | 32 ++++++++++++++++----------------
- 1 file changed, 16 insertions(+), 16 deletions(-)
+ drivers/md/dm-verity-target.c | 8 ++++++++
+ include/linux/device-mapper.h | 1 +
+ 2 files changed, 9 insertions(+)
 
-diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
-index 5a634cca1d42..609b4a5e8a80 100644
---- a/include/uapi/linux/audit.h
-+++ b/include/uapi/linux/audit.h
-@@ -48,7 +48,7 @@
-  * 2500 - 2999 future user space (maybe integrity labels and related events)
-  *
-  * Messages from 1000-1199 are bi-directional. 1200-1299 & 2100 - 2999 are
-- * exclusively user space. 1300-2099 is kernel --> user space 
-+ * exclusively user space. 1300-2099 is kernel --> user space
-  * communication.
-  */
- #define AUDIT_GET		1000	/* Get status */
-@@ -78,7 +78,7 @@
- #define AUDIT_LAST_USER_MSG	1199
- #define AUDIT_FIRST_USER_MSG2	2100	/* More user space messages */
- #define AUDIT_LAST_USER_MSG2	2999
-- 
-+
- #define AUDIT_DAEMON_START      1200    /* Daemon startup record */
- #define AUDIT_DAEMON_END        1201    /* Daemon normal stop record */
- #define AUDIT_DAEMON_ABORT      1202    /* Daemon error stop record */
-@@ -140,20 +140,20 @@
- #define AUDIT_MAC_CALIPSO_ADD	1418	/* NetLabel: add CALIPSO DOI entry */
- #define AUDIT_MAC_CALIPSO_DEL	1419	/* NetLabel: del CALIPSO DOI entry */
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index c507f3a4e237..225f67ab378d 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -16,8 +16,10 @@
+ #include "dm-verity.h"
+ #include "dm-verity-fec.h"
+ #include "dm-verity-verify-sig.h"
++#include "dm-core.h"
+ #include <linux/module.h>
+ #include <linux/reboot.h>
++#include <linux/security.h>
  
--#define AUDIT_FIRST_KERN_ANOM_MSG   1700
--#define AUDIT_LAST_KERN_ANOM_MSG    1799
--#define AUDIT_ANOM_PROMISCUOUS      1700 /* Device changed promiscuous mode */
--#define AUDIT_ANOM_ABEND            1701 /* Process ended abnormally */
--#define AUDIT_ANOM_LINK		    1702 /* Suspicious use of file links */
--#define AUDIT_ANOM_CREAT	    1703 /* Suspicious file creation */
--#define AUDIT_INTEGRITY_DATA	    1800 /* Data integrity verification */
--#define AUDIT_INTEGRITY_METADATA    1801 /* Metadata integrity verification */
--#define AUDIT_INTEGRITY_STATUS	    1802 /* Integrity enable status */
--#define AUDIT_INTEGRITY_HASH	    1803 /* Integrity HASH type */
--#define AUDIT_INTEGRITY_PCR	    1804 /* PCR invalidation msgs */
--#define AUDIT_INTEGRITY_RULE	    1805 /* policy rule */
--#define AUDIT_INTEGRITY_EVM_XATTR   1806 /* New EVM-covered xattr */
--#define AUDIT_INTEGRITY_POLICY_RULE 1807 /* IMA policy rules */
-+#define AUDIT_FIRST_KERN_ANOM_MSG	1700
-+#define AUDIT_LAST_KERN_ANOM_MSG	1799
-+#define AUDIT_ANOM_PROMISCUOUS		1700 /* Device changed promiscuous mode */
-+#define AUDIT_ANOM_ABEND		1701 /* Process ended abnormally */
-+#define AUDIT_ANOM_LINK			1702 /* Suspicious use of file links */
-+#define AUDIT_ANOM_CREAT		1703 /* Suspicious file creation */
-+#define AUDIT_INTEGRITY_DATA		1800 /* Data integrity verification */
-+#define AUDIT_INTEGRITY_METADATA	1801 /* Metadata integrity verification */
-+#define AUDIT_INTEGRITY_STATUS		1802 /* Integrity enable status */
-+#define AUDIT_INTEGRITY_HASH		1803 /* Integrity HASH type */
-+#define AUDIT_INTEGRITY_PCR		1804 /* PCR invalidation msgs */
-+#define AUDIT_INTEGRITY_RULE		1805 /* policy rule */
-+#define AUDIT_INTEGRITY_EVM_XATTR	1806 /* New EVM-covered xattr */
-+#define AUDIT_INTEGRITY_POLICY_RULE	1807 /* IMA policy rules */
- #define AUDIT_INTEGRITY_POLICY_LOAD	1808 /* IPE Policy Load */
- #define AUDIT_INTEGRITY_POLICY_ACTIVATE	1809 /* IPE Policy Activation */
- #define AUDIT_INTEGRITY_EVENT		1810 /* IPE Evaluation Event */
+ #define DM_MSG_PREFIX			"verity"
+ 
+@@ -530,6 +532,12 @@ static int verity_verify_io(struct dm_verity_io *io)
+ 			return -EIO;
+ 	}
+ 
++	r = security_bdev_setsecurity(dm_table_get_md(v->ti->table)->bdev,
++				      DM_VERITY_ROOTHASH_SEC_NAME,
++				      v->root_digest, v->digest_size);
++	if (unlikely(r < 0))
++		return r;
++
+ 	/*
+ 	 * At this point, the merkel tree has finished validating.
+ 	 * if signature was specified, validate the signature here.
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 02be0be21d38..b82e8223d52a 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -625,5 +625,6 @@ static inline unsigned long to_bytes(sector_t n)
+ }
+ 
+ #define DM_VERITY_SIGNATURE_SEC_NAME DM_NAME	".verity-sig"
++#define DM_VERITY_ROOTHASH_SEC_NAME DM_NAME	".verity-rh"
+ 
+ #endif	/* _LINUX_DEVICE_MAPPER_H */
 -- 
 2.27.0
