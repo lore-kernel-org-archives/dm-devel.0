@@ -1,15 +1,15 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 61/74] libmultipath: adopt_paths(): skip
-	removed paths
-Date: Fri, 17 Jul 2020 23:28:36 -0500
-Message-ID: <20200718042836.GT11089@octiron.msp.redhat.com>
+Subject: Re: [PATCH 63/74] multipathd: deal with INIT_REMOVED
+ during path addition
+Date: Sat, 18 Jul 2020 00:46:54 -0500
+Message-ID: <20200718054654.GU11089@octiron.msp.redhat.com>
 References: <20200709105145.9211-1-mwilck@suse.com>
-	<20200709105145.9211-9-mwilck@suse.com>
+	<20200709105145.9211-11-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200709105145.9211-9-mwilck@suse.com>
+In-Reply-To: <20200709105145.9211-11-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,35 +24,178 @@ To: mwilck@suse.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Jul 09, 2020 at 12:51:32PM +0200, mwilck@suse.com wrote:
+On Thu, Jul 09, 2020 at 12:51:34PM +0200, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
 > 
-> If we don't do this, pathinfo() will fail on these paths, causing
-> adopt_paths() to fail.
+> With the introduction of INIT_REMOVED, we have to deal with the situation
+> when a path is re-added in this state. This enables us to detect the
+> situation where a path is added while still part of a map after a failed
+> removal, which we couldn't before. Dealing with this correctly requires
+> some additional logic. There's a good case (re-added path is still mapped
+> by a map with matching WWID) and a bad case (non-matching WWID).
 > 
-
-This is probably unnecessary, but it seems safer to make sure that
-pp->mpp is set to mpp, before bailing out on removed paths.
-
--Ben
-
+> The logic is very similar in uev_add_path() and cli_add_path().
+> 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/structs_vec.c | 2 ++
->  1 file changed, 2 insertions(+)
+>  multipathd/cli_handlers.c | 49 +++++++++++++++++++++++++++++++++--
+>  multipathd/main.c         | 54 ++++++++++++++++++++++++++++++++++++---
+>  2 files changed, 97 insertions(+), 6 deletions(-)
 > 
-> diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-> index 7c68592..1e0f109 100644
-> --- a/libmultipath/structs_vec.c
-> +++ b/libmultipath/structs_vec.c
-> @@ -79,6 +79,8 @@ int adopt_paths(vector pathvec, struct multipath *mpp)
->  					pp->dev, mpp->alias);
->  				continue;
->  			}
-> +			if (pp->initialized == INIT_REMOVED)
-> +				continue;
->  			condlog(3, "%s: ownership set to %s",
->  				pp->dev, mpp->alias);
->  			pp->mpp = mpp;
+> diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+> index 782bb00..679fd57 100644
+> --- a/multipathd/cli_handlers.c
+> +++ b/multipathd/cli_handlers.c
+> @@ -713,11 +713,56 @@ cli_add_path (void * v, char ** reply, int * len, void * data)
+>  		goto blacklisted;
+>  
+>  	pp = find_path_by_dev(vecs->pathvec, param);
+> -	if (pp) {
+> +	if (pp && pp->initialized != INIT_REMOVED) {
+>  		condlog(2, "%s: path already in pathvec", param);
+>  		if (pp->mpp)
+>  			return 0;
+> -	} else {
+> +	} else if (pp) {
+> +		/* Trying to add a path in INIT_REMOVED state */
+> +		struct multipath *prev_mpp;
+> +
+> +		prev_mpp = pp->mpp;
+
+O.k. I might be missing something here. How is it possible for a
+path to be in the INIT_REMOVED state, and not have pp->mpp set?
+Is this just a safety check?  Is so, should we print a message,
+since this is an unexpected state.
+
+> +		pp->mpp = NULL;
+> +		pp->initialized = INIT_NEW;
+> +		pp->wwid[0] = '\0';
+> +		conf = get_multipath_config();
+> +		pthread_cleanup_push(put_multipath_config, conf);
+> +		r = pathinfo(pp, conf, DI_ALL | DI_BLACKLIST);
+> +		pthread_cleanup_pop(1);
+> +
+> +		if (prev_mpp) {
+> +			/* Similar logic as in uev_add_path() */
+> +			pp->mpp = prev_mpp;
+> +			if (r == PATHINFO_OK &&
+> +			    !strncmp(prev_mpp->wwid, pp->wwid, WWID_SIZE)) {
+> +				condlog(2, "%s: path re-added to %s", pp->dev,
+> +					pp->mpp->alias);
+
+Should multipath be reinstating the path with dm here? I realize that it
+will get resinstated when it's checked next. At the very least,
+multipathd should be making sure it get checked the next time it's
+examined in checkerloop.
+
+> +				return 0;
+> +			} else if (!ev_remove_path(pp, vecs, true))
+> +				/* Path removed in ev_remove_path() */
+> +				pp = NULL;
+> +			else {
+> +				/* Init state is now INIT_REMOVED again */
+> +				pp->dmstate = PSTATE_FAILED;
+> +				dm_fail_path(pp->mpp->alias, pp->dev_t);
+> +				condlog(1, "%s: failed to re-add path still mapped in %s",
+> +					pp->dev, pp->mpp->alias);
+> +				return 1;
+> +			}
+> +		} else {
+> +			switch (r) {
+> +			case PATHINFO_SKIPPED:
+> +				goto blacklisted;
+> +			case PATHINFO_OK:
+> +				break;
+> +			default:
+> +				condlog(0, "%s: failed to get pathinfo", param);
+> +				return 1;
+> +			}
+> +		}
+> +	}
+> +
+> +	if (!pp) {
+>  		struct udev_device *udevice;
+>  
+>  		udevice = udev_device_new_from_subsystem_sysname(udev,
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 545eb6d..7b2d320 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -842,9 +842,21 @@ uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
+>  	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
+>  	if (pp) {
+>  		int r;
+> +		struct multipath *prev_mpp = NULL;
+> +		bool was_removed = pp->initialized == INIT_REMOVED;
+
+was_removed is only used once, so it's not necessary.
+
+> +
+> +		if (was_removed) {
+> +			condlog(3, "%s: re-adding removed path", pp->dev);
+> +			pp->initialized = INIT_NEW;
+> +			prev_mpp = pp->mpp;
+> +			pp->mpp = NULL;
+> +			/* make sure get_uid() is called */
+> +			pp->wwid[0] = '\0';
+> +		} else
+> +			condlog(3,
+> +				"%s: spurious uevent, path already in pathvec",
+> +				uev->kernel);
+>  
+> -		condlog(3, "%s: spurious uevent, path already in pathvec",
+> -			uev->kernel);
+>  		if (!pp->mpp && !strlen(pp->wwid)) {
+>  			condlog(3, "%s: reinitialize path", uev->kernel);
+>  			udev_device_unref(pp->udev);
+> @@ -854,9 +866,43 @@ uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
+>  			r = pathinfo(pp, conf,
+>  				     DI_ALL | DI_BLACKLIST);
+>  			pthread_cleanup_pop(1);
+> -			if (r == PATHINFO_OK)
+> +			if (r == PATHINFO_OK && !prev_mpp)
+>  				ret = ev_add_path(pp, vecs, need_do_map);
+> -			else if (r == PATHINFO_SKIPPED) {
+> +			else if (r == PATHINFO_OK &&
+
+again, should we reinstate this path?
+
+> +				 !strncmp(pp->wwid, prev_mpp->wwid, WWID_SIZE)) {
+> +				/*
+> +				 * Path was unsuccessfully removed, but now
+> +				 * re-added, and still belongs to the right map
+> +				 * - all fine.
+> +				 */
+> +				pp->mpp = prev_mpp;
+> +				ret = 0;
+> +			} else if (prev_mpp) {
+> +				/*
+> +				 * Bad: re-added path still hangs in wrong map
+> +				 * Make another attempt to remove the path
+> +				 */
+> +				pp->mpp = prev_mpp;
+> +				ret = ev_remove_path(pp, vecs, true);
+> +				if (r == PATHINFO_OK && !ret)
+> +					/*
+> +					 * Path successfully freed, move on to
+> +					 * "new path" code path below
+> +					 */
+> +					pp = NULL;
+> +				else {
+> +					/*
+> +					 * Failure in ev_remove_path will keep
+> +					 * path in pathvec in INIT_REMOVED state
+> +					 * Fail the path to make sure it isn't
+> +					 * used any more.
+> +					 */
+> +					pp->dmstate = PSTATE_FAILED;
+> +					dm_fail_path(pp->mpp->alias, pp->dev_t);
+> +					condlog(1, "%s: failed to re-add path still mapped in %s",
+> +						pp->dev, pp->mpp->alias);
+> +				}
+> +			} else if (r == PATHINFO_SKIPPED) {
+>  				condlog(3, "%s: remove blacklisted path",
+>  					uev->kernel);
+>  				i = find_slot(vecs->pathvec, (void *)pp);
 > -- 
 > 2.26.2
