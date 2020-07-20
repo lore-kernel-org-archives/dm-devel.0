@@ -1,85 +1,33 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 00/80] multipath-tools series part VI:
- incomplete udev initialization
-Date: Mon, 20 Jul 2020 16:20:47 -0500
-Message-ID: <20200720212047.GH11089@octiron.msp.redhat.com>
-References: <20200709110330.9917-1-mwilck@suse.com>
+From: Richard Weinberger <richard.weinberger@gmail.com>
+Subject: Re: [PATCH 04/14] bdi: initialize ->ra_pages in bdi_init
+Date: Mon, 20 Jul 2020 23:27:57 +0200
+Message-ID: <CAFLxGvyxtYnJ5UdD18uNA97zQaDB8-Wv8MHQn2g9GYD74v7cTg@mail.gmail.com>
+References: <20200720075148.172156-1-hch@lst.de> <20200720075148.172156-5-hch@lst.de>
+ <CAFLxGvxNHGEOrj6nKTtDeiU+Rx4xv_6asjSQYcFWXhk5m=1cBA@mail.gmail.com>
+ <20200720120734.GA29061@lst.de> <2827a5dbd94bc5c2c1706a6074d9a9a32a590feb.camel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200709110330.9917-1-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: mwilck@suse.com
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <2827a5dbd94bc5c2c1706a6074d9a9a32a590feb.camel@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Artem Bityutskiy <dedekind1@gmail.com>
+Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, Hans de Goede <hdegoede@redhat.com>, Richard Weinberger <richard@nod.at>, LKML <linux-kernel@vger.kernel.org>, linux-block@vger.kernel.org, Song Liu <song@kernel.org>, device-mapper development <dm-devel@redhat.com>, linux-mtd@lists.infradead.org, linux-mm@kvack.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, cgroups mailinglist <cgroups@vger.kernel.org>, drbd-dev@lists.linbit.com
 List-Id: dm-devel.ids
 
-On Thu, Jul 09, 2020 at 01:03:24PM +0200, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
-> 
-> Hi Christophe, hi Ben,
-> 
-> This is part VI of a larger patch series for multipath-tools I've been preparing.
-> It's based on the previously submitted part V.
-> 
-> The full series will also be available here:
-> https://github.com/mwilck/multipath-tools/tree/ups/submit-2007
-> 
-> There are tags in that repo for each part of the series.
-> This part is tagged "submit-200709-6".
+On Mon, Jul 20, 2020 at 2:37 PM Artem Bityutskiy <dedekind1@gmail.com> wrote:
+>
+> On Mon, 2020-07-20 at 14:07 +0200, Christoph Hellwig wrote:
+> > What about jffs2 and blk2mtd raw block devices?
 
-for the part
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
- 
-> The series handles an issue observed in certain partner installations, where
-> DM devices were incompletely initialized by udev - during initrd procesing,
-> the "add" event had been processed, but the subsequent "change" event had not,
-> because udevd had been killed before getting around to handle them.
-> 
-> My first attempt to fix this was based on udev rules ("11-dm-mpath.rules: Fix
-> udev rule processing during coldplug"), but this patch was wrong. We have to
-> add logic in multipathd itself. The most important patch in the series that
-> fixed the actual customer problem is patch 76. Patch 75 was supposed to handle
-> a slightly different incarnation of the same problem, which so far hasn't been
-> actually observed. But I think having this patch "just in case" doesn't hurt,
-> either.
-> 
-> Patch 78 and 79 rename "update_path_groups()", which over time has grown
-> to be the main entry point for reloading maps.
-> 
-> Patch 80 fixes an issue which I observed while testing the first 3 patches.
-> 
-> Regards,
-> Martin
-> 
-> Martin Wilck (6):
->   multipathd: uev_trigger(): handle incomplete ADD events
->   libmultipath: select_action(): force udev reload for uninitialized
->     maps
->   libmultipath: log dm_task_run() errors
->   libmultipath: move reload_map() to multipathd
->   multipathd: rename update_path_groups() -> reload_and_sync_map()
->   libmultipath: select_action(): don't drop map if alias clashes
-> 
->  libmultipath/configure.c  | 112 +++++++++++++++-----------------------
->  libmultipath/configure.h  |   3 +-
->  libmultipath/devmapper.c  |  61 +++++++++++++++++----
->  libmultipath/devmapper.h  |   4 ++
->  multipathd/cli_handlers.c |   8 +--
->  multipathd/dmevents.c     |   4 +-
->  multipathd/main.c         |  71 ++++++++++++++++++++++--
->  multipathd/main.h         |   4 +-
->  multipathd/waiter.c       |   2 +
->  9 files changed, 178 insertions(+), 91 deletions(-)
-> 
-> -- 
-> 2.26.2
+I don't worry much about blk2mtd.
+
+> If my memory serves me correctly JFFS2 did not mind readahead.
+
+This covers my knowledge too.
+I fear enabling readahead on JFFS2 will cause performance issues, this
+filesystem
+is mostly used on small and slow NOR devices.
+
+-- 
+Thanks,
+//richard
