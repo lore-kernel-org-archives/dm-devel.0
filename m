@@ -1,14 +1,14 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 00/54] multipath-tools series part IV:
- identify paths by dev_t
-Date: Mon, 20 Jul 2020 16:12:04 -0500
-Message-ID: <20200720211204.GF11089@octiron.msp.redhat.com>
-References: <20200709103623.8302-1-mwilck@suse.com>
+Subject: Re: [PATCH 00/74] multipath-tools series part V: removed
+ path handling
+Date: Mon, 20 Jul 2020 16:19:17 -0500
+Message-ID: <20200720211917.GG11089@octiron.msp.redhat.com>
+References: <20200709105145.9211-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200709103623.8302-1-mwilck@suse.com>
+In-Reply-To: <20200709105145.9211-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,64 +23,87 @@ To: mwilck@suse.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Jul 09, 2020 at 12:36:11PM +0200, mwilck@suse.com wrote:
+On Thu, Jul 09, 2020 at 12:51:24PM +0200, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
 > 
 > Hi Christophe, hi Ben,
 > 
-> This is part IV of a larger patch series for multipath-tools I've been preparing.
-> It's based on the previously submitted part III.
+> This is part V of a larger patch series for multipath-tools I've been preparing.
+> It's based on the previously submitted part IV.
 > 
 > The full series will also be available here:
 > https://github.com/mwilck/multipath-tools/tree/ups/submit-2007
 > 
 > There are tags in that repo for each part of the series.
-> This part is tagged "submit-200709-4".
+> This part is tagged "submit-200709-5".
 
-For the part, with the exception of patches 44 & 46
+
+For the part, with the exception of patches 61,63,64,65,66 & 71
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
- 
-> The dominant idea of the patches in this subseries is to move away from
-> the device node name as the main path identifier towards the dev_t aka
-> major/minor number. This is motivated by the fact that dev_t is used by the
-> kernel device mapper for referring to devices, both maps and paths.
-> If searching a device by dev_t fails, it's basically certain not to exist.
-> DM calls with major/minor number may even succeed if the respective devnode
-> has not been created yet. dev_t also works better for devices that aren't
-> fully initialized yet. Of course we still track the device name, but mostly
-> for log messages and user-directed output.
+
 > 
-> In short, using dev_t as primary identifier makes our code more robust.
+> The series addresses several issues with missing, unintialized, and removed
+> paths. The motivation was that I strongly dislike the side effects of
+> disassemble_map(), adding paths and setting WWIDs while parsing map
+> parameters. IMO this has always been a layering violation. This patch set adds
+> a new function dedicated to handling paths which have not been detected via
+> udev but are present as members of dm maps. That makes it much easier to
+> track and improve the logic applied when such devices are detected.
 > 
-> The subseries also contains some unrelated fixes for functions I worked on
-> while making these changes.
+> I believe that the new logic will also fix the issue recently reported by
+> Chongyun ("libmultipath/dmparser: add missing path with good status when sync
+> state with dm kernel"). At least, the approach is very similar, although
+> the call to pathinfo() for new devices now happens in update_pathvec_from_dm()
+> rather than in disassemble_map().
 > 
-> Regards,
+> The patch set also gets rid of the "is_daemon" argument for disassemble_map(),
+> causing semantics in daemon and non-daemon mode. The reason for this parameter
+> goes way back into history; it was avoiding to re-add manually removed paths
+> because they were still showing up in maps. But OTOH we must add missing
+> devices which we've failed to detect. The patch set handles this by tracking
+> the state of "being removed" as a new init state, and only actually removing
+> the paths from pathvec when they don't show up in maps any more.
+> 
+> Regards
 > Martin
 > 
-> Martin Wilck (12):
->   libmultipath: adopt_paths(): use find_path_by_devt()
->   libmultipath: adopt_paths(): don't bail out on single path failure
->   libmultipath: path_discover(): use find_path_by_devt()
->   libmultipath: path_discover(): always set DI_BLACKLIST
->   libmultipath: get_refwwid(): use find_path_by_devt()
->   libmultipath: get_refwwid(): call get_multipath_config() only once
->   libmultipath: get_refwwid(): get rid of "check" label
->   libmultipath: get_refwwid(): use symbolic return values
->   libmultipath: get_refwwid(): use switch statement
->   libmultipath: constify get_mpe_wwid()
->   multipath: call strchop() on command line argument
->   libmultipath: get_refwwid(): skip strchop(), and constify dev
->     parameter
+> Martin Wilck (21):
+>   libmultipath: protect use of pp->udev
+>   libmultipath: add uninitialize_path()
+>   multipath-tools: introduce INIT_REMOVED state
+>   libmultipath: update_mpp_paths(): handle INIT_REMOVED
+>   libmultipath: verify_paths(): don't delete paths from pathvec
+>   libmultipath: sync_paths(): handle INIT_REMOVED
+>   libmultipath: orphan_paths(): delete paths in INIT_REMOVED state
+>   libmultipath: adopt_paths(): skip removed paths
+>   multipathd: ev_remove_path(): use INIT_REMOVED
+>   multipathd: deal with INIT_REMOVED during path addition
+>   multipathd: check_path(): set retrigger_delay if necessary
+>   libmultipath: add update_pathvec_from_dm()
+>   libmultipath: update_pathvec_from_dm: handle pp->mpp mismatch
+>   libmultipath: disassemble_map(): always search paths by dev_t
+>   libmultipath: disassemble_map(): require non-NULL pathvec
+>   libmultipath: disassemble_map(): get rid of "is_daemon" argument
+>   libmultipath: disassemble_map(): do not change pathvec and WWIDs
+>   multipath: use update_pathvec_from_dm()
+>   libmpathpersist: use update_pathvec_from_dm()
+>   libmultipath: decrease loglevel in store_path()
+>   libmultipath: dmparser: constify function arguments
 > 
->  libmultipath/config.c      |   2 +-
->  libmultipath/config.h      |   2 +-
->  libmultipath/configure.c   | 200 +++++++++++++------------------------
->  libmultipath/configure.h   |   2 +-
->  libmultipath/discovery.c   |  32 +++---
->  libmultipath/structs_vec.c |  14 ++-
->  multipath/main.c           |   2 +
->  7 files changed, 94 insertions(+), 160 deletions(-)
+>  libmpathpersist/mpath_persist.c       |  56 +-----
+>  libmultipath/configure.c              |   2 +-
+>  libmultipath/discovery.c              |  15 +-
+>  libmultipath/dmparser.c               |  70 ++-----
+>  libmultipath/dmparser.h               |   4 +-
+>  libmultipath/prioritizers/alua_rtpg.c |   6 +-
+>  libmultipath/structs.c                |  21 +-
+>  libmultipath/structs.h                |   6 +
+>  libmultipath/structs_vec.c            | 263 +++++++++++++++++++++++---
+>  libmultipath/structs_vec.h            |  11 +-
+>  multipath/main.c                      |  71 +------
+>  multipathd/cli_handlers.c             |  49 ++++-
+>  multipathd/main.c                     | 113 ++++++++---
+>  13 files changed, 445 insertions(+), 242 deletions(-)
 > 
 > -- 
 > 2.26.2
