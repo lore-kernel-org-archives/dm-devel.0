@@ -1,15 +1,14 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 42/42] libmultipath: dm_addmap(): refuse
- creating map with empty WWID
-Date: Mon, 20 Jul 2020 16:11:00 -0500
-Message-ID: <20200720211100.GE11089@octiron.msp.redhat.com>
-References: <20200709103513.8142-1-mwilck@suse.com>
-	<20200709103513.8142-4-mwilck@suse.com>
+Subject: Re: [PATCH 00/54] multipath-tools series part IV:
+ identify paths by dev_t
+Date: Mon, 20 Jul 2020 16:12:04 -0500
+Message-ID: <20200720211204.GF11089@octiron.msp.redhat.com>
+References: <20200709103623.8302-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200709103513.8142-4-mwilck@suse.com>
+In-Reply-To: <20200709103623.8302-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,69 +23,64 @@ To: mwilck@suse.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Jul 09, 2020 at 12:35:13PM +0200, mwilck@suse.com wrote:
+On Thu, Jul 09, 2020 at 12:36:11PM +0200, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
 > 
-> We already avoid creating maps with empty WWID in coalesce_paths()
-> as well as in ev_add_path(). The only code path where it's difficult
-> to prove (although extremely unlikely) that we can't call
-> dm_addmap(ACT_CREATE) with an empty WWID is update_path_groups()->
-> reload_map(). To make the code easier to review and avoid ugly
-> corner cases, simply refuse to create maps with a zero-length
-> WWID.
+> Hi Christophe, hi Ben,
 > 
+> This is part IV of a larger patch series for multipath-tools I've been preparing.
+> It's based on the previously submitted part III.
+> 
+> The full series will also be available here:
+> https://github.com/mwilck/multipath-tools/tree/ups/submit-2007
+> 
+> There are tags in that repo for each part of the series.
+> This part is tagged "submit-200709-4".
 
+For the part, with the exception of patches 44 & 46
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/devmapper.c | 26 +++++++++++++++-----------
->  1 file changed, 15 insertions(+), 11 deletions(-)
+ 
+> The dominant idea of the patches in this subseries is to move away from
+> the device node name as the main path identifier towards the dev_t aka
+> major/minor number. This is motivated by the fact that dev_t is used by the
+> kernel device mapper for referring to devices, both maps and paths.
+> If searching a device by dev_t fails, it's basically certain not to exist.
+> DM calls with major/minor number may even succeed if the respective devnode
+> has not been created yet. dev_t also works better for devices that aren't
+> fully initialized yet. Of course we still track the device name, but mostly
+> for log messages and user-directed output.
 > 
-> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-> index a177a54..fb7675c 100644
-> --- a/libmultipath/devmapper.c
-> +++ b/libmultipath/devmapper.c
-> @@ -352,6 +352,12 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
->  	char *prefixed_uuid = NULL;
->  	uint32_t cookie = 0;
->  
-> +	if (task == DM_DEVICE_CREATE && strlen(mpp->wwid) == 0) {
-> +		condlog(1, "%s: refusing to create map with empty WWID",
-> +			mpp->alias);
-> +		return 0;
-> +	}
-> +
->  	/* Need to add this here to allow 0 to be passed in udev_flags */
->  	udev_flags |= DM_UDEV_DISABLE_LIBRARY_FALLBACK;
->  
-> @@ -368,18 +374,16 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
->  		dm_task_set_ro(dmt);
->  
->  	if (task == DM_DEVICE_CREATE) {
-> -		if (strlen(mpp->wwid) > 0) {
-> -			prefixed_uuid = MALLOC(UUID_PREFIX_LEN +
-> -					       strlen(mpp->wwid) + 1);
-> -			if (!prefixed_uuid) {
-> -				condlog(0, "cannot create prefixed uuid : %s",
-> -					strerror(errno));
-> -				goto addout;
-> -			}
-> -			sprintf(prefixed_uuid, UUID_PREFIX "%s", mpp->wwid);
-> -			if (!dm_task_set_uuid(dmt, prefixed_uuid))
-> -				goto freeout;
-> +		prefixed_uuid = MALLOC(UUID_PREFIX_LEN +
-> +				       strlen(mpp->wwid) + 1);
-> +		if (!prefixed_uuid) {
-> +			condlog(0, "cannot create prefixed uuid : %s",
-> +				strerror(errno));
-> +			goto addout;
->  		}
-> +		sprintf(prefixed_uuid, UUID_PREFIX "%s", mpp->wwid);
-> +		if (!dm_task_set_uuid(dmt, prefixed_uuid))
-> +			goto freeout;
->  		dm_task_skip_lockfs(dmt);
->  #ifdef LIBDM_API_FLUSH
->  		dm_task_no_flush(dmt);
+> In short, using dev_t as primary identifier makes our code more robust.
+> 
+> The subseries also contains some unrelated fixes for functions I worked on
+> while making these changes.
+> 
+> Regards,
+> Martin
+> 
+> Martin Wilck (12):
+>   libmultipath: adopt_paths(): use find_path_by_devt()
+>   libmultipath: adopt_paths(): don't bail out on single path failure
+>   libmultipath: path_discover(): use find_path_by_devt()
+>   libmultipath: path_discover(): always set DI_BLACKLIST
+>   libmultipath: get_refwwid(): use find_path_by_devt()
+>   libmultipath: get_refwwid(): call get_multipath_config() only once
+>   libmultipath: get_refwwid(): get rid of "check" label
+>   libmultipath: get_refwwid(): use symbolic return values
+>   libmultipath: get_refwwid(): use switch statement
+>   libmultipath: constify get_mpe_wwid()
+>   multipath: call strchop() on command line argument
+>   libmultipath: get_refwwid(): skip strchop(), and constify dev
+>     parameter
+> 
+>  libmultipath/config.c      |   2 +-
+>  libmultipath/config.h      |   2 +-
+>  libmultipath/configure.c   | 200 +++++++++++++------------------------
+>  libmultipath/configure.h   |   2 +-
+>  libmultipath/discovery.c   |  32 +++---
+>  libmultipath/structs_vec.c |  14 ++-
+>  multipath/main.c           |   2 +
+>  7 files changed, 94 insertions(+), 160 deletions(-)
+> 
 > -- 
 > 2.26.2
