@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 11/14] mm: use SWP_SYNCHRONOUS_IO more intelligently
-Date: Mon, 20 Jul 2020 09:51:45 +0200
-Message-ID: <20200720075148.172156-12-hch@lst.de>
+Subject: [PATCH 13/14] bdi: invert BDI_CAP_NO_ACCT_WB
+Date: Mon, 20 Jul 2020 09:51:47 +0200
+Message-ID: <20200720075148.172156-14-hch@lst.de>
 References: <20200720075148.172156-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,32 +12,104 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: Song Liu <song@kernel.org>, Hans de Goede <hdegoede@redhat.com>, Richard Weinberger <richard@nod.at>, linux-mtd@lists.infradead.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org
 List-Id: dm-devel.ids
 
-There is no point in trying to call bdev_read_page if SWP_SYNCHRONOUS_IO
-is not set, as the device won't support it.  Also there is no point in
-trying a bio submission if bdev_read_page failed.
+Replace BDI_CAP_NO_ACCT_WB with a positive BDI_CAP_WRITEBACK_ACCT to
+make the checks more obvious.  Also remove the pointless
+bdi_cap_account_writeback wrapper that just obsfucates the check.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- mm/page_io.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ fs/fuse/inode.c             |  3 ++-
+ include/linux/backing-dev.h | 13 +++----------
+ mm/backing-dev.c            |  1 +
+ mm/page-writeback.c         |  4 ++--
+ 4 files changed, 8 insertions(+), 13 deletions(-)
 
-diff --git a/mm/page_io.c b/mm/page_io.c
-index ccda7679008851..63b44b8221af0f 100644
---- a/mm/page_io.c
-+++ b/mm/page_io.c
-@@ -403,8 +403,11 @@ int swap_readpage(struct page *page, bool synchronous)
- 		goto out;
- 	}
+diff --git a/fs/fuse/inode.c b/fs/fuse/inode.c
+index 84fe187eb64385..b7a558b82bd3be 100644
+--- a/fs/fuse/inode.c
++++ b/fs/fuse/inode.c
+@@ -1038,7 +1038,8 @@ static int fuse_bdi_init(struct fuse_conn *fc, struct super_block *sb)
+ 		return err;
  
--	ret = bdev_read_page(sis->bdev, swap_page_sector(page), page);
--	if (!ret) {
-+	if (sis->flags & SWP_SYNCHRONOUS_IO) {
-+		ret = bdev_read_page(sis->bdev, swap_page_sector(page), page);
-+		if (ret)
-+			goto out;
-+
- 		if (trylock_page(page)) {
- 			swap_slot_free_notify(page);
- 			unlock_page(page);
+ 	/* fuse does it's own writeback accounting */
+-	sb->s_bdi->capabilities = BDI_CAP_NO_ACCT_WB | BDI_CAP_STRICTLIMIT;
++	sb->s_bdi->capabilities &= ~BDI_CAP_WRITEBACK_ACCT;
++	sb->s_bdi->capabilities |= BDI_CAP_STRICTLIMIT;
+ 
+ 	/*
+ 	 * For a single fuse filesystem use max 1% of dirty +
+diff --git a/include/linux/backing-dev.h b/include/linux/backing-dev.h
+index 5da4ea3dd0cc5c..b217344a2c63be 100644
+--- a/include/linux/backing-dev.h
++++ b/include/linux/backing-dev.h
+@@ -120,17 +120,17 @@ int bdi_set_max_ratio(struct backing_dev_info *bdi, unsigned int max_ratio);
+  *
+  * BDI_CAP_NO_ACCT_DIRTY:  Dirty pages shouldn't contribute to accounting
+  * BDI_CAP_NO_WRITEBACK:   Don't write pages back
+- * BDI_CAP_NO_ACCT_WB:     Don't automatically account writeback pages
++ * BDI_CAP_WRITEBACK_ACCT: Automatically account writeback pages
+  * BDI_CAP_STRICTLIMIT:    Keep number of dirty pages below bdi threshold.
+  */
+ #define BDI_CAP_NO_ACCT_DIRTY	0x00000001
+ #define BDI_CAP_NO_WRITEBACK	0x00000002
+-#define BDI_CAP_NO_ACCT_WB	0x00000004
++#define BDI_CAP_WRITEBACK_ACCT	0x00000004
+ #define BDI_CAP_STRICTLIMIT	0x00000010
+ #define BDI_CAP_CGROUP_WRITEBACK 0x00000020
+ 
+ #define BDI_CAP_NO_ACCT_AND_WRITEBACK \
+-	(BDI_CAP_NO_WRITEBACK | BDI_CAP_NO_ACCT_DIRTY | BDI_CAP_NO_ACCT_WB)
++	(BDI_CAP_NO_WRITEBACK | BDI_CAP_NO_ACCT_DIRTY)
+ 
+ extern struct backing_dev_info noop_backing_dev_info;
+ 
+@@ -179,13 +179,6 @@ static inline bool bdi_cap_account_dirty(struct backing_dev_info *bdi)
+ 	return !(bdi->capabilities & BDI_CAP_NO_ACCT_DIRTY);
+ }
+ 
+-static inline bool bdi_cap_account_writeback(struct backing_dev_info *bdi)
+-{
+-	/* Paranoia: BDI_CAP_NO_WRITEBACK implies BDI_CAP_NO_ACCT_WB */
+-	return !(bdi->capabilities & (BDI_CAP_NO_ACCT_WB |
+-				      BDI_CAP_NO_WRITEBACK));
+-}
+-
+ static inline bool mapping_cap_writeback_dirty(struct address_space *mapping)
+ {
+ 	return bdi_cap_writeback_dirty(inode_to_bdi(mapping->host));
+diff --git a/mm/backing-dev.c b/mm/backing-dev.c
+index 41ec322090fca6..5f5958e1d39060 100644
+--- a/mm/backing-dev.c
++++ b/mm/backing-dev.c
+@@ -744,6 +744,7 @@ struct backing_dev_info *bdi_alloc(int node_id)
+ 		kfree(bdi);
+ 		return NULL;
+ 	}
++	bdi->capabilities = BDI_CAP_WRITEBACK_ACCT;
+ 	bdi->ra_pages = VM_READAHEAD_PAGES;
+ 	return bdi;
+ }
+diff --git a/mm/page-writeback.c b/mm/page-writeback.c
+index 27a10536adad30..44c4a588f48df5 100644
+--- a/mm/page-writeback.c
++++ b/mm/page-writeback.c
+@@ -2740,7 +2740,7 @@ int test_clear_page_writeback(struct page *page)
+ 		if (ret) {
+ 			__xa_clear_mark(&mapping->i_pages, page_index(page),
+ 						PAGECACHE_TAG_WRITEBACK);
+-			if (bdi_cap_account_writeback(bdi)) {
++			if (bdi->capabilities & BDI_CAP_WRITEBACK_ACCT) {
+ 				struct bdi_writeback *wb = inode_to_wb(inode);
+ 
+ 				dec_wb_stat(wb, WB_WRITEBACK);
+@@ -2793,7 +2793,7 @@ int __test_set_page_writeback(struct page *page, bool keep_write)
+ 						   PAGECACHE_TAG_WRITEBACK);
+ 
+ 			xas_set_mark(&xas, PAGECACHE_TAG_WRITEBACK);
+-			if (bdi_cap_account_writeback(bdi))
++			if (bdi->capabilities & BDI_CAP_WRITEBACK_ACCT)
+ 				inc_wb_stat(inode_to_wb(inode), WB_WRITEBACK);
+ 
+ 			/*
 -- 
 2.27.0
