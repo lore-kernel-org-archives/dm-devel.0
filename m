@@ -1,17 +1,98 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: a fix and two cleanups around blk_stack_limits
-Date: Mon, 20 Jul 2020 08:12:48 +0200
-Message-ID: <20200720061251.652457-1-hch@lst.de>
+Subject: [PATCH 1/3] block: inherit the zoned characteristics in blk_stack_limits
+Date: Mon, 20 Jul 2020 08:12:49 +0200
+Message-ID: <20200720061251.652457-2-hch@lst.de>
+References: <20200720061251.652457-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200720061251.652457-1-hch@lst.de>
 Sender: linux-block-owner@vger.kernel.org
 To: axboe@kernel.dk
 Cc: Damien.LeMoal@wdc.com, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Jens,
+Lift the code from device mapper into blk_stack_limits to inherity
+the stacking limitations.  This ensures we do the right thing for
+all stacked zoned block devices.
 
-this series ensures that the zoned device limitations are properly
-inherited in blk_stack_limits, and then cleanups up two rather
-pointless wrappers around it.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ block/blk-settings.c   |  1 +
+ drivers/md/dm-table.c  | 19 -------------------
+ include/linux/blkdev.h |  9 ++++++---
+ 3 files changed, 7 insertions(+), 22 deletions(-)
+
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index 9a2c23cd970073..9cddbd73647405 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -609,6 +609,7 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+ 		t->chunk_sectors = min_not_zero(t->chunk_sectors,
+ 						b->chunk_sectors);
+ 
++	t->zoned = max(t->zoned, b->zoned);
+ 	return ret;
+ }
+ EXPORT_SYMBOL(blk_stack_limits);
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 0ea5b7367179ff..ec5364133cef7f 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -467,9 +467,6 @@ static int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+ 		       q->limits.logical_block_size,
+ 		       q->limits.alignment_offset,
+ 		       (unsigned long long) start << SECTOR_SHIFT);
+-
+-	limits->zoned = blk_queue_zoned_model(q);
+-
+ 	return 0;
+ }
+ 
+@@ -1528,22 +1525,6 @@ int dm_calculate_queue_limits(struct dm_table *table,
+ 			       dm_device_name(table->md),
+ 			       (unsigned long long) ti->begin,
+ 			       (unsigned long long) ti->len);
+-
+-		/*
+-		 * FIXME: this should likely be moved to blk_stack_limits(), would
+-		 * also eliminate limits->zoned stacking hack in dm_set_device_limits()
+-		 */
+-		if (limits->zoned == BLK_ZONED_NONE && ti_limits.zoned != BLK_ZONED_NONE) {
+-			/*
+-			 * By default, the stacked limits zoned model is set to
+-			 * BLK_ZONED_NONE in blk_set_stacking_limits(). Update
+-			 * this model using the first target model reported
+-			 * that is not BLK_ZONED_NONE. This will be either the
+-			 * first target device zoned model or the model reported
+-			 * by the target .io_hints.
+-			 */
+-			limits->zoned = ti_limits.zoned;
+-		}
+ 	}
+ 
+ 	/*
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 06995b96e94679..67b9ccc1da3560 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -306,11 +306,14 @@ enum blk_queue_state {
+ 
+ /*
+  * Zoned block device models (zoned limit).
++ *
++ * Note: This needs to be ordered from the least to the most severe
++ * restrictions for the inheritance in blk_stack_limits() to work.
+  */
+ enum blk_zoned_model {
+-	BLK_ZONED_NONE,	/* Regular block device */
+-	BLK_ZONED_HA,	/* Host-aware zoned block device */
+-	BLK_ZONED_HM,	/* Host-managed zoned block device */
++	BLK_ZONED_NONE = 0,	/* Regular block device */
++	BLK_ZONED_HA,		/* Host-aware zoned block device */
++	BLK_ZONED_HM,		/* Host-managed zoned block device */
+ };
+ 
+ struct queue_limits {
+-- 
+2.27.0
