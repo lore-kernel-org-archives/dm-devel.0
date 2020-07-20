@@ -1,28 +1,51 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: a fix and two cleanups around blk_stack_limits
-Date: Mon, 20 Jul 2020 19:35:30 +0200
-Message-ID: <20200720173530.GA21442@lst.de>
-References: <20200720061251.652457-1-hch@lst.de> <dfe56cf2-db3d-3461-9834-be314f4080ef@kernel.dk>
+From: Shakeel Butt <shakeelb@google.com>
+Subject: Re: [PATCH 11/14] mm: use SWP_SYNCHRONOUS_IO more intelligently
+Date: Mon, 20 Jul 2020 10:52:55 -0700
+Message-ID: <CALvZod7ACBnNX5W-gtTzheh8R-rxv1nB-5q7UcDUZ7BvtpakpA@mail.gmail.com>
+References: <20200720075148.172156-1-hch@lst.de> <20200720075148.172156-12-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <dfe56cf2-db3d-3461-9834-be314f4080ef@kernel.dk>
-Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Christoph Hellwig <hch@lst.de>, Damien.LeMoal@wdc.com, linux-block@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20200720075148.172156-12-hch@lst.de>
+Sender: linux-raid-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>, Minchan Kim <minchan@kernel.org>
+Cc: Jens Axboe <axboe@kernel.dk>, Song Liu <song@kernel.org>, Hans de Goede <hdegoede@redhat.com>, Richard Weinberger <richard@nod.at>, linux-mtd@lists.infradead.org, dm-devel@redhat.com, "open list:BLOCK LAYER" <linux-block@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, drbd-dev@lists.linbit.com, linux-raid@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, Cgroups <cgroups@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Mon, Jul 20, 2020 at 10:56:23AM -0600, Jens Axboe wrote:
-> On 7/20/20 12:12 AM, Christoph Hellwig wrote:
-> > Hi Jens,
-> > 
-> > this series ensures that the zoned device limitations are properly
-> > inherited in blk_stack_limits, and then cleanups up two rather
-> > pointless wrappers around it.
-> 
-> We should probably make this against for-5.9/drivers instead, to avoid
-> an unnecessary conflict when merging.
++Minchan Kim
 
-Then we'd also need a merge as my next series depends on this, and it
-clearly is core material.  Not sure which one is more important.
+On Mon, Jul 20, 2020 at 12:52 AM Christoph Hellwig <hch@lst.de> wrote:
+>
+> There is no point in trying to call bdev_read_page if SWP_SYNCHRONOUS_IO
+> is not set, as the device won't support it.  Also there is no point in
+> trying a bio submission if bdev_read_page failed.
+
+This will at least break the failure path of zram_rw_page().
+
+>
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> ---
+>  mm/page_io.c | 7 +++++--
+>  1 file changed, 5 insertions(+), 2 deletions(-)
+>
+> diff --git a/mm/page_io.c b/mm/page_io.c
+> index ccda7679008851..63b44b8221af0f 100644
+> --- a/mm/page_io.c
+> +++ b/mm/page_io.c
+> @@ -403,8 +403,11 @@ int swap_readpage(struct page *page, bool synchronous)
+>                 goto out;
+>         }
+>
+> -       ret = bdev_read_page(sis->bdev, swap_page_sector(page), page);
+> -       if (!ret) {
+> +       if (sis->flags & SWP_SYNCHRONOUS_IO) {
+> +               ret = bdev_read_page(sis->bdev, swap_page_sector(page), page);
+> +               if (ret)
+> +                       goto out;
+> +
+>                 if (trylock_page(page)) {
+>                         swap_slot_free_notify(page);
+>                         unlock_page(page);
+> --
+> 2.27.0
+>
