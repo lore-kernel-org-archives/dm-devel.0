@@ -1,51 +1,86 @@
-From: Shakeel Butt <shakeelb@google.com>
-Subject: Re: [PATCH 11/14] mm: use SWP_SYNCHRONOUS_IO more intelligently
-Date: Mon, 20 Jul 2020 10:52:55 -0700
-Message-ID: <CALvZod7ACBnNX5W-gtTzheh8R-rxv1nB-5q7UcDUZ7BvtpakpA@mail.gmail.com>
-References: <20200720075148.172156-1-hch@lst.de> <20200720075148.172156-12-hch@lst.de>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 00/42] multipath-tools series part III:
+	duplicate alias
+Date: Mon, 20 Jul 2020 15:30:23 -0500
+Message-ID: <20200720203023.GC11089@octiron.msp.redhat.com>
+References: <20200709103513.8142-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20200720075148.172156-12-hch@lst.de>
-Sender: linux-raid-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>, Minchan Kim <minchan@kernel.org>
-Cc: Jens Axboe <axboe@kernel.dk>, Song Liu <song@kernel.org>, Hans de Goede <hdegoede@redhat.com>, Richard Weinberger <richard@nod.at>, linux-mtd@lists.infradead.org, dm-devel@redhat.com, "open list:BLOCK LAYER" <linux-block@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, drbd-dev@lists.linbit.com, linux-raid@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, Cgroups <cgroups@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200709103513.8142-1-mwilck@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: mwilck@suse.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-+Minchan Kim
+On Thu, Jul 09, 2020 at 12:35:10PM +0200, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
+> 
+> Hi Christophe, hi Ben,
+> 
+> This is part II of a larger patch series for multpath-tools I've been preparing.
+> It contains fixes for a customer issue where the same alias was set for
+> several maps with different WWIDs in the WWIDs file.
+> 
+> It's based on the previously submitted part II.
+> 
+> The full series will also be available here:
+> https://github.com/mwilck/multipath-tools/tree/ups/submit-2007
+> 
+> There are tags in that repo for each part of the series.
+> This part is tagged "submit-200709-3".
 
-On Mon, Jul 20, 2020 at 12:52 AM Christoph Hellwig <hch@lst.de> wrote:
->
-> There is no point in trying to call bdev_read_page if SWP_SYNCHRONOUS_IO
-> is not set, as the device won't support it.  Also there is no point in
-> trying a bio submission if bdev_read_page failed.
+With the first two of these patches applied , multipathd fails a
+real-world situation in different, arguably worse, way than it currently
+does, and I think it could do better.  If user_friendly_names is set,
+but two (or more) devices weren't in the initramfs bindings file, they
+will get random aliases during boot.  Assuming the devices are in the
+regular filesystem bindings file, it's not super uncommon for these
+devices to pick from the same alias as they use in the regular bindings
+file, but with different wwids matching to different aliases.
 
-This will at least break the failure path of zram_rw_page().
+Without these patches, multipath will rename them if possible, but if
+not, they will still exist, but with the wrong alias. Existing with the
+wrong alias isn't great, since things could be checking for the devices
+by name, which could cause corruption. But in reality, usually they are
+referenced by Labels, which will still work (since most things are
+designed to not expect persistent naming of devices).  However, with
+this patches, some of the devices will be deleted, which avoids the
+possiblity of corruption, but in practice usually is worse because
+referencing devices by label already avoids the corruption problem. 
 
->
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  mm/page_io.c | 7 +++++--
->  1 file changed, 5 insertions(+), 2 deletions(-)
->
-> diff --git a/mm/page_io.c b/mm/page_io.c
-> index ccda7679008851..63b44b8221af0f 100644
-> --- a/mm/page_io.c
-> +++ b/mm/page_io.c
-> @@ -403,8 +403,11 @@ int swap_readpage(struct page *page, bool synchronous)
->                 goto out;
->         }
->
-> -       ret = bdev_read_page(sis->bdev, swap_page_sector(page), page);
-> -       if (!ret) {
-> +       if (sis->flags & SWP_SYNCHRONOUS_IO) {
-> +               ret = bdev_read_page(sis->bdev, swap_page_sector(page), page);
-> +               if (ret)
-> +                       goto out;
-> +
->                 if (trylock_page(page)) {
->                         swap_slot_free_notify(page);
->                         unlock_page(page);
-> --
-> 2.27.0
->
+A better idea might simply be to fallback to using the WWID as an alias,
+on the offending map.  This should avoid corruption, since unless
+someone manually set the WWID as an alias in multipath.conf it should be
+unique. But it won't cause an existing, and possibly necessary, device
+to get deleted.
+
+-Ben
+ 
+> Regards,
+> Martin
+> 
+> Martin Wilck (3):
+>   libmultipath: refuse creating map with duplicate alias
+>   libmultipath: refuse reloading an existing map with different WWID
+>   libmultipath: dm_addmap(): refuse creating map with empty WWID
+> 
+>  libmultipath/configure.c   | 24 ++++++++++++++++++++----
+>  libmultipath/devmapper.c   | 26 +++++++++++++++-----------
+>  libmultipath/structs_vec.c | 13 +++++++++++++
+>  libmultipath/structs_vec.h |  1 +
+>  multipathd/main.c          |  6 +++++-
+>  5 files changed, 54 insertions(+), 16 deletions(-)
+> 
+> -- 
+> 2.26.2
