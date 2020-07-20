@@ -1,10 +1,9 @@
 From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [PATCH 1/3] block: inherit the zoned characteristics in
- blk_stack_limits
-Date: Mon, 20 Jul 2020 08:09:53 +0000
-Message-ID: <CY4PR04MB37515CAD1C2FBE1F85574CAAE77B0@CY4PR04MB3751.namprd04.prod.outlook.com>
+Subject: Re: [PATCH 2/3] block: remove bdev_stack_limits
+Date: Mon, 20 Jul 2020 08:11:23 +0000
+Message-ID: <CY4PR04MB3751CDE47A50C4F06D4C97F9E77B0@CY4PR04MB3751.namprd04.prod.outlook.com>
 References: <20200720061251.652457-1-hch@lst.de>
- <20200720061251.652457-2-hch@lst.de>
+ <20200720061251.652457-3-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
@@ -16,99 +15,103 @@ Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redha
 List-Id: dm-devel.ids
 
 On 2020/07/20 15:13, Christoph Hellwig wrote:=0A=
-> Lift the code from device mapper into blk_stack_limits to inherity=0A=
-> the stacking limitations.  This ensures we do the right thing for=0A=
-> all stacked zoned block devices.=0A=
+> This function is just a tiny wrapper around blk_stack_limit and has=0A=
+> two callers.  Simplify the stack a bit by open coding it in the two=0A=
+> callers.=0A=
 > =0A=
 > Signed-off-by: Christoph Hellwig <hch@lst.de>=0A=
 > ---=0A=
->  block/blk-settings.c   |  1 +=0A=
->  drivers/md/dm-table.c  | 19 -------------------=0A=
->  include/linux/blkdev.h |  9 ++++++---=0A=
->  3 files changed, 7 insertions(+), 22 deletions(-)=0A=
+>  block/blk-settings.c   | 25 ++-----------------------=0A=
+>  drivers/md/dm-table.c  |  3 ++-=0A=
+>  include/linux/blkdev.h |  2 --=0A=
+>  3 files changed, 4 insertions(+), 26 deletions(-)=0A=
 > =0A=
 > diff --git a/block/blk-settings.c b/block/blk-settings.c=0A=
-> index 9a2c23cd970073..9cddbd73647405 100644=0A=
+> index 9cddbd73647405..8c63af7726850c 100644=0A=
 > --- a/block/blk-settings.c=0A=
 > +++ b/block/blk-settings.c=0A=
-> @@ -609,6 +609,7 @@ int blk_stack_limits(struct queue_limits *t, struct q=
-ueue_limits *b,=0A=
->  		t->chunk_sectors =3D min_not_zero(t->chunk_sectors,=0A=
->  						b->chunk_sectors);=0A=
->  =0A=
-> +	t->zoned =3D max(t->zoned, b->zoned);=0A=
->  	return ret;=0A=
+> @@ -614,28 +614,6 @@ int blk_stack_limits(struct queue_limits *t, struct =
+queue_limits *b,=0A=
 >  }=0A=
 >  EXPORT_SYMBOL(blk_stack_limits);=0A=
+>  =0A=
+> -/**=0A=
+> - * bdev_stack_limits - adjust queue limits for stacked drivers=0A=
+> - * @t:	the stacking driver limits (top device)=0A=
+> - * @bdev:  the component block_device (bottom)=0A=
+> - * @start:  first data sector within component device=0A=
+> - *=0A=
+> - * Description:=0A=
+> - *    Merges queue limits for a top device and a block_device.  Returns=
+=0A=
+> - *    0 if alignment didn't change.  Returns -1 if adding the bottom=0A=
+> - *    device caused misalignment.=0A=
+> - */=0A=
+> -int bdev_stack_limits(struct queue_limits *t, struct block_device *bdev,=
+=0A=
+> -		      sector_t start)=0A=
+> -{=0A=
+> -	struct request_queue *bq =3D bdev_get_queue(bdev);=0A=
+> -=0A=
+> -	start +=3D get_start_sect(bdev);=0A=
+> -=0A=
+> -	return blk_stack_limits(t, &bq->limits, start);=0A=
+> -}=0A=
+> -EXPORT_SYMBOL(bdev_stack_limits);=0A=
+> -=0A=
+>  /**=0A=
+>   * disk_stack_limits - adjust queue limits for stacked drivers=0A=
+>   * @disk:  MD/DM gendisk (top)=0A=
+> @@ -651,7 +629,8 @@ void disk_stack_limits(struct gendisk *disk, struct b=
+lock_device *bdev,=0A=
+>  {=0A=
+>  	struct request_queue *t =3D disk->queue;=0A=
+>  =0A=
+> -	if (bdev_stack_limits(&t->limits, bdev, offset >> 9) < 0) {=0A=
+> +	if (blk_stack_limits(&t->limits, &bdev_get_queue(bdev)->limits,=0A=
+> +			get_start_sect(bdev) + (offset >> 9)) < 0) {=0A=
+>  		char top[BDEVNAME_SIZE], bottom[BDEVNAME_SIZE];=0A=
+>  =0A=
+>  		disk_name(disk, 0, top);=0A=
 > diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c=0A=
-> index 0ea5b7367179ff..ec5364133cef7f 100644=0A=
+> index ec5364133cef7f..aac4c31cfc8498 100644=0A=
 > --- a/drivers/md/dm-table.c=0A=
 > +++ b/drivers/md/dm-table.c=0A=
-> @@ -467,9 +467,6 @@ static int dm_set_device_limits(struct dm_target *ti,=
+> @@ -458,7 +458,8 @@ static int dm_set_device_limits(struct dm_target *ti,=
  struct dm_dev *dev,=0A=
->  		       q->limits.logical_block_size,=0A=
->  		       q->limits.alignment_offset,=0A=
->  		       (unsigned long long) start << SECTOR_SHIFT);=0A=
-> -=0A=
-> -	limits->zoned =3D blk_queue_zoned_model(q);=0A=
-> -=0A=
->  	return 0;=0A=
->  }=0A=
->  =0A=
-> @@ -1528,22 +1525,6 @@ int dm_calculate_queue_limits(struct dm_table *tab=
-le,=0A=
->  			       dm_device_name(table->md),=0A=
->  			       (unsigned long long) ti->begin,=0A=
->  			       (unsigned long long) ti->len);=0A=
-> -=0A=
-> -		/*=0A=
-> -		 * FIXME: this should likely be moved to blk_stack_limits(), would=0A=
-> -		 * also eliminate limits->zoned stacking hack in dm_set_device_limits(=
-)=0A=
-> -		 */=0A=
-> -		if (limits->zoned =3D=3D BLK_ZONED_NONE && ti_limits.zoned !=3D BLK_ZO=
-NED_NONE) {=0A=
-> -			/*=0A=
-> -			 * By default, the stacked limits zoned model is set to=0A=
-> -			 * BLK_ZONED_NONE in blk_set_stacking_limits(). Update=0A=
-> -			 * this model using the first target model reported=0A=
-> -			 * that is not BLK_ZONED_NONE. This will be either the=0A=
-> -			 * first target device zoned model or the model reported=0A=
-> -			 * by the target .io_hints.=0A=
-> -			 */=0A=
-> -			limits->zoned =3D ti_limits.zoned;=0A=
-> -		}=0A=
+>  		return 0;=0A=
 >  	}=0A=
 >  =0A=
->  	/*=0A=
+> -	if (bdev_stack_limits(limits, bdev, start) < 0)=0A=
+> +	if (blk_stack_limits(limits, &q->limits,=0A=
+> +			get_start_sect(bdev) + start) < 0)=0A=
+>  		DMWARN("%s: adding target device %s caused an alignment inconsistency:=
+ "=0A=
+>  		       "physical_block_size=3D%u, logical_block_size=3D%u, "=0A=
+>  		       "alignment_offset=3D%u, start=3D%llu",=0A=
 > diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h=0A=
-> index 06995b96e94679..67b9ccc1da3560 100644=0A=
+> index 67b9ccc1da3560..247b0e0a2901f0 100644=0A=
 > --- a/include/linux/blkdev.h=0A=
 > +++ b/include/linux/blkdev.h=0A=
-> @@ -306,11 +306,14 @@ enum blk_queue_state {=0A=
->  =0A=
->  /*=0A=
->   * Zoned block device models (zoned limit).=0A=
-> + *=0A=
-> + * Note: This needs to be ordered from the least to the most severe=0A=
-> + * restrictions for the inheritance in blk_stack_limits() to work.=0A=
->   */=0A=
->  enum blk_zoned_model {=0A=
-> -	BLK_ZONED_NONE,	/* Regular block device */=0A=
-> -	BLK_ZONED_HA,	/* Host-aware zoned block device */=0A=
-> -	BLK_ZONED_HM,	/* Host-managed zoned block device */=0A=
-> +	BLK_ZONED_NONE =3D 0,	/* Regular block device */=0A=
-> +	BLK_ZONED_HA,		/* Host-aware zoned block device */=0A=
-> +	BLK_ZONED_HM,		/* Host-managed zoned block device */=0A=
->  };=0A=
->  =0A=
->  struct queue_limits {=0A=
+> @@ -1106,8 +1106,6 @@ extern void blk_set_default_limits(struct queue_lim=
+its *lim);=0A=
+>  extern void blk_set_stacking_limits(struct queue_limits *lim);=0A=
+>  extern int blk_stack_limits(struct queue_limits *t, struct queue_limits =
+*b,=0A=
+>  			    sector_t offset);=0A=
+> -extern int bdev_stack_limits(struct queue_limits *t, struct block_device=
+ *bdev,=0A=
+> -			    sector_t offset);=0A=
+>  extern void disk_stack_limits(struct gendisk *disk, struct block_device =
+*bdev,=0A=
+>  			      sector_t offset);=0A=
+>  extern void blk_queue_stack_limits(struct request_queue *t, struct reque=
+st_queue *b);=0A=
 > =0A=
 =0A=
 Looks good.=0A=
 =0A=
 Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>=0A=
-=0A=
 =0A=
 -- =0A=
 Damien Le Moal=0A=
