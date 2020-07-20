@@ -1,42 +1,28 @@
-From: Deven Bowers <deven.desai@linux.microsoft.com>
-Subject: Re: [RFC PATCH v4 02/12] security: add ipe lsm evaluation loop and
- audit system
-Date: Mon, 20 Jul 2020 09:44:01 -0700
-Message-ID: <f7cda924-a14d-35bf-7c00-f12e2be9844c@linux.microsoft.com>
-References: <20200717230941.1190744-1-deven.desai@linux.microsoft.com>
- <20200717230941.1190744-3-deven.desai@linux.microsoft.com>
- <4b0c9925-d163-46a2-bbcb-74deb7446540@infradead.org>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: a fix and two cleanups around blk_stack_limits
+Date: Mon, 20 Jul 2020 10:56:23 -0600
+Message-ID: <dfe56cf2-db3d-3461-9834-be314f4080ef@kernel.dk>
+References: <20200720061251.652457-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4b0c9925-d163-46a2-bbcb-74deb7446540@infradead.org>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200720061251.652457-1-hch@lst.de>
 Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Randy Dunlap <rdunlap@infradead.org>, agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serge@hallyn.com, zohar@linux.ibm.com, viro@zeniv.linux.org.uk, paul@paul-moore.com, eparis@redhat.com, jannh@google.com, dm-devel@redhat.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, linux-audit@redhat.com
-Cc: tyhicks@linux.microsoft.com, linux-kernel@vger.kernel.org, corbet@lwn.net, sashal@kernel.org, jaskarankhurana@linux.microsoft.com, mdsakib@microsoft.com, nramas@linux.microsoft.com, pasha.tatshin@soleen.com
+Sender: linux-block-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Damien.LeMoal@wdc.com, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-
-
-On 7/17/2020 4:16 PM, Randy Dunlap wrote:
-> On 7/17/20 4:09 PM, Deven Bowers wrote:
->> +config SECURITY_IPE_PERMISSIVE_SWITCH
->> +	bool "Enable the ability to switch IPE to permissive mode"
->> +	default y
->> +	help
->> +	  This option enables two ways of switching IPE to permissive mode,
->> +	  a sysctl (if enabled), `ipe.enforce`, or a kernel command line
->> +	  parameter, `ipe.enforce`. If either of these are set to 0, files
+On 7/20/20 12:12 AM, Christoph Hellwig wrote:
+> Hi Jens,
 > 
-> 	                                               is set
+> this series ensures that the zoned device limitations are properly
+> inherited in blk_stack_limits, and then cleanups up two rather
+> pointless wrappers around it.
 
-Thanks, I'll change it in the next iteration.
+We should probably make this against for-5.9/drivers instead, to avoid
+an unnecessary conflict when merging.
 
-> 
->> +	  will be subject to IPE's policy, audit messages will be logged, but
->> +	  the policy will not be enforced.
->> +
->> +	  If unsure, answer Y.
-> 
-> 
+-- 
+Jens Axboe
