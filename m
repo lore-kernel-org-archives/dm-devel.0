@@ -1,34 +1,49 @@
-From: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>
-Subject: Re: [PATCH 1/3] block: inherit the zoned characteristics in
- blk_stack_limits
-Date: Mon, 20 Jul 2020 06:45:24 +0000
-Message-ID: <SN4PR0401MB35983F8986A949FCEB79A3829B7B0@SN4PR0401MB3598.namprd04.prod.outlook.com>
-References: <20200720061251.652457-1-hch@lst.de>
- <20200720061251.652457-2-hch@lst.de>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 01/14] fs: remove the unused SB_I_MULTIROOT flag
+Date: Mon, 20 Jul 2020 09:51:35 +0200
+Message-ID: <20200720075148.172156-2-hch@lst.de>
+References: <20200720075148.172156-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>, "axboe@kernel.dk" <axboe@kernel.dk>
-Cc: Damien Le Moal <Damien.LeMoal@wdc.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20200720075148.172156-1-hch@lst.de>
+Sender: linux-raid-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Song Liu <song@kernel.org>, Hans de Goede <hdegoede@redhat.com>, Richard Weinberger <richard@nod.at>, linux-mtd@lists.infradead.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 20/07/2020 08:13, Christoph Hellwig wrote:=0A=
->  /*=0A=
->   * Zoned block device models (zoned limit).=0A=
-> + *=0A=
-> + * Note: This needs to be ordered from the least to the most severe=0A=
-> + * restrictions for the inheritance in blk_stack_limits() to work.=0A=
->   */=0A=
->  enum blk_zoned_model {=0A=
-> -	BLK_ZONED_NONE,	/* Regular block device */=0A=
-> -	BLK_ZONED_HA,	/* Host-aware zoned block device */=0A=
-> -	BLK_ZONED_HM,	/* Host-managed zoned block device */=0A=
-> +	BLK_ZONED_NONE =3D 0,	/* Regular block device */=0A=
-=0A=
-The initialization to 0 for the first value is not needed.=0A=
-=0A=
-Apart from that,=0A=
-Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>=0A=
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ fs/namei.c         | 4 ++--
+ include/linux/fs.h | 1 -
+ 2 files changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/fs/namei.c b/fs/namei.c
+index 72d4219c93acb7..e9ff0d54a110a7 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -568,8 +568,8 @@ static bool path_connected(struct vfsmount *mnt, struct dentry *dentry)
+ {
+ 	struct super_block *sb = mnt->mnt_sb;
+ 
+-	/* Bind mounts and multi-root filesystems can have disconnected paths */
+-	if (!(sb->s_iflags & SB_I_MULTIROOT) && (mnt->mnt_root == sb->s_root))
++	/* Bind mounts can have disconnected paths */
++	if (mnt->mnt_root == sb->s_root)
+ 		return true;
+ 
+ 	return is_subdir(dentry, mnt->mnt_root);
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 1d7c4f7465d24c..613323008519ca 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1365,7 +1365,6 @@ extern int send_sigurg(struct fown_struct *fown);
+ #define SB_I_CGROUPWB	0x00000001	/* cgroup-aware writeback enabled */
+ #define SB_I_NOEXEC	0x00000002	/* Ignore executables on this fs */
+ #define SB_I_NODEV	0x00000004	/* Ignore devices on this fs */
+-#define SB_I_MULTIROOT	0x00000008	/* Multiple roots to the dentry tree */
+ 
+ /* sb->s_iflags to limit user namespace mounts */
+ #define SB_I_USERNS_VISIBLE		0x00000010 /* fstype already mounted */
+-- 
+2.27.0
