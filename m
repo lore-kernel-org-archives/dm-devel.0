@@ -1,84 +1,85 @@
-From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 11/14] mm: use SWP_SYNCHRONOUS_IO more intelligently
-Date: Mon, 20 Jul 2020 22:46:17 -0700
-Message-ID: <20200721054617.GA1879427@google.com>
-References: <20200720075148.172156-1-hch@lst.de>
- <20200720075148.172156-12-hch@lst.de>
- <CALvZod7ACBnNX5W-gtTzheh8R-rxv1nB-5q7UcDUZ7BvtpakpA@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] shmfs: don't allocate pages on read
+Date: Tue, 21 Jul 2020 05:12:54 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2007210510230.6959@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CALvZod7ACBnNX5W-gtTzheh8R-rxv1nB-5q7UcDUZ7BvtpakpA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hans de Goede <hdegoede-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "open list:BLOCK LAYER" <linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Cgroups <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: MULTIPART/MIXED; BOUNDARY="185206533-396230313-1595322775=:6959"
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hugh Dickins <hughd@google.com>
+Cc: linux-mm@kvack.org, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-Thanks for Ccing me, Shakeel.
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+--185206533-396230313-1595322775=:6959
+Content-Type: TEXT/PLAIN; charset=ISO-8859-2
+Content-Transfer-Encoding: 8BIT
 
-On Mon, Jul 20, 2020 at 10:52:55AM -0700, Shakeel Butt wrote:
-> +Minchan Kim
-> 
-> On Mon, Jul 20, 2020 at 12:52 AM Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
-> >
-> > There is no point in trying to call bdev_read_page if SWP_SYNCHRONOUS_IO
-> > is not set, as the device won't support it.  Also there is no point in
-> > trying a bio submission if bdev_read_page failed.
-> 
-> This will at least break the failure path of zram_rw_page().
+Hi
 
-Yes, it needs post processing for error propagaion like *page* handling
-part in end_swap_bio_read(mostly, PG_error and PG_uptodate with pr_alert).
-bdev_read_page's sematic doesn't need to be synchronous so it could just
-submit the IO request and complete the IO afterward. In that case, we
-need right error handling, too if the IO encoutered error. BIO fallback
-makes it simple.
+Do we still need the patch a0ee5ec520ede?
 
- * bdev_read_page() - Start reading a page from a block device
- * @bdev: The device to read the page from
- * @sector: The offset on the device to read the page to (need not be aligned)
- * @page: The page to read
- *
- * On entry, the page should be locked.  It will be unlocked when the page
- * has been read.  If the block driver implements rw_page synchronously,
- * that will be true on exit from this function, but it need not be.
- *
- * Errors returned by this function are usually "soft", eg out of memory, or
- * queue full; callers should try a different route to read this page rather
- * than propagate an error back up the stack.
+We are using the loop device for testing and when we read something from 
+the loop device, it allocates the pages on the underlying shmfs 
+filesystem. See this example:
 
-The other concern about this patch is zram have used rw_page for a long
-time even though sometime it doesn't declare BDI_CAP_SYNCHRONOUS_IO by itself
-because rw_page shows 4~5% bandwidth improvement compared to bio-based.
-The performance gain becomes more important these day because compressor
-becomes more fast day by day.
+# mkdir -p /mnt/test
+# mount -t tmpfs /dev/null /mnt/test
+# cd /mnt/test
+# truncate -s 1GiB file
+# du -hs file
+0       file
+# losetup /dev/loop0 file
+# du -hs file
+1,1M    file
+# dd if=/dev/loop0 of=/dev/null
+2097152+0 záznamů přečteno
+2097152+0 záznamů zapsáno
+1073741824 bajtů (1,1 GB, 1,0 GiB) zkopírováno, 4,06865 s, 264 MB/s
+# du -hs file
+1,0G    file
 
-> 
-> >
-> > Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-> > ---
-> >  mm/page_io.c | 7 +++++--
-> >  1 file changed, 5 insertions(+), 2 deletions(-)
-> >
-> > diff --git a/mm/page_io.c b/mm/page_io.c
-> > index ccda7679008851..63b44b8221af0f 100644
-> > --- a/mm/page_io.c
-> > +++ b/mm/page_io.c
-> > @@ -403,8 +403,11 @@ int swap_readpage(struct page *page, bool synchronous)
-> >                 goto out;
-> >         }
-> >
-> > -       ret = bdev_read_page(sis->bdev, swap_page_sector(page), page);
-> > -       if (!ret) {
-> > +       if (sis->flags & SWP_SYNCHRONOUS_IO) {
-> > +               ret = bdev_read_page(sis->bdev, swap_page_sector(page), page);
-> > +               if (ret)
-> > +                       goto out;
-> > +
-> >                 if (trylock_page(page)) {
-> >                         swap_slot_free_notify(page);
-> >                         unlock_page(page);
-> > --
-> > 2.27.0
-> >
+This patch turns off the allocation on read.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ mm/shmem.c |    8 --------
+ 1 file changed, 8 deletions(-)
+
+Index: linux-2.6/mm/shmem.c
+===================================================================
+--- linux-2.6.orig/mm/shmem.c	2020-06-29 14:50:06.000000000 +0200
++++ linux-2.6/mm/shmem.c	2020-07-16 19:22:58.000000000 +0200
+@@ -2507,14 +2507,6 @@ static ssize_t shmem_file_read_iter(stru
+ 	ssize_t retval = 0;
+ 	loff_t *ppos = &iocb->ki_pos;
+ 
+-	/*
+-	 * Might this read be for a stacking filesystem?  Then when reading
+-	 * holes of a sparse file, we actually need to allocate those pages,
+-	 * and even mark them dirty, so it cannot exceed the max_blocks limit.
+-	 */
+-	if (!iter_is_iovec(to))
+-		sgp = SGP_CACHE;
+-
+ 	index = *ppos >> PAGE_SHIFT;
+ 	offset = *ppos & ~PAGE_MASK;
+ 
+--185206533-396230313-1595322775=:6959
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--185206533-396230313-1595322775=:6959--
