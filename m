@@ -1,29 +1,62 @@
-From: David Sterba <dsterba-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH 04/14] bdi: initialize ->ra_pages in bdi_init
-Date: Wed, 22 Jul 2020 11:04:26 +0200
-Message-ID: <20200722090426.GQ3703@twin.jikos.cz>
-References: <20200722062552.212200-1-hch@lst.de>
- <20200722062552.212200-5-hch@lst.de>
-Reply-To: dsterba-AlSwsSmVLrQ@public.gmane.org
+From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Subject: [PATCH] libmultipath: free pgp if add_pathgroup fails in
+ disassemble_map func
+Date: Wed, 22 Jul 2020 16:36:04 +0800
+Message-ID: <e58b31e0-4f66-072f-b9c6-1047714cf3bf@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20200722062552.212200-5-hch-jcswGhMUV9g@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hans de Goede <hdegoede-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-/sHSiTBGKwq//tTphpj/8g@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, christophe.varoqui@opensvc.com, Zdenek Kabelac <zkabelac@redhat.com>
+Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
 List-Id: dm-devel.ids
 
-On Wed, Jul 22, 2020 at 08:25:42AM +0200, Christoph Hellwig wrote:
-> Set up a readahead size by default, as very few users have a good
-> reason to change it.
-> 
-> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-> ---
+In disassemble_map func, pgp will be added to mpp->pg by calling
+add_pathgroup after allocing a pathgroup (pgp) successfully. However,
+if add_pathgroup fails, the pgp is actually not inserted into mpp->pg.
+So, calling free_pgvec(mpp->pg) cannot free the pgp, then memory leak
+problem occurs.
 
-For the btrfs bits
+disassemble_map:
+-> pgp = alloc_pathgroup()
+-> if add_pathgroup(mpp, pgp) fails
+	-> goto out
+out:
+free_pgvec(mpp->pg, KEEP_PATHS);
 
->  fs/btrfs/disk-io.c    | 1 -
+Here, we will call free_pathgroup(pgp) before going to out tag.
 
-Acked-by: David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>
+Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+---
+ libmultipath/dmparser.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index ac13ec06..6225838b 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -268,8 +268,10 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+ 		if (!pgp)
+ 			goto out;
+
+-		if (add_pathgroup(mpp, pgp))
++		if (add_pathgroup(mpp, pgp)) {
++			free_pathgroup(pgp, KEEP_PATHS);
+ 			goto out;
++		}
+
+ 		p += get_word(p, &word);
+
+-- 
+2.24.0.windows.2
