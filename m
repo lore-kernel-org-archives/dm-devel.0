@@ -1,8 +1,8 @@
 From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: [PATCH] libmultipath: free pgp if add_pathgroup fails in
- disassemble_map func
-Date: Wed, 22 Jul 2020 16:36:04 +0800
-Message-ID: <e58b31e0-4f66-072f-b9c6-1047714cf3bf@huawei.com>
+Subject: [PATCH] libmultipath: free pp if store_path fails in
+ disassemble_map
+Date: Wed, 22 Jul 2020 16:41:28 +0800
+Message-ID: <b1cccadd-955e-0341-879f-01659a04dbb4@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -17,46 +17,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, christophe.varoqui@opensvc.com, Zdenek Kabelac <zkabelac@redhat.com>
-Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
+To: mwilck@suse.com, Benjamin Marzinski <bmarzins@redhat.com>, christophe.varoqui@opensvc.com, Zdenek Kabelac <zkabelac@redhat.com>
+Cc: linfeilong@huawei.com, yanxiaodan@huawei.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-In disassemble_map func, pgp will be added to mpp->pg by calling
-add_pathgroup after allocing a pathgroup (pgp) successfully. However,
-if add_pathgroup fails, the pgp is actually not inserted into mpp->pg.
-So, calling free_pgvec(mpp->pg) cannot free the pgp, then memory leak
-problem occurs.
+In disassemble_map func, one pp will be allocated and stored in pathvec
+(only in client mode) and pgp->paths. However, if store_path fails, pp
+will not be freed, then memory leak problem occurs.
 
-disassemble_map:
--> pgp = alloc_pathgroup()
--> if add_pathgroup(mpp, pgp) fails
-	-> goto out
-out:
-free_pgvec(mpp->pg, KEEP_PATHS);
-
-Here, we will call free_pathgroup(pgp) before going to out tag.
+Here, we will call free_path to free pp when store_path fails.
 
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
 ---
- libmultipath/dmparser.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ libmultipath/dmparser.c | 15 +++++++++++++--
+ 1 file changed, 13 insertions(+), 2 deletions(-)
 
 diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index ac13ec06..6225838b 100644
+index 6225838b..3dc77242 100644
 --- a/libmultipath/dmparser.c
 +++ b/libmultipath/dmparser.c
-@@ -268,8 +268,10 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
- 		if (!pgp)
- 			goto out;
+@@ -142,6 +142,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+ 	int def_minio = 0;
+ 	struct path * pp;
+ 	struct pathgroup * pgp;
++	int pp_need_free_flag = 0;
 
--		if (add_pathgroup(mpp, pgp))
-+		if (add_pathgroup(mpp, pgp)) {
-+			free_pathgroup(pgp, KEEP_PATHS);
- 			goto out;
-+		}
+ 	p = params;
 
- 		p += get_word(p, &word);
+@@ -293,6 +294,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+ 			char devname[FILE_NAME_SIZE];
 
+ 			pp = NULL;
++			pp_need_free_flag = 0;
+ 			p += get_word(p, &word);
+
+ 			if (!word)
+@@ -323,9 +325,15 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+ 					strncpy(pp->wwid, mpp->wwid,
+ 						WWID_SIZE - 1);
+ 				}
++
++				if (is_daemon)
++					pp_need_free_flag = 1;
++
+ 				/* Only call this in multipath client mode */
+-				if (!is_daemon && store_path(pathvec, pp))
++				if (!is_daemon && store_path(pathvec, pp)) {
++					free_path(pp);
+ 					goto out1;
++				}
+ 			} else {
+ 				if (!strlen(pp->wwid) &&
+ 				    strlen(mpp->wwid))
+@@ -334,8 +342,11 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+ 			}
+ 			FREE(word);
+
+-			if (store_path(pgp->paths, pp))
++			if (store_path(pgp->paths, pp)) {
++				if (pp_need_free_flag)
++					free_path(pp);
+ 				goto out;
++			}
+
+ 			/*
+ 			 * Update wwid for multipaths which are not setup
 -- 
 2.24.0.windows.2
