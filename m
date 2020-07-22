@@ -1,36 +1,60 @@
-From: Richard Weinberger <richard@nod.at>
-Subject: Re: [PATCH 04/14] bdi: initialize ->ra_pages in bdi_init
-Date: Wed, 22 Jul 2020 13:15:43 +0200 (CEST)
-Message-ID: <1212963412.160863.1595416543195.JavaMail.zimbra@nod.at>
-References: <20200722062552.212200-1-hch@lst.de> <20200722062552.212200-5-hch@lst.de>
+From: Shakeel Butt <shakeelb@google.com>
+Subject: Re: [PATCH 11/14] mm: use SWP_SYNCHRONOUS_IO more intelligently
+Date: Wed, 22 Jul 2020 09:26:45 -0700
+Message-ID: <CALvZod6zF7Ak8KWf4dq0pEF2ty7JN_SyNE7PxLjrfF+EuDbZ2w@mail.gmail.com>
+References: <20200722062552.212200-1-hch@lst.de> <20200722062552.212200-12-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200722062552.212200-5-hch@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: hch <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Song Liu <song@kernel.org>, Hans de Goede <hdegoede@redhat.com>, Minchan Kim <minchan@kernel.org>, linux-mtd <linux-mtd@lists.infradead.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, drbd-dev@lists.linbit.com, linux-raid@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, cgroups@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20200722062552.212200-12-hch@lst.de>
+Sender: linux-raid-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Song Liu <song@kernel.org>, Hans de Goede <hdegoede@redhat.com>, Richard Weinberger <richard@nod.at>, Minchan Kim <minchan@kernel.org>, linux-mtd@lists.infradead.org, dm-devel@redhat.com, "open list:BLOCK LAYER" <linux-block@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, drbd-dev@lists.linbit.com, linux-raid@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, Cgroups <cgroups@vger.kernel.org>
 List-Id: dm-devel.ids
 
------ Ursprüngliche Mail -----
-> Set up a readahead size by default, as very few users have a good
-> reason to change it.
-> 
+On Tue, Jul 21, 2020 at 11:27 PM Christoph Hellwig <hch@lst.de> wrote:
+>
+> There is no point in trying to call bdev_read_page if SWP_SYNCHRONOUS_IO
+> is not set, as the device won't support it.
+>
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
-> block/blk-core.c      | 1 -
-> drivers/mtd/mtdcore.c | 1 +
-> fs/9p/vfs_super.c     | 4 ++--
-> fs/afs/super.c        | 1 -
-> fs/btrfs/disk-io.c    | 1 -
-> fs/fuse/inode.c       | 1 -
-> fs/nfs/super.c        | 9 +--------
-> fs/ubifs/super.c      | 1 +
+>  mm/page_io.c | 18 ++++++++++--------
+>  1 file changed, 10 insertions(+), 8 deletions(-)
+>
+> diff --git a/mm/page_io.c b/mm/page_io.c
+> index ccda7679008851..442061348dfb26 100644
+> --- a/mm/page_io.c
+> +++ b/mm/page_io.c
+> @@ -403,15 +403,17 @@ int swap_readpage(struct page *page, bool synchronous)
+>                 goto out;
+>         }
+>
+> -       ret = bdev_read_page(sis->bdev, swap_page_sector(page), page);
+> -       if (!ret) {
+> -               if (trylock_page(page)) {
+> -                       swap_slot_free_notify(page);
+> -                       unlock_page(page);
+> -               }
+> +       if (sis->flags & SWP_SYNCHRONOUS_IO) {
+> +               ret = bdev_read_page(sis->bdev, swap_page_sector(page), page);
+> +               if (ret) {
 
-For ubifs and mtd:
+!ret
 
-Acked-by: Richard Weinberger <richard@nod.at>
-
-Thanks,
-//richard
+> +                       if (trylock_page(page)) {
+> +                               swap_slot_free_notify(page);
+> +                               unlock_page(page);
+> +                       }
+>
+> -               count_vm_event(PSWPIN);
+> -               goto out;
+> +                       count_vm_event(PSWPIN);
+> +                       goto out;
+> +               }
+>         }
+>
+>         ret = 0;
+> --
+> 2.27.0
+>
