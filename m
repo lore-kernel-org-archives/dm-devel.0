@@ -1,35 +1,23 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [PATCH v2 0/7] crypto: add CRYPTO_ALG_ALLOCATES_MEMORY
-Date: Wed, 22 Jul 2020 17:29:32 +1000
-Message-ID: <20200722072932.GA27544@gondor.apana.org.au>
-References: <20200716115538.GA31461@gondor.apana.org.au>
- <8eefed8b-5ad5-424b-ab32-85e0cbac0a15@nxp.com>
+From: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>
+Subject: Re: [PATCH 09/14] bdi: remove BDI_CAP_CGROUP_WRITEBACK
+Date: Wed, 22 Jul 2020 07:45:24 +0000
+Message-ID: <SN4PR0401MB35988BC2003CCDFC7CE8258F9B790@SN4PR0401MB3598.namprd04.prod.outlook.com>
+References: <20200722062552.212200-1-hch@lst.de>
+ <20200722062552.212200-10-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <8eefed8b-5ad5-424b-ab32-85e0cbac0a15@nxp.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Horia =?utf-8?Q?Geant=C4=83?= <horia.geanta@nxp.com>
-Cc: Eric Biggers <ebiggers@kernel.org>, mpatocka@redhat.com, linux-crypto@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
+Cc: Song Liu <song@kernel.org>, Hans de Goede <hdegoede@redhat.com>, Richard Weinberger <richard@nod.at>, Minchan Kim <minchan@kernel.org>, "linux-mtd@lists.infradead.org" <linux-mtd@lists.infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "cgroups@vger.kernel.org" <cgroups@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Fri, Jul 17, 2020 at 05:42:43PM +0300, Horia Geantă wrote:
->
-> Looks like there's no mention of a limit on src, dst scatterlists size
-> that crypto implementations could use when pre-allocating memory
-> and crypto users needing CRYPTO_ALG_ALLOCATES_MEMORY should be aware of
-> (for the contract to be honoured):
-> https://lore.kernel.org/linux-crypto/780cb500-2241-61bc-eb44-6f872ad567d3@nxp.com
-
-Good point.  I think we should limit this flag only to the cases
-applicable to dm-crypt, which seems to be 4 entries maximum.
-
-Anything else should be allowed to allocate extra memory as needed.
-
-Thanks,
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+On 22/07/2020 08:27, Christoph Hellwig wrote:=0A=
+> it is know to support cgroup writeback, or the bdi comes from the block=
+=0A=
+knwon  ~^=0A=
+=0A=
+Apart from that,=0A=
+Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>=0A=
