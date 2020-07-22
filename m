@@ -1,15 +1,14 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm-integrity: revert adc0daad366b to fix
-	recalculation
-Date: Wed, 22 Jul 2020 16:02:04 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2007221601140.16826@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.2007221444390.6426@file01.intranet.prod.int.rdu2.redhat.com>
-	<20200722194536.GA28682@redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH] libmultipath: free pgp if add_pathgroup
+ fails in disassemble_map func
+Date: Wed, 22 Jul 2020 15:48:44 -0500
+Message-ID: <20200722204843.GJ11089@octiron.msp.redhat.com>
+References: <e58b31e0-4f66-072f-b9c6-1047714cf3bf@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200722194536.GA28682@redhat.com>
+In-Reply-To: <e58b31e0-4f66-072f-b9c6-1047714cf3bf@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,52 +18,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Marian Csontos <mcsontos@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Content-Disposition: inline
+To: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Cc: lixiaokeng <lixiaokeng@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, linfeilong <linfeilong@huawei.com>, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-
-
-On Wed, 22 Jul 2020, Mike Snitzer wrote:
-
-> On Wed, Jul 22 2020 at  2:46pm -0400,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
+On Wed, Jul 22, 2020 at 04:36:04PM +0800, Zhiqiang Liu wrote:
+> In disassemble_map func, pgp will be added to mpp->pg by calling
+> add_pathgroup after allocing a pathgroup (pgp) successfully. However,
+> if add_pathgroup fails, the pgp is actually not inserted into mpp->pg.
+> So, calling free_pgvec(mpp->pg) cannot free the pgp, then memory leak
+> problem occurs.
 > 
-> > Hi Mike
-> > 
-> > Please submit this to Linus and to RHEL-8.
-> > 
-> > Mikulas
-> > 
-> > 
-> > 
-> > From: Mikulas Patocka <mpatocka@redhat.com>
-> > 
-> > The patch adc0daad366b62ca1bce3e2958a40b0b71a8b8b3 broke recalculation on
-> > dm-integrity. The patch replaces a private variable "suspending" with a
-> > call to "dm_suspended".
-> > 
-> > The problem is that dm_suspended returns true not only during suspend, but
-> > also during resume. This race condition could occur:
-> > 1. dm_integrity_resume calls queue_work(ic->recalc_wq, &ic->recalc_work)
-> > 2. integrity_recalc (&ic->recalc_work) preempts the current thread
-> > 3. integrity_recalc calls if (unlikely(dm_suspended(ic->ti))) goto unlock_ret;
-> > 4. integrity_recalc exits and no recalculating is done.
-> > 
-> > In order to fix this race condition, we stop using dm_suspended and start
-> > using the variable "suspending" (that is only set during suspend, not
-> > during resume).
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > Fixes: adc0daad366b ("dm: report suspended device during destroy")
-> > Cc: stable@vger.kernel.org	# v4.18+
+> disassemble_map:
+> -> pgp = alloc_pathgroup()
+> -> if add_pathgroup(mpp, pgp) fails
+> 	-> goto out
+> out:
+> free_pgvec(mpp->pg, KEEP_PATHS);
 > 
-> OK, but why not add a dm_suspending() to DM core?  Could be other
-> future targets would like this same info right?  I don't see harm in
-> elevating it.
+> Here, we will call free_pathgroup(pgp) before going to out tag.
 > 
-> Mike
 
-Yes - it may be possible to add this.
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Mikulas
+> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+> ---
+>  libmultipath/dmparser.c | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
+> 
+> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+> index ac13ec06..6225838b 100644
+> --- a/libmultipath/dmparser.c
+> +++ b/libmultipath/dmparser.c
+> @@ -268,8 +268,10 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+>  		if (!pgp)
+>  			goto out;
+> 
+> -		if (add_pathgroup(mpp, pgp))
+> +		if (add_pathgroup(mpp, pgp)) {
+> +			free_pathgroup(pgp, KEEP_PATHS);
+>  			goto out;
+> +		}
+> 
+>  		p += get_word(p, &word);
+> 
+> -- 
+> 2.24.0.windows.2
+> 
