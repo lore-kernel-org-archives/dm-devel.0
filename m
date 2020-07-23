@@ -1,16 +1,16 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH] libmultipath: free pp if store_path fails in
- disassemble_map
-Date: Thu, 23 Jul 2020 08:22:39 -0500
-Message-ID: <20200723132239.GL11089@octiron.msp.redhat.com>
-References: <b1cccadd-955e-0341-879f-01659a04dbb4@huawei.com>
-	<20200722205310.GK11089@octiron.msp.redhat.com>
-	<fadebd49-d6b0-2813-68b0-57218f8fa13e@huawei.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH v2] dm-integrity: revert adc0daad366b to fix
+	recalculation
+Date: Thu, 23 Jul 2020 10:42:09 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2007231036570.17947@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2007221444390.6426@file01.intranet.prod.int.rdu2.redhat.com>
+	<20200722194536.GA28682@redhat.com>
+	<alpine.LRH.2.02.2007221601140.16826@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <fadebd49-d6b0-2813-68b0-57218f8fa13e@huawei.com>
+In-Reply-To: <alpine.LRH.2.02.2007221601140.16826@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,99 +20,177 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Cc: yanxiaodan@huawei.com, linfeilong@huawei.com, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, mwilck@suse.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Marian Csontos <mcsontos@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Jul 23, 2020 at 09:28:51AM +0800, Zhiqiang Liu wrote:
-> 
-> 
-> On 2020/7/23 4:53, Benjamin Marzinski wrote:
-> > On Wed, Jul 22, 2020 at 04:41:28PM +0800, Zhiqiang Liu wrote:
-> >> In disassemble_map func, one pp will be allocated and stored in pathvec
-> >> (only in client mode) and pgp->paths. However, if store_path fails, pp
-> >> will not be freed, then memory leak problem occurs.
-> >>
-> >> Here, we will call free_path to free pp when store_path fails.
-> >>
-> > 
-> > Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > 
-> > However, this will need to get reworked on top of Martin's patches (or
-> > incorporated into his next verion patchset).
-> > 
-> 
-> Thanks for your suggestion.
-> Which branch should I choose to modify my patch?
 
-Martin's latest set of commits is available here:
-https://github.com/mwilck/multipath-tools/tree/ups/submit-2007
+
+On Wed, 22 Jul 2020, Mikulas Patocka wrote:
 
 > 
 > 
-> > -Ben
+> On Wed, 22 Jul 2020, Mike Snitzer wrote:
+> 
+> > On Wed, Jul 22 2020 at  2:46pm -0400,
+> > Mikulas Patocka <mpatocka@redhat.com> wrote:
 > > 
-> >> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-> >> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
-> >> ---
-> >>  libmultipath/dmparser.c | 15 +++++++++++++--
-> >>  1 file changed, 13 insertions(+), 2 deletions(-)
-> >>
-> >> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-> >> index 6225838b..3dc77242 100644
-> >> --- a/libmultipath/dmparser.c
-> >> +++ b/libmultipath/dmparser.c
-> >> @@ -142,6 +142,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
-> >>  	int def_minio = 0;
-> >>  	struct path * pp;
-> >>  	struct pathgroup * pgp;
-> >> +	int pp_need_free_flag = 0;
-> >>
-> >>  	p = params;
-> >>
-> >> @@ -293,6 +294,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
-> >>  			char devname[FILE_NAME_SIZE];
-> >>
-> >>  			pp = NULL;
-> >> +			pp_need_free_flag = 0;
-> >>  			p += get_word(p, &word);
-> >>
-> >>  			if (!word)
-> >> @@ -323,9 +325,15 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
-> >>  					strncpy(pp->wwid, mpp->wwid,
-> >>  						WWID_SIZE - 1);
-> >>  				}
-> >> +
-> >> +				if (is_daemon)
-> >> +					pp_need_free_flag = 1;
-> >> +
-> >>  				/* Only call this in multipath client mode */
-> >> -				if (!is_daemon && store_path(pathvec, pp))
-> >> +				if (!is_daemon && store_path(pathvec, pp)) {
-> >> +					free_path(pp);
-> >>  					goto out1;
-> >> +				}
-> >>  			} else {
-> >>  				if (!strlen(pp->wwid) &&
-> >>  				    strlen(mpp->wwid))
-> >> @@ -334,8 +342,11 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
-> >>  			}
-> >>  			FREE(word);
-> >>
-> >> -			if (store_path(pgp->paths, pp))
-> >> +			if (store_path(pgp->paths, pp)) {
-> >> +				if (pp_need_free_flag)
-> >> +					free_path(pp);
-> >>  				goto out;
-> >> +			}
-> >>
-> >>  			/*
-> >>  			 * Update wwid for multipaths which are not setup
-> >> -- 
-> >> 2.24.0.windows.2
-> >>
+> > > Hi Mike
+> > > 
+> > > Please submit this to Linus and to RHEL-8.
+> > > 
+> > > Mikulas
+> > > 
+> > > 
+> > > 
+> > > From: Mikulas Patocka <mpatocka@redhat.com>
+> > > 
+> > > The patch adc0daad366b62ca1bce3e2958a40b0b71a8b8b3 broke recalculation on
+> > > dm-integrity. The patch replaces a private variable "suspending" with a
+> > > call to "dm_suspended".
+> > > 
+> > > The problem is that dm_suspended returns true not only during suspend, but
+> > > also during resume. This race condition could occur:
+> > > 1. dm_integrity_resume calls queue_work(ic->recalc_wq, &ic->recalc_work)
+> > > 2. integrity_recalc (&ic->recalc_work) preempts the current thread
+> > > 3. integrity_recalc calls if (unlikely(dm_suspended(ic->ti))) goto unlock_ret;
+> > > 4. integrity_recalc exits and no recalculating is done.
+> > > 
+> > > In order to fix this race condition, we stop using dm_suspended and start
+> > > using the variable "suspending" (that is only set during suspend, not
+> > > during resume).
+> > > 
+> > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > > Fixes: adc0daad366b ("dm: report suspended device during destroy")
+> > > Cc: stable@vger.kernel.org	# v4.18+
 > > 
+> > OK, but why not add a dm_suspending() to DM core?  Could be other
+> > future targets would like this same info right?  I don't see harm in
+> > elevating it.
 > > 
-> > .
-> > 
+> > Mike
+> 
+> Yes - it may be possible to add this.
+> 
+> Mikulas
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+
+The patch adc0daad366b62ca1bce3e2958a40b0b71a8b8b3 broke recalculation on
+dm-integrity. The patch replaces a private variable "suspending" with a
+call to "dm_suspended".
+
+The problem is that dm_suspended returns true not only during suspend, but
+also during resume. This race condition could occur:
+1. dm_integrity_resume calls queue_work(ic->recalc_wq, &ic->recalc_work)
+2. integrity_recalc (&ic->recalc_work) preempts the current thread
+3. integrity_recalc calls if (unlikely(dm_suspended(ic->ti))) goto unlock_ret;
+4. integrity_recalc exits and no recalculating is done.
+
+In order to fix this race condition, we add a function dm_suspending that
+is only true during the postsuspend phase and use it instead of
+dm_suspended.
+
+Signed-off-by: Mikulas Patocka <mpatocka redhat com>
+Fixes: adc0daad366b ("dm: report suspended device during destroy")
+Cc: stable vger kernel org      # v4.18+
+
+Index: rhel8/drivers/md/dm.c
+===================================================================
+--- rhel8.orig/drivers/md/dm.c
++++ rhel8/drivers/md/dm.c
+@@ -140,6 +140,7 @@ EXPORT_SYMBOL_GPL(dm_bio_get_target_bio_
+ #define DMF_NOFLUSH_SUSPENDING 5
+ #define DMF_DEFERRED_REMOVE 6
+ #define DMF_SUSPENDED_INTERNALLY 7
++#define DMF_SUSPENDING 8
+ 
+ #define DM_NUMA_NODE NUMA_NO_NODE
+ static int dm_numa_node = DM_NUMA_NODE;
+@@ -2379,6 +2380,7 @@ static void __dm_destroy(struct mapped_d
+ 	if (!dm_suspended_md(md)) {
+ 		dm_table_presuspend_targets(map);
+ 		set_bit(DMF_SUSPENDED, &md->flags);
++		set_bit(DMF_SUSPENDING, &md->flags);
+ 		dm_table_postsuspend_targets(map);
+ 	}
+ 	/* dm_put_live_table must be before msleep, otherwise deadlock is possible */
+@@ -2701,7 +2703,9 @@ retry:
+ 	if (r)
+ 		goto out_unlock;
+ 
++	set_bit(DMF_SUSPENDING, &md->flags);
+ 	dm_table_postsuspend_targets(map);
++	clear_bit(DMF_SUSPENDING, &md->flags);
+ 
+ out_unlock:
+ 	mutex_unlock(&md->suspend_lock);
+@@ -2798,7 +2802,9 @@ static void __dm_internal_suspend(struct
+ 	(void) __dm_suspend(md, map, suspend_flags, TASK_UNINTERRUPTIBLE,
+ 			    DMF_SUSPENDED_INTERNALLY);
+ 
++	set_bit(DMF_SUSPENDING, &md->flags);
+ 	dm_table_postsuspend_targets(map);
++	clear_bit(DMF_SUSPENDING, &md->flags);
+ }
+ 
+ static void __dm_internal_resume(struct mapped_device *md)
+@@ -2951,6 +2957,11 @@ int dm_suspended_md(struct mapped_device
+ 	return test_bit(DMF_SUSPENDED, &md->flags);
+ }
+ 
++static int dm_suspending_md(struct mapped_device *md)
++{
++	return test_bit(DMF_SUSPENDING, &md->flags);
++}
++
+ int dm_suspended_internally_md(struct mapped_device *md)
+ {
+ 	return test_bit(DMF_SUSPENDED_INTERNALLY, &md->flags);
+@@ -2967,6 +2978,12 @@ int dm_suspended(struct dm_target *ti)
+ }
+ EXPORT_SYMBOL_GPL(dm_suspended);
+ 
++int dm_suspending(struct dm_target *ti)
++{
++	return dm_suspending_md(dm_table_get_md(ti->table));
++}
++EXPORT_SYMBOL_GPL(dm_suspending);
++
+ int dm_noflush_suspending(struct dm_target *ti)
+ {
+ 	return __noflush_suspending(dm_table_get_md(ti->table));
+Index: rhel8/drivers/md/dm-integrity.c
+===================================================================
+--- rhel8.orig/drivers/md/dm-integrity.c
++++ rhel8/drivers/md/dm-integrity.c
+@@ -2428,7 +2428,7 @@ static void integrity_writer(struct work
+ 	unsigned prev_free_sectors;
+ 
+ 	/* the following test is not needed, but it tests the replay code */
+-	if (unlikely(dm_suspended(ic->ti)) && !ic->meta_dev)
++	if (unlikely(dm_suspending(ic->ti)) && !ic->meta_dev)
+ 		return;
+ 
+ 	spin_lock_irq(&ic->endio_wait.lock);
+@@ -2489,7 +2489,7 @@ static void integrity_recalc(struct work
+ 
+ next_chunk:
+ 
+-	if (unlikely(dm_suspended(ic->ti)))
++	if (unlikely(dm_suspending(ic->ti)))
+ 		goto unlock_ret;
+ 
+ 	range.logical_sector = le64_to_cpu(ic->sb->recalc_sector);
+Index: rhel8/include/linux/device-mapper.h
+===================================================================
+--- rhel8.orig/include/linux/device-mapper.h
++++ rhel8/include/linux/device-mapper.h
+@@ -426,6 +426,7 @@ const char *dm_device_name(struct mapped
+ int dm_copy_name_and_uuid(struct mapped_device *md, char *name, char *uuid);
+ struct gendisk *dm_disk(struct mapped_device *md);
+ int dm_suspended(struct dm_target *ti);
++int dm_suspending(struct dm_target *ti);
+ int dm_noflush_suspending(struct dm_target *ti);
+ void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors);
+ union map_info *dm_get_rq_mapinfo(struct request *rq);
