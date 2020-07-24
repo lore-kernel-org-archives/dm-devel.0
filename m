@@ -1,18 +1,18 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH v2] dm-integrity: revert adc0daad366b to fix
- recalculation
-Date: Thu, 23 Jul 2020 14:39:29 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2007231438470.1796@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.2007221444390.6426@file01.intranet.prod.int.rdu2.redhat.com>
-	<20200722194536.GA28682@redhat.com>
-	<alpine.LRH.2.02.2007221601140.16826@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.2007231036570.17947@file01.intranet.prod.int.rdu2.redhat.com>
-	<20200723182328.GA3753@redhat.com>
+From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Subject: Re: [PATCH] libmultipath: free pp if store_path fails in
+ disassemble_map
+Date: Fri, 24 Jul 2020 09:36:45 +0800
+Message-ID: <ec916c01-6d9f-2c8a-cd1b-cb7e3ccf10dd@huawei.com>
+References: <b1cccadd-955e-0341-879f-01659a04dbb4@huawei.com>
+	<20200722205310.GK11089@octiron.msp.redhat.com>
+	<fadebd49-d6b0-2813-68b0-57218f8fa13e@huawei.com>
+	<20200723132239.GL11089@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200723182328.GA3753@redhat.com>
+In-Reply-To: <20200723132239.GL11089@octiron.msp.redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,40 +22,108 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Marian Csontos <mcsontos@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: yanxiaodan@huawei.com, linfeilong@huawei.com, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, mwilck@suse.com
 List-Id: dm-devel.ids
 
 
 
-On Thu, 23 Jul 2020, Mike Snitzer wrote:
+On 2020/7/23 21:22, Benjamin Marzinski wrote:
+> On Thu, Jul 23, 2020 at 09:28:51AM +0800, Zhiqiang Liu wrote:
+>>
+>>
+>> On 2020/7/23 4:53, Benjamin Marzinski wrote:
+>>> On Wed, Jul 22, 2020 at 04:41:28PM +0800, Zhiqiang Liu wrote:
+>>>> In disassemble_map func, one pp will be allocated and stored in pathvec
+>>>> (only in client mode) and pgp->paths. However, if store_path fails, pp
+>>>> will not be freed, then memory leak problem occurs.
+>>>>
+>>>> Here, we will call free_path to free pp when store_path fails.
+>>>>
+>>>
+>>> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+>>>
+>>> However, this will need to get reworked on top of Martin's patches (or
+>>> incorporated into his next verion patchset).
+>>>
+>>
+>> Thanks for your suggestion.
+>> Which branch should I choose to modify my patch?
+> 
+> Martin's latest set of commits is available here:
+> https://github.com/mwilck/multipath-tools/tree/ups/submit-2007
+> 
+>>
+>>
+Thanks for your patience.
+I will send the V2 patch based on the branch: ups/submit-2007.
 
-> On Thu, Jul 23 2020 at 10:42am -0400,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
+>>> -Ben
+>>>
+>>>> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+>>>> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+>>>> ---
+>>>>  libmultipath/dmparser.c | 15 +++++++++++++--
+>>>>  1 file changed, 13 insertions(+), 2 deletions(-)
+>>>>
+>>>> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+>>>> index 6225838b..3dc77242 100644
+>>>> --- a/libmultipath/dmparser.c
+>>>> +++ b/libmultipath/dmparser.c
+>>>> @@ -142,6 +142,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+>>>>  	int def_minio = 0;
+>>>>  	struct path * pp;
+>>>>  	struct pathgroup * pgp;
+>>>> +	int pp_need_free_flag = 0;
+>>>>
+>>>>  	p = params;
+>>>>
+>>>> @@ -293,6 +294,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+>>>>  			char devname[FILE_NAME_SIZE];
+>>>>
+>>>>  			pp = NULL;
+>>>> +			pp_need_free_flag = 0;
+>>>>  			p += get_word(p, &word);
+>>>>
+>>>>  			if (!word)
+>>>> @@ -323,9 +325,15 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+>>>>  					strncpy(pp->wwid, mpp->wwid,
+>>>>  						WWID_SIZE - 1);
+>>>>  				}
+>>>> +
+>>>> +				if (is_daemon)
+>>>> +					pp_need_free_flag = 1;
+>>>> +
+>>>>  				/* Only call this in multipath client mode */
+>>>> -				if (!is_daemon && store_path(pathvec, pp))
+>>>> +				if (!is_daemon && store_path(pathvec, pp)) {
+>>>> +					free_path(pp);
+>>>>  					goto out1;
+>>>> +				}
+>>>>  			} else {
+>>>>  				if (!strlen(pp->wwid) &&
+>>>>  				    strlen(mpp->wwid))
+>>>> @@ -334,8 +342,11 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+>>>>  			}
+>>>>  			FREE(word);
+>>>>
+>>>> -			if (store_path(pgp->paths, pp))
+>>>> +			if (store_path(pgp->paths, pp)) {
+>>>> +				if (pp_need_free_flag)
+>>>> +					free_path(pp);
+>>>>  				goto out;
+>>>> +			}
+>>>>
+>>>>  			/*
+>>>>  			 * Update wwid for multipaths which are not setup
+>>>> -- 
+>>>> 2.24.0.windows.2
+>>>>
+>>>
+>>>
+>>> .
+>>>
 > 
-> > In order to fix this race condition, we add a function dm_suspending that
-> > is only true during the postsuspend phase and use it instead of
-> > dm_suspended.
-> > 
 > 
-> ...
+> .
 > 
-> > Index: rhel8/drivers/md/dm.c
-> > ===================================================================
-> > --- rhel8.orig/drivers/md/dm.c
-> > +++ rhel8/drivers/md/dm.c
-> > @@ -140,6 +140,7 @@ EXPORT_SYMBOL_GPL(dm_bio_get_target_bio_
-> >  #define DMF_NOFLUSH_SUSPENDING 5
-> >  #define DMF_DEFERRED_REMOVE 6
-> >  #define DMF_SUSPENDED_INTERNALLY 7
-> > +#define DMF_SUSPENDING 8
-> 
-> Think I prefer DMF_POST_SUSPENDING.  If you're OK with that I can fix up
-> the code while I stage your commit.
-> 
-> Thanks,
-> Mike
-
-Yes - you can change it.
-
-Mikulas
