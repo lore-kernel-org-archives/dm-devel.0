@@ -1,78 +1,80 @@
-From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: [PATCH V2] libmultipath: free pp if store_path fails in
- disassemble_map
-Date: Fri, 24 Jul 2020 09:40:18 +0800
-Message-ID: <40a7ea22-8897-363a-5821-99add9de6dc5@huawei.com>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: bdi cleanups v3
+Date: Fri, 24 Jul 2020 09:32:59 +0200
+Message-ID: <20200724073313.138789-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, christophe.varoqui@opensvc.com, Zdenek Kabelac <zkabelac@redhat.com>
-Cc: linfeilong@huawei.com, yanxiaodan@huawei.com, dm-devel@redhat.com
+Content-Transfer-Encoding: 8bit
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Cc: Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hans de Goede <hdegoede-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-In disassemble_map func, one pp will be allocated and stored in
-pgp->paths. However, if store_path fails, pp will not be freed,
-then memory leak problem occurs.
+Hi Jens,
 
-Here, we will call free_path to free pp when store_path fails.
+this series contains a bunch of different BDI cleanups.  The biggest item
+is to isolate block drivers from the BDI in preparation of changing the
+lifetime of the block device BDI in a follow up series.
 
-Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
----
-V1->V2: update based on ups/submit-2007 branch.
 
- libmultipath/dmparser.c | 9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+Changes since v2:
+ - fix a rw_page return value check
+ - fix various changelogs
 
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index b9858fa5..8a0501ba 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -143,6 +143,7 @@ int disassemble_map(const struct _vector *pathvec,
- 	int def_minio = 0;
- 	struct path * pp;
- 	struct pathgroup * pgp;
-+	int pp_alloc_flag = 0;
+Changes since v1:
+ - rebased to the for-5.9/block-merge branch
+ - explicitly set the readahead to 0 for ubifs, vboxsf and mtd
+ - split the zram block_device operations
+ - let rw_page users fall back to bios in swap_readpage
 
- 	assert(pathvec != NULL);
- 	p = params;
-@@ -292,6 +293,7 @@ int disassemble_map(const struct _vector *pathvec,
 
- 		for (j = 0; j < num_paths; j++) {
- 			pp = NULL;
-+			pp_alloc_flag = 0;
- 			p += get_word(p, &word);
-
- 			if (!word)
-@@ -304,13 +306,16 @@ int disassemble_map(const struct _vector *pathvec,
-
- 				if (!pp)
- 					goto out1;
--
-+				pp_alloc_flag = 1;
- 				strlcpy(pp->dev_t, word, BLK_DEV_SIZE);
- 			}
- 			FREE(word);
-
--			if (store_path(pgp->paths, pp))
-+			if (store_path(pgp->paths, pp)) {
-+				if (pp_alloc_flag)
-+					free_path(pp);
- 				goto out;
-+			}
-
- 			pgp->id ^= (long)pp;
- 			pp->pgindex = i + 1;
--- 
-2.24.0.windows.2
+Diffstat:
+ block/blk-core.c              |    2 
+ block/blk-integrity.c         |    4 
+ block/blk-mq-debugfs.c        |    1 
+ block/blk-settings.c          |    5 
+ block/blk-sysfs.c             |  282 ++++++++++--------------------------------
+ block/genhd.c                 |   13 +
+ drivers/block/aoe/aoeblk.c    |    2 
+ drivers/block/brd.c           |    1 
+ drivers/block/drbd/drbd_nl.c  |   18 --
+ drivers/block/drbd/drbd_req.c |    4 
+ drivers/block/rbd.c           |    2 
+ drivers/block/zram/zram_drv.c |   19 +-
+ drivers/md/bcache/super.c     |    4 
+ drivers/md/dm-table.c         |    9 -
+ drivers/md/raid0.c            |   16 --
+ drivers/md/raid10.c           |   46 ++----
+ drivers/md/raid5.c            |   31 +---
+ drivers/mmc/core/queue.c      |    3 
+ drivers/mtd/mtdcore.c         |    1 
+ drivers/nvdimm/btt.c          |    2 
+ drivers/nvdimm/pmem.c         |    1 
+ drivers/nvme/host/core.c      |    3 
+ drivers/nvme/host/multipath.c |   10 -
+ drivers/scsi/iscsi_tcp.c      |    4 
+ fs/9p/vfs_file.c              |    2 
+ fs/9p/vfs_super.c             |    4 
+ fs/afs/super.c                |    1 
+ fs/btrfs/disk-io.c            |    2 
+ fs/fs-writeback.c             |    7 -
+ fs/fuse/inode.c               |    4 
+ fs/namei.c                    |    4 
+ fs/nfs/super.c                |    9 -
+ fs/super.c                    |    2 
+ fs/ubifs/super.c              |    1 
+ fs/vboxsf/super.c             |    1 
+ include/linux/backing-dev.h   |   78 +----------
+ include/linux/blkdev.h        |    3 
+ include/linux/drbd.h          |    1 
+ include/linux/fs.h            |    2 
+ mm/backing-dev.c              |   12 -
+ mm/filemap.c                  |    4 
+ mm/memcontrol.c               |    2 
+ mm/memory-failure.c           |    2 
+ mm/migrate.c                  |    2 
+ mm/mmap.c                     |    2 
+ mm/page-writeback.c           |   18 +-
+ mm/page_io.c                  |   18 +-
+ mm/swapfile.c                 |    4 
+ 48 files changed, 204 insertions(+), 464 deletions(-)
