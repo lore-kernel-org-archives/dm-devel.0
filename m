@@ -1,29 +1,49 @@
-From: Wols Lists <antlists@youngman.org.uk>
-Subject: Re: [PATCH 09/14] bdi: remove BDI_CAP_CGROUP_WRITEBACK
-Date: Sun, 26 Jul 2020 10:01:37 +0100
-Message-ID: <5F1D4671.5060708@youngman.org.uk>
-References: <20200722062552.212200-1-hch@lst.de>
- <20200722062552.212200-10-hch@lst.de>
- <SN4PR0401MB35988BC2003CCDFC7CE8258F9B790@SN4PR0401MB3598.namprd04.prod.outlook.com>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: [PATCH 02/14] drbd: remove dead code in device_to_statistics
+Date: Sun, 26 Jul 2020 17:03:21 +0200
+Message-ID: <20200726150333.305527-3-hch@lst.de>
+References: <20200726150333.305527-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <SN4PR0401MB35988BC2003CCDFC7CE8258F9B790@SN4PR0401MB3598.namprd04.prod.outlook.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-Cc: Song Liu <song@kernel.org>, Hans de Goede <hdegoede@redhat.com>, Richard Weinberger <richard@nod.at>, Minchan Kim <minchan@kernel.org>, "linux-mtd@lists.infradead.org" <linux-mtd@lists.infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "cgroups@vger.kernel.org" <cgroups@vger.kernel.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20200726150333.305527-1-hch-jcswGhMUV9g@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Cc: Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hans de Goede <hdegoede-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-On 22/07/20 08:45, Johannes Thumshirn wrote:
-> On 22/07/2020 08:27, Christoph Hellwig wrote:
->> it is know to support cgroup writeback, or the bdi comes from the block
-> knwon  ~^
-> 
-Whoops - "known"
+Ever since the switch to blk-mq, a lower device not used for VM
+writeback will not be marked congested, so the check will never
+trigger.
 
-> Apart from that,
-> Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
-> 
-Cheers,
-Wol
+Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+---
+ drivers/block/drbd/drbd_nl.c | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/drivers/block/drbd/drbd_nl.c b/drivers/block/drbd/drbd_nl.c
+index d0d9a549b58388..650372ee2c7822 100644
+--- a/drivers/block/drbd/drbd_nl.c
++++ b/drivers/block/drbd/drbd_nl.c
+@@ -3370,7 +3370,6 @@ static void device_to_statistics(struct device_statistics *s,
+ 	if (get_ldev(device)) {
+ 		struct drbd_md *md = &device->ldev->md;
+ 		u64 *history_uuids = (u64 *)s->history_uuids;
+-		struct request_queue *q;
+ 		int n;
+ 
+ 		spin_lock_irq(&md->uuid_lock);
+@@ -3384,11 +3383,6 @@ static void device_to_statistics(struct device_statistics *s,
+ 		spin_unlock_irq(&md->uuid_lock);
+ 
+ 		s->dev_disk_flags = md->flags;
+-		q = bdev_get_queue(device->ldev->backing_bdev);
+-		s->dev_lower_blocked =
+-			bdi_congested(q->backing_dev_info,
+-				      (1 << WB_async_congested) |
+-				      (1 << WB_sync_congested));
+ 		put_ldev(device);
+ 	}
+ 	s->dev_size = drbd_get_capacity(device->this_bdev);
+-- 
+2.27.0
