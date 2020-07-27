@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 1/6] Makefile.inc: trim extra information from
-	systemd version
-Date: Mon, 27 Jul 2020 14:24:23 -0500
-Message-ID: <1595877868-5595-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 4/6] libmultipath: count pending paths as active
+	on loads
+Date: Mon, 27 Jul 2020 14:24:26 -0500
+Message-ID: <1595877868-5595-5-git-send-email-bmarzins@redhat.com>
 References: <1595877868-5595-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,27 +22,70 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-Some systemd versions print extra information in the
-"pkg-config --modversion" output, which confuses make. Trim this
-off.
+When multipath loads a table, it signals to udev if there are no active
+paths.  Multipath wasn't counting pending paths as active.  This meant
+that if all the paths were pending, udev would treat the device as not
+ready, and not run kpartx on it.  Even if the pending paths later
+because active and were reinstated, the kernel would not send a new
+uevent, because from its point of view, they were always up.
+
+The alternative would be to continue to treat them as failed in the udev
+rules, but then also tell the kernel that they were down, so that it
+would trigger a uevent when they were reinstated. However, this could
+lead to newly created multipath devices failing IO, simply because the
+path checkers hadn't returned yet. Having udev assume that the the
+device is up, like the kernel does, seems like the safer option.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- Makefile.inc | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/devmapper.c | 3 ++-
+ libmultipath/structs.c   | 7 +++++++
+ libmultipath/structs.h   | 1 +
+ 3 files changed, 10 insertions(+), 1 deletion(-)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index e7256e3a..8ea3352d 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -37,7 +37,7 @@ endif
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index f597ff8b..126cd728 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -417,7 +417,8 @@ static uint16_t build_udev_flags(const struct multipath *mpp, int reload)
+ 	/* DM_UDEV_DISABLE_LIBRARY_FALLBACK is added in dm_addmap */
+ 	return	(mpp->skip_kpartx == SKIP_KPARTX_ON ?
+ 		 MPATH_UDEV_NO_KPARTX_FLAG : 0) |
+-		((count_active_paths(mpp) == 0 || mpp->ghost_delay_tick > 0) ?
++		((count_active_pending_paths(mpp) == 0 ||
++		  mpp->ghost_delay_tick > 0) ?
+ 		 MPATH_UDEV_NO_PATHS_FLAG : 0) |
+ 		(reload && !mpp->force_udev_reload ?
+ 		 MPATH_UDEV_RELOAD_FLAG : 0);
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index 3eac3d61..0d1f969d 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -491,6 +491,13 @@ int count_active_paths(const struct multipath *mpp)
+ 	return do_pathcount(mpp, states, 2);
+ }
  
- ifndef SYSTEMD
- 	ifeq ($(shell pkg-config --modversion libsystemd >/dev/null 2>&1 && echo 1), 1)
--		SYSTEMD = $(shell pkg-config --modversion libsystemd)
-+		SYSTEMD = $(shell pkg-config --modversion libsystemd | awk '{print $$1}')
- 	else
- 		ifeq ($(shell systemctl --version >/dev/null 2>&1 && echo 1), 1)
- 			SYSTEMD = $(shell systemctl --version 2> /dev/null | \
++int count_active_pending_paths(const struct multipath *mpp)
++{
++	int states[] = {PATH_UP, PATH_GHOST, PATH_PENDING};
++
++	return do_pathcount(mpp, states, 3);
++}
++
+ int pathcmp(const struct pathgroup *pgp, const struct pathgroup *cpgp)
+ {
+ 	int i, j;
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 0c03e711..917e4083 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -448,6 +448,7 @@ struct path * first_path (const struct multipath *mpp);
+ 
+ int pathcount (const struct multipath *, int);
+ int count_active_paths(const struct multipath *);
++int count_active_pending_paths(const struct multipath *);
+ int pathcmp (const struct pathgroup *, const struct pathgroup *);
+ int add_feature (char **, const char *);
+ int remove_feature (char **, const char *);
 -- 
 2.17.2
