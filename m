@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 2/6] kpartx: fix -Wsign-compare error
-Date: Mon, 27 Jul 2020 14:24:24 -0500
-Message-ID: <1595877868-5595-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 1/6] Makefile.inc: trim extra information from
+	systemd version
+Date: Mon, 27 Jul 2020 14:24:23 -0500
+Message-ID: <1595877868-5595-2-git-send-email-bmarzins@redhat.com>
 References: <1595877868-5595-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,23 +22,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
+Some systemd versions print extra information in the
+"pkg-config --modversion" output, which confuses make. Trim this
+off.
+
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- kpartx/kpartx.c | 2 +-
+ Makefile.inc | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index c24ad6d9..653ce0c8 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -738,7 +738,7 @@ struct block {
- /* blknr is always in 512 byte blocks */
- char *
- getblock (int fd, unsigned int blknr) {
--	unsigned int secsz = get_sector_size(fd);
-+	int secsz = get_sector_size(fd);
- 	unsigned int blks_per_sec = secsz / 512;
- 	unsigned int secnr = blknr / blks_per_sec;
- 	unsigned int blk_off = (blknr % blks_per_sec) * 512;
+diff --git a/Makefile.inc b/Makefile.inc
+index e7256e3a..8ea3352d 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -37,7 +37,7 @@ endif
+ 
+ ifndef SYSTEMD
+ 	ifeq ($(shell pkg-config --modversion libsystemd >/dev/null 2>&1 && echo 1), 1)
+-		SYSTEMD = $(shell pkg-config --modversion libsystemd)
++		SYSTEMD = $(shell pkg-config --modversion libsystemd | awk '{print $$1}')
+ 	else
+ 		ifeq ($(shell systemctl --version >/dev/null 2>&1 && echo 1), 1)
+ 			SYSTEMD = $(shell systemctl --version 2> /dev/null | \
 -- 
 2.17.2
