@@ -1,14 +1,14 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [dm-level] upstream-queue-libmultipath: fix memory
- leak when iscsi login/out and "multipath -r" executed
-Date: Mon, 27 Jul 2020 11:45:30 -0500
-Message-ID: <20200727164530.GN11089@octiron.msp.redhat.com>
-References: <1694e42f-92e7-e380-bc8c-ac3ec47cafdc@huawei.com>
+Subject: [PATCH 3/6] libmultipath: remove code duplication in
+	path counting
+Date: Mon, 27 Jul 2020 14:24:25 -0500
+Message-ID: <1595877868-5595-4-git-send-email-bmarzins@redhat.com>
+References: <1595877868-5595-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1694e42f-92e7-e380-bc8c-ac3ec47cafdc@huawei.com>
+In-Reply-To: <1595877868-5595-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,79 +18,130 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: lixiaokeng <lixiaokeng@huawei.com>
-Cc: liuzhiqiang26@huawei.com, linfeilong@huawei.com, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>, lutianxiong@huawei.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-On Sat, Jul 25, 2020 at 01:47:01PM +0800, lixiaokeng wrote:
-> When one iscsi device logs in and logs out with the "multipath -r"
-> executed at the same time, memory leak happens in multipathd
-> process.
-> 
-> The reason is following. When "multipath -r" is executed, the path
-> will be free in configure function. Before path_discovery executed,
-> iscsi device logs out. Then path_discovery will not find any path and
-> there is no path in the gvecs->pathvec. When map_discovery function
-> is executed, disassemble_map function will be called. Because
-> gvecs->pathvec->slot is empty and is_deamon is 1, a path will be
-> allocated and is not stored in gvecs->pathvec but store in
-> mpp->pg. But when the mpp is removed and freed by remove_map
-> function, the path will not be free and can't be find anymore.
-> 
-> The procedure details given as follows,
-> 1."multipath -r" is executed
-> main
-> 	->child
-> 		->reconfigure
-> 			->configure
-> 				->path_discovery //after iscsi logout
-> 				->map_discovery
-> 					->update_multipath_table
-> 						->disassemble_map
-> 							->alloc_path
-> 2.then "multipath -r" is executed again
-> main
-> main
-> 	->child
-> 		->reconfigure
-> 			->remove_maps_and_stop_waiters
-> 				->remove_maps
-> 
-> Here, we delete checking is_deamon. Because whether the process is a
-> daemon process or not, we think the path should be add to gvecs->pathvec.
+pathcountgr() is never used except by pathcount(), and neither is the
+special case for PATH_WILD. Simplify this and make one function that is
+used by both pathcount() and count_active_paths(). This will be used
+again in a future patch.
 
-There is more work that needs to be done to besides removing the is_daemon
-check.  However, Martin already posted patches that deal with this as
-part of the his large patchset.
+Also use count_active_paths() in mpath_persist.
 
-https://www.redhat.com/archives/dm-devel/2020-July/msg00245.html
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmpathpersist/mpath_persist.c |  4 +--
+ libmultipath/structs.c          | 47 +++++++++++++--------------------
+ libmultipath/structs.h          |  1 -
+ 3 files changed, 21 insertions(+), 31 deletions(-)
 
-You should take a look at those, and at my comments on them, because they
-should resolve your issue.
-
--Ben
-
-> 
-> Reported-by: Tianxiong Li <lutianxiong@huawei.com>
-> Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
-> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-> 
-> ---
->  libmultipath/dmparser.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-> index b856a07f..d556f642 100644
-> --- a/libmultipath/dmparser.c
-> +++ b/libmultipath/dmparser.c
-> @@ -315,7 +315,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
->  						WWID_SIZE);
->  				}
->  				/* Only call this in multipath client mode */
-> -				if (!is_daemon && store_path(pathvec, pp))
-> +				if (store_path(pathvec, pp))
->  					goto out1;
->  			} else {
->  				if (!strlen(pp->wwid) &&
-> --
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index 3da7a6cf..a132f4e9 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -436,7 +436,7 @@ int mpath_prout_reg(struct multipath *mpp,int rq_servact, int rq_scope,
+ 
+ 	all_tg_pt = (mpp->all_tg_pt == ALL_TG_PT_ON ||
+ 		     paramp->sa_flags & MPATH_F_ALL_TG_PT_MASK);
+-	active_pathcount = pathcount(mpp, PATH_UP) + pathcount(mpp, PATH_GHOST);
++	active_pathcount = count_active_paths(mpp);
+ 
+ 	if (active_pathcount == 0) {
+ 		condlog (0, "%s: no path available", mpp->wwid);
+@@ -648,7 +648,7 @@ int mpath_prout_rel(struct multipath *mpp,int rq_servact, int rq_scope,
+ 	if (!mpp)
+ 		return MPATH_PR_DMMP_ERROR;
+ 
+-	active_pathcount = pathcount (mpp, PATH_UP) + pathcount (mpp, PATH_GHOST);
++	active_pathcount = count_active_paths(mpp);
+ 
+ 	struct threadinfo thread[active_pathcount];
+ 	memset(thread, 0, sizeof(thread));
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index 2dd378c4..3eac3d61 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -455,49 +455,40 @@ find_path_by_devt (const struct _vector *pathvec, const char * dev_t)
+ 	return NULL;
+ }
+ 
+-int pathcountgr(const struct pathgroup *pgp, int state)
++static int do_pathcount(const struct multipath *mpp, const int *states,
++			unsigned int nr_states)
+ {
++	struct pathgroup *pgp;
+ 	struct path *pp;
+ 	int count = 0;
+-	int i;
++	unsigned int i, j, k;
+ 
+-	vector_foreach_slot (pgp->paths, pp, i)
+-		if ((pp->state == state) || (state == PATH_WILD))
+-			count++;
++	if (!mpp->pg || !nr_states)
++		return count;
+ 
++	vector_foreach_slot (mpp->pg, pgp, i) {
++		vector_foreach_slot (pgp->paths, pp, j) {
++			for (k = 0; k < nr_states; k++) {
++				if (pp->state == states[k]) {
++					count++;
++					break;
++				}
++			}
++		}
++	}
+ 	return count;
+ }
+ 
+ int pathcount(const struct multipath *mpp, int state)
+ {
+-	struct pathgroup *pgp;
+-	int count = 0;
+-	int i;
+-
+-	if (mpp->pg) {
+-		vector_foreach_slot (mpp->pg, pgp, i)
+-			count += pathcountgr(pgp, state);
+-	}
+-	return count;
++	return do_pathcount(mpp, &state, 1);
+ }
+ 
+ int count_active_paths(const struct multipath *mpp)
+ {
+-	struct pathgroup *pgp;
+-	struct path *pp;
+-	int count = 0;
+-	int i, j;
+-
+-	if (!mpp->pg)
+-		return 0;
++	int states[] = {PATH_UP, PATH_GHOST};
+ 
+-	vector_foreach_slot (mpp->pg, pgp, i) {
+-		vector_foreach_slot (pgp->paths, pp, j) {
+-			if (pp->state == PATH_UP || pp->state == PATH_GHOST)
+-				count++;
+-		}
+-	}
+-	return count;
++	return do_pathcount(mpp, states, 2);
+ }
+ 
+ int pathcmp(const struct pathgroup *pgp, const struct pathgroup *cpgp)
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index d69bc2e9..0c03e711 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -446,7 +446,6 @@ struct path * find_path_by_devt (const struct _vector *pathvec, const char *devt
+ struct path * find_path_by_dev (const struct _vector *pathvec, const char *dev);
+ struct path * first_path (const struct multipath *mpp);
+ 
+-int pathcountgr (const struct pathgroup *, int);
+ int pathcount (const struct multipath *, int);
+ int count_active_paths(const struct multipath *);
+ int pathcmp (const struct pathgroup *, const struct pathgroup *);
+-- 
+2.17.2
