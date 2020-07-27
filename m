@@ -1,188 +1,38 @@
-From: Minchan Kim <minchan@kernel.org>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 Subject: Re: [PATCH 10/14] bdi: remove BDI_CAP_SYNCHRONOUS_IO
-Date: Sun, 26 Jul 2020 12:06:39 -0700
-Message-ID: <20200726190639.GA560221@google.com>
-References: <20200726150333.305527-1-hch@lst.de>
- <20200726150333.305527-11-hch@lst.de>
+Date: Mon, 27 Jul 2020 09:58:22 +0200
+Message-ID: <20200727075822.GA5355@lst.de>
+References: <20200726150333.305527-1-hch@lst.de> <20200726150333.305527-11-hch@lst.de> <20200726190639.GA560221@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20200726150333.305527-11-hch@lst.de>
-Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Song Liu <song@kernel.org>, Hans de Goede <hdegoede@redhat.com>, Richard Weinberger <richard@nod.at>, linux-mtd@lists.infradead.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org
+In-Reply-To: <20200726190639.GA560221-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hans de Goede <hdegoede-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Sun, Jul 26, 2020 at 05:03:29PM +0200, Christoph Hellwig wrote:
-> BDI_CAP_SYNCHRONOUS_IO is only checked in the swap code, and used to
-> decided if ->rw_page can be used on a block device.  Just check up for
-> the method instead.  The only complication is that zram needs a second
-> set of block_device_operations as it can switch between modes that
-> actually support ->rw_page and those who don't.
+On Sun, Jul 26, 2020 at 12:06:39PM -0700, Minchan Kim wrote:
+> > @@ -528,8 +530,7 @@ static ssize_t backing_dev_store(struct device *dev,
+> >  	 * freely but in fact, IO is going on so finally could cause
+> >  	 * use-after-free when the IO is really done.
+> >  	 */
+> > -	zram->disk->queue->backing_dev_info->capabilities &=
+> > -			~BDI_CAP_SYNCHRONOUS_IO;
+> > +	zram->disk->fops = &zram_wb_devops;
+> >  	up_write(&zram->init_lock);
 > 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  drivers/block/brd.c           |  1 -
->  drivers/block/zram/zram_drv.c | 19 +++++++++++++------
->  drivers/nvdimm/btt.c          |  2 --
->  drivers/nvdimm/pmem.c         |  1 -
->  include/linux/backing-dev.h   |  9 ---------
->  mm/swapfile.c                 |  2 +-
->  6 files changed, 14 insertions(+), 20 deletions(-)
-> 
-> diff --git a/drivers/block/brd.c b/drivers/block/brd.c
-> index 2723a70eb85593..cc49a921339f77 100644
-> --- a/drivers/block/brd.c
-> +++ b/drivers/block/brd.c
-> @@ -403,7 +403,6 @@ static struct brd_device *brd_alloc(int i)
->  	disk->flags		= GENHD_FL_EXT_DEVT;
->  	sprintf(disk->disk_name, "ram%d", i);
->  	set_capacity(disk, rd_size * 2);
-> -	brd->brd_queue->backing_dev_info->capabilities |= BDI_CAP_SYNCHRONOUS_IO;
->  
->  	/* Tell the block layer that this is not a rotational device */
->  	blk_queue_flag_set(QUEUE_FLAG_NONROT, brd->brd_queue);
-> diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
-> index 9100ac36670afc..d73ddf018fa65f 100644
-> --- a/drivers/block/zram/zram_drv.c
-> +++ b/drivers/block/zram/zram_drv.c
-> @@ -52,6 +52,9 @@ static unsigned int num_devices = 1;
->   */
->  static size_t huge_class_size;
->  
-> +static const struct block_device_operations zram_devops;
-> +static const struct block_device_operations zram_wb_devops;
-> +
->  static void zram_free_page(struct zram *zram, size_t index);
->  static int zram_bvec_read(struct zram *zram, struct bio_vec *bvec,
->  				u32 index, int offset, struct bio *bio);
-> @@ -408,8 +411,7 @@ static void reset_bdev(struct zram *zram)
->  	zram->backing_dev = NULL;
->  	zram->old_block_size = 0;
->  	zram->bdev = NULL;
-> -	zram->disk->queue->backing_dev_info->capabilities |=
-> -				BDI_CAP_SYNCHRONOUS_IO;
-> +	zram->disk->fops = &zram_devops;
->  	kvfree(zram->bitmap);
->  	zram->bitmap = NULL;
->  }
-> @@ -528,8 +530,7 @@ static ssize_t backing_dev_store(struct device *dev,
->  	 * freely but in fact, IO is going on so finally could cause
->  	 * use-after-free when the IO is really done.
->  	 */
-> -	zram->disk->queue->backing_dev_info->capabilities &=
-> -			~BDI_CAP_SYNCHRONOUS_IO;
-> +	zram->disk->fops = &zram_wb_devops;
->  	up_write(&zram->init_lock);
+> For zram, regardless of BDI_CAP_SYNCHRONOUS_IO, it have used rw_page
+> every time on read/write path. This one with next patch will make zram
+> use bio instead of rw_page when it's declared !BDI_CAP_SYNCHRONOUS_IO,
+> which introduce regression for performance.
 
-For zram, regardless of BDI_CAP_SYNCHRONOUS_IO, it have used rw_page
-every time on read/write path. This one with next patch will make zram
-use bio instead of rw_page when it's declared !BDI_CAP_SYNCHRONOUS_IO,
-which introduce regression for performance.
+It really should not matter, as the overhead of setting up a bio
+is minimal.  It also is only used in the legacy mpage buffered I/O
+code outside of the swap code, which has so many performance issues on
+its own that even if this made a difference it wouldn't matter.
 
-In the swap code, BDI_CAP_SYNCHRONOUS_IO is used to avoid swap cache
-when the page was private. bdev_read_page is not designed to rely on
-synchronous operation. That's why this patch breaks the old behavior.
-
->  
->  	pr_info("setup backing device %s\n", file_name);
-> @@ -1819,6 +1820,13 @@ static const struct block_device_operations zram_devops = {
->  	.owner = THIS_MODULE
->  };
->  
-> +static const struct block_device_operations zram_wb_devops = {
-> +	.open = zram_open,
-> +	.submit_bio = zram_submit_bio,
-> +	.swap_slot_free_notify = zram_slot_free_notify,
-> +	.owner = THIS_MODULE
-> +};
-> +
->  static DEVICE_ATTR_WO(compact);
->  static DEVICE_ATTR_RW(disksize);
->  static DEVICE_ATTR_RO(initstate);
-> @@ -1946,8 +1954,7 @@ static int zram_add(void)
->  	if (ZRAM_LOGICAL_BLOCK_SIZE == PAGE_SIZE)
->  		blk_queue_max_write_zeroes_sectors(zram->disk->queue, UINT_MAX);
->  
-> -	zram->disk->queue->backing_dev_info->capabilities |=
-> -			(BDI_CAP_STABLE_WRITES | BDI_CAP_SYNCHRONOUS_IO);
-> +	zram->disk->queue->backing_dev_info->capabilities |= BDI_CAP_STABLE_WRITES;
->  	device_add_disk(NULL, zram->disk, zram_disk_attr_groups);
->  
->  	strlcpy(zram->compressor, default_compressor, sizeof(zram->compressor));
-> diff --git a/drivers/nvdimm/btt.c b/drivers/nvdimm/btt.c
-> index 412d21d8f64351..b4184dc9b41eb4 100644
-> --- a/drivers/nvdimm/btt.c
-> +++ b/drivers/nvdimm/btt.c
-> @@ -1540,8 +1540,6 @@ static int btt_blk_init(struct btt *btt)
->  	btt->btt_disk->private_data = btt;
->  	btt->btt_disk->queue = btt->btt_queue;
->  	btt->btt_disk->flags = GENHD_FL_EXT_DEVT;
-> -	btt->btt_disk->queue->backing_dev_info->capabilities |=
-> -			BDI_CAP_SYNCHRONOUS_IO;
->  
->  	blk_queue_logical_block_size(btt->btt_queue, btt->sector_size);
->  	blk_queue_max_hw_sectors(btt->btt_queue, UINT_MAX);
-> diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-> index 94790e6e0e4ce1..436b83fb24ad61 100644
-> --- a/drivers/nvdimm/pmem.c
-> +++ b/drivers/nvdimm/pmem.c
-> @@ -478,7 +478,6 @@ static int pmem_attach_disk(struct device *dev,
->  	disk->queue		= q;
->  	disk->flags		= GENHD_FL_EXT_DEVT;
->  	disk->private_data	= pmem;
-> -	disk->queue->backing_dev_info->capabilities |= BDI_CAP_SYNCHRONOUS_IO;
->  	nvdimm_namespace_disk_name(ndns, disk->disk_name);
->  	set_capacity(disk, (pmem->size - pmem->pfn_pad - pmem->data_offset)
->  			/ 512);
-> diff --git a/include/linux/backing-dev.h b/include/linux/backing-dev.h
-> index 52583b6f2ea05d..860ea33571bce5 100644
-> --- a/include/linux/backing-dev.h
-> +++ b/include/linux/backing-dev.h
-> @@ -122,9 +122,6 @@ int bdi_set_max_ratio(struct backing_dev_info *bdi, unsigned int max_ratio);
->   * BDI_CAP_NO_WRITEBACK:   Don't write pages back
->   * BDI_CAP_NO_ACCT_WB:     Don't automatically account writeback pages
->   * BDI_CAP_STRICTLIMIT:    Keep number of dirty pages below bdi threshold.
-> - *
-> - * BDI_CAP_SYNCHRONOUS_IO: Device is so fast that asynchronous IO would be
-> - *			   inefficient.
->   */
->  #define BDI_CAP_NO_ACCT_DIRTY	0x00000001
->  #define BDI_CAP_NO_WRITEBACK	0x00000002
-> @@ -132,7 +129,6 @@ int bdi_set_max_ratio(struct backing_dev_info *bdi, unsigned int max_ratio);
->  #define BDI_CAP_STABLE_WRITES	0x00000008
->  #define BDI_CAP_STRICTLIMIT	0x00000010
->  #define BDI_CAP_CGROUP_WRITEBACK 0x00000020
-> -#define BDI_CAP_SYNCHRONOUS_IO	0x00000040
->  
->  #define BDI_CAP_NO_ACCT_AND_WRITEBACK \
->  	(BDI_CAP_NO_WRITEBACK | BDI_CAP_NO_ACCT_DIRTY | BDI_CAP_NO_ACCT_WB)
-> @@ -174,11 +170,6 @@ static inline int wb_congested(struct bdi_writeback *wb, int cong_bits)
->  long congestion_wait(int sync, long timeout);
->  long wait_iff_congested(int sync, long timeout);
->  
-> -static inline bool bdi_cap_synchronous_io(struct backing_dev_info *bdi)
-> -{
-> -	return bdi->capabilities & BDI_CAP_SYNCHRONOUS_IO;
-> -}
-> -
->  static inline bool bdi_cap_stable_pages_required(struct backing_dev_info *bdi)
->  {
->  	return bdi->capabilities & BDI_CAP_STABLE_WRITES;
-> diff --git a/mm/swapfile.c b/mm/swapfile.c
-> index 6c26916e95fd4a..18eac97b10e502 100644
-> --- a/mm/swapfile.c
-> +++ b/mm/swapfile.c
-> @@ -3230,7 +3230,7 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
->  	if (bdi_cap_stable_pages_required(inode_to_bdi(inode)))
->  		p->flags |= SWP_STABLE_WRITES;
->  
-> -	if (bdi_cap_synchronous_io(inode_to_bdi(inode)))
-> +	if (p->bdev && p->bdev->bd_disk->fops->rw_page)
->  		p->flags |= SWP_SYNCHRONOUS_IO;
->  
->  	if (p->bdev && blk_queue_nonrot(bdev_get_queue(p->bdev))) {
-> -- 
-> 2.27.0
-> 
+If you want magic treatment for your zram swap code you really need
+to integrate it with the swap code instead of burding the block layer
+with all this mess.
