@@ -1,50 +1,27 @@
-From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: [PATCH] libmultipath: fix a memory leak in
- disassemble_status func
-Date: Tue, 28 Jul 2020 21:48:06 +0800
-Message-ID: <9bc76686-747f-e85b-d25f-db5a056cf869@huawei.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: bdi cleanups v3
+Date: Tue, 28 Jul 2020 09:41:28 -0600
+Message-ID: <0b2b59d4-da4c-33df-82b4-0d4935b91e6e@kernel.dk>
+References: <20200724073313.138789-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200724073313.138789-1-hch@lst.de>
 Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: mwilck@suse.com, bmarzins@redhat.com, christophe.varoqui@opensvc.com, Zdenek Kabelac <zkabelac@redhat.com>
-Cc: linfeilong@huawei.com, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com
+Sender: linux-block-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Song Liu <song@kernel.org>, Hans de Goede <hdegoede@redhat.com>, Richard Weinberger <richard@nod.at>, Minchan Kim <minchan@kernel.org>, linux-mtd@lists.infradead.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org
 List-Id: dm-devel.ids
 
+On 7/24/20 1:32 AM, Christoph Hellwig wrote:
+> Hi Jens,
+> 
+> this series contains a bunch of different BDI cleanups.  The biggest item
+> is to isolate block drivers from the BDI in preparation of changing the
+> lifetime of the block device BDI in a follow up series.
 
-In disassemble_status func, for dealing with selector args,
-word is allocated by get_word func. However, word is not freed.
-Then a memory leak occurs.
+Applied, thanks.
 
-Here, we call FREE(word) to free word.
-
-Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
----
- libmultipath/dmparser.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index 3dc77242..a4a989b2 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -584,6 +584,7 @@ int disassemble_status(char *params, struct multipath *mpp)
- 						   &def_minio) == 1 &&
- 					    def_minio != mpp->minio)
- 							mpp->minio = def_minio;
-+					FREE(word);
- 				} else
- 					p += get_word(p, NULL);
- 			}
 -- 
-2.24.0.windows.2
+Jens Axboe
