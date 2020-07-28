@@ -1,61 +1,233 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: bdi cleanups v3
-Date: Tue, 28 Jul 2020 13:20:09 -0600
-Message-ID: <08ded32a-cf3a-55b0-6a88-19d201edac93@kernel.dk>
-References: <20200724073313.138789-1-hch@lst.de>
- <0b2b59d4-da4c-33df-82b4-0d4935b91e6e@kernel.dk>
+From: Deven Bowers <deven.desai@linux.microsoft.com>
+Subject: [RFC PATCH v5 01/11] scripts: add ipe tooling to generate boot policy
+Date: Tue, 28 Jul 2020 14:36:01 -0700
+Message-ID: <20200728213614.586312-2-deven.desai@linux.microsoft.com>
+References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <0b2b59d4-da4c-33df-82b4-0d4935b91e6e@kernel.dk>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Song Liu <song@kernel.org>, Hans de Goede <hdegoede@redhat.com>, Richard Weinberger <richard@nod.at>, Minchan Kim <minchan@kernel.org>, linux-mtd@lists.infradead.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serge@hallyn.com, zohar@linux.ibm.com, viro@zeniv.linux.org.uk, paul@paul-moore.com, eparis@redhat.com, jannh@google.com, dm-devel@redhat.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, linux-audit@redhat.com
+Cc: tyhicks@linux.microsoft.com, linux-kernel@vger.kernel.org, corbet@lwn.net, sashal@kernel.org, jaskarankhurana@linux.microsoft.com, mdsakib@microsoft.com, nramas@linux.microsoft.com, pasha.tatashin@soleen.com
 List-Id: dm-devel.ids
 
-On 7/28/20 9:41 AM, Jens Axboe wrote:
-> On 7/24/20 1:32 AM, Christoph Hellwig wrote:
->> Hi Jens,
->>
->> this series contains a bunch of different BDI cleanups.  The biggest item
->> is to isolate block drivers from the BDI in preparation of changing the
->> lifetime of the block device BDI in a follow up series.
-> 
-> Applied, thanks.
+Add a tool for the generation of an IPE policy to be compiled into the
+kernel. This policy will be enforced until userland deploys and activates
+a new policy.
 
-Dropped:
+Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
+---
+ MAINTAINERS                   |   6 ++
+ scripts/Makefile              |   1 +
+ scripts/ipe/Makefile          |   2 +
+ scripts/ipe/polgen/.gitignore |   1 +
+ scripts/ipe/polgen/Makefile   |   7 ++
+ scripts/ipe/polgen/polgen.c   | 136 ++++++++++++++++++++++++++++++++++
+ 6 files changed, 153 insertions(+)
+ create mode 100644 scripts/ipe/Makefile
+ create mode 100644 scripts/ipe/polgen/.gitignore
+ create mode 100644 scripts/ipe/polgen/Makefile
+ create mode 100644 scripts/ipe/polgen/polgen.c
 
-  CC      block/blk-sysfs.o
-block/blk-sysfs.c:608:16: error: ‘blk_throtl_sample_show’ undeclared here (not in a function); did you mean ‘blk_throtl_sample_entry’?
-  608 | QUEUE_RW_ENTRY(blk_throtl_sample, "throttle_sample_time");
-      |                ^~~~~~~~~~~~~~~~~
-block/blk-sysfs.c:563:10: note: in definition of macro ‘QUEUE_RW_ENTRY’
-  563 |  .show = _prefix##_show,   \
-      |          ^~~~~~~
-block/blk-sysfs.c:608:16: error: ‘blk_throtl_sample_store’ undeclared here (not in a function); did you mean ‘blk_throtl_sample_entry’?
-  608 | QUEUE_RW_ENTRY(blk_throtl_sample, "throttle_sample_time");
-      |                ^~~~~~~~~~~~~~~~~
-block/blk-sysfs.c:564:11: note: in definition of macro ‘QUEUE_RW_ENTRY’
-  564 |  .store = _prefix##_store,   \
-      |           ^~~~~~~
-block/blk-sysfs.c:657:3: error: ‘blk_throtl_sample_time_entry’ undeclared here (not in a function); did you mean ‘blk_throtl_sample_time_store’?
-  657 |  &blk_throtl_sample_time_entry.attr,
-      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      |   blk_throtl_sample_time_store
-block/blk-sysfs.c:608:16: warning: ‘blk_throtl_sample_entry’ defined but not used [-Wunused-variable]
-  608 | QUEUE_RW_ENTRY(blk_throtl_sample, "throttle_sample_time");
-      |                ^~~~~~~~~~~~~~~~~
-block/blk-sysfs.c:561:33: note: in definition of macro ‘QUEUE_RW_ENTRY’
-  561 | static struct queue_sysfs_entry _prefix##_entry = { \
-      |                                 ^~~~~~~
-make[1]: *** [scripts/Makefile.build:281: block/blk-sysfs.o] Error 1
-make: *** [Makefile:1756: block] Error 2
-
-from "block: add helper macros for queue sysfs entries"
-
-This has not seen a full compile test even...
-
+diff --git a/MAINTAINERS b/MAINTAINERS
+index d53db30d1365..86450be5437b 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -8579,6 +8579,12 @@ S:	Supported
+ T:	git git://git.kernel.org/pub/scm/linux/kernel/git/zohar/linux-integrity.git
+ F:	security/integrity/ima/
+ 
++INTEGRITY POLICY ENFORCEMENT (IPE)
++M:	Deven Bowers <deven.desai@linux.microsoft.com>
++L:	linux-integrity@vger.kernel.org
++S:	Supported
++F:	scripts/ipe/
++
+ INTEL 810/815 FRAMEBUFFER DRIVER
+ M:	Antonino Daplas <adaplas@gmail.com>
+ L:	linux-fbdev@vger.kernel.org
+diff --git a/scripts/Makefile b/scripts/Makefile
+index 95ecf970c74c..b3c1882fd6dd 100644
+--- a/scripts/Makefile
++++ b/scripts/Makefile
+@@ -34,6 +34,7 @@ hostprogs += unifdef
+ subdir-$(CONFIG_GCC_PLUGINS) += gcc-plugins
+ subdir-$(CONFIG_MODVERSIONS) += genksyms
+ subdir-$(CONFIG_SECURITY_SELINUX) += selinux
++subdir-$(CONFIG_SECURITY_IPE) += ipe
+ 
+ # Let clean descend into subdirs
+ subdir-	+= basic dtc gdb kconfig mod
+diff --git a/scripts/ipe/Makefile b/scripts/ipe/Makefile
+new file mode 100644
+index 000000000000..e87553fbb8d6
+--- /dev/null
++++ b/scripts/ipe/Makefile
+@@ -0,0 +1,2 @@
++# SPDX-License-Identifier: GPL-2.0-only
++subdir-y := polgen
+diff --git a/scripts/ipe/polgen/.gitignore b/scripts/ipe/polgen/.gitignore
+new file mode 100644
+index 000000000000..80f32f25d200
+--- /dev/null
++++ b/scripts/ipe/polgen/.gitignore
+@@ -0,0 +1 @@
++polgen
+diff --git a/scripts/ipe/polgen/Makefile b/scripts/ipe/polgen/Makefile
+new file mode 100644
+index 000000000000..a519b594e13c
+--- /dev/null
++++ b/scripts/ipe/polgen/Makefile
+@@ -0,0 +1,7 @@
++# SPDX-License-Identifier: GPL-2.0
++hostprogs-y	:= polgen
++HOST_EXTRACFLAGS += \
++	-I$(srctree)/include \
++	-I$(srctree)/include/uapi \
++
++always		:= $(hostprogs-y)
+diff --git a/scripts/ipe/polgen/polgen.c b/scripts/ipe/polgen/polgen.c
+new file mode 100644
+index 000000000000..a80fffe1b27c
+--- /dev/null
++++ b/scripts/ipe/polgen/polgen.c
+@@ -0,0 +1,136 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (C) Microsoft Corporation. All rights reserved.
++ */
++
++#include <stdlib.h>
++#include <stddef.h>
++#include <stdio.h>
++#include <unistd.h>
++#include <errno.h>
++
++static void usage(const char *const name)
++{
++	printf("Usage: %s OutputFile (PolicyFile)\n", name);
++	exit(EINVAL);
++}
++
++static int policy_to_buffer(const char *pathname, char **buffer, size_t *size)
++{
++	int rc = 0;
++	FILE *fd;
++	char *lbuf;
++	size_t fsize;
++	size_t read;
++
++	fd = fopen(pathname, "r");
++	if (!fd) {
++		rc = errno;
++		goto out;
++	}
++
++	fseek(fd, 0, SEEK_END);
++	fsize = ftell(fd);
++	rewind(fd);
++
++	lbuf = malloc(fsize);
++	if (!lbuf) {
++		rc = ENOMEM;
++		goto out_close;
++	}
++
++	read = fread((void *)lbuf, sizeof(*lbuf), fsize, fd);
++	if (read != fsize) {
++		rc = -1;
++		goto out_free;
++	}
++
++	*buffer = lbuf;
++	*size = fsize;
++	fclose(fd);
++
++	return rc;
++
++out_free:
++	free(lbuf);
++out_close:
++	fclose(fd);
++out:
++	return rc;
++}
++
++static int write_boot_policy(const char *pathname, const char *buf, size_t size)
++{
++	FILE *fd;
++	size_t i;
++
++	fd = fopen(pathname, "w");
++	if (!fd)
++		goto err;
++
++	fprintf(fd, "/* This file is automatically generated.");
++	fprintf(fd, " Do not edit. */\n");
++	fprintf(fd, "#include <stddef.h>\n");
++	fprintf(fd, "const char *const ipe_boot_policy =\n");
++
++	if (!buf || size == 0) {
++		fprintf(fd, "\tNULL;\n");
++		fclose(fd);
++		return 0;
++	}
++
++	for (i = 0; i < size; ++i) {
++		if (i == 0)
++			fprintf(fd, "\t\"");
++
++		switch (buf[i]) {
++		case '"':
++			fprintf(fd, "\\\"");
++			break;
++		case '\'':
++			fprintf(fd, "'");
++			break;
++		case '\n':
++			fprintf(fd, "\\n\"\n\t\"");
++			break;
++		case '\\':
++			fprintf(fd, "\\\\");
++			break;
++		default:
++			fprintf(fd, "%c", buf[i]);
++		}
++	}
++	fprintf(fd, "\";\n");
++	fclose(fd);
++
++	return 0;
++
++err:
++	if (fd)
++		fclose(fd);
++	return errno;
++}
++
++int main(int argc, const char *argv[])
++{
++	int rc = 0;
++	size_t len = 0;
++	char *policy = NULL;
++
++	if (argc < 2)
++		usage(argv[0]);
++
++	if (argc > 2) {
++		rc = policy_to_buffer(argv[2], &policy, &len);
++		if (rc != 0)
++			goto cleanup;
++	}
++
++	rc = write_boot_policy(argv[1], policy, len);
++cleanup:
++	if (policy)
++		free(policy);
++	if (rc != 0)
++		perror("An error occurred during policy conversion: ");
++	return rc;
++}
 -- 
-Jens Axboe
+2.27.0
