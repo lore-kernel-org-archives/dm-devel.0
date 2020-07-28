@@ -1,10 +1,9 @@
 From: Johannes Thumshirn <Johannes.Thumshirn-Sjgp3cTcYWE@public.gmane.org>
-Subject: Re: [PATCH 06/14] block: lift setting the readahead size into the
- block layer
-Date: Tue, 28 Jul 2020 12:23:18 +0000
-Message-ID: <DM5PR0401MB359169BADDBE6B9F611B9BF19B730@DM5PR0401MB3591.namprd04.prod.outlook.com>
+Subject: Re: [PATCH 10/14] bdi: remove BDI_CAP_SYNCHRONOUS_IO
+Date: Tue, 28 Jul 2020 12:26:28 +0000
+Message-ID: <DM5PR0401MB359158A8461462BA1965C0309B730@DM5PR0401MB3591.namprd04.prod.outlook.com>
 References: <20200724073313.138789-1-hch@lst.de>
- <20200724073313.138789-7-hch@lst.de>
+ <20200724073313.138789-11-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
