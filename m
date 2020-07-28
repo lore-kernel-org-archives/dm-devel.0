@@ -1,117 +1,52 @@
 From: Deven Bowers <deven.desai@linux.microsoft.com>
-Subject: Re: [RFC PATCH v5 06/11] dm-verity: move signature check after tree
- validation
-Date: Tue, 28 Jul 2020 16:55:04 -0700
-Message-ID: <a5534f1c-8979-0cfd-3989-2567f4a29dbc@linux.microsoft.com>
+Subject: Re: [RFC PATCH v5 05/11] fs: add security blob and hooks for
+ block_device
+Date: Tue, 28 Jul 2020 16:55:30 -0700
+Message-ID: <f6bda37a-e6f8-3de9-2bae-25d2296f3424@linux.microsoft.com>
 References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
- <20200728213614.586312-7-deven.desai@linux.microsoft.com>
- <20200728215041.GF4053562@gmail.com>
+ <20200728213614.586312-6-deven.desai@linux.microsoft.com>
+ <ef0fff6f-410a-6444-f1e3-03499a2f52b7@schaufler-ca.com>
+ <20200728224003.GC951209@ZenIV.linux.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200728215041.GF4053562@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200728224003.GC951209@ZenIV.linux.org.uk>
 Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serge@hallyn.com, zohar@linux.ibm.com, viro@zeniv.linux.org.uk, paul@paul-moore.com, eparis@redhat.com, jannh@google.com, dm-devel@redhat.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, linux-audit@redhat.com, tyhicks@linux.microsoft.com, linux-kernel@vger.kernel.org, corbet@lwn.net, sashal@kernel.org, jaskarankhurana@linux.microsoft.com, mdsakib@microsoft.com, nramas@linux.microsoft.com, pasha.tatashin@soleen.com
+Sender: linux-kernel-owner@vger.kernel.org
+To: Al Viro <viro@zeniv.linux.org.uk>, Casey Schaufler <casey@schaufler-ca.com>
+Cc: agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serge@hallyn.com, zohar@linux.ibm.com, paul@paul-moore.com, eparis@redhat.com, jannh@google.com, dm-devel@redhat.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, linux-audit@redhat.com, tyhicks@linux.microsoft.com, linux-kernel@vger.kernel.org, corbet@lwn.net, sashal@kernel.org, jaskarankhurana@linux.microsoft.com, mdsakib@microsoft.com, nramas@linux.microsoft.com, pasha.tatashin@soleen.com
 List-Id: dm-devel.ids
 
 
 
-On 7/28/2020 2:50 PM, Eric Biggers wrote:
-> On Tue, Jul 28, 2020 at 02:36:06PM -0700, Deven Bowers wrote:
->> The CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG introduced by Jaskaran was
->> intended to be used to allow an LSM to enforce verifications for all
->> dm-verity volumes.
+On 7/28/2020 3:40 PM, Al Viro wrote:
+> On Tue, Jul 28, 2020 at 03:22:59PM -0700, Casey Schaufler wrote:
+> 
+>>> +	hlist_for_each_entry(p, &security_hook_heads.bdev_setsecurity, list) {
+>>> +		rc = p->hook.bdev_setsecurity(bdev, name, value, size);
+>>> +
+>>> +		if (rc == -ENOSYS)
+>>> +			rc = 0;
+>>> +
+>>> +		if (rc != 0)
 >>
->> However, with it's current implementation, this signature verification
->> occurs after the merkel-tree is validated, as a result the signature can
->> pass initial verification by passing a matching root-hash and signature.
->> This results in an unreadable block_device, but that has passed signature
->> validation (and subsequently, would be marked as verified).
+>> Perhaps:
+>> 		else if (rc != 0)
 >>
->> This change moves the signature verification to after the merkel-tree has
->> finished validation.
->>
->> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
->> ---
->>   drivers/md/dm-verity-target.c     |  44 ++++------
->>   drivers/md/dm-verity-verify-sig.c | 140 ++++++++++++++++++++++--------
->>   drivers/md/dm-verity-verify-sig.h |  24 +++--
->>   drivers/md/dm-verity.h            |   2 +-
->>   4 files changed, 134 insertions(+), 76 deletions(-)
->>
->> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
->> index eec9f252e935..fabc173aa7b3 100644
->> --- a/drivers/md/dm-verity-target.c
->> +++ b/drivers/md/dm-verity-target.c
->> @@ -471,9 +471,9 @@ static int verity_verify_io(struct dm_verity_io *io)
->>   	struct bvec_iter start;
->>   	unsigned b;
->>   	struct crypto_wait wait;
->> +	int r;
->>   
->>   	for (b = 0; b < io->n_blocks; b++) {
->> -		int r;
->>   		sector_t cur_block = io->block + b;
->>   		struct ahash_request *req = verity_io_hash_req(v, io);
->>   
->> @@ -530,6 +530,16 @@ static int verity_verify_io(struct dm_verity_io *io)
->>   			return -EIO;
->>   	}
->>   
->> +	/*
->> +	 * At this point, the merkel tree has finished validating.
->> +	 * if signature was specified, validate the signature here.
->> +	 */
->> +	r = verity_verify_root_hash(v);
->> +	if (r < 0) {
->> +		DMERR_LIMIT("signature mismatch");
->> +		return r;
->> +	}
->> +
->>   	return 0;
->>   }
+>>> +			break;
+>>> +	}
+>>> +
+>>> +	return rc;
 > 
-> This doesn't make any sense.
+> 	hlist_for_each_entry(p, &security_hook_heads.bdev_setsecurity, list) {
+> 		rc = p->hook.bdev_setsecurity(bdev, name, value, size);
+> 		if (rc && rc != -ENOSYS)
+> 			return rc;
+> 	}
+> 	return 0;
 > 
-> This just moves the signature verification to some random I/O.
-> 
-> The whole point of dm-verity is that data is verified on demand.  You can't know
-> whether any particular data or hash block is consistent with the root hash or
-> not until it is read and verified.
-> 
-> When the first I/O completes it might have just checked one block of a billion.
-> 
-> Not to mention that you didn't consider locking at all.
-> 
-> - Eric
+> Easier to reason about that way...
 > 
 
-I appear to have dangerously misunderstood how dm-verity works under the
-covers. What I thought was happening here was that *this* would be where
-the first I/O that completes validation and has been verified - the root
-hash signature could then be checked against the root hash, and then
-no-op for remaining blocks, provided the signature validates.
-
-The reason why I was proposing moving the signature check, is that I was 
-afraid of the block_device being created in dm-verity with a root-hash 
-that belongs to a different device + a signature that verifies that
-root-hash, would get past verity_ctr, as despite the root hash not
-matching the hash tree, the signature and the root hash will be 
-verified. At this point, a block_device structure would be resident in
-the kernel with the security attributes I propose in the next patch in 
-the series. This device would never be read successfully, but the
-structure with the attribute would exist.
-
-This felt odd because there would be a structure in the kernel with an
-attribute that says it passed a security check, but the block_device is
-effectively invalid.
-
-I realize now that that's a pretty ridiculous situation because the 
-theoretical attack with access to manipulate the kernel memory in such a 
-way to make it viable could just override whatever is needed to make the 
-exploit work, and isn't unique to dm-verity.
-
-I'm going to drop this patch in the next iteration of this series.
+Yeah, this is cleaner. I'll make the change for v6.
