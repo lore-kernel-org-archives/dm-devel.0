@@ -1,7 +1,8 @@
 From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: [dm- devel][PATCH V2]
-Date: Wed, 29 Jul 2020 09:52:12 +0800
-Message-ID: <b444af45-dbc3-2525-066f-4475efdc1a57@huawei.com>
+Subject: [dm- devel][PATCH V2] libmultipath: fix a memory leak in
+ disassemble_status func
+Date: Wed, 29 Jul 2020 09:53:32 +0800
+Message-ID: <4c522712-3d81-cbdf-3011-b90141eeedb4@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,7 +17,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: bmarzins@redhat.com, mwilck@suse.com, hare@suse.de, christophe.varoqui@opensvc.com, kabelac@redhat.com
+To: bmarzins@redhat.com, Martin Wilck <mwilck@suse.com>, christophe.varoqui@opensvc.com, kabelac@redhat.com
 Cc: linfeilong <linfeilong@huawei.com>, yanxiaodan@huawei.com, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
 List-Id: dm-devel.ids
 
