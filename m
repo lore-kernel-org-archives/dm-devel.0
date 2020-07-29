@@ -1,15 +1,11 @@
 From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: Re: [PATCH] libmultipath: fix a memory leak in
- disassemble_status func
-Date: Wed, 29 Jul 2020 09:47:50 +0800
-Message-ID: <c07e2946-0355-6317-943d-02774f88840c@huawei.com>
-References: <9bc76686-747f-e85b-d25f-db5a056cf869@huawei.com>
-	<20200728162000.GP11089@octiron.msp.redhat.com>
+Subject: [dm- devel][PATCH V2]
+Date: Wed, 29 Jul 2020 09:52:12 +0800
+Message-ID: <b444af45-dbc3-2525-066f-4475efdc1a57@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200728162000.GP11089@octiron.msp.redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,59 +16,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: "lixiaokeng@huawei.com >> lixiaokeng" <lixiaokeng@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, linfeilong@huawei.com, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, mwilck@suse.com
+To: bmarzins@redhat.com, mwilck@suse.com, hare@suse.de, christophe.varoqui@opensvc.com, kabelac@redhat.com
+Cc: linfeilong <linfeilong@huawei.com>, yanxiaodan@huawei.com, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
 List-Id: dm-devel.ids
 
 
+In disassemble_status func, for dealing with selector args,
+word is allocated by get_word func. However, word is not freed.
+Then a memory leak occurs.
 
-On 2020/7/29 0:20, Benjamin Marzinski wrote:
-> On Tue, Jul 28, 2020 at 09:48:06PM +0800, Zhiqiang Liu wrote:
->>
->> In disassemble_status func, for dealing with selector args,
->> word is allocated by get_word func. However, word is not freed.
->> Then a memory leak occurs.
->>
->> Here, we call FREE(word) to free word.
-> 
-> Err... At the risk of sounding stupid, There is a least-pending
-> selector?  Hannes, you added this code (commit 35ad40b4 "leastpending IO
-> loadbalancing is not displayed properly"). Was this a Suse thing?  Is it
-> still a Suse thing, or have queue-length and service-time replaced it?
-> 
-Thanks for your reply.
-I am sorry that I cannot answer these questions. I found the memory leak through
-code review.
-In addition, I forget to add a check of whether work is null. I will send the
-v2 patch.
+Here, we call FREE(word) to free word.
 
-> At any rate, for the patch itself (assuming that the correct answer
-> isn't to just delete the least-pending code),
-> 
-> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
->  
->> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
->> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
->> ---
->>  libmultipath/dmparser.c | 1 +
->>  1 file changed, 1 insertion(+)
->>
->> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
->> index 3dc77242..a4a989b2 100644
->> --- a/libmultipath/dmparser.c
->> +++ b/libmultipath/dmparser.c
->> @@ -584,6 +584,7 @@ int disassemble_status(char *params, struct multipath *mpp)
->>  						   &def_minio) == 1 &&
->>  					    def_minio != mpp->minio)
->>  							mpp->minio = def_minio;
->> +					FREE(word);
->>  				} else
->>  					p += get_word(p, NULL);
->>  			}
->> -- 
->> 2.24.0.windows.2
->>
-> 
-> 
-> .
-> 
+Fixes: 35ad40b4 ('leastpending IO loadbalancing is not displayed properly')
+Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/dmparser.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index 3dc77242..33f47405 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -580,10 +580,15 @@ int disassemble_status(char *params, struct multipath *mpp)
+ 				if (!strncmp(mpp->selector,
+ 					     "least-pending", 13)) {
+ 					p += get_word(p, &word);
++
++					if (!word)
++						return 1;
++
+ 					if (sscanf(word,"%d:*d",
+ 						   &def_minio) == 1 &&
+ 					    def_minio != mpp->minio)
+ 							mpp->minio = def_minio;
++					FREE(word);
+ 				} else
+ 					p += get_word(p, NULL);
+ 			}
+-- 
+2.24.0.windows.2
