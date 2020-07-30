@@ -1,8 +1,7 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: Re: [PATCH] libmultipath: fix a memory leak in
- set_ble_device
-Date: Thu, 30 Jul 2020 20:45:49 +0800
-Message-ID: <b5ae18b7-35b2-01ba-bb18-def6d86a7b99@huawei.com>
+Subject: [PATCH] libmultipath: fix a memory leak in set_ble_device
+Date: Thu, 30 Jul 2020 21:27:28 +0800
+Message-ID: <0c9f562c-9c2b-f18f-7399-79d0862a8843@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -17,12 +16,15 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 Cc: linfeilong@huawei.com, liuzhiqiang26@huawei.com, lutianxiong@huawei.com
 List-Id: dm-devel.ids
 
+Hi.
+  I'm very sorry for subject mistake in first mail.
+
 In set_ble_device func, if blist is NULL or ble is NULL,
-the vendor and product isn't freed. We think it is not
+the vendor and product isn't free. We think it is not
 reasonable that strdup(XXX) is used as set_ble_device
 and store_ble functions' parameter.
 
@@ -32,17 +34,23 @@ Because constant string like "sdb" will be their parameter,
 char * is changed to const char *. This is base on
 upstream-queue branch in openSUSE/multipath-tools.
 
+Here we have another question. We want to know which branch
+is mainline in https://github.com/openSUSE/multipath-tools.
+The master is not changed since two years ago. And we find
+the ups/submit-2007 branch in mwilck/multipath-tools have
+a great changes. Do you have a plan to merge it to openSUSE.
+
 Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 
 ---
- libmultipath/blacklist.c | 81 ++++++++++++++++++++++------------------
- libmultipath/blacklist.h |  4 +-
- tests/blacklist.c        | 31 +++++++--------
- 3 files changed, 59 insertions(+), 57 deletions(-)
+ libmultipath/blacklist.c | 74 +++++++++++++++++++++++-----------------
+ libmultipath/blacklist.h |  4 +--
+ tests/blacklist.c        | 31 +++++++----------
+ 3 files changed, 58 insertions(+), 51 deletions(-)
 
 diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
-index db58ccca..2ff7cd84 100644
+index db58ccca..04aeb426 100644
 --- a/libmultipath/blacklist.c
 +++ b/libmultipath/blacklist.c
 @@ -29,14 +29,19 @@ char *check_invert(char *str, bool *invert)
@@ -105,49 +113,45 @@ index db58ccca..2ff7cd84 100644
 
  	if (!blist)
  		return 1;
-@@ -93,31 +100,40 @@ int set_ble_device(vector blist, char * vendor, char * product, int origin)
+@@ -93,31 +100,42 @@ int set_ble_device(vector blist, char * vendor, char * product, int origin)
  		return 1;
 
  	if (vendor) {
 -		regex_str = check_invert(vendor, &ble->vendor_invert);
--		if (regcomp(&ble->vendor_reg, regex_str,
--			    REG_EXTENDED|REG_NOSUB)) {
--			FREE(vendor);
--			if (product)
--				FREE(product);
--			return 1;
--		}
--		ble->vendor = vendor;
 +		vendor_str = STRDUP(vendor);
 +		if (!vendor_str)
 +			goto out;
 +
 +		regex_str = check_invert(vendor_str, &ble->vendor_invert);
-+		if (regcomp(&ble->vendor_reg, regex_str, REG_EXTENDED|REG_NOSUB))
+ 		if (regcomp(&ble->vendor_reg, regex_str,
+ 			    REG_EXTENDED|REG_NOSUB)) {
+-			FREE(vendor);
+-			if (product)
+-				FREE(product);
+-			return 1;
 +			goto out;
-+
+ 		}
+-		ble->vendor = vendor;
 +		ble->vendor = vendor_str;
  	}
  	if (product) {
 -		regex_str = check_invert(product, &ble->product_invert);
--		if (regcomp(&ble->product_reg, regex_str,
--			    REG_EXTENDED|REG_NOSUB)) {
++		product_str = STRDUP(product);
++		if (!product_str)
++			goto out1;
++
++		regex_str = check_invert(product_str, &ble->product_invert);
+ 		if (regcomp(&ble->product_reg, regex_str,
+ 			    REG_EXTENDED|REG_NOSUB)) {
 -			FREE(product);
 -			if (vendor) {
 -				ble->vendor = NULL;
 -				FREE(vendor);
 -			}
 -			return 1;
--		}
++			goto out1;
+ 		}
 -		ble->product = product;
-+		product_str = STRDUP(product);
-+		if (!product_str)
-+			goto out1;
-+
-+		regex_str = check_invert(product_str, &ble->product_invert);
-+		if (regcomp(&ble->product_reg, regex_str, REG_EXTENDED|REG_NOSUB))
-+			goto out1;
-+
 +		ble->product = product_str;
  	}
  	ble->origin = origin;
@@ -166,7 +170,7 @@ index db58ccca..2ff7cd84 100644
  }
 
  static int
-@@ -178,19 +194,12 @@ setup_default_blist (struct config * conf)
+@@ -178,20 +196,16 @@ setup_default_blist (struct config * conf)
  {
  	struct blentry * ble;
  	struct hwentry *hwe;
@@ -177,25 +181,29 @@ index db58ccca..2ff7cd84 100644
 -	if (!str)
 -		return 1;
 -	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
-+	if (store_ble(conf->blist_devnode, "!^(sd[a-z]|dasd[a-z]|nvme[0-9])", ORIGIN_DEFAULT))
++	if (store_ble(conf->blist_devnode, "!^(sd[a-z]|dasd[a-z]|nvme[0-9])"
++		, ORIGIN_DEFAULT)) {
  		return 1;
++	}
 
 -	str = STRDUP("(SCSI_IDENT_|ID_WWN)");
 -	if (!str)
 -		return 1;
 -	if (store_ble(conf->elist_property, str, ORIGIN_DEFAULT))
-+	if (store_ble(conf->elist_property, "(SCSI_IDENT_|ID_WWN)", ORIGIN_DEFAULT))
++	if (store_ble(conf->elist_property, "(SCSI_IDENT_|ID_WWN)", ORIGIN_DEFAULT)) {
  		return 1;
++	}
 
  	vector_foreach_slot (conf->hwtable, hwe, i) {
-@@ -202,9 +211,7 @@ setup_default_blist (struct config * conf)
+ 		if (hwe->bl_product) {
+@@ -202,9 +216,7 @@ setup_default_blist (struct config * conf)
  				return 1;
  			ble = VECTOR_SLOT(conf->blist_device,
  					  VECTOR_SIZE(conf->blist_device) - 1);
 -			if (set_ble_device(conf->blist_device,
 -					   STRDUP(hwe->vendor),
 -					   STRDUP(hwe->bl_product),
-+			if (set_ble_device(conf->blist_device, hwe->vendor, hwe->bl_product,
++			if (set_ble_device(conf->blist_device,hwe->vendor,hwe->bl_product,
  					   ORIGIN_DEFAULT)) {
  				FREE(ble);
  				vector_del_slot(conf->blist_device, VECTOR_SIZE(conf->blist_device) - 1);
