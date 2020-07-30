@@ -1,81 +1,64 @@
 From: Deven Bowers <deven.desai@linux.microsoft.com>
-Subject: [RFC PATCH v6 11/11] cleanup: uapi/linux/audit.h
-Date: Wed, 29 Jul 2020 17:31:13 -0700
-Message-ID: <20200730003113.2561644-12-deven.desai@linux.microsoft.com>
+Subject: [RFC PATCH v6 08/11] dm-verity: add bdev_setsecurity hook for root-hash
+Date: Wed, 29 Jul 2020 17:31:10 -0700
+Message-ID: <20200730003113.2561644-9-deven.desai@linux.microsoft.com>
 References: <20200730003113.2561644-1-deven.desai@linux.microsoft.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-security-module-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20200730003113.2561644-1-deven.desai@linux.microsoft.com>
-Sender: owner-linux-security-module@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serge@hallyn.com, zohar@linux.ibm.com, viro@zeniv.linux.org.uk, paul@paul-moore.com, eparis@redhat.com, jannh@google.com, dm-devel@redhat.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, linux-audit@redhat.com
 Cc: tyhicks@linux.microsoft.com, linux-kernel@vger.kernel.org, corbet@lwn.net, sashal@kernel.org, jaskarankhurana@linux.microsoft.com, mdsakib@microsoft.com, nramas@linux.microsoft.com, pasha.tatashin@soleen.com
 List-Id: dm-devel.ids
 
-Remove trailing whitespaces and align the integrity #defines in
-linux/uapi/audit.h
+Add a security hook call to set a security property of a block_device
+in dm-verity with the root-hash that was passed to device-mapper.
 
 Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 ---
- include/uapi/linux/audit.h | 32 ++++++++++++++++----------------
- 1 file changed, 16 insertions(+), 16 deletions(-)
+ drivers/md/dm-verity-target.c | 8 ++++++++
+ include/linux/device-mapper.h | 1 +
+ 2 files changed, 9 insertions(+)
 
-diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
-index 5a634cca1d42..609b4a5e8a80 100644
---- a/include/uapi/linux/audit.h
-+++ b/include/uapi/linux/audit.h
-@@ -48,7 +48,7 @@
-  * 2500 - 2999 future user space (maybe integrity labels and related events)
-  *
-  * Messages from 1000-1199 are bi-directional. 1200-1299 & 2100 - 2999 are
-- * exclusively user space. 1300-2099 is kernel --> user space 
-+ * exclusively user space. 1300-2099 is kernel --> user space
-  * communication.
-  */
- #define AUDIT_GET		1000	/* Get status */
-@@ -78,7 +78,7 @@
- #define AUDIT_LAST_USER_MSG	1199
- #define AUDIT_FIRST_USER_MSG2	2100	/* More user space messages */
- #define AUDIT_LAST_USER_MSG2	2999
-- 
-+
- #define AUDIT_DAEMON_START      1200    /* Daemon startup record */
- #define AUDIT_DAEMON_END        1201    /* Daemon normal stop record */
- #define AUDIT_DAEMON_ABORT      1202    /* Daemon error stop record */
-@@ -140,20 +140,20 @@
- #define AUDIT_MAC_CALIPSO_ADD	1418	/* NetLabel: add CALIPSO DOI entry */
- #define AUDIT_MAC_CALIPSO_DEL	1419	/* NetLabel: del CALIPSO DOI entry */
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index 9970488e67ed..44914668398d 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -16,8 +16,10 @@
+ #include "dm-verity.h"
+ #include "dm-verity-fec.h"
+ #include "dm-verity-verify-sig.h"
++#include "dm-core.h"
+ #include <linux/module.h>
+ #include <linux/reboot.h>
++#include <linux/security.h>
  
--#define AUDIT_FIRST_KERN_ANOM_MSG   1700
--#define AUDIT_LAST_KERN_ANOM_MSG    1799
--#define AUDIT_ANOM_PROMISCUOUS      1700 /* Device changed promiscuous mode */
--#define AUDIT_ANOM_ABEND            1701 /* Process ended abnormally */
--#define AUDIT_ANOM_LINK		    1702 /* Suspicious use of file links */
--#define AUDIT_ANOM_CREAT	    1703 /* Suspicious file creation */
--#define AUDIT_INTEGRITY_DATA	    1800 /* Data integrity verification */
--#define AUDIT_INTEGRITY_METADATA    1801 /* Metadata integrity verification */
--#define AUDIT_INTEGRITY_STATUS	    1802 /* Integrity enable status */
--#define AUDIT_INTEGRITY_HASH	    1803 /* Integrity HASH type */
--#define AUDIT_INTEGRITY_PCR	    1804 /* PCR invalidation msgs */
--#define AUDIT_INTEGRITY_RULE	    1805 /* policy rule */
--#define AUDIT_INTEGRITY_EVM_XATTR   1806 /* New EVM-covered xattr */
--#define AUDIT_INTEGRITY_POLICY_RULE 1807 /* IMA policy rules */
-+#define AUDIT_FIRST_KERN_ANOM_MSG	1700
-+#define AUDIT_LAST_KERN_ANOM_MSG	1799
-+#define AUDIT_ANOM_PROMISCUOUS		1700 /* Device changed promiscuous mode */
-+#define AUDIT_ANOM_ABEND		1701 /* Process ended abnormally */
-+#define AUDIT_ANOM_LINK			1702 /* Suspicious use of file links */
-+#define AUDIT_ANOM_CREAT		1703 /* Suspicious file creation */
-+#define AUDIT_INTEGRITY_DATA		1800 /* Data integrity verification */
-+#define AUDIT_INTEGRITY_METADATA	1801 /* Metadata integrity verification */
-+#define AUDIT_INTEGRITY_STATUS		1802 /* Integrity enable status */
-+#define AUDIT_INTEGRITY_HASH		1803 /* Integrity HASH type */
-+#define AUDIT_INTEGRITY_PCR		1804 /* PCR invalidation msgs */
-+#define AUDIT_INTEGRITY_RULE		1805 /* policy rule */
-+#define AUDIT_INTEGRITY_EVM_XATTR	1806 /* New EVM-covered xattr */
-+#define AUDIT_INTEGRITY_POLICY_RULE	1807 /* IMA policy rules */
- #define AUDIT_INTEGRITY_POLICY_LOAD	1808 /* IPE Policy Load */
- #define AUDIT_INTEGRITY_POLICY_ACTIVATE	1809 /* IPE Policy Activation */
- #define AUDIT_INTEGRITY_EVENT		1810 /* IPE Evaluation Event */
+ #define DM_MSG_PREFIX			"verity"
+ 
+@@ -1207,6 +1209,12 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	ti->per_io_data_size = roundup(ti->per_io_data_size,
+ 				       __alignof__(struct dm_verity_io));
+ 
++	r = security_bdev_setsecurity(dm_table_get_md(v->ti->table)->bdev,
++				      DM_VERITY_ROOTHASH_SEC_NAME,
++				      v->root_digest, v->digest_size);
++	if (r)
++		goto bad;
++
+ 	verity_verify_sig_opts_cleanup(&verify_args);
+ 
+ 	return 0;
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index ab6b8eb0a150..e8ef887e4bae 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -626,5 +626,6 @@ static inline unsigned long to_bytes(sector_t n)
+ }
+ 
+ #define DM_VERITY_SIGNATURE_SEC_NAME DM_NAME	".verity-sig"
++#define DM_VERITY_ROOTHASH_SEC_NAME DM_NAME	".verity-rh"
+ 
+ #endif	/* _LINUX_DEVICE_MAPPER_H */
 -- 
 2.27.0
