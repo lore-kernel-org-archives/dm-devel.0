@@ -1,14 +1,13 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH] devmapper: remove useless using of memset in
- dm_get_info func
-Date: Thu, 30 Jul 2020 17:16:20 -0500
-Message-ID: <20200730221620.GC19233@octiron.msp.redhat.com>
-References: <0cbfeea7-5f30-a148-555b-19af2429c32c@huawei.com>
+From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Subject: [dm- devel][PATCH] vector: return null when realloc
+ fails in vector_alloc_slot func
+Date: Fri, 31 Jul 2020 18:41:57 +0800
+Message-ID: <a04e1267-0f1c-3a8b-c163-1697469ffeca@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <0cbfeea7-5f30-a148-555b-19af2429c32c@huawei.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,36 +17,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Cc: linfeilong <linfeilong@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>, Martin Wilck <mwilck@suse.com>
+To: bmarzins@redhat.com, Martin Wilck <mwilck@suse.com>, christophe.varoqui@opensvc.com, kabelac@redhat.com
+Cc: linfeilong@huawei.com, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
 List-Id: dm-devel.ids
 
-On Thu, Jul 30, 2020 at 10:06:35PM +0800, Zhiqiang Liu wrote:
-> 
-> In dm_get_info func, if do_get_info fails, we donot need to
-> call memset to assign 0 to *dmi which will be freed.
-> 
-> Here, we remove the useless using of memset in dm_get_info func.
-> 
-> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  libmultipath/devmapper.c | 1 -
->  1 file changed, 1 deletion(-)
-> 
-> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-> index f597ff8b..00ee0dfc 100644
-> --- a/libmultipath/devmapper.c
-> +++ b/libmultipath/devmapper.c
-> @@ -1464,7 +1464,6 @@ dm_get_info (const char * mapname, struct dm_info ** dmi)
->  		return 1;
-> 
->  	if (do_get_info(mapname, *dmi) != 0) {
-> -		memset(*dmi, 0, sizeof(struct dm_info));
->  		FREE(*dmi);
->  		*dmi = NULL;
->  		return 1;
-> -- 
-> 2.24.0.windows.2
-> 
+
+In vector_alloc_slot func, if REALLOC fails, it means new slot
+allocation fails. However, it just update v->allocated and then
+return the old v->slot without new slot. So, the caller will take
+the last old slot as the new allocated slot, and use it by calling
+vector_set_slot func. Finally, the data of last slot is lost.
+
+Here, if REALLOC or MALLOC fails, we will return NULL.
+
+Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+---
+ libmultipath/vector.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/libmultipath/vector.c b/libmultipath/vector.c
+index 501cf4c5..29dc9848 100644
+--- a/libmultipath/vector.c
++++ b/libmultipath/vector.c
+@@ -49,12 +49,14 @@ vector_alloc_slot(vector v)
+ 	else
+ 		new_slot = (void *) MALLOC(sizeof (void *) * v->allocated);
+
+-	if (!new_slot)
++	/* If REALLOC or MALLOC fails, it means new slot allocation fails, so return NULL. */
++	if (!new_slot) {
+ 		v->allocated -= VECTOR_DEFAULT_SIZE;
+-	else
+-		v->slot = new_slot;
++		return NULL;
++	}
+
+-	return v->slot;
++	v->slot = new_slot;
++	return v->slot[VECTOR_SIZE(v) - 1];
+ }
+
+ int
+-- 
+2.24.0.windows.2
