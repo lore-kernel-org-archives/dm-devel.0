@@ -1,69 +1,29 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [dm- devel][PATCH] vector: return null when realloc
- fails in vector_alloc_slot func
-Date: Fri, 31 Jul 2020 12:11:11 -0500
-Message-ID: <20200731171111.GE19233@octiron.msp.redhat.com>
-References: <a04e1267-0f1c-3a8b-c163-1697469ffeca@huawei.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [RFC PATCH v5 00/11] Integrity Policy Enforcement LSM (IPE)
+Date: Sun, 2 Aug 2020 13:55:45 +0200
+Message-ID: <20200802115545.GA1162@bug>
+References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <a04e1267-0f1c-3a8b-c163-1697469ffeca@huawei.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-To: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Cc: lixiaokeng <lixiaokeng@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, linfeilong@huawei.com, dm-devel@redhat.com, kabelac@redhat.com, Martin Wilck <mwilck@suse.com>
+In-Reply-To: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Deven Bowers <deven.desai@linux.microsoft.com>
+Cc: agk@redhat.com, axboe@kernel.dk, snitzer@redhat.com, jmorris@namei.org, serge@hallyn.com, zohar@linux.ibm.com, viro@zeniv.linux.org.uk, paul@paul-moore.com, eparis@redhat.com, jannh@google.com, dm-devel@redhat.com, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, linux-audit@redhat.com, tyhicks@linux.microsoft.com, linux-kernel@vger.kernel.org, corbet@lwn.net, sashal@kernel.org, jaskarankhurana@linux.microsoft.com, mdsakib@microsoft.com, nramas@linux.microsoft.com, pasha.tatashin@soleen.com
 List-Id: dm-devel.ids
 
-On Fri, Jul 31, 2020 at 06:41:57PM +0800, Zhiqiang Liu wrote:
-> 
-> In vector_alloc_slot func, if REALLOC fails, it means new slot
-> allocation fails. However, it just update v->allocated and then
-> return the old v->slot without new slot. So, the caller will take
-> the last old slot as the new allocated slot, and use it by calling
-> vector_set_slot func. Finally, the data of last slot is lost.
->
+Hi!
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
- 
-> Here, if REALLOC or MALLOC fails, we will return NULL.
-> 
-> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
-> ---
->  libmultipath/vector.c | 10 ++++++----
->  1 file changed, 6 insertions(+), 4 deletions(-)
-> 
-> diff --git a/libmultipath/vector.c b/libmultipath/vector.c
-> index 501cf4c5..29dc9848 100644
-> --- a/libmultipath/vector.c
-> +++ b/libmultipath/vector.c
-> @@ -49,12 +49,14 @@ vector_alloc_slot(vector v)
->  	else
->  		new_slot = (void *) MALLOC(sizeof (void *) * v->allocated);
-> 
-> -	if (!new_slot)
-> +	/* If REALLOC or MALLOC fails, it means new slot allocation fails, so return NULL. */
-> +	if (!new_slot) {
->  		v->allocated -= VECTOR_DEFAULT_SIZE;
-> -	else
-> -		v->slot = new_slot;
-> +		return NULL;
-> +	}
-> 
-> -	return v->slot;
-> +	v->slot = new_slot;
-> +	return v->slot[VECTOR_SIZE(v) - 1];
->  }
-> 
->  int
-> -- 
-> 2.24.0.windows.2
+> IPE is a Linux Security Module which allows for a configurable
+> policy to enforce integrity requirements on the whole system. It
+> attempts to solve the issue of Code Integrity: that any code being
+> executed (or files being read), are identical to the version that
+> was built by a trusted source.
+
+How is that different from security/integrity/ima?
+
+									Pavel
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
