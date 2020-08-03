@@ -1,14 +1,14 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [dm- devel][PATCH] vector: add lower bound check of
- E in VECTOR_SLOT
-Date: Mon, 3 Aug 2020 12:49:44 -0500
-Message-ID: <20200803174944.GH19233@octiron.msp.redhat.com>
-References: <db186a10-8244-c9cd-4da0-b03976ce48b9@huawei.com>
+Subject: Re: [dm- devel][PATCH] tests/hwtable: fix a memory free
+ in replicate_config
+Date: Mon, 3 Aug 2020 13:01:54 -0500
+Message-ID: <20200803180154.GI19233@octiron.msp.redhat.com>
+References: <0c482278-37d5-9875-c22c-b14fd02f30d9@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <db186a10-8244-c9cd-4da0-b03976ce48b9@huawei.com>
+In-Reply-To: <0c482278-37d5-9875-c22c-b14fd02f30d9@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,32 +23,31 @@ To: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Cc: lixiaokeng <lixiaokeng@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, linfeilong <linfeilong@huawei.com>, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Mon, Aug 03, 2020 at 10:41:48AM +0800, Zhiqiang Liu wrote:
+On Mon, Aug 03, 2020 at 10:43:54AM +0800, Zhiqiang Liu wrote:
 > 
-> In VECTOR_SLOT(V, E), we add the lower bound check of E.
-> E cannot be less than zero.
+> In replicate_config func, hwtable is allocated by calling get_used_hwes
+> func, however it is not freed.
 > 
 > Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
 > ---
->  libmultipath/vector.h | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+>  tests/hwtable.c | 1 +
+>  1 file changed, 1 insertion(+)
 > 
-> diff --git a/libmultipath/vector.h b/libmultipath/vector.h
-> index e16ec461..cdb94b24 100644
-> --- a/libmultipath/vector.h
-> +++ b/libmultipath/vector.h
-> @@ -32,7 +32,7 @@ typedef struct _vector *vector;
+> diff --git a/tests/hwtable.c b/tests/hwtable.c
+> index 473028b7..84d2b35f 100644
+> --- a/tests/hwtable.c
+> +++ b/tests/hwtable.c
+> @@ -468,6 +468,7 @@ static void replicate_config(const struct hwt_state *hwt, bool local)
+>  		/* "local" configuration */
+>  		hwtable = get_used_hwes(hwt->vecs->pathvec);
+>  		cfg1 = snprint_config(conf, NULL, hwtable, hwt->vecs->mpvec);
+> +		vector_free(hwtable);
+>  	}
 > 
->  #define VECTOR_DEFAULT_SIZE 1
->  #define VECTOR_SIZE(V)   ((V) ? ((V)->allocated) / VECTOR_DEFAULT_SIZE : 0)
-> -#define VECTOR_SLOT(V,E) (((V) && (E) < VECTOR_SIZE(V)) ? (V)->slot[(E)] : NULL)
-> +#define VECTOR_SLOT(V,E) (((V) && (E) < VECTOR_SIZE(V) && (E) >= 0) ? (V)->slot[(E)] : NULL)
->  #define VECTOR_LAST_SLOT(V)   (((V) && VECTOR_SIZE(V) > 0) ? (V)->slot[(VECTOR_SIZE(V) - 1)] : NULL)
-> 
->  #define vector_foreach_slot(v,p,i) \
+>  	assert_non_null(cfg1);
 > -- 
 > 2.24.0.windows.2
 > 
