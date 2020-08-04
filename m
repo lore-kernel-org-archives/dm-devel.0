@@ -1,30 +1,50 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: don't call report zones for more than the user requested
-Date: Tue, 4 Aug 2020 10:36:25 -0400
-Message-ID: <20200804143625.GA14672@redhat.com>
-References: <20200804092501.7938-1-johannes.thumshirn@wdc.com>
- <CY4PR04MB3751EB538B7F29FBDBB4EBA4E74A0@CY4PR04MB3751.namprd04.prod.outlook.com>
- <SN4PR0401MB3598A9D49399D70697DCEC789B4A0@SN4PR0401MB3598.namprd04.prod.outlook.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: [PATCH] dm-ebs: Fix incorrect checking for
+ REQ_OP_FLUSH.
+Date: Tue, 4 Aug 2020 16:53:51 +0200
+Message-ID: <4f1d8377-6df2-ec1d-df1b-492d6a192468@redhat.com>
+References: <20200731224645.89483-1-jdorminy@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <SN4PR0401MB3598A9D49399D70697DCEC789B4A0@SN4PR0401MB3598.namprd04.prod.outlook.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>
-Cc: Damien Le Moal <Damien.LeMoal@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Naohiro Aota <Naohiro.Aota@wdc.com>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200731224645.89483-1-jdorminy@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: John Dorminy <jdorminy@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Aug 04 2020 at  7:26am -0400,
-Johannes Thumshirn <Johannes.Thumshirn@wdc.com> wrote:
+Acked-by: Heinz Mauelshagen <heinzm@redhat.com>
 
-> On 04/08/2020 12:17, Damien Le Moal wrote:
-> > 
-> > Looks good. I think this needs a Cc: stable.
-> 
-> Indeed, Mike can you add these two when applying or do you want me to resend?
-> 
-> Fixes: d41003513e61 ("block: rework zone reporting")
-> Cc: stable@vger.kernel.org # v5.5+
-
-I can apply those tags, thanks.
+On 8/1/20 12:46 AM, John Dorminy wrote:
+> REQ_OP_FLUSH was being treated as a flag, but the operation
+> part of bio->bi_opf must be treated as a whole. Change to
+> accessing the operation part via bio_op(bio) and checking
+> for equality.
+>
+> Signed-off-by: John Dorminy <jdorminy@redhat.com>
+> ---
+>   drivers/md/dm-ebs-target.c | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/drivers/md/dm-ebs-target.c b/drivers/md/dm-ebs-target.c
+> index 44451276f128..cb85610527c2 100644
+> --- a/drivers/md/dm-ebs-target.c
+> +++ b/drivers/md/dm-ebs-target.c
+> @@ -363,7 +363,7 @@ static int ebs_map(struct dm_target *ti, struct bio *bio)
+>   	bio_set_dev(bio, ec->dev->bdev);
+>   	bio->bi_iter.bi_sector = ec->start + dm_target_offset(ti, bio->bi_iter.bi_sector);
+>   
+> -	if (unlikely(bio->bi_opf & REQ_OP_FLUSH))
+> +	if (unlikely(bio_op(bio) == REQ_OP_FLUSH))
+>   		return DM_MAPIO_REMAPPED;
+>   	/*
+>   	 * Only queue for bufio processing in case of partial
