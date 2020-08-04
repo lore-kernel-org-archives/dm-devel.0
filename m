@@ -1,53 +1,46 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [dm- devel][PATCH] tests/hwtable: fix a memory free
- in replicate_config
-Date: Mon, 3 Aug 2020 13:01:54 -0500
-Message-ID: <20200803180154.GI19233@octiron.msp.redhat.com>
-References: <0c482278-37d5-9875-c22c-b14fd02f30d9@huawei.com>
+From: Johannes Thumshirn <johannes.thumshirn@wdc.com>
+Subject: [PATCH] dm: don't call report zones for more than the user requested
+Date: Tue,  4 Aug 2020 18:25:01 +0900
+Message-ID: <20200804092501.7938-1-johannes.thumshirn@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <0c482278-37d5-9875-c22c-b14fd02f30d9@huawei.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Cc: lixiaokeng <lixiaokeng@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, linfeilong <linfeilong@huawei.com>, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, Martin Wilck <mwilck@suse.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, Damien Le Moal <Damien.LeMoal@wdc.com>, Naohiro Aota <Naohiro.Aota@wdc.com>, Johannes Thumshirn <johannes.thumshirn@wdc.com>
 List-Id: dm-devel.ids
 
-On Mon, Aug 03, 2020 at 10:43:54AM +0800, Zhiqiang Liu wrote:
-> 
-> In replicate_config func, hwtable is allocated by calling get_used_hwes
-> func, however it is not freed.
-> 
-> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Don't call report zones for more zones than the user actually requested,
+otherwise this can lead to out-of-bounds accesses in the callback
+functions.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+Such a situation can happen if the target's ->report_zones() callback
+function returns 0 because we've reached the end of the target and then
+restart the report zones on the second target.
 
-> ---
->  tests/hwtable.c | 1 +
->  1 file changed, 1 insertion(+)
-> 
-> diff --git a/tests/hwtable.c b/tests/hwtable.c
-> index 473028b7..84d2b35f 100644
-> --- a/tests/hwtable.c
-> +++ b/tests/hwtable.c
-> @@ -468,6 +468,7 @@ static void replicate_config(const struct hwt_state *hwt, bool local)
->  		/* "local" configuration */
->  		hwtable = get_used_hwes(hwt->vecs->pathvec);
->  		cfg1 = snprint_config(conf, NULL, hwtable, hwt->vecs->mpvec);
-> +		vector_free(hwtable);
->  	}
-> 
->  	assert_non_null(cfg1);
-> -- 
-> 2.24.0.windows.2
-> 
+We're again calling into ->report_zones() and ultimately into the user
+supplied callback function but when we're not subtracting the number of
+zones already processed this may lead to out-of-bounds accesses in the
+user callbacks.
+
+Signed-off-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
+---
+ drivers/md/dm.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 5b9de2f71bb0..88b391ff9bea 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -504,7 +504,8 @@ static int dm_blk_report_zones(struct gendisk *disk, sector_t sector,
+ 		}
+ 
+ 		args.tgt = tgt;
+-		ret = tgt->type->report_zones(tgt, &args, nr_zones);
++		ret = tgt->type->report_zones(tgt, &args,
++					      nr_zones - args.zone_idx);
+ 		if (ret < 0)
+ 			goto out;
+ 	} while (args.zone_idx < nr_zones &&
+-- 
+2.26.2
