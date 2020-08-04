@@ -1,16 +1,18 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 12/35] libmultipath: strlcpy()/strlcat(): use
- restrict qualifier
-Date: Tue, 04 Aug 2020 17:36:31 +0200
-Message-ID: <246f58856cdc0c5d80046ca7d740ff92f91b0f87.camel@suse.com>
-References: <20200709101620.6786-1-mwilck@suse.com>
-	<20200709101620.6786-13-mwilck@suse.com>
-	<20200716221848.GN11089@octiron.msp.redhat.com>
+From: Deven Bowers <deven.desai@linux.microsoft.com>
+Subject: Re: [RFC PATCH v5 00/11] Integrity Policy Enforcement
+ LSM (IPE)
+Date: Tue, 4 Aug 2020 09:07:26 -0700
+Message-ID: <fb35a1f7-7633-a678-3f0f-17cf83032d2b@linux.microsoft.com>
+References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
+	<20200802115545.GA1162@bug> <20200802140300.GA2975990@sasha-vm>
+	<20200802143143.GB20261@amd>
+	<1596386606.4087.20.camel@HansenPartnership.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200716221848.GN11089@octiron.msp.redhat.com>
+In-Reply-To: <1596386606.4087.20.camel@HansenPartnership.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,64 +22,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+To: James Bottomley <James.Bottomley@HansenPartnership.com>, Pavel Machek <pavel@ucw.cz>, Sasha Levin <sashal@kernel.org>
+Cc: snitzer@redhat.com, zohar@linux.ibm.com, dm-devel@redhat.com, tyhicks@linux.microsoft.com, agk@redhat.com, paul@paul-moore.com, corbet@lwn.net, jmorris@namei.org, nramas@linux.microsoft.com, serge@hallyn.com, pasha.tatashin@soleen.com, jannh@google.com, linux-block@vger.kernel.org, viro@zeniv.linux.org.uk, axboe@kernel.dk, mdsakib@microsoft.com, linux-kernel@vger.kernel.org, eparis@redhat.com, linux-security-module@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org, jaskarankhurana@linux.microsoft.com
 List-Id: dm-devel.ids
 
-On Thu, 2020-07-16 at 17:18 -0500, Benjamin Marzinski wrote:
-> On Thu, Jul 09, 2020 at 12:15:57PM +0200, mwilck@suse.com wrote:
-> > From: Martin Wilck <mwilck@suse.com>
-> > 
-> > Also remove the redundant local variables. It's not necessary to
-> > make "restrict" work, but it makes the intention more clear.
-> > 
-> > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > ---
-> >  libmultipath/util.c | 28 ++++++++++++----------------
-> >  libmultipath/util.h |  4 ++--
-> >  2 files changed, 14 insertions(+), 18 deletions(-)
-> > 
-> > diff --git a/libmultipath/util.c b/libmultipath/util.c
-> > index 957fb97..f965094 100644
-> > --- a/libmultipath/util.c
-> > +++ b/libmultipath/util.c
-> > 
-> > -size_t strlcat(char *dst, const char *src, size_t size)
-> > +size_t strlcat(char * restrict dst, const char * restrict src,
-> > size_t size)
-> >  {
-> >  	size_t bytes = 0;
-> > -	char *q = dst;
-> > -	const char *p = src;
-> >  	char ch;
-> >  
-> > -	while (bytes < size && *q) {
-> > -		q++;
-> > +	while (bytes < size && *dst) {
-> > +		dst++;
-> >  		bytes++;
-> >  	}
-> >  	if (bytes == size)
-> 
-> this should return the strlen(dst) + strlen(src). It wouldn't in the
-> admittedly weird case where size isn't large enough to fit dst.
-
-Are you sure?
-
-https://linux.die.net/man/3/strlcat
-
-"Note, however, that if strlcat() traverses size characters without
-finding a NUL, the length of the string is considered to be size and
-the destination string will not be NUL-terminated (since there was no
-space for the NUL)."
-
-The way I understand this is that the current code is actually correct
-in returning bytes + strlen(src).
-
-This is also consistent with what I see elsewhere
-
-https://github.com/ffainelli/uClibc/blob/master/libc/string/strlcat.c
-https://github.com/freebsd/freebsd/blob/master/crypto/heimdal/lib/roken/strlcat.c
-
-Regards
-Martin
+CgpPbiA4LzIvMjAyMCA5OjQzIEFNLCBKYW1lcyBCb3R0b21sZXkgd3JvdGU6Cj4gT24gU3VuLCAy
+MDIwLTA4LTAyIGF0IDE2OjMxICswMjAwLCBQYXZlbCBNYWNoZWsgd3JvdGU6Cj4+IE9uIFN1biAy
+MDIwLTA4LTAyIDEwOjAzOjAwLCBTYXNoYSBMZXZpbiB3cm90ZToKPj4+IE9uIFN1biwgQXVnIDAy
+LCAyMDIwIGF0IDAxOjU1OjQ1UE0gKzAyMDAsIFBhdmVsIE1hY2hlayB3cm90ZToKPj4+PiBIaSEK
+Pj4+Pgo+Pj4+PiBJUEUgaXMgYSBMaW51eCBTZWN1cml0eSBNb2R1bGUgd2hpY2ggYWxsb3dzIGZv
+ciBhIGNvbmZpZ3VyYWJsZQo+Pj4+PiBwb2xpY3kgdG8gZW5mb3JjZSBpbnRlZ3JpdHkgcmVxdWly
+ZW1lbnRzIG9uIHRoZSB3aG9sZSBzeXN0ZW0uCj4+Pj4+IEl0IGF0dGVtcHRzIHRvIHNvbHZlIHRo
+ZSBpc3N1ZSBvZiBDb2RlIEludGVncml0eTogdGhhdCBhbnkgY29kZQo+Pj4+PiBiZWluZyBleGVj
+dXRlZCAob3IgZmlsZXMgYmVpbmcgcmVhZCksIGFyZSBpZGVudGljYWwgdG8gdGhlCj4+Pj4+IHZl
+cnNpb24gdGhhdCB3YXMgYnVpbHQgYnkgYSB0cnVzdGVkIHNvdXJjZS4KPj4+Pgo+Pj4+IEhvdyBp
+cyB0aGF0IGRpZmZlcmVudCBmcm9tIHNlY3VyaXR5L2ludGVncml0eS9pbWE/Cj4+Pgo+Pj4gTWF5
+YmUgaWYgeW91IHdvdWxkIGhhdmUgcmVhZCB0aGUgY292ZXIgbGV0dGVyIGFsbCB0aGUgd2F5IGRv
+d24gdG8KPj4+IHRoZSA1dGggcGFyYWdyYXBoIHdoaWNoIGV4cGxhaW5zIGhvdyBJUEUgaXMgZGlm
+ZmVyZW50IGZyb20gSU1BIHdlCj4+PiBjb3VsZCBhdm9pZGVkIHRoaXMgbWFpbCBleGNoYW5nZS4u
+Lgo+Pgo+PiAiCj4+IElQRSBkaWZmZXJzIGZyb20gb3RoZXIgTFNNcyB3aGljaCBwcm92aWRlIGlu
+dGVncml0eSBjaGVja2luZyAoZm9yCj4+IGluc3RhbmNlLAo+PiBJTUEpLCBhcyBpdCBoYXMgbm8g
+ZGVwZW5kZW5jeSBvbiB0aGUgZmlsZXN5c3RlbSBtZXRhZGF0YSBpdHNlbGYuIFRoZQo+PiBhdHRy
+aWJ1dGVzIHRoYXQgSVBFIGNoZWNrcyBhcmUgZGV0ZXJtaW5pc3RpYyBwcm9wZXJ0aWVzIHRoYXQg
+ZXhpc3QKPj4gc29sZWx5Cj4+IGluIHRoZSBrZXJuZWwuIEFkZGl0aW9uYWxseSwgSVBFIHByb3Zp
+ZGVzIG5vIGFkZGl0aW9uYWwgbWVjaGFuaXNtcyBvZgo+PiB2ZXJpZnlpbmcgdGhlc2UgZmlsZXMg
+KGUuZy4gSU1BIFNpZ25hdHVyZXMpIC0gYWxsIG9mIHRoZSBhdHRyaWJ1dGVzCj4+IG9mCj4+IHZl
+cmlmeWluZyBmaWxlcyBhcmUgZXhpc3RpbmcgZmVhdHVyZXMgd2l0aGluIHRoZSBrZXJuZWwsIHN1
+Y2ggYXMKPj4gZG0tdmVyaXR5Cj4+IG9yIGZzdmVyaXR5Lgo+PiAiCj4+Cj4+IFRoYXQgaXMgbm90
+IHJlYWxseSBoZWxwZnVsLgoKUGVyaGFwcyBJIGNhbiBleHBsYWluIChhbmQgcmUtd29yZCB0aGlz
+IHBhcmFncmFwaCkgYSBiaXQgYmV0dGVyLgoKQXMgSmFtZXMgaW5kaWNhdGVzLCBJUEUgZG9lcyB0
+cnkgdG8gY2xvc2UgdGhlIGdhcCBvZiB0aGUgSU1BIGxpbWl0YXRpb24Kd2l0aCB4YXR0ci4gSSBo
+b25lc3RseSB3YXNu4oCZdCBmYW1pbGlhciB3aXRoIHRoZSBhcHBlbmRlZCBzaWduYXR1cmVzLAp3
+aGljaCBzZWVtcyBmaW5lLgoKUmVnYXJkbGVzcywgdGhpcyBpc27igJl0IHRoZSBsYXJnZXIgYmVu
+ZWZpdCB0aGF0IElQRSBwcm92aWRlcy4gVGhlCmxhcmdlciBiZW5lZml0IG9mIHRoaXMgaXMgaG93
+IElQRSBzZXBhcmF0ZXMgX21lY2hhbmlzbXNfIChwcm9wZXJ0aWVzKQp0byBlbmZvcmNlIGludGVn
+cml0eSByZXF1aXJlbWVudHMsIGZyb20gX3BvbGljeV8uIFRoZSBMU00gcHJvdmlkZXMKcG9saWN5
+LCB3aGlsZSB0aGluZ3MgbGlrZSBkbS12ZXJpdHkgcHJvdmlkZSBtZWNoYW5pc20uCgpTbyB0byBz
+cGVhaywgSVBFIGFjdHMgYXMgdGhlIGdsdWUgZm9yIG90aGVyIG1lY2hhbmlzbXMgdG8gbGV2ZXJh
+Z2UgYQpjdXN0b21pemFibGUsIHN5c3RlbS13aWRlIHBvbGljeSB0byBlbmZvcmNlLiBXaGlsZSB0
+aGlzIGluaXRpYWwKcGF0Y2hzZXQgb25seSBvbmJvYXJkcyBkbS12ZXJpdHksIHRoZXJl4oCZcyBh
+bHNvIHBvdGVudGlhbCBmb3IgTUFDIGxhYmVscywKZnMtdmVyaXR5LCBhdXRoZW50aWNhdGVkIEJU
+UkZTLCBkbS1pbnRlZ3JpdHksIGV0Yy4gSVBFIGxldmVyYWdlcwpleGlzdGluZyBzeXN0ZW1zIGlu
+IHRoZSBrZXJuZWwsIHdoaWxlIElNQSB1c2VzIGl0cyBvd24uCgpBbm90aGVyIGRpZmZlcmVuY2Ug
+aXMgdGhlIGdlbmVyYWwgY292ZXJhZ2UuIElNQSBoYXMgc29tZSBkaWZmaWN1bHRpZXMKaW4gY292
+ZXJpbmcgbXByb3RlY3RbMV0sIElQRSBkb2VzbuKAmXQgKHRoZSBNQVBfQU5PTllNT1VTIGluZGlj
+YXRlZCBieQpKYW5uIGluIHRoYXQgdGhyZWFkIHdvdWxkIGJlIGRlbmllZCBhcyB0aGUgZmlsZSBz
+dHJ1Y3Qgd291bGQgYmUgbnVsbCwKd2l0aCBJUEXigJlzIGN1cnJlbnQgc2V0IG9mIHN1cHBvcnRl
+ZCBtZWNoYW5pc21zLiBtcHJvdGVjdCB3b3VsZCBjb250aW51ZQp0byBmdW5jdGlvbiBhcyBleHBl
+Y3RlZCBpZiB5b3UgY2hhbmdlIHRvIFBST1RfRVhFQykuCgo+IFBlcmhhcHMgdGhlIGJpZyBxdWVz
+dGlvbiBpczogSWYgd2UgdXNlZCB0aGUgZXhpc3RpbmcgSU1BIGFwcGVuZGVkCj4gc2lnbmF0dXJl
+IGZvciBkZXRhY2hlZCBzaWduYXR1cmVzIChlZmZlY3RpdmVseSBiZWNvbWluZyB0aGUKPiAicHJv
+cGVydGllcyIgcmVmZXJyZWQgdG8gaW4gdGhlIGNvdmVyIGxldHRlcikgYW5kIGhvb2tlZCBJTUEg
+aW50bwo+IGRldmljZSBtYXBwZXIgdXNpbmcgYWRkaXRpb25hbCBwb2xpY3kgdGVybXMsIHdvdWxk
+IHRoYXQgc2F0aXNmeSBhbGwgdGhlCj4gcmVxdWlyZW1lbnRzIHRoaXMgbmV3IExTTSBoYXM/CgpX
+ZWxsLCBNaW1pLCB3aGF0IGRvIHlvdSB0aGluaz8gU2hvdWxkIHdlIGludGVncmF0ZSBhbGwgdGhl
+IGZlYXR1cmVzIG9mCklQRSBpbnRvIElNQSwgb3IgZG8geW91IHRoaW5rIHRoZXkgYXJlIHN1ZmZp
+Y2llbnRseSBkaWZmZXJlbnQgaW4KYXJjaGl0ZWN0dXJlIHRoYXQgaXQgd291bGQgYmUgd29ydGgg
+aXQgdG8ga2VlcCB0aGUgY29kZSBiYXNlIGluIHNlcGFyYXRlCkxTTXM/CgoKWzFdIApodHRwczov
+L2xvcmUua2VybmVsLm9yZy9saW51eC1pbnRlZ3JpdHkvMTU4ODY4ODIwNC41MTU3LjUuY2FtZWxA
+bGludXguaWJtLmNvbS8KCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
+LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
