@@ -1,15 +1,16 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH] dm-ebs: Fix incorrect checking for
- REQ_OP_FLUSH.
-Date: Tue, 4 Aug 2020 16:53:51 +0200
-Message-ID: <4f1d8377-6df2-ec1d-df1b-492d6a192468@redhat.com>
-References: <20200731224645.89483-1-jdorminy@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 08/35] libmultipath: create bitfield
+	abstraction
+Date: Tue, 04 Aug 2020 17:04:50 +0200
+Message-ID: <2ae4b38b8f07eb1ac9be31099b5be091fa6e9617.camel@suse.com>
+References: <20200709101620.6786-1-mwilck@suse.com>
+	<20200709101620.6786-9-mwilck@suse.com>
+	<20200716211708.GM11089@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200731224645.89483-1-jdorminy@redhat.com>
-Content-Language: en-US
+In-Reply-To: <20200716211708.GM11089@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,32 +20,96 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: John Dorminy <jdorminy@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Acked-by: Heinz Mauelshagen <heinzm@redhat.com>
+On Thu, 2020-07-16 at 16:17 -0500, Benjamin Marzinski wrote:
+> On Thu, Jul 09, 2020 at 12:15:53PM +0200, mwilck@suse.com wrote:
+> > From: Martin Wilck <mwilck@suse.com>
+> > 
+> > In e32d521d ("libmultipath: coalesce_paths: fix size mismatch
+> > handling"),
+> > we introduced simple bitmap handling functions. We can do better.
+> > This
+> > patch introduces a bitfield type with overflow detection and a
+> > find_first_set() method.
+> > 
+> > Use this in coalesce_paths(), and adapt the unit tests. Also, add
+> > unit tests for "odd" bitfield sizes; so far we tested only
+> > multiples
+> > of 64.
+> > 
+> > Signed-off-by: Martin Wilck <mwilck@suse.com>
+> > ---
+> >  libmultipath/configure.c |   9 +-
+> >  libmultipath/util.c      |  35 ++++++
+> >  libmultipath/util.h      |  57 ++++++++-
+> >  tests/util.c             | 263
+> > +++++++++++++++++++++++++++++++++++----
+> >  4 files changed, 327 insertions(+), 37 deletions(-)
+> > 
+> > ...
+> > diff --git a/libmultipath/util.c b/libmultipath/util.c
+> > index 3c43f28..46cacd4 100644
+> > --- a/libmultipath/util.c
+> > +++ b/libmultipath/util.c
+> > @@ -404,3 +404,38 @@ void close_fd(void *arg)
+> >  {
+> >  	close((long)arg);
+> >  }
+> > +
+> > +struct bitfield *alloc_bitfield(unsigned int maxbit)
+> > +{
+> > +	unsigned int n;
+> > +	struct bitfield *bf;
+> > +
+> > +	n = maxbit > 0 ? (maxbit - 1) / bits_per_slot + 1 : 0;
+> 
+> What's the point in accepting 0? That's an empty bitmap.
+> 
+> > +	bf = calloc(1, sizeof(struct bitfield) + n *
+> > sizeof(bitfield_t));
+> 
+> Need to check that bf got set before dereferencing it.
 
-On 8/1/20 12:46 AM, John Dorminy wrote:
-> REQ_OP_FLUSH was being treated as a flag, but the operation
-> part of bio->bi_opf must be treated as a whole. Change to
-> accessing the operation part via bio_op(bio) and checking
-> for equality.
->
-> Signed-off-by: John Dorminy <jdorminy@redhat.com>
-> ---
->   drivers/md/dm-ebs-target.c | 2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
->
-> diff --git a/drivers/md/dm-ebs-target.c b/drivers/md/dm-ebs-target.c
-> index 44451276f128..cb85610527c2 100644
-> --- a/drivers/md/dm-ebs-target.c
-> +++ b/drivers/md/dm-ebs-target.c
-> @@ -363,7 +363,7 @@ static int ebs_map(struct dm_target *ti, struct bio *bio)
->   	bio_set_dev(bio, ec->dev->bdev);
->   	bio->bi_iter.bi_sector = ec->start + dm_target_offset(ti, bio->bi_iter.bi_sector);
->   
-> -	if (unlikely(bio->bi_opf & REQ_OP_FLUSH))
-> +	if (unlikely(bio_op(bio) == REQ_OP_FLUSH))
->   		return DM_MAPIO_REMAPPED;
->   	/*
->   	 * Only queue for bufio processing in case of partial
+Thanks for spotting these, I will fix them.
+
+> 
+> > +	bf->len = maxbit;
+> > +	return bf;
+> > +}
+> > +
+> > +void _log_bitfield_overflow(const char *f, unsigned int bit,
+> > unsigned int len)
+> > +{
+> > +	condlog(0, "%s: bitfield overflow: %u >= %u", f, bit, len);
+> > +}
+> > +
+> > +unsigned int find_first_set(const struct bitfield *bf)
+> > +{
+> > +	unsigned int b = 0, i, n;
+> > +
+> > +	for (i = 0; i < bf->len; i+= bits_per_slot) {
+> > +		b = _ffs(bf->bits[i / bits_per_slot]);
+> > +		if (b != 0)
+> > +			break;
+> > +	};
+> > +	if (b == 0)
+> > +		return 0;
+> > +
+> > +	n = i + b;
+> > +	if (n <= bf->len)
+> > +		return n;
+> > +
+> > +	return 0;
+> > +}
+> 
+> This is neat and all, but what's it for?  I didn't see it used in the
+> rest of the patches.  Did I miss it, or do you have a future use for
+> it?
+
+Got me :-) I first thought we had a use for it. I can rip it out if you
+prefer, saving a local copy in case we need it in the future. 
+
+Martin
