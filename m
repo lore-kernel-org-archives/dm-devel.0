@@ -1,16 +1,16 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 66/74] libmultipath: update_pathvec_from_dm:
- handle pp->mpp mismatch
-Date: Wed, 05 Aug 2020 21:44:40 +0200
-Message-ID: <b74c9d674b40d6efe889fadfd005758e79dc4d8d.camel@suse.com>
+Subject: Re: [PATCH 69/74] libmultipath: disassemble_map(): get
+ rid of "is_daemon" argument
+Date: Wed, 05 Aug 2020 22:05:19 +0200
+Message-ID: <a51ef1b268de27db37386ba05af009f513ecce84.camel@suse.com>
 References: <20200709105145.9211-1-mwilck@suse.com>
-	<20200709105145.9211-14-mwilck@suse.com>
-	<20200719051200.GX11089@octiron.msp.redhat.com>
+	<20200709105145.9211-17-mwilck@suse.com>
+	<20200719052617.GY11089@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200719051200.GX11089@octiron.msp.redhat.com>
+In-Reply-To: <20200719052617.GY11089@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,47 +24,47 @@ To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, 2020-07-19 at 00:12 -0500, Benjamin Marzinski wrote:
-> On Thu, Jul 09, 2020 at 12:51:37PM +0200, mwilck@suse.com wrote:
+On Sun, 2020-07-19 at 00:26 -0500, Benjamin Marzinski wrote:
+> On Thu, Jul 09, 2020 at 12:51:40PM +0200, mwilck@suse.com wrote:
 > > From: Martin Wilck <mwilck@suse.com>
 > > 
-> > Treat this like a WWID mismatch.
-> > 
-> > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > ---
-> >  libmultipath/structs_vec.c | 37 +++++++++++++++++++++++-----------
-> > ---
-> >  1 file changed, 23 insertions(+), 14 deletions(-)
-> > 
-> > diff --git a/libmultipath/structs_vec.c
-> > b/libmultipath/structs_vec.c
-> > index 5dd37d5..8651b98 100644
-> > --- a/libmultipath/structs_vec.c
-> > +++ b/libmultipath/structs_vec.c
-> > 
-> > [...]
-> > +		bad_path:
-> > +			/*
-> > +			 * This path exists, but in the wrong map.
-> > +			 * We can't reload the map from here.
-> > +			 * Instead, treat this path like "missing
-> > udev".
-> > +			 * check_path() will trigger an uevent and
-> > reset pp->tick.
-> > +			 */
-> > +			must_reload = true;
-> > +			pp->mpp = NULL;
-> > +			dm_fail_path(mpp->alias, pp->dev_t);
-> > +			vector_del_slot(pgp->paths, j--);
-> > +			pp->initialized = INIT_MISSING_UDEV;
-> > +			pp->tick = 1;
+> > The reason for the is_daemon parameter in disassemble_map() lies
+> > deep in multipath-tools' past, in b96dead ("[multipathd] remove the
+> > retry login in uev_remove_path()"): By not adding paths from
+> > disassembled maps to the pathvec, we avoided to re-add removed
+> > paths on
+> > future map reloads (logic in update_mpp_paths()). As we can handle
+> > this with
+> > INIT_REMOVED now, we don't need to distinguish daemon and non-
+> > daemon
+> > mode any more. This fixes a memory leak, because only paths which
+> > are in
+> > pathvec will be freed on program exit.
 > 
-> Is there a reason not to call orphan_path() to clean up things like
-> any
-> open fd, until we figure out what to do with the path.
+> I don't have any problems with the code in this patch. I just want to
+> reiterate that I don't think that multipathd should automatically be
+> adding paths, just because they were in a multipath device.  In my
+> opinion, multipathd should have the final decision as to what a
+> multipath device should look like.  If it sees an unexpected path,
+> and
+> runs pathinfo on it, and finds that that path does belong, it's fine
+> to
+> add it. But if pathinfo says that the path doesn't belong, multipathd
+> shouldn't add it to the pathvec. It should instead trigger a reload
+> of
+> the device to remove path.
 
-Thanks for the suggestion. It makes sense for the 2nd "bad_path"
-condition but not for the first. I'll treat the two cases differently.
+Got it. I commented in my reply to 65/74. I'll repost this part with
+the minor issues you raised fixed (hopefully). Then let's review /
+discuss this again. If we agree on your PoV, we can probably ditch the
+whole INIT_REMOVED part of my series.
 
-Regards
+I hope you agree that "if (!is_daemon)" so deep in libmultipath
+is ugly and should be replaced by something cleaner.
+
+We should take the opportunity to agree on a definition on the exact
+semantics of pathvec, i.e. which devices should be members of pathvec,
+and which ones shouldn't. I don't see a clear, consequent definition
+currently.
+
 Martin
