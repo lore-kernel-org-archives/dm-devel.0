@@ -1,15 +1,16 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 00/42] multipath-tools series part III:
-	duplicate alias
-Date: Tue, 04 Aug 2020 23:08:14 +0200
-Message-ID: <6fdb676e4ff63e4ea6f986e9a3a7401da6a27bae.camel@suse.com>
-References: <20200709103513.8142-1-mwilck@suse.com>
-	<20200720203023.GC11089@octiron.msp.redhat.com>
+Subject: Re: [PATCH 44/54] libmultipath: adopt_paths(): don't
+ bail out on single path failure
+Date: Wed, 05 Aug 2020 14:05:00 +0200
+Message-ID: <7a92c06bdbfdcfd3530607f4b8dbce7a5c9330a5.camel@suse.com>
+References: <20200709103623.8302-1-mwilck@suse.com>
+	<20200709103623.8302-3-mwilck@suse.com>
+	<20200717212525.GR11089@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200720203023.GC11089@octiron.msp.redhat.com>
+In-Reply-To: <20200717212525.GR11089@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,69 +24,38 @@ To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 2020-07-20 at 15:30 -0500, Benjamin Marzinski wrote:
-> On Thu, Jul 09, 2020 at 12:35:10PM +0200, mwilck@suse.com wrote:
+On Fri, 2020-07-17 at 16:25 -0500, Benjamin Marzinski wrote:
+> On Thu, Jul 09, 2020 at 12:36:13PM +0200, mwilck@suse.com wrote:
 > > From: Martin Wilck <mwilck@suse.com>
 > > 
-> > Hi Christophe, hi Ben,
-> > 
-> > This is part II of a larger patch series for multpath-tools I've
-> > been preparing.
-> > It contains fixes for a customer issue where the same alias was set
-> > for
-> > several maps with different WWIDs in the WWIDs file.
-> > 
-> > It's based on the previously submitted part II.
-> > 
-> > The full series will also be available here:
-> > https://github.com/mwilck/multipath-tools/tree/ups/submit-2007
-> > 
-> > There are tags in that repo for each part of the series.
-> > This part is tagged "submit-200709-3".
+> > If pathinfo fails for one path to be adopted, we currently
+> > fail the entire function. This may cause ev_add_path() for a valid
+> > path to fail because some other path is broken. Fix it by just
+> > skipping paths that don't look healthy.
 > 
-> With the first two of these patches applied , multipathd fails a
-> real-world situation in different, arguably worse, way than it
-> currently
-> does, and I think it could do better.  If user_friendly_names is set,
-> but two (or more) devices weren't in the initramfs bindings file,
-> they
-> will get random aliases during boot.  Assuming the devices are in the
-> regular filesystem bindings file, it's not super uncommon for these
-> devices to pick from the same alias as they use in the regular
-> bindings
-> file, but with different wwids matching to different aliases.
-> 
-> Without these patches, multipath will rename them if possible, but if
-> not, they will still exist, but with the wrong alias. Existing with
+> This looks problematic to me.  While I agree that we shouldn't make
+> ev_add_path fail because some other path failed, but what about if
 > the
-> wrong alias isn't great, since things could be checking for the
-> devices
-> by name, which could cause corruption. 
+> path we are trying to add fails in pathinfo().  In this case
+> multipathd
+> won't orphan the path and it will report "path added to devmap", even
+> though it wasn't. Also what is the correct response for when you try
+> to create a multipath device but none of the paths can be added.
+> Should multipathd create a device with no paths? 
 
-Indeed I didn't think of this scenario.
+There are 3 callers of adopt_path():
 
-The problem our customer faced was actually an evil case of data
-corruption which must be avoided. But you're right, my attempt to fix
-it was wrong.
+ 1 add_map_with_path()
+ 2 ev_add_path()
+ 3 update_map()
 
-> But in reality, usually they are
-> referenced by Labels, which will still work (since most things are
-> designed to not expect persistent naming of devices).  However, with
-> this patches, some of the devices will be deleted, which avoids the
-> possiblity of corruption, but in practice usually is worse because
-> referencing devices by label already avoids the corruption problem. 
-> 
-> A better idea might simply be to fallback to using the WWID as an
-> alias,
-> on the offending map.  This should avoid corruption, since unless
-> someone manually set the WWID as an alias in multipath.conf it should
-> be
-> unique. But it won't cause an existing, and possibly necessary,
-> device
-> to get deleted.
+adopt_paths() only ever adds new paths to a map, so in case 3), the map
+would not come out without paths unless it had been empty before
+already. For this caller, my patch is definitely an improvement.
 
-Ok, I'm going to try to come up with a version that doesn't suffer from
-the problem you describe. I'll have to ponder about it some more.
+For 1) and 2), we are adding a specific path, so we should test in the
+caller whether that specific path was successfully added, and fail
+otherwise. Would that address your concern?
 
-Thanks for pointing this out,
+Regards,
 Martin
