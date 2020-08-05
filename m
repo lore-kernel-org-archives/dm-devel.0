@@ -1,105 +1,130 @@
-From: Mimi Zohar <zohar@linux.ibm.com>
-Subject: Re: [dm-devel] [RFC PATCH v5 00/11] Integrity Policy Enforcement
- LSM (IPE)
-Date: Wed, 05 Aug 2020 14:15:13 -0400
-Message-ID: <b08ae82102f35936427bf138085484f75532cff1.camel@linux.ibm.com>
-References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
-          <20200802115545.GA1162@bug> <20200802140300.GA2975990@sasha-vm>
-          <20200802143143.GB20261@amd>
-          <1596386606.4087.20.camel@HansenPartnership.com>
-          <fb35a1f7-7633-a678-3f0f-17cf83032d2b@linux.microsoft.com>
-         <1596639689.3457.17.camel@HansenPartnership.com>
-         <alpine.LRH.2.21.2008050934060.28225@namei.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: fixing 4.14-stable's broken DM cache writethrough
+ support [was: Re: [(resend) PATCH v3: {linux-4.14.y} ] dm cache: submit
+ writethrough writes in parallel to origin and cache]
+Date: Wed, 5 Aug 2020 15:34:09 -0400
+Message-ID: <20200805193409.GA21824@redhat.com>
+References: <8CFF8DA9-C105-461C-8F5A-DA2BF448A135@oracle.com>
+	<20200804124735.GA219143@kroah.com>
+	<20200804182037.GA15453@redhat.com>
+	<20200805143242.GC2154236@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.21.2008050934060.28225@namei.org>
-Sender: owner-linux-security-module@vger.kernel.org
-To: James Morris <jmorris@namei.org>, James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: Deven Bowers <deven.desai@linux.microsoft.com>, Pavel Machek <pavel@ucw.cz>, Sasha Levin <sashal@kernel.org>, snitzer@redhat.com, dm-devel@redhat.com, tyhicks@linux.microsoft.com, agk@redhat.com, paul@paul-moore.com, corbet@lwn.net, nramas@linux.microsoft.com, serge@hallyn.com, pasha.tatashin@soleen.com, jannh@google.com, linux-block@vger.kernel.org, viro@zeniv.linux.org.uk, axboe@kernel.dk, mdsakib@microsoft.com, linux-kernel@vger.kernel.org, eparis@redhat.com, linux-security-module@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org, jaskarankhurana@linux.microsoft.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200805143242.GC2154236@kroah.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Greg KH <gregkh@linuxfoundation.org>
+Cc: John Donnelly <john.p.donnelly@oracle.com>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, 2020-08-05 at 09:59 -0700, James Morris wrote:
-> On Wed, 5 Aug 2020, James Bottomley wrote:
-> 
-> > I'll leave Mimi to answer, but really this is exactly the question that
-> > should have been asked before writing IPE.  However, since we have the
-> > cart before the horse, let me break the above down into two specific
-> > questions.
-> 
-> The question is valid and it was asked. We decided to first prototype what 
-> we needed and then evaluate if it should be integrated with IMA. We 
-> discussed this plan in person with Mimi (at LSS-NA in 2019), and presented 
-> a more mature version of IPE to LSS-NA in 2020, with the expectation that 
-> such a discussion may come up (it did not).
+On Wed, Aug 05 2020 at 10:32am -0400,
+Greg KH <gregkh@linuxfoundation.org> wrote:
 
-When we first spoke the concepts weren't fully formulated, at least to
-me.
+> On Tue, Aug 04, 2020 at 02:20:38PM -0400, Mike Snitzer wrote:
+> > On Tue, Aug 04 2020 at  8:47am -0400,
+> > Greg KH <gregkh@linuxfoundation.org> wrote:
+> > 
+> > > On Tue, Aug 04, 2020 at 07:33:05AM -0500, John Donnelly wrote:
+> > > > From: Mike Snitzer <snitzer@redhat.com>
+> > > > 
+> > > > Discontinue issuing writethrough write IO in series to the origin and
+> > > > then cache.
+> > > > 
+> > > > Use bio_clone_fast() to create a new origin clone bio that will be
+> > > > mapped to the origin device and then bio_chain() it to the bio that gets
+> > > > remapped to the cache device.  The origin clone bio does _not_ have a
+> > > > copy of the per_bio_data -- as such check_if_tick_bio_needed() will not
+> > > > be called.
+> > > > 
+> > > > The cache bio (parent bio) will not complete until the origin bio has
+> > > > completed -- this fulfills bio_clone_fast()'s requirements as well as
+> > > > the requirement to not complete the original IO until the write IO has
+> > > > completed to both the origin and cache device.
+> > > > 
+> > > > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > > > 
+> > > > (cherry picked from commit 2df3bae9a6543e90042291707b8db0cbfbae9ee9)
+> > > > 
+> > > > Fixes: 4ec34f2196d125ff781170ddc6c3058c08ec5e73 (dm bio record:
+> > > > save/restore bi_end_io and bi_integrity )
+> > > > 
+> > > > 4ec34f21 introduced a mkfs.ext4 hang on a LVM device that has been
+> > > > modified with lvconvert --cachemode=writethrough.
+> > > > 
+> > > > CC:stable@vger.kernel.org for 4.14.y
+> > > > 
+> > > > Signed-off-by: John Donnelly <john.p.donnelly@oracle.com>
+> > > > Reviewed-by: Somasundaram Krishnasamy <somasundaram.krishnasamy@oracle.com>
+> > > > 
+> > > > conflicts:
+> > > > 	drivers/md/dm-cache-target.c. -  Corrected usage of
+> > > > 	writethrough_mode(&cache->feature) that was caught by
+> > > > 	compiler, and removed unused static functions : writethrough_endio(),
+> > > > 	defer_writethrough_bio(), wake_deferred_writethrough_worker()
+> > > > 	that generated warnings.
+> > > 
+> > > What is this "conflicts nonsense"?  You don't see that in any other
+> > > kernel patch changelog, do you?
+> > > 
+> > > > ---
+> > > > drivers/md/dm-cache-target.c | 92 ++++++++++++++++++--------------------------
+> > > > 1 file changed, 37 insertions(+), 55 deletions(-)
+> > > 
+> > > Please fix your email client up, it's totally broken and this does not
+> > > work at all and is getting frustrating from my side here.
+> > > 
+> > > Try sending emails to yourself and see if you can apply the patches, as
+> > > the one you sent here does not work, again:
+> > 
+> > John's inability to submit a patch that can apply aside: I do not like
+> > how this patch header is constructed (yet attributed "From" me).  It is
+> > devoid of detail as it relates to stable@.
+> > 
+> > Greg, please don't apply the v4 of this patch either.  I'll craft a
+> > proper stable@ patch that explains the reason for change and why we're
+> > left having to resolve conflicts in stable@.
+> > 
+> > But first I need to focus on sending DM changes to Linus for v5.9 merge.
 > 
-> These patches are still part of this process and 'RFC' status.
-> 
-> >    1. Could we implement IPE in IMA (as in would extensions to IMA cover
-> >       everything).  I think the answers above indicate this is a "yes".
-> 
-> It could be done, if needed.
-> 
-> >    2. Should we extend IMA to implement it?  This is really whether from a
-> >       usability standpoint two seperate LSMs would make sense to cover the
-> >       different use cases.
-> 
-> One issue here is that IMA is fundamentally a measurement & appraisal 
-> scheme which has been extended to include integrity enforcement. IPE was 
-> designed from scratch to only perform integrity enforcement. As such, it 
-> is a cleaner design -- "do one thing and do it well" is a good design 
-> pattern.
-> 
-> In our use-case, we utilize _both_ IMA and IPE, for attestation and code 
-> integrity respectively. It is useful to be able to separate these 
-> concepts. They really are different:
-> 
-> - Code integrity enforcement ensures that code running locally is of known 
-> provenance and has not been modified prior to execution.
-> 
-> - Attestation is about measuring the health of a system and having that 
-> measurement validated by a remote system. (Local attestation is useless).
-> 
-> I'm not sure there is value in continuing to shoe-horn both of these into 
-> IMA.
+> Ok, no worries, I'll drop all of these from my review queue and wait for
+> something from you sometime in the future.
 
-True, IMA was originally limited to measurement and attestation, but
-most of the original EVM concepts were subsequently included in IMA. 
-(Remember, Reiner Sailer wrote the original IMA, which I inherited.  I
-was originially working on EVM code integrity.)  From a naming
-perspective including EVM code integrity in IMA was a mistake.  My
-thinking at the time was that as IMA was already calculating the file
-hash, instead of re-calculating the file hash for integrity, calculate
-the file hash once and re-use it for multiple things - measurement, 
-integrity, and audit.   At the same time define a single system wide
-policy.
+Hey Greg,
 
-When we first started working on IMA, EVM, trusted, and encrypted keys,
-the general kernel community didn't see a need for any of it.  Thus, a
-lot of what was accomplished has been accomplished without the backing
-of the real core filesystem people.
+SO I've looked this required 4.14 stable@ backport over. Because 4.14
+already has these commits (to fix a dm integrity issue):
+1b17159e52b dm bio record: save/restore bi_end_io and bi_integrity
+248aa2645aa dm integrity: use dm_bio_record and dm_bio_restore
 
-If block layer integrity was enough, there wouldn't have been a need
-for fs-verity.   Even fs-verity is limited to read only filesystems,
-which makes validating file integrity so much easier.  From the
-beginning, we've said that fs-verity signatures should be included in
-the measurement list.  (I thought someone signed on to add that support
-to IMA, but have not yet seen anything.)
+DM-cache's 4.14 writethrough mode got broken because its implementation
+(ab)used dm_hook_bio+dm_bio_record and predates 4.15's switch to using
+bio_chain() via commit 2df3bae9a654.  Without commit 2df3bae9a654 the
+dm_hook_bio+dm_bio_record changes from commit 1b17159e52b break
+dm-cache's writethrough support.
 
-Going forward I see a lot of what we've accomplished being incorporated
-into the filesystems.  When IMA will be limited to defining a system
-wide policy, I'll have completed my job.
+So 4.14-stable now needs these 3 upstream 4.15 commits:
+8e3c3827776f dm cache: pass cache structure to mode functions
+2df3bae9a654 dm cache: submit writethrough writes in parallel to origin and cache
+9958f1d9a04e dm cache: remove all obsolete writethrough-specific code
 
-Mimi
+Applying those commits to v4.14.190 with:
+git cherry-pick -x 8e3c3827776f^..9958f1d9a04e
 
-> 
-> >  I've got to say the least attractive thing
-> >       about separation is the fact that you now both have a policy parser.
-> >        You've tried to differentiate yours by making it more Kconfig
-> >       based, but policy has a way of becoming user space supplied because
-> >       the distros hate config options, so I think you're going to end up
-> >       with a policy parser very like IMAs.
+results in a kernel that successfully builds and should fix
+4.14-stable's broken dm-cache writethrough support.
+
+Are you ok with queueing up applying these 3 upstream commits to
+4.14-stable or do you need me to send a patchset?
+
+Thanks,
+Mike
