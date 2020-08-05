@@ -1,84 +1,31 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] libmultipath: fix null dereference in add
-Date: Wed, 05 Aug 2020 23:36:38 +0200
-Message-ID: <7b6403a39da1a6fd6f2297884fed957414c4e55d.camel@suse.com>
-References: <9f10e135-348d-d11a-85cb-797522ba5210@huawei.com>
-	<20200803173535.GF19233@octiron.msp.redhat.com>
+From: James Morris <jmorris@namei.org>
+Subject: Re: [dm-devel] [RFC PATCH v5 00/11] Integrity Policy Enforcement
+ LSM (IPE)
+Date: Thu, 6 Aug 2020 09:51:57 +1000 (AEST)
+Message-ID: <alpine.LRH.2.21.2008060949410.20084@namei.org>
+References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>   <20200802115545.GA1162@bug> <20200802140300.GA2975990@sasha-vm>   <20200802143143.GB20261@amd>   <1596386606.4087.20.camel@HansenPartnership.com>   <fb35a1f7-7633-a678-3f0f-17cf83032d2b@linux.microsoft.com>
+  <1596639689.3457.17.camel@HansenPartnership.com>  <alpine.LRH.2.21.2008050934060.28225@namei.org> <b08ae82102f35936427bf138085484f75532cff1.camel@linux.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200803173535.GF19233@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, lixiaokeng <lixiaokeng@huawei.com>
-Cc: linfeilong@huawei.com, dm-devel@redhat.com, liuzhiqiang26@huawei.com, lutianxiong@huawei.com
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <b08ae82102f35936427bf138085484f75532cff1.camel@linux.ibm.com>
+Sender: owner-linux-security-module@vger.kernel.org
+To: Mimi Zohar <zohar@linux.ibm.com>
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, Deven Bowers <deven.desai@linux.microsoft.com>, Pavel Machek <pavel@ucw.cz>, Sasha Levin <sashal@kernel.org>, snitzer@redhat.com, dm-devel@redhat.com, tyhicks@linux.microsoft.com, agk@redhat.com, paul@paul-moore.com, corbet@lwn.net, nramas@linux.microsoft.com, serge@hallyn.com, pasha.tatashin@soleen.com, jannh@google.com, linux-block@vger.kernel.org, viro@zeniv.linux.org.uk, axboe@kernel.dk, mdsakib@microsoft.com, linux-kernel@vger.kernel.org, eparis@redhat.com, linux-security-module@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org, jaskarankhurana@linux.microsoft.com
 List-Id: dm-devel.ids
 
-On Mon, 2020-08-03 at 12:35 -0500, Benjamin Marzinski wrote:
-> On Mon, Aug 03, 2020 at 07:57:01PM +0800, lixiaokeng wrote:
-> > I got a multipath segfault while running iscsi login/logout and
-> > following scripts in parallel:
-> > 
-> > #!/bin/bash
-> > interval=1
-> > while true
-> > do
-> >               multipath -F &> /dev/null
-> >               multipath -r &> /dev/null
-> >               multipath -v2 &> /dev/null
-> >               multipath -ll &> /dev/null
-> >               sleep $interval
-> > done
-> > 
-> > This is the debuginfo:
-> > #0  0x00007f3805e4df58 in add (ctx=0x55d1569e4a00,
-> > ud=0x55d1569bafd0) at nvme.c:801
-> > 801              if (strcmp("disk", udev_device_get_devtype(ud)))
-> > (gdb) bt
-> > #0  0x00007f3805e4df58 in add (ctx=0x55d1569e4a00,
-> > ud=0x55d1569bafd0) at nvme.c:801
-> > #1  0x00007f3806687a44 in add_foreign (udev=0x55d1569bafd0) at
-> > foreign.c:299
-> > #2  0x00007f3806665abf in is_claimed_by_foreign (ud=<optimized
-> > out>) at foreign.h:316
-> > #3  pathinfo (pp=0x55d1569e9f50, conf=0x55d1569b92d0, mask=69) at
-> > discovery.c:2064
-> > #4  0x000055d154c91cbb in check_usable_paths (conf=0x55d1569b92d0,
-> > devpath=0x55d1569e3200 "dm-6", dev_type=<optimized out>) at
-> > main.c:368
-> > #5  0x000055d154c910a5 in main (argc=3, argv=<optimized out>) at
-> > main.c:1057
-> > In add() at libmultipath/foreign/nvme.c,
-> > udev_device_get_devtype(ud) return a NULL pointer then
-> > dereferenced.
-> > Here, NULL check is needed.
-> > Check if udev_device_get_devtype return NULL before dereferencing
-> > it.
+On Wed, 5 Aug 2020, Mimi Zohar wrote:
+
+> If block layer integrity was enough, there wouldn't have been a need
+> for fs-verity.   Even fs-verity is limited to read only filesystems,
+> which makes validating file integrity so much easier.  From the
+> beginning, we've said that fs-verity signatures should be included in
+> the measurement list.  (I thought someone signed on to add that support
+> to IMA, but have not yet seen anything.)
 > 
-> This patch looks fine. However, it has pointed out a larger problem
-> with
-> the udev_device_get_* functions. This is not the only instance where
-> we
-> aren't checking the return value of these functions before
-> dereferencing
-> it.
+> Going forward I see a lot of what we've accomplished being incorporated
+> into the filesystems.  When IMA will be limited to defining a system
+> wide policy, I'll have completed my job.
 
-Right. libudev/libsystemd seem to follow a "lazy" approach for certain 
-properties, fetching them only when requested. If such a function call
-returns NULL, I guess we have to assume that fetching the respective
-property from sysfs failed, and thus the udev_device has become non-
-existent / invalid. OTOH, this is probably "better" than libudev
-fetching other properties from the cache and NOT making us realize that
-the device is long gone.
-
-Next pending code audit :-/
-
-Martin
+What are your thoughts on IPE being a standalone LSM? Would you prefer to 
+see its functionality integrated into IMA?
