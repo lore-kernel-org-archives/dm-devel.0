@@ -1,17 +1,15 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 3/6] libmultipath: remove code duplication in
- path counting
-Date: Thu, 6 Aug 2020 10:48:12 +0000
-Message-ID: <a8190af67d89edb0819b231417b349e56c3deff1.camel@suse.com>
+Subject: Re: [PATCH 0/6] multipath cleanups
+Date: Thu, 6 Aug 2020 10:58:50 +0000
+Message-ID: <75f9dc44f24e4ff5923ba3bc5cb44f29635afb62.camel@suse.com>
 References: <1595877868-5595-1-git-send-email-bmarzins@redhat.com>
-	<1595877868-5595-4-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1595877868-5595-4-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1595877868-5595-1-git-send-email-bmarzins@redhat.com>
 Content-Language: en-US
-Content-ID: <ECE4D8CCF58B2042902527C39C71B5C3@eurprd04.prod.outlook.com>
+Content-ID: <45963B8C4183444EA50BFFE78EBAB8F5@eurprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,25 +24,38 @@ Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 On Mon, 2020-07-27 at 14:24 -0500, Benjamin Marzinski wrote:
-> pathcountgr() is never used except by pathcount(), and neither is the
-> special case for PATH_WILD. Simplify this and make one function that
-> is
-> used by both pathcount() and count_active_paths(). This will be used
-> again in a future patch.
-> 
-> Also use count_active_paths() in mpath_persist.
+> Patches 0003 & 0004 fix an issue that I've seen with paths whose
+> checker
+> takes too long when multipathd is starting up and creating devices.
+>=20
+> The others are minor build fixes or small cleanups to my previous
+> patchset.
+>=20
+> Benjamin Marzinski (6):
+>   Makefile.inc: trim extra information from systemd version
+>   kpartx: fix -Wsign-compare error
+>   libmultipath: remove code duplication in path counting
+>   libmultipath: count pending paths as active on loads
+>   libmultipath: deal with flushing no maps
+>   multipath: deal with delegation failures correctly
+>=20
+>  Makefile.inc                    |  2 +-
+>  kpartx/kpartx.c                 |  2 +-
+>  libmpathpersist/mpath_persist.c |  4 +--
+>  libmultipath/devmapper.c        |  5 ++--
+>  libmultipath/structs.c          | 52 ++++++++++++++++---------------
+> --
+>  libmultipath/structs.h          |  2 +-
+>  multipath/main.c                |  9 ++++--
+>  7 files changed, 39 insertions(+), 37 deletions(-)
+>=20
 
-The patch looks correct. I had thought about something like it as well
-when I first introduced count_active_paths(). But count_active_paths()
-is used a *lot*, and often in critical situations. I wonder whether it
-deserves an optimized version. The compiler can surely optimize better
-with two constant expressions than with the additional for-loop over an
-array with variable size. That's why back then I decided against
-implementing it as a special case of a generic function. I actually
-considered inlining count_active_paths().
+For the series, except 3/6:
 
-It's hard to quantify the effect, and I haven't done any benchmarks. 
-But still, can we perhaps keep the optimized version of
-count_active_paths() itself?
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-Martin
+--=20
+Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+SUSE  Software Solutions Germany GmbH
+HRB 36809, AG N=FCrnberg GF: Felix
+Imend=F6rffer
