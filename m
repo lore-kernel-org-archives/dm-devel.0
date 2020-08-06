@@ -1,16 +1,17 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH 2/6] kpartx: fix -Wsign-compare error
-Date: Thu, 6 Aug 2020 10:30:30 +0000
-Message-ID: <6a8a2544bf10ae6e4d61bf93f8026216c3e90782.camel@suse.com>
+Subject: Re: [PATCH 3/6] libmultipath: remove code duplication in
+ path counting
+Date: Thu, 6 Aug 2020 10:48:12 +0000
+Message-ID: <a8190af67d89edb0819b231417b349e56c3deff1.camel@suse.com>
 References: <1595877868-5595-1-git-send-email-bmarzins@redhat.com>
-	<1595877868-5595-3-git-send-email-bmarzins@redhat.com>
+	<1595877868-5595-4-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1595877868-5595-3-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1595877868-5595-4-git-send-email-bmarzins@redhat.com>
 Content-Language: en-US
-Content-ID: <32A8E024AC962A4FB5709ADBF018860D@eurprd04.prod.outlook.com>
+Content-ID: <ECE4D8CCF58B2042902527C39C71B5C3@eurprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,37 +26,25 @@ Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 On Mon, 2020-07-27 at 14:24 -0500, Benjamin Marzinski wrote:
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  kpartx/kpartx.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
->=20
-> diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-> index c24ad6d9..653ce0c8 100644
-> --- a/kpartx/kpartx.c
-> +++ b/kpartx/kpartx.c
-> @@ -738,7 +738,7 @@ struct block {
->  /* blknr is always in 512 byte blocks */
->  char *
->  getblock (int fd, unsigned int blknr) {
-> -=09unsigned int secsz =3D get_sector_size(fd);
-> +=09int secsz =3D get_sector_size(fd);
->  =09unsigned int blks_per_sec =3D secsz / 512;
->  =09unsigned int secnr =3D blknr / blks_per_sec;
->  =09unsigned int blk_off =3D (blknr % blks_per_sec) * 512;
+> pathcountgr() is never used except by pathcount(), and neither is the
+> special case for PATH_WILD. Simplify this and make one function that
+> is
+> used by both pathcount() and count_active_paths(). This will be used
+> again in a future patch.
+> 
+> Also use count_active_paths() in mpath_persist.
 
-I was wondering why I didn't see this one. Turns out that it occurs
-only for 32bit compilations. It looks like sort of an overzealous
-compiler warning to me, as it's only about a "!=3D" comparison that can
-hardly produce a wrong or unexpected result.
+The patch looks correct. I had thought about something like it as well
+when I first introduced count_active_paths(). But count_active_paths()
+is used a *lot*, and often in critical situations. I wonder whether it
+deserves an optimized version. The compiler can surely optimize better
+with two constant expressions than with the additional for-loop over an
+array with variable size. That's why back then I decided against
+implementing it as a special case of a generic function. I actually
+considered inlining count_active_paths().
 
-Btw, not that it would matter much, but the value of he BLKSSZGET ioctl
-is actually unsigned.
+It's hard to quantify the effect, and I haven't done any benchmarks. 
+But still, can we perhaps keep the optimized version of
+count_active_paths() itself?
 
-Anyway, ack.
-
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+Martin
