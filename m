@@ -1,57 +1,142 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 3/6] libmultipath: remove code duplication in
- path counting
-Date: Mon, 10 Aug 2020 16:51:25 -0500
-Message-ID: <20200810215125.GO19233@octiron.msp.redhat.com>
-References: <1595877868-5595-1-git-send-email-bmarzins@redhat.com>
-	<1595877868-5595-4-git-send-email-bmarzins@redhat.com>
-	<a8190af67d89edb0819b231417b349e56c3deff1.camel@suse.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <a8190af67d89edb0819b231417b349e56c3deff1.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Martin Wilck <Martin.Wilck@suse.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+From: Chuck Lever <chucklever@gmail.com>
+Subject: Re: [dm-devel] [RFC PATCH v5 00/11] Integrity Policy Enforcement LSM
+ (IPE)
+Date: Mon, 10 Aug 2020 19:36:47 -0400
+Message-ID: <6E907A22-02CC-42DD-B3CD-11D304F3A1A8@gmail.com>
+References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
+ <20200802115545.GA1162@bug> <20200802140300.GA2975990@sasha-vm>
+ <20200802143143.GB20261@amd> <1596386606.4087.20.camel@HansenPartnership.com>
+ <fb35a1f7-7633-a678-3f0f-17cf83032d2b@linux.microsoft.com>
+ <1596639689.3457.17.camel@HansenPartnership.com>
+ <alpine.LRH.2.21.2008050934060.28225@namei.org>
+ <b08ae82102f35936427bf138085484f75532cff1.camel@linux.ibm.com>
+ <329E8DBA-049E-4959-AFD4-9D118DEB176E@gmail.com>
+ <da6f54d0438ee3d3903b2c75fcfbeb0afdf92dc2.camel@linux.ibm.com>
+ <1597073737.3966.12.camel@HansenPartnership.com>
+Mime-Version: 1.0 (Mac OS X Mail 13.4 \(3608.80.23.2.2\))
+Content-Type: text/plain;
+        charset=us-ascii
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <1597073737.3966.12.camel@HansenPartnership.com>
+Sender: linux-block-owner@vger.kernel.org
+To: James Bottomley <James.Bottomley@HansenPartnership.com>
+Cc: Mimi Zohar <zohar@linux.ibm.com>, James Morris <jmorris@namei.org>, Deven Bowers <deven.desai@linux.microsoft.com>, Pavel Machek <pavel@ucw.cz>, Sasha Levin <sashal@kernel.org>, snitzer@redhat.com, dm-devel@redhat.com, tyhicks@linux.microsoft.com, agk@redhat.com, Paul Moore <paul@paul-moore.com>, Jonathan Corbet <corbet@lwn.net>, nramas@linux.microsoft.com, serge@hallyn.com, pasha.tatashin@soleen.com, Jann Horn <jannh@google.com>, linux-block@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, mdsakib@microsoft.com, open list <linux-kernel@vger.kernel.org>, eparis@redhat.com, linux-security-module@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-integrity@vger.kernel.org, jaskarankhurana@linu
 List-Id: dm-devel.ids
 
-On Thu, Aug 06, 2020 at 10:48:12AM +0000, Martin Wilck wrote:
-> On Mon, 2020-07-27 at 14:24 -0500, Benjamin Marzinski wrote:
-> > pathcountgr() is never used except by pathcount(), and neither is the
-> > special case for PATH_WILD. Simplify this and make one function that
-> > is
-> > used by both pathcount() and count_active_paths(). This will be used
-> > again in a future patch.
-> > 
-> > Also use count_active_paths() in mpath_persist.
-> 
-> The patch looks correct. I had thought about something like it as well
-> when I first introduced count_active_paths(). But count_active_paths()
-> is used a *lot*, and often in critical situations. I wonder whether it
-> deserves an optimized version. The compiler can surely optimize better
-> with two constant expressions than with the additional for-loop over an
-> array with variable size. That's why back then I decided against
-> implementing it as a special case of a generic function. I actually
-> considered inlining count_active_paths().
-> 
-> It's hard to quantify the effect, and I haven't done any benchmarks. 
-> But still, can we perhaps keep the optimized version of
-> count_active_paths() itself?
 
-Sure.
 
--Ben
+> On Aug 10, 2020, at 11:35 AM, James Bottomley =
+<James.Bottomley@HansenPartnership.com> wrote:
+>=20
+> On Sun, 2020-08-09 at 13:16 -0400, Mimi Zohar wrote:
+>> On Sat, 2020-08-08 at 13:47 -0400, Chuck Lever wrote:
+>>>> On Aug 5, 2020, at 2:15 PM, Mimi Zohar <zohar@linux.ibm.com>
+>>>> wrote:
+>>=20
+>> <snip>
+>>=20
+>>>> If block layer integrity was enough, there wouldn't have been a
+>>>> need for fs-verity.   Even fs-verity is limited to read only
+>>>> filesystems, which makes validating file integrity so much
+>>>> easier.  =46rom the beginning, we've said that fs-verity signatures
+>>>> should be included in the measurement list.  (I thought someone
+>>>> signed on to add that support to IMA, but have not yet seen
+>>>> anything.)
+>>>=20
+>>> Mimi, when you and I discussed this during LSS NA 2019, I didn't
+>>> fully understand that you expected me to implement signed Merkle
+>>> trees for all filesystems. At the time, it sounded to me like you
+>>> wanted signed Merkle trees only for NFS files. Is that still the
+>>> case?
+>>=20
+>> I definitely do not expect you to support signed Merkle trees for all
+>> filesystems.  My interested is from an IMA perspective of measuring
+>> and verifying the fs-verity Merkle tree root (and header info)
+>> signature. This is independent of which filesystems support it.
+>>=20
+>>>=20
+>>> The first priority (for me, anyway) therefore is getting the
+>>> ability to move IMA metadata between NFS clients and servers
+>>> shoveled into the NFS protocol, but that's been blocked for various
+>>> legal reasons.
+>>=20
+>> Up to now, verifying remote filesystem file integrity has been out of
+>> scope for IMA.   With fs-verity file signatures I can at least grasp
+>> how remote file integrity could possibly work.  I don't understand
+>> how remote file integrity with existing IMA formats could be
+>> supported. You might want to consider writing a whitepaper, which
+>> could later be used as the basis for a patch set cover letter.
+>=20
+> I think, before this, we can help with the basics (and perhaps we
+> should sort them out before we start documenting what we'll do).
 
-> 
-> Martin
-> 
+Thanks for the help! I just want to emphasize that documentation
+(eg, a specification) will be critical for remote filesystems.
+
+If any of this is to be supported by a remote filesystem, then we
+need an unencumbered description of the new metadata format rather
+than code. GPL-encumbered formats cannot be contributed to the NFS
+standard, and are probably difficult for other filesystems that are
+not Linux-native, like SMB, as well.
+
+
+> The
+> first basic is that a merkle tree allows unit at a time verification.=20=
+
+> First of all we should agree on the unit.  Since we always fault a =
+page
+> at a time, I think our merkle tree unit should be a page not a block.
+
+Remote filesystems will need to agree that the size of that unit is
+the same everywhere, or the unit size could be stored in the per-file
+metadata.
+
+
+> Next, we should agree where the check gates for the per page accesses
+> should be ... definitely somewhere in readpage, I suspect and finally
+> we should agree how the merkle tree is presented at the gate.  I think
+> there are three ways:
+>=20
+>   1. Ahead of time transfer:  The merkle tree is transferred and =
+verified
+>      at some time before the accesses begin, so we already have a
+>      verified copy and can compare against the lower leaf.
+>   2. Async transfer:  We provide an async mechanism to transfer the
+>      necessary components, so when presented with a unit, we check the
+>      log n components required to get to the root
+>   3. The protocol actually provides the capability of 2 (like the SCSI
+>      DIF/DIX), so to IMA all the pieces get presented instead of IMA
+>      having to manage the tree
+
+A Merkle tree is potentially large enough that it cannot be stored in
+an extended attribute. In addition, an extended attribute is not a
+byte stream that you can seek into or read small parts of, it is
+retrieved in a single shot.
+
+For this reason, the idea was to save only the signature of the tree's
+root on durable storage. The client would retrieve that signature
+possibly at open time, and reconstruct the tree at that time.
+
+Or the tree could be partially constructed on-demand at the time each
+unit is to be checked (say, as part of 2. above).
+
+The client would have to reconstruct that tree again if memory pressure
+caused some or all of the tree to be evicted, so perhaps an on-demand
+mechanism is preferable.
+
+
+> There are also a load of minor things like how we get the head hash,
+> which must be presented and verified ahead of time for each of the
+> above 3.
+
+Also, changes to a file's content and its tree signature are not
+atomic. If a file is mutable, then there is the period between when
+the file content has changed and when the signature is updated.
+Some discussion of how a client is to behave in those situations will
+be necessary.
+
+
+--
+Chuck Lever
+chucklever@gmail.com
