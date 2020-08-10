@@ -1,65 +1,99 @@
-From: Mimi Zohar <zohar@linux.ibm.com>
-Subject: Re: [dm-devel] [RFC PATCH v5 00/11] Integrity Policy Enforcement
- LSM (IPE)
-Date: Sun, 09 Aug 2020 13:16:09 -0400
-Message-ID: <da6f54d0438ee3d3903b2c75fcfbeb0afdf92dc2.camel@linux.ibm.com>
-References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
-         <20200802115545.GA1162@bug> <20200802140300.GA2975990@sasha-vm>
-         <20200802143143.GB20261@amd>
-         <1596386606.4087.20.camel@HansenPartnership.com>
-         <fb35a1f7-7633-a678-3f0f-17cf83032d2b@linux.microsoft.com>
-         <1596639689.3457.17.camel@HansenPartnership.com>
-         <alpine.LRH.2.21.2008050934060.28225@namei.org>
-         <b08ae82102f35936427bf138085484f75532cff1.camel@linux.ibm.com>
-         <329E8DBA-049E-4959-AFD4-9D118DEB176E@gmail.com>
+From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Subject: [dm- devel][PATCH] checker: add input check of state in
+ checker_state_name func
+Date: Mon, 10 Aug 2020 09:14:39 +0800
+Message-ID: <9c67963b-477f-b3f5-8c8c-048de9357ff9@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <329E8DBA-049E-4959-AFD4-9D118DEB176E@gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Chuck Lever <chucklever@gmail.com>, James Morris <jmorris@namei.org>, James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: Deven Bowers <deven.desai@linux.microsoft.com>, Pavel Machek <pavel@ucw.cz>, Sasha Levin <sashal@kernel.org>, snitzer@redhat.com, dm-devel@redhat.com, tyhicks@linux.microsoft.com, agk@redhat.com, Paul Moore <paul@paul-moore.com>, Jonathan Corbet <corbet@lwn.net>, nramas@linux.microsoft.com, serge@hallyn.com, pasha.tatashin@soleen.com, Jann Horn <jannh@google.com>, linux-block@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, mdsakib@microsoft.com, open list <linux-kernel@vger.kernel.org>, eparis@redhat.com, linux-security-module@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-integrity@vger.kernel.org, jaskarankhurana@linux.microsoft.com
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, Martin Wilck <mwilck@suse.com>, christophe.varoqui@opensvc.com, zkabelac@redhat.com
+Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>, liuzhiqiang26@huawei.com
 List-Id: dm-devel.ids
 
-On Sat, 2020-08-08 at 13:47 -0400, Chuck Lever wrote:
-> > On Aug 5, 2020, at 2:15 PM, Mimi Zohar <zohar@linux.ibm.com> wrote:
 
-<snip>
+In checker_state_name func, we donot check whether input i
+is valid. It may cause array access violation problem.
 
-> > If block layer integrity was enough, there wouldn't have been a need
-> > for fs-verity.   Even fs-verity is limited to read only filesystems,
-> > which makes validating file integrity so much easier.  From the
-> > beginning, we've said that fs-verity signatures should be included in
-> > the measurement list.  (I thought someone signed on to add that support
-> > to IMA, but have not yet seen anything.)
-> 
-> Mimi, when you and I discussed this during LSS NA 2019, I didn't fully
-> understand that you expected me to implement signed Merkle trees for all
-> filesystems. At the time, it sounded to me like you wanted signed Merkle
-> trees only for NFS files. Is that still the case?
+Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+---
+ libmultipath/checkers.c | 26 +++++++++++++++-----------
+ libmultipath/checkers.h |  3 ++-
+ 2 files changed, 17 insertions(+), 12 deletions(-)
 
-I definitely do not expect you to support signed Merkle trees for all
-filesystems.  My interested is from an IMA perspective of measuring and
-verifying the fs-verity Merkle tree root (and header info) signature. 
-This is independent of which filesystems support it.
+diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+index c3cf53db..c91e1686 100644
+--- a/libmultipath/checkers.c
++++ b/libmultipath/checkers.c
+@@ -22,23 +22,27 @@ struct checker_class {
+ 	short msgtable_size;
+ };
 
-> 
-> The first priority (for me, anyway) therefore is getting the ability to
-> move IMA metadata between NFS clients and servers shoveled into the NFS
-> protocol, but that's been blocked for various legal reasons.
+-char *checker_state_names[] = {
+-	"wild",
+-	"unchecked",
+-	"down",
+-	"up",
+-	"shaky",
+-	"ghost",
+-	"pending",
+-	"timeout",
+-	"removed",
+-	"delayed",
++static const char *checker_state_names[PATH_MAX_STATE] = {
++	[PATH_WILD] = "wild",
++	[PATH_UNCHECKED] = "unchecked",
++	[PATH_DOWN] = "down",
++	[PATH_UP] = "up",
++	[PATH_SHAKY] = "shaky",
++	[PATH_GHOST] = "ghost",
++	[PATH_PENDING] = "pending",
++	[PATH_TIMEOUT] = "timeout",
++	[PATH_REMOVED] = "removed",
++	[PATH_DELAYED] = "delayed",
+ };
 
-Up to now, verifying remote filesystem file integrity has been out of
-scope for IMA.   With fs-verity file signatures I can at least grasp
-how remote file integrity could possibly work.  I don't understand how
-remote file integrity with existing IMA formats could be supported. You
-might want to consider writing a whitepaper, which could later be used
-as the basis for a patch set cover letter.
+ static LIST_HEAD(checkers);
 
-Mimi
+ const char *checker_state_name(int i)
+ {
++	if (i < 0 || i >= PATH_MAX_STATE) {
++		condlog (2, "invalid state index = %d", i);
++		return INVALID;
++	}
+ 	return checker_state_names[i];
+ }
 
-> 
-> IMO we need agreement from everyone (integrity developers, FS
-> implementers, and Linux distributors) that a signed Merkle tree IMA
-> metadata format, stored in either an xattr or appended to an executable
-> file, will be the way forward for IMA in all filesystems.
+diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
+index 5237e7ec..93052b72 100644
+--- a/libmultipath/checkers.h
++++ b/libmultipath/checkers.h
+@@ -67,7 +67,7 @@
+  *   During this time, it is marked as "delayed"
+  */
+ enum path_check_state {
+-	PATH_WILD,
++	PATH_WILD = 0,
+ 	PATH_UNCHECKED,
+ 	PATH_DOWN,
+ 	PATH_UP,
+@@ -88,6 +88,7 @@ enum path_check_state {
+ #define READSECTOR0  "readsector0"
+ #define CCISS_TUR    "cciss_tur"
+ #define NONE         "none"
++#define INVALID      "invalid"
+
+ #define ASYNC_TIMEOUT_SEC	30
+
+-- 
+2.24.0.windows.2
