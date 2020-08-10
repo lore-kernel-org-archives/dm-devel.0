@@ -1,21 +1,15 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 08/35] libmultipath: create bitfield
-	abstraction
-Date: Mon, 10 Aug 2020 20:59:15 +0200
-Message-ID: <7f5040a66421b9d63578079e0c31fb9d5b1d4155.camel@suse.com>
-References: <20200709101620.6786-1-mwilck@suse.com>
-	<20200709101620.6786-9-mwilck@suse.com>
-	<20200716211708.GM11089@octiron.msp.redhat.com>
-	<2ae4b38b8f07eb1ac9be31099b5be091fa6e9617.camel@suse.com>
-	<bb9b9031513d4e806f0bb2f700a822ed25364e36.camel@suse.com>
-	<20200804162635.GJ19233@octiron.msp.redhat.com>
-	<8c69def7c61863e8b36502ebd08f5188734f7fa5.camel@suse.com>
-	<20200810180525.GL19233@octiron.msp.redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH V2] libmultipath: free pp if store_path fails
+ in disassemble_map
+Date: Mon, 10 Aug 2020 14:07:38 -0500
+Message-ID: <20200810190738.GN19233@octiron.msp.redhat.com>
+References: <40a7ea22-8897-363a-5821-99add9de6dc5@huawei.com>
+	<7d0e4a58ddec95d141433c5f472865cba6961459.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200810180525.GL19233@octiron.msp.redhat.com>
+In-Reply-To: <7d0e4a58ddec95d141433c5f472865cba6961459.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,63 +19,99 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Disposition: inline
+To: Martin Wilck <mwilck@suse.com>
+Cc: yanxiaodan@huawei.com, linfeilong@huawei.com, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, Zhiqiang Liu <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-Hi Ben,
-
-On Mon, 2020-08-10 at 13:05 -0500, Benjamin Marzinski wrote:
-> On Tue, Aug 04, 2020 at 09:35:08PM +0200, Martin Wilck wrote:
-> > On Tue, 2020-08-04 at 11:26 -0500, Benjamin Marzinski wrote:
-> > > 
-> > > I'm also still fuzzy on why we want to support zero length
-> > > bitfields.
-> > > Since they can't be grown like vectors can, it seem like
-> > > requesting a
-> > > zero length bitfield will always be a sign of a coding error. We
-> > > would get a more useful error by having the failure happen closer
-> > > to
-> > > the error in the code.  Or is there actually a use for a zero
-> > > length
-> > > bitfield that can't be grown?
-> > 
-> > The only "use" would be to be able to work with bitmaps in
-> > situations
-> > where zero elements are possible, without the need to catch another
-> > exception. 0-element bitfields are technically possible although
-> > logically they make no sense. That's robust design for a library
-> > function, IMO. I don't see why it'd be "better" to return NULL
-> > instead.
-> > If we are after errors in callers, we might want to print an error
-> > message and still not return NULL.
+On Mon, Aug 10, 2020 at 02:20:27PM +0200, Martin Wilck wrote:
+> Hello Liu,
 > 
-> Fine. It's a pretty trivial thing either way.
+> On Fri, 2020-07-24 at 09:40 +0800, Zhiqiang Liu wrote:
+> > In disassemble_map func, one pp will be allocated and stored in
+> > pgp->paths. However, if store_path fails, pp will not be freed,
+> > then memory leak problem occurs.
+> > 
+> > Here, we will call free_path to free pp when store_path fails.
+> > 
+> > Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+> > Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+> > ---
+> > V1->V2: update based on ups/submit-2007 branch.
+> > 
+> >  libmultipath/dmparser.c | 9 +++++++--
+> >  1 file changed, 7 insertions(+), 2 deletions(-)
+> > 
+> 
+> thanks for the patch. I'd suggest to do this without the pp_alloc_flag
+> variable, by pulling the store_path() call into the if (!pp)
+> conditional and treating failure differently in both branches of the
+> conditional. (Side note: if we introduce a boolean like this, we should
+> use "bool" as the variable type).
+> 
+> Unless you object, I'll add that change on top of my submit-2007
+> series, giving you appropriate credits.
+> 
+> @Ben, @Christophe: I've been considering for some time to start
+> handling cases like this with __attribute__((cleanup(f)))) (
+> https://gcc.gnu.org/onlinedocs/gcc/Common-Variable-Attributes.html).
+> That could reduce the amount of goto clauses for error handling
+> significantly. It would be a major change in coding style though. What
+> do you think?
 
-It took me a while, but ...
+So, I haven't really looked into the cleanup attribute. How would it
+work here? We only want to free the path if we didn't store it. We can't
+free it if it got stored.  Can you disable the cleanup? If we have to
+make the cleanup function check if the path got stored, that seems like
+more work than simply using the multiple goto labels like we do now.
 
-The current typical usage e.g. in group_by_match() looks like this:
+-Ben
 
-	bitmap = alloc_bitfield(VECTOR_SIZE(paths));
-
-	if (!bitmap)
-		goto out;
-
-	for (i = 0; i < VECTOR_SIZE(paths); i++) {
-	        ....
-
-Here, VECTOR_SIZE(paths) == 0 is a valid value that just causes nothing
-to happen in the function. The other callers aren't much different. I
-think we rather don't want to print an error message in these cases.
-
-Every caller needs to check the return value of alloc_bitfield()
-anyway, to guard against OOM. The code above would actually be slightly
-optimized by returning NULL from alloc_bitfield() for maxbit == 0, by
-returning immediately. Besides, we eliminate an (albeit minimal) risk
-of hitting OOM by avoiding one needless memory allocation. 
-
-The fact that all our callers work like this convinces me. I'll change
-the return value to NULL like you suggested.
-
-Cheers,
-Martin
+> 
+> Regards,
+> Martin
+> 
+> 
+> > diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+> > index b9858fa5..8a0501ba 100644
+> > --- a/libmultipath/dmparser.c
+> > +++ b/libmultipath/dmparser.c
+> > @@ -143,6 +143,7 @@ int disassemble_map(const struct _vector
+> > *pathvec,
+> >  	int def_minio = 0;
+> >  	struct path * pp;
+> >  	struct pathgroup * pgp;
+> > +	int pp_alloc_flag = 0;
+> > 
+> >  	assert(pathvec != NULL);
+> >  	p = params;
+> > @@ -292,6 +293,7 @@ int disassemble_map(const struct _vector
+> > *pathvec,
+> > 
+> >  		for (j = 0; j < num_paths; j++) {
+> >  			pp = NULL;
+> > +			pp_alloc_flag = 0;
+> >  			p += get_word(p, &word);
+> > 
+> >  			if (!word)
+> > @@ -304,13 +306,16 @@ int disassemble_map(const struct _vector
+> > *pathvec,
+> > 
+> >  				if (!pp)
+> >  					goto out1;
+> > -
+> > +				pp_alloc_flag = 1;
+> >  				strlcpy(pp->dev_t, word, BLK_DEV_SIZE);
+> >  			}
+> >  			FREE(word);
+> > 
+> > -			if (store_path(pgp->paths, pp))
+> > +			if (store_path(pgp->paths, pp)) {
+> > +				if (pp_alloc_flag)
+> > +					free_path(pp);
+> >  				goto out;
+> > +			}
+> > 
+> >  			pgp->id ^= (long)pp;
+> >  			pp->pgindex = i + 1;
+> 
