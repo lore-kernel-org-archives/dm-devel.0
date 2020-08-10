@@ -1,142 +1,71 @@
-From: Chuck Lever <chucklever@gmail.com>
-Subject: Re: [dm-devel] [RFC PATCH v5 00/11] Integrity Policy Enforcement LSM
- (IPE)
-Date: Mon, 10 Aug 2020 19:36:47 -0400
-Message-ID: <6E907A22-02CC-42DD-B3CD-11D304F3A1A8@gmail.com>
-References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
- <20200802115545.GA1162@bug> <20200802140300.GA2975990@sasha-vm>
- <20200802143143.GB20261@amd> <1596386606.4087.20.camel@HansenPartnership.com>
- <fb35a1f7-7633-a678-3f0f-17cf83032d2b@linux.microsoft.com>
- <1596639689.3457.17.camel@HansenPartnership.com>
- <alpine.LRH.2.21.2008050934060.28225@namei.org>
- <b08ae82102f35936427bf138085484f75532cff1.camel@linux.ibm.com>
- <329E8DBA-049E-4959-AFD4-9D118DEB176E@gmail.com>
- <da6f54d0438ee3d3903b2c75fcfbeb0afdf92dc2.camel@linux.ibm.com>
- <1597073737.3966.12.camel@HansenPartnership.com>
-Mime-Version: 1.0 (Mac OS X Mail 13.4 \(3608.80.23.2.2\))
-Content-Type: text/plain;
-        charset=us-ascii
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <1597073737.3966.12.camel@HansenPartnership.com>
-Sender: linux-block-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: Mimi Zohar <zohar@linux.ibm.com>, James Morris <jmorris@namei.org>, Deven Bowers <deven.desai@linux.microsoft.com>, Pavel Machek <pavel@ucw.cz>, Sasha Levin <sashal@kernel.org>, snitzer@redhat.com, dm-devel@redhat.com, tyhicks@linux.microsoft.com, agk@redhat.com, Paul Moore <paul@paul-moore.com>, Jonathan Corbet <corbet@lwn.net>, nramas@linux.microsoft.com, serge@hallyn.com, pasha.tatashin@soleen.com, Jann Horn <jannh@google.com>, linux-block@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, mdsakib@microsoft.com, open list <linux-kernel@vger.kernel.org>, eparis@redhat.com, linux-security-module@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-integrity@vger.kernel.org, jaskarankhurana@linu
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 44/54] libmultipath: adopt_paths(): don't
+ bail out on single path failure
+Date: Mon, 10 Aug 2020 18:53:01 -0500
+Message-ID: <20200810235301.GQ19233@octiron.msp.redhat.com>
+References: <20200709103623.8302-1-mwilck@suse.com>
+	<20200709103623.8302-3-mwilck@suse.com>
+	<20200717212525.GR11089@octiron.msp.redhat.com>
+	<7a92c06bdbfdcfd3530607f4b8dbce7a5c9330a5.camel@suse.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <7a92c06bdbfdcfd3530607f4b8dbce7a5c9330a5.camel@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+On Wed, Aug 05, 2020 at 02:05:00PM +0200, Martin Wilck wrote:
+> On Fri, 2020-07-17 at 16:25 -0500, Benjamin Marzinski wrote:
+> > On Thu, Jul 09, 2020 at 12:36:13PM +0200, mwilck@suse.com wrote:
+> > > From: Martin Wilck <mwilck@suse.com>
+> > > 
+> > > If pathinfo fails for one path to be adopted, we currently
+> > > fail the entire function. This may cause ev_add_path() for a valid
+> > > path to fail because some other path is broken. Fix it by just
+> > > skipping paths that don't look healthy.
+> > 
+> > This looks problematic to me.  While I agree that we shouldn't make
+> > ev_add_path fail because some other path failed, but what about if
+> > the
+> > path we are trying to add fails in pathinfo().  In this case
+> > multipathd
+> > won't orphan the path and it will report "path added to devmap", even
+> > though it wasn't. Also what is the correct response for when you try
+> > to create a multipath device but none of the paths can be added.
+> > Should multipathd create a device with no paths? 
+> 
+> There are 3 callers of adopt_path():
+> 
+>  1 add_map_with_path()
+>  2 ev_add_path()
+>  3 update_map()
+> 
+> adopt_paths() only ever adds new paths to a map, so in case 3), the map
+> would not come out without paths unless it had been empty before
+> already. For this caller, my patch is definitely an improvement.
+> 
+> For 1) and 2), we are adding a specific path, so we should test in the
+> caller whether that specific path was successfully added, and fail
+> otherwise. Would that address your concern?
 
+That sounds reasonable
 
-> On Aug 10, 2020, at 11:35 AM, James Bottomley =
-<James.Bottomley@HansenPartnership.com> wrote:
->=20
-> On Sun, 2020-08-09 at 13:16 -0400, Mimi Zohar wrote:
->> On Sat, 2020-08-08 at 13:47 -0400, Chuck Lever wrote:
->>>> On Aug 5, 2020, at 2:15 PM, Mimi Zohar <zohar@linux.ibm.com>
->>>> wrote:
->>=20
->> <snip>
->>=20
->>>> If block layer integrity was enough, there wouldn't have been a
->>>> need for fs-verity.   Even fs-verity is limited to read only
->>>> filesystems, which makes validating file integrity so much
->>>> easier.  =46rom the beginning, we've said that fs-verity signatures
->>>> should be included in the measurement list.  (I thought someone
->>>> signed on to add that support to IMA, but have not yet seen
->>>> anything.)
->>>=20
->>> Mimi, when you and I discussed this during LSS NA 2019, I didn't
->>> fully understand that you expected me to implement signed Merkle
->>> trees for all filesystems. At the time, it sounded to me like you
->>> wanted signed Merkle trees only for NFS files. Is that still the
->>> case?
->>=20
->> I definitely do not expect you to support signed Merkle trees for all
->> filesystems.  My interested is from an IMA perspective of measuring
->> and verifying the fs-verity Merkle tree root (and header info)
->> signature. This is independent of which filesystems support it.
->>=20
->>>=20
->>> The first priority (for me, anyway) therefore is getting the
->>> ability to move IMA metadata between NFS clients and servers
->>> shoveled into the NFS protocol, but that's been blocked for various
->>> legal reasons.
->>=20
->> Up to now, verifying remote filesystem file integrity has been out of
->> scope for IMA.   With fs-verity file signatures I can at least grasp
->> how remote file integrity could possibly work.  I don't understand
->> how remote file integrity with existing IMA formats could be
->> supported. You might want to consider writing a whitepaper, which
->> could later be used as the basis for a patch set cover letter.
->=20
-> I think, before this, we can help with the basics (and perhaps we
-> should sort them out before we start documenting what we'll do).
+-Ben
 
-Thanks for the help! I just want to emphasize that documentation
-(eg, a specification) will be critical for remote filesystems.
-
-If any of this is to be supported by a remote filesystem, then we
-need an unencumbered description of the new metadata format rather
-than code. GPL-encumbered formats cannot be contributed to the NFS
-standard, and are probably difficult for other filesystems that are
-not Linux-native, like SMB, as well.
-
-
-> The
-> first basic is that a merkle tree allows unit at a time verification.=20=
-
-> First of all we should agree on the unit.  Since we always fault a =
-page
-> at a time, I think our merkle tree unit should be a page not a block.
-
-Remote filesystems will need to agree that the size of that unit is
-the same everywhere, or the unit size could be stored in the per-file
-metadata.
-
-
-> Next, we should agree where the check gates for the per page accesses
-> should be ... definitely somewhere in readpage, I suspect and finally
-> we should agree how the merkle tree is presented at the gate.  I think
-> there are three ways:
->=20
->   1. Ahead of time transfer:  The merkle tree is transferred and =
-verified
->      at some time before the accesses begin, so we already have a
->      verified copy and can compare against the lower leaf.
->   2. Async transfer:  We provide an async mechanism to transfer the
->      necessary components, so when presented with a unit, we check the
->      log n components required to get to the root
->   3. The protocol actually provides the capability of 2 (like the SCSI
->      DIF/DIX), so to IMA all the pieces get presented instead of IMA
->      having to manage the tree
-
-A Merkle tree is potentially large enough that it cannot be stored in
-an extended attribute. In addition, an extended attribute is not a
-byte stream that you can seek into or read small parts of, it is
-retrieved in a single shot.
-
-For this reason, the idea was to save only the signature of the tree's
-root on durable storage. The client would retrieve that signature
-possibly at open time, and reconstruct the tree at that time.
-
-Or the tree could be partially constructed on-demand at the time each
-unit is to be checked (say, as part of 2. above).
-
-The client would have to reconstruct that tree again if memory pressure
-caused some or all of the tree to be evicted, so perhaps an on-demand
-mechanism is preferable.
-
-
-> There are also a load of minor things like how we get the head hash,
-> which must be presented and verified ahead of time for each of the
-> above 3.
-
-Also, changes to a file's content and its tree signature are not
-atomic. If a file is mutable, then there is the period between when
-the file content has changed and when the signature is updated.
-Some discussion of how a client is to behave in those situations will
-be necessary.
-
-
---
-Chuck Lever
-chucklever@gmail.com
+> 
+> Regards,
+> Martin
+> 
+> 
