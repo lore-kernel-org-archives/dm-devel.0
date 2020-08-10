@@ -1,118 +1,91 @@
-From: Mimi Zohar <zohar@linux.ibm.com>
-Subject: Re: [dm-devel] [RFC PATCH v5 00/11] Integrity Policy Enforcement
- LSM (IPE)
-Date: Mon, 10 Aug 2020 13:57:40 -0400
-Message-ID: <8565b1430d5244eba95fc1fe0ed470b886747aaa.camel@linux.ibm.com>
-References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
-         <20200802115545.GA1162@bug> <20200802140300.GA2975990@sasha-vm>
-         <20200802143143.GB20261@amd>
-         <1596386606.4087.20.camel@HansenPartnership.com>
-         <fb35a1f7-7633-a678-3f0f-17cf83032d2b@linux.microsoft.com>
-         <1596639689.3457.17.camel@HansenPartnership.com>
-         <alpine.LRH.2.21.2008050934060.28225@namei.org>
-         <b08ae82102f35936427bf138085484f75532cff1.camel@linux.ibm.com>
-         <329E8DBA-049E-4959-AFD4-9D118DEB176E@gmail.com>
-         <da6f54d0438ee3d3903b2c75fcfbeb0afdf92dc2.camel@linux.ibm.com>
-         <1597073737.3966.12.camel@HansenPartnership.com>
-         <4664ab7dc3b324084df323bfa4670d5bfde76e66.camel@linux.ibm.com>
-         <1597079586.3966.34.camel@HansenPartnership.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 08/35] libmultipath: create bitfield
+	abstraction
+Date: Mon, 10 Aug 2020 13:05:25 -0500
+Message-ID: <20200810180525.GL19233@octiron.msp.redhat.com>
+References: <20200709101620.6786-1-mwilck@suse.com>
+	<20200709101620.6786-9-mwilck@suse.com>
+	<20200716211708.GM11089@octiron.msp.redhat.com>
+	<2ae4b38b8f07eb1ac9be31099b5be091fa6e9617.camel@suse.com>
+	<bb9b9031513d4e806f0bb2f700a822ed25364e36.camel@suse.com>
+	<20200804162635.GJ19233@octiron.msp.redhat.com>
+	<8c69def7c61863e8b36502ebd08f5188734f7fa5.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1597079586.3966.34.camel@HansenPartnership.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@HansenPartnership.com>, Chuck Lever <chucklever@gmail.com>, James Morris <jmorris@namei.org>
-Cc: Deven Bowers <deven.desai@linux.microsoft.com>, Pavel Machek <pavel@ucw.cz>, Sasha Levin <sashal@kernel.org>, snitzer@redhat.com, dm-devel@redhat.com, tyhicks@linux.microsoft.com, agk@redhat.com, Paul Moore <paul@paul-moore.com>, Jonathan Corbet <corbet@lwn.net>, nramas@linux.microsoft.com, serge@hallyn.com, pasha.tatashin@soleen.com, Jann Horn <jannh@google.com>, linux-block@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, mdsakib@microsoft.com, open list <linux-kernel@vger.kernel.org>, eparis@redhat.com, linux-security-module@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-integrity@vger.kernel.org, jaskarankhurana@linux.microsoft.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <8c69def7c61863e8b36502ebd08f5188734f7fa5.camel@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 2020-08-10 at 10:13 -0700, James Bottomley wrote:
-> On Mon, 2020-08-10 at 12:35 -0400, Mimi Zohar wrote:
-> > On Mon, 2020-08-10 at 08:35 -0700, James Bottomley wrote:
-> [...]
-> > > > Up to now, verifying remote filesystem file integrity has been
-> > > > out of scope for IMA.   With fs-verity file signatures I can at
-> > > > least grasp how remote file integrity could possibly work.  I
-> > > > don't understand how remote file integrity with existing IMA
-> > > > formats could be supported. You might want to consider writing a
-> > > > whitepaper, which could later be used as the basis for a patch
-> > > > set cover letter.
+On Tue, Aug 04, 2020 at 09:35:08PM +0200, Martin Wilck wrote:
+> On Tue, 2020-08-04 at 11:26 -0500, Benjamin Marzinski wrote:
+> > On Tue, Aug 04, 2020 at 05:18:18PM +0200, Martin Wilck wrote:
+> > > On Tue, 2020-08-04 at 17:04 +0200, Martin Wilck wrote:
+> > > > On Thu, 2020-07-16 at 16:17 -0500, Benjamin Marzinski wrote:
+> > > > > On Thu, Jul 09, 2020 at 12:15:53PM +0200, mwilck@suse.com
+> > > > > wrote:
+> > > > > > From: Martin Wilck <mwilck@suse.com>
+> > > > > > +struct bitfield *alloc_bitfield(unsigned int maxbit)
+> > > > > > +{
+> > > > > > +	unsigned int n;
+> > > > > > +	struct bitfield *bf;
+> > > > > > +
+> > > > > > +	n = maxbit > 0 ? (maxbit - 1) / bits_per_slot + 1 : 0;
+> > > > > 
+> > > > > What's the point in accepting 0? That's an empty bitmap.
+> > > > > 
+> > > > Thanks for spotting these, I will fix them.
 > > > 
-> > > I think, before this, we can help with the basics (and perhaps we
-> > > should sort them out before we start documenting what we'll do).
+> > > Thinking about it once more, I believe that accepting 0 as the
+> > > bitfield
+> > > length is actually the right thing. A bitfield of length 0 makes
+> > > not
+> > > much less sense than one of length 1. The code makes sure that the
+> > > bit
+> > > operations on the 0-length bitfield behave correctly (see
+> > > test_bitmask_len_0()). Thus callers can use bitfields without
+> > > bothering
+> > > for extra NULL checks. That was the intention. Like we support 0-
+> > > length 
+> > > vectors.
 > > 
-> > I'm not opposed to doing that, but you're taking this discussion in a
-> > totally different direction.  The current discussion is about NFSv4
-> > supporting the existing IMA signatures, not only fs-verity
-> > signatures. I'd like to understand how that is possible and for the
-> > community to weigh in on whether it makes sense.
+> > But the calloc call itself can return NULL, so deferencing bf (as in
+> > bf->len = maxbit), can crash.
 > 
-> Well, I see the NFS problem as being chunk at a time, right, which is
-> merkle tree, or is there a different chunk at a time mechanism we want
-> to use?  IMA currently verifies signature on open/exec and then
-> controls updates.  Since for NFS we only control the client, we can't
-> do that on an NFS server, so we really do need verification at read
-> time ... unless we're threading IMA back to the NFS server?
+> Of course, I wasn't arguing about that. I'm going to resend with this
+> fixed.
+> 
+> > I'm also still fuzzy on why we want to support zero length bitfields.
+> > Since they can't be grown like vectors can, it seem like requesting a
+> > zero length bitfield will always be a sign of a coding error. We
+> > would get a more useful error by having the failure happen closer to
+> > the error in the code.  Or is there actually a use for a zero length
+> > bitfield that can't be grown?
+> 
+> The only "use" would be to be able to work with bitmaps in situations
+> where zero elements are possible, without the need to catch another
+> exception. 0-element bitfields are technically possible although
+> logically they make no sense. That's robust design for a library
+> function, IMO. I don't see why it'd be "better" to return NULL instead.
+> If we are after errors in callers, we might want to print an error
+> message and still not return NULL.
 
-Yes.  I still don't see how we can support the existing IMA signatures,
-which is based on the file data hash, unless the "chunk at a time
-mechanism" is not a tree, but linear.
+Fine. It's a pretty trivial thing either way.
 
-Mimi
+-Ben
 
 > 
-> > > The first basic is that a merkle tree allows unit at a time
-> > > verification. First of all we should agree on the unit.  Since we
-> > > always fault a page at a time, I think our merkle tree unit should
-> > > be a page not a block. Next, we should agree where the check gates
-> > > for the per page accesses should be ... definitely somewhere in
-> > > readpage, I suspect and finally we should agree how the merkle tree
-> > > is presented at the gate.  I think there are three ways:
-> > > 
-> > >    1. Ahead of time transfer:  The merkle tree is transferred and
-> > > verified
-> > >       at some time before the accesses begin, so we already have a
-> > >       verified copy and can compare against the lower leaf.
-> > >    2. Async transfer:  We provide an async mechanism to transfer
-> > > the
-> > >       necessary components, so when presented with a unit, we check
-> > > the
-> > >       log n components required to get to the root
-> > >    3. The protocol actually provides the capability of 2 (like the
-> > > SCSI
-> > >       DIF/DIX), so to IMA all the pieces get presented instead of
-> > > IMA
-> > >       having to manage the tree
-> > > 
-> > > There are also a load of minor things like how we get the head
-> > > hash, which must be presented and verified ahead of time for each
-> > > of the above 3.
-> > 
-> >  
-> > I was under the impression that IMA support for fs-verity signatures
-> > would be limited to including the fs-verity signature in the
-> > measurement list and verifying the fs-verity signature.   As fs-
-> > verity is limited to immutable files, this could be done on file
-> > open.  fs-verity would be responsible for enforcing the block/page
-> > data integrity.   From a local filesystem perspective, I think that
-> > is all that is necessary.
+> Martin
 > 
-> The fs-verity use case is a bit of a crippled one because it's
-> immutable.  I think NFS represents more the general case where you
-> can't rely on immutability and have to verify at chunk read time.  If
-> we get chunk at a time working for NFS, it should work also for fs-
-> verity and we wouldn't need to have two special paths.
-> 
-> I think, even for NFS we would only really need to log the open, so
-> same as you imagine for fs-verity.  As long as the chunk read hashes
-> match, we can be silent because everything is going OK, so we only need
-> to determine what to do and log on mismatch (which isn't expected to
-> happen for fs-verity).
-> 
-> > In terms of remote file systems,  the main issue is transporting and
-> > storing the Merkle tree.  As fs-verity is limited to immutable files,
-> > this could still be done on file open.
-> 
-> Right, I mentioned that in my options ... we need some "supply
-> integrity" hook ... or possibly multiple hooks for a variety of
-> possible methods.
