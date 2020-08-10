@@ -1,111 +1,134 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
-Subject: Re: [dm-devel] [RFC PATCH v5 00/11] Integrity Policy Enforcement
- LSM (IPE)
-Date: Mon, 10 Aug 2020 10:13:06 -0700
-Message-ID: <1597079586.3966.34.camel@HansenPartnership.com>
-References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
-         <20200802115545.GA1162@bug> <20200802140300.GA2975990@sasha-vm>
-         <20200802143143.GB20261@amd>
-         <1596386606.4087.20.camel@HansenPartnership.com>
-         <fb35a1f7-7633-a678-3f0f-17cf83032d2b@linux.microsoft.com>
-         <1596639689.3457.17.camel@HansenPartnership.com>
-         <alpine.LRH.2.21.2008050934060.28225@namei.org>
-         <b08ae82102f35936427bf138085484f75532cff1.camel@linux.ibm.com>
-         <329E8DBA-049E-4959-AFD4-9D118DEB176E@gmail.com>
-         <da6f54d0438ee3d3903b2c75fcfbeb0afdf92dc2.camel@linux.ibm.com>
-         <1597073737.3966.12.camel@HansenPartnership.com>
-         <4664ab7dc3b324084df323bfa4670d5bfde76e66.camel@linux.ibm.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] nvme: explicitly use normal NVMe error handling
+ when appropriate
+Date: Mon, 10 Aug 2020 13:22:09 -0400
+Message-ID: <20200810172209.GA19535@redhat.com>
+References: <729820BC-5F38-4E22-A83A-862E57BAE201@netapp.com>
+	<E3390A8E-D582-47BA-A085-21663D883365@netapp.com>
+	<20200806184057.GA27858@redhat.com>
+	<20200806191943.GA27868@redhat.com>
+	<6B826235-C504-4621-B8F7-34475B200979@netapp.com>
+	<20200807000755.GA28957@redhat.com>
+	<510f5aff-0437-b1ce-f7ab-c812edbea880@grimberg.me>
+	<20200807045015.GA29737@redhat.com>
+	<fec745aa-0091-ee1f-cb0f-da9e18cf0aa2@grimberg.me>
+	<20200810143620.GA19127@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <4664ab7dc3b324084df323bfa4670d5bfde76e66.camel@linux.ibm.com>
-Sender: owner-linux-security-module@vger.kernel.org
-To: Mimi Zohar <zohar@linux.ibm.com>, Chuck Lever <chucklever@gmail.com>, James Morris <jmorris@namei.org>
-Cc: Deven Bowers <deven.desai@linux.microsoft.com>, Pavel Machek <pavel@ucw.cz>, Sasha Levin <sashal@kernel.org>, snitzer@redhat.com, dm-devel@redhat.com, tyhicks@linux.microsoft.com, agk@redhat.com, Paul Moore <paul@paul-moore.com>, Jonathan Corbet <corbet@lwn.net>, nramas@linux.microsoft.com, serge@hallyn.com, pasha.tatashin@soleen.com, Jann Horn <jannh@google.com>, linux-block@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, mdsakib@microsoft.com, open list <linux-kernel@vger.kernel.org>, eparis@redhat.com, linux-security-module@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-integrity@vger.kernel.org, jaskarankhurana@linux.microsoft.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200810143620.GA19127@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Sagi Grimberg <sagi@grimberg.me>
+Cc: "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Ewan Milne <emilne@redhat.com>, Chao Leng <lengchao@huawei.com>, Keith Busch <kbusch@kernel.org>, "Meneghini,
+	John" <John.Meneghini@netapp.com>
 List-Id: dm-devel.ids
 
-On Mon, 2020-08-10 at 12:35 -0400, Mimi Zohar wrote:
-> On Mon, 2020-08-10 at 08:35 -0700, James Bottomley wrote:
-[...]
-> > > Up to now, verifying remote filesystem file integrity has been
-> > > out of scope for IMA.   With fs-verity file signatures I can at
-> > > least grasp how remote file integrity could possibly work.  I
-> > > don't understand how remote file integrity with existing IMA
-> > > formats could be supported. You might want to consider writing a
-> > > whitepaper, which could later be used as the basis for a patch
-> > > set cover letter.
-> > 
-> > I think, before this, we can help with the basics (and perhaps we
-> > should sort them out before we start documenting what we'll do).
+On Mon, Aug 10 2020 at 10:36am -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
+
+> On Fri, Aug 07 2020 at  7:35pm -0400,
+> Sagi Grimberg <sagi@grimberg.me> wrote:
 > 
-> I'm not opposed to doing that, but you're taking this discussion in a
-> totally different direction.  The current discussion is about NFSv4
-> supporting the existing IMA signatures, not only fs-verity
-> signatures. I'd like to understand how that is possible and for the
-> community to weigh in on whether it makes sense.
-
-Well, I see the NFS problem as being chunk at a time, right, which is
-merkle tree, or is there a different chunk at a time mechanism we want
-to use?  IMA currently verifies signature on open/exec and then
-controls updates.  Since for NFS we only control the client, we can't
-do that on an NFS server, so we really do need verification at read
-time ... unless we're threading IMA back to the NFS server?
-
-> > The first basic is that a merkle tree allows unit at a time
-> > verification. First of all we should agree on the unit.  Since we
-> > always fault a page at a time, I think our merkle tree unit should
-> > be a page not a block. Next, we should agree where the check gates
-> > for the per page accesses should be ... definitely somewhere in
-> > readpage, I suspect and finally we should agree how the merkle tree
-> > is presented at the gate.  I think there are three ways:
 > > 
-> >    1. Ahead of time transfer:  The merkle tree is transferred and
-> > verified
-> >       at some time before the accesses begin, so we already have a
-> >       verified copy and can compare against the lower leaf.
-> >    2. Async transfer:  We provide an async mechanism to transfer
-> > the
-> >       necessary components, so when presented with a unit, we check
-> > the
-> >       log n components required to get to the root
-> >    3. The protocol actually provides the capability of 2 (like the
-> > SCSI
-> >       DIF/DIX), so to IMA all the pieces get presented instead of
-> > IMA
-> >       having to manage the tree
+> > >>Hey Mike,
+...
+> > >I think NVMe can easily fix this by having an earlier stage of checking,
+> > >e.g. nvme_local_retry_req(), that shortcircuits ever getting to
+> > >higher-level multipathing consideration (be it native NVMe or DM
+> > >multipathing) for cases like NVME_SC_CMD_INTERRUPTED.
+> > >To be clear: the "default" case of nvme_failover_req() that returns
+> > >false to fallback to NVMe's "local" normal NVMe error handling -- that
+> > >can stay.. but a more explicit handling of cases like
+> > >NVME_SC_CMD_INTERRUPTED should be added to a nvme_local_retry_req()
+> > >check that happens before nvme_failover_req() in nvme_complete_rq().
 > > 
-> > There are also a load of minor things like how we get the head
-> > hash, which must be presented and verified ahead of time for each
-> > of the above 3.
+> > I don't necessarily agree with having a dedicated nvme_local_retry_req().
+> > a request that isn't failed over, goes to local error handling (retry or
+> > not). I actually think that just adding the condition to
+> > nvme_complete_req and having nvme_failover_req reject it would work.
+> > 
+> > Keith?
 > 
->  
-> I was under the impression that IMA support for fs-verity signatures
-> would be limited to including the fs-verity signature in the
-> measurement list and verifying the fs-verity signature.   As fs-
-> verity is limited to immutable files, this could be done on file
-> open.  fs-verity would be responsible for enforcing the block/page
-> data integrity.   From a local filesystem perspective, I think that
-> is all that is necessary.
+> I think that is basically what I'm thinking too.
 
-The fs-verity use case is a bit of a crippled one because it's
-immutable.  I think NFS represents more the general case where you
-can't rely on immutability and have to verify at chunk read time.  If
-we get chunk at a time working for NFS, it should work also for fs-
-verity and we wouldn't need to have two special paths.
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: nvme: explicitly use normal NVMe error handling when appropriate
 
-I think, even for NFS we would only really need to log the open, so
-same as you imagine for fs-verity.  As long as the chunk read hashes
-match, we can be silent because everything is going OK, so we only need
-to determine what to do and log on mismatch (which isn't expected to
-happen for fs-verity).
+Commit 764e9332098c0 ("nvme-multipath: do not reset on unknown
+status"), among other things, fixed NVME_SC_CMD_INTERRUPTED error
+handling by changing multipathing's nvme_failover_req() to short-circuit
+path failover and then fallback to NVMe's normal error handling (which
+takes care of NVME_SC_CMD_INTERRUPTED).
 
-> In terms of remote file systems,  the main issue is transporting and
-> storing the Merkle tree.  As fs-verity is limited to immutable files,
-> this could still be done on file open.
+This detour through native NVMe multipathing code is unwelcome because
+it prevents NVMe core from handling NVME_SC_CMD_INTERRUPTED independent
+of any multipathing concerns.
 
-Right, I mentioned that in my options ... we need some "supply
-integrity" hook ... or possibly multiple hooks for a variety of
-possible methods.
+Introduce nvme_status_needs_local_error_handling() to prioritize
+non-failover retry, when appropriate, in terms of normal NVMe error
+handling.  nvme_status_needs_local_error_handling() will naturely evolve
+to include handling of any other errors that normal error handling must
+be used for.
 
-James
+nvme_failover_req()'s ability to fallback to normal NVMe error handling
+has been preserved because it may be useful for future NVME_SC that
+nvme_status_needs_local_error_handling() hasn't yet been trained for.
+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/nvme/host/core.c | 16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
+index 88cff309d8e4..be749b690af7 100644
+--- a/drivers/nvme/host/core.c
++++ b/drivers/nvme/host/core.c
+@@ -252,6 +252,16 @@ static inline bool nvme_req_needs_retry(struct request *req)
+ 	return true;
+ }
+ 
++static inline bool nvme_status_needs_local_error_handling(u16 status)
++{
++	switch (status & 0x7ff) {
++	case NVME_SC_CMD_INTERRUPTED:
++		return true;
++	default:
++		return false;
++	}
++}
++
+ static void nvme_retry_req(struct request *req)
+ {
+ 	struct nvme_ns *ns = req->q->queuedata;
+@@ -270,7 +280,8 @@ static void nvme_retry_req(struct request *req)
+ 
+ void nvme_complete_rq(struct request *req)
+ {
+-	blk_status_t status = nvme_error_status(nvme_req(req)->status);
++	u16 nvme_status = nvme_req(req)->status;
++	blk_status_t status = nvme_error_status(nvme_status);
+ 
+ 	trace_nvme_complete_rq(req);
+ 
+@@ -280,7 +291,8 @@ void nvme_complete_rq(struct request *req)
+ 		nvme_req(req)->ctrl->comp_seen = true;
+ 
+ 	if (unlikely(status != BLK_STS_OK && nvme_req_needs_retry(req))) {
+-		if ((req->cmd_flags & REQ_NVME_MPATH) && nvme_failover_req(req))
++		if (!nvme_status_needs_local_error_handling(nvme_status) &&
++		    (req->cmd_flags & REQ_NVME_MPATH) && nvme_failover_req(req))
+ 			return;
+ 
+ 		if (!blk_queue_dying(req->q)) {
+-- 
+2.18.0
