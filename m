@@ -1,35 +1,57 @@
-From: James Morris <jmorris@namei.org>
-Subject: Re: [dm-devel] [RFC PATCH v5 00/11] Integrity Policy Enforcement
- LSM (IPE)
-Date: Tue, 11 Aug 2020 06:29:17 +1000 (AEST)
-Message-ID: <alpine.LRH.2.21.2008110628260.792@namei.org>
-References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>  <20200802115545.GA1162@bug> <20200802140300.GA2975990@sasha-vm>  <20200802143143.GB20261@amd>  <1596386606.4087.20.camel@HansenPartnership.com>  <fb35a1f7-7633-a678-3f0f-17cf83032d2b@linux.microsoft.com>
-  <1596639689.3457.17.camel@HansenPartnership.com>  <alpine.LRH.2.21.2008050934060.28225@namei.org>  <b08ae82102f35936427bf138085484f75532cff1.camel@linux.ibm.com>  <alpine.LRH.2.21.2008060949410.20084@namei.org>  <eb7a2f5b5cd22cf9231aa0fd8fdb77c729a83428.camel@linux.ibm.com>
-  <alpine.LRH.2.21.2008080240350.13040@namei.org>  <4a764c86a824a4b931dd7f130ce7afce7df140e4.camel@linux.ibm.com> <268edec96cbe7d2626c9158b806e8865b6b1b8ed.camel@linux.ibm.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 3/6] libmultipath: remove code duplication in
+ path counting
+Date: Mon, 10 Aug 2020 16:51:25 -0500
+Message-ID: <20200810215125.GO19233@octiron.msp.redhat.com>
+References: <1595877868-5595-1-git-send-email-bmarzins@redhat.com>
+	<1595877868-5595-4-git-send-email-bmarzins@redhat.com>
+	<a8190af67d89edb0819b231417b349e56c3deff1.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <268edec96cbe7d2626c9158b806e8865b6b1b8ed.camel@linux.ibm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mimi Zohar <zohar@linux.ibm.com>
-Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, Deven Bowers <deven.desai@linux.microsoft.com>, Pavel Machek <pavel@ucw.cz>, Sasha Levin <sashal@kernel.org>, snitzer@redhat.com, dm-devel@redhat.com, tyhicks@linux.microsoft.com, agk@redhat.com, paul@paul-moore.com, corbet@lwn.net, nramas@linux.microsoft.com, serge@hallyn.com, pasha.tatashin@soleen.com, jannh@google.com, linux-block@vger.kernel.org, viro@zeniv.linux.org.uk, axboe@kernel.dk, mdsakib@microsoft.com, linux-kernel@vger.kernel.org, eparis@redhat.com, linux-security-module@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org, jaskarankhurana@linux.microsoft.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <a8190af67d89edb0819b231417b349e56c3deff1.camel@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Martin Wilck <Martin.Wilck@suse.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 7 Aug 2020, Mimi Zohar wrote:
-
-> > > Are you planning to attend Plumbers? Perhaps we could propose a BoF 
-> > > session on this topic.
+On Thu, Aug 06, 2020 at 10:48:12AM +0000, Martin Wilck wrote:
+> On Mon, 2020-07-27 at 14:24 -0500, Benjamin Marzinski wrote:
+> > pathcountgr() is never used except by pathcount(), and neither is the
+> > special case for PATH_WILD. Simplify this and make one function that
+> > is
+> > used by both pathcount() and count_active_paths(). This will be used
+> > again in a future patch.
 > > 
-> > That sounds like a good idea.
+> > Also use count_active_paths() in mpath_persist.
 > 
-> Other than it is already sold out.
+> The patch looks correct. I had thought about something like it as well
+> when I first introduced count_active_paths(). But count_active_paths()
+> is used a *lot*, and often in critical situations. I wonder whether it
+> deserves an optimized version. The compiler can surely optimize better
+> with two constant expressions than with the additional for-loop over an
+> array with variable size. That's why back then I decided against
+> implementing it as a special case of a generic function. I actually
+> considered inlining count_active_paths().
+> 
+> It's hard to quantify the effect, and I haven't done any benchmarks. 
+> But still, can we perhaps keep the optimized version of
+> count_active_paths() itself?
 
-Mimi advised me off-list that she is able to attend, so I've submitted a 
-BoF proposal:
+Sure.
 
-https://www.linuxplumbersconf.org/event/7/abstracts/732/
+-Ben
 
-
--- 
-James Morris
-<jmorris@namei.org>
+> 
+> Martin
+> 
