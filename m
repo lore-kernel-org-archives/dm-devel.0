@@ -1,13 +1,13 @@
-From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: [dm- devel][PATCH] checker: add input check of state in
- checker_state_name func
-Date: Mon, 10 Aug 2020 09:14:39 +0800
-Message-ID: <9c67963b-477f-b3f5-8c8c-048de9357ff9@huawei.com>
+From: "McIntyre, Vincent (CASS, Marsfield)" <Vincent.Mcintyre@csiro.au>
+Subject: Promise and ALUA
+Date: Mon, 10 Aug 2020 04:33:19 +0000
+Message-ID: <20200810043316.GH21810@mayhem.atnf.CSIRO.AU>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Language: en-US
+Content-ID: <F8C563E331AF08459814C34E740E7633@ausprd01.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,83 +17,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Martin Wilck <mwilck@suse.com>, christophe.varoqui@opensvc.com, zkabelac@redhat.com
-Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>, liuzhiqiang26@huawei.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Hi,
 
-In checker_state_name func, we donot check whether input i
-is valid. It may cause array access violation problem.
+for many years we have been operating some Promise VTrak arrays
+without any use of the ALUA feature (largely so we don't have to
+specify LUN affinities as well, which seems to be required).
 
-Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
----
- libmultipath/checkers.c | 26 +++++++++++++++-----------
- libmultipath/checkers.h |  3 ++-
- 2 files changed, 17 insertions(+), 12 deletions(-)
+In the process of upgrading to Debian Buster
+(multipath-tools 0.7.9 and kernel 4.19)
+I find that I can no longer connect to our Promise arrays.
+They are detected but the only useful output I get is
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index c3cf53db..c91e1686 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -22,23 +22,27 @@ struct checker_class {
- 	short msgtable_size;
- };
+ multipathd[986]: reconfigure (operator)
+ multipathd[986]: sdc: alua not supported
+ multipathd[986]: sdd: alua not supported
+ multipathd[986]: sdr: alua not supported
+ multipathd[986]: sde: alua not supported
+ multipathd[986]: sdf: alua not supported
+ multipathd[986]: sdg: alua not supported
+ multipathd[986]: sdh: alua not supported
+ multipathd[986]: sdi: alua not supported
 
--char *checker_state_names[] = {
--	"wild",
--	"unchecked",
--	"down",
--	"up",
--	"shaky",
--	"ghost",
--	"pending",
--	"timeout",
--	"removed",
--	"delayed",
-+static const char *checker_state_names[PATH_MAX_STATE] = {
-+	[PATH_WILD] = "wild",
-+	[PATH_UNCHECKED] = "unchecked",
-+	[PATH_DOWN] = "down",
-+	[PATH_UP] = "up",
-+	[PATH_SHAKY] = "shaky",
-+	[PATH_GHOST] = "ghost",
-+	[PATH_PENDING] = "pending",
-+	[PATH_TIMEOUT] = "timeout",
-+	[PATH_REMOVED] = "removed",
-+	[PATH_DELAYED] = "delayed",
- };
 
- static LIST_HEAD(checkers);
+I found the note in the manpage about alua being selected by
+default for these arrays[1], but I'm taken aback that I'm not
+allowed to override this.
 
- const char *checker_state_name(int i)
- {
-+	if (i < 0 || i >= PATH_MAX_STATE) {
-+		condlog (2, "invalid state index = %d", i);
-+		return INVALID;
-+	}
- 	return checker_state_names[i];
- }
+Is there really no support any more for choosing whether to use
+ALUA or not?
 
-diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index 5237e7ec..93052b72 100644
---- a/libmultipath/checkers.h
-+++ b/libmultipath/checkers.h
-@@ -67,7 +67,7 @@
-  *   During this time, it is marked as "delayed"
-  */
- enum path_check_state {
--	PATH_WILD,
-+	PATH_WILD = 0,
- 	PATH_UNCHECKED,
- 	PATH_DOWN,
- 	PATH_UP,
-@@ -88,6 +88,7 @@ enum path_check_state {
- #define READSECTOR0  "readsector0"
- #define CCISS_TUR    "cciss_tur"
- #define NONE         "none"
-+#define INVALID      "invalid"
+I have tried messing about with detect_prio, dectect_checker
+and whatnot, to no avail.
 
- #define ASYNC_TIMEOUT_SEC	30
+Kind regards
+Vince
 
--- 
-2.24.0.windows.2
+[1] 9b5ea2eda85ae072cb697310807611c693713c2b
+    libmultipath: retain_attached_hw_handler obsolete with 4.3+
